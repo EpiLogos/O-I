@@ -26,7 +26,7 @@ export interface AgentChainSlot {
 }
 
 /** The chain composition — mockup order gateway → agent → skillset → world →
- * git (AGENTIC-CONVERGENCE Rev 5). The agent slot composes actuation's
+ * git (agent-shell-mockup.html Rev 5; WORLD-SHELL-DESIGN §7.1). The agent slot composes actuation's
  * harness-model, software-factory's agent-custody and central's
  * agent-identity on ONE visible face; the world slot composes central reads,
  * the ai-kit knowledge route and software-factory write mode. */

@@ -20,7 +20,7 @@
 import type {ReactNode} from 'react'
 import {Action, Chooser, Radio, Readout, TextField, Tile, type LightState, type Option} from '../../sdk/panel'
 import {NONE, has, json, prefixed, railAndPane, scoped, st, strOf, type ViewProps} from './design'
-import {design as thread} from './software-factory__thread'
+import {design as thread} from './thread'
 import {CreatureFace, type RunState} from '../faces'
 import './ai-kit__messages.css'
 

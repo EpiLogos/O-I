@@ -66,7 +66,7 @@ const SLOT_DESIGNS = {
   'central:main:approvals': (await import('../src/inhabitants/catalogue/panels/software-factory__approvals.tsx')).design,
   'central:packet': (await import('../src/inhabitants/catalogue/panels/central__packet.tsx')).design,
   'central:agent': (await import('../src/inhabitants/catalogue/panels/actuation__harness-model.tsx')).design,
-  'central:voice': (await import('../src/inhabitants/catalogue/panels/actuation__voice.tsx')).design,
+  'central:voice': (await import('../src/inhabitants/catalogue/panels/voice.tsx')).design,
   'central:scope': (await import('../src/inhabitants/catalogue/panels/scope.tsx')).scope,
   'central:ground-hygiene': (await import('../src/inhabitants/catalogue/panels/central__ground-hygiene.tsx')).design,
   'central:machine': machineDesign,
@@ -342,7 +342,7 @@ test('Ground hygiene\'s person tenders name the route as the kernel stands: invo
 
 const {AnswerVoice, VOICE_OFF, voiceBodyReadings} = await import('../src/central/devices/answerVoice.ts')
 const voiceBind = await import('../src/agent/devices/voiceBinding.ts')
-const {design: voiceDesign} = await import('../src/inhabitants/catalogue/panels/actuation__voice.tsx')
+const {design: voiceDesign} = await import('../src/inhabitants/catalogue/panels/voice.tsx')
 /** CODE-DERIVED: nara_voice open's constitution as kernel/src/nara_voice_constitution.rs composes it (actuation.speech-constitution/v1:
  * `interaction` from the composed modality — the local cascade may claim no full duplex or barge-in —, `interruption` unsupported, and
  * provenance.stage_relations in the order stt, text, tts, the speech stages carrying configuration.declared_voice); speak's receipt as the

@@ -1,4 +1,4 @@
-/** The Factory vertical's join (WORLD-SHELL-DESIGN §17.1; DLW-PLAN Phase 3) — pure.
+/** The Factory vertical's join (WORLD-SHELL-DESIGN §17.1) — pure.
  *
  * One selected Factory run is recovered through the projections on the SAME
  * identity: the run's ref. Each row below names the owner read it stands on

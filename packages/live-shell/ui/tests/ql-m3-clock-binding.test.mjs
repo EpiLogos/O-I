@@ -84,7 +84,9 @@ test('the form is read once per encounter; a new degree advances forward on the 
     'generation.lower': 'CT', 'generation.upper': 'CC', 'generation.positive': 'CCC', 'generation.negative': 'CTC', 'generation.nonDual': false})
   // The Rack page's keys are the rack's (qlRack.ts): the rack absent with its reason until it is read, the part in the view's own hand.
   const binding = m3.qlM3Binding(m3.qlM3State())
-  for (const key of Object.keys(design.defaults).filter(key => !['turn', 'open', 'readout', 'reciprocal'].includes(key)))
+  // Skin (Wheel or Binding) is the view's own choice; the Binding skin's keys stand under `binding.` and are hosted by prefixing Binding's
+  // own binding (DLW §22.3, "The Binding skin"). Both wait for qlM3Binding to carry them.
+  for (const key of Object.keys(design.defaults).filter(key => !['turn', 'open', 'readout', 'reciprocal', 'skin'].includes(key) && !key.startsWith('binding.')))
     assert.ok(key in values || binding.standing[key]?.disabled || binding.local[key], `${key} from the owner, named absent, or the view's own`)
   assert.deepEqual(Object.keys(m3.QL_M3_ABSENT), [], 'no key of the M3 clock lacks its owner now')
   assert.equal('rack' in binding.values, false, 'the rack is not read in this test')

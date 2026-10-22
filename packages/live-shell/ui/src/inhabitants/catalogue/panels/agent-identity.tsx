@@ -1,3 +1,5 @@
+// Retired as a device of its own (22 Oct manual rewrite): not a `<family>__<face>.tsx` panel any more, so the catalogue does not load
+// it; the Agent (actuation:harness-model) carries its pages through this module.
 // Agent identity (manual §19.4, central:agent-identity): who an agent is, read from Central's roster before you give it work. Live's
 // nearest: Utility or a small info device: a well that draws one thing and a short row of controls. The well draws the agent as the
 // roster holds it: its face (the shell's agent face, agent/maskFace.ts), its name, standing and revision, the one line that says who it
@@ -40,7 +42,7 @@ import {CreatureFace} from '../faces/CreatureFace'
 import {PATTERNS, type RunState} from '../faces/agency'
 import {faceOf} from '../faces/figures'
 import {FORM_ASKS, FORM_NAME, ORDER, type Form} from './practice'
-import './central__agent-identity.css'
+import './agent-identity.css'
 
 type V = ViewProps['v']
 

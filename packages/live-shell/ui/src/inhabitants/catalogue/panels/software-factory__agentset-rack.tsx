@@ -21,15 +21,25 @@
 // Join. The owners combine returns in one way: Software Factory's barrier waits until every leg it names has returned, and then an
 // independent reviewer synthesises (orchestration.rs `barrier_reading`, `synthesize`); Hermes' delegate_task returns every child's result to
 // the parent. So All has an owner operation, None needs none, and First, Quorum and Weighted have no owner operation: they stand named and dark.
+// Fan-out and Depth (manual §19.15) start at 2 and have no upper limit: the top step of each control is No limit, kept as 0.
+// The Helper page (manual §19.15 Decision helpers) carries the Decision helper's own parts (ai-kit__decision-helper.tsx) under `helper.`:
+// the spread of the last question, the question, the pick with its status and the engine's verdict, the team's questions with your
+// request and the team's admission, and the Provider with its model, its hosting, When, Deadline and Probe.
+// Making a group (manual §19.15): New on the head opens the card for a group, on keys `new.*`: new.for (what it is for), new.members
+// (the agents dragged in by their faces, from new.roster [{id, name, pattern?}]), new.type (the pattern that sets how they answer
+// together). Make (`new.make`) asks Central to propose the group as a set of agents, read back on `new.proposal` {ref, name, members,
+// type}; Accept (`new.accept`) keeps it, Change returns to the fields, Discard (`new.discard`) drops it. No kernel route proposes or
+// accepts an agent set yet (Central's sets are read with central.agent-set.resolve).
 // A key the owner has not reported is absent, and the view draws "—" for it and names it in words.
-import {memo, useLayoutEffect, useMemo, useState, type CSSProperties} from 'react'
+import {memo, useLayoutEffect, useMemo, useState, type CSSProperties, type ReactNode} from 'react'
 import {KindMark} from '../../sdk/marks'
 import {maskStatic} from '../../../agent/maskFace'
-import {Action, Band, Chooser, Folded, Lamp, Panel, Radio, Readout, Rows, Section, Tile, ValueBox, type LightState, type Option, type RowItem, type Scale, type Tone} from '../../sdk/panel'
-import {NONE, has, json, numOf, st, strOf, type DesignedDevice, type ViewProps} from './design'
+import {Action, Band, Chooser, Dial, Display, Folded, Lamp, Panel, Radio, Readout, Rows, Section, TextField, Tile, ValueBox, type LightState, type Option, type RowItem, type Scale, type Tone} from '../../sdk/panel'
+import {NONE, has, json, numOf, on, prefixed, scoped, st, strOf, type DesignedDevice, type ViewProps} from './design'
+import {design as decisionHelper} from './decision-helper'
 import {CreatureFace, FigureThumb} from '../faces/CreatureFace'
 import {CrewFace} from '../faces/CrewFace'
-import {PATTERNS, countOf as patternCount, isCrew, type RunState} from '../faces/agency'
+import {FAMILIES, PATTERNS, countOf as patternCount, isCrew, type RunState} from '../faces/agency'
 import {faceOf} from '../faces/figures'
 import './software-factory__agentset-rack.css'
 
@@ -38,12 +48,15 @@ type State = 'working' | 'idle' | 'stalled' | 'done' | 'failed'
 
 // ---------------------------------------------------------------- fixed vocabulary (not the owner's data)
 
-/** The owner's defaults: Hermes' delegation block (delegate_tool_config.py: 10 children, depth 1) and its summary cap (24000 characters). */
-const FAN_DEFAULT = 10, DEPTH_DEFAULT = 1, CAP_DEFAULT = 24000
-/** The controls' reach. The owner sets a floor of 1 and no ceiling; a reading above the reach draws as the owner gave it. */
-const FAN: Scale = {min: 1, max: 32, step: 1}
-const DEPTH: Scale = {min: 1, max: 8, step: 1}
-const CAP: Scale = {min: 0, max: 100000, step: 1000}
+/** The start values (manual §19.15): 2 helpers at once, 2 levels deep. A start value, not a limit. */
+const FAN_DEFAULT = 2, DEPTH_DEFAULT = 2
+/** The controls' reach. The owner sets a floor of 1 and no ceiling: the step past the last number is No limit, kept as 0. */
+const FAN: Scale = {min: 1, max: 33, step: 1}
+const DEPTH: Scale = {min: 1, max: 9, step: 1}
+const limited = (s: Scale) => (x: number) => (x >= s.max ? 'No limit' : `${Math.round(x)}`)
+/** A limit as the control draws it (0, no limit, stands at the top step) and as the owner keeps it (the top step is 0). */
+const shownLimit = (s: Scale, x: number | undefined) => (x === undefined ? NaN : x <= 0 ? s.max : x)
+const keptLimit = (s: Scale, x: number) => (Math.round(x) >= s.max ? 0 : Math.round(x))
 const INHERIT = 'inherit'
 
 const STATE_WORD: Record<State, string> = {working: 'Working', idle: 'Idle', stalled: 'Stalled', done: 'Done', failed: 'Failed'}
@@ -55,7 +68,7 @@ const STATE_SAYS: Record<State, string> = {
   failed: 'Failed: the member stopped with an error. Retry runs its task again.',
 }
 const HANDBACKS: readonly Option<string>[] = [
-  {value: 'summary', label: 'Summary', does: 'The helper returns its closing note, cut to the Summary cap. Keeps the lead\'s context short.'},
+  {value: 'summary', label: 'Summary', does: 'The helper returns its closing note. Keeps the lead\'s context short.'},
   {value: 'digest', label: 'Digest', does: 'The helper returns its closing note, its tool calls and the files it touched.'},
   {value: 'raw', label: 'Raw', does: 'The helper returns its whole thread.'},
 ]
@@ -73,7 +86,6 @@ const SAYS = {
   depth: 'How many levels of helpers may sit below the lead. At 1, helpers do not spawn helpers.',
   handBack: 'What a helper returns to its parent: its closing note, a digest or its whole thread.',
   join: 'How the members\' returns combine. None keeps one return. All waits for every member. First, Quorum and Weighted have no owner yet.',
-  cap: 'The most characters of a Summary that reach the parent. A longer one keeps its head and tail. 0 is no cap.',
   model: 'The model for everything the group spawns. A member can set its own.',
   retry: 'Run the chosen member\'s task again, when it is stalled or failed.',
   open: 'Open the crew full in a pane.',
@@ -147,19 +159,17 @@ const lampOf = (state: State | undefined): {light: LightState; tone: Tone} =>
     : state === 'idle' || state === 'failed' ? {light: 'dark', tone: 'accent'} : {light: 'unknown', tone: 'accent'}
 const crewOf = (v: V) => strOf(v, 'crew')
 const titleOf = (v: V) => { const c = crewOf(v); return c === undefined ? 'Agentset rack' : `Agents · ${c}` }
-const n = (x: number) => `${Math.round(x)}`
-const cap = (x: number) => (x <= 0 ? 'No cap' : `${Math.round(x / 1000)}k`)
 /** Members at work, against the most that may run at once. */
 const workingLine = (p: ViewProps) => {
   if (!has(p.v, 'members')) return undefined
   const w = countOf(membersOf(p.v), 'working'), f = numOf(p.v, 'fanOut')
-  return f === undefined ? `${w}` : `${w}/${Math.round(f)}`
+  return f === undefined || f <= 0 ? `${w}` : `${w}/${Math.round(f)}`
 }
 /** The deepest level of helpers, against the most levels allowed. */
 const deepLine = (p: ViewProps) => {
   if (!has(p.v, 'members')) return undefined
   const list = membersOf(p.v), deep = list.reduce((d, m) => Math.max(d, m.depth), 0), allowed = numOf(p.v, 'depth')
-  return allowed === undefined ? `${deep}` : `${deep}/${Math.round(allowed)}`
+  return allowed === undefined || allowed <= 0 ? `${deep}` : `${deep}/${Math.round(allowed)}`
 }
 const countLine = (v: V, state: State) => (has(v, 'members') ? `${countOf(membersOf(v), state)}` : undefined)
 
@@ -193,10 +203,10 @@ function MemberList({p, size, chip = true, note = true, label = true}: {p: ViewP
   </>
 }
 
-const fanBox = (p: ViewProps) => <ValueBox label="Fan-out" does={SAYS.fanOut} value={numOf(p.v, 'fanOut') ?? NaN} def={FAN_DEFAULT} scale={FAN} format={n}
-  onChange={x => p.set('fanOut', Math.round(x))} {...st(p, 'fanOut')} />
-const depthBox = (p: ViewProps) => <ValueBox label="Depth" does={SAYS.depth} value={numOf(p.v, 'depth') ?? NaN} def={DEPTH_DEFAULT} scale={DEPTH} format={n}
-  onChange={x => p.set('depth', Math.round(x))} {...st(p, 'depth')} />
+const fanBox = (p: ViewProps) => <ValueBox label="Fan-out" does={SAYS.fanOut} value={shownLimit(FAN, numOf(p.v, 'fanOut'))} def={FAN_DEFAULT} scale={FAN} format={limited(FAN)}
+  onChange={x => p.set('fanOut', keptLimit(FAN, x))} {...st(p, 'fanOut')} />
+const depthBox = (p: ViewProps) => <ValueBox label="Depth" does={SAYS.depth} value={shownLimit(DEPTH, numOf(p.v, 'depth'))} def={DEPTH_DEFAULT} scale={DEPTH} format={limited(DEPTH)}
+  onChange={x => p.set('depth', keptLimit(DEPTH, x))} {...st(p, 'depth')} />
 const handBack = (p: ViewProps) => <Radio label="Hand-back" does={SAYS.handBack} value={strOf(p.v, 'handBack') ?? ''} options={HANDBACKS} stack
   onChange={x => p.set('handBack', x)} {...st(p, 'handBack')} />
 
@@ -219,12 +229,6 @@ const modelValue = (v: V) => { const m = strOf(v, 'model'); return m === undefin
 const modelChooser = (p: ViewProps) => <Chooser label="Subagent model" does={SAYS.model} value={modelValue(p.v)} options={modelOptions(p.v)} wide
   onChange={x => p.set('model', x)} {...st(p, 'model')} />
 
-/** The Summary cap acts on a Summary only. */
-const capBox = (p: ViewProps) => {
-  const s = st(p, 'returnCap'), mode = strOf(p.v, 'handBack')
-  return <ValueBox wide label="Summary cap" does={SAYS.cap} value={numOf(p.v, 'returnCap') ?? NaN} def={CAP_DEFAULT} scale={CAP} format={cap} {...s}
-    disabled={s.disabled ?? (mode !== undefined && mode !== 'summary' ? 'Only a Summary has a cap.' : undefined)} onChange={x => p.set('returnCap', Math.round(x))} />
-}
 
 const retryAction = (p: ViewProps, chosen: Node | undefined) => {
   const s = st(p, 'retry'), can = chosen?.state === 'stalled' || chosen?.state === 'failed'
@@ -342,6 +346,186 @@ function CrewPane({p}: {p: ViewProps}) {
   </div>
 }
 
+// ---------------------------------------------------------------- Helper: the decision helpers (the Decision helper's own parts, carried)
+// Carried from the Decision helper's design (ai-kit__decision-helper.tsx), where these parts were drawn first, under `helper.`.
+
+const PROVIDERS = [
+  {value: 'none', label: 'None', does: 'No helper. Every open question goes back to the member who asked it.'},
+  {value: 'local', label: 'This machine', does: 'A small model on this machine. Nothing it reads leaves the machine.'},
+  {value: 'endpoint', label: 'Your endpoint', does: 'A model you serve yourself, at an address you give.'},
+  {value: 'hosted', label: 'Hosted', does: 'A hosted decision service. What it reads leaves the machine.'},
+] as const
+const WHEN = [
+  {value: 'background', label: 'Background', does: 'The act goes on. The answer joins it if it comes before the deadline.'},
+  {value: 'before', label: 'Before the act', does: 'The act waits for the answer, up to the deadline.'},
+] as const
+const DEADLINE: Scale = {min: 1, max: 120, log: true}
+const ASK_STATUS: Record<string, {label: string; tone?: Tone}> = {
+  determined: {label: 'Picked', tone: 'accent'}, partial: {label: 'Part picked', tone: 'accent'}, unresolved: {label: 'Abstained'},
+  unavailable: {label: 'Unavailable', tone: 'stall'}, refused: {label: 'Refused', tone: 'stall'}, stale: {label: 'Stale', tone: 'stall'},
+}
+const ENGINE: Record<string, {label: string; tone?: Tone}> = {validated: {label: 'Validated', tone: 'green'}, kept: {label: 'Kept as given'}, refused: {label: 'Refused', tone: 'stall'}, waiting: {label: 'Checking'}}
+const POLICY: Record<string, string> = {'preserve-candidates': 'Keep candidates', abstain: 'Abstain', 'single-if-supported': 'One if supported'}
+interface HelperAsk {readonly instrument: string; readonly member: string; readonly cf: string; readonly field: string; readonly labels: readonly string[]; readonly min: number; readonly max: number; readonly policy: string}
+interface HelperAnswer {readonly status: string; readonly scores: Readonly<Record<string, number>>; readonly picked: readonly string[]; readonly engine?: string; readonly reason?: string}
+interface Instrument {readonly id: string; readonly organ: string; readonly name: string; readonly labels: readonly string[]; readonly person: boolean; readonly built: boolean; readonly admitted: boolean}
+const isObj = (x: unknown): x is Record<string, unknown> => !!x && typeof x === 'object' && !Array.isArray(x)
+const strsOf = (x: unknown): string[] => (Array.isArray(x) ? x.filter((y): y is string => typeof y === 'string') : [])
+function helperAsk(v: V): HelperAsk | undefined {
+  const a = json<unknown>(v, 'ask', null)
+  if (!isObj(a) || typeof a.instrument !== 'string' || !Array.isArray(a.labels)) return undefined
+  return {instrument: a.instrument, member: text(a.member) ?? NONE, cf: text(a.cf) ?? NONE, field: text(a.field) ?? NONE,
+    labels: a.labels.flatMap(l => (isObj(l) && typeof l.id === 'string' ? [l.id] : typeof l === 'string' ? [l] : [])),
+    min: typeof a.min === 'number' ? a.min : 0, max: typeof a.max === 'number' ? a.max : 1, policy: text(a.policy) ?? NONE}
+}
+function helperAnswer(v: V): HelperAnswer | undefined {
+  const a = json<unknown>(v, 'answer', null)
+  if (!isObj(a) || typeof a.status !== 'string') return undefined
+  return {status: a.status, scores: isObj(a.scores) ? Object.fromEntries(Object.entries(a.scores).filter(([, x]) => typeof x === 'number')) as Record<string, number> : {},
+    picked: strsOf(a.picked), engine: text(a.engine), reason: text(a.reason)}
+}
+const instrumentsOf = (v: V): Instrument[] | undefined => {
+  if (!has(v, 'instruments')) return undefined
+  const raw = json<unknown>(v, 'instruments', [])
+  return Array.isArray(raw) ? raw.flatMap(x => (isObj(x) && typeof x.id === 'string' && typeof x.name === 'string'
+    ? [{id: x.id, organ: text(x.organ) ?? NONE, name: x.name, labels: strsOf(x.labels), person: x.person === true, built: x.built !== false, admitted: x.admitted === true}] : [])) : []
+}
+const hostedHealth = (v: V) => { const h = json<unknown>(v, 'hosted', null); return isObj(h) ? text(h.health) : undefined }
+const wanted = (v: V, i: Instrument) => v[`allow:${i.id}`] !== false && !i.person && i.built
+const pickWords = (a: HelperAnswer | undefined) => (a === undefined ? undefined : a.picked.length ? a.picked.join(', ') : 'none')
+
+/** The spread: a bar for each label the owner allows, as tall as the helper's confidence, the pick lit. */
+function SpreadWell({v, w, h}: {v: V; w: number; h: number}) {
+  const ask = helperAsk(v), a = helperAnswer(v), e = a?.engine ? ENGINE[a.engine] : undefined
+  const top = 16, base = h - 20, left = 8, right = w - 8, n = Math.max(1, ask?.labels.length ?? 1)
+  const step = (right - left) / n, bar = Math.max(2, step - (n > 8 ? 2 : 5)), most = Math.max(.5, ...Object.values(a?.scores ?? {}))
+  const Y = (x: number) => base - (x / most) * (base - top), cutTo = (id: string) => { const k = Math.max(2, Math.floor(step / 5)); return id.length > k ? `${id.slice(0, k - 1)}…` : id }
+  return <Display w={w} h={h} label="The spread" corner={e?.label ?? (ask ? ask.instrument : NONE)}
+    does="One bar for each label the owner allows, as tall as the helper's confidence. Lit bars are its pick. The corner says what the engine did with it.">
+    {!has(v, 'ask') ? <text x={w / 2} y={h / 2} textAnchor="middle" className="dp-ink-dim">No reading of the question</text>
+      : !ask ? <text x={w / 2} y={h / 2} textAnchor="middle" className="dp-ink-dim">Nothing open: the rules settled it</text> : <>
+        <line x1={left} x2={right} y1={base} y2={base} className="dp-faint" />
+        {ask.labels.map((l, i) => { const x = left + i * step + (step - bar) / 2, sc = a?.scores[l], picked = a?.picked.includes(l) ?? false
+          return <g key={l}>
+            {sc !== undefined && <rect x={x} y={Y(sc)} width={bar} height={Math.max(1, base - Y(sc))} className={picked ? 'dp-fill-on' : 'dp-fill'} />}
+            <text x={x + bar / 2} y={base + 10} textAnchor="middle" className={picked ? 'dp-ink' : 'dp-axis'}>{cutTo(l)}</text>
+          </g> })}
+        {!a && <text x={w / 2} y={(top + base) / 2} textAnchor="middle" className="dp-ink-dim">Asked. No answer yet.</text>}
+        {a && !a.picked.length && a.status === 'unresolved' && <text x={w / 2} y={top + 8} textAnchor="middle" className="dp-ink-dim">Abstained: nothing stood out</text>}
+      </>}
+  </Display>
+}
+
+/** The Helper page: the last question and its spread, the pick and the engine's verdict, the team's questions, and the provider. */
+function HelperBands({p}: {p: ViewProps}) {
+  const v = p.v, ask = helperAsk(v), a = helperAnswer(v), status = a ? ASK_STATUS[a.status] : undefined, e = a?.engine ? ENGINE[a.engine] : undefined
+  const [page, setPage] = useState(0), all = instrumentsOf(v), health = hostedHealth(v)
+  const items: RowItem[] = (all ?? []).map(i => ({id: i.id, name: i.name, note: i.organ, request: i.person || !i.built ? undefined : wanted(v, i),
+    light: i.person || !i.built || !wanted(v, i) ? 'dark' : i.admitted ? 'lit' : 'unknown', tone: i.admitted ? 'accent' : undefined,
+    why: i.person ? 'The collaboration gate is yours. No helper answers it, not even to abstain.' : !i.built ? 'Not built yet.' : wanted(v, i) && !i.admitted ? 'Asked for. The team has not measured it yet.' : undefined,
+    does: `${i.labels.length} labels: ${i.labels.join(', ')}`}))
+  return <>
+    <Band>
+      <Section width={206}><SpreadWell v={v} w={194} h={146} /></Section>
+      <Section label="Question" cols={2} grow>
+        <Readout label="instrument" does="The typed question the member put." value={ask?.instrument} />
+        <Readout label="asked by" does="The member who asked." value={ask?.member} />
+        <Readout label="row" does="The context frame it was asked at." value={ask?.cf} />
+        <Readout label="field" does="What the question decides." value={ask?.field} />
+        <Readout label="may hold" does="How many labels the answer may hold." value={ask ? `${ask.min}–${ask.max} of ${ask.labels.length}` : undefined} />
+        <Readout label="if none" does="What to do when no label stands out: keep the candidates, abstain, or give one only if it is supported." value={ask ? POLICY[ask.policy] ?? ask.policy : undefined} />
+      </Section>
+    </Band>
+    <Band>
+      <Section label="Answer" cols={2} width={150}>
+        <Readout label="pick" does="The labels the helper picked. None is an answer too, and it is kept." value={pickWords(a)} tone={a?.picked.length ? 'accent' : undefined} />
+        <Readout label="status" does="Picked, part picked, abstained, unavailable, refused or stale." value={status?.label} tone={status?.tone} />
+        <Readout label="engine" does={`What the engine did with the pick: validated it, kept an abstention as given, or refused it.${a?.reason ? ` ${a.reason}` : ''}`} value={e?.label} tone={e?.tone} />
+        <Readout label="by rule" does="Acts the rules settled whole. They asked the helper nothing." value={numOf(v, 'settled')} tone="green" />
+        <Readout label="asked" does="Questions put to the helper." value={numOf(v, 'asked')} tone="accent" />
+        <Readout label="abstained" does="Answers that picked nothing." value={numOf(v, 'abstained')} />
+        <Readout label="refused" does="Picks the engine refused." value={numOf(v, 'refused')} tone="stall" />
+      </Section>
+      <Section grow><Rows label={all ? 'The team\'s questions' : 'The team\'s questions · no reading'} items={items} size={8} page={page} onPage={setPage}
+        onRequest={st(p, 'instruments').disabled ? undefined : (id, x) => p.set(`allow:${id}`, x)}
+        does="The questions the helper may answer for this team. The square is your request; the light is the team's measured admission." /></Section>
+    </Band>
+    <Band>
+      <Section label="Provider" width={150}>
+        <Chooser {...st(p, 'provider')} label="Provider" wide does="Who answers: none, a model on this machine, your endpoint, or a hosted service. On this machine nothing the helper reads leaves it."
+          value={strOf(v, 'provider') ?? ''} options={PROVIDERS} onChange={x => p.set('provider', x)} />
+        <Readout label="model" does="The model that answers, where it runs, and whether it is loaded: AIKit's reading." value={has(v, 'model') ? `${strOf(v, 'model')} · ${strOf(v, 'state') ?? NONE}` : undefined}
+          tone={strOf(v, 'state') === 'loaded' ? 'green' : undefined} />
+        <Readout label="hosting" does="Whether the service that serves the model answers: Workcell's reading. It can disagree with the model's." value={health} tone={health === 'healthy' ? 'green' : health ? 'stall' : undefined} />
+      </Section>
+      <Section label="Timing" cols={2} grow>
+        <Radio {...st(p, 'when')} label="When" does="Background: the act goes on and the answer joins it if it comes in time. Before the act: the act waits for it." value={strOf(v, 'when') ?? ''} options={WHEN} stack onChange={x => p.set('when', x)} />
+        <Dial {...st(p, 'deadline')} label="Deadline" does="How long an answer may take. A later one is dropped, and the question stays open." value={numOf(v, 'deadline') ?? NaN} def={10} scale={DEADLINE} format={x => `${Math.round(x)} s`}
+          onChange={x => p.set('deadline', Math.round(x))} />
+        <div style={{gridColumn: 'span 2', width: '100%'}}><Action {...st(p, 'probe')} label="Probe" does="Asks the helper one small typed question and reports how it answered and how long it took."
+          disabled={st(p, 'probe').disabled ?? (strOf(v, 'provider') === 'none' ? 'Choose a provider first.' : undefined)} onPress={() => p.set('probe', true)} /></div>
+      </Section>
+    </Band>
+  </>
+}
+
+// ---------------------------------------------------------------- New: the card that makes a group (manual §19.15 Making a group)
+
+interface Rostered {readonly id: string; readonly name: string; readonly pattern?: string}
+const rosterOf = (v: V): Rostered[] | undefined => { const raw = json<unknown>(v, 'new.roster', undefined)
+  return Array.isArray(raw) ? raw.flatMap(x => (isObj(x) && typeof x.id === 'string' && typeof x.name === 'string' ? [{id: x.id, name: x.name, pattern: text(x.pattern)}] : [])) : undefined }
+const span2 = (child: ReactNode) => <div style={{gridColumn: 'span 2', width: '100%'}}>{child}</div>
+
+/** The card: what the group is for, its members dragged in by their faces, and its type; Make asks Central to propose it; the proposal is
+ * accepted as an agent is. */
+function NewGroupBands({p}: {p: ViewProps}) {
+  const v = p.v, roster = rosterOf(v), members = strsOf(json<unknown>(v, 'new.members', [])), type = strOf(v, 'new.type')
+  const proposal = isObj(json<unknown>(v, 'new.proposal', null)) ? json<Record<string, unknown>>(v, 'new.proposal', {}) : undefined
+  const types: Option<string>[] = FAMILIES.flatMap(f => f.patterns.map(x => ({value: x.id, label: `${f.name} · ${x.name}`, does: x.does})))
+  const makeWhy = !(strOf(v, 'new.for') ?? '').trim() ? 'Say what the group is for first.' : members.length < 2 ? 'A group has at least two members: drag them in.' : undefined
+  const faces = (ids: readonly string[]) => <div style={{display: 'flex', gap: 6, height: 34, alignItems: 'center', overflow: 'hidden', width: '100%'}}
+    data-i="Members|The members you dragged in, each by its face.">
+    {ids.length ? ids.map(id => { const r = roster?.find(x => x.id === id), pat = r?.pattern ?? type
+      return <span key={id} style={{flex: 'none', display: 'inline-flex'}} title={r?.name ?? id}>{pat ? <CreatureFace figure={faceOf(pat).id} state="queued" size={30} /> : <Face size={24} />}</span> })
+      : <i className="as-none">Drag members in by their faces.</i>}
+  </div>
+  if (proposal) return <Band>
+    <Section label="The proposal" width={206}>
+      {faces(strsOf(proposal.members))}
+      <Readout label="group" does="The group Central proposes, as a set of agents." value={text(proposal.name)} />
+    </Section>
+    <Section label="Accept" grow>
+      <Readout label="members" does="The agents the set holds." value={strsOf(proposal.members).length} tone="value" />
+      <Action {...st(p, 'new.accept')} hold label="Accept" does="Keeps the group, as you keep an agent." onPress={() => p.set('new.accept', text(proposal.ref) ?? true)} />
+      <Action label="Change" does="Back to the card's fields." onPress={() => p.set('new.proposal', undefined)} />
+      <Action {...st(p, 'new.discard')} label="Discard" does="Drops the proposal." onPress={() => p.set('new.discard', text(proposal.ref) ?? true)} />
+    </Section>
+  </Band>
+  return <>
+    <Band>
+      <Section label="For" cols={2} grow>
+        {span2(<TextField {...st(p, 'new.for')} wide label="What the group is for" does="Say what you want the group for, as you would say it to a team." value={strOf(v, 'new.for') ?? ''}
+          placeholder="Check the suite before a release, one guardian for each product." onChange={x => p.set('new.for', x)} />)}
+        {span2(<Chooser {...st(p, 'new.type')} label="Type" wide does="The pattern the group works as: it sets how the members answer together." value={type ?? ''}
+          options={[{value: '', label: 'None yet'}, ...types]} onChange={x => p.set('new.type', x || undefined)} disabled={types.length ? undefined : 'No reading of the types.'} />)}
+        {span2(faces(members))}
+      </Section>
+    </Band>
+    <Band>
+      <Section label="Members" grow><Rows does="Your agents. Drag a face into the card, or press a square to add or take out a member." size={6} columns={2}
+        items={roster ? roster.map(r => ({id: r.id, name: r.name, light: members.includes(r.id) ? 'lit' as LightState : 'dark' as LightState, tone: 'value' as const, request: members.includes(r.id)}))
+          : [{id: 'none', name: 'No reading of your agents', light: 'unknown'}]}
+        onRequest={roster ? (id, x) => p.set('new.members', JSON.stringify(x ? [...members, id] : members.filter(m => m !== id))) : undefined} /></Section>
+      <Section label="Make" width={104}>
+        <Readout label="members" does="The members the group will hold." value={members.length} tone="value" />
+        <Action {...st(p, 'new.make')} label="Make" does="Central proposes the group as a set of agents. Nothing is kept until you accept it."
+          onPress={makeWhy ? undefined : () => p.set('new.make', JSON.stringify({for: strOf(v, 'new.for'), members, type}))} disabled={st(p, 'new.make').disabled ?? makeWhy} />
+        <Action label="Close" does="Closes the card. Nothing was made." onPress={() => p.set('new.open', false)} />
+      </Section>
+    </Band>
+  </>
+}
+
 // ---------------------------------------------------------------- the device
 
 const atWork = (p: ViewProps) => lightOf(p) === 'lit' && countOf(membersOf(p.v), 'working') > 0
@@ -376,23 +560,40 @@ const HELPERS = [
 ]
 const MODELS = [{id: 'glm-5.3-flash'}, {id: 'glm-5.2'}, {id: 'glm-5'}, {id: 'glm-4-9b'}]
 
-/** Every key the owners report: the "No readings" fixture drops all of them. */
-const KEYS = ['light', 'crew', 'member', 'members', 'fanOut', 'depth', 'handBack', 'returnCap', 'model', 'models', 'join', 'pattern']
-const NOTHING: Record<string, undefined> = Object.fromEntries(KEYS.map(k => [k, undefined]))
+/** Every key the owners report: the "No readings" fixture drops all of them, the Helper page's and the card's with them. */
+const KEYS = ['light', 'crew', 'member', 'members', 'fanOut', 'depth', 'handBack', 'model', 'models', 'join', 'pattern', 'new.roster', 'new.open', 'new.for', 'new.members']
+const NOTHING: Record<string, undefined> = {...Object.fromEntries(KEYS.map(k => [k, undefined])), ...prefixed('helper.', decisionHelper.fixtures?.['No readings'] ?? {}) as Record<string, undefined>}
+const helperOf = (p: ViewProps) => scoped(p, 'helper.')
+const PAGES = [{id: 'members', label: 'Members'}, {id: 'helper', label: 'Helper'}] as const
+/** The agents of your roster the card offers, with the pattern each was given. */
+const ROSTER = [{id: 'agent/oi-field-guardian', name: 'oi-field-guardian', pattern: 'scout'}, {id: 'agent/central-guardian', name: 'central-guardian', pattern: 'watch'},
+  {id: 'agent/aikit-guardian', name: 'aikit-guardian', pattern: 'watch'}, {id: 'agent/factory-guardian', name: 'factory-guardian', pattern: 'watch'},
+  {id: 'agent/workcell-guardian', name: 'workcell-guardian', pattern: 'watch'}, {id: 'agent/ql-guardian', name: 'ql-guardian', pattern: 'watch'}]
 
 export const design: DesignedDevice = {
   id: 'software-factory:agentset-rack',
   title: 'Agentset rack',
   kind: 'rack',
   defaults: {
-    light: 'lit', crew: 'oi-guardians', member: LEAD, fanOut: FAN_DEFAULT, depth: DEPTH_DEFAULT, handBack: 'summary', returnCap: CAP_DEFAULT, model: INHERIT, join: 'all', pattern: 'scout',
+    light: 'lit', crew: 'oi-guardians', member: LEAD, fanOut: FAN_DEFAULT, depth: DEPTH_DEFAULT, handBack: 'summary', model: INHERIT, join: 'all', pattern: 'scout',
     models: JSON.stringify(MODELS), members: JSON.stringify(CREW),
+    // The Helper page's readings and settings: the Decision helper's own, under `helper.`.
+    ...prefixed('helper.', decisionHelper.defaults),
+    // The card for a new group: closed until you press New.
+    'new.open': false, 'new.for': '', 'new.members': '[]', 'new.roster': JSON.stringify(ROSTER),
   },
+  firstPage: 'members',
   fixtures: {
     'The oi-guardians crew': {},
     'Nested helpers': {depth: 2, fanOut: 6, model: 'glm-5.3-flash', member: 'agent/factory-guardian', members: JSON.stringify([...CREW, ...HELPERS])},
     'One return': {join: 'none', handBack: 'digest'},
-    'A trail of ants': {crew: 'trail', pattern: 'trail', join: 'none', fanOut: 32, handBack: 'digest'},
+    'A trail of ants': {crew: 'trail', pattern: 'trail', join: 'none', fanOut: 0, depth: 0, handBack: 'digest'},
+    'The helper abstained': prefixed('helper.', decisionHelper.fixtures?.Abstained ?? {}),
+    'Making a group': {'new.open': true, 'new.for': 'Check the suite before a release, one guardian for each product.', 'new.type': 'quorum',
+      'new.members': JSON.stringify(['agent/central-guardian', 'agent/aikit-guardian', 'agent/workcell-guardian'])},
+    'A group to accept': {'new.open': true, 'new.for': 'Check the suite before a release, one guardian for each product.', 'new.type': 'quorum',
+      'new.members': JSON.stringify(['agent/central-guardian', 'agent/aikit-guardian', 'agent/workcell-guardian']),
+      'new.proposal': JSON.stringify({ref: 'proposal:release-check', name: 'release-check', members: ['agent/central-guardian', 'agent/aikit-guardian', 'agent/workcell-guardian'], type: 'quorum'})},
     'No readings': NOTHING,
   },
 
@@ -418,8 +619,10 @@ export const design: DesignedDevice = {
   </Panel>,
 
   whole: p => {
-    const list = membersOf(p.v), chosen = chosenOf(p.v, list)
-    return <Panel title={titleOf(p.v)} mark={headMark} view="whole" {...head(p)}>
+    const list = membersOf(p.v), chosen = chosenOf(p.v, list), making = on(p.v, 'new.open'), page = p.page === 'helper' ? 'helper' : 'members'
+    return <Panel title={titleOf(p.v)} mark={headMark} view="whole" {...head(p)} pages={PAGES} page={page} onPage={p.setPage}
+      acts={making ? undefined : <Action label="New" does="Opens a card to make a new group." onPress={() => p.set('new.open', true)} />}>
+      {making ? <NewGroupBands p={p} /> : page === 'helper' ? <HelperBands p={helperOf(p)} /> : <>
       <Band>
         <Section label="Members" width={220}>
           <MemberList p={p} size={8} note={false} label={false} />
@@ -448,10 +651,10 @@ export const design: DesignedDevice = {
         <Section label="Return" cols={2} width={196}>
           {handBack(p)}
           {joinChooser(p)}
-          <div className="as-span">{capBox(p)}</div>
           <div className="as-span">{modelChooser(p)}</div>
         </Section>
       </Band>
+      </>}
     </Panel>
   },
 

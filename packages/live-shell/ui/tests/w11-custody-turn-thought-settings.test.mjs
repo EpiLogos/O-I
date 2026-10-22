@@ -53,7 +53,7 @@ const session = await import('../src/agent/devices/sessionChainBindings.ts')
 const pages = await import('../src/agent/devices/aikitPages.ts')
 const ground = await import('../src/central/devices/pageGround.ts')
 const config = await import('../src/native/configuration.ts')
-const {design: custodyDesign} = await import('../src/inhabitants/catalogue/panels/software-factory__agent-custody.tsx')
+const {design: custodyDesign} = await import('../src/inhabitants/catalogue/panels/agent-custody.tsx')
 const {design: agentDesign} = await import('../src/inhabitants/catalogue/panels/actuation__harness-model.tsx')
 
 family.resetFamilyManifestsForTest()

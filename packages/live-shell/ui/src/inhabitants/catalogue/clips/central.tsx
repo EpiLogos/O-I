@@ -1,8 +1,9 @@
 // Central's clip (manual §18.1): a page of a world — a Being, a Thing or a Flow — on that world's track; the Day is the set, not a
 // clip. Clip view shows the page as you write it, the same editor as the page in a pane, with its facts and its tools beside it.
-// Panel one holds the page's Clip fields (title, colour, kind, template at its version, revision, save state), its Launch tab (a
-// page plays when launched: how it opens, where, and for a Flow whether its people and agents take their seats; what plays is open
-// now), and the form's own fields: a Being's or a Thing's ties, or a Flow's participants, its world and its container (manual §24.5).
+// Panel one holds the page's Clip fields (title, colour, kind, template at its version, revision, save state) and the form's own
+// fields: a Being's or a Thing's ties, or a Flow's participants, its world and its container (manual §24.5). A page has no Launch tab:
+// it is placed, not launched (§16.5, §18.1 Opening a page). It plays from the moment you open it until you close the moment; where it
+// opens is a pane's act, and Open in, from its menu, opens a being or a thing in another instrument.
 // Panel two holds the tools that shape and mark the page: Text, Highlight and Notes; the five passage acts stand over the selected
 // passage. Remember keeps the passage word for word with its source ref as a proposal in your ground: Central's `central.remember`
 // (Control/agents/remembered) for a page of your own world, `projectcentral.remember` (the project's ProjectCentral/agents/remembered) for a
@@ -13,12 +14,10 @@
 // `selected` (the paragraph the selection stands in), `notes` (JSON {id, anchor, text, timing}), `source` (the page's source
 // text), and for a Flow `participants` (JSON {name, initial, kind: person | agent}), `entries` (JSON {id, who, rel?, depth, text,
 // kind?: observe | interpret | choose}), `container` and `journalPages` (JSON, the dates the Journal has pages for, newest first).
-// Launch reads `opensAs`, `opensIn`, `seats`, `open` (the open moment, when the page plays: its machine and since when) and the
-// page's own `place`, `stop` and `sky` (absent closes that way of opening, with the reason).
 import type {ReactNode} from 'react'
 import {Action, Chooser, Radio, TextField, Toggle, ValueBox} from '../../sdk/panel'
 import {has, numOf, strOf} from '../panels/design'
-import {COLOURS, Fact, Fields, Rows, Row, Rule, Said, Wide, choice, flag, read} from './clipKit'
+import {COLOURS, Fact, Fields, Rows, Row, Said, Wide, choice, flag, read} from './clipKit'
 import type {ClipProps, DesignedClip} from './design'
 
 type V = ClipProps['v']
@@ -39,29 +38,6 @@ function ClipPanel(p: ClipProps) {
     <Row label="Revision"><Fact label="Revision" does="The saved revision the page stands on." value={strOf(p.v, 'revision')} /></Row>
     <Row label="Save"><Fact label="Save state" does="The outcome of the last save. A stale or conflicting save keeps your draft and shows what changed." value={save ? save[0]!.toUpperCase() + save.slice(1) : undefined}
       tone={save ? SAVE_TONE[save as keyof typeof SAVE_TONE] : undefined} /></Row>
-  </Rows>
-}
-
-/** Launch (manual §18.1 "The Launch panel"): a page plays when launched, and what plays is open now. A being or a thing opens as its
- * page, in the world's reading view, at its stop on a walk, or at its placements in the sky; a way with nothing to stand on stays closed
- * and says so. A Flow opens as one of its three readings, and Seats brings its people and agents back. */
-function LaunchPanel(p: ClipProps) {
-  const flow = isFlow(p.v)
-  const open = strOf(p.v, 'open')
-  const ways = flow
-    ? [{value: 'dialogue', label: 'Dialogue'}, {value: 'flow', label: 'Flow'}, {value: 'journal', label: 'Journal'}]
-    : [{value: 'page', label: 'Page'},
-      {value: 'reading', label: 'Reading', does: 'Opens it in the world\'s reading view, with its sources.'},
-      {value: 'walk', label: 'Walk', does: 'Opens the Journey at the page\'s stop.', why: has(p.v, 'stop') ? undefined : 'The page is a stop on no walk yet.'},
-      {value: 'sky', label: 'Sky', does: 'Opens the Sky at the page\'s placements.', why: has(p.v, 'sky') ? undefined : 'The page has no placement in the sky: a person\'s sky comes from an identity shared with you.'}]
-  return <Rows>
-    <Row label="Opens as"><Chooser label="Opens as" does="How the page opens when it is launched." value={choice(p.v, 'opensAs', flow ? 'dialogue' : 'page')} options={ways} onChange={x => p.set('opensAs', x)} /></Row>
-    {ways.filter(way => 'why' in way && way.why).map(way => <Said key={way.value}>{way.label}: {(way as {why: string}).why}</Said>)}
-    <Row label="Opens in"><Chooser label="Opens in" does="Where the page opens." value={choice(p.v, 'opensIn', 'focused')} onChange={x => p.set('opensIn', x)}
-      options={[{value: 'focused', label: 'The focused pane'}, {value: 'pane', label: 'A new pane'}, {value: 'window', label: 'Its own window'}]} /></Row>
-    {flow && <Row label="Seats"><Toggle label="Seats" does="Brings the Flow's people and agents back to their seats: each agent's session resumes where it stopped." on={flag(p.v, 'seats') ?? true} onChange={x => p.set('seats', x)} /></Row>}
-    <Rule />
-    <Row label="Open now"><Fact label="Open now" does="Whether the page plays: an open moment, listed in NOWs with its machine and the agent at work. Stop closes the moment; what still plays at the day's close carries to tomorrow." value={open} tone={open ? 'green' : undefined} /></Row>
   </Rows>
 }
 
@@ -330,10 +306,9 @@ export const clip: DesignedClip = {
     'A Being': {},
     'A Flow': {kind: 'flow', name: 'Closing the day', colour: 'var(--sel)', template: 'Flow · standard @ 4', revision: '7be0d13', save: 'unchanged',
       participants: JSON.stringify(FLOW_PEOPLE), entries: JSON.stringify(FLOW_ENTRIES), speakAs: 'Frank', relation: 'reply', journalPage: '16 Oct 2026', selected: 'e2',
-      journalPages: JSON.stringify(['16 Oct 2026', '15 Oct 2026', '14 Oct 2026']), world: 'O:I', container: 'none', opensAs: 'dialogue', seats: true, open: 'Mac · since 09:12',
+      journalPages: JSON.stringify(['16 Oct 2026', '15 Oct 2026', '14 Oct 2026']), world: 'O:I', container: 'none',
       notes: JSON.stringify([{id: 'n3', anchor: 'Fizz · "the owner\'s automation"', text: 'Which automation? Name it in the Day entry.'}]), source: '---\ntemplate: flow · standard @ 4\n---\n\n## Frank\nCan the Day close itself …',
       'view.panel': 'people', 'view.editor': 'flow', 'view.tools': 'notes'},
-    'Launching': {'view.panel': 'launch', stop: 'Rupertsberg, 1150', opensAs: 'reading', opensIn: 'pane'},
     'An inquiry': {kind: 'flow', name: 'What the move asks', colour: 'var(--parasakti)', template: 'Flow · standard @ 4', revision: '0c31f9a', save: 'saved', world: 'Practice',
       participants: JSON.stringify([{name: 'Frank', initial: 'F', kind: 'person'}, {name: 'Nara', initial: 'N', kind: 'agent', session: 'practice'}]), container: 'inquiry', entryKind: 'observe', relation: 'reply',
       entries: JSON.stringify(INQUIRY_ENTRIES), speakAs: 'Frank', selected: 'i3', journalPages: JSON.stringify(['18 Oct 2026', '17 Oct 2026']), journalPage: '18 Oct 2026',
@@ -343,7 +318,6 @@ export const clip: DesignedClip = {
   },
   panel: [
     {id: 'clip', label: 'Clip', does: 'The page\'s title, colour, kind, template, revision and save state.', draw: ClipPanel},
-    {id: 'launch', label: 'Launch', does: 'How the page opens when launched, where, and whether it is open now.', draw: LaunchPanel},
     {id: 'ties', label: 'Ties', does: 'What the page is tied to: its world, its subject, its offices, its sources and its place.', draw: TiesPanel, shows: v => kindOf(v) === 'being' || kindOf(v) === 'thing'},
     {id: 'people', label: 'Participants', does: 'Who is in the exchange, the world it belongs to, and the form that holds it.', draw: PeoplePanel, shows: isFlow},
   ],

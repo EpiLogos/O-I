@@ -534,6 +534,10 @@ test('the Agent, the rack, the member and Scope draw their designs on their bind
         assert.match(all, /<button type="button" class="dp-activator"[^>]*disabled=""/, 'the power light only reads: its activator stands disabled')
         continue
       }
+      // The manual (§19.12) moved Knowledge from one chooser to Scope's Knowledge page: Sources, Search first, Link depth and Read
+      // budget (scope.tsx `src.*`, `searchFirst`, `linkDepth`, `readBudget`). The binding's single `knowledge` key draws no control now;
+      // its page's keys are the binding lane's to wire.
+      if (design.id === bind.SCOPE_DESIGN && key === 'knowledge') continue
       assert.ok(all.includes(escaped(why)), `${design.id}: the control of ${key} says why it cannot act (${why})`)
     }
     assert.match(all, /data-disabled="true"/, `${design.id}: a refused control is drawn disabled`)

@@ -1,4 +1,4 @@
-/** The Central vertical's join (WORLD-SHELL-DESIGN §17.2; DLW-PLAN Phase 3) — pure.
+/** The Central vertical's join (WORLD-SHELL-DESIGN §17.2) — pure.
  *
  * One real day is recovered through the Timeline: a selected clip on the day
  * track, the conversation track, or the wiki's Constellation resolves here to

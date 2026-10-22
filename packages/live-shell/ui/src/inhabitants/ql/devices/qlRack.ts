@@ -48,7 +48,7 @@ export const RACK_CARRIED: Readonly<Record<RackInstrument, readonly {readonly de
     {device: 'quaternal-logic:sky', where: 'The Sky, and Sky modulation (§22.2).'},
   ],
   3: [
-    {device: 'quaternal-logic:binding', where: 'Binding\'s nonets (§22.8), and the reading the clock takes before it draws.'},
+    {device: 'quaternal-logic:m3-clock', where: 'The M3 clock\'s Binding skin: its nonets (§22.3), and the reading the clock takes before it draws.'},
     {device: 'quaternal-logic:deck', where: 'The Deck\'s I Ching (§22.4), the Hexagram readout, and a line change on the form.'},
     {device: 'quaternal-logic:m-prime-matrices', where: 'The Form matrix (§22.6), the Codon readout, and Binding\'s junctions and charges.'},
     {device: 'quaternal-logic:m3-clock', where: 'Matrix, Seed, Pose map and the Generation readout; Binding\'s Pairing.'},

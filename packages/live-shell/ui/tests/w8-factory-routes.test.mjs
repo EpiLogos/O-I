@@ -56,7 +56,7 @@ const session = await import('../src/agent/devices/sessionChainBindings.ts')
 const pages = await import('../src/agent/devices/aikitPages.ts')
 const runMap = await import('../src/agent/devices/runMapBinding.ts')
 const {design: padsDesign} = await import('../src/inhabitants/catalogue/panels/software-factory__prompt-pads.tsx')
-const {design: custodyDesign} = await import('../src/inhabitants/catalogue/panels/software-factory__agent-custody.tsx')
+const {design: custodyDesign} = await import('../src/inhabitants/catalogue/panels/agent-custody.tsx')
 const {skills: rackDesign} = await import('../src/inhabitants/catalogue/panels/skills.tsx')
 const {memberDevice: memberDesign} = await import('../src/inhabitants/catalogue/panels/member.tsx')
 const {design: agentDesign} = await import('../src/inhabitants/catalogue/panels/actuation__harness-model.tsx')
@@ -419,8 +419,9 @@ test('13 · (b) every key the rebound designs read is an owner reading, absent w
     if (design.id === memberDesign.id && !['why', 'history', 'ground', 'retireReason', 'retireAsk', 'restoreAsk', 'event'].includes(key)) continue // the member's own: factory-design-binding
     assert.ok(classify(binding, key) || written(binding, key), `${design.id} ${key}: a reading, absent with why, the hand's, or written through its owner`)
   }
-  // The keys that stand only as an owner write are a pad's settings its schedule does not hold, each written through pads-write.
+  // The manual (§19.22): no pad keeps a time. A pad that runs by itself is a routine in Settings, Automations, so the design draws no
+  // Runs at, At, Days or Every, and no key of it stands only as an owner write.
   const [[, chosen]] = bound()
-  assert.deepEqual(designKeys(padsDesign).filter(key => !classify(chosen, key) && written(chosen, key)), ['every'], 'a daily pad holds no interval; Every writes one')
+  assert.deepEqual(designKeys(padsDesign).filter(key => !classify(chosen, key) && written(chosen, key)), [], 'the pads keep no time of their own')
   bind.resetHolds()
 })

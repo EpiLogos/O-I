@@ -1,0 +1,4 @@
+/* The rack kit of an instrument of the map (manual §16.16): the ledger's ladder in the Part section and the readings under its own
+   positions. Shell and panel tokens only. */
+.mrk-ladder { display: flex; justify-content: center; width: 100%; }
+.mrk-where { display: flex; gap: 10px; justify-content: space-around; width: 100%; margin-top: 4px; }

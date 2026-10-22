@@ -190,6 +190,21 @@ const UNBOUND = {
 // ---------------------------------------------------------------------------------------------------------------- the classification
 
 const keysOf = design => [...new Set([...Object.keys(design.defaults), ...Object.values(design.fixtures ?? {}).flatMap(fixture => Object.keys(fixture))])]
+/** Pages a design carries from another device, by prefix: their keys are hosted by prefixing that device's own binding (design.ts scoped). The
+ * M3 clock carries the Binding skin under `binding.` (DLW §22.3, "The Binding skin"). */
+const CARRIED = {'quaternal-logic:m3-clock': {'binding.': 'quaternal-logic:binding'}}
+/** Keys the manual added that the design's binding does not carry yet, each named: the M3 clock's Skin (Wheel or Binding, §22.3), and the
+ * Chakra's Rack page, M4′'s rack (§22.5; the M3 clock's binding reads its own through qlRack.ts rackPage). */
+const WAITING = {'quaternal-logic:m3-clock': ['skin'], 'quaternal-logic:chakra': ['rack', 'rack.part']}
+const keepIn = (design, keep) => ({...design, defaults: Object.fromEntries(Object.entries(design.defaults).filter(([k]) => keep(k))),
+  fixtures: Object.fromEntries(Object.entries(design.fixtures ?? {}).map(([n, f]) => [n, Object.fromEntries(Object.entries(f).filter(([k]) => keep(k)))]))})
+/** The keys a design holds as its own: neither carried from another device nor waiting. */
+const ownOf = design => keepIn(design, k => !(WAITING[design.id] ?? []).includes(k) && !Object.keys(CARRIED[design.id] ?? {}).some(prefix => k.startsWith(prefix)))
+/** A carried page as its own device holds it: its keys without the prefix. */
+const carriedOf = (design, prefix) => {
+  const strip = values => Object.fromEntries(Object.entries(values).filter(([k]) => k.startsWith(prefix)).map(([k, x]) => [k.slice(prefix.length), x]))
+  return {...design, id: `${design.id} ${prefix}*`, defaults: strip(design.defaults), fixtures: Object.fromEntries(Object.entries(design.fixtures ?? {}).map(([n, f]) => [n, strip(f)]))}
+}
 /** The control keys of a design, read from its source: a literal `set('key'`, a control's standing `st(p, 'key')`, a helper's `(p, 'key'`;
  * a key built from an id (`on:${id}`) stands as its prefix with `*`. */
 function controlKeysOf(file, keys) {
@@ -254,7 +269,8 @@ test('(b) and (c) for every design of Expressions, Live and Quaternal Logic: eac
       table.push({design: design.id, unbound: UNBOUND[design.id]})
       continue
     }
-    const keys = classify(design, binding)
+    const keys = classify(ownOf(design), binding)
+    for (const [prefix, other] of Object.entries(CARRIED[design.id] ?? {})) classify(carriedOf(design, prefix), bound[other])
     const control = controls(binding, controlKeysOf(file, keysOf(design)))
     // Every key of the design as the binding stands it: written through an owner, the view's own, disabled with why, or a reading.
     const all = controls(binding, keysOf(design))

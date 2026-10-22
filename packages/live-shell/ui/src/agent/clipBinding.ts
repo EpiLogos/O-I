@@ -14,7 +14,9 @@
 //     every default stated by the owner.
 // Every per-task setting writes through its seam in agent/devices/taskBindings.ts TASK_SEAMS, against the settings' standing
 // revision. The Intent panel (§19.1, the design's D3 panel) has no reading a kernel route reaches: its keys stand absent and its writes
-// refused, each with the operation it waits for (INTENT_ABSENT, INTENT_REFUSED). Pure, apart from the hook at the end.
+// refused, each with the operation it waits for (INTENT_ABSENT, INTENT_REFUSED). The manual's Loop (the Clip panel) and Repeat (the
+// Launch panel: what varies between the runs, Compare, the takes) have no owner field yet: they stand absent and refused the same way
+// (LAUNCH_ABSENT, LAUNCH_REFUSED). Pure, apart from the hook at the end.
 import type {Value, Values} from '../frame/devices/designed'
 import {clipBinding, type ClipBinding, type ClipWiring} from '../frame/detail/clipBinding'
 import {useViewHoldsVersion} from '../frame/detail/clipBinding'
@@ -130,6 +132,33 @@ export const INTENT_REFUSED: Readonly<Record<string, string>> = {
   criterion: 'A success condition: no owner operation carries it yet — missing op: a success-condition write on the bounded intent of the project-development ledger (Software Factory has none) (Software Factory).',
 }
 
+/** Loop and Repeat (manual §16.5, §19.1 The Clip panel and The Launch panel): the session's settings owner (AIKit
+ * `encounter-session-settings`) still speaks Launch as once · hold · loop and Then as next · handoff · stop, with no Loop stop condition
+ * or cap and no Repeat fields; the takes a Repeat makes are the take lanes' reading (AIKit encounter_task_attempts_list), not handed to
+ * Clip view; and no owner compares takes. Each key stands absent, and each control refused, with the operation it waits for. */
+const SESSION_SETTINGS = 'AIKit `encounter-session-settings` (kernel encounter_session_settings) keeps Launch as once · hold · loop and no'
+export const LAUNCH_ABSENT: Readonly<Record<string, string>> = {
+  loop: `Loop: no reading reaches it yet — ${SESSION_SETTINGS} Loop field of its own (AIKit).`,
+  'loop.until': `Loop's stop condition: no reading reaches it yet — ${SESSION_SETTINGS} stop condition for a loop (AIKit).`,
+  'loop.cap': `Loop's cap: no reading reaches it yet — ${SESSION_SETTINGS} cap for a loop (AIKit).`,
+  'repeat.variable': `Repeat's Variable: no reading reaches it yet — ${SESSION_SETTINGS} Repeat launch or its fields (AIKit).`,
+  'repeat.levels': `Repeat's Levels: no reading reaches them yet — ${SESSION_SETTINGS} Repeat launch or its fields (AIKit).`,
+  'repeat.repeats': `Repeat's Repeats: no reading reaches it yet — ${SESSION_SETTINGS} Repeat launch or its fields (AIKit).`,
+  'repeat.stop': `Repeat's Stop when: no reading reaches it yet — ${SESSION_SETTINGS} Repeat launch or its fields (AIKit).`,
+  compare: 'Compare: no reading reaches it yet — missing op: no owner compares takes side by side (Software Factory).',
+  takes: 'The takes a Repeat made: not handed to Clip view — the take lanes read them (AIKit encounter_task_attempts_list, each Run by factory_attempt_read) (AIKit).',
+}
+export const LAUNCH_REFUSED: Readonly<Record<string, string>> = {
+  loop: 'Loop: no owner operation carries it yet — missing op: a Loop field on the task\'s session settings (encounter-session-settings has Launch once · hold · loop only) (AIKit).',
+  'loop.until': 'Loop\'s stop condition: no owner operation carries it yet — missing op: a loop stop condition on the task\'s session settings (AIKit).',
+  'loop.cap': 'Loop\'s cap: no owner operation carries it yet — missing op: a loop cap on the task\'s session settings (AIKit).',
+  'repeat.variable': 'Repeat\'s Variable: no owner operation carries it yet — missing op: Repeat and its fields on the task\'s session settings (AIKit).',
+  'repeat.levels': 'Repeat\'s Levels: no owner operation carries it yet — missing op: Repeat and its fields on the task\'s session settings (AIKit).',
+  'repeat.repeats': 'Repeat\'s Repeats: no owner operation carries it yet — missing op: Repeat and its fields on the task\'s session settings (AIKit).',
+  'repeat.stop': 'Repeat\'s Stop when: no owner operation carries it yet — missing op: Repeat and its fields on the task\'s session settings (AIKit).',
+  compare: 'Compare: no owner operation carries it yet — missing op: a comparison of takes (Software Factory).',
+}
+
 /** clip:factory's wiring: every key the design draws or sets. */
 export function factoryWiring(task: TaskAddress | null, context: TaskSeamContext | null = null): ClipWiring {
   const acts: Record<string, (value: Value) => Promise<void>> = {}
@@ -153,14 +182,14 @@ export function factoryWiring(task: TaskAddress | null, context: TaskSeamContext
       sessions: 'the other sessions of the agency reading, for Hand off to', log: 'the session\'s temporal events inside the task\'s span',
       elapsed: 'the task\'s start to its last activity, in seconds',
     },
-    absent: INTENT_ABSENT,
+    absent: {...INTENT_ABSENT, ...LAUNCH_ABSENT},
     acts,
     view: {
       fold: 'Fold keeps only the lanes of the tools the agent used: how the log shows, not the log',
       event: 'the log row selected in Clip view', 'env.control': 'which of the Agent\'s controls the envelope editor shows',
       'criteria.page': 'the page of success conditions Clip view shows',
     },
-    refused: {...refused, ...INTENT_REFUSED},
+    refused: {...refused, ...INTENT_REFUSED, ...LAUNCH_REFUSED},
   }
 }
 

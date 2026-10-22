@@ -55,12 +55,16 @@ export const WORKSPACE_DEVICE_ID = WORKSPACE_DESIGN
 
 const ON_THE_PAGE = 'the hosted form is the page\'s one writer while it holds the page (DocumentFlowFace.tsx: the bridge reads its island and never pushes into it)'
 const NO_SELECTION = 'The page\'s selection (ql-flow.html currentSel) does not cross the host bridge: the bridge reads the island only (desktop/cradle/src/document/frame.ts useDocumentHostRead).'
+/** Why the Document's Thought page reads and writes nothing yet: the Flow device carries Contemplate (FLOW_WIRING); the Document's
+ * binding is handed neither the Flow's AIKit ref nor the thought hand. */
+const NO_DOCUMENT_THOUGHT = 'the Document is not handed the Flow\'s AIKit ref or the thought hand that the Flow device reads it through —'
 
 export const DOCUMENT_WIRING: DesignWiring = {
   design: DOCUMENT_DESIGN,
   keys: ['light', 'template', 'title', 'view', 'flowView', 'ground', 'layout', 'pinned', 'agentWrites', 'autosave', 'copied', 'dirty', 'outcome', 'face', 'date',
     'tabTitle', 'highlights', 'notes', 'entries', 'packet', 'journal', 'island', 'save', 'reread', 'copy', 'clear',
-    'selection', 'selectionAct', 'packetScope', 'act.highlight', 'act.note', 'act.topacket', 'act.remember', 'act.answerthis'],
+    'selection', 'selectionAct', 'packetScope', 'act.highlight', 'act.note', 'act.topacket', 'act.remember', 'act.answerthis',
+    'preflight', 'thought', 'since', 'preflightRead', 'contemplate', 'sinceRead'],
   reads: {
     light: 'the reached document stands: lit when its owner answered (the Flow file read, the Day document), dark when it refused',
     template: 'the reached document\'s form (documentDoor.ts DocumentInPane.form): Day or Flow',
@@ -106,6 +110,11 @@ export const DOCUMENT_WIRING: DesignWiring = {
     'act.topacket': `To packet adds the selected passage to the page's packet: ${NO_SELECTION}`,
     'act.remember': `Remember keeps the selected passage through central.remember (projectcentral.remember for a project's page), which the kernel reaches, but it needs the passage: ${NO_SELECTION}`,
     'act.answerthis': `Answer this sends the selected passage to the agent on the world's chain (Clip view's Answer this, nara/answerThis.ts): ${NO_SELECTION}`,
+    // The Thought page (§17.8): its acts are the Flow's own, written by the Flow device's binding (FLOW_WIRING), which holds the Flow's
+    // AIKit ref and the thought hand; the Document's binding is handed neither.
+    preflightRead: `Preflight: ${NO_DOCUMENT_THOUGHT} invoke_action \`action:contemplate-flow\`, asked bare (AIKit).`,
+    contemplate: `Contemplate: ${NO_DOCUMENT_THOUGHT} invoke_action \`action:contemplate-flow\` with the preflight record (AIKit).`,
+    sinceRead: `Changed since: ${NO_DOCUMENT_THOUGHT} op flow_changed_since (AIKit).`,
   },
   absent: {
     selection: NO_SELECTION,
@@ -114,6 +123,10 @@ export const DOCUMENT_WIRING: DesignWiring = {
     pinned: 'No owner reports whether the pane is pinned to its page.',
     agentWrites: 'No owner holds how agent entries arrive on a page.',
     autosave: 'No owner saves a page by itself.',
+    // The Thought page's readings: AIKit's Flow cognition, which the Flow device reads (FLOW_WIRING) and the Document does not yet.
+    preflight: `Contemplate's preflight: ${NO_DOCUMENT_THOUGHT} invoke_action \`action:contemplate-flow\`, asked bare (AIKit).`,
+    thought: `The last thought: ${NO_DOCUMENT_THOUGHT} aikit_read flow-thoughts, or the run this window asked (AIKit).`,
+    since: `What changed since the thought: ${NO_DOCUMENT_THOUGHT} op flow_changed_since (AIKit).`,
   },
 }
 

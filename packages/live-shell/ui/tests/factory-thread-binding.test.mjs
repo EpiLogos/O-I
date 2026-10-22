@@ -57,7 +57,7 @@ familyDoor.resetFamilyManifestsForTest()
 ;(await import('../src/inhabitants/worldShellFamilies.ts')).loadWorldShellFamilies()
 const {foundHarnesses} = await import('../src/agent/useHarnessBinding.ts')
 const {catalogueModels} = await import('../src/agent/devices/useModelCatalogue.ts')
-const {design: threadDesign} = await import('../src/inhabitants/catalogue/panels/software-factory__thread.tsx')
+const {design: threadDesign} = await import('../src/inhabitants/catalogue/panels/thread.tsx')
 const {design: agentDesign} = await import('../src/inhabitants/catalogue/panels/actuation__harness-model.tsx')
 
 const views = ['folded', 'compact', 'whole', 'full', 'widget']

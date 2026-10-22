@@ -95,16 +95,6 @@ const QUATERNAL_LOGIC_MANIFEST: InhabitantManifest = {
         note: 'Your centres\' elements (manual §22.5, M4.1): QL\'s elemental map of your saved identity (ql.nara-elemental-reading/v1) and its natal distribution, read through the kernel\'s nara_elemental (ql/devices/qlChakra.ts). Today\'s centres and routes are the scene\'s (ql.scene/v1) for the Sky\'s sky, read through the kernel\'s ql_read scene-compose (ql/devices/qlCentres.ts); a ql that names no centre leaves them absent, and the device says so.',
       },
       {
-        id: 'sitting',
-        presentations: ['compact'],
-        liveSemantic: 'device-instrument',
-        // Your personal layer (the Studio's Nara chain, manual §24.7), and Technē's Timeline beside the Chakra: a sitting stands with your
-        // centres, M4.1 (§24.9), and is a stretch of the day's time.
-        heldBy: ['studio:nara', 'techne:m2'],
-        invariant: {generates: 'kernel:invoke_action'},
-        note: 'A sitting (manual §24.3): the transport times it, the torus rings its bell through the one instrument\'s own strike, and Stop keeps the time actually sat. Its record is a page in your practice world, made through Central\'s own creation door (projectcentral.source.create; ql/devices/qlSitting.ts). Nothing scores it; today\'s centres are the scene\'s, read as the Chakra reads them (ql/devices/qlCentres.ts), and absent with the reason when the scene names none.',
-      },
-      {
         id: 'resonator-bank',
         presentations: ['compact', 'expanded', 'full'],
         // An effect lives in Live (lock §5.2: a Technē chain device is an instrument, never an effect): the QL home mode is Technē, so the face
@@ -130,17 +120,6 @@ const QUATERNAL_LOGIC_MANIFEST: InhabitantManifest = {
           + 'its cell the Live transport\'s mode in force; the Form\'s cell is the person\'s M3 form, moved by m3_reception\'s select-form. The Oscillator waits on `ql kernel m1`, the codons and '
           + 'the partners on `ql kernel m3` and ql_m3_apply_matrix, the Kernel page\'s answers on `ql kernel apply` — none has a kernel op yet — and the Situation on the M′ packets (QL-MEF #281). '
           + 'M1 is the oscillator source; M2 is never a second generator (owner D13).',
-      },
-      {
-        id: 'binding',
-        presentations: ['compact', 'expanded', 'full'],
-        liveSemantic: 'device-instrument',
-        // M3′'s rack holds it beside the Deck and the Resonator bank (manual §16.16), and it sits in the Studio's body chain (§22.8).
-        heldBy: ['techne:m3', 'studio:body'],
-        invariant: {generatesAbsent: 'Binding writes to no owner: it takes the kernel\'s symbols — the form\'s hexagram and its generation cells through m3_reception — and runs its own physics over them (lock §7).'},
-        note: 'M3′\'s view of form as charge (manual §22.8; ql/devices/qlBinding.ts): the codons a matrix holds together, drawn as colour charges bound by strings. The cell and its codons\' '
-          + 'charges are the form\'s state (ql.m3-state/v1 generation, under the pairing\'s matrix); its tension, coupling, pairing and charge are its own; the nonet and the kernel events '
-          + 'that move it wait on their kernel ops, and the device says which.',
       },
     ],
     params: {grammar: 'quaternal-logic/parameter-address/v1'},

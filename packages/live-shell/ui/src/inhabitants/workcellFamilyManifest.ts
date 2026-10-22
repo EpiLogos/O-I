@@ -14,7 +14,6 @@ export function workcellFamilyManifest(): FamilyManifest {
       {id: 'git-seat', presentations: ['compact', 'expanded', 'full'], liveSemantic: 'return', invariant: {routesTo: 'workcell-cli:git commit'}, note: 'Branch vs main, uncommitted, commit policy, push, Land/draft PR; subagents share lead seat.'},
       {id: 'remote-carrier', presentations: ['compact'], liveSemantic: 'link', note: 'Reach/where; composed or refused — never live in mockup.'},
       {id: 'link', presentations: ['compact'], liveSemantic: 'link', note: 'Transport Link: shared field across Mac and Omarchy sessions.'},
-      {id: 'seat', presentations: ['expanded'], liveSemantic: 'return', invariant: {routesTo: 'workcell-cli:seat land'}, note: 'Seat join/release/land over workcell-cli; no new worktrees.'},
       // A workcell (DLW §19.23): a rack whose chain is the road in and out — a return track in Factory and the Works in of every track an
       // agent works on, in every mode; its tile the Workcells widget (agent/devices/workcellRackBinding.ts).
       {id: 'workcell', presentations: ['compact', 'expanded', 'full'], liveSemantic: 'rack',

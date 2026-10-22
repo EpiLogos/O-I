@@ -62,7 +62,10 @@ const PAGES = ['chain', 'world', 'services', 'exposure', 'release']
 const draw = (binding, view) => renderToStaticMarkup(createElement(host.HostedDevice, {designed: design, binding, view, nav: {}}))
 const escaped = text => text.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#x27;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 /** Every key the design reads: its defaults and its fixtures' keys. */
+// The carried keys stand under their prefixes and are hosted by prefixing their own owners' bindings (design.ts scoped): the Left behind
+// page under `left.`, the tile's gateways under `gw.` (DLW §19.23).
 const designKeys = [...new Set([...Object.keys(design.defaults), ...Object.values(design.fixtures ?? {}).flatMap(fixture => Object.keys(fixture))])]
+  .filter(key => !key.startsWith('left.') && !key.startsWith('gw.'))
 /** (b): a key is an owner reading, absent with the reason named, a hold of the hand — or, for a fate, a write refused with its reason. */
 const classify = (binding, key) => binding.local && key in binding.local ? 'local' : key in binding.values ? 'reading'
   : binding.standing?.[key]?.disabled ? 'absent' : binding.writes?.(key) ? 'refused-write' : null

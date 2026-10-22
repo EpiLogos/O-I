@@ -1,3 +1,5 @@
+// Retired as a device of its own (22 Oct manual rewrite): not a `<family>__<face>.tsx` panel any more, so the catalogue does not load
+// it; the Agent (actuation:harness-model) carries its pages through this module.
 // Custody (manual §19.4, software-factory:agent-custody): how much an agent decides alone, what waits for you before a change lands,
 // how a write arrives, and what the agent holds now. Live's nearest: Utility with a small display — a few plain settings whose meaning
 // shows at a glance. It shares the Agent's chain slot (agentDeviceCatalogue.ts) and its `autonomy` key (agentParamAddresses.ts: the
@@ -26,7 +28,7 @@
 import {useState} from 'react'
 import {Action, Band, Chooser, Dial, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, TextField, Tile, Toggle, type LightState, type Option, type RowItem} from '../../sdk/panel'
 import {NONE, boolOf, clampTo, has, json, numOf, shown, st, strOf, type DesignedDevice, type ViewProps} from './design'
-import './software-factory__agent-custody.css'
+import './agent-custody.css'
 
 type V = ViewProps['v']
 

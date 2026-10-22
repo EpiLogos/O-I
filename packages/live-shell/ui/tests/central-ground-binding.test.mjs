@@ -5,8 +5,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {register} from 'node:module'
-import {createElement} from 'react'
-import {renderToStaticMarkup} from 'react-dom/server'
 
 const compiler = new URL('../node_modules/typescript/lib/typescript.js', import.meta.url).href
 register(`data:text/javascript,${encodeURIComponent(`
@@ -39,8 +37,6 @@ const {resetHolds, setHeld} = await import('../src/central/devices/pageBindings.
 const hygiene = await import('../src/inhabitants/centralHygieneModel.ts')
 const impact = await import('../src/inhabitants/centralImpactModel.ts')
 const {designKey} = await import('../src/frame/devices/designs.ts')
-const HYGIENE = (await import('../src/inhabitants/catalogue/panels/central__ground-hygiene.tsx')).design
-const IMPACT = (await import('../src/inhabitants/catalogue/panels/central__impact.tsx')).design
 
 const seat = (product, state, branch, tracked, untracked, ahead, behind, claimedBy = null) => ({product, state, registered_branch: branch, registered_head: 'a1b2c3d',
   claimed_by: claimedBy, now_ref: null, zones: [], admission: null, live_branch: branch, live_head: 'a1b2c3d', tracked_changes: tracked, untracked, behind_main: behind, ahead_main: ahead})
@@ -57,12 +53,13 @@ const KERNEL = [{boundaryOp: 'op workcell_status_read', channel: 'kernel-op', at
   {boundaryOp: 'op git_repository_read (project O-I)', channel: 'kernel-op', at: 't', refusal: 'No eligible Connector implements GitState.'}]
 const SEAT_READ = {boundaryOp: 'seat status --json (Control/user/workcell/seat)', channel: 'machine-instrument', at: 't'}
 
-test('every key of Ground hygiene and Impact is wired; each device is published under its design\'s id', () => {
-  for (const [wiring, design] of [[ground.HYGIENE_WIRING, HYGIENE], [ground.IMPACT_WIRING, IMPACT]]) {
-    assert.equal(design.id, wiring.design)
-    assert.equal(designKey('central', wiring.design.slice('central:'.length)), design.id)
-    for (const key of Object.keys(design.fixtures['No readings'])) assert.ok(wiring.keys.includes(key), `${design.id}: "${key}" is wired`)
-    for (const key of wiring.keys) assert.ok([wiring.reads, wiring.writes, wiring.local, wiring.refused, wiring.absent].some(table => key in table), `${design.id}: "${key}" placed`)
+// Ground hygiene's and Impact's designs were retired as devices of their own in the 22 Oct manual rewrite (the seats and checkouts are
+// Git / landing's Checkouts page, the reach the Knowledge graph's Reach page); their bindings stay for the devices that carry them, so
+// what is checked here is the bindings' own law: every wired key placed, each device published under its own id.
+test('every key Ground hygiene and Impact wire is placed; each device is published under its own id', () => {
+  for (const wiring of [ground.HYGIENE_WIRING, ground.IMPACT_WIRING]) {
+    assert.equal(designKey('central', wiring.design.slice('central:'.length)), wiring.design)
+    for (const key of wiring.keys) assert.ok([wiring.reads, wiring.writes, wiring.local, wiring.refused, wiring.absent].some(table => key in table), `${wiring.design}: "${key}" placed`)
   }
 })
 
@@ -88,10 +85,6 @@ test('Ground hygiene, given the seat reading, reports the clean landed seat as l
   let reread = 0
   await ground.hygieneBinding('central:ground-hygiene', null, Date.now(), async () => { reread++ }).write([{key: 'reread', value: true}])
   assert.equal(reread, 1, 'Read now reads the owners again')
-  // The SSR of its views on the census.
-  const props = b => ({v: b.values, owner: b.values, set: () => {}, nav: {}, page: '', setPage: () => {}, standing: b.standing})
-  for (const view of ['folded', 'compact', 'whole', 'widget', 'full']) assert.doesNotThrow(() => renderToStaticMarkup(createElement(() => HYGIENE[view](props(binding)))), view)
-  assert.match(renderToStaticMarkup(createElement(() => HYGIENE.full(props(binding)))), /landed/i)
 })
 
 test('Impact draws the subject, the graph\'s cut, the references and the sessions a seat checkout touches; a refused graph says its words', () => {
@@ -113,7 +106,5 @@ test('Impact draws the subject, the graph\'s cut, the references and the session
   assert.equal(refused.nodes, undefined)
   setHeld('central:impact', 'depth', 3)
   assert.equal(ground.impactValues('central:impact', reading).depth, 3, 'Depth is the view\'s own')
-  const binding = ground.impactBinding('central:impact', reading)
-  const props = b => ({v: b.values, owner: b.values, set: () => {}, nav: {}, page: '', setPage: () => {}, standing: b.standing})
-  for (const view of ['folded', 'compact', 'whole', 'widget', 'full']) assert.doesNotThrow(() => renderToStaticMarkup(createElement(() => IMPACT[view](props(binding)))), view)
+  assert.ok(ground.impactBinding('central:impact', reading).values.nodes, 'the binding carries the reading')
 })

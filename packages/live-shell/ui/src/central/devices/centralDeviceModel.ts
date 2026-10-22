@@ -29,18 +29,17 @@ import {DIE_POSITIONS, dieFaceLabel} from './dayDie'
 export const CENTRAL_FAMILY = 'central'
 
 /** The family's faces that stand on a chain, in the order the chains draw them (DLW §16.2, lock §0.3.4; R4): on the Main track the Day;
- * on a world's track the Packet — then the Agent and Scope, devices of Actuation and Software Factory that CentralDevices.tsx places — then,
- * on a world whose folder holds code, Ground hygiene, Machine and Impact (CentralDevices.tsx centralChainSlots). */
+ * on a world's track the Packet — then the Agent and Scope, devices of Actuation and Software Factory that CentralDevices.tsx places.
+ * Ground hygiene, Machine and Impact were retired as devices of their own in the 22 Oct manual rewrite (the seats and checkouts are Git /
+ * landing's, the machine the Remote carrier's, the reach the Knowledge graph's). */
 export const CENTRAL_MAIN_FACES = ['day-die'] as const
-export const CENTRAL_WORKSPACE_FACES = ['packet', 'ground-hygiene', 'machine', 'impact'] as const
+export const CENTRAL_WORKSPACE_FACES = ['packet'] as const
 export const CENTRAL_DEVICE_FACES: readonly string[] = [...CENTRAL_MAIN_FACES, ...CENTRAL_WORKSPACE_FACES]
 
-/** The faces the family still declares that stand on no chain (R4; DLW §16.1): the page family — the Workspace (the track head and its
- * kept context), the Document, the Flow, Beings and Things (a page's Clip panel and editor tabs), Text, Highlight and Notes (a page's
- * tools) — and the agent's former devices: the Answer, Agent identity and Context & world (one Agent and one Scope carry them), and
- * Search (a pane, and the line where you type @). Their designs and bindings stay, for Clip view and the views. */
-export const CENTRAL_OFF_CHAIN_FACES: readonly string[] = ['workspace', 'flow-document', 'beings', 'things', 'document', 'text', 'highlight', 'notes',
-  'nara-conversation', 'agent-identity', 'context-world', 'search']
+/** The faces the family still declares that stand on no chain (R4; DLW §16.1): the Document (a page's Clip panel and editor tabs) and
+ * Search (a pane, and the line where you type @). The Workspace, the Flow, Beings, Things, Text, Highlight, Notes, the Answer, Agent
+ * identity and Context & world were retired as faces of their own in the 22 Oct manual rewrite; their bindings stay. */
+export const CENTRAL_OFF_CHAIN_FACES: readonly string[] = ['document', 'search']
 
 export const centralDeviceId = (faceId: string): string => `${CENTRAL_FAMILY}:${faceId}`
 
@@ -48,20 +47,8 @@ export const centralDeviceId = (faceId: string): string => `${CENTRAL_FAMILY}:${
  * (inhabitants/sdk/adoptVerifiedRows.ts:38-39 for the two it already marks; the rest from icon-cut.html). */
 const FACES: Readonly<Record<string, {title: string; icon: IconName}>> = {
   'day-die': {title: 'Day die', icon: 'die'},
-  'flow-document': {title: 'Flow', icon: 'journey'},
-  'nara-conversation': {title: 'Conversation', icon: 'dock'},
-  'context-world': {title: 'Context · world', icon: 'orbit'},
-  'agent-identity': {title: 'Agent identity', icon: 'contact'},
-  'ground-hygiene': {title: 'Ground hygiene', icon: 'placed'},
-  'impact': {title: 'Impact', icon: 'map'},
-  'machine': {title: 'Machine', icon: 'cmd'},
   'document': {title: 'Document', icon: 'form'},
-  'workspace': {title: 'Workspace', icon: 'session'},
-  'beings': {title: 'Beings', icon: 'contact'},
-  'things': {title: 'Things', icon: 'hex'},
-  'text': {title: 'Text', icon: 'select'},
-  'highlight': {title: 'Highlight', icon: 'draw'},
-  'notes': {title: 'Notes', icon: 'cap'},
+  'docs': {title: 'Docs', icon: 'lib'},
   'packet': {title: 'Packet', icon: 'bind'},
   'search': {title: 'Search', icon: 'search'},
 }

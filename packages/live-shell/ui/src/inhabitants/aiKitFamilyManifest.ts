@@ -15,12 +15,6 @@ export function aiKitFamilyManifest(): FamilyManifest {
     faces: [
       {id: 'skillset-rack', presentations: ['compact', 'expanded'], liveSemantic: 'rack', invariant: {chains: ['skill-device'], chainSelector: 'skill (admit light)'}, note: 'Skills as chains with admit lights; macros Thoroughness, Test depth, Reach, Risk.'},
       {id: 'skill-device', presentations: ['compact', 'expanded'], liveSemantic: 'device-audio-fx', invariant: {transforms: 'the agent turn passing the skillset chain (the turn passes on)'}, note: 'Single skill on a chain; disclosure law as admit light.'},
-      {id: 'knowledge-route', presentations: ['compact', 'expanded'], liveSemantic: 'device-audio-fx', invariant: {transforms: 'the agent\'s context reach (knowledge bounds on the World device)'}, note: 'Reads and knowledge bounds on context-world device (shared face with Central).'},
-      {id: 'agency-gateway', presentations: ['compact'], liveSemantic: 'return', invariant: {routesTo: 'kernel:harness_agent_control'}, note: 'AIKit harness gateway; kernel HarnessAgentRead/Control (#618).'},
-      {id: 'capture-skill', presentations: ['compact'], liveSemantic: 'capture', note: 'Transport Capture → skill proposal.'},
-      {id: 'decision-helper', presentations: ['compact', 'expanded'], liveSemantic: 'device-audio-fx',
-        invariant: {transforms: 'a member\'s open question: one label the owner allows, or none (DLW §19.20)'},
-        note: 'Decision helper: AIKit\'s decision provider (kernel decision_status) and QL\'s team space (kernel team_space); after the team\'s members on its chain.'},
       // Messages (DLW §19.24): an instrument born on the rail — its tile and its Full only, in every mode (agent/devices/messagesBinding.ts).
       {id: 'messages', presentations: ['full'], liveSemantic: 'device-instrument',
         invariant: {generatesAbsent: 'Born on the rail: it reads AIKit\'s population and the open agent\'s conversation (kernel inhabitation_read); a send waits for `aikit gateway send` through the kernel.'},

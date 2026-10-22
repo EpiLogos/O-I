@@ -32,11 +32,12 @@ import {useLivingPlan} from './livingPlan'
 import {useLensRegistry} from './lensRegistry'
 
 /** Each instrument's chain on the rack: the design that is the instrument (where the instrument is not the holder's own plate, the
- * World of M0′ and M4′), then its effects, left to right. */
+ * World of M0′ and M4′), then its effects, left to right. The Timeline (M2′'s head) and Light were retired as devices of their own in
+ * the 22 Oct manual rewrite: the timeline is Technē's Arrangement view, and Light is the Canvas's Light page; their bindings stay. */
 export const TECHNE_CHAINS: Readonly<Record<string, {readonly head?: string; readonly effects: readonly string[]}>> = {
   'techne:m0': {effects: [LENS_DESIGN]},
-  'techne:m1': {head: CANVAS_DESIGN, effects: [LIGHT_DESIGN, LENS_DESIGN]},
-  'techne:m2': {head: TIMELINE_DESIGN, effects: [LENS_DESIGN]},
+  'techne:m1': {head: CANVAS_DESIGN, effects: [LENS_DESIGN]},
+  'techne:m2': {effects: [LENS_DESIGN]},
   'techne:m3': {head: JOURNEY_DESIGN, effects: [LENS_DESIGN]},
   'techne:m4': {effects: [LENS_DESIGN]},
   'techne:m5': {head: PALACE_DESIGN, effects: [LENS_DESIGN]},
@@ -51,9 +52,7 @@ interface DesignSpec {readonly design: string; readonly title: string; readonly 
 export const TECHNE_DESIGNS: readonly DesignSpec[] = [
   {design: PALACE_DESIGN, title: 'Palace', icon: 'palace', note: 'The palace you stand in, as the palace session holds it (projections/atlas/palaces/palaceSession.ts): its rooms, its walk, its board, its bookmarks and its Return.'},
   {design: CANVAS_DESIGN, title: 'Canvas', icon: 'form', note: 'The research frame\'s board, as the frame announces it: its pointer mode, grid snap, zoom, save state and selection. Its items, lines and frames are not published.'},
-  {design: TIMELINE_DESIGN, title: 'Timeline', icon: 'arrangement', note: 'The research frame\'s ruler, as the frame announces it: its lens, and the shared window the session holds. Its events and relations are not published.'},
   {design: JOURNEY_DESIGN, title: 'Journey', icon: 'journey', note: 'The research frame\'s walk, as the frame announces it: the stop it stands on, how many stops, that stop\'s name, and whether it walks.'},
-  {design: LIGHT_DESIGN, title: 'Light', icon: 'expr', effect: true, note: 'An optical bench over the Canvas. Its engine (LightBox) is not in this candidate: it stands with no reading.'},
   {design: LENS_DESIGN, title: 'Lens', icon: 'techne', effect: true, note: 'A reading through one of Quaternal Logic\'s lenses and a context frame. It draws QL\'s lenses with their sublenses, frames and provider operations, and holds the lens and sublens you choose; the reading and the frame reading wait for a target and a mapping that nothing in the shell supplies yet.'},
   {design: GRAPH_DESIGN, title: 'Knowledge graph', icon: 'search', note: 'The open graph\'s view state and its own reading (its handle); with no graph open, the kernel graph op\'s reading of the root register\'s wiki.'},
 ]

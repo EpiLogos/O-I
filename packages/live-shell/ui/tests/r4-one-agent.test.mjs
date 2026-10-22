@@ -52,9 +52,9 @@ const answer = await import('../src/central/devices/answerBinding.ts')
 const world = await import('../src/central/devices/contextWorldBinding.ts')
 const pages = await import('../src/central/devices/pageBindings.ts')
 const {design: agentDesign} = await import('../src/inhabitants/catalogue/panels/actuation__harness-model.tsx')
-const {design: custodyDesign} = await import('../src/inhabitants/catalogue/panels/software-factory__agent-custody.tsx')
-const {design: identityDesign} = await import('../src/inhabitants/catalogue/panels/central__agent-identity.tsx')
-const {design: threadDesign} = await import('../src/inhabitants/catalogue/panels/software-factory__thread.tsx')
+const {design: custodyDesign} = await import('../src/inhabitants/catalogue/panels/agent-custody.tsx')
+const {design: identityDesign} = await import('../src/inhabitants/catalogue/panels/agent-identity.tsx')
+const {design: threadDesign} = await import('../src/inhabitants/catalogue/panels/thread.tsx')
 const {scope: scopeDesign} = await import('../src/inhabitants/catalogue/panels/scope.tsx')
 
 const quiet = run => {

@@ -1,7 +1,7 @@
 // The sky provider slot — [C2-a6, C2-b13].
 //
-// Port decision, recorded against BOTH contracts (CONTEXT-PACK §1.7 names the
-// stale design sentence and orders lanes to take this decision explicitly):
+// Port decision, recorded against BOTH contracts (the atlas's own sky subsystem, pinned in
+// src/projections/atlas/PORT-PIN.json, made WORLD-SHELL-DESIGN §3.1's "no ephemeris code" stale; lanes take this decision explicitly):
 //
 // 1. The shell projection's DATED-SKY OWNER is the QL kerykeion contract —
 //    Work/Quaternal-Logic `providers/sky/kerykeion_snapshot.py`, accepting
@@ -33,7 +33,7 @@
 // ephemeris, and this port file keeps only the envelope: the request/snapshot
 // types below and `requestQlSkySnapshot`, which returns the snapshot untouched.
 
-/** Field names verified against the K8 contract reading (CONTEXT-PACK §2.1);
+/** Field names verified against the K8 contract reading (Work/Quaternal-Logic `providers/sky/kerykeion_snapshot.py` and its tests);
  * the `speed` component key is the contract's "full three-component speed"
  * and is typed widely until the adapter is exercised against a live
  * snapshot. No domain is invented: anything not verified stays `unknown`. */

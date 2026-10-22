@@ -1,3 +1,5 @@
+// Retired as a device of its own (22 Oct manual rewrite): not a `<family>__<face>.tsx` panel any more, so the catalogue does not load
+// it; the Agent (actuation:harness-model) carries its pages through this module.
 // Voice (manual §19.21, actuation:voice): how an agent speaks, after the Agent on its chain. Listening is the track's own input row
 // (Input, Listen, Pause, Recogniser: manual §24.1), as Live keeps input on the track and sound on the devices. Live's nearest: a vocal
 // chain's last device, with its pitch-and-timing display. The display is the last spoken turn on one audio clock: each sentence with the

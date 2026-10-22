@@ -5,13 +5,17 @@
 // agent that works here. Live's nearest: a return track, whose chain several tracks share; drawn as a rack and its chain list.
 // Its pages carry the material a run stands in, which Workcell prepares for it: Chain (the road and who works here, with what each
 // harness process costs), World (the run's prepared world: its bindings, its lifetime and checkpoints), Services (whether each service
-// the run needs is up), Exposure (what the run exposes, each with Open) and Release (keep or let go of each binding).
+// the run needs is up), Exposure (what the run exposes, each with Open), Release (keep or let go of each binding) and Left behind (the
+// worlds, bindings and sandboxes that runs left, each with its finding, with Recover and Release orphans).
+// The Workcells tile: a chip for each workcell with its state; the chosen one's lane, claim and the agents working in it; under them every
+// gateway the machines reach, one line each with its state dot, and Show (All, Ready, In use). A line pressed opens that gateway's Frames.
 //
 // Value keys. The owners report (never written from here):
 //   light      'lit' | 'dark'     the register and the workcell's gateway answered; hollow when nobody reports
 //   name       string             the workcell's name (`seat status --json`: workcell; Control/machines/workcells.register.json)
 //   machine    string             where it runs (the Remote carrier's reading: `workcell status --json`, workcell_ref)
-//   chain      [{id, name, light, reading}]  its three devices with their lights and one reading each (the devices' own owners)
+//   chain      [{id, name, light, reading, fault?}]  its three devices with their lights and one reading each (the devices' own owners);
+//                                  `fault` is the owner's words where it reports one: the row stands orange
 //   seats      [{product, state, lane, claimedBy, workers, dirty, ahead, behind}]  one per project (`seat status --json`, SeatRow)
 //   working    [{agent, track, mode, instance?}]  the agents working here now, from the claims and the gateway's sessions (`aikit gateway
 //                                  who`); `instance` is the harness instance the agent runs in, where the gateway names its process
@@ -19,7 +23,7 @@
 //                                  instance_ref, harness_ref, liveness live|stale, pids) with their cost (`workcell instances usage <ref>
 //                                  --pid <n> --json`: metrics.cpu_utilisation percent, metrics.memory_rss bytes); a metric the provider
 //                                  marks unsupported is left out. No kernel route reaches `instances` yet.
-//   workcells  [{name, light, lane}]  every workcell the machines hold, for the tile's chips
+//   workcells  [{name, light, lane, claimedBy?}]  every workcell the machines hold, for the tile's chips
 //   frames     [{at, dir, kind, note}]  the gateway's latest frames (the Frames monitor's reading, §19.6)
 //   run        string             the run whose world the pages show: the selected track's running task (the shell's selection)
 //   world      {ref, demand, persistence, retention, state, bindings: [{ref, port, provider, necessity, health, presence, observed?}]}
@@ -48,19 +52,28 @@
 // (`workcell doctor`), open (the surface's ref: the shell opens its endpoint in Web or a pane), apply (`workcell --receipt R reconcile
 // --desired <ref>=<state>...` for each binding whose fate you changed), releaseWorld (`workcell --receipt R release`, by the world's
 // retention). The kernel has no route to recover, reconcile or release yet: the host stands them disabled with its reason.
+// The Left behind page's values stand under `left.` (a binding hosts the page by prefixing the leftovers' own binding; the shapes are
+// centralHygieneModel's): left.worlds ([{ref, state, bindings: [{ref, presence, health}]}]: each persisted world receipt, material_read),
+// left.sandboxes ({server, sandboxes: [{id, state, lease live | expired-orphan | unknown, expiresAt}]}: `workcell sandboxes reconcile
+// --server <url> --json`), left.findings ([{kind, subject, standing, boundaryOps, tenderId}]: binding-drift, binding-lost, sandbox-orphan,
+// sandbox-unproven), left.sources ([{boundaryOp, refusal?}]), left.readAge, left.receipt / left.receipts. Held by the hand: left.sel
+// (the finding chosen), left.page:findings. Acts, the finding's subject as the value: left.recover (`workcell --receipt R reconcile
+// --desired <binding>=present`), left.orphans (`workcell sandboxes reconcile --server <url> --release-orphans`); left.reread (Read now).
+// The tile's gateways stand under `gw.` (the gateways' own binding): gw.chains ([{id, name, transport?, state ready | composed | refused,
+// why?, workcells?}]), gw.show ('all' | 'ready' | 'inuse'); gw.chain is the gateway whose Frames page a pressed line opens.
 // A key the owner has not reported is absent: the views draw "—" and name the missing reading in the well.
 import {useState} from 'react'
-import {Action, Band, Chooser, Display, Folded, Handle, Meter, Panel, Radio, Readout, Rows, Section, Tile, Toggle, type LightState, type Option, type RowItem, type Tone} from '../../sdk/panel'
-import {NONE, boolOf, clampTo, has, json, numOf, st, strOf, type DesignedDevice, type ViewProps} from './design'
+import {Action, Band, Chooser, Display, Folded, Handle, Lamp, Meter, Panel, Radio, Readout, Rows, Section, Tile, Toggle, type LightState, type Option, type RowItem, type Tone} from '../../sdk/panel'
+import {NONE, boolOf, clampTo, has, json, numOf, prefixed, scoped, st, strOf, type DesignedDevice, type ViewProps} from './design'
 import './workcell__workcell.css'
 
 type V = ViewProps['v']
 
-interface ChainDevice {readonly id: string; readonly name: string; readonly light?: string; readonly reading?: string}
+interface ChainDevice {readonly id: string; readonly name: string; readonly light?: string; readonly reading?: string; readonly fault?: string}
 interface Seat {readonly product: string; readonly state: string; readonly lane?: string | null; readonly claimedBy?: string | null; readonly workers?: readonly string[]
   readonly dirty?: number; readonly ahead?: number; readonly behind?: number}
 interface Worker {readonly agent: string; readonly track: string; readonly mode: string; readonly instance?: string}
-interface Cell {readonly name: string; readonly light?: string; readonly lane?: string | null}
+interface Cell {readonly name: string; readonly light?: string; readonly lane?: string | null; readonly claimedBy?: string | null}
 interface Frame {readonly at: string; readonly dir: 'in' | 'out'; readonly kind: string; readonly note?: string}
 interface Instance {readonly ref: string; readonly harness: string; readonly liveness?: string; readonly pids?: readonly number[]; readonly cpu?: number; readonly rss?: number}
 interface Binding {readonly ref: string; readonly port: string; readonly provider?: string; readonly necessity?: string; readonly health?: string; readonly presence?: string; readonly observed?: string}
@@ -122,7 +135,8 @@ const OPEN_IN: readonly Option<string>[] = [{value: 'web', label: 'Web', does: '
 /** A binding's fates, as `workcell reconcile --desired` names them, from kept to let go. */
 const FATES: readonly Option<string>[] = [{value: 'present', label: 'Keep', does: 'Keep the binding, or bring it back.'}, {value: 'suspended', label: 'Suspend', does: 'Suspend it where its provider can.'},
   {value: 'snapshotted', label: 'Snapshot', does: 'Keep a snapshot and let the material go, where its provider can.'}, {value: 'released', label: 'Release', does: 'Let the material go.'}]
-const PAGES = [{id: 'chain', label: 'Chain'}, {id: 'world', label: 'World'}, {id: 'services', label: 'Services'}, {id: 'exposure', label: 'Exposure'}, {id: 'release', label: 'Release'}] as const
+const PAGES = [{id: 'chain', label: 'Chain'}, {id: 'world', label: 'World'}, {id: 'services', label: 'Services'}, {id: 'exposure', label: 'Exposure'}, {id: 'release', label: 'Release'},
+  {id: 'left', label: 'Left behind'}] as const
 type PageId = typeof PAGES[number]['id']
 const pageOf = (p: ViewProps): PageId => (PAGES.some(x => x.id === p.page) ? p.page as PageId : 'chain')
 
@@ -169,7 +183,8 @@ function macros(p: ViewProps, stack: boolean) {
 function ChainList({p, selected, onSelect}: {p: ViewProps; selected: string; onSelect: (id: string) => void}) {
   const chain = chainOf(p.v)
   const items: RowItem[] = chain
-    ? chain.map(d => ({id: d.id, name: d.name, light: lightIn(d.light), note: d.reading ?? NONE, does: `${d.name}: select it to read it beside the list; ▸ on its head expands it.`}))
+    ? chain.map((d): RowItem => ({id: d.id, name: d.name, light: d.fault ? 'lit' : lightIn(d.light), tone: d.fault ? 'stall' : undefined, why: d.fault, note: d.reading ?? NONE,
+      does: `${d.name}: select it to read it beside the list; ▸ on its head expands it.`}))
     : [{id: 'none', name: 'No reading of the chain', light: 'unknown'}]
   return <Rows label="Chain" does="The road in and out, in its order: the gateway, the machine, the seat and its landing." items={items} selected={selected} onSelect={chain ? onSelect : undefined} size={3} />
 }
@@ -461,6 +476,179 @@ function ReleaseBand({p}: {p: ViewProps}) {
   </Band>
 }
 
+// ------------------------------------------------------------------------------------------------ what runs left behind (`left.` keys)
+
+type LeftRing = 'sandboxes' | 'bindings' | 'worlds'
+type LeftTick = 'held' | 'foreign' | 'idle'
+const LEFT_RINGS: readonly LeftRing[] = ['sandboxes', 'bindings', 'worlds']
+const LEFT_TITLE: Record<LeftRing, string> = {worlds: 'Worlds', bindings: 'Bindings', sandboxes: 'Sandboxes'}
+const LEFT_OF: Record<string, LeftRing> = {'binding-drift': 'bindings', 'binding-lost': 'bindings', 'sandbox-orphan': 'sandboxes', 'sandbox-unproven': 'sandboxes'}
+const LEFT_KIND: Record<string, string> = {'binding-drift': 'Binding not present', 'binding-lost': 'Binding lost', 'sandbox-orphan': 'Orphan sandbox', 'sandbox-unproven': 'Sandbox without a lease'}
+const LEFT_SAYS: Record<string, string> = {
+  'binding-drift': 'A world\'s binding is missing or stale, and its receipt can bring it back: Recover brings it back.',
+  'binding-lost': 'A binding of a world that lasted only for its task is gone, and nothing brings it back.',
+  'sandbox-orphan': 'A sandbox whose lease has ended, which nothing holds. Release orphans releases it, with a receipt.',
+  'sandbox-unproven': 'The server reports no lease for the sandbox, so it may still be in use. This is not a fault, and it is never released.',
+}
+const LEFT_SHORT: Record<string, string> = {'binding-drift': 'not present', 'binding-lost': 'lost', 'sandbox-orphan': 'orphan', 'sandbox-unproven': 'no lease'}
+const LEFT_TENDER: Record<string, 'recover' | 'orphans'> = {'reconcile-binding': 'recover', 'release-orphans': 'orphans'}
+const LEFT_OP: Record<LeftRing, RegExp> = {worlds: /material/, bindings: /material|reconcile/, sandboxes: /sandboxes/}
+interface LeftFinding {readonly id: string; readonly ring: LeftRing; readonly at: number | undefined; readonly kind: string; readonly fault: boolean; readonly subject: string; readonly tender?: 'recover' | 'orphans'}
+
+/** What runs left, as read: each ring (worlds, their bindings, the sandboxes), the owner's findings on them, and the refusals. */
+function readLeft(v: V) {
+  const worlds = listOf<{ref: string; state?: string; bindings: {subject: string; presence?: string}[]}>(v, 'worlds', r => (text(r.ref) ? {ref: r.ref as string, state: text(r.state),
+    bindings: (Array.isArray(r.bindings) ? r.bindings : []).flatMap(b => (rec(b) && text(b.ref) ? [{subject: `${r.ref}#${b.ref}`, presence: text(b.presence)}] : []))} : undefined))
+  const boxes = json<unknown>(v, 'sandboxes', undefined)
+  const sandboxes = rec(boxes) && Array.isArray(boxes.sandboxes) ? boxes.sandboxes.flatMap(b => (rec(b) && text(b.id) ? [{id: b.id as string, lease: text(b.lease)}] : [])) : undefined
+  const server = rec(boxes) ? text(boxes.server) : undefined
+  const bindings = worlds?.flatMap(w => w.bindings)
+  const rings: Record<LeftRing, {ticks: LeftTick[]; subjects: string[]} | undefined> = {
+    worlds: worlds && {ticks: worlds.map(w => (w.state === 'healthy' ? 'held' : 'foreign')), subjects: worlds.map(w => w.ref)},
+    bindings: bindings && {ticks: bindings.map(b => (b.presence === 'present' ? 'held' : b.presence === 'missing' || b.presence === 'stale' ? 'foreign' : 'idle')), subjects: bindings.map(b => b.subject)},
+    sandboxes: sandboxes && {ticks: sandboxes.map(b => (b.lease === 'live' ? 'held' : b.lease === 'expired-orphan' ? 'foreign' : 'idle')), subjects: sandboxes.map(b => b.id)},
+  }
+  const sources = listOf<{boundaryOp: string; refusal?: string}>(v, 'sources', r => (text(r.boundaryOp) ? {boundaryOp: r.boundaryOp as string, refusal: text(r.refusal)} : undefined))
+  const refusal = Object.fromEntries(LEFT_RINGS.map(ring => [ring, sources?.find(s => LEFT_OP[ring].test(s.boundaryOp) && s.refusal)?.refusal])) as Record<LeftRing, string | undefined>
+  const readable = (ring: LeftRing) => !!rings[ring] && !refusal[ring]
+  const reported = listOf<{kind: string; subject: string; tenderId?: string}>(v, 'findings', r => (text(r.kind) && text(r.subject) ? {kind: r.kind as string, subject: r.subject as string, tenderId: text(r.tenderId)} : undefined))
+  const shown: LeftFinding[] = (reported ?? []).flatMap((f): LeftFinding[] => {
+    const ring = LEFT_OF[f.kind]
+    if (!ring || !readable(ring)) return []
+    const i = rings[ring]?.subjects.indexOf(f.subject) ?? -1
+    return [{id: `${f.kind}:${f.subject}`, ring, at: i < 0 ? undefined : i, kind: f.kind, fault: f.kind !== 'sandbox-unproven', subject: f.subject, tender: f.tenderId ? LEFT_TENDER[f.tenderId] : undefined}]
+  })
+  return {rings, refusal, readable, server, found: reported !== undefined, shown, anyRead: LEFT_RINGS.some(readable)}
+}
+const leftOf = (p: ViewProps) => scoped(p, 'left.')
+
+const LEFT_R = [1, .7, .4]
+const polarAt = (cx: number, cy: number, r: number, i: number, n: number) => {
+  const a = -Math.PI / 2 + 2 * Math.PI * (i + .5) / n
+  return [cx + r * Math.cos(a), cy + r * Math.sin(a)] as const
+}
+/** Three rings — sandboxes, bindings and worlds from the outside in. A tick for each thing read (teal held, orange lost or ended, faint
+ * unproven); a dot beside a tick that has a finding, orange a fault, teal a reading; the chosen one ringed. Beside them each ring's count. */
+function LeftRings({p}: {p: ViewProps}) {
+  const g = readLeft(p.v), sel = strOf(p.v, 'sel'), cx = 66, cy = 70, R = 52, t = 2.4
+  return <g>
+    {LEFT_RINGS.map((ring, k) => {
+      const read = g.rings[ring], r = R * LEFT_R[k]!, ok = g.readable(ring) && !!read, n = read?.ticks.length ?? 0
+      const lines: Record<LeftTick, string> = {held: '', foreign: '', idle: ''}
+      if (ok) for (let i = 0; i < n; i++) {
+        const [x1, y1] = polarAt(cx, cy, r - t, i, n), [x2, y2] = polarAt(cx, cy, r + t, i, n)
+        lines[read!.ticks[i]!] += `M${x1.toFixed(1)} ${y1.toFixed(1)}L${x2.toFixed(1)} ${y2.toFixed(1)}`
+      }
+      return <g key={ring}>
+        <circle cx={cx} cy={cy} r={r} className="dp-faint" strokeDasharray={ok ? undefined : '2 3'} opacity={ok ? 1 : .6} />
+        {ok && <>
+          <path d={lines.idle} stroke="var(--text-faint)" strokeWidth={1} fill="none" />
+          <path d={lines.held} stroke="var(--dp-value)" strokeWidth={1.4} fill="none" />
+          <path d={lines.foreign} stroke="var(--stall)" strokeWidth={1.5} fill="none" />
+          {g.shown.filter(f => f.ring === ring && f.at !== undefined).map(f => {
+            const [x, y] = polarAt(cx, cy, r + 6.5, f.at!, n)
+            return <g key={f.id}>
+              <circle cx={x} cy={y} r={t} fill={f.fault ? 'var(--stall)' : 'var(--dp-value)'} />
+              {f.id === sel && <circle cx={x} cy={y} r={t + 4} fill="none" stroke="var(--text)" strokeWidth={1} />}
+            </g>
+          })}
+        </>}
+      </g>
+    })}
+    {!g.anyRead && <text x={cx} y={cy + 3} className="dp-axis" textAnchor="middle">no reading</text>}
+    {LEFT_RINGS.map((ring, i) => <g key={ring}>
+      <text x={134} y={24 + i * 40} className="dp-axis">{LEFT_TITLE[ring].toLowerCase()}</text>
+      <text x={134} y={36 + i * 40} className="dp-ink">{g.readable(ring) ? `${g.rings[ring]?.ticks.length ?? 0} read` : g.refusal[ring] ? 'refused' : 'no reading'}</text>
+    </g>)}
+  </g>
+}
+
+const leftRows = (g: ReturnType<typeof readLeft>): RowItem[] => {
+  const refused = LEFT_RINGS.flatMap((ring): RowItem[] => (g.refusal[ring] ? [{id: `refused:${ring}`, name: `${LEFT_TITLE[ring]} not read`, light: 'dark', tone: 'stall', why: g.refusal[ring]}] : []))
+  if (!g.anyRead) return refused.length ? refused : [{id: 'none', name: 'No reading', light: 'unknown'}]
+  if (!g.found) return [...refused, {id: 'none', name: 'No reading of the findings', light: 'unknown'}]
+  if (!g.shown.length) return [...refused, {id: 'clear', name: 'Nothing left behind', light: 'lit', tone: 'green'}]
+  return [...refused, ...g.shown.map((f): RowItem => ({id: f.id, name: f.ring === 'bindings' ? shortRef(f.subject.split('#').pop()!) : f.subject, light: 'lit', tone: f.fault ? 'stall' : 'value',
+    note: LEFT_SHORT[f.kind] ?? f.kind, does: `${LEFT_KIND[f.kind] ?? f.kind}: ${LEFT_SAYS[f.kind] ?? ''} ${f.subject}`}))]
+}
+/** Why a finding's act cannot run now, or undefined. */
+function leftWhy(p: ViewProps, f: LeftFinding | undefined, act: 'recover' | 'orphans'): string | undefined {
+  if (!f) return 'Choose a finding first.'
+  if (f.tender !== act) return f.kind === 'binding-lost' ? LEFT_SAYS['binding-lost'] : f.kind === 'sandbox-unproven' ? LEFT_SAYS['sandbox-unproven'] : `It does not fit ${LEFT_KIND[f.kind] ?? 'this finding'}.`
+  return st(p, act).disabled
+}
+
+function LeftBand({p}: {p: ViewProps}) {
+  const g = readLeft(p.v), sel = g.shown.find(f => f.id === strOf(p.v, 'sel')), read = numOf(p.v, 'readAge')
+  const faults = g.shown.filter(f => f.fault).length
+  return <Band>
+    <Section width={206}>
+      <Display w={194} h={146} label="What runs left" does="Rings of the sandboxes, the worlds' bindings and the worlds, with the count of each. A dot marks a thing with a finding: orange a fault, teal a reading."
+        corner={g.anyRead && g.found ? `${g.shown.length} found` : NONE}>
+        <LeftRings p={p} />
+      </Display>
+    </Section>
+    <Section label="Read" width={92}>
+      <Readout big label="faults" does="The findings that are faults: bindings not present or lost, and orphan sandboxes." value={g.anyRead && g.found ? faults : undefined} tone={faults ? 'stall' : 'green'} />
+      <Readout label="read" does="When the page last read what the runs left." value={read === undefined ? undefined : read === 0 ? 'now' : `${read} s ago`} />
+      <Action {...st(p, 'reread')} label="Read now" does="Read the world receipts and the sandbox server again." onPress={() => p.set('reread', true)} />
+    </Section>
+    <Section label="Found" grow>
+      <Rows does="What the runs left, each with its finding. Orange is a fault; teal a reading that is not one. Press one to choose it."
+        items={leftRows(g)} size={6} selected={sel?.id} onSelect={id => { if (!id.startsWith('refused:') && id !== 'none' && id !== 'clear') p.set('sel', id) }}
+        page={numOf(p.v, 'page:findings') ?? 0} onPage={x => p.set('page:findings', x)} />
+      <div className="ref-pair">
+        <Action {...st(p, 'recover')} hold label="Recover" does="Bring the chosen binding back from its world's receipt." onPress={() => { if (sel) p.set('recover', sel.subject) }} disabled={leftWhy(p, sel, 'recover')} />
+        <Action {...st(p, 'orphans')} hold label="Release orphans" does={`Release the sandboxes whose lease has ended${g.server ? ` on ${g.server}` : ''}. A sandbox without a lease is never released. It returns a receipt.`}
+          onPress={() => { if (sel) p.set('orphans', sel.subject) }} disabled={leftWhy(p, sel, 'orphans')} />
+      </div>
+    </Section>
+  </Band>
+}
+
+function LeftDoc({v}: {v: V}) {
+  const g = readLeft(v)
+  return <>
+    <h3>Left behind <small>{g.anyRead && g.found ? `${g.shown.length} found` : 'no reading'}{g.server ? ` · sandbox server ${g.server}` : ''}</small></h3>
+    <table className="wc-seats">
+      <thead><tr><th>What</th><th>Finding</th><th>What it means</th></tr></thead>
+      <tbody>{LEFT_RINGS.flatMap(ring => g.refusal[ring] ? [<tr key={`r:${ring}`} data-free="true"><td><b>{LEFT_TITLE[ring]}</b></td><td data-fault="true">not read</td><td>{g.refusal[ring]}</td></tr>] : [])}
+        {g.shown.map(f => <tr key={f.id}><td><b>{f.subject}</b></td><td data-fault={f.fault ? 'true' : undefined}>{LEFT_KIND[f.kind] ?? f.kind}</td><td>{LEFT_SAYS[f.kind] ?? NONE}</td></tr>)}</tbody>
+    </table>
+    {strOf(v, 'receipt') && <p className="ref-doc-lead">Last receipt: {strOf(v, 'receipt')}</p>}
+  </>
+}
+
+// ------------------------------------------------------------------------------------------------ the tile's gateways (`gw.` keys)
+
+type GwState = 'ready' | 'composed' | 'refused'
+interface Gateway {readonly id: string; readonly name: string; readonly transport?: string; readonly state?: GwState; readonly why?: string; readonly workcells?: readonly string[]}
+const gatewaysOf = (v: V) => listOf<Gateway>(v, 'chains', r => (text(r.id) && text(r.name) ? {id: r.id as string, name: r.name as string, transport: text(r.transport), why: text(r.why),
+  state: r.state === 'ready' || r.state === 'composed' || r.state === 'refused' ? r.state : undefined,
+  workcells: Array.isArray(r.workcells) ? r.workcells.filter((w): w is string => typeof w === 'string') : undefined} : undefined))
+const SHOWS: readonly Option<string>[] = [{value: 'all', label: 'All', does: 'List every gateway.'}, {value: 'ready', label: 'Ready', does: 'List only the gateways that answered a read.'},
+  {value: 'inuse', label: 'In use', does: 'List only the gateways a workcell uses.'}]
+const gwLamp = (s: GwState | undefined): {light: LightState; tone: Tone} =>
+  s === 'ready' ? {light: 'lit', tone: 'green'} : s === 'composed' ? {light: 'lit', tone: 'accent'} : s === 'refused' ? {light: 'dark', tone: 'accent'} : {light: 'unknown', tone: 'accent'}
+const GW_WORD: Record<GwState, string> = {ready: 'Ready', composed: 'Composed', refused: 'Refused'}
+
+/** Every gateway the machines reach, one line each with its state dot; Show filters them; a line pressed opens that gateway's Frames page. */
+function TileGateways({p}: {p: ViewProps}) {
+  const g = scoped(p, 'gw.'), all = gatewaysOf(g.v), show = strOf(g.v, 'show')
+  const listed = (all ?? []).filter(x => (show === 'ready' ? x.state === 'ready' : show === 'inuse' ? (x.workcells?.length ?? 0) > 0 : true))
+  return <div className="wc-gws">
+    <div className="wc-gws-head"><span className="dp-label">Gateways{listed.length > 2 ? <span className="wc-gws-more"> +{listed.length - 2}</span> : null}</span>
+      <span className="wc-gws-show" role="radiogroup" aria-label="Show">{SHOWS.map(o => <button key={o.value} type="button" role="radio" aria-checked={o.value === show}
+        data-i={`${o.label}|${o.does}`} disabled={!!st(g, 'show').disabled} onClick={() => g.set('show', o.value)}>{o.label}</button>)}</span></div>
+    {all === undefined ? <p className="wc-gws-none">No reading of the gateways.</p> : listed.length === 0 ? <p className="wc-gws-none">No gateway to show.</p>
+      : <ul className="wc-gws-list">{listed.slice(0, 2).map(x => { const lamp = gwLamp(x.state)
+        return <li key={x.id}><button type="button" data-state={x.state} onClick={() => { g.set('chain', x.id); p.nav.full?.() }}
+          data-i={`${x.name}|${x.state ? GW_WORD[x.state] : 'No reading of this gateway yet.'}${x.state === 'refused' ? ` ${x.why ?? 'The owner gave no reason.'}` : ''} Press to open its Frames page.`}>
+          <Lamp state={lamp.light} tone={lamp.tone} /><b>{x.name}</b><span>{x.state === 'refused' ? x.why ?? GW_WORD.refused : x.transport ?? (x.state ? GW_WORD[x.state] : NONE)}</span>
+        </button></li> })}</ul>}
+  </div>
+}
+
 // ------------------------------------------------------------------------------------------------ the device
 
 const SAMPLE_WORLD = {
@@ -503,7 +691,35 @@ const INSTANCES = [
 const READ_AT = 1792547400000
 /** Every key the owners report or the shell holds: the "No reading" fixture drops all of them. */
 const ALL = ['light', 'name', 'machine', 'chain', 'seats', 'working', 'frames', 'transport', 'approvals', 'stallAfter', 'landAs', 'instances', 'run', 'world', 'lease',
-  'checkpoints', 'readAt', 'services', 'surfaces', 'omitted', 'reconciled', 'openIn', 'needed', 'workcells']
+  'checkpoints', 'readAt', 'services', 'surfaces', 'omitted', 'reconciled', 'openIn', 'needed', 'workcells', 'left.worlds', 'left.sandboxes', 'left.findings', 'left.sources',
+  'left.readAge', 'gw.chains', 'gw.show']
+
+/** What runs left on this Mac on 21 Oct, in the shapes of centralHygieneModel: two prepared worlds and a sandbox server's five sandboxes. */
+const SANDBOX_SERVER = 'http://127.0.0.1:8090'
+const LEFT_SOURCES = [{boundaryOp: 'op material_read (2 world receipts)'}, {boundaryOp: `workcell sandboxes reconcile --server ${SANDBOX_SERVER}`}]
+const LEFT_DEFAULTS = {
+  readAge: 12,
+  worlds: JSON.stringify([
+    {ref: 'world:demand:factory-attempt-dlw-build-0142', state: 'degraded', bindings: [{ref: 'workspace:checkout', presence: 'present'}, {ref: 'affordance:shell', presence: 'present'},
+      {ref: 'connectivity:service:gliner25-decision/personal-workcell', presence: 'present'}, {ref: 'output:artifacts', presence: 'present'}]},
+    {ref: 'world:demand:factory-attempt-ql-m-ledger-0031', state: 'degraded', bindings: [{ref: 'workspace:checkout', presence: 'stale'}, {ref: 'affordance:shell', presence: 'present'},
+      {ref: 'output:artifacts', presence: 'present'}, {ref: 'output:logs', presence: 'released'}]}]),
+  sandboxes: JSON.stringify({server: SANDBOX_SERVER, sandboxes: [{id: 'sbx-7f2a', state: 'Running', lease: 'live'}, {id: 'sbx-81c0', state: 'Running', lease: 'live'},
+    {id: 'sbx-90d4', state: 'Paused', lease: 'live'}, {id: 'sbx-3b17', state: 'Running', lease: 'expired-orphan'}, {id: 'sbx-c55e', state: 'Running', lease: 'unknown'}]}),
+  findings: JSON.stringify([
+    {kind: 'binding-drift', subject: 'world:demand:factory-attempt-ql-m-ledger-0031#workspace:checkout', standing: 'The checkout is stale; the receipt can bring it back.', boundaryOps: ['op material_read (2 world receipts)'], tenderId: 'reconcile-binding'},
+    {kind: 'binding-lost', subject: 'world:demand:factory-attempt-ql-m-ledger-0031#output:logs', standing: 'The logs lasted only for their task.', boundaryOps: ['op material_read (2 world receipts)'], tenderId: null},
+    {kind: 'sandbox-orphan', subject: 'sbx-3b17', standing: 'Its lease ended at 18:00 on 20 Oct.', boundaryOps: [`workcell sandboxes reconcile --server ${SANDBOX_SERVER}`], tenderId: 'release-orphans'},
+    {kind: 'sandbox-unproven', subject: 'sbx-c55e', standing: 'The server reports no lease for it.', boundaryOps: [`workcell sandboxes reconcile --server ${SANDBOX_SERVER}`], tenderId: null}]),
+  sources: JSON.stringify(LEFT_SOURCES),
+}
+/** The gateways the actuation family registers, with their standing as AIKit words it and the workcells whose chain each heads. */
+const GATEWAYS = [
+  {id: 'hermes', name: 'Hermes gateway', transport: 'network', state: 'ready', workcells: ['env-1', 'env-2']},
+  {id: 'aikit-agency-gateway', name: 'AIKit agency gateway', transport: 'this machine', state: 'ready', workcells: ['env-3']},
+  {id: 'actuation-frank', name: 'Actuation gateway', transport: 'private network', state: 'composed', workcells: []},
+  {id: 'remote-carrier', name: 'Remote carrier', state: 'refused', why: 'Refused by default: terminate TLS in front first.', workcells: []},
+]
 
 export const design: DesignedDevice = {
   id: 'workcell:workcell',
@@ -526,8 +742,8 @@ export const design: DesignedDevice = {
       {agent: 'uiux-lane-kit', track: 'UI/UX refinement', mode: 'Factory', instance: 'instance:claude-code:a7a018c8'},
       {agent: 'Nara', track: 'Practice', mode: 'Central'}]),
     instances: JSON.stringify(INSTANCES),
-    workcells: JSON.stringify([{name: 'env-1', light: 'lit', lane: 'dlw/build'}, {name: 'env-2', light: 'lit', lane: 'dlw/uiux-kit-motion'},
-      {name: 'env-3', light: 'dark', lane: null}, {name: 'omarchy · env-1', light: 'lit', lane: 'ql/m-ledger'}]),
+    workcells: JSON.stringify([{name: 'env-1', light: 'lit', lane: 'dlw/build', claimedBy: 'claude-code:dlw-lead'}, {name: 'env-2', light: 'lit', lane: 'dlw/uiux-kit-motion', claimedBy: 'claude-code:uiux-lane-kit'},
+      {name: 'env-3', light: 'dark', lane: null}, {name: 'omarchy · env-1', light: 'lit', lane: 'ql/m-ledger', claimedBy: 'codex:m-ledger'}]),
     frames: JSON.stringify([
       {at: '14:02:01', dir: 'out', kind: 'prompt.submit', note: 'Type-check the three TypeScript roots'},
       {at: '14:02:02', dir: 'in', kind: 'message.delta', note: 'I will read the agent context first.'},
@@ -541,6 +757,8 @@ export const design: DesignedDevice = {
     surfaces: JSON.stringify([{ref: 'exposure:preview', interaction: 'preview', endpoint: 'http://127.0.0.1:5208'}]),
     omitted: JSON.stringify([{requirement: 'exposure:inspector', necessity: 'optional', reason: 'no offer supports this material requirement'}]),
     'want:connectivity:service:gliner25-decision/personal-workcell': 'released',
+    ...prefixed('left.', LEFT_DEFAULTS) as Record<string, string | number>,
+    ...prefixed('gw.', {chains: JSON.stringify(GATEWAYS), show: 'all'}) as Record<string, string>,
   },
   fixtures: {
     'Two lanes at work': {},
@@ -556,6 +774,8 @@ export const design: DesignedDevice = {
         {id: 'landing', name: 'Git / landing', light: 'dark', reading: 'No lane'}]),
       seats: JSON.stringify([{product: 'o-i', state: 'free', lane: null}, {product: 'quaternal-logic', state: 'free', lane: null}]), working: '[]',
       run: undefined, world: 'null', lease: undefined, checkpoints: undefined, surfaces: undefined, omitted: undefined, 'want:connectivity:service:gliner25-decision/personal-workcell': undefined},
+    'Nothing left behind': prefixed('left.', {findings: '[]'}),
+    'Sandbox server down': prefixed('left.', {sandboxes: undefined, sources: JSON.stringify([LEFT_SOURCES[0], {...LEFT_SOURCES[1], refusal: 'the sandbox server did not answer'}])}),
     'No reading': {...Object.fromEntries(ALL.map(k => [k, undefined])), 'want:connectivity:service:gliner25-decision/personal-workcell': undefined},
   },
 
@@ -582,13 +802,16 @@ function CompactView({p}: {p: ViewProps}) {
 function WholeView({p}: {p: ViewProps}) {
     const [selected, setSelected] = useState('gateway'), m = macros(p, true), chosen = chainOf(p.v)?.find(d => d.id === selected)
     const page = pageOf(p), world = worldOf(p.v)
+    const left = readLeft(leftOf(p).v), leftFaults = left.anyRead && left.found ? left.shown.filter(f => f.fault).length : undefined
     const pages = PAGES.map(x => ({id: x.id, label: x.label,
-      light: x.id === 'world' ? (world ? (faulty(world) ? 'dark' : 'lit') : undefined) as LightState | undefined : undefined}))
+      light: x.id === 'world' ? (world ? (faulty(world) ? 'dark' : 'lit') : undefined) as LightState | undefined
+        : x.id === 'left' ? (leftFaults === undefined ? undefined : leftFaults ? 'dark' : 'lit') as LightState | undefined : undefined}))
     return <Panel title={strOf(p.v, 'name') ?? 'Workcell'} view="whole" light={light(p.v, p.owner)} onFold={p.nav.fold} onFull={p.nav.full} pages={pages} page={page} onPage={p.setPage}>
       {page === 'world' ? <WorldBand p={p} />
         : page === 'services' ? <ServicesBand p={p} />
         : page === 'exposure' ? <ExposureBand p={p} />
         : page === 'release' ? <ReleaseBand p={p} />
+        : page === 'left' ? <LeftBand p={leftOf(p)} />
         : <Band>
           <Section width={196}>
             <ChainList p={p} selected={selected} onSelect={setSelected} />
@@ -615,7 +838,8 @@ function FullView({p}: {p: ViewProps}) {
   return <div className="ref-pane-body">
     <PaneTabs p={p} />
     <div className="ref-doc wc-doc">
-      {page === 'world' ? <WorldDoc v={p.v} /> : page === 'services' ? <ServicesDoc v={p.v} /> : page === 'exposure' ? <ExposureDoc p={p} /> : page === 'release' ? <ReleaseDoc v={p.v} /> : <SeatsDoc v={p.v} />}
+      {page === 'world' ? <WorldDoc v={p.v} /> : page === 'services' ? <ServicesDoc v={p.v} /> : page === 'exposure' ? <ExposureDoc p={p} /> : page === 'release' ? <ReleaseDoc v={p.v} />
+        : page === 'left' ? <LeftDoc v={leftOf(p).v} /> : <SeatsDoc v={p.v} />}
     </div>
   </div>
 }
@@ -719,16 +943,19 @@ function WidgetView({p}: {p: ViewProps}) {
     const cells = cellsOf(p.v), here = strOf(p.v, 'name')
     const [chosen, setChosen] = useState(here ?? cells[0]?.name ?? '')
     const cell = cells.find(c => c.name === chosen)
+    const working = chosen === here ? workingOf(p.v) ?? [] : []
+    const claim = cell ? (cell.lane ? (cell.claimedBy ? cell.claimedBy.split(':').pop() : undefined) : 'free') : undefined
     return <Tile title="Workcells" light={light(p.v, p.owner)} span={2} onFull={p.nav.full}><div className="wc-tile">
       <div className="wc-chips" role="radiogroup" aria-label="Workcell">
         {cells.map(c => <button key={c.name} type="button" role="radio" aria-checked={c.name === chosen} className="wc-chip" data-light={lightIn(c.light)}
           data-i={`${c.name}|${c.lane ? `Lane ${c.lane}.` : 'No lane.'} Click to show it.`} onClick={() => setChosen(c.name)}>{c.name}</button>)}
       </div>
       <div className="wc-tile-body">
-        <p className="wc-tile-lane" data-i="Lane|The lane the chosen workcell's seat holds."><b>{cell ? (cell.lane ?? 'free') : NONE}</b>{chosen === here && strOf(p.v, 'machine') ? ` · ${strOf(p.v, 'machine')}` : ''}</p>
-        {chosen === here && (workingOf(p.v)?.slice(0, 2) ?? []).map(w => <p key={`${w.agent}:${w.track}`} className="wc-tile-who"
-          data-i={`${w.agent}|Working here: ${w.mode} · ${w.track}. Click to select its track.`}><i />{w.agent} <span>{w.mode} · {w.track}</span></p>)}
-        {chosen === here && (workingOf(p.v)?.length ?? 0) > 2 && <p className="wc-tile-who"><span>+{workingOf(p.v)!.length - 2} more</span></p>}
+        <p className="wc-tile-lane" data-i="Lane|The lane the chosen workcell's seat holds, and who claims it."><b>{cell ? (cell.lane ?? 'free') : NONE}</b>{cell?.lane ? ` · ${claim ?? NONE}` : ''}</p>
+        {working.length > 0 && <p className="wc-tile-who">{working.slice(0, 3).map(w => <button key={`${w.agent}:${w.track}`} type="button" className="wc-face"
+          data-i={`${w.agent}|Working here: ${w.mode} · ${w.track}. Click to select its track.`} onClick={() => p.set('track', w.track)}><i />{w.agent}</button>)}
+          {working.length > 3 && <span>+{working.length - 3}</span>}</p>}
       </div>
+      <TileGateways p={p} />
     </div></Tile>
 }

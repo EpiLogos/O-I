@@ -60,8 +60,8 @@ const pages = await import('../src/central/devices/pageBindings.ts')
 const ground = await import('../src/central/devices/pageGround.ts')
 const {day: dayDesign} = await import('../src/inhabitants/catalogue/panels/day.tsx')
 const {scope: scopeDesign} = await import('../src/inhabitants/catalogue/panels/scope.tsx')
-const {design: flowDesign} = await import('../src/inhabitants/catalogue/panels/central__flow-document.tsx')
-const {design: workspaceDesign} = await import('../src/inhabitants/catalogue/panels/central__workspace.tsx')
+// The Flow's and the Workspace's designs were retired as devices of their own in the 22 Oct manual rewrite; their bindings stay for the
+// devices that carry them, so their writes and refusals are checked here on the bindings alone.
 
 const W2 = JSON.parse(readFileSync(new URL('./fixtures/person-writes-2026-10-21.json', import.meta.url), 'utf8'))
 const REAL = JSON.parse(readFileSync(new URL('./fixtures/stale-refusals-2026-10-21.json', import.meta.url), 'utf8'))
@@ -289,10 +289,6 @@ test('the Flow\'s Thought: the preflight asked by a press — REAL refusal drawn
   assert.deepEqual(presses, ['preflight', ['contemplate', 'aikit:invocation:1'], ['since', 'cognition']])
   const none = pages.flowBinding('central:flow-document', reached, null, null, null, null)
   assert.match(none.standing.preflightRead.disabled, /no Flow is reached with its AIKit Flow ref/)
-  // (e) the Thought page draws AIKit's refusal in its words.
-  host.setHostPage('central:flow-document', 'thought')
-  drawsOn(flowDesign, refusedRun, /flow-2026-10-03-1432|Cairn/, ['no Flow node resolves 769005e3-9bf0-491b-afcd-db10706ab8da'])
-  host.resetHost('central:flow-document')
 })
 
 // ── the Workspace's Ground and Self ──────────────────────────────────────────────────────────────────────────────────────────────
@@ -320,7 +316,4 @@ test('REAL — the Workspace\'s Ground and Self read Central\'s inspection and s
   const root = pages.workspaceBinding('central:workspace', {...workspace, project: undefined}, Date.now(), null, {project: null})
   assert.match(root.standing.pcPreview.disabled, /no world's ground is read here/)
   pages.resetHolds()
-  host.setHostPage('central:workspace', 'ground')
-  drawsOn(workspaceDesign, binding, /Archetypal-Earth\/wiki|sf1-walk/)
-  host.resetHost('central:workspace')
 })

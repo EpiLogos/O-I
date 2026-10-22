@@ -1,6 +1,6 @@
 // The Run map (manual §19.25, software-factory:run-map): one Run of developmental work as the graph Factory keeps of it: its units,
 // what each waits on, the barriers that gather them, the decision and the candidate they lead to, and where the Run's own lifecycle
-// stands; beside it the Run's Recognition, and the Commission and Journey the Run belongs to. Live's nearest: a rack's chain list
+// stands; beside it the Run's Recognition, and the Commission and Course the Run belongs to. Live's nearest: a rack's chain list
 // drawn as a signal flow, as Max for Live draws a patch: you read left to right what feeds what. An instrument on Factory's Main track:
 // a Run spans every session of the set, as the Main track does.
 //
@@ -24,20 +24,14 @@
 // - `edges`: rows of {from, to, relation}, as above.
 // - `ret`: the Run's latest Return, {ref, summary}: the subject you recognise (factory.journey-reading/v1 returns[].return_ref).
 // - `recognition`: the Recognition of that Return, {ref, at}, absent until you give it (journey reading recognitions[]).
-// - `journey`: {ref, purpose, status, runs: [{ref, name, lifecycle, recognised?}]}. purpose is the Commission's (commission.purpose);
-//   status proposed | active | paused | completed | abandoned; runs in the order Factory continued them (commission-read traversal
-//   `continued-from`, continuationRunRefs; factory_development_read `journey`, `commission-read`).
+// - `journey`: the Course (manual §19.25: the work as it goes on across runs; Factory names it a Journey), {ref, purpose, status, runs:
+//   [{ref, name, lifecycle, recognised?}]}. purpose is the Commission's (commission.purpose); status proposed | active | paused |
+//   completed | abandoned; runs in the order Factory continued them (commission-read traversal `continued-from`, continuationRunRefs;
+//   factory_development_read `journey`, `commission-read`).
 // - The shell's: `unit` (the node you read), `show` ('all' · 'open' · 'done').
-// Writes, each a key the device sets once:
-// - `recognise`: factory_owner Recognise {journey_ref, subject_ref: ret.ref, basis_refs} (desktop/cradle/kernel/src/factory.rs:323), which
-//   records the owner mutation `record-owner-recognition`. Exists.
-// - `close`: factory_owner RunClose {run_ref, recognition_ref, authority_grant} (factory.rs:347): the owner moves the lifecycle in its
-//   legal order to finished (seeded → active → finishing → finished) or refuses in its own words; when a serial unit remains, the close
-//   starts it instead and the Run goes on. Exists. It follows a Recognition, so it stands disabled until there is one.
-// - `retry`: the attempt operation `retry` under the unit's RetryGrant (attempt_runtime.rs). No kernel op carries it: the binding
-//   stands it disabled with that reason.
-// - `continue`: ContinueCommission (commission.rs:182): a successor Run in the same Journey, from this one. Its route is
-//   `factory development mutate`, which the kernel issues only for a Recognition: the binding stands it disabled with that reason.
+// Recognition is given in Approvals (§19.14): Recognise, Close and Continue stand there, and the map reads only the return and whether
+// you recognised it. The one write here is `retry`: the attempt operation `retry` under the unit's RetryGrant (attempt_runtime.rs). No
+// kernel op carries it: the binding stands it disabled with that reason.
 import {type ReactNode} from 'react'
 import {Action, Band, Chooser, Display, Folded, Handle, Panel, Radio, Readout, Section, Tile, type LightState, type Option, type Tone} from '../../sdk/panel'
 import {NONE, clampTo, grown, has, json, st, strOf, type DesignedDevice, type ViewProps} from './design'
@@ -248,10 +242,7 @@ const SHOW: readonly Option<string>[] = [
 const SAYS = {
   unit: 'The node you read: a unit, a barrier, a decision or a candidate.',
   show: 'Which nodes stand out: all of them, those still to do, or those done.',
-  recognise: 'Say that you meet the run\'s return as what it was for. Factory records your Recognition with the Journey.',
-  close: 'Close the run after your Recognition: Factory moves it to finished in its own order, or starts the next serial unit. Factory refuses in its own words when it cannot.',
   retry: 'Start the unit again under its retry grant, from a failed or quiet attempt.',
-  continue: 'Start a successor run in the same Journey, from this one, when the work needs another pass.',
 }
 
 const unitChooser = (p: ViewProps, r: Reading, wide = true) => {
@@ -260,45 +251,27 @@ const unitChooser = (p: ViewProps, r: Reading, wide = true) => {
     options={now !== undefined && !options.some(o => o.value === now) ? [...options, {value: now, label: now}] : options} onChange={x => p.set('unit', x)} />
 }
 const showRadio = (p: ViewProps, stack = true) => <Radio {...st(p, 'show')} label="Show" does={SAYS.show} value={strOf(p.v, 'show') ?? ''} options={SHOW} stack={stack} onChange={x => p.set('show', x)} />
-const recogniseAction = (p: ViewProps) => {
-  const s = st(p, 'recognise'), ret = retOf(p.v), done_ = recognitionOf(p.v)
-  return <Action {...s} label="Recognise" does={SAYS.recognise}
-    disabled={s.disabled ?? (!ret ? 'The run has returned nothing to recognise yet.' : done_ ? 'You recognised this return.' : !has(p.v, 'journey') ? 'No reading of the Journey the run belongs to.' : undefined)}
-    onPress={() => p.set('recognise', retOf(p.v)?.ref)} />
-}
-const closeAction = (p: ViewProps) => {
-  const s = st(p, 'close'), life = runOf(p.v)?.lifecycle
-  return <Action {...s} hold label="Close" does={SAYS.close}
-    disabled={s.disabled ?? (life === 'finished' || life === 'archived' ? 'The run is finished.' : life === 'aborted' ? 'The run was aborted.' : !recognitionOf(p.v) ? 'A close follows your Recognition: recognise the return first.' : undefined)}
-    onPress={() => p.set('close', recognitionOf(p.v)?.ref)} />
-}
 const retryAction = (p: ViewProps, r: Reading) => {
   const s = st(p, 'retry'), leg = r.me?.leg, can = leg?.status === 'failed' || leg?.status === 'late_result' || leg?.status === 'quiescent'
   return <Action {...s} label="Retry" does={SAYS.retry}
     disabled={s.disabled ?? (!r.me || r.me.kind !== 'work' ? 'Choose a unit.' : !can ? 'The unit has not failed or gone quiet.' : leg?.allowed !== undefined && leg.spent !== undefined && leg.spent >= leg.allowed ? 'Its retry grant is spent.' : undefined)}
     onPress={() => p.set('retry', r.me?.id)} />
 }
-const continueAction = (p: ViewProps) => {
-  const s = st(p, 'continue'), j = journeyOf(p.v)
-  return <Action {...s} label="Continue" does={SAYS.continue}
-    disabled={s.disabled ?? (!j ? 'No reading of the Journey.' : j.status !== 'active' && j.status !== 'paused' ? 'Only an active or paused Journey takes a successor run.' : undefined)}
-    onPress={() => p.set('continue', runOf(p.v)?.ref)} />
-}
-
 const light = (p: ViewProps): LightState => { const x = strOf(p.owner ?? p.v, 'light'); return x === 'lit' || x === 'dark' ? x : 'unknown' }
 const LIGHT_WHY = 'A run is not turned on or off: it runs while its units do.'
 const atWork = (p: ViewProps) => light(p) === 'lit' && !!nodesOf(p.v)?.some(n => n.state === 'active')
 const head = (p: ViewProps) => ({light: light(p), lightWhy: LIGHT_WHY, busy: atWork(p), onFold: p.nav.fold, onFull: p.nav.full})
 const legWord = (leg?: Leg) => (leg?.status ? leg.status.replace(/_/g, ' ') : undefined)
 const tries = (leg?: Leg) => (leg?.allowed !== undefined ? `${leg.spent ?? 0}/${leg.allowed}` : leg?.attempts !== undefined ? String(leg.attempts) : undefined)
+/** This run's place in the course (Factory's Journey), as "3 of 3". */
 const placeOfRun = (v: V) => { const j = journeyOf(v), ref = runOf(v)?.ref, i = j && ref ? j.runs.findIndex(x => x.ref === ref) : -1; return j && i >= 0 ? `${i + 1} of ${j.runs.length}` : undefined }
 
 // ---------------------------------------------------------------- the pane
 
 function JourneyStrip({v}: {v: V}) {
   const j = journeyOf(v), me = runOf(v)?.ref
-  if (!j) return <p className="rm-none">No reading of the Journey.</p>
-  return <ol className="rm-journey" aria-label="The Journey's runs">
+  if (!j) return <p className="rm-none">No reading of the course.</p>
+  return <ol className="rm-journey" aria-label="The course's runs">
     {j.runs.map((x, i) => <li key={x.ref} data-me={x.ref === me || undefined} data-life={x.lifecycle} data-i={`${x.name ?? x.ref}|${x.lifecycle ? LIFE_WORD[x.lifecycle] : 'No reading of its lifecycle'}${x.recognised ? ', recognised' : ''}.${i ? ' Continued from the run before it.' : ''}`}>
       <i /><b>{x.name ?? x.ref}</b><small>{x.lifecycle ? LIFE_WORD[x.lifecycle] : NONE}</small>{x.recognised && <em>recognised</em>}
     </li>)}
@@ -313,7 +286,7 @@ function MapPane({p}: {p: ViewProps}) {
   return <div className="rm-pane">
     <header className="rm-head" aria-label="The run">
       <b>{r.run?.name ?? r.run?.ref ?? NONE}</b><span data-tone={r.run?.lifecycle ? LIFE_TONE[r.run.lifecycle] : undefined}>{r.run?.lifecycle ? LIFE_WORD[r.run.lifecycle] : NONE}</span>
-      <span>{done(r) ?? NONE} returned</span><span>{rec ? 'recognised' : has(v, 'journey') ? 'not recognised' : `recognised ${NONE}`}</span><span>for: {j?.purpose ?? NONE}</span><span>run {placeOfRun(v) ?? NONE}</span>
+      <span>{done(r) ?? NONE} returned</span><span>{rec ? 'recognised' : has(v, 'journey') ? 'not recognised' : `recognised ${NONE}`}</span><span>for: {j?.purpose ?? NONE}</span><span>run {placeOfRun(v) ?? NONE} of the course</span>
     </header>
     <div className="rm-main">
       <div className="rm-map"><MapWell p={p} r={r} w={Math.max(420, (p.room?.w ?? 900) - 300)} h={Math.max(260, (p.room?.h ?? 520) - 120)} live labels size="full" /></div>
@@ -333,10 +306,10 @@ function MapPane({p}: {p: ViewProps}) {
         </>}
         <h4>Return</h4>
         <p>{ret ? ret.summary ?? ret.ref : r.nodes ? 'Nothing returned yet.' : 'No reading of the return.'}</p>
-        <p className="rm-rec" data-on={rec ? 'true' : undefined}>{rec ? `Recognised${rec.at ? ` ${rec.at}` : ''}` : ret ? 'Waits for your Recognition' : ''}</p>
+        <p className="rm-rec" data-on={rec ? 'true' : undefined} data-i="Recognition|You recognise a run's return in Approvals.">{rec ? `Recognised${rec.at ? ` ${rec.at}` : ''}` : ret ? 'Waits for your Recognition in Approvals' : ''}</p>
       </aside>
     </div>
-    <footer className="rm-foot"><small>Journey{j?.status ? ` · ${j.status}` : ''}</small><JourneyStrip v={v} /></footer>
+    <footer className="rm-foot"><small>Course{j?.status ? ` · ${j.status}` : ''}</small><JourneyStrip v={v} /></footer>
   </div>
 }
 
@@ -390,19 +363,19 @@ export const design: DesignedDevice = {
     const r = read(p.v)
     return <Panel title="Run map" view="compact" {...head(p)} onSelect={p.nav.select}>
       <Section width={152}><MapWell p={p} r={r} w={140} h={146} live labels={false} size="compact" /></Section>
-      <Section label="Macros" width={112}>
-        {unitChooser(p, r)}
-        {showRadio(p, false)}
-        {recogniseAction(p)}
-        {closeAction(p)}
+      <Section label="Macros" cols={2} width={112}>
+        <div style={{gridColumn: 'span 2', width: '100%'}}>{unitChooser(p, r)}</div>
+        <div style={{gridColumn: 'span 2', width: '100%'}}>{showRadio(p, false)}</div>
+        <Readout label="returned" does="Units returned of the run's units." value={done(r)} tone="green" />
+        <Readout label="waiting" does="Nodes blocked or waiting for your decision." value={waiting(r)} tone="stall" />
       </Section>
     </Panel>
   },
 
   whole: p => {
     const r = read(p.v), j = journeyOf(p.v), rec = recognitionOf(p.v), me = r.me, life = r.run?.lifecycle
-    // Expanded, the two bands stand side by side: the well grows into what the other five sections leave.
-    const w = grown(p, 194, 120 + 150 + 150 + 120 + 190 + 6 * 12 + 40, 380)
+    // Expanded, the two bands stand side by side: the well grows into what the other four sections leave.
+    const w = grown(p, 194, 120 + 150 + 150 + 190 + 5 * 12 + 40, 380)
     return <Panel title="Run map" view="whole" {...head(p)}>
       <Band>
         <Section width={w + 12}><MapWell p={p} r={r} w={w} h={146} live labels size="whole" /></Section>
@@ -419,20 +392,15 @@ export const design: DesignedDevice = {
           {showRadio(p)}
         </Section>
       </Band>
+      {/* Recognition is given in Approvals (§19.14): Recognise, Close and Continue stand there. The map reads the return and your word. */}
       <Band>
-        <Section label="Recognition" width={150}>
-          {recogniseAction(p)}
-          <Readout label="return" does="Whether the run has returned work for you to recognise." value={retOf(p.v) ? 'returned' : r.nodes ? 'none yet' : undefined} />
-          <Readout label="recognised" does="When you recognised the return." value={rec ? rec.at ?? 'yes' : has(p.v, 'journey') ? 'not yet' : undefined} tone={rec ? 'accent' : undefined} />
+        <Section label="Recognition" cols={2} width={190}>
+          <Readout label="return" does="Whether the run has returned work for you to recognise. You recognise it in Approvals." value={retOf(p.v) ? 'returned' : r.nodes ? 'none yet' : undefined} />
+          <Readout label="recognised" does="When you recognised the run's return, in Approvals." value={rec ? rec.at ?? 'yes' : has(p.v, 'journey') ? 'not yet' : undefined} tone={rec ? 'accent' : undefined} />
         </Section>
-        <Section label="Close" width={120}>
-          {closeAction(p)}
-          <Readout label="next" does="What a close does now: finish the run, or start the serial unit that remains." value={life === 'finished' ? 'nothing' : r.nodes ? (r.nodes.some(n => n.kind === 'work' && n.state === 'ready') ? 'start a unit' : 'finish') : undefined} />
-        </Section>
-        <Section label="Journey" cols={2} grow>
-          <Readout label="run" does="This run's place among the Journey's runs." value={placeOfRun(p.v)} />
-          <Readout label="journey" does="How the Journey stands: active, paused, completed or abandoned." value={j?.status} />
-          {continueAction(p)}
+        <Section label="Course" cols={2} grow>
+          <Readout label="run" does="This run's place in the course: the work as it goes on across runs." value={placeOfRun(p.v)} />
+          <Readout label="course" does="How the course stands: active, paused, completed or abandoned." value={j?.status} />
         </Section>
       </Band>
     </Panel>

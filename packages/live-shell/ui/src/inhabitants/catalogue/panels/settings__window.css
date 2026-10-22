@@ -85,6 +85,36 @@
 .st-chips { display: flex; flex-wrap: wrap; gap: 8px; padding: 2px 0; }
 .st-chip { display: inline-flex; align-items: center; gap: 8px; }
 
+/* Setup (manual §10.11): the five steps in order, each with its light; the Projects step's folder drawn beside ProjectCentral, each part
+   dashed where Accept would make it. */
+.st-steps { display: flex; gap: 2px; margin: 0 0 6px; border-bottom: 1px solid var(--line, #24262a); }
+.st-steps button { flex: 1 1 0; min-width: 0; display: flex; align-items: center; gap: 6px; height: 24px; padding: 0 8px; border: 0; border-bottom: 2px solid transparent;
+  background: transparent; color: var(--text-dim, #a2a7ad); font: inherit; white-space: nowrap; overflow: hidden; cursor: pointer; }
+.st-steps button:hover { color: var(--text, #d4d7da); }
+.st-steps button[aria-current="step"] { border-bottom-color: var(--dp-on); background: var(--bg-2, #3f4348); color: var(--text, #d4d7da); }
+.st-steps button i { font-style: normal; font-size: 10px; color: var(--text-faint, #71767c); }
+.st-cols--setup { grid-template-columns: minmax(0, 1fr) 380px; }
+.st-form--setup { flex-wrap: wrap; gap: 6px 10px; }
+.st-form--setup .dp-cell--chooser { width: 120px; }
+.st-plan { margin: 6px 0 0; padding-left: 18px; font-size: 10.5px; color: var(--text-dim, #a2a7ad); }
+.st-plan li { height: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.st-draw { display: block; }
+.st-draw text { font: 10px var(--font-ui, sans-serif); fill: var(--text-dim, #a2a7ad); }
+.st-draw .st-draw-title { fill: var(--text, #d4d7da); font-weight: 600; }
+.st-draw .st-draw-faint { fill: var(--text-faint, #71767c); font-size: 9.5px; }
+.st-draw .st-draw-wiki { fill: var(--dp-value); font-weight: 600; }
+.st-draw .st-draw-bad { fill: var(--stall, #ff9b4a); font-size: 9.5px; }
+.st-draw .st-box { fill: var(--dp-field, #1e2023); stroke: var(--text-faint, #71767c); }
+.st-draw .st-box[data-make="true"] { fill: none; stroke: var(--dp-on); stroke-dasharray: 4 3; }
+.st-draw .st-box[data-bad="true"] { stroke: var(--stall, #ff9b4a); }
+.st-draw .st-part { fill: var(--bg-2, #3f4348); stroke: var(--line, #24262a); }
+.st-draw .st-part[data-make="true"] { fill: none; stroke: var(--dp-on); stroke-dasharray: 4 3; }
+.st-draw .st-part[data-absent="true"] { fill: none; stroke: var(--text-faint, #71767c); stroke-dasharray: 1 3; }
+.st-draw .st-file { fill: none; stroke: var(--text-faint, #71767c); }
+.st-draw .st-file[data-wiki="true"] { stroke: var(--dp-value); }
+.st-draw .st-draw-copy { fill: none; stroke: var(--dp-on); stroke-width: 1.4; }
+.st-draw .st-draw-link { fill: none; stroke: var(--dp-value); stroke-dasharray: 2 3; }
+
 .st-foot { flex: none; display: flex; align-items: center; gap: 8px; height: 28px; padding: 0 12px; background: var(--bg-0, #26292d); border-top: 1px solid var(--line, #24262a); color: var(--text-dim, #a2a7ad); }
 .st-foot > span { flex: 1 1 auto; }
 .st-open { font-size: 10px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; }

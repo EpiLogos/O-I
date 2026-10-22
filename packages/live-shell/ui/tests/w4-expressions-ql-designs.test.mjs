@@ -315,7 +315,10 @@ test('the M3 clock reads the generation law and the cell of the form\'s hexagram
   assert.equal(binding.writes('law.matrix'), true)
   assert.equal(binding.writes('generation.positive'), false)
   assert.deepEqual(Object.keys(m3c.QL_M3_ABSENT), [], 'no key lacks its owner now')
-  const keys = classify(DESIGNS.m3clock, binding)
+  // Skin and the Binding skin's `binding.` keys wait for qlM3Binding to carry them (DLW §22.3, "The Binding skin"): the skin's own keys are
+  // Binding's, hosted by prefixing its binding.
+  const own = Object.fromEntries(Object.entries(DESIGNS.m3clock.defaults).filter(([key]) => key !== 'skin' && !key.startsWith('binding.')))
+  const keys = classify({...DESIGNS.m3clock, defaults: own, fixtures: {}}, binding)
   assert.deepEqual(keys.absent.sort(), ['rack'], 'the rack, until it is read (qlRack.ts); the part is the view\'s own')
   assert.match(m3c.qlM3Binding(NO_M3).standing['law.matrix'].disabled, /No Nara identity is chosen/)
 })
@@ -536,7 +539,7 @@ test('the Rack pages read their instrument\'s rack from the map\'s ledger: posit
   assert.equal(binding.values['rack.part'], '1')
   assert.equal(binding.standing.rack.disabled, rackMod.RACK_READ)
   // The design's own fixture words for where a part is worked (its RACK_M3); the binding's are the manual's.
-  const all = drawsClean(DESIGNS.m3clock, binding, /I Ching, Hexagram|Law and Generation|The wheel, Resonator bank/, ['wheel', 'rack'])
+  const all = drawsClean(DESIGNS.m3clock, binding, /I Ching, Hexagram|Law and Generation|The wheel, Resonator bank/, ['wheel', 'binding', 'rack'])
   assert.ok(all.includes('Minor Arcana') && all.includes('I-Ching System'), 'the rack draws the registry\'s names')
   binding.local['rack.part']('4')
   assert.equal(m3c.qlM3Binding(m3Of(), rackMod.qlRackState(3)).values['rack.part'], '4')

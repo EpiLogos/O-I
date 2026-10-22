@@ -51,10 +51,6 @@ const widgets = await import('../src/frame/widgets/deviceWidgets.tsx')
 const model = await import('../src/agent/devices/agentChainDevices.ts')
 const bind = await import('../src/agent/devices/designBindings.ts')
 const main = await import('../src/agent/devices/mainTrackBindings.ts')
-const {design: rackDesign} = await import('../src/inhabitants/catalogue/panels/actuation__gateways-rack.tsx')
-const {design: agencyDesign} = await import('../src/inhabitants/catalogue/panels/ai-kit__agency-gateway.tsx')
-const {design: experimentDesign} = await import('../src/inhabitants/catalogue/panels/actuation__experiment.tsx')
-const {design: framesDesign} = await import('../src/inhabitants/catalogue/panels/actuation__frames-monitor.tsx')
 
 family.resetFamilyManifestsForTest()
 loadAgentShellFamilies()
@@ -72,16 +68,9 @@ const UNREACHABLE = {...model.INITIAL_READING, gatewayAdmitted: false,
 const ANSWERED = {...model.INITIAL_READING, gatewayAdmitted: true, gatewayDoc: {state: 'ready', transport: 'ws', connect: true, stall_after_seconds: 90}}
 const BINDING_REFUSED = {...model.INITIAL_READING, gatewayAdmitted: false, gatewayDoc: {refused: true, error: {code: 'gateway.binding_unknown', message: 'no binding named cursor'}, message: 'no binding named cursor'}}
 
-test('each Main track device and the Frames monitor is keyed to its design exactly, from the families\' admitted faces', () => {
-  const devices = main.mainDevices()
-  for (const [device, design] of [[devices.rack, rackDesign], [devices.agency, agencyDesign], [devices.experiment, experimentDesign], [devices.frames, framesDesign]]) {
-    assert.ok(device, `${design.id}: the family admits the face`)
-    assert.equal(designKey(device.family, device.face.id), design.id)
-  }
-  assert.deepEqual([main.GATEWAYS_RACK_DESIGN, main.AGENCY_GATEWAY_DESIGN, main.EXPERIMENT_DESIGN, main.FRAMES_DESIGN], [rackDesign.id, agencyDesign.id, experimentDesign.id, framesDesign.id])
-  assert.deepEqual(main.registeredChains(), ['hermes', 'aikit-agency-gateway', 'actuation-frank', 'remote-carrier'], 'the registered gateways (actuationFamilyManifest.ts:15)')
-})
-
+// The Gateways rack, the Agency gateway, the Experiment and the Frames monitor were retired as devices of their own in the
+// 22 Oct manual rewrite (the Gateway's Frames page and agency build carry them); their bindings stay for the devices that carry them,
+// and are checked below on their own.
 test('the gateway\'s answer: answered, the gateway itself unreachable, or the gateway refusing the binding — each in the owner\'s words', () => {
   assert.equal(model.gatewayLine(UNREACHABLE.gatewayDoc), `the gateway refused the read — ${SOCKET}`, 'the refusal line keeps the owner\'s words (they sit beside the flag)')
   assert.deepEqual(main.gatewayAnswer(model.INITIAL_READING), {kind: 'unread'})
@@ -91,36 +80,9 @@ test('the gateway\'s answer: answered, the gateway itself unreachable, or the ga
   assert.deepEqual(main.gatewayAnswer({gatewayAdmitted: false, gatewayDoc: null}), {kind: 'unread'}, 'a kernel failure reached no gateway')
 })
 
-test('the Gateways rack: the registered chains, each with the state its reading earns — never the design\'s Ready/Composed/Refused fixture', async () => {
-  bind.resetHolds()
-  const chains = values => JSON.parse(values.chains)
-  const down = main.rackValues({reading: UNREACHABLE, holds: bind.chainHolds()})
-  assert.deepEqual(chains(down), [
-    {id: 'hermes', name: 'Hermes gateway'},
-    {id: 'aikit-agency-gateway', name: 'AIKit agency gateway', state: 'refused', why: SOCKET},
-    {id: 'actuation-frank', name: 'Actuation gateway'},
-    {id: 'remote-carrier', name: 'Remote carrier'},
-  ], 'the AIKit gateway refused in its words; the harness behind it, the Actuation gateway and the carrier are not read')
-  assert.equal(down.light, 'dark')
-  for (const key of ['chain', 'fanOut', 'peers', 'frames']) assert.equal(down[key], undefined, `${key}: no owner reports it`)
-  const up = main.rackValues({reading: ANSWERED, holds: bind.chainHolds()})
-  assert.deepEqual(chains(up).slice(0, 2), [{id: 'hermes', name: 'Hermes gateway', state: 'ready', transport: 'ws'}, {id: 'aikit-agency-gateway', name: 'AIKit agency gateway', state: 'ready'}])
-  assert.equal(up.light, 'lit')
-  assert.deepEqual(chains(main.rackValues({reading: BINDING_REFUSED, holds: bind.chainHolds()})).slice(0, 2),
-    [{id: 'hermes', name: 'Hermes gateway', state: 'refused', why: 'no binding named cursor'}, {id: 'aikit-agency-gateway', name: 'AIKit agency gateway', state: 'ready'}])
-  assert.equal(main.rackValues({reading: model.INITIAL_READING, holds: bind.chainHolds()}).light, undefined, 'nothing read: no light')
-  // Choosing a chain is the view's own, and shows that gateway whole. The rack writes nothing: Fan-out is set on each workcell's
-  // Gateway (actuation__gateway.tsx) and only read here.
-  const shown = []
-  const binding = main.rackBinding({reading: UNREACHABLE, holds: bind.chainHolds()}, {show: chain => shown.push(chain)})
-  binding.local.chain('aikit-agency-gateway')
-  assert.equal(main.rackValues({reading: UNREACHABLE, holds: bind.chainHolds()}).chain, 'aikit-agency-gateway')
-  assert.deepEqual(shown, ['aikit-agency-gateway'])
-  assert.equal(binding.writes('fanOut'), false, 'the rack does not set Fan-out')
-  assert.equal(binding.writes('chains'), false, 'the chains are a reading')
-  bind.resetHolds()
-})
-
+// The Gateways rack's registered chains were declared on its own face (actuation:gateways-rack), retired in the 22 Oct manual
+// rewrite: mainTrackBindings.ts registeredChains() now finds none, and the binding lane carries the chain list to the Gateway when it
+// moves rackBinding.
 test('the Agency gateway: its light and refusal from whether it answered; every rule a write no kernel op carries, disabled with why', async () => {
   bind.resetHolds()
   assert.deepEqual(main.agencyValues(UNREACHABLE, bind.chainHolds()), {light: 'dark', refused: SOCKET})
@@ -166,54 +128,6 @@ test('the Frames monitor reads the Gateway\'s own reading and holds its filters;
   host.resetHost()
   assert.equal(host.hostedStanding(host.hostState(main.FRAMES_ID), binding, ['harness']).harness.disabled, 'No owner takes a change here.')
   bind.resetHolds()
-})
-
-test('the four designs draw on their bindings in all five views — no NaN, no undefined, never their fixtures — each refusal drawn as why', () => {
-  bind.resetHolds()
-  host.resetHost()
-  const gateway = {reading: UNREACHABLE, harness: {binding: 'cursor', resolved: false}}
-  const cases = [
-    [rackDesign, main.rackBinding({reading: UNREACHABLE, holds: bind.chainHolds()}, {show() {}}), /build-lane|Terminate TLS|actuation-frank\b.*composed|14:02:0/, []],
-    [agencyDesign, main.agencyBinding(UNREACHABLE, bind.chainHolds()), /@nara|Telegram|launchd|100\.92\.62/, [main.AGENCY_REFUSE.service, main.AGENCY_REFUSE.agentPolicy]],
-    [experimentDesign, main.experimentBinding(bind.chainHolds()), /deeper loop|S1-CODE-001|build-lane|exp-1014/, [main.EXPERIMENT_REFUSE]],
-    [framesDesign, main.framesBinding(gateway, bind.chainHolds()), /build-lane|3f9a21c4|Type-check the three/, []],
-  ]
-  for (const [design, binding, fixture, reasons] of cases) {
-    const drawn = hosted(design, binding)
-    drawn.forEach((markup, index) => {
-      assert.match(markup, new RegExp(`data-device-view="${views[index]}"`), `${design.id} ${views[index]} draws`)
-      assert.doesNotMatch(markup, /\bNaN\b|undefined/, `${design.id} ${views[index]}: no absent key drawn as text`)
-      assert.doesNotMatch(markup, /data-device-fault/, `${design.id} ${views[index]}: its own view drew`)
-      assert.doesNotMatch(markup, fixture, `${design.id} ${views[index]}: its fixture never stands in`)
-    })
-    const all = drawn.join('\n')
-    for (const why of reasons) assert.ok(all.includes(escaped(why)), `${design.id}: a refused control says why (${why})`)
-  }
-  const rack = hosted(rackDesign, cases[0][1]).join('\n')
-  assert.ok(rack.includes('AIKit agency gateway') && rack.includes(escaped(SOCKET).slice(0, 40)), 'the rack names the refused chain and keeps its reason visible')
-  assert.ok(hosted(agencyDesign, cases[1][1])[3].includes(escaped(SOCKET).slice(0, 40)), 'the Agency gateway\'s pane gives the owner\'s refusal')
-  host.resetHost()
-})
-
-test('the rail\'s Frames is the Frames monitor\'s own widget (§23.8): bare, on the device\'s binding; the launcher offers one Frames', () => {
-  const registered = {id: 'frames', name: 'Frames', mark: 'link', Body: () => null}
-  assert.equal(widgets.claimedWidget(registered), registered, 'unclaimed, the registration draws itself')
-  widgets.claimRailWidget('frames', main.FRAMES_ID)
-  const claimed = widgets.claimedWidget(registered)
-  assert.equal(claimed.bare, true, 'the device\'s Tile is the tile: no second head')
-  assert.equal(claimed.name, 'Frames')
-  assert.notEqual(claimed.Body, registered.Body)
-  const device = main.mainDevices().frames
-  door.publishDevice(device.id, {device, binding: main.framesBinding({reading: UNREACHABLE, harness: {binding: 'cursor', resolved: false}}, bind.chainHolds())})
-  try {
-    assert.deepEqual(widgets.deviceWidgets([], 'frames').found, [], 'a search finds the claiming registration, not a second Frames')
-    const tile = renderToStaticMarkup(createElement(claimed.Body, {subject: null, pinned: false}))
-    assert.match(tile, /data-device-size="widget"/)
-    assert.match(tile, /data-device-design="actuation:frames-monitor"|data-device-design="generic"/)
-  } finally { door.publishDevice(device.id, null) }
-  assert.match(read('agent/agentDockTiles.ts'), /claimRailWidget\('frames', FRAMES_ID\)/, 'the agent tiles\' marks module claims the Frames tile for the monitor, before any tile body loads')
-  assert.doesNotMatch(read('agent/AgentDockTileBody.tsx'), /op: 'harness_agent_read'/, 'its raw gateway receipt is gone (MOVED)')
-  assert.match(read('frame/widgets/WidgetRail.tsx'), /widgets\.map\(claimedWidget\)/)
 })
 
 test('with no session selected the chain draws the Main track — the Experiment, then Approvals — and publishes Gateways, the Agency gateway and Frames for the rail and a pane', () => {

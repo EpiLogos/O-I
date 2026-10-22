@@ -234,7 +234,7 @@ test('7 · the designs draw on these bindings in all their views and pages — n
   const carrierBinding = cell.carrierBinding(answered(REAL.workcellStatus), bind.chainHolds(), undefined, {discover: answered(MATERIAL.discover), probe: answered(PROBE.reachable)})
   const runsBinding = tasks.runsBinding('s', bind.chainHolds(), {takes: [], choose: async () => ({ok: true})})
   const cases = [
-    [rackDesign, rackBinding, ['chain', 'world', 'services', 'exposure', 'release'], /Claude Code · local|reads-round-2|omarchy · env-1|factory-attempt|Type-check the three|dlw\/uiux-kit-motion/, [rack.WORKCELL_REFUSE.releaseWorld]],
+    [rackDesign, rackBinding, ['chain', 'world', 'services', 'exposure', 'release', 'left'], /Claude Code · local|reads-round-2|omarchy · env-1|factory-attempt|Type-check the three|dlw\/uiux-kit-motion/, [rack.WORKCELL_REFUSE.releaseWorld]],
     [carrierDesign, carrierBinding, [undefined], /ready-to-carry|private-tailnet|1791417468786/, []],
     [runsDesign, runsBinding, [undefined], /Type-check the roots|run:3|AgentShellContext/, []],
   ]
@@ -260,11 +260,14 @@ test('7 · the designs draw on these bindings in all their views and pages — n
 
 test('8 · (b) every key these designs read is an owner reading, absent with why, the hand\'s, or written through its owner', () => {
   bind.resetHolds()
+  // A carried page's keys stand under its prefix and are hosted by prefixing that page's own binding, not this one (design.ts scoped):
+  // the carrier carries the Machine page under `mc.` (DLW §19.18, "The Machine page"; central:machine's binding); the workcell its Left
+  // behind page under `left.` and its tile's gateways under `gw.` (§19.23).
   const cases = [
-    [rackDesign, rack.workcellRackBinding(rackInput(), {gateway: null, rereadServices: () => {}})],
-    [carrierDesign, cell.carrierBinding(answered(REAL.workcellStatus), bind.chainHolds(), undefined, {discover: answered(MATERIAL.discover)})],
+    [rackDesign, rack.workcellRackBinding(rackInput(), {gateway: null, rereadServices: () => {}}), ['left.', 'gw.']],
+    [carrierDesign, cell.carrierBinding(answered(REAL.workcellStatus), bind.chainHolds(), undefined, {discover: answered(MATERIAL.discover)}), ['mc.']],
   ]
-  for (const [design, binding] of cases) for (const key of designKeys(design)) assert.ok(classify(binding, key), `${design.id} ${key}`)
+  for (const [design, binding, carried] of cases) for (const key of designKeys(design).filter(key => !carried.some(prefix => key.startsWith(prefix)))) assert.ok(classify(binding, key), `${design.id} ${key}`)
   const runs = tasks.runsBinding('s', bind.chainHolds(), {takes: [], choose: async () => ({ok: true})})
   for (const key of ['collected', 'collect']) assert.equal(classify(runs, key), 'absent', key)
   bind.resetHolds()

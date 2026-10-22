@@ -15,20 +15,25 @@
 //   epoch         the date of the sky the routes follow (the Sky's).
 // View, the routes shown, the colour source and the detail are the view's own. The entry's Privacy has no owner operation (the
 // personal layer is the private Nara identity; nothing shares it), so it is not offered: the layer reads private.
+//
+// The Chakra is M4′'s face (manual §22.5, §16.16), so its Rack page holds M4′'s rack (the rack kit, map-rack.tsx, which
+// the Torus, the Sky and the M3 clock carry too): the identity matrix at 0, Epii's integration at 5, and the four working parts between
+// them, on the keys rack and rack.part.
 import {Band, Display, Folded, Handle, Panel, Radio, Readout, Section, Tile, Toggle, type LightState} from '../../sdk/panel'
 import {NONE, boolOf, clampTo, json, st, strOf, type DesignedDevice, type ViewProps} from './design'
+import {RACK_M4, RackBands} from './map-rack'
 import './quaternal-logic__chakra.css'
 
 type V = ViewProps['v']
 
 const VS = '︎'
 const GLYPH: Record<string, string> = {Sun: '☉', Moon: '☽', Mercury: '☿', Venus: '♀', Mars: '♂', Jupiter: '♃', Saturn: '♄', Uranus: '♅', Neptune: '♆', Pluto: '♇'}
-const ROUTES = [{key: 'route.own', label: 'Own', short: 'own', does: 'The planets whose own route reaches the centre.'},
-  {key: 'route.decan', label: 'Decan', short: 'decan', does: 'The decan rulers that reach the centre.'},
-  {key: 'route.sun', label: 'Sun', short: '☉', does: 'The Sun, which reaches all seven centres.'},
-  {key: 'route.earth', label: 'Earth', short: '⊕', does: 'The Earth, which grounds the Root.'}] as const
-const VIEWS = [{value: 'rows', label: 'Rows', does: 'The seven centres as rows.'}, {value: 'figure', label: 'Figure', does: 'The seven centres on the body.'}] as const
-const COLOURS = [{value: 'element', label: 'Element', does: 'Colour each centre by its element.'}, {value: 'sky', label: 'Sky', does: 'Colour each centre by its hits alone.'}] as const
+const ROUTES = [{key: 'route.own', label: 'Own planet', short: 'own', does: 'The planets whose own route reaches the centre.'},
+  {key: 'route.decan', label: 'Decan ruler', short: 'decan', does: 'The planet that rules the part of the sky where a body stands.'},
+  {key: 'route.sun', label: 'Sun reception', short: '☉', does: 'The Sun, which reaches all seven centres.'},
+  {key: 'route.earth', label: 'Earth grounding', short: '⊕', does: 'The Earth, which grounds the Root.'}] as const
+const VIEWS = [{value: 'rows', label: 'Seven rows', does: 'The seven centres as rows.'}, {value: 'figure', label: 'Body figure', does: 'The seven centres on the body.'}] as const
+const COLOURS = [{value: 'element', label: 'Element', does: 'Element palette: colour each centre by its element.'}, {value: 'sky', label: 'Sky arc', does: 'Sky arc colour: colour each centre by its hits alone.'}] as const
 /** The elements' own colours: a colour of the material, inside the display only. */
 const ELEMENT_COLOUR: Record<string, string> = {Earth: '#b08d57', Water: '#4f8fbf', Fire: '#d9603b', Air: '#6fbf73', Space: '#7f8fd9', Beyond: '#9a7fd1', 'Beyond all': '#d6c9f0'}
 const f1 = (x: number) => x.toFixed(1)
@@ -107,8 +112,8 @@ function controls(p: ViewProps) {
   const v = p.v, figure = strOf(v, 'view') === 'figure'
   return {
     view: <Radio {...st(p, 'view')} label="View" does="The form of the reading." value={strOf(v, 'view') ?? ''} options={VIEWS} stack onChange={x => p.set('view', x)} />,
-    colour: <Radio {...st(p, 'colour')} label="Colour" does="Where the colour of a centre comes from." value={strOf(v, 'colour') ?? ''} options={COLOURS} stack onChange={x => p.set('colour', x)} />,
-    natal: <Toggle {...st(p, 'natal')} label="Natal" does="Show how your birth sky spreads over the centres, as dashed rings. Only you see it." on={boolOf(v, 'natal') === true} onChange={x => p.set('natal', x)}
+    colour: <Radio {...st(p, 'colour')} label="Colour source" does="Where the colour of a centre comes from: the element palette, or the sky arc." value={strOf(v, 'colour') ?? ''} options={COLOURS} stack onChange={x => p.set('colour', x)} />,
+    natal: <Toggle {...st(p, 'natal')} label="Natal" does="Natal distribution: how your birth sky spreads over the centres, as dashed rings. Only you see it." on={boolOf(v, 'natal') === true} onChange={x => p.set('natal', x)}
       disabled={st(p, 'natal').disabled ?? (natalOf(v) ? undefined : 'No birth data is saved.')} />,
     route: (i: number) => { const r = ROUTES[i]!
       return <Toggle key={r.key} {...st(p, r.key)} label={r.label} tone="value" does={`Show this route and count its hits. ${r.does}`} on={on(v, r.key)} onChange={x => p.set(r.key, x)}
@@ -136,12 +141,15 @@ export const design: DesignedDevice = {
       {ordinal: 6, ref: '#2-5-0/1-6', name: 'Ājñā', element: 'Beyond', mantra: 'OM', petals: 2, own: ['Moon', 'Neptune'], decan: ['Moon']},
       {ordinal: 7, ref: '#2-5-0/1-7', name: 'Sahasrāra', element: 'Beyond all', mantra: 'silence', petals: 1000, own: ['Sun', 'Pluto'], decan: ['Sun']}]),
     'natal.counts': JSON.stringify([2, 1, 3, 2, 1, 1, 2]),
+    // M4′'s rack, read from the M registry at revision c211a781 with the ledger's rungs; the parts carried as §16.16 and §24 name them.
+    rack: RACK_M4, 'rack.part': '1',
   },
+  firstPage: 'centres',
   fixtures: {
     'The sky of 28 Sep 2026': {},
     'Own routes only, on the body': {'route.decan': false, 'route.sun': false, view: 'figure', natal: true},
     'Mantra and yantra': {'detail.mantra': true, 'detail.yantra': true, colour: 'sky'},
-    'No reading': {centres: undefined, 'natal.counts': undefined, epoch: undefined, reason: 'No centres reach the shell'},
+    'No reading': {centres: undefined, 'natal.counts': undefined, epoch: undefined, reason: 'No centres reach the shell', rack: undefined, 'rack.part': undefined},
   },
 
   folded: p => { const m = most(p.v)
@@ -157,28 +165,30 @@ export const design: DesignedDevice = {
       <Section label="Macros" cols={2} width={124}>{c.view}{c.colour}{c.route(1)}{c.natal}</Section>
     </Panel> },
 
-  whole: p => { const c = controls(p), m = most(p.v), w = wide(p) ? Math.round(clampTo(186, p.room!.w - 640, 300)) : 186
-    return <Panel title="Chakra" view="whole" {...head(p)}>
+  whole: p => { const c = controls(p), m = most(p.v), w = wide(p) ? Math.round(clampTo(186, p.room!.w - 640, 300)) : 186, page = p.page === 'rack' ? 'rack' : 'centres'
+    return <Panel title="Chakra" view="whole" {...head(p)} pages={[{id: 'centres', label: 'Centres'}, {id: 'rack', label: 'Rack'}]} page={page} onPage={p.setPage}>
+      {page === 'rack' ? <RackBands p={p} /> : <>
       <Band>
         <Section width={w + 12}>
           <Display w={w} h={146} label="The centres" does={`${DISPLAY_DOES} Drag handles 1 to 4 down to hide a route, up to show it.`}>
             <Centres p={p} w={w} h={146} handles big={false} />
           </Display>
         </Section>
-        <Section label="Routes" width={64}>{[0, 1, 2, 3].map(c.route)}</Section>
-        <Section label="Show" grow>{c.view}{c.colour}</Section>
+        <Section label="Sky" width={88}>{[0, 1, 2, 3].map(c.route)}</Section>
+        <Section grow>{c.view}{c.colour}</Section>
       </Band>
       <Band>
         <Section label="Detail" width={76}>
           {c.detail('detail.element', 'Element', 'Show each centre\'s element.')}{c.detail('detail.mantra', 'Mantra', 'Show each centre\'s mantra.')}{c.detail('detail.yantra', 'Yantra', 'Show each centre\'s yantra, by its petals.')}
         </Section>
-        <Section label="Personal" width={80}>{c.natal}<Readout label="layer" does="Your personal layer is your private Nara identity: nothing shares it." value="private" /></Section>
-        <Section label="Reading" grow>
+        <Section label="Reading" cols={2} grow>
           <Readout big label={m ? `hits · ${m.name}` : 'hits'} does="The centre with the most hits, and how many." value={m ? hitsOf(p.v, m) : undefined} tone="value" />
-          <Readout label="sky" does="The date of the sky that reaches the centres. It follows the Sky." value={dateWord(p.v)} />
-          <Readout label="count" does="Each route counts once. Routes are counted, not weighted." value="1 per route" />
+          <Readout label="date" does="The sky that reaches the centres. It follows the Sky." value={dateWord(p.v)} />
+          <Readout label="hits" does="How much each route counts: every route counts once. Routes are counted, not weighted." value="one per route" />
         </Section>
+        <Section label="Personal" width={80}>{c.natal}<Readout label="layer" does="Your personal layer is your private Nara identity: nothing shares it." value="private" /></Section>
       </Band>
+      </>}
     </Panel> },
 
   full: p => <div className="ref-pane-body ref-pane-body--dark">

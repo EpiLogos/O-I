@@ -65,3 +65,7 @@
 .gs-pulse { animation: gs-pulse 1.8s ease-in-out infinite; }
 @keyframes gs-pulse { 50% { opacity: .3; } }
 @media (prefers-reduced-motion: reduce) { .gs-pulse { animation: none; } }
+
+/* The Seat page: Join seat and Release, one under the other. */
+.gs-acts { display: flex; flex-direction: column; gap: 5px; align-self: stretch; align-items: stretch; }
+.gs-acts .dp-cell { align-items: stretch; }

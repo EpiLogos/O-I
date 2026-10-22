@@ -61,9 +61,9 @@ const {design: seatDesign} = await import('../src/inhabitants/catalogue/panels/w
 const {design: carrierDesign} = await import('../src/inhabitants/catalogue/panels/workcell__remote-carrier.tsx')
 const {design: framesDesign} = await import('../src/inhabitants/catalogue/panels/actuation__frames-monitor.tsx')
 const {design: experimentDesign} = await import('../src/inhabitants/catalogue/panels/actuation__experiment.tsx')
-const {design: custodyDesign} = await import('../src/inhabitants/catalogue/panels/software-factory__agent-custody.tsx')
+const {design: custodyDesign} = await import('../src/inhabitants/catalogue/panels/agent-custody.tsx')
 const {design: ledgerDesign} = await import('../src/inhabitants/catalogue/panels/software-factory__ledger.tsx')
-const {design: helperDesign} = await import('../src/inhabitants/catalogue/panels/ai-kit__decision-helper.tsx')
+const {design: helperDesign} = await import('../src/inhabitants/catalogue/panels/decision-helper.tsx')
 const {design: memberDesign} = await import('../src/inhabitants/catalogue/panels/member.tsx')
 
 family.resetFamilyManifestsForTest()
@@ -364,8 +364,11 @@ test('(b) every key the bound designs read is an owner reading, absent with why 
     [framesDesign, main.framesBinding(gateway, bind.chainHolds(), {ecology: answered(ECOLOGY), replays: new Map([['actuation-stream/replay', {error: NO_REPLAY}]])})],
     [experimentDesign, main.experimentBinding(bind.chainHolds())],
   ]
+  // A carried page's keys stand under its prefix and are hosted by prefixing that page's own binding (design.ts scoped): the carrier
+  // carries the Machine page under `mc.` (DLW §19.18, "The Machine page").
+  const carried = {'workcell:remote-carrier': ['mc.']}
   for (const [design, binding] of cases) {
-    for (const key of designKeys(design)) {
+    for (const key of designKeys(design).filter(key => !(carried[design.id] ?? []).some(prefix => key.startsWith(prefix)))) {
       const kind = classify(binding, key)
       assert.ok(kind, `${design.id} ${key}: a reading, absent with why, or the hand's`)
     }

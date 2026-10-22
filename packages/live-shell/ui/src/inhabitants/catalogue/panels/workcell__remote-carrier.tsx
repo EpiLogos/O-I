@@ -28,9 +28,26 @@
 //                               No kernel route reaches plan yet.
 // The Standing page draws the offers and the plan; the Route page the connections. Act: replan (asks `workcell plan` again).
 // The shell holds and the owner is asked to write:  where ('this' · 'connected'), machine (a connection label).
+//
+// The Machine page (§19.18 "The Machine page"): what you declared for the machine beside what it holds, made good where it can be, and
+// the way back to it. Its values stand under `mc.`: a binding hosts the page by prefixing the machine's own binding. The owner is Central
+// (ctrl/src/machine.rs, ctrl/src/recovery.rs), through the kernel's invoke_action: machine.account, machine.declaration {role},
+// machine.plan {role}, machine.verify {role} read; machine.apply {role}, machine.adopt-current change the machine or its declaration;
+// central.recovery.plan {role} reads; central.recover {role} recovers. The page has three parts, one band each: Declared (the ledger, a
+// lane for each kind, declared left of the spine and observed right, each declared tick in the plan's verdict), Reconcile (plan, apply
+// and verify as stages; handle 1 on the stages sets Change) and Recover (plan, synchronise, apply and verify as stages).
+//   mc.light, mc.roles [{role, path, requirements}], mc.host {platform, architecture, observedAt, ...}, mc.declared {bindings,
+//   capabilities, packages, configurations, services}, mc.observed {capabilities, packages, configurations, services}, mc.plan {entries:
+//   [{kind, id, status satisfied | missing | changeable | unsupported, port?, connector?, reason?}], summary}, mc.applied {outcome,
+//   operations}, mc.verified {satisfied}, mc.recovery {synchronization, reason?, connector?, changes}, mc.recovered {outcome, stage?,
+//   message?, synchronized?, applied?, operations?, satisfied?}.
+// Settings the shell holds: mc.role, mc.mode (Change: off · propose · write), mc.refresh (manual · open). Held by the hand: mc.ask (the
+//   act waiting for Confirm). Acts: mc.replan, mc.apply, mc.verify, mc.adopt, mc.recoveryPlan, mc.recover. Apply, Adopt and Recover
+//   change the machine or its declaration: under Propose each waits for Confirm, and each is held.
+// On the Machine page the pane is the Machine at full size (the four kinds side by side) and the tile its small ledger.
 // A key the owner has not reported is absent, and the view draws "—" for it and names it in words.
 import {Action, Band, Chooser, Display, Folded, Handle, Lamp, Panel, Radio, Readout, Rows, Section, Tile, type LightState, type Option, type RowItem, type Tone} from '../../sdk/panel'
-import {clampTo, has, json, NONE, st, strOf, type DesignedDevice, type ViewProps} from './design'
+import {clampTo, has, json, NONE, prefixed, scoped, st, strOf, type DesignedDevice, type ViewProps} from './design'
 import './workcell__remote-carrier.css'
 
 type V = ViewProps['v']
@@ -165,9 +182,11 @@ interface Geo {
   readonly chars: number; readonly off: number
   /** The round trip and the grant, under the route. */
   readonly blocks: boolean
+  /** The round trip's own words under the route (Compact says it in its macro instead). */
+  readonly rttWords?: boolean
 }
 const COMPACT: Geo = {w: 140, h: 146, hx0: 4, hx1: 40, hh: 30, mx0: 78, mx1: 138, bh: 16, step: 20, max: 4, cy: 48, chars: 7, off: 16, blocks: true}
-const WHOLE: Geo = {w: 194, h: 146, hx0: 6, hx1: 60, hh: 30, mx0: 106, mx1: 188, bh: 16, step: 20, max: 4, cy: 48, chars: 12, off: 17, blocks: true}
+const WHOLE: Geo = {w: 194, h: 146, hx0: 6, hx1: 60, hh: 30, mx0: 106, mx1: 188, bh: 16, step: 20, max: 4, cy: 48, chars: 12, off: 17, blocks: true, rttWords: true}
 const TILE: Geo = {w: 112, h: 78, hx0: 4, hx1: 26, hh: 24, mx0: 54, mx1: 108, bh: 16, step: 20, max: 3, cy: 39, chars: 7, off: 13, blocks: false}
 
 /** The line from this machine to one machine: its standing draws it. */
@@ -198,9 +217,9 @@ function Under({g, chosen}: {g: Geo; chosen: Machine | undefined}) {
       <path d={`M${x0} ${y}H${at(rtt)}`} className="dp-curve" style={{strokeWidth: 2.5}} />
       <circle cx={at(rtt)} cy={y} r={2.6} className="rc-rtt" />
     </g>}
-    <text x={x0} y={y - 9} className={rtt === undefined ? 'dp-axis' : 'dp-ink-dim'}>
+    {(g.rttWords || chosen === undefined || rtt === undefined) && <text x={x0} y={y - 9} className={rtt === undefined ? 'dp-axis' : 'dp-ink-dim'}>
       {chosen === undefined ? 'No machine chosen' : rtt === undefined ? 'No reading of the round trip' : <><tspan className="dp-axis">round trip </tspan>{msText(rtt)}</>}
-    </text>
+    </text>}
     {OPS.map((op, i) => <rect key={op} x={x0 + i * pitch} y={124} width={tw} height={7} className="rc-tick"
       data-granted={chosen?.grant === undefined ? 'unknown' : chosen.grant.includes(op) ? 'true' : 'false'} />)}
     <text x={x0} y={141} className="dp-axis">{count === undefined ? 'No reading of the grant' : <><tspan className="dp-ink-dim">grant </tspan>{count} of {OPS.length}</>}</text>
@@ -460,6 +479,335 @@ function Pane({v}: {v: V}) {
   </div>
 }
 
+// ================================================================ the Machine page (`mc.` keys)
+
+type Mode = 'off' | 'propose' | 'write'
+type Kind = 'capability' | 'package' | 'configuration' | 'service'
+type Status = 'satisfied' | 'missing' | 'changeable' | 'unsupported'
+const KINDS: readonly {kind: Kind; key: string; name: string}[] = [
+  {kind: 'capability', key: 'capabilities', name: 'capabilities'}, {kind: 'package', key: 'packages', name: 'packages'},
+  {kind: 'configuration', key: 'configurations', name: 'configuration'}, {kind: 'service', key: 'services', name: 'services'}]
+const MODES: readonly Mode[] = ['off', 'propose', 'write']
+const MODE_OPTIONS = [{value: 'off', label: 'Off', does: 'The device only reads. Apply, Adopt and Recover are not offered.'},
+  {value: 'propose', label: 'Propose', does: 'Apply, Adopt and Recover wait for your Confirm.'}, {value: 'write', label: 'Write', does: 'They run when you hold them, with a report.'}] as const
+const REFRESH = [{value: 'manual', label: 'Manual', does: 'Read again only when you press Plan.'}, {value: 'open', label: 'On open', does: 'Read again when the device opens.'}] as const
+const STATUS_TONE: Readonly<Record<Status, Tone | undefined>> = {satisfied: 'value', changeable: 'accent', missing: 'stall', unsupported: undefined}
+const ACTS = {
+  apply: {label: 'Apply', op: 'Make the changeable requirements so, through the connectors the plan names, then verify.'},
+  adopt: {label: 'Adopt', op: 'Write what this machine holds into the role\'s declaration, under Control/machines. It never changes the machine.'},
+  recover: {label: 'Recover', op: 'Synchronise your source, apply the plan, and verify, stage by stage. It stops at the first stage that fails.'},
+} as const
+type Act = keyof typeof ACTS
+
+interface Entry {readonly kind: string; readonly id: string; readonly status: Status; readonly port?: string; readonly connector?: string; readonly reason?: string}
+interface MPlan {readonly entries: readonly Entry[]; readonly summary?: Readonly<Record<Status, number>>}
+interface Declared {readonly bindings: readonly {kind: string; reference: string}[]; readonly items: Readonly<Record<Kind, readonly string[]>>}
+const rec = (x: unknown): Record<string, unknown> | undefined => (x && typeof x === 'object' && !Array.isArray(x) ? x as Record<string, unknown> : undefined)
+const ids = (x: unknown): string[] => (Array.isArray(x) ? x.flatMap(i => (typeof i === 'string' ? [i] : text(rec(i)?.id) ? [rec(i)!.id as string] : [])) : [])
+const STATUSES: readonly string[] = ['satisfied', 'missing', 'changeable', 'unsupported']
+
+function declaredOf(v: V): Declared | undefined {
+  const d = rec(json<unknown>(v, 'declared', undefined))
+  if (!d) return undefined
+  const items = Object.fromEntries(KINDS.map(k => [k.kind, ids(d[k.key])])) as Record<Kind, string[]>
+  const bindings = Array.isArray(d.bindings) ? d.bindings.flatMap(b => { const r = rec(b); return r && text(r.kind) && text(r.reference) ? [{kind: r.kind as string, reference: r.reference as string}] : [] }) : []
+  return {bindings, items}
+}
+function observedOf(v: V): Record<Kind, string[]> | undefined {
+  const o = rec(json<unknown>(v, 'observed', undefined))
+  return o ? Object.fromEntries(KINDS.map(k => [k.kind, ids(o[k.key])])) as Record<Kind, string[]> : undefined
+}
+function mplanOf(v: V): MPlan | undefined {
+  const p = rec(json<unknown>(v, 'plan', undefined))
+  if (!p) return undefined
+  const entries = (Array.isArray(p.entries) ? p.entries : []).flatMap((e): Entry[] => {
+    const r = rec(e)
+    return r && text(r.kind) && text(r.id) && typeof r.status === 'string' && STATUSES.includes(r.status)
+      ? [{kind: r.kind as string, id: r.id as string, status: r.status as Status, port: text(r.port), connector: text(r.connector), reason: text(r.reason)}] : []
+  })
+  const s = rec(p.summary)
+  const summary = s && STATUSES.every(k => typeof s[k] === 'number') ? s as Record<Status, number> : undefined
+  return {entries, summary}
+}
+const objOf = (v: V, key: string) => rec(json<unknown>(v, key, undefined))
+const modeOf = (v: V): Mode | undefined => { const m = strOf(v, 'mode'); return m === 'off' || m === 'propose' || m === 'write' ? m : undefined }
+const kindOfEntry = (k: string): Kind | undefined => KINDS.find(x => x.kind === k || x.key === k)?.kind
+const statusOf = (plan: MPlan | undefined, kind: Kind, id: string): Status | undefined => plan?.entries.find(e => kindOfEntry(e.kind) === kind && e.id === id)?.status
+/** How far the machine is from its declaration: the requirements not satisfied. */
+const toChange = (plan: MPlan | undefined) => (plan ? (plan.summary ? plan.summary.changeable + plan.summary.missing + plan.summary.unsupported : plan.entries.filter(e => e.status !== 'satisfied').length) : undefined)
+const verdict = (v: V) => { const n = toChange(mplanOf(v)); return n === undefined ? NONE : n === 0 ? 'satisfied' : `${n} differ` }
+const verifiedWord = (v: V) => { const x = objOf(v, 'verified'); return x ? (x.satisfied === true ? 'Satisfied' : 'Differs') : undefined }
+
+/** Whether an act can run now, and if not, why. The host's standing for its key comes last. */
+function actState(p: ViewProps, act: Act): {ok: boolean; why?: string} {
+  const mode = modeOf(p.v)
+  if (mode === undefined) return {ok: false, why: 'Change has no reading.'}
+  if (mode === 'off') return {ok: false, why: 'Change is Off. Set it to Propose or Write.'}
+  if (!has(p.v, 'role')) return {ok: false, why: 'No role is chosen.'}
+  if (act === 'apply') { const plan = mplanOf(p.v); if (plan && !plan.entries.some(e => e.status === 'changeable')) return {ok: false, why: 'Nothing in the plan is changeable.'} }
+  const held = st(p, act).disabled
+  return held ? {ok: false, why: held} : {ok: true}
+}
+/** Under Propose an act waits for your Confirm; under Write it runs. */
+const pressAct = (p: ViewProps, act: Act) => (modeOf(p.v) === 'propose' ? p.set('ask', act) : p.set(act, strOf(p.v, 'role') ?? true))
+
+const LEVER = [-40, 0, 40]
+/** The Change lever: Off, Propose, Write, with handle 1 on it. */
+function Lever({p, cx, y}: {p: ViewProps; cx: number; y: number}) {
+  const mode = modeOf(p.v), at = mode === undefined ? -1 : MODES.indexOf(mode)
+  const drag = !st(p, 'mode').disabled ? (x: number) => p.set('mode', MODES[Math.round(clampTo(0, 2, (x - cx + 40) / 40))]!) : undefined
+  return <g>
+    <path d={`M${cx + LEVER[0]!} ${y}H${cx + LEVER[2]!}`} className="dp-faint" />
+    {LEVER.map((dx, i) => <g key={i}>
+      <circle cx={cx + dx} cy={y} r={1.8} fill="var(--text-faint)" />
+      {mode !== undefined && <text x={cx + dx} y={y - 8} className="dp-axis" textAnchor="middle">{MODES[i]}</text>}
+    </g>)}
+    {mode === undefined ? <text x={cx} y={y - 8} className="dp-axis" textAnchor="middle">no reading of Change</text>
+      : <Handle n={1} x={cx + LEVER[at]!} y={y} label="Change" does="Drag along the line: Off, Propose or Write. Propose waits for your Confirm."
+        onDrag={drag} onReset={drag && (() => p.set('mode', 'propose'))} />}
+  </g>
+}
+
+/** The ledger: a lane for each kind, named and counted; the declaration left of the spine in the plan's verdict (teal satisfied, amber
+ * changeable, orange missing, crossed unsupported), what the machine holds right of it. */
+function Ledger({p, w, h, small}: {p: ViewProps; w: number; h: number; small?: boolean}) {
+  const v = p.v, declared = declaredOf(v), observed = observedOf(v), plan = mplanOf(v)
+  const cx = w / 2, top = small ? 12 : 30, laneH = small ? (h - 18) / 4 : 26, pitch = small ? 3 : 4, half = cx - (small ? 8 : 52)
+  const role = strOf(v, 'role'), bind = declared?.bindings.find(b => b.kind === 'workcell')?.reference
+  return <g>
+    {!small && <>
+      <text x={7} y={12} className="dp-axis">declared · {role ?? NONE}</text>
+      <text x={w - 7} y={12} className="dp-axis" textAnchor="end">observed</text>
+      {bind && <text x={7} y={22} className="dp-ink-dim">{bind}</text>}
+    </>}
+    <path d={`M${cx} ${top - 6}V${top + laneH * 4 - 6}`} stroke="var(--text-dim)" strokeWidth={1} />
+    {KINDS.map((k, i) => {
+      const y = top + i * laneH + laneH / 2 - 6
+      const mine = declared?.items[k.kind] ?? [], seen = observed?.[k.kind] ?? []
+      const room = Math.floor(half / pitch)
+      return <g key={k.kind}>
+        {!small && <text x={7} y={y + 3} className="dp-axis">{k.name}</text>}
+        {!small && <text x={7} y={y + 12} className="dp-ink-dim">{declared ? mine.length : NONE}</text>}
+        {!small && <text x={w - 7} y={y + 3} className="dp-axis" textAnchor="end">{observed ? seen.length : NONE}</text>}
+        {mine.slice(0, room).map((id, j) => {
+          const s = statusOf(plan, k.kind, id), x = cx - 4 - j * pitch, t = s ? STATUS_TONE[s] : undefined
+          return s === 'unsupported'
+            ? <path key={id} d={`M${x - 1.5} ${y - 3}l3 6M${x + 1.5} ${y - 3}l-3 6`} stroke="var(--text-faint)" strokeWidth={1}><title>{`${id} · unsupported`}</title></path>
+            : <path key={id} d={`M${x} ${y - 4}V${y + 4}`} strokeWidth={small ? 1.4 : 2} stroke={t === 'value' ? 'var(--dp-value)' : t === 'accent' ? 'var(--dp-on)' : t === 'stall' ? 'var(--stall)' : 'var(--text-dim)'}><title>{`${id} · ${s ?? 'not planned'}`}</title></path>
+        })}
+        {seen.slice(0, Math.floor((w - (small ? 6 : 26) - cx) / pitch)).map((id, j) => {
+          const x = cx + 4 + j * pitch, wanted = mine.includes(id)
+          return <path key={id} d={`M${x} ${y - 4}V${y + 4}`} strokeWidth={small ? 1.2 : 1.5} stroke={wanted ? 'var(--dp-value)' : 'var(--text-faint)'}><title>{id}</title></path>
+        })}
+        {declared && mine.length === 0 && !small && <text x={cx - 6} y={y + 3} className="dp-axis" textAnchor="end">none</text>}
+      </g>
+    })}
+    {!declared && <text x={cx - 6} y={top + laneH * 4 + (small ? -2 : 4)} className="dp-axis" textAnchor="end">no declaration</text>}
+    {!observed && <text x={cx + 6} y={top + laneH * 4 + (small ? -2 : 4)} className="dp-axis">not observed</text>}
+  </g>
+}
+
+/** The stages of a road, left to right: a node for each, filled where it ran well, amber where it ran in part, crossed where it failed,
+ * hollow where it has not run, dashed where nothing is configured. Under each, its result. */
+type Stage = {name: string; state: 'ok' | 'part' | 'failed' | 'idle' | 'none'; result: string}
+function Stages({p, w, h, stages, lever}: {p: ViewProps; w: number; h: number; stages: readonly Stage[]; lever?: boolean}) {
+  const n = stages.length, x0 = 30, x1 = w - 30, y = 52
+  const at = (i: number) => (n === 1 ? w / 2 : x0 + i * (x1 - x0) / (n - 1))
+  return <g>
+    {stages.slice(1).map((_, i) => <path key={i} d={`M${at(i) + 8} ${y}H${at(i + 1) - 8}`} className={stages[i]!.state === 'ok' ? 'dp-curve' : 'dp-faint'} />)}
+    {stages.map((s, i) => {
+      const x = at(i)
+      return <g key={s.name}>
+        {s.state === 'failed'
+          ? <><circle cx={x} cy={y} r={6} fill="none" stroke="var(--stall)" strokeWidth={1.5} /><path d={`M${x - 3} ${y - 3}l6 6M${x + 3} ${y - 3}l-6 6`} stroke="var(--stall)" strokeWidth={1.5} /></>
+          : <circle cx={x} cy={y} r={6} fill={s.state === 'ok' ? 'var(--dp-value)' : s.state === 'part' ? 'var(--dp-on)' : 'none'}
+            stroke={s.state === 'idle' || s.state === 'none' ? 'var(--text-faint)' : 'none'} strokeDasharray={s.state === 'none' ? '2 2' : undefined} />}
+        <text x={x} y={y - 12} className="dp-ink" textAnchor="middle">{s.name}</text>
+        {s.result.split('\n').map((line, k) => <text key={k} x={x} y={y + 20 + k * 10} className="dp-axis" textAnchor="middle">{line}</text>)}
+      </g>
+    })}
+    {lever && <Lever p={p} cx={w / 2} y={h - 8} />}
+  </g>
+}
+const numIn = (o: Record<string, unknown> | undefined, k: string) => (typeof o?.[k] === 'number' ? o[k] as number : undefined)
+function reconcileStages(v: V): Stage[] {
+  const plan = mplanOf(v), applied = objOf(v, 'applied'), verified = objOf(v, 'verified'), n = toChange(plan)
+  const outcome = text(applied?.outcome), ops = Array.isArray(applied?.operations) ? applied!.operations.length : undefined
+  return [
+    {name: 'plan', state: plan ? (n ? 'part' : 'ok') : 'idle', result: plan ? (n ? `${n} differ` : 'satisfied') : 'not read'},
+    {name: 'apply', state: outcome === 'complete' ? 'ok' : outcome === 'partial' ? 'part' : outcome ? 'failed' : 'idle', result: outcome ? `${outcome}\n${ops ?? NONE} change${ops === 1 ? '' : 's'}` : 'not run'},
+    {name: 'verify', state: verified?.satisfied === true ? 'ok' : verified?.satisfied === false ? 'failed' : 'idle', result: verified ? (verified.satisfied === true ? 'satisfied' : 'differs') : 'not run'},
+  ]
+}
+const ORDER_OF_STAGES = ['synchronization', 'machine_apply', 'verification']
+function recoverStages(v: V): Stage[] {
+  const plan = objOf(v, 'recovery'), done = objOf(v, 'recovered'), sync = text(plan?.synchronization), failedAt = text(done?.stage)
+  const stopped = (stage: string) => failedAt === stage
+  const ranPast = (stage: string) => done !== undefined && !stopped(stage) && (failedAt === undefined || ORDER_OF_STAGES.indexOf(failedAt) > ORDER_OF_STAGES.indexOf(stage))
+  const applied = text(done?.applied), ops = numIn(done, 'operations'), changes = numIn(plan, 'changes')
+  return [
+    {name: 'plan', state: plan ? 'ok' : 'idle', result: plan ? `${changes ?? NONE} to change` : 'not read'},
+    {name: 'sync', state: sync === 'not_configured' ? 'none' : stopped('synchronization') ? 'failed' : ranPast('synchronization') ? 'ok' : sync === 'unavailable' ? 'failed' : 'idle',
+      result: stopped('synchronization') ? 'failed' : ranPast('synchronization') && sync !== 'not_configured' ? (done?.synchronized === true ? 'changed' : 'unchanged') : sync ? sync.replace('_', ' ') : NONE},
+    {name: 'apply', state: stopped('machine_apply') ? 'failed' : applied === 'complete' ? 'ok' : applied === 'partial' ? 'part' : 'idle', result: stopped('machine_apply') ? `${applied ?? 'failed'}` : applied ? `${applied}\n${ops ?? NONE} change${ops === 1 ? '' : 's'}` : 'not run'},
+    {name: 'verify', state: stopped('verification') ? 'failed' : done?.satisfied === true ? 'ok' : 'idle', result: stopped('verification') ? 'differs' : done?.satisfied === true ? 'satisfied' : 'not run'},
+  ]
+}
+
+const roleChooser = (p: ViewProps) => {
+  const roles = (json<unknown[]>(p.v, 'roles', []) ?? []).flatMap(r => { const o = rec(r); return o && text(o.role) ? [{value: o.role as string, label: o.role as string, does: text(o.path)}] : [] })
+  return <Chooser {...st(p, 'role')} label="Role" wide does="The declaration the machine is read against: a role under Control/machines." value={strOf(p.v, 'role') ?? ''} options={roles} onChange={x => p.set('role', x)} />
+}
+const modeRadio = (p: ViewProps) => <Radio {...st(p, 'mode')} label="Change" does="Off: only read. Propose: Apply, Adopt and Recover wait for your Confirm. Write: they run when you hold them, with a report." value={modeOf(p.v) ?? ''} options={MODE_OPTIONS} stack onChange={x => p.set('mode', x)} />
+
+/** An act with its ask: the act itself, or, while it waits under Propose, Confirm and Cancel. */
+function ActButton({p, act}: {p: ViewProps; act: Act}) {
+  const can = actState(p, act), stand = st(p, act), t = ACTS[act]
+  if (strOf(p.v, 'ask') === act) return <div className="rc-ask">
+    <Action {...stand} hold label="Confirm" does={`${t.label}: ${t.op}`} onPress={() => { p.set(act, strOf(p.v, 'role') ?? true); p.set('ask', undefined) }} disabled={can.ok ? undefined : can.why} />
+    <Action label="Cancel" does="Leave the machine as it is." onPress={() => p.set('ask', undefined)} />
+  </div>
+  return <Action {...stand} hold={modeOf(p.v) === 'write'} label={t.label} does={t.op} onPress={() => pressAct(p, act)} disabled={can.ok ? undefined : can.why} />
+}
+
+function entryRows(v: V, all: boolean): RowItem[] {
+  const plan = mplanOf(v)
+  if (!plan) return [{id: 'none', name: 'No reading of the plan', light: 'unknown'}]
+  const shownRows = plan.entries.filter(e => all || e.status !== 'satisfied')
+  if (!shownRows.length) return [{id: 'none', name: plan.entries.length ? 'Every requirement is satisfied' : 'The declaration asks for nothing', light: 'lit', tone: 'green'}]
+  return shownRows.map((e): RowItem => ({id: `${e.kind}:${e.id}`, name: e.id, light: e.status === 'unsupported' ? 'dark' : 'lit', tone: STATUS_TONE[e.status] ?? 'value',
+    note: `${kindOfEntry(e.kind) ?? e.kind} · ${e.status}`, why: e.status === 'missing' || e.status === 'unsupported' ? e.reason ?? 'Central gave no reason.' : undefined,
+    does: e.status === 'changeable' ? `Apply makes it so through ${e.connector ?? 'its connector'}${e.port ? ` (${e.port})` : ''}.` : `${e.kind} ${e.id}: ${e.status}.`}))
+}
+
+/** The Machine page: Declared, Reconcile and Recover, a band each. */
+function MachineBands({p}: {p: ViewProps}) {
+  const v = p.v, host = objOf(v, 'host'), done = objOf(v, 'recovered'), rp = objOf(v, 'recovery')
+  return <>
+    <Band>
+      <Section width={206}>
+        <Display w={194} h={146} label="Declared" does="A lane for each kind, named and counted. Declared on the left of the spine, observed on the right. Teal satisfied, amber changeable, orange missing, crossed unsupported."
+          corner={verdict(v)}>
+          <Ledger p={p} w={194} h={146} />
+        </Display>
+      </Section>
+      <Section label="Declared" width={104}>
+        {roleChooser(p)}
+        <Readout label="host" does="The machine as Central last observed it: its platform and architecture." value={text(host?.platform) ? `${text(host?.platform)} · ${text(host?.architecture) ?? NONE}` : undefined} />
+        <Readout label="verified" does="Whether the machine met its declaration when last checked." value={verifiedWord(v)} tone={objOf(v, 'verified')?.satisfied === true ? 'green' : objOf(v, 'verified') ? 'stall' : undefined} />
+        <Chooser {...st(p, 'refresh')} label="Refresh" wide does="When the device reads again." value={strOf(v, 'refresh') ?? ''} options={REFRESH} onChange={x => p.set('refresh', x)} />
+      </Section>
+      <Section label="Requirements" grow>
+        <Rows does="Every requirement of the declaration and its verdict. Point at the ! for Central's reason." items={entryRows(v, true)} size={8} />
+      </Section>
+    </Band>
+    <Band>
+      <Section width={206}>
+        <Display w={194} h={146} label="Reconcile" does="Plan, apply, verify: each stage with its result. Drag handle 1 to set Change.">
+          <Stages p={p} w={194} h={146} stages={reconcileStages(v)} lever />
+        </Display>
+      </Section>
+      <Section label="Change" width={72}>{modeRadio(p)}</Section>
+      <Section label="Reconcile" width={84}>
+        <Action {...st(p, 'replan')} label="Plan" does="Compare the declaration with the machine again. It changes nothing." onPress={() => p.set('replan', strOf(v, 'role') ?? true)} />
+        <ActButton p={p} act="apply" />
+        <Action {...st(p, 'verify')} label="Verify" does="Observe the machine and check it against the declaration." onPress={() => p.set('verify', strOf(v, 'role') ?? true)} />
+        <ActButton p={p} act="adopt" />
+      </Section>
+      <Section label="To change" grow>
+        <Rows does="What the plan would change, and why the rest cannot be changed here." items={entryRows(v, false)} size={8} />
+      </Section>
+    </Band>
+    <Band>
+      <Section width={206}>
+        <Display w={194} h={146} label="Recover" does="Plan, synchronise, apply, verify: each stage of the way back with its result.">
+          <Stages p={p} w={194} h={146} stages={recoverStages(v)} />
+        </Display>
+      </Section>
+      <Section label="Recover" width={104}>
+        <Readout label="synchronise" does="How your source synchronises before the machine is applied: not configured, satisfied, changeable or unavailable." value={text(rp?.synchronization)?.replace('_', ' ')} />
+        <Readout label="last" does="How the last recovery ended." value={text(done?.outcome)} tone={text(done?.outcome) === 'complete' ? 'green' : done ? 'stall' : undefined} />
+        <Action {...st(p, 'recoveryPlan')} label="Plan" does="Preview the synchronisation and the machine plan, changing nothing." onPress={() => p.set('recoveryPlan', strOf(v, 'role') ?? true)} />
+        <ActButton p={p} act="recover" />
+      </Section>
+      <Section label="Stages" grow>
+        <Rows does="Each stage of the last recovery, and where it stopped." items={recoverStages(v).map((s): RowItem => ({id: s.name, name: s.name, light: s.state === 'ok' || s.state === 'part' || s.state === 'failed' ? 'lit' : 'dark',
+          tone: s.state === 'ok' ? 'green' : s.state === 'part' ? 'accent' : 'stall', note: s.result.replace('\n', ' · '),
+          why: s.state === 'failed' ? text(done?.message) ?? 'Central gave no reason.' : undefined}))} size={6} />
+      </Section>
+    </Band>
+  </>
+}
+
+/** The Machine at full size: the four kinds side by side, each what you declared with its verdict and the connector that would change it,
+ * and what else the machine holds; under them the last apply, the last verification and the last recovery. */
+function MachinePane({p}: {p: ViewProps}) {
+  const v = p.v, declared = declaredOf(v), observed = observedOf(v), plan = mplanOf(v), host = objOf(v, 'host'), applied = objOf(v, 'applied'), done = objOf(v, 'recovered')
+  return <div className="ref-pane-body mc-pane">
+    <div className="mc-top">
+      <h3>Machine<small>{strOf(v, 'role') ?? NONE} · {text(host?.platform) ?? NONE} {text(host?.architecture) ?? ''}</small></h3>
+      <span className="mc-verdict" data-ok={toChange(plan) === 0 ? 'true' : undefined}>{verdict(v)}</span>
+    </div>
+    <div className="mc-cols">
+      {KINDS.map(k => {
+        const mine = declared?.items[k.kind], seen = observed?.[k.kind], extra = seen?.filter(id => !mine?.includes(id)) ?? []
+        return <section key={k.kind} className="mc-col">
+          <h4>{k.name}<b>{mine ? mine.length : NONE} declared · {seen ? seen.length : NONE} observed</b></h4>
+          {!declared ? <p className="mc-none">No reading of the declaration.</p> : mine!.length === 0 ? <p className="mc-none">None declared.</p>
+            : <ul className="mc-list">{mine!.map(id => { const s = statusOf(plan, k.kind, id); const e = plan?.entries.find(x => kindOfEntry(x.kind) === k.kind && x.id === id)
+              return <li key={id} data-status={s}><i /><b>{id}</b><span>{s ?? 'not planned'}{e?.connector ? ` · ${e.connector}` : ''}</span>{e?.reason && <em>{e.reason}</em>}</li> })}</ul>}
+          {extra.length > 0 && <p className="mc-extra">Also on the machine: {extra.slice(0, 12).join(' · ')}{extra.length > 12 ? ` · +${extra.length - 12}` : ''}</p>}
+        </section>
+      })}
+    </div>
+    <div className="mc-foot">
+      <span>Last apply <b>{text(applied?.outcome) ?? NONE}</b>{Array.isArray(applied?.operations) ? ` · ${applied!.operations.length} change${applied!.operations.length === 1 ? '' : 's'}` : ''}</span>
+      <span>Verified <b>{verifiedWord(v) ?? NONE}</b></span>
+      <span>Last recovery <b>{text(done?.outcome) ?? NONE}</b>{text(done?.message) ? ` · ${text(done?.message)}` : ''}</span>
+    </div>
+  </div>
+}
+
+/** What this Mac reported (machine.account, machine.plan, 21 Oct), with a workstation role declared beside it. */
+const OBSERVED_CAPS = ['MachineInspector', 'claude-code@source:actuation-harness-capability', 'claude-code@source:workcell-harness-instance', 'codex@source:actuation-harness-capability',
+  'cursor-cli@source:actuation-harness-detection', 'gemini@source:actuation-harness-capability', 'hermes-acp@source:actuation-harness-detection', 'hermes@source:actuation-harness-detection',
+  'ollama@source:workcell-harness-instance', 'openclaw@source:actuation-harness-capability', 'opencode@source:workcell-harness-instance', 'pi@source:actuation-harness-capability',
+  'pi@source:workcell-harness-instance', 'prime@source:workcell-harness-instance', 'zcode@source:actuation-harness-capability']
+const WORKSTATION = {
+  bindings: [{kind: 'workcell', reference: 'workcell:mac'}],
+  capabilities: ['claude-code@source:actuation-harness-capability', 'codex@source:actuation-harness-capability', 'pi@source:actuation-harness-capability', 'hermes@source:actuation-harness-capability'],
+  packages: [{id: 'git', state: 'present'}, {id: 'node', state: 'present'}, {id: 'rustup', state: 'present'}, {id: 'redis', state: 'present'}, {id: 'tailscale', state: 'present'}],
+  configurations: [{id: 'git-config', state: 'present'}, {id: 'zshrc', state: 'present'}],
+  services: [{id: 'redis-now', running: true, enabled: true}, {id: 'tailscaled', running: true}],
+}
+const WORKSTATION_PLAN = {
+  entries: [
+    {kind: 'capability', id: 'claude-code@source:actuation-harness-capability', status: 'satisfied'}, {kind: 'capability', id: 'codex@source:actuation-harness-capability', status: 'satisfied'},
+    {kind: 'capability', id: 'pi@source:actuation-harness-capability', status: 'satisfied'},
+    {kind: 'capability', id: 'hermes@source:actuation-harness-capability', status: 'unsupported', reason: 'No eligible Connector declares a compatible capability installer.'},
+    {kind: 'package', id: 'git', status: 'satisfied'}, {kind: 'package', id: 'node', status: 'satisfied'},
+    {kind: 'package', id: 'rustup', status: 'changeable', port: 'PackageManager', connector: 'homebrew'},
+    {kind: 'package', id: 'redis', status: 'satisfied'}, {kind: 'package', id: 'tailscale', status: 'satisfied'},
+    {kind: 'configuration', id: 'git-config', status: 'satisfied'},
+    {kind: 'configuration', id: 'zshrc', status: 'changeable', port: 'ConfigurationSource', connector: 'personal.git-sync'},
+    {kind: 'service', id: 'redis-now', status: 'satisfied'},
+    {kind: 'service', id: 'tailscaled', status: 'missing', reason: 'The service is not observed, and no eligible Connector starts it.'},
+  ],
+  summary: {satisfied: 9, changeable: 2, missing: 1, unsupported: 1},
+}
+const MACHINE_DEFAULTS = {
+  light: 'lit', role: 'workstation', mode: 'propose', refresh: 'open',
+  roles: JSON.stringify([{role: 'current', path: 'Control/machines/current.json', requirements: 0}, {role: 'workstation', path: 'Control/machines/workstation.json', requirements: 13}]),
+  host: JSON.stringify({hostname: 'unknown-host', platform: 'macos', architecture: 'aarch64', observedAt: 1792547554, stale: false, connector: 'read-models.harness-capability'}),
+  declared: JSON.stringify(WORKSTATION),
+  observed: JSON.stringify({capabilities: OBSERVED_CAPS, packages: ['git', 'node', 'redis', 'tailscale', 'ripgrep'], configurations: ['git-config'], services: ['redis-now']}),
+  plan: JSON.stringify(WORKSTATION_PLAN),
+  applied: JSON.stringify({outcome: 'partial', operations: [{kind: 'package', id: 'rustup', port: 'PackageManager', connector: 'homebrew', changed: true}]}),
+  verified: JSON.stringify({satisfied: false}),
+  recovery: JSON.stringify({synchronization: 'changeable', connector: 'personal.git-sync', changes: 4}),
+}
+const machineOf = (p: ViewProps) => scoped(p, 'mc.')
+
 // ---------------------------------------------------------------- the device
 
 const SESSIONS = [
@@ -510,24 +858,32 @@ const PLAN_UNMET = {status: 'unsatisfiable', bindings: [PLAN.bindings[0]!],
     {requirement: 'exposure:preview', necessity: 'optional', reason: 'no offer supports this material requirement'}]}
 
 /** Every key the owners report or the shell holds: the "No readings" fixture drops all of them. */
-const KEYS = ['light', 'here', 'where', 'machine', 'machines', 'offers', 'plan']
+const KEYS = ['light', 'here', 'where', 'machine', 'machines', 'offers', 'plan', ...Object.keys(MACHINE_DEFAULTS).map(k => `mc.${k}`)]
 const NOTHING: Record<string, undefined> = Object.fromEntries(KEYS.map(k => [k, undefined]))
+const PAGE_IDS = ['route', 'standing', 'machine'] as const
+const pageOf = (p: ViewProps): (typeof PAGE_IDS)[number] => (p.page === 'standing' || p.page === 'machine' ? p.page : 'route')
 
 export const design: DesignedDevice = {
   id: 'workcell:remote-carrier',
   title: 'Remote carrier',
   kind: 'connection',
   firstPage: 'route',
-  defaults: {light: 'dark', here: 'workcell:mac', where: 'this', machine: 'omarchy', machines: JSON.stringify(MACHINES), offers: JSON.stringify(OFFERS), plan: JSON.stringify(PLAN)},
+  defaults: {light: 'dark', here: 'workcell:mac', where: 'this', machine: 'omarchy', machines: JSON.stringify(MACHINES), offers: JSON.stringify(OFFERS), plan: JSON.stringify(PLAN),
+    ...prefixed('mc.', MACHINE_DEFAULTS) as Record<string, string>},
   fixtures: {
     'Reads only, one grant ended': {},
     'A plan that cannot be met': {light: 'lit', where: 'connected', machine: 'omarchy', machines: JSON.stringify(READY), offers: JSON.stringify(OFFERS_OMARCHY), plan: JSON.stringify(PLAN_UNMET)},
     'Ready and carried': {light: 'lit', where: 'connected', machine: 'omarchy', machines: JSON.stringify(READY)},
+    'This Mac, nothing declared': prefixed('mc.', {role: 'current',
+      declared: JSON.stringify({bindings: [{kind: 'workcell', reference: 'workcell:mac'}], capabilities: [], packages: [], configurations: [], services: []}),
+      observed: JSON.stringify({capabilities: OBSERVED_CAPS, packages: [], configurations: [], services: []}), plan: JSON.stringify({entries: [], summary: {satisfied: 0, missing: 0, changeable: 0, unsupported: 0}}),
+      applied: undefined, verified: JSON.stringify({satisfied: true}), recovery: JSON.stringify({synchronization: 'not_configured', changes: 0})}),
+    'Recovered in part': prefixed('mc.', {recovered: JSON.stringify({outcome: 'partial', stage: 'machine_apply', message: 'Recovery machine application did not complete: one operation failed.',
+      synchronized: true, applied: 'partial', operations: 1})}),
     'No readings': NOTHING,
   },
 
-  folded: p => <Folded title="Remote carrier" light={lightOf(p)}
-    readings={[placeName(p.v) ?? NONE]} onUnfold={p.nav.unfold} />,
+  folded: p => <Folded title="Remote carrier" light={lightOf(p)} onUnfold={p.nav.unfold} />,
 
   compact: p => <Panel title="Remote carrier" view="compact" {...head(p)} onSelect={p.nav.select}>
     <Section width={152}>
@@ -539,16 +895,18 @@ export const design: DesignedDevice = {
     </Section>
     <Section label="Reading" width={80}>
       {standingReadout(p.v)}
+      {rttReadout(p.v)}
     </Section>
   </Panel>,
 
   whole: p => {
     const chosen = chosenOf(p.v, machinesOf(p.v))
-    const page = p.page === 'standing' ? 'standing' : 'route'
-    const plan = planOf(p.v)
-    const pages = [{id: 'route', label: 'Route'}, {id: 'standing', label: 'Standing', light: (plan?.status ? (plan.status === 'unsatisfiable' ? 'dark' : 'lit') : undefined) as LightState | undefined}]
+    const page = pageOf(p)
+    const plan = planOf(p.v), differ = toChange(mplanOf(machineOf(p).v))
+    const pages = [{id: 'route', label: 'Route'}, {id: 'standing', label: 'Standing', light: (plan?.status ? (plan.status === 'unsatisfiable' ? 'dark' : 'lit') : undefined) as LightState | undefined},
+      {id: 'machine', label: 'Machine', light: (differ === undefined ? undefined : differ ? 'dark' : 'lit') as LightState | undefined}]
     return <Panel title="Remote carrier" view="whole" {...head(p)} pages={pages} page={page} onPage={p.setPage}>
-      {page === 'standing' ? <StandingBands p={p} /> : <><Band>
+      {page === 'standing' ? <StandingBands p={p} /> : page === 'machine' ? <MachineBands p={machineOf(p)} /> : <><Band>
         <Section width={206}>
           <RouteDisplay p={p} g={WHOLE} />
         </Section>
@@ -572,18 +930,28 @@ export const design: DesignedDevice = {
     </Panel>
   },
 
-  full: p => <Pane v={p.v} />,
+  full: p => (pageOf(p) === 'machine' ? <MachinePane p={machineOf(p)} /> : <Pane v={p.v} />),
 
   widget: p => {
+    if (pageOf(p) === 'machine') {
+      const m = machineOf(p), differ = toChange(mplanOf(m.v))
+      return <Tile title={`Machine · ${strOf(m.v, 'role') ?? NONE}`} light={lightOf(p)} span={2} onFull={p.nav.full}>
+        <Display w={96} h={96} label="The machine" does="Declared left of the spine, observed right. Teal satisfied, amber changeable, orange missing.">
+          <Ledger p={m} w={96} h={96} small />
+        </Display>
+        <div className="rc-tile-side">
+          <Readout big label="differ" does="Requirements the machine does not meet as declared." value={differ} tone={differ ? 'accent' : 'green'} />
+          <Readout label="verified" does="Whether the machine met its declaration when last checked." value={verifiedWord(m.v)} tone={objOf(m.v, 'verified')?.satisfied === true ? 'green' : objOf(m.v, 'verified') ? 'stall' : undefined} />
+        </div>
+      </Tile>
+    }
     return <Tile title="Remote carrier" light={lightOf(p)} span={2} onFull={p.nav.full}>
       <div className="rc-tile-pic">
         <RouteDisplay p={p} g={TILE} live={false} />
-        <span className="rc-tile-name" data-i={`Place|${placeName(p.v) ?? 'No reading of the place.'}`}>{placeName(p.v) ?? NONE}</span>
+        <span className="rc-tile-name" data-i={`Machine|${placeName(p.v) ?? 'No reading of the place.'}`}>{placeName(p.v) ?? NONE}</span>
       </div>
       <div className="rc-tile-side">
-        {standingReadout(p.v)}
-        {rttReadout(p.v)}
-        {credReadout(p.v)}
+        <Readout big label="round trip" does="The time for one message to go to the chosen machine and return." value={msText(chosenOf(p.v, machinesOf(p.v))?.rtt)} tone="value" />
       </div>
     </Tile>
   },

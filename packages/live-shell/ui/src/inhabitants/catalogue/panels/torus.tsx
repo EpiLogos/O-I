@@ -16,10 +16,10 @@
 // the owner's refusal. Writes: stage.procedure (the one you chose; the shell holds it), stage.budget (1..1024, 16: `--max-evaluations`), and
 // four acts, each on its own key with the procedure's ref: stage.evaluate, stage.bind, stage.unbind, stage.retire. No kernel op reaches
 // `ql stage` yet: the binding owes the route, and the host stands the acts disabled with that reason until it lands.
-// The Rack page carries the rack of M1′ (quaternal-logic__map-rack.tsx), on the keys rack and rack.part.
+// The Rack page carries the rack of M1′ (the rack kit, map-rack.tsx), on the keys rack and rack.part.
 import type {CSSProperties} from 'react'
 import {Action, Band, Chooser, Dial, Display, Folded, Handle, Meter, Panel, Radio, Readout, Rows, Section, Tile, Toggle, ValueBox, type LightState, type RowItem} from '../../sdk/panel'
-import {RACK_M1, RackBands} from './quaternal-logic__map-rack'
+import {RACK_M1, RackBands} from './map-rack'
 import {LIVE_CADENCE_OPTIONS, LIVE_CONTEXT_FRAME_OPTIONS, LIVE_HARMONIC_OPTIONS, LIVE_LENS_OPTIONS} from '../../../live/torusInstrument'
 import {NONE, boolOf, clampTo, db, fixed, has, json, num, numOf, on, pct, secs, shown, signed, st, strOf, type DesignedDevice, type ViewProps} from './design'
 

@@ -37,3 +37,22 @@
 .wc-surfaces code { font: 11px var(--mono, ui-monospace, monospace); color: var(--dp-value, #5cc6b4); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .wc-surfaces span { color: var(--text-dim, #a3a8ad); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .wc-surfaces .dp-cell { width: auto; }
+
+/* The tile's agents: a face mark and a name each, pressed to select the agent's track. */
+.wc-face { font: inherit; padding: 0 6px 0 0; border: 0; background: none; color: var(--text, #d4d7da); cursor: pointer; }
+.wc-face i { display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: var(--accent, #ffbe00); margin-right: 4px; vertical-align: 1px; }
+.wc-face:focus-visible { outline: 1px solid var(--accent, #ffbe00); }
+/* The tile's gateways: one line each with its state dot, and Show. */
+.wc-gws { margin-top: auto; padding: 3px 7px 0; border-top: 1px solid var(--line, #3a3d41); font-size: 10px; line-height: 13px; }
+.wc-gws-head { display: flex; align-items: center; justify-content: space-between; }
+.wc-gws-show { display: flex; gap: 2px; }
+.wc-gws-show button { font: inherit; font-size: 9px; line-height: 12px; padding: 0 4px; border: 1px solid var(--line, #3a3d41); background: var(--dp-field, #26292c); color: var(--text-dim, #a3a8ad); cursor: pointer; }
+.wc-gws-show button[aria-checked="true"] { background: var(--dp-on, #ffbe00); border-color: var(--dp-on, #ffbe00); color: var(--dp-on-text, #111); }
+.wc-gws-list { list-style: none; margin: 1px 0 0; padding: 0; }
+.wc-gws-list button { display: grid; grid-template-columns: 9px minmax(0, auto) minmax(0, 1fr); gap: 0 5px; align-items: center; width: 100%; padding: 0; border: 0; background: none; font: inherit; text-align: left; color: var(--text, #d4d7da); cursor: pointer; }
+.wc-gws-list button > * { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wc-gws-list b { font-weight: 500; }
+.wc-gws-list span { color: var(--text-dim, #a3a8ad); }
+.wc-gws-list button[data-state="refused"] b, .wc-gws-list button[data-state="refused"] span { color: var(--text-faint, #71767c); }
+.wc-gws-list button:focus-visible { outline: 1px solid var(--accent, #ffbe00); }
+.wc-gws-more, .wc-gws-none { margin: 0; color: var(--text-faint, #71767c); }

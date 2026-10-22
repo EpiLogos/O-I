@@ -71,3 +71,31 @@
 .rc-ops li { height: 17px; padding: 0 7px; line-height: 15px; border: 1px solid var(--line, #24262a); font-size: 9.5px; color: var(--text-faint, #71767c); }
 .rc-ops li[data-granted="true"] { border-color: var(--dp-value, #5cc6b4); color: var(--dp-value, #5cc6b4); }
 .rc-ops li[data-granted="unknown"] { border-style: dashed; }
+
+/* The Machine page: the ask under an act that waits for Confirm, and the Machine at full size (declared beside observed, kind by kind, and the last reports). */
+.rc-ask { display: flex; gap: 4px; width: 100%; }
+.rc-ask > * { flex: 1 1 0; }
+.mc-pane { color: var(--text); font: 11px var(--font-ui, sans-serif); }
+.mc-top { flex: none; display: flex; align-items: baseline; gap: 18px; padding: 10px 16px 8px; background: var(--bg-0); border-bottom: 1px solid var(--line); }
+.mc-top h3 { margin: 0; font-size: 13px; font-weight: 600; }
+.mc-top h3 small { margin-left: 8px; font-size: 11px; font-weight: 400; color: var(--text-faint); }
+.mc-verdict { margin-left: auto; color: var(--dp-on); font-variant-numeric: tabular-nums; }
+.mc-verdict[data-ok="true"] { color: var(--green); }
+.mc-cols { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.mc-col { min-width: 0; min-height: 0; overflow: hidden; border-right: 1px solid var(--line); padding: 0 0 8px; }
+.mc-col:last-child { border-right: 0; }
+.mc-col h4 { display: flex; align-items: center; gap: 7px; margin: 0; padding: 10px 14px 6px; font-size: 10px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--text-dim); }
+.mc-col h4 b { margin-left: auto; font-weight: 400; letter-spacing: 0; text-transform: none; color: var(--text-faint); }
+.mc-list { list-style: none; margin: 0; padding: 0 10px; }
+.mc-list li { display: grid; grid-template-columns: 8px minmax(0, 1fr); gap: 1px 8px; align-items: center; padding: 4px 4px; border-bottom: 1px solid color-mix(in srgb, var(--line) 70%, transparent); }
+.mc-list li i { width: 7px; height: 7px; border-radius: 50%; border: 1px solid var(--text-faint); }
+.mc-list li[data-status="satisfied"] i { background: var(--dp-value); border-color: var(--dp-value); }
+.mc-list li[data-status="changeable"] i { background: var(--dp-on); border-color: var(--dp-on); }
+.mc-list li[data-status="missing"] i { background: var(--stall); border-color: var(--stall); }
+.mc-list li b { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mc-list li span, .mc-list li em { grid-column: 2; color: var(--text-dim); font-size: 10.5px; font-style: normal; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mc-list li em { color: var(--text-faint); }
+.mc-none { margin: 0; padding: 4px 14px; color: var(--text-faint); }
+.mc-extra { margin: 8px 14px 0; color: var(--text-faint); font-size: 10.5px; line-height: 1.45; max-height: 6em; overflow: hidden; }
+.mc-foot { flex: none; display: flex; gap: 28px; padding: 8px 16px; border-top: 1px solid var(--line); background: var(--bg-0); color: var(--text-dim); }
+.mc-foot b { font-weight: 500; color: var(--text); }

@@ -14,15 +14,11 @@ export function softwareFactoryFamilyManifest(): FamilyManifest {
         hint: 'The selected run\'s task list (op factory_attempt_task_list_read). No row source is composed in this browser yet; the same tasks show as the run\'s tree under Runs.'},
     ],
     faces: [
-      {id: 'agent-custody', presentations: ['compact', 'expanded'], liveSemantic: 'macro', invariant: {maps: [{key: 'autonomy', range: ['suggest', 'review', 'auto']}]}, note: 'Autonomy, review gate, write mode, hand-back on agent device (shared face with Actuation).'},
       {id: 'context-write-mode', presentations: ['compact', 'expanded'], liveSemantic: 'return', invariant: {routesTo: 'shell.setWriteArm'}, note: 'Write receipts and Return on context-world device.'},
       {id: 'ledger', presentations: ['compact'], liveSemantic: 'track', invariant: {stream: 'the Factory ledger (main-track receipts)'}, note: 'Main-track ledger device and dock tile.'},
       {id: 'approvals', presentations: ['compact', 'full'], liveSemantic: 'return', invariant: {routesTo: 'kernel:harness_agent_control'}, note: 'Default approvals and approval queue tile.'},
-      {id: 'run-device', presentations: ['expanded', 'full'], liveSemantic: 'track', invariant: {stream: 'the Factory run (one session\'s task stream)'}, note: 'Factory run on timeline when projected.'},
-      // The session's conversation, its clips and its crew (DLW §19.4, §19.1, §19.15), drawn on their owners by the Factory chain
-      // (agent/devices/threadBinding.ts, taskBindings.ts, sessionChainBindings.ts).
-      {id: 'thread', presentations: ['compact', 'expanded', 'full'], liveSemantic: 'device-instrument', invariant: {generates: 'kernel:harness_agent_control'}, note: 'One session\'s conversation: the Agent\'s Full (DLW §19.4, §19.4). Its words go the Agent\'s way (the steer line or the next task).'},
-      {id: 'tasks', presentations: ['compact', 'expanded', 'full'], liveSemantic: 'track', invariant: {stream: 'one session\'s tasks (agency_read, encounter_task_read, temporal_events_read)'}, note: 'The clips on one session\'s track (DLW §19.1).'},
+      // The session's crew (DLW §19.15), drawn on its owner by the Factory chain. The Thread, Tasks, Run and Custody faces are retired
+      // as faces of their own (22 Oct manual rewrite); their bindings stay for the devices that carry them.
       {id: 'agentset-rack', presentations: ['compact', 'expanded', 'full'], liveSemantic: 'rack', invariant: {chains: ['agent-session'], chainSelector: 'member (state light)'}, note: 'A group\'s sessions as one unit, one chain for each member (DLW §19.15).'},
       // The Main track's two design-package devices (DLW §16.2 "On the Main track: the Run map, the experiments, Approvals and the
       // prompt pads"), drawn on their bindings (agent/devices/runMapBinding.ts, promptPadsBinding.ts).

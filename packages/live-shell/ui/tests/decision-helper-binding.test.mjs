@@ -38,7 +38,7 @@ const {loadAgentShellFamilies} = await import('../src/inhabitants/loadAgentShell
 const host = await import('../src/frame/devices/deviceHost.tsx')
 const bind = await import('../src/agent/devices/designBindings.ts')
 const helper = await import('../src/agent/devices/decisionHelperBinding.ts')
-const {design} = await import('../src/inhabitants/catalogue/panels/ai-kit__decision-helper.tsx')
+const {design} = await import('../src/inhabitants/catalogue/panels/decision-helper.tsx')
 family.resetFamilyManifestsForTest()
 loadAgentShellFamilies()
 

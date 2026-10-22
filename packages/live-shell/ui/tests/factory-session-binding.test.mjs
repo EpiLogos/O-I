@@ -43,8 +43,9 @@ const {designKey} = await import('../src/frame/devices/designs.ts')
 const host = await import('../src/frame/devices/deviceHost.tsx')
 const bind = await import('../src/agent/devices/designBindings.ts')
 const own = await import('../src/agent/devices/sessionChainBindings.ts')
-const {design: runDesign} = await import('../src/inhabitants/catalogue/panels/software-factory__run-device.tsx')
-const {design: custodyDesign} = await import('../src/inhabitants/catalogue/panels/software-factory__agent-custody.tsx')
+// The Run's own design (software-factory:run-device) and Custody's face were retired as devices of their own in the 22 Oct manual
+// rewrite; their bindings stay, and Custody's pages are the Agent's (agent-custody.tsx).
+const {design: custodyDesign} = await import('../src/inhabitants/catalogue/panels/agent-custody.tsx')
 const {design: agentsetDesign} = await import('../src/inhabitants/catalogue/panels/software-factory__agentset-rack.tsx')
 
 family.resetFamilyManifestsForTest()
@@ -70,9 +71,9 @@ const GROUP = track({sessionRef: 'session-space/fx', depth: 0, parentRef: null, 
 const TRACKS = [GROUP, LEAD, HELPER, IDLE, OTHER]
 const THREAD = JSON.stringify([{who: 'you', kind: 'you', text: 'Return the correction'}])
 
-test('the three devices are keyed to their designs exactly, from Software Factory\'s admitted faces', () => {
+test('the Agentset rack is keyed to its design exactly, from Software Factory\'s admitted faces', () => {
   const devices = own.sessionDevices()
-  for (const [device, design] of [[devices.run, runDesign], [devices.custody, custodyDesign], [devices.agentset, agentsetDesign]]) {
+  for (const [device, design] of [[devices.agentset, agentsetDesign]]) {
     assert.ok(device, `${design.id}: the family admits the face`)
     assert.equal(designKey(device.family, device.face.id), design.id)
   }
@@ -95,10 +96,6 @@ test('the Run reads the session\'s lane on the run model\'s own axis: its tasks 
   for (const key of ['attempts', 'take', 'events', 'color', 'telemetry', 'solo', 'open']) assert.equal(values[key], undefined, `${key}: no reading`)
   assert.equal(JSON.parse(values.sessions).length, 4, 'the sessions to choose from, groups left out')
   assert.deepEqual(own.runValues({session: GROUP, tracks: TRACKS, nowUnixMs: NOW, agent: {}, holds: bind.chainHolds()}), {watch: 'auto', lanes: 'messages', overview: true}, 'a group is no session')
-  for (const [key, value] of Object.entries(runDesign.defaults)) {
-    if (key === 'light' || key === 'overview') continue // lit is the Agent's reading; Overview On is the manual's start as well as the design's
-    assert.notDeepEqual([key, values[key]], [key, value], `${key} carries the design's default`)
-  }
 })
 
 test('the Run holds its view, moves THE selection when you choose a session, and refuses Telemetry and Solo by name', async () => {
@@ -163,13 +160,11 @@ test('the Agentset rack: a group\'s sessions as its chains, each named by its ag
   bind.resetHolds()
 })
 
-test('the three designs draw on their bindings in all five views — no NaN, no undefined, never their fixtures — each refusal drawn as why', () => {
+test('the two designs draw on their bindings in all five views — no NaN, no undefined, never their fixtures — each refusal drawn as why', () => {
   bind.resetHolds()
   host.resetHost()
   const scope = {standing: {writeMode: {disabled: 'Write mode: missing op (WO-SF2)'}}}
   const cases = [
-    [runDesign, own.runBinding({session: LEAD, tracks: TRACKS, nowUnixMs: NOW, agent: {light: 'lit', thread: THREAD}, holds: bind.chainHolds()}, {select() {}}),
-      /Fizz|re-plan port|widgets API docs|portPlan/, [own.RUN_REFUSE.telemetry]],
     [custodyDesign, own.custodyBinding({sessionRef: LEAD.sessionRef, autonomy: 'review', agent: {light: 'lit'}}, scope), /drop old captures|portPlan|Kite/, [own.CUSTODY_REFUSE.gate]],
     [agentsetDesign, own.agentsetBinding({group: GROUP, tracks: TRACKS, holds: bind.chainHolds()}), /oi-guardians|aikit-guardian|tsc · three roots/, [own.AGENTSET_REFUSE.fanOut]],
   ]
@@ -184,7 +179,7 @@ test('the three designs draw on their bindings in all five views — no NaN, no 
     const all = drawn.join('\n')
     for (const why of reasons) assert.ok(all.includes(escaped(why)), `${design.id}: a refused control says why (${why})`)
   }
-  assert.ok(hosted(agentsetDesign, cases[2][1]).join('\n').includes('aletheia'), 'the rack draws the group\'s real member')
+  assert.ok(hosted(agentsetDesign, cases[1][1]).join('\n').includes('aletheia'), 'the rack draws the group\'s real member')
   host.resetHost()
 })
 

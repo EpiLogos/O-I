@@ -1,5 +1,6 @@
 // Settings (manual §10.10, settings:window): the window ⌘, opens, after Live's Settings: its pages down the left, the page beside them.
-// It holds what the owners of your world let you set: the harnesses and models new conversations start with, the credentials they
+// The first time the DLW opens, the window opens on Setup (§10.11): five steps that bring in what you have, each found, previewed and
+// accepted in turn. It holds what the owners of your world let you set: the harnesses and models new conversations start with, the credentials they
 // reach providers through, the profiles you keep, the machines a workcell carries work to, the routines that run verified Methods,
 // the look of the window, the installed products, and each owner's System reading (what it declares, what is in effect, what is
 // active, what waits staged). The window stands on no chain, so it has Full only. One design with pages, not a design for each page:
@@ -44,11 +45,20 @@
 // Machines:     machines [{label, endpoint, credential?, expects: [op], note?}]  Workcell's declarations (`workcell machine list`);
 //               connections [{label, state, protocol?, remote?, granted: [op], reconciled?, detail?}]  its receipts (`workcell
 //               connections list`: connected | disconnected | refused | incompatible).
+// Setup (manual §10.11; the kernel's `setup` op over native oi's adoption: discover, plan, apply with the plan's review token):
+//               setup [{step: ground | harnesses | credentials | machines | projects, state: found | accepted, items: [{name, where?,
+//               change?, why?}]}]  what each step found, the change Accept would make, or why setup leaves it alone; setupStep the
+//               step shown; plan [text] the steps the owner would take, in order, once you press Preview.
+//               folders [{path, title, place: work | elsewhere, finds: none | one | many | unreadable | ground, wikis: [path],
+//               material: [name], central: [part]}]  the folders the Projects step read: what it found, the wikis a folder keeps, its
+//               own material and the ProjectCentral parts already there; folder, make (create | keep | copy), wiki and where
+//               (stands | work) are your choices for the folder shown.
 // Automations (AIKit, kernel op `routine`): routines [{ref, name, state, when?, next?, method, revision?, verified?, unattended?}];
 //               methods [{method, revision, runs}]; timers [{name, provider, when?}]; history [{at, routine, outcome, delivery?}];
 //               options {proofs, triggers, authorities, profiles: [{ref, title}]} for a new routine (RoutineAuthoringSource.options);
 //               contexts [{ref, title}] the work contexts routines are read in: this AIKit home, or a project (the routine op's
-//               `project`); `context` is the chosen one.
+//               `project`); `context` is the chosen one. new.from names what opened the form (a pad's Make routine, §19.22): this page
+//               is the one place a run is given a time.
 // Appearance:   theme {saved, observed?} (presentation_read, presentation_observe: light | dark | system, or a library theme's id);
 //               themes [{id, name}] the library; imported [{id, name}]; visualLayer, welcome (the renderer's retained store).
 // Products:     products [{id, version?, state, reason?, actions: [{ref, title, runnable, why?}], observed?, digest?,
@@ -80,6 +90,10 @@
 //   RemoteMachinesSource has no native binding and the kernel no route.
 //   enableRoutine <ref>, reprove <ref>, createRoutine (new.name, new.method, new.proof, new.trigger, new.authority, new.profile):
 //   RoutineAuthoringSource, no native binding yet.
+//   acceptStep <step> (setup apply on the plan whose changes the step's table shows, held): exists for Ground, Harnesses and
+//   skills, Credentials and Machines. For Projects, previewStep 'projects' (Preview: the plan, read into `plan`) and acceptStep
+//   'projects' with folder, make, wiki and where: the adoption plan carries no project step yet, so no owner op makes a
+//   ProjectCentral round a folder or keeps or copies its wiki. rereadSetup (setup discover) exists.
 //   The host stands each act without an owner disabled, with that reason.
 // A key the owner has not reported is absent: its cell draws "—", and the page names the missing reading.
 import {useState, type ReactNode} from 'react'
@@ -99,6 +113,7 @@ const strs = (x: unknown): string[] => (Array.isArray(x) ? x.filter((s): s is st
 /** The pages, in the window's order, each with the category the shell files settings under (settings/model.ts categories). A page
  * marked `contributed` shows only when an owner contributes a setting to it, as in the shell. */
 const PAGES = [
+  {id: 'setup', label: 'Setup', category: 'setup', group: ''},
   {id: 'harnesses', label: 'Harnesses & models', category: 'agents', group: 'Preferences'},
   {id: 'skills', label: 'Skills & methods', category: 'skills', group: 'Preferences', contributed: true},
   {id: 'profiles', label: 'Profiles', category: 'profiles', group: 'Preferences'},
@@ -113,7 +128,7 @@ const PAGES = [
   {id: 'system', label: 'System', category: 'inspection', group: 'System'},
 ] as const
 type PageId = typeof PAGES[number]['id'] | 'review'
-const pageOf = (p: ViewProps): PageId => (p.page === 'review' || PAGES.some(x => x.id === p.page) ? p.page as PageId : 'harnesses')
+const pageOf = (p: ViewProps): PageId => (p.page === 'review' || PAGES.some(x => x.id === p.page) ? p.page as PageId : 'setup')
 const pageOfCategory = (c: string): PageId => PAGES.find(x => x.category === c)?.id ?? 'system'
 
 const OWNER: Readonly<Record<string, string>> = {'ai-kit': 'AIKit', 'software-factory': 'Factory', central: 'Central', oi: 'O:I', 'quaternal-logic': 'Quaternal Logic',
@@ -246,6 +261,150 @@ function ScopeBar({p}: {p: ViewProps}) {
   return <Chooser {...st(p, 'scope')} label="Applies to" does="The scope the settings below are read and changed at: this machine, a world, a project or a workcell."
     value={now ? opt(now) : ''} options={scopes.map(s => ({value: opt(s), label: txt(s.title) ?? opt(s)}))}
     onChange={x => { const s = scopes.find(c => opt(c) === x); if (s) p.set('scope', JSON.stringify(s)) }} />
+}
+
+// ---------------------------------------------------------------- Setup (manual §10.11)
+
+/** Setup's five steps, in order, each with the owner whose Accept makes its change and the page you come back to it on. */
+const STEPS = [
+  {id: 'ground', label: 'Ground', owner: 'Central', back: 'Setup'},
+  {id: 'harnesses', label: 'Harnesses and skills', owner: 'AIKit', back: 'Harnesses & models, Skills & methods'},
+  {id: 'credentials', label: 'Credentials', owner: 'AIKit', back: 'Credentials'},
+  {id: 'machines', label: 'Machines', owner: 'Workcell', back: 'Machines & services'},
+  {id: 'projects', label: 'Projects', owner: 'Central', back: 'the browser\'s Work place'},
+] as const
+type StepId = typeof STEPS[number]['id']
+const STEP_LIGHT: Readonly<Record<string, LightState>> = {accepted: 'lit', found: 'dark'}
+
+/** What the Projects step found in a folder, and what each choice of Make does there (manual §10.11, The Projects step). */
+const FINDS: Readonly<Record<string, string>> = {none: 'no wiki', one: 'one wiki', many: 'wikis', unreadable: 'cannot be read', ground: 'ground in place'}
+function makeOptions(f: Rec | undefined, wiki: string | undefined): Option<string>[] {
+  const finds = txt(f?.finds), many = finds === 'many' && !wiki
+  const closed = finds === 'unreadable' ? 'Its ProjectCentral cannot be read. Mend its manifest by hand.' : finds === 'ground' ? 'Its ground is in place: nothing to make.' : undefined
+  return [
+    {value: 'create', label: 'Create', does: 'ProjectCentral is made round the folder. Nothing in the folder moves.',
+      why: closed ?? (finds === 'none' ? undefined : 'The folder keeps a wiki: keep it in place or copy it in.')},
+    {value: 'keep', label: 'Keep in place', does: 'The wiki stays where it is and joins the world\'s wiki as one of its sources.',
+      why: closed ?? (finds === 'none' ? 'The folder keeps no wiki.' : many ? 'Choose the wiki first.' : undefined)},
+    {value: 'copy', label: 'Copy in', does: 'The wiki is copied into ProjectCentral. The original stays where it was.',
+      why: closed ?? (finds === 'none' ? 'The folder keeps no wiki.' : many ? 'Choose the wiki first.' : undefined)},
+  ]
+}
+
+/** The folder as setup reads it: its own material at the left, ProjectCentral at the right, each part dashed where Accept would make
+ * it. A wiki the folder keeps is marked; Keep in place joins it to the world's wiki as a source, Copy in copies it across. */
+const PC_PARTS = ['user', 'agents', 'wiki', 'now'] as const
+function ProjectDrawing({f, make, wiki, where}: {f: Rec; make: string | undefined; wiki: string | undefined; where: string}) {
+  const W = 372, H = 150, material = strs(f.material).slice(0, 6), wikis = strs(f.wikis), present = strs(f.central), finds = txt(f.finds)
+  const chosenWiki = wikis.length === 1 ? wikis[0] : wiki
+  const moved = where === 'work' && txt(f.place) !== 'work'
+  const makes = finds !== 'unreadable' && finds !== 'ground'
+  const rowY = (i: number) => 44 + i * 16, partY = (i: number) => 38 + i * 26
+  const wikiRow = chosenWiki ? material.findIndex(m => chosenWiki === m || chosenWiki.startsWith(`${m}/`)) : -1
+  return <svg className="st-draw" viewBox={`0 0 ${W} ${H}`} width={W} height={H} role="img"
+    aria-label={`${txt(f.title) ?? 'The folder'} and its ProjectCentral: ${makes ? 'the dashed parts would be made' : FINDS[finds ?? ''] ?? 'not read'}`}>
+    <rect x={6} y={18} width={168} height={H - 24} rx={3} className="st-box" data-make={moved ? 'true' : undefined} />
+    <text x={14} y={32} className="st-draw-title">{moved ? `Work/${txt(f.title) ?? ''}` : txt(f.title) ?? NONE}</text>
+    <text x={6} y={12} className="st-draw-faint">{moved ? `copied from ${txt(f.path) ?? NONE}` : txt(f.path) ?? NONE}</text>
+    {material.map((m, i) => <g key={m}>
+      <rect x={14} y={rowY(i) - 9} width={7} height={9} className="st-file" data-wiki={wikis.some(w => w === m || w.startsWith(`${m}/`)) ? 'true' : undefined} />
+      <text x={26} y={rowY(i)} className={i === wikiRow ? 'st-draw-wiki' : undefined}>{m}</text>
+    </g>)}
+    <rect x={198} y={18} width={168} height={H - 24} rx={3} className="st-box" data-make={makes && !present.length ? 'true' : undefined} data-bad={finds === 'unreadable' ? 'true' : undefined} />
+    <text x={206} y={32} className="st-draw-title">ProjectCentral</text>
+    {finds === 'unreadable' && <text x={360} y={32} textAnchor="end" className="st-draw-bad">manifest unreadable</text>}
+    {PC_PARTS.map((part, i) => {
+      const here = present.includes(part), made = !here && makes
+      return <g key={part}>
+        <rect x={210} y={partY(i)} width={144} height={18} rx={2} className="st-part" data-make={made ? 'true' : undefined} data-absent={!here && !made ? 'true' : undefined} />
+        <text x={218} y={partY(i) + 12.5}>{part}{part === 'wiki' && make === 'keep' && chosenWiki ? ' · source in place' : part === 'wiki' && make === 'copy' && chosenWiki ? ' · copied in' : ''}</text>
+      </g>
+    })}
+    {makes && wikiRow >= 0 && (make === 'keep' || make === 'copy') && <path d={`M${26 + Math.min(110, material[wikiRow]!.length * 5.6) + 6} ${rowY(wikiRow) - 3}C 190 ${rowY(wikiRow) - 3} 190 ${partY(2) + 9} 210 ${partY(2) + 9}`}
+      className={make === 'copy' ? 'st-draw-copy' : 'st-draw-link'} />}
+  </svg>
+}
+
+function ProjectsStep({p}: {p: ViewProps}) {
+  const v = p.v, folders = list(v, 'folders'), folder = folders?.find(f => f.path === strOf(v, 'folder')) ?? folders?.[0]
+  const wikis = strs(folder?.wikis), wiki = strOf(v, 'wiki'), where = strOf(v, 'where') ?? 'stands'
+  const options = makeOptions(folder, wikis.length > 1 ? wiki : wikis[0]), make = strOf(v, 'make')
+  const open = options.find(o => o.value === make && !o.why)
+  const plan = has(v, 'plan') ? strs(json<unknown>(v, 'plan', [])) : undefined
+  const [shown, pager] = usePaged(folders ?? [], 5)
+  return <div className="st-cols st-cols--setup">
+    <div>
+      <table className="st-tbl">
+        <Cols w={[undefined, 62, 108]} />
+        <thead><tr><th>Folder {pager}</th><th>Where</th><th>Central finds</th></tr></thead>
+        <tbody>{folders === undefined ? <tr><td colSpan={3} className="st-none">No reading of your folders.</td></tr>
+          : folders.length === 0 ? <tr><td colSpan={3} className="st-none">No folder of work was found.</td></tr>
+          : shown.map(f => {
+            const path = txt(f.path) ?? '', finds = txt(f.finds)
+            return <tr key={path} className="st-pick" data-focus={folder?.path === path ? 'true' : undefined} data-read={finds === 'ground' ? 'true' : undefined}
+              onClick={() => { p.set('folder', path); p.set('make', undefined); p.set('wiki', undefined); p.set('plan', undefined) }}>
+              <td data-i={`${txt(f.title) ?? path}|${path}`}><b>{txt(f.title) ?? path}</b></td>
+              <td>{txt(f.place) === 'work' ? 'Work' : txt(f.place) ? 'elsewhere' : NONE}</td>
+              <td><span data-st={finds === 'unreadable' ? 'stall' : finds === 'ground' ? 'green' : undefined}>{finds === 'many' ? `${strs(f.wikis).length} wikis` : FINDS[finds ?? ''] ?? NONE}</span></td>
+            </tr>
+          })}</tbody>
+      </table>
+      {plan && <ol className="st-plan" aria-label="Preview">{plan.length ? plan.map((s, i) => <li key={i}>{s}</li>) : <li className="st-none">Nothing to do.</li>}</ol>}
+    </div>
+    <div>
+      {folder ? <ProjectDrawing f={folder} make={open ? make : undefined} wiki={wiki} where={where} /> : <span className="st-none">Choose a folder.</span>}
+      <div className="st-form st-form--setup">
+        <Radio {...st(p, 'where')} label="Where" does="Adopt the project where it stands, or move it into your ground's Work under its own name. A moved project's original stays until you remove it." value={where}
+          options={[{value: 'stands', label: 'Where it stands'}, {value: 'work', label: 'Into Work', why: txt(folder?.place) === 'work' ? 'It stands in Work already.' : undefined}]}
+          onChange={x => { p.set('where', x); p.set('plan', undefined) }} />
+        <Radio {...st(p, 'make')} label="Make" does="What Central makes of the folder's ground. A choice the folder does not allow stays closed and says why." value={make ?? ''}
+          options={options} onChange={x => { p.set('make', x); p.set('plan', undefined) }} />
+        <Chooser {...st(p, 'wiki')} label="Wiki" does="The folder's wiki to keep or copy. Where the folder holds two, Central does not choose for you."
+          value={wikis.length === 1 ? wikis[0]! : wiki ?? ''} options={wikis.map(w => ({value: w, label: w}))}
+          onChange={wikis.length > 1 ? x => { p.set('wiki', x); p.set('plan', undefined) } : undefined} disabled={wikis.length ? undefined : 'The folder keeps no wiki.'} />
+        <Action {...st(p, 'previewStep')} label="Preview" does="Lists every step Central would take, in order. Nothing changes." onPress={() => p.set('previewStep', 'projects')}
+          disabled={open ? undefined : 'Choose what to make first.'} />
+        <Action {...st(p, 'acceptStep')} hold label="Accept" does="Makes the world's ground as previewed." onPress={() => p.set('acceptStep', 'projects')}
+          disabled={!open ? 'Choose what to make first.' : plan === undefined ? 'Preview first.' : undefined} />
+      </div>
+    </div>
+  </div>
+}
+
+function SetupPage({p}: {p: ViewProps}) {
+  const v = p.v, steps = list(v, 'setup'), accepted = steps?.filter(s => s.state === 'accepted').length
+  const at = (STEPS.find(s => s.id === strOf(v, 'setupStep'))?.id ?? STEPS.find(s => steps?.find(r => r.step === s.id)?.state !== 'accepted')?.id ?? 'ground') as StepId
+  const step = STEPS.find(s => s.id === at)!, reading = steps?.find(s => s.step === at), items = Array.isArray(reading?.items) ? reading!.items.filter(rec) : undefined
+  const [shown, pager] = usePaged(items ?? [], 9)
+  return <section className="st-sec st-setup">
+    <h4>Setup<small>{steps ? `${accepted} of ${STEPS.length} accepted` : 'your computer is not read yet'}</small>
+      <span className="st-head-acts"><Action {...st(p, 'rereadSetup')} label="Read again" does="Reads your computer again. Nothing is made twice; what you accepted stays." onPress={() => p.set('rereadSetup', true)} /></span></h4>
+    <nav className="st-steps" aria-label="Setup steps">{STEPS.map((s, i) => {
+      const r = steps?.find(x => x.step === s.id)
+      return <button key={s.id} type="button" aria-current={s.id === at ? 'step' : undefined}
+        data-i={`${s.label}|${s.owner} makes this step's change. You come back to it in ${s.back}.`}
+        onClick={() => { p.set('setupStep', s.id); p.set('plan', undefined) }}>
+        <Lamp state={steps ? STEP_LIGHT[txt(r?.state) ?? ''] ?? 'unknown' : 'unknown'} tone="green" /><i>{i + 1}</i>{s.label}</button>
+    })}</nav>
+    {at === 'projects' ? <ProjectsStep p={p} /> : <>
+      <table className="st-tbl">
+        <Cols w={[150, 210, undefined]} />
+        <thead><tr><th>Found {pager}</th><th>Where</th><th>The change Accept makes</th></tr></thead>
+        <tbody>{items === undefined ? <tr><td colSpan={3} className="st-none">Not read yet.</td></tr>
+          : items.length === 0 ? <tr><td colSpan={3} className="st-none">Nothing found.</td></tr>
+          : shown.map((r, i) => <tr key={i} data-read={txt(r.why) ? 'true' : undefined}>
+            <td><b>{txt(r.name) ?? NONE}</b>{txt(r.why) && <i className="st-why" data-i={`Left alone|${r.why}`}>!</i>}</td>
+            <td className="st-ref">{txt(r.where) ?? NONE}</td>
+            <td className="st-dim">{txt(r.why) ? 'left as it is' : txt(r.change) ?? NONE}</td>
+          </tr>)}</tbody>
+      </table>
+      <div className="st-form">
+        <Readout label="state" does="Found: Accept would make the changes above. Accepted: they are made." value={txt(reading?.state)} />
+        <Action {...st(p, 'acceptStep')} hold label="Accept" does={`${step.owner} makes the changes above. Until you accept, nothing you have moves or changes.`} onPress={() => p.set('acceptStep', at)}
+          disabled={txt(reading?.state) === 'accepted' ? 'Accepted.' : items?.some(r => !txt(r.why)) ? undefined : 'Nothing found to bring in.'} />
+      </div>
+    </>}
+  </section>
 }
 
 // ---------------------------------------------------------------- Harnesses & models
@@ -490,7 +649,7 @@ function AutomationsPage({p}: {p: ViewProps}) {
   const none = (what: string) => <tr><td colSpan={7} className="st-none">{what}</td></tr>
   return <>
     <section className="st-sec">
-      <h4>Automations<small>AIKit · verified Methods that run on a schedule or an event; schedules keep Central's civil time</small>{pager}
+      <h4>Automations<small>AIKit · the one place a run is given a time · schedules keep Central's civil time</small>{pager}
         <span className="st-head-acts">
           <Action label="Create routine…" does="Makes a routine from a Method that has been run and verified. It starts as a Draft." onPress={() => p.set('adding', creating ? undefined : 'routine')} />
         </span></h4>
@@ -500,6 +659,7 @@ function AutomationsPage({p}: {p: ViewProps}) {
         <Radio {...st(p, 'show')} label="Show" does="What the page lists." value={show} options={SHOW_AUTO} onChange={x => p.set('show', x)} />
       </div>
       {creating && <div className="st-form st-form--grid">
+        {has(v, 'new.from') && <Readout label="from" does="What opened this routine: the pad whose prompt it runs. Its time is given here, and nowhere else." value={strOf(v, 'new.from')} />}
         <TextField label="Name" does="The routine's name." value={strOf(v, 'new.name') ?? ''} onChange={x => p.set('new.name', x)} />
         <Chooser label="Method" does="A Method with a verified run in this work context." value={strOf(v, 'new.method') ?? ''} options={(methods ?? []).flatMap(m => (txt(m.method) ? [{value: m.method as string, label: `${m.method}${txt(m.revision) ? ` @${m.revision}` : ''}`}] : []))} onChange={x => p.set('new.method', x)} />
         <Chooser label="Verified run" does="The proof: a successful, verified run of that exact Method revision." value={strOf(v, 'new.proof') ?? ''} options={opts('proofs', 'ref')} onChange={x => p.set('new.proof', x)} />
@@ -736,14 +896,14 @@ function Window({p}: {p: ViewProps}) {
   const shown = PAGES.filter(x => !('contributed' in x) || settings?.some(s => s.category === x.category))
   const lamp: LightState = src ? (txt(src.kind) === 'native' ? 'lit' : 'dark') : 'unknown'
   const nav = (group: string) => <>
-    <span className="st-nav-group">{group}</span>
+    {group && <span className="st-nav-group">{group}</span>}
     {shown.filter(x => x.group === group).map(x => {
       const n = settings ? draftsOf(v).filter(k => settings.find(s => draftKey(s.ref) === k)?.category === x.category).length : 0
       return <button key={x.id} type="button" aria-current={page === x.id && !searching ? 'page' : undefined} onClick={() => { p.setPage(x.id); p.set('search', '') }}>
         {x.label}{n > 0 && <i data-i={`${x.label}|${n} local ${n === 1 ? 'change' : 'changes'} on this page.`}>{n}</i>}</button>
     })}
   </>
-  const body = searching ? <Results p={p} /> : page === 'review' ? <ReviewPage p={p} /> : page === 'harnesses' ? <HarnessesPage p={p} /> : page === 'credentials' ? <CredentialsPage p={p} />
+  const body = searching ? <Results p={p} /> : page === 'review' ? <ReviewPage p={p} /> : page === 'setup' ? <SetupPage p={p} /> : page === 'harnesses' ? <HarnessesPage p={p} /> : page === 'credentials' ? <CredentialsPage p={p} />
     : page === 'profiles' ? <ProfilesPage p={p} /> : page === 'machines' ? <MachinesPage p={p} /> : page === 'automations' ? <AutomationsPage p={p} />
       : page === 'appearance' ? <AppearancePage p={p} /> : page === 'products' ? <ProductsPage p={p} /> : page === 'system' ? <SystemPage p={p} />
         : <OwnerPage p={p} category={PAGES.find(x => x.id === page)!.category} />
@@ -756,7 +916,7 @@ function Window({p}: {p: ViewProps}) {
         <Lamp state={lamp} tone="green" />{src ? txt(src.label) ?? NONE : NONE}{src?.simulated === true && <em>simulated</em>}</span>
     </header>
     <div className="st-main">
-      <nav className="st-nav" aria-label="Settings pages">{nav('Preferences')}{nav('System')}</nav>
+      <nav className="st-nav" aria-label="Settings pages">{nav('')}{nav('Preferences')}{nav('System')}</nav>
       <main className="st-page" aria-label={searching ? 'Search' : PAGES.find(x => x.id === page)?.label ?? 'Review changes'}>{body}</main>
     </div>
     <footer className="st-foot">
@@ -837,7 +997,32 @@ const SYSTEM = [
     {section: 'proposals', key: 'central.proposals', title: 'Pending source-return proposals', mutable: true, drift: {state: 'none'}, declared: {proposals: []}, effective: {proposals: []}, active: {proposals: []}, staged: {accepted: 0, pending_or_applying: 0, rejected: 0}},
   ]},
 ]
+// Setup on this Mac: four steps accepted, and the Projects step reading the folders of work it found (§10.11).
+const SETUP_DONE = [
+  {step: 'ground', state: 'accepted', items: [{name: 'Your ground', where: '~/Central', change: 'adopted where it is'}]},
+  {step: 'harnesses', state: 'accepted', items: [
+    {name: 'Claude Code', where: '~/.claude', change: 'connected through its adapter · its skills keep working'},
+    {name: 'Codex', where: '~/.codex', change: 'connected through its adapter'},
+    {name: 'pi', where: '~/.pi', change: 'connected through its adapter'},
+    {name: 'Hermes', where: '~/.hermes', why: 'Its session settings cannot be read here.'}]},
+  {step: 'credentials', state: 'accepted', items: [
+    {name: 'Anthropic', where: 'keychain://aikit/anthropic', change: 'bound by reference'},
+    {name: 'OpenAI', where: 'keychain://aikit/openai', change: 'bound by reference'}]},
+  {step: 'machines', state: 'accepted', items: [
+    {name: 'This Mac', where: 'workcell:mac', change: 'a workcell'},
+    {name: 'omarchy', where: '100.92.62.101', change: 'prepared as a place to work · its settings kept'}]},
+  {step: 'projects', state: 'found', items: []},
+]
+const FOLDERS = [
+  {path: '~/Central/Work/O-I', title: 'O-I', place: 'work', finds: 'ground', material: ['desktop', 'docs', 'packages', 'suite'], central: ['user', 'agents', 'wiki', 'now']},
+  {path: '~/Writing/essays', title: 'essays', place: 'elsewhere', finds: 'one', wikis: ['wiki'], material: ['drafts', 'published', 'wiki', 'README.md'], central: []},
+  {path: '~/Code/sketches', title: 'sketches', place: 'elsewhere', finds: 'none', material: ['src', 'assets', 'package.json'], central: []},
+  {path: '~/Central/Work/garden', title: 'garden', place: 'work', finds: 'many', wikis: ['notes/wiki', 'site/wiki'], material: ['notes', 'site', 'plants.csv'], central: []},
+  {path: '~/Old/lab', title: 'lab', place: 'elsewhere', finds: 'unreadable', material: ['ProjectCentral', 'runs'], central: ['user', 'agents']},
+]
+
 const DEFAULTS = {
+  setup: dump(SETUP_DONE), setupStep: 'projects', folders: dump(FOLDERS), folder: '~/Writing/essays', make: 'copy', where: 'stands',
   source: dump({kind: 'native', label: 'Native configuration · this Mac'}),
   scope: dump({kind: 'machine', ref: null, title: 'This machine'}),
   scopes: dump([{kind: 'machine', ref: null, title: 'This machine'}, {kind: 'world', ref: null, title: 'World'}, {kind: 'project', ref: 'O-I', title: 'Project · O-I'}, {kind: 'workcell', ref: 'env-1', title: 'Workcell · env-1'}]),
@@ -912,7 +1097,8 @@ export const design: DesignedDevice = {
   title: 'Settings',
   kind: 'instrument',
   views: ['full'],
-  firstPage: 'harnesses',
+  // The first time the DLW opens, Settings opens on Setup (§10.11).
+  firstPage: 'setup',
   defaults: DEFAULTS,
   fixtures: {
     'This Mac': {},
@@ -927,7 +1113,19 @@ export const design: DesignedDevice = {
       ]),
       result: dump({status: 'partial', operations: [{ref: 'ai-kit:models:models.default', status: 'applied'}, {ref: 'software-factory:telemetry:watch-interval-seconds', status: 'verified'},
         {ref: 'ai-kit:resolution:resolution.profiles', status: 'refused', message: 'The profile documentation is not admitted at the machine scope.'}]}),
-      adding: 'routine', 'new.name': 'Nightly map refresh', 'new.method': 'central:oi-checks', rotating: 'ai-kit:credential:zai',
+      adding: 'routine', 'new.name': 'Morning checks', 'new.method': 'central:oi-checks', 'new.from': 'Prompt pads · pad 3', rotating: 'ai-kit:credential:zai',
+      plan: dump(['Make ~/Writing/essays/ProjectCentral: user, agents, now', 'Copy wiki into ProjectCentral/agents/wiki', 'Add essays to the browser\'s Work place as a world',
+        'Leave ~/Writing/essays/wiki where it was']),
+    },
+    'First opening': {
+      setup: dump([
+        {step: 'ground', state: 'found', items: [{name: 'Your ground', where: '~/Central', change: 'adopt it where it is · nothing in it moves'}]},
+        {step: 'harnesses', state: 'found', items: [{name: 'Claude Code', where: '~/.claude', change: 'connect through its adapter'}, {name: 'Codex', where: '~/.codex', change: 'connect through its adapter'}]},
+        {step: 'credentials', state: 'found', items: [{name: 'Anthropic', where: 'keychain://aikit/anthropic', change: 'bind by reference'}, {name: 'ANTHROPIC_API_KEY', where: '~/.zshrc', why: 'A key outside a secure store is named, never read.'}]},
+        {step: 'machines', state: 'found', items: [{name: 'This Mac', where: 'this computer', change: 'make it a workcell'}]},
+        {step: 'projects', state: 'found', items: []},
+      ]),
+      setupStep: 'ground', make: undefined,
     },
     'Development adapter': {source: dump({kind: 'development', label: 'Development scenario · census of 7 October', simulated: true}), connections: dump([]), search: 'model'},
     'No readings': NOTHING,
