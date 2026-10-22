@@ -14,6 +14,26 @@ planning, pages and creatures lanes and does no build work. Nothing here starts 
 
 ## Where it stands
 
+- **22 Oct — read this first.** The build run of 21–22 Oct worked only items 10 and 11 of "The work, in order" below
+  (kinds of device and placement; coverage: every capability wired to its owner). Its brief named those two items, and
+  the run never checked that items 1–9 were done. They were not, and they are the next run's work, in order from item 1.
+  What items 10 and 11 changed is mostly what a control does when it is pressed (kernel routes, owner operations in six
+  products). They changed little of what the owner sees or can use: devices that work, racks, acts, one browser, words.
+  - State: main `08df20494` is the r36 candidate. On `dlw/finish`, not yet on main: the Session grid and ruler drawn to their
+    designs and fed by real readings (`c871de149`, `4d1fedca5`), W3's last three routes (`5d5128940`), and the native
+    Library fix (`4481f5ece`: every native candidate's Library read "no built Expressions asset").
+  - Parked, not for main as it is: `dlw/k0-wiring-wip` (Actuation usage and continuity, Workcell lease and checkpoints, wired into
+    the Ledger, Identity and the workcell rack; its commit message lists what is owed).
+  - Owner PRs open: Actuation #143, Workcell #123, ai-kit #545, Factory #289, Central #293. Central #293's Approve needs
+    `control.apply-proposal` in the owner's human grant (Control/user/native-action-authority.json), which only the owner
+    can add.
+  - The first screen pass (22 Oct): `../evidence/screen-pass-20261022/` (S1 on a browser copy of the shell, N1 on r36 natively;
+    both the window and its grammar, not yet the devices). They are findings to fix, not a work list that replaces items 1–9.
+  - Traps: `~/Applications/O-I Shell Candidate.app` is an 8 Oct build with the candidate's bundle id, so never open the app by
+    bundle id (`open -b`); launch a candidate by its binary path. Entering Factory raises a Keychain prompt for
+    "workcell-connection" (Workcell's connection probe). A candidate reopens the last window and Live set on the owner's real
+    ground, so a pass that tests from the ground up needs a clean data home.
+
 - **21 Oct:**
   - `dlw/build` landed on `main` as #689.
   - The lane goes on as #693, which conflicts with `main` only in PATH.md: both carry "T-PROCEDURAL-BODY: where it ended".
