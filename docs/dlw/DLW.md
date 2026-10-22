@@ -5455,7 +5455,7 @@ Compare draws two takes side by side, each with its tasks, its cost and its retu
 | Readings | Tokens · Time · Tool calls · Test results · Spend · Stalls | Tokens, Time | What each take records on each beat. |
 | Beat | 5 s–5 min | 15 s | How often a reading is taken. |
 
-How the work came to the run in front of you, a first pass, a pass that was dropped, the pass you are on, is the Run map's Course (§19.25).
+How the work came to the run in front of you, a first pass, a pass that was dropped, the pass you are on, is the Run map's Journey (§19.25).
 
 Press Record and what the sessions do lays out on the ruler as clips, with their takes under them.
 
@@ -5530,7 +5530,7 @@ caption: The Agents tile: each agent a creature, standing at the zone its run ha
 - To find the first failure of a long run, open its take lanes, set Show to Stalled and read the top row.
 - To keep a good attempt, choose the take that stands before you launch another.
 - To compare two attempts, set Compare.
-- To see how the work came to this run, read the Run map's Course (§19.25).
+- To see how the work came to this run, read the Run map's Journey (§19.25).
 - Before you confirm an attempt, read its review in Approvals from the top: the conditions, then the claims without evidence.
 - To find the sessions that need you, set Sessions' Filter to Stalled.
 - To find a lost session, set Sessions' Filter to Running and read the names.
@@ -6717,7 +6717,7 @@ You need one place to answer what waits for you. Approvals holds every proposal,
 | Proposal | A change an agent proposes, with its diff. | Approve, Changes or Deny. An approved proposal lands with a receipt. |
 | Request | A question an owner or an agent raises: a routine failed, a service stopped answering, a decision only you can make, such as a deploy. | Approve or Deny, or Open, which opens it where it belongs: a run in Factory, a Day in Central, an agent in Messages. |
 | Review | The take you chose to stand, set against what it was for (§19.1). | Confirm, which is held, or Changes. |
-| Recognition | A run that has returned (§19.25). | Recognise, then Close, which is held; or Continue, for a new run in the same course. |
+| Recognition | A run that has returned (§19.25). | Recognise, then Close, which is held; or Continue, for a new run in the same journey. |
 
 How long a request waits before it counts as unanswered, and what happens then, are the Agent's Wait and On no answer (§19.4); the default answer is the Gateway's Approvals (§19.2). Approvals shows them and never sets them.
 
@@ -6736,7 +6736,7 @@ You need to know what you accept before it stands. Review sets the attempt's ret
 
 #### Recognition
 
-A run answers to a commission, and closes only on your Recognition: your word that what it returned is what the commission asked for. Read the run's return, press Recognise, then hold Close, and Factory finishes the run, or starts its next unit if one remains. If the return falls short, press Continue, and a new run continues the same course; the earlier run stays on the record. Recognition is yours. No agent gives it, and no setting gives it for you.
+A run answers to a commission, and closes only on your Recognition: your word that what it returned is what the commission asked for. Read the run's return, press Recognise, then hold Close, and Factory finishes the run, or starts its next unit if one remains. If the return falls short, press Continue, and a new run continues the same journey; the earlier run stays on the record. Recognition is yours. No agent gives it, and no setting gives it for you.
 
 #### Parameters
 
@@ -7800,14 +7800,14 @@ work after it starts only when all of them have returned. A diamond is a
 decision that waits for you. At the right end stand what the run returns and
 what it is for.
 
-#### Commission, Course and Recognition
+#### Commission, Journey and Recognition
 
-A run answers to a Commission, belongs to a Course, and closes on your Recognition, which you give in Approvals (§19.14).
+A run answers to a Commission, belongs to a Journey, and closes on your Recognition, which you give in Approvals (§19.14).
 
 | Word | What it is | What you do with it |
 |---|---|---|
 | Commission | The request that starts the work: what it is for, and who works on it. | You give it once. Factory keeps it, and every run of the work answers to it. |
-| Course | The work as it goes on across runs. A run that needs another pass is continued by a new run in the same course, and the earlier run stays on the record. | You read where the work has been, pass by pass. To try again from where a run left off, press Continue in Approvals. |
+| Journey | The work as it goes on across runs. A run that needs another pass is continued by a new run in the same journey, and the earlier run stays on the record. | You read where the work has been, pass by pass. To try again from where a run left off, press Continue in Approvals. |
 | Recognition | Your word that what a run returned is what the commission asked for. | You give it in Approvals after you have read the return. A run closes only after it. |
 
 Recognition is yours. No agent gives it, and no setting gives it for you.
@@ -7836,7 +7836,7 @@ A line between two units is green once the earlier one has returned.
 | Waiting | A count (reading) | Read from Factory | Nodes blocked or waiting for your decision. |
 | Retries | Spent of allowed (reading) | Read from Factory | The attempts the unit you read has spent of those its retry grant allows. |
 | Recognised | A time, or Not yet (reading) | Read from Factory | When you recognised the run's return. |
-| Course | Active · Paused · Completed · Abandoned (reading) | Read from Factory | How the course stands, and which of its runs this one is. |
+| Journey | Active · Paused · Completed · Abandoned (reading) | Read from Factory | How the journey stands, and which of its runs this one is. |
 
 #### Views
 
@@ -7870,18 +7870,18 @@ The whole map shows every parameter in four groups.
 | Unit | Unit, its state, Retries, Retry |
 | Run | Lifecycle, Returned, Waiting, Show |
 | Recognition | The return and Recognised; Recognise, Close and Continue stand in Approvals |
-| Course | The run's place in the course, and the course's state |
+| Journey | The run's place in the journey, and the journey's state |
 
 ##### Full
 
 The full map fills the pane with the map, each node named. Beside it stands
 the node you read: what it is for, how it stands, what it waits on, what it
 opens, its last attempt, its retries and who holds it. Under that stands the
-run's return and your Recognition. Along the foot runs the course: its runs in
+run's return and your Recognition. Along the foot runs the journey: its runs in
 the order each continued the last, this one marked, each recognised run with
 its mark. The head names the run, how it stands, what has returned, whether you
 recognised it, what the commission asked for, and the run's place in the
-course.
+journey.
 
 ##### Widget
 
@@ -7902,7 +7902,7 @@ the nodes that wait.
 3. Press a node to read it. In the pane, its waits and its holder stand beside the map.
 4. Answer a waiting decision in Approvals (§19.14). The blocked unit goes on.
 5. When the run has returned, read its return, and recognise it in Approvals (§19.14).
-6. If the return falls short, press Continue there for a new run in the same course.
+6. If the return falls short, press Continue there for a new run in the same journey.
 
 #### Rules
 
@@ -7910,14 +7910,14 @@ the nodes that wait.
 - A unit stands right of everything it waits on.
 - A run closes only after your Recognition. Factory moves it to finished in its own order, and refuses in its own words when it cannot: while a unit is missing, failed or waiting on you.
 - Recognition is yours alone.
-- Continue starts a new run in the same course. The earlier run stays on the record.
+- Continue starts a new run in the same journey. The earlier run stays on the record.
 - Retry starts a failed or quiet unit again only within its retry grant.
 
 #### Tips
 
 - To find what holds the run up, set Show to Open and look for stripes and amber diamonds.
 - To see why a run exists, open the pane and read the head: what the commission asked for.
-- To see how the work came this far, read the course along the foot of the pane.
+- To see how the work came this far, read the journey along the foot of the pane.
 - Before you recognise a run, read its attempt's review in Approvals (§19.14).
 
 ## 20. Expressions
@@ -10835,7 +10835,7 @@ The widget shows a small wheel with its position. Click the wheel to open the M3
 
 **Product:** Quaternal Logic · **Kind:** instrument · **Track:** Any track. It is a device on a reading, and a pane when you open it full.
 
-The Deck lays out a spread of cards or a hexagram for a concern that you carry. Use it to read the concern in six positions and to see how the positions answer one another. Keep the reading as part of your concern.
+The Deck lays out a spread of cards or a hexagram for a concern that you carry. Use it to read the concern in six positions and to see how the positions answer one another. Keep the reading as part of your journey.
 
 The Deck serves two instruments. Its hexagrams and cards are M3′'s I Ching and Tarot; the reading you make with them, drawing, casting and carrying a concern, is M4′'s divinatory frameworks (§16.16).
 
@@ -10877,7 +10877,7 @@ A line cast as 6 or 9 moves; a line cast as 7 or 8 rests. The bases carry the sa
 | Moving lines | Show · Hide | Show | Marks the lines that change, in an I Ching reading. |
 | Matrix | Complementary · Moving and resting · Same quality | Complementary | For the I Ching, the matrix whose generation cell shows. |
 | Agent reads | Off · Propose · Write | Propose | Off: the agent does not read. Propose: each reading waits for you to accept it. Write: readings go in directly, each with a receipt. |
-| Concern | The open concern | The open concern | The concern that the reading joins. |
+| Journey | The open journey | The open journey | The journey that the reading joins. |
 
 #### Views
 
@@ -10907,7 +10907,7 @@ The whole Deck shows every parameter, in two groups.
 
 | Group | Parameters |
 |---|---|
-| Reading | Deck, Spread, Draw, Theme, Pairs, Lemniscate, Moving lines, Matrix, Concern |
+| Reading | Deck, Spread, Draw, Theme, Pairs, Lemniscate, Moving lines, Matrix, Journey |
 | Agent | Agent reads |
 
 ##### Full
@@ -10924,7 +10924,7 @@ The widget shows the last spread, with its theme. Click the spread to open the D
 |---|---|
 | Play | Turns the next card, or the next line. |
 | Capture | Keeps the spread as a scene. |
-| Record | Records the reading into the concern. |
+| Record | Records the reading into the journey. |
 | Arm | Lets the agent write its reading directly, with receipts. |
 
 #### To use the Deck
@@ -10934,13 +10934,13 @@ The widget shows the last spread, with its theme. Click the spread to open the D
 3. Press Play to draw. Each card lands at its position.
 4. Read each position by its question.
 5. Read the pairs. Note where the positions agree and where they differ.
-6. Record the reading into your concern.
+6. Record the reading into your journey.
 
 #### Rules
 
 - The Deck answers and explains. It does not score the reading or pick it for you.
 - Each card and each hexagram shows the codon it belongs to. A hexagram shows the codons its cell yields under the chosen matrix.
-- A reading is an act on your concern. Each act shows its author.
+- A reading is an act on your journey. Each act shows its author.
 - An agent does not write behind your back. The Agent reads parameter is your choice.
 - The night reading does not contradict the day reading. It shows what the day rests on.
 
@@ -10949,7 +10949,7 @@ The widget shows the last spread, with its theme. Click the spread to open the D
 - To start a reading, use the Sphere and see where it leads.
 - To check a hard concern, use the Klein and read the night cards last.
 - To find a relation to your own writing, record the reading and link the entry.
-- To return to an old reading, open the concern and select the spread.
+- To return to an old reading, open the journey and select the spread.
 
 ### 22.5 Chakra
 
@@ -11620,7 +11620,7 @@ You need somewhere to keep a practice for years: the pages you write in the morn
 
 ### 24.1 The practice world
 
-**Product:** Central, with Quaternal Logic · **Track:** your practice world · **Clip:** a journal, a dream journal, a sitting, a concern · **Agent:** Nara
+**Product:** Central, with Quaternal Logic · **Track:** your practice world · **Clip:** a journal, a dream journal, a sitting, a journey · **Agent:** Nara
 
 Your practice is a world of its own, kept on your planet as a room fogged to everyone but you (§2). In Central it is a track of Kind Practice. Its chain is the packet, Nara and Nara's scope: Nara is the agent of this world, and it reads only what you give it.
 
@@ -11700,13 +11700,13 @@ Select an image in a dream and choose **Amplify**. Nara lays beside it the place
 
 A sitting is a clip of the practice world's track (§24.1): its length, its bell and its intervals stand in its Clip panel, and Play rings the bell and begins.
 
-### 24.4 Concerns
+### 24.4 Journeys
 
-**Product:** Quaternal Logic, with Central · **Clip:** a concern on the practice world · **Device:** the Deck (§22.4)
+**Product:** Quaternal Logic, with Central · **Clip:** a journey on the practice world · **Device:** the Deck (§22.4)
 
 A concern is something you carry: a decision, a grief, a piece of work, a season. You read it with one tarot deck for its whole life, so the cards become its vocabulary, and with the I Ching for how it changes. It plays while the concern is open, and it carries from day to day until you close it.
 
-Each act on a concern is its own, and shows who made it:
+Each act on a journey is its own, and shows who made it:
 
 | Act | What it does |
 |---|---|
@@ -11717,14 +11717,14 @@ Each act on a concern is its own, and shows who made it:
 | Turn | Changes a card's orientation under the spread's rule. |
 | Comment | Writes a reading. A later comment stands beside the earlier one. |
 
-Launch a concern as Reading and it opens as an Expression: its cards and lines laid out in a scene you can walk, with each card's codon and the entries it is linked to. Your writing stays in the concern's flow, which remains where you write.
+Launch a journey as Reading and it opens as an Expression: its cards and lines laid out in a scene you can walk, with each card's codon and the entries it is linked to. Your writing stays in the journey's flow, which remains where you write.
 
 #### Rules
 
-- A concern has one deck. Reopening it never deals again, and a new day never resets it.
-- A draw, an assignment, a reading and an act on your clock are four different things, and the concern keeps them apart.
+- A journey has one deck. Reopening it never deals again, and a new day never resets it.
+- A draw, an assignment, a reading and an act on your clock are four different things, and the journey keeps them apart.
 - A correction supersedes without erasing. The first reading stays.
-- A card's place in your concern does not change your identity, and an act on your M3 clock happens only when you make it.
+- A card's place in your journey does not change your identity, and an act on your M3 clock happens only when you make it.
 
 ### 24.5 Containers
 
@@ -11762,7 +11762,7 @@ Launch your page as Sky and your natal sky opens beside today's: the planets whe
 #### Rules
 
 - A corrected birth time is a new revision of the same identity, never a new person.
-- Your identity is kept in your ground. Practice, concerns and answers never write it.
+- Your identity is kept in your ground. Practice, journeys and answers never write it.
 - Your natal sky comes from your identity. The shell does not compute a second chart.
 - Sharing your sky gives consent to see it. It never writes your identity.
 
@@ -11770,20 +11770,20 @@ Launch your page as Sky and your natal sky opens beside today's: the planets whe
 
 **Product:** Expressions, with Quaternal Logic · **Chain:** the Studio's Nara chain (§20.3)
 
-Open the Nara chain in an Expression and your personal layer lies over the field: your identity, your centres (§22.5), your form and clock (§22.3), your sky (§22.1) and your open concern's deck (§22.4). Nara reads the selection you make in the Expression and can move the Expression's focus to answer, with a checkpoint you can return to.
+Open the Nara chain in an Expression and your personal layer lies over the field: your identity, your centres (§22.5), your form and clock (§22.3), your sky (§22.1) and your open journey's deck (§22.4). Nara reads the selection you make in the Expression and can move the Expression's focus to answer, with a checkpoint you can return to.
 
 #### Rules
 
 - Your readings never enter the Expression. Saving or sharing the Expression carries none of your layer.
 - A move of focus is undone by its checkpoint.
 
-### 24.8 Read as, and returns
+### 24.8 Lenses and returns
 
 **Product:** Technē, with Quaternal Logic
 
-Select a passage in a practice page and choose Read as. Each of its six ways of reading reads from its own sources and leaves its reading as a Source entry in the page, with the way named.
+Select a passage in a practice page and read it through a lens. Each lens reads from its own sources and leaves its reading as a Source entry in the page, with the lens named.
 
-| Read as | Reads the passage as |
+| Lens | Reads the passage as |
 |---|---|
 | Gebser | A structure of consciousness: archaic, magic, mythical, mental or integral. |
 | Ontological | What it assumes there is. |
@@ -11796,7 +11796,7 @@ What a practice teaches you can return to the Day's face 5, and from there, once
 
 #### Rules
 
-- A Read as reading is a reading. It does not replace what you wrote.
+- A lens reading is a reading. It does not replace what you wrote.
 - Nothing in a practice writes the shared map. A pattern reaches your knowledge only after you review it.
 
 ### 24.9 Where each practice stands in Nara's map
@@ -11805,9 +11805,9 @@ What a practice teaches you can return to the Day's face 5, and from there, once
 |---|---|
 | Identity and natal sky | M4.0 Mahamaya identity matrix: birthdate (M4.0-0), chart (M4.0-1), Jungian (M4.0-2), Gene Keys (M4.0-3), Human Design (M4.0-4), quintessence (M4.0-5) |
 | Sitting, centres, today's sky on you | M4.1 Sympathetic medicine: elemental ground (M4.1-0), energy body (M4.1-1), timing (M4.1-4), feedback and safety (M4.1-5) |
-| Concerns | M4.2 Divinatory frameworks: tarot (M4.2-1), I Ching (M4.2-2), casting with consent (M4.2-3), interpretation (M4.2-4) |
+| Journeys | M4.2 Divinatory frameworks: tarot (M4.2-1), I Ching (M4.2-2), casting with consent (M4.2-3), interpretation (M4.2-4) |
 | Containers, and how a concern changes | M4.3 Mediating transformation: Bohmian dialogue (M4.3-2.0), talking circle (M4.3-2.1), Diamond Approach inquiry (M4.3-2.2), phase history (M4.3-5) |
-| Read as; journal and dreams as lived history | M4.4 Context and lenses: Gebser (M4.4.0) to Trika (M4.4.5); temporal sedimentation (M4.4.4.2), symbolic body (M4.4.4.3) |
+| Lenses; journal and dreams as lived history | M4.4 Context and lenses: Gebser (M4.4.0) to Trika (M4.4.5); temporal sedimentation (M4.4.4.2), symbolic body (M4.4.4.3) |
 | You, where all of it meets | M4.4.4.4 Personal Pratibimba |
 | Returns | M4.5 Epii integration |
 

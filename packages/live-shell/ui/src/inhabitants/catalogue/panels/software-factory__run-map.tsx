@@ -1,6 +1,6 @@
 // The Run map (manual §19.25, software-factory:run-map): one Run of developmental work as the graph Factory keeps of it: its units,
 // what each waits on, the barriers that gather them, the decision and the candidate they lead to, and where the Run's own lifecycle
-// stands; beside it the Run's Recognition, and the Commission and Course the Run belongs to. Live's nearest: a rack's chain list
+// stands; beside it the Run's Recognition, and the Commission and Journey the Run belongs to. Live's nearest: a rack's chain list
 // drawn as a signal flow, as Max for Live draws a patch: you read left to right what feeds what. An instrument on Factory's Main track:
 // a Run spans every session of the set, as the Main track does.
 //
@@ -24,7 +24,7 @@
 // - `edges`: rows of {from, to, relation}, as above.
 // - `ret`: the Run's latest Return, {ref, summary}: the subject you recognise (factory.journey-reading/v1 returns[].return_ref).
 // - `recognition`: the Recognition of that Return, {ref, at}, absent until you give it (journey reading recognitions[]).
-// - `journey`: the Course (manual §19.25: the work as it goes on across runs; Factory names it a Journey), {ref, purpose, status, runs:
+// - `journey`: the Journey (manual §19.25: the work as it goes on across runs; Factory names it a Journey), {ref, purpose, status, runs:
 //   [{ref, name, lifecycle, recognised?}]}. purpose is the Commission's (commission.purpose); status proposed | active | paused |
 //   completed | abandoned; runs in the order Factory continued them (commission-read traversal `continued-from`, continuationRunRefs;
 //   factory_development_read `journey`, `commission-read`).
@@ -309,7 +309,7 @@ function MapPane({p}: {p: ViewProps}) {
         <p className="rm-rec" data-on={rec ? 'true' : undefined} data-i="Recognition|You recognise a run's return in Approvals.">{rec ? `Recognised${rec.at ? ` ${rec.at}` : ''}` : ret ? 'Waits for your Recognition in Approvals' : ''}</p>
       </aside>
     </div>
-    <footer className="rm-foot"><small>Course{j?.status ? ` · ${j.status}` : ''}</small><JourneyStrip v={v} /></footer>
+    <footer className="rm-foot"><small>Journey{j?.status ? ` · ${j.status}` : ''}</small><JourneyStrip v={v} /></footer>
   </div>
 }
 
@@ -398,7 +398,7 @@ export const design: DesignedDevice = {
           <Readout label="return" does="Whether the run has returned work for you to recognise. You recognise it in Approvals." value={retOf(p.v) ? 'returned' : r.nodes ? 'none yet' : undefined} />
           <Readout label="recognised" does="When you recognised the run's return, in Approvals." value={rec ? rec.at ?? 'yes' : has(p.v, 'journey') ? 'not yet' : undefined} tone={rec ? 'accent' : undefined} />
         </Section>
-        <Section label="Course" cols={2} grow>
+        <Section label="Journey" cols={2} grow>
           <Readout label="run" does="This run's place in the course: the work as it goes on across runs." value={placeOfRun(p.v)} />
           <Readout label="course" does="How the course stands: active, paused, completed or abandoned." value={j?.status} />
         </Section>
