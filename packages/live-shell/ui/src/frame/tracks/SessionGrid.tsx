@@ -15,7 +15,7 @@
 // track's own material and stands in the Main column at the end, which carries each row's launcher, Stop All and Back to
 // Arrangement (lit when what plays differs from the ruler); an armed track's empty slots are record buttons (Live cap 35).
 import {useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent, type MouseEvent as ReactMouseEvent, type ReactNode} from 'react'
-import type {ClipLaunch, WorldTrack, WorldTrackClip, WorldTrackColumn, WorldTrackSection, WorldTrackSet} from '../../timeline/worldTrackAdapter'
+import type {WorldTrack, WorldTrackClip, WorldTrackColumn, WorldTrackSection, WorldTrackSet} from '../../timeline/worldTrackAdapter'
 import {clipStandingAttributes, clipStandingEdge, clipStandingMark, clipStandingTag, clipStandingTitle} from './trackMarks'
 import {sectionFoldKey, sessionRowLayout, shownRowLayout} from './trackSections'
 import {mixerCells, type MixerCell} from './trackLanes'
@@ -416,16 +416,10 @@ export function SessionGridView({set, selection, folded, onFold, receipt, onPres
 
 /** The states a clip can stand in, in the order the legend names them (dlw:session-grid's foot). */
 const LEGEND_STATES = ['waiting', 'running', 'stopped', 'recording', 'stalled', 'done'] as const
-/** What a clip's owner may say of it beyond the shared contract, read where a set carries it: its launch mode (`launch.mode`, the design's
- * once · hold · loop, in the family's own words) and how far a running clip has got (`progress`: its elapsed and its expected length, in
- * one unit of the owner's). No adapter carries either yet (the W4 return proposes both for timeline/worldTrackAdapter.ts); until one
- * does, a clip draws them as the design draws them absent: no mode word, and no progress. */
-export type ClipReading = WorldTrackClip & {launch?: ClipLaunch & {mode?: string}; progress?: {elapsed: number; expected: number}}
-
-/** A running clip's progress in whole percent, from its owner's elapsed and expected length (the design's `--p`), never past 100: the
- * fill reaches the reading and has no end drawn. Null where no reading gives it — a clip not running, no expected length, or a value
- * that is not a finite count — and nothing is estimated in its place. */
-export function clipProgress(clip: Pick<ClipReading, 'status' | 'progress'>): number | null {
+/** A running clip's progress in whole percent, from its owner's elapsed and expected length (`progress`; the design's `--p`), never past
+ * 100: the fill reaches the reading and has no end drawn. Null where no reading gives it — a clip not running, no expected length, or a
+ * value that is not a finite count — and nothing is estimated in its place. */
+export function clipProgress(clip: Pick<WorldTrackClip, 'status' | 'progress'>): number | null {
   const read = clip.progress
   if (clip.status !== 'running' || !read) return null
   const {elapsed, expected} = read
@@ -434,14 +428,14 @@ export function clipProgress(clip: Pick<ClipReading, 'status' | 'progress'>): nu
 }
 
 /** The launch mode the second line says: the owner's word, except the design's default (once), which the design draws as nothing. */
-const shownMode = (clip: Pick<ClipReading, 'launch'>): string | undefined => {
+const shownMode = (clip: Pick<WorldTrackClip, 'launch'>): string | undefined => {
   const mode = clip.launch?.mode?.trim()
   return mode && mode.toLowerCase() !== 'once' ? mode : undefined
 }
 
 /** A clip's second line (catalogue dlw__session-grid.tsx FullGrid's cell, its `<small>`): how it plays (the launch mode, where its owner
  * says one other than once), what follows it, as the owner words it, and the takes stacked under it. Nothing to say, no line. */
-export function clipSecondLine(clip: Pick<ClipReading, 'launch' | 'takes'>) {
+export function clipSecondLine(clip: Pick<WorldTrackClip, 'launch' | 'takes'>) {
   const mode = shownMode(clip), follow = clip.launch?.follow, takes = clip.takes?.length ?? 0
   const said = [
     mode && <span key="mode" className="cs-mode">{mode}</span>,

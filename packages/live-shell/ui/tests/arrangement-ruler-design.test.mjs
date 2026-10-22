@@ -68,7 +68,7 @@ test('a stretch stands in the window where the window shows it: held to the rule
 
 test('with no loop carried, no brace stands: the design\'s absent state', () => {
   const markup = html(run())
-  assert.equal(loopOf(run()), undefined)
+  assert.equal(loopOf(run(), 1000), undefined)
   assert.deepEqual(braces(markup), [])
   assert.doesNotMatch(markup, /tl-brace|data-loop/)
 })
@@ -99,6 +99,14 @@ test('a set with no ruler lays its rows end to end, and the loop it carries stan
     clips: [{id: 's1', trackId: 'v', columnId: 'p0', label: 'one', span: {start: 0, end: 4}}, {id: 's2', trackId: 'v', columnId: 'p1', label: 'two', span: {start: 0, end: 4}}],
     loop: {start: 0, end: 8}}
   assert.match(html(set), /<i class="tl-brace" data-loop="ruler" style="left:0%;width:100%"/, 'the whole saved sequence')
+})
+
+test('a loop with no end runs to the end of what the Arrangement lays', () => {
+  assert.deepEqual(loopOf(run({loop: {start: 600}}), 1000), {start: 600, end: 1000})
+  assert.match(html(run({loop: {start: 600}})), /<i class="tl-brace" data-loop="ruler" style="left:60%;width:40%" role="img" aria-label="Loop · 600 – 1000 · /)
+  const rows = {columns: [{id: 'p0', name: 'Scene 1'}], tracks: [{id: 'v', name: 'Field: visual', kind: 'expression-visual'}],
+    clips: [{id: 's1', trackId: 'v', columnId: 'p0', label: 'one', span: {start: 0, end: 4}}], loop: {start: 0}}
+  assert.match(html(rows), /<i class="tl-brace" data-loop="ruler" style="left:0%;width:100%" role="img" aria-label="Loop · 0 – 4 · /)
 })
 
 test('the brace is drawn in shell tokens, quieter in the lanes, and takes no pointer: nothing sets a loop from here', () => {

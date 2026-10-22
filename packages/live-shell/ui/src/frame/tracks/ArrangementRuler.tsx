@@ -75,10 +75,10 @@ export function placeClips(set: WorldTrackSet): {placed: Placed[]; end: number} 
   return {placed, end}
 }
 
-/** The loop its owner carries, in the Arrangement's units (the ruler's, or the rows laid end to end): `loop`, which no adapter carries
- * yet (the W4 return proposes it for timeline/worldTrackAdapter.ts). A set without one draws no brace, as the design draws no loop. */
-export type LoopReading = {loop?: TimeRange}
-export const loopOf = (set: WorldTrackSet): TimeRange | undefined => (set as WorldTrackSet & LoopReading).loop
+/** The loop its owner carries (`set.loop`), in the Arrangement's units: a loop with no end runs to the end of what the Arrangement
+ * lays (`end`, the bounds' end). A set without one draws no brace, as the design draws no loop. */
+export const loopOf = (set: WorldTrackSet, end: number): TimeRange | undefined =>
+  set.loop ? {start: set.loop.start, end: set.loop.end ?? end} : undefined
 
 /** The loop brace where the window shows it (catalogue dlw__arrangement-ruler.tsx `.arp-brace`): over the marks with its words, quieter in
  * a lane. An end outside the window draws no edge. */
@@ -189,7 +189,7 @@ export function ArrangementRulerView({set, selection, empty, view, lanes: lanesV
   const light = occasion ? occasionLight(occasion) : undefined
   const marker = view.marker !== null && inWindow(view.marker) ? view.marker : undefined
   // The loop its owner carries, held to the ruler and cut to the window (rulerWindow.ts bandIn); with none, no brace stands.
-  const loop = loopOf(set)
+  const loop = loopOf(set, bounds.end)
   const loopBand = loop ? bandIn(loop, range, bounds) : null
   const loopWords = loop ? `Loop · ${label(loop.start)} – ${label(loop.end)} · its owner's; set it where its owner sets it` : ''
 

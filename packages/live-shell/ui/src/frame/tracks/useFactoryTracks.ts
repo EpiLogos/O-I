@@ -74,11 +74,12 @@ export const useFactoryTracks: UseModeTracks = reading => {
     () => owned ? {control: control => harnessAgentControl(transport, harness.binding, control)} : undefined,
     [owned, transport, harness.binding],
   )
-  // Every session's Telemetry and Solo: its own settings, all read in one owner call and each written on its own.
+  // Every session's Telemetry and Solo, and its task's launch, follow and quantize: its own settings, all read in one owner call;
+  // Telemetry and Solo are each written on its own.
   const sessionRefs = useMemo(() => agency.tracks.filter(track => !track.group).map(track => track.sessionRef), [agency.tracks])
   const own = useSettingsAnswers(transport, sessionRefs, SETTINGS_PROJECT)
   const settings = useMemo<FactorySettingsPort | undefined>(() => transport.kind === 'unavailable' ? undefined : {
-    of: session => { const reading = own.get(session); return reading ? {telemetry: reading.track.telemetry, solo: reading.track.solo} : null },
+    of: session => { const reading = own.get(session); return reading ? {telemetry: reading.track.telemetry, solo: reading.track.solo, task: reading.task} : null },
     set: async (session, setting, on) => {
       try {
         await writeSessionSettings(transport, SETTINGS_PROJECT, session, trackSettingChange(setting, on))

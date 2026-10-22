@@ -9,11 +9,14 @@
 // reads): the owner's playback for each scene's state, its scene transport for launch, Stop All and Back to Arrangement, the presented
 // scene's recorded moves and generator lanes as automation lanes, and the frame's held count and Re-enable (native/frameTakes.ts, the
 // link the transport's Re-enable presses — shell/transports/useExpressionsTransport.tsx:183-188).
+// W4: from the same readings, the playing scene's progress (its elapsed seconds over the length it plays) and the saved sequence's
+// loop flag, so the Session draws the fill and the Arrangement the loop brace.
 import type {SurfMode} from '../../shell/modeGrammar'
 import type {NativeCompositionViewSource} from '../../shell/compositionViews'
 import type {NativeEditorReading} from '../../../../../expressions-boundary/src/editor'
 import {readFrameTakeLink, type FrameTakeLink} from '../../native/frameTakes'
 import {STAGE_AUTOMATION_RESUME} from '../../native/stageCommands'
+import {sceneDuration} from '../../components/nativeScenePlayback'
 import type {ExpressionsControls, ExpressionsWorkReading} from '../../timeline/expressionsTrackAdapter'
 import type {SetDocument} from '../../shell/document'
 import type {SetSummary} from '../../shell/useSet'
@@ -97,13 +100,23 @@ export function nativeTracks(content: NativeExpressionsContent | null | undefine
   const playback = content.playback
   // How each scene stands, from the owner's playback: the scene that plays runs, a scene with material stands ready, one without
   // says why. A scene playing outside the saved sequence differs from the ruler.
-  const statusOf = (scene: (typeof scenes)[number]) => playback && playback.scene_playing && playback.scene_ref === scene.scene_ref ? {status: 'running' as const}
+  // How far the playing scene has got (W4): the owner's elapsed seconds over the length the scene plays — its saved snapshot's while
+  // the saved sequence plays, else its working length (the Expressions app's own timing, propertyTracks.ts expressionTiming) — and
+  // only when that length is read (nativeScenePlayback.ts sceneDuration). Nothing is estimated for a scene whose length is unread.
+  const progressOf = (scene: (typeof scenes)[number]) => {
+    const expected = playback ? sceneDuration(playback.saved_sequence_playing ? scene.snapshot.duration : scene.working?.duration) : null
+    return playback && expected !== null && Number.isFinite(playback.scene_elapsed_seconds) ? {progress: {elapsed: playback.scene_elapsed_seconds, expected}} : {}
+  }
+  const statusOf = (scene: (typeof scenes)[number]) => playback && playback.scene_playing && playback.scene_ref === scene.scene_ref ? {status: 'running' as const, ...progressOf(scene)}
     : scene.material?.available ? {status: 'stopped' as const} : scene.material?.reason ? {note: scene.material.reason} : {}
   const presented = extra.reading && extra.reading.basis.expression_ref === expressionId ? extra.reading : null
+  // The saved sequence's loop flag (the Journey's, expressions-boundary/src/scenes.ts `loop`), where a saved sequence stands to loop.
+  const loops = content.scenes?.loop === true && content.scenes.timing.saved.available
   return expressionsTrackAdapter.project({expressions: [{id: expressionId, name: workName ?? expressionId,
     scenes: scenes.map(scene => ({id: scene.scene_ref, name: scene.title || scene.native_title, duration: scene.working?.duration ?? scene.snapshot.duration ?? 0, ...statusOf(scene)}))}],
     ...(presented ? {automation: [{expressionId, sceneId: presented.basis.scene_ref, lanes: sceneAutomationOf(presented)}]} : {}),
     ...(playback ? {differs: playback.scene_playing && !playback.saved_sequence_playing} : {}),
+    ...(loops ? {loop: true} : {}),
     ...(extra.held !== undefined ? {held: extra.held} : {}),
     ...(extra.controls ? {controls: extra.controls} : {})})
 }
