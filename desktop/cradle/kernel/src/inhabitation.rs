@@ -276,30 +276,12 @@ fn drain(mut reader: impl Read) -> (Vec<u8>, bool) {
 /// The owner's refusal in its own words: the three-part `{fact, consequence,
 /// action}` refusal (WORLD-INHABITATION-V1, OpenRig's convention) when the
 /// owner wrote one on stdout, else its `error.message` (or an `error` that is
-/// its words, as Actuation's research harness answers), else stderr.
+/// its words, as Actuation's research harness answers); the same document
+/// when it is the whole of stderr (Workcell writes its `--json` refusal
+/// there: `{"error":{"kind","message"},"ok":false}`); else stderr.
 pub(crate) fn refusal_words(stdout: &[u8], stderr: &[u8]) -> String {
-    if let Ok(value) = serde_json::from_slice::<Value>(stdout) {
-        if let Some(words) = value
-            .get("error")
-            .and_then(Value::as_str)
-            .filter(|words| !words.trim().is_empty())
-        {
-            return words.to_owned();
-        }
-        let refusal = value
-            .get("error")
-            .filter(|e| e.is_object())
-            .unwrap_or(&value);
-        let parts: Vec<&str> = ["fact", "consequence", "action"]
-            .iter()
-            .filter_map(|key| refusal.get(*key).and_then(Value::as_str))
-            .collect();
-        if !parts.is_empty() {
-            return parts.join(" ");
-        }
-        if let Some(message) = refusal.get("message").and_then(Value::as_str) {
-            return message.to_owned();
-        }
+    if let Some(words) = document_words(stdout).or_else(|| document_words(stderr)) {
+        return words;
     }
     // The refusal paragraph only: a CLI parser appends its usage help after
     // a blank line, which is not the owner's answer to this read.
@@ -316,6 +298,33 @@ pub(crate) fn refusal_words(stdout: &[u8], stderr: &[u8]) -> String {
     } else {
         words
     }
+}
+
+/// The words of one refusal document, when the bytes are one.
+fn document_words(bytes: &[u8]) -> Option<String> {
+    let value = serde_json::from_slice::<Value>(bytes).ok()?;
+    if let Some(words) = value
+        .get("error")
+        .and_then(Value::as_str)
+        .filter(|words| !words.trim().is_empty())
+    {
+        return Some(words.to_owned());
+    }
+    let refusal = value
+        .get("error")
+        .filter(|e| e.is_object())
+        .unwrap_or(&value);
+    let parts: Vec<&str> = ["fact", "consequence", "action"]
+        .iter()
+        .filter_map(|key| refusal.get(*key).and_then(Value::as_str))
+        .collect();
+    if !parts.is_empty() {
+        return Some(parts.join(" "));
+    }
+    refusal
+        .get("message")
+        .and_then(Value::as_str)
+        .map(str::to_owned)
 }
 
 /// Run one read-only owner command with a deadline. Spawn failure and
@@ -522,6 +531,13 @@ mod tests {
         assert_eq!(
             refusal_words(br#"{"error":{"message":"refused"}}"#, b""),
             "refused"
+        );
+        // Workcell's `--json` refusal is the whole of its stderr (REAL,
+        // `workcell sandboxes reconcile --server http://127.0.0.1:9 --json`,
+        // exit 4, 22 Oct 2026).
+        assert_eq!(
+            refusal_words(b"", br#"{"error":{"kind":"unavailable","message":"unavailable: connect OpenSandbox HTTP endpoint 127.0.0.1:9: Connection refused (os error 61)"},"ok":false}"#),
+            "unavailable: connect OpenSandbox HTTP endpoint 127.0.0.1:9: Connection refused (os error 61)"
         );
     }
 

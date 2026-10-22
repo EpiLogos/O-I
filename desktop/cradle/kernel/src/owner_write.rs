@@ -916,6 +916,7 @@ fn factory_action(request: &factory::OwnerRequest) -> &'static str {
         factory::OwnerRequest::DevelopmentCommission { .. } => "development commission",
         factory::OwnerRequest::RunClose { .. } => "run close",
         factory::OwnerRequest::AttemptReceiving { .. } => "attempt receiving",
+        factory::OwnerRequest::AttemptRetry { .. } => "attempt action retry",
         factory::OwnerRequest::AttemptDecisionSubmit { .. } => "attempt decision submit",
         factory::OwnerRequest::CustodyAssign { .. } => "development custody assign",
         factory::OwnerRequest::CustodyUpdate { .. } => "development custody update",
@@ -933,7 +934,8 @@ fn factory_ref(request: &factory::OwnerRequest, data: &Value) -> String {
     match request {
         OwnerRequest::ActionInvoke { run_ref, .. }
         | OwnerRequest::RunClose { run_ref, .. }
-        | OwnerRequest::AttemptReceiving { run_ref, .. } => run_ref.clone(),
+        | OwnerRequest::AttemptReceiving { run_ref, .. }
+        | OwnerRequest::AttemptRetry { run_ref, .. } => run_ref.clone(),
         OwnerRequest::Recognise {
             journey_ref,
             state_path,

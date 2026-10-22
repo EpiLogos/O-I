@@ -24,6 +24,8 @@
 // saved sequence — lit while a scene plays outside it); and the presented scene's automation lanes, each naming its device and
 // parameter: the recorded moves (an armed take records the studio: the scene's property tracks) and the lanes that move a
 // parameter by a generator, which name what moves them. Re-enable lights while the owner counts values held by hand.
+// W4: the playing scene carries its progress (its elapsed seconds over the length it plays) and the set its loop (the saved sequence
+// returns to its start), each only as the reading gives it; nothing is estimated.
 //
 // Pure TypeScript. No React, no family names.
 
@@ -46,7 +48,9 @@ export interface ExpressionsWorkReading {
     name: string;
     scenes: {id: string; name: string; duration: number; takes?: {id: string; name: string}[];
       /** How the scene stands, from the owner's playback reading (R3). */
-      status?: ClipStatus; note?: string}[];
+      status?: ClipStatus; note?: string;
+      /** How far the playing scene has got, from the owner's playback reading: its elapsed seconds and the length it plays (W4). */
+      progress?: {elapsed: number; expected: number}}[];
   }[];
   // Live's scene rows: each stop stands one or more scenes at once.
   stops?: {id: string; name: string; scenes: {expressionId: string; sceneId: string}[]}[];
@@ -57,6 +61,9 @@ export interface ExpressionsWorkReading {
   held?: number;
   /** A scene plays outside the saved sequence (Back to Arrangement lights); absent: no playback is read. */
   differs?: boolean;
+  /** The saved sequence returns to its first scene at its end (the Journey's loop flag, as the owner reads it): the whole sequence the
+   * Arrangement lays is the loop. Absent or false: no loop. */
+  loop?: boolean;
   /** The owner's scene transport, when the presented composition gives one. */
   controls?: ExpressionsControls;
 }
@@ -176,7 +183,8 @@ export function projectExpressionsWork(reading: ExpressionsWorkReading): WorldTr
       if (columnId === undefined) throw new Error(`Scene ${scene.id} of ${expression.id} has no column`);
       const start = cursor.get(columnId) ?? 0;
       const end = start + duration;
-      const state = {...(scene.status ? {status: scene.status} : {}), ...(scene.note ? {note: scene.note} : {})};
+      const state = {...(scene.status ? {status: scene.status} : {}), ...(scene.note ? {note: scene.note} : {}),
+        ...(scene.progress ? {progress: scene.progress} : {})};
       clips.push(
         {id: `${key}:visual`, trackId: visualLaneId(expression.id), columnId, label: scene.name, span: {start, end}, ...state},
         {id: `${key}:audio`, trackId: audioLaneId(expression.id), columnId, label: scene.name, span: {start, end}, ...state},
@@ -206,6 +214,8 @@ export function projectExpressionsWork(reading: ExpressionsWorkReading): WorldTr
     main: {name: 'Main', chain: [], ...(reading.differs !== undefined ? {differs: reading.differs} : {})},
     lanes: {automation, absent: {...EXPRESSIONS_LANES_ABSENT, ...(reading.automation ? {} : {automation: 'The presented scene\'s reading is not published to this pane, so its lanes are unread.'})},
       ...(reading.held !== undefined ? {held: reading.held} : {})}};
+  // The saved sequence loops whole: from its start to the end of what the Arrangement lays (worldTrackAdapter.ts `loop` with no end).
+  if (reading.loop === true) set.loop = {start: 0};
   const actions = expressionsActions(reading, clips);
   if (actions) set.actions = actions;
   return set;

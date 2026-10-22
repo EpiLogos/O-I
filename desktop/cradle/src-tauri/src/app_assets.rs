@@ -9,9 +9,12 @@ pub fn handle<R: Runtime>(app: &AppHandle<R>, request: &Request<Vec<u8>>) -> Res
     respond(request, |key| {
         // AssetResolver::get has an SPA fallback to the shell index. Exact
         // admission avoids serving that shell for a missing hosted module.
+        // The candidate embeds its frontend with the shell beside `__application/expressions/` (build-native-candidate.py
+        // stage), so a key is found under that prefix there and bare where the Expressions build is the whole frontend.
         let resolver = app.asset_resolver();
-        if resolver.iter().any(|(name, _)| name.trim_start_matches('/') == key) {
-            return resolver.get(key.to_owned()).map(|asset| (asset.bytes, "bundled"));
+        let names: Vec<String> = resolver.iter().map(|(name, _)| name.to_string()).collect();
+        if let Some(name) = embedded_name(names.iter().map(String::as_str), key) {
+            return resolver.get(name).map(|asset| (asset.bytes, "bundled"));
         }
         #[cfg(all(debug_assertions, not(feature = "native_shell")))]
         {
@@ -22,6 +25,12 @@ pub fn handle<R: Runtime>(app: &AppHandle<R>, request: &Request<Vec<u8>>) -> Res
     })
 }
 
+
+/// The embedded asset that answers `key` (`expressions/…`): stored bare, or under the candidate's `__application/` prefix.
+fn embedded_name<'a>(names: impl IntoIterator<Item = &'a str>, key: &str) -> Option<String> {
+    let prefixed = format!("__application/{key}");
+    names.into_iter().map(|name| name.trim_start_matches('/')).find(|name| *name == key || *name == prefixed).map(str::to_owned)
+}
 
 fn respond(
     request: &Request<Vec<u8>>,
@@ -66,6 +75,14 @@ mod tests {
             let response = respond(&request(path), |_| panic!("refused request reached assets"));
             assert_eq!(response.status(), StatusCode::FORBIDDEN);
         }
+    }
+    #[test]
+    fn a_key_is_found_bare_or_under_the_candidates_application_prefix() {
+        let candidate = ["/app/index.html", "/__application/expressions/library.html"];
+        assert_eq!(embedded_name(candidate, "expressions/library.html").as_deref(), Some("__application/expressions/library.html"));
+        assert_eq!(embedded_name(["/expressions/index.html"], "expressions/index.html").as_deref(), Some("expressions/index.html"));
+        assert_eq!(embedded_name(candidate, "expressions/missing.html"), None);
+        assert_eq!(embedded_name(["/app/expressions/library.html"], "expressions/library.html"), None);
     }
     #[test]
     fn embedded_response_keeps_exact_bytes_and_missing_asset_is_not_shell_html() {

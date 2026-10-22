@@ -139,8 +139,8 @@ test('2 · Grants: no issuer other than the person\'s own press reaches a write 
   // A whole forged record, as Actuation would accept it from the file, pressed as Issue: refused all the same.
   await assert.rejects(binding.write([{key: 'issue', value: JSON.stringify(AUTHORITY.record)}]), {message: session.CUSTODY_GRANTS_REFUSE.issue})
   assert.deepEqual(calls, [], 'no Issue press reached any port')
-  // The agent's own Run map retry and Agentset retry stay refused too (they need a named grant action the desk never asserts).
-  assert.match(runMap.RUN_MAP_REFUSE.retry, /needs a named grant action, and the desk never asserts one/)
+  // The Run map's Retry asserts no grant either: Factory retries only what its admission admits, under the host's grant (lane K0).
+  assert.match(runMap.RUN_MAP_REFUSE.retry, /under the host's grant, never one the desk names/)
   // And nowhere in the agent zone does the desk compose an authority-issue request.
   const agentZone = new URL('../src/agent/', import.meta.url).pathname
   const files = []
@@ -328,8 +328,9 @@ const upkeep = (write) => ({unused: answered(AIKIT.unused_trimmed.data), collate
 
 // REPLACED (lane W9): Sync, Promote and Rollback read AIKit's source list, Apply adopts at the reviewed digest and Run applies the chosen
 // procedure at its diff's digest since the kernel's round of cdbde6fe7 (w9-approvals-ledger-sets.test.mjs 11). What stays here: Undo and
-// Revoke only on what AIKit listed, Issue refused, AIKit's refusal in its words, Preview a reading.
-test('10 · the rack\'s upkeep: Undo and Revoke only on what AIKit listed; Issue stays refused; Preview reads a plan and writes nothing', async () => {
+// Revoke only on what AIKit listed, AIKit's refusal in its words, Preview a reading. REPLACED (lane K0): Issue writes aikit_write
+// bypass-issue (k0-routes-bindings.test.mjs); a press with no scope and reason is not asked.
+test('10 · the rack\'s upkeep: Undo and Revoke only on what AIKit listed; an Issue press without its scope and reason is not asked; Preview reads a plan and writes nothing', async () => {
   bind.resetHolds()
   const {ports, calls} = recorder(['write'])
   const binding = bind.rackBinding('factory:skillset', RACK_INPUT(), null, PLACE, upkeep(ports.write))
@@ -343,7 +344,7 @@ test('10 · the rack\'s upkeep: Undo and Revoke only on what AIKit listed; Issue
   calls.length = 0
   await assert.rejects(binding.write([{key: 'procUndo', value: 'prc_not_listed'}]), /not in AIKit's list/)
   await assert.rejects(binding.write([{key: 'revoke', value: 'byp_1'}]), /not in AIKit's list/)
-  await assert.rejects(binding.write([{key: 'issue', value: 'x'}]), {message: bind.RACK_UPKEEP_REFUSE.issue})
+  await assert.rejects(binding.write([{key: 'issue', value: 'x'}]), {message: 'Issue: the press names no scope and reason.'})
   assert.deepEqual(calls, [], 'nothing unlisted or unrouted reached AIKit')
   const listed = bind.rackBinding('factory:skillset', RACK_INPUT(), null, PLACE, {...upkeep(ports.write), bypasses: answered({bypasses: [{id: 'byp_1', scope: 'session', reason: 'probe', state: 'active'}]})})
   await listed.write([{key: 'revoke', value: 'byp_1'}])

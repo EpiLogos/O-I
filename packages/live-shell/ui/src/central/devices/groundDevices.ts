@@ -6,7 +6,10 @@
 //     the worktrees and branches are Central's read-only git census (`central.git.census`, central.git-census/v1) through the kernel's
 //     invoke_action (T-COVERAGE §1.3; owner_write.rs carries it as a reading), read once for both and again on Read now;
 //   - the Ground and Material pages (readHygienePages): central.doctor, central.world.reproject.plan and projectcentral.ground.inspect
-//     through invoke_action, Workcell's world receipts from its status; the sandboxes, which no kernel route reaches, refused by name;
+//     through invoke_action, Workcell's worlds of this machine's cell (`workcell worlds`, each receipt read with material_read); the
+//     tenders write through their owners on the person's press (groundBindings.ts HYGIENE_WRITERS); the sandboxes of a named server through
+//     workcell_read sandboxes
+//     (lane K0), and while no server is named (none is yet: Workcell names its declared deployment's URL in no reading), refused saying so;
 //   - Impact reads its subject's three legs when the subject changes — the knowledge graph (`op graph`, readGraph), a folder's
 //     listing (`op files_list`), the NOW register (`op now` kind:list) — ported from inhabitants/CentralImpactDevice.tsx's `read`
 //     (which reads through these three since lane BC3: one implementation of each leg), and the NOW leg again when the kernel says
@@ -22,8 +25,12 @@ import {assembleImpact, type ImpactReading, type ImpactSubject, type NowListRow}
 import {receiptMovesNow} from '../../owners/notices'
 import {useSpineEpoch} from '../../owners/spine'
 import {centralDeviceId} from './centralDeviceModel'
-import {hygieneBinding, impactBinding, type HygienePages, type HygieneRead} from './groundBindings'
-import {authoredOfInspection, groundFindings, materialFindings, rootOfDoctor, scaffoldOfPlan, type BoundaryOpSource, type MaterialWorld} from '../../inhabitants/centralHygieneModel'
+import {hygieneBinding, impactBinding, NO_SANDBOX_SERVER, type HygienePages, type HygienePorts, type HygieneRead, type HygieneSandboxes} from './groundBindings'
+import {centralWrite} from './centralDeviceWrites'
+import {materialWorldOf, worldsOf} from '../../agent/devices/workcellMaterial'
+import {authoredOfInspection, groundFindings, materialFindings, rootOfDoctor, sandboxesOfReport, scaffoldOfPlan, type BoundaryOpSource, type MaterialWorld,
+  type SandboxReading} from '../../inhabitants/centralHygieneModel'
+import {ownerRouteWrite, refusalWords, workcellReadOp, workcellWriteOp} from '../../agent/devices/ownerRoutes'
 import {ownerReadings} from '../../owners/ownerReading'
 import {readWorkcellOf, workcellReadingKey} from '../../owners/readers'
 import {heldOf, holdsVersion, subscribeHolds} from './pageBindings'
@@ -141,9 +148,23 @@ export const PAGE_OPS = {
   root: 'central.doctor',
   scaffold: `central.world.reproject.plan (project ${CENSUS_PROJECT})`,
   authored: `projectcentral.ground.inspect (project ${CENSUS_PROJECT})`,
-  worlds: 'material: workcell status persisted_world_receipts (op workcell_status_read)',
+  worlds: 'material: `workcell worlds` (op workcell_read worlds), each receipt read with op material_read',
   sandboxes: 'workcell sandboxes reconcile --server <the sandbox server>',
 } as const
+/** The sandboxes' operation for a named server (op workcell_read sandboxes, lane K0). */
+export const sandboxesOp = (server: string) => `workcell sandboxes reconcile --server ${server} (op workcell_read sandboxes)`
+
+/** Workcell's report of one named sandbox server (op workcell_read sandboxes): its sandboxes with their leases, or Workcell's refusal in its
+ * words. The kernel withholds the key variable from a server the desk names. */
+export async function readSandboxes(transport: KernelTransportStatus, server: string, again: boolean): Promise<{reading: SandboxReading} | {refused: string}> {
+  try {
+    const call = await kernelRead(transport, {op: 'workcell_read', request: {kind: 'sandboxes', server}}, {fresh: again})
+    if (call.error) return {refused: refusalWords(call.error)}
+    const outcome = call.outcome as {result?: unknown; data?: unknown} | null
+    const reading = outcome?.result === 'owner_route_reading' ? sandboxesOfReport(outcome.data) : null
+    return reading ? {reading} : {refused: 'Workcell answered in a form the device does not read (its sandboxes reconcile report expected).'}
+  } catch (cause) { return {refused: REFUSAL(cause)} }
+}
 
 /** One Central reading for the pages through invoke_action: its data, or its refusal in the owner's words. */
 async function pageRead(transport: KernelTransportStatus, action: string, input: Record<string, unknown>, again: boolean): Promise<{data: unknown} | {refused: string}> {
@@ -157,9 +178,9 @@ async function pageRead(transport: KernelTransportStatus, action: string, input:
 /** The Ground and Material pages (DLW §18.5): Central's root (central.doctor), the world's scaffold (central.world.reproject.plan) and its
  * authored ground (projectcentral.ground.inspect), each through invoke_action as a reading; Workcell's prepared worlds from its status
  * (the shared workcell answer: none while it keeps no world receipt; with some, no operation lists them for material_read, refused by
- * name); the sandboxes, which no kernel route reaches, refused by name. The model classifies the findings (centralHygieneModel.ts
- * groundFindings, materialFindings). */
-export async function readHygienePages(transport: KernelTransportStatus, epoch: string, again: boolean): Promise<HygienePages> {
+ * name); the sandboxes of the server named (`sandboxServer`, op workcell_read sandboxes), and with none named, refused saying so. The
+ * model classifies the findings (centralHygieneModel.ts groundFindings, materialFindings). */
+export async function readHygienePages(transport: KernelTransportStatus, epoch: string, again: boolean, sandboxServer: string | null = null): Promise<HygienePages> {
   const at = new Date().toISOString()
   const [doctor, plan, inspection] = await Promise.all([
     pageRead(transport, 'central.doctor', {}, again),
@@ -176,37 +197,98 @@ export async function readHygienePages(transport: KernelTransportStatus, epoch: 
   const root = reading(PAGE_OPS.root, doctor, rootOfDoctor)
   const scaffold = reading(PAGE_OPS.scaffold, plan, scaffoldOfPlan)
   const authored = reading(PAGE_OPS.authored, inspection, authoredOfInspection)
-  // Workcell's prepared worlds: its status says how many world receipts it keeps (the census read it a moment ago: the shared answer).
+  // Workcell's prepared worlds of this machine's cell: `workcell worlds` lists their receipts (lane K0: the route stands since lane W12), and
+  // each is read with material_read for its bindings' presence. The cell and its state root are Workcell's status (the shared answer).
+  const worlds = await readHygieneWorlds(transport, epoch, again, at, sources)
+  // The sandboxes: Workcell's report of the server named, else why none is read.
+  let sandboxes: SandboxReading | undefined
+  const sandboxOp = sandboxServer ? sandboxesOp(sandboxServer) : PAGE_OPS.sandboxes
+  if (!sandboxServer) sources.push({boundaryOp: sandboxOp, channel: 'kernel-op', at, refusal: NO_SANDBOX_SERVER})
+  else {
+    const read = await readSandboxes(transport, sandboxServer, again)
+    if ('reading' in read) { sandboxes = read.reading; sources.push({boundaryOp: sandboxOp, channel: 'kernel-op', at}) }
+    else sources.push({boundaryOp: sandboxOp, channel: 'kernel-op', at, refusal: read.refused})
+  }
+  const findings = [
+    ...groundFindings({root, scaffold, authored, ops: {root: PAGE_OPS.root, scaffold: PAGE_OPS.scaffold, authored: PAGE_OPS.authored}}),
+    ...materialFindings({worlds, sandboxes, ops: {worlds: PAGE_OPS.worlds, sandboxes: sandboxOp}}),
+  ]
+  return {...(root ? {root} : {}), ...(scaffold ? {scaffold} : {}), ...(authored ? {authored} : {}), ...(worlds ? {worlds} : {}), ...(sandboxes ? {sandboxes} : {}),
+    sources, findings}
+}
+
+/** The worlds of this machine's cell as the Material page reads them: `workcell worlds` (op workcell_read worlds) lists the receipts Workcell
+ * keeps, those of the cell its status names (workcell_ref), each read with the kernel's material_read for its bindings (centralHygieneModel.ts
+ * MaterialWorld: presence and health; the world's persistence carried to each binding). A source for each read, its refusal in Workcell's
+ * words; undefined when the worlds could not be listed. */
+async function readHygieneWorlds(transport: KernelTransportStatus, epoch: string, again: boolean, at: string, sources: BoundaryOpSource[]): Promise<MaterialWorld[] | undefined> {
   const workcell = ownerReadings.entry(workcellReadingKey(transport), readWorkcellOf(transport))
   await workcell.ensure(epoch)
   const status = workcell.snapshot()
-  const receipts = status.status === 'answered' ? (status.value as {persisted_world_receipts?: unknown} | null)?.persisted_world_receipts : undefined
-  let worlds: MaterialWorld[] | undefined
-  if (receipts === 0) { worlds = []; sources.push({boundaryOp: PAGE_OPS.worlds, channel: 'kernel-op', at}) }
-  else sources.push({boundaryOp: PAGE_OPS.worlds, channel: 'kernel-op', at, refusal: status.status !== 'answered' ? status.error ?? 'Workcell did not answer its status.'
-    : typeof receipts === 'number' ? `Workcell keeps ${receipts} world receipt${receipts === 1 ? '' : 's'}, and no operation lists them for material_read to read.` : 'Workcell\'s status names no world receipts.'})
-  sources.push({boundaryOp: PAGE_OPS.sandboxes, channel: 'machine-instrument', at, refusal: 'No kernel route reaches Workcell\'s sandboxes reconcile yet (T-COVERAGE §1.2).'})
-  const findings = [
-    ...groundFindings({root, scaffold, authored, ops: {root: PAGE_OPS.root, scaffold: PAGE_OPS.scaffold, authored: PAGE_OPS.authored}}),
-    ...materialFindings({worlds, ops: {worlds: PAGE_OPS.worlds, sandboxes: PAGE_OPS.sandboxes}}),
-  ]
-  return {...(root ? {root} : {}), ...(scaffold ? {scaffold} : {}), ...(authored ? {authored} : {}), ...(worlds ? {worlds} : {}), sources, findings}
+  const cell = status.status === 'answered' ? status.value as {workcell_ref?: unknown; state_root?: unknown} | null : null
+  if (!cell || typeof cell.workcell_ref !== 'string' || typeof cell.state_root !== 'string') {
+    sources.push({boundaryOp: PAGE_OPS.worlds, channel: 'kernel-op', at, refusal: status.status === 'refused' ? status.error ?? 'Workcell refused its status.'
+      : status.status === 'reading' ? 'Workcell has not answered its status yet.' : 'Workcell\'s status names no workcell_ref and state root, so no receipt can be told as this cell\'s.'})
+    return undefined
+  }
+  let listing: ReturnType<typeof worldsOf> = null
+  try {
+    const call = await kernelRead(transport, workcellReadOp({kind: 'worlds'}), {fresh: again})
+    if (call.error) { sources.push({boundaryOp: PAGE_OPS.worlds, channel: 'kernel-op', at, refusal: refusalWords(call.error)}); return undefined }
+    listing = worldsOf((call.outcome as {data?: unknown} | null)?.data)
+  } catch (cause) { sources.push({boundaryOp: PAGE_OPS.worlds, channel: 'kernel-op', at, refusal: REFUSAL(cause)}); return undefined }
+  if (!listing) { sources.push({boundaryOp: PAGE_OPS.worlds, channel: 'kernel-op', at, refusal: 'Workcell answered its worlds in a form the device does not read (workcell.world-receipts/v1 expected).'}); return undefined }
+  sources.push({boundaryOp: PAGE_OPS.worlds, channel: 'kernel-op', at})
+  const mine = listing.worlds.filter(world => world.workcellRef === cell.workcell_ref)
+  const read = await Promise.all(mine.map(async (listed): Promise<MaterialWorld | null> => {
+    const op = `material: material_read ${listed.worldRef}`
+    try {
+      const call = await kernelRead(transport, {op: 'material_read', target: {receipt: listed.receipt, state_root: String(cell.state_root), expected_world_ref: listed.worldRef}}, {fresh: again})
+      const outcome = call.outcome as {data?: unknown; failure?: {message?: unknown}} | null
+      const material = call.error ? null : materialWorldOf(outcome?.data)
+      if (!material) {
+        sources.push({boundaryOp: op, channel: 'kernel-op', at, refusal: call.error ? refusalWords(call.error) : typeof outcome?.failure?.message === 'string' ? outcome.failure.message
+          : 'Workcell answered the material read with neither a reading nor its failure.'})
+        return null
+      }
+      sources.push({boundaryOp: op, channel: 'kernel-op', at})
+      const world = material.world as {ref: string; state?: string; persistence?: string; bindings: {ref: string; presence?: string; health?: string}[]}
+      return {ref: world.ref, receipt: listed.receipt, ...(world.state ? {state: world.state} : {}),
+        bindings: world.bindings.map(binding => ({ref: String(binding.ref), presence: binding.presence ?? 'unknown', ...(binding.health ? {health: binding.health} : {}),
+          ...(world.persistence ? {persistence: world.persistence} : {})}))}
+    } catch (cause) { sources.push({boundaryOp: op, channel: 'kernel-op', at, refusal: REFUSAL(cause)}); return null }
+  }))
+  return read.filter((world): world is MaterialWorld => world !== null)
 }
 
-export function useHygieneDevice(transport: KernelTransportStatus, open: boolean): DesignBinding {
+/** The named server's Release orphans through the kernel: workcell_write release-orphans {server} (`workcell sandboxes reconcile --server
+ * <url> --release-orphans`), Workcell's report, or its refusal thrown in its words. */
+export const sandboxesPort = (transport: KernelTransportStatus, server: string): HygieneSandboxes => ({server,
+  release: async named => (await ownerRouteWrite(transport, workcellWriteOp({kind: 'release-orphans', server: named}), '`workcell sandboxes reconcile --release-orphans`')).data})
+
+/** Ground hygiene on the owners. `sandboxServer`: the OpenSandbox lifecycle server whose sandboxes the Material page reads and whose
+ * orphans Release orphans releases (Workcell's own `--server`); nothing names one yet (NO_SANDBOX_SERVER), so callers pass none. */
+export function useHygieneDevice(transport: KernelTransportStatus, open: boolean, sandboxServer: string | null = null): DesignBinding {
   const epoch = useSpineEpoch()
   const [read, setRead] = useState<HygieneRead | null>(null)
   useSyncExternalStore(subscribeHolds, holdsVersion, holdsVersion)
   const version = holdsVersion()
   const census = useCallback(async (again: boolean) => {
     const {census, findings} = await readHygieneCensus({transport, epoch, machineRead: hygieneMachineRead(transport, again)})
-    const pages = await readHygienePages(transport, epoch, again)
+    const pages = await readHygienePages(transport, epoch, again, sandboxServer)
     setRead({census, findings, pages, at: Date.now()})
-  }, [transport, epoch])
+  }, [transport, epoch, sandboxServer])
   const run = useCallback(() => census(true), [census])
   useEffect(() => { if (open) void census(false) }, [open, census])
+  // The tenders' writers (lane K0): Central's acts through invoke_action (the person's press, PERSON_ACTS), Workcell's reconcile on a world's
+  // receipt, and a named server's Release orphans.
+  const ports = useMemo((): HygienePorts => (transport.kind === 'unavailable' ? {project: CENSUS_PROJECT} : {
+    central: (action, input) => centralWrite(transport, action, input),
+    workcell: async request => (await ownerRouteWrite(transport, workcellWriteOp(request), `\`workcell ${request.kind}\``)).data,
+    project: CENSUS_PROJECT, sandboxes: sandboxServer ? sandboxesPort(transport, sandboxServer) : null,
+  }), [transport, sandboxServer])
   // eslint-disable-next-line react-hooks/exhaustive-deps -- the holds' version re-binds the view's own keys
-  return useMemo(() => hygieneBinding(HYGIENE_DEVICE_ID, read, Date.now(), run), [read, run, version])
+  return useMemo(() => hygieneBinding(HYGIENE_DEVICE_ID, read, Date.now(), run, ports), [read, run, ports, version])
 }
 
 const sameSubject = (a: ImpactSubject | null, b: ImpactSubject | null) => a?.kind === b?.kind && a?.path === b?.path

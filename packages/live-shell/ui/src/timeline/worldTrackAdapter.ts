@@ -137,6 +137,9 @@ export interface WorldTrackLanes {
 export interface ClipLaunch {
   quantize?: string;
   follow?: string;
+  /** How it plays once launched (manual §3; the design's once · hold · loop), in the family's own word. The Session's second line
+   * says it, except once, the default, which it draws as nothing. */
+  mode?: string;
 }
 /** One take under a clip (manual §3: "Takes stack under a clip so you can choose the one that stands"). */
 export interface WorldClipTake {
@@ -275,6 +278,10 @@ export interface WorldTrackClip {
   /** What its owner discloses is absent about this clip (its state, its length), in the owner's own words. The Session
    * shows it where the clip stands. */
   note?: string;
+  /** How far a running clip has got, as its owner reads it: the time it has played and the length it is expected to play, in one
+   * unit of the owner's. Absent where no owner reads both — an owner that knows no expected length gives none, and the Session
+   * draws no progress rather than an estimate. */
+  progress?: {elapsed: number; expected: number};
 }
 
 // A transport take exposed by a family. Takes belong to the Transport stratum
@@ -375,6 +382,10 @@ export interface WorldTrackSet {
   main?: WorldMainTrack;
   /** The lanes under the tracks in Arrangement view. */
   lanes?: WorldTrackLanes;
+  /** The loop its owner carries (manual §10.2: the Arrangement's loop brace), in the Arrangement's units: the ruler's, or the rows
+   * laid end to end. No `end`: it runs to the end of what the Arrangement lays (a whole sequence that returns to its start). Absent:
+   * no loop is read, and no brace is drawn. */
+  loop?: {start: number; end?: number};
 }
 
 /** The retained occasion as the shared views read it: its basis words exactly as first read, where it stands on this set's

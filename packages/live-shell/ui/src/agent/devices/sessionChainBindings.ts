@@ -11,8 +11,9 @@
 //   AIKit's encounter view (the Thread's rows, threadBinding.ts threadJson) — the Run's full view is the thread.
 // What no kernel op reaches: a session's Factory run (factory_attempt_read needs a run ref the agency reading never names, so the
 //   Run's takes are absent), the event lanes (the temporal stream names the session, not Messages · Files · Terminal · Web · Graph),
-//   Hermes' subagent tree and delegation block (subagent.list over tui_gateway; no config.set key), Factory's custody holds and
-//   RetryGrant, Central's agent-set records for a SessionSpace (agency_read names no set for it). Each is absent here and each write
+//   Hermes' subagent tree and delegation block (subagent.list over tui_gateway; no config.set key), the Run and workflow unit a member's
+//   task is (Factory's retry, factory_owner attempt-retry, takes them), Central's agent-set records for a SessionSpace (agency_read names no
+//   set for it). Each is absent here and each write
 //   that needs one stands disabled with the operation it lacks. Pure, apart from the view holds (designBindings.ts holdView).
 import type {DesignBinding, Standing, Value, ValueChange, Values} from '../../frame/devices/designed'
 import type {DeviceInstance} from '../../frame/devices/deviceRuntime'
@@ -48,9 +49,14 @@ const reading = (key: string) => `${key} is a reading: its owner reports it; not
 
 // ---------------------------------------------------------------------------------------------------------------- the Run
 
+// Telemetry and Solo are the session's own settings on AIKit (lane K0 corrected): `encounter-session-settings` `track.telemetry` and
+// `track.solo`, written through the kernel's encounter_session_settings against the revision that stands (agent/sessionSettings.ts
+// trackSettingChange) — the Session view's mixer reads and writes them (timeline/factoryTrackAdapter.ts FACTORY_TELEMETRY_OP, FACTORY_SOLO_OP).
+// The Run device is handed neither the session's settings reading nor its writer, so it names that route and stands disabled here.
+// AIKit's gateway agent controls (`aikit gateway agent --binding B pause|resume`) address a gateway binding's connector, never a session.
 export const RUN_REFUSE = {
-  telemetry: missing('Telemetry', 'a session\'s telemetry switch (agency_read reports none; the shell\'s Telemetry flag is its own)', 'Actuation'),
-  solo: missing('Solo', 'a session solo that pauses the others (harness_agent_control addresses the whole bound harness)', 'Actuation'),
+  telemetry: 'Telemetry: the session\'s own setting on AIKit (encounter_session_settings {track: {telemetry}}, as the Session view\'s mixer writes it); the Run device is not handed the session\'s settings or their writer, so it does not write it here (AIKit).',
+  solo: 'Solo: the session\'s own setting on AIKit (encounter_session_settings {track: {solo}}, as the Session view\'s mixer writes it); the Run device is not handed the session\'s settings or their writer, so it does not write it here (AIKit).',
   take: 'No takes are read: factory_attempt_read needs the run ref of the session\'s work, and the agency reading names none.',
   open: 'No events are read into lanes: the temporal stream names the session, not Messages, Files, Terminal, Web or Graph.',
 } as const
@@ -423,7 +429,9 @@ export const AGENTSET_REFUSE = {
   returnCap: DELEGATION('Summary cap', 'delegation.max_summary_chars'),
   model: DELEGATION('Subagent model', 'delegation.model'),
   join: missing('Join', 'a tie from this group to one of Central\'s agent sets: the group is an AIKit session space, and AIKit\'s team carries no join; Central keeps join on its agent sets (central.agent-set/v1 `join`, written by central.agent-set.save, read by list, read and resolve), and agency_read names only the space\'s ref and label, so no reading says which set this group runs', 'Central'),
-  retry: missing('Retry', 'Factory\'s RetryGrant (factory/src/orchestration.rs) through the kernel', 'Software Factory'),
+  // Factory retries a unit of a Run under the unit's retry grant (factory_owner attempt-retry, lane K0; the Run map's Retry). The rack
+  // holds a member, which is an agent session, and no reading names the Run or the workflow unit the member's task is.
+  retry: 'Retry: Factory retries a unit of a Run under its retry grant (factory_owner attempt-retry, the Run map\'s Retry); the rack holds the chosen member, an agent session, and no reading here names the Run or the workflow unit its task is (Software Factory).',
 } as const
 
 export interface AgentsetInput {

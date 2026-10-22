@@ -91,6 +91,9 @@ bullet twice gets one Sonnet diagnostic; never a third builder attempt.
 
 ## 7. Open claims
 
+**22 Oct:** read HANDOFF-BUILD "Where it stands › 22 Oct — read this first" before anything here. The next run starts at
+HANDOFF-BUILD's item 1, not at T-COVERAGE.
+
 One branch, one run (`dlw/build`; #675 landed; #677 landed in five parts, #678–#682; the lane since then landed as #685 on 20 Oct, 31 commits replayed onto main with its tree byte-identical to `5885d4df7`; PR #683 carries what follows). Builders are Opus, at most
 two at a time (owner, 17 Oct evening, after four builders hit the session limit twice: "run 1-2 subagents and go slower"; R1 and R3 finish, then R2, then R4), driven from the lead session (owner, 14 Oct evening: "run like 3 opus subagents and drive from the main
 session … get work done well first time round"); type-checks serialised through one lock because the machine runs

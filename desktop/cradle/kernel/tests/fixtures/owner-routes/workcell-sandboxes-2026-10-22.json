@@ -1,0 +1,41 @@
+{
+  "captured": "2026-10-22, the installed workcell 0.1.0 (dd89ebae271c), read only (no --release-orphans): 'read' against a fixture OpenSandbox lifecycle server on 127.0.0.1:18931 that listed three sandboxes (a live lease, an expired lease, no lease), saw no API-key header, and would have refused any DELETE; 'unreachable' against 127.0.0.1:9, where nothing listens (exit 4, the refusal document the whole of stderr). No sandbox server is declared on this machine (`workcell doctor --json`: opensandbox_control_fence null).",
+  "argv": "workcell sandboxes reconcile --server URL --json",
+  "read": {
+    "deleted_snapshots": [],
+    "failures": [],
+    "include_snapshots": false,
+    "ok": true,
+    "release_orphans": false,
+    "released_sandboxes": [],
+    "sandboxes": [
+      {
+        "expires_at": "2099-01-01T00:00:00Z",
+        "id": "sbx-live",
+        "lease": "live",
+        "state": "Running"
+      },
+      {
+        "expires_at": "2020-01-01T00:00:00Z",
+        "id": "sbx-orphan",
+        "lease": "expired-orphan",
+        "state": "Paused"
+      },
+      {
+        "expires_at": null,
+        "id": "sbx-nolease",
+        "lease": "unknown",
+        "state": "Running"
+      }
+    ],
+    "server": "http://127.0.0.1:18931",
+    "snapshots": [],
+    "unrecognised_sandboxes": 0,
+    "unrecognised_snapshots": 0
+  },
+  "unreachable": {
+    "exit": 4,
+    "stdout": "",
+    "stderr": "{\"error\":{\"kind\":\"unavailable\",\"message\":\"unavailable: connect OpenSandbox HTTP endpoint 127.0.0.1:9: Connection refused (os error 61)\"},\"ok\":false}\n"
+  }
+}

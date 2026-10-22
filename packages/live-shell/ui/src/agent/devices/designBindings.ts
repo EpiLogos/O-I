@@ -313,6 +313,20 @@ export interface AgentInput {
   readonly events?: readonly TemporalEventLike[] | null
   /** AIKit's continuity for the Context page (aikitPages.ts): `aikit work continuity pressure` and `commands`; absent: not read here. */
   readonly context?: {readonly pressure: AikitAnswer; readonly commands: AikitAnswer; readonly turn?: AikitAnswer}
+  /** Actuation's usage records of the selected session (`actuation usage list --session S`, the kernel's actuation_read {usage-list}; lane
+   * K0): the model the session last reported using, where the gateway names none. Absent: not read here. */
+  readonly usage?: AikitAnswer
+}
+
+/** The model the session last reported using: the newest usage record's `usage.model.name` that Actuation lists for it
+ * (actuation.usage-listing/v1, records in stream order), where a record names one. Pure. */
+export function lastUsageModelOf(listing: unknown): string | undefined {
+  if (!isObj(listing) || listing.schema !== 'actuation.usage-listing/v1' || !Array.isArray(listing.records)) return undefined
+  for (const record of [...listing.records].reverse()) {
+    const model = isObj(record) && isObj(record.usage) && isObj(record.usage.model) ? record.usage.model : null
+    if (model && typeof model.name === 'string' && model.name) return model.name
+  }
+  return undefined
 }
 
 /** The Agent's values: each key from the owner that reports it, or absent. */
@@ -359,6 +373,8 @@ function agentOwnValues(input: AgentInput): Record<string, Value> {
   if (harness.resolved) put(values, 'harness', harness.binding)
   const doc = reading.gatewayAdmitted === true && isObj(reading.gatewayDoc) ? reading.gatewayDoc : null
   if (doc && typeof doc.model === 'string') put(values, 'model', doc.model)
+  // Where the gateway names no model, the one the session last reported using (Actuation's usage records, lane K0).
+  else if (sessionRef != null && input.usage?.status === 'answered') put(values, 'model', lastUsageModelOf(input.usage.value))
   put(values, 'effort', accepted.effort)
   put(values, 'input', accepted.input)
   put(values, 'quantize', accepted.quantize)
@@ -669,9 +685,10 @@ async function compose(change: ValueChange, ports: ComposePorts | null, place: {
 // chain stands (aikitPages.ts maps each answer; FactoryDeviceChain.tsx reads them), with `aikit source list` and the chosen procedure's
 // `aikit procedure diff` (lane W9, the kernel's round of cdbde6fe7); Sync, Promote, Rollback, Undo and Revoke write through aikit_write on
 // the thing the page chose, Apply adopts only at the digest of the plan you reviewed (`aikit adopt <root> --yes --expect-digest`), and Run
-// applies the chosen procedure only at the digest its diff names (`aikit procedure run <id> --expect-digest`). A bypass issue stays
-// disabled: no route mints its secret. The pages' settings are the hand's own holds.
-const aikitMissing = (what: string, op: string) => missing(what, `${op} through the kernel`, 'AIKit')
+// applies the chosen procedure only at the digest its diff names (`aikit procedure run <id> --expect-digest`). Issue writes the bypass
+// through aikit_write bypass-issue (lane K0: `aikit bypass issue --scope S --reason R`, whose answer is the bypass's id — the id `bypass
+// list` shows, no secret); AIKit refuses a scope it does not take and an empty reason in its own words. The pages' settings are the hand's
+// own holds.
 /** Why each upkeep reading is absent when nothing is handed in (lane W8 reads them through aikit_read where the chain stands). */
 export const RACK_UPKEEP_ABSENT: Readonly<Record<string, string>> = {
   unused: 'The members never seen used: AIKit\'s `aikit unused` is not read here.',
@@ -681,14 +698,12 @@ export const RACK_UPKEEP_ABSENT: Readonly<Record<string, string>> = {
   procedures: 'The changes AIKit made to the machine: AIKit\'s `aikit procedure list` is not read here.',
   bypasses: 'The hook bypasses: AIKit\'s `aikit bypass list` is not read here.',
 }
-/** The act that stays refused, naming what it lacks (the kernel routes no bypass issue). */
-export const RACK_UPKEEP_REFUSE: Readonly<Record<string, string>> = {
-  issue: aikitMissing('Issue a bypass', '`aikit bypass issue` (not routed: it mints a secret)'),
-}
+/** The upkeep acts that stay refused, naming what each lacks: none since the kernel routes `aikit bypass issue` (lane K0). */
+export const RACK_UPKEEP_REFUSE: Readonly<Record<string, string>> = {}
 /** The acts routed to AIKit's own commands (aikit_write), each a person's press on the thing the page chose. */
 export const RACK_UPKEEP_WRITES: Readonly<Record<string, string>> = {
   sync: 'source-sync', promote: 'source-promote', rollback: 'source-rollback', procUndo: 'procedure-undo', revoke: 'bypass-revoke',
-  adoptApply: 'adopt', procRun: 'procedure-run',
+  adoptApply: 'adopt', procRun: 'procedure-run', issue: 'bypass-issue',
 }
 /** AIKit's upkeep readings as the rack's chain holds them (workcellReads.ts useAikitRead). */
 export interface RackUpkeep {
@@ -771,6 +786,13 @@ export function rackBinding(id: string, input: RackInput, ports: ComposePorts | 
       case 'revoke':
         if (!bypasses?.some(row => row.id === value)) throw Error('Revoke: that bypass is not in AIKit\'s list.')
         return {kind, id: value}
+      case 'issue': {
+        // The design's press: JSON {scope, reason}. The scope and the reason go as written; AIKit takes or refuses them in its words.
+        let pressed: {scope?: unknown; reason?: unknown}
+        try { pressed = JSON.parse(value) as {scope?: unknown; reason?: unknown} } catch { throw Error('Issue: the press names no scope and reason.') }
+        if (typeof pressed?.reason !== 'string') throw Error('Issue: give a reason first.')
+        return {kind, reason: pressed.reason, ...(typeof pressed.scope === 'string' && pressed.scope ? {scope: pressed.scope} : {})}
+      }
       case 'adoptApply': {
         // Apply only the plan you reviewed: the digest pressed is the digest of the plan read.
         if (!adoption || typeof adoption.digest !== 'string' || adoption.digest !== value) throw Error('Apply: the plan changed since you reviewed it, or names no digest; read it again with Preview.')

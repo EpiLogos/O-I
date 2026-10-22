@@ -5,8 +5,8 @@
 // session's task record and temporal_events_read), the session list the Thread offers (threadBinding.ts sessionRowsOf), and the
 // task THE selection names (`<track>#task/<n>`, timeline/factoryTrackAdapter.ts parseFactoryTaskRef). Launch quantize is the
 // transport's Quantize — the Agent's interrupt timing (one binding feeds both). A new task goes the Agent's own way (its declared
-// new-task row, kernel:harness_agent_control configure {prompt}). Launch, Retry and Stop after have only the whole bound harness
-// as their grain (factoryTrackAdapter.ts FACTORY_GRAIN), never one task, so they stand disabled with that reason. The per-task
+// new-task row, kernel:harness_agent_control configure {prompt}). Launch, Retry and Stop after are Software Factory's acts on a Run's
+// unit (TASKS_REFUSE), and a task clip names neither, so they stand disabled with that reason. The per-task
 // settings (Mode, Then, To, Effort, Autonomy, Register, Form here; every setting of the Clip view through TASK_SEAMS) are the
 // session's settings on their owner, AIKit's `encounter-session-settings` (kernel encounter_session_settings, agent/sessionSettings.ts),
 // written against the revision that stands. The task's log is not read: the temporal stream names the session, not the task's
@@ -53,11 +53,17 @@ const put = (values: Record<string, Value>, key: string, value: Value | null | u
 
 // ---------------------------------------------------------------------------------------------------------------- Tasks
 
-const GRAIN = (what: string) => missing(what, `a ${what.toLowerCase()} of one task (harness_agent_control addresses the whole bound harness; the owner takes no task)`, 'Actuation')
+// A task's lifecycle is Software Factory's (lane K0; Factory README: an attempt Action owns start, retry, cancel and Return, and a retry
+// is a new attempt record): Factory starts, retries and cancels the attempt of a Run's workflow unit (`factory attempt action`, operations
+// start-serial, retry, request-cancellation), not a clip of a session. A task clip names no Run and no unit, so none of the three can be
+// addressed from here: Retry has its route (factory_owner attempt-retry, the Run map's Retry) and waits on the clip's Run and unit; Launch
+// and Stop after have no kernel route to Factory's start-serial or request-cancellation at all. harness_agent_control addresses the whole
+// bound harness, never one task.
+const NO_TASK_UNIT = 'a task clip names no Factory Run and no workflow unit (the session\'s attempts stand on Runs, and a unit is retried from the Run map)'
 export const TASKS_REFUSE: Readonly<Record<string, string>> = {
-  launch: GRAIN('Launch'),
-  retry: GRAIN('Retry'),
-  stopAfter: GRAIN('Stop after'),
+  launch: missing('Launch', `a kernel route to Factory's attempt start-serial for one task's unit — ${NO_TASK_UNIT}`, 'Software Factory'),
+  retry: `Retry: Factory retries a unit of a Run (factory_owner attempt-retry, the Run map's Retry), and ${NO_TASK_UNIT} (Software Factory).`,
+  stopAfter: missing('Stop after', `a kernel route to Factory's attempt request-cancellation for one task's unit — ${NO_TASK_UNIT}`, 'Software Factory'),
 }
 
 /** Where the session's settings are written: the transport and register its owner is reached through, and the reading the
@@ -119,7 +125,7 @@ export const TASK_SEAMS: Readonly<Record<TaskSetting, TaskSeam>> = {
 
 /** The owner op the task's own acts wait for, in its exact shape. */
 export const TASK_OP_SHAPES: Readonly<Record<string, string>> = {
-  'Actuation · harness_task_control': 'request {session_ref, task: n, act: launch|retry|stop} → answer the task\'s state (one task, not the whole bound harness)',
+  'Software Factory · factory attempt action': 'operation start-serial | retry | request-cancellation on {run_ref, workflow_unit_ref} → factory.attempt-action/v1 receipt (retry routed: factory_owner attempt-retry); a task clip must first name its Run and unit',
 }
 
 export interface TasksInput {

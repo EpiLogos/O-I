@@ -30,6 +30,10 @@ export interface TaskClip {
   softStop: boolean
   /** The disclosed absence — what the native sources cannot say. */
   disclosure: string | null
+  /** The bound task's own ref (`request.central.task_ref`), where the record names one: the key its settings and its attempts are
+   * read under (AIKit encounter-session-settings `task.task_ref`, encounter_task_attempts_list). Absent on the soft-stop slot and on a
+   * record that names only a purpose. */
+  taskRef?: string
 }
 
 export interface NeedleReading {
@@ -157,6 +161,7 @@ interface TaskRecordLike {
   state: TaskState
   /** True when the state came from the owner's own field, not an inference. */
   ownerDeclared: boolean
+  taskRef: string | null
 }
 
 /** Read one bound task record (`aikit.encounter-task/v1`). The reading holds
@@ -187,7 +192,7 @@ function readTaskRecord(reading: unknown, nowUnixMs: number, sessionEvents: Temp
   } else {
     state = 'unknown'
   }
-  return {title: purpose ?? taskRef, state, ownerDeclared}
+  return {title: purpose ?? taskRef, state, ownerDeclared, taskRef}
 }
 
 /** Build the clips for one session: the data's own clips, then exactly one
@@ -228,6 +233,7 @@ export function buildTaskClips(
       lastActivityUnixMs: latest,
       softStop: false,
       disclosure,
+      ...(record.taskRef ? {taskRef: record.taskRef} : {}),
     })
   }
   clips.push({

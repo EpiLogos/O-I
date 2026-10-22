@@ -189,7 +189,8 @@ test('Tasks device: Mode, To and a single Effort go to the owner; Launch, Retry 
   await after.write([{key: 'effort', value: 'high'}])
   assert.deepEqual(entry.snapshot().value.task.effort, [[0, 'high']])
   assert.equal(entry.snapshot().value.task.launch, 'loop')
-  for (const key of ['launch', 'retry', 'stopAfter']) assert.match(after.standing[key].disabled, /missing op/, key)
+  // REPLACED (lane K0): the three are Software Factory's, and each names what it needs (a task clip names no Run or unit).
+  for (const key of ['launch', 'retry', 'stopAfter']) assert.equal(after.standing[key].disabled, tasks.TASKS_REFUSE[key], key)
   const unread = tasks.tasksBinding({...input, settings: null}, null, {selectTask() {}, queue: async () => {}})
   assert.equal(unread.standing.mode.disabled, settings.SETTINGS_WHY.notHere)
   await assert.rejects(() => unread.write([{key: 'mode', value: 'hold'}]), {message: settings.SETTINGS_WHY.notHere})
