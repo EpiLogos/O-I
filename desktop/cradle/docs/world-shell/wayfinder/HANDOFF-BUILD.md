@@ -28,11 +28,10 @@ planning, pages and creatures lanes and does no build work. Nothing here starts 
   - State: main `08df20494` is the r36 candidate. On `dlw/finish`, not yet on main: the Session grid and ruler drawn to their
     designs and fed by real readings (`c871de149`, `4d1fedca5`), W3's last three routes (`5d5128940`), and the native
     Library fix (`4481f5ece`: every native candidate's Library read "no built Expressions asset").
-  - Parked, not for main as it is: `dlw/k0-wiring-wip` (Actuation usage and continuity, Workcell lease and checkpoints, wired into
-    the Ledger, Identity and the workcell rack; its commit message lists what is owed).
-  - Owner PRs open: Actuation #143, Workcell #123, ai-kit #545, Factory #289, Central #293. Central #293's Approve needs
-    `control.apply-proposal` in the owner's human grant (Control/user/native-action-authority.json), which only the owner
-    can add.
+  - Also in #704 (`b7d6e27bf`): Actuation's usage and continuity and Workcell's lease and checkpoints, wired into the Ledger,
+    Identity and the workcell rack; Ground hygiene's tenders through their owners.
+  - Owner PRs merged 22 Oct and every product installed from main: Actuation #143, Workcell #123, ai-kit #545, Factory #289,
+    Central #293. The owner added `control.apply-proposal` to the human grant.
   - The first screen pass (22 Oct): `../evidence/screen-pass-20261022/` (S1 on a browser copy of the shell, N1 on r36 natively;
     both the window and its grammar, not yet the devices). They are findings to fix, not a work list that replaces items 1–9.
   - Traps: `~/Applications/O-I Shell Candidate.app` is an 8 Oct build with the candidate's bundle id, so never open the app by
