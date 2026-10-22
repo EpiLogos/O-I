@@ -19,6 +19,16 @@ planning, pages and creatures lanes and does no build work. Nothing here starts 
   the run never checked that items 1–9 were done. They were not, and they are the next run's work, in order from item 1.
   What items 10 and 11 changed is mostly what a control does when it is pressed (kernel routes, owner operations in six
   products). They changed little of what the owner sees or can use: devices that work, racks, acts, one browser, words.
+  - **The next run opens like this (the owner's word, 22 Oct), before any build work:**
+    1. Write the acceptance journeys from the manual (§1–§10 and §16): what a person does in the app, end to end, in each mode.
+       Each journey cites its manual section and its gallery design. They are the only definition of done.
+    2. Fold the plan into this file. It is the one state of record: the journeys with pass or fail, the current candidate, and
+       the owner's order of work. PATH, MAP and FOUNDATION retire into git history.
+    3. Replace the installed app (`~/Applications/O-I Shell Candidate.app`) with the current candidate.
+    4. Build a native candidate from main (with #704 if it has landed), launch it from a clean data home, and walk every
+       journey on screen with computer use. If the native app cannot be driven, the run stops and says so.
+    Then work "The work, in order" from item 1, each item judged by the journeys. The run's first reply says what state the app
+    is in, from using it, and which items it takes, in this order.
   - State: main `08df20494` is the r36 candidate. On `dlw/finish`, not yet on main: the Session grid and ruler drawn to their
     designs and fed by real readings (`c871de149`, `4d1fedca5`), W3's last three routes (`5d5128940`), and the native
     Library fix (`4481f5ece`: every native candidate's Library read "no built Expressions asset").
