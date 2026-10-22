@@ -272,3 +272,13 @@ red, another lane's reworded tooltip that `tests/native-device-pool.test.mjs` st
   13 times the work and failed a generator that was fast.
 - The shell's cloud layer is a window of the analytic field about the camera, made in the tile worker's lane, shown whole, turned by the wind since it was made and
   remade at 0.4 degrees of drift; the 1024 mask still draws the world view. Its noise is sampled on the sphere, not in longitude and latitude.
+
+## State of record (moved from PATH sec 7, 22 Oct 2026)
+
+Moved verbatim from the retired `PATH.md` (history: PATH.md at `41557a9ed`). Hashes, run labels (r1, r23 ...) and cross-references inside are as PATH wrote them; "PATH sec N" and "FOUNDATION sec N" in this text name the retired files, whose content is now in `MAP.md` (State of the streams, The foundation's route), `EXECUTE.md` and the tickets.
+
+### Row (PATH sec 7 table)
+
+| Ticket | Who | Zone | Since |
+|---|---|---|---|
+| T-PROCEDURAL-BODY — worlds you build, at the Earth's standard (`tickets/T-PROCEDURAL-BODY-at-the-earths-standard.md`) | **code landed** on `dlw/build` (20–21 Oct): the boundary `023302338` (the Earth's own numbers as the gate, with teeth) and the manual `bdabfcdbe` (§2, §17.2); Lane A's generator, version 2 of `fbm-sphere` (a base 2048 or 4096 wide; procedural tiles in a worker at close zoom, `ae744db53`; the look and weather from the occasion; the sea's shelf and open sea `241294a72`, `d0aa5b801`; the ground past the finest tile `f43b7cf00`; ice sheets `adc6a4750`; clouds as a window of the field about the camera, crisp at a region view, sampled on the sphere at the poles `95c29f536`); Lane B's system (only agents at work and what they have just made in orbit, maturity to a look, the wiring, the locations audited against §17.2), and the lead's gate with the shelf and deep sea held to the Earth's (`82a7ea24b`, `c9bdea5f1`). No `todo` is left in any planet test; planet and atlas suites 542 of 542, `tsc` and the port-pin clean, the whole suite green. **Seen** (headless, swiftshader; `evidence/procedural-body-20261020/after/`): beside the Earth at 3.2, 1.35 and 1.08 radii the body reads as a planet with weather at a world view, with crisp ground and thin broken clouds at a region view, and with rock, cover patches and rivers at a place view; the System scale shows only the agents and what they made; a new world is a grey moon. Still lesser than the Earth: the open sea is a flat dark navy at these distances (its lines and wide shelves are softer than the Earth's), past zoom 8 the sharpness is grain, forest grades dark. **Not seen:** the native candidate (its screen pass is the owner's) | lead, two Sonnet builders (owner's second account) | 21 Oct |

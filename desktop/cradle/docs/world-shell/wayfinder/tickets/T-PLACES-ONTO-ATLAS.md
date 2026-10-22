@@ -313,3 +313,40 @@ editor validates — `desktop/cradle/src/knowledge/WikiFactsEditor.tsx`, `deskto
 `fsj/src/kernelExpressions.ts`, and now the atlas's Place tool); `psychogeographic/basemapSources.ts` (the closed ids the
 Scene material validates, `fsj/src/researchMaterial.ts`); `fsj/src/placeTourRecord.ts` (the same material's tour law).
 Scenes saved before keep their place views, layers and tours as inert, validated data.
+
+## State of record (moved from PATH sec 7, 22 Oct 2026)
+
+Moved verbatim from the retired `PATH.md` (history: PATH.md at `41557a9ed`). Hashes, run labels (r1, r23 ...) and cross-references inside are as PATH wrote them; "PATH sec N" and "FOUNDATION sec N" in this text name the retired files, whose content is now in `MAP.md` (State of the streams, The foundation's route), `EXECUTE.md` and the tickets.
+
+### PATH sec 7: the 126 targets re-homed (lane M), the register follows the code (lane T), Places is the atlas alone (lane O)
+
+Then: the 126 targets re-homed (lane M, FOUNDATION §8): `acceptance.py rehome` re-opens every cited path:line, runs the
+reachability script over every home and records home, owner op and evidence — or a named gap — on each row; `verify` holds
+the new columns; the input is rebuilt by `tools/build_rehome.py` from any seat. 122 homed, 4 gaps; 0 seen on screen (all
+code-reading plus the reachability script); 40 homed on homes FOUNDATION §4 and N4 retire (the frame's Places map and
+Palace). Ranked: G1 the stage's file exports have no native receiver (the main window sets no download handler and wry
+cancels `<a download>`: lane-1 B2/B3); G2 the Instruments rail keeps no subject into Graph (D1); G3 the shell carries no
+frame deep-link address (E22); R1 Places onto the atlas (31 targets); R2 palaces onto the atlas (N4, 9); S1 mount N2's
+subject door — 76 homes read their facets only on a Wiki-bound Scene, reached today only by Examine in the Graph pane.
+
+Then: the register follows the code again (`c1b203e4c`, lane T): 123 homed, 3 gaps (G4 Capture into a Scene, G5 Record a walk,
+G6 the Journey's beat), homes on a retiring home 40 → 9 (R2, palaces onto the atlas); the Wiki-Scene rows reach through N2's door beside
+Examine. Seen on screen: 0. Carried from lane T: the progress axis disagrees with the re-home columns (T20/T25/T26 are gaps but
+`implemented: yes`; D1 is homed but pending; 47 rows' `implemented` evidence cites files no longer in the tree) — `rehome`
+leaves progress alone by design, so the progress axis needs its own re-record. Fixed from its code-reading (`d6b5aa672`): pressing
+the World from another pane opened the Earth and then folded the World again. Decided (lock §0.1.3: the Project instrument is
+"the Earth and solar system ⇄ Graph", the World the planet builder acting on it): the Earth pane stands the Project, and the
+World opens by its fold — the mockup's open M4 plate is the craft floor for the World's plate, not which instrument the pane is.
+
+Then: Places is the atlas, alone (`92a7d38d5`, lane O, R1). The 31 Places targets are listed with their atlas homes in
+`tickets/T-PLACES-ONTO-ATLAS.md`: the M4 World / Places plate (Body, Landmass, Climate, Sky with the QL Sun and the Frames
+ladder, Locations with find and the Place tool through the owner's editor, Relations narrowing the one filter), the transport's
+time on the atlas's one time button and the shared window (no second clock), the globe's gestures with their words in the
+hover; the atlas's own chrome and onboarding stand down in the pane; the frame's Places map, overlays, lens panels and route are
+removed (−10.4k lines), each retired test naming its replacement, and the map's place consumer with them (`235b4771f`). Judged
+not kept (lane O, with reasons in the ticket): pitch and bearing, polygon regions, hierarchy edges, the basemap/terrain choice.
+Gaps: named map views (T20) wait on Technē's Capture writer; tour recording (T25) on the journey owner; T26 is the Journey's. Carried
+from lane O: the draft contract (`psychogeographic/placeAuthoring.ts`) should move to its owner and the folder go; the frame's
+`app.ts` still wires a 'place' lens; dead Places CSS in the frame; the Earth pane could stand M4 open by default (the mockup's
+open plate) — the lead's call under lock §0.1.3; the atlas's focus label and a non-Field lens's own controls still draw in the
+pane. Screen legs UNVERIFIED until the next native pass.

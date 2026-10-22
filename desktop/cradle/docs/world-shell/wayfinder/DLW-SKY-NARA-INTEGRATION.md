@@ -15,8 +15,8 @@ premise under all of it: **every person's self is a whole solar system
 interacting.**
 
 This is a design contemplation in the wayfinder genre. It **proposes**; it
-does not amend the artifacts of record (`WORLD-SHELL-DESIGN.md`,
-`DLW-PLAN.md`) and it claims no implementation. Where it synthesises, the
+does not amend the artifact of record (`WORLD-SHELL-DESIGN.md`, into which the
+former plan and pane documents are folded) and it claims no implementation. Where it synthesises, the
 sources are named; where a choice belongs to the owner, it is surfaced as a
 choice with the source's own alternatives, never silently answered.
 
@@ -44,7 +44,8 @@ The port stipulations are real and precise — with one important word about
   `ql.sky-snapshot/v1`).
 - **Staleness to correct**: `WORLD-SHELL-DESIGN.md` §3.1's sentence "The
   Atlas has no ephemeris code; none is invented here" is stale at atlas HEAD
-  (recorded in `CONTEXT-PACK.md` §1.7); the atlas now carries the sky
+  (recorded in the retired `CONTEXT-PACK.md` §1.7; the sky modules are pinned in
+`packages/live-shell/ui/src/projections/atlas/PORT-PIN.json`); the atlas now carries the sky
   subsystem and the Kerykeion/libephemeris sidecar. The *law* the sentence
   carries — no ephemeris invented, the sky arrives from its native owner —
   stands and is exactly what this document builds on.
@@ -419,10 +420,9 @@ readings:
 
 ---
 
-Sources: `wayfinder/MAP.md`, `wayfinder/CONTEXT-PACK.md` (§1.7, §2.1),
+Sources: `wayfinder/MAP.md`, `packages/live-shell/ui/src/projections/atlas/PORT-PIN.json`, `Work/Quaternal-Logic/providers/sky/kerykeion_snapshot.py`,
 `wayfinder/tickets/L5-earth-graph-aion-port.md`, `new-shell/WORLD-SHELL-DESIGN.md`
-(Rev 2–5, §3.1, §18), `wayfinder/DLW-PLAN.md` (§5.5), `wayfinder/DLW-PANES-ONTOLOGY.md`,
-`wayfinder/DLW-PANES-PER-MODE.md`, `Work/Quaternal-Logic/docs/kernel-rebuild/m123-scene-map/{nara,m2-sky}.md`,
+(Rev 2–5, §3.1, §18, and the folded plan and pane documents: §18.1, §5.6–§5.10, §4.3), `Work/Quaternal-Logic/docs/kernel-rebuild/m123-scene-map/{nara,m2-sky}.md`,
 `Work/Quaternal-Logic/docs/kernel-rebuild/APERTURES-AND-CLOCK-CENTRE.md`,
 `Work/Quaternal-Logic/docs/L5-TECHNE-DUAL-READING-LOCK.md` (§11a, §13),
 `Work/Quaternal-Logic/docs/M-PRIME-PHYSICAL-MUSIC-WAYFINDER.md`,

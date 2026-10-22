@@ -674,7 +674,7 @@ Skill stand-in: port widgets.
 
 - **Usage.** A skill chip in a skillset rack until an authored engine glyph replaces it. The picture is a diamond.
 - **States.** One drawing. The row's light is admit or deny.
-- **Appears.** Ported from agent-shell-mockup.html SK['port-widgets'], scaled from 16 to 24. AGENTIC-CONVERGENCE.md calls these geometric stand-ins.
+- **Appears.** Ported from agent-shell-mockup.html SK['port-widgets'], scaled from 16 to 24. They are geometric stand-ins; the Expressions glyph library is their intended later source.
 
 ### capture-plan
 

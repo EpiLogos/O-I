@@ -219,3 +219,106 @@ in-window readback; capture; full-suite backing; fresh candidate profile
 `~/.config/oi-shell-candidate/0-1-2/{composition,catalogue}.json`); a
 session-lock pre-check in `readback`; the AX-settle rule for the conductor's
 kit; the hand relaunch of r1d at ~17:25Z kept no logs.
+
+## State of record (moved from PATH sec 7, 22 Oct 2026)
+
+Moved verbatim from the retired `PATH.md` (history: PATH.md at `41557a9ed`). Hashes, run labels (r1, r23 ...) and cross-references inside are as PATH wrote them; "PATH sec N" and "FOUNDATION sec N" in this text name the retired files, whose content is now in `MAP.md` (State of the streams, The foundation's route), `EXECUTE.md` and the tickets.
+
+### The native passes and builds (PATH sec 7 paragraphs, in their order)
+
+Then: the native pass of build n2 (`9a1974d13`, 16 Oct 02:47–02:55; computer-use through the background app tools — the window
+stood on the stage, full-screen control unanswered three times). Seen working: the owner's resize report fixed — Technē's Earth
+stays round when the browser or the detail area toggles (the pane narrows, widens and grows; no window resize); the status bar's
+Info line names what the pointer is over ("Toggle browser · ⌘⌥B", "Central — the day and its documents"); Central's Day draws its
+catalogue design on the chain — "Fri 16", "—" on the net, the owner's stale-pointer refusal in the well, the Today press (Central's
+ensure, left for the owner), the kit head's marks; Technē's Project and World on the kit's head with live wells ("the Earth not mounted"
+until it mounts, then the disc with "no place located", "sky not loaded"), the folds as kit strips with their accent addresses, the World's
+Locations a "0 placed · 15" readout with no sentence, the detail head "World open on the focused pane"; Expressions' Studio reads
+"saved" (lane D's false dirty gone), fits its band at a 1261×820 window with one Save (TOOLS whole, Pointer as kit dials, sections
+folded to their titles); Factory's chain draws the Gateway ("refused", "No readings", "—"; Connect disabled), the Agent ("turns not
+read", "check-in not read", Budget disabled) and the Skillset rack ("Members · no reading") from their designs. Small, open: the Day's
+refusal clips at the well's foot (the design); the World's Locations shows a fifth row cut at the plate's foot; the Pointer's value "0.23
+stage un…" overflows its cell (values are short, manual §16.8).
+
+Then: Wave 0, the native pass of the m4 build (`2de90416e`, stamp 20261015T-m4; product equal to HEAD; 16 Oct 00:33–00:45,
+computer-use, full-screen control, the window brought out of Stage Manager's strip). Seen working: Locations › O-I expands its
+three Scenes within ~5 s of the double-click (the installed AIKit batch); the Canvas draws the O-I card with no chrome in the pane
+(only the minimap, which the Canvas's Minimap switch owns); the canvas frame re-lays itself out when the browser toggles; with the Earth in
+the pane the O-I palace floor draws (two rooms on a dashed path) with no atlas label or "≡"; Project, World (Body, Landmass, Climate, Sky
+drawn waiting; Locations paged; Relations) and Palace (Rooms, Path, Board, Return, Bookmarks) stand; the Studio carries Save, Undo and
+Redo in its head, Your controls opens with + Parameter and a chosen control; ⌘⌥Enter brings the frame's own chrome into the pane
+and restores it; Factory and Live load (Live's M1 torus device draws its picture). Seen broken — lanes F and D: (1) the owner's
+report, "the resizing of the pane content per the changes to viewport size with sidebar toggle changes": the Earth draws as an
+ellipse whenever its pane changes size without a window resize — the ported atlas re-measures on `window` resize only
+(`projections/atlas/src/globe/engine.ts:135`, `src/app/controller.ts:299`, `src/ui/walk-strip.ts:47`); (2) the door, with a restored
+work in the pane, asks Scene "O I" in `techne-m0.central…` — the frame toasts "revision_conflict: the native Expression changed",
+the row stays "asking for O I…", and after 30 s the fault line says the frame "gave the shell no reason"; (3) the Studio reads
+"edited since save" over a work the status bar and the frame's scene bar call saved; (4) the Technē fault line still stands in
+Expressions' pane; (5) entering a palace from a pane that holds the frame starts the walk and says "entered on the Earth" but the
+Earth never comes into view; (6) Expressions' transport overflows at 1372 px (Repeat/Pulse/Global truncated, a "Running" readout
+over Map and the mode icons); (7) the status bar's info line is crushed to one letter by the admission list; (8) the panes' tab
+strips and ⊞ never reveal by pointing (Technē's frame pane, Expressions, Central's Day/Flow), and ⌘⌥\ shows nothing — so Central's
+day tracks behind the Flow were not reached again; (9) the Studio overflows its band (TOOLS and the nested Glyph Sequence box with
+its own Save cut at the plate's foot); (10) Central's Day still reads the owner's refusal "The native today pointer is stale"
+(the Days stop at 13 Oct: no ensure has run since the scheduled rollover was disabled on 13 Oct), and the Day device offers no
+ensure. Not seen: a Compact device on Technē's row (World and Palace open left no room). (9) and the plates' density go to Wave A; (10)
+to B0's reading, then the Central device lane.
+
+Then: the native pass at `e37198c2d` (computer-use, the owner's real ground; the window parks in Stage Manager's strip until
+clicked onto its stage, FOUNDATION §5). Seen working: Technē's subject door — Locations › O-I reads "opening…" while the wiki
+registers project (~1 min natively), then "in O I · +2" with its three Scenes as rows, the Expressions panel naming Scene "O I"
+and then "O-I — wiki overview", Saved; World › Palaces lists one palace per register and entering O-I opens the Earth and draws
+its floor (two rooms on a dashed path), the M5 Palace / Integral Whole plate (Rooms, Path guided|free, Guide, Start ← →, Portals
+"↩ the Earth") with the walk playing on the transport (6 s a locus, "Locus 2 of 5 · Journey / scene"); the M4 World / Places
+plate (Body, Landmass, Climate, Sky, Locations "place | palace | portal", 15 unlocated). Seen broken, and fixed:
+(1) a work opened in a pane drew nothing, in Technē and in Expressions — headless, the frame had laid out the Scene (the M1
+canvas, its "O I" card) exactly over the pane, behind the pane's opaque body: the placed residence is position: fixed, a stacking
+context of its own, so the frame's z-index counted only inside it (`2e37defb4`; headless after: the canvas draws). Unseen until
+lane W, because no work could open in a pane before. (2) The atlas's focus label showed through a palace's floor, and the
+Theory lens's Options "≡" (Jung's theory, Dynamics) stood in the Earth pane — the palace layer now stands above every field
+overlay, and the atlas's header stands down whole, its line, scope and Options on the M4 plate under Lens (`6f8c25dc5`). Seen
+next, and out as ticket Y: with the cover gone the frame draws its own chrome in the pane (masthead, tool palette, zoom, minimap,
+scene bar, the React Flow mark) — the owner's "options inside the pane", hidden until now under the blank. Not reached: Central's
+tracks (the Flows track, `818c18a15`) — the persisted Central layout showed the Day and the Flow, the tracks a tab behind the
+Flow by the seed, not found this pass; an empty Flow page grew an unsaved first entry during the pass with no press on it
+(nothing saved: the editor saves only when asked). Central's Day still reads the owner's refusal: "The native today pointer is
+stale". Native re-check of (1) and (2): the build at `6f8c25dc5`.
+
+The native pass at `11475cc3d` (computer-use, the owner's real ground): Technē opens on the Earth alone (no stray
+Expressions tab), the atlas draws and says why the owner's subjects stand nowhere ("45 subjects read from their owners, none on
+the Earth"); Locations lists the owner's projects, and choosing O-I names it in the title line, Trail and aperture, answers "in
+O I · +2" with its Scenes listed, and opens the stage — but the asked Scene never opened and nothing said so (lane S); the
+atlas pane still draws Archetypal-Earth's own chooser, onboarding and time strip (to lane O). Central reads days by date in
+the title line, detail head and Trail; the Flow answers. Expressions' empty centre says what it waits for, the Studio fits at
+1280 with Capture in view; with no work open the Studio's head and the status bar had named the frame's own scene — fixed
+(`29d96db8b`). Live's chain stands Keyboard and M1 torus; a background-control drag cannot start WebKit's drag session, so
+the chain end's drop stays UNVERIFIED on screen (scripted only).
+
+The native pass at `ae9301a1b` (computer-use, 15 Oct): every mode at the mockup's anatomy — Central's paper documents,
+plates and aperture; Factory's grid, thread and one-line clip side; Live's rail, Keyboard and M1 torus plates with real
+readings; Expressions' Studio; Technē's rack. Found and fixed: the traffic lights covered the transport's first controls
+at the 46px bar, and the window had no drag region; the empty hosted Expressions frame painted over the pane's waiting
+line; Expressions' aperture named the frame's own scene as a work. Found and given a lane: the Flow's form never starts
+natively (lane I above). Seen, not ours to change: the owner's saved trees hold an Automations surface in Live (its own icon
+tabs and Refresh inside the pane) and an Expressions pane in Technē (the latter was ours, not the owner's: fixed in `10d17bf49`); Central's Day waits on the owner ensuring the
+current Day. Also landed: Central's Clip view reads Highlights, Notes and Packet from the document's own payload
+(`0fcd51006`, lane H).
+
+Native: the 14 Oct full-suite builds at `665906251` and `94f52764` were sealed,
+launched and read back with 6 of 6 owners admitted. The first readback named a
+real fault no scripted test could see: the continuity commands were denied by
+the native IPC ACL (and so, since 25 September, were the Factory working
+surface and the decision confirmation); fixed in `6f41f6f5b`, with a
+conformance test holding registration, manifest and capability together, and
+the second run reads the continuity with no denial. Computer-use access was
+refused a fourth time, so no screen pass has run.
+
+### Carries (PATH sec 9)
+
+- Native run at the lane's HEAD `c9c1510a8` (13 Oct, stamp `20261013T-phase1b`):
+  clean build (`source_dirty: false`), sealed, launched, AX settled at 1595
+  elements, the window reads "Native host · revision c9c1510a8da4" and "3 of
+  6 owners admitted" (3 excluded by footprint), the rail reads "Central" and
+  no element carries "Base · Central" / "08:30" / "21:00"; quit exit 0
+  (`evidence/p0-r1/run-20261013T-phase1b/`; channel scripted). Screencapture
+  still refused — the pixel legs stay owed.

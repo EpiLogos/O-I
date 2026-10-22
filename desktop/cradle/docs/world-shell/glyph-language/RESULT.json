@@ -42,7 +42,7 @@
   "waits": [
     "C3 widget-standards extraction has not landed (wayfinder/tickets/C3-widget-standards.md, output wayfinder/WIDGET-STANDARDS.md). This roster does not rename ids ahead of that document.",
     "The device-family field face is field-lines so the encounter spine can keep the plain name field. If the standards document calls that face field, reconcile the two names then.",
-    "Skill pictures are the geometric stand-ins in agent-shell-mockup.html. AGENTIC-CONVERGENCE.md points at the Expressions glyph library as their later source. Replace a picture with a chip; keep the skill id.",
+    "Skill pictures are the geometric stand-ins in agent-shell-mockup.html. The Expressions glyph library is their intended later source. Replace a picture with a chip; keep the skill id.",
     "Bee portraits stay illustrations. They carry each agent's own colour, which this roster does not bake in.",
     "Planet bodies stay the Earth projection's drawing. M0′–M5′ stay the mockup's text labels."
   ],

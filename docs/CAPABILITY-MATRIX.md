@@ -2,6 +2,8 @@
 
 *Assembled from the recovery ledger (`Work/github-recovery-mirror/ledger/capability-matrix/`; regenerate with `assemble.py` + `render_md.py` against the mirror). Machine-readable companion: `suite/capability-matrix.json`.*
 
+*The S-whole matrix is now `ProjectCentral/user/capability-matrix.{csv,json}` (protocol `ql-capability-matrix/1`). It carries this recovery's 38 S-position rows, with their ids, evidence and per-source verdicts. The scope law `s-only-scope` below describes how this 2026-09-06 recovery was extracted; it does not set the scope of the S whole.*
+
 Generated 2026-09-06 from the recovery ledger (`github-recovery-mirror/`): 166 capabilities, every one carrying a standing verdict backed by cited tree evidence, joined under the corpus's own receipt laws. This is the S-level recovery of functional intent; S′/M/M′ material is out of scope by locked decision.
 
 Standing rule: **conservative** — the weakest non-historical source verdict governs a merged record; per-source verdicts stay visible in `capability-matrix.json`. Zero records were unreconciled.

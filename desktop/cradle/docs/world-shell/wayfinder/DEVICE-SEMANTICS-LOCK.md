@@ -1,18 +1,10 @@
 # DLW device semantics lock — Live's ontology is the DLW's
 
-**Standing:** 12 Oct 2026, the conductor (`claude-code:dlw-conductor`),
-written directly from the ground — the owner's specimen (`../icon-cut.html`,
-typed in `packages/live-shell/ui/src/inhabitants/sdk/modes.ts`), the world
-mockup (`../world-shell-mockup.html`, Revision 5 with 2–4 recorded in
-`../WORLD-SHELL-DESIGN.md`), the agent mockups, the device SDK and family
-manifests as built, the Expressions device brief, the capability matrices
-(via `npm run devices:gaps`), the Ableton RE corpus, and the Glass Bead Game
-study (`docs/research/glass-bead-game/05-DLW-RELATION.md` §2). Where
-DLW-PLAN, DLW-VISION, WIDGET-GUIDE or the tickets disagree with this file on
-device semantics, this file stands; they are conformed to it.
-
-Mockup values (names, hours, counts, sample data) are illustrative. Their
-**structure and semantics** are the intent.
+**Standing:** 12 Oct 2026, the conductor (`claude-code:dlw-conductor`), written directly from the ground: the owner's
+specimen (`../icon-cut.html`), the world mockup, the device SDK and family manifests as built, the Ableton RE corpus and the
+Glass Bead Game study. Where a plan, the vision, the widget guide or a ticket disagreed with this file on device semantics, this
+file stands; the plan, the vision and the widget guide are since folded into `../WORLD-SHELL-DESIGN.md`, `DEVICE-SDK.md` and the
+manual. Mockup values (names, hours, counts, sample data) are illustrative; their **structure and semantics** are the intent.
 
 ---
 
@@ -57,7 +49,7 @@ derived, not asked.
 ### 0.1 Every instrument in every mode (owner ruling, 13 Oct 2026)
 
 Relayed from the DLW documentation session; it supersedes the plain-aperture
-rule wherever this file, WSD, WIDGET-GUIDE, DLW-PANES-PER-MODE or the mockup
+rule wherever this file, WSD, the retired widget guide and pane documents, or the mockup
 stated it.
 
 1. **Every pane instrument works in every mode at full capability.**
@@ -277,7 +269,7 @@ VIEWTIP, DVN, BCATS, CTABS/WID, deviceDetail/formDevice/liveDetail, TPM;
 | Element | Semantic | Note |
 |---|---|---|
 | Mode rail (five icons) + Session/Arrangement icons | Live's view selector, generalised | Epi-Logos is a lens, never a rail entry |
-| Panes (split tree, tabs on an auto-hidden rail) | **device type with several devices** (Live: several reverbs under one effect type) | every pane hosts an **instrument type** (Earth, Timeline, Graph, Expression, Document, Sessions, Thread, Terminal, …); a type has several implementations; default sets per mode, users save their own (`DLW-PANES-ONTOLOGY.md` §0, owner's words) — see §8.1 |
+| Panes (split tree, tabs on an auto-hidden rail) | **device type with several devices** (Live: several reverbs under one effect type) | every pane hosts an **instrument type** (Earth, Timeline, Graph, Expression, Document, Sessions, Thread, Terminal, …); a type has several implementations; default sets per mode, users save their own (`WORLD-SHELL-DESIGN.md` §5.6; the owner's words are `PROGRAMME.md` R7) — see §8.1 |
 | Right dock (companion + tiles: agent, Packet, Trail, Field, Agents, Terminal, Results, Sky, NOWs) | **stretched**: Live's Info/Help views + the agent-shell standard | the agent-shell mockup is the standard (owner ruling 8 Oct) |
 | Aperture (World · Local · Shared · Federated) + view-as | the key/scale slot in Technē; elsewhere the aperture slot | — |
 | Trail (every encounter kept) | undo history + the encounter spine | one spine, no second selection model |
@@ -289,13 +281,7 @@ VIEWTIP, DVN, BCATS, CTABS/WID, deviceDetail/formDevice/liveDetail, TPM;
 
 ## 4. Misfits and gaps — each with its fix (no questions)
 
-1. **Devices do not declare a Live semantic.** `InhabitantFaceKind`
-   (`parameter | document | conversation | instrument`, `manifest.ts:31`)
-   is the rack's resident taxonomy (WSD §5), and `DEVICE_FORMATS`
-   (`chain-plate | die | scene-strip | run-viewer | instrument-face |
-   tool-tile`, `modes.ts`) is presentation. Neither names instrument /
-   audio-effect / MIDI-effect / rack / chain / macro / clip / track / scene.
-   **Fix:** add `liveSemantic` to the face declaration and gate it (§5).
+1. *Settled: every face declares `liveSemantic`, gated by §5 (this item was the fault; the gate is the fix).*
 2. **Twenty-five suite capabilities have no family scope** (`devices:gaps`:
    `(no family scope)`). **Fix — homes by semantic:** search aperture →
    Browser search (all modes); session observatory → Factory arrangement
@@ -322,15 +308,14 @@ VIEWTIP, DVN, BCATS, CTABS/WID, deviceDetail/formDevice/liveDetail, TPM;
    course over time is the §14 modulation and the owner's revision history.
    **Fix:** re-enable (hand back) is the automation-re-enable semantic in
    every mode; the Arrangement shows revision clips, not drawn envelopes.
-5. **Macros are named twice under other words.** Rack-widget compact
-   controls (≤4, `DEVICE-PANEL-BRIEF.md` rule 8) and ActSpec delegated
-   controls (`AGENTIC-CONVERGENCE.md`). **Fix:** both are `macro`; the gate
-   checks a macro maps declared rows of its own device.
+5. **Macros are named twice under other words** (rack-widget compact controls, ≤4; ActSpec delegated controls). *Settled: both are
+   `macro`; the gate (§5.3) checks a macro maps declared rows of its own device (`DEVICE-SDK.md`, field-panel design rule 8;
+   `WORLD-SHELL-DESIGN.md` §7.1).*
 6. **The Central title still reads "Base · Central"** (`inhabitants/sdk/modes.ts:159`,
    `shell/modeGrammar.ts:228`). **Fix:** title "Central" (T-LABELS).
 7. **Day hours are hard-coded in text** (mockup sample "08:30 / 21:00";
    copied into `modes.ts:175` and `shell/modeGrammar.ts:282` — "day opened 08:30 · close routine ·
-   21:00", WIDGET-GUIDE §4.1, PATH, DLW-PLAN). **Fix:** the punch row reads
+   21:00", `WORLD-SHELL-DESIGN.md` Revision 5, PATH). **Fix:** the punch row reads
    the day's bounds and automated closure from the Central owner; the
    meaning text says "day opened · close routine · day closes".
 8. **Expressions Studio sections are not yet devices in the chain.** The
@@ -389,12 +374,7 @@ Added to `inhabitants/sdk/validate.ts` with the vocabulary in `modes.ts`
 
 ## 6. Conformance — the plans
 
-The plans are conformed to this file before any build resumes:
-DLW-PLAN, DLW-VISION, WIDGET-GUIDE, PATH, MAP and the tickets drop what this
-file shows to be invented or already settled (owner questions, invented
-tickets, hard-coded day hours, Nara framed outside the Epi-Logos lens, the
-physics sim's sounding treated as open, per-repo owner tickets). The list
-is made against this file and applied in one pass.
+*Done (12 Oct 2026): the plans were conformed to this file in one pass; the plan, the vision and the widget guide are since folded into `../WORLD-SHELL-DESIGN.md`, `DEVICE-SDK.md` and the manual, and the list of what they dropped is closed.*
 
 ---
 
@@ -477,7 +457,7 @@ stop across.
 
 Every pane hosts an instrument **type**; a type may have several
 **implementations**, selectable like Live's several reverbs
-(`DLW-PANES-ONTOLOGY.md` §0, the owner's words). Settings live in the
+(`WORLD-SHELL-DESIGN.md` §5.6, the owner's words; also `PROGRAMME.md` R7). Settings live in the
 workspace's sets, never in browser storage, for every type with more than
 one implementation.
 

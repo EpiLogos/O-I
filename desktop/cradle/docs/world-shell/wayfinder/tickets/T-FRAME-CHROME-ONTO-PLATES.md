@@ -258,3 +258,33 @@ not re-shot).
   port onto the Device side is its own work.
 - **The relation field's keys** (Cause · Recurrence · Concurrency; the standing filter) are read and stood down by code; the headless
   work's reading discloses no typed relations, so they were not seen.
+
+## State of record (moved from PATH sec 7, 22 Oct 2026)
+
+Moved verbatim from the retired `PATH.md` (history: PATH.md at `41557a9ed`). Hashes, run labels (r1, r23 ...) and cross-references inside are as PATH wrote them; "PATH sec N" and "FOUNDATION sec N" in this text name the retired files, whose content is now in `MAP.md` (State of the streams, The foundation's route), `EXECUTE.md` and the tickets.
+
+### PATH sec 7: lane Y, and lane P (stage exports, the frame's address)
+
+Then: lane Y landed (`14a713f89`): the hosted frame draws only its field in a pane. The frame learns its presentation from the host
+(devices | frame) and stands its own chrome down; presentedChrome.ts reads and presses its own controls for the plates (the atlas
+header door's move). The Studio carries the masthead's work, Nara and Your controls (the curated toolbar, + Parameter); new
+Canvas, Timeline and Journey plates carry the research instruments' tools; the pane menu's Full size brings the frame's
+own chrome back inside the pane. Headless: Technē canvas 40 → 0 controls in the pane, Expressions 0. Lane D landed (`90f16590d`):
+the door's ~40 s main-thread hold was a disposed Earth pane session mounting the globe anyway under React's development double
+invoke and losing its WebGL context on software GL — a session disposed before its module mounts no longer mounts it; register
+standings never stay "reading" with nothing reading them; the wiki pipeline costs ~18 ms for all 17 registers. Most of the native
+door's minute is AIKit relations reads the installed AIKit cannot batch yet (ai-kit #509 not installed). Lane K2's last step
+(`0608d1c41`): the temporal read asks Central once (`thoughts.read-batch`, 114 → 5 processes, 18.6 → 6.7 s), falling back on
+Central's own refusal. The native oi-material:// route reads through the one dispatch (`7696be561`). Waiting on the owner: merge
+and install ai-kit #509, Central #273, Workcell #116 (all green), then `workcell identity set workcell:mac --rebind`.
+
+Then: every stage export lands and the frame's address is kept (`6f82c20d6`, lane P, G1 + G3). The main window had been
+auto-created with no download receiver, so wry cancelled every `<a download>` — Capture PNG, Save video, Export ▾, the
+quarantine export, the canvas's .canvas and frame PNG all vanished natively; windows are now built in setup with
+`downloads.rs`'s receiver (detached surfaces too), files land in the platform's Downloads (placement.json rules no export
+home), and the Studio's Capture section says where. The frame announces its address with its state, the book keeps it with
+the open work, the frame reopens there, and the Studio's head names and copies it. The Studio's columns fold to fit the row
+at 1440px; Expressions' chain ends at the Studio (its drop box gone). Screen legs UNVERIFIED until the next native pass.
+Carried from lane P: the main window has always stood on WebKit's default store (the pinned `from_config` ignores the
+config's identifier) while detached windows use the configured one — moving main would empty the workspace book without a
+migration; no OS URL scheme is registered, so an address opens only from inside the app.

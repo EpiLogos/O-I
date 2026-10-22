@@ -166,3 +166,48 @@ hosted frame's local drafts should live is a separate decision, the
     Control/user/flows/untitled-expression-….expression.json" (in the scratch
     ground).
 - Native screen: the lead's (not verified here).
+
+## State of record (moved from PATH sec 7, 22 Oct 2026)
+
+Moved verbatim from the retired `PATH.md` (history: PATH.md at `41557a9ed`). Hashes, run labels (r1, r23 ...) and cross-references inside are as PATH wrote them; "PATH sec N" and "FOUNDATION sec N" in this text name the retired files, whose content is now in `MAP.md` (State of the streams, The foundation's route), `EXECUTE.md` and the tickets.
+
+### PATH sec 7: the subject door and the opened work (lanes W, S, N)
+
+Then: a native Expression the candidate opens can open (`5bacd1d8c`, lane W; `14fb4913d`). Decided from the authored ground
+(`tickets/T-RECOVERY-FOR-OPENED-WORKS.md`: "The host chooses native identities"; an address is "routing metadata only"): the host
+selects `{scope: expressions, checkpoint_id = the ref}` for every work it opens with no configured address, before the frame
+asks; a configured saved work keeps its own; an empty checkpoint reads as "none yet" and the first is created through the
+owner's absent-basis CAS; and an untouched opening canvas is no longer retained as a draft, so the door's Scene and New open
+straight from the frame's blank canvas. Headless on the real ground (lane W's stack): the door reached "shown" ("in O I · +2")
+and reopened from revision 1 after a restart; New opened its work (in a scratch Central root). Carried from lane W: the owner
+quarantine ops (`keep/remove_draft_quarantine`) are refused by the admission ("Unsupported native recovery operation"); the
+boot read of the opening canvas's checkpoint is refused ("Native recovery was not adopted…"); an edited local draft in a hosted
+frame has no address, so opening something else from it is refused; the panel never retries a failed boot `list`; the wiki
+registers took 200–300 s under this machine's load, so an early door ask settles absent and must be asked again. Screen leg
+UNVERIFIED.
+
+Then: Technē's subject door traced (lane S, headless against the real ground): two breaks in series. (1) The stage pane's
+placement record was erased by a remounted instance's late unmount, so the frame never stood over the stage and no navigator
+took the ask — fixed (`989f27921`: a pane's record belongs to the instance that admitted it). (2) The frame then refuses the
+Expression the host opened — "No host-selected native recovery address is attached" — because the candidate selects recovery
+addresses only from a `saved-work.json` the owner's config does not hold; by code-reading this blocks every native Expression
+open in the candidate (the browser's Open too), not only the door (lane W). The door is never silent now (`02e9f0370`): a taken
+ask settles shown or refused, the row reads "asking for <Scene>…" until the frame shows it, and a stalled ask says why on the
+row and the pane's fault line. The register's progress axis follows the code (`7f6d706e6`, lane V: implemented 125 → 106, all
+lane 4, the frame map's evidence gone with the map); implemented is proven at a target's home (`8b0ed7afd`: an off-target
+quote no longer holds; `prove-at-home` checks the home's own line, tests that reach it and the commit; lane 4 re-proven on the
+atlas — 105 implemented). Carried from lane V: after lane U lands, `reprogress --apply --lane 4 --lane 5 --at-home`; 53 rows in
+lanes 1–3 and 5 cite evidence outside their home's file — re-prove at home lane by lane as the exercised column is worked
+(FOUNDATION §6 step 4), not by a blanket return; T14/T15/T24/T10's proofs cover their behaviour in part.
+
+Then: Technē starts from the world (`3a8fbc2d6`, lane N, S1 + G2). N2's subject door is mounted: Locations and Places list
+the owner's subjects from the atlas's suite standing (Bodies and Journeys say which input they wait on), double-click or Enter
+opens a subject in the Scene that carries it through the owner's reverse query and selection ask, the subject is named in the
+title line, Trail, aperture and Clip side, and the Graph opens turned to it. Headless, the door's wiki load took 144–188 s and
+answered absent (ensureWikiStanding 16–40 s per register, 17 registers) — passed to lane Q with the Graph op. Carried from
+lane N: one atlas per session, so a Graph opened beside Technē's Earth is held and takes nothing when the Earth closes (to lane
+O). Found while converging it: the Expressions panel had been opening its engine-checkpoint binding as a tab into whichever
+tree stood in front, 20–140 s after entering a mode, and moving it into the tree in front on every switch — the empty
+Expressions pane seen natively in Technē and Live; the binding is now held on no tab (`10d17bf49`, headless: three minutes
+in Technē, the Earth alone, the binding kept). The native pass at `a8ec87dda` could not run: the Mac was locked with the
+candidate in Stage Manager's strip (FOUNDATION §5).

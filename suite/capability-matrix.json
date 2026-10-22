@@ -34,7 +34,8 @@
   {
    "id": "s-only-scope",
    "statement": "This matrix is S-level: positions S and S0-S5 only. S-prime/M/M-prime material (the wider Epi-Logos architecture) is out of scope and was excluded at extraction.",
-   "source": "locked decision, 2026-09-05"
+   "source": "locked decision, 2026-09-05",
+   "note": "Historical extraction scope of this 2026-09-06 recovery, not a scope for the S whole. The S-whole matrix is ProjectCentral/user/capability-matrix.{csv,json} (ql-capability-matrix/1): its 38 S-position rows are carried there with their ids, evidence and per-source verdicts; the S0-S5 rows stay with the native products' matrices."
   }
  ],
  "counts": {

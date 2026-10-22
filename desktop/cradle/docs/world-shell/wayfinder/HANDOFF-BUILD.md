@@ -5,18 +5,72 @@ planning, pages and creatures lanes and does no build work. Nothing here starts 
 
 ## Read first, in order
 
-1. `PATH.md` — the live route. Its roles (§1), seats (§2), gates (§3) and open claims (§7) are the build's state of record.
-   The build lead keeps it true.
-2. `MAP.md` › "Lanes now" — the build lane's items, and what the planning and pages lanes send you.
-3. `FOUNDATION.md` §6 — the foundation's order.
+1. `MAP.md` — the build map: Destination, Notes (the Rooting note says where each kind of thing lives), Decisions so far, Lanes
+   now with the state of each stream and the foundation's route. A stream's state is on its ticket (`State of record`,
+   `Resolution`).
+2. The manual, on O-I `main`: `docs/dlw/DLW.md` Part One (§1–§10) and the device UI §16; each mode's tracks and clips §17.1–§21.1.
+3. "Where it stands" below, then "The work, in order".
 4. `DEVICE-SEMANTICS-LOCK.md` §0, then the ticket you claim (`tickets/`).
-5. The manual, on O-I `main`: `docs/dlw/DLW.md` (device UI §16; each mode's tracks and clips §17.1–§21.1).
+5. `EXECUTE.md` — the execution prompt: the roles, the ground, the gates and the laws.
 
 ## Where it stands
 
+- **22 Oct — read this first.** The build run of 21–22 Oct worked only items 10 and 11 of "The work, in order" below
+  (kinds of device and placement; coverage: every capability wired to its owner). Its brief named those two items, and
+  the run never checked that items 1–9 were done. They were not, and they are the next run's work, in order from item 1.
+  What items 10 and 11 changed is mostly what a control does when it is pressed (kernel routes, owner operations in six
+  products). They changed little of what the owner sees or can use: devices that work, racks, acts, one browser, words.
+  - **The next run builds the app (owner, 22 Oct).** There is one plan, the documentation system (the manual and the plan
+    documents), and this handoff runs it; both serve the app. The acceptance journeys and the reconciliation of the plan
+    documents come from the owner's documentation lane. Before any build work, the run builds a native candidate from main,
+    launches it from a clean data home, and uses it on screen with computer use, against the journeys and the manual. A device,
+    a view or an item is done only when it works there. If the native app cannot be driven, the run stops and says so. Its first
+    reply says what state the app is in, from using it.
+  - **What the documentation lane hands the run** (22 Oct): the manual is consolidated and is the one description of the app (Part
+    One says what it is for; the acts of §5–§9 and §10.11, bringing in what you have, are the journeys; the fence in §16.17
+    governs devices). The plan documents are folded into the manual, the architecture documents (`WORLD-SHELL-DESIGN.md`,
+    `DEVICE-SEMANTICS-LOCK.md`, `DEVICE-SDK.md`), the rulings register (`PROGRAMME.md`) and the map; MAP's Rooting note says where
+    each kind of thing lives. A ticket you claim gets its UX-refs, capability-refs and grade written in its header before you
+    start (`EXECUTE.md`). The catalogue's designs follow the manual and draw the pages it now specifies.
+  - State: main `08df20494` is the r36 candidate. On `dlw/finish`, not yet on main: the Session grid and ruler drawn to their
+    designs and fed by real readings (`c871de149`, `4d1fedca5`), W3's last three routes (`5d5128940`), and the native
+    Library fix (`4481f5ece`: every native candidate's Library read "no built Expressions asset").
+  - Also in #704 (`b7d6e27bf`): Actuation's usage and continuity and Workcell's lease and checkpoints, wired into the Ledger,
+    Identity and the workcell rack; Ground hygiene's tenders through their owners.
+  - Owner PRs merged 22 Oct and every product installed from main: Actuation #143, Workcell #123, ai-kit #545, Factory #289,
+    Central #293. The owner added `control.apply-proposal` to the human grant.
+  - The first screen pass (22 Oct): `../evidence/screen-pass-20261022/` (S1 on a browser copy of the shell, N1 on r36 natively;
+    both the window and its grammar, not yet the devices). They are findings to fix, not a work list that replaces items 1–9.
+  - Traps: `~/Applications/O-I Shell Candidate.app` is an 8 Oct build with the candidate's bundle id, so never open the app by
+    bundle id (`open -b`); launch a candidate by its binary path. Entering Factory raises a Keychain prompt for
+    "workcell-connection" (Workcell's connection probe). A candidate reopens the last window and Live set on the owner's real
+    ground, so a pass that tests from the ground up needs a clean data home.
+
+- **Carried from the documentation lane (22 Oct): do this before item 1.** The manual, the catalogue's designs and the plan
+  documents were consolidated on branch `docs/dlw-reconcile` (draft PR). What it leaves for the build:
+  1. **Finish the catalogue retirement.** The manual no longer embeds 35 devices and their panel files are deleted (six moved to
+     plain modules). The shell's runtime wiring still places some of them: `CentralDevices.tsx` (Voice, Ground hygiene, Machine,
+     Impact), `railDevices.tsx` (Diff, Calendar, Notifications), `registeredChains()` in `mainTrackBindings` (the gateways list),
+     and `FaceStage` has no design hosting it. Rewire each to the device that absorbed it (the folded entry's sentence in the
+     manual says which), place Docs after Scope, and move the bindings that now serve only retired ids to the absorbing device.
+     Sixteen test files fail at load for the same reason and about ten more assert the old catalogue (agent-family-manifest,
+     agent-rail-devices, central-devices-chain, central-devices-rack, design-redundancy, inhabitant-manifest, live-semantics,
+     r4-chains, techne-instrument-wells, w4-family-classification): update each to the manual's new fact. CI is the check.
+  2. **Docs ids.** Switch the shell to `projectcentral.docs.*` once Central #294 is merged and installed, and add them beside the
+     `projectcentral.self.*` ids in the kernel's `PERSON_ACTS` (`desktop/cradle/kernel/src/action.rs`); the old ids keep answering
+     as aliases until then.
+  3. **Bind O-I's documents to the six tiers** of `ProjectCentral/docs` (`projectcentral.docs.*`, after #294 is installed).
+  4. **Wire the pages the designs now draw** (the binding lane): the words the Factory clip's owner speaks (Trigger, Gate, Toggle,
+     Repeat; Next task, Again, Stop), Approvals' new answers, the Day's bounds readings, Docs' Moved since and Meaning (needs a
+     kernel operation for `aikit knowledge frame`), the prefixed keys of the absorbed devices (`diff.`, `seat.`, `co.`, `mc.`,
+     `left.`, `gw.`, `binding.`, `reach.`). Each binding names the keys no owner serves yet as absent, with the reason.
+  5. **Re-render** `docs/dlw/DLW.html` (`node docs/dlw/render.mjs`) once the catalogue builds.
+  6. **The S-whole matrix** (`ProjectCentral/user/capability-matrix.csv` and `.json`) is a first pass: the owner-served keys per
+     device, the readable account and the native maintenance fields are open. Maintain it with the protocol's tools from here.
+
 - **21 Oct:**
   - `dlw/build` landed on `main` as #689.
-  - The lane goes on as #693, which conflicts with `main` only in PATH.md: both carry "T-PROCEDURAL-BODY: where it ended".
+  - The lane goes on as #693, which conflicts with `main` only in PATH.md (since retired: its rows are on the tickets' State of record): both carry "T-PROCEDURAL-BODY: where it ended".
   - #690 (the kit's motion), #692 (themes) and #695 (the Answer's voice) are open and mergeable.
   - The catalogue on `main` (`7937e2a59`) has the six kinds, views by place, workcells, Messages and the faces kit.
   - The coverage is item 11.
@@ -25,9 +79,9 @@ planning, pages and creatures lanes and does no build work. Nothing here starts 
   carries everything since.
 - The last candidates are r28 (`Work/O-I/target/p0-r1/20261020T-r28`; evidence
   `desktop/cradle/docs/world-shell/evidence/p0-r1/run-20261020T-r28/`) and r29, built for the reads
-  (`run-20261020T-r29-reads/`). PATH §7 says what each row was seen doing on the native app and what each still owes its
+  (`run-20261020T-r29-reads/`). the tickets' State of record (T-REALIGN, T-WORLDS, T-PROCEDURAL-BODY, T-COVERAGE, T-AGENCY) say what each row was seen doing on the native app and what each still owes its
   screen check.
-- Loading (PATH L1, which carries the measurements):
+- Loading (the measurements are in this list; the row's history is `PATH.md` at `41557a9ed`, and its owes stand in MAP's State of the streams):
   - Done:
     - the shell's first script is split (main window 6.38 → 2.80 MB), and panes draw their last reading at once;
     - the reads were paying for re-deriving state on every call, not for the process start: a warm process saves only
@@ -51,7 +105,7 @@ planning, pages and creatures lanes and does no build work. Nothing here starts 
 
 From MAP's build lane:
 
-1. What PATH §7 says is owed: the screen checks, and L1's three owes.
+1. What the tickets' State of record and MAP's State of the streams say is owed: the screen checks, and L1's three owes.
 2. Foundations (item 4) and loading (item 5): L1's owed reads first.
 3. Reverse engineering into the product (item 3).
 4. Technē's construction chain, end to end (item 6).
@@ -161,8 +215,8 @@ Build none of them ahead of the manual.
 
 These rules each cost a failure to learn.
 
-- **Roles** are PATH §1:
-  - one lead (Opus) converges, commits and keeps PATH;
+- **Roles** are `EXECUTE.md`'s:
+  - one lead (Opus) converges, commits and keeps the ticket's state true;
   - builders are Opus, one or two at a time, each with an exclusive file zone and a brief from `BRIEF-BUILDER.md`;
   - no Workflow tool, no research fan-outs, no task chips.
 - **The owner's eye judges UI.** Each wave ends with a computer-use pass on a candidate built at HEAD. Headless WebKit draws no
