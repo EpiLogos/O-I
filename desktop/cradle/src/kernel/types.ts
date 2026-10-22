@@ -247,7 +247,11 @@ export type WorkcellReadRequest = {kind:"connections-list"} | {kind:"connections
    * kept|not-kept|mismatch|unreadable, body?, body_digest?, detail?}}`. `body` is the demand the run was started with, checked
    * against `run.demand_digest`, and appears only when `kept`. A run recorded before Workcell kept bodies is `not-kept` (never
    * reconstructed). `demand.path` plans as `plan {demand:{demand_json: path}}`. */
-  | {kind:"run-show";run:string};
+  | {kind:"run-show";run:string}
+  /** `workcell sandboxes reconcile --server URL` without `--release-orphans` (a report): `{server, sandboxes:[{id, state, expires_at,
+   * lease: live|expired-orphan|unknown}], released_sandboxes:[], failures:[{operation, target, reason}], snapshots,
+   * unrecognised_sandboxes, …}`. The server is the desk's, so the kernel withholds the key variable Workcell would send it. */
+  | {kind:"sandboxes";server:string};
 /** A material demand in `workcell plan`'s own flags, one field per flag. `demand_json` is Workcell's `--demand-json PATH` (a run's
  * kept demand, `run-show`'s `demand.path`); Workcell refuses it mixed with any other field. */
 export interface WorkcellDemand { demand_json?:string; demand_ref?:string; require?:string[]; prefer?:string[]; optional?:string[]; workspace?:"writable"|"read-only"; workspace_ref?:string; revision?:string; project_runtime?:string; connect?:string[]; prefer_connect?:string[]; optional_connect?:string[]; expose?:string[]; prefer_expose?:string[]; optional_expose?:string[]; output?:string[]; prefer_output?:string[]; optional_output?:string[]; resource?:string[]; subject?:string[]; persistence?:string; isolation?:string; retention?:string; extension?:string[] }
@@ -260,7 +264,10 @@ export type WorkcellWriteRequest =
    * --desired logical-ref=state…`. Writes on the machine's Workcell state. */
   | {kind:"disconnect";label:string}
   | {kind:"recover"|"release";receipt:string}
-  | {kind:"reconcile";receipt:string;desired:string[]};
+  | {kind:"reconcile";receipt:string;desired:string[]}
+  /** `workcell sandboxes reconcile --server URL --release-orphans`: the sandboxes whose lease ended released (a sandbox without lease
+   * evidence never is); the same report, `released_sandboxes` naming them. No key travels to the desk's server. */
+  | {kind:"release-orphans";server:string};
 /** `seat join|release WORKCELL PRODUCT --actor REF --json`: the actor is the desk's, claims are attributed; every region goes to one
  * `--region` flag. Answers central.workcell-seat-result/v1. */
 export type SeatWriteRequest =
@@ -323,6 +330,9 @@ export type AikitWriteRequest =
   /** `aikit procedure undo PROCEDURE`, `aikit bypass revoke ID`. */
   | {kind:"procedure-undo";procedure:string}
   | {kind:"bypass-revoke";id:string}
+  /** `aikit bypass issue [--scope next-event|session] --reason R [--capability C]`: `{bypass_id, scope, reason, capability}` — the id
+   * `bypass list` shows, no secret. AIKit refuses an empty reason and another scope in its own words. */
+  | {kind:"bypass-issue";scope?:string|null;reason:string;capability?:string|null}
   /** `aikit source sync|rollback ID`; `aikit source promote ID [--trust] [--trust-skill C]…`. */
   | {kind:"source-sync"|"source-rollback";id:string}
   | {kind:"source-promote";id:string;trust?:boolean;trust_skills?:string[]}

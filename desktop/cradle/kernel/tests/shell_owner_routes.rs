@@ -105,7 +105,7 @@ impl Fake {
                 "#!/bin/sh\n\
                  printf '%s\\n' \"$*\" >> \"{d}/argv.txt\"\n\
                  cat > \"{d}/stdin.txt\"\n\
-                 printf 'position=%s\\nbinary=%s\\nroot=%s\\n' \"$OI_POSITION_REF\" \"$FACTORY_NATIVE_CENTRAL_BINARY\" \"$FACTORY_NATIVE_CENTRAL_ROOT\" > \"{d}/env.txt\"\n\
+                 printf 'position=%s\\nbinary=%s\\nroot=%s\\nsandbox_key=%s\\n' \"$OI_POSITION_REF\" \"$FACTORY_NATIVE_CENTRAL_BINARY\" \"$FACTORY_NATIVE_CENTRAL_ROOT\" \"$OPEN_SANDBOX_API_KEY\" > \"{d}/env.txt\"\n\
                  case \"$(cat \"{d}/mode\")\" in\n\
                  refuse) cat \"{d}/refuse.json\" 2>/dev/null; cat \"{d}/refuse.txt\" >&2 2>/dev/null; exit \"$(cat \"{d}/refuse.exit\" 2>/dev/null || echo 2)\" ;;\n\
                  raw) cat \"{d}/answer.txt\" ;;\n\
@@ -3146,5 +3146,196 @@ fn ql_refracts_a_wiki_target_through_the_lenses_named() {
         ),
     );
     assert!(outcome.unwrap_err().contains("ql-mef/wiki-refraction/v1"));
+    let _ = fs::remove_dir_all(&dir);
+}
+
+#[test]
+fn workcell_reads_a_named_sandbox_server_and_releases_its_orphans_without_its_key() {
+    let _held = hold();
+    let dir = scratch("workcell-sandboxes");
+    let workcell = Fake::new(&dir, "workcell");
+    let _bin = Bound::set("OI_WORKCELL_BIN", &workcell.bin);
+    // The kernel's own environment holds a key; the desk names the server, so
+    // the key must never reach the child.
+    let _key = Bound::set("OPEN_SANDBOX_API_KEY", "test-only-marker-not-a-secret");
+    // Workcell's own reading of a fixture lifecycle server (REAL, read only).
+    let real = fixture("workcell-sandboxes-2026-10-22.json");
+    let server = "http://127.0.0.1:18931";
+    let read = |server: &str| {
+        op(json!({"op": "workcell_read", "request": {"kind": "sandboxes", "server": server}}))
+    };
+
+    workcell.answer(&real["read"]);
+    let (outcome, form) = dispatched(no_central(&dir), read(server));
+    let outcome = outcome.unwrap();
+    assert_eq!(form, "owner-read");
+    let (route, data, _) = reading(&outcome);
+    assert_eq!(route, "workcell sandboxes reconcile");
+    assert_eq!(data, real["read"], "Workcell's report, verbatim");
+    let leases: Vec<&str> = data["sandboxes"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|row| row["lease"].as_str().unwrap())
+        .collect();
+    assert_eq!(leases, ["live", "expired-orphan", "unknown"]);
+    assert_eq!(receipts(&outcome), json!([]), "a read earns no receipt");
+    assert_eq!(
+        workcell.asked(),
+        [format!("sandboxes reconcile --server {server} --json")],
+        "only the server travels: no --api-key-env, --release or --include-snapshots"
+    );
+    assert!(
+        workcell.env().contains("sandbox_key=\n"),
+        "the key is withheld from a server the desk names: {}",
+        workcell.env()
+    );
+
+    // No server named: refused before Workcell is asked.
+    workcell.forget();
+    let (outcome, _) = dispatched(no_central(&dir), read("  "));
+    assert_eq!(kind(&outcome.unwrap_err()), "incompatible");
+    assert!(workcell.asked().is_empty());
+
+    // An unreachable server: Workcell's refusal, its message out of its
+    // stderr document (REAL, exit 4).
+    let refused = &real["unreachable"];
+    workcell.refuse(None, refused["stderr"].as_str().unwrap(), 4);
+    let (outcome, _) = dispatched(no_central(&dir), read("http://127.0.0.1:9"));
+    let error = outcome.unwrap_err();
+    assert_eq!(kind(&error), "owner-refused-or-failed");
+    assert!(
+        error.contains("connect OpenSandbox HTTP endpoint 127.0.0.1:9: Connection refused")
+            && !error.contains(r#"\"ok\":false"#),
+        "{error}"
+    );
+
+    // Release orphans: a write; the receipt names the server when Workcell
+    // released something (the report's shape, FAKE: no server was released).
+    let mut released = real["read"].clone();
+    released["release_orphans"] = json!(true);
+    released["released_sandboxes"] = json!(["sbx-orphan"]);
+    workcell.answer(&released);
+    workcell.forget();
+    let release = op(
+        json!({"op": "workcell_write", "request": {"kind": "release-orphans", "server": server}}),
+    );
+    let (outcome, form) = dispatched(no_central(&dir), release.clone());
+    let outcome = outcome.unwrap();
+    assert_eq!(form, "owner-write");
+    let (route, data, _) = reading(&outcome);
+    assert_eq!(route, "workcell sandboxes reconcile --release-orphans");
+    assert_eq!(data["released_sandboxes"], json!(["sbx-orphan"]));
+    assert_eq!(
+        workcell.asked(),
+        [format!(
+            "sandboxes reconcile --server {server} --release-orphans --json"
+        )]
+    );
+    assert!(workcell.env().contains("sandbox_key=\n"));
+    let receipt_wire = receipts(&outcome);
+    assert_eq!(receipt_wire[0]["event"], "owner_changed");
+    assert_eq!(receipt_wire[0]["owner"], "workcell");
+    assert_eq!(receipt_wire[0]["ref"], server);
+
+    // Nothing released: no receipt.
+    workcell.answer(&real["read"]);
+    let (outcome, _) = dispatched(no_central(&dir), release);
+    assert!(outcome.unwrap().receipts.is_empty());
+    let _ = fs::remove_dir_all(&dir);
+}
+
+#[test]
+fn aikit_issues_a_hook_bypass_and_names_the_id_it_lists() {
+    let _held = hold();
+    let dir = scratch("aikit-bypass-issue");
+    let aikit = Fake::new(&dir, "aikit");
+    let _bin = Bound::set("OI_AIKIT_BIN", &aikit.bin);
+    // The installed AIKit's own answers in an isolated home (REAL).
+    let real = fixture("aikit-bypass-issue-2026-10-22.json");
+    let issue = |scope: &str| {
+        op(
+            json!({"op": "aikit_write", "request": {"kind": "bypass-issue", "scope": scope,
+            "reason": "fixture capture"}}),
+        )
+    };
+
+    aikit.answer(&real["issued"]);
+    let (outcome, form) = dispatched(no_central(&dir), issue("next-event"));
+    let outcome = outcome.unwrap();
+    assert_eq!(form, "owner-write");
+    let (route, data, _) = reading(&outcome);
+    assert_eq!(route, "aikit bypass issue");
+    assert_eq!(data, real["issued"]["data"], "AIKit's record, verbatim");
+    assert_eq!(
+        aikit.asked(),
+        ["bypass issue --scope next-event --reason fixture capture --json"]
+    );
+    let receipt_wire = receipts(&outcome);
+    assert_eq!(receipt_wire[0]["owner"], "ai-kit");
+    assert_eq!(receipt_wire[0]["action"], "aikit bypass issue");
+    assert_eq!(receipt_wire[0]["ref"], real["issued"]["data"]["bypass_id"]);
+
+    // A scope AIKit does not take, and no reason: its refusals, its words.
+    aikit.refuse(Some(&real["scope_refused"]), "", 2);
+    let (outcome, _) = dispatched(no_central(&dir), issue("1h"));
+    assert!(outcome
+        .unwrap_err()
+        .contains("`1h` is not a bypass scope; use `next-event` or `session`"));
+    aikit.refuse(Some(&real["reason_refused"]), "", 2);
+    let (outcome, _) = dispatched(no_central(&dir), issue("session"));
+    assert!(outcome
+        .unwrap_err()
+        .contains("a bypass must carry a reason; pass --reason"));
+    let _ = fs::remove_dir_all(&dir);
+}
+
+#[test]
+fn a_units_retry_is_a_factory_write_refused_while_factory_admits_no_desktop_retry() {
+    let _held = hold();
+    let dir = scratch("factory-retry");
+    let factory = Fake::new(&dir, "factory");
+    let _bin = Bound::set("OI_FACTORY_BIN", &factory.bin);
+    // The installed Factory's admission reading (REAL, `factory attempt
+    // admission --json`, 22 Oct 2026): it admits attempt-receiving only.
+    factory.answer(&json!({
+        "contract": "factory.attempt-admission/v1", "nativeOwner": "factory",
+        "capabilityRef": "capability/factory/operate-attempt",
+        "desktopCaller": {"callerRef": "oi:desktop", "lineage": ["oi:desktop"], "projectionKind": "desktop-human"},
+        "actions": [{"actionRef": "attempt-receiving", "actorKind": "human",
+            "command": "factory attempt receiving <state> <request-json|->",
+            "contract": "factory.attempt-receiving-action/v1", "nativeAction": "central.receiving.submit",
+            "scopeRef": "project:Factory"}],
+        "standing": "A reading of what Factory expects of a desktop caller. It grants nothing: the grant is the owner's, in the contract named here."
+    }));
+    let (outcome, form) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "factory_owner", "request": {"kind": "attempt-retry",
+            "state_path": dir.join("state").display().to_string(), "run_ref": "run:one",
+            "workflow_unit_ref": "unit:inspect-source"}}),
+        ),
+    );
+    let outcome = outcome.unwrap();
+    assert_eq!(form, "owner-write", "a retry is the person's write");
+    let KernelOpResult::FactoryDevelopmentReading { data } = &outcome.result else {
+        panic!("not Factory's document: {:?}", outcome.result)
+    };
+    assert_eq!(data["contract"], "oi.factory-attempt-retry/v1");
+    assert_eq!(data["status"], "refused");
+    assert_eq!(data["refusal"]["step"], "admission");
+    assert!(
+        data["refusal"]["message"]
+            .as_str()
+            .unwrap()
+            .contains("names no attempt-retry action, only attempt-receiving"),
+        "{data}"
+    );
+    assert_eq!(
+        factory.asked(),
+        ["attempt admission --json"],
+        "nothing is read or acted on past the admission"
+    );
+    assert!(outcome.receipts.is_empty(), "a refusal moves nothing");
     let _ = fs::remove_dir_all(&dir);
 }

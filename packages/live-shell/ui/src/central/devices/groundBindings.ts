@@ -1,12 +1,14 @@
 // Ground hygiene (DLW §18.5) and Impact (§18.13) on Central's readings (lane BC2): the catalogue's designs
 // (inhabitants/catalogue/panels/central__ground-hygiene.tsx, central__impact.tsx) bound over the census and the neighbourhood their
 // owners give, classified by the shell's own models (inhabitants/centralHygieneModel.ts, centralImpactModel.ts — the device draws
-// what the model reports and classifies nothing itself). Pure: no React, no transport. The readers are groundDevices.ts.
+// what the model reports and classifies nothing itself). The Material page's sandboxes are Workcell's report of a named server
+// (workcell_read sandboxes, lane K0) and Release orphans writes through workcell_write release-orphans; no server is named yet, so both
+// stand refused saying so (NO_SANDBOX_SERVER). Pure: no React, no transport. The readers are groundDevices.ts.
 import type {DesignBinding, Value, Values} from '../../frame/devices/designed'
 import {HYGIENE_TENDERS, type AuthoredReading, type BoundaryOpSource, type HygieneCensus, type HygieneFinding, type MaterialWorld, type RootReading, type SandboxReading,
   type ScaffoldReading} from '../../inhabitants/centralHygieneModel'
 import type {ImpactReading} from '../../inhabitants/centralImpactModel'
-import {pageBinding, heldOf, type DesignWiring, type PageActs} from './pageBindings'
+import {pageBinding, heldOf, type DesignWiring} from './pageBindings'
 
 export const HYGIENE_DESIGN = 'central:ground-hygiene'
 export const IMPACT_DESIGN = 'central:impact'
@@ -15,14 +17,16 @@ const tender = (id: string): string => {
   const t = HYGIENE_TENDERS.find(candidate => candidate.id === id)
   return t ? `${t.label}: no writer reaches it from here — it waits on ${t.waitsFor} (${t.ownerOperation}).` : 'No tender has a writer yet.'
 }
-const NO_TENDER = 'No tender has a writer that reaches it from here (centralHygieneModel.ts HYGIENE_TENDERS: release waits for the seat instrument, prune and sweep for a commissioned repair, Initialise root, Reproject and Recognise for the person\'s route, Reconcile and Release orphans for a kernel route to Workcell), so the device only reads: Tend stands Off.'
+const NO_TENDER = 'No tender has a writer that reaches it from here (centralHygieneModel.ts HYGIENE_TENDERS: release waits for the seat instrument, prune and sweep for a commissioned repair, Initialise root, Reproject and Recognise for the person\'s route, Reconcile for a kernel route to Workcell, Release orphans for a sandbox server named here), so the device only reads: Tend stands Off.'
 
 /** The tender each act key runs, and its Allow setting (the design's TENDERS; the model's HYGIENE_TENDERS ids). */
 export const HYGIENE_TENDER_KEYS: Readonly<Record<string, string>> = {release: 'release-seat', prune: 'prune-worktree', sweep: 'sweep-branch', init: 'init-root',
   reproject: 'reproject-scaffold', recognise: 'recognise-source', reconcile: 'reconcile-binding', orphans: 'release-orphans'}
 /** The nine rings of the three pages (§18.5 "What it reads"). */
 export const HYGIENE_RINGS = ['seats', 'worktrees', 'branches', 'root', 'scaffold', 'authored', 'worlds', 'bindings', 'sandboxes'] as const
-const NO_SANDBOXES = 'The sandboxes are Workcell\'s `workcell sandboxes reconcile --server <url> --json`, which no kernel route reaches yet (T-COVERAGE §1.2).'
+/** Why the sandboxes are not read: the kernel reads a server Workcell is pointed at (workcell_read sandboxes, lane K0), and none is named. */
+export const NO_SANDBOX_SERVER = 'No sandbox server is named here: Workcell\'s `workcell sandboxes reconcile --server <url>` reads a server by its URL (the kernel\'s workcell_read sandboxes), and no Workcell reading names the URL of the sandbox deployment it declares.'
+const NO_SANDBOXES = `The sandboxes: ${NO_SANDBOX_SERVER}`
 const TENDER_KEYS = Object.keys(HYGIENE_TENDER_KEYS)
 
 export const HYGIENE_WIRING: DesignWiring = {
@@ -109,8 +113,32 @@ export interface HygieneRead {
   readonly at: number
 }
 
-/** Ground hygiene's readings (HYGIENE_WIRING). Null census: not read yet — every reading absent. */
-export function hygieneValues(id: string, read: HygieneRead | null, now: number): Values {
+/** A sandbox server named to Ground hygiene, and Workcell's release of its orphans (workcell_write release-orphans {server}, `workcell
+ * sandboxes reconcile --server <url> --release-orphans`): Workcell's report, or its refusal thrown in its words. Nothing names one yet. */
+export interface HygieneSandboxes {
+  readonly server: string
+  readonly release: (server: string) => Promise<unknown>
+}
+
+/** Ground hygiene with a sandbox server named: Release orphans has a writer, so Tending and its Allow are the hand's settings (§18.5:
+ * Propose and On by default); every other tender stays refused with its reason. */
+export const HYGIENE_ORPHANS_WIRING: DesignWiring = (() => {
+  const omit = (table: Readonly<Record<string, string>>, keys: readonly string[]) => Object.fromEntries(Object.entries(table).filter(([key]) => !keys.includes(key)))
+  return {
+    ...HYGIENE_WIRING, reads: omit(HYGIENE_WIRING.reads, ['tend']), refused: omit(HYGIENE_WIRING.refused, ['tend', 'orphans', 'allow:orphans']),
+    absent: {...omit(HYGIENE_WIRING.absent, ['allow:orphans']),
+      receipt: 'The device keeps no tender\'s receipt: Workcell\'s report of a release is read on the Material page again.',
+      receipts: 'The device keeps no tender\'s receipt: Workcell\'s report of a release is read on the Material page again.'},
+    writes: {...HYGIENE_WIRING.writes, orphans: 'workcell_write release-orphans {server}: `workcell sandboxes reconcile --server <url> --release-orphans` releases every sandbox whose lease ended, and never one without lease evidence'},
+    local: {...HYGIENE_WIRING.local, tend: 'Tending (§18.5: Propose by default): the hand\'s own setting; only Release orphans has a writer here',
+      'allow:orphans': 'whether the device offers Release orphans (§18.5 Allowed tenders: On by default)'},
+  }
+})()
+const ORPHANS_DEFAULTS: Readonly<Record<string, Value>> = {tend: 'propose', 'allow:orphans': true}
+
+/** Ground hygiene's readings (HYGIENE_WIRING; HYGIENE_ORPHANS_WIRING when a sandbox server is named). Null census: not read yet — every
+ * reading absent. */
+export function hygieneValues(id: string, read: HygieneRead | null, now: number, orphans = false): Values {
   const values: Record<string, Value> = {}
   if (read) {
     const {census} = read
@@ -120,7 +148,7 @@ export function hygieneValues(id: string, read: HygieneRead | null, now: number)
       values.machineRef = census.machineRef
       values.machines = JSON.stringify([{id: 'this', label: 'This machine', ref: census.machineRef}])
     }
-    values.tend = 'off'
+    if (!orphans) values.tend = 'off'
     values.refresh = 'open'
     values.readAge = Math.max(0, Math.round((now - read.at) / 1000))
     values.sources = JSON.stringify([...census.sources, ...(read.pages?.sources ?? [])])
@@ -135,15 +163,35 @@ export function hygieneValues(id: string, read: HygieneRead | null, now: number)
   const held = heldOf(id)
   // The view's holds start where the manual sets them (§18.5: Look at All On; Provenance Human-authored; Standing Design commitment).
   const defaults: Record<string, Value> = {machine: 'this', faults: true, ...Object.fromEntries(HYGIENE_RINGS.map(ring => [`look:${ring}`, true])),
-    'as:provenance': 'human-authored', 'as:standing': 'design-commitment'}
-  for (const key of Object.keys(HYGIENE_WIRING.local)) { const value = held[key] ?? defaults[key]; if (value !== undefined) values[key] = value }
+    'as:provenance': 'human-authored', 'as:standing': 'design-commitment', ...(orphans ? ORPHANS_DEFAULTS : {})}
+  const wiring = orphans ? HYGIENE_ORPHANS_WIRING : HYGIENE_WIRING
+  for (const key of Object.keys(wiring.local)) { const value = held[key] ?? defaults[key]; if (value !== undefined) values[key] = value }
   return values
 }
 
-/** Ground hygiene's binding: the census, Read now through the owners again, every tender disabled with the model's reason. */
-export function hygieneBinding(id: string, read: HygieneRead | null, now: number, reread: (() => Promise<void>) | null): DesignBinding {
-  const acts: PageActs = {reread: async () => { if (!reread) throw new Error('No transport reaches the owners here.'); await reread() }}
-  return pageBinding(id, HYGIENE_WIRING, hygieneValues(id, read, now), acts, reread ? {} : {reread: 'No transport reaches the owners here.'})
+/** Release orphans on the named server: the pressed sandbox must be an orphan in Workcell's last report, and stands released when Workcell's
+ * report names it released; a failure for it is Workcell's words. Then the pages are read again. */
+async function releaseOrphans(read: HygieneRead | null, sandboxes: HygieneSandboxes, value: Value, reread: (() => Promise<void>) | null): Promise<void> {
+  const subject = typeof value === 'string' ? value : ''
+  const box = read?.pages?.sandboxes?.sandboxes.find(row => row.id === subject)
+  if (!box || box.lease !== 'expired-orphan') throw new Error(`Release orphans: ${subject || 'that sandbox'} is not an orphan in Workcell's last report of ${sandboxes.server}; read it again.`)
+  const report = await sandboxes.release(sandboxes.server) as {released_sandboxes?: unknown; failures?: unknown} | null
+  const failure = Array.isArray(report?.failures) ? (report!.failures as {target?: unknown; operation?: unknown; reason?: unknown}[]).find(row => row?.target === subject) : undefined
+  if (failure) throw new Error(`Workcell could not release ${subject}: ${String(failure.reason ?? failure.operation ?? 'no reason given')}`)
+  if (reread) await reread()
+}
+
+/** Ground hygiene's binding: the census, Read now through the owners again, every tender disabled with the model's reason — except Release
+ * orphans, which writes through Workcell when a sandbox server is named (`sandboxes`). */
+export function hygieneBinding(id: string, read: HygieneRead | null, now: number, reread: (() => Promise<void>) | null, sandboxes: HygieneSandboxes | null = null): DesignBinding {
+  const acts: Record<string, (value: Value) => Promise<void>> = {reread: async () => { if (!reread) throw new Error('No transport reaches the owners here.'); await reread() }}
+  if (sandboxes) acts.orphans = value => releaseOrphans(read, sandboxes, value, reread)
+  // No sandbox read answered from the server named: Release orphans has nothing to stand on, and says why.
+  const why: Record<string, string> = reread ? {} : {reread: 'No transport reaches the owners here.'}
+  if (sandboxes && !read?.pages?.sandboxes) {
+    why.orphans = read?.pages?.sources.find(source => /sandboxes/.test(source.boundaryOp))?.refusal ?? `Release orphans: Workcell has not reported ${sandboxes.server}'s sandboxes yet.`
+  }
+  return pageBinding(id, sandboxes ? HYGIENE_ORPHANS_WIRING : HYGIENE_WIRING, hygieneValues(id, read, now, !!sandboxes), acts, why)
 }
 
 /** Impact's readings (IMPACT_WIRING) from the owners' legs, as centralImpactModel.ts assembles them. */

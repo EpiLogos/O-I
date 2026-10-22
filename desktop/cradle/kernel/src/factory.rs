@@ -377,6 +377,26 @@ pub enum OwnerRequest {
         #[serde(default)]
         authority_grant: Option<String>,
     },
+    /// The person retries a unit of a Run (the Run map's Retry, T-COVERAGE
+    /// §1.2 "the attempt `retry`"): Factory's own attempt operation `retry`
+    /// (`factory attempt action <state> -`, `factory.attempt-action/v1`),
+    /// a new attempt for the unit under the retry grant its current attempt
+    /// already consumes. Factory must admit it from a desktop caller: its
+    /// admission reading (`factory attempt admission`) names the
+    /// `attempt-retry` action, and the native action, scope and actor kind a
+    /// grant must carry; until it does, the retry is refused naming what
+    /// Factory admits. The grant is resolved by the host against Central's
+    /// native action authority contract with the host's own token, as a
+    /// choice's is. The task, parent Journey, grant ref and the disposition
+    /// come verbatim from Factory's attempt reading; the desk names only the
+    /// Run and the unit (factory_retry.rs).
+    AttemptRetry {
+        state_path: PathBuf,
+        run_ref: String,
+        workflow_unit_ref: String,
+        #[serde(default)]
+        authority_grant: Option<String>,
+    },
     /// `factory attempt decision submit <state> -` with the retained
     /// `RequestUnitDecision` Action document, carried verbatim (lane W3,
     /// T-COVERAGE §1.2): Factory submits the unit's question to Central's
@@ -1574,6 +1594,28 @@ pub fn owner(request: OwnerRequest, world: Option<&Value>) -> Result<Value, Erro
                 },
             ))
         }
+        OwnerRequest::AttemptRetry {
+            state_path,
+            run_ref,
+            workflow_unit_ref,
+            authority_grant,
+        } => {
+            let contract = authority_contract_for(&state_path);
+            let mut call =
+                |args: &[std::ffi::OsString], input: Option<&[u8]>| owner_call(args, input);
+            Ok(retry::attempt_retry(
+                &mut call,
+                &state_path,
+                &run_ref,
+                &workflow_unit_ref,
+                retry::RetryAuthority {
+                    grant: authority_grant,
+                    token: host_native_token(),
+                    contract: contract.as_deref(),
+                    now_unix_seconds: now_unix_seconds(),
+                },
+            ))
+        }
         OwnerRequest::AttemptDecisionSubmit {
             state_path,
             request,
@@ -2098,6 +2140,9 @@ const RUN_CLOSE: Wanted<'static> = Wanted {
 
 #[path = "factory_receiving.rs"]
 mod receiving;
+
+#[path = "factory_retry.rs"]
+mod retry;
 
 /// The host's native action authority for one close: the grant ref and token
 /// it holds, the contract the grant resolves against, and the reading clock.

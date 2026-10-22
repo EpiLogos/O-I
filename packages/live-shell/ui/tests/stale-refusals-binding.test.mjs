@@ -291,7 +291,7 @@ test('FIXTURE — a root part not valid, a root mixed with a product, a binding 
   for (const id of ['init-root', 'reproject-scaffold', 'recognise-source', 'reconcile-binding', 'release-orphans']) assert.ok(hygieneModel.HYGIENE_TENDERS.some(t => t.id === id), `${id} is declared`)
 })
 
-test('the pages read through invoke_action and the shared workcell answer; the sandboxes, which no route reaches, refused by name', async () => {
+test('the pages read through invoke_action and the shared workcell answer; the sandboxes, with no sandbox server named, refused saying so', async () => {
   const actions = {'central.doctor': PAGES.doctor.data, 'central.world.reproject.plan': PAGES.reprojectOI.data, 'projectcentral.ground.inspect': PAGES.groundOI.data}
   const owner = kernel(actions)
   const fetchWithStatus = async (url, init) => {
@@ -306,7 +306,8 @@ test('the pages read through invoke_action and the shared workcell answer; the s
   assert.deepEqual(pages.worlds, [], 'Workcell keeps no world receipt: no world, a reading')
   assert.equal(pages.sandboxes, undefined)
   assert.deepEqual(pages.sources.map(source => [source.boundaryOp, !!source.refusal]), [[OPS.root, false], [OPS.scaffold, false], [OPS.authored, false], [OPS.worlds, false], [OPS.sandboxes, true]])
-  assert.match(pages.sources.at(-1).refusal, /No kernel route reaches Workcell's sandboxes reconcile/)
+  // REPLACED (lane K0): the kernel reads a named server's sandboxes (workcell_read sandboxes); none is named, and the refusal says so.
+  assert.equal(pages.sources.at(-1).refusal, groundBind.NO_SANDBOX_SERVER)
   assert.equal(pages.findings.length, 1650, 'O-I: no scaffold missing, every listed candidate waiting')
 })
 
@@ -326,7 +327,9 @@ test('(b)(c)(e) Ground hygiene draws the census and the pages in every view: eve
     assert.match(binding.standing[key].disabled, /person's authority: .*PERSON_ACTS names, which do not include it/, key)
     await assert.rejects(binding.write([{key, value: 'x'}]), /PERSON_ACTS/)
   }
-  for (const key of ['reconcile', 'orphans']) assert.match(binding.standing[key].disabled, /kernel route to Workcell/, key)
+  assert.match(binding.standing.reconcile.disabled, /kernel route to Workcell/)
+  // REPLACED (lane K0): Release orphans has its route (workcell_write release-orphans) and waits for a sandbox server named here.
+  assert.match(binding.standing.orphans.disabled, /a sandbox server named to the shell/)
   const findings = JSON.parse(binding.values.findings)
   assert.ok(findings.some(f => f.kind === 'scaffold-missing') && findings.some(f => f.kind === 'source-unrecognised'))
   const fixture = /fold\/day-close-20261012|933731e|2026-10-15T09:12|sbx-3b17|world:demand:factory-attempt/
@@ -336,7 +339,7 @@ test('(b)(c)(e) Ground hygiene draws the census and the pages in every view: eve
   const onGround = drawsOn(hygieneDesign, binding, fixture)
   assert.ok(onGround.includes('ProjectCentral/relations'), 'the missing scaffold part is drawn')
   host.setHostPage(binding.id, 'material')
-  const onMaterial = drawsOn(hygieneDesign, binding, fixture, ['No kernel route reaches Workcell\'s sandboxes reconcile yet (T-COVERAGE §1.2).'])
+  const onMaterial = drawsOn(hygieneDesign, binding, fixture, [groundBind.NO_SANDBOX_SERVER])
   assert.doesNotMatch(onMaterial, /sbx-/, 'no sandbox is drawn: none was read')
   host.resetHost(binding.id)
 })

@@ -377,8 +377,8 @@ export const HYGIENE_TENDERS: readonly HygieneTender[] = [
   {
     id: 'release-orphans',
     label: 'Release orphans',
-    ownerOperation: 'workcell sandboxes reconcile --server <url> --release-orphans (Workcell)',
-    waitsFor: 'a kernel route to Workcell\'s sandboxes reconcile, which the owner has and the kernel does not reach yet (T-COVERAGE §1.2)',
+    ownerOperation: 'workcell sandboxes reconcile --server <url> --release-orphans (Workcell; the kernel\'s workcell_write release-orphans)',
+    waitsFor: 'a sandbox server named to the shell: the owner, Workcell, takes the server of its sandboxes reconcile by URL, and no Workcell reading names the URL of the sandbox deployment it declares',
     receiptShape: 'the sandboxes released (lease expired-orphan); a sandbox with no lease evidence is never released',
   },
 ]
@@ -414,6 +414,15 @@ export interface MaterialWorld {
 export interface SandboxReading {
   readonly server: string
   readonly sandboxes: readonly {readonly id: string; readonly state?: string; readonly lease: string; readonly expiresAt?: string | null}[]
+}
+
+/** Workcell's reconcile report (`{server, sandboxes: [{id, state, expires_at, lease}], released_sandboxes, failures, …}`, the kernel's
+ * workcell_read sandboxes) as the Material page's sandboxes, each with the lease Workcell gave it. Null when it is not that report. */
+export function sandboxesOfReport(data: unknown): SandboxReading | null {
+  if (!rec(data) || !text(data.server) || !Array.isArray(data.sandboxes)) return null
+  return {server: String(data.server), sandboxes: data.sandboxes.flatMap(row => (rec(row) && text(row.id) && text(row.lease)
+    ? [{id: String(row.id), lease: String(row.lease), ...(text(row.state) ? {state: String(row.state)} : {}),
+      expiresAt: text(row.expires_at) ? String(row.expires_at) : null}] : []))}
 }
 
 /** The role hints a native candidate must carry to be listed as waiting for recognition: the manual's "a vision, an intent, an

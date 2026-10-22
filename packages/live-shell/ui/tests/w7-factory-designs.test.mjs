@@ -182,7 +182,7 @@ test('4 · the Run map: no Run is named on the Main track, so its readings stand
   bind.resetHolds()
   const binding = runMap.runMapBinding(bind.chainHolds())
   for (const key of ['run', 'nodes', 'edges', 'ret', 'recognition', 'journey']) assert.match(binding.standing[key].disabled, /no Run is named on the Main track/, key)
-  assert.match(binding.standing.retry.disabled, /the attempt `retry`/)
+  assert.match(binding.standing.retry.disabled, /factory_owner attempt-retry \(the attempt `retry`/)
   assert.match(binding.standing.continue.disabled, /`factory development mutate` for ContinueCommission/)
   assert.match(binding.standing.recognise.disabled, /factory_owner Recognise takes the Journey and the Return/)
   await assert.rejects(() => binding.write([{key: 'close', value: true}]), /factory_owner RunClose/)
@@ -205,15 +205,16 @@ test('4 · the Run map: no Run is named on the Main track, so its readings stand
 
 // REPLACED (lane W8): the rack's upkeep pages, the member's Why and History, the Agent's Context page and Custody's Grants read and write
 // through AIKit's and Actuation's routes (w8-factory-routes.test.mjs). What stays refused here is what no route carries.
-test('5 · what no route carries stays refused: Retire and Restore (PERSON_ACTS names neither), a procedure run, a bypass issue, an adoption with no digest, the last turn', async () => {
+test('5 · what no route carries stays refused: Retire and Restore (PERSON_ACTS names neither), a procedure run, an adoption with no digest, the last turn', async () => {
   const member = bind.memberBinding(bind.MEMBER_DEVICE_ID, {}, null, bind.chainHolds())
   for (const key of ['retire', 'restore']) assert.match(member.standing[key].disabled, /PERSON_ACTS names it not/, key)
   const action = readFileSync(new URL('../../../../desktop/cradle/kernel/src/action.rs', import.meta.url), 'utf8')
   const acts = action.slice(action.indexOf('pub const PERSON_ACTS'), action.indexOf('];', action.indexOf('pub const PERSON_ACTS')))
   assert.doesNotMatch(acts, /control\.skills/)
   // REPLACED (lane W9): Apply and Run write at the reviewed digest since the kernel's round of cdbde6fe7 (w9-approvals-ledger-sets.test.mjs).
-  assert.deepEqual(Object.keys(bind.RACK_UPKEEP_REFUSE), ['issue'])
-  assert.match(bind.RACK_UPKEEP_REFUSE.issue, /mints a secret/)
+  // REPLACED (lane K0): a bypass issue writes through aikit_write bypass-issue (k0-routes-bindings.test.mjs); no upkeep act stays refused.
+  assert.deepEqual(Object.keys(bind.RACK_UPKEEP_REFUSE), [])
+  assert.equal(bind.RACK_UPKEEP_WRITES.issue, 'bypass-issue')
   // REPLACED (lane W11): the last turn is read through aikit_read continuity-turn; not handed in, it says so.
   assert.match(bind.AGENT_CONTEXT_ABSENT['ctx.turn'], /`aikit work continuity turn` through the kernel's aikit_read/)
 })

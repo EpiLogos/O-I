@@ -25,7 +25,10 @@
 //!   child, as inhabitation.rs does).
 //! - A secret never crosses: no route carries a token or an authorization;
 //!   Workcell's connect names a declared machine whose credential reference
-//!   the owner resolves itself.
+//!   the owner resolves itself. Workcell's sandbox reconcile takes the server
+//!   the desk names, so its child runs without the key variable Workcell
+//!   would send there (`SANDBOX_KEY_ENV`) and no `--api-key-env` travels: a
+//!   server that needs a key refuses in its own words.
 use crate::material::Error;
 use crate::owner_process::{Bound, Effect, Failed};
 use serde::{Deserialize, Serialize};
@@ -369,6 +372,15 @@ pub enum WorkcellRead {
     RunShow {
         run: String,
     },
+    /// The sandboxes on one OpenSandbox lifecycle server, each with its lease
+    /// as Workcell classifies it (`workcell sandboxes reconcile --server URL`,
+    /// without `--release-orphans`: a pure report): `live`, `expired-orphan`
+    /// or `unknown` (no lease evidence). Reads only. The child runs without
+    /// the key variable (`SANDBOX_KEY_ENV`): no credential reaches a server
+    /// the desk names.
+    Sandboxes {
+        server: String,
+    },
 }
 
 /// A material demand in Workcell's own flag spelling (`workcell plan`): each
@@ -488,6 +500,16 @@ pub enum WorkcellWrite {
     Reconcile {
         receipt: PathBuf,
         desired: Vec<String>,
+    },
+    /// The sandboxes whose lease has ended released on one OpenSandbox
+    /// lifecycle server (`workcell sandboxes reconcile --server URL
+    /// --release-orphans`). Workcell releases only an expired lease; a
+    /// sandbox without lease evidence is never released. Neither `--release
+    /// <id>` (Workcell's operator escape hatch, which ignores lease evidence)
+    /// nor `--include-snapshots` (with `--release-orphans` it deletes every
+    /// snapshot) travels, and the child runs without the key variable.
+    ReleaseOrphans {
+        server: String,
     },
 }
 
@@ -771,10 +793,22 @@ pub enum AikitWrite {
     ProcedureUndo {
         procedure: String,
     },
-    /// Revoke an open hook bypass token (`aikit bypass revoke <id>`). Issuing
-    /// one is not routed: it mints a secret.
+    /// Revoke an open hook bypass token (`aikit bypass revoke <id>`).
     BypassRevoke {
         id: String,
+    },
+    /// Issue a hook bypass in this context (`aikit bypass issue [--scope S]
+    /// --reason R [--capability C]`): the hook chain lets the next event, or
+    /// the session, through, and AIKit records the reason. AIKit answers the
+    /// bypass's id, the same id `bypass list` shows: no secret is minted or
+    /// carried. AIKit refuses an empty reason and a scope it does not take in
+    /// its own words.
+    BypassIssue {
+        #[serde(default)]
+        scope: Option<String>,
+        reason: String,
+        #[serde(default)]
+        capability: Option<String>,
     },
     /// A skill source's candidate snapshot made (`aikit source sync <id>`),
     /// promoted (`aikit source promote <id> [--trust | --trust-skill C…]`)
@@ -862,6 +896,7 @@ impl AikitWrite {
             | Self::ProcedureRun { .. }
             | Self::ProcedureUndo { .. }
             | Self::BypassRevoke { .. }
+            | Self::BypassIssue { .. }
             | Self::SourceSync { .. }
             | Self::SourcePromote { .. }
             | Self::SourceRollback { .. }
@@ -1030,6 +1065,9 @@ struct Call<'a> {
     cwd: Option<&'a Path>,
     limit: Duration,
     effect: Effect,
+    /// Variables of the kernel's environment the child never sees: a secret
+    /// the owner would send to a destination the desk named.
+    withheld: &'static [&'static str],
 }
 
 impl Call<'_> {
@@ -1042,9 +1080,16 @@ impl Call<'_> {
             cwd: None,
             limit,
             effect: Effect::Read,
+            withheld: &[],
         }
     }
 }
+
+/// The variable Workcell reads an OpenSandbox server's key from when no
+/// `--api-key-env` names another (Workcell `OPENSANDBOX_DEFAULT_API_KEY_ENV`).
+/// The sandbox routes take the server the desk names, so their child runs
+/// without it: Workcell then sends no key ("servers without auth accept that").
+pub const SANDBOX_KEY_ENV: &str = "OPEN_SANDBOX_API_KEY";
 
 fn words(args: &[&str]) -> Vec<OsString> {
     args.iter().map(OsString::from).collect()
@@ -1109,6 +1154,9 @@ fn spawn(call: Call<'_>) -> Result<std::process::Output, Error> {
         .args(&call.args)
         .env_remove("OI_POSITION_REF")
         .env_remove("OI_OCCUPANT_GENERATION");
+    for variable in call.withheld {
+        command.env_remove(variable);
+    }
     if let Some(cwd) = call.cwd {
         command.current_dir(cwd);
     }
@@ -1773,8 +1821,15 @@ fn workcell_answer(request: &WorkcellRead) -> Result<Reading, Error> {
             args.extend(words(&["collect", "--json"]));
             ("workcell collect", args)
         }
+        WorkcellRead::Sandboxes { server } => {
+            ("workcell sandboxes reconcile", sandbox_args(server, false)?)
+        }
     };
-    let data = run(Call::new(workcell(), route, args, READ_LIMIT))?;
+    let mut call = Call::new(workcell(), route, args, READ_LIMIT);
+    if matches!(request, WorkcellRead::Sandboxes { .. }) {
+        call.withheld = &[SANDBOX_KEY_ENV];
+    }
+    let data = run(call)?;
     let data = match request {
         WorkcellRead::ConnectionsList => fields(route, data, &[("connections", Kind::List)])?,
         WorkcellRead::Placement { .. } => {
@@ -1819,11 +1874,45 @@ fn workcell_answer(request: &WorkcellRead) -> Result<Reading, Error> {
             data,
             &[("world_ref", Kind::Text), ("outputs", Kind::List)],
         )?,
+        WorkcellRead::Sandboxes { .. } => sandbox_report(route, data)?,
         WorkcellRead::Plan { .. } | WorkcellRead::Doctor => {
             unreachable!("answered by workcell_findings")
         }
     };
     Ok(reading(route.into(), data, Vec::new()))
+}
+
+/// `workcell sandboxes reconcile --server URL [--release-orphans] --json`, in
+/// Workcell's own spelling. Only the server and the release travel: never
+/// `--api-key-env`, `--release <id>` or `--include-snapshots`.
+fn sandbox_args(server: &str, release: bool) -> Result<Vec<OsString>, Error> {
+    if server.trim().is_empty() {
+        return Err(incompatible(
+            "workcell sandboxes reconcile names the sandbox server it reads".into(),
+        ));
+    }
+    let mut args = words(&["sandboxes", "reconcile", "--server"]);
+    args.push(server.into());
+    if release {
+        args.push("--release-orphans".into());
+    }
+    args.push("--json".into());
+    Ok(args)
+}
+
+/// Workcell's reconcile report: the server, its sandboxes with their leases,
+/// what this pass released and every failure by target.
+fn sandbox_report(route: &str, data: Value) -> Result<Value, Error> {
+    fields(
+        route,
+        data,
+        &[
+            ("server", Kind::Text),
+            ("sandboxes", Kind::List),
+            ("released_sandboxes", Kind::List),
+            ("failures", Kind::List),
+        ],
+    )
 }
 
 /// Workcell's plan and doctor: a satisfiable plan or a clean baseline exits
@@ -2451,11 +2540,20 @@ fn workcell_world_written(request: &WorkcellWrite) -> Result<Written, Error> {
             }
             ("workcell reconcile", args)
         }
+        WorkcellWrite::ReleaseOrphans { server } => {
+            let mut args = sandbox_args(server, true)?;
+            // `sandbox_args` closes with `--json`, which every arm gets below.
+            args.pop();
+            ("workcell sandboxes reconcile --release-orphans", args)
+        }
         _ => unreachable!("answered by workcell_written"),
     };
     args.push("--json".into());
     let mut call = Call::new(workcell(), route, args, OWNER_WRITE_LIMIT);
     call.effect = Effect::Write;
+    if matches!(request, WorkcellWrite::ReleaseOrphans { .. }) {
+        call.withheld = &[SANDBOX_KEY_ENV];
+    }
     let data = run(call)?;
     let (data, reference) = match request {
         WorkcellWrite::Disconnect { label } => {
@@ -2492,6 +2590,15 @@ fn workcell_world_written(request: &WorkcellWrite) -> Result<Written, Error> {
                 .as_array()
                 .is_some_and(|deltas| !deltas.is_empty());
             (data, moved.then(|| receipt.display().to_string()))
+        }
+        // Released is what moved on the server; a failure names its target
+        // in the report, which travels as Workcell wrote it.
+        WorkcellWrite::ReleaseOrphans { server } => {
+            let data = sandbox_report(route, data)?;
+            let released = data["released_sandboxes"]
+                .as_array()
+                .is_some_and(|released| !released.is_empty());
+            (data, released.then(|| server.clone()))
         }
         _ => unreachable!(),
     };
@@ -2737,6 +2844,18 @@ fn aikit_written(request: &AikitWrite, cwd: Option<&Path>) -> Result<Written, Er
             args.push(id.into());
             ("aikit bypass revoke", args)
         }
+        AikitWrite::BypassIssue {
+            scope,
+            reason,
+            capability,
+        } => {
+            let mut args = words(&["bypass", "issue"]);
+            push_flag(&mut args, "--scope", scope.as_deref());
+            args.push("--reason".into());
+            args.push(reason.into());
+            push_flag(&mut args, "--capability", capability.as_deref());
+            ("aikit bypass issue", args)
+        }
         AikitWrite::SourceSync { id } => {
             let mut args = words(&["source", "sync"]);
             args.push(id.into());
@@ -2860,6 +2979,12 @@ fn aikit_written(request: &AikitWrite, cwd: Option<&Path>) -> Result<Written, Er
         }
         AikitWrite::ProcedureUndo { procedure } | AikitWrite::ProcedureRun { procedure, .. } => {
             (data, Some(procedure.clone()))
+        }
+        // The bypass AIKit opened, by the id it answered.
+        AikitWrite::BypassIssue { .. } => {
+            let data = fields(route, data, &[("bypass_id", Kind::Text)])?;
+            let reference = named(&data, &["/bypass_id"]);
+            (data, reference)
         }
         AikitWrite::BypassRevoke { id }
         | AikitWrite::SourceSync { id }
