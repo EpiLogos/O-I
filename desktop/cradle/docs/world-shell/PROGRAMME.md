@@ -737,3 +737,223 @@ The owner's question on the musical system, L2720-2723 (§18); the last line con
 Read with: R12 and R22 (Epi-Logos is a lens, not a mode); R25 (the realignment).
 
 ---
+
+### R30 — Rulings in the legacy cradle's design documents (retired 27 Oct)
+
+Copied word for word, with line numbers, from the cradle documents before they retired (O-I #728).
+
+
+For the lead to add to `desktop/cradle/docs/world-shell/PROGRAMME.md`. Each passage below records an owner ruling, acceptance, direction or supplied reference in a document retired under O-I #728, and none of them is in PROGRAMME.md (checked by searching PROGRAMME.md for each passage's words and for the rulings' identifiers). They are copied exactly from `origin/main` at `8873b096817b603b5b562cc378ec00b808391b7d`, with the file and lines named; only a leading `>` is added to each line. Most are the documents' own records of what the owner ruled or accepted, not the owner's words; the owner's own words appear only where the source marks them as quotations (D1, D2, and the requests quoted in 10-SIDEBARS L72 and L101).
+
+Checked and holding no owner ruling: `06-SYSTEM-SETTINGS.md` (its law L1–L6 and `v1` descriptor are now §0 of `07-WAVE-5-SYSTEM-CONTRIBUTION.md`), `PROMPT.md`, and `PRESENTATION-STATE-ADDENDUM-PROPOSED.md` (a proposal awaiting owner ratification, never ratified). The owner rulings these documents cite by number ("ruling 5", "ruling 6", "ruling 7", "ruling 8") are the 22 September shell behaviour rulings, which stand in `packages/oi-design-system/DESKTOP-LANGUAGE.md`.
+
+`04-VERIFICATION.md` is not quoted here because its content moved, word for word where it is owner-bound, into `docs/experience/LOCAL-CAMPAIGN.md`: the CAW authorial anchors (“one prompt for the connective session”, “it's the user's day”, “agent in situ”, “clean squashed/rebased state across all product lines”) are in §11, and the Epi walks with “Publication authorised; H ratification pending (Satya), 2026-09-12” are in §12. Its heading “Factory/Agency joined acceptance — adopted 2026-09-14” recorded the adoption of `docs/experience/FACTORY-AGENCY.md`, which states that adoption itself.
+
+## 10-SIDEBARS.md — the UI lead, accepted 23 Sep 2026
+
+### Standing
+
+Source: `docs/cradle/10-SIDEBARS.md` L3
+
+> Standing: design-commitment — owner-accepted as the UI lead, 2026-09-23 (rulings D1–D6 of 22 Sep, amendments A1–A6 of 23 Sep and A7 of the World-rooted inhabitation amendment recorded in §7)
+
+### Owner rulings D1–D6 (22 Sep 2026), amendments A1–A6 (23 Sep 2026), S1, and A7
+
+Source: `docs/cradle/10-SIDEBARS.md` L372-393
+
+> ## 7. Owner rulings (22 Sep 2026)
+>
+> - **D1 — Inspect.** *"inspect can naturally use the canvas or popout."* Inspect opens the object's own page in the canvas or a popped-out window (§4.7). There is no drawer and no tab.
+> - **D2 — Epi-Logos.** *"a mode in the footer, very minimal button … meant to just focus the corpus via the file system … rather than being locked to one page/surface."* It is a lens toggle (§3.1).
+> - **D3 — Inbox.** Universal. It replaces the scattered receiving and returns locations.
+> - **D4 — Chat routing.** Confirmed as specified (§3.5).
+> - **D5 — Factory files.** Focus the ProjectCentral intent and vision files, and lean into the HTML template system. Each mode has its own slice of the context sources (§3.7).
+> - **D6 — Project and workspace.** One clean logic across modes (§3.6).
+>
+> ### Amendments (23 Sep 2026)
+>
+> - **A1 — Models are models.** Model pickers list real model names only. Harness and connection are separate chips. This fixes the current error where connection labels appear as models.
+> - **A2 — Permission modes.** A selector in the composer (Ask · Accept edits · Plan only · Bypass permissions) and a per-harness default in Settings → Permissions.
+> - **A3 — No title band on the right.** An avatar menu sits in the tab row; the top of the panel is one row.
+> - **A4 — Full-page centres.** Factory, Expressions, Technè and Settings have no pane tab bars.
+> - **A5 — Epi-Logos lives in the hidden window footer**, not the mode bar.
+> - **A6 — Open beside / Pop out** on every left-sidebar row that opens material.
+> - **S1 accepted:** Settings with the left-sidebar section list, as shown in the study.
+>
+> ### Amendment A7 — World-rooted inhabitation (O-I #220, Factory #195)
+>
+> - **A7 — The Agents tab is who is here.** Its rows are World Positions and their occupancy, from the owners' readings (§4.5; [WORLD-INHABITATION-V1](../contracts/WORLD-INHABITATION-V1.md)), not the agent profile roster. Profiles stay reachable as secondary detail. This replaces the WORKING WITH YOU / GUARDIANS sections of 22 Sep.
+
+### Reference apps the owner supplied, 22 Sep 2026
+
+Source: `docs/cradle/10-SIDEBARS.md` L32
+
+> - Reference apps the owner supplied on 22 Sep: Claude desktop and Codex (session rows with live status, right panel as a launcher of files/browser/terminal), Grok Bot (a roster instead of chat history, ⌘K palette with typed tabs), Buzz (Inbox, agent roster, "Honey: Working" under the composer).
+
+### The owner's request: a project picker and agent activity per project
+
+Source: `docs/cradle/10-SIDEBARS.md` L72
+
+> - **Scope selector** replaces the hardcoded "My O:I / Personal ground" heading. It names the current scope: **Central** (the root; valid without a child project) or a Work project. Its menu is the real census: Central, then each project with its live marks (`● 2` working, `! 1` needs you), remote machines labelled (`Omarchy`) with a reachability dot. When another project has activity, the chevron carries a dot. This one control serves the Factory request "a project picker, and a place for agent activity per project".
+
+Source: `docs/cradle/10-SIDEBARS.md` L101
+
+> This keeps the owner's "agent activity per project" requirement without adding a second roster.
+
+### Technè's left body is the wiki map (the owner's ruling, restored)
+
+Source: `docs/cradle/10-SIDEBARS.md` L88
+
+> | **Technè** | — | WIKI MAP with a List / Tree / Graph switch, over the one projection store. **This restores the owner's ruling, which regressed** (§6.1) |
+
+### Factory's right panel is Run · Agents · Context; the chat is the centre Tasks view
+
+Source: `docs/cradle/10-SIDEBARS.md` L224
+
+> | Factory | the run's lead or selected agent | **Run · Agents · Context** (the chat is the centre Tasks view — owner ruling) |
+
+### Overview is renamed Central (owner finding, #375)
+
+Source: `docs/cradle/10-SIDEBARS.md` L353
+
+> | World navigator: Overview / Today / Explore | **Rename** Overview → Central (owner finding, #375); add Library |
+
+### The canvas insertion of files, terminals and browser material is the accepted specimen (owner, 21 Sep 2026)
+
+Source: `docs/cradle/10-SIDEBARS.md` L261
+
+> **Preserve.** The existing canvas insertion of files, terminals and browser material is the accepted specimen (owner, 21 Sep). This design only removes repeated empty instructions and "returns" wording.
+
+### No close control on the right panel (owner acceptance, 26 Sep 2026)
+
+Source: `docs/cradle/10-SIDEBARS.md` L201
+
+> - **No close control on the panel** *(owner acceptance, 26 Sep 2026 — the approved Factory working-surface study, `docs/cradle/sidebars/factory-ui-study-20260926.html`)*. The former ✕ is removed. The shell's persistent sidebar icon in the topbar is the ONE open/close control, reachable while the panel is expanded, overlayed (narrow) or restored; ⌘⇧B keeps working. Expansion, restoration and reopening preserve the prior arrangement. Every mode's panel carries this same treatment — Base, Factory, Expressions, Technè, Epi-Logos, Settings — with each mode's own curated planes and established arrangements retained.
+
+### The model-first composer (owner acceptance, 26 Sep 2026)
+
+Source: `docs/cradle/10-SIDEBARS.md` L204
+
+> - **Composer** *(amended by the model-first ruling, owner acceptance 26 Sep 2026)*: To: chips (@ opens the same picker); *Insert context* (+); dictation (mic; local STT); the **permission mode chip**; the **model control — one chip, always present**, fresh conversations included (A1 below); Send, which becomes **Stop** in the same slot while a turn runs. The standing "Connect with …" harness inventory is removed: route switching, resume and setup fold into the model control's menu, and a disconnected conversation reads as one concise state at that control.
+
+### The material workspace (owner acceptance, 26 Sep 2026)
+
+Source: `docs/cradle/10-SIDEBARS.md` L263-268
+
+> **Amended — the material workspace** *(owner acceptance, 26 Sep 2026, the approved Factory working-surface study; applies to every mode whose Context is the pane canvas — Factory, Expressions, Technè; Base and Epi-Logos keep their prepared-context Context)*:
+>
+> - The open material fills the plane **edge to edge** beneath the pane's one strip: no inset frame, no standing Situation / Prepared / Active stack above or below the canvas, no capped strip.
+> - The strip's **+ insertion menu** opens **File · Terminal · Browser · Canvas · Graph · Side chat**. Canvas opens the standing hosted canvas surface (the Expressions application, or the Technè constellation); Graph opens the project's native knowledge graph — the developed GraphCanvas renderer with its filters, selection and open-in-Technè handoff; Side chat opens a chosen conversation into the pane through the ordinary encounter placement, so its conversation state rides through. Every entry converges on the same native opening routes the canvas's own keys and drag-and-drop use.
+> - **Selection and preparation** ride in the strip's compact **Context** control: one button carrying the real prepared count, opening the present situation, the native prepared-context reading (inspect, include/remove, expressions, saved sets) and the active-material lanes. Counts come from the context owner, never a display guess.
+> - The strip's close control on individual tabs stays; the panel-level close is the topbar sidebar icon (§4.1).
+
+## 11-FACTORY.md — Factory, accepted with the UI lead
+
+### Standing
+
+Source: `docs/cradle/11-FACTORY.md` L3
+
+> Standing: design-commitment — owner-accepted as part of the UI lead, 2026-09-23 (with amendments A1–A7 in 10-SIDEBARS §7)
+
+### The owner's layouts, and the owner's screenshot as reference
+
+Source: `docs/cradle/11-FACTORY.md` L8
+
+> **Factory is where structured multi-agent work is set up, watched, and recognised.** This page designs its centre pages, its right panel, and the object pages that Inspect opens. It keeps the owner's layouts (Desk | Tasks on the left, Run · Agents · Context on the right) and specifies what fills them, using the fields the owners actually write today. The companion study, [`sidebars/sidebars-study.html`](sidebars/sidebars-study.html), renders every page below. Choose *Factory*, then a page.
+
+Source: `docs/cradle/11-FACTORY.md` L10
+
+> Sources honoured: FACTORY-AGENCY §§1–14 and the fourteen obligations; the Factory UI handoff (§§1–10); the UI v2 specs `02-RUN` and `07-DESK` (commit `397cd001`, unlanded); #375's rejections; and the DeepSeek Harness trajectory from #289 and the owner's 22 Sep screenshot.
+
+Source: `docs/cradle/11-FACTORY.md` L121
+
+> Built after the DSH Trajectory view (owner screenshot, 22 Sep), over the real journal.
+
+### The model-first composer in Tasks (26 Sep 2026)
+
+Source: `docs/cradle/11-FACTORY.md` L185-186
+
+> - **Composer** (10-SIDEBARS §4.1, as amended 26 Sep 2026 — model-first): To: · Insert context · dictation · **permission mode** · **model** · Send/Stop. The composer shows model names; harnesses and their routes are managed in Settings → Harnesses (10-SIDEBARS §4.1 amendment). A model picker never lists a connection (Amendment A1).
+>   - The **model control** is one chip, always present — a fresh conversation included, where it reads the native model roster and the held choice rides first-send provisioning into the conversation's own model-select route. The former harness chip in this row, and the plain-text "Connect with …" list before it, are retired; route switching, resume and setup fold into the model control's menu.
+
+## 12-SETTINGS.md — Settings, accepted with the UI lead
+
+### Standing: S1 accepted, S2 adopted as recommended
+
+Source: `docs/cradle/12-SETTINGS.md` L3
+
+> Standing: design-commitment — owner-accepted as part of the UI lead, 2026-09-23 (S1 accepted; S2 write-only key entry adopted as recommended); realises HARNESS-SETTINGS-RESEARCH-2026-09-22 §1–§3
+
+Source: `docs/cradle/12-SETTINGS.md` L31
+
+> Sections are organised **by task** (research §2), with **Products** below for the per-owner pages. This settles the conflict between the research brief (categories) and the v2 spec (owner rail): both are present, tasks first. *(Decision S1.)*
+
+Source: `docs/cradle/12-SETTINGS.md` L198-201
+
+> ## 7. Decisions for the owner
+>
+> - **S1: Tasks first, products below.** The research brief groups by category; the v2 spec by owner rail. *Recommend both, task sections first*, since that is how people look for settings.
+> - **S2: A write-only key field.** Ruling 6 says enter and see keys; the v2 spec forbids a masked token field. *Recommend: a write-only entry that empties after saving*, and you only ever see that a key is present and whether it works.
+
+### Keys are entered, never shown again
+
+Source: `docs/cradle/12-SETTINGS.md` L107
+
+> - **Never:** a key is never shown again after saving, and there is no reveal or copy of secret material anywhere (DOM, clipboard, logs). This satisfies both ruling 6 ("enter and see API keys") and the v2 no-secret-material rule: you see *that* a key is present and working, never the key.
+
+## 13-BUILD-PROMPT.md
+
+Source: `docs/cradle/13-BUILD-PROMPT.md` L11
+
+> You are building the O:I cradle desktop's new UI. It is specified and owner-accepted (23 Sep 2026).
+
+## 05-EXECUTION.md
+
+### Current foundation execution protocol — owner direction, 6 Sep 2026
+
+Source: `docs/cradle/05-EXECUTION.md` L12-35
+
+> ## Current foundation execution protocol — owner direction,2026-09-06
+>
+> Use the [wayfinder](../OI-DESKTOP-CRADLE-REBUILD-WAYFINDER.md#foundation-and-gateway-execution-map--current-binding-direction)
+> and [programme FND-00–06/GW-01–06](../../.superpowers/sdd/cradle-rebuild/IMPLEMENTATION-PROGRAMME-2026-09-06.md#foundation-execution-gate--owner-direction-2026-09-06)
+> as the current file/state/gate map. They supersede historical specimen-first,
+> old desktop-path and selected-reference instructions below. Build production
+> `desktop/cradle`; do not create another specimen. The lead owns form/fidelity and
+> integration. Independent product work must have explicit file/contract ownership;
+> the concurrently developed Gateway product lane is consumed, not redispatched.
+>
+> A fresh real inspection of every indexed HTML reference is mandatory because the
+> previous pass missed the right panel. Reference top-bar rendering is exempt;
+> its functions are native. The owner's right-panel relocation and management-bar
+> removal are additional explicit corrections, not a general design exemption.
+> Before implementation, record the reference-to-region/state/interaction mapping.
+> At the coherent checkpoint compare native production against all reference modes,
+> including subject changes and keyboard/full/restore behaviour. Mark functional
+> and visual/interaction evidence separately. Inspect code, real owner operations
+> and actual mounted view state between these bounded visual checkpoints.
+>
+> Preserve occupied work and active providers. Recheck process/artifact identity;
+> no simultaneous build into a preview under test. Newly landed native capabilities
+> attach to stable presentation inputs, never dictate a convenient redesign.
+> An integration absence stays named with its owner; it cannot become fake data,
+
+### Design changes are the owner's
+
+Source: `docs/cradle/05-EXECUTION.md` L81-85
+
+> what was observed. Do not partially accept; do not silently fix it in place
+> unless that is faster than re-dispatching. If the work contradicts the design,
+> the design wins: fix the work, or return the conflict to the owner with
+> reasons. **Never edit `docs/cradle/` to match code** — design changes are
+> recognised by the owner, not derived from implementation.
+
+## 01-DESIGN.md
+
+No passage is attributed to the owner. One sentence is quoted without attribution; it is listed so the lead can decide whether it is the owner's.
+
+Source: `docs/cradle/01-DESIGN.md` L63-65
+
+> - **No profile shadow** — "my profile is the face of my world I have chosen to
+>   make present here." An account is a reading over native source; several may
+>   coexist; none silently replaces its source.
