@@ -1021,7 +1021,7 @@ fn remote_docs(surface: &Surface) -> String {
 fn oi_doc_topic(topic: &str) -> Option<&'static str> {
     match topic {
         "readme" | "home" => Some("README.md"),
-        "vision" => Some("docs/VISION.md"),
+        "vision" => Some("ProjectCentral/docs/1-vision/VISION.md"),
         "surfaces" => Some("docs/SURFACES.md"),
         "architecture" => Some("docs/ARCHITECTURE.md"),
         "cli" => Some("docs/CLI.md"),

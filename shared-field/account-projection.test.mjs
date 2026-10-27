@@ -174,7 +174,7 @@ function oiProjectProjection() {
               standing: 'authored-position',
             },
             source_system: 'git',
-            source_ref: 'docs/positions/FOUNDING-POSITIONS.md',
+            source_ref: 'ProjectCentral/docs/0-ground/positions/FOUNDING-POSITIONS.md',
             source_revision: 'founding-position@current',
           }),
         ],

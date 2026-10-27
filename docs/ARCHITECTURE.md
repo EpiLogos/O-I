@@ -11,7 +11,7 @@ follow the owner implementation and dated evidence linked from that route.
 
 {O:I} is the shared frame around six independently useful product surfaces. It does not absorb their behaviour.
 
-For the canonical three-depth visual orientation — experience, product relation, then current software seams — see [`VISUAL-PRODUCT-UNDERSTANDING.md`](VISUAL-PRODUCT-UNDERSTANDING.md).
+For the canonical three-depth visual orientation — experience, product relation, then current software seams — see [`VISUAL-PRODUCT-UNDERSTANDING.md`](../ProjectCentral/docs/1-vision/VISUAL-PRODUCT-UNDERSTANDING.md).
 
 The architecture has one Idea and two deliberately thin operative faces:
 
@@ -85,7 +85,7 @@ O:I owns the portal and portable relation grammar. The source product keeps sema
 
 This gives the parent package a positive role beyond installation while preserving its sparseness. The parent does not need to know how to manage a Run, materialise a workspace, resolve a capability, author a wiki, or execute a Workcell lifecycle. It needs enough structure to preserve identity, provenance, revision, field participation, addressable Contributions, and the mediation through which one participant encounters another's externalised material.
 
-The consolidated contract is [`SHARED-FIELD.md`](SHARED-FIELD.md). The deeper Self/Other account is [`OBJECTIVE-CO-INTERNALITY.md`](OBJECTIVE-CO-INTERNALITY.md).
+The consolidated contract is [`SHARED-FIELD.md`](SHARED-FIELD.md). The deeper Self/Other account is [`OBJECTIVE-CO-INTERNALITY.md`](../ProjectCentral/docs/0-ground/OBJECTIVE-CO-INTERNALITY.md).
 
 ## Objective Internality and Objective Co-Internality
 

@@ -9,7 +9,7 @@
     "grounding220": {
       "source_ref": "docs/experience/CASES.md",
       "issue": "https://github.com/EpiLogos/O-I/issues/220",
-      "policy": "Read CASES.md (Session grounding SG1–SG12; Prepared NOW context PNC01–PNC18; Workcell-root NOW NOW01–NOW37), the temporal law in docs/contracts/WORLD-INHABITATION-V1.md §5 and docs/architecture/shared-participation.md (FieldNow and FieldDay), docs/PERSISTENT-AGENCY-AND-MATERIAL-HOSTING.md (Session grounding), docs/architecture/agent-context.md, current owner tickets and the exact source cut. These joins preserve accepted Factory design and earlier stories/obligations; declaration is not runtime or human evidence. Also consume AIKit#388 for the 2026-09-22 early Factory integration; preserve C0–C5 and the existing Day/NOW broad-fan-out gate."
+      "policy": "Read CASES.md (Session grounding SG1–SG12; Prepared NOW context PNC01–PNC18; Workcell-root NOW NOW01–NOW37), the temporal law in docs/contracts/WORLD-INHABITATION-V1.md §5 and docs/architecture/shared-participation.md (FieldNow and FieldDay), ProjectCentral/docs/3-architecture/PERSISTENT-AGENCY-AND-MATERIAL-HOSTING.md (Session grounding), docs/architecture/agent-context.md, current owner tickets and the exact source cut. These joins preserve accepted Factory design and earlier stories/obligations; declaration is not runtime or human evidence. Also consume AIKit#388 for the 2026-09-22 early Factory integration; preserve C0–C5 and the existing Day/NOW broad-fan-out gate."
     }
   },
   "required_obligation_ids": [

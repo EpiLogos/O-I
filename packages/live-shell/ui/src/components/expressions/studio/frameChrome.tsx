@@ -6,7 +6,7 @@
 // sent back as one `chrome` command through the frame's one runner, which presses the frame's own control: nothing here holds a value of
 // a control, re-implements one, or reaches into the frame.
 //
-// Drawn in the device craft (owner, 15 Oct: "the ableton UI approach … no scrollers, no overuse of internal boxes"; docs/dlw/DLW.md §16
+// Drawn in the device craft (owner, 15 Oct: "the ableton UI approach … no scrollers, no overuse of internal boxes"; ProjectCentral/docs/1-vision/dlw/DLW.md §16
 // §5, the panel kit's controls, inhabitants/sdk/panel.tsx): a toggle is the kit's toggle, lit amber while the frame reads it pressed; a
 // press the kit's action; a choice the kit's chooser under its small name; a number the frame bounds a value box (a range a dial) that
 // sends on release; any other value a small field that commits on Enter or leaving it; a reading a line of mono words — keys flow in
@@ -80,7 +80,7 @@ function ValueField({control, view, disabled}: {control: FrameChromeControl; vie
 }
 
 /** A number the frame bounds, swept: the kit's value box or dial (inhabitants/sdk/panel.tsx), the frame's value shown, the new value sent
- * as one press when the hand lets go (docs/dlw/DLW.md §16.10). */
+ * as one press when the hand lets go (ProjectCentral/docs/1-vision/dlw/DLW.md §16.10). */
 function sweepable(control: FrameChromeControl): {min: number; max: number; step?: number} | null {
   const min = Number(control.min), max = Number(control.max)
   return control.min !== undefined && control.max !== undefined && Number.isFinite(min) && Number.isFinite(max) && max > min

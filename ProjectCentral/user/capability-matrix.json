@@ -1,7 +1,7 @@
 {
   "protocol": "ql-capability-matrix/1",
   "matrix_id": "matrix.oi-shell",
-  "anchor_ref": "docs/dlw/DLW.md",
+  "anchor_ref": "ProjectCentral/docs/1-vision/dlw/DLW.md",
   "default_view": "shell-field",
   "views": [
     {
@@ -16,55 +16,55 @@
           {
             "id": "techne",
             "label": "Technē",
-            "source_ref": "docs/dlw/DLW.md#17.1",
+            "source_ref": "ProjectCentral/docs/1-vision/dlw/DLW.md#17.1",
             "scope": "§17.1 Technē: tracks and clips; §17 entries that stand on a reading's chain (§17.10 Light, §17.11 Lens)."
           },
           {
             "id": "any-mode",
             "label": "Any mode: the shared instruments",
-            "source_ref": "docs/dlw/DLW.md#17",
+            "source_ref": "ProjectCentral/docs/1-vision/dlw/DLW.md#17",
             "scope": "§17.2–§17.9 (Product line 'Pane: any pane, in every mode') and §22, whose entries stand on 'Any track'."
           },
           {
             "id": "central",
             "label": "Central",
-            "source_ref": "docs/dlw/DLW.md#18",
+            "source_ref": "ProjectCentral/docs/1-vision/dlw/DLW.md#18",
             "scope": "§18 Central."
           },
           {
             "id": "factory",
             "label": "Factory",
-            "source_ref": "docs/dlw/DLW.md#19",
+            "source_ref": "ProjectCentral/docs/1-vision/dlw/DLW.md#19",
             "scope": "§19 Factory and the agent chain."
           },
           {
             "id": "expressions",
             "label": "Expressions",
-            "source_ref": "docs/dlw/DLW.md#20",
+            "source_ref": "ProjectCentral/docs/1-vision/dlw/DLW.md#20",
             "scope": "§20 Expressions."
           },
           {
             "id": "live",
             "label": "Live",
-            "source_ref": "docs/dlw/DLW.md#21",
+            "source_ref": "ProjectCentral/docs/1-vision/dlw/DLW.md#21",
             "scope": "§21 Live."
           },
           {
             "id": "window",
             "label": "The window",
-            "source_ref": "docs/dlw/DLW.md#10.1",
+            "source_ref": "ProjectCentral/docs/1-vision/dlw/DLW.md#10.1",
             "scope": "§10.1 The window; §23 Widgets (Product line 'Part of the window: the widget rail on the right')."
           },
           {
             "id": "settings",
             "label": "Settings and setup",
-            "source_ref": "docs/dlw/DLW.md#10.10",
+            "source_ref": "ProjectCentral/docs/1-vision/dlw/DLW.md#10.10",
             "scope": "§10.10 Settings; §10.11 Bringing in what you have."
           },
           {
             "id": "houses",
             "label": "The houses",
-            "source_ref": "docs/dlw/DLW.md#16.1",
+            "source_ref": "ProjectCentral/docs/1-vision/dlw/DLW.md#16.1",
             "scope": "§10.4 Houses; §16.1 'Houses and their chains'."
           }
         ]

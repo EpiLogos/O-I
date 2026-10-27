@@ -13,8 +13,8 @@
 // create_project_central | unresolved_human_decision_required, its reason, the wiki candidates and the native signals), the treatment you
 // choose, its preview (`projectcentral.init` with preview, `projectcentral.adopt.preview`, `projectcentral.migrate.preview`: the mutation
 // plan's operations) and Accept (`projectcentral.init`, `adopt` or `migrate`). Self is the world's account of itself and the returns people
-// wrote (`projectcentral.self.inspect`, central.development-field-reading/v1: the aperture, the six tier bindings, the UX sources and the EX
-// returns), with Ensure (`projectcentral.self.ensure`) and Relate (`projectcentral.self.tier.relate` or `retain-tier` for a tier,
+// wrote (`projectcentral.docs.inspect`, central.development-field-reading/v1: the aperture, the six tier bindings, the UX sources and the EX
+// returns), with Ensure (`projectcentral.docs.ensure`) and Relate (`projectcentral.docs.tier.relate` or `retain-tier` for a tier,
 // `ux.relate` for an intended experience, `ex.relate` for a return, which only a person can make). Every one is reached by the kernel's
 // invoke_action; Accept and Relate carry the person's authority, which that route does not yet carry (ticket §1.1).
 //   pc       {outcome, reason, candidates: [{source, space}], signals: [{kind, path}], errors}  the inspection
@@ -508,8 +508,8 @@ function SelfBands({p}: {p: ViewProps}) {
     <Band>
       <Section width={206}><SelfWell v={p.v} w={194} h={146} /></Section>
       <Section label="Self" width={104}>
-        <Readout label="self" does="Whether the world has its ProjectCentral/self: where its account of itself is written." value={s ? (s.exists ? 'present' : 'none yet') : undefined} tone={s?.exists ? 'green' : 'stall'} />
-        <Action {...st(p, 'selfEnsure')} label="Ensure" does="Add ProjectCentral/self where it is missing. Native documents, the wiki and the NOW field stay where they are."
+        <Readout label="self" does="Whether the world has its ProjectCentral/docs: where its account of itself is written, on the six tiers." value={s ? (s.exists ? 'present' : 'none yet') : undefined} tone={s?.exists ? 'green' : 'stall'} />
+        <Action {...st(p, 'selfEnsure')} label="Ensure" does="Add ProjectCentral/docs where it is missing. Native documents, the wiki and the NOW field stay where they are."
           onPress={s && s.exists === false ? () => p.set('selfEnsure', true) : undefined} disabled={st(p, 'selfEnsure').disabled ?? (s?.exists ? 'The world has its self.' : undefined)} />
         <Readout label="returns" does="Returns people wrote against the world's intended experiences." value={s?.ex.length} tone="accent" />
       </Section>

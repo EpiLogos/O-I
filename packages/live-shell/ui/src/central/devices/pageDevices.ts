@@ -30,7 +30,7 @@ import {readDayPage, readFlowPage, wordsOfHtml, type FlowPage} from './pageReadi
 import {dateOfDayPath} from '../daySurface'
 import {actionAnswerOf, centralActionOp, useCentralAction, useDayDieReading, type ActionAnswer} from './useCentralReadings'
 import {kernelOp, kernelRead} from '../../../../../../desktop/cradle/src/kernel/bridge'
-import {CONTEMPLATE_FLOW_ACTION, PC_ACCEPT_ACTION, PC_INSPECT_ACTION, PC_PREVIEW_ACTION, PC_SELF_ENSURE_ACTION, PC_SELF_INSPECT_ACTION, PC_TIER_RELATE_ACTION, acceptInput, relateInput,
+import {CONTEMPLATE_FLOW_ACTION, PC_ACCEPT_ACTION, PC_INSPECT_ACTION, PC_PREVIEW_ACTION, PC_DOCS_ENSURE_ACTION, PC_DOCS_INSPECT_ACTION, PC_TIER_RELATE_ACTION, acceptInput, relateInput,
   lastKeptThought, type FlowThought, type ThoughtHand, type WorkspaceGround} from './pageGround'
 import {useOwnerOp} from '../../owners/ownerCall'
 
@@ -190,7 +190,7 @@ export function useFlowThought(transport: KernelTransportStatus, flowRef: string
 export function useWorkspaceGround(transport: KernelTransportStatus, project: string | null): WorkspaceGround {
   const input = useMemo(() => (project ? {project} : null), [project])
   const pc = useCentralAction(transport, PC_INSPECT_ACTION, input)
-  const self = useCentralAction(transport, PC_SELF_INSPECT_ACTION, input)
+  const self = useCentralAction(transport, PC_DOCS_INSPECT_ACTION, input)
   const [plan, setPlan] = useState<{project: string; treatment: 'adopt' | 'migrate'; answer: ActionAnswer} | null>(null)
   const preview = useCallback(async (treatment: 'adopt' | 'migrate', source: string) => {
     if (!project) return
@@ -202,7 +202,7 @@ export function useWorkspaceGround(transport: KernelTransportStatus, project: st
       await centralWrite(transport, PC_ACCEPT_ACTION[treatment], acceptInput(project, treatment, source))
       setPlan(null)
     },
-    ensure: async () => { await centralWrite(transport, PC_SELF_ENSURE_ACTION, {project}) },
+    ensure: async () => { await centralWrite(transport, PC_DOCS_ENSURE_ACTION, {project}) },
     relate: async (tier: number, sourceRef: string) => { await centralWrite(transport, PC_TIER_RELATE_ACTION, relateInput(project, tier, sourceRef)) },
   } : {}), [project, transport])
   return useMemo(() => ({project, ...(project ? {pc, self, preview, ...writes} : {}), ...(plan && plan.project === project ? {plan: {treatment: plan.treatment, answer: plan.answer}} : {})}),

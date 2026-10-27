@@ -21,7 +21,7 @@ export async function setup({ cradleRoot }) {
     mkdirSync(join(root, 'Work', 'Editor'));
     mkdirSync(join(root, 'Work', 'Other'));
     call('projectcentral.init', { project: 'Editor', project_id: 'editor-walk' });
-    const docs = ['docs/cradle/02-ARCHITECTURE.md', 'docs/cradle/07-WAVE-5-SYSTEM-CONTRIBUTION.md', 'docs/cradle/08-WAVE-5-CONSUMER-SEAM.md', 'docs/cradle/09-CONFIGURATION-PLANE.md', 'docs/cradle/PERSONAL-WEB.md', 'docs/FLOW.md', 'docs/CANONICAL-PRODUCT-FIELD.md', 'docs/OI-DESKTOP-APPLICATION-SPEC.md', 'docs/OI-CENTRAL-FOUNDATION-2026-09-04.md', 'docs/positions/FOUNDING-POSITIONS.md'];
+    const docs = ['docs/cradle/02-ARCHITECTURE.md', 'docs/cradle/07-WAVE-5-SYSTEM-CONTRIBUTION.md', 'docs/cradle/08-WAVE-5-CONSUMER-SEAM.md', 'docs/cradle/09-CONFIGURATION-PLANE.md', 'docs/cradle/PERSONAL-WEB.md', 'docs/FLOW.md', 'docs/CANONICAL-PRODUCT-FIELD.md', 'docs/OI-DESKTOP-APPLICATION-SPEC.md', 'docs/OI-CENTRAL-FOUNDATION-2026-09-04.md', 'ProjectCentral/docs/0-ground/positions/FOUNDING-POSITIONS.md'];
     const projectRoot = join(root, 'Work', 'Editor');
     const originals = new Map();
     for (const [i, doc] of docs.entries()) {

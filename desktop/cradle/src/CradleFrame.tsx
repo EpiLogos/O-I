@@ -2096,7 +2096,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
         * stands, never unmounted, never moved — moving a subtree that
         * contains an iframe detaches it and the iframe re-navigates (the
         * measured defect this replaces: the park-adopt stage,
-        * docs/experience/evidence/mode-engine-state.before.json). */}
+        * ProjectCentral/docs/5-evidence/cradle/experience/evidence/mode-engine-state.before.json). */}
       {stageCentres.map(({mode: stageMode, binding}) => {
         const presented = stageMode === mode && !!binding;
         return (

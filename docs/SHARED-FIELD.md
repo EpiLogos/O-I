@@ -18,7 +18,7 @@ oi.contribution/v1
 oi.encounter/v1
 ```
 
-`docs/OBJECTIVE-CO-INTERNALITY.md` gives the deeper Self/Other account. This document is the consolidated architectural contract around it.
+`ProjectCentral/docs/0-ground/OBJECTIVE-CO-INTERNALITY.md` gives the deeper Self/Other account. This document is the consolidated architectural contract around it.
 
 ## Why this belongs to {O:I}
 

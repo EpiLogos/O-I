@@ -1,4 +1,4 @@
-// The Clip view kit: Live 12's Clip View, in the device kit's controls and tokens (docs/dlw/DLW.md §16.5). The measures are Live's
+// The Clip view kit: Live 12's Clip View, in the device kit's controls and tokens (ProjectCentral/docs/1-vision/dlw/DLW.md §16.5). The measures are Live's
 // own, read from the captures (Work/reverse-engineering/ableton-live-12.0.25/evidence/ui/clip-view):
 // - the head is the clip's title bar: its activator, its name on its colour, 17 px high in Live (cap 01, 02);
 // - under it, two panels side by side, each 170 px wide in Live with a tab strip of 16 px (cap 02: Main Properties and Launch

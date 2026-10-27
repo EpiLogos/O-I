@@ -142,7 +142,7 @@ config. Positions, custody and Returns continue through `aikit inhabit`,
 
 ## Operative praxis
 
-The target pre-`#97` suite UX is one first-hand `oi` instrument backed by AIKit's accepted general resolver. The implementation Wayfinder is `docs/OI-OPERATIVE-FRONTDOOR-WAYFINDER.md`; AIKit `#142` remains the runtime owner of `ResolveExpression`, typed refs, Search/Explain/History, Method discovery and the operative address grammar.
+The target pre-`#97` suite UX is one first-hand `oi` instrument backed by AIKit's accepted general resolver. The implementation Wayfinder is `ProjectCentral/docs/4-development/OI-OPERATIVE-FRONTDOOR-WAYFINDER.md`; AIKit `#142` remains the runtime owner of `ResolveExpression`, typed refs, Search/Explain/History, Method discovery and the operative address grammar.
 
 **Do not pretend this resolver syntax exists when the installed AIKit/O:I composition does not expose the accepted contract.** On current compositions without that floor, use the verified aliases and native owner commands above.
 

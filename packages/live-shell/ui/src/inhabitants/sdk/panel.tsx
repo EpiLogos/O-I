@@ -1,4 +1,4 @@
-// The device panel kit: the parts every designed device panel is built from (the device UI standard, docs/dlw/DLW.md §16).
+// The device panel kit: the parts every designed device panel is built from (the device UI standard, ProjectCentral/docs/1-vision/dlw/DLW.md §16).
 // They follow Live's own devices: one head (activator, fold, name, pages, open full), a body of fixed height ruled into
 // sections, a display well that draws the device's state and carries handles, and a closed set of controls — dial, value box,
 // toggle, radio, chooser, rows, readout, action, light. Every control is controlled (value in, change out), names what it does

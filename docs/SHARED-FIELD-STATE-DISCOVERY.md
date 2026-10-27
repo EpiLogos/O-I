@@ -2,7 +2,7 @@
 
 **Standing:** owner-directed integration lock, 16 September 2026.  
 **Programme:** O:I #18 SharedField/Explore, O:I #306 Expression Field and O:I #65 two-world acceptance.  
-**Companions:** `docs/SHARED-FIELD-QL-EPI-INTEGRATION-WAYFINDER.md`, `docs/architecture/shared-participation.md`, `docs/experience/STORIES.md` (TO, SH, XA), `docs/contracts/EXPRESSION-APPLICATION-V1.md`, `shared-field/WORLD-PRESENTATION.md`.  
+**Companions:** `ProjectCentral/docs/4-development/SHARED-FIELD-QL-EPI-INTEGRATION-WAYFINDER.md`, `docs/architecture/shared-participation.md`, `docs/experience/STORIES.md` (TO, SH, XA), `docs/contracts/EXPRESSION-APPLICATION-V1.md`, `shared-field/WORLD-PRESENTATION.md`.  
 **Purpose:** make state ownership, project/workspace continuity, Search/Resolve discovery and optional live shared staging explicit before SharedField development resumes.
 
 This document does not create a second state store, workspace model, search system or SharedField ontology. It connects the state laws already present in the Cradle, AIKit, Explore, Expression and SharedField work.

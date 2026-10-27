@@ -1,6 +1,6 @@
 /* The plate's controls (plateControls.tsx) and the device panel kit's controls (inhabitants/sdk/panel.css) as an instrument's plate and
    a Compact instrument draw them. The kit's colour names resolve the shell's tokens (styles.css :root) at :root in panel.css, so a
-   plate brings no colour of its own (docs/dlw/DLW.md §16.9: teal a value, amber what is on, the well near black). Shell tokens
+   plate brings no colour of its own (ProjectCentral/docs/1-vision/dlw/DLW.md §16.9: teal a value, amber what is on, the well near black). Shell tokens
    only. */
 /* The kit's colours resolve the shell's tokens at :root now (panel.css), on every plate; an instrument's plate and a Compact
    instrument keep only the kit's type here. */

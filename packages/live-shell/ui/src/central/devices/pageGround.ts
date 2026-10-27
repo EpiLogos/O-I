@@ -8,14 +8,15 @@
 // contemplate, sinceRead), as the cradle's own surface asks them (desktop/cradle/src/flow/contemplate.tsx). AIKit keeps no read of a Flow's
 // last thought (T-COVERAGE §1.5), so a thought stands only once this window asked for it.
 //
-// The Workspace's Ground and Self pages (manual §18.1 Ground; central__workspace.tsx): Central's `projectcentral.inspect {project}`
-// (what it would make of the folder), `projectcentral.self.inspect {project}` (central.development-field-reading/v1: the self aperture,
+// The Workspace's Ground and Self pages (manual §18.1 Ground, §18.5 Docs; central__workspace.tsx): Central's `projectcentral.inspect {project}`
+// (what it would make of the folder), `projectcentral.docs.inspect {project}` (central.development-field-reading/v1: the documentation aperture,
 // tier bindings, UX and EX relations) — readings through invoke_action — and the preview of a treatment: `projectcentral.adopt.preview`
 // or `projectcentral.migrate.preview {project, source}` (projectcentral-mutation-plan); Central has no preview of `projectcentral.init`.
-// Accept (`projectcentral.init {project, project_id}`, `adopt` or `migrate {project, project_id, source}`), Ensure (`projectcentral.self.ensure
-// {project}`) and a tier's Relate (`projectcentral.self.tier.relate {project, source_ref, tier, acceptance}`) write the world's ground as the
+// Accept (`projectcentral.init {project, project_id}`, `adopt` or `migrate {project, project_id, source}`), Ensure (`projectcentral.docs.ensure
+// {project}`) and a tier's Relate (`projectcentral.docs.tier.relate {project, source_ref, tier, acceptance}`) write the world's ground as the
 // person's own presses, which the kernel carries with the person's authority (action.rs PERSON_ACTS). Binding a source as an intended
-// experience or a return (`projectcentral.self.ux.relate`, `ex.relate`) is not among those presses, so it stands disabled naming that.
+// experience or a return (`projectcentral.docs.ux.relate`, `ex.relate`) is not among those presses, so it stands disabled naming that.
+// Central's first ids for these (`projectcentral.self.*`) still answer as deprecated aliases; the shell asks by the docs ids (O-I #727).
 //
 // Pure: no React, no transport. The readers are pageDevices.ts.
 import type {Value} from '../../frame/devices/designed'
@@ -141,7 +142,7 @@ export function thoughtValues(thought: FlowThought | null, timeZone?: string): R
 // ---------------------------------------------------------------------------------------------------------------- the Workspace's ground
 
 export const PC_INSPECT_ACTION = 'projectcentral.inspect'
-export const PC_SELF_INSPECT_ACTION = 'projectcentral.self.inspect'
+export const PC_DOCS_INSPECT_ACTION = 'projectcentral.docs.inspect'
 export const PC_PREVIEW_ACTION: Readonly<Record<'adopt' | 'migrate', string>> = {adopt: 'projectcentral.adopt.preview', migrate: 'projectcentral.migrate.preview'}
 
 /** What this window holds of the workspace's world's ground: its project, the inspection, the self reading, and the preview asked last. */
@@ -154,7 +155,7 @@ export interface WorkspaceGround {
   readonly preview?: (treatment: 'adopt' | 'migrate', source: string) => Promise<void>
   /** The person's Accept: make the world's ground by the treatment previewed (a source for adopt and migrate). */
   readonly accept?: (treatment: 'create' | 'adopt' | 'migrate', source: string | null) => Promise<void>
-  /** The person's Ensure: give the world its ProjectCentral/self. */
+  /** The person's Ensure: give the world its ProjectCentral/docs. */
   readonly ensure?: () => Promise<void>
   /** The person's Relate: bind a source of the world to a tier of its account. */
   readonly relate?: (tier: number, sourceRef: string) => Promise<void>
@@ -163,8 +164,8 @@ export interface WorkspaceGround {
 /** The person's presses that write the world's ground (action.rs PERSON_ACTS). A ProjectCentral's id is its project's name, as every
  * project.json keeps it (Work/<Name>/ProjectCentral/project.json `project_id`). */
 export const PC_ACCEPT_ACTION: Readonly<Record<'create' | 'adopt' | 'migrate', string>> = {create: 'projectcentral.init', adopt: 'projectcentral.adopt', migrate: 'projectcentral.migrate'}
-export const PC_SELF_ENSURE_ACTION = 'projectcentral.self.ensure'
-export const PC_TIER_RELATE_ACTION = 'projectcentral.self.tier.relate'
+export const PC_DOCS_ENSURE_ACTION = 'projectcentral.docs.ensure'
+export const PC_TIER_RELATE_ACTION = 'projectcentral.docs.tier.relate'
 export const acceptInput = (project: string, treatment: 'create' | 'adopt' | 'migrate', source: string | null): Record<string, unknown> =>
   ({project, project_id: project, ...(treatment === 'create' ? {} : {source})})
 /** The held Relate is the person's acceptance of the relation (Central asks it explicitly: `acceptance: human-accepted`). */
@@ -180,7 +181,7 @@ export function pcValue(data: unknown): string | undefined {
     errors: list(data.manifest_errors).map(String)})
 }
 
-/** projectcentral.self.inspect's data (central.development-field-reading/v1) as the design's `self` ({aperture {exists, status}, tiers
+/** projectcentral.docs.inspect's data (central.development-field-reading/v1) as the design's `self` ({aperture {exists, status}, tiers
  * [{tier, label?, source}], ux [{ref, source}], ex [{ref, source, ux}], unbound [{source, hints}]}), in Central's own shapes
  * (ctrl/src/development_field.rs): a tier's sources are resolved sources ({ref, path, …}, or null where a bound ref no longer resolves), a
  * UX's and an EX's source is one, and an unbound source of the self folder is {ref, path, standing, provenance}. A source is named by its ref,

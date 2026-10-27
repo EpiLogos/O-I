@@ -3,7 +3,7 @@
 Status: pinned cross-owner read/action contract for O-I #65 / #220 and Factory #195
 (World-rooted inhabitation amendment, 2026-09-23). Behavioural reference:
 `mvschwarz/openrig@c8fca9d5c436e5357807e05254bf6735613eea3f` — see
-[`docs/research/openrig-c8fca9d/CROSSWALK.md`](../research/openrig-c8fca9d/CROSSWALK.md).
+[`ProjectCentral/docs/5-evidence/research/openrig-c8fca9d/CROSSWALK.md`](../../ProjectCentral/docs/5-evidence/research/openrig-c8fca9d/CROSSWALK.md).
 
 This contract names what each owner publishes so a fresh occupant can answer
 *where am I, which address do I hold, who holds it with me, what work do I carry,

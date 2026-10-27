@@ -1,6 +1,6 @@
 # Personal Web — Beings, Things and the six initial HTML forms
 
-**Standing:** the Personal Web contract. The owner's rulings it applies are in [PROGRAMME](../../desktop/cradle/docs/world-shell/PROGRAMME.md); the experience is the PW family of [STORIES](../experience/STORIES.md) and manual §2, §18.1 and §24; the proving is in [CASES](../experience/CASES.md) (Personal Web).
+**Standing:** the Personal Web contract. The owner's rulings it applies are in [PROGRAMME](../../ProjectCentral/docs/0-ground/PROGRAMME.md); the experience is the PW family of [STORIES](../experience/STORIES.md) and manual §2, §18.1 and §24; the proving is in [CASES](../experience/CASES.md) (Personal Web).
 
 ## 1. Names, repertoire and ownership
 

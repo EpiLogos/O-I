@@ -1,6 +1,6 @@
 // An instrument as one plate with its controls grouped in sections side by side (manual §10.4 "Whole — every setting, grouped"; the
 // mockup's `instFrame()` at world-shell-mockup.html:1411 and its CSS .inst/.insth/.isecs/.isec at :352-359; the device UI standard,
-// docs/dlw/DLW.md §16.9: "Sections are columns, ruled off from each other by a hairline and named in small capitals. The well is the
+// ProjectCentral/docs/1-vision/dlw/DLW.md §16.9: "Sections are columns, ruled off from each other by a hairline and named in small capitals. The well is the
 // only inset surface … Nothing scrolls, and no box sits inside a box"). Its head is the panel kit's (inhabitants/sdk/panel.tsx PanelHead,
 // manual §16.9: the activator, ▾, the name, the held mark, the pages, ⤢), with the device's own acts after the pages (the Studio's Save,
 // Undo, Redo) and the place's marks before ⤢; who owns the plate and where it stands is said on the status bar when you point at the head,

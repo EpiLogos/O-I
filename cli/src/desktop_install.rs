@@ -1,6 +1,6 @@
 //! Receipt-owned install/remove lifecycle for the packaged Desktop bundle.
 //!
-//! Law this module implements (docs/CONTEXT-FRAME-ACCEPTANCE-CAMPAIGN.md):
+//! Law this module implements (ProjectCentral/docs/3-architecture/CONTEXT-FRAME-ACCEPTANCE-CAMPAIGN.md):
 //! recognition precedes mutation — a plan is always produced before anything
 //! is written; only installer-owned resources are removed, and every owned
 //! resource is recorded in the install receipt; Central ground, Agents and

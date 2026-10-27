@@ -5,7 +5,7 @@
   "families": [],
   "standing": "Owner-directed intended experience and implementation/testing commission, 28 September 2026. Completed #18 carrier evidence is retained; this module claims no installed or human acceptance.",
   "runtime_or_human_acceptance": false,
-  "implementation_wayfinder": "docs/SHARED-FIELD-QL-EPI-INTEGRATION-WAYFINDER.md",
+  "implementation_wayfinder": "ProjectCentral/docs/4-development/SHARED-FIELD-QL-EPI-INTEGRATION-WAYFINDER.md",
   "temporal_source": "docs/contracts/WORLD-INHABITATION-V1.md",
   "source_reading_note": "campaign.json imports this module. The existing compiler hashes the module, story_source and document_operations_source. Other linked sources and actual native matrix digests must be resolved at C0; linked filenames are not evidence of execution or recursive hashing.",
   "obligation_sources": {

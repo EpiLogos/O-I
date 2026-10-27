@@ -1,6 +1,6 @@
 //! ES1 knowledge side + ES4 joint focus / deixis / portals — the one-state
 //! relation between the graph / Wiki / constellation presentations and
-//! Expressions (docs/EXPRESSION-WORLD-SUBSTRATE-WAYFINDER.md §3.5, §4,
+//! Expressions (ProjectCentral/docs/4-development/EXPRESSION-WORLD-SUBSTRATE-WAYFINDER.md §3.5, §4,
 //! §17 ES4; docs/contracts/EXPRESSION-APPLICATION-V1.md; issue #366 EX3A5).
 //!
 //! The governing law: ONE canonical bounded relation/selection state. LIST,

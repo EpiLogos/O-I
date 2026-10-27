@@ -2,7 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import {register} from 'node:module'
 
-// The handles that move two parameters (docs/dlw/DLW.md §16.9, §21.5; catalogue/panels/handleLaws.ts). A handle is what its picture
+// The handles that move two parameters (ProjectCentral/docs/1-vision/dlw/DLW.md §16.9, §21.5; catalogue/panels/handleLaws.ts). A handle is what its picture
 // draws run backwards, so each law is held as a round trip: put the handle where the values place it, read the values off that place,
 // and they come back (within the step each is kept to). The Filter's cutoff and resonance handle is the manual's own example; the
 // Dynamics knee and its dip and the Delay's first two repeats follow the same rule.

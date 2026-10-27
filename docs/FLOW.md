@@ -1,7 +1,7 @@
 # Flow — live linguistic source relation
 
 **Status:** developed design relation · implementation tracked by [#137](https://github.com/EpiLogos/O-I/issues/137)  
-**Authored ground:** [`docs/positions/FOUNDING-POSITIONS.md`](positions/FOUNDING-POSITIONS.md)  
+**Authored ground:** [`ProjectCentral/docs/0-ground/positions/FOUNDING-POSITIONS.md`](../ProjectCentral/docs/0-ground/positions/FOUNDING-POSITIONS.md)  
 **Living Wiki:** [#134](https://github.com/EpiLogos/O-I/issues/134)
 
 ## Why Flow exists

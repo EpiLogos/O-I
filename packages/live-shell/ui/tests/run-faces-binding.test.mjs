@@ -179,14 +179,14 @@ test('the stage plays the kernel\'s own run events at their instants — never a
   const space = 'session-space/o-i-chat-1791392815-b898'
   const events = [
     {stream: 'aikit-history', kind: 'now', subject_ref: space, instant_unix_ms: NOW - 60_000, stream_position: 'n0', summary: 'receipt 0'},
-    {stream: 'aikit-history', kind: 'knowledge', subject_ref: space, instant_unix_ms: NOW - 50_000, stream_position: 'k0', summary: 'used source:project:O-I:docs/dlw/DLW.md'},
+    {stream: 'aikit-history', kind: 'knowledge', subject_ref: space, instant_unix_ms: NOW - 50_000, stream_position: 'k0', summary: 'used source:project:O-I:ProjectCentral/docs/1-vision/dlw/DLW.md'},
     {stream: 'aikit-history', kind: 'generation', subject_ref: space, instant_unix_ms: NOW - 20_000, stream_position: 'g0', summary: 'generation gen_1'},
     {stream: 'aikit-history', kind: 'curation', subject_ref: space, instant_unix_ms: NOW - 10_000, stream_position: 'c0'},
     {stream: 'aikit-history', kind: 'return', subject_ref: space, stream_position: 'r-no-instant'},
   ]
   const recording = runs.stageRecordingOf(events, [SESSION, space])
   assert.deepEqual(recording.events.map(e => [e.at, e.kind]), [[0, 'knowledge'], [30_000, 'generation']], 'each at its own instant; curation and NOW are no part of the tree; an instant-less event has no place')
-  assert.equal(recording.events[0].output, 'used source:project:O-I:docs/dlw/DLW.md', 'the owner\'s own words')
+  assert.equal(recording.events[0].output, 'used source:project:O-I:ProjectCentral/docs/1-vision/dlw/DLW.md', 'the owner\'s own words')
   assert.equal(recording.source.transcript, 'oi.temporal-events/v1')
   assert.equal(recording.length, 32_000)
   // The Agent's binding carries it as `stage` (the design's stage reads a recording; proposed to the design lane).

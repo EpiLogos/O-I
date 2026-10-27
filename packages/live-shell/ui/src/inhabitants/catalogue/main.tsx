@@ -1,6 +1,6 @@
 // The catalogue gallery (npx vite --config src/inhabitants/catalogue/vite.config.mjs, port 5208). It draws every device the
 // families declare at the door, through the shell's own runtime (frame/devices/DeviceView.tsx), in each view the manual names
-// (docs/dlw/DLW.md §16.3): folded, compact, whole (expanded above the chain; the pool holds no device, §16.7), full, pop-out and widget. The
+// (ProjectCentral/docs/1-vision/dlw/DLW.md §16.3): folded, compact, whole (expanded above the chain; the pool holds no device, §16.7), full, pop-out and widget. The
 // DLW manual embeds it beside each device's spec:
 //   ?device=<family>:<face>&view=all|folded|compact|whole|full|popout|widget   one device (or a comma list of views; flip names whole)
 //   (no device)                                                          the index of every declared device
@@ -254,7 +254,7 @@ function Gallery() {
 const clipRoute = new URLSearchParams(location.search).get('clip')
 createRoot(document.getElementById('root')!).render(clipRoute !== null ? <ClipGallery mode={clipRoute} /> : <Gallery />)
 
-// Embedded in the manual, the gallery tells the page its height, so the frame fits every view it draws (docs/dlw/render.mjs).
+// Embedded in the manual, the gallery tells the page its height, so the frame fits every view it draws (ProjectCentral/docs/1-vision/dlw/render.mjs).
 if (window.parent !== window) {
   const tell = () => window.parent.postMessage({dlwGallery: {h: Math.ceil(document.documentElement.scrollHeight)}}, '*')
   new ResizeObserver(tell).observe(document.body)

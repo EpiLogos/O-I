@@ -1,6 +1,6 @@
 # World shell: builder contracts
 
-**Standing:** the shell's builder contracts, carried from `WORLD-SHELL-DESIGN.md` and `DEVICE-SEMANTICS-LOCK.md` on 27 Oct 2026; the manual ([`../dlw/DLW.md`](../dlw/DLW.md)) is the spec, and PROGRAMME ([`../../desktop/cradle/docs/world-shell/PROGRAMME.md`](../../desktop/cradle/docs/world-shell/PROGRAMME.md)) holds the owner's rulings.
+**Standing:** the shell's builder contracts, carried from `WORLD-SHELL-DESIGN.md` and `DEVICE-SEMANTICS-LOCK.md` on 27 Oct 2026; the manual ([`../dlw/DLW.md`](../../ProjectCentral/docs/1-vision/dlw/DLW.md)) is the spec, and PROGRAMME ([`../../ProjectCentral/docs/0-ground/PROGRAMME.md`](../../ProjectCentral/docs/0-ground/PROGRAMME.md)) holds the owner's rulings.
 
 ## 1. The device face, its parameters, and the faces with bodies
 

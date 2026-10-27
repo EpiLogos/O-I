@@ -3,7 +3,7 @@
 //! Superseded scope: #192 originally presented these labels as the
 //! installation-modality taxonomy and called them "context frames". The
 //! Context Frame composition lock ([#268],
-//! `docs/CONTEXT-FRAME-COMPOSITION-LOCK.md`) supersedes that taxonomy: the
+//! `ProjectCentral/docs/3-architecture/CONTEXT-FRAME-COMPOSITION-LOCK.md`) supersedes that taxonomy: the
 //! Context Frames are one containing material frame (CF5) plus the six
 //! install modes it organises, defined in [`crate::context_frames`]. These
 //! labels remain valid as **per-registration
@@ -19,7 +19,7 @@
 //! [`InstallModality::Unknown`] honestly rather than guessing.
 //!
 //! Each path exists to deliver one operative-UX outcome from
-//! `docs/OI-OPERATIVE-FRONTDOOR-WAYFINDER.md`: bootstrap acceptance is UX
+//! `ProjectCentral/docs/4-development/OI-OPERATIVE-FRONTDOOR-WAYFINDER.md`: bootstrap acceptance is UX
 //! acceptance, not just command success. The per-path outcome is part
 //! of the vocabulary itself, so a bootstrap path cannot claim a label
 //! without claiming its UX thread.

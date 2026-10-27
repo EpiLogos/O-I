@@ -13,7 +13,7 @@
  *   mounted DIRECTLY in place through `ModeCentreBody` and never moved —
  *   the pane tier's own warm-tree law (moving a DOM subtree that contains
  *   an iframe detaches it and the iframe re-navigates, which the measured
- *   receipt in docs/experience/evidence/mode-engine-state.before.json
+ *   receipt in ProjectCentral/docs/5-evidence/cradle/experience/evidence/mode-engine-state.before.json
  *   names). A mode swap flips the slot's visibility; the application's
  *   document, engine and in-memory state ride through.
  * - PANE-TAB-PRESENTED centres (a centre kind opened as an ordinary pane

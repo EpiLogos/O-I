@@ -1,6 +1,6 @@
 # Wiki and constellation practice — Cradle implementation specification
 
-**Standing:** owner-directed design specification, 20 September 2026; implementation and installed-app evidence are separate. **Read first:** [product decisions WC01–WC15](../positions/WIKI-CONSTELLATION-PRACTICE.md), [stories](../experience/STORIES.md), implementation Wayfinder (retired 27 Oct into the DLW map, O-I #706; read it at `8873b0968`).
+**Standing:** owner-directed design specification, 20 September 2026; implementation and installed-app evidence are separate. **Read first:** [product decisions WC01–WC15](../../ProjectCentral/docs/0-ground/positions/WIKI-CONSTELLATION-PRACTICE.md), [stories](../experience/STORIES.md), implementation Wayfinder (retired 27 Oct into the DLW map, O-I #706; read it at `8873b0968`).
 
 This specifies the joined Wiki/Technè practice. It extends `02-ARCHITECTURE.md` (with workspace continuity, §6.1–§6.8), O:I #366/#335/#375 and the existing `ql.techne/v1` / `oi.expression/v1` seams. Exact native symbols and available schema versions are reconciled from the incoming mains; the behaviour and ownership decisions below are already explicit. Missing owner functionality is implementation work, not permission to omit the experience.
 

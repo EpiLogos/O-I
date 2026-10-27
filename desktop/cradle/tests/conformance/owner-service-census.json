@@ -1,6 +1,6 @@
 {
   "schema": "oi.owner-service-census/v1",
-  "law": "docs/world-shell/LEGACY-CRADLE-RETIREMENT.md §3 gate 4 (every owner operation served by the candidate kernel at parity; the 8787 seam retires with a named replacement for each caller) and §5 step 5 (retire the seam once the census shows zero remaining callers).",
+  "law": "ProjectCentral/docs/4-development/world-shell/LEGACY-CRADLE-RETIREMENT.md §3 gate 4 (every owner operation served by the candidate kernel at parity; the 8787 seam retires with a named replacement for each caller) and §5 step 5 (retire the seam once the census shows zero remaining callers).",
   "seam": "owner service 8787. In-tree it is the axum server in packages/live-shell (default bind 127.0.0.1:8787, LIVE_SHELL_BIND). Its routes are the Live Set document and device-parameter domain. It serves no ground, day/now, or event route.",
   "method": "tests/conformance/owner-service-census.test.mjs parses the server route table and bind port from source, then scans desktop/cradle, packages, cli and scripts for /api/<route> URL literals (after a quote, backtick or template brace) and :8787 literals. Non-comment hits in shipping trees are callers. Hits under tests, docs and derived output are listed separately. A caller is counted per (file, route).",
   "server": {

@@ -154,13 +154,13 @@ test('Approvals on both Main tracks: the project\'s returned work that waits (K1
   // ctrl source_return.rs:221-238). The real O-I reading answered none (K1 shapes/source-returns-o-i.json: entries []).
   const minted = 1_792_300_000_000
   const entries = [
-    {return_ref: `central:return:project:o-i:${minted}000000-4242`, source_ref: 'central:source:project:O-I:docs/dlw/DLW.md', basis_revision: 'r1', status: 'pending',
+    {return_ref: `central:return:project:o-i:${minted}000000-4242`, source_ref: 'central:source:project:O-I:ProjectCentral/docs/1-vision/dlw/DLW.md', basis_revision: 'r1', status: 'pending',
       agent_session_ref: 'agent-session/flint', current_revision: 'r1'},
     {return_ref: 'central:return:project:o-i:1-1', source_ref: 'central:source:project:O-I:README.md', basis_revision: 'r1', status: 'accepted', agent_session_ref: 'agent-session/flint', current_revision: 'r2'},
   ]
   const tracks = [{sessionRef: 'agent-session/flint', agentName: 'Flint', agentRef: 'agent/flint', purpose: 'Docs pass', group: false}]
   const rows = receipts.proposalRows(entries, tracks, minted + 90_000)
-  assert.deepEqual(rows, [{id: entries[0].return_ref, kind: 'proposal', who: 'Flint', text: 'docs/dlw/DLW.md', where: 'docs/dlw/DLW.md', session: 'Docs pass', age: 90}],
+  assert.deepEqual(rows, [{id: entries[0].return_ref, kind: 'proposal', who: 'Flint', text: 'ProjectCentral/docs/1-vision/dlw/DLW.md', where: 'ProjectCentral/docs/1-vision/dlw/DLW.md', session: 'Docs pass', age: 90}],
     'a pending return waits; an accepted one does not')
   designs.resetHolds()
   const values = receipts.approvalsValues({gateway: {}, session: null, encounter: null, holds: designs.chainHolds(), returns: {entries}, tracks, nowUnixMs: minted + 90_000})

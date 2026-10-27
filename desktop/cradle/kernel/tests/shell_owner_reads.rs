@@ -223,7 +223,7 @@ fn source_returns_read_lists_centrals_returns_for_the_project_or_the_configured_
     // `central:return:project:<project id>:<unix ns>-<pid>`, `before` a listing's `next_before` file name.
     let listing = json!({
         "schema": "central.source-returns/v1",
-        "entries": [{"return_ref": "central:return:project:O-I:1792230000123456789-4242", "source_ref": "central:source:project:project:o-i:docs/dlw/DLW.md",
+        "entries": [{"return_ref": "central:return:project:O-I:1792230000123456789-4242", "source_ref": "central:source:project:project:o-i:ProjectCentral/docs/1-vision/dlw/DLW.md",
                      "basis_revision": "sha256:aa", "status": "pending", "agent_session_ref": "agent-session/x",
                      "current_revision": "sha256:aa"}],
         "more": false, "next_before": null, "authored_source_mutated": false

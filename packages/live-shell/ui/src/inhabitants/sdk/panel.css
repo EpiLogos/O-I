@@ -1,4 +1,4 @@
-/* The device panel kit (panel.tsx; docs/dlw/DLW.md §16). Live's device language on the shell's tokens: a flat grey face, a
+/* The device panel kit (panel.tsx; ProjectCentral/docs/1-vision/dlw/DLW.md §16). Live's device language on the shell's tokens: a flat grey face, a
    lighter head, hairline rules between sections, one dark well per display, amber for what is on, teal for a value and its arc.
    Every colour resolves the shell's own tokens (styles.css :root, the mockup's palette) at :root, so a plate brings no colour of
    its own anywhere it stands — the chain, the pool, a pane, the rail, the gallery (manual §16.9). The mockup's plate is the

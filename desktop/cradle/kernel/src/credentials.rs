@@ -381,7 +381,7 @@ impl Client {
     }
 
     /// A harness's declared auth options (`aikit harness auth <slug>
-    /// --json`, docs/dlw/DLW.md §10.10 (Sign in)
+    /// --json`, ProjectCentral/docs/1-vision/dlw/DLW.md §10.10 (Sign in)
     /// §2a): the env-var names and own-login entries a settings face renders
     /// beside the API-key input. Nothing is executed here — describe mode
     /// reads the harness's profile only, and the login itself is a terminal

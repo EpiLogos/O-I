@@ -9,7 +9,7 @@
 
 Owner-approved direction: retain the present v2 home and hero, bring an existing video band below it, refresh public words from the developed O:I/paradigm position and §5, and replace the principal extra-page navigation with a Library-first, view-only Expressions host.
 
-Copy remains in `content/public-site.md`. `src/shell/content.ts` is now layout and source selection, not a competing copy store. The public-copy pass follows `docs/positions/FOUNDING-POSITIONS.md`, `PRAXIS-AND-OPERATIVE-LANGUAGE.md`, the recovered positions in `PUBLIC-VOICE-WORKING.md` (not wholesale adoption of that agent draft), and `EpiLogos/Antykathera-Essay-Work/submission-package/essay/THE-RETURN-OF-ZERO.md` §5 at `e3aee553f002cf9b57ff79f40ee963ad03c5416f`. It is a site-copy revision under this commission, not an essay rewrite or a claim of final manuscript acceptance.
+Copy remains in `content/public-site.md`. `src/shell/content.ts` is now layout and source selection, not a competing copy store. The public-copy pass follows `ProjectCentral/docs/0-ground/positions/FOUNDING-POSITIONS.md`, `PRAXIS-AND-OPERATIVE-LANGUAGE.md`, the recovered positions in `PUBLIC-VOICE-WORKING.md` (not wholesale adoption of that agent draft), and `EpiLogos/Antykathera-Essay-Work/submission-package/essay/THE-RETURN-OF-ZERO.md` §5 at `e3aee553f002cf9b57ff79f40ee963ad03c5416f`. It is a site-copy revision under this commission, not an essay rewrite or a claim of final manuscript acceptance.
 
 ## What is reused
 

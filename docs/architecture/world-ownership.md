@@ -40,7 +40,7 @@ meaningful; CSS visibility is not an egress policy.
 | Publish and consume an Expression | O:I `shared-field/expression-projection.mjs`, `spacetimedb.mjs` | Selection filter precedes serialization; semantic refs distinct from database row IDs. | Expression projection and hosted-source tests; [shared participation](shared-participation.md) names outstanding installed proof. |
 
 See [relations.json](relations.json) W1–W11 for exact arrow bases. The Epi
-domain's richer meanings remain in its [Wayfinder](../EXPRESSION-WORLD-SUBSTRATE-WAYFINDER.md)
+domain's richer meanings remain in its [Wayfinder](../../ProjectCentral/docs/4-development/EXPRESSION-WORLD-SUBSTRATE-WAYFINDER.md)
 and ongoing audit. Neither a WorldPresentation nor an Explore entry replaces
 the coordinate-bound world or Personal Pratibimba.
 

@@ -2647,7 +2647,7 @@
         "packages/live-shell/ui/src/components/NativeSceneFace.text.tsx",
         "packages/live-shell/ui/src/components/nativeSceneFace.text.ts"
       ],
-      "boundary_op": "none: local focus on a text layer; writes no document (docs/world-shell/NATIVE-ACTIONS-AUDIT-20261009.md section 2) (app.ts:682)",
+      "boundary_op": "none: local focus on a text layer; writes no document (ProjectCentral/docs/5-evidence/world-shell/NATIVE-ACTIONS-AUDIT-20261009.md section 2) (app.ts:682)",
       "tests": [
         "packages/live-shell/ui/tests/native-scene-faces.test.mjs"
       ],

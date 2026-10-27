@@ -95,13 +95,13 @@ Use the specific technical noun when it matters: underlying model capacity, Agen
 
 Programme statements should also preserve research status. O:I is building an open platform in which proposed agency structures can be tested; public copy should not present development propositions as already-proven behavioural conclusions.
 
-`docs/positions/FOUNDING-POSITIONS.md` is the upstream authored source for this public framing. The site tests check load-bearing public claims against that file directly.
+`ProjectCentral/docs/0-ground/positions/FOUNDING-POSITIONS.md` is the upstream authored source for this public framing. The site tests check load-bearing public claims against that file directly.
 
 ## Source-to-site provenance
 
 Public writing is a **projection from developed product meaning**, not an independent compression exercise.
 
-When a site change concerns what O:I, a World, Objective Internality, human agency, a native product or the research programme *means*, begin at `docs/positions/FOUNDING-POSITIONS.md` and follow provenance far enough to distinguish:
+When a site change concerns what O:I, a World, Objective Internality, human agency, a native product or the research programme *means*, begin at `ProjectCentral/docs/0-ground/positions/FOUNDING-POSITIONS.md` and follow provenance far enough to distinguish:
 
 - **authored position** — why the distinction exists and what the programme is choosing to build;
 - **product/design commitment** — the relation a native product is meant to preserve;

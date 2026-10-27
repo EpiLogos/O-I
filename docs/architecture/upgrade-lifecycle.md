@@ -43,7 +43,7 @@ detected stale gateway to `aikit gateway upgrade apply --wait`; default apply
 only reports it. AIKit owns drain, service-manager restart and expected new
 PID/image verification. Its separate durable transaction and native
 plan/apply/resume commands are described in
-[AIKit's gateway upgrade](../../../ai-kit/docs/GATEWAY-UPGRADE.md)
+[AIKit's gateway upgrade](https://github.com/EpiLogos/ai-kit/blob/main/docs/GATEWAY-UPGRADE.md)
 (`gateway_upgrade_system.rs` and `gateway_upgrade.rs`, inspected at AIKit
 `8c6c48f03996807723336b963a5a6014da38ea5b`). Gateway transaction files,
 canonical session-space state and the EncounterStore journal differ from the

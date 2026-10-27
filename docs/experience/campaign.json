@@ -1,7 +1,7 @@
 {
   "purpose": "Planning/source projection for the existing O-I#65 campaign; not a runtime or evidence registry",
   "owner": "EpiLogos/O-I#65",
-  "ux_contract": "docs/DEVELOPMENT-FIELD-PROTOCOL-WAYFINDER.md#4-development-field-references",
+  "ux_contract": "ProjectCentral/docs/4-development/DEVELOPMENT-FIELD-PROTOCOL-WAYFINDER.md#4-development-field-references",
   "profile": "docs/experience/STORY-PROFILE.md",
   "story_source": "docs/experience/STORIES.md",
   "practice_source": "docs/experience/PRACTICE-CONDITIONS.md",
@@ -309,9 +309,9 @@
         "CAW:P17"
       ],
       "source_refs": [
-        "docs/positions/FOUNDING-POSITIONS.md",
+        "ProjectCentral/docs/0-ground/positions/FOUNDING-POSITIONS.md",
         "docs/INSTALL.md",
-        "docs/EXISTING-WORLD-ADOPTION.md",
+        "ProjectCentral/docs/4-development/EXISTING-WORLD-ADOPTION.md",
         "docs/experience/INSTALLATION-VARIANTS.md",
         "https://github.com/EpiLogos/O-I/issues/268"
       ]
@@ -617,7 +617,7 @@
         "Workcell#23"
       ],
       "source_refs": [
-        "docs/EXISTING-WORLD-ADOPTION.md",
+        "ProjectCentral/docs/4-development/EXISTING-WORLD-ADOPTION.md",
         "https://github.com/EpiLogos/O-I/issues/65"
       ]
     },
@@ -699,7 +699,7 @@
       ],
       "source_refs": [
         "docs/experience/LOCAL-CAMPAIGN.md",
-        "docs/OI-DESKTOP-CONTINUOUS-WORK-WAYFINDER.md",
+        "ProjectCentral/docs/4-development/OI-DESKTOP-CONTINUOUS-WORK-WAYFINDER.md",
         "https://github.com/EpiLogos/ai-kit/blob/main/docs/v2/23-TUI-HUMAN-EXPERIENCE-SPEC.md"
       ]
     },
@@ -728,7 +728,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": []
     },
@@ -761,7 +761,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": []
     },
@@ -786,7 +786,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "Ableton Live 12.0.25 (the shell's grammar)"
@@ -822,7 +822,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": []
     },
@@ -855,7 +855,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "Ableton Live 12.0.25 (session model",
@@ -894,7 +894,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "Ableton Live 12.0.25 (session model)",
@@ -925,7 +925,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "Ableton Live 12.0.25 (session model)",
@@ -960,7 +960,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "Ableton Live 12.0.25 (session model",
@@ -992,7 +992,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "Ableton Live 12.0.25 (session model)",
@@ -1025,7 +1025,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "Ableton Live 12.0.25 (object model",
@@ -1056,7 +1056,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "MapLibre GL JS (Earth)",
@@ -1091,7 +1091,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "interior.dev (the shell's kit)"
@@ -1124,7 +1124,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "interior.dev (the shell's kit)",
@@ -1160,7 +1160,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "Ableton Live 12.0.25 (session model: a sample as an audio clip's source",
@@ -1189,7 +1189,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "Ableton Live 12.0.25 (the Groove Pool",
@@ -1223,7 +1223,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "Ableton Live 12.0.25 (session model",
@@ -1257,7 +1257,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "Obsidian 1.7.7 (saving",
@@ -1285,7 +1285,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "Ableton Live 12.0.25 (session model)"
@@ -1313,7 +1313,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "Ableton Live 12.0.25 (session model)",
@@ -1344,7 +1344,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "Obsidian 1.7.7 (saving",
@@ -1378,7 +1378,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "Obsidian 1.7.7 (saving",
@@ -1408,7 +1408,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "Obsidian 1.7.7 (graph and links)"
@@ -1442,7 +1442,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "Obsidian 1.7.7 (saving)",
@@ -1475,7 +1475,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "Ableton Live 12.0.25 (the browser's search)",
@@ -1502,7 +1502,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "VS Code's workbench (the command line over anything)"
@@ -1537,7 +1537,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "Obsidian 1.7.7 (graph and links)",
@@ -1570,7 +1570,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "Obsidian 1.7.7 (saving)"
@@ -1598,7 +1598,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "Obsidian 1.7.7 (saving)"
@@ -1632,7 +1632,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "Ableton Live 12.0.25: session model",
@@ -1665,7 +1665,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "Ableton Live 12.0.25: object model",
@@ -1698,7 +1698,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "Ableton Live 12.0.25: device decodes"
@@ -1732,7 +1732,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "Ableton Live 12.0.25: session model",
@@ -1760,7 +1760,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "Ableton Live 12.0.25: device decodes"
@@ -1794,7 +1794,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "Ableton Live 12.0.25: session model",
@@ -1826,7 +1826,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "Ableton Live 12.0.25: session model"
@@ -1855,7 +1855,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "Ableton Live 12.0.25: session model",
@@ -1885,7 +1885,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "Ableton Live 12.0.25: session model (the Groove Pool)"
@@ -1917,7 +1917,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "QL's own system",
@@ -1950,7 +1950,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "QL's own system",
@@ -1985,7 +1985,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "QL's own system",
@@ -2014,7 +2014,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "QL's own system"
@@ -2045,7 +2045,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "QL's own system"
@@ -2071,7 +2071,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "QL's own system"
@@ -2101,7 +2101,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "QL's own system",
@@ -2136,7 +2136,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "Shotcut with MLT",
@@ -2169,7 +2169,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "Shotcut with MLT",
@@ -2202,7 +2202,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "Shotcut with MLT",
@@ -2238,7 +2238,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "Shotcut with MLT",
@@ -2271,7 +2271,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "Shotcut with MLT",
@@ -2300,7 +2300,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "Shotcut with MLT",
@@ -2329,7 +2329,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "QL's own system",
@@ -2364,7 +2364,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "Shotcut with MLT",
@@ -2405,7 +2405,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "Ableton Live 12.0.25: session model (the browser",
@@ -2441,7 +2441,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "Ableton Live 12.0.25 (session model",
@@ -2478,7 +2478,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "Ableton Live 12.0.25 (clip states",
@@ -2515,7 +2515,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "Ableton Live 12.0.25 (transport",
@@ -2547,7 +2547,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "Ableton Live 12.0.25 (Tempo",
@@ -2583,7 +2583,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "Ableton Live 12.0.25 (takes and comping)",
@@ -2613,7 +2613,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "OpenRig (BEHAVIOURS.md §11: closure reasons and the handed-off chain",
@@ -2644,7 +2644,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "Buzz's agent system (CONTRACT Behaviour 4: diff cards and the owner gate)",
@@ -2672,7 +2672,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "OpenRig (BEHAVIOURS.md §11: append-only transitions and stated outcomes)"
@@ -2702,7 +2702,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "Grok Bot 0.68.1 (Factory's agent client)",
@@ -2734,7 +2734,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "Grok Bot 0.68.1 (mid-task updates",
@@ -2763,7 +2763,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "Ableton Live 12.0.25 (a device's presets in the browser)"
@@ -2789,7 +2789,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "Buzz's agent system (creating an agent as a membership act)",
@@ -2821,7 +2821,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "Ableton Live 12.0.25 (racks",
@@ -2854,7 +2854,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "Quaternal Logic's own system (#714)"
@@ -2884,7 +2884,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "—"
@@ -2915,7 +2915,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "—"
@@ -2943,7 +2943,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "—"
@@ -2972,7 +2972,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "—"
@@ -2999,7 +2999,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "Grok Bot 0.68.1 (workflows learned by demonstration)",
@@ -3033,7 +3033,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "Ableton Live 12.0.25 (Drum Rack pads",
@@ -3069,7 +3069,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "Buzz's agent system (→ Messages: agents as members",
@@ -3104,7 +3104,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "Grok Bot 0.68.1 (messaging by typing",
@@ -3136,7 +3136,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "Ableton Live 12.0.25 (return tracks",
@@ -3171,7 +3171,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "OpenRig (BEHAVIOURS.md §3: liveness verdicts",
@@ -3205,7 +3205,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "Grok Bot 0.68.1 (local execution beside a remote computer)",
@@ -3242,7 +3242,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "OpenRig (BEHAVIOURS.md §3–§5: a durable seat whose occupants change",
@@ -3269,7 +3269,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "Grok Bot 0.68.1 (a remote computer per run beside a local execution daemon)",
@@ -3308,7 +3308,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "—"
@@ -3334,7 +3334,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "Quaternal Logic's own system (#714)"
@@ -3370,7 +3370,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "OpenRig (BEHAVIOURS.md §15: honest unknown",
@@ -3401,7 +3401,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "Ableton Live 12.0.25 (session model",
@@ -3432,7 +3432,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "Aeon Timeline 2's manual",
@@ -3460,7 +3460,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "Ableton Live 12.0.25 (clip and scene follow actions)",
@@ -3494,7 +3494,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "Aeon Timeline 2's manual",
@@ -3529,7 +3529,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "Aeon Timeline 2's manual",
@@ -3562,7 +3562,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "MapLibre GL JS (Google Earth",
@@ -3598,7 +3598,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "MapLibre GL JS",
@@ -3637,7 +3637,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "MapLibre GL JS (Google Earth",
@@ -3671,7 +3671,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "tldraw",
@@ -3703,7 +3703,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "Obsidian 1.7.7 (graph and links)"
@@ -3727,7 +3727,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "QL's own system"
@@ -3760,7 +3760,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "tldraw",
@@ -3788,7 +3788,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "tldraw",
@@ -3818,7 +3818,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "tldraw",
@@ -3849,7 +3849,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "Godot's animation state machine",
@@ -3880,7 +3880,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "Godot's animation state machine",
@@ -3915,7 +3915,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "Godot's animation state machine",
@@ -3944,7 +3944,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "Godot's animation state machine",
@@ -3977,7 +3977,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "Ableton Live 12.0.25 (an effect on a chain)",
@@ -4005,7 +4005,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "Obsidian 1.7.7 (saving",
@@ -4035,7 +4035,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "Obsidian 1.7.7 (graph and links)"
@@ -4059,7 +4059,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "Obsidian 1.7.7 (saving)"
@@ -4090,7 +4090,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "VS Code's workbench (MIT)"
@@ -4124,7 +4124,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "Ableton Live 12.0.25 (the transport)"
@@ -4158,7 +4158,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "QL's own system"
@@ -4184,7 +4184,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "QL's own system"
@@ -4211,7 +4211,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "QL's own system"
@@ -4240,7 +4240,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "QL's own system"
@@ -4270,7 +4270,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "QL's own system"
@@ -4296,7 +4296,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "QL's own system"
@@ -4321,7 +4321,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "QL's own system"
@@ -4345,7 +4345,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "QL's own system"
@@ -4374,7 +4374,7 @@
         "O-I#715"
       ],
       "source_refs": [
-        "docs/dlw/DLW.md"
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
       ],
       "port_sources": [
         "QL's own system"
@@ -4628,7 +4628,7 @@
   "existing_caw": {
     "cases_path": "tests/continuous-work/cases.json",
     "joins_path": "tests/continuous-work/joins.json",
-    "entry_document": "docs/CONTINUOUS-WORK-PROVING.md",
+    "entry_document": "ProjectCentral/docs/5-evidence/CONTINUOUS-WORK-PROVING.md",
     "required_case_ids": [
       "P01",
       "P02",

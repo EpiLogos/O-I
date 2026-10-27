@@ -1,4 +1,4 @@
-// The designed-device contract as the shell hosts it (docs/dlw/DLW.md §16.3, §8, §11). The contract's one source is the
+// The designed-device contract as the shell hosts it (ProjectCentral/docs/1-vision/dlw/DLW.md §16.3, §8, §11). The contract's one source is the
 // catalogue's (inhabitants/catalogue/panels/design.ts: DesignedDevice, ViewProps, Values, Nav — "The host owns the values and the
 // navigation; a view only reads them and asks for changes"); this module re-exports it for the shell's callers and adds what the
 // shell brings a view (§8 "The shell brings the values, the writes, the navigation between views, and the standing of each

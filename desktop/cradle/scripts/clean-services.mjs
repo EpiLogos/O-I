@@ -58,7 +58,7 @@ for (const [name, path] of [["local Kev checkout", LOCAL_KEV], ["redis-server", 
   if (!existsSync(path)) { console.error(`missing ${name}: ${path}`); process.exit(2); }
 }
 
-const record = {schema: "oi.clean-services/v1", spec_ref: "docs/cradle/CENTRAL-FIELD-NATIVE-AUDIT-A.md (what a clean installation can do without a model credential; O:I #598)", grade: "A", at: new Date().toISOString(), steps: [], checks: []};
+const record = {schema: "oi.clean-services/v1", spec_ref: "ProjectCentral/docs/5-evidence/cradle/CENTRAL-FIELD-NATIVE-AUDIT-A.md (what a clean installation can do without a model credential; O:I #598)", grade: "A", at: new Date().toISOString(), steps: [], checks: []};
 const say = (step, detail) => { record.steps.push({step, ...(detail !== undefined ? {detail} : {})}); console.log(`[${step}]`, detail === undefined ? "" : JSON.stringify(detail).slice(0, 300)); };
 const check = (label, ok, detail) => { record.checks.push({label, ok: !!ok, ...(detail !== undefined ? {detail} : {})}); console.log(`${ok ? "PASS" : "FAIL"} — ${label}${detail !== undefined ? " · " + JSON.stringify(detail).slice(0, 220) : ""}`); };
 const freePort = () => new Promise((res, rej) => { const s = createServer(); s.listen(0, "127.0.0.1", () => { const {port} = s.address(); s.close(() => res(port)); }); s.on("error", rej); });

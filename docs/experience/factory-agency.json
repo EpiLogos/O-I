@@ -21,7 +21,7 @@
     },
     {
       "date": "2026-09-18",
-      "source_ref": "desktop/cradle/docs/world-shell/PROGRAMME.md",
+      "source_ref": "ProjectCentral/docs/0-ground/PROGRAMME.md",
       "authority": "Owner request to simplify the parallel Factory UI around Run, Agents and Context while preserving Factory, Grok Bot and Buzz functions",
       "scope": "Three top-level Factory tabs; centre Agent/team Chat or full SSSF Run view; object-local inspection and material opening",
       "standing": "Owner-selected layout for immediate parallel-branch experimentation, not final visual acceptance",
@@ -31,7 +31,7 @@
   ],
   "presentation_resolution": {
     "effective_date": "2026-09-18",
-    "source_ref": "desktop/cradle/docs/world-shell/PROGRAMME.md",
+    "source_ref": "ProjectCentral/docs/0-ground/PROGRAMME.md",
     "factory_sidebar_tabs": ["Run", "Agents", "Context"],
     "centre": ["selected Agent/team conversation", "existing full SSSF multi-lane Run view"],
     "supersedes": "Six peer sidebar destinations from PR #373: Trajectory, Context, Skills & tools, Claims & evidence, Results, Inspect. Their functions remain object-local depths, not hidden substitute top-level tabs.",
@@ -43,7 +43,7 @@
       "source_ref": "docs/experience/STORIES.md",
       "issue": "https://github.com/EpiLogos/O-I/issues/289",
       "policy": "Original native and functional obligations remain. Current sidebar navigation is determined by the September-18 handoff; historical layout wording does not restore the superseded six-tab taxonomy. Source mapping is not execution or human EX.",
-      "amendment_refs": ["desktop/cradle/docs/world-shell/PROGRAMME.md", "docs/experience/CASES.md"]
+      "amendment_refs": ["ProjectCentral/docs/0-ground/PROGRAMME.md", "docs/experience/CASES.md"]
     }
   },
   "required_obligation_ids": [

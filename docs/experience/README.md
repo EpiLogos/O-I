@@ -22,7 +22,7 @@ Each story includes the agent's intended experience: recognising the task, findi
 
 ## What stands over what
 
-The owner's words (tier 0: [founding positions](../positions/FOUNDING-POSITIONS.md) and the [owner rulings register](../../desktop/cradle/docs/world-shell/PROGRAMME.md)) → [the DLW manual](../dlw/DLW.md) → the stories and the capability matrix → contracts → plans → evidence ([#711](https://github.com/EpiLogos/O-I/issues/711)). Nothing an agent wrote stands over the manual.
+The owner's words (tier 0: [founding positions](../../ProjectCentral/docs/0-ground/positions/FOUNDING-POSITIONS.md) and the [owner rulings register](../../ProjectCentral/docs/0-ground/PROGRAMME.md)) → [the DLW manual](../../ProjectCentral/docs/1-vision/dlw/DLW.md) → the stories and the capability matrix → contracts → plans → evidence ([#711](https://github.com/EpiLogos/O-I/issues/711)). Nothing an agent wrote stands over the manual.
 
 ## A story's six cells, the manual and the matrix
 
@@ -63,7 +63,7 @@ The DLW families in [STORIES.md](STORIES.md) are written on the six cells. The e
 
 ## Authorities read to the depth the work needs
 
-[Founding positions](../positions/FOUNDING-POSITIONS.md) govern meaning. [Development Field §§4–7](../DEVELOPMENT-FIELD-PROTOCOL-WAYFINDER.md) supplies the existing UX/EX/capability/evidence relations. [Central's matrix protocol](https://github.com/EpiLogos/Central/blob/main/docs/CAPABILITY-MATRIX-PROTOCOL.md) owns `ql-capability-matrix/1`; native products keep capability identity and operations.
+[Founding positions](../../ProjectCentral/docs/0-ground/positions/FOUNDING-POSITIONS.md) govern meaning. [Development Field §§4–7](../../ProjectCentral/docs/4-development/DEVELOPMENT-FIELD-PROTOCOL-WAYFINDER.md) supplies the existing UX/EX/capability/evidence relations. [Central's matrix protocol](https://github.com/EpiLogos/Central/blob/main/docs/CAPABILITY-MATRIX-PROTOCOL.md) owns `ql-capability-matrix/1`; native products keep capability identity and operations.
 
 | Authority | Retained purpose and scope |
 |---|---|

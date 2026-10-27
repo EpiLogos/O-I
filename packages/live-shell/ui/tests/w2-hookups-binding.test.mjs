@@ -147,7 +147,7 @@ test('the rail\'s NOWs binding hands railBindings.nowsCloseWrites the ground it 
 // ── Approvals' Approve ───────────────────────────────────────────────────────────────────────────────────────────────────────────
 
 const minted = 1_792_300_000_000
-const PENDING = {return_ref: `central:return:project:o-i:${minted}000000-4242`, source_ref: 'central:source:project:O-I:docs/dlw/DLW.md', basis_revision: 'r1',
+const PENDING = {return_ref: `central:return:project:o-i:${minted}000000-4242`, source_ref: 'central:source:project:O-I:ProjectCentral/docs/1-vision/dlw/DLW.md', basis_revision: 'r1',
   status: 'pending', agent_session_ref: 'agent-session/flint', current_revision: 'r1'}
 const MOVED = {...PENDING, return_ref: 'central:return:project:o-i:1792300001000000000-4243', current_revision: 'r2'}
 const PERSON = accept.personRefOf(W2.personalAnchor.data)

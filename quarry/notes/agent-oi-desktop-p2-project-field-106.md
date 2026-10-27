@@ -4,7 +4,7 @@
 104 commits · Class A QUARRY-DESKTOP (§3) · =
 `feat/living-wiki-desktop-135` + one merge (`[LIVING-WIKI] Merge
 change-aware workbench composition (#136)`). Contract of record already on
-main: `docs/OI-DESKTOP-P2-PROJECT-FIELD-CONTRACT.md`.
+main: `ProjectCentral/docs/3-architecture/OI-DESKTOP-P2-PROJECT-FIELD-CONTRACT.md`.
 
 ## What it is
 

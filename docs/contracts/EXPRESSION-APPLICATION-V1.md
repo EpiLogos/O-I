@@ -1,7 +1,7 @@
 # Expression application v1
 
 **Standing:** EX1 implementation contract for O:I #306. Baseline: `267a688`.
-Consumes [product meaning](../dlw/DLW.md) (manual §7, §20), [human/Agent UX](../experience/STORIES.md) (the XS, XC, XG, XF, XA families), [execution map](../../.superpowers/sdd/cradle-rebuild/EXPRESSION-FIELD-WAYFINDER-2026-09-14.md), [Cradle architecture](../cradle/02-ARCHITECTURE.md), [composability](../OI-DESKTOP-APPLICATION-SPEC.md#12-composability-is-an-experienced-property), [Action dispatch](../../desktop/cradle/kernel/src/action.rs), and [WorldPresentation](../../shared-field/WORLD-PRESENTATION.md).
+Consumes [product meaning](../../ProjectCentral/docs/1-vision/dlw/DLW.md) (manual §7, §20), [human/Agent UX](../experience/STORIES.md) (the XS, XC, XG, XF, XA families), [execution map](../../.superpowers/sdd/cradle-rebuild/EXPRESSION-FIELD-WAYFINDER-2026-09-14.md), [Cradle architecture](../cradle/02-ARCHITECTURE.md), [composability](../OI-DESKTOP-APPLICATION-SPEC.md#12-composability-is-an-experienced-property), [Action dispatch](../../desktop/cradle/kernel/src/action.rs), and [WorldPresentation](../../shared-field/WORLD-PRESENTATION.md).
 
 ## One application meaning
 

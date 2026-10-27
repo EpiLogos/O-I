@@ -31,7 +31,7 @@ O:I differentiates them. Each facet is its own product, with its own records and
 
 The Cradle is the O:I desktop application, and it is being built now. It comes before the harness. It sets up the agent's world as one working situation that any harness can then act within: the ground, the agents present and what each may do, the capabilities in play, the work under way and the machines it runs on. In the Cradle a person chooses the world and project in focus, brings an agent into it, sees what that agent is actually doing, pulls knowledge into view when it helps, moves into structured development when the work calls for it, and lets the right workspace or machine be provided underneath. It is a meta-harness, not a dashboard: files, knowledge, agents and their activity form one situation rather than a view over separate tools.
 
-Technically it is a Tauri application with a Rust kernel and a React interface (`desktop/cradle/`). The interface sends typed operations to the kernel. The kernel composes readings from each product's own commands and writes only through Central's Actions, as compare-and-swap writes. There is no generic shell, filesystem, network or secret bridge. Design: [`docs/cradle/01-DESIGN.md`](docs/cradle/01-DESIGN.md); architecture: [`docs/cradle/02-ARCHITECTURE.md`](docs/cradle/02-ARCHITECTURE.md). One Linux pre-release bundle exists (`oi-desktop-v0.1.0-prelocal.1`, installed with `oi desktop install --recorded`). Otherwise, build it from source as described in [`desktop/README.md`](desktop/README.md).
+Technically it is a Tauri application with a Rust kernel and a React interface (`desktop/cradle/`). The interface sends typed operations to the kernel. The kernel composes readings from each product's own commands and writes only through Central's Actions, as compare-and-swap writes. There is no generic shell, filesystem, network or secret bridge. Design: the manual, [`ProjectCentral/docs/1-vision/dlw/DLW.md`](ProjectCentral/docs/1-vision/dlw/DLW.md) (the earlier `docs/cradle/01-DESIGN.md` retired 27 Oct, O-I #728; read it at `c1eeefb11`); architecture: [`docs/cradle/02-ARCHITECTURE.md`](docs/cradle/02-ARCHITECTURE.md). One Linux pre-release bundle exists (`oi-desktop-v0.1.0-prelocal.1`, installed with `oi desktop install --recorded`). Otherwise, build it from source as described in [`desktop/README.md`](desktop/README.md).
 
 ## The six products
 
@@ -137,11 +137,11 @@ Other install routes (an npm-packaged launcher, `cargo install --path cli`) and 
 
 | Kind of claim | Where |
 |---|---|
-| Authored position: why this is worth doing and what must not be lost | [`docs/positions/FOUNDING-POSITIONS.md`](docs/positions/FOUNDING-POSITIONS.md) |
-| The concepts and primitives behind the six facets | [`docs/PRIMITIVES.md`](docs/PRIMITIVES.md) |
-| Vision and design: what the product is intended to become | [`docs/VISION.md`](docs/VISION.md), [`docs/cradle/`](docs/cradle/README.md) |
+| Authored position: why this is worth doing and what must not be lost | [`ProjectCentral/docs/0-ground/positions/FOUNDING-POSITIONS.md`](ProjectCentral/docs/0-ground/positions/FOUNDING-POSITIONS.md) |
+| The concepts and primitives behind the six facets | [`ProjectCentral/docs/0-ground/PRIMITIVES.md`](ProjectCentral/docs/0-ground/PRIMITIVES.md) |
+| Vision and design: what the product is intended to become | [`ProjectCentral/docs/1-vision/VISION.md`](ProjectCentral/docs/1-vision/VISION.md), [`docs/cradle/`](docs/cradle/README.md) |
 | Architecture: how the present system is structured, and which operation lives where | [`docs/architecture/README.md`](docs/architecture/README.md), [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md), [`docs/CANONICAL-PRODUCT-FIELD.md`](docs/CANONICAL-PRODUCT-FIELD.md) |
-| Shared-field relations | [`docs/SHARED-FIELD.md`](docs/SHARED-FIELD.md), [`docs/OBJECTIVE-CO-INTERNALITY.md`](docs/OBJECTIVE-CO-INTERNALITY.md) |
+| Shared-field relations | [`docs/SHARED-FIELD.md`](docs/SHARED-FIELD.md), [`ProjectCentral/docs/0-ground/OBJECTIVE-CO-INTERNALITY.md`](ProjectCentral/docs/0-ground/OBJECTIVE-CO-INTERNALITY.md) |
 | Surfaces | [`docs/SURFACES.md`](docs/SURFACES.md) |
 | Research programme | [`docs/RESEARCH.md`](docs/RESEARCH.md) |
 | Installation (changes with each release) | [`docs/INSTALL.md`](docs/INSTALL.md) |
@@ -153,4 +153,4 @@ Agents working inside an O:I world: see [`skills/oi/SKILL.md`](skills/oi/SKILL.m
 
 Objective Internality is the account of the means through which a life knows and acts within a world: memory, language, models, abilities, habits and relations. Those means are examined there as one relation with the knower and the known. It is developed in the essay [*Confronting the Limit: Determination, Subjectivity and Mind as Objective Internality*](https://oi.epi-logos.org/essay/), and O:I is its technological side.
 
-The research stance is to hold model capacity constant and treat the surrounding arrangement as the thing that varies. A simpler arrangement beating a richer one, or two formally different arrangements proving operationally equivalent, are legitimate results. The longer conceptual account that previously opened this README, covering the composition circuit, the primitives and the human contact points, now lives verbatim in [`docs/PRIMITIVES.md`](docs/PRIMITIVES.md). O:I also reads as **Operating Infrastructure**: the engineering face of the same field.
+The research stance is to hold model capacity constant and treat the surrounding arrangement as the thing that varies. A simpler arrangement beating a richer one, or two formally different arrangements proving operationally equivalent, are legitimate results. The longer conceptual account that previously opened this README, covering the composition circuit, the primitives and the human contact points, now lives verbatim in [`ProjectCentral/docs/0-ground/PRIMITIVES.md`](ProjectCentral/docs/0-ground/PRIMITIVES.md). O:I also reads as **Operating Infrastructure**: the engineering face of the same field.

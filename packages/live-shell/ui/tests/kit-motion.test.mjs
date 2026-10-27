@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import {register} from 'node:module'
 import {readFile} from 'node:fs/promises'
 
-// How a control moves (docs/dlw/DLW.md §16.10; inhabitants/sdk/panel.tsx, panel.css). A control moves only when its state changes,
+// How a control moves (ProjectCentral/docs/1-vision/dlw/DLW.md §16.10; inhabitants/sdk/panel.tsx, panel.css). A control moves only when its state changes,
 // and only to show that change: the hand is answered at once, what something else changed glides, slides or rings once, and nothing
 // loops but what the owner reports. The kit draws the parts server-side (the thumb under a radio and under a head's pages, the default's
 // tick and notch, the hold's fill, the copy mark, the ring on a working light, the grip on a movable row); the layout-bound parts

@@ -131,7 +131,7 @@ export const MISSING_OPS = {
 /** The owner bindings the chain's lights read in the native run (P0-R4):
  * each names the product that owns the reading and the reading's own op.
  * Owners follow the verified per-device family map
- * (`desktop/cradle/docs/world-shell/AGENT-DEVICE-OWNERSHIP.md:20-37`, carried
+ * (`ProjectCentral/docs/3-architecture/world-shell/AGENT-DEVICE-OWNERSHIP.md:20-37`, carried
  * at DLW-PLAN.md:1706-1713). The gateway lamp shows `harness_agent_read`, the
  * AIKit agency gateway's harness-binding reading (:22) — the Gateway device's
  * transport face is Actuation's (:20), so the missing transport op is owed by

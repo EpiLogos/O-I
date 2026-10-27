@@ -532,7 +532,7 @@ SDK proof crosses the whole lifecycle, not just compilation: public authoring, c
 
 Installation forms and their lifecycle are in [INSTALLATION-VARIANTS.md](INSTALLATION-VARIANTS.md) (#268). The DLW itself is a full install (#707); the underlying products keep their own install options. Where a test proves a minimum, the excluded products are genuinely absent. Record requested, effective and installed products, native alternatives, Surface and material placement separately. Software update, selected source sync and material reconnect are different actions; lifecycle tests include interrupted setup, change, recovery and owned teardown without deleting human work.
 
-Use the existing `scripts/caw_campaign.py`, `caw_bind.py`, `caw_local.py`, native owner tests and current source-lock mechanism. Use its documented invocation from `docs/CONTINUOUS-WORK-PROVING.md`, rechecking current help and actual executable paths. Do not copy a historical SHA from that document and call it today's installed state.
+Use the existing `scripts/caw_campaign.py`, `caw_bind.py`, `caw_local.py`, native owner tests and current source-lock mechanism. Use its documented invocation from `ProjectCentral/docs/5-evidence/CONTINUOUS-WORK-PROVING.md`, rechecking current help and actual executable paths. Do not copy a historical SHA from that document and call it today's installed state.
 
 Use the QL `check-ux-spine.py --prepare UXnn` and source trace to enumerate its complete current story and practice field; use existing numerical/property/engine/domain tests alongside the real instrument/computer-use walk. Preparation checks do not act, run models or establish human ratification. Preserve the L host extension and exact source-defined geometry/music rather than substitute generic widgets.
 
@@ -859,7 +859,7 @@ synthesis does not introduce another implementation gate ahead of K8/AW.
 
 ### 12.1 L. Epi living-instrument states — a domain composition of this spine
 
-The codes in the third column are the host states of §0.5, and the global invariants are the rules for every device and view in the [DLW manual §16](../dlw/DLW.md#16-how-devices-work).
+The codes in the third column are the host states of §0.5, and the global invariants are the rules for every device and view in the [DLW manual §16](../../ProjectCentral/docs/1-vision/dlw/DLW.md#16-how-devices-work).
 
 **Publication authorised; H ratification pending (Satya), 2026-09-12.** This new
 section is published for availability and review, not yet H-ratified. The design
@@ -913,7 +913,7 @@ does not acquire another QL runtime or Skill registry.
 
 ## 13. Optimise useful work, and the process of improving it
 
-Optimisation is carried through the existing rounds of this protocol under [O:I #65](https://github.com/EpiLogos/O-I/issues/65); [founding positions](../positions/FOUNDING-POSITIONS.md) remain upstream. #220 retains connective implementation; native owners retain their code and evidence. This is not a second campaign, scheduler, model registry or results database. Preserve all existing stories, CAW P01–P28 and named cases, developer/gateway/SDK obligations and the complete delegated QL field.
+Optimisation is carried through the existing rounds of this protocol under [O:I #65](https://github.com/EpiLogos/O-I/issues/65); [founding positions](../../ProjectCentral/docs/0-ground/positions/FOUNDING-POSITIONS.md) remain upstream. #220 retains connective implementation; native owners retain their code and evidence. This is not a second campaign, scheduler, model registry or results database. Preserve all existing stories, CAW P01–P28 and named cases, developer/gateway/SDK obligations and the complete delegated QL field.
 
 ### 13.1 Purpose and invariant
 

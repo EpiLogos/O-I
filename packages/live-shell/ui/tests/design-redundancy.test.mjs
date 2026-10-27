@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 
-// A number stands once in a view (docs/dlw/DLW.md §16.12). scripts/design-sweep.mjs renders every designed device's folded, compact,
+// A number stands once in a view (ProjectCentral/docs/1-vision/dlw/DLW.md §16.12). scripts/design-sweep.mjs renders every designed device's folded, compact,
 // whole and widget views on its defaults and on each fixture and reads off what each says in numbers. A display's corner gives way to
 // any number a control or readout in the same plate already states (panel.tsx Display); what is left is held here, each with the
 // reason it stands. A device view that is not in this list says no number twice. A new duplicate fails this test: either remove it, or
