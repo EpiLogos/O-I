@@ -192,7 +192,7 @@ lands through the owner's `draft` action and leaves through the person's own
 
 **The lawful home of the STT endpoint.** Not a settings-page product
 setting: the settings page projects product-owned descriptors
-(docs/cradle/06-SYSTEM-SETTINGS.md L4/L6) and the composition plane's
+(docs/cradle/07-WAVE-5-SYSTEM-CONTRIBUTION.md §0, L4/L6) and the composition plane's
 setting refs belong to real product owners (docs/cradle/09-CONFIGURATION-PLANE.md)
 — no product owns a local speech stack, and inventing an owner would
 misattribute one. Dictation is desktop-owned input matter, the same class as

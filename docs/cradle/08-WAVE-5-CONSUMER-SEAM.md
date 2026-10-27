@@ -11,10 +11,10 @@ integration contract for the UI lead. The historical round describes inputs
 that existed and were exercised on that machine; it is not a design for
 anything unbuilt or evidence of a newly inspected machine.
 
-Companion documents: `06-SYSTEM-SETTINGS.md` (the law, L1–L6, and the base
-`v1` descriptor) and `07-WAVE-5-SYSTEM-CONTRIBUTION.md` (the `v2` descriptor,
-the mount document, and §4.5–§4.8 which fix the conventions this round
-closed).
+Companion document: `07-WAVE-5-SYSTEM-CONTRIBUTION.md` (§0: the law, L1–L6,
+and the base `v1` descriptor, carried from the retired `06-SYSTEM-SETTINGS.md`;
+the `v2` descriptor, the mount document, and §4.5–§4.8 which fix the
+conventions this round closed).
 
 ## 1. The one call convention
 

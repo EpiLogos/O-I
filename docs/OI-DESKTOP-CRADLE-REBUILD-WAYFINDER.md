@@ -165,15 +165,15 @@ continuity is now explicitly mapped as GW-01–06, not fog.
    rebuild branch. Kernel and other reusable business logic survives only where
    the new design re-derives it — each re-derivation re-proven by a walk, not
    by its tests. The rest is removed, not left unbuilt.
-2. **Verify by operation** (`docs/cradle/05-EXECUTION.md §3`):
+2. **Verify by operation** (`docs/experience/LOCAL-CAMPAIGN.md` §0):
    > Prose summaries, test output, and contract tests do not establish a UX
    > condition.
    Every unit lands with a **functional walk in the running app** (§8).
    `APP-SPEC §17`: "Visual acceptance is human evidence" — at phase gates the
    owner walks the app; screenshots accompany every receipt. There is no
    separate token/certification theatre: the gate is the app.
-3. **The design set wins.** the cradle design set (`docs/cradle/`, files
-   01–05), `APP-SPEC` (§4–§8, §11, §13,
+3. **The design set wins.** the cradle design set (`docs/cradle/02-ARCHITECTURE.md`,
+   `docs/cradle/03-UX-STATES.md` and `docs/experience/LOCAL-CAMPAIGN.md`), `APP-SPEC` (§4–§8, §11, §13,
    §14, §17), #155 D1–D11 + Buzz specimen, #138, #25,
    `CANONICAL-PRODUCT-FIELD.md`, and the alpha notes are the bar. Design is
    never edited to match code.
@@ -191,7 +191,7 @@ continuity is now explicitly mapped as GW-01–06, not fog.
    may honestly report model unset. The cradle renders what resolution
    returned.
 7. **Honesty.** Truthful state only — no invented health, no fake loading, no
-   simulated streams, unavailable ≠ error (`cradle/04` honesty laws; APP-SPEC
+   simulated streams, unavailable ≠ error (the honesty laws in LOCAL-CAMPAIGN §0.3; APP-SPEC
    §14: "professional software, recognisably O:I"; scarce gold).
 8. **Files mapped, prompts pithy.** Every unit names its files. Briefs are
    imperative: name the files, the operation, the metric. No hedging, no

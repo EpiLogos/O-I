@@ -34,16 +34,12 @@ preserve newer local work. Existing Technè mode, Stage, native ownership and
 
 | Document | What it fixes |
 |---|---|
-| [01-DESIGN.md](01-DESIGN.md) | What the Cradle is, the human experience it serves, and the native intents it is bound to. |
 | [02-ARCHITECTURE.md](02-ARCHITECTURE.md) | The application kernel, services, seams, state layers, events and focus model. |
-| [03-UX-STATES.md](03-UX-STATES.md) | The complete UX state space, each state derived from intent. |
-| [04-VERIFICATION.md](04-VERIFICATION.md) | What is true when the design exists — the conditions the app meets, and the build order. |
-| [05-EXECUTION.md](05-EXECUTION.md) | The standing injunction for the orchestrator and subagents doing the development work. |
-| [10-SIDEBARS.md](10-SIDEBARS.md) | The left and right sidebars in every mode and state, with the acceptance check for each state (the accepted UI lead, 23 Sep 2026). Visual study: [sidebars/sidebars-study.html](sidebars/sidebars-study.html). |
-| [11-FACTORY.md](11-FACTORY.md) | Factory: the Desk, Tasks, the Run page (Map · Trajectory · Live · Handoff), the right panel and the object pages Inspect opens, built on the fields owners actually write. |
-| [12-SETTINGS.md](12-SETTINGS.md) | Settings and System: task sections, the stage → review → apply → read-back change model, harnesses, models, credentials, skills, profiles, permissions, product pages. |
-| [13-BUILD-PROMPT.md](13-BUILD-PROMPT.md) | The execution prompt for building the UI lead: reconcile, protect, four lanes, acceptance by walks. |
-| [PROMPT.md](PROMPT.md) | The minimal dispatch prompt to hand a subagent at the start of a vertical. |
+| [03-UX-STATES.md](03-UX-STATES.md) | The complete UX state space, each state derived from intent. Its rules fold into the DLW manual under a later ticket. |
+| [07](07-WAVE-5-SYSTEM-CONTRIBUTION.md), [08](08-WAVE-5-CONSUMER-SEAM.md), [09](09-CONFIGURATION-PLANE.md) | The System contribution contract with the System law L1–L6 and the `v1` descriptor (07 §0), its consumer seam, and the configuration plane. |
+| `CENTRAL-FIELD-*`, [HOSTED-CONTRIBUTIONS.md](HOSTED-CONTRIBUTIONS.md), [WIKI-CONSTELLATION-SPEC.md](WIKI-CONSTELLATION-SPEC.md), [WIKI-CONSTELLATION-OPERATIONS.md](WIKI-CONSTELLATION-OPERATIONS.md), [EXPRESSION-FIELD.md](EXPRESSION-FIELD.md), [PERSONAL-WEB.md](PERSONAL-WEB.md) | Contracts that code and other documents read. |
+
+The legacy Cradle's UX and layout documents retired on 27 October 2026 (O-I #728; git keeps them): 01-DESIGN, 04-VERIFICATION, 05-EXECUTION, 06-SYSTEM-SETTINGS, 10-SIDEBARS, 11-FACTORY, 12-SETTINGS, 13-BUILD-PROMPT, PROMPT and the presentation-state proposal. The everyday loop, the verification conditions and the lived walks, including the Epi domain walks, are in the test protocol, [LOCAL-CAMPAIGN.md](../experience/LOCAL-CAMPAIGN.md). The System law and the `v1` settings descriptor are in [07 §0](07-WAVE-5-SYSTEM-CONTRIBUTION.md#0-the-system-law-and-the-v1-descriptor). Intent for the new shell is the [DLW manual](../dlw/DLW.md); the stories are in [docs/experience](../experience/README.md).
 
 ## Provenance class
 
@@ -87,9 +83,9 @@ system:
 
 **Publication authorised; H ratification pending (Satya), 2026-09-12.** The new
 Epi domain composition is available in [03 §L](03-UX-STATES.md#l-epi-living-instrument-states--a-domain-composition-of-this-spine)
-and [04 §8](04-VERIFICATION.md#8-epi-domain-walks). Those additions and their
+and [LOCAL-CAMPAIGN §12](../experience/LOCAL-CAMPAIGN.md#12-epi-domain-walks). Those additions and their
 QL-MEF source/practice crosswalk await the owner's H ratification. The existing
-Cradle A–K states, continuous-work amendments, §2 spine and §§1–7 verification
-remain intact and keep their prior standing. Publication and CI are not owner
+Cradle A–K states, continuous-work amendments, the everyday-loop spine and the
+rest of the verification protocol remain intact and keep their prior standing. Publication and CI are not owner
 ratification or lived validation. The QL-MEF Wayfinder remains the domain's
 implementation map; this review does not introduce a new K8/AW launch gate.

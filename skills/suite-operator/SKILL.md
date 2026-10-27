@@ -197,8 +197,8 @@ scope. Add description-selection and native operation/readback cases for this
 procedure through the existing CAW campaign, including the missing-producer
 negative. Running those commands is evidence only when actually executed.
 
-Use the existing everyday-loop spine in `docs/cradle/04-VERIFICATION.md`
-§2 and §6.1–6.6: human entry, operative Agent practice, permitted work, failure,
+Use the existing everyday-loop spine in `docs/experience/LOCAL-CAMPAIGN.md`
+§0 and §10.1–10.6: human entry, operative Agent practice, permitted work, failure,
 repair, Return and later re-entry. Installed and human evidence stays distinct.
 Native Skill improvements return to their source owner; neither use, scores nor
 benchmarks silently promote source or author human preference.

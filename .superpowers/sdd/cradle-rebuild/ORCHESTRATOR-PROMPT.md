@@ -16,7 +16,7 @@ Before anything else, in this order:
    destination, standing laws, capability matrix, units, walk contracts,
    design-in-context waypoints. Your unit rows come from its §5.
 3. Read the two laws you will be most tempted to skip:
-   `docs/cradle/05-EXECUTION.md §3` (verify by operation) and
+   `desktop/cradle/docs/world-shell/wayfinder/TRACKER.md` (verify by operation, under "How the build runs") and
    `docs/OI-DESKTOP-APPLICATION-SPEC.md §17` (visual acceptance is human evidence).
 
 Then execute map §10 (first move): branch `cradle-rebuild` off `main`; first
