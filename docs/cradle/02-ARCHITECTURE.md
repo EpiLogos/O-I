@@ -6,9 +6,9 @@ Standing: architecture-contract
 # 02 — Cradle architecture
 
 **Status:** architecture commitment for the O:I desktop.
-**Companion:** [founding positions](../positions/FOUNDING-POSITIONS.md) and the [DLW manual](../dlw/DLW.md) (intent), the [stories](../experience/STORIES.md) and [LOCAL-CAMPAIGN.md](../experience/LOCAL-CAMPAIGN.md) (the states, in its §0.5, and evidence).
+**Companion:** [founding positions](../../ProjectCentral/docs/0-ground/positions/FOUNDING-POSITIONS.md) and the [DLW manual](../../ProjectCentral/docs/1-vision/dlw/DLW.md) (intent), the [stories](../experience/STORIES.md) and [LOCAL-CAMPAIGN.md](../experience/LOCAL-CAMPAIGN.md) (the states, in its §0.5, and evidence).
 
-**20 September 2026 clarification:** §6 explicitly includes retained kernel loading/resource state. Read [Wiki/constellation decisions WC01–WC15](../positions/WIKI-CONSTELLATION-PRACTICE.md) and the joined development map (retired 27 Oct into the DLW map, O-I #706; read it at `8873b0968`) for its purpose and application. The dated implementation disposition in §11 remains historical evidence, not a finding about the owner's incoming local mains.
+**20 September 2026 clarification:** §6 explicitly includes retained kernel loading/resource state. Read [Wiki/constellation decisions WC01–WC15](../../ProjectCentral/docs/0-ground/positions/WIKI-CONSTELLATION-PRACTICE.md) and the joined development map (retired 27 Oct into the DLW map, O-I #706; read it at `8873b0968`) for its purpose and application. The dated implementation disposition in §11 remains historical evidence, not a finding about the owner's incoming local mains.
 
 ## 1. Stack and kernel
 

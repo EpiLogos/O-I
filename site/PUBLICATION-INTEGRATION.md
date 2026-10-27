@@ -84,8 +84,8 @@ This receiving build carries an edition, not an archive or live subscription.
 
 ## Founding, wording and install basis
 
-Grounding remains `docs/positions/FOUNDING-POSITIONS.md`,
-`docs/CAPABILITY-MATRIX.md`, `docs/experience/STORIES.md` (XA, FC) and the existing
+Grounding remains `ProjectCentral/docs/0-ground/positions/FOUNDING-POSITIONS.md`,
+`ProjectCentral/docs/2-design/CAPABILITY-MATRIX.md`, `docs/experience/STORIES.md` (XA, FC) and the existing
 expression/Technè Wayfinders. Recovered native capability is not inferred absent
 from a missing desktop join; source/controlled/integrated/installed/observed
 standing stays separate.

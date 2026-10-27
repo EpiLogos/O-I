@@ -3,7 +3,7 @@
 // palace"; the mockup's M4 plate, world-shell-mockup.html:1447-1461 `deviceDetail` k==='M4' and its controls :1385-1397 — knobs for
 // Sea level, Continents, Relief, Warmth, Moisture, Ice caps, Atmosphere, Clouds, Axial tilt; segmented Body, Coast, Kind, Relations;
 // Locations and Relations as tight lists; manual §17.2 World, Whole: "View, Body, Landmass, Climate, Sky, Locations, Earth layers").
-// One plate drawn in the device craft (docs/dlw/DLW.md §16; the panel kit, inhabitants/sdk/panel.tsx): a dial for a value you sweep,
+// One plate drawn in the device craft (ProjectCentral/docs/1-vision/dlw/DLW.md §16; the panel kit, inhabitants/sdk/panel.tsx): a dial for a value you sweep,
 // a radio for one of a few, rows for places, the sections side by side and folded to fit; the atlas pane carries no chrome (owner,
 // 14 Oct: "controls live in device UI, never as chrome inside a pane").
 //

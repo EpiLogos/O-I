@@ -16,7 +16,7 @@ can unfold through tiling and popouts; this does not impose six desktop panels.
 
 **Status:** application/design commitment  
 **Owner:** O:I application host and whole-level composition  
-**Authored ground:** `docs/positions/FOUNDING-POSITIONS.md`  
+**Authored ground:** `ProjectCentral/docs/0-ground/positions/FOUNDING-POSITIONS.md`  
 **Coordinates with:** O:I #23, #26, #18, #84, #85, #86, #93; current desktop-workbench implementation; Central #51/#70/#72/#74/#82; Actuation #4/#15/#16; AIKit #28/#42/#53/#67/#108/#113/#114; Software Factory #143/#144/#145/#155; Workcell #21–#29 as applicable; current Quaternal Logic / Epi integration work.
 
 This document specifies **what the installed O:I desktop application is meant to become as an experienced product**.

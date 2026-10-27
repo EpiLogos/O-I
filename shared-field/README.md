@@ -1,6 +1,6 @@
 # O:I shared-field implementation floor
 
-This directory is the smallest executable form of the local-first seam specified in `docs/SHARED-FIELD.md` and `docs/OBJECTIVE-CO-INTERNALITY.md`.
+This directory is the smallest executable form of the local-first seam specified in `docs/SHARED-FIELD.md` and `ProjectCentral/docs/0-ground/OBJECTIVE-CO-INTERNALITY.md`.
 
 The **portable semantic core** deliberately has no framework, network client, database, or identity-provider dependency. Native products still own their canonical objects. O:I defines only the whole-level relations by which explicitly selected representations cross product/world boundaries and by which independently grounded Participants can become mutually available through a SharedField. The adjacent `spacetimedb/` module is a hosted materialisation of that contract, not a replacement identity/ontology layer.
 
@@ -103,9 +103,9 @@ This remains deliberately narrower than a universal policy engine. Central remai
 
 The hosted content surface is audience-filtered server-side (OI-017 Phase 1, PR #44): SharedField, Participant, Projection, Contribution and Explore rows live in private backing tables and reach callers only through caller-filtered Views, with effective Projection visibility the intersection of SharedField visibility and Projection audience. Hosted `unlisted` remains rejected. See `PHASE1-PRIVATE-CONTENT-SECURITY-RECEIPT.md`; the earlier note that private-content Views were a later slice is superseded.
 
-SpaceTimeDB documents one-shot schedule tables for timed execution, but the exact pinned 2.8.1 standalone used by O:I CI did not reproduce a one-second scheduled authority-expiry event in repeated live fixtures. O:I therefore does not rely on that timer for private-read revocation. See `docs/ENCOUNTER-SECURITY-SPACETIMEDB-CONFORMANCE.md` for the provider finding and fail-closed consequence.
+SpaceTimeDB documents one-shot schedule tables for timed execution, but the exact pinned 2.8.1 standalone used by O:I CI did not reproduce a one-second scheduled authority-expiry event in repeated live fixtures. O:I therefore does not rely on that timer for private-read revocation. See `ProjectCentral/docs/5-evidence/ENCOUNTER-SECURITY-SPACETIMEDB-CONFORMANCE.md` for the provider finding and fail-closed consequence.
 
-See `docs/ENCOUNTER-SECURITY.md` for the six primitives and `docs/ENCOUNTER-SECURITY-IMPLEMENTATION.md` for the ES0 threat/responsibility matrix, primary-source lock and residual-risk ledger.
+See `ProjectCentral/docs/3-architecture/ENCOUNTER-SECURITY.md` for the six primitives and `ProjectCentral/docs/3-architecture/ENCOUNTER-SECURITY-IMPLEMENTATION.md` for the ES0 threat/responsibility matrix, primary-source lock and residual-risk ledger.
 
 ## Collective temporal projection (FieldNow / FieldDay)
 

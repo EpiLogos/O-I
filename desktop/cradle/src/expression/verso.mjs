@@ -1,6 +1,6 @@
 /**
  * The Expression verso (ES2) — the structured reading generated over ONE
- * Expression identity (docs/EXPRESSION-WORLD-SUBSTRATE-WAYFINDER.md §1, §5,
+ * Expression identity (ProjectCentral/docs/4-development/EXPRESSION-WORLD-SUBSTRATE-WAYFINDER.md §1, §5,
  * §17 ES2). The front is the living engine body; the verso is a composable
  * reading over the same identity and its bound subjects: source, provenance,
  * relations, disclosed Actions, available representations.

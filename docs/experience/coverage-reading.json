@@ -9,26 +9,26 @@
     "H": "human UX/Recognition — never earned by automation here"
   },
   "generated_from": {
-    "reading_digest": "sha256:a94f847995cf366087a00befdb7b879db28f5b7de0c38834f22862c5df39d8bf",
+    "reading_digest": "sha256:be4a60f01f0b2de9f919e454f862628457e305e56788758072785c149d15b9f1",
     "source_basis": {
-      "docs/experience/campaign.json": "sha256:eaf34feef0b1c7ac3dbfff0ed84572037c34edc2e92f93bdb667e429114e83b3",
-      "docs/experience/STORIES.md": "sha256:d57cd8a2796c2d638c87c054ac6f9eb816f97e882d8644508a21a071a3e0d0ea",
+      "docs/experience/campaign.json": "sha256:6b0a96d445d1c6c45f1e87e880587c2f38a5ad4423b42f427856e0222bf71db3",
+      "docs/experience/STORIES.md": "sha256:1ca2147d4363455619c57ee42f049df4d9f9f1f9cdd7ec91e816977dc5c90a1f",
       "docs/experience/PRACTICE-CONDITIONS.md": "sha256:bcb88c23dca60447f8c4aba0bedc66471cd1d5d0fab09cecb3fca0b189a7f79d",
-      "docs/experience/STORY-PROFILE.md": "sha256:5d225c9ba702de77d6c89dafce523ffb5965f06077a795d87548aabc524120c5",
-      "docs/experience/LOCAL-CAMPAIGN.md": "sha256:99fd2250ecc7438cd8b33fe30c508a86af700f550dbad50e713662882ae97c12",
+      "docs/experience/STORY-PROFILE.md": "sha256:53fc3d9cc50a006d97f397b7cf32a3fceef4665e4473484df8f12823535e0713",
+      "docs/experience/LOCAL-CAMPAIGN.md": "sha256:da8a7b2d53b08feb1a63844cec79093f175960588132978463ce21bc81569c04",
       "desktop/cradle/walk/scenario-bindings.json": "sha256:382e4aa82a706f132b6e921273d3adda4f78d6187e3da3bb9941020998b5b53f",
       "docs/experience/developer-field.json": "sha256:c5d22c367d4edbd5cf5d42f12cc5814c674677f974ff5f1b5f07c8142346b614",
-      "docs/experience/DEVELOPER-FIELD.md": "sha256:35f24e29c19195ecdda876ce959ac4782cead16ae77deebaddbfe0d743c69315",
+      "docs/experience/DEVELOPER-FIELD.md": "sha256:62fa849ac524273dcba8cbb934f4665df30271879a215b0fab1385868abe30f6",
       "docs/experience/personal-web.json": "sha256:57283aab88db3c44bea2a8346add3d9143d3260192674af9ddf0cd635cc6dda8",
-      "docs/experience/factory-agency.json": "sha256:b55f6725c2d71f2edd28b1b8493afd00e0605beb252d378bc148ee55e71b971c",
-      "docs/experience/CASES.md": "sha256:f8b69c0b3dac0e0ee528656de23ae33d462a0f515ebd4a2959622e2e8a8f4b0f",
-      "docs/experience/session-grounding.json": "sha256:2ef9bebfe5d5442bab1eb6288d479d066958862f4481e8df4fb665b85ab593f0",
+      "docs/experience/factory-agency.json": "sha256:95831d00de349f0aa7bdb3a60954e7f2a71745745481ef7e4248e70469baf922",
+      "docs/experience/CASES.md": "sha256:79f814d4fe98d355dbf9b5aa487309e90bbf061d18273e80542ddbe00bf1f48a",
+      "docs/experience/session-grounding.json": "sha256:74ba2321e9a47f43482d0d24123b35a6e3c33826ecf74ba21cb9abd5c24ad408",
       "docs/experience/harness-first-adoption.json": "sha256:769a2e38685fea86e69c1cd592397f3926cd9fd574097e48ab1bfe227d832355",
-      "docs/experience/vak-expression-craft.json": "sha256:1bc2f74bef7c293acd217d718294241168198c6f716e869a5ba3bba6a0b8cbb3",
-      "docs/experience/wiki-constellation.json": "sha256:25c23a7c83342578277387cf3b6dc7fe51ee7dded69804b6249eb72aafb9c06a",
-      "docs/cradle/WIKI-CONSTELLATION-SPEC.md": "sha256:f513284eac3c2cbb975ead1d5bb8be79c1c6bdb4d4a6c2c54dd67c689b565149",
-      "docs/experience/shared-field-world-participation.json": "sha256:853d3047b0a77ee5147cfb82d5aed121d0c8b208223ed71de8ab0b8803268eef",
-      "docs/SHARED-FIELD-STATE-DISCOVERY.md": "sha256:a14a538b00ce601ddb41db689014eab7fcdb59b9497711574051ec5517e5557e",
+      "docs/experience/vak-expression-craft.json": "sha256:abb2a481723707bc641d6004455d6f88c8aa215db06411c9daac0045c3c5fc1d",
+      "docs/experience/wiki-constellation.json": "sha256:324aac67f53b1ea45ba2802c5c8447bf913d87bde300c19d01d498a838992900",
+      "docs/cradle/WIKI-CONSTELLATION-SPEC.md": "sha256:dd37647bed119d07f8065145b2d6a12bfbdeea92ba93bd9cf4512943566abde5",
+      "docs/experience/shared-field-world-participation.json": "sha256:a9cff554866d12aa7c4ce463594460abc80f1b0123b814c047f8756fb29f60d6",
+      "docs/SHARED-FIELD-STATE-DISCOVERY.md": "sha256:d71e0960348b2b9927d3e5d962f8da0b84e9c4d499b177f2f1f19e73fe575bf6",
       "docs/experience/plural-flow.json": "sha256:c6e2075004ae6169f3de9e27e0f2cd5d0a93d1105ecdfc640fbc3d6d16adc382"
     },
     "bindings_path": "desktop/cradle/walk/scenario-bindings.json",
@@ -4768,7 +4768,7 @@
     {
       "id": "wc65:WC01",
       "module": "docs/experience/wiki-constellation.json",
-      "source_ref": "docs/positions/WIKI-CONSTELLATION-PRACTICE.md#3-decisions-made-here",
+      "source_ref": "ProjectCentral/docs/0-ground/positions/WIKI-CONSTELLATION-PRACTICE.md#3-decisions-made-here",
       "native_locator": "Product WC01; specification section 2; STORIES KN01–KN03, TG01",
       "requirement": "Ordinary linked Markdown is a complete useful Wiki path without QL or forced source migration.",
       "story_ids": [
@@ -4822,7 +4822,7 @@
     {
       "id": "wc65:WC02",
       "module": "docs/experience/wiki-constellation.json",
-      "source_ref": "docs/positions/WIKI-CONSTELLATION-PRACTICE.md#3-decisions-made-here",
+      "source_ref": "ProjectCentral/docs/0-ground/positions/WIKI-CONSTELLATION-PRACTICE.md#3-decisions-made-here",
       "native_locator": "Product WC02; specification section 2; STORIES KN01–KN03, TG01; FL06, WV16",
       "requirement": "Reader, graph, backlinks, tags and agent lookup share source occurrence and target resolution.",
       "story_ids": [
@@ -4875,7 +4875,7 @@
     {
       "id": "wc65:WC03",
       "module": "docs/experience/wiki-constellation.json",
-      "source_ref": "docs/positions/WIKI-CONSTELLATION-PRACTICE.md#3-decisions-made-here",
+      "source_ref": "ProjectCentral/docs/0-ground/positions/WIKI-CONSTELLATION-PRACTICE.md#3-decisions-made-here",
       "native_locator": "Product WC03; specification section 5; STORIES TF01–TF07",
       "requirement": "Humans and agents can create and edit a constellation from selected material or an explicitly chosen frame.",
       "story_ids": [
@@ -4912,7 +4912,7 @@
     {
       "id": "wc65:WC04",
       "module": "docs/experience/wiki-constellation.json",
-      "source_ref": "docs/positions/WIKI-CONSTELLATION-PRACTICE.md#3-decisions-made-here",
+      "source_ref": "ProjectCentral/docs/0-ground/positions/WIKI-CONSTELLATION-PRACTICE.md#3-decisions-made-here",
       "native_locator": "Product WC04; specification sections 5 and 8; STORIES TF01–TF07; TF06, XA17",
       "requirement": "Formal QL validity, interpretation support and acceptance remain distinguishable while provisional construction is usable.",
       "story_ids": [
@@ -4947,7 +4947,7 @@
     {
       "id": "wc65:WC05",
       "module": "docs/experience/wiki-constellation.json",
-      "source_ref": "docs/positions/WIKI-CONSTELLATION-PRACTICE.md#3-decisions-made-here",
+      "source_ref": "ProjectCentral/docs/0-ground/positions/WIKI-CONSTELLATION-PRACTICE.md#3-decisions-made-here",
       "native_locator": "Product WC05; specification sections 4, 5 and 8; STORIES TF01–TF07; TF06, XA17; FL06, WV16",
       "requirement": "Contextual membership and modular constellation reuse preserve source, whole and presentation identities.",
       "story_ids": [
@@ -4984,7 +4984,7 @@
     {
       "id": "wc65:WC06",
       "module": "docs/experience/wiki-constellation.json",
-      "source_ref": "docs/positions/WIKI-CONSTELLATION-PRACTICE.md#3-decisions-made-here",
+      "source_ref": "ProjectCentral/docs/0-ground/positions/WIKI-CONSTELLATION-PRACTICE.md#3-decisions-made-here",
       "native_locator": "Product WC06; specification section 6; STORIES XA01–XA06",
       "requirement": "Technè construction uses the actual 3D Expression medium with glyphs, text, images, lines and particle relations.",
       "story_ids": [
@@ -5061,7 +5061,7 @@
     {
       "id": "wc65:WC07",
       "module": "docs/experience/wiki-constellation.json",
-      "source_ref": "docs/positions/WIKI-CONSTELLATION-PRACTICE.md#3-decisions-made-here",
+      "source_ref": "ProjectCentral/docs/0-ground/positions/WIKI-CONSTELLATION-PRACTICE.md#3-decisions-made-here",
       "native_locator": "Product WC07; specification sections 3, 5 and 6; STORIES TF01–TF07; XA01–XA06",
       "requirement": "M0′ makes linked source material available for construction and M1′ deepens tools in the same working field.",
       "story_ids": [
@@ -5099,7 +5099,7 @@
     {
       "id": "wc65:WC08",
       "module": "docs/experience/wiki-constellation.json",
-      "source_ref": "docs/positions/WIKI-CONSTELLATION-PRACTICE.md#3-decisions-made-here",
+      "source_ref": "ProjectCentral/docs/0-ground/positions/WIKI-CONSTELLATION-PRACTICE.md#3-decisions-made-here",
       "native_locator": "Product WC08; specification section 7; STORIES TI05, XA07",
       "requirement": "The real situated agent and person operate the same QL-shaped working construction over exact disclosed corpus references.",
       "story_ids": [
@@ -5160,7 +5160,7 @@
     {
       "id": "wc65:WC09",
       "module": "docs/experience/wiki-constellation.json",
-      "source_ref": "docs/positions/WIKI-CONSTELLATION-PRACTICE.md#3-decisions-made-here",
+      "source_ref": "ProjectCentral/docs/0-ground/positions/WIKI-CONSTELLATION-PRACTICE.md#3-decisions-made-here",
       "native_locator": "Product WC09; specification sections 5.1 and 8; STORIES TF01–TF07; TI05, XA07; TF06, XA17",
       "requirement": "Deliberate semantic relationship authoring is operative through its native owner while ordinary spatial composition stays reversible.",
       "story_ids": [
@@ -5195,7 +5195,7 @@
     {
       "id": "wc65:WC10",
       "module": "docs/experience/wiki-constellation.json",
-      "source_ref": "docs/positions/WIKI-CONSTELLATION-PRACTICE.md#3-decisions-made-here",
+      "source_ref": "ProjectCentral/docs/0-ground/positions/WIKI-CONSTELLATION-PRACTICE.md#3-decisions-made-here",
       "native_locator": "Product WC10; specification section 8; STORIES TF06, XA17; SH01, TO14",
       "requirement": "Constellations, QL relationships, Expressions and artifacts return to native Wiki/Library discovery with attribution and derivation.",
       "story_ids": [
@@ -5238,7 +5238,7 @@
     {
       "id": "wc65:WC11",
       "module": "docs/experience/wiki-constellation.json",
-      "source_ref": "docs/positions/WIKI-CONSTELLATION-PRACTICE.md#3-decisions-made-here",
+      "source_ref": "ProjectCentral/docs/0-ground/positions/WIKI-CONSTELLATION-PRACTICE.md#3-decisions-made-here",
       "native_locator": "Product WC11; specification sections 3 and 4; STORIES TS01–TS08; SH01, TO14",
       "requirement": "Filtering and emphasis change disclosure without altering constellation identity, source meaning or audience eligibility.",
       "story_ids": [
@@ -5306,7 +5306,7 @@
     {
       "id": "wc65:WC12",
       "module": "docs/experience/wiki-constellation.json",
-      "source_ref": "docs/positions/WIKI-CONSTELLATION-PRACTICE.md#3-decisions-made-here",
+      "source_ref": "ProjectCentral/docs/0-ground/positions/WIKI-CONSTELLATION-PRACTICE.md#3-decisions-made-here",
       "native_locator": "Product WC12; specification section 9; architecture section 6; STORIES FL06, WV16",
       "requirement": "The existing kernel resource layer provides retained revision-aware readings, in-flight work and model continuity without taking semantic ownership.",
       "story_ids": [
@@ -5379,7 +5379,7 @@
     {
       "id": "wc65:WC13",
       "module": "docs/experience/wiki-constellation.json",
-      "source_ref": "docs/positions/WIKI-CONSTELLATION-PRACTICE.md#3-decisions-made-here",
+      "source_ref": "ProjectCentral/docs/0-ground/positions/WIKI-CONSTELLATION-PRACTICE.md#3-decisions-made-here",
       "native_locator": "Product WC13; specification sections 3 and 9.1; STORIES KN01–KN03, TG01; TS01–TS08; FL06, WV16",
       "requirement": "Wiki navigation is fluent, accessible and measured, with strong search/filter/backlink/preview/history tools and quiet graph defaults.",
       "story_ids": [
@@ -5445,7 +5445,7 @@
     {
       "id": "wc65:WC14",
       "module": "docs/experience/wiki-constellation.json",
-      "source_ref": "docs/positions/WIKI-CONSTELLATION-PRACTICE.md#3-decisions-made-here",
+      "source_ref": "ProjectCentral/docs/0-ground/positions/WIKI-CONSTELLATION-PRACTICE.md#3-decisions-made-here",
       "native_locator": "Product WC14; specification section 10; CASES (Wiki and constellations: the first integrated walk); Wayfinder sections 4–7",
       "requirement": "The complete ordinary-source → constructive constellation → Expression/Palace → native Return → Wiki rediscovery loop is proven, not just isolated UI.",
       "story_ids": [
@@ -5486,7 +5486,7 @@
     {
       "id": "wc65:WC15",
       "module": "docs/experience/wiki-constellation.json",
-      "source_ref": "docs/positions/WIKI-CONSTELLATION-PRACTICE.md#3-decisions-made-here",
+      "source_ref": "ProjectCentral/docs/0-ground/positions/WIKI-CONSTELLATION-PRACTICE.md#3-decisions-made-here",
       "native_locator": "Product WC15; manual §8, §17.3–§17.4; Wayfinder sections 1, 2 and 8",
       "requirement": "Product decisions and reasons remain visible in the plan and UX entry and trace through native work, rather than being hidden in schemas.",
       "story_ids": [

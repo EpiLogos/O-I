@@ -1,4 +1,4 @@
-// The plate's controls over the device panel kit (inhabitants/sdk/panel.tsx; docs/dlw/DLW.md §16.10): the kit's dial, value box,
+// The plate's controls over the device panel kit (inhabitants/sdk/panel.tsx; ProjectCentral/docs/1-vision/dlw/DLW.md §16.10): the kit's dial, value box,
 // toggle, radio, chooser, readout, action and light are used as they are; this module adds only what an instrument's plate needs and the
 // kit does not carry, drawn on the kit's own classes so it reads as one panel:
 //   • a value sent to its owner on release (manual §16.10 "While you drag, the control shows the value you set. When you release it,

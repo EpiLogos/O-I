@@ -6,10 +6,10 @@
 // stands here in the manual's groups (stageInstrumentModel.ts), read from the frame's published chrome and pressed through its one
 // runner (components/expressions/studio/frameChrome.tsx). Ported, not recreated: each key is the frame's own control
 // (expressions-app field-studies-journeys/src/researchInstruments.tsx, journeyInstrument.tsx, shell.ts, app.ts), pressed. Drawn in the
-// device craft (frameChrome.tsx on the panel kit, docs/dlw/DLW.md §16): keys lit by the frame's reading, bounded numbers swept, a
+// device craft (frameChrome.tsx on the panel kit, ProjectCentral/docs/1-vision/dlw/DLW.md §16): keys lit by the frame's reading, bounded numbers swept, a
 // parameter the manual names that no owner carries drawn as its switch with nothing lit and its reason on the status line.
 // The plate's head is the panel kit's (InstrumentPlate.tsx), its display section the instrument's live well (inhabitants/ql/devices/
-// techneWells.tsx: the board, the ruler, the walk), and no sentence stands in it (docs/dlw/DLW.md §16.9): a frame reading that is a
+// techneWells.tsx: the board, the ruler, the walk), and no sentence stands in it (ProjectCentral/docs/1-vision/dlw/DLW.md §16.9): a frame reading that is a
 // save state is a light, one that is a line of words is a light whose words are the status bar's, a group the frame places nothing in
 // says one word with its reason on the status bar, and a parameter no owner carries draws disabled with its reason (§6 Disabled).
 //

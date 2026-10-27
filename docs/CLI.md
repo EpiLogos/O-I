@@ -130,7 +130,7 @@ These inspect or explicitly change the default ground binding. They do not initi
 
 ## `oi current-world`
 
-`oi current-world [--json]` discloses the situated six-product composition and current machine/Workcell relation. See [`CURRENT-WORLD-CONTEXT-FRAME.md`](CURRENT-WORLD-CONTEXT-FRAME.md).
+`oi current-world [--json]` discloses the situated six-product composition and current machine/Workcell relation. See [`CURRENT-WORLD-CONTEXT-FRAME.md`](../ProjectCentral/docs/3-architecture/CURRENT-WORLD-CONTEXT-FRAME.md).
 
 ## Current-main development
 
@@ -164,7 +164,7 @@ oi recognition register PACKAGE.json
 oi recognition unregister CONTRIBUTION_REF
 ```
 
-`oi adopt` inspects an existing World through the shared recognition engine and returns owner handoffs without mutation. `oi recognition *` runs, lists, registers, or unregisters World recognition contributions. See [`EXISTING-WORLD-ADOPTION.md`](EXISTING-WORLD-ADOPTION.md).
+`oi adopt` inspects an existing World through the shared recognition engine and returns owner handoffs without mutation. `oi recognition *` runs, lists, registers, or unregisters World recognition contributions. See [`EXISTING-WORLD-ADOPTION.md`](../ProjectCentral/docs/4-development/EXISTING-WORLD-ADOPTION.md).
 
 ## Omarchy Reference World host
 
@@ -174,7 +174,7 @@ oi host omarchy realise --home PATH [--accept-managed-update] [--json]
 oi host omarchy verify [--home PATH] [--json]
 ```
 
-`plan` inspects the source-pinned native host relation without mutation. `realise` materialises only O:I-owned plugin payloads; native enable/reload remains explicit. `verify` checks managed payload bytes without fabricating Omarchy/Hyprland uptake. See [`integrations/OMARCHY-HOST.md`](integrations/OMARCHY-HOST.md).
+`plan` inspects the source-pinned native host relation without mutation. `realise` materialises only O:I-owned plugin payloads; native enable/reload remains explicit. `verify` checks managed payload bytes without fabricating Omarchy/Hyprland uptake. See [`integrations/OMARCHY-HOST.md`](../ProjectCentral/docs/3-architecture/integrations/OMARCHY-HOST.md).
 
 ## Product commands
 

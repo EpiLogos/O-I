@@ -1,4 +1,4 @@
-// A designed clip: Clip view for one mode, laid out as Live 12 lays out its Clip View (docs/dlw/DLW.md §16.5; the captures in
+// A designed clip: Clip view for one mode, laid out as Live 12 lays out its Clip View (ProjectCentral/docs/1-vision/dlw/DLW.md §16.5; the captures in
 // Work/reverse-engineering/ableton-live-12.0.25/evidence/ui/clip-view, caps 01–28 and 46–47). Live's anatomy is fixed in the kit
 // (clipKit.tsx): the head across the panels, panel one with its Clip and Launch tabs, panel two with the tools in tabs, and the
 // editor in tabs beside them. A design fills those places for its mode's clip, and every place draws from one set of values and

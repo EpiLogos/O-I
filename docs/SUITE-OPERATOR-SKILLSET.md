@@ -35,7 +35,7 @@ native repository authoritative Skill source
   -> native Capability / Action / authority gate
 ```
 
-For an agent already operating in a person's harness, use the AD family of [STORIES](experience/STORIES.md) and manual [§10.11](dlw/DLW.md), registered in #65's existing source map. It carries the complete explained setup, native source adoption, hooks, reload/restart, useful first task and unsupported-target SDK route. Reading that source explicitly in a commissioned bootstrap is not a claim that normal discovery or live loading has already worked.
+For an agent already operating in a person's harness, use the AD family of [STORIES](experience/STORIES.md) and manual [§10.11](../ProjectCentral/docs/1-vision/dlw/DLW.md), registered in #65's existing source map. It carries the complete explained setup, native source adoption, hooks, reload/restart, useful first task and unsupported-target SDK route. Reading that source explicitly in a commissioned bootstrap is not a claim that normal discovery or live loading has already worked.
 
 ## Base versus Root
 

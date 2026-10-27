@@ -1,5 +1,5 @@
 // The catalogue gallery: every declared device, drawn by the shell's own device runtime in each of its views, so the DLW
-// manual (docs/dlw, Part Three) shows the real components beside their specs. Harness config, not the shell build.
+// manual (ProjectCentral/docs/1-vision/dlw, Part Three) shows the real components beside their specs. Harness config, not the shell build.
 import {defineConfig} from 'vite';
 import {fileURLToPath} from 'node:url';
 import {dirname, join, sep} from 'node:path';
@@ -10,7 +10,7 @@ const cradleSrc = join(uiRoot, '..', '..', '..', 'desktop', 'cradle', 'src');
 // The Day's Full view draws its real template page (desktop/cradle/documents).
 const cradleDocuments = join(uiRoot, '..', '..', '..', 'desktop', 'cradle', 'documents');
 // The faces (faces/vendor) are the face rig's plain-JS kit: each file runs the moment it is imported, and some take 300 ms. The
-// manual carries the gallery as one script (docs/dlw/gallery.mjs), where an import does not defer a file, so each vendored file
+// manual carries the gallery as one script (ProjectCentral/docs/1-vision/dlw/gallery.mjs), where an import does not defer a file, so each vendored file
 // becomes a function that the faces' loader (faces/vendor.ts) calls when a face needs it. The files themselves are not changed.
 const faceVendor = () => ({
   name: 'catalogue-face-vendor',

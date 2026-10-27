@@ -18,7 +18,7 @@
 // LOADING. Each file is an IIFE that sets a window global (window.CreatureKit and so on) and some of them build a whole body at load
 // (the eagle takes 300 ms), so nothing runs until a face asks for it:
 //   - in the shell's build a file is its own lazy chunk, executed when it is imported;
-//   - in the gallery's build (docs/dlw/gallery.mjs: one script for the manual) the catalogue's vite config wraps each file in
+//   - in the gallery's build (ProjectCentral/docs/1-vision/dlw/gallery.mjs: one script for the manual) the catalogue's vite config wraps each file in
 //     `export default function` (vite.config.mjs, `faceVendor`), so that it runs when this loader calls it, never at load.
 // The loader runs a file once, after the files it needs.
 type Module = {default?: () => void}

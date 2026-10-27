@@ -4,11 +4,11 @@ This file intentionally lives under `shared-field/` so the final receipt-bearing
 
 Authoritative receipt:
 
-- `docs/OI-017-ENCOUNTER-SECURITY-FINAL-RECEIPT.md`
+- `ProjectCentral/docs/5-evidence/OI-017-ENCOUNTER-SECURITY-FINAL-RECEIPT.md`
 
 Aligned semantic grammar:
 
-- `docs/ENCOUNTER-SECURITY.md`
+- `ProjectCentral/docs/3-architecture/ENCOUNTER-SECURITY.md`
 
 Final residual executable seams:
 

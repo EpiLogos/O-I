@@ -1,7 +1,7 @@
 // lane E (ticket E, 15 Oct): the plate grammar every device stands on — sections side by side at the widths their controls take, folded to
 // their titles when the row is too narrow, never a scroller; no box inside a box; controls visual first (dials, switches, rows that page) —
 // and the Technē instruments' Compact presentation: a well drawn from the owners' readings and the four macros each instrument's manual
-// entry names (docs/dlw/DLW.md §16.1, §17.2–§17.7 Presentations; docs/dlw/DEVICE-UI.md §1–§3). Rendered server-side with the production
+// entry names (ProjectCentral/docs/1-vision/dlw/DLW.md §16.1, §17.2–§17.7 Presentations; docs/dlw/DEVICE-UI.md §1–§3). Rendered server-side with the production
 // modules in memory (the loader of atlas-places-plate.test.mjs).
 import test from 'node:test'
 import assert from 'node:assert/strict'

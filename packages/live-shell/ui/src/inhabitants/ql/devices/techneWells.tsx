@@ -1,4 +1,4 @@
-// The live picture at the heart of each Technē instrument (docs/dlw/DLW.md §16.9 "The picture comes first"; §7 the display: "Draw every
+// The live picture at the heart of each Technē instrument (ProjectCentral/docs/1-vision/dlw/DLW.md §16.9 "The picture comes first"; §7 the display: "Draw every
 // mark from the device's values or readings, by the device's own law. Do not draw a likely picture. When a reading is missing, say which
 // one in the well"), one well per instrument, drawn at any size: the Compact's on the rack (techneCompacts.tsx) and the open plate's display
 // section (ProjectPlate.tsx, StageInstrumentPlate.tsx, PlacesPlate.tsx, PalacePlate.tsx). Each reads only what its owner reports:

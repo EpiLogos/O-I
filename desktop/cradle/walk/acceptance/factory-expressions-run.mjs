@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // factory-expressions-run: the real-agent portion of the Factory Expressions
-// acceptance (docs/cradle/handovers/factory-expressions-2026-09-26/
+// acceptance (ProjectCentral/docs/4-development/cradle/handovers/factory-expressions-2026-09-26/
 // EXPRESSION-DEVELOPMENT-SPEC.md §9 items 3, 4, 7, 8; contract
 // docs/contracts/EXPRESSION-ACT-MATERIAL-V1.md §5).
 //

@@ -18,7 +18,7 @@ A release remains useful after development advances. It must not be presented as
 
 Every path that installs, registers, establishes or reconciles an {O:I} composition records exactly one named installation-path label — `cli/src/modality.rs` is the canonical vocabulary, and the install descriptors in `surfaces.json` carry a `modality` field. The label is recorded in composition state at install/init time and disclosed by `oi status [--json]` and `oi doctor [--json]`. Legacy state that predates the field discloses `modality: unknown` honestly; it is never inferred retroactively.
 
-These labels are **provenance, not an installation taxonomy**. Since the Context Frame composition lock ([CONTEXT-FRAME-COMPOSITION-LOCK.md](CONTEXT-FRAME-COMPOSITION-LOCK.md), #268) they no longer name "context frames" or choose which composition you have: the composition a person adopts is selected and described through the Context Frames — one containing material frame (CF5) organising six install modes, each situated at a frame notation (`00/00`, `0/1`, `0/1/2`, `0/1/2/3`, `4.5/0`, `5/0`). A label tells you which path registered a surface; the lock tells you what the person adopted and what each product contributes.
+These labels are **provenance, not an installation taxonomy**. Since the Context Frame composition lock ([CONTEXT-FRAME-COMPOSITION-LOCK.md](../ProjectCentral/docs/3-architecture/CONTEXT-FRAME-COMPOSITION-LOCK.md), #268) they no longer name "context frames" or choose which composition you have: the composition a person adopts is selected and described through the Context Frames — one containing material frame (CF5) organising six install modes, each situated at a frame notation (`00/00`, `0/1`, `0/1/2`, `0/1/2/3`, `4.5/0`, `5/0`). A label tells you which path registered a surface; the lock tells you what the person adopted and what each product contributes.
 
 | Path label | What it is | Entry points |
 |---|---|---|
@@ -29,7 +29,7 @@ These labels are **provenance, not an installation taxonomy**. Since the Context
 | `reference-world-host` | The reference-world host relation; O:I materialises only its own plugin payloads against the pinned Omarchy contract. | `oi host omarchy plan/realise/verify` |
 | `harness-strap` | Harness admission and strapping delegated to AIKit (ai-kit #114). O:I's strap step today is the guardian-SkillSet handoff to the installed AIKit and the `oi.package/v1` native lifecycle envelope; harness admission proper is not reimplemented here. | (inside `init` / `oi skills sync`; `native_lifecycle.rs`) |
 
-Each path exists to deliver one operative-UX outcome from `docs/OI-OPERATIVE-FRONTDOOR-WAYFINDER.md`: bootstrap acceptance is UX acceptance, not just command success. The per-path UX thread is documented on the vocabulary itself (`cli/src/modality.rs`).
+Each path exists to deliver one operative-UX outcome from `ProjectCentral/docs/4-development/OI-OPERATIVE-FRONTDOOR-WAYFINDER.md`: bootstrap acceptance is UX acceptance, not just command success. The per-path UX thread is documented on the vocabulary itself (`cli/src/modality.rs`).
 
 ### Install sources are exclusive-and-declared
 

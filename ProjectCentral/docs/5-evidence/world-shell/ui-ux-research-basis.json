@@ -1,0 +1,301 @@
+{
+  "schema": "techne.new-shell.ui-ux-research-basis/v1",
+  "standing": "source-bound research and proposed placement; current rack not admitted",
+  "recorded_at": "2026-10-08T00:54:17.191562+00:00",
+  "heads": {
+    "/Users/admin/Central/worktrees/env-1/o-i": "40de7693050709577716f37a6c8d6b46fedeae82",
+    "/Users/admin/Central/Work/O-I": "126343f91eb3967bba96a30c063830b5041a0e99"
+  },
+  "sources": [
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "sha256": "39805c54322b8744a2cd45db7b56339ac4e8ea4e754cb60fd07e53c06796208d",
+      "bytes": 206884
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/workspacePreferences.ts",
+      "sha256": "d9a36594b34967dc51b20822e6b910e92b2f5e8d2235f6e947ce8219fc1d4efa",
+      "bytes": 2959
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/liveWorkspace.ts",
+      "sha256": "380bf12ca9265f0ce78010d710d4f5ab8f7a82e83d923764124ec9fc1f8cf828",
+      "bytes": 9150
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/beltPicker.ts",
+      "sha256": "8442081af1ccd85f00e1a0679a55343f84e72c7b410753c8cc03dd603c9e5b97",
+      "bytes": 1908
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/sharedSettings.ts",
+      "sha256": "40d5c8006d89da9c6563e5f26b2fc37566b6e70048393f76da4568047e80a0cc",
+      "bytes": 3386
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/kernelComposition.ts",
+      "sha256": "24e1818ad0840eec1bff3631295a690db9fa40ebdce5e8439631f31b172f3b46",
+      "bytes": 11680
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/kernelDocumentBridge.ts",
+      "sha256": "916d892d0f84b0247db814e13e139eed19e0770348b811c24cf5878a93dee52b",
+      "bytes": 25536
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/hostEditor.ts",
+      "sha256": "548aff310bf61c0670839aa38c7f36a69e9a09c276ceb3ef01cfa05b000f0844",
+      "bytes": 22991
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/model.ts",
+      "sha256": "24df98124d7e98065d9dd98fc500198317d2aef3b2dc13a123772b98a1b27f21",
+      "bytes": 35850
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/nativeParameters.ts",
+      "sha256": "b1756eaf9b2d05e753137f4a950a43e3a122ccf45506a987f72b854774a0c65c",
+      "bytes": 9729
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/inspector.ts",
+      "sha256": "bcad35e4cae3d74d35c7bbb5796c56308d4d2b6a3b6242282fef1a4865f9c9ee",
+      "bytes": 57925
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/shell.ts",
+      "sha256": "e3131f3cb7722cb3519e7dfd831a67a04f0fd9c05ba34bf9380d984d21668d8a",
+      "bytes": 12093
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/lensStudio.ts",
+      "sha256": "1f9c2db8d7721fffb647a1db325a325b151dc5625ee5ea339116bc95812f385c",
+      "bytes": 3629
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/researchInstruments.tsx",
+      "sha256": "4d5ba7bd4070148691b0ec183de8b796bfdf8e1b429c5814e4d4706a413cd266",
+      "bytes": 64226
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/nativeField.ts",
+      "sha256": "f54f92a63d664e212b40a61e952411a2c6cb1872554fb0b5f441eb6195535b0c",
+      "bytes": 44875
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/naraInstrument.tsx",
+      "sha256": "9be870612631ffda44649a0baa377ab5d46fcb41d11c775961108bad0136561d",
+      "bytes": 42678
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/sceneWorkflow.ts",
+      "sha256": "f2f98c56fb6cace607735c1b862ee7de901ba8bd3a6f37933f1dbe4f27ec1c44",
+      "bytes": 2397
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/propertyTracks.ts",
+      "sha256": "b9b874babdeac87b46a6c3413a83a9283438a440e798aa14076141e93286799e",
+      "bytes": 4337
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/automationEditor.ts",
+      "sha256": "83d0200c9b7cf444abe1464e2c597f1148a912a794fdda3e7764330c68e7c364",
+      "bytes": 6496
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/actPanel.ts",
+      "sha256": "84823c5fb1ae70b8b4707060d186030193c7981546a84a230cdcbb45dc8ac21c",
+      "bytes": 25841
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/App.tsx",
+      "sha256": "8912fdc847cf98c73bbc29ac342b16b437809434e23b4c1a3bb67b69a26ef41e",
+      "bytes": 15365
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/components/WorldBrowser.tsx",
+      "sha256": "3189815557284d17889a5c0d23a09d77f03971dd57a8204ba98f3297e7336a68",
+      "bytes": 10292
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/components/NativeWorldDetail.tsx",
+      "sha256": "3e1b7d586edaa30aa2293af3c88654276da00a8577e7602f8e00ac9f0543240a",
+      "bytes": 2950
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/components/NativeWorldDetail.css",
+      "sha256": "1907be25bda8e61b9f240d5674cef17e8d7a87c3bd4e8a3007531dd18c87a932",
+      "bytes": 1683
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/components/NativeRackEditor.tsx",
+      "sha256": "80f2e101ae2e18ce5467f97c44c5b7b7c7be3bc0590d1162152edc44c07bf9fd",
+      "bytes": 16298
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/components/NativeMaterialBrowser.tsx",
+      "sha256": "b8208f825362566225b9f861474ee0e17b7bccd2d0a95a0063b20b36d7486234",
+      "bytes": 10065
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/native/Foundation.tsx",
+      "sha256": "692acfe974f4eec31fe0d644b13268428ed259e89c87bf9654a95e3c99daba95",
+      "bytes": 6381
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/expressions-boundary/src/editor.ts",
+      "sha256": "10d8a13cbe29b57d0348095b53e3f058d500bf5db3ce2564b96a41c118a3042b",
+      "bytes": 4557
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/expressions-boundary/src/nativeRackSchema.ts",
+      "sha256": "40622071d5b0a0aa10ca66fcedc038bc9bc698b8d5ffc7bbd8512aa2f1f81f1f",
+      "bytes": 9825
+    },
+    {
+      "path": "/Users/admin/Central/Work/O-I/docs/research/ableton-live-12.0.25/ui/UI-EVIDENCE.md",
+      "sha256": "d02f8a096406059a1a38aea3b16d7da7bd0db010a006ba98658a14a9fd0aa128",
+      "bytes": 6840
+    },
+    {
+      "path": "/Users/admin/Central/Work/O-I/docs/research/ableton-live-12.0.25/evidence/ui/live-session-real.png",
+      "sha256": "4307949c0c3de6c480d4fe7c3c08e9cb72d2b64c9695bb68db1fb0bef3a73eea",
+      "bytes": 218414
+    },
+    {
+      "path": "/Users/admin/Central/Work/O-I/docs/research/ableton-live-12.0.25/evidence/ui/live-arrangement-real.png",
+      "sha256": "246526bf631ad912082821ff4d81a26b0193fd67d194f8c612199d348af2dd48",
+      "bytes": 471081
+    },
+    {
+      "path": "/Users/admin/Central/Work/O-I/docs/research/ableton-live-12.0.25/evidence/ui/live-wavetable-device-panel.png",
+      "sha256": "f1a867ab204f9b5ca37179969375c65c6d0d32cbfec1bd46977dbba74ba9e657",
+      "bytes": 454815
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/ProjectCentral/docs/0-ground/PROGRAMME.md",
+      "sha256": "8afb105aa2659b90d0c827d53e90587f4b295ad829c78f43fff8fa721dd8605c",
+      "bytes": 11654
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/ProjectCentral/docs/4-development/world-shell/CONVERGENCE.md",
+      "sha256": "d01c755d4e65c17f8eaa63ad7ed435e04f01d57d79350e26a4e638d4c4a18753",
+      "bytes": 9124
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/docs/world-shell/lanes/lane-7-app-structure/STRUCTURE.md",
+      "sha256": "4a35d9b529877b6e46ada302299393b5c84f7f1d8d37b072388b42e1ce5162cb",
+      "bytes": 33399
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/docs/world-shell/lanes/lane-3-expressions-editor/TARGET-SET.md",
+      "sha256": "714c1402f9bbf205d7f14620af36051fecfe774f49194f850d326a9da2e66d55",
+      "bytes": 47051
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/docs/world-shell/lanes/lane-5-journey-palace/TARGET-SET.md",
+      "sha256": "b9e2f560e9bae343d1e0c9cb6e96b33b8cfe037d4ca4e258c8941e5526b8f1eb",
+      "bytes": 41833
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/docs/world-shell/UI-UX-CONVERGENCE-STUDY.md",
+      "sha256": "e82e06d855dbfe805fe3311e3fbbe42a01d109ef43717b6ccc792ecf52116753",
+      "bytes": 16412
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/ProjectCentral/docs/2-design/world-shell/EXPRESSIONS-FEATURE-MAP.md",
+      "sha256": "64569b5303ba1cb6df6db0db64cb32eb874c86d0c702a604a3c058f827b05cc1",
+      "bytes": 13540
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/ProjectCentral/docs/2-design/world-shell/expressions-ui-actions.json",
+      "sha256": "3d92f35c8c75d515379d418414d79cd79ed9b310b85671931d5db82cb3c2f386",
+      "bytes": 87344
+    },
+    {
+      "path": "/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/evidence/native-device-chain-1920x1200.png",
+      "sha256": "45fae8e97caf72d9ddeb85d4ac524385cd4a8989de307e4617dd3811c13ee7d5",
+      "bytes": 1101444
+    },
+    {
+      "path": "/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/evidence/native-device-chain-700x700-before.png",
+      "sha256": "3982eee0de583dd4302ee67df4feac2a53788edd01de8da3816452603a4cb8cd",
+      "bytes": 377268
+    },
+    {
+      "path": "/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/preserved-open-draft.json",
+      "sha256": "5dc628e5f94c4d14a7481673bf6dfd02af0b75a9aec747798b695206c824a42a",
+      "bytes": 1483
+    },
+    {
+      "path": "/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/evidence/sol-8789-runtime-basis.json",
+      "sha256": "724e5086e167916e78da48dabb526c1cc5178feec23f7561a1e4b87d7ec28239",
+      "bytes": 2551
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/docs/world-shell/lanes/lane-1-canvas-graph/TARGET-SET.md",
+      "sha256": "4960817ce7c089a316557d8a8ff75c92f1e7ae6c2183d77438aedf3917e73aa2",
+      "byte_len": 24423,
+      "role": "approved functional target set"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/docs/world-shell/lanes/lane-2-timeline/TARGET-SET.md",
+      "sha256": "57e02c638cf4c5cae2ae249036041baf8673b205be53c42cec7586925854ea45",
+      "byte_len": 32161,
+      "role": "approved functional target set"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/docs/world-shell/lanes/lane-4-world-places/TARGET-SET.md",
+      "sha256": "ad3f6425c6fef711a550d2e57d2a3894313673dd9187b43af6aff0101e790e25",
+      "byte_len": 23201,
+      "role": "approved functional target set"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/ProjectCentral/docs/2-design/world-shell/NATIVE-EDITOR-STANDARD.md",
+      "sha256": "0902054e0ce56dedca41920d066acd3ebba9e419e90db1c02fef39d3348bb6b9",
+      "byte_len": 19875,
+      "role": "current study and receiving standard"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/ProjectCentral/docs/3-architecture/world-shell/KERNEL-STATE-FOUNDATION.md",
+      "sha256": "1859c20704e94243646948e6946a338e6be4fa23cd66ec5abe54c6cc08eaeef8",
+      "byte_len": 15536,
+      "role": "current study and receiving standard"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/ProjectCentral/docs/5-evidence/world-shell/EDITOR-FOUNDATION-RETURN.html",
+      "sha256": "e4f5bb6b6ffb5a27df5e4d21cc63218f40ab195e9cab73cfe8f1bfe3598446a4",
+      "byte_len": 2085854,
+      "role": "current study and receiving standard"
+    }
+  ],
+  "computer_use": {
+    "surface": "native app accessibility and screenshots; no browser/DOM helpers",
+    "ableton": "Running com.ableton.live; audio-export Save dialog left open; no new macro/device behavior replay claimed",
+    "candidate_preservation": "Original 8788 view left intact with retained input; separate candidate 8789 view opened"
+  },
+  "knowledge_route": {
+    "parent": "No result after >19m; only exact parent query terminated",
+    "worker": "No result after 3m23s; only exact worker query terminated"
+  },
+  "acquisition": [
+    {
+      "source": "Ableton UI observations/captures",
+      "classification": "interface-only",
+      "code_adopted": false
+    },
+    {
+      "source": "existing Expressions toolbelt/native composition/state/parameter owners",
+      "step": "B",
+      "new_reference_code_adopted": false
+    }
+  ],
+  "acceptance": {
+    "ux_standard_admitted": false,
+    "targets_closed": 0,
+    "canonical_file_save_accepted": false
+  },
+  "missing_source_paths": [],
+  "feature_families": 49,
+  "literal_router_actions": 207
+}

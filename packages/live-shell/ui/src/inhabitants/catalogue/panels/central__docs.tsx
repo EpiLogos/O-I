@@ -11,7 +11,7 @@
 //   sources   [{path, tier: 0–5 | null, rev?, kind?, hints?, recognised?: {provenance, standing} | false, meaning?: holds | missing |
 //             wrong-relation | duplicate | stale | constitutive-flattening | none, mappings?: [{coordinate, implementation?, state, detail?}],
 //             moved?: number, refusal?}]
-//             The tier bindings and the unbound sources are Central's (`projectcentral.self.inspect`: the six tier bindings and the
+//             The tier bindings and the unbound sources are Central's (`projectcentral.docs.inspect`: the six tier bindings and the
 //             sources no tier holds); a document's kind is a tag on its source. Recognised is Central's (`projectcentral.ground.inspect`:
 //             recognised_sources with provenance and standing; a source whose name suggests a vision, an intent, an experience or a
 //             design waits, and so does a passage kept with Remember). Meaning is AIKit's project reflection (`aikit knowledge frame`,
@@ -20,14 +20,14 @@
 //             be read carries the refusal in the owner's words and its readings stay empty.
 //   root      {root, valid, checks: [{path, valid}]}  central.doctor: the parts every Central root must hold
 //   scaffold  {project, present: [path], missing: [path]}  central.world.reproject.plan {project}: the world's ProjectCentral scaffold
-//   account   {exists}  projectcentral.self.inspect's aperture: whether the world has its account
+//   account   {exists}  projectcentral.docs.inspect's aperture: whether the world has its account
 //   ux        [{ref, source}]  the experiences the world means to give; ex [{ref, source, ux: [ref]}] the returns people wrote
 // Settings: subject (subjects: the track's world and the folders and notes in it), tier, show (all | needs), provenance, standing,
 //   refresh (manual | open), source (the source chosen), bindAs ('0'…'5' | 'ux' | 'ex').
-// Acts, each on its own key: relate (JSON {as, source}: `projectcentral.self.tier.relate`, `ux.relate`, `ex.relate`, held; only a person
+// Acts, each on its own key: relate (JSON {as, source}: `projectcentral.docs.tier.relate`, `ux.relate`, `ex.relate`, held; only a person
 //   binds a return), recognise (JSON {source, provenance, standing}: `projectcentral.ground.apply`, held; only a person recognises),
 //   readNow (every reading again; Meaning's `aikit knowledge frame` has no kernel op yet), openSource (the source in the Document),
-//   ensure (`projectcentral.self.ensure`), reproject (`central.world.reproject.apply`), initRoot (`central.init`). Next is the hand's: it
+//   ensure (`projectcentral.docs.ensure`), reproject (`central.world.reproject.apply`), initRoot (`central.init`). Next is the hand's: it
 //   points the tier and Relate at the next tier that has no source. Each act returns a receipt.
 // A key the owner does not report is absent: its control draws "—", and the picture names the missing reading.
 import {useState, type ReactNode} from 'react'
@@ -137,7 +137,7 @@ function partsOf(v: V): {root?: Part[]; world?: Part[]; account?: Part} {
   return {
     root: root && Array.isArray(root.checks) ? root.checks.flatMap(c => { const r = rec(c); return r && txt(r.path) ? [{path: r.path as string, present: r.valid === true, where: 'root' as const}] : [] }) : undefined,
     world: scaffold ? [...strs(scaffold.present).map(path => ({path, present: true, where: 'world' as const})), ...strs(scaffold.missing).map(path => ({path, present: false, where: 'world' as const}))] : undefined,
-    account: account && typeof account.exists === 'boolean' ? {path: 'ProjectCentral/self', present: account.exists, where: 'account'} : undefined,
+    account: account && typeof account.exists === 'boolean' ? {path: 'ProjectCentral/docs', present: account.exists, where: 'account'} : undefined,
   }
 }
 const missingOf = (v: V) => { const {root, world, account} = partsOf(v); return root || world || account ? [...(root ?? []), ...(world ?? []), ...(account ? [account] : [])].filter(x => !x.present).length : undefined }

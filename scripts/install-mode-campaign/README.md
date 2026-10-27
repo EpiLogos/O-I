@@ -1,7 +1,7 @@
 # Install-mode acceptance campaign kit
 
 Reusable fixtures for the Context Frame acceptance campaign
-(`docs/CONTEXT-FRAME-ACCEPTANCE-CAMPAIGN.md`, parent #268): the
+(`ProjectCentral/docs/3-architecture/CONTEXT-FRAME-ACCEPTANCE-CAMPAIGN.md`, parent #268): the
 deterministic container ladder and the physical-machine tooling. These
 scripts prove each install mode's own promise — fresh install, promised
 capability, absence of unselected dependencies, restart, change, update,

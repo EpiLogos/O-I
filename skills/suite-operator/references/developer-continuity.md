@@ -85,7 +85,7 @@ missing chat tooling is not a compiler-transfer project. Keep essential missing
 code/checks pending, but continue unrelated implementable work.
 
 Inspect the actual declared native install/build/test operations in
-`docs/INSTALL.md`, `docs/CONVERGENCE-AND-ACCEPTANCE.md` and current product
+`docs/INSTALL.md`, `ProjectCentral/docs/4-development/CONVERGENCE-AND-ACCEPTANCE.md` and current product
 descriptors. Prepare one coherent source cut and one runnable local handoff,
 including actual prerequisites, pending local evidence and a recovery route.
 Do not call missing production code a local-test obligation. Isolate target/build

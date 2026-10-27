@@ -51,7 +51,7 @@ join is desired integration/acceptance, not a claim of observed delivery.
 | Hosted rows → Explore / renderer | `shared-field/spacetimedb.mjs`, `expression-presentation.mjs`, desktop consumer | Subscription/reconnect/stale reading, semantic identity and renderer/fallback; installed ordinary episode. |
 
 S1–S9 are indexed in [relations.json](relations.json). Consume the
-[Epi fidelity route](../EXPRESSION-WORLD-SUBSTRATE-WAYFINDER.md) for the
+[Epi fidelity route](../../ProjectCentral/docs/4-development/EXPRESSION-WORLD-SUBSTRATE-WAYFINDER.md) for the
 coordinate-bound world and Personal Pratibimba. A shared coordinate locus,
 private person, current occasion and particular Expression are different
 subjects. This diagram makes no new numerical or branch-domain determination.

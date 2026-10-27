@@ -2,7 +2,7 @@
 // instrument … carries its full native controls on the Device side"; the mockup's M0 plate, world-shell-mockup.html:1456 — Whole (depth,
 // budget), View (list · tree · graph · form, kinds, ghosts), Source; manual §17.3's grammar, Whole: "Reach, Filters, Display, Groups").
 // Before, M0′ stood as its families' plate: three boxed sub-devices (the globe, Graph tools, Earth ⇄ Graph) and the deep-time clock, each
-// its own plate inside a column. Here their parameters are the plate's own sections, drawn in the device craft (docs/dlw/DLW.md §16;
+// its own plate inside a column. Here their parameters are the plate's own sections, drawn in the device craft (ProjectCentral/docs/1-vision/dlw/DLW.md §16;
 // the panel kit, inhabitants/sdk/panel.tsx, and frame/devices/plateControls.tsx): the view and the scope as switches, the graph's reach
 // and what it draws as switches, its four forces as dials, the clock as a value box with its keys.
 //

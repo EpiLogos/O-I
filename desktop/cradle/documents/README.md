@@ -3,7 +3,7 @@
 The two owner-supplied portable document forms, preserved byte-exact as
 received (2026-09-10). They are real source fixtures, not templates the
 desktop copies from: the blank tab opens these actual files through the
-existing file/source route (`docs/OI-DESKTOP-CONTINUOUS-WORK-WAYFINDER.md`
+existing file/source route (`ProjectCentral/docs/4-development/OI-DESKTOP-CONTINUOUS-WORK-WAYFINDER.md`
 §2). Neither has been "installed" anywhere else by this intake.
 
 | File | Form | Bytes | SHA-256 |

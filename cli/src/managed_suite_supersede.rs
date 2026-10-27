@@ -3,7 +3,7 @@
 //
 // `oi where` — and everything that locates a product through it: the cradle
 // kernel, `oi aikit`, world heads — answers from the one active suite receipt
-// (docs/DEVELOPMENT-FIELD-PROTOCOL-WAYFINDER.md §9.4). A managed update that
+// (ProjectCentral/docs/4-development/DEVELOPMENT-FIELD-PROTOCOL-WAYFINDER.md §9.4). A managed update that
 // built, linked and receipted a product the suite receipt pins would otherwise
 // be shadowed: installed, yet never what the suite resolves. So the update
 // activates a successor receipt. It reuses every other product exactly as

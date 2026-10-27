@@ -1,6 +1,6 @@
 # One activity, human and agent readings
 
-**Scope:** application profile of the existing UX record in `docs/DEVELOPMENT-FIELD-PROTOCOL-WAYFINDER.md` §4.1. This document completes the agent-practice aperture now commissioned by the owner. It does not mint a new runtime object, a new Method artifact, or a second capability registry. Central retains the source convention; AIKit owns operative interpretation, retrieval and practice resolution; native owners retain capabilities and effects.
+**Scope:** application profile of the existing UX record in `ProjectCentral/docs/4-development/DEVELOPMENT-FIELD-PROTOCOL-WAYFINDER.md` §4.1. This document completes the agent-practice aperture now commissioned by the owner. It does not mint a new runtime object, a new Method artifact, or a second capability registry. Central retains the source convention; AIKit owns operative interpretation, retrieval and practice resolution; native owners retain capabilities and effects.
 
 ## 1. Preserve the existing story record
 

@@ -8,7 +8,9 @@ set -e
 cd "$(git rev-parse --show-toplevel)"
 missing=0
 for p in $(
-  grep -ohE '(docs|skills|scripts|packages|desktop)/[A-Za-z0-9_./-]+' \
+  # ProjectCentral/docs/<tier>/… is matched whole (O-I #727), so its inner
+  # docs/… is never checked at the root.
+  grep -ohE '(ProjectCentral|docs|skills|scripts|packages|desktop)/[A-Za-z0-9_./-]+' \
     docs/OI-DESKTOP-CRADLE-REBUILD-WAYFINDER.md \
     skills/cradle-execution/SKILL.md \
     .superpowers/sdd/cradle-rebuild/ORCHESTRATOR-PROMPT.md 2>/dev/null | sort -u

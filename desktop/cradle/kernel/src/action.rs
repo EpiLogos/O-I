@@ -60,8 +60,10 @@ pub fn central_action(action: &str) -> bool {
 
 /// The person's own presses that reach Central as Actions (T-COVERAGE §1.1): closing a NOW; the Day's settings, its moves'
 /// records, its rollover and its close-out carry; accepting a returned source; making, keeping and removing an agent and a
-/// group; a world's relations; a document's own edit; a workspace's Accept (init, adopt, migrate) and its Self's Ensure and Relate
-/// (manual §18.1 Ground, "accept it there"), its UX and EX relations; the Machine's Apply, Adopt and Recover; Ground hygiene's
+/// group; a world's relations; a document's own edit; a workspace's Accept (init, adopt, migrate) and its Docs' Ensure and Relate
+/// (manual §18.1 Ground, "accept it there"; §18.5 Docs), its UX and EX relations — Central's `projectcentral.docs.*` ids (its
+/// first `projectcentral.self.*` ids still answer there as deprecated aliases; the kernel presses the docs ids); the Machine's
+/// Apply, Adopt and Recover; Ground hygiene's
 /// tenders (init-root, reproject-scaffold, recognise-source). Central admits these on the person's native authority, so the kernel carries the host's token
 /// for exactly these (flow.rs `for_person`: read in the native process, never supplied by the desk), as it does for Open today
 /// and a page's Launch. Every other invocation goes without it, and Central refuses an act it does not grant in its own words.
@@ -83,11 +85,11 @@ pub const PERSON_ACTS: [&str; 28] = [
     "projectcentral.init",
     "projectcentral.adopt",
     "projectcentral.migrate",
-    "projectcentral.self.ensure",
-    "projectcentral.self.tier.relate",
-    "projectcentral.self.retain-tier",
-    "projectcentral.self.ux.relate",
-    "projectcentral.self.ex.relate",
+    "projectcentral.docs.ensure",
+    "projectcentral.docs.tier.relate",
+    "projectcentral.docs.retain-tier",
+    "projectcentral.docs.ux.relate",
+    "projectcentral.docs.ex.relate",
     "machine.apply",
     "machine.adopt-current",
     "central.recover",
@@ -485,16 +487,16 @@ mod tests {
             "projectcentral.init",
             "projectcentral.adopt",
             "projectcentral.migrate",
-            "projectcentral.self.ensure",
-            "projectcentral.self.tier.relate",
-            "projectcentral.self.retain-tier",
+            "projectcentral.docs.ensure",
+            "projectcentral.docs.tier.relate",
+            "projectcentral.docs.retain-tier",
         ] {
             assert!(person_act(id), "{id} is the person's press");
         }
-        // The Self's UX and EX, the Machine's Apply, Adopt and Recover, and Ground hygiene's tenders.
+        // The Docs' UX and EX, the Machine's Apply, Adopt and Recover, and Ground hygiene's tenders.
         for id in [
-            "projectcentral.self.ux.relate",
-            "projectcentral.self.ex.relate",
+            "projectcentral.docs.ux.relate",
+            "projectcentral.docs.ex.relate",
             "machine.apply",
             "machine.adopt-current",
             "central.recover",
@@ -507,7 +509,7 @@ mod tests {
         // Their previews, plans and readings carry nothing.
         for id in [
             "projectcentral.adopt.preview",
-            "projectcentral.self.inspect",
+            "projectcentral.docs.inspect",
             "machine.plan",
             "machine.verify",
             "central.recovery.plan",

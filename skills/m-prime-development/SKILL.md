@@ -27,7 +27,7 @@ O-I packages/live-shell/ui/src/inhabitants/sdk/   the kit (DEVICE-SDK.md is its 
 O-I packages/live-shell/ui/src/inhabitants/       the neutral door + families
 O-I suite/capability-matrix.json + suite/product-capabilities.json  the matrices
 O-I gates/                   the definition of landed (gates/run.mjs)
-O-I docs/research/glass-bead-game/   the figure — 06-THE-PRAXIS.md is the
+O-I ProjectCentral/docs/5-evidence/research/glass-bead-game/   the figure — 06-THE-PRAXIS.md is the
                                      praxis layer (the domain's intended use
                                      as spec and verification layer); 01–05
                                      the source study the figure stands on

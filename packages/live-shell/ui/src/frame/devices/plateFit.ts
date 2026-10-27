@@ -1,5 +1,5 @@
 // A plate's sections fit the device row by the plate's own fold (InstrumentPlate.tsx; manual §10.4 "A device can also fold down to its
-// title. Click the title to open it again"; docs/dlw/DLW.md §16.9 "Nothing scrolls … When a panel holds more than fits, it gets
+// title. Click the title to open it again"; ProjectCentral/docs/1-vision/dlw/DLW.md §16.9 "Nothing scrolls … When a panel holds more than fits, it gets
 // pages"; owner, 15 Oct: "no scrollers"). Moved whole from components/expressions/studio/plateFit.ts and studioFit.ts (lane Y), where
 // the Studio and the stage plates measured their rows, so that every plate fits the same way: the row is measured where it stands,
 // the sections that may fold fold to their titles from the given order until the row is within its width, and the person's own folds

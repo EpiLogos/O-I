@@ -182,7 +182,7 @@ Contact and hosted-state phases already carry bounded semantics. Reprove the act
 
 ## Source-locked research record
 
-Bring `docs/ENCOUNTER-SECURITY.md` and its source/version rationale into exact agreement with what is actually adopted, adapted, rejected or deferred. Current-provider/source assertions must come from primary sources and executable provider evidence where applicable.
+Bring `ProjectCentral/docs/3-architecture/ENCOUNTER-SECURITY.md` and its source/version rationale into exact agreement with what is actually adopted, adapted, rejected or deferred. Current-provider/source assertions must come from primary sources and executable provider evidence where applicable.
 
 This is a closure document, not a vendor catalogue. Do not make OpenFGA/SpiceDB/Cedar/OPA/Biscuit/Sigstore/TUF/Wasmtime/etc. constitutional merely because #31 asked that they be researched.
 
@@ -239,7 +239,7 @@ Do not reopen #43 unless live evidence shows one of its four completed protocol 
 
 If #31 closes, commit a durable final receipt such as:
 
-`docs/OI-017-ENCOUNTER-SECURITY-FINAL-RECEIPT.md`
+`ProjectCentral/docs/5-evidence/OI-017-ENCOUNTER-SECURITY-FINAL-RECEIPT.md`
 
 containing:
 

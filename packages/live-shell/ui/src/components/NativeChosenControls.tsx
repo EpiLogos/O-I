@@ -1,5 +1,5 @@
 // Your controls (the frame's toolbelt, Journey.shared.toolbelt, through the boundary's chosen controls): the parameters the person chose,
-// each a dial of the device panel kit (inhabitants/sdk/panel.tsx Dial; docs/dlw/DLW.md §16.10) standing in the section that holds them
+// each a dial of the device panel kit (inhabitants/sdk/panel.tsx Dial; ProjectCentral/docs/1-vision/dlw/DLW.md §16.10) standing in the section that holds them
 // — never a card, never a box of its own. The section never scrolls: the dials page, the pages in the row's head (manual §16.9 "When a
 // panel holds more than fits, it gets pages in its head"), as many to a page as the section's height and width hold. A change goes to the
 // owner when the hand lets go (§5.2): the dial shows the value you set while you drag, then the value waits in italics until the owner's

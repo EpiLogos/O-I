@@ -1,4 +1,4 @@
-// The designed clips: Clip view for each mode (docs/dlw/DLW.md §16.5, and each mode's "tracks and clips" section). Each is its own
+// The designed clips: Clip view for each mode (ProjectCentral/docs/1-vision/dlw/DLW.md §16.5, and each mode's "tracks and clips" section). Each is its own
 // module, loaded when the gallery asks for it, so one clip that does not build never stops another from drawing.
 import type {ClipMode, DesignedClip} from './design'
 

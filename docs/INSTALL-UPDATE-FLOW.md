@@ -80,7 +80,7 @@ answer to "what is installed here" — not `ls ~/.local/bin`.
 
 `oi where` — and through it the cradle kernel, `oi aikit` and the world heads
 — resolves a suite product from the one active suite receipt
-(`receipts/active-suite.json`, [Development Field §9.4](DEVELOPMENT-FIELD-PROTOCOL-WAYFINDER.md)),
+(`receipts/active-suite.json`, [Development Field §9.4](../ProjectCentral/docs/4-development/DEVELOPMENT-FIELD-PROTOCOL-WAYFINDER.md)),
 not from `bin/<exe>`. A managed update that moved a product the suite pins
 would otherwise be shadowed: built, linked and receipted, yet never what the
 suite resolves. On 14 October 2026 this left the installed desktop resolving a

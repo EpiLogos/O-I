@@ -55,7 +55,7 @@
     "requires_dsh": false,
     "ql_role": "optional source-qualified domain types, interpretation, roles and lawful conduct over native Factory contracts",
     "dsh_role": "retain actual native SessionEvent/trajectory/composition evidence when the execution uses DSH; do not fabricate or require it for generic operation",
-    "ui_source": "docs/dlw/DLW.md",
+    "ui_source": "ProjectCentral/docs/1-vision/dlw/DLW.md",
     "correlation": ["authored source revision/digest and unit locator", "compiled WorkflowUnit and Run/frontier", "ExecutionDisposition and actual attempt", "Actuation Activity and native session/trace/tool event", "artifact/evidence/Return", "exact original source basis"],
     "source_is_runtime_telemetry": false,
     "live_execution_claimed": false

@@ -294,9 +294,9 @@ export const THINGS_READ_WIRING: DesignWiring = pageWiring(THINGS_DESIGN, false,
 /** Why a write of a world's ground stands: Central takes it, but it writes the person's ground and is not among the person's own presses the
  * kernel carries through invoke_action (action.rs PERSON_ACTS), so nothing writes it from here. */
 const NOT_PERSON_ACT = 'it is not among the person\'s own presses the kernel carries (desktop/cradle/kernel/src/action.rs PERSON_ACTS), so it waits for the kernel to carry it.'
-/** Binding a source as an intended experience or a return: Central's projectcentral.self.ux.relate {ux_ref} and ex.relate {ex_ref, actor_kind,
+/** Binding a source as an intended experience or a return: Central's projectcentral.docs.ux.relate {ux_ref} and ex.relate {ex_ref, actor_kind,
  * ux_refs} take a reference the design does not name, and neither is among the person's own presses the kernel carries. */
-export const RELATE_UX_EX_REFUSED = `Relate as an intended experience or a return: projectcentral.self.ux.relate {ux_ref, source_ref} and ex.relate {ex_ref, source_ref, actor_kind, ux_refs} write the world's self — ${NOT_PERSON_ACT}`
+export const RELATE_UX_EX_REFUSED = `Relate as an intended experience or a return: projectcentral.docs.ux.relate {ux_ref, source_ref} and ex.relate {ex_ref, source_ref, actor_kind, ux_refs} write the world's self — ${NOT_PERSON_ACT}`
 const NO_WORLD_GROUND = 'no world\'s ground is read here (a workspace of your root has no ProjectCentral; Ground hygiene reads the root\'s).'
 const NO_THOUGHT_HAND = 'Contemplate: no Flow is reached with its AIKit Flow ref here, so neither the preflight nor a run can be asked (`action:contemplate-flow`).'
 const BOOK_KEEPS = 'The workspace book keeps every part of the context, for every mode, at every change (desktop/cradle/src/workspace/store.ts): it has no such setting.'
@@ -314,15 +314,15 @@ export const WORKSPACE_WIRING: DesignWiring = {
     widgets: 'the widgets open on the rail', visited: 'when the book last stood in it (lastVisitedAt)',
     trees: 'each mode\'s pane tree (splits with weights, tab groups with their tabs and pins)', sets: 'the newest named set of each mode',
     pc: 'what Central would make of the world\'s folder (projectcentral.inspect {project}; pageGround.ts pcValue)',
-    self: 'the world\'s self (projectcentral.self.inspect {project}; selfValue)', pcPlan: 'the preview asked last (projectcentral.adopt.preview | migrate.preview; planValue)',
+    self: 'the world\'s self (projectcentral.docs.inspect {project}; selfValue)', pcPlan: 'the preview asked last (projectcentral.adopt.preview | migrate.preview; planValue)',
   },
   writes: {
     pcPreview: 'Central\'s preview of the treatment chosen (projectcentral.adopt.preview | migrate.preview {project, source}, through invoke_action): a reading, nothing changes',
     mode: 'the book\'s own mode switch (continuity/workspace.tsx setMode → store.ts switchMode): the open mode turns',
     name: 'the book\'s own rename of the current workspace (store.ts rename)',
     pcAccept: 'the person\'s Accept: projectcentral.init {project, project_id}, adopt or migrate {project, project_id, source} as previewed (invoke_action, action.rs PERSON_ACTS)',
-    selfEnsure: 'the person\'s Ensure: projectcentral.self.ensure {project} (invoke_action, action.rs PERSON_ACTS)',
-    selfRelate: 'the person\'s Relate of a tier: projectcentral.self.tier.relate {project, source_ref, tier, acceptance human-accepted} (invoke_action, action.rs PERSON_ACTS)',
+    selfEnsure: 'the person\'s Ensure: projectcentral.docs.ensure {project} (invoke_action, action.rs PERSON_ACTS)',
+    selfRelate: 'the person\'s Relate of a tier: projectcentral.docs.tier.relate {project, source_ref, tier, acceptance human-accepted} (invoke_action, action.rs PERSON_ACTS)',
   },
   local: {clip: 'the clip this device holds selected',
     // The Ground and Self pages' settings (D-package; manual §18.1 Ground): the person's choices, held until a preview or an accept asks.
@@ -340,7 +340,7 @@ export const WORKSPACE_WIRING: DesignWiring = {
   absent: {
     pc: 'Not read: the workspace names no project world (projectcentral.inspect reads one project), or Central has not answered.',
     pcPlan: 'Not asked yet: press Preview (projectcentral.adopt.preview or migrate.preview); Central has no preview of projectcentral.init.',
-    self: 'Not read: the workspace names no project world (projectcentral.self.inspect reads one project), or Central has not answered.',
+    self: 'Not read: the workspace names no project world (projectcentral.docs.inspect reads one project), or Central has not answered.',
     kind: BOOK_KEEPS, place: 'No owner places a workspace on the planet yet.', keepPanes: BOOK_KEEPS, keepInstruments: BOOK_KEEPS, keepWidgets: BOOK_KEEPS, keepSets: BOOK_KEEPS,
     rememberIn: BOOK_KEEPS, onLaunch: BOOK_KEEPS, openIn: BOOK_KEEPS, keepWhen: BOOK_KEEPS, sendToDay: 'No route sends a workspace\'s work to the Day yet.',
     dirty: 'No owner reports which of a workspace\'s documents hold edits the owner does not.',

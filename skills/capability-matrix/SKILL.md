@@ -10,7 +10,7 @@ Use this Skill when work adds, changes, or audits a capability claim in the ONE 
 ## Where things live
 
 ```text
-O-I docs/CAPABILITY-MATRIX.md          — the human-readable matrix (O:I holds the top-end matrix)
+O-I ProjectCentral/docs/2-design/CAPABILITY-MATRIX.md          — the human-readable matrix (O:I holds the top-end matrix)
 O-I suite/capability-matrix.json       — machine-readable envelope (epilogos-recovery/capability-matrix/v1)
 Work/github-recovery-mirror/ledger/    — the recovery ledger the matrix is assembled from:
   capability-entries/  claims (capability-entry/v1 records)

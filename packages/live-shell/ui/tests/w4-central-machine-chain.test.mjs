@@ -9,7 +9,7 @@
 // - CODE-DERIVED: what no real answer on this machine holds, built from Central's own structs — a machine plan with entries
 //   (ctrl/src/machine.rs MachinePlanEntry: connector is {id, version}), and a self reading with bound tiers and unbound sources
 //   (ctrl/src/development_field.rs TierReading.sources, UnboundSelfSource {ref, path, standing, provenance}); no world on this machine has
-//   a ProjectCentral/self, and the current role declares no requirement.
+//   a ProjectCentral/docs (Central's documentation aperture, first named ProjectCentral/self), and the current role declares no requirement.
 // - SCRIPTED: the catalogue designs rendered through the runtime's host (deviceHost.HostedDevice) to static markup; the chain's placement
 //   as a pure function; a kernel behind the bridge's fetch recording each op. No owner state is written: every write goes to a recording
 //   hand or the fake kernel.
@@ -271,8 +271,8 @@ test('the family declares Machine: an effect on a world\'s chain after Ground hy
 // ── the Workspace's ground presses, and the self as Central gives it ─────────────────────────────────────────────────────────────────
 
 const SELF = {schema: 'central.development-field-reading/v1', scope_ref: 'project:Archetypal-Earth',
-  self_aperture: {path: 'ProjectCentral/self', status: 'present', exists: true, issues: [], linked_sources: [],
-    unbound_sources: [{ref: 'central:source:project:Archetypal-Earth:ProjectCentral/self/walks.md', path: 'ProjectCentral/self/walks.md', revision: 'r1', standing: 'unresolved', provenance: 'unresolved', authority_from_location: false}]},
+  self_aperture: {path: 'ProjectCentral/docs', status: 'present', exists: true, issues: [], linked_sources: [],
+    unbound_sources: [{ref: 'central:source:project:Archetypal-Earth:ProjectCentral/docs/walks.md', path: 'ProjectCentral/docs/walks.md', revision: 'r1', standing: 'unresolved', provenance: 'unresolved', authority_from_location: false}]},
   tier_bindings: [{tier: 0, semantic_office: 'ground', canonical_label: 'Earth', canonical_path: null,
     sources: [{ref: 'central:source:project:Archetypal-Earth:docs/VISION.md', path: 'docs/VISION.md', roles: [], provenance: 'human-authored', standing: 'design-commitment', treatment: 'retain-native-in-place', revision: 'r2', agent_retrieval_allowed: true, retained_native: true}, null]}],
   ux: [{ux_ref: 'ux:walks', source: {ref: 'central:source:project:Archetypal-Earth:docs/UX.md', path: 'docs/UX.md'}, intended_experience: true, implementation_fact: false, test_result: false, agent_inference: false, ex_human_return: false}],
@@ -285,7 +285,7 @@ test('CODE-DERIVED — the self reads as Central gives it: a tier\'s resolved so
     tiers: [{tier: 0, label: 'Earth', source: 'central:source:project:Archetypal-Earth:docs/VISION.md'}],
     ux: [{ref: 'ux:walks', source: 'central:source:project:Archetypal-Earth:docs/UX.md'}],
     ex: [{ref: 'ex:1', source: 'central:source:project:Archetypal-Earth:returns/1.md', ux: ['ux:walks']}],
-    unbound: [{source: 'central:source:project:Archetypal-Earth:ProjectCentral/self/walks.md', hints: ['ProjectCentral/self/walks.md', 'standing unresolved', 'provenance unresolved']}],
+    unbound: [{source: 'central:source:project:Archetypal-Earth:ProjectCentral/docs/walks.md', hints: ['ProjectCentral/docs/walks.md', 'standing unresolved', 'provenance unresolved']}],
   })
   assert.deepEqual(JSON.parse(ground.selfValue(W2.selfInspectOI.data)).unbound, [], 'REAL: O-I has no self, nothing unbound')
 })
@@ -323,10 +323,10 @@ test('the presses carry exactly Central\'s inputs through invoke_action: init/ad
   const owner = kernel({ok: true})
   const bridge = {kind: 'bridge', url: 'http://owner.ground'}
   await withKernel(owner, () => writes.centralWrite(bridge, ground.PC_ACCEPT_ACTION.adopt, ground.acceptInput('O-I', 'adopt', 'wiki.json')))
-  await withKernel(owner, () => writes.centralWrite(bridge, ground.PC_SELF_ENSURE_ACTION, {project: 'O-I'}))
+  await withKernel(owner, () => writes.centralWrite(bridge, ground.PC_DOCS_ENSURE_ACTION, {project: 'O-I'}))
   assert.deepEqual(owner.sent.map(op => [op.op, op.invocation.action, op.invocation.input]), [
     ['invoke_action', 'projectcentral.adopt', {project: 'O-I', project_id: 'O-I', source: 'wiki.json'}],
-    ['invoke_action', 'projectcentral.self.ensure', {project: 'O-I'}]])
+    ['invoke_action', 'projectcentral.docs.ensure', {project: 'O-I'}]])
 })
 
 test('Ground hygiene\'s person tenders name the route as the kernel stands: invoke_action carries the person only for PERSON_ACTS', () => {

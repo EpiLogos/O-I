@@ -1,7 +1,7 @@
 # Expression act and reusable material — shared binding contract (v1)
 
 **Standing:** implementation contract for the Factory Expressions commission
-(`docs/cradle/handovers/factory-expressions-2026-09-26/EXPRESSION-DEVELOPMENT-SPEC.md`).
+(`ProjectCentral/docs/4-development/cradle/handovers/factory-expressions-2026-09-26/EXPRESSION-DEVELOPMENT-SPEC.md`).
 Owned by the integration lead; lanes A/B/C implement against it. The Rust types
 in `desktop/cradle/kernel/src/expression*.rs` become the contract of record once
 landed; this file fixes the shapes they must take.

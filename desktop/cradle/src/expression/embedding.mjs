@@ -1,6 +1,6 @@
 /**
  * The bounded live-embedding budget (ES2 anti-recursion law,
- * docs/EXPRESSION-WORLD-SUBSTRATE-WAYFINDER.md §4.1, §17 ES2):
+ * ProjectCentral/docs/4-development/EXPRESSION-WORLD-SUBSTRATE-WAYFINDER.md §4.1, §17 ES2):
  *
  *   - identity recursion is allowed and visible;
  *   - active renderer recursion is depth/budget bounded;

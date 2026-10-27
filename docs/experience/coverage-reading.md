@@ -1,7 +1,7 @@
 # Executable frontend coverage reading (generated)
 
 Generated from declared source and committed walk receipts — planning-only, not acceptance.
-Bindings: `desktop/cradle/walk/scenario-bindings.json` · reading digest `sha256:a94f84799…`
+Bindings: `desktop/cradle/walk/scenario-bindings.json` · reading digest `sha256:be4a60f01…`
 
 | obligation | grades required | earned (automation) | remaining | branches covered | executable tests | latest receipt |
 |---|---|---|---|---|---|---|

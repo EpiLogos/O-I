@@ -1,5 +1,5 @@
 /* The frame's controls on a device (frameChrome.tsx) in the device craft: the panel kit's toggle, action, chooser, value box and dial
-   (inhabitants/sdk/panel.css; docs/dlw/DLW.md §16.10) — keys flow in rows at the section's width, a choice or a value stands under its
+   (inhabitants/sdk/panel.css; ProjectCentral/docs/1-vision/dlw/DLW.md §16.10) — keys flow in rows at the section's width, a choice or a value stands under its
    small name, a reading is a mono line. No box of their own, no scroller. Shell and SDK tokens only. */
 /* Keys flow down a column and then across (Live's device widens; it never scrolls and never cuts a control off): six rows of 16 px,
    a choice, a value or a swept number two rows, a reading one; the section takes the columns its run needs, and the plate folds what

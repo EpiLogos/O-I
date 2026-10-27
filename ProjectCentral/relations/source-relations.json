@@ -1,0 +1,3629 @@
+{
+  "schema": "central.project.ground-relations/v1",
+  "project_id": "O-I",
+  "relations": [
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/0-ground/CORE-PRIMITIVE-FIELD.md",
+      "path": "ProjectCentral/docs/0-ground/CORE-PRIMITIVE-FIELD.md",
+      "provenance": "human-adopted",
+      "standing": "authored-human-position",
+      "roles": [
+        "document-tier-0",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139739
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/0-ground/COVENANT-MARK-AND-SITUATION.md",
+      "path": "ProjectCentral/docs/0-ground/COVENANT-MARK-AND-SITUATION.md",
+      "provenance": "human-adopted",
+      "standing": "authored-human-position",
+      "roles": [
+        "document-tier-0",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139739
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/0-ground/COVENANT-SITUATION-SCRIPT.md",
+      "path": "ProjectCentral/docs/0-ground/COVENANT-SITUATION-SCRIPT.md",
+      "provenance": "human-adopted",
+      "standing": "authored-human-position",
+      "roles": [
+        "document-tier-0",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139739
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/0-ground/COVENANT-SOURCE-MARK-FIGURE.md",
+      "path": "ProjectCentral/docs/0-ground/COVENANT-SOURCE-MARK-FIGURE.md",
+      "provenance": "human-adopted",
+      "standing": "authored-human-position",
+      "roles": [
+        "document-tier-0",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139739
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/0-ground/EPISTEMIC-CULTIVATION.md",
+      "path": "ProjectCentral/docs/0-ground/EPISTEMIC-CULTIVATION.md",
+      "provenance": "human-adopted",
+      "standing": "authored-human-position",
+      "roles": [
+        "document-tier-0",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139739
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/0-ground/HUMAN-AGENT-COVENANT.md",
+      "path": "ProjectCentral/docs/0-ground/HUMAN-AGENT-COVENANT.md",
+      "provenance": "human-adopted",
+      "standing": "authored-human-position",
+      "roles": [
+        "document-tier-0",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139740
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/0-ground/OBJECTIVE-CO-INTERNALITY.md",
+      "path": "ProjectCentral/docs/0-ground/OBJECTIVE-CO-INTERNALITY.md",
+      "provenance": "human-adopted",
+      "standing": "authored-human-position",
+      "roles": [
+        "document-tier-0",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139740
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/0-ground/PRIMITIVES.md",
+      "path": "ProjectCentral/docs/0-ground/PRIMITIVES.md",
+      "provenance": "human-adopted",
+      "standing": "authored-human-position",
+      "roles": [
+        "document-tier-0",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139740
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/0-ground/PROGRAMME.md",
+      "path": "ProjectCentral/docs/0-ground/PROGRAMME.md",
+      "provenance": "human-adopted",
+      "standing": "authored-human-position",
+      "roles": [
+        "document-tier-0",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139740
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/0-ground/positions/FOUNDING-POSITIONS.md",
+      "path": "ProjectCentral/docs/0-ground/positions/FOUNDING-POSITIONS.md",
+      "provenance": "human-adopted",
+      "standing": "authored-human-position",
+      "roles": [
+        "document-tier-0",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139740
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/0-ground/positions/PRAXIS-AND-OPERATIVE-LANGUAGE.md",
+      "path": "ProjectCentral/docs/0-ground/positions/PRAXIS-AND-OPERATIVE-LANGUAGE.md",
+      "provenance": "human-adopted",
+      "standing": "authored-human-position",
+      "roles": [
+        "document-tier-0",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139740
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/0-ground/positions/PUBLIC-VOICE-WORKING.md",
+      "path": "ProjectCentral/docs/0-ground/positions/PUBLIC-VOICE-WORKING.md",
+      "provenance": "human-adopted",
+      "standing": "authored-human-position",
+      "roles": [
+        "document-tier-0",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139740
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/0-ground/positions/WIKI-CONSTELLATION-PRACTICE.md",
+      "path": "ProjectCentral/docs/0-ground/positions/WIKI-CONSTELLATION-PRACTICE.md",
+      "provenance": "human-adopted",
+      "standing": "authored-human-position",
+      "roles": [
+        "document-tier-0",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139740
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/1-vision/VISION.md",
+      "path": "ProjectCentral/docs/1-vision/VISION.md",
+      "provenance": "human-adopted",
+      "standing": "design-commitment",
+      "roles": [
+        "document-tier-1",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139740
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/1-vision/VISUAL-PRODUCT-UNDERSTANDING.md",
+      "path": "ProjectCentral/docs/1-vision/VISUAL-PRODUCT-UNDERSTANDING.md",
+      "provenance": "human-adopted",
+      "standing": "design-commitment",
+      "roles": [
+        "document-tier-1",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139740
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/1-vision/dlw/DLW.html",
+      "path": "ProjectCentral/docs/1-vision/dlw/DLW.html",
+      "provenance": "generated-derived",
+      "standing": "unspecified",
+      "roles": [
+        "document-tier-1",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139741
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/1-vision/dlw/DLW.md",
+      "path": "ProjectCentral/docs/1-vision/dlw/DLW.md",
+      "provenance": "human-adopted",
+      "standing": "design-commitment",
+      "roles": [
+        "document-tier-1",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139741
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/2-design/CAPABILITY-MATRIX.md",
+      "path": "ProjectCentral/docs/2-design/CAPABILITY-MATRIX.md",
+      "provenance": "human-adopted",
+      "standing": "design-commitment",
+      "roles": [
+        "document-tier-2",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139741
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/2-design/cradle/THEME-LIBRARY.md",
+      "path": "ProjectCentral/docs/2-design/cradle/THEME-LIBRARY.md",
+      "provenance": "human-adopted",
+      "standing": "design-commitment",
+      "roles": [
+        "document-tier-2",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139741
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/2-design/cradle/sidebars/factory-ui-study-20260926.html",
+      "path": "ProjectCentral/docs/2-design/cradle/sidebars/factory-ui-study-20260926.html",
+      "provenance": "human-adopted",
+      "standing": "design-commitment",
+      "roles": [
+        "document-tier-2",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139741
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/2-design/cradle/sidebars/sidebars-study.html",
+      "path": "ProjectCentral/docs/2-design/cradle/sidebars/sidebars-study.html",
+      "provenance": "human-adopted",
+      "standing": "design-commitment",
+      "roles": [
+        "document-tier-2",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139741
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/2-design/cradle/theme-variants/epi-a.theme.json",
+      "path": "ProjectCentral/docs/2-design/cradle/theme-variants/epi-a.theme.json",
+      "provenance": "human-adopted",
+      "standing": "design-commitment",
+      "roles": [
+        "document-tier-2",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139741
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/2-design/cradle/theme-variants/epi-day-a.theme.json",
+      "path": "ProjectCentral/docs/2-design/cradle/theme-variants/epi-day-a.theme.json",
+      "provenance": "human-adopted",
+      "standing": "design-commitment",
+      "roles": [
+        "document-tier-2",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139741
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/2-design/cradle/theme-variants/oi-dark-a.theme.json",
+      "path": "ProjectCentral/docs/2-design/cradle/theme-variants/oi-dark-a.theme.json",
+      "provenance": "human-adopted",
+      "standing": "design-commitment",
+      "roles": [
+        "document-tier-2",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139741
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/2-design/cradle/theme-variants/oi-light-a.theme.json",
+      "path": "ProjectCentral/docs/2-design/cradle/theme-variants/oi-light-a.theme.json",
+      "provenance": "human-adopted",
+      "standing": "design-commitment",
+      "roles": [
+        "document-tier-2",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139742
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/2-design/cradle/theme-variants/variants.json",
+      "path": "ProjectCentral/docs/2-design/cradle/theme-variants/variants.json",
+      "provenance": "human-adopted",
+      "standing": "design-commitment",
+      "roles": [
+        "document-tier-2",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139742
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/2-design/world-shell/BROWSER-TAXONOMY-DIFFERENTIAL.md",
+      "path": "ProjectCentral/docs/2-design/world-shell/BROWSER-TAXONOMY-DIFFERENTIAL.md",
+      "provenance": "human-adopted",
+      "standing": "design-commitment",
+      "roles": [
+        "document-tier-2",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139742
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/2-design/world-shell/EXPRESSIONS-ENCOUNTER-SPINE.md",
+      "path": "ProjectCentral/docs/2-design/world-shell/EXPRESSIONS-ENCOUNTER-SPINE.md",
+      "provenance": "human-adopted",
+      "standing": "design-commitment",
+      "roles": [
+        "document-tier-2",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139742
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/2-design/world-shell/EXPRESSIONS-FEATURE-MAP.md",
+      "path": "ProjectCentral/docs/2-design/world-shell/EXPRESSIONS-FEATURE-MAP.md",
+      "provenance": "human-adopted",
+      "standing": "design-commitment",
+      "roles": [
+        "document-tier-2",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139742
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/2-design/world-shell/EXPRESSIONS-FOUR-SURFACES.md",
+      "path": "ProjectCentral/docs/2-design/world-shell/EXPRESSIONS-FOUR-SURFACES.md",
+      "provenance": "human-adopted",
+      "standing": "design-commitment",
+      "roles": [
+        "document-tier-2",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139742
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/2-design/world-shell/EXPRESSIONS-LIVE-REPLAY.md",
+      "path": "ProjectCentral/docs/2-design/world-shell/EXPRESSIONS-LIVE-REPLAY.md",
+      "provenance": "human-adopted",
+      "standing": "design-commitment",
+      "roles": [
+        "document-tier-2",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139742
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/2-design/world-shell/EXPRESSIONS-PARAMETER-ADDRESSES.md",
+      "path": "ProjectCentral/docs/2-design/world-shell/EXPRESSIONS-PARAMETER-ADDRESSES.md",
+      "provenance": "human-adopted",
+      "standing": "design-commitment",
+      "roles": [
+        "document-tier-2",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139742
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/2-design/world-shell/INSTRUMENT-EDITORS.md",
+      "path": "ProjectCentral/docs/2-design/world-shell/INSTRUMENT-EDITORS.md",
+      "provenance": "human-adopted",
+      "standing": "design-commitment",
+      "roles": [
+        "document-tier-2",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139742
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/2-design/world-shell/NATIVE-EDITOR-STANDARD.md",
+      "path": "ProjectCentral/docs/2-design/world-shell/NATIVE-EDITOR-STANDARD.md",
+      "provenance": "human-adopted",
+      "standing": "design-commitment",
+      "roles": [
+        "document-tier-2",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139742
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/2-design/world-shell/UX-SPINE-ALIGNMENT.md",
+      "path": "ProjectCentral/docs/2-design/world-shell/UX-SPINE-ALIGNMENT.md",
+      "provenance": "human-adopted",
+      "standing": "design-commitment",
+      "roles": [
+        "document-tier-2",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139743
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/2-design/world-shell/agent-shell-deviations.md",
+      "path": "ProjectCentral/docs/2-design/world-shell/agent-shell-deviations.md",
+      "provenance": "human-adopted",
+      "standing": "design-commitment",
+      "roles": [
+        "document-tier-2",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139743
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/2-design/world-shell/browser-taxonomy-matrix.json",
+      "path": "ProjectCentral/docs/2-design/world-shell/browser-taxonomy-matrix.json",
+      "provenance": "human-adopted",
+      "standing": "design-commitment",
+      "roles": [
+        "document-tier-2",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139743
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/2-design/world-shell/expressions-ui-actions.json",
+      "path": "ProjectCentral/docs/2-design/world-shell/expressions-ui-actions.json",
+      "provenance": "human-adopted",
+      "standing": "design-commitment",
+      "roles": [
+        "document-tier-2",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139743
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/3-architecture/CONTEXT-FRAME-ACCEPTANCE-CAMPAIGN.md",
+      "path": "ProjectCentral/docs/3-architecture/CONTEXT-FRAME-ACCEPTANCE-CAMPAIGN.md",
+      "provenance": "human-adopted",
+      "standing": "architecture-contract",
+      "roles": [
+        "document-tier-3",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139743
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/3-architecture/CONTEXT-FRAME-COMPOSITION-LOCK.md",
+      "path": "ProjectCentral/docs/3-architecture/CONTEXT-FRAME-COMPOSITION-LOCK.md",
+      "provenance": "human-adopted",
+      "standing": "architecture-contract",
+      "roles": [
+        "document-tier-3",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139743
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/3-architecture/CURRENT-WORLD-CONTEXT-FRAME.md",
+      "path": "ProjectCentral/docs/3-architecture/CURRENT-WORLD-CONTEXT-FRAME.md",
+      "provenance": "human-adopted",
+      "standing": "architecture-contract",
+      "roles": [
+        "document-tier-3",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139743
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/3-architecture/ENCOUNTER-SECURITY-IMPLEMENTATION.md",
+      "path": "ProjectCentral/docs/3-architecture/ENCOUNTER-SECURITY-IMPLEMENTATION.md",
+      "provenance": "human-adopted",
+      "standing": "architecture-contract",
+      "roles": [
+        "document-tier-3",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139743
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/3-architecture/ENCOUNTER-SECURITY.md",
+      "path": "ProjectCentral/docs/3-architecture/ENCOUNTER-SECURITY.md",
+      "provenance": "human-adopted",
+      "standing": "architecture-contract",
+      "roles": [
+        "document-tier-3",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139743
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/3-architecture/OI-DESKTOP-P2-PROJECT-FIELD-CONTRACT.md",
+      "path": "ProjectCentral/docs/3-architecture/OI-DESKTOP-P2-PROJECT-FIELD-CONTRACT.md",
+      "provenance": "human-adopted",
+      "standing": "architecture-contract",
+      "roles": [
+        "document-tier-3",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139744
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/3-architecture/OI-DESKTOP-P3-AGENCY-SIDECAR-CONTRACT.md",
+      "path": "ProjectCentral/docs/3-architecture/OI-DESKTOP-P3-AGENCY-SIDECAR-CONTRACT.md",
+      "provenance": "human-adopted",
+      "standing": "architecture-contract",
+      "roles": [
+        "document-tier-3",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139744
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/3-architecture/OI-INHABITATION-FOUNDATIONS-2026-09-04.md",
+      "path": "ProjectCentral/docs/3-architecture/OI-INHABITATION-FOUNDATIONS-2026-09-04.md",
+      "provenance": "human-adopted",
+      "standing": "architecture-contract",
+      "roles": [
+        "document-tier-3",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139744
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/3-architecture/PERSISTENT-AGENCY-AND-MATERIAL-HOSTING.md",
+      "path": "ProjectCentral/docs/3-architecture/PERSISTENT-AGENCY-AND-MATERIAL-HOSTING.md",
+      "provenance": "human-adopted",
+      "standing": "architecture-contract",
+      "roles": [
+        "document-tier-3",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139744
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/3-architecture/PROJECTION-SEAM-DESIGN.md",
+      "path": "ProjectCentral/docs/3-architecture/PROJECTION-SEAM-DESIGN.md",
+      "provenance": "human-adopted",
+      "standing": "architecture-contract",
+      "roles": [
+        "document-tier-3",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139744
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/3-architecture/cradle/DOCUMENT-SURFACE.md",
+      "path": "ProjectCentral/docs/3-architecture/cradle/DOCUMENT-SURFACE.md",
+      "provenance": "human-adopted",
+      "standing": "architecture-contract",
+      "roles": [
+        "document-tier-3",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139744
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/3-architecture/integrations/OMARCHY-HOST.md",
+      "path": "ProjectCentral/docs/3-architecture/integrations/OMARCHY-HOST.md",
+      "provenance": "human-adopted",
+      "standing": "architecture-contract",
+      "roles": [
+        "document-tier-3",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139744
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/3-architecture/world-shell/AGENT-DEVICE-OWNERSHIP.md",
+      "path": "ProjectCentral/docs/3-architecture/world-shell/AGENT-DEVICE-OWNERSHIP.md",
+      "provenance": "human-adopted",
+      "standing": "architecture-contract",
+      "roles": [
+        "document-tier-3",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139744
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/3-architecture/world-shell/C2-CORPUS-SEAM.md",
+      "path": "ProjectCentral/docs/3-architecture/world-shell/C2-CORPUS-SEAM.md",
+      "provenance": "human-adopted",
+      "standing": "architecture-contract",
+      "roles": [
+        "document-tier-3",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139744
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/3-architecture/world-shell/INSTRUMENTATION-CONTRACT.md",
+      "path": "ProjectCentral/docs/3-architecture/world-shell/INSTRUMENTATION-CONTRACT.md",
+      "provenance": "human-adopted",
+      "standing": "architecture-contract",
+      "roles": [
+        "document-tier-3",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139744
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/3-architecture/world-shell/KERNEL-STATE-FOUNDATION.md",
+      "path": "ProjectCentral/docs/3-architecture/world-shell/KERNEL-STATE-FOUNDATION.md",
+      "provenance": "human-adopted",
+      "standing": "architecture-contract",
+      "roles": [
+        "document-tier-3",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139745
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/3-architecture/world-shell/NATIVE-COMPOSITION.md",
+      "path": "ProjectCentral/docs/3-architecture/world-shell/NATIVE-COMPOSITION.md",
+      "provenance": "human-adopted",
+      "standing": "architecture-contract",
+      "roles": [
+        "document-tier-3",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139745
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/4-development/CONVERGENCE-AND-ACCEPTANCE.md",
+      "path": "ProjectCentral/docs/4-development/CONVERGENCE-AND-ACCEPTANCE.md",
+      "provenance": "human-adopted",
+      "standing": "current-development-state",
+      "roles": [
+        "document-tier-4",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139745
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/4-development/DEVELOPMENT-FIELD-PROTOCOL-WAYFINDER.md",
+      "path": "ProjectCentral/docs/4-development/DEVELOPMENT-FIELD-PROTOCOL-WAYFINDER.md",
+      "provenance": "human-adopted",
+      "standing": "current-development-state",
+      "roles": [
+        "document-tier-4",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139745
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/4-development/EXISTING-WORLD-ADOPTION.md",
+      "path": "ProjectCentral/docs/4-development/EXISTING-WORLD-ADOPTION.md",
+      "provenance": "human-adopted",
+      "standing": "current-development-state",
+      "roles": [
+        "document-tier-4",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139745
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/4-development/EXPRESSION-PRODUCTION-SUITE-ALIGNMENT.md",
+      "path": "ProjectCentral/docs/4-development/EXPRESSION-PRODUCTION-SUITE-ALIGNMENT.md",
+      "provenance": "human-adopted",
+      "standing": "current-development-state",
+      "roles": [
+        "document-tier-4",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139745
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/4-development/EXPRESSION-WORLD-SUBSTRATE-WAYFINDER.md",
+      "path": "ProjectCentral/docs/4-development/EXPRESSION-WORLD-SUBSTRATE-WAYFINDER.md",
+      "provenance": "human-adopted",
+      "standing": "current-development-state",
+      "roles": [
+        "document-tier-4",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139745
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/4-development/OI-CRADLE-UI-CONSOLIDATION-2026-09-23.md",
+      "path": "ProjectCentral/docs/4-development/OI-CRADLE-UI-CONSOLIDATION-2026-09-23.md",
+      "provenance": "human-adopted",
+      "standing": "current-development-state",
+      "roles": [
+        "document-tier-4",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139745
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/4-development/OI-DESKTOP-CONTINUOUS-WORK-WAYFINDER.md",
+      "path": "ProjectCentral/docs/4-development/OI-DESKTOP-CONTINUOUS-WORK-WAYFINDER.md",
+      "provenance": "human-adopted",
+      "standing": "current-development-state",
+      "roles": [
+        "document-tier-4",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139745
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/4-development/OI-GIT-AND-SKILLS-NORMALISATION-PROGRAMME.md",
+      "path": "ProjectCentral/docs/4-development/OI-GIT-AND-SKILLS-NORMALISATION-PROGRAMME.md",
+      "provenance": "human-adopted",
+      "standing": "current-development-state",
+      "roles": [
+        "document-tier-4",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139746
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/4-development/OI-OPERATIVE-FRONTDOOR-WAYFINDER.md",
+      "path": "ProjectCentral/docs/4-development/OI-OPERATIVE-FRONTDOOR-WAYFINDER.md",
+      "provenance": "human-adopted",
+      "standing": "current-development-state",
+      "roles": [
+        "document-tier-4",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139746
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/4-development/PI-ORCHESTRATION-HANDOVER.md",
+      "path": "ProjectCentral/docs/4-development/PI-ORCHESTRATION-HANDOVER.md",
+      "provenance": "human-adopted",
+      "standing": "current-development-state",
+      "roles": [
+        "document-tier-4",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139746
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/4-development/PI-PACKAGE-SPEC.md",
+      "path": "ProjectCentral/docs/4-development/PI-PACKAGE-SPEC.md",
+      "provenance": "human-adopted",
+      "standing": "current-development-state",
+      "roles": [
+        "document-tier-4",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139746
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/4-development/SHARED-FIELD-QL-EPI-INTEGRATION-WAYFINDER.md",
+      "path": "ProjectCentral/docs/4-development/SHARED-FIELD-QL-EPI-INTEGRATION-WAYFINDER.md",
+      "provenance": "human-adopted",
+      "standing": "current-development-state",
+      "roles": [
+        "document-tier-4",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139746
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/4-development/astra/OI-ASTRA-AIKIT-HARMONISATION.md",
+      "path": "ProjectCentral/docs/4-development/astra/OI-ASTRA-AIKIT-HARMONISATION.md",
+      "provenance": "human-adopted",
+      "standing": "current-development-state",
+      "roles": [
+        "document-tier-4",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139746
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/4-development/astra/OI-ASTRA-DESKTOP-BUILD.md",
+      "path": "ProjectCentral/docs/4-development/astra/OI-ASTRA-DESKTOP-BUILD.md",
+      "provenance": "human-adopted",
+      "standing": "current-development-state",
+      "roles": [
+        "document-tier-4",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139746
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/4-development/cradle/ESSAY-MECHANICAL-REPAIRS.proposal.patch",
+      "path": "ProjectCentral/docs/4-development/cradle/ESSAY-MECHANICAL-REPAIRS.proposal.patch",
+      "provenance": "human-adopted",
+      "standing": "current-development-state",
+      "roles": [
+        "document-tier-4",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139746
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/4-development/cradle/experience/MODE-ENGINE-STATE-PERSISTENCE.md",
+      "path": "ProjectCentral/docs/4-development/cradle/experience/MODE-ENGINE-STATE-PERSISTENCE.md",
+      "provenance": "human-adopted",
+      "standing": "current-development-state",
+      "roles": [
+        "document-tier-4",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139746
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/4-development/cradle/experience/WORKSPACE-CONTINUITY-EXECUTION.md",
+      "path": "ProjectCentral/docs/4-development/cradle/experience/WORKSPACE-CONTINUITY-EXECUTION.md",
+      "provenance": "human-adopted",
+      "standing": "current-development-state",
+      "roles": [
+        "document-tier-4",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139747
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/4-development/cradle/handovers/factory-expressions-2026-09-26/EXPRESSION-DEVELOPMENT-SPEC.md",
+      "path": "ProjectCentral/docs/4-development/cradle/handovers/factory-expressions-2026-09-26/EXPRESSION-DEVELOPMENT-SPEC.md",
+      "provenance": "human-adopted",
+      "standing": "current-development-state",
+      "roles": [
+        "document-tier-4",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139747
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/4-development/cradle/handovers/factory-expressions-2026-09-26/START-HERE.md",
+      "path": "ProjectCentral/docs/4-development/cradle/handovers/factory-expressions-2026-09-26/START-HERE.md",
+      "provenance": "human-adopted",
+      "standing": "current-development-state",
+      "roles": [
+        "document-tier-4",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139747
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/4-development/world-shell/CONVERGENCE.md",
+      "path": "ProjectCentral/docs/4-development/world-shell/CONVERGENCE.md",
+      "provenance": "human-adopted",
+      "standing": "current-development-state",
+      "roles": [
+        "document-tier-4",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139747
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/4-development/world-shell/EDITOR-BRIDGE-HARDENING.md",
+      "path": "ProjectCentral/docs/4-development/world-shell/EDITOR-BRIDGE-HARDENING.md",
+      "provenance": "human-adopted",
+      "standing": "current-development-state",
+      "roles": [
+        "document-tier-4",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139747
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/4-development/world-shell/LEGACY-CRADLE-RETIREMENT.md",
+      "path": "ProjectCentral/docs/4-development/world-shell/LEGACY-CRADLE-RETIREMENT.md",
+      "provenance": "human-adopted",
+      "standing": "current-development-state",
+      "roles": [
+        "document-tier-4",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139747
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/4-development/world-shell/NATIVE-RECOVERY-REPAIR.md",
+      "path": "ProjectCentral/docs/4-development/world-shell/NATIVE-RECOVERY-REPAIR.md",
+      "provenance": "human-adopted",
+      "standing": "current-development-state",
+      "roles": [
+        "document-tier-4",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139747
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/4-development/world-shell/STARTUP-CONTINUATION.md",
+      "path": "ProjectCentral/docs/4-development/world-shell/STARTUP-CONTINUATION.md",
+      "provenance": "human-adopted",
+      "standing": "current-development-state",
+      "roles": [
+        "document-tier-4",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139747
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/4-development/world-shell/wayfinder/BRIEF-SCREEN-PASS.md",
+      "path": "ProjectCentral/docs/4-development/world-shell/wayfinder/BRIEF-SCREEN-PASS.md",
+      "provenance": "human-adopted",
+      "standing": "current-development-state",
+      "roles": [
+        "document-tier-4",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139747
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/4-development/world-shell/wayfinder/DLW-SKY-NARA-INTEGRATION.md",
+      "path": "ProjectCentral/docs/4-development/world-shell/wayfinder/DLW-SKY-NARA-INTEGRATION.md",
+      "provenance": "human-adopted",
+      "standing": "current-development-state",
+      "roles": [
+        "document-tier-4",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139748
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/4-development/world-shell/wayfinder/TRACKER.md",
+      "path": "ProjectCentral/docs/4-development/world-shell/wayfinder/TRACKER.md",
+      "provenance": "human-adopted",
+      "standing": "current-development-state",
+      "roles": [
+        "document-tier-4",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139748
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/5-evidence/CONTINUOUS-WORK-PROVING.md",
+      "path": "ProjectCentral/docs/5-evidence/CONTINUOUS-WORK-PROVING.md",
+      "provenance": "observed",
+      "standing": "observed-evidence",
+      "roles": [
+        "document-tier-5",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139748
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/5-evidence/ENCOUNTER-SECURITY-SPACETIMEDB-CONFORMANCE.md",
+      "path": "ProjectCentral/docs/5-evidence/ENCOUNTER-SECURITY-SPACETIMEDB-CONFORMANCE.md",
+      "provenance": "observed",
+      "standing": "observed-evidence",
+      "roles": [
+        "document-tier-5",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139748
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/5-evidence/OI-017-ENCOUNTER-SECURITY-FINAL-RECEIPT.md",
+      "path": "ProjectCentral/docs/5-evidence/OI-017-ENCOUNTER-SECURITY-FINAL-RECEIPT.md",
+      "provenance": "observed",
+      "standing": "observed-evidence",
+      "roles": [
+        "document-tier-5",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139748
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/5-evidence/OI-ALPHA-AGENCY-INTENT-EXPRESSION-2026-09-03.md",
+      "path": "ProjectCentral/docs/5-evidence/OI-ALPHA-AGENCY-INTENT-EXPRESSION-2026-09-03.md",
+      "provenance": "observed",
+      "standing": "observed-evidence",
+      "roles": [
+        "document-tier-5",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139748
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/5-evidence/OI-ALPHA-AGENT-LAUNCH-SEAM-2026-09-04.md",
+      "path": "ProjectCentral/docs/5-evidence/OI-ALPHA-AGENT-LAUNCH-SEAM-2026-09-04.md",
+      "provenance": "observed",
+      "standing": "observed-evidence",
+      "roles": [
+        "document-tier-5",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139748
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/5-evidence/OI-ALPHA-OWNER-RECONCILIATION-2026-09-03.md",
+      "path": "ProjectCentral/docs/5-evidence/OI-ALPHA-OWNER-RECONCILIATION-2026-09-03.md",
+      "provenance": "observed",
+      "standing": "observed-evidence",
+      "roles": [
+        "document-tier-5",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139748
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/5-evidence/OI-DESKTOP-AGENT-NATIVE-SURFACE-LEDGER.md",
+      "path": "ProjectCentral/docs/5-evidence/OI-DESKTOP-AGENT-NATIVE-SURFACE-LEDGER.md",
+      "provenance": "observed",
+      "standing": "observed-evidence",
+      "roles": [
+        "document-tier-5",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139748
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/5-evidence/OI-DESKTOP-P4-FACTORY-SOURCE-FIDELITY.md",
+      "path": "ProjectCentral/docs/5-evidence/OI-DESKTOP-P4-FACTORY-SOURCE-FIDELITY.md",
+      "provenance": "observed",
+      "standing": "observed-evidence",
+      "roles": [
+        "document-tier-5",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139749
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/5-evidence/OI-DESKTOP-SURFACE-LEDGER-COSMIC-123-DELTA.md",
+      "path": "ProjectCentral/docs/5-evidence/OI-DESKTOP-SURFACE-LEDGER-COSMIC-123-DELTA.md",
+      "provenance": "observed",
+      "standing": "observed-evidence",
+      "roles": [
+        "document-tier-5",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139749
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/5-evidence/OI-DESKTOP-SURFACE-LEDGER-FINAL-2026-09-02.md",
+      "path": "ProjectCentral/docs/5-evidence/OI-DESKTOP-SURFACE-LEDGER-FINAL-2026-09-02.md",
+      "provenance": "observed",
+      "standing": "observed-evidence",
+      "roles": [
+        "document-tier-5",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139749
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/5-evidence/OI-objective-internality-report.md",
+      "path": "ProjectCentral/docs/5-evidence/OI-objective-internality-report.md",
+      "provenance": "observed",
+      "standing": "observed-evidence",
+      "roles": [
+        "document-tier-5",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139749
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/5-evidence/cradle/CENTRAL-FIELD-NATIVE-AUDIT-A.md",
+      "path": "ProjectCentral/docs/5-evidence/cradle/CENTRAL-FIELD-NATIVE-AUDIT-A.md",
+      "provenance": "observed",
+      "standing": "observed-evidence",
+      "roles": [
+        "document-tier-5",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139749
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/5-evidence/cradle/CENTRAL-FIELD-RESULTS.md",
+      "path": "ProjectCentral/docs/5-evidence/cradle/CENTRAL-FIELD-RESULTS.md",
+      "provenance": "observed",
+      "standing": "observed-evidence",
+      "roles": [
+        "document-tier-5",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139749
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/5-evidence/cradle/CENTRAL-FIELD-UX-TRANSFER.md",
+      "path": "ProjectCentral/docs/5-evidence/cradle/CENTRAL-FIELD-UX-TRANSFER.md",
+      "provenance": "observed",
+      "standing": "observed-evidence",
+      "roles": [
+        "document-tier-5",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139749
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/5-evidence/research/AGENTIC-ENGINEERING-DAVID-ONDREJ-TRANSCRIPT.md",
+      "path": "ProjectCentral/docs/5-evidence/research/AGENTIC-ENGINEERING-DAVID-ONDREJ-TRANSCRIPT.md",
+      "provenance": "observed",
+      "standing": "observed-evidence",
+      "roles": [
+        "document-tier-5",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139749
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/5-evidence/research/META-HARNESS-CONTEXT-CRAFT.md",
+      "path": "ProjectCentral/docs/5-evidence/research/META-HARNESS-CONTEXT-CRAFT.md",
+      "provenance": "observed",
+      "standing": "observed-evidence",
+      "roles": [
+        "document-tier-5",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139749
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/5-evidence/research/RESEARCH-PROTOCOL.md",
+      "path": "ProjectCentral/docs/5-evidence/research/RESEARCH-PROTOCOL.md",
+      "provenance": "observed",
+      "standing": "observed-evidence",
+      "roles": [
+        "document-tier-5",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139750
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/5-evidence/research/SHARED-AGENCY-CASE-STUDIES.md",
+      "path": "ProjectCentral/docs/5-evidence/research/SHARED-AGENCY-CASE-STUDIES.md",
+      "provenance": "observed",
+      "standing": "observed-evidence",
+      "roles": [
+        "document-tier-5",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139750
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/5-evidence/research/glass-bead-game/01-MECHANICS.md",
+      "path": "ProjectCentral/docs/5-evidence/research/glass-bead-game/01-MECHANICS.md",
+      "provenance": "observed",
+      "standing": "observed-evidence",
+      "roles": [
+        "document-tier-5",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139750
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/5-evidence/research/glass-bead-game/02-EVOLUTION-DECAY.md",
+      "path": "ProjectCentral/docs/5-evidence/research/glass-bead-game/02-EVOLUTION-DECAY.md",
+      "provenance": "observed",
+      "standing": "observed-evidence",
+      "roles": [
+        "document-tier-5",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139750
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/5-evidence/research/glass-bead-game/03-LADDER.md",
+      "path": "ProjectCentral/docs/5-evidence/research/glass-bead-game/03-LADDER.md",
+      "provenance": "observed",
+      "standing": "observed-evidence",
+      "roles": [
+        "document-tier-5",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139750
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/5-evidence/research/glass-bead-game/04-COMPUTATIONAL-AFTERLIFE.md",
+      "path": "ProjectCentral/docs/5-evidence/research/glass-bead-game/04-COMPUTATIONAL-AFTERLIFE.md",
+      "provenance": "observed",
+      "standing": "observed-evidence",
+      "roles": [
+        "document-tier-5",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139750
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/5-evidence/research/glass-bead-game/05-DLW-RELATION.md",
+      "path": "ProjectCentral/docs/5-evidence/research/glass-bead-game/05-DLW-RELATION.md",
+      "provenance": "observed",
+      "standing": "observed-evidence",
+      "roles": [
+        "document-tier-5",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139750
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/5-evidence/research/glass-bead-game/06-THE-PRAXIS.md",
+      "path": "ProjectCentral/docs/5-evidence/research/glass-bead-game/06-THE-PRAXIS.md",
+      "provenance": "observed",
+      "standing": "observed-evidence",
+      "roles": [
+        "document-tier-5",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139750
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/5-evidence/research/glass-bead-game/README.md",
+      "path": "ProjectCentral/docs/5-evidence/research/glass-bead-game/README.md",
+      "provenance": "observed",
+      "standing": "observed-evidence",
+      "roles": [
+        "document-tier-5",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139750
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/5-evidence/research/glass-bead-game/appendix-a-expressions-dive.md",
+      "path": "ProjectCentral/docs/5-evidence/research/glass-bead-game/appendix-a-expressions-dive.md",
+      "provenance": "observed",
+      "standing": "observed-evidence",
+      "roles": [
+        "document-tier-5",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139751
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/5-evidence/research/glass-bead-game/appendix-b-worlds-of-knowing-dive.md",
+      "path": "ProjectCentral/docs/5-evidence/research/glass-bead-game/appendix-b-worlds-of-knowing-dive.md",
+      "provenance": "observed",
+      "standing": "observed-evidence",
+      "roles": [
+        "document-tier-5",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139751
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/5-evidence/research/openrig-c8fca9d/BEHAVIOURS.md",
+      "path": "ProjectCentral/docs/5-evidence/research/openrig-c8fca9d/BEHAVIOURS.md",
+      "provenance": "observed",
+      "standing": "observed-evidence",
+      "roles": [
+        "document-tier-5",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139751
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/5-evidence/research/openrig-c8fca9d/CROSSWALK.md",
+      "path": "ProjectCentral/docs/5-evidence/research/openrig-c8fca9d/CROSSWALK.md",
+      "provenance": "observed",
+      "standing": "observed-evidence",
+      "roles": [
+        "document-tier-5",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139751
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/5-evidence/reviews/product-fidelity-2026-09-19/01-oi.md",
+      "path": "ProjectCentral/docs/5-evidence/reviews/product-fidelity-2026-09-19/01-oi.md",
+      "provenance": "observed",
+      "standing": "observed-evidence",
+      "roles": [
+        "document-tier-5",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139751
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/5-evidence/reviews/product-fidelity-2026-09-19/02-central-evidence.md",
+      "path": "ProjectCentral/docs/5-evidence/reviews/product-fidelity-2026-09-19/02-central-evidence.md",
+      "provenance": "observed",
+      "standing": "observed-evidence",
+      "roles": [
+        "document-tier-5",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139751
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/5-evidence/reviews/product-fidelity-2026-09-19/02-central.md",
+      "path": "ProjectCentral/docs/5-evidence/reviews/product-fidelity-2026-09-19/02-central.md",
+      "provenance": "observed",
+      "standing": "observed-evidence",
+      "roles": [
+        "document-tier-5",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139751
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/5-evidence/reviews/product-fidelity-2026-09-19/04-aikit.md",
+      "path": "ProjectCentral/docs/5-evidence/reviews/product-fidelity-2026-09-19/04-aikit.md",
+      "provenance": "observed",
+      "standing": "observed-evidence",
+      "roles": [
+        "document-tier-5",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139751
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/5-evidence/reviews/product-fidelity-2026-09-19/05-factory.md",
+      "path": "ProjectCentral/docs/5-evidence/reviews/product-fidelity-2026-09-19/05-factory.md",
+      "provenance": "observed",
+      "standing": "observed-evidence",
+      "roles": [
+        "document-tier-5",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139751
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/5-evidence/reviews/product-fidelity-2026-09-19/06-workcell.md",
+      "path": "ProjectCentral/docs/5-evidence/reviews/product-fidelity-2026-09-19/06-workcell.md",
+      "provenance": "observed",
+      "standing": "observed-evidence",
+      "roles": [
+        "document-tier-5",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139752
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/5-evidence/reviews/product-fidelity-2026-09-19/ALIGNMENT.md",
+      "path": "ProjectCentral/docs/5-evidence/reviews/product-fidelity-2026-09-19/ALIGNMENT.md",
+      "provenance": "observed",
+      "standing": "observed-evidence",
+      "roles": [
+        "document-tier-5",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139752
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/5-evidence/reviews/product-fidelity-2026-09-19/BASELINE.json",
+      "path": "ProjectCentral/docs/5-evidence/reviews/product-fidelity-2026-09-19/BASELINE.json",
+      "provenance": "observed",
+      "standing": "observed-evidence",
+      "roles": [
+        "document-tier-5",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139752
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/5-evidence/reviews/product-fidelity-2026-09-19/README.md",
+      "path": "ProjectCentral/docs/5-evidence/reviews/product-fidelity-2026-09-19/README.md",
+      "provenance": "observed",
+      "standing": "observed-evidence",
+      "roles": [
+        "document-tier-5",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139752
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/5-evidence/reviews/product-fidelity-2026-09-19/SYNTHESIS.md",
+      "path": "ProjectCentral/docs/5-evidence/reviews/product-fidelity-2026-09-19/SYNTHESIS.md",
+      "provenance": "observed",
+      "standing": "observed-evidence",
+      "roles": [
+        "document-tier-5",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139752
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/5-evidence/world-shell/ACCEPTANCE-CHECKPOINT.md",
+      "path": "ProjectCentral/docs/5-evidence/world-shell/ACCEPTANCE-CHECKPOINT.md",
+      "provenance": "observed",
+      "standing": "observed-evidence",
+      "roles": [
+        "document-tier-5",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139752
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/5-evidence/world-shell/AGENT-SHELL-ACCEPTANCE.md",
+      "path": "ProjectCentral/docs/5-evidence/world-shell/AGENT-SHELL-ACCEPTANCE.md",
+      "provenance": "observed",
+      "standing": "observed-evidence",
+      "roles": [
+        "document-tier-5",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139752
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/5-evidence/world-shell/EDITOR-FOUNDATION-RETURN.html",
+      "path": "ProjectCentral/docs/5-evidence/world-shell/EDITOR-FOUNDATION-RETURN.html",
+      "provenance": "observed",
+      "standing": "observed-evidence",
+      "roles": [
+        "document-tier-5",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139752
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/5-evidence/world-shell/NATIVE-ACTIONS-AUDIT-20261009.md",
+      "path": "ProjectCentral/docs/5-evidence/world-shell/NATIVE-ACTIONS-AUDIT-20261009.md",
+      "provenance": "observed",
+      "standing": "observed-evidence",
+      "roles": [
+        "document-tier-5",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139752
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/5-evidence/world-shell/RECOVERY-ROUTING-AUDIT.md",
+      "path": "ProjectCentral/docs/5-evidence/world-shell/RECOVERY-ROUTING-AUDIT.md",
+      "provenance": "observed",
+      "standing": "observed-evidence",
+      "roles": [
+        "document-tier-5",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139753
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/5-evidence/world-shell/SETTINGS-COVERAGE.md",
+      "path": "ProjectCentral/docs/5-evidence/world-shell/SETTINGS-COVERAGE.md",
+      "provenance": "observed",
+      "standing": "observed-evidence",
+      "roles": [
+        "document-tier-5",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139753
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/5-evidence/world-shell/SETTINGS-RETURN.html",
+      "path": "ProjectCentral/docs/5-evidence/world-shell/SETTINGS-RETURN.html",
+      "provenance": "observed",
+      "standing": "observed-evidence",
+      "roles": [
+        "document-tier-5",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139753
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/5-evidence/world-shell/audit-20261014/FOUNDATION-AUDIT.md",
+      "path": "ProjectCentral/docs/5-evidence/world-shell/audit-20261014/FOUNDATION-AUDIT.md",
+      "provenance": "observed",
+      "standing": "observed-evidence",
+      "roles": [
+        "document-tier-5",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139753
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/5-evidence/world-shell/audit-20261014/PORT-AUDIT.md",
+      "path": "ProjectCentral/docs/5-evidence/world-shell/audit-20261014/PORT-AUDIT.md",
+      "provenance": "observed",
+      "standing": "observed-evidence",
+      "roles": [
+        "document-tier-5",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139753
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/5-evidence/world-shell/evidence/ft-takes-20261019/README.md",
+      "path": "ProjectCentral/docs/5-evidence/world-shell/evidence/ft-takes-20261019/README.md",
+      "provenance": "observed",
+      "standing": "observed-evidence",
+      "roles": [
+        "document-tier-5",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139753
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/5-evidence/world-shell/evidence/integration-checkpoint-20261008/README.md",
+      "path": "ProjectCentral/docs/5-evidence/world-shell/evidence/integration-checkpoint-20261008/README.md",
+      "provenance": "observed",
+      "standing": "observed-evidence",
+      "roles": [
+        "document-tier-5",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139753
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/5-evidence/world-shell/evidence/p0-bimba-live/headlines.md",
+      "path": "ProjectCentral/docs/5-evidence/world-shell/evidence/p0-bimba-live/headlines.md",
+      "provenance": "observed",
+      "standing": "observed-evidence",
+      "roles": [
+        "document-tier-5",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139754
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/5-evidence/world-shell/evidence/p0-r1/README.md",
+      "path": "ProjectCentral/docs/5-evidence/world-shell/evidence/p0-r1/README.md",
+      "provenance": "observed",
+      "standing": "observed-evidence",
+      "roles": [
+        "document-tier-5",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139754
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/5-evidence/world-shell/evidence/procedural-body-20261020/README.md",
+      "path": "ProjectCentral/docs/5-evidence/world-shell/evidence/procedural-body-20261020/README.md",
+      "provenance": "observed",
+      "standing": "observed-evidence",
+      "roles": [
+        "document-tier-5",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139754
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/5-evidence/world-shell/evidence/procedural-body-20261020/before/globe/index.html",
+      "path": "ProjectCentral/docs/5-evidence/world-shell/evidence/procedural-body-20261020/before/globe/index.html",
+      "provenance": "observed",
+      "standing": "observed-evidence",
+      "roles": [
+        "document-tier-5",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139754
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/5-evidence/world-shell/evidence/screen-pass-20261022/N1-native-window-and-grammar.md",
+      "path": "ProjectCentral/docs/5-evidence/world-shell/evidence/screen-pass-20261022/N1-native-window-and-grammar.md",
+      "provenance": "observed",
+      "standing": "observed-evidence",
+      "roles": [
+        "document-tier-5",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139754
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/5-evidence/world-shell/evidence/screen-pass-20261022/S1-browser-window-and-grammar.md",
+      "path": "ProjectCentral/docs/5-evidence/world-shell/evidence/screen-pass-20261022/S1-browser-window-and-grammar.md",
+      "provenance": "observed",
+      "standing": "observed-evidence",
+      "roles": [
+        "document-tier-5",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139754
+    },
+    {
+      "ref": "central:source:project:O-I:ProjectCentral/docs/5-evidence/world-shell/ui-ux-research-basis.json",
+      "path": "ProjectCentral/docs/5-evidence/world-shell/ui-ux-research-basis.json",
+      "provenance": "observed",
+      "standing": "observed-evidence",
+      "roles": [
+        "document-tier-5",
+        "project-docs-source-aperture",
+        "self-description-source"
+      ],
+      "treatment": "ordinary-project-source",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139753
+    },
+    {
+      "ref": "central:source:project:O-I:desktop/cradle/docs/world-shell/EXPRESSIONS-PORT-STATUS.json",
+      "path": "desktop/cradle/docs/world-shell/EXPRESSIONS-PORT-STATUS.json",
+      "provenance": "agent-maintained",
+      "standing": "current-development-state",
+      "roles": [
+        "document-tier-4",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139765
+    },
+    {
+      "ref": "central:source:project:O-I:desktop/cradle/docs/world-shell/FUNCTIONAL-CROSSWALK.json",
+      "path": "desktop/cradle/docs/world-shell/FUNCTIONAL-CROSSWALK.json",
+      "provenance": "agent-maintained",
+      "standing": "current-development-state",
+      "roles": [
+        "document-tier-4",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139765
+    },
+    {
+      "ref": "central:source:project:O-I:desktop/cradle/docs/world-shell/FUNCTIONAL-CROSSWALK.md",
+      "path": "desktop/cradle/docs/world-shell/FUNCTIONAL-CROSSWALK.md",
+      "provenance": "human-adopted",
+      "standing": "current-development-state",
+      "roles": [
+        "document-tier-4",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139765
+    },
+    {
+      "ref": "central:source:project:O-I:desktop/cradle/docs/world-shell/README.md",
+      "path": "desktop/cradle/docs/world-shell/README.md",
+      "provenance": "human-adopted",
+      "standing": "current-development-state",
+      "roles": [
+        "document-tier-4",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139765
+    },
+    {
+      "ref": "central:source:project:O-I:desktop/cradle/docs/world-shell/agent-device-mockup.html",
+      "path": "desktop/cradle/docs/world-shell/agent-device-mockup.html",
+      "provenance": "human-adopted",
+      "standing": "design-commitment",
+      "roles": [
+        "document-tier-2",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139765
+    },
+    {
+      "ref": "central:source:project:O-I:desktop/cradle/docs/world-shell/agent-native-mockup.html",
+      "path": "desktop/cradle/docs/world-shell/agent-native-mockup.html",
+      "provenance": "human-adopted",
+      "standing": "design-commitment",
+      "roles": [
+        "document-tier-2",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139766
+    },
+    {
+      "ref": "central:source:project:O-I:desktop/cradle/docs/world-shell/agent-shell-fidelity.json",
+      "path": "desktop/cradle/docs/world-shell/agent-shell-fidelity.json",
+      "provenance": "agent-maintained",
+      "standing": "design-commitment",
+      "roles": [
+        "document-tier-2",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139766
+    },
+    {
+      "ref": "central:source:project:O-I:desktop/cradle/docs/world-shell/agent-shell-mockup.html",
+      "path": "desktop/cradle/docs/world-shell/agent-shell-mockup.html",
+      "provenance": "human-adopted",
+      "standing": "design-commitment",
+      "roles": [
+        "document-tier-2",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139766
+    },
+    {
+      "ref": "central:source:project:O-I:desktop/cradle/docs/world-shell/glyph-language/GlyphRoster.md",
+      "path": "desktop/cradle/docs/world-shell/glyph-language/GlyphRoster.md",
+      "provenance": "human-adopted",
+      "standing": "design-commitment",
+      "roles": [
+        "document-tier-2",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139767
+    },
+    {
+      "ref": "central:source:project:O-I:desktop/cradle/docs/world-shell/glyph-language/RESULT.json",
+      "path": "desktop/cradle/docs/world-shell/glyph-language/RESULT.json",
+      "provenance": "generated-derived",
+      "standing": "unspecified",
+      "roles": [
+        "document-tier-2",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139767
+    },
+    {
+      "ref": "central:source:project:O-I:desktop/cradle/docs/world-shell/glyph-language/roster-sheet.html",
+      "path": "desktop/cradle/docs/world-shell/glyph-language/roster-sheet.html",
+      "provenance": "generated-derived",
+      "standing": "unspecified",
+      "roles": [
+        "document-tier-2",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139768
+    },
+    {
+      "ref": "central:source:project:O-I:desktop/cradle/docs/world-shell/glyph-language/roster.svg",
+      "path": "desktop/cradle/docs/world-shell/glyph-language/roster.svg",
+      "provenance": "generated-derived",
+      "standing": "unspecified",
+      "roles": [
+        "document-tier-2",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139768
+    },
+    {
+      "ref": "central:source:project:O-I:desktop/cradle/docs/world-shell/icon-cut-refined.html",
+      "path": "desktop/cradle/docs/world-shell/icon-cut-refined.html",
+      "provenance": "human-adopted",
+      "standing": "design-commitment",
+      "roles": [
+        "document-tier-2",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139766
+    },
+    {
+      "ref": "central:source:project:O-I:desktop/cradle/docs/world-shell/icon-cut.html",
+      "path": "desktop/cradle/docs/world-shell/icon-cut.html",
+      "provenance": "human-adopted",
+      "standing": "design-commitment",
+      "roles": [
+        "document-tier-2",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139766
+    },
+    {
+      "ref": "central:source:project:O-I:desktop/cradle/docs/world-shell/lanes/lane-1-canvas-graph/FINDINGS.md",
+      "path": "desktop/cradle/docs/world-shell/lanes/lane-1-canvas-graph/FINDINGS.md",
+      "provenance": "observed",
+      "standing": "observed-evidence",
+      "roles": [
+        "document-tier-5",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139768
+    },
+    {
+      "ref": "central:source:project:O-I:desktop/cradle/docs/world-shell/lanes/lane-1-canvas-graph/RE-TARGETS.md",
+      "path": "desktop/cradle/docs/world-shell/lanes/lane-1-canvas-graph/RE-TARGETS.md",
+      "provenance": "human-adopted",
+      "standing": "design-commitment",
+      "roles": [
+        "document-tier-2",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139768
+    },
+    {
+      "ref": "central:source:project:O-I:desktop/cradle/docs/world-shell/lanes/lane-1-canvas-graph/TARGET-SET.md",
+      "path": "desktop/cradle/docs/world-shell/lanes/lane-1-canvas-graph/TARGET-SET.md",
+      "provenance": "human-adopted",
+      "standing": "design-commitment",
+      "roles": [
+        "document-tier-2",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139768
+    },
+    {
+      "ref": "central:source:project:O-I:desktop/cradle/docs/world-shell/lanes/lane-2-timeline/FINDINGS.md",
+      "path": "desktop/cradle/docs/world-shell/lanes/lane-2-timeline/FINDINGS.md",
+      "provenance": "observed",
+      "standing": "observed-evidence",
+      "roles": [
+        "document-tier-5",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139768
+    },
+    {
+      "ref": "central:source:project:O-I:desktop/cradle/docs/world-shell/lanes/lane-2-timeline/RE-TARGETS.md",
+      "path": "desktop/cradle/docs/world-shell/lanes/lane-2-timeline/RE-TARGETS.md",
+      "provenance": "human-adopted",
+      "standing": "design-commitment",
+      "roles": [
+        "document-tier-2",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139768
+    },
+    {
+      "ref": "central:source:project:O-I:desktop/cradle/docs/world-shell/lanes/lane-2-timeline/TARGET-SET.md",
+      "path": "desktop/cradle/docs/world-shell/lanes/lane-2-timeline/TARGET-SET.md",
+      "provenance": "human-adopted",
+      "standing": "design-commitment",
+      "roles": [
+        "document-tier-2",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139768
+    },
+    {
+      "ref": "central:source:project:O-I:desktop/cradle/docs/world-shell/lanes/lane-3-expressions-editor/FINDINGS.md",
+      "path": "desktop/cradle/docs/world-shell/lanes/lane-3-expressions-editor/FINDINGS.md",
+      "provenance": "observed",
+      "standing": "observed-evidence",
+      "roles": [
+        "document-tier-5",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139769
+    },
+    {
+      "ref": "central:source:project:O-I:desktop/cradle/docs/world-shell/lanes/lane-3-expressions-editor/RE-TARGETS.md",
+      "path": "desktop/cradle/docs/world-shell/lanes/lane-3-expressions-editor/RE-TARGETS.md",
+      "provenance": "human-adopted",
+      "standing": "design-commitment",
+      "roles": [
+        "document-tier-2",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139769
+    },
+    {
+      "ref": "central:source:project:O-I:desktop/cradle/docs/world-shell/lanes/lane-3-expressions-editor/TARGET-SET.md",
+      "path": "desktop/cradle/docs/world-shell/lanes/lane-3-expressions-editor/TARGET-SET.md",
+      "provenance": "human-adopted",
+      "standing": "design-commitment",
+      "roles": [
+        "document-tier-2",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139769
+    },
+    {
+      "ref": "central:source:project:O-I:desktop/cradle/docs/world-shell/lanes/lane-4-world-places/FINDINGS.md",
+      "path": "desktop/cradle/docs/world-shell/lanes/lane-4-world-places/FINDINGS.md",
+      "provenance": "observed",
+      "standing": "observed-evidence",
+      "roles": [
+        "document-tier-5",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139769
+    },
+    {
+      "ref": "central:source:project:O-I:desktop/cradle/docs/world-shell/lanes/lane-4-world-places/RE-TARGETS.md",
+      "path": "desktop/cradle/docs/world-shell/lanes/lane-4-world-places/RE-TARGETS.md",
+      "provenance": "human-adopted",
+      "standing": "design-commitment",
+      "roles": [
+        "document-tier-2",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139769
+    },
+    {
+      "ref": "central:source:project:O-I:desktop/cradle/docs/world-shell/lanes/lane-4-world-places/TARGET-SET.md",
+      "path": "desktop/cradle/docs/world-shell/lanes/lane-4-world-places/TARGET-SET.md",
+      "provenance": "human-adopted",
+      "standing": "design-commitment",
+      "roles": [
+        "document-tier-2",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139769
+    },
+    {
+      "ref": "central:source:project:O-I:desktop/cradle/docs/world-shell/lanes/lane-5-journey-palace/FINDINGS.md",
+      "path": "desktop/cradle/docs/world-shell/lanes/lane-5-journey-palace/FINDINGS.md",
+      "provenance": "observed",
+      "standing": "observed-evidence",
+      "roles": [
+        "document-tier-5",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139769
+    },
+    {
+      "ref": "central:source:project:O-I:desktop/cradle/docs/world-shell/lanes/lane-5-journey-palace/RE-TARGETS.md",
+      "path": "desktop/cradle/docs/world-shell/lanes/lane-5-journey-palace/RE-TARGETS.md",
+      "provenance": "human-adopted",
+      "standing": "design-commitment",
+      "roles": [
+        "document-tier-2",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139769
+    },
+    {
+      "ref": "central:source:project:O-I:desktop/cradle/docs/world-shell/lanes/lane-5-journey-palace/TARGET-SET.md",
+      "path": "desktop/cradle/docs/world-shell/lanes/lane-5-journey-palace/TARGET-SET.md",
+      "provenance": "human-adopted",
+      "standing": "design-commitment",
+      "roles": [
+        "document-tier-2",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139770
+    },
+    {
+      "ref": "central:source:project:O-I:desktop/cradle/docs/world-shell/lanes/lane-6-ableton-shell/SCOPE.md",
+      "path": "desktop/cradle/docs/world-shell/lanes/lane-6-ableton-shell/SCOPE.md",
+      "provenance": "human-adopted",
+      "standing": "design-commitment",
+      "roles": [
+        "document-tier-2",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139770
+    },
+    {
+      "ref": "central:source:project:O-I:desktop/cradle/docs/world-shell/lanes/lane-7-app-structure/STRUCTURE.md",
+      "path": "desktop/cradle/docs/world-shell/lanes/lane-7-app-structure/STRUCTURE.md",
+      "provenance": "human-adopted",
+      "standing": "architecture-contract",
+      "roles": [
+        "document-tier-3",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139770
+    },
+    {
+      "ref": "central:source:project:O-I:desktop/cradle/docs/world-shell/references.json",
+      "path": "desktop/cradle/docs/world-shell/references.json",
+      "provenance": "agent-maintained",
+      "standing": "current-development-state",
+      "roles": [
+        "document-tier-4",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139766
+    },
+    {
+      "ref": "central:source:project:O-I:desktop/cradle/docs/world-shell/sources.json",
+      "path": "desktop/cradle/docs/world-shell/sources.json",
+      "provenance": "agent-maintained",
+      "standing": "current-development-state",
+      "roles": [
+        "document-tier-4",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139766
+    },
+    {
+      "ref": "central:source:project:O-I:desktop/cradle/docs/world-shell/targets.json",
+      "path": "desktop/cradle/docs/world-shell/targets.json",
+      "provenance": "agent-maintained",
+      "standing": "current-development-state",
+      "roles": [
+        "document-tier-4",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139766
+    },
+    {
+      "ref": "central:source:project:O-I:desktop/cradle/docs/world-shell/wayfinder/tools/lead-kit/README.md",
+      "path": "desktop/cradle/docs/world-shell/wayfinder/tools/lead-kit/README.md",
+      "provenance": "human-adopted",
+      "standing": "current-development-state",
+      "roles": [
+        "document-tier-4",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139770
+    },
+    {
+      "ref": "central:source:project:O-I:desktop/cradle/docs/world-shell/wayfinder/tools/lead-kit/measure-reads/README.md",
+      "path": "desktop/cradle/docs/world-shell/wayfinder/tools/lead-kit/measure-reads/README.md",
+      "provenance": "human-adopted",
+      "standing": "current-development-state",
+      "roles": [
+        "document-tier-4",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139770
+    },
+    {
+      "ref": "central:source:project:O-I:desktop/cradle/docs/world-shell/world-shell-mockup-r1.html",
+      "path": "desktop/cradle/docs/world-shell/world-shell-mockup-r1.html",
+      "provenance": "human-adopted",
+      "standing": "design-commitment",
+      "roles": [
+        "document-tier-2",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139767
+    },
+    {
+      "ref": "central:source:project:O-I:desktop/cradle/docs/world-shell/world-shell-mockup-r2.html",
+      "path": "desktop/cradle/docs/world-shell/world-shell-mockup-r2.html",
+      "provenance": "human-adopted",
+      "standing": "design-commitment",
+      "roles": [
+        "document-tier-2",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139767
+    },
+    {
+      "ref": "central:source:project:O-I:desktop/cradle/docs/world-shell/world-shell-mockup-r3.html",
+      "path": "desktop/cradle/docs/world-shell/world-shell-mockup-r3.html",
+      "provenance": "human-adopted",
+      "standing": "design-commitment",
+      "roles": [
+        "document-tier-2",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139767
+    },
+    {
+      "ref": "central:source:project:O-I:desktop/cradle/docs/world-shell/world-shell-mockup-r4.html",
+      "path": "desktop/cradle/docs/world-shell/world-shell-mockup-r4.html",
+      "provenance": "human-adopted",
+      "standing": "design-commitment",
+      "roles": [
+        "document-tier-2",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139767
+    },
+    {
+      "ref": "central:source:project:O-I:desktop/cradle/docs/world-shell/world-shell-mockup.html",
+      "path": "desktop/cradle/docs/world-shell/world-shell-mockup.html",
+      "provenance": "human-adopted",
+      "standing": "design-commitment",
+      "roles": [
+        "document-tier-2",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139767
+    },
+    {
+      "ref": "central:source:project:O-I:docs/ARCHITECTURE.md",
+      "path": "docs/ARCHITECTURE.md",
+      "provenance": "human-adopted",
+      "standing": "architecture-contract",
+      "roles": [
+        "document-tier-3",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139754
+    },
+    {
+      "ref": "central:source:project:O-I:docs/CANONICAL-PRODUCT-FIELD.md",
+      "path": "docs/CANONICAL-PRODUCT-FIELD.md",
+      "provenance": "human-adopted",
+      "standing": "architecture-contract",
+      "roles": [
+        "document-tier-3",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139754
+    },
+    {
+      "ref": "central:source:project:O-I:docs/CI-COMPOSITION.md",
+      "path": "docs/CI-COMPOSITION.md",
+      "provenance": "human-adopted",
+      "standing": "current-development-state",
+      "roles": [
+        "document-tier-4",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139754
+    },
+    {
+      "ref": "central:source:project:O-I:docs/CI.md",
+      "path": "docs/CI.md",
+      "provenance": "human-adopted",
+      "standing": "current-development-state",
+      "roles": [
+        "document-tier-4",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139755
+    },
+    {
+      "ref": "central:source:project:O-I:docs/CLI-SURFACE-CONFORMANCE.md",
+      "path": "docs/CLI-SURFACE-CONFORMANCE.md",
+      "provenance": "human-adopted",
+      "standing": "architecture-contract",
+      "roles": [
+        "document-tier-3",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139755
+    },
+    {
+      "ref": "central:source:project:O-I:docs/CLI.md",
+      "path": "docs/CLI.md",
+      "provenance": "human-adopted",
+      "standing": "architecture-contract",
+      "roles": [
+        "document-tier-3",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139755
+    },
+    {
+      "ref": "central:source:project:O-I:docs/FACTORY-PROVING-FLOOR.md",
+      "path": "docs/FACTORY-PROVING-FLOOR.md",
+      "provenance": "human-adopted",
+      "standing": "current-development-state",
+      "roles": [
+        "document-tier-4",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139755
+    },
+    {
+      "ref": "central:source:project:O-I:docs/FLOW.md",
+      "path": "docs/FLOW.md",
+      "provenance": "human-adopted",
+      "standing": "design-commitment",
+      "roles": [
+        "document-tier-2",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139755
+    },
+    {
+      "ref": "central:source:project:O-I:docs/INSTALL-UPDATE-FLOW.md",
+      "path": "docs/INSTALL-UPDATE-FLOW.md",
+      "provenance": "human-adopted",
+      "standing": "current-development-state",
+      "roles": [
+        "document-tier-4",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139755
+    },
+    {
+      "ref": "central:source:project:O-I:docs/INSTALL.md",
+      "path": "docs/INSTALL.md",
+      "provenance": "human-adopted",
+      "standing": "current-development-state",
+      "roles": [
+        "document-tier-4",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139755
+    },
+    {
+      "ref": "central:source:project:O-I:docs/MIGRATION.md",
+      "path": "docs/MIGRATION.md",
+      "provenance": "human-adopted",
+      "standing": "current-development-state",
+      "roles": [
+        "document-tier-4",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139755
+    },
+    {
+      "ref": "central:source:project:O-I:docs/OI-CENTRAL-FOUNDATION-2026-09-04.md",
+      "path": "docs/OI-CENTRAL-FOUNDATION-2026-09-04.md",
+      "provenance": "human-adopted",
+      "standing": "architecture-contract",
+      "roles": [
+        "document-tier-3",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139755
+    },
+    {
+      "ref": "central:source:project:O-I:docs/OI-DESKTOP-APPLICATION-SPEC.md",
+      "path": "docs/OI-DESKTOP-APPLICATION-SPEC.md",
+      "provenance": "human-adopted",
+      "standing": "design-commitment",
+      "roles": [
+        "document-tier-2",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139756
+    },
+    {
+      "ref": "central:source:project:O-I:docs/OI-DESKTOP-CRADLE-REBUILD-WAYFINDER.md",
+      "path": "docs/OI-DESKTOP-CRADLE-REBUILD-WAYFINDER.md",
+      "provenance": "human-adopted",
+      "standing": "current-development-state",
+      "roles": [
+        "document-tier-4",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139756
+    },
+    {
+      "ref": "central:source:project:O-I:docs/OI-DESKTOP-P1-HOST-INTEGRATION-CONTRACT.md",
+      "path": "docs/OI-DESKTOP-P1-HOST-INTEGRATION-CONTRACT.md",
+      "provenance": "human-adopted",
+      "standing": "architecture-contract",
+      "roles": [
+        "document-tier-3",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139756
+    },
+    {
+      "ref": "central:source:project:O-I:docs/RESEARCH.md",
+      "path": "docs/RESEARCH.md",
+      "provenance": "human-adopted",
+      "standing": "authored-human-position",
+      "roles": [
+        "document-tier-0",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139756
+    },
+    {
+      "ref": "central:source:project:O-I:docs/SHARED-FIELD-STATE-DISCOVERY.md",
+      "path": "docs/SHARED-FIELD-STATE-DISCOVERY.md",
+      "provenance": "human-adopted",
+      "standing": "architecture-contract",
+      "roles": [
+        "document-tier-3",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139756
+    },
+    {
+      "ref": "central:source:project:O-I:docs/SHARED-FIELD.md",
+      "path": "docs/SHARED-FIELD.md",
+      "provenance": "human-adopted",
+      "standing": "architecture-contract",
+      "roles": [
+        "document-tier-3",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139756
+    },
+    {
+      "ref": "central:source:project:O-I:docs/SKILL-CONFORMANCE.md",
+      "path": "docs/SKILL-CONFORMANCE.md",
+      "provenance": "human-adopted",
+      "standing": "architecture-contract",
+      "roles": [
+        "document-tier-3",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139756
+    },
+    {
+      "ref": "central:source:project:O-I:docs/SUITE-OPERATOR-SKILLSET.md",
+      "path": "docs/SUITE-OPERATOR-SKILLSET.md",
+      "provenance": "human-adopted",
+      "standing": "current-development-state",
+      "roles": [
+        "document-tier-4",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139756
+    },
+    {
+      "ref": "central:source:project:O-I:docs/SURFACES.md",
+      "path": "docs/SURFACES.md",
+      "provenance": "human-adopted",
+      "standing": "architecture-contract",
+      "roles": [
+        "document-tier-3",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139756
+    },
+    {
+      "ref": "central:source:project:O-I:docs/architecture/README.md",
+      "path": "docs/architecture/README.md",
+      "provenance": "human-adopted",
+      "standing": "architecture-contract",
+      "roles": [
+        "document-tier-3",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139758
+    },
+    {
+      "ref": "central:source:project:O-I:docs/architecture/agent-context.md",
+      "path": "docs/architecture/agent-context.md",
+      "provenance": "human-adopted",
+      "standing": "architecture-contract",
+      "roles": [
+        "document-tier-3",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139758
+    },
+    {
+      "ref": "central:source:project:O-I:docs/architecture/agent-context.mmd",
+      "path": "docs/architecture/agent-context.mmd",
+      "provenance": "human-adopted",
+      "standing": "architecture-contract",
+      "roles": [
+        "document-tier-3",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139758
+    },
+    {
+      "ref": "central:source:project:O-I:docs/architecture/checks.json",
+      "path": "docs/architecture/checks.json",
+      "provenance": "agent-maintained",
+      "standing": "architecture-contract",
+      "roles": [
+        "document-tier-3",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139759
+    },
+    {
+      "ref": "central:source:project:O-I:docs/architecture/evidence/epi-programme-entrances-20261001.json",
+      "path": "docs/architecture/evidence/epi-programme-entrances-20261001.json",
+      "provenance": "observed",
+      "standing": "observed-evidence",
+      "roles": [
+        "document-tier-5",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139760
+    },
+    {
+      "ref": "central:source:project:O-I:docs/architecture/evidence/factory-rejection-currency.json",
+      "path": "docs/architecture/evidence/factory-rejection-currency.json",
+      "provenance": "observed",
+      "standing": "observed-evidence",
+      "roles": [
+        "document-tier-5",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139760
+    },
+    {
+      "ref": "central:source:project:O-I:docs/architecture/evidence/published-native-navigation.json",
+      "path": "docs/architecture/evidence/published-native-navigation.json",
+      "provenance": "observed",
+      "standing": "observed-evidence",
+      "roles": [
+        "document-tier-5",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139761
+    },
+    {
+      "ref": "central:source:project:O-I:docs/architecture/execution-return.md",
+      "path": "docs/architecture/execution-return.md",
+      "provenance": "human-adopted",
+      "standing": "architecture-contract",
+      "roles": [
+        "document-tier-3",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139759
+    },
+    {
+      "ref": "central:source:project:O-I:docs/architecture/execution-return.mmd",
+      "path": "docs/architecture/execution-return.mmd",
+      "provenance": "human-adopted",
+      "standing": "architecture-contract",
+      "roles": [
+        "document-tier-3",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139759
+    },
+    {
+      "ref": "central:source:project:O-I:docs/architecture/plural-flow.md",
+      "path": "docs/architecture/plural-flow.md",
+      "provenance": "human-adopted",
+      "standing": "architecture-contract",
+      "roles": [
+        "document-tier-3",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139759
+    },
+    {
+      "ref": "central:source:project:O-I:docs/architecture/plural-flow.mmd",
+      "path": "docs/architecture/plural-flow.mmd",
+      "provenance": "human-adopted",
+      "standing": "architecture-contract",
+      "roles": [
+        "document-tier-3",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139759
+    },
+    {
+      "ref": "central:source:project:O-I:docs/architecture/relations.json",
+      "path": "docs/architecture/relations.json",
+      "provenance": "agent-maintained",
+      "standing": "architecture-contract",
+      "roles": [
+        "document-tier-3",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139759
+    },
+    {
+      "ref": "central:source:project:O-I:docs/architecture/rendered/agent-context.svg",
+      "path": "docs/architecture/rendered/agent-context.svg",
+      "provenance": "generated-derived",
+      "standing": "unspecified",
+      "roles": [
+        "document-tier-3",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139761
+    },
+    {
+      "ref": "central:source:project:O-I:docs/architecture/rendered/execution-return.svg",
+      "path": "docs/architecture/rendered/execution-return.svg",
+      "provenance": "generated-derived",
+      "standing": "unspecified",
+      "roles": [
+        "document-tier-3",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139761
+    },
+    {
+      "ref": "central:source:project:O-I:docs/architecture/rendered/index.html",
+      "path": "docs/architecture/rendered/index.html",
+      "provenance": "generated-derived",
+      "standing": "unspecified",
+      "roles": [
+        "document-tier-3",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139761
+    },
+    {
+      "ref": "central:source:project:O-I:docs/architecture/rendered/plural-flow.svg",
+      "path": "docs/architecture/rendered/plural-flow.svg",
+      "provenance": "generated-derived",
+      "standing": "unspecified",
+      "roles": [
+        "document-tier-3",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139761
+    },
+    {
+      "ref": "central:source:project:O-I:docs/architecture/rendered/render-manifest.json",
+      "path": "docs/architecture/rendered/render-manifest.json",
+      "provenance": "generated-derived",
+      "standing": "unspecified",
+      "roles": [
+        "document-tier-3",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139761
+    },
+    {
+      "ref": "central:source:project:O-I:docs/architecture/rendered/shared-participation.svg",
+      "path": "docs/architecture/rendered/shared-participation.svg",
+      "provenance": "generated-derived",
+      "standing": "unspecified",
+      "roles": [
+        "document-tier-3",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139761
+    },
+    {
+      "ref": "central:source:project:O-I:docs/architecture/rendered/upgrade-lifecycle.svg",
+      "path": "docs/architecture/rendered/upgrade-lifecycle.svg",
+      "provenance": "generated-derived",
+      "standing": "unspecified",
+      "roles": [
+        "document-tier-3",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139761
+    },
+    {
+      "ref": "central:source:project:O-I:docs/architecture/rendered/world-ownership.svg",
+      "path": "docs/architecture/rendered/world-ownership.svg",
+      "provenance": "generated-derived",
+      "standing": "unspecified",
+      "roles": [
+        "document-tier-3",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139761
+    },
+    {
+      "ref": "central:source:project:O-I:docs/architecture/shared-participation.md",
+      "path": "docs/architecture/shared-participation.md",
+      "provenance": "human-adopted",
+      "standing": "architecture-contract",
+      "roles": [
+        "document-tier-3",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139759
+    },
+    {
+      "ref": "central:source:project:O-I:docs/architecture/shared-participation.mmd",
+      "path": "docs/architecture/shared-participation.mmd",
+      "provenance": "human-adopted",
+      "standing": "architecture-contract",
+      "roles": [
+        "document-tier-3",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139759
+    },
+    {
+      "ref": "central:source:project:O-I:docs/architecture/source-basis.json",
+      "path": "docs/architecture/source-basis.json",
+      "provenance": "agent-maintained",
+      "standing": "architecture-contract",
+      "roles": [
+        "document-tier-3",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139759
+    },
+    {
+      "ref": "central:source:project:O-I:docs/architecture/upgrade-lifecycle.md",
+      "path": "docs/architecture/upgrade-lifecycle.md",
+      "provenance": "human-adopted",
+      "standing": "architecture-contract",
+      "roles": [
+        "document-tier-3",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139760
+    },
+    {
+      "ref": "central:source:project:O-I:docs/architecture/upgrade-lifecycle.mmd",
+      "path": "docs/architecture/upgrade-lifecycle.mmd",
+      "provenance": "human-adopted",
+      "standing": "architecture-contract",
+      "roles": [
+        "document-tier-3",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139760
+    },
+    {
+      "ref": "central:source:project:O-I:docs/architecture/verification.md",
+      "path": "docs/architecture/verification.md",
+      "provenance": "human-adopted",
+      "standing": "architecture-contract",
+      "roles": [
+        "document-tier-3",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139760
+    },
+    {
+      "ref": "central:source:project:O-I:docs/architecture/world-ownership.md",
+      "path": "docs/architecture/world-ownership.md",
+      "provenance": "human-adopted",
+      "standing": "architecture-contract",
+      "roles": [
+        "document-tier-3",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139760
+    },
+    {
+      "ref": "central:source:project:O-I:docs/architecture/world-ownership.mmd",
+      "path": "docs/architecture/world-ownership.mmd",
+      "provenance": "human-adopted",
+      "standing": "architecture-contract",
+      "roles": [
+        "document-tier-3",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139760
+    },
+    {
+      "ref": "central:source:project:O-I:docs/architecture/world-shell.md",
+      "path": "docs/architecture/world-shell.md",
+      "provenance": "human-adopted",
+      "standing": "architecture-contract",
+      "roles": [
+        "document-tier-3",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139760
+    },
+    {
+      "ref": "central:source:project:O-I:docs/contracts/EXPRESSION-ACT-MATERIAL-V1.md",
+      "path": "docs/contracts/EXPRESSION-ACT-MATERIAL-V1.md",
+      "provenance": "human-adopted",
+      "standing": "architecture-contract",
+      "roles": [
+        "document-tier-3",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139758
+    },
+    {
+      "ref": "central:source:project:O-I:docs/contracts/EXPRESSION-APPLICATION-V1.md",
+      "path": "docs/contracts/EXPRESSION-APPLICATION-V1.md",
+      "provenance": "human-adopted",
+      "standing": "architecture-contract",
+      "roles": [
+        "document-tier-3",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139758
+    },
+    {
+      "ref": "central:source:project:O-I:docs/contracts/NARA-EXPRESSION-JOURNEY-V1.md",
+      "path": "docs/contracts/NARA-EXPRESSION-JOURNEY-V1.md",
+      "provenance": "human-adopted",
+      "standing": "architecture-contract",
+      "roles": [
+        "document-tier-3",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139758
+    },
+    {
+      "ref": "central:source:project:O-I:docs/contracts/NARA-SPEECH-EXPERIENCE-V1.md",
+      "path": "docs/contracts/NARA-SPEECH-EXPERIENCE-V1.md",
+      "provenance": "human-adopted",
+      "standing": "architecture-contract",
+      "roles": [
+        "document-tier-3",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139758
+    },
+    {
+      "ref": "central:source:project:O-I:docs/contracts/WORLD-INHABITATION-V1.md",
+      "path": "docs/contracts/WORLD-INHABITATION-V1.md",
+      "provenance": "human-adopted",
+      "standing": "architecture-contract",
+      "roles": [
+        "document-tier-3",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139758
+    },
+    {
+      "ref": "central:source:project:O-I:docs/cradle/02-ARCHITECTURE.md",
+      "path": "docs/cradle/02-ARCHITECTURE.md",
+      "provenance": "human-adopted",
+      "standing": "architecture-contract",
+      "roles": [
+        "document-tier-3",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139757
+    },
+    {
+      "ref": "central:source:project:O-I:docs/cradle/07-WAVE-5-SYSTEM-CONTRIBUTION.md",
+      "path": "docs/cradle/07-WAVE-5-SYSTEM-CONTRIBUTION.md",
+      "provenance": "human-adopted",
+      "standing": "architecture-contract",
+      "roles": [
+        "document-tier-3",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139757
+    },
+    {
+      "ref": "central:source:project:O-I:docs/cradle/08-WAVE-5-CONSUMER-SEAM.md",
+      "path": "docs/cradle/08-WAVE-5-CONSUMER-SEAM.md",
+      "provenance": "human-adopted",
+      "standing": "architecture-contract",
+      "roles": [
+        "document-tier-3",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139757
+    },
+    {
+      "ref": "central:source:project:O-I:docs/cradle/09-CONFIGURATION-PLANE.md",
+      "path": "docs/cradle/09-CONFIGURATION-PLANE.md",
+      "provenance": "human-adopted",
+      "standing": "architecture-contract",
+      "roles": [
+        "document-tier-3",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139757
+    },
+    {
+      "ref": "central:source:project:O-I:docs/cradle/CENTRAL-FIELD-CONTRACT.md",
+      "path": "docs/cradle/CENTRAL-FIELD-CONTRACT.md",
+      "provenance": "human-adopted",
+      "standing": "architecture-contract",
+      "roles": [
+        "document-tier-3",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139757
+    },
+    {
+      "ref": "central:source:project:O-I:docs/cradle/CENTRAL-FIELD-WORLD-PACKAGE.md",
+      "path": "docs/cradle/CENTRAL-FIELD-WORLD-PACKAGE.md",
+      "provenance": "human-adopted",
+      "standing": "architecture-contract",
+      "roles": [
+        "document-tier-3",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139757
+    },
+    {
+      "ref": "central:source:project:O-I:docs/cradle/HOSTED-CONTRIBUTIONS.md",
+      "path": "docs/cradle/HOSTED-CONTRIBUTIONS.md",
+      "provenance": "human-adopted",
+      "standing": "architecture-contract",
+      "roles": [
+        "document-tier-3",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139757
+    },
+    {
+      "ref": "central:source:project:O-I:docs/cradle/PERSONAL-WEB.md",
+      "path": "docs/cradle/PERSONAL-WEB.md",
+      "provenance": "human-adopted",
+      "standing": "architecture-contract",
+      "roles": [
+        "document-tier-3",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139757
+    },
+    {
+      "ref": "central:source:project:O-I:docs/cradle/README.md",
+      "path": "docs/cradle/README.md",
+      "provenance": "human-adopted",
+      "standing": "architecture-contract",
+      "roles": [
+        "document-tier-3",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139757
+    },
+    {
+      "ref": "central:source:project:O-I:docs/cradle/WIKI-CONSTELLATION-SPEC.md",
+      "path": "docs/cradle/WIKI-CONSTELLATION-SPEC.md",
+      "provenance": "human-adopted",
+      "standing": "architecture-contract",
+      "roles": [
+        "document-tier-3",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139758
+    },
+    {
+      "ref": "central:source:project:O-I:docs/experience/CASES.md",
+      "path": "docs/experience/CASES.md",
+      "provenance": "human-adopted",
+      "standing": "design-commitment",
+      "roles": [
+        "document-tier-2",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139762
+    },
+    {
+      "ref": "central:source:project:O-I:docs/experience/DEVELOPER-FIELD.md",
+      "path": "docs/experience/DEVELOPER-FIELD.md",
+      "provenance": "human-adopted",
+      "standing": "design-commitment",
+      "roles": [
+        "document-tier-2",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139762
+    },
+    {
+      "ref": "central:source:project:O-I:docs/experience/INSTALLATION-VARIANTS.md",
+      "path": "docs/experience/INSTALLATION-VARIANTS.md",
+      "provenance": "human-adopted",
+      "standing": "design-commitment",
+      "roles": [
+        "document-tier-2",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139762
+    },
+    {
+      "ref": "central:source:project:O-I:docs/experience/LOCAL-CAMPAIGN.md",
+      "path": "docs/experience/LOCAL-CAMPAIGN.md",
+      "provenance": "human-adopted",
+      "standing": "design-commitment",
+      "roles": [
+        "document-tier-2",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139762
+    },
+    {
+      "ref": "central:source:project:O-I:docs/experience/PRACTICE-CONDITIONS.md",
+      "path": "docs/experience/PRACTICE-CONDITIONS.md",
+      "provenance": "human-adopted",
+      "standing": "design-commitment",
+      "roles": [
+        "document-tier-2",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139762
+    },
+    {
+      "ref": "central:source:project:O-I:docs/experience/README.md",
+      "path": "docs/experience/README.md",
+      "provenance": "human-adopted",
+      "standing": "design-commitment",
+      "roles": [
+        "document-tier-2",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139762
+    },
+    {
+      "ref": "central:source:project:O-I:docs/experience/STORIES.md",
+      "path": "docs/experience/STORIES.md",
+      "provenance": "human-adopted",
+      "standing": "design-commitment",
+      "roles": [
+        "document-tier-2",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139763
+    },
+    {
+      "ref": "central:source:project:O-I:docs/experience/STORY-PROFILE.md",
+      "path": "docs/experience/STORY-PROFILE.md",
+      "provenance": "human-adopted",
+      "standing": "design-commitment",
+      "roles": [
+        "document-tier-2",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139763
+    },
+    {
+      "ref": "central:source:project:O-I:docs/experience/TOOLS.md",
+      "path": "docs/experience/TOOLS.md",
+      "provenance": "human-adopted",
+      "standing": "current-development-state",
+      "roles": [
+        "document-tier-4",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139763
+    },
+    {
+      "ref": "central:source:project:O-I:docs/experience/campaign.json",
+      "path": "docs/experience/campaign.json",
+      "provenance": "human-adopted",
+      "standing": "design-commitment",
+      "roles": [
+        "document-tier-2",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139763
+    },
+    {
+      "ref": "central:source:project:O-I:docs/experience/coverage-reading.json",
+      "path": "docs/experience/coverage-reading.json",
+      "provenance": "generated-derived",
+      "standing": "unspecified",
+      "roles": [
+        "document-tier-4",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139763
+    },
+    {
+      "ref": "central:source:project:O-I:docs/experience/coverage-reading.md",
+      "path": "docs/experience/coverage-reading.md",
+      "provenance": "generated-derived",
+      "standing": "unspecified",
+      "roles": [
+        "document-tier-4",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139763
+    },
+    {
+      "ref": "central:source:project:O-I:docs/experience/developer-field.json",
+      "path": "docs/experience/developer-field.json",
+      "provenance": "human-adopted",
+      "standing": "design-commitment",
+      "roles": [
+        "document-tier-2",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139763
+    },
+    {
+      "ref": "central:source:project:O-I:docs/experience/evidence/plural-flow-20260930/README.md",
+      "path": "docs/experience/evidence/plural-flow-20260930/README.md",
+      "provenance": "observed",
+      "standing": "observed-evidence",
+      "roles": [
+        "document-tier-5",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139765
+    },
+    {
+      "ref": "central:source:project:O-I:docs/experience/evidence/plural-flow-20260930/flow.html",
+      "path": "docs/experience/evidence/plural-flow-20260930/flow.html",
+      "provenance": "observed",
+      "standing": "observed-evidence",
+      "roles": [
+        "document-tier-5",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139765
+    },
+    {
+      "ref": "central:source:project:O-I:docs/experience/factory-agency.json",
+      "path": "docs/experience/factory-agency.json",
+      "provenance": "human-adopted",
+      "standing": "design-commitment",
+      "roles": [
+        "document-tier-2",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139764
+    },
+    {
+      "ref": "central:source:project:O-I:docs/experience/harness-first-adoption.json",
+      "path": "docs/experience/harness-first-adoption.json",
+      "provenance": "human-adopted",
+      "standing": "design-commitment",
+      "roles": [
+        "document-tier-2",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139764
+    },
+    {
+      "ref": "central:source:project:O-I:docs/experience/personal-web.json",
+      "path": "docs/experience/personal-web.json",
+      "provenance": "human-adopted",
+      "standing": "design-commitment",
+      "roles": [
+        "document-tier-2",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139764
+    },
+    {
+      "ref": "central:source:project:O-I:docs/experience/plural-flow.json",
+      "path": "docs/experience/plural-flow.json",
+      "provenance": "human-adopted",
+      "standing": "design-commitment",
+      "roles": [
+        "document-tier-2",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139764
+    },
+    {
+      "ref": "central:source:project:O-I:docs/experience/session-grounding.json",
+      "path": "docs/experience/session-grounding.json",
+      "provenance": "human-adopted",
+      "standing": "design-commitment",
+      "roles": [
+        "document-tier-2",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139764
+    },
+    {
+      "ref": "central:source:project:O-I:docs/experience/shared-field-world-participation.json",
+      "path": "docs/experience/shared-field-world-participation.json",
+      "provenance": "human-adopted",
+      "standing": "design-commitment",
+      "roles": [
+        "document-tier-2",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139764
+    },
+    {
+      "ref": "central:source:project:O-I:docs/experience/vak-expression-craft.json",
+      "path": "docs/experience/vak-expression-craft.json",
+      "provenance": "human-adopted",
+      "standing": "design-commitment",
+      "roles": [
+        "document-tier-2",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139764
+    },
+    {
+      "ref": "central:source:project:O-I:docs/experience/wiki-constellation.json",
+      "path": "docs/experience/wiki-constellation.json",
+      "provenance": "human-adopted",
+      "standing": "design-commitment",
+      "roles": [
+        "document-tier-2",
+        "self-description-source"
+      ],
+      "treatment": "retain-native-in-place",
+      "recognition": "human-accepted source relation",
+      "recorded_at_unix_seconds": 1793139765
+    }
+  ]
+}

@@ -7,7 +7,7 @@ import {join} from 'node:path'
 
 // The agent's face, live (src/agent/FaceStage.tsx), the face it hosts (public/face, vendored from EpiLogos/face-rig by
 // scripts/sync-face.mjs), and the Answer that stands it where it is opened (catalogue/panels/central__nara-conversation.tsx;
-// docs/dlw/DLW.md §19.4). What holds without a browser: the pose each phase asks of the face, in the face's own names; the mask
+// ProjectCentral/docs/1-vision/dlw/DLW.md §19.4). What holds without a browser: the pose each phase asks of the face, in the face's own names; the mask
 // the stage draws on the server; where the Answer stands the face and where it keeps the icon; the light's ring while the agent
 // works; and the vendored files against their REVISION.json. The live face itself is walked in the gallery.
 // Loader as kit-motion.test.mjs.

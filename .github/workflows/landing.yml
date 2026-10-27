@@ -4,9 +4,9 @@ on:
   push:
     branches: [main]
     # Prose no test or gate reads: a change touching only these skips the tier.
-    paths-ignore: ['docs/dlw/**', 'docs/research/glass-bead-game/**']
+    paths-ignore: ['ProjectCentral/docs/1-vision/dlw/**', 'ProjectCentral/docs/5-evidence/research/glass-bead-game/**']
   pull_request:
-    paths-ignore: ['docs/dlw/**', 'docs/research/glass-bead-game/**']
+    paths-ignore: ['ProjectCentral/docs/1-vision/dlw/**', 'ProjectCentral/docs/5-evidence/research/glass-bead-game/**']
   workflow_dispatch:
 
 permissions:

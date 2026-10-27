@@ -4,7 +4,7 @@ Register: episteme
 
 # O:I Desktop Cradle — Rebuild Wayfinder (the grilled map)
 
-> **Adopted Factory/Agency correction — 2026-09-14:** The Factory and Agency rows of [STORIES](experience/STORIES.md) (the adoption is in [PROGRAMME](../desktop/cradle/docs/world-shell/PROGRAMME.md) R31) and [#289](https://github.com/EpiLogos/O-I/issues/289) now govern that scoped experience. Ordinary work retains the four-plane companion; Factory reserves the right for actual artifacts while conversation/Run/workspace occupies the centre. Native-resolved model/harness choices are usable in the shared session interaction: earlier law 6 and “no desktop model parameter” checks mean no desktop-owned resolution, not no human chooser. The owner's authorised bounded Terra/Luna parallelism under one integrator supersedes historical “no subagents” wording for this campaign. Existing ownership, source, checks and human-evidence gates remain.
+> **Adopted Factory/Agency correction — 2026-09-14:** The Factory and Agency rows of [STORIES](experience/STORIES.md) (the adoption is in [PROGRAMME](../ProjectCentral/docs/0-ground/PROGRAMME.md) R31) and [#289](https://github.com/EpiLogos/O-I/issues/289) now govern that scoped experience. Ordinary work retains the four-plane companion; Factory reserves the right for actual artifacts while conversation/Run/workspace occupies the centre. Native-resolved model/harness choices are usable in the shared session interaction: earlier law 6 and “no desktop model parameter” checks mean no desktop-owned resolution, not no human chooser. The owner's authorised bounded Terra/Luna parallelism under one integrator supersedes historical “no subagents” wording for this campaign. Existing ownership, source, checks and human-evidence gates remain.
 
 
 > **Final foundation placement correction (September 8):** Read [the pane and resource contract](../.superpowers/sdd/cradle-rebuild/SELF-OTHER-FIELD-UX-2026-09-08.md#one-pane-system-an-optional-accompanying-agent). The right sidebar stays the optional accompanying agent; Shared Field details use ordinary canvas panes/full views/popouts, returning as tabs. A NOW starts from intention + one or more worlds/projections; selected outputs may survive closure. First rounds establish UI fidelity, window/focus/restore correctness and measured bounded resource use. This overrides earlier generic right-inspector wording for shared subjects.
@@ -707,7 +707,7 @@ terminal state. P0 closed this way 2026-09-05
 
 **For implementation before P1 shell + business-logic integration**
 
-- **Expression overlay ready:** [`BRIEF-FND-07-EXPRESSION-2026-09-08.md`](../../../Work/O-I/.superpowers/sdd/cradle-rebuild/BRIEF-FND-07-EXPRESSION-2026-09-08.md) supplied to shell agent, with corrected agent-form derivation and "resize only" steering direction applied.
+- **Expression overlay ready:** `BRIEF-FND-07-EXPRESSION-2026-09-08.md` (a session brief that was never committed to this repository) supplied to shell agent, with corrected agent-form derivation and "resize only" steering direction applied.
 - **Specification updated:** spec and study README at revision 6; D22, W1.8, FND-07 remain in wayfinder and programme from prior turn.
 - **Handoff logged:** closing handoff recorded in O-I NOW field; O-I day 2026-09-08 rolled over to 2026-09-09 with 26 live records carried forward.
 - **Root-register note:** README drafts and two dated folders at the Work root predate this session and remain in place; proposed placement decision deferred to the owner.

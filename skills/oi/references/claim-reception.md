@@ -4,7 +4,7 @@ Use this reference when receiving another Agent's substantial return, composing 
 
 ## Source and standing
 
-Owner-requested operational recovery, 17 September 2026. The originating account is [Factory Primitive Relations §§7.2–7.5](https://github.com/EpiLogos/Factory/blob/main/docs/canon/QL-SOFTWARE-FACTORY-PRIMITIVE-RELATIONS.md); [Factory operation](https://github.com/EpiLogos/Factory/blob/main/skills/factory-operation/SKILL.md), semantic ref `factory:operator`, already supplies whole-relative verification and the plausibility barrier. [O:I Founding Positions](https://github.com/EpiLogos/O-I/blob/main/docs/positions/FOUNDING-POSITIONS.md) preserves authored meaning, selective disclosure and Return. This reference carries that language across the suite doorway; it creates no new Claim store, assessment scale or authority.
+Owner-requested operational recovery, 17 September 2026. The originating account is [Factory Primitive Relations §§7.2–7.5](https://github.com/EpiLogos/Factory/blob/main/docs/canon/QL-SOFTWARE-FACTORY-PRIMITIVE-RELATIONS.md); [Factory operation](https://github.com/EpiLogos/Factory/blob/main/skills/factory-operation/SKILL.md), semantic ref `factory:operator`, already supplies whole-relative verification and the plausibility barrier. [O:I Founding Positions](https://github.com/EpiLogos/O-I/blob/main/ProjectCentral/docs/0-ground/positions/FOUNDING-POSITIONS.md) preserves authored meaning, selective disclosure and Return. This reference carries that language across the suite doorway; it creates no new Claim store, assessment scale or authority.
 
 ## Receive, relate, assess, continue
 

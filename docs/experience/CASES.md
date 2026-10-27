@@ -29,7 +29,7 @@ One conversation across people, agents and worlds ([stories CJ](STORIES.md); the
 
 ## Wiki and constellations (WCT01–WCT25)
 
-Wiki reading and editing without QL, constellation construction, the agent's construction space and Return ([the wiki specification](../cradle/WIKI-CONSTELLATION-SPEC.md); decisions WC01–WC15 in [the practice position](../positions/WIKI-CONSTELLATION-PRACTICE.md)).
+Wiki reading and editing without QL, constellation construction, the agent's construction space and Return ([the wiki specification](../cradle/WIKI-CONSTELLATION-SPEC.md); decisions WC01–WC15 in [the practice position](../../ProjectCentral/docs/0-ground/positions/WIKI-CONSTELLATION-PRACTICE.md)).
 
 | Case | Required observation and negative |
 |---|---|
@@ -160,7 +160,7 @@ The first comparative specimens inside the campaign; the protocol is [LOCAL-CAMP
 
 ## Session grounding (SG1–SG12)
 
-Twelve bounded units that prove the native prerequisites of continuous work: source and place, identity, the material census, providers, composition, authority and delivery, recovery, remote access, Guardians, Factory return, presence and the joined walk. They are proof units, not product primitives or story IDs. [session-grounding.json](session-grounding.json) holds each as an obligation `grounding220:<name>`, with its full required branches, the stories it binds (including the DO rows added on 22 September), its execution lanes and its required evidence: C, P and M for all, and H as well for SG11 and SG12. The laws the units prove are in [persistent agency and material hosting](../PERSISTENT-AGENCY-AND-MATERIAL-HOSTING.md), [agent context](../architecture/agent-context.md) and [World inhabitation §1](../contracts/WORLD-INHABITATION-V1.md).
+Twelve bounded units that prove the native prerequisites of continuous work: source and place, identity, the material census, providers, composition, authority and delivery, recovery, remote access, Guardians, Factory return, presence and the joined walk. They are proof units, not product primitives or story IDs. [session-grounding.json](session-grounding.json) holds each as an obligation `grounding220:<name>`, with its full required branches, the stories it binds (including the DO rows added on 22 September), its execution lanes and its required evidence: C, P and M for all, and H as well for SG11 and SG12. The laws the units prove are in [persistent agency and material hosting](../../ProjectCentral/docs/3-architecture/PERSISTENT-AGENCY-AND-MATERIAL-HOSTING.md), [agent context](../architecture/agent-context.md) and [World inhabitation §1](../contracts/WORLD-INHABITATION-V1.md).
 
 | Case | Required proof | Obligation and original stories |
 |---|---|---|

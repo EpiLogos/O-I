@@ -304,7 +304,8 @@ def initialize() -> None:
         {"id": "persistence:A1", "owner": "native owning write operation; client schedules, waits for acknowledgements and preserves drafts on failure", "state": "pending", "source": source(GROUND / "Work/O-I/campaign-evidence/2026-10-07-obsidian-re/contracts/a1-save-handling.contract.md"), "divergence": "Lane 3 E18 targets consistent atomic per-document stores rather than Obsidian's observed in-place non-atomic writes. A1 includes the documented divergence decision, not a silent compatibility claim."},
         {"id": "time:techne:time-axis/v1", "owner": "lane 2; lane 4 consumes, never redefines", "targets": ["lane-2:T6", "lane-2:T17", "lane-2:T21", "lane-4:T14", "lane-4:T15"], "state": "pending", "transport_bridge": "Civil/Day/NOW time remains native; musical work time binds through one explicit typed bridge, not fabricated dates or a second transport clock."},
     ]
-    basis = [CAMPAIGN / "PROGRAMME.md", CAMPAIGN / "CONVERGENCE.md", LANES_DIR / "lane-7-app-structure/STRUCTURE.md"]
+    # PROGRAMME and CONVERGENCE stand in the project's documentation tiers (O-I #727).
+    basis = [REPO / "ProjectCentral/docs/0-ground/PROGRAMME.md", REPO / "ProjectCentral/docs/4-development/world-shell/CONVERGENCE.md", LANES_DIR / "lane-7-app-structure/STRUCTURE.md"]
     for directory, _, _ in LANES.values():
         basis += [LANES_DIR / directory / "TARGET-SET.md", LANES_DIR / directory / "RE-TARGETS.md"]
     basis += [GROUND / "Work/O-I/campaign-evidence/2026-10-07-obsidian-re/contracts/a1-save-handling.contract.md", GROUND / "Work/O-I/campaign-evidence/2026-10-07-obsidian-re/recreation-backlog.md"]

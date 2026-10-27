@@ -15,7 +15,7 @@
 //! characteristic ways of adopting the system, not ascending editions.
 //! All-products deployment remains a valid composition inside CF5; it is not
 //! itself one of the modes and no eighth frame exists. Canonical lock:
-//! `docs/CONTEXT-FRAME-COMPOSITION-LOCK.md`.
+//! `ProjectCentral/docs/3-architecture/CONTEXT-FRAME-COMPOSITION-LOCK.md`.
 
 use serde::{Deserialize, Serialize};
 

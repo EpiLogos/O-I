@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// The UX transfer gaps, closed with checks (docs/cradle/CENTRAL-FIELD-UX-TRANSFER.md). Each section is one UX item; each check
+// The UX transfer gaps, closed with checks (ProjectCentral/docs/5-evidence/cradle/CENTRAL-FIELD-UX-TRANSFER.md). Each section is one UX item; each check
 // names what the site does (site/tests/essay-reader-controls.py) and asserts the native field does it, by pointer AND by keyboard
 // where the site has both.
 //   UX4  the graph and the connections list share the filter and the same neighbourhood

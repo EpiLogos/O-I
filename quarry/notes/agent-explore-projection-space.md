@@ -76,7 +76,7 @@ live-probe of SpaceTimeDB as a shared-field transport.
   ratify through owner operations) and W-waypoint D19 workspace autosave
   shape (working vs published state).
 - SpaceTimeDB live bridge → the **Encounter security line**
-  (`docs/ENCOUNTER-SECURITY-SPACETIMEDB-CONFORMANCE.md` on main) and fog
+  (`ProjectCentral/docs/5-evidence/ENCOUNTER-SECURITY-SPACETIMEDB-CONFORMANCE.md` on main) and fog
   row **Gateway continuity / SharedField admission** (§2.4): this branch
   is the only live evidence that a hosted SharedField endpoint can feed
   an O:I surface without leaking implementation identity.

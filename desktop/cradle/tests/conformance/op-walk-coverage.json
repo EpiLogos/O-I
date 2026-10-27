@@ -821,7 +821,7 @@
     {
       "op": "live_device_descriptors",
       "native_owner": "kernel/src/live_set_owner.rs",
-      "spec_ref": "docs/world-shell/LEGACY-CRADLE-RETIREMENT.md §3 gate 4; tests/conformance/owner-service-census.json (8787 seam)",
+      "spec_ref": "ProjectCentral/docs/4-development/world-shell/LEGACY-CRADLE-RETIREMENT.md §3 gate 4; tests/conformance/owner-service-census.json (8787 seam)",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -830,7 +830,7 @@
     {
       "op": "live_device_param_write",
       "native_owner": "kernel/src/live_set_owner.rs",
-      "spec_ref": "docs/world-shell/LEGACY-CRADLE-RETIREMENT.md §3 gate 4; tests/conformance/owner-service-census.json (8787 seam)",
+      "spec_ref": "ProjectCentral/docs/4-development/world-shell/LEGACY-CRADLE-RETIREMENT.md §3 gate 4; tests/conformance/owner-service-census.json (8787 seam)",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -839,7 +839,7 @@
     {
       "op": "live_device_params_read",
       "native_owner": "kernel/src/live_set_owner.rs",
-      "spec_ref": "docs/world-shell/LEGACY-CRADLE-RETIREMENT.md §3 gate 4; tests/conformance/owner-service-census.json (8787 seam)",
+      "spec_ref": "ProjectCentral/docs/4-development/world-shell/LEGACY-CRADLE-RETIREMENT.md §3 gate 4; tests/conformance/owner-service-census.json (8787 seam)",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -848,7 +848,7 @@
     {
       "op": "live_groove_pool_read",
       "native_owner": "kernel/src/live_set_owner.rs",
-      "spec_ref": "docs/dlw/DLW.md \u00a716.7 (the pool's other face is Live's own); packages/live-set/src/edit.rs",
+      "spec_ref": "ProjectCentral/docs/1-vision/dlw/DLW.md \u00a716.7 (the pool's other face is Live's own); packages/live-set/src/edit.rs",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -857,7 +857,7 @@
     {
       "op": "live_groove_pool_write",
       "native_owner": "kernel/src/live_set_owner.rs",
-      "spec_ref": "docs/dlw/DLW.md \u00a716.7 (each groove is the set's, read from it and written into it); packages/live-set/src/edit.rs",
+      "spec_ref": "ProjectCentral/docs/1-vision/dlw/DLW.md \u00a716.7 (each groove is the set's, read from it and written into it); packages/live-set/src/edit.rs",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -866,7 +866,7 @@
     {
       "op": "live_set_read",
       "native_owner": "kernel/src/live_set_owner.rs",
-      "spec_ref": "docs/world-shell/LEGACY-CRADLE-RETIREMENT.md §3 gate 4; tests/conformance/owner-service-census.json (8787 seam)",
+      "spec_ref": "ProjectCentral/docs/4-development/world-shell/LEGACY-CRADLE-RETIREMENT.md §3 gate 4; tests/conformance/owner-service-census.json (8787 seam)",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -875,7 +875,7 @@
     {
       "op": "live_take_comp",
       "native_owner": "kernel/src/live_set_owner.rs",
-      "spec_ref": "docs/dlw/DLW.md \u00a716.6 Arrangement view (take lanes) and \u00a721.1 Takes and Arrangement lanes; packages/live-set/src/edit.rs",
+      "spec_ref": "ProjectCentral/docs/1-vision/dlw/DLW.md \u00a716.6 Arrangement view (take lanes) and \u00a721.1 Takes and Arrangement lanes; packages/live-set/src/edit.rs",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -920,7 +920,7 @@
     {
       "op": "decision_status",
       "native_owner": "kernel/src/lib.rs",
-      "spec_ref": "docs/dlw/DLW.md \u00a719.20 (Decision helper); tickets/T-AGENCY K5",
+      "spec_ref": "ProjectCentral/docs/1-vision/dlw/DLW.md \u00a719.20 (Decision helper); tickets/T-AGENCY K5",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "DLW build lane (T-AGENCY K5)",
@@ -947,7 +947,7 @@
     {
       "op": "team_space",
       "native_owner": "kernel/src/lib.rs",
-      "spec_ref": "docs/dlw/DLW.md \u00a719.20 (Decision helper); tickets/T-AGENCY K5",
+      "spec_ref": "ProjectCentral/docs/1-vision/dlw/DLW.md \u00a719.20 (Decision helper); tickets/T-AGENCY K5",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "DLW build lane (T-AGENCY K5)",
@@ -1514,7 +1514,7 @@
     {
       "op": "world_body_read",
       "native_owner": "kernel/src/construction.rs",
-      "spec_ref": "docs/world-shell/wayfinder/tickets/T-WORLDS-the-run-to-ux-testing.md \u00a75 (W3); docs/dlw/DLW.md \u00a717.2",
+      "spec_ref": "docs/world-shell/wayfinder/tickets/T-WORLDS-the-run-to-ux-testing.md \u00a75 (W3); ProjectCentral/docs/1-vision/dlw/DLW.md \u00a717.2",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "W3/world body",

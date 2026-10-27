@@ -2487,7 +2487,7 @@ The 85 stories of the retired `docs/ux/` catalogue (`ux.oi.*`, O-I #728) are row
 
 ## Where the feature UX stories went
 
-The feature UX files of `docs/experience/` and three of `docs/cradle/` retired under O-I #729. Their intended experience is in these rows; their rulings are in [PROGRAMME](../../desktop/cradle/docs/world-shell/PROGRAMME.md), their cases in [CASES](CASES.md) and their laws in the contracts. The Expression Field's own stories EF01–EF10 now happen here:
+The feature UX files of `docs/experience/` and three of `docs/cradle/` retired under O-I #729. Their intended experience is in these rows; their rulings are in [PROGRAMME](../../ProjectCentral/docs/0-ground/PROGRAMME.md), their cases in [CASES](CASES.md) and their laws in the contracts. The Expression Field's own stories EF01–EF10 now happen here:
 
 - EF01 Enter an Expression and remain in the world → XS01, XS02, XS12, XA04, WV16
 - EF02 Project knowledge into a living local whole → XA01, XA02, TQ01, TG01

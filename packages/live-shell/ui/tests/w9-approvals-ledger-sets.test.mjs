@@ -177,7 +177,7 @@ test('3 · the chain reads the Runs the shown session\'s takes name, Factory\'s 
 
 test('4 · Changes: a comment on the waiting return in the words written in the thread, read at the press; the composer is cleared once Central keeps it', async () => {
   const minted = 1_792_300_000_000
-  const PENDING = {return_ref: `central:return:project:o-i:${minted}000000-4242`, source_ref: 'central:source:project:O-I:docs/dlw/DLW.md', basis_revision: 'r1',
+  const PENDING = {return_ref: `central:return:project:o-i:${minted}000000-4242`, source_ref: 'central:source:project:O-I:ProjectCentral/docs/1-vision/dlw/DLW.md', basis_revision: 'r1',
     status: 'pending', agent_session_ref: 'agent-session/flint', current_revision: 'r1'}
   const sent = [], cleared = []
   const base = approvals({returns: {entries: [PENDING]}, units: null})

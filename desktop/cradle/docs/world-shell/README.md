@@ -101,13 +101,13 @@ hosting uses the existing Tauri `kernel_op` seam. No bridge was listening at
 The 126 targets (`lanes/*/TARGET-SET.md`, `targets.json`) are the Technē-instrument
 editing behaviours of five lanes (Canvas / Project / Graph, Timeline, Expressions
 editing core, Places, Journey / Palace), approved as that programme's scope
-(`PROGRAMME.md`). They are not an inventory of what the O:I products do through the
+([PROGRAMME](../../../../ProjectCentral/docs/0-ground/PROGRAMME.md)). They are not an inventory of what the O:I products do through the
 DLW: the retired FOUNDATION §8 said they cover Central, AIKit, Factory, Workcell,
 Actuation, Quaternal Logic and the Expressions owner, and that was wrong. The
 products' capability record is the O:I matrix (the DLW map, O-I #706).
 
 *The rest of this section is moved verbatim from the retired `wayfinder/FOUNDATION.md`
-§8 (22 Oct 2026; history: `2a1ccca02`). PORT-AUDIT is `audit-20261014/PORT-AUDIT.md`.*
+§8 (22 Oct 2026; history: `2a1ccca02`). PORT-AUDIT is [`audit-20261014/PORT-AUDIT.md`](../../../../ProjectCentral/docs/5-evidence/world-shell/audit-20261014/PORT-AUDIT.md).*
 
 After F2–F5, every target is re-homed. The register gains two columns, both
 verified on screen:
@@ -133,11 +133,11 @@ Copied 11 October 2026 from the reverse-engineering campaign so the design
 sits in the cradle tree with the app. The campaign copy remains at
 `desktop/cradle/docs/world-shell/`.
 
-- **This directory** holds the design pack: the mockups, `icon-cut.html`, the port and instrumentation contracts, PROGRAMME (the owner's rulings) and `wayfinder/` (the tracker document and the sky and Nara plan). The plan is the wayfinder map, O-I #706; the design is the manual (`docs/dlw/DLW.md`); the builder contracts are `docs/architecture/world-shell.md`.
+- **This directory** holds what code reads by path: the mockups, `icon-cut.html`, the glyph language, the acceptance register (`acceptance.py` with `targets.json`, `sources.json`, `references.json`), the port ledger and functional crosswalk, the agent-shell fidelity oracle, the lanes' target sets, and the lead's tools (`wayfinder/tools/`). The pack's readable documents stand in the project's documentation tiers (O-I #727): PROGRAMME, the owner's rulings, in [tier 0](../../../../ProjectCentral/docs/0-ground/PROGRAMME.md); the design studies in [tier 2](../../../../ProjectCentral/docs/2-design/world-shell/); the port and instrumentation contracts and the seams in [tier 3](../../../../ProjectCentral/docs/3-architecture/world-shell/); the tracker document, the sky and Nara plan and the screen-pass brief in [tier 4](../../../../ProjectCentral/docs/4-development/world-shell/wayfinder/); the audits, returns and `evidence/` in [tier 5](../../../../ProjectCentral/docs/5-evidence/world-shell/). The plan is the wayfinder map, O-I #706; the design is the manual (`ProjectCentral/docs/1-vision/dlw/DLW.md`); the builder contracts are `docs/architecture/world-shell.md`.
 - **The shell code** is `packages/live-shell`. It is not a second app inside
   `desktop/cradle/src`. The cradle tree is still the installed legacy app
   (`org.epilogos.oi.cradle`). The successor named in
-  `LEGACY-CRADLE-RETIREMENT.md` is `org.epilogos.oi.live-shell`. Cutover
+  [`LEGACY-CRADLE-RETIREMENT.md`](../../../../ProjectCentral/docs/4-development/world-shell/LEGACY-CRADLE-RETIREMENT.md) is `org.epilogos.oi.live-shell`. Cutover
   stays owner-named; the wholesale port mounts the cradle's working
   components (terminal, browser, documents, chats) into the shell's panes.
 - **Not copied:** the campaign's `evidence/`, native build stages, and

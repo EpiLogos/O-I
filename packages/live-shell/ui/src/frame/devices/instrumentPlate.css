@@ -1,6 +1,6 @@
 /* An instrument as one plate, its controls grouped in sections side by side: the mockup's .inst / .insth / .isecs / .isec
    (world-shell-mockup.html:352-359) drawn on the SDK's plate (inhabitants/sdk/sdk.css) at the device UI standard's measures
-   (docs/dlw/DLW.md §16.9: a 22 px head, a band of sections, 56 px control columns, 9 px small capitals 13 px high; §1: "Sections are
+   (ProjectCentral/docs/1-vision/dlw/DLW.md §16.9: a 22 px head, a band of sections, 56 px control columns, 9 px small capitals 13 px high; §1: "Sections are
    columns, ruled off from each other by a hairline … Nothing scrolls, and no box sits inside a box"). Shell and SDK tokens only. */
 .inst-plate { flex: none; display: flex; flex-direction: column; min-width: 0; min-height: 0; height: 100%; max-height: 100% }
 /* The plate's face (manual §16.9 Face): the panel kit's grey on a hairline, its head, its row of sections, what stands under them. */

@@ -144,7 +144,7 @@ class VakExpressionCraftSourceTests(unittest.TestCase):
 
     def test_source_trace_join_is_existing_ui_and_evidence_not_new_runtime(self):
         owner = self.module["factory_native_authoring"]
-        self.assertEqual(owner["ui_source"], "docs/dlw/DLW.md")
+        self.assertEqual(owner["ui_source"], "ProjectCentral/docs/1-vision/dlw/DLW.md")
         self.assertTrue((ROOT / owner["ui_source"]).is_file())
         self.assertEqual(owner["correlation"], [
             "authored source revision/digest and unit locator",

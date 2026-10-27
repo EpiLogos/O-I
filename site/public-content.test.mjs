@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 const source = readFileSync(new URL('./content/public-site.md', import.meta.url), 'utf8');
-const foundingPositions = readFileSync(new URL('../docs/positions/FOUNDING-POSITIONS.md', import.meta.url), 'utf8');
+const foundingPositions = readFileSync(new URL('../ProjectCentral/docs/0-ground/positions/FOUNDING-POSITIONS.md', import.meta.url), 'utf8');
 const viteConfig = readFileSync(new URL('./vite.config.ts', import.meta.url), 'utf8');
 
 function hasHeading(level, id) {

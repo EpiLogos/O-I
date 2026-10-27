@@ -1,6 +1,6 @@
 # BRIEF — the desktop opens the same hosted refs (Lane C step 5, unit U-SF1)
 
-Map: `docs/SHARED-FIELD-QL-EPI-INTEGRATION-WAYFINDER.md` §2 Lane C step 5, §4. Relation cell: **S→S0 · aperture mode** — the Shared Field projection is an
+Map: `ProjectCentral/docs/4-development/SHARED-FIELD-QL-EPI-INTEGRATION-WAYFINDER.md` §2 Lane C step 5, §4. Relation cell: **S→S0 · aperture mode** — the Shared Field projection is an
 owner read model the kernel pulls through the O:I-owned client; the desktop invents no store, no second index, no identity.
 
 ## Law excerpts (verbatim)

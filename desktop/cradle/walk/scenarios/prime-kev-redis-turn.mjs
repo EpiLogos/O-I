@@ -67,7 +67,7 @@ const CTRL = env0.OI_CENTRAL_CTRL_BIN ?? join(HOME, ".local/bin/ctrl");
 const BODY = "agent-body/epi-prime-ql";
 const PROVIDER_ID = "epi-prime-ql-candidate";
 
-const record = {schema: "oi.prime-kev-redis-turn/v1", spec_ref: "docs/cradle/CENTRAL-FIELD-NATIVE-AUDIT-A.md (actual use of Kev, Redis and the QL body; O:I #598)", grade: "A", at: new Date().toISOString(), steps: [], model: null};
+const record = {schema: "oi.prime-kev-redis-turn/v1", spec_ref: "ProjectCentral/docs/5-evidence/cradle/CENTRAL-FIELD-NATIVE-AUDIT-A.md (actual use of Kev, Redis and the QL body; O:I #598)", grade: "A", at: new Date().toISOString(), steps: [], model: null};
 const say = (step, detail) => { record.steps.push({step, ...(detail !== undefined ? {detail} : {})}); console.log(`[${step}]`, detail === undefined ? "" : JSON.stringify(detail).slice(0, 360)); };
 const save = () => { mkdirSync(dirname(artifact), {recursive: true}); writeFileSync(record.ok ? artifact : artifact.replace(/\.json$/, ".failure.json"), JSON.stringify(record, null, 2) + "\n"); };
 

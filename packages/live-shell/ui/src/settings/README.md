@@ -27,7 +27,7 @@ by registration of the settings panel.
 
 The single coverage map, exact native-wiring handoff and executed interaction
 evidence are maintained in the existing programme:
-`desktop/cradle/docs/world-shell/SETTINGS-COVERAGE.md`
+`ProjectCentral/docs/5-evidence/world-shell/SETTINGS-COVERAGE.md`
 and its `settings-evidence/` directory. The frontend census retains all 50
 captured native descriptors; ordinary instrument parameters belong to their
 working editors and arrive through `pointOfUseEntries` and `navigate`.

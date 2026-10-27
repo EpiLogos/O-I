@@ -1,5 +1,5 @@
 // The Technē instruments' Compact presentation on the rack (manual §16.1: "Compact | In a chain | Play the device: a small live picture and
-// up to four macros"; each instrument's entry, §17.1–§17.6 Presentations; docs/dlw/DLW.md §16.3 "Compact — The display and up to four
+// up to four macros"; each instrument's entry, §17.1–§17.6 Presentations; ProjectCentral/docs/1-vision/dlw/DLW.md §16.3 "Compact — The display and up to four
 // macros", §7 the display): an instrument not open on the focused pane stands on the rack as its Compact while the row has room (the rack
 // folds the rest to their titles, TechneDevices.tsx), so it can be played without opening it. Each Compact is a head (its light, its
 // mark, its name — pressed, it opens the instrument on the focused pane through the one instrument door, as its fold always did), a well

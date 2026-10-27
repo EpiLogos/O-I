@@ -1,4 +1,4 @@
-// T-PROCEDURAL-BODY — the manual's World (docs/dlw/DLW.md §17.2, and the places §2 repeats it) held to the code, so the two cannot drift
+// T-PROCEDURAL-BODY — the manual's World (ProjectCentral/docs/1-vision/dlw/DLW.md §17.2, and the places §2 repeats it) held to the code, so the two cannot drift
 // apart again. A doc/code tripwire: it reads the manual's words and the sources' declarations (no GPU, no network).
 //
 // The lead's. Every test is real: the ones that needed the lanes' work carried `todo` until it landed, and no longer do.
@@ -7,7 +7,7 @@ import assert from 'node:assert/strict'
 import {readFileSync} from 'node:fs'
 
 const here = new URL('.', import.meta.url)
-const manual = readFileSync(new URL('../../../../docs/dlw/DLW.md', here), 'utf8')
+const manual = readFileSync(new URL('../../../../ProjectCentral/docs/1-vision/dlw/DLW.md', here), 'utf8')
 const atlas = new URL('../src/projections/atlas/', here)
 const read = path => readFileSync(new URL(path, atlas), 'utf8')
 

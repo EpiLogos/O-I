@@ -74,7 +74,7 @@ def validate(root, overrides=None):
     # Epi states L0–L11 are all in the one test protocol (O-I #728, #779).
     protocol = read('docs/experience/LOCAL-CAMPAIGN.md')
     stories = read('docs/experience/STORIES.md')
-    manual = read('docs/dlw/DLW.md')
+    manual = read('ProjectCentral/docs/1-vision/dlw/DLW.md')
     skill = read('skills/cradle-execution/SKILL.md')
     for text in [SPINE, '## 11. Source reconciliation and unresolved evidence', EPI_WALKS, 'fresh agent', 'human']:
         if text not in protocol:
@@ -154,7 +154,7 @@ def main():
             def test_family_state(self): self.reject(protocol, '| Presentation | `J-detached(n)` |', '| Presentation | `J-gone` |')
             def test_story_row(self): self.reject(protocol, '| Authority | `K-refused` | Human declined | RA02,', '| Authority | `K-refused` | Human declined | ZZ99,')
             def test_root(self): self.reject(protocol, 'Central is the root meta-Project', 'Central is a child Project')
-            def test_receipt(self): self.reject('docs/dlw/DLW.md', 'A receipt does not mean you have seen or accepted what it\n  records', 'A receipt is acceptance of what it\n  records')
+            def test_receipt(self): self.reject('ProjectCentral/docs/1-vision/dlw/DLW.md', 'A receipt does not mean you have seen or accepted what it\n  records', 'A receipt is acceptance of what it\n  records')
         run = unittest.TextTestRunner(verbosity=2).run(unittest.defaultTestLoader.loadTestsFromTestCase(Mutations))
         if not run.wasSuccessful(): return 1
         result['mutations'] = run.testsRun
