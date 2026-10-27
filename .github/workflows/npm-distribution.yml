@@ -48,6 +48,7 @@ jobs:
         run: |
           set -euo pipefail
           prefix="$RUNNER_TEMP/oi-npm-prefix"
-          package="$RUNNER_TEMP/epi-logos-oi-0.1.0-prelocal.4.tgz"
+          version=$(node -p "require('./packages/oi-cli/package.json').version")
+          package="$RUNNER_TEMP/epi-logos-oi-$version.tgz"
           npm install --global "$package" --prefix "$prefix"
           "$prefix/bin/oi" help >/dev/null
