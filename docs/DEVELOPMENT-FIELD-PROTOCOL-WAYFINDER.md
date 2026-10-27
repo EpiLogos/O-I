@@ -135,7 +135,7 @@ The deeper intelligence grammar, Development Field retrieval scripts and Develop
 
 ### 2.2.1 Current Jev + Redis NOW integration
 
-O:I #65 / #220 now has a published native implementation path through AIKit #388 and Workcell #98. AIKit consumes the existing Central/BKMR source and Wiki/Knowledge routes, Factory Run/Journey/workflow-unit relations, declared capability matrices and the existing encounter/session path; Workcell owns Redis material lifecycle. Jev remains general typed decision capacity rather than a document-only service. The implementation source is [JEV-REDIS-NOW-INTEGRATION.md](experience/JEV-REDIS-NOW-INTEGRATION.md) and the installed-world execution handoff is [JEV-REDIS-NOW-LOCAL-INTEGRATION-PROMPT.md](experience/JEV-REDIS-NOW-LOCAL-INTEGRATION-PROMPT.md). These sources do not close installed live-provider, two-Workcell or human Recognition obligations.
+O:I #65 / #220 now has a published native implementation path through AIKit #388 and Workcell #98. AIKit consumes the existing Central/BKMR source and Wiki/Knowledge routes, Factory Run/Journey/workflow-unit relations, declared capability matrices and the existing encounter/session path; Workcell owns Redis material lifecycle. Jev remains general typed decision capacity rather than a document-only service. The implementation source is [prepared NOW context](architecture/agent-context.md) and the installed-world execution handoff is its cases PNC01–PNC18 in [CASES](experience/CASES.md). These sources do not close installed live-provider, two-Workcell or human Recognition obligations.
 
 ## 2.3 Software Factory — developmental meaning owner
 

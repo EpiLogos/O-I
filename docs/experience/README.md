@@ -16,7 +16,7 @@ The person already has applications, files, instructions, projects, accounts, ma
 
 Each story includes the agent's intended experience: recognising the task, finding the sufficient permitted context and appropriate practice, discovering usable operations, acting within current bounds, understanding feedback and leaving a continuation. The human, the acting agent and the test supervisor see different aspects of the **same activity**, not separate feature lists.
 
-**The stories are at the vision level.** They state the intended experience. Capabilities and design explain what enables it; contracts say who owns the operations; plans and tests say what is being built or exercised; observations and the owner's EX return evidence. A passing test or a changed implementation cannot silently redefine a story. [Document operations](DOCUMENT-OPERATIONS.md) binds these roles to the existing document framework and practices.
+**The stories are at the vision level.** They state the intended experience. Capabilities and design explain what enables it; contracts say who owns the operations; plans and tests say what is being built or exercised; observations and the owner's EX return evidence. A passing test or a changed implementation cannot silently redefine a story. [LOCAL-CAMPAIGN §1.3](LOCAL-CAMPAIGN.md) binds these roles to the existing document framework and practices.
 
 **Standing:** source-grounded elaboration under the owner's commission, not runtime or human acceptance. QL's separately published UX keeps its own H-ratification record. Document counts, source compilation and merge do not supply human adoption or lived proof.
 
@@ -45,24 +45,21 @@ The DLW families in [STORIES.md](STORIES.md) are written on the six cells. The e
 
 | Source | Its function |
 |---|---|
-| [STORIES.md](STORIES.md) | The one catalogue: 1,193 six-cell DLW stories in 116 families; 90 earlier stories in twelve families (AD–UI); the QL family, which imports QL-MEF's UX01–UX12. The 85 `ux.oi` stories of the retired `docs/ux/` are mapped onto these rows |
+| [STORIES.md](STORIES.md) | The one catalogue: 1,217 six-cell DLW stories in 116 families; 94 earlier stories in twelve families (AD–UI); the PW family of thirteen; the QL family, which imports QL-MEF's UX01–UX12. The 85 `ux.oi` stories of the retired `docs/ux/` and the feature UX files of O-I #729 are mapped onto these rows |
 | [STORY-PROFILE.md](STORY-PROFILE.md) | The one record shape: the existing UX fields, the six cells, `extensions.agent_ux` and matrix compatibility |
 | [PRACTICE-CONDITIONS.md](PRACTICE-CONDITIONS.md) | P01–P18: when a practice applies, what context it needs and what it does; document links, not installed Skills |
-| [LOCAL-CAMPAIGN.md](LOCAL-CAMPAIGN.md) and the [campaign Method](../../skills/experience-campaign/SKILL.md) | The one test protocol: the everyday loop, C0–C5, the four starting worlds, the standard, roles, the verifier's walk on the native app, repair and replay, the lived walks and the Epi domain walks UX01–UX12 (H ratification pending) |
+| [LOCAL-CAMPAIGN.md](LOCAL-CAMPAIGN.md) and the [campaign Method](../../skills/experience-campaign/SKILL.md) | The one test protocol: the everyday loop, C0–C5, the four starting worlds, the standard, roles, the verifier's walk on the native app, repair and replay, the lived walks and the Epi domain walks UX01–UX12 (H ratification pending); the C0 source-to-operation reconciliation and the document operations (§1.1, §1.3), Technē and Expressions inside C0–C5 (§1.4) and the optimisation procedure (§13) |
+| [CASES.md](CASES.md) | The acceptance cases that stories, obligations and tickets cite by ID |
 | [campaign.json](campaign.json) | The compiler's declarations: families and their IDs, owners, proof and source references, source modules, the delegated QL stories |
 | [DEVELOPER-FIELD.md](DEVELOPER-FIELD.md) and [developer-field.json](developer-field.json) | TM01–10 terminal and developer, GW01–10 gateway and Telegram, DO01–08 document field; the module also holds native capability candidates and binding gaps |
-| [PERSONAL-WEB.md](PERSONAL-WEB.md) and [personal-web.json](personal-web.json) | PW01–13 |
-| [FACTORY-AGENCY.md](FACTORY-AGENCY.md) and [factory-agency.json](factory-agency.json) | The owner-validated Factory and Agency design; fourteen obligations on existing stories and the joined walk (§14) |
-| [SESSION-GROUNDING.md](SESSION-GROUNDING.md) and [session-grounding.json](session-grounding.json) | Native prerequisites and continuity; twelve obligations on existing stories |
-| [HARNESS-FIRST-ADOPTION.md](HARNESS-FIRST-ADOPTION.md), [EXPRESSION-FIELD.md](EXPRESSION-FIELD.md), [WIKI-CONSTELLATION-UX.md](WIKI-CONSTELLATION-UX.md), [SHARED-FIELD-DESKTOP.md](SHARED-FIELD-DESKTOP.md), [PLURAL-FLOW-SPEC.md](PLURAL-FLOW-SPEC.md) | Source modules whose JSON files (`harness-first-adoption`, `vak-expression-craft`, `wiki-constellation`, `shared-field-world-participation`, `plural-flow`) attach obligations to existing stories |
-| [DOCUMENT-OPERATIONS.md](DOCUMENT-OPERATIONS.md) | Where documents live, their lifecycle, and the source-to-operation reconciliation done at C0 |
+| [personal-web.json](personal-web.json) | Declares PW01–13, whose rows are in STORIES; the contract is [Personal Web](../cradle/PERSONAL-WEB.md) |
+| [factory-agency.json](factory-agency.json) | Fourteen Factory and Agency obligations on existing stories; the joined walk is FAJ1–FAJ9 in CASES |
+| [session-grounding.json](session-grounding.json) | Native prerequisites, continuity, the temporal field and prepared NOW context; twelve obligations on existing stories, with their cases SG1–SG12, NOW01–NOW37 and PNC01–PNC18 in CASES |
+| [harness-first-adoption.json](harness-first-adoption.json), [vak-expression-craft.json](vak-expression-craft.json), [wiki-constellation.json](wiki-constellation.json), [shared-field-world-participation.json](shared-field-world-participation.json), [plural-flow.json](plural-flow.json) | Source modules that attach obligations to existing stories; their laws are in [Expression application](../contracts/EXPRESSION-APPLICATION-V1.md), [Expression act and material](../contracts/EXPRESSION-ACT-MATERIAL-V1.md), the [wiki specification](../cradle/WIKI-CONSTELLATION-SPEC.md), [shared participation](../architecture/shared-participation.md) and [plural Flow](../architecture/plural-flow.md) |
 | [TOOLS.md](TOOLS.md), [coverage-reading.md](coverage-reading.md) | The compiler's checks and native capability binding; a generated coverage reading |
 | [INSTALLATION-VARIANTS.md](INSTALLATION-VARIANTS.md) | #268 installation forms and lifecycle variants |
-| [INHABITED-SYSTEM-ORIENTATION.md](INHABITED-SYSTEM-ORIENTATION.md) | Orientation across the parallel campaigns that feed C0–C5 |
-| [FACTORY-UI-INTEGRATION-HANDOFF.md](FACTORY-UI-INTEGRATION-HANDOFF.md), [NOW-PARADIGM-RETURN.md](NOW-PARADIGM-RETURN.md) | Factory UI integration: NOW, Paradigm and Return, claim reception, native telemetry, search and Git, intent-led agent creation and AIKit Skill assignment |
-| [JEV-REDIS-NOW-INTEGRATION.md](JEV-REDIS-NOW-INTEGRATION.md), [JEV-REDIS-NOW-LOCAL-INTEGRATION-PROMPT.md](JEV-REDIS-NOW-LOCAL-INTEGRATION-PROMPT.md) | Prepared NOW per participant through Central/BKMR, Factory relations, Redis, Jev decisions and AIKit pre-turn delivery; its local integration handoff |
 
-The other files here are feature accounts, handoffs and research that fold into the stories under their own tickets (#711); `evidence/` and `research/` hold dated records.
+`evidence/` and `research/` hold dated records.
 
 ## Authorities read to the depth the work needs
 

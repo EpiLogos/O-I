@@ -63,6 +63,13 @@ for the site-edition accounts (O:I, products, research, shared field, build). Th
 `?ref=…` and `explore.html?ref=…` continue into `./essay/?view=library` (client redirect in `src/shell/PublicApp.tsx`;
 `/explore` and `/explore.html` in `vercel.json`).
 
+Regenerate after any accepted source change:
+`cd desktop/cradle/expressions-app && node scripts/export-return-of-zero-publication.mjs`
+— it sha-verifies every source binding at the essay revision and refuses to
+publish drifted bytes.
+
+Publication is a projection of the same collection identity the local Library reads — no second public form (#366 EX3A6).
+
 ## Pipeline repairs made on the way
 
 1. **Internal links.** Corpus links are true relative file paths; Quartz resolved them from the vault root unless the file

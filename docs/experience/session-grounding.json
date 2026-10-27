@@ -1,15 +1,15 @@
 {
   "purpose": "Commissioned native integration and proof obligations within the existing #65 UX spine; no new story IDs, runtime, storage or evidence system. The 2026-09-16 Workcell-root NOW clarification is carried through these same obligations rather than a second test registry. The 2026-09-22 Jev/Redis amendment develops the existing native operations and their working backing, not a second semantic store.",
-  "story_source": "docs/experience/SESSION-GROUNDING.md",
-  "document_operations_source": "docs/experience/JEV-REDIS-NOW-INTEGRATION.md",
+  "story_source": "docs/experience/STORIES.md",
+  "document_operations_source": "docs/experience/CASES.md",
   "families": [],
   "standing": "agent-inference; source-grounded implementation/testing map commissioned 2026-09-14, temporally clarified 2026-09-16 and extended under the 2026-09-22 Jev/Redis integration commission",
   "runtime_or_human_acceptance": false,
   "obligation_sources": {
     "grounding220": {
-      "source_ref": "docs/experience/SESSION-GROUNDING.md",
+      "source_ref": "docs/experience/CASES.md",
       "issue": "https://github.com/EpiLogos/O-I/issues/220",
-      "policy": "Read full source, docs/experience/WORKCELL-NOW-TEMPORAL-FIELD.md, current owner tickets and exact source cut. These joins preserve accepted Factory design and earlier stories/obligations; declaration is not runtime or human evidence. Also consume docs/experience/JEV-REDIS-NOW-INTEGRATION.md and AIKit#388 for the 2026-09-22 early Factory integration; preserve C0–C5 and the existing Day/NOW broad-fan-out gate."
+      "policy": "Read CASES.md (Session grounding SG1–SG12; Prepared NOW context PNC01–PNC18; Workcell-root NOW NOW01–NOW37), the temporal law in docs/contracts/WORLD-INHABITATION-V1.md §5 and docs/architecture/shared-participation.md (FieldNow and FieldDay), docs/PERSISTENT-AGENCY-AND-MATERIAL-HOSTING.md (Session grounding), docs/architecture/agent-context.md, current owner tickets and the exact source cut. These joins preserve accepted Factory design and earlier stories/obligations; declaration is not runtime or human evidence. Also consume AIKit#388 for the 2026-09-22 early Factory integration; preserve C0–C5 and the existing Day/NOW broad-fan-out gate."
     }
   },
   "required_obligation_ids": [
@@ -30,7 +30,7 @@
     {
       "id": "grounding220:source-place",
       "source": "grounding220",
-      "native_locator": "SG1 · §§1,4 · Workcell NOW §§2–4",
+      "native_locator": "CASES SG1 · PERSISTENT-AGENCY (Session grounding): who makes each part true, working destination · WORLD-INHABITATION §5 (governing determination, recursive NOW law, material inhabitation, Day)",
       "requirement": "Choose or continue legitimate existing/new work with real source, Workcell-root NOW, bounded child working destination and required/preferred environment; preserve thin/external sessions and the explicit rich Herdr reference.",
       "story_ids": ["TM01", "TM02", "AG01", "MC01", "DV02"],
       "execution_lanes": ["A", "C"],
@@ -46,7 +46,7 @@
     {
       "id": "grounding220:identity",
       "source": "grounding220",
-      "native_locator": "SG2 · §§3,6 · Workcell NOW §§2,3,5",
+      "native_locator": "CASES SG2 · PERSISTENT-AGENCY (Session grounding): place, identity and continuity; provider lifecycle · WORLD-INHABITATION §5 (identity laws, material inhabitation, temporal address)",
       "requirement": "Maintain exact Workcell/root-NOW/child-NOW/AgentSession/SessionSpace/provider/material relations across view movement, re-observation, explicit recreation and concurrent sessions.",
       "story_ids": ["TM02", "AG06", "DV05", "WK04"],
       "execution_lanes": ["A", "W"],
@@ -62,7 +62,7 @@
     {
       "id": "grounding220:census",
       "source": "grounding220",
-      "native_locator": "SG3 · §§2,5 · Workcell NOW §3",
+      "native_locator": "CASES SG3 · PERSISTENT-AGENCY (Session grounding): material census · WORLD-INHABITATION §5 (material inhabitation)",
       "requirement": "Extend actual Workcell observations to provider places and each live process, preserving executable-based inventory aggregation, root/child NOW correlations supplied by owners, and external unattributed work.",
       "story_ids": ["TM03", "WK04", "MC03", "MC07"],
       "execution_lanes": ["W"],
@@ -78,7 +78,7 @@
     {
       "id": "grounding220:provider",
       "source": "grounding220",
-      "native_locator": "SG4 · §§2,6,13 · Workcell NOW §§3,10",
+      "native_locator": "CASES SG4 · PERSISTENT-AGENCY (Session grounding): provider lifecycle · WORLD-INHABITATION §5 (material inhabitation, one Surface grammar)",
       "requirement": "Make the existing Herdr adapter reachable through AIKit public environment operations and retained working-Surface bindings; prove actual open/attach/focus/close/recovery as Surfaces within the established Workcell root/child NOW relation.",
       "story_ids": ["TM02", "TM06", "TM08", "AG09"],
       "execution_lanes": ["A"],
@@ -95,7 +95,7 @@
     {
       "id": "grounding220:composition",
       "source": "grounding220",
-      "native_locator": "SG5 · §7 · Workcell NOW §§2,3,10; Jev/Redis §§1–3",
+      "native_locator": "CASES SG5 · agent-context: composition; prepared NOW context · WORLD-INHABITATION §5 (recursive NOW law, material inhabitation, one Surface grammar)",
       "requirement": "Resolve source/identity/praxis/context/model/harness/environment/authority through the existing native composition, bind it to the selected Workcell root/child NOW, and expose confirmed target-effective behaviour.",
       "story_ids": ["AG03", "AG04", "PX02", "PX03", "PX04", "PX06", "TM01", "DO01", "DO04", "DO07"],
       "execution_lanes": ["A", "C"],
@@ -115,7 +115,7 @@
     {
       "id": "grounding220:authority-delivery",
       "source": "grounding220",
-      "native_locator": "SG6 · §8 · Workcell NOW §6; Jev/Redis §§2–4",
+      "native_locator": "CASES SG6 · PERSISTENT-AGENCY (Session grounding): authority, dispatch and service lifetimes · WORLD-INHABITATION §5 (bounded delegation) · agent-context: prepared NOW context",
       "requirement": "Join actual governing authority to a bounded grant and admitted Agency, allocate/bind the correct child NOW, then exact prepared body, real dispatch/result and attributable Activity; correlate Factory only when commissioned.",
       "story_ids": ["AG07", "AG08", "GW06", "GW09", "DV01", "TM03"],
       "execution_lanes": ["A"],
@@ -134,7 +134,7 @@
     {
       "id": "grounding220:recovery",
       "source": "grounding220",
-      "native_locator": "SG7 · §§3,6,8,9 · Workcell NOW §§3,4,7; Jev/Redis §§3–4",
+      "native_locator": "CASES SG7 · PERSISTENT-AGENCY (Session grounding): identity, provider lifecycle, authority, remote access · WORLD-INHABITATION §5 (material inhabitation, Day, Routine) · agent-context: prepared NOW context",
       "requirement": "Prove permitted work and return routes through detached UI, connection loss and selected service/provider restart while retaining the correct root/child NOW continuity or explicit successor/recovery.",
       "story_ids": ["AG06", "AG09", "GW05", "GW07", "MC06", "DV04", "DO08"],
       "execution_lanes": ["A", "W"],
@@ -153,7 +153,7 @@
     {
       "id": "grounding220:remote",
       "source": "grounding220",
-      "native_locator": "SG8 · §9 · Workcell NOW §§2,3,4; Jev/Redis §4",
+      "native_locator": "CASES SG8 · PERSISTENT-AGENCY (Session grounding): remote access and moving execution · WORLD-INHABITATION §5 · agent-context: prepared NOW context",
       "requirement": "Prove remote access to the same living Workcell/root/child NOW separately from deliberate execution re-placement onto a real second material host/root NOW.",
       "story_ids": ["MC02", "MC04", "MC08", "GW08", "TM09"],
       "execution_lanes": ["W", "A"],
@@ -172,7 +172,7 @@
     {
       "id": "grounding220:guardians",
       "source": "grounding220",
-      "native_locator": "SG9 · §§2,8; Jev/Redis §§2,5",
+      "native_locator": "CASES SG9 · PERSISTENT-AGENCY (Session grounding): authority, dispatch and service lifetimes · agent-context: prepared NOW context",
       "requirement": "Recover existing Field Guardian/product Agent expressions, formation/default/skill provenance, resolve supported selections and prove actual ordinary harness activation.",
       "story_ids": ["AG01", "AG02", "AG05", "AG08", "TM01", "TM03", "DO04"],
       "execution_lanes": ["C", "A"],
@@ -190,7 +190,7 @@
     {
       "id": "grounding220:factory-return",
       "source": "grounding220",
-      "native_locator": "SG10 · §10 · Workcell NOW §§5,7,8; Jev/Redis §§4–6",
+      "native_locator": "CASES SG10, PNC12, PNC17 · execution-return: Factory correlation of an attempt · WORLD-INHABITATION §5 (temporal address, Factory temporal projection, Routine) · agent-context: prepared NOW context",
       "requirement": "Carry real commissioned work through exact admitted execution, independent work/verification, native Git, durable structured outputs/handoff and Central temporal continuation across Workcell root/child NOWs and Routine occurrences.",
       "story_ids": ["DV01", "DV02", "DV03", "DV04", "WR05", "WR06", "TM05", "DO03", "DO05", "DO07", "DO08"],
       "execution_lanes": ["A", "U"],
@@ -210,7 +210,7 @@
     {
       "id": "grounding220:presence",
       "source": "grounding220",
-      "native_locator": "SG11 · §10 · Workcell NOW §§5,9,10; Jev/Redis §§3–4",
+      "native_locator": "CASES SG11 · 02-ARCHITECTURE §13 · WORLD-INHABITATION §5 (temporal address, one Surface grammar) · shared-participation: FieldNow and FieldDay · agent-context: prepared NOW context",
       "requirement": "Connect native desktop/TUI/Gateway/Omarchy entry and attention to the exact current work through one frameable NOW grammar, preserving accepted Factory and ordinary arrangements.",
       "story_ids": ["UI02", "UI04", "UI05", "TM07", "TM09", "GW05"],
       "execution_lanes": ["U", "A"],
@@ -231,7 +231,7 @@
     {
       "id": "grounding220:joined",
       "source": "grounding220",
-      "native_locator": "SG12 · §§11–14 · Workcell NOW §§11–12; Jev/Redis §§5–7",
+      "native_locator": "CASES SG12 and its connected walk · CASES NOW01–NOW37 · CASES PNC01–PNC18",
       "requirement": "Execute the complete connected source→two Workcell root NOWs→operative Agent→Herdr Factory work alongside Direct tmux/external harness→bounded delegation→independent verification→output→recovery→Routine→real remote access/re-placement→personal Day→SharedField projection walk.",
       "story_ids": ["DV08", "TM03", "TM10", "MC06", "GW08", "DO01", "DO03", "DO04", "DO05", "DO07", "DO08"],
       "execution_lanes": ["A", "V"],

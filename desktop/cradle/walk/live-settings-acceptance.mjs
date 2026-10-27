@@ -1,7 +1,7 @@
 /**
  * Row-by-row LIVE acceptance for the configuration plane's owner groups
  * (docs/cradle/06-SYSTEM-SETTINGS §7 L1/L2/L3, §8 P2 phasing — the
- * acceptance floor of HARNESS-SETTINGS-RESEARCH-2026-09-22 §4, negative
+ * acceptance floor of docs/experience/CASES.md AFN1–AFN10, negative
  * roster 5: no acceptance on the fixture world where a real owner route
  * exists).
  *

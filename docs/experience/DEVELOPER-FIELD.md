@@ -14,7 +14,7 @@ Sources: AIKit `docs/v2/23-TUI-HUMAN-EXPERIENCE-SPEC.md` §§1, 9–13, 19, 21�
 
 ## TM — Keep one comprehensible working field across terminal layers
 
-The current implementation/proof detail for these terminal/material stories is [SESSION-GROUNDING.md](SESSION-GROUNDING.md) and its obligation module, under #220. It retains the failed full TM02 run and its bounded live-continuity successes, repairs invalid version/PTY/count assertions, and maps exact provider identity, effective composition, authority, Workcell census and remote continuity to TM/AG/MC/GW/DV/UI stories. Read the source and actual current owner operations before replay; the map is not an execution receipt.
+The native prerequisites for these terminal and material stories are the session-grounding cases SG1–SG12 in [CASES](CASES.md) and their obligations in session-grounding.json, under #220; the laws they prove are in [persistent agency and material hosting](../PERSISTENT-AGENCY-AND-MATERIAL-HOSTING.md) (Session grounding). It retains the failed full TM02 run and its bounded live-continuity successes, repairs invalid version/PTY/count assertions, and maps exact provider identity, effective composition, authority, Workcell census and remote continuity to TM/AG/MC/GW/DV/UI stories. Read the source and actual current owner operations before replay; the map is not an execution receipt.
 
 The distinctions are operational, not a mandatory stack. A bare terminal with an existing harness is a valid world. A mux supplies its own windows/panes; **Herdr can additionally supply native agent automation**, and is not reduced to a pure mux. SessionSpace relates supported sessions and surfaces without replacing native IDs. The TUI has Quick/fullscreen/popup and attached inspection; an OS window/compositor is another host relation. A remote Workcell is not another tab. Capabilities differ by actual provider and version.
 
@@ -77,4 +77,4 @@ In an approved disposable world, undertake a real Factory change in Herdr while 
 
 This is an integrated **episode**, not a replacement for the complete source scope. Its success does not certify every SDK or host. Run the minimum, platform-specific and individual-native-operation cases separately, then this composite. The person supplies genuine choices and experiential return; the local lead handles technical orchestration.
 
-The [document-operation integration](DOCUMENT-OPERATIONS.md) specifies the preliminary work which makes this campaign itself discoverable and maintainable. The [main Wayfinder](README.md) remains the only C0–C5 sequence.
+The [C0 source-to-operation reconciliation and document operations](LOCAL-CAMPAIGN.md) (§1.1, §1.3) specifies the preliminary work which makes this campaign itself discoverable and maintainable. The [main Wayfinder](README.md) remains the only C0–C5 sequence.

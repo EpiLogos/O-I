@@ -9,7 +9,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
 MODULE = "docs/experience/shared-field-world-participation.json"
-UX = "docs/experience/SHARED-FIELD-DESKTOP.md"
+UX = "docs/experience/STORIES.md"
 STATE = "docs/SHARED-FIELD-STATE-DISCOVERY.md"
 EXPECTED = {
     "web65:WORLD", "web65:EXPLORE", "web65:RESOLVE", "web65:PARTICIPATE",

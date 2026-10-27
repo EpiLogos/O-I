@@ -738,7 +738,7 @@
     {
       "op": "hosted_native",
       "native_owner": "kernel/src/native_owner_transport.rs",
-      "spec_ref": "docs/experience/SHARED-FIELD-DESKTOP.md; docs/contracts/EXPRESSION-ACT-MATERIAL-V1.md",
+      "spec_ref": "docs/architecture/shared-participation.md; docs/contracts/EXPRESSION-ACT-MATERIAL-V1.md",
       "status": "referenced",
       "scenarios": [
         "kernel/tests/native_owner_transport.rs"

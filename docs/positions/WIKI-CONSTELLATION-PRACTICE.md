@@ -2,7 +2,7 @@
 
 **Standing:** owner-directed product clarification and implementation-planning commission, 20 September 2026. This document preserves the owner's meaning and makes the resulting design decisions explicit. Explanatory elaboration is attributed to this design pass; it is not a claim of implemented behaviour or blanket ratification of older pending QL UX material.
 
-**Upstream:** [Founding positions](FOUNDING-POSITIONS.md). **Development entry:** joined Wayfinder (retired 27 Oct into the DLW map, O-I #706; read it at `8873b0968`). **Human/agent experience:** [UX spine extension](../experience/WIKI-CONSTELLATION-UX.md). **Contract detail:** [Cradle specification](../cradle/WIKI-CONSTELLATION-SPEC.md).
+**Upstream:** [Founding positions](FOUNDING-POSITIONS.md). **Development entry:** joined Wayfinder (retired 27 Oct into the DLW map, O-I #706; read it at `8873b0968`). **Human/agent experience:** [stories](../experience/STORIES.md). **Contract detail:** [Cradle specification](../cradle/WIKI-CONSTELLATION-SPEC.md).
 
 ## 1. The owner clarification and its reason
 
@@ -75,7 +75,7 @@ Ordinary Wiki work remains useful without QL. Technè is itself creative and ope
 
 ## 7. Existing commitments extended, not restarted
 
-This clarification extends O:I #366's live Wiki→Expression seam, #335's generic Expression substrate, #375 and the Technè mode Wayfinder (retired 27 Oct into the DLW map, O-I #706; read it at `8873b0968`), and [workspace continuity](../experience/WORKSPACE-CONTINUITY.md). QL's [dual-reading lock](https://github.com/EpiLogos/QL-MEF/blob/main/docs/L5-TECHNE-DUAL-READING-LOCK.md) already gives M1′ construction and M5′→M0′ Return; the new work makes that loop executable over ordinary linked writing.
+This clarification extends O:I #366's live Wiki→Expression seam, #335's generic Expression substrate, #375 and the Technè mode Wayfinder (retired 27 Oct into the DLW map, O-I #706; read it at `8873b0968`), and [workspace continuity](../cradle/02-ARCHITECTURE.md). QL's [dual-reading lock](https://github.com/EpiLogos/QL-MEF/blob/main/docs/L5-TECHNE-DUAL-READING-LOCK.md) already gives M1′ construction and M5′→M0′ Return; the new work makes that loop executable over ordinary linked writing.
 
 The prohibition on inferring semantic edges from coordinates remains. It is explicitly **not** a prohibition on deliberately authoring QL relations through their native owner. The adapter-not-a-store boundary remains. It is explicitly **not** a prohibition on retained application readings or on persistent constellation work in its proper owner. No existing H-pending source, native schema or research proposition is silently promoted by this document.
 

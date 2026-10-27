@@ -103,6 +103,8 @@ each is the owner's to give. If the other world's agent gives you something,
 it arrives in your world under their name, and stays theirs until you have
 made it your own.
 
+The field reads only what you have shown, and never owns it. If its service is lost, your own world and its open work stay exactly as they are, and when it comes back the field is brought up to date from what you had shown. Withdrawing something takes it out of the field without taking it out of your world.
+
 So one person's work and everyone's knowledge turn out to be the same kind of
 thing. A private journal, a team's codebase, an archive of letters, a school
 of thought, the literature of a whole science: each is a world at its own
@@ -505,11 +507,15 @@ Expressions people make is how agents learn it: it shows them what an
 expression is, and how differently two people can give form to the same
 thing.
 
+An agent can teach this way too. Ask Epii to explain a relation you have selected and it composes a short sequence in the field, not a long answer beside it: it sets out the things that carry the relation, moves between them with a few words, and says how it is reading them. Pause it, open a source, ask a question, or turn the reading down and go on; what you turn down is kept as turned down. Whatever an agent changes in the field is tied to the act that changed it, so movement you see is never taken for work an agent did, and an agent asked to change one thing leaves your scenes, your locks and your own edits as they were.
+
 Anything in any mode can be given an expression — a day, a run of work, a
 source, a place, an argument you can't yet put into words — and every mode can
 open the expression stage beside its own panes. Scenes made here travel: onto a
 walk, into a palace, into someone else's world. Live joins this medium on one
 timeline, sound and picture together, the way a film editor holds them.
+
+An Expression can live inside a page. A being, a thing, a flow or a day can hold one playing; open it full and it is the same Expression, and closing it brings you back to the page where you were. Where it cannot play live, the page shows its still or its recording and says so. Open a coordinate of the map as an Expression and the whole field is expressed from that place, with its sources a step away; an Expression made this way from the readings says that it was generated, while one you compose keeps the sources it was made from. Close the DLW and open it again, and an Expression's scenes, settings and selection come back as you saved them; the field tells you what of its live motion it could not bring back.
 
 And you can simply stay with it. Turn the lights down, let a single symbol turn
 in the field and listen to what it does.
@@ -790,6 +796,10 @@ herdr, tmux, cmux and your computer's own terminal are providers of a space.
 Each can show it, and the names each gives it are labels, never who it is. If
 one provider stops answering, only its view of the space goes dark.
 
+A room lives as long as the machine that holds it. If a provider restarts, or the machine under it, the space tells you what came back: the room's layout, the history on its screen, the agent's own session taken up again, or a fresh agent given the same work. Whichever it is, the work keeps its identity, and a room rebuilt after a restart is never shown as the old one still running. A name or a number that turns up again does not make it the same room.
+
+Opening a room that runs on another of your machines leaves the work where it runs (§19.18). Moving it is a different act: you change the workcell its track works in, and the next task starts there (§19.23).
+
 A Terminal follows the room of the workcell its track works in. A message to
 an agent goes to the agent through Messages (§10.6). It never types into the
 agent's room.
@@ -879,6 +889,10 @@ it. ⌥0 moves focus to the transport, ⌥3 to Clip view, ⌥4 to Device view, �
 to the browser and ⌥6 to the pool, as in Live. A drag, an open menu, a value
 you are typing, and Clip view expanded into the main area last only while you
 use them.
+
+Looking away unloads nothing. Come back to a pane, a set or a mode you left and it is there at once as you left it, scrolled and selected where you were. What changed while you were away is read again in place, with the last reading standing until the new one arrives, and a slow folder in the browser never holds back a page you already know.
+
+If the DLW stops without warning, it opens again on what it kept: the set, its panes and what they held, and the writing it had kept on this machine but not yet saved, back on its page beside the revision it began from. A part of the window it cannot read is set aside with its reason while the rest opens; it is never replaced by an empty window. A page changed elsewhere in the meantime shows as a conflict, never as a quiet replacement of what you wrote.
 
 ### 10.3 The browser and the pool
 
@@ -1359,6 +1373,8 @@ running session keeps its harness, its model and its composition.
 - Settings shows no secret. A credential, a projection and a machine's
   connection show their reference. A key you enter goes to the computer's own
   secure field and on to the credential owner, never through the window.
+- A page shows each setting as a row with its control. An owner's raw record never stands on a page; its configuration as written stands read only on the System page.
+- Where a harness or a provider has a login of its own, Sign in runs it in a terminal, where you answer it, and the page reads the result back. It stands on each harness client on Harnesses & models, and beside a provider's key on Credentials. A harness that signs in only inside itself says so in its own words and offers no button, and a login the page cannot read affects that harness alone.
 - A change stays yours until its owner applies it.
 - An act its owner cannot take stays in place, dimmed, and the status bar
   says why.
@@ -1419,6 +1435,8 @@ again and nothing is made twice. Run it over an older setup and it brings the
 setup into agreement, keeping your local edits beside what it proposes.
 The desktop is a full install: every product it carries is there from the
 first open, and Setup adds none and removes none (§10.10).
+
+You can also come in without the window, from the coding tool you already talk to. Paste the adoption request into that conversation. The agent reads what you have, and before it changes anything tells you what it found and what each addition would do for you: one door to the products, a ground for your work, agents whose acts are their own and bounded, and the practice and context your tools receive. Take all of it, keep what you have, or take less. If the conversation cannot run commands on your computer, the agent gives you the exact step to take, and never says your computer changed when it did not. When it is done it tells you what is active now and what waits for a reload, a new session or a restart, and how to carry on; it never restarts your tool to make a check pass. Then it helps you with a piece of your own work, so you see the result, and says which harness and model did the work, what practice they received, what changed and where it lies. You can go on in that tool and open the same work in the DLW later: neither door is needed for the other.
 
 #### The Projects step
 
@@ -3266,6 +3284,10 @@ Visit another world and you land on what its owner has shown, tinted and clouded
 
 Relations between bodies are lines across the dark: anchor, participate, contribution, watch, projection and federate. A line for an open contact shows while the contact lasts.
 
+Share a part of your world and you choose what goes: a project, an agent and the skills it carries, the machine that runs it, what is happening there now. Before anything leaves, you read exactly what others will receive, what stays out and who it is for; once shared, each part can be found and opened on its own, and nothing private goes with it because it is linked to it. A skill you share can be read without being run unless you offer it to be run, and a machine you share shows no keys and takes no work.
+
+In a shared field you can present an Expression so that others follow it with you. Whoever chooses to follow sees the scene and the focus you set; they can stop following and keep their own reading without leaving the field, and follow again to catch up. Following carries only that shared scene and focus, never anyone's tabs, drafts, agent context or Nara readings. Work you start with others in a field keeps what it is for, what it draws on and who takes part; each of you sees where the work actually runs, and when it closes you choose what to keep. A run of work shown in the field is live while its source answers, reads as it was when it was kept, and plays back without running anything again.
+
 #### The graph view
 
 Turn the World to its graph side and the same material lays out by connection. Each node takes the colour of what it is. The ties between nodes show what joins them. The graph is a second view of the same field and holds no data of its own.
@@ -4583,6 +4605,8 @@ A Flow adds its participants:
 |---|---|---|---|
 | Participants | A list of names. Each is a Person or an Agent. | You | Who is in the exchange. Each has a name and an initial. A person is drawn solid, an agent as points. An agent can be tied to a session. |
 | World | A world | The world of its track | The world the exchange belongs to. |
+
+A Flow can hold several people and agents at once. Address an entry to one of them and only that one is asked to answer, while everyone in the Flow can read it; ask two agents the same question and each answers in its own entry, with what it read, so a later entry can draw both together. Close the page while an answer is coming and it arrives once, against the question as it stood when you asked; if you changed the question meanwhile, the answer shows the difference. A group of agents can work a question among themselves within the purpose, turns and time you set, and stops or waits when it is done. Someone you bring in partway receives the part of the history you chose, and the Flow shows what reached them. Each person keeps their own Day: closing yours never resets the discussion.
 
 A Being or a Thing adds its ties. The ties belong to the page, not to its design.
 
@@ -6000,6 +6024,8 @@ You need to know what the agent was told before it acted, and what it was not to
 
 The Context page draws the session's prompts against its budget, the four brackets as zones and a needle where the session stands. Under it stand the last turn's blocks as columns: standing lines solid, ordinary lines that entered lighter, the lines withheld as an orange outline above them, and a block withheld whole as an empty outline. Beside them: the prompts, the allowance now, the star commands armed, the lines that entered and the lines and blocks withheld. The list names each block and what it let in.
 
+When an agent reads a rule too literally, correct it once: say so, or select the answer and choose Use this correction. The agent says in plain words what it will change, makes the smallest change to its own working reading, and a compact item shows what changed, where it applies and whether the next act has it. Open the source and edit it yourself, narrow it to this project or this session, suspend it or undo it. If the next act did not receive it, the item says where it stopped; nothing says learned because a file was written. A correction in one project or on one machine stays there unless you carry it further.
+
 ```ui
 device: actuation:harness-model
 page: context
@@ -6287,6 +6313,8 @@ to see what the agent carries, what is really available to it now, and what it
 has used. Use its other pages to keep the practice itself: where it comes from,
 the skill trees on your machine that AIKit does not own, and every change
 AIKit has made, each of which you can take back.
+
+When you are not sure what an agent should carry, ask for suggestions. AIKit searches the sets and skills you hold, with the practice each product's guardian keeps, and a small model compares them with what the agent is for. Each suggestion says why, where it comes from and at which revision, where it applies, what it needs and what it leaves uncovered. Take or leave each one; nothing applies until you apply it. Nothing is suggested unless you ask: not as you type, not when the catalogue refreshes, not when a page opens. Without a model you search and choose by hand. A suggestion goes stale when the agent's purpose, its source or its scope changes, and no suggestion installs anything from outside.
 
 #### Four kinds of carried practice
 
@@ -6839,6 +6867,8 @@ Full's head carries the receipts shown, those made today, those waiting, the tur
 
 You need one place to answer what waits for you. Approvals holds every proposal, every request and every review that waits for your answer: the changes agents propose, the questions an owner or an agent asks you to decide, the attempt you chose to stand, and the run whose return you have read. Nothing in it lands until you answer. The queue is a lake: the water rises with the number of items that wait, so the backlog reads at a glance. A dry bed is an empty queue, and a lake at its brim holds eight items or more.
 
+Only what needs your answer comes here. Progress, an ordinary result and a routine that ran as it should never wait in Approvals. An item that waits shows in Approvals, on its tile, and beside its run or its agent; answer it in any of these and it is answered in all, and it never comes to you twice.
+
 #### What waits
 
 | Kind | What it is | What you answer |
@@ -6854,6 +6884,8 @@ How long a request waits before it counts as unanswered, and what happens then, 
 
 You need to know what you accept before it stands. Review sets the attempt's return against what it was for: each success condition with its answer, each claim the attempt makes with the evidence for it, the outputs the run left in its world, and the questions that wait on you. Collect gathers the outputs where the run kept them.
 
+What you read stands at the revision you opened. If the agent brings a newer result while you read, it shows beside the take, marked newer, and never takes the place of what you are reviewing; open it when you choose. Closing the review keeps the take: nothing is lost, and nothing is accepted, by being closed.
+
 | Reading | What it shows |
 |---|---|
 | Intent | Across the success conditions: met, not met or open. |
@@ -6866,6 +6898,8 @@ You need to know what you accept before it stands. Review sets the attempt's ret
 #### Recognition
 
 A run answers to a commission, and closes only on your Recognition: your word that what it returned is what the commission asked for. Read the run's return, press Recognise, then hold Close, and Factory finishes the run, or starts its next unit if one remains. If the return falls short, press Continue, and a new run continues the same journey; the earlier run stays on the record. Recognition is yours. No agent gives it, and no setting gives it for you.
+
+A return opens on its outcome: what was done, whole or in part. Then what changed, with its diff; the checks, with any still owed shown as owed; what the run took, in time and in what its owners report it cost; and what is left, with what blocks it and the next step. Last comes a continuation you can copy, which names the run, so that another session or another agent takes the work up from there without your telling it again. Opening a return starts nothing. The work goes on only when you press Continue or send the continuation.
 
 #### Parameters
 
@@ -7112,6 +7146,8 @@ The widget is the Agents tile (§19.1): each member a creature, standing at the 
 **Product:** Workcell · **Kind:** connection · **Chain:** last device on a workcell's chain, with the Seat inside it
 
 You need your agents' work to land safely in the project, with checks you can read, however many sessions and modes it came from. Git / landing is the place where the work ends, for every agent that works in its workcell. It commits the work, pushes it and lands it as a merge request.
+
+Every diff says what it is set against: a commit, what is staged, or the working files, and its counts of files and lines come from that comparison. A check names the revision it tested; when the work changes after it, the check reads stale until it runs again. Git work you do in a terminal of your own shows at the next reading, and your staged, unstaged and untracked files are never touched to make a landing tidy.
 
 #### The branch diagram
 
@@ -12094,6 +12130,8 @@ an owner allows (§19.15). The Nara and Epii agents use them most; no model
 belongs to one agent or one position. Quaternal Logic sets the questions and
 settles what its rules can.
 
+Under the Epi-Logos lens, in Expressions and in Technē, a new conversation with the mode's agent starts on the Prime–QL body, with Quaternal Logic's faculties, and works on the same subject and scene you see. It is the same agent on another body, not a new one, and its Identity page names the body. Turning to the lens starts no agent, asks for no key and leaves a conversation already under way on the body it began with. A provider you chose yourself stays yours, and is never shown as the Prime–QL body. Where that body cannot be had, the agent says so and offers the repair; it never answers as a generic agent under the Epi-Logos name. Take the lens off, and Expressions and Technē keep the agent you chose for them, with nothing lost.
+
 Every act an agent takes runs in the same order.
 
 <figure style="margin:18px 0 26px;border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:14px 14px 8px">
@@ -12160,6 +12198,8 @@ Each result keeps the mark of how it was reached: seen in a source, settled by
 rule, picked by the helper, written by an agent, accepted by you. A later step
 adds its own mark and never wipes out an earlier one.
 
+You also need to say, in plain words, that something did not go well, and have it looked into. Say it to the agent as you would to a colleague: this did not go well; this rule is being misread; the agents keep using one thing as a reason for another. Your words are kept as yours, as a question, not a verdict. The agent finds the work you mean and shows you how far it will look before it looks any wider. It sets what was meant beside what came back, with what the work was given, what it actually read and what it did, and names the kind of difference it found: a poor result, too much cost or repetition, missing context, a rule that never reached the agent or was read against its words, a machine that failed, or a test that expected the wrong thing. It brings the evidence for and against, says what it cannot know, and proposes a next step with its owner: keep the observation, test it, change a practice, propose a clarification of the rule, or commission a repair. The original work stays as it was, and a rule changes only when you accept the change.
+
 ### 25.3 Six powers
 
 Ta-Onta gives an agent six powers. Each reaches through to the product that
@@ -12204,6 +12244,8 @@ four forms as every other practice.
 A person, an agent and a program reach each operation by the same name,
 through the product that owns it. An operation that does not exist yet says
 so, and nothing stands in for it.
+
+Each of the six products has a guardian among your agents: the agent that keeps the practice which operates that product. It is the product's own agent, under the name it already has, never made again from a list. A finding from real work becomes a proposal to its practice, and the practice changes only when you accept the proposal, after it has worked again on a fresh task. Rejected proposals and older revisions are kept. One success never changes the practice by itself, and only a lesson that holds for every product goes up to the practice of the whole suite.
 
 ### 25.5 Agents and M1-2-3′
 

@@ -117,7 +117,15 @@ Product ownership says where a repair belongs; it does not mean the human must o
 | C4 — Repair and replay | Preserve original failed attempt and uncertain effects; locate the context/discovery/loading/authority/dispatch/material/UI/document/test boundary; commission bounded native repair | New exact source/build/running/practice cut, comparable original inputs, fresh actor where needed and regressions. No coaching or changed expected outcome hidden inside the old trial |
 | C5 — Independent proof and human return | Different verifier exercises the full selected activity and significant failure/recovery; present genuinely prepared work for the person's judgement | Separate D/C/P/M and actual H/EX, updated coverage and one next round. A child success cannot close an unfulfilled parent |
 
-The preliminary task is **C0's source-to-operation reconciliation, joined with C1's actual discovery and loading preparation**. [DOCUMENT-OPERATIONS.md](DOCUMENT-OPERATIONS.md) supplies the procedure and the existing source/SkillSet homes. An uncoached agent must be able to retrieve the applicable story and practice through the supported source route; a typed-reader gap is repaired at its native owner, not patched with another campaign Wiki.
+The rounds are horizontal compositional acceptance: they do not blindly rerun every native feature test. Accepted receipts stay valid at their cut; C0 and C1 determine whether the current candidate contains those cuts or accepted successors, then select the smallest representative whole activity that pressures the new composition. Specialised proving grammars run inside the rounds: TD1–TD8 (in [CASES](CASES.md)) pressure the 3:3/4:2 Technē bridges, and V0–V8 pressure the Vāk/C′/Ta-Onta execution language from Search through real performance, Factory repair, rehearing and Recognition. Product-native suites keep their own deterministic and owner-specific guarantees. A failed joined walk names a native owner; it does not create a duplicate implementation in O:I.
+
+The preliminary task is **C0's source-to-operation reconciliation, joined with C1's actual discovery and loading preparation**. The lead performs it once before the broad round and records its result through the existing campaign and native evidence homes. It is not a standing dashboard, and tests do not wait until every record is annotated.
+
+1. Correct the canonical entry and read the actual vision-level story sources. Keep earlier IDs and original acceptance definitions. The `developer-field.json` crosswalk includes all TUI §21 A–H and §22.1–14, the inspected #97 remainders, #154 A–G and Telegram's real acceptance, #65 A–I, the SDK lifecycle specimens and documentary return. The old CAW and QL source modules remain independently complete obligations.
+2. Read the current native matrices and the relevant authoring and operation repertoire. Bind the selected first batch to actual capabilities, public commands and Action schemas, source revisions and loaded practice. Keep global coverage as a maintained inventory with direct, transitive, deferred, inapplicable and uncovered dispositions; every deferment names its owner and re-entry. Source-candidate links reduce lookup work but do not override current IDs or code.
+3. Expand each selected story into ordinary actor, computer-use and independent verifier packets, with the current host, tool and provider dimensions, preconditions, protected state, remaining bounds and meaningful negatives. For terminal proof record each actual tmux, cmux and Herdr variant; for gateway proof record actual Telegram and the complete resident, effect and reply route. One successful substitute cannot close all provider variants.
+4. Use the supported public source and knowledge interface to make these references discoverable in the test world, and observe whether an uncoached agent finds the appropriate story, practice and source. An unsupported typed reader or a missing source projection is a native implementation task, not a campaign-specific Wiki; ordinary source reading remains a truthful bootstrap meanwhile.
+5. Keep one bounded readiness return under #65: the selected source and cut and the actual operation bindings; the working repertoire and genuine gaps; the first ready tasks; the required physical and credential decisions; the original obligations still pending. Then run a ready ordinary-use story. The computer-use and testing lead, not the person, carries dependency sequencing and repair. Human assessment is asked for only against a prepared experience, and is recorded as the person's own EX.
 
 ### 1.2 First and later rounds
 
@@ -126,6 +134,122 @@ Start with ready ordinary-use stories on disposable realistic projects: a usual-
 Then run individual host/capability/SDK specimens, terminal interaction, real gateway legs and the mixed developer-field episode. Prepare #268 minimum/lifecycle worlds and the second-machine topology separately. Fold in all CAW recurrence/receiving/continuity and the full QL native source obligations at their actual prerequisites. No ordinary proof waits for an unrelated moving domain branch; its missing obligations remain visible.
 
 Remote source/CI development can continue without local credentials. Local does not mean manual: actual machine/provider/computer-use checks can be automated at the level they genuinely exercise. Missing production code is implementation work, not automatically a physical proof wait. No new scheduler, test database or transfer system is required.
+
+### 1.3 Document operations within C0–C5
+
+Use the following conduct within C0–C5. These are uses of existing source and intelligence operations; the table introduces no API names.
+
+| Situation / trigger | Operation and sufficient ground | Durable result and return boundary | Existing practice and owner |
+|---|---|---|---|
+| A person asks what is intended or a source contradicts an implementation claim | Recover current authored position, relevant UX unit, its originating issue/utterance and current document relation; deepen only as far as needed | Attributable reading of the conflict; absent source is named, not replaced by code/PR prose | Central `docs-methodology` and `documentation-standing`; AIKit `product-understanding`, `knowledge-navigation` |
+| A vision/story refinement is commissioned | Draft/refine the native unit, retain its stable identity, old meaning and explicit intended difference; assess parent/child coverage and proper standing | Reviewed candidate source and affected links; ordinary repository work proceeds within its commission; private human-source adoption uses the real separate owner boundary | AIKit `structured-account-authoring`; Central `docs-methodology`; local intake/wayfinder practice from #164 |
+| A capability/story/contract changes | Follow forward and reverse references to affected account units, practices, proving cases and exact code/CLI evidence | Reviewed directional multi-file update, source-basis checks and coherent projections; no fake evidence to fill columns | Central `capability-matrices` and maintained `reconcile_product_ground.py` / `product_maintenance.py`; native product owns capability meaning |
+| The selected document should inform a real agent | Resolve SourceRef/current content, retrieval policy, context grain and source-owned practice; verify catalogue, trust, set, projection, entry link and actual loading separately | Normal discovery and useful act, or the first precise unsupported boundary; do not dump every source into context | AIKit `profile-skillset`, `runtime-operation`, `skill-authoring`; actual #164 retrieval/release practices |
+| A source changes while a derived account or test packet depends on it | Use actual source change and explicit dependency routes; compare content/revision before reasoning | Affected reading/test requirement marked for review; no unsolicited model call, automatic adoption or false claim the old conclusion is wrong | Native Central source revision; AIKit Living Knowledge / Project reflection and `wiki-inhabitation` |
+| A test returns failure or surprising behaviour | Preserve original story/revision, actual episode, failed handoff and uncertainty; compare code, contract, context, practice and test expectation | Correct native repair, practice revision or attributable proposal; original failed evidence remains; independent repeat uses a new basis | Campaign Method, verification/runtime practices, #164 debugging/delegation, Factory evidence when commissioned |
+| A useful result deserves retained knowledge or a reusable practice | Assess source/observations, applicability, contradictory cases and actual recognition law | Agent-owned knowledge or a parameterised practice with source/evidence and limits; human source stays unchanged unless separately accepted | AIKit native knowledge/praxis; #164 wiki-return/knowledge-promotion/skill-release; no score-based self-promotion |
+| An account is rendered or selectively shared | Read canonical source units and chosen audience, render only supported material, preserve navigable refs and attribution | Derived HTML/Projection stays a representation; an authored HTML source stays source. Editing/exporting one must not silently mutate the other | AIKit `html-account`, `projection-authoring`, `structured-account-authoring`; Central source identity |
+| Documents overlap, move, retire or restore | Review each selected source unit against a real successor; preserve untransferred/conflicting meaning, inbound refs and current revision | Retention, guarded consolidation/archival/restoration through a supported native path; partial transfer remains partial | Central source/lifecycle structure; AIKit reflection/retirement operations where implemented; #164 archive-recovery |
+
+For the directional matrix/account procedure, use the existing native checker and transaction tool only after reading the affected meaning and exact bases. Its checked digest records a reviewed basis; it does not ratify semantics. Broader archival or Wiki ingestion cannot be claimed from that helper. Preserve unknown CSV columns, JSON extensions, source spans and native IDs during every round trip. Do not copy protected Control into fixtures to test these operations.
+
+The documentation-authoring repertoire is AIKit's `aikit-project-author` SkillSet (operation, knowledge-navigation, wiki-inhabitation, product-understanding, meta-harness-craft, structured-account-authoring, projection-authoring, html-account, runtime-operation, verification, profile-skillset and skill-authoring); use its current declared identity and selected members, not a newly invented documentation set. Central's public `docs-methodology`, `documentation-standing` and `capability-matrices` Skills add standing and matrix discipline and stay Central's: scope-select them through the native resolver, and do not copy them into O:I's guardian manifest. O:I's `skills/suite-operator/skillset.toml` declares the shipped guardian's three O:I Skills, and O:I holds and projects the session strap. Central #164 owns the private local practices; resolve `Control/user/skills` locally under permission. `skills/experience-campaign/SKILL.md` stays the one O:I-owned campaign procedure: a fresh operator may read it explicitly as the authorised bootstrap, while genuine native discovery remains an acceptance requirement. A SkillSet is a repertoire, not a schedule or an authority grant. Test activation and near-misses as well as packaging: ordinary source lookup does not trigger the whole campaign; a request to refine UX recovers vision rather than extracting intent from a PR; a real failed cross-owner handoff invokes bounded diagnosis and fair replay.
+
+### 1.4 Technē and Expressions inside C0–C5
+
+When a round includes Technē's deep instruments or the 3:3 Expression reading, each round also carries the following; the joined cases are TD1–TD8 in [CASES](CASES.md).
+
+#### C0 — source-to-operation readiness
+
+For any round that includes QL/Epi deep instruments:
+
+1. read the QL-MEF dual-reading lock and current implementation Wayfinders;
+2. identify the selected real subject/whole and its native owners;
+3. record which of the six deep instruments are actually available and why;
+4. record which 3:3 Expression bindings are actually available;
+5. bind current Ta-Onta/Agent profiles, Actions, authority and providers without inventing missing runtime support;
+6. distinguish repository readiness, installed readiness and human-experience readiness.
+
+C0 should explicitly catch the obsolete assumption that Expressions is the sixth peer Technē instrument.
+
+#### C1 — prepare the real world
+
+Prepare a realistic Project/World with enough attributable material to exercise the selected path:
+
+- Central/ProjectCentral source ground;
+- Wiki/ProjectMap/searchable subject;
+- relation/temporal material where used;
+- place/spatial material where used;
+- at least one Expression/Scene relation for cross-cut proving where applicable;
+- actual eligible Agent/Agency/session/provider state;
+- finite renderer/material resources and cleanup path.
+
+Do not add fake QL/time/place data merely to make all six icons available.
+
+#### C2 — ordinary deep work
+
+Start from Project/Wiki/Graph rather than a special Epi launcher where possible.
+
+At minimum prove one useful deep-instrument action against a real subject, such as:
+
+- arrange/formalise a constellation in Canvas;
+- inspect a causal/temporal relation in M2;
+- compose a Journey from real refs;
+- inspect situated/historical geography;
+- enter an integral/Palace composition.
+
+The action must use native refs/Actions and preserve source standing.
+
+#### C3 — compose the field
+
+Run the joined path:
+
+```text
+Project/Wiki/Graph
+  -> Canvas
+  -> Relation/Timeline
+  -> Journey
+  -> Places/World
+  -> Palace
+  -> Return to the Project ground
+```
+
+This is an integration spine, not a mandatory user workflow. A missing facet may be skipped only with a truthful unavailable/degraded reading; the actor must not silently replace the subject.
+
+Also cross into the 3:3 Expression reading at least once and return to the same deep field.
+
+#### C4 — repair/replay
+
+Route failures to the native owner:
+
+```text
+wrong/missing source or Project ground     -> Central
+Search/ProjectMap/Wiki/context failure     -> AIKit
+Agent/authority failure                    -> Actuation
+Run/evidence/developmental failure         -> Factory
+provider/material/lifecycle failure        -> Workcell
+QL/M′/Ta-Onta semantic failure             -> QL-MEF
+Surface/window/Expression host failure     -> O:I
+Research Canvas interaction migration gap  -> owning integration lane, without restoring old substrate authority
+```
+
+Preserve the original failed traversal and repeat against the same semantic basis where practical.
+
+#### C5 — independent proof and human Return
+
+The independent verifier and human owner must separately judge semantic correctness and experience.
+
+Human evidence must answer whether:
+
+- Project feels like the deep end of the existing Central/Wiki world rather than another application;
+- Canvas/Relation/Journey/World/Palace feel like differentiated operations on one field;
+- Expression feels like another reading of the same subject rather than an export/import boundary;
+- Journey genuinely mediates research into living Expression Scenes;
+- Places/World preserves evidence/historical distinctions while opening larger Earth/world depth;
+- Agent participation is instrument-attuned but continuous with the native Agency system;
+- the result can Return to Project/Wiki/source ground with provenance and authority legible.
+
+No repository test can substitute for this H/EX verdict.
 
 ## 2. Before asking the person to test
 
@@ -400,6 +524,8 @@ Return one readable account: what the person can actually do now; what still fai
 
 Screenshots and transcripts that contain private source stay local; publish only reviewed, bounded or redacted references. Keep operational ledger prose lean with the existing `central-ledger` practice where it is available; that limit never applies to the plan, the stories or the person's writing. No recurring background task is created without its own authorised trigger and scope.
 
+Commissioned documentation and planning updates reach the owning repository's main before the work is reported delivered (the owner's instruction of 18 September 2026, recorded in PROGRAMME). A working draft may live on main while staying a draft: landing it adopts none of its proposed wording, changes no human-authored source and certifies no runtime behaviour. An explicitly requested branch-only proposal, or a concrete unresolved conflict, failed required check, permission or approval restriction, is an exception to name with its blocker, never a claim of completion; repository protections are never bypassed and unrelated code is never merged to make documentation available. After landing, canonical links and active instructions point to main or an exact landed revision; branch links stay as provenance only.
+
 Per story retain source standing, binding/readiness, executed result, independent verification and human assessment separately. Keep skipped/unavailable cases visible and new capability inventory entries accounted for. Every current native capability has a direct, transitive, uncovered, deferred, inapplicable or retired disposition with its reason and its successor or re-entry ([STORY-PROFILE §4](STORY-PROFILE.md#forward-and-reverse-coverage)). Every imported requirement keeps its full source and meaningful subcases; adding a source ID without testing it is not a pass. Static source tests establish only the source and relationship claims they exercised. Only the required complete route, independent negative/recovery proof and applicable human assessment warrants **usable end-to-end feature.** for the named scope.
 
 A failed attempt can reveal a code bug, a misleading Skill description, a loading or discovery defect, a contract mismatch, an unsupported environment, an interface problem, a wrong test or a real open design question. Preserve the evidence, repair the proper owner and repeat. Return improvements through the existing document, knowledge and practice operations. The person's vision and ground change only by their own explicit source decision; tests cannot author them.
@@ -412,7 +538,7 @@ The app is accepted when the everyday loop of §0 has been lived in — used for
 
 A fresh verification session or independent subagent that did not implement the slice reads the original acceptance, exercises the full public operation and a consequential failure/recovery case, and rejects a disconnected producer. Only the fully supported parent may receive **usable end-to-end feature.** A child merge, snapshot, receipt, screenshot or green subset cannot supply that verdict.
 
-For Factory and Agency work, apply the complete connected walk and per-harness branches in [FACTORY-AGENCY.md §14](FACTORY-AGENCY.md#14-joined-acceptance-and-ux-spine-mapping). [factory-agency.json](factory-agency.json) maps its fourteen obligations into the existing stories, and [SESSION-GROUNDING.md](SESSION-GROUNDING.md) with [session-grounding.json](session-grounding.json) supplies the twelve native prerequisites: actual Herdr reference work beside direct tmux and external work, source and Skill loading, exact material identity, authority and dispatch, independent evidence, and remote access as distinct from re-placement. Required evidence covers the actual arrangement, single visible conversation and draft continuity, native-resolved session choices and operative context/skills, real plural participation and authority, artifact arrival/version/relocation, all shared template variants and complete handoff, Run inspection, native Git basis and verification, footer and Gateway, NOW and recurrence, native menu, keyboard, narrow and reduced-motion behaviour, and Epi/Nara parity. Use a real commissioned Run and a bounded child; an unrelated conversation or tmux session plus a queued Run cannot pass. Every available admitted harness is tested against its supported faculties with economical eligible models; unavailable, unsupported and failed branches stay explicit. Design adoption and source compilation prove neither the feature nor the person's experience.
+For Factory and Agency work, apply the complete connected walk and per-harness branches in [CASES](CASES.md) FAJ1–FAJ9, with the scenarios FAS1–FAS7. [factory-agency.json](factory-agency.json) maps its fourteen obligations into the existing stories, and [session-grounding.json](session-grounding.json), with its cases SG1–SG12 in [CASES](CASES.md), supplies the twelve native prerequisites: actual Herdr reference work beside direct tmux and external work, source and Skill loading, exact material identity, authority and dispatch, independent evidence, and remote access as distinct from re-placement. Required evidence covers the actual arrangement, single visible conversation and draft continuity, native-resolved session choices and operative context/skills, real plural participation and authority, artifact arrival/version/relocation, all shared template variants and complete handoff, Run inspection, native Git basis and verification, footer and Gateway, NOW and recurrence, native menu, keyboard, narrow and reduced-motion behaviour, and Epi/Nara parity. Use a real commissioned Run and a bounded child; an unrelated conversation or tmux session plus a queued Run cannot pass. Every available admitted harness is tested against its supported faculties with economical eligible models; unavailable, unsupported and failed branches stay explicit. Design adoption and source compilation prove neither the feature nor the person's experience.
 
 ### 10.1 Human walk: arrive and understand before upgrading
 
@@ -535,6 +661,16 @@ preserve an owned link or explicitly load an exact authorised body only under it
 recorded plan; it cannot counterfeit a native install, authority or hot reload.
 The human should not discover a missing first-time link during unrelated work.
 
+### 10.7 Human walk: a concern becomes a repair I meet again
+
+Choose one genuinely useful bounded task from the current world, with its original intended experience, applicable governance and proof obligation, and identify the exact task, NOW, context, Activity and Return readings it needs (C0). Reconcile the selected cut on the primary machine, and on Omarchy where the two-machine leg runs; protect live work and private source; use bounded actor, witness and verifier roles with finite effects, spend and retries and an explicit stop route; keep the historical source and context basis before acting (C1).
+
+Perform the task through a real admitted agent and observe the actual context and output, not only a projected instruction file. Then say one of the ordinary concerns against the task or a selected source or Activity: it did not go well; a rule is being misread; the agents use one thing as a reason for another. The person and the investigator both reach the same original evidence without combing transcripts (C2).
+
+Across the round, pressure the joined field: two scoped children, different context selections, repeated and late Returns, a changed rule revision, unavailable disclosure evidence, and view, host and Day changes, including a task that spans a Day boundary and Omarchy work while the primary is away. Aggregate without counting an event twice or leaking a sibling's private context, and keep the original scope and source basis when the inquiry widens (C3).
+
+Keep the failed occasion, find the real boundary and commission a bounded native repair through Factory when development is needed. Change implementation, projection or the agent's practice at its owner; a change to human intent or governance goes through its own Recognition. Produce exact Candidate, artifact and test evidence and a usable continuation (C4). Rebuild or rebind the changed part, re-enter the same story and task in the running world with a new evidence cut beside the original comparison; a different verifier repeats the affected activity, and the person's own judgement supplies H where it is required (C5). A green test and a successful Git integration do not substitute for meeting the difference again. The negatives are NPR01–NPR10 in [CASES](CASES.md#now-paradigm-and-return-npr01npr10).
+
 ## 11. Source reconciliation and unresolved evidence
 
 The original conversation supplies the negative requirements as well as positive
@@ -624,3 +760,98 @@ on the owner's machine follows repository acceptance and includes the current
 prototype and all native products. It is not a blanket blocker on repository
 work and does not turn a controlled test into a lived result. The pending UX
 synthesis does not introduce another implementation gate ahead of K8/AW.
+
+## 13. Optimise useful work, and the process of improving it
+
+Optimisation is carried through the existing rounds of this protocol under [O:I #65](https://github.com/EpiLogos/O-I/issues/65); [founding positions](../positions/FOUNDING-POSITIONS.md) remain upstream. #220 retains connective implementation; native owners retain their code and evidence. This is not a second campaign, scheduler, model registry or results database. Preserve all existing stories, CAW P01–P28 and named cases, developer/gateway/SDK obligations and the complete delegated QL field.
+
+### 13.1 Purpose and invariant
+
+Improve the quality, reliability, responsiveness or economy of an intended activity while preserving its meaning, authority, scope and required fidelity. The system should become better at discovering, testing, retaining and applying improvements—not merely generate more lessons or use fewer tokens.
+
+Capability, cost, latency, reliability, human attention and learning are distinct dimensions. Compare useful operating points for the actual undertaking, not a universal intelligence score. More expensive or slower work can be the appropriate improvement when it establishes a necessary result, preserves reflective depth or enables a richer experience. Reducing scope, concealing failures or silently lowering numerical/expressive fidelity does not establish optimisation of the same activity.
+
+Privacy, source/provenance, identity, authority, correctness, independent verification and consequential human choice constrain every comparison. Never reward agreement with a system interpretation as proof of human benefit. Ordinary Direct work, partial installations and no-QL operation remain complete choices.
+
+### 13.2 Eight lanes of awareness
+
+These are measurement/diagnosis dimensions, not new product positions or eight mandatory reports per task. At C0 select the relevant lanes; retain an explicit reason when a material concern is deferred or cannot be measured.
+
+| Lane | Improvement sought | Candidate observations and failure questions |
+|---|---|---|
+| Capability and outcome | More complete, repeatable useful work | Independent success and retained scope; accepted outcomes over all attempts; significant errors; transfer to unfamiliar inputs; did a cheap result omit the difficult requirement? |
+| Agent economics and orchestration | Inference and coordination earn their cost | Whole-task input/output/cache usage and spend; failed attempts, retries, verification and synthesis; time to accepted result; single/plural agency and escalation; did delegation add duplicated work or correlated mistakes? |
+| Context, knowledge and praxis | Sufficient permitted material and appropriate practice become operative | Governing-source retrieval, freshness, relevance, discovery/trigger precision and near misses; selected/projected/actually loaded revisions; repeated context reconstruction; did the agent lack a clear native operation rather than a stronger model? |
+| Runtime and material | Responsive operation under actual resource constraints | Startup, interaction/cancel latency, frame-time distributions, audio deadlines, memory/VRAM growth, CPU/GPU/IO and idle work where measurable; queues, thermal/energy conditions where available; lifecycle leaks and foreground contention |
+| Data and distributed worlds | Correct incremental change without excess movement or disclosure | Index rebuild versus incremental work; payloads, subscriptions and cache reuse; source/generation age; reconnect and convergence; distinguish coalescible presentation updates from consequential commands, source edits and Returns |
+| Repairability and maintainability | Safe recovery and fewer recurring defects | Time to independently verified restoration, uncertain effects, rollback success, repeat incidents, unnecessary architectural complexity, upgrades and compatibility; native-owner fix versus installed workaround |
+| Human attention and experience | Less supervision and friction with depth nearby | Restatement, avoidable interruptions, assistance, loss of focus/continuity, accessibility, explanation and actual human assessment; do not infer H/EX from screenshots or agent approval |
+| Learning and optimisation quality | Experience produces transferable, worthwhile improvement | Useful later uptake, held-out gains, recurrence/regressions, rejected experiments, stale/duplicate skills, time and resources spent improving, and the fitness of the improvement procedure itself |
+
+Instrumentation has a cost and disclosure boundary. Measure its overhead where material; sample or defer expensive observation without silently removing safety checks. Missing measurements are unknown, not zero. A small source task should not trigger a whole-suite census or an LLM reflection by default.
+
+### 13.3 Native owners and the model roster
+
+The model-roster intention now has an existing native home: [AIKit's Model field, roster and capability-fit](https://github.com/EpiLogos/ai-kit/blob/main/docs/v2/15-MODEL-ROSTER-CAPABILITY-FIT.md), with #64 ranking provenance and the #265 catalogue/availability/selection/actualisation continuation. Extend it; do not create a Factory-local catalogue or infer provider availability from past usage.
+
+| Owner | Role in optimisation |
+|---|---|
+| Central | Human-authored purpose/preferences/governance, sources, NOW/Day and receiving/adoption; private source and generated proposals remain distinct |
+| AIKit | Model catalogue and derived roster/ranking; context/praxis/body/provider resolution, actual loading and explainable selection; task-scoped model/quirk knowledge over existing refs |
+| Actuation | Actual Agency/Activity/Stream/Return and attributable provider/model-usage observations; managed and externally existing agency remain valid |
+| Factory | Commission/Run/work-unit/attempt/Candidate/Recognition, developmental demand and comparisons, aggregation of owner evidence and fitness Return; no mandatory Factory ancestry for Direct work |
+| Workcell | Material placement, processes/services/resources/connectivity and supported lifecycle/recovery observations; local serving competes for real machine capacity |
+| O:I | Whole-experience composition, campaign and cross-owner comparison; not a new domain runtime or telemetry daemon |
+| QL-MEF / Ta-Onta | Source-qualified formal, musical, contextual and reflexive specialisation; native optimisation/learning acceptance in `docs/kernel-rebuild/OPTIMISATION-AND-LEARNING.md` within #94/#132/#133/#134 |
+
+The roster must support model class/family/variant and access/modality distinctions, source-reported properties, known/discovered quirks, strengths/limits by task and role, body/context conditions, applicability, provenance, freshness, uncertainty and contrary evidence. A finding about a quantised model in a particular harness is not automatically a property of every route to that model. Unknown model details remain unknown. Authored preference, eligibility, availability, familiarity, price and observed fitness remain separate. Required constraints gate ranking; cheapness cannot make an ineligible candidate usable.
+
+Human, structured-agent and Factory consumers should inspect the same native reading. Do not invent an unsupported roster CLI command or a desktop-only model selector. Seed/provider facts require dated primary-source refresh when used; this plan publishes no current model leaderboard or prices.
+
+### 13.4 Whole-undertaking economics and fair comparison
+
+The unit of economic comparison is verified useful work, not a cheap turn. Keep all attempts, failed/rejected candidates, retries, cancelled or late work, synthesis, verification, repair and the attributable learning cost. Report provider input/output/cache-read/cache-write or other usage only when exposed, with model/variant/provider/harness/settings and evidence. Avoid double counting across parent/child correlations or aggregate and raw receipts.
+
+Distinguish provider-reported spend from an estimate with currency, pricing source/revision and calculation basis. Subscription/quota constraints and local resource use are not fabricated per-token cash charges. Human intervention/time stays visible separately. Cost per accepted outcome must name the denominator, task set and acceptance test; with no accepted outcomes it is undefined, never free. Capability/risk/coverage and failure rates remain beside cost.
+
+Before each experiment state the hypothesis, quality/fidelity floor, eligible alternatives, metric definitions, material budgets, intended comparison and stopping rule. Preserve exact source/build/install/running/Skill/context/model/provider/engine/quantisation/parameter/hardware conditions where relevant. Record cold/warm cache, load, seeds and nondeterminism. Version changing provider aliases honestly when exact internals are unavailable.
+
+Use comparable realistic inputs and repeat observations sufficiently for the decision and risk. Report sample counts, variation and uncertainty; a single successful specimen does not establish general superiority. Paired or interleaved comparisons can reduce time/load confounding. Compare both equal-budget outcomes and resource use at the same required quality where useful. Do not change several conditions and attribute all improvement to the model. Diagnose discovery, tool/API, context/loading, authority, dispatch/material, result and verifier defects separately.
+
+Working actors receive normal tasks and permitted discovery routes, not verifier answers, hidden filenames or canaries. Keep development/evaluation/held-out episodes separate; candidate training and review must not consume the holdout answers. Qualify correlated reviewers and independent lineage. Automated judgement is evidence at its tested scope, not human EX.
+
+### 13.5 Carry this through C0–C5
+
+| Existing unit | Optimisation responsibility |
+|---|---|
+| C0 — source-to-operation readiness | Identify intended outcome/invariants, applicable lanes, suspected bottleneck, native owner and relevant model/praxis evidence. Bind the selected activity, not another universal inventory. |
+| C1 — actual test world | Fix the baseline, comparison conditions, budgets, collection overhead, normal actor packets and independent verifier. Record source presence versus actual loaded practice. |
+| C2 — ordinary useful work | Run the uncoached baseline and collect bounded outcome, resource and friction evidence. No hidden mid-trial repairs or assistance. |
+| C3 — composition and stress | Exercise selected scale, realistic mixed load, long-session lifecycle, failure/re-entry and remote/independent-world conditions. A quiet isolated benchmark does not certify the composed experience. |
+| C4 — repair and replay | Preserve original failure and uncertain effects; change the smallest appropriate native subject; independently replay comparable inputs and regressions at a new exact cut. |
+| C5 — independent proof and human Return | Judge improvement, no improvement, regression or inconclusive evidence; state applicability, trade-offs and admitted/rejected/proposed standing. Record reuse, rollback and next review conditions. |
+
+Attach a compact comparison to the existing episode/Run/issue evidence: **basis and source refs; hypothesis and invariants; changed subject/revisions; condition and budget; observed outcome/resource delta with denominator/uncertainty; verifier/human standing; disposition/applicability/rollback/next action**. Detailed traces remain behind native refs. This is required information, not a new universal on-disk schema. Missing native capture/lookup is assigned to its owner; an explicitly recorded bootstrap is not claimed as product automation.
+
+Each meaningful campaign round returns at least its relevant baseline and a justified optimisation disposition. It need not manufacture an improvement or run all eight lanes. Once an approved performance/resource limit is established, regressions become part of affected acceptance; calibrate limits to the supported experience and machine rather than inventing universal numbers here. Optimisation work does not waive original functional closure or hold unrelated ready stories hostage.
+
+### 13.6 Learning, repair and admission
+
+Use the smallest intervention that addresses the diagnosed cause: a source/description fix, retrieval/loading repair, native tool/API improvement, bounded composition change, executable helper or Skill revision. Stable verified deterministic operations need not be rediscovered through inference at every use. Do not compensate for unclear product interfaces with an ever larger prompt.
+
+Repair restores an intended condition. Learning proposes a future practice/capability. Promotion makes the change operative or authoritative. These transitions can be related without sharing permission. Bounded automated experiments and safe repairs use existing grants; consequential source, policy and capability changes retain native approval and Recognition. Neither recurrence nor a learned success replenishes consumed authority.
+
+A saved lesson is a candidate. Validate its trigger and near misses, supported inputs, effects, failure/recovery and source lineage. Then prove normal discovery and actual loading by a fresh agent, followed by useful reuse on unfamiliar inputs. Replaying the original output or showing a skill file is insufficient. Preserve a worked example, explanation, applicability, disconfirmations and retirement/rollback. Rare recovery or authority-boundary practice is not worthless merely because it is infrequent.
+
+Triage reflection opportunities by novelty, repeated failure, correction and expected future use; include reflection cost. Compare this policy with alternatives rather than mandate an expensive review after every trivial act. Consolidation must preserve supporting scripts/assets/references and critical capabilities. Usage frequency informs maintenance but does not confer trust or silently author a preference.
+
+Hermes is a named comparative case for this work: inspect its then-current source for skill capture/review/maintenance, foreground-resource interaction and recoverable retirement. Record the exact revision and compare actual mechanisms/results; do not import a second memory/skill owner, assume its defaults fit O:I, or treat its feature descriptions as measured gains here.
+
+### 13.7 The optimisation process is itself a test subject
+
+Distinguish current-task adaptation, reusable practice development and development of the optimiser. The last is an ordinary bounded developmental undertaking whose subject is an **exact version of a diagnosis, experiment-selection, evaluation, retention or promotion practice**. It is not unrestricted self-rewriting.
+
+Ta-Onta specialises this under existing AW3/B08–B11: an actual failure or useful pattern is consumed through T/T′, reviewed, named where appropriate and reused; a versioned improvement to that very process is then compared on later work. Native storage, authority and evidence stay with their existing owners.
+
+The first comparisons, the optimiser comparison and the evaluator's own test are [CASES](CASES.md) OPC1–OPC5. These are the first comparative specimens, not replacements for the full campaign. Missing producer/measurement support remains named implementation work. Provider/material/UI/human tests run only at their actual available and authorised level. Repository source checks validate the plan, not any claim of better performance.
+~~~

@@ -1,7 +1,7 @@
 {
   "purpose": "Source module of the existing #65 campaign, not a second registry or runtime. Mappings are source-derived requirements, not executed coverage.",
   "story_source": "docs/experience/DEVELOPER-FIELD.md",
-  "document_operations_source": "docs/experience/DOCUMENT-OPERATIONS.md",
+  "document_operations_source": "docs/experience/LOCAL-CAMPAIGN.md",
   "ux_tier": 1,
   "standing": "agent-authored source-grounded elaboration under the user commission",
   "families": [

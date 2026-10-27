@@ -19,10 +19,14 @@ class AdaptiveWikiSource(unittest.TestCase):
         for n in range(1, 16):
             self.assertIn(f"wc65:WC{n:02}", obligations)
     def test_complete_interaction_text_is_in_the_hashed_source_reading(self):
-        source = self.reading["source_documents"]["docs/experience/WIKI-CONSTELLATION-UX.md"]
+        # The interaction is now a story row (STORIES.md) and the AP01–AP08
+        # contract (WIKI-CONSTELLATION-SPEC §11); both are hashed sources.
+        documents = self.reading["source_documents"]
+        sources = [documents[path] for path in ("docs/experience/STORIES.md", "docs/cradle/WIKI-CONSTELLATION-SPEC.md")]
         for text in ["Use this correction", "root meta-project", "bkmr", "ripgrep", "AP08"]:
-            self.assertIn(text, source["text"])
-        self.assertTrue(source["digest"].startswith("sha256:"))
+            self.assertTrue(any(text in source["text"] for source in sources), text)
+        for source in sources:
+            self.assertTrue(source["digest"].startswith("sha256:"))
     def test_extension_does_not_confer_runtime_or_human_acceptance(self):
         self.assertIsNone(self.reading["feature_verdict"])
         for story in self.reading["stories"]:

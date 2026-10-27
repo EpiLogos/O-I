@@ -2,7 +2,7 @@
 
 Implementation direction for O:I #335 and QL-MEF #201, corrected by the owner on 27 September 2026: Nara M4 is experienced inside the existing Expression/M4′ format. A separate React identity dashboard is not the commissioned product. This document records the presentation correction; it does not adopt new identity mathematics or certify implementation.
 
-Governing sources: [Expression application](EXPRESSION-APPLICATION-V1.md), [Expression Field §7](../cradle/EXPRESSION-FIELD.md#7-nara-and-the-m-instrumentarium), [EF05 and continuity](../experience/EXPRESSION-FIELD.md), and [front/verso/portals](../experience/EXPRESSION-WORLD-UX.md). Commission: [full identity journey](https://github.com/EpiLogos/QL-MEF/issues/201#issuecomment-5857484170), [application coordination](https://github.com/EpiLogos/O-I/issues/335#issuecomment-5857490451).
+Governing sources: [Expression application](EXPRESSION-APPLICATION-V1.md), [Nara in the Expression Field](EXPRESSION-APPLICATION-V1.md), [EF05 and continuity](../experience/STORIES.md), and [front/verso/portals](../experience/STORIES.md). Commission: [full identity journey](https://github.com/EpiLogos/QL-MEF/issues/201#issuecomment-5857484170), [application coordination](https://github.com/EpiLogos/O-I/issues/335#issuecomment-5857490451).
 
 ## Place and ownership
 

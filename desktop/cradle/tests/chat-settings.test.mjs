@@ -1,5 +1,5 @@
 // The "Chat & harnesses" settings face (owner commission 2026-09-21), read
-// LIVE per the acceptance law (docs/experience/HARNESS-SETTINGS-RESEARCH-
+// LIVE per the acceptance law (docs/experience/CASES.md AFN1; formerly HARNESS-SETTINGS-RESEARCH-
 // 2026-09-22.md §4, negative roster item 1: verbatim wire/demo snapshots as
 // requirements are banned — live-read round trips required). Each live test
 // invokes the installed `aikit`, derives its expected counts and names from

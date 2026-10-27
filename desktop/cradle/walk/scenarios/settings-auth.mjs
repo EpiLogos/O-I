@@ -1,5 +1,5 @@
 /**
- * 12-SETTINGS §3.3/§3.4 + HARNESS-SETTINGS-RESEARCH-2026-09-22 §2a — the
+ * 12-SETTINGS §3.3/§3.4 + DLW.md §10.10 Sign in, STORIES WP01 WP06 — the
  * login option beside the API-key input, walked against the real kernel and
  * the installed AIKit. Nothing here is a fixture: the harnesses' declared
  * auth options are read live twice (once by the page through the kernel, once

@@ -2,7 +2,7 @@
 role: architecture
 standing: agent-inference
 scope: O:I composed World; native ownership and current operation routes
-design_refs: ["../positions/FOUNDING-POSITIONS.md", "../experience/PLURAL-FLOW-SPEC.md", "../experience/SHARED-FIELD-DESKTOP.md", "../../.wayfinder/maps/agent-praxis-document-world.md"]
+design_refs: ["../positions/FOUNDING-POSITIONS.md", "../experience/STORIES.md", "../experience/CASES.md", "../../.wayfinder/maps/agent-praxis-document-world.md"]
 updated: 2026-10-04
 ---
 
@@ -23,7 +23,7 @@ installation, a running process and a presented result can have different cuts.
 | Concern | Current entry | What the older material still means |
 | --- | --- | --- |
 | O:I whole and product responsibility | [Architecture](../ARCHITECTURE.md), [founding positions](../positions/FOUNDING-POSITIONS.md) and this operational route | The first-suite diagrams in [visual understanding](../VISUAL-PRODUCT-UNDERSTANDING.md) describe that dated floor, not a current completeness verdict. |
-| Desktop kernel, events, retained resources and presentation | [Cradle architecture](../cradle/02-ARCHITECTURE.md), [World inhabitation](../contracts/WORLD-INHABITATION-V1.md), [session grounding](../experience/SESSION-GROUNDING.md) | The Cradle's 4 September build census is history. Contracts remain governing where later amendments have not changed them. |
+| Desktop kernel, events, retained resources and presentation | [Cradle architecture](../cradle/02-ARCHITECTURE.md), [World inhabitation](../contracts/WORLD-INHABITATION-V1.md), [session grounding](../PERSISTENT-AGENCY-AND-MATERIAL-HOSTING.md) | The Cradle's 4 September build census is history. Contracts remain governing where later amendments have not changed them. |
 | Central source and temporal ownership | Central `docs/ARCHITECTURE-NAVIGATION.md` → `CENTRAL-SYSTEM-SPEC.md`, `CONTROL-CONTENT-PROTOCOL.md`, `PROJECTCENTRAL-NOW.md`, `PROJECTCENTRAL-FLOW.md` | The product checkout and a person's Central root are distinct. Registered Flow continuity metadata and the current ordinary-file plural append operation are distinct contracts. |
 | AIKit resolution, context, praxis and resident communication | AIKit `docs/ARCHITECTURE-NAVIGATION.md` → `docs/v2/README.md`, `PRAXIS-ARCHITECTURE.md`, `WIKI-OPERATIONAL-PROJECTION.md`, `encounter-runtime.md` | AIKit `docs/ARCHITECTURE.md` is the earlier resolver/migration baseline. V2 target design and later implementation/evidence contracts have different standing. |
 | Actuation authority, occupancy, attributable events and Return | Actuation `docs/ARCHITECTURE-NAVIGATION.md` → `ACTUATION-CONSTITUTION.md`, `WORLD-BOUND-ROOT-AGENCY.md`, `ACTUATION-STREAM.md` | Provider traces, AIKit connection signals and Factory attempts may correlate with a Stream; they do not acquire its identity. |

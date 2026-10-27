@@ -15,7 +15,7 @@ SPEC = importlib.util.spec_from_file_location(
 assert SPEC is not None and SPEC.loader is not None
 MODULE = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(MODULE)
-SOURCE = "docs/experience/EPI-LOGOS-AGENT-MODE.md"
+SOURCE = "docs/experience/CASES.md"
 CARRIER = "docs/experience/vak-expression-craft.json"
 CLAUSES = {
     "lean-language": "constitution",
@@ -42,6 +42,11 @@ class EpiAgentModeSourceTests(unittest.TestCase):
             path.write_text(source["text"], encoding="utf-8")
 
     def assert_connected(self, reading) -> None:
+        # CASES.md is read for several modules, so connection is the carrier's
+        # own declaration, not merely the file's presence in the reading.
+        carriers = [m for m in reading["source_modules"] if m["source_module_path"] == CARRIER]
+        self.assertEqual(len(carriers), 1)
+        self.assertEqual(carriers[0].get("document_operations_source"), SOURCE)
         self.assertIn(SOURCE, reading["source_documents"])
         attached = [
             obligation

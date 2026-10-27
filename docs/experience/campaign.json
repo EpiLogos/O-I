@@ -22,9 +22,8 @@
     "docs/experience/shared-field-world-participation.json",
     "docs/experience/plural-flow.json"
   ],
-  "document_operations_source": "docs/experience/DOCUMENT-OPERATIONS.md",
-  "jev_redis_now_integration_source": "docs/experience/JEV-REDIS-NOW-INTEGRATION.md",
-  "jev_redis_now_local_handoff": "docs/experience/JEV-REDIS-NOW-LOCAL-INTEGRATION-PROMPT.md",
+  "document_operations_source": "docs/experience/LOCAL-CAMPAIGN.md",
+  "jev_redis_now_integration_source": "docs/experience/CASES.md",
   "jev_redis_now_native_delivery": {
     "aikit": "EpiLogos/ai-kit#388",
     "workcell": "EpiLogos/Workcell#98",
@@ -325,7 +324,8 @@
         "WK03",
         "WK04",
         "WK05",
-        "WK06"
+        "WK06",
+        "WK07"
       ],
       "title": "Work normally without supervising the machinery",
       "owners": [
@@ -360,7 +360,9 @@
         "GV05",
         "GV06",
         "GV07",
-        "GV08"
+        "GV08",
+        "GV09",
+        "GV10"
       ],
       "title": "Write and maintain the instructions that matter",
       "owners": [
@@ -587,7 +589,7 @@
       "source_refs": [
         "docs/SHARED-FIELD.md",
         "https://github.com/EpiLogos/O-I/issues/65",
-        "docs/experience/SHARED-FIELD-DESKTOP.md"
+        "docs/architecture/shared-participation.md"
       ]
     },
     {
@@ -629,7 +631,8 @@
         "DV05",
         "DV06",
         "DV07",
-        "DV08"
+        "DV08",
+        "DV09"
       ],
       "title": "Develop, compare alternatives, upgrade and recover",
       "owners": [
@@ -839,7 +842,8 @@
         "WN11",
         "WN12",
         "WN13",
-        "WN14"
+        "WN14",
+        "WN15"
       ],
       "title": "Hold the window the same way in every kind of work",
       "owners": [
@@ -876,7 +880,9 @@
         "WV12",
         "WV13",
         "WV14",
-        "WV15"
+        "WV15",
+        "WV16",
+        "WV17"
       ],
       "title": "Move between the grid, the ruler and the panes without losing my place",
       "owners": [
@@ -1356,7 +1362,12 @@
         "CJ05",
         "CJ06",
         "CJ07",
-        "CJ08"
+        "CJ08",
+        "CJ09",
+        "CJ10",
+        "CJ11",
+        "CJ12",
+        "CJ13"
       ],
       "title": "Keep a conversation or a journal as a Flow",
       "owners": [
@@ -2374,7 +2385,13 @@
         "XA08",
         "XA09",
         "XA10",
-        "XA11"
+        "XA11",
+        "XA12",
+        "XA13",
+        "XA14",
+        "XA15",
+        "XA16",
+        "XA17"
       ],
       "title": "Give anything an expression and carry it across modes",
       "owners": [
@@ -2584,7 +2601,8 @@
         "FJ06",
         "FJ07",
         "FJ08",
-        "FJ09"
+        "FJ09",
+        "FJ10"
       ],
       "title": "See a piece of work whole, and close it on my word",
       "owners": [
@@ -2883,7 +2901,9 @@
         "RK06",
         "RK07",
         "RK08",
-        "RK09"
+        "RK09",
+        "RK10",
+        "RK11"
       ],
       "title": "Carry the practice the work needs, and see whether it is used",
       "owners": [
@@ -3172,7 +3192,8 @@
         "GD07",
         "GD08",
         "GD09",
-        "GD10"
+        "GD10",
+        "GD11"
       ],
       "title": "Run work on the right machine, and keep my machines in step",
       "owners": [
@@ -3269,7 +3290,8 @@
         "RW09",
         "RW10",
         "RW11",
-        "RW12"
+        "RW12",
+        "RW13"
       ],
       "title": "Meet the same agents, doing the same work, in every mode",
       "owners": [
@@ -3599,7 +3621,12 @@
         "TO10",
         "TO11",
         "TO12",
-        "TO13"
+        "TO13",
+        "TO14",
+        "TO15",
+        "TO16",
+        "TO17",
+        "TO18"
       ],
       "title": "Stand in another moment, look further out, and see what others see",
       "owners": [

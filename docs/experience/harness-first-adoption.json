@@ -1,12 +1,12 @@
 {
   "purpose": "Source-mapped elaboration of harness-first adoption and the bounded non-QL native cut inside O-I#65. No new user-story IDs, installer schema, runtime or evidence store.",
-  "story_source": "docs/experience/HARNESS-FIRST-ADOPTION.md",
+  "story_source": "docs/experience/STORIES.md",
   "families": [],
   "standing": "owner-directed intended-experience clarification, 2026-09-19; implementation and installed proof remain separate",
   "runtime_or_human_acceptance": false,
   "obligation_sources": {
     "adoption65": {
-      "source_ref": "docs/experience/HARNESS-FIRST-ADOPTION.md",
+      "source_ref": "docs/experience/STORIES.md",
       "issue": "https://github.com/EpiLogos/O-I/issues/65",
       "native_admission_owner": "https://github.com/EpiLogos/ai-kit/issues/114",
       "policy": "Read the complete source, current INSTALL-UPDATE-FLOW and native admission/ground contracts. This elaborates existing stories; no source count, merge or available Skill establishes actual use."
@@ -26,7 +26,7 @@
     {
       "id": "adoption65:entry-and-facets",
       "source": "adoption65",
-      "native_locator": "HARNESS-FIRST-ADOPTION §§1,2.A–B",
+      "native_locator": "STORIES AD01, AD05, AD08; manual §10.11",
       "requirement": "Enter through an ordinary request in an existing harness; explain and select useful participation before native mutation, without requiring a preinstalled O:I context or a replacement application.",
       "story_ids": ["AD01", "AD05", "AD08", "WK01"],
       "required_evidence": ["C", "P", "M"],
@@ -41,7 +41,7 @@
     {
       "id": "adoption65:source-preservation",
       "source": "adoption65",
-      "native_locator": "HARNESS-FIRST-ADOPTION §2.C",
+      "native_locator": "STORIES AD02, AD03, AD09, WI04–WI13; manual §10.11 Ground and Projects steps",
       "requirement": "Use native Central root/Project recognition, binding and deliberate migration while retaining human source, existing agents, Skills, exclusions and pending work.",
       "story_ids": ["AD01", "AD02", "AD03", "AD09", "GV01", "GV06"],
       "required_evidence": ["C", "P", "M"],
@@ -55,7 +55,7 @@
     {
       "id": "adoption65:practice-and-defaults",
       "source": "adoption65",
-      "native_locator": "HARNESS-FIRST-ADOPTION §2.D",
+      "native_locator": "STORIES AD04, PX01, GV03, GV05, RK11; docs/SUITE-OPERATOR-SKILLSET.md",
       "requirement": "Make actual source-owned Skills, Methods and default Guardian relations understandable, discoverable, selected and useful in the chosen scope.",
       "story_ids": ["AD04", "AD05", "GV03", "GV05", "PX01"],
       "required_evidence": ["C", "P"],
@@ -70,7 +70,7 @@
     {
       "id": "adoption65:hooks-and-activation",
       "source": "adoption65",
-      "native_locator": "HARNESS-FIRST-ADOPTION §§2.E–G",
+      "native_locator": "STORIES AD01, AD04, GV05, EX05; manual §10.11",
       "requirement": "Project through the actual harness adapter, install compatible scoped hooks, and complete truthful live/next-session/restart activation with a recoverable first task.",
       "story_ids": ["AD04", "AD09", "GV03", "GV05", "WK01"],
       "required_evidence": ["C", "P", "M"],
@@ -85,7 +85,7 @@
     {
       "id": "adoption65:session-routing",
       "source": "adoption65",
-      "native_locator": "HARNESS-FIRST-ADOPTION §3",
+      "native_locator": "STORIES AG04, AG06, WK04, WK05, TM02, TM03, WN12",
       "requirement": "Make externally entered harness work and O:I-started SessionSpaces converge through real native context, model, authority and Activity relations, adding Factory ancestry only for genuinely commissioned work.",
       "story_ids": ["AG04", "AG06", "WK04", "WK05", "TM02", "DV02", "UI01", "UI02"],
       "required_evidence": ["C", "P", "M"],
@@ -101,7 +101,7 @@
     {
       "id": "adoption65:extension-and-retraction",
       "source": "adoption65",
-      "native_locator": "HARNESS-FIRST-ADOPTION §4",
+      "native_locator": "STORIES AD07, AD09, EX01, EX05",
       "requirement": "An unsupported or partial harness yields a useful SDK/conformance route; acceptance, refusal and eventual retraction preserve the person's existing world.",
       "story_ids": ["AD07", "AD08", "AD09", "EX01"],
       "required_evidence": ["C", "P"],
@@ -115,7 +115,7 @@
     {
       "id": "adoption65:current-native-cut",
       "source": "adoption65",
-      "native_locator": "HARNESS-FIRST-ADOPTION §5",
+      "native_locator": "PROGRAMME R31 (the 19 Sep current-native cut); docs/INSTALL-UPDATE-FLOW.md",
       "requirement": "Converge and install the explicitly selected current non-QL native cut on the Mac using the existing managed update authority, with exact held QL/app and actual running-provider disclosure.",
       "story_ids": ["AD03", "AD08", "AD09", "DV01", "DV05", "UI01"],
       "required_evidence": ["C", "M"],
@@ -130,7 +130,7 @@
     {
       "id": "adoption65:independent-proving",
       "source": "adoption65",
-      "native_locator": "HARNESS-FIRST-ADOPTION §§6–7",
+      "native_locator": "LOCAL-CAMPAIGN §2.1, §5, §10",
       "requirement": "Run source-grounded useful-work tests in existing feature worktrees and isolated Omarchy test worlds; preserve failures, repair native owners and independently replay without duplicating the campaign or frontend.",
       "story_ids": ["WK01", "WK04", "WK05", "DV01", "DV02", "DV05", "UI01", "UI02"],
       "required_evidence": ["C", "P", "M"],

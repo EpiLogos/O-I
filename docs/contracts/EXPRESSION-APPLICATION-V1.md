@@ -1,7 +1,7 @@
 # Expression application v1
 
 **Standing:** EX1 implementation contract for O:I #306. Baseline: `267a688`.
-Consumes [product meaning](../cradle/EXPRESSION-FIELD.md), [human/Agent UX](../experience/EXPRESSION-FIELD.md), [execution map](../../.superpowers/sdd/cradle-rebuild/EXPRESSION-FIELD-WAYFINDER-2026-09-14.md), [Cradle architecture](../cradle/02-ARCHITECTURE.md), [composability](../OI-DESKTOP-APPLICATION-SPEC.md#12-composability-is-an-experienced-property), [Action dispatch](../../desktop/cradle/kernel/src/action.rs), and [WorldPresentation](../../shared-field/WORLD-PRESENTATION.md).
+Consumes [product meaning](../dlw/DLW.md) (manual §7, §20), [human/Agent UX](../experience/STORIES.md) (the XS, XC, XG, XF, XA families), [execution map](../../.superpowers/sdd/cradle-rebuild/EXPRESSION-FIELD-WAYFINDER-2026-09-14.md), [Cradle architecture](../cradle/02-ARCHITECTURE.md), [composability](../OI-DESKTOP-APPLICATION-SPEC.md#12-composability-is-an-experienced-property), [Action dispatch](../../desktop/cradle/kernel/src/action.rs), and [WorldPresentation](../../shared-field/WORLD-PRESENTATION.md).
 
 ## One application meaning
 
@@ -252,3 +252,126 @@ opened from an Expression instrument lands as a real pane in the current
 arrangement's tree. Document limits are unchanged:
 64 Expressions, 64 scenes, 256 entity/relation bindings, 256 changes per
 atomic edit, 512 KiB per document.
+
+## Ownership laws of the Expression Field
+
+An Expression is a living presentation of native subjects and relations. It can be quiet and page-like, spatial and graphical, animated and musical, or a full-screen processual instrument. It does not acquire ownership of what it presents. Sources, Wiki subjects, Agents, M coordinates, Nara states, Actions, authority and SharedField identities remain owned by their native systems.
+
+```text
+Expression != canonical subject
+Expression entity != Agent/Wiki/M coordinate identity
+Expression relation != WikiEdge/Contribution/KnowledgeRoute by appearance
+renderer != M′ instrument
+particle movement != evidence of Agent action
+selection != Action
+visible != disclosed to Agent
+bound != authorised
+live personal state != portable Expression
+Expression save != source mutation
+Expression projection != public without audience policy
+WorldPresentation != Expression
+Being/Thing presentation role != native identity class
+```
+
+### Presentation, parity and attribution
+
+Presentation changes never remint the Expression, bound subjects, AgentSession, Wiki subject, M coordinate or Nara occasion.
+
+A human may select, drag, arrange, edit and invoke through visible controls. An Agent receives the same subjects, scene/entity identities, relation bindings, available operations, parameter state, source revisions and ActionRefs through structured application state.
+
+The Agent never needs DOM/canvas scraping to know what the person selected or to create/edit/deploy an Expression. The human never needs to understand engine internals to ask an Agent to compose one.
+
+Agent operations are inspectable and attributable. A visual change caused by an Agent is linked to the actual application operation/Activity. Ambient animation and autonomous engine motion remain distinguishable from Agent activity.
+
+These are application operations over existing owners. They do not grant source mutation, Agent authority or publication rights by themselves.
+
+Agent personality/presence may shape presentation, but personality is not authority or identity. Activity may alter visible rhythm/form where deliberately bound; decorative animation must never be presented as evidence that an Agent acted.
+
+A profile change changes the presentation grammar, not the meaning/source of the bound subject.
+
+When recursion would instantiate the same live Expression inside itself, present a link/portal/capture rather than another active renderer.
+
+### Derived and authored Expressions
+
+Derived coordinate Expressions should be generated from current source/readings and a presentation grammar. They are not 1,875 hand-maintained files. Authored Expressions may refine, teach or artistically present a coordinate and retain exact source revisions.
+
+```text
+DERIVED EXPRESSION
+coordinate + current readings + presentation grammar
+
+AUTHORED EXPRESSION
+human/Epii composition + source/revision provenance
+```
+
+### Being and Thing roles
+
+An Expression may contain either or both. These are presentation roles, not new identity classes.
+
+```text
+ExpressionEntityBinding {
+  expression_entity_ref
+  subject_ref
+  presentation_role: Being | Thing
+  source/revision refs
+  current owner Reading(s)
+  relation bindings
+  disclosed ActionRefs
+  local presentation/material state
+}
+```
+
+A Being can become a Thing for another encounter without minting another person or Agent identity. A Thing can lead to its creator, steward, participant or Agent through actual typed relations rather than inferred presentation proximity.
+
+### Knowledge projected into the field
+
+Canonical knowledge identity stays outside the renderer. A graph-projection adapter maps stable subject/relation refs into expressive entities and connective forms. Changing the data query or selected locus changes the projected field without creating another graph database or Expression-owned relation model.
+
+QL pair/triad/whole constellations, harmonics, lenses and source-backed glyph structures can provide stable patterned presentation grammars. They are layout/intelligence inputs, not visual proofs of semantic truth.
+
+### Nara in the Expression Field
+
+K10 supplies protected Nara/M4 truth. K8 supplies accepted M1/M2/M3 continuous and audio state. O:I owns the Expression Stage/material renderer. The full Nara mode binds those truths into the current engine without creating a second clock, field, resonator, audio owner or personal state store.
+
+The seven Nara centres are **receiving loci**. Cymatic resonant stations are **conditions of the shared resonant medium**. They may be related but must not be identified.
+
+Selection is inspection. Deliberate Actions change domain or source state. Manual/general Expression authoring controls may coexist with bound domain state only where ownership and override/follow state are explicit.
+
+Portable Nara Expressions contain safe refs/cues and host artifacts, not raw journal, identity, bioquaternion or seven-centre private state. Authorised live personal values are session-local rendering inputs.
+
+### Pages, WorldPresentation and the shared field
+
+`WorldPresentation` remains the portable authored page/world composition above individual renderers. Expression becomes one admitted Component/Surface renderer with explicit fallback:
+
+```text
+WorldPresentation
+  ├─ heading/text/wiki/card/cube/other components
+  └─ Expression binding
+       ├─ live accepted renderer when available
+       ├─ image/video/frozen fallback
+       └─ exact subject/provenance/Action refs
+```
+
+No Epi-specific CMS is introduced. HTML remains capable of primary authorship; derived pages retain sources; page refinement and source Return remain separate operations.
+
+SharedField receives an explicit Projection of an Expression or WorldPresentation, never ambient private runtime state.
+
+A projected Expression may be served live when the target has an accepted renderer, or through image/video/HTML fallback. Source/subject identities, audience policy and provenance remain inspectable. A recipient may encounter, fork or contribute according to the SharedField contract without receiving another person's protected Nara state or Agent authority.
+
+### Learning from use
+
+The Expression Field can accumulate useful evidence about how people and Agents compose and inhabit it without silently becoming a self-modifying preference engine.
+
+Retain as attributable evidence where authorised:
+
+- human-created Expressions and scene structures;
+- parameter/automation choices and later revisions;
+- successful/failed Agent composition Methods;
+- source/knowledge routes actually used;
+- human corrections, acceptance, rejection and returned understanding;
+- performance/resource evidence.
+
+AIKit praxis, T/T′ consumption and recognised Methods may learn from that evidence under their existing laws. The engine does not infer truth, personality or therapeutic effect from aesthetic preference or visual coherence.
+
+### Naming of operations
+
+Exact naming follows the existing O:I Action/application grammar. Not every presentation edit needs a canonical cross-product Action identity; draft-local UI mechanics remain application interactions. Consequential domain/source/publication operations route through their actual owner and authority seam.

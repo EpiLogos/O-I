@@ -15,7 +15,7 @@ SPEC = importlib.util.spec_from_file_location(
 assert SPEC is not None and SPEC.loader is not None
 MODULE = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(MODULE)
-SOURCE = "docs/experience/HARNESS-FIRST-ADOPTION.md"
+SOURCE = "docs/experience/STORIES.md"
 MODULE_PATH = "docs/experience/harness-first-adoption.json"
 
 

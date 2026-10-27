@@ -49,8 +49,9 @@ beginning `METHOD:`, not another artifact.
 
 ## Harness-first adoption and current-cut entry
 
-For a request made in an existing harness, read
-`docs/experience/HARNESS-FIRST-ADOPTION.md` at this Skill's source revision.
+For a request made in an existing harness, read the AD family ("Add only what
+helps my existing setup") of `docs/experience/STORIES.md` and manual
+`docs/dlw/DLW.md` §10.11 at this Skill's source revision.
 Its source module belongs to the existing #65 map. Resolve the reference from
 its owner when a projected Skill has no sibling docs; an explicit bootstrap
 read is not proof that normal discovery/loading works.

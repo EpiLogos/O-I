@@ -4,7 +4,7 @@
 // scenarios (invented agents, simulated runs; every control mutates a typed
 // fixture, never native data). It proves the fixture mechanics only and is
 // excluded from the acceptance set (research dossier
-// docs/experience/HARNESS-SETTINGS-RESEARCH-2026-09-22.md §4, negative
+// docs/experience/CASES.md AFN1–AFN10, negative
 // roster item 5; DESKTOP-LANGUAGE.md ruling 8, 2026-09-22). Acceptance for
 // the Run / Agents / Context surfaces lives in
 // walk/scenarios/factory-development.mjs, restated over the real kernel legs

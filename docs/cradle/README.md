@@ -17,7 +17,7 @@ the same discoverable field. This is not two Wikis or a read-only graph converte
 Read in this order:
 
 1. [Product decisions WC01–WC15 and their reasons](../positions/WIKI-CONSTELLATION-PRACTICE.md).
-2. [Human and agent UX spine extension](../experience/WIKI-CONSTELLATION-UX.md).
+2. [Human and agent UX spine extension](WIKI-CONSTELLATION-SPEC.md).
 3. Joined Wiki/Technè development Wayfinder (retired 27 Oct into the DLW map, O-I #706; read it at `8873b0968`).
 4. [Implementation specification](WIKI-CONSTELLATION-SPEC.md).
 
@@ -37,7 +37,7 @@ preserve newer local work. Existing Technè mode, Stage, native ownership and
 | [02-ARCHITECTURE.md](02-ARCHITECTURE.md) | The application kernel, services, seams, state layers, events and focus model. |
 | [03-UX-STATES.md](03-UX-STATES.md) | The complete UX state space, each state derived from intent. Its rules fold into the DLW manual under a later ticket. |
 | [07](07-WAVE-5-SYSTEM-CONTRIBUTION.md), [08](08-WAVE-5-CONSUMER-SEAM.md), [09](09-CONFIGURATION-PLANE.md) | The System contribution contract with the System law L1–L6 and the `v1` descriptor (07 §0), its consumer seam, and the configuration plane. |
-| `CENTRAL-FIELD-*`, [HOSTED-CONTRIBUTIONS.md](HOSTED-CONTRIBUTIONS.md), [WIKI-CONSTELLATION-SPEC.md](WIKI-CONSTELLATION-SPEC.md), [WIKI-CONSTELLATION-OPERATIONS.md](WIKI-CONSTELLATION-OPERATIONS.md), [EXPRESSION-FIELD.md](EXPRESSION-FIELD.md), [PERSONAL-WEB.md](PERSONAL-WEB.md) | Contracts that code and other documents read. |
+| `CENTRAL-FIELD-*`, [HOSTED-CONTRIBUTIONS.md](HOSTED-CONTRIBUTIONS.md), [WIKI-CONSTELLATION-SPEC.md](WIKI-CONSTELLATION-SPEC.md), [PERSONAL-WEB.md](PERSONAL-WEB.md); the Expression Field's laws are in [EXPRESSION-APPLICATION-V1](../contracts/EXPRESSION-APPLICATION-V1.md) | Contracts that code and other documents read. |
 
 The legacy Cradle's UX and layout documents retired on 27 October 2026 (O-I #728; git keeps them): 01-DESIGN, 04-VERIFICATION, 05-EXECUTION, 06-SYSTEM-SETTINGS, 10-SIDEBARS, 11-FACTORY, 12-SETTINGS, 13-BUILD-PROMPT, PROMPT and the presentation-state proposal. The everyday loop, the verification conditions and the lived walks, including the Epi domain walks, are in the test protocol, [LOCAL-CAMPAIGN.md](../experience/LOCAL-CAMPAIGN.md). The System law and the `v1` settings descriptor are in [07 §0](07-WAVE-5-SYSTEM-CONTRIBUTION.md#0-the-system-law-and-the-v1-descriptor). Intent for the new shell is the [DLW manual](../dlw/DLW.md); the stories are in [docs/experience](../experience/README.md).
 

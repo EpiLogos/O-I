@@ -3,7 +3,7 @@
 **What it is:** the tier-0 register of the owner's rulings for the DLW (the new shell and the Technè instruments): the owner's own words, recorded where they were given. Plans, lanes, tickets and the manual cite it; none restates it.
 **Standing:** owner-authored; verbatim; never summarised. Each entry names its source, line range and date; only the owner changes or retires one. Laws that were set by agents and are not rulings sit last, under "Standing laws carried from the 7 Oct programme".
 **Where other rulings stand:** the five-mode ruling is R12; the owner's settled facts and the 13 Oct instrument rulings are R22–R24, carried from `wayfinder/DEVICE-SEMANTICS-LOCK.md` §0 when it retired; the shell-contemplation correction of 7 Oct (M1-M2-M3-M4, D13, the two-clock doctrine) is `lanes/lane-6-ableton-shell/SCOPE.md` L1-25, which stays where it is.
-**Order:** the 7 Oct implementation-commission rulings (L12-74, in place and unchanged), then the owner passages appended from retired planning documents (R1-R29).
+**Order:** the 7 Oct implementation-commission rulings (L12-74, in place and unchanged), then the owner passages appended from retired planning documents (R1-R31).
 
 The plan is the wayfinder map, O-I #706; its Notes and [`wayfinder/TRACKER.md`](wayfinder/TRACKER.md) carry the standing laws (port, aperture, craft, musical, instrument, reverse-engineering), and its tickets are the map's sub-issues.
 This file no longer carries a lane table, a phase ladder or deliverables; those are the map's and the lane directories'.
@@ -742,8 +742,7 @@ Read with: R12 and R22 (Epi-Logos is a lens, not a mode); R25 (the realignment).
 
 Copied word for word, with line numbers, from the cradle documents before they retired (O-I #728).
 
-
-For the lead to add to `desktop/cradle/docs/world-shell/PROGRAMME.md`. Each passage below records an owner ruling, acceptance, direction or supplied reference in a document retired under O-I #728, and none of them is in PROGRAMME.md (checked by searching PROGRAMME.md for each passage's words and for the rulings' identifiers). They are copied exactly from `origin/main` at `8873b096817b603b5b562cc378ec00b808391b7d`, with the file and lines named; only a leading `>` is added to each line. Most are the documents' own records of what the owner ruled or accepted, not the owner's words; the owner's own words appear only where the source marks them as quotations (D1, D2, and the requests quoted in 10-SIDEBARS L72 and L101).
+Each passage below records an owner ruling, acceptance, direction or supplied reference in a document retired under O-I #728, and none of them is in PROGRAMME.md (checked by searching PROGRAMME.md for each passage's words and for the rulings' identifiers). They are copied exactly from `origin/main` at `8873b096817b603b5b562cc378ec00b808391b7d`, with the file and lines named; only a leading `>` is added to each line. Most are the documents' own records of what the owner ruled or accepted, not the owner's words; the owner's own words appear only where the source marks them as quotations (D1, D2, and the requests quoted in 10-SIDEBARS L72 and L101).
 
 Checked and holding no owner ruling: `06-SYSTEM-SETTINGS.md` (its law L1–L6 and `v1` descriptor are now §0 of `07-WAVE-5-SYSTEM-CONTRIBUTION.md`), `PROMPT.md`, and `PRESENTATION-STATE-ADDENDUM-PROPOSED.md` (a proposal awaiting owner ratification, never ratified). The owner rulings these documents cite by number ("ruling 5", "ruling 6", "ruling 7", "ruling 8") are the 22 September shell behaviour rulings, which stand in `packages/oi-design-system/DESKTOP-LANGUAGE.md`.
 
@@ -957,3 +956,528 @@ Source: `docs/cradle/01-DESIGN.md` L63-65
 > - **No profile shadow** — "my profile is the face of my world I have chosen to
 >   make present here." An account is a reading over native source; several may
 >   coexist; none silently replaces its source.
+
+### R31 — Rulings in the feature UX documents (retired 27 Oct)
+
+Copied word for word, with line numbers, from the feature documents before they retired (O-I #729).
+
+Each passage records an owner ruling, acceptance, direction, commission or supplied reference in a file retired under O-I #729, and none of them was found in PROGRAMME.md (each was searched for by its words; the few already there are named where they occur). Passages are copied exactly from `cleanup/ux-fold` at `4e627f4c180cfc30c890107dbb3af48e88207656` (PR #777), with the file and lines named; only a leading `>` is added to each line. Every quoted line was checked by script against that commit.
+
+Most passages are the documents' own records of what the owner ruled, approved or commissioned, not the owner's words. The owner's own words appear only where the source marks them as quotation: HARNESS-SETTINGS-RESEARCH L3-6 (the commission), UI-FUNCTION-LANDING L66 and L72, and the owner's first-person account in `docs/cradle/PERSONAL-WEB.md` L7 (so named by `docs/positions/PUBLIC-VOICE-WORKING.md` L144). Where a line carries the document's own continuation after the ruling, the note says so.
+
+Checked and holding no owner ruling: EXPRESSION-HOST-CONTRACT-FOR-FACTORY-RUNS, RETURN-OF-ZERO-PUBLICATION, JEV-REDIS-NOW-LOCAL-INTEGRATION-PROMPT and the cradle's WIKI-CONSTELLATION-OPERATIONS.
+
+
+## FACTORY-AGENCY.md — the Factory and Agency design the owner validated, adopted 14 Sep 2026
+
+### The design is adopted (14 Sep 2026)
+Source: `docs/experience/FACTORY-AGENCY.md` L8
+> **Adopted 2026-09-14.** The owner explicitly validated this design in the “Define O-I 289 system design” task and commissioned its publication, ticket update and UX-spine mapping. This is acceptance of the design, not human acceptance of the implementation. It does not confer adoption on the rest of the #65 story map.
+
+### Within the adopted design: the right-hand artifact display stays; the AgentLayer reading is superseded (14 Sep 2026)
+Source: `docs/experience/FACTORY-AGENCY.md` L48 (the design's own words, adopted with it)
+> This explicitly supersedes the earlier reading of #289/#292 that kept the right permanently as AgentLayer. “No special Return rail” prohibits a separate widget/store/chrome; it does not remove the Factory right-hand artifact display. The original Factory centre/right relationship remains operative.
+
+### Within the adopted design: the desktop presents the model and harness choice (14 Sep 2026)
+Source: `docs/experience/FACTORY-AGENCY.md` L89 (the design's own words, adopted with it)
+> The old Cradle shorthand “desktop carries no model choice” is superseded only as a UI restriction: O:I presents the native model/harness choices and confirmed results; AIKit/Actuation retain resolution and actualisation. A provider-advertised resident selector and the full resolved Model roster are distinct capabilities.
+
+### A separate native architecture session beside the UI work (owner commission, Sep 2026)
+Source: `docs/experience/FACTORY-AGENCY.md` L238 (the first sentence records the commission; the rest is the document's allocation)
+> The owner has commissioned a separate native architecture session alongside this UI implementation. Follow [SESSION-GROUNDING.md §11](SESSION-GROUNDING.md#11-work-allocation-and-concurrency) and #220 for the current allocation. The Factory integrator owns shell placement, shared session interaction, owner consumers, returned-template family and the installed-app walk. The native integrator owns AIKit composition/session/provider work, Actuation authority and the Factory execution joins, including continuity of unpublished #311 work after reconciling its actual checkout. Independent Workcell and Central streams return their native changes to that integrator.
+
+### The owner's Terra/Luna delegation authorisation (Sep 2026)
+Source: `docs/experience/FACTORY-AGENCY.md` L240
+> The owner's existing Terra/Luna delegation authorisation permits bounded supporting work where independent: returned-template variants, Git projection, roster/picker consumers and acceptance coverage. Partition writes and publish exact native operations, versions and evidence for consumers. No concurrent writers on the same mutable subject or live service. This staffing allocation preserves the complete accepted experience; a missing native dependency remains work to finish.
+
+## FACTORY-UI-INTEGRATION-HANDOFF.md — the owner's Run / Agents / Context and Desk / Tasks direction, 18 Sep 2026
+
+### Run, Agents, Context; the centre is Desk / Tasks (owner direction, 18 Sep 2026)
+Source: `docs/experience/FACTORY-UI-INTEGRATION-HANDOFF.md` L8
+> **Current owner direction, 18 September 2026:** build the parallel Factory sidebar around three clear jobs: **Run, Agents, Context**. The centre is **Desk / Tasks** (see §10): Desk is whole-Run-first — the live Run board, then the full SSSF multi-lane Run view of the selected Run; Tasks is chat-first — the full-size working conversation. Inspecting a thing, assessing a claim and opening a result are interactions with that work, not reasons for more top-level sidebar categories.
+
+### The six-tab navigation of PR #373 is superseded (18 Sep 2026)
+Source: `docs/experience/FACTORY-UI-INTEGRATION-HANDOFF.md` L10
+> **This supersedes the six-tab navigation in PR #373 and earlier versions of this handoff**, including Trajectory / Context / Skills & tools / Claims & evidence / Results / Inspect as peer destinations. Retain their actual functions in the locations below. Historical issue comments, downloaded handoffs and existing source references are not instructions to restore that taxonomy. Short labels describe user jobs; native identities/authority do not change.
+
+### Standing: the owner's selected layout, for immediate experimentation (18 Sep 2026)
+Source: `docs/experience/FACTORY-UI-INTEGRATION-HANDOFF.md` L12 (the first sentence is the standing; the rest of the line is the document's execution instruction)
+> **Standing and execution:** this is the owner's selected layout for immediate experimentation in the already-running UI-refinement branch, not an assertion of tested usability or a permanent design freeze. Continue components/CSS and try interactions now. Preserve unpublished work and current shared-file ownership. No full census, preliminary branch merge, new architecture, mandatory documentation round or native implementation completion is a prerequisite for useful UI experiments. #289/#292/#375 remains the UI track; #220 supplies native integration; #65/#201–#205 retains joined proof.
+
+### The owner's local reference and the accepted left-files interaction (18 Sep 2026)
+Source: `docs/experience/FACTORY-UI-INTEGRATION-HANDOFF.md` L16
+> Preserve the six existing entrances: Base / Desktop, Factory, Expressions, Technè, O:I Web, Epi-Logos. World/paradigm/corpus context remains separate from arrangement. Use the current Expressions-led design and the owner's actual local reference, not a new visual system. Preserve the accepted left-files interaction, current neutral light/dark styling, quiet revealable footer and existing pane/window/popout capabilities.
+
+### The owner's intended receiving path (18 Sep 2026)
+Source: `docs/experience/FACTORY-UI-INTEGRATION-HANDOFF.md` L94 (the first sentence names the owner's intent; the rest is the document's elaboration)
+> **Returns and the human Inbox:** preserve the owner's intended receiving path. A result explicitly addressed/routed to the person can appear beside its Run and in the native NOW/Day/Inbox through the same reference. Show delivered/pending review/included or other actual native states, and the correct response action. An ordinary intermediate artifact or progress event is not automatically an Inbox item. Delivery, acknowledgment, accepting a proposal, including text in the human Day, recognising a Candidate and Git integration are separate acts. Do not turn every Day entry into an Agent task.
+
+### Desk replaces the Factory Inbox entry; Tasks is chat-first, Desk is whole-Run-first (owner commission, 18 Sep 2026)
+Source: `docs/experience/FACTORY-UI-INTEGRATION-HANDOFF.md` L171-173
+> ## 10. Desk and Tasks (owner commission, 18 September 2026)
+>
+> **Desk replaces the Factory-left-sidebar Inbox entry**; Tasks remains the place for task conversations. This supersedes both the undifferentiated centre Chat/Run toggle above and the later chat-only-centre instruction: **Tasks is chat-first, Desk is whole-Run-first**, chosen by the left navigator's two entries. Switching changes the working view, never execution — no Run stops, no session starts, no message sends, no open document is destroyed, and the conversation's draft survives.
+
+## UI-FUNCTION-LANDING.md — the landing table of the 18 Sep 2026 integration commission (Version 2 shell × Version 1 functionality)
+
+### The integration commission (18 Sep 2026)
+Source: `docs/experience/UI-FUNCTION-LANDING.md` L8-11
+> The integration commission of 2026-09-18: the parallel UI (Version 2) is the
+> presentation destination; the accumulated functionality (Version 1 and the
+> native owners) is the donor. One real application. This is the landing table
+> the commission (§4) requires; it is maintained here and reported on #375.
+
+### PR #370 is the owner's to land (18 Sep 2026)
+Source: `docs/experience/UI-FUNCTION-LANDING.md` L26-28 ("owner lanes" here are the product owners' lanes; the last sentence is the reservation)
+> The owner lanes above are active and respected; none is rebased, reset or
+> landed here. The integration commits ride the convergence branch locally;
+> PR #370 is the owner's to land.
+
+### The existing left-files UX is accepted (recorded 18 Sep 2026)
+Source: `docs/experience/UI-FUNCTION-LANDING.md` L45, first and fifth cells of the B1 row
+> B1 · Base files/editor/terminal/preview + Day/Flow documents
+> existing left-files UX is accepted
+
+### Expressions hosts the O:I Expressions application itself (owner direction, 19 Sep 2026)
+Source: `docs/experience/UI-FUNCTION-LANDING.md` L64, first cell of the E3 row
+> E3 · Expressions hosts the O:I Expressions application itself — the Point-Cloud-Demo workspace full-screen with ITS UI, Library and engine (owner direction 2026-09-19)
+
+### The wiki list was the generic browser the owner rejected; the portal and the dedicated mode stage (owner rulings, 19 Sep 2026)
+Source: `docs/experience/UI-FUNCTION-LANDING.md` L65, first and last cells of the T2 row
+> T2 · Instrument 0 is the source-backed Wiki→Expression projection (supersedes the wiki-list landing the same day — the list was the generic browser the owner rejected)
+> **landed 2026-09-19** — owner seams since resolved by the owner's 2026-09-19 rulings: portal-inside-Technè was a stale kernel disclosure (the expression-world seam IS the portal runtime — capabilities corrected, the page opens as a real pane placement in the current mode's tree) and the cross-mode knowledge-open handler now leaves the same reading trail sources do; still named: SharedField staging (EX3A6 unadmitted) and a racy `oi:epi-open-source` layout placement (reproduced 3×, recorded). 2026-09-19 second pass: the dedicated mode stage is UNCONDITIONAL (owner ruling) — the knowledge page's kernel surface and mode-tree placement are the truth the probe asserts (the panel's Active Context is the surfacing seam); the m0 probe re-lawed accordingly and is green
+
+### The mode's panel sides were not folded on (owner finding, 19 Sep 2026; owner's words in quotation marks)
+Source: `docs/experience/UI-FUNCTION-LANDING.md` L66, first cell of the C2 row
+> C2 · The mode's panel sides reachable from the chat face (owner finding 2026-09-19: "panels not properly folded on")
+
+### One Wiki→Expression projection state (owner continuation, 19 Sep 2026)
+Source: `docs/experience/UI-FUNCTION-LANDING.md` L67, first cell of the T3 row
+> T3 · ONE Wiki→Expression projection state — the Technè left body's LIST/TREE/GRAPH apertures and the Expressions graph navigator read from and drive the SAME projection Instrument 0 presents (QL-MEF #213 one relation/selection state; #366 bidirectional law; owner continuation 2026-09-19)
+
+### Augment the established Library, never a second one (owner spec, 19 Sep 2026)
+Source: `docs/experience/UI-FUNCTION-LANDING.md` L68, first cell of the L1 row
+> L1 · The two navigation horizons inside the REAL Expressions Library (owner spec: augment the established interaction, never a second Library)
+
+### One store for the kernel's expressions and the vendored app (owner continuation, Lane M, 19 Sep 2026)
+Source: `docs/experience/UI-FUNCTION-LANDING.md` L69, first cell of the K1 row
+> K1 · The kernel's expression ops meet the vendored app's engine/documents — one store, no second copy (owner continuation Lane M)
+
+### Collection manifests for Central-backed readings (owner continuation, Lane N, 19 Sep 2026)
+Source: `docs/experience/UI-FUNCTION-LANDING.md` L70, first cell of the C3 row
+> C3 · Collection manifests close D1 + D3 so Central-backed collection readings can serve the Library (owner continuation Lane N)
+
+### The connected walk, not fixtures (owner spec, 19 Sep 2026; owner's words in quotation marks)
+Source: `docs/experience/UI-FUNCTION-LANDING.md` L72, first cell of the W2 row
+> W2 · The 13-step connected walk (owner spec "Do not hide behind fixtures") — evidence recorded per portion
+
+### The application vendored into the repository, the owner's directives executed (19 Sep 2026)
+Source: `docs/experience/UI-FUNCTION-LANDING.md` L74, first and fourth cells of the E4 row (the fourth cell is the document's list of what was done under those directives)
+> E4 · The application vendored into the repo — built inside, all owner directives executed (2026-09-19)
+> inside the app: `oiMark()` default (one expression, two scenes — Day ink-on-paper / Night light-in-the-dark, matching the base O:I image), orbit anchor bottom-left with menu-relative reveal kept, collections exported to `legacy-collections/` (3 featured + 37 starters as oi.journey data; oi-mark + source-twelve-faces retained non-legacy), masthead aligned to the shell's window cutout (live `oi-shell-cutout` posted geometry, icons 24px); Instrument 0 opens onto the Epii face — `source-twelve-faces` ("Twelve faces · one mask", the app's own corpus) via deep-link, stepping into the wiki·graph whole projection
+
+### The three-tier retention law (owner-approved spec, 19 Sep 2026)
+Source: `docs/experience/UI-FUNCTION-LANDING.md` L77, first, second and fifth cells of the R1 row (the second cell is the document's statement of the approved law, with its implementation)
+> R1 · The three-tier retention law (owner-approved spec, 2026-09-19)
+> Worker K `766cc322`: panes concealed-retained (every open tab keeps its body — same DOM node — through tab switches; only `sources`/`blank` release; close releases all); file-tree listing store (workspace-keyed, kernel `file_changed` receipts invalidate — one event per owner-recorded write), collapsed folders keep children mounted, ONE tree-level reading indicator; mode centres retained through a portal park (expressions/techne/epi-logos/system — the expressions iframe is the same node across mode switches); per-workspace quarantine (a broken workspace loads empty and is named in the footer, never rejects the book)
+> tiers: active → retained(concealed, suspended by the existing display:none laws) → released(close); persisted layout untouched — this is runtime retention
+
+## HARNESS-SETTINGS-RESEARCH-2026-09-22.md — the settings and acceptance research made under the owner's commission, 22 Sep 2026
+
+### Expose the options the reference harnesses expose (owner commission, 22 Sep 2026; owner's words in quotation marks)
+Source: `docs/experience/HARNESS-SETTINGS-RESEARCH-2026-09-22.md` L3-6 (L6 continues with the document's own words after "assertions.")
+> Owner commission: "use other harnesses as a guide — JUST EXPOSE THE OPTIONS
+> THEY EXPOSE" (Hermes, Claude Code, Codex for configuration coverage; Buzz,
+> Grok Bot, DeepSeek Harness UI for visual reference), plus a scour of our own
+> test suite for demo/below-bar assertions. Six research passes ran this day;
+
+### Auth is part of model setup: the login option beside the key (owner direction, 22–23 Sep 2026)
+Source: `docs/experience/HARNESS-SETTINGS-RESEARCH-2026-09-22.md` L82-83 (L83 continues with the document's own words, "The backend now")
+> Owner direction: auth is part of model setup — next to the API key input,
+> the login option (pi and most harnesses already offer both). The backend now
+
+Already standing, not added: L170-172 "Protocol (owner ruling 8): acceptance fixtures derive from the designs …" is the document's rendering of the 22 Sep shell behaviour ruling 8, which stands in `packages/oi-design-system/DESKTOP-LANGUAGE.md` L54-58 and which R30 L748 names as standing there. L289 "Proposed execution order (owner to rule)" is a proposal, never ruled.
+
+## HARNESS-FIRST-ADOPTION.md — entering O:I from the harness already in use, owner-directed, 19 Sep 2026
+
+### Standing: owner-directed UX clarification (19 Sep 2026)
+Source: `docs/experience/HARNESS-FIRST-ADOPTION.md` L3 (the first sentence is the standing; the rest is the document's own)
+> **Source standing:** owner-directed UX clarification, 19 September 2026. This elaborates the existing [#65 campaign](README.md), not a new onboarding product, runtime or acceptance programme. The original AD/WK/GV/AG/PX/DV/UI stories and their full native obligations remain. [harness-first-adoption.json](harness-first-adoption.json) binds the clauses below to those existing stories. Publication specifies the experience; it does not claim an executed installation, loaded hook or successful agent task.
+
+### A bounded current-native cut across Omarchy and the Mac, not a cold install (owner commission, 19 Sep 2026)
+Source: `docs/experience/HARNESS-FIRST-ADOPTION.md` L112
+> The owner now commissions a bounded current-native cut across Omarchy/remote and Mac. It is **not a cold install** and must not become a re-bootstrap of the personal ground.
+
+## OPTIMISATION.md — optimising useful work and the process of improving it, owner-authorised, 13 Sep 2026
+
+### Standing: owner-authorised planning amendment (13 Sep 2026)
+Source: `docs/experience/OPTIMISATION.md` L3
+> **Standing:** owner-authorised planning amendment, 13 September 2026. This specifies work and evidence; publication is not implementation, installed practice, measured improvement or human acceptance.
+
+## EXPRESSION-HOST-CONTRACT-FOR-FACTORY-RUNS.md — the Expression host contract for Factory Runs, 19 Sep 2026
+
+Checked; no owner ruling. Its standing (L3) is "agent-authored receiving contract".
+
+## EPI-LOGOS-AGENT-MODE.md — the situated Prime–QL agent in Expressions and Technē, owner commission 22 Sep 2026
+
+### The owner commissions the Epi-Logos agent mode (22 Sep 2026)
+Source: `docs/experience/EPI-LOGOS-AGENT-MODE.md` L3 (the first sentence records the commission; the rest of the line is the document's standing and links)
+> **Owner commission:** 22 September 2026. **Standing:** architecture and implementation/test assignment, not an installed-runtime or human-experience verdict. **Campaign:** existing #65 C0–C5; **integration:** #220. **Native body:** [Actuation #107](https://github.com/EpiLogos/Actuation/issues/107); **domain:** QL-MEF #201/#135; **general preparation:** AIKit #388.
+
+### A parallel integration lane for mode quality, in the existing tree (owner admission, 22 Sep 2026)
+Source: `docs/experience/EPI-LOGOS-AGENT-MODE.md` L59
+> The owner explicitly admits this as a **parallel integration lane for mode quality**. The local lead can perform it in the **existing main feature tree** with bounded file claims. It does not request another checkout or rebase every other ongoing contribution. All shared Git/index/checkout/commit, install and service changes remain serialized by the same lead; native owners retain their assigned source trees.
+
+## RETURN-OF-ZERO-PUBLICATION.md — the published reading for the site lane, 19 Sep 2026
+
+Checked; no owner ruling. Its standing (L3) is "agent-authored publication preparation". L6-7 ("Everything else in the corpus stays local until the owner admits it") and L67-68 ("The owner's Recognition remains the gate for widening the published set beyond these nine surfaces") are the document's own statements of an owner gate, not records of a ruling. For the lead: `desktop/cradle/expressions-app/collections/return-of-zero/PUBLICATION.json` `standing` records a later owner stipulation ("recorded 2026-09-21: the corpus is to be published; no per-family approval gates") that supersedes the narrow nine-surface set; it is not in PROGRAMME and is outside my files, so I name it rather than quote it.
+
+## SESSION-GROUNDING.md — the session grounding and continuity map, commissioned 14 Sep 2026
+
+### The commission (14 Sep 2026)
+
+Source: `docs/experience/SESSION-GROUNDING.md` L8
+
+> **Commissioned 2026-09-14.** This is the source-grounded implementation/testing map requested after the Factory/Agency design was adopted. It connects existing contracts and records current findings; it does not promote the attached session's metaphors or proposed defaults into new authored law. The accepted human experience remains [FACTORY-AGENCY.md](FACTORY-AGENCY.md).
+
+### Parallel UI and native architecture work, at the owner's request (recorded in the map of 14 Sep 2026)
+
+Source: `docs/experience/SESSION-GROUNDING.md` L193
+
+> The owner now requests parallel UI and native architecture work. This supersedes earlier instructions that made the Factory UI integrator write every native dependency.
+
+Checked and holding no other owner ruling: §§1–10 and §§12–15. §15's "Both near-term outcomes remain standing" (L265–266) restates the owner's two outcomes, recorded below under INHABITED-SYSTEM-ORIENTATION.md.
+
+## WORKCELL-NOW-TEMPORAL-FIELD.md — Workcell-root NOW and the temporal field, owner-approved 16 Sep 2026
+
+### Standing: owner-approved development clarification, adopted 16 Sep 2026
+
+Source: `docs/experience/WORKCELL-NOW-TEMPORAL-FIELD.md` L2-4
+
+> Register: design
+> Standing: owner-approved development clarification
+> Adopted: 2026-09-16
+
+### The governing determination and the first proving world (approved 16 Sep 2026)
+
+Source: `docs/experience/WORKCELL-NOW-TEMPORAL-FIELD.md` L15-19
+
+> The governing determination is:
+>
+> > **NOW is recursively localised and materially situated. Each Workcell participating in a World has one persistent root NOW horizon. Bounded tasks, Projects, Journeys and delegated acts occupy child NOWs within that horizon. A human Day composes eligible NOW horizons by reference. SharedField projects selected local NOW/DAY relations into a collective FieldNow/FieldDay without acquiring local source identity.**
+>
+> The first physical proving world is the owner's primary workstation plus Omarchy.
+
+The rest of this approved text (§§1–9, the law sentences of §10, §12 and the closure relation) moves word for word into contracts and CASES.md (see `contracts.md` and `cases.md`); it keeps this approval. One approved clause conflicts with the manual: §6 L273 lets a child be delegated to "a remote Workcell when placement resolves there", while manual §19.1 (L5448), §19.16 (L7256) and §19.23 (L7711) say "A helper works where its lead works". The lead or the owner settles which stands.
+
+## NOW-PARADIGM-RETURN.md — NOW, Paradigm and Return, commissioned 17 Sep 2026
+
+### The commission (owner request, 17 Sep 2026)
+
+Source: `docs/experience/NOW-PARADIGM-RETURN.md` L8
+
+> **Commission:** owner request, 17 September 2026, to recover the existing NOW/Paradigm, Day-level intent, agent-context, Factory telemetry and self-improvement relation before parallel proving and system inhabitation.
+
+### What the person should be able to say in ordinary work (quoted in the source, unattributed)
+
+The source sets these three utterances in quotation marks without saying whose words they are. They are listed so the lead can decide whether they are the owner's, as R30 did for 01-DESIGN.
+
+Source: `docs/experience/NOW-PARADIGM-RETURN.md` L16
+
+> The person should be able to say, during ordinary work, “I feel like this didn’t go so well”, “this governance law is being misinterpreted”, or “agents seem to be using x as a reason for y”. The system should locate the relevant work and its actual conditions, show the evidence, help distinguish the kind of discrepancy, and carry an authorised refinement back into the running world.
+
+## JEV-REDIS-NOW-INTEGRATION.md — Jev and Redis in the NOW and development field, commissioned 22 Sep 2026
+
+### Commission and standing (22 Sep 2026)
+
+Source: `docs/experience/JEV-REDIS-NOW-INTEGRATION.md` L3
+
+> **Commission:** 22 September 2026. **Campaign:** O:I #65, existing C0–C5. **Native integration:** O:I #220; AIKit [#388](https://github.com/EpiLogos/ai-kit/issues/388). **Standing:** owner-commissioned design and implementation assignment; publication is not runtime, installed-provider or human-experience acceptance.
+
+### The owner commission and its governing clarification (22 Sep 2026)
+
+Source: `docs/experience/JEV-REDIS-NOW-INTEGRATION.md` L5
+
+> This is a subordinate implementation note for [document operations](DOCUMENT-OPERATIONS.md), [session grounding](SESSION-GROUNDING.md), [Workcell-root NOW](WORKCELL-NOW-TEMPORAL-FIELD.md) and [NOW/Paradigm/Return](NOW-PARADIGM-RETURN.md). The existing campaign and native owner maps remain authoritative. The 22 September owner commission is to fold the discussed Jev/Redis integration into #65 now, ready for testing as Factory becomes usable. Its immediate preceding clarification governs: Jev is generally available classification and decision capacity; its useful applications belong in the existing document organisation, matrices, Wiki and practices.
+
+Read with: the September sources' Jev is the decision capacity the manual now names Kev (manual §19.20, §25.2; R17); `docs/cradle/CENTRAL-FIELD-NATIVE-AUDIT-A.md` K1 cites AIKit's `docs/JEV-REDIS-NOW.md` for Kev's election. The clarification that its applications belong in the existing document organisation, matrices, Wiki and practices reads the same under that name.
+
+## JEV-REDIS-NOW-LOCAL-INTEGRATION-PROMPT.md — the local installed-world handoff for Jev and Redis
+
+Checked; no owner ruling. "operator-approved backup" (L149) is an instruction to the operator, not a record of an owner ruling.
+
+## WORKSPACE-CONTINUITY.md — workspace continuity contract, commissioned 19 Sep 2026
+
+### The commission (19 Sep 2026)
+
+Source: `docs/experience/WORKSPACE-CONTINUITY.md` L3
+
+> Status: proposed implementation contract, commissioned 19 September 2026. This is a design, not a claim that the installed application has passed it.
+
+### The owner's report of the local v2 book, and the reconciliation target
+
+L11 also records the agent's inspected cut; it is quoted whole because the owner's report sits inside it.
+
+Source: `docs/experience/WORKSPACE-CONTINUITY.md` L11-13
+
+> The remote source inspection used O:I commit `fe92e1d027c806f99144ebf832a536307c0fe581`. The first 95 lines of `workspace/store.ts` on `agent/factory-desk-reading-20260918` were also checked. Both inspected versions still declare a v1 WorkspaceBook. The owner's local report describes a newer v2 book with per-mode trees and work already undertaken on three-tier retention. That local checkout was not inspected in this research session.
+>
+> **The local v2 implementation is the reconciliation target, not something to replace with inspected v1 code.** Implementation begins by recording the actual checkout, running build and unpublished changes, then marking each source finding below as present, repaired, superseded or unverified there. Existing passing work is retained. This document's requirements apply regardless of whether an individual old defect is already fixed.
+
+## INHABITED-SYSTEM-ORIENTATION.md — inhabited system orientation, owner-directed, amended 20 Sep 2026
+
+### Standing (20 Sep 2026)
+
+Source: `docs/experience/INHABITED-SYSTEM-ORIENTATION.md` L3
+
+> **Standing:** owner-directed orientation/index, amended 20 September 2026.  
+
+### Current owner direction: two outcomes, three Mac tracks (20 Sep 2026)
+
+Source: `docs/experience/INHABITED-SYSTEM-ORIENTATION.md` L9-31
+
+> ## Current owner direction — two outcomes, three Mac tracks
+>
+> **20 September execution split:** web Agents implement bounded production changes, regression tests and controlled verification through reviewable PRs. They do not merge, install candidates or operate the person's computers. Local Agents reconcile the exact source/revision receipt on #65/#220, integrate compatible PRs, build the installed candidate and perform real-provider and computer-use episodes. Controlled web results remain useful evidence at their actual scope; absence of live credentials is not permission to leave production routes unfinished.
+>
+> The three Mac tracks below are **receiving/integration slots**, not three additional web implementation branches or a fourth verifier checkout. Shared files have one writer; consumers publish typed contracts and explicitly dependent ingress changes rather than overwrite the shared shell. Lane A owns visual treatment, lane C Agent/harness composition, and lane D setup/configuration consumers and these campaign amendments. Native setting, credential and authority meaning remains with its owner. Omarchy continues contribution and hosting, not a prerequisite for unrelated Mac work.
+>
+> The two near-term outcomes are both required:
+>
+> **A. Installable, configurable, useful native products and O:I, including actual Factory self-inhabitation.** A discovered descriptor, populated settings page, queued Run or fixture success does not complete this outcome. A real bounded O:I improvement must travel through Factory's native authored source, Commission/Run, execution, artifacts and independent Return; the person must be able to use and recover the selected installed composition.
+>
+> **B. The complete source-backed Epi/Wiki/Expression/Technè corpus experience and its real hosted publication.** A first scene or sample passage proves only that slice. Preserve the full corpus scope in #366/#352/#335, QL-MEF #201 and the existing Epi source owners, and the hosted `5/0` encounter in #268/[INSTALLATION-VARIANTS.md](INSTALLATION-VARIANTS.md). Publication means a served, source/version-bound edition reached through the real Library/Expression reader in a clean browser, not merely a local build or deployment plan.
+>
+> | Bounded Mac track | Native responsibility and integration boundary |
+> |---|---|
+> | **1 — O:I/Desktop/whole-product UX** | Current shell, application integration, complete human flows and actual Mac UX proof. Retains the unpublished #375 UI-function landing, shared routing/store/styles and the chosen current app. |
+> | **2 — S0–S4 functionality/performance/Factory + Run-in-Expressions** | Native product operations, installation/configuration/lifecycle, functional and performance repairs, Factory self-inhabitation and the real Run source-to-result path. Supplies native contracts/adapters to Track 1, not a competing shell. |
+> | **3 — QL-MEF/Expressions/Technè/Nara/Epii** | QL/domain facilities, source-backed full corpus, Expression/Technè/Nara/Epii experience and its hosted publication joins. Shares the existing renderer/Library/source field; does not create another app or corpus store. |
+>
+> **The primary checkout counts within three O:I Mac trees total. Each native repository has one owner checkout. There is no fourth Mac verifier tree.** Independent verification is an office and a clean affected test/episode, not permission to create another checkout. Claims name disjoint files and branches before shared-code edits; Track 1 performs shell integration. Preserve unpublished, dirty and untracked work.
+>
+> Omarchy supplies **bounded independent work and Bimba/SharedField hosting**. Its own install, sandbox, native shell and physical-host claims still need their own evidence. They do **not** gate unrelated Mac implementation or useful native work. This supersedes the older Mac→Omarchy harmonise/inhabit-before-Mac progression in this orientation and the 18 September sandbox-default campaign wording. Historical receipts and material obligations remain valid at their stated cuts.
+>
+> The existing **Day/NOW foundation gate remains in force for broad dependent fan-out**. Independent bounded implementation, tests and the work making that foundation true continue now. No additional whole-suite audit or planning approval gate precedes useful work.
+
+LOCAL-CAMPAIGN §2.1 (L162–179) already carries the same topology as protocol; it does not record it as the owner's direction, so the record belongs here.
+
+## DOCUMENT-OPERATIONS.md — how the campaign belongs to the living document field
+
+### Documentation delivery ends on main (owner instruction, 18 Sep 2026)
+
+Source: `docs/experience/DOCUMENT-OPERATIONS.md` L7
+
+> **Owner instruction, 18 September 2026:** commissioned documentation and planning updates must reach the owning repository's `main` before the session reports the work as delivered. A pushed docs branch, open PR, issue comment or downloadable handoff is not the completed delivery. Use a short-lived branch/PR when required, reconcile with current main, run the applicable source checks, land the authorised documentation and read back its mainline path/revision in the same session. Do not leave the human or the next implementation session to discover and merge it.
+
+L9–11 elaborate the instruction's terms in the document's own words; they go to LOCAL-CAMPAIGN §9 as protocol (`cases.md`, LOCAL-CAMPAIGN passages).
+
+### The UX map is at the vision level (the user's authorial correction, undated; the file is of 18–24 Sep 2026)
+
+The source marks this as the user's explicit correction and sets the phrase in bold, not in quotation marks.
+
+Source: `docs/experience/DOCUMENT-OPERATIONS.md` L15
+
+> The user's authorial correction for this refinement is explicit: **the UX map is at the vision level**. `STORIES.md` and `DEVELOPER-FIELD.md` are intended-experience sources. An agent's side belongs there too: what it should be able to discover, understand, select, do and continue is part of the product's intended experience, not merely a test harness configuration.
+
+### Natural selection and compact prepared material in the Context plane (owner commission, 20 Sep 2026)
+
+Source: `docs/experience/DOCUMENT-OPERATIONS.md` L113
+
+> The existing editing, knowledge-selection and source/Return stories now have a scoped implementation route: [Canvas editor and selected context](../../.wayfinder/maps/canvas-editor-context.md), continuing Cradle D20/W1.7, U1.2/U1.3/U1.4, U3.1/U3.2 and FND-04. The owner commissioned natural selection and compact prepared material in the existing Context plane, not participant administration on every highlight. Keep the current Run / Agents / Context organisation. This source is already included by the campaign/developer-field loaders; no new story or capability family is introduced.
+
+## EXPRESSION-FIELD.md (experience) — the Expression Field's lived experience, owner-approved 14 Sep 2026
+
+### Standing: owner-approved UX direction (14 Sep 2026)
+
+Source: `docs/experience/EXPRESSION-FIELD.md` L3
+
+> **Standing:** owner-approved UX direction, 14 September 2026. This extends the existing O:I experience campaign; it does not replace the Cradle spine, Personal Web stories, K9/K10 acceptance or SharedField acceptance.
+
+### Vāk-authored craft: the owner's clarification of 19 Sep 2026
+
+The document's record of the owner's clarification; the passage after the first sentence is the document's own statement of scope and ownership.
+
+Source: `docs/experience/EXPRESSION-FIELD.md` L189
+
+> **Owner clarification, 19 September 2026.** This elaborates EF04/EF07 and their discovery, continuity and delivery relations. It does not redefine the existing stories or require QL for ordinary O:I Expressions. [vak-expression-craft.json](vak-expression-craft.json) maps the clauses to the existing #65 story families. **Base TypeScript workflow/run authoring, native compilation, first-source stamping and source-to-SSSF/trajectory publication belong to Factory**, under its [native authoring plan](https://github.com/EpiLogos/Factory/blob/main/docs/program/NATIVE-WORKFLOW-AUTHORING.md) and existing #195/#197/#199/#145. QL-MEF's [Vāk Expression Workflow Wayfinder](https://github.com/EpiLogos/QL-MEF/blob/main/docs/integrations/epi-logos/VAK-EXPRESSION-WORKFLOW-WAYFINDER.md) owns the optional domain projection and expressive proving, continuing #201/#135 and K/AW. Publication is intended-experience ground, not evidence of a shipped native TypeScript entry or loaded agent.
+
+## EXPRESSION-FIELD.md (cradle) — the Expression Field's product meaning, owner-approved 14 Sep 2026
+
+### Standing: owner-approved product and design direction (14 Sep 2026)
+
+Source: `docs/cradle/EXPRESSION-FIELD.md` L3
+
+> **Standing:** owner-approved product/design direction, 14 September 2026. This extends the existing Cradle, Personal Web, WorldPresentation, Wiki and Epi/Nara work; it is not a new product, semantic owner, CMS, graph store or particle ontology.
+
+## EXPRESSION-WORLD-UX.md — front, verso, portals and inhabited depth, owner-directed 15 Sep 2026
+
+### Standing: owner-directed companion to the Expression World substrate (15 Sep 2026)
+
+Source: `docs/experience/EXPRESSION-WORLD-UX.md` L3-4
+
+> **Standing:** owner-directed UX companion to `docs/EXPRESSION-WORLD-SUBSTRATE-WAYFINDER.md`, 15 September 2026.  
+> **Purpose:** specify the ordinary human/Agent experience of the paradigm-neutral substrate before Epi/Ta-Onta specialises it.
+
+## TECHNE-DUAL-READING.md — the Technē dual-reading amendment, owner-ratified 16 Sep 2026
+
+The 19 Oct 2026 withdrawal of the four-and-two reading named in L3 is already in PROGRAMME (R23, item 3: "the four-and-two reading that set them as M0′–M5′ is withdrawn (owner, 19 Oct 2026)"). The 16 Sep ratification and the instrument set it fixed are not.
+
+### Standing: owner-ratified amendment (16 Sep 2026), revised 19 Oct 2026
+
+Source: `docs/experience/TECHNE-DUAL-READING.md` L3
+
+> **Standing:** owner-ratified experience/planning amendment, 2026-09-16; revised 19 Oct 2026, when the owner withdrew the four-and-two reading (Technē's instruments as M0′–M5′) because it does not hold what the coordinate system says of those layers. The instruments are named by their work; the one-field identity law (§3), native ownership (§2) and the acceptance cases (§5) stand.  
+
+### Expressions is the 3:3 body of the same field, not a sixth Technē instrument (16 Sep 2026, as revised 19 Oct 2026)
+
+Source: `docs/experience/TECHNE-DUAL-READING.md` L12-35
+
+> The current Epi field has two operating modes over the **same selected world/subject/source field**:
+>
+> ```text
+> 3:3 EXPRESSION READING
+>     living/material/experiential
+>
+> TECHNĒ
+>     deep/professional/research-authoring
+> ```
+>
+> The earlier grouping of `Canvas · Timeline · Place · Story · Palace · Expressions` as six peer Technē instruments is superseded.
+>
+> Technē's deep instruments are:
+>
+> ```text
+> Project / Wiki / Graph
+> Canvas / Constellation
+> Relation Field / Timeline
+> Journey / Expression Scenes
+> Places / World
+> Palace / integral articulation and Return
+> ```
+>
+> They carry no M′ numbers. Expressions remains the 3:3 body of the same field, not a sixth Technē instrument.
+
+### The one-field identity law (16 Sep 2026)
+
+`docs/positions/PUBLIC-VOICE-WORKING.md` L120 quotes this sentence as owner-ratified.
+
+Source: `docs/experience/TECHNE-DUAL-READING.md` L79
+
+> The central #65 proof is no longer merely that several surfaces can display related information. It is that a person can change **reading** without silently changing **what they are working on**.
+
+## WIKI-CONSTELLATION-UX.md — wiki and constellation practice, owner-directed 20 Sep 2026
+
+The decisions WC01–WC15 the file applies stand in `docs/positions/WIKI-CONSTELLATION-PRACTICE.md`, which stays.
+
+### Standing: owner-directed intended experience (20 Sep 2026)
+
+Source: `docs/experience/WIKI-CONSTELLATION-UX.md` L3
+
+> **Standing:** owner-directed intended experience and development clarification, 20 September 2026. Publication is requested; runtime and human-use evidence remain separate. This extends the existing KN, WR, AG, PX, UI and SH stories, the Expression field and QL UX spine. It creates no new story family or capability registry and does not ratify unrelated H-pending sources.
+
+### A correction must change what the next act receives (owner-directed extension, 20 Sep 2026)
+
+Source: `docs/experience/WIKI-CONSTELLATION-UX.md` L126
+
+> **Owner-directed extension, 20 September 2026.** The person's correction must change what the next act receives, not merely become another note that future agents may or may not find. This is the operational continuation of activities D, F and G, not a new Wiki, memory service or story family. The native bounded delivery is [AIKit #366](https://github.com/EpiLogos/ai-kit/pull/366); the Wiki and constructive consumers remain #418 and #420. Code, source proof, actual harness use and human experience retain different standing.
+
+## SHARED-FIELD-DESKTOP.md — Explore, encounter and participation, owner-approved 16 Sep 2026 and refined 28 Sep 2026
+
+### Standing: owner-approved synthesis (16 Sep 2026); owner-directed O:I-world participation refinement (28 Sep 2026)
+
+Source: `docs/experience/SHARED-FIELD-DESKTOP.md` L3
+
+> **Standing:** owner-approved synthesis of the existing SharedField/Explore, Self/Other, Personal Web, Expression Field and desktop interaction laws, updated 16 September 2026; owner-directed O:I-world participation refinement, 28 September 2026. This is the explicit desktop UX contract for the carrier delivered by O:I #18 and its SF0–SF6 bridge. Current richer implementation/UX proceeds through #220/#375/#335/#366 and the single #65 campaign. #18's completed carrier standing is retained.
+
+### Purpose: share and participate in O:I worlds (the 28 Sep 2026 refinement)
+
+The document's statement of the purpose the 28 Sep refinement directed; not marked as the owner's words.
+
+Source: `docs/experience/SHARED-FIELD-DESKTOP.md` L25-27
+
+> The field exists so people can share their **O:I world** and participate in a shared field of artificial-plus-human agency. What becomes encounterable includes their selected Workcells, agents, AgentSets, Skills, SkillSets, Methods, capabilities, projects, sources and artifacts, together with the relations which make those constituents a working world. Publishing an isolated result is useful but does not exhaust this experience.
+>
+> A visitor should be able to understand what a world is doing, which people and agents participate, what powers and practices are available, where activity is materially carried, what it produces, and how to contribute. A participant can bring an agent or offered capability into a shared undertaking and receive a result back into their own world. The shared field thereby develops through real participation as well as publication.
+
+### The September Self/Other placement remains binding
+
+The document's statement; the placement comes from `.superpowers/sdd/cradle-rebuild/SELF-OTHER-FIELD-UX-2026-09-08.md`, which it names as upstream design authority (L7). Not marked as the owner's words. The DLW manual's panes and rail (§10.1, §10.2) now carry where depth opens.
+
+Source: `docs/experience/SHARED-FIELD-DESKTOP.md` L179-184
+
+> The September Self/Other placement remains binding:
+>
+> - a bounded relation/tree/constellation can frame the current subject on the left **inside the active Surface** when useful;
+> - details/files/Contribution depth can open on the right **inside that Surface**;
+> - either depth can collapse, overlay, split, detach or disappear;
+> - neither is required at rest.
+
+## PERSONAL-WEB.md (experience) — inhabit, craft and share a personal web, owner-approved #279
+
+### The exact family names are Beings and Things
+
+Source: `docs/experience/PERSONAL-WEB.md` L3
+
+> **Place:** vision-level intended experience, source-grounded elaboration under the owner-approved [Personal Web #279](https://github.com/EpiLogos/O-I/issues/279). The exact family names are **Beings** and **Things**. This is an additive source module of the one [#65 campaign](README.md), not a new runtime, test registry or reinstall programme. The [feature contract](../cradle/PERSONAL-WEB.md) carries full scope and source provenance; the table below is a set of experienced journeys, not its replacement.
+
+## PERSONAL-WEB.md (cradle) — Beings, Things and the six initial HTML forms, owner-approved 13 Sep 2026
+
+### Standing: owner-approved product and design direction (13 Sep 2026)
+
+Source: `docs/cradle/PERSONAL-WEB.md` L3
+
+> **Standing:** owner-approved product/design direction, 13 September 2026; detailed implementation choices are attributable engineering elaboration. **Feature:** [#279](https://github.com/EpiLogos/O-I/issues/279), inside desktop #190 and Explore #18. **Installed acceptance:** the existing [#65 experience campaign](../experience/README.md), not a second reinstall programme. This document is the feature companion of [Continuous Work](../OI-DESKTOP-CONTINUOUS-WORK-WAYFINDER.md). A table of requirements is not a completed experience.
+
+### The owner's first-person account of the personal web (13 Sep 2026)
+
+`docs/positions/PUBLIC-VOICE-WORKING.md` L144 and L334 name this passage the owner's first-person definition, owner-approved direction.
+
+Source: `docs/cradle/PERSONAL-WEB.md` L7
+
+> I can build a personal web with my agents: a home, writing, interests, works, people, projects, occasions and collections. I can organise it through time and relations, craft how each page looks, and choose the parts that others can enter. Someone can encounter my work, follow it to me, discover a shared interest and continue into another world. My private sources and ongoing work are not the price of participating.
+
+### Beings and Things are the exact plural family names
+
+Source: `docs/cradle/PERSONAL-WEB.md` L9
+
+> **Beings** and **Things** are the exact plural family names. Beings presents a situated presence and opens its world; Things gives a subject or work an intelligible presentation and a place in relation. They join Flow/Dialogue, Day/4+2, Yoshimoto Cube and Epi-Card. Six is the initial repertoire, not the maximum number of templates, a compulsory workflow, or six allowed forms of thought. One-off authored HTML and later user-made templates are legitimate.
+
+### The owner's correction: C can organise the page body itself
+
+Source: `docs/cradle/PERSONAL-WEB.md` L15
+
+> The owner corrected an earlier merely abstract classification: C can organise the underlying Beings/Things page body itself.
+
+### The owner's final correction and authorisation (13 Sep 2026)
+
+Source: `docs/cradle/PERSONAL-WEB.md` L132
+
+> The owner's final correction, **Beings / Things**, and authorisation to plan/code now govern the names and sequence. The preceding source-grounded chat established the repertoire, then corrected M/M′-first placement and C-as-abstract-classifier. Preserve those corrections rather than reintroducing the rejected readings.
+
+## PLURAL-FLOW-SPEC.md — one conversation across people, agents and worlds, owner-commissioned 29 Sep 2026
+
+### The commission and its standing (29 Sep 2026)
+
+The standing line says the purpose and the requested extension come from the owner's discussion and the operational decisions are the plan's; the purpose follows.
+
+Source: `docs/experience/PLURAL-FLOW-SPEC.md` L3-6
+
+> **Commission:** [O:I #558](https://github.com/EpiLogos/O-I/issues/558), 29 September 2026.  
+> **Execution:** [Plural Flow Wayfinder](../../.wayfinder/maps/plural-flow-now.md).  
+> **Containing work:** #65 C0–C5, #220 native integration, #154 communication and #375 experience; the existing SharedField and personal-document work.  
+> **Standing:** owner-commissioned development specification. The purpose and requested extension come from the owner's current discussion; the operational decisions below are this implementation plan, not a report that the installed system already performs them. Publication does not claim runtime or human acceptance.
+
+### The purpose the owner gave: plural participation is fundamental
+
+Source: `docs/experience/PLURAL-FLOW-SPEC.md` L10-14
+
+> Plural participation is fundamental. A person writing with Nara, two agents discussing a source, a team developing an Expression and several people bringing their agents into a shared undertaking use the same conversational relations. SharedField extends scope, reach and shared participation; local plural work remains useful with no hosted SharedField service.
+>
+> **Flow holds the developing conversation and its material. NOW holds the undertaking in which it matters. SessionSpace brings actual runtime sessions and Surfaces into relation. Day places the encounter within each person's continuing life.** These meanings are complementary, not aliases.
+>
+> The desired ordinary act is to bring someone into a continuing Flow, address a contribution, follow a side inquiry, receive useful independent work, examine its sources and return to the same conversation later. A contribution may be writing, a source passage, a note, media, a constellation, an Expression or an artifact. The person's existing writing retains its full shape and usefulness outside the live app.
+
+## WIKI-CONSTELLATION-OPERATIONS.md (cradle)
+
+Checked; no owner ruling. It is a guide to the O-I #418 implementation.

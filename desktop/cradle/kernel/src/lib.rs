@@ -963,7 +963,7 @@ pub enum KernelOp {
     ClientInstall {
         client: String,
     },
-    /// Settings · auth login (HARNESS-SETTINGS-RESEARCH-2026-09-22 §2a):
+    /// Settings · auth login (DLW.md §10.10 Sign in):
     /// `aikit harness auth <slug> --json` — the harness's declared auth
     /// options (env-var names, own-login entries with runnable + argv or
     /// note) verbatim. Describe only: the login itself is a terminal act,

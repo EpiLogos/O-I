@@ -357,7 +357,7 @@ partial application, unavailable receipts/readback and uncertain replies;
 retain their original evidence. Track 2 proves native effects/authority and
 concurrency, while Track 3 supplies selected QL consumer facilities.
 
-The [current orientation](../experience/INHABITED-SYSTEM-ORIENTATION.md)
+The [local campaign](../experience/LOCAL-CAMPAIGN.md)
 and [local campaign](../experience/LOCAL-CAMPAIGN.md) set three bounded Mac
 tracks: **three O:I trees total including the primary**, one owner checkout
 per native repository, no fourth verifier tree. Omarchy's bounded independent

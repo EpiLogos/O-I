@@ -1030,7 +1030,7 @@
       "key_literals": [
         "oi-cradle.file-last-reading.v1:${…}"
       ],
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §6; docs/experience/WORKSPACE-CONTINUITY.md §WF2; 2026-09-24 commissioned native recovery migration",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §6 and §6.7; WORKSPACE-CONTINUITY-WAYFINDER WF2; 2026-09-24 commissioned native recovery migration",
       "rationale": "Read/remove only, explicit one-time conversion of an older browser copy into an acknowledged detached unverified device draft. Native recovery must freshly allow it. No source identity or revision imported; no cache writes, no source writes/history, original preserved until acknowledgement.",
       "keys": [
         {
@@ -1214,7 +1214,7 @@
       "key_literals": [
         "oi-cradle.unplaced-draft.v1:${…}"
       ],
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §6; docs/experience/WORKSPACE-CONTINUITY.md §WF2; 2026-09-24 commissioned native recovery migration",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §6 and §6.7; WORKSPACE-CONTINUITY-WAYFINDER WF2; 2026-09-24 commissioned native recovery migration",
       "rationale": "Existing unplaced human writing and explicitly recovered unverified text only; acknowledged device-draft persistence. No native source binding, revision, write or history authority.",
       "keys": [
         {
