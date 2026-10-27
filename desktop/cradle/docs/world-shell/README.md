@@ -133,11 +133,7 @@ Copied 11 October 2026 from the reverse-engineering campaign so the design
 sits in the cradle tree with the app. The campaign copy remains at
 `desktop/cradle/docs/world-shell/`.
 
-- **This directory** holds the design pack: `WORLD-SHELL-DESIGN.md`, the
-  mockups, `icon-cut.html`, the port and instrumentation contracts, and
-  `wayfinder/` (the map `MAP.md`, which holds the route and the state of the
-  streams, the tickets, and the wholesale port map; the product plan and the pane ontology are folded into
-  `WORLD-SHELL-DESIGN.md`).
+- **This directory** holds the design pack: the mockups, `icon-cut.html`, the port and instrumentation contracts, PROGRAMME (the owner's rulings) and `wayfinder/` (the tracker document and the sky and Nara plan). The plan is the wayfinder map, O-I #706; the design is the manual (`docs/dlw/DLW.md`); the builder contracts are `docs/architecture/world-shell.md`.
 - **The shell code** is `packages/live-shell`. It is not a second app inside
   `desktop/cradle/src`. The cradle tree is still the installed legacy app
   (`org.epilogos.oi.cradle`). The successor named in
