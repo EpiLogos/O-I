@@ -32,7 +32,7 @@ The developer is also that person. Updating the suite must return them to their 
 
 ### 0.2 Map of the recovered obligations into the spine
 
-The "Existing location" column names state families of [03-UX-STATES](../cradle/03-UX-STATES.md), BOOT rows of the bootstrap and loading contract, and sections of AIKit's TUI specification. The P-numbers are CAW cases.
+The "Existing location" column names the host states of [§0.5](#05-host-states-and-the-rows-that-carry-them), BOOT rows of the bootstrap and loading contract, and sections of AIKit's TUI specification. The P-numbers are CAW cases.
 
 | Intended experience | Existing location | Agent participation and required practice | Observable result and proving home |
 |---|---|---|---|
@@ -91,6 +91,102 @@ Use the maintained practice sources rather than reproduce them in every ticket:
 The private repertoire's current text and installed bindings must be inspected locally; an issue report is not a substitute for those bodies. Do not create a second repertoire here. AIKit remains owner of Skill/METHOD registration, classification, selection, trust, SkillSet composition and projection. Native products can author their own procedure sources; O:I does not register foreign Skills in a parallel manifest.
 
 A source exists → is catalogued → is selected/eligible → is projected → is linked at the harness entry → is actually loaded/used are separate observations. Test a newly added Skill as well as a changed existing Skill. A changed symlink or generation does not prove that an already-running Agent reread its body. The existing AIKit #299 and #296 obligations belong in this acceptance rather than becoming hidden setup steps for the human.
+
+### 0.5 Host states and the rows that carry them
+
+Each area of §0.3 passes through the states below; §0.2 and §12.1 name them by these codes. A state holds when the rows beside it, walked in the running app, show it: the rows say what the person does and sees in the DLW, and the area's paragraph in §0.3 states the conditions that hold in every one of its states.
+
+| Area | State | What it is | Rows |
+|---|---|---|---|
+| Inhabitation | `A0 Unrecognised` | No World/machine recognised yet | SU02, SU03, AD02 |
+| Inhabitation | `A1 Recognising` | Machine/ground recognition in progress | SU02, WI12, SU05 |
+| Inhabitation | `A2 Inhabited-minimal` | Ground + Work exist; no available Agency yet | SU05, FA02, AG01 |
+| Inhabitation | `A3 Inhabited` | Ground and an available Agency, with child Projects where present | SU04, SU08, WI10, WO01 |
+| Inhabitation | `A2/A3.d Product absent` | A native product not installed | SU01, AD05, AD08 |
+| Inhabitation | `A*.d Degraded` | Present but partially serving (daemon stopped, stale binding, no version flag) | SU01, WN10, UI05, WP11, GB01 |
+| Inhabitation | `A.U` | Updating the system while remaining in one's work: understanding the installation, reviewing a developer update, updating under existing authority, a failed update or activation, repair or rollback, and continuing after the update | DV06, DV07, SU01, GD05 |
+| Focus | `B0 No focus` | Nothing selected | FA13, WG09 |
+| Focus | `B1 Focused(subject)` | One `SubjectRef` is current | WT03, FC01, UI02 |
+| Focus | `B2 Multi-focus` | Split canvases, each with its own subject | WV06, WV07, WV09, WN08 |
+| Focus | `B3 Promoted` | A summoned/left subject raised to centre | WV08, WV04, WG07 |
+| Focus | `B4 Detached` | A surface in its own window: a device popped out, an agent's thread popped out, or a second window of the set; same subject, same binding | WD05, FI01, WV03, WG07 |
+| Focus | `B5 Returned` | Detached surface re-docked | WD05, FI01, UI02 |
+| Writing | `C0 Blank` | Blank writing or a chosen existing document with no text yet | WR01, DY01, WA04 |
+| Writing | `C1 Authoring` | Writing as material | CP01, DY01, WN14 |
+| Writing | `C2 Addressing` | The writing acquires recipients | CS01–CS06, CJ10, FQ07 |
+| Writing | `C3 Commissioned` | An explicit request sends selected material; Factory Commission only when developmental work is requested | CA01, CA02, CA06, WR03, FC10 |
+| Writing | `C4 Continuing` | Returned material is received and, when reviewed, included in the same document | WR04, CA07, CA08, TB06, CA10 |
+| Writing | `C5 Conflict` | Concurrent or stale revision | TH01, WV17, FL10 |
+| Writing | `C.T` | Human Day, Flow/Dialogue and agent NOW: the Day as the person's writing and receiving surface, NOW as the agents' bounded clearing, one set of entries read as Flow and Dialogue, separate receipt, inclusion and completion, rollover by adopted time policy, and the portable copy | DY01, DY03, WM08, WM09, CJ01–CJ03, WR02, WR04–WR07, CC01–CC08, CA10, PW13 |
+| Agency | `D-create Intent` | "What do you want this Agent to do?" | AG01, FM01 |
+| Agency | `D-create Resolving` | Worlds / knowledge / capabilities / body / bounds being resolved | AG01, AG04 |
+| Agency | `D-create Determined` | Resolutions complete, inspectable | AG02, FM02, FM03 |
+| Agency | `D-idle` | Present, not engaged | RF01, FQ03, FN03 |
+| Agency | `D-working` | Acting now; live activity rows (read/edit/run/inspect → exact subjects) | RF01, FI08, FS04 |
+| Agency | `D-waiting` | Waiting on an identified dependency or participant; not automatically a demand on the human | FJ01, RF01 |
+| Agency | `D-attention` | Human judgement required (subset of waiting: authority, Recognition, refusal) | RF01, FQ02, RA01 |
+| Agency | `D-unavailable` | Body/harness unreachable — an observation, with reason | GB01, GD09, AG08 |
+| Agency | `D-returned` | Produced an attributable result; awaiting review only where that is required, without equating delivery or later idleness with Recognition | RF01, FT09, FJ07 |
+| Agency | D competence | skill used → method evidenced → routine proposed → routine admitted, through the actual owner and required acceptance; never self-granted | RK04, RC01, RC06, WP09, PX05 |
+| Agency | D delegation and sets | An agent may carry sub-agents; sets are authored collectives, distinct from resolved membership, SharedField membership, sessions and co-actuation | RF08, FX01, FX11, FI03, FM04, AG07, CJ06 |
+| Agency | `D.P` | Participation and assistance: an Agent participating without a Central profile, profile adoption and withdrawal, and Do with me / Teach me / Do for me | AG08, AG09, DV01, FM02 |
+| Encounter | `E0 Quiescent` | Session exists, no turn in flight | FQ01, FQ03, WN11 |
+| Encounter | `E1 Composing` | Human writing to agent(s) | FQ01, FQ07, WN13 |
+| Encounter | `E2 Streaming` | Agent turn in flight | FK02, FK04, FI08, FS04 |
+| Encounter | `E3 Permission-requested` | Agent requests authority for a consequential act | RA03, FI05, FN08 |
+| Encounter | `E4 Turn-complete` | Turn ended | FT01, RR04, WN11 |
+| Encounter | `E5 Interrupted` | Human interrupted | FK03, AG09, DV04 |
+| Encounter | `E6 Session-switched` | Same session from another supported surface | AG06, RW01, WN12, GD11 |
+| Encounter | `E7 Observing` | Conversation, activity, context, actions and runtime of one session in view together, in the Agent's Full or its own window | FI01, FI08, UI04, GB10 |
+| Encounter | `E8 Lineage` | Continue / refine-context / fork / recompose | FA10, FJ08, FT05, AG06 |
+| Encounter | `E.G absent` | Name Gateway/ecology absence and what cannot be reached; available local work stays usable; no perpetual loading or invented empty session list | GB01, UI05, WN10 |
+| Encounter | `E.G restricted` | Show only the authorised ecology; distinguish no visible sessions from an unavailable read; discovery is not permission to attach/invoke | GD09, WM10, FQ09, GA09 |
+| Encounter | `E.G attaching` | Requested canonical session and actual owner operation remain visible; cancelled/refused/unsupported attach returns to prior usable context | GB06, GD11 |
+| Encounter | `E.G connected` | Messages and every page of the Agent refer to the same authorised session; the actual provider and material origin show where they matter | FQ01, FQ11, RW01 |
+| Encounter | `E.G reconnecting/last-observed` | Keep original identities/draft and observation age; reconcile native cursor/replay without duplicate messages, invented continuity or implicit new turn | WM10, AG06, MC06 |
+| Encounter | `E.G lost/rematerialised` | Surface or remote Workcell loss is local degradation; process/socket/Fabric change does not rename session; explicit lineage if native continuation changes | WN15, GD11, MC06 |
+| Encounter | `E.G subject-switched` | New subject gets its own relevant planes/availability; clear prior agent/history/context immediately; restore workspace-scoped view state without moving attention on incoming activity | FQ13, WG11, UI02, CJ06 |
+| Context and knowledge | `F-eligible` | Could be disclosed into this act's horizon | FW01, FT02, CA01 |
+| Context and knowledge | `F-disclosed` | Actually disclosed — with the why (which relation selected it) | FT02, UI04, WM11, CA06, FW04 |
+| Context and knowledge | `F-excluded` | Out of the authorised horizon; explain only what the caller may know | WM02, GV06, FW01 |
+| Context and knowledge | `F-withheld` | Not projected into this context; a selection/policy fact, not a missing-file assertion | UI04, WM02, GV06, PX03 |
+| Context and knowledge | `F-degraded` | Knowledge reading served from a lower provider class | FW07, KN03, KN09 |
+| Context and knowledge | `F-aperture` → `F-surface` | Selection-anchored neighbourhood, promoted to its own view; promotion and dismissal never fork the node | WM11, WG07, KN02, KN03 |
+| Context and knowledge | F remember | Keeping a generated or read passage for a chosen destination, with its provenance, without promoting it into the person's words | CA11, TB04, FI07 |
+| Context and knowledge | F practice | Skills and tools met through their descriptions and sources; registered, selected or projected is not loaded or used | RK04, RK05, PX01, PX02 |
+| Development | `G0 Ordinary` | Direct work without Factory execution | WK01, WK04, CA06 |
+| Development | `G1 Entering` | Explicitly request structured development | FC10, FA01 |
+| Development | `G2 Commissioned` | Journey authorised with direction | DV01, FJ05, FT02 |
+| Development | `G3 Running` | Actual attempts act under the Journey | FS01, FS02, FJ01 |
+| Development | `G4 Candidate-formed` | A coherent possible Project reality exists | FT05, FT09, DV03 |
+| Development | `G5 Recognition-pending` | Awaiting human judgement | RA01, RA04, FJ04 |
+| Development | `G6 Recognised` | Candidate accepted / intention revised / refused | FJ07, FJ08, GL06 |
+| Development | `G7 Failed/returned` | Run or evidence path failed | FJ10, DV04, FT05, FI06 |
+| Development | G readings | Semantic, live and trajectory readings of one work, with Cognitive when the owner supplies it; never flattened into a log or a score | FJ01, FS04, FI07, RR04 |
+| Development | `G.W` | Working copies, environments and returned alternatives: Candidate work on its own exact base with the person's dirty checkout intact, required versus preferred environment, detach without cancel, and comparison of distinct Candidates | DV02, DV03, DV05, GL01, GL11, GL13, GR03, RR06, WR05 |
+| Material | `H-implicit` | Local machine serves, unnamed | MC01, GA03 |
+| Material | `H-named` | Deliberate placement (Runs on: Dev VM) | GA02, GA03, MC02 |
+| Material | `H-materialising` | Body being brought real | GR01, GR05 |
+| Material | `H-relocated` | Semantic work continues through a changed body where supported | GA04, MC06 |
+| Material | `H-failed` | Materialisation/lifecycle failure | GR03, WP11, MC06 |
+| Material | H protection | Central validation, harness interception and Workcell confinement cover different ground; a plan or configured hook is not enforced protection | MC04, FW01 |
+| Shared | `I-private` | Default; nothing projected | TO05, SU06, SH01 |
+| Shared | `I-projecting` | Composing a projection (audience, purpose, source revision) | TO14, SH01, PW09 |
+| Shared | `I-shared` | Projection live in a field | TO06, TO14, TO15 |
+| Shared | `I-encountering` | Others' material presented | TO07, TO16, WO05 |
+| Shared | `I-addressed` | Someone requests the person's attention | SH02, TO08, WO06 |
+| Shared | `I-contributing` | Returning an attributable difference | SH04, PW10, TO17 |
+| Presentation | `J-rest` | The main area alone: the browser, the rail and the detail area hidden | WN01, WN03, WN04 |
+| Presentation | `J-summoned(region)` | A part brought into view for what it holds: the browser, the pool, a tile on the rail, Clip view or Device view | WG01, GA10, WN02, WN04 |
+| Presentation | `J-full` | Every part of the window shown: the transport, the browser and the pool, the main area, the rail, the detail area and the status bar | WN01, WN03, WN04, SU07 |
+| Presentation | `J-focused-work` | The window given to writing: Clip view filling the main area, the browser and the rail hidden, or the window filling the screen | WN07, WV04, WN01, WN03 |
+| Presentation | `J-detached(n)` | Detached windows in play | WV03, WD05, FI01 |
+| Authority | `K-read` | Non-effectful read within actual access/disclosure scope; no implied mutation/invocation authority | WM02, WM11, GV06, FW01 |
+| Authority | `K-proposed` | Agent proposes durable human-source change | CA08, RA02, FW03, GV08 |
+| Authority | `K-grant-bounded` | Time/scope-bounded authority issued | FN09, CA09, FK07, FW03 |
+| Authority | `K-refused` | Human declined | RA02, RA03, FN10, SH02 |
+| Authority | `K-expired` | Bound lapsed | FN09, RA03, RA06 |
+| Authority | `K-escalated` | Beyond bounds → attention | FN08, RA06, FW01 |
 
 ## 1. Your job and why it exists
 
@@ -684,7 +780,7 @@ implementation reports are not current proof.
 This protocol repairs earlier shorthand in the spine: blank canvas does not force a
 Flow; ordinary direct work does not imply a Commission; waiting does not always
 mean a human must act; read-only is not unrestricted disclosure; returned is not
-recognised. [03-UX-STATES](../cradle/03-UX-STATES.md) records the same interpretations.
+recognised. The conditions of §0.3 and the host states of §0.5 carry the same interpretations.
 No architectural claim is inferred from a claimed phenomenal difference between
 humans and models: Day/NOW is the user's authored interaction/ownership design.
 
@@ -708,7 +804,7 @@ or a requirement that ordinary writing depend on QL. The owner-approved living
 instrument is defined in QL-MEF's existing Kernel Rebuild Wayfinder. Its pending
 [UX reconciliation](https://github.com/EpiLogos/QL-MEF/blob/main/docs/kernel-rebuild/UX-SPINE-RECONCILIATION.md)
 supplies the full source-to-experience mapping and detailed scenarios.
-[03 §L](../cradle/03-UX-STATES.md#l-epi-living-instrument-states--a-domain-composition-of-this-spine)
+[§12.1](#121-l-epi-living-instrument-states--a-domain-composition-of-this-spine)
 records the corresponding pending host extension. Domain meaning and mathematical
 source depth stay QL-owned; none of the host's Day/Dialogue, source, authority,
 recovery, Candidate or Skill-loading rules is replaced by the Epi presentation.
@@ -760,6 +856,60 @@ on the owner's machine follows repository acceptance and includes the current
 prototype and all native products. It is not a blanket blocker on repository
 work and does not turn a controlled test into a lived result. The pending UX
 synthesis does not introduce another implementation gate ahead of K8/AW.
+
+### 12.1 L. Epi living-instrument states — a domain composition of this spine
+
+The codes in the third column are the host states of §0.5, and the global invariants are the rules for every device and view in the [DLW manual §16](../dlw/DLW.md#16-how-devices-work).
+
+**Publication authorised; H ratification pending (Satya), 2026-09-12.** This new
+section is published for availability and review, not yet H-ratified. The design
+standing of the existing A–K, CAW amendments and global invariants above is
+unchanged. Neither this merge nor passing checks ratify these new scenario
+mappings or establish installed/human acceptance.
+
+**Source field:** the owner conversation culminating in the QL-MEF pre-K8 lock;
+[authorial source minute, with its new framing pending H review](https://github.com/EpiLogos/QL-MEF/blob/main/docs/kernel-rebuild/UX-INTENT-SOURCE-MINUTE.md),
+[whole domain-to-spine crosswalk](https://github.com/EpiLogos/QL-MEF/blob/main/docs/kernel-rebuild/UX-SPINE-RECONCILIATION.md),
+and QL-MEF #135/#133/#94/#132/#134. These states specify Epi participation in
+A–K, not a new master plan, runtime enum or QL L-family coordinate system.
+
+Ordinary blank writing remains first-class and does not itself mint a Flow.
+Deliberately entering Epi foregrounds the living planetary–Nara event within the
+same Canvas. Writing, sources, graph and conversation remain summonable. The Epi
+composition uses a left Bimba companion and right canonical Epii encounter;
+it does not replace the host's ordinary layout or make three regions mandatory
+at rest. Native owners still determine source, identity, agency and material
+state. No passive selection or view switch initiates agency or grants disclosure.
+
+| State | Person's activity and visible consequence | Existing states and domain walk |
+|---|---|---|
+| `L0 Situated` | Enter the root Central World or a child Project. A fresh Epii can orient from actual disclosed source and loaded practice without another recital of the architecture. Absent capabilities are named. | A2/A3, D-create, E0, F; UX01 |
+| `L1 Living occasion` | Encounter a real current or historical sky around Earth through this Nara's independently determined centres. Inspect date/frame/provider freshness and distinguish modelled influence from reported experience. | B1, F, H; UX02 |
+| `L2 Clock opened` | Open the gathered clock around its existing centre, work with all 18 M2 aperture identities and paired lenses, change inscription/lensing independently or together, then gather the same event. | B1/B3, F-aperture, J; UX03 |
+| `L3 Expressed relation` | Meet a source-bearing glyph, image, geometry or musical condition. The 0→1 morph can enact `/`; written/enacted/combined forms and quiet readable modes preserve meaning and the same constituent. | B1, F, J; UX04 |
+| `L4 Source disclosed` | Follow a selected field object into Bimba, properties, source and Wiki constellation. Pin or detach a source while the event continues; return to the same object. | B1/B2/B4/B5, F, K; UX05 |
+| `L5 Co-operative act` | Ask Epii, inspect the proposed method and authorised scope, observe actual attention/operation and its musical/visual performance, interrupt or refuse, then receive a source-grounded result. | D/E/F/K; UX06 |
+| `L6 Personal participation` | Write, question, invoke an oracle or practise through Nara's full identity/body/oracle/transformation/context/integration field. Decide whether an interpretation enters activity. Authored writing and stable identity remain attributable. | C/E/K; UX07 |
+| `L7 Useful return` | Read a pithy report, expand its evidence, correct it, and see T/T′ work consumed from the actual NOW into useful context/learning. Recover that result later without twelve accumulating file silos. | C4/C5, D-returned, E4, F; UX08 |
+| `L8 Named praxis` | Recognise a performed path as `= name`, inspect its expansion, reuse it with new inputs, and separately replay its original occasion. Ambiguous names, stale proof and failed reuse remain visible. | D competence, F, K; UX09 |
+| `L9 Developmental return` | Carry a real discrepancy into source-grounded inquiry or commissioned Factory development. Inspect evidence and recognise, redirect or refuse the result; subsequently encounter the changed ground. | G, E, F, K; UX10 |
+| `L10 Continuing` | Mute, reduce motion, detach, interrupt or restart and re-enter the retained subject, draft, NOW and history. Live, frozen, replay and new interpretation remain distinguishable. | B4/B5, E5–E8/E.G, J, H; UX11 |
+| `L11 Shared encounter` | Two protected Naras receive one sky independently. Deliberately project a scoped presence, encounter another contribution and observe actual consent/withdrawal limits. Images and audio can also be private. | I, K, F; UX12 |
+
+All six M′ faculties remain accessible as focused relational regions or states
+of one continuous event. 3:3 Cosmic123/Personal450 and 4:2 explicit1234/50 are
+compositions of the same faculties; M4/M4′ is the hinge, M0′ actual Bimba and
+M5′ the same Epii. Focus/disclosure, presentation adjustment and a domain-changing
+Action preserve their actual meaning and source basis. A recognised named method
+need not enter Factory; Candidate Recognition is distinct from naming praxis.
+
+The full QL A01–A18/B01–B12 coverage and deeper capability inventories remain
+mandatory under their prior ratified sources. A successful walk does not define
+a smaller domain. The new state mapping is **specified and H-pending**: local
+runtime, actual agent loading/use and human assessment need their own receipts.
+[LOCAL-CAMPAIGN §12](../experience/LOCAL-CAMPAIGN.md#12-epi-domain-walks) gives the corresponding pending
+host walks. QL-MEF's Wayfinder remains the implementation sequence; the Cradle
+does not acquire another QL runtime or Skill registry.
 
 ## 13. Optimise useful work, and the process of improving it
 

@@ -173,7 +173,7 @@ continuity is now explicitly mapped as GW-01–06, not fog.
    owner walks the app; screenshots accompany every receipt. There is no
    separate token/certification theatre: the gate is the app.
 3. **The design set wins.** the cradle design set (`docs/cradle/02-ARCHITECTURE.md`,
-   `docs/cradle/03-UX-STATES.md` and `docs/experience/LOCAL-CAMPAIGN.md`), `APP-SPEC` (§4–§8, §11, §13,
+   `docs/experience/STORIES.md` and `docs/experience/LOCAL-CAMPAIGN.md`), `APP-SPEC` (§4–§8, §11, §13,
    §14, §17), #155 D1–D11 + Buzz specimen, #138, #25,
    `CANONICAL-PRODUCT-FIELD.md`, and the alpha notes are the bar. Design is
    never edited to match code.
@@ -387,7 +387,7 @@ output, it is not built (law 10).
 | D5 | How agents are created | Create act writes an **agency-intent expression** → Central AgentProfile → AIKit compose → launch. One text box in the UI; the authored chain underneath is the product operation. Models are harness-level stipulations (law 6), never asked here. | `OI-ALPHA-AGENCY-INTENT-EXPRESSION`; `OI-ALPHA-AGENT-LAUNCH-SEAM` |
 | D6 | Activity vs chat | Activity rows are **stable semantic objects** distinct from actions; permission requests correlate to their row and gate the real tool. Buzz is the reference specimen (source-locked `buzz@00e61eaf`) — mined for interaction lessons only. | #155 D5/D6 |
 | D7 | Session Observatory | Sessions observable above bounded Runs; presence from real signals (D-life ○●◐!×✓); promote Activity → bounded Run. | #155 D7/D8 |
-| D8 | Knowledge substrate | AIKit knowledge + Central wiki via native seams; aperture results carry ref/kind/owner/provenance/actions; remember-this writes world-relative refs with provenance. | APP-SPEC §8; `cradle/03` F-states; #155 D2 |
+| D8 | Knowledge substrate | AIKit knowledge + Central wiki via native seams; aperture results carry ref/kind/owner/provenance/actions; remember-this writes world-relative refs with provenance. | APP-SPEC §8; the F states of `docs/experience/LOCAL-CAMPAIGN.md` §0.5; #155 D2 |
 | D9 | Design system | **Extend `packages/oi-design-system`** (house token vocabulary already drafted) to the #25 extraction list from `site/src`; the cradle consumes it and nothing hard-codes tokens. No separate certification gate — the P0 phase walk *is* the evidence. Palette direction ruled: soft writing-paper ground (drab off grey-yellow-green); the wiki-graph idiom (dark grey nodes, slender lines) leads the visual vision (D21). The token vocabulary already carries `--oi-paper` — the ruling firms its direction. | #25; APP-SPEC §17; owner ruling 2026-09-05 |
 | D10 | Walk harness | A typed, dev-only channel in the cradle (`__cradle.walk`): invoke operations, read state, capture receipts/screenshots. Dev tooling only — no new renderer authority. | `cradle/05 §3` |
 | D11 | ai-kit substrate | Work from ai-kit `main` after porting self-contained full-shape modules (agent/compose → resolve → store/CLI). Never merge branches. | `OI-INHABITATION-FOUNDATIONS §6` |
@@ -567,7 +567,7 @@ Gate: knowledge gathers on the focus and remembers to chosen destinations.
 - **U3.2 Knowledge on selection** `(S→S2 + S→S0)` · walk: select a paragraph →
   aperture shows linked knowledge for that ref; created notes store
   world-relative refs.
-- **U3.3 Remember-this** `(S→S0)` · `cradle/03` F-states · walk: remember from
+- **U3.3 Remember-this** `(S→S0)` · LOCAL-CAMPAIGN §0.5 F states · walk: remember from
   canvas → note lands in the chosen destination with provenance
   `generated-proposal`; recognition promotes it.
 - **U3.4 Wiki graph surface** `(S→S0 + S→S2)` (D21) ·

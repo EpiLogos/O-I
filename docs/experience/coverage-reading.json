@@ -9,13 +9,13 @@
     "H": "human UX/Recognition — never earned by automation here"
   },
   "generated_from": {
-    "reading_digest": "sha256:d7f1e2c8fd18790c7635c0060162a39e0ea3c16fc1caa0cf66c5f030d55e2f5e",
+    "reading_digest": "sha256:a94f847995cf366087a00befdb7b879db28f5b7de0c38834f22862c5df39d8bf",
     "source_basis": {
-      "docs/experience/campaign.json": "sha256:685f4a3548a2604e2d0e6b2bd35ee576e53b0a125e68f145e8ae4e327c54763a",
-      "docs/experience/STORIES.md": "sha256:e9b83051b3a253fa02c2f346a8ce5d13298f4e39b07b86d45cd0bf4d4eaf3af7",
+      "docs/experience/campaign.json": "sha256:eaf34feef0b1c7ac3dbfff0ed84572037c34edc2e92f93bdb667e429114e83b3",
+      "docs/experience/STORIES.md": "sha256:d57cd8a2796c2d638c87c054ac6f9eb816f97e882d8644508a21a071a3e0d0ea",
       "docs/experience/PRACTICE-CONDITIONS.md": "sha256:bcb88c23dca60447f8c4aba0bedc66471cd1d5d0fab09cecb3fca0b189a7f79d",
       "docs/experience/STORY-PROFILE.md": "sha256:5d225c9ba702de77d6c89dafce523ffb5965f06077a795d87548aabc524120c5",
-      "docs/experience/LOCAL-CAMPAIGN.md": "sha256:a3a28a400eed2158cc93301110f9a55c503845fb400c91eff5f1979d85807610",
+      "docs/experience/LOCAL-CAMPAIGN.md": "sha256:99fd2250ecc7438cd8b33fe30c508a86af700f550dbad50e713662882ae97c12",
       "desktop/cradle/walk/scenario-bindings.json": "sha256:382e4aa82a706f132b6e921273d3adda4f78d6187e3da3bb9941020998b5b53f",
       "docs/experience/developer-field.json": "sha256:c5d22c367d4edbd5cf5d42f12cc5814c674677f974ff5f1b5f07c8142346b614",
       "docs/experience/DEVELOPER-FIELD.md": "sha256:35f24e29c19195ecdda876ce959ac4782cead16ae77deebaddbfe0d743c69315",

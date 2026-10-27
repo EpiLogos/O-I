@@ -144,7 +144,7 @@ pub enum KernelEvent {
     WorldChanged {
         summary: String,
     },
-    /// The one global focus relation moved (02 §7, 03 §B).
+    /// The one global focus relation moved (02 §7; LOCAL-CAMPAIGN §0.3 Focus).
     FocusChanged {
         focus: GlobalFocus,
     },

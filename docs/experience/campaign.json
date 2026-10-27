@@ -698,7 +698,7 @@
         "CAW:P28"
       ],
       "source_refs": [
-        "docs/cradle/03-UX-STATES.md",
+        "docs/experience/LOCAL-CAMPAIGN.md",
         "docs/OI-DESKTOP-CONTINUOUS-WORK-WAYFINDER.md",
         "https://github.com/EpiLogos/ai-kit/blob/main/docs/v2/23-TUI-HUMAN-EXPERIENCE-SPEC.md"
       ]
@@ -4442,7 +4442,7 @@
     "H_ratification_at_inspection": "pending",
     "human_experience_validated_at_inspection": false,
     "host_extensions": [
-      "docs/cradle/03-UX-STATES.md#L",
+      "docs/experience/LOCAL-CAMPAIGN.md#121-l-epi-living-instrument-states--a-domain-composition-of-this-spine",
       "docs/experience/LOCAL-CAMPAIGN.md#12-epi-domain-walks"
     ],
     "proof_refs": [

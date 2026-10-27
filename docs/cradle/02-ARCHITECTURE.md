@@ -6,7 +6,7 @@ Standing: architecture-contract
 # 02 — Cradle architecture
 
 **Status:** architecture commitment for the O:I desktop.
-**Companion:** [founding positions](../positions/FOUNDING-POSITIONS.md) and the [DLW manual](../dlw/DLW.md) (intent), [03-UX-STATES.md](03-UX-STATES.md) (states), [LOCAL-CAMPAIGN.md](../experience/LOCAL-CAMPAIGN.md) (evidence).
+**Companion:** [founding positions](../positions/FOUNDING-POSITIONS.md) and the [DLW manual](../dlw/DLW.md) (intent), the [stories](../experience/STORIES.md) and [LOCAL-CAMPAIGN.md](../experience/LOCAL-CAMPAIGN.md) (the states, in its §0.5, and evidence).
 
 **20 September 2026 clarification:** §6 explicitly includes retained kernel loading/resource state. Read [Wiki/constellation decisions WC01–WC15](../positions/WIKI-CONSTELLATION-PRACTICE.md) and the joined development map (retired 27 Oct into the DLW map, O-I #706; read it at `8873b0968`) for its purpose and application. The dated implementation disposition in §11 remains historical evidence, not a finding about the owner's incoming local mains.
 
@@ -514,6 +514,17 @@ and attribution. ACP connection events alone do not establish canonical Stream
 or cross-surface Gateway acceptance. Preserve bounded retention/backpressure and
 durable owner replay; a replay gap or unsupported operation is not repaired with
 fabricated events. Continue/refine/fork/recompose are explicit owner relations.
+
+A session bridge that is slow, blocked or stopped degrades its own encounter's
+reading; it never blocks the rest of the application. Observing a session is a
+relation its owner grants, never ambient: listing or reaching a session does not
+open its conversation, Activity or context to another participant or Surface.
+Recorded conversation, prepared operative context and the provider's retained
+continuation state are separate. A transcript on disk does not prove it entered
+the new acting context. Compaction retains source range/producer, required
+identity/governance, pins, unanswered requests and arrivals across its committed
+cursor. Native resume, selected-context rehydration and a fresh attempt are
+named distinctly. No hidden reasoning capture is required.
 
 A disappearing UI consumer detaches its view; it does not cancel the provider or
 Gateway. Explicit cancel is a separate owner operation. Provider conversation IDs,

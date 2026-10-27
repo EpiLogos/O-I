@@ -35,11 +35,10 @@ preserve newer local work. Existing Technè mode, Stage, native ownership and
 | Document | What it fixes |
 |---|---|
 | [02-ARCHITECTURE.md](02-ARCHITECTURE.md) | The application kernel, services, seams, state layers, events and focus model. |
-| [03-UX-STATES.md](03-UX-STATES.md) | The complete UX state space, each state derived from intent. Its rules fold into the DLW manual under a later ticket. |
 | [07](07-WAVE-5-SYSTEM-CONTRIBUTION.md), [08](08-WAVE-5-CONSUMER-SEAM.md), [09](09-CONFIGURATION-PLANE.md) | The System contribution contract with the System law L1–L6 and the `v1` descriptor (07 §0), its consumer seam, and the configuration plane. |
 | `CENTRAL-FIELD-*`, [HOSTED-CONTRIBUTIONS.md](HOSTED-CONTRIBUTIONS.md), [WIKI-CONSTELLATION-SPEC.md](WIKI-CONSTELLATION-SPEC.md), [PERSONAL-WEB.md](PERSONAL-WEB.md); the Expression Field's laws are in [EXPRESSION-APPLICATION-V1](../contracts/EXPRESSION-APPLICATION-V1.md) | Contracts that code and other documents read. |
 
-The legacy Cradle's UX and layout documents retired on 27 October 2026 (O-I #728; git keeps them): 01-DESIGN, 04-VERIFICATION, 05-EXECUTION, 06-SYSTEM-SETTINGS, 10-SIDEBARS, 11-FACTORY, 12-SETTINGS, 13-BUILD-PROMPT, PROMPT and the presentation-state proposal. The everyday loop, the verification conditions and the lived walks, including the Epi domain walks, are in the test protocol, [LOCAL-CAMPAIGN.md](../experience/LOCAL-CAMPAIGN.md). The System law and the `v1` settings descriptor are in [07 §0](07-WAVE-5-SYSTEM-CONTRIBUTION.md#0-the-system-law-and-the-v1-descriptor). Intent for the new shell is the [DLW manual](../dlw/DLW.md); the stories are in [docs/experience](../experience/README.md).
+The legacy Cradle's UX and layout documents retired on 27 October 2026 (O-I #728; git keeps them): 01-DESIGN, 04-VERIFICATION, 05-EXECUTION, 06-SYSTEM-SETTINGS, 10-SIDEBARS, 11-FACTORY, 12-SETTINGS, 13-BUILD-PROMPT, PROMPT and the presentation-state proposal. 03-UX-STATES followed (O-I #779): its state families A–K are the host states of [LOCAL-CAMPAIGN §0.5](../experience/LOCAL-CAMPAIGN.md#05-host-states-and-the-rows-that-carry-them), told by the [stories](../experience/STORIES.md), and its Epi states are [LOCAL-CAMPAIGN §12.1](../experience/LOCAL-CAMPAIGN.md#121-l-epi-living-instrument-states--a-domain-composition-of-this-spine). The everyday loop, the verification conditions and the lived walks, including the Epi domain walks, are in the test protocol, [LOCAL-CAMPAIGN.md](../experience/LOCAL-CAMPAIGN.md). The System law and the `v1` settings descriptor are in [07 §0](07-WAVE-5-SYSTEM-CONTRIBUTION.md#0-the-system-law-and-the-v1-descriptor). Intent for the new shell is the [DLW manual](../dlw/DLW.md); the stories are in [docs/experience](../experience/README.md).
 
 ## Provenance class
 
@@ -82,7 +81,7 @@ system:
 ## Epi UX additions published for H review
 
 **Publication authorised; H ratification pending (Satya), 2026-09-12.** The new
-Epi domain composition is available in [03 §L](03-UX-STATES.md#l-epi-living-instrument-states--a-domain-composition-of-this-spine)
+Epi domain composition is available in [LOCAL-CAMPAIGN §12.1](../experience/LOCAL-CAMPAIGN.md#121-l-epi-living-instrument-states--a-domain-composition-of-this-spine)
 and [LOCAL-CAMPAIGN §12](../experience/LOCAL-CAMPAIGN.md#12-epi-domain-walks). Those additions and their
 QL-MEF source/practice crosswalk await the owner's H ratification. The existing
 Cradle A–K states, continuous-work amendments, the everyday-loop spine and the

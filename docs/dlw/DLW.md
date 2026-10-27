@@ -772,6 +772,8 @@ edge it stands on, a key, and an edge you drag to size it. Hide one and the
 main area takes its room. Show it again and it comes back at the size you
 left it.
 
+A part you have hidden is a way of holding the window, not something missing. Nothing reports it as missing and nothing opens it for you; show it again and it comes back as you left it, with what changed meanwhile read again in place.
+
 | Part | Toggle | Key | To size it |
 |---|---|---|---|
 | Browser | Top left | ⌥⌘B or ⌥⌘5 | Drag its right edge. |
@@ -1737,6 +1739,7 @@ in.
 - Whatever asks for your attention names exactly what it is about, and one
   act takes you there. An ordinary wait, or a reading going by, does not ask
   for your attention.
+- Nothing that arrives takes your focus. A message, a run's progress or a returned result shows where it belongs and waits there: it does not change what you have selected, rearrange your panes or open a part you have hidden. Only a tile or a view you have set to Follow keeps up with it.
 - An agent is shown everything it is allowed to know, whole. You are shown
   the same facts, opening further as you go into them. Being an agent never
   widens what is shown.

@@ -5,7 +5,7 @@
 //! The whole application shares one notion of *what we are currently
 //! talking about*: a stable subject plus its surrounding relations (current
 //! World, Project, Journey, Agency encounter). Exactly one current focus
-//! relation exists kernel-wide (03 §B); focus change propagates as an event
+//! relation exists kernel-wide (LOCAL-CAMPAIGN §0.3 Focus); focus change propagates as an event
 //! every surface may consume, and no component copies selection state
 //! (02 §5, §7).
 //!
@@ -117,14 +117,14 @@ focus_relation! {
 
 focus_relation! {
     /// The current Agency encounter relation (02 §7). Today's encounter
-    /// identity is the canonical AIKit AgentSession (03 §B4).
+    /// identity is the canonical AIKit AgentSession (LOCAL-CAMPAIGN §0.5, B4).
     AgencyEncounterRef, "current agency encounter"
 }
 
 /// The one global focus relation (02 §7): current World, Project, subject,
 /// Journey and Agency encounter. Absent relations are absent — an
 /// observation, never fabricated (02 §10); the empty relation is state
-/// `B0 No focus` (03 §B).
+/// `B0 No focus` (LOCAL-CAMPAIGN §0.5).
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(default)]
 pub struct GlobalFocus {
@@ -141,7 +141,7 @@ pub struct GlobalFocus {
 }
 
 impl GlobalFocus {
-    /// `B0 No focus` (03 §B): nothing is selected.
+    /// `B0 No focus` (LOCAL-CAMPAIGN §0.5): nothing is selected.
     pub fn unfocused() -> Self {
         Self::default()
     }
@@ -162,7 +162,7 @@ impl GlobalFocus {
 
     /// Make `subject` the one current focus. Replaces whatever subject was
     /// current — the invariant is exactly one current focus relation
-    /// kernel-wide (03 §B), never an accumulation.
+    /// kernel-wide (LOCAL-CAMPAIGN §0.3 Focus), never an accumulation.
     pub fn focus_subject(&mut self, subject: SemanticRef) -> Result<(), FocusRefError> {
         self.subject = Some(SubjectRef::try_from(subject)?);
         Ok(())

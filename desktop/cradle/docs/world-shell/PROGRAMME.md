@@ -3,7 +3,7 @@
 **What it is:** the tier-0 register of the owner's rulings for the DLW (the new shell and the Technè instruments): the owner's own words, recorded where they were given. Plans, lanes, tickets and the manual cite it; none restates it.
 **Standing:** owner-authored; verbatim; never summarised. Each entry names its source, line range and date; only the owner changes or retires one. Laws that were set by agents and are not rulings sit last, under "Standing laws carried from the 7 Oct programme".
 **Where other rulings stand:** the five-mode ruling is R12; the owner's settled facts and the 13 Oct instrument rulings are R22–R24, carried from `wayfinder/DEVICE-SEMANTICS-LOCK.md` §0 when it retired; the shell-contemplation correction of 7 Oct (M1-M2-M3-M4, D13, the two-clock doctrine) is `lanes/lane-6-ableton-shell/SCOPE.md` L1-25, which stays where it is.
-**Order:** the 7 Oct implementation-commission rulings (L12-74, in place and unchanged), then the owner passages appended from retired planning documents (R1-R31).
+**Order:** the 7 Oct implementation-commission rulings (L12-74, in place and unchanged), then the owner passages appended from retired planning documents (R1-R32).
 
 The plan is the wayfinder map, O-I #706; its Notes and [`wayfinder/TRACKER.md`](wayfinder/TRACKER.md) carry the standing laws (port, aperture, craft, musical, instrument, reverse-engineering), and its tickets are the map's sub-issues.
 This file no longer carries a lane table, a phase ladder or deliverables; those are the map's and the lane directories'.
@@ -1481,3 +1481,57 @@ Source: `docs/experience/PLURAL-FLOW-SPEC.md` L10-14
 ## WIKI-CONSTELLATION-OPERATIONS.md (cradle)
 
 Checked; no owner ruling. It is a guide to the O-I #418 implementation.
+
+### R32 — Rulings in the cradle UX states (retired 27 Oct)
+
+Copied word for word, with line numbers, from `docs/cradle/03-UX-STATES.md` before it retired (O-I #779).
+
+Each passage records an owner ruling, authorisation, direction, commission or supplied reference in `docs/cradle/03-UX-STATES.md`, retired under O-I #779, and none of them was found in PROGRAMME.md (each was searched for by its words, its date and its identifiers; the one already there is named where it occurs). Passages are copied exactly from `main` at `26309ecaaf7c140ff026e45a9c9ac5f9ca22008a` (PR #778), with the lines named; only a leading `>` is added to each line. Every quoted line was checked by script against that commit.
+
+All five are the document's own records of what the owner directed, authorised or commissioned, or of the source the owner supplied; none is marked as the owner's own words.
+
+Already in PROGRAMME: the heading "Factory and Agency arrangement refinement — adopted 2026-09-14" and its two paragraphs (L25-29) record, over these state families, the adoption that R31 holds as "The design is adopted (14 Sep 2026)" (PROGRAMME L973-975, from `docs/experience/FACTORY-AGENCY.md` L8). Their "explicit Factory exception to earlier permanent-accompaniment wording" is the ruling R31 holds as "Within the adopted design: the right-hand artifact display stays; the AgentLayer reading is superseded (14 Sep 2026)" (PROGRAMME L977-979).
+
+Checked and holding no owner ruling: the front matter and status line (L1-11, a design commitment with no owner adoption named), the notation (L13-15), the state families A–K and their invariants, C.T, D.P, G.W, the global invariants (L395-416), and the rest of §L (L432-468).
+
+
+## 03-UX-STATES.md — the cradle's UX states
+
+### The CAW reconciliation extends these states and follows the owner's authorial amendments (12 Sep 2026)
+Source: `docs/cradle/03-UX-STATES.md` L17-21 (the reconciliation is the user's commission, which LOCAL-CAMPAIGN §0.1 records; the last sentence is the document's own)
+> The 12 September CAW reconciliation extends the existing families below and the
+> everyday-loop spine in LOCAL-CAMPAIGN §0. It follows the exact Day/Dialogue sources and
+> Factory #195 / O:I #220 authorial amendments, rather than deriving intent from
+> implementation or pull requests. Current Wave 6–8 file-opening, source and
+> participation rules refine earlier shorthand without discarding these states.
+
+### Updating while remaining in one's work derives from the user's commission (Sep 2026)
+Source: `docs/cradle/03-UX-STATES.md` L53-55 (the first sentence names the commission; the second is the document's own scope)
+> Derived from the user's suite-convergence/upgrade/repair commission, O:I #97,
+> #220 and BOOT-13 in `BOOTSTRAP-AND-LOADING.md`. These are refinements of A*.d,
+> E.G and H, not another onboarding wizard or new runtime ontology.
+
+### Gateway continuity and the right-hand encounter: the owner's clarification (6 Sep 2026)
+Source: `docs/cradle/03-UX-STATES.md` L220-225 (`docs/cradle/02-ARCHITECTURE.md` §14 L488 records the same clarification for its consumer contract, which stays in force)
+> Owner-directed clarification, 2026-09-06; derives from #154 and architecture §14.
+> Agent details and Conversation / Activity / Context / Inspect are the dynamic
+> right-hand encounter section, including the appropriate actual subject content.
+> Do not duplicate that section above the canvas or substitute a fixed generic
+> inspector. Full/side/tab/detached are presentations of the same owner encounter;
+> view changes never make another transcript or composer.
+
+### The Epi living-instrument states: publication authorised, H ratification pending (12 Sep 2026)
+Source: `docs/cradle/03-UX-STATES.md` L420-424 (the section moved word for word, with this standing, to `docs/experience/LOCAL-CAMPAIGN.md` §12.1; PROGRAMME R30 names the same standing for LOCAL-CAMPAIGN §12)
+> **Publication authorised; H ratification pending (Satya), 2026-09-12.** This new
+> section is published for availability and review, not yet H-ratified. The design
+> standing of the existing A–K, CAW amendments and global invariants above is
+> unchanged. Neither this merge nor passing checks ratify these new scenario
+> mappings or establish installed/human acceptance.
+
+### The source the owner supplied for the Epi states: the conversation that ended in the QL-MEF pre-K8 lock
+Source: `docs/cradle/03-UX-STATES.md` L426-430 (the first clause names the owner's conversation; the rest is the document's account of its scope)
+> **Source field:** the owner conversation culminating in the QL-MEF pre-K8 lock;
+> [authorial source minute, with its new framing pending H review](https://github.com/EpiLogos/QL-MEF/blob/main/docs/kernel-rebuild/UX-INTENT-SOURCE-MINUTE.md),
+> [whole domain-to-spine crosswalk](https://github.com/EpiLogos/QL-MEF/blob/main/docs/kernel-rebuild/UX-SPINE-RECONCILIATION.md),
+> and QL-MEF #135/#133/#94/#132/#134. These states specify Epi participation in
+> A–K, not a new master plan, runtime enum or QL L-family coordinate system.
