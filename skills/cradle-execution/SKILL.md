@@ -34,7 +34,7 @@ gate; a separate owner ruling is required only for exceptions named by law 13.
 
 Use the design set below, together with subsequent explicit owner corrections:
 
-- `docs/cradle/` files 01–05 (austere rest, Flow, focus model, event seam, honesty, verification law)
+- `docs/cradle/02-ARCHITECTURE.md` and `docs/cradle/03-UX-STATES.md` (focus model, event seam, states), and `docs/experience/LOCAL-CAMPAIGN.md` (the everyday loop, honesty and the verification law)
 - `docs/OI-DESKTOP-APPLICATION-SPEC.md` (§4–§8 regional contracts, §14 design language, §17 acceptance)
 - GitHub #155 (D1–D11 agent semantics + Buzz specimen, source-locked `buzz@00e61eaf`)
 - #138 (Flow desktop contract), #25 (design system), `docs/CANONICAL-PRODUCT-FIELD.md` (the ontology)
@@ -146,7 +146,7 @@ process or the already-approved QL execution map. Its publication and tests
 are not owner ratification or installed/human acceptance.
 
 When this host unit touches QL's living instrument, read `docs/cradle/03-UX-STATES.md`
-§L and `04-VERIFICATION.md` §8 with their explicit pending standing, then QL-MEF's
+§L and `docs/experience/LOCAL-CAMPAIGN.md` §12 with their explicit pending standing, then QL-MEF's
 `docs/kernel-rebuild/UX-SPINE-RECONCILIATION.md`. Name the UX story, original owner
 intent, A/B criteria and native producer dependencies. Preserve the complete
 field rather than testing only what the renderer presently exposes.

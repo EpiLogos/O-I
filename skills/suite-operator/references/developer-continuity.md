@@ -4,7 +4,7 @@ Use from the suite-operator Skill when the person asks to bring a development
 suite current, reconcile failed integration, prepare an installed campaign, or
 continue work after an upgrade. This is a reference procedure over existing
 native operations, not another workflow engine or a new Skill/Method registry.
-It implements [the everyday-loop walks](../../../docs/cradle/04-VERIFICATION.md#61-human-walk-arrive-and-understand-before-upgrading).
+It implements [the everyday-loop walks](../../../docs/experience/LOCAL-CAMPAIGN.md#101-human-walk-arrive-and-understand-before-upgrading).
 
 ## Inputs and activation boundary
 

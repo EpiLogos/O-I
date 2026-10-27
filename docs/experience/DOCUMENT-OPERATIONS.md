@@ -103,7 +103,7 @@ Finally, keep one bounded readiness return under #65: selected source/cut and ac
 
 The previous campaign did broadly reference terminal, developer and gateway work, but that was not a per-obligation account of the original TUI and real Telegram tests. This refinement supplies that account. It does not claim the required actors, machines, connector or source readers have been exercised here.
 
-At inspection #65's opening pointed to unmerged O:I #262 (`docs/ux`), while accepted main held `docs/experience`; AIKit #303 was also unmerged. They remain preserved proposal sources with exact heads in the module index. Their pending unique-unit reconciliation is explicit, not silently lost or falsely completed. The canonical operative campaign remains this mainline path. Do not merge another story profile/compiler merely to fix a link.
+At inspection #65's opening pointed to unmerged O:I #262 (`docs/ux`), while accepted main held `docs/experience`; AIKit #303 was also unmerged. They remain preserved proposal sources with exact heads in the module index. Their pending unique-unit reconciliation is explicit, not silently lost or falsely completed. The canonical operative campaign remains this mainline path. Do not merge another story profile/compiler merely to fix a link. That reconciliation is now done: O-I #728 folded `docs/ux` into this folder and retired it.
 
 Source checks can verify module/identity/relationship preservation and reject broken links or a dropped declared requirement. Native execution and installed/provider/machine/human tests establish different facts. Every closure names the source scope and evidence level; the historical #97 cut, a passing source compiler, or an available SkillSet cannot substitute for an actual useful operation.
 

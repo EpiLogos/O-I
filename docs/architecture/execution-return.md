@@ -3,7 +3,7 @@ role: architecture
 standing: agent-inference
 scope: commissioned work, custody, attempt verification and human Return
 diagram_refs: ["execution-return.mmd"]
-design_refs: ["../cradle/11-FACTORY.md", "../experience/PLURAL-FLOW-SPEC.md"]
+design_refs: ["../dlw/DLW.md", "../experience/PLURAL-FLOW-SPEC.md"]
 updated: 2026-09-30
 ---
 # How does commissioned work return?

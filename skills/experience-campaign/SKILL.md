@@ -199,9 +199,9 @@ Central is the root meta-Project; no fake child is required for ordinary root wo
 Existing tools, direct agency, no-desktop and partial worlds remain legitimate.
 
 Read the same accepted source cut:
-`docs/experience/README.md` (the single C0–C5 Wayfinder), `STORY-PROFILE.md`,
+`docs/experience/README.md` (the entry to the one specification), `STORY-PROFILE.md`,
 selected `STORIES.md` / `DEVELOPER-FIELD.md` rows, their P01–P18 conditions,
-`DOCUMENT-OPERATIONS.md`, `LOCAL-CAMPAIGN.md` and `TOOLS.md`.
+`DOCUMENT-OPERATIONS.md`, `LOCAL-CAMPAIGN.md` (the one test protocol, with C0–C5) and `TOOLS.md`.
 Resolve locators through native source, not assumed siblings of a projected copy.
 Read original issue/vision/specs for meaning, not PR prose or code alone.
 

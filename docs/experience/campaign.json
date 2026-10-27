@@ -304,7 +304,10 @@
         "O-I#173",
         "O-I#268",
         "O-I#192:historical-provenance",
-        "O-I:bootstrap/loading"
+        "O-I:bootstrap/loading",
+        "O-I#29",
+        "CAW:P05",
+        "CAW:P17"
       ],
       "source_refs": [
         "docs/positions/FOUNDING-POSITIONS.md",
@@ -321,7 +324,8 @@
         "WK02",
         "WK03",
         "WK04",
-        "WK05"
+        "WK05",
+        "WK06"
       ],
       "title": "Work normally without supervising the machinery",
       "owners": [
@@ -336,7 +340,11 @@
         "O-I#202",
         "CAW:P07-P10",
         "CAW:P16-P17",
-        "CAW:P21-P22"
+        "CAW:P21-P22",
+        "O-I#65:C",
+        "O-I#65:F",
+        "CAW:P01",
+        "CAW:P25"
       ],
       "source_refs": [
         "https://github.com/EpiLogos/ai-kit/blob/main/docs/v2/23-TUI-HUMAN-EXPERIENCE-SPEC.md"
@@ -351,7 +359,8 @@
         "GV04",
         "GV05",
         "GV06",
-        "GV07"
+        "GV07",
+        "GV08"
       ],
       "title": "Write and maintain the instructions that matter",
       "owners": [
@@ -367,7 +376,9 @@
         "CAW:P01",
         "CAW:P04-P05",
         "CAW:P07",
-        "CAW:P25-P28"
+        "CAW:P25-P28",
+        "CAW:P08",
+        "CAW:P20"
       ],
       "source_refs": [
         "https://github.com/EpiLogos/Central/blob/main/docs/CONTROL-CONTENT-PROTOCOL.md"
@@ -384,7 +395,8 @@
         "AG06",
         "AG07",
         "AG08",
-        "AG09"
+        "AG09",
+        "AG10"
       ],
       "title": "Create and work with actual collaborators",
       "owners": [
@@ -399,7 +411,9 @@
         "O-I#155",
         "Central#137",
         "CAW:P07-P12",
-        "CAW:P25"
+        "CAW:P25",
+        "ai-kit#211:journey-B",
+        "CAW:P14"
       ],
       "source_refs": [
         "https://github.com/EpiLogos/ai-kit/blob/main/docs/v2/23-TUI-HUMAN-EXPERIENCE-SPEC.md",
@@ -432,7 +446,8 @@
         "O-I#134",
         "ai-kit#118",
         "CAW:P08",
-        "CAW:P18-P20"
+        "CAW:P18-P20",
+        "ai-kit#211:journey-F"
       ],
       "source_refs": [
         "https://github.com/EpiLogos/O-I/issues/134",
@@ -494,7 +509,14 @@
         "O-I#201",
         "CAW:P02-P06",
         "CAW:P15-P16",
-        "CAW:P19"
+        "CAW:P19",
+        "O-I#138",
+        "Central#74",
+        "Central#150",
+        "Central#151",
+        "Central#152",
+        "ai-kit#276",
+        "Factory#200"
       ],
       "source_refs": [
         "https://github.com/EpiLogos/Factory/issues/195#issuecomment-5620703383",
@@ -529,7 +551,8 @@
         "Workcell#26",
         "Workcell#27",
         "Workcell#72",
-        "CAW:P14-P17"
+        "CAW:P14-P17",
+        "CAW:P26"
       ],
       "source_refs": [
         "https://github.com/EpiLogos/Workcell/blob/main/docs/MATERIALISATION-SPEC.md",
@@ -558,7 +581,8 @@
         "O-I#65:G",
         "O-I#91",
         "CAW:P10",
-        "CAW:P12"
+        "CAW:P12",
+        "O-I#155"
       ],
       "source_refs": [
         "docs/SHARED-FIELD.md",
@@ -573,7 +597,8 @@
         "EX02",
         "EX03",
         "EX04",
-        "EX05"
+        "EX05",
+        "EX06"
       ],
       "title": "Extend a useful system through public interfaces",
       "owners": [
@@ -624,11 +649,24 @@
         "CAW:P13-P14",
         "CAW:P18-P19",
         "CAW:P21-P24",
-        "CAW:P26-P28"
+        "CAW:P26-P28",
+        "O-I#65:A",
+        "O-I#213",
+        "Factory#143",
+        "Factory#201",
+        "Factory#221",
+        "Factory#222",
+        "CAW:P05",
+        "CAW:P17",
+        "CAW:candidate-worktree-now",
+        "CAW:working-environment-continuity",
+        "CAW:assisted-commission",
+        "CAW:candidate-comparison",
+        "CAW:developer-upgrade-repair-reentry"
       ],
       "source_refs": [
         "https://github.com/EpiLogos/Factory/issues/195",
-        "docs/cradle/04-VERIFICATION.md",
+        "docs/experience/LOCAL-CAMPAIGN.md",
         "docs/experience/INSTALLATION-VARIANTS.md"
       ]
     },
@@ -4378,7 +4416,186 @@
     "human_experience_validated_at_inspection": false,
     "host_extensions": [
       "docs/cradle/03-UX-STATES.md#L",
-      "docs/cradle/04-VERIFICATION.md#8"
+      "docs/experience/LOCAL-CAMPAIGN.md#12-epi-domain-walks"
+    ],
+    "proof_refs": [
+      "O-I#65:I",
+      "O-I#216",
+      "QL-MEF#94",
+      "QL-MEF#132",
+      "QL-MEF#133",
+      "QL-MEF#134",
+      "ai-kit#267",
+      "Factory#217",
+      "CAW:P20"
+    ],
+    "capability_candidates": [
+      {
+        "repository": "EpiLogos/QL-MEF",
+        "matrix_path": "ProjectCentral/user/capability-matrix.csv",
+        "inspected_blob": "417ac7d90aaf7dd45c9f367cec90d34166acde75",
+        "capability_id": "cap.ql.context-frames",
+        "ql_story_ids": [
+          "UX04",
+          "UX05",
+          "UX06",
+          "UX09"
+        ],
+        "reason": "Folded from the docs/ux participation register (O-I #728). Needed for the formal and intelligence field (exact source definitions, operations and full inventories).",
+        "binding_status": "candidate-source-id-observed; exact current operation/loading unbound"
+      },
+      {
+        "repository": "EpiLogos/QL-MEF",
+        "matrix_path": "ProjectCentral/user/capability-matrix.csv",
+        "inspected_blob": "417ac7d90aaf7dd45c9f367cec90d34166acde75",
+        "capability_id": "cap.ql.kernel-operators",
+        "ql_story_ids": [
+          "UX04",
+          "UX05",
+          "UX06",
+          "UX09"
+        ],
+        "reason": "Folded from the docs/ux participation register (O-I #728). Needed for the formal and intelligence field (exact source definitions, operations and full inventories).",
+        "binding_status": "candidate-source-id-observed; exact current operation/loading unbound"
+      },
+      {
+        "repository": "EpiLogos/QL-MEF",
+        "matrix_path": "ProjectCentral/user/capability-matrix.csv",
+        "inspected_blob": "417ac7d90aaf7dd45c9f367cec90d34166acde75",
+        "capability_id": "cap.ql.pairing",
+        "ql_story_ids": [
+          "UX04",
+          "UX05",
+          "UX06",
+          "UX09"
+        ],
+        "reason": "Folded from the docs/ux participation register (O-I #728). Needed for the formal and intelligence field (exact source definitions, operations and full inventories).",
+        "binding_status": "candidate-source-id-observed; exact current operation/loading unbound"
+      },
+      {
+        "repository": "EpiLogos/QL-MEF",
+        "matrix_path": "ProjectCentral/user/capability-matrix.csv",
+        "inspected_blob": "417ac7d90aaf7dd45c9f367cec90d34166acde75",
+        "capability_id": "cap.ql.lens-registry",
+        "ql_story_ids": [
+          "UX04",
+          "UX05",
+          "UX06",
+          "UX09"
+        ],
+        "reason": "Folded from the docs/ux participation register (O-I #728). Needed for the formal and intelligence field (exact source definitions, operations and full inventories).",
+        "binding_status": "candidate-source-id-observed; exact current operation/loading unbound"
+      },
+      {
+        "repository": "EpiLogos/QL-MEF",
+        "matrix_path": "ProjectCentral/user/capability-matrix.csv",
+        "inspected_blob": "417ac7d90aaf7dd45c9f367cec90d34166acde75",
+        "capability_id": "cap.ql.vak-source",
+        "ql_story_ids": [
+          "UX04",
+          "UX05",
+          "UX06",
+          "UX09"
+        ],
+        "reason": "Folded from the docs/ux participation register (O-I #728). Needed for the formal and intelligence field (exact source definitions, operations and full inventories).",
+        "binding_status": "candidate-source-id-observed; exact current operation/loading unbound"
+      },
+      {
+        "repository": "EpiLogos/QL-MEF",
+        "matrix_path": "ProjectCentral/user/capability-matrix.csv",
+        "inspected_blob": "417ac7d90aaf7dd45c9f367cec90d34166acde75",
+        "capability_id": "cap.ql.vak-context",
+        "ql_story_ids": [
+          "UX04",
+          "UX05",
+          "UX06",
+          "UX09"
+        ],
+        "reason": "Folded from the docs/ux participation register (O-I #728). Needed for the formal and intelligence field (exact source definitions, operations and full inventories).",
+        "binding_status": "candidate-source-id-observed; exact current operation/loading unbound"
+      },
+      {
+        "repository": "EpiLogos/QL-MEF",
+        "matrix_path": "ProjectCentral/user/capability-matrix.csv",
+        "inspected_blob": "417ac7d90aaf7dd45c9f367cec90d34166acde75",
+        "capability_id": "cap.ql.service-readings",
+        "ql_story_ids": [
+          "UX04",
+          "UX05",
+          "UX06",
+          "UX09"
+        ],
+        "reason": "Folded from the docs/ux participation register (O-I #728). Needed for the formal and intelligence field (exact source definitions, operations and full inventories).",
+        "binding_status": "candidate-source-id-observed; exact current operation/loading unbound"
+      },
+      {
+        "repository": "EpiLogos/QL-MEF",
+        "matrix_path": "ProjectCentral/user/capability-matrix.csv",
+        "inspected_blob": "417ac7d90aaf7dd45c9f367cec90d34166acde75",
+        "capability_id": "cap.ql.wiki-refraction",
+        "ql_story_ids": [
+          "UX04",
+          "UX05",
+          "UX06",
+          "UX09"
+        ],
+        "reason": "Folded from the docs/ux participation register (O-I #728). Needed for the formal and intelligence field (exact source definitions, operations and full inventories).",
+        "binding_status": "candidate-source-id-observed; exact current operation/loading unbound"
+      },
+      {
+        "repository": "EpiLogos/QL-MEF",
+        "matrix_path": "ProjectCentral/user/capability-matrix.csv",
+        "inspected_blob": "417ac7d90aaf7dd45c9f367cec90d34166acde75",
+        "capability_id": "cap.ql.shape",
+        "ql_story_ids": [
+          "UX04",
+          "UX05",
+          "UX06",
+          "UX09"
+        ],
+        "reason": "Folded from the docs/ux participation register (O-I #728). Needed for the formal and intelligence field (exact source definitions, operations and full inventories).",
+        "binding_status": "candidate-source-id-observed; exact current operation/loading unbound"
+      },
+      {
+        "repository": "EpiLogos/ai-kit",
+        "matrix_path": "ProjectCentral/user/telos/capability-matrix.csv",
+        "inspected_blob": "55e2827aed3b2d7c1e57a792024f09d1646dad23",
+        "capability_id": "cap.aikit.context-resolution",
+        "ql_story_ids": [
+          "UX04",
+          "UX05",
+          "UX06",
+          "UX09"
+        ],
+        "reason": "Folded from the docs/ux participation register (O-I #728). Needed for the formal and intelligence field (exact source definitions, operations and full inventories).",
+        "binding_status": "candidate-source-id-observed; exact current operation/loading unbound"
+      },
+      {
+        "repository": "EpiLogos/Factory",
+        "matrix_path": "ProjectCentral/user/capability-matrix.csv",
+        "inspected_blob": "4b8b30166d69c518895af5e4cde5aa1f0fc5d005",
+        "capability_id": "cap.factory.run-thought",
+        "ql_story_ids": [
+          "UX04",
+          "UX05",
+          "UX06",
+          "UX09"
+        ],
+        "reason": "Folded from the docs/ux participation register (O-I #728). Needed for the formal and intelligence field (exact source definitions, operations and full inventories).",
+        "binding_status": "candidate-source-id-observed; exact current operation/loading unbound"
+      }
+    ],
+    "native_binding_gaps": [
+      {
+        "owner": "QL-MEF",
+        "required_for": [
+          "UX04",
+          "UX05",
+          "UX06",
+          "UX09"
+        ],
+        "reason": "Expand current owner matrices beyond coarse product-family IDs; no full-field claim from these starter links. Folded from the docs/ux participation register (O-I #728)."
+      }
     ]
   },
   "existing_caw": {

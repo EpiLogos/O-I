@@ -60,8 +60,8 @@ For orientation, read only to the depth the present work requires:
 
 - `docs/positions/FOUNDING-POSITIONS.md` — authored product meaning.
 - `docs/cradle/03-UX-STATES.md` — the canonical human/application state grammar.
-- `docs/cradle/04-VERIFICATION.md` — ordinary everyday-loop and verification spine.
-- `docs/experience/README.md` — the one C0–C5 inhabited-system campaign.
+- `docs/experience/LOCAL-CAMPAIGN.md` — the one test protocol: the everyday-loop spine (§0), the C0–C5 rounds (§1.1) and the lived walks (§10–§12).
+- `docs/experience/README.md` — the entry to the stories, their record shape and the protocol.
 
 ### Agency / development / persistence
 

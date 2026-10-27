@@ -8,14 +8,14 @@ Standing: design-commitment
 **Status:** design commitment. Every state below is derived from intent
 (citations in each family), not from implementation nouns. The eventual app is
 complete when every state here exists, is reachable, and is verified as stated
-in [04-VERIFICATION.md](04-VERIFICATION.md).
+in the test protocol, [LOCAL-CAMPAIGN.md](../experience/LOCAL-CAMPAIGN.md).
 
 Notation: **rest** = what a state looks like in the austere default;
 **summoned** = what appears when depth is invoked. Absence of a region is a
 state, not a defect.
 
 The 12 September CAW reconciliation extends the existing families below and the
-everyday-loop spine in 04 §2. It follows the exact Day/Dialogue sources and
+everyday-loop spine in LOCAL-CAMPAIGN §0. It follows the exact Day/Dialogue sources and
 Factory #195 / O:I #220 authorial amendments, rather than deriving intent from
 implementation or pull requests. Current Wave 6–8 file-opening, source and
 participation rules refine earlier shorthand without discarding these states.
@@ -67,7 +67,7 @@ A full developer-suite campaign accounts for all seven repositories and their
 companions; ordinary app use still supports a smaller composition. Full
 installed proof is not a prerequisite for independent repository coding. A
 session owns the connective work and next handoff; the human is not its message
-bus. Walk these situations using 04 §6.1–6.2 and the existing CAW cases.
+bus. Walk these situations using LOCAL-CAMPAIGN §10.1–10.2 and the existing CAW cases.
 
 ## B. Focus states — *what are we talking about?*
 
@@ -185,7 +185,7 @@ me / Do for me** modes. Teach explains without secretly executing; collaboration
 stages choices; delegation acts under existing bounds and returns genuine human
 choices. No mode grants authority or authors human intent. Preserve intended
 difference, selected source, closure/evidence condition and deliberate constraints
-from preview through actual commissioning. See AIKit TUI UX §§5–7 and 04 §6.3–6.4.
+from preview through actual commissioning. See AIKit TUI UX §§5–7 and LOCAL-CAMPAIGN §10.3–10.4.
 
 ## E. Encounter states — *the conversation with an agent*
 
@@ -411,7 +411,7 @@ Derived from: Reading ≠ Action; authority gates (architecture §9.4); FP §4
    progressive disclosure of the same facts, never wider disclosure by being an Agent.
 6. **Keyboard and pointer parity** on every interaction the Buzz grammar
    contributes (compose, address, dismiss, promote).
-7. **Verification follows the original whole:** the lived walks in 04 §6 and
+7. **Verification follows the original whole:** the lived walks in LOCAL-CAMPAIGN §10 and
    CAW P01–P28 retain all obligations, even when a child implementation succeeds.
    Independent full-feature proof is separate from the implementer's checks.
 
@@ -463,6 +463,6 @@ The full QL A01–A18/B01–B12 coverage and deeper capability inventories remai
 mandatory under their prior ratified sources. A successful walk does not define
 a smaller domain. The new state mapping is **specified and H-pending**: local
 runtime, actual agent loading/use and human assessment need their own receipts.
-[04 §8](04-VERIFICATION.md#8-epi-domain-walks) gives the corresponding pending
+[LOCAL-CAMPAIGN §12](../experience/LOCAL-CAMPAIGN.md#12-epi-domain-walks) gives the corresponding pending
 host walks. QL-MEF's Wayfinder remains the implementation sequence; the Cradle
 does not acquire another QL runtime or Skill registry.

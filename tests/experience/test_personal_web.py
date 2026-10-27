@@ -38,10 +38,12 @@ class PersonalWebTests(unittest.TestCase):
             before = em.load_sources(root)
             old = {s["id"]: s for s in before["stories"]}
             now = {s["id"]: s for s in current["stories"]}
-            # 114 earlier stories, plus the DLW's six-cell families (O-I #728),
-            # which carry extensions.ux and were added after Personal Web.
+            # 114 earlier stories and the four rows folded in from docs/ux
+            # (WK06, GV08, AG10, EX06; O-I #728), plus the DLW's six-cell
+            # families, which carry extensions.ux and were added after
+            # Personal Web.
             dlw = [k for k, v in old.items() if "ux" in v["extensions"]]
-            self.assertEqual(len(old) - len(dlw), 114)
+            self.assertEqual(len(old) - len(dlw), 118)
             # The module has grown additively twice: PW01–12 at O-I#279, then
             # PW13 (personal-history intake, Central #242). Each later story
             # keeps the earlier field verbatim.

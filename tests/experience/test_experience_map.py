@@ -291,7 +291,7 @@ class ExecutableCoverageTests(unittest.TestCase):
     def write_receipt(self, name: str, *, passed=True, grade="B", checks=(True, True)):
         receipt = {
             "schema": "oi.cradle.walk.scenario/v1", "scenario": name,
-            "spec_ref": "docs/cradle/05-EXECUTION.md §3", "grade": grade,
+            "spec_ref": "docs/experience/LOCAL-CAMPAIGN.md §0", "grade": grade,
             "generated_at": "2026-09-22T00:00:00Z", "passed": passed,
             "checks": [{"ok": ok, "label": f"check {i}"} for i, ok in enumerate(checks)],
             "environment": {"source": {"repository_head": "head", "dirty_digest": "digest"}},

@@ -14,7 +14,8 @@ carry it to the complete product.
 
 FIRST, ABSORB THE VISION — read these in order (short, and they are the
 truth of what you're building, in /Users/admin/Central/Work/O-I):
-1. docs/cradle/01-DESIGN.md — the everyday experience: austere rest, the
+1. docs/cradle/01-DESIGN.md (retired 27 Oct 2026; the DLW manual, docs/dlw/DLW.md,
+   now holds the experience) — the everyday experience: austere rest, the
    canvas as the main human act, agency alive at the left, everything else
    summoned. "The resting shape is the product; the full grammar is its
    depth."
