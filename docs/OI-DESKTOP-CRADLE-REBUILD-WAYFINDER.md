@@ -716,7 +716,7 @@ terminal state. P0 closed this way 2026-09-05
 
 ## Canvas editing and selected context — 20 September 2026
 
-This bounded owner-commissioned continuation implements D20/W1.7, U1.2–U1.4, U3.1/U3.2 and FND-04. Its executable contract is [the canvas editor map](../.wayfinder/maps/canvas-editor-context.md). The latest Run / Agents / Context presentation remains; text selection is not a mode switch, participation wizard or publication act. Native AIKit owns prepared-context records and the Vāk expression. Central retains source/revision authority. Selection, preparation, dispatch and actual provider context remain distinct. Current source and returned test evidence are recorded in that map; no installed or human acceptance is implied.
+This bounded owner-commissioned continuation implements D20/W1.7, U1.2–U1.4, U3.1/U3.2 and FND-04. Its executable contract is the canvas editor map (retired 27 Oct into the DLW map, O-I #706; read it at `8873b0968`). The latest Run / Agents / Context presentation remains; text selection is not a mode switch, participation wizard or publication act. Native AIKit owns prepared-context records and the Vāk expression. Central retains source/revision authority. Selection, preparation, dispatch and actual provider context remain distinct. Current source and returned test evidence are recorded in that map; no installed or human acceptance is implied.
 
 ## Canvas editor/context integration — 20 September 2026
 

@@ -104,7 +104,7 @@ editing core, Places, Journey / Palace), approved as that programme's scope
 (`PROGRAMME.md`). They are not an inventory of what the O:I products do through the
 DLW: the retired FOUNDATION §8 said they cover Central, AIKit, Factory, Workcell,
 Actuation, Quaternal Logic and the Expressions owner, and that was wrong. The
-products' capability record is the O:I matrix (`wayfinder/MAP.md`, Rooting).
+products' capability record is the O:I matrix (the DLW map, O-I #706).
 
 *The rest of this section is moved verbatim from the retired `wayfinder/FOUNDATION.md`
 §8 (22 Oct 2026; history: `2a1ccca02`). PORT-AUDIT is `audit-20261014/PORT-AUDIT.md`.*
@@ -121,7 +121,7 @@ the product.
 
 The re-homing ran (lane M: `acceptance.py rehome`, its input is built by
 `wayfinder/tools/build_rehome.py`); its state is in the State of record of
-`wayfinder/tickets/T-PLACES-ONTO-ATLAS.md`.
+`wayfinder/tickets/T-PLACES-ONTO-ATLAS.md` (retired 27 Oct into the DLW map, O-I #706; read it at `8873b0968`).
 
 ---
 

@@ -191,7 +191,7 @@ The current repair lanes are shared Expression participation, Factory/Flow
 execution, Epi fidelity, and configuration/Workcell/NOW acceptance. This field
 publishes settled documentation corrections while those lanes continue.
 
-The [plural Flow map](../../.wayfinder/maps/plural-flow-now.md#9-independent-verification--30-september-2026)
+The plural Flow map (retired 27 Oct into the DLW map, O-I #706; read it at `8873b0968`)
 records installed AIKit `02395f05` / Central `fe269e19` verification, repairs
 D1–D9 and open D10 (unknown metadata beyond JavaScript's exact integer range
 and island key-order rewriting). That evidence does not establish hosted

@@ -3,7 +3,7 @@
 **Standing:** owner-directed UX companion to `docs/EXPRESSION-WORLD-SUBSTRATE-WAYFINDER.md`, 15 September 2026.  
 **Purpose:** specify the ordinary human/Agent experience of the paradigm-neutral substrate before Epi/Ta-Onta specialises it.
 
-**20 September constructive-practice extension:** [Wiki/constellation decisions](../positions/WIKI-CONSTELLATION-PRACTICE.md), [human/agent UX spine](WIKI-CONSTELLATION-UX.md) and [joined Wayfinder](../../.wayfinder/maps/wiki-constellation-development.md) make the creation-and-return loop explicit. The source field is usable without QL; editable constellations, real 3D Expression making and native QL-relation/artifact Return add creative organisation. This extends the front/verso identity below, not a second Wiki or renderer.
+**20 September constructive-practice extension:** [Wiki/constellation decisions](../positions/WIKI-CONSTELLATION-PRACTICE.md), [human/agent UX spine](WIKI-CONSTELLATION-UX.md) and joined Wayfinder (retired 27 Oct into the DLW map, O-I #706; read it at `8873b0968`) make the creation-and-return loop explicit. The source field is usable without QL; editable constellations, real 3D Expression making and native QL-relation/artifact Return add creative organisation. This extends the front/verso identity below, not a second Wiki or renderer.
 
 ## 1. The Expression is where the person is
 
@@ -142,4 +142,4 @@ The QL-shaped agent staging space is the shared editable construction, not anoth
 
 A deliberate typed relation tool can author a native QL relationship. Ordinary proximity or particle motion cannot. Saved constellations/relations, Expressions and new artifacts return through existing owners to Wiki/Library discovery. The Return preserves whole/member structure, derivation and partial-save truth. Palace composes actual Expressions, constellations and Scenes rather than a second Scene ontology.
 
-Kernel resource retention and existing workspace continuity keep this encounter warm across source/graph/Expression movement and restart. The first acceptance loop is actual linked writing → constructive constellation → Expression/Scenes/Palace → native relationship/artifact Return → Wiki rediscovery → source-change reconciliation. [WCT01–WCT18](../../.wayfinder/maps/wiki-constellation-development.md#7-verification-cases) and the existing campaign source module make its failure branches explicit.
+Kernel resource retention and existing workspace continuity keep this encounter warm across source/graph/Expression movement and restart. The first acceptance loop is actual linked writing → constructive constellation → Expression/Scenes/Palace → native relationship/artifact Return → Wiki rediscovery → source-change reconciliation. [WCT01–WCT18](CASES.md) and the existing campaign source module make its failure branches explicit.

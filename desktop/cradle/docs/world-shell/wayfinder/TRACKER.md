@@ -130,10 +130,10 @@ A task ticket closes only when its stories reach their grades; landing is not do
 The plan documents this map replaced (`desktop/cradle/docs/world-shell/wayfinder/MAP.md`, `HANDOFF-BUILD.md`, `EXECUTE.md`, the briefs, the 94 tickets under `wayfinder/tickets/`, and the eight older maps under `.wayfinder/maps/`) were deleted on main when the map took over. Code comments and records that still cite them by name read them from git:
 
 ```sh
-git show <retirement-parent>:desktop/cradle/docs/world-shell/wayfinder/tickets/<file>
+git show 8873b0968:desktop/cradle/docs/world-shell/wayfinder/tickets/<file>
 ```
 
-`<retirement-parent>` is the commit before the deletion; record its hash here when the deletion lands.
+`8873b0968` is the last commit on main that holds them.
 
 # How the build runs
 

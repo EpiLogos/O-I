@@ -1,7 +1,7 @@
 # Plural Flow: one conversation across people, agents and worlds
 
 **Commission:** [O:I #558](https://github.com/EpiLogos/O-I/issues/558), 29 September 2026.  
-**Execution:** [Plural Flow Wayfinder](../../.wayfinder/maps/plural-flow-now.md).  
+**Execution:** Plural Flow Wayfinder (retired 27 Oct into the DLW map, O-I #706; read it at `8873b0968`).  
 **Containing work:** #65 C0–C5, #220 native integration, #154 communication and #375 experience; the existing SharedField and personal-document work.  
 **Standing:** owner-commissioned development specification. The purpose and requested extension come from the owner's current discussion; the operational decisions below are this implementation plan, not a report that the installed system already performs them. Publication does not claim runtime or human acceptance.
 
@@ -214,7 +214,7 @@ Nara and Central #242's importer must receive author/addressee/occurrence/reply/
 
 ## 5. Development contract and completion
 
-The [Wayfinder](../../.wayfinder/maps/plural-flow-now.md) defines PF0–PF5, exact first delivery and MP01–MP18 proof cases. The [source module](plural-flow.json) binds the full specification and Wayfinder into the existing #65 story/obligation compiler. Existing `web65:*`, CAW, gateway and QL evidence retain their own coverage.
+The Wayfinder (retired 27 Oct into the DLW map, O-I #706; read it at `8873b0968`) defines PF0–PF5, exact first delivery and MP01–MP18 proof cases. The [source module](plural-flow.json) binds the full specification and Wayfinder into the existing #65 story/obligation compiler. Existing `web65:*`, CAW, gateway and QL evidence retain their own coverage.
 
 For each required branch, bind the actual repository-qualified capability ID, current matrix digest/account, source meaning, public operation/schema, selected Skill/Method/Methodology, material/provider/authority conditions and independent test. Follow [TOOLS.md](TOOLS.md). Required missing capabilities become implementation obligations at their native owner; neither a rendered participant list nor a populated matrix proves behaviour.
 

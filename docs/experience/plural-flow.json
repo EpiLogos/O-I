@@ -1,8 +1,8 @@
 {
   "purpose": "Plural Flow is fundamental local and cross-world participation within O-I#65/#220, not a second messaging or story system.",
   "story_source": "docs/experience/PLURAL-FLOW-SPEC.md",
-  "document_operations_source": ".wayfinder/maps/plural-flow-now.md",
-  "implementation_wayfinder": ".wayfinder/maps/plural-flow-now.md",
+  "document_operations_source": "docs/experience/CASES.md",
+  "implementation_wayfinder": "docs/experience/CASES.md",
   "families": [],
   "standing": "Owner-commissioned specification and implementation plan, 29 September 2026; no runtime or human acceptance claimed.",
   "runtime_or_human_acceptance": false,

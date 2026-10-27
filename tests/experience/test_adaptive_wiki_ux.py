@@ -30,7 +30,7 @@ class AdaptiveWikiSource(unittest.TestCase):
                 self.assertEqual(story["extensions"]["runtime_readiness"], "not-assessed")
                 self.assertIsNone(story["extensions"]["human_experience"])
     def test_original_and_new_walks_are_retained(self):
-        text = (ROOT / ".wayfinder/maps/wiki-constellation-development.md").read_text()
+        text = (ROOT / "docs/experience/CASES.md").read_text()
         for n in range(1, 26):
             self.assertIn(f"WCT{n:02}", text)
 

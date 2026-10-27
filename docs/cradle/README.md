@@ -18,7 +18,7 @@ Read in this order:
 
 1. [Product decisions WC01–WC15 and their reasons](../positions/WIKI-CONSTELLATION-PRACTICE.md).
 2. [Human and agent UX spine extension](../experience/WIKI-CONSTELLATION-UX.md).
-3. [Joined Wiki/Technè development Wayfinder](../../.wayfinder/maps/wiki-constellation-development.md).
+3. Joined Wiki/Technè development Wayfinder (retired 27 Oct into the DLW map, O-I #706; read it at `8873b0968`).
 4. [Implementation specification](WIKI-CONSTELLATION-SPEC.md).
 
 [Architecture §6](02-ARCHITECTURE.md#6-three-state-responsibilities--native-work-retained-resources-presentation)

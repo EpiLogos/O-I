@@ -1,6 +1,6 @@
 # Wiki and constellation practice — Cradle implementation specification
 
-**Standing:** owner-directed design specification, 20 September 2026; implementation and installed-app evidence are separate. **Read first:** [product decisions WC01–WC15](../positions/WIKI-CONSTELLATION-PRACTICE.md), [UX spine](../experience/WIKI-CONSTELLATION-UX.md), [implementation Wayfinder](../../.wayfinder/maps/wiki-constellation-development.md).
+**Standing:** owner-directed design specification, 20 September 2026; implementation and installed-app evidence are separate. **Read first:** [product decisions WC01–WC15](../positions/WIKI-CONSTELLATION-PRACTICE.md), [UX spine](../experience/WIKI-CONSTELLATION-UX.md), implementation Wayfinder (retired 27 Oct into the DLW map, O-I #706; read it at `8873b0968`).
 
 This specifies the joined Wiki/Technè practice. It extends `02-ARCHITECTURE.md`, `WORKSPACE-CONTINUITY.md`, O:I #366/#335/#375 and the existing `ql.techne/v1` / `oi.expression/v1` seams. Exact native symbols and available schema versions are reconciled from the incoming mains; the behaviour and ownership decisions below are already explicit. Missing owner functionality is implementation work, not permission to omit the experience.
 
@@ -147,6 +147,6 @@ Use an authorised representative corpus plus generated 1k/10k/larger index cases
 
 ## 10. Verification and implementation standing
 
-The [Wayfinder](../../.wayfinder/maps/wiki-constellation-development.md) assigns the work and WCT01–WCT18 checks; the [UX spine](../experience/WIKI-CONSTELLATION-UX.md) keeps the whole human/agent activities visible. Existing #65, native matrices, CAW and QL UX obligations remain. Disconnect a real producer/handler and require the relevant integration test to fail.
+The Wayfinder (retired 27 Oct into the DLW map, O-I #706; read it at `8873b0968`) assigns the work and WCT01–WCT18 checks; the [UX spine](../experience/WIKI-CONSTELLATION-UX.md) keeps the whole human/agent activities visible. Existing #65, native matrices, CAW and QL UX obligations remain. Disconnect a real producer/handler and require the relevant integration test to fail.
 
 The first joined acceptance specimen is an ordinary linked Markdown corpus → precise passage selection → QL-framed editable constellation with agent collaboration → full Expression presentation → Scene/Palace composition → native relation/artifact Return → Wiki rediscovery → mode/restart recovery → source-change reconciliation. Include a second constellation using one of the same sources and an ordinary no-QL path. No serial ten-subject demo or fixture-only renderer path satisfies this contract.

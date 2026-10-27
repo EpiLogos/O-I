@@ -6,7 +6,7 @@
   "standing": "Owner-directed intended experience and implementation planning, 20 September 2026; no runtime or human-use verdict and no blanket H ratification of earlier QL sources.",
   "runtime_or_human_acceptance": false,
   "decision_source": "docs/positions/WIKI-CONSTELLATION-PRACTICE.md",
-  "implementation_wayfinder": ".wayfinder/maps/wiki-constellation-development.md",
+  "implementation_wayfinder": "docs/experience/CASES.md",
   "native_ql_wayfinder": "https://github.com/EpiLogos/QL-MEF/blob/docs/wiki-constellation-practice-20260920/docs/L5-TECHNE-WIKI-CONSTELLATION-WAYFINDER.md",
   "source_reading_note": "The existing compiler reads this module, story_source and document_operations_source. decision_source and implementation_wayfinder are retained locators, not an assertion that the compiler recursively hashes all linked files.",
   "obligation_sources": {

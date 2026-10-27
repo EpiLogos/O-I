@@ -59,7 +59,7 @@ explicit creation/selection route before hosted recovery can operate — since 1
 Oct the host is that route: with `selectOpenedWorks` it selects
 `{scope:'expressions', checkpoint_id: <ref>}` for a work it opens itself, and the
 first checkpoint is created through the owner's absent-basis CAS
-(wayfinder/tickets/T-RECOVERY-FOR-OPENED-WORKS.md).
+(`wayfinder/tickets/T-RECOVERY-FOR-OPENED-WORKS.md` (retired 27 Oct into the DLW map, O-I #706; read it at `8873b0968`)).
 
 ## Native evidence
 
