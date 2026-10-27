@@ -3,7 +3,7 @@ name: central-session-strap
 description: Use at session start, resume, compaction recovery or a root/Project scope change in Central, especially before allocating task scratch. Resolve the current World, governing intent, native NOW and applicable practices; a normal authorised repository edit is not an inbox contribution or a reason to move all work into NOW.
 ---
 
-<!-- O:I GUARDIAN SKILL SHIPMENT; held and projected by O:I (owner ruling 2026-09-17: "oi holds and projects the strap itself and the skill"); commissioned 2026-09-06. THIS repository file is the strap's authoritative source; AIKit assigns it to agents (the `oi` skill source, capsule skill/oi/central-session-strap), so no ground carries a copy. Merged 2026-10-27 on the owner's word (the guardian's structure and description, plus what Central had moved on to: `now.py` retired, the seat law, the routing table, the doorway, the doors-only floor). Owner-ratified edits happen here, never in projections. -->
+<!-- O:I GUARDIAN SKILL SHIPMENT (commissioned 2026-09-06; owner ruling 2026-09-17 that O:I projects the strap). A mirror of the Control spool's `central-session-strap`, which is the copy agents are assigned; the spool copy is edited first and this file is brought to match it, never the other way. Merged 2026-10-27 on the owner's word: the guardian's structure and description, with the facts Central had moved on to. Derived copies on a ground are receipt-gated. -->
 
 # Central session strap
 
