@@ -2,11 +2,10 @@
 
 **What it is:** the tier-0 register of the owner's rulings for the DLW (the new shell and the Technè instruments): the owner's own words, recorded where they were given. Plans, lanes, tickets and the manual cite it; none restates it.
 **Standing:** owner-authored; verbatim; never summarised. Each entry names its source, line range and date; only the owner changes or retires one. Laws that were set by agents and are not rulings sit last, under "Standing laws carried from the 7 Oct programme".
-**Where other rulings stand:** the five-mode ruling is `wayfinder/CONTEMPLATION-DLW-INSTRUMENT.md:232-252`; the owner's settled facts and the 13 Oct instrument rulings are `wayfinder/DEVICE-SEMANTICS-LOCK.md` §0 (§0.1, §0.2); the shell-contemplation correction of 7 Oct (M1-M2-M3-M4, D13, the two-clock doctrine) is `lanes/lane-6-ableton-shell/SCOPE.md` L1-25, which stays where it is.
+**Where other rulings stand:** the five-mode ruling is R12; the owner's settled facts and the 13 Oct instrument rulings are `wayfinder/DEVICE-SEMANTICS-LOCK.md` §0 (§0.1, §0.2); the shell-contemplation correction of 7 Oct (M1-M2-M3-M4, D13, the two-clock doctrine) is `lanes/lane-6-ableton-shell/SCOPE.md` L1-25, which stays where it is.
 **Order:** the 7 Oct implementation-commission rulings (L12-74, in place and unchanged), then the owner passages appended from retired planning documents (R1-R9).
 
-The execution map is [`wayfinder/MAP.md`](wayfinder/MAP.md): the lanes, the standing laws (port, aperture, widget, musical, honesty, craft, instrument, reverse-engineering),
-the tickets under `wayfinder/tickets/` and the execution prompt `wayfinder/EXECUTE.md`.
+The plan is the wayfinder map, O-I #706; its Notes and [`wayfinder/TRACKER.md`](wayfinder/TRACKER.md) carry the standing laws (port, aperture, craft, musical, instrument, reverse-engineering), and its tickets are the map's sub-issues.
 This file no longer carries a lane table, a phase ladder or deliverables; those are the map's and the lane directories'.
 
 ## Owner rulings — implementation commission (2026-10-07, evening)
@@ -157,7 +156,7 @@ Source: `wayfinder/DLW-PLAN.md` L2892-2895 (compiled 2026-10-10), "owner words (
 
 ### R6 — Port the legacy cradle's working components wholesale (owner commission, 2026-10-11)
 
-Source: `wayfinder/DLW-WHOLESALE-PORT-MAP.md` L5-9 (lane return of 2026-10-11, "Commission, in the owner's words"). That map stays, bound, as a tier-4 reference.
+Source: `wayfinder/DLW-WHOLESALE-PORT-MAP.md` L5-9 (lane return of 2026-10-11, "Commission, in the owner's words"). That map retired on 27 Oct (#735); its per-component verdicts went to the stories' cell 4.
 
 > Commission, in the owner's words: *"be clear what to port from the original
 > legacy cradle app wholesale — like terminal and browser and documents panels,
@@ -292,3 +291,114 @@ Each is recorded with its reasons and its owner's words on the decision records 
 - **Skills** (#713): "theres quite a clear gap between what our system already deifnes and what is USED by agents in the moment, this is always the issue with skills etc, and aikit fails when none of this is used by agents, so please lets ensure we fix that as part of this preparatory work".
 - **The manual's open questions** (#716): "days to weeks to months to year, already specified"; "the nara systems are incredibly specific and take on a variety of phenomenological, dialoguical and meidtatoive insight based tehcnicques, which dictate the "mediattive" aspetcs"; "this logos cycle would be a meta-skill, just lerave iit"; "colours are canonical, in bi9omba map and also in general canon of astrology"; "just […] have a solar system with planets, its interactive, opne can click between polanets"; "uranus YES"; "they are apertures ovewr the M3 clock, they are again in the bimba map"; "no, "My World", obvioulsy"; "epi and anara are the epi and nmara agents hwich. can persist as a widget across modes"; "the vision doc shjould stayt separate yes, it has its place in the docs ontology".
 - **Order of work**: "if that means folding in PR's, whilst the UX/stories stuff is done here, then we do in that order".
+
+### R12 — The mode set: Live stays as the base mode (owner, 12 Oct 2026)
+
+Source: `wayfinder/CONTEMPLATION-DLW-INSTRUMENT.md` L236-241, "Owner ruling — the mode set (12 Oct 2026, after this contemplation)". PROGRAMME's header points at these lines; the file retires under #735.
+
+> Owner's words: "lets just keep the live mode, it ought be integrated
+> cleanly, eventually, into expressions where we've planned to have the video
+> and audio track layers together (like a video editor would, like davinci),
+> but having the base mode means we can get a clean reverse engineer basis to
+> ensure we are porting/using its real deep dynamics as a whole unified
+> technology, building from that only gets better".
+
+The same section records what it fixes: five modes, Live (base) · Central · Factory · Expressions · Technē, with Epi-Logos a lens, not a mode.
+
+### R13 — How builders run (owner, 14 and 17 Oct 2026)
+
+Sources: `wayfinder/BRIEF-BUILDER.md` L4-5 and `wayfinder/MAP.md` L367-368 (14 Oct evening); `wayfinder/EXECUTE.md` L54-55 and `MAP.md` L367 (17 Oct evening, "after four builders hit the session limit twice").
+
+> 14 Oct evening: "run like 3 opus subagents and drive from the main session … get work done well first time round, reduce review needs, ensure we pass proper context and standards and validation criteria"
+
+> 17 Oct evening: "run 1-2 subagents and go slower"
+
+The ellipsis is the sources' own.
+
+### R14 — Computer use at the end of every wave (owner, 14 Oct 2026)
+
+Source: `wayfinder/EXECUTE.md` L70-71, "Gates".
+
+> "get computer use going … at the end of waves"
+
+The ellipsis is the source's own. Read with: #715 (a separate verifier walks each story at the end of each wave).
+
+### R15 — Options inside the pane; the pane at full size; the Studio as the toolbar; device craft (owner, 14 and 15 Oct 2026)
+
+Source: `wayfinder/tickets/T-FRAME-CHROME-ONTO-PLATES.md` L5-6 (14 Oct), L52 (15 Oct, "(b) The pane at full size"), L70-71 (15 Oct, "(c) The Studio is the toolbar, curated"), L90-91 (15 Oct, "Device craft").
+
+> 14 Oct: "immediately seeing the violations of having options inside the pane"
+
+> 15 Oct: "UI inside in fullscreen, UI outside in devices/instruments panel when normal pane view"
+
+> 15 Oct: "the rack device view wass meant to be the toolbar, which lshould be letting you curate the settings and macros which you are adding to the toolbar, just like it works in the current expressions app"
+
+> 15 Oct: "techne instruments arent propelry taking the ableton UI approahc, rich modal layouts, visually driven etc, no scrollers, no overuse of intenral boxes etc"
+
+Read with: the owner's 20 Oct direction that the app's own UI still draws inside the field pane and every control stands in the Studio's Full (#747). Its words survive only as an agent's paraphrase in `HANDOFF-BUILD.md` item 9.
+
+### R16 — The catalogue of designed devices (owner, 16 Oct 2026)
+
+Source: `wayfinder/tickets/T-DEVICES-RUNTIME-family-chains.md` L66 (State of record, the catalogue row).
+
+> "the parallel lanes are developing the high end device component specs in the documentation lane, you can directly work from its … catalogue of pre designed UI, the wiring and UX integration should be somewhat trivial wiring"
+
+The ellipsis is the source's own.
+
+### R17 — The agency side: Kev, the language model and the graph; Ta-Onta as the full agent SDK; the coordinate notation (owner, 19 Oct 2026)
+
+Source: `wayfinder/tickets/T-AGENCY-the-agent-world-and-the-construction-chain.md` L10-14, "1. The owner's direction (19 Oct, verbatim)".
+
+> - "consider the current m4 as kev m5 as llm m0 as graph knowledge system, ql based, split we're building for the agency side of
+>   our system"
+> - "the ta onta system becomes not just an sdk/apoi for agents in relation to expressions alone, but rather seems to be the full
+>   agentic sdk/api which ought become a fgull set of methodologies methods skills compose dinto skillsets"
+> - "get clean with the coordinate notation too my guy, M1-2-3', M4/5/0', nice and simple 3:3, we cna get more preciswe as we go"
+
+Read with: the 20 Oct coordinate correction that made Kev and the language models AIKit (S2) capabilities used by the agents at M5-4 (manual §25.1–§25.2; QL-MEF #339). The owner's own words for that correction, and for the 19 Oct "second round", survive only as agent renderings in the same file.
+
+### R18 — The procedural planet: what is wrong, and the spec (owner, 20 Oct 2026)
+
+Source: `wayfinder/tickets/T-PROCEDURAL-BODY-at-the-earths-standard.md` L7-11.
+
+> Owner, 20 Oct 2026: the procedural system "feels a little bit thin on the ground, unintegrated into the devices ontology cleanly", the
+> render against the Earth "is utterly dogshite in terms of quality and pixel quality", the generator "is barely generating the elements of
+> the planet". The spec is "a truly customisable procedural system for the planet creation logic, with actual places etc as visitable
+> locations, the temporality of the object baked into the overall experience, the locations actually in the original Archetypal Earth
+> style, and for now orbits to a minimum: orbits should be reserved for agentic works and recent artefacts therefrom."
+
+### R19 — The follow-ups of the 20 Oct build list (owner, 20 Oct 2026)
+
+Source: `wayfinder/tools/lead-kit/lanes/QUEUE.md` L9, heading of "Decisions taken on the follow-ups".
+
+> "all follow ups are seemingly obvious decisions"
+
+The decisions taken under it (Key source and the drivers; the plate beside the native torus; §20.1's Sound page; the collision strike; the Day's agent session; the Day document's fields; Close's learned list; Close now by a person; the Day agent's grants) are the lead's, made on this leave; they are carried as decisions, not as rulings.
+
+### R20 — The Epi-Logos field commission (owner, 6 Oct 2026)
+
+Source: `.wayfinder/maps/epi-logos-field.md` L28, L32, L34, L38, L40, "0.2 Owner-authored corrections and their reasons".
+
+> “we have existing full ql agent, the experiemtns are good, mef plus local kev model too super good, aikit comes with full redis stack too”
+
+> “we still want to be ensuring the UX comes formo the existing updated site, or at least porting the ocnventions in th UX porpelry over to the cradle in the process”
+>
+> “the process long term is develop the minimal system then refit the full product field into this”
+
+> “the UI being agent native and built for composability/plugin paradoigm, with decoupled domain type archietcure, should mean that these kinds of UI change are not an issue at the level of business logic; if this approahc/intent has been violated anywhee then this is the chance to amend this”
+>
+> “this apply to the BASE mode, the CENTRAL mode... the system wouldnt have factory or workcell, but it WOULD be have ql-mef and epi-logos mode right”
+
+Read with: the 7 Oct commission (this file's D-A and D-E: the build base is the Ableton shell) and R11 (#707: the desktop is a full install), which bear on the second, third and fifth passages.
+
+### R21 — Factory Expressions: the owner's controlling clarifications (owner, 26 Sep 2026)
+
+Source: `docs/cradle/handovers/factory-expressions-2026-09-26/EXPRESSION-DEVELOPMENT-SPEC.md` L22-26, "Owner's controlling clarifications". The map that worked from it, `.wayfinder/maps/factory-expressions.md`, retires under #735; the spec itself does not.
+
+> - “consider it to be part of the agent profile to gain this definition”
+> - “a scene change is just a state change, expressions as a whole are set fo possible state changes”
+> - “constellation is who/what is there, composiiton is how are these organised in the scene and why”
+> - “this is more art than anything”
+> - “the acts can stretch across modes (fatcory, expressions and tehcne) where an ‘act’ has a very different nature between modes”
+
+---
