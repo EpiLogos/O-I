@@ -2356,6 +2356,1964 @@
         "Ableton Live 12.0.25: session model (the browser",
         "previews and drops onto tracks)"
       ]
+    },
+    {
+      "id": "FA",
+      "ids": [
+        "FA01",
+        "FA02",
+        "FA03",
+        "FA04",
+        "FA05",
+        "FA06",
+        "FA07",
+        "FA08",
+        "FA09",
+        "FA10",
+        "FA11",
+        "FA12",
+        "FA13"
+      ],
+      "title": "Set agents to work on what I want built",
+      "owners": [
+        "Actuation",
+        "Central",
+        "Factory",
+        "ai-kit"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Ableton Live 12.0.25 (session model",
+        "launch modes",
+        "follow actions)",
+        "OpenRig (BEHAVIOURS.md §3–§5: durable seats with changing occupants",
+        "§11: handoff)",
+        "Grok Bot 0.68.1 (handing task ownership between agents)"
+      ]
+    },
+    {
+      "id": "FS",
+      "ids": [
+        "FS01",
+        "FS02",
+        "FS03",
+        "FS04",
+        "FS05",
+        "FS06",
+        "FS07",
+        "FS08",
+        "FS09",
+        "FS10"
+      ],
+      "title": "See how the work stands at a glance",
+      "owners": [
+        "Actuation",
+        "Central",
+        "Factory",
+        "O-I"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Ableton Live 12.0.25 (clip states",
+        "Arrangement)",
+        "OpenRig (BEHAVIOURS.md §15: three-axis activity state and status precedence",
+        "honest unknown)",
+        "Buzz's agent system (per-agent working state)"
+      ]
+    },
+    {
+      "id": "FK",
+      "ids": [
+        "FK01",
+        "FK02",
+        "FK03",
+        "FK04",
+        "FK05",
+        "FK06",
+        "FK07",
+        "FK08",
+        "FK09",
+        "FK10",
+        "FK11",
+        "FK12"
+      ],
+      "title": "Step in where I am needed, and stay out of the way where I am not",
+      "owners": [
+        "Actuation",
+        "Factory",
+        "O-I"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Ableton Live 12.0.25 (transport",
+        "Arm",
+        "Re-enable",
+        "punch)",
+        "Buzz's agent system (CONTRACT Behaviours 2–3: steer as the default mid-turn path)"
+      ]
+    },
+    {
+      "id": "FE",
+      "ids": [
+        "FE01",
+        "FE02",
+        "FE03",
+        "FE04",
+        "FE05",
+        "FE06"
+      ],
+      "title": "Pace and read the floor from the transport",
+      "owners": [
+        "Actuation",
+        "Factory",
+        "O-I",
+        "ai-kit"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Ableton Live 12.0.25 (Tempo",
+        "Tap",
+        "Metronome",
+        "Follow)",
+        "Buzz's agent system (heartbeat liveness)"
+      ]
+    },
+    {
+      "id": "FT",
+      "ids": [
+        "FT01",
+        "FT02",
+        "FT03",
+        "FT04",
+        "FT05",
+        "FT06",
+        "FT07",
+        "FT08",
+        "FT09",
+        "FT10"
+      ],
+      "title": "Say what a task is for, and keep the attempt that stands",
+      "owners": [
+        "Actuation",
+        "Factory",
+        "Workcell",
+        "ai-kit"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Ableton Live 12.0.25 (takes and comping)",
+        "OpenRig (BEHAVIOURS.md §11: closure only with a stated outcome)"
+      ]
+    },
+    {
+      "id": "FJ",
+      "ids": [
+        "FJ01",
+        "FJ02",
+        "FJ03",
+        "FJ04",
+        "FJ05",
+        "FJ06",
+        "FJ07",
+        "FJ08",
+        "FJ09"
+      ],
+      "title": "See a piece of work whole, and close it on my word",
+      "owners": [
+        "Factory"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "OpenRig (BEHAVIOURS.md §11: closure reasons and the handed-off chain",
+        "§17: a refusal names the current state and the next operation)"
+      ]
+    },
+    {
+      "id": "RA",
+      "ids": [
+        "RA01",
+        "RA02",
+        "RA03",
+        "RA04",
+        "RA05",
+        "RA06",
+        "RA07",
+        "RA08",
+        "RA09"
+      ],
+      "title": "Answer what waits for me",
+      "owners": [
+        "Central",
+        "Factory",
+        "ai-kit"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Buzz's agent system (CONTRACT Behaviour 4: diff cards and the owner gate)",
+        "Grok Bot 0.68.1 (drafts awaiting approval)"
+      ]
+    },
+    {
+      "id": "RR",
+      "ids": [
+        "RR01",
+        "RR02",
+        "RR03",
+        "RR04",
+        "RR05",
+        "RR06",
+        "RR07",
+        "RR08"
+      ],
+      "title": "Read back what the agents did",
+      "owners": [
+        "Factory"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "OpenRig (BEHAVIOURS.md §11: append-only transitions and stated outcomes)"
+      ]
+    },
+    {
+      "id": "FN",
+      "ids": [
+        "FN01",
+        "FN02",
+        "FN03",
+        "FN04",
+        "FN05",
+        "FN06",
+        "FN07",
+        "FN08",
+        "FN09",
+        "FN10"
+      ],
+      "title": "Tune how an agent works",
+      "owners": [
+        "Actuation",
+        "Factory"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Grok Bot 0.68.1 (Factory's agent client)",
+        "Ableton Live 12.0.25 (clip envelopes)"
+      ]
+    },
+    {
+      "id": "FI",
+      "ids": [
+        "FI01",
+        "FI02",
+        "FI03",
+        "FI04",
+        "FI05",
+        "FI06",
+        "FI07",
+        "FI08",
+        "FI09"
+      ],
+      "title": "Read what an agent did and what it was told",
+      "owners": [
+        "Actuation",
+        "Central",
+        "Factory",
+        "ai-kit"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Grok Bot 0.68.1 (mid-task updates",
+        "drafts awaiting approval)",
+        "Buzz's agent system (diff cards in the thread)",
+        "OpenRig (BEHAVIOURS.md §4: occupant generations)"
+      ]
+    },
+    {
+      "id": "FY",
+      "ids": [
+        "FY01",
+        "FY02",
+        "FY03",
+        "FY04",
+        "FY05",
+        "FY06",
+        "FY07"
+      ],
+      "title": "Give an agent a type",
+      "owners": [
+        "Actuation"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Ableton Live 12.0.25 (a device's presets in the browser)"
+      ]
+    },
+    {
+      "id": "FM",
+      "ids": [
+        "FM01",
+        "FM02",
+        "FM03",
+        "FM04",
+        "FM05"
+      ],
+      "title": "Make agents and groups",
+      "owners": [
+        "Actuation",
+        "Central",
+        "Factory"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Buzz's agent system (creating an agent as a membership act)",
+        "Grok Bot 0.68.1 (named persistent teammates)"
+      ]
+    },
+    {
+      "id": "FX",
+      "ids": [
+        "FX01",
+        "FX02",
+        "FX03",
+        "FX04",
+        "FX05",
+        "FX06",
+        "FX07",
+        "FX08",
+        "FX09",
+        "FX10",
+        "FX11"
+      ],
+      "title": "Run a team of agents as one",
+      "owners": [
+        "Actuation",
+        "Factory"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Ableton Live 12.0.25 (racks",
+        "chains",
+        "macros)",
+        "Buzz's agent system (teams of agents)"
+      ]
+    },
+    {
+      "id": "FD",
+      "ids": [
+        "FD01",
+        "FD02",
+        "FD03",
+        "FD04",
+        "FD05",
+        "FD06",
+        "FD07",
+        "FD08",
+        "FD09"
+      ],
+      "title": "Settle small choices with a decision helper",
+      "owners": [
+        "Factory",
+        "QL-MEF",
+        "ai-kit"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Quaternal Logic's own system (#714)"
+      ]
+    },
+    {
+      "id": "FW",
+      "ids": [
+        "FW01",
+        "FW02",
+        "FW03",
+        "FW04",
+        "FW05",
+        "FW06",
+        "FW07",
+        "FW08",
+        "FW09"
+      ],
+      "title": "Limit what an agent may touch and look up",
+      "owners": [
+        "Central",
+        "Factory",
+        "ai-kit"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "—"
+      ]
+    },
+    {
+      "id": "RK",
+      "ids": [
+        "RK01",
+        "RK02",
+        "RK03",
+        "RK04",
+        "RK05",
+        "RK06",
+        "RK07",
+        "RK08",
+        "RK09"
+      ],
+      "title": "Carry the practice the work needs, and see whether it is used",
+      "owners": [
+        "O-I",
+        "ai-kit"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "—"
+      ]
+    },
+    {
+      "id": "RS",
+      "ids": [
+        "RS01",
+        "RS02",
+        "RS03",
+        "RS04",
+        "RS05",
+        "RS06",
+        "RS07",
+        "RS08",
+        "RS09"
+      ],
+      "title": "Keep where practice comes from, and take changes back",
+      "owners": [
+        "ai-kit"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "—"
+      ]
+    },
+    {
+      "id": "RM",
+      "ids": [
+        "RM01",
+        "RM02",
+        "RM03",
+        "RM04",
+        "RM05",
+        "RM06",
+        "RM07",
+        "RM08",
+        "RM09"
+      ],
+      "title": "Read and run one member of the practice",
+      "owners": [
+        "Central",
+        "ai-kit"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "—"
+      ]
+    },
+    {
+      "id": "RC",
+      "ids": [
+        "RC01",
+        "RC02",
+        "RC03",
+        "RC04",
+        "RC05",
+        "RC06",
+        "RC07",
+        "RC08"
+      ],
+      "title": "Teach an agent by doing the task once",
+      "owners": [
+        "ai-kit"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Grok Bot 0.68.1 (workflows learned by demonstration)",
+        "Ableton Live 12.0.25 (Capture)"
+      ]
+    },
+    {
+      "id": "FP",
+      "ids": [
+        "FP01",
+        "FP02",
+        "FP03",
+        "FP04",
+        "FP05",
+        "FP06",
+        "FP07",
+        "FP08",
+        "FP09",
+        "FP10",
+        "FP11",
+        "FP12"
+      ],
+      "title": "Keep the asks I repeat on pads",
+      "owners": [
+        "Factory",
+        "Workcell",
+        "ai-kit"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Ableton Live 12.0.25 (Drum Rack pads",
+        "choke groups)",
+        "Grok Bot 0.68.1 (demonstrated workflows saved as scheduled skills)"
+      ]
+    },
+    {
+      "id": "FQ",
+      "ids": [
+        "FQ01",
+        "FQ02",
+        "FQ03",
+        "FQ04",
+        "FQ05",
+        "FQ06",
+        "FQ07",
+        "FQ08",
+        "FQ09",
+        "FQ10",
+        "FQ11",
+        "FQ12",
+        "FQ13",
+        "FQ14"
+      ],
+      "title": "Talk to my agents from wherever I am",
+      "owners": [
+        "Factory",
+        "ai-kit"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Buzz's agent system (→ Messages: agents as members",
+        "open relays between agents",
+        "per-agent working state)",
+        "OpenRig (BEHAVIOURS.md §9: the send guard",
+        "CROSSWALK §9: delivery at the recipient's next turn)"
+      ]
+    },
+    {
+      "id": "FV",
+      "ids": [
+        "FV01",
+        "FV02",
+        "FV03",
+        "FV04",
+        "FV05",
+        "FV06",
+        "FV07",
+        "FV08",
+        "FV09",
+        "FV10",
+        "FV11",
+        "FV12"
+      ],
+      "title": "Hear an agent and see it speak",
+      "owners": [
+        "Actuation"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Grok Bot 0.68.1 (messaging by typing",
+        "dictation and voice)"
+      ]
+    },
+    {
+      "id": "GA",
+      "ids": [
+        "GA01",
+        "GA02",
+        "GA03",
+        "GA04",
+        "GA05",
+        "GA06",
+        "GA07",
+        "GA08",
+        "GA09",
+        "GA10"
+      ],
+      "title": "Decide once where agents work",
+      "owners": [
+        "Actuation",
+        "Workcell",
+        "ai-kit"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Ableton Live 12.0.25 (return tracks",
+        "sends)",
+        "OpenRig (BEHAVIOURS.md §3: stable seat identity",
+        "§16: terminal providers)"
+      ]
+    },
+    {
+      "id": "GB",
+      "ids": [
+        "GB01",
+        "GB02",
+        "GB03",
+        "GB04",
+        "GB05",
+        "GB06",
+        "GB07",
+        "GB08",
+        "GB09",
+        "GB10",
+        "GB11",
+        "GB12",
+        "GB13"
+      ],
+      "title": "Let agents in through a gateway",
+      "owners": [
+        "Actuation"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "OpenRig (BEHAVIOURS.md §3: liveness verdicts",
+        "§15: honest unknown)",
+        "Buzz's agent system (CONTRACT Behaviours 2 and 4: heartbeat liveness",
+        "permission requests)"
+      ]
+    },
+    {
+      "id": "GD",
+      "ids": [
+        "GD01",
+        "GD02",
+        "GD03",
+        "GD04",
+        "GD05",
+        "GD06",
+        "GD07",
+        "GD08",
+        "GD09",
+        "GD10"
+      ],
+      "title": "Run work on the right machine, and keep my machines in step",
+      "owners": [
+        "Actuation",
+        "Workcell"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Grok Bot 0.68.1 (local execution beside a remote computer)",
+        "Buzz's agent system (where an agent runs as a first-class choice)",
+        "Ableton Live 12.0.25 (Link)"
+      ]
+    },
+    {
+      "id": "GL",
+      "ids": [
+        "GL01",
+        "GL02",
+        "GL03",
+        "GL04",
+        "GL05",
+        "GL06",
+        "GL07",
+        "GL08",
+        "GL09",
+        "GL10",
+        "GL11",
+        "GL12",
+        "GL13",
+        "GL14",
+        "GL15"
+      ],
+      "title": "Land the work safely",
+      "owners": [
+        "Factory",
+        "Workcell"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "OpenRig (BEHAVIOURS.md §3–§5: a durable seat whose occupants change",
+        "§17: refusals that name the state)"
+      ]
+    },
+    {
+      "id": "GR",
+      "ids": [
+        "GR01",
+        "GR02",
+        "GR03",
+        "GR04",
+        "GR05",
+        "GR06",
+        "GR07"
+      ],
+      "title": "Keep a run's world, and what it leaves behind",
+      "owners": [
+        "Workcell"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Grok Bot 0.68.1 (a remote computer per run beside a local execution daemon)",
+        "OpenRig (BEHAVIOURS.md §13: snapshot and restore)"
+      ]
+    },
+    {
+      "id": "RW",
+      "ids": [
+        "RW01",
+        "RW02",
+        "RW03",
+        "RW04",
+        "RW05",
+        "RW06",
+        "RW07",
+        "RW08",
+        "RW09",
+        "RW10",
+        "RW11",
+        "RW12"
+      ],
+      "title": "Meet the same agents, doing the same work, in every mode",
+      "owners": [
+        "Actuation",
+        "Central",
+        "Factory",
+        "O-I",
+        "QL-MEF",
+        "Workcell",
+        "ai-kit"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "—"
+      ]
+    },
+    {
+      "id": "RO",
+      "ids": [
+        "RO01",
+        "RO02",
+        "RO03",
+        "RO04",
+        "RO05",
+        "RO06"
+      ],
+      "title": "Know how an agent's act was reached",
+      "owners": [
+        "QL-MEF",
+        "ai-kit"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Quaternal Logic's own system (#714)"
+      ]
+    },
+    {
+      "id": "RF",
+      "ids": [
+        "RF01",
+        "RF02",
+        "RF03",
+        "RF04",
+        "RF05",
+        "RF06",
+        "RF07",
+        "RF08",
+        "RF09",
+        "RF10",
+        "RF11",
+        "RF12",
+        "RF13"
+      ],
+      "title": "Read agents and processes at a glance",
+      "owners": [
+        "Actuation",
+        "Central",
+        "Factory",
+        "O-I",
+        "Workcell"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "OpenRig (BEHAVIOURS.md §15: honest unknown",
+        "never a fabricated state)"
+      ]
+    },
+    {
+      "id": "TK",
+      "ids": [
+        "TK01",
+        "TK02",
+        "TK03",
+        "TK04",
+        "TK05",
+        "TK06",
+        "TK07",
+        "TK08",
+        "TK09",
+        "TK10"
+      ],
+      "title": "Set what I know at its time and place",
+      "owners": [
+        "O-I",
+        "ai-kit"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Ableton Live 12.0.25 (session model",
+        "object model)",
+        "Aeon Timeline 2's manual"
+      ]
+    },
+    {
+      "id": "TE",
+      "ids": [
+        "TE01",
+        "TE02",
+        "TE03",
+        "TE04",
+        "TE05",
+        "TE06",
+        "TE07",
+        "TE08",
+        "TE09",
+        "TE10"
+      ],
+      "title": "Open an event and see how sure anyone is of it",
+      "owners": [
+        "ai-kit"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Aeon Timeline 2's manual",
+        "PeriodO"
+      ]
+    },
+    {
+      "id": "TA",
+      "ids": [
+        "TA01",
+        "TA02",
+        "TA03",
+        "TA04",
+        "TA05",
+        "TA06",
+        "TA07",
+        "TA08"
+      ],
+      "title": "Stand a stop: its moment, its place and its scenes at once",
+      "owners": [
+        "QL-MEF"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Ableton Live 12.0.25 (clip and scene follow actions)",
+        "Godot's animation state machine",
+        "Unity Timeline's documentation"
+      ]
+    },
+    {
+      "id": "TR",
+      "ids": [
+        "TR01",
+        "TR02",
+        "TR03",
+        "TR04",
+        "TR05",
+        "TR06",
+        "TR07",
+        "TR08",
+        "TR09",
+        "TR10",
+        "TR11",
+        "TR12"
+      ],
+      "title": "Lay history on one ruler",
+      "owners": [
+        "Central",
+        "Factory"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Aeon Timeline 2's manual",
+        "TimelineJS3",
+        "vis-timeline",
+        "PeriodO",
+        "Histography",
+        "Chronas",
+        "Archetypal Earth",
+        "ported as code"
+      ]
+    },
+    {
+      "id": "TV",
+      "ids": [
+        "TV01",
+        "TV02",
+        "TV03",
+        "TV04",
+        "TV05",
+        "TV06",
+        "TV07",
+        "TV08",
+        "TV09"
+      ],
+      "title": "Read history by cause, recurrence and concurrency",
+      "owners": [
+        "O-I"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Aeon Timeline 2's manual",
+        "Histography",
+        "Chronas"
+      ]
+    },
+    {
+      "id": "TW",
+      "ids": [
+        "TW01",
+        "TW02",
+        "TW03",
+        "TW04",
+        "TW05",
+        "TW06",
+        "TW07",
+        "TW08",
+        "TW09",
+        "TW10",
+        "TW11",
+        "TW12"
+      ],
+      "title": "Build my planet",
+      "owners": [
+        "QL-MEF"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "MapLibre GL JS (Google Earth",
+        "Cesium",
+        "QGIS surveyed)",
+        "Archetypal Earth",
+        "ported as code"
+      ]
+    },
+    {
+      "id": "TY",
+      "ids": [
+        "TY01",
+        "TY02",
+        "TY03",
+        "TY04",
+        "TY05",
+        "TY06",
+        "TY07",
+        "TY08",
+        "TY09",
+        "TY10",
+        "TY11"
+      ],
+      "title": "See my worlds and agents as one system",
+      "owners": [
+        "Central",
+        "Factory",
+        "QL-MEF"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "MapLibre GL JS",
+        "Archetypal Earth",
+        "ported as code"
+      ]
+    },
+    {
+      "id": "TO",
+      "ids": [
+        "TO01",
+        "TO02",
+        "TO03",
+        "TO04",
+        "TO05",
+        "TO06",
+        "TO07",
+        "TO08",
+        "TO09",
+        "TO10",
+        "TO11",
+        "TO12",
+        "TO13"
+      ],
+      "title": "Stand in another moment, look further out, and see what others see",
+      "owners": [
+        "QL-MEF"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "MapLibre GL JS (Google Earth",
+        "Cesium",
+        "QGIS surveyed)",
+        "Archetypal Earth",
+        "ported as code"
+      ]
+    },
+    {
+      "id": "TG",
+      "ids": [
+        "TG01",
+        "TG02",
+        "TG03",
+        "TG04",
+        "TG05",
+        "TG06",
+        "TG07",
+        "TG08",
+        "TG09",
+        "TG10",
+        "TG11"
+      ],
+      "title": "Read my notes link by link",
+      "owners": [
+        "ai-kit"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "tldraw",
+        "Excalidraw",
+        "Obsidian `.canvas`",
+        "Miro's documentation (canvas and graph)",
+        "Obsidian 1.7.7 (graph and links)"
+      ]
+    },
+    {
+      "id": "TS",
+      "ids": [
+        "TS01",
+        "TS02",
+        "TS03",
+        "TS04",
+        "TS05",
+        "TS06",
+        "TS07",
+        "TS08"
+      ],
+      "title": "Narrow the graph and act on what it shows",
+      "owners": [
+        "Central",
+        "Factory"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Obsidian 1.7.7 (graph and links)"
+      ]
+    },
+    {
+      "id": "TQ",
+      "ids": [
+        "TQ01",
+        "TQ02",
+        "TQ03",
+        "TQ04",
+        "TQ05"
+      ],
+      "title": "Bring Quaternal Logic into the field round a note",
+      "owners": [
+        "QL-MEF"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "QL's own system"
+      ]
+    },
+    {
+      "id": "TC",
+      "ids": [
+        "TC01",
+        "TC02",
+        "TC03",
+        "TC04",
+        "TC05",
+        "TC06",
+        "TC07",
+        "TC08",
+        "TC09",
+        "TC10",
+        "TC11",
+        "TC12",
+        "TC13",
+        "TC14"
+      ],
+      "title": "Think out loud on a table",
+      "owners": [
+        "O-I"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "tldraw",
+        "Excalidraw",
+        "Obsidian `.canvas`",
+        "Miro's documentation"
+      ]
+    },
+    {
+      "id": "TI",
+      "ids": [
+        "TI01",
+        "TI02",
+        "TI03",
+        "TI04",
+        "TI05",
+        "TI06"
+      ],
+      "title": "Draw relations and send them to their owners",
+      "owners": [
+        "ai-kit"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "tldraw",
+        "Excalidraw",
+        "Obsidian `.canvas`",
+        "Miro's documentation"
+      ]
+    },
+    {
+      "id": "TF",
+      "ids": [
+        "TF01",
+        "TF02",
+        "TF03",
+        "TF04",
+        "TF05",
+        "TF06",
+        "TF07"
+      ],
+      "title": "Give a question a shape before it has answers",
+      "owners": [
+        "QL-MEF",
+        "ai-kit"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "tldraw",
+        "Excalidraw (the board)",
+        "QL's own system (the forms)"
+      ]
+    },
+    {
+      "id": "TJ",
+      "ids": [
+        "TJ01",
+        "TJ02",
+        "TJ03",
+        "TJ04",
+        "TJ05",
+        "TJ06",
+        "TJ07",
+        "TJ08",
+        "TJ09",
+        "TJ10"
+      ],
+      "title": "Make a walk through a subject",
+      "owners": [
+        "O-I"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Godot's animation state machine",
+        "Twine 2",
+        "Unity Timeline's documentation",
+        "Archetypal Earth",
+        "ported as code"
+      ]
+    },
+    {
+      "id": "TN",
+      "ids": [
+        "TN01",
+        "TN02",
+        "TN03",
+        "TN04",
+        "TN05",
+        "TN06",
+        "TN07",
+        "TN08"
+      ],
+      "title": "Walk it, record it and keep the take that stands",
+      "owners": [
+        "QL-MEF"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Godot's animation state machine",
+        "Twine 2",
+        "Unity Timeline's documentation",
+        "Archetypal Earth",
+        "ported as code"
+      ]
+    },
+    {
+      "id": "TP",
+      "ids": [
+        "TP01",
+        "TP02",
+        "TP03",
+        "TP04",
+        "TP05",
+        "TP06",
+        "TP07",
+        "TP08",
+        "TP09",
+        "TP10",
+        "TP11",
+        "TP12"
+      ],
+      "title": "Enter a palace and walk its rooms",
+      "owners": [
+        "O-I"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Godot's animation state machine",
+        "Twine 2",
+        "Unity Timeline's documentation"
+      ]
+    },
+    {
+      "id": "TU",
+      "ids": [
+        "TU01",
+        "TU02",
+        "TU03",
+        "TU04",
+        "TU05",
+        "TU06",
+        "TU07",
+        "TU08"
+      ],
+      "title": "Build a palace and return what I found",
+      "owners": [
+        "O-I"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Godot's animation state machine",
+        "Twine 2",
+        "Unity Timeline's documentation"
+      ]
+    },
+    {
+      "id": "TL",
+      "ids": [
+        "TL01",
+        "TL02",
+        "TL03",
+        "TL04",
+        "TL05",
+        "TL06",
+        "TL07",
+        "TL08",
+        "TL09",
+        "TL10",
+        "TL11"
+      ],
+      "title": "Read through one way of seeing at a time",
+      "owners": [
+        "QL-MEF",
+        "ai-kit"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Ableton Live 12.0.25 (an effect on a chain)",
+        "QL's own system"
+      ]
+    },
+    {
+      "id": "TD",
+      "ids": [
+        "TD01",
+        "TD02",
+        "TD03",
+        "TD04",
+        "TD05",
+        "TD06",
+        "TD07",
+        "TD08"
+      ],
+      "title": "Read and write a page beside the work, in any mode",
+      "owners": [
+        "Central"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Obsidian 1.7.7 (saving",
+        "plugins",
+        "graph and links)"
+      ]
+    },
+    {
+      "id": "TB",
+      "ids": [
+        "TB01",
+        "TB02",
+        "TB03",
+        "TB04",
+        "TB05",
+        "TB06",
+        "TB07",
+        "TB08",
+        "TB09"
+      ],
+      "title": "Mark a passage and hand it to an agent",
+      "owners": [
+        "Central"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Obsidian 1.7.7 (graph and links)"
+      ]
+    },
+    {
+      "id": "TH",
+      "ids": [
+        "TH01",
+        "TH02",
+        "TH03",
+        "TH04",
+        "TH05"
+      ],
+      "title": "Save a page safely, and ask for a reading of a whole Flow",
+      "owners": [
+        "Central"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Obsidian 1.7.7 (saving)"
+      ]
+    },
+    {
+      "id": "TT",
+      "ids": [
+        "TT01",
+        "TT02",
+        "TT03",
+        "TT04",
+        "TT05",
+        "TT06",
+        "TT07",
+        "TT08",
+        "TT09",
+        "TT10"
+      ],
+      "title": "Keep a shell next to my work",
+      "owners": [
+        "Central",
+        "Workcell",
+        "ai-kit"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "VS Code's workbench (MIT)"
+      ]
+    },
+    {
+      "id": "TX",
+      "ids": [
+        "TX01",
+        "TX02",
+        "TX03",
+        "TX04",
+        "TX05",
+        "TX06",
+        "TX07",
+        "TX08",
+        "TX09",
+        "TX10",
+        "TX11",
+        "TX12",
+        "TX13",
+        "TX14",
+        "TX15"
+      ],
+      "title": "Play Technē from the transport",
+      "owners": [
+        "O-I"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Ableton Live 12.0.25 (the transport)"
+      ]
+    },
+    {
+      "id": "NP",
+      "ids": [
+        "NP01",
+        "NP02",
+        "NP03",
+        "NP04",
+        "NP05",
+        "NP06",
+        "NP07",
+        "NP08",
+        "NP09",
+        "NP10",
+        "NP11"
+      ],
+      "title": "Keep a practice world only I can see into",
+      "owners": [
+        "Actuation",
+        "Central",
+        "O-I",
+        "QL-MEF",
+        "ai-kit"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "QL's own system"
+      ]
+    },
+    {
+      "id": "NV",
+      "ids": [
+        "NV01",
+        "NV02",
+        "NV03",
+        "NV04",
+        "NV05",
+        "NV06"
+      ],
+      "title": "Let Nara hear me",
+      "owners": [
+        "Actuation",
+        "Central"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "QL's own system"
+      ]
+    },
+    {
+      "id": "NJ",
+      "ids": [
+        "NJ01",
+        "NJ02",
+        "NJ03",
+        "NJ04",
+        "NJ05",
+        "NJ06",
+        "NJ07"
+      ],
+      "title": "Write my journal and my dreams",
+      "owners": [
+        "Central",
+        "QL-MEF"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "QL's own system"
+      ]
+    },
+    {
+      "id": "NS",
+      "ids": [
+        "NS01",
+        "NS02",
+        "NS03",
+        "NS04",
+        "NS05",
+        "NS06",
+        "NS07",
+        "NS08",
+        "NS09"
+      ],
+      "title": "Sit",
+      "owners": [
+        "Central",
+        "QL-MEF"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "QL's own system"
+      ]
+    },
+    {
+      "id": "NK",
+      "ids": [
+        "NK01",
+        "NK02",
+        "NK03",
+        "NK04",
+        "NK05",
+        "NK06",
+        "NK07",
+        "NK08",
+        "NK09",
+        "NK10"
+      ],
+      "title": "Carry a concern for days or months",
+      "owners": [
+        "Central",
+        "QL-MEF"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "QL's own system"
+      ]
+    },
+    {
+      "id": "NC",
+      "ids": [
+        "NC01",
+        "NC02",
+        "NC03",
+        "NC04",
+        "NC05",
+        "NC06"
+      ],
+      "title": "Hold a conversation in a form",
+      "owners": [
+        "Central",
+        "QL-MEF"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "QL's own system"
+      ]
+    },
+    {
+      "id": "NI",
+      "ids": [
+        "NI01",
+        "NI02",
+        "NI03",
+        "NI04",
+        "NI05"
+      ],
+      "title": "See myself as the system discloses me",
+      "owners": [
+        "Central",
+        "QL-MEF"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "QL's own system"
+      ]
+    },
+    {
+      "id": "NF",
+      "ids": [
+        "NF01",
+        "NF02",
+        "NF03",
+        "NF04",
+        "NF05"
+      ],
+      "title": "Lay my own layer over an Expression",
+      "owners": [
+        "QL-MEF"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "QL's own system"
+      ]
+    },
+    {
+      "id": "NL",
+      "ids": [
+        "NL01",
+        "NL02",
+        "NL03",
+        "NL04",
+        "NL05",
+        "NL06",
+        "NL07",
+        "NL08"
+      ],
+      "title": "Read a practice page through a lens, and return what it taught",
+      "owners": [
+        "Central",
+        "QL-MEF",
+        "ai-kit"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "QL's own system"
+      ]
     }
   ],
   "native_capability_sources": [
