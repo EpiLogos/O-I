@@ -19,6 +19,8 @@ from typing import Any
 
 BASE = Path(__file__).resolve().parents[1]
 STORY_ID = re.compile(r"(?!UX)[A-Z]{2}[0-9]{2}\Z")
+STARTING_WORLD = re.compile(r"\[(Bare|Arriving|Lived-in|Yours)\]")
+GRADE = re.compile(r"(D|C|P|M|H)( \(core\))?")
 PRACTICE_ID = re.compile(r"P[0-9]{2}\Z")
 COLUMNS = [
     "id", "record_type", "view_id", "row_id", "column_id", "capability_refs",
@@ -44,7 +46,8 @@ def source_path(root: Path, relative: str) -> Path:
     return target
 
 
-def table_rows(text: str, pattern: re.Pattern[str], width: int) -> list[tuple[int, list[str]]]:
+def table_rows(text: str, pattern: re.Pattern[str], width: int | tuple[int, ...]) -> list[tuple[int, list[str]]]:
+    widths = (width,) if isinstance(width, int) else tuple(width)
     rows = []
     for number, line in enumerate(text.splitlines(), 1):
         if not line.startswith("|"):
@@ -53,7 +56,7 @@ def table_rows(text: str, pattern: re.Pattern[str], width: int) -> list[tuple[in
         first = cells[0].split()[0] if cells and cells[0] else ""
         if not pattern.fullmatch(first):
             continue
-        if len(cells) != width or not all(cells):
+        if len(cells) not in widths or not all(cells):
             raise ValueError(f"malformed source row {first} at line {number}")
         rows.append((number, cells))
     return rows
@@ -123,8 +126,12 @@ def load_sources(root: Path) -> dict[str, Any]:
     story_paths = list(dict.fromkeys([primary_path, *[m["story_source"] for m in modules]]))
     for path in story_paths:
         source = documents[path]
-        for line, cells in table_rows(source["text"], STORY_ID, 5):
-            key, human, agent, outcome, failure = cells
+        for line, cells in table_rows(source["text"], STORY_ID, (5, 7)):
+            six_cell = len(cells) == 7
+            if six_cell:
+                key, human, where, agent, outcome, failure, grade_cell = cells
+            else:
+                key, human, agent, outcome, failure = cells
             if key not in expected:
                 raise ValueError(f"undeclared local story {key}")
             if key in seen:
@@ -134,14 +141,24 @@ def load_sources(root: Path) -> dict[str, Any]:
             if family.get("story_source", primary_path) != path:
                 raise ValueError(f"story {key} is in the wrong declared source")
             refs = list(dict.fromkeys(re.findall(r"\bP[0-9]{2}\b", agent)))
-            if not refs or any(ref not in practices for ref in refs):
+            if (not refs and not six_cell) or any(ref not in practices for ref in refs):
                 raise ValueError(f"unresolved practice relation for {key}: {refs}")
+            ux = None
+            if six_cell:
+                world = STARTING_WORLD.match(human)
+                if not world:
+                    raise ValueError(f"story {key} names no starting world (Bare, Arriving, Lived-in or Yours)")
+                grade = GRADE.fullmatch(grade_cell)
+                if not grade:
+                    raise ValueError(f"story {key} has an unknown grade: {grade_cell}")
+                ux = {"starting_world": world.group(1), "grade": grade.group(1),
+                      "core": bool(grade.group(2)), "port_sources": list(family.get("port_sources", []))}
             stories.append({
                 "id": key, "kind": "ux", "parent_ref": family["id"],
                 "actor": "person and situated agent/operator as specified in the source row",
                 "story": human, "entry_state": human, "act": human,
                 "experienced_outcome": outcome, "return_state": outcome,
-                "branch_condition": failure, "surface_refs": [],
+                "branch_condition": failure, "surface_refs": [where] if six_cell else [],
                 "source_refs": [path, *family["source_refs"]],
                 "standing": "specified", "extensions": {
                     "source_locator": {"path": path, "row_id": key, "line": line,
@@ -157,6 +174,7 @@ def load_sources(root: Path) -> dict[str, Any]:
                         "steps": {"source_statement": agent,
                             "episode_binding": "Expand meaningful handoffs from the full family/source with actual actors, inputs, contracts and readback."},
                         "failure_and_reentry": failure},
+                    **({"ux": ux} if ux else {}),
                     "existing_proof_refs": copy.deepcopy(family["proof_refs"]),
                     "inherited_obligations": [],
                     "runtime_readiness": "not-assessed", "execution_evidence": [],
