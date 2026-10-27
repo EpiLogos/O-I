@@ -450,7 +450,7 @@ provenance
 
 An addressable resource may remain an ordinary `1`, open a `0/1` whole, or carry a specific QL shape only when an actual QL definition and attributable binding exist.
 
-Do not force every document into six positions merely because QL can read sixfolds.
+Every resource carries its six positions, each filled from its source or left open; a position is never filled for show.
 
 ## 5.3 Capability matrices
 

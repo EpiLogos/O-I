@@ -91,7 +91,7 @@ Use **`ql-capability-matrix/1`**, not a story-specific matrix format. Named view
 - Which existing proving obligation verifies the human or agent side of a handoff?
 - Which variants have actually been exercised?
 
-A view declares its question, axes, member identities/source refs and the meaning of an empty cell. Story and step refs are axis members; they are not automatically capabilities. Multiple determinations in a cell remain distinct, including contrary evidence. Human/agent perspectives or a 6×6 display alone do not establish QL conjugacy. Set `shape_binding` only from an actual QL definition and sourced derivation; preserve ordinary unshaped stories.
+A view declares its question, axes, member identities/source refs and the meaning of an empty cell. Story and step refs are axis members; they are not automatically capabilities. Multiple determinations in a cell remain distinct, including contrary evidence. Human/agent perspectives or a 6×6 display alone do not establish QL conjugacy. Set `shape_binding` only from an actual QL definition and sourced derivation. Every story carries its six cells (§1); a cell is filled from its source or left open.
 
 ### Native identity stays native
 
