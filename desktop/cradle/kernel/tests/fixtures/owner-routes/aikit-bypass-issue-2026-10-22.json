@@ -1,0 +1,40 @@
+{
+  "captured": "2026-10-22, the installed aikit 0.1.0 (49adaebf423d) in an isolated HOME and AIKIT_HOME under the session scratchpad (never the owner's ground): 'issued' for --scope next-event --reason 'fixture capture'; 'scope_refused' for --scope 1h (exit 2: `bypass issue --help` offers a duration, its parser refuses one); 'reason_refused' with no --reason (exit 2). Each document on stdout.",
+  "argv": "aikit bypass issue [--scope S] --reason R [--capability C] --json",
+  "issued": {
+    "context": {
+      "context_id": "ctx_01M5HAN8GNM88ZS80ZT1C8MWT3",
+      "project_root": null,
+      "session_id": null
+    },
+    "data": {
+      "bypass_id": "byp_01M5HAN8GR971C3410W8980J7Q",
+      "capability": null,
+      "reason": "fixture capture",
+      "scope": "next-event"
+    },
+    "ok": true,
+    "schema": 1,
+    "warnings": []
+  },
+  "scope_refused": {
+    "error": {
+      "code": "cli.usage",
+      "details": {
+        "scope": "1h"
+      },
+      "message": "`1h` is not a bypass scope; use `next-event` or `session`"
+    },
+    "ok": false,
+    "schema": 1
+  },
+  "reason_refused": {
+    "error": {
+      "code": "cli.usage",
+      "details": {},
+      "message": "a bypass must carry a reason; pass --reason"
+    },
+    "ok": false,
+    "schema": 1
+  }
+}

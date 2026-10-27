@@ -333,7 +333,7 @@ jobs:
   installed-suite:
     if: ${{ inputs.focused-development != true }}
     name: Installed six-product suite from the recorded pre-local build set
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 45
     env:
       GH_TOKEN: ${{ github.token }}
@@ -535,7 +535,7 @@ jobs:
   factory-proving:
     if: ${{ inputs.focused-development != true }}
     name: Factory proving floor against exact owner sources
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
@@ -569,7 +569,7 @@ jobs:
   living-wiki-w7:
     if: ${{ inputs.focused-development != true }}
     name: Living Wiki W7 pinned owner contracts
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 35
     env:
       CENTRAL_SHA: 31d54eb4a6202c89c7f60ec004654916133dea94
@@ -649,7 +649,7 @@ jobs:
   authored-wiki-w8:
     if: ${{ inputs.focused-development != true }}
     name: Authored Wiki relations W8 pinned owner contracts
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 40
     env:
       CENTRAL_SHA: 31d54eb4a6202c89c7f60ec004654916133dea94
@@ -847,7 +847,7 @@ jobs:
   collection-native:
     if: ${{ inputs.focused-development != true }}
     name: Collection native source identity, CAS and restart against exact Central
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4

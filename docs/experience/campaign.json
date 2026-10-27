@@ -11,37 +11,243 @@
     "receipts": "desktop/cradle/walk/artifacts/",
     "standing": "declared source relations between executable frontend tests and the obligation field; the compiler validates them, receipts carry them as executed evidence; not an acceptance database"
   },
-  "source_modules": ["docs/experience/developer-field.json", "docs/experience/personal-web.json", "docs/experience/factory-agency.json", "docs/experience/session-grounding.json", "docs/experience/harness-first-adoption.json", "docs/experience/vak-expression-craft.json", "docs/experience/wiki-constellation.json", "docs/experience/shared-field-world-participation.json", "docs/experience/plural-flow.json"],
-  "document_operations_source": "docs/experience/DOCUMENT-OPERATIONS.md",
-  "jev_redis_now_integration_source": "docs/experience/JEV-REDIS-NOW-INTEGRATION.md",
-  "jev_redis_now_local_handoff": "docs/experience/JEV-REDIS-NOW-LOCAL-INTEGRATION-PROMPT.md",
-  "jev_redis_now_native_delivery": {"aikit":"EpiLogos/ai-kit#388","workcell":"EpiLogos/Workcell#98","connective_owner":"EpiLogos/O-I#220","campaign":"EpiLogos/O-I#65","standing":"cloud implementation and deterministic/native-service proof; installed live-provider and human Recognition remain environment-local"},
+  "source_modules": [
+    "docs/experience/developer-field.json",
+    "docs/experience/personal-web.json",
+    "docs/experience/factory-agency.json",
+    "docs/experience/session-grounding.json",
+    "docs/experience/harness-first-adoption.json",
+    "docs/experience/vak-expression-craft.json",
+    "docs/experience/wiki-constellation.json",
+    "docs/experience/shared-field-world-participation.json",
+    "docs/experience/plural-flow.json"
+  ],
+  "document_operations_source": "docs/experience/LOCAL-CAMPAIGN.md",
+  "jev_redis_now_integration_source": "docs/experience/CASES.md",
+  "jev_redis_now_native_delivery": {
+    "aikit": "EpiLogos/ai-kit#388",
+    "workcell": "EpiLogos/Workcell#98",
+    "connective_owner": "EpiLogos/O-I#220",
+    "campaign": "EpiLogos/O-I#65",
+    "standing": "cloud implementation and deterministic/native-service proof; installed live-provider and human Recognition remain environment-local"
+  },
   "ux_tier": 1,
   "tier_note": "Vision/intended-experience source role, not human adoption, implementation readiness, a storage migration or a QL coordinate. Plans and evidence remain downstream.",
   "standing": "specified; source-grounded elaboration commissioned for publication",
   "runtime_or_human_acceptance": false,
-  "setup_contexts": ["fresh-ground", "existing-ground-reconcile", "developer-source", "existing-world-adoption", "reference-world-host", "harness-strap"],
+  "setup_contexts": [
+    "fresh-ground",
+    "existing-ground-reconcile",
+    "developer-source",
+    "existing-world-adoption",
+    "reference-world-host",
+    "harness-strap"
+  ],
   "setup_context_semantics": "Historical bootstrap/registration operation provenance only. O-I#268 supersedes these as an installation-modality or Context Frame taxonomy. Preserve old receipts under their original version.",
-  "composition_examples": ["ground-only", "existing-native-harness", "selected-praxis-and-knowledge", "commissioned-development", "nested-material-work", "full-desktop", "headless", "optional-QL", "hosted-library-learning"],
+  "composition_examples": [
+    "ground-only",
+    "existing-native-harness",
+    "selected-praxis-and-knowledge",
+    "commissioned-development",
+    "nested-material-work",
+    "full-desktop",
+    "headless",
+    "optional-QL",
+    "hosted-library-learning"
+  ],
   "composition_note": "Examples remain non-prescriptive activity/view labels for existing readers. O-I#268 with the owner's 18 September 2026 correction: CF5 contains six forms of engagement, not necessarily six local installs. CF7 5/0 is hosted Library/Expression learning. Selected/effective/installed, visitor versus host, experience surface, source sync and material connection remain separate. INSTALLATION-VARIANTS.md is the current source. Neither this source nor a CF string proves runtime support.",
   "installation_composition": {
     "authority": "https://github.com/EpiLogos/O-I/issues/268",
     "variant_source": "docs/experience/INSTALLATION-VARIANTS.md",
     "organisation": "1+6",
     "source_amendment": "2026-09-18: retain this existing planning key and frame identities; CF7 is hosted engagement, not a visitor installation. This is not an executable installer schema or a reinterpretation of historical receipts.",
-    "containing_frame": {"id":"CF5","expression":"4.0/1–4.4/5","meaning":"The material nesting condition for every engagement form, not a maximal installed-package tier; host and visitor material are separately observed.","management_software_mandatory":false},
+    "containing_frame": {
+      "id": "CF5",
+      "expression": "4.0/1–4.4/5",
+      "meaning": "The material nesting condition for every engagement form, not a maximal installed-package tier; host and visitor material are separately observed.",
+      "management_software_mandatory": false
+    },
     "forms": [
-      {"id":"CF1","expression":"00/00","composition":"Desktop + Central + explicitly selected backing","normal_new_install_backing":["Central","Actuation","ai-kit"],"backing_selection_explicit":true,"story_ids":["AD01","AD02","AD08","AD09","UI01","UI02","UI03","UI04","UI05","UI06","UI07"],"required_observation":"Desktop is independently addable/removable; selected underlying useful work and source survive.","not_implied":"CF1 is not CF3; a chosen writing-only backing does not promise agent features."},
-      {"id":"CF2","expression":"0/1","composition":"Central + Actuation","native_products":["Central","Actuation"],"not_required":["ai-kit","Factory","QL-MEF"],"story_ids":["AD02","AD04","AD08","WK01","WK02"],"required_observation":"Existing realised agent tool uses durable relevant ground and explicit bounds without hidden AIKit, Factory or QL installation."},
-      {"id":"CF3","expression":"0/1/2","composition":"Central + Actuation + AIKit","native_products":["Central","Actuation","ai-kit"],"not_required":["Factory","QL-MEF"],"story_ids":["AD01","AD04","AD05","WK01","WK02","WK03","WK04","WK05","GV03","PX01","PX02","PX03"],"required_observation":"Relevant source and practice reach an actual ordinary task through the person's selected tool; desktop optional."},
-      {"id":"CF4","expression":"0/1/2/3","composition":"Central + Actuation + AIKit + Factory","native_products":["Central","Actuation","ai-kit","Factory"],"not_required":["QL-MEF"],"story_ids":["AD08","AD09","DV01","DV02","DV03","DV04","DV05","DV06","DV07","DV08","WK04","WK05"],"required_observation":"Actual coordinated development coexists with ordinary sessions; Factory presence does not commission every conversation."},
-      {"id":"CF6","expression":"4.5/0","composition":"Central + minimal Workcell client/connectivity to a separately realised world","native_products":["Central","Workcell-client"],"not_required_locally":["Actuation","ai-kit","Factory","QL-MEF"],"story_ids":["AD06","AD08","AD09","MC02","MC03","MC05","MC06","UI02","UI07"],"required_observation":"An authorised remote activity/service is reachable with private source/access boundaries; remote software is not reported as local installation."},
-      {"id":"CF7","expression":"5/0","composition":"Hosted O:I Web Library + accepted Expression renderer + published source-bound corpus/edition","entry_kind":"hosted-browser","requires_local_install":false,"native_products":[],"native_products_scope":"visitor-local required O:I packages, not the host's software composition","not_required":["Central","Actuation","ai-kit","Factory","QL-MEF","Workcell","O-I Desktop"],"visitor_agent_or_api_key_required":false,"live_shared_session_required_for_reading":false,"default_collection":"owner-curated published Epi-Logos corpus in the existing shared Library, not another catalogue or the limit of O:I Web","story_ids":["AD08","KN01","KN02","KN07","KN09","UI01","UI02","UI03","UI05"],"required_observation":"Clean browser with no local O:I installation: Library → real source-bound subject → live Expression → declared relation/source → same reading position; deep-link reload and truthful optional-service/renderer loss. Published corpus/source/projection and visitor state retain distinct identities.","optional_richer_source":"docs/kernel-rebuild/UX-SPINE-RECONCILIATION.md in EpiLogos/QL-MEF","implementation_followup":"O-I#268 removes mandatory learner-install assumptions in native catalogue/setup/help through reviewed compatibility changes; #375/#366 and QL-MEF#201 supply the same hosted/app corpus consumer. No runtime migration is claimed by this planning record."}
+      {
+        "id": "CF1",
+        "expression": "00/00",
+        "composition": "Desktop + Central + explicitly selected backing",
+        "normal_new_install_backing": [
+          "Central",
+          "Actuation",
+          "ai-kit"
+        ],
+        "backing_selection_explicit": true,
+        "story_ids": [
+          "AD01",
+          "AD02",
+          "AD08",
+          "AD09",
+          "UI01",
+          "UI02",
+          "UI03",
+          "UI04",
+          "UI05",
+          "UI06",
+          "UI07"
+        ],
+        "required_observation": "Desktop is independently addable/removable; selected underlying useful work and source survive.",
+        "not_implied": "CF1 is not CF3; a chosen writing-only backing does not promise agent features."
+      },
+      {
+        "id": "CF2",
+        "expression": "0/1",
+        "composition": "Central + Actuation",
+        "native_products": [
+          "Central",
+          "Actuation"
+        ],
+        "not_required": [
+          "ai-kit",
+          "Factory",
+          "QL-MEF"
+        ],
+        "story_ids": [
+          "AD02",
+          "AD04",
+          "AD08",
+          "WK01",
+          "WK02"
+        ],
+        "required_observation": "Existing realised agent tool uses durable relevant ground and explicit bounds without hidden AIKit, Factory or QL installation."
+      },
+      {
+        "id": "CF3",
+        "expression": "0/1/2",
+        "composition": "Central + Actuation + AIKit",
+        "native_products": [
+          "Central",
+          "Actuation",
+          "ai-kit"
+        ],
+        "not_required": [
+          "Factory",
+          "QL-MEF"
+        ],
+        "story_ids": [
+          "AD01",
+          "AD04",
+          "AD05",
+          "WK01",
+          "WK02",
+          "WK03",
+          "WK04",
+          "WK05",
+          "GV03",
+          "PX01",
+          "PX02",
+          "PX03"
+        ],
+        "required_observation": "Relevant source and practice reach an actual ordinary task through the person's selected tool; desktop optional."
+      },
+      {
+        "id": "CF4",
+        "expression": "0/1/2/3",
+        "composition": "Central + Actuation + AIKit + Factory",
+        "native_products": [
+          "Central",
+          "Actuation",
+          "ai-kit",
+          "Factory"
+        ],
+        "not_required": [
+          "QL-MEF"
+        ],
+        "story_ids": [
+          "AD08",
+          "AD09",
+          "DV01",
+          "DV02",
+          "DV03",
+          "DV04",
+          "DV05",
+          "DV06",
+          "DV07",
+          "DV08",
+          "WK04",
+          "WK05"
+        ],
+        "required_observation": "Actual coordinated development coexists with ordinary sessions; Factory presence does not commission every conversation."
+      },
+      {
+        "id": "CF6",
+        "expression": "4.5/0",
+        "composition": "Central + minimal Workcell client/connectivity to a separately realised world",
+        "native_products": [
+          "Central",
+          "Workcell-client"
+        ],
+        "not_required_locally": [
+          "Actuation",
+          "ai-kit",
+          "Factory",
+          "QL-MEF"
+        ],
+        "story_ids": [
+          "AD06",
+          "AD08",
+          "AD09",
+          "MC02",
+          "MC03",
+          "MC05",
+          "MC06",
+          "UI02",
+          "UI07"
+        ],
+        "required_observation": "An authorised remote activity/service is reachable with private source/access boundaries; remote software is not reported as local installation."
+      },
+      {
+        "id": "CF7",
+        "expression": "5/0",
+        "composition": "Hosted O:I Web Library + accepted Expression renderer + published source-bound corpus/edition",
+        "entry_kind": "hosted-browser",
+        "requires_local_install": false,
+        "native_products": [],
+        "native_products_scope": "visitor-local required O:I packages, not the host's software composition",
+        "not_required": [
+          "Central",
+          "Actuation",
+          "ai-kit",
+          "Factory",
+          "QL-MEF",
+          "Workcell",
+          "O-I Desktop"
+        ],
+        "visitor_agent_or_api_key_required": false,
+        "live_shared_session_required_for_reading": false,
+        "default_collection": "owner-curated published Epi-Logos corpus in the existing shared Library, not another catalogue or the limit of O:I Web",
+        "story_ids": [
+          "AD08",
+          "KN01",
+          "KN02",
+          "KN07",
+          "KN09",
+          "UI01",
+          "UI02",
+          "UI03",
+          "UI05"
+        ],
+        "required_observation": "Clean browser with no local O:I installation: Library → real source-bound subject → live Expression → declared relation/source → same reading position; deep-link reload and truthful optional-service/renderer loss. Published corpus/source/projection and visitor state retain distinct identities.",
+        "optional_richer_source": "docs/kernel-rebuild/UX-SPINE-RECONCILIATION.md in EpiLogos/QL-MEF",
+        "implementation_followup": "O-I#268 removes mandatory learner-install assumptions in native catalogue/setup/help through reviewed compatibility changes; #375/#366 and QL-MEF#201 supply the same hosted/app corpus consumer. No runtime migration is claimed by this planning record."
+      }
     ],
-    "cross_form_branches":["add-remove-desktop-without-recreating-work","change-capability-composition-with-pending-work","software-update-distinct-from-source-sync-and-reconnect","private-two-machine-continuation","owned-teardown-with-residue-account","historical-receipt-version-preserved"],
-    "all_products_with_or_without_desktop":"Supported inside CF5; no eighth frame and no CF5-by-package-count derivation.",
-    "variant_rule":"A story/form link requests applicability review and concrete episode binding, not every action in that family being supported by the minimum composition. Excluded local products must actually be absent in installed-minimum proof. CF7 tests a clean visitor browser, not a fictitious learner package install/uninstall; host administration and optional personal/shared participation are separate.",
-    "readiness":"specified; native composition implementation and actual hosted/installed proof are separate"
+    "cross_form_branches": [
+      "add-remove-desktop-without-recreating-work",
+      "change-capability-composition-with-pending-work",
+      "software-update-distinct-from-source-sync-and-reconnect",
+      "private-two-machine-continuation",
+      "owned-teardown-with-residue-account",
+      "historical-receipt-version-preserved"
+    ],
+    "all_products_with_or_without_desktop": "Supported inside CF5; no eighth frame and no CF5-by-package-count derivation.",
+    "variant_rule": "A story/form link requests applicability review and concrete episode binding, not every action in that family being supported by the minimum composition. Excluded local products must actually be absent in installed-minimum proof. CF7 tests a clean visitor browser, not a fictitious learner package install/uninstall; host administration and optional personal/shared participation are separate.",
+    "readiness": "specified; native composition implementation and actual hosted/installed proof are separate"
   },
   "sandbox_proving": {
     "source": "docs/experience/LOCAL-CAMPAIGN.md#21-omarchy-sandbox-proving--available-development-material",
@@ -53,7 +259,16 @@
     "provider_readiness": "verify actual current native offers, isolation and lifecycle in C1; this source pass did not inspect the host",
     "new_runtime_or_campaign": false,
     "foundation_policy": "Consume the existing Day/NOW foundation return before broad Factory-dependent fan-out; continue authorised independent work and foundation-building tests. Do not add a premature H gate.",
-    "episode_binding": ["existing UX story and full parent obligations", "native capability/Action and expected/forbidden effects", "source/build/install/running/practice cut", "provider/sandbox/image generation and actual OS/hardware scope", "World/Project/task/child-NOW/session/Run refs where real", "writable resources/network/credentials/authority and finite budgets", "evidence retained outside guest deletion", "independent replay/holdout and owned cleanup"],
+    "episode_binding": [
+      "existing UX story and full parent obligations",
+      "native capability/Action and expected/forbidden effects",
+      "source/build/install/running/practice cut",
+      "provider/sandbox/image generation and actual OS/hardware scope",
+      "World/Project/task/child-NOW/session/Run refs where real",
+      "writable resources/network/credentials/authority and finite budgets",
+      "evidence retained outside guest deletion",
+      "independent replay/holdout and owned cleanup"
+    ],
     "parallelism": "Disjoint writable worlds and supported guest desktops may run concurrently within measured capacity; shared host services, data/indexes, Git targets, installations and desktop focus are serialized.",
     "fixture_rule": "Preserve original UX/source expectation and failed episode; source-backed fixture correction and native repair require independent replay. No expected-answer coaching, weakened assertions or silent scope reduction.",
     "evidence_scope": "Real automation can supply D/C/P and applicable M at its observed scope; guest isolation is not independent physical hardware, macOS packaging or human H/EX.",
@@ -61,46 +276,4397 @@
     "human_assessment": null
   },
   "families": [
-    {"id":"AD","ids":["AD01","AD02","AD03","AD04","AD05","AD06","AD07","AD08","AD09"],"title":"Add only what helps my existing setup","owners":["O-I","Central","Actuation","ai-kit","Workcell"],"proof_refs":["O-I#65:A","O-I#93","O-I#173","O-I#268","O-I#192:historical-provenance","O-I:bootstrap/loading"],"source_refs":["docs/positions/FOUNDING-POSITIONS.md","docs/INSTALL.md","docs/EXISTING-WORLD-ADOPTION.md","docs/experience/INSTALLATION-VARIANTS.md","https://github.com/EpiLogos/O-I/issues/268"]},
-    {"id":"WK","ids":["WK01","WK02","WK03","WK04","WK05"],"title":"Work normally without supervising the machinery","owners":["Central","ai-kit","Actuation","Factory","Workcell"],"proof_refs":["O-I#65:B","O-I#202","CAW:P07-P10","CAW:P16-P17","CAW:P21-P22"],"source_refs":["https://github.com/EpiLogos/ai-kit/blob/main/docs/v2/23-TUI-HUMAN-EXPERIENCE-SPEC.md"]},
-    {"id":"GV","ids":["GV01","GV02","GV03","GV04","GV05","GV06","GV07"],"title":"Write and maintain the instructions that matter","owners":["Central","ai-kit","Actuation"],"proof_refs":["O-I#65:A","O-I#65:B","Central#72","Central#164","CAW:P01","CAW:P04-P05","CAW:P07","CAW:P25-P28"],"source_refs":["https://github.com/EpiLogos/Central/blob/main/docs/CONTROL-CONTENT-PROTOCOL.md"]},
-    {"id":"AG","ids":["AG01","AG02","AG03","AG04","AG05","AG06","AG07","AG08","AG09"],"title":"Create and work with actual collaborators","owners":["Central","Actuation","ai-kit","Workcell"],"proof_refs":["O-I#65:B","O-I#154","O-I#155","Central#137","CAW:P07-P12","CAW:P25"],"source_refs":["https://github.com/EpiLogos/ai-kit/blob/main/docs/v2/23-TUI-HUMAN-EXPERIENCE-SPEC.md","https://github.com/EpiLogos/O-I/issues/155"]},
-    {"id":"KN","ids":["KN01","KN02","KN03","KN04","KN05","KN06","KN07","KN08","KN09"],"title":"Find, understand and maintain knowledge","owners":["Central","ai-kit","Factory","QL-MEF"],"proof_refs":["O-I#65:E","O-I#84","O-I#134","ai-kit#118","CAW:P08","CAW:P18-P20"],"source_refs":["https://github.com/EpiLogos/O-I/issues/134","https://github.com/EpiLogos/ai-kit/blob/main/docs/v2/23-TUI-HUMAN-EXPERIENCE-SPEC.md"]},
-    {"id":"PX","ids":["PX01","PX02","PX03","PX04","PX05","PX06"],"title":"Make useful practice and intelligence reusable","owners":["ai-kit","Central","Factory","Actuation","QL-MEF"],"proof_refs":["O-I#65:B","O-I#65:C","Central#164","ai-kit#299:accepted-procedure","CAW:P01","CAW:P07-P08","CAW:P25-P28"],"source_refs":["https://github.com/EpiLogos/Central/issues/164","https://github.com/EpiLogos/ai-kit/blob/main/registry/README.md"]},
-    {"id":"WR","ids":["WR01","WR02","WR03","WR04","WR05","WR06","WR07"],"title":"Write, receive useful help and continue through time","owners":["Central","ai-kit","Actuation","Factory","O-I"],"proof_refs":["O-I#201","CAW:P02-P06","CAW:P15-P16","CAW:P19"],"source_refs":["https://github.com/EpiLogos/Factory/issues/195#issuecomment-5620703383","https://github.com/EpiLogos/Central/issues/74"]},
-    {"id":"MC","ids":["MC01","MC02","MC03","MC04","MC05","MC06","MC07","MC08"],"title":"Choose where work runs and keep it usable","owners":["Workcell","Central","ai-kit","Actuation"],"proof_refs":["O-I#65:H","O-I#268:CF6","Workcell#20","Workcell#22","Workcell#24","Workcell#26","Workcell#27","Workcell#72","CAW:P14-P17"],"source_refs":["https://github.com/EpiLogos/Workcell/blob/main/docs/MATERIALISATION-SPEC.md","https://github.com/EpiLogos/Workcell/blob/main/docs/CONNECTIVITY-FABRIC.md","docs/experience/INSTALLATION-VARIANTS.md"]},
-    {"id":"SH","ids":["SH01","SH02","SH03","SH04","SH05","SH06"],"title":"Share O:I worlds and participate in human-and-agent work","owners":["O-I","Central","ai-kit","Actuation"],"proof_refs":["O-I#65:G","O-I#91","CAW:P10","CAW:P12"],"source_refs":["docs/SHARED-FIELD.md","https://github.com/EpiLogos/O-I/issues/65","docs/experience/SHARED-FIELD-DESKTOP.md"]},
-    {"id":"EX","ids":["EX01","EX02","EX03","EX04","EX05"],"title":"Extend a useful system through public interfaces","owners":["O-I","Central","ai-kit","Workcell","Actuation"],"proof_refs":["O-I#65:D","O-I#173","ai-kit#114","Workcell#23"],"source_refs":["docs/EXISTING-WORLD-ADOPTION.md","https://github.com/EpiLogos/O-I/issues/65"]},
-    {"id":"DV","ids":["DV01","DV02","DV03","DV04","DV05","DV06","DV07","DV08"],"title":"Develop, compare alternatives, upgrade and recover","owners":["Factory","Central","ai-kit","Workcell","Actuation","O-I"],"proof_refs":["O-I#65:C","O-I#97","O-I#268:lifecycle","O-I#220","Factory#195","CAW:P13-P14","CAW:P18-P19","CAW:P21-P24","CAW:P26-P28"],"source_refs":["https://github.com/EpiLogos/Factory/issues/195","docs/cradle/04-VERIFICATION.md","docs/experience/INSTALLATION-VARIANTS.md"]},
-    {"id":"UI","ids":["UI01","UI02","UI03","UI04","UI05","UI06","UI07"],"title":"Exercise actual human controls","owners":["O-I","ai-kit"],"proof_refs":["O-I#65:F","O-I#190","ai-kit#211","ai-kit#282","CAW:P21-P22","CAW:P28"],"source_refs":["docs/cradle/03-UX-STATES.md","docs/OI-DESKTOP-CONTINUOUS-WORK-WAYFINDER.md","https://github.com/EpiLogos/ai-kit/blob/main/docs/v2/23-TUI-HUMAN-EXPERIENCE-SPEC.md"]}
+    {
+      "id": "AD",
+      "ids": [
+        "AD01",
+        "AD02",
+        "AD03",
+        "AD04",
+        "AD05",
+        "AD06",
+        "AD07",
+        "AD08",
+        "AD09"
+      ],
+      "title": "Add only what helps my existing setup",
+      "owners": [
+        "O-I",
+        "Central",
+        "Actuation",
+        "ai-kit",
+        "Workcell"
+      ],
+      "proof_refs": [
+        "O-I#65:A",
+        "O-I#93",
+        "O-I#173",
+        "O-I#268",
+        "O-I#192:historical-provenance",
+        "O-I:bootstrap/loading",
+        "O-I#29",
+        "CAW:P05",
+        "CAW:P17"
+      ],
+      "source_refs": [
+        "docs/positions/FOUNDING-POSITIONS.md",
+        "docs/INSTALL.md",
+        "docs/EXISTING-WORLD-ADOPTION.md",
+        "docs/experience/INSTALLATION-VARIANTS.md",
+        "https://github.com/EpiLogos/O-I/issues/268"
+      ]
+    },
+    {
+      "id": "WK",
+      "ids": [
+        "WK01",
+        "WK02",
+        "WK03",
+        "WK04",
+        "WK05",
+        "WK06",
+        "WK07"
+      ],
+      "title": "Work normally without supervising the machinery",
+      "owners": [
+        "Central",
+        "ai-kit",
+        "Actuation",
+        "Factory",
+        "Workcell"
+      ],
+      "proof_refs": [
+        "O-I#65:B",
+        "O-I#202",
+        "CAW:P07-P10",
+        "CAW:P16-P17",
+        "CAW:P21-P22",
+        "O-I#65:C",
+        "O-I#65:F",
+        "CAW:P01",
+        "CAW:P25"
+      ],
+      "source_refs": [
+        "https://github.com/EpiLogos/ai-kit/blob/main/docs/v2/23-TUI-HUMAN-EXPERIENCE-SPEC.md"
+      ]
+    },
+    {
+      "id": "GV",
+      "ids": [
+        "GV01",
+        "GV02",
+        "GV03",
+        "GV04",
+        "GV05",
+        "GV06",
+        "GV07",
+        "GV08",
+        "GV09",
+        "GV10"
+      ],
+      "title": "Write and maintain the instructions that matter",
+      "owners": [
+        "Central",
+        "ai-kit",
+        "Actuation"
+      ],
+      "proof_refs": [
+        "O-I#65:A",
+        "O-I#65:B",
+        "Central#72",
+        "Central#164",
+        "CAW:P01",
+        "CAW:P04-P05",
+        "CAW:P07",
+        "CAW:P25-P28",
+        "CAW:P08",
+        "CAW:P20"
+      ],
+      "source_refs": [
+        "https://github.com/EpiLogos/Central/blob/main/docs/CONTROL-CONTENT-PROTOCOL.md"
+      ]
+    },
+    {
+      "id": "AG",
+      "ids": [
+        "AG01",
+        "AG02",
+        "AG03",
+        "AG04",
+        "AG05",
+        "AG06",
+        "AG07",
+        "AG08",
+        "AG09",
+        "AG10"
+      ],
+      "title": "Create and work with actual collaborators",
+      "owners": [
+        "Central",
+        "Actuation",
+        "ai-kit",
+        "Workcell"
+      ],
+      "proof_refs": [
+        "O-I#65:B",
+        "O-I#154",
+        "O-I#155",
+        "Central#137",
+        "CAW:P07-P12",
+        "CAW:P25",
+        "ai-kit#211:journey-B",
+        "CAW:P14"
+      ],
+      "source_refs": [
+        "https://github.com/EpiLogos/ai-kit/blob/main/docs/v2/23-TUI-HUMAN-EXPERIENCE-SPEC.md",
+        "https://github.com/EpiLogos/O-I/issues/155"
+      ]
+    },
+    {
+      "id": "KN",
+      "ids": [
+        "KN01",
+        "KN02",
+        "KN03",
+        "KN04",
+        "KN05",
+        "KN06",
+        "KN07",
+        "KN08",
+        "KN09"
+      ],
+      "title": "Find, understand and maintain knowledge",
+      "owners": [
+        "Central",
+        "ai-kit",
+        "Factory",
+        "QL-MEF"
+      ],
+      "proof_refs": [
+        "O-I#65:E",
+        "O-I#84",
+        "O-I#134",
+        "ai-kit#118",
+        "CAW:P08",
+        "CAW:P18-P20",
+        "ai-kit#211:journey-F"
+      ],
+      "source_refs": [
+        "https://github.com/EpiLogos/O-I/issues/134",
+        "https://github.com/EpiLogos/ai-kit/blob/main/docs/v2/23-TUI-HUMAN-EXPERIENCE-SPEC.md"
+      ]
+    },
+    {
+      "id": "PX",
+      "ids": [
+        "PX01",
+        "PX02",
+        "PX03",
+        "PX04",
+        "PX05",
+        "PX06"
+      ],
+      "title": "Make useful practice and intelligence reusable",
+      "owners": [
+        "ai-kit",
+        "Central",
+        "Factory",
+        "Actuation",
+        "QL-MEF"
+      ],
+      "proof_refs": [
+        "O-I#65:B",
+        "O-I#65:C",
+        "Central#164",
+        "ai-kit#299:accepted-procedure",
+        "CAW:P01",
+        "CAW:P07-P08",
+        "CAW:P25-P28"
+      ],
+      "source_refs": [
+        "https://github.com/EpiLogos/Central/issues/164",
+        "https://github.com/EpiLogos/ai-kit/blob/main/registry/README.md"
+      ]
+    },
+    {
+      "id": "WR",
+      "ids": [
+        "WR01",
+        "WR02",
+        "WR03",
+        "WR04",
+        "WR05",
+        "WR06",
+        "WR07"
+      ],
+      "title": "Write, receive useful help and continue through time",
+      "owners": [
+        "Central",
+        "ai-kit",
+        "Actuation",
+        "Factory",
+        "O-I"
+      ],
+      "proof_refs": [
+        "O-I#201",
+        "CAW:P02-P06",
+        "CAW:P15-P16",
+        "CAW:P19",
+        "O-I#138",
+        "Central#74",
+        "Central#150",
+        "Central#151",
+        "Central#152",
+        "ai-kit#276",
+        "Factory#200"
+      ],
+      "source_refs": [
+        "https://github.com/EpiLogos/Factory/issues/195#issuecomment-5620703383",
+        "https://github.com/EpiLogos/Central/issues/74"
+      ]
+    },
+    {
+      "id": "MC",
+      "ids": [
+        "MC01",
+        "MC02",
+        "MC03",
+        "MC04",
+        "MC05",
+        "MC06",
+        "MC07",
+        "MC08"
+      ],
+      "title": "Choose where work runs and keep it usable",
+      "owners": [
+        "Workcell",
+        "Central",
+        "ai-kit",
+        "Actuation"
+      ],
+      "proof_refs": [
+        "O-I#65:H",
+        "O-I#268:CF6",
+        "Workcell#20",
+        "Workcell#22",
+        "Workcell#24",
+        "Workcell#26",
+        "Workcell#27",
+        "Workcell#72",
+        "CAW:P14-P17",
+        "CAW:P26"
+      ],
+      "source_refs": [
+        "https://github.com/EpiLogos/Workcell/blob/main/docs/MATERIALISATION-SPEC.md",
+        "https://github.com/EpiLogos/Workcell/blob/main/docs/CONNECTIVITY-FABRIC.md",
+        "docs/experience/INSTALLATION-VARIANTS.md"
+      ]
+    },
+    {
+      "id": "SH",
+      "ids": [
+        "SH01",
+        "SH02",
+        "SH03",
+        "SH04",
+        "SH05",
+        "SH06"
+      ],
+      "title": "Share O:I worlds and participate in human-and-agent work",
+      "owners": [
+        "O-I",
+        "Central",
+        "ai-kit",
+        "Actuation"
+      ],
+      "proof_refs": [
+        "O-I#65:G",
+        "O-I#91",
+        "CAW:P10",
+        "CAW:P12",
+        "O-I#155"
+      ],
+      "source_refs": [
+        "docs/SHARED-FIELD.md",
+        "https://github.com/EpiLogos/O-I/issues/65",
+        "docs/architecture/shared-participation.md"
+      ]
+    },
+    {
+      "id": "EX",
+      "ids": [
+        "EX01",
+        "EX02",
+        "EX03",
+        "EX04",
+        "EX05",
+        "EX06"
+      ],
+      "title": "Extend a useful system through public interfaces",
+      "owners": [
+        "O-I",
+        "Central",
+        "ai-kit",
+        "Workcell",
+        "Actuation"
+      ],
+      "proof_refs": [
+        "O-I#65:D",
+        "O-I#173",
+        "ai-kit#114",
+        "Workcell#23"
+      ],
+      "source_refs": [
+        "docs/EXISTING-WORLD-ADOPTION.md",
+        "https://github.com/EpiLogos/O-I/issues/65"
+      ]
+    },
+    {
+      "id": "DV",
+      "ids": [
+        "DV01",
+        "DV02",
+        "DV03",
+        "DV04",
+        "DV05",
+        "DV06",
+        "DV07",
+        "DV08",
+        "DV09"
+      ],
+      "title": "Develop, compare alternatives, upgrade and recover",
+      "owners": [
+        "Factory",
+        "Central",
+        "ai-kit",
+        "Workcell",
+        "Actuation",
+        "O-I"
+      ],
+      "proof_refs": [
+        "O-I#65:C",
+        "O-I#97",
+        "O-I#268:lifecycle",
+        "O-I#220",
+        "Factory#195",
+        "CAW:P13-P14",
+        "CAW:P18-P19",
+        "CAW:P21-P24",
+        "CAW:P26-P28",
+        "O-I#65:A",
+        "O-I#213",
+        "Factory#143",
+        "Factory#201",
+        "Factory#221",
+        "Factory#222",
+        "CAW:P05",
+        "CAW:P17",
+        "CAW:candidate-worktree-now",
+        "CAW:working-environment-continuity",
+        "CAW:assisted-commission",
+        "CAW:candidate-comparison",
+        "CAW:developer-upgrade-repair-reentry"
+      ],
+      "source_refs": [
+        "https://github.com/EpiLogos/Factory/issues/195",
+        "docs/experience/LOCAL-CAMPAIGN.md",
+        "docs/experience/INSTALLATION-VARIANTS.md"
+      ]
+    },
+    {
+      "id": "UI",
+      "ids": [
+        "UI01",
+        "UI02",
+        "UI03",
+        "UI04",
+        "UI05",
+        "UI06",
+        "UI07"
+      ],
+      "title": "Exercise actual human controls",
+      "owners": [
+        "O-I",
+        "ai-kit"
+      ],
+      "proof_refs": [
+        "O-I#65:F",
+        "O-I#190",
+        "ai-kit#211",
+        "ai-kit#282",
+        "CAW:P21-P22",
+        "CAW:P28"
+      ],
+      "source_refs": [
+        "docs/experience/LOCAL-CAMPAIGN.md",
+        "docs/OI-DESKTOP-CONTINUOUS-WORK-WAYFINDER.md",
+        "https://github.com/EpiLogos/ai-kit/blob/main/docs/v2/23-TUI-HUMAN-EXPERIENCE-SPEC.md"
+      ]
+    },
+    {
+      "id": "SU",
+      "ids": [
+        "SU01",
+        "SU02",
+        "SU03",
+        "SU04",
+        "SU05",
+        "SU06",
+        "SU07",
+        "SU08"
+      ],
+      "title": "Open the DLW for the first time and find myself and my work in it",
+      "owners": [
+        "Central",
+        "O-I",
+        "QL-MEF",
+        "Workcell",
+        "ai-kit"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": []
+    },
+    {
+      "id": "WI",
+      "ids": [
+        "WI01",
+        "WI02",
+        "WI03",
+        "WI04",
+        "WI05",
+        "WI06",
+        "WI07",
+        "WI08",
+        "WI09",
+        "WI10",
+        "WI11",
+        "WI12",
+        "WI13",
+        "WI14"
+      ],
+      "title": "Bring in the work and tools I already have, without moving them",
+      "owners": [
+        "Central",
+        "Workcell",
+        "ai-kit"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": []
+    },
+    {
+      "id": "WS",
+      "ids": [
+        "WS01",
+        "WS02",
+        "WS03",
+        "WS04",
+        "WS05",
+        "WS06",
+        "WS07",
+        "WS08"
+      ],
+      "title": "Change how my world works in one window",
+      "owners": [
+        "O-I"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Ableton Live 12.0.25 (the shell's grammar)"
+      ]
+    },
+    {
+      "id": "WP",
+      "ids": [
+        "WP01",
+        "WP02",
+        "WP03",
+        "WP04",
+        "WP05",
+        "WP06",
+        "WP07",
+        "WP08",
+        "WP09",
+        "WP10",
+        "WP11",
+        "WP12"
+      ],
+      "title": "Choose the harnesses, keys, machines and routines my work runs on",
+      "owners": [
+        "Actuation",
+        "Central",
+        "Factory",
+        "O-I",
+        "Workcell",
+        "ai-kit"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": []
+    },
+    {
+      "id": "WN",
+      "ids": [
+        "WN01",
+        "WN02",
+        "WN03",
+        "WN04",
+        "WN05",
+        "WN06",
+        "WN07",
+        "WN08",
+        "WN09",
+        "WN10",
+        "WN11",
+        "WN12",
+        "WN13",
+        "WN14",
+        "WN15"
+      ],
+      "title": "Hold the window the same way in every kind of work",
+      "owners": [
+        "O-I",
+        "ai-kit"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Ableton Live 12.0.25 (session model",
+        "object model)",
+        "interior.dev (the shell's kit)"
+      ]
+    },
+    {
+      "id": "WV",
+      "ids": [
+        "WV01",
+        "WV02",
+        "WV03",
+        "WV04",
+        "WV05",
+        "WV06",
+        "WV07",
+        "WV08",
+        "WV09",
+        "WV10",
+        "WV11",
+        "WV12",
+        "WV13",
+        "WV14",
+        "WV15",
+        "WV16",
+        "WV17"
+      ],
+      "title": "Move between the grid, the ruler and the panes without losing my place",
+      "owners": [
+        "O-I",
+        "QL-MEF"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Ableton Live 12.0.25 (session model)",
+        "interior.dev (the shell's kit)"
+      ]
+    },
+    {
+      "id": "WT",
+      "ids": [
+        "WT01",
+        "WT02",
+        "WT03",
+        "WT04",
+        "WT05",
+        "WT06",
+        "WT07",
+        "WT08",
+        "WT09",
+        "WT10"
+      ],
+      "title": "Use the same transport in every kind of work",
+      "owners": [
+        "Central",
+        "O-I"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Ableton Live 12.0.25 (session model)",
+        "interior.dev (the shell's kit)"
+      ]
+    },
+    {
+      "id": "WA",
+      "ids": [
+        "WA01",
+        "WA02",
+        "WA03",
+        "WA04",
+        "WA05",
+        "WA06",
+        "WA07",
+        "WA08",
+        "WA09",
+        "WA10",
+        "WA11",
+        "WA12",
+        "WA13",
+        "WA14",
+        "WA15"
+      ],
+      "title": "Act on anything as Live acts on it",
+      "owners": [
+        "O-I"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Ableton Live 12.0.25 (session model",
+        "object model)"
+      ]
+    },
+    {
+      "id": "WB",
+      "ids": [
+        "WB01",
+        "WB02",
+        "WB03",
+        "WB04",
+        "WB05",
+        "WB06",
+        "WB07",
+        "WB08",
+        "WB09"
+      ],
+      "title": "Find anything I can work with and bring it in",
+      "owners": [
+        "Central",
+        "O-I",
+        "Workcell",
+        "ai-kit"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Ableton Live 12.0.25 (session model)",
+        "interior.dev (the shell's kit)"
+      ]
+    },
+    {
+      "id": "WD",
+      "ids": [
+        "WD01",
+        "WD02",
+        "WD03",
+        "WD04",
+        "WD05",
+        "WD06",
+        "WD07",
+        "WD08",
+        "WD09",
+        "WD10",
+        "WD11",
+        "WD12",
+        "WD13"
+      ],
+      "title": "Shape what works on the material with devices",
+      "owners": [
+        "O-I"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Ableton Live 12.0.25 (object model",
+        "racks",
+        "device decodes)",
+        "interior.dev (the shell's kit)"
+      ]
+    },
+    {
+      "id": "WO",
+      "ids": [
+        "WO01",
+        "WO02",
+        "WO03",
+        "WO04",
+        "WO05",
+        "WO06",
+        "WO07"
+      ],
+      "title": "Stand in my world and see how far it reaches",
+      "owners": [
+        "Central",
+        "O-I",
+        "QL-MEF"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "MapLibre GL JS (Earth)",
+        "Archetypal Earth",
+        "ported as code"
+      ]
+    },
+    {
+      "id": "WG",
+      "ids": [
+        "WG01",
+        "WG02",
+        "WG03",
+        "WG04",
+        "WG05",
+        "WG06",
+        "WG07",
+        "WG08",
+        "WG09",
+        "WG10",
+        "WG11"
+      ],
+      "title": "Keep what I need at hand in every kind of work",
+      "owners": [
+        "Central",
+        "O-I",
+        "QL-MEF",
+        "ai-kit"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "interior.dev (the shell's kit)"
+      ]
+    },
+    {
+      "id": "WM",
+      "ids": [
+        "WM01",
+        "WM02",
+        "WM03",
+        "WM04",
+        "WM05",
+        "WM06",
+        "WM07",
+        "WM08",
+        "WM09",
+        "WM10",
+        "WM11",
+        "WM12"
+      ],
+      "title": "See what agents read and change, and what is still open",
+      "owners": [
+        "Central",
+        "Factory",
+        "ai-kit"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "interior.dev (the shell's kit)",
+        "VS Code's workbench (the code-editor side)"
+      ]
+    },
+    {
+      "id": "FC",
+      "ids": [
+        "FC01",
+        "FC02",
+        "FC03",
+        "FC04",
+        "FC05",
+        "FC06",
+        "FC07",
+        "FC08",
+        "FC09",
+        "FC10",
+        "FC11",
+        "FC12"
+      ],
+      "title": "Carry one thing across the modes and let each make its own of it",
+      "owners": [
+        "Central",
+        "Factory",
+        "O-I",
+        "QL-MEF",
+        "ai-kit"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Ableton Live 12.0.25 (session model: a sample as an audio clip's source",
+        "Show in Browser",
+        "the browser's preview)"
+      ]
+    },
+    {
+      "id": "CL",
+      "ids": [
+        "CL01",
+        "CL02",
+        "CL03",
+        "CL04",
+        "CL05",
+        "CL06"
+      ],
+      "title": "Read a thing through a frame or a lens without changing it",
+      "owners": [
+        "O-I",
+        "QL-MEF",
+        "ai-kit"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Ableton Live 12.0.25 (the Groove Pool",
+        "the Clip panel's Groove)"
+      ]
+    },
+    {
+      "id": "FL",
+      "ids": [
+        "FL01",
+        "FL02",
+        "FL03",
+        "FL04",
+        "FL05",
+        "FL06",
+        "FL07",
+        "FL08",
+        "FL09",
+        "FL10",
+        "FL11",
+        "FL12"
+      ],
+      "title": "Keep my sets, files and media where they belong",
+      "owners": [
+        "Central",
+        "O-I",
+        "ai-kit"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Ableton Live 12.0.25 (session model",
+        "the `.als`)",
+        "Obsidian 1.7.7 (saving)"
+      ]
+    },
+    {
+      "id": "CW",
+      "ids": [
+        "CW01",
+        "CW02",
+        "CW03",
+        "CW04",
+        "CW05",
+        "CW06",
+        "CW07",
+        "CW08",
+        "CW09",
+        "CW10",
+        "CW11"
+      ],
+      "title": "Bring the worlds I work on into today",
+      "owners": [
+        "Actuation",
+        "Central",
+        "Factory"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Obsidian 1.7.7 (saving",
+        "graph and links)",
+        "VS Code's workbench (the code-editor side)"
+      ]
+    },
+    {
+      "id": "CM",
+      "ids": [
+        "CM01",
+        "CM02",
+        "CM03",
+        "CM04",
+        "CM05",
+        "CM06"
+      ],
+      "title": "Set how each world takes part in today",
+      "owners": [
+        "Central",
+        "O-I"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Ableton Live 12.0.25 (session model)"
+      ]
+    },
+    {
+      "id": "CT",
+      "ids": [
+        "CT01",
+        "CT02",
+        "CT03",
+        "CT04",
+        "CT05",
+        "CT06",
+        "CT07",
+        "CT08"
+      ],
+      "title": "Use the transport for writing and for the day",
+      "owners": [
+        "Central",
+        "Workcell"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Ableton Live 12.0.25 (session model)",
+        "Obsidian 1.7.7 (saving)"
+      ]
+    },
+    {
+      "id": "CP",
+      "ids": [
+        "CP01",
+        "CP02",
+        "CP03",
+        "CP04",
+        "CP05",
+        "CP06",
+        "CP07",
+        "CP08",
+        "CP09",
+        "CP10",
+        "CP11"
+      ],
+      "title": "Write and mark the pages of my worlds",
+      "owners": [
+        "Central"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Obsidian 1.7.7 (saving",
+        "plugins)",
+        "VS Code's workbench (the code-editor side)"
+      ]
+    },
+    {
+      "id": "CJ",
+      "ids": [
+        "CJ01",
+        "CJ02",
+        "CJ03",
+        "CJ04",
+        "CJ05",
+        "CJ06",
+        "CJ07",
+        "CJ08",
+        "CJ09",
+        "CJ10",
+        "CJ11",
+        "CJ12",
+        "CJ13"
+      ],
+      "title": "Keep a conversation or a journal as a Flow",
+      "owners": [
+        "Central"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Obsidian 1.7.7 (saving",
+        "graph and links)"
+      ]
+    },
+    {
+      "id": "CB",
+      "ids": [
+        "CB01",
+        "CB02",
+        "CB03",
+        "CB04",
+        "CB05",
+        "CB06",
+        "CB07",
+        "CB08",
+        "CB09"
+      ],
+      "title": "Tie a page to what it is about and where it stands",
+      "owners": [
+        "Central",
+        "O-I"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Obsidian 1.7.7 (graph and links)"
+      ]
+    },
+    {
+      "id": "CA",
+      "ids": [
+        "CA01",
+        "CA02",
+        "CA03",
+        "CA04",
+        "CA05",
+        "CA06",
+        "CA07",
+        "CA08",
+        "CA09",
+        "CA10",
+        "CA11",
+        "CA12",
+        "CA13"
+      ],
+      "title": "Hand a passage to an agent and keep only what helps",
+      "owners": [
+        "Actuation",
+        "Central",
+        "Factory"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Obsidian 1.7.7 (saving)",
+        "VS Code's workbench (the code-editor side)"
+      ]
+    },
+    {
+      "id": "CS",
+      "ids": [
+        "CS01",
+        "CS02",
+        "CS03",
+        "CS04",
+        "CS05",
+        "CS06",
+        "CS07",
+        "CS08",
+        "CS09",
+        "CS10",
+        "CS11",
+        "CS12"
+      ],
+      "title": "Find anything I can reach and send what I selected there",
+      "owners": [
+        "Actuation",
+        "Central"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Ableton Live 12.0.25 (the browser's search)",
+        "VS Code's workbench (the command line over anything)"
+      ]
+    },
+    {
+      "id": "CG",
+      "ids": [
+        "CG01",
+        "CG02",
+        "CG03",
+        "CG04",
+        "CG05",
+        "CG06"
+      ],
+      "title": "Grow into Search's own language",
+      "owners": [
+        "Central",
+        "QL-MEF"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "VS Code's workbench (the command line over anything)"
+      ]
+    },
+    {
+      "id": "CD",
+      "ids": [
+        "CD01",
+        "CD02",
+        "CD03",
+        "CD04",
+        "CD05",
+        "CD06",
+        "CD07",
+        "CD08",
+        "CD09",
+        "CD10",
+        "CD11",
+        "CD12",
+        "CD13",
+        "CD14"
+      ],
+      "title": "Keep each world's own account of itself",
+      "owners": [
+        "Central",
+        "Workcell",
+        "ai-kit"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Obsidian 1.7.7 (graph and links)",
+        "VS Code's workbench (the code-editor side)"
+      ]
+    },
+    {
+      "id": "DY",
+      "ids": [
+        "DY01",
+        "DY02",
+        "DY03",
+        "DY04",
+        "DY05",
+        "DY06",
+        "DY07",
+        "DY08",
+        "DY09",
+        "DY10",
+        "DY11",
+        "DY12",
+        "DY13"
+      ],
+      "title": "Set the day going and see what it holds, face by face",
+      "owners": [
+        "Central"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Obsidian 1.7.7 (saving)"
+      ]
+    },
+    {
+      "id": "CC",
+      "ids": [
+        "CC01",
+        "CC02",
+        "CC03",
+        "CC04",
+        "CC05",
+        "CC06",
+        "CC07",
+        "CC08",
+        "CC09"
+      ],
+      "title": "Let the day close and carry on tomorrow",
+      "owners": [
+        "Central"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Obsidian 1.7.7 (saving)"
+      ]
+    },
+    {
+      "id": "LV",
+      "ids": [
+        "LV01",
+        "LV02",
+        "LV03",
+        "LV04",
+        "LV05",
+        "LV06",
+        "LV07",
+        "LV08",
+        "LV09",
+        "LV10",
+        "LV11",
+        "LV12",
+        "LV13",
+        "LV14",
+        "LV15"
+      ],
+      "title": "Lay a piece out in parts and launch it",
+      "owners": [
+        "QL-MEF"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Ableton Live 12.0.25: session model",
+        "object model"
+      ]
+    },
+    {
+      "id": "LT",
+      "ids": [
+        "LT01",
+        "LT02",
+        "LT03",
+        "LT04",
+        "LT05",
+        "LT06",
+        "LT07",
+        "LT08",
+        "LT09",
+        "LT10",
+        "LT11",
+        "LT12",
+        "LT13"
+      ],
+      "title": "Play the torus",
+      "owners": [
+        "QL-MEF"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Ableton Live 12.0.25: object model",
+        "device decodes"
+      ]
+    },
+    {
+      "id": "LB",
+      "ids": [
+        "LB01",
+        "LB02",
+        "LB03",
+        "LB04",
+        "LB05",
+        "LB06",
+        "LB07",
+        "LB08",
+        "LB09",
+        "LB10",
+        "LB11",
+        "LB12",
+        "LB13"
+      ],
+      "title": "Shape the torus's sound and keep it",
+      "owners": [
+        "QL-MEF"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Ableton Live 12.0.25: device decodes"
+      ]
+    },
+    {
+      "id": "LM",
+      "ids": [
+        "LM01",
+        "LM02",
+        "LM03",
+        "LM04",
+        "LM05",
+        "LM06",
+        "LM07",
+        "LM08",
+        "LM09",
+        "LM10",
+        "LM11",
+        "LM12",
+        "LM13",
+        "LM14",
+        "LM15"
+      ],
+      "title": "Play in a mode and tune in exact ratios",
+      "owners": [
+        "QL-MEF"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Ableton Live 12.0.25: session model",
+        "device decodes"
+      ]
+    },
+    {
+      "id": "LE",
+      "ids": [
+        "LE01",
+        "LE02",
+        "LE03",
+        "LE04",
+        "LE05",
+        "LE06",
+        "LE07",
+        "LE08"
+      ],
+      "title": "Shape the sound with effects",
+      "owners": [
+        "O-I"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Ableton Live 12.0.25: device decodes"
+      ]
+    },
+    {
+      "id": "LN",
+      "ids": [
+        "LN01",
+        "LN02",
+        "LN03",
+        "LN04",
+        "LN05",
+        "LN06",
+        "LN07",
+        "LN08",
+        "LN09",
+        "LN10",
+        "LN11",
+        "LN12",
+        "LN13",
+        "LN14",
+        "LN15"
+      ],
+      "title": "Edit notes and samples in Clip view",
+      "owners": [
+        "O-I"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Ableton Live 12.0.25: session model",
+        "object model"
+      ]
+    },
+    {
+      "id": "LR",
+      "ids": [
+        "LR01",
+        "LR02",
+        "LR03",
+        "LR04",
+        "LR05",
+        "LR06",
+        "LR07",
+        "LR08",
+        "LR09",
+        "LR10",
+        "LR11",
+        "LR12"
+      ],
+      "title": "Record, comp and arrange",
+      "owners": [
+        "O-I"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Ableton Live 12.0.25: session model"
+      ]
+    },
+    {
+      "id": "LF",
+      "ids": [
+        "LF01",
+        "LF02",
+        "LF03",
+        "LF04",
+        "LF05",
+        "LF06",
+        "LF07",
+        "LF08",
+        "LF09",
+        "LF10"
+      ],
+      "title": "Bring in, keep and render the set's files",
+      "owners": [
+        "O-I"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Ableton Live 12.0.25: session model",
+        "object model"
+      ]
+    },
+    {
+      "id": "LG",
+      "ids": [
+        "LG01",
+        "LG02",
+        "LG03",
+        "LG04",
+        "LG05",
+        "LG06",
+        "LG07",
+        "LG08",
+        "LG09"
+      ],
+      "title": "Sound a constellation, and play it through grooves",
+      "owners": [
+        "QL-MEF",
+        "ai-kit"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Ableton Live 12.0.25: session model (the Groove Pool)"
+      ]
+    },
+    {
+      "id": "LS",
+      "ids": [
+        "LS01",
+        "LS02",
+        "LS03",
+        "LS04",
+        "LS05",
+        "LS06",
+        "LS07",
+        "LS08",
+        "LS09",
+        "LS10",
+        "LS11",
+        "LS12",
+        "LS13"
+      ],
+      "title": "See the sky over my world",
+      "owners": [
+        "QL-MEF"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "QL's own system",
+        "Ableton Live 12.0.25: device decodes",
+        "for the device's grammar"
+      ]
+    },
+    {
+      "id": "LP",
+      "ids": [
+        "LP01",
+        "LP02",
+        "LP03",
+        "LP04",
+        "LP05",
+        "LP06",
+        "LP07",
+        "LP08",
+        "LP09",
+        "LP10",
+        "LP11",
+        "LP12"
+      ],
+      "title": "Let the planets move the sound",
+      "owners": [
+        "QL-MEF"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "QL's own system",
+        "Ableton Live 12.0.25: device decodes"
+      ]
+    },
+    {
+      "id": "LK",
+      "ids": [
+        "LK01",
+        "LK02",
+        "LK03",
+        "LK04",
+        "LK05",
+        "LK06",
+        "LK07",
+        "LK08",
+        "LK09",
+        "LK10",
+        "LK11",
+        "LK12",
+        "LK13",
+        "LK14",
+        "LK15"
+      ],
+      "title": "Read the wheel of the clock and hear how it is cut",
+      "owners": [
+        "QL-MEF"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "QL's own system",
+        "Ableton Live 12.0.25: racks",
+        "device decodes"
+      ]
+    },
+    {
+      "id": "LJ",
+      "ids": [
+        "LJ01",
+        "LJ02",
+        "LJ03",
+        "LJ04",
+        "LJ05",
+        "LJ06",
+        "LJ07",
+        "LJ08"
+      ],
+      "title": "See which codons a matrix binds",
+      "owners": [
+        "QL-MEF"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "QL's own system"
+      ]
+    },
+    {
+      "id": "LD",
+      "ids": [
+        "LD01",
+        "LD02",
+        "LD03",
+        "LD04",
+        "LD05",
+        "LD06",
+        "LD07",
+        "LD08",
+        "LD09",
+        "LD10",
+        "LD11",
+        "LD12"
+      ],
+      "title": "Draw a reading on the Deck",
+      "owners": [
+        "QL-MEF"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "QL's own system"
+      ]
+    },
+    {
+      "id": "LH",
+      "ids": [
+        "LH01",
+        "LH02",
+        "LH03",
+        "LH04",
+        "LH05",
+        "LH06",
+        "LH07"
+      ],
+      "title": "See what the sky does to my centres",
+      "owners": [
+        "QL-MEF"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "QL's own system"
+      ]
+    },
+    {
+      "id": "LQ",
+      "ids": [
+        "LQ01",
+        "LQ02",
+        "LQ03",
+        "LQ04",
+        "LQ05",
+        "LQ06",
+        "LQ07",
+        "LQ08",
+        "LQ09",
+        "LQ10",
+        "LQ11"
+      ],
+      "title": "See what the instrument is made of",
+      "owners": [
+        "QL-MEF"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "QL's own system",
+        "Ableton Live 12.0.25: racks"
+      ]
+    },
+    {
+      "id": "XS",
+      "ids": [
+        "XS01",
+        "XS02",
+        "XS03",
+        "XS04",
+        "XS05",
+        "XS06",
+        "XS07",
+        "XS08",
+        "XS09",
+        "XS10",
+        "XS11",
+        "XS12",
+        "XS13",
+        "XS14",
+        "XS15"
+      ],
+      "title": "Start an Expression and launch its scenes",
+      "owners": [
+        "O-I"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Shotcut with MLT",
+        "Olive",
+        "Kdenlive and Blender's sequence editor in the register"
+      ]
+    },
+    {
+      "id": "XC",
+      "ids": [
+        "XC01",
+        "XC02",
+        "XC03",
+        "XC04",
+        "XC05",
+        "XC06",
+        "XC07",
+        "XC08",
+        "XC09",
+        "XC10",
+        "XC11",
+        "XC12"
+      ],
+      "title": "Compose a scene: its symbols, words and figures",
+      "owners": [
+        "QL-MEF"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Shotcut with MLT",
+        "Olive"
+      ]
+    },
+    {
+      "id": "XG",
+      "ids": [
+        "XG01",
+        "XG02",
+        "XG03",
+        "XG04",
+        "XG05",
+        "XG06",
+        "XG07",
+        "XG08",
+        "XG09",
+        "XG10",
+        "XG11",
+        "XG12",
+        "XG13"
+      ],
+      "title": "Shape one symbol: its place, force, voice and meaning",
+      "owners": [
+        "QL-MEF"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Shotcut with MLT",
+        "Olive (keyframes)",
+        "Kdenlive and Blender's sequence editor in the register"
+      ]
+    },
+    {
+      "id": "XF",
+      "ids": [
+        "XF01",
+        "XF02",
+        "XF03",
+        "XF04",
+        "XF05",
+        "XF06",
+        "XF07",
+        "XF08",
+        "XF09",
+        "XF10",
+        "XF11",
+        "XF12",
+        "XF13",
+        "XF14",
+        "XF15"
+      ],
+      "title": "Set up the field and keep my controls in reach",
+      "owners": [
+        "QL-MEF"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Shotcut with MLT",
+        "Olive"
+      ]
+    },
+    {
+      "id": "XM",
+      "ids": [
+        "XM01",
+        "XM02",
+        "XM03",
+        "XM04",
+        "XM05",
+        "XM06",
+        "XM07",
+        "XM08",
+        "XM09",
+        "XM10",
+        "XM11",
+        "XM12",
+        "XM13"
+      ],
+      "title": "Make the field move",
+      "owners": [
+        "O-I"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Shotcut with MLT",
+        "Olive"
+      ]
+    },
+    {
+      "id": "XL",
+      "ids": [
+        "XL01",
+        "XL02",
+        "XL03",
+        "XL04",
+        "XL05",
+        "XL06",
+        "XL07",
+        "XL08",
+        "XL09"
+      ],
+      "title": "Give the field its look",
+      "owners": [
+        "QL-MEF"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Shotcut with MLT",
+        "Olive"
+      ]
+    },
+    {
+      "id": "XR",
+      "ids": [
+        "XR01",
+        "XR02",
+        "XR03",
+        "XR04",
+        "XR05",
+        "XR06",
+        "XR07",
+        "XR08",
+        "XR09"
+      ],
+      "title": "Tune the plate the field sounds on",
+      "owners": [
+        "O-I"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "QL's own system",
+        "for the modes of M2′"
+      ]
+    },
+    {
+      "id": "XT",
+      "ids": [
+        "XT01",
+        "XT02",
+        "XT03",
+        "XT04",
+        "XT05",
+        "XT06",
+        "XT07",
+        "XT08",
+        "XT09",
+        "XT10",
+        "XT11",
+        "XT12",
+        "XT13",
+        "XT14",
+        "XT15"
+      ],
+      "title": "Cut scenes on one timeline, keep takes and export",
+      "owners": [
+        "QL-MEF"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Shotcut with MLT",
+        "Olive",
+        "Kdenlive and Blender's sequence editor in the register"
+      ]
+    },
+    {
+      "id": "XA",
+      "ids": [
+        "XA01",
+        "XA02",
+        "XA03",
+        "XA04",
+        "XA05",
+        "XA06",
+        "XA07",
+        "XA08",
+        "XA09",
+        "XA10",
+        "XA11",
+        "XA12",
+        "XA13",
+        "XA14",
+        "XA15",
+        "XA16",
+        "XA17"
+      ],
+      "title": "Give anything an expression and carry it across modes",
+      "owners": [
+        "Central",
+        "Factory",
+        "QL-MEF",
+        "ai-kit"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Ableton Live 12.0.25: session model (the browser",
+        "previews and drops onto tracks)"
+      ]
+    },
+    {
+      "id": "FA",
+      "ids": [
+        "FA01",
+        "FA02",
+        "FA03",
+        "FA04",
+        "FA05",
+        "FA06",
+        "FA07",
+        "FA08",
+        "FA09",
+        "FA10",
+        "FA11",
+        "FA12",
+        "FA13"
+      ],
+      "title": "Set agents to work on what I want built",
+      "owners": [
+        "Actuation",
+        "Central",
+        "Factory",
+        "ai-kit"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Ableton Live 12.0.25 (session model",
+        "launch modes",
+        "follow actions)",
+        "OpenRig (BEHAVIOURS.md §3–§5: durable seats with changing occupants",
+        "§11: handoff)",
+        "Grok Bot 0.68.1 (handing task ownership between agents)"
+      ]
+    },
+    {
+      "id": "FS",
+      "ids": [
+        "FS01",
+        "FS02",
+        "FS03",
+        "FS04",
+        "FS05",
+        "FS06",
+        "FS07",
+        "FS08",
+        "FS09",
+        "FS10"
+      ],
+      "title": "See how the work stands at a glance",
+      "owners": [
+        "Actuation",
+        "Central",
+        "Factory",
+        "O-I"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Ableton Live 12.0.25 (clip states",
+        "Arrangement)",
+        "OpenRig (BEHAVIOURS.md §15: three-axis activity state and status precedence",
+        "honest unknown)",
+        "Buzz's agent system (per-agent working state)"
+      ]
+    },
+    {
+      "id": "FK",
+      "ids": [
+        "FK01",
+        "FK02",
+        "FK03",
+        "FK04",
+        "FK05",
+        "FK06",
+        "FK07",
+        "FK08",
+        "FK09",
+        "FK10",
+        "FK11",
+        "FK12"
+      ],
+      "title": "Step in where I am needed, and stay out of the way where I am not",
+      "owners": [
+        "Actuation",
+        "Factory",
+        "O-I"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Ableton Live 12.0.25 (transport",
+        "Arm",
+        "Re-enable",
+        "punch)",
+        "Buzz's agent system (CONTRACT Behaviours 2–3: steer as the default mid-turn path)"
+      ]
+    },
+    {
+      "id": "FE",
+      "ids": [
+        "FE01",
+        "FE02",
+        "FE03",
+        "FE04",
+        "FE05",
+        "FE06"
+      ],
+      "title": "Pace and read the floor from the transport",
+      "owners": [
+        "Actuation",
+        "Factory",
+        "O-I",
+        "ai-kit"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Ableton Live 12.0.25 (Tempo",
+        "Tap",
+        "Metronome",
+        "Follow)",
+        "Buzz's agent system (heartbeat liveness)"
+      ]
+    },
+    {
+      "id": "FT",
+      "ids": [
+        "FT01",
+        "FT02",
+        "FT03",
+        "FT04",
+        "FT05",
+        "FT06",
+        "FT07",
+        "FT08",
+        "FT09",
+        "FT10"
+      ],
+      "title": "Say what a task is for, and keep the attempt that stands",
+      "owners": [
+        "Actuation",
+        "Factory",
+        "Workcell",
+        "ai-kit"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Ableton Live 12.0.25 (takes and comping)",
+        "OpenRig (BEHAVIOURS.md §11: closure only with a stated outcome)"
+      ]
+    },
+    {
+      "id": "FJ",
+      "ids": [
+        "FJ01",
+        "FJ02",
+        "FJ03",
+        "FJ04",
+        "FJ05",
+        "FJ06",
+        "FJ07",
+        "FJ08",
+        "FJ09",
+        "FJ10"
+      ],
+      "title": "See a piece of work whole, and close it on my word",
+      "owners": [
+        "Factory"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "OpenRig (BEHAVIOURS.md §11: closure reasons and the handed-off chain",
+        "§17: a refusal names the current state and the next operation)"
+      ]
+    },
+    {
+      "id": "RA",
+      "ids": [
+        "RA01",
+        "RA02",
+        "RA03",
+        "RA04",
+        "RA05",
+        "RA06",
+        "RA07",
+        "RA08",
+        "RA09"
+      ],
+      "title": "Answer what waits for me",
+      "owners": [
+        "Central",
+        "Factory",
+        "ai-kit"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Buzz's agent system (CONTRACT Behaviour 4: diff cards and the owner gate)",
+        "Grok Bot 0.68.1 (drafts awaiting approval)"
+      ]
+    },
+    {
+      "id": "RR",
+      "ids": [
+        "RR01",
+        "RR02",
+        "RR03",
+        "RR04",
+        "RR05",
+        "RR06",
+        "RR07",
+        "RR08"
+      ],
+      "title": "Read back what the agents did",
+      "owners": [
+        "Factory"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "OpenRig (BEHAVIOURS.md §11: append-only transitions and stated outcomes)"
+      ]
+    },
+    {
+      "id": "FN",
+      "ids": [
+        "FN01",
+        "FN02",
+        "FN03",
+        "FN04",
+        "FN05",
+        "FN06",
+        "FN07",
+        "FN08",
+        "FN09",
+        "FN10"
+      ],
+      "title": "Tune how an agent works",
+      "owners": [
+        "Actuation",
+        "Factory"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Grok Bot 0.68.1 (Factory's agent client)",
+        "Ableton Live 12.0.25 (clip envelopes)"
+      ]
+    },
+    {
+      "id": "FI",
+      "ids": [
+        "FI01",
+        "FI02",
+        "FI03",
+        "FI04",
+        "FI05",
+        "FI06",
+        "FI07",
+        "FI08",
+        "FI09"
+      ],
+      "title": "Read what an agent did and what it was told",
+      "owners": [
+        "Actuation",
+        "Central",
+        "Factory",
+        "ai-kit"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Grok Bot 0.68.1 (mid-task updates",
+        "drafts awaiting approval)",
+        "Buzz's agent system (diff cards in the thread)",
+        "OpenRig (BEHAVIOURS.md §4: occupant generations)"
+      ]
+    },
+    {
+      "id": "FY",
+      "ids": [
+        "FY01",
+        "FY02",
+        "FY03",
+        "FY04",
+        "FY05",
+        "FY06",
+        "FY07"
+      ],
+      "title": "Give an agent a type",
+      "owners": [
+        "Actuation"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Ableton Live 12.0.25 (a device's presets in the browser)"
+      ]
+    },
+    {
+      "id": "FM",
+      "ids": [
+        "FM01",
+        "FM02",
+        "FM03",
+        "FM04",
+        "FM05"
+      ],
+      "title": "Make agents and groups",
+      "owners": [
+        "Actuation",
+        "Central",
+        "Factory"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Buzz's agent system (creating an agent as a membership act)",
+        "Grok Bot 0.68.1 (named persistent teammates)"
+      ]
+    },
+    {
+      "id": "FX",
+      "ids": [
+        "FX01",
+        "FX02",
+        "FX03",
+        "FX04",
+        "FX05",
+        "FX06",
+        "FX07",
+        "FX08",
+        "FX09",
+        "FX10",
+        "FX11"
+      ],
+      "title": "Run a team of agents as one",
+      "owners": [
+        "Actuation",
+        "Factory"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Ableton Live 12.0.25 (racks",
+        "chains",
+        "macros)",
+        "Buzz's agent system (teams of agents)"
+      ]
+    },
+    {
+      "id": "FD",
+      "ids": [
+        "FD01",
+        "FD02",
+        "FD03",
+        "FD04",
+        "FD05",
+        "FD06",
+        "FD07",
+        "FD08",
+        "FD09"
+      ],
+      "title": "Settle small choices with a decision helper",
+      "owners": [
+        "Factory",
+        "QL-MEF",
+        "ai-kit"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Quaternal Logic's own system (#714)"
+      ]
+    },
+    {
+      "id": "FW",
+      "ids": [
+        "FW01",
+        "FW02",
+        "FW03",
+        "FW04",
+        "FW05",
+        "FW06",
+        "FW07",
+        "FW08",
+        "FW09"
+      ],
+      "title": "Limit what an agent may touch and look up",
+      "owners": [
+        "Central",
+        "Factory",
+        "ai-kit"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "—"
+      ]
+    },
+    {
+      "id": "RK",
+      "ids": [
+        "RK01",
+        "RK02",
+        "RK03",
+        "RK04",
+        "RK05",
+        "RK06",
+        "RK07",
+        "RK08",
+        "RK09",
+        "RK10",
+        "RK11"
+      ],
+      "title": "Carry the practice the work needs, and see whether it is used",
+      "owners": [
+        "O-I",
+        "ai-kit"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "—"
+      ]
+    },
+    {
+      "id": "RS",
+      "ids": [
+        "RS01",
+        "RS02",
+        "RS03",
+        "RS04",
+        "RS05",
+        "RS06",
+        "RS07",
+        "RS08",
+        "RS09"
+      ],
+      "title": "Keep where practice comes from, and take changes back",
+      "owners": [
+        "ai-kit"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "—"
+      ]
+    },
+    {
+      "id": "RM",
+      "ids": [
+        "RM01",
+        "RM02",
+        "RM03",
+        "RM04",
+        "RM05",
+        "RM06",
+        "RM07",
+        "RM08",
+        "RM09"
+      ],
+      "title": "Read and run one member of the practice",
+      "owners": [
+        "Central",
+        "ai-kit"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "—"
+      ]
+    },
+    {
+      "id": "RC",
+      "ids": [
+        "RC01",
+        "RC02",
+        "RC03",
+        "RC04",
+        "RC05",
+        "RC06",
+        "RC07",
+        "RC08"
+      ],
+      "title": "Teach an agent by doing the task once",
+      "owners": [
+        "ai-kit"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Grok Bot 0.68.1 (workflows learned by demonstration)",
+        "Ableton Live 12.0.25 (Capture)"
+      ]
+    },
+    {
+      "id": "FP",
+      "ids": [
+        "FP01",
+        "FP02",
+        "FP03",
+        "FP04",
+        "FP05",
+        "FP06",
+        "FP07",
+        "FP08",
+        "FP09",
+        "FP10",
+        "FP11",
+        "FP12"
+      ],
+      "title": "Keep the asks I repeat on pads",
+      "owners": [
+        "Factory",
+        "Workcell",
+        "ai-kit"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Ableton Live 12.0.25 (Drum Rack pads",
+        "choke groups)",
+        "Grok Bot 0.68.1 (demonstrated workflows saved as scheduled skills)"
+      ]
+    },
+    {
+      "id": "FQ",
+      "ids": [
+        "FQ01",
+        "FQ02",
+        "FQ03",
+        "FQ04",
+        "FQ05",
+        "FQ06",
+        "FQ07",
+        "FQ08",
+        "FQ09",
+        "FQ10",
+        "FQ11",
+        "FQ12",
+        "FQ13",
+        "FQ14"
+      ],
+      "title": "Talk to my agents from wherever I am",
+      "owners": [
+        "Factory",
+        "ai-kit"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Buzz's agent system (→ Messages: agents as members",
+        "open relays between agents",
+        "per-agent working state)",
+        "OpenRig (BEHAVIOURS.md §9: the send guard",
+        "CROSSWALK §9: delivery at the recipient's next turn)"
+      ]
+    },
+    {
+      "id": "FV",
+      "ids": [
+        "FV01",
+        "FV02",
+        "FV03",
+        "FV04",
+        "FV05",
+        "FV06",
+        "FV07",
+        "FV08",
+        "FV09",
+        "FV10",
+        "FV11",
+        "FV12"
+      ],
+      "title": "Hear an agent and see it speak",
+      "owners": [
+        "Actuation"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Grok Bot 0.68.1 (messaging by typing",
+        "dictation and voice)"
+      ]
+    },
+    {
+      "id": "GA",
+      "ids": [
+        "GA01",
+        "GA02",
+        "GA03",
+        "GA04",
+        "GA05",
+        "GA06",
+        "GA07",
+        "GA08",
+        "GA09",
+        "GA10"
+      ],
+      "title": "Decide once where agents work",
+      "owners": [
+        "Actuation",
+        "Workcell",
+        "ai-kit"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Ableton Live 12.0.25 (return tracks",
+        "sends)",
+        "OpenRig (BEHAVIOURS.md §3: stable seat identity",
+        "§16: terminal providers)"
+      ]
+    },
+    {
+      "id": "GB",
+      "ids": [
+        "GB01",
+        "GB02",
+        "GB03",
+        "GB04",
+        "GB05",
+        "GB06",
+        "GB07",
+        "GB08",
+        "GB09",
+        "GB10",
+        "GB11",
+        "GB12",
+        "GB13"
+      ],
+      "title": "Let agents in through a gateway",
+      "owners": [
+        "Actuation"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "OpenRig (BEHAVIOURS.md §3: liveness verdicts",
+        "§15: honest unknown)",
+        "Buzz's agent system (CONTRACT Behaviours 2 and 4: heartbeat liveness",
+        "permission requests)"
+      ]
+    },
+    {
+      "id": "GD",
+      "ids": [
+        "GD01",
+        "GD02",
+        "GD03",
+        "GD04",
+        "GD05",
+        "GD06",
+        "GD07",
+        "GD08",
+        "GD09",
+        "GD10",
+        "GD11"
+      ],
+      "title": "Run work on the right machine, and keep my machines in step",
+      "owners": [
+        "Actuation",
+        "Workcell"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Grok Bot 0.68.1 (local execution beside a remote computer)",
+        "Buzz's agent system (where an agent runs as a first-class choice)",
+        "Ableton Live 12.0.25 (Link)"
+      ]
+    },
+    {
+      "id": "GL",
+      "ids": [
+        "GL01",
+        "GL02",
+        "GL03",
+        "GL04",
+        "GL05",
+        "GL06",
+        "GL07",
+        "GL08",
+        "GL09",
+        "GL10",
+        "GL11",
+        "GL12",
+        "GL13",
+        "GL14",
+        "GL15"
+      ],
+      "title": "Land the work safely",
+      "owners": [
+        "Factory",
+        "Workcell"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "OpenRig (BEHAVIOURS.md §3–§5: a durable seat whose occupants change",
+        "§17: refusals that name the state)"
+      ]
+    },
+    {
+      "id": "GR",
+      "ids": [
+        "GR01",
+        "GR02",
+        "GR03",
+        "GR04",
+        "GR05",
+        "GR06",
+        "GR07"
+      ],
+      "title": "Keep a run's world, and what it leaves behind",
+      "owners": [
+        "Workcell"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Grok Bot 0.68.1 (a remote computer per run beside a local execution daemon)",
+        "OpenRig (BEHAVIOURS.md §13: snapshot and restore)"
+      ]
+    },
+    {
+      "id": "RW",
+      "ids": [
+        "RW01",
+        "RW02",
+        "RW03",
+        "RW04",
+        "RW05",
+        "RW06",
+        "RW07",
+        "RW08",
+        "RW09",
+        "RW10",
+        "RW11",
+        "RW12",
+        "RW13"
+      ],
+      "title": "Meet the same agents, doing the same work, in every mode",
+      "owners": [
+        "Actuation",
+        "Central",
+        "Factory",
+        "O-I",
+        "QL-MEF",
+        "Workcell",
+        "ai-kit"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "—"
+      ]
+    },
+    {
+      "id": "RO",
+      "ids": [
+        "RO01",
+        "RO02",
+        "RO03",
+        "RO04",
+        "RO05",
+        "RO06"
+      ],
+      "title": "Know how an agent's act was reached",
+      "owners": [
+        "QL-MEF",
+        "ai-kit"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Quaternal Logic's own system (#714)"
+      ]
+    },
+    {
+      "id": "RF",
+      "ids": [
+        "RF01",
+        "RF02",
+        "RF03",
+        "RF04",
+        "RF05",
+        "RF06",
+        "RF07",
+        "RF08",
+        "RF09",
+        "RF10",
+        "RF11",
+        "RF12",
+        "RF13"
+      ],
+      "title": "Read agents and processes at a glance",
+      "owners": [
+        "Actuation",
+        "Central",
+        "Factory",
+        "O-I",
+        "Workcell"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "OpenRig (BEHAVIOURS.md §15: honest unknown",
+        "never a fabricated state)"
+      ]
+    },
+    {
+      "id": "TK",
+      "ids": [
+        "TK01",
+        "TK02",
+        "TK03",
+        "TK04",
+        "TK05",
+        "TK06",
+        "TK07",
+        "TK08",
+        "TK09",
+        "TK10"
+      ],
+      "title": "Set what I know at its time and place",
+      "owners": [
+        "O-I",
+        "ai-kit"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Ableton Live 12.0.25 (session model",
+        "object model)",
+        "Aeon Timeline 2's manual"
+      ]
+    },
+    {
+      "id": "TE",
+      "ids": [
+        "TE01",
+        "TE02",
+        "TE03",
+        "TE04",
+        "TE05",
+        "TE06",
+        "TE07",
+        "TE08",
+        "TE09",
+        "TE10"
+      ],
+      "title": "Open an event and see how sure anyone is of it",
+      "owners": [
+        "ai-kit"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Aeon Timeline 2's manual",
+        "PeriodO"
+      ]
+    },
+    {
+      "id": "TA",
+      "ids": [
+        "TA01",
+        "TA02",
+        "TA03",
+        "TA04",
+        "TA05",
+        "TA06",
+        "TA07",
+        "TA08"
+      ],
+      "title": "Stand a stop: its moment, its place and its scenes at once",
+      "owners": [
+        "QL-MEF"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Ableton Live 12.0.25 (clip and scene follow actions)",
+        "Godot's animation state machine",
+        "Unity Timeline's documentation"
+      ]
+    },
+    {
+      "id": "TR",
+      "ids": [
+        "TR01",
+        "TR02",
+        "TR03",
+        "TR04",
+        "TR05",
+        "TR06",
+        "TR07",
+        "TR08",
+        "TR09",
+        "TR10",
+        "TR11",
+        "TR12"
+      ],
+      "title": "Lay history on one ruler",
+      "owners": [
+        "Central",
+        "Factory"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Aeon Timeline 2's manual",
+        "TimelineJS3",
+        "vis-timeline",
+        "PeriodO",
+        "Histography",
+        "Chronas",
+        "Archetypal Earth",
+        "ported as code"
+      ]
+    },
+    {
+      "id": "TV",
+      "ids": [
+        "TV01",
+        "TV02",
+        "TV03",
+        "TV04",
+        "TV05",
+        "TV06",
+        "TV07",
+        "TV08",
+        "TV09"
+      ],
+      "title": "Read history by cause, recurrence and concurrency",
+      "owners": [
+        "O-I"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Aeon Timeline 2's manual",
+        "Histography",
+        "Chronas"
+      ]
+    },
+    {
+      "id": "TW",
+      "ids": [
+        "TW01",
+        "TW02",
+        "TW03",
+        "TW04",
+        "TW05",
+        "TW06",
+        "TW07",
+        "TW08",
+        "TW09",
+        "TW10",
+        "TW11",
+        "TW12"
+      ],
+      "title": "Build my planet",
+      "owners": [
+        "QL-MEF"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "MapLibre GL JS (Google Earth",
+        "Cesium",
+        "QGIS surveyed)",
+        "Archetypal Earth",
+        "ported as code"
+      ]
+    },
+    {
+      "id": "TY",
+      "ids": [
+        "TY01",
+        "TY02",
+        "TY03",
+        "TY04",
+        "TY05",
+        "TY06",
+        "TY07",
+        "TY08",
+        "TY09",
+        "TY10",
+        "TY11"
+      ],
+      "title": "See my worlds and agents as one system",
+      "owners": [
+        "Central",
+        "Factory",
+        "QL-MEF"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "MapLibre GL JS",
+        "Archetypal Earth",
+        "ported as code"
+      ]
+    },
+    {
+      "id": "TO",
+      "ids": [
+        "TO01",
+        "TO02",
+        "TO03",
+        "TO04",
+        "TO05",
+        "TO06",
+        "TO07",
+        "TO08",
+        "TO09",
+        "TO10",
+        "TO11",
+        "TO12",
+        "TO13",
+        "TO14",
+        "TO15",
+        "TO16",
+        "TO17",
+        "TO18"
+      ],
+      "title": "Stand in another moment, look further out, and see what others see",
+      "owners": [
+        "QL-MEF"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "MapLibre GL JS (Google Earth",
+        "Cesium",
+        "QGIS surveyed)",
+        "Archetypal Earth",
+        "ported as code"
+      ]
+    },
+    {
+      "id": "TG",
+      "ids": [
+        "TG01",
+        "TG02",
+        "TG03",
+        "TG04",
+        "TG05",
+        "TG06",
+        "TG07",
+        "TG08",
+        "TG09",
+        "TG10",
+        "TG11"
+      ],
+      "title": "Read my notes link by link",
+      "owners": [
+        "ai-kit"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "tldraw",
+        "Excalidraw",
+        "Obsidian `.canvas`",
+        "Miro's documentation (canvas and graph)",
+        "Obsidian 1.7.7 (graph and links)"
+      ]
+    },
+    {
+      "id": "TS",
+      "ids": [
+        "TS01",
+        "TS02",
+        "TS03",
+        "TS04",
+        "TS05",
+        "TS06",
+        "TS07",
+        "TS08"
+      ],
+      "title": "Narrow the graph and act on what it shows",
+      "owners": [
+        "Central",
+        "Factory"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Obsidian 1.7.7 (graph and links)"
+      ]
+    },
+    {
+      "id": "TQ",
+      "ids": [
+        "TQ01",
+        "TQ02",
+        "TQ03",
+        "TQ04",
+        "TQ05"
+      ],
+      "title": "Bring Quaternal Logic into the field round a note",
+      "owners": [
+        "QL-MEF"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "QL's own system"
+      ]
+    },
+    {
+      "id": "TC",
+      "ids": [
+        "TC01",
+        "TC02",
+        "TC03",
+        "TC04",
+        "TC05",
+        "TC06",
+        "TC07",
+        "TC08",
+        "TC09",
+        "TC10",
+        "TC11",
+        "TC12",
+        "TC13",
+        "TC14"
+      ],
+      "title": "Think out loud on a table",
+      "owners": [
+        "O-I"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "tldraw",
+        "Excalidraw",
+        "Obsidian `.canvas`",
+        "Miro's documentation"
+      ]
+    },
+    {
+      "id": "TI",
+      "ids": [
+        "TI01",
+        "TI02",
+        "TI03",
+        "TI04",
+        "TI05",
+        "TI06"
+      ],
+      "title": "Draw relations and send them to their owners",
+      "owners": [
+        "ai-kit"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "tldraw",
+        "Excalidraw",
+        "Obsidian `.canvas`",
+        "Miro's documentation"
+      ]
+    },
+    {
+      "id": "TF",
+      "ids": [
+        "TF01",
+        "TF02",
+        "TF03",
+        "TF04",
+        "TF05",
+        "TF06",
+        "TF07"
+      ],
+      "title": "Give a question a shape before it has answers",
+      "owners": [
+        "QL-MEF",
+        "ai-kit"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "tldraw",
+        "Excalidraw (the board)",
+        "QL's own system (the forms)"
+      ]
+    },
+    {
+      "id": "TJ",
+      "ids": [
+        "TJ01",
+        "TJ02",
+        "TJ03",
+        "TJ04",
+        "TJ05",
+        "TJ06",
+        "TJ07",
+        "TJ08",
+        "TJ09",
+        "TJ10"
+      ],
+      "title": "Make a walk through a subject",
+      "owners": [
+        "O-I"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Godot's animation state machine",
+        "Twine 2",
+        "Unity Timeline's documentation",
+        "Archetypal Earth",
+        "ported as code"
+      ]
+    },
+    {
+      "id": "TN",
+      "ids": [
+        "TN01",
+        "TN02",
+        "TN03",
+        "TN04",
+        "TN05",
+        "TN06",
+        "TN07",
+        "TN08"
+      ],
+      "title": "Walk it, record it and keep the take that stands",
+      "owners": [
+        "QL-MEF"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Godot's animation state machine",
+        "Twine 2",
+        "Unity Timeline's documentation",
+        "Archetypal Earth",
+        "ported as code"
+      ]
+    },
+    {
+      "id": "TP",
+      "ids": [
+        "TP01",
+        "TP02",
+        "TP03",
+        "TP04",
+        "TP05",
+        "TP06",
+        "TP07",
+        "TP08",
+        "TP09",
+        "TP10",
+        "TP11",
+        "TP12"
+      ],
+      "title": "Enter a palace and walk its rooms",
+      "owners": [
+        "O-I"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Godot's animation state machine",
+        "Twine 2",
+        "Unity Timeline's documentation"
+      ]
+    },
+    {
+      "id": "TU",
+      "ids": [
+        "TU01",
+        "TU02",
+        "TU03",
+        "TU04",
+        "TU05",
+        "TU06",
+        "TU07",
+        "TU08"
+      ],
+      "title": "Build a palace and return what I found",
+      "owners": [
+        "O-I"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Godot's animation state machine",
+        "Twine 2",
+        "Unity Timeline's documentation"
+      ]
+    },
+    {
+      "id": "TL",
+      "ids": [
+        "TL01",
+        "TL02",
+        "TL03",
+        "TL04",
+        "TL05",
+        "TL06",
+        "TL07",
+        "TL08",
+        "TL09",
+        "TL10",
+        "TL11"
+      ],
+      "title": "Read through one way of seeing at a time",
+      "owners": [
+        "QL-MEF",
+        "ai-kit"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Ableton Live 12.0.25 (an effect on a chain)",
+        "QL's own system"
+      ]
+    },
+    {
+      "id": "TD",
+      "ids": [
+        "TD01",
+        "TD02",
+        "TD03",
+        "TD04",
+        "TD05",
+        "TD06",
+        "TD07",
+        "TD08"
+      ],
+      "title": "Read and write a page beside the work, in any mode",
+      "owners": [
+        "Central"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Obsidian 1.7.7 (saving",
+        "plugins",
+        "graph and links)"
+      ]
+    },
+    {
+      "id": "TB",
+      "ids": [
+        "TB01",
+        "TB02",
+        "TB03",
+        "TB04",
+        "TB05",
+        "TB06",
+        "TB07",
+        "TB08",
+        "TB09"
+      ],
+      "title": "Mark a passage and hand it to an agent",
+      "owners": [
+        "Central"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Obsidian 1.7.7 (graph and links)"
+      ]
+    },
+    {
+      "id": "TH",
+      "ids": [
+        "TH01",
+        "TH02",
+        "TH03",
+        "TH04",
+        "TH05"
+      ],
+      "title": "Save a page safely, and ask for a reading of a whole Flow",
+      "owners": [
+        "Central"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Obsidian 1.7.7 (saving)"
+      ]
+    },
+    {
+      "id": "TT",
+      "ids": [
+        "TT01",
+        "TT02",
+        "TT03",
+        "TT04",
+        "TT05",
+        "TT06",
+        "TT07",
+        "TT08",
+        "TT09",
+        "TT10"
+      ],
+      "title": "Keep a shell next to my work",
+      "owners": [
+        "Central",
+        "Workcell",
+        "ai-kit"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "VS Code's workbench (MIT)"
+      ]
+    },
+    {
+      "id": "TX",
+      "ids": [
+        "TX01",
+        "TX02",
+        "TX03",
+        "TX04",
+        "TX05",
+        "TX06",
+        "TX07",
+        "TX08",
+        "TX09",
+        "TX10",
+        "TX11",
+        "TX12",
+        "TX13",
+        "TX14",
+        "TX15"
+      ],
+      "title": "Play Technē from the transport",
+      "owners": [
+        "O-I"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "Ableton Live 12.0.25 (the transport)"
+      ]
+    },
+    {
+      "id": "NP",
+      "ids": [
+        "NP01",
+        "NP02",
+        "NP03",
+        "NP04",
+        "NP05",
+        "NP06",
+        "NP07",
+        "NP08",
+        "NP09",
+        "NP10",
+        "NP11"
+      ],
+      "title": "Keep a practice world only I can see into",
+      "owners": [
+        "Actuation",
+        "Central",
+        "O-I",
+        "QL-MEF",
+        "ai-kit"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "QL's own system"
+      ]
+    },
+    {
+      "id": "NV",
+      "ids": [
+        "NV01",
+        "NV02",
+        "NV03",
+        "NV04",
+        "NV05",
+        "NV06"
+      ],
+      "title": "Let Nara hear me",
+      "owners": [
+        "Actuation",
+        "Central"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "QL's own system"
+      ]
+    },
+    {
+      "id": "NJ",
+      "ids": [
+        "NJ01",
+        "NJ02",
+        "NJ03",
+        "NJ04",
+        "NJ05",
+        "NJ06",
+        "NJ07"
+      ],
+      "title": "Write my journal and my dreams",
+      "owners": [
+        "Central",
+        "QL-MEF"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "QL's own system"
+      ]
+    },
+    {
+      "id": "NS",
+      "ids": [
+        "NS01",
+        "NS02",
+        "NS03",
+        "NS04",
+        "NS05",
+        "NS06",
+        "NS07",
+        "NS08",
+        "NS09"
+      ],
+      "title": "Sit",
+      "owners": [
+        "Central",
+        "QL-MEF"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "QL's own system"
+      ]
+    },
+    {
+      "id": "NK",
+      "ids": [
+        "NK01",
+        "NK02",
+        "NK03",
+        "NK04",
+        "NK05",
+        "NK06",
+        "NK07",
+        "NK08",
+        "NK09",
+        "NK10"
+      ],
+      "title": "Carry a concern for days or months",
+      "owners": [
+        "Central",
+        "QL-MEF"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "QL's own system"
+      ]
+    },
+    {
+      "id": "NC",
+      "ids": [
+        "NC01",
+        "NC02",
+        "NC03",
+        "NC04",
+        "NC05",
+        "NC06"
+      ],
+      "title": "Hold a conversation in a form",
+      "owners": [
+        "Central",
+        "QL-MEF"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "QL's own system"
+      ]
+    },
+    {
+      "id": "NI",
+      "ids": [
+        "NI01",
+        "NI02",
+        "NI03",
+        "NI04",
+        "NI05"
+      ],
+      "title": "See myself as the system discloses me",
+      "owners": [
+        "Central",
+        "QL-MEF"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "QL's own system"
+      ]
+    },
+    {
+      "id": "NF",
+      "ids": [
+        "NF01",
+        "NF02",
+        "NF03",
+        "NF04",
+        "NF05"
+      ],
+      "title": "Lay my own layer over an Expression",
+      "owners": [
+        "QL-MEF"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "QL's own system"
+      ]
+    },
+    {
+      "id": "NL",
+      "ids": [
+        "NL01",
+        "NL02",
+        "NL03",
+        "NL04",
+        "NL05",
+        "NL06",
+        "NL07",
+        "NL08"
+      ],
+      "title": "Read a practice page through a lens, and return what it taught",
+      "owners": [
+        "Central",
+        "QL-MEF",
+        "ai-kit"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "docs/dlw/DLW.md"
+      ],
+      "port_sources": [
+        "QL's own system"
+      ]
+    }
   ],
   "native_capability_sources": [
-    {"repository":"EpiLogos/Central","path":"ProjectCentral/user/capability-matrix.csv","binding":"inspect exact current IDs; never mint replicas"},
-    {"repository":"EpiLogos/ai-kit","path":"ProjectCentral/user/telos/capability-matrix.csv","binding":"inspect exact current IDs; never mint replicas"},
-    {"repository":"EpiLogos/Factory","path":"ProjectCentral/user/capability-matrix.csv","binding":"inspect exact current IDs; never mint replicas"},
-    {"repository":"EpiLogos/Workcell","path":"ProjectCentral/user/capability-matrix.csv","binding":"inspect exact current IDs; never mint replicas"},
-    {"repository":"EpiLogos/Actuation","path":"ProjectCentral/user/capability-matrix.csv","binding":"verify current declared matrix path and exact IDs before use"},
-    {"repository":"EpiLogos/QL-MEF","path":"docs/integrations/epi-logos/EPI-CAPABILITY-MATRIX-FIELD-INDEX.md","binding":"enumerate every registered native matrix, not only the product synopsis"},
-    {"repository":"EpiLogos/O-I","path":"suite/capability-matrix.json","binding":"use host source inventory and actual current native command/application account"}
+    {
+      "repository": "EpiLogos/Central",
+      "path": "ProjectCentral/user/capability-matrix.csv",
+      "binding": "inspect exact current IDs; never mint replicas"
+    },
+    {
+      "repository": "EpiLogos/ai-kit",
+      "path": "ProjectCentral/user/telos/capability-matrix.csv",
+      "binding": "inspect exact current IDs; never mint replicas"
+    },
+    {
+      "repository": "EpiLogos/Factory",
+      "path": "ProjectCentral/user/capability-matrix.csv",
+      "binding": "inspect exact current IDs; never mint replicas"
+    },
+    {
+      "repository": "EpiLogos/Workcell",
+      "path": "ProjectCentral/user/capability-matrix.csv",
+      "binding": "inspect exact current IDs; never mint replicas"
+    },
+    {
+      "repository": "EpiLogos/Actuation",
+      "path": "ProjectCentral/user/capability-matrix.csv",
+      "binding": "verify current declared matrix path and exact IDs before use"
+    },
+    {
+      "repository": "EpiLogos/QL-MEF",
+      "path": "docs/integrations/epi-logos/EPI-CAPABILITY-MATRIX-FIELD-INDEX.md",
+      "binding": "enumerate every registered native matrix, not only the product synopsis"
+    },
+    {
+      "repository": "EpiLogos/O-I",
+      "path": "suite/capability-matrix.json",
+      "binding": "use host source inventory and actual current native command/application account"
+    }
   ],
   "delegated_ql": {
-    "repository":"EpiLogos/QL-MEF",
-    "trace_path":"docs/kernel-rebuild/ux-spine-trace.json",
-    "story_path":"docs/kernel-rebuild/UX-SPINE-RECONCILIATION.md",
-    "practice_path":"docs/kernel-rebuild/AGENT-PRACTICE-AND-BOOTSTRAP.md",
-    "standing_path":"docs/kernel-rebuild/ux-publication-standing.json",
-    "known_ids":["UX01","UX02","UX03","UX04","UX05","UX06","UX07","UX08","UX09","UX10","UX11","UX12"],
-    "policy":"Include the complete selected source trace and all linked original acceptance/matrix fields. Preserve additional rows and source standing; never infer coverage from this snapshot count. CF7 hosted learning is not the complete richer Epii instrument and does not imply a visitor installation.",
-    "H_ratification_at_inspection":"pending",
-    "human_experience_validated_at_inspection":false,
-    "host_extensions":["docs/cradle/03-UX-STATES.md#L","docs/cradle/04-VERIFICATION.md#8"]
+    "repository": "EpiLogos/QL-MEF",
+    "trace_path": "docs/kernel-rebuild/ux-spine-trace.json",
+    "story_path": "docs/kernel-rebuild/UX-SPINE-RECONCILIATION.md",
+    "practice_path": "docs/kernel-rebuild/AGENT-PRACTICE-AND-BOOTSTRAP.md",
+    "standing_path": "docs/kernel-rebuild/ux-publication-standing.json",
+    "known_ids": [
+      "UX01",
+      "UX02",
+      "UX03",
+      "UX04",
+      "UX05",
+      "UX06",
+      "UX07",
+      "UX08",
+      "UX09",
+      "UX10",
+      "UX11",
+      "UX12"
+    ],
+    "policy": "Include the complete selected source trace and all linked original acceptance/matrix fields. Preserve additional rows and source standing; never infer coverage from this snapshot count. CF7 hosted learning is not the complete richer Epii instrument and does not imply a visitor installation.",
+    "H_ratification_at_inspection": "pending",
+    "human_experience_validated_at_inspection": false,
+    "host_extensions": [
+      "docs/experience/LOCAL-CAMPAIGN.md#121-l-epi-living-instrument-states--a-domain-composition-of-this-spine",
+      "docs/experience/LOCAL-CAMPAIGN.md#12-epi-domain-walks"
+    ],
+    "proof_refs": [
+      "O-I#65:I",
+      "O-I#216",
+      "QL-MEF#94",
+      "QL-MEF#132",
+      "QL-MEF#133",
+      "QL-MEF#134",
+      "ai-kit#267",
+      "Factory#217",
+      "CAW:P20"
+    ],
+    "capability_candidates": [
+      {
+        "repository": "EpiLogos/QL-MEF",
+        "matrix_path": "ProjectCentral/user/capability-matrix.csv",
+        "inspected_blob": "417ac7d90aaf7dd45c9f367cec90d34166acde75",
+        "capability_id": "cap.ql.context-frames",
+        "ql_story_ids": [
+          "UX04",
+          "UX05",
+          "UX06",
+          "UX09"
+        ],
+        "reason": "Folded from the docs/ux participation register (O-I #728). Needed for the formal and intelligence field (exact source definitions, operations and full inventories).",
+        "binding_status": "candidate-source-id-observed; exact current operation/loading unbound"
+      },
+      {
+        "repository": "EpiLogos/QL-MEF",
+        "matrix_path": "ProjectCentral/user/capability-matrix.csv",
+        "inspected_blob": "417ac7d90aaf7dd45c9f367cec90d34166acde75",
+        "capability_id": "cap.ql.kernel-operators",
+        "ql_story_ids": [
+          "UX04",
+          "UX05",
+          "UX06",
+          "UX09"
+        ],
+        "reason": "Folded from the docs/ux participation register (O-I #728). Needed for the formal and intelligence field (exact source definitions, operations and full inventories).",
+        "binding_status": "candidate-source-id-observed; exact current operation/loading unbound"
+      },
+      {
+        "repository": "EpiLogos/QL-MEF",
+        "matrix_path": "ProjectCentral/user/capability-matrix.csv",
+        "inspected_blob": "417ac7d90aaf7dd45c9f367cec90d34166acde75",
+        "capability_id": "cap.ql.pairing",
+        "ql_story_ids": [
+          "UX04",
+          "UX05",
+          "UX06",
+          "UX09"
+        ],
+        "reason": "Folded from the docs/ux participation register (O-I #728). Needed for the formal and intelligence field (exact source definitions, operations and full inventories).",
+        "binding_status": "candidate-source-id-observed; exact current operation/loading unbound"
+      },
+      {
+        "repository": "EpiLogos/QL-MEF",
+        "matrix_path": "ProjectCentral/user/capability-matrix.csv",
+        "inspected_blob": "417ac7d90aaf7dd45c9f367cec90d34166acde75",
+        "capability_id": "cap.ql.lens-registry",
+        "ql_story_ids": [
+          "UX04",
+          "UX05",
+          "UX06",
+          "UX09"
+        ],
+        "reason": "Folded from the docs/ux participation register (O-I #728). Needed for the formal and intelligence field (exact source definitions, operations and full inventories).",
+        "binding_status": "candidate-source-id-observed; exact current operation/loading unbound"
+      },
+      {
+        "repository": "EpiLogos/QL-MEF",
+        "matrix_path": "ProjectCentral/user/capability-matrix.csv",
+        "inspected_blob": "417ac7d90aaf7dd45c9f367cec90d34166acde75",
+        "capability_id": "cap.ql.vak-source",
+        "ql_story_ids": [
+          "UX04",
+          "UX05",
+          "UX06",
+          "UX09"
+        ],
+        "reason": "Folded from the docs/ux participation register (O-I #728). Needed for the formal and intelligence field (exact source definitions, operations and full inventories).",
+        "binding_status": "candidate-source-id-observed; exact current operation/loading unbound"
+      },
+      {
+        "repository": "EpiLogos/QL-MEF",
+        "matrix_path": "ProjectCentral/user/capability-matrix.csv",
+        "inspected_blob": "417ac7d90aaf7dd45c9f367cec90d34166acde75",
+        "capability_id": "cap.ql.vak-context",
+        "ql_story_ids": [
+          "UX04",
+          "UX05",
+          "UX06",
+          "UX09"
+        ],
+        "reason": "Folded from the docs/ux participation register (O-I #728). Needed for the formal and intelligence field (exact source definitions, operations and full inventories).",
+        "binding_status": "candidate-source-id-observed; exact current operation/loading unbound"
+      },
+      {
+        "repository": "EpiLogos/QL-MEF",
+        "matrix_path": "ProjectCentral/user/capability-matrix.csv",
+        "inspected_blob": "417ac7d90aaf7dd45c9f367cec90d34166acde75",
+        "capability_id": "cap.ql.service-readings",
+        "ql_story_ids": [
+          "UX04",
+          "UX05",
+          "UX06",
+          "UX09"
+        ],
+        "reason": "Folded from the docs/ux participation register (O-I #728). Needed for the formal and intelligence field (exact source definitions, operations and full inventories).",
+        "binding_status": "candidate-source-id-observed; exact current operation/loading unbound"
+      },
+      {
+        "repository": "EpiLogos/QL-MEF",
+        "matrix_path": "ProjectCentral/user/capability-matrix.csv",
+        "inspected_blob": "417ac7d90aaf7dd45c9f367cec90d34166acde75",
+        "capability_id": "cap.ql.wiki-refraction",
+        "ql_story_ids": [
+          "UX04",
+          "UX05",
+          "UX06",
+          "UX09"
+        ],
+        "reason": "Folded from the docs/ux participation register (O-I #728). Needed for the formal and intelligence field (exact source definitions, operations and full inventories).",
+        "binding_status": "candidate-source-id-observed; exact current operation/loading unbound"
+      },
+      {
+        "repository": "EpiLogos/QL-MEF",
+        "matrix_path": "ProjectCentral/user/capability-matrix.csv",
+        "inspected_blob": "417ac7d90aaf7dd45c9f367cec90d34166acde75",
+        "capability_id": "cap.ql.shape",
+        "ql_story_ids": [
+          "UX04",
+          "UX05",
+          "UX06",
+          "UX09"
+        ],
+        "reason": "Folded from the docs/ux participation register (O-I #728). Needed for the formal and intelligence field (exact source definitions, operations and full inventories).",
+        "binding_status": "candidate-source-id-observed; exact current operation/loading unbound"
+      },
+      {
+        "repository": "EpiLogos/ai-kit",
+        "matrix_path": "ProjectCentral/user/telos/capability-matrix.csv",
+        "inspected_blob": "55e2827aed3b2d7c1e57a792024f09d1646dad23",
+        "capability_id": "cap.aikit.context-resolution",
+        "ql_story_ids": [
+          "UX04",
+          "UX05",
+          "UX06",
+          "UX09"
+        ],
+        "reason": "Folded from the docs/ux participation register (O-I #728). Needed for the formal and intelligence field (exact source definitions, operations and full inventories).",
+        "binding_status": "candidate-source-id-observed; exact current operation/loading unbound"
+      },
+      {
+        "repository": "EpiLogos/Factory",
+        "matrix_path": "ProjectCentral/user/capability-matrix.csv",
+        "inspected_blob": "4b8b30166d69c518895af5e4cde5aa1f0fc5d005",
+        "capability_id": "cap.factory.run-thought",
+        "ql_story_ids": [
+          "UX04",
+          "UX05",
+          "UX06",
+          "UX09"
+        ],
+        "reason": "Folded from the docs/ux participation register (O-I #728). Needed for the formal and intelligence field (exact source definitions, operations and full inventories).",
+        "binding_status": "candidate-source-id-observed; exact current operation/loading unbound"
+      }
+    ],
+    "native_binding_gaps": [
+      {
+        "owner": "QL-MEF",
+        "required_for": [
+          "UX04",
+          "UX05",
+          "UX06",
+          "UX09"
+        ],
+        "reason": "Expand current owner matrices beyond coarse product-family IDs; no full-field claim from these starter links. Folded from the docs/ux participation register (O-I #728)."
+      }
+    ]
   },
   "existing_caw": {
-    "cases_path":"tests/continuous-work/cases.json",
-    "joins_path":"tests/continuous-work/joins.json",
-    "entry_document":"docs/CONTINUOUS-WORK-PROVING.md",
-    "required_case_ids":["P01","P02","P03","P04","P05","P06","P07","P08","P09","P10","P11","P12","P13","P14","P15","P16","P17","P18","P19","P20","P21","P22","P23","P24","P25","P26","P27","P28"],
-    "named_subcases":["candidate-worktree-now","working-environment-continuity","assisted-commission","candidate-comparison","developer-upgrade-repair-reentry","operative-practice-discovery"],
-    "policy":"Preserve definitions and evidence grades. New or missing executable obligations stay explicit; source declaration is not execution."
+    "cases_path": "tests/continuous-work/cases.json",
+    "joins_path": "tests/continuous-work/joins.json",
+    "entry_document": "docs/CONTINUOUS-WORK-PROVING.md",
+    "required_case_ids": [
+      "P01",
+      "P02",
+      "P03",
+      "P04",
+      "P05",
+      "P06",
+      "P07",
+      "P08",
+      "P09",
+      "P10",
+      "P11",
+      "P12",
+      "P13",
+      "P14",
+      "P15",
+      "P16",
+      "P17",
+      "P18",
+      "P19",
+      "P20",
+      "P21",
+      "P22",
+      "P23",
+      "P24",
+      "P25",
+      "P26",
+      "P27",
+      "P28"
+    ],
+    "named_subcases": [
+      "candidate-worktree-now",
+      "working-environment-continuity",
+      "assisted-commission",
+      "candidate-comparison",
+      "developer-upgrade-repair-reentry",
+      "operative-practice-discovery"
+    ],
+    "policy": "Preserve definitions and evidence grades. New or missing executable obligations stay explicit; source declaration is not execution."
   }
 }

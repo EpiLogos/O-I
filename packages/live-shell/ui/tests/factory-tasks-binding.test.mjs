@@ -94,10 +94,12 @@ test('Tasks writes the owners\' way: the timing through the Agent, a new task th
   await binding.write([{key: 'newTask', value: '  Land the correction  '}])
   binding.local.task(3)
   assert.deepEqual(calls, [['agent', ['quantize', 'now']], ['queue', 'Land the correction'], ['select', 3]])
+  // REPLACED (lane K0): the task's lifecycle is Software Factory's (an attempt Action on a Run's unit), and a clip names no Run or unit.
   for (const key of ['launch', 'retry', 'stopAfter']) {
-    assert.match(binding.standing[key].disabled, /harness_agent_control addresses the whole bound harness; the owner takes no task/, key)
-    await assert.rejects(() => binding.write([{key, value: true}]), /missing op/)
+    assert.match(binding.standing[key].disabled, /a task clip names no Factory Run and no workflow unit.*\(Software Factory\)/, key)
+    await assert.rejects(() => binding.write([{key, value: true}]), {message: tasks.TASKS_REFUSE[key]})
   }
+  assert.match(tasks.TASKS_REFUSE.retry, /factory_owner attempt-retry/)
   // The per-task settings are the session's settings on their owner (factory-session-settings.test.mjs): not read here, they say so.
   for (const key of ['mode', 'then', 'to', 'effort', 'autonomy', 'register', 'form']) assert.equal(binding.standing[key].disabled, 'The session\'s settings are not read here.', key)
   assert.equal(calls.length, 3, 'no refusal dispatched anything')

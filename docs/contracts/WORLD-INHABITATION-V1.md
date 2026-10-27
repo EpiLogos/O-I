@@ -281,3 +281,355 @@ owner's Central NOW flow `two-machine-inhabitation-2026-09-24`.
   (`aletheia-5`) are occupied this way; their work arrives through Factory workflows authored in
   Vāk (EpiLogos/QL-MEF#247, EpiLogos/Factory#269).
 
+## 5. Workcell-root NOW and the temporal field
+
+### The governing determination
+
+The governing determination is:
+
+> **NOW is recursively localised and materially situated. Each Workcell participating in a World has one persistent root NOW horizon. Bounded tasks, Projects, Journeys and delegated acts occupy child NOWs within that horizon. A human Day composes eligible NOW horizons by reference. SharedField projects selected local NOW/DAY relations into a collective FieldNow/FieldDay without acquiring local source identity.**
+
+The first physical proving world is the owner's primary workstation plus Omarchy.
+
+```text
+Personal World
+│
+├─ primary Workcell
+│    └─ root NOW: primary
+│         ├─ child NOW: direct work
+│         ├─ child NOW: Factory unit
+│         └─ child NOW: delegated work
+│
+└─ Omarchy Workcell
+     └─ root NOW: omarchy
+          ├─ child NOW: resident agency
+          ├─ child NOW: Factory unit
+          └─ child NOW: scheduled/delegated work
+```
+
+The human Day on the primary workstation is a temporal whole over these simultaneously present Workcell horizons. Neither Workcell needs to become the other's material owner in order to participate in the same Day.
+
+### Recursive NOW law
+
+Use the existing Central NOW relation recursively rather than minting a second `NowHorizon` ontology.
+
+```text
+World
+  └─ WorkcellRef
+       └─ root NowRef
+            ├─ child NowRef
+            │    └─ child NowRef
+            └─ child NowRef
+```
+
+#### Root NOW
+
+The root NOW is the persistent temporal horizon through which a Workcell presently participates in a World.
+
+It is stable across ordinary terminal/window/view changes, SessionSpace presentation changes, provider pane/workspace replacement, Day rollover, creation/completion of individual child tasks and foreground/background transitions.
+
+It can require reconstruction after real material loss, but material reconstruction does not by itself make a new semantic NOW when the Central continuity relation remains valid.
+
+#### Child NOW
+
+A child NOW is the bounded localisation of actual work within a Workcell horizon. It retains the existing NOW semantics, including as applicable:
+
+```text
+purpose / subject
+participants
+source basis + revisions
+scope / World / Project
+T artifacts and bounded scratch
+pending obligations / requests
+writable namespace
+continuation / successor relation
+return address
+archive / quiescence state
+```
+
+Typical subjects include a direct task, Project-local task, Factory Journey/Run/workflow unit, Agent delegation, Routine occurrence or another explicitly bounded work relation.
+
+Child nesting is permitted where a real bounded delegation or decomposition relation warrants it. Recursion follows real work rather than imposing a mandatory tree over everything that happens on a machine.
+
+#### Core identity laws
+
+```text
+WorkcellRef != NowRef
+root NowRef != child NowRef
+NowRef != SessionSpaceRef
+NowRef != AgentSessionRef
+NowRef != RunRef
+NowRef != JourneyRef
+NowRef != provider workspace/pane/session id
+NowRef != process/container id
+```
+
+The relations among these objects are first-class; their identities do not collapse.
+
+### Material inhabitation
+
+A Workcell-root NOW is made inhabitable through the already-developed AIKit/Workcell/provider field.
+
+```text
+root NOW
+  ↓ contains/localises
+child NOW
+  ↓ operative binding
+SessionSpace / AgentSession
+  ↓ Surface/provider binding
+Herdr | tmux | cmux | desktop | harness-native | other
+  ↓ material support
+Workcell process / service / storage / network
+```
+
+For the first physical setup, Omarchy / Herdr is the rich reference working-environment provider; tmux is the thin persistent portability provider; cmux remains an optional supported environment where present; desktop/TUI/harness-native views are additional Surfaces over the same canonical work.
+
+A pane or workspace is therefore not a NOW. It is a material/presentation locus through which a NOW may be encountered.
+
+Closing a view, closing a pane, interrupting a turn, cancelling an Agency act, stopping a process, quiescing a child NOW and ending a Factory attempt remain different operations.
+
+#### Persistent agency field
+
+Each Workcell can host a resident agency field beneath its root NOW. Provider servers, Gateway services, scheduler carriers and resident harness bodies may persist there according to their own lifecycle contracts.
+
+This lets a Workcell remain genuinely inhabited while individual task/session Surfaces appear and disappear.
+
+### One Surface grammar for the NOW
+
+O:I surfaces should present one temporal grammar at several frames rather than inventing separate status stores.
+
+Opening/focusing another Surface preserves the current child NOW. Deliberate move/re-placement is visibly a different operation.
+
+### Personal Day over several Workcells
+
+The human Day remains a Central-owned civil-time source, not a synonym for a machine or scheduler interval.
+
+In the first personal setup:
+
+```text
+Personal Day D                  owned from primary Central temporal source
+│
+├─ primary root NOW
+│    └─ child NOWs ...
+│
+└─ Omarchy root NOW
+     └─ child NOWs ...
+```
+
+The Day gathers eligible relations from each horizon by stable reference and provenance.
+
+#### Day rollover
+
+Day rollover performs temporal closure/reconciliation, not global process reset.
+
+At rollover:
+
+1. account for the current participating Workcell/root-NOW horizons;
+2. retain exact active/waiting child NOW relations;
+3. preserve pending permissions, uncertain effects, Returns and unresolved obligations;
+4. close the dated human Day reading;
+5. advance the authorised Day pointer/create the next Day source;
+6. allow quiescent child/provider material to be compacted or released under its existing owner policy;
+7. continue live root NOWs and live children by reference.
+
+Thus the person enters a new Day while the machines can remain continuously present.
+
+#### Offline primary machine
+
+Omarchy can continue working while the primary workstation is unavailable.
+
+Its native activity retains occurrence/material/source evidence such as:
+
+```text
+occurred_at
+observed_at
+WorkcellRef
+root NowRef
+child NowRef
+ActivityRef / ReturnRef
+source/provider cursor
+```
+
+When the primary machine returns, Central receiving/Day composition reconciles the event according to its original occurrence/source/task relations. Receipt/review time does not replace occurrence time.
+
+### Root work, the work occasion and the Day as a vantage
+
+Central remains the root meta-project. A child software Project is not required to legitimate root work, a root Agent or personal Day inquiry. A Workcell-root NOW is a temporal/material anchor, not a new filesystem root or replacement for Central.
+
+A bounded work occasion is not necessarily a model turn, a whole conversation, a single calendar date or a Factory Run. It can span several turns and Days; one Run can involve simultaneous children on both machines. Attempts retain their own effective conditions. The stable work relation and its changing execution conditions must both remain recoverable.
+
+The person can read the field from My NOW, Workcell, Project, Journey/Run, Agent or an explicitly projected SharedField vantage. These are views over native relations, not copied tasks. The same Activity appearing in several views must not be counted several times.
+
+**The Day is a human vantage, not an automatic scheduler or global permission grant.** Its writing and intentions can orient related tasks without silently issuing Commissions, marking personal tasks complete or granting every child access to every other child. Human intent evolves through actual source revision or accepted proposal. A result does not retroactively determine what the person must have intended.
+
+### Receiving and re-entry
+
+Central NOW/Inbox/DAY receives references to the real work, and AIKit Routine/provider scheduling can re-enter it under current proof/authority. Reconnect and DAY rollover do not schedule work or replenish exhausted bounds.
+
+### Temporal address for Activity and logging
+
+Do not create a universal event ontology. Instead allow existing Activity/Return/telemetry/logging readings to carry a bounded correlation envelope when their native owners can establish the relation.
+
+Representative shape:
+
+```text
+TemporalAddress {
+  occurred_at
+  observed_at
+
+  world_ref
+  workcell_ref
+  root_now_ref
+  child_now_ref?
+  day_ref?
+
+  project_ref?
+  journey_ref?
+  run_ref?
+  workflow_unit_ref?
+  routine_ref?
+  routine_occurrence_ref?
+
+  agent_ref?
+  agency_ref?
+  agent_session_ref?
+
+  shared_field_ref?
+  field_day_ref?
+
+  native_owner
+  native_event_ref?
+  cursor?
+  provenance
+}
+```
+
+This is a correlation grammar over native facts. Actuation remains Activity/Return owner; Factory remains developmental/telemetry owner; AIKit remains session/composition owner; Workcell remains material observation owner; Central remains temporal source owner; SharedField remains shared projection owner.
+
+One attributable Activity can legitimately appear in several views because it participates in several real relations.
+
+### Factory temporal projection
+
+Factory's existing NOW law is strengthened by place, not replaced.
+
+```text
+Journey / Run / WorkflowUnit / Execution
+  ↔ WorkcellRef
+  ↔ root NowRef
+  ↔ child NowRef
+  ↔ Flow / source revisions
+  ↔ Activity / Evidence / Return
+  ↔ DayRef where applicable
+```
+
+A Journey or Run may span many Days, have simultaneous child work on several Workcells, continue while one UI or Workcell is unavailable, receive several Routine-backed invocations, and converge bounded child Returns without those children becoming one Agent identity.
+
+Factory's live view is therefore a projection over native current relations.
+
+#### SSSF / Build depths
+
+```text
+Semantic
+  Journey / Run / workflow status and frontier
+
+Cognitive
+  Run Thought where available
+
+Live
+  Agency / Execution / AgentSession
+  Workcell / root NOW / child NOW
+  provider/material state
+
+Trajectory
+  attributable Activity / tool / process / permission / evidence
+  ordered through owner cursors/times with temporal/material correlation
+```
+
+A result/handoff can expose the exact continuing child NOW/session/run address where useful, so continuation is executable rather than archaeological.
+
+### Bounded delegation and the Pi harness adapter
+
+The generic subagency relation is larger than any harness-native subagent feature.
+
+```text
+parent Agency / AgentSession
+    + current temporal address
+        ↓
+bounded child determination / authority
+        ↓
+Central child NOW allocation
+        ↓
+AIKit child context / praxis / model / harness / SessionSpace resolution
+        ↓
+Workcell + provider materialisation
+        ↓
+child Pi | Codex | Claude | other admitted harness
+        ↓
+Activity / Evidence / Return
+        ↓
+parent return route / Factory convergence where applicable
+```
+
+#### Pi adapter extension
+
+AIKit's Pi adapter should project a thin O:I delegation extension through Pi's real native extension faculties. Useful affordances include equivalents of:
+
+```text
+delegate
+inspect delegations
+contribute
+pause / cancel
+receive Return
+```
+
+The extension invokes the native O:I/AIKit operation. It does not own tmux/Herdr commands or invent a Pi-only child identity model.
+
+A Pi parent can therefore delegate to another Pi child, a different admitted harness, a specialised durable O:I Agent or a remote Workcell when placement resolves there. In the DLW, delegation that resolves to another Workcell is a track whose Works in names that Workcell, and its next task starts there; a helper inside one lead's task works where its lead works, in the lead's seat and branch (manual §19.16, §19.23).
+
+Harness-native delegation facilities map onto the same semantic contract where possible. Provider team/subagent/process IDs remain provenance beneath the canonical Agency/NOW/session relation.
+
+### Routine, cron and temporal re-entry
+
+A Routine occurrence has an origin and an execution destination.
+
+```text
+trigger observation
+  on Workcell A / root NOW A
+        ↓
+proof + authority + eligibility revalidation
+        ↓
+placement/body resolution
+        ↓
+child NOW on Workcell A or Workcell B
+        ↓
+Agency / AgentSession / Activity / Return
+```
+
+Keep the accepted laws:
+
+```text
+Journey != Routine
+Routine != scheduler job
+NOW != scheduler queue
+DAY rollover != trigger
+trigger fired != Action authorised
+provider job id != RoutineRef
+restart != renewed authority
+```
+
+A scheduler on the primary workstation can trigger work that executes on Omarchy. Omarchy can also observe its own scheduled events while the primary is offline.
+
+Each consequential occurrence retains enough provenance to reconstruct:
+
+```text
+RoutineRef + proof/praxis revision
+RoutineOccurrenceRef
+trigger observation + provider/cursor
+origin Workcell/root NOW
+execution Workcell/root NOW/child NOW
+Agency / AgentSession / Factory refs where present
+Activity / Return
+source/Flow revisions
+```
+
+Duplicate occurrence delivery cannot produce a second consequential child/effect without passing the current idempotence/reconciliation law.

@@ -263,7 +263,7 @@ degraded-provider warnings; the context diagram follows that newer standing.
 
 | Required finding | Independently recovered result |
 | --- | --- |
-| Governing source | `docs/experience/PLURAL-FLOW-SPEC.md`, the dated plural Wayfinder, and the repaired [Flow companion](plural-flow.md). |
+| Governing source | the plural Flow contract in [plural-flow.md](plural-flow.md), the cases MP01–MP18 in `docs/experience/CASES.md`, the dated plural Wayfinder, and the repaired [Flow companion](plural-flow.md). |
 | Public operation | `aikit session-space encounter --request-json <JSON>`; conversation actions are JSON values. `session_space_cli.rs` accepts the JSON or `@file` argument; `ConversationSendRequest` defines the actual request. |
 | Owner and storage | AIKit `encounter_conversation.rs` owns request admission, delivery and incorporation; `state/encounters.sqlite3` retains steps, source acknowledgements and cursors. Central `ctrl/src/flow_append.rs` owns the source mutation and its CAS/idempotency boundary. |
 | Authority over lifecycle | Membership is checked before dispatch and before inclusion. Central separately refuses a departed author. Queued or completed provider output does not override current participation authority. |

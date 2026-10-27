@@ -1,14 +1,14 @@
 {
   "purpose": "Plural Flow is fundamental local and cross-world participation within O-I#65/#220, not a second messaging or story system.",
-  "story_source": "docs/experience/PLURAL-FLOW-SPEC.md",
-  "document_operations_source": ".wayfinder/maps/plural-flow-now.md",
-  "implementation_wayfinder": ".wayfinder/maps/plural-flow-now.md",
+  "story_source": "docs/experience/STORIES.md",
+  "document_operations_source": "docs/experience/CASES.md",
+  "implementation_wayfinder": "docs/experience/CASES.md",
   "families": [],
   "standing": "Owner-commissioned specification and implementation plan, 29 September 2026; no runtime or human acceptance claimed.",
   "runtime_or_human_acceptance": false,
   "obligation_sources": {
     "plural65": {
-      "source_ref": "docs/experience/PLURAL-FLOW-SPEC.md",
+      "source_ref": "docs/architecture/plural-flow.md",
       "issue": "https://github.com/EpiLogos/O-I/issues/558",
       "consumer_issues": [65, 220, 154, 375],
       "policy": "Retain full source and Wayfinder cases MP01-MP18. This adds obligations to existing WR/AG/WK/MC/SH/UI/GW/DO/PX/KN stories. Native operations, capability IDs and runtime bindings come from current owners; these planning labels do not mint them."
@@ -18,7 +18,7 @@
   "obligations": [
     {
       "id": "plural65:FORM", "source": "plural65",
-      "native_locator": "PLURAL-FLOW-SPEC section 2; Wayfinder PF1, MP01-MP03",
+      "native_locator": "plural Flow contract (docs/architecture/plural-flow.md): Evolve the complete Flow form; STORIES CJ01-CJ08; CASES MP01-MP03",
       "requirement": "Flow retains complete rich writing while expressing actual participants, addressed contributions, branching and convergence with stable identities and compatibility.",
       "story_ids": ["WR01", "WR02", "WR03", "AG06", "UI03", "DO01"],
       "required_evidence": ["D", "C", "P", "M", "H"],
@@ -31,7 +31,7 @@
     },
     {
       "id": "plural65:DELIVERY", "source": "plural65",
-      "native_locator": "PLURAL-FLOW-SPEC sections 3.1-3.3; Wayfinder PF2, MP04-MP06",
+      "native_locator": "plural Flow contract (docs/architecture/plural-flow.md): The accepted act, Correlation and group delivery, Streaming; STORIES CJ09, CJ11; CASES MP04-MP06",
       "requirement": "Native correlation carries each accepted Flow request through actual recipient context and provider output to the right returned contribution independently of the UI.",
       "story_ids": ["WR03", "WR04", "AG06", "WK04", "GW03", "UI06"],
       "required_evidence": ["D", "C", "P", "M"],
@@ -44,7 +44,7 @@
     },
     {
       "id": "plural65:RECOVERY", "source": "plural65",
-      "native_locator": "PLURAL-FLOW-SPEC section 3; Wayfinder PF1/PF2, MP06-MP08",
+      "native_locator": "plural Flow contract (docs/architecture/plural-flow.md): Native conversation operation and dependable return; STORIES CJ11; CASES MP06-MP08",
       "requirement": "Independent native effects are recoverable and attributable through concurrent source edits, crashes and replay without losing writing or duplicating work.",
       "story_ids": ["WR02", "WR04", "WR06", "GW06", "UI05", "DO05"],
       "required_evidence": ["D", "C", "P", "M"],
@@ -57,7 +57,7 @@
     },
     {
       "id": "plural65:PARTICIPATION", "source": "plural65",
-      "native_locator": "PLURAL-FLOW-SPEC sections 1, 2.1, 2.3 and 4.1; Wayfinder PF3, MP01/MP09/MP10/MP14/MP16",
+      "native_locator": "plural Flow contract (docs/architecture/plural-flow.md): One native relation, Participants and attribution, Readership is not addressee selection, Identity and material routing; STORIES CJ10, CJ13, CJ06; CASES MP01/MP09/MP10/MP14/MP16",
       "requirement": "Humans and agents participate through real identity, bounded history, authority, SessionSpace and material relations, with readership distinct from addressing or invocation.",
       "story_ids": ["AG01", "AG06", "AG09", "MC02", "MC03", "SH02", "SH03", "GW03"],
       "required_evidence": ["D", "C", "P", "M", "H"],
@@ -70,7 +70,7 @@
     },
     {
       "id": "plural65:RESPONSE", "source": "plural65",
-      "native_locator": "PLURAL-FLOW-SPEC section 4.2; Wayfinder PF3, MP11",
+      "native_locator": "plural Flow contract (docs/architecture/plural-flow.md): Response arrangements; STORIES CJ12; CASES MP11",
       "requirement": "An admitted addressed, facilitated or bounded team exchange advances useful work without repeated human continuation and ends or waits for a meaningful reason.",
       "story_ids": ["WK04", "WK05", "AG06", "AG09", "PX03", "GW03", "GW06"],
       "required_evidence": ["D", "C", "P", "M", "H"],
@@ -83,7 +83,7 @@
     },
     {
       "id": "plural65:SHARED", "source": "plural65",
-      "native_locator": "PLURAL-FLOW-SPEC sections 1.2, 3.5 and 4.3; Wayfinder PF4, MP12-MP14/MP16",
+      "native_locator": "plural Flow contract (docs/architecture/plural-flow.md): Local, cross-Workcell and cross-World, Shared storage and origin ownership, One conversation through different faces; CASES MP12-MP14/MP16",
       "requirement": "Local plural Flow, cross-Workcell participation and independently grounded SharedFields use the same conversational relations with explicit native source and hosted projection ownership.",
       "story_ids": ["SH01", "SH02", "SH03", "SH04", "SH05", "MC03", "MC05", "GW06", "WR03"],
       "required_evidence": ["D", "C", "P", "M", "H"],
@@ -96,7 +96,7 @@
     },
     {
       "id": "plural65:CONTINUITY", "source": "plural65",
-      "native_locator": "PLURAL-FLOW-SPEC sections 4.5 and 5; Wayfinder PF2/PF4/PF5, MP15/MP18",
+      "native_locator": "plural Flow contract (docs/architecture/plural-flow.md): Day, Nara and historical intake; STORIES CJ11, PW13; CASES (Plural Flow: the first complete encounter); CASES MP15/MP18",
       "requirement": "The shared undertaking survives Day/session boundaries and returns useful, correctly attributed history to each person and later agent encounter.",
       "story_ids": ["WR04", "WR05", "WR06", "WR07", "KN05", "KN08", "SH04", "SH05"],
       "required_evidence": ["D", "C", "P", "M", "H"],
@@ -109,7 +109,7 @@
     },
     {
       "id": "plural65:UI", "source": "plural65",
-      "native_locator": "PLURAL-FLOW-SPEC section 4.4; Wayfinder PF4, MP03/MP05/MP17",
+      "native_locator": "plural Flow contract (docs/architecture/plural-flow.md): Flow and Expression presentation; STORIES CJ01-CJ08, CJ09-CJ11; manual §18.1; CASES MP03/MP05/MP17",
       "requirement": "The existing Flow, standalone rich form and shared Expression experience make plural participation readable and operable through the same native actions.",
       "story_ids": ["UI01", "UI02", "UI03", "UI04", "UI05", "UI06", "WR01", "WR03", "SH03", "DO03"],
       "required_evidence": ["D", "C", "P", "M", "H"],
@@ -122,7 +122,7 @@
     },
     {
       "id": "plural65:MATRIX", "source": "plural65",
-      "native_locator": "PLURAL-FLOW-SPEC section 5; Wayfinder PF0/PF5 and section 4; TOOLS.md",
+      "native_locator": "CASES MP01-MP18 and the first complete encounter; TOOLS.md",
       "requirement": "The feature is developed and verified through existing capability/UX/practice and source-bound test relations with independent expected outcomes.",
       "story_ids": ["WR03", "AG06", "SH03", "KN08", "PX01", "PX05", "DV01", "DV08", "UI06"],
       "required_evidence": ["D", "C", "P", "M"],

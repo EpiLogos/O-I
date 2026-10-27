@@ -3,7 +3,7 @@
  * (the shared current reading) and `oi.field-day/v1` (a collective
  * aggregation interval).
  *
- * Law (docs/experience/WORKCELL-NOW-TEMPORAL-FIELD.md §9): NOW is recursively
+ * Law (docs/contracts/WORLD-INHABITATION-V1.md §5 and docs/architecture/shared-participation.md, FieldNow and FieldDay): NOW is recursively
  * localised and materially situated. Each Workcell keeps one persistent root
  * NOW; bounded undertakings occupy child NOWs. A SharedField projects SELECTED
  * local NOW/DAY relations into FieldNow/FieldDay WITHOUT acquiring local

@@ -35,16 +35,36 @@ class PersonalWebTests(unittest.TestCase):
             current = em.load_sources(root)
             config["source_modules"].remove("docs/experience/personal-web.json")
             config_path.write_text(json.dumps(config))
+            # The PW rows live in STORIES.md (O-I #729): the field before
+            # Personal Web is the catalogue without its PW section.
+            stories_path = root / "docs/experience/STORIES.md"
+            stories = stories_path.read_text(encoding="utf-8")
+            head, rest = stories.split("## PW — ", 1)
+            stories_path.write_text(head + "## " + rest.split("\n## ", 1)[1], encoding="utf-8")
             before = em.load_sources(root)
             old = {s["id"]: s for s in before["stories"]}
             now = {s["id"]: s for s in current["stories"]}
-            self.assertEqual(len(old), 114)
+            # 114 earlier stories and the four rows folded in from docs/ux
+            # (WK06, GV08, AG10, EX06; O-I #728), the four rows folded in
+            # from the feature UX files (WK07, GV09, GV10, DV09; O-I #729),
+            # plus the DLW's six-cell families, which carry extensions.ux and
+            # were added after Personal Web.
+            dlw = [k for k, v in old.items() if "ux" in v["extensions"]]
+            self.assertEqual(len(old) - len(dlw), 122)
             # The module has grown additively twice: PW01–12 at O-I#279, then
             # PW13 (personal-history intake, Central #242). Each later story
             # keeps the earlier field verbatim.
             self.assertEqual(set(now) - set(old), {f"PW{i:02}" for i in range(1,14)})
+            def located(story):
+                # Removing the PW section moves later rows and changes the
+                # file digest; the meaning of every earlier story must not move.
+                story = json.loads(json.dumps(story))
+                locator = story["extensions"]["source_locator"]
+                if locator["path"] == "docs/experience/STORIES.md":
+                    locator.pop("line"); locator.pop("digest")
+                return story
             for key, value in old.items():
-                self.assertEqual(now[key], value)
+                self.assertEqual(located(now[key]), located(value))
             inherited = [o for o in current["inherited_obligations"]
                          if o["source_module"] != "docs/experience/personal-web.json"]
             self.assertEqual(
@@ -59,7 +79,7 @@ class PersonalWebTests(unittest.TestCase):
         for story in result["stories"]:
             if not story["id"].startswith("PW"):
                 continue
-            self.assertEqual(story["extensions"]["source_locator"]["path"], "docs/experience/PERSONAL-WEB.md")
+            self.assertEqual(story["extensions"]["source_locator"]["path"], "docs/experience/STORIES.md")
             self.assertEqual(story["extensions"]["runtime_readiness"], "not-assessed")
             self.assertIsNone(story["extensions"]["human_experience"])
         self.assertIsNone(result["feature_verdict"])
@@ -67,8 +87,10 @@ class PersonalWebTests(unittest.TestCase):
     def test_full_feature_contract_is_retained_as_source_not_only_table_rows(self):
         result = em.load_sources(ROOT)
         doc = (ROOT / "docs/cradle/PERSONAL-WEB.md").read_text()
-        for exact in ["Beings", "Things", "C0/C5", "Full portable copy", "PW6", "5654421849"]:
+        for exact in ["Beings", "Things", "C0/C5", "Full portable copy", "5654421849"]:
             self.assertIn(exact, doc)
+        # The proving unit PW6 moved from the contract's retired work map to CASES.
+        self.assertIn("| PW6 |", (ROOT / "docs/experience/CASES.md").read_text())
         self.assertIn("seventh", doc)
 
 if __name__ == "__main__":

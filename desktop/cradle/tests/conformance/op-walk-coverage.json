@@ -72,7 +72,7 @@
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
-      "reason": "Kernel-direct only: tests/shell_owner_routes.rs against fake owners (AIKit's capture, promote, trust record, praxis method run|prove, set package export, wiki-shape declare, knowledge forget, procedure run|undo, bypass revoke, source sync|promote|rollback and adopt --yes [--expect-digest]); no directly attributable executed native walk is recorded here for aikit_write; retain explicit operation-specific coverage debt until its owner supplies a receipt."
+      "reason": "Kernel-direct only: tests/shell_owner_routes.rs against fake owners (AIKit's capture, promote, trust record, praxis method run|prove, set package export, wiki-shape declare, knowledge forget, procedure run|undo, bypass revoke|issue (issue: lane K0, its answers captured in an isolated home), source sync|promote|rollback and adopt --yes [--expect-digest]); no directly attributable executed native walk is recorded here for aikit_write; retain explicit operation-specific coverage debt until its owner supplies a receipt."
     },
     {
       "op": "being_encounter",
@@ -553,7 +553,7 @@
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
-      "reason": "No directly attributable executed native walk is recorded here for factory_owner; retain explicit operation-specific coverage debt until its owner supplies a receipt."
+      "reason": "Kernel-direct for attempt-retry (lane K0): src/factory_retry.rs against a scripted Factory (admission, attempt read, attempt action) and tests/shell_owner_routes.rs, refused at the admission the installed Factory answers (it admits no desktop retry); no directly attributable executed native walk is recorded here for factory_owner; retain explicit operation-specific coverage debt until its owner supplies a receipt."
     },
     {
       "op": "file_bytes",
@@ -738,7 +738,7 @@
     {
       "op": "hosted_native",
       "native_owner": "kernel/src/native_owner_transport.rs",
-      "spec_ref": "docs/experience/SHARED-FIELD-DESKTOP.md; docs/contracts/EXPRESSION-ACT-MATERIAL-V1.md",
+      "spec_ref": "docs/architecture/shared-participation.md; docs/contracts/EXPRESSION-ACT-MATERIAL-V1.md",
       "status": "referenced",
       "scenarios": [
         "kernel/tests/native_owner_transport.rs"
@@ -1473,7 +1473,7 @@
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
-      "reason": "Kernel-direct only: tests/shell_owner_routes.rs against fake owners (Workcell's connections list|show|probe (probe: Workcell#117), machine list (with control_operations, Workcell#118), doctor, discover, plan (with --demand-json, a run's kept demand), placement (Workcell#119), instances list|usage, worlds (Workcell#120), run show with the run's kept demand (Workcell#121) and collect; with real Workcell answers as fixtures); no directly attributable executed native walk is recorded here for workcell_read; retain explicit operation-specific coverage debt until its owner supplies a receipt."
+      "reason": "Kernel-direct only: tests/shell_owner_routes.rs against fake owners (Workcell's connections list|show|probe (probe: Workcell#117), machine list (with control_operations, Workcell#118), doctor, discover, plan (with --demand-json, a run's kept demand), placement (Workcell#119), instances list|usage, worlds (Workcell#120), run show with the run's kept demand (Workcell#121), collect, and sandboxes reconcile --server URL (a report; the key variable withheld from the desk's server, lane K0); with real Workcell answers as fixtures); no directly attributable executed native walk is recorded here for workcell_read; retain explicit operation-specific coverage debt until its owner supplies a receipt."
     },
     {
       "op": "workcell_status_read",
@@ -1491,7 +1491,7 @@
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
-      "reason": "Kernel-direct only: tests/shell_owner_routes.rs against fake owners (Workcell's connect --connection, machine add|remove, connections disconnect, and recover|release|reconcile --desired on a prepared world); no directly attributable executed native walk is recorded here for workcell_write; retain explicit operation-specific coverage debt until its owner supplies a receipt."
+      "reason": "Kernel-direct only: tests/shell_owner_routes.rs against fake owners (Workcell's connect --connection, machine add|remove, connections disconnect, recover|release|reconcile --desired on a prepared world, and sandboxes reconcile --server URL --release-orphans with the key variable withheld (lane K0)); no directly attributable executed native walk is recorded here for workcell_write; retain explicit operation-specific coverage debt until its owner supplies a receipt."
     },
     {
       "op": "working_surface_attachment",

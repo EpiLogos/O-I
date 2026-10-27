@@ -47,13 +47,13 @@ lane and its necessary controlled tests continue to make the gate true; do not
 require the completed foundation in order to build that foundation. Expansion
 waits for the recorded outcome below.
 
-Read `docs/experience/NOW-PARADIGM-RETURN.md` with
-`WORKCELL-NOW-TEMPORAL-FIELD.md`, `FACTORY-AGENCY.md` and the current Central
+Read `docs/experience/LOCAL-CAMPAIGN.md` §10.7 and `CASES.md` (NOW, Paradigm and
+Return; Workcell-root NOW) with `docs/contracts/WORLD-INHABITATION-V1.md` §5,
+`docs/architecture/execution-return.md`, the Factory and Agency rows of `STORIES.md` and the current Central
 #150–#153 source. The Day/NOW lane already being locked remains the producer;
 consume its actual current contracts rather than inventing a parallel schema,
 `now.md` orientation summary, template generator or learning store. This section
-makes the owner's sequencing explicit; the recovery document's broader parallel
-construction wording does not authorise the postponed fan-out.
+makes the owner's sequencing explicit.
 
 ### Recover the existing human forms before designing or migrating
 
@@ -199,14 +199,14 @@ Central is the root meta-Project; no fake child is required for ordinary root wo
 Existing tools, direct agency, no-desktop and partial worlds remain legitimate.
 
 Read the same accepted source cut:
-`docs/experience/README.md` (the single C0–C5 Wayfinder), `STORY-PROFILE.md`,
+`docs/experience/README.md` (the entry to the one specification), `STORY-PROFILE.md`,
 selected `STORIES.md` / `DEVELOPER-FIELD.md` rows, their P01–P18 conditions,
-`DOCUMENT-OPERATIONS.md`, `LOCAL-CAMPAIGN.md` and `TOOLS.md`.
+`LOCAL-CAMPAIGN.md` (the one test protocol, with C0–C5, the C0 source-to-operation reconciliation and the document operations), `CASES.md` and `TOOLS.md`.
 Resolve locators through native source, not assumed siblings of a projected copy.
 Read original issue/vision/specs for meaning, not PR prose or code alone.
 
 For each commissioned campaign round also read
-`docs/experience/OPTIMISATION.md`. Select the relevant optimisation lanes and
+`docs/experience/LOCAL-CAMPAIGN.md` §13. Select the relevant optimisation lanes and
 quality/fidelity invariants before measuring. This is part of C0–C5, not a new
 campaign or an instruction to benchmark every model before useful work begins.
 
@@ -309,7 +309,7 @@ practice the Candidate; compare O0/O1 under equal total improvement budgets and
 fixed independent holdouts. Include all improvement overhead and regressions.
 Test the verifier with broken/stale/unsafe candidates; it cannot certify gains by
 changing its success criterion. Repair, learning and promotion retain different
-authority. Use OPTIMISATION.md and the existing QL #94 acceptance companion for
+authority. Use CASES OPC1–OPC5, LOCAL-CAMPAIGN §13 and the existing QL #94 acceptance companion for
 the concrete cases; neither creates an unbounded self-rewrite loop.
 
 ## Outputs and stopping rules

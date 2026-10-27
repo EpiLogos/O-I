@@ -31,7 +31,11 @@
 //   failure, a running one reaching the live edge. The take that stands is the one whose Return Central has received, and the main
 //   lane shows it. Choosing a take is Factory's own op, the comp action: the attempt's Return proposed to Central's receiving field
 //   (`factory_owner` attempt-receiving); Factory receives a whole attempt, so a stretch dragged across a take chooses the take and
-//   copies no part of it. Launch quantize and follow are absent: the armed timing is shell state, not a reading of the task.
+//   copies no part of it. The same attempts stack under the task's clip (`takes`), matched by the task_ref they serve.
+// - launch (W4): how a task plays once launched, what follows it and when a launch lands are its own settings on AIKit
+//   (`encounter-session-settings` `task`: launch, then and handoff_to, quantize — its defaults stated), read with the session's Telemetry
+//   and Solo and carried only onto the task whose task_ref they name. Factory reads no expected length for a task, so no clip carries
+//   progress.
 // - R3 (manual §19.1 "The mixer row", §16.6): each session's mixer row — Monitor is Watch (In · Auto · Off), the activator is
 //   Telemetry, Solo, and Arm, which is the shell's one write arm (`shell.setWriteArm`, the transport's own; its light is the flag
 //   the shell moves only when the owner accepts); the way in is the Gateway and the way out the landing, routes not settings. The
@@ -48,6 +52,7 @@ import {AGENT_CHAIN_MIME, decodeChainDrag} from '../agent/agentChainDrag'
 import {takeNames, takeWords, type FactoryTake} from '../agent/factoryTakes'
 import {eventsForSession, sharedAxis, trackKey, type AgentSessionTrack, type TaskClip, type TaskState, type TemporalEventLike} from '../agent/agentRunModel'
 import type {
+  ClipLaunch,
   ClipStatus,
   WorldCompStretch,
   WorldEventLane,
@@ -89,11 +94,29 @@ export const FACTORY_SEAT_OP = 'harness_agent_control:new — starts a NEW agent
 export const FACTORY_RETRY_OP = `${FACTORY_GRAIN} · harness_agent_control:restart — the bound harness's stalled task, from its last good step; the owner takes no session`
 export const FACTORY_BATCH_OP = `${FACTORY_GRAIN} · harness_agent_control:resume — the bound harness's queued tasks; the owner takes no row`
 
+/** A session's current task's own settings as AIKit states them (`encounter-session-settings` `task`, its defaults stated: launch once,
+ * then next, quantize global): how it plays once launched, what follows it (a handoff names whom to), and when a launch lands. */
+export interface FactoryTaskSettings {
+  task_ref: string
+  launch: string
+  then: string
+  handoff_to: string | null
+  quantize: string
+}
+
 /** The sessions' own settings (AIKit `encounter-session-settings`): each session's Telemetry and Solo as its owner states them
- * (absent while unread), and the write of one, which answers with the owner's reading or its refusal. */
+ * (absent while unread), its current task's settings where the reading names a task (`task`; absent or null: none read), and the
+ * write of one, which answers with the owner's reading or its refusal. */
 export interface FactorySettingsPort {
-  of(sessionRef: string): {telemetry: boolean; solo: boolean} | null
+  of(sessionRef: string): {telemetry: boolean; solo: boolean; task?: FactoryTaskSettings | null} | null
   set(sessionRef: string, setting: 'telemetry' | 'solo', on: boolean): Promise<unknown>
+}
+
+/** A task's launch in the owner's words (manual §3: launch quantize and follow actions; the design's mode): the mode as AIKit names
+ * it, the follow as its `then` (a handoff with whom it hands to), the quantize as its word with spaces. */
+export function factoryTaskLaunch(task: FactoryTaskSettings): ClipLaunch {
+  const follow = task.then === 'handoff' ? (task.handoff_to ? `handoff to ${task.handoff_to}` : 'handoff') : task.then
+  return {...(task.launch ? {mode: task.launch} : {}), ...(follow ? {follow} : {}), ...(task.quantize ? {quantize: task.quantize.replace(/-/g, ' ')} : {})}
 }
 
 /** The sessions' attempts as takes (agent/factoryTakes.ts): a session's takes as its owners state them (null while unread, empty
@@ -317,6 +340,16 @@ export const factoryTrackAdapter: WorldTrackAdapter<FactorySessionsReading> = {
         const at = task.state === 'queued' ? {start: secs(axis.endUnixMs)}
           : task.state === 'unknown' ? undefined
           : {start, end}
+        // W4: a task's own launch and its attempts, each read under its task_ref — the settings AIKit states for the session's current
+        // task (only when that task is this one), and the attempts the task serves (agent/factoryTakes.ts `taskRef`), named as their
+        // take lanes are and standing where Central received the Return. A task no reading names carries neither. Factory reads no
+        // expected length for a task, so a running one carries no progress.
+        const own = task.taskRef ? reading.settings?.of(track.sessionRef)?.task : undefined
+        const launch = own && own.task_ref === task.taskRef ? factoryTaskLaunch(own) : undefined
+        const attempts = task.taskRef ? reading.takes?.of(track.sessionRef) ?? [] : []
+        const names = takeNames(attempts)
+        const takes = attempts.filter(take => take.taskRef === task.taskRef)
+          .map(take => ({id: `${trackId}#take/${take.attemptRef}`, name: names.get(take.attemptRef) ?? 'take', ...(take.receivingRef ? {standing: true} : {})}))
         clips.push({
           id: factoryTaskRef(trackId, task.n),
           trackId,
@@ -326,6 +359,8 @@ export const factoryTrackAdapter: WorldTrackAdapter<FactorySessionsReading> = {
           ...(status ? {status} : {}),
           ...(at ? {at} : {}),
           ...(task.disclosure ? {note: task.disclosure} : {}),
+          ...(launch && Object.keys(launch).length ? {launch} : {}),
+          ...(takes.length ? {takes} : {}),
         })
       }
     }

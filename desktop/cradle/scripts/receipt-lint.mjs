@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Receipt lint — DESKTOP-LANGUAGE.md "Owner rulings, 22 September 2026"
- * ruling 8 (with docs/experience/HARNESS-SETTINGS-RESEARCH-2026-09-22.md §4
+ * ruling 8 (with docs/experience/CASES.md AFN1–AFN10
  * negative roster item 4): acceptance fixtures derive from the designs, and
  * controlled receipts dressed in acceptance shape are banned.
  *
@@ -65,11 +65,11 @@ const SCENARIO_SPEC = {
   "settings-shell": "docs/cradle/12-SETTINGS.md §1 §3 §4 S1 S3 S10 S11 S14 S15",
   "settings-change": "docs/cradle/12-SETTINGS.md §2 §4 S3 S4 S5 S6 S7 S8 S9",
   "settings-credentials": "docs/cradle/12-SETTINGS.md §3.4 §4 S12 S13",
-  "settings-auth": "docs/cradle/12-SETTINGS.md §3.3 §3.4; docs/experience/HARNESS-SETTINGS-RESEARCH-2026-09-22.md §2a",
+  "settings-auth": "docs/cradle/12-SETTINGS.md §3.3 §3.4; docs/dlw/DLW.md §10.10 (Sign in); docs/experience/STORIES.md WP01 WP06",
   "settings-unreadable": "docs/cradle/12-SETTINGS.md §2 §4 S2",
   configuration: "docs/cradle/09-CONFIGURATION-PLANE.md",
-  "factory-development": "docs/experience/FACTORY-AGENCY.md §4/§5/§8/§12",
-  "background-completion": "docs/experience/FACTORY-AGENCY.md §1 + handoff §4",
+  "factory-development": "docs/experience/CASES.md FAJ2 FAJ3 FAJ4; docs/experience/STORIES.md UI04 WR05 FJ01-FJ09 UI03",
+  "background-completion": "docs/experience/STORIES.md UI02 WR05; docs/experience/CASES.md FAJ2",
   "lane0-repairs": "docs/cradle/10-SIDEBARS.md §6.1 (2,3,7) §3.6 rule 1; 11-FACTORY.md §4",
   "factory-desk": "docs/cradle/11-FACTORY.md §7 F1 F2 F3 F4 F5",
   "factory-run": "docs/cradle/11-FACTORY.md §7 F6 F7 F8 F12 F13",

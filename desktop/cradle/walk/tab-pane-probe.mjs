@@ -1,10 +1,10 @@
 import {chromium} from 'playwright';
 // Acceptance probe — the pane tab-strip's presentation and fold laws
-// (UI-FUNCTION-LANDING B1, "reveal law"; Workbench GroupPane + registry:
+// (PROGRAMME R31, UI-FUNCTION-LANDING B1, "reveal law"; Workbench GroupPane + registry:
 // orient flips one pane's orientation, pin/unpin is per pane, and a folded
 // strip hides with ZERO remainder in both orientations). Every check is a
 // state equality or geometry, never presence alone; failures accumulate and
-// the probe exits 1 when any check fails (HARNESS-SETTINGS-RESEARCH-2026-09-22
+// the probe exits 1 when any check fails (CASES AFN7, from HARNESS-SETTINGS-RESEARCH-2026-09-22
 // §4 negative roster 7 + owner ruling 8).
 //
 // It reads the standing dev server (PROBE_URL overrides).

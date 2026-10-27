@@ -1,6 +1,6 @@
 /**
  * FieldNow / FieldDay live acceptance — the collective temporal projection
- * (WORKCELL-NOW-TEMPORAL-FIELD §9; O:I #13/#18, EpiLogos #65).
+ * (docs/architecture/shared-participation.md, FieldNow and FieldDay; O:I #13/#18, EpiLogos #65).
  *
  *   OI_SHARED_FIELD_TARGET=frank-acceptance node_modules/.bin/tsx field-now-live-acceptance.ts
  *

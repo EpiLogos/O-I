@@ -141,7 +141,8 @@ test('2 · the world\'s writes: none without a world\'s receipt (no reading name
   await assert.rejects(rack.workcellRackBinding(rackInput({world: WORLD}), {gateway: null, workcell: async () => { throw new Error(workcellSays) }}).write([{key: 'recover', value: WORLD.ref}]),
     {message: workcellSays})
   assert.match(rack.workcellRackBinding(rackInput({world: WORLD}), {gateway: null}).standing.recover.disabled, /carrier is unavailable/)
-  assert.match(rack.WORKCELL_REFUSE.checkpoint, /Workcell has none/)
+  // REPLACED (lane K0): Workcell takes checkpoints (`workcell --receipt R checkpoint`, k0-owner-ops-bindings.test.mjs); no world, none taken.
+  assert.match(rack.WORKCELL_REFUSE.checkpoint, /workcell --receipt R checkpoint/)
   bind.resetHolds()
 })
 

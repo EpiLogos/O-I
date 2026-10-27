@@ -388,7 +388,7 @@ Because these interventions affect what an artificial actor can notice and how i
 
 The aim is to make ways of knowing available as research and design objects which can be compared, cultivated, contested, and returned.
 
-## 4′ — Quaternal Logic makes archetypal form answerable to software
+## 4′ — Quaternal Logic is the structure the software enacts
 
 Quaternal Logic belongs to a wider Epi-Logos philosophical programme shaped by depth psychology, Eastern metaphysics, recursive relational thought, and a long attempt to articulate an archetypal structure in which awareness, manifestation, relation, polarity, mediation, return, and agency can be understood together.
 
@@ -402,11 +402,11 @@ This is where the phrase **archetypal form in code** becomes important. If a cla
 
 The existing QL work calls this requirement **operational parity**.
 
-Operational parity is also the epistemic safeguard. QL is speculative research, not metaphysics proven by software. A formal structure can fail to produce useful operational distinctions. Two supposedly different QL forms may turn out to be behaviourally equivalent in a given domain. A classic recurrence may outperform a QL recurrence. A QL decomposition may improve explanation but not execution. Those are answers from the experimental field.
+Operational parity is how the theory shows itself in software. A formal relation built faithfully organises behaviour, composition, recurrence or interpretation, and its effect can be seen. The theory's foundations are not reopened by each implementation: where an implementation meets a concrete inconsistency or a correspondence not yet worked out, it names it precisely so that it can be resolved at its source.
 
 The relation can be stated compactly as **QL as bimba, software as pratibimba**: a formal or archetypal image is expressed into a technical reflection, and the reflection returns information about what the originating form actually means when made operative.
 
-Quaternal Logic therefore belongs in the O:I family as its deepest explicit formal research surface. A minimal O:I can remain entirely ordinary. A maximal research programme can use QL to ask questions that the rest of the field deliberately leaves open.
+Quaternal Logic is therefore the structure of the DLW and of the records its products keep: the six positions shape the day, the work cycle, the constellations and the instruments. The desktop is the full instrument and installs as one whole; the underlying products can still be composed without it.
 
 ## 5′ — Product understanding preserves provenance from vision to reality and back
 

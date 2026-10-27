@@ -19,6 +19,8 @@
 //   pane's insert marker, snapped to the grid, coarsely, or freely (Shift frees one press, Alt coarsens it), and keyboard zoom
 //   holds it still (rulerWindow.ts; nativeArrangementTimeline.tsx:92-111, :142-148, :173-226, :296-315). The window, the snap
 //   and the marker are the pane's presentation: nothing here writes time to any owner.
+// - the loop brace (catalogue dlw__arrangement-ruler.tsx `.arp-brace`): the loop its owner carries (`loopOf`), over the marks and down
+//   each track, cut to the window (rulerWindow.ts bandIn). It is read, never set here, and a set that carries none draws none.
 // R3 (manual §16.6 "Arrangement view", §16.8; lock §0.3 item 3; Live cap 43–45): each track's head carries its mixer switches; the
 // Main track's material lies last; under each track lie its lanes by the Lanes setting (Takes On, Automation On, Events Off): take
 // lanes, each with its audition, where a stretch selected and Return copies it into the main lane through the owner's comp (the
@@ -35,8 +37,8 @@ import {narrowestSectionOf, sectionLanes} from './trackSections'
 import {railKindText, railSegments, railStopTitle, walkRails, type WalkRail} from './trackRails'
 import {occasionLight} from './worldCutTracks'
 import {
-  clampRange, fitRange, isFit, markStep, nextSnap, panBy, percentOf, rangeBounds, snapAt, snapOfPress, wheelZoomFactor, windowMarks,
-  windowOfKey, zoomAround, type SnapMode, type TimeRange,
+  bandIn, clampRange, fitRange, isFit, markStep, nextSnap, panBy, percentOf, rangeBounds, snapAt, snapOfPress, wheelZoomFactor, windowMarks,
+  windowOfKey, zoomAround, type SnapMode, type TimeRange, type WindowBand,
 } from './rulerWindow'
 import {useTracksMenu} from '../menu/TracksMenu'
 import './tracks.css'
@@ -71,6 +73,18 @@ export function placeClips(set: WorldTrackSet): {placed: Placed[]; end: number} 
   if (typeof fixed === 'number' && Number.isFinite(fixed) && fixed > 0) return {placed, end: fixed}
   const end = Math.max(cursor, 1, ...placed.map(p => p.end), ...set.tracks.map(track => track.needle ?? 0))
   return {placed, end}
+}
+
+/** The loop its owner carries (`set.loop`), in the Arrangement's units: a loop with no end runs to the end of what the Arrangement
+ * lays (`end`, the bounds' end). A set without one draws no brace, as the design draws no loop. */
+export const loopOf = (set: WorldTrackSet, end: number): TimeRange | undefined =>
+  set.loop ? {start: set.loop.start, end: set.loop.end ?? end} : undefined
+
+/** The loop brace where the window shows it (catalogue dlw__arrangement-ruler.tsx `.arp-brace`): over the marks with its words, quieter in
+ * a lane. An end outside the window draws no edge. */
+function LoopBrace({band, words, lane}: {band: WindowBand; words: string; lane?: boolean}) {
+  return <i className="tl-brace" data-loop={lane ? 'lane' : 'ruler'} data-cut-start={band.cutStart || undefined} data-cut-end={band.cutEnd || undefined}
+    style={{left: `${band.left}%`, width: `${band.width}%`}} {...(lane ? {'aria-hidden': true} : {role: 'img', 'aria-label': words})} />
 }
 
 /** A length on the ruler when the set gives no way to say it: the number and the ruler's unit. */
@@ -174,6 +188,10 @@ export function ArrangementRulerView({set, selection, empty, view, lanes: lanesV
   const occasionAt = occasion?.at !== undefined && inWindow(occasion.at) ? occasion.at : undefined
   const light = occasion ? occasionLight(occasion) : undefined
   const marker = view.marker !== null && inWindow(view.marker) ? view.marker : undefined
+  // The loop its owner carries, held to the ruler and cut to the window (rulerWindow.ts bandIn); with none, no brace stands.
+  const loop = loopOf(set, bounds.end)
+  const loopBand = loop ? bandIn(loop, range, bounds) : null
+  const loopWords = loop ? `Loop · ${label(loop.start)} – ${label(loop.end)} · its owner's; set it where its owner sets it` : ''
 
   // The ruler's gestures (nativeArrangementTimeline.tsx:142-148, :173-198): a drag pans the window, a press sets the marker.
   const gesture = view.gesture ?? {current: null}
@@ -356,6 +374,7 @@ export function ArrangementRulerView({set, selection, empty, view, lanes: lanesV
       {rulerTools(view, range, bounds, anchor)}
       <div {...marksProps} className="tl-marks tl-window" onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp}
         onPointerCancel={() => { gesture.current = null }} onKeyDown={onKeyDown}>
+        {loopBand && <LoopBrace band={loopBand} words={loopWords} />}
         {marks.map(mark => <span key={mark.at} className={mark.end ? 'end' : undefined} style={{left: `${percentOf(mark.at, range)}%`}}>{label(mark.at)}</span>)}
         {occasionReadout}
         {markerMark}
@@ -406,6 +425,7 @@ export function ArrangementRulerView({set, selection, empty, view, lanes: lanesV
           </div>
           : <button type="button" className={`tl-head${selection.ref === track.id ? ' sel' : ''}`} title={`${track.name} · ${track.kind}`} onClick={selectTrack}>{headName}</button>}
         <div className="tl-body">
+          {loopBand && <LoopBrace band={loopBand} words={loopWords} lane />}
           {now !== undefined && <span className="tl-now" style={{left: pct(now)}} aria-hidden="true" />}
           {occasionAt !== undefined && <span className="tl-occ" style={{left: lineAt(occasionAt)}} aria-hidden="true" />}
           {marker !== undefined && <span className="tl-marker" style={{left: lineAt(marker)}} aria-hidden="true" />}

@@ -4,7 +4,7 @@ Register: episteme
 
 # O:I Desktop Cradle — Rebuild Wayfinder (the grilled map)
 
-> **Adopted Factory/Agency correction — 2026-09-14:** [FACTORY-AGENCY.md](experience/FACTORY-AGENCY.md) and [#289](https://github.com/EpiLogos/O-I/issues/289) now govern that scoped experience. Ordinary work retains the four-plane companion; Factory reserves the right for actual artifacts while conversation/Run/workspace occupies the centre. Native-resolved model/harness choices are usable in the shared session interaction: earlier law 6 and “no desktop model parameter” checks mean no desktop-owned resolution, not no human chooser. The owner's authorised bounded Terra/Luna parallelism under one integrator supersedes historical “no subagents” wording for this campaign. Existing ownership, source, checks and human-evidence gates remain.
+> **Adopted Factory/Agency correction — 2026-09-14:** The Factory and Agency rows of [STORIES](experience/STORIES.md) (the adoption is in [PROGRAMME](../desktop/cradle/docs/world-shell/PROGRAMME.md) R31) and [#289](https://github.com/EpiLogos/O-I/issues/289) now govern that scoped experience. Ordinary work retains the four-plane companion; Factory reserves the right for actual artifacts while conversation/Run/workspace occupies the centre. Native-resolved model/harness choices are usable in the shared session interaction: earlier law 6 and “no desktop model parameter” checks mean no desktop-owned resolution, not no human chooser. The owner's authorised bounded Terra/Luna parallelism under one integrator supersedes historical “no subagents” wording for this campaign. Existing ownership, source, checks and human-evidence gates remain.
 
 
 > **Final foundation placement correction (September 8):** Read [the pane and resource contract](../.superpowers/sdd/cradle-rebuild/SELF-OTHER-FIELD-UX-2026-09-08.md#one-pane-system-an-optional-accompanying-agent). The right sidebar stays the optional accompanying agent; Shared Field details use ordinary canvas panes/full views/popouts, returning as tabs. A NOW starts from intention + one or more worlds/projections; selected outputs may survive closure. First rounds establish UI fidelity, window/focus/restore correctness and measured bounded resource use. This overrides earlier generic right-inspector wording for shared subjects.
@@ -165,15 +165,15 @@ continuity is now explicitly mapped as GW-01–06, not fog.
    rebuild branch. Kernel and other reusable business logic survives only where
    the new design re-derives it — each re-derivation re-proven by a walk, not
    by its tests. The rest is removed, not left unbuilt.
-2. **Verify by operation** (`docs/cradle/05-EXECUTION.md §3`):
+2. **Verify by operation** (`docs/experience/LOCAL-CAMPAIGN.md` §0):
    > Prose summaries, test output, and contract tests do not establish a UX
    > condition.
    Every unit lands with a **functional walk in the running app** (§8).
    `APP-SPEC §17`: "Visual acceptance is human evidence" — at phase gates the
    owner walks the app; screenshots accompany every receipt. There is no
    separate token/certification theatre: the gate is the app.
-3. **The design set wins.** the cradle design set (`docs/cradle/`, files
-   01–05), `APP-SPEC` (§4–§8, §11, §13,
+3. **The design set wins.** the cradle design set (`docs/cradle/02-ARCHITECTURE.md`,
+   `docs/experience/STORIES.md` and `docs/experience/LOCAL-CAMPAIGN.md`), `APP-SPEC` (§4–§8, §11, §13,
    §14, §17), #155 D1–D11 + Buzz specimen, #138, #25,
    `CANONICAL-PRODUCT-FIELD.md`, and the alpha notes are the bar. Design is
    never edited to match code.
@@ -191,7 +191,7 @@ continuity is now explicitly mapped as GW-01–06, not fog.
    may honestly report model unset. The cradle renders what resolution
    returned.
 7. **Honesty.** Truthful state only — no invented health, no fake loading, no
-   simulated streams, unavailable ≠ error (`cradle/04` honesty laws; APP-SPEC
+   simulated streams, unavailable ≠ error (the honesty laws in LOCAL-CAMPAIGN §0.3; APP-SPEC
    §14: "professional software, recognisably O:I"; scarce gold).
 8. **Files mapped, prompts pithy.** Every unit names its files. Briefs are
    imperative: name the files, the operation, the metric. No hedging, no
@@ -387,7 +387,7 @@ output, it is not built (law 10).
 | D5 | How agents are created | Create act writes an **agency-intent expression** → Central AgentProfile → AIKit compose → launch. One text box in the UI; the authored chain underneath is the product operation. Models are harness-level stipulations (law 6), never asked here. | `OI-ALPHA-AGENCY-INTENT-EXPRESSION`; `OI-ALPHA-AGENT-LAUNCH-SEAM` |
 | D6 | Activity vs chat | Activity rows are **stable semantic objects** distinct from actions; permission requests correlate to their row and gate the real tool. Buzz is the reference specimen (source-locked `buzz@00e61eaf`) — mined for interaction lessons only. | #155 D5/D6 |
 | D7 | Session Observatory | Sessions observable above bounded Runs; presence from real signals (D-life ○●◐!×✓); promote Activity → bounded Run. | #155 D7/D8 |
-| D8 | Knowledge substrate | AIKit knowledge + Central wiki via native seams; aperture results carry ref/kind/owner/provenance/actions; remember-this writes world-relative refs with provenance. | APP-SPEC §8; `cradle/03` F-states; #155 D2 |
+| D8 | Knowledge substrate | AIKit knowledge + Central wiki via native seams; aperture results carry ref/kind/owner/provenance/actions; remember-this writes world-relative refs with provenance. | APP-SPEC §8; the F states of `docs/experience/LOCAL-CAMPAIGN.md` §0.5; #155 D2 |
 | D9 | Design system | **Extend `packages/oi-design-system`** (house token vocabulary already drafted) to the #25 extraction list from `site/src`; the cradle consumes it and nothing hard-codes tokens. No separate certification gate — the P0 phase walk *is* the evidence. Palette direction ruled: soft writing-paper ground (drab off grey-yellow-green); the wiki-graph idiom (dark grey nodes, slender lines) leads the visual vision (D21). The token vocabulary already carries `--oi-paper` — the ruling firms its direction. | #25; APP-SPEC §17; owner ruling 2026-09-05 |
 | D10 | Walk harness | A typed, dev-only channel in the cradle (`__cradle.walk`): invoke operations, read state, capture receipts/screenshots. Dev tooling only — no new renderer authority. | `cradle/05 §3` |
 | D11 | ai-kit substrate | Work from ai-kit `main` after porting self-contained full-shape modules (agent/compose → resolve → store/CLI). Never merge branches. | `OI-INHABITATION-FOUNDATIONS §6` |
@@ -567,7 +567,7 @@ Gate: knowledge gathers on the focus and remembers to chosen destinations.
 - **U3.2 Knowledge on selection** `(S→S2 + S→S0)` · walk: select a paragraph →
   aperture shows linked knowledge for that ref; created notes store
   world-relative refs.
-- **U3.3 Remember-this** `(S→S0)` · `cradle/03` F-states · walk: remember from
+- **U3.3 Remember-this** `(S→S0)` · LOCAL-CAMPAIGN §0.5 F states · walk: remember from
   canvas → note lands in the chosen destination with provenance
   `generated-proposal`; recognition promotes it.
 - **U3.4 Wiki graph surface** `(S→S0 + S→S2)` (D21) ·
@@ -716,7 +716,7 @@ terminal state. P0 closed this way 2026-09-05
 
 ## Canvas editing and selected context — 20 September 2026
 
-This bounded owner-commissioned continuation implements D20/W1.7, U1.2–U1.4, U3.1/U3.2 and FND-04. Its executable contract is [the canvas editor map](../.wayfinder/maps/canvas-editor-context.md). The latest Run / Agents / Context presentation remains; text selection is not a mode switch, participation wizard or publication act. Native AIKit owns prepared-context records and the Vāk expression. Central retains source/revision authority. Selection, preparation, dispatch and actual provider context remain distinct. Current source and returned test evidence are recorded in that map; no installed or human acceptance is implied.
+This bounded owner-commissioned continuation implements D20/W1.7, U1.2–U1.4, U3.1/U3.2 and FND-04. Its executable contract is the canvas editor map (retired 27 Oct into the DLW map, O-I #706; read it at `8873b0968`). The latest Run / Agents / Context presentation remains; text selection is not a mode switch, participation wizard or publication act. Native AIKit owns prepared-context records and the Vāk expression. Central retains source/revision authority. Selection, preparation, dispatch and actual provider context remain distinct. Current source and returned test evidence are recorded in that map; no installed or human acceptance is implied.
 
 ## Canvas editor/context integration — 20 September 2026
 

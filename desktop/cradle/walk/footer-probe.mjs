@@ -1,8 +1,8 @@
 import {chromium} from 'playwright';
-// Acceptance probe — the workspace footer's reveal law (UI-FUNCTION-LANDING
+// Acceptance probe — the workspace footer's reveal law (PROGRAMME R31, UI-FUNCTION-LANDING
 // B1: "edge 3px→24px on hover, actions summary reachable"). Every check is
 // content or geometry, never presence alone; failures accumulate and the
-// probe exits 1 when any check fails (HARNESS-SETTINGS-RESEARCH-2026-09-22
+// probe exits 1 when any check fails (CASES AFN7, from HARNESS-SETTINGS-RESEARCH-2026-09-22
 // §4 negative roster 7 + owner ruling 8: a probe without a failure path is
 // print-as-verification).
 //

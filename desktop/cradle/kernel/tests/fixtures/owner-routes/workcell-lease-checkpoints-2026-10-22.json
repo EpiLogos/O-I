@@ -1,0 +1,177 @@
+{
+  "captured": "2026-10-22, Workcell PR EpiLogos/Workcell#123 (branch dlw/w6-owner-ops, 024d3ba), the debug binary built from it, over a scratch --state-root under the session scratchpad: a host world prepared there ('host'), the same world's execution binding rewritten as an OpenSandbox sandbox sb-1 with the deployment declared in the scratch services.json against a stub lifecycle server on 127.0.0.1:18942 ('sandbox'; the PR's own test does the same), and that deployment pointed at 127.0.0.1:9, where nothing listens ('unreachable'). 'installed' is the installed workcell 0.1.0's answer to the new verbs for the same receipt. Never the owner's state root or a real sandbox server.",
+  "receipt_shape": "the scratch receipt paths are replaced by RECEIPT in the tests",
+  "host": {
+    "lease": {
+      "leases": [
+        {
+          "logical_ref": "affordance:shell",
+          "material_ref": "execution:host-process:b092405fba1f812f",
+          "port": "execution",
+          "presence": "present",
+          "provider_ref": "provider:collapsed-local-host-process",
+          "standing": "no-lease"
+        }
+      ],
+      "observed_at_unix_ms": 1792660425957,
+      "ok": true,
+      "schema": "workcell.material-leases/v1",
+      "world_ref": "world:b79e30c36fa4636e"
+    },
+    "checkpoint_refused": {
+      "exit": 6,
+      "stdout": "",
+      "stderr": {
+        "error": {
+          "kind": "unsupported",
+          "message": "unsupported: no binding of material world `world:b79e30c36fa4636e` is held by a provider that takes checkpoints"
+        },
+        "ok": false
+      }
+    },
+    "checkpoint_unknown_binding": {
+      "exit": 5,
+      "stdout": "",
+      "stderr": {
+        "error": {
+          "kind": "not-found",
+          "message": "not found: material world `world:b79e30c36fa4636e` has no binding `affordance:none`"
+        },
+        "ok": false
+      }
+    },
+    "checkpoints": {
+      "checkpoints": [],
+      "ledger": "/private/tmp/claude-501/-Users-admin-Central/8300544e-4e39-428c-913c-0f026a6b86e1/scratchpad/k0b/wstate/checkpoints/world_b79e30c36fa4636e.jsonl",
+      "ok": true,
+      "schema": "workcell.material-checkpoints/v1",
+      "unreadable": [],
+      "world_ref": "world:b79e30c36fa4636e"
+    }
+  },
+  "sandbox": {
+    "lease": {
+      "leases": [
+        {
+          "expires_at": "2026-10-22T12:00:00Z",
+          "logical_ref": "affordance:shell",
+          "material_ref": "sb-1",
+          "port": "execution",
+          "presence": "present",
+          "provenance": {
+            "provider": "opensandbox",
+            "upstream.execd_spec_blob": "ccfbce2d4330ec8a70ea359206fab17afa9e7a98",
+            "upstream.lifecycle_api": "0.1.0",
+            "upstream.lifecycle_spec_blob": "8723921f2599e2e349428af3b864f30a5987e9a8",
+            "upstream.repository": "opensandbox-group/OpenSandbox",
+            "upstream.revision": "173a576d3afcd1fb9ab116b4c1353b2f4b0848d1"
+          },
+          "provider_ref": "provider:opensandbox",
+          "renewable": true,
+          "standing": "leased"
+        }
+      ],
+      "observed_at_unix_ms": 1792660426047,
+      "ok": true,
+      "schema": "workcell.material-leases/v1",
+      "world_ref": "world:b79e30c36fa4636e"
+    },
+    "checkpoint": {
+      "checkpoint_ref": "snap-1",
+      "ledger": "/private/tmp/claude-501/-Users-admin-Central/8300544e-4e39-428c-913c-0f026a6b86e1/scratchpad/k0b/wstate/checkpoints/world_b79e30c36fa4636e.jsonl",
+      "logical_ref": "affordance:shell",
+      "name": "before",
+      "ok": true,
+      "provenance": {
+        "provider": "opensandbox",
+        "provider_snapshot_state": "Ready",
+        "upstream.execd_spec_blob": "ccfbce2d4330ec8a70ea359206fab17afa9e7a98",
+        "upstream.lifecycle_api": "0.1.0",
+        "upstream.lifecycle_spec_blob": "8723921f2599e2e349428af3b864f30a5987e9a8",
+        "upstream.repository": "opensandbox-group/OpenSandbox",
+        "upstream.revision": "173a576d3afcd1fb9ab116b4c1353b2f4b0848d1"
+      },
+      "provider_ref": "provider:opensandbox",
+      "reusable": true,
+      "schema": "workcell.material-checkpoint/v1",
+      "source_material_ref": "sb-1",
+      "state": "ready",
+      "taken_at_unix_ms": 1792660426084,
+      "world_ref": "world:b79e30c36fa4636e"
+    },
+    "checkpoints": {
+      "checkpoints": [
+        {
+          "checkpoint_ref": "snap-1",
+          "logical_ref": "affordance:shell",
+          "name": "before",
+          "provenance": {
+            "provider": "opensandbox",
+            "provider_snapshot_state": "Ready",
+            "upstream.execd_spec_blob": "ccfbce2d4330ec8a70ea359206fab17afa9e7a98",
+            "upstream.lifecycle_api": "0.1.0",
+            "upstream.lifecycle_spec_blob": "8723921f2599e2e349428af3b864f30a5987e9a8",
+            "upstream.repository": "opensandbox-group/OpenSandbox",
+            "upstream.revision": "173a576d3afcd1fb9ab116b4c1353b2f4b0848d1"
+          },
+          "provider_ref": "provider:opensandbox",
+          "reusable": true,
+          "schema": "workcell.material-checkpoint/v1",
+          "source_material_ref": "sb-1",
+          "state": "ready",
+          "taken_at_unix_ms": 1792660426084,
+          "world_ref": "world:b79e30c36fa4636e"
+        }
+      ],
+      "ledger": "/private/tmp/claude-501/-Users-admin-Central/8300544e-4e39-428c-913c-0f026a6b86e1/scratchpad/k0b/wstate/checkpoints/world_b79e30c36fa4636e.jsonl",
+      "ok": true,
+      "schema": "workcell.material-checkpoints/v1",
+      "unreadable": [],
+      "world_ref": "world:b79e30c36fa4636e"
+    }
+  },
+  "unreachable": {
+    "lease": {
+      "leases": [
+        {
+          "error": "unavailable: connect OpenSandbox HTTP endpoint 127.0.0.1:9: Connection refused (os error 61)",
+          "logical_ref": "affordance:shell",
+          "material_ref": "sb-1",
+          "port": "execution",
+          "presence": "present",
+          "provider_ref": "provider:opensandbox",
+          "standing": "unobserved"
+        }
+      ],
+      "observed_at_unix_ms": 1792660426131,
+      "ok": true,
+      "schema": "workcell.material-leases/v1",
+      "world_ref": "world:b79e30c36fa4636e"
+    }
+  },
+  "installed": {
+    "lease": {
+      "exit": 2,
+      "stdout": "",
+      "stderr": {
+        "error": {
+          "kind": "invalid-demand",
+          "message": "invalid demand: unknown command `lease`; run `workcell help`"
+        },
+        "ok": false
+      }
+    },
+    "checkpoints": {
+      "exit": 2,
+      "stdout": "",
+      "stderr": {
+        "error": {
+          "kind": "invalid-demand",
+          "message": "invalid demand: unknown command `checkpoints`; run `workcell help`"
+        },
+        "ok": false
+      }
+    }
+  },
+  "argv": "workcell --receipt R lease|checkpoints --json; workcell --receipt R checkpoint [--binding L] [--name N] --json"
+}

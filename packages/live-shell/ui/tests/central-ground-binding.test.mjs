@@ -66,21 +66,25 @@ test('every key Ground hygiene and Impact wire is placed; each device is publish
 test('Ground hygiene draws what the shell reads — the kernel\'s sources, the git refusal in its words, the machine — and no ring it did not read', () => {
   resetHolds()
   const v = ground.hygieneValues('central:ground-hygiene', census(KERNEL), Date.now())
-  assert.deepEqual([v.light, v.machineRef, v.tend, v.refresh, v.faults], ['lit', 'workcell:mac', 'off', 'open', true])
+  // REPLACED (lane K0): Tending is the hand's own setting now that tenders write through their owners, at the manual's Propose (§18.5).
+  assert.deepEqual([v.light, v.machineRef, v.tend, v.refresh, v.faults], ['lit', 'workcell:mac', 'propose', 'open', true])
+  assert.deepEqual([v['allow:init'], v['allow:reproject'], v['allow:recognise'], v['allow:reconcile']], [true, true, true, true], 'Allowed tenders: All On')
   assert.ok(v.readAge >= 5)
   assert.match(JSON.parse(v.sources)[1].refusal, /GitState/)
   for (const key of ['seats', 'worktrees', 'branches', 'disk', 'allow:release', 'receipt']) assert.equal(v[key], undefined, `${key}: not read`)
   assert.deepEqual(ground.hygieneValues('central:ground-hygiene', null, Date.now()).light, undefined, 'not read yet: no light')
 })
 
-test('Ground hygiene, given the seat reading, reports the clean landed seat as landed and the clean seat ahead of main as not; every tender stands disabled with the model\'s reason', async () => {
+test('Ground hygiene, given the seat reading, reports the clean landed seat as landed and the clean seat ahead of main as not; the seat\'s tenders stand disabled with the model\'s reason', async () => {
   resetHolds()
   const binding = ground.hygieneBinding('central:ground-hygiene', census([...KERNEL, SEAT_READ]), Date.now(), async () => {})
   const findings = JSON.parse(binding.values.findings)
   assert.deepEqual(findings.filter(f => f.kind === 'occupied-by-landed').map(f => f.subject), ['env-1/landed'])
   assert.equal(findings.find(f => f.subject === 'env-1/actuation' && f.kind === 'occupied-by-landed'), undefined, 'actuation: clean, 3 ahead — not landed')
   assert.equal(JSON.parse(binding.values.seats).length, 3)
-  for (const key of ['release', 'prune', 'sweep', 'tend', 'allow:release']) assert.match(binding.standing[key].disabled, /writer|Off/, `${key} disabled with its reason`)
+  // REPLACED (lane K0): Release seat, Prune and Sweep have no writer here; Tend is the hand's setting, never disabled.
+  for (const key of ['release', 'prune', 'sweep', 'allow:release']) assert.match(binding.standing[key].disabled, /no writer reaches it/, `${key} disabled with its reason`)
+  assert.equal(binding.standing.tend, undefined, 'Tend is the hand\'s own setting')
   await assert.rejects(() => binding.write([{key: 'release', value: 'env-1/landed'}]), /seat instrument/)
   let reread = 0
   await ground.hygieneBinding('central:ground-hygiene', null, Date.now(), async () => { reread++ }).write([{key: 'reread', value: true}])

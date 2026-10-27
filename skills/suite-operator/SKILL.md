@@ -49,8 +49,9 @@ beginning `METHOD:`, not another artifact.
 
 ## Harness-first adoption and current-cut entry
 
-For a request made in an existing harness, read
-`docs/experience/HARNESS-FIRST-ADOPTION.md` at this Skill's source revision.
+For a request made in an existing harness, read the AD family ("Add only what
+helps my existing setup") of `docs/experience/STORIES.md` and manual
+`docs/dlw/DLW.md` §10.11 at this Skill's source revision.
 Its source module belongs to the existing #65 map. Resolve the reference from
 its owner when a projected Skill has no sibling docs; an explicit bootstrap
 read is not proof that normal discovery/loading works.
@@ -197,8 +198,8 @@ scope. Add description-selection and native operation/readback cases for this
 procedure through the existing CAW campaign, including the missing-producer
 negative. Running those commands is evidence only when actually executed.
 
-Use the existing everyday-loop spine in `docs/cradle/04-VERIFICATION.md`
-§2 and §6.1–6.6: human entry, operative Agent practice, permitted work, failure,
+Use the existing everyday-loop spine in `docs/experience/LOCAL-CAMPAIGN.md`
+§0 and §10.1–10.6: human entry, operative Agent practice, permitted work, failure,
 repair, Return and later re-entry. Installed and human evidence stays distinct.
 Native Skill improvements return to their source owner; neither use, scores nor
 benchmarks silently promote source or author human preference.

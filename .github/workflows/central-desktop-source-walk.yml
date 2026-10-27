@@ -14,7 +14,7 @@ defaults:
     shell: bash
 jobs:
   joined:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     env:
       PLAYWRIGHT_BROWSERS_PATH: /tmp/oi-w2-browser-engines

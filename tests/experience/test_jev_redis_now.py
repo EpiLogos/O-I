@@ -8,7 +8,7 @@ import tempfile
 import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
-NOTE = "docs/experience/JEV-REDIS-NOW-INTEGRATION.md"
+NOTE = "docs/experience/CASES.md"
 MODULE = "docs/experience/session-grounding.json"
 SPEC = importlib.util.spec_from_file_location("jev_redis_experience_map", ROOT / "scripts/experience_map.py")
 assert SPEC is not None and SPEC.loader is not None

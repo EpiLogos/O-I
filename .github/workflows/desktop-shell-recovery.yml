@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   shell:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
@@ -121,7 +121,7 @@ jobs:
           if-no-files-found: error
           retention-days: 14
   wider-suite:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4

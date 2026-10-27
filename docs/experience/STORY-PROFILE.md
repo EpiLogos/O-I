@@ -20,9 +20,24 @@ A parent describes a whole activity. Children describe meaningful interactions o
 
 Publication, source standing, implementation support, observed execution and human EX remain different. The source stories are specified, not automatically tested. A generated interpretation is not the person's own report.
 
+### The six cells of one story
+
+A story's record is read on the six positions, which are also the six document tiers. Each cell is filled from its source or left open, never filled for show.
+
+| Position | Cell | Record fields |
+|---|---|---|
+| 0 Why | The owner's words the story answers | `source_refs` to tier-0 ground |
+| 1 What | Who, from which start, does what, and gets what | `actor`, `story`, `entry_state`, `act`, `experienced_outcome`, `return_state`, `branch_condition` |
+| 2 How | The device, view and act that carry it, and the capability rows it needs | `surface_refs`; `extensions.agent_ux.capability_requirements` |
+| 3 Who / Which / Whereby | The product operation that owns the effect, and the agent that acts | `extensions.agent_ux.participants`, `steps` |
+| 4 Where / When / Whither | Its starting world (Bare, Arriving, Lived-in or Yours), surface and machine; its reverse-engineered port source; the code | `extensions.ux.starting_world`, `extensions.ux.port_sources`, code refs |
+| 5 Why-for / Why-not | The walk, the grade and the owner's EX: what it was for, and whether it held | `extensions.ux.grade` (D, C, P, M or H), `existing_proof_refs`, EX refs |
+
+The readable catalogue carries these as columns; the capability matrix carries them as references in a story-by-position view.
+
 ## 2. The additive agent reading
 
-Use `extensions.agent_ux` for the **same** story and revision. Do not copy it as an unrelated “agent feature”. The minimum complete reading is:
+Use `extensions.agent_ux` for the **same** story and revision. Records written to the retired `docs/ux/` profile carry this reading as `extensions.participation`; read them as `agent_ux`. Do not copy it as an unrelated “agent feature”. The minimum complete reading is:
 
 | Member | Required meaning |
 |---|---|
@@ -42,6 +57,80 @@ SkillSets provide an available repertoire; they are not execution order, grants 
 
 The agent record contains explicit task plans, source selections and observable decisions, **not hidden chain of thought**. Test explainability through declared choices, tool inputs/results and provenance.
 
+### What decides that a practice applies
+
+- **The situation is part of the reading.** Root meta-Project, child Project, an unadopted external source and a private shared scope are not interchangeable.
+- **Recognising is not choosing.** Noticing that a practice may apply is not selecting it, permission or invocation. Each test packet includes at least one near-miss: a similar request where the practice does not apply. An ordinary source edit is not a contribution to the person's diary; a task without structured development does not start Factory work.
+- **Facts and judgement are decided differently.** Deterministic facts use the owner's own validation: the known source revision, a valid path, the actual permission, target compatibility, a finite bound. Applicability that needs judgement keeps an explanation grounded in what was encountered, never an invented numeric score.
+- **Behaviour, not a magic name.** Where several practices fit, the acceptance states the acceptable behaviour and its bounds rather than one Skill name, unless that exact Skill is the requirement. A test that a Skill is a Method reads the start of its real description; a heading in the body does not count.
+- **Only the selected composition reaches the actor.** The source list may name candidate practices; a particular actor's packet holds only the selected, sufficient composition. An orchestrator's broad access never reaches a worker because they share a campaign.
+- **A failed result is a fact to locate, not a verdict.** By itself it does not show disobedience, a code defect or permission to retry.
+
+### Example: WK01 in the record form
+
+This packet is source-bound, not ready to run. Local preparation resolves the installed operations and versions and records them before a live test.
+
+```json
+{
+  "id": "WK01",
+  "kind": "story",
+  "parent_ref": "WK",
+  "actor": "person using their existing coding tool, with a working agent",
+  "story": "Fix the defect in my usual coding tool without being asked to paste the project's working instructions again.",
+  "entry_state": "A permitted disposable project has a real failing behaviour, an existing project instruction naming the relevant check, and an ordinary supported agent-tool entry. No O:I window is open.",
+  "act": "Ask the usual tool to fix the behaviour, without supplying the hidden test command or the expected answer.",
+  "experienced_outcome": "The behaviour is repaired and the relevant check was found and run. The person did not have to reconstruct context.",
+  "return_state": "The changed source, the checks run and the next action stay findable; unrelated and private material is kept.",
+  "branch_condition": "A needed source or practice is withheld, stale or not loaded; the agent names the missing condition instead of inventing it.",
+  "surface_refs": [],
+  "source_refs": ["docs/experience/STORIES.md"],
+  "standing": "specified",
+  "extensions": {
+    "agent_ux": {
+      "participants": [
+        {"role": "requester", "kind": "the person, or a declared computer-use driver"},
+        {"role": "worker", "kind": "the agent under test"},
+        {"role": "verifier", "kind": "an independent agent"}
+      ],
+      "trigger": {
+        "when": "an ordinary coding request in the existing project",
+        "near_miss": "a request only to explain code authorises no change and no commissioned Run"
+      },
+      "determining_conditions": ["current source", "permitted writes", "supported tool", "finite task bounds"],
+      "context_requirements": {
+        "required": ["the actual project", "the current authorised task", "discoverable project instructions"],
+        "excluded": ["the verifier's expected answer", "other projects' private source"]
+      },
+      "capability_requirements": [
+        {"ref": "cap.aikit.context-resolution", "owner": "EpiLogos/ai-kit", "binding_status": "source-bound"},
+        {"ref": "cap.central.control-reading", "owner": "EpiLogos/Central", "binding_status": "source-bound",
+         "when": "the selected source is Central-owned"}
+      ],
+      "practice_requirements": [
+        {"ref": "skill/aikit/runtime-operation", "binding_status": "source-bound",
+         "source_path": "registry/capsules/skill/aikit/runtime-operation/payload/SKILL.md"},
+        {"requirement": "the project's own verification practice", "binding_status": "binding-required"}
+      ],
+      "steps": [
+        {"id": "orient", "role": "worker",
+         "observable": "The worker finds the right project and its source through the ordinary route."},
+        {"id": "act", "role": "worker",
+         "operation": {"binding_status": "binding-required", "discovery": "the installed owner's public operation and its description"},
+         "observable": "Authorised source changes, and the required checks run.",
+         "invariants": ["no unrelated writes", "no private source disclosed"]},
+        {"id": "verify", "role": "verifier", "oracle_visibility": "verifier only",
+         "observable": "Independent reproduction passes on the changed artifact and fails on the original defect."}
+      ],
+      "reentry": "A later session finds the changed source, the checks and the next action through ordinary discovery."
+    }
+  }
+}
+```
+
+`surface_refs: []` means that no native Surface identity has been asserted, not that the trial has no interface. Local binding names the actual tool, surface or environment, or its honest external-provider identity; no Workcell or Session ID is made up for a harness that has not supplied one. The verifier's oracle and fault-injection instructions stay outside the worker's context.
+
+Inside a story's steps each capability, practice or operation binding records how far it has got: `binding-required` (the exact missing reference and its owner are named; an unresolved binding never reads as an empty successful list), `source-bound`, `executable` or `exercised`. That is the state of the one binding, not a product status. Keep the owner's richer vocabulary where it supplies one, with its original value.
+
 ## 3. Test episodes are separate from story meaning
 
 A reusable story does not contain today's secret paths or pretend its possible actors are already running. A campaign episode binds:
@@ -59,7 +148,9 @@ expected observations and independent checks
 actual event/evidence refs and intervention history
 ```
 
-Keep this episode in the existing campaign/evidence system. Its subject may be a Factory task when commissioned, but direct tests and product use do not require Factory ancestry. Human EX uses the existing §4.2 definition: only the person's own report supplies it. A computer-use agent's observation or evaluation is machine evidence attributed to that tester.
+Keep this episode in the existing campaign/evidence system. Its subject may be a Factory task when commissioned, but direct tests and product use do not require Factory ancestry.
+
+Each actual attempt records, separately: the prepared context and the loading observed, the practice chosen and the use observed, the operation requested and the one performed, the source, executable and provider versions, the readback, private evidence references and any assistance. None of these is back-filled from the plan after a failed test. Human EX uses the existing §4.2 definition: only the person's own report supplies it. A computer-use agent's observation or evaluation is machine evidence attributed to that tester.
 
 ### Actor brief and verifier brief must differ
 
@@ -75,8 +166,9 @@ Use **`ql-capability-matrix/1`**, not a story-specific matrix format. Named view
 - Under which source/context conditions does each practice apply?
 - Which existing proving obligation verifies the human or agent side of a handoff?
 - Which variants have actually been exercised?
+- In which installations and compositions does a story apply, where is it legitimately unavailable, and how does it behave at first use and at removal?
 
-A view declares its question, axes, member identities/source refs and the meaning of an empty cell. Story and step refs are axis members; they are not automatically capabilities. Multiple determinations in a cell remain distinct, including contrary evidence. Human/agent perspectives or a 6×6 display alone do not establish QL conjugacy. Set `shape_binding` only from an actual QL definition and sourced derivation; preserve ordinary unshaped stories.
+A view declares its question, axes, member identities/source refs and the meaning of an empty cell. Story and step refs are axis members; they are not automatically capabilities. Multiple determinations in a cell remain distinct, including contrary evidence. Human/agent perspectives or a 6×6 display alone do not establish QL conjugacy. Set `shape_binding` only from an actual QL definition and sourced derivation. Every story carries its six cells (§1); a cell is filled from its source or left open.
 
 ### Native identity stays native
 
@@ -149,4 +241,4 @@ The story can be bound to existing `central-git-convergence`, `central-work-inta
 
 The same story source can be read normally, linked from a capability account, retrieved by an agent, or rendered as a bounded graph of story → step → condition → practice → capability → evidence. Selecting a node can reveal its actual source and relevant operation. This publication supplies source relationships and a planning projection; it does not claim a shipped graph editor or automatic testing scheduler.
 
-When a capability, Skill description, source scope or provider changes, find dependent stories through these explicit links. Revalidate affected bindings and tests; do not silently mark all summaries current. Use the existing Knowledge/SourcePool/ProjectMap and source revision mechanisms. If a native consumer does not yet understand the typed extension, record the exact parser/provider dependency and continue through ordinary source reading. Do not create another Wiki or overwrite generated index data to simulate integration.
+When a capability, Skill description, source scope or provider changes, find dependent stories through these explicit links. Revalidate affected bindings and tests; do not silently mark all summaries current. A changed document does not by itself start expensive reasoning or a destructive experiment. A repair that changes the basis starts a new trial and reruns the whole affected activity. Use the existing Knowledge/SourcePool/ProjectMap and source revision mechanisms. If a native consumer does not yet understand the typed extension, record the exact parser/provider dependency and continue through ordinary source reading. Do not create another Wiki or overwrite generated index data to simulate integration.

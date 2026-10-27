@@ -1,6 +1,6 @@
 {
  "purpose": "Additive source module of O-I#65 for owner-approved O-I#279; not another campaign or runtime.",
- "story_source": "docs/experience/PERSONAL-WEB.md",
+ "story_source": "docs/experience/STORIES.md",
  "ux_tier": 1,
  "standing": "owner-approved direction; agent-authored implementation/experience elaboration, not executed acceptance",
  "families": [

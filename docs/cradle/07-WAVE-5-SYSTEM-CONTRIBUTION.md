@@ -5,11 +5,144 @@ surface. Freezes the field names; leaves the canonical Rust/TS types to the
 composition-kernel track (`02-ARCHITECTURE.md` lineage: one composition
 layer, native ownership preserved).*
 
-Supplements `06-SYSTEM-SETTINGS.md`, which remains the law (L1–L6) and the
-base disclosure contract (`oi.product-settings-disclosure/v1`). Wave 5 does
-not replace that design — it makes it native. §4.5 of 06 ("Source today")
-said every section is `provenance: cradle-composed` until each product ships
-its descriptor natively. Wave 5 is P2 and P3 of 06 §8: the products ship.
+§0 carries the System law (L1–L6) and the base disclosure contract
+(`oi.product-settings-disclosure/v1`) from the retired `06-SYSTEM-SETTINGS.md`.
+Wave 5 does not replace that contract — it makes it native. §0.6 ("Source
+today") said every section is `provenance: cradle-composed` until each product
+ships its descriptor natively. Wave 5 is P2 and P3 of §0.7: the products ship.
+
+---
+
+## 0. The System law and the `v1` descriptor
+
+Carried from the retired `06-SYSTEM-SETTINGS.md` (its §2, §4 and §8; O-I #728). Only its section numbers changed, and pointers into its page layout, which retired with the legacy Cradle, now say "the retired page". This law and contract stand; 08 and 09 cite them.
+
+### 0.1 Law
+
+- **L1 — Discovered ≠ ready.** Installation is discovery, never runtime
+  readiness (BOOT-06/12). Every availability label keeps the honest form:
+  `discovered — not verified ready`. Registration never stands in for
+  health.
+- **L2 — Owner refs on every value.** No value appears without its
+  provenance: which owner disclosed it, and when observed. The observed-at
+  stamp is freshness, never owner-carried revision (composition.rs law).
+- **L3 — Empty is proof, not failure.** A product section with no disclosed
+  settings and no disclosed actions renders its emptiness honestly. Nothing
+  is fabricated to fill space (law 4 / D15 menu law, applied to settings).
+- **L4 — Writes cross the owner seam only.** A setting is mutable in this
+  surface only when the owner discloses a mutation operation. Otherwise the
+  setting is read-only here and names its native path ("set through
+  `aikit profile`"). The cradle never reaches past an owner to edit its
+  state.
+- **L5 — Disclosure cleanliness.** The primary surface is human-readable:
+  sections, values, provenance. Raw records stay behind an explicit
+  `<details>`-grade disclosure for the integrator — never the main view.
+- **L6 — The descriptor is product-owned.** Each product authors its own
+  settings disclosure (schema in §0.2–§0.5). The cradle only projects. Adding a
+  section or setting to a product never requires cradle code changes — this
+  is what "easy to update and refine" means structurally.
+
+Each product discloses its settings surface as data. The cradle projects;
+it never authors product configuration (L6).
+
+### 0.2 Settings descriptor
+
+```json
+{
+  "schema": "oi.product-settings-disclosure/v1",
+  "product_id": "ai-kit",
+  "disclosed_at_unix_ms": 1757324400000,
+  "about": "Resolution and composition layer: sources → skills → sets → profiles → sessions.",
+  "sections": [
+    {
+      "id": "resolution",
+      "title": "Resolution chain",
+      "settings": [
+        {
+          "key": "sources.pins",
+          "title": "Skill source pins",
+          "kind": "table",
+          "axes": {
+            "authored": {"source_count": 12},
+            "effective": {"source_count": 12, "owner_ref": "aikit sources list"},
+            "active": {"source_count": 12, "owner_ref": "aikit tree apply receipt"}
+          },
+          "mutable": false,
+          "native_path": "aikit sources / aikit set"
+        }
+      ]
+    }
+  ],
+  "actions": [
+    {
+      "action_ref": "aikit.session.attach",
+      "title": "Attach to session",
+      "args": [{"name": "space_ref", "kind": "string"}],
+      "availability": "missing_native_obligation"
+    }
+  ]
+}
+```
+
+### 0.3 The configuration axes
+
+Three axes, always distinguished — this is the core of "configurational
+matter" vs a registry:
+
+- **authored** — what the human wrote (config files, pins, policy).
+- **effective** — what the product actually resolved (with owner ref).
+- **active** — what is running right now (with owner ref / receipt).
+
+A setting where all three agree still shows all three — the agreement is
+the information. A setting where they diverge is a **drift** and renders
+as the page's primary maintenance signal.
+
+### 0.4 Setting kinds
+
+`scalar` (string/bool/number/path), `select` (disclosed options),
+`table` (rows with provenance), `presence` (credential/env presence —
+never values), `reference` (a ref to another product's disclosed entity,
+e.g. a Workcell instance bound to an Actuation receipt). New kinds extend
+the schema version; the projection degrades to raw-with-label on unknown
+kinds rather than dropping them.
+
+### 0.5 Action disclosure
+
+Actions carry `action_ref`, args, and `availability`:
+`disclosed` (callable), `missing_native_obligation` (named, not callable —
+renders as obligation, never as a disabled button), or `unavailable`
+(owner said why). L3 applies: an empty `actions` array renders emptiness.
+
+### 0.6 Source today
+
+Until each product ships its descriptor natively, the page composes the
+*projection* from what the kernel already reads (composition census,
+agency, factory bindings, ground) and marks every composed section
+`provenance: cradle-composed` — visibly cheaper than a native disclosure,
+never passed off as one. Native disclosures replace composition one product
+at a time; the page does not change when they do (L6).
+
+### 0.7 Phasing
+
+- **P0 — this design + descriptor schema** (`oi.product-settings-disclosure/v1`)
+  and fixture worlds (steady / empty / drifted) for the walk. No product
+  code changes.
+- **P1 — cradle projection.** SystemPanel restructured into the retired page's
+  architecture over *existing* kernel reads only, cradle-composed
+  provenance marked. Walk checks for L1–L5 land. The page is informative
+  and honest before it is powerful.
+- **P2 — native disclosures.** Each product ships its descriptor (product-
+  repo work, one at a time): Central → AIKit → Workcell → O:I → Actuation
+  → QL, ordered by seam maturity. Cradle code does not change per product
+  (L6) — only the walk gains a check per native disclosure.
+- **P3 — engagement.** Intent/invoke ops disclosed per product following
+  the Factory pattern; bootstrap flow activates; maintenance remediations
+  go live. Ordered by user need: install/verify (O:I) → session attach
+  (AIKit) → lifecycle (Workcell) → ecology/attach/stream (Actuation).
+
+Dependencies are explicit: P1 needs only P0; each P2 item needs only P1
+plus that product's owner-side descriptor; each P3 item needs its P2
+descriptor. Nothing blocks P1 except this design's acceptance.
 
 ---
 
@@ -52,13 +185,13 @@ schema            oi.product-settings-disclosure/v2
 contract_revision wave-5/system.1
 ```
 
-`v1` (06 §4.1) stays readable — the cradle's P1 projection still consumes it.
+`v1` (§0.2) stays readable — the cradle's P1 projection still consumes it.
 `v2` is `v1` plus: the `owner` block, the `staged` and `expected_effect`
 axes, per-value provenance on every axis, `drift`, per-action
 `authority`/`exposure`/`explain`/`history`, and owner-level
 `availability`/`degradations`/`obligations`.
 
-New kinds extend the schema version (06 §4.3). An unknown `kind` degrades to
+New kinds extend the schema version (§0.4). An unknown `kind` degrades to
 raw-with-label; it is never dropped.
 
 ## 3. The descriptor
@@ -131,7 +264,7 @@ raw-with-label; it is never dropped.
 ## 4. The four distinctions that must not collapse
 
 **4.1 Axes.** `declared`, `effective` and `active` are always all three
-present, even when they agree — the agreement is the information (06 §4.2).
+present, even when they agree — the agreement is the information (§0.3).
 `staged` is present with `stage_state: "none"` when nothing is prepared.
 `expected_effect` names what the stage would do. A divergence between
 declared and effective is a `drift` and is the surface's primary
@@ -246,7 +379,7 @@ Rules the mount obeys:
   honest "installed but not ready" position (L1).
 - The surface renders a mounted descriptor natively. Where no descriptor is
   mounted it falls back to the P1 cradle-composed section, still marked
-  `provenance: cradle-composed` (06 §4.5) and visibly cheaper than a native
+  `provenance: cradle-composed` (§0.6) and visibly cheaper than a native
   disclosure. Native disclosures replace composition one product at a time
   and the page does not change when they do (L6).
 

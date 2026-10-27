@@ -406,7 +406,7 @@ fn resolve_desired_cut(id: &str, checkout: &Path, candidate: Option<&str>) -> Re
     // exports it with `git archive <revision>`, so an occupied or dirty
     // checkout (an owner's protected frontend branch, a live research or
     // telemetry lane) is left exactly as it was while the accepted cut is
-    // still what gets built. HARNESS-FIRST-ADOPTION.md §5: the integration
+    // still what gets built. PROGRAMME R31 (the 19 Sep current-native cut) and docs/INSTALL-UPDATE-FLOW.md: the integration
     // lead establishes the intended cut; when moving the checkout cannot
     // preserve active work, the selection seam carries it instead.
     let is_main = selector.eq_ignore_ascii_case("main");

@@ -222,7 +222,8 @@ const GROUND = {sources: {state: 'ready', data: {schema: 'central.source-change-
 
 test('6 · the rail reads the project\'s returns for the Ledger, and the kernel\'s returns entry is the one place `comments` can be lost', () => {
   const rail = read('agent/devices/AgentRailDevices.tsx')
-  assert.match(rail, /ledgerBinding\(\{ground: ground\.reading, groundError: ground\.error, holds, returns: returned, tracks\}, \{openSession\}\)/)
+  // REPLACED (lane K0): the chosen receipt's session's usage rides along (actuation_read {usage-list}).
+  assert.match(rail, /ledgerBinding\(\{ground: ground\.reading, groundError: ground\.error, holds, returns: returned, tracks, usage\}, \{openSession\}\)/)
   // The kernel's returns entry (desktop/cradle/kernel/src/flow.rs SourceReturnEntry) passes on only the fields it names: where it does not
   // carry `comments`, a commented return reads as Waiting — true (it waits), only less exact.
   assert.equal(rec.returnReceiptRows([{return_ref: 'central:return:project:o-i:1792157400000000000-1', source_ref: 'central:source:project:O-I:a.md', basis_revision: 'r',

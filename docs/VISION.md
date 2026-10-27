@@ -130,20 +130,13 @@ Useful observations include task completion, orientation, restraint, recovery, c
 
 The aim is not to prove a universal maximal stack. It is to map the structured engineering space between capacity and effective agency.
 
-## 10. Quaternal Logic as optional maximal research
+## 10. Quaternal Logic is the structure
 
-Quaternal Logic is not required for minimal {O:I}.
+Quaternal Logic is the structure the DLW is built in, not a layer added to it. Its six positions stay the same across everything they organise: they shape how Central keeps a day and documents a project, how Factory runs and returns work, how Technē builds constellations, and how Live's instruments sound. Every record carries its six positions, each filled from its source or left open, never filled for show. A person never needs to know a coordinate for any of this to work; the structure is in the instruments.
 
-Within the wider Epi-Logos programme it provides a formal and experimental field for asking whether archetypal, relational and recursive distinctions can become technically answerable. The software discipline is **operational consequence**: if a QL distinction is supposed to matter to an operation, the implementation should eventually make a discriminable difference that can be tested rather than merely carrying the terminology.
+The DLW installs as one whole: the desktop brings all six products, Quaternal Logic among them. The underlying {O:I} products can still be composed without the desktop, in the smaller forms of the [installation variants](experience/INSTALLATION-VARIANTS.md).
 
-This leaves several legitimate outcomes open:
-
-- a classic approach can outperform a QL-informed one;
-- two proposed QL forms can prove operationally equivalent;
-- a QL distinction can improve explanation or navigation without improving execution;
-- a formal relation can remain research-only because no adequate operational contract has yet been established.
-
-Software results therefore answer questions about the technical articulation of the research. They do not by themselves prove the metaphysics from which the research was motivated.
+The theory comes first, and the software makes it usable. Its foundations — the six positions, the coordinate system and the Bimba map, the M0–M5 subsystems and their correspondences across music, topology and number — are an authored commitment that agents study and implement faithfully, not a hypothesis each implementation reopens. Where an implementation meets a concrete inconsistency or a correspondence not yet worked out, it names it precisely and returns it to its source. The software's evidence — derivations, correspondences, faithful implementation and observed use — makes the theory's coherence visible and transmissible.
 
 ## 11. Provenance is part of product understanding
 

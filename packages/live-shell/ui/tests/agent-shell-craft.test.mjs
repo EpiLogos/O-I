@@ -28,8 +28,10 @@ const ruleIn = (text, selector) => {
 const ruleFor = selector => ruleIn(css, selector)
 const trackRule = selector => ruleIn(tracksCss, selector)
 
-test('the session grid keeps the mockup 28px cell, 26px header and 22px stop-row rhythm (the one shared grid)', () => {
-  assert.match(trackRule('.cs {'), /height:\s*28px/, 'clip cell height 28px (world-shell-mockup.html .cs)')
+// W4 (the design is the standard, the mockups the floor): the cell takes the design's 52px, room for a clip's second line
+// (catalogue dlw__session-grid.css .sgd-cell). Replaces the mockup's 28px (world-shell-mockup.html .cs).
+test('the session grid keeps the design\'s 52px cell and the mockup 26px header and 22px stop-row rhythm (the one shared grid)', () => {
+  assert.match(trackRule('.cs {'), /height:\s*52px/, 'clip cell height 52px (catalogue dlw__session-grid.css .sgd-cell)')
   assert.match(trackRule('.trk .thd {'), /height:\s*26px/, 'track header height 26px')
   assert.match(trackRule('.trk-foot {'), /height:\s*22px/, 'the track foot (retry) keeps the stop row\'s 22px')
   assert.match(trackRule('.trk.sub {'), /width:\s*104px/, 'a helper\'s track is 104px wide (mockup .trk.sub)')

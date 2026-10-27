@@ -14,7 +14,7 @@ SPEC = importlib.util.spec_from_file_location(
 assert SPEC is not None and SPEC.loader is not None
 MODULE = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(MODULE)
-SOURCE = "docs/experience/EXPRESSION-FIELD.md"
+SOURCE = "docs/experience/STORIES.md"
 MODULE_PATH = "docs/experience/vak-expression-craft.json"
 
 
@@ -40,12 +40,31 @@ class VakExpressionCraftSourceTests(unittest.TestCase):
                          [f"P{i:02}" for i in range(1, 29)])
         self.assertEqual(self.config["delegated_ql"]["repository"], "EpiLogos/QL-MEF")
 
-    def test_original_expression_stories_are_preserved_verbatim(self):
+    def test_original_expression_stories_are_preserved_in_their_rows(self):
+        # The Expression Field's own stories EF01–EF10 retired into story rows
+        # (O-I #729). Each keeps its ID, names the rows that carry it, and every
+        # named row is a compiled story; the module's EF references all resolve.
         source = (ROOT / SOURCE).read_text(encoding="utf-8")
-        before = source.split("## 9. Vāk-authored craft", 1)[0].rstrip() + "\n"
-        data = before.encode("utf-8")
-        blob = hashlib.sha1(b"blob " + str(len(data)).encode() + b"\0" + data).hexdigest()
-        self.assertEqual(blob, "93035d856295e4eaf89a8895dbe95652a4c8556c")
+        section = source.split("## Where the feature UX stories went", 1)[1].split("\n## ", 1)[0]
+        known = {story["id"] for story in self.reading["stories"]}
+        mapped = {}
+        for line in section.splitlines():
+            if line.startswith("- EF") and " → " in line:
+                key, rows = line[2:].split(" → ", 1)
+                ids = set()
+                for part in rows.split(", "):
+                    if "–" in part:
+                        start, end = part.split("–")
+                        ids.update(f"{start[:2]}{n:02}" for n in range(int(start[2:]), int(end[2:]) + 1))
+                    else:
+                        ids.add(part.strip())
+                mapped[key.split()[0]] = ids
+        self.assertEqual(set(mapped), {f"EF{n:02}" for n in range(1, 11)})
+        for key, ids in mapped.items():
+            with self.subTest(story=key):
+                self.assertTrue(ids)
+                self.assertTrue(ids.issubset(known), ids - known)
+        self.assertTrue(set(self.module["existing_expression_stories"]).issubset(mapped))
 
     def test_full_expression_source_is_in_the_operator_reading(self):
         data = (ROOT / SOURCE).read_bytes()
@@ -125,7 +144,7 @@ class VakExpressionCraftSourceTests(unittest.TestCase):
 
     def test_source_trace_join_is_existing_ui_and_evidence_not_new_runtime(self):
         owner = self.module["factory_native_authoring"]
-        self.assertEqual(owner["ui_source"], "docs/experience/FACTORY-UI-INTEGRATION-HANDOFF.md")
+        self.assertEqual(owner["ui_source"], "docs/dlw/DLW.md")
         self.assertTrue((ROOT / owner["ui_source"]).is_file())
         self.assertEqual(owner["correlation"], [
             "authored source revision/digest and unit locator",

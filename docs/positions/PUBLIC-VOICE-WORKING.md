@@ -105,9 +105,9 @@ Verbatim, attributed, grouped by theme. This is the anchor bank: proposed copy b
 
 > **[QUOTE]** "The originating ambition is to ask whether agentic technology can be developed in structural sympathy with an account of mind and world that differs from the predominantly materialist and computational ontology from which the AI industry usually begins." — FOUNDING-POSITIONS.md L397
 
-> **[QUOTE]** "Quaternal Logic therefore belongs in the O:I family as its deepest explicit formal research surface. A minimal O:I can remain entirely ordinary. A maximal research programme can use QL to ask questions that the rest of the field deliberately leaves open." — FOUNDING-POSITIONS.md L409
+> **[QUOTE]** "Quaternal Logic is therefore the structure of the DLW and of the records its products keep: the six positions shape the day, the work cycle, the constellations and the instruments." — FOUNDING-POSITIONS.md 4′
 
-> **[QUOTE]** "Operational parity is also the epistemic safeguard. QL is speculative research, not metaphysics proven by software." — FOUNDING-POSITIONS.md L405
+> **[QUOTE]** "Operational parity is how the theory shows itself in software." — FOUNDING-POSITIONS.md 4′
 
 > **[QUOTE]** "The relation can be stated compactly as **QL as bimba, software as pratibimba**: a formal or archetypal image is expressed into a technical reflection, and the reflection returns information about what the originating form actually means when made operative." — FOUNDING-POSITIONS.md L407
 

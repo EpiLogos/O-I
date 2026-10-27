@@ -5,7 +5,7 @@ import {createServer} from 'vite';
 import {chromium} from 'playwright';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
-const document = readFileSync(new URL('../../../docs/cradle/01-DESIGN.md', import.meta.url), 'utf8');
+const document = readFileSync(new URL('../../../docs/cradle/README.md', import.meta.url), 'utf8');
 const source = readFileSync(new URL('../src/editor/TextEditor.tsx', import.meta.url), 'utf8');
 const server = await createServer({root, appType: 'custom', server: {host: '127.0.0.1', port: 0, strictPort: false}, logLevel: 'error'});
 server.middlewares.use('/editor-appearance', async (_, response) => {
@@ -34,7 +34,7 @@ function contrast(foreground, background) {
 try {
   await page.goto(`http://127.0.0.1:${server.httpServer.address().port}/editor-appearance`);
   await page.waitForFunction(() => window.editorAppearance);
-  await page.evaluate(value => editorAppearance.render(value, '01-DESIGN.md'), document);
+  await page.evaluate(value => editorAppearance.render(value, 'README.md'), document);
   await page.getByRole('textbox', {name: 'Source text'}).waitFor();
   await page.waitForFunction(() => [...window.document.querySelectorAll('.cm-content span')].some(span => span.textContent === '02-ARCHITECTURE.md'));
   await page.evaluate(() => {window.originalEditor = window.document.querySelector('.cm-editor');});

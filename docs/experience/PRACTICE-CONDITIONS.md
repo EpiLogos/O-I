@@ -53,10 +53,12 @@ Record the smallest source-qualified facts which select the next operation. Typi
 The local lead reads the actual current material through its native source/repository:
 
 - Central #164 and its substantive later comments identify the private source repertoire and actual adopted sets. Resolve `Control/user/skills` through the owner's declared source, not a guessed user path. Do not publish private text. Root mirror and harness-link procedural resolutions retain their explicit source/version limits.
-- AIKit `registry/capsules/skill/aikit/{operation,knowledge-navigation,wiki-inhabitation,runtime-operation,session-space,profile-skillset,verification}/payload/SKILL.md` are source paths to inspect, not proof every item is selected or trusted in the current actor.
+- AIKit `registry/capsules/skill/aikit/{operation,knowledge-navigation,wiki-inhabitation,runtime-operation,session-space,profile-skillset,verification}/payload/SKILL.md` are source paths to inspect, not proof every item is selected or trusted in the current actor. Read each one's current description to know whether it is a Method; a heading in its body does not make it one.
+- Central's `skills/capability-matrices/SKILL.md` carries capability-matrix relation work.
 - Factory `skills/factory-bounded-work/SKILL.md` and its repair/change/coordination references remain the developmental procedure. Its description already carries `METHOD:`.
-- O:I `skills/oi`, `skills/suite-operator`, `skills/central-session-strap` are the existing shipped entry. The new `skills/experience-campaign/SKILL.md` is a source-owned testing Method; publication alone does not add it to a person's installed repertoire.
+- O:I `skills/oi`, `skills/suite-operator`, `skills/central-session-strap` are the existing shipped entry. Compare the shipped session strap with an independently edited local copy; never overwrite the local practice. The new `skills/experience-campaign/SKILL.md` is a source-owned testing Method; publication alone does not add it to a person's installed repertoire.
 - Workcell's current native procedure/SDK and deployment source determine its real commands and safety. Do not derive supported isolation from a platform name.
+- For an extension (#65 D), discover the selected owner's current SDK, authoring Skill and conformance operation. There is no common SDK or Skill ID to assume.
 - QL's `AGENT-PRACTICE-AND-BOOTSTRAP.md` already owns AP01–AP18/XP01–XP12, named Skills and producer gaps. Reference that exact field and standing rather than copy its practices into this P-map or relabel its mathematical operations.
 
 ## Practice changes are tested where they matter

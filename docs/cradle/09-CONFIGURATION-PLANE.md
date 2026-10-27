@@ -1,9 +1,10 @@
 # 09 — Configuration plane: the C0 contract lock
 
 *The frozen contract for O:I configuration, profiles, scopes and owner-native
-mutation (#299, Gate A / C0). Supplements `06-SYSTEM-SETTINGS.md` (the System
-law, L1–L6), `07-WAVE-5-SYSTEM-CONTRIBUTION.md` (the `v2` native-read seam,
-whose §7 storage boundary this document explicitly narrows) and
+mutation (#299, Gate A / C0). Supplements `07-WAVE-5-SYSTEM-CONTRIBUTION.md`
+(§0, the System law L1–L6 carried from the retired `06-SYSTEM-SETTINGS.md`;
+the `v2` native-read seam, whose §7 storage boundary this document explicitly
+narrows) and
 `08-WAVE-5-CONSUMER-SEAM.md` (the consumer seam as exercised).*
 
 Standing: this document is the contract of record for the configuration

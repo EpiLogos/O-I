@@ -1,10 +1,10 @@
 # Source projection and native capability binding
 
-This tooling supports the existing story/capability conventions. It is **not** an execution engine, a substitute for normal AIKit discovery, or a verifier of the user's experience. The UX source remains vision-level. Its readable and compiled forms connect to native documentation, capability and practice operations as described in [DOCUMENT-OPERATIONS.md](DOCUMENT-OPERATIONS.md).
+This tooling supports the existing story/capability conventions. It is **not** an execution engine, a substitute for normal AIKit discovery, or a verifier of the user's experience. The UX source remains vision-level. Its readable and compiled forms connect to native documentation, capability and practice operations as described in [LOCAL-CAMPAIGN §1.3](LOCAL-CAMPAIGN.md).
 
 ## Early Factory integration — Jev and Redis, 22 September 2026
 
-For the owner's current #65 bring-up round, read [Jev and Redis in the existing NOW and development field](JEV-REDIS-NOW-INTEGRATION.md). [AIKit #388](https://github.com/EpiLogos/ai-kit/issues/388) is the bounded native implementation assignment, coordinated by O:I #220. Start native construction and controlled testing alongside Factory bring-up; exercise the first live integrated episode as soon as the bounded Factory/Day/NOW path is usable. Preserve the existing foundation-first broad-fan-out gate, C0–C5 and all later obligations.
+For the owner's current #65 bring-up round, read [prepared NOW context](../architecture/agent-context.md) and its cases PNC01–PNC18 in [CASES](CASES.md). [AIKit #388](https://github.com/EpiLogos/ai-kit/issues/388) is the bounded native implementation assignment, coordinated by O:I #220. Start native construction and controlled testing alongside Factory bring-up; exercise the first live integrated episode as soon as the bounded Factory/Day/NOW path is usable. Preserve the existing foundation-first broad-fan-out gate, C0–C5 and all later obligations.
 
 Jev stays a general classifier/decider used by the existing document/matrix/Wiki/context/Factory practices. Central/BKMR supplies source locations and continuity; the Wiki can use any eligible ContextSource; Redis holds prepared participant-specific context and relevant NOW-plane activity. Native CLI/direct-service delivery leads and MCP is optional. This is not a new Wiki, source inventory, memory ontology or full-QL-harness prerequisite.
 
@@ -114,7 +114,7 @@ The publication supplies a concrete source profile and planning projection now. 
 
 At C0/C2, inspect the current existing Knowledge/SourcePool/ProjectMap and UX-field reader. Use it if it supports these source/ref relations. If it does not, record the precise source-adapter/typed-relation delta at the existing native owner and implement it there within the ongoing programme; no new Wiki, renderer, scheduler or capability registry is required. Until then the exact source reading is an explicit usable bootstrap, not evidence of automatic graph/discovery support.
 
-Use the current native document and practice repertoire from `DOCUMENT-OPERATIONS.md`: vision/source standing, directional capability-account updates, actual project-author set, source discovery/loading and evidence return. A source role in JSON is not an executed Central source-relation write, and a generated vision refinement does not author the human's position. Runtime mutation and source retirement retain their native revision and authority rules.
+Use the current native document and practice repertoire from LOCAL-CAMPAIGN §1.3: vision/source standing, directional capability-account updates, actual project-author set, source discovery/loading and evidence return. A source role in JSON is not an executed Central source-relation write, and a generated vision refinement does not author the human's position. Runtime mutation and source retirement retain their native revision and authority rules.
 
 The full forward/reverse inventory is performed against the selected current cut. No static list guarantees that later native capabilities or old requirement subcases were included. Uncovered rows require a story or explicit supporting/deferred/inapplicable disposition before full coverage is claimed. Refer to `STORY-PROFILE.md` for retained source and standing rules.
 

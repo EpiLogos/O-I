@@ -85,7 +85,7 @@ This receiving build carries an edition, not an archive or live subscription.
 ## Founding, wording and install basis
 
 Grounding remains `docs/positions/FOUNDING-POSITIONS.md`,
-`docs/CAPABILITY-MATRIX.md`, `docs/experience/EXPRESSION-WORLD-UX.md` and the existing
+`docs/CAPABILITY-MATRIX.md`, `docs/experience/STORIES.md` (XA, FC) and the existing
 expression/Technè Wayfinders. Recovered native capability is not inferred absent
 from a missing desktop join; source/controlled/integrated/installed/observed
 standing stays separate.
@@ -118,7 +118,7 @@ self-inhabiting installation remain required near-term outcomes.
 ## Recovered H/W7 delivery and exact remaining join
 
 The actual `desktop/cradle/expressions-app/collections/return-of-zero/PUBLICATION.json`
-and `docs/experience/RETURN-OF-ZERO-PUBLICATION.md` already deliver a real
+and `desktop/cradle/expressions-app/collections/return-of-zero/PUBLICATION.json` already deliver a real
 `oi.collection-publication/v1` preparation: nine members (sovereign essay plus eight
 rooms), `oi.legacy-collections/v1` / `oi.collection-provenance/v1` identities,
 source `dbf3b17`, nine cover hashes and accepted `oi.journey v1` imports. These are

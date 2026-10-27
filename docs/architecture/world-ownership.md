@@ -43,3 +43,103 @@ See [relations.json](relations.json) W1–W11 for exact arrow bases. The Epi
 domain's richer meanings remain in its [Wayfinder](../EXPRESSION-WORLD-SUBSTRATE-WAYFINDER.md)
 and ongoing audit. Neither a WorldPresentation nor an Explore entry replaces
 the coordinate-bound world or Personal Pratibimba.
+
+## Ownership in detail
+
+### Presentation, documents and the shared host
+
+O:I owns presentation, navigation, arrangement and generic document templating. Central owns durable Agent/Profile/AgentSet, source and temporal ground. AIKit owns context/praxis/body/model/harness/session/SessionSpace resolution. Actuation owns Agency/authority/Activity and Gateway relations. Factory owns Commission/Journey/Run/execution/candidate/evidence/developmental Recognition. Workcell owns material actuality. QL owns Epi/Nara/Ta-Onta meanings.
+
+The same host can serve Epi/Nara and Factory without transferring their domain meanings. Preserve ordinary → Epi/Nara → ordinary → Factory → ordinary → Epi/Nara continuity, using the current shared host/Stage and owner refs. Direct/non-developmental work remains complete without Factory or QL.
+
+Keep semantic/domain identities at their current owners: Central source/temporal/receiving; AIKit search/praxis/session/Git/context; Actuation authority/Activity/Return; Factory developmental work/evidence; Workcell material; O:I presentation. The redesign changes entry points, not protocols or stores.
+
+### Each owner's temporal responsibility
+
+The clarification preserves the existing owner distinctions.
+
+**Central** owns human Day identity and civil-time/timezone policy; root and Project temporal source; NOW identity/lifecycle; bounded child NOW allocation and working material/source relations; rollover, receiving, archive and continuation provenance.
+
+**AIKit** owns operative composition and encounter continuity: Context/praxis/model/harness resolution; AgentSession and SessionSpace; working-environment/provider bindings; projection into admitted harnesses; dispatch, continuation and bounded delegation orchestration at the operative layer; Routine intent/occurrence and provider-facing recurrence composition.
+
+**Actuation** owns actual agency: Agent / Agency / WorldBinding; determination, delegation and bounds; Activity / ActuationStream; attributable Return and current authority.
+
+**Factory** owns developmental meaning: Commission, Journey, Run and workflow units; developmental topology and execution correlation; Claims/Evidence/Candidates; developmental Return and Recognition; derived telemetry over owner-native evidence.
+
+**Workcell** owns material actuality: host/Workcell identity; process/service/storage/network placement; persistent hosting and lifecycle; material recovery/rematerialisation; process/resource observation and confinement where supported.
+
+**O:I / SharedField** composes and presents native relations. SharedField owns selected shared participation/projection relations: Participant, Projection and SharedField; Contribution and Encounter; Presence and shared Activity projection; hosted/federated live state through the SpaceTimeDB adapter.
+
+No product acquires another product's identity simply because these relations are shown together.
+
+## Technē and Expressions over one field
+
+### Native ownership and reuse
+
+The acceptance pass must begin by proving that each apparent instrument is operating existing owners rather than replacing them.
+
+| Experience | Native substrate to consume |
+|---|---|
+| Project/Wiki/Graph | Central World + Work/ProjectCentral; AIKit ProjectMap/SemanticWiki/Search/KnowledgeRoute; current O:I Wiki/graph projection; optional QL overlays |
+| Canvas | existing Wiki/ProjectMap subjects + Research Canvas interaction body + QL constellation/geometry where warranted |
+| Relation/Timeline | real typed relations + Research Canvas Timeline/relation field + Central DAY/NOW + AgentSession + Factory activity/evidence |
+| Journey | Research Canvas Story/Journey interaction + real O:I Expression Scene refs |
+| Places/World | Research Canvas Place/Map/Street/Globe + historical-geography ontology + real world/Earth/M2/M3/M4 readings where installed |
+| Palace | real Wiki subjects/Views/Journeys/Expressions/Sources composed through current O:I presentation/Expression owners |
+| 3:3 Expression | generic O:I Expression/Profile/Scene/Edition/Portal substrate specialised by current Ta-Onta/QL bindings |
+
+Acceptance fails if a UI succeeds only by creating a second semantic store, project tree, timeline truth, scene ontology, agent runtime or renderer-owned identity.
+
+### The one-field identity law
+
+The central #65 proof is no longer merely that several surfaces can display related information. It is that a person can change **reading** without silently changing **what they are working on**.
+
+Where applicable the transition preserves:
+
+```text
+subject_ref
+whole/member/relation refs
+native owner
+source + revision basis
+constellation identity
+current occasion/event ref
+selected Project/World
+canonical ActionRefs
+AgentSession relation
+provenance / standing
+```
+
+A surface with no valid temporal/spatial/QL facet reports that fact. It does not fabricate metadata or silently choose another subject.
+
+### Ta-Onta and agent non-identities
+
+The six canonical Guardians remain enduring product/domain stewards:
+
+```text
+Anuttara · Paramaśiva · Paraśakti · Mahāmāyā · Nara · Epii
+```
+
+They are not replaced by instrument workers.
+
+The current M×S′ matrix already supplies the operative roles:
+
+```text
+Anima_i = M_i × S4′
+    situated expressive operator
+
+Aletheia_i = M_i × S5′
+    disclosure/Return operator
+```
+
+The former third line, Technē_i = Aletheia_i operating M_i′ through "its" deep instrument, went with the four-and-two reading: no instrument is an M_i′.
+
+The campaign must keep these non-identities visible:
+
+```text
+Guardian != Agency
+Aletheia != L5-5 Technē
+Instrument != Agent identity
+selection != disclosure
+visible Action != authorised invocation
+returned reading != accepted source mutation
+```

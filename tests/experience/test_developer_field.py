@@ -83,7 +83,9 @@ class DeveloperFieldTests(unittest.TestCase):
             em.load_sources(self.root)
 
     def test_missing_declared_document_source_does_not_silently_degrade(self):
-        (self.root / "docs/experience/DOCUMENT-OPERATIONS.md").unlink()
+        declared = json.loads(self.module_path.read_text())["document_operations_source"]
+        self.assertEqual(declared, "docs/experience/LOCAL-CAMPAIGN.md")
+        (self.root / declared).unlink()
         with self.assertRaises(OSError):
             em.load_sources(self.root)
 

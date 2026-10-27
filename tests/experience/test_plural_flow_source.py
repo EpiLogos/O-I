@@ -10,8 +10,8 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
 MODULE = "docs/experience/plural-flow.json"
-SPEC = "docs/experience/PLURAL-FLOW-SPEC.md"
-WAYFINDER = ".wayfinder/maps/plural-flow-now.md"
+SPEC = "docs/experience/STORIES.md"
+WAYFINDER = "docs/experience/CASES.md"
 EXPECTED = {
     "plural65:FORM", "plural65:DELIVERY", "plural65:RECOVERY",
     "plural65:PARTICIPATION", "plural65:RESPONSE", "plural65:SHARED",

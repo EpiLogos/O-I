@@ -1,19 +1,19 @@
 {
   "purpose": "Adopted Factory/Agency design obligations within the existing #65 UX source projection; no new stories, schema, runtime or evidence store.",
-  "story_source": "docs/experience/FACTORY-AGENCY.md",
-  "document_operations_source": "docs/experience/FACTORY-UI-INTEGRATION-HANDOFF.md",
+  "story_source": "docs/experience/STORIES.md",
+  "document_operations_source": "docs/experience/CASES.md",
   "families": [],
   "standing": "design-commitment; original design adopted 2026-09-14, owner-directed parallel-UI layout refinement 2026-09-18; no implementation or human-experience verdict",
   "design_adoption": {
     "date": "2026-09-14",
-    "scope": "Factory/Agency design in FACTORY-AGENCY.md only",
+    "scope": "Factory/Agency design adopted 14 Sep 2026 (PROGRAMME R31); its experience is carried by STORIES.md rows and manual §19",
     "authority": "https://github.com/EpiLogos/O-I/issues/289",
     "implementation_or_human_experience_accepted": false
   },
   "design_amendments": [
     {
       "date": "2026-09-17",
-      "source_ref": "docs/experience/FACTORY-UI-INTEGRATION-HANDOFF.md",
+      "source_ref": "docs/experience/STORIES.md",
       "authority": "Owner commission to integrate and merge planning for the current parallel UI refinement; O:I #373/#375/#289/#65",
       "scope": "Guardian-stewarded product repertoires, bounded intent-led Skill suggestions, claim reception, native Day/NOW/Git/telemetry links and DSH-inspired but DSH-independent right desk",
       "standing": "Historical layout revised on 2026-09-18; functional requirements retained",
@@ -21,7 +21,7 @@
     },
     {
       "date": "2026-09-18",
-      "source_ref": "docs/experience/FACTORY-UI-INTEGRATION-HANDOFF.md",
+      "source_ref": "desktop/cradle/docs/world-shell/PROGRAMME.md",
       "authority": "Owner request to simplify the parallel Factory UI around Run, Agents and Context while preserving Factory, Grok Bot and Buzz functions",
       "scope": "Three top-level Factory tabs; centre Agent/team Chat or full SSSF Run view; object-local inspection and material opening",
       "standing": "Owner-selected layout for immediate parallel-branch experimentation, not final visual acceptance",
@@ -31,7 +31,7 @@
   ],
   "presentation_resolution": {
     "effective_date": "2026-09-18",
-    "source_ref": "docs/experience/FACTORY-UI-INTEGRATION-HANDOFF.md",
+    "source_ref": "desktop/cradle/docs/world-shell/PROGRAMME.md",
     "factory_sidebar_tabs": ["Run", "Agents", "Context"],
     "centre": ["selected Agent/team conversation", "existing full SSSF multi-lane Run view"],
     "supersedes": "Six peer sidebar destinations from PR #373: Trajectory, Context, Skills & tools, Claims & evidence, Results, Inspect. Their functions remain object-local depths, not hidden substitute top-level tabs.",
@@ -40,10 +40,10 @@
   },
   "obligation_sources": {
     "factory289": {
-      "source_ref": "docs/experience/FACTORY-AGENCY.md",
+      "source_ref": "docs/experience/STORIES.md",
       "issue": "https://github.com/EpiLogos/O-I/issues/289",
       "policy": "Original native and functional obligations remain. Current sidebar navigation is determined by the September-18 handoff; historical layout wording does not restore the superseded six-tab taxonomy. Source mapping is not execution or human EX.",
-      "amendment_refs": ["docs/experience/FACTORY-UI-INTEGRATION-HANDOFF.md"]
+      "amendment_refs": ["desktop/cradle/docs/world-shell/PROGRAMME.md", "docs/experience/CASES.md"]
     }
   },
   "required_obligation_ids": [
@@ -51,7 +51,7 @@
   ],
   "obligations": [
     {
-      "id": "factory289:arrangement", "source": "factory289", "native_locator": "§1 + current handoff §4",
+      "id": "factory289:arrangement", "source": "factory289", "native_locator": "STORIES UI02, UI04, SU07; manual §3, §10.2; CASES FAJ2, FAJ6",
       "requirement": "Factory sidebar has Run, Agents, Context beside selected Agent/team Chat or the full SSSF Run view. Retain ordinary companion functions and actual right-hand material opening, selected work/output, one transcript/composer, drafts, focus, detach/redock, leave/re-entry and restart.",
       "story_ids": ["UI02", "UI04", "DV05", "TM02"], "required_evidence": ["C", "P", "M", "H"],
       "required_branches": [
@@ -64,7 +64,7 @@
       ]
     },
     {
-      "id": "factory289:agents", "source": "factory289", "native_locator": "§2 + current handoff §§2–3",
+      "id": "factory289:agents", "source": "factory289", "native_locator": "STORIES AG01–AG08, FM01–FM05, FX01–FX02, RK11; manual §19.4, §19.15, §25.4; CASES FAS1, FAS2",
       "requirement": "Agents tab supports readable roster, personal/Project scope, intent-first create/review/use, reusable teams and organisation, actual assignment/outcome ownership, bounded helpers and native durable-source recognition for Keep as Agent.",
       "story_ids": ["AG01", "AG02", "AG05", "AG07", "AG08"], "required_evidence": ["C", "P", "M", "H"],
       "required_branches": [
@@ -78,7 +78,7 @@
       ]
     },
     {
-      "id": "factory289:session-compose", "source": "factory289", "native_locator": "§3 + current handoff §§3–4",
+      "id": "factory289:session-compose", "source": "factory289", "native_locator": "STORIES AG04, AG06, FA01, FA10, WP01; manual §6, §10.10; CASES FAJ1",
       "requirement": "Compact Direct/Factory session interaction resolves Agent, harness/edition, real Model policy/routes, environment/worktree/host, repertoire, context and permissions together; existing Continue is immediate.",
       "story_ids": ["AG04", "AG06", "PX06", "TM01", "TM06"], "required_evidence": ["C", "P", "M", "H"],
       "required_branches": [
@@ -91,7 +91,7 @@
       ]
     },
     {
-      "id": "factory289:praxis-context", "source": "factory289", "native_locator": "§4 + current handoff §§3/5",
+      "id": "factory289:praxis-context", "source": "factory289", "native_locator": "STORIES AG03, PX01–PX04, RK01–RK04, RK10, FT02, FW01–FW09; manual §19.7, §19.12; CASES FAS4",
       "requirement": "Manage Skills and Capabilities within Agents; inspect selected/projected/confirmed-effective/blocked/unavailable practice. Context Sources distinguishes available, selected and actual historical disclosure per act. Useful work proves required material and practice reached the selected session.",
       "story_ids": ["AG03", "PX01", "PX02", "PX03", "PX04", "UI04"], "required_evidence": ["C", "P", "M"],
       "required_branches": [
@@ -106,7 +106,7 @@
       ]
     },
     {
-      "id": "factory289:conversation", "source": "factory289", "native_locator": "§4 + current handoff §§3–5",
+      "id": "factory289:conversation", "source": "factory289", "native_locator": "STORIES AG07–AG09, WR03, FQ01, FQ07; manual §19.24; CASES FAS2",
       "requirement": "Central individual or actual team chat retains multiparty To:/@, attributed messages, attachments/skills, semantic coalesced activity, real permissions/interruption and failed-send draft recovery. Address, contribution and bounded delegation retain distinct effects.",
       "story_ids": ["AG07", "AG08", "AG09", "WR03", "UI04", "GW09"], "required_evidence": ["C", "P", "M", "H"],
       "required_branches": [
@@ -120,7 +120,7 @@
       ]
     },
     {
-      "id": "factory289:output-dynamics", "source": "factory289", "native_locator": "§5 + current handoff §5",
+      "id": "factory289:output-dynamics", "source": "factory289", "native_locator": "STORIES WR04, WR05, RA04, FT09; manual §19.14 Review; CASES FAJ4, FAJ5, FAS5",
       "requirement": "Context Produced lists actual partial/final material with native provenance; short chat links open its content in the right pane or chosen placement. Background cues preserve selected work and reviewed revision.",
       "story_ids": ["WR04", "WR05", "UI02", "DV03"], "required_evidence": ["C", "P", "M", "H"],
       "required_branches": [
@@ -134,7 +134,7 @@
       ]
     },
     {
-      "id": "factory289:templates", "source": "factory289", "native_locator": "§6 + current handoff §5",
+      "id": "factory289:templates", "source": "factory289", "native_locator": "STORIES RA04, FT09, RR04; docs/architecture/execution-return.md (Returned material and its templates); CASES FAJ4",
       "requirement": "Open shared structured-data code, verification, report/research, preview/media and handoff bodies from Context Produced using existing native renderers; details/evidence are attached to the material, not required peer sidebar tabs.",
       "story_ids": ["WR05", "DV03", "UI02", "UI03"], "required_evidence": ["C", "M", "H"],
       "required_branches": [
@@ -146,7 +146,7 @@
       ]
     },
     {
-      "id": "factory289:handoff", "source": "factory289", "native_locator": "§7 + current handoff §5",
+      "id": "factory289:handoff", "source": "factory289", "native_locator": "STORIES FJ10, FJ07, FJ08, RR04, WR06; manual §19.14 Recognition; CASES FAJ4, FAJ5",
       "requirement": "Context Produced/Returns opens outcome-first handoff: actual/partial state, browsable changes/diff, verification/outstanding work, attributable observations, blocker/next act, canonical continuation and expandable provenance.",
       "story_ids": ["WR05", "WR06", "AG06", "DV04"], "required_evidence": ["C", "P", "M", "H"],
       "required_branches": [
@@ -159,7 +159,7 @@
       ]
     },
     {
-      "id": "factory289:runs", "source": "factory289", "native_locator": "§8 + current handoff §4",
+      "id": "factory289:runs", "source": "factory289", "native_locator": "STORIES DV01–DV04, FJ01–FJ09, FS01–FS04, TM03; manual §19.25, §19.1; CASES FAJ3, FAS3",
       "requirement": "Centre retains full SSSF multi-lane map/frontier and actual correlation; Run sidebar provides compact purpose/control, selected step/attempt, missing legs, timeline/tool/permission/evidence detail, metrics and supplied Run Thought.",
       "story_ids": ["DV01", "DV02", "DV03", "DV04", "TM03"], "required_evidence": ["C", "P", "M", "H"],
       "required_branches": [
@@ -174,7 +174,7 @@
       ]
     },
     {
-      "id": "factory289:git", "source": "factory289", "native_locator": "§9 + current handoff §5",
+      "id": "factory289:git", "source": "factory289", "native_locator": "STORIES TM05, DV02, DV03, GL05, GL06, WM04; manual §19.16, §23.2; CASES FAJ4, FAS5",
       "requirement": "Git comparison/history is available on Context sources/results and related Run checks; actual repository/worktree and exact source/test basis are preserved and external CLI changes reconcile.",
       "story_ids": ["TM05", "DV02", "DV03", "UI04"], "required_evidence": ["C", "P", "M"],
       "required_branches": [
@@ -186,7 +186,7 @@
       ]
     },
     {
-      "id": "factory289:attention-gateway", "source": "factory289", "native_locator": "§10 + current handoff §§4–5/7",
+      "id": "factory289:attention-gateway", "source": "factory289", "native_locator": "STORIES AG09, UI05, GW05–GW09, RA01–RA09, FQ02, WM12; manual §19.14, §19.2; CASES FAS3",
       "requirement": "Relevant Run/Agent/Context attention cue and quiet footer expose the same native pending item; exact activity is openable anywhere, including Observatory/alternate Surface, with local reachability recovery.",
       "story_ids": ["AG09", "UI04", "UI05", "GW05", "GW06", "GW08", "GW09"], "required_evidence": ["C", "P", "M", "H"],
       "required_branches": [
@@ -199,7 +199,7 @@
       ]
     },
     {
-      "id": "factory289:temporal-routine", "source": "factory289", "native_locator": "§11 + current handoff §§3/5–6",
+      "id": "factory289:temporal-routine", "source": "factory289", "native_locator": "STORIES WR05, WR06, PX05, WP09, FP06, FP07, WM08; manual §10.10 Automations, §23.6; CASES FAJ7, FAS6",
       "requirement": "Agents exposes recurring responsibility and proven practice setup; Run exposes actual occurrence; Context exposes output and addressed NOW/Day/Inbox Return with native time/lineage and retained human writing.",
       "story_ids": ["WR05", "WR06", "PX05", "WK05", "DV04"], "required_evidence": ["C", "P", "M"],
       "required_branches": [
@@ -213,7 +213,7 @@
       ]
     },
     {
-      "id": "factory289:visual", "source": "factory289", "native_locator": "§12 + current handoff §§4/7–9",
+      "id": "factory289:visual", "source": "factory289", "native_locator": "STORIES UI01–UI05, TM09, WN09, WN10, RF13; manual §10.1, §10.9; CASES FAS7",
       "requirement": "Three clear Factory tabs with content-first Run, actionable Agents and Sources/Produced Context; current Expressions tokens, no stacked banners, usable empty/degraded states, real keyboard/pointer/narrow interactions and native pane/window continuity.",
       "story_ids": ["UI01", "UI02", "UI03", "UI05", "TM09"], "required_evidence": ["M", "H"],
       "required_branches": [
@@ -227,7 +227,7 @@
       ]
     },
     {
-      "id": "factory289:joined", "source": "factory289", "native_locator": "§13–14 + current handoff §8",
+      "id": "factory289:joined", "source": "factory289", "native_locator": "CASES FAJ1–FAJ9, FAS1–FAS7; STORIES DV01–DV08, TM03, TM10; docs/architecture/execution-return.md (The authority gate)",
       "requirement": "Within the existing programme, exercise organisation/intent/skills → actual Run and chat → bounded child/permission → source/Git/result/check → human receiving/feedback → recovery → Guardian practice and recurrence, using the three-tab layout without discarding native scope.",
       "story_ids": ["DV01", "DV02", "DV03", "DV05", "DV08", "AG06", "UI02", "UI06", "TM03", "TM10"], "required_evidence": ["C", "P", "M", "H"],
       "required_branches": [

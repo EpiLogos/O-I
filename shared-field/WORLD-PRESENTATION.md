@@ -252,7 +252,7 @@ This proves the authoring model is Surface-neutral while leaving the richer loca
 
 ## Expression Field renderer relation
 
-The owner-approved Expression Field ([`docs/cradle/EXPRESSION-FIELD.md`](../docs/cradle/EXPRESSION-FIELD.md), O:I #306) is a first-class **renderer/component relation inside WorldPresentation**, not a replacement for WorldPresentation.
+The owner-approved Expression Field ([Expression application contract](../docs/contracts/EXPRESSION-APPLICATION-V1.md), O:I #306) is a first-class **renderer/component relation inside WorldPresentation**, not a replacement for WorldPresentation.
 
 ```text
 WorldPresentation

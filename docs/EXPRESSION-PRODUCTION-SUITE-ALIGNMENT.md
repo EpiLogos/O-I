@@ -142,7 +142,7 @@ O:I #419 carries the W5 connection repair for the actual imported application,
 without reopening accepted K8–K10 numerical ownership. The complete affected
 producer/consumer map, stable native host contract, source and lifecycle limits,
 executed-check pointers and executable local packet are maintained in the
-existing [Expression Production Suite Wayfinder](../.wayfinder/maps/expression-production-suite.md#w5--lane-f--embedded-native-backcheck-20-september-2026).
+existing Expression Production Suite Wayfinder (retired 27 Oct into the DLW map, O-I #706; read it at `8873b0968`).
 
 M1/M2/M3 source outputs, native target/PCM time and GPU presentation are distinct
 readings of one event. Native follow, a presentation-scale override, deliberate

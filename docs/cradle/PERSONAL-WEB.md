@@ -1,10 +1,8 @@
 # Personal Web — Beings, Things and the six initial HTML forms
 
-**Standing:** owner-approved product/design direction, 13 September 2026; detailed implementation choices are attributable engineering elaboration. **Feature:** [#279](https://github.com/EpiLogos/O-I/issues/279), inside desktop #190 and Explore #18. **Installed acceptance:** the existing [#65 experience campaign](../experience/README.md), not a second reinstall programme. This document is the feature companion of [Continuous Work](../OI-DESKTOP-CONTINUOUS-WORK-WAYFINDER.md). A table of requirements is not a completed experience.
+**Standing:** the Personal Web contract. The owner's rulings it applies are in [PROGRAMME](../../desktop/cradle/docs/world-shell/PROGRAMME.md); the experience is the PW family of [STORIES](../experience/STORIES.md) and manual §2, §18.1 and §24; the proving is in [CASES](../experience/CASES.md) (Personal Web).
 
-## 1. The world someone can make
-
-I can build a personal web with my agents: a home, writing, interests, works, people, projects, occasions and collections. I can organise it through time and relations, craft how each page looks, and choose the parts that others can enter. Someone can encounter my work, follow it to me, discover a shared interest and continue into another world. My private sources and ongoing work are not the price of participating.
+## 1. Names, repertoire and ownership
 
 **Beings** and **Things** are the exact plural family names. Beings presents a situated presence and opens its world; Things gives a subject or work an intelligible presentation and a place in relation. They join Flow/Dialogue, Day/4+2, Yoshimoto Cube and Epi-Card. Six is the initial repertoire, not the maximum number of templates, a compulsory workflow, or six allowed forms of thought. One-off authored HTML and later user-made templates are legitimate.
 
@@ -57,9 +55,7 @@ The host owns application chrome, trusted navigation/authority and native contro
 
 Opening, selecting, folding, flipping and reading have no model/permission effect. Agent requests disclose the selected structured subject and actual source basis, not scraped HTML or the whole private document by default. Creating a file, saving source, exporting a full copy, publishing, receiving a contribution and accepting it into source remain different operations.
 
-## 5. Personal and Work are arrangements of one world
-
-Place **Work / Personal** at the bottom of the existing left sidebar. Work retains the current project/session/task navigation. Personal foregrounds a compact calendar, Today, expandable days/periods and stable Home, pages, Things/collections and People routes. The central home is a real customisable HTML composition, including a gallery, not a seventh required ontology or permanent dashboard.
+## 5. Time and arrangement
 
 Calendar grouping uses declared occurrence first, then explicit local creation date where appropriate. Revision time does not move an old occasion to today. Enduring pages may appear on several dates without copied files; no mandatory date folders, private-source migration or forked Central root. A manually arranged collection stays curated; a query-backed section has an inspectable query and refresh policy.
 
@@ -99,35 +95,7 @@ Publication hosting can serve an edition while its source workstation is offline
 
 Require six real forms and a seventh custom extension; preserve unknown data, content/design changes and authority. Then prove specialised Epi uses over actual Bimba/M0′, canonical Epii/M5′ and relevant M/M′ instruments. This does not restart current AW implementation, duplicate K8's shared-core writer or replace full scope with one demonstration. Native missing joins are implementation obligations; only genuine installed/provider/human checks wait for the existing campaign.
 
-## 9. Work map and current delivery boundary
-
-| Unit | Files / existing owner to extend | Required result / standing |
-|---|---|---|
-| PW0 | This document; inherited Wayfinder; source inventory below; #279/#18/#190/#94/#65 | Approved scope and source identity retained. This first increment publishes the map; it is not runtime acceptance. |
-| PW1 | `desktop/cradle/documents/forms.json`, `src/personal/page.mjs`, `documents/build-personal.mjs`, existing `src/flow/documentForms.ts` and source route | First cut: reproducible standalone **text/link** Beings/Things reference carriers, C binding, unknown-data preservation and actual file choices. No Card/Cube availability advertised until intake. Full media/editor/native Save and extension discovery remain open. |
-| PW2 | Existing Cradle/kernel workspace, navigator/sidebar, source/temporal providers | Personal/Work with correct draft/session/arrangement continuity; native calendar/home/gallery and real source entries. Not implemented by PW1's date helper. |
-| PW3 | Existing KnowledgeSurface, source/subject binding, projection relations and native pane operations | Bidirectional bounded page/graph, typed people/works/interests and source-safe backlinks. No new graph store. |
-| PW4 | Retained Card spec/component and uploaded Cube format/teaching/mechanism; native authoring and material lifecycle | Full bodies, actual art direction, media, safe export and source continuity. A planned roster entry is not an implemented template. |
-| PW5 | `shared-field` Projection/admission/return and existing site/desktop material hosts; native Central/AIKit | Audience-filtered actual documents/assets, independent-world encounter/contribution/return and hosting failure behaviour. No claimed safe publication from full-copy export. |
-| PW6 | #94 Hen; [Personal Web stories](../experience/PERSONAL-WEB.md), existing #65 C0–C5 / #205 / #220 | Source→build→installed→registered→running/loading cut, reinstall/recovery, native/provider/two-world and human UX through the existing local orchestrator. |
-
-### First-cut implementation qualification
-
-Beings/Things reference HTML is generated from the checked-in module on `npm run dev` and `npm run build`, in the existing owner-resolved `desktop/cradle/documents` directory. Only these built-in generated targets are overwritten; user-created instances elsewhere are not. `node documents/build-personal.mjs --check` proves deterministic reproduction. A source checkout without building gets an honest unavailable-file state. Installed asset placement still needs the native delivery receipt; no installation is performed by this commit.
-
-The current reference renderer supports title/subtitle/introduction, text sections, relation-labelled links, two compositional arrangements and paper/ink presentation. In-document editing and **Save HTML copy** are browser operations; native source editing continues through the existing source route. Export includes the complete embedded data, explicitly **not** a sanitised or audience-filtered publication. It never writes source or creates native subjects. First explicit export may allocate portable document identity; merely opening does not.
-
-Private source bodies, exact provenance and extension fields remain unchanged by appearance edits. The reference formatter rejects unsupported structured profiles rather than lossy conversion. It is not the universal renderer for all future custom HTML. Native edited-preview Save, suspend/reentry without draft loss, asset editing, permissions, true catalogue discovery/overrides and generic imported forms remain PW1/PW2/PW4 obligations. Do not certify these from standalone browser tests.
-
-## 10. Proving and return to the existing campaign
-
-Use [PW01–PW12](../experience/PERSONAL-WEB.md) as an additive source module in the existing experience compiler. Preserve all previous 113 stories, inherited native obligations, practices, full CAW and QL records. Do not manufacture capability IDs, provider evidence or human adoption by compiling this file. The current 32 structural and 39 browser checks concern only their exact first-cut subject; the PR's CI must repeat them on the uploaded tree.
-
-The integrating route is author → Wiki → Card/Cube or page → filtered publication → independently grounded encounter → contribution → authorised revision-checked Return → reprojection. Include private sentinel data absent from external HTML, JSON, assets, indexes and backlinks. Use owner/member/stranger, distinct worlds/credentials, revocation during subscriptions, reconnect, concurrent stale writes, source-offline hosted availability, restart/backup recovery and narrow/maximised/standalone/hosted readings. Two windows with one token do not meet the requirement.
-
-Card: two real art directions with the same semantic body. Cube: full teaching plus second supported subject, verified intermediate mechanism states. Extensibility: second custom world and seventh template. App: Work/Personal switch preserves ongoing work, author identity, layout and drafts. Media/graph/windows: measured bounded resources, no duplicate simulations, hidden-view pause and proper disposal. Accessibility/reduced motion/plain reading retain meaning. Significant design and actual collaboration receive human review, not simulated approval.
-
-## 11. Source and supersession record
+## 9. Source and supersession record
 
 The owner's final correction, **Beings / Things**, and authorisation to plan/code now govern the names and sequence. The preceding source-grounded chat established the repertoire, then corrected M/M′-first placement and C-as-abstract-classifier. Preserve those corrections rather than reintroducing the rejected readings.
 

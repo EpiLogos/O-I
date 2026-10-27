@@ -387,7 +387,7 @@ const stageFollower = table(
 );
 
 /*
- * The collective temporal projection (WORKCELL-NOW-TEMPORAL-FIELD §9):
+ * The collective temporal projection (docs/architecture/shared-participation.md, FieldNow and FieldDay):
  *
  * a participant's local NOW/DAY truth (Central, on its own Workcell)
  *      ↓ explicit, audience-scoped, revision-checked put_field_now / put_field_day

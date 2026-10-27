@@ -1,0 +1,251 @@
+{
+  "captured": "2026-10-22, Actuation PR EpiLogos/Actuation#143 (branch dlw/w6-owner-ops, 0a0dfe8), the debug binary built from it, over a scratch --store under the session scratchpad (streams opened and usage recorded there, as the PR's own usage_list_command test does; never the owner's store). 'installed_*' are the installed actuation 0.2.1's answers to the same verbs (it reads the word after `usage`/`realised` as a file).",
+  "usage_list_session": {
+    "schema": "actuation.usage-listing/v1",
+    "store": "/private/tmp/claude-501/-Users-admin-Central/8300544e-4e39-428c-913c-0f026a6b86e1/scratchpad/k0b/store",
+    "agent_session_ref": "session:a",
+    "records": [
+      {
+        "stream_ref": "stream:one",
+        "agent_session_ref": "session:a",
+        "event_ref": "event:stream:one:1",
+        "sequence": 1,
+        "usage": {
+          "schema": "actuation.model-usage/v1",
+          "usage_ref": "model-usage:stream:one:1",
+          "actuation_ref": "act:direct",
+          "invocation_ref": "invocation:1",
+          "correlation": {
+            "agency_ref": "agency:direct",
+            "agent_session_ref": "session:a",
+            "harness_ref": "harness:claude-code"
+          },
+          "provider": {
+            "standing": "not-reported"
+          },
+          "model": {
+            "standing": "normalized-from-native",
+            "name": "claude-fable-5"
+          },
+          "tokens": {
+            "standing": "normalized-from-native",
+            "input": 10,
+            "output": 1
+          },
+          "cache": {
+            "standing": "not-reported"
+          },
+          "timing": {
+            "latency": {
+              "standing": "not-reported"
+            }
+          },
+          "cost": {
+            "standing": "provider-reported",
+            "amount": 0.5,
+            "currency": "USD"
+          },
+          "outcome": {
+            "state": "completed",
+            "standing": "normalized-from-native"
+          },
+          "provenance": {
+            "reporter_ref": "harness:claude-code",
+            "native_event_ref": "claude-code:message:1",
+            "native_schema": "claude-code.transcript/assistant-message",
+            "observed_at": "2026-09-08T20:00:00Z",
+            "raw_evidence_refs": [
+              "trace:line-1"
+            ]
+          }
+        }
+      },
+      {
+        "stream_ref": "stream:one",
+        "agent_session_ref": "session:a",
+        "event_ref": "event:stream:one:2",
+        "sequence": 2,
+        "usage": {
+          "schema": "actuation.model-usage/v1",
+          "usage_ref": "model-usage:stream:one:2",
+          "actuation_ref": "act:direct",
+          "invocation_ref": "invocation:2",
+          "correlation": {
+            "agency_ref": "agency:direct",
+            "agent_session_ref": "session:a",
+            "harness_ref": "harness:claude-code"
+          },
+          "provider": {
+            "standing": "not-reported"
+          },
+          "model": {
+            "standing": "normalized-from-native",
+            "name": "claude-fable-5"
+          },
+          "tokens": {
+            "standing": "normalized-from-native",
+            "input": 20,
+            "output": 2
+          },
+          "cache": {
+            "standing": "not-reported"
+          },
+          "timing": {
+            "latency": {
+              "standing": "not-reported"
+            }
+          },
+          "cost": {
+            "standing": "not-reported"
+          },
+          "outcome": {
+            "state": "completed",
+            "standing": "normalized-from-native"
+          },
+          "provenance": {
+            "reporter_ref": "harness:claude-code",
+            "native_event_ref": "claude-code:message:2",
+            "native_schema": "claude-code.transcript/assistant-message",
+            "observed_at": "2026-09-08T20:00:00Z",
+            "raw_evidence_refs": [
+              "trace:line-2"
+            ]
+          }
+        }
+      }
+    ],
+    "totals": {
+      "records": 2,
+      "tokens_input": {
+        "sum": 30,
+        "records": 2
+      },
+      "tokens_output": {
+        "sum": 3,
+        "records": 2
+      },
+      "tokens_not_reported": 0,
+      "cost": [
+        {
+          "currency": "USD",
+          "amount": 0.5,
+          "records": 1,
+          "standings": [
+            "provider-reported"
+          ]
+        }
+      ],
+      "cost_not_reported": 1
+    },
+    "invalid": []
+  },
+  "usage_list_empty": {
+    "schema": "actuation.usage-listing/v1",
+    "store": "/private/tmp/claude-501/-Users-admin-Central/8300544e-4e39-428c-913c-0f026a6b86e1/scratchpad/k0b/store",
+    "agent_session_ref": "session:none",
+    "records": [],
+    "totals": {
+      "records": 0,
+      "tokens_input": {
+        "sum": 0,
+        "records": 0
+      },
+      "tokens_output": {
+        "sum": 0,
+        "records": 0
+      },
+      "tokens_not_reported": 0,
+      "cost": [],
+      "cost_not_reported": 0
+    },
+    "invalid": []
+  },
+  "usage_list_extra_refusal": {
+    "exit": 2,
+    "stdout": "",
+    "stderr": "actuation: usage list takes only --session and --store; stream:one is not one of its arguments\n"
+  },
+  "realised_continuity": {
+    "input": {
+      "previous": {
+        "schema": "actuation.realised/v1",
+        "realised_ref": "realised:direct",
+        "actuation_ref": "actuation:direct",
+        "agent_ref": "agent:direct",
+        "agency_ref": "agency:direct",
+        "world_binding_ref": "binding:direct",
+        "loop": {
+          "recurrence": "event-driven",
+          "acting": true
+        },
+        "observation": {
+          "state": "observed",
+          "evidence_refs": [
+            "evidence:driver"
+          ]
+        },
+        "body": {
+          "harness_ref": "harness:claude-code",
+          "session_ref": "session:1",
+          "model_condition_ref": "model:1"
+        }
+      },
+      "next": {
+        "schema": "actuation.realised/v1",
+        "realised_ref": "realised:later",
+        "actuation_ref": "actuation:direct",
+        "agent_ref": "agent:direct",
+        "agency_ref": "agency:direct",
+        "world_binding_ref": "binding:direct",
+        "loop": {
+          "recurrence": "event-driven",
+          "acting": true
+        },
+        "observation": {
+          "state": "observed",
+          "evidence_refs": [
+            "evidence:driver"
+          ]
+        },
+        "body": {
+          "harness_ref": "harness:codex",
+          "session_ref": "session:1",
+          "model_condition_ref": "model:1"
+        }
+      }
+    },
+    "answer": {
+      "schema": "actuation.realised-continuity/v1",
+      "previous_realised_ref": "realised:direct",
+      "next_realised_ref": "realised:later",
+      "delta": {
+        "same_agent": true,
+        "same_agency": true,
+        "same_world_binding": true,
+        "same_actuation": true,
+        "harness_changed": true,
+        "session_changed": false,
+        "process_changed": false,
+        "model_condition_changed": false,
+        "material_binding_changed": false,
+        "recurrence_changed": false
+      }
+    }
+  },
+  "realised_continuity_refusal": {
+    "exit": 2,
+    "stdout": "",
+    "stderr": "actuation: invalid realised continuity input: missing field `next`; it takes {\"previous\": <actuation.realised/v1>, \"next\": <actuation.realised/v1>}\n"
+  },
+  "installed_usage_list": {
+    "exit": 2,
+    "stdout": "",
+    "stderr": "actuation: no JSON input supplied for list: No such file or directory (os error 2)\n"
+  },
+  "installed_realised_continuity": {
+    "exit": 2,
+    "stdout": "",
+    "stderr": "actuation: no JSON input supplied for continuity: No such file or directory (os error 2)\n"
+  },
+  "argv": "actuation usage list [--session S] --json; actuation realised continuity - --json ({previous, next} on stdin)"
+}

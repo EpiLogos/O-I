@@ -307,10 +307,13 @@ export function SessionGridView({set, selection, folded, onFold, receipt, onPres
               const key = `clip:${clip.id}`
               // Its standing, as the source discloses it (trackMarks.ts); a clip with no standing reading draws none.
               const mark = clipStandingMark(clip)
+              // How far a running clip has got, only where its owner reads it (clipProgress); else the fill grows with no end, as it always did.
+              const progress = clipProgress(clip)
+              const mode = shownMode(clip)
               return <div key={row.id} role="gridcell" className={`cs clip${clip.status ? ` ${clip.status}` : ''}${selected ? ' sel' : ''}`} data-clip={clip.id} data-clip-status={clip.status ?? 'undisclosed'}
-                data-receipt={receiptMark(receipt, key)}
-                title={`${clip.label} · ${word}${clip.launch?.quantize ? ` · launches ${clip.launch.quantize}` : ''}${clip.launch?.follow ? ` · then ${clip.launch.follow}` : ''}${clip.takes?.length ? ` · ${clip.takes.length} takes` : ''}${clip.note ? ` · ${clip.note}` : ''}${clipStandingTitle(mark)}`}
-                {...clipStandingAttributes(mark)} style={mark ? {borderLeft: clipStandingEdge(mark)} : undefined}
+                data-receipt={receiptMark(receipt, key)} data-progress={progress ?? undefined}
+                title={`${clip.label} · ${word}${progress !== null ? ` · ${progress}% through, as its owner reads it` : ''}${mode ? ` · plays ${mode}` : ''}${clip.launch?.quantize ? ` · launches ${clip.launch.quantize}` : ''}${clip.launch?.follow ? ` · then ${clip.launch.follow}` : ''}${clip.takes?.length ? ` · ${clip.takes.length} takes` : ''}${clip.note ? ` · ${clip.note}` : ''}${clipStandingTitle(mark)}`}
+                {...clipStandingAttributes(mark)} style={mark || progress !== null ? {...(mark ? {borderLeft: clipStandingEdge(mark)} : {}), ...(progress !== null ? {'--p': progress} : {})} as CSSProperties : undefined}
                 onClick={() => selection.select({kind: 'clip', ref: clip.id, title: clip.label, track: clip.trackId})}>
                 <button type="button" className="tri" aria-label={`Launch ${clip.label}${grain}`} disabled={!trackLaunch} title={trackLaunch ? `Launch (${trackLaunch.op})` : owned ? 'No launch: the owner discloses no launch for this clip' : 'No launch: this track is read, not launched'}
                   onClick={event => { event.stopPropagation(); if (trackLaunch) onPress(key, `Launch ${clip.label}`, () => trackLaunch.run(clip.id)) }} />
@@ -413,18 +416,34 @@ export function SessionGridView({set, selection, folded, onFold, receipt, onPres
 
 /** The states a clip can stand in, in the order the legend names them (dlw:session-grid's foot). */
 const LEGEND_STATES = ['waiting', 'running', 'stopped', 'recording', 'stalled', 'done'] as const
-/** A clip's second line (catalogue dlw__session-grid.tsx FullGrid's cell, its `<small>`): what follows it, as the owner words it, and the
- * takes stacked under it. The design's launch mode (once · hold · loop) stands there too where the owner discloses one; no set carries a
- * launch mode yet (timeline/worldTrackAdapter.ts ClipLaunch holds quantize and follow), so it is left out, never guessed. Nothing to say,
- * no line. */
+/** A running clip's progress in whole percent, from its owner's elapsed and expected length (`progress`; the design's `--p`), never past
+ * 100: the fill reaches the reading and has no end drawn. Null where no reading gives it — a clip not running, no expected length, or a
+ * value that is not a finite count — and nothing is estimated in its place. */
+export function clipProgress(clip: Pick<WorldTrackClip, 'status' | 'progress'>): number | null {
+  const read = clip.progress
+  if (clip.status !== 'running' || !read) return null
+  const {elapsed, expected} = read
+  if (!Number.isFinite(elapsed) || !Number.isFinite(expected) || !(expected > 0) || elapsed < 0) return null
+  return Math.min(100, Math.round(elapsed / expected * 100))
+}
+
+/** The launch mode the second line says: the owner's word, except the design's default (once), which the design draws as nothing. */
+const shownMode = (clip: Pick<WorldTrackClip, 'launch'>): string | undefined => {
+  const mode = clip.launch?.mode?.trim()
+  return mode && mode.toLowerCase() !== 'once' ? mode : undefined
+}
+
+/** A clip's second line (catalogue dlw__session-grid.tsx FullGrid's cell, its `<small>`): how it plays (the launch mode, where its owner
+ * says one other than once), what follows it, as the owner words it, and the takes stacked under it. Nothing to say, no line. */
 export function clipSecondLine(clip: Pick<WorldTrackClip, 'launch' | 'takes'>) {
-  const follow = clip.launch?.follow, takes = clip.takes?.length ?? 0
-  if (!follow && !takes) return null
-  return <small className="cs-sub">
-    {follow && <span className="cs-follow">→ {follow}</span>}
-    {follow && takes > 0 && ' · '}
-    {takes > 0 && <span className="cs-takes">{takes} {takes === 1 ? 'take' : 'takes'}</span>}
-  </small>
+  const mode = shownMode(clip), follow = clip.launch?.follow, takes = clip.takes?.length ?? 0
+  const said = [
+    mode && <span key="mode" className="cs-mode">{mode}</span>,
+    follow && <span key="follow" className="cs-follow">→ {follow}</span>,
+    takes > 0 && <span key="takes" className="cs-takes">{takes} {takes === 1 ? 'take' : 'takes'}</span>,
+  ].filter(Boolean)
+  if (!said.length) return null
+  return <small className="cs-sub">{said.flatMap((part, i) => (i ? [' · ', part] : [part]))}</small>
 }
 
 /** The grid's foot (catalogue dlw__session-grid.tsx FullGrid's bar): the legend of a clip's states, and what the selected clip launches

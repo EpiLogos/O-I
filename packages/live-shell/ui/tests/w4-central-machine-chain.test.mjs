@@ -330,7 +330,8 @@ test('the presses carry exactly Central\'s inputs through invoke_action: init/ad
 })
 
 test('Ground hygiene\'s person tenders name the route as the kernel stands: invoke_action carries the person only for PERSON_ACTS', () => {
-  const tenders = hygiene.HYGIENE_TENDERS.filter(tender => /person/.test(tender.waitsFor))
+  // REPLACED (lane K0): Reconcile is the person's press too, through Workcell's route; the tenders through invoke_action name PERSON_ACTS.
+  const tenders = hygiene.HYGIENE_TENDERS.filter(tender => /invoke_action/.test(tender.waitsFor))
   assert.ok(tenders.length >= 3)
   for (const tender of tenders) {
     assert.match(tender.waitsFor, /PERSON_ACTS/, tender.id)

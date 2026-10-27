@@ -1,7 +1,7 @@
 # Workspace continuity — execution record (WF0)
 
 Status: implementation record for the continuity contract
-(`WORKSPACE-CONTINUITY.md`) and wayfinder
+(`docs/cradle/02-ARCHITECTURE.md` §6.1–§6.8) and wayfinder
 (`.superpowers/sdd/cradle-rebuild/WORKSPACE-CONTINUITY-WAYFINDER-2026-09-19.md`,
 delivered as PR #386). Commissioned 2026-09-19. This file records what the
 local cut already satisfied, what this track changed, and where the evidence

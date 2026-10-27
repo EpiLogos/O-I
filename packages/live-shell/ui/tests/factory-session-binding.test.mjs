@@ -108,9 +108,11 @@ test('the Run holds its view, moves THE selection when you choose a session, and
   assert.deepEqual(calls, [HELPER.sessionRef])
   const after = own.runValues({session: LEAD, tracks: TRACKS, nowUnixMs: NOW, agent: {}, holds: bind.chainHolds()})
   assert.deepEqual([after.lanes, after.watch], ['all', 'off'])
+  // REPLACED (lane K0): Telemetry and Solo are the session's own settings on AIKit (encounter_session_settings, as the mixer writes them);
+  // the Run is not handed them, and says so.
   for (const key of ['telemetry', 'solo']) {
-    assert.match(binding.standing[key].disabled, /missing op/, key)
-    await assert.rejects(() => binding.write([{key, value: true}]), /missing op/)
+    assert.match(binding.standing[key].disabled, new RegExp(`encounter_session_settings \\{track: \\{${key}\\}\\}.*not handed the session's settings`), key)
+    await assert.rejects(() => binding.write([{key, value: true}]), {message: own.RUN_REFUSE[key]})
   }
   assert.match(binding.standing.take.disabled, /factory_attempt_read needs the run ref/)
   bind.resetHolds()
@@ -153,10 +155,13 @@ test('the Agentset rack: a group\'s sessions as its chains, each named by its ag
   const binding = own.agentsetBinding({group: GROUP, tracks: TRACKS, holds: bind.chainHolds()})
   binding.local.member(HELPER.sessionRef)
   assert.equal(own.agentsetValues({group: GROUP, tracks: TRACKS, holds: bind.chainHolds()}).member, HELPER.sessionRef, 'the chosen member is the view\'s')
-  for (const key of ['fanOut', 'depth', 'handBack', 'returnCap', 'model', 'retry']) {
+  for (const key of ['fanOut', 'depth', 'handBack', 'returnCap', 'model']) {
     assert.match(binding.standing[key].disabled, /missing op/, key)
     await assert.rejects(() => binding.write([{key, value: 1}]), /missing op/)
   }
+  // REPLACED (lane K0): Factory's retry is routed (factory_owner attempt-retry), and the rack holds no Run or unit for a member.
+  assert.match(binding.standing.retry.disabled, /factory_owner attempt-retry.*no reading here names the Run or the workflow unit/)
+  await assert.rejects(() => binding.write([{key: 'retry', value: 1}]), {message: own.AGENTSET_REFUSE.retry})
   bind.resetHolds()
 })
 

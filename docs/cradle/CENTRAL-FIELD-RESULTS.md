@@ -1,6 +1,6 @@
 # Central field — results (6–7 October 2026)
 
-Parent: O:I #592 · map `.wayfinder/maps/epi-logos-field.md` · ledger #598 · branch `feat/central-field-base`.
+Parent: O:I #592 · map `.wayfinder/maps/epi-logos-field.md` (retired 27 Oct into the DLW map, O-I #706; read it at `8873b0968`) · ledger #598 · branch `feat/central-field-base`.
 Contract and decisions: `CENTRAL-FIELD-CONTRACT.md`. Receipts: `desktop/cradle/walk/artifacts/*.json`. Every number below is
 from a receipt or a command the lead re-ran; "proven" names the check, "not proven" names the gap.
 

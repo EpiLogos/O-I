@@ -114,6 +114,40 @@ class ExperienceMapTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "unresolved practice"):
             em.load_sources(self.root)
 
+    def _six_cell_family(self, row):
+        config_path = self.root / "docs/experience/campaign.json"
+        path = self.root / "docs/experience/STORIES.md"
+        if not hasattr(self, "_six_cell_originals"):
+            self._six_cell_originals = (config_path.read_text(), path.read_text())
+        config_path.write_text(self._six_cell_originals[0])
+        path.write_text(self._six_cell_originals[1])
+        config = json.loads(config_path.read_text())
+        config["families"].append({"id": "ZZ", "ids": ["ZZ01"], "title": "A six-cell family",
+            "owners": ["O-I"], "proof_refs": ["O-I#715"], "source_refs": ["docs/experience/STORY-PROFILE.md"],
+            "port_sources": ["Ableton Live 12.0.25"]})
+        config_path.write_text(json.dumps(config, indent=2))
+        path.write_text(path.read_text() + "\n\n## ZZ — A six-cell family\n\n"
+            "| ID | Starting world and act | Where it happens | Owning operation and agent | Useful completion | Failure or continuation | Grade |\n"
+            "|---|---|---|---|---|---|---|\n" + row + "\n")
+
+    def test_six_cell_story_carries_world_place_and_grade(self):
+        self._six_cell_family("| ZZ01 | [Bare] I open the app for the first time. | §10.11 Setup, Settings | Central: setup; no agent | My World exists. | Stopping halfway keeps what I accepted. | H (core) |")
+        story = next(s for s in em.load_sources(self.root)["stories"] if s["id"] == "ZZ01")
+        self.assertEqual(story["extensions"]["ux"]["starting_world"], "Bare")
+        self.assertEqual(story["extensions"]["ux"]["grade"], "H")
+        self.assertTrue(story["extensions"]["ux"]["core"])
+        self.assertEqual(story["surface_refs"], ["§10.11 Setup, Settings"])
+        self.assertEqual(story["extensions"]["ux"]["port_sources"], ["Ableton Live 12.0.25"])
+        self.assertEqual(story["extensions"]["agent_ux"]["practice_requirements"], [])
+
+    def test_six_cell_story_refuses_unknown_world_or_grade(self):
+        self._six_cell_family("| ZZ01 | [Somewhere] I open the app. | §10.11 | Central | Done. | Stopped. | P |")
+        with self.assertRaisesRegex(ValueError, "starting world"):
+            em.load_sources(self.root)
+        self._six_cell_family("| ZZ01 | [Yours] I open the app. | §10.11 | Central | Done. | Stopped. | Q |")
+        with self.assertRaisesRegex(ValueError, "grade"):
+            em.load_sources(self.root)
+
     def test_native_matrix_format_and_no_local_capability_impersonation(self):
         result = em.load_sources(self.root)
         manifest, rows = em.relation_projection(result)
@@ -257,7 +291,7 @@ class ExecutableCoverageTests(unittest.TestCase):
     def write_receipt(self, name: str, *, passed=True, grade="B", checks=(True, True)):
         receipt = {
             "schema": "oi.cradle.walk.scenario/v1", "scenario": name,
-            "spec_ref": "docs/cradle/05-EXECUTION.md §3", "grade": grade,
+            "spec_ref": "docs/experience/LOCAL-CAMPAIGN.md §0", "grade": grade,
             "generated_at": "2026-09-22T00:00:00Z", "passed": passed,
             "checks": [{"ok": ok, "label": f"check {i}"} for i, ok in enumerate(checks)],
             "environment": {"source": {"repository_head": "head", "dirty_digest": "digest"}},

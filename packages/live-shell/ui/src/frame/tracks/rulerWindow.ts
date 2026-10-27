@@ -78,6 +78,20 @@ export function percentOf(at: number, range: TimeRange): number {
   return span > 0 ? (at - range.start) / span * 100 : 0
 }
 
+/** A stretch of the ruler as the window shows it (catalogue dlw__arrangement-ruler.tsx `.arp-brace`, the loop brace): where it begins and
+ * how wide it is, in percent of the window, and whether an end lies outside the window, where no brace edge is drawn. */
+export interface WindowBand {readonly left: number; readonly width: number; readonly cutStart: boolean; readonly cutEnd: boolean}
+
+/** Where a stretch stands in the window: held to the ruler first, then cut to the window. Null for a stretch with no length, one
+ * that runs backwards or holds no finite point (nothing is guessed for it), and one wholly outside the window. */
+export function bandIn(stretch: TimeRange, range: TimeRange, bounds: Pick<RangeBounds, 'start' | 'end'>): WindowBand | null {
+  if (!Number.isFinite(stretch.start) || !Number.isFinite(stretch.end) || !(stretch.end > stretch.start)) return null
+  const start = Math.max(bounds.start, stretch.start), end = Math.min(bounds.end, stretch.end)
+  if (!(end > start) || end <= range.start || start >= range.end) return null
+  const from = Math.max(start, range.start), to = Math.min(end, range.end)
+  return {left: percentOf(from, range), width: percentOf(to, range) - percentOf(from, range), cutStart: start < range.start, cutEnd: end > range.end}
+}
+
 /** Whether the window is the whole ruler. */
 export const isFit = (range: TimeRange, bounds: RangeBounds): boolean =>
   Math.abs(range.start - bounds.start) < 1e-9 && Math.abs(range.end - bounds.end) < 1e-9

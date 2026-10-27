@@ -1,16 +1,16 @@
 {
   "purpose": "Owner-directed O:I-world participation refinement within the existing O-I#65 C0–C5 campaign and #220 integration. Projectable Workcells, agents and practices join knowledge, live activity and authored Beings/Things; no new story family, runtime or capability registry.",
-  "story_source": "docs/experience/SHARED-FIELD-DESKTOP.md",
+  "story_source": "docs/experience/STORIES.md",
   "document_operations_source": "docs/SHARED-FIELD-STATE-DISCOVERY.md",
   "families": [],
   "standing": "Owner-directed intended experience and implementation/testing commission, 28 September 2026. Completed #18 carrier evidence is retained; this module claims no installed or human acceptance.",
   "runtime_or_human_acceptance": false,
   "implementation_wayfinder": "docs/SHARED-FIELD-QL-EPI-INTEGRATION-WAYFINDER.md",
-  "temporal_source": "docs/experience/WORKCELL-NOW-TEMPORAL-FIELD.md",
+  "temporal_source": "docs/contracts/WORLD-INHABITATION-V1.md",
   "source_reading_note": "campaign.json imports this module. The existing compiler hashes the module, story_source and document_operations_source. Other linked sources and actual native matrix digests must be resolved at C0; linked filenames are not evidence of execution or recursive hashing.",
   "obligation_sources": {
     "web65": {
-      "source_ref": "docs/experience/SHARED-FIELD-DESKTOP.md#0-purpose--share-and-participate-in-oi-worlds",
+      "source_ref": "docs/architecture/shared-participation.md",
       "issue": "https://github.com/EpiLogos/O-I/issues/65",
       "consumer_issues": [220, 375, 335, 366, 279, 154],
       "policy": "Preserve the complete current SharedField/temporal/Personal-Web/Expression/Resolve/Gateway sources and their independent meanings. These obligations amend the existing SH/KN/AG/PX/MC/DV/UI/GW/PW stories. Current public-operation and capability identities come from native source and the selected cut, not names invented in this module."
@@ -20,7 +20,7 @@
   "obligations": [
     {
       "id": "web65:WORLD", "source": "web65",
-      "native_locator": "SHARED-FIELD-DESKTOP sections 0, 2, 3, 7 and 18.2; Personal Web #279; #18 naming amendment 5718300149",
+      "native_locator": "shared-participation (Shared field participation): three presentations, several scopes; publishing from the local world; CASES web65 first integrated delivery; STORIES TO14, SH01; Personal Web #279; #18 naming amendment 5718300149",
       "requirement": "People share a coherent region of their O:I world and participate in artificial-plus-human agency: eligible Workcells, agents/repertoires, Skills/Methods, projects, knowledge and activity become independently inspectable through Beings/Things and the existing Projection contracts.",
       "story_ids": ["SH01", "SH03", "SH06", "MC01", "AG01", "PX01", "PW01", "PW09", "PW10"],
       "required_evidence": ["D", "C", "P", "M", "H"],
@@ -33,7 +33,7 @@
     },
     {
       "id": "web65:EXPLORE", "source": "web65",
-      "native_locator": "SHARED-FIELD-DESKTOP sections 1–4, 8, 12, 15–18; O-I#375 and current desktop consumer",
+      "native_locator": "STORIES TO07, CS10, WV16; shared-participation (Shared field participation): where state lives, presentation bodies, knowledge travel, workspace and lifecycle; CASES SF1 walk and web65; O-I#375 and current desktop consumer",
       "requirement": "Ordinary Explore entry opens an explorable shared world whose knowledge constellation, agent-act Expression and authored Beings/Things are complementary presentations of the same native subjects.",
       "story_ids": ["UI01", "UI02", "UI03", "UI04", "UI05", "UI06", "KN01", "KN02", "SH01", "PW05"],
       "required_evidence": ["D", "C", "P", "M", "H"],
@@ -46,7 +46,7 @@
     },
     {
       "id": "web65:RESOLVE", "source": "web65",
-      "native_locator": "SHARED-FIELD-DESKTOP sections 2 and 8; AIKit#142; QL-MEF#83 operative syntax",
+      "native_locator": "shared-participation (Shared field participation): where state lives and what search is; knowledge travel and resolution; AIKit#142; QL-MEF#83 operative syntax",
       "requirement": "The existing AIKit Resolve/Search and Śiva–Śakti-derived syntax resolve shared subjects, practices, participating worlds and activity through one typed reference field.",
       "story_ids": ["KN01", "KN02", "KN03", "KN09", "PX01", "SH01", "SH06", "UI01", "UI06"],
       "required_evidence": ["D", "C", "P", "M"],
@@ -59,7 +59,7 @@
     },
     {
       "id": "web65:PARTICIPATE", "source": "web65",
-      "native_locator": "SHARED-FIELD-DESKTOP sections 4–6 and 9; O-I#154; AIKit#275; Workcell#72",
+      "native_locator": "shared-participation (Shared field participation): joining with an agent; participants and addressing; contributions; shared NOW; STORIES SH03, SH04, TO17; O-I#154; AIKit#275; Workcell#72",
       "requirement": "A participant brings a real Agent into a shared NOW, the actual body receives relevant shared context and performs useful work, and messages can address the field, a durable responsibility or a precise instance at its Workcell.",
       "story_ids": ["SH02", "SH03", "AG06", "AG09", "MC02", "MC03", "GW03", "GW06", "UI04", "UI06"],
       "required_evidence": ["D", "C", "P", "M", "H"],
@@ -72,7 +72,7 @@
     },
     {
       "id": "web65:ACTIVITY", "source": "web65",
-      "native_locator": "SHARED-FIELD-DESKTOP sections 0.1, 9–13; current RunExpressionBody and native activity/Expression owners",
+      "native_locator": "shared-participation (Shared field participation): three presentations; expression and agent operation; shared NOW; Shared Stage; STORIES TO15, TO16, TO18; current RunExpressionBody and native activity/Expression owners",
       "requirement": "Local and shared activity Expressions make actual human-and-agent work inspectable in live, frozen and replay readings, with knowledge and authored pages connected to its cast, work and results.",
       "story_ids": ["SH03", "UI02", "UI04", "UI05", "DV03", "DV04", "DV05", "PW11"],
       "required_evidence": ["D", "C", "P", "M", "H"],
@@ -85,7 +85,7 @@
     },
     {
       "id": "web65:RETURN", "source": "web65",
-      "native_locator": "SHARED-FIELD-DESKTOP sections 6, 7, 18.1 and 18.2; existing Wiki/constellation and praxis Return",
+      "native_locator": "shared-participation (Shared field participation): contributions; publishing; capability matrices; CASES web65 first integrated delivery; existing Wiki/constellation and praxis Return",
       "requirement": "Shared participation leaves a useful artifact, knowledge or practice which returns through its native owner, is encounterable in the field and helps later work in another participant's world.",
       "story_ids": ["SH04", "SH06", "KN05", "KN06", "KN08", "PX05", "DV08", "PW10"],
       "required_evidence": ["D", "C", "P", "M", "H"],
@@ -98,7 +98,7 @@
     },
     {
       "id": "web65:CONTINUITY", "source": "web65",
-      "native_locator": "SHARED-FIELD-DESKTOP sections 0.2, 9, 12, 13 and 18.2; WORKCELL-NOW-TEMPORAL-FIELD; #220",
+      "native_locator": "shared-participation (Shared field participation): same field, several scopes; shared NOW; workspace and lifecycle; Shared Stage; CASES web65 first integrated delivery; WORLD-INHABITATION-V1 §5 and shared-participation FieldNow and FieldDay; CASES NOW25–NOW31; #220",
       "requirement": "One grounded world across Workcells and independently authorised shared worlds remain usable through time, disconnection, revocation and fresh-body re-entry, with shared and local state correctly related.",
       "story_ids": ["SH02", "SH03", "SH05", "MC03", "MC04", "MC05", "MC06", "GW06", "GW08", "WR06", "UI02", "UI05", "PW10", "PW11"],
       "required_evidence": ["D", "C", "P", "M", "H"],
@@ -111,7 +111,7 @@
     },
     {
       "id": "web65:MATRIX", "source": "web65",
-      "native_locator": "SHARED-FIELD-DESKTOP section 18.1; TOOLS.md native capability binding; Central CAPABILITY-MATRIX-PROTOCOL",
+      "native_locator": "shared-participation (Shared field participation): capability matrices anchor development and proof; TOOLS.md native capability binding; Central CAPABILITY-MATRIX-PROTOCOL",
       "requirement": "Development and testing are anchored in reviewed native capability matrices, full UX obligations and real operation/praxis/source evidence, with improvements returned into that same field.",
       "story_ids": ["SH01", "SH02", "SH03", "SH04", "SH05", "SH06", "KN08", "PX01", "PX05", "DV01", "DV03", "DV08", "UI06"],
       "required_evidence": ["D", "C", "P", "M"],
