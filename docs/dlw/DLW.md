@@ -135,6 +135,16 @@ work for the first time, it has a plain home of its own: a menu act, a
 setting, a step of setup. It never borrows a Live gesture that means
 something else.
 
+Every part of the DLW that takes one of Live's meanings keeps what makes it
+that thing in Live. A track is a lane of one stream, with its own chain. A
+clip is a piece of that stream, with a state you can read. An instrument
+makes the material, an effect changes what passes through it and keeps the
+rest, a rack holds chains side by side, and a macro turns real settings of
+its own device.
+A part that cannot keep what Live's thing keeps does not take its name. Where
+Live has the thing, the DLW's version is checked against how Live's own
+behaves, as measured in Live itself.
+
 Start with a **track**. In Live a track is a lane for one kind of sound —
 drums, a bassline, a voice — and it plays one clip at a time. In the DLW a
 track is a lane for one stream of your work. In Central the day is the set and
@@ -207,7 +217,17 @@ next bar, or, in Factory, once the agent finishes the tool it is using.
 capture of a scene, the attempt at a task that should land, the reading of a
 history you want to keep. Above all of it runs the **transport**, the same
 controls in the same places in every mode, each meaning what it should for
-the work in front of you.
+the work in front of you. The views, the chain and the browser hold still in
+the same way: each stands where it stands in every mode, and only what it
+means moves with the mode.
+
+Everything you see belongs to an owner, the product that keeps it: Central
+keeps your pages and your day, the engine keeps the sound, Quaternal Logic
+keeps the sky. The window shows what the owner reports. A change you make
+goes to the owner, which applies it or refuses it and says why; until it
+answers, the change shows as waiting. A control with no owner behind it only
+reads. Nothing on the screen moves without a cause you can see: whatever
+moves a value names itself on it.
 
 Whatever you work on, one thing stands in focus: a constellation of your wiki,
 a whole and the things gathered round it, each with its source. Constellations
@@ -1640,6 +1660,71 @@ as Live's Spectrum and MIDI monitor do, and writes nothing. A **connection**
 brings agents to the work and takes their work to where it lands, as Live's
 audio interface carries sound in and out of every track.
 
+#### What each part keeps
+
+Every device, view and control takes one of Live's meanings and keeps what
+makes it that thing (§3). What it must keep follows from what it is:
+
+| It is | It keeps |
+|---|---|
+| An instrument | It names the act of its owner that makes the material. |
+| An effect | It names the material it works on, changes what passes through it and keeps the rest. It never replaces the material without leaving a receipt. |
+| A rack | It holds at least one chain, and a way to choose between its chains. |
+| A macro | It turns at least one real setting of its own device, each within that setting's range. |
+| A track | It names the stream it carries, and keeps no copy of it. |
+| A clip | It holds its material by reference and version, and shows its state. |
+| A stop | It names the clips it stands together. |
+
+Each device declares which of Live's meanings it takes. A device that
+declares none, or declares one it does not keep, is refused when it is
+brought in, and the refusal names what it lacks. Where Live has the same
+object, the device names Live's, so that what it does can be checked against
+what Live does.
+
+The grammar does not change from mode to mode; what it means does. The same
+slots of the transport, the same views, the same chain and the same browser
+serve every mode; what each one does is the mode's, set out in the
+transport's table (§10.5) and in each mode's section. A device opened in
+another mode keeps every control it has and works on that mode's material.
+
+Owners write, and devices read. A parameter that its owner can change
+carries the way the change reaches the owner; a parameter without one is a
+reading, and its control only shows (§16.13). The shell keeps no copy of what
+an owner keeps. Nothing moves without a cause you can see: a value that
+something else moves names what moved it (§16.11).
+
+#### Rules for every device and view
+
+These hold for every device, every view and every state the window can be
+in.
+
+- Things that look alike are kept apart. Reading a thing is not acting on it,
+  and seeing an act is not being allowed to take it. Selecting a thing does
+  not give it to an agent, and being present is not being allowed. A thing
+  hidden from you is not missing, and a thing degraded is not broken. What
+  you wrote, what was observed and what was generated stay marked apart. What
+  a world shows, what someone offers it and the source itself are three
+  things. Who takes part is not who someone is, and meeting a claim is not
+  believing it. A receipt does not mean you have seen or accepted what it
+  records, and what is carried to an agent is not what it has loaded.
+- What a thing is belongs to its owner, and how it is shown belongs to the
+  window. Neither is worked out from the other: a layout never changes what a
+  page says, and a change to the page never moves the panes. A draft you are
+  writing stays in your hands until its owner acknowledges the save.
+- When something is missing, slow or failing, the window says so where the
+  thing would stand: what is missing, whose it is, and what can bring it
+  back. It never shows an empty success in its place, and it never holds the
+  whole window waiting. A view that shows only part of something says how
+  much it leaves out.
+- Whatever asks for your attention names exactly what it is about, and one
+  act takes you there. An ordinary wait, or a reading going by, does not ask
+  for your attention.
+- An agent is shown everything it is allowed to know, whole. You are shown
+  the same facts, opening further as you go into them. Being an agent never
+  widens what is shown.
+- Whatever you can do with the pointer you can do from the keyboard, and
+  whatever you can do from the keyboard you can do with the pointer.
+
 ### 16.1 What goes where
 
 A device is one kind of thing among five, and most of what the DLW does
@@ -2109,6 +2194,8 @@ hold Alt to turn it off while you drag.
   it.
 - Switching between Session view, Arrangement view and Pane view changes
   neither the selection nor what runs.
+- A pane you leave keeps its place. Come back to it, by view or by mode, and
+  it stands with the camera, the selection and the moment it had.
 - A clip that is running shows no end. A waiting clip shows no length. A
   stalled clip shows where it stopped and does not look done.
 - A row launches only what is in it. Stop pressed twice cancels at once;
@@ -2118,6 +2205,8 @@ hold Alt to turn it off while you drag.
 - A move does not change what a clip is. Placement does not raise a claim to
   a fact.
 - Every edit is one labelled step that can be undone alone.
+- The overview strip is the one way to move along the whole ruler. No second
+  scrub bar stands beside it.
 - Every mode uses the same states, the same stop buttons and the same keys.
 
 ### 16.7 The browser and the pool
@@ -2178,6 +2267,10 @@ Commit writes the groove into the clip's notes.
   owner.
 - How the window stands is kept with the set. An arrangement to start from
   again is a template in the browser (§10.3).
+- A set keeps where things stand and what each pane holds, by reference to
+  their owners, never their content. Opened again, it asks each owner afresh,
+  so nothing shows from the set alone; what it could not keep, such as a
+  draft never saved, it names as it opens.
 
 ### 16.8 Play, record and automation
 
@@ -2197,6 +2290,18 @@ A pad triggers: press it and it plays now, as a Drum Rack pad does. When
 something happens later is a matter of time, and time has three homes: a
 clip's place on the ruler, an automation lane, and a routine in Settings,
 Automations (§10.10). No pad and no device keeps a clock time of its own.
+
+Five times run through the DLW, and they are kept apart. The day is
+Central's: when it opens and when it closes. The sky and the clock are
+Quaternal Logic's: where the planets stand and where the wheel has turned. A
+routine runs at the time Settings gives it, and each run lies on the ruler as
+a clip beside the rest of the work; only what was set to run fires, and only
+what fired is drawn. The transport moves over clips and drives nothing else.
+An occasion is a moment you stand in: it keeps that moment as it was read,
+and says separately whether what it shows still stands now. Any device may
+read any of these times, and a modulator may take one as its source. One
+time becomes another only by a rule stated for that crossing: the transport
+never moves the day, and a past occasion never passes for now.
 
 ### 16.9 How a device looks
 
@@ -2471,6 +2576,11 @@ The shell brings the values, the writes, the navigation between views, the
 room each view stands in, and the standing of each parameter: its automation,
 its modulator, its holder.
 
+The shell knows no product by name. Each product brings its devices, its rows
+in the browser, its material for the tracks and its tiles through the same
+door as a device you build yourself, so a new product joins without any
+change to the shell. No product gets a place of its own outside these.
+
 The panel kit is `packages/live-shell/ui/src/inhabitants/sdk/panel.tsx`, and a
 designed device is a module of `inhabitants/catalogue/panels/`. A device
 without views of its own is drawn by the generic plate: its parameters,
@@ -2527,6 +2637,9 @@ A device is done when all of these are true:
 - The views match the device's entry below, and the entry passes the fence
   (§16.17).
 - Beside its Live nearest, the plate reads as a Live device.
+- The whole it belongs to works as a person uses it, walked from start to end
+  by someone other than its builder. A part that passes on its own does not
+  pass the whole, and every step of the walk it belongs to still has to hold.
 
 To see a device in the gallery, run the gallery from `packages/live-shell/ui`:
 
@@ -2938,7 +3051,7 @@ One ruler holds every reading. It runs from deep time to today and stretches so 
 
 The ruler can reach far past any calendar. Beyond the range of dates, it counts years, and its ticks step by a million years, ten million, a hundred million and a billion.
 
-An overview strip over the whole domain shows where the view sits. Drag the strip to move the view. Resize it to zoom.
+An overview strip over the whole domain shows where the view sits. Drag the strip to move the view. Resize it to zoom. With a subject selected, the strip shows how densely it turns up along the ruler.
 
 | Part | What it is |
 |---|---|
@@ -2946,7 +3059,7 @@ An overview strip over the whole domain shows where the view sits. Drag the stri
 | Epoch | A named age drawn as a band on the ruler. Epochs nest. The narrowest epoch colours everything inside it. |
 | Event | A clip at its year and place. It carries the passages and the material it gathers. A parent event holds child events, and zooming out folds them into the parent. |
 | Span | The life of a person, a place or an institution, drawn thin behind its events. |
-| Thread | An ordered path through events. The walk of a whole reading is derived in date order and is not stored. A field thread follows one subject through its located occurrences. |
+| Thread | An ordered path through events. The walk of a whole reading is derived in date order and is not stored. A field thread follows one subject through its located occurrences. It keeps one stop for each stretch of time and carries the subject's other occurrences in that stretch at the stop, so nothing is dropped. |
 
 An epoch shows the label that its source gives it.
 
@@ -3157,7 +3270,7 @@ Relations between bodies are lines across the dark: anchor, participate, contrib
 
 Turn the World to its graph side and the same material lays out by connection. Each node takes the colour of what it is. The ties between nodes show what joins them. The graph is a second view of the same field and holds no data of its own.
 
-The graph view has its own controls. Set how many hops it reaches, how far nodes spread and how strongly they pull together. Choose which occurrences show as dust around a node. Choose which ties show: from a source, inferred, or from a site. Choose whether nodes hold to their sky anchors. Fit brings the whole graph into the pane. Choose Space to return to the body.
+The graph view has its own controls. Set how many hops it reaches, how far nodes spread and how strongly they pull together. Choose which occurrences show as dust around a node. Choose which ties show: from a source, inferred, or from a site. Choose whether nodes hold to their sky anchors, and which tiers of node show. Fit brings the whole graph into the pane. Choose Space to return to the body. The graph's settings are kept with the set, as every pane's are.
 
 #### Parameters
 | Parameter | Values | Default | What it does |
@@ -3826,7 +3939,7 @@ You need a building to keep a whole subject in. A Palace is a place on the World
 | Private room | A room that holds your own practice. It stays under cloud to every audience but you. |
 | Portal | A door out to another place, another palace or another person's world. Walking through a portal is an encounter like any other. |
 
-A Palace is a curated system over one corpus or one project. It stands on the World at a place. To enter, select the palace on the World and choose Enter. The Palace pane then shows the same place from inside. The palace has no home apart from the World.
+A Palace is a curated system over one corpus or one project. In Live's terms it is a curated set: tracks, sections, stops and walks gathered for one body of material. It stands on the World at a place. To enter, select the palace on the World and choose Enter. The Palace pane then shows the same place from inside. The palace has no home apart from the World.
 
 #### The board
 
@@ -5771,7 +5884,10 @@ profile, self and practice that make it who it is). A new model is a change of
 body; a new profile revision is a change of identity. The device reads the roster and
 never adds, changes or invents an agent. Identity gives an agent no right:
 what it may read and write comes from Scope. An agent that has a type wears
-the creature of its type as its face (below).
+the creature of its type as its face (below). Its colour goes with it
+wherever it appears: its row in the browser, its tile on the rail, the head
+of its track and its turns in a thread, so you can tell at a glance whose
+work you are looking at.
 
 How a write arrives is not set here. Scope sets the most the agent may do in
 each part of the world, and Arm decides whether it writes directly or
@@ -8515,6 +8631,9 @@ owner answers a change.
 - A macro set to All scenes is not recorded. Turn All scenes off to record its moves.
 - Your Nara readings never enter the Expression. Nara may move its focus, with a checkpoint you can return to; saving or sharing the Expression carries none of your layer (§24.7).
 - A control that you hold shows the hand-back light. Press the light to give control back.
+- Choosing a macro changes no value. The parameter stands where it was until you turn it.
+- A Follow macro takes its symbol when you start to turn it. Change the selection while you turn, and the value still goes to the symbol you started on.
+- Saving and reopening the Expression keeps the macros, their order, their reach and their values.
 
 #### Tips
 
@@ -9791,6 +9910,7 @@ Live's Main track carries the scenes. Each row has a launch button with the scen
 #### Rules
 
 - Pointer, touch, computer keys and MIDI all use one path.
+- Playing takes the shortest path in the instrument. Nothing slow, such as the sky, an agent or the map, is asked while a note plays, and a picture that stutters never stalls the sound.
 - Keys do not play notes while you type in a document.
 - Release a key and the note is released. Lose focus or lose a device, and all held notes are released. Panic releases all notes at once.
 - A direct strike, a route preview and a generated walk look different on the playing surface.
@@ -10022,6 +10142,9 @@ The widget shows the small live torus with a level meter. Click the torus to ope
 - The torus is the only generator. The sky, the tuning and the mode tune and move it. They do not make sound.
 - The torus in Live and the torus in an Expression are one simulation. They are not two copies.
 - Picture and sound come from one prepared state. The sample rate and the frame rate are two views of it.
+- Everything that takes part in the sound has one role, and the roles stay apart: a body that rings, a voice that moves with its symbol, a collision that strikes, a meter that listens, and a form that is only seen. A meter makes no sound, and neither does a form that is only seen.
+- Samples, seconds, bars, the torus's turns, the clock's steps, the sky's date and the day are kept apart. One becomes another only by a rule stated for that crossing, and where the sound meets the day the crossing is measured, not worked out. Where no rule is stated, the Torus refuses rather than guess.
+- A recorded performance keeps what it needs to be played on: the notes with their expression, the tuning and the sources as they stood, the moves of modulation and automation, the course of the body, the form and the forces, changes of context, the seeds, and how the ruler met the sound. Where the field's motion cannot be replayed exactly, the recording says from which state it resumes. A picture of the field is never taken for a rewind.
 - A camera move does not change the sound, unless Receiver is On.
 - Each key is a point on a helix. The place of each key is calculated from the geometry of the torus. It is not set by eye.
 - A saved state keeps every parameter. A preset in the browser opens with the same sound.
@@ -10640,6 +10763,7 @@ The widget shows the planets, with their degrees. Click a planet to open its ass
 - A parameter that the sky moves shows the planet on the control. It shows the base value and the value now.
 - To take hold of the parameter, move it. The hand-back light comes on. Press the light to give the control back.
 - The sky reaches the sound as a plan made before you play. The sky does not delay a note.
+- A planet never sets a value itself. It proposes one, and the device that owns the parameter applies it by its own rules. An assignment whose target cannot be written, or lies outside the chain, is refused when you make it, not while you play.
 - The sky is calculated. It is not an observed sky.
 - A planet that has no value for a date is shown as missing. The device does not guess.
 - The device clears or changes an assignment at once, and you can undo it.
@@ -10862,6 +10986,8 @@ The widget shows a small wheel with its position. Click the wheel to open the M3
 - The twelve lenses, the 18 apertures and the 12 steps of the clock are different counts. Do not confuse them.
 - The 18 apertures stand over the M3 clock, as they do in the Bimba map. The Sky's ring carries none.
 - The needle runs on its own clock. A slow screen does not slow the sound.
+- What is written on the wheel changes only when an inscription arrives. The clock never fills the time between two inscriptions with steps of its own.
+- A form becomes a body that can sound only when all of it is given: its shape and size, its material, its edges, and where it is struck and where it is heard. A cloud of points or a glyph alone is not yet a body.
 
 #### Tips
 

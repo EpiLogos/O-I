@@ -2,8 +2,8 @@
 
 **What it is:** the tier-0 register of the owner's rulings for the DLW (the new shell and the Technè instruments): the owner's own words, recorded where they were given. Plans, lanes, tickets and the manual cite it; none restates it.
 **Standing:** owner-authored; verbatim; never summarised. Each entry names its source, line range and date; only the owner changes or retires one. Laws that were set by agents and are not rulings sit last, under "Standing laws carried from the 7 Oct programme".
-**Where other rulings stand:** the five-mode ruling is R12; the owner's settled facts and the 13 Oct instrument rulings are `wayfinder/DEVICE-SEMANTICS-LOCK.md` §0 (§0.1, §0.2); the shell-contemplation correction of 7 Oct (M1-M2-M3-M4, D13, the two-clock doctrine) is `lanes/lane-6-ableton-shell/SCOPE.md` L1-25, which stays where it is.
-**Order:** the 7 Oct implementation-commission rulings (L12-74, in place and unchanged), then the owner passages appended from retired planning documents (R1-R9).
+**Where other rulings stand:** the five-mode ruling is R12; the owner's settled facts and the 13 Oct instrument rulings are R22–R24, carried from `wayfinder/DEVICE-SEMANTICS-LOCK.md` §0 when it retired; the shell-contemplation correction of 7 Oct (M1-M2-M3-M4, D13, the two-clock doctrine) is `lanes/lane-6-ableton-shell/SCOPE.md` L1-25, which stays where it is.
+**Order:** the 7 Oct implementation-commission rulings (L12-74, in place and unchanged), then the owner passages appended from retired planning documents (R1-R29).
 
 The plan is the wayfinder map, O-I #706; its Notes and [`wayfinder/TRACKER.md`](wayfinder/TRACKER.md) carry the standing laws (port, aperture, craft, musical, instrument, reverse-engineering), and its tickets are the map's sub-issues.
 This file no longer carries a lane table, a phase ladder or deliverables; those are the map's and the lane directories'.
@@ -400,5 +400,340 @@ Source: `docs/cradle/handovers/factory-expressions-2026-09-26/EXPRESSION-DEVELOP
 > - “constellation is who/what is there, composiiton is how are these organised in the scene and why”
 > - “this is more art than anything”
 > - “the acts can stretch across modes (fatcory, expressions and tehcne) where an ‘act’ has a very different nature between modes”
+
+### R22 — The settled facts: never reopened, never asked (owner, 12 Oct 2026)
+
+Source: `wayfinder/DEVICE-SEMANTICS-LOCK.md` L36-47 (origin/main `8873b09`), "Settled by the owner — never reopened, never asked (12 Oct 2026)", copied before the lock retired (#733). The wording is the lock's: its author, the conductor (`claude-code:dlw-conductor`), set the owner's settled facts down in one sentence of its own. The mode set in the owner's own words is R12.
+
+> **Settled by the owner — never reopened, never asked (12 Oct 2026):**
+> five modes, Live the base mode and measured basis, later joined into
+> Expressions' audio+video timeline; Epi-Logos is a lens, not a mode; Nara
+> belongs to the Epi-Logos lens, overlaid on the astrology components ported
+> from Archetypal-Earth; the physics/cymatic simulation IS the sounding
+> instrument; the day is an automated closure and an instrument/device — no
+> hours are set; development is unified — every repo a change needs is
+> changed in the same work, no per-repo owner tickets; a player plays by
+> downloading the app, making things and projecting them to the shared field;
+> Technē instruments already act on Expressions; agent-chain order is
+> Factory's (Ta-Onta). Anything else the code and corpus can answer is
+> derived, not asked.
+
+Read with: R12 (the mode set); R11 (#712, how the build runs).
+
+### R23 — Every instrument in every mode (owner ruling, 13 Oct 2026)
+
+Source: `wayfinder/DEVICE-SEMANTICS-LOCK.md` L49-84 (origin/main `8873b09`), §0.1, "Every instrument in every mode (owner ruling, 13 Oct 2026)". The wording is the lock's, relayed from the DLW documentation session. Item 3 carries two later owner corrections as the lock recorded them: the withdrawal of the instruments' M′ numbers (19 Oct 2026) and the M′ layers as the app layers of the six M subsystems (20 Oct 2026). Section marks inside (§2, §2.5, §0.1.3) are the lock's own; "manual §25" is the manual's.
+
+> Relayed from the DLW documentation session; it supersedes the plain-aperture
+> rule wherever this file, WSD, the retired widget guide and pane documents, or the mockup
+> stated it.
+>
+> 1. **Every pane instrument works in every mode at full capability.**
+>    Nothing is Technē-only. The detail row's Device side follows the
+>    **focused pane's instrument** in any mode: a Places, Graph, Timeline or
+>    Expression pane in Central or Factory gets that instrument's full native
+>    controls through its devices' exposed parameters. The controls stay out
+>    of the pane body. A pane that holds no instrument keeps its mode's Device
+>    side (§2). The mode supplies the material; the instruments stay whole.
+> 2. **Each mode's material reads through the world (planet) grammar.**
+>    Central: your planet is Central; projects are places on its surface; the
+>    day's work and its meaningful points are walks on the planet; context and
+>    files are ephemeral objects in orbit. Factory: a NOW is a planet (a task
+>    becomes a world); agents are activity around it; subagents are nested
+>    orbits. Expressions: within every mode as well — the graph projection
+>    (the Project instrument's Graph) is as apt for Central and Factory as for
+>    Expressions (projecting context, wayfinder mapping). Live shares the same
+>    grammar.
+> 3. **Technē's Project instrument is the Earth and solar system together with
+>    its graph view** — the ported atlas's Earth ⇄ Graph, where it was
+>    Project/Wiki/Graph. The other five instruments (§2.5) work the underlying
+>    information differently, to develop that world. The instruments are named
+>    by their work and carry no M′ numbers: the four-and-two reading that set
+>    them as M0′–M5′ is withdrawn (owner, 19 Oct 2026), because it does not
+>    hold what the coordinate system says of those layers. The M′ layers are
+>    the app layers of the six M subsystems, held in O:I (M5-3): Live holds
+>    M1′–M3′, Expressions is M4′, Technē is M5′, and M0′ is the graph systems
+>    and the planetary continuity between local and collective (owner, 20 Oct
+>    2026; manual §25).
+> 4. **Three forms, three times.** Worlds, expressions and graphs can each be
+>    live, moved into creative composition, and recorded and played back (and
+>    so shared).
+
+Read with: R17 and the manual §25 (the coordinate layers); R18 (orbits are kept for agents and their recent artefacts, which narrows item 2's "context and files are ephemeral objects in orbit").
+
+### R24 — Live mode is one instrument: the M1 torus (owner ruling, 13 Oct 2026)
+
+Source: `wayfinder/DEVICE-SEMANTICS-LOCK.md` L86-119 (origin/main `8873b09`), §0.2, "Live mode is one instrument — the M1 torus (owner ruling, 13 Oct 2026)". The wording is the lock's. `WORLD-SHELL-DESIGN.md` §18 opened with a shorter restatement of the same ruling, which is not copied again.
+
+> Recorded in QL-MEF PR #329 (`docs/M-PRIME-PHYSICAL-MUSIC-WAYFINDER.md` §0.4,
+> `docs/music/JANKO-QL-INSTRUMENT-FIGURE.md` §4a, work packets K/P/U) and O:I
+> PR #655 (`docs/dlw/DLW.md` §9).
+>
+> 1. **One instrument.** Live mode exposes a single instrument, the M1 torus,
+>    driven by the bi-phasal dual oscillator (3:3 / 4:2) as the only generator
+>    (D13 stands: M2 tunes and modulates only). Fully sound-designable; its
+>    states save as presets that appear in the browser. The capacities derived
+>    from the Live corpus stay in the engine and appear as chain devices —
+>    filters, dynamics, delays, reverbs, envelopes, LFOs, racks, macros —
+>    never as Ableton's catalogue.
+> 2. **The visible torus is the full oscillation state**: a real, cymatic,
+>    directly playable simulation in the Expressions engine; sound and picture
+>    from one state. Live mode and every Expression share this one simulation —
+>    never two builds.
+> 3. **Three presentations**: the compact rack widget (mini torus + ≤4
+>    macros), the expanded instrument in the browser pool, the full torus in
+>    the centre pane.
+> 4. **The keyboard is the torus unwound**: each Jankó key is an excitation
+>    point on its helix (WT₀ the bimba arc, WT₁ the pratibimba Klein-extension
+>    arc; musical V3 §0); a semitone is a cross-helix step; a chord excites
+>    several points and the figure they draw is the chord's symbol. The exact
+>    angular placement is a kernel derivation (QL-MEF packet K, published in
+>    I1) — never laid out by eye.
+> 5. **Scales use Live's grammar**: transport key/root/scale set the mode in
+>    force (one of the 84 lens/CF modes, or a source scale — Ficino planetary,
+>    Shem, maqām — with tuning); each clip may carry its own mode and the piano
+>    roll folds to or highlights it; note devices before the torus (scale
+>    mapping, exact-ratio tuning, sky modulation); the Jankó surface recolours
+>    to the mode in force.
+> 6. **To build**: tickets T-LIVE-TORUS-INSTRUMENT, T-LIVE-JANKO-DEVICE,
+>    T-LIVE-MODE-SCALES, T-LIVE-MIDI (wayfinder `tickets/`).
+
+Read with: R25, whose items 2 and 6 replace this ruling's item 3 (three presentations) and item 6's keyboard device; item 4's law stands. R12 (Live as the base mode).
+
+### R25 — The realignment: what goes where, six views, Clip view after Live (owner ruling, 16–17 Oct 2026)
+
+Source: `wayfinder/DEVICE-SEMANTICS-LOCK.md` L121-151 (origin/main `8873b09`), §0.3. The wording is the lock's; the design it names is the manual's (§16–§23). Section marks §0.2, §2.1–§2.4 and §4 are the lock's own; §16–§23 are the manual's as of `1c70fefa3`.
+
+> The owner commissioned a realignment of the designs against Live and the grown device list; the manual carries it (O-I main
+> `docs/dlw/DLW.md` §16–§23, `1c70fefa3` or later; evidence `Work/reverse-engineering/ableton-live-12.0.25/ui/CLIP-VIEW-EVIDENCE.md`;
+> the run: `tickets/T-REALIGN-the-next-run-after-the-design-realignment.md`). Where a row below in this lock says otherwise, this
+> section stands.
+>
+> 1. **What goes where** (manual §16.1). A track is a stream with its chain; a clip is a piece of material; what changes the clip is
+>    its editor's (Clip view); a device works on material passing through, for every clip on the track; Session view and
+>    Arrangement view are views, not devices; a widget is a device's view. One job is one device in every mode.
+> 2. **Six views, not three** (§16.3–§16.4): Folded, Compact, Whole, Full, Pop-out, Widget. Whole stands in the pool for a browser
+>    selection and, expanded, as Live's expanded view: a full-width band between Clip view and the chain, the panes shrinking. Pop-out
+>    is the device's own window, the material with every control. The head is Live's: activator, ▸ expand, name; a double-click folds;
+>    ▦ pane and ↗ pop-out at the right. Supersedes "three presentations" in §0.2 item 3 and §2.4's field-device row.
+> 3. **Clip view after Live 12, every mode** (§16.5, §17.1–§21.1): Clip and Launch tabs, Tools, the editor's tabs, Envelopes
+>    (Automation or Modulation, linked or unlinked); launch is per clip; Clip view stacks over Device view. Takes are Arrangement take
+>    lanes with comping; every track has Live's mixer row; the Main track carries the row launchers, Stop All and Back to Arrangement.
+> 4. **Central** (§18.1): the tracks are workspaces and the Day is the Main track. The chain is the Packet, the Agent and Scope (Ground
+>    hygiene and Impact on a code workspace). Text, Highlight and Notes are a page's tools in Clip view; Flow, Beings and Things are a
+>    page's Clip panel and editor tabs. Supersedes §2.2's device-chain row.
+> 5. **One Agent, one Scope** (§19.4, §19.12): the Agent carries Custody, Identity and the Thread (as its Full); Answer is the Agent on
+>    a page's chain; Context & world is Scope. How a write arrives is set by Scope and Arm only.
+> 6. **The keyboard is the part's input, not a chain device** (§21.1): Jankó or piano layout, computer keys or MIDI, as Live's MIDI
+>    From; the key column of the Notes editor; pressure in the MPE tab; the playing surface in the Torus's Full and Pop-out. Supersedes
+>    §0.2 item 6's T-LIVE-JANKO-DEVICE and §2.1's keyboard row; item 4's law (each key an excitation point on its helix) stands.
+> 7. **The Studio** (§20.3) is the Expression's rack: your chosen controls are its macros, the field devices stand in its chains. The
+>    pointer tools, the selected symbol's controls (Formation, Force, Sound, Meaning) and the scene's tools (Text, Blueprint, Arrange)
+>    are in the scene's Clip view; Capture is the transport's; Scene, Automation and Body & triggers are the scene clip's panels.
+>    Supersedes §2.4's Studio row and §4 item 8.
+> 8. **The torus's effects** are four devices after the torus (§21.5: Filter, Dynamics, Delay, Reverb); Sky modulation is Quaternal
+>    Logic's modulator for any chain (§22.2).
+
+### R26 — Clarifications: instrument types, the two graphs, palaces, what plays at a stop, porting the code (owner, 12 Oct 2026; the graphs corrected 13 Oct)
+
+Source: `wayfinder/DEVICE-SEMANTICS-LOCK.md` L454-517 (origin/main `8873b09`), §8, "Clarifications (owner, 12 Oct 2026)". The wording is the lock's. Section marks inside (§0.1, §7.3, §9.2, C2, T-AE-REPORT) are the lock's own.
+
+> ### 8.1 Instrument types, several implementations — and the two graphs are two instruments
+>
+> Every pane hosts an instrument **type**; a type may have several
+> **implementations**, selectable like Live's several reverbs
+> (`WORLD-SHELL-DESIGN.md` §5.6, the owner's words; also `PROGRAMME.md` R7). Settings live in the
+> workspace's sets, never in browser storage, for every type with more than
+> one implementation.
+>
+> The two graphs are **not** one type (owner correction, 13 Oct 2026; this
+> replaces the earlier reading of them as two implementations under one Graph
+> parameter model):
+>
+> - the **Archetypal-Earth / atlas coloured graph** is the second view of the
+>   **0 instrument** — the Earth and solar system ⇄ Graph (§0.1.3;
+>   `packages/live-shell/ui/src/projections/atlas/src/graph/`, the switch on
+>   key G). Its own settings are its own: four forces, the dust (occurrences),
+>   the tie bases (jung · inferred · site), the node tiers
+>   (`Work/Archetypal-Earth/src/graph/settings.ts`), moved from browser
+>   storage into the workspace's sets. There is no separately planned Graph
+>   instrument; it is folded into the 0 instrument.
+> - the **knowledge graph** (the wiki constellation, Obsidian-RE-derived;
+>   `desktop/cradle/src/knowledge/GraphCanvas.tsx`,
+>   `docs/cradle/WIKI-CONSTELLATION-SPEC.md` §4–5) is its **own standalone
+>   instrument**, which any pane in any mode can hold (§0.1.1). Its controls
+>   are its spec's: depth, budget, view (list · tree · graph · form), kinds,
+>   ghosts, standing floor, relation types, the shared filter.
+>
+> §0.1.2's "the graph projection (the 0 instrument)" names the world's graph
+> view; the knowledge graph stays distinct from it.
+>
+> ### 8.2 Palaces are curated systems within a corpus or project
+>
+> A **Palace** is a curated system over one corpus or project.
+> Archetypal-Earth's modes are the worked foundation: Aion (a reading — epochs,
+> events, threads), the Red Book (a folio walk), Theory with Dynamics (concepts
+> and their routes), Astrology over the Sky (a walk planet by planet), all
+> standing on the Field. Read as a palace: its **rooms** are its curated
+> sections (epochs, folios, chapters, concepts, planets); its **path** is its
+> walks (the Journey); its **objects** open at their revision and are owned by the
+> corpus, never by the room; its **portals** lead to other palaces and places;
+> private rooms hold the practice material (dreams, coincidences); its Return
+> proposes to the owner. Live: a palace is a curated Set — tracks, sections,
+> scenes and walks assembled for one body of material.
+>
+> ### 8.3 What plays at a stop
+>
+> The Expression a walk's stop carries is the media of that moment — images,
+> video, live renders with sound (the physics instrument sounding). A walk is
+> therefore a sequence of Expressions, or of scenes within one Expression,
+> over the ruler (§9.2): the Timeline's thread, walked, is what the
+> Expressions play (§7.3).
+>
+> ### 8.4 Port the code, not the shortcuts
+>
+> Archetypal-Earth stands alone, so in places it handles data more loosely than
+> O:I allows: data fetched from `public/data/*.json`, settings in browser
+> storage, modes as flags on one state. That is fine for the app; it is not
+> the DLW's. The port copies AE's code verbatim and adapts at the host seam:
+> material comes through the corpus provider seam (C2) and native owners with
+> refs and revisions; projects and corpora through ProjectCentral; settings and
+> default sets through the workspace; modes through the shell's one spine. Each
+> such adaptation is recorded beside the pinned AE commit (T-AE-REPORT).
+
+Read with: R7 (the reverb insight, in the owner's words), which §8.1's first paragraph cites and its 13 Oct correction narrows; R6 (port the legacy cradle's components wholesale).
+
+### R27 — Tracks, clips, stops: one ontology, and Live's clip editing in every mode (owner, 12 Oct 2026)
+
+Source: `wayfinder/DEVICE-SEMANTICS-LOCK.md` L521-589 (origin/main `8873b09`), §9.1–§9.4, "Tracks, clips, stops — one ontology, and Live's clip editing in every mode (owner, 12 Oct 2026)". The wording is the lock's. Its §9.5 (L591-599) is the lock's reading of the code and the fix it set (T-EXPRESSION-TRACKS), not a ruling, and is left out.
+
+> ### 9.1 The rule, and the word "scene"
+>
+> **Expressions are to scenes as Live's tracks are to clips.** An Expression is
+> a track; its scenes are its clips. So in the DLW **"scene" always means an
+> Expression's scene — a clip.** Live's own "scene" (the row that launches one
+> clip per track together) is called a **stop** here: a stop stands one or more
+> clips at once. Every mode reads the same three levels:
+>
+> | Mode | Track | Clip | Stop (Live's scene row) | Takes (lanes under a clip) |
+> |---|---|---|---|---|
+> | Live | audio / MIDI / group / return | audio / MIDI clip | scene | take lanes, comping |
+> | Expressions | **an Expression** | **a scene** | a moment across several Expressions | captured takes of a scene |
+> | Technē (the Timeline's ruler / the Journey) | a native stream: a reading's thread, a subject's occurrences, a journey, runs, revisions, sky | an event, occurrence or revision at its time and place | a **walk stop**: it stands its event and launches the Expression scene(s) it carries | readings that extend a reading (layers, never rewrites) |
+> | Factory | a session | a task | a launched batch (Play: "every queued one") | **attempts** (attempt 1 failed · attempt 2 …); comping = choosing the attempt that lands (review) |
+> | Central | a stream: Day · Flows · Beings · Things · Goals | an entry or document | the day's face (the die) standing its entries | revisions (draft · saved · edited since save) |
+>
+> ### 9.2 A walk
+>
+> A walk is an ordered sequence of stops, and it takes one of two shapes —
+> both Live mechanics:
+>
+> - **through a sequence of Expressions** — each stop launches a scene on a
+>   different Expression (a track change at each stop): Live's **scene follow
+>   actions**, row to row;
+> - **through the scenes within one Expression** — the stops step down one
+>   track's clips: Live's **clip follow actions**, clip to clip in a track.
+>
+> A walk may mix them. Launch quantize is the walk's arrival; pace is its
+> tempo; Follow keeps the view on the standing stop. **Record a walk** is
+> Live's Session → Arrangement recording: the walk, played, is laid out on the
+> ruler as clips on Expression tracks. This replaces "a walk is a sequence of
+> Expressions" in §7.3 and §8.3: a walk goes through a sequence of Expressions
+> **or** through scenes within an Expression.
+>
+> ### 9.3 Two sides of one track and one clip — sight and sound
+>
+> An Expression (track) and each of its scenes (clips) has two sides, one
+> state:
+>
+> - **visual** — the form: glyph projection, the field, images, video, live
+>   render;
+> - **audio** — the sound: the physics instrument sounding (M1 generates, M2
+>   modulates), entity voices, `followCymatic`.
+>
+> Sound and form are projections of one state (the musical law: common cause),
+> so the two sides stay locked: edit one and the other follows. Live's own
+> parallel is a video clip on an audio track — the picture in the video window,
+> its sound in the track — and the joined audio+video timeline Live becomes in
+> Expressions later (owner ruling). In the Arrangement each Expression track
+> shows both lanes, picture over sound; the Clip detail shows both sides of
+> the selected scene in sync.
+>
+> ### 9.4 Live's clip editing, carried into every mode
+>
+> Live's Clip view is the richest editor in the product. Each part has a home
+> in every mode's Clip detail:
+>
+> | Live Clip view | Expressions — a scene | Technē — an event | Factory — a task | Central — an entry |
+> |---|---|---|---|---|
+> | Clip box: name, colour, signature, groove | scene name, colour; signature = the field ratio (5:3) | name; standing (fact · claim · inferred · hypothesis) as colour and dash | task name; state | entry title; form |
+> | Launch box: mode, quantize, legato, follow actions | scene launch quantize; follow = the next scene of the walk | arrival; follow = the walk's next stop | Run; quantize = when stop/steer lands (next tool); follow = the next queued task, the routine loop | — (entries are read, not launched) |
+> | Start / end / loop markers, loop brace | scene in / out; scene loop | the event's span; the occasion window (Technē's loop brace) | the write window (plan ✓ … deploy) | the selection / highlight range |
+> | **Note editor** (piano roll: rows × notes; velocity, chance; draw; fold; scale awareness) | the **sequence editor**: entity lanes × sequence steps (a step's hold + transition = a note's length + glide); fold to used entities; scale = the ☿ resonance key | the material an event gathers (its occurrences and passages), by time | the tool-run log: tool calls as notes on the task's time | the document itself, edited by the document devices |
+> | **Sample editor** (waveform; warp markers, warp mode; transpose, gain, reverse) | the audio side of the scene: what the plate sounds, pitch riding the plate, voice gains | warp = the non-linear deep-time scale (material time mapped onto ruler time — AE's time scale) | — | — |
+> | **Clip envelopes** (automation and modulation inside the clip) | Field-device parameters over the scene (physics, resonance, colour, …), each lane showing its modulator (§14) | — | effort / budget over the task | — |
+> | Take lanes, comping, consolidate | capture takes; comp the take that stands; consolidate = save the scene | readings as layers | attempts; comp = review and land the attempt | revisions; consolidate = save |
+> | Draw mode, keys, MIDI map | draw form (the Studio's form tool), keys, map | place tool | point (mark a tile for the armed agent) | highlight pen |
+
+Read with: R25 item 3, which replaces §9.4's table where the two differ (manual §16.5, §17.1–§21.1).
+
+### R28 — The agent-shell mockup is the standard (owner ruling, 8 Oct 2026)
+
+Source: `wayfinder/DEVICE-SEMANTICS-LOCK.md` L273 (origin/main `8873b09`), §3, the right dock's row; the ruling is the row's last cell. `WORLD-SHELL-DESIGN.md` Revision 4 (L95, "The right side is the agent-shell dock again") is the same day's design. The lock gives no more of the owner's words.
+
+> | Right dock (companion + tiles: agent, Packet, Trail, Field, Agents, Terminal, Results, Sky, NOWs) | **stretched**: Live's Info/Help views + the agent-shell standard | the agent-shell mockup is the standard (owner ruling 8 Oct) |
+
+Read with: R11 (#716: Epi and Nara "can persist as a widget across modes"); the right dock is now the widget rail (manual §10.6).
+
+### R29 — Owner words carried only in WORLD-SHELL-DESIGN (8 Oct 2026, and the 18 Sep 2026 ruling it quotes)
+
+Source: `WORLD-SHELL-DESIGN.md` (origin/main `8873b09`), copied before it retired (#733); each passage names its lines. The first two quote the owner. The other four are the design document's renderings of what the owner said, kept because no other source carries them; they are not the owner's words. The owner's 8 Oct device-family direction is R2, and the time sentence is R5.
+
+The owner's phrasing, L658-661 (§3.7):
+
+> **The owner's phrasing** (planning session, quoted by the orchestrator):
+> "a day is a track, returns and handoffs are clips, conversations are clips,
+> the wiki is already a native Expression projection"; audio and
+> visual/physics tracks "are track adapters."
+
+The 18 Sep ruling, L2010-2014 (§6.1, quoting `desktop/cradle/src/workspace/mode.ts`):
+
+> The owner's ruling stands above it (mode.ts comment, verbatim): "Owner
+> ruling 2026-09-18: Epi-Logos is NOT a mode entry — it is a whole-app world
+> state (the workspace world context, `context.world`, displayed and toggled
+> in the workspace footer). Settings is the terminal system entry and switches
+> instantly like any other mode."
+
+The owner's corrections to the planning transcript, as the design document renders them, L10-15:
+
+> It supersedes the conversational planning transcript's hierarchy framing and
+> integrates the owner's corrections: projections are not a hierarchy; panes
+> are real panes; Central is resolved by the shell's own grammar, not a
+> separate mode; documents and curated features become inhabitants of the rack;
+> the Jung atlas (`Work/Archetypal-Earth`) is a found, owned implementation —
+> the Earth projection's seed, not a missing input.
+
+The scrub bar, L566-569 (§3.2); the first sentence and the start of the second are the document's own:
+
+> Clips are the material in lanes; launching, recording, moving, trimming,
+> splitting are the crosswalk's session/arrangement family operating through
+> existing native owners. The integrated overview stays the single navigation
+> surface — no duplicate scrub bar (owner ruling, retained).
+
+Tabs, L928-931 (§4); the last line continues with the document's own words, "The shell already":
+
+> - **Tabs are implicit in tracks and clips**, exactly as the owner said: in
+>   Ableton there is no tab strip over the main area — selecting a clip shows
+>   the Clip view, selecting a track shows the Device view, and the
+>   Clip|Device switch in the detail area is the only "tab". The shell already
+
+The owner's question on the musical system, L2720-2723 (§18); the last line continues with the document's own words, "Revisions 2 and 5 above already draw":
+
+> Owner question, 8 October 2026: has the underlying musical system been
+> thought through — the instrument, the torus and clock projections onto the
+> Earth integration, and whether Expressions gains the full musical suite
+> integrated into its scenes and layers. Revisions 2 and 5 above already draw
+
+Read with: R12 and R22 (Epi-Logos is a lens, not a mode); R25 (the realignment).
 
 ---
