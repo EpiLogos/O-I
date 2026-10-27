@@ -1225,6 +1225,1105 @@ These families carry every act the DLW manual describes, on the six cells of [ST
 | XA10 | [Lived-in] I play the torus in Live and see and hear it ring at the centre of an Expression. | §9, §21.2, §20.2 What the field holds · Live's playing surface; the Field | Quaternal Logic: the one Torus | What I play sounds in the scene, and its figure forms in the particles on the body | The torus is the only generator; the field's modes and voices tune and carry its sound and make none of their own (§21.2 Rules, §20.2) | M |
 | XA11 | [Lived-in] I keep in step with others playing the same field. | §10.5 (Expressions column) · the transport · Link | Shell (Expressions) | My field keeps time with theirs | — | M |
 
+## FA — Set agents to work on what I want built
+
+**Why:** "in Factory, I'd want to essentially be using this to create more, continue to create more useful philosophical tooling through the system, for the system." · "So if you're a writer, you'd write; if you're a musician, you'd make music; if you're a software engineer, you make software." (UX chat 27 Oct)
+**Where:** manual §6, §19.1, §10.2, §10.3, §16.6 · **Port sources:** Ableton Live 12.0.25 (session model, launch modes, follow actions); OpenRig (BEHAVIOURS.md §3–§5: durable seats with changing occupants; §11: handoff); Grok Bot 0.68.1 (handing task ownership between agents)
+
+| ID | Starting world and act | Where it happens | Owning operation and agent | Useful completion | Failure or continuation | Grade |
+|---|---|---|---|---|---|---|
+| FA01 | [Arriving] I drag one of my agents from the browser onto an empty track in Factory, type a task into the composer under its face and press Enter, so that it starts working for me. | §19.1, §19.4 · Session view, the track; the browser's Agents place; the Agent's Compact view; Clip view's Log | Software Factory keeps the session and its task; Actuation runs it · the seated agent | The track head names the session and its agent. The task stands as a clip with a blinking triangle and a fill that has no end, and Clip view's Log fills tool by tool along the task's time. | The Agent's light stays dark until the harness reports the agent on; nothing draws as running before it does. | H (core) |
+| FA02 | [Bare] I switch to Factory with nothing seated yet, to see where work begins. | §10.2, §19.1 · Session view, empty grid; the rail | Software Factory · none | The grid waits for an agent from the browser; the rail holds the Results, Agents and Terminal tiles. | Nothing is invented to fill the grid: no agent is fixed in advance, and the roster comes from my agents. | P |
+| FA03 | [Lived-in] I double-click an empty square on a session's track and write a task there, to queue it without starting it. | §19.1 · Session view, empty slot | Software Factory · the session's agent | A queued clip stands on the track with a fast blink and no length, ready to launch. | A single click on an empty square does something else: it stops the session after its current task, and the square says so before I click. | P |
+| FA04 | [Lived-in] I launch a queued task with its triangle or Enter. | §19.1, §10.9 · Session view, the clip | Software Factory; Actuation · the session's agent | The task runs on its session; selecting it shows its Log in Clip view. | A deactivated clip is grey and does not launch; while the session's owner cannot be reached the track keeps its last reading, dimmed, and nothing launches. | P |
+| FA05 | [Lived-in] I queue a task on each of several sessions and launch the row with its button on the Main track, or its number key, to start a batch across sessions at once. | §6, §19.1 · Session view, the Main track's row launchers | Software Factory · each session's agent | One task starts on each session in the row together. | A row launches only what is in it: a session with an empty slot in that row starts nothing. | P |
+| FA06 | [Lived-in] I set a task's Launch mode to Gate, or to Toggle, to run it only while I hold the launch or to start and stop it with successive presses. | §19.1 · Clip view, Launch panel | Software Factory · the session's agent | The task runs as the mode says; Trigger stays the default. | A task has no legato and no launch velocity. | P |
+| FA07 | [Lived-in] I set what follows a task, Next task, Again or Stop, so the session runs on without my pressing each launch. | §3, §19.1 · Clip view, Launch panel, Then | Software Factory · the session's agent | When the task finishes, its follow action runs on the same track. | Follow actions never cross to another track; to hand the work on I drag the task (FA08). | P |
+| FA08 | [Lived-in] I drag a task onto another session's track, so that agent continues it. | §19.1 · Session view, drag between tracks. Source: OpenRig §11 (handoff with a chain of record); Grok Bot (handing task ownership) | Software Factory keeps the task's custody · the receiving session's agent | The task stands on the other session's track and its agent works it. | The original session is left as it was; nothing launches by the drag alone. | P |
+| FA09 | [Lived-in] I drag another agent from the browser onto the Agent parameter of a seated session, to change who works it while the track and its tasks stay. | §19.4 · Device view, the Agent's Agent parameter. Source: OpenRig §3–§4 (a durable seat filled over time by changing occupants) | Central's roster supplies the agent; Actuation runs it | The track keeps its tasks and its record; the Agent shows the new agent, and each value it moves carries its name. | The device reads the roster and never adds or invents an agent; the Identity page's Changed since shows what changed (FI09). | P |
+| FA10 | [Lived-in] I find yesterday's chat under its project in the browser and drag it onto an empty track, to carry on that work with the same agent. | §10.3, §19.1 · the browser, Factory's projects and their chats | AIKit keeps the session space; Software Factory · the chat's agent | The chat's session reopens where it stopped, as a track. | Selecting the chat only previews its last exchange; nothing reopens or changes until I drag it. | P |
+| FA11 | [Lived-in] I group several sessions under one header and fold it, so a team and its helpers read as one line. | §6, §19.1, §10.9 · Session view, track heads (⌘G, U) | Software Factory · the agents of the group | Each agent's helpers step in beneath it with one coloured rail for each level, so three layers of delegation read at a glance; folded, the header's slots still show the children's tasks. | A helper shows one step of indent for each level, never flattened, unless I set the Sessions tile's Nest to Off. | P |
+| FA12 | [Lived-in] I switch a session's Activator off, to keep its tasks from running without removing it. | §19.1 · Session view, the mixer row | Software Factory · the session's agent | The track dims and its tasks do not run. | Switching it on again lets queued tasks launch; nothing that ran is lost. | P |
+| FA13 | [Lived-in] I deselect every session to look at what serves them all. | §19.1, §16.6 · Device view, the Main track's chain | Software Factory | Device view shows the Main track's chain: Approvals, Prompt pads and the Run map. | The Ledger, the frames and Link are not on this chain: they stand on the rail, the Gateway and the transport. | P |
+
+## FS — See how the work stands at a glance
+
+**Why:** "it should be quite clear from the medium, the media themselves, what one is to do in each of these places." · "six is sort of the Goldilocks number for how much a mind can hold at a glance." (UX chat 27 Oct)
+**Where:** manual §6, §19.1, §10.2, §16.6 · **Port sources:** Ableton Live 12.0.25 (clip states, Arrangement); OpenRig (BEHAVIOURS.md §15: three-axis activity state and status precedence, honest unknown); Buzz's agent system (per-agent working state)
+
+| ID | Starting world and act | Where it happens | Owning operation and agent | Useful completion | Failure or continuation | Grade |
+|---|---|---|---|---|---|---|
+| FS01 | [Lived-in] I look over a batch running across sessions to see which task waits, runs, stalls or is done, and retry the one that stalled. | §6, §19.1 · Session view, the clips; the track's retry. Source: OpenRig §15 (failed and needs-input take precedence over active or idle) | Software Factory reads each session's state from Actuation's check-ins · the agents of the batch | A queued task blinks fast with no length; a running one blinks with no end; a stalled one is striped with an orange triangle, frozen where its output stopped, and its track lights a retry; a stopped one stands in full colour; a done one is dim. Retry starts the task again from its last good step, on the same basis. | A stalled task keeps its place and never looks done; nothing on the grid predicts when a running task will end. | H (core) |
+| FS02 | [Lived-in] I press Tab to follow every thread along one ruler, to see how long each has run and where it has got to. | §6, §19.1 · Arrangement view, the sessions as tracks | Software Factory; Actuation's heartbeat · the session agents | Each session runs along the clock of the run with a needle at its last check-in that jumps at each check-in; a line marks the present and Follow keeps it in view. | A needle that stops marks a stall, and its readout says how long the track has stalled; the needle never predicts the end. | P |
+| FS03 | [Lived-in] I switch between Session view and Arrangement view while a task runs. | §10.2 · Session view and Arrangement view | The shell; Software Factory keeps the set | What I selected stays selected and the task keeps running; where it has a place on the ruler that place is selected and scrolled into sight. | A task that has not yet run has no place on the ruler, so its track's head lights instead. | P |
+| FS04 | [Lived-in] I show event lanes under a thread and click an event, to open what the agent touched at that moment. | §6, §19.1 · Arrangement view, event lanes (Messages, Files, Terminal, Web, Graph) | Software Factory · the session's agent | Each event sits at its time; clicking it opens it in its widget beside me. | Lanes I have not chosen in the Event lanes setting stay hidden; Messages shows by default. | P |
+| FS05 | [Lived-in] I read the reading on a track's head, to know whether the run still stands on what its sources declare. | §19.1, §18.5 · Arrangement view, the track head | Central's Docs (Moved since) | It reads sound, or names what is stale (a source or binding moved), missing (one is gone) or open (a gap the sources name themselves). | A run on a stale source is flagged before I trust its result; nothing marks it sound without the reading. | P |
+| FS06 | [Lived-in] I filter the Sessions tile to Stalled, to find the sessions that need me. | §19.1 · the rail, Sessions tile. Source: OpenRig §15 (activity state) | Software Factory · the sessions listed | The tree shows each session with its state and its helpers nested; three counts give sessions, running and stalled; clicking selects the track and double-clicking opens the thread. | Running finds a session I have lost track of; a session in the tile is always the same session as its track. | P |
+| FS07 | [Lived-in] I look at the Agents tile to see where each agent's run has reached and who is stuck. | §19.1 · the rail, Agents tile. Source: OpenRig §15; Buzz (per-agent working state) | Software Factory; Actuation's run events · each seated agent | Each agent is the creature of its type, standing at the roots while it reads, on the trunk while it makes and in the crown once it has delivered, with its helpers joined by dashed lines and a line saying what each does. | A stuck agent stands frozen with an amber outline; an agent whose Monitor is Off works in silence and shows nothing new. | P |
+| FS08 | [Lived-in] I set a noisy session's Monitor (Watch) to Off, to keep it out of the tiles, the Ledger and other agents while it works. | §19.1 · Session view, the mixer row, Monitor | Software Factory · the session's agent | The session keeps working and stops streaming; In streams it always, Auto when it is armed or selected. | Off never stops the work; the session's own track still shows its state. | P |
+| FS09 | [Lived-in] I solo two sessions, to attend to them alone while the rest run on. | §19.1 · Session view, the mixer row, Solo | The shell · none | The views, tiles and instruments show only the soloed sessions. | The others keep running unseen; unsoloing brings them back as they now stand. | P |
+| FS10 | [Lived-in] I press Record in Arrangement view, to keep what the sessions do as clips along the ruler. | §16.8, §19.1 · Arrangement view, the transport | Software Factory · the session agents | What the sessions do lays out on the ruler as clips, with their takes under them, ready to edit and compare. | What is not recorded stays in the Ledger and the threads; nothing is lost by not recording. | P |
+
+## FK — Step in where I am needed, and stay out of the way where I am not
+
+**Why:** "So this is why the system actually needs to be as kind of capable of stepping out of the way." (UX chat 27 Oct)
+**Where:** manual §6, §10.5 (Factory column), §19.4 Transport, §19.1 · **Port sources:** Ableton Live 12.0.25 (transport, Arm, Re-enable, punch); Buzz's agent system (CONTRACT Behaviours 2–3: steer as the default mid-turn path)
+
+| ID | Starting world and act | Where it happens | Owning operation and agent | Useful completion | Failure or continuation | Grade |
+|---|---|---|---|---|---|---|
+| FK01 | [Lived-in] I press Play to run the selected task, or every queued task when none is selected. | §10.5, §19.4 · the transport, Play | Software Factory; Actuation · the session agents | The task, or every queued task, starts; each runs through its session's gateway under its Scope and Arm. | A session whose Activator is off does not run its tasks. | P |
+| FK02 | [Lived-in] I press Stop to pause the work at the next safe point. | §6, §10.5, §19.4 · the transport, Stop | Actuation · each running agent | Every running agent pauses at its next safe point and keeps what it had in mind; pressing Play resumes. | Quantize decides whether the pause lands now, at the next tool or at the next turn. | P |
+| FK03 | [Lived-in] I press Stop twice to cancel at once. | §6, §19.1, §19.4 · the transport, Stop | Actuation · each running agent | The turn is cancelled, or an answer in progress is discarded, without waiting for a safe point. | Quantize does not delay a double Stop. | P |
+| FK04 | [Lived-in] While an agent works, I type a note and press Option and Enter, to change its course without breaking the turn. | §6, §10.5, §19.4 · the composer; the transport, Overdub (Steer). Source: Buzz CONTRACT Behaviour 2 (steer) | Actuation · the running agent | A steer line appears in the thread reading "heard at next tool" until the agent takes it, and the agent continues with the note. | With the Agent's Input set to Queue, what I send waits as the next task instead of reaching the turn. | P |
+| FK05 | [Lived-in] I set the Agent's Input to Queue, to send several jobs that wait their turn. | §19.4 · Device view, the Agent, Input | Actuation · the seated agent | Each message I send waits as its own next task on the track. | Steer is the default; switching back makes the next note reach the running turn. | P |
+| FK06 | [Lived-in] I set Quantize to Next turn for a long task, so my Stop and steer land only between turns. | §10.5, §19.1 · the transport, Quantize; Clip view, Launch panel, Quantize | Actuation · the session's agent | Stop and steer wait for the boundary I chose: Now, Next tool or Next turn; a task's own Quantize overrides the transport's Global. | A long task does not hold up the others; a double Stop still cancels at once. | P |
+| FK07 | [Lived-in] I arm a track, to let its agent write directly with receipts where its Scope allows. | §6, §10.5, §19.1, §19.4 · the transport, Arm; the mixer row, Arm | Software Factory; Actuation · the armed track's agent | Writes inside the Scope land directly, each with a receipt, and do not enter the Approvals queue. | With Arm off every write arrives as a proposal card for my answer; Direct writes need Arm on. | P |
+| FK08 | [Lived-in] I draw a window across a task with Punch in and Punch out, so nothing is written before I approve the plan or after it ships. | §6, §10.5, §19.4 · Arrangement view, the transport, Loop and punch | Software Factory · the session's agent | Agents write only inside the marked window on the ruler. | A write outside the window does not land. | P |
+| FK09 | [Lived-in] I edit a file an agent is holding, then hand it back when I finish. | §19.4, §10.5 · the Agent's Custody page, Hand back; the transport, Re-enable | Actuation · the agent holding it | The agent does not overwrite my edit; Re-enable and Hand back stay lit until I press one, and then the agent takes the file again. | Holding stays visible in the Agent's Held list and as a dot on its Compact face. | P |
+| FK10 | [Lived-in] I arm a track and press Record, then speak, to give its agent a new task by voice. | §10.5, §19.1, §19.4 · the transport, Record; the mixer row, Arm | Software Factory · the armed track's agent | My spoken words become a new task on that track. | Record does nothing on an unarmed track; under Local only, what I say stays on this machine. | M |
+| FK11 | [Lived-in] I press Draw and point an agent at a place or a tile, to give it a reference. | §10.5, §19.12 · the transport, Draw; Scope | Software Factory (Scope) · the session's agent | The place is marked as a reference for the agent. | — | P |
+| FK12 | [Lived-in] I bind a spoken word to a control, to drive the floor without the mouse. | §10.5 · the transport, Keys and maps | The shell · none | Saying the word presses the control. | — | P |
+
+## FE — Pace and read the floor from the transport
+
+**Why:** "Just in the same way Ableton Live is professional software, it's not easy to use, but once you get your grips on it, it's incredibly fun because it opens up all these doors for creativity." (UX chat 27 Oct)
+**Where:** manual §10.5 (Factory column), §19.2 Transport, §19.4 Transport · **Port sources:** Ableton Live 12.0.25 (Tempo, Tap, Metronome, Follow); Buzz's agent system (heartbeat liveness)
+
+| ID | Starting world and act | Where it happens | Owning operation and agent | Useful completion | Failure or continuation | Grade |
+|---|---|---|---|---|---|---|
+| FE01 | [Lived-in] I nudge Tempo to set how hard the selected agent thinks in each turn. | §10.5, §19.4 · the transport, Tempo ‹ › | Actuation · the selected agent | The Agent's Effort moves, and the value shows that I moved it. | A task's own Effort envelope keeps its value for that task. | P |
+| FE02 | [Lived-in] I turn the Metronome on, so agents check in on a beat and a stall shows itself. | §10.5, §19.2, §19.4 · the transport, Metronome | Actuation (heartbeat), through the workcell's Gateway · each agent | Each check-in moves its thread's needle; the faces breathe only while check-ins arrive. | A needle that stops is a stall: the track lights Retry and the stall card names what the last tool waits for. | P |
+| FE03 | [Lived-in] I press Tap to ask every running agent where it has got to. | §6, §10.5, §19.2 · the transport, Tap | Actuation, through the Gateway · every running agent | A status line from each agent comes back to the rail, where the agents stand at their stations, and into their conversations in Messages. | — | P |
+| FE04 | [Lived-in] I turn Follow on, to keep the views with the agents as they work. | §10.5 · the transport, Follow | The shell · none | The views move with the agents' progress. | — | P |
+| FE05 | [Lived-in] I read Position, Time signature and Key, to know where a task is and what it has cost. | §10.5, §19.1, §19.4 · the transport, Position, Time signature, Key | Actuation; Software Factory · the selected agent | Position gives task, turn and step; Time signature gives turns used of turns allowed; Key counts tokens in and out. | A reading that has no source shows as absent, never as zero. | P |
+| FE06 | [Lived-in] I read Load and Rate, to know how full an agent's context is and how fast agents are writing. | §10.5, §19.2, §19.4 · the transport, Load and Rate | AIKit (context); Actuation, through the Gateway (rate) · the selected agent | Load shows the context's fullness and opens onto the Context page; Rate shows the writing speed through the gateway. | At depleted or critical pressure ordinary guidance no longer enters, which Load makes visible before the agent seems to forget. | P |
+
+## FT — Say what a task is for, and keep the attempt that stands
+
+**Why:** "as soon as agents follow the quaternal logic structure, it structures their inputs, it structures their outputs, it structures their action, and this becomes incredibly helpful." (UX chat 27 Oct)
+**Where:** manual §19.1 (Clip view, Takes and Arrangement lanes, Results tile), §19.5 · **Port sources:** Ableton Live 12.0.25 (takes and comping); OpenRig (BEHAVIOURS.md §11: closure only with a stated outcome)
+
+| ID | Starting world and act | Where it happens | Owning operation and agent | Useful completion | Failure or continuation | Grade |
+|---|---|---|---|---|---|---|
+| FT01 | [Lived-in] After a run returns, I read each success condition's answer and the Return across them. | §19.1 · Clip view, Intent panel. Source: OpenRig §11 (no closure without its reason) | Software Factory keeps them with the run · the session's agent | Each condition reads met or not met with the evidence that shows it, or open; Return reads not met if one is not met, open if one is open, met when all are met. | Open is an honest answer: the run could not tell, and says so. | P |
+| FT02 | [Lived-in] I read the Context line of a task's Intent panel, to see what the task may read and the limits it keeps. | §19.1 · Clip view, Intent panel, Context | AIKit · the session's agent | The sources the task's context draws on and its constraints, read from AIKit. | The words of the intent stay in the source they come from; Factory keeps only the reference. | P |
+| FT03 | [Lived-in] I set a task's Output style, to have the agent write plainly and technically or tersely as a list. | §19.1 · Clip view, Clip panel | Software Factory · the session's agent | The agent writes the task's output in that style. | The style applies to this task only. | P |
+| FT04 | [Lived-in] I turn a task's Loop on with a stop condition and a cap, so it runs again after each finish until it is done. | §6, §19.1 · Clip view, Clip panel, Loop | Software Factory · the session's agent | The task reruns after each finish until its stop condition holds or the cap is reached. | A loop always ends at its stop condition or its cap. | P |
+| FT05 | [Lived-in] I retry a failed task and keep both attempts. | §19.1 · Arrangement view, take lanes | Software Factory · the session's agent | The retry lies as a new take lane under the same track, its run drawn as a tree that grows, bears fruit when it finishes, and comes down grey if it fails. | The earlier take stays as a record; nothing chooses between them for me. | P |
+| FT06 | [Lived-in] I select the take that stands, or select a range in a take and press Enter to bring it into the main lane. | §19.1 · Arrangement view, take lanes | Software Factory · none | A gold bar marks the take that stands, and it goes to review in Approvals. | It stands only when I hold Confirm in Approvals (RA04). | P |
+| FT07 | [Lived-in] I choose what each take records on each beat, and how often, before comparing runs. | §19.1 · Arrangement view, take settings Readings and Beat | Software Factory · none | Each take records tokens, time, tool calls, test results, spend or stalls at the beat I set. | A reading that has no source shows as absent in Compare. | P |
+| FT08 | [Lived-in] I set Show to Stalled on a long run's take lanes, to find its first failure. | §19.1 · Arrangement view, take settings Show | Software Factory · none | Only stalled tasks draw, and the top row is the first failure. | All, Running and Done bring the others back. | P |
+| FT09 | [Lived-in] I open the Results tile to read the selected run's takes with their authors and diffs, and accept one for review. | §19.1 · the rail, Results tile | Software Factory; Workcell (collected outputs) · the run's agents | Each result shows its author and diff; Accept sends it to review in Approvals; beside them stand the outputs Workcell collected from the run's world, where each lies and what it left out, and Collect gathers them again. | Accept sends a result to review; it does not decide the review. | P |
+| FT10 | [Lived-in] I record the moves of an agent's effort over a run, to see how hard it worked when. | §16.8, §19.1 · Arrangement view, Automation lane | Actuation · the session's agent | Arm, then move Effort, and the move lands as an automation lane under the track; Re-enable gives the parameter back to its lane. | A value I take hold of shows the hand-back light until I give it back. | P |
+
+## FJ — See a piece of work whole, and close it on my word
+
+**Why:** "The factory development runs, the work cycle, everything is based on quaternal logic." (UX chat 27 Oct)
+**Where:** manual §6, §19.25 Run map, §19.14 Recognition · **Port sources:** OpenRig (BEHAVIOURS.md §11: closure reasons and the handed-off chain; §17: a refusal names the current state and the next operation)
+
+| ID | Starting world and act | Where it happens | Owning operation and agent | Useful completion | Failure or continuation | Grade |
+|---|---|---|---|---|---|---|
+| FJ01 | [Lived-in] I select Factory's Main track and read the Run map of the work, to see which parts are done, which wait on others and where it waits on me. | §6, §19.25 · Device view, the Main track's chain, Run map; its Full in a pane | Software Factory · the run's agents | Each unit is a block, dashed when planned, outlined teal when ready, filled teal and ringed at work, striped orange when blocked, green when returned, dim when dropped; a line to each waiting unit turns green once the earlier unit returns; a bar counts what a barrier still waits for; an amber diamond is a decision that waits for me; the ring is what the run returns and the flag where it is going. | The map draws only what Factory reports; it never draws a unit, line or state of its own. | H (core) |
+| FJ02 | [Lived-in] I set the map's Show to Open, to find what holds the run up. | §19.25 · Run map, Show | Software Factory | The units still to do stand out, and the stripes and amber diamonds show where the run is held. | Done brings back what has returned; All shows everything. | P |
+| FJ03 | [Lived-in] I press a node on the map to read it. | §19.25 · Run map, Full | Software Factory · the unit's agent | Beside the map: what the node is for, how it stands, what it waits on, what it opens, its last attempt, its retries and who holds it. | Retries reads the attempts spent of those its retry grant allows. | P |
+| FJ04 | [Lived-in] I answer a decision the run waits on, so the blocked unit can go on. | §19.25, §19.14 · Run map, amber diamond; Approvals | Software Factory · none | The unit behind the decision moves from blocked to ready and goes on. | A decision I leave unanswered stays amber and the unit stays blocked. | P |
+| FJ05 | [Lived-in] I read the map's head, to see why the run exists and where it stands. | §19.25 · Run map, Full, the head | Software Factory | The run's name, how it stands, what has returned, whether I recognised it, what the commission asked for, and its place in the journey. | Lifecycle reads Seeded, At work, Waits for you, Suspended, Finishing, Finished or Aborted, as Factory reports it. | P |
+| FJ06 | [Lived-in] I read the journey along the foot of the map, to see how the work came this far. | §19.25, §19.1 · Run map, Full, the journey | Software Factory | Its runs in the order each continued the last, this one marked, each recognised run with its mark; a first pass, a dropped pass and the pass I am on read in order. | Journey reads Active, Paused, Completed or Abandoned. | P |
+| FJ07 | [Lived-in] I read a run's return, press Recognise and hold Close, to finish the run. | §19.14, §19.25 · Approvals, Review page, Recognition. Source: OpenRig §11 (closure only with a stated reason) | Software Factory (Recognition) · none: Recognition is mine | Factory finishes the run, or starts its next unit if one remains; a gold diamond marks my Recognition on the map. | Factory refuses to finish, in its own words, while a unit is missing, failed or waiting on me; no agent and no setting gives Recognition for me. | P |
+| FJ08 | [Lived-in] The return falls short, so I press Continue, for a new run in the same journey. | §19.14, §19.25 · Approvals, Recognition, Continue. Source: OpenRig §11 (handed-off chain) | Software Factory · the run's agents | A new run continues the journey from where the last left off. | The earlier run stays on the record. | P |
+| FJ09 | [Lived-in] I keep the Run map's tile on the rail, to watch the run from any mode. | §19.25, §10.6 · the rail, Run map widget | Software Factory | The small map, where the run stands, the units returned and the nodes that wait. | The tile stays when I change mode. | P |
+
+## RA — Answer what waits for me
+
+**Why:** "it kind of puts the AI tools next to human creativity tools in a way, which kind of gives, for me at least, gives everything the right place to land and the right emphasis." (UX chat 27 Oct)
+**Where:** manual §19.14 Approvals · **Port sources:** Buzz's agent system (CONTRACT Behaviour 4: diff cards and the owner gate); Grok Bot 0.68.1 (drafts awaiting approval)
+
+| ID | Starting world and act | Where it happens | Owning operation and agent | Useful completion | Failure or continuation | Grade |
+|---|---|---|---|---|---|---|
+| RA01 | [Lived-in] I open Approvals to see how much waits for me. | §19.14 · the Main track's chain; the rail, Approvals tile; Compact view, the lake | Software Factory, with Central and AIKit | The number on the title counts the queue; the lake's water rises with it, dry when empty and at its brim at eight or more; each item floats at the time it has waited. | The level is only what waits: an answered item leaves it. | P |
+| RA02 | [Lived-in] I open a proposal's diff and approve it, ask for changes, or deny it. | §19.14 · Approvals, Full or tile, a proposal. Source: Buzz Behaviour 4 | Software Factory · the proposing agent | An approved proposal lands with a receipt; Changes goes back to the agent. | Deny is always mine; no setting gives it away. | P |
+| RA03 | [Lived-in] I answer a request, approve or deny it, or open it where it belongs. | §19.14 · Approvals, a request | Software Factory, with the owner that asked · none | Open takes me to the run in Factory, the Day in Central or the agent in Messages, to answer there. | A request I do not answer stays in the queue and never lands. | P |
+| RA04 | [Lived-in] I read the review of a take I chose, conditions first and then the claims without evidence, and hold Confirm. | §19.1, §19.14 · Approvals, Review page | Software Factory; Central (receipt link) · none | Intent, Conditions met, Claims with evidence (a claim with none draws a dashed box), Requests, Return and Receipt; Collect gathers the outputs; Confirm makes the take stand. | Changes sends it back; a receipt linked by Central is not my acceptance. | P |
+| RA05 | [Lived-in] I set Show to Urgent and Order to By risk, to clear many items fast. | §19.14 · Approvals, Queue page | Software Factory | The urgent items, red on the lake, come first, then the riskiest. | Follow keeps the newest at the top when I want arrival order instead. | P |
+| RA06 | [Lived-in] I notice a request has floated past the amber line. | §19.14, §19.4 · Approvals, Compact view | Software Factory; the Agent's Wait and On no answer | Past the wait the Agent sets, the request turns orange: it counts as unanswered. | With On no answer at Hold it waits on; only On no answer at Deny denies for me, and only because I set it. | P |
+| RA07 | [Lived-in] I answer from the Approvals tile while working in another mode. | §19.14, §10.6 · the rail, Approvals widget | Software Factory | Each card names who asked and what, with Approve, Changes, Deny or Open as the kind allows; the foot counts the agents waiting for me in Messages. | A review's and a recognition's cards only open; they are answered on the Review page. | P |
+| RA08 | [Lived-in] An item arrives while I am away from the window, and I want my computer to tell me. | §19.14 · Approvals, Desktop reading | Software Factory; the computer's notifications | The computer shows a notice when an item arrives. | If Desktop reads Refused, the computer refuses notices until I allow them in its settings; an item shown there counts as unopened until I open it here, and opening it tells its owner nothing. | P |
+| RA09 | [Lived-in] I empty the queue before I end the day. | §19.14 · Approvals | Software Factory | Nothing waits for me. | A request I leave stays in the queue and lands nothing. | P |
+
+## RR — Read back what the agents did
+
+**Why:** "But I think also the main difference being that the work itself is seen from a holistic position." (UX chat 27 Oct)
+**Where:** manual §19.13 Ledger · **Port sources:** OpenRig (BEHAVIOURS.md §11: append-only transitions and stated outcomes)
+
+| ID | Starting world and act | Where it happens | Owning operation and agent | Useful completion | Failure or continuation | Grade |
+|---|---|---|---|---|---|---|
+| RR01 | [Lived-in] I open the Ledger tile, to see the last receipts at a glance. | §19.13 · the rail, Ledger widget | Software Factory | Each line is a task and its outcome, beside counts of receipts shown, waiting and turns; pressing a line opens its receipt in Full. | The list follows every session of the set: a new session appears on its own. | P |
+| RR02 | [Lived-in] I open the Ledger full in a pane and narrow it by period, agent, outcome and order. | §19.13 · Pane view, Ledger Full | Software Factory | The head counts receipts shown and made today, waiting, turns, tokens and spend; the list stands with the selected receipt open beside it. | The Ledger only reads; it changes no receipt. | P |
+| RR03 | [Lived-in] I set Outcome to Commented, to find tasks that need an answer. | §19.13 · Ledger, Outcome. Source: OpenRig §11 (each closure carries its outcome) | Software Factory | Only the tasks that drew a comment list; Landed, Approved and Refused filter the same way. | — | P |
+| RR04 | [Lived-in] I open a task's receipt, to see exactly what it did and how. | §19.13 · Ledger Full, Receipt | Software Factory | The task's number and name, the agent, the outcome, the revision it started from, who accepted it, the files that changed, and one line for how the agent worked: the Method at its revision, the model and seat, the sources it read. | A receipt is made when the task writes and is never edited afterwards. | P |
+| RR05 | [Lived-in] I set Agent to one agent and Period to All, to audit that agent. | §19.13 · Ledger, Agent and Period | Software Factory | Every receipt of that agent, across all runs. | — | P |
+| RR06 | [Lived-in] Two runs of one task came out differently, so I compare their receipts' worked-under lines. | §19.13 · Ledger Full, two receipts | Software Factory | The Method revision, model, seat and sources set side by side show what differed. | — | P |
+| RR07 | [Lived-in] I click a task in the Ledger to open its log. | §19.13 · Ledger; Clip view, Log; the transport, Position | Software Factory | The task's log opens in Clip view, and Position shows that task. | — | P |
+| RR08 | [Lived-in] I press Capture on a receipt, to keep it as an example. | §19.13, §10.5 · Ledger; the transport, Capture | Software Factory | The receipt is kept as an example. | — | P |
+
+## FN — Tune how an agent works
+
+**Why:** "there are agentic aspects of the system, and there's, you know, the whole self-learning side of things, the whole self-improvement side of things" (UX chat 27 Oct)
+**Where:** manual §6, §19.4 (Run and Custody pages, Grants), §19.1 Envelopes · **Port sources:** Grok Bot 0.68.1 (Factory's agent client); Ableton Live 12.0.25 (clip envelopes)
+
+| ID | Starting world and act | Where it happens | Owning operation and agent | Useful completion | Failure or continuation | Grade |
+|---|---|---|---|---|---|---|
+| FN01 | [Lived-in] I set an agent's Effort and Budget before a short task, to keep its cost down. | §19.4 · Device view, the Agent, Run page; Compact macros | Actuation · the seated agent | Each turn thinks at that effort, and the device shows turns used of the turns allowed. | The transport's Time signature shows the same reading; a task's own Effort envelope keeps its own value. | P |
+| FN02 | [Lived-in] I set Effort and Autonomy for one task only, without touching the session's values. | §19.1 · Clip view, Envelopes tab | Actuation (effort); Software Factory (autonomy) · the session's agent | The task runs at its own effort and autonomy; Inherit takes the Agent's; Modulation moves the session's value by steps and follows it when it changes. | A task's envelope applies to that task only. | P |
+| FN03 | [Lived-in] I bench an agent, keeping it on the chain with no work. | §19.4 · the Agent, Power | Actuation · the seated agent | The agent takes no new work; its settings and thread stay. | Its light reports what the harness reports; a benched agent is not shown as working. | P |
+| FN04 | [Lived-in] I set an agent's Heartbeat and its beat, to decide how often it checks in. | §19.4 · the Agent, Heartbeat | Actuation · the seated agent | It checks in on each beat and each check-in moves its needle. | With Heartbeat off nothing moves the needle, and silence cannot be read as progress. | P |
+| FN05 | [Lived-in] I choose what happens when an agent stalls: ask me, retry once, or stop. | §19.4 · the Agent, On stall | Actuation · the seated agent | A stall follows that choice. | Ask raises the stall card and the track's retry for me to act on. | P |
+| FN06 | [Lived-in] For a new agent I set Autonomy to Suggest, and raise it to Review and Auto as I come to trust it. | §6, §19.4 · the Agent, Custody page | Software Factory · the seated agent | Suggest proposes only; Review works and I check each result; Auto lands changes with receipts. | Deny is always mine; no Autonomy value takes it away. | P |
+| FN07 | [Lived-in] I set the Review gate to say what waits for me before a change lands. | §19.4 · the Agent, Review gate | Software Factory · the seated agent | Diffs, Approvals or both wait for my answer. | A change behind the gate never lands without my answer. | P |
+| FN08 | [Lived-in] I set whom the agent asks, how long a request waits, and whether it holds or denies when nobody answers. | §19.4 · the Agent, Escalate to, Wait, On no answer | Software Factory · the seated agent | Requests go to the person named; past the Wait they count as unanswered and the agent holds or denies as set. | With Hold, a deploy cannot leave at night by default. | P |
+| FN09 | [Lived-in] I issue a grant that lets an agent bring a helper into being, configure one, make one actual or take its return back, in a World I choose and until a time I choose. | §19.4 · the Agent, Grants page | Actuation (Determine, Configure, Actualise, Reintegrate) · the agent that holds it | The grant appears as a row of filled cells, one for each operation it allows, and holds until it ends. | Saving, preparing or starting an agent never grants anything by itself. | P |
+| FN10 | [Lived-in] I select a grant, give a reason and hold Revoke, to end it. | §19.4 · the Agent, Grants page | Actuation · the agent that held it | The grant is struck through and no longer allows anything. | A revoked grant cannot be given back; I issue a new one. | P |
+
+## FI — Read what an agent did and what it was told
+
+**Why:** "we're working with AI agents who would like to subtly deny, subtly challenge, subtly delay the clarity around these things" (UX chat 27 Oct)
+**Where:** manual §19.4 (the thread, the stage, Identity) · **Port sources:** Grok Bot 0.68.1 (mid-task updates, drafts awaiting approval); Buzz's agent system (diff cards in the thread); OpenRig (BEHAVIOURS.md §4: occupant generations)
+
+| ID | Starting world and act | Where it happens | Owning operation and agent | Useful completion | Failure or continuation | Grade |
+|---|---|---|---|---|---|---|
+| FI01 | [Lived-in] I pop an agent's thread out into a window of its own, to watch and steer one agent beside my work. | §19.4 · the Agent, Pop-out | Actuation · the seated agent | The thread with the agent's controls in one row under it, in its own window. | Closing the window closes the view only; the agent works on. | P |
+| FI02 | [Lived-in] A run failed, so I show only the tools in the thread and click the last tool row. | §19.4 · the Agent's thread (Full) | Actuation · the seated agent | The tool's output opens; the last rows say what went wrong. | The thread shows what happened in order and never edits the record. | P |
+| FI03 | [Lived-in] I follow a spawn row to the thread of a helper the agent started. | §19.4 · the thread, Spawn row | Actuation · the helper | The helper's own thread opens, nested under the lead's, with its live state. | Helpers can also be shown inline in the lead's thread. | P |
+| FI04 | [Lived-in] I read an ask row to see a typed question the agent put to a decision helper. | §19.4, §19.15 · the thread, Ask row | Actuation; AIKit (Kev) · the decision helper | The labels the agent allowed and the answer, marked as evidence. | A helper's answer never stands in for something the agent saw. | P |
+| FI05 | [Lived-in] I answer a proposal card in the thread with Approve or Changes, after reading its Diff. | §19.4 · the thread, Proposal card. Source: Buzz Behaviour 4 (diff cards); Grok Bot (drafts awaiting approval) | Software Factory · the proposing agent | Approve lands the change with a receipt; Changes returns it to the agent. | With Arm on, writes inside Scope land directly and no card appears. | P |
+| FI06 | [Lived-in] An agent stalled, so I act on its stall card: retry, hard stop, steer, or tell its parent. | §19.4 · the thread, Stall card | Actuation · the stalled agent and its parent | The card names the prompt the agent waits for; Tell parent hands the stall back to the agent that spawned it. | Retry lights only when the agent has stalled. | P |
+| FI07 | [Lived-in] I set Messages to Thought, to read what the agent kept for this run and how it worked. | §19.4 · the thread, Thought rows; the Thought page | Actuation · the seated agent | Under one line naming the Method at its revision, the model on its harness and the sources it read, each kept thought shows what carries it, its words, who kept it, the units it is about and whether it is active, resolved, superseded, integrated or retained; the Thought page filters by each. | — | P |
+| FI08 | [Lived-in] I open the Agent's Full, to see where a run stands without reading its thread. | §19.4 · the Agent, Full: the stage beside the thread | Actuation's run events · the seated agent | The run grows as a tree, roots while it reads, trunk as it writes, crown when it returns, each artefact a fruit, and the agent as a creature on it. | The stage draws only what the run's events say: progress never goes back or predicts the end, and a failed tree turns grey with the failure held. | P |
+| FI09 | [Lived-in] I read an agent's Identity page, and what changed since an earlier receipt of its work. | §19.4 · the Agent, Identity page, Changed since. Source: OpenRig §4 (a seat's occupant changes while the seat holds) | Central's roster | The roster card (name, colour, character, harness, skills, world, accepted or proposed, revision), with changes of body (model, harness, effort) set apart from changes of identity (profile, self, practice). | Identity gives the agent no right: what it may read and write comes from Scope. | P |
+
+## FY — Give an agent a type
+
+**Why:** "the system is built around this plug-and-play devices and instruments ontology from Ableton." (UX chat 27 Oct)
+**Where:** manual §19.4 Type, §10.3, §25.6 · **Port sources:** Ableton Live 12.0.25 (a device's presets in the browser)
+
+| ID | Starting world and act | Where it happens | Owning operation and agent | Useful completion | Failure or continuation | Grade |
+|---|---|---|---|---|---|---|
+| FY01 | [Lived-in] I open an agent's Type page and choose a family, then a pattern, to know how it will behave before I give it work. | §19.4, §25.6 · the Agent, Type page | Actuation, with each device's own owner · the seated agent | The pattern's preset lands: its eight fields (Start, Stay, Count, Reach, Link, Join, Change, Failure) each write a setting of a device the agent already has, and the agent wears the pattern's creature. | Choosing a type does not lock the settings. | P |
+| FY02 | [Arriving] I drag an agent type from the browser onto an empty track, to start an agent in a known pattern. | §19.4, §10.3 · the browser, under the Agent, the six families and their patterns | Actuation · the new agent | An agent of that type takes the seat with the type's preset and wears its creature. | — | P |
+| FY03 | [Lived-in] I drag a type onto an agent already seated, to give it that type. | §19.4 · the browser to the Agent | Actuation · the seated agent | The preset loads over the agent's settings. | — | P |
+| FY04 | [Lived-in] After choosing a type, I move one of the settings it wrote. | §19.4 · the device holding that setting | That device's owner · the seated agent | My value stays mine. | — | P |
+| FY05 | [Lived-in] I read the Lands list for a pattern, to see where each field lands and which have no setting. | §19.4 · Type page, Lands | Actuation | Each field shows the setting it writes; a field with no setting stays named and dark with its reason: nothing starts an agent on an event, nothing lets an agent read its nearest neighbours, the Ledger keeps no fading marks, no owner combines returns by First, Quorum or Weighted. | Nothing stands in for what an instrument lacks. | P |
+| FY06 | [Lived-in] I read a pattern's Failure field before I choose it. | §19.4, §25.6 · Type page | Actuation | The known way the pattern breaks: a Trail whose marks do not fade circles in a mill, a Drop that no Approvals gate holds is injection, a Guard admits whatever carries the right mark. | These are warnings, not types and not settings. | P |
+| FY07 | [Lived-in] I choose a pattern whose animal is not drawn. | §19.4, §25.6 · Type page; the browser | Actuation | Its sign shows, dark, and it seats an agent all the same. | — | P |
+
+## FM — Make agents and groups
+
+**Why:** "For software developers, for people exploring AI and agentic work, Factory would be their wheelhouse." (UX chat 27 Oct)
+**Where:** manual §19.4 Making an agent, §19.15 Making a group, §19.24 · **Port sources:** Buzz's agent system (creating an agent as a membership act); Grok Bot 0.68.1 (named persistent teammates)
+
+| ID | Starting world and act | Where it happens | Owning operation and agent | Useful completion | Failure or continuation | Grade |
+|---|---|---|---|---|---|---|
+| FM01 | [Lived-in] On a new agent's card I set Kept for to the project, so the agent belongs to the project and not to me alone. | §19.4 · Making an agent, the card | Central · the proposed agent | Once accepted, the agent belongs to the project rather than to me alone. | — | P |
+| FM02 | [Lived-in] I seat a proposed agent before accepting it, to try it on real work. | §19.4, §19.24 · the card; a track | Central; Actuation · the proposed agent | It works where I seat it, and shows as proposed in Messages and on its Identity page. | It works only where I seat it until I accept it. | P |
+| FM03 | [Lived-in] I discard an agent's proposal. | §19.4 · the card, Discard | Central | Nothing joins the roster. | Making an agent writes only a proposal until I accept it. | P |
+| FM04 | [Lived-in] I drag the Agentset rack onto a lead's track, or press New on its head, to make a group. | §19.15 · Making a group; the browser's Devices | Central proposes the group; Software Factory holds the rack | A card asks what the group is for, takes its members dragged in by their faces, and its type, which sets how the members answer together; Central proposes it as a set of agents, which I accept as I accept an agent. | — | P |
+| FM05 | [Lived-in] I open a new agent's Being page in Central. | §19.4, §18.1 · Central, the agent's Being page | Central keeps the card in my ground | The Being page reads the card. | Neither the Agent nor Messages keeps a copy of the card. | P |
+
+## FX — Run a team of agents as one
+
+**Why:** "QL is the DLW's structure, every record carries its six positions filled from source." (decision record #707)
+**Where:** manual §19.15 Agentset rack, §19.4 In a team · **Port sources:** Ableton Live 12.0.25 (racks, chains, macros); Buzz's agent system (teams of agents)
+
+| ID | Starting world and act | Where it happens | Owning operation and agent | Useful completion | Failure or continuation | Grade |
+|---|---|---|---|---|---|---|
+| FX01 | [Lived-in] I drag an agentset onto the lead's track and select the group header, to see the team. | §19.15 · Device view, Agentset rack | Software Factory · the lead and its helpers | One chain for each member, the lead at the top, helpers indented a step for each level, a chip naming each member's model. | With many members the chains group by state, each group with its count. | P |
+| FX02 | [Lived-in] I drag another agent onto the rack, to add a member. | §19.15 · Agentset rack, Members | Software Factory · the new member | The member gets its own chain. | The rack sets no upper limit on members. | P |
+| FX03 | [Lived-in] I set Fan-out and Depth, to bound how many helpers run at once and how deep they spawn. | §19.15 · Agentset rack, Limits | Software Factory · the lead | At most that many helpers run together; at Depth 1 helpers spawn none of their own. | The defaults are start values, not limits: a limit is a value I set. | P |
+| FX04 | [Lived-in] I set Hand-back to Summary, to keep the lead's context short. | §19.15 · Agentset rack, Return | Software Factory · the helpers and their lead | Each helper returns a summary to its parent; Raw and Digest return more. | — | P |
+| FX05 | [Lived-in] I set the Subagent model to a smaller model, to save cost on everything the group spawns. | §19.15 · Agentset rack, Subagent model | Software Factory; Actuation · the group | Spawned helpers use that model unless a member sets its own. | — | P |
+| FX06 | [Lived-in] I leave Join on All, to read the returns only when every member has finished. | §19.15 · Agentset rack, Join | Software Factory · the members and an independent reviewer | The group waits for every member, and an independent reviewer integrates the returns; None keeps one return instead. | Stacking returns end to end is not integrating; First, Quorum and Weighted stand dark because no owner combines returns that way. | P |
+| FX07 | [Lived-in] I launch the group to fire every queued task of the crew. | §19.15 · the group header; the transport, Play | Software Factory · every member | All the members' queued tasks start; number keys launch rows across the members. | — | P |
+| FX08 | [Lived-in] One member stalls while the others work. | §19.15 · Agentset rack, Compact | Software Factory · the stalled member | Its chain draws an orange outline and the group lights Retry. | A stalled member does not stop the others. | P |
+| FX09 | [Lived-in] I hard-stop the whole group. | §19.15 · the group header | Software Factory · every member | Every session in the group stops. | The work written so far stays as a draft. | P |
+| FX10 | [Lived-in] I open the rack full in a pane, to see the crew as a whole. | §19.15 · Pane view, Agentset rack Full | Software Factory · the crew | The crew as a tree of creatures in the posture of their states, and beside it the crew as its pattern draws it: a pair face to face, a crew in an arc with the lead in front, a swarm scattered and small; under it the chosen member's thread and files. | A crew with no pattern draws the shell's agent face for each member. | P |
+| FX11 | [Lived-in] I read where an agent stands in its team. | §19.4 · the Agent, Team cell | The team space, Anima or Aletheia · the member | Its row (a context frame with the questions it asks by day and by night) and its depth, one of the six M domains. | Empty when the agent is in no team. | P |
+
+## FD — Settle small choices with a decision helper
+
+**Why:** "the whole point of having a symbolic mathematical system as a foundational structure is that what is invariant are the abstract positions of quaternal logic." (UX chat 27 Oct)
+**Where:** manual §19.15 Decision helpers (Helper page), §19.20, §25.2 · **Port sources:** Quaternal Logic's own system (#714)
+
+| ID | Starting world and act | Where it happens | Owning operation and agent | Useful completion | Failure or continuation | Grade |
+|---|---|---|---|---|---|---|
+| FD01 | [Lived-in] I drag an agent of type Settle onto a team's Agentset rack, to add a decision helper. | §19.15 · Agentset rack, Helper page | AIKit (Kev) · the decision helper | One helper stands beside the members and answers every one of them. | The helper is never one of the agents acting on the work. | P |
+| FD02 | [Lived-in] I choose who answers the helper's questions. | §19.15 · Helper page, Provider | AIKit · the decision helper | On this machine nothing the helper reads leaves it; my endpoint or a hosted one answer otherwise. | None sends every open question back to the member who asked. | P |
+| FD03 | [Lived-in] I choose whether an act waits for the helper or goes on without it. | §19.15 · Helper page, When | AIKit · the decision helper | Background lets the act go on and the answer join it if it comes in time; Before the act makes the act wait. | — | P |
+| FD04 | [Lived-in] I set how long an answer may take. | §19.15 · Helper page, Deadline | AIKit · the decision helper | Answers within the deadline join the act. | A later answer is dropped and the question stays open. | P |
+| FD05 | [Lived-in] I turn the team's questions on or off for the helper. | §19.15 · Helper page, Instruments | Quaternal Logic (the team's questions); AIKit | The helper answers only the questions I allow, among them the Vāk block, gate readings 1 to 5, thought reading, gnosis retrieval, stack traverse, plugin integration, improvement proposal and Klein telemetry. | Each question's light shows whether the team has measured it and admits it. | P |
+| FD06 | [Lived-in] I read the spread of the last question, to see how strongly the helper held each label. | §19.15 · Helper page, the spread | AIKit · the decision helper | A bar for each allowed label, as tall as the helper's confidence, with the pick lit. | A flat spread means nothing stood out: the helper abstains, and the abstention is kept as an answer. | P |
+| FD07 | [Lived-in] I read the engine's verdict on a pick. | §19.15, §25.2 · Helper page, the pick and its verdict | Quaternal Logic checks the pick | The pick validated, or refused with its reason. | A pick is evidence for the act, never a receipt, and never overrides what an agent saw. | P |
+| FD08 | [Lived-in] I read the helper's counts, to see how often the rules settle things without it. | §19.15 · Helper page, Counts | Quaternal Logic; AIKit | Acts settled by rule, questions asked, abstentions, and picks the engine refused. | An act the rules settle whole asks the helper nothing. | P |
+| FD09 | [Lived-in] A member or helper tries to answer the collaboration gate, gate 6. | §19.4, §19.14, §19.15 · Approvals; Helper page | Software Factory; Quaternal Logic | The gate waits for me. | Its answer is refused, even an abstention. | P |
+
+## FW — Limit what an agent may touch and look up
+
+**Why:** "because the responsibility to a world is made explicit again." (UX chat 27 Oct)
+**Where:** manual §6, §19.12 Scope (rings, Knowledge page), §19.9 · **Port sources:** —
+
+| ID | Starting world and act | Where it happens | Owning operation and agent | Useful completion | Failure or continuation | Grade |
+|---|---|---|---|---|---|---|
+| FW01 | [Lived-in] I turn Scope's Reach to the smallest part of my world the work needs. | §19.12 · Device view, Scope, the rings | Software Factory · the seated agent | The rings show the reach, from one object through a scene and an Expression to everything in Central; places outside it are closed even if they are on a list. | Raising the reach waits for my Confirm; the agent cannot widen its own Reach or lists. | P |
+| FW02 | [Lived-in] I add a place to Writes only where the agent must write. | §19.12 · Scope Whole, Writes | Software Factory · the seated agent | An amber light marks each writable place in reach; every other place is read-only. | With Writes empty, the agent writes nowhere. | P |
+| FW03 | [Lived-in] I choose how the agent's writes arrive: as proposals, as a draft I review, or directly. | §19.12 · Scope, Write mode | Software Factory · the seated agent | Propose waits for me; Draft lands in a draft; Direct lands in the thing itself with a receipt. | Direct needs Arm on; with Arm off it acts as Propose. | P |
+| FW04 | [Lived-in] I read the basis and the receipts, to see what the agent started from and what it changed. | §19.12 · Scope, Basis and Receipts; Full and widget | Software Factory · the seated agent | The revision it started from and the revision of its edits (r15 to r17); in Full each receipt is numbered on the place it wrote. | Every write carries a receipt; pressing one in the widget reads it whole. | P |
+| FW05 | [Lived-in] I keep Search first on and lower Link depth, to keep the agent on topic. | §19.12 · Scope, Knowledge page | AIKit · the seated agent | The agent searches before it reads a file and follows fewer links from each hit. | Sources are not copied into the prompt; the agent finds and reads them on demand. | P |
+| FW06 | [Lived-in] I set a Read budget for a long task. | §19.12 · Scope, Knowledge page | AIKit · the seated agent | The agent reads at most that many pages in the task. | — | P |
+| FW07 | [Lived-in] I read the Route, to know whether the agent's knowledge route answers. | §19.12 · Scope, Knowledge page, Route | AIKit | Ready, Composed or Refused. | A refused route names its reason, and the agent works without that source. | P |
+| FW08 | [Lived-in] A source has moved, so I read again the agent's readings that rest on it. | §19.12, §18.5 · Scope, Knowledge; Docs, Moved since | AIKit; Central's Docs · the seated agent | Read again reads the chosen reading at the source's new revision, and AIKit records the use. | A page the agent read always shows with its source, which I can open. | P |
+| FW09 | [Lived-in] I hold Forget on a reading, so the route stops ranking it from memory. | §19.12 · Scope, Knowledge | AIKit | AIKit drops its record of having used the reading. | The source itself is untouched. | P |
+
+## RK — Carry the practice the work needs, and see whether it is used
+
+**Why:** "a clear gap between what our system already defines and what is used by agents in the moment" (decision record #713)
+**Where:** manual §19.7 Skillset rack (Set page), §25.4 · **Port sources:** —
+
+| ID | Starting world and act | Where it happens | Owning operation and agent | Useful completion | Failure or continuation | Grade |
+|---|---|---|---|---|---|---|
+| RK01 | [Arriving] I drag a skillset from the browser onto a session's chain, to give its agent a repertoire. | §19.7 · Device view, Skillset rack, Compact | AIKit · the seated agent | The members list by kind, methodologies first, each with my request as a square, its mark in its state and its ten steps of evidence. | Membership grants no trust, no authority and no loading. | P |
+| RK02 | [Lived-in] I click a member's square to turn it off, read the preview and apply it. | §19.7 · Skillset rack, Preview and Apply | AIKit · the seated agent | The change applies through the profile in use. | A new change cancels the preview; nothing applies without Preview then Apply. | P |
+| RK03 | [Lived-in] I set where the composition applies: every session on this machine, every session in the project, or this session only. | §19.7 · Skillset rack, Scope and Profile | AIKit | The composition holds at that scope under the chosen profile. | — | P |
+| RK04 | [Lived-in] I read a member's ten steps of evidence, to see whether the agent really used it. | §19.7 · Skillset rack, Evidence | AIKit | Each step from carried to verified is lit only where there is evidence. | A step nobody observed stays hollow; nothing is inferred upward, so carried is not loaded and loaded is not used. | P |
+| RK05 | [Lived-in] I turn Unused on, to find what a set carries for nothing. | §19.7 · Skillset rack, Unused | AIKit | Only members catalogued and never seen used remain. | A member loaded and never invoked costs context; I can turn it off. | P |
+| RK06 | [Lived-in] I choose a package target and export the set, to give it to a team on another harness. | §19.7 · Skillset rack, Package | AIKit | AIKit writes the native package and its receipt. | The unsupported count names each relation the target cannot carry; the set does not change. | M |
+| RK07 | [Lived-in] I keep the rack's widget on the rail, to watch practice from any mode. | §19.7 · the rail, Skillset widget | AIKit | The four marks with a count under each, and counts of available, loaded and invoked. | It stays when I change mode. | P |
+| RK08 | [Lived-in] I choose in Settings whether practice is drawn with blades or pens. | §19.7 · Settings | AIKit's marks; the shell's presentation | The whole shell uses the one set of marks. | A mark's drawing never changes with its state: full, orange or dim. | P |
+| RK09 | [Lived-in] I bind a key or a spoken word to turn a member on or off. | §19.7, §19.8 · the transport, Keys and maps | AIKit | The key or word toggles my request for that member. | — | P |
+
+## RS — Keep where practice comes from, and take changes back
+
+**Why:** "add the missing skills to sets with one copy each" (decision record #713)
+**Where:** manual §19.7 Skillset rack (Sources, Adopt, Procedures pages) · **Port sources:** —
+
+| ID | Starting world and act | Where it happens | Owning operation and agent | Useful completion | Failure or continuation | Grade |
+|---|---|---|---|---|---|---|
+| RS01 | [Lived-in] I choose a source and sync it, to bring in a new version of practice without making it live. | §19.7 · Skillset rack, Sources page | AIKit (Sync) | A new candidate snapshot stands beside the active one. | Nothing becomes active by syncing; Sources is dark while a candidate waits. | M |
+| RS02 | [Lived-in] I hold Promote, to make the candidate active. | §19.7 · Sources page | AIKit (Promote) | The candidate becomes active. | The snapshot before stays to roll back to. | M |
+| RS03 | [Lived-in] I hold Roll back, to return to the snapshot promoted before. | §19.7 · Sources page | AIKit (Roll back) | The earlier snapshot is active again. | A source changes only through its snapshots. | M |
+| RS04 | [Arriving] I preview adopting my coding tool's own skills folder and hold Apply, to bring those skills under AIKit. | §19.7 · Skillset rack, Adopt page | AIKit (Adopt) | Each skill is copied into AIKit's namespace and a link left in its place; skills AIKit already owns are left as they are. | The plan refuses a skill another tree holds a different copy of, and shows it with an orange cross; adoption keeps the originals in its journal. | M |
+| RS05 | [Lived-in] Sources shows copies that differ, so I adopt the tree that holds the copy I keep. | §19.7 · Sources page, the trees AIKit does not own | AIKit | The other copies then read the same skill. | — | M |
+| RS06 | [Lived-in] I choose a planned procedure and hold Run, to apply it exactly as planned. | §19.7 · Skillset rack, Procedures page | AIKit | The procedure applies, its edits shown by kind. | A world that has changed since the plan refuses it; Procedures is dark while a procedure is planned and not run. | M |
+| RS07 | [Lived-in] I choose an applied procedure and hold Undo, to take it back. | §19.7 · Procedures page | AIKit | It is undone from its journal, the last edit first, every file put back as it was. | — | M |
+| RS08 | [Lived-in] I issue a bypass with how long it lasts and a reason, to let an agent through the hook chain. | §19.7 · Procedures page, the next bypass | AIKit | The agent passes the hooks for the next event, the session or an hour, and AIKit records the reason. | A bypass grants no authority. | P |
+| RS09 | [Lived-in] I hold Revoke on an open bypass. | §19.7 · Procedures page | AIKit | The bypass closes. | — | P |
+
+## RM — Read and run one member of the practice
+
+**Why:** "But when they don't follow the structure, they end up redefining things in less helpful modalities." (UX chat 27 Oct)
+**Where:** manual §19.8 Skill, Method, Methodology · **Port sources:** —
+
+| ID | Starting world and act | Where it happens | Owning operation and agent | Useful completion | Failure or continuation | Grade |
+|---|---|---|---|---|---|---|
+| RM01 | [Lived-in] I select a member in the rack, to see it closely. | §19.8 · Skillset rack; the member expanded above it | AIKit | Its face follows its form: a Skill shows the harnesses it reaches and the sets that carry it; a Method the path it composes from claim to return; a Methodology its field and which Method applies when. | The form comes from the member's own text; to change the form, change the text. | P |
+| RM02 | [Lived-in] A member's mark is orange because nobody has reviewed its new revision, so I click Review, read the revision and confirm. | §19.8 · member device, Trust and Review | AIKit · none | AIKit records that I reviewed it, and the member becomes available. | AIKit does not deliver an unseen revision until I review it; the old revision stays. | P |
+| RM03 | [Lived-in] I click Run on a Method and confirm after reading its preflight. | §19.8 · member device, Run; the transport, Play | AIKit · the Method | The Method runs once and keeps a receipt. | A missing condition refuses the run before any effect, and names itself. | P |
+| RM04 | [Lived-in] After a run, I click Prove to check its receipt. | §19.8 · member device, Prove | AIKit | The last run is confirmed as verified. | A run that did not verify is refused. | P |
+| RM05 | [Lived-in] I read whether the act in hand needs a Methodology, and open it full to read its table of Methods. | §19.8 · member device, Instantiate; Full in a pane | AIKit | Needed or not needed for the act; Full shows which Method applies when. | A Methodology points at its Methods and does not hold their text. | P |
+| RM06 | [Lived-in] I read which harnesses a Skill is written into. | §19.8 · member device, Reach | AIKit | The harnesses it reaches in this context. | — | P |
+| RM07 | [Lived-in] I give a reason and retire a member my ground holds, and confirm. | §19.8 · member device, Why page, Retire | Central (standing in my ground) | The member is no longer projected; its files stay, and who retired it, when and why are kept. | The Why tab is dark while the member is retired; a member from a product's or package's skills is retired where it is written. | M |
+| RM08 | [Lived-in] I restore a retired member and confirm. | §19.8 · member device, Restore | Central | It returns to active standing. | — | P |
+| RM09 | [Lived-in] I open a member's History, to find when it stopped working. | §19.8 · member device, History page | AIKit | A lane for each kind of change, oldest at the left; the last orange mark is the last failure, with when it happened and whether it can be taken back. | A change makes a new revision, unseen until reviewed; the old revision stays. | P |
+
+## RC — Teach an agent by doing the task once
+
+**Why:** "the person's own intuition is already baked into their skills in terms of what they create and what they do. The whole point is you're bringing that to the surface and making it explicit." (UX chat 27 Oct)
+**Where:** manual §19.7 Capture page, §19.11, §10.5 Capture · **Port sources:** Grok Bot 0.68.1 (workflows learned by demonstration); Ableton Live 12.0.25 (Capture)
+
+| ID | Starting world and act | Where it happens | Owning operation and agent | Useful completion | Failure or continuation | Grade |
+|---|---|---|---|---|---|---|
+| RC01 | [Lived-in] I select the track whose agent should learn a task, press Capture, do the task by hand, and press Capture again. | §19.7, §10.5 · the transport, Capture; Skillset rack, Capture page | AIKit · the track's agent | The page lists the steps it found in what I did. | It records only what I do while Capture is on; its dot is red while it records. | M |
+| RC02 | [Lived-in] I choose to learn from a selected clip, or from the last minutes of my work, instead of a live capture. | §19.7 · Capture page, Source and Minutes | AIKit | The steps come from that clip, or from up to sixty minutes back. | — | P |
+| RC03 | [Lived-in] While capturing, I press Record and speak, to add my own notes to the example. | §19.7 · the transport, Record, with Capture on | AIKit | My spoken notes join the example. | — | M |
+| RC04 | [Lived-in] I remove a step that does not belong, and choose the form, name and scope of what will be made. | §19.7 · Capture page, Steps, Form, Name, Scope | AIKit | A Method for a whole practice or a Skill for one step, under the name I gave, usable in this project or in all my work. | — | P |
+| RC05 | [Lived-in] I read what the proposal resembles before I accept it, to see whether I already have it. | §19.7 · Capture page, Resembles | AIKit | The members it is close to, nearest first. | — | P |
+| RC06 | [Lived-in] I accept the proposal. | §19.7, §19.14 · Capture page, Accept; Approvals | AIKit | It joins the rack as a draft member of my practice, with the example kept beside it so a reader can see where it came from. | It is kept as a draft only when I accept it; until then it waits in Approvals and on the page. | P |
+| RC07 | [Lived-in] The proposal holds a secret, so I read what holds it and press Release. | §19.7 · Capture page, Held for, Release | AIKit | Release scans the proposal again and frees it when no secret remains. | Each finding shows masked; a proposal is never accepted while a secret remains. | P |
+| RC08 | [Lived-in] I remove a proposal I do not want. | §19.7 · Capture page, Remove | AIKit | The proposal is dropped. | — | P |
+
+## FP — Keep the asks I repeat on pads
+
+**Why:** "So people can develop their own if they need to, and so it becomes this highly customizable workstation." (UX chat 27 Oct)
+**Where:** manual §19.22 Prompt pads, §10.10 Automations · **Port sources:** Ableton Live 12.0.25 (Drum Rack pads, choke groups); Grok Bot 0.68.1 (demonstrated workflows saved as scheduled skills)
+
+| ID | Starting world and act | Where it happens | Owning operation and agent | Useful completion | Failure or continuation | Grade |
+|---|---|---|---|---|---|---|
+| FP01 | [Lived-in] I select the Main track, choose my project's bank on the pads' head, press an empty pad and write a prompt on it. | §19.22 · Device view, Prompt pads | Software Factory keeps the bank | The pad is made, named from the prompt's first words, pad 1 at the bottom left of sixteen. | Only I write a pad; an agent cannot change one. | P |
+| FP02 | [Lived-in] I choose the pad's session, its agent, its scope and where it works. | §19.22 · Prompt pads, Pad and Works groups | Software Factory; Workcell (Works in) | The pad's task will start on that session, or open a new one with the chosen agent, under that Scope, in that workcell. | — | P |
+| FP03 | [Lived-in] I press Run now, to start the pad's task now. | §19.22 · Prompt pads, Run now | Software Factory, through the Gateway under Scope and Arm · the pad's agent | The pad lights while its task runs, on the session it names. | With Arm off the task proposes; with Arm on it writes directly, with receipts. | P |
+| FP04 | [Lived-in] A pad's corner has turned orange, so I press the pad and read its last run. | §19.22 · Prompt pads, the pad's corner | Software Factory | The corner shows how the last run ended: green done, orange stalled, grey stopped, a hollow ring refused; the last run's stall names what it waits for. | — | P |
+| FP05 | [Lived-in] I put two builds' pads in one choke group, to keep them off one seat. | §19.22 · Prompt pads, Choke | Software Factory | Pads in one group never run at once: one waits while the other runs; each shows c and its group. | — | P |
+| FP06 | [Lived-in] I press Make routine on a pad, to have it run by itself on a schedule. | §19.22, §10.10 · Prompt pads, Alone; Settings, Automations | AIKit (routines) | Automations opens on a new routine for that pad, where I give it its schedule, such as weekdays at 08:00; the pad then shows ↻ and its next time. | No pad keeps a time: the schedule lives only in the routine. | P |
+| FP07 | [Lived-in] I read whether a scheduled pad may run while nobody watches. | §19.22 · Prompt pads, Alone: Routine, Unattended, Next | AIKit; Software Factory | The routine's state (Draft, Enabled, Disabled, Proof stale), whether I granted unattended runs, and the next run. | Proof stale means the Method changed since it was proved, and the pad waits until it is proved again. | P |
+| FP08 | [Lived-in] I open the pads full, to see every pad's schedule, last run and result. | §19.22 · Pane view, Prompt pads Full | Software Factory; AIKit | Each pad with its prompt, its session, its routine's next run, and its last run and how it ended; the schedule as a reading. | Nothing runs where I cannot see it: every run of a pad is recorded. | P |
+| FP09 | [Lived-in] I keep the pads' widget on the rail with Follow on. | §19.22 · the rail, Prompt pads widget; the transport, Follow | Software Factory | The pads that run by themselves, in the order they next run, with the count of timed pads and of pads running now; Follow keeps it on the next pad to run. | — | P |
+| FP10 | [Lived-in] I edit a pad's prompt. | §19.22 · Prompt pads | Software Factory | The next run uses the new prompt. | A run already made keeps the prompt it ran with. | P |
+| FP11 | [Lived-in] I change a scheduled pad's agent, to hand its routine to another agent. | §19.22 · Prompt pads, Agent | Software Factory; AIKit | The new agent works the pad's runs. | The routine keeps its schedule. | P |
+| FP12 | [Lived-in] I clear a pad. | §19.22 · Prompt pads, Clear | Software Factory | The pad is empty and can take a new prompt. | Its record of runs stays. | P |
+
+## FQ — Talk to my agents from wherever I am
+
+**Why:** "such that there is responsiveness at the level of the agent, level of the system agent." (UX chat 27 Oct)
+**Where:** manual §19.24 Messages, §19.2 The agency build, §19.10, §10.1, §10.6 · **Port sources:** Buzz's agent system (→ Messages: agents as members, open relays between agents, per-agent working state); OpenRig (BEHAVIOURS.md §9: the send guard; CROSSWALK §9: delivery at the recipient's next turn)
+
+| ID | Starting world and act | Where it happens | Owning operation and agent | Useful completion | Failure or continuation | Grade |
+|---|---|---|---|---|---|---|
+| FQ01 | [Arriving] I click Messages in the rail's launcher, click an agent's face, write and press Enter. | §19.24, §10.6 · the rail, Messages widget. Source: Buzz (agents as members) | AIKit's agency gateway carries it · the agent | The message reaches the agent; the conversation is the same thread its Agent shows, in every mode. | The gateway carries a message and never acts for the agent; a message never types into the agent's room. An agent I did not seat receives no message. | P |
+| FQ02 | [Lived-in] I leave Messages ordered by Needs you, to see who needs me. | §19.24 · Messages, the list. Source: OpenRig §15 (needs-input before active or idle) | AIKit · my agents | Agents that wait for me and those that have stalled come first, then the rest by their last message; each face is in the posture of its state. | Show narrows to agents or groups, and Search filters by name. | P |
+| FQ03 | [Lived-in] I write to an agent that is not running. | §19.24 · Messages. Source: OpenRig CROSSWALK §9 (held for the recipient's next turn) | AIKit · the agent | The message waits, and the agent reads it when it next runs. | It shows at rest until then. | P |
+| FQ04 | [Yours] I write to an agent working on another machine. | §19.24 · Messages | AIKit, through that machine's workcell · the agent | The message is carried to it there, and the conversation's head names where it works: mode, track and workcell. | — | M |
+| FQ05 | [Lived-in] I drag a message onto the agent's track, to turn it into work. | §19.24 · Messages to the track. Source: OpenRig §9 (a message must not drive the agent's prompt) | Software Factory · the agent | The agent takes it as a task with a receipt. | A message asks; it is not a task until I drag it. | P |
+| FQ06 | [Lived-in] I talk a piece of work through with an agent, then drag its face onto an empty track. | §19.24 · Messages to the grid | Software Factory · the agent | The agent takes a seat on that track, ready for the task. | — | P |
+| FQ07 | [Lived-in] In a group conversation I write @ and a member's name, to speak to that one member. | §19.24 · Messages, a group. Source: Buzz (relays by mention) | AIKit · the group's members | Each message carries its author's face; the named member answers. | Who answers otherwise follows the group's type. | P |
+| FQ08 | [Lived-in] I set Agent to agent to Allow for a planner and a builder, so one can hand work to the other. | §19.2 · the agency build, Agent to agent. Source: Buzz (agent-to-agent handoffs); Grok Bot (bots messaging each other) | AIKit's agency gateway · the two agents | Their calls pass without asking me. | With Ask each call waits in Approvals; a refused call becomes an event in the activity record, with its reason, and does not vanish. | P |
+| FQ09 | [Lived-in] I turn off every surface but this window, to keep a session private. | §19.2 · the agency build, Surfaces | AIKit's agency gateway | Only this window may send a message to the agent. | — | P |
+| FQ10 | [Yours] I change how the agency gateway can be reached, from this machine only to my private network. | §19.2 · the agency build, Entry | AIKit's agency gateway | The change is planned first and lands when I confirm it. | — | M |
+| FQ11 | [Lived-in] I expand the agency gateway's mark in the head of Messages, and open it full. | §19.2, §19.24 · Messages, the gateway's mark | AIKit's agency gateway | Its state, inbox count, harnesses and settings over the conversation; Full shows the messages that passed and the refusals with their reasons. | The state is a reading: Ready, Composed or Refused. | P |
+| FQ12 | [Lived-in] I press Record with a conversation chosen, to speak into it. | §19.24 · the transport, Record | AIKit · the agent | My words are dictated into the conversation. | — | M |
+| FQ13 | [Lived-in] I turn Follow on, so Messages stays with the agent of the track I select. | §19.24 · the transport, Follow | AIKit | Selecting a track brings up its agent's conversation. | — | P |
+| FQ14 | [Lived-in] A routine has failed, and I look for it in Messages. | §19.24, §19.14 · Messages; Approvals | Software Factory | It stands in Approvals, under Requests. | What an owner raises for my attention is not a message. | P |
+
+## FV — Hear an agent and see it speak
+
+**Why:** "So that would be Epi and Nara together as the sort of canonical, emblematic agent of the system." (UX chat 27 Oct)
+**Where:** manual §19.4 The answer's face and The Voice page, §19.21 · **Port sources:** Grok Bot 0.68.1 (messaging by typing, dictation and voice)
+
+| ID | Starting world and act | Where it happens | Owning operation and agent | Useful completion | Failure or continuation | Grade |
+|---|---|---|---|---|---|---|
+| FV01 | [Lived-in] I open the agent that answers on a Central page in a pane, to talk to it face to face. | §19.4 · Pane view, the Agent's Full (the answer's face) | Actuation · the world's agent | The face fills the pane, whole and live: at rest while it waits, attending while I speak, intent on the packet while it reads, its mouth moving while it answers, asleep while no conversation is bound. | Under reduced motion the face no longer sways, breathes or turns by itself, and each state still shows. | P |
+| FV02 | [Lived-in] I turn Hears on and speak to the agent. | §19.4 · the face's mark, or the rack's Answer page | Actuation · the world's agent | The face listens; when I stop, my words are written under it and go to the agent. | Hears starts off; under Local only, what I say stays on this machine. | M |
+| FV03 | [Lived-in] I turn Speaks on, to hear the answer. | §19.4 · the face's mark, or the Answer page | Actuation · the world's agent | The answer is spoken, its words standing under the face as they are said. | Speaks starts off. | M |
+| FV04 | [Lived-in] I open the small conversation beside the face, or close it to give the face the pane. | §19.4 · the face's third mark | Actuation · the world's agent | The exchange, each claim's sources, a proposal's Accept and Decline, and a line to type in. | — | P |
+| FV05 | [Lived-in] I set the face's feeling, emotion and gaze, and play a gesture. | §19.4 · the Agent, Face page | Actuation · the world's agent | The feeling and emotion stay on the face while the agent rests; its own states move the face over them and it returns to them after. | — | P |
+| FV06 | [Lived-in] I choose the body that speaks for the agent. | §19.4 · the Agent, Voice page, Body | Actuation · the agent | Local, Face, Realtime aligned, Realtime in the service's own voice, or Off; each body reports what it can do. | A body that cannot run now stands closed with its reason, and the page offers nothing the body cannot do. | M |
+| FV07 | [Lived-in] I choose the voice, its speed, and what moves the face's mouth. | §19.4 · Voice page, Voice, Speed, Mouth | Actuation · the agent | The agent speaks in that voice at that speed; Aligned moves the mouth with each sound. | Aligned needs a body that measures each sound; Local follows the loudness. | M |
+| FV08 | [Lived-in] I leave Affect on, so the face's feeling follows what is being said. | §19.4 · Voice page, Affect | K-E-V chooses the feeling · the agent | Before each sentence is spoken, its feeling is chosen and shown. | K-E-V never changes the words. | M |
+| FV09 | [Lived-in] I set Interrupt to Barge-in, to talk over the agent. | §19.4 · Voice page, Interrupt | Actuation · the agent | Speaking ends the agent's sentence and it hears what I say. | Stop only ends the sentence; Off lets it finish. | M |
+| FV10 | [Lived-in] I keep everything said and spoken on my machine. | §19.4, §10.10 · Voice page, Body; Settings, Permissions | Actuation; Settings' Permissions owners | With a Local or Face body and egress at Local only, nothing leaves the machine. | Under Local only the cloud bodies stand closed. | M |
+| FV11 | [Lived-in] I open the Voice page full, to read the last spoken turn. | §19.4 · Voice page, Full | Actuation · the agent | The turn on one clock: each sentence's chosen feeling, its words across the time they took, and the sounds that moved the mouth, with a receipt for the turn. | Every spoken turn keeps a receipt. | M |
+| FV12 | [Lived-in] I turn Console on, to see Epii's console beside the face. | §19.4 · Voice page, Console | Actuation | Epii's console stands beside the face. | — | P |
+
+## GA — Decide once where agents work
+
+**Why:** "I'm trying to make sure that these operate by detecting the existing system and molding to the user's uniqueness in terms of their setup." (UX chat 27 Oct)
+**Where:** manual §6, §19.23 Workcell, §19.1 The workcells, §16.6 In/Out, §10.1 · **Port sources:** Ableton Live 12.0.25 (return tracks, sends); OpenRig (BEHAVIOURS.md §3: stable seat identity; §16: terminal providers)
+
+| ID | Starting world and act | Where it happens | Owning operation and agent | Useful completion | Failure or continuation | Grade |
+|---|---|---|---|---|---|---|
+| GA01 | [Arriving] I show the return tracks in Factory, to see where my agents can work. | §19.1, §19.23 · Session view, return tracks (⌥⌘R) | Workcell (the register) | One return track for each workcell my machines hold, such as env-1, env-2 and env-3, each head naming its machine and the agents working in it now. | The DLW makes no workcell; it shows only those the register holds. | P |
+| GA02 | [Arriving] I select a workcell and set its gateway, its machine and its landing once. | §19.23 · Device view, the workcell's chain | Workcell, with Actuation | Its chain reads in the road's order, Gateway, Remote carrier, Git / landing, and every session that works there, on any track and in any mode, takes those settings. | A track has no gateway and no landing of its own. | P |
+| GA03 | [Lived-in] I choose a track's Works in, to send its agents to another workcell. | §19.23, §16.6 · the track's In/Out section, Works in, in any mode | Workcell | The change lands at the track's next task; Works in reads the workcell's name and its lane. | A running task finishes where it started; a helper always works where its lead works. | P |
+| GA04 | [Lived-in] I drag a session's head onto a workcell, to move it there. | §19.1 · Session view, the track head to a return track | Workcell | The session's Works in names the new workcell from its next task. | — | P |
+| GA05 | [Lived-in] From a Central or Technē track, I press ▸ beside its Works in. | §16.6, §19.23 · the track's In/Out section | Workcell | Device view shows that workcell's chain, the same one Factory's return track holds. | — | P |
+| GA06 | [Lived-in] I turn the workcell's macros, to change its gateway's transport, approvals and stall time and its landing from one place. | §19.23 · the workcell, Compact macros | Workcell; Actuation | The macros move the Gateway's Transport, Approvals and Stall after, and Git / landing's Land as. | A device whose owner reports a fault shows it in orange on the chain list. | P |
+| GA07 | [Yours] I read who is working in a workcell and what each costs the machine. | §19.23 · the workcell, Chain page, Working here | Workcell | Each agent with its track, its mode, a meter of its processor and its memory. | — | M |
+| GA08 | [Yours] I open the workcell full, to see its seats and the harness processes on its machine. | §19.23 · Pane view, workcell Full | Workcell | One row for each project's seat with its lane, claim, co-workers, uncommitted files and branch against main; the harness processes with their meters; the gateway's latest frames. | — | M |
+| GA09 | [Lived-in] I open the Workcells tile, to see every workcell and gateway at a glance. | §19.1, §19.23 · the rail, Workcells widget | Workcell; Actuation (gateways) | A chip for each workcell with its state; the chosen one shows its lane, its claim and the faces of its agents; under them every gateway with a state dot, green ready, amber composed, faint refused with its reason. | Clicking an agent selects its track; clicking a gateway opens its Frames page; Show narrows to Ready or In use. | P |
+| GA10 | [Lived-in] I open a terminal from Factory's rail, to work in a session's shell. | §19.1, §10.1 · the rail, Terminal tile | AIKit's session space, in the workcell | The terminal follows the room of the workcell its track works in. | If one provider of the space stops answering, only its view goes dark. | P |
+
+## GB — Let agents in through a gateway
+
+**Why:** "there should be some pretty clear per mode devices and instruments, which makes it obvious what per mode is, I guess, sort of essential for operation." (UX chat 27 Oct)
+**Where:** manual §19.2 Gateway, §19.3, §19.6 · **Port sources:** OpenRig (BEHAVIOURS.md §3: liveness verdicts; §15: honest unknown); Buzz's agent system (CONTRACT Behaviours 2 and 4: heartbeat liveness, permission requests)
+
+| ID | Starting world and act | Where it happens | Owning operation and agent | Useful completion | Failure or continuation | Grade |
+|---|---|---|---|---|---|---|
+| GB01 | [Arriving] I check the Gateway's light and readiness before giving the workcell's agents work. | §19.2 · the workcell's chain, Gateway | Actuation, through the harness's own control | The light is lit only when the harness reports ready; Readiness reads its database, settings, model and disk. | A refused gateway names its reason and keeps it visible; one that is composed is declared and not in use, and shows as such. | P |
+| GB02 | [Lived-in] I choose how the shell reaches the harness. | §19.2 · Gateway, Transport | Actuation | Local, a trusted child process; Network, with a token; Remote, with a short-lived ticket through a connected machine named by the Remote carrier. | — | M |
+| GB03 | [Lived-in] I set the default answer to an agent's approval request for this workcell. | §19.2 · Gateway, Approvals | Actuation | Ask me each time, allow for the session, or allow always; Session lets a trusted agent work without prompts. | Deny is always mine; a setting the harness refuses to change shows read-only with its reason. | P |
+| GB04 | [Lived-in] I set Stall after to 5 min on the workcell where a slow build runs. | §19.2 · Gateway, Stall after | Actuation | A session counts as stalled only after that long without progress while work is pending. | — | P |
+| GB05 | [Lived-in] I turn Auto-continue on, so a turn that stops on its own is continued. | §19.2 · Gateway, Auto-continue | Actuation | The gateway continues such a turn for up to fifteen minutes. | — | P |
+| GB06 | [Lived-in] I detach a workcell's sessions with Connect, then attach them again later. | §19.2 · Gateway, Connect | Actuation | Detached sessions keep running in their harness and attach again where they are. | — | P |
+| GB07 | [Lived-in] I set how many observers may follow each session. | §19.2 · Gateway, Fan-out | Actuation | Up to that many observers. | A slow observer loses only its own feed. | P |
+| GB08 | [Lived-in] I hot-swap the Gateway for another build from the browser, to reach another harness. | §19.2 · Device view; the browser's Devices | Actuation | The Hermes gateway, the AIKit agency gateway or the Actuation gateway stands in its place and answers to the same controls. | Gateways with similar names stay separate; nothing merges them. | P |
+| GB09 | [Lived-in] I read the link diagram, to see frames in flight and the gateway's health. | §19.2 · Gateway, Compact | Actuation | Dots moving along the line, the replay ring, the heartbeat pulse, and the epoch, last sequence, peers and heartbeat age. | A new epoch means the gateway restarted, and the shell syncs again. | P |
+| GB10 | [Lived-in] I open the Gateway full and filter its frames to one session's tools, to find the tool that stalled it. | §19.2, §19.6 · Pane view, the Frames page | Actuation | Every frame the gateway sent or received, per session, in order, in five lanes and a list; the last tool frame names the stall. | The monitor only reads; it sends nothing and changes no frame. | P |
+| GB11 | [Lived-in] I filter the frames to Messages, to check that my note reached the agent. | §19.2 · the Frames page | Actuation | The steer line shows the note arriving. | — | P |
+| GB12 | [Lived-in] I pause the frame list to read it. | §19.2 · the Frames page, Pause and Keep | Actuation | The list holds still while the gateway goes on keeping frames, up to the number Keep allows. | — | P |
+| GB13 | [Lived-in] I keep the Gateway's tile on the rail. | §19.2, §19.1 · the rail, Frames tile | Actuation | The link diagram, the readiness state and the last eleven frames, newest at the bottom; clicking a frame opens it in Full. | — | P |
+
+## GD — Run work on the right machine, and keep my machines in step
+
+**Why:** "2 envs, omarchy for longer running tests from fresh installs, no builds on omarchy" (decision record #712)
+**Where:** manual §19.18 Remote carrier (Route, Standing, Machine page), §19.19 Link · **Port sources:** Grok Bot 0.68.1 (local execution beside a remote computer); Buzz's agent system (where an agent runs as a first-class choice); Ableton Live 12.0.25 (Link)
+
+| ID | Starting world and act | Where it happens | Owning operation and agent | Useful completion | Failure or continuation | Grade |
+|---|---|---|---|---|---|---|
+| GD01 | [Yours] I read a connected machine's standing and credential, to know whether it can carry the workcell's sessions now. | §19.18 · the workcell's chain, Remote carrier, Route page | Workcell | Ready, Composed or Refused with its reason; Valid, Expired or Revoked; the grant, one row for each operation; the round trip. | An expired credential and a revoked one show as different states; a refused or composed carrier never shows as live. | M |
+| GD02 | [Yours] Before moving a long run, I read the Standing page, to see whether the machine's offers meet what the run needs. | §19.18 · Remote carrier, Standing page | Workcell | The offers for each port, a ring round each the plan chose, and the plan: Satisfiable, Degraded with the need met poorly, or Unsatisfiable with the need and its reason. | A need no offer meets shows as an orange cross; the plan prepares and claims nothing. | M |
+| GD03 | [Yours] I read a machine against the role declared for it. | §19.18 · Remote carrier, Machine page, Declared | Workcell | Each requirement under capabilities, packages, configuration and services, with its verdict: Satisfied, Changeable, Missing or Unsupported. | Reading changes nothing. | M |
+| GD04 | [Yours] I plan the changes, then apply them, to make the machine hold what its role declares. | §19.18 · Machine page, Reconcile (Plan, Apply) | Workcell (Plan, Apply) | Apply makes the changeable requirements so, through the connectors the plan names, verifies, and reports what it changed. | A requirement no connector can change stays missing or unsupported, and the device does not guess a way; with Change at Propose, Apply waits for my confirm. | M |
+| GD05 | [Yours] After an update, I press Verify. | §19.18 · Machine page, Verify | Workcell | The machine is observed and checked against its declaration: Satisfied or Differs. | — | M |
+| GD06 | [Yours] I press Adopt, to start a role's declaration from the machine I have. | §19.18 · Machine page, Adopt | Workcell | What the machine holds is written into the role's declaration under `Control/machines`, ready to edit. | Adopt writes the declaration, never the machine. | M |
+| GD07 | [Yours] A machine has been lost or rebuilt, so I recover it from its declaration. | §19.18 · Machine page, Recover | Workcell | My source synchronises, the plan applies and the machine verifies, stage by stage. | Recover stops at the first stage that fails and keeps the result of each stage before it. | M |
+| GD08 | [Yours] I press Link and read the peers, to join my machines into one ledger and one clock. | §19.19 · the transport, Link, and ▾ beside it | Workcell | Agents on my other machines and in other harnesses show beside my own; Share keeps the ledger, the clock or both in common, and a receipt made on one machine shows on all. | Link shares the ledger and the clock, never a seat. | M |
+| GD09 | [Yours] With Link on, I open Link full and select a session on another machine, to follow its run. | §19.19 · Pane view, Link Full | Workcell; Actuation | Each machine with its sessions and seats; the selected session's thread. | A machine that cannot be reached shows as such and stays in the list. | M |
+| GD10 | [Yours] I remove a machine from Link's Machines, to keep it private for a while. | §19.19 · Link, Machines | Workcell | The machine leaves the link and its sessions no longer show here. | — | M |
+
+## GL — Land the work safely
+
+**Why:** "This could be additional refinements to existing systems or devices or instruments. It could also be new instruments, new devices, new functionality, or it could even be standalone apps." (UX chat 27 Oct)
+**Where:** manual §6, §19.16 Git / landing (Seat page, Checkouts page), §19.17 · **Port sources:** OpenRig (BEHAVIOURS.md §3–§5: a durable seat whose occupants change; §17: refusals that name the state)
+
+| ID | Starting world and act | Where it happens | Owning operation and agent | Useful completion | Failure or continuation | Grade |
+|---|---|---|---|---|---|---|
+| GL01 | [Lived-in] I claim the project's seat for the workcell's lane, so agents can change the project without touching other work. | §19.16 · Git / landing, Seat page. Source: OpenRig §3–§4 | Workcell (the register) · the lane's agents | The seat holds the lane, a new branch from main by default, and Claim reads Yours. | The device never creates a new checkout; a commit from a place that is not a seat is refused. | M |
+| GL02 | [Lived-in] I attach to the lane that stands in a seat, to work beside the agents already on it. | §19.16 · Seat page, Join, Co-workers | Workcell · the co-workers | The session joins the lane and its agents are listed as co-workers. | Starting a new lane instead replaces the standing lane, but never its uncommitted work. | M |
+| GL03 | [Lived-in] Every seat is busy when I need one. | §19.16 · Seat page | Workcell | I attach to a standing lane, or take one over. | The device makes no new checkout to get round a busy seat. | M |
+| GL04 | [Lived-in] I set when the agent commits. | §19.16 · Git / landing, Commit | Workcell | Per turn, per task or by hand; per task keeps the history small and reviewable. | — | M |
+| GL05 | [Lived-in] I leave Push off while I test, and read the diff. | §19.16 · Git / landing, Push; Full | Workcell | The work stays on this machine; Full lists the commits, files and checks with the diff beside them. | — | M |
+| GL06 | [Lived-in] When the work is ready I choose how it lands and press Land, then read the checks. | §19.16 · Git / landing, Land as, Land, Checks | Workcell | The branch lands as a draft merge request, a merge request or a merge; the checks read passed of all and still running, and I open the merge request once they pass. | Land merges by itself only when Land as is Merge; the checks come from the remote and the device never makes them up. | M |
+| GL07 | [Lived-in] I press Play with Land as set, so the work lands itself when it is done. | §19.16 · the transport, Play | Workcell | It lands when the last task ends and the checks pass. | — | M |
+| GL08 | [Lived-in] With Arm off, I approve the agent's commits. | §19.16, §19.14 · the transport, Arm; Approvals | Workcell; Software Factory | Commits wait as proposals until I approve them. | — | M |
+| GL09 | [Lived-in] I punch in and out on the ruler, to mark the steps before and after which nothing is committed. | §19.16 · the transport, Punch in and out | Workcell | Only commits inside the window are made. | — | M |
+| GL10 | [Lived-in] After the merge, I release the seat. | §19.16 · Seat page, Release | Workcell | The seat returns to the main branch and its claim clears. | A seat left on a landed branch is not finished work. | M |
+| GL11 | [Yours] I open the Checkouts page, to see every checkout, seat and lane branch of the machine and what each finding means. | §19.16 · Git / landing, Checkouts page | Workcell | Seats, worktrees and branches, each finding named: seat claimed, on a landed branch, drift, checkout missing, disk below floor, stray branch, worktree outside the register, foreign lane, root is a product checkout. | A finding is a reading, not a verdict; a source that cannot be read shows its refusal word for word and leaves the row empty. | M |
+| GL12 | [Yours] I release a seat the Checkouts page finds standing on a landed branch. | §19.16 · Checkouts page, Release seat | Workcell | The seat is refreshed to the main branch and its claim clears, with a receipt. | It never releases a seat that holds uncommitted files. | M |
+| GL13 | [Yours] I prune a worktree that no seat names. | §19.16 · Checkouts page, Prune worktree | Workcell | The checkout is removed, with a receipt. | It never tends another lane's unmerged work, and never creates a worktree or a seat. | M |
+| GL14 | [Yours] I show faults only and sweep the stray lane branches. | §19.16 · Checkouts page, Sweep branch | Workcell | Each stray branch is removed, with a receipt. | A branch a seat holds or a claim accounts for is not stray and is left alone. | M |
+| GL15 | [Lived-in] I press Capture on Git / landing, to keep a diff as an example. | §19.16 · the transport, Capture | Workcell | The diff is kept as an example. | — | M |
+
+## GR — Keep a run's world, and what it leaves behind
+
+**Why:** "Obviously, at the data level and the file level, and the UX level, the fluidity of moving the data, the information between these modes is also really important." (UX chat 27 Oct)
+**Where:** manual §19.23 Workcell (World, Services, Exposure, Left behind pages; The run's world) · **Port sources:** Grok Bot 0.68.1 (a remote computer per run beside a local execution daemon); OpenRig (BEHAVIOURS.md §13: snapshot and restore)
+
+| ID | Starting world and act | Where it happens | Owning operation and agent | Useful completion | Failure or continuation | Grade |
+|---|---|---|---|---|---|---|
+| GR01 | [Lived-in] I press Play on a track that works in a workcell, so the run gets the world it needs. | §19.23 · the transport, Play | Workcell · the track's agent | Workcell joins the seat when the first task starts, and prepares the run's world: its checkout, its shell, its services, its stores. | The pages read that world from its receipt and never prepare it themselves. | M |
+| GR02 | [Lived-in] I open the World page for the selected run. | §19.23 · the workcell, World page | Workcell | Its bindings by port, each present, degraded, missing, stale or let go; how long it is meant to last, what releasing it keeps, its lease and its checkpoints. | A world on this machine has no lease and lives until it is released; the World tab is dark while a binding is missing or stale. | M |
+| GR03 | [Lived-in] A binding has gone stale, so I read the world again and recover it. | §19.23 · World page, Read now, Recover | Workcell | Read now rereads the world from its receipt; Recover brings missing and stale bindings back. | A binding that lasted only for its task, once lost, does not come back. | M |
+| GR04 | [Lived-in] I take a checkpoint of the run's world. | §19.23 · World page, Checkpoint | Workcell | A new checkpoint stands on the lifetime line, ready to restore from. | — | M |
+| GR05 | [Lived-in] I check whether the services the run needs are up. | §19.23 · the workcell, Services page | Workcell | Each service a branch, solid while it answers, dashed when degraded, crossed when down, with a filled dot where the run needs it; Needed only narrows to those. | — | M |
+| GR06 | [Lived-in] I open the run's preview from its Exposure page. | §19.23 · Exposure page, Open in, Open | Workcell | The endpoint opens on the web or in the pane that has focus. | What the run could not expose is crossed, with the reason. | M |
+| GR07 | [Lived-in] I read what earlier runs left behind and clear what nothing holds. | §19.23 · the workcell, Left behind page | Workcell | The worlds, bindings and sandboxes runs left, each with its finding; Recover brings back a binding not present, and Release orphans releases a sandbox whose lease has ended, with a receipt. | A sandbox the server reports without a lease may still be in use, is not a fault, and is never released. | M |
+
+## RW — Meet the same agents, doing the same work, in every mode
+
+**Why:** "it implies that there is translatability between musical, visual, pure informational, and agentic modes of work" (UX chat 27 Oct) · "no one needs to know QL for it to work." (decision record #709)
+**Where:** manual §25 (opening), §25.1, §25.3, §25.4, §25.5, §19.4 One agent, three owners · **Port sources:** —
+
+| ID | Starting world and act | Where it happens | Owning operation and agent | Useful completion | Failure or continuation | Grade |
+|---|---|---|---|---|---|---|
+| RW01 | [Lived-in] I meet the agent that runs my Factory tasks answering on a Central page. | §19.4, §25 · Central, a world's chain after the packet; Factory, a session's chain | Actuation (how it runs), Software Factory (how much it decides), Central (who it is) · the agent | The same agent with the same settings, the same custody and the same thread; what I learned of it in one mode holds in the other. | Its Scope applies in each place, with that place's default reach. | P |
+| RW02 | [Lived-in] I ask an agent to pick up where it left off, in whichever mode I am. | §25.3 · Enter (Khora, S0′) | Central, AIKit, Actuation, Workcell · the agent | The project, subject, sources, session and machine are entered again: in Factory the agent is seated on its session; in Central the Day and the world open. | — | P |
+| RW03 | [Lived-in] I rely on an agent keeping each thing in its form. | §25.3 · Form (Hen, S1′) | Central, AIKit, Quaternal Logic · the agent | In Factory each task keeps its receipts; in Central each page keeps its template; in Live each clip keeps its source. | — | P |
+| RW04 | [Lived-in] I let an agent find what it can use. | §25.3 · Find (Pleroma, S2′) | AIKit, and every product's actions · the agent | In Factory it racks skills and routes knowledge; in Central it searches with @; in Live it finds devices, sounds and grooves. | — | P |
+| RW05 | [Lived-in] I rely on an agent to hold the times of the act together. | §25.3 · Time (Chronos, S3′) | Central, Quaternal Logic, Factory · the agent | In Factory it keeps the run and its needle; in Central the day and its close; in Technē the ruler. | — | P |
+| RW06 | [Lived-in] I let an agent compose the act: who takes part, what each does, in what order, toward what return. | §25.3 · Compose (Anima, S4′) | Quaternal Logic, Factory, Actuation · the agent or team | In Factory it plans and runs the task; in Central it answers into the page; in Expressions it composes the scene. | — | P |
+| RW07 | [Lived-in] I let an agent say what happened and bring back what was learned. | §25.3 · Return (Aletheia, S5′) | Central, AIKit, Factory · the agent or team | In Factory it lands the work with its checks; in Central it files what the day taught; in Live it keeps the take. | — | P |
+| RW08 | [Lived-in] I look at the practice every agent carries for the agent world. | §25.4, §19.7 · Skillset rack, the Ta-Onta set | AIKit · the agent | The Ta-Onta set: the Methodology loaded before work in any mode, one Method for each power from claim to return, and the skills those Methods call. | — | P |
+| RW09 | [Lived-in] I press an operation that an agent or a program can also call by the same name. | §25.4 · any device | The product that owns the operation | The same operation runs through its owner, whoever calls it. | An operation that does not exist yet says so, and nothing stands in for it. | P |
+| RW10 | [Lived-in] In Live, I let an agent write clips and automation for the torus, the synth and the clock. | §25.5 · Live, tracks and lanes | Quaternal Logic; the set · the agent | The agent's clips and automation play through the instrument, and the take I choose is kept. | — | M |
+| RW11 | [Lived-in] In Expressions, I let an agent compose a scene. | §25.5 · Expressions, a scene | The Expression's owner · the agent | It finds premade characters, scenes and material before making anything new, steps the scene in time, and saves what it made as reusable material tied to its sources. | — | M |
+| RW12 | [Lived-in] I turn from Live to an Expression or to Technē, keeping my place. | §25.1 · the transport, Mode | The shell; Quaternal Logic | The coordinate I stand on, the moment and the reading stay; only the face in front of me changes. | A turn never changes what a thing is, where it came from or who owns it. | P |
+
+## RO — Know how an agent's act was reached
+
+**Why:** "It's about faithfully making that theory into something usable, into a praxis that needs to be upheld" · "unless an agent studies it before it answers, it won't be able to capture" (UX chat 27 Oct)
+**Where:** manual §25.2 One act, in order; §19.15 Decision helpers; §19.4 · **Port sources:** Quaternal Logic's own system (#714)
+
+| ID | Starting world and act | Where it happens | Owning operation and agent | Useful completion | Failure or continuation | Grade |
+|---|---|---|---|---|---|---|
+| RO01 | [Lived-in] An agent acts where Quaternal Logic's rules settle everything. | §25.2 · any act | Quaternal Logic over the ground (the Bimba map, my wikis and sources) | The act is settled by rule; no model is asked. | — | P |
+| RO02 | [Lived-in] An act leaves a choice open among labels an owner allows. | §25.2, §19.15 · the decision helper | AIKit (Kev, on this machine) · the decision helper | Kev picks one or abstains, in the background unless the act must wait. | Kev never acts, writes, answers the collaboration gate, or sends what it reads off the machine. | P |
+| RO03 | [Lived-in] An act needs reading or writing. | §25.2, §19.4 · the Agent | AIKit (the agent's language model) · the agent | The model reads, writes, quotes, explains and proposes. | It never makes its own proposal true. | P |
+| RO04 | [Lived-in] An agent's pick or claim does not hold. | §25.2 · any act | Quaternal Logic checks it | The rules refuse it and name their reason; a gap is named as a question. | The rules never guess, and never fill a gap with a likely answer. | P |
+| RO05 | [Lived-in] I accept, change or refuse what is left of an act. | §25.2 · the act's proposal or review | The product that owns the thing | The owner saves what I accepted, reads it back and makes it findable, and the next act starts from it. | — | P |
+| RO06 | [Lived-in] I read how a result was reached. | §25.2 · the result, wherever it stands | Each step's owner | Its marks: seen in a source, settled by rule, picked by the helper, written by an agent, accepted by me. | A later step adds its own mark and never wipes out an earlier one. | P |
+
+## RF — Read agents and processes at a glance
+
+**Why:** "that's where intuition sees a wholeness in the act as opposed to trying to pull dots together." (UX chat 27 Oct)
+**Where:** manual §25.6 (agent types, habitats and zones, eight run states, process types), §19.4 The stage, §19.1 Agents tile, §19.14 · **Port sources:** OpenRig (BEHAVIOURS.md §15: honest unknown, never a fabricated state)
+
+| ID | Starting world and act | Where it happens | Owning operation and agent | Useful completion | Failure or continuation | Grade |
+|---|---|---|---|---|---|---|
+| RF01 | [Lived-in] I read an agent's creature to know which of the eight run states it is in. | §25.6 · the Agent's face; the Agents tile; Messages | Actuation's run events · the agent | Queued: at rest, head down, dim. Thinking: alert, a flick for each read. Acting: at work. Waiting: still, turned out. Stalled: frozen. Producing: offering what it made. Done: at rest, dim. Failed: slack, head fallen. | A face moves only for something the run did; the idle stays still. | P |
+| RF02 | [Lived-in] I watch whether a creature breathes. | §25.6 · any face | Actuation's check-ins | Breath shows that check-ins are arriving. | A stall does not breathe. | P |
+| RF03 | [Lived-in] I read a run's tree to see where it stands. | §25.6, §19.4 · the stage; a take in the grove | Actuation's run events | Roots light while it reads; bark brightens where it has climbed as it writes; a branch buds for each helper; the crown comes into leaf as it returns; each fruit reddens while its checks run, turns gold when it lands, and falls when refused. | The zone where it failed flushes cinnabar and the crown comes down; progress never goes down or predicts the end. | P |
+| RF04 | [Lived-in] I follow a fallen or harvested fruit back to its tree, and read the ground beneath. | §25.6 · the stage | Actuation; the artefact's owner | A fruit keeps its link to its run after it falls or is harvested; the ground keeps the history: worn paths, shed skins, fallen fruit. | New growth may dim an old mark, and never deletes it. | P |
+| RF05 | [Lived-in] I read where a creature stands in its habitat, to know its role. | §25.6 · the stage; the Agents tile | Actuation | Each habitat's zones are roles: the tree's roots gather, trunk makes, crown delivers; water, shore, sky and cliff, grassland, mountain, hive, desert, field and den have their own; several creatures in one habitat are a crew, each holding its zone. | A creature or environ never stands on a world's body: Earth, places and weather belong to the World. | P |
+| RF06 | [Lived-in] I read a crew's face. | §25.6, §19.15 · the Agentset rack, Full | Software Factory | Several whole creatures in one pane, each in the posture of its own state. | — | P |
+| RF07 | [Lived-in] I read a standing agent's tree. | §25.6 · the stage | Actuation | It fruits every season and adds a ring each year: its age is read in its rings. | — | P |
+| RF08 | [Lived-in] I read a helper on its lead's tree. | §25.6 · the stage | Actuation | The helper climbs its lead's tree as a vine on a host. | — | P |
+| RF09 | [Lived-in] I read a gateway's course. | §25.6, §19.2 · the Gateway | Actuation | A river: a stream with no done. | — | P |
+| RF10 | [Lived-in] I read the Approvals queue's course. | §25.6, §19.14 · Approvals | Software Factory | A lake whose level is its backlog. | — | P |
+| RF11 | [Lived-in] I read the wear of many runs on the ground. | §25.6, §19.16, §18.5 · the Checkouts page; Docs | Workcell; Central | Erosion: drift and worn paths. | — | P |
+| RF12 | [Lived-in] I read a field's cycle and the lanes that follow one another on a seat. | §25.6, §23.6, §19.16 · the NOWs; the Seat page | Central (NOWs); Workcell (seats) | Seasons on the NOWs: active, quiescent, closed, archived; succession on the Seat page: one lane after another on the same ground. | — | P |
+| RF13 | [Lived-in] I turn on reduced motion. | §25.6, §19.4 · the computer's setting | The shell | Faces and grounds change posture only: no breath, ripple or sway, each posture taken at once. | Every state still shows. | P |
+
+## TK — Set what I know at its time and place
+
+**Why:** "And of course Techne would be geared towards knowledge workers." (UX chat 27 Oct). "each clip's source is its constellation, as a sample is an audio clip's." (#709)
+**Where:** manual §3, §8, §10.3, §16.5, §17.1 · **Port sources:** Ableton Live 12.0.25 (session model, object model); Aeon Timeline 2's manual
+
+| ID | Starting world and act | Where it happens | Owning operation and agent | Useful completion | Failure or continuation | Grade |
+|---|---|---|---|---|---|---|
+| TK01 | [Bare] I switch to Technē for the first time and want to see where its work starts. | §17.1 · Pane view · World (Full); the Journey and Trail tiles on the rail; the selected track's chain in Device view | Shell (Technē's layout); Technē (World) | My World fills one pane at the scale of my system, a small grey moon while I have barely begun it, with the Journey and Trail tiles at hand; the workspace I am in remembers the layout. | If the World's owner cannot be reached, the pane keeps its last picture, dimmed, and the device's light is dark (§10.2). | P |
+| TK02 | [Arriving] I look in the browser for what to work with in Technē. | §10.3 · the browser, Technē leading · the preview at the foot of the list | Shell (browser); Technē | My sources lead the list, then the bodies, places, palaces and journeys of the world I stand in; selecting a row shows its preview and changes nothing. | A credential never appears in the browser; Settings shows only its reference. | P |
+| TK03 | [Lived-in] I drop a constellation from the browser onto a Technē track to work with it here. | §17.1 · Session view · a reading track; #709 | Technē, reading the wiki constellation (AIKit) | Technē makes its own clip of the constellation, and the Clip panel names the constellation as the clip's source. | Moving between modes transcribes; nothing is copied, recreated or reprocessed (#709). | P |
+| TK04 | [Lived-in] With an event selected, I choose Show in Browser and switch to Expressions to see what that mode makes of the same constellation. | §16.5 · Clip view · Clip panel; the browser's preview; #709 | Shell (browser); the wiki constellation (AIKit) | The browser keeps the constellation through the mode change, and its preview shows what Expressions makes of it; a drop on an Expression track makes that mode's clip of it. | Changing mode closes nothing and never sends, shows or launches anything by itself (§3). | P |
+| TK05 | [Arriving] I fold a reading's tracks under its head to read several readings at once. | §17.1 · Session view or Arrangement view · the reading's track head (U) | Technē (reading); shell (fold) | The head keeps the stream's name, its colour and the reading's author, with its tracks folded beneath it until I open them again. | A fold is a way of looking, not a change; Undo does not take it back (§10.9). | P |
+| TK06 | [Lived-in] I follow one subject through every place it turned up, in order. | §17.1 · Arrangement view · an Occurrences track and its field thread | Technē (reading) | The subject's located occurrences stand in order on the track, and the ruler draws them as a field thread. | An empty place stays empty; nothing invents one. | P |
+| TK07 | [Lived-in] I switch a reading off so that a walk passes it by. | §17.1 · the mixer row · Activator | Technē (reading) | The reading stays on the ruler, dimmed, keeps its place and settings, and a walk passes it by. | — | P |
+| TK08 | [Lived-in] I attend to two readings alone. | §17.1 · the mixer row · Solo, from the track's menu | Technē (reading) | The ruler and the instruments show only the soloed readings; the others keep their place. | Solo waits in the track's menu, since S plays a note of the Jankó keyboard (§10.9). | P |
+| TK09 | [Lived-in] I arm a journey track so the instrument can write into it. | §17.1 · the mixer row · Arm | Technē (journey) | A walk I record, or a stop I place, is written into the armed track. | With Arm off nothing is written into the track; the track has no Monitor. | P |
+| TK10 | [Lived-in] I keep a walk as a journey track and read its stops in walk order. | §17.1 · Arrangement view · a journey track and the stop rail under it | Technē (journey) | The walk's stops run as a rail under the track, numbered in walk order. | A stop with no place, no moment or no scene shows that it holds none. | P |
+
+## TE — Open an event and see how sure anyone is of it
+
+**Why:** "What do I think, and who am I? Where do I come from? What's my... what are the antecedent conditions or prerequisites for me thinking this way?" (UX chat 27 Oct)
+**Where:** manual §8, §16.5, §17.1 Clip view · **Port sources:** Aeon Timeline 2's manual, PeriodO
+
+| ID | Starting world and act | Where it happens | Owning operation and agent | Useful completion | Failure or continuation | Grade |
+|---|---|---|---|---|---|---|
+| TE01 | [Lived-in] I select an event and want to know first how sure anyone is of it. | §17.1 · Clip view · Clip panel, Standing | Technē (reading) | Standing shows first and sets the clip's line: a fact solid, a claim lighter, an inference dashed, a guess dotted, a dispute hatched with each side named, a gap an empty slot with an honest label. | Standing is a reading; placing the event anywhere never raises it. | P |
+| TE02 | [Arriving] I read when an event happened, as precisely as its source says. | §17.1 · Clip view · Clip panel, Date and Span | Technē (reading) | The date stands in the source's words, such as "12th c." or "1963", a circa date as a hatched band, and the span gives the event's life on the ruler with the loop brace over it as its occasion window. | An event without a date gets none made up; the ruler says "No dates disclosed". | P |
+| TE03 | [Lived-in] I open the event that holds the one I selected. | §17.1 · Clip view · Clip panel, Parent | Technē (reading) | The parent event opens with its children; zooming out on the ruler folds the children into it. | An event with no parent shows none. | P |
+| TE04 | [Arriving] I follow a passage an event gathered back to where it came from. | §17.1 · Clip view · editor, Material tab | Technē; the source's owner | The event's passages and occurrences stand by time, and following one lands me on the line it came from. | The material belongs to its sources; the event has nothing of its own to edit. | P |
+| TE05 | [Lived-in] I see how an event relates to others. | §17.1 · Clip view · editor, Relations tab | Technē, from the wiki's typed relations (AIKit) | Each typed relation shows in the colour and line of its standing. | Two events placed side by side draw no relation. | P |
+| TE06 | [Lived-in] I see the bounded whole an event belongs to. | §17.1 · Clip view · editor, Constellation tab | Technē, from the wiki constellation (AIKit) | The constellation is drawn round the event. | The constellation is the wiki's; Technē draws it and keeps no copy (#709). | P |
+| TE07 | [Arriving] I check where a reading took an event from, and how it was admitted. | §17.1 · Clip view · editor, Source tab | Technē; the source's owner | The source shows at its revision, with how it was admitted. | If the owner cannot be reached, the clip keeps its last content, dimmed, and cannot be edited (§16.5). | P |
+| TE08 | [Lived-in] I want to say that two events belong together. | §17.1 · Clip view · Tools; then §17.4 Canvas | Technē | An event offers no editing tools, so I draw the line on the Canvas, where it stays a suggestion until the relation's owner agrees. | Nothing on the event changes. | P |
+| TE09 | [Lived-in] I select a stop of a walk and read what it stands. | §17.1 · Clip view · Clip panel for a stop | Technē (journey) | Place, Moment, Thing, Scene and Narration show together: where the World goes, where the clock goes, what the stop is about, the scene that launches and the guide's words. | A stop with no place, no moment or no scene shows that it holds none; nothing invents one. | P |
+| TE10 | [Lived-in] I extend another author's reading with my own and choose which stands. | §17.1 · Arrangement view · Takes on a reading | Technē (reading) | My reading lies as a layer over the earlier one, and I choose the take that stands. | A later reading never rewrites the earlier one. | P |
+
+## TA — Stand a stop: its moment, its place and its scenes at once
+
+**Why:** "and, of course, turning these into interactive experiences for other people." (UX chat 27 Oct)
+**Where:** manual §3, §17.1 Launch panel and Main track · **Port sources:** Ableton Live 12.0.25 (clip and scene follow actions); Godot's animation state machine; Unity Timeline's documentation
+
+| ID | Starting world and act | Where it happens | Owning operation and agent | Useful completion | Failure or continuation | Grade |
+|---|---|---|---|---|---|---|
+| TA01 | [Lived-in] I launch an event or a stop from Session view. | §17.1 · Session view · the clip's ▶, or Enter | Technē; the scenes through Expressions; the sky from Quaternal Logic | The clock goes to its moment, the World goes to its place, and the scenes it carries launch. | Launch stands the stop and never changes the event. | P |
+| TA02 | [Lived-in] I launch a stop across every track from the Main track. | §17.1 · Session view · the Main track's row launchers | Technē | The row's stop stands with its event and the scenes it carries. | If an owner cannot be reached, the tracks keep what was last read, dimmed, and nothing launches (§10.2). | P |
+| TA03 | [Lived-in] I choose how the walk reaches one stop. | §17.1 · Clip view · Launch panel, Arrival | Technē | Global follows the transport's Quantize; Fly, Cut or Fade sets this stop's own arrival. | A stop left on Global changes with the transport's Quantize. | P |
+| TA04 | [Lived-in] I let a walk step down one Expression scene by scene. | §17.1 · Clip view · Launch panel, Follow action: Next stop | Technē | Next stop on one track steps down that track's clips, as Live's clip follow actions do. | A deactivated clip is passed by (§10.2). | P |
+| TA05 | [Lived-in] I let a walk pass through several Expressions, one scene from each. | §17.1 · Session view · rows of stops; Launch panel, Follow action | Technē | The walk steps from row to row, as Live's scene follow actions do, and may mix that with stepping down one track. | A walk through several Expressions changes track at each stop. | P |
+| TA06 | [Lived-in] I hold a walk at a stop, or send it back to its start when the stop ends. | §17.1 · Clip view · Launch panel, Follow action: Stay or Return to start | Technē | The walk stays at the stop, or returns to its start stop. | The start stop is set on the Journey (§17.6). | P |
+| TA07 | [Lived-in] I make a slow arrival into the next stop. | §17.1 · Clip view · Launch panel, Transition time and Curve | Technē | The change into the next stop lasts up to ten seconds, linear or eased in, out or both; Fade with a longer time arrives slowly. | — | P |
+| TA08 | [Lived-in] I choose when the next stop's scene takes over. | §17.1 · Clip view · Launch panel, Switch | Technē; the scene through Expressions | The next scene takes over at once, in step with the scene's beat, or when the outgoing scene ends. | — | P |
+
+## TR — Lay history on one ruler
+
+**Why:** "So adding temporal, geographic understanding" (UX chat 27 Oct)
+**Where:** manual §8, §17.1 Arrangement view, §17.5 · **Port sources:** Aeon Timeline 2's manual, TimelineJS3, vis-timeline, PeriodO, Histography, Chronas; Archetypal Earth, ported as code
+
+| ID | Starting world and act | Where it happens | Owning operation and agent | Useful completion | Failure or continuation | Grade |
+|---|---|---|---|---|---|---|
+| TR01 | [Arriving] I press Tab to see what came before, what followed and what happened at once. | §17.1 · Arrangement view · the ruler | Technē (timeline) | The ruler opens on the subject I selected, from deep time to today, stretched so that old ages and recent days both stay readable, a marked break joining the long past to today, the major unit in one row and the minor below, both changing as I zoom. | While it loads the ruler and the tracks stand at once, and clips still being read are dimmed (§10.2). | H (core) |
+| TR02 | [Lived-in] I zoom past the range of any calendar. | §17.1 · Arrangement view · the ruler | Technē (timeline) | The ruler counts years, its ticks stepping by a million, ten million, a hundred million and a billion. | — | P |
+| TR03 | [Lived-in] I move and zoom with the overview strip. | §17.1 · Arrangement view · the overview strip | Technē (timeline) | The strip shows where the view sits over the whole domain; dragging it moves the view, and resizing it zooms. | Overview strip Off hides it. | P |
+| TR04 | [Lived-in] I add a second historian's reading as a layer. | §17.1 · Arrangement view · Settings, Readings | Technē (reading) | The layers stack, a later reading lying over an earlier one, and dispute marks show where the two differ. | A later reading extends an earlier one and never rewrites it. | P |
+| TR05 | [Arriving] I see the named ages behind the events. | §17.1 · Arrangement view · Epoch bands | Technē (timeline) | Epochs stand as nested bands with the labels their sources give, and the narrowest epoch colours everything inside it. | Colour changes only when meaning changes; the ruler never animates by itself. | P |
+| TR06 | [Lived-in] I see the lives of people, places and institutions behind their events. | §17.1 · Arrangement view · Spans | Technē (timeline) | Each span is drawn thin behind its events. | Spans Off hides them. | P |
+| TR07 | [Lived-in] Where events crowd at a broad zoom, I open the crowd. | §17.1 · Arrangement view · a count on the ruler | Technē (timeline) | A count such as "7 events, 1601 to 1650" opens one zoom step in when I click it. | A count is never drawn as an event. | P |
+| TR08 | [Lived-in] I keep child events open at a broad zoom. | §17.1 · Arrangement view · Settings, Nesting | Technē (timeline) | Auto folds children into their parent as I zoom out; Open all keeps them open. | — | P |
+| TR09 | [Lived-in] I switch the ruler to measure the time of my sessions instead of the history I study. | §17.1 · Arrangement view · Settings, Time axis | Technē (timeline) | The same readings lie along the time of my sessions, or along history, as the reading's corpus keeps it. | — | P |
+| TR10 | [Lived-in] I add my own work to the ruler beside the history. | §17.1 · Arrangement view · Settings, Your work: Days, Runs, Receipts | Technē (timeline); Central (Days); Factory (runs) | The strata of my days, runs and receipts lie beside what I study, so that zoomed to a year I see what I did while a book was written. | A Day stands thin on the ruler, since the Factory runs in it carry no clock time (§17.11). | P |
+| TR11 | [Arriving] I lay out a source's undated but ordered events. | §17.1 · Arrangement view · Settings, Time scale: Relative | Technē (timeline) | The events stand as Day 0, Day 1 and on, with no calendar year shown. | Relative shows only when a source gives a starting point. | P |
+| TR12 | [Lived-in] I place a new event at the point I click on the ruler. | §17.1 · Arrangement view · the transport's Draw, on an armed track | Technē (reading) | A new event stands where I clicked. | Placement gives the event no standing it does not have. | P |
+
+## TV — Read history by cause, recurrence and concurrency
+
+**Why:** "intuitive recognition, which is much more about stepping back away from particular patterns to see a whole." (UX chat 27 Oct)
+**Where:** manual §8, §17.1 Arrangement view · **Port sources:** Aeon Timeline 2's manual, Histography, Chronas
+
+| ID | Starting world and act | Where it happens | Owning operation and agent | Useful completion | Failure or continuation | Grade |
+|---|---|---|---|---|---|---|
+| TV01 | [Lived-in] I trace a chain of cause and influence. | §17.1 · Arrangement view · Read by: Cause | Technē (timeline) | Selecting a chain lights its hops in order, each with its time offset, and Chronology brings the events back by date. | A hop with no date says so; checking a story means looking for those hops. | P |
+| TV02 | [Lived-in] I see what keeps returning. | §17.1 · Arrangement view · Read by: Recurrence | Technē (timeline) | What recurs is shown with each return marked. | — | P |
+| TV03 | [Lived-in] I see what happened at once, across readings and across my own work. | §17.1 · Arrangement view · Read by: Concurrency | Technē (timeline) | Concurrent events stand together across readings and my work. | Being at once is not being caused; no edge is drawn for it. | P |
+| TV04 | [Lived-in] I show the relations between events. | §17.1 · Arrangement view · Settings, Edges | Technē (timeline) | Edges take the colour and line of their standing, with a legend whenever edges show. | Placing two events side by side draws no edge. | P |
+| TV05 | [Lived-in] I read only what is established. | §17.1 · Arrangement view · Settings, Standing floor: Facts only | Technē (timeline) | Events below the chosen standing are hidden. | Hiding never changes an event's standing. | P |
+| TV06 | [Arriving] I want to see why an event is dated as it is. | §17.1 · Arrangement view · the event's evidence | Technē; the source's owner | The source opens at the passage that gives its date. | A precise mark needs a precise source; a low-precision date draws as a band. | P |
+| TV07 | [Lived-in] I set the span I read over. | §17.1 · Arrangement view · Settings, Window; the transport's Loop | Technē (timeline) | The ruler reads over the window, and the World and the other panes take the same window. | All time is the default. | P |
+| TV08 | [Lived-in] I keep this arrangement of the ruler under a name. | §17.1 · Arrangement view · Settings, View | Technē (timeline) | The saved view keeps the camera, Read by, the filters, the open frame and the stack of events I held, and applying it brings them back. | — | P |
+| TV09 | [Lived-in] I read the ruler in peace. | §17.1 · Arrangement view · focus mode (F) | Technē (timeline) | The ruler stands alone for reading. | Esc returns. | P |
+
+## TW — Build my planet
+
+**Why:** "building my creative world out of these concepts and whatnot" (UX chat 27 Oct). "This is why the whole thing's based around world-building. It's there to reflect and help refine the reflection of one's world." (UX chat 27 Oct)
+**Where:** manual §2, §8, §17.2 · **Port sources:** MapLibre GL JS (Google Earth, Cesium, QGIS surveyed); Archetypal Earth, ported as code
+
+| ID | Starting world and act | Where it happens | Owning operation and agent | Useful completion | Failure or continuation | Grade |
+|---|---|---|---|---|---|---|
+| TW01 | [Bare] I open the World in a pane to see my planet. | §17.2 · Pane view · World (Full), System scale | Technē (World); Quaternal Logic (the sky) | My World turns under its star, lit and showing its phase, with only agents at work and what they have just made in orbit. | The idle body is still; it never spins by itself. | P |
+| TW02 | [Bare] I shape My World's land: how much sea, how many continents, how rugged the relief, how the coast runs. | §17.2 · Device view · World, Landmass | Technē (World) | The planet redraws at once with plains, ranges, rivers, lakes, sea floor and a smooth, fjord or archipelago coast, and keeps that land from the whole planet down to one valley. | Earth and other worlds are read-only; the same seed and settings give the same planet on any machine. | H (core) |
+| TW03 | [Bare] I set how warm and wet My World is and how far its ice reaches. | §17.2 · Device view · World, Climate | Technē (World) | Desert, savanna, grassland, forest, jungle and tundra move to where warmth and moisture put them, with a snow line and ice caps that draw back as the climate warms. | — | P |
+| TW04 | [Bare] I set My World's air, clouds and the tilt of its axis. | §17.2 · Device view · World, Sky | Technē (World) | The air shows at the limb, clouds lie in bands that move at different speeds, and the seasons swing with the tilt. | Weather follows the occasion; the same occasion shows the same weather on any machine. | P |
+| TW05 | [Lived-in] I reroll the seed for a new body from the same settings. | §17.2 · Device view · World, Body: Reroll | Technē (World) | A new land is drawn, and every location keeps its name and the position I gave it. | Where a spot is now sea, the World draws the location on the nearest shore and says so; nothing moves until I move it. | P |
+| TW06 | [Bare] I place a place, a palace, a portal or a route on My World. | §17.2 · Pane view · World (Full); Device view, Place kind; the transport's Draw | Technē (World) | A click on the body places the chosen kind, and the World suggests a name from the seed that I keep or replace. | A click makes an approximate place, and a drag does not make it exact. | P |
+| TW07 | [Lived-in] I come down from the whole body to one place. | §17.2 · Pane view · World, Scale: Body, Region, Place | Technē (World) | Each scale keeps the selected thing in view, and the land stays where it is, finely drawn down to the closest view. | — | P |
+| TW08 | [Lived-in] I fly to a place from anywhere. | §17.2 · Pane view · World (Full) | Technē (World) | The flight ends at a scale that fits the place's precision: a street for an exact place, a city for an approximate one, the whole region for a region. | A place with no position does not fly; the World lists it in a separate register. | P |
+| TW09 | [Lived-in] I turn the body and select a location on it. | §17.2 · Pane view · World (Full) | Technē (World) | Dragging turns the body; clicking a location selects it. | — | P |
+| TW10 | [Lived-in] I plan a trip through a subject on Earth. | §17.2 · Pane view · World, Body: Earth; Place kind: Route | Technē (World) | The stops stand on Earth, joined in order by a route. | Earth is given; its land cannot be changed, only placed on. | P |
+| TW11 | [Lived-in] I set the World's scale, aperture, audience and moment from its compact face on the chain. | §17.2 · Device view · World (Compact), four macros | Technē (World) | The small live picture changes at once; folded, the World shows the body's name, the scale and the aperture. | — | P |
+| TW12 | [Yours] I open a body built by an older generator. | §17.2 · Pane view · World (Full) | Technē (World) | It draws as it always did until I next change it; then the current generator rebuilds it from the same seed and settings. | — | P |
+
+## TY — See my worlds and agents as one system
+
+**Why:** "so that it's clear I am represented in this system, archetypally speaking, as well as all of my projects are represented in this system." (UX chat 27 Oct)
+**Where:** manual §2, §5, §17.2 · **Port sources:** MapLibre GL JS; Archetypal Earth, ported as code
+
+| ID | Starting world and act | Where it happens | Owning operation and agent | Useful completion | Failure or continuation | Grade |
+|---|---|---|---|---|---|---|
+| TY01 | [Arriving] After Setup brings in my projects, I find each as a body in my system. | §17.2 · Pane view · World, System scale; §10.11 | Technē (World); Central (Setup, Projects step) | Each project turns as a body built from its own seed, with a landing place on my planet, in the world's colour that its track, clips and body all share. | Until I land it, a world stands at a spot named from its ref and says so. | P |
+| TY02 | [Arriving] I land a world where I want it on my planet. | §17.2 · Pane view · World (Full) · Land | Technē (World) | The world's landing place stays at the spot I chose. | — | P |
+| TY03 | [Lived-in] I admit a world to today on a Central track and look for it in my sky. | §17.2 · Pane view · World, System scale; §5 Central track | Technē (World); Central (today's set) | The admitted world takes a body in my system. | — | P |
+| TY04 | [Lived-in] I see how lived in each of my worlds is. | §17.2 · Pane view · World, System and Body scales | Technē (World) | A world barely begun is a small grey moon; one lived in for a year has seas, air, colour and weather, read from how long it has existed, how much it holds and how often I shaped it. | The look is never stored and never a setting, and nothing makes a world look less finished. | P |
+| TY05 | [Lived-in] I watch the agents at work for me. | §17.2 · Pane view · World, System scale | Technē (World), drawing Factory's running sessions | Agents at work ride the inner ring, each keeping its place, and what they have just made rides the outer ring, drifting off as it ages. | My files, open pages and works to hand stand on the ground, never in orbit. | P |
+| TY06 | [Lived-in] I open something in orbit. | §17.2 · Pane view · World, System scale | Technē (World); the object's owner | The selected object opens. | — | P |
+| TY07 | [Lived-in] I enter a project's place on my planet. | §17.2 · Pane view · World, Place scale | Technē (World) | I am on that world. | — | P |
+| TY08 | [Lived-in] I walk between places and look at where I have been. | §2, §17.2 · Pane view · World (Full) | Technē (World) | Every walk I take wears a path between places. | — | P |
+| TY09 | [Lived-in] I turn the World to its graph side. | §17.2 · Pane view · World, View: Graph | Technē (World) | The same material lays out by connection, each node in the colour of what it is, the ties showing what joins them; Space returns to the body. | The graph holds no data of its own. | P |
+| TY10 | [Lived-in] I shape the graph side: its reach, its spread and which ties show. | §17.2 · Pane view · World, View: Graph, its own controls | Technē (World) | Hops, spread and pull change the layout; occurrences show as dust; ties from a source, inferred or from a site show or hide; nodes hold to their sky anchors or not; Fit brings it all into the pane. | — | P |
+| TY11 | [Lived-in] I glance at my planet from any mode. | §17.2 · the rail · World widget | Technē (World); Quaternal Logic (today's sky) | The widget shows my planet small, with its phase and today's sky; clicking it opens the World in a pane at the same scale. | — | P |
+
+## TO — Stand in another moment, look further out, and see what others see
+
+**Why:** "This being, I guess, co-extensive with their personal world, the shared world, would point them in the direction of, I guess, the personal being the collective, and vice versa." (UX chat 27 Oct). "the responsibility to a world is made explicit again." (UX chat 27 Oct)
+**Where:** manual §2, §4, §17.2 · **Port sources:** MapLibre GL JS (Google Earth, Cesium, QGIS surveyed); Archetypal Earth, ported as code
+
+| ID | Starting world and act | Where it happens | Owning operation and agent | Useful completion | Failure or continuation | Grade |
+|---|---|---|---|---|---|---|
+| TO01 | [Lived-in] I stand in a past date to work there. | §17.2 · Device view · World, Occasion; §4 | Technē (World); Quaternal Logic (the sky) | The sky, the shading of day and night on Earth, the weather on every body I built and the places valid then all follow the date. | If the sky's owner is not available, the sky layer says why and draws nothing in its place. | P |
+| TO02 | [Lived-in] I mark a window of a past moment. | §17.2 · the transport's Loop and punch; World, occasion window | Technē (World) | Only the places that were valid in the window show on the body. | Imagery does not turn back in time; the occasion filters places, not pictures. | P |
+| TO03 | [Lived-in] I let the moment of the stop I am on drive the World. | §17.2 · Device view · World, Occasion: a stop | Technē (World, journey) | The sky, weather and valid places follow the stop's moment. | — | P |
+| TO04 | [Lived-in] I widen how far I look, from My World alone to the fields it is joined to. | §17.2 · Device view · World, Aperture; the transport's Key | Technē (World); the shared field | World, Local, Shared and Federated each bring the next remove into view, and what lies just past the edge is counted and offered. | Other worlds show only what they have shown. | P |
+| TO05 | [Lived-in] I look at My World as the shared field and the public see it. | §17.2 · Device view · World, View as; the transport's Key | Technē (World) | Field shows what I have not shown lying under cloud; Public shows what the public sees. | — | P |
+| TO06 | [Lived-in] I raise something into wider view. | §2, §17.2 · World | Technē (World) | It shows to the wider audience once I have agreed. | Raising anything into wider view always asks me first. | P |
+| TO07 | [Lived-in] I visit someone else's world. | §17.2 · Pane view · World, Aperture: Shared; select its planet | Technē (World); the shared field; the agent that keeps that world | I land on what its owner has shown, tinted and clouded as they left it, with the agent that keeps it there to talk to. | Another world's body is read-only; being findable, reachable, in touch and trusted are separate steps, each the owner's to give. | P |
+| TO08 | [Lived-in] I receive something from another world's agent. | §2, §17.2 · World | Technē (World); the giving world's agent | It arrives in My World under their name. | It stays theirs until I make it my own. | P |
+| TO09 | [Lived-in] I choose which relations between worlds show. | §17.2 · Device view · World, Relations shown | Technē (World) | Anchor, participate, contribution, watch, projection and federate lines cross the dark, and an open contact shows while it lasts. | — | P |
+| TO10 | [Lived-in] I see the shared field whole. | §17.2 · Pane view · World, Scale: Field | Technē (World); the shared field | The field's worlds turn as planets around a shared star, joined fields at a remove, contributions crossing the gap as particles. | — | P |
+| TO11 | [Lived-in] I anchor a place of My World to a real place on Earth. | §17.2 · Pane view · World, Body: Earth | Technē (World) | The location stands on Earth and the World draws the anchor line from my place to it. | A change to a place goes to its owner as a proposal. | P |
+| TO12 | [Arriving] I read where a thing stands and how sure that is. | §17.2 · Pane view · World, Scale: Place | Technē (World); the source's owner | The place shows its exact position, its precision and the frame it was measured in, and opens its source. | An approximate place never looks exact, and a mythic place looks mythic in every view. | P |
+| TO13 | [Arriving] I add live imagery, terrain and day and night to Earth. | §17.2 · Device view · World, Earth layers | Technē (World); the imagery's source | Each layer shows on Earth naming its source. | Live imagery and terrain need my consent first; Offline is the default. | M |
+
+## TG — Read my notes link by link
+
+**Why:** "So this is why the foundation, in terms of data model, are the quaternal logic-formed wiki constellations of the intelligence system." (UX chat 27 Oct)
+**Where:** manual §5, §17.3 · **Port sources:** tldraw, Excalidraw, Obsidian `.canvas`, Miro's documentation (canvas and graph); Obsidian 1.7.7 (graph and links)
+
+| ID | Starting world and act | Where it happens | Owning operation and agent | Useful completion | Failure or continuation | Grade |
+|---|---|---|---|---|---|---|
+| TG01 | [Arriving] I open a note and the Knowledge graph beside it, and select a node. | §17.3 · Pane view · Knowledge graph (Full) beside a Document | Technē (Knowledge graph) over the wiki (AIKit) | The node's note opens in the reader beside the graph with its backlinks and its typed relations in and out. | The graph shows what the wiki holds and stores no nodes of its own. | P |
+| TG02 | [Arriving] I preview a node, then open its source. | §17.3 · Pane view · Knowledge graph (Full) | Technē (Knowledge graph) | Pointing shows a preview; double-clicking opens the source. | A small node stays quiet until I zoom in or select it. | P |
+| TG03 | [Lived-in] I reach farther from the note I hold, up to the whole wiki. | §17.3 · Device view · Depth, Scope | Technē (Knowledge graph) | Hops are added one at a time up to three, and Whole wiki draws the entire wiki. | — | P |
+| TG04 | [Lived-in] I let more of a large wiki show at once. | §17.3 · Device view · Budget | Technē (Knowledge graph) | Up to the budget I set, from 8 to 4096 nodes, show. | The graph says when the budget hides more. | P |
+| TG05 | [Arriving] I look for what is missing in an Obsidian vault I brought in. | §17.3 · Pane view · Knowledge graph; Device view, Ghosts: Show | Technē (Knowledge graph) | A link with no target stands as a dashed, hollow node whose label says how many sources hold it; selecting it shows which notes hold the link. | A ghost never takes a placeholder. | P |
+| TG06 | [Lived-in] I read the same notes as a list, a tree or the form of a whole. | §17.3 · Device view · View: List, Tree, Graph, Form | Technē (Knowledge graph) | The same notes and filters show in the chosen shape. | — | P |
+| TG07 | [Lived-in] I jump around a large graph and back again. | §17.3 · Pane view · the minimap; Back and Forward | Technē (Knowledge graph) | Clicking the minimap jumps the view; Back and Forward return to an earlier view with the same camera, selection and filters. | Fit changes only the camera; Clear filters keeps the camera and the selection. | P |
+| TG08 | [Lived-in] I follow a line of thought along its direction. | §17.3 · Device view · Arrows | Technē (Knowledge graph) | Each line shows its direction. | — | P |
+| TG09 | [Lived-in] I choose which labels show. | §17.3 · Device view · Labels | Technē (Knowledge graph) | Labels show as I zoom, all at once, or only near the selection. | — | P |
+| TG10 | [Lived-in] I keep a graph view to come back to. | §17.3 · Device view · a saved view | Technē (Knowledge graph) | The saved view keeps the filters and the camera. | — | P |
+| TG11 | [Lived-in] I keep the neighbourhood of my selection on the rail. | §17.3 · the rail · Knowledge graph widget | Technē (Knowledge graph) | The widget shows the selection's neighbourhood, its centre marked and the nodes an agent touched coloured; a click recentres it and the open mark opens the full graph in a pane. | A link that does not resolve shows as a ghost node. | P |
+
+## TS — Narrow the graph and act on what it shows
+
+**Why:** "So this is why the foundation, in terms of data model, are the quaternal logic-formed wiki constellations of the intelligence system." (UX chat 27 Oct)
+**Where:** manual §17.3 · **Port sources:** Obsidian 1.7.7 (graph and links)
+
+| ID | Starting world and act | Where it happens | Owning operation and agent | Useful completion | Failure or continuation | Grade |
+|---|---|---|---|---|---|---|
+| TS01 | [Lived-in] I narrow the graph to some kinds of note and some families of relation. | §17.3 · Device view · Kinds, Relation types | Technē (Knowledge graph) | Each filter stays on screen as a chip, and removing the chip removes the filter. | Text links, shared tags, the wiki's typed relations, constellation members and my own proposals stay apart; no filter hides where a relation comes from. | P |
+| TS02 | [Lived-in] I choose between keeping a match's context and showing matches only. | §17.3 · Device view · Filter mode | Technē (Knowledge graph) | Context dims the rest; Matches only hides it, and the graph says it shows part of the whole. | A node with hidden neighbours is never called unrelated; a hidden private note leaks no label, count or line. | P |
+| TS03 | [Lived-in] I hide relations that stand below a level. | §17.3 · Device view · Standing floor | Technē (Knowledge graph) | Only relations at or above the chosen standing show. | — | P |
+| TS04 | [Lived-in] I check what a change to a folder, a note or a Day would reach before I make it. | §17.3 · Pane view · the reader: References, Links, Sessions; Device view, Sessions | Technē (Knowledge graph); Central; Factory (session records) | The reader lists the files and pages that mention it, the notes it links to with their relations, and the sessions whose records name it, open or also closed; each list names its source. | A source that cannot be read shows its refusal, and its list stays empty; an empty result, an incomplete read and a failed provider each say which they are. | P |
+| TS05 | [Lived-in] I colour a set of nodes as a group. | §17.3 · Device view · Groups | Technē (Knowledge graph) | The group stands out in its colour. | A group changes the look of nodes, never what they are. | P |
+| TS06 | [Lived-in] I draw a relation between two notes in the graph. | §17.3 · Pane view · Knowledge graph; the transport's Arm and Re-enable | Technē (Knowledge graph); the relation's owner; an agent | My line stands as a proposal; with Arm on, an agent writes a relation directly with a receipt, and Re-enable gives back one it holds. | A drawn line states no fact until its owner accepts it; with Arm off the agent proposes. | P |
+| TS07 | [Lived-in] I arrange the same notes by hand. | §17.3 · Pane view · the node menu: Hand to Canvas | Technē (Knowledge graph, Canvas) | The Canvas opens on the same notes. | — | P |
+| TS08 | [Lived-in] I give a selection of nodes to an agent. | §17.3 · Pane view · Knowledge graph; the transport's Capture, in Central | Technē (Knowledge graph); Central (Packet) | In Central, Capture puts the selected node in the packet; elsewhere it keeps the present view as a scene. | The graph never loads a note into an agent's context by itself. | P |
+
+## TQ — Bring Quaternal Logic into the field round a note
+
+**Why:** "because intuitively, six is sort of the Goldilocks number for how much a mind can hold at a glance." (UX chat 27 Oct)
+**Where:** manual §17.3 Quaternal Logic's aperture · **Port sources:** QL's own system
+
+| ID | Starting world and act | Where it happens | Owning operation and agent | Useful completion | Failure or continuation | Grade |
+|---|---|---|---|---|---|---|
+| TQ01 | [Yours] I hold a note and ask the graph to explain how Quaternal Logic stands round it. | §17.3 · Device view · Aperture page, Aperture: Explain | Technē (Knowledge graph); Quaternal Logic | The pass always comes in from the whole, 5, through the ground, 0, to the first step, 1, and explains the positions it admits. | The aperture is orientation; the wiki's own correctness never waits on it. | P |
+| TQ02 | [Yours] I ask for positions 2 and 3, say the reading needs its context, and set the budget to 4. | §17.3 · Device view · Aperture page: Positions, Context, Aperture budget | Technē (Knowledge graph); Quaternal Logic | The pass admits 5, 0, 1 and 2 and names 3 and 4 as left out; the display draws the way in as a bright arc, each admitted position lit with its place in the order, the left-out ones dashed. | Raising the budget to 6 admits all six. | P |
+| TQ03 | [Yours] I read a note through its whole frame. | §17.3 · Device view · Aperture page: Whole frame | Technē (Knowledge graph); Quaternal Logic | All six positions come in: the full frame. | The budget caps how many positions one pass admits, and names those it leaves out. | P |
+| TQ04 | [Yours] I carry a note's refraction from a Lens through the positions the aperture admits. | §17.3 · Device view · Aperture: Formal; §17.11 Lens on the note's reading | Technē (Knowledge graph, Lens); Quaternal Logic | The note's refraction is carried through the admitted positions. | Formal needs a refraction of the note. | P |
+| TQ05 | [Arriving] I read an ordinary wiki with no Quaternal Logic laid over it. | §17.3 · Device view · Aperture: Ordinary | Technē (Knowledge graph) | The wiki stands on its own, and the aperture is only offered. | — | P |
+
+## TC — Think out loud on a table
+
+**Why:** "intuitive recognition, which is much more about stepping back away from particular patterns to see a whole." (UX chat 27 Oct)
+**Where:** manual §8, §17.4 · **Port sources:** tldraw, Excalidraw, Obsidian `.canvas`, Miro's documentation
+
+| ID | Starting world and act | Where it happens | Owning operation and agent | Useful completion | Failure or continuation | Grade |
+|---|---|---|---|---|---|---|
+| TC01 | [Arriving] I drag a note or a source from the browser onto the Canvas. | §17.4 · Pane view · Canvas (Full) | Technē (Canvas) | It lies on the board as a card, and double-clicking opens the thing in its own instrument at its own revision. | Removing a card leaves the thing where it is. | P |
+| TC02 | [Bare] I drop a question as a sticky note in the middle of the board. | §17.4 · Pane view · Canvas; Device view, Tool: Note, Sticky colour | Technē (Canvas) | A short note in my own words stands on the board in a colour from the app's palette. | A sticky note is presentation, never a source. | P |
+| TC03 | [Lived-in] I mark a group with a shape, or put a line of text on the board. | §17.4 · Device view · Tool: Shape or Text; Shape | Technē (Canvas) | A rectangle, ellipse or diamond, or an unframed line of text, stands where I click; the transport's Draw places the next one. | — | P |
+| TC04 | [Arriving] I put a web page or a media file on the board. | §17.4 · Pane view · Canvas, an embed | Technē (Canvas) | The page or file shows on the board. | The Canvas keeps the link, not a copy. | P |
+| TC05 | [Lived-in] I draw a frame around a cluster and title it. | §17.4 · Device view · Tool: Frame | Technē (Canvas) | A border holds the group, its title at the top edge. | Frames, positions and grouping are presentation and change no source. | P |
+| TC06 | [Lived-in] I drag cards into clusters and line them up. | §17.4 · Pane view · Canvas; Device view, Snap | Technē (Canvas) | Guide lines show where a dragged item aligns and it settles on them; Grid snap is a separate choice. | Moving two items close together states no relation. | P |
+| TC07 | [Lived-in] I find a card in a large board. | §17.4 · Pane view · Canvas: Find, Fit, minimap | Technē (Canvas) | Find selects the match and centres it, Enter moves to the next, Fit brings everything or the selection into view, and the minimap jumps the view. | — | P |
+| TC08 | [Lived-in] I keep an arrangement of the board as a named view and apply it later. | §17.4 · Device view · View | Technē (Canvas) | The view keeps the camera, the frames, the selection and the subject, and applying it restores them. | If an item has left since, the Canvas says which one and the view still applies. | P |
+| TC09 | [Lived-in] I walk a colleague through an argument, one idea in each frame. | §17.4 · Pane view · Canvas: Present | Technē (Canvas) | The frames show in order, full screen, the arrow key moving to the next. | Esc leaves and restores the Canvas as it was. | P |
+| TC10 | [Lived-in] I export one frame as a picture. | §17.4 · Pane view · Canvas, a frame's export | Technē (Canvas) | The frame is written as an image file. | — | M |
+| TC11 | [Arriving] I open an Obsidian `.canvas` file from my vault on the Canvas. | §17.4 · Pane view · Canvas, import | Technē (Canvas) | The board opens from the file. | Presentation items the other tool does not know are listed in the file header. | M |
+| TC12 | [Lived-in] I export a board for someone who uses another note tool. | §17.4 · Pane view · Canvas, export | Technē (Canvas) | A file other note tools open is written. | An exported relation always carries a note of its native identity. | M |
+| TC13 | [Lived-in] I leave the board and trust it is saved. | §17.4 · Device view · Autosave | Technē (Canvas) | It saves a short time after a gesture and at once after a delete, and a small glyph shows saved, saving or held. | — | M |
+| TC14 | [Lived-in] I see an item of the board in the wiki. | §17.4 · Pane view · Canvas: Show in graph | Technē (Canvas, Knowledge graph) | The Knowledge graph opens on the same subject. | Back returns me to the Canvas. | P |
+
+## TI — Draw relations and send them to their owners
+
+**Why:** "the responsibility to a world is made explicit again." (UX chat 27 Oct)
+**Where:** manual §8, §17.4 Lines are proposals · **Port sources:** tldraw, Excalidraw, Obsidian `.canvas`, Miro's documentation
+
+| ID | Starting world and act | Where it happens | Owning operation and agent | Useful completion | Failure or continuation | Grade |
+|---|---|---|---|---|---|---|
+| TI01 | [Lived-in] I draw a line from one card to another to say they belong together. | §17.4 · Device view · Tool: Relate, Relation type, Standing, Line kind | Technē (Canvas) | A straight, curved or elbowed line joins the cards with its type, echo, influence, cause or transform, and its standing, shown when I point at it. | The line is a proposal; no other instrument sees it as a fact. | P |
+| TI02 | [Lived-in] I test a theory by drawing its lines as guesses. | §17.4 · Device view · Standing: Guess | Technē (Canvas) | The guesses stand as guesses beside the claims, ready to promote only the ones I can support. | — | P |
+| TI03 | [Lived-in] I promote a line to the owner of that relation. | §17.4 · Pane view · Canvas, the line's Promote | Technē (Canvas); the relation's owner (the wiki, AIKit) | The owner accepts, changes or refuses it; accepted, it becomes a relation every instrument sees. | A refusal changes nothing on the Canvas except the line's mark. | P |
+| TI04 | [Lived-in] I label a line and move the cards it joins. | §17.4 · Device view · Line label; Pane view, Canvas | Technē (Canvas) | The label sits at the line's middle; a line bound to a card's side stays on that side, and an elbow line reroutes round the moved card. | The look of a line is presentation. | P |
+| TI05 | [Lived-in] I let an agent rearrange the board while I watch. | §17.4 · the transport's Arm and Re-enable | Technē (Canvas); an agent | The agent moves items and frames directly, each with a receipt, and Re-enable gives back an item it holds. | Relations still wait for their owners. | P |
+| TI06 | [Lived-in] I see how many of my lines still wait on their owners. | §17.4 · Device view · Canvas (Folded); the rail, Canvas widget | Technē (Canvas) | The folded Canvas shows its title and the proposals that wait; the widget shows the map and the count and opens the Canvas on a click. | — | P |
+
+## TF — Give a question a shape before it has answers
+
+**Why:** "Everything has its function within that underlying system by design, by nature of how I work." (UX chat 27 Oct)
+**Where:** manual §17.4 Give the board a form · **Port sources:** tldraw, Excalidraw (the board); QL's own system (the forms)
+
+| ID | Starting world and act | Where it happens | Owning operation and agent | Useful completion | Failure or continuation | Grade |
+|---|---|---|---|---|---|---|
+| TF01 | [Lived-in] I give a question a form and choose its centre. | §17.4 · Device view · Canvas, Form page: Form, Centre | Technē (Canvas); Quaternal Logic | Roles stand round the centre as positions of Quaternal Logic, from a pair to the sixfold and its conjugate, and what I have not found yet shows as an open role. | — | P |
+| TF02 | [Lived-in] I put a card on an open role. | §17.4 · Device view · Form page: Role, Place | Technē (Canvas) | The card takes the role. | A role is not a relation: cards on neighbouring roles stay unlinked until I draw a line and its owner accepts it. | P |
+| TF03 | [Lived-in] I ask which open role a card fits. | §17.4 · Device view · Form page: Suggest, Accept | Technē (Canvas); a decision helper, through Kev (AIKit) | The helper's pick stands dashed with its confidence, or it picks none; Accept places the card. | The pick never places a card by itself; placing the card myself refuses it. | P |
+| TF04 | [Lived-in] I stand the board in its form. | §17.4 · Device view · Layout: Form | Technē (Canvas) | Role 0 stands at the top and the rest run clockwise, so the gaps sit where I can see them. | Layout moves no source; Free and Radial stand the cards otherwise. | P |
+| TF05 | [Lived-in] I check the form before keeping it. | §17.4 · Device view · Form page: Check | Technē (Canvas); Quaternal Logic | The form's rules run: one card on each role, a conjugate only on a filled direct role, every card a real thing. | Declare waits until the form passes Check. | P |
+| TF06 | [Yours] I declare the form into my wiki. | §17.4 · Device view · Form page: Declare | Technē (Canvas); the wiki constellation (AIKit) | The constellation, its whole, its form and each card on its role, is written into my wiki through its owner, and the Knowledge graph shows it from then on. | Declaring states no relation. | P |
+| TF07 | [Yours] I fill the sixfold and its conjugate and watch the twelve fold into one. | §17.4 · Device view · Form page: Fields, Fold | Technē (Canvas); Quaternal Logic | Fields counts the pairs whose two roles and their conjugates are filled, each a four-by-four field of the whole, and once every role is filled Fold shows the twelve folding into one. | — | P |
+
+## TJ — Make a walk through a subject
+
+**Why:** "and, of course, turning these into interactive experiences for other people." (UX chat 27 Oct)
+**Where:** manual §8, §17.6 · **Port sources:** Godot's animation state machine, Twine 2, Unity Timeline's documentation; Archetypal Earth, ported as code
+
+| ID | Starting world and act | Where it happens | Owning operation and agent | Useful completion | Failure or continuation | Grade |
+|---|---|---|---|---|---|---|
+| TJ01 | [Lived-in] I start a walk from a reading. | §17.6 · Pane view · Journey (Full) | Technē (Journey); the scenes from Expressions | The walk starts as one stop for each scene the reading's Expressions hold, each row showing its place, moment, thing, scene, narration and arrival. | A reading with no scenes shows why it has none. | P |
+| TJ02 | [Lived-in] I start an empty walk and add a stop where I stand. | §17.6 · Pane view · Journey; the transport's Capture | Technē (Journey) | Capture keeps the present view as a scene and adds a stop that carries it. | — | P |
+| TJ03 | [Lived-in] I add a stop by clicking the World. | §17.6 · the transport's Draw; Pane view, World | Technē (Journey, World) | A new stop stands at the place I clicked. | — | P |
+| TJ04 | [Lived-in] I put the stops in order. | §17.6 · Pane view · Journey (Full), drag a stop | Technē (Journey) | The walk takes the new order. | An order that adds or drops a scene is refused. | P |
+| TJ05 | [Lived-in] I write the words the guide speaks at a stop. | §17.6 · Pane view · Journey, a stop's narration; Device view, Narration | Technē (Journey) | The narration is spoken or shown at the stop, or neither with Narration off. | — | P |
+| TJ06 | [Lived-in] I shape the transition between two stops. | §17.6 · Pane view · Journey (Full); Device view, Transition time, Curve, Switch | Technē (Journey) | Dragging a stop over the end of the one before makes the overlap its transition, with its length and curve drawn between them; pulling them apart makes a cut. | — | P |
+| TJ07 | [Lived-in] I choose how the walk chooses its scenes. | §17.6 · Device view · Journey, Path | Technē (Journey) | Through Expressions launches a scene on a different Expression at each stop; Through one Expression steps down one Expression's scenes; Mixed does both. | — | P |
+| TJ08 | [Lived-in] I keep a sweep of the field from Expressions as a stop's scene. | §3, §17.6 · Pane view · Journey: Compose scene | Technē (Journey); Expressions (the scene's owner) | The Expression's owner receives the new scene as a proposal. | A name that exists is refused; if the Expression changed since I opened it, the change is refused and my draft stays. | P |
+| TJ09 | [Lived-in] I keep the walk I made. | §17.6 · Pane view · Journey, save to its Expression | Technē (Journey); Expressions | The walk is saved to its Expression. | A walk I start stays local work until I save it. | P |
+| TJ10 | [Lived-in] I set where the walk begins and whether it repeats. | §17.6 · Device view · Journey: Start stop, Loop | Technē (Journey) | The walk begins at the start stop, which is also where Return goes, and loops, or loops and leaves at the end of the scene. | — | P |
+
+## TN — Walk it, record it and keep the take that stands
+
+**Why:** "what people will hopefully understand and do and create in this system is worlds, but worlds known as such, as worlds being built in the moment and inhabited in the moment." (UX chat 27 Oct)
+**Where:** manual §3, §4, §8, §17.1, §17.6, §10.5 · **Port sources:** Godot's animation state machine, Twine 2, Unity Timeline's documentation; Archetypal Earth, ported as code
+
+| ID | Starting world and act | Where it happens | Owning operation and agent | Useful completion | Failure or continuation | Grade |
+|---|---|---|---|---|---|---|
+| TN01 | [Lived-in] I take a thread from the timeline and walk it. | §8, §17.1 · Arrangement view, a thread; Pane view, Journey and World; the transport's Play | Technē (Journey, World, timeline); the scenes through Expressions; the sky from Quaternal Logic | Each stop sets the clock to its year and the World to its place and launches the scenes it carries, while each transition shows its progress and the next stop and the path ahead stay in sight. | A reading switched off is passed by; Reload brings me back to the stop where I stood. | H (core) |
+| TN02 | [Lived-in] I stop the walk. | §17.6 · the transport's Stop | Technē (Journey) | The walk stops at the stop I am on. | — | P |
+| TN03 | [Lived-in] I enter the scene a stop carries, then come back. | §17.6 · Pane view · Journey: Enter, Return | Technē (Journey); Expressions | My subject, reading and selection come with me into the scene, and Return brings me back to the same stop. | Return finds the stop by its scene, not by its number. | P |
+| TN04 | [Lived-in] I press Record and go from place to place, and event to event, to make a walk. | §17.1, §17.6 · the transport's Record; Pane view, World; Arrangement view | Technē (Journey) on an armed track | Each place, moment or thing I visit becomes a stop, and when I stop recording the walk lies along the ruler, ready to edit. | — | P |
+| TN05 | [Lived-in] I add stops to a walk that exists. | §17.6 · the transport's Overdub | Technē (Journey) | The new stops join the walk. | — | P |
+| TN06 | [Lived-in] I record two tellings of a walk and choose the take that stands. | §17.1, §17.6 · Device view · Journey, Take; Arrangement view takes | Technē (Journey) | Both tellings stay as takes, and the one I choose stands. | The latest take stands until I choose another. | P |
+| TN07 | [Lived-in] I follow the walk from the rail while another instrument fills the pane. | §17.1, §17.6 · the rail · Journey widget | Technē (Journey) | The tile shows the stop I am on, its narration and a play button that walks the stops. | — | P |
+| TN08 | [Lived-in] I go back to a place I was a while ago. | §17.1, §10.7 · the rail · Trail widget | Shell (trail) | The Trail lists every place I went, newest first, and selecting one returns me to it, the same page at the same point. | — | P |
+
+## TP — Enter a palace and walk its rooms
+
+**Why:** "It's a tool for advancing understanding and empathy and shared, collective insight." (UX chat 27 Oct)
+**Where:** manual §8, §17.7 · **Port sources:** Godot's animation state machine, Twine 2, Unity Timeline's documentation
+
+| ID | Starting world and act | Where it happens | Owning operation and agent | Useful completion | Failure or continuation | Grade |
+|---|---|---|---|---|---|---|
+| TP01 | [Lived-in] I enter a palace from the World. | §17.7 · Pane view · World, select the palace: Enter; Palace (Full) | Technē (World, Palace) | The Palace pane shows the same place from inside: its rooms, objects and walk on one board. | The palace has no home apart from the World. | P |
+| TP02 | [Lived-in] I select a room and ask why it stands where it does. | §17.7 · Pane view · Palace; Device view, Guide | Technē (Palace); the companion | The guide says why the selected room stands there. | With Guide off, the companion stays quiet. | P |
+| TP03 | [Lived-in] I open an object in a room, then go back to the room. | §17.7 · Pane view · Palace: Return to room | Technē (Palace); the object's instrument | The object opens in its own instrument at its own revision, and Return to room brings me back. | An object belongs to the corpus; the room only points to it. | P |
+| TP04 | [Lived-in] I see what a room's structure rests on. | §17.7 · Pane view · Palace (Full) | Technē (Palace) | A room built on a warranted structure shows that structure and its source; a freely arranged room says so. | Free composition never shows as warranted structure. | P |
+| TP05 | [Lived-in] I see which objects are parts of others. | §17.7 · Device view · Connections | Technē (Palace) | A line joins each object to the object it is declared part of. | A named member that is missing draws as broken; it does not vanish. | P |
+| TP06 | [Lived-in] I walk the rooms. | §17.7 · the transport's Play, Stop, Tempo, Quantize | Technē (Palace); the companion | The walk starts at the start room, stays in each room for the tempo, reaches the next as Quantize sets, wraps at the end, and the guide speaks at each room. | Stop stops the walk; a Palace is entered, walked and returned from, never performed. | P |
+| TP07 | [Lived-in] I choose the order the rooms are walked in, and where the walk begins. | §17.7 · Device view · Path, Walk order, Start room | Technē (Palace) | Guided walks the rooms in the authored or the spatial order from the start room, which is also where Return to ground leads; Free lets me walk anywhere. | — | P |
+| TP08 | [Lived-in] I bookmark a position and jump back to it. | §17.7 · Device view · Bookmark | Technē (Palace) | A bookmark keeps the room, the place in the walk and the object in focus. | — | P |
+| TP09 | [Lived-in] I walk through a portal to another place or another person's world. | §17.7 · Pane view · Palace, a portal in a wall | Technē (Palace, World) | I leave the Palace for the place the portal leads to. | Walking through a portal is an encounter like any other, under its owner's steps of trust (§17.2). | P |
+| TP10 | [Lived-in] I record my visit as a walk. | §17.7 · the transport's Record | Technē (Palace, Journey) | My visit is kept as a walk. | — | P |
+| TP11 | [Lived-in] I see the Palace as the field and the public see it. | §17.7 · Device view · Audience | Technē (Palace) | Me, Field and Public each show the Palace as that audience sees it. | A private room stays under cloud for Field and Public. | P |
+| TP12 | [Lived-in] I keep the Palace's plan at hand on the rail. | §17.7 · the rail · Palace widget | Technē (Palace) | The tile shows the plan with the room I stand in, and clicking a room enters it. | — | P |
+
+## TU — Build a palace and return what I found
+
+**Why:** "the responsibility to a world is made explicit again." (UX chat 27 Oct). "It's a tool for advancing understanding and empathy and shared, collective insight." (UX chat 27 Oct)
+**Where:** manual §3, §8, §17.7 · **Port sources:** Godot's animation state machine, Twine 2, Unity Timeline's documentation
+
+| ID | Starting world and act | Where it happens | Owning operation and agent | Useful completion | Failure or continuation | Grade |
+|---|---|---|---|---|---|---|
+| TU01 | [Lived-in] I arrange the rooms and objects on the board. | §17.7 · Pane view · Palace (Full); Device view, Snap | Technē (Palace) | Rooms and objects move where I drag them, several at once with a marquee, aligned to the grid. | Arrangement is presentation and changes no object. | P |
+| TU02 | [Lived-in] I put one idea in each room on the old fixed floor. | §17.7 · Device view · Arrangement: Method of loci | Technē (Palace) | The board becomes six rooms with four places in each. | Board brings the free arrangement back. | P |
+| TU03 | [Lived-in] I place a room, an object or a portal. | §17.7 · the transport's Draw | Technē (Palace) | The new room, object or portal stands where I click. | — | P |
+| TU04 | [Lived-in] I add a door from a room to a related place and name where it leads. | §17.7 · the transport's Draw: Portal; click the wall | Technē (Palace) | A portal draws as a door in the wall, leading to the place I named. | — | P |
+| TU05 | [Yours] I keep dreams or notes in a private room of a palace. | §17.7 · Pane view · Palace, a private room | Technē (Palace) | The room holds my practice and stays under cloud to every audience but me. | A private room is under cloud for every portal and every export too. | P |
+| TU06 | [Lived-in] I return my finding to the owners of the sources. | §17.7 · Pane view · Palace: Return; Device view, Return route | Technē (Palace); the sources' owner | The objects go in the order I arranged them, with my intent for each room, as a proposal carrying my name to the route the reading names; the owner accepts it or not, and the ground opens again on the same subject. | Return writes to no source. | P |
+| TU07 | [Lived-in] I return from a reading that names no route. | §17.7 · Pane view · Palace: Return | Technē (Palace) | A receipt says that nothing was sent. | A refused route gives the same receipt, and the sources stay unchanged. | P |
+| TU08 | [Lived-in] I let the Palace's agent move objects while I watch. | §17.7 · the transport's Arm and Re-enable | Technē (Palace); the Palace's agent | The agent moves objects directly, each with a receipt, and Re-enable gives back one it holds. | With Arm off the agent proposes. | P |
+
+## TL — Read through one way of seeing at a time
+
+**Why:** "Technē lenses and refines it" (#709). "And actually, the viewpoint is not a series of propositions to accept." (UX chat 27 Oct)
+**Where:** manual §8, §17.11; §16.5 Clip panel and the pool (#709) · **Port sources:** Ableton Live 12.0.25 (an effect on a chain); QL's own system
+
+| ID | Starting world and act | Where it happens | Owning operation and agent | Useful completion | Failure or continuation | Grade |
+|---|---|---|---|---|---|---|
+| TL01 | [Yours] I put the Lens on the chain of a reading and set it to L5, Para Vāk. | §17.11 · Device view · Lens, after the reading's instrument | Technē (Lens); Quaternal Logic | The rays show where the reading can stand: the World, the Knowledge graph, the Canvas, the ruler, the Journey, the Palace and an Expression, each carried, thin or refused. | The material stays as it was; a relation or a walk the Lens finds stays a proposal until the wiki's governance takes it up. | P |
+| TL02 | [Lived-in] I point at an instrument that refuses the reading. | §17.11 · Device view · Lens, Lens page, Instruments | Technē (Lens); the refusing instrument's owner | The refusal shows with its owner's reason, such as a Day refused by the Journey because no scene, place or Expression is bound to it. | A refused instrument keeps its owner's reason. | P |
+| TL03 | [Yours] I read through one sublens of the lens. | §17.11 · Device view · Lens page: drag the handle round the ring; Sublens | Technē (Lens); Quaternal Logic | The reading runs through the one condition I chose, named on the ring. | The whole lens is the default. | P |
+| TL04 | [Lived-in] I ask the lens where a subject stands, how two subjects relate, or how several read as one. | §17.11 · Device view · Read: Locate, Refract, Relate, Synthesise | Technē (Lens); the provider of the readings (Quaternal Logic) | The reading answers what I asked, with its lens and frame named and its evidence. | A kind of reading the provider does not offer stands closed, with its word. | P |
+| TL05 | [Yours] I find which context frame a step of my material stands in. | §17.11 · Device view · Frame page: Position, Face, Grain | Technē (Lens); Quaternal Logic | Narrowing face and grain one at a time brings the owner's answer, exact, partial, ambiguous or no frame, such as CF4 exact at position 2 on the Power face and inner four. | A frame answer describes the material and gives it no standing or authority. | P |
+| TL06 | [Lived-in] I read the material plain. | §17.11 · Device view · Mode: Off | Technē (Lens) | The material passes unread, and the instruments it stands in still show. | The owner still checks that the material is well formed. | P |
+| TL07 | [Lived-in] I make a reading wait on the lens's provider. | §17.11 · Device view · Mode: Required or Optional | Technē (Lens); the provider of the readings | Required stops when the provider is absent; Optional reads when it can and stops nothing when it cannot. | — | P |
+| TL08 | [Yours] I compare two ways of seeing on the same reading. | §17.11 · Device view · two Lenses on the chain; the mixer row, Solo | Technē (Lens, reading) | Each Lens reads through its own lens and the soloed reading shows both. | — | P |
+| TL09 | [Lived-in] I record my moves on the Lens as automation. | §17.11 · the transport's Arm and Re-enable | Technē (Lens) | My moves are kept as automation lanes, and Re-enable gives back a parameter I hold. | — | P |
+| TL10 | [Lived-in] I read the Lens at a glance on its chain and on the rail. | §17.11 · Device view · Lens (Folded, Compact); the rail, Lens widget | Technē (Lens) | The lens's name, how many instruments take the reading and the frame show; the compact face sets lens, sublens, position and mode. | — | P |
+| TL11 | [Yours] I choose an MEF lens from the pool for a Technē clip and try it without changing the source. | §16.5 · Clip view · Clip panel; the pool; #709 | Technē; Quaternal Logic; the wiki (AIKit) | The lens applies as a groove does, its sublenses as its parameters, and the source stays unchanged until Commit writes the reading into the wiki. | Without Commit, nothing is written. | P |
+
+## TD — Read and write a page beside the work, in any mode
+
+**Why:** "And this will be paired with what I develop in Central, which are actual documents, documentation, HTML mockups, mostly writing though, of course." (UX chat 27 Oct)
+**Where:** manual §5, §17.8 · **Port sources:** Obsidian 1.7.7 (saving, plugins, graph and links)
+
+| ID | Starting world and act | Where it happens | Owning operation and agent | Useful completion | Failure or continuation | Grade |
+|---|---|---|---|---|---|---|
+| TD01 | [Lived-in] In Technē I open a Central page in a pane beside the World. | §17.8 · Pane view · Document (Full), from the browser | Central (Document) | The page opens as its template draws it, and the Document brings its controls into Device view. | — | P |
+| TD02 | [Lived-in] I redraw a page with another template, or another version of its template. | §17.8 · Device view · Template | Central (Document) | The page draws with the chosen template and keeps that version until I change it. | A new version of a template does not change an old page; a page keeps its connections however it is restyled. | P |
+| TD03 | [Lived-in] I read a page's source text. | §17.8 · Device view · View: Page or Source | Central (Document) | The drawn page and its source text are one switch apart. | — | P |
+| TD04 | [Lived-in] I choose how a Flow reads. | §17.8 · Device view · Flow view: Dialogue, Flow, Journal | Central (Document) | The same entries read as a dialogue, a flow or a journal. | Flow view applies to a Flow only. | P |
+| TD05 | [Lived-in] I set the paper tone of a page. | §17.8 · Device view · Paper | Central (Document) | The page reads on the template's paper, light or dark. | — | P |
+| TD06 | [Lived-in] I keep a page in its pane while I select elsewhere. | §17.8 · Device view · Pin: Pinned | Central (Document) | The pinned pane keeps its page; Follows lets it follow my selection again. | — | P |
+| TD07 | [Lived-in] I choose what a plain selection does. | §17.8 · Device view · Selection act | Central (Document) | A plain selection highlights, notes, goes to the packet, is remembered or is answered, as I set. | — | P |
+| TD08 | [Lived-in] I open a closed Day and read it again. | §17.8 · Pane view · Document, a closed Day | Central (Document, Day) | The closed Day opens as it was kept. | — | P |
+
+## TB — Mark a passage and hand it to an agent
+
+**Why:** "And this will be paired with what I develop in Central, which are actual documents, documentation, HTML mockups, mostly writing though, of course." (UX chat 27 Oct)
+**Where:** manual §5, §17.8 Work on a passage · **Port sources:** Obsidian 1.7.7 (graph and links)
+
+| ID | Starting world and act | Where it happens | Owning operation and agent | Useful completion | Failure or continuation | Grade |
+|---|---|---|---|---|---|---|
+| TB01 | [Lived-in] I mark a passage. | §17.8 · Pane view · Document, Highlight; the transport's Draw | Central (Document) | The passage is highlighted and stays whole. | A highlight is presentation. | P |
+| TB02 | [Lived-in] I attach a note to a passage. | §17.8 · Pane view · Document, Note | Central (Document) | The note hangs on the passage. | A note is not a source. | P |
+| TB03 | [Lived-in] I collect passages for an agent and check the size before sending. | §17.8 · Pane view · To packet; the transport's Capture; Device view, the packet | Central (Document, Packet) | The packet holds exactly what the agent will read, shown whole with its size. | Nothing is sent until I press Play. | P |
+| TB04 | [Lived-in] I keep a line word for word in my own ground. | §17.8 · Pane view · Document, Remember | Central (Document, Docs) | The passage is kept with where it came from, as a proposal that Docs shows unrecognised until I recognise it there. | A remembered passage keeps its words and its source exactly. | P |
+| TB05 | [Lived-in] I ask the agent about the passage I selected. | §17.8 · Pane view · Answer this; the transport's Play | Central (Document, Packet); the agent | The answer arrives as a new entry with its author and its sources, and following a source lands me on the line it came from. | With Arm off every entry waits for me. | P |
+| TB06 | [Lived-in] I accept or remove each entry the agent proposed. | §17.8 · Pane view · Document; the transport's Arm | Central (Document); the agent | An accepted entry shows on the page's face with its author; with Arm on, the agent writes directly, each write with a receipt. | The agent never writes behind my back. | P |
+| TB07 | [Lived-in] I change a passage the agent wrote, then give it back. | §17.8 · Pane view · Document; the hand-back light; the transport's Re-enable | Central (Document); the agent | The hand-back light comes on when I change it, and one press gives the passage back. | — | P |
+| TB08 | [Lived-in] I tag a colleague, an agent or a place in a page with @. | §17.8 · Pane view · Document, @ | Central (Search, Document) | A colleague receives the passage and where it came from, an agent starts to work on it, and a place files the passage on that spot of My World. | — | P |
+| TB09 | [Lived-in] I dictate into a page. | §17.8 · the transport's Record, Stop, Overdub | Central (Document) | My words go into the page; Overdub chooses whether what comes back joins as a new entry or replaces the selection; Stop ends dictation. | Keys never play notes while I type in a page. | M |
+
+## TH — Save a page safely, and ask for a reading of a whole Flow
+
+**Why:** "And this will be paired with what I develop in Central, which are actual documents, documentation, HTML mockups, mostly writing though, of course." (UX chat 27 Oct)
+**Where:** manual §17.8 Save and the Thought page · **Port sources:** Obsidian 1.7.7 (saving)
+
+| ID | Starting world and act | Where it happens | Owning operation and agent | Useful completion | Failure or continuation | Grade |
+|---|---|---|---|---|---|---|
+| TH01 | [Lived-in] I save a page someone else changed while I was writing. | §17.8 · Pane view · Document, the save state; Device view, Autosave | Central (Document) | The save names its outcome: saved, unchanged, stale, conflict or refused. | A stale or conflicting save keeps my draft and shows what changed. | M |
+| TH02 | [Lived-in] I check whether the page is saved. | §17.8 · Pane view · the save state; the transport's Load, Metronome, Quantize | Central (Document) | The page shows saved or edited since save; Metronome saves as I go and Quantize sets when a save lands. | — | M |
+| TH03 | [Lived-in] Before asking an agent to read a whole Flow, I check what it would read and touch. | §17.8 · Device view · Document, Thought page: Preflight | Central (Document); the agent | Preflight shows the agent, its model and harness, the Flow's entries, and the sources that moved since and the knowledge they affect. | Nothing runs and nothing is recorded. | P |
+| TH04 | [Lived-in] I hold Contemplate to have the Flow read once. | §17.8 · Device view · Thought page: Contemplate (held) | Central (Document, Contemplate); the agent | The thought comes back kept with the moment it was taken, its tensions, candidates and proposals waiting for me. | If anything changed after the preflight, Contemplate refuses and says so; it never runs by itself. | P |
+| TH05 | [Lived-in] Later, I see what moved since the thought. | §17.8 · Device view · Thought page: Changed since | Central (Document, Docs) | Three lanes from the thought to now show the sources that moved, the knowledge they affect, and what the thought left open. | None of the thought's returns is applied until I take it up. | P |
+
+## TT — Keep a shell next to my work
+
+**Why:** "I'm trying to make sure that these operate by detecting the existing system and molding to the user's uniqueness in terms of their setup." (UX chat 27 Oct)
+**Where:** manual §10.1 Where a session lives, §17.9 · **Port sources:** VS Code's workbench (MIT)
+
+| ID | Starting world and act | Where it happens | Owning operation and agent | Useful completion | Failure or continuation | Grade |
+|---|---|---|---|---|---|---|
+| TT01 | [Arriving] I open a Terminal beside my work. | §17.9 · Pane view · Terminal (Full), or the rail, Terminal widget | Central (Terminal); AIKit (the session space); Workcell | My shell starts live in the room of the selected track's workcell, the seat's checkout or a run's shell. | — | M |
+| TT02 | [Lived-in] I select another session in the grid. | §17.9 · Session view · a session; Terminal, Follow: Follows | Central (Terminal); AIKit | A following Terminal moves to that session's shell. | — | M |
+| TT03 | [Lived-in] I watch an agent run its tests. | §17.9 · Pane view · Terminal; Device view, Input: Watch only | Central (Terminal); AIKit; the agent | The room shows live with the agent's name, and each command it ran shows as the agent's, not mine. | A message to the agent goes through Messages, never through the Terminal. | M |
+| TT04 | [Lived-in] I keep a server in view while I work elsewhere. | §17.9 · Device view · Follow: Pinned; the rail | Central (Terminal); AIKit | The pinned Terminal keeps its room while the selection moves, and moved to the rail it frees the pane. | The widget and the pane show the same shell; closing one does not close it. | M |
+| TT05 | [Lived-in] I open another room, or start another command in one. | §17.9 · Device view · Room, Command | Central (Terminal); AIKit | The Terminal shows the chosen room of the workcell's session space, running my shell or the command I set. | — | M |
+| TT06 | [Lived-in] I close the window while a command runs, and come back later. | §10.1, §17.9 · Terminal | AIKit (the session space) | What runs in the room goes on, and reopening returns me to the same room. | The room belongs to its session space, not to the Terminal or the window. | M |
+| TT07 | [Arriving] I use the terminal provider I already have. | §10.1, §17.9 · Device view · Provider (reading) | AIKit (session space providers: herdr, tmux, cmux, this terminal) | The provider read from AIKit shows the room; its name for the room is a label, never who it is. | If the provider stops answering, the Terminal says so and the room stays. | M |
+| TT08 | [Lived-in] An agent's shell waits for my yes or no. | §17.9 · the rail · Terminal widget | Central (Terminal); the agent | The widget says "following" with the agent's name, and the waiting shell shows in the stall colour; I type my answer in the shell. | — | M |
+| TT09 | [Lived-in] I run a routine once by hand so an agent can learn it. | §17.9 · the transport's Capture | Central (Terminal); the agent that receives the example | The commands I ran by hand become an example I can give an agent. | — | M |
+| TT10 | [Lived-in] I set how much output the Terminal keeps and how it reads. | §17.9 · Device view · Scrollback, Font size, Wrap | Central (Terminal) | A long log stays in the scrollback I set, at the text size and wrap I chose. | Raise Scrollback before starting the command. | P |
+
+## TX — Play Technē from the transport
+
+**Why:** "once you get your grips on it, it's incredibly fun because it opens up all these doors for creativity." (UX chat 27 Oct)
+**Where:** manual §10.5 (Technē's column), §8, the transport tables of §17.1–§17.7 · **Port sources:** Ableton Live 12.0.25 (the transport)
+
+| ID | Starting world and act | Where it happens | Owning operation and agent | Useful completion | Failure or continuation | Grade |
+|---|---|---|---|---|---|---|
+| TX01 | [Lived-in] I join the shared field. | §10.5 · transport, Time group · Link | Technē (World); the shared field | My World joins the shared field. | — | P |
+| TX02 | [Lived-in] After standing in a past moment, I come back to now. | §10.5 · transport · Tap | Technē (World, timeline) | One tap returns the occasion, and the ruler's window, to now. | — | P |
+| TX03 | [Lived-in] I set the walk's pace. | §10.5 · transport · Tempo | Technē (Journey, Palace) | The walk stays at each stop, or each room, for the pace I set, between two and twelve seconds on the Journey. | — | P |
+| TX04 | [Lived-in] I read which stop of how many I am on. | §10.5 · transport · Time signature | Technē (Journey, Palace) | The stop, or the room, and the count show in the transport. | — | P |
+| TX05 | [Lived-in] I see who else is present in the field. | §10.5 · transport · Metronome | Technē (World); the shared field | Who else is present shows. | — | P |
+| TX06 | [Lived-in] I set how every stop arrives. | §10.5 · transport · Quantize | Technē (Journey, World) | Each stop arrives by fly, cut or fade, unless its own Arrival overrides it. | — | P |
+| TX07 | [Lived-in] I set how far I look, and as whom, from the transport. | §10.5 · transport, Key group | Technē (World) | Key sets the aperture and the view as for every pane. | — | P |
+| TX08 | [Lived-in] I let the panes keep with what I meet. | §10.5 · transport · Follow | Technē (World, Journey, Palace, Knowledge graph, Canvas) | Selecting an event moves the World to its place and year, and the other panes keep to the stop, room, place or note I am on. | A pinned pane keeps its subject. | P |
+| TX09 | [Lived-in] I read the moment that drives the panes. | §10.5 · transport · Position | Technē | Position shows the clock that drives the panes, and on a walk the stop. | — | P |
+| TX10 | [Lived-in] I let the instrument in front of me write. | §10.5 · transport · Arm | Technē (the focused instrument) | The instrument writes directly, each agent write with its receipt. | With Arm off, writes arrive as proposals; relations always wait for their owners. | P |
+| TX11 | [Lived-in] I give back what the instrument was holding. | §10.5 · transport · Re-enable | Technē (the focused instrument) | Control returns to what the instrument or its agent held. | — | P |
+| TX12 | [Lived-in] I keep the view in front of me as a scene. | §10.5 · transport · Capture | Technē (World, timeline, Canvas, Knowledge graph); Expressions | The present view is kept as a scene I can carry onto a walk. | — | P |
+| TX13 | [Lived-in] I map a key to the instrument I am playing. | §10.5 · transport, Hands group · Key map | Technē; shell | The key works the control I mapped. | Single letters never act while I type in a document. | P |
+| TX14 | [Lived-in] I check my connection to the field. | §10.5 · transport, Readings group · Rate | Technē; the shared field | Rate shows the connection to the field. | — | P |
+| TX15 | [Lived-in] I check how much of My World I show. | §10.5 · transport, Readings group · Load | Technē (World) | Load shows how much of My World I show. | — | P |
+
+## NP — Keep a practice world only I can see into
+
+**Why:** "I'd want to be using this side of it, essentially as my personal practice system, my personal practice operating system, you could say." (UX chat 27 Oct). "the Epi and Nara agents are one widget that persists across modes" (#716)
+**Where:** manual §2, §13, §24.1 · **Port sources:** QL's own system
+
+| ID | Starting world and act | Where it happens | Owning operation and agent | Useful completion | Failure or continuation | Grade |
+|---|---|---|---|---|---|---|
+| NP01 | [Lived-in] I bring my practice world into today. | §24.1 · Session view in Central · a track of Kind Practice | Central (the practice world); Nara's branch M4.4.4.4 Personal Pratibimba | My practice is a track in today's set, its clips the journal, the dream journal, sittings and concerns; on my planet it is a room fogged to everyone but me. | Raising any of it into wider view asks me first, page by page. | P |
+| NP02 | [Lived-in] I check what Nara can read of me. | §24.1 · Device view · the practice world's chain: the packet, Nara, Nara's scope | Central (Packet, Scope); agent: Nara | The chain shows the packet and Nara's scope: Nara reads only what I give it. | Nara keeps no second journal; everything it knows of me is in my own pages, at their revisions. | P |
+| NP03 | [Lived-in] I select a passage in a practice page and ask Nara about it. | §24.1 · Pane view · Document, Answer this | Central (Document); agent: Nara | Nara answers into the page from what I wrote, naming each passage it used. | With Arm off the answer arrives as a proposal. | P |
+| NP04 | [Lived-in] I check where a passage Nara drew on came from. | §24.1 · Pane view · Document, a passage Nara used | Central (Document); agent: Nara | Each passage keeps its source, its revision, who wrote it, when it happened and when it arrived. | — | P |
+| NP05 | [Lived-in] I correct something I wrote that Nara has read. | §24.1 · Pane view · Document | Central (Document); agent: Nara | The correction stands beside what it corrects. | Nothing earlier is rewritten. | P |
+| NP06 | [Lived-in] I share something from a practice page with the Day. | §24.1 · the practice track's mixer row · Output: Day | Central (Day); Nara's branch M4.5 Epii integration | What I choose to share goes to the Day's faces 0 and 5. | Output is None by default: the practice stays out of the Day. | P |
+| NP07 | [Lived-in] I switch my practice off for a while. | §24.1 · the practice track's mixer row · Activator | Central (the practice world) | Its pages do not open to play. | — | P |
+| NP08 | [Lived-in] I let Nara write into my practice pages directly. | §24.1 · the practice track's mixer row · Arm | Central (Document); agent: Nara | Nara's writes land directly, each with a receipt. | Arm is off by default, and every answer arrives as a proposal. | P |
+| NP09 | [Lived-in] I attend to my practice alone. | §24.1 · the practice track's mixer row · Solo | Central (Day); Technē (World) | The Day's faces and my planet show only my practice. | My other worlds keep running. | P |
+| NP10 | [Lived-in] I move from Central to Technē to Live while talking with Nara. | §10.6 · the rail · the one Epi and Nara widget (#716) | AIKit (Messages), with Actuation (Agent); shell (rail); agents: Epi and Nara | The conversation stays open on the rail in every mode; changing mode closes nothing. | A message to an agent goes through Messages, never typed into its room (§10.1). | P |
+| NP11 | [Yours] A month into carrying a decision, I ask Nara what it finds. | §13, §24.1, §24.4 · Pane view · Document, the concern's flow; the Deck (§22.4) | Central (Document); Quaternal Logic (Deck); agent: Nara; Nara's branches M4.2 and M4.3-5 phase history | Nara answers from the pages I wrote beside the cards, my dreams and my sittings, naming each passage it used; the cards are still where they fell, and the I Ching shows how the question has turned. | What I wrote never changes my identity. | H (core) |
+
+## NV — Let Nara hear me
+
+**Why:** "So that would be Epi and Nara together as the sort of canonical, emblematic agent of the system." (UX chat 27 Oct)
+**Where:** manual §24.1 input row; §19.4 Voice page · **Port sources:** QL's own system
+
+| ID | Starting world and act | Where it happens | Owning operation and agent | Useful completion | Failure or continuation | Grade |
+|---|---|---|---|---|---|---|
+| NV01 | [Lived-in] I let my practice track hear me. | §24.1 · the practice track's input row · Input: Mic | Central (the practice world); agent: Nara | The track hears me through the microphone. | Input is Off by default. | M |
+| NV02 | [Lived-in] I speak to Nara by holding a key, or hands-free. | §24.1 · the input row · Listen | Central; agent: Nara | Push to talk hears me while I hold the key; Hands-free hears me whenever I speak. | — | M |
+| NV03 | [Lived-in] I give myself longer pauses before my turn ends. | §24.1 · the input row · Pause | Central; agent: Nara | Under Hands-free, a silence of the length I set, half a second to four, ends my turn. | — | M |
+| NV04 | [Lived-in] I choose how my speech becomes text on this machine. | §24.1 · the input row · Recogniser | Central | Fast or Accurate, both on this machine; Accurate is slower. | — | M |
+| NV05 | [Lived-in] I speak a turn aloud. | §24.1 · the practice track | Central; agent: Nara; Nara's branch M4.4 (symbolic body M4.4.4.3) | The spoken turn stands with my body, and Nara hears it as embodied. | — | M |
+| NV06 | [Lived-in] I hear Nara answer aloud. | §24.1 · Device view · Nara's Agent, Voice page (§19.4) | Actuation (Agent); agent: Nara | Nara speaks its answer. | Whether what I say may leave this machine is set in Settings, Permissions (§10.10). | M |
+
+## NJ — Write my journal and my dreams
+
+**Why:** "So I'd want to be journaling through my system. I'd want to be inputting my dreams." (UX chat 27 Oct)
+**Where:** manual §24.1, §24.2 · **Port sources:** QL's own system
+
+| ID | Starting world and act | Where it happens | Owning operation and agent | Useful completion | Failure or continuation | Grade |
+|---|---|---|---|---|---|---|
+| NJ01 | [Lived-in] I write today's page of my journal. | §24.2 · Pane view · Document, a journal flow in its Journal tab | Central (Document); Nara's branch M4.4 (temporal sedimentation M4.4.4.2) | I write alone, one page a day, speaking as myself. | — | P |
+| NJ02 | [Lived-in] I write down a dream I woke with. | §24.2 · Pane view · Document, the dream journal; Device view, Entry: Dream | Central (Document); Nara's branch M4.4 | The entry holds what happened, who was there, how it felt, and what the day before it held. | — | P |
+| NJ03 | [Lived-in] I add a waking note rather than a dream. | §24.2 · Device view · Entry: Waking note | Central (Document) | The next entry stands as a waking note. | — | P |
+| NJ04 | [Lived-in] I read a dream beside the day before it. | §24.2 · Device view · Day before | Central (Document, Day) | The dream links to the Day before it, so I can read what it answers. | — | P |
+| NJ05 | [Lived-in] I select an image in a dream and amplify it. | §24.2 · Pane view · Document, Amplify | Central; Quaternal Logic; agent: Nara | Nara lays beside it the places the image has stood before, in my pages, my knowledge and the works my worlds hold, each as a Source entry with where it comes from. | Amplifying does not interpret; Nara never says what a dream means. | P |
+| NJ06 | [Lived-in] I choose where Amplify looks. | §24.2 · Device view · Amplify from | Central; agent: Nara | My pages, my knowledge and the works of my worlds each switch on or off. | — | P |
+| NJ07 | [Lived-in] I close the window after writing a dream and open the dream journal again. | §24.2 · Pane view · Document, the dream journal page | Central (Document) | The dream is in the dream journal's page, in my ground. | Nothing is kept in the window alone. | M |
+
+## NS — Sit
+
+**Why:** "No Hesse's pause: Nara's phenomenological, dialogical and meditative techniques carry the meditative side." (#716)
+**Where:** manual §24.1 A sitting, §24.3 · **Port sources:** QL's own system
+
+| ID | Starting world and act | Where it happens | Owning operation and agent | Useful completion | Failure or continuation | Grade |
+|---|---|---|---|---|---|---|
+| NS01 | [Lived-in] I launch a sitting and press Play. | §24.1 · Session view · a sitting clip on the practice track; Expressions, the field | Central (the practice world); Expressions (the field); Quaternal Logic (the torus); Nara's branch M4.1 Sympathetic medicine | My field opens with my seven centres as my identity and today's sky give them, around the torus, and the torus rings the bell to begin. | Nothing scores a sitting, and the field never tells me how I am; it shows my centres as their sources give them. | H (core) |
+| NS02 | [Lived-in] I set how long I will sit. | §24.1 · Clip view · the sitting's Clip panel, Length | Central (the practice world) | The sitting lasts from one to a hundred and twenty minutes, twenty by default. | — | P |
+| NS03 | [Lived-in] I choose the bell's tone. | §24.1 · Clip view · Bell | Quaternal Logic (the torus); Nara's branch M4.1-4 timing | The torus rings the note of the scale I chose at the start, the intervals and the end, or no bell. | The torus's root is the default. | M |
+| NS04 | [Lived-in] I have the bell ring during the sitting. | §24.1 · Clip view · Intervals; the transport's Loop | Quaternal Logic (the torus); Central | The bell rings every five, ten, fifteen or thirty minutes, and the transport's Loop shows the intervals. | Intervals are Off by default. | M |
+| NS05 | [Lived-in] I rest my attention on a centre. | §24.1 · Clip view · Focus: A centre; Centre | Expressions (the field); Nara's branch M4.1-1 energy body | The chosen centre lights in the field, the heart by default. | — | P |
+| NS06 | [Lived-in] I sit with a question. | §24.1 · Clip view · Focus: An inquiry; Inquiry | Central (the practice world) | The question I typed is the one I hold through the sitting. | Breath and Open are the other foci. | P |
+| NS07 | [Lived-in] I glance at how long is left. | §24.1 · Session view · the sitting clip | Central (the practice world) | The clip shows the time left as a ring. | — | P |
+| NS08 | [Lived-in] I end a sitting early. | §24.1 · the transport's Stop | Central (the practice world); Nara's branch M4.1-5 feedback and safety | The sitting ends now and keeps the length I actually sat. | I can end a sitting at any moment. | P |
+| NS09 | [Lived-in] When the bell ends the sitting, I write a line about it, or nothing. | §24.1 · Clip view · After | Central (Document) | Write a line opens a line to write; Nothing opens nothing. | — | P |
+
+## NK — Carry a concern for days or months
+
+**Why:** "I'd want to be doing my tarot draws and I Ching draws." (UX chat 27 Oct)
+**Where:** manual §13, §16.16, §24.4; the Deck, §22.4 · **Port sources:** QL's own system
+
+| ID | Starting world and act | Where it happens | Owning operation and agent | Useful completion | Failure or continuation | Grade |
+|---|---|---|---|---|---|---|
+| NK01 | [Lived-in] I open something I am carrying as a concern. | §24.1, §24.4 · Session view · a concern clip on the practice track; the Deck | Quaternal Logic (Deck), with Central; Nara's branch M4.2 Divinatory frameworks | The concern plays while it is open, read with one tarot deck for its whole life and the I Ching for how it changes, and carries from day to day. | — | P |
+| NK02 | [Lived-in] I draw a card or cast a line for the concern. | §24.4 · Device view · Deck: Draw | Quaternal Logic (Deck); Nara's branches M4.2-1 tarot, M4.2-2 I Ching, M4.2-3 casting with consent | The card is dealt or the line cast, shown as a draw and as mine. | Each draw asks my consent to chance. | P |
+| NK03 | [Lived-in] I place a card where I choose. | §24.4 · Device view · Deck: Assign | Quaternal Logic (Deck) | The card stands where I placed it, as an assignment. | An assignment is never a draw and never claims to be one. | P |
+| NK04 | [Lived-in] I move a card already placed. | §24.4 · Device view · Deck: Move | Quaternal Logic (Deck) | The card stands in its new position, the move shown as mine. | — | P |
+| NK05 | [Lived-in] I tie a card or a line to something I wrote. | §24.4 · Device view · Deck: Link | Quaternal Logic (Deck); Central (the entry) | The card or line is linked to the entry. | — | P |
+| NK06 | [Lived-in] I turn a card. | §24.4 · Device view · Deck: Turn | Quaternal Logic (Deck) | The card's orientation changes under the spread's rule. | — | P |
+| NK07 | [Lived-in] I write a reading of the concern. | §24.4 · Device view · Deck: Comment; the concern's flow | Quaternal Logic (Deck); Central (Document); Nara's branch M4.2-4 interpretation | My reading stands as a comment, and a later one stands beside the earlier. | A correction supersedes without erasing; the first reading stays. | P |
+| NK08 | [Lived-in] I launch the concern as a Reading. | §24.4 · Session view · the concern clip, launched as Reading; Expressions | Quaternal Logic; Expressions | It opens as an Expression: the cards and lines laid out in a scene I can walk, each with its codon and the entries it is linked to. | My writing stays in the concern's flow, where I write. | P |
+| NK09 | [Lived-in] I reopen a concern the next day. | §24.4 · Session view · the concern clip | Quaternal Logic (Deck), with Central | The cards stand as they were. | Reopening never deals again, and a new day never resets the journey. | P |
+| NK10 | [Lived-in] I close a concern I have carried. | §24.4 · Session view · the concern clip | Central, with Quaternal Logic; Nara's branch M4.3-5 phase history | It stops carrying from day to day. | A card's place in the journey never changes my identity, and an act on my M3 clock happens only when I make it. | P |
+
+## NC — Hold a conversation in a form
+
+**Why:** "I'd want to be doing phenomenological or dialogical work, as planned already." (UX chat 27 Oct)
+**Where:** manual §24.5 · **Port sources:** QL's own system
+
+| ID | Starting world and act | Where it happens | Owning operation and agent | Useful completion | Failure or continuation | Grade |
+|---|---|---|---|---|---|---|
+| NC01 | [Lived-in] I hold a conversation as a Bohm dialogue. | §24.5 · Clip view · the flow's Container: Dialogue | Central, with Quaternal Logic; Nara's branch M4.3-2.0 Bohmian dialogue | Assumptions are held in view rather than defended, and each reply names what it suspends. | — | P |
+| NC02 | [Lived-in] I hold a talking circle. | §24.5 · Clip view · Container: Circle | Central, with Quaternal Logic; Nara's branch M4.3-2.1 talking circle | Speak as passes round the participants in order, and only the holder writes. | — | P |
+| NC03 | [Lived-in] I inquire into my own experience. | §24.5 · Clip view · Container: Inquiry | Central, with Quaternal Logic; Nara's branch M4.3-2.2 Diamond Approach inquiry | Each entry is what is here now, then what I notice about it. | — | P |
+| NC04 | [Lived-in] I say what kind of entry I am making. | §24.5 · Pane view · an entry's kind: Observe, Interpret, Choose | Central, with Quaternal Logic | The entry stands as what happened, what I take it to mean, or what I decide to do. | An observation, an interpretation and a choice stay apart. | P |
+| NC05 | [Lived-in] I interpret something I observed earlier. | §24.5 · Pane view · a new Interpret entry | Central | My interpretation stands as its own entry. | A later interpretation never rewrites the observation. | P |
+| NC06 | [Lived-in] I leave a container. | §24.5 · Clip view · Container | Central | Leaving is kept as an entry of its own. | — | P |
+
+## NI — See myself as the system discloses me
+
+**Why:** "We're not imposing an identity; we're revealing or disclosing the existing identity." (UX chat 27 Oct). "And I'd want to be able to, like, really understand and see this representation of my archetypal self, as I planned for the system." (UX chat 27 Oct)
+**Where:** manual §24.6; the Sky's Share page, §22.1 · **Port sources:** QL's own system
+
+| ID | Starting world and act | Where it happens | Owning operation and agent | Useful completion | Failure or continuation | Grade |
+|---|---|---|---|---|---|---|
+| NI01 | [Lived-in] I open my own Being page. | §24.6 · Pane view · Document, my Being page | Quaternal Logic, with Central; Nara's branch M4.0 Mahamaya identity matrix (M4.0-0 to M4.0-5) | My birth, natal chart, Jungian functions, Gene Keys and Human Design, and what they make together, show by reference, each layer with its source. | A missing layer shows as absent with its reason; nothing fills it. | P |
+| NI02 | [Yours] I launch my Being page as Sky. | §24.6 · Session view · my Being page launched as Sky; the Sky (§22.1) | Quaternal Logic (Sky); Nara's branch M4.0-1 chart | My natal sky opens beside today's: the planets where they stood when I was born, and where they stand now. | My natal sky comes from my identity; the shell never computes a second chart. | H (core) |
+| NI03 | [Yours] I correct my birth time. | §24.6 · Pane view · my Being page | Quaternal Logic, with Central; Nara's branch M4.0-0 birthdate | The corrected time is a new revision of the same identity. | It is never a new person, and practice, journeys and answers never write my identity. | P |
+| NI04 | [Lived-in] I share my sky with someone in this world. | §24.6 · the Sky's Share page (§22.1): Share | Quaternal Logic (Sky) | They can open my birth ring over the sky of the date, and the page lists them with the day I shared. | Sharing gives consent to see and never writes my identity; Withdraw takes it back. | P |
+| NI05 | [Lived-in] I open the Being page of someone who shares their sky with me. | §24.6 · Pane view · their Being page, launched as Sky | Quaternal Logic (Sky) | Their sky opens while they share it with me. | When their consent no longer permits it, the row is dark and the sky stays closed. | P |
+
+## NF — Lay my own layer over an Expression
+
+**Why:** "So that's the kind of main, I guess, immediate USP is your work and yourself are considered one and the same, part of one and the same endeavor." (UX chat 27 Oct)
+**Where:** manual §24.7; the Studio's Nara chain, §20.3 · **Port sources:** QL's own system
+
+| ID | Starting world and act | Where it happens | Owning operation and agent | Useful completion | Failure or continuation | Grade |
+|---|---|---|---|---|---|---|
+| NF01 | [Lived-in] I open the Nara chain in an Expression. | §24.7 · Device view · the Studio's Nara chain | Expressions (Studio), with Quaternal Logic; agent: Nara | My personal layer lies over the field: my identity, my centres, my form and clock, my sky and my open journey's deck. | — | P |
+| NF02 | [Lived-in] I select something in the Expression for Nara to read. | §24.7 · Pane view · the field | Expressions; agent: Nara | Nara reads the selection I made. | — | P |
+| NF03 | [Lived-in] I let Nara move the Expression's focus to answer. | §24.7 · Pane view · the field | Expressions; agent: Nara | The focus moves to Nara's answer, with a checkpoint I can return to. | — | P |
+| NF04 | [Lived-in] I undo Nara's move of focus. | §24.7 · Pane view · the checkpoint | Expressions | Returning to the checkpoint undoes the move. | — | P |
+| NF05 | [Lived-in] I save or share an Expression I worked in with my Nara layer open. | §24.7 · the Expression's save; sharing | Expressions | The Expression is saved or shared as itself. | My readings never enter the Expression; it carries none of my layer. | P |
+
+## NL — Read a practice page through a lens, and return what it taught
+
+**Why:** "What do I think, and who am I? Where do I come from? What's my... what are the antecedent conditions or prerequisites for me thinking this way?" (UX chat 27 Oct)
+**Where:** manual §24.8 · **Port sources:** QL's own system
+
+| ID | Starting world and act | Where it happens | Owning operation and agent | Useful completion | Failure or continuation | Grade |
+|---|---|---|---|---|---|---|
+| NL01 | [Lived-in] I read a passage of my practice as a structure of consciousness. | §24.8 · Pane view · Document, a selected passage: Gebser lens | Technē, with Quaternal Logic; Nara's branch M4.4.0 Gebser | The reading, archaic, magic, mythical, mental or integral, stands as a Source entry in the page with the lens named. | A lens reading is a reading and never replaces what I wrote. | P |
+| NL02 | [Lived-in] I read what a passage assumes there is. | §24.8 · Pane view · Ontological lens | Technē, with Quaternal Logic; Nara's branch M4.4 | The reading stands as a Source entry with the lens named. | — | P |
+| NL03 | [Lived-in] I read how a passage assumes we know. | §24.8 · Pane view · Epistemological lens | Technē, with Quaternal Logic; Nara's branch M4.4 | The reading stands as a Source entry with the lens named. | — | P |
+| NL04 | [Lived-in] I read a passage in Jung's terms. | §24.8 · Pane view · Depth lens | Technē, with Quaternal Logic; Nara's branch M4.4 | The functions, the shadow, the complexes, the stages of the work and the Self are read from their own sources, as a Source entry with the lens named. | — | P |
+| NL05 | [Lived-in] I read a passage as first-person experience. | §24.8 · Pane view · Phenomenological lens | Technē, with Quaternal Logic; Nara's branch M4.4 | Its experience, its history and its body are read as a Source entry with the lens named. | — | P |
+| NL06 | [Lived-in] I read a passage through Kashmir Śaivism's recognition. | §24.8 · Pane view · Trika lens | Technē, with Quaternal Logic; Nara's branch M4.4.5 Trika | The reading stands as a Source entry with the lens named. | It is offered, never a verdict. | P |
+| NL07 | [Lived-in] I return what a practice taught me to the Day. | §24.8 · the Day's face 5 | Central (Day); Nara's branch M4.5 Epii integration | The return stands on face 5, naming what it drew on and how. | — | P |
+| NL08 | [Lived-in] Once I have read a return, I take it into my knowledge. | §24.8 · the Day's face 5; my knowledge | Central; AIKit (the wiki) | The pattern reaches my knowledge after my review. | Nothing in a practice writes the shared map. | P |
+
 ## Where the earlier stories now happen
 
 Each earlier story keeps its ID and meaning; in the DLW it happens here.
@@ -1271,6 +2370,43 @@ Each earlier story keeps its ID and meaning; in the DLW it happens here.
 - UI01 → §20.1 Where everything is, finding a control by its name through the line (§18.4)
 - UI02 → §20.1 Pane view, the field and the Studio side by side; §10.2 splitting and pinning panes
 - UI06 → §7 the interface built for agents, through which an agent opens, edits and performs an Expression (`KernelOp::expression`)
+- AG01 → §19.4 Making an agent: For, Works in, Kept for, Type and Carries on the card; Make; Accept
+- AG02 → §19.4 Making an agent: Change before Accept
+- AG03 → §19.12 Scope: Reads, and the Knowledge page's Sources
+- AG04 → §19.4 Agent: Model and Harness
+- AG06 → §19.24 Messages: one agent, one conversation, the same in every mode and in its Agent device
+- AG07 → §19.24 Messages, groups; §19.2 the agency build, Agent to agent
+- AG09 → §19.4 Agent: Power (Benched), Stop and Stop twice; §19.15 Hard stop on a group
+- PX03 → §19.7 Skillset rack: mark states (held, withheld, with the reason) and child sets carried by reference
+- PX06 → §19.1 Launch panel, Repeat (Variable, Levels, Repeats, Stop when), with Compare; §19.5 Experiment
+- GV03 → §19.8 member device, Why page; §19.4 Agent, Context page
+- DV01 → §19.1 Clip view, Intent panel (Intent, From, Success, Add)
+- DV03 → §19.1 Compare; §19.14 Approvals, Review
+- DV04 → §19.1 Retry from the last good step as a new take; §19.25 Run map, Retry within the retry grant
+- DV05 → §10.1 Where a session lives; §19.2 Gateway, Connect (a detached session keeps running)
+- MC01 → §19.18 Remote carrier, Where: This machine
+- MC02 → §19.18 Remote carrier, Where and Machine, with the Gateway's Transport set to Remote
+- MC06 → §19.2 Gateway, a new epoch and the shell's resync; §19.23 the run's world, Recover
+- MC07 → §19.15 Decision helpers: Model (AIKit) and Hosting (Workcell) readings, which can disagree
+- MC08 → §19.23 Workcell, Release page: each binding's Fate, Apply, Release world
+- UI04 → §19.4 Agent: the thread in Full, and the Context page
+- KN02 → §17.3 Knowledge graph, select a node and read its typed relations in the reader (TG01)
+- KN03 → §17.3 Knowledge graph, View: List, Tree, Graph, Form, with filters and depth kept (TG03, TG06, TS01)
+- TM04 → §17.3 Knowledge graph, filter and recentre a wiki decision and open the same focus in another pane (TS01, TG07, TG11)
+- UX05 → §17.1 Clip view Source tab and §17.3 reader, following a subject into its sources and wiki (TE07, TG02)
+- UI02 → §10.2 and §17 Pane view, opening a document, the graph and a conversation side by side (TD01, TG01)
+- WR02 → §17.8 Document, Flow view: Dialogue, Flow, Journal (TD04)
+- WR03 → §17.8 Document, Answer this on a selected passage (TB05)
+- WR04 → §17.8 Document, accepting or removing an entry the agent proposed (TB06)
+- KN06 → §17.8 Document, Thought page: Contemplate and Changed since (TH04, TH05)
+- SH04 → §17.4 Canvas, Promote, and §17.7 Palace, Return: a proposal to another owner's material, carrying my name (TI03, TU06)
+- SH01 → §17.2 World, View as and raising into wider view, and §17.7 private room (TO05, TO06, TU05)
+- TM02 → §10.1 and §17.9 Terminal, a room provided by tmux, cmux or herdr that I return to later (TT06, TT07)
+- UI04 → §17.9 Terminal, following an agent's run live with its name (TT03)
+- UX11 → §17.2 World, standing in a past occasion whose weather and valid places are what they were (TO01)
+- UX02 → §24.6 my Being page launched as Sky, my natal sky beside today's (NI02)
+- UX07 → §24.1 to §24.5 writing, questioning, practising and returning through the practice world (NP03, NJ01, NS01, NK01, NC01)
+- UX12 → §24.6 sharing my sky and opening another person's while they share it (NI04, NI05)
 
 ## Expanding without losing the whole
 
