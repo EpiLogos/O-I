@@ -59,7 +59,7 @@ derive participant identity from a socket.
 | Operation/source | Storage and lifecycle | Verification route |
 | --- | --- | --- |
 | Central Flow append, `ctrl/src/flow_append.rs` included by `file_mutation.rs` | Source CAS, policy/lock/journal; entry.request ref/digest and reply relation | `ctrl/tests/flow_append.rs`, shared plural conformance fixtures. |
-| AIKit `conversation_send/step/admit/incorporate`, `crates/aikit-cli/src/encounter_conversation.rs` | `state/encounters.sqlite3`: request/recipient state, source ack, delivery IDs and cursors in `crates/aikit-store/src/encounter_conversation.rs` / `encounter_delivery.rs` | `crates/aikit-cli/src/encounter_conversation_tests.rs` departed/queued/running cases and the [independent return](../../.wayfinder/maps/plural-flow-now.md#9-independent-verification--30-september-2026). |
+| AIKit `conversation_send/step/admit/incorporate`, `crates/aikit-cli/src/encounter_conversation.rs` | `state/encounters.sqlite3`: request/recipient state, source ack, delivery IDs and cursors in `crates/aikit-store/src/encounter_conversation.rs` / `encounter_delivery.rs` | `crates/aikit-cli/src/encounter_conversation_tests.rs` departed/queued/running cases and the independent return (retired 27 Oct into the DLW map, O-I #706; read it at `8873b0968`). |
 | O:I native document integration | `desktop/cradle/src` and embedded plural module | `desktop/cradle` `test:plural-flow`; installed keyboard/pointer proof has its own standing. |
 
 The map reports an installed AIKit `02395f05` / Central `fe269e19` interrupted

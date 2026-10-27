@@ -2,7 +2,7 @@
 
 **Standing:** owner-directed intended experience and development clarification, 20 September 2026. Publication is requested; runtime and human-use evidence remain separate. This extends the existing KN, WR, AG, PX, UI and SH stories, the Expression field and QL UX spine. It creates no new story family or capability registry and does not ratify unrelated H-pending sources.
 
-**Why and decisions:** [WC01–WC15](../positions/WIKI-CONSTELLATION-PRACTICE.md). **How to build:** [joined Wayfinder](../../.wayfinder/maps/wiki-constellation-development.md). **Detailed contracts:** [specification](../cradle/WIKI-CONSTELLATION-SPEC.md). **Machine-readable attachment to existing stories:** [wiki-constellation.json](wiki-constellation.json).
+**Why and decisions:** [WC01–WC15](../positions/WIKI-CONSTELLATION-PRACTICE.md). **How to build:** joined Wayfinder (retired 27 Oct into the DLW map, O-I #706; read it at `8873b0968`). **Detailed contracts:** [specification](../cradle/WIKI-CONSTELLATION-SPEC.md). **Machine-readable attachment to existing stories:** [wiki-constellation.json](wiki-constellation.json).
 
 ## 1. What the person should experience
 

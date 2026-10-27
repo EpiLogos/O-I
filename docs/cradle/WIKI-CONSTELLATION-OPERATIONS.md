@@ -1,6 +1,6 @@
 # Working with linked writing and constellations
 
-This guide describes the Wiki implementation in O-I #418 and its native dependencies. It is not an installed-suite acceptance receipt. Product reasons and decisions remain in [Wiki constellation practice](../positions/WIKI-CONSTELLATION-PRACTICE.md); requirements remain in the [joined Wayfinder](../../.wayfinder/maps/wiki-constellation-development.md), [specification](WIKI-CONSTELLATION-SPEC.md) and [UX](../experience/WIKI-CONSTELLATION-UX.md).
+This guide describes the Wiki implementation in O-I #418 and its native dependencies. It is not an installed-suite acceptance receipt. Product reasons and decisions remain in [Wiki constellation practice](../positions/WIKI-CONSTELLATION-PRACTICE.md); requirements remain in the joined Wayfinder (retired 27 Oct into the DLW map, O-I #706; read it at `8873b0968`), [specification](WIKI-CONSTELLATION-SPEC.md) and [UX](../experience/WIKI-CONSTELLATION-UX.md).
 
 ## Begin with existing writing
 

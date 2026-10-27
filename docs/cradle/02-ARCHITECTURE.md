@@ -8,7 +8,7 @@ Standing: architecture-contract
 **Status:** architecture commitment for the O:I desktop.
 **Companion:** [01-DESIGN.md](01-DESIGN.md) (intent), [03-UX-STATES.md](03-UX-STATES.md) (states), [04-VERIFICATION.md](04-VERIFICATION.md) (evidence).
 
-**20 September 2026 clarification:** §6 explicitly includes retained kernel loading/resource state. Read [Wiki/constellation decisions WC01–WC15](../positions/WIKI-CONSTELLATION-PRACTICE.md) and the [joined development map](../../.wayfinder/maps/wiki-constellation-development.md) for its purpose and application. The dated implementation disposition in §11 remains historical evidence, not a finding about the owner's incoming local mains.
+**20 September 2026 clarification:** §6 explicitly includes retained kernel loading/resource state. Read [Wiki/constellation decisions WC01–WC15](../positions/WIKI-CONSTELLATION-PRACTICE.md) and the joined development map (retired 27 Oct into the DLW map, O-I #706; read it at `8873b0968`) for its purpose and application. The dated implementation disposition in §11 remains historical evidence, not a finding about the owner's incoming local mains.
 
 ## 1. Stack and kernel
 

@@ -50,7 +50,7 @@ opens itself and has no configured address for — `{scope:'expressions',
 checkpoint_id: <ref>, expression_ref: <ref>}`, the owner's own id-equals-ref law
 — before the frame asks; a configured saved work keeps its address, and the
 first checkpoint is created through the owner's absent-basis CAS
-(wayfinder/tickets/T-RECOVERY-FOR-OPENED-WORKS.md, 15 Oct).
+(`wayfinder/tickets/T-RECOVERY-FOR-OPENED-WORKS.md` (retired 27 Oct into the DLW map, O-I #706; read it at `8873b0968`), 15 Oct).
 See [RECOVERY-OWNERSHIP.md](./RECOVERY-OWNERSHIP.md) for the actual native bases,
 remaining app integration and executed read-only acceptance.
 

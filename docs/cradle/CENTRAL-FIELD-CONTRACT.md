@@ -1,7 +1,7 @@
 # Central field — the small shared contract (EF0)
 
 Status: **published 6 October 2026 by the lead, revised as the first vertical lands.**
-Parent: O:I #592 · Map: `.wayfinder/maps/epi-logos-field.md` · Repair ledger: O:I #598.
+Parent: O:I #592 · Map: `.wayfinder/maps/epi-logos-field.md` (retired 27 Oct into the DLW map, O-I #706; read it at `8873b0968`) · Repair ledger: O:I #598.
 Branch: `feat/central-field-base` (seat `env-2/o-i`). Names below describe meaning; where a
 type already exists it is named by its file, and nothing here mints a competing store.
 
