@@ -2,11 +2,7 @@
 
 Start at [#65 and the campaign map](README.md). Use [stories](STORIES.md), [paired record profile](STORY-PROFILE.md) and [practice conditions](PRACTICE-CONDITIONS.md). Load the source-owned [campaign Method](../../skills/experience-campaign/SKILL.md) explicitly for this commissioned bootstrap when it is not yet discoverable through the actual installed AIKit source. That explicit load is not a claim that normal discovery works.
 
-**Current owner update — 20 September 2026:** use the [existing orientation's three bounded Mac tracks](INHABITED-SYSTEM-ORIENTATION.md#current-owner-direction--two-outcomes-three-mac-tracks): (1) O:I/Desktop/whole-product UX, (2) S0–S4 functionality/performance/Factory plus Run-in-Expressions, (3) QL-MEF/Expressions/Technè/Nara/Epii. The primary checkout is included within **three O:I Mac trees total**; each native repository has **one owner checkout**. No fourth Mac verifier tree. Track 1 owns shell integration and Mac UX proof; Track 2 owns native operations; Track 3 owns QL/Expression facilities. Claim disjoint files before edits and preserve unpublished local work. Verification uses the existing owner checkout and isolated outputs/episodes, not an additional Mac tree.
-
-Omarchy contributes **bounded independent work and Bimba/SharedField hosting**, without gating unrelated Mac progress. This supersedes the 18 September sandbox-default/Omarchy-first execution wording, not the historical sandbox observations or material evidence. `5/0` remains the hosted Library/Expression learning encounter, not a visitor-side install: [INSTALLATION-VARIANTS.md](INSTALLATION-VARIANTS.md) retains that correction and clean-browser walk. Both useful installed products with actual Factory self-inhabitation **and** the complete source-backed corpus with real hosted publication remain required outcomes. A representative slice is not closure of either.
-
-The existing Day/NOW gate still bounds broad dependent fan-out. Independent useful implementation and affected tests continue without another whole-suite audit or planning approval phase. Web Agents now deliver production implementation and controlled verification through PRs; local Agents alone integrate and perform real-provider/computer-use acceptance. This GitHub implementation commission does not authorise connection to or mutation of the person's machines; local operations below require their own current authority. Native matrices, C0–C5 and historical receipts keep their scopes.
+The DLW's work runs through its wayfinder map, EpiLogos/O-I#706: a story is built and walked through the ticket that names it.
 
 ## 1. Your job and why it exists
 
@@ -26,6 +22,21 @@ Keep one concise current entry under #65 linking the exact round, active test as
 6. **Check safety and capacity.** Set explicit time/turn/cost/concurrency/resource/retry limits for this round; record which effects, external transmissions, credentials, machine restarts and repository writes are permitted. No fixed global allowance is inferred from this document. Have an emergency stop and known cleanup/retention boundaries before starting a multi-agent or computer-use run.
 
 A missing production operation remains implementation work. Do not invite the human into a control known to have no working route. Complete it, or select a useful independent activity while preserving that obligation as blocked. Human judgement is reserved for actual choices and experience, not avoidable setup debugging.
+
+## 2.2 Starting worlds and the standard
+
+Every story names the world it starts from. Each is a real state, never a fixture:
+
+| World | What it holds | What it proves |
+|---|---|---|
+| Bare | Nothing: no ground, no agent tools, no projects | Installing the full suite, Setup's steps finding nothing, Nara's birth-data step, a first project, a first piece of work in each mode |
+| Arriving | A realistic, disposable person: repositories with their own agent instructions, a configured coding agent with skills, notes, audio, an Ableton set, an Obsidian vault | Adopting what is there and keeping it working as before (manual §10.11) |
+| Lived-in | A world made by walking Bare and Arriving forward through the app, then kept | Continuity, history, many worlds, depth |
+| Yours | The owner's own ground | The owner's own use; agents test here too, and its writes are real |
+
+A world is one Central folder, chosen and named; every product keeps that world's state under it or keyed to it. A candidate opens the chosen world's own state. A test never leaves copied material behind as remembered state, and a design fixture in the device gallery never counts as acceptance.
+
+**The standard a story is held to** (O-I #715). Each story declares its grade: P by default, meaning the effect runs through its real owning product; M where files, machines or sound are involved; H for each mode's core stories and any the owner flags. The builder never grades its own work. An independent verifier with no build context walks the story on the native candidate, built in env-2 from an identified commit, from the story's starting world; confirms each effect by reading it back from the product that owns it; records screenshots and readbacks with the story; and judges each capture as the owner would, beside its Live counterpart or its mockup. H comes only from the owner, in their own words. A ticket closes only when its stories reach their grades; landing with green CI is not done.
 
 ## 2.1 Omarchy sandbox proving — bounded independent development material
 
@@ -134,6 +145,10 @@ Do not require invisible private reasoning. Evidence is actual prompts/context d
 For quiet-use tests the driver may never open the O:I desktop. The benefit is demonstrated when the normal harness discovers and uses the relevant instruction/knowledge/resource in useful work. Instrument the prohibited side effects too: unwanted source rewrites, unrequested model invocations, secret leakage or spurious Factory tasks are failures, even if the main answer looks good.
 
 For graph/intelligence tests, give actual documents with relations, changes and disagreement. Let the acting agent find them using normal search. Keep oracle filenames/expected dependencies outside its context. A verifier checks retrieved sources, the substantive result and the dependencies used; merely emitting a graph or a polished paragraph is insufficient.
+
+### The verifier's walk on the native app
+
+The verifier drives the native candidate only; a browser render is never a substitute, because only the native host reaches the products' owners. It loads the computer-use tools, asks for access to the candidate, and walks each story at two viewports, the window maximised on the largest display and the window 700 pt wide at full height. It interacts only through the app's own controls and keys. For each story it reports PASS, FAIL or ABSENT with what it saw, quoting on-screen text exactly, and the capture's file name; then the defects, each with where, what differs from the story and the capture; then the three most visible craft gaps against Live or the mockups. It changes no code and leaves the app running for the lead to quit.
 
 ## 5. When a subagent or seam goes wrong
 

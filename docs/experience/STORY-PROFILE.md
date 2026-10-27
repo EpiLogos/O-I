@@ -20,9 +20,24 @@ A parent describes a whole activity. Children describe meaningful interactions o
 
 Publication, source standing, implementation support, observed execution and human EX remain different. The source stories are specified, not automatically tested. A generated interpretation is not the person's own report.
 
+### The six cells of one story
+
+A story's record is read on the six positions, which are also the six document tiers. Each cell is filled from its source or left open, never filled for show.
+
+| Position | Cell | Record fields |
+|---|---|---|
+| 0 Why | The owner's words the story answers | `source_refs` to tier-0 ground |
+| 1 What | Who, from which start, does what, and gets what | `actor`, `story`, `entry_state`, `act`, `experienced_outcome`, `return_state`, `branch_condition` |
+| 2 How | The device, view and act that carry it, and the capability rows it needs | `surface_refs`; `extensions.agent_ux.capability_requirements` |
+| 3 Who / Which / Whereby | The product operation that owns the effect, and the agent that acts | `extensions.agent_ux.participants`, `steps` |
+| 4 Where / When / Whither | Its starting world (Bare, Arriving, Lived-in or Yours), surface and machine; its reverse-engineered port source; the code | `extensions.ux.starting_world`, `extensions.ux.port_sources`, code refs |
+| 5 Why-for / Why-not | The walk, the grade and the owner's EX: what it was for, and whether it held | `extensions.ux.grade` (D, C, P, M or H), `existing_proof_refs`, EX refs |
+
+The readable catalogue carries these as columns; the capability matrix carries them as references in a story-by-position view.
+
 ## 2. The additive agent reading
 
-Use `extensions.agent_ux` for the **same** story and revision. Do not copy it as an unrelated “agent feature”. The minimum complete reading is:
+Use `extensions.agent_ux` for the **same** story and revision. The earlier `docs/ux/` profile called this reading `extensions.participation`; it is the same reading under one name. Do not copy it as an unrelated “agent feature”. The minimum complete reading is:
 
 | Member | Required meaning |
 |---|---|
