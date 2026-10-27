@@ -1,0 +1,256 @@
+{
+  "protocol": "ql-capability-matrix/1",
+  "matrix_id": "matrix.oi-shell",
+  "anchor_ref": "docs/dlw/DLW.md",
+  "default_view": "shell-field",
+  "views": [
+    {
+      "id": "shell-field",
+      "title": "O:I shell · area × native product",
+      "semantics": "Each intersection asks: which shell devices and instrument targets in this area draw on this native product, and as what? A placement exists only where a manual entry's Product line names the product (coverage 'product' when it is the entry's product, 'with' when named after 'with'), or where a target's native_owners name it (coverage 'native-owner'). The houses row places the devices §16.1 names in each house a second time. The direction is always shell → product: the shell presents, the product owns the operation and its state. Empty means unassessed, never absent or impossible.",
+      "row_axis": {
+        "id": "shell-areas",
+        "label": "Shell areas",
+        "ordering": "Part Three's families in order (§17 Technē and the instruments that open in any mode, §18 Central, §19 Factory, §20 Expressions, §21 Live; §22 → Any mode; §23 → the window's rail), then Part One's Settings (§10.10–§10.11) and the houses (§10.4, §16.1)",
+        "members": [
+          {
+            "id": "techne",
+            "label": "Technē",
+            "source_ref": "docs/dlw/DLW.md#17.1",
+            "scope": "§17.1 Technē: tracks and clips; §17 entries that stand on a reading's chain (§17.10 Light, §17.11 Lens)."
+          },
+          {
+            "id": "any-mode",
+            "label": "Any mode: the shared instruments",
+            "source_ref": "docs/dlw/DLW.md#17",
+            "scope": "§17.2–§17.9 (Product line 'Pane: any pane, in every mode') and §22, whose entries stand on 'Any track'."
+          },
+          {
+            "id": "central",
+            "label": "Central",
+            "source_ref": "docs/dlw/DLW.md#18",
+            "scope": "§18 Central."
+          },
+          {
+            "id": "factory",
+            "label": "Factory",
+            "source_ref": "docs/dlw/DLW.md#19",
+            "scope": "§19 Factory and the agent chain."
+          },
+          {
+            "id": "expressions",
+            "label": "Expressions",
+            "source_ref": "docs/dlw/DLW.md#20",
+            "scope": "§20 Expressions."
+          },
+          {
+            "id": "live",
+            "label": "Live",
+            "source_ref": "docs/dlw/DLW.md#21",
+            "scope": "§21 Live."
+          },
+          {
+            "id": "window",
+            "label": "The window",
+            "source_ref": "docs/dlw/DLW.md#10.1",
+            "scope": "§10.1 The window; §23 Widgets (Product line 'Part of the window: the widget rail on the right')."
+          },
+          {
+            "id": "settings",
+            "label": "Settings and setup",
+            "source_ref": "docs/dlw/DLW.md#10.10",
+            "scope": "§10.10 Settings; §10.11 Bringing in what you have."
+          },
+          {
+            "id": "houses",
+            "label": "The houses",
+            "source_ref": "docs/dlw/DLW.md#16.1",
+            "scope": "§10.4 Houses; §16.1 'Houses and their chains'."
+          }
+        ]
+      },
+      "column_axis": {
+        "id": "native-products",
+        "label": "Native products S0–S5",
+        "members": [
+          {
+            "id": "S0",
+            "label": "Central",
+            "source_ref": "Central:ProjectCentral/user/capability-matrix.json"
+          },
+          {
+            "id": "S1",
+            "label": "Actuation",
+            "source_ref": "Actuation:ProjectCentral/user/capability-matrix.json"
+          },
+          {
+            "id": "S2",
+            "label": "AIKit",
+            "source_ref": "ai-kit:ProjectCentral/user/telos/capability-matrix.json"
+          },
+          {
+            "id": "S3",
+            "label": "Software Factory",
+            "source_ref": "Factory:ProjectCentral/user/capability-matrix.json"
+          },
+          {
+            "id": "S4",
+            "label": "Workcell",
+            "source_ref": "Workcell:ProjectCentral/user/capability-matrix.json"
+          },
+          {
+            "id": "S5",
+            "label": "Quaternal Logic",
+            "source_ref": "Quaternal-Logic:ProjectCentral/user/capability-matrix.json"
+          }
+        ]
+      }
+    },
+    {
+      "id": "instrument-lanes",
+      "title": "Instrument lanes · lane × native product",
+      "semantics": "Each intersection asks: which of this lane's acceptance targets name this native product among their owners (targets.json native_owners or contract_owner)? Every target names 'O:I Expression kernel' (O:I's own, no column) and 'Central / AIKit declared source owners'. Empty means unassessed.",
+      "row_axis": {
+        "id": "instrument-lanes",
+        "label": "The five instrument lanes of the target register",
+        "members": [
+          {
+            "id": "lane-1",
+            "label": "Canvas / Project / Graph",
+            "source_ref": "desktop/cradle/docs/world-shell/lanes/lane-1-canvas-graph/TARGET-SET.md"
+          },
+          {
+            "id": "lane-2",
+            "label": "Timeline",
+            "source_ref": "desktop/cradle/docs/world-shell/lanes/lane-2-timeline/TARGET-SET.md"
+          },
+          {
+            "id": "lane-3",
+            "label": "Expressions editing core",
+            "source_ref": "desktop/cradle/docs/world-shell/lanes/lane-3-expressions-editor/TARGET-SET.md"
+          },
+          {
+            "id": "lane-4",
+            "label": "Places",
+            "source_ref": "desktop/cradle/docs/world-shell/lanes/lane-4-world-places/TARGET-SET.md"
+          },
+          {
+            "id": "lane-5",
+            "label": "Journey / Palace",
+            "source_ref": "desktop/cradle/docs/world-shell/lanes/lane-5-journey-palace/TARGET-SET.md"
+          }
+        ]
+      },
+      "column_axis": {
+        "id": "native-products",
+        "label": "Native products S0–S5",
+        "members": [
+          {
+            "id": "S0",
+            "label": "Central",
+            "source_ref": "Central:ProjectCentral/user/capability-matrix.json"
+          },
+          {
+            "id": "S1",
+            "label": "Actuation",
+            "source_ref": "Actuation:ProjectCentral/user/capability-matrix.json"
+          },
+          {
+            "id": "S2",
+            "label": "AIKit",
+            "source_ref": "ai-kit:ProjectCentral/user/telos/capability-matrix.json"
+          },
+          {
+            "id": "S3",
+            "label": "Software Factory",
+            "source_ref": "Factory:ProjectCentral/user/capability-matrix.json"
+          },
+          {
+            "id": "S4",
+            "label": "Workcell",
+            "source_ref": "Workcell:ProjectCentral/user/capability-matrix.json"
+          },
+          {
+            "id": "S5",
+            "label": "Quaternal Logic",
+            "source_ref": "Quaternal-Logic:ProjectCentral/user/capability-matrix.json"
+          }
+        ]
+      }
+    }
+  ],
+  "provenance": {
+    "account": "docs/dlw/DLW.md, the Digital Logos Workstation manual, is the governing account: the owner calls it the vision and the main spec.",
+    "policy": "One matrix for the S whole. The desktop's feature claims are capability rows that relate to the native products they read; native capabilities stay in their own products' matrices and are not copied here (CAPABILITY-MATRIX-PROTOCOL.md, Native product view). Rows: the devices the manual embeds, the 126 targets of the instrument-lane register (statuses carried as recorded), and the 38 S-position rows of the 2026-09-06 recovery matrix (ids preserved). Evidence is never generated to fill a column; empty means unassessed.",
+    "standing": "agent-inference",
+    "generated_on": "2026-10-22",
+    "generator": "python3 -I gen.py --root <o-i tree>; kept outside the repository, in the generating session's scratchpad (matrix/gen.py)",
+    "sources": [
+      {
+        "path": "docs/dlw/DLW.md",
+        "sha256": "e611f7f83c16c7c7e245533773c9f721234b6d148ae7cca4eaf7a00cc4ad1f4d",
+        "git_head": "08df20494ed5bcc72471ba63e675d0efff81dfec",
+        "git_blob_at_head": "477e95e5531ab8bd8dc64bfa8442720f36958229",
+        "working_tree_differs_from_head": true
+      },
+      {
+        "path": "desktop/cradle/docs/world-shell/targets.json",
+        "sha256": "94be1733dfa8620eaa7793a6752c7c29e5762e032f19017d6e5936e0db2417e3",
+        "git_head": "08df20494ed5bcc72471ba63e675d0efff81dfec",
+        "git_blob_at_head": "1edd619e1c7b4e41282ea1e87dcd78fc59084805",
+        "working_tree_differs_from_head": false
+      },
+      {
+        "path": "suite/capability-matrix.json",
+        "sha256": "fe8a484b6613ba633919ce30ea203406cf9e58b1ea1c24887c6220428c9f425f",
+        "git_head": "08df20494ed5bcc72471ba63e675d0efff81dfec",
+        "git_blob_at_head": "005b00a1b1d5684691d58f17557004171d7a3097",
+        "working_tree_differs_from_head": true
+      }
+    ],
+    "readings": {
+      "device_gaps": {
+        "command": "node scripts/device-gaps.mjs --all --json",
+        "cwd": "packages/live-shell/ui",
+        "output_sha256": "fa47abab07d24a1ff7b5328186ee977da50e121575452b7d8bfc3987ca108107",
+        "note": "joins recovery-matrix rows to admitted family faces; params were empty for every family, so no per-device owner-served key count exists"
+      },
+      "door": {
+        "command": "node scripts/validate-devices.mjs --json",
+        "cwd": "packages/live-shell/ui",
+        "output_sha256": "93ecc82962fdf53ca43b34410b2071ff0618edc0df6acfa2e766261819edc081"
+      }
+    },
+    "native_cli_basis": {
+      "Central:ProjectCentral/user/capability-matrix.csv": {
+        "sha256": "c175897977e092a1d92eb9fc6b6c185b353e6b12aecca0fedf265adcc25b5974",
+        "git_head": "6e564b28134ad02e63707948fd8752a2ee1eaea0"
+      },
+      "ai-kit:ProjectCentral/user/telos/capability-matrix.csv": {
+        "sha256": "2119fcaf24d54da3e5354aec9294e2e2a11e012e30b5754837c1b926e0aa41f1",
+        "git_head": "7482737e8370c89834a1ff5a4199bb5f30685cf4"
+      },
+      "Factory:ProjectCentral/user/capability-matrix.csv": {
+        "sha256": "8466766eb40513fdeb75cef0bbed46f0294c325b6a962a615192e9478364d957",
+        "git_head": "f99f11aa83b61e43b2b71e4bc49260bc2f165e55"
+      },
+      "Workcell:ProjectCentral/user/capability-matrix.csv": {
+        "sha256": "77f0b3be7e27a36e725c76e4cc3af05e26b2bdea95269a0919c49fcb52aa3ded",
+        "git_head": "1c07c8229010a0b2b1e75964b612a622c1f09071"
+      },
+      "Actuation:ProjectCentral/user/capability-matrix.csv": {
+        "sha256": "c6df82102541c05d5908c9b1834d692e527dccdfe8ae129ec81016b131d06fea",
+        "git_head": "2e6d40ea011caff069fe6e00eb38ad88b5b71ad2"
+      }
+    },
+    "native_refs": {
+      "method": "exact string match of a target's owner_op backticked operation names, or a device's declared write path after '<product>-cli:', against the native matrices' cli_commands",
+      "matches": 0
+    },
+    "registers_carried": {
+      "suite/capability-matrix.json": "its 38 S-position rows are carried here with ids, evidence and per-source verdicts; its S0–S5 rows stay with the native matrices; the file stays as the recovery's historical extraction",
+      "desktop/cradle/docs/world-shell/targets.json": "its 126 targets are rows here with statuses as recorded; the register keeps the full definitions and evidence until the owner retires it",
+      "not_reconciled_here": "suite/product-capabilities.json (the native S0–S5 catalogue, left alone), packages/live-shell/ui/src/inhabitants/capabilityHomes.ts and T-COVERAGE"
+    }
+  }
+}

@@ -654,7 +654,7 @@ export const GLYPHS = {
     meaning: `Skill stand-in: port widgets.`,
     usage: `A skill chip in a skillset rack until an authored engine glyph replaces it. The picture is a diamond.`,
     states: `One drawing. The row's light is admit or deny.`,
-    appears: `Ported from agent-shell-mockup.html SK['port-widgets'], scaled from 16 to 24. AGENTIC-CONVERGENCE.md calls these geometric stand-ins.`,
+    appears: `Ported from agent-shell-mockup.html SK['port-widgets'], scaled from 16 to 24. They are geometric stand-ins; the Expressions glyph library is their intended later source.`,
     body: `<path fill="currentColor" d="M12 2.25 21.75 12 12 21.75 2.25 12z"/>`,
   },
   "capture-plan": {

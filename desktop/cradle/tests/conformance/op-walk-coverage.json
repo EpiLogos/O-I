@@ -421,7 +421,7 @@
     {
       "op": "encounter_session_settings",
       "native_owner": "kernel/src/agency.rs",
-      "spec_ref": "docs/world-shell/wayfinder/PATH.md \u00a77 FT row; AIKit docs/implementation/CAW-TASK-DISPATCH.md (encounter-session-settings)",
+      "spec_ref": "docs/world-shell/wayfinder/tickets/T-TRACKS-FACTORY-sessions-and-tasks.md State of record (the FT row, moved from PATH \u00a77); AIKit docs/implementation/CAW-TASK-DISPATCH.md (encounter-session-settings)",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -430,7 +430,7 @@
     {
       "op": "encounter_session_settings_list",
       "native_owner": "kernel/src/agency.rs",
-      "spec_ref": "docs/world-shell/wayfinder/PATH.md \u00a77 FT row; AIKit docs/implementation/CAW-TASK-DISPATCH.md (encounter-session-settings)",
+      "spec_ref": "docs/world-shell/wayfinder/tickets/T-TRACKS-FACTORY-sessions-and-tasks.md State of record (the FT row, moved from PATH \u00a77); AIKit docs/implementation/CAW-TASK-DISPATCH.md (encounter-session-settings)",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -439,7 +439,7 @@
     {
       "op": "encounter_task_attempts_list",
       "native_owner": "kernel/src/agency.rs",
-      "spec_ref": "docs/world-shell/wayfinder/PATH.md \u00a77 FT row; AIKit docs/implementation/CAW-TASK-DISPATCH.md (encounter-task-attempts)",
+      "spec_ref": "docs/world-shell/wayfinder/tickets/T-TRACKS-FACTORY-sessions-and-tasks.md State of record (the FT row, moved from PATH \u00a77); AIKit docs/implementation/CAW-TASK-DISPATCH.md (encounter-task-attempts)",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -803,7 +803,7 @@
     {
       "op": "live_clip_read",
       "native_owner": "kernel/src/live_set_owner.rs",
-      "spec_ref": "docs/world-shell/wayfinder/PATH.md \u00a77 (the Live set's own edits); packages/live-set/src/edit.rs",
+      "spec_ref": "docs/world-shell/wayfinder/tickets/T-REALIGN-the-next-run-after-the-design-realignment.md State of record (the OO row: the Live set's own edits, moved from PATH \u00a77); packages/live-set/src/edit.rs",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -812,7 +812,7 @@
     {
       "op": "live_clip_write",
       "native_owner": "kernel/src/live_set_owner.rs",
-      "spec_ref": "docs/world-shell/wayfinder/PATH.md \u00a77 (the Live set's own edits); packages/live-set/src/edit.rs",
+      "spec_ref": "docs/world-shell/wayfinder/tickets/T-REALIGN-the-next-run-after-the-design-realignment.md State of record (the OO row: the Live set's own edits, moved from PATH \u00a77); packages/live-set/src/edit.rs",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -884,7 +884,7 @@
     {
       "op": "live_track_mixer_write",
       "native_owner": "kernel/src/live_set_owner.rs",
-      "spec_ref": "docs/world-shell/wayfinder/PATH.md \u00a77 (the Live set's own edits); packages/live-set/src/edit.rs",
+      "spec_ref": "docs/world-shell/wayfinder/tickets/T-REALIGN-the-next-run-after-the-design-realignment.md State of record (the OO row: the Live set's own edits, moved from PATH \u00a77); packages/live-set/src/edit.rs",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",

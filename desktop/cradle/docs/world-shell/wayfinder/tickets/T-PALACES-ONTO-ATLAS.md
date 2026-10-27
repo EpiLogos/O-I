@@ -198,3 +198,22 @@ atlas; `m0m5/agent-state.ts` (unreached before and after; its deletion is propos
 host protocol (`HostedTechneLens`, the shell's `HOSTED_INSTRUMENT`), as `place` did. The boundary's Palace trail route
 (`packages/expressions-boundary/src/timeWindow.ts:164`) has no caller once the frame's lens is gone; it stays pinned beside the atlas's
 port (`atlas-palaces-trail.test.mjs`) and its retirement is proposed.
+
+## State of record (moved from PATH sec 7, 22 Oct 2026)
+
+Moved verbatim from the retired `PATH.md` (history: PATH.md at `41557a9ed`). Hashes, run labels (r1, r23 ...) and cross-references inside are as PATH wrote them; "PATH sec N" and "FOUNDATION sec N" in this text name the retired files, whose content is now in `MAP.md` (State of the streams, The foundation's route), `EXECUTE.md` and the tickets.
+
+### PATH sec 7: palaces live in the atlas (lane U, N4)
+
+Then: palaces live in the atlas (`b5a935661`, lane U, N4): a palace is a register's native Expression standing on the world —
+its rooms its Scenes in owner order (the path), a room's objects the subjects its Scenes bind, its door the first placed room;
+entered from M4's Locations (kind palace), the M5 fold, or the browser's World › Palaces (`30ba8692f`: opens the Earth, waits for
+its owners, enters — a wait that ends says so); the M5 Palace / Integral Whole plate carries Rooms, Path and Portals, the walk rides
+the transport, the pane draws only the floor. The frame's Palace lens, board and hop are removed (−2.9k lines), with the
+instrument-editors packet's Palace editor (`82eb45f4d`); the stage keeps three lenses. Lane 5's palace evidence went with the frame
+(`c0fc49da7`: implemented 105 → 98); lane X re-homed the nine on the atlas's palaces and re-proved them there (`4d8de2be3`:
+R2 closes, homes on a retiring home 0, implemented 105). Carried from lane U: no owner discloses a Scene's privacy
+or shape (no clouded room, one room size); no owner sets a walk pace (a fixed 6 s, said); a live register's Return discloses
+`oi.expression.edit`, not governed-write, so a Propose Return honestly comes back "not routed"; the boundary's `palaceHop` route
+has no caller left but stays pinned as the trail step's reference law; `TechneLensBar` in ModeDetail.tsx is unrendered since F2
+(only tests reach it) — remove with its tests. Screen legs UNVERIFIED.

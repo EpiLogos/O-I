@@ -1,6 +1,6 @@
 # Reviewer brief — template (Sonnet)
 
-Sent by the lead only at the review points in PATH §6, as one Agent call
+Sent by the lead only at the review points listed at the foot of this file (from the retired PATH §6), as one Agent call
 with `model: sonnet`. Read-only.
 
 ```text
@@ -41,3 +41,10 @@ mockups at both viewports; every face carries its Live semantic. R2: one
 spine, no second store, honest track adapters. R3: Factory and Central owners
 present. R4a/b: identity continuous across projections. R5: register axes
 implemented/exercised/passed, never on code-reading alone. R6: cutover gates.
+
+## Review points (from PATH sec 6)
+
+R0 after the screen pass · R1 end of Phase 1 · R2 each seam batch · R3
+before verticals · R4a/b after each vertical · R5 each target-lane block ·
+R6 before retirement. Exception: a builder failing the same acceptance
+bullet twice gets one Sonnet diagnostic; never a third builder attempt.

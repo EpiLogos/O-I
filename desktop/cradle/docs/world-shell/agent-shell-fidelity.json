@@ -1,7 +1,7 @@
 {
   "schema": "oi.agent-shell-fidelity/v1",
   "source": "new-shell/agent-shell-mockup.html",
-  "revision": "AGENTIC-CONVERGENCE.md Revision 5",
+  "revision": "agent-shell-mockup.html Revision 5 (the retired AGENTIC-CONVERGENCE.md Revision 5; architecture folded into WORLD-SHELL-DESIGN.md §7.1)",
   "generated_at": "2026-10-08",
   "tokens": {
     "--bg-0": "#26292d",

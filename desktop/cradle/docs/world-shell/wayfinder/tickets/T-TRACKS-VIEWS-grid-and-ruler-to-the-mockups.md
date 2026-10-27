@@ -40,3 +40,13 @@ Additive fields on `timeline/worldTrackAdapter.ts` only; every existing adapter 
 Factory's grid folds its helpers under their parent with ancestor rails; a stalled lane is striped with its retry lit;
 Central's five columns carry the mockup colours; the ruler shows a now line and stalled needles; no view names a mode
 (`tests/f3-tracks.test.mjs` and the tripwire stay green).
+
+## State of record (moved from PATH sec 7, 22 Oct 2026)
+
+Moved verbatim from the retired `PATH.md` (history: PATH.md at `41557a9ed`). Hashes, run labels (r1, r23 ...) and cross-references inside are as PATH wrote them; "PATH sec N" and "FOUNDATION sec N" in this text name the retired files, whose content is now in `MAP.md` (State of the streams, The foundation's route), `EXECUTE.md` and the tickets.
+
+### PATH sec 7: the grid and ruler regain the World-cut presentation (lane K)
+
+Then: the shared grid and ruler regained what the World-cut presentation drew (`c89cb9ab1`, lane K: standing edges,
+sections by atmosphere, cron firings — at their instant on Central's ruler too —, the retained occasion with its admission
+light, walk rails, ruler zoom/pan/snap; ported from `09a573a1d`).

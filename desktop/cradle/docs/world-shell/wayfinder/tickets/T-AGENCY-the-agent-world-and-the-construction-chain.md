@@ -156,3 +156,13 @@ installed; K6 on the planning lane's device answer; K8 on K1–K5.
   them where they miss.
 - Where Ta-Onta's Methodology and six Methods live: QL-MEF `skills/` (beside the 39 domain skills) or Central's skills. This ticket
   assumes QL-MEF, because the lock is QL's.
+
+## State of record (moved from PATH sec 7, 22 Oct 2026)
+
+Moved verbatim from the retired `PATH.md` (history: PATH.md at `41557a9ed`). Hashes, run labels (r1, r23 ...) and cross-references inside are as PATH wrote them; "PATH sec N" and "FOUNDATION sec N" in this text name the retired files, whose content is now in `MAP.md` (State of the streams, The foundation's route), `EXECUTE.md` and the tickets.
+
+### Row (PATH sec 7 table): K5, the Decision helper
+
+| Ticket | Who | Zone | Since |
+|---|---|---|---|
+| K5 — the Decision helper on its owners (T-AGENCY K5; manual §19.20) | **code landed** `c43d143da`. Kernel ops `decision_status` (`aikit --json decide status`, asks no model) and `team_space` (`oi ql context-frame team-space --json`); `ai-kit:decision-helper` admitted as AIKit's face and drawn on them (`agent/devices/decisionHelperBinding.ts`): Provider, the model, where it runs, loaded or not, independence, no price; the team space's instruments with their labels, the collaboration gate the person's. It stands on a group's chain after the Agentset rack and is read only while it stands there. Unread and left unknown: the last question and answer, today's log and counts, When and Deadline, each instrument's measured admission; every write disabled with the op it lacks (the provider election, a team's When and Deadline, Probe, an instrument's request). QL installed at `74e9c8e` so `ql context-frame team-space` answers. Owes: the ops those writes lack; Ask and Suggest; the native screen pass (a group's chain needs an agent session on this machine) | `agent/devices/decisionHelper*.ts`, kernel `team_space.rs`, `agency.rs` `decision_status` | 20 Oct |
