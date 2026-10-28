@@ -14,7 +14,7 @@
 // Where the Agent carries a Voice page it speaks to you, and answers with its speaking face (§19.4 "The answer's face"; ticket 804): the
 // face's own keys — the conversation beside it and the face's dynamics — are the view's, held once for the session under the Agent's id in
 // the chain's holds, so the chain, the pool, the pane and the rail draw one face (ported from central/devices/answerBinding.ts
-// ANSWER_VIEW_DEFAULTS). Pure, apart from those view holds.
+// ANSWER_VIEW_DEFAULTS at c776a3007, retired there in #806). Pure, apart from those view holds.
 import type {DesignBinding, Standing, Value, ValueChange, Values} from '../../frame/devices/designed'
 import {chainHolds, holdView, viewHolds} from './designBindings'
 

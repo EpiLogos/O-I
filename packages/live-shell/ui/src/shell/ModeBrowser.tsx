@@ -450,21 +450,24 @@ function WorldsRows({needle}: {needle: string}) {
   const listed = useListing<CentralWorldsReading>('world_browse', transport, 'worlds', () => readWorlds(transport), () => null, true)
   const worlds: CentralWorldsReading = listed.status === 'answered' && listed.value ? listed.value
     : listed.status === 'refused' ? {state: 'unavailable', reason: listed.error ?? 'Central did not answer'} : {state: 'reading'}
-  const [said, setSaid] = useState<string | null>(null)
+  // The set's last answer: a world brought in is a status; a refusal (today's Day not open, in the Day's words) an alert (#806).
+  const [said, setSaid] = useState<{readonly ok: boolean; readonly words: string} | null>(null)
   if (worlds.state === 'reading') return <p className="native-empty" role="status">Reading the worlds…</p>
   if (worlds.state === 'unavailable') return <DesignedRead absence="Central did not disclose its worlds" reason={worlds.reason} affordance="op world_browse — the root register and each project's ProjectCentral." />
   const needleText = needle.trim().toLocaleLowerCase()
   const shown = worlds.worlds.filter(world => !needleText || `${world.name} ${world.ref}`.toLocaleLowerCase().includes(needleText))
   if (!shown.length) return <p className="native-empty">No world matches this search.</p>
-  return <WorldRowList worlds={shown} said={said} onSeat={world => {
+  return <WorldRowList worlds={shown} said={said?.ok ? said.words : null} fault={said && !said.ok ? said.words : null} onSeat={world => {
     setSaid(null)
-    void seatWorldFromBrowser(world).then(answer => setSaid(answer.ok ? answer.note ?? `${world.name} is in today's set.` : answer.error ?? `${world.name} did not come into today.`))
+    void seatWorldFromBrowser(world).then(answer => setSaid(answer.ok ? {ok: true, words: answer.note ?? `${world.name} is in today's set.`}
+      : {ok: false, words: answer.error ?? `${world.name} did not come into today.`}))
   }} />
 }
 
 /** The Worlds rows as drawn: each world's mark, name and kind; dragged, double-clicked or Entered to bring it into today; the set's
- * last answer under them. */
-export function WorldRowList({worlds, onSeat, said}: {readonly worlds: readonly CentralWorld[]; onSeat(world: CentralWorld): void; readonly said: string | null}) {
+ * last answer under them — a world brought in as a status, a refusal as an alert in the owner's words. */
+export function WorldRowList({worlds, onSeat, said, fault = null}: {readonly worlds: readonly CentralWorld[]; onSeat(world: CentralWorld): void; readonly said: string | null
+  readonly fault?: string | null}) {
   return <section className="mode-browser-rows" aria-label="Worlds"><ul>
     {worlds.map(world => {
       const hover = `${world.name} — ${world.kind === 'yours' ? 'your own world' : `${world.project}'s world`}; its pages are kept in ${world.folder}. Drag it onto the empty track, or double-click it or press Enter, to bring it into today.`
@@ -478,7 +481,7 @@ export function WorldRowList({worlds, onSeat, said}: {readonly worlds: readonly 
         </div>
       </li>
     })}
-  </ul>{said && <p className="native-empty" role="status">{said}</p>}</section>
+  </ul>{said && <p className="native-empty" role="status">{said}</p>}{fault && <p className="native-error" role="alert" data-seat-fault>{fault}</p>}</section>
 }
 
 /** Bring a world into today's set from its browser row (Live: double-click or Enter loads a browser item): through the set the Session

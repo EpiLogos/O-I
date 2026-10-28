@@ -253,3 +253,47 @@ test('the face is reached: FaceStage is product, through the Agent\'s design (ca
     assert.ok(product.has(join(repo, 'packages/live-shell/ui', file)), `${file} is loaded by the candidate`)
   }
 })
+
+// ── the Answer's run, role and packet on Central's Agent (the #804 carries, ticket 806) ──────────────────────────────────────────────
+// §19.4 "intent on the packet while it reads, its mouth moving with its words while it answers": the face answers from the session's
+// own state, not only from the voice; the retired Answer's binding read the same (answerBinding.ts answerValues `state`, `packet` at
+// c776a3007), and the Agent reads it as its run.
+
+const answerMod = await import('../src/central/devices/answerBinding.ts')
+const ROSTER = [{ref: 'agent/nara', name: 'Nara', accepted: true, role: 'nara'}]
+// Shaped as the Packet's items (packetBinding.ts packetItemOf): a text selection of a Flow. FIXTURE.
+const PACKET = JSON.stringify([{entry: 1, scope: 'selection', text: 'What does this entry ask of me', chars: 30, bytes: 30, label: 'Closing the day'}])
+const inputOf = (status, packet) => ({nara: {state: 'bound', session: 'session:a'}, observed: {status: {state: status}, reading: {blocks: [], permissions: []}}, roster: ROSTER,
+  ...(packet ? {packet} : {})})
+
+test('Central\'s Agent reads its run from the session: producing while a turn is in flight, so the face answers with the voice quiet; its role is the binding\'s', () => {
+  bind.resetHolds()
+  for (const status of ['TurnInFlight', 'InterruptRequested']) assert.equal(answerMod.centralAgentValues('central:agent', inputOf(status)).run, 'producing', status)
+  assert.equal(answerMod.centralAgentValues('central:agent', inputOf('Resident')).run, undefined, 'at rest: no run is read, the face rests')
+  assert.equal(answerMod.centralAgentValues('central:agent', {...inputOf('TurnInFlight'), nara: {state: 'unbound', session: null}}).run, undefined, 'nothing bound: nothing runs')
+  assert.equal(answerMod.centralAgentValues('central:agent', inputOf('Resident')).role, 'nara', 'the dialogue binding\'s role')
+  const answering = centralAgent(answerMod.centralAgentValues('central:agent', inputOf('TurnInFlight')))
+  assert.ok(draw(answering, 'full').includes(mask('speak')), 'its mouth moving with its words while it answers: from the run, the voice quiet')
+  bind.resetHolds()
+})
+
+test('Central\'s Agent shows the packet it reads — the Packet\'s items, when they are prepared for this very session — and the chain hands them over', () => {
+  bind.resetHolds()
+  const own = answerMod.centralAgentValues('central:agent', inputOf('Resident', {items: PACKET, session: 'session:a'}))
+  assert.equal(own.packet, PACKET)
+  assert.equal(answerMod.centralAgentValues('central:agent', inputOf('Resident', {items: PACKET, session: 'session:b'})).packet, undefined, 'another session\'s packet is not this one\'s')
+  const full = draw(centralAgent({...own, thread: JSON.stringify([{who: 'you', kind: 'you', text: 'Which unit starts first?'}])}), 'full')
+  assert.match(full, /aria-label="Packet"><li[^>]*><b>selection<\/b>Closing the day/, 'the packet the turn carries, under your words')
+  const chainSource = read('central/devices/CentralDevices.tsx')
+  assert.match(chainSource, /packet: typeof packet\.values\.packet === 'string' \? \{items: packet\.values\.packet, session: packetSession\} : null/,
+    'CentralDevices hands the Packet\'s items and their session to the Agent\'s input')
+  bind.resetHolds()
+})
+
+test('REPLACED (#806) — the retired Answer\'s own binding is gone from answerBinding.ts; what the one Agent reads stays', () => {
+  // answerBinding, answerValues, ANSWER_WIRING, ANSWER_DESIGN and ANSWER_VIEW_DEFAULTS served the Answer design retired in #804. Their
+  // behaviours stand on the Agent: the voice's keys on its Voice page (voiceBinding.ts; the Voice page test above), the face's own keys
+  // held for the session (oneAgentBinding.ts; the face-keys test above), the packet and the run on centralAgentValues (the two above).
+  for (const name of ['answerBinding', 'answerValues', 'ANSWER_WIRING', 'ANSWER_DESIGN', 'ANSWER_VIEW_DEFAULTS']) assert.equal(name in answerMod, false, `${name} is retired`)
+  for (const name of ['centralAgentValues', 'centralAgentBinding', 'centralAgentRef', 'CENTRAL_AGENT_ID', 'CENTRAL_AGENT_REFUSED']) assert.ok(name in answerMod, `${name} stays`)
+})

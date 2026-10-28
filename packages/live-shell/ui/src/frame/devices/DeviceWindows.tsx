@@ -11,7 +11,14 @@
 //
 // The bar: close, roll up to the bar, fill the shell's window (and the native window can then fill the screen); drag it to move the
 // window, double-click it to fill. The corner sizes it. A press anywhere brings it to the front.
-import {useEffect, useRef, useState, type KeyboardEvent, type PointerEvent} from 'react'
+//
+// Under the device, the status bar's Info line (manual §16.9 "What a control does is said in the status bar when you point at it";
+// §16.11 Disabled "The control at 40 % strength. The status bar says why"): a window stands apart from the shell's status bar — the
+// host's own window has none, and a filled window covers it — so each window carries the line, reading what the pointer enters inside
+// it by the shell's one info law (components/StatusBar.tsx infoOf), a dimmed control's reason and the host's refusals among it (#806).
+import {useCallback, useEffect, useRef, useState, type KeyboardEvent, type MouseEvent, type PointerEvent} from 'react'
+import {INFO_IDLE, infoOf} from '../../components/StatusBar'
+import type {DataIStatusInfo} from '../../agent/statusInfo'
 import {closeDeviceWindow, openDeviceWindowHere, raiseDeviceWindow, setDeviceWindow, setPopOutRoute, useDeviceDoor, useDeviceWindows, type DeviceWindowBox,
   type DeviceWindowState, type PublishedDevice} from './deviceDoor'
 import {nativeHostMain, popOutNative} from './deviceRelay'
@@ -20,6 +27,31 @@ import {heldInView, movedWindowBox, openedWindowBox, sizedWindowBox, windowRoom,
 import {PlacedDevice, useShownBox} from './DeviceView'
 import {RESIZE_STEP} from '../../shell/workspaceAreas'
 import './devices.css'
+
+/** What the Info line of a window says for what the pointer entered: the nearest `data-i` (else title) by the shell's one info law
+ * (StatusBar.tsx infoOf), or null where the element says nothing (the line then keeps its last reading, as the status bar's does). Pure. */
+export function windowInfoOf(target: unknown): DataIStatusInfo | null {
+  const element = target as Element | null
+  return element && typeof element.closest === 'function' ? infoOf(element) : null
+}
+
+/** A window's Info line reading: what the pointer last entered inside the window (its `mouseover`, which the host's refusals ride too:
+ * deviceHost.tsx sayOnInfoLine). */
+export function useWindowInfo(): {readonly info: DataIStatusInfo | null; readonly onMouseOver: (event: MouseEvent<HTMLElement>) => void} {
+  const [info, setInfo] = useState<DataIStatusInfo | null>(null)
+  const onMouseOver = useCallback((event: MouseEvent<HTMLElement>) => { const read = windowInfoOf(event.target); if (read) setInfo(read) }, [])
+  return {info, onMouseOver}
+}
+
+/** What a window says of itself where the pointer is over none of its controls: the Info line's reading stops at the window, never
+ * reading on to whatever stands behind it. */
+export const WINDOW_SAYS = 'The device\'s own window. Point at a control: what it does, or why it stands dimmed, is said in the line under it.'
+
+/** The window's Info line, docked under its device: the status bar's line, its words and its idle sentence (StatusBar.tsx INFO_IDLE). */
+export function WindowInfoLine({info}: {readonly info: DataIStatusInfo | null}) {
+  return <footer className="device-window-info" data-region="window-info" role="status" data-info={info ? 'reading' : 'idle'}>
+    {info ? <><b>{info.label}</b>{info.fn}</> : <><b>Info</b>{INFO_IDLE}</>}</footer>
+}
 
 /** The shell's window, as the windows are held inside it. */
 function useViewport(): readonly [number, number] {
@@ -78,6 +110,7 @@ function DeviceWindowFrame({state, entry, front, box, viewport}: {state: DeviceW
   const roomRef = useRef<HTMLDivElement>(null)
   const measured = useShownBox(roomRef)
   const drag = useRef<{kind: 'move' | 'size'; drag: WindowDrag} | null>(null)
+  const info = useWindowInfo()
   const close = () => closeDeviceWindow(id)
   const take = (kind: 'move' | 'size') => (event: PointerEvent<HTMLElement>) => {
     if (event.button !== 0 || (kind === 'move' && (event.target as Element).closest('button'))) return
@@ -103,7 +136,7 @@ function DeviceWindowFrame({state, entry, front, box, viewport}: {state: DeviceW
   return <section className="device-window" role="region" aria-roledescription="window" aria-label={`${title} — its own window`} data-device-window={id}
     data-front={front ? 'true' : undefined} data-filled={state.filled ? 'true' : undefined} data-shaded={state.shaded ? 'true' : undefined}
     style={state.filled ? undefined : {left: box.x, top: box.y, width: box.w, height: state.shaded ? undefined : box.h}}
-    onPointerDownCapture={() => raiseDeviceWindow(id)}>
+    onPointerDownCapture={() => raiseDeviceWindow(id)} onMouseOver={info.onMouseOver} data-i={`${title}|${WINDOW_SAYS}`}>
     <header className="device-window-bar" onPointerDown={take('move')} onPointerMove={follow} onPointerUp={letGo} onPointerCancel={letGo}
       onDoubleClick={event => { if (!(event.target as Element).closest('button')) setDeviceWindow(id, {filled: !state.filled, shaded: false}) }}
       data-i={`${title}|Its own window: drag the bar to move it, double-click it to fill the window. The device stays on its chain.`}>
@@ -122,6 +155,7 @@ function DeviceWindowFrame({state, entry, front, box, viewport}: {state: DeviceW
     {!state.shaded && <div ref={roomRef} className="device-window-room">
       <PlacedDevice device={entry.device} view="popout" frame="window" room={room} picture={entry.picture} binding={entry.binding} onClose={close} />
     </div>}
+    {!state.shaded && <WindowInfoLine info={info.info} />}
     {!state.filled && !state.shaded && <div className="device-window-size" role="separator" aria-label={`Size ${title}'s window`} tabIndex={0}
       data-i={`Size|Drag the corner to size the window; the arrows size it by the keys.`}
       onPointerDown={take('size')} onPointerMove={follow} onPointerUp={letGo} onPointerCancel={letGo} onKeyDown={sizeByKey} />}

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /** Actual saved identity, adopted source profile, dated provider and native M3
  * command reception. Explicit symbolic activity policy; no legacy closure claim.
- * node tests/nara-m3-native.mjs /absolute/config.json */
+ * node tests/m3-reception-native.mjs /absolute/config.json */
 import assert from 'node:assert/strict';
 import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {createHash,randomUUID} from 'node:crypto';
@@ -26,7 +26,7 @@ try{
  const source=await hostedCompositionFile({kind:'bridge',url:config.bridge},{operation:'open',path:config.file_path});
  await ensureNativeCoordinateProfile(request=>native({op:'expression',request}),async request=>validateCoordinateExpression(await native({op:'nara_coordinate',request})),source.document);
  const expression_ref=`expression:controlled-m3-${randomUUID()}`;
- fork=await native({op:'expression',request:{operation:'fork',expression_ref:source.document.expression_ref,expected_revision:source.document.revision,new_expression_ref:expression_ref,actor:'agent:nara-m3-verification'}});
+ fork=await native({op:'expression',request:{operation:'fork',expression_ref:source.document.expression_ref,expected_revision:source.document.revision,new_expression_ref:expression_ref,actor:'agent:m3-reception-verification'}});
  const identity=await native({op:'nara_identity',request:{operation:'open',source_ref:config.binding.source_ref}});
  const binding={...config.binding,operation:'context',role:'nara',expression_ref,expected_revision:identity.source.revision};
  const op=request=>native({op:'m3_reception',project:config.project,request:{...request,binding}});
@@ -67,10 +67,10 @@ try{
  const scene=fork.document.scenes.find(scene=>scene.entity_refs.some(ref=>ref!==fork.document.selection.entity_ref));
  assert.ok(scene,'Actual Expression must expose a second selectable entity');
  const entity_ref=scene.entity_refs.find(ref=>ref!==fork.document.selection.entity_ref);
- const focused=await native({op:'expression',request:{operation:'edit',expression_ref,expected_revision:fork.document.revision,actor:'agent:nara-m3-verification',changes:[{change:'focus',scene_ref:scene.scene_ref,entity_ref}]}});
+ const focused=await native({op:'expression',request:{operation:'edit',expression_ref,expected_revision:fork.document.revision,actor:'agent:m3-reception-verification',changes:[{change:'focus',scene_ref:scene.scene_ref,entity_ref}]}});
  const focusedM3=await op({operation:'read'});
  assert.deepEqual(focusedM3.state,twice.state);assert.deepEqual(focusedM3.activity,twice.activity);
- const restored=await native({op:'expression',request:{operation:'edit',expression_ref,expected_revision:focused.document.revision,actor:'agent:nara-m3-verification',changes:[{change:'focus',scene_ref:fork.document.selection.scene_ref,entity_ref:fork.document.selection.entity_ref??null}]}});
+ const restored=await native({op:'expression',request:{operation:'edit',expression_ref,expected_revision:focused.document.revision,actor:'agent:m3-reception-verification',changes:[{change:'focus',scene_ref:fork.document.selection.scene_ref,entity_ref:fork.document.selection.entity_ref??null}]}});
  assert.deepEqual((await op({operation:'read'})).state,twice.state);
  checks.push('Actual reversible native focus preserves the same M3 event, activity and generation');
 
@@ -91,9 +91,9 @@ try{
  const subsequent=await op({operation:'apply',expected_generation:1,operations:[{operation:'select-form',address:1}]});
  assert.equal(subsequent.activity.turn_count,1);assert.equal(subsequent.activity.packets[0].before_generation,1);
  checks.push('Explicit policy selection preserves an existing form and admits only subsequent successful commands');
- const renamed=await native({op:'expression',request:{operation:'edit',expression_ref,expected_revision:restored.document.revision,actor:'agent:nara-m3-verification',changes:[{change:'rename',title:restored.document.title+' controlled structural change'}]}});
+ const renamed=await native({op:'expression',request:{operation:'edit',expression_ref,expected_revision:restored.document.revision,actor:'agent:m3-reception-verification',changes:[{change:'rename',title:restored.document.title+' controlled structural change'}]}});
  assert.equal((await op({operation:'read'})).status,'absent');
- const restoredStructure=await native({op:'expression',request:{operation:'edit',expression_ref,expected_revision:renamed.document.revision,actor:'agent:nara-m3-verification',changes:[{change:'rename',title:restored.document.title}]}});
+ const restoredStructure=await native({op:'expression',request:{operation:'edit',expression_ref,expected_revision:renamed.document.revision,actor:'agent:m3-reception-verification',changes:[{change:'rename',title:restored.document.title}]}});
  assert.equal((await op({operation:'read'})).status,'absent');
  checks.push('A structural edit invalidates M3 permanently even when the prior structure is restored');
 
@@ -104,7 +104,7 @@ try{
  await writeFile(path.join(config.output,'receipt.json'),JSON.stringify({schema:'oi.m3-reception-native-verification/v1',checks,first,changed,twice,enabled,subsequent,pinned_event:pinned.context,changed_event:repinned.context,sources,limits:['Explicit selected symbolic activity policy; no historical contemplation closure, physical material map or human Recognition inferred']},null,2));
  console.log(JSON.stringify({ok:true,checks:checks.length,output:config.output}));
 }finally{
- if(fork)await native({op:'expression',request:{operation:'close',expression_ref:fork.document.expression_ref,actor:'agent:nara-m3-verification'}});
- if(opened)await native({op:'expression',request:{operation:'close',expression_ref:config.binding.expression_ref,actor:'agent:nara-m3-verification'}});
+ if(fork)await native({op:'expression',request:{operation:'close',expression_ref:fork.document.expression_ref,actor:'agent:m3-reception-verification'}});
+ if(opened)await native({op:'expression',request:{operation:'close',expression_ref:config.binding.expression_ref,actor:'agent:m3-reception-verification'}});
  await server.close();
 }

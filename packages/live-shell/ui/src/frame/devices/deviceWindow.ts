@@ -10,6 +10,9 @@ export const WINDOW_MIN_W = 400
 export const WINDOW_MIN_H = 300
 /** The window's bar (catalogue.css `.cat-window-bar`). */
 export const WINDOW_BAR_H = 26
+/** The status bar's Info line the window docks under its device (DeviceWindows.tsx WindowInfoLine; devices.css .device-window-info, as
+ * styles.css .statusbar-info-line): one line, so a dimmed control says why in the window too (manual §16.11). */
+export const WINDOW_INFO_H = 20
 /** The window as the gallery draws it: 1180 wide, the bar over a 620 px room. */
 export const WINDOW_W = 1180
 export const WINDOW_H = WINDOW_BAR_H + 620
@@ -58,7 +61,7 @@ export function sizedWindowBox(drag: WindowDrag, pointer: readonly [number, numb
   return {...drag.box, w: Math.round(w), h: Math.round(h)}
 }
 
-/** The room a window gives its device: the window less its bar, at 100 % (design.ts ViewProps.room). */
+/** The room a window gives its device: the window less its bar and its Info line, at 100 % (design.ts ViewProps.room). */
 export function windowRoom(box: {readonly w: number; readonly h: number}): {w: number; h: number} {
-  return {w: Math.max(0, Math.round(box.w)), h: Math.max(0, Math.round(box.h - WINDOW_BAR_H))}
+  return {w: Math.max(0, Math.round(box.w)), h: Math.max(0, Math.round(box.h - WINDOW_BAR_H - WINDOW_INFO_H))}
 }

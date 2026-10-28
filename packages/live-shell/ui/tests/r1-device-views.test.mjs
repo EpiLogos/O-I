@@ -271,7 +271,10 @@ test('a window moves and sizes inside the shell\'s window, never below the nativ
   assert.deepEqual([sized.w, sized.h], [win.WINDOW_MIN_W, win.WINDOW_MIN_H])
   const grown = win.sizedWindowBox({box: {x: 100, y: 50, w: 500, h: 400}, at: [0, 0]}, [5000, 5000], viewport)
   assert.deepEqual([grown.w, grown.h], [1340, 850], 'never past the right and bottom edges')
-  assert.deepEqual(win.windowRoom({w: 1180, h: 646}), {w: 1180, h: 620}, 'the room is the window less its bar')
+  // REPLACED (#806): "the room is the window less its bar" — a window now docks the status bar's Info line under its device
+  // (DeviceWindows.tsx WindowInfoLine; §16.11 Disabled "The status bar says why"), so the room is the window less its bar and that line.
+  assert.deepEqual(win.windowRoom({w: 1180, h: 646}), {w: 1180, h: 646 - win.WINDOW_BAR_H - win.WINDOW_INFO_H}, 'the room is the window less its bar and its Info line')
+  assert.equal(win.WINDOW_INFO_H, 20, 'one status line high (styles.css .statusbar-info-line)')
   assert.equal(win.heldInView(first, viewport), first, 'a box already in view is the same box')
 })
 

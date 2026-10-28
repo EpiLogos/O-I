@@ -46,14 +46,17 @@ const CARRIED = {
   // REPLACED (#804): software-factory's `tasks` and `runs`, carried by `tasks` and `factory-runs` — retired with the devices they listed: a
   // task is a clip on its session's track, a run that track in Arrangement view with its take lanes (§19.1). No entry carries them.
   workcell: {git: 'git'},
-  'ai-kit': {skillsets: 'skillsets'},
+  // REPLACED (#806): ai-kit's `skills` stood open while it overlapped software-factory's factory-knowledge; that category is gone (#804:
+  // the Knowledge route is Scope's Knowledge page, §19.9, §19.12), and a skill is a member of a skillset (§10.3 Devices: "racks such as
+  // skillsets"), so the family's Skillsets entry carries it.
+  'ai-kit': {skillsets: 'skillsets', skills: 'skillsets'},
 }
-// Bare ids still open: each overlaps a mockup entry owned by another family (ai-kit's agents and skills against
-// software-factory's factory-agents and factory-knowledge). No owner has ruled whose they are, so they stay bare.
+// Bare ids still open: each overlaps a mockup entry owned by another family (ai-kit's agents against software-factory's
+// factory-agents). No owner has ruled whose they are, so they stay bare.
 // quaternal-logic's `knowledge` (the retained instrument list, Technē) cannot be declared until the family records the
 // modes its sky, torus and clock faces present in: the door validator refuses a Technē entry no face of the family presents in.
 const OPEN_BARE = {
-  'ai-kit': ['agents', 'skills'],
+  'ai-kit': ['agents'],
   'quaternal-logic': ['knowledge'],
 }
 // The mockup's categories whose rows ModeBrowser composes today (CategoryRows): a declared entry never claims one.

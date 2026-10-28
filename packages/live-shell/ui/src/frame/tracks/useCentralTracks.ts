@@ -8,7 +8,8 @@
 //   (kernel/src/page.rs `page_task`), active;
 // - the day's entries: the World cut's one temporal read, which the frame already publishes as `reading.world`.
 // The acts: Launch and Stop are the page owner's (pageOwner.ts launchPage, stopPage); a world dropped on the empty track is written
-// into the Day's set (writeDaySet); every world's Arm is the shell's one write arm. After an act the readings it moved are read
+// into the Day's set (writeDaySet), and while today's Day does not stand the drop is still taken and refused in the Day's words
+// (withWorldSeat, daySet.ts bringInRefusal); every world's Arm is the shell's one write arm. After an act the readings it moved are read
 // again. Registered as `base: worldCut(useCentralTracks)` in modeTracks.ts.
 import {useCallback, useEffect, useMemo, useRef, useSyncExternalStore} from 'react'
 import {useAgentShellOptional} from '../../agent/AgentShellContext'
@@ -19,7 +20,7 @@ import {launchPage, stopPage} from '../../../../../../desktop/cradle/src/persona
 import {validateDocumentBasis} from '../../../../../../desktop/cradle/src/central/dayForm'
 import type {KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
 import {readWorlds, readWorldPages, type CentralWorld, type CentralWorldsReading } from '../../central/centralWorlds'
-import {daySetOf, withWorld, withoutWorld, writeDaySet} from '../../central/daySet'
+import {bringInRefusal, daySetOf, withWorld, withoutWorld, writeDaySet} from '../../central/daySet'
 import {currentDayOf} from '../../central/devices/dayBinding'
 import {openLaunched} from '../../central/launchOpening'
 import {documentLayoutWriter} from '../../central/documents/documentDoor'
@@ -37,7 +38,7 @@ import {openInstrument} from '../instrumentDoor'
 import {DEVICE_PANE_KIND} from '../devices/devicePane'
 import {centralDeviceId} from '../../central/devices/centralDeviceModel'
 import {openOrRevealInCentral} from '../../central/devices/centralOpenReveal'
-import {centralWorldTrackId} from '../../timeline/centralTrackAdapter'
+import {CENTRAL_WORLD_DRAG, centralWorldTrackId} from '../../timeline/centralTrackAdapter'
 import {useCentralGroundAnswer, usePageHistories} from '../../central/devices/useCentralReadings'
 import type {CentralGroundReading} from '../../../../../../desktop/cradle/src/central/client'
 import {
@@ -78,6 +79,23 @@ export function setReadingOf(ground: CentralGroundReading | null, error: string 
 // The pages that play now (each active clearing whose task is a page's) are read by the pure adapter, which the Day's close reads too.
 import {playingOf} from '../../timeline/centralTrackAdapter'
 export {playingOf}
+
+/** The empty track while today's set cannot be written (#806: Worlds' drag, double-click and Enter did nothing while Central named an
+ * earlier Day): where the adapter offers no seat (it seats only on a set it reads, centralTrackAdapter.ts centralActions) and Central
+ * discloses its worlds, a world dropped there is still taken, and refused in `why`'s words — never written, and never dropped in
+ * silence. A set that seats keeps its own seat, untouched. Pure. */
+export function withWorldSeat(set: WorldTrackSet, worlds: CentralWorldsReading, why: (world: CentralWorld) => string | null): WorldTrackSet {
+  if (set.actions?.seat || worlds.state !== 'read') return set
+  const disclosed = worlds.worlds
+  return {...set, actions: {...set.actions, seat: {
+    op: 'today\'s set, kept in today\'s Day, which does not stand now: a world dropped here is refused, saying why', accepts: CENTRAL_WORLD_DRAG,
+    run: async (payload: string) => {
+      const world = disclosed.find(candidate => candidate.ref === payload.trim())
+      if (!world) return {ok: false, error: `"${payload}" is no world Central discloses.`}
+      return {ok: false, error: why(world) ?? `${world.name} cannot come into today: no kernel carrier reaches Central here, so nothing writes today's set.`}
+    },
+  }}}
+}
 
 /** The world's Docs on the door (central/devices/CentralDevices.tsx publishes it on the world's chain, DLW §16.2, §18.5). */
 const DOCS_DEVICE = centralDeviceId('docs')
@@ -172,6 +190,9 @@ export function useCentralTracks(reading: TracksReading): WorldTrackSet {
   // A page's revisions are its takes (manual §18.1): each page's source history, read once per page and again on the spine's epoch. The
   // standing take runs to now as of the last time the set was drawn (now is read inside the memo, never a dependency of it).
   const histories = usePageHistories(transport, inSet, pages, epoch)
-  return useMemo(() => withWorksIn(projectCentralTracks({civil, worlds, set, pages, playing, controls, colours, practice, histories, nowMs: Date.now()}), register, projectOf,
-    seats.status === 'refused' ? seats.error : null), [civil, worlds, set, pages, playing, controls, colours, practice, histories, register, projectOf, seats])
+  // A world the set cannot take now is refused on the Day's own ground reading, the one the Day device reads (useCentralGroundAnswer).
+  const groundReading = ground.reading, groundError = ground.error
+  return useMemo(() => withWorldSeat(withWorksIn(projectCentralTracks({civil, worlds, set, pages, playing, controls, colours, practice, histories, nowMs: Date.now()}), register, projectOf,
+    seats.status === 'refused' ? seats.error : null), worlds, world => bringInRefusal(world.name, groundReading, groundError)),
+  [civil, worlds, set, pages, playing, controls, colours, practice, histories, register, projectOf, seats, groundReading, groundError])
 }

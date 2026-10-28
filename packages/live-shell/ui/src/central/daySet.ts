@@ -7,7 +7,8 @@
 import {DayFormSession, isObject, unmappedChanges, validateDocumentBasis} from '../../../../../desktop/cradle/src/central/dayForm'
 import {receiving} from '../../../../../desktop/cradle/src/receiving/client'
 import type {KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
-import type {DayAperture} from './devices/dayBinding'
+import type {CentralGroundReading} from '../../../../../desktop/cradle/src/central/client'
+import {canCloseDay, civilDayName, currentDayOf, type DayAperture} from './devices/dayBinding'
 
 export const DAY_SET_SCHEMA = 'oi.day-set/v1'
 
@@ -85,6 +86,33 @@ export function carriedSet(closed: DaySet, closedDay: string, playing: readonly 
   for (const world of worlds) set = withWorld(set, world.ref, world.name)
   const rows = closed.rows.flatMap(row => { const pages = row.pages.filter(page => plays.has(page)); return pages.length ? [{...row, pages}] : [] })
   return {...set, rows}
+}
+
+/** Why a world cannot come into today's set now, or null when it can (manual §18.1 "To bring a world into today, drag it from the
+ * browser onto an empty track"). Today's set is kept in today's Day, so the refusal is the Day's: the Day Central names and civil today,
+ * in the owner's words, and the press on the Day device that opens today (§18.2 Whole, Close: "Close routine, Close now, Open today").
+ * While Central names an earlier Day the kernel reads it `stale` (central.rs Request::Inspect); the owner would take the set's write
+ * into that earlier Day (central.document.mutate does not refuse it), which is no world in today. Close now closes the Day Central
+ * names and opens tomorrow's (central.day.close-carry); Open today then points at today and makes its document (centralDeviceWrites.ts
+ * openToday). Pressing Open today first would leave the earlier Day open with no press to close it, so Close now is named first while
+ * the Day Central names can still be closed (canCloseDay). Pure. */
+export function bringInRefusal(world: string, ground: CentralGroundReading | null, error: string | null): string | null {
+  if (!ground) return error ? `${world} cannot come into today: Central's ground did not answer: ${error}` : `${world} cannot come into today yet: Central's Day is still being read.`
+  const {standing, pointer} = currentDayOf(ground)
+  if (!standing) return `${world} cannot come into today yet: Central's Day is still being read.`
+  if (standing.state === 'ready') return null
+  const kept = `${world} cannot come into today: today's set is kept in today's Day`
+  const again = `then bring ${world} in again.`
+  const today = ground.time.state === 'ready' ? ground.time.data?.civil_date ?? null : null
+  const named = (date: string) => civilDayName(date) ?? date
+  if (standing.state === 'uninitialised') {
+    return `${kept}, and ${named(standing.civilDate)} has no document yet (${standing.op}). On the Day device, press Open today to make it; ${again}`
+  }
+  if (pointer && today && pointer !== today) {
+    const press = canCloseDay(ground) ? `press Close now to close ${named(pointer)}, then Open today` : 'press Open today'
+    return `${kept}, and the Day Central names is ${named(pointer)}, not today, ${named(today)} (Central: "${standing.message}"). On the Day device, ${press}; ${again}`
+  }
+  return `${kept}, which Central did not read: ${standing.message}`
 }
 
 /** Write today's set: read the Day document again (the revision the write is checked against), let `change` make the next set from

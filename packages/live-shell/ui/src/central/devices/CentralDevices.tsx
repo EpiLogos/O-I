@@ -450,8 +450,11 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
   )
   const answerAgents = answerRoster.state === 'ready' ? answerRoster.agents : null
   const refreshNara = nara.refresh
-  const answerInput = useMemo(() => ({nara: {state: nara.state, session: nara.session, resume: nara.resume}, observed: answerObserved, roster: answerAgents, page: null}),
-    [nara.state, nara.session, nara.resume, answerObserved, answerAgents])
+  // The packet the Agent reads (§19.4 "intent on the packet while it reads"): the Packet's items, with the session they are prepared for
+  // (answerBinding.ts centralAgentValues shows them only for the bound session's own turn).
+  const answerInput = useMemo(() => ({nara: {state: nara.state, session: nara.session, resume: nara.resume}, observed: answerObserved, roster: answerAgents,
+    packet: typeof packet.values.packet === 'string' ? {items: packet.values.packet, session: packetSession} : null}),
+  [nara.state, nara.session, nara.resume, answerObserved, answerAgents, packet.values.packet, packetSession])
   // The session's next turn: its encounter's own draft, then its Send (the thread pane's). A typed question and a spoken one go this way.
   const answerSend = useMemo(() => (answerHandle && 'actions' in answerHandle
     ? async (text: string) => { answerHandle.actions.change(text); await answerHandle.actions.send() } : null), [answerHandle])
