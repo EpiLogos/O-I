@@ -1,6 +1,6 @@
 // The world's widgets (FOUNDATION F8), one registration: every tile of the two old docks — the mode dock's (the agent of the
 // mode in front of you, the packet, the trail, the field, the NOWs, results, the sky) and the agent dock's (sessions,
-// agents, terminal, files, web, graph, diff, frames, ledger, approvals) — as widgets of the one rail. The agent, the packet
+// agents, terminal, files, web, graph, frames, ledger, approvals; its Diff is Files' Diff page) — as widgets of the one rail. The agent, the packet
 // and the trail are their own bodies (src/widgets/, shell/TrailWidget.tsx): the real conversation, the owner's prepared
 // context and THE selection's stops. Every other body is the old tile's body, unchanged; where both docks had a tile of
 // the same id, the agent dock's reads its owner and stands. The bodies read what the App hands them (widgets/widgetReading).
@@ -56,7 +56,7 @@ const HINTS: Record<string, string> = {
   packet: 'exactly what the agent will receive', trail: 'every place you went, to return to', field: 'who is present; what waits for admission',
   nows: 'the day and its Now', results: 'run results and diffs', sky: 'the dated sky', sessions: 'the agency\'s sessions',
   agents: 'agents at work', terminal: 'the Workbench terminal\'s shell', files: 'the seat\'s repository', web: 'web surfaces',
-  graph: 'the knowledge graph', diff: 'the seat\'s working diff', frames: 'the harness gateway', ledger: 'the task record',
+  graph: 'the knowledge graph', frames: 'the harness gateway', ledger: 'the task record',
   approvals: 'the task\'s approval hooks',
 }
 

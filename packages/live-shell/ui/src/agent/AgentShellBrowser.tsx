@@ -12,6 +12,10 @@ import {useRosterAnswer, useWorkcellAnswer} from '../owners/readers'
 import {AGENT_CHAIN_MIME, encodeChainDrag, setActiveChainDrag, type AgentChainDrag} from './agentChainDrag'
 import {missingOpRemedy, OWNER_BINDINGS, ownerRefusalLine} from './agentChainDrag'
 import {FactoryChatsRows} from './FactoryChatsRows'
+import {setHostPage} from '../frame/devices/deviceHost'
+import {DEVICE_PANE_KIND} from '../frame/devices/devicePane'
+import {openInstrument, reportInstrumentFault} from '../frame/instrumentDoor'
+import {railDeviceId} from '../widgets/railDevices'
 import './agentShell.css'
 
 const CATEGORIES = [
@@ -26,13 +30,23 @@ const CATEGORIES = [
 // them. A session's course is its track in Arrangement view and its attempts are the track's take lanes, the take that stands on the main
 // lane (DLW §19.1 "Takes and Arrangement lanes"; timeline/factoryTrackAdapter.ts, agent/factoryTakes.ts).
 
+/** A press on the Git row: the seat's working diff, read on Files' Diff page, full in a pane (§23.4 "Reading what changed before you approve
+ * it, the uncommitted changes and those an agent proposes, is the Diff page of Files (§23.2)"). It replaced the Diff tile it toggled (ticket
+ * 804). With no pane tree mounted the press says so on the frame's fault line. */
+export function openSeatDiff(): void {
+  const files = railDeviceId('files')
+  setHostPage(files, 'diff')
+  try { openInstrument(DEVICE_PANE_KIND, undefined, {ref: files, title: 'Files'}) }
+  catch (cause) { reportInstrumentFault(cause instanceof Error ? cause.message : String(cause)) }
+}
+
+// No Diff row (ticket 804): the Git row opens Files' Diff page (openSeatDiff).
 const CONTEXT_TILES = [
   {id: 'sessions' as const, name: 'Sessions'},
   {id: 'terminal' as const, name: 'Terminal'},
   {id: 'files' as const, name: 'Files'},
   {id: 'web' as const, name: 'Web'},
   {id: 'graph' as const, name: 'Graph'},
-  {id: 'diff' as const, name: 'Diff'},
   {id: 'frames' as const, name: 'Frames'},
   {id: 'ledger' as const, name: 'Ledger'},
   {id: 'approvals' as const, name: 'Approvals'},
@@ -296,7 +310,7 @@ export function AgentShellBrowser({rows, error, loading, controlled}: {rows: Age
               onDragEnd={item.drag ? () => setActiveChainDrag(null) : undefined}
               onClick={() => {
                 if (category === 'context') shell.toggleTile(item.key as typeof CONTEXT_TILES[number]['id'])
-                if (category === 'git') shell.toggleTile('diff')
+                if (category === 'git') openSeatDiff()
                 if (category === 'sess') {
                   shell.setSelectedTrackId(item.key, item.label)
                   shell.openThread(item.key)

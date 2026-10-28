@@ -17,13 +17,13 @@ export type AgentTileId =
   | 'files'
   | 'web'
   | 'graph'
-  | 'diff'
   | 'frames'
   | 'ledger'
   | 'approvals'
   | 'agents'
 
-const AGENT_TILE_IDS: readonly AgentTileId[] = ['sessions', 'terminal', 'files', 'web', 'graph', 'diff', 'frames', 'ledger', 'approvals', 'agents']
+// No Diff tile (ticket 804): reading what changed before you approve it is the Diff page of Files (§23.4, §23.2).
+const AGENT_TILE_IDS: readonly AgentTileId[] = ['sessions', 'terminal', 'files', 'web', 'graph', 'frames', 'ledger', 'approvals', 'agents']
 
 export const EFFORT_STEPS: AgentEffort[] = ['low', 'medium', 'high', 'max']
 export const QUANTIZE_STEPS: AgentQuantize[] = ['now', 'next tool', 'next turn']
@@ -39,10 +39,6 @@ export interface AgentShellState {
   openThread: (trackId: string | null) => void
   openTiles: AgentTileId[]
   toggleTile: (id: AgentTileId) => void
-  dockWidth: number
-  setDockWidth: (px: number) => void
-  dockFolded: boolean
-  setDockFolded: (v: boolean) => void
   effort: AgentEffort
   setEffort: (v: AgentEffort) => void
   heartbeat: boolean
@@ -116,8 +112,6 @@ export function AgentShellProvider({children, frameRef}: {children: ReactNode; f
   const [unbookedTiles, setOpenTiles] = useState<AgentTileId[]>([])
   const bookTiles = continuity?.current.widgets?.open ?? DEFAULT_WIDGETS
   const openTiles = continuity ? bookTiles.filter((id): id is AgentTileId => AGENT_TILE_IDS.includes(id as AgentTileId)) : unbookedTiles
-  const [dockWidth, setDockWidth] = useState(300)
-  const [dockFolded, setDockFolded] = useState(false)
   const [effort, setEffort] = useState<AgentEffort>('high')
   const [heartbeat, setHeartbeat] = useState(true)
   const [follow, setFollow] = useState(true)
@@ -145,8 +139,6 @@ export function AgentShellProvider({children, frameRef}: {children: ReactNode; f
     openThread: id => { setThreadTrackId(id); if (id) setCentreView('thread') },
     openTiles,
     toggleTile: id => continuity ? continuity.toggleWidgetOpen(id, DEFAULT_WIDGETS) : setOpenTiles(current => current.includes(id) ? current.filter(x => x !== id) : [...current, id]),
-    dockWidth, setDockWidth,
-    dockFolded, setDockFolded,
     effort, setEffort,
     heartbeat, setHeartbeat,
     follow, setFollow,
@@ -170,7 +162,7 @@ export function AgentShellProvider({children, frameRef}: {children: ReactNode; f
     telemetryOn,
     toggleTelemetry: trackId => setTelemetryOn(current => ({...current, [trackId]: !(current[trackId] !== false)})),
     statusInfo,
-  }), [centreView, selectedTrackId, worldSelection, unbooked, threadTrackId, openTiles, dockWidth, dockFolded, effort, heartbeat, follow, steer, writeArm, handBackLit, loopOn, quantize, tokenScope, voiceArmed, capturing, tapNote, voiceNote, captureNote, captureLog, expandedDevice, telemetryOn, statusInfo])
+  }), [centreView, selectedTrackId, worldSelection, unbooked, threadTrackId, openTiles, effort, heartbeat, follow, steer, writeArm, handBackLit, loopOn, quantize, tokenScope, voiceArmed, capturing, tapNote, voiceNote, captureNote, captureLog, expandedDevice, telemetryOn, statusInfo])
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }

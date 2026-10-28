@@ -38,9 +38,14 @@
 // operation withdraws a proposal yet) drops it. The card is Central's; the Agent keeps no copy.
 // The widget is the agent's tile in Messages (§19.24): its face in the posture of its state, its state, the last lines of its
 // conversation and a composer.
-import {memo, useLayoutEffect, useMemo, useState, type ReactNode} from 'react'
+// The answer's face (manual §19.4 "The answer's face"; ticket 804): where the Agent speaks to you — its voice read, on Central's chain — it
+// answers with its speaking face, carried through agent-answer.tsx (ported from the retired Answer): Folded names how its answers reach the
+// page; Compact and the widget draw the small face; Whole opens on the Answer and Face pages, the whole face at the left of the picture;
+// Full is mostly the face, with its three marks and the conversation at its right. Elsewhere its face is the creature of its type.
+import {memo, useMemo, useState, type ReactNode} from 'react'
 import {Action, Band, Chooser, Dial, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, TextField, Tile, Toggle, ValueBox, type LightState, type Option, type RowItem} from '../../sdk/panel'
 import {maskStatic} from '../../../agent/maskFace'
+import {useFaceColours} from '../../../agent/FaceStage'
 import {NONE, boolOf, clampTo, has, json, numOf, on, prefixed, scoped, shown, st, strOf, type DesignedDevice, type Value, type ViewProps} from './design'
 import {CustodyBands, GrantsBands, design as custody} from './agent-custody'
 import {IdentityBands, agentType, withType, design as identity} from './agent-identity'
@@ -52,6 +57,7 @@ import {faceOf} from '../faces/figures'
 import {BEAT_MS, STALL_BEATS, stateOfThread, type Recording} from '../faces/runs'
 import {design as thread} from './thread'
 import {design as voice} from './voice'
+import {ANSWER_FIXTURES, AnswerBands, AnswerPane, AnswerWell, FaceBands, SmallFace, answerAsWord, answerBusy, answerStateWord, answersWithFace, poseOf} from './agent-answer'
 import './actuation__harness-model.css'
 
 /** The keys the carried pages share with the Agent: its light, the autonomy both read, and the input the thread's composer sends. */
@@ -61,6 +67,10 @@ const THREAD_SHARED = ['light', 'input', 'quantize', 'draft', 'sent', 'age'] as 
 const VOICE_SHARED = ['light'] as const
 const PAGES = [{id: 'agent', label: 'Run'}, {id: 'custody', label: 'Custody'}, {id: 'grants', label: 'Grants'}, {id: 'identity', label: 'Identity'}, {id: 'type', label: 'Type'},
   {id: 'context', label: 'Context'}, {id: 'voice', label: 'Voice'}] as const
+/** Where the Agent answers with its face, Whole adds the pages Answer and Face before its own, and opens on Answer (§19.4 The answer's face:
+ * "Whole: The whole face at the left of the picture; the pages Answer and Face"). */
+const ANSWER_PAGES = [{id: 'answer', label: 'Answer'}, {id: 'face', label: 'Face'}, ...PAGES] as const
+const ANSWER_ONLY: readonly string[] = ['answer', 'face']
 const custodyOf = (p: ViewProps) => scoped(p, 'custody.', CUSTODY_SHARED)
 const identityOf = (p: ViewProps) => scoped(p, 'id.', IDENTITY_SHARED)
 /** The pattern the agent was given: the identity page's `types` read for the agent it shows. */
@@ -186,17 +196,8 @@ function runStateOf(v: V, lamp: string | undefined): RunState {
 }
 
 // ---------------------------------------------------------------- the face
-
-/** The face colours resolved from the shell's tokens: the mask mixes hex values, so it needs the token's value, not its name. */
-function useFaceColours() {
-  const [colours, setColours] = useState({ink: 'var(--fizz)', ground: 'var(--bg-0)'})
-  useLayoutEffect(() => {
-    const style = getComputedStyle(document.documentElement)
-    const hex = (name: string, fallback: string) => { const x = style.getPropertyValue(name).trim(); return /^#[0-9a-f]{6}$/i.test(x) ? x : fallback }
-    setColours({ink: hex('--fizz', 'var(--fizz)'), ground: hex('--bg-0', 'var(--bg-0)')})
-  }, [])
-  return colours
-}
+// The face colours are the face's own (agent/FaceStage.tsx useFaceColours: the shell's tokens resolved, since the mask mixes hex values);
+// this design kept a copy of the same hook until ticket 804.
 
 /** The agent's face at rest, as the shell's agent device draws it. Dim when the agent is benched. */
 const Face = memo(function Face({x, y, size, dim}: {x: number; y: number; size: number; dim: boolean}) {
@@ -302,7 +303,9 @@ const powerRadio = (p: ViewProps) => { const x = strOf(p.v, 'light')
     options={[{value: 'on', label: 'On'}, {value: 'benched', label: 'Benched'}]} onChange={y => p.set('light', y === 'on' ? 'lit' : 'dark')} /> }
 /** The head: the light reads the owner alone, hollow when it reports none; pressing it asks, unless the host stands it disabled. */
 const atWork = (p: ViewProps) => stateWord(lampOf(p), p.v) === 'working'
-const head = (p: ViewProps) => ({light: lampOf(p), busy: atWork(p), onLight: st(p, 'light').disabled ? undefined : () => p.set('light', lightOf(p) === 'lit' ? 'dark' : 'lit'), lightWhy: st(p, 'light').disabled, onFold: p.nav.fold, onFull: p.nav.full})
+/** The light's ring: while the agent works; where it answers with its face, while it hears, speaks or works (§19.4 The answer's face). */
+const busyOf = (p: ViewProps) => (answersWithFace(p.v) ? answerBusy(p, runStateOf(p.v, lightOf(p))) : atWork(p))
+const head = (p: ViewProps) => ({light: lampOf(p), busy: busyOf(p), onLight: st(p, 'light').disabled ? undefined : () => p.set('light', lightOf(p) === 'lit' ? 'dark' : 'lit'), lightWhy: st(p, 'light').disabled, onFold: p.nav.fold, onFull: p.nav.full})
 
 
 /** Team cell: where the agent stands in Anima or Aletheia — its row, the question the row asks of it, and its depth. */
@@ -707,7 +710,7 @@ export const design: DesignedDevice = {
     'new.open': false, 'new.for': '', 'new.kept': 'you', 'new.carries': '[]',
     'new.worlds': JSON.stringify(['O-I', 'Archetypal-Earth', 'Central']), 'new.skillsets': JSON.stringify(['central:documentation', 'central:core-development', 'ai-kit:reading', 'ql:foundations']),
   } as DesignedDevice['defaults'],
-  firstPage: 'agent',
+  // No first page of its own: Whole opens on Run, or on Answer where the agent answers with its face (`whole`, below).
   fixtures: {
     Working: {},
     'Waiting for your answer': {thread: sampleThread({}), age: 8},
@@ -737,6 +740,8 @@ export const design: DesignedDevice = {
           {event: 'PreToolUse', title: 'docs/dlw/DLW.md: its standing guidance', standing: 2, kept: 0, withheld: 9}, {event: 'PostToolUse', title: 'Receipts of the last edits', standing: 0, kept: 0, withheld: 10, suppressed: true}]})},
     'Not read': {light: 'unknown', used: -1, age: -1, thread: sampleThread({})},
     'No run event yet': {stage: undefined},
+    // The answer's face (§19.4): the Agent where it speaks to you, on a page's chain in Central.
+    ...ANSWER_FIXTURES,
     'No readings': {...Object.fromEntries(['light', 'effort', 'effortHeld', 'cap', 'input', 'quantize', 'heartbeat', 'beat', 'onStall', 'model', 'harness', 'draft', 'sent', 'agent', 'autonomy',
       'used', 'age', 'thread', 'stage', 'models', 'harnesses', 'ctx.pressure', 'ctx.turn', 'ctx.armed', 'new.open', 'new.for', 'new.kept', 'new.carries', 'new.worlds', 'new.skillsets'].map(k => [k, undefined])),
       ...prefixed('speech.', NO_READINGS(voice), VOICE_SHARED),
@@ -744,11 +749,15 @@ export const design: DesignedDevice = {
       ...prefixed('thread.', NO_READINGS(thread), THREAD_SHARED)},
   },
 
-  folded: p => <Folded title="Agent" light={lampOf(p)} readings={[shown(p.v, 'agent'), (turnsLine(p.v) ?? NONE).replace(/ /g, '')]} onUnfold={p.nav.unfold} />,
+  // Where it answers with its face, Folded is the agent's name and how its answers reach the page (§19.4 The answer's face, Folded).
+  folded: p => <Folded title="Agent" light={lampOf(p)} readings={[shown(p.v, 'agent'), answersWithFace(p.v) ? answerAsWord(p.v) ?? NONE : (turnsLine(p.v) ?? NONE).replace(/ /g, '')]}
+    onUnfold={p.nav.unfold} />,
 
+  // Where it answers with its face, the well is the answer's: the small face beside the agent's name and what it does now.
   compact: p => <Panel title="Agent" view="compact" {...head(p)} onSelect={p.nav.select}>
     <Section width={152}>
-      <AgentWell v={p.v} set={p.set} standing={p.standing} lamp={lightOf(p)} w={140} h={146} size="compact" />
+      {answersWithFace(p.v) ? <AnswerWell p={p} run={runStateOf(p.v, lightOf(p))} w={140} h={146} size="compact" />
+        : <AgentWell v={p.v} set={p.set} standing={p.standing} lamp={lightOf(p)} w={140} h={146} size="compact" />}
     </Section>
     <Section label="Macros" cols={2}>
       {autonomyRadio(p)}
@@ -758,31 +767,41 @@ export const design: DesignedDevice = {
     </Section>
   </Panel>,
 
-  whole: p => <Panel title="Agent" view="whole" {...head(p)} pages={PAGES} page={p.page || 'agent'} onPage={p.setPage}
-    acts={p.page === 'identity' && !on(p.v, 'new.open') ? <Action label="New" does="Opens a card to make a new agent." onPress={() => p.set('new.open', true)} /> : undefined}>
-    {p.page === 'custody' ? <CustodyBands p={custodyOf(p)} writes={false} />
-      : p.page === 'grants' ? <GrantsBands p={custodyOf(p)} />
-      : p.page === 'identity' ? (on(p.v, 'new.open') ? <NewCardBands p={p} /> : <IdentityBands p={identityOf(p)} state={runStateOf(p.v, lightOf(p))} />)
-      : p.page === 'type' ? <TypeBands p={p} />
-      : p.page === 'context' ? <ContextBands p={p} />
-      : p.page === 'voice' ? <VoiceBands p={speechOf(p)} />
-      : <AgentBands p={p} />}
-  </Panel>,
+  whole: p => {
+    const answering = answersWithFace(p.v), run = runStateOf(p.v, lightOf(p))
+    const page = p.page && (answering || !ANSWER_ONLY.includes(p.page)) ? p.page : answering ? 'answer' : 'agent'
+    return <Panel title="Agent" view="whole" {...head(p)} pages={answering ? ANSWER_PAGES : PAGES} page={page} onPage={p.setPage}
+      acts={page === 'identity' && !on(p.v, 'new.open') ? <Action label="New" does="Opens a card to make a new agent." onPress={() => p.set('new.open', true)} /> : undefined}>
+      {page === 'answer' ? <AnswerBands p={p} run={run} />
+        : page === 'face' ? <FaceBands p={p} run={run} />
+        : page === 'custody' ? <CustodyBands p={custodyOf(p)} writes={false} />
+        : page === 'grants' ? <GrantsBands p={custodyOf(p)} />
+        : page === 'identity' ? (on(p.v, 'new.open') ? <NewCardBands p={p} /> : <IdentityBands p={identityOf(p)} state={run} />)
+        : page === 'type' ? <TypeBands p={p} />
+        : page === 'context' ? <ContextBands p={p} />
+        : page === 'voice' ? <VoiceBands p={speechOf(p)} />
+        : <AgentBands p={p} />}
+    </Panel>
+  },
 
-  full: p => <FullWithStage p={p} />,
+  // Full is the thread and the stage; where the agent answers with its face, mostly the face (§19.4 The answer's face, Full). Its pop-out is
+  // the host's Full over Whole: "Full, with the rack under it".
+  full: p => (answersWithFace(p.v) ? <AnswerPane p={p} run={runStateOf(p.v, lightOf(p))} /> : <FullWithStage p={p} />),
 
   // The agent's tile in Messages (§19.24): its face in the posture of its state, its state, the last lines of its conversation and a
   // composer.
+  // Where it answers with its face, the tile's face is the small face, and its light carries the ring while it hears, speaks or works.
   widget: p => {
-    const send = st(p, 'sent'), draft = strOf(p.v, 'draft') ?? '', who = strOf(p.v, 'agent'), run = runStateOf(p.v, lightOf(p))
+    const send = st(p, 'sent'), draft = strOf(p.v, 'draft') ?? '', who = strOf(p.v, 'agent'), run = runStateOf(p.v, lightOf(p)), answering = answersWithFace(p.v)
     const says = 'Type a message and press Enter. It steers the turn that runs, or waits as the next task, as Input says.'
     const talk = lines(p.v).filter(r => r.kind !== 'tool').slice(-3)
-    return <Tile title={`Agent · ${shown(p.v, 'agent')}`} light={lampOf(p)} busy={atWork(p)} span={2} onFull={p.nav.full}>
+    return <Tile title={`Agent · ${shown(p.v, 'agent')}`} light={lampOf(p)} busy={busyOf(p)} span={2} onFull={p.nav.full}>
       <div className="hm-tile-face">
-        <Display w={64} h={64} label="The agent's face" does="The creature of its type, in the posture of its state.">
-          <AgentFace x={4} y={8} size={32} dim={lightOf(p) !== 'lit'} type={typeOfAgent(p.v)} state={run} />
+        <Display w={64} h={64} label="The agent's face" does={answering ? 'The small face: a still drawing of the face that answers, in the same state.' : 'The creature of its type, in the posture of its state.'}>
+          {answering ? <SmallFace x={4} y={8} size={32} pose={poseOf(p, run)} />
+            : <AgentFace x={4} y={8} size={32} dim={lightOf(p) !== 'lit'} type={typeOfAgent(p.v)} state={run} />}
         </Display>
-        <Readout label="state" does="What the agent does now." value={stateWord(lightOf(p), p.v)} tone={needle(p.v) === 'stalled' ? 'stall' : 'value'} />
+        <Readout label="state" does="What the agent does now." value={answering ? answerStateWord(p, run) : stateWord(lightOf(p), p.v)} tone={needle(p.v) === 'stalled' ? 'stall' : 'value'} />
       </div>
       <div className="hm-tile-side">
         <div className="hm-last" aria-live="polite">{talk.length ? talk.map((r, i) => <p key={i}><b>{r.kind === 'you' || r.kind === 'steer' || r.kind === 'queued' ? 'you' : r.who}</b> {r.kind === 'proposal' ? `Proposal · ${r.text}` : r.text || NONE}</p>)

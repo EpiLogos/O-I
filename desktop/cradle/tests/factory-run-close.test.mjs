@@ -2,7 +2,7 @@
 // The owner's receipt or refusal is read as the kernel returned it (desk model:
 // runModel.ts readRunClose / closeWords / settleRunClose). The owner's order
 // rules are the conformance spec of packages/live-shell/ui/src/agent/
-// factoryQueueAdvance.ts, mirrored here for the Run's close: a close applies
+// the retired shell factoryQueueAdvance.ts (gone with #804; the kernel's run close is the one rule), as the Run's close: a close applies
 // once, a replay is already-applied with its receipt, a refusal changes nothing
 // and is shown in the owner's own words, and a closed Run stops its live
 // production while a refused close leaves it as it is.

@@ -112,7 +112,9 @@ test('on the server the stage draws the mask in the pose and no frame: the live 
 })
 
 // The Answer (central:nara-conversation), which stood the face where it is opened, was retired as a device of its own in the 22 Oct
-// manual rewrite; what holds of the face without it is the stage above and the vendored files below.
+// manual rewrite. REPLACED (#804): the Agent stands it where it answers with its face (catalogue/panels/agent-answer.tsx), checked on the
+// bindings Central composes in t804-retired-carries-answer-face.test.mjs; what holds of the face itself is the stage above and the
+// vendored files below.
 
 // ── the vendored face ─────────────────────────────────────────────────────
 

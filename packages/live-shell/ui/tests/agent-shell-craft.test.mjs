@@ -39,18 +39,13 @@ test('the session grid keeps the design\'s 52px cell and the mockup 26px header 
   assert.equal(ruleFor('.agent-slot {'), null, 'the agent shell no longer styles a grid of its own')
 })
 
-test('the transport keeps the mockup control rhythm (19px rows, 10px type)', () => {
-  const nc = ruleFor('.agent-shell-transport .agent-nc ')
-  assert.match(nc, /height:19px/, 'nc control 19px tall')
-  assert.match(nc, /font-size:10px/, 'nc control 10px type')
-  const fld = ruleFor('.agent-shell-transport .agent-fld ')
-  assert.match(fld, /font-family:var\(--mono\)/, 'readouts are mono')
-})
-
-test('the context dock uses the mockup tile/launcher geometry', () => {
-  assert.match(ruleFor('.agent-tiles {'), /minmax\(270px, 1fr\)/, 'tiles auto-fill at 270px')
-  assert.match(ruleFor('.agent-lgrid {'), /minmax\(130px, 1fr\)/, 'launcher cells at 130px')
-  assert.match(ruleFor('.agent-lgrid {'), /grid-auto-rows:126px/, 'launcher rows 126px')
+// DELETED (#804): "the transport keeps the mockup control rhythm" and "the context dock uses the mockup tile/launcher geometry" — the old
+// Factory bar (AgentShellTransport.tsx) and the agent dock (AgentContextDock.tsx) were unreached and are deleted, with their rules in
+// agentShell.css. Their replacements hold their craft: the one transport's floor in browser-transport-craft.test.mjs ("the transport
+// stylesheet holds the floor") and f7-transport.test.mjs, the one widget rail's in widget-rail-craft.test.mjs ("the launcher's cells are
+// 122px rows in two columns").
+test('DELETED (#804) — the old bar\'s and the dock\'s rules are gone with them', () => {
+  for (const selector of ['.agent-shell-transport .agent-nc ', '.agent-context-dock {', '.agent-tiles {', '.agent-lgrid {']) assert.equal(ruleFor(selector), null, `${selector.trim()}: no rule`)
 })
 
 test('the clip stall grammar is the mockup hazard, not a flat fill (the one shared grid)', () => {
@@ -68,22 +63,9 @@ test('the arrangement draws no predicted ends (mask fade on running, dash on que
   assert.match(trackRule('.tl-needle {'), /width:\s*2px/, 'needle is a 2px line')
 })
 
-test('transport controls carry drawn marks, not bare text glyphs', async () => {
-  const transport = await read('AgentShellTransport.tsx')
-  for (const banned of ['>▥<', '>▤<', '●◦', '>➜', '>⌘<', '>←<', '>○<', '>∞<']) {
-    assert.ok(!transport.includes(banned), `raw glyph ${banned} replaced by a drawn mark`)
-  }
-  assert.ok(transport.includes('CutIcon name="link"'), 'Link draws the specimen mark')
-  assert.ok(transport.includes('CutIcon name="tap"'), 'Tap draws the specimen mark')
-  assert.ok(transport.includes('CutIcon name="metro"'), 'Heartbeat draws the pendulum')
-  assert.ok(transport.includes('CutIcon name="follow"'), 'Follow draws the specimen mark')
-  assert.ok(transport.includes('CutIcon name="arm"'), 'Write arm draws the lever')
-  assert.ok(transport.includes('CutIcon name="back"'), 'Hand back draws the specimen mark')
-  assert.ok(transport.includes('CutIcon name="cap"'), 'Capture draws the recording head')
-  assert.ok(transport.includes('CutIcon name="loop"'), 'Loop draws the specimen mark')
-  assert.ok(transport.includes('CutIcon name="browser"'), 'Browser toggle draws the globe')
-  assert.ok(transport.includes('CutIcon name="detail"'), 'Detail toggle draws the panes')
-})
+// DELETED (#804): "transport controls carry drawn marks, not bare text glyphs" read the old Factory bar (AgentShellTransport.tsx), deleted
+// unreached. The one transport draws every slot's mark from the cut (frame/transport/slots.ts): browser-transport-craft.test.mjs ("the
+// transport groups Link and Tap with the tempo cells … and keeps the slot laws") and f7-transport.test.mjs hold it.
 
 test('icon marks come from the specimen set, not ad-hoc paths', async () => {
   const icons = await read('agentIcons.tsx')
@@ -107,9 +89,8 @@ test('no raw JSON renders as a panel surface — receipts fold, cards name', asy
   const chain = await read('devices/FactoryDeviceChain.tsx')
   assert.ok(chain.includes('<RefusalCard'), 'the chain\'s refusals render through the landed disclosure card')
   assert.ok(chain.includes('agent-transport-note'), 'and its receipts as the one styled line')
-  const dock = await read('AgentContextDock.tsx')
-  assert.ok(dock.includes('agent-lcell'), 'launcher renders preview cells')
-  assert.ok(dock.includes('agent-tile-h'), 'tiles carry the tile header anatomy')
+  // REPLACED (#804): "launcher renders preview cells; tiles carry the tile header anatomy" on the deleted agent dock — the one widget rail
+  // draws both (widget-rail-craft.test.mjs "the rail wears the mockup's anatomy").
 })
 
 test('the disclosure card grammar is styled, named and dismissible', () => {

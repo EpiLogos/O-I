@@ -29,11 +29,10 @@ export const AGENTSET_DESIGN = 'software-factory:agentset-rack'
 export const RUN_ID = 'factory:run'
 export const CUSTODY_ID = 'factory:custody'
 export const AGENTSET_ID = 'factory:agentset'
-export const SESSION_DEVICE_IDS: readonly string[] = [RUN_ID, CUSTODY_ID, AGENTSET_ID]
 
 /** The session's devices of the runtime, each of its admitted face (designKey(family, face.id) is its design's id); null when the family
  * does not admit the face. The Run was retired (tickets 725 and 772: a session's course is its track in Arrangement view, §16.1); RUN_ID
- * stays so a stale door entry is cleared. */
+ * stays as the key the Run binding's view holds are kept under, and nothing publishes it (ticket 804). */
 export const sessionDevices = (): {custody: DeviceInstance | null; agentset: DeviceInstance | null} => ({
   custody: familyFaceDevice(CUSTODY_ID, 'software-factory', 'agent-custody', 'Custody', 'arm'),
   agentset: familyFaceDevice(AGENTSET_ID, 'software-factory', 'agentset-rack', 'Agentset rack', 'bind'),

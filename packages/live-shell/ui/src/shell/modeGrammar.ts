@@ -331,10 +331,8 @@ const factory: SurfModeGrammar = {
       hint: 'The working sessions — one row per session, tracks are sessions, clips are tasks.'},
     {id: 'factory-agents', label: 'Agents', group: 'Work', mark: 'bind', kindMark: 'agent', family: 'software-factory', state: 'cut',
       hint: 'The agent population — who is seated, running, stalled.'},
-    {id: 'factory-runs', label: 'Runs', group: 'Work', mark: 'arrangement', kindMark: 'run', family: 'software-factory', state: 'cut',
-      hint: 'The run viewer — attempts and their task trees as temporal material.'},
-    {id: 'factory-knowledge', label: 'Knowledge', group: 'Ground', mark: 'search', family: 'software-factory', state: 'cut',
-      hint: 'The knowledge route — skills and sources the sessions can admit.'},
+    // No Runs and no Knowledge category (ticket 804): a run is its session's track in Arrangement view and its take lanes (§19.1 "Takes
+    // and Arrangement lanes"), and the Knowledge route is Scope's Knowledge page (§19.9, §19.12).
   ],
   centre: {
     session: {label: 'Sessions', meaning: 'tracks are sessions, clips are tasks'},

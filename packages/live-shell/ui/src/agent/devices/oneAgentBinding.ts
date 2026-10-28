@@ -9,8 +9,14 @@
 //
 // Replaces the three devices that stood beside the Agent (FactoryDeviceChain.tsx's Thread and Custody members of the Agent slot;
 // CentralDevices.tsx's Agent identity before the Answer): their bindings (threadBinding.ts, sessionChainBindings.ts custodyBinding,
-// central/devices/identityBinding.ts) are unchanged and composed here. Pure.
+// central/devices/identityBinding.ts) are unchanged and composed here.
+//
+// Where the Agent carries a Voice page it speaks to you, and answers with its speaking face (§19.4 "The answer's face"; ticket 804): the
+// face's own keys — the conversation beside it and the face's dynamics — are the view's, held once for the session under the Agent's id in
+// the chain's holds, so the chain, the pool, the pane and the rail draw one face (ported from central/devices/answerBinding.ts
+// ANSWER_VIEW_DEFAULTS). Pure, apart from those view holds.
 import type {DesignBinding, Standing, Value, ValueChange, Values} from '../../frame/devices/designed'
+import {chainHolds, holdView, viewHolds} from './designBindings'
 
 /** A page the Agent carries: its prefix, the keys it shares with the Agent (read and written as the Agent's own), and which of those
  * shared keys the page owns — read from the page's binding and written to its owner rather than the Agent's (Custody sets the autonomy
@@ -94,11 +100,27 @@ function lay<T>(into: Record<string, T>, page: CarriedPage, record: Readonly<Rec
   }
 }
 
+/** The speaking face's own keys at rest (agent-answer.tsx): the conversation beside the face, the face neutral, centred, and nodding when
+ * asked; `face.source` (the source the pane shows) has none until you open one. */
+export const FACE_VIEW_DEFAULTS: Readonly<Record<string, Value>> = {
+  'face.chat': 'on', 'face.emotion': 'neutral', 'face.feeling.v': 0, 'face.feeling.a': 0, 'face.gaze.x': 0, 'face.gaze.y': 0, 'face.gesture': 'nod', 'face.do': 0,
+}
+const FACE_LOCAL = [...Object.keys(FACE_VIEW_DEFAULTS), 'face.source'] as const
+/** The hold the face's keys are kept under: the Agent's own id, as a page of it. */
+export const faceHoldOf = (id: string): string => `${id}/face`
+
 /** The one Agent's binding: the Agent's own binding with each carried page's laid in under its prefix. A value is its owner's reading; a
  * change goes to the owner of its key; a refusal is that owner's. A carried page that is absent leaves its keys absent (the design then
- * draws "—" and names the missing reading). */
+ * draws "—" and names the missing reading). Where the Voice page is carried, the speaking face's own keys are laid in too, each the view's. */
 export function composeAgentBinding(own: DesignBinding, pages: CarriedBindings): DesignBinding {
-  return carryPages(own, carriedOf(pages))
+  const composed = carryPages(own, carriedOf(pages))
+  if (!pages.voice) return composed
+  const hold = faceHoldOf(own.id), held = viewHolds(chainHolds(), hold)
+  const values: Record<string, Value> = {...composed.values}
+  for (const key of FACE_LOCAL) { const value = held[key] ?? FACE_VIEW_DEFAULTS[key]; if (value !== undefined) values[key] = value }
+  const local: Record<string, (value: Value | undefined) => void> = {...(composed.local ?? {})}
+  for (const key of FACE_LOCAL) local[key] = value => holdView(hold, key, value)
+  return {...composed, values: values as Values, local}
 }
 
 /** Any device's binding with the pages it carries laid in, each under its prefix (the 22 Oct catalogue: a device whose design draws a

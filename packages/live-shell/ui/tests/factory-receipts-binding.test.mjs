@@ -164,9 +164,12 @@ test('REPLACED (#788) — Approvals reads and sets no default answer (the Gatewa
     ['permission', 'req-7', {outcome: 'selected', option_id: 'o3'}],
   ], 'each answer is the harness\'s own choice, through the session\'s encounter (recorded here, never sent)')
   await assert.rejects(() => binding.write([{key: 'allowOnce', value: 'req-gone'}]), /no longer waits/)
+  // REPLACED (#804): "Wait and On no answer refused naming the configure op they lack" — they are the Agent's (§19.4) and Approvals shows
+  // them and never sets them (§19.14): readings here, absent with the reading they wait for, and no write is taken.
   for (const key of ['wait', 'noAnswer']) {
-    assert.match(binding.standing[key].disabled, /missing op/, key)
-    await assert.rejects(() => binding.write([{key, value: 'x'}]), /missing op/)
+    assert.match(binding.standing[key].disabled, /no reading reaches it yet/, key)
+    assert.equal(binding.writes(key), false, `${key}: never set here`)
+    await assert.rejects(() => binding.write([{key, value: 'x'}]), /is a reading/)
   }
   // REPLACED (lane W9): Changes has its owner (Central's projectcentral.source.return_comment); a chain carries it by wrapping the binding
   // (sourceReturnComment.ts withReturnComments). Unwrapped, it stands disabled saying no comment hand is passed.

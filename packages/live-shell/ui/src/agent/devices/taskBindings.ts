@@ -37,8 +37,8 @@ export const TASKS_ID = 'factory:tasks'
 export const RUNS_ID = 'factory:runs'
 
 // Tasks and Runs have no devices of their own (tickets 725 and 772): a task is a clip, its attempts the track's takes in Arrangement view
-// (§16.1, §19.1). Their ids stay so a stale door entry is cleared (FactoryDeviceChain.tsx); their bindings stay for the tests that read the
-// owners through them.
+// (§16.1, §19.1). Their ids stay as the keys their view holds are kept under (RUNS_ID's `viewHolds`), and nothing publishes them (ticket 804);
+// their bindings stay for the tests that read the owners through them.
 
 const missing = (what: string, op: string, owner: string) => `${what}: no owner operation carries it yet — missing op: ${op} (${owner}).`
 const disabled = (reasons: Readonly<Record<string, string>>): Record<string, Standing> =>

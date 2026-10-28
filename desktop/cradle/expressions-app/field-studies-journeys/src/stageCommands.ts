@@ -7,7 +7,7 @@ import {NATIVE_BINDINGS} from './nativeParameters.js';
 import {effectChainRefusal, readEffectOperands, type EffectValue, type PresentationEffect} from './native-field/effectsLaw.js';
 import {CURVE_TYPES, SWITCH_MODES, TRANSITION_KINDS, WIPE_DIRECTIONS, type CurveType, type SwitchMode, type TransitionKind, type WipeDirection} from '../../src/engine/transitionMath.js';
 import {TIMELINE_CATEGORY_IDS} from './timelineCategoryIds.js';
-export const STAGE_COMMANDS = ['view', 'capture', 'present', 'export', 'import', 'tool', 'engine', 'take', 'tracks', 'automation', 'live', 'instrument', 'janko', 'presentation', 'chrome', 'sound', 'journey', 'canvas', 'timeline', 'procedural-stage'] as const;
+export const STAGE_COMMANDS = ['view', 'capture', 'present', 'export', 'import', 'tool', 'engine', 'take', 'tracks', 'automation', 'live', 'instrument', 'janko', 'strike-at', 'presentation', 'chrome', 'sound', 'journey', 'canvas', 'timeline', 'procedural-stage'] as const;
 /** The Ta-Onta procedural stage's own operations on the native field (DLW §21.2, the Torus's Stage page; QL-MEF continuous/host.rs
  * stage_operation): read its state, evaluate a procedure, bind one to the live flow within a budget, unbind it, retire its slots. Each
  * runs the native field's own controller operation (nativeField.ts stage), through the kernel's native_expression exchange. */
@@ -245,6 +245,10 @@ export type StageCommand =
   | {command: 'live'; action: 'release'}
   | {command: 'instrument'; edit: InstrumentEdit}
   | {command: 'janko'; action: 'play'; pitch_classes: number[]; amplitude: number}
+  /** A strike at points of the torus surface (DLW §21.2 "What strikes the Torus": a touch, a note in a clip at its key's point), run as the
+   * native field's own strike at points (controller.ts playAt; QL-MEF `strike-at`): one act of 1..64 points, each the torus's own angles
+   * on the sampled sheet, theta the tube and phi the ring, each in [0, 2π), struck at one amplitude in (0, 1]. */
+  | {command: 'strike-at'; points: StageStrikePoint[]; amplitude: number}
   | {command: 'presentation'; chrome: FramePresentation}
   | {command: 'chrome'; id: string; value?: string}
   /** The Expression's own sound (DLW §20.1 the mixer row's Activator and Solo): every object sound of the open Expression silenced or
@@ -270,6 +274,11 @@ export type StageCommand =
   | {command: 'procedural-stage'; action: 'bind'; procedure_ref: string; max_evaluations?: number};
 /** A Jankó note: one to twelve distinct pitch classes (0–11) struck together as one act, at an amplitude in (0, 1] (modal metres; the owner's strike bound). */
 export const STAGE_JANKO_AMPLITUDE_MAX = 1;
+/** A point of the torus surface: its two angles on the sampled sheet [0, 2π) (instrument-session.mjs strikeAt, the owner's own bound). */
+export interface StageStrikePoint {theta: number; phi: number}
+/** The most points one strike at points holds (instrument-session.mjs STRIKE_AT_MAX_POINTS). */
+export const STAGE_STRIKE_AT_MAX_POINTS = 64;
+const onSheet = (angle: unknown): angle is number => typeof angle === 'number' && Number.isFinite(angle) && angle >= 0 && angle < 2 * Math.PI;
 export type StageResult = {ok: true} | {ok: false; error: string};
 
 const BASE_KEYS = ['v', 'kind', 'command', 'req'] as const;
@@ -445,6 +454,16 @@ export function readStageRequest(raw: unknown): {req: number; command: StageComm
       if (new Set(classes).size !== classes.length) return null;
       if (typeof raw.amplitude !== 'number' || !Number.isFinite(raw.amplitude) || raw.amplitude <= 0 || raw.amplitude > STAGE_JANKO_AMPLITUDE_MAX) return null;
       return {req, command: {command: 'janko', action: 'play', pitch_classes: [...classes], amplitude: raw.amplitude}};
+    }
+    case 'strike-at': {
+      // One act of points, each closed to its two angles on the sheet; a point off it is refused here, never reduced (the mode shapes
+      // change sign across its seam), as the owner refuses it.
+      if (!closed(raw, [...BASE_KEYS, 'points', 'amplitude']) || !Array.isArray(raw.points)) return null;
+      const points = raw.points;
+      if (points.length < 1 || points.length > STAGE_STRIKE_AT_MAX_POINTS) return null;
+      if (!points.every(point => plain(point) && closed(point, ['theta', 'phi']) && onSheet(point.theta) && onSheet(point.phi))) return null;
+      if (typeof raw.amplitude !== 'number' || !Number.isFinite(raw.amplitude) || raw.amplitude <= 0 || raw.amplitude > STAGE_JANKO_AMPLITUDE_MAX) return null;
+      return {req, command: {command: 'strike-at', points: points.map(point => ({theta: point.theta as number, phi: point.phi as number})), amplitude: raw.amplitude}};
     }
     case 'presentation':
       return closed(raw, [...BASE_KEYS, 'chrome']) && stageOneOf(FRAME_PRESENTATIONS, raw.chrome) ? {req, command: {command: 'presentation', chrome: raw.chrome}} : null;

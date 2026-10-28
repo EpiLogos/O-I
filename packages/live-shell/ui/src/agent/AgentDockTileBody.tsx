@@ -58,52 +58,11 @@ function ReadingRows({label, text, loading}: {label: string; text: string | null
   )
 }
 
+// No Diff tile (ticket 804): the seat's working diff is read on Files' Diff page (§23.4 "Reading what changed before you approve it … is
+// the Diff page of Files"; widgets/railDevices.tsx useDiffReading, kernel git_diff_read through Central's central.git.diff).
 export function AgentDockTileBody({id, sessionRef}: {id: AgentTileId; sessionRef: string | null}) {
   const {transport} = useWorkspace()
-  const [diff, setDiff] = useState<string | null>(null)
-  const [diffLoading, setDiffLoading] = useState(false)
   const [gitNote, setGitNote] = useState<string | null>(null)
-
-  useEffect(() => {
-    if (id !== 'diff') return
-    let live = true
-    setDiffLoading(true)
-    void (async () => {
-      if (transport.kind === 'unavailable') {
-        if (live) {
-          setDiff(transport.reason ?? 'Unavailable')
-          setDiffLoading(false)
-        }
-        return
-      }
-      const repo = await kernelRead(transport, {op: 'git_repository_read', project: 'O-I'})
-      if (!live) return
-      if (repo.error || repo.outcome?.result !== 'git_repository_reading') {
-        setDiff(repo.error ?? 'git_repository_read unavailable')
-        setDiffLoading(false)
-        return
-      }
-      const doc = repo.outcome.document as {repo_root?: string; head?: string} | undefined
-      const root = doc?.repo_root
-      if (!root) {
-        setDiff('Repository root not disclosed')
-        setDiffLoading(false)
-        return
-      }
-      const patch = await kernelRead(transport, {
-        op: 'git_diff_read',
-        request: {repo_root: root, from: 'HEAD', to: 'working-tree', max_bytes: 48_000, max_files: 40},
-      })
-      if (!live) return
-      if (patch.error || patch.outcome?.result !== 'git_diff_reading') {
-        setDiff(patch.error ?? 'git_diff_read unavailable')
-      } else {
-        setDiff(safeJson(patch.outcome.document))
-      }
-      setDiffLoading(false)
-    })()
-    return () => { live = false }
-  }, [id, transport])
 
   useEffect(() => {
     if (id !== 'files') return
@@ -123,7 +82,6 @@ export function AgentDockTileBody({id, sessionRef}: {id: AgentTileId; sessionRef
   if (id === 'sessions') return <NativeContextPanel project="O-I" />
   if (id === 'agents') return <NativeContextPanel project="O-I" initialTab="agents" />
   if (id === 'ledger' || id === 'approvals') { const Device = deviceWidget(`${DEVICE_WIDGET_PREFIX}${id === 'ledger' ? LEDGER_ID : APPROVALS_ID}`).Body; return <Device subject={sessionRef} pinned={false} /> }
-  if (id === 'diff') return <ReadingRows label="git_diff_read · seat" text={diff} loading={diffLoading} />
   if (id === 'frames') { const Frames = deviceWidget(`${DEVICE_WIDGET_PREFIX}${FRAMES_ID}`).Body; return <Frames subject={sessionRef} pinned={false} /> }
   if (id === 'files') return <ReadingRows label="git_repository_read · O-I" text={gitNote} />
   if (id === 'graph') return <ReadingRows label="Graph" text="Open Bimba / knowledge graph from the world browser; no kernel graph_read in this shell yet." />

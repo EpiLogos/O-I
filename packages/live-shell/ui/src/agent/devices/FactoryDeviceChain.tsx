@@ -76,8 +76,8 @@ import {useSelectedSkillChain} from './skillRackSelection'
 import {useAgentChainReading} from './useAgentChainReading'
 import {RACK_PROJECT, composePorts, useRackReading} from './useRackReading'
 import {observedState, useEncounterSessions} from './EncounterObservers'
-import {EXPERIMENT_ID, FRAMES_ID, mainDevices} from './mainTrackBindings'
-import {THREAD_DEVICE_ID, shownSession, threadBinding, threadJson} from './threadBinding'
+import {FRAMES_ID, mainDevices} from './mainTrackBindings'
+import {shownSession, threadBinding, threadJson} from './threadBinding'
 import {CAPTURE_PAGE, CHECKOUTS_PAGE, HELPER_PAGE, MACHINE_PAGE, SEAT_PAGE, carryPages, composeAgentBinding} from './oneAgentBinding'
 import {useHygieneDevice} from '../../central/devices/groundDevices'
 import {openNotificationTarget, useOwnerRequests} from '../../widgets/railDevices'
@@ -91,15 +91,14 @@ import {useUnitDecisions, waitingDecisions} from './unitDecisions'
 import {useCentralAction} from '../../central/devices/useCentralReadings'
 import {useAtSearch} from '../../central/searchPane'
 import {useModelCatalogue} from './useModelCatalogue'
-import {RUNS_ID, TASKS_ID} from './taskBindings'
 import {useAttemptTakes} from '../../owners/attemptTakes'
 import {useTaskAnswer, useWorkcellAnswer} from '../../owners/readers'
 import {usePopulationAnswer} from './usePopulationAnswer'
 import {
-  AGENTSET_DESIGN, AGENTSET_ID, CUSTODY_ID, SESSION_DEVICE_IDS, agentsetBinding, custodyBinding, sessionDevices, type CustodyPorts,
+  AGENTSET_DESIGN, AGENTSET_ID, agentsetBinding, custodyBinding, sessionDevices, type CustodyPorts,
 } from './sessionChainBindings'
 import {APPROVALS_DESIGN, APPROVALS_ID, approvalsBinding, receiptDevices} from './receiptBindings'
-import {CARRIER_DESIGN, CARRIER_ID, SEAT_ID, carrierBinding, connectionLabels, gitBinding, planRunOf, runDemandOf, seatBinding, workcellDevices, type SeatPorts} from './workcellBindings'
+import {CARRIER_DESIGN, CARRIER_ID, carrierBinding, connectionLabels, gitBinding, planRunOf, runDemandOf, seatBinding, workcellDevices, type SeatPorts} from './workcellBindings'
 import {ROUTE_WORDS, aikitWriteOp, deskActorOf, factoryOwnerWrite, ownerRouteWrite, refusalWords, seatWriteOp} from './ownerRoutes'
 import {worldsOf} from './workcellMaterial'
 import {currentIdentity} from '../../../../../../desktop/cradle/src/nara/identity/current'
@@ -529,12 +528,12 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
     for (const [id, device, designBinding] of own) publishDevice(id, device ? {device, binding: designBinding} : null)
   }, [ownDevices, receipts, cells, agentsetCarrying, approvalsDesignBinding, carrierCarrying])
   useEffect(() => () => {
-    // The Thread and Custody no longer publish (the Agent carries them), nor the Seat (Git / landing's Seat page) nor the Experiment; their
-    // ids are cleared once, so nothing stale stands on the door. The Link is the transport's (§19.19), and the rail's agent devices —
-    // Messages, Frames, the Ledger, the workcell rack — are the rail's publisher's (AgentRailDevices.tsx RAIL_AGENT_DEVICE_IDS): none of
-    // them is withdrawn here.
-    for (const id of [...CHAIN_DEVICE_IDS, MEMBER_DEVICE_ID, THREAD_DEVICE_ID, CUSTODY_ID, TASKS_ID, RUNS_ID, EXPERIMENT_ID, ...SESSION_DEVICE_IDS, APPROVALS_ID,
-      SEAT_ID, CARRIER_ID, RUN_MAP_ID, PROMPT_PADS_ID]) publishDevice(id, null)
+    // The chain withdraws exactly what it publishes. The Thread and Custody (the Agent carries them, §19.4), Tasks and Runs (a task is a
+    // clip, a run its track's take lanes, §19.1), the Run, the Experiment (a task launched with Repeat, §19.5) and the Seat (Git / landing's
+    // Seat page, §19.17) publish nowhere, and the door is the session's memory, so no entry of theirs can stand to be cleared (ticket 804).
+    // The Link is the transport's (§19.19), and the rail's agent devices — Messages, Frames, the Ledger, the workcell rack — are the rail's
+    // publisher's (AgentRailDevices.tsx RAIL_AGENT_DEVICE_IDS): none of them is withdrawn here.
+    for (const id of [...CHAIN_DEVICE_IDS, MEMBER_DEVICE_ID, AGENTSET_ID, APPROVALS_ID, CARRIER_ID, RUN_MAP_ID, PROMPT_PADS_ID]) publishDevice(id, null)
   }, [])
 
   const choose = (slotId: string) => { shell.setExpandedDevice(slotId as AgentDeviceId); selectDevice(chainDeviceId(slotId)) }

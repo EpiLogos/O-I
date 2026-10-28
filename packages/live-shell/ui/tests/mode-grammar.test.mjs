@@ -220,8 +220,9 @@ test('the browser table: Live and Expressions keep their own browsers; the other
   assert.deepEqual(Object.keys(base), ['central-worlds', 'central-days', 'central-flows', 'central-beings', 'central-things', 'central-goals', 'central-files', 'central-wiki', 'central-new'])
   assert.deepEqual(base['central-days'].group, 'Central')
   assert.deepEqual(base['central-files'].group, 'Project')
-  // Factory — per its manifest: Sessions · Agents · Runs · Knowledge.
-  assert.deepEqual(Object.keys(byId('factory')), ['factory-sessions', 'factory-agents', 'factory-runs', 'factory-knowledge'])
+  // Factory — Sessions · Agents. REPLACED (#804): "Sessions · Agents · Runs · Knowledge" — a run is its session's track in Arrangement view
+  // and its take lanes (§19.1 "Takes and Arrangement lanes"), and the Knowledge route is Scope's Knowledge page (§19.9, §19.12).
+  assert.deepEqual(Object.keys(byId('factory')), ['factory-sessions', 'factory-agents'])
   // Technē — to-hand sources · files, then the World groups.
   assert.deepEqual(Object.keys(byId('techne')),
     ['techne-sources', 'techne-files', 'techne-bodies', 'techne-locations', 'techne-places', 'techne-palaces', 'techne-journeys'])
@@ -289,7 +290,8 @@ test('the browser rail: categories wear the cut\'s kind marks where the specimen
       'central-worlds': 'world', 'central-days': 'day', 'central-flows': 'doc', 'central-beings': 'agent',
       'central-things': 'source', 'central-goals': 'archetype', 'central-files': 'doc', 'central-wiki': 'source',
     },
-    factory: {'factory-sessions': 'run', 'factory-agents': 'agent', 'factory-runs': 'run'},
+    // REPLACED (#804): Runs (run) — no Runs category (§19.1).
+    factory: {'factory-sessions': 'run', 'factory-agents': 'agent'},
     techne: {
       'techne-files': 'doc', 'techne-bodies': 'world', 'techne-locations': 'location',
       'techne-places': 'place', 'techne-palaces': 'palace', 'techne-journeys': 'journey',

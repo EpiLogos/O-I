@@ -279,17 +279,18 @@ export interface ThreadPorts {
 }
 
 const AGENT_KEYS = new Set(['draft', 'sent', 'input', 'quantize'])
-const THREAD_WRITES = new Set([...AGENT_KEYS, 'approve', 'hardStop', 'retry', 'diff', 'tellParent', 'voice', 'light'])
+const THREAD_WRITES = new Set([...AGENT_KEYS, 'approve', 'decline', 'hardStop', 'retry', 'diff', 'tellParent', 'voice', 'light'])
 
-/** The Thread's binding: its values; the composer, Input and timing through the Agent's binding; Approve and Hard stop to the shown
- * session's encounter; the view's keys held here; every act no owner carries refused by name. */
+/** The Thread's binding: its values; the composer, Input and timing through the Agent's binding; Approve, Decline and Hard stop to the shown
+ * session's encounter; the view's keys held here; every act no owner carries refused by name. Decline is the answer's face's (§19.4: the
+ * conversation holds "a proposal's Accept and Decline"; agent-answer.tsx), the harness's own reject on the same consent request (ticket 804). */
 export function threadBinding(input: ThreadInput, agent: Pick<DesignBinding, 'write'> | null, ports: ThreadPorts, id: string = THREAD_DEVICE_ID): DesignBinding {
   const shown = shownSession(input, id)
   const reading = input.encounter?.reading
   const consent = pendingPermissions(reading)[0]
   const standing: Record<string, Standing> = Object.fromEntries([...Object.entries(THREAD_ABSENT), ...Object.entries(THREAD_REFUSED)].map(([key, why]) => [key, {disabled: why}]))
   const consentWhy = !consent ? THREAD_REFUSE.noConsent : verbStanding(reading, 'permission')
-  if (consentWhy) standing.approve = {disabled: consentWhy}
+  if (consentWhy) { standing.approve = {disabled: consentWhy}; standing.decline = {disabled: consentWhy} }
   const stopWhy = shown == null ? THREAD_REFUSE.noSession : verbStanding(reading, 'cancel')
   if (stopWhy) standing.hardStop = {disabled: stopWhy}
   if (shown != null && shown !== input.chainSession) standing.sent = {disabled: viewHolds(input.holds, id).pin === true ? THREAD_REFUSE.pinned : THREAD_REFUSE.notChain}
@@ -321,6 +322,14 @@ export function threadBinding(input: ThreadInput, agent: Pick<DesignBinding, 'wr
           const allow = consent.choices.find(choice => choice.kind === 'allow_once') ?? consent.choices.find(choice => choice.kind?.startsWith('allow'))
           if (!allow) throw Error('The consent request offers no allow choice; answer it in the thread pane.')
           await ports.permission(consent.native_request_id, {outcome: 'selected', option_id: allow.option_id})
+          continue
+        }
+        if (key === 'decline') {
+          if (consentWhy || !consent || !ports.permission) throw Error(consentWhy ?? THREAD_REFUSE.noConsent)
+          // Decline is the harness's own reject (receiptBindings.ts choiceFor 'deny' reads the same kinds), never an invented one.
+          const reject = consent.choices.find(choice => choice.kind === 'reject_once') ?? consent.choices.find(choice => choice.kind?.startsWith('reject'))
+          if (!reject) throw Error('The consent request offers no reject choice; answer it in the thread pane.')
+          await ports.permission(consent.native_request_id, {outcome: 'selected', option_id: reject.option_id})
           continue
         }
         if (key === 'hardStop') {
