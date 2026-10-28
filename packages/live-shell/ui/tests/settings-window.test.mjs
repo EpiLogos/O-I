@@ -87,8 +87,16 @@ test('every key the design reads and every press it makes is classified — a re
   for (const key of win.SETTINGS_LOCAL_KEYS) assert.ok(key in w.local || key.startsWith('new.'), `${key} is the window's own`)
   for (const key of ['enterKey', 'scan', 'revokeProjection']) assert.ok(w.refused[key], `${key}: refused naming its route`)
   for (const key of ['secretRefs', 'projections', 'outside']) assert.match(w.absent[key], /no kernel route/)
-  for (const key of ['setup', 'folders', 'setupPlan']) assert.match(w.absent[key], /kernel op `setup`/, `${key}: Setup's reading stands absent naming the op`)
-  for (const key of ['acceptStep', 'previewStep', 'rereadSetup']) assert.match(w.refused[key], /kernel op `setup`/, `${key}: Setup's press stands refused naming the op`)
+  // Setup (§10.11; #738) is bound: its readings are native oi's adoption (the kernel's `setup` op) and Central's Work, its presses theirs.
+  for (const key of ['setup', 'folders', 'setupPlan']) assert.ok(key in w.reads && !(key in w.absent), `${key}: Setup's reading, from its owner`)
+  assert.match(w.reads.setup, /kernel op `setup`/)
+  assert.match(w.reads.folders, /work\.list/)
+  assert.match(w.reads.folders, /projectcentral\.inspect/)
+  assert.match(w.reads.setupPlan, /projectcentral\.adopt\.preview/)
+  for (const key of ['acceptStep', 'previewStep', 'rereadSetup']) assert.ok(key in w.writes && !(key in w.refused), `${key}: Setup's press goes to its owner`)
+  assert.match(w.writes.acceptStep, /apply/)
+  assert.match(w.writes.acceptStep, /projectcentral\.init/)
+  assert.equal(win.NO_SETUP, undefined, 'no blanket absence of Setup stands')
   assert.ok(!('plan' in w.absent) && 'plan' in w.writes, 'Review changes… is the owners\' plan; Setup\'s preview reads `setupPlan`, never the same key')
   assert.doesNotMatch(text, /\(v, 'plan'|\(p\.v, 'plan'|set\('plan', undefined\)/, 'the design reads no preview under the key Review changes… presses')
   // A press drawn waiting shows its pressed value in place of the reading under the same key: only a toggle writes the key it reads.
@@ -364,7 +372,7 @@ test('SCRIPTED — the Settings window (SettingsWorkspace) draws the design\'s F
   host.resetHost(ID)
   assert.match(markup, /data-device-view="full"/)
   assert.match(markup, /class="ref-pane-body st-window"/, 'the catalogue design draws the window')
-  assert.match(markup, /aria-label="Harnesses &amp; models"/, 'today\'s first page, until first-run Setup is bound')
+  assert.match(markup, /aria-label="Harnesses &amp; models"/, 'a window opened over a world with its ground opens on Harnesses & models')
   assert.match(markup, /no reading of the owners&#x27; settings/, 'the registry not read yet: said, never a sample')
   assert.match(markup, />← Back to work</, 'the way back')
   assert.doesNotMatch(markup, SETTINGS_FIXTURE)
@@ -376,4 +384,187 @@ test('the pages the window drew before are retired with the port: the design dra
     assert.equal(existsSync(new URL(`../src/settings/${file}`, import.meta.url)), false, `${file}: ported into windowPages.ts and the design`)
   const workspace = readFileSync(new URL('../src/settings/SettingsWorkspace.tsx', import.meta.url), 'utf8')
   assert.match(workspace, /<HostedDevice designed=\{windowDesign\}/)
+})
+
+// ── Setup (manual §10.11; O-I #738) ──────────────────────────────────────────────────────────────────────────────────────────────────
+
+/** Native oi's adoption and Central's Work as they answer (oi setup's oi.setup/v1 documents; ctrl's work.list, projectcentral.inspect,
+ * central.files.list and projectcentral.init data, shapes read from the installed owners on scratch worlds, 28 Oct). A world's folder
+ * is /w/Bare; its ground, once made, /w/Bare/Central. Every request is kept, in order. */
+function scriptedSetup() {
+  const calls = []
+  const GROUND = '/w/Bare/Central'
+  const world = {bound: null, outcome: 'new', journal: null, work: new Map()}
+  const discovery = () => ({schema: 'oi.setup/v1', basis: 'basis-1', data_root: '/w/Bare/data', composition_path: '/w/Bare/.config/oi-shell-candidate/full-suite/composition.json',
+    target: 'macos/aarch64', bound_ground: world.bound, suggested_ground: GROUND, selected_ground: GROUND,
+    ground: world.outcome === 'new' ? {outcome: 'new', canonical_path: GROUND, note: 'Native Central initialization requires explicit review.'}
+      : {outcome: 'recognized', canonical_path: GROUND, identity: {device: '1', inode: '2'}, access: {readable: true, searchable: true}},
+    choices: [{id: 'custom', title: 'Choose individual products', description: '', products: [], hosted: false}], products: [], warnings: [], desktop: {state: 'not-installed'}, recognition: {}})
+  const adoption = {async request(request) {
+    calls.push(['setup', request.action, structuredClone(request)])
+    if (request.action === 'status') return {schema: 'oi.setup/v1', disposition: world.journal ? 'verified' : 'not_started', journal: world.journal}
+    if (request.action === 'discover') return {schema: 'oi.setup/v1', discovery: discovery()}
+    if (request.action === 'plan') {
+      const now = Date.now()
+      return {schema: 'oi.setup/v1', plan: {schema: 'oi.adoption-plan/v1', engagement_contract: 'oi.engagement/2026-09-18', selection: request.selection, discovery: discovery(),
+        steps: [{title: 'Establish Central', effects: [`Ask Central to initialise ${request.selection.ground} and verify it with its native doctor.`], operation: {kind: 'establish_ground', path: request.selection.ground}},
+          {title: 'Record the chosen composition', effects: [], operation: {kind: 'record_composition'}}],
+        blocked: [], notices: [], review_token: 'review-1', created_at_unix_ms: now - 1, expires_at_unix_ms: now + 15 * 60 * 1000}}
+    }
+    if (request.action === 'apply') {
+      world.bound = GROUND; world.outcome = 'recognized'
+      world.journal = {schema: 'oi.adoption-journal/v1', plan: request.plan, records: request.plan.steps.map(() => ({state: 'verified'}))}
+      return {schema: 'oi.setup/v1', disposition: 'verified', journal: world.journal}
+    }
+    throw new Error(`unexpected ${request.action}`)
+  }}
+  const central = async (action, input) => {
+    calls.push(['central', action, structuredClone(input)])
+    if (!world.bound) throw new Error(`Central root does not exist as a directory: ${GROUND}`)
+    const project = name => { const row = world.work.get(name); if (!row) throw new Error(`Project root does not exist as a directory: ${GROUND}/Work/${name}`); return row }
+    if (action === 'work.list') return {items: [...world.work.keys()].map(name => ({name, path: `${GROUND}/Work/${name}`})), root: GROUND}
+    if (action === 'projectcentral.inspect') {
+      const row = project(input.project)
+      return row.made ? {outcome: 'already_conformant', manifest: {schema: 'central.project/v1', project_id: input.project, human_source: 'ProjectCentral/user', wiki: {profile: 'okf-wiki/v1', source: 'ProjectCentral/agents/wiki/wiki.json'}},
+        manifest_errors: [], wiki_candidates: [{source: 'ProjectCentral/agents/wiki/wiki.json', space_ref: `central:wiki:project:${input.project}`}], source_signals: [], reason: 'ProjectCentral human-source and Agent-Wiki fractal is present and readable.'}
+        : {outcome: row.wikis.length === 1 ? 'bind_existing_wiki_in_place' : row.wikis.length ? 'unresolved_human_decision_required' : 'create_project_central', manifest: null, manifest_errors: [],
+          wiki_candidates: row.wikis.map(source => ({source, space_ref: 'central:wiki:x'})), source_signals: [], reason: 'No compatible OKF Wiki source was found; the canonical human-source/Agent-Wiki fractal can be created around the native Project.'}
+    }
+    if (action === 'central.files.list') {
+      const [, name, sub] = /^Work\/([^/]+)(?:\/(.*))?$/.exec(input.path)
+      const row = project(name)
+      const names = sub === 'ProjectCentral' ? ['agents', 'user', 'project.json'] : [...row.material, ...(row.made ? ['ProjectCentral'] : []), '.git']
+      return {schema: 'central.directory-reading/v1', entries: names.map(entry => ({name: entry, kind: entry.includes('.') && entry !== '.git' ? 'file' : 'directory'}))}
+    }
+    if (action === 'projectcentral.adopt.preview') return {operations: [`Keep ${input.source} in place as a participating source`, 'Create ProjectCentral/agents/wiki/wiki.json'], source: input.source, preserves_source: true}
+    if (action === 'projectcentral.init' || action === 'projectcentral.adopt') {
+      const row = project(input.project); row.made = true
+      return {outcome: 'create_project_central', project_id: input.project_id, project_root: `${GROUND}/Work/${input.project}`, wiki_source: 'ProjectCentral/agents/wiki/wiki.json'}
+    }
+    throw new Error(`unexpected ${action}`)
+  }
+  return {source: {adoption, central, groundChanged: () => calls.push(['groundChanged'])}, calls, world, GROUND}
+}
+const held = values => key => values[key]
+const stepOf = (values, step) => JSON.parse(values.setup).find(row => row.step === step)
+
+test('CODE-DERIVED — Setup\'s Ground step is native oi\'s discovery: a new ground found, a recognised one adopted where it is, one Central cannot read named with its reason', () => {
+  const base = {bound_ground: null, suggested_ground: '/w/Bare/Central', selected_ground: '/w/Bare/Central', ground: {outcome: 'new', canonical_path: '/w/Bare/Central'}}
+  const found = win.setupValues({adoption: {discovery: base}, folders: {state: 'unread'}, plan: null}, held({}))
+  assert.deepEqual(stepOf(found, 'ground').state, 'found')
+  assert.equal(stepOf(found, 'ground').items[0].where, '/w/Bare/Central')
+  assert.match(stepOf(found, 'ground').items[0].change, /Central makes/)
+  assert.equal(found.folders, undefined, 'no Work is read before there is a ground')
+  const bound = win.setupValues({adoption: {discovery: {...base, bound_ground: '/w/Bare/Central', ground: {outcome: 'recognized', canonical_path: '/w/Bare/Central', access: {readable: true, searchable: true}}}},
+    folders: {state: 'read', folders: []}, plan: null}, held({}))
+  assert.equal(stepOf(bound, 'ground').state, 'accepted')
+  assert.deepEqual(JSON.parse(bound.folders), [], 'Work read, and empty')
+  const unread = win.setupValues({adoption: {discovery: {...base, ground: {outcome: 'unavailable', reason: 'Central root recognition did not complete. No existing content was changed.'}}}, folders: {state: 'unread'}, plan: null}, held({}))
+  assert.match(stepOf(unread, 'ground').items[0].why, /recognition did not complete/)
+  const refused = win.setupValues({adoption: {error: 'Error: The installed O:I setup command could not start. No request was sent.'}, folders: {state: 'unread'}, plan: null}, held({}))
+  assert.match(stepOf(refused, 'ground').items[0].why, /could not start/)
+  assert.equal(win.setupValues({adoption: {}, folders: {state: 'unread'}, plan: null}, held({})).setup, undefined, 'not read yet: absent, never a sample')
+})
+
+test('CODE-DERIVED — Setup\'s Projects step is Central\'s Work: each folder\'s inspection, its material and its ProjectCentral; the step is accepted once a project stands with its ground', () => {
+  const folders = [
+    {name: 'essays', path: '/w/C/Work/essays', inspection: {outcome: 'bind_existing_wiki_in_place', manifest: null, manifest_errors: [], wiki_candidates: [{source: 'wiki/wiki.json'}]}, material: ['drafts', 'wiki'], parts: []},
+    {name: 'garden', path: '/w/C/Work/garden', inspection: {outcome: 'unresolved_human_decision_required', manifest: null, manifest_errors: [], wiki_candidates: [{source: 'notes/wiki/wiki.json'}, {source: 'site/wiki/wiki.json'}]}, material: ['notes', 'site'], parts: []},
+    {name: 'sketches', path: '/w/C/Work/sketches', inspection: {outcome: 'create_project_central', manifest: null, manifest_errors: [], wiki_candidates: []}, material: ['src'], parts: []},
+    {name: 'lab', path: '/w/C/Work/lab', inspection: {outcome: 'unresolved_human_decision_required', manifest: null, manifest_errors: ['project.json: missing field `project_id`'], wiki_candidates: []}, material: ['runs'], parts: ['user']},
+    {name: 'O-I', path: '/w/C/Work/O-I', inspection: {outcome: 'already_conformant', manifest: {wiki: {source: 'ProjectCentral/agents/wiki/wiki.json'}}, manifest_errors: [], wiki_candidates: [{source: 'ProjectCentral/agents/wiki/wiki.json'}]}, material: ['docs'], parts: ['user', 'agents', 'now']},
+  ]
+  const discovery = {bound_ground: '/w/C', selected_ground: '/w/C', ground: {outcome: 'recognized', canonical_path: '/w/C'}}
+  const values = win.setupValues({adoption: {discovery}, folders: {state: 'read', folders}, plan: null}, held({}))
+  const drawn = JSON.parse(values.folders)
+  assert.deepEqual(drawn.map(f => [f.title, f.place, f.finds]), [['essays', 'work', 'one'], ['garden', 'work', 'many'], ['sketches', 'work', 'none'], ['lab', 'work', 'unreadable'], ['O-I', 'work', 'ground']])
+  assert.deepEqual(drawn[0].wikis, ['wiki/wiki.json'])
+  assert.deepEqual(drawn[1].wikis, ['notes/wiki/wiki.json', 'site/wiki/wiki.json'])
+  assert.deepEqual(drawn[4].central, ['user', 'agents', 'wiki', 'now'], 'the ProjectCentral parts already there')
+  assert.deepEqual(drawn[4].wikis, [], 'a ground in place keeps no wiki to adopt')
+  assert.equal(stepOf(values, 'projects').state, 'accepted', 'a project stands with its ground')
+  // The preview stands only for the folder and the choice it was asked for.
+  const plan = {folder: '/w/C/Work/sketches', make: 'create', where: 'stands', lines: ['Central makes ProjectCentral round sketches']}
+  assert.deepEqual(JSON.parse(win.setupValues({adoption: {discovery}, folders: {state: 'read', folders}, plan}, held({folder: '/w/C/Work/sketches', make: 'create'})).setupPlan), plan.lines)
+  assert.equal(win.setupValues({adoption: {discovery}, folders: {state: 'read', folders}, plan}, held({folder: '/w/C/Work/sketches', make: 'keep'})).setupPlan, undefined)
+  assert.equal(win.setupValues({adoption: {discovery}, folders: {state: 'read', folders}, plan}, held({folder: '/w/C/Work/essays', make: 'create'})).setupPlan, undefined)
+})
+
+test('SCRIPTED — Setup walked on an empty folder: Accept makes the world\'s ground through native oi (custom: Central only, the reviewed plan\'s token), and a folder of its Work becomes the first project through Central', async () => {
+  const {source, calls, world, GROUND} = scriptedSetup()
+  const walk = new settingsPages.SetupWalk(source)
+  await walk.read()
+  let values = win.setupValues(walk.snapshot(), held({}))
+  assert.equal(stepOf(values, 'ground').state, 'found')
+  assert.equal(values.folders, undefined, 'no Work before the ground')
+  await assert.rejects(walk.preview(held({make: 'create'})), /ground/i, 'Preview waits for the ground')
+
+  const said = await walk.accept('ground', held({}))
+  assert.match(said, /Central made your ground/)
+  const plan = calls.find(([, action]) => action === 'plan')[2]
+  assert.deepEqual(plan.selection, {composition: 'custom', ground: GROUND, desktop: 'keep', bundle: null, bundle_sha256: null, products: ['central'], remove_products: []},
+    'only Central\'s ground: the desktop is a full install, and Setup adds and removes no product')
+  const apply = calls.find(([, action]) => action === 'apply')[2]
+  assert.equal(apply.approval, 'review-1', 'Accept applies the reviewed plan by its token')
+  assert.ok(calls.some(([kind]) => kind === 'groundChanged'), 'the host reads its world again')
+  values = win.setupValues(walk.snapshot(), held({}))
+  assert.equal(stepOf(values, 'ground').state, 'accepted', 'read back from native oi: the ground bound and recognised')
+  assert.deepEqual(JSON.parse(values.folders), [], 'Central\'s Work read: empty')
+  assert.equal(stepOf(values, 'projects').state, 'found')
+  await assert.rejects(walk.accept('ground', held({})), /accepted/i, 'nothing is made twice')
+
+  // The person makes a folder in the ground's Work (the system picker's New Folder), and reads again.
+  world.work.set('First project', {material: ['notes'], wikis: [], made: false})
+  await walk.read()
+  values = win.setupValues(walk.snapshot(), held({}))
+  const [folder] = JSON.parse(values.folders)
+  assert.deepEqual([folder.title, folder.finds, folder.material], ['First project', 'none', ['notes']])
+  const choice = {folder: folder.path, make: 'create'}
+  await assert.rejects(walk.accept('projects', held(choice)), /Preview first/)
+  await walk.preview(held(choice))
+  values = win.setupValues(walk.snapshot(), held(choice))
+  assert.match(JSON.parse(values.setupPlan).join(' '), /projectcentral\.init/)
+  assert.ok(!calls.some(([, action]) => action === 'projectcentral.init'), 'Preview changes nothing')
+  const made = await walk.accept('projects', held(choice))
+  assert.match(made, /First project/)
+  assert.deepEqual(calls.find(([, action]) => action === 'projectcentral.init')[2], {project: 'First project', project_id: 'First project'})
+  values = win.setupValues(walk.snapshot(), held(choice))
+  assert.equal(JSON.parse(values.folders)[0].finds, 'ground', 'read back from Central: the ground in place')
+  assert.equal(stepOf(values, 'projects').state, 'accepted')
+  assert.equal(values.setupPlan, undefined, 'the preview retires with the change it previewed')
+})
+
+test('SCRIPTED — Setup\'s refusals name their owner: a step Setup does not read yet, a folder\'s wiki to choose, a project already in Work, and an Accept without its preview', async () => {
+  const {source, world} = scriptedSetup()
+  const walk = new settingsPages.SetupWalk(source)
+  await walk.read()
+  await walk.accept('ground', held({}))
+  world.work.set('essays', {material: ['drafts', 'wiki'], wikis: ['wiki/wiki.json'], made: false})
+  world.work.set('garden', {material: ['notes', 'site'], wikis: ['notes/wiki/wiki.json', 'site/wiki/wiki.json'], made: false})
+  await walk.read()
+  for (const step of ['harnesses', 'credentials', 'machines']) await assert.rejects(walk.accept(step, held({})), /AIKit|Workcell|machine/, `${step}: names its owner`)
+  const garden = '/w/Bare/Central/Work/garden', essays = '/w/Bare/Central/Work/essays'
+  await assert.rejects(walk.preview(held({folder: garden, make: 'keep'})), /Choose the wiki/)
+  await assert.rejects(walk.preview(held({folder: essays, make: 'create'})), /keeps a wiki/)
+  await assert.rejects(walk.preview(held({folder: essays, make: 'keep', where: 'work'})), /stands in Work already/)
+  await walk.preview(held({folder: essays, make: 'keep'}))
+  assert.match(JSON.parse(win.setupValues(walk.snapshot(), held({folder: essays, make: 'keep'})).setupPlan).join(' '), /Keep wiki\/wiki\.json in place/)
+  await walk.accept('projects', held({folder: essays, make: 'keep'}))
+  assert.equal(JSON.parse(win.setupValues(walk.snapshot(), held({})).folders).find(f => f.title === 'essays').finds, 'ground')
+})
+
+test('SCRIPTED — the first time the DLW opens (no ground yet), Settings opens on Setup; a contextual request opens Setup too', async () => {
+  const {SettingsWorkspace} = await import('../src/settings/SettingsWorkspace.tsx')
+  const {ShellConfigContext} = await import('../src/shell/useSet.ts')
+  host.resetHost(ID)
+  const first = renderToStaticMarkup(createElement(ShellConfigContext.Provider, {value: {onboarding: true}},
+    createElement(SettingsWorkspace, {adapter: createDevelopmentSettingsAdapter('ready'), active: true, onReturn: () => {}, request: null})))
+  host.resetHost(ID)
+  assert.match(first, /aria-label="Setup steps"/, 'Setup, on first opening')
+  const {setupRequest} = await import('../src/settings/host.ts')
+  const request = setupRequest('Back to work')
+  assert.equal(request.page, 'setup')
+  assert.equal(request.returnLabel, 'Back to work')
+  const foundation = readFileSync(new URL('../src/native/Foundation.tsx', import.meta.url), 'utf8')
+  assert.match(foundation, /onboarding[^\n]*openSettings\(setupRequest\(/, 'the foundation opens Settings on Setup when the world has no ground yet')
 })

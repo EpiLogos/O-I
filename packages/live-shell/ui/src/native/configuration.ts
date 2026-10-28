@@ -4,7 +4,9 @@ import {createLiveHarnessSource} from '../../../../../desktop/cradle/src/configu
 import {compactScope} from '../../../../../desktop/cradle/src/configuration/contracts'
 import {kernelOp} from '../../../../../desktop/cradle/src/kernel/bridge'
 import type {KernelOp, KernelOutcome, KernelTransportStatus, PresentationDocument} from '../../../../../desktop/cradle/src/kernel/types'
-import type {SettingsAdapter, SettingsBasis} from '../settings/adapter'
+import type {SettingsAdapter, SettingsBasis, SetupSource} from '../settings/adapter'
+import {createAdoptionNative} from '../../../../../desktop/cradle/src/configuration/adoptionNative'
+import {actionAnswerOf, centralActionOp} from '../central/devices/centralActions'
 import type {MachineConnection, MachineOperationResult, RemoteMachineDeclaration, RemoteMachinesSource} from '../settings/machines'
 import type {RoutineAuthoringResult, RoutineAuthoringSource} from '../settings/routines'
 export type {SettingsAdapter, SettingsBasis} from '../settings/adapter'
@@ -17,6 +19,8 @@ export interface NativeSettingsContext {
   navigate?: SettingsAdapter['navigate']
   /** The renderer's own visual preference store (cradle visuals/store.ts `visuals`), handed in by the caller that already holds it. */
   visuals?: VisualsStoreLike
+  /** Setup's owners over the host's kernel channel (nativeSetup), the same before and after the world is qualified. */
+  setup?: SetupSource
 }
 /** The part of the cradle's visual preference store Settings reads and writes. */
 export interface VisualsStoreLike {
@@ -160,6 +164,24 @@ export async function nativeImportTheme(call: Call, text: string, fileName: stri
   return kept.outcome.document
 }
 
+/** Setup's owners over the host's kernel channel (settings/adapter.ts SetupSource): the kernel's `setup` op through the cradle's adoption
+ * transport (configuration/adoptionNative.ts) and Central's actions through invoke_action (central/devices/centralActions.ts), each
+ * answering in its owner's words. It needs no qualified world: Setup is what makes one. `groundChanged` is the host's read of its world. */
+export function nativeSetup(transport: KernelTransportStatus, groundChanged?: () => void): SetupSource {
+  const call = (op: KernelOp) => kernelOp(transport, op)
+  return {
+    adoption: createAdoptionNative(call),
+    async central(action, input) {
+      const answer = await call(centralActionOp(action, input))
+      if (answer.error) throw new Error(answer.error)
+      const read = actionAnswerOf({status: 'answered', value: answer.outcome?.result === 'action_dispatched' ? answer.outcome : null, error: null}, action)
+      if (read.status === 'answered') return read.value
+      throw new Error(read.status === 'refused' ? read.error : `${action} did not answer.`)
+    },
+    ...(groundChanged ? {groundChanged} : {}),
+  }
+}
+
 /** No private desired/configuration store. Documents and owner receipts cross
  * through the imported native source. Reading preflight is not owner CAS. Connecting reads nothing: the owner is first
  * asked when Settings reads its registry (it is opened). */
@@ -251,6 +273,7 @@ export async function connectNativeSettings(transport: KernelTransportStatus, co
     routineAuthoring: nativeRoutineAuthoring(call),
     ...(context.visuals ? {visualPreferences: nativeVisualPreferences(context.visuals)} : {}),
     importTheme: (text, fileName) => nativeImportTheme(call, text, fileName),
+    ...(context.setup ? {setup: context.setup} : {}),
   }
   return adapter
 }

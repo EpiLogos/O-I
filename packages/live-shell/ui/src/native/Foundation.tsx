@@ -10,9 +10,9 @@ import {configureFileResourceHost} from '../../../../../desktop/cradle/src/files
 import {configureWikiProjectionAccess, retireWikiProjectionAccess} from '../../../../../desktop/cradle/src/techne/wikiProjectionStore'
 import type {KernelEventReplay, KernelReceipt, KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
 import {readShellConfig, shellTransport, invalidateSet, type ShellConfig} from './application'
-import {connectNativeSettings} from './configuration'
+import {connectNativeSettings, nativeSetup} from './configuration'
 import {visuals} from '../../../../../desktop/cradle/src/visuals/store'
-import {configureSettingsHost} from '../settings/host'
+import {configureSettingsHost, openSettings, setupRequest} from '../settings/host'
 import {unavailableSettingsAdapter} from '../settings/adapter'
 import {useWorkspace} from '../shell/workspace'
 import {ShellConfigContext} from '../shell/useSet'
@@ -39,6 +39,8 @@ export function NativeFoundation({children}: {children: ReactNode}) {
   const [pending, setPending] = useState(true)
   const [fault, setFault] = useState<string | null>(null)
   const [replayFault, setReplayFault] = useState<string | null>(null)
+  // The first time the DLW opens on a world with no ground, Settings opens on Setup (manual §10.11): once per launch.
+  const setupOpened = useRef(false)
   // The qualified host can disclose state and recognise a personal ground
   // before a World is selected. World-bound resources remain retired below.
   const transportKey = JSON.stringify(config ? shellTransport(config) : {kind: 'unavailable', reason: 'The native host connection has not been read.'})
@@ -62,12 +64,15 @@ export function NativeFoundation({children}: {children: ReactNode}) {
       showFailure(access.reason)
       throw Error(access.reason)
     }
+    // Setup reaches its owners over the kernel channel before a world is qualified; a ground it makes is read again here.
+    const setup = nativeSetup(access, () => { if (live.current) retry(value => value + 1) })
     if (!qualifiedWorld(reading)) {
       retire()
       const reason = reading.world_error ?? (reading.onboarding ? 'Choose the native personal ground to open its work.' : 'The host has not disclosed its native World and physical Workcell binding.')
       currentWorkspace.current.attachTransport(access)
-      configureSettingsHost(unavailableSettingsAdapter(reason))
+      configureSettingsHost({...unavailableSettingsAdapter(reason), setup})
       setFault(reading.onboarding ? null : reason)
+      if (reading.onboarding && !setupOpened.current) { setupOpened.current = true; openSettings(setupRequest()) }
       return
     }
     const world = reading.world_scope
@@ -80,7 +85,7 @@ export function NativeFoundation({children}: {children: ReactNode}) {
       currentWorkspace.current.attachNativeAccess({transport: access, scope: {
         owner: world.owner, world: world.world, workcell: world.workcell_ref, accessEpoch: ownerEpoch,
       }})
-      const adapter = await connectNativeSettings(access, {ownerEpoch, isCurrent, visuals,
+      const adapter = await connectNativeSettings(access, {ownerEpoch, isCurrent, visuals, setup,
       scopeChoices: [
         {address: {scope_kind: 'world', scope_ref: null}, title: 'Current World'},
         {address: {scope_kind: 'ground', scope_ref: null}, title: 'Personal ground'},

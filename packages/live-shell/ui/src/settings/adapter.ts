@@ -7,6 +7,7 @@ import type { SystemCompositionReading } from '../../../../../desktop/cradle/src
 import type { HarnessSource } from '../../../../../desktop/cradle/src/configuration/harnessSource'
 import type { RemoteMachinesSource } from './machines'
 import type { RoutineAuthoringSource } from './routines'
+import type { AdoptionNative } from '../../../../../desktop/cradle/src/configuration/adoptionController'
 
 export type { ChangeRequest, PlanBundle, ContributionMount } from '../../../../../desktop/cradle/src/configuration/source'
 export type { SettingSpec, ScopeAddress, ConfigResolution, PlanDocument, ChangeSetDocument } from '../../../../../desktop/cradle/src/configuration/contracts'
@@ -37,7 +38,18 @@ export type SettingsRequest = {
   requestId: string
   scope: ScopeAddress
   returnLabel: string
-} & ({ setting_ref: string; page?: never } | { page: 'machines' | 'automations'; setting_ref?: never })
+} & ({ setting_ref: string; page?: never } | { page: 'machines' | 'automations' | 'setup'; setting_ref?: never })
+/** Setup (manual §10.11) runs before a world is qualified, so it reaches its owners over the kernel channel the host holds, not over the
+ * qualified configuration owners: the kernel's `setup` op (native oi's adoption — discover, plan, apply with the plan's review token;
+ * desktop/cradle/src/configuration/adoptionController.ts) for the Ground step, and Central's own actions through invoke_action for the
+ * Projects step (Work's members, a project's inspection, its previews and the person's Accept). */
+export interface SetupSource {
+  readonly adoption: AdoptionNative
+  /** One Central action: its data, or a refusal in Central's words. */
+  central(action: string, input: Readonly<Record<string, unknown>>): Promise<unknown>
+  /** The host reads its world again once a ground is made or bound (native/Foundation.tsx). */
+  groundChanged?(): void
+}
 export interface SettingsAdapter {
   readonly kind: 'native' | 'development' | 'unavailable'
   /** Explicit scenarios simulate responses. A development native bridge does not. */
@@ -84,6 +96,8 @@ export interface SettingsAdapter {
   routineAuthoring?: RoutineAuthoringSource
   pointOfUseEntries?: readonly SettingsSearchTarget[]
   navigate?(destination: SettingsDestination): void
+  /** Setup's owners, reached before and after a world is qualified (SetupSource). */
+  setup?: SetupSource
 }
 
 export function unavailableSettingsAdapter(reason = 'The native configuration contribution has not been connected to this shell.'): SettingsAdapter {

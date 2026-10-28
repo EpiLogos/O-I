@@ -8,7 +8,7 @@
 // bar's Info line, as the components said them under their controls. Nothing here invents a value.
 import {useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore} from 'react'
 import type {Value} from '../frame/devices/designed'
-import type {ChangeRequest, ScopeAddress, SettingsAdapter} from './adapter'
+import type {ChangeRequest, ScopeAddress, SettingsAdapter, SetupSource} from './adapter'
 import type {KernelOp, PresentationDocument, PresentationTheme} from '../../../../../desktop/cradle/src/kernel/types'
 import type {HarnessReading} from '../../../../../desktop/cradle/src/configuration/harnessSource'
 import type {ProfileDocument} from '../../../../../desktop/cradle/src/configuration/contracts'
@@ -19,7 +19,10 @@ import {refusalLine, scalarEntries} from '../agent/RefusalCard'
 import {connectionBasis, machineBasis, validateMachine, type MachineConnection, type RemoteMachineDeclaration} from './machines'
 import {authorityAllowsTrigger, eligibleProofs, routineBasis, scheduleFromInput, type RoutineAuthoringOptions, type RoutineAuthoringResult, type ScheduleShape} from './routines'
 import {appearanceValues, automationValues, credentialValues, folderOf, harnessValues, machineValues, NO_AUTHORING, NO_HARNESS, NO_INVOKE, NO_MACHINES, NO_NAVIGATE, NO_PRODUCTS,
-  NO_PROFILES, NO_VISUALS, productValues, profileValues, systemValues, type CredentialRow} from './windowValues'
+  NO_PROFILES, NO_SETUP_SOURCE, NO_VISUALS, groundBound, productValues, profileValues, SETUP_UNBOUND, setupFolder, setupValues, systemValues, type CredentialRow,
+  type SetupPreview, type SetupSnapshot, type SetupWorkFolder} from './windowValues'
+import {AdoptionController} from '../../../../../desktop/cradle/src/configuration/adoptionController'
+import {PC_ACCEPT_ACTION, PC_INSPECT_ACTION, PC_PREVIEW_ACTION, acceptInput} from '../central/devices/pageGround'
 
 /** A press through its owner: it resolves with the owner's acknowledgement in its words (said on the Info line), or rejects with its refusal. */
 export type Act = (value: Value) => Promise<string | void>
@@ -648,4 +651,167 @@ export function useProductsPage(adapter: SettingsAdapter, enabled: boolean): Pag
         },
       }}
   }, [adapter, read.value, read.error, read.refresh, ran, read])
+}
+
+// ---------------------------------------------------------------------------------------------------------------- Setup (manual §10.11)
+
+const SETUP_MAKES = {create: 'create', keep: 'adopt', copy: 'migrate'} as const
+const entryNames = (reading: unknown): string[] => {
+  const entries = reading && typeof reading === 'object' ? (reading as {entries?: unknown}).entries : undefined
+  return Array.isArray(entries) ? entries.flatMap(entry => (entry && typeof (entry as {name?: unknown}).name === 'string' ? [(entry as {name: string}).name] : [])) : []
+}
+
+/** Setup as the window walks it (manual §10.11), over its owners (settings/adapter.ts SetupSource). The Ground step is native oi's adoption
+ * through the cradle's AdoptionController, unchanged: status and discover read the ground; Accept makes a plan for Central's ground alone
+ * (custom, products [central]: the desktop is a full install, and Setup adds and removes no product), applies it with its review token,
+ * and reads it back. The Projects step is Central's Work: work.list and each member's projectcentral.inspect; Preview asks Central's
+ * adopt or migrate preview (Create's plan is the inspection: Central has no preview of projectcentral.init); Accept presses
+ * projectcentral.init, adopt or migrate as previewed, and reads the folder back. Each Accept answers only once its owner reads the change
+ * back. Plain, so the window's hook and a headless walk drive the same presses. */
+export class SetupWalk {
+  readonly controller: AdoptionController
+  private folders: SetupSnapshot['folders'] = {state: 'unread'}
+  private plan: SetupPreview | null = null
+  private current: SetupSnapshot
+  private listeners = new Set<() => void>()
+  readonly source: SetupSource
+  constructor(source: SetupSource) {
+    this.source = source
+    this.controller = new AdoptionController(source.adoption)
+    this.current = this.compose()
+    this.controller.subscribe(() => this.publish())
+  }
+  snapshot = (): SetupSnapshot => this.current
+  subscribe = (listener: () => void): (() => void) => { this.listeners.add(listener); return () => { this.listeners.delete(listener) } }
+  private compose(): SetupSnapshot { return {adoption: this.controller.getSnapshot(), folders: this.folders, plan: this.plan} }
+  private publish(): void { this.current = this.compose(); for (const listener of [...this.listeners]) listener() }
+
+  /** Read every step again: native oi's ground, then Central's Work once there is a ground. A refusal stands in the reading, in its
+   * owner's words; nothing is retried. */
+  async read(): Promise<void> {
+    await this.controller.refresh()
+    await this.readWork()
+  }
+  private async readWork(): Promise<void> {
+    if (!groundBound(this.controller.getSnapshot().discovery)) { this.folders = {state: 'unread'}; this.publish(); return }
+    try {
+      const listing = await this.source.central('work.list', {})
+      const items = (listing && typeof listing === 'object' && Array.isArray((listing as {items?: unknown}).items) ? (listing as {items: unknown[]}).items : [])
+        .flatMap(item => { const row = item as {name?: unknown; path?: unknown}; return typeof row?.name === 'string' && typeof row.path === 'string' ? [{name: row.name, path: row.path}] : [] })
+      const folders = await Promise.all(items.map(async ({name, path}): Promise<SetupWorkFolder> => {
+        const [inspection, listed] = await Promise.all([
+          this.source.central(PC_INSPECT_ACTION, {project: name}).catch((cause: unknown) => ({refused: words(cause)})),
+          this.source.central('central.files.list', {path: `Work/${name}`}).catch(() => null),
+        ])
+        const names = entryNames(listed)
+        const parts = names.includes('ProjectCentral') ? entryNames(await this.source.central('central.files.list', {path: `Work/${name}/ProjectCentral`}).catch(() => null)) : []
+        return {name, path, inspection, material: names.filter(entry => entry !== 'ProjectCentral' && !entry.startsWith('.')), parts}
+      }))
+      this.folders = {state: 'read', folders}
+    } catch (cause) { this.folders = {state: 'refused', error: words(cause)} }
+    this.publish()
+  }
+
+  /** Accept a step (held): Ground through native oi, Projects through Central; the others name the owner they wait on. */
+  async accept(step: string, held: Held): Promise<string> {
+    if (step === 'ground') return this.acceptGround()
+    if (step === 'projects') return this.acceptProject(held)
+    throw new Error(SETUP_UNBOUND[step] ?? `${step} is no step of Setup.`)
+  }
+  private async acceptGround(): Promise<string> {
+    if (!this.controller.getSnapshot().discovery) await this.controller.refresh()
+    const before = this.controller.getSnapshot()
+    if (!before.discovery) throw new Error(before.error ?? 'Native oi did not read your ground.')
+    if (before.unresolved) throw new Error('An earlier adoption is unresolved in native oi\'s journal: read it again before another write. Nothing was sent.')
+    if (groundBound(before.discovery)) throw new Error('Accepted: Central keeps your ground here already. Nothing is made twice.')
+    const ground = before.discovery.selected_ground ?? before.discovery.suggested_ground
+    this.controller.select({composition: 'custom', ground, desktop: 'keep', bundle: null, bundle_sha256: null, products: ['central'], remove_products: []})
+    await this.controller.plan()
+    const planned = this.controller.getSnapshot()
+    if (planned.error) throw new Error(planned.error)
+    if (!planned.plan || planned.step !== 'review') throw new Error('Native oi made no plan to review. Nothing was sent.')
+    if (planned.plan.blocked.length) throw new Error(planned.plan.blocked.join(' '))
+    const made = planned.plan.steps.some(row => row.operation.kind === 'establish_ground')
+    await this.controller.apply()
+    const applied = this.controller.getSnapshot()
+    if (applied.disposition !== 'verified') throw new Error(applied.error ?? `Native oi answered ${applied.disposition ?? 'nothing'}; its journal decides. Read again; nothing is retried.`)
+    await this.controller.refresh()
+    await this.readWork()
+    this.source.groundChanged?.()
+    if (!groundBound(this.controller.getSnapshot().discovery)) throw new Error('Native oi applied the plan, but its reading does not show the ground bound. Read again.')
+    return made ? `Central made your ground at ${ground} and checked it. Your world's state is kept beside it.` : `Central keeps your ground at ${ground}, where it was. Nothing in it moved.`
+  }
+
+  /** The Projects step's choice on the held keys, checked as the design closes its choices; the folder's own row with it. */
+  private chosen(held: Held): {row: SetupWorkFolder; make: keyof typeof SETUP_MAKES; where: string; wiki?: string} {
+    if (this.folders.state === 'refused') throw new Error(this.folders.error)
+    if (this.folders.state !== 'read') throw new Error('Make your ground first: Central reads its Work once there is a ground.')
+    const rows = this.folders.folders, path = text(held('folder')) || rows[0]?.path
+    const row = rows.find(folder => folder.path === path)
+    if (!row) throw new Error('Choose a folder of your ground\'s Work.')
+    const folder = setupFolder(row), finds = folder.finds, wikis = folder.wikis as string[]
+    if (finds === 'unreadable') throw new Error(`${row.name}: its ProjectCentral cannot be read. Mend its manifest by hand.`)
+    if (finds === 'ground') throw new Error(`${row.name}: its ground is in place. Nothing to make.`)
+    const where = text(held('where')) || 'stands'
+    if (where === 'work') throw new Error(`${row.name} stands in Work already.`)
+    const make = text(held('make'))
+    if (make !== 'create' && make !== 'keep' && make !== 'copy') throw new Error('Choose what to make first.')
+    if (make === 'create' && finds !== 'none') throw new Error(`${row.name} keeps a wiki: keep it in place or copy it in.`)
+    if (make !== 'create' && finds === 'none') throw new Error(`${row.name} keeps no wiki.`)
+    const wiki = wikis.length === 1 ? wikis[0] : text(held('wiki')) || undefined
+    if (make !== 'create' && (!wiki || !wikis.includes(wiki))) throw new Error('Choose the wiki first: Central does not choose for you.')
+    return {row, make, where, ...(make !== 'create' && wiki ? {wiki} : {})}
+  }
+  /** Preview: the steps Central would take, in order. Nothing changes. */
+  async preview(held: Held): Promise<void> {
+    const {row, make, where, wiki} = this.chosen(held)
+    let lines: string[]
+    if (make === 'create') {
+      const reason = row.inspection && typeof row.inspection === 'object' ? (row.inspection as {reason?: unknown}).reason : undefined
+      lines = [`Central makes ProjectCentral round ${row.name} (projectcentral.init): its user and agents parts and its wiki.`, ...(typeof reason === 'string' && reason ? [reason] : []), 'Nothing in the folder moves.']
+    } else {
+      const data = await this.source.central(PC_PREVIEW_ACTION[SETUP_MAKES[make] as 'adopt' | 'migrate'], {project: row.name, source: wiki})
+      const operations = data && typeof data === 'object' && Array.isArray((data as {operations?: unknown}).operations) ? (data as {operations: unknown[]}).operations.map(String) : null
+      if (!operations) throw new Error(`Central answered its ${SETUP_MAKES[make]} preview in a form Setup does not read (projectcentral-mutation-plan expected).`)
+      lines = operations
+    }
+    this.plan = {folder: row.path, make, where, ...(wiki ? {wiki} : {}), lines}
+    this.publish()
+  }
+  private async acceptProject(held: Held): Promise<string> {
+    const {row, make, where, wiki} = this.chosen(held)
+    const plan = this.plan
+    if (!plan || plan.folder !== row.path || plan.make !== make || plan.where !== where || plan.wiki !== wiki) throw new Error('Preview first: Accept makes what the preview listed.')
+    const treatment = SETUP_MAKES[make]
+    await this.source.central(PC_ACCEPT_ACTION[treatment], acceptInput(row.name, treatment, wiki ?? null))
+    this.plan = null
+    await this.readWork()
+    const after = this.folders.state === 'read' ? this.folders.folders.find(folder => folder.name === row.name) : undefined
+    if (!after || setupFolder(after).finds !== 'ground') throw new Error(`Central answered ${PC_ACCEPT_ACTION[treatment]}, but ${row.name} does not read back with its ground in place. Read again.`)
+    return `Central made ${row.name}'s ProjectCentral beside its material${wiki ? `, its wiki ${make === 'keep' ? 'kept in place' : 'copied in'}` : ''}. It reads back in place.`
+  }
+}
+
+const noSetup: SetupSnapshot = {adoption: {}, folders: {state: 'unread'}, plan: null}
+const noSetupSnapshot = () => noSetup
+/** Setup (manual §10.11) on the window's binding: the SetupWalk over the adapter's setup source, read when the page opens and for each
+ * new source; its values on the choices you hold (choices: the held folder, make, wiki and where, so a preview stands only for them). */
+export function useSetupPage(adapter: SettingsAdapter, enabled: boolean, held: Held, done: (keys: readonly string[]) => void, choices: readonly unknown[]): PagePart {
+  const source = adapter.setup
+  const walk = useMemo(() => (source ? new SetupWalk(source) : null), [source])
+  const snapshot = useSyncExternalStore(walk?.subscribe ?? noSubscription, walk?.snapshot ?? noSetupSnapshot, walk?.snapshot ?? noSetupSnapshot)
+  useEffect(() => { if (enabled && walk) void walk.read() }, [enabled, walk])
+  return useMemo((): PagePart => {
+    if (!walk) return {values: {}, acts: {}, why: {acceptStep: NO_SETUP_SOURCE, previewStep: NO_SETUP_SOURCE, rereadSetup: NO_SETUP_SOURCE}, refused: {}, reread: async () => {}}
+    const why: Record<string, string> = {}
+    if (snapshot.adoption.busy) why.acceptStep = why.rereadSetup = 'Waiting for native oi…'
+    const refusal = snapshot.folders.state === 'refused' ? snapshot.folders.error : null
+    return {values: setupValues(snapshot, held), why, refused: refusedOn('rereadSetup', refusal), reread: enabled ? () => walk.read() : async () => {},
+      acts: {
+        acceptStep: async step => { const said = await walk.accept(String(step), held); done(['make', 'wiki']); return said },
+        previewStep: async () => { await walk.preview(held) },
+        rereadSetup: async () => { await walk.read() },
+      }}
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- the held choices name what the values read
+  }, [walk, snapshot, held, done, enabled, ...choices])
 }

@@ -6,7 +6,7 @@
 // (config_reset on the reading digest). The pages' own readings and presses are windowPages.ts's hooks, each read once its page opens.
 // The design's page is the host's (deviceHost.tsx): the window's category follows it, and a contextual request turns it. An owner's
 // acknowledgement is said on the status bar's Info line (deviceHost.tsx sayOnInfoLine), as the host says a refusal.
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react'
+import { useContext, useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react'
 import type { ChangeRequest, ChangeSetDocument, ConfigResolution, ContributionMount, PlanBundle, ScopeAddress, SettingsAdapter, SettingsRequest } from './adapter'
 import { unavailableSettingsAdapter } from './adapter'
 import { acknowledgeDrafts, allowedScope, basisChanged, categoryOf, createDraft, draftOwnerChanged, initialScope, isSensitiveSetting, rawValue, settingKey } from './model'
@@ -15,7 +15,8 @@ import type { DesignBinding, Standing, Value, ValueChange } from '../frame/devic
 import { HostedDevice, hostState, sayOnInfoLine, setHostPage } from '../frame/devices/deviceHost'
 import { design as windowDesign, searchResults } from '../inhabitants/catalogue/panels/settings__window'
 import { SETTINGS_LOCAL_KEYS, SETTINGS_WINDOW_ID, SETTINGS_WINDOW_WIRING, searchStep, windowCoreValues } from './windowValues'
-import { useAppearancePage, useAutomationsPage, useCredentialsPage, useHarnessPage, useMachinesPage, useProductsPage, useProfilesPage, type Act, type PagePart } from './windowPages'
+import { useAppearancePage, useAutomationsPage, useCredentialsPage, useHarnessPage, useMachinesPage, useProductsPage, useProfilesPage, useSetupPage, type Act, type PagePart } from './windowPages'
+import { ShellConfigContext } from '../shell/useSet'
 import '../inhabitants/catalogue/panels/panels.css'
 import './preferences.css'
 
@@ -31,8 +32,9 @@ const scopeOf = (value: Value | undefined): {scope: ScopeAddress; category?: str
     return typeof s.kind === 'string' ? {scope: {scope_kind: s.kind, scope_ref: typeof s.ref === 'string' && s.ref ? s.ref : null} as ScopeAddress, ...(typeof s.category === 'string' ? {category: s.category} : {})} : null
   } catch { return null }
 }
-/** The page Settings opens on until first-run Setup (§10.11) is bound to this window: Harnesses & models, as before. */
-const FIRST_PAGE = 'harnesses'
+/** The page Settings opens on: Setup the first time the DLW opens, on a world with no ground yet (manual §10.11, the host's `onboarding`),
+ * else Harnesses & models. */
+const firstPage = (onboarding: boolean | undefined) => (onboarding ? 'setup' : 'harnesses')
 
 const unavailable = unavailableSettingsAdapter()
 interface Props { adapter?: SettingsAdapter; request?: SettingsRequest | null; onReturn?: () => void; active?: boolean; initialDrafts?: { setting_ref: string; scope: ScopeAddress; raw: unknown }[] }
@@ -45,10 +47,15 @@ export function SettingsWorkspace({ adapter = unavailable, request, onReturn, ac
   const [drafts, setDrafts] = useState<Record<string, Draft>>({})
   // The page the design shows is the host's (deviceHost.tsx setHostPage); the window's category follows it, and a page is read once opened.
   // A press inside the window re-reads the host's page (the design turns it in the press's own handler, before this one hears the click).
-  const [, setPageTick] = useState(() => { if (hostState(SETTINGS_WINDOW_ID).page === null) setHostPage(SETTINGS_WINDOW_ID, FIRST_PAGE); return 0 })
-  const category: CategoryId = CATEGORY_OF[hostState(SETTINGS_WINDOW_ID).page ?? FIRST_PAGE] ?? 'agents'
+  const onboarding = useContext(ShellConfigContext)?.onboarding
+  const [, setPageTick] = useState(() => { if (hostState(SETTINGS_WINDOW_ID).page === null) setHostPage(SETTINGS_WINDOW_ID, firstPage(onboarding)); return 0 })
+  const page = hostState(SETTINGS_WINDOW_ID).page ?? firstPage(onboarding)
+  const category: CategoryId = CATEGORY_OF[page] ?? 'agents'
   const setCategory = (next: CategoryId) => { setHostPage(SETTINGS_WINDOW_ID, PAGE_OF[next]); setPageTick(n => n + 1) }
   const [visited,setVisited]=useState<Set<CategoryId>>(()=>new Set(['agents']))
+  // Setup files no settings under a category: it is read once its page has opened.
+  const [setupOpened, setSetupOpened] = useState(page === 'setup')
+  useEffect(() => { if (page === 'setup') setSetupOpened(true) }, [page])
   const [operationScope,setOperationScope]=useState<ScopeAddress|null>(null)
   useEffect(()=>{setVisited(old=>old.has(category)?old:new Set([...old,category]))},[category])
   const [query, setQuery] = useState('')
@@ -123,6 +130,7 @@ export function SettingsWorkspace({ adapter = unavailable, request, onReturn, ac
 
   useEffect(() => {
     if (!request) return
+    if(request.page==='setup'){setHostPage(SETTINGS_WINDOW_ID,'setup');setPageTick(n=>n+1);setSelected(null);setQuery('');return}
     if(request.page){setCategory(request.page==='machines'?'execution':'automations');setOperationScope(request.scope);setSelected(null);setQuery('');return}
     if(!entries.length)return
     const entry = entries.find(e => e.spec.setting_ref === request.setting_ref)
@@ -277,7 +285,8 @@ export function SettingsWorkspace({ adapter = unavailable, request, onReturn, ac
   const automations = useAutomationsPage(adapter, wanted && visited.has('automations'), held, context, typeof holds.show === 'string' ? holds.show : 'routines',
     typeof holds.routine === 'string' ? holds.routine : null, done)
   const products = useProductsPage(adapter, wanted && (visited.has('products') || visited.has('inspection')))
-  const parts: readonly PagePart[] = [harness, credentials, appearance, profiles, machines, automations, products]
+  const setup = useSetupPage(adapter, wanted && setupOpened, held, done, [holds.folder, holds.make, holds.wiki, holds.where])
+  const parts: readonly PagePart[] = [harness, credentials, appearance, profiles, machines, automations, products, setup]
 
   // ── the window's own presses ────────────────────────────────────────────────────────────────────────────────────────────────────
   const entryOf = (ref: string) => entries.find(entry => entry.spec.setting_ref === ref)

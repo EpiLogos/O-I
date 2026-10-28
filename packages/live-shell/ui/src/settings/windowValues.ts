@@ -16,6 +16,7 @@ import type {PresentationDocument} from '../../../../../desktop/cradle/src/kerne
 import type {MachineConnection, RemoteMachineDeclaration} from './machines'
 import type {Invocation, MethodRow, RoutineDetail, RoutineList} from '../../../../../desktop/cradle/src/contributions/automations/client'
 import {actionMessage, nextOccurrenceTimes} from '../../../../../desktop/cradle/src/contributions/automations/client'
+import type {AdoptionDiscovery, AdoptionState} from '../../../../../desktop/cradle/src/configuration/adoptionController'
 
 export const SETTINGS_WINDOW_ID = 'settings:window'
 
@@ -411,6 +412,93 @@ export function systemValues(reading: SystemCompositionReading | null): Record<s
       ...(setting.kind === 'secret' ? {} : {declared: setting.axes.declared, effective: setting.axes.effective, active: setting.axes.active, staged: setting.axes.staged})})))}]))}
 }
 
+// ---------------------------------------------------------------------------------------------------------------- Setup (manual §10.11)
+
+/** One folder of the ground's Work as Central reads it for Setup's Projects step: work.list's member, its projectcentral.inspect (or the
+ * refusal in Central's words), its own material (central.files.list of the folder, hidden entries and ProjectCentral aside) and the
+ * parts of its ProjectCentral already there (central.files.list of ProjectCentral). */
+export interface SetupWorkFolder {readonly name: string; readonly path: string; readonly inspection: unknown; readonly material: readonly string[]; readonly parts: readonly string[]}
+/** A preview Setup asked for: the folder and the choices it was asked on, and the steps Central would take, in order. */
+export interface SetupPreview {readonly folder: string; readonly make: string; readonly where: string; readonly wiki?: string; readonly lines: readonly string[]}
+/** What Setup holds: native oi's adoption state for the Ground step (the cradle's AdoptionController snapshot), Central's Work for the
+ * Projects step, and the preview asked last. */
+export interface SetupSnapshot {
+  readonly adoption: Partial<Pick<AdoptionState, 'discovery' | 'plan' | 'error' | 'busy' | 'unresolved'>>
+  readonly folders: {readonly state: 'unread'} | {readonly state: 'read'; readonly folders: readonly SetupWorkFolder[]} | {readonly state: 'refused'; readonly error: string}
+  readonly plan: SetupPreview | null
+}
+
+/** Whether native oi reads the ground as bound and recognised: the Ground step's change is made. Pure. */
+export function groundBound(discovery: AdoptionDiscovery | undefined): boolean {
+  if (!discovery?.bound_ground || discovery.ground.outcome !== 'recognized') return false
+  return [discovery.selected_ground, discovery.ground.canonical_path].includes(discovery.bound_ground)
+}
+
+/** The Ground step from native oi's discovery (oi.setup/v1): the ground bound and recognised (accepted), a new one Central would make in
+ * the folder chosen, an existing one adopted where it is, or one Central cannot read, named with its reason. A refused read or a blocked
+ * plan stands on the row in native oi's words. Undefined before any reading. Pure. */
+export function setupGroundStep(adoption: SetupSnapshot['adoption']): Record<string, unknown> | undefined {
+  const discovery = adoption.discovery
+  if (!discovery) return adoption.error ? {step: 'ground', state: 'found', items: [{name: 'Your ground', why: adoption.error}]} : undefined
+  const where = discovery.selected_ground ?? discovery.suggested_ground
+  if (groundBound(discovery)) return {step: 'ground', state: 'accepted', items: [{name: 'Your ground', where, change: 'Central keeps it here · nothing in it moved'}]}
+  const outcome = discovery.ground.outcome
+  const item: Record<string, string> = outcome === 'new' ? {name: 'A new ground', where, change: 'Central makes your ground here and checks it · nothing else is made'}
+    : outcome === 'recognized' ? {name: 'Your ground', where, change: 'Central adopts it where it is · nothing in it moves'}
+      : {name: 'Your ground', where, why: discovery.ground.reason ?? `Central did not recognise ${where} as a ground it can read.`}
+  const why = adoption.plan?.blocked.length ? adoption.plan.blocked.join(' ') : adoption.error
+  return {step: 'ground', state: 'found', items: [why ? {...item, why} : item]}
+}
+
+const PC_PARTS = ['user', 'agents', 'wiki', 'now'] as const
+/** A folder of Work as the Projects step draws it: what Central finds there (projectcentral.inspect: no wiki, one, several, a ProjectCentral
+ * it cannot read, or the ground in place), the wikis a folder keeps to adopt, its material and the ProjectCentral parts already there. Pure. */
+export function setupFolder(row: SetupWorkFolder): Record<string, unknown> {
+  const inspection = rec(row.inspection) ? row.inspection : {}
+  const errors = Array.isArray(inspection.manifest_errors) ? inspection.manifest_errors : []
+  const manifest = rec(inspection.manifest) ? inspection.manifest : null
+  const candidates = (Array.isArray(inspection.wiki_candidates) ? inspection.wiki_candidates : []).flatMap(row => (rec(row) && txt(row.source) ? [txt(row.source)!] : []))
+  const finds = !txt(inspection.outcome) || errors.length || (manifest && inspection.outcome !== 'already_conformant') ? 'unreadable'
+    : inspection.outcome === 'already_conformant' ? 'ground' : !candidates.length ? 'none' : candidates.length === 1 ? 'one' : 'many'
+  const central = PC_PARTS.filter(part => (part === 'wiki' ? !!manifest && rec(manifest.wiki) : row.parts.includes(part)))
+  return {path: row.path, title: row.name, place: 'work', finds, wikis: finds === 'ground' || finds === 'unreadable' ? [] : candidates, material: [...row.material], central}
+}
+
+/** The choices the Projects step stands on, as the design reads them: the folder shown (the first, until you choose), what to make, where,
+ * and the wiki (the folder's one, else the one you chose). Pure. */
+export function setupChoice(folders: readonly Record<string, unknown>[], held: (key: string) => Value | undefined): {folder?: string; make?: string; where: string; wiki?: string} {
+  const chosen = txt(held('folder')), folder = folders.find(f => f.path === chosen) ?? folders[0]
+  const wikis = Array.isArray(folder?.wikis) ? folder!.wikis as string[] : []
+  const wiki = wikis.length === 1 ? wikis[0] : txt(held('wiki'))
+  return {...(txt(folder?.path) ? {folder: txt(folder!.path)} : {}), ...(txt(held('make')) ? {make: txt(held('make'))} : {}), where: txt(held('where')) ?? 'stands', ...(wiki ? {wiki} : {})}
+}
+
+/** Setup's values (the design's setup, folders and setupPlan): the Ground step from native oi; once there is a ground, the Projects step
+ * from Central's Work, accepted once a project stands with its ground; the preview, only for the choices it was asked on. Harnesses and
+ * skills, Credentials and Machines are not read by Setup yet (SETUP_UNBOUND): they stand unread. Pure. */
+export function setupValues(snapshot: SetupSnapshot, held: (key: string) => Value | undefined): Record<string, Value> {
+  const values: Record<string, Value> = {}
+  const steps: Record<string, unknown>[] = []
+  const ground = setupGroundStep(snapshot.adoption)
+  if (ground) steps.push(ground)
+  if (snapshot.folders.state === 'read') {
+    const folders = snapshot.folders.folders.map(setupFolder)
+    values.folders = json(folders)
+    steps.push({step: 'projects', state: folders.some(folder => folder.finds === 'ground') ? 'accepted' : 'found', items: []})
+    const plan = snapshot.plan, choice = setupChoice(folders, held)
+    if (plan && plan.folder === choice.folder && plan.make === choice.make && plan.where === choice.where && plan.wiki === choice.wiki) values.setupPlan = json(plan.lines)
+  }
+  if (steps.length) values.setup = json(steps)
+  return values
+}
+
+/** Setup's steps whose owners' adoption is not bound to it yet, each in its owner's terms (manual §10.11's table). */
+export const SETUP_UNBOUND: Readonly<Record<string, string>> = {
+  harnesses: 'Harnesses and skills: AIKit\'s adoption of an agent tool and its skills (aikit init, aikit adopt) is not bound to Setup yet; Harnesses & models and Skills & methods read each harness.',
+  credentials: 'Credentials: AIKit\'s discovery and binding by reference (credential_discover, credential_setup) stand on the Credentials page; Setup does not read them yet.',
+  machines: 'Machines: making this computer a workcell (Central\'s machine.adopt-current with Workcell\'s binding) is not bound to Setup yet; Machines & services reads Workcell\'s machines.',
+}
+
 // ---------------------------------------------------------------------------------------------------------------- the classification
 
 /** A page's capability this adapter does not carry (the development and unavailable adapters carry few; native/configuration.ts binds them). */
@@ -426,8 +514,7 @@ export const NO_NAVIGATE = (what: string) => `${what} stands beside its instrume
 export const NO_WORKCELL_SECRETS = 'Workcell\'s secret references, projections and scan (`workcell system --json` keys.references, `workcell secret projections`, `workcell secret scan`): no kernel route reaches them yet (T-COVERAGE §1.2).'
 export const NO_SECURE_FIELD = 'Enter key: a write-only key goes to the native host\'s own secure field, never through the window; no host qualifies that capability here (SettingsAdapter.canEnterCredentialMaterial).'
 export const NO_STANDING = 'A route\'s standing (unproven, observed, usable) is AIKit\'s model field (`aikit model-catalogue show`), which model_catalogue does not carry yet.'
-/** Setup (manual §10.11) is not bound in this window: the kernel op exists (desktop/cradle/src/kernel/types.ts `setup`), and nothing here calls it. */
-export const NO_SETUP = 'Setup (manual §10.11): the kernel op `setup` (desktop/cradle/src/kernel/types.ts, the adoption controller\'s discover, plan and apply) is not bound to this window yet; Settings opens on Harnesses & models.'
+export const NO_SETUP_SOURCE = NO('Setup', 'setup')
 
 /** Every key the design reads or presses, by where it stands. */
 export const SETTINGS_WINDOW_WIRING = {
@@ -459,6 +546,9 @@ export const SETTINGS_WINDOW_WIRING = {
     visualLayer: 'the renderer\'s visual layer (SettingsAdapter.visualPreferences)', welcome: 'the renderer\'s welcome scene (SettingsAdapter.visualPreferences)',
     products: 'each product\'s mount and operations (system_composition_read)', ran: 'the last operation\'s answer (product_action_run)',
     system: 'each owner\'s System disclosure on its four axes (system_composition_read)',
+    setup: 'Setup\'s steps (manual §10.11): Ground from native oi\'s adoption (the kernel op `setup`: status and discover; bound and recognised is accepted); Projects from Central\'s Work, accepted once a project stands with its ground. Harnesses and skills, Credentials and Machines are not read by Setup yet (SETUP_UNBOUND)',
+    folders: 'the folders of the ground\'s Work (Central work.list), each with Central\'s projectcentral.inspect, its material and its ProjectCentral parts (central.files.list)',
+    setupPlan: 'the preview of the folder and choices shown: Central\'s projectcentral.adopt.preview or projectcentral.migrate.preview operations; for Create, the inspection Central plans projectcentral.init on',
   },
   writes: {
     plan: 'config_plan_reviewed', apply: 'config_apply_reviewed', reset: 'config_reset on the reading digest', keep: 'the draft re-based on the current reading (the window\'s own)',
@@ -476,6 +566,9 @@ export const SETTINGS_WINDOW_WIRING = {
     checkCreation: 'RoutineAuthoringSource.readResult: a waiting creation read back, never sent again',
     addMachine: 'RemoteMachinesSource.add', connect: 'RemoteMachinesSource.connect', disconnect: 'RemoteMachinesSource.disconnect', removeMachine: 'RemoteMachinesSource.remove',
     openElsewhere: 'the setting\'s own editor beside its instrument (SettingsAdapter.navigate)', 'pick:<ref>': 'the system picker (SettingsAdapter.pickResource)',
+    acceptStep: 'Ground: native oi\'s reviewed plan (the kernel op `setup`: plan, then apply with its review token; Central only — custom, products [central]) read back by discover. Projects: Central\'s projectcentral.init, adopt or migrate as previewed, read back by projectcentral.inspect. The other steps refuse naming their owner (SETUP_UNBOUND)',
+    previewStep: 'Central\'s projectcentral.adopt.preview or migrate.preview for the folder and wiki chosen; Create previews from Central\'s inspection (it has no preview of projectcentral.init)',
+    rereadSetup: 'native oi\'s status and discover, then Central\'s Work, read again',
   },
   local: {
     search: 'what you search for', hit: 'the search result ↑/↓ marked', scope: 'the scope a page\'s settings are read and changed at', focus: 'the setting a press or a request opened',
@@ -487,11 +580,9 @@ export const SETTINGS_WINDOW_WIRING = {
   },
   refused: {
     enterKey: NO_SECURE_FIELD, scan: NO_WORKCELL_SECRETS, revokeProjection: NO_WORKCELL_SECRETS,
-    acceptStep: NO_SETUP, previewStep: NO_SETUP, rereadSetup: NO_SETUP,
   },
   absent: {
     secretRefs: NO_WORKCELL_SECRETS, projections: NO_WORKCELL_SECRETS, outside: NO_WORKCELL_SECRETS,
-    setup: NO_SETUP, folders: NO_SETUP, setupPlan: NO_SETUP,
   },
 } as const
 

@@ -110,11 +110,13 @@
 //   enableRoutine <ref> with new.grant, reprove <ref> with new.reproof, createRoutine (new.name, new.description, new.method,
 //   new.proof, new.trigger — a new schedule with new.repeat and new.schedule — new.authority, new.profile, new.scopes), checkCreation (a
 //   waiting creation read back, never sent again): RoutineAuthoringSource.
-//   acceptStep <step> (setup apply on the plan whose changes the step's table shows, held): exists for Ground, Harnesses and
-//   skills, Credentials and Machines. For Projects, previewStep 'projects' (Preview: the plan, read into `setupPlan`) and acceptStep
-//   'projects' with folder, make, wiki and where: the adoption plan carries no project step yet, so no owner op makes a
-//   ProjectCentral round a folder or keeps or copies its wiki. rereadSetup (setup discover) exists. The window does not bind the
-//   `setup` op yet: Setup's readings stand absent and its presses refused, naming it.
+//   acceptStep <step> (held): Ground is native oi's reviewed plan for Central's ground (setup plan, then apply with its review token),
+//   read back by setup discover. For Projects, previewStep 'projects' (Preview: Central's projectcentral.adopt.preview or
+//   migrate.preview, read into `setupPlan`; Create's plan is Central's inspection) and acceptStep 'projects' with folder, make and
+//   wiki: Central's projectcentral.init, adopt or migrate, read back by projectcentral.inspect. A folder that stands outside the
+//   ground's Work (where: work, or a folder elsewhere) has no Central op yet. Harnesses and skills, Credentials and Machines are not
+//   read by Setup yet; their Accept names the owner (settings/windowValues.ts SETUP_UNBOUND). rereadSetup (setup discover, then
+//   Central's Work) exists. The binding: settings/windowPages.ts SetupWalk.
 //   The host stands each act without an owner disabled, with that reason. A press that turns the page is a click inside the window,
 //   which reads the page it turned to.
 // A key the owner has not reported is absent: its cell draws "—", and the page names the missing reading.
