@@ -7,7 +7,7 @@
 // transport's Quantize — the Agent's interrupt timing (one binding feeds both). A new task goes the Agent's own way (its declared
 // new-task row, kernel:harness_agent_control configure {prompt}). Launch, Retry and Stop after are Software Factory's acts on a Run's
 // unit (TASKS_REFUSE), and a task clip names neither, so they stand disabled with that reason. The per-task
-// settings (Mode, Then, To, Effort, Autonomy, Register, Form here; every setting of the Clip view through TASK_SEAMS) are the
+// settings (Mode, Then, Effort, Autonomy, Register, Form here; every setting of the Clip view through TASK_SEAMS) are the
 // session's settings on their owner, AIKit's `encounter-session-settings` (kernel encounter_session_settings, agent/sessionSettings.ts),
 // written against the revision that stands. The task's log is not read: the temporal stream names the session, not the task's
 // tools along its time.
@@ -80,11 +80,11 @@ export interface TaskAddress {
   readonly n: number
 }
 
-/** The settings that belong to one task (manual §19.1 Clip view: its name, colour and activator, its output style, its Launch, Then,
- * Hand off to and Quantize, and its envelopes — the Agent's Effort and Autonomy for this task, as Automation or Modulation, linked or
- * not). */
-export type TaskSetting = 'name' | 'colour' | 'active' | 'register' | 'form' | 'launch' | 'then' | 'handoff' | 'quantize' | 'effort' | 'autonomy'
-  | 'envelopeMode' | 'envelopeLink'
+/** The settings that belong to one task (manual §19.1 Clip view: its name, colour and activator, its output style, its Loop with its stop
+ * condition and cap, its Launch mode, Then and Quantize, what a Repeat varies — Variable, Levels, Repeats, Stop when — and its envelopes:
+ * the Agent's Effort and Autonomy for this task, as Automation or Modulation, linked or not). */
+export type TaskSetting = 'name' | 'colour' | 'active' | 'register' | 'form' | 'loop' | 'loopUntil' | 'loopCap' | 'launch' | 'then' | 'quantize'
+  | 'repeatVariable' | 'repeatLevels' | 'repeatRepeats' | 'repeatStop' | 'effort' | 'autonomy' | 'envelopeMode' | 'envelopeLink'
 
 /** The seam each task setting writes through (T-REALIGN R2: "Owner ops that do not exist yet are built, not listed"): the session's
  * settings on their owner. A seam whose owner op does not stand names why (`refused`) and its control stands disabled with it. */
@@ -109,10 +109,16 @@ export const TASK_SEAMS: Readonly<Record<TaskSetting, TaskSeam>> = {
   active: settingSeam('active'),
   register: settingSeam('register'),
   form: settingSeam('form'),
+  loop: settingSeam('loop'),
+  loopUntil: settingSeam('loopUntil'),
+  loopCap: settingSeam('loopCap'),
   launch: settingSeam('launch'),
   then: settingSeam('then'),
-  handoff: settingSeam('handoff'),
   quantize: settingSeam('quantize'),
+  repeatVariable: settingSeam('repeatVariable'),
+  repeatLevels: settingSeam('repeatLevels'),
+  repeatRepeats: settingSeam('repeatRepeats'),
+  repeatStop: settingSeam('repeatStop'),
   effort: settingSeam('effort'),
   autonomy: settingSeam('autonomy'),
   envelopeMode: settingSeam('envelopeMode'),

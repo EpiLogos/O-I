@@ -104,7 +104,8 @@ const sessionWith = taskReading => ({sessionRef: 'sess-lead', purpose: 'lead', a
 const bound = {state: 'running', request: {central: {purpose: 'map field → plan', task_ref: 'task:map'}}}
 /** FIXTURE: AIKit's encounter-session-settings reading for the session (desktop/cradle/src/kernel/types.ts EncounterSessionSettingsReading). */
 const settingsOf = task => ({of: () => ({telemetry: true, solo: false, task}), set: async () => ({ok: true})})
-const ownTask = {task_ref: 'task:map', launch: 'hold', then: 'handoff', handoff_to: 'tests', quantize: 'next-tool'}
+// REPLACED (#787): the task launched with hold and handed off to `tests`; AIKit speaks the manual's words and Hand off to is retired.
+const ownTask = {task_ref: 'task:map', launch: 'gate', then: 'again', quantize: 'next-tool'}
 /** FIXTURE: the attempts the session's tasks serve (agent/factoryTakes.ts FactoryTake). */
 const attempt = (attemptRef, taskRef, receivingRef = null) => ({sessionRef: 'sess-lead', attemptRef, runRef: 'run:1', statePath: 's', taskRef, unit: 'inspect',
   state: receivingRef ? 'returned' : 'running', startUnixMs: NOW - 200_000, endUnixMs: null, summary: null, receivingRef})
@@ -118,11 +119,11 @@ test('the run model keeps the bound task\'s own ref; a record that names only a 
 })
 
 test('Factory: a task\'s launch is its own settings on AIKit, in the owner\'s words, and only on the task they name', () => {
-  assert.deepEqual(factoryTaskLaunch(ownTask), {mode: 'hold', follow: 'handoff to tests', quantize: 'next tool'})
-  assert.deepEqual(factoryTaskLaunch({task_ref: 't', launch: 'once', then: 'next', handoff_to: null, quantize: 'global'}), {mode: 'once', follow: 'next', quantize: 'global'},
+  assert.deepEqual(factoryTaskLaunch(ownTask), {mode: 'gate', follow: 'again', quantize: 'next tool'})
+  assert.deepEqual(factoryTaskLaunch({task_ref: 't', launch: 'trigger', then: 'next', quantize: 'global'}), {mode: 'trigger', follow: 'next', quantize: 'global'},
     'the defaults AIKit states are its reading, and stand as read')
   const [clip] = project({settings: settingsOf(ownTask)}).clips
-  assert.deepEqual([clip.label, clip.status, clip.launch], ['map field → plan', 'running', {mode: 'hold', follow: 'handoff to tests', quantize: 'next tool'}])
+  assert.deepEqual([clip.label, clip.status, clip.launch], ['map field → plan', 'running', {mode: 'gate', follow: 'again', quantize: 'next tool'}])
   assert.equal(project({settings: settingsOf({...ownTask, task_ref: 'task:other'})}).clips[0].launch, undefined, 'settings for another task: none on this one')
   assert.equal(project({settings: settingsOf(null)}).clips[0].launch, undefined, 'the reading names no task: none')
   assert.equal(project({}).clips[0].launch, undefined, 'the settings unread: none')
@@ -135,8 +136,8 @@ test('Factory: the attempts a task serves stack under its clip, named as their l
   assert.deepEqual(set.lanes.takes.filter(lane => lane.trackId === trackId).map(lane => lane.id).slice(0, 2), clip.takes.map(take => take.id), 'the same takes as its lanes')
   assert.equal(clip.progress, undefined, 'Factory reads no expected length for a task: no progress')
   const markup = grid(set)
-  assert.match(markup, /<small class="cs-sub"><span class="cs-mode">hold<\/span> · <span class="cs-follow">→ handoff to tests<\/span> · <span class="cs-takes">2 takes<\/span><\/small>/)
-  assert.match(markup, /title="map field → plan · Running · plays hold · launches next tool · then handoff to tests · 2 takes"/)
+  assert.match(markup, /<small class="cs-sub"><span class="cs-mode">gate<\/span> · <span class="cs-follow">→ again<\/span> · <span class="cs-takes">2 takes<\/span><\/small>/)
+  assert.match(markup, /title="map field → plan · Running · plays gate · launches next tool · then again · 2 takes"/)
   assert.doesNotMatch(markup, /data-progress/)
   assert.equal(project({takes: takesOf([attempt('a3', 'task:other')])}).clips[0].takes, undefined, 'attempts for another task: none on this one')
 })
