@@ -1,5 +1,5 @@
 {
- "_source": "REAL, headless: `ql mef lenses --json` from QL-MEF pull 349 (dlw/ql-mef-sublenses, built at b661840; rebased to 8c11e76 with no code change), 21 Oct 2026. The installed ql (2c041e9e) does not carry sublenses yet.",
+ "_source": "REAL, headless: `ql mef lenses --json` from the installed ql at QL-MEF b87dfee08 (the L0 form ruled in O-I #707: #355 and #356), 28 Oct 2026.",
  "command": [
   "ql",
   "mef",
@@ -33,17 +33,17 @@
       "sublensRef": "mef:sublens:L0.2@1"
      },
      {
-      "label": "Whom/Which/When",
+      "label": "Who/Which/Whereby",
       "position": 3,
       "sublensRef": "mef:sublens:L0.3@1"
      },
      {
-      "label": "Where/Why-for",
+      "label": "Where/When/Whither",
       "position": 4,
       "sublensRef": "mef:sublens:L0.4@1"
      },
      {
-      "label": "Why-so/Why-not",
+      "label": "Why-for/Why-not",
       "position": 5,
       "sublensRef": "mef:sublens:L0.5@1"
      }
