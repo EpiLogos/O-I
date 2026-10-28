@@ -9,6 +9,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {register} from 'node:module'
+import {readFile} from 'node:fs/promises'
 
 const compiler = new URL('../node_modules/typescript/lib/typescript.js', import.meta.url).href
 register(`data:text/javascript,${encodeURIComponent(`
@@ -528,6 +529,8 @@ test('Factory: a constellation dropped on a session\'s track makes the session\'
   assert.deepEqual(writes.map(body => [body.request, body.expected_revision]), [[{task: {task_ref: 'task:fixtures', set: {source: LIVED}}}, 'session-settings/01']],
     'one write: the bound task\'s source, against the revision read')
   assert.ok(aikit.sent.indexOf(writes[0]) < aikit.sent.length - 1 && !aikit.sent.at(-1).request, 'the source is read back from AIKit after the write')
+  // REPLACED (O-I #768, a fresh task): a session that held no task was refused outright; it is given a new task now (the next test). This
+  // one names no agent and has no other session to take a task's basis from, so it is still refused in words and nothing is written.
   const idle = settingsKernel(settingsOf(null, {task: false}))
   const untasked = await withKernel(idle, () => factory.makeTaskOf(BRIDGE, session, {ref: LIVED, title: 'The lived-in world'}))
   assert.equal(untasked.ok, false)
@@ -545,6 +548,103 @@ test('Factory: a constellation dropped on a session\'s track makes the session\'
   const drawn = factoryTrackSet({columns: [], tracks: [{id: trackKey(track), name: 'Fizz'}], clips: []}, null, null, BRIDGE, [track])
   assert.equal(drawn.actions.makeClip.accepts, owners.CONSTELLATION_DRAG)
   assert.match(drawn.actions.makeClip.op, /AIKit encounter-session-settings/)
+})
+
+/** A session's prepared task as AIKit records it (aikit.encounter-task/v1, ai-kit encounter_task.rs TaskRecord): the request it was made with
+ * — its Central placement, the protocol child that works it, its working directory, its Workcell boundary and its authority — and its
+ * preparation complete (`ready`). FIXTURE shaped as the owner's record. */
+const PREPARED = {schema: 'aikit.encounter-task/v1', revision: 'task-binding/01JBASIS', ready: true, agency_revision: 'rev/1',
+  request: {central: {ctrl_bin: '/opt/oi/bin/ctrl', central_root: '/world', project: 'O-I', task_ref: 'task:fixtures', purpose: 'correlate occurrences',
+    participant_refs: ['agent:fizz'], source_refs: ['source/plan'], workcell_ref: 'workcell:env-2'},
+  provider: {id: 'task-child', label: 'Task child', protocol: 'acp', argv: ['python3', '-u', 'provider.py']},
+  cwd: '/world/Work/O-I/lane', selected_directories: ['/world/Work/O-I/lane'], additional_protected_directories: ['/world/Work/O-I/lane/.git'],
+  workcell_boundary_bin: '/opt/oi/bin/workcell-write-boundary', prepared_run_scope: {run_slug: 'a-run', expected_demand_digest: 'sha256:x'},
+  authority_ref: 'authority:owner', material_host: null}}
+
+/** AIKit behind the bridge for a Factory of several sessions (FIXTURE): each session's settings, read one at a time or as a list; each
+ * one's task record; and its task creation (`encounter_task_configure`), which binds the new task to the session, its source the request's —
+ * so the session's settings then read it — or refuses in AIKit's words. */
+function factoryKernel({tasks = {'ses-214': PREPARED}, refuse = null} = {}) {
+  const sent = []
+  const held = new Map(Object.keys({'ses-214': 1, 'ses-215': 1}).map(session => [session, {...settingsOf(null, {task: Boolean(tasks[session])}), agent_session: session}]))
+  const records = new Map(Object.entries(tasks))
+  const ok = (result, data) => ({json: async () => ({ok: true, outcome: {result, data}})})
+  const fetch = async (_url, init) => {
+    const body = JSON.parse(init.body)
+    sent.push(body)
+    if (body.op === 'encounter_session_settings' && !body.request) return ok('encounter_session_settings_reading', held.get(body.agent_session))
+    if (body.op === 'encounter_session_settings_list') return ok('encounter_session_settings_list_reading',
+      {schema: 'aikit.encounter-session-settings-list/v1', readings: body.agent_sessions.map(session => held.get(session) ?? {agent_session: session, refused: 'not attached'})})
+    if (body.op === 'encounter_task_read') return ok('encounter_task_reading', records.get(body.agent_session) ?? null)
+    if (body.op === 'encounter_task_configure') {
+      if (refuse) return {json: async () => ({ok: false, error: refuse})}
+      const record = {schema: 'aikit.encounter-task/v1', revision: 'task-binding/01JNEW', ready: true, request: body.request}
+      records.set(body.agent_session, record)
+      const reading = settingsOf(body.request.source ?? null, {revision: 'session-settings/02'})
+      held.set(body.agent_session, {...reading, agent_session: body.agent_session,
+        task: {...reading.task, task_ref: body.request.central.task_ref, name: body.request.central.purpose, set: []}})
+      return ok('encounter_task_reading', record)
+    }
+    return {json: async () => ({ok: false, error: `the fixture kernel answers no ${body.op}`})}
+  }
+  return {sent, fetch}
+}
+
+test('Factory: a constellation dropped on a session that holds no task makes a new task of it through AIKit\'s task creation, its source read back from AIKit', async () => {
+  const idle = {...track, sessionRef: 'ses-215', agentRef: 'agent:buzz', agentName: 'Buzz', tasks: []}
+  const maker = factory.taskMaker(BRIDGE, [track, idle], ref => owners.constellationNamed(ROWS, ref))
+  assert.match(maker.op, /encounter-task-configure/, 'the maker names AIKit\'s task creation beside the settings write')
+  const aikit = factoryKernel()
+  const made = await withKernel(aikit, () => maker.run(trackKey(idle), LIVED))
+  assert.equal(made.ok, true, made.error)
+  assert.match(made.note, /The lived-in world/)
+  const configured = aikit.sent.filter(body => body.op === 'encounter_task_configure')
+  assert.equal(configured.length, 1, 'one task is made')
+  const [{agent_session, project, request, expected_revision}] = configured
+  assert.equal(agent_session, 'ses-215')
+  assert.equal(project, 'O-I')
+  assert.equal(expected_revision, undefined, 'a session that holds no task has no task revision to write against')
+  // The new task takes the project's prepared basis from the task a session of the project holds — its Central, protocol child, working
+  // directory, Workcell boundary and authority, each the owner's — and is its own: its ref, its purpose the constellation's name, its agent
+  // the session's, its source the constellation. Nothing of the other task's own run, NOW relations or sources travels.
+  assert.match(request.central.task_ref, /^task:the-lived-in-world-[0-9a-z]+$/)
+  assert.deepEqual(request, {
+    central: {ctrl_bin: '/opt/oi/bin/ctrl', central_root: '/world', project: 'O-I', task_ref: request.central.task_ref, purpose: 'The lived-in world',
+      participant_refs: ['agent:buzz'], source_refs: []},
+    provider: PREPARED.request.provider, cwd: '/world/Work/O-I/lane', selected_directories: ['/world/Work/O-I/lane'],
+    additional_protected_directories: ['/world/Work/O-I/lane/.git'], workcell_boundary_bin: '/opt/oi/bin/workcell-write-boundary',
+    authority_ref: 'authority:owner', source: LIVED})
+  const at = aikit.sent.indexOf(configured[0])
+  assert.ok(aikit.sent.slice(at + 1).some(body => body.op === 'encounter_session_settings' && body.agent_session === 'ses-215' && !body.request),
+    'the task\'s source is read back from AIKit after it is made')
+  // On AIKit's own record (REAL: the kernel's owner-route fixture, a drop through the real kernel, AIKit, Central and Workcell boundary): the
+  // request made from a real prepared task is the one AIKit took and made a task of, but for the moment in the new task's ref.
+  const real = JSON.parse(await readFile(new URL('../../../../desktop/cradle/kernel/tests/fixtures/owner-routes/aikit-task-configure-2026-10-28.json', import.meta.url), 'utf8'))
+  const onReal = factoryKernel({tasks: {'ses-214': real.basis}})
+  const realMaker = factory.taskMaker(BRIDGE, [track, {...idle, agentRef: real.request.request.central.participant_refs[0]}], ref => owners.constellationNamed(ROWS, ref))
+  assert.equal((await withKernel(onReal, () => realMaker.run(trackKey(idle), LIVED))).ok, true)
+  const sentToReal = onReal.sent.find(body => body.op === 'encounter_task_configure').request
+  assert.deepEqual(sentToReal, {...real.request.request, central: {...real.request.request.central, task_ref: sentToReal.central.task_ref}})
+  assert.equal(real.answer.ready, true, 'AIKit prepared the task it was asked to make')
+  assert.equal(real.settings_after.task.source, LIVED, 'and its settings read the constellation back as the task\'s source')
+  // Refusals, each in words: AIKit's own; no session of the project holds a prepared task; a session's task still preparing is no basis;
+  // a session that names no agent.
+  const refused = await withKernel(factoryKernel({refuse: 'Current Agency does not authorise this task, authority or participant'}),
+    () => maker.run(trackKey(idle), LIVED))
+  assert.equal(refused.ok, false)
+  assert.match(refused.error, /Current Agency does not authorise this task, authority or participant/)
+  const bare = factoryKernel({tasks: {}})
+  const none = await withKernel(bare, () => maker.run(trackKey(idle), LIVED))
+  assert.equal(none.ok, false)
+  assert.match(none.error, /Buzz holds no task/)
+  assert.match(none.error, /encounter-task-configure/)
+  assert.equal(bare.sent.some(body => body.op === 'encounter_task_configure'), false, 'without a basis nothing is asked to make a task')
+  const pending = await withKernel(factoryKernel({tasks: {'ses-214': {...PREPARED, ready: false}}}), () => maker.run(trackKey(idle), LIVED))
+  assert.equal(pending.ok, false, 'a task still preparing gives no basis')
+  const nameless = factory.taskMaker(BRIDGE, [track, {...idle, agentRef: null}], ref => owners.constellationNamed(ROWS, ref))
+  const anonymous = await withKernel(factoryKernel(), () => nameless.run(trackKey(idle), LIVED))
+  assert.equal(anonymous.ok, false)
+  assert.match(anonymous.error, /names no agent/)
 })
 
 /** The open Expression's owner behind the composition's actions (FIXTURE, the request door createNativeContentActions answers through):

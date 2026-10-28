@@ -677,6 +677,11 @@ export type KernelOp =
    * envelopes. Without `request` it reads; with it, a change made against `expected_revision` (absent while the session has none).
    * The owner's reading or refusal passes through verbatim. */
   | {op:"encounter_session_settings";project:string;agent_session:string;request?:EncounterSessionSettingsRequest;expected_revision?:string}
+  /** Make one session's task (AIKit `encounter-task-configure`, aikit.encounter-task/v1; manual §10.3: a constellation dropped on a
+   * session's track makes "a task in Factory"): the request travels verbatim, against `expected_revision` (absent while the session holds
+   * no task). AIKit allocates the task's NOW with Central and has Workcell inspect its boundary; its record (result
+   * `encounter_task_reading`) or its refusal passes through verbatim. */
+  | {op:"encounter_task_configure";project:string;agent_session:string;request:EncounterTaskRequest;expected_revision?:string}
   /** Several sessions' settings read at once (aikit.encounter-session-settings-list/v1), so a view of many tracks asks once. */
   | {op:"encounter_session_settings_list";project:string;agent_sessions:string[]}
   /** Several sessions' served attempts read at once (aikit.encounter-task-attempts-list/v1): for each session, the Factory attempts
@@ -1051,6 +1056,24 @@ export interface KnowledgeHit { address: KnowledgeAddress; resource: string; lab
 export interface KnowledgeRelations { nodes: {resource: string; label: string; kind: string; address?: KnowledgeAddress}[]; edges: {from: string; to: string; relation: string;reference?:string;authored_relation?:import('../knowledge/wikiDocument').WikiEvidence;origin?:string|{provider?:string;revision?:string;authority?:string}}[]; truncated: boolean; warnings: string[] }
 
 /** Several sessions' readings in the order asked; a session no retained SessionSpace holds answers its refusal. */
+/** A task as AIKit makes it (`encounter-task-configure`; ai-kit encounter_task.rs TaskRequest, which refuses a field it does not know): its
+ * Central placement (central_placement.rs CentralTaskRequest: the Central owner and World it is allocated in, its ref, purpose and
+ * participants), the protocol child that works it, its working directory and the directories it may write, the Workcell boundary that
+ * confines it, the authority it works under, and the constellation it is made of (`source`, the wiki ref of its whole; ai-kit ecac1f35). */
+export interface EncounterTaskRequest {
+  central: {ctrl_bin: string; central_root: string; project: string | null; task_ref: string; purpose: string; participant_refs: string[]
+    source_refs: string[]; parent_now_ref?: string; workcell_ref?: string; work_refs?: unknown[]}
+  provider: Record<string, unknown>
+  cwd: string
+  selected_directories: string[]
+  additional_protected_directories?: string[]
+  workcell_boundary_bin?: string
+  prepared_run_scope?: unknown
+  authority_ref: string
+  material_host?: unknown
+  repertoire?: unknown
+  source?: string
+}
 export interface EncounterSessionSettingsList {
   schema: 'aikit.encounter-session-settings-list/v1'
   readings: (EncounterSessionSettingsReading | {agent_session: string; refused: string})[]

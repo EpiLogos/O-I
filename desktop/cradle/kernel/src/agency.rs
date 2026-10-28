@@ -518,19 +518,7 @@ impl Client {
         if request.is_none() && expected_revision.is_some() {
             return Err("A settings revision goes with a change".into());
         }
-        let spaces = self.read_project(cwd, project_ref)?;
-        let attached = spaces.as_array().is_some_and(|rows| {
-            rows.iter().any(|space| {
-                space["agent_sessions"]
-                    .as_object()
-                    .is_some_and(|sessions| sessions.contains_key(agent_session))
-            })
-        });
-        if !attached {
-            return Err(
-                "The session is not attached to this native Project's SessionSpaces".into(),
-            );
-        }
+        self.require_attached(cwd, project_ref, agent_session)?;
         let mut command = Command::new(&self.executable);
         if self.suite_route {
             command.arg("aikit");
@@ -574,6 +562,84 @@ impl Client {
             return Err("Unsupported or misaddressed native session settings reading".into());
         }
         Ok(data)
+    }
+
+    /// Make one session's task through the owner's `encounter-task-configure`
+    /// (`aikit.encounter-task/v1`): the request travels verbatim, with the
+    /// task's revision when it has one. AIKit allocates the task's NOW with
+    /// Central, has Workcell inspect its write boundary and keeps the record;
+    /// its refusal (an Agency that does not authorise the task, a stale
+    /// revision, a source outside a settings word) passes through in its own
+    /// words. The session must be attached to one of the Project's
+    /// SessionSpaces, as a settings change's must.
+    pub fn task_configure(
+        &self,
+        cwd: &Path,
+        project_ref: &str,
+        agent_session: &str,
+        request: &Value,
+        expected_revision: Option<&str>,
+    ) -> Result<Value, String> {
+        self.require_attached(cwd, project_ref, agent_session)?;
+        let mut command = Command::new(&self.executable);
+        if self.suite_route {
+            command.arg("aikit");
+        }
+        command.arg("session-space");
+        if let Some(home) = &self.home {
+            command.env("AIKIT_HOME", home);
+        }
+        command.arg("-C").arg(cwd);
+        command.args(["encounter-task-configure", "--agent-session", agent_session]);
+        command.arg("--request-json").arg(request.to_string());
+        if let Some(revision) = expected_revision {
+            command.args(["--expected-revision", revision]);
+        }
+        // Central's allocation and Workcell's inspection run inside the
+        // owner's call: the encounter write bound, and a stop is uncertain.
+        let bound = crate::owner_process::Bound {
+            owner: "AIKit",
+            operation: "encounter-task-configure",
+            limit: ENCOUNTER_WRITE_LIMIT,
+            effect: crate::owner_process::Effect::Write,
+        };
+        let output = crate::owner_process::output(&mut command, None, bound)
+            .map_err(|error| format!("AIKit SessionSpace is unavailable: {error}"))?;
+        if !output.status.success() {
+            return Err(owner_process_failure("encounter-task-configure", &output));
+        }
+        let mut data: Value = serde_json::from_slice(&output.stdout)
+            .map_err(|e| format!("AIKit SessionSpace returned an unreadable task record: {e}"))?;
+        if data.get("ok").and_then(Value::as_bool) == Some(true) {
+            data = data.get("data").cloned().unwrap_or(Value::Null);
+        }
+        if data["schema"].as_str() != Some("aikit.encounter-task/v1") {
+            return Err("AIKit answered something other than the session's task record".into());
+        }
+        Ok(data)
+    }
+
+    /// The owner's gate for a session's own settings and task: the session is
+    /// attached to one of the Project's SessionSpaces.
+    fn require_attached(
+        &self,
+        cwd: &Path,
+        project_ref: &str,
+        agent_session: &str,
+    ) -> Result<(), String> {
+        let spaces = self.read_project(cwd, project_ref)?;
+        let attached = spaces.as_array().is_some_and(|rows| {
+            rows.iter().any(|space| {
+                space["agent_sessions"]
+                    .as_object()
+                    .is_some_and(|sessions| sessions.contains_key(agent_session))
+            })
+        });
+        if attached {
+            Ok(())
+        } else {
+            Err("The session is not attached to this native Project's SessionSpaces".into())
+        }
     }
 }
 

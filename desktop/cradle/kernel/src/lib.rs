@@ -666,6 +666,23 @@ pub enum KernelOp {
         #[serde(default)]
         expected_revision: Option<String>,
     },
+    /// Make one session's task through the owner's
+    /// `encounter-task-configure` (`aikit.encounter-task/v1`; manual §10.3: a
+    /// constellation dropped on a session's track makes "a task in Factory"):
+    /// the request — the task's Central placement, provider, working
+    /// directory, Workcell boundary, authority and the constellation it is
+    /// made of (`source`) — travels verbatim, against `expected_revision`
+    /// (absent while the session holds no task). The session must be
+    /// attached to one of the Project's spaces. AIKit allocates, prepares and
+    /// keeps the task; its record or its refusal passes through verbatim, and
+    /// the kernel builds nothing and keeps nothing.
+    EncounterTaskConfigure {
+        project: String,
+        agent_session: String,
+        request: serde_json::Value,
+        #[serde(default)]
+        expected_revision: Option<String>,
+    },
     /// Several sessions' settings read at once (the owner's
     /// `aikit.encounter-session-settings-list/v1`), so a view of many tracks
     /// asks once. Every session must be attached to one of the Project's
@@ -3508,6 +3525,7 @@ impl Kernel {
             | KernelOp::AgencyRead { .. }
             | KernelOp::EncounterTaskRead { .. }
             | KernelOp::EncounterSessionSettings { .. }
+            | KernelOp::EncounterTaskConfigure { .. }
             | KernelOp::EncounterSessionSettingsList { .. }
             | KernelOp::EncounterTaskAttemptsList { .. }
             | KernelOp::ModelRoster { .. }

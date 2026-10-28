@@ -108,6 +108,8 @@ const WRITING_OPS: ReadonlySet<string> = new Set(["invoke_action", "file_operati
   "nara_decision_record", "live_device_param_write", "live_clip_write", "live_clip_create", "live_track_mixer_write", "live_take_comp", "live_groove_pool_write", "harness_agent_control", "chat_default_hold",
   "chat_default_discard", "credential_setup", "credential_rotate", "credential_revoke", "client_install", "product_action_run", "dictation_configure", "working_surface_attachment",
   "encounter_provision", "flow_participant_provision", "config_apply_reviewed",
+  // AIKit's task creation: a session's new task, made of a constellation (O-I #768).
+  "encounter_task_configure",
   // Lane W3's owner routes that write (kernel/src/owner_routes.rs).
   "gateway_write", "workcell_write", "seat_write", "aikit_write",
   // Actuation's authority acts and its comparison run (a Repeat's takes, O-I 795) write Actuation's ground.
