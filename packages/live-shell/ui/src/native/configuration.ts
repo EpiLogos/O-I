@@ -4,7 +4,7 @@ import {createLiveHarnessSource} from '../../../../../desktop/cradle/src/configu
 import {compactScope} from '../../../../../desktop/cradle/src/configuration/contracts'
 import {kernelOp} from '../../../../../desktop/cradle/src/kernel/bridge'
 import type {KernelOp, KernelOutcome, KernelTransportStatus, PresentationDocument} from '../../../../../desktop/cradle/src/kernel/types'
-import type {SettingsAdapter, SettingsBasis, SetupSource} from '../settings/adapter'
+import type {SettingsAdapter, SettingsBasis, SetupAikitOp, SetupSource} from '../settings/adapter'
 import {createAdoptionNative} from '../../../../../desktop/cradle/src/configuration/adoptionNative'
 import {actionAnswerOf, centralActionOp} from '../central/devices/centralActions'
 import type {MachineConnection, MachineOperationResult, RemoteMachineDeclaration, RemoteMachinesSource} from '../settings/machines'
@@ -164,13 +164,26 @@ export async function nativeImportTheme(call: Call, text: string, fileName: stri
   return kept.outcome.document
 }
 
+/** The answer each AIKit op Setup asks is read from (kernel lib.rs KernelOpResult): its owner's data. */
+const SETUP_AIKIT_ANSWER: Readonly<Record<SetupAikitOp['op'], string>> = {
+  harness_status: 'harness_status_reading', harness_auth_describe: 'harness_auth_reading', aikit_read: 'owner_route_reading', aikit_write: 'owner_route_reading',
+  credential_discover: 'credential_reading', credential_list: 'credential_reading', credential_setup: 'credential_changed',
+}
 /** Setup's owners over the host's kernel channel (settings/adapter.ts SetupSource): the kernel's `setup` op through the cradle's adoption
- * transport (configuration/adoptionNative.ts), Central's actions through invoke_action (central/devices/centralActions.ts) and Workcell's
- * status (workcell_status_read), each answering in its owner's words. It needs no qualified world: Setup is what makes one. `groundChanged` is the host's read of its world. */
+ * transport (configuration/adoptionNative.ts), AIKit's ops (SetupAikitOp: its data from the answer each op returns), Central's actions
+ * through invoke_action (central/devices/centralActions.ts) and Workcell's status (workcell_status_read), each answering in its owner's
+ * words. It needs no qualified world: Setup is what makes one. `groundChanged` is the host's read of its world. */
 export function nativeSetup(transport: KernelTransportStatus, groundChanged?: () => void): SetupSource {
   const call = (op: KernelOp) => kernelOp(transport, op)
   return {
     adoption: createAdoptionNative(call),
+    async aikit(op) {
+      const answer = await call(op)
+      if (answer.error) throw new Error(answer.error)
+      const outcome = answer.outcome as {result?: string; data?: unknown} | null | undefined
+      if (outcome?.result !== SETUP_AIKIT_ANSWER[op.op]) throw new Error(`AIKit did not answer ${op.op}.`)
+      return outcome.data
+    },
     async central(action, input) {
       const answer = await call(centralActionOp(action, input))
       if (answer.error) throw new Error(answer.error)

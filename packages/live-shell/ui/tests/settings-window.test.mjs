@@ -96,6 +96,9 @@ test('every key the design reads and every press it makes is classified — a re
   for (const key of ['acceptStep', 'previewStep', 'rereadSetup']) assert.ok(key in w.writes && !(key in w.refused), `${key}: Setup's press goes to its owner`)
   assert.match(w.writes.acceptStep, /apply/)
   assert.match(w.writes.acceptStep, /projectcentral\.init/)
+  for (const route of ['aikit init', 'aikit tree --expand registries', 'aikit credential discover', 'aikit harness auth']) assert.ok(w.reads.setup.includes(route), `Setup reads ${route}`)
+  for (const route of ['aikit adopt', 'aikit credential setup']) assert.ok(w.writes.acceptStep.includes(route), `Accept presses ${route}`)
+  assert.doesNotMatch(json(w.reads) + json(w.writes), /SETUP_UNBOUND/, 'no step of Setup stands unbound')
   assert.equal(win.NO_SETUP, undefined, 'no blanket absence of Setup stands')
   assert.ok(!('plan' in w.absent) && 'plan' in w.writes, 'Review changes… is the owners\' plan; Setup\'s preview reads `setupPlan`, never the same key')
   assert.doesNotMatch(text, /\(v, 'plan'|\(p\.v, 'plan'|set\('plan', undefined\)/, 'the design reads no preview under the key Review changes… presses')
@@ -396,8 +399,11 @@ function scriptedSetup() {
   const GROUND = '/w/Bare/Central'
   // `elsewhere`: the folders of work under the world's folder outside its ground (work.candidates), by their path relative to it;
   // `machine`: the Workcell Central's current machine is bound to (Control/machines/current.json), null until adopted.
+  // `tools`: the agent tools AIKit detects, each with its folder and its skill root (names, AIKit's standing, a revision a change bumps);
+  // `keys`: where AIKit's discovery finds a key (name and location, never a value); `bindings`: credential → the reference it is bound to.
   const world = {bound: null, outcome: 'new', journal: null, work: new Map(), elsewhere: new Map(), machine: null,
-    workcell: {ok: true, workcell_ref: 'workcell:local', workcell_ref_source: 'default', health: 'healthy', state_root: '/w/Bare/.workcell'}}
+    workcell: {ok: true, workcell_ref: 'workcell:local', workcell_ref_source: 'default', health: 'healthy', state_root: '/w/Bare/.workcell'},
+    tools: new Map(), keys: [], bindings: new Map()}
   const HOME = '/w/Bare'
   const digestOf = relative => `digest:${relative}:${world.elsewhere.get(relative).revision}`
   const discovery = () => ({schema: 'oi.setup/v1', basis: 'basis-1', data_root: '/w/Bare/data', composition_path: '/w/Bare/.config/oi-shell-candidate/full-suite/composition.json',
@@ -475,8 +481,50 @@ function scriptedSetup() {
     throw new Error(`unexpected ${action}`)
   }
   const workcell = async () => { calls.push(['workcell']); return world.workcell }
-  return {source: {adoption, central, workcell, groundChanged: () => calls.push(['groundChanged'])}, calls, world, GROUND, HOME}
+  // AIKit as it answers through the kernel (REAL shapes: the kernel's fixture aikit-setup-harnesses-credentials-2026-10-28.json).
+  const rootOf = tool => `${tool.folder}/skills`
+  const aikit = async op => {
+    calls.push(['aikit', op.op === 'aikit_read' || op.op === 'aikit_write' ? `${op.op} ${op.request.kind}` : op.op, structuredClone(op)])
+    const tools = [...world.tools.values()]
+    if (op.op === 'harness_status') return {clients: [...tools.map(tool => ({client: tool.client, harness: tool.harness, detection: 'detected', installed: true, config_dir: tool.folder,
+      capability: 'descriptor', dispatch: 'client', credential: 'credential-gated'})), {client: 'codex', harness: 'codex', detection: 'not-installed', installed: false, config_dir: `${HOME}/.codex`}]}
+    if (op.op === 'harness_auth_describe') {
+      if (op.harness !== 'claude-code') throw new Error(`harness.unknown: no harness profile named ${op.harness}`)
+      return REAL.harness_auth_claude.data
+    }
+    if (op.op === 'aikit_read' && op.request.kind === 'init') return {roots: tools.map(tool => ({label: `@${tool.client}`, path: rootOf(tool), skills: tool.names.length, dead_symlinks: 0, missing_frontmatter: 0, problems: 0})),
+      root_count: tools.length, total_skills: tools.reduce((n, tool) => n + tool.names.length, 0), total_problems: 0}
+    if (op.op === 'aikit_read' && op.request.kind === 'collate') return {clusters: tools.flatMap(tool => tool.names.map(name => ({name, copies: 1, where: [{path: `${rootOf(tool)}/${name}`, root: `@${tool.client}`, version: null}]})))}
+    if (op.op === 'aikit_read' && op.request.kind === 'tree') return {rows: [{depth: 0, path: 'registries', summary: `${tools.length} registries`},
+      ...tools.map(tool => ({depth: 1, path: `registries/@${tool.client}`, summary: tool.standing === 'adopted' ? `adopted · ${tool.names.length} skills · procedure ${tool.procedure}` : `foreign · ${tool.names.length} skills`}))]}
+    if (op.op === 'aikit_read' && op.request.kind === 'adopt-plan') {
+      const tool = tools.find(row => rootOf(row) === op.request.root)
+      if (!tool) throw new Error(`adopt.no_skills: \`${op.request.root}\` contains no valid Agent Skills`)
+      if (tool.standing !== 'foreign') throw new Error(REAL.adopt_plan_again.error.message)
+      return {source: op.request.root, namespace: op.request.namespace, skills: tool.names.length, capsules: tool.names.map(name => `skill/${op.request.namespace}/${name}`),
+        review_digest: `review:${tool.client}:${tool.revision}`, digest: `procedure:${tool.client}`, procedure: 'prc_01PLAN', applied: false, projection: null, diff: 'procedure prc_01PLAN'}
+    }
+    if (op.op === 'aikit_write' && op.request.kind === 'adopt') {
+      const tool = tools.find(row => rootOf(row) === op.request.root)
+      if (op.request.expect_digest !== `review:${tool.client}:${tool.revision}`) throw new Error('procedure.review_mismatch: the foreign root changed since it was reviewed; preview it again')
+      tool.standing = 'adopted'; tool.procedure = 'prc_01ADOPT'
+      return {applied: true, ownership: 'adopted', namespace: op.request.namespace, skills: tool.names.length, capsules: tool.names.map(name => `skill/${op.request.namespace}/${name}`), procedure: tool.procedure}
+    }
+    if (op.op === 'credential_discover') return {count: world.keys.length, findings: world.keys.map(key => ({...key, already_bound: world.bindings.has(key.proposed_credential_ref)}))}
+    if (op.op === 'credential_list') return {bindings: [...world.bindings].map(([credential_ref, reference]) => ({...REAL.list_bound.data.bindings[0], credential_ref, declared_secret_ref: reference, binding_provenance: reference})),
+      material_entry: {available: false}}
+    if (op.op === 'credential_setup') {
+      if ('material' in op) throw new Error('a key never crosses Setup')
+      if (!/^(keychain|op|varlock|pass):\/\//.test(op.reference)) throw new Error('A stored secret reference names keychain://, op://, varlock:// or pass://')
+      world.bindings.set(op.credential, op.reference)
+      return {...REAL.setup_ref.data, credential: op.credential}
+    }
+    throw new Error(`unexpected ${op.op}`)
+  }
+  return {source: {adoption, central, workcell, aikit, groundChanged: () => calls.push(['groundChanged'])}, calls, world, GROUND, HOME}
 }
+/** AIKit's answers on a scratch Arriving world (REAL; the kernel's owner-route fixture, the world's folder written /w/Arriving). */
+const REAL = JSON.parse(readFileSync(new URL('../../../../desktop/cradle/kernel/tests/fixtures/owner-routes/aikit-setup-harnesses-credentials-2026-10-28.json', import.meta.url), 'utf8'))
 const held = values => key => values[key]
 const stepOf = (values, step) => JSON.parse(values.setup).find(row => row.step === step)
 
@@ -574,7 +622,9 @@ test('SCRIPTED — Setup\'s refusals name their owner: a step Setup does not rea
   world.work.set('essays', {material: ['drafts', 'wiki'], wikis: ['wiki/wiki.json'], made: false})
   world.work.set('garden', {material: ['notes', 'site'], wikis: ['notes/wiki/wiki.json', 'site/wiki/wiki.json'], made: false})
   await walk.read()
-  for (const step of ['harnesses', 'credentials']) await assert.rejects(walk.accept(step, held({})), /AIKit/, `${step}: names its owner`)
+  // Bare keeps no agent tool and no key: Harnesses and skills and Credentials find nothing to bring in, and say so naming AIKit (their
+  // binding: the AIKit tests below; the refusal naming an unbound step retired with SETUP_UNBOUND).
+  for (const step of ['harnesses', 'credentials']) await assert.rejects(walk.accept(step, held({})), /Nothing found to bring in: AIKit/, `${step}: nothing to bring in`)
   const garden = '/w/Bare/Central/Work/garden', essays = '/w/Bare/Central/Work/essays'
   await assert.rejects(walk.preview(held({folder: garden, make: 'keep'})), /Choose the wiki/)
   await assert.rejects(walk.preview(held({folder: essays, make: 'create'})), /keeps a wiki/)
@@ -622,7 +672,7 @@ test('CODE-DERIVED — Setup\'s Machines step is Workcell\'s identity and Centra
   const unread = stepOf(win.setupValues({...base, machine: {state: 'read', workcell: {error: 'workcell: state root is not writable'}, bound: []}}, held({})), 'machines')
   assert.match(unread.items[0].why, /not writable/)
   assert.equal(stepOf(win.setupValues(base, held({})), 'machines'), undefined, 'not read yet: absent')
-  assert.equal(win.SETUP_UNBOUND.machines, undefined, 'Machines is bound')
+  assert.equal(win.SETUP_UNBOUND, undefined, 'every step of Setup is bound: none refuses for want of its owner')
 })
 
 test('SCRIPTED — Arriving: a folder of work that stands outside the ground is brought into Work as previewed, its original kept, and then becomes a project there', async () => {
@@ -689,6 +739,152 @@ test('SCRIPTED — Machines: Accept binds Central\'s current machine to the Work
   world.machine = 'workcell:mac'
   await walk.read()
   await assert.rejects(walk.accept('machines', held({})), /already binds a different Workcell: workcell:mac/)
+})
+
+test('CODE-DERIVED — Setup\'s Harnesses and skills step is AIKit\'s reading of each agent tool and its skills: found until AIKit holds every skill root, its settings and instructions left as they are', () => {
+  const base = {adoption: {}, folders: {state: 'unread'}, plan: null}
+  // AIKit's own answers on a scratch Arriving world (REAL): Claude Code detected, its two skills foreign, then adopted.
+  const harnesses = win.setupHarnessClients(REAL.client_status.data)
+  assert.deepEqual(harnesses, [{client: 'claude', harness: 'claude-code', folder: '/w/Arriving/.claude'}], 'the detected tools only: Codex is not installed')
+  const foreign = win.setupSkillRoots(REAL.init_foreign.data, REAL.collate_all.data, REAL.tree_foreign.data)
+  assert.deepEqual(foreign, [{label: '@claude', path: '/w/Arriving/.claude/skills', skills: 2, problems: 0, names: ['field-recording-log', 'weekly-review'], standing: 'foreign'}])
+  const found = stepOf(win.setupValues({...base, harnesses: {state: 'read', harnesses, roots: foreign}}, held({})), 'harnesses')
+  assert.equal(found.state, 'found')
+  assert.deepEqual([found.items[0].name, found.items[0].where], ['claude-code', '/w/Arriving/.claude/skills'])
+  assert.match(found.items[0].change, /AIKit adopts its 2 skills \(field-recording-log, weekly-review\) as skill\/claude\//)
+  assert.match(found.items[0].change, /claude-code reads them where they were/)
+  assert.match(found.items[0].change, /settings and instructions stay as they are/)
+  const adopted = win.setupSkillRoots(REAL.init_adopted.data, REAL.collate_all.data, REAL.tree_adopted.data)
+  assert.equal(adopted[0].standing, 'adopted')
+  assert.match(adopted[0].procedure, /^prc_/, 'the Procedure AIKit adopted it by, from its tree')
+  const accepted = stepOf(win.setupValues({...base, harnesses: {state: 'read', harnesses, roots: adopted}}, held({})), 'harnesses')
+  assert.equal(accepted.state, 'accepted', 'read back from AIKit: the root is adopted')
+  assert.match(accepted.items[0].change, /AIKit holds its 2 skills .*adopted · procedure prc_/)
+  // A detected tool with no skills is named and left alone; AIKit's refusal stands in its words; not read yet is absent.
+  const bare = stepOf(win.setupValues({...base, harnesses: {state: 'read', harnesses, roots: []}}, held({})), 'harnesses')
+  assert.equal(bare.state, 'found')
+  assert.match(bare.items[0].why, /keeps no skills/)
+  const refused = stepOf(win.setupValues({...base, harnesses: {state: 'refused', error: 'AIKit\'s client status did not finish'}}, held({})), 'harnesses')
+  assert.match(refused.items[0].why, /did not finish/)
+  assert.equal(win.setupValues(base, held({})).setup, undefined, 'not read yet: absent, never a sample')
+})
+
+test('CODE-DERIVED — Setup\'s Credentials step is where AIKit finds each provider\'s key, the place and never the value; Accept binds the key you choose by the reference you give', () => {
+  const base = {adoption: {}, folders: {state: 'unread'}, plan: null}
+  const providers = win.setupHarnessProviders({client: 'claude', harness: 'claude-code', folder: '/w/Arriving/.claude'}, REAL.harness_auth_claude.data)
+  assert.deepEqual(providers.map(row => [row.harness, row.provider, row.envVar]), [['claude-code', 'anthropic', 'ANTHROPIC_API_KEY']])
+  assert.match(providers[0].ownLogin, /claude login keeps OAuth material in its own credential store/)
+  // Arriving keeps no key: Claude Code reaches Anthropic through its own login, named and left alone; nothing to bind.
+  const none = stepOf(win.setupValues({...base, credentials: {state: 'read', findings: win.setupKeyFindings(REAL.discover_none.data), providers, bindings: []}}, held({})), 'credentials')
+  assert.equal(none.state, 'found')
+  assert.deepEqual(none.items.map(row => [row.name, !!row.why, row.credential]), [['anthropic for claude-code', true, undefined]])
+  assert.match(none.items[0].why, /own credential store/)
+  // A key found in the world's .env (a dummy value AIKit never reads): its place and name, the credential it would bind.
+  const findings = win.setupKeyFindings(REAL.discover_found.data)
+  assert.deepEqual(findings, [{source: 'project-env', location: '/w/Arriving/.env', name: 'ANTHROPIC_API_KEY', credential: 'credential:anthropic', bound: false}])
+  assert.doesNotMatch(JSON.stringify(REAL.discover_found), /scratch-dummy/, 'discovery carries no value')
+  const reading = {state: 'read', findings, providers, bindings: []}
+  const found = stepOf(win.setupValues({...base, credentials: reading}, held({})), 'credentials')
+  assert.equal(found.state, 'found')
+  assert.deepEqual([found.items[0].name, found.items[0].where, found.items[0].credential], ['ANTHROPIC_API_KEY', '/w/Arriving/.env', 'credential:anthropic'])
+  assert.match(found.items[0].change, /AIKit binds credential:anthropic by the reference you give/)
+  assert.equal(found.items.length, 1, 'the provider Claude Code reaches is covered by the key found')
+  const given = stepOf(win.setupValues({...base, credentials: reading}, held({credential: 'credential:anthropic', reference: 'op://Scratch/anthropic/credential'})), 'credentials')
+  assert.match(given.items[0].change, /AIKit binds credential:anthropic to op:\/\/Scratch\/anthropic\/credential/, 'the reference you give stands in the change Accept makes')
+  // Bound (AIKit's list read back): accepted, by its reference.
+  const bindings = settingsPages.credentialMetadata(REAL.list_bound.data)
+  const accepted = stepOf(win.setupValues({...base, credentials: {state: 'read', findings: win.setupKeyFindings(REAL.discover_bound.data), providers, bindings}}, held({})), 'credentials')
+  assert.equal(accepted.state, 'accepted')
+  assert.equal(accepted.items[0].bound, true)
+  assert.match(accepted.items[0].change, /bound by reference to op:\/\/Scratch\/anthropic\/credential/)
+  assert.equal(win.setupValues(base, held({})).setup, undefined, 'not read yet: absent')
+})
+
+test('SCRIPTED — Harnesses and skills: Accept adopts each agent tool\'s skill root through AIKit\'s reviewed plan, reads it back adopted, and makes nothing twice', async () => {
+  const {source, calls, world, HOME} = scriptedSetup()
+  world.tools.set('claude', {client: 'claude', harness: 'claude-code', folder: `${HOME}/.claude`, names: ['field-recording-log', 'weekly-review'], standing: 'foreign', revision: 1})
+  const walk = new settingsPages.SetupWalk(source)
+  await walk.read()
+  // AIKit's routes run from the world's ground (the kernel's route_ground): before there is one, the step is not read, and says why.
+  assert.equal(stepOf(win.setupValues(walk.snapshot(), held({})), 'harnesses'), undefined, 'no ground yet: not read')
+  assert.ok(!calls.some(([kind]) => kind === 'aikit'), 'AIKit is not asked before there is a ground')
+  await assert.rejects(walk.accept('harnesses', held({})), /Make your ground first/)
+  await walk.accept('ground', held({}))
+  let step = stepOf(win.setupValues(walk.snapshot(), held({})), 'harnesses')
+  assert.equal(step.state, 'found', 'read once the ground is made')
+  assert.ok(!calls.some(([, kind]) => kind === 'aikit_read adopt-plan' || kind === 'aikit_write adopt'), 'reading plans and adopts nothing')
+  // The root changes after it was read: AIKit's plan adopts what is there now, so Accept refuses and adopts nothing.
+  world.tools.get('claude').names.push('field-trip')
+  await assert.rejects(walk.accept('harnesses', held({})), /changed since it was read/)
+  assert.ok(!calls.some(([, kind]) => kind === 'aikit_write adopt'), 'nothing was adopted')
+  world.tools.get('claude').names.pop()
+  await walk.read()
+  const said = await walk.accept('harnesses', held({}))
+  assert.match(said, /AIKit adopted 2 skills from claude-code/)
+  assert.match(said, /reads them where they were/)
+  const plan = calls.find(([, kind]) => kind === 'aikit_read adopt-plan')[2].request
+  assert.deepEqual(plan, {kind: 'adopt-plan', root: `${HOME}/.claude/skills`, namespace: 'claude'})
+  const adopt = calls.find(([, kind]) => kind === 'aikit_write adopt')[2].request
+  assert.deepEqual(adopt, {kind: 'adopt', root: `${HOME}/.claude/skills`, namespace: 'claude', expect_digest: 'review:claude:1'}, 'the plan\'s review digest: AIKit applies only the bytes it surveyed')
+  step = stepOf(win.setupValues(walk.snapshot(), held({})), 'harnesses')
+  assert.equal(step.state, 'accepted', 'read back from AIKit\'s tree: adopted')
+  await assert.rejects(walk.accept('harnesses', held({})), /Nothing is made twice/)
+  assert.equal(calls.filter(([, kind]) => kind === 'aikit_write adopt').length, 1)
+})
+
+test('SCRIPTED — Credentials: Accept binds the key you choose by the reference you give, never the key itself, reads it back bound, and makes nothing twice', async () => {
+  const {source, calls, world, HOME} = scriptedSetup()
+  world.tools.set('claude', {client: 'claude', harness: 'claude-code', folder: `${HOME}/.claude`, names: [], standing: 'foreign', revision: 1})
+  world.keys.push({source: 'project-env', location: `${HOME}/.env`, name: 'ANTHROPIC_API_KEY', proposed_credential_ref: 'credential:anthropic', proposed_env_var: 'ANTHROPIC_API_KEY'})
+  const walk = new settingsPages.SetupWalk(source)
+  await walk.read()
+  await assert.rejects(walk.accept('credentials', held({})), /Make your ground first/)
+  await walk.accept('ground', held({}))
+  let step = stepOf(win.setupValues(walk.snapshot(), held({})), 'credentials')
+  assert.equal(step.state, 'found')
+  assert.equal(step.items[0].credential, 'credential:anthropic')
+  const sent = () => calls.filter(([, kind]) => kind === 'credential_setup')
+  await assert.rejects(walk.accept('credentials', held({})), /Give where the key lies in your secure store/)
+  for (const reference of ['sk-ant-api03-not-a-reference', 'env://ANTHROPIC_API_KEY', 'file:///w/.env']) {
+    await assert.rejects(walk.accept('credentials', held({reference})), /never the key itself/i, `${reference}: refused before anything is sent`)
+  }
+  assert.equal(sent().length, 0, 'nothing was sent to AIKit')
+  const choice = {credential: 'credential:anthropic', reference: 'op://Scratch/anthropic/credential'}
+  const said = await walk.accept('credentials', held(choice))
+  assert.match(said, /AIKit bound credential:anthropic by reference/)
+  assert.match(said, /never shows it and never keeps it/)
+  assert.deepEqual(sent()[0][2], {op: 'credential_setup', credential: 'credential:anthropic', reference: 'op://Scratch/anthropic/credential'}, 'a reference, and no material')
+  step = stepOf(win.setupValues(walk.snapshot(), held({})), 'credentials')
+  assert.equal(step.state, 'accepted', 'read back from AIKit\'s binding list')
+  await assert.rejects(walk.accept('credentials', held(choice)), /Nothing is made twice/)
+  assert.equal(sent().length, 1)
+  // With no AIKit reached, both steps refuse naming the source they lack.
+  const bare = new settingsPages.SetupWalk({...source, aikit: undefined})
+  await bare.read()
+  assert.equal(stepOf(win.setupValues(bare.snapshot(), held({})), 'ground').state, 'accepted')
+  assert.match(stepOf(win.setupValues(bare.snapshot(), held({})), 'harnesses').items[0].why, /SetupSource\.aikit/)
+  await assert.rejects(bare.accept('credentials', held(choice)), /SetupSource\.aikit/)
+})
+
+test('SCRIPTED — the design draws Harnesses and skills and Credentials from AIKit\'s readings: each tool\'s skills with the change Accept makes; each key\'s place, the key you choose and the reference you give, never a key', async () => {
+  const {source, world, HOME} = scriptedSetup()
+  world.tools.set('claude', {client: 'claude', harness: 'claude-code', folder: `${HOME}/.claude`, names: ['field-recording-log', 'weekly-review'], standing: 'foreign', revision: 1})
+  world.keys.push({source: 'project-env', location: `${HOME}/.env`, name: 'ANTHROPIC_API_KEY', proposed_credential_ref: 'credential:anthropic', proposed_env_var: 'ANTHROPIC_API_KEY'})
+  const walk = new settingsPages.SetupWalk(source)
+  await walk.read()
+  await walk.accept('ground', held({}))
+  const harnesses = drawn({...win.setupValues(walk.snapshot(), held({})), setupStep: 'harnesses'}, 'setup')
+  assert.ok(harnesses.includes('claude-code'), 'the tool, by AIKit\'s name for it')
+  assert.ok(harnesses.includes(escaped('AIKit adopts its 2 skills (field-recording-log, weekly-review)')), 'the change Accept makes')
+  const choice = {credential: 'credential:anthropic', reference: 'op://Scratch/anthropic/credential'}
+  const credentials = drawn({...win.setupValues(walk.snapshot(), held(choice)), setupStep: 'credentials', ...choice}, 'setup')
+  assert.ok(credentials.includes('ANTHROPIC_API_KEY') && credentials.includes(`${HOME}/.env`), 'the key\'s name and where it lies')
+  assert.match(credentials, /aria-label="Reference"[^>]*value="op:\/\/Scratch\/anthropic\/credential"|value="op:\/\/Scratch\/anthropic\/credential"[^>]*aria-label="Reference"/, 'the reference you give, in its own field')
+  assert.ok(credentials.includes(escaped('AIKit binds credential:anthropic to op://Scratch/anthropic/credential')), 'the binding Accept makes, with your reference')
+  assert.match(credentials, /data-focus="true"/, 'the key chosen is marked')
+  assert.doesNotMatch(credentials, /scratch-dummy/, 'no value is drawn')
+  const unchosen = drawn({...win.setupValues(walk.snapshot(), held({})), setupStep: 'credentials'}, 'setup')
+  assert.ok(unchosen.includes(escaped('Give where the key lies in your store first.')), 'Accept waits for a reference, and says so')
 })
 
 test('SCRIPTED — the first time the DLW opens (no ground yet), Settings opens on Setup; a contextual request opens Setup too', async () => {

@@ -285,7 +285,7 @@ export function SettingsWorkspace({ adapter = unavailable, request, onReturn, ac
   const automations = useAutomationsPage(adapter, wanted && visited.has('automations'), held, context, typeof holds.show === 'string' ? holds.show : 'routines',
     typeof holds.routine === 'string' ? holds.routine : null, done)
   const products = useProductsPage(adapter, wanted && (visited.has('products') || visited.has('inspection')))
-  const setup = useSetupPage(adapter, wanted && setupOpened, held, done, [holds.folder, holds.make, holds.wiki, holds.where])
+  const setup = useSetupPage(adapter, wanted && setupOpened, held, done, [holds.folder, holds.make, holds.wiki, holds.where, holds.credential, holds.reference])
   const parts: readonly PagePart[] = [harness, credentials, appearance, profiles, machines, automations, products, setup]
 
   // ── the window's own presses ────────────────────────────────────────────────────────────────────────────────────────────────────

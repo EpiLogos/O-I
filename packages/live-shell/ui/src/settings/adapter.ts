@@ -2,7 +2,7 @@
 import type { ChangeSetDocument, ConfigResolution, PlanDocument, ScopeAddress, SettingSpec } from '../../../../../desktop/cradle/src/configuration/contracts'
 import type { ChangeRequest, ConfigPlaneSource, PlanBundle } from '../../../../../desktop/cradle/src/configuration/source'
 import { disconnectedCatalogue } from './catalogue'
-import type { KernelOp, KernelOutcome, PresentationCustomTheme, PresentationDocument } from '../../../../../desktop/cradle/src/kernel/types'
+import type { AikitReadRequest, AikitWriteRequest, KernelOp, KernelOutcome, PresentationCustomTheme, PresentationDocument } from '../../../../../desktop/cradle/src/kernel/types'
 import type { SystemCompositionReading } from '../../../../../desktop/cradle/src/workspace/settings/types'
 import type { HarnessSource } from '../../../../../desktop/cradle/src/configuration/harnessSource'
 import type { RemoteMachinesSource } from './machines'
@@ -39,15 +39,26 @@ export type SettingsRequest = {
   scope: ScopeAddress
   returnLabel: string
 } & ({ setting_ref: string; page?: never } | { page: 'machines' | 'automations' | 'setup'; setting_ref?: never })
+/** The AIKit ops Setup asks (manual §10.11, Harnesses and skills and Credentials): the tools AIKit detects and the providers each reaches
+ * (harness_status, harness_auth_describe), the skill roots it discovers, names, holds and would adopt (aikit_read init, collate, tree,
+ * adopt-plan), the person's adoption (aikit_write adopt), and the keys it finds, the bindings it keeps and a binding by reference
+ * (credential_discover, credential_list, credential_setup: a reference, never material). */
+export type SetupAikitOp =
+  | { op: 'harness_status' } | { op: 'harness_auth_describe'; harness: string }
+  | { op: 'aikit_read'; request: Extract<AikitReadRequest, { kind: 'init' | 'collate' | 'tree' | 'adopt-plan' }> }
+  | { op: 'aikit_write'; request: Extract<AikitWriteRequest, { kind: 'adopt' }> }
+  | { op: 'credential_discover' } | { op: 'credential_list' } | { op: 'credential_setup'; credential: string; reference: string }
 /** Setup (manual §10.11) runs before a world is qualified, so it reaches its owners over the kernel channel the host holds, not over the
  * qualified configuration owners: the kernel's `setup` op (native oi's adoption — discover, plan, apply with the plan's review token;
- * desktop/cradle/src/configuration/adoptionController.ts) for the Ground step, Workcell's status and Central's machine actions for the
- * Machines step, and Central's own actions through invoke_action for the Projects step (Work's members, the folders of work elsewhere,
- * a project's inspection, its previews and the person's Accept). */
+ * desktop/cradle/src/configuration/adoptionController.ts) for the Ground step, AIKit's ops for the Harnesses and skills and Credentials
+ * steps, Workcell's status and Central's machine actions for the Machines step, and Central's own actions through invoke_action for the
+ * Projects step (Work's members, the folders of work elsewhere, a project's inspection, its previews and the person's Accept). */
 export interface SetupSource {
   readonly adoption: AdoptionNative
   /** One Central action: its data, or a refusal in Central's words. */
   central(action: string, input: Readonly<Record<string, unknown>>): Promise<unknown>
+  /** One AIKit op Setup asks (SetupAikitOp): its data, or AIKit's refusal in its words. */
+  aikit?(op: SetupAikitOp): Promise<unknown>
   /** Workcell's status for this computer (`workcell status --json`, the kernel's workcell_status_read): the Workcell it answers as. */
   workcell?(): Promise<unknown>
   /** The host reads its world again once a ground is made or bound (native/Foundation.tsx). */

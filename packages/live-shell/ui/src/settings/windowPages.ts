@@ -19,8 +19,9 @@ import {refusalLine, scalarEntries} from '../agent/RefusalCard'
 import {connectionBasis, machineBasis, validateMachine, type MachineConnection, type RemoteMachineDeclaration} from './machines'
 import {authorityAllowsTrigger, eligibleProofs, routineBasis, scheduleFromInput, type RoutineAuthoringOptions, type RoutineAuthoringResult, type ScheduleShape} from './routines'
 import {appearanceValues, automationValues, credentialValues, folderOf, harnessValues, machineValues, NO_AUTHORING, NO_HARNESS, NO_INVOKE, NO_MACHINES, NO_NAVIGATE, NO_PRODUCTS,
-  NO_PROFILES, NO_SETUP_SOURCE, NO_VISUALS, groundBound, productValues, profileValues, SETUP_UNBOUND, setupFolder, setupValues, systemValues, type CredentialRow,
-  type SetupMachine, type SetupPreview, type SetupSnapshot, type SetupWorkFolder} from './windowValues'
+  NO_PROFILES, NO_SETUP_AIKIT, NO_SETUP_SOURCE, NO_VISUALS, groundBound, productValues, profileValues, SECRET_REFERENCE, setupFolder, setupHarnessClients, setupHarnessProviders,
+  setupKeyFindings, setupNamespace, setupSkillRoots, setupValues, systemValues, type CredentialRow, type SetupCredentials, type SetupHarnesses, type SetupMachine, type SetupPreview,
+  type SetupSnapshot, type SetupWorkFolder} from './windowValues'
 import {AdoptionController} from '../../../../../desktop/cradle/src/configuration/adoptionController'
 import {PC_ACCEPT_ACTION, PC_INSPECT_ACTION, PC_PREVIEW_ACTION, acceptInput} from '../central/devices/pageGround'
 
@@ -666,7 +667,13 @@ const entryNames = (reading: unknown): string[] => {
 /** Setup as the window walks it (manual §10.11), over its owners (settings/adapter.ts SetupSource). The Ground step is native oi's adoption
  * through the cradle's AdoptionController, unchanged: status and discover read the ground; Accept makes a plan for Central's ground alone
  * (custom, products [central]: the desktop is a full install, and Setup adds and removes no product), applies it with its review token,
- * and reads it back. The Machines step makes this computer a workcell: it reads the Workcell this computer answers as (Workcell's status)
+ * and reads it back. The Harnesses and skills step is AIKit's: the tools its client status detects, the skill roots `aikit init` finds,
+ * their skills (`aikit collate --all`) and AIKit's standing for each (`aikit tree --expand registries`); Accept adopts each root AIKit reads
+ * as foreign through its own reviewed plan (`aikit adopt ROOT --namespace LABEL`, then `--yes --expect-digest` on that plan's review
+ * digest), so the skills are AIKit's and the tool keeps reading them where they were, and reads the root back adopted. The Credentials
+ * step is AIKit's too: where `aikit credential discover` finds each key (never its value), the providers each detected tool reaches
+ * (`aikit harness auth`) and the bindings AIKit keeps; Accept binds the key chosen by the reference the person gives (`aikit credential
+ * setup --ref`), a place in a store and never a key, and reads it back from AIKit's list. The Machines step makes this computer a workcell: it reads the Workcell this computer answers as (Workcell's status)
  * and Central's current machine (machine.declaration), and Accept binds the one to the other (machine.adopt-current), so the world
  * qualifies. The Projects step is Central's Work: work.list and each member's projectcentral.inspect, then the folders of work that stand
  * elsewhere under the world's folder (work.candidates). A folder elsewhere comes into Work first — Central keeps a project in its Work, never
@@ -679,6 +686,8 @@ export class SetupWalk {
   private folders: SetupSnapshot['folders'] = {state: 'unread'}
   private plan: SetupPreview | null = null
   private machine: SetupMachine | undefined = undefined
+  private harnesses: SetupHarnesses | undefined = undefined
+  private credentials: SetupCredentials | undefined = undefined
   private brought: string | null = null
   private current: SetupSnapshot
   private listeners = new Set<() => void>()
@@ -691,15 +700,48 @@ export class SetupWalk {
   }
   snapshot = (): SetupSnapshot => this.current
   subscribe = (listener: () => void): (() => void) => { this.listeners.add(listener); return () => { this.listeners.delete(listener) } }
-  private compose(): SetupSnapshot { return {adoption: this.controller.getSnapshot(), folders: this.folders, plan: this.plan, machine: this.machine, brought: this.brought} }
+  private compose(): SetupSnapshot {
+    return {adoption: this.controller.getSnapshot(), folders: this.folders, plan: this.plan, machine: this.machine, brought: this.brought, harnesses: this.harnesses, credentials: this.credentials}
+  }
   private publish(): void { this.current = this.compose(); for (const listener of [...this.listeners]) listener() }
 
-  /** Read every step again: native oi's ground, then, once there is a ground, this computer's Workcell and Central's machine, Central's
-   * Work and the folders of work elsewhere. A refusal stands in the reading, in its owner's words; nothing is retried. */
+  /** Read every step again: native oi's ground, then, once there is a ground, AIKit's tools, skill roots and keys, this computer's
+   * Workcell and Central's machine, Central's Work and the folders of work elsewhere. A refusal stands in the reading, in its owner's
+   * words; nothing is retried. */
   async read(): Promise<void> {
     await this.controller.refresh()
+    await this.readHarnesses()
+    await this.readCredentials()
     await this.readMachine()
     await this.readWork()
+  }
+  /** AIKit's tools and skill roots (SetupHarnesses): its client status, `aikit init`, `aikit collate --all` and `aikit tree --expand
+   * registries`. AIKit's routes run from the world's ground (the kernel's route_ground), so they are read once there is one. */
+  private async readHarnesses(): Promise<void> {
+    const aikit = this.source.aikit
+    if (!groundBound(this.controller.getSnapshot().discovery)) { this.harnesses = undefined; this.publish(); return }
+    if (!aikit) { this.harnesses = {state: 'refused', error: NO_SETUP_AIKIT}; this.publish(); return }
+    try {
+      const [status, init, collate, tree] = await Promise.all([aikit({op: 'harness_status'}), aikit({op: 'aikit_read', request: {kind: 'init'}}),
+        aikit({op: 'aikit_read', request: {kind: 'collate', all: true}}), aikit({op: 'aikit_read', request: {kind: 'tree', expand: ['registries']}})])
+      this.harnesses = {state: 'read', harnesses: setupHarnessClients(status), roots: setupSkillRoots(init, collate, tree)}
+    } catch (cause) { this.harnesses = {state: 'refused', error: words(cause)} }
+    this.publish()
+  }
+  /** AIKit's keys and bindings (SetupCredentials): `aikit credential discover` (presence only), the providers `aikit harness auth` names
+   * for each detected tool (a refusal named on its tool), and `aikit credential list` (metadata only). */
+  private async readCredentials(): Promise<void> {
+    const aikit = this.source.aikit
+    if (!groundBound(this.controller.getSnapshot().discovery)) { this.credentials = undefined; this.publish(); return }
+    if (!aikit) { this.credentials = {state: 'refused', error: NO_SETUP_AIKIT}; this.publish(); return }
+    try {
+      const tools = this.harnesses?.state === 'read' ? this.harnesses.harnesses : setupHarnessClients(await aikit({op: 'harness_status'}))
+      const [discover, list, providers] = await Promise.all([aikit({op: 'credential_discover'}), aikit({op: 'credential_list'}),
+        Promise.all(tools.map(tool => aikit({op: 'harness_auth_describe', harness: tool.harness}).then(auth => setupHarnessProviders(tool, auth),
+          (cause: unknown) => [{harness: tool.harness, ...(tool.folder ? {folder: tool.folder} : {}), provider: '', unread: `AIKit did not say which providers ${tool.harness} reaches: ${words(cause)}`}])))])
+      this.credentials = {state: 'read', findings: setupKeyFindings(discover), providers: providers.flat(), bindings: credentialMetadata(list)}
+    } catch (cause) { this.credentials = {state: 'refused', error: words(cause)} }
+    this.publish()
   }
   /** Workcell's status (the Workcell this computer answers as) and Central's current machine's Workcell bindings (none until adopted). */
   private async readMachine(): Promise<void> {
@@ -746,12 +788,72 @@ export class SetupWalk {
     this.publish()
   }
 
-  /** Accept a step (held): Ground through native oi, Machines and Projects through Central; the others name the owner they wait on. */
+  /** Accept a step (held): Ground through native oi, Harnesses and skills and Credentials through AIKit, Machines and Projects through
+   * Central. */
   async accept(step: string, held: Held): Promise<string> {
     if (step === 'ground') return this.acceptGround()
+    if (step === 'harnesses') return this.acceptHarnesses()
+    if (step === 'credentials') return this.acceptCredential(held)
     if (step === 'machines') return this.acceptMachine()
     if (step === 'projects') return this.acceptProject(held)
-    throw new Error(SETUP_UNBOUND[step] ?? `${step} is no step of Setup.`)
+    throw new Error(`${step} is no step of Setup.`)
+  }
+  /** Connects each tool's skills to AIKit (manual §10.11): each root AIKit reads as foreign is adopted through AIKit's own plan for it,
+   * pressed on that plan's review digest — AIKit applies only the bytes it surveyed — once the plan adopts as many skills as were read
+   * (a root changed since is refused, and nothing of it is adopted). Read back from AIKit: the root adopted, still keeping its skills.
+   * A root adopted before this one fails stays adopted; nothing is made twice. */
+  private async acceptHarnesses(): Promise<string> {
+    const aikit = this.source.aikit
+    if (!aikit) throw new Error(NO_SETUP_AIKIT)
+    if (!groundBound(this.controller.getSnapshot().discovery)) throw new Error(SETUP_GROUND_FIRST)
+    // What the step showed is what Accept adopts: the reading the person saw, not a fresh one (a refusal is read again).
+    if (this.harnesses?.state !== 'read') await this.readHarnesses()
+    const reading = this.harnesses
+    if (reading?.state !== 'read') throw new Error(reading?.error ?? 'AIKit did not read your agent tools.')
+    const keeping = reading.roots.filter(root => root.skills > 0), pending = keeping.filter(root => root.standing === 'foreign')
+    if (!keeping.length) throw new Error('Nothing found to bring in: AIKit finds no agent tool\'s skills on this computer.')
+    if (!pending.length) throw new Error('Accepted: AIKit holds every skill root here already. Nothing is made twice.')
+    const toolOf = (path: string) => reading.harnesses.find(tool => tool.folder && path.startsWith(`${tool.folder}/`))?.harness
+    const said: string[] = []
+    for (const root of pending) {
+      const namespace = setupNamespace(root)
+      const plan = await aikit({op: 'aikit_read', request: {kind: 'adopt-plan', root: root.path, namespace}}) as {review_digest?: unknown; capsules?: unknown}
+      if (!plan || typeof plan.review_digest !== 'string' || !Array.isArray(plan.capsules)) throw new Error(`AIKit answered its adoption plan for ${root.path} in a form Setup does not read (review_digest and capsules expected).`)
+      if (plan.capsules.length !== root.skills) throw new Error(`${root.path} changed since it was read: AIKit's plan adopts ${plan.capsules.length} skills, not the ${root.skills} shown. Read again; nothing of it was adopted.`)
+      await aikit({op: 'aikit_write', request: {kind: 'adopt', root: root.path, namespace, expect_digest: plan.review_digest}})
+      said.push(`${root.skills} skill${root.skills === 1 ? '' : 's'} from ${toolOf(root.path) ?? root.label} (${plan.capsules.map(String).join(', ')})`)
+    }
+    await this.readHarnesses()
+    const after = this.harnesses?.state === 'read' ? this.harnesses.roots : []
+    for (const root of pending) {
+      const now = after.find(row => row.label === root.label)
+      if (!now || now.standing === 'foreign' || now.standing === 'unknown' || now.skills !== root.skills) throw new Error(`AIKit answered aikit adopt, but ${root.path} does not read back adopted with its ${root.skills} skills. Read again.`)
+    }
+    return `AIKit adopted ${said.join('; ')} and reads them back as its own; each tool reads them where they were, its settings and instructions as they are.`
+  }
+  /** Binds the key chosen by the reference the person gives (manual §10.11): `aikit credential setup CREDENTIAL --ref REFERENCE`, a place in
+   * a store and never a key — a reference that names no store is refused before anything is sent. Read back from AIKit's list. */
+  private async acceptCredential(held: Held): Promise<string> {
+    const aikit = this.source.aikit
+    if (!aikit) throw new Error(NO_SETUP_AIKIT)
+    if (!groundBound(this.controller.getSnapshot().discovery)) throw new Error(SETUP_GROUND_FIRST)
+    if (this.credentials?.state !== 'read') await this.readCredentials()
+    const reading = this.credentials
+    if (reading?.state !== 'read') throw new Error(reading?.error ?? 'AIKit did not read your keys.')
+    const bound = new Set(reading.bindings.filter(row => !row.revoked).map(row => row.credential))
+    const open = reading.findings.filter(row => row.credential && !row.bound && !bound.has(row.credential))
+    const credential = text(held('credential')) || open[0]?.credential
+    if (!credential) throw new Error(bound.size ? 'Accepted: every key found is bound. Nothing is made twice.' : 'Nothing found to bring in: AIKit finds no provider\'s key on this computer.')
+    if (bound.has(credential)) throw new Error(`Accepted: ${credential} is bound already. Nothing is made twice.`)
+    if (!open.some(row => row.credential === credential)) throw new Error(`${credential} is no key AIKit found here. Read again.`)
+    const reference = text(held('reference'))
+    if (!reference) throw new Error('Give where the key lies in your secure store first: op://, keychain://, pass:// or varlock://.')
+    if (!SECRET_REFERENCE.test(reference)) throw new NotAReference()
+    await aikit({op: 'credential_setup', credential, reference})
+    await this.readCredentials()
+    const now = this.credentials?.state === 'read' ? this.credentials.bindings.find(row => row.credential === credential && !row.revoked) : undefined
+    if (!now || now.reference !== reference) throw new Error(`AIKit answered aikit credential setup, but ${credential} does not read back bound to ${reference}. Read again.`)
+    return `AIKit bound ${credential} by reference to ${reference}, and reads it back: the key stays where it lies; the DLW never shows it and never keeps it.`
   }
   /** Makes this computer a workcell (manual §10.11): Central's current machine bound to the Workcell this computer answers as, read back
    * from Central's declaration; then the host reads its world again, which now qualifies (`oi current-world` reads that binding). */
@@ -788,6 +890,8 @@ export class SetupWalk {
     const applied = this.controller.getSnapshot()
     if (applied.disposition !== 'verified') throw new Error(applied.error ?? `Native oi answered ${applied.disposition ?? 'nothing'}; its journal decides. Read again; nothing is retried.`)
     await this.controller.refresh()
+    await this.readHarnesses()
+    await this.readCredentials()
     await this.readMachine()
     await this.readWork()
     this.source.groundChanged?.()
@@ -875,6 +979,13 @@ export class SetupWalk {
   }
 }
 
+/** AIKit's steps wait for the ground: its routes run from it (the kernel's route_ground). */
+const SETUP_GROUND_FIRST = 'Make your ground first: AIKit\'s routes run from your ground.'
+/** A reference that names no store: refused before anything is sent, and the field is cleared (it may hold the key itself). */
+export class NotAReference extends Error {
+  constructor() { super('A reference names where the key lies in your store: op://, keychain://, pass:// or varlock://, never the key itself. Nothing was sent.') }
+}
+
 const noSetup: SetupSnapshot = {adoption: {}, folders: {state: 'unread'}, plan: null}
 const noSetupSnapshot = () => noSetup
 /** Setup (manual §10.11) on the window's binding: the SetupWalk over the adapter's setup source, read when the page opens and for each
@@ -891,7 +1002,16 @@ export function useSetupPage(adapter: SettingsAdapter, enabled: boolean, held: H
     const refusal = snapshot.folders.state === 'refused' ? snapshot.folders.error : null
     return {values: setupValues(snapshot, held), why, refused: refusedOn('rereadSetup', refusal), reread: enabled ? () => walk.read() : async () => {},
       acts: {
-        acceptStep: async step => { const said = await walk.accept(String(step), held); done(['make', 'wiki', ...(step === 'projects' ? ['folder', 'where'] : [])]); return said },
+        acceptStep: async step => {
+          try {
+            const said = await walk.accept(String(step), held)
+            done(step === 'credentials' ? ['credential', 'reference'] : ['make', 'wiki', ...(step === 'projects' ? ['folder', 'where'] : [])])
+            return said
+          } catch (cause) {
+            if (cause instanceof NotAReference) done(['reference'])
+            throw cause
+          }
+        },
         previewStep: async () => { await walk.preview(held) },
         rereadSetup: async () => { await walk.read() },
       }}
