@@ -11,9 +11,9 @@
 //
 // Each device's own Full is the page itself: ⤢ brings the document's own pane forward (centralDocuments.ts revealDocumentPane), the
 // material the Text, Highlight and Notes Full views name ("the open document at full size", DLW §18.1–§18.1).
-import {useCallback, useEffect, useMemo, useState, useSyncExternalStore} from 'react'
+import {useCallback, useEffect, useMemo, useReducer, useState, useSyncExternalStore} from 'react'
 import {readFlowInstance} from '../../../../../../desktop/cradle/src/flow/instances'
-import type {CentralLocation, KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
+import type {AikitReadRequest, CentralLocation, KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
 import {BOOK_MODE_OF_SHELL, useOptionalContinuity, type ShellMode} from '../../continuity/workspace'
 import type {DesignBinding} from '../../frame/devices/designed'
 import type {OwnFull} from '../../frame/devices/deviceDoor'
@@ -24,15 +24,15 @@ import {useReachedDocument, type DocumentInPane} from '../documents/documentDoor
 import {centralDeviceId, type CentralReads} from './centralDeviceModel'
 import {appendFlowEntry, centralWrite, setFlowMeta} from './centralDeviceWrites'
 import {civilDayName, type DayAperture} from './dayBinding'
-import {DOCS_ACTIONS, docsBinding, documentBinding, flowBinding, highlightBinding, holdsVersion, notesBinding, subscribeHolds, textBinding, workspaceBinding, type BookWorkspace,
-  type DocsPorts, type TrackWorld, type PageMaterial, type ReachedPage} from './pageBindings'
+import {DOCS_ACTIONS, docsBinding, docsHorizonInput, readDocsMeaning, documentBinding, flowBinding, highlightBinding, holdsVersion, notesBinding, subscribeHolds, textBinding, workspaceBinding, type BookWorkspace,
+  type AikitAsk, type DocsPorts, type TrackWorld, type PageMaterial, type ReachedPage} from './pageBindings'
 import {readDayPage, readFlowPage, wordsOfHtml, type FlowPage} from './pageReadings'
 import {dateOfDayPath} from '../daySurface'
 import {actionAnswerOf, centralActionOp, useCentralAction, useCentralActionAsked, useDayDieReading, type ActionAnswer} from './useCentralReadings'
 import {kernelOp, kernelRead} from '../../../../../../desktop/cradle/src/kernel/bridge'
 import {CONTEMPLATE_FLOW_ACTION, PC_ACCEPT_ACTION, PC_INSPECT_ACTION, PC_PREVIEW_ACTION, PC_DOCS_ENSURE_ACTION, PC_DOCS_INSPECT_ACTION, PC_TIER_RELATE_ACTION, acceptInput, relateInput,
   lastKeptThought, type FlowThought, type ThoughtHand, type WorkspaceGround} from './pageGround'
-import {useOwnerOp} from '../../owners/ownerCall'
+import {useHeldRead, useOwnerOp} from '../../owners/ownerCall'
 
 /** The Day device's document, as useDayDevice reads it (CentralDevices.tsx). */
 export interface DayDocumentReading {
@@ -183,10 +183,21 @@ export function useFlowThought(transport: KernelTransportStatus, flowRef: string
   return {state, hand}
 }
 
+/** One AIKit reading through the kernel's aikit_read, asked anew (the composite that asks it is the held reading): its data, or a throw in
+ * the kernel's or AIKit's words. */
+const aikitAsk = (transport: KernelTransportStatus): AikitAsk => async request => {
+  const call = await kernelRead(transport, {op: 'aikit_read', request: request as unknown as AikitReadRequest}, {fresh: true})
+  if (call.error || call.outcome?.result !== 'owner_route_reading') throw new Error(call.error ?? `AIKit did not answer aikit_read ${String(request.kind)}.`)
+  return (call.outcome as {data?: unknown}).data
+}
+
 /** Docs on the track's world (DLW §18.5; pageBindings.ts docsBinding): Central's four readings of its account — the tiers and their
  * sources (projectcentral.docs.inspect), what it recognises as ground (projectcentral.ground.inspect), the root's parts (central.doctor) and
- * the world's scaffold (central.world.reproject.plan) — held for the window as every Central reading is (useCentralActionAsked), asked again on
- * Read now and after each of the person's presses (centralWrite, action.rs PERSON_ACTS). Your world (no project) asks only the root's. */
+ * the world's scaffold (central.world.reproject.plan) — held for the window as every Central reading is (useCentralActionAsked); Meaning,
+ * the laws the world declares and each one's verdict from AIKit (pageBindings.ts readDocsMeaning: the kernel's aikit_read reflection-laws and
+ * reflection-verify in the world's ground), held as one reading; Moved since, Central's change horizon of the world, asked once a law names
+ * the revision it read its source at (docsHorizonInput). All asked again on Read now and after each of the person's presses (centralWrite,
+ * action.rs PERSON_ACTS). Your world (no project) asks only the root's. */
 export function useDocsDevice(transport: KernelTransportStatus, id: string, world: TrackWorld | null): DesignBinding {
   const project = world?.project ?? null
   const input = useMemo(() => (project ? {project} : null), [project])
@@ -194,16 +205,27 @@ export function useDocsDevice(transport: KernelTransportStatus, id: string, worl
   const ground = useCentralActionAsked(transport, DOCS_ACTIONS.ground, input)
   const doctor = useCentralActionAsked(transport, DOCS_ACTIONS.doctor, NO_INPUT)
   const plan = useCentralActionAsked(transport, DOCS_ACTIONS.plan, input)
+  // Meaning: one held reading of AIKit's laws and verdicts for the world, asked anew on Read now (the count names the asking).
+  const [asked, askAgain] = useReducer((count: number) => count + 1, 0)
+  const meaningRead = useHeldRead(project && transport.kind !== 'unavailable' ? ['docs-meaning', transport, project, asked] : null,
+    () => readDocsMeaning(project!, aikitAsk(transport)))
+  const meaning = useMemo((): ActionAnswer | undefined => (!project ? undefined : meaningRead.status === 'answered' ? {status: 'answered', value: meaningRead.value}
+    : meaningRead.status === 'refused' ? {status: 'refused', error: meaningRead.error ?? 'AIKit did not list the world\'s reflection laws.'} : {status: 'reading'}),
+  [project, meaningRead.status, meaningRead.value, meaningRead.error])
+  const horizonInput = useMemo(() => docsHorizonInput(project, meaning), [project, meaning])
+  const horizon = useCentralActionAsked(transport, DOCS_ACTIONS.horizon, horizonInput)
   useSyncExternalStore(subscribeHolds, holdsVersion, holdsVersion)
   const holds = holdsVersion()
-  const readAgain = useMemo(() => [inspect.again, ground.again, doctor.again, plan.again], [inspect.again, ground.again, doctor.again, plan.again])
+  const readAgain = useMemo(() => [inspect.again, ground.again, doctor.again, plan.again, horizon.again, askAgain],
+    [inspect.again, ground.again, doctor.again, plan.again, horizon.again])
   const ports = useMemo((): DocsPorts => (transport.kind === 'unavailable' ? {} : {
     central: (action, input) => centralWrite(transport, action, input),
     reread: () => { for (const again of readAgain) again() },
   }), [transport, readAgain])
-  return useMemo(() => docsBinding(id, world, {...(project ? {inspect: inspect.answer, ground: ground.answer, plan: plan.answer} : {}), doctor: doctor.answer}, ports),
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- the holds' version re-binds the view's own keys
-    [id, world, project, inspect.answer, ground.answer, doctor.answer, plan.answer, ports, holds])
+  return useMemo(() => docsBinding(id, world, {...(project ? {inspect: inspect.answer, ground: ground.answer, plan: plan.answer, meaning, ...(horizonInput ? {horizon: horizon.answer} : {})} : {}),
+    doctor: doctor.answer}, ports),
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- the holds' version re-binds the view's own keys
+  [id, world, project, inspect.answer, ground.answer, doctor.answer, plan.answer, meaning, horizonInput, horizon.answer, ports, holds])
 }
 const NO_INPUT: Readonly<Record<string, unknown>> = {}
 

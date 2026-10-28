@@ -712,9 +712,20 @@ pub enum AikitRead {
     },
     /// The verdict of one target-owned reflection law over the project's
     /// ProjectMap (`aikit knowledge reflection verify -`, ai-kit#541;
-    /// `aikit.reflection-verdict/v1`), the law on stdin as handed.
+    /// `aikit.reflection-verdict/v1`), the law on stdin as handed; asked in
+    /// the named world's ground, whose ProjectMap it is (else the root's).
     ReflectionVerify {
         law: Value,
+        #[serde(default)]
+        project: Option<String>,
+    },
+    /// The reflection laws a world declares, each as written, and each file
+    /// that is not one with why (`aikit knowledge reflection laws`,
+    /// `aikit.reflection-laws/v1`, O-I #786); asked in the named world's
+    /// ground (else the root's).
+    ReflectionLaws {
+        #[serde(default)]
+        project: Option<String>,
     },
     GatewayReplay {
         stream: String,
@@ -903,7 +914,9 @@ impl AikitRead {
             | Self::ContinuityCommands { project }
             | Self::ContinuityPressure { project }
             | Self::ContinuityTurn { project, .. }
-            | Self::CloseoutVerify { project, .. } => project.as_deref(),
+            | Self::CloseoutVerify { project, .. }
+            | Self::ReflectionVerify { project, .. }
+            | Self::ReflectionLaws { project } => project.as_deref(),
             Self::WikiShapeValidate { .. }
             | Self::WikiShapeCompress { .. }
             | Self::GatewayEcology { .. }
@@ -919,8 +932,7 @@ impl AikitRead {
             | Self::Unused
             | Self::Explain { .. }
             | Self::History { .. }
-            | Self::KnowledgeFrame { .. }
-            | Self::ReflectionVerify { .. } => None,
+            | Self::KnowledgeFrame { .. } => None,
         }
     }
 }
@@ -2177,6 +2189,10 @@ pub(crate) fn aikit_read_args(request: &AikitRead) -> (&'static str, Vec<OsStrin
             "aikit knowledge reflection verify",
             words(&["knowledge", "reflection", "verify", "-", "--json"]),
         ),
+        AikitRead::ReflectionLaws { .. } => (
+            "aikit knowledge reflection laws",
+            words(&["knowledge", "reflection", "laws", "--json"]),
+        ),
         AikitRead::KnowledgeFrame { addresses, query } => {
             let mut args = words(&["knowledge", "frame"]);
             args.extend(addresses.iter().map(OsString::from));
@@ -2230,7 +2246,7 @@ fn aikit_read_answer(request: &AikitRead, cwd: Option<&Path>) -> Result<Reading,
     let (route, args) = aikit_read_args(request);
     let mut call = Call::new(aikit(), route, args, READ_LIMIT);
     call.cwd = cwd;
-    if let AikitRead::ReflectionVerify { law } = request {
+    if let AikitRead::ReflectionVerify { law, .. } = request {
         if !law.is_object() {
             return Err(incompatible(
                 "aikit knowledge reflection verify takes one ReflectionLaw object".into(),
@@ -2300,6 +2316,17 @@ fn aikit_read_answer(request: &AikitRead, cwd: Option<&Path>) -> Result<Reading,
                 route,
                 data,
                 &[("law", Kind::Text), ("verification", Kind::Record)],
+            )?
+        }
+        AikitRead::ReflectionLaws { .. } => {
+            const LAWS: &str = "aikit.reflection-laws/v1";
+            if data.get("version").and_then(Value::as_str) != Some(LAWS) {
+                return Err(unexpected(route, LAWS, &data));
+            }
+            fields(
+                route,
+                data,
+                &[("laws", Kind::List), ("unreadable", Kind::List)],
             )?
         }
         AikitRead::Inbox { .. } => fields(route, data, &[("items", Kind::List)])?,

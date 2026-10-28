@@ -361,17 +361,120 @@ export const WORKSPACE_WIRING: DesignWiring = {
  *   - the acts, each the person's own press the kernel carries (action.rs PERSON_ACTS), then the account read again: Relate
  *     (`projectcentral.docs.tier.relate`), Recognise (`projectcentral.ground.apply`, the document left where it is), Ensure
  *     (`projectcentral.docs.ensure`), Reproject (`central.world.reproject.apply`) and Initialise root (`central.init`).
- * Meaning and Moved since stand absent, each naming the reading it waits for (DOCS_MEANING_ABSENT, DOCS_MOVED_ABSENT). */
+ * Meaning and Moved since (O-I #786) are each source's readings against the work, by the laws the world wrote (readDocsMeaning,
+ * docsMeaningOf, docsMovedOf). */
 export const DOCS_DESIGN = 'central:docs'
 /** The readings Docs asks, by the key of DocsReadings. */
-export const DOCS_ACTIONS = {inspect: 'projectcentral.docs.inspect', ground: 'projectcentral.ground.inspect', doctor: 'central.doctor', plan: 'central.world.reproject.plan'} as const
-/** Meaning (§18.5 "Whether the code still holds what the source says, by the law the project wrote for them"): AIKit verifies one law it is
- * handed (`aikit knowledge reflection verify -`, aikit.reflection-verdict/v1; the kernel's aikit_read reflection-verify), and nothing lists the
- * laws a project wrote. `aikit knowledge frame` (the kernel's aikit_read knowledge-frame) answers a context pack of readings, not a verdict. */
-export const DOCS_MEANING_ABSENT = 'Meaning: not read — missing op: the reflection laws a project declares, listed by AIKit (`aikit knowledge reflection verify` verifies one law handed to it, through the kernel\'s aikit_read reflection-verify, and no reading names the laws a world wrote; `aikit knowledge frame` answers readings, not a verdict) (AIKit).'
-/** Moved since (§18.5 "What moved since the source was last read against the work"): Central's change horizon counts the changes after a
- * consumer's cursor, and no reading of a source against the work stands to set one (Meaning is not read). */
-export const DOCS_MOVED_ABSENT = 'Moved since: not read — missing op: when each source was last read against the work (Central\'s projectcentral.change.horizon counts the changes after a consumer\'s cursor, and Docs holds none while Meaning is unread) (Central).'
+export const DOCS_ACTIONS = {inspect: 'projectcentral.docs.inspect', ground: 'projectcentral.ground.inspect', doctor: 'central.doctor', plan: 'central.world.reproject.plan',
+  horizon: 'projectcentral.change.horizon'} as const
+
+/** Meaning (§18.5 "Whether the code still holds what the source says, by the law the project wrote for them"): the reflection laws the world
+ * declares, as AIKit lists them (`aikit knowledge reflection laws`, aikit.reflection-laws/v1: one ReflectionLaw per file in the world's own
+ * `.aikit/reflection-laws/`, each naming the source it reads and the revision it read it at), and each law's verdict (`aikit knowledge
+ * reflection verify -`, aikit.reflection-verdict/v1), both asked in the world's ground (the kernel's aikit_read reflection-laws and
+ * reflection-verify {project}). A verdict refused stands in AIKit's words under its law's id. */
+export interface DocsMeaning {
+  readonly laws: unknown
+  readonly verdicts: Readonly<Record<string, ActionAnswer>>
+}
+/** One AIKit reading through the kernel (aikit_read): its data, or a throw in the kernel's or AIKit's words. */
+export type AikitAsk = (request: Readonly<Record<string, unknown>>) => Promise<unknown>
+export const DOCS_LAWS_VERSION = 'aikit.reflection-laws/v1'
+const DOCS_VERDICT_VERSION = 'aikit.reflection-verdict/v1'
+const HORIZON_SCHEMA = 'central.source-change-horizon/v1'
+const HOLDS_KINDS = ['missing', 'wrong-relation', 'duplicate', 'stale', 'constitutive-flattening'] as const
+type HoldsState = 'holds' | typeof HOLDS_KINDS[number]
+
+/** A law as AIKit lists it: its id, the source it reads and the revision it read it at, and the coordinates it maps. */
+interface ListedLaw {
+  readonly id: string; readonly source?: string; readonly sourceRevision?: string
+  readonly coordinates: readonly {readonly coordinate: string; readonly implementation?: string}[]
+}
+/** The laws of AIKit's listing, or none where the answer is not one. Pure. */
+function lawsOf(listing: unknown): ListedLaw[] {
+  const doc = docRec(listing)
+  if (!doc || doc.version !== DOCS_LAWS_VERSION) return []
+  return docList(doc.laws).flatMap((row): ListedLaw[] => {
+    const law = docRec(docRec(row)?.law), id = docText(law?.id)
+    if (!law || !id) return []
+    const coordinates = [
+      ...docList(law.mappings).flatMap(m => { const r = docRec(m), c = docText(r?.coordinate); return r && c ? [{coordinate: c, implementation: docText(r.implementation)}] : [] }),
+      ...docList(law.constitutive_relations).flatMap(m => { const r = docRec(m), c = docText(r?.ref_id); return r && c ? [{coordinate: c, implementation: docText(r.to)}] : [] }),
+    ]
+    return [{id, source: docText(law.source), sourceRevision: docText(law.source_revision), coordinates}]
+  })
+}
+/** The laws AIKit could not read, each as its path and AIKit's words. Pure. */
+const unreadableLawsOf = (listing: unknown): string[] => docList(docRec(listing)?.unreadable).flatMap(row => {
+  const r = docRec(row), path = docText(r?.path)
+  return path ? [`${path} is not a law: ${docText(r?.error) ?? 'AIKit gave no reason'}.`] : []
+})
+
+/** Ask AIKit for the laws the world declares, then each law's verdict as listed, one after another, all in the world's ground. A listing
+ * refused throws AIKit's words; a verdict refused stands under its law's id. */
+export async function readDocsMeaning(project: string, ask: AikitAsk): Promise<DocsMeaning> {
+  const laws = await ask({kind: 'reflection-laws', project})
+  const verdicts: Record<string, ActionAnswer> = {}
+  const listed = docList(docRec(laws)?.laws).map(row => docRec(docRec(row)?.law)).filter((law): law is Record<string, unknown> => !!docText(law?.id))
+  for (const law of listed) {
+    try { verdicts[law.id as string] = {status: 'answered', value: await ask({kind: 'reflection-verify', law, project})} }
+    catch (cause) { verdicts[law.id as string] = {status: 'refused', error: cause instanceof Error ? cause.message : String(cause)} }
+  }
+  return {laws, verdicts}
+}
+
+/** Moved since asks Central's horizon only where a law names the revision it read its source at (nothing else was read against the work). */
+export function docsHorizonInput(project: string | null, meaning: ActionAnswer | undefined): {project: string} | null {
+  const value = docRec(answerOf(meaning))
+  return project && value && lawsOf(value.laws).some(law => law.source && law.sourceRevision) ? {project} : null
+}
+
+/** A source's Meaning: none where no law reads it; else each coordinate of each law that reads it, holding or how it does not in AIKit's
+ * word (its issues for that coordinate), and the source holding only where every one does. Undefined (not read) while a law's verdict is
+ * unanswered or refused. Pure. */
+export function docsMeaningOf(ref: string, meaning: DocsMeaning): {meaning: HoldsState | 'none'; mappings?: Record<string, unknown>[]} | undefined {
+  const laws = lawsOf(meaning.laws).filter(law => law.source === ref)
+  if (!laws.length) return {meaning: 'none'}
+  const mappings: Record<string, unknown>[] = []
+  for (const law of laws) {
+    const verdict = docRec(answerOf(meaning.verdicts[law.id]))
+    const verification = verdict?.version === DOCS_VERDICT_VERSION ? docRec(verdict.verification) : null
+    if (!verification) return undefined
+    const issues = docList(verification.issues).flatMap(row => {
+      const r = docRec(row), kind = docText(r?.kind), at = docText(r?.relation_ref)
+      return r && kind && at && (HOLDS_KINDS as readonly string[]).includes(kind) ? [{kind: kind as HoldsState, at, detail: docText(r.detail)}] : []
+    })
+    for (const {coordinate, implementation} of law.coordinates) {
+      const mine = issues.filter(issue => issue.at === coordinate)
+      const detail = mine.flatMap(issue => (issue.detail ? [issue.detail] : [])).join('; ')
+      mappings.push({coordinate, ...(implementation ? {implementation} : {}), state: mine[0]?.kind ?? 'holds', ...(detail ? {detail} : {})})
+    }
+    // An issue on no coordinate of the law (a constitutive binding the law no longer names) stands as its own row.
+    for (const issue of issues) if (!law.coordinates.some(c => c.coordinate === issue.at)) mappings.push({coordinate: issue.at, state: issue.kind, ...(issue.detail ? {detail: issue.detail} : {})})
+  }
+  const failing = mappings.find(row => row.state !== 'holds')
+  return {meaning: (failing?.state as HoldsState | undefined) ?? 'holds', mappings}
+}
+
+/** A source's Moved since (§18.5 "What moved since the source was last read against the work"): Central's horizon's changes to the source
+ * after the one that brought it to the revision its law read; 0 where it stands at that revision still; where the horizon kept no change
+ * that arrived at that revision, every change it kept to the source counts, and at least one, since the revision differs. The most any
+ * law that reads it counts. Undefined where no law names the revision it read, or the horizon was not answered. Pure. */
+export function docsMovedOf(ref: string, rowRevision: string | undefined, meaning: DocsMeaning, horizon: unknown): number | undefined {
+  const revisions = lawsOf(meaning.laws).flatMap(law => (law.source === ref && law.sourceRevision ? [law.sourceRevision] : []))
+  const doc = docRec(horizon)
+  if (!revisions.length || !doc || doc.schema !== HORIZON_SCHEMA) return undefined
+  const changes = docList(doc.changes).flatMap(row => { const r = docRec(row); return r && r.source_ref === ref && typeof r.cursor === 'number' ? [r] : [] })
+    .sort((a, b) => (a.cursor as number) - (b.cursor as number))
+  const observed = docList(doc.sources).map(docRec).find(row => docRec(row?.binding)?.ref === ref)
+  const current = docText(docRec(observed?.revision)?.revision) ?? rowRevision
+  return Math.max(...revisions.map(read => {
+    if (current === read) return 0
+    let anchor = -1
+    changes.forEach((change, at) => { if (change.after_revision === read) anchor = at })
+    return Math.max(changes.length - anchor - 1, 1)
+  }))
+}
 /** Your world: Central's account is a project's (projectcentral.docs.inspect reads one project). */
 export const DOCS_NO_PROJECT = 'Your world has no project account to read: projectcentral.docs.inspect reads one project, and your root is none (Control/self is the root\'s own, made by central.self.ensure).'
 /** No kernel carrier: Central cannot be asked. */
@@ -382,12 +485,16 @@ export const DOCS_RELATE_UX_EX = 'Relate as an intended experience or a return: 
 export const DOCS_WIRING: DesignWiring = {
   design: DOCS_DESIGN,
   keys: ['light', 'subject', 'subjects', 'tier', 'show', 'provenance', 'standing', 'refresh', 'source', 'bindAs', 'sources', 'root', 'scaffold', 'account', 'ux', 'ex',
-    'relate', 'recognise', 'readNow', 'openSource', 'ensure', 'reproject', 'initRoot'],
+    'refusal:meaning', 'refusal:moved', 'relate', 'recognise', 'readNow', 'openSource', 'ensure', 'reproject', 'initRoot'],
   reads: {
     light: 'whether the account stands: lit when Central answered projectcentral.docs.inspect, dark when it refused',
     subject: 'the track\'s world: its project as Central discloses it (world browse: central/centralWorlds.ts readWorlds), or Central for your world',
     subjects: 'the track\'s world (its folders and notes are not listed yet)',
-    sources: `each tier's sources and the unbound ones at their revision (projectcentral.docs.inspect), each recognised as Central records it (projectcentral.ground.inspect recognised_sources). ${DOCS_MEANING_ABSENT} ${DOCS_MOVED_ABSENT}`,
+    sources: 'each tier\'s sources and the unbound ones at their revision (projectcentral.docs.inspect), each recognised as Central records it (projectcentral.ground.inspect '
+      + 'recognised_sources); its Meaning, each law the world declares on it verified by AIKit (aikit knowledge reflection laws, then reflection verify, in the world\'s ground), '
+      + 'none where no law reads it; its Moved since, the changes Central\'s horizon kept to it since the revision its law read (projectcentral.change.horizon)',
+    'refusal:meaning': 'why a source\'s Meaning is not read, in AIKit\'s words: its listing refused, a law\'s verdict refused, or a file in .aikit/reflection-laws that is not a law',
+    'refusal:moved': 'why Moved since is not read, in Central\'s words (projectcentral.change.horizon refused)',
     root: 'the parts every Central root must hold (central.doctor)', scaffold: 'the world\'s ProjectCentral scaffold, present and missing (central.world.reproject.plan)',
     account: 'whether the world has its account (projectcentral.docs.inspect self_aperture)', ux: 'the experiences the world means to give (projectcentral.docs.inspect ux)',
     ex: 'the returns written against them (projectcentral.docs.inspect ex)',
@@ -396,7 +503,7 @@ export const DOCS_WIRING: DesignWiring = {
     relate: 'the person\'s Relate of a tier: projectcentral.docs.tier.relate {project, source_ref, tier, acceptance human-accepted} (invoke_action, action.rs PERSON_ACTS)',
     recognise: 'the person\'s Recognise: projectcentral.ground.apply {project, source, provenance, standing, treatment retain-native-in-place, acceptance human-accepted} (PERSON_ACTS)',
     ensure: 'the person\'s Ensure: projectcentral.docs.ensure {project} (PERSON_ACTS)', reproject: 'the person\'s Reproject: central.world.reproject.apply {project} (PERSON_ACTS)',
-    initRoot: 'the person\'s Initialise root: central.init (PERSON_ACTS)', readNow: 'the four readings asked of Central again',
+    initRoot: 'the person\'s Initialise root: central.init (PERSON_ACTS)', readNow: 'Central\'s readings and AIKit\'s laws and verdicts asked again',
   },
   local: {
     tier: 'the tier in front (the first that needs you, by default)', show: 'Everything, or Needs you (the default)',
@@ -416,6 +523,10 @@ export interface DocsReadings {
   readonly ground?: ActionAnswer
   readonly doctor?: ActionAnswer
   readonly plan?: ActionAnswer
+  /** AIKit's laws and verdicts (DocsMeaning), or AIKit's refusal of the listing. */
+  readonly meaning?: ActionAnswer
+  /** Central's change horizon of the world (central.source-change-horizon/v1). */
+  readonly horizon?: ActionAnswer
 }
 /** Docs' writers: one of the person's own Central acts through invoke_action (centralDeviceWrites.ts centralWrite), and the readings asked
  * again. */
@@ -437,9 +548,10 @@ const fieldOf = (answer: ActionAnswer | undefined): Record<string, unknown> | nu
 /** A resolved source's path (Central's ResolvedDevelopmentSource; null where a bound ref no longer resolves). */
 const pathOfSource = (source: unknown): string | undefined => docText(docRec(source)?.path)
 
-/** The sources on the six tiers and the unbound ones, in the design's shape ({path, tier, rev, hints, recognised}), each recognised as the
- * ground inspection records it: {provenance, standing} where Central lists it, false where it does not, left out where it was not read. */
-function docsSources(field: Record<string, unknown>, ground: unknown): Record<string, unknown>[] {
+/** The sources on the six tiers and the unbound ones, in the design's shape ({path, tier, rev, hints, recognised, meaning, mappings, moved}),
+ * each recognised as the ground inspection records it: {provenance, standing} where Central lists it, false where it does not, left out
+ * where it was not read; Meaning and Moved since where AIKit and Central answered (docsMeaningOf, docsMovedOf), left out where not. */
+function docsSources(field: Record<string, unknown>, ground: unknown, meaning: DocsMeaning | null = null, horizon: unknown = undefined): Record<string, unknown>[] {
   const groundRec = docRec(ground)
   const recognised = groundRec && Array.isArray(groundRec.recognised_sources)
     ? new Map(groundRec.recognised_sources.flatMap(row => { const r = docRec(row), path = docText(r?.path); return r && path ? [[path, {provenance: docText(r.provenance) ?? 'unresolved', standing: docText(r.standing) ?? 'unresolved'}] as const] : [] }))
@@ -447,8 +559,10 @@ function docsSources(field: Record<string, unknown>, ground: unknown): Record<st
   const row = (source: unknown, tier: number | null): Record<string, unknown>[] => {
     const r = docRec(source), path = pathOfSource(source)
     if (!r || !path) return []
-    const rev = docText(docRec(r.revision)?.revision)
-    return [{path, tier, ...(rev ? {rev} : {}), hints: [], ...(recognised ? {recognised: recognised.get(path) ?? false} : {})}]
+    const rev = docText(docRec(r.revision)?.revision), ref = docText(r.ref)
+    const read = meaning && ref ? docsMeaningOf(ref, meaning) : undefined
+    const moved = meaning && ref ? docsMovedOf(ref, rev, meaning, horizon) : undefined
+    return [{path, tier, ...(rev ? {rev} : {}), hints: [], ...(recognised ? {recognised: recognised.get(path) ?? false} : {}), ...(read ?? {}), ...(moved === undefined ? {} : {moved})}]
   }
   const tiers = docList(field.tier_bindings).flatMap(binding => {
     const b = docRec(binding)
@@ -467,9 +581,13 @@ export function docsValues(id: string, world: TrackWorld | null, readings: DocsR
     values.subjects = JSON.stringify([subject])
   }
   const field = fieldOf(readings.inspect)
+  const meaning = docRec(answerOf(readings.meaning)) as DocsMeaning | null
+  const meaningWhy = docsMeaningRefusal(readings.meaning, meaning), movedWhy = refusedOf(readings.horizon)
+  if (meaningWhy) values['refusal:meaning'] = meaningWhy
+  if (movedWhy) values['refusal:moved'] = movedWhy
   if (field) {
     values.light = 'lit'
-    values.sources = JSON.stringify(docsSources(field, answerOf(readings.ground)))
+    values.sources = JSON.stringify(docsSources(field, answerOf(readings.ground), meaning, answerOf(readings.horizon)))
     const aperture = docRec(field.self_aperture)
     if (aperture && typeof aperture.exists === 'boolean') values.account = JSON.stringify({exists: aperture.exists})
     values.ux = JSON.stringify(docList(field.ux).flatMap(row => { const r = docRec(row), ref = docText(r?.ux_ref); return r && ref ? [{ref, source: pathOfSource(r.source) ?? ''}] : [] }))
@@ -483,6 +601,16 @@ export function docsValues(id: string, world: TrackWorld | null, readings: DocsR
   const scaffold = scaffoldOfPlan(answerOf(readings.plan))
   if (scaffold) values.scaffold = JSON.stringify(scaffold)
   return withHeld(id, DOCS_WIRING, values, {show: 'needs', provenance: 'human-authored', standing: 'design-commitment', refresh: 'open'})
+}
+
+/** Why Meaning is not read where it is not, in AIKit's words: the listing refused, each law whose verdict was refused, each file that is
+ * not a law. */
+function docsMeaningRefusal(answer: ActionAnswer | undefined, meaning: DocsMeaning | null): string | undefined {
+  const refused = refusedOf(answer)
+  if (refused) return refused
+  if (!meaning) return undefined
+  const words = [...Object.entries(meaning.verdicts).flatMap(([id, verdict]) => (verdict.status === 'refused' ? [`${id}: ${verdict.error}`] : [])), ...unreadableLawsOf(meaning.laws)]
+  return words.length ? words.join(' ') : undefined
 }
 
 /** Why each reading Docs draws stands empty now: Central's refusal word for word, your root's having no project, or not answered yet. */

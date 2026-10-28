@@ -14,6 +14,10 @@
 //   does, over the controlled scene owner of desktop/cradle/tests/native-expression-fixture.mjs (protocol only, not QL's numbers),
 //   which here also discloses a played reading by pitch class (the shape planJankoStrike reads) and keeps every strike it is sent.
 // - The clock is a controlled one: time moves only when the test moves it, so each strike's moment is exact.
+// O-I #809: a strike lands at the sample the player chooses. Play reads the owner's audio clock (`audio-clock`: where its rendered sound
+// stands, its rate, its lookahead and block), anchors the clip one owner lookahead past that sound, and strikes each note-on with its own
+// sample cursor (`at_samples_elapsed`) one lookahead before the owner's render reaches it. The owner lands it there (QL-MEF: the native
+// render lands a strike at exactly its sample), so a late wake never moves a note: only a wake later than the owner's slack lets one go.
 import test, {after} from 'node:test'
 import assert from 'node:assert/strict'
 import {register, createRequire} from 'node:module'
@@ -113,19 +117,29 @@ const controlledClock = (start = 100) => {
   }
 }
 
-/** A player over the controlled clock: the set's owner answers `clip`, and the torus takes every strike (its answer from `answer`). */
-const harness = ({clip = REAL, answer = () => ({ok: true}), random = () => 0} = {}) => {
+/** The owner's audio clock as the frame answers it: the embedded policy's lookahead and block (controller.ts EMBEDDED_NATIVE_PLAYBACK). */
+const CLOCK = {samples_elapsed: '480000', sample_rate: 48000, lookahead_seconds: 0.5, block_frames: 8192}
+/** The clip's first beat: one owner lookahead past the sound the owner had rendered when Play read its clock. */
+const ANCHOR = 480000 + 24000
+/** How late a wake may be and still land its note: the lookahead less the block the owner may render meanwhile. */
+const SLACK = 0.5 - 8192 / 48000
+const sampleAt = seconds => String(ANCHOR + Math.round(seconds * 48000))
+
+/** A player over the controlled clock: the set's owner answers `clip`, the owner's audio clock `audio` (or its refusal), and the torus
+ * takes every strike (its answer from `answer`). */
+const harness = ({clip = REAL, answer = () => ({ok: true}), random = () => 0, audio = () => CLOCK} = {}) => {
   const clock = controlledClock()
-  const sent = [], watchers = new Set()
+  const sent = [], watchers = new Set(), reads = []
   let reading = clip
   const owners = {
     read: async address => { assert.deepEqual(address, ADDRESS, 'the clip is read from the place the selection names'); return reading },
+    clock: async () => { reads.push(clock.now()); return audio() },
     strike: async command => { sent.push({at: clock.now(), command}); return answer(command) },
     watch: (_address, changed) => { watchers.add(changed); return () => watchers.delete(changed) },
     now: clock.now, later: clock.later, cancel: clock.cancel, random,
   }
   const p = player.createClipPlayer(owners)
-  return {p, clock, sent, watchers, set: next => { reading = next; for (const changed of [...watchers]) changed() }}
+  return {p, clock, sent, reads, watchers, set: next => { reading = next; for (const changed of [...watchers]) changed() }}
 }
 
 // ---------------------------------------------------------------------------------------------------- the clip's plan, from its owner
@@ -168,19 +182,21 @@ test('a clip with nothing to play is refused in words, before anything is struck
 
 // ---------------------------------------------------------------------------------------------------- the player, in time
 
-test('Play strikes each note-on at its own moment, measured from the press at the set\'s tempo, and the clip ends at its end', async () => {
-  const {p, clock, sent} = harness()
+test('Play anchors the clip one owner lookahead past its rendered sound and strikes each note-on at its own sample, one lookahead ahead', async () => {
+  const {p, clock, sent, reads} = harness()
   const pressed = clock.now()
   p.play(ADDRESS, REAL_BPM)
   await clock.settle()
   assert.equal(p.state().playing?.name, 'LABS 10')
-  assert.equal(sent.length, 0, 'nothing strikes before its moment')
+  assert.deepEqual(reads, [pressed], 'the owner\'s audio clock is read once, at the press')
   const beat = 60 / REAL_BPM
   await clock.run(pressed + 600)
   assert.equal(sent.length, realNoteOns.length, 'every note-on was struck')
   realNoteOns.forEach((note, i) => {
-    assert.ok(Math.abs(sent[i].at - (pressed + (note.at - REAL.start) * beat)) < 1e-9, `note ${i} strikes at its own moment`)
-    assert.deepEqual(sent[i].command, {command: 'janko', action: 'play', pitch_classes: [note.p % 12], amplitude: note.vel / 127})
+    const offset = (note.at - REAL.start) * beat
+    assert.ok(Math.abs(sent[i].at - (pressed + offset)) < 1e-9, `note ${i} is sent one lookahead before the owner reaches it`)
+    assert.deepEqual(sent[i].command, {command: 'janko', action: 'play', pitch_classes: [note.p % 12], amplitude: note.vel / 127,
+      at_samples_elapsed: sampleAt(offset)}, `note ${i} lands at its own sample`)
   })
   assert.equal(p.state().playing, null, 'the clip played to its end and stopped')
   assert.equal(clock.pending(), 0, 'no timer is left behind')
@@ -201,24 +217,25 @@ test('Stop ends it: nothing more strikes, and no timer is left', async () => {
   assert.equal(sent.length, 3, 'nothing strikes after Stop')
 })
 
-test('a looped clip strikes its loop again and again, each pass after the last, and takes an edit at the next pass', async () => {
+test('a looped clip strikes its loop again and again, each pass at its own samples, and takes an edit at the next pass', async () => {
   const {p, clock, sent, set} = harness({clip: looped()})
   const pressed = clock.now(), beat = 60 / 120
   p.play(ADDRESS, 120)
   await clock.settle()
-  // Pass 1: 6 → 8 (2 beats). Pass 2 from beat 2 after the press: 4 → 8. Pass 3 from beat 6.
+  // Pass 1: 6 → 8 (2 beats). Pass 2 from beat 2 after the anchor: 4 → 8. Pass 3 from beat 6.
   await clock.run(pressed + 6 * beat - 1e-6)
-  assert.deepEqual(sent.map(s => [Math.round((s.at - pressed) / beat * 1e6) / 1e6, s.command.pitch_classes]), [[0, [7]], [2, [0, 4]], [4, [7]]])
+  assert.deepEqual(sent.map(s => [s.command.at_samples_elapsed, s.command.pitch_classes]),
+    [[sampleAt(0), [7]], [sampleAt(2 * beat), [0, 4]], [sampleAt(4 * beat), [7]]])
   set(looped({notes: [{id: 9, p: 62, at: 5, len: 1, vel: 127, chance: 1, on: true}]}))
   await clock.settle()
   await clock.run(pressed + 10 * beat - 1e-6)
-  assert.deepEqual(sent.slice(3).map(s => [Math.round((s.at - pressed) / beat * 1e6) / 1e6, s.command.pitch_classes]), [[7, [2]]],
+  assert.deepEqual(sent.slice(3).map(s => [s.command.at_samples_elapsed, s.command.pitch_classes]), [[sampleAt(7 * beat), [2]]],
     'the edited loop plays from the next pass')
   assert.equal(p.state().playing?.name, 'Riff', 'a looped clip plays on until Stop')
   p.stop()
 })
 
-test('a late wake strikes the note late, but a stall never bursts its backlog: a note-on too late is missed and counted', async () => {
+test('a late wake never moves a note: it lands at its own sample; a stall past the owner\'s slack lets a note go and counts it', async () => {
   // The looped clip at 120 BPM strikes once a second: pass 1 at 0 s; then each loop pass of 2 s strikes at its start and 1 s in.
   const {p, clock, sent} = harness({clip: looped()})
   const pressed = clock.now()
@@ -226,18 +243,38 @@ test('a late wake strikes the note late, but a stall never bursts its backlog: a
   await clock.settle()
   await clock.run(pressed + 0.5, 0.05)
   assert.equal(sent.length, 1, 'a wake 50 ms late still strikes')
-  assert.ok(Math.abs(sent[0].at - (pressed + 0.05)) < 1e-9, 'late by the wake, never early')
+  assert.ok(Math.abs(sent[0].at - (pressed + 0.05)) < 1e-9, 'sent late by the wake')
+  assert.equal(sent[0].command.at_samples_elapsed, sampleAt(0), 'and still lands at its own sample')
+  await clock.run(pressed + 1.5, SLACK - 0.01)
+  assert.equal(sent.length, 2, 'a wake just inside the owner\'s slack still lands')
+  assert.equal(sent[1].command.at_samples_elapsed, sampleAt(1))
   assert.equal(p.state().missed, 0)
-  // The thread stalls for five seconds: the strikes due at 1, 2, 3, 4 and 5 s are past when it wakes at 5.5 s.
+  // The thread stalls: the strikes due at 2, 3, 4 and 5 s are past the owner's slack when it wakes at 5.5 s.
   clock.stall(pressed + 5.5)
   await clock.run(pressed + 5.5)
-  assert.equal(sent.length, 1, 'the backlog is not struck at once')
-  assert.equal(p.state().missed, 5, 'every note-on the stall passed is counted as missed')
-  assert.ok(player.CLIP_MISSED_AFTER_SECONDS < 0.5, 'the 5 s strike, half a second late at the wake, is missed too')
+  assert.equal(sent.length, 2, 'the backlog is not struck at once')
+  assert.equal(p.state().missed, 4, 'every note-on the stall passed is counted as missed')
   await clock.run(pressed + 6.5)
-  assert.equal(sent.length, 2, 'the clip keeps its own time after a stall')
-  assert.ok(Math.abs(sent[1].at - (pressed + 6)) < 1e-9, 'the next note-on strikes at its own moment')
+  assert.equal(sent.length, 3, 'the clip keeps its own time after a stall')
+  assert.ok(Math.abs(sent[2].at - (pressed + 6)) < 1e-9)
+  assert.equal(sent[2].command.at_samples_elapsed, sampleAt(6), 'the next note-on lands at its own sample')
   p.stop()
+})
+
+test('Play refuses in words when the owner\'s audio clock cannot be read or leaves no time to schedule ahead', async () => {
+  for (const [audio, words] of [
+    [() => { throw new Error('The field is not running: resume it, then play') }, /audio clock: The field is not running/],
+    [() => ({...CLOCK, lookahead_seconds: 8192 / 48000}), /no time to strike ahead/],
+  ]) {
+    const {p, clock, sent} = harness({audio})
+    p.play(ADDRESS, REAL_BPM)
+    await clock.settle()
+    await clock.run(clock.now() + 600)
+    assert.equal(p.state().playing, null)
+    assert.match(p.state().fault, words)
+    assert.equal(sent.length, 0, 'nothing strikes without the owner\'s clock')
+    assert.equal(clock.pending(), 0)
+  }
 })
 
 test('a note with a chance sounds as often as its chance says, by the player\'s own draw', async () => {
@@ -250,6 +287,7 @@ test('a note with a chance sounds as often as its chance says, by the player\'s 
   await clock.settle()
   await clock.run(clock.now() + 10)
   assert.deepEqual(sent.map(s => s.command.pitch_classes), [[4], [7]], 'the first chance missed its draw, the second made it')
+  assert.deepEqual(sent.map(s => s.command.at_samples_elapsed), [sampleAt(0), sampleAt(0.5)])
 })
 
 test('the torus\'s refusal is named and the clip keeps its time; a clip the owner cannot read never starts', async () => {
@@ -285,14 +323,16 @@ const openController = async () => {
         return {pitch_class, voices: [{mode_ref: `scene:planet/${voice.planet_ref}`, planet_ref: voice.planet_ref}]}
       })}}
     }
+    /** Each strike as the owner took it: its act, and the sample cursor it lands at (none: at the owner's cursor). */
     async request(request) {
       const command = request.request?.command
       if (command?.operation !== 'strike' && command?.operation !== 'strike-at') return super.request(request)
       const read = structuredClone(request)
       read.request.command = {operation: 'read'}
       const reply = await super.request(read)
-      if (command.operation === 'strike') this.strikes.push(structuredClone(command.strikes))
-      else this.strikesAt.push(structuredClone(command.points))
+      const took = {cursor: this.frame.samples_elapsed, at: command.at_samples_elapsed}
+      if (command.operation === 'strike') this.strikes.push({...took, act: structuredClone(command.strikes)})
+      else this.strikesAt.push({...took, act: structuredClone(command.points)})
       this.bump(1n)
       reply.field = structuredClone(this.frame)
       reply.field.audio = []
@@ -305,13 +345,17 @@ const openController = async () => {
     releaseRetainedField() {}, onRetainedRecoveryRequired: () => () => {}, checkpointRetainedField() { return {receipt: {}}; }, restoreRetainedField() {}}
   const owner = new Owner(), audio = new ControlledAudio(), c = new NativeFieldController(owner, renderer, () => audio)
   await c.compose({sky: 'none'})
+  // The session pumps the owner's sound ahead on its own timer; wait for its first block, so the owner's cursor stands past zero.
+  for (let i = 0; i < 400 && c.reading.native?.acknowledged?.samples_elapsed === '0'; i++) await new Promise(resolve => setTimeout(resolve, 5))
+  assert.notEqual(c.reading.native?.acknowledged?.samples_elapsed, '0', 'the owner has rendered sound ahead')
   return {owner, c}
 }
 
 /** The stage channel as the candidate runs it: the host posts the exact message (stageRequestMessage), the frame reads it
- * (readStageRequest) and runs its own case — `janko` through nativeField.ts playJanko, `strike-at` through controller.playAt. */
+ * (readStageRequest) and runs its own case — `janko` through nativeField.ts playJanko, `strike-at` through controller.playAt, and
+ * `audio-clock` as the controller's audioClock — and answers with stageReplyMessage, which the host reads back (readStageResult). */
 const frameChannel = async c => {
-  const {stageRequestMessage, readStageRequest} = await stage()
+  const {stageRequestMessage, readStageRequest, stageReplyMessage, readStageResult} = await stage()
   const {planJankoStrike} = await janko()
   let req = 0
   const pending = []
@@ -320,59 +364,103 @@ const frameChannel = async c => {
     assert.ok(message, `the host posts ${JSON.stringify(command)}`)
     const read = readStageRequest(message)
     assert.deepEqual(read, {req, command}, 'the frame reads the command the player sent, exactly')
+    const at = read.command.at_samples_elapsed
+    let clock
     if (read.command.command === 'janko') {
       const plan = planJankoStrike(c.reading.instrument?.influence?.played_addresses, read.command.pitch_classes)
       if (plan.refusal) throw new Error(plan.refusal)
-      await c.playVoices(plan.refs, read.command.amplitude)
-    } else if (read.command.command === 'strike-at') await c.playAt(read.command.points, read.command.amplitude)
+      await c.playVoices(plan.refs, read.command.amplitude, at)
+    } else if (read.command.command === 'strike-at') await c.playAt(read.command.points, read.command.amplitude, at)
+    else if (read.command.command === 'audio-clock') clock = c.audioClock()
     else throw new Error(`not a strike: ${read.command.command}`)
-    return {ok: true}
+    const {req: answered, ...result} = readStageResult(stageReplyMessage(req, clock ? {ok: true, clock} : {ok: true}, read.command))
+    assert.equal(answered, req)
+    return result
   }
   return {strike: command => { const done = run(command); pending.push(done); return done }, settled: () => Promise.all(pending)}
 }
 
-test('each note-on of the real clip reaches the owner: its key\'s voices, struck at its velocity over 127, in the clip\'s order', async () => {
+test('the owner\'s audio clock is the frame\'s own: where its rendered sound stands, its rate, its lookahead and its block', async () => {
+  const {c} = await openController()
+  try {
+    const native = c.reading.native, policy = c.reading.playback_policy
+    assert.deepEqual(c.audioClock(), {samples_elapsed: native.acknowledged.samples_elapsed, sample_rate: 48000,
+      lookahead_seconds: policy.lookaheadSeconds, block_frames: policy.blockFrames})
+    const channel = await frameChannel(c)
+    assert.deepEqual(await player.readAudioClock(channel.strike), c.audioClock(), 'the player reads it through the stage channel')
+  } finally { await c.dispose() }
+  const {NativeFieldController} = await controller()
+  const closed = new NativeFieldController({request: async () => { throw new Error('no owner') }}, {}, () => { throw new Error('no audio') })
+  assert.throws(() => closed.audioClock(), /Open the live instrument first/)
+})
+
+test('each note-on of the real clip reaches the owner at its own sample: its key\'s voices, at its velocity over 127, in the clip\'s order', async () => {
   const {owner, c} = await openController()
   try {
     const channel = await frameChannel(c)
     const clock = controlledClock()
+    const clocks = []
     const p = player.createClipPlayer({read: async () => REAL, strike: channel.strike, watch: () => () => {}, now: clock.now, later: clock.later,
-      cancel: clock.cancel, random: () => 0})
+      cancel: clock.cancel, random: () => 0, clock: async () => { const read = await player.readAudioClock(channel.strike); clocks.push(read); return read }})
+    const pressed = clock.now()
     p.play(ADDRESS, REAL_BPM)
-    await clock.settle()
-    await clock.run(clock.now() + 600)
+    await new Promise(resolve => setTimeout(resolve, 20))
+    await clock.run(pressed + 600)
     await channel.settled()
+    assert.equal(clocks.length, 1)
+    const {samples_elapsed, sample_rate, lookahead_seconds} = clocks[0]
+    const anchor = BigInt(samples_elapsed) + BigInt(Math.round(lookahead_seconds * sample_rate)), beat = 60 / REAL_BPM
     const voices = c.reading.instrument.influence.voices
     const refOf = pc => `scene:planet/${voices[pc % voices.length].planet_ref}`
-    assert.deepEqual(owner.strikes, realNoteOns.map(note => [{mode_ref: refOf(note.p % 12), amplitude: [note.vel / 127, 0]}]),
-      'one owner strike per note-on, on the voice the owner names for its key')
+    assert.deepEqual(owner.strikes.map(({at, act}) => ({at, act})), realNoteOns.map(note => ({
+      at: String(anchor + BigInt(Math.round((note.at - REAL.start) * beat * sample_rate))),
+      act: [{mode_ref: refOf(note.p % 12), amplitude: [note.vel / 127, 0]}]})),
+      'one owner strike per note-on, on the voice the owner names for its key, at its own sample')
+    for (const {at, cursor} of owner.strikes) assert.ok(BigInt(at) > BigInt(cursor), `the strike at ${at} reached the owner ahead of its cursor ${cursor}`)
     assert.equal(c.reading.instrument.played.strikes, realNoteOns.length)
     assert.equal(c.reading.instrument.struck.source, 'note', 'the plate follows the voices the clip struck')
     assert.deepEqual(c.reading.instrument.struck.refs, [refOf(realNoteOns.at(-1).p % 12)])
   } finally { await c.dispose() }
 })
 
-test('a strike at points reaches the owner through the frame: the points and the amplitude the command names, as one act', async () => {
+test('a strike at points reaches the owner through the frame with its sample: the points, the amplitude and the cursor the command names', async () => {
   const {owner, c} = await openController()
   try {
     const channel = await frameChannel(c)
     const points = [{theta: 0.5, phi: 1.25}, {theta: 2, phi: 6.2}]
+    const at = String(BigInt(c.audioClock().samples_elapsed) + 4800n)
+    assert.deepEqual(await channel.strike({command: 'strike-at', points, amplitude: 0.4, at_samples_elapsed: at}), {ok: true})
     await channel.strike({command: 'strike-at', points, amplitude: 0.4})
-    assert.deepEqual(owner.strikesAt, [points.map(point => ({...point, amplitude: [0.4, 0]}))])
+    assert.deepEqual(owner.strikesAt.map(({at, act}) => ({at, act})), [{at, act: points.map(point => ({...point, amplitude: [0.4, 0]}))},
+      {at: undefined, act: points.map(point => ({...point, amplitude: [0.4, 0]}))}], 'a strike with no cursor lands at the owner\'s own')
     assert.equal(c.reading.instrument.struck.source, 'point')
     assert.deepEqual(c.reading.instrument.struck.points, points)
   } finally { await c.dispose() }
 })
 
-test('the frame runs each strike through the native field: janko through playJanko, strike-at through the controller\'s playAt', () => {
+test('a sample behind the owner\'s cursor is sound already rendered: the owner\'s own session refuses it before any exchange', async () => {
+  const {owner, c} = await openController()
+  try {
+    const behind = String(BigInt(c.audioClock().samples_elapsed) - 1n)
+    await assert.rejects(c.playAt([{theta: 1, phi: 1}], 0.4, behind), /already rendered/)
+    await assert.rejects(c.playVoices([`scene:planet/${c.reading.instrument.influence.voices[0].planet_ref}`], 0.4, behind), /already rendered/)
+    assert.deepEqual([owner.strikes.length, owner.strikesAt.length], [0, 0], 'nothing reached the owner')
+    assert.equal(c.reading.status, 'following', 'a refused note leaves the field running')
+  } finally { await c.dispose() }
+})
+
+test('the frame runs each strike through the native field with its sample, and answers the audio clock from its controller', () => {
   const app = readFileSync(join(journeys, 'src/app.ts'), 'utf8')
   const run = app.slice(app.indexOf('async function runStageCommand('), app.indexOf('async function answerStageCommand('))
-  assert.match(run, /case 'janko':[\s\S]*?await nativeField\.playJanko\(command\.pitch_classes,command\.amplitude\);/)
-  assert.match(run, /case 'strike-at':[\s\S]*?await nativeField\.controller\.playAt\(command\.points,command\.amplitude\);/)
+  assert.match(run, /case 'janko':[\s\S]*?await nativeField\.playJanko\(command\.pitch_classes,command\.amplitude,command\.at_samples_elapsed\);/)
+  assert.match(run, /case 'strike-at':[\s\S]*?await nativeField\.controller\.playAt\(command\.points,command\.amplitude,command\.at_samples_elapsed\);/)
+  assert.match(run, /case 'audio-clock':[\s\S]*?return \{ok:true,clock:nativeField\.controller\.audioClock\(\)\};/)
+  const answer = app.slice(app.indexOf('async function answerStageCommand('), app.indexOf('function openStudioSection('))
+  assert.match(answer, /const answer=await runStageCommand\(command\);window\.parent\.postMessage\(stageReplyMessage\(req,answer,command\),'\*'\);/)
   const nativeField = readFileSync(join(journeys, 'src/nativeField.ts'), 'utf8')
   const body = nativeField.slice(nativeField.indexOf('const playJanko='), nativeField.indexOf('const touch=('))
   assert.match(body, /planJankoStrike\(reading\.instrument\?\.influence\?\.played_addresses,pitchClasses\)/)
-  assert.match(body, /await controller\.playVoices\(plan\.refs,amplitude\)/)
+  assert.match(body, /await controller\.playVoices\(plan\.refs,amplitude,at\)/)
 })
 
 // ---------------------------------------------------------------------------------------------------- Live's transport

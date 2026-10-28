@@ -11,6 +11,9 @@ import {RecoveryAdmission, type RecoveryBinding} from './recoveryBinding.ts';
 import {onSharedTimeWindowChange, SHARED_TIME_NUDGE, type DisclosureSessionStore} from '../../../desktop/cradle/src/techne/session.ts';
 /** A stage control that the frame never answers settles as a refusal, never a hang. */
 const STAGE_TIMEOUT_MS = 60000;
+/** The stage commands the owner takes while the frame is concealed: the Live instrument's edits, the Jankó's chords, a strike at points and the
+ * owner's audio clock. */
+const CONCEALED_STAGE_COMMANDS: ReadonlySet<StageCommand['command']> = new Set(['instrument', 'janko', 'strike-at', 'audio-clock']);
 /** An Expression open waiting for the frame's readiness, with the settle of its answer. */
 interface PendingExpressionOpen {ref: string; refresh: boolean; lens?: HostedTechneLens; recovery?: RecoveryBinding; settle: (result: StageResult) => void}
 const SUPERSEDED_OPEN = 'A newer open superseded this one before the Expressions application was ready';
@@ -224,7 +227,7 @@ export class ExpressionsHost {
       const stage = readStageResult(data), pending = stage ? this.pendingStage.get(stage.req) : undefined;
       if (stage && pending && pending.epoch === this.epoch) {
         clearTimeout(pending.timer); this.pendingStage.delete(stage.req);
-        pending.settle(stage.ok ? {ok: true} : {ok: false, error: stage.error});
+        pending.settle(stage.ok ? (stage.clock ? {ok: true, clock: stage.clock} : {ok: true}) : {ok: false, error: stage.error});
       }
       if (kind === 'host-capture-result' || stage) return;
     }
@@ -434,10 +437,10 @@ export class ExpressionsHost {
   stageCommand(command: StageCommand): Promise<StageResult> {
     if (!this.alive) throw Error('The hosted application was disposed');
     if (!this.ready) throw Error('The Expressions application has not reported its state yet');
-    // The Live instrument's edits, the Jankó keyboard's chords and a strike at points of the torus (a clip's note, the M3 clock) reach the
-    // owner while the frame is concealed (as a DAW's knobs and keys stay live under the arrangement). Every other stage command keeps the
-    // presented gate.
-    if (!this.presented() && command.command !== 'instrument' && command.command !== 'janko' && command.command !== 'strike-at') throw Error('The requested application is concealed');
+    // The Live instrument's edits, the Jankó keyboard's chords, a strike at points of the torus (a clip's note, the M3 clock) and the owner's
+    // audio clock a player schedules those strikes on (O-I #809) reach the owner while the frame is concealed (as a DAW's knobs and keys
+    // stay live under the arrangement). Every other stage command keeps the presented gate.
+    if (!this.presented() && !CONCEALED_STAGE_COMMANDS.has(command.command)) throw Error('The requested application is concealed');
     const req = ++this.stageRequests;
     const message = stageRequestMessage(req, command);
     if (!message) throw Error('Unknown Expressions stage command');

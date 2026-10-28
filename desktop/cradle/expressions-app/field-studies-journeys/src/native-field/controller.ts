@@ -9,6 +9,7 @@ import {editEffectChain,editEffects,initialEffects,type EffectValue,type Effects
 import {PresentationEffects} from './presentationEffects';
 import {voiceModeRef} from './torusPlay.mjs';
 import {conditionReadingOf} from '../instrumentCondition';
+import type {StageAudioClock} from '../stageCommands';
 export interface NativeRenderer {
  retainedTargetPort():any;releaseRetainedField():void;
  retainedTopology?():{tex_width:number;tex_height:number;particle_count:number;slot_count:number}|null;
@@ -415,11 +416,23 @@ export class NativeFieldController {
   try{if(this.event)editSceneEvent(this.event,edit);}catch(error){if(this.session)this.refusal={operation:label,reason:String(error instanceof Error?error.message:error),at:Date.now()};this.changed();return Promise.reject(error);}
   return this.determinant(label,()=>({operation:'replace-event',event:editSceneEvent(this.event,edit),strike:this.influenceReading?.material?.strike_on_event!==false}),true);
  }
+ /** The owner's audio clock (O-I #809), for a player that schedules ahead on it: the sample cursor the owner's rendered sound stands at
+  * (the session's acknowledged samples_elapsed), the field's sample rate, and the playback policy's lookahead and block. A strike at a
+  * later sample lands there; one at or before this cursor is already rendered. Refused while no scene owner follows. */
+ audioClock():StageAudioClock{
+  const session=this.session;
+  if(!session||!this.scene||!this.opened)throw new Error('Open the live instrument first: the audio clock belongs to a scene owner');
+  if(this.status!=='following'||this.suspension)throw new Error('The field is not running: resume it, then play');
+  return {samples_elapsed:session.reading.acknowledged.samples_elapsed,sample_rate:this.opened.receipt.field.sample_rate,
+   lookahead_seconds:this.playback.lookaheadSeconds,block_frames:this.playback.blockFrames};
+ }
  /** A played note: strike the named scene voices (native mode references taken from the
-  * owner's own `played_addresses`) now. A performance act, not a determinant: no hold, no
-  * source or influence re-read, and the struck body's sound queues behind sound already
-  * scheduled — so the latency is the presentation lookahead, reported, never hidden. */
- playVoices(modeRefs:string[],amplitude=0.35){
+  * owner's own `played_addresses`) now, or at `at` — the owner's sample cursor the note lands at
+  * (O-I #809; InstrumentSession.strike), so a player scheduling ahead on the audio clock places
+  * each note at its sample. A performance act, not a determinant: no hold, no source or
+  * influence re-read. Struck now, the body's sound queues behind sound already scheduled — the
+  * latency is the presentation lookahead, reported, never hidden. */
+ playVoices(modeRefs:string[],amplitude=0.35,at?:string){
   const session=this.session;
   if(!session||!this.scene)return Promise.reject(new Error('Open the live instrument first: a played strike belongs to a scene owner'));
   if(!Array.isArray(modeRefs)||modeRefs.length<1||modeRefs.length>64||modeRefs.some(r=>typeof r!=='string'||!r))return Promise.reject(new Error('a played strike names 1..64 voices'));
@@ -430,7 +443,7 @@ export class NativeFieldController {
    if(!(await this.waitIdle(session,2000)))throw new Error('native owner busy; the note was not sent');
    if(this.status!=='following'||this.suspension||!this.current(session))throw new Error('instrument held before the note was sent');
    const sent=performance.now();
-   try{await session.strike(acts);}
+   try{await session.strike(acts,at===undefined?{}:{at_samples_elapsed:at});}
    catch(error){this.refused('played strike',error,session);throw error;}
    this.refusal=null;this.played={at:Date.now(),strikes:(this.played?.strikes??0)+1,last_ms:performance.now()-sent};this.struck={at:Date.now(),source:'note',refs:[...modeRefs]};this.changed();
   });
@@ -439,8 +452,9 @@ export class NativeFieldController {
   * torus's own angles, theta the tube and phi the ring, on the sheet [0, 2π), struck now at the same impulse. A chord is several points
   * in one act. The owner excites every standing voice by its own shape at each point (QL scene_field.rs ShapeBasis::strike_at), so the
   * torus plays every voice it tunes. A performance act like playVoices: no hold, no re-read, and the struck body sounds behind sound
-  * already scheduled. A point off the sheet is refused here, before the owner sees it, as InstrumentSession.strikeAt refuses it. */
- playAt(points:{theta:number;phi:number}[],amplitude=0.35){
+  * already scheduled, or lands at `at`, the owner's sample cursor, as playVoices does. A point off the sheet is refused here, before the
+  * owner sees it, as InstrumentSession.strikeAt refuses it. */
+ playAt(points:{theta:number;phi:number}[],amplitude=0.35,at?:string){
   const session=this.session;
   if(!session||!this.scene)return Promise.reject(new Error('Open the live instrument first: a played strike belongs to a scene owner'));
   if(!Array.isArray(points)||points.length<1||points.length>64)return Promise.reject(new Error('a strike at points names 1..64 points of the torus'));
@@ -454,7 +468,7 @@ export class NativeFieldController {
    if(!(await this.waitIdle(session,2000)))throw new Error('native owner busy; the strike was not sent');
    if(this.status!=='following'||this.suspension||!this.current(session))throw new Error('instrument held before the strike was sent');
    const sent=performance.now();
-   try{await session.strikeAt(acts);}
+   try{await session.strikeAt(acts,at===undefined?{}:{at_samples_elapsed:at});}
    catch(error){this.refused('strike at a point',error,session);throw error;}
    const refs=(Array.isArray(this.influenceReading?.voices)?this.influenceReading.voices:[]).map((v:any)=>v?.planet_ref).filter((r:unknown):r is string=>typeof r==='string').map(voiceModeRef);
    this.refusal=null;this.played={at:Date.now(),strikes:(this.played?.strikes??0)+1,last_ms:performance.now()-sent};this.struck={at:Date.now(),source:'point',refs,points:struck};this.changed();

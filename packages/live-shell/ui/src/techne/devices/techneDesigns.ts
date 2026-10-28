@@ -10,13 +10,19 @@
 // `views`): an instrument stands on a chain and full in a pane and keeps a tile; an effect stands on a chain, and the manual gives the Lens
 // a Full and a Widget too (§17.11 Views). The 22 Oct manual rewrite retired the Timeline and Light as devices of their own: the timeline is
 // Technē's Arrangement view (§17.5), and Light is the Canvas's Light page (§17.4), carried by the Canvas's binding (canvasCarryingLight).
-import {useEffect, useMemo, useSyncExternalStore} from 'react'
+import {useEffect, useMemo, useReducer, useState, useSyncExternalStore} from 'react'
 import type {DesignBinding} from '../../frame/devices/designed'
 import type {DeviceInstance} from '../../frame/devices/deviceRuntime'
 import type {InhabitantFaceDeclaration} from '../../inhabitants/manifest'
 import type {IconName} from '../../inhabitants/sdk/icons'
 import type {KnowledgeGraphSurface} from '../../../../../../desktop/cradle/src/knowledge/knowledgeGraphHandle'
 import {disclosureSession} from '../../../../../../desktop/cradle/src/techne/session'
+import {detectTransport} from '../../../../../../desktop/cradle/src/kernel/bridge'
+import {useOptionalContinuity} from '../../continuity/workspace'
+import {readFilesLeg, readNowLeg} from '../../central/devices/groundDevices'
+import {useReceiptsMove} from '../../central/devices/useCentralReadings'
+import {receiptMovesNow} from '../../owners/notices'
+import type {ImpactSubject} from '../../inhabitants/centralImpactModel'
 import {useHostedChrome} from '../../projections/expressionsPaneHost'
 import {palaceState, subscribePalace} from '../../projections/atlas/palaces/palaceSession'
 import {readPalaces, usePalaces} from '../../projections/atlas/palaces/palacesWorld'
@@ -27,7 +33,7 @@ import {setFilters} from '../../inhabitants/knowledgeGraphFaceActions'
 import {CANVAS_DESIGN, GRAPH_DESIGN, JOURNEY_DESIGN, LENS_DESIGN, PALACE_DESIGN, designDevice, heldFor, useHolds} from './designDevices'
 import {SESSION_ACTS, palaceBinding, type PalaceWorld} from './palaceBinding'
 import {canvasBinding, journeyBinding, type FrameReadings} from './frameBindings'
-import {graphBinding, surfaceRead, GRAPH_READ_NODES, type GraphWrites} from './graphBinding'
+import {graphBinding, readGraphReach, surfaceRead, GRAPH_READ_NODES, type GraphReach, type GraphWrites} from './graphBinding'
 import {useGraphRead} from './graphRead'
 import {canvasCarryingLight, lensBinding, lightBinding} from './effectBindings'
 import {useLivingPlan} from './livingPlan'
@@ -90,8 +96,34 @@ const GRAPH_WRITES: GraphWrites = {setter: writeThroughOwner, patch: setFilters}
 /** Light's binding, carried as the Canvas's Light page (§17.4). */
 const LIGHT = lightBinding()
 
+/** The selections the graph's reach reads (§17.3 "Select a folder, a note or a Day"): the book's one selection, as the browser's Days and
+ * Files rows set it (App.tsx centralSubject: its ref is the subject's Central-relative path). */
+const REACH_KINDS: ReadonlySet<string> = new Set(['folder', 'note', 'day'])
+
+/** What the browser's selected folder, note or Day reaches, read through Impact's legs (graphBinding.ts readGraphReach over groundDevices.ts
+ * readFilesLeg and readNowLeg, through the kernel) when the selection changes, and its sessions again on a NOW receipt, as Impact read
+ * them; only while the Knowledge graph stands on the rack (`active`). Null with nothing selected. */
+function useGraphReach(active: boolean): GraphReach | null {
+  const selection = useOptionalContinuity()?.current.context?.selection
+  const kind = selection && REACH_KINDS.has(selection.kind) ? selection.kind as ImpactSubject['kind'] : null
+  const path = kind ? selection?.ref ?? null : null
+  const [reach, setReach] = useState<GraphReach | null>(null)
+  const [moved, moveAgain] = useReducer((count: number) => count + 1, 0)
+  useReceiptsMove(receiptMovesNow, moveAgain)
+  useEffect(() => {
+    if (!active || !kind || !path) { setReach(null); return }
+    const subject: ImpactSubject = {kind, path}
+    let alive = true
+    setReach(was => ({...(was && was.subject.kind === kind && was.subject.path === path ? was : {subject}), reading: true}))
+    const transport = detectTransport()
+    void readGraphReach(subject, {files: at => readFilesLeg(transport, at), now: () => readNowLeg(transport)}).then(read => { if (alive) setReach(read) })
+    return () => { alive = false }
+  }, [active, kind, path, moved])
+  return reach
+}
+
 /** The bindings of the designs, each on its owner, read where they stand. The kernel's graph is read only while the Knowledge graph
- * stands on the rack (`graph`). */
+ * stands on the rack (`graph`), and so is what the browser's selection reaches. */
 export function useTechneDesignBindings({graph, surface}: {graph: boolean; surface: KnowledgeGraphSurface | null}): Readonly<Record<string, DesignBinding>> {
   const palace = useSyncExternalStore(subscribePalace, palaceState, palaceState)
   // The Palace's world (its Enter page and its places as doors out): the world's palaces, read once as the Palace plate reads them
@@ -113,6 +145,8 @@ export function useTechneDesignBindings({graph, surface}: {graph: boolean; surfa
   const plan = useLivingPlan(holds[GRAPH_DESIGN])
   // The Lens: QL's lens registry, frames and provider operations, read once (lensRegistry.ts).
   const lensLists = useLensRegistry()
+  // The graph's reach: what the browser's selected folder, note or Day reaches, through Impact's legs.
+  const reach = useGraphReach(graph)
   return useMemo(() => {
     const frame: FrameReadings = {state: hosted?.state ?? null, run: hosted?.run ?? null,
       window: session ? session.time_window ? {from: session.time_window.from, to: session.time_window.to} : null : undefined}
@@ -121,7 +155,7 @@ export function useTechneDesignBindings({graph, surface}: {graph: boolean; surfa
       [CANVAS_DESIGN]: canvasCarryingLight(canvasBinding(frame, heldFor(CANVAS_DESIGN)), LIGHT),
       [JOURNEY_DESIGN]: journeyBinding(frame),
       [LENS_DESIGN]: lensBinding(lensLists, heldFor(LENS_DESIGN)),
-      [GRAPH_DESIGN]: graphBinding(surface, read, GRAPH_WRITES, heldFor(GRAPH_DESIGN), plan),
+      [GRAPH_DESIGN]: graphBinding(surface, read, GRAPH_WRITES, heldFor(GRAPH_DESIGN), plan, reach),
     }
-  }, [palace, palaceWorld, holds, hosted, session, read, surface, plan, lensLists])
+  }, [palace, palaceWorld, holds, hosted, session, read, surface, plan, lensLists, reach])
 }

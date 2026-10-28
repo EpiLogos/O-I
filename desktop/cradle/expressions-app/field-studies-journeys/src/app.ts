@@ -60,7 +60,7 @@ import {inspectorHTML,InspectorContext} from './inspector.js';
 import {sourceVisual,describeAnalysis} from './sourcePreview.js';
 import {isStudioSection,studioPlacement,type StudioSection} from './studioSections.js';
 import {LiveOverrides} from './liveOverrides.js';
-import {STAGE_COMMANDS,readStageRequest,stageReplyMessage,stageRefusal,type StageCommand,type StageCaptureSettings} from './stageCommands.js';import {installPresentedChrome,frameChromeRegions,type PresentedChrome} from './presentedChrome.js';
+import {STAGE_COMMANDS,readStageRequest,stageReplyMessage,stageRefusal,type StageCommand,type StageCaptureSettings,type StageResult} from './stageCommands.js';import {installPresentedChrome,frameChromeRegions,type PresentedChrome} from './presentedChrome.js';
 import {DEFAULT_SOURCE_THRESHOLD} from '../../src/engine/sourceSampling';
 import {PARAMETERS,parameter} from './registry.js';
 import {evaluateParameters,phases,sequenceAt,focusAt,arrange,reorderFocus} from './timeline.js';
@@ -2302,7 +2302,7 @@ function journeyEdge(edit:EdgeEdit){
  if(JSON.stringify(probe.find(v=>v.id===write.sceneId))===JSON.stringify(store.document.scenes.find(v=>v.id===write.sceneId)))return;
  changed(()=>applyTimelineMove(store.document,list=>applyEdgeWrite(list,write)),true,label);
 }
-async function runStageCommand(command:StageCommand){
+async function runStageCommand(command:StageCommand):Promise<StageResult>{
  const body=document.body;
  switch(command.command){
   case 'view':await action(command.action,body);break;
@@ -2314,14 +2314,20 @@ async function runStageCommand(command:StageCommand){
   /* T-FRAME-CHROME-ONTO-PLATES: the shell's declaration of how it presents this frame (the chrome stands down or returns, nothing else moves), and one control of the chrome pressed from a device: the frame's own control, through its own handler (presentedChrome.ts). */case 'presentation':if(!presentedChrome)throw new Error('This application has not drawn its chrome yet.');presentedChrome.setPresentation(command.chrome);break;case 'chrome':if(!presentedChrome)throw new Error('This application has not drawn its chrome yet.');presentedChrome.press(command.id,command.value);break;case 'janko':
    // A Jankó chord: the owner's own played voices, struck through the native owner (nativeField.ts playJanko). Never synthesised.
    if(!nativeField)throw new Error('This application has no native instrument.');
-   await nativeField.playJanko(command.pitch_classes,command.amplitude);
+   await nativeField.playJanko(command.pitch_classes,command.amplitude,command.at_samples_elapsed);
    break;
   case 'strike-at':
    // A strike at points of the torus (DLW §21.2 "What strikes the Torus"): the owner's own strike at those points, through the native
-   // field's controller (controller.ts playAt), as a touch on the stage strikes. Never synthesised.
+   // field's controller (controller.ts playAt), as a touch on the stage strikes, at the sample a player chose (O-I #809). Never synthesised.
    if(!nativeField)throw new Error('This application has no native instrument.');
-   await nativeField.controller.playAt(command.points,command.amplitude);
+   await nativeField.controller.playAt(command.points,command.amplitude,command.at_samples_elapsed);
    break;
+  case 'audio-clock':
+   // The owner's audio clock (O-I #809): where its rendered sound stands, its rate, lookahead and block, for a player that schedules each
+   // strike ahead at its sample (packages/live-shell/ui/src/live/clipPlayer.ts). Read from the native field's controller: it writes nothing,
+   // so it returns before the announce below, as the streamed set does.
+   if(!nativeField)throw new Error('This application has no native instrument.');
+   return {ok:true,clock:nativeField.controller.audioClock()};
   case 'instrument':
    // The Live instrument's edits run the native field's own controller operations (nativeField.ts command): the same path as the Studio's controls.
    if(!nativeField)throw new Error('This application has no native instrument.');
@@ -2358,7 +2364,7 @@ async function runStageCommand(command:StageCommand){
   case 'timeline':if(!researchInstruments)throw new Error('This application has no Timeline.');await researchInstruments.timelineAct(command);break;
   case 'live':
    // The streamed set returns before the announce below: it writes no document and must not trigger a shell read at 20 Hz.
-   if(command.action==='set'){liveOverrides.setDrag(command.target,command.value);needsFrame=true;return;}
+   if(command.action==='set'){liveOverrides.setDrag(command.target,command.value);needsFrame=true;return {ok:true};}
    if(command.action==='release'){if(liveOverrides.releaseDrags())needsFrame=true;break;}
    if(!scene().automation.some(lane=>lane.target===command.target&&lane.enabled))throw new Error('No enabled automation drives this parameter, so there is nothing to hold.');
    liveOverrides.hold(command.target,command.value);needsFrame=true;break;
@@ -2414,12 +2420,13 @@ async function runStageCommand(command:StageCommand){
    break;
  }
  announceHostState();
+ return {ok:true};
 }
 async function answerStageCommand(raw:Record<string,unknown>){
  const parsed=readStageRequest(raw);
  if(!parsed){if(Number.isSafeInteger(raw.req)&&Number(raw.req)>0)window.parent.postMessage(stageReplyMessage(Number(raw.req),{ok:false,error:'This stage command is outside the shell vocabulary'}),'*');return;}
  const {req,command}=parsed;
- try{await runStageCommand(command);window.parent.postMessage(stageReplyMessage(req,{ok:true},command),'*');}
+ try{const answer=await runStageCommand(command);window.parent.postMessage(stageReplyMessage(req,answer,command),'*');}
  catch(error){window.parent.postMessage(stageReplyMessage(req,{ok:false,error:error instanceof Error?error.message:String(error)},command),'*');}
 }
 // The host's open-studio command opens a section with the nav button's own
