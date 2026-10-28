@@ -17,19 +17,25 @@
 //     a named tour, and each kept view is a Scene of its own whose material keeps the view: a Scene is what Capture makes. The Expression is
 //     saved to the owner's works home (expression_home.rs), so a fresh owner lists it again after a relaunch.
 //
-// A stop keeps no moment and no thing: the frame's tour law refuses a temporal or dated-place field on a stop (placeTourRecord.ts), so a
-// recorded walk stands at the ruler's "no time" slots, in order, and a kept view keeps the shared window it was taken in.
+// A stop keeps a place, a moment and a thing (part two of #760; manual §17.6, a Journey's stop has "a place, a moment, a scene and a few
+// words"): the tour law admits an optional `moment` — a window in the shared window's own shape — and an optional `thing_ref`, the visited
+// thing's owner ref (placeTourRecord.ts; the kernel's place_tour_stop admits the same). A stop made while an occasion stands on the time spine
+// keeps it as its moment (a point window at the occasion's instant), so the take lies at its moments on the ruler (recordedWalksOf, and
+// recordedInstantsOf for a moment that is an instant); a stop of no moment stands at a "no time" slot. A kept view keeps the shared window
+// it was taken in and the atlas's filter in force (`filter`, the atlas's own query, src/shell/filter.ts filterQuery; G4).
 //
 // Pure TypeScript. No React, no atlas engine.
-import {TOUR_CAPTION_MAX, TOUR_LIMIT, TOUR_STOP_LIMIT, placeTourProblem, type PlaceTourRecord, type PlaceTourStop} from '../../../../../../../desktop/cradle/expressions-app/field-studies-journeys/src/placeTourRecord'
+import {TOUR_CAPTION_MAX, TOUR_LIMIT, TOUR_STOP_LIMIT, placeTourProblem, type PlaceTourMoment, type PlaceTourRecord, type PlaceTourStop} from '../../../../../../../desktop/cradle/expressions-app/field-studies-journeys/src/placeTourRecord'
 import {applyResearchMaterial, type PlaceTimeWindowRecord, type PlaceViewRecord} from '../../../../../../../desktop/cradle/expressions-app/field-studies-journeys/src/researchMaterial'
 import {blankScene, clone, type Scene as FrameScene} from '../../../../../../../desktop/cradle/expressions-app/field-studies-journeys/src/model'
 import type {Change, ExpressionDocument, Scene} from '../../../../../../../desktop/cradle/src/expression/types'
 import type {WorldWalk, WorldWalkStop} from '../../../timeline/worldTrackAdapter'
 import {KEPT_VIEWS_KIND, RECORDED_WALK_KIND, isRecordedWalk} from '../../../timeline/techneTrackAdapter'
 import {wrapLon} from '../src/data/geo'
+import {windowYear} from '../sharedClock'
+import {parseTimestamp} from '../../../../../../../desktop/cradle/src/techne/m0m5/timeline/scale'
 
-export type {PlaceTourStop, PlaceViewRecord, PlaceTimeWindowRecord}
+export type {PlaceTourMoment, PlaceTourStop, PlaceViewRecord, PlaceTimeWindowRecord}
 
 /** The atlas's camera: where it looks on the body (degrees) and how far it stands from the centre, in globe radii. */
 export interface AtlasCamera {
@@ -60,24 +66,47 @@ export function cameraOf(viewport: Pick<WalkViewport, 'x' | 'y' | 'zoom'>): Atla
 /** How long a recorded walk stays at each stop: the Journey's own default pace (manual §17.6 Parameters, "Pace 2–12 seconds, default 6"). */
 export const WALK_PACE_MS = 6000
 
-/** One visit on the World while Record runs: the place it stands on (its owner's ref, when a place the world holds), its name, and the camera. */
+/** One visit on the World while Record runs: the place it stands on (its owner's ref, when a place the world holds), its name, the camera,
+ * the thing it visited (its owner's ref), and the moment it was made at (absent: the moment in force, which the session reads). */
 export interface WalkVisit {
   readonly placeRef: string | null
   readonly name: string
   readonly camera: AtlasCamera
+  readonly thingRef?: string | null
+  readonly moment?: PlaceTourMoment | null
 }
 
-/** A visit as a stop of the take: the frame's tour stop, its caption the name of what was visited. */
+/** A visit as a stop of the take: the frame's tour stop, its caption the name of what was visited, its moment and its thing when it has
+ * them (absent is none). */
 export function stopOfVisit(visit: WalkVisit, holdMs: number = WALK_PACE_MS): PlaceTourStop {
   const caption = visit.name.trim().slice(0, TOUR_CAPTION_MAX)
-  return {place_ref: visit.placeRef, viewport: viewportOf(visit.camera), caption: caption || null, hold_ms: holdMs}
+  return {place_ref: visit.placeRef, viewport: viewportOf(visit.camera), caption: caption || null, hold_ms: holdMs,
+    ...(visit.moment ? {moment: {from: visit.moment.from, to: visit.moment.to}} : {}), ...(visit.thingRef ? {thing_ref: visit.thingRef} : {})}
 }
 
-/** Two visits in a row to the same place are one stop (the trail's own rule: going to the place you stand on is no move). */
+/** Two visits in a row that stand on the same place, at the same moment, of the same thing are one stop (the trail's own rule: going to
+ * the place you stand on is no move). A new moment or a new thing where the World stands is a move. */
 export function visitKey(visit: WalkVisit): string {
-  if (visit.placeRef) return `place:${visit.placeRef}`
   const at = viewportOf(visit.camera)
-  return `at:${at.y.toFixed(4)},${at.x.toFixed(4)},${at.zoom.toFixed(2)}`
+  const place = visit.placeRef ? `place:${visit.placeRef}` : `at:${at.y.toFixed(4)},${at.x.toFixed(4)},${at.zoom.toFixed(2)}`
+  return `${place}|${visit.moment ? `${visit.moment.from ?? ''}..${visit.moment.to ?? ''}` : ''}|${visit.thingRef ?? ''}`
+}
+
+/** An occasion's instant as a stop's moment: the window that stands at that instant and nowhere else (from and to the same). */
+export function momentOfInstant(unixMs: number): PlaceTourMoment {
+  const at = new Date(unixMs).toISOString()
+  return {from: at, to: at}
+}
+
+/** The instant a moment stands at when it is one (an occasion's), else null: a moment with an open edge, or two edges, is a span of time. */
+export function instantOfMoment(moment: PlaceTourMoment | undefined): number | null {
+  if (!moment || moment.from === null || moment.from !== moment.to) return null
+  try {
+    const ms = parseTimestamp(moment.from)
+    return Number.isFinite(ms) ? ms : null
+  } catch {
+    return null
+  }
 }
 
 /** The take being recorded with one more stop, or the frame law's refusal of it. */
@@ -200,9 +229,10 @@ export function keptViewChanges(document: ExpressionDocument, sceneRef: string, 
   return [{change: 'scene_create', scene_ref: sceneRef, title}, material(sceneRef, scene, null)]
 }
 
-/** The present view as the record keeps it: the camera, and the shared window the World stands in (null: all time). */
-export function viewRecordOf(camera: AtlasCamera, window: PlaceTimeWindowRecord | null): PlaceViewRecord {
-  return {viewport: viewportOf(camera), window: window ? {from: window.from, to: window.to} : null}
+/** The present view as the record keeps it: the camera, the shared window the World stands in (null: all time), and the atlas's filter in
+ * force in its own query (empty: none in force; null: no atlas to read it from, so the view keeps none). */
+export function viewRecordOf(camera: AtlasCamera, window: PlaceTimeWindowRecord | null, filter: string | null = null): PlaceViewRecord {
+  return {viewport: viewportOf(camera), window: window ? {from: window.from, to: window.to} : null, ...(filter !== null ? {filter} : {})}
 }
 
 // ── the walks on the ruler ────────────────────────────────────────────────
@@ -215,9 +245,13 @@ export const KEPT_VIEWS_WALK_ID = 'walk:kept-views'
 
 const placeOf = (viewport: Pick<WalkViewport, 'x' | 'y'>, label: string): WorldWalkStop['place'] => ({label, lat: viewport.y, lon: viewport.x})
 
+const stopId = (walkId: string, index: number): string => `${walkId}:${index + 1}`
+
 /** The walk's takes and its kept views as walks of stops, for the ruler: each take a walk (the latest is the one that stands), and the kept
  * views a walk through the Expression's Scenes, in the order they were kept. `placeName` names a stop's place from the world's places when the
- * stop's own caption is empty. Nothing is invented: a stop with no caption and no place reads as its number. */
+ * stop's own caption is empty. Nothing is invented: a stop with no caption and no place reads as its number. A stop kept at a moment carries
+ * the year it stands in (the shared clock's own reading of a window, sharedClock.ts windowYear), so it lies at its moment; the thing it visited rides
+ * with the material it reaches (`also`). */
 export function recordedWalksOf(walk: WalkReading, placeName: (ref: string) => string | null = () => null): WorldWalk[] {
   const latest = walk.takes[walk.takes.length - 1]?.name
   const takes = walk.takes.map((take): WorldWalk => {
@@ -225,10 +259,25 @@ export function recordedWalksOf(walk: WalkReading, placeName: (ref: string) => s
     return {id, name: take.name === latest ? `${take.name} · stands` : take.name, kind: RECORDED_WALK_KIND, derived: false,
       stops: take.stops.map((stop, index): WorldWalkStop => {
         const label = stop.caption ?? (stop.place_ref ? placeName(stop.place_ref) : null) ?? `Stop ${index + 1}`
-        return {id: `${id}:${index + 1}`, label, place: placeOf(stop.viewport, label), also: stop.binding ? [stop.binding.scene_ref] : []}
+        const at = stop.moment ? windowYear(stop.moment) : null
+        // The year the moment stands in, whole (the rail says it, formatYear rounds): an instant late in a year is still that year.
+        const year = at === null ? null : Math.floor(at)
+        return {id: stopId(id, index), label, place: placeOf(stop.viewport, label), ...(year !== null ? {year} : {}),
+          also: [...(stop.binding ? [stop.binding.scene_ref] : []), ...(stop.thing_ref ? [stop.thing_ref] : [])]}
       })}
   })
   if (!walk.views.length) return takes
   return [...takes, {id: KEPT_VIEWS_WALK_ID, name: 'Kept views', kind: KEPT_VIEWS_KIND, derived: false,
-    stops: walk.views.map((view, index): WorldWalkStop => ({id: `${KEPT_VIEWS_WALK_ID}:${index + 1}`, label: view.title, place: placeOf(view.view.viewport, view.title), also: [view.sceneRef]}))}]
+    stops: walk.views.map((view, index): WorldWalkStop => ({id: stopId(KEPT_VIEWS_WALK_ID, index), label: view.title, place: placeOf(view.view.viewport, view.title), also: [view.sceneRef]}))}]
+}
+
+/** The stops of the takes kept at an instant (an occasion's), by the stop's id in recordedWalksOf: the ruler lays each among the hours of
+ * its civil day rather than on the deep-time scale (timeline/techneTrackAdapter.ts `recorded.instants`). */
+export function recordedInstantsOf(walk: WalkReading): ReadonlyMap<string, number> {
+  const instants = new Map<string, number>()
+  for (const take of walk.takes) take.stops.forEach((stop, index) => {
+    const ms = instantOfMoment(stop.moment)
+    if (ms !== null) instants.set(stopId(takeWalkId(take.name), index), ms)
+  })
+  return instants
 }

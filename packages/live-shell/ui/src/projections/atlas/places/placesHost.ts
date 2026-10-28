@@ -12,7 +12,8 @@
 // - The Place tool's click (placeTool.ts): while it is armed, the point under a click on the globe is read through the atlas's own
 //   surface maths (globe/zoom.ts surfacePointAt, data/geo.ts latLonFromDir) — the click itself stays the globe's.
 // - A place the World turns to (turnAtlasTo, the one door every "fly to a place" goes through) is a place you visit: while Record runs it is
-//   a stop of the walk (O-I #760, walks/walkSession.ts noteWalkVisit), with the camera the turn frames it at.
+//   a stop of the walk (O-I #760, walks/walkSession.ts noteWalkVisit), with the camera the turn frames it at, and the subject it selects
+//   there as the thing visited.
 // - The Place tool's owner (placeTool.ts PlaceOwner): the draft is offered to the subject's time-and-place editor
 //   (WikiFactsEditor.tsx offerConstellationRoute); the subject is opened where that editor stands (the Graph and source surface,
 //   `oi:epi-open-knowledge`, panels/knowledge.tsx); after the owner saves, the world is read again and the subject's occurrence is
@@ -132,7 +133,9 @@ export function turnAtlasTo(handle: AtlasHandle, place: SuitePlace | undefined, 
     if (index === undefined) return false;
     handle.ctl.navigate({view: {kind: 'manifest', occId: turn.occId, context: {type: 'family', id: handle.model.occ[index].familyId}}, deep: false,
       ...(handle.ctl.state.graph ? {graph: true as const} : {})});
-    noteWalkVisit({placeRef: visited.ref, name: visited.name, camera});
+    // The subject selected there is the thing visited, as the atlas's own notice of the opened occurrence names it (walks/walksHost.ts
+    // visitOfManifest): the two notices are one stop.
+    noteWalkVisit({placeRef: visited.ref, name: visited.name, camera, thingRef: handle.model.occ[index].subject_ref ?? null});
     return true;
   }
   flyAtlasTo(handle, turn.lat, turn.lon, turn.dist, later);

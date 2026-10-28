@@ -51,8 +51,11 @@ export interface PlaceBasemapRecord {terrainVisible:boolean;layers:Record<string
 export interface PlaceLayersRecord {relations?:string[];standing?:PlaceStanding[];basemap?:PlaceBasemapRecord}
 /** lane-4 T20: the shared time window a view restores ({from,to} as the session holds them; null = open). */
 export interface PlaceTimeWindowRecord {from:string|null;to:string|null}
-/** lane-4 T20: a named Places view — camera, layer toggles, basemap rows and the time window. Refs and presentation only, never a copy of the reading. */
-export interface PlaceViewRecord extends PlaceLayersRecord {viewport:{x:number;y:number;zoom:number;pitch?:number;bearing?:number};window:PlaceTimeWindowRecord|null}
+/** lane-4 T20: a named Places view — camera, layer toggles, basemap rows and the time window. Refs and presentation only, never a copy of the reading.
+ * O-I #760 (targets.json G4, "its camera, the filter in force and the window"): `filter` is the atlas's field filter in force when the view
+ * was kept, in the atlas's own query grammar (live-shell projections/atlas/src/shell/filter.ts filterQuery: `w=…&c=…&e=a..b&k=…&a=…&t=…`);
+ * empty is no filter in force, absent is a view kept without one. */
+export interface PlaceViewRecord extends PlaceLayersRecord {viewport:{x:number;y:number;zoom:number;pitch?:number;bearing?:number};window:PlaceTimeWindowRecord|null;filter?:string}
 /** lane-2 T16: a timeline card's style, in the card-style colour grammar (`#rrggbb` or `#rrggbbaa`). Absent = the category's own colours. */
 export interface TimelineCardStyle {dotColour?:string;bgColour?:string;textColour?:string}
 /** lane-2 T15: the M2′ chronology (the timeline's own spine) or the relation field. */
@@ -281,12 +284,31 @@ function validatePlaceLayers(value:Record<string,any>):void{
 export function validatePlaceLayersRecord(value:unknown):asserts value is PlaceLayersRecord{require(object(value),'Invalid place layers');validatePlaceLayers(value);}
 /** lane-4 T20: a named Places view is closed, bounded and refs-free: camera (longitude x, latitude y, zoom, pitch, bearing), the layer toggles, the basemap rows and the shared time window. */
 export function validatePlaceView(value:unknown):void{
- require(object(value),'Invalid place view');keys(value,['viewport','relations','standing','basemap','window']);
+ require(object(value),'Invalid place view');keys(value,['viewport','relations','standing','basemap','window','filter']);
+ if(value.filter!==undefined)require(placeViewFilter(value.filter),'Invalid place view filter');
  validateViewport(value.viewport);
  require(finite(value.viewport.x,-180,180)&&finite(value.viewport.y,-90,90),'Place view camera exceeds the globe');
  validatePlaceLayers({relations:value.relations,standing:value.standing,basemap:value.basemap});
  require(value.window!==undefined,'Invalid place view window');
  if(value.window!==null){require(object(value.window),'Invalid place view window');keys(value.window,['from','to']);require(['from','to'].every(key=>value.window[key]===null||typeof value.window[key]==='string'&&text(value.window[key],64)),'Invalid place view window');}
+}
+/** O-I #760: the bound of a kept view's filter, in UTF-16 units. The kernel holds the same (expression_scene.rs PLACE_VIEW_FILTER_MAX). */
+export const PLACE_VIEW_FILTER_MAX=2048;
+/** The keys the atlas's filter query writes (filter.ts filterQuery): works, cultures, era, kinds, archetypes, theoretics. */
+const PLACE_VIEW_FILTER_KEYS=['w','c','e','k','a','t'];
+/** A kept view's filter: empty, or `key=value` parts joined by `&`, each key one the atlas writes and written once, each value non-empty and
+ * of the characters the atlas's slugs and eras are written in (letters, digits, `_ . , -`). What the parts mean is the atlas's to read. */
+export function placeViewFilter(value:unknown):value is string{
+ if(typeof value!=='string'||value.length>PLACE_VIEW_FILTER_MAX)return false;
+ if(value==='')return true;
+ const seen=new Set<string>();
+ return value.split('&').every(part=>{
+  const at=part.indexOf('=');
+  const key=part.slice(0,at),rest=part.slice(at+1);
+  if(at<1||!PLACE_VIEW_FILTER_KEYS.includes(key)||seen.has(key)||!rest||!/^[A-Za-z0-9_.,-]+$/.test(rest))return false;
+  seen.add(key);
+  return true;
+ });
 }
 /** Tolerant plain-text reading of note blocks: paragraphs join with newlines,
  * non-text parts are skipped. Unlike expressionTextFromNote this never

@@ -1152,8 +1152,10 @@ const TOUR_STOP_LIMIT: usize = 32;
 const TOUR_CAPTION_MAX: usize = 280;
 const TOUR_HOLD_MAX_MS: f64 = 60000.0;
 const TOUR_REF_MAX: usize = 1024;
-/// lane-4 T25–T26: one named tour, admitted closed. A tour is an ordered list of camera stops; a stop carries no temporal,
-/// route or dated-place field. The optional journey binding is a pair of refs and nothing else.
+/// O-I #760: a stop's moment edge, a timestamp as the shared window holds one (the place view window's own bound).
+const TOUR_MOMENT_EDGE_MAX: usize = 64;
+/// lane-4 T25–T26: one named tour, admitted closed. A tour is an ordered list of camera stops; a stop carries no route or
+/// dated-place field and no temporal field but its moment. The optional journey binding is a pair of refs and nothing else.
 fn place_tour(value: &Value) -> Result<(), String> {
     let tour = object(value, "Place tour")?;
     if tour.keys().any(|k| k != "stops") || !tour.contains_key("stops") {
@@ -1167,13 +1169,18 @@ fn place_tour(value: &Value) -> Result<(), String> {
     }
     stops.iter().try_for_each(place_tour_stop)
 }
-/// lane-4 T25–T26: one stop, admitted closed. Every field but the binding is required; the binding is a pair of refs.
+/// lane-4 T25–T26: one stop, admitted closed. Every field but the binding, the moment and the thing is required; the binding is
+/// a pair of refs. O-I #760 (manual §17.1 Takes, "each place, moment or thing you visit becomes a stop"): the optional moment is a
+/// window in the shared window's shape — `from` and `to`, each a string of at most 64 UTF-16 units or null, not both null — and the
+/// optional thing is its owner's ref. Absent is none; neither is ever null. The frame's placeTourRecord.ts admits the same, and
+/// both judge one case list (tests/fixtures/place-material-parity.json).
 fn place_tour_stop(value: &Value) -> Result<(), String> {
     const FIELDS: [&str; 4] = ["place_ref", "viewport", "caption", "hold_ms"];
+    const OPTIONAL: [&str; 3] = ["binding", "moment", "thing_ref"];
     let stop = object(value, "Place tour stop")?;
     if stop
         .keys()
-        .any(|k| !FIELDS.contains(&k.as_str()) && k != "binding")
+        .any(|k| !FIELDS.contains(&k.as_str()) && !OPTIONAL.contains(&k.as_str()))
         || !FIELDS.iter().all(|k| stop.contains_key(*k))
     {
         return Err("Invalid place tour stop".into());
@@ -1225,6 +1232,27 @@ fn place_tour_stop(value: &Value) -> Result<(), String> {
         {
             return Err("Invalid place tour binding".into());
         }
+    }
+    if let Some(moment) = stop.get("moment") {
+        let edge = |bound: Option<&Value>| {
+            bound.is_some_and(|v| {
+                v.is_null()
+                    || v.as_str()
+                        .is_some_and(|s| utf16_len(s) <= TOUR_MOMENT_EDGE_MAX)
+            })
+        };
+        let window = moment.as_object();
+        if !window.is_some_and(|w| {
+            w.keys().all(|k| k == "from" || k == "to")
+                && edge(w.get("from"))
+                && edge(w.get("to"))
+                && !(w["from"].is_null() && w["to"].is_null())
+        }) {
+            return Err("Invalid place tour moment".into());
+        }
+    }
+    if stop.get("thing_ref").is_some_and(|thing| !tour_ref(thing)) {
+        return Err("Invalid place tour thing ref".into());
     }
     Ok(())
 }
@@ -1392,13 +1420,26 @@ const PLACE_STANDINGS: &[&str] = &["factual", "mythic", "owner-vocabulary"];
 /// allowance for live sources and no occurrence refs: a view is presentation only.
 fn place_view(value: &Value) -> Result<(), String> {
     let view = object(value, "Place view")?;
-    if view
-        .keys()
-        .any(|k| !["viewport", "relations", "standing", "basemap", "window"].contains(&k.as_str()))
-        || !view.contains_key("viewport")
+    if view.keys().any(|k| {
+        ![
+            "viewport",
+            "relations",
+            "standing",
+            "basemap",
+            "window",
+            "filter",
+        ]
+        .contains(&k.as_str())
+    }) || !view.contains_key("viewport")
         || !view.contains_key("window")
     {
         return Err("Invalid place view".into());
+    }
+    if view
+        .get("filter")
+        .is_some_and(|filter| !place_view_filter(filter))
+    {
+        return Err("Invalid place view filter".into());
     }
     let camera = object(&value["viewport"], "Place view camera")?;
     if camera
@@ -1485,6 +1526,37 @@ fn place_view(value: &Value) -> Result<(), String> {
         }
     }
     Ok(())
+}
+/// O-I #760: a kept view's filter bound, in UTF-16 units; the frame's researchMaterial.ts PLACE_VIEW_FILTER_MAX holds the same.
+const PLACE_VIEW_FILTER_MAX: usize = 2048;
+/// O-I #760 (targets.json G4, "its camera, the filter in force and the window"): the atlas's field filter in force when the view was
+/// kept, in the atlas's own query grammar (live-shell projections/atlas/src/shell/filter.ts filterQuery). Empty is no filter in force;
+/// otherwise `key=value` parts joined by `&`, each key one the atlas writes (w, c, e, k, a, t) and written once, each value non-empty
+/// and of letters, digits and `_ . , -`. What the parts mean is the atlas's to read. The frame's placeViewFilter admits the same.
+fn place_view_filter(value: &Value) -> bool {
+    let Some(text) = value.as_str() else {
+        return false;
+    };
+    if utf16_len(text) > PLACE_VIEW_FILTER_MAX {
+        return false;
+    }
+    if text.is_empty() {
+        return true;
+    }
+    let mut seen: Vec<&str> = Vec::new();
+    text.split('&').all(|part| {
+        let Some((key, rest)) = part.split_once('=') else {
+            return false;
+        };
+        let fits = ["w", "c", "e", "k", "a", "t"].contains(&key)
+            && !seen.contains(&key)
+            && !rest.is_empty()
+            && rest
+                .chars()
+                .all(|c| c.is_ascii_alphanumeric() || matches!(c, '_' | '.' | ',' | '-'));
+        seen.push(key);
+        fits
+    })
 }
 /// lane-4 T21: the Places layer toggles and basemap rows the Scene keeps, admitted closed and bounded the way a view's layers
 /// are (see place_view). Every field is optional; the basemap ids are the same list the app holds; no live-source allowance.
@@ -2931,7 +3003,7 @@ mod tests {
             validate_research(&with_tours(json!({"Paris": {"stops": too_many}})), &ids).is_err(),
             "accepted a 33rd stop"
         );
-        // refused: a forbidden temporal key on a stop: a recorded stop carries no time and no route
+        // refused: a temporal key on a stop other than its moment, and a route: a stop keeps its time only as its moment (O-I #760)
         for forbidden in ["window", "time_window", "temporal", "validity", "route_id"] {
             let mut extra = serde_json::Map::new();
             extra.insert(forbidden.into(), json!({"from": "1900", "to": null}));
@@ -2960,5 +3032,58 @@ mod tests {
         }
         assert!(validate_research(&with_tours(Value::Object(seventeen)), &ids).is_err());
         assert!(validate_research(&with_tours(json!({"   ": three.clone()})), &ids).is_err());
+    }
+
+    /// O-I #760: one case list, two validators. The frame's material law judges the same cases
+    /// (expressions-app field-studies-journeys/tests/place-material-parity.test.mjs): a recorded stop's
+    /// moment and thing, and a kept view's filter, are admitted or refused by both alike.
+    #[test]
+    fn place_material_parity_cases_are_judged_as_the_frame_judges_them() {
+        use super::validate_research;
+        use serde_json::{json, Value};
+        use std::collections::BTreeSet;
+        let ids: BTreeSet<&str> = BTreeSet::new();
+        let cases: Value =
+            serde_json::from_str(include_str!("../tests/fixtures/place-material-parity.json"))
+                .expect("the parity cases are JSON");
+        let laid = |base: &Value, over: &Value| {
+            let mut value = base.clone();
+            for (key, field) in over.as_object().expect("a case lays an object") {
+                value[key] = field.clone();
+            }
+            value
+        };
+        let material = |key: &str, record: Value| {
+            let mut m = json!({"schema": "oi.research-scene/v1", "cards": {}, "strokes": [], "views": {}, "timeline": {}});
+            m[key] = record;
+            m
+        };
+        let judge = |family: &str, admitted: bool| {
+            let group = &cases[family];
+            let rows = group[if admitted { "admitted" } else { "refused" }]
+                .as_array()
+                .expect("a list of cases");
+            assert!(!rows.is_empty(), "{family}: no cases");
+            for row in rows {
+                let value = laid(&group["base"], &row["with"]);
+                let research = if family == "tour_stop" {
+                    material("placeTours", json!({"Walk": {"stops": [value]}}))
+                } else {
+                    material("placeViews", json!({ "View": value }))
+                };
+                let verdict = validate_research(&research, &ids);
+                assert_eq!(
+                    verdict.is_ok(),
+                    admitted,
+                    "{family}: {} — the frame {} it, the kernel answered {verdict:?}",
+                    row["what"],
+                    if admitted { "admits" } else { "refuses" }
+                );
+            }
+        };
+        for family in ["tour_stop", "place_view"] {
+            judge(family, true);
+            judge(family, false);
+        }
     }
 }

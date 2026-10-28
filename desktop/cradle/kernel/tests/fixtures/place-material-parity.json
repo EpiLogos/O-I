@@ -1,0 +1,363 @@
+{
+ "schema": "oi.place-material-parity/v1",
+ "about": "One case list, two validators: the frame's (field-studies-journeys/src/placeTourRecord.ts placeTourProblem, researchMaterial.ts validatePlaceView) and the kernel's (src/expression_scene.rs place_tour_stop, place_view). Each case's fields are laid over the base and must be admitted by both, or refused by both (O-I #760). The frame's tests/place-material-parity.test.mjs and the kernel's place_material_parity_cases_are_judged_as_the_frame_judges_them read this file.",
+ "tour_stop": {
+  "base": {
+   "place_ref": "place:paris",
+   "viewport": {
+    "x": 2.35,
+    "y": 48.85,
+    "zoom": 11,
+    "pitch": 40,
+    "bearing": -20
+   },
+   "caption": "Arrive by the river",
+   "hold_ms": 4000
+  },
+  "admitted": [
+   {
+    "what": "a stop as a walk recorded it before moments and things (no moment, no thing)",
+    "with": {}
+   },
+   {
+    "what": "a stop with no place, no caption and no hold",
+    "with": {
+     "place_ref": null,
+     "caption": null,
+     "hold_ms": 0
+    }
+   },
+   {
+    "what": "a stop that carries a journey binding",
+    "with": {
+     "binding": {
+      "expression_ref": "expression:techne-walk-central",
+      "scene_ref": "expression:techne-walk-central:scene:view-1"
+     }
+    }
+   },
+   {
+    "what": "a moment that is an instant (an occasion on the time spine)",
+    "with": {
+     "moment": {
+      "from": "2026-10-28T10:15:00.000Z",
+      "to": "2026-10-28T10:15:00.000Z"
+     }
+    }
+   },
+   {
+    "what": "a moment open at its start (the Earth's clock writes the window's end)",
+    "with": {
+     "moment": {
+      "from": null,
+      "to": "1600-01-01T00:00:00Z"
+     }
+    }
+   },
+   {
+    "what": "a moment open at its end, a deep year",
+    "with": {
+     "moment": {
+      "from": "-000500-01-01T00:00:00Z",
+      "to": null
+     }
+    }
+   },
+   {
+    "what": "a moment edge of 64 UTF-16 units",
+    "with": {
+     "moment": {
+      "from": "1111111111111111111111111111111111111111111111111111111111111111",
+      "to": null
+     }
+    }
+   },
+   {
+    "what": "a moment edge of 32 astral characters (64 UTF-16 units)",
+    "with": {
+     "moment": {
+      "from": "😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀",
+      "to": null
+     }
+    }
+   },
+   {
+    "what": "a thing by its owner's ref",
+    "with": {
+     "thing_ref": "wiki:node:mercurius"
+    }
+   },
+   {
+    "what": "a thing ref of 1024 UTF-16 units",
+    "with": {
+     "thing_ref": "tttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt"
+    }
+   },
+   {
+    "what": "a place, a moment, a thing and a binding on one stop",
+    "with": {
+     "moment": {
+      "from": "2026-10-28T10:15:00.000Z",
+      "to": "2026-10-28T10:15:00.000Z"
+     },
+     "thing_ref": "wiki:node:tower",
+     "binding": {
+      "expression_ref": "expression:techne-walk-central",
+      "scene_ref": "expression:techne-walk-central:scene:view-1"
+     }
+    }
+   }
+  ],
+  "refused": [
+   {
+    "what": "a route on a stop",
+    "with": {
+     "route_id": "r1"
+    }
+   },
+   {
+    "what": "a window on a stop (a view's field, never a stop's)",
+    "with": {
+     "window": {
+      "from": "1900",
+      "to": null
+     }
+    }
+   },
+   {
+    "what": "a time_window on a stop",
+    "with": {
+     "time_window": {
+      "from": "1900",
+      "to": null
+     }
+    }
+   },
+   {
+    "what": "a temporal field on a stop",
+    "with": {
+     "temporal": {
+      "from": "1900",
+      "to": null
+     }
+    }
+   },
+   {
+    "what": "a validity on a stop",
+    "with": {
+     "validity": {
+      "from": "1900",
+      "to": null
+     }
+    }
+   },
+   {
+    "what": "a moment with neither edge (no moment is the field's absence)",
+    "with": {
+     "moment": {
+      "from": null,
+      "to": null
+     }
+    }
+   },
+   {
+    "what": "a moment without its end",
+    "with": {
+     "moment": {
+      "from": "1900"
+     }
+    }
+   },
+   {
+    "what": "a moment with an unknown field",
+    "with": {
+     "moment": {
+      "from": "1900",
+      "to": null,
+      "axis": 1
+     }
+    }
+   },
+   {
+    "what": "a moment edge of 65 UTF-16 units",
+    "with": {
+     "moment": {
+      "from": "11111111111111111111111111111111111111111111111111111111111111111",
+      "to": null
+     }
+    }
+   },
+   {
+    "what": "a moment edge of 33 astral characters (66 UTF-16 units)",
+    "with": {
+     "moment": {
+      "from": "😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀",
+      "to": null
+     }
+    }
+   },
+   {
+    "what": "a moment edge that is a number",
+    "with": {
+     "moment": {
+      "from": 1900,
+      "to": null
+     }
+    }
+   },
+   {
+    "what": "a moment that is a string",
+    "with": {
+     "moment": "1900"
+    }
+   },
+   {
+    "what": "a moment that is null (absent is no moment)",
+    "with": {
+     "moment": null
+    }
+   },
+   {
+    "what": "an empty thing ref",
+    "with": {
+     "thing_ref": ""
+    }
+   },
+   {
+    "what": "a thing ref of 1025 UTF-16 units",
+    "with": {
+     "thing_ref": "ttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt"
+    }
+   },
+   {
+    "what": "a thing ref that is a number",
+    "with": {
+     "thing_ref": 7
+    }
+   },
+   {
+    "what": "a thing ref that is null (absent is no thing)",
+    "with": {
+     "thing_ref": null
+    }
+   },
+   {
+    "what": "a thing as an object rather than a ref",
+    "with": {
+     "thing_ref": {
+      "ref": "wiki:node:tower"
+     }
+    }
+   }
+  ]
+ },
+ "place_view": {
+  "base": {
+   "viewport": {
+    "x": 8.98,
+    "y": 47.21,
+    "zoom": 2.5
+   },
+   "window": {
+    "from": "1900-01-01T00:00:00Z",
+    "to": "1961-06-06T00:00:00Z"
+   }
+  },
+  "admitted": [
+   {
+    "what": "a view as Capture kept it before filters (camera and window)",
+    "with": {}
+   },
+   {
+    "what": "a view kept with no filter in force",
+    "with": {
+     "filter": ""
+    }
+   },
+   {
+    "what": "a view kept with works, cultures, an era and kinds in force",
+    "with": {
+     "filter": "w=cw12,cw9ii&c=gnostic&e=-200..400&k=dream,vision"
+    }
+   },
+   {
+    "what": "a view kept with archetypes and theoretics in force",
+    "with": {
+     "filter": "a=self,shadow&t=individuation"
+    }
+   },
+   {
+    "what": "a filter of 2048 UTF-16 units",
+    "with": {
+     "filter": "w=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    }
+   }
+  ],
+  "refused": [
+   {
+    "what": "a filter key the atlas's filter never writes",
+    "with": {
+     "filter": "x=1"
+    }
+   },
+   {
+    "what": "a filter key written twice",
+    "with": {
+     "filter": "w=cw12&w=cw9ii"
+    }
+   },
+   {
+    "what": "a filter key with no value",
+    "with": {
+     "filter": "w="
+    }
+   },
+   {
+    "what": "a filter part with no value at all",
+    "with": {
+     "filter": "w"
+    }
+   },
+   {
+    "what": "an empty filter part",
+    "with": {
+     "filter": "&w=cw12"
+    }
+   },
+   {
+    "what": "a character the filter's grammar never writes",
+    "with": {
+     "filter": "w=cw 12"
+    }
+   },
+   {
+    "what": "an escaped character",
+    "with": {
+     "filter": "w=cw%2012"
+    }
+   },
+   {
+    "what": "a filter of 2049 UTF-16 units",
+    "with": {
+     "filter": "w=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    }
+   },
+   {
+    "what": "a filter as an object",
+    "with": {
+     "filter": {
+      "works": [
+       "cw12"
+      ]
+     }
+    }
+   },
+   {
+    "what": "a filter that is null (absent is a view kept without one)",
+    "with": {
+     "filter": null
+    }
+   }
+  ]
+ }
+}

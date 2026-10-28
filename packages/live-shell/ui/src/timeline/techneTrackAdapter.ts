@@ -41,8 +41,10 @@
 //   slot of the grid, so neither is offered here.
 // - recorded walks (O-I #760; manual §17.1 Takes, "Press Record and go somewhere new ... the walk lies along the ruler"): the takes the
 //   World recorded and the views it kept, read from their owner (projections/atlas/walks/walkRecord.ts recordedWalksOf, the walk's
-//   Expression), handed in as `recorded` and laid in the Journeys stream as every other walk is. Their stops have no moment (the tour
-//   law), so they stand at the ruler's "no time" slots, in order. A stop of one is stood by the World, never the spine (useTechneTracks.ts).
+//   Expression), handed in as `recorded` and laid in the Journeys stream as every other walk is. A stop kept at a moment lies at it: an
+//   instant (an occasion's, `recorded.instants`) among the hours of its civil day, as a run receipt is placed; a span by its year on the
+//   deep-time scale (the stop's `year`). A stop kept at no moment stands at a "no time" slot, in order. A stop of one is stood by the World,
+//   never the spine (useTechneTracks.ts).
 // - R3 (manual §17.1 "The mixer row", §16.6): every track's mixer row — Activator shows or hides the reading, Solo shows only the
 //   soloed, Arm lets the instrument write into the track; its input is its sources, its output the instrument it plays through;
 //   Monitor is none. Arm is the World's one write arm on a recorded walk's track while the World is open (`recorded.arm`); a reading's
@@ -194,8 +196,9 @@ export interface TechneReading {
   controls?: TechneControls
   /** Which readings stand on the ruler (timeline/readingShown.ts), and its writes; absent, every reading stands and the row says so. */
   shown?: {state: ReadingShown; show(trackId: string, on: boolean): void; solo(trackId: string, on: boolean): void}
-  /** The walks the World recorded and kept, read from their owner, and its write arm while the World is open (absent `arm`: closed). */
-  recorded?: {walks: readonly WorldWalk[]; armed: boolean; arm?(on: boolean): TechneReceipt}
+  /** The walks the World recorded and kept, read from their owner, and its write arm while the World is open (absent `arm`: closed).
+   * `instants`: the stops kept at an instant, by stop id (walkRecord.ts recordedInstantsOf), laid among the hours of their civil day. */
+  recorded?: {walks: readonly WorldWalk[]; instants?: ReadonlyMap<string, number>; armed: boolean; arm?(on: boolean): TechneReceipt}
 }
 
 /** The World cut's temporal read as this adapter reads it. */
@@ -297,6 +300,12 @@ type Place =
 interface Draft {
   clip: Omit<WorldTrackClip, 'at'>
   place: Place
+}
+
+/** An instant's place among the civil days: its UTC day and minute; null for an instant outside the four-digit years a day key names. */
+function civilPlaceAt(instant: number): Place | null {
+  const key = new Date(instant).toISOString().slice(0, 10)
+  return isDate(key) ? {kind: 'civil', day: key, minute: clamp(Math.round((instant - dayStartMs(key)) / 60000), 0, MINUTES_PER_DAY - 1)} : null
 }
 
 /** A run receipt's place: its instant, held inside the civil day the owner's day_ref names (never the day before). */
@@ -408,6 +417,7 @@ export function projectTechneTracks(reading: TechneReading): WorldTrackSet {
   const drafts: Draft[] = []
   const usedClipIds = new Set<string>()
   const stopClipIds = new Map<WorldWalk, string[]>()
+  const recordedInstants = reading.recorded?.instants
   for (const walk of orderedWalks) {
     const trackId = trackOfWalk.get(walk) as string
     const total = walk.stops.length
@@ -422,6 +432,8 @@ export function projectTechneTracks(reading: TechneReading): WorldTrackSet {
       usedClipIds.add(id)
       ids.push(id)
       const year = finite(stop.year) ? stop.year : finite(source?.span?.start) ? source?.span?.start : undefined
+      // A recorded stop kept at an instant lies among its day's hours; only a walk the World recorded names one.
+      const instant = isRecordedWalk(walk) ? recordedInstants?.get(stop.id) : undefined
       const next = walk.stops[index + 1]
       drafts.push({
         clip: {
@@ -430,7 +442,7 @@ export function projectTechneTracks(reading: TechneReading): WorldTrackSet {
           ...(source?.standing ? {standing: source.standing} : {}),
           ...(next ? {launch: {follow: `stop ${index + 2}/${total} · ${next.label}`}} : {}),
         },
-        place: year !== undefined ? {kind: 'year', year} : {kind: 'none'},
+        place: (finite(instant) ? civilPlaceAt(instant) : null) ?? (year !== undefined ? {kind: 'year', year} : {kind: 'none'}),
       })
     })
     stopClipIds.set(walk, ids)

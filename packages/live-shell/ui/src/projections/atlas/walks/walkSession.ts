@@ -15,7 +15,15 @@
 // lists the owner's works and reads the walk from the open document, or from its file when the owner holds it only as a file (`inspect_file`,
 // so a read opens nothing); a write opens a filed work first (`open_file`). Every refusal is said in the owner's words.
 //
-// Playing ports the frame's tour playback (placeTours.ts placeTourSteps: each stop flies, then holds for its own hold), on the World.
+// Playing ports the frame's tour playback (placeTours.ts placeTourSteps: each stop flies, then holds), on the World.
+//
+// Part two (#760): a stop keeps a place, a moment and a thing (manual §17.1 Takes, "each place, moment or thing you visit becomes a stop").
+// While Record runs, an occasion stood on the time spine is a visit at that moment, and a thing the World selects (an occurrence, by its
+// owner's ref) is a visit of that thing; every stop keeps the moment in force when it was made (the World's `moment`, the spine's occasion).
+// Playing a take turns the window to each stop's moment and selects its thing as the World stands it. Capture keeps the atlas's filter in
+// force with the view, and reopening the view restores it (G4). The walk's pace is the transport's Tempo (manual §17.2 Transport, "Tempo —
+// Sets how long the walk dwells at each stop"), the one the Palace's walk keeps (palaces/palaceSession.ts walkPace): a stop is recorded at
+// it and a take walks at it.
 //
 // Pure TypeScript, no React. The host binds the owners and the World while the Earth stands (walksHost.ts).
 import {TOUR_FLIGHT_MS} from '../../../../../../../desktop/cradle/expressions-app/field-studies-journeys/src/placeTourRecord'
@@ -27,7 +35,7 @@ import type {Change, ExpressionDocument, ExpressionRequest, ExpressionResult} fr
 import {
   KEPT_VIEWS_WALK_ID, WALK_ACTOR, cameraOf, keptViewChanges, keptViewSceneRef, nextTakeName, stopOfVisit, takeChanges, takeWalkId, viewRecordOf, visitKey,
   walkExpressionRef, walkExpressionTitle, walkReadingOf, withStop,
-  type AtlasCamera, type PlaceTimeWindowRecord, type PlaceTourStop, type WalkReading, type WalkVisit,
+  type AtlasCamera, type PlaceTimeWindowRecord, type PlaceTourMoment, type PlaceTourStop, type WalkReading, type WalkVisit,
 } from './walkRecord'
 
 /** The owners a walk reads and writes through: the kernel's `expression` op. Its answer, or its refusal thrown in its words. */
@@ -50,10 +58,20 @@ export interface WalkWorld {
   here(): WalkHere | null
   /** the shared window the World stands in (null: all time) */
   window(): PlaceTimeWindowRecord | null
+  /** the moment in force: the occasion the time spine stands on, as a moment (null: none, the transport stands at Now) */
+  moment(): PlaceTourMoment | null
+  /** the atlas's filter in force, in its own query (empty: none in force; null: no atlas to read) */
+  filter(): string | null
+  /** the walk's pace: how long the walk dwells at each stop, in ms (the transport's Tempo) */
+  pace(): number
   /** stand a stop: its place where the world holds it, else its camera; `ms` the flight's length */
   go(target: {readonly placeRef: string | null; readonly camera: AtlasCamera}, ms: number): void
-  /** set the shared window a kept view keeps; the writer's refusal, or null */
+  /** select a thing a stop visited, by its owner's ref; the refusal, or null once it is selected */
+  select(thingRef: string): string | null
+  /** set the shared window a kept view or a stop's moment keeps; the writer's refusal, or null */
   setWindow(window: PlaceTimeWindowRecord | null): string | null
+  /** set the atlas's filter a kept view keeps (its own query); the refusal, or null */
+  setFilter(filter: string): string | null
 }
 
 /** What the store holds of the owner's walk. */
@@ -69,7 +87,7 @@ export interface WalkState {
   readonly bound: boolean
   /** the instrument may write (the transport's Arm) */
   readonly armed: boolean
-  /** the take being recorded: its stops so far and the place it stands on (a second visit there is no stop) */
+  /** the take being recorded: its stops so far and where the last was made (its place, moment and thing: a second visit there is no stop) */
   readonly recording: {readonly stops: readonly PlaceTourStop[]; readonly last: string | null} | null
   readonly reading: WalkOwnerReading
   /** an owner is answering a write */
@@ -87,7 +105,7 @@ export interface WalkSession {
   bind(owners: WalkOwners, world: WalkWorld): () => void
   arm(on: boolean): void
   record(): void
-  /** a place visited on the World: a stop of the take while Record runs; nothing otherwise */
+  /** a place, moment or thing visited on the World: a stop of the take while Record runs; nothing otherwise */
   visit(visit: WalkVisit): void
   /** Stop: end the recording and keep the take, or stop the walk that walks */
   stop(): Promise<void>
@@ -229,8 +247,11 @@ export function createWalkSession({later = timer}: {later?: Later} = {}): WalkSe
       const view = reading.walk.views[from]
       if (!view) return `No view ${from + 1} is kept.`
       here.go({placeRef: null, camera: cameraOf(view.view.viewport)}, TOUR_FLIGHT_MS)
-      const refusal = here.setWindow(view.view.window)
-      set({line: refusal ? `Reopened ${view.title} at the view it keeps; its window was not set: ${refusal}` : `Reopened ${view.title} at the view it keeps.`})
+      const windowRefused = here.setWindow(view.view.window)
+      // A view kept before filters were kept leaves the filter in force as it stands.
+      const filterRefused = view.view.filter !== undefined ? here.setFilter(view.view.filter) : null
+      const refusals = [windowRefused && `its window was not set: ${windowRefused}`, filterRefused && `its filter was not set: ${filterRefused}`].filter(Boolean)
+      set({line: `Reopened ${view.title} at the view it keeps${refusals.length ? `; ${refusals.join('; ')}` : ''}.`})
       return null
     }
     const take = reading.walk.takes.find(row => takeWalkId(row.name) === walkId)
@@ -238,13 +259,17 @@ export function createWalkSession({later = timer}: {later?: Later} = {}): WalkSe
     if (!take.stops[from]) return `${take.name} has no stop ${from + 1}.`
     const step = (index: number) => {
       const stop = take.stops[index]
+      // The World stands the stop's place, then selects the thing it visited, and the window turns to its moment; a stop kept at no moment
+      // leaves the window as it stands. What the World refuses is said beside the stop.
       here.go({placeRef: stop.place_ref, camera: cameraOf(stop.viewport)}, TOUR_FLIGHT_MS)
-      set({playing: {walkId, index, total: take.stops.length}, line: `Walking ${take.name}: stop ${index + 1} of ${take.stops.length}, ${stop.caption ?? 'a place with no name'}.`})
+      const refusals = [stop.thing_ref ? here.select(stop.thing_ref) : null, stop.moment ? here.setWindow(stop.moment) : null].filter(Boolean)
+      set({playing: {walkId, index, total: take.stops.length},
+        line: `Walking ${take.name}: stop ${index + 1} of ${take.stops.length}, ${stop.caption ?? 'a place with no name'}.${refusals.length ? ` ${refusals.join(' ')}` : ''}`})
       cancelPlay = later(() => {
         cancelPlay = null
         if (index + 1 < take.stops.length) step(index + 1)
         else set({playing: null, line: `${take.name} has walked its ${plural(take.stops.length, 'stop', 'stops')}.`})
-      }, TOUR_FLIGHT_MS + stop.hold_ms)
+      }, TOUR_FLIGHT_MS + here.pace())
     }
     step(from)
     return null
@@ -284,14 +309,16 @@ export function createWalkSession({later = timer}: {later?: Later} = {}): WalkSe
       if (state.busy) { set({line: BUSY}); return }
       if (state.recording) return
       halt()
-      set({recording: {stops: [], last: null}, line: 'Recording: each place you visit on the World becomes a stop. Stop keeps the take.'})
+      set({recording: {stops: [], last: null}, line: 'Recording: each place, moment or thing you visit on the World becomes a stop. Stop keeps the take.'})
     },
     visit(visit) {
       const recording = state.recording
-      if (!recording) return
-      const key = visitKey(visit)
+      if (!recording || !world) return
+      // A visit made at no moment of its own is made at the moment in force.
+      const made = visit.moment === undefined ? {...visit, moment: world.moment()} : visit
+      const key = visitKey(made)
       if (key === recording.last) return
-      const next = withStop(recording.stops, stopOfVisit(visit))
+      const next = withStop(recording.stops, stopOfVisit(made, world.pace()))
       if (next.problem) { set({line: next.problem}); return }
       set({recording: {stops: next.stops, last: key}, line: `Recording: ${plural(next.stops.length, 'stop', 'stops')}, the last at ${visit.name}.`})
     },
@@ -325,7 +352,9 @@ export function createWalkSession({later = timer}: {later?: Later} = {}): WalkSe
       if (state.busy) { set({line: BUSY}); return }
       const here = world.here()
       if (!here) { set({line: 'The World shows the sky or the graph, which frame no body: come down to a body to keep its view.'}); return }
-      const view = viewRecordOf(here.camera, world.window())
+      const view = viewRecordOf(here.camera, world.window(), world.filter())
+      const at = {placeRef: here.place?.ref ?? null, camera: here.camera, moment: world.moment()}
+      const pace = world.pace()
       const mine = generation
       let title = '', sceneRef = ''
       set({busy: true, line: 'Keeping the view…'})
@@ -341,9 +370,9 @@ export function createWalkSession({later = timer}: {later?: Later} = {}): WalkSe
         let carried = ''
         let next = recording
         if (recording) {
-          const stop = {...stopOfVisit({placeRef: here.place?.ref ?? null, name: title, camera: here.camera}), binding: {expression_ref: kept.walk.expressionRef, scene_ref: sceneRef}}
+          const stop = {...stopOfVisit({...at, name: title}, pace), binding: {expression_ref: kept.walk.expressionRef, scene_ref: sceneRef}}
           const added = withStop(recording.stops, stop)
-          next = added.problem ? recording : {stops: added.stops, last: visitKey({placeRef: here.place?.ref ?? null, name: title, camera: here.camera})}
+          next = added.problem ? recording : {stops: added.stops, last: visitKey({...at, name: title})}
           carried = added.problem ? ` It is not a stop of the take: ${added.problem}` : ', and a stop of the take carries it'
         }
         set({busy: false, recording: next, reading: {phase: 'read', walk: kept.walk, saved: kept.saved},
@@ -363,7 +392,8 @@ export const walkSession: WalkSession = createWalkSession()
 
 let lastVisit: WalkVisit | null = null
 
-/** A place visited on the World (places/placesHost.ts turnAtlasTo, the atlas's own navigation, walksHost.ts): a stop while Record runs. */
+/** A place, moment or thing visited on the World (places/placesHost.ts turnAtlasTo, the atlas's own navigation, an occasion stood on the
+ * time spine, walksHost.ts): a stop while Record runs. */
 export function noteWalkVisit(visit: WalkVisit): void {
   lastVisit = visit
   walkSession.visit(visit)

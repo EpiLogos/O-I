@@ -10,8 +10,9 @@
 // modeTracks.ts.
 //
 // The World's recorded walks (O-I #760) are read from the walk's own store (projections/atlas/walks/walkSession.ts, which the atlas host
-// binds and reads through the walk's owner): its takes and kept views as walks (walkRecord.ts recordedWalksOf), and its one write arm while
-// the World is open. A stop of one is stood by the World (the session's play: a take walks on from it, a kept view reopens), never the spine.
+// binds and reads through the walk's owner): its takes and kept views as walks (walkRecord.ts recordedWalksOf) with the stops kept at an
+// instant (recordedInstantsOf), and its one write arm while the World is open. A stop of one is stood by the World (the session's play: a
+// take walks on from it, turning the window to each stop's moment; a kept view reopens), never the spine.
 //
 // Its actions go through the owners that exist: a walk stop is stood by the rule the Timeline and the Journey share
 // (timeline/journeyWalks.ts walkStopFocus → timeline/walkFocus.ts applyWalkStopFocus: its occasion on the spine, or its epoch in
@@ -32,7 +33,7 @@ import type {TracksReading} from './modeTracks'
 import {setReadingShown, setReadingSolo, useReadingShown} from '../../timeline/readingShown'
 import {isRecordedWalk} from '../../timeline/techneTrackAdapter'
 import {walkSession, type WalkSession} from '../../projections/atlas/walks/walkSession'
-import {recordedWalksOf} from '../../projections/atlas/walks/walkRecord'
+import {recordedInstantsOf, recordedWalksOf} from '../../projections/atlas/walks/walkRecord'
 
 /** The published reading, with the Expression door the frame hands it. */
 export type TechneTracksReading = TracksReading & {journey?: JourneyPresentation}
@@ -73,6 +74,7 @@ export function useTechneTracks(reading: TracksReading): WorldTrackSet {
   const walk = useSyncExternalStore(walkSession.subscribe, walkSession.get, walkSession.get)
   const recorded = useMemo(() => ({
     walks: walk.reading.phase === 'read' ? recordedWalksOf(walk.reading.walk) : [],
+    ...(walk.reading.phase === 'read' ? {instants: recordedInstantsOf(walk.reading.walk)} : {}),
     armed: walk.armed,
     ...(walk.bound ? {arm: (on: boolean) => {
       walkSession.arm(on)

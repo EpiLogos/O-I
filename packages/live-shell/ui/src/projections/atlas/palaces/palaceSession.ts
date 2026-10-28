@@ -338,6 +338,25 @@ export const PALACE_WALK_DWELLS_MS: readonly number[] = [2000, 3000, 4000, PALAC
 /** The dwell Tempo last chose: it holds from palace to palace while the session lasts. */
 let walkDwell = PALACE_WALK_DWELL_MS
 let walkTimer: ReturnType<typeof setInterval> | null = null
+const paceListeners = new Set<() => void>()
+
+/** The walk's pace (manual §10.5 Technē, Tempo "Set the walk's pace"; §17.2 World Transport, "Tempo — Sets how long the walk dwells at each
+ * stop"): the dwell Tempo last chose. One pace for every walk on the World: a palace's walk dwells in each room for it, and the World's
+ * recorded walk (walks/walkSession.ts) dwells at each stop for it and records its stops at it (O-I #760). */
+export function walkPace(): number {
+  return walkDwell
+}
+
+/** Hear each change of the walk's pace, inside a palace or outside one. Returns the release. */
+export function subscribeWalkPace(listener: () => void): () => void {
+  paceListeners.add(listener)
+  return () => { paceListeners.delete(listener) }
+}
+
+function setWalkPace(next: number): void {
+  walkDwell = next
+  for (const listener of [...paceListeners]) listener()
+}
 
 /** Session presentation saved on change (palaceInstrument.tsx:263 persist): the walk, the board and the bookmarks persist through
  * the palace's presence owner; a refused store is told once. */
@@ -382,14 +401,15 @@ export function startWalking(): void {
 }
 
 /** Tempo's step (the transport's ‹ ›): › (+1) quickens the walk to the next shorter dwell, ‹ (-1) slows it; a walk that walks goes on at
- * the new dwell from where it stands. Each end of the dwells holds. */
+ * the new dwell from where it stands. Each end of the dwells holds. Outside a palace it steps the walk's pace the World's walk keeps. */
 export function stepTempo(direction: 1 | -1): void {
   const here = inside()
-  if (!here) return
-  const at = PALACE_WALK_DWELLS_MS.indexOf(here.dwellMs)
+  const current = here ? here.dwellMs : walkDwell
+  const at = PALACE_WALK_DWELLS_MS.indexOf(current)
   const next = PALACE_WALK_DWELLS_MS[Math.min(PALACE_WALK_DWELLS_MS.length - 1, Math.max(0, (at < 0 ? PALACE_WALK_DWELLS_MS.indexOf(PALACE_WALK_DWELL_MS) : at) - direction))]
-  if (next === here.dwellMs) return
-  walkDwell = next
+  if (next === current) return
+  setWalkPace(next)
+  if (!here) return
   patch({dwellMs: next})
   if (walkTimer) {
     clearInterval(walkTimer)
@@ -833,7 +853,7 @@ export function resetPalaceSession(): void {
   viewportTimer = null
   viewportPending = null
   persistFailed = false
-  walkDwell = PALACE_WALK_DWELL_MS
+  setWalkPace(PALACE_WALK_DWELL_MS)
   owners = null
   set({phase: 'outside'})
 }
