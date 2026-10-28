@@ -12,18 +12,21 @@
 //! | [`KernelEventLogSource`] | kernel event log | the in-process log |
 //! | [`AikitHistorySource`] | aikit history evidence | `aikit history --json` |
 //! | [`factory_runs_read`] | Factory run receipts | `factory telemetry day` (`factory.telemetry-day/v1`) |
+//! | [`day_opening`] | the opening of today's Day | `central.day.read` (root) |
 //!
 //! Owner readings follow the house law (`history.rs`, `central.rs`): an
 //! envelope flagged `automatic_agent_or_model_invocation` is refused, never
 //! degraded into a reading. A source's own time is inherited verbatim where
 //! the source records one (`created_at`, the fixture's `utc`, an aikit
 //! evidence `occurred_at`, a kernel `observed_at`, a Factory signal's
-//! `updated_at_unix_ms`) and left absent where it does not — the field never
-//! receives an invented time.
+//! `updated_at_unix_ms`, a Day's `opened_at_unix_seconds`) and left absent
+//! where it does not — the field never receives an invented time.
 //!
-//! Not joined: a Central day-open moment. The Day reading
-//! (`central.day-reading/v1`) states a civil date and a document state but
-//! no opened-at instant, so no moment is emitted for it (never a midnight).
+//! Central's Day joins as its opening: the Day reading
+//! (`central.day-reading/v1`) states the instant ensure-day opened the Day
+//! (`opened_at_unix_seconds`, O-I #756), and that instant is the moment. A
+//! Day that states none gives no moment (never a midnight, never the time it
+//! was read).
 
 use crate::events::KernelEventLog;
 use crate::factory::OwnerRequest;
@@ -769,6 +772,104 @@ impl TemporalStreamSource for AikitHistorySource {
 }
 
 // ---------------------------------------------------------------------------
+// Central's Day — `central.day.read` (root register, today's Day)
+// ---------------------------------------------------------------------------
+
+/// Central's Day: the moment today's Day was opened.
+const DAY_STREAM: &str = "central-day";
+
+const DAY_READING_SCHEMA: &str = "central.day-reading/v1";
+
+fn day_absence(reason: AbsenceReason, owner_words: String) -> StreamAbsence {
+    StreamAbsence {
+        stream: DAY_STREAM.into(),
+        reason,
+        owner_words,
+        source_ref: None,
+    }
+}
+
+/// Central's answer for today's Day (`central.day.read`, root register) as its opening: one moment at the instant the
+/// reading says the Day was opened (`opened_at_unix_seconds`, which ensure-day records as it opens the Day), inherited
+/// verbatim. A Day that states no opening is no moment — never its midnight, never the time it was read — and no absence:
+/// "no moment" is an answer. Central's refusal (before the first Day: "no DayRef or current today pointer"), an absent
+/// owner and a reading out of contract are named absences, and the field still answers.
+pub(crate) fn day_opening(
+    answer: Result<Value, OwnerCallError>,
+) -> Result<Vec<TemporalEvent>, StreamAbsence> {
+    let envelope = answer.map_err(|error| {
+        let reason = match error {
+            OwnerCallError::Unavailable { .. } => AbsenceReason::OwnerAbsent,
+            OwnerCallError::Refused { .. } => AbsenceReason::Refused,
+            OwnerCallError::Malformed { .. } => AbsenceReason::OwnerUnreadable,
+        };
+        day_absence(reason, error.to_string())
+    })?;
+    if envelope["ok"] != true {
+        let words = envelope
+            .pointer("/error/message")
+            .and_then(Value::as_str)
+            .unwrap_or_default();
+        return Err(day_absence(AbsenceReason::Refused, words.to_owned()));
+    }
+    if envelope_refused(&envelope) {
+        return Err(day_absence(
+            AbsenceReason::Refused,
+            "the owner answered with an automatic or model-invoked reading; refused".into(),
+        ));
+    }
+    let unreadable = |reason: String| day_absence(AbsenceReason::OwnerUnreadable, reason);
+    let day = &envelope["data"];
+    if day["schema"] != DAY_READING_SCHEMA {
+        return Err(unreadable(format!(
+            "the Day reading is not `{DAY_READING_SCHEMA}`"
+        )));
+    }
+    let day_ref = day["day_ref"]
+        .as_str()
+        .filter(|day_ref| !day_ref.is_empty())
+        .ok_or_else(|| unreadable("the Day reading names no `day_ref`".into()))?;
+    let opened = match day.get("opened_at_unix_seconds") {
+        None | Some(Value::Null) => return Ok(Vec::new()),
+        Some(opened) => opened
+            .as_i64()
+            .ok_or_else(|| unreadable("`opened_at_unix_seconds` is not an integer".into()))?,
+    };
+    let civil_instant = jiff::Timestamp::from_second(opened)
+        .map(|instant| instant.to_string())
+        .map_err(|error| {
+            unreadable(format!(
+                "`opened_at_unix_seconds` ({opened}) is not a valid instant: {error}"
+            ))
+        })?;
+    let evidence_refs = [
+        day.pointer("/source/ref"),
+        day.pointer("/revision/revision"),
+    ]
+    .into_iter()
+    .flatten()
+    .filter_map(Value::as_str)
+    .map(str::to_owned)
+    .collect();
+    let civil_date = day
+        .pointer("/temporal/civil_date")
+        .and_then(Value::as_str)
+        .unwrap_or(day_ref);
+    Ok(vec![TemporalEvent {
+        stream: DAY_STREAM.into(),
+        kind: EventKind::Day,
+        thought_type: None,
+        subject_ref: day_ref.to_owned(),
+        civil_instant: Some(civil_instant),
+        instant_unix_ms: None,
+        day_ref: None,
+        stream_position: format!("{day_ref}#opened"),
+        evidence_refs,
+        summary: format!("The Day {civil_date} opened."),
+    }])
+}
+
+// ---------------------------------------------------------------------------
 // Factory run receipts — `factory telemetry day` (factory.telemetry-day/v1)
 // ---------------------------------------------------------------------------
 
@@ -1434,11 +1535,11 @@ fn read_thoughts_chunk(
 /// - ONE `central.now.list` reading serves both the clearing refs and the
 ///   clearing events (they read the same register);
 /// - the independent owners (civil field, wiki placement, kernel log,
-///   aikit history) run beside the thought stream, which is ONE call to
-///   Central's NOW batch (`central.now.thoughts.read-batch`) — or, for a
-///   Central without it, the per-clearing fan-out bounded at
+///   aikit history, today's Day) run beside the thought stream, which is
+///   ONE call to Central's NOW batch (`central.now.thoughts.read-batch`) —
+///   or, for a Central without it, the per-clearing fan-out bounded at
 ///   [`THOUGHT_WORKERS`]; the Factory run stream follows the civil field
-///   (its window needs the policy) and is non-fatal;
+///   (its window needs the policy) and is non-fatal, and so is the Day's;
 /// - the Central owner executable is named directly when the host
 ///   provides it (`OI_CENTRAL_CTRL_BIN`), one process per Action instead
 ///   of two;
@@ -1497,6 +1598,12 @@ pub fn read_field(
             }));
             let aikit = scope.spawn(crate::read_cache::carried(|| {
                 AikitHistorySource::discover(cwd.clone()).read()
+            }));
+            // Today's Day, for the instant it was opened.
+            let day = scope.spawn(crate::read_cache::carried(|| {
+                day_opening(
+                    owner.run_envelope("central.day.read", json!({ "project": Value::Null })),
+                )
             }));
 
             // The register reading arrives first: the thought fan-out reads
@@ -1576,6 +1683,10 @@ pub fn read_field(
                 events: factory_events,
                 absences: factory_absences,
             } = awaited_factory(factory.recv_timeout(FACTORY_READ_BOUND));
+            let (day_events, day_absences) = match day.join().expect("day reader") {
+                Ok(events) => (events, Vec::new()),
+                Err(absence) => (Vec::new(), vec![absence]),
+            };
 
             let now_stream = Collected {
                 name: "central-now",
@@ -1601,6 +1712,10 @@ pub fn read_field(
                 name: FACTORY_STREAM,
                 events: factory_events,
             };
+            let day_stream = Collected {
+                name: DAY_STREAM,
+                events: day_events,
+            };
             let mut answer = project(
                 &[
                     &now_stream,
@@ -1609,14 +1724,16 @@ pub fn read_field(
                     &kernel_stream,
                     &aikit_stream,
                     &factory_stream,
+                    &day_stream,
                 ],
                 &field,
                 &observed,
                 query,
             )?;
-            // Every stream that swallowed its failure names it here; the five
-            // others fail the whole reading by name and never reach this list.
-            answer.absences = factory_absences;
+            // Every stream that swallowed its failure names it here (Factory's,
+            // the Day's); the five others fail the whole reading by name and
+            // never reach this list.
+            answer.absences = factory_absences.into_iter().chain(day_absences).collect();
             let retained =
                 serde_json::to_value(&answer).map_err(|error| TemporalEventsError::CivilTime {
                     reason: format!("temporal answer serialisation failed: {error}"),
@@ -1736,6 +1853,9 @@ mod read_field_tests {
                 "aikit.json",
                 r#"{"ok":true,"data":{"entries":[{"id":"ev-1","kind":"generation","subject":"factory/run-01","summary":"a retained report","occurred_at_unix_ms":1791428384933}]}}"#,
             );
+            // Today's Day, as `central.day.read` answers it once ensure-day opened it; a test that wants another Day
+            // reading writes its own.
+            let day = write_file(&directory, "day.json", DAY_OPENED);
             // The Factory owner: an empty locate file answers `absent` (the
             // owner's own "No such file" refusal); a located reading is written
             // by the test that wants one. Factory calls log to their own file,
@@ -1808,6 +1928,7 @@ mod read_field_tests {
                     batch.display()
                 );
                 let _ = writeln!(body, r#"  central.files.list) cat {} ;;"#, files.display());
+                let _ = writeln!(body, r#"  central.day.read) cat {} ;;"#, day.display());
                 let _ = writeln!(body, r#"  central.world) cat {} ;;"#, world.display());
                 let _ = writeln!(body, r#"  *) printf '{{"ok":false}}' ;;"#);
                 let _ = writeln!(body, "esac");
@@ -1913,6 +2034,24 @@ mod read_field_tests {
 
     const THOUGHTS_REPLY: &str = r#"{"ok":true,"data":{"directory":"dir/T","fixtures":[{"file":"a.json","conforming":true,"content":"{\"utc\": \"2026-10-08T09:00:00+01:00\"}"}]}}"#;
 
+    /// Today's Day as `central.day.read` answers it (the installed `ctrl`'s shape, 28 Oct 2026, its content left out),
+    /// opened at 2026-10-08T07:30:00Z by ensure-day.
+    const DAY_OPENED: &str = r#"{"ok":true,"status":"success","action":"central.day.read","data":{"schema":"central.day-reading/v1",
+        "day_ref":"central:day:control:root:2026-10-08",
+        "source":{"ref":"central:source:control:root:Control/user/day/2026-10-08/day.md","path":"Control/user/day/2026-10-08/day.md"},
+        "revision":{"byte_len":0,"revision":"central.content-fnv1a64/v1:0:cbf29ce484222325"},
+        "temporal":{"schema":"central.human-day/v1","day_ref":"central:day:control:root:2026-10-08","civil_date":"2026-10-08","created_at_unix_seconds":1791444600,"lifecycle":"open"},
+        "opened_at_unix_seconds":1791444600,"document_state":"uninitialised","document":null,"automatic_agent_or_model_invocation":false}}"#;
+
+    /// The same Day from a Central whose reading states no opening instant (one before O-I #756, or a relation that
+    /// records none).
+    const DAY_UNSTATED: &str = r#"{"ok":true,"status":"success","action":"central.day.read","data":{"schema":"central.day-reading/v1",
+        "day_ref":"central:day:control:root:2026-10-08",
+        "source":{"ref":"central:source:control:root:Control/user/day/2026-10-08/day.md","path":"Control/user/day/2026-10-08/day.md"},
+        "revision":{"byte_len":0,"revision":"central.content-fnv1a64/v1:0:cbf29ce484222325"},
+        "temporal":{"schema":"central.human-day/v1","day_ref":"central:day:control:root:2026-10-08","civil_date":"2026-10-08","lifecycle":"open"},
+        "document_state":"uninitialised","document":null,"automatic_agent_or_model_invocation":false}}"#;
+
     fn receipts() -> Vec<crate::events::KernelEventReceipt> {
         let mut log = crate::events::KernelEventLog::new();
         log.record(crate::events::KernelEvent::WorkingSurfaceDriving {
@@ -1968,6 +2107,7 @@ mod read_field_tests {
         assert_eq!(
             counts,
             vec![
+                ("central.day.read".to_owned(), 1),
                 ("central.files.list".to_owned(), 1),
                 ("central.now.list".to_owned(), 1),
                 ("central.now.thoughts.read-batch".to_owned(), 1),
@@ -1977,7 +2117,7 @@ mod read_field_tests {
         );
 
         // Every stream joined the field: 4 clearings + 4 thoughts + 1 wiki
-        // placement + 2 kernel receipts + 1 aikit entry.
+        // placement + 2 kernel receipts + 1 aikit entry + the Day's opening.
         let by_stream = |name: &str| {
             answer
                 .events
@@ -1990,6 +2130,7 @@ mod read_field_tests {
         assert_eq!(by_stream("wiki-returns"), 1);
         assert_eq!(by_stream("kernel-event-log"), 2);
         assert_eq!(by_stream("aikit-history"), 1);
+        assert_eq!(by_stream("central-day"), 1);
         // Thought identity is the clearing's own ref even though the
         // fixture replies were read in parallel.
         for reference in ["ref-a", "ref-b", "ref-c", "ref-d"] {
@@ -2144,6 +2285,195 @@ mod read_field_tests {
             error,
             TemporalEventsError::InvalidRecord { ref stream, .. } if stream == "central-now"
         ));
+    }
+
+    fn day_moments(answer: &TemporalEventsAnswer) -> Vec<&TemporalEvent> {
+        answer
+            .events
+            .iter()
+            .filter(|event| event.stream == DAY_STREAM)
+            .collect()
+    }
+
+    /// Central's Day joins the field at the instant it was opened (`central.day-reading/v1`
+    /// `opened_at_unix_seconds`, O-I #756): one `day` moment on its own stream, on the civil day the policy places it.
+    #[test]
+    fn a_day_joins_the_field_at_the_instant_it_was_opened() {
+        let _env = owner_env();
+        let owner = FakeOwner::new("day-opened", &nowlist(&["ref-a"]), THOUGHTS_REPLY);
+        let cache = Mutex::new(crate::read_cache::OwnerReadCache::default());
+        let answer = read_field(
+            &owner.client(),
+            &cache,
+            &[],
+            owner.directory.clone(),
+            &span_window(),
+        )
+        .unwrap();
+        let moments = day_moments(&answer);
+        assert_eq!(moments.len(), 1, "{:?}", answer.events);
+        let opened = moments[0];
+        assert_eq!(opened.kind, EventKind::Day);
+        assert_eq!(opened.subject_ref, "central:day:control:root:2026-10-08");
+        assert_eq!(
+            opened.civil_instant.as_deref(),
+            Some("2026-10-08T07:30:00Z")
+        );
+        assert_eq!(opened.instant_unix_ms, Some(1_791_444_600_000));
+        assert_eq!(
+            opened.day_ref.as_deref(),
+            Some("central:day:control:root:2026-10-08")
+        );
+        assert_eq!(
+            opened.stream_position,
+            "central:day:control:root:2026-10-08#opened"
+        );
+        assert_eq!(
+            opened.evidence_refs,
+            vec![
+                "central:source:control:root:Control/user/day/2026-10-08/day.md".to_string(),
+                "central.content-fnv1a64/v1:0:cbf29ce484222325".to_string(),
+            ]
+        );
+        assert_eq!(opened.summary, "The Day 2026-10-08 opened.");
+        assert!(
+            answer
+                .absences
+                .iter()
+                .all(|absence| absence.stream != DAY_STREAM),
+            "{:?}",
+            answer.absences
+        );
+        assert_eq!(
+            owner
+                .calls()
+                .iter()
+                .filter(|call| *call == "central.day.read")
+                .count(),
+            1
+        );
+    }
+
+    /// A Day that states no opening instant is no moment and no absence: the field never invents one — not midnight,
+    /// not the moment it was read.
+    #[test]
+    fn a_day_that_states_no_opening_is_no_moment() {
+        let _env = owner_env();
+        for (name, reading) in [
+            ("day-unstated", DAY_UNSTATED.to_owned()),
+            (
+                "day-null",
+                DAY_OPENED.replace(
+                    r#""opened_at_unix_seconds":1791444600"#,
+                    r#""opened_at_unix_seconds":null"#,
+                ),
+            ),
+        ] {
+            let owner = FakeOwner::new(name, &nowlist(&["ref-a"]), THOUGHTS_REPLY);
+            std::fs::write(owner.directory.join("day.json"), reading).unwrap();
+            let cache = Mutex::new(crate::read_cache::OwnerReadCache::default());
+            let answer = read_field(
+                &owner.client(),
+                &cache,
+                &[],
+                owner.directory.clone(),
+                &window_all(),
+            )
+            .unwrap();
+            assert!(
+                day_moments(&answer).is_empty(),
+                "{name}: {:?}",
+                answer.events
+            );
+            assert!(answer.absences.is_empty(), "{name}: {:?}", answer.absences);
+            assert_eq!(
+                answer
+                    .events
+                    .iter()
+                    .filter(|event| event.stream == "central-now")
+                    .count(),
+                1,
+                "{name}: the rest of the field answers"
+            );
+        }
+    }
+
+    /// Before the first Day is opened Central answers no ("no DayRef or current today pointer"): a named absence in the
+    /// owner's own words, and the rest of the field still answers.
+    #[test]
+    fn a_refused_day_reading_is_a_named_absence_and_the_field_still_answers() {
+        let _env = owner_env();
+        let owner = FakeOwner::new("day-refused", &nowlist(&["ref-a"]), THOUGHTS_REPLY);
+        std::fs::write(
+            owner.directory.join("day.json"),
+            r#"{"ok":false,"status":"unavailable_capability","action":"central.day.read","error":{"code":"source_or_scope_unavailable","message":"no DayRef or current today pointer"}}"#,
+        )
+        .unwrap();
+        let cache = Mutex::new(crate::read_cache::OwnerReadCache::default());
+        let answer = read_field(
+            &owner.client(),
+            &cache,
+            &[],
+            owner.directory.clone(),
+            &window_all(),
+        )
+        .unwrap();
+        assert!(day_moments(&answer).is_empty());
+        assert_eq!(
+            answer.absences,
+            vec![StreamAbsence {
+                stream: DAY_STREAM.into(),
+                reason: AbsenceReason::Refused,
+                owner_words: "no DayRef or current today pointer".into(),
+                source_ref: None,
+            }]
+        );
+        assert_eq!(
+            answer
+                .events
+                .iter()
+                .filter(|event| event.stream == "central-now")
+                .count(),
+            1
+        );
+    }
+
+    /// A Day reading the field cannot read as its contract states, or one flagged automatic, is named, never a moment.
+    #[test]
+    fn a_day_reading_out_of_contract_is_named_never_a_moment() {
+        let opened: Value = serde_json::from_str(DAY_OPENED).unwrap();
+        let mapped = |envelope: Value| day_opening(Ok(envelope));
+        assert_eq!(mapped(opened.clone()).unwrap().len(), 1);
+        let mut automatic = opened.clone();
+        automatic["data"]["automatic_agent_or_model_invocation"] = json!(true);
+        assert_eq!(
+            mapped(automatic).unwrap_err().reason,
+            AbsenceReason::Refused
+        );
+        for (pointer, value) in [
+            ("/data/schema", json!("central.day-reading/v0")),
+            (
+                "/data/opened_at_unix_seconds",
+                json!("2026-10-08T07:30:00Z"),
+            ),
+            ("/data/day_ref", json!(null)),
+        ] {
+            let mut broken = opened.clone();
+            *broken.pointer_mut(pointer).unwrap() = value;
+            assert_eq!(
+                mapped(broken).unwrap_err().reason,
+                AbsenceReason::OwnerUnreadable,
+                "{pointer}"
+            );
+        }
+        assert_eq!(
+            day_opening(Err(OwnerCallError::Unavailable {
+                detail: "no ctrl".into()
+            }))
+            .unwrap_err()
+            .reason,
+            AbsenceReason::OwnerAbsent
+        );
     }
 
     #[test]

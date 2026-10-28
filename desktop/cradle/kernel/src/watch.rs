@@ -1258,8 +1258,11 @@ fn classify_path(roots: &Roots, path: &Path) -> Vec<Scope> {
 /// Paths whose changes are never a change of what an owner reads: build
 /// output, dependency trees, git's object store, Finder droppings, and the
 /// caches and lock files owners write around their own reads (Central's
-/// `.central/bkmr` index and `source-change-horizon.json`, GitNexus's index).
-/// Without this a read would announce its own cache write and be asked again.
+/// `.central/bkmr` index, its Source Change Horizons — a Project's
+/// `source-change-horizon.json` and the root's `source-change-control.json`,
+/// which a reconcile rewrites only when the sources it derives from moved,
+/// a move the watch saw already — and GitNexus's index). Without this a
+/// read would announce its own cache write and be asked again.
 fn noise(relative: &Path) -> bool {
     let parts = names(relative);
     for (index, part) in parts.iter().enumerate() {
@@ -1273,7 +1276,9 @@ fn noise(relative: &Path) -> bool {
             ".central" => {
                 if matches!(
                     parts.get(index + 1),
-                    Some(&"bkmr") | Some(&"source-change-horizon.json")
+                    Some(&"bkmr")
+                        | Some(&"source-change-horizon.json")
+                        | Some(&"source-change-control.json")
                 ) {
                     return true;
                 }
@@ -1692,6 +1697,10 @@ mod tests {
         for ignored in [
             "Work/O-I/.central/bkmr/index.db",
             "Work/O-I/.central/source-change-horizon.json",
+            // The root register's horizon (Central `CONTROL_HORIZON_STATE`), which a root `source.read` rewrites when
+            // the Control sources it is derived from moved (O-I #756).
+            ".central/source-change-control.json",
+            ".central/source-horizon.lock",
             "Work/O-I/ProjectCentral/agents/wiki/.wiki.json.publication.lock",
             "Work/O-I/x.lock.1",
             "Work/O-I/.gitnexus/graph.db",
