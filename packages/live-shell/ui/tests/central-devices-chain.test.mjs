@@ -43,6 +43,11 @@ export async function load(u, c, n) {
 }`)}`, import.meta.url)
 
 const model = await import('../src/central/devices/centralDeviceModel.ts')
+const answer = await import('../src/central/devices/answerBinding.ts')
+const agentChain = await import('../src/agent/devices/agentChainDevices.ts')
+const hygieneModel = await import('../src/inhabitants/centralHygieneModel.ts')
+const groundBind = await import('../src/central/devices/groundBindings.ts')
+const pages = await import('../src/central/devices/pageBindings.ts')
 const chain = await import('../src/central/devices/CentralDevices.tsx')
 const dayDie = await import('../src/central/devices/dayDie.ts')
 const door = await import('../src/frame/devices/deviceDoor.ts')
@@ -66,12 +71,17 @@ const html = (element) => renderToStaticMarkup(element)
 const transport = {kind: 'unavailable', reason: 'the test carrier is down'}
 const central = inhabitantManifest('central')
 assert.ok(central, 'the central family is admitted by the shell\'s own door')
-// R4 (DLW §16.2; lock §0.3.4): the family's faces on the chains are the Day (the Main track's) and the Packet, then — on a world whose folder
-// holds code — Ground hygiene, Machine (W4, §18.7) and Impact (a world's); the Agent and Scope stand between the Packet and Ground hygiene as
-// devices of their own families (r4-chains.test.mjs; w4-central-machine-chain.test.mjs places them per world kind).
+// R4 (DLW §16.2; lock §0.3.4): the family's faces on the chains are the Day (the Main track's) and the Packet, then Docs (a world's: "The
+// packet, the agent of the world, and its scope; then Docs"); the Agent and Scope stand between the Packet and Docs as devices of their own
+// families (r4-chains.test.mjs).
 // REPLACED: lane BC3's seven (the Day, Agent identity, the Answer, Context & world, Search, Ground hygiene, Impact) — Agent identity and
 // the Answer are the one Agent's, Context & world is Scope's, Search is a pane.
-const FACES = ['day-die', 'packet', 'ground-hygiene', 'machine', 'impact']
+// REPLACED (#725, the 22 Oct catalogue): W4's Ground hygiene, Machine and Impact on a world holding code — retired as devices of their own:
+// the seats and checkouts are Git / landing's Checkouts page (§19.16), the machine the Remote carrier's Machine page (§18.7, §19.18), what a
+// change reaches the Knowledge graph's, the NOWs' and Docs' Meaning (§18.6). Docs stands after Scope on every world (§16.2, §18.5).
+const FACES = ['day-die', 'packet', 'docs']
+/** The faces retired in the 22 Oct manual rewrite that stood on a Central chain or in its door: none is declared, none stands. */
+const RETIRED = ['ground-hygiene', 'machine', 'impact', 'nara-conversation', 'flow-document', 'context-world', 'workspace', 'beings', 'things', 'text', 'highlight', 'notes']
 const DAY_REF = 'central:day:control:root:2026-10-06'
 const ready = vertical.interpretDayOpen(DAY_REF, {data: {schema: 'oi.central-day-open/v1', project: null, day: {
   document_state: 'ready', source: {ref: 'central:source:control:root:Control/user/day/2026-10-06/day.md'},
@@ -94,7 +104,7 @@ const deviceMarkup = (markup, faceId) => {
 }
 function DeviceViewOf({entry, size}) { return createElement(DeviceView, {device: entry.device, size, picture: entry.picture(size), marks: entry.marks}) }
 
-test('the family\'s faces on the chains are five devices, in chain order, each its own family\'s declaration; no page face and no moved face stands', () => {
+test('the family\'s faces on the chains are three devices, in chain order, each its own family\'s declaration; no page face and no moved face stands', () => {
   const set = entries()
   assert.deepEqual(set.map(entry => entry.id), FACES.map(id => `central:${id}`))
   for (const entry of set) {
@@ -105,9 +115,11 @@ test('the family\'s faces on the chains are five devices, in chain order, each i
     assert.notEqual(declared.liveSemantic, 'clip', `${entry.id} is a device, not a clip`)
   }
   assert.equal(set.find(entry => entry.id === 'central:day-die').device.face.liveSemantic, 'device-instrument')
-  // MOVED (lane BC2): the Flow was declared a clip and stood on the Clip side (FlowClip.tsx, which nothing mounted). DLW §18.1 makes it
-  // an instrument, first on a Flow document's chain: it stands there while a Flow is reached (central-page-family-binding.test.mjs).
-  assert.equal(central.faces.find(face => face.id === 'flow-document').liveSemantic, 'device-instrument')
+  // REPLACED (#725): "the Flow is an instrument, first on a Flow document's chain" (lane BC2's MOVE) — the 22 Oct manual folds the Flow into a
+  // page's Clip panel and editor tabs (PROGRAMME R25 item 4: "Flow, Beings and Things are a page's Clip panel and editor tabs"; §18.1 "A clip
+  // is a page: a Being, a Thing, a Flow"), so the family declares no Flow face; its binding (pageBindings.ts flowBinding) is checked below.
+  for (const id of RETIRED) assert.ok(!central.faces.some(face => face.id === id), `${id} is retired: the family declares no face of it`)
+  assert.equal(set.find(entry => entry.id === 'central:docs').device.face.liveSemantic, 'device-audio-fx', 'Docs is an effect (§18.5 "Kind: effect")')
   assert.deepEqual(model.clipFaces(central.faces).map(face => face.id), [], 'the family declares no clip')
   // REPLACED: "with no document reached, no page device stands" and "with no workspace book, the Workspace does not stand" — no page
   // face stands on any chain now, reached or not (§16.1: a page's Clip panel, editor tabs and tools).
@@ -127,11 +139,10 @@ test('REPLACED — a face the family declares that no chain names stands on no c
 
 test('every device is compact on the chain: a picture, at most four readings, no text-only card, and the doors to whole and full', () => {
   const markup = html(createElement(BaseDevicesDetail, {transport}))
-  // W4 (§16.2): with no world's track selected the world's chain names no world, so only the Day and the Packet of the family stand; Ground
-  // hygiene, Machine and Impact stand on a world whose folder holds code (w4-central-machine-chain.test.mjs), and stay on the door.
-  const CODE_FACES = ['ground-hygiene', 'machine', 'impact']
-  for (const id of CODE_FACES) assert.ok(!markup.includes(`data-device="central:${id}"`), `${id}: on no chain while no world holding code is selected`)
-  for (const id of FACES.filter(face => !CODE_FACES.includes(face))) {
+  // REPLACED (#725): W4's "Ground hygiene, Machine and Impact stand on no chain while no world holding code is selected" — they are retired
+  // (§18.6, §18.7, §19.16), so they stand on no chain whatever world is selected; every chain face stands with no world selected.
+  for (const id of RETIRED) assert.ok(!markup.includes(`data-device="central:${id}"`), `${id}: retired, on no chain`)
+  for (const id of FACES) {
     const device = deviceMarkup(markup, id)
     assert.match(device, /data-device-size="compact"/, id)
     // The Day's picture is its design's net (lane BC, central-day-binding.test.mjs); with no ground read here its generic plate stands,
@@ -164,16 +175,19 @@ test('the rows are the family\'s declared rows; a row is a reading unless the fa
   const set = entries()
   const rowsOf = id => set.find(entry => entry.id === `central:${id}`).device.rows
   const declared = (instance) => AGENT_SHELL_ADDRESS_TABLE.filter(row => row.family === 'central' && row.deviceInstance === instance).map(row => row.key)
-  // The two faces that left the chain (R4) keep their declared rows where they are drawn (the gallery's generic plate).
+  // The face that left the chain (R4) keeps its declared rows where it is drawn (the gallery's generic plate).
   const model_ = id => model.centralDevice(central.faces.find(face => face.id === id), {})
-  assert.deepEqual(model_('context-world').rows.map(row => row.key), declared('world'), 'the Context-world\'s rows are Central\'s world addresses')
+  // REPLACED (#725): "the Context-world's rows are Central's world addresses" on Context & world's own plate — Context & world is Scope
+  // (PROGRAMME R25 item 5; §19.12), so Central's world addresses are rows of the agent chain's world device, Scope, which carries them.
+  assert.deepEqual(agentChain.slotRows('world').filter(row => row.family === 'central').map(row => row.key), declared('world'), 'Scope carries Central\'s world addresses')
   assert.deepEqual(model_('agent-identity').rows.map(row => row.key).filter(key => declared('agent').includes(key)), declared('agent'), 'the identity row is Central\'s agent address')
   assert.ok(rowsOf('packet'))
   // The two instruments declare `generates`; their write row goes through exactly that path. Every other row is a reading.
   const writing = Object.fromEntries(set.map(entry => [entry.id.slice('central:'.length), entry.device.rows.filter(row => row.writePath).map(row => [row.key, row.writePath])]))
   // REPLACED: the Answer's ['bound', 'kernel:nara_dialogue'] row and the readings of Agent identity, Context & world and Search are no chain
   // entries now; the dialogue's binding is the one Agent's light (r4-one-agent.test.mjs).
-  assert.deepEqual(writing, {'day-die': [['face', 'kernel:receiving']], 'packet': [], 'ground-hygiene': [], 'machine': [], 'impact': []})
+  // REPLACED (#725): Ground hygiene's, Machine's and Impact's empty write lists — retired; Docs writes nothing until its binding lands.
+  assert.deepEqual(writing, {'day-die': [['face', 'kernel:receiving']], 'packet': [], 'docs': []})
   for (const entry of set) {
     const declaredPath = entry.device.face.invariant?.generates
     assert.equal(typeof entry.device.submit, declaredPath ? 'function' : 'undefined', `${entry.id}: a write door exactly where the declaration names a generating path`)
@@ -187,22 +201,33 @@ test('a light is the owner\'s reading: dark when unknown, on only when the owner
   for (const id of FACES) assert.equal(light(id, {}), 'unknown', `${id}: no reading, no light`)
   assert.equal(light('day-die', {day: {standing: ready, face: null, revision: null}}), 'on')
   assert.equal(light('day-die', {day: {standing: uninitialised, face: null, revision: null}}), 'off')
-  assert.equal(light('nara-conversation', {nara: {state: 'resolving', conversation: null, gap: null, expression: null, session: null}}), 'unknown', 'resolving is not yet known')
-  assert.equal(light('nara-conversation', {nara: {state: 'bound', conversation: null, gap: null, expression: 'expression:x', session: 'session:y'}}), 'on')
-  assert.equal(light('nara-conversation', {nara: {state: 'no-identity', conversation: null, gap: null, expression: null, session: null}}), 'off')
+  // REPLACED (#725): the Nara conversation's own light — the Answer was retired ("Answer is the Agent on a page's chain", PROGRAMME R25 item
+  // 5): the dialogue binding is the one Agent's light on Central (answerBinding.ts centralAgentValues), dark-or-lit only where the owner
+  // reports, and unread while it resolves.
+  const agentLight = state => answer.centralAgentValues('central:agent', {nara: {state, session: null}, roster: null, page: null}).light
+  assert.equal(agentLight('resolving'), undefined, 'resolving is not yet known')
+  assert.equal(agentLight('bound'), 'lit')
+  assert.equal(agentLight('unbound'), 'dark')
+  assert.equal(agentLight('refused'), 'dark')
+  assert.equal(agentLight('no-identity'), undefined, 'no identity: no dialogue was asked, so no reading')
   assert.equal(light('agent-identity', {roster: {answer: 'refused', identity: null, accepted: 0, total: 0, fault: 'refused'}}), 'unknown', 'a refused roster is no reading')
   assert.equal(light('agent-identity', {roster: {answer: 'read', identity: 'agent/central-guardian', accepted: 2, total: 3, fault: null}}), 'on')
-  assert.equal(light('ground-hygiene', {workcell: {answer: 'read', ref: 'workcell:mac', health: 'ok', ok: null, fault: null}}), 'unknown', 'an answer with no ok is not a lit light')
-  assert.equal(light('ground-hygiene', {workcell: {answer: 'read', ref: 'workcell:mac', health: 'degraded', ok: false, fault: null}}), 'off')
+  // REPLACED (#725): Ground hygiene's generic light over the workcell status reading — Ground hygiene was retired (its checkouts are Git /
+  // landing's Checkouts page, §19.16); the workcell status's own ref is the census's machine ref, read by the hygiene model's workcellRefOf.
+  assert.equal(hygieneModel.workcellRefOf({workcell_ref: 'workcell:mac', health: 'degraded'}), 'workcell:mac')
+  assert.equal(hygieneModel.workcellRefOf({health: 'ok'}), null, 'an answer with no ref names no machine')
 })
 
 test('the owners\' readings fill the rows: the roster\'s first accepted agent, the workcell, the conversation, the Day\'s revision', () => {
   const device = (id, reads) => model.centralDevice(central.faces.find(face => face.id === id), reads)
   assert.equal(device('agent-identity', {roster: {answer: 'read', identity: 'agent/central-guardian', accepted: 2, total: 3, fault: null}}).values.identity, 'agent/central-guardian')
   assert.equal(device('agent-identity', {roster: {answer: 'read', identity: null, accepted: 0, total: 1, fault: null}}).values.roster, '0 accepted · 1 on the roster')
-  assert.equal(device('ground-hygiene', {workcell: {answer: 'read', ref: 'workcell:mac', health: 'ok', ok: true, fault: null}}).values.workcell, 'workcell:mac')
+  // REPLACED (#725): Ground hygiene's workcell row — see the light test above (workcellRefOf).
   assert.equal(device('day-die', {day: {standing: ready, face: 0, revision: REVISION}}).values.revision, ':000000000000 · 12 B')
-  assert.equal(device('impact', {impact: {kind: 'folder', path: 'Work/O-I'}}).values.subject, 'folder · Work/O-I')
+  // REPLACED (#725): the Impact's subject row — Impact was retired (§18.6); its subject is its binding's own reading (groundBindings.ts
+  // impactValues), which no device publishes now.
+  assert.deepEqual(JSON.parse(groundBind.impactValues('central:impact', {subject: {kind: 'folder', path: 'Work/O-I'}, legs: [], nodes: [], edges: []}).subject),
+    {kind: 'folder', path: 'Work/O-I', ref: null})
   assert.match(device('day-die', {day: {standing: uninitialised, face: null, revision: null}}).rows.find(row => row.key === 'day').disclosure, /central · initialise-day/, 'an uninitialised Day names the owner op that admits it')
 })
 
@@ -223,8 +248,9 @@ test('the door shows the same device whole in its band and full in a pane', () =
     assert.equal(set[0].device.values.face, '#3 Pattern — Observations', 'the same device, the same live settings')
     assert.doesNotMatch(pane, /data-param=/, 'a pane holds the material; its controls stay in Device view (DLW §16.1)')
     // REPLACED: the Answer's pane (the Nara conversation's hosted body) — the Answer is the one Agent, whose Full is its thread.
-    assert.match(html(createElement(DeviceFullPane, {id: 'central:ground-hygiene'})), /data-central-device="ground-hygiene"/)
-    assert.match(html(createElement(DeviceFullPane, {id: 'central:impact'})), /data-central-picture="impact"/, 'no subject: the full size is its picture, not a blank')
+    // REPLACED (#725): Ground hygiene's and Impact's panes — retired (§19.16, §18.6); Docs, which follows Scope, opens full on its own
+    // picture until its binding lands, not a blank.
+    assert.match(html(createElement(DeviceFullPane, {id: 'central:docs'})), /data-central-body="docs"[\s\S]*data-central-picture="docs"/, 'no binding: the full size is its picture, not a blank')
   } finally {
     for (const entry of set) door.publishDevice(entry.id, null)
     door.selectDevice(null)
@@ -232,11 +258,9 @@ test('the door shows the same device whole in its band and full in a pane', () =
   assert.match(html(createElement(DeviceFullPane, {id: 'central:day-die'})), /not on any chain right now/, 'withdrawn with its chain')
 })
 
-test('the impact opens full over the subject the browser selected', () => {
-  const subject = {kind: 'folder', path: 'Work/O-I'}
-  const entry = entries({impact: subject}).find(item => item.id === 'central:impact')
-  assert.match(html(entry.picture('full')), /data-central-device="impact"[^>]*data-subject="Work\/O-I"/)
-})
+// REPLACED (#725): "the impact opens full over the subject the browser selected" — Impact was retired (§18.6: what a change to a folder or a
+// note reaches is read in the Knowledge graph and the NOWs, and whether the code still says it in Docs' Meaning); no device takes the
+// browser's subject on Central's chain until Docs' Subject is bound. Its binding still reads the subject: see the rows test above.
 
 test('REPLACED — no native pop-out mark of the family\'s own: the door\'s ↗ (the device\'s own window, R1) stands alone; a face the host holds popped out says so in its Full', () => {
   // Was: "pop-out is kept where the face declares it: offered with a host and an aperture, disabled without, redock when out — a mark of
@@ -391,11 +415,14 @@ test('a die turn the owner cannot take is refused in the owner\'s words or by na
 
 test('binding the conversation resolves the dialogue through the nara_dialogue op, as the encounter surface does; unbinding has no owner op', async () => {
   const conversation = {project: null, expressionRef: 'expression:bind-1', conversation: null}
-  // The conversation face stands on no chain since R4 (the one Agent binds the dialogue); its device and write door stand as the model
-  // builds them, over the same writers the chain held (centralDeviceWrites.ts bindConversation).
-  const face = central.faces.find(item => item.id === 'nara-conversation')
-  const device = ({conversation: aperture = conversation, afterWrite} = {}) => model.centralDevice(face, {nara: NARA_UNBOUND},
-    writes.centralWriters({transport: bridge, day: null, conversation: aperture, afterWrite}))
+  // REPLACED (#725): the conversation face's `bound` row — the Answer was retired (PROGRAMME R25 item 5): the one Agent's light binds the
+  // dialogue through the same writer the chain holds (CentralDevices.tsx: `bind` is centralDeviceWrites.ts bindConversation, then the read
+  // again), so the same presses are made on the Agent's binding.
+  const device = ({conversation: aperture = conversation, afterWrite} = {}) => {
+    const binding = answer.centralAgentBinding('central:agent', {nara: NARA_UNBOUND, roster: null, page: null},
+      {bind: aperture ? async () => { await writes.bindConversation(bridge, aperture); afterWrite?.conversation?.() } : null, send: null})
+    return {submit: changes => binding.write(changes.map(({key, value}) => ({key: key === 'bound' ? 'light' : key, value: value === true ? 'lit' : value === false ? 'dark' : value})))}
+  }
   // no current identity: the face's own words
   identity.clearCurrentIdentity()
   const owner = fakeOwner()
@@ -412,6 +439,7 @@ test('binding the conversation resolves the dialogue through the nara_dialogue o
       await assert.rejects(() => device({conversation: {project: null, expressionRef: null, conversation: null}}).submit([{key: 'bound', value: true}]), /No expression is selected/)
       await assert.rejects(() => device({conversation: {project: null, expressionRef: null, conversation: 'conversation:space-1'}}).submit([{key: 'bound', value: true}]), /expression/i, 'a space with no expression names the owner gap')
       await assert.rejects(() => device().submit([{key: 'bound', value: false}]), /cannot unbind/)
+      await assert.rejects(() => device({conversation: null}).submit([{key: 'bound', value: true}]), /No conversation is selected/)
       assert.equal(owner.sent.length, 0, 'every refusal came before the owner was asked')
       await device({afterWrite: {conversation: () => { bound++ }}}).submit([{key: 'bound', value: true}])
     })
@@ -431,23 +459,23 @@ test('binding the conversation resolves the dialogue through the nara_dialogue o
   }
 })
 
-test('MOVED — the Flow is an instrument, no longer a clip: its states are a row read from the owner and the hosted form, and its next entry is the row it generates through', async () => {
-  const flow = central.faces.find(face => face.id === 'flow-document')
-  assert.deepEqual(flow.invariant, {generates: 'kernel:file_operation'}, 'DLW §18.1: an instrument first on a Flow document\'s chain')
-  const instance = (reads, writers) => model.centralDevice(flow, reads, writers)
-  const stateRow = instance({}).rows.find(row => row.key === 'state')
-  assert.deepEqual([stateRow.type, stateRow.values, stateRow.writePath], ['enumerated', ['draft', 'saved', 'edited since save'], undefined], 'the states, as a reading')
-  assert.deepEqual(instance({}).rows.map(row => [row.key, row.writePath]), [['document', undefined], ['revision', undefined], ['state', undefined], ['entry', 'kernel:file_operation']])
-  assert.equal(instance({}).values.state, undefined, 'no flow, no state')
-  assert.equal(instance({flow: {path: 'Control/user/flows/a.html', revision: REVISION, state: 'saved'}}).values.state, 'saved')
-  assert.equal(instance({flow: {path: 'Control/user/flows/a.html', revision: REVISION, state: 'draft?'}}).values.state, undefined, 'a state the family does not name is never drawn')
-  assert.equal(typeof instance({}).submit, 'function', 'the generating row has its door')
-  // The door refuses in words where no Flow is reached, and while the page holds a draft — nothing is written behind the hosted form.
-  const none = writes.centralWriters({transport, day: null, conversation: null, page: null})
-  await assert.rejects(() => instance({}, none).submit([{key: 'entry', value: 'a line'}]), /No Flow document is reached/)
-  const location = {schema: 'central.path-ref/v1', ref: 'central:path:/ground:Control/user/flows/a.html', root: '/ground', path: 'Control/user/flows/a.html'}
-  const dirty = writes.centralWriters({transport, day: null, conversation: null, page: {location, dirty: true}})
-  await assert.rejects(() => instance({}, dirty).submit([{key: 'entry', value: 'a line'}]), /holds edits its owner does not/)
+test('REPLACED (#725) — the Flow\'s states are a reading of the owner and the hosted form, and its next entry goes through the Flow\'s own write, refused where no Flow is read or the page holds a draft', async () => {
+  // Was "MOVED — the Flow is an instrument, no longer a clip": the 22 Oct manual folds the Flow into a page's Clip panel and editor tabs
+  // (PROGRAMME R25 item 4; §18.1), so no Flow face is declared; what the Flow device read and wrote is its binding's (pageBindings.ts
+  // flowBinding, FLOW_WIRING), which the page's Clip view carries: the state a reading, the next entry the person's write.
+  assert.ok(!central.faces.some(face => face.id === 'flow-document'), 'no Flow device')
+  assert.equal(pages.FLOW_WIRING.reads.state, 'saved, or edited since save (the hosted form\'s draft fact)', 'the state is a reading')
+  assert.ok(!('state' in pages.FLOW_WIRING.writes), 'nothing writes the state')
+  assert.match(pages.FLOW_WIRING.writes.extra, /op file_operation/, 'the next entry is the Flow\'s own write')
+  const reached = {document: null, save: null, reread: null, dirty: false}
+  const none = pages.flowBinding('central:flow-document', reached, null, null, null)
+  await assert.rejects(() => none.write([{key: 'extra', value: JSON.stringify([{by: 'F', head: 'a line'}])}]), /has not been read yet/)
+  const page = {title: 'A Flow', template: null, plural: true, media: '[]', view: null, revision: null, people: [{initial: 'F', kind: 'person', name: 'Frank'}], journal: [], entries: []}
+  const appended = []
+  const dirty = pages.flowBinding('central:flow-document', {...reached, dirty: true}, {form: 'flow', page, refusal: null}, null, {append: async entry => { appended.push(entry) }})
+  assert.equal(dirty.values.state, 'edited', 'the hosted form\'s draft fact, read')
+  await assert.rejects(() => dirty.write([{key: 'extra', value: JSON.stringify([{by: 'F', head: 'a line'}])}]), /holds edits its owner does not/)
+  assert.equal(appended.length, 0, 'nothing is written behind the hosted form')
 })
 
 test('MOVED — the die\'s face list no longer stands over its page: whole and compact draw no die picture, and full is the hosted form alone', () => {

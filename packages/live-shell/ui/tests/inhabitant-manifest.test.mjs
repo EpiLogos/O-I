@@ -80,27 +80,33 @@ test('loadWorldShellFamilies admits the sixth family and composes the L2 extensi
   }
   // Central's composed manifest carries the L2 faces after its base's own.
   const central = schema.inhabitantManifest('central')
-  // …and the page family after them (lane BC2: DLW §17.8 Document, §18.2 Workspace, §18.4–§18.8; Docs, §18.5), then the agent chain's
-  // Packet and Search (lane BC3: DLW §18.3, §18.4).
-  assert.deepEqual(central.faces.map(face => face.id),
-    ['context-world', 'agent-identity', 'machine', 'ground-hygiene', 'impact', 'day-die', 'flow-document', 'nara-conversation',
-      'document', 'workspace', 'beings', 'things', 'text', 'highlight', 'notes', 'docs', 'packet', 'search'])
-  // Software-factory's composed manifest carries attempt-review after its base's own (the base admits the thread, tasks and the
-  // agentset rack since lane BF3).
+  // …and the page family after them (lane BC2: DLW §17.8 Document; Docs, §18.5), then the agent chain's Packet and Search (lane BC3: DLW
+  // §18.3, §18.4).
+  // REPLACED (#725): the 22 Oct manual rewrite retired Context & world (Scope's), Machine (the Remote carrier's Machine page, §18.7), Ground
+  // hygiene (Git / landing's Checkouts page, §19.16), Impact (§18.6), the Flow and the Nara conversation (PROGRAMME R25 items 4–5), and the
+  // Workspace, Beings, Things, Text, Highlight and Notes (the track's head and Docs; a page's Clip panel, editor tabs and tools, §16.1,
+  // §18.1). Agent identity stays: Central's half of the one Agent (§19.4 "One agent, three owners").
+  assert.deepEqual(central.faces.map(face => face.id), ['agent-identity', 'day-die', 'document', 'docs', 'packet', 'search'])
+  // Software-factory's composed manifest: its base's own, Custody first.
+  // REPLACED (#725): the Run, the Thread, Tasks and attempt-review (the Runs) were retired as faces of their own — the course of a run is its
+  // track in Arrangement view, its attempts are takes, a task is a clip (§16.1), the thread is the Agent's Full (§19.4).
   const factory = schema.inhabitantManifest('software-factory')
   assert.deepEqual(factory.faces.map(face => face.id),
-    ['agent-custody', 'context-write-mode', 'ledger', 'approvals', 'run-device', 'thread', 'tasks', 'agentset-rack', 'run-map', 'prompt-pads', 'attempt-review'])
+    ['agent-custody', 'context-write-mode', 'ledger', 'approvals', 'agentset-rack', 'run-map', 'prompt-pads'])
   // Idempotent: a second load changes nothing.
   world.loadWorldShellFamilies()
   assert.equal(JSON.stringify(schema.inhabitantManifest('central')), JSON.stringify(central))
 })
 
-test('quaternal-logic: every face but the sky, the M3 clock, the Deck, the Chakra, the Sitting, the Resonator bank, the M′ matrices and Binding is declared waiting with a named owner; telemetry is an honest null; the family is the chronos contributor', () => {
+test('quaternal-logic: every face but the sky, the M3 clock, the Deck, the Chakra, the Resonator bank and the M′ matrices is declared waiting with a named owner; telemetry is an honest null; the family is the chronos contributor', () => {
   door.resetFamilyManifestsForTest()
   qlogic.quaternalLogicFamilyManifest()
   const manifest = schema.inhabitantManifest('quaternal-logic')
   assert.ok(manifest)
-  assert.equal(manifest.faces.length, 9)
+  // REPLACED (#725): nine faces — the Sitting and Binding were retired as faces of their own in the 22 Oct manual rewrite: a sitting is a
+  // clip of the practice world's track (§24.3), and Binding is the M3 clock's Binding skin (§22.8).
+  assert.equal(manifest.faces.length, 7)
+  for (const id of ['sitting', 'binding']) assert.ok(!manifest.faces.some(face => face.id === id), `${id}: retired`)
   for (const face of manifest.faces) {
     // The sky draws on its owner (lane BL, aba3ddaea): the kernel's nara_identity transit, with its honest absence of a write.
     if (face.id === 'sky') { assert.notEqual(face.admission, 'waiting', 'sky: admitted on the transit read'); continue }
@@ -109,14 +115,10 @@ test('quaternal-logic: every face but the sky, the M3 clock, the Deck, the Chakr
     // T-WORLDS W4: the Deck reads and acts on the open journey (nara_journey); the Chakra reads your elements (nara_elemental).
     if (face.id === 'deck') { assert.notEqual(face.admission, 'waiting', 'deck: admitted on nara_journey'); assert.equal(face.invariant.generates, 'kernel:nara_journey'); continue }
     if (face.id === 'chakra') { assert.notEqual(face.admission, 'waiting', 'chakra: admitted on nara_elemental'); assert.ok(face.invariant.generatesAbsent, 'chakra: a reading, never written'); continue }
-    // T-WORLDS W4: the Sitting is timed by the transport and keeps its record as a page through Central's creation door.
-    if (face.id === 'sitting') { assert.notEqual(face.admission, 'waiting', 'sitting: admitted on its owners'); assert.equal(face.invariant.generates, 'kernel:invoke_action'); continue }
     // MR: the Resonator bank is an effect on Live's chain after the torus, on the clock's cut, the mode's root and the stage's own bank.
     if (face.id === 'resonator-bank') { assert.notEqual(face.admission, 'waiting', 'resonator-bank: admitted on its owners'); assert.equal(face.liveSemantic, 'device-audio-fx'); assert.ok(face.invariant.transforms); continue }
-    // Lane W4: the M′ matrices read the mode catalogue, the mode in force and the M3 form, and move the form through m3_reception; Binding
-    // reads the form's hexagram and runs its own physics, writing to no owner.
+    // Lane W4: the M′ matrices read the mode catalogue, the mode in force and the M3 form, and move the form through m3_reception.
     if (face.id === 'm-prime-matrices') { assert.notEqual(face.admission, 'waiting', 'm-prime-matrices: admitted on its owners'); assert.equal(face.invariant.generates, 'kernel:m3_reception'); continue }
-    if (face.id === 'binding') { assert.notEqual(face.admission, 'waiting', 'binding: admitted on the M3 form'); assert.ok(face.invariant.generatesAbsent, 'binding: writes to no owner'); continue }
     assert.equal(face.admission, 'waiting', `${face.id}: declared, waiting`)
     assert.ok(face.note && face.note.length > 40, `${face.id}: the note names what it waits for`)
     assert.equal(schema.faceKind(face), 'parameter', `${face.id}: declared faces carry no body until an owner lands`)
@@ -132,18 +134,15 @@ test('the L2 document and conversation faces carry §5.2/§5.3 bodies and pass t
   world.loadWorldShellFamilies()
   const central = schema.inhabitantManifest('central')
   const die = central.faces.find(face => face.id === 'day-die')
-  const flow = central.faces.find(face => face.id === 'flow-document')
-  const nara = central.faces.find(face => face.id === 'nara-conversation')
   assert.equal(schema.faceKind(die), 'document')
   assert.equal(die.document.hosting, 'oi.document-frame/v1')
   assert.equal(die.document.file, 'ql-daily-die.html')
   assert.deepEqual(die.document.saveRouter, schema.SAVE_ROUTER_OUTCOMES)
   assert.deepEqual([...die.dock], ['dock', 'expand', 'pop-out'])
-  assert.equal(schema.faceKind(flow), 'document')
-  assert.equal(flow.document.file, 'ql-flow.html')
-  assert.deepEqual(flow.document.saveRouter, schema.SAVE_ROUTER_OUTCOMES)
-  assert.equal(schema.faceKind(nara), 'conversation')
-  assert.equal(nara.conversation.binding, 'oi.nara-dialogue-binding/v1')
+  // DELETED (#725): the Flow's document body (ql-flow.html, the save router) and the Nara conversation's (oi.nara-dialogue-binding/v1) as faces
+  // of the family — the manual removed both devices (PROGRAMME R25 item 4: "Flow, Beings and Things are a page's Clip panel and editor tabs";
+  // item 5: "Answer is the Agent on a page's chain"). The Flow page keeps its hosting as a page (the `flow` detached kind, below).
+  for (const id of ['flow-document', 'nara-conversation']) assert.ok(!central.faces.some(face => face.id === id), `${id}: retired`)
   // Central's pop-out faces require the family's detached kinds — the door declared them.
   assert.ok(central.detachedKinds.includes('flow') && central.detachedKinds.includes('encounter') && central.detachedKinds.includes('file'))
   // The whole world-shell set validates clean, composed state included.

@@ -10,6 +10,7 @@ register(`data:text/javascript,${encodeURIComponent(`
 import ts from ${JSON.stringify(compiler)};
 import {readFile} from 'node:fs/promises';
 export async function resolve(s, c, n) {
+  if (s === 'react' || s.startsWith('react/')) return n(s, {...c, parentURL: ${JSON.stringify(import.meta.url)}})
   let r = null
   try { r = await n(s, c) } catch (e) { if (!s.startsWith('.')) throw e }
   if (r) {
@@ -47,7 +48,10 @@ const POPPING_FAMILIES = ['central']
 const NON_STANDALONE = [
   ['atlas-earth', 'globe-engine'], ['atlas-earth', 'graph-tools'], ['atlas-earth', 'mode-switch'], ['atlas-earth', 'time-control'],
   ['knowledge-graph', 'knowledge-scope'], ['knowledge-graph', 'knowledge-filters'], ['knowledge-graph', 'knowledge-display'],
-  ['actuation', 'gateway'], ['ai-kit', 'skill-device'], ['workcell', 'seat'], ['software-factory', 'ledger'], ['central', 'context-world'],
+  // REPLACED (#725): Workcell's Seat and Central's Context & world were retired as faces of their own in the 22 Oct manual rewrite; the
+  // devices that carry them — Git / landing (its Seat page, §19.17) and Scope (Context & world is Scope, PROGRAMME R25 item 5) — stand
+  // in their places, parameter faces both.
+  ['actuation', 'gateway'], ['ai-kit', 'skill-device'], ['workcell', 'git-seat'], ['software-factory', 'ledger'], ['software-factory', 'context-write-mode'],
 ]
 
 const loaded = () => {
@@ -56,13 +60,16 @@ const loaded = () => {
   return schema.allInhabitantManifests()
 }
 
-test('the standalone set is exactly the four faces whose bodies draw in a window of their own', () => {
+test('the standalone set is exactly the faces whose bodies draw in a window of their own', () => {
   for (const [id, kind] of STANDALONE) assert.equal(schema.standsAlone(id, kind), true, `${id} stands alone`)
   assert.equal(schema.standsAlone('day-die', 'parameter'), false, 'a parameter face never stands alone')
   assert.equal(schema.standsAlone('globe-engine', 'instrument'), false, 'the atlas globe drives the main window handle')
   const manifests = loaded()
   const standing = manifests.flatMap(manifest => manifest.faces.filter(schema.faceStandsAlone).map(face => `${manifest.id}/${face.id}`)).sort()
-  assert.deepEqual(standing, ['central/day-die', 'central/flow-document', 'central/nara-conversation'])
+  // REPLACED (#725): the Flow and the Nara conversation stood alone too — retired as faces of their own (the Flow is a page's Clip panel
+  // and editor tabs, PROGRAMME R25 item 4; "Answer is the Agent on a page's chain", R25 item 5), so the Day die is the one standing face.
+  // The standalone law itself (schema.standsAlone, by id and kind) is unchanged above.
+  assert.deepEqual(standing, ['central/day-die'])
 })
 
 test('a device pops out exactly where its face stands alone; the families that carry those faces declare the device kind', () => {
@@ -89,9 +96,11 @@ test('a device pops out exactly where its face stands alone; the families that c
 test('the Central device faces keep their lifecycles and carry the device kind beside flow, file and encounter', () => {
   loaded()
   const central = schema.inhabitantManifest('central')
-  for (const id of ['day-die', 'flow-document', 'nara-conversation']) {
+  // REPLACED (#725): the Flow's and the Nara conversation's lifecycles — retired (R25 items 4 and 5); the Day die keeps its own.
+  for (const id of ['day-die']) {
     assert.deepEqual([...central.faces.find(entry => entry.id === id).dock], ['dock', 'expand', 'pop-out'], id)
   }
+  for (const id of ['flow-document', 'nara-conversation']) assert.ok(!central.faces.some(entry => entry.id === id), `${id}: retired`)
   assert.deepEqual([...central.detachedKinds].sort(), ['device', 'encounter', 'file', 'flow'])
 })
 
@@ -113,8 +122,11 @@ test('the device door refuses a standalone face whose aperture is absent, by nam
   const manifests = loaded()
   assert.match(detached.deviceIdentityFault({family: 'central', face: 'day-die', aperture}, manifests), /needs its Day/)
   assert.equal(detached.deviceIdentityFault({family: 'central', face: 'day-die', aperture: withDay}, manifests), null)
-  assert.match(detached.deviceIdentityFault({family: 'central', face: 'flow-document', aperture}, manifests), /needs its flow/)
-  assert.equal(detached.deviceIdentityFault({family: 'central', face: 'nara-conversation', aperture}, manifests), null, 'Nara shows its own state without a conversation')
+  // DELETED (#725): "the Flow device needs its flow" and "Nara shows its own state without a conversation" — the manual removed both devices
+  // (PROGRAMME R25 item 4: "Flow, Beings and Things are a page's Clip panel and editor tabs"; item 5: "Answer is the Agent on a page's
+  // chain"); the door now refuses either by name, as it refuses any face no family declares.
+  assert.match(detached.deviceIdentityFault({family: 'central', face: 'flow-document', aperture: withFlow}, manifests), /central declares no face "flow-document"/)
+  assert.match(detached.deviceIdentityFault({family: 'central', face: 'nara-conversation', aperture}, manifests), /central declares no face "nara-conversation"/)
 })
 
 test('the validator is unchanged: a pop-out face needs detachedKinds, and any door kind satisfies it', () => {
@@ -140,20 +152,27 @@ test('the rack draws no pop-out mark for a face that cannot stand alone, and a l
   const atlas = manifests.find(entry => entry.id === 'atlas-earth')
   assert.doesNotMatch(renderToStaticMarkup(createElement(rack.InhabitantRack, {manifests: [atlas], transport, deviceWindows: host()})), /data-action="pop-out"/)
   const central = schema.inhabitantManifest('central')
-  const nara = {...central, faces: central.faces.filter(face => face.id === 'nara-conversation')}
-  const markup = renderToStaticMarkup(createElement(rack.InhabitantRack, {manifests: [nara], transport, deviceWindows: host()}))
+  // REPLACED (#725): the standing face was the Nara conversation (retired, R25 item 5); the Day die is the standing face now, its Day in the
+  // aperture so its window would not be empty.
+  const die = {...central, faces: central.faces.filter(face => face.id === 'day-die')}
+  const day = {project: null, sourceRef: 'source:day', documentId: 'day-doc'}
+  const markup = renderToStaticMarkup(createElement(rack.InhabitantRack, {manifests: [die], transport, day, deviceWindows: host()}))
   const tag = markup.match(/<button[^>]*data-action="pop-out"[^>]*>/)[0]
   assert.doesNotMatch(tag, /disabled/)
   // Without a host door the same mark stands disabled.
-  const idle = renderToStaticMarkup(createElement(rack.InhabitantRack, {manifests: [nara], transport}))
+  const idle = renderToStaticMarkup(createElement(rack.InhabitantRack, {manifests: [die], transport, day}))
   assert.match(idle.match(/<button[^>]*data-action="pop-out"[^>]*>/)[0], /disabled/)
 })
 
-test('the faces that draw from the identity alone have a body in the window; a parameter face has none', () => {
+test('the faces that draw from their aperture have a body in the window; a parameter face has none', () => {
   const central = schema.inhabitantManifest('central')
-  const nara = central.faces.find(face => face.id === 'nara-conversation')
-  assert.ok(rack.faceBodyFor(nara, {transport}), 'the Nara body draws in its own window')
-  const parameter = central.faces.find(face => face.id === 'context-world')
+  // REPLACED (#725): the Nara body drew from the identity alone — the Answer was retired (R25 item 5); the Day die draws its body from its
+  // Day, and with none it has none (its window would be empty, and the door refuses it: above).
+  const die = central.faces.find(face => face.id === 'day-die')
+  assert.ok(rack.faceBodyFor(die, {transport, day: {project: null, sourceRef: 'source:day', documentId: 'day-doc'}}), 'the Day die\'s body draws in its own window')
+  assert.equal(rack.faceBodyFor(die, {transport}), null, 'no Day, no body')
+  // REPLACED (#725): Context & world — retired (Context & world is Scope); Agent identity is the parameter face Central still declares.
+  const parameter = central.faces.find(face => face.id === 'agent-identity')
   assert.equal(rack.faceBodyFor(parameter, {transport}), null, 'a parameter face has no body in the rack or the window')
 })
 

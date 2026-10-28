@@ -71,7 +71,7 @@ export const DOCUMENT_WIRING: DesignWiring = {
     title: 'a Flow\'s meta.title (its file, flow/instances.ts readFlowInstance); a Day has none of its own (its heading is its date)',
     flowView: 'a Flow\'s meta.view',
     dirty: 'the hosted form\'s draft fact (DocumentInPane.dirty, the face\'s data-dirty)',
-    outcome: 'the save router\'s last named outcome (DocumentInPane.outcome); before any save, saved where the face holds nothing its owner does not (the Saved state: the owner holds this revision, centralDeviceModel.ts FLOW_STATES)',
+    outcome: 'the save router\'s last named outcome (DocumentInPane.outcome); before any save, saved where the face holds nothing its owner does not (the Saved state: the owner holds this revision)',
     face: 'the Day document\'s meta.face (the Day device\'s reading, when the reached Day is its document)',
     date: 'the Day\'s civil date (the Day device\'s, when the reached Day is its document)',
     tabTitle: 'the pane\'s own tab title (centralDocuments.ts subjectOf)',

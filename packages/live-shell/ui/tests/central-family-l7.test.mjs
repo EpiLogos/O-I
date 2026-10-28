@@ -51,7 +51,10 @@ test('the L7 extension composes onto central without rewriting any base', () => 
   // The composed manifest carries the L7 face after the L2 faces.
   const composed = schema.inhabitantManifest('central')
   const faceIds = composed.faces.map(face => face.id)
-  assert.ok(faceIds.includes('ground-hygiene') && faceIds.includes('impact'), 'the L2-declared faces remain')
+  // REPLACED (#725): Ground hygiene and Impact were the L2 faces checked — retired in the 22 Oct manual rewrite (§19.16, §18.6); the L2
+  // extension declares the Day die alone now.
+  assert.ok(faceIds.includes('day-die'), 'the L2-declared face remains')
+  assert.ok(!faceIds.includes('ground-hygiene') && !faceIds.includes('impact'), 'the retired L2 faces are declared no more')
   assert.ok(faceIds.includes('day-now'), 'the L7-declared day-now face composes')
   assert.equal(faceIds.indexOf('day-now'), faceIds.length - 1, 'the L7 face composes last (declaration order)')
   // Validation passes on the composed family.

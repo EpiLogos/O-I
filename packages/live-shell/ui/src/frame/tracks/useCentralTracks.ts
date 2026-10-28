@@ -79,8 +79,8 @@ export function setReadingOf(ground: CentralGroundReading | null, error: string 
 import {playingOf} from '../../timeline/centralTrackAdapter'
 export {playingOf}
 
-/** The track's Workspace device on the door (central/devices/CentralDevices.tsx publishes it; pageBindings.ts WORKSPACE_DEVICE_ID). */
-const WORKSPACE_DEVICE = centralDeviceId('workspace')
+/** The world's Docs on the door (central/devices/CentralDevices.tsx publishes it on the world's chain, DLW §16.2, §18.5). */
+const DOCS_DEVICE = centralDeviceId('docs')
 
 export function useCentralTracks(reading: TracksReading): WorldTrackSet {
   const shell = useAgentShellOptional()
@@ -101,13 +101,14 @@ export function useCentralTracks(reading: TracksReading): WorldTrackSet {
     const held = set.state === 'read' ? set.set.tracks.map(track => track.world) : []
     return worlds.worlds.filter(world => world.kind === 'yours' || held.includes(world.ref))
   }, [worlds, set])
-  // Each world's head opens the track's Workspace device full in a pane (§18.1: "The settings stand on the Track page of the track's
-  // Workspace device"; its Ground and Self pages are the world's own). The press selects the track first, so the device reads that world.
+  // Each world's head opens the world's Docs full in a pane (§18.1: "The settings stand on the track's head … The world's account of itself
+  // is Docs, on the track's chain (§18.5)"; the Workspace device that the head opened before was retired in the 22 Oct manual rewrite, its
+  // Ground and Self pages folded into Docs). The press selects the track first, so the device reads that world.
   useEffect(() => {
     const devices = new Map<string, TrackHeadDevice>(inSet.map(world => [centralWorldTrackId(world.ref), {
-      title: 'Workspace',
-      does: `Open ${world.name}'s Workspace full in a pane: its Track page (the settings on this head), its Ground and its Self`,
-      open: () => openInstrument(DEVICE_PANE_KIND, undefined, {ref: WORKSPACE_DEVICE, title: `${world.name} · Workspace`}),
+      title: 'Docs',
+      does: `Open ${world.name}'s Docs full in a pane: the world's account of itself, on six tiers`,
+      open: () => openInstrument(DEVICE_PANE_KIND, undefined, {ref: DOCS_DEVICE, title: `${world.name} · Docs`}),
     }]))
     nameTrackHeadDevices('central', devices)
     return () => nameTrackHeadDevices('central', null)

@@ -46,7 +46,8 @@ const heads = await import('../src/frame/tracks/trackHeads.ts')
 const grid = await import('../src/frame/tracks/SessionGrid.tsx')
 const {ArrangementRulerView} = await import('../src/frame/tracks/ArrangementRuler.tsx')
 const pages = await import('../src/central/devices/pageBindings.ts')
-const {design: workspaceDesign} = await import('../src/inhabitants/catalogue/panels/central__workspace.tsx')
+// The Workspace's design (central__workspace.tsx) was retired in the 22 Oct manual rewrite (#725): a world's settings stand on its track's head
+// and its account is Docs (§18.1, §18.5); the Workspace's binding stays (pageBindings.ts workspaceBinding) and is checked on its own values.
 
 const escaped = text => text.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#x27;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 const viewsOf = design => design.views ?? ['folded', 'compact', 'whole', 'full', 'widget']
@@ -74,29 +75,30 @@ const SET = {columns: [{id: 'r1', name: '1'}], clips: [], tracks: [{id: WORLD_TR
 
 test('a mode names the device its tracks\' heads open; the Session grid and the Arrangement ruler draw one head button for it, and a track no mode names draws none', () => {
   const opened = []
-  heads.nameTrackHeadDevices('central', new Map([[WORLD_TRACK, {title: 'Workspace', does: 'Open O-I\'s Workspace full in a pane', open: () => opened.push('central:workspace')}]]))
+  // REPLACED (#725): the head named the Workspace — retired; a world's head opens its Docs (useCentralTracks.ts, §18.1, §18.5).
+  heads.nameTrackHeadDevices('central', new Map([[WORLD_TRACK, {title: 'Docs', does: 'Open O-I\'s Docs full in a pane', open: () => opened.push('central:docs')}]]))
   try {
     const selected = []
     const selection = {select: target => selected.push(target)}
     const session = renderToStaticMarkup(createElement(grid.SessionGridView, {set: SET, selection, folded: {}, onFold: noop, receipt: null, onPress: noop, onDismiss: noop}))
     assert.match(session, new RegExp(`data-track-device="${WORLD_TRACK}"`))
-    assert.match(session, /aria-label="Open O-I&#x27;s Workspace in a pane"/)
+    assert.match(session, /aria-label="Open O-I&#x27;s Docs in a pane"/)
     assert.doesNotMatch(session, /data-track-device="factory:session:x"/, 'a track no mode names: no button')
     const view = {window: null, onWindow: noop, snap: 'free', onSnap: noop, marker: null, onMarker: noop, width: 0}
     const ruler = renderToStaticMarkup(createElement(ArrangementRulerView, {set: SET, selection, view, receipt: null, onPress: noop, onDismiss: noop}))
     assert.match(ruler, new RegExp(`data-track-device="${WORLD_TRACK}"`), 'the Arrangement\'s head too')
-    // The press selects the track first (so the Workspace reads that world), then opens the device.
+    // The press selects the track first (so Docs reads that world), then opens the device.
     const button = grid.TrackDeviceButton({device: heads.trackHeadDevice(WORLD_TRACK), track: SET.tracks[0], selection})
     let stopped = false
     button.props.onClick({stopPropagation: () => { stopped = true }})
     assert.deepEqual(selected, [{kind: 'track', ref: WORLD_TRACK, title: 'O-I'}])
-    assert.deepEqual(opened, ['central:workspace'])
+    assert.deepEqual(opened, ['central:docs'])
     assert.ok(stopped, 'the press is the button\'s, not the head\'s')
   } finally { heads.nameTrackHeadDevices('central', null) }
   assert.equal(heads.trackHeadDevice(WORLD_TRACK), undefined, 'taken back: no button')
 })
 
-test('the Workspace opened on a world reads the world\'s name and folder, offers the worlds\' projects as Folder choices, and refuses a rename naming the op', async () => {
+test('the Workspace\'s binding on a world reads the world\'s name and folder, offers the worlds\' projects as Folder choices, and refuses a rename naming the op', async () => {
   pages.resetHolds()
   const book = {id: 'w1', name: 'Morning', project: 'Archetypal-Earth', layout: {root: null, mode: 'base'}}
   const world = {name: 'O-I', project: 'O-I'}
@@ -110,18 +112,23 @@ test('the Workspace opened on a world reads the world\'s name and folder, offers
   assert.deepEqual([yours.values.name, yours.values.folder], ['Your world', 'central'], 'your world: Central')
   const bookOnly = pages.workspaceBinding(pages.WORKSPACE_DEVICE_ID, book, Date.now(), {switchMode: noop, rename: noop}, null)
   assert.deepEqual([bookOnly.values.name, bookOnly.values.folder], ['Morning', 'Archetypal-Earth'], 'no world: the book\'s workspace, as before')
-  for (const key of designKeys(workspaceDesign)) assert.ok([pages.WORKSPACE_WIRING.reads, pages.WORKSPACE_WIRING.local, pages.WORKSPACE_WIRING.refused, pages.WORKSPACE_WIRING.absent].some(table => key in table), `${key} classified`)
-  // The design's Name field spreads no standing (catalogue central__workspace.tsx:674, PROPOSE), so the refusal is said on the press (above).
-  drawsOn(workspaceDesign, binding, /Archetypal-Earth\/wiki|sf1-walk|Palace/)
+  // REPLACED (#725): "every key of the Workspace's design classified" and its drawing on the binding — the manual removed the Workspace as a
+  // device (§18.1: "The settings stand on the track's head … The world's account of itself is Docs, on the track's chain"), so no design
+  // draws these keys; every key the binding reports is still one its wiring classifies.
+  for (const key of Object.keys(binding.values)) assert.ok(pages.WORKSPACE_WIRING.keys.includes(key) || key.includes(':'), `${key} classified`)
 })
 
-test('code-reading — Central names each world\'s head device, and publishes the Workspace on the door for the pane it opens', async () => {
+test('code-reading — Central names each world\'s head device, and publishes Docs on the door for the pane it opens', async () => {
   const {readFile} = await import('node:fs/promises')
   const tracks = await readFile(new URL('../src/frame/tracks/useCentralTracks.ts', import.meta.url), 'utf8')
   assert.match(tracks, /nameTrackHeadDevices\('central', devices\)/)
-  assert.match(tracks, /openInstrument\(DEVICE_PANE_KIND, undefined, \{ref: WORKSPACE_DEVICE, title: `\$\{world\.name\} · Workspace`\}\)/)
+  // REPLACED (#725): the head opened the Workspace, which CentralDevices.tsx published on no chain — the Workspace was retired (§18.1); the
+  // head opens the world's Docs, which stands on the world's chain (§16.2) and is published with the chain's own devices.
+  assert.match(tracks, /openInstrument\(DEVICE_PANE_KIND, undefined, \{ref: DOCS_DEVICE, title: `\$\{world\.name\} · Docs`\}\)/)
+  assert.match(tracks, /const DOCS_DEVICE = centralDeviceId\('docs'\)/)
   const chain = await readFile(new URL('../src/central/devices/CentralDevices.tsx', import.meta.url), 'utf8')
-  assert.match(chain, /publishDevice\(WORKSPACE_DEVICE_ID, workspaceBinding \? \{device: workspaceDev, binding: workspaceBinding\} : \{device: workspaceDev\}\)/)
+  assert.match(chain, /return \[centralDeviceId\('packet'\), CENTRAL_AGENT_ID, CENTRAL_SCOPE_ID, DOCS_DEVICE_ID\]/)
+  assert.match(chain, /for \(const entry of entries\) publishDevice\(entry\.id, centralPublication\(entry, bindingOf\(entry\.id\)\)\)/)
   assert.doesNotMatch(await readFile(new URL('../src/frame/tracks/SessionGrid.tsx', import.meta.url), 'utf8'), /central:world|'central'/, 'the grid stays mode-blind')
 })
 
