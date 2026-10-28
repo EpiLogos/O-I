@@ -81,7 +81,7 @@ export const WIDGETS: readonly WidgetDeclaration[] = [
   ...AGENT_TILES.map((id): WidgetDeclaration => (id === 'terminal' ? {id, name: tileTitle(id), mark: TILE_ICONS[id], hint: HINTS[id], bare: true, Body: TerminalRailWidget}
     : {id, name: tileTitle(id), mark: TILE_ICONS[id], hint: HINTS[id], Body: agentTile(id)})),
   ...RAIL_BORN,
-  // Gateways and the Workcells tile after the old tiles.
+  // The Workcells tile after the old tiles (it lists the gateways: §19.3).
   ...DEVICE_BORN.filter(widget => widget.id !== 'messages'),
 ]
 

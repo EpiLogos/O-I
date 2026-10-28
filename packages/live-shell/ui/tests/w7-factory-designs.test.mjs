@@ -63,8 +63,10 @@ const {design: runMapDesign} = await import('../src/inhabitants/catalogue/panels
 const {design: custodyDesign} = await import('../src/inhabitants/catalogue/panels/agent-custody.tsx')
 const {skills: rackDesign} = await import('../src/inhabitants/catalogue/panels/skills.tsx')
 const {memberDevice: memberDesign} = await import('../src/inhabitants/catalogue/panels/member.tsx')
-const {design: runsDesign} = await import('../src/inhabitants/catalogue/panels/software-factory__attempt-review.tsx')
-const {design: runDeviceDesign} = await import('../src/inhabitants/catalogue/panels/software-factory__run-device.tsx')
+// Runs' and the Run device's designs were retired in the 22 Oct manual rewrite (#725; §16.1 "The course of a run is its track in Arrangement
+// view; its attempts are takes; a task is a clip"); their bindings stay and are checked on their own values. Capture skill is the Skillset
+// rack's Capture page (§19.11, `capture.`); capture-skill.tsx is the plain module the rack draws it through.
+const carry = await import('../src/agent/devices/oneAgentBinding.ts')
 const {design: threadDesign} = await import('../src/inhabitants/catalogue/panels/thread.tsx')
 const {design: agentDesign} = await import('../src/inhabitants/catalogue/panels/actuation__harness-model.tsx')
 
@@ -154,24 +156,30 @@ test('2 · Capture skill: the proposal that waits is AIKit\'s newest open Method
 })
 const routesEnvelope = message => JSON.stringify({kind: 'owner-refused-or-failed', message, operation_may_have_run: false})
 
-test('2 · Capture skill stands on the armed track\'s chain — a session\'s, after Scope — never a group\'s, a workcell\'s or the Main track\'s; it is AIKit\'s own face', () => {
-  const device = capture.captureSkillDevice()
-  assert.ok(device)
-  assert.equal(designKey(device.family, device.face.id), captureDesign.id)
-  assert.deepEqual(places.chainSlots({kind: 'session', group: false}, {helper: true, capture: true}), ['agent', 'skillset', 'world', 'capture'])
-  assert.deepEqual(places.chainSlots({kind: 'session', group: true}, {helper: true, capture: true}), ['agentset', 'decision-helper', 'agent', 'skillset', 'world'])
-  assert.deepEqual(places.chainSlots({kind: 'main'}, {helper: true, capture: true}), ['experiment', 'approvals'])
-  assert.equal(places.SLOT_DEVICE.capture.design, captureDesign.id)
+test('2 · Capture skill is the Skillset rack\'s Capture page on the armed track\'s chain — a session\'s — never a group\'s, a workcell\'s or the Main track\'s', () => {
+  // REPLACED (#725): "Capture skill stands on the armed track's chain, after Scope; it is AIKit's own face" — the 22 Oct manual rewrite
+  // retired it as a device of its own (§19.11: "Turning something you did by hand into a skill is the Capture page of the Skillset rack
+  // (§19.7)"): AIKit admits no capture-skill face, no chain has a Capture plate, and the rack carries the capture binding under `capture.`
+  // while it stands on a session's (the armed track's) chain.
+  assert.equal(capture.captureSkillDevice(), null, 'no Capture skill device of its own')
+  for (const key of Object.keys(captureDesign.defaults)) assert.ok(`capture.${key}` in rackDesign.defaults, `the rack carries capture.${key}`)
+  assert.deepEqual(places.chainSlots({kind: 'session', group: false}), ['agent', 'skillset', 'world'])
+  assert.deepEqual(places.chainSlots({kind: 'session', group: true}), ['agentset', 'agent', 'skillset', 'world'])
+  assert.deepEqual(places.chainSlots({kind: 'main'}), ['approvals'])
+  assert.equal(places.SLOT_DEVICE.capture, undefined, 'no Capture plate')
   const view = read('agent/devices/FactoryDeviceChain.tsx')
-  assert.match(view, /const captureOn = knowledgeOn && !groupTrack && !!captureDevice/)
-  assert.match(view, /case 'capture': return captureOn \? placed\(CAPTURE_SKILL_ID, captureDevice, captureDesignBinding/)
+  assert.match(view, /const captureOn = sessionChain && !groupTrack\n/)
+  assert.match(view, /const rackCarrying = useMemo\(\(\) => \(rackDesignBinding \? carryPages\(rackDesignBinding, captureOn \? \[\{page: CAPTURE_PAGE, binding: captureDesignBinding\}\] : \[\]\) : null\)/)
+  assert.doesNotMatch(view, /placed\(CAPTURE_SKILL_ID/, 'no Capture plate on any chain')
   assert.match(view, /promote: \(candidate, id\) => ownerRouteWrite\(transport, aikitWriteOp\(\{kind: 'promote', project: RACK_PROJECT, candidate/)
 })
 
 // REPLACED (lane W8): the Prompt pads read Factory's bank through factory_owner locate and pads-read and write through pads-write
 // (w8-factory-routes.test.mjs); the Main track's order is still §16.2's.
-test('3 · the Prompt pads stand on the Main track in §16.2\'s order: the Run map, the experiments, Approvals and the prompt pads', () => {
-  assert.deepEqual(places.chainSlots({kind: 'main'}, {helper: true, pads: true, runMap: true}), ['run-map', 'experiment', 'approvals', 'prompt-pads'])
+test('3 · the Prompt pads stand on the Main track in §16.2\'s order: the Run map, Approvals and the prompt pads', () => {
+  // REPLACED (#725): "the Run map, the experiments, Approvals and the prompt pads" — the manual's §16.2 now reads "On the Main track: the Run
+  // map, Approvals and the prompt pads", the Experiment retired (§19.5: a task launched with Repeat, its takes compared with Compare).
+  assert.deepEqual(places.chainSlots({kind: 'main'}, {pads: true, runMap: true}), ['run-map', 'approvals', 'prompt-pads'])
   const padsDevice = pads.promptPadsDevice()
   assert.ok(padsDevice, 'Software Factory admits the prompt-pads face: its plate stands on the Main track')
   assert.equal(padsDevice.id, pads.PROMPT_PADS_ID)
@@ -190,7 +198,8 @@ test('4 · the Run map: no Run is named on the Main track, so its readings stand
   const mapDevice = runMap.runMapDevice()
   assert.ok(mapDevice, 'Software Factory admits the run-map face: its plate stands on the Main track')
   assert.equal(mapDevice.id, runMap.RUN_MAP_ID)
-  // D3 on the devices that already stand: the Journey on Runs, Structure on the Run device, the Thought page on the Thread.
+  // D3: the Journey on Runs' binding, Structure on the Run's, the Thought page on the Thread (the Runs and the Run devices were retired in the
+  // 22 Oct manual rewrite, §16.1; their bindings stay, and the Thread is the Agent's Full, §19.4).
   const runs = tasks.runsBinding('s', bind.chainHolds())
   assert.match(runs.standing.journey.disabled, /factory_development_read `run`/)
   const run = session.runBinding({session: null, tracks: null, nowUnixMs: 0, agent: {}, holds: bind.chainHolds()}, {select: () => {}})
@@ -231,8 +240,14 @@ test('the bound designs draw on their bindings in all their views — no NaN, no
     [rackDesign, bind.rackBinding('factory:skillset', {profile: null, sets: {}, setList: null, skills: null, capabilities: null, profiles: null, holds: bind.chainHolds()}, null, {project: 'O-I', sessionRef: null}),
       /prc_01M29MA279X5V519PSFXT0K3WV|b3:91d04c2e7a/, []],
     [memberDesign, bind.memberBinding(bind.MEMBER_DEVICE_ID, {}, null, bind.chainHolds()), /2 Oct 09:14|r6 reviewed and trusted/, []],
+    // REPLACED (#725): Capture skill drawn on its successor too — the Skillset rack's Capture page (§19.11), the rack carrying the capture
+    // binding under `capture.` as the chain does (FactoryDeviceChain.tsx rackCarrying), the page in front.
+    [rackDesign, carry.carryPages(bind.rackBinding('factory:skillset', {profile: null, sets: {}, setList: null, skills: null, capabilities: null, profiles: null, holds: bind.chainHolds()}, null, {project: 'O-I', sessionRef: null}),
+      [{page: carry.CAPTURE_PAGE, binding: capture.captureSkillBinding({inbox, holds: bind.chainHolds()}, {promote: async () => ({})})}]),
+      /Release a changed skill|Release, take 2|central-skill-release|GITHUB_TOKEN|prc_01M29MA279X5V519PSFXT0K3WV|b3:91d04c2e7a/, [capture.CAPTURE_REFUSE.remove], 'capture'],
   ]
-  for (const [design, binding, fixture, reasons] of cases) {
+  for (const [design, binding, fixture, reasons, page] of cases) {
+    if (page) host.setHostPage(binding.id, page)
     const drawn = hosted(design, binding)
     for (const [view, markup] of drawn) {
       assert.match(markup, new RegExp(`data-device-view="${view}"`), `${design.id} ${view} draws`)
@@ -242,6 +257,7 @@ test('the bound designs draw on their bindings in all their views — no NaN, no
     }
     const all = drawn.map(([, markup]) => markup).join('\n')
     for (const why of reasons) assert.ok(all.includes(escaped(why)), `${design.id}: a refused control says why (${why.slice(0, 50)}…)`)
+    if (page) host.resetHost()
   }
   bind.resetHolds()
   host.resetHost()
@@ -261,9 +277,12 @@ test('(b) every key the newly bound designs read is an owner reading, absent wit
     if (design.id === custodyDesign.id && key === 'writeMode') continue
     assert.ok(classify(binding, key), `${design.id} ${key}: a reading, absent with why, or the hand's`)
   }
-  for (const [design, binding] of [[runsDesign, tasks.runsBinding('s', bind.chainHolds())], [runDeviceDesign, session.runBinding({session: null, tracks: null, nowUnixMs: 0, agent: {}, holds: bind.chainHolds()}, {select: () => {}})],
-    [threadDesign, thread.threadBinding({selected: null, chainSession: null, tracks: null, nowUnixMs: 0, encounter: null, agent: {}, holds: bind.chainHolds()}, null, {select: () => {}})]]) {
-    for (const key of ['journey', 'structure', 'thoughts', 'operative'].filter(key => key in design.defaults || Object.values(design.fixtures ?? {}).some(f => key in f))) {
+  // REPLACED (#725): Runs' `journey` and the Run device's `structure` classified against their designs — both designs were retired (§16.1);
+  // the readings stand absent on the bindings' own standing, as the designs read them.
+  assert.equal(classify(tasks.runsBinding('s', bind.chainHolds()), 'journey'), 'absent', 'Runs\' binding: journey')
+  assert.equal(classify(session.runBinding({session: null, tracks: null, nowUnixMs: 0, agent: {}, holds: bind.chainHolds()}, {select: () => {}}), 'structure'), 'absent', 'the Run\'s binding: structure')
+  for (const [design, binding] of [[threadDesign, thread.threadBinding({selected: null, chainSession: null, tracks: null, nowUnixMs: 0, encounter: null, agent: {}, holds: bind.chainHolds()}, null, {select: () => {}})]]) {
+    for (const key of ['thoughts', 'operative'].filter(key => key in design.defaults || Object.values(design.fixtures ?? {}).some(f => key in f))) {
       assert.equal(classify(binding, key), 'absent', `${design.id} ${key}`)
     }
   }

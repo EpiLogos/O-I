@@ -273,6 +273,9 @@ export function openedOf(hold: Value | undefined): string[] {
   try { const ids = JSON.parse(hold) as unknown; return Array.isArray(ids) ? ids.filter((id): id is string => typeof id === 'string') : [] } catch { return [] }
 }
 
+/** The ids opened here, as Approvals' view holds them (the `opened` hold openedOf reads back). Pure. */
+export const openedHold = (ids: readonly string[]): string => JSON.stringify(ids)
+
 /** An Approvals binding with Notifications' readings laid in (ownerRequestsValues): the owner's requests after the queue's own rows, the
  * waiting count and the desktop's notice. Open (software-factory__approvals.tsx: "Every item takes open, which marks it opened here and tells
  * its owner nothing") on an owner's request first opens what it names where it belongs (`open`, which refuses in its own words where the shell

@@ -129,7 +129,10 @@ test('Factory: the session\'s chain is Agent, skills rack, scope — no Thread, 
   assert.doesNotMatch(text, /placed\(RUN_ID/, 'no Run after the landing')
   assert.match(text, /composeAgentBinding\(agentDesignBinding, \{custody: custodyDesignBinding, identity: identityDesignBinding, thread: threadDesignBinding\}\)/,
     'the one Agent carries them')
-  assert.match(text, /\{slot\.id === 'git' && placed\(SEAT_ID/, 'the Seat stays inside the landing (§19.17)')
+  // REPLACED (#725): "the Seat stays inside the landing" as a device of its own — the Seat was retired into Git / landing's Seat page (§19.17
+  // "Claiming a seat … is the Seat page of Git / landing"), carried on the landing's binding under `seat.`.
+  assert.doesNotMatch(text, /placed\(SEAT_ID/, 'no Seat device inside the landing')
+  assert.match(text, /carryPages\(gitDesignBinding, \[\{page: SEAT_PAGE, binding: seatDesignBinding\}/, 'the Seat is the landing\'s Seat page (§19.17)')
   assert.match(text, /case 'agentset': return placed\(AGENTSET_ID/, 'the Agentset rack leads a group\'s chain (§19.15)')
   assert.match(text, /seatBinding\(\{status: seats\.status === 'answered' \? seats\.value : null/, 'the Seat on the seat instrument (K1 seat_status_read)')
   assert.doesNotMatch(text, /linkBinding/, 'the Link is the transport\'s (§19.19)')

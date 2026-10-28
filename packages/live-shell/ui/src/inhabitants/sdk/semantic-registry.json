@@ -158,6 +158,20 @@
   },
   {
     "family": "central",
+    "face": "agent-identity",
+    "kind": "parameter",
+    "liveSemantic": "info",
+    "modes": [
+      "base"
+    ],
+    "formats": {},
+    "invariant": null,
+    "writePaths": [],
+    "heldBy": [],
+    "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/ui/UI-EVIDENCE.md"
+  },
+  {
+    "family": "central",
     "face": "day-die",
     "kind": "document",
     "liveSemantic": "device-instrument",
@@ -450,6 +464,31 @@
       "studio:body"
     ],
     "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/operator-voice.md"
+  },
+  {
+    "family": "software-factory",
+    "face": "agent-custody",
+    "kind": "parameter",
+    "liveSemantic": "macro",
+    "modes": [
+      "factory"
+    ],
+    "formats": {},
+    "invariant": {
+      "maps": [
+        {
+          "key": "autonomy",
+          "range": [
+            "suggest",
+            "review",
+            "auto"
+          ]
+        }
+      ]
+    },
+    "writePaths": [],
+    "heldBy": [],
+    "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/racks-session-model.md"
   },
   {
     "family": "software-factory",

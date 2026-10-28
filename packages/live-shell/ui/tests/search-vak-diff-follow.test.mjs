@@ -116,10 +116,15 @@ test('the Diff follows the selected seat, else the selected project world\'s rep
   assert.deepEqual(rail.diffProjectOf('central', 'Factory'), {project: 'Factory', from: 'workspace'}, 'your world has no repository of its own: the book\'s project')
   assert.deepEqual(rail.diffProjectOf(undefined, undefined), {project: 'O-I', from: 'shell'})
   assert.deepEqual(rail.diffProjectOf('central', 'central'), {project: 'O-I', from: 'shell'})
-  assert.equal(rail.DIFF_WORKSPACE_ID, holds.WORKSPACE_DEVICE_ID, 'the id named on the rail is the Workspace device\'s own')
+  // REPLACED (#725): the selected world's project was the Workspace's `folder` — the Workspace was retired into the track's head and Docs
+  // (§18.1, §18.5), so the Diff reads the world Docs stands on: Docs' `subject` (pageBindings.ts docsValues, `world.project ?? 'central'`).
+  const {centralDeviceId} = await import('../src/central/devices/centralDeviceModel.ts')
+  assert.equal(rail.DIFF_WORLD_ID, centralDeviceId('docs'), 'the id named on the rail is Docs\' own (CentralDevices.tsx DOCS_DEVICE_ID)')
+  assert.deepEqual([holds.docsValues('central:docs', {name: 'Archetypal-Earth', project: 'Archetypal-Earth'}).subject, holds.docsValues('central:docs', {name: 'Your world', project: null}).subject],
+    ['Archetypal-Earth', 'central'], 'Docs\' subject is the world\'s project, or Central for your world: the words diffProjectOf reads')
   const {readFile} = await import('node:fs/promises')
   const source = await readFile(new URL('../src/widgets/railDevices.tsx', import.meta.url), 'utf8')
-  assert.match(source, /publishedDevice\(DIFF_WORKSPACE_ID\)\?\.binding\?\.values\.folder/)
+  assert.match(source, /publishedDevice\(DIFF_WORLD_ID\)\?\.binding\?\.values\.subject/)
   assert.match(source, /\{op: 'git_repository_read', project\}/, 'the repository read follows the project chosen')
   assert.match(source, /selectedSeatOf\(seatValues, seats\.value\)/, 'a selected seat still stands first (0321415ea)')
 })

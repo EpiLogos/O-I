@@ -83,7 +83,7 @@ import {THREAD_DEVICE_ID, shownSession, threadBinding, threadJson} from './threa
 import {CAPTURE_PAGE, CHECKOUTS_PAGE, HELPER_PAGE, MACHINE_PAGE, SEAT_PAGE, carryPages, composeAgentBinding} from './oneAgentBinding'
 import {useHygieneDevice} from '../../central/devices/groundDevices'
 import {openNotificationTarget, useOwnerRequests} from '../../widgets/railDevices'
-import {openedOf, withOwnerRequests} from '../../widgets/railBindings'
+import {openedHold, openedOf, withOwnerRequests} from '../../widgets/railBindings'
 import {useMachineDevice} from '../../central/devices/machineDevice'
 import {useIdentityDevice} from '../../central/devices/agentChainDevices'
 import {PERSONAL_ANCHOR_ACTION, acceptSourceReturn, personRefOf} from '../../central/devices/sourceReturnAccept'
@@ -536,7 +536,7 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
     // rewrite): the requests Central keeps for personal.notify, Messages' waiting agents and the desktop's notice (railBindings.ts
     // withOwnerRequests), as Central's Approvals carries them; Open marks an item opened here, after opening an owner's request.
     return withOwnerRequests(commented, {...ownerRequests, nowUnixMs: sessions?.nowUnixMs || Date.now()}, openNotificationTarget,
-      {opened: openedOf(viewHolds(holds, APPROVALS_ID).opened), hold: ids => holdView(APPROVALS_ID, 'opened', JSON.stringify(ids))})
+      {opened: openedOf(viewHolds(holds, APPROVALS_ID).opened), hold: ids => holdView(APPROVALS_ID, 'opened', openedHold(ids))})
   }, [shownHandle, gatewayDesignBinding, shownTrack, holds, returned, tracks, sessions?.nowUnixMs, transport, person, units, agentDraft, agentWrite, ownerRequests])
 
   // A workcell's devices (§19.23): Git / landing's Seat page (the seat instrument), starting at the selected workcell's seat of the project;

@@ -957,6 +957,16 @@ export function scopeValues(held: ChainHolds): Values {
   return values
 }
 
+/** Scope's Knowledge page's readings (§19.12 Knowledge; scope.tsx `route`, `routeWhy`, `readings`, `reading`), absent in the Knowledge
+ * route's own words (knowledgeRouteBinding.ts KNOWLEDGE_ABSENT, §19.9): no reading of the route's standing for the agent reaches the chain,
+ * nor of the pages it read. */
+export const SCOPE_KNOWLEDGE_ABSENT: Readonly<Record<string, string>> = {
+  route: 'Route: no reading reaches it yet — missing op: a reading of the route\'s standing for the agent (AIKit).',
+  routeWhy: 'Route: no reading reaches it yet — missing op: a reading of the route\'s standing for the agent (AIKit).',
+  readings: 'The pages the agent read: no reading reaches them yet — missing op: a knowledge history by session or task — `aikit knowledge history` (aikit.knowledge-application-history/v1) records each route with an empty context (AIKit).',
+  reading: 'The pages the agent read: no reading reaches them yet — missing op: a knowledge history by session or task — `aikit knowledge history` (aikit.knowledge-application-history/v1) records each route with an empty context (AIKit).',
+}
+
 const SCOPE_WRITES = (key: string) => ['reach', 'writeMode'].includes(key) || key in REFUSED_WRITES[SCOPE_DESIGN]! || key.startsWith('w:')
 
 /** A raised reach the view holds: a ring, or none (Cancel's drop). */
@@ -973,7 +983,7 @@ export function scopeBinding(id: string, held: ChainHolds, writeModeRow: SdkPara
     id,
     values: scopeValues(held),
     local: {reachPending: value => updateHolds(was => (was.reachPending === reachOf(value) ? was : {...was, reachPending: reachOf(value)}))},
-    standing: disabled(REFUSED_WRITES[SCOPE_DESIGN]!),
+    standing: {...disabled(REFUSED_WRITES[SCOPE_DESIGN]!), ...disabled(SCOPE_KNOWLEDGE_ABSENT)},
     writes: SCOPE_WRITES,
     write: async changes => {
       for (const {key, value} of changes) {

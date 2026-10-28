@@ -198,7 +198,12 @@ test('the chain places them where the manual does: Custody on the one Agent, the
   assert.doesNotMatch(view, /placed\(RUN_ID/, 'the Run stands on no chain')
   assert.match(view, /\[RUN_ID, ownDevices\.run, runDesignBinding\]/, 'the Run stays published')
   // REPLACED (lane W1-Factory): the chain draws its place's plan (factoryPlaces.ts chainSlots — a group's leads with the Agentset rack).
-  assert.match(view, /case 'agentset': return placed\(AGENTSET_ID, ownDevices\.agentset, agentsetDesignBinding/, 'the Agentset rack on a group\'s chain (§19.15)')
+  // REPLACED (#725): the rack stood on its own binding — it carries its Helper page now (§19.20 "A decision helper is an agent of type
+  // Settle in a team's Agentset rack, on the rack's Helper page"; the Decision helper was retired into it in the 22 Oct manual rewrite), so
+  // the group's chain draws it on its binding with the helper's laid in under `helper.` while it stands on a group.
+  assert.match(view, /case 'agentset': return placed\(AGENTSET_ID, ownDevices\.agentset, agentsetCarrying/, 'the Agentset rack on a group\'s chain (§19.15)')
+  assert.match(view, /const agentsetCarrying = useMemo\(\(\) => carryPages\(agentsetDesignBinding, helperStands \? \[\{page: HELPER_PAGE, binding: helperDesignBinding\}\] : \[\]\)/,
+    'the rack carries the Helper page on its own binding')
   assert.match(view, /const place = factoryPlace\(\{sessionRef, group: !!groupTrack, workcell\}\)/)
   // REPLACED (lane W8): Custody takes the hand's holds, Actuation's authority list and the current person (the Grants page), and its
   // Revoke port; Scope still stands in its row.

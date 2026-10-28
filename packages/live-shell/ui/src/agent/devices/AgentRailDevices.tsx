@@ -165,6 +165,22 @@ export function AgentRailDevices() {
       ...(stall ? {stallAfter: {...stall, title: 'Stall after'}} : {}),
     }, (row, value) => fireWritePath(row, value, {transport, binding}))
   }, [reading, binding, resolved, transport])
+  // The Frames tile is the Gateway's widget (§19.6): the Gateway's own binding (its Link page, the same rows and write path the chain's Gateway
+  // writes through) with the frames' binding laid over it (its Frames page, the frames themselves): each key goes to the binding that holds it.
+  const framesTile = useMemo((): DesignBinding => {
+    const held = new Set([...Object.keys(frames.values), ...Object.keys(frames.local ?? {}), ...Object.keys(frames.standing ?? {})])
+    const owner = (key: string): DesignBinding => (held.has(key) ? frames : gatewayPort)
+    return {...gatewayPort, ...frames, id: FRAMES_ID, values: {...gatewayPort.values, ...frames.values},
+      standing: {...(gatewayPort.standing ?? {}), ...(frames.standing ?? {})}, local: {...(gatewayPort.local ?? {}), ...(frames.local ?? {})},
+      writes: key => { const binding = owner(key); return binding.writes ? binding.writes(key) : !!binding.write },
+      write: async changes => {
+        for (const change of changes) {
+          const binding = owner(change.key)
+          if (!binding.write) throw Error(`${change.key} is a reading: its owner reports it; nothing here changes it.`)
+          await binding.write([change])
+        }
+      }}
+  }, [frames, gatewayPort])
   // The machine's services and harness processes (W10): Workcell's doctor, its instances and each live one's cost, read while the rack stands.
   const doctor = useWorkcellRead(transport, asked ? {kind: 'doctor'} : null)
   const instanceList = useWorkcellRead(transport, asked ? {kind: 'instances-list'} : null)
@@ -218,7 +234,7 @@ export function AgentRailDevices() {
   }), [main, receipts])
   const publish = (id: string, designBinding: DesignBinding) => { const device = devices[id]; publishDevice(id, device ? {device, binding: designBinding} : null) }
   useEffect(() => { publish(MESSAGES_ID, messages) }, [devices, messages]) // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(() => { publish(FRAMES_ID, frames) }, [devices, frames]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { publish(FRAMES_ID, framesTile) }, [devices, framesTile]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { publish(LEDGER_ID, ledger) }, [devices, ledger]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { publish(WORKCELL_RACK_ID, workcell) }, [devices, workcell]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => () => { for (const id of RAIL_AGENT_DEVICE_IDS) publishDevice(id, null) }, [])

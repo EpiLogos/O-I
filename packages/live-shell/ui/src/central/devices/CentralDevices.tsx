@@ -95,7 +95,7 @@ import {CENTRAL_SCOPE_ID, CONTEXT_WORLD_DEVICE_ID, IDENTITY_DEVICE_ID, PACKET_DE
 import {EFFECTIVE_SOURCES_ACTION, ROOT_WORLD_RELATIONS, WORLD_RELATIONS_READ, WORLD_RELATIONS_SAVE, type ChangeHorizon} from './contextWorldBinding'
 import {useAtSearch} from '../searchPane'
 import {openNotificationTarget, useOwnerRequests} from '../../widgets/railDevices'
-import {openedOf, withOwnerRequests} from '../../widgets/railBindings'
+import {openedHold, openedOf, withOwnerRequests} from '../../widgets/railBindings'
 import './centralDevices.css'
 
 /** The root register's world, whose effective sources Scope reads (central.world.effective-sources {scope, world_ref}). */
@@ -541,7 +541,7 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
     // Open marks an item opened here (the one Approvals' view hold), after opening an owner's request where it belongs.
     const opened = openedOf(viewHolds(holds, APPROVALS_ID).opened)
     const requested = withOwnerRequests(commented, {...ownerRequests, nowUnixMs: nowUnixMs || Date.now()}, openNotificationTarget,
-      {opened, hold: ids => holdView(APPROVALS_ID, 'opened', JSON.stringify(ids))})
+      {opened, hold: ids => holdView(APPROVALS_ID, 'opened', openedHold(ids))})
     return {...requested, standing: {...requested.standing, approvals: {disabled: CENTRAL_DEFAULT_ANSWER}}}
   }, [answerHandle, naraTrack, answerObserved, holds, returned, agency.tracks, nowUnixMs, transport, person, agentDraft, agentWrite, ownerRequests])
   const others = useMemo(() => centralAgentDevices(), [])

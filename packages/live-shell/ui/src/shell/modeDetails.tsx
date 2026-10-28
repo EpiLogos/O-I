@@ -184,7 +184,7 @@ export const MODE_DETAILS: Readonly<Record<SurfMode, ModeDetail>> = {
         // With no session selected the Device side is Factory's Main track (§16.2; agent/devices/FactoryDeviceChain.tsx), as Live
         // shows the Main track's chain when no other track is chosen. The gateways, the frames and the ledger are monitors on the rail, and
         // the road in and out is the workcell's (§19.1, §19.23): a session's chain is the agent, its skills and its scope.
-        if (!track) return {name: 'Main', line: 'Factory\'s Main track: the Experiment and Approvals'}
+        if (!track) return {name: 'Main', line: 'Factory\'s Main track: the Run map, Approvals and the prompt pads'}
         return {name: shown ?? factorySessionName(track, null, undefined),
           line: track.group ? 'a group: the Agentset rack and the Decision helper, then the chain: agent → skills → scope' : 'the agent\'s chain: agent → skills → scope'}
       },

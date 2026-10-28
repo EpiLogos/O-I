@@ -54,7 +54,9 @@ const material = await import('../src/agent/devices/workcellMaterial.ts')
 const tasks = await import('../src/agent/devices/taskBindings.ts')
 const {design: rackDesign} = await import('../src/inhabitants/catalogue/panels/workcell__workcell.tsx')
 const {design: carrierDesign} = await import('../src/inhabitants/catalogue/panels/workcell__remote-carrier.tsx')
-const {design: runsDesign} = await import('../src/inhabitants/catalogue/panels/software-factory__attempt-review.tsx')
+// Runs' design (software-factory__attempt-review.tsx) was retired in the 22 Oct manual rewrite (#725): a run's attempts are takes on its track
+// in Arrangement view (§16.1), its outputs the Results tile's and Approvals' review (§19.1, §19.14); its binding (taskBindings.ts runsBinding)
+// stays and is checked on its own values.
 
 family.resetFamilyManifestsForTest()
 loadAgentShellFamilies()
@@ -237,8 +239,13 @@ test('7 · the designs draw on these bindings in all their views and pages — n
   const cases = [
     [rackDesign, rackBinding, ['chain', 'world', 'services', 'exposure', 'release', 'left'], /Claude Code · local|reads-round-2|omarchy · env-1|factory-attempt|Type-check the three|dlw\/uiux-kit-motion/, [rack.WORKCELL_REFUSE.releaseWorld]],
     [carrierDesign, carrierBinding, [undefined], /ready-to-carry|private-tailnet|1791417468786/, []],
-    [runsDesign, runsBinding, [undefined], /Type-check the roots|run:3|AgentShellContext/, []],
   ]
+  // REPLACED (#725): Runs' design drawn on its binding — no design draws Runs now (§16.1 "its attempts are takes"; §19.1 Results): the
+  // binding's own values carry no absent key as text and none of the retired design's sample, and its Outputs stand disabled with why.
+  const runsValues = JSON.stringify(runsBinding.values)
+  assert.doesNotMatch(runsValues, /\bNaN\b|undefined/, 'Runs\' binding: no absent key as text')
+  assert.doesNotMatch(runsValues, /Type-check the roots|run:3|AgentShellContext/, 'Runs\' binding: never the retired design\'s sample')
+  for (const key of ['collected', 'collect']) assert.equal(runsBinding.standing[key].disabled, tasks.RUNS_OUTPUTS[key], `${key}: disabled, saying why`)
   for (const [design, binding, pages, fixture, reasons] of cases) {
     const drawn = []
     for (const view of host.viewsOf(design)) {

@@ -130,26 +130,31 @@ test('the Frames monitor reads the Gateway\'s own reading and holds its filters;
   bind.resetHolds()
 })
 
-test('with no session selected the chain draws the Main track — the Experiment, then Approvals — and publishes Gateways, the Agency gateway and Frames for the rail and a pane', () => {
+test('with no session selected the chain draws the Main track — the Run map, Approvals and the Prompt pads — and the rail publishes Frames, the Gateway\'s widget', () => {
   const view = read('agent/devices/FactoryDeviceChain.tsx')
   // REPLACED (lane W1-Factory; DLW §16.1, §16.2, §19.1, §19.3, §19.10): Gateways is a monitor, on the rail and full in a pane, never on a chain;
   // the Agency gateway stands in the head of Messages and on no chain. The Main track's chain is the Experiment, then Approvals.
+  // REPLACED (#725): the 22 Oct manual rewrite retired the Experiment (§19.5: "An experiment is a task launched with Repeat, each run a take,
+  // and the takes set side by side with Compare"), the Gateways monitor (§19.3: listed on the Workcells tile) and the Agency gateway (§19.10:
+  // the Gateway's agency build); the Main track is "the Run map, Approvals and the prompt pads" (§16.2), and the rail's Frames is the
+  // Gateway's widget (§19.6).
   assert.match(view, /<div className="factory-main" data-track="main"/)
   assert.match(view, /\{place\.kind === 'main' && <div className="factory-main"/, 'with no session selected the Device side is the Main track')
   assert.match(view, /\{place\.kind === 'session' && <>\{plates\}/, 'a selected session shows its own chain')
   assert.doesNotMatch(view, /<DeviceView device=\{main\.rack\}/, 'Gateways stands on no chain')
   assert.doesNotMatch(view, /<DeviceView device=\{main\.agency\}/, 'nor does the Agency gateway')
-  assert.match(view, /<DeviceView device=\{main\.experiment\} size="compact" binding=\{mainBindings\.experiment\}/)
-  // REPLACED (lane W1-Factory, the rail's one publisher): Gateways, the Agency gateway and Frames stand on the rail in every mode, so the
-  // rail's publisher (AgentRailDevices.tsx) publishes them with their bindings; the chain publishes the Experiment.
-  assert.match(view, /publishDevice\(EXPERIMENT_ID, \{device: main\.experiment, binding: mainBindings\.experiment\}\)/, 'the Experiment is published with its binding')
+  assert.doesNotMatch(view, /main\.experiment|mainBindings\.experiment/, 'no Experiment device stands or is published')
+  assert.match(read('agent/devices/factoryPlaces.ts'), /export const MAIN_CHAIN: readonly FactorySlot\[\] = \['approvals'\]/)
+  assert.match(read('agent/devices/factoryPlaces.ts'), /\[\.\.\.\(stands\.runMap \? \['run-map' as const\] : \[\]\), \.\.\.MAIN_CHAIN, \.\.\.\(stands\.pads \? \['prompt-pads' as const\] : \[\]\)\]/,
+    'the Run map leads, the Prompt pads close')
   const rail = read('agent/devices/AgentRailDevices.tsx')
-  for (const [id, binding] of [['GATEWAYS_RACK_ID', 'gateways'], ['AGENCY_GATEWAY_ID', 'agency'], ['FRAMES_ID', 'frames']]) {
-    assert.match(rail, new RegExp(`publish\\(${id}, ${binding}\\)`), `${id} is published with its binding, in every mode`)
-  }
+  assert.match(rail, /publish\(FRAMES_ID, framesTile\)/, 'Frames, the Gateway\'s widget, is published with its binding, in every mode')
+  for (const id of ['GATEWAYS_RACK_ID', 'AGENCY_GATEWAY_ID']) assert.doesNotMatch(rail, new RegExp(`publish\\(${id}`), `${id}: no device of its own`)
   // REPLACED (lane W7): the Run map and the Prompt pads are withdrawn with the chain too.
   assert.match(view, /EXPERIMENT_ID, \.\.\.SESSION_DEVICE_IDS, APPROVALS_ID,\s+SEAT_ID, CARRIER_ID, RUN_MAP_ID, PROMPT_PADS_ID\]\) publishDevice\(id, null\)/, 'and withdrawn with the chain — never the rail\'s')
-  assert.match(read('agent/agentDockTiles.ts'), /claimRailWidget\('gateways', GATEWAYS_RACK_ID\)/, 'the rail claims the Gateways tile for the monitor')
+  // REPLACED (#725): the rail claimed the Gateways tile for the monitor — retired; the Workcells tile lists the gateways (§19.3).
+  assert.doesNotMatch(read('agent/agentDockTiles.ts'), /claimRailWidget\('gateways'/, 'no Gateways tile')
+  assert.match(read('agent/agentDockTiles.ts'), /claimRailWidget\('frames', FRAMES_ID\)/, 'the Frames tile draws the Gateway\'s widget')
   assert.doesNotMatch(read('agent/devices/mainTrackBindings.ts'), /\.defaults\[|\.fixtures|catalogue\/panels\//, 'the bindings read no design default or fixture')
   for (const file of ['agent/devices/mainTrackBindings.ts', 'agent/devices/factoryDevices.css', 'frame/widgets/deviceWidgets.tsx']) {
     assert.deepEqual(read(file).match(/#[0-9a-fA-F]{3,8}\b/g) ?? [], [], `${file}: shell tokens only`)
