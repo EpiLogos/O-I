@@ -151,7 +151,12 @@ test('with no session selected the chain draws the Main track — the Run map, A
   assert.match(rail, /publish\(FRAMES_ID, framesTile\)/, 'Frames, the Gateway\'s widget, is published with its binding, in every mode')
   for (const id of ['GATEWAYS_RACK_ID', 'AGENCY_GATEWAY_ID']) assert.doesNotMatch(rail, new RegExp(`publish\\(${id}`), `${id}: no device of its own`)
   // REPLACED (lane W7): the Run map and the Prompt pads are withdrawn with the chain too.
-  assert.match(view, /EXPERIMENT_ID, \.\.\.SESSION_DEVICE_IDS, APPROVALS_ID,\s+SEAT_ID, CARRIER_ID, RUN_MAP_ID, PROMPT_PADS_ID\]\) publishDevice\(id, null\)/, 'and withdrawn with the chain — never the rail\'s')
+  // REPLACED (#804): "the Thread, Custody, Tasks, Runs, Experiment, Run and Seat ids are cleared once" — nothing publishes them (the Agent
+  // carries the Thread and Custody, §19.4; a task is a clip and a run its track's take lanes, §19.1; the Seat is Git / landing's page,
+  // §19.17; an experiment is a task launched with Repeat, its takes set side by side with Compare, §19.5), and the door is the session's memory, so no stale entry of theirs can
+  // stand. The chain withdraws exactly what it publishes.
+  assert.match(view, /for \(const id of \[\.\.\.CHAIN_DEVICE_IDS, MEMBER_DEVICE_ID, AGENTSET_ID, APPROVALS_ID, CARRIER_ID, RUN_MAP_ID, PROMPT_PADS_ID\]\) publishDevice\(id, null\)/, 'and withdrawn with the chain — never the rail\'s')
+  assert.doesNotMatch(view, /THREAD_DEVICE_ID, CUSTODY_ID|TASKS_ID, RUNS_ID|SESSION_DEVICE_IDS|EXPERIMENT_ID, \.\.\./, 'no id nothing publishes')
   // REPLACED (#725): the rail claimed the Gateways tile for the monitor — retired; the Workcells tile lists the gateways (§19.3).
   assert.doesNotMatch(read('agent/agentDockTiles.ts'), /claimRailWidget\('gateways'/, 'no Gateways tile')
   assert.match(read('agent/agentDockTiles.ts'), /claimRailWidget\('frames', FRAMES_ID\)/, 'the Frames tile draws the Gateway\'s widget')

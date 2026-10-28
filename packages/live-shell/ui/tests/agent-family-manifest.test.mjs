@@ -27,6 +27,7 @@ const door = await import('../src/inhabitants/familyManifest.ts')
 const load = await import('../src/inhabitants/loadAgentShellFamilies.ts')
 const catalogue = await import('../src/inhabitants/agentDeviceCatalogue.ts')
 const addresses = await import('../src/inhabitants/agentParamAddresses.ts')
+const grammar = await import('../src/shell/modeGrammar.ts')
 
 test('the neutral door admits the five agent-shell families once and exposes declared surfaces each', () => {
   door.resetFamilyManifestsForTest()
@@ -34,8 +35,12 @@ test('the neutral door admits the five agent-shell families once and exposes dec
   const ids = door.allFamilyManifests().map(m => m.id)
   assert.deepEqual(ids, ['actuation', 'ai-kit', 'central', 'software-factory', 'workcell'])
   for (const manifest of door.allFamilyManifests()) {
-    // A family's browser presence is its declared entries (seam 4, browserEntries) or a bare id list.
-    assert.ok(manifest.browser.length + (manifest.browserEntries?.length ?? 0) >= 1, manifest.id)
+    // A family's browser presence is its declared entries (seam 4, browserEntries), a bare id list, or a category the mode grammar draws as
+    // its own. REPLACED (#804): "its declared entries or a bare id list" — Software Factory's two entries (Runs, Tasks) listed retired devices
+    // and are gone (§19.1: a task is a clip, a run its track's take lanes); its presence is the Factory browser's Sessions and Agents,
+    // which the grammar draws as its own (modeGrammar.ts factory-sessions, factory-agents: family software-factory).
+    const owned = grammar.SURF_MODES.flatMap(mode => grammar.MODE_GRAMMAR[mode].browser).filter(category => category.family === manifest.id).length
+    assert.ok(manifest.browser.length + (manifest.browserEntries?.length ?? 0) + owned >= 1, manifest.id)
     assert.ok(manifest.faces.length >= 1, manifest.id)
     assert.ok(manifest.params.grammar, manifest.id)
     assert.ok(manifest.projections.length >= 1, manifest.id)

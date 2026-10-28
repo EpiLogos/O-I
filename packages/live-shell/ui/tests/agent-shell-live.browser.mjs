@@ -12,8 +12,9 @@
  *                                 (http://127.0.0.1:9): asserts the shell's
  *                                 honest refusal states, records which
  *                                 native-required checks cannot hold, exit 0.
- *   --fixture                     offline disclosure checks against the
- *                                 repurposed refusal fixture (no kernel).
+ *   (DELETED #804: --fixture, the offline refusal fixture over the old bar
+ *    and dock, src/agent/agentShellFixture.tsx — unreached and deleted; the
+ *    refusal states are --cut's, on the real App.)
  *   --expect-live-red-when-cut    runs the FULL live battery against the dead
  *                                 bridge and REQUIRES the suite to go red.
  *                                 Any native-dependent (native:true) check
@@ -25,8 +26,8 @@
  * Live entry: the real App root (src/App.tsx) under the real providers, the
  * same tree main.tsx mounts — WorkspaceProvider + NativeFoundation resolve
  * the transport from the served /api/config and attach it to the workspace;
- * the centre panel native.agent (AgentShellCentre), AgentShellTransport,
- * StatusBar, AgentShellBrowser and AgentShellDeviceDetail are the shipped
+ * the centre panel native.agent (AgentShellCentre), the one transport (its
+ * Factory slots: shell/transports/useFactoryTransport.tsx), StatusBar, AgentShellBrowser and AgentShellDeviceDetail are the shipped
  * components over the real kernelOp path. No stub providers.
  *
  * Env: OI_KERNEL_BRIDGE, OI_AGENT_SHELL_ORACLE, OI_FIDELITY_EVIDENCE,
@@ -42,7 +43,7 @@ import {
   ui, loadOracle, ensureEvidenceDir, bundleEntry, shellHtml, serveShellPage,
   launchShell, makeChecker, writeReceipt, summarize,
   agencyReadViaBridge, spendViaBridge, rosterViaBridge, probeBridge, postOp,
-  runFixtureHarness, EVIDENCE_LIVE_DEFAULT, BRIDGE_DEFAULT, CUT_BRIDGE, STATUS_INFO_SELECTOR, AGENCY_PROJECT,
+  EVIDENCE_LIVE_DEFAULT, BRIDGE_DEFAULT, CUT_BRIDGE, STATUS_INFO_SELECTOR, AGENCY_PROJECT,
 } from './support/agentShellHarness.mjs'
 
 const args = process.argv.slice(2)
@@ -484,7 +485,6 @@ async function runRedProof() {
 
 let mode = flag('--live') ? 'live'
   : flag('--cut') ? 'cut'
-  : flag('--fixture') ? 'fixture'
   : flag('--expect-live-red-when-cut') ? 'red'
   : null
 
@@ -496,10 +496,7 @@ if (!mode) {
 
 let checker
 let evidence
-if (mode === 'fixture') {
-  evidence = evidenceArg ?? EVIDENCE_LIVE_DEFAULT
-  checker = await runFixtureHarness({evidence})
-} else if (mode === 'red') {
+if (mode === 'red') {
   await runRedProof()
   process.exit(0)
 } else {

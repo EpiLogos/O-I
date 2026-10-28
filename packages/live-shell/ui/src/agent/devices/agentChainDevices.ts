@@ -404,8 +404,8 @@ function slotValues(slot: string, input: AgentChainInput): Record<string, ParamV
 
 export type ChainWrite = (row: SdkParamRow, value: unknown) => Promise<DispatchReceipt>
 
-/** The value a row's owner setter takes. The shell's steer and write-arm setters take a boolean (AgentShellTransport.tsx:89,91,
- * the transport's own calls); the rows are enumerated, so the choice is carried the way the transport carries it. The write
+/** The value a row's owner setter takes. The shell's steer and write-arm setters take a boolean (shell/transports/useFactoryTransport.tsx:91-92,
+ * the transport's own calls, ported from the old bar, deleted in ticket 804); the rows are enumerated, so the choice is carried the way the transport carries it. The write
  * arm's `draft` has no writer (the address's own disclosure), so it is refused by name. */
 export function carryValue(row: SdkParamRow, value: ParamValue): {ok: true; value: ParamValue} | {ok: false; reason: string} {
   if (row.writePath === 'shell.setSteer') return {ok: true, value: value === 'steer'}

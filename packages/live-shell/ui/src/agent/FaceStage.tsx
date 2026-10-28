@@ -11,7 +11,8 @@
  * (public/face/face-embed.js turns the face's `motion` off); every state still shows.
  *
  * The frame takes no pointer unless the host asks (`interactive`), so a device's handles and rows under it keep their hand.
- * The Answer (catalogue/panels/central__nara-conversation.tsx) stands it in its well and its pane; the Agent can stand it too.
+ * The Agent stands it where it answers with its face (§19.4 "The answer's face"; catalogue/panels/agent-answer.tsx, ticket 804): in its well, on
+ * its Face page and as its Full. The Answer (central__nara-conversation.tsx) stood it until it was retired into the Agent.
  */
 import {memo, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties} from 'react'
 import {maskStatic, type FaceExpr} from './maskFace'

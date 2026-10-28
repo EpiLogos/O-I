@@ -9,7 +9,7 @@ import assert from 'node:assert/strict'
 const STANDS = {
   'actuation:gateway · whole': 'The picture marks the check-in age beside its needle; the readout is the number to read.',
   'actuation:harness-model · compact': 'The corner is turns used of the cap (3 / 12); the cap is the Budget box.',
-  'actuation:harness-model · whole': 'The corner is turns used of the cap; the Budget box is the cap and the readout the turns used: two parameters, the same number only when the agent spent its whole budget (12 / 12, the Failed fixture).',
+  'actuation:harness-model · whole': 'The corner is turns used of the cap; the Budget box is the cap and the readout the turns used: two parameters, the same number only when the agent spent its whole budget (12 / 12, the Failed fixture). On the Answer page (#804, the retired Answer\'s entry), the corner is the turn against the budget (43 KB / 256 KB); the readout is the turn on its own.',
   'actuation:harness-model · widget': 'The turns readout is used of the cap, two parameters that read the same only when the agent spent its whole budget (12 / 12, the Failed fixture).',
   'central:search · whole': 'The picture is the vāk neighbourhood with the symbol at its centre; the readout is the symbol to read.',
   'expressions:colour · whole': 'Different parameters that stand at the same value by default.',

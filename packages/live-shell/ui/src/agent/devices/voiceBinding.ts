@@ -11,6 +11,12 @@
 //   bodies       Local: available where the native kernel and a bound conversation stand, else closed with the voice's own words
 //                (useAnswerVoice.ts voiceAbsence). Face, Realtime aligned and Realtime own voice: closed, each with the route it lacks.
 //   reason       why no turn is drawn: Kokoro measures no timing and the voice keeps no record of the turn it spoke; or the voice's words.
+//   hears, speaks  on · off, as the voice holds them; written through it (Hears opens the microphone, Speaks speaks each answer).
+//   now          what the voice does now: quiet · listening · speaking.
+//   heard        your words as the owner wrote them, until they are sent.
+// The last four are the answer's face's (§19.4 "The answer's face": attending while you speak, its mouth moving with its words, Hears and
+// Speaks in the rack and at the face's lower corners), ported from the retired Answer's binding (central/devices/answerBinding.ts
+// ANSWER_WIRING, ticket 804); the Agent's design draws them under `speech.`, on the answer's face.
 // What nothing reports, each absent with the reading it waits for: the declared voice and the voices (the open's constitution names the
 // TTS stage's declared voice — nara_voice_constitution.rs stage configuration `declared_voice` — and AnswerVoice keeps only the lease), the
 // body's duplex, barge-in and stop (the constitution's `interaction` and `interruption`, not kept either), the latency and the receipt of a
@@ -79,22 +85,39 @@ export function voiceValues(input: VoiceInput): Values {
     {id: 'realtime-native', available: false, why: BODY_CLOSED.realtime},
   ])
   values.reason = state.refused.speaks ?? state.refused.hears ?? why ?? NO_TURN
+  // The voice as its owner holds it: the answer's face reads these (attending while you speak, speaking while the answer plays).
+  Object.assign(values, {hears: state.hears, speaks: state.speaks, now: state.voice, heard: state.heard})
   return values
 }
 
+/** The voice's two keys the face's marks and the Answer page press. */
+const VOICE_KEYS: readonly VoiceKey[] = ['hears', 'speaks']
+
 /** Voice's binding: Body writes through the Answer's voice (Local: Speaks on; Off: Speaks and Hears off), refused in its words where
- * the voice cannot open; every other control stands disabled with the operation it lacks; every absent reading with what it waits for. */
+ * the voice cannot open; Hears and Speaks write to it, standing disabled with why where it cannot open and refused in the owner's words
+ * after a refusal; every other control stands disabled with the operation it lacks; every absent reading with what it waits for. */
 export function voiceBinding(input: VoiceInput, write: (key: VoiceKey, value: unknown) => Promise<void>, id: string = VOICE_ID): DesignBinding {
   const standing: Record<string, Standing> = Object.fromEntries(Object.entries({...VOICE_ABSENT, ...VOICE_REFUSE}).map(([key, why]) => [key, {disabled: why}]))
   if (input.why !== null && !(input.state.speaks === 'on' || input.state.hears === 'on')) standing['voice.body'] = {disabled: input.why}
+  // Hears and Speaks (answerBinding.ts answerBinding, ported): where the voice cannot open, both stand disabled with the reason; where it
+  // can and its owner refused the last press, the key says so in the owner's words and stays pressable.
+  for (const key of VOICE_KEYS) {
+    if (input.why !== null) standing[key] = {disabled: input.why}
+    else if (input.state.refused[key]) standing[key] = {refused: input.state.refused[key]}
+  }
   return {
     id,
     values: voiceValues(input),
     standing,
     ...(input.state.busy ? {waiting: ['voice.body']} : {}),
-    writes: key => key === 'voice.body' || key in VOICE_REFUSE,
+    writes: key => key === 'voice.body' || VOICE_KEYS.includes(key as VoiceKey) || key in VOICE_REFUSE,
     write: async changes => {
       for (const {key, value} of changes) {
+        if (VOICE_KEYS.includes(key as VoiceKey)) {
+          if (input.why !== null) throw Error(input.why)
+          await write(key as VoiceKey, value)
+          continue
+        }
         if (key === 'voice.body') {
           if (value === 'local') {
             if (input.why !== null) throw Error(input.why)

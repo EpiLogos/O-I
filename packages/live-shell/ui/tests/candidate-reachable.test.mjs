@@ -201,7 +201,9 @@ test('on the tree: the catalogue\'s designs load through the panels\' glob (pane
   // REPLACED (#788): "knowledgeRouteBinding.ts: nothing the candidate loads names it" — the retired Knowledge route's binding was deleted
   // (its page is Scope's Knowledge page, §19.12). A file nothing names stays unreached on the fixture tree above (src/unnamed.html); on the
   // tree, the agent chain's devices hold no file the candidate does not load.
-  assert.deepEqual(unreachedUnder([ui('src/agent/devices')], product).map(file => relative(repo, file)), [], 'every file of the agent devices is product')
+  // REPLACED (#804): "every file of the agent devices" — every file of src/agent now: the dock, the old bar, their fixture and the queue model
+  // are deleted (t804-retired-carries-answer-face.test.mjs), and the face stands in the Agent (agent-answer.tsx).
+  assert.deepEqual(unreachedUnder([ui('src/agent')], product).map(file => relative(repo, file)), [], 'every file of src/agent is product')
 })
 
 test('on the tree: the shell is reached, and a module only types name is not, unless it declares only types', () => {

@@ -15,12 +15,12 @@
  *   - kernel bridge calls from Node ({POST url}/op) used to cross-check what
  *     the page renders against what the same bridge actually discloses
  *
- * The fixture refusal battery (runFixtureHarness) is shared by
- * agent-shell-fidelity.browser.mjs and the --fixture mode of
- * agent-shell-live.browser.mjs.
+ * DELETED (#804): the fixture refusal battery (runFixtureHarness), which
+ * bundled src/agent/agentShellFixture.tsx — the old Factory bar and agent
+ * dock over a dead transport, all three unreached and deleted. The refusal
+ * states are agent-shell-live.browser.mjs --cut's, on the real App.
  */
 
-import assert from 'node:assert/strict'
 import {createServer} from 'node:http'
 import {existsSync, readdirSync} from 'node:fs'
 import {readFile, mkdir, writeFile} from 'node:fs/promises'
@@ -89,8 +89,6 @@ const evidenceFallback = label => {
 }
 export const EVIDENCE_LIVE_DEFAULT =
   resolveProgrammePath('new-shell', 'evidence', 'agent-shell-f2-live-20261008') ?? evidenceFallback('live')
-export const EVIDENCE_FIXTURE_DEFAULT =
-  resolveProgrammePath('new-shell', 'evidence', 'agent-shell-fixture-refusal-20261008') ?? evidenceFallback('fixture')
 
 /** The oracle path: the env override first, then the derived programme path.
  * Refuses BY NAME when neither supplies it — never an absolute guess. */
@@ -389,101 +387,4 @@ export async function writeReceipt(path, receipt) {
 
 export function summarize(name, {observations, faults, withheld, captures}) {
   return {name, observations: observations.length, faults: faults.length, withheld: withheld.length, captures}
-}
-
-// ---------------------------------------------------------------------------
-// the fixture refusal battery — the only thing the fixture suite asserts
-
-export const FIXTURE_REASON = 'kernel not attached — refusal harness'
-
-export async function runFixtureHarness({evidence}) {
-  await ensureEvidenceDir(evidence)
-  const fixtureEntry = await bundleEntry({
-    contents: `import ${JSON.stringify(join(ui, 'src/agent/agentShellFixture.tsx'))};\n`,
-    resolveDir: join(ui, 'src/agent'),
-    sourcefile: 'agent-shell-fixture-entry.tsx',
-    outfile: 'agent-shell-fixture.mjs',
-  })
-  const {url, close} = await serveShellPage({html: shellHtml(fixtureEntry), kernelBridge: CUT_BRIDGE})
-  const {browser, page, browserErrors, pageErrors} = await launchShell({width: 1920, height: 1200})
-  const checker = makeChecker()
-  const captures = []
-  try {
-    await page.goto(url, {waitUntil: 'domcontentloaded'})
-    await page.waitForSelector('#play', {timeout: 20000})
-
-    await checker.check('fixture mounted', async () => {
-      assert.equal(await page.evaluate(() => window.__agentShellFixture === true), true)
-    })
-    await checker.check('unavailable transport disclosed in the browser device pool', async () => {
-      // The refusal renders as the disclosure card (named, receipt folded);
-      // the reason must appear on the card or the kv line — never swallowed.
-      await page.waitForFunction(() => {
-        const pool = document.querySelector('.agent-device-pool')
-        if (!pool) return false
-        const card = pool.querySelector('[data-refusal], .agent-refusal')
-        const line = pool.querySelector('.agent-disclosed')
-        return (!!card && card.textContent.includes('kernel not attached'))
-          || (!!line && line.textContent.includes('kernel not attached'))
-      }, undefined, {timeout: 8000})
-    })
-    await checker.check('unavailable transport disclosed in the context dock tile', async () => {
-      await page.waitForFunction(() => {
-        const el = document.querySelector('.native-context-panel .native-error')
-        return !!el && el.textContent.includes('kernel not attached')
-      }, undefined, {timeout: 8000})
-    })
-    await checker.check('the agent tab discloses the unavailable transport instead of a session reading', async () => {
-      const text = await page.locator('.agent-shell-centre .view-empty').innerText()
-      assert.ok(text.includes('Native transport unavailable') && text.includes(FIXTURE_REASON), text)
-    })
-    await checker.check('no fabricated session tracks (the agent tab draws no grid; the tracks pane is not mounted here)', async () => {
-      assert.equal(await page.locator('.trk, .agent-track').count(), 0)
-    })
-    await checker.check('no fabricated rows (no Porting, no Honey)', async () => {
-      const text = await page.evaluate(() => document.body.innerText)
-      assert.ok(!text.includes('Porting'), 'fake "Porting" row present')
-      assert.ok(!text.includes('Honey'), 'fake "Honey" row present')
-    })
-    await checker.check('telemetry reads honest absence (tokens in)', async () => {
-      assert.equal((await page.locator('#tokIn').innerText()).trim(), '—')
-    })
-    await checker.check('telemetry reads honest absence (tokens out)', async () => {
-      assert.equal((await page.locator('#tokOut').innerText()).trim(), '—')
-    })
-    await checker.check('budget reads honest absence', async () => {
-      assert.equal((await page.locator('#budget').innerText()).trim(), '— / —')
-    })
-    await checker.check('position reads honest absence', async () => {
-      assert.equal((await page.locator('#position').innerText()).trim(), '— . — . —')
-    })
-    await checker.check('spend meter shows no fabricated fill', async () => {
-      const fill = await page.evaluate(() => getComputedStyle(document.querySelector('.cpu-meter')).getPropertyValue('--fill').trim())
-      assert.equal(fill, '', `cpu meter carries a fill: ${fill}`)
-    })
-    await checker.check('no uncaught page errors', async () => {
-      assert.deepEqual(pageErrors, [])
-    })
-
-    const shot = join(evidence, 'fixture-refusal-1920x1200.png')
-    await page.screenshot({path: shot, fullPage: true})
-    captures.push('fixture-refusal-1920x1200.png')
-  } finally {
-    await writeReceipt(join(evidence, 'receipt.json'), {
-      schema: 'oi.agent-shell-fidelity-f2/v2',
-      mode: 'fixture',
-      oracle: null,
-      observations: checker.observations,
-      faults: checker.faults,
-      withheld: checker.withheld,
-      captures,
-      browserErrors,
-      pageErrors,
-      evidence,
-      at: new Date().toISOString(),
-    })
-    await browser.close()
-    await close()
-  }
-  return checker
 }

@@ -56,10 +56,9 @@ export const GIT_ID = chainDeviceId('git')
 export const SEAT_ID = 'factory:git:seat'
 export const CARRIER_ID = 'factory:main:remote-carrier'
 export const LINK_ID = 'factory:main:link'
-export const WORKCELL_DEVICE_IDS: readonly string[] = [SEAT_ID, CARRIER_ID, LINK_ID]
 
 /** The workcell's devices of the runtime. The Seat was retired into Git / landing's Seat page (tickets 725 and 772: §19.17; oneAgentBinding.ts
- * SEAT_PAGE, `seat.`); SEAT_ID stays so a stale door entry is cleared. */
+ * SEAT_PAGE, `seat.`); SEAT_ID stays as the key the Seat page's view holds are kept under, and nothing publishes it (ticket 804). */
 export const workcellDevices = (): {carrier: DeviceInstance | null; link: DeviceInstance | null} => ({
   carrier: familyFaceDevice(CARRIER_ID, 'workcell', 'remote-carrier', 'Remote carrier', 'link'),
   link: familyFaceDevice(LINK_ID, 'workcell', 'link', 'Link', 'linkChain'),

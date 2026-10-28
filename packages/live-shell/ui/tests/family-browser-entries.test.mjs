@@ -43,7 +43,8 @@ const SIX = ['central', 'actuation', 'ai-kit', 'software-factory', 'workcell', '
 const CARRIED = {
   central: {ground: 'central-ground', agents: 'central-beings'},
   actuation: {gateways: 'gateways'},
-  'software-factory': {tasks: 'tasks', runs: 'factory-runs'},
+  // REPLACED (#804): software-factory's `tasks` and `runs`, carried by `tasks` and `factory-runs` — retired with the devices they listed: a
+  // task is a clip on its session's track, a run that track in Arrangement view with its take lanes (§19.1). No entry carries them.
   workcell: {git: 'git'},
   'ai-kit': {skillsets: 'skillsets'},
 }
@@ -105,7 +106,8 @@ test('each mode\'s composed browser keeps the mockup list intact, in order, as i
 test('an owner fill takes the entry\'s standing from its own family only, keeps the mockup\'s label, and never duplicates', () => {
   const fills = declaredAll().filter(entry => modeGrammar.MODE_GRAMMAR.base.browser.concat(
     modeGrammar.MODE_GRAMMAR.factory.browser, modeGrammar.MODE_GRAMMAR.techne.browser).some(category => category.id === entry.id))
-  assert.deepEqual(fills.map(entry => entry.id).sort(), ['central-beings', 'factory-runs'], 'the two owner fills, and only those')
+  // REPLACED (#804): "the two owner fills" — factory-runs filled the retired Runs category (§19.1).
+  assert.deepEqual(fills.map(entry => entry.id).sort(), ['central-beings'], 'the one owner fill, and only that')
   for (const declaration of fills) {
     const mode = modeGrammar.SURF_MODES.find(name => statics(name).some(category => category.id === declaration.id))
     const floor = statics(mode).find(category => category.id === declaration.id)

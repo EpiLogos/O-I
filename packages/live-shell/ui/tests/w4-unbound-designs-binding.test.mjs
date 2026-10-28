@@ -316,5 +316,9 @@ test('§16.14 — none of the three bindings defaults a reading: unread owners l
   assert.deepEqual(bind.scopeValues(bind.chainHolds()), {})
   assert.deepEqual(tb.terminalValues(null), {})
   const voice = vb.voiceValues({state: VOICE_OFF, why: ABSENT_KERNEL})
-  assert.deepEqual(Object.keys(voice).sort(), ['bodies', 'reason', 'voice.body'], 'the closed voice is a reading (Off); nothing else is filled in')
+  // REPLACED (#804): "the closed voice is a reading (Off); nothing else is filled in" — the voice also reports what it holds, for the answer's
+  // face (§19.4: Hears and Speaks, attending while you speak): Hears and Speaks off, quiet, nothing heard. Each is the voice owner's own
+  // state (answerVoice.ts VOICE_OFF is what it holds before anything opens: answer-voice.test.mjs "both keys start off"), never a default.
+  assert.deepEqual(Object.keys(voice).sort(), ['bodies', 'heard', 'hears', 'now', 'reason', 'speaks', 'voice.body'], 'the closed voice is a reading (Off); nothing else is filled in')
+  assert.deepEqual([voice.hears, voice.speaks, voice.now, voice.heard], [VOICE_OFF.hears, VOICE_OFF.speaks, VOICE_OFF.voice, VOICE_OFF.heard], 'each the voice\'s own state')
 })

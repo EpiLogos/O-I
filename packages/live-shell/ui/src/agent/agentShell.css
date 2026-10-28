@@ -49,19 +49,7 @@
   grid-template-areas:"tp tp tp" "br ct dk" "ch ch dk" "sb sb sb";
 }
 
-/* ============ transport (mockup .nc/.fld/.tbtn rhythm; specimen icons) ============ */
-.agent-shell-transport .agent-nc { height:19px; min-width:17px; padding:1px 4px; background:var(--bg-0); border:1px solid var(--line-strong); line-height:14px; font-size:10px; color:var(--text-dim); display:inline-flex; align-items:center; justify-content:center; gap:3px }
-.agent-shell-transport .agent-nc.on { background:var(--accent); color:var(--accent-ink); border-color:var(--accent) }
-.agent-shell-transport .agent-nc.warn { color:var(--stall); border-color:var(--warn-border) }
-.agent-shell-transport .agent-nc svg { display:block }
-.agent-shell-transport .agent-fld { height:19px; padding:2px 6px; font-size:10px; background:var(--bg-0); color:var(--text); display:inline-flex; align-items:center; gap:4px; font-family:var(--mono) }
-.agent-shell-transport .agent-fld small { font-size:8.5px; color:var(--text-faint) }
-.agent-shell-transport .agent-tbtn { width:20px; height:22px; display:grid; place-items:center; color:var(--text-dim) }
-.agent-shell-transport .agent-tbtn.play { color:var(--accent) }
-.agent-shell-transport .agent-tbtn.play.on { color:var(--accent-ink); background:var(--accent) }
-.agent-shell-transport .agent-tbtn.rec { color:var(--rec-ink) }
-.agent-shell-transport .agent-tbtn.rec.on { color:var(--rec) }
-.agent-shell-transport .cpu-meter { background:linear-gradient(90deg, var(--accent) 0, var(--accent) var(--fill, 0%), var(--bg-0) var(--fill, 0%), var(--bg-0) 100%) }
+/* The old Factory bar's rules (.agent-shell-transport) left with it (ticket 804): the one transport draws Factory's slots (frame/transport). */
 
 /* ============ browser + pool (mockup .br) ============ */
 .agent-shell-browser { min-height:0; display:flex; flex-direction:column; background:var(--bg-1); border:1px solid var(--line-strong); border-right:4px solid var(--line); border-radius:3px 0 0 3px; overflow:hidden }
@@ -165,38 +153,7 @@
 .agent-world-read { color:var(--fizz) }
 .agent-world-write { color:var(--honey) }
 
-/* ============ context dock (mockup .dk tiles + launcher) ============ */
-.agent-context-dock { min-height:0; display:flex; flex-direction:column; background:var(--bg-1); border-left:4px solid var(--line); position:relative; width:var(--dock-w, 300px) }
-.agent-tilesh { height:24px; flex:none; display:flex; align-items:center; gap:6px; padding:0 6px; background:var(--bg-2); border-bottom:1px solid var(--line); font-size:11px }
-.agent-tilesh .r { margin-left:auto; display:flex; gap:3px }
-.agent-tilesh button { width:19px; height:19px; display:grid; place-items:center; color:var(--text-dim); background:var(--bg-0); border:1px solid var(--line-strong); font-size:10px; padding:0 }
-.agent-tiles { flex:1; min-height:0; overflow:auto; padding:5px; display:grid; grid-template-columns:repeat(auto-fill, minmax(270px, 1fr)); gap:5px; align-content:start }
-.agent-tile { border:1px solid var(--line); background:var(--bg-1); display:flex; flex-direction:column; min-width:0; min-height:120px }
-.agent-tile-h { height:24px; flex:none; display:flex; align-items:center; gap:5px; padding:0 6px; background:var(--bg-2); font-size:11px; border-bottom:1px solid var(--line); color:var(--text) }
-.agent-tile-h .t { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
-.agent-tile-h .x { color:var(--text-faint); font-size:10px; display:flex; gap:7px }
-.agent-tile-h .x span { cursor:pointer }
-.agent-tile-h .x span:hover { color:var(--text) }
-.agent-tile-h svg { flex:none }
-.agent-tile-b { flex:1; min-height:0; overflow:auto; position:relative }
-.agent-launch { height:300px; flex:none; border-top:5px solid var(--line); display:flex; flex-direction:column; background:var(--bg-2); margin-bottom:4px }
-.agent-launch.folded { height:30px }
-.agent-launch.folded .agent-lgrid { display:none }
-.agent-lh { height:25px; flex:none; display:flex; align-items:center; gap:5px; padding:0 5px; background:var(--bg-1); border-bottom:1px solid var(--line); font-size:11px }
-.agent-lh input { flex:1; min-width:0; height:18px; background:var(--bg-0); border:1px solid var(--line); padding:0 6px; font-size:10.5px; color:var(--text); outline:none }
-.agent-lh .f { color:var(--text-faint); cursor:pointer; width:16px; text-align:center; background:none; border:none; padding:0 }
-.agent-lgrid { flex:1; overflow:auto; display:grid; grid-template-columns:repeat(auto-fill, minmax(130px, 1fr)); grid-auto-rows:126px; gap:5px; padding:5px }
-.agent-lgrid .agent-lcell { border:1px solid var(--line); background:var(--bg-1); display:flex; flex-direction:column; cursor:pointer; position:relative; min-width:0; padding:0; text-align:left }
-.agent-lgrid .agent-lcell:hover { border-color:var(--text-faint) }
-.agent-lgrid .agent-lcell.on { border-color:var(--accent) }
-.agent-lcell .pv { flex:1; background:var(--bg-0); margin:4px; position:relative; overflow:hidden; color:var(--text-dim); font-size:10px }
-.agent-lcell .nm { height:20px; display:flex; align-items:center; gap:5px; padding:0 6px; font-size:10.5px; color:var(--text-dim) }
-.agent-lcell .nm svg { flex:none }
-.agent-lcell .nm .s { margin-left:auto; font-size:9px; color:var(--sel) }
-.agent-lcell .dot { position:absolute; top:7px; right:7px; width:7px; height:7px; border-radius:50%; background:var(--accent) }
-.agent-context-dock .agent-lcell { border:1px solid var(--line); background:var(--bg-1) }
-/* legacy flat launcher rows (kept for the narrow dock) */
-.agent-context-dock .agent-launch-rows { display:grid; grid-template-columns:1fr 1fr; gap:4px; max-height:140px; overflow:auto; padding:4px }
+/* The agent dock's rules (.agent-context-dock, its tiles and launcher) left with it (ticket 804): the one widget rail draws the tiles. */
 
 /* ============ disclosures: refusing cards (mockup card grammar) ============ */
 .agent-refusal { flex:none; margin:6px 8px; border:1px solid var(--stall); background:color-mix(in srgb, var(--stall) 8%, transparent); padding:7px 10px; font-size:11px; color:var(--text); max-width:640px }
@@ -222,7 +179,6 @@
 .frame.agent-shell-frame .agent-shell-browser { grid-area:br }
 .frame.agent-shell-frame .center { grid-area:ct }
 .frame.agent-shell-frame .agent-shell-centre { grid-area:ct }
-.frame.agent-shell-frame .agent-context-dock { grid-area:dk }
 .frame.agent-shell-frame .chain { grid-area:ch }
 .frame.agent-shell-frame .agent-device-chain { grid-area:ch; min-height:0; overflow:auto }
 .frame.agent-shell-frame .statusbar { grid-area:sb }
@@ -240,11 +196,6 @@
   .frame.agent-shell-frame.dock-open { grid-template-columns:0 minmax(0, 1fr) var(--dock-w) }
   .frame.agent-shell-frame .agent-shell-browser { display:none }
 }
-/* Narrow widths: the transport scrolls rather than clipping its controls. */
-@media (max-width:1000px) {
-  .agent-shell-transport .transport-controls { overflow-x:auto; scrollbar-width:thin }
-  .agent-shell-transport .transport-spacer { min-width:8px }
-}
 @media (prefers-reduced-motion:reduce) {
-  .frame.agent-shell-frame *, .agent-device-chain *, .agent-context-dock * { animation:none !important }
+  .frame.agent-shell-frame *, .agent-device-chain * { animation:none !important }
 }

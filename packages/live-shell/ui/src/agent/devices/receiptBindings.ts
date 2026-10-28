@@ -22,8 +22,9 @@
 // (agentChainDevices.ts gatewayDisclosed, kernel harness_agent_control configure {approvals}), and Approvals is handed no Gateway (ticket
 // 788). Its queue is the shown session's pending consent requests (AIKit's encounter view `permissions`, the Thread's own reading,
 // threadBinding.ts pendingPermissions), each answered with the harness's own choice (allow once, allow always, reject) through the
-// encounter's `permission` verb. Wait and On no answer, the Agent's, have no owner reading or write (Hermes' approvals.timeout is not a
-// harness_agent_control configure field, harnessAgentControl.ts:14-25); the proposals are
+// encounter's `permission` verb. Wait and On no answer are the Agent's (§19.4), and Approvals "shows them and never sets them" (§19.14): two
+// readings, which no owner reports yet (Hermes' approvals.timeout is not a harness_agent_control field, harnessAgentControl.ts:15-26), so
+// they stand absent with the reading they wait for and no write of them is taken (ticket 804); the proposals are
 // Central's source returns, which the kernel reads since lane K1 (`source_returns_read`, central.source-returns/v1: workcellReads.ts) —
 // the pending and applying ones stand in the queue. Approve accepts one through Central's projectcentral.source.return_accept, the person's
 // press the kernel carries (central/devices/sourceReturnAccept.ts, handed in as a port). Changes comments on the waiting return through
@@ -320,9 +321,15 @@ export function ledgerBinding(input: LedgerInput, ports: LedgerPorts): DesignBin
 
 // ---------------------------------------------------------------------------------------------------------------- Approvals
 
+/** The Agent's Wait and On no answer, which Approvals reads and never sets (§19.14): absent until an owner reports them, each with the reading it
+ * waits for. They replaced the configure writes Approvals once refused for them (ticket 804). */
+const notRead = (what: string, op: string, owner: string) => `${what}: no reading reaches it yet — missing op: ${op} (${owner}).`
+export const APPROVALS_ABSENT = {
+  wait: notRead('The Agent\'s Wait', 'the agent\'s approvals timeout read back (Hermes\' approvals.timeout: harness_agent_control carries approvals, transport, connect and stall-after only)', 'Actuation'),
+  noAnswer: notRead('The Agent\'s On no answer', 'a timed-out request\'s outcome read back from the agent\'s harness', 'Actuation'),
+} as const
+
 export const APPROVALS_REFUSE = {
-  wait: missing('Wait', 'Hermes\' approvals.timeout through harness_agent_control configure (it carries approvals, transport, connect and stall-after only)', 'Actuation'),
-  noAnswer: missing('On no answer', 'a timed-out request\'s outcome through harness_agent_control configure', 'Actuation'),
   changes: 'Changes: this chain passes no comment hand (Central\'s projectcentral.source.return_comment comments on the waiting return in the words written in the thread: central/devices/sourceReturnComment.ts).',
 } as const
 
@@ -454,11 +461,12 @@ function choiceFor(request: NativePermission, answer: 'allowOnce' | 'allowAlways
 }
 
 /** Approvals' binding: each answer to a request through the shown session's encounter, with the harness's own choice; Approve through
- * Central's acceptance (the `approve` port); the view's settings held by the shell; Wait, On no answer and Changes stand disabled with what
- * they lack. The default answer is the Gateway's, never set here (§19.14). */
+ * Central's acceptance (the `approve` port); the view's settings held by the shell; Changes stands disabled with what it lacks; Wait and On
+ * no answer are the Agent's readings, absent with what they wait for and never written. The default answer is the Gateway's, never set
+ * here (§19.14). */
 export function approvalsBinding(input: ApprovalsInput, ports: ApprovalsPorts, id: string = APPROVALS_ID): DesignBinding {
   const requests = input.encounter ? pendingPermissions(input.encounter) : []
-  const standing: Record<string, Standing> = disabled(APPROVALS_REFUSE)
+  const standing: Record<string, Standing> = {...disabled(APPROVALS_ABSENT), ...disabled(APPROVALS_REFUSE)}
   const verb = !input.session ? 'No session is shown: select one, or pin the Thread to one.' : !input.encounter ? 'The session\'s conversation is not read yet.'
     : verbStanding(input.encounter, 'permission')
   // A unit decision needs no conversation: while one waits, each answer is judged at the press, on the item chosen.
