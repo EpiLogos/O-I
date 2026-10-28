@@ -8,6 +8,9 @@
 // source, how many links from a hit it stood, and whether its source moved since (Docs' Moved since, §18.5); `reading` is the one
 // chosen. Read again (`readAgain`) reads it at the new revision of its source and AIKit records the use; Forget (`forget`, held) drops
 // AIKit's record of having used it — no kernel request forgets a use yet.
+// A read place's square is your include or exclude of it in the world (`r:<id>`: true included, false excluded; Central's world relations
+// keep it, central.world-relations.save), as Context & world's toggles were before Scope carried them (lock §0.3.5); its standing says why
+// a place takes no request. A place the owner reports no request for has no square.
 import {useState} from 'react'
 import {Action, Band, Dial, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, Tile, Toggle, ValueBox, type LightState, type RowItem} from '../../sdk/panel'
 import {NONE, boolOf, clampTo, has, json, numOf, shown, st, strOf, type DesignedDevice, type ViewProps} from './design'
@@ -26,7 +29,10 @@ const writeRing = (v: V) => {
   const r = reach(v), wanted = writes(v).filter(w => v[`w:${w.id}`] !== false).map(w => w.ring)
   return r === undefined || !wanted.length ? undefined : Math.min(r, Math.max(...wanted))
 }
-const readRows = (v: V): RowItem[] => reads(v).map(r => ({id: r.id, name: r.name, light: reach(v) === undefined ? 'unknown' : r.ring <= reach(v)! ? 'lit' : 'dark', tone: 'value', note: ['obj', 'scene', 'expr', 'world'][r.ring] ?? NONE}))
+const readRows = (p: ViewProps): RowItem[] => reads(p.v).map(r => ({id: r.id, name: r.name, light: reach(p.v) === undefined ? 'unknown' : r.ring <= reach(p.v)! ? 'lit' : 'dark', tone: 'value',
+  note: ['obj', 'scene', 'expr', 'world'][r.ring] ?? NONE, request: boolOf(p.v, `r:${r.id}`), why: st(p, `r:${r.id}`).disabled}))
+/** Include or exclude a read place, where its owner takes the request. */
+const askRead = (p: ViewProps) => (id: string, x: boolean) => { if (!st(p, `r:${id}`).disabled) p.set(`r:${id}`, x) }
 const writeRows = (v: V): RowItem[] => writes(v).map(w => {
   const request = v[`w:${w.id}`] !== false, r = reach(v)
   return {id: w.id, name: w.name, request, light: r === undefined ? 'unknown' : request && w.ring <= r ? 'lit' : 'dark', tone: 'accent', note: w.receipts === undefined ? NONE : `${w.receipts}`,
@@ -164,6 +170,8 @@ export const scope: DesignedDevice = {
   kind: 'effect',
   defaults: {light: 'lit', reach: 1, writeMode: 'propose', basis: 'r15 → r17',
     reads: JSON.stringify(SAMPLE_READS), writes: JSON.stringify(SAMPLE_WRITES),
+    // Your include or exclude of each read place, as the world's relations keep it: the Expression you set aside is excluded.
+    'r:lantern': true, 'r:scene': true, 'r:registers': true, 'r:tidal': false, 'r:wiki': true,
     // Knowledge: the manual's defaults (Wiki and Project knowledge, Search first, two links, forty pages) and the route's readings.
     'src.wiki': true, 'src.project': true, 'src.code': false, searchFirst: true, linkDepth: 2, readBudget: 40, route: 'ready', reading: 'k3',
     readings: JSON.stringify([
@@ -192,7 +200,7 @@ export const scope: DesignedDevice = {
       <Dial {...st(p, 'reach')} label="Reach" does="The widest part of the world the agent may touch. Raising it asks you first." value={reach(p.v) ?? NaN} def={1}
         scale={{min: 0, max: 3, step: 1}} format={x => RINGS[x]!} onChange={ask(p.v, p.set)} pending={p.v.reachPending !== undefined || st(p, 'reach').pending} />
       <Radio {...st(p, 'writeMode')} label="Write mode" does="How a write arrives." value={strOf(p.v, 'writeMode') ?? ''} options={MODES} stack onChange={x => p.set('writeMode', x)} />
-      <Readout label="reads" does="Places the agent may read. Click the plate to choose them." value={litCount(readRows(p.v), p.v, 'reads')} tone="value" onPress={p.nav.select} />
+      <Readout label="reads" does="Places the agent may read. Click the plate to choose them." value={litCount(readRows(p), p.v, 'reads')} tone="value" onPress={p.nav.select} />
       <Readout label="writes" does="Places the agent may write. Click the plate to choose them." value={litCount(writeRows(p.v), p.v, 'writes')} tone="accent" onPress={p.nav.select} />
     </Section>
   </Panel>,
@@ -254,7 +262,8 @@ function ScopeWhole({p}: {p: ViewProps}) {
     </Band>
     <Band>
       <Section width={132}>
-        <Rows label={has(p.v, 'reads') ? 'Reads' : 'Reads · no reading'} does="The places the agent may read. A teal light marks a place in reach." items={readRows(p.v)} size={7} page={readPage} onPage={setReadPage} />
+        <Rows label={has(p.v, 'reads') ? 'Reads' : 'Reads · no reading'} does="The places the agent may read. A teal light marks a place in reach. The square is your request: pressed, the world includes the place; open, it excludes it."
+          items={readRows(p)} onRequest={askRead(p)} size={7} page={readPage} onPage={setReadPage} />
       </Section>
       <Section width={132}>
         <Rows label={has(p.v, 'writes') ? 'Writes · receipts' : 'Writes · no reading'} does="The places the agent may write. The square is your request; amber marks a place in reach." items={writeRows(p.v)}

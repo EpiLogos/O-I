@@ -17,6 +17,10 @@
 //   resonatorMode  resonator | template (legacy: no live medium)
 //   stations   the plate's seven anchors (the Studio's station ticks, inspector.ts): [{index, name, frequencyHz, m, n, color}]
 //   resonance.live  the frequency the medium sounds now (the Studio's live readout)
+//   drive      what drives the plate now, as the engine resolved it (its telemetry `cymatic.driver`, resonanceDrive.ts ResolvedResonanceDrive):
+//              {kind torus | frequency | sweep | semanticFocus, targetHz, bound, silent?, reason?, keySource?, tonesHz?}. The plate says
+//              which source drives it and at what tone, or that the torus is silent and why (manual §20.14: "Under Torus the torus drives
+//              it"); Frequency driver is only the setting, so the picture never passes the setting off as the reading.
 //   body.source  'declared' | 'tattva' (manual §20.14, as on the Torus): under Tattva the tattva of the M2 condition sets the
 //   plate's Q, Agitation and Edge through its element fibre, by M2's proposed table of body constants; the owner reports
 //   tattva.name, tattva.fibre (absent where the map gives none) and tattva.standing, and those three controls are held.
@@ -69,6 +73,22 @@ interface Station {readonly index: number; readonly name: string; readonly frequ
 const stationsOf = (v: V): Station[] => json<unknown[]>(v, 'stations', []).flatMap((e): Station[] => { const s = e as Station; return typeof s?.frequencyHz === 'number' ? [{index: s.index, name: String(s.name ?? ''), frequencyHz: s.frequencyHz, m: s.m, n: s.n}] : [] })
 const f1 = (x: number) => x.toFixed(1)
 
+/** What drives the plate now, as the engine resolved it (`drive`); undefined while it is not read. */
+interface Drive {readonly kind: string; readonly targetHz?: number; readonly silent?: boolean; readonly reason?: string}
+const driveOf = (v: V): Drive | undefined => { const d = json<unknown>(v, 'drive', undefined) as Record<string, unknown> | undefined
+  return d && typeof d === 'object' && typeof d.kind === 'string' ? {kind: d.kind, targetHz: typeof d.targetHz === 'number' && Number.isFinite(d.targetHz) ? d.targetHz : undefined,
+    silent: d.silent === true, reason: typeof d.reason === 'string' && d.reason ? d.reason : undefined} : undefined }
+/** The engine's drive kinds in the device's words (the Frequency driver's options; a sweep is Automation's). */
+const DRIVE_WORD: Readonly<Record<string, string>> = {torus: 'Torus', frequency: 'Manual', sweep: 'Sweep', semanticFocus: 'Focus'}
+/** The plate's caption: which source drives it and at what tone, a silent torus and why, or the dash. */
+function driveCaption(v: V): {text: string; why?: string} {
+  const d = driveOf(v)
+  if (!d) return {text: `driven by ${NONE}`, why: 'No reading of what drives the plate: the engine\'s resolved drive has not reached the shell.'}
+  const word = DRIVE_WORD[d.kind] ?? d.kind
+  if (d.silent) return {text: `${word} · silent`, why: d.reason}
+  return {text: d.targetHz === undefined ? `${word} drives` : `${word} drives · ${hz(d.targetHz)}`}
+}
+
 /** The plate and its tuning band. Handle 1 is the drive frequency on the band. */
 function Plate({p, w, h, handles, grid = 46}: {p: ViewProps; w: number; h: number; handles: boolean; grid?: number}) {
   const v = p.v, f = fin(v, R.freq), f0 = fin(v, R.f0), q = fin(v, R.q), count = fin(v, R.modes), on = boolOf(v, 'resonanceEnabled'), legacy = strOf(v, 'resonatorMode') === 'template'
@@ -79,8 +99,11 @@ function Plate({p, w, h, handles, grid = 46}: {p: ViewProps; w: number; h: numbe
   let peak = 1e-9
   for (let j = 0; j < grid; j++) for (let i = 0; i < grid; i++) { const u = (i + .5) / grid - .5, vv = (j + .5) / grid - .5; let s = 0; for (const m of modes) s += m.a * shape(m.m, m.n, u, vv); vals.push(s); peak = Math.max(peak, Math.abs(s)) }
   const dots = vals.flatMap((s, k) => (Math.abs(s) / peak < .08 ? [k] : []))
+  const said = driveCaption(v)
   return <g>
     <rect x={px0} y={py0} width={side} height={side} fill="none" className="dp-faint" />
+    {w >= 120 && <text x={px0 + 3} y={py0 + 9} className="dp-axis" style={{fontSize: w > 400 ? 11 : 7.5}} data-i={`Drive|${said.why ?? 'What drives the plate now, as the engine resolved it.'}`}>
+      {said.text}{said.why && w > 400 ? ` — ${said.why}` : ''}</text>}
     <g opacity={on === false || legacy ? .3 : 1}>{dots.map(k => <rect key={k} x={px0 + (k % grid) * cell} y={py0 + Math.floor(k / grid) * cell} width={Math.max(1, cell * .8)} height={Math.max(1, cell * .8)} fill="var(--text, #d4d7da)" />)}</g>
     {(on === false || legacy) && <text x={w / 2} y={py0 + side / 2} textAnchor="middle" className="dp-ink">{legacy ? 'legacy templates' : 'off'}</text>}
     <path d={`M${bx0} ${by}H${bx1}`} className="dp-faint" />
@@ -107,6 +130,7 @@ export const design: DesignedDevice = {
     resonanceEnabled: true, 'cymatics.frequencyHz': 396, frequencyDriver: 'torus', 'cymatics.dominance': 1, 'cymatics.dampingQFactor': 4.5, 'cymatics.driveStrength': 1, 'cymatics.driveScale': 1,
     'cymatics.transportGain': 1, 'cymatics.agitation': .3, 'cymatics.plateSize': 700, 'cymatics.boundaryStrength': 6, 'cymatics.baseFrequency': 40, 'cymatics.modeCount': 64,
     templateDimension: '2D', autoSweep: false, sweepDirection: 'ascent', 'cymatics.sweep.glideS': 8, 'cymatics.sweep.dwellS': 2, resonatorMode: 'resonator', 'resonance.live': 396,
+    drive: JSON.stringify({kind: 'torus', targetHz: 396, bound: true, keySource: 'torus', tonesHz: [396]}),
     'body.source': 'declared', 'tattva.name': 'Prithvi', 'tattva.fibre': 'earth', 'tattva.standing': 'proposed',
     // Seven anchors of the default plate: distinct (m, n) across the band, ascending, f = f0 (m² + n²) at f0 = 40 Hz.
     stations: JSON.stringify([{index: 0, name: 'Station 1', frequencyHz: 200, m: 1, n: 2}, {index: 1, name: 'Station 2', frequencyHz: 400, m: 1, n: 3}, {index: 2, name: 'Station 3', frequencyHz: 520, m: 2, n: 3},
@@ -115,10 +139,12 @@ export const design: DesignedDevice = {
   fixtures: {
     'Tuned at 396 Hz': {},
     'At station 3, ringing': {'cymatics.frequencyHz': 520, 'cymatics.dampingQFactor': 24, 'resonance.live': 520},
-    'Sweeping': {frequencyDriver: 'automation', autoSweep: true, sweepDirection: 'pingpong'},
+    'Sweeping': {frequencyDriver: 'automation', autoSweep: true, sweepDirection: 'pingpong', drive: JSON.stringify({kind: 'sweep', targetHz: 520, bound: true})},
+    // The torus plays nothing: the engine holds the plate at its last tone and says why (resonanceDrive.ts `silent`, `reason`).
+    'The torus is silent': {drive: JSON.stringify({kind: 'torus', targetHz: 396, bound: false, silent: true, reason: 'The torus is not playing.', keySource: 'torus'})},
     // M2's proposed body constants for the earth fibre: Q 12, Agitation 0.1, Edge 20.
     'Tattva: Prithvi, earth': {'body.source': 'tattva', 'cymatics.dampingQFactor': 12, 'cymatics.agitation': .1, 'cymatics.boundaryStrength': 20},
-    'No readings': {resonanceEnabled: undefined, 'cymatics.frequencyHz': undefined, 'cymatics.dampingQFactor': undefined, stations: undefined, 'resonance.live': undefined, reason: 'The field has not announced its plate'},
+    'No readings': {resonanceEnabled: undefined, 'cymatics.frequencyHz': undefined, 'cymatics.dampingQFactor': undefined, stations: undefined, 'resonance.live': undefined, drive: undefined, reason: 'The field has not announced its plate'},
   },
 
   folded: p => <Folded title="Resonance" light={lightOf(p)} readings={[fin(p.v, R.freq) === undefined ? NONE : hz(fin(p.v, R.freq)!), stationAt(p.v) ? `st. ${stationAt(p.v)!.index + 1}` : `Q ${fin(p.v, R.q) ?? NONE}`]} onUnfold={p.nav.unfold} />,

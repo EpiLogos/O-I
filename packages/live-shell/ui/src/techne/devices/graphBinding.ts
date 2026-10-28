@@ -15,6 +15,8 @@
 //   selected     the open graph's selected subject ('' while none is selected); a press on a node selects through the handle's own
 //                act (knowledgeGraphHandle.ts select: the canvas's press, KnowledgeSurface.tsx select)
 //   minimap      the canvas's overview toggle, through the handle (minimap, setMinimap)
+//   fit          the Fit button's own act on the open graph (knowledgeGraphHandle.ts fit: the canvas's own fit, within its zoom limits); an
+//                act, never a value: the zoom it lands on is read back on `zoom`
 //   scope, depth, direction, shared, text, kinds, relations, ghosts (unresolved), orphans (isolated), mode (context), labels,
 //   arrows, zoom, groups (emphasis)   the open graph's view state (GraphFilters), kinds and relations as the design lists them
 //   reading      the kernel graph op's answer (oi.cradle.graph-reading/v1), whole: the open surface's, else the root register's
@@ -55,7 +57,7 @@ export const GRAPH_SETTERS: Readonly<Record<string, string>> = {
   zoom: 'shell.setKnowledgeZoom',
 }
 /** The keys that write through the handle's own acts. */
-const HANDLE_KEYS = ['selected', 'minimap'] as const
+const HANDLE_KEYS = ['selected', 'minimap', 'fit'] as const
 const VIEW_KEYS = [...Object.keys(GRAPH_SETTERS), ...HANDLE_KEYS, 'clear'] as const
 /** Sessions (§17.3 "What a subject reaches": open only, or open and closed) is the view's own; the design keys it `reach.closed`. */
 export const GRAPH_LOCAL = ['budget', ...APERTURE_REQUEST, 'reach.closed'] as const
@@ -130,6 +132,11 @@ export async function graphWrite(surface: KnowledgeGraphSurface | null, changes:
       if (typeof value !== 'string' || !value) throw Error('Select a note on the graph.')
       if (!surface.select) throw Error(missing('Select a note', 'the select act on the open graph\'s handle', 'the knowledge graph'))
       surface.select(value)
+      continue
+    }
+    if (key === 'fit') {
+      if (!surface.fit) throw Error(missing('Fit', 'the Fit act on the open graph\'s handle', 'the knowledge graph'))
+      surface.fit()
       continue
     }
     if (key === 'minimap') {

@@ -13,9 +13,12 @@
 //   lines     the lines the xterm keeps now
 //   watch     whether keys reach the shell (the surface's stdin gate)
 // The writes go through the same surface: Text size (the xterm refits, and the host resizes the PTY: terminal_resize), Scrollback, Watch.
-// What nothing reports, each absent with what it waits for: the shells to choose and the screen (the design draws its own list of shells,
-// widgets__terminal.tsx SHELLS, and has no key for the screen the surface holds), Follow (the PTY host keys a terminal by its surface, not
-// by a session). Folder and Command name the terminal that runs; a new one starts in the Workbench (New Terminal). Pure.
+// What nothing reports, each absent with what it waits for (the design's own keys, widgets__terminal.tsx): `rooms` (the rooms of the
+// workcell's session space, each with its screen: the surface publishes its PTY's folder, command, process and line count, never the screen's
+// text, and no provider room list reaches the shell), `selected` and `shell` (the room of the run you select, the room you pinned: the PTY host
+// keys a terminal by its surface, not by a session), `provider` and `answers` (which provider gives the room, and whether it answers: the
+// surface is this computer's own PTY, and no provider is read), Follow. Folder and Command name the terminal that runs; a new one starts in
+// the Workbench (New Terminal). Pure.
 import type {DesignBinding, Standing, Value, Values} from '../frame/devices/designed'
 import type {DeviceInstance} from '../frame/devices/deviceRuntime'
 import type {TerminalEntry} from '../../../../../desktop/cradle/src/terminal/terminalReadings'
@@ -41,13 +44,16 @@ export const NO_TERMINAL = 'No terminal is open. Open one in the Workbench (New 
 /** The readings nothing reports, each with what it waits for. */
 export const TERMINAL_ABSENT = {
   selected: unread('The shell of the session you select', 'a terminal per session (the PTY host keys each terminal by its surface)', 'Desktop shell host'),
-  shell: unread('The shells to choose', 'a list of the open terminals on the design (it draws its own list, widgets__terminal.tsx SHELLS, and has no key for the screen)', 'Design'),
+  shell: unread('The room you pinned', 'the rooms of the workcell\'s session space, each by its provider\'s id (the PTY host keys a terminal by its surface)', 'Desktop shell host'),
+  rooms: unread('The rooms and their screens', 'the rooms of the workcell\'s session space with each room\'s last lines (terminalReadings.ts publishes the PTY\'s folder, command, process and line count, never the screen\'s text)', 'Desktop shell host'),
+  provider: unread('The provider that gives the room', 'which provider (herdr, tmux, cmux or this terminal) holds the room the surface shows (the surface attaches this computer\'s own PTY and names no provider)', 'Desktop shell host'),
+  answers: unread('Whether the provider answers', 'a provider\'s own health read (no provider is read; the PTY\'s own end is `exited`)', 'Desktop shell host'),
 } as const
 
 /** The controls no owner operation carries, each with the operation it lacks. */
 export const TERMINAL_REFUSE = {
   follow: missing('Follow', 'a terminal per session, to move to the shell of the session you select (the PTY host keys each terminal by its surface)', 'Desktop shell host'),
-  shell: missing('The shell shown', 'a list of the open terminals on the design (widgets__terminal.tsx draws its own SHELLS)', 'Design'),
+  shell: missing('Pin a room', 'the rooms of the workcell\'s session space to choose among (the PTY host keys a terminal by its surface)', 'Desktop shell host'),
   folder: 'Folder: a running shell keeps its folder; a new shell starts in the Workbench (New Terminal), in the project\'s folder.',
   command: 'Command: a running shell keeps what it started with; a new shell starts in the Workbench (New Terminal).',
 } as const

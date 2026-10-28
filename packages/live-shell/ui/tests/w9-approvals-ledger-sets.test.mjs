@@ -121,7 +121,8 @@ test('1 · unit decisions: Factory\'s waiting ones (a basis, no response, no ret
   assert.equal(units.returnProject('nonsense'), undefined)
   // The queue: each waiting decision a request, its question, its unit, the shown session's agent, how long it has stood in Central.
   const rows = units.unitRows(READ(), SHOWN, 1_792_600_090_000)
-  assert.deepEqual(rows[0], {id: 'hr:asked', kind: 'request', text: 'Resume the bounded work of hr:asked?', where: 'unit:type-check', who: 'Flint', session: 'Type-check the roots', age: 90})
+  assert.deepEqual(rows[0], {id: 'hr:asked', kind: 'request', text: 'Resume the bounded work of hr:asked?', where: 'unit:type-check', options: {allowOnce: 'Resume bounded work', deny: 'Cancel bounded work'},
+    who: 'Flint', session: 'Type-check the roots', age: 90}, 'with its two answers in Factory\'s words (#757)')
   assert.equal(rows[1].age, undefined, 'a question not put to Central has stood nowhere: no age')
   const answered = READ({'hr:asked': {standing: units.questionStanding(DECISION('answered', true))}})
   assert.deepEqual(units.unitRows(answered, SHOWN, 1).map(row => row.id), ['hr:unasked', 'hr:someone'], 'an answered question leaves the lake')

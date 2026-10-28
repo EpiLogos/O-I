@@ -14,6 +14,8 @@ type StageProceduralCommand=Extract<StageCommand,{command:'procedural-stage'}>;
 import {createLiveEntry} from './native-field/liveEntry.mjs';
 import {planJankoStrike} from './native-field/jankoStrike.mjs';
 import {torusPlayReading} from './native-field/torusPlay.mjs';
+import {touchStrike,type StageView} from './native-field/surfaceTouch';
+import {WORLD_SCALE} from './nativeParameters';
 /** scene_field.rs `PLANETS`, in scalar-degree order: the map's own names. */
 const PLANET_NAMES=['Sun','Venus','Mercury','Moon','Saturn','Jupiter','Mars','Neptune','Pluto'];
 const esc=(v:unknown)=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
@@ -495,8 +497,20 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
   if(plan.refusal)throw new Error(plan.refusal);
   await controller.playVoices(plan.refs,amplitude);
  };
+ /** A touch on the torus (DLW §21.2 "What strikes the Torus": "A touch | The point of the surface you touch"): what the press strikes
+  * (surfaceTouch.ts touchStrike, from the stage as the engine is handed it and the engine's own projection), struck through the owner's
+  * strike at a point. Answers whether the press was a touch on the torus; a press that is not one is left to the stage. */
+ const touch=(x:number,y:number,view:StageView,pressure?:number):boolean=>{
+  const projection=(engine.telemetry?.() as any)?.config?.depth?.projection==='perspective'?'perspective':'orthographic';
+  const strike=touchStrike(controller.reading as any,x,y,view,{projection,worldScale:WORLD_SCALE,pressure});
+  if(!strike.point){if(strike.say)setText('key',strike.why);return false;}
+  const {theta,phi}=strike.point,degrees=(angle:number)=>(angle*180/Math.PI).toFixed(1);
+  setText('key',`Touched the torus at θ ${degrees(theta)}°, φ ${degrees(phi)}°: it rings there.`);
+  controller.playAt([strike.point],strike.amplitude).catch(error=>{setText('key',`Not played: ${String(error instanceof Error?error.message:error)}`);});
+  return true;
+ };
  const openLive=()=>{liveEntry.enter();requestAnimationFrame(()=>liveEntry.check());};
  const leaveLive=()=>liveEntry.leave();
  update();
- return {controller,panel,command,stage,playJanko,openLive,leaveLive,dispose:()=>{clearInterval(timer);panel.removeEventListener('click',click);panel.removeEventListener('input',range);panel.removeEventListener('pointerdown',pressKey);panel.removeEventListener('focusin',focusKey);document.removeEventListener('visibilitychange',visibility);window.removeEventListener('pagehide',pagehide);panel.remove();domainView.dispose();style.remove();void controller.dispose();}};
+ return {controller,panel,command,stage,playJanko,touch,openLive,leaveLive,dispose:()=>{clearInterval(timer);panel.removeEventListener('click',click);panel.removeEventListener('input',range);panel.removeEventListener('pointerdown',pressKey);panel.removeEventListener('focusin',focusKey);document.removeEventListener('visibilitychange',visibility);window.removeEventListener('pagehide',pagehide);panel.remove();domainView.dispose();style.remove();void controller.dispose();}};
 }

@@ -142,7 +142,10 @@ test('the view\'s keys are its own hand: the date asks the owner again once the 
   assert.equal(calls[0].request.request.mode, 'current')
   // The Sun handle moves four keys together; none is a draft and none reaches a write: each goes to the view's hand.
   const binding = sky.qlSkyBinding(sky.qlSkyState())
-  assert.equal(binding.write, undefined, 'the sky takes no change')
+  // The sky takes no change: its one write is your withdrawal of a consent you gave (#757, `presence.withdraw`); the date and the drawing are the view's.
+  assert.equal(binding.writes('year'), false, 'the sky takes no change')
+  assert.equal(binding.writes('presence.withdraw'), true, 'the Share page\'s Withdraw is the person\'s own act')
+  await assert.rejects(binding.write([{key: 'year', value: 2026}]), /the sky takes no change/)
   for (const [key, value] of [['now', false], ['year', 2026], ['day', 271], ['time', 720]]) assert.equal(setHosted(binding, key, value), false, `${key} is the view's own`)
   assert.equal(await flushDrafts(binding), null, 'nothing waits on the owner')
   assert.equal(calls.length, 1, 'the owner is asked once the hand settles, not on every move')
@@ -206,7 +209,9 @@ test('the Share page lists the consents both ways from SharedField, split by you
   const empty = renderToStaticMarkup(h(HostedDevice, {designed: {...design, firstPage: 'share'}, binding, view: 'whole', nav: {}}))
   assert.match(empty, /Only you see your sky/)
   assert.match(empty, /No one has shared a sky with you/)
-  assert.match(empty, /Central keeps each consent and has no operation to withdraw one yet\./, 'Withdraw has no key: the design\'s own words stand')
+  // #757 replaced the design's fixed refusal with a per-consent Withdraw (presence.withdraw): with no consent given, it says there is none.
+  assert.doesNotMatch(empty, /has no operation to withdraw one yet/)
+  assert.ok(empty.includes('You share your sky with no one now: there is no consent to withdraw.'), 'Withdraw says why it cannot act')
   // SCRIPTED: your Participant published the presence: a consent you gave, to World B, permitting now.
   presences.resetSkyPresences({call: presenceCall(listAnswer(presenceFixture.list), snapshotAnswer([OWNER], [{participant_ref: 'participant:world-b', presentation: {chosen_name: 'World B'}}]))})
   await presences.readSkyPresences()

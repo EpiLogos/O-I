@@ -4,9 +4,11 @@
 // lattice f0·(m²+n²) on the plate, f0·√(m²+n²+p²) in the chamber; phi_mn and phi_mnp as the nodal figure); its readings are the
 // scene's. The controls are the front of five owners: object sound (entitySound.ts), the resonance medium, the field's time scale
 // and the morph's dwell. Every parameter writes the owner's own address, so a value moved here moves in Resonance and Physics too.
+// Every control spreads its key's standing (design.ts `st`), so a control its owner does not take draws the owner's reason; a key the
+// owner has not reported draws unread (the dial's ring alone, the meter empty and marked unread), never NaN (manual §16.11).
 import {useMemo, type CSSProperties} from 'react'
 import {Band, Dial, Display, Folded, Handle, Panel, Radio, Readout, Section, Tile, Toggle, type LightState} from '../../sdk/panel'
-import {clampTo, num, on, str, type DesignedDevice, type ViewProps} from './design'
+import {NONE, boolOf, clampTo, num, numOf, on, st, str, strOf, type DesignedDevice, type ViewProps} from './design'
 
 type V = ViewProps['v']
 type SetFn = ViewProps['set']
@@ -87,19 +89,21 @@ const count = (n: number) => (n < 1000 ? `${n}` : n < 10000 ? `${(n / 1000).toFi
 const light = (v: V): LightState => (on(v, 'sound') ? 'lit' : 'dark')
 const modeOf = (v: V) => nearest(lattice(str(v, 'medium') === 'chamber', num(v, 'baseFrequency')), num(v, 'resonance'))
 const modeText = (mode: Mode) => (mode.p === undefined ? `${mode.m}·${mode.n}` : `${mode.m}·${mode.n}·${mode.p}`)
-/** The meter: the voices' own gains summed, at the field's level; silent while sound is off. */
-const meter = (v: V) => (on(v, 'sound') ? clampTo(0, 1, num(v, 'voices') * VOICE_GAIN * num(v, 'level')) : 0)
+/** The meter: the voices' own gains summed, at the field's level; silent while sound is off; undefined (unread) while the voices, the level
+ * or the sound has no reading. */
+const meter = (v: V): number | undefined => { const voices = numOf(v, 'voices'), lvl = numOf(v, 'level'), sound = boolOf(v, 'sound')
+  return sound === false ? 0 : sound === undefined || voices === undefined || lvl === undefined ? undefined : clampTo(0, 1, voices * VOICE_GAIN * lvl) }
 
 // ---------------------------------------------------------------- the stage: the plate or the chamber, its particles and its symbols
 
 function Stage({v, ox, oy, s, dots}: {v: V; ox: number; oy: number; s: number; dots: number}) {
   const chamber = str(v, 'medium') === 'chamber', mode = modeOf(v), plate = on(v, 'plate')
-  const k = s * .24, c = s - k, voices = num(v, 'voices'), sounding = on(v, 'sound')
+  const k = s * .24, c = s - k, voices = numOf(v, 'voices') ?? 0, sounding = on(v, 'sound')
   const pts = useMemo(() => (chamber ? cavityDots(mode.m, mode.n, mode.p ?? 1, dots) : plateDots(mode.m, mode.n, num(v, 'dominance'), dots)),
     [chamber, mode.m, mode.n, mode.p, num(v, 'dominance'), dots])
   const pos = (u: number, w: number, y: number) => (chamber ? [ox + (u + .5) * c + (w + .5) * k, oy + k + (.5 - y) * c - (w + .5) * k] as const : [ox + (u + .5) * s, oy + (.5 - y) * s] as const)
   // The trail of a particle lies behind its slide toward the still line, as long as the time scale: none at 0.
-  const reach = num(v, 'tempo') * s / 120
+  const reach = (numOf(v, 'tempo') ?? 0) * s / 120
   const paths = (keep: (d: Dot) => boolean) => pts.filter(keep).map(d => {
     const [x, y] = pos(d.u, d.w, d.v), tx = chamber ? (d.gx * c + d.gz * k) / c : d.gx, ty = chamber ? -(d.gy * c + d.gz * k) / c : -d.gy
     return `M${x.toFixed(1)} ${y.toFixed(1)}l${(tx * reach || .01).toFixed(1)} ${(ty * reach).toFixed(1)}`
@@ -156,7 +160,13 @@ function CycleBar({v, set, x, top, bottom}: {v: V; set?: SetFn; x: number; top: 
   </g>
 }
 
+/** Whether the plate's tuning is read: the tone and the resonator's f0 (Resonance's rows). Without them no mode can be drawn. */
+const tuned = (v: V) => numOf(v, 'resonance') !== undefined && numOf(v, 'baseFrequency') !== undefined
+
 function FieldDisplay({v, set, w, h, hold}: {v: V; set?: SetFn; w: number; h: number; hold?: boolean}) {
+  if (!tuned(v)) return <Display w={w} h={h} label="The field" does="The plate or chamber, drawn from Resonance's tone and f0, which are not read." corner={NONE}>
+    <text x={w / 2} y={h / 2} textAnchor="middle" className="dp-ink-dim">No reading of the plate</text>
+  </Display>
   const mode = modeOf(v)
   return <Display w={w} h={h} label="The field" does="The plate or chamber, the particles on its still lines and the symbols, drawn from the device's values. Drag the handles."
     corner={`${modeText(mode)} · ${hertz(mode.hz)}`}>
@@ -174,7 +184,7 @@ function FieldDisplay({v, set, w, h, hold}: {v: V; set?: SetFn; w: number; h: nu
 // ---------------------------------------------------------------- controls
 
 const DIAL = (p: ViewProps, key: string, label: string, does: string, def: number, scale: {min: number; max: number; log?: boolean}, format: (x: number) => string) =>
-  <Dial key={key} label={label} does={does} value={num(p.v, key)} def={def} scale={scale} format={format} onChange={x => p.set(key, x)} />
+  <Dial key={key} {...st(p, key)} label={label} does={does} value={numOf(p.v, key) ?? NaN} def={def} scale={scale} format={format} onChange={x => p.set(key, x)} />
 
 const level = (p: ViewProps) => DIAL(p, 'level', 'Level', 'Sets the loudness of the whole field.', 1, LEVEL, times)
 const tempo = (p: ViewProps) => DIAL(p, 'tempo', 'Tempo', 'Sets the pace of the field. At 0 the field holds still.', 1, TEMPO, times)
@@ -207,7 +217,7 @@ export const design: DesignedDevice = {
     'Plate off': {voices: 0, particles: 42000, plate: false, sound: false},
   },
 
-  folded: p => <Folded title="Field" light={light(p.v)} readings={[hertz(num(p.v, 'resonance')), times(num(p.v, 'tempo'))]} onUnfold={p.nav.unfold} />,
+  folded: p => <Folded title="Field" light={light(p.v)} readings={[numOf(p.v, 'resonance') === undefined ? NONE : hertz(numOf(p.v, 'resonance')!), numOf(p.v, 'tempo') === undefined ? NONE : times(numOf(p.v, 'tempo')!)]} onUnfold={p.nav.unfold} />,
 
   compact: p => <Panel title="Field" view="compact" light={light(p.v)} onFold={p.nav.fold} onFull={p.nav.full} onSelect={p.nav.select}>
     <Section width={152}><FieldDisplay v={p.v} set={p.set} w={140} h={146} /></Section>
@@ -218,8 +228,9 @@ export const design: DesignedDevice = {
     <Band>
       <Section width={198}><FieldDisplay v={p.v} set={p.set} w={186} h={146} hold /></Section>
       <Section label="Sound" cols={1}>
-        <Toggle label="Sound" does="Lets the field sound. The picture stays when sound is off." on={on(p.v, 'sound')} onChange={x => p.set('sound', x)} />
-        <Toggle label="Symbol voices" does="Lets symbols carry the torus's sound to where they stand." on={on(p.v, 'symbolVoices')} onChange={x => p.set('symbolVoices', x)} />
+        <Toggle {...st(p, 'sound')} label="Sound" does="Lets the field sound. The picture stays when sound is off." on={on(p.v, 'sound')} unknown={boolOf(p.v, 'sound') === undefined} onChange={x => p.set('sound', x)} />
+        <Toggle {...st(p, 'symbolVoices')} label="Symbol voices" does="Lets symbols carry the torus's sound to where they stand." on={on(p.v, 'symbolVoices')} unknown={boolOf(p.v, 'symbolVoices') === undefined}
+          onChange={x => p.set('symbolVoices', x)} />
         {level(p)}
       </Section>
       <Section label="Time" cols={1}>
@@ -228,35 +239,37 @@ export const design: DesignedDevice = {
       </Section>
       <Section label="Tuning" grow>
         {tone(p)}
-        <Radio label="Key source" does="Chooses whose pitches tune the field: the torus, the sky or the resonance you set." value={str(p.v, 'keySource')} options={KEY_SOURCES} stack onChange={x => p.set('keySource', x)} />
+        <Radio {...st(p, 'keySource')} label="Key source" does="Chooses whose pitches tune the field: the torus, the sky or the resonance you set." value={strOf(p.v, 'keySource') ?? ''} options={KEY_SOURCES} stack onChange={x => p.set('keySource', x)} />
       </Section>
     </Band>
     <Band>
       <Section label="Plate" width={96}>
-        <Toggle label="Plate on" does="Turns the resonant plate on. Tone, Medium and Key source act only while it is on." on={on(p.v, 'plate')} onChange={x => p.set('plate', x)} />
-        <Radio label="Medium" does="Chooses a flat plate or a three-dimensional chamber." value={str(p.v, 'medium')} options={MEDIUMS} stack onChange={x => p.set('medium', x)} />
+        <Toggle {...st(p, 'plate')} label="Plate on" does="Turns the resonant plate on. Tone, Medium and Key source act only while it is on." on={on(p.v, 'plate')} unknown={boolOf(p.v, 'plate') === undefined} onChange={x => p.set('plate', x)} />
+        <Radio {...st(p, 'medium')} label="Medium" does="Chooses a flat plate or a three-dimensional chamber." value={strOf(p.v, 'medium') ?? ''} options={MEDIUMS} stack onChange={x => p.set('medium', x)} />
       </Section>
       <Section label="Nearest mode" cols={2}>
-        <Readout big label="mode" does="The plate mode nearest the tone." value={modeText(modeOf(p.v))} tone="value" />
-        <Readout label="mode Hz" does="The frequency of that mode." value={Math.round(modeOf(p.v).hz)} />
-        <Readout label="detune" does="How far the tone sits from that mode, in cents." value={`${Math.round(1200 * Math.log2(num(p.v, 'resonance') / modeOf(p.v).hz))} ¢`} />
+        <Readout big label="mode" does="The plate mode nearest the tone." value={tuned(p.v) ? modeText(modeOf(p.v)) : undefined} tone="value" />
+        <Readout label="mode Hz" does="The frequency of that mode." value={tuned(p.v) ? Math.round(modeOf(p.v).hz) : undefined} />
+        <Readout label="detune" does="How far the tone sits from that mode, in cents." value={tuned(p.v) ? `${Math.round(1200 * Math.log2(num(p.v, 'resonance') / modeOf(p.v).hz))} ¢` : undefined} />
       </Section>
       <Section label="Counts" grow>
-        <Readout big label="voices" does="Symbols that have a voice. Give a symbol its voice in the Sound device." value={num(p.v, 'voices')} tone="accent" />
-        <Readout label="particles" does="Particles in the field. Set the count in Ink." value={count(num(p.v, 'particles'))} />
+        <Readout big label="voices" does="Symbols that have a voice. Give a symbol its voice in the Sound device." value={numOf(p.v, 'voices')} tone="accent" />
+        <Readout label="particles" does="Particles in the field. Set the count in Ink." value={numOf(p.v, 'particles') === undefined ? undefined : count(numOf(p.v, 'particles')!)} />
       </Section>
     </Band>
   </Panel>,
 
   full: p => {
-    const w = 760, h = 420, mode = modeOf(p.v), chamber = str(p.v, 'medium') === 'chamber', voices = num(p.v, 'voices')
+    if (!tuned(p.v)) return <div className="ref-pane-body ref-pane-body--dark"><p className="ref-pane-none">No reading of the plate: Resonance has not reported its tone and f0.</p></div>
+    const w = 760, h = 420, mode = modeOf(p.v), chamber = str(p.v, 'medium') === 'chamber', voices = numOf(p.v, 'voices') ?? 0
+    const said = (key: string, format: (x: number) => string) => (numOf(p.v, key) === undefined ? NONE : format(numOf(p.v, key)!))
     return <div className="ref-pane-body ref-pane-body--dark">
       <svg viewBox={`0 0 ${w} ${h}`} width="100%" height="100%" preserveAspectRatio="xMidYMid meet" className="ref-pane-svg" aria-label="The field">
         <g className="dp-display" style={{background: 'none'}}>
           <Stage v={p.v} ox={60} oy={26} s={368} dots={2600} />
           <text x={480} y={52} className="dp-ink" style={{fontSize: 14}}>{chamber ? 'Chamber' : 'Plate'} · mode {modeText(mode)}</text>
           <text x={480} y={72} className="dp-ink-dim" style={{fontSize: 12}}>{hertz(mode.hz)} · tuned to {hertz(num(p.v, 'resonance'))}</text>
-          <text x={480} y={90} className="dp-ink-dim" style={{fontSize: 12}}>{count(num(p.v, 'particles'))} particles · pace {times(num(p.v, 'tempo'))} · holds {ratio(num(p.v, 'hold'))}</text>
+          <text x={480} y={90} className="dp-ink-dim" style={{fontSize: 12}}>{said('particles', count)} particles · pace {said('tempo', times)} · holds {said('hold', ratio)}</text>
           {SYMBOLS.slice().reverse().map((sym, i) => {
             const at = SYMBOLS.length - 1 - i, y = 134 + i * 34, voiced = at < voices
             return <g key={sym.name} opacity={voiced ? 1 : .6}>
@@ -272,10 +285,11 @@ export const design: DesignedDevice = {
   },
 
   widget: p => <Tile title="Field" light={light(p.v)} onFull={p.nav.full}>
-    <Display w={98} h={100} label="The field" does="Click ⤢ to open it full in the pane that has focus." corner={hertz(num(p.v, 'resonance'))}>
-      <Stage v={p.v} ox={7} oy={14} s={84} dots={160} />
+    <Display w={98} h={100} label="The field" does="Click ⤢ to open it full in the pane that has focus." corner={numOf(p.v, 'resonance') === undefined ? NONE : hertz(numOf(p.v, 'resonance')!)}>
+      {tuned(p.v) ? <Stage v={p.v} ox={7} oy={14} s={84} dots={160} /> : <text x={49} y={56} textAnchor="middle" className="dp-ink-dim">no reading</text>}
     </Display>
-    <div className="ref-meter" data-i={`Level|${on(p.v, 'sound') ? 'The voices, summed, at the field\'s level.' : 'Sound is off.'}`}
-      style={{'--level': meter(p.v)} as CSSProperties}><span /></div>
+    <div className="ref-meter" data-unread={meter(p.v) === undefined ? 'true' : undefined}
+      data-i={`Level|${meter(p.v) === undefined ? st(p, 'level').disabled ?? 'No reading of the level.' : on(p.v, 'sound') ? 'The voices, summed, at the field\'s level.' : 'Sound is off.'}`}
+      style={{'--level': meter(p.v) ?? 0} as CSSProperties}><span /></div>
   </Tile>,
 }

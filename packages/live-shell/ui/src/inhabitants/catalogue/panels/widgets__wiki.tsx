@@ -1,6 +1,7 @@
 // Wiki (manual §23.7): the wiki pages an agent may use, read here and never edited. A device born on the rail; Live's nearest is the
 // Info View — a page of text beside the work, with its links. The display is the page as its owner reads it: its title and kind, then
-// its lines, each link underlined in teal where it resolves and left as it is, faint and dashed, where it does not. The pages stand
+// its lines, each link underlined in teal where it resolves and left as it is, faint and dashed, where it does not; a link the reading
+// names `external` leads out of the wiki and is its own kind, a solid faint line that opens nothing here (the wiki is read, not left). The pages stand
 // as dots down the right edge; the one the agent read last is ringed in amber; the handle sits on the page shown.
 //
 // Owners, keyed on their paths:
@@ -45,11 +46,11 @@ function WikiPage({p, w, h, pager, size = 9, press}: {p: ViewProps; w: number; h
     {body?.lines.slice(0, fit).map((line, i) => { const y = 30 + i * lh
       return <g key={i}>
         <text x={6} y={y} className="dp-ink-dim dp-mono" style={{fontSize: size, whiteSpace: 'pre'}}>{line.slice(0, room)}</text>
-        {body.links.filter(l => l.line === i && l.from < room).map((l, j) => { const resolved = l.state === 'resolved', x = 6 + l.from * cw, x2 = 6 + Math.min(l.to, room) * cw
-          return <g key={j}>
-            <path d={`M${x.toFixed(1)} ${y + 2}H${x2.toFixed(1)}`} stroke={resolved ? 'var(--dp-value)' : 'var(--text-faint, #71767c)'} strokeWidth={1} strokeDasharray={resolved ? undefined : '2 2'} />
+        {body.links.filter(l => l.line === i && l.from < room).map((l, j) => { const resolved = l.state === 'resolved', external = l.state === 'external', x = 6 + l.from * cw, x2 = 6 + Math.min(l.to, room) * cw
+          return <g key={j} data-link={l.state}>
+            <path d={`M${x.toFixed(1)} ${y + 2}H${x2.toFixed(1)}`} stroke={resolved ? 'var(--dp-value)' : 'var(--text-faint, #71767c)'} strokeWidth={1} strokeDasharray={resolved || external ? undefined : '2 2'} />
             <rect x={x} y={y - size} width={x2 - x} height={size + 4} fill="transparent" style={{cursor: resolved ? 'pointer' : 'default'}}
-              data-i={resolved ? `${l.target}|Follow the link.` : `${l.target}|This link does not resolve: it shows as it is.`}
+              data-i={resolved ? `${l.target}|Follow the link.` : external ? `${l.target}|An external link: it leads out of the wiki, and Wiki opens nothing outside it.` : `${l.target}|This link does not resolve: it shows as it is.`}
               onClick={() => { const t = pages!.find(n => n.ref === l.target); if (resolved && t) p.set('page', t.ref) }} />
           </g> })}
       </g> })}
@@ -61,8 +62,9 @@ function WikiPage({p, w, h, pager, size = 9, press}: {p: ViewProps; w: number; h
 }
 
 const LIGHT_WHY = 'Wiki has no on or off: it only reads. The light stays hollow.'
-const linkCounts = (v: V) => { const b = bodyOf(v); return b ? {resolved: b.links.filter(l => l.state === 'resolved').length, open: b.links.filter(l => l.state !== 'resolved').length} : undefined }
-const DISPLAY_DOES = 'The page as the wiki reads it. A link in teal resolves; a link that does not resolve shows as it is. The amber ring marks the page the agent read last.'
+const linkCounts = (v: V) => { const b = bodyOf(v); return b ? {resolved: b.links.filter(l => l.state === 'resolved').length, external: b.links.filter(l => l.state === 'external').length,
+  open: b.links.filter(l => l.state !== 'resolved' && l.state !== 'external').length} : undefined }
+const DISPLAY_DOES = 'The page as the wiki reads it. A link in teal resolves; a link that does not resolve shows as it is, dashed; an external link, a plain line, leads out of the wiki. The amber ring marks the page the agent read last.'
 
 /** Full's head: the page's kind, its links, the page the agent read last; Page and Follow. */
 function Head({p}: {p: ViewProps}) {
@@ -71,6 +73,7 @@ function Head({p}: {p: ViewProps}) {
     {label: 'kind', value: pg?.type || undefined, does: 'The kind of the page shown.'},
     {label: 'links', value: n?.resolved, does: 'Links on the page that resolve.', tone: 'value'},
     {label: 'open', value: n?.open, does: 'Links on the page that do not resolve.'},
+    {label: 'external', value: n?.external, does: 'Links on the page that lead out of the wiki.'},
     {label: 'read last', value: last?.title, does: 'The page the selected agent read last.', tone: 'accent'},
   ]} controls={<>
     <Chooser {...st(p, 'page')} label="Page" does="The page to show." value={pg?.ref ?? ''} options={(pages ?? []).map(x => ({value: x.ref, label: x.title}))} onChange={x => p.set('page', x)}
@@ -111,6 +114,8 @@ export const design = railAndPane({
   },
   fixtures: {
     'The page the agent read': {},
+    // A page whose reading names a link out of the wiki (the knowledge owner's occurrence state `external`).
+    'An external link': {body: JSON.stringify({lines: ['The device rules follow Ableton\'s manual:', 'https://www.ableton.com/en/manual/ for the shapes.'], links: [{line: 1, from: 0, to: 33, target: 'https://www.ableton.com/en/manual/', state: 'external'}]})},
     'Another page': {page: 'wiki:node:device-ui', body: JSON.stringify({lines: ['A device must show its state at a glance, answer', 'the hand at once and never ask you to read.', '', 'Its panel is drawn after Live\'s own devices.'], links: []})},
     'No reading': {pages: undefined, body: undefined, page: undefined, readLast: undefined, reason: 'The wiki did not answer'},
   },

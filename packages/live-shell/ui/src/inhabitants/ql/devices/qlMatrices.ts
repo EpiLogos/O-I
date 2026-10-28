@@ -7,7 +7,11 @@
 //                     setModeInForce; §22.6 Transport "Key, root and scale | Sets the lens and the mode. The Reading matrix follows
 //                     them"); a new cell is that mode set on the transport (setLiveModeHold), the same hand Scale mapping uses
 //                     (live/designBindings/scaleMappingBinding.ts);
-//   form.address      the person's M3 form through the kernel's m3_reception (qlM3Clock.ts); a new address, and Apply, is its select-form;
+//   form.address      the person's M3 form through the kernel's m3_reception (qlM3Clock.ts); a new address is its select-form;
+//   form.matrix       the matrix the form stands under now ('complementary' | 'moving-resting' | 'same-quality'): the M3 state's
+//                     form.matrix_axis (0..2, QL's MatrixFamily::ALL order, crates/ql-core/src/pole/codon.rs); Apply (`form.apply`, the
+//                     family by name) is m3_reception's own `apply-matrix {family}`, which moves the form to its partner under that matrix
+//                     and stands it under it (QL fold.rs apply_matrix), so a second press returns;
 //   m1.cells          the family's 144 cells, each QL's own `ql kernel m1` answer through the kernel's ql_read (qlM1.ts);
 //   matrix, valueForm, m1.basis, kernel.position, kernel.face   the view's own choices (DesignBinding.local): which matrix and value form
 //                     show, which order of the twelve notes the served catalogue is read in (until held, the mode in force's), and the
@@ -42,8 +46,10 @@ export const QL_MATRICES_DEVICE_ID = techneDeviceId(QL_MATRICES_FAMILY, QL_MATRI
 
 /** The view's own keys: what shows, and the kernel address the operators read. */
 export const QL_MATRICES_LOCAL = ['matrix', 'valueForm', 'm1.basis', 'kernel.position', 'kernel.face', 'm1.family', 'm1.row12', 'm1.col12'] as const
-/** The keys an owner takes a change of: the mode in force's lens and frame, the form's address. */
-export const QL_MATRICES_WRITES = ['m1.lens12', 'm1.context_frame', 'form.address'] as const
+/** The keys an owner takes a change of: the mode in force's lens and frame, the form's address, Apply (the form's apply-matrix). */
+export const QL_MATRICES_WRITES = ['m1.lens12', 'm1.context_frame', 'form.address', 'form.apply'] as const
+/** QL's three M3 matrix families in their own order (MatrixFamily::ALL: Complementary, MovingResting, SameQuality), by the design's names. */
+export const MATRIX_FAMILIES = ['complementary', 'moving-resting', 'same-quality'] as const
 
 const NO_TICK = missing('The M1 clock\'s tick', 'a running M1 clock announced to the shell (QL\'s M1 engine answers the tick its request carries; '
   + 'nothing in the shell keeps an M1 clock)', 'Quaternal Logic')
@@ -148,6 +154,8 @@ export function qlMatricesValues(state: QlMatricesState): Record<string, Value> 
   if (frame !== undefined) values['m1.context_frame'] = frame
   const form = state.m3.reading?.status === 'available' ? state.m3.reading.state : null
   if (form && int(form.form?.address)) values['form.address'] = form.form.address
+  const axis = form?.form?.matrix_axis
+  if (int(axis) && axis >= 0 && axis < MATRIX_FAMILIES.length) values['form.matrix'] = MATRIX_FAMILIES[axis]!
   const config = m1Config(state.held)
   values['m1.family'] = config.family; values['m1.row12'] = config.row12; values['m1.col12'] = config.col12
   const cells = m1CellsOf(state)
@@ -164,7 +172,8 @@ export function qlMatricesStanding(state: QlMatricesState, key: string): string 
     if (!catalogueOf(state)) return catalogueWhy(state.modes.reading)
     return shownBasis(state) ? null : 'Choose a basis first: the Reading reads the owner\'s modes in one of its two orders.'
   }
-  if (key === 'form.address') return state.m3.reading?.status === 'available' && state.m3.reading.state ? null : state.m3.reason ?? NO_FORM
+  if (key === 'form.address' || key === 'form.apply') return state.m3.reading?.status === 'available' && state.m3.reading.state ? null : state.m3.reason ?? NO_FORM
+  if (key === 'form.matrix') return 'A reading: the matrix the form stands under (its M3 state); Apply moves the form under it.'
   if (key === 'm2.tonics') return catalogueOf(state) ? (shownBasis(state) ? 'A reading: the owner\'s mode catalogue.' : 'Choose a basis: the owner serves its modes in two orders.') : catalogueWhy(state.modes.reading)
   return `${key}: no setting of the matrices.`
 }
@@ -172,13 +181,18 @@ export function qlMatricesStanding(state: QlMatricesState, key: string): string 
 /** Apply the design's changes through the owners: the cell of the Reading as the transport's mode, the form's address as its select-form.
  * Throws in words for one the owners do not take, before any is applied. */
 export async function applyQlMatricesChanges(state: QlMatricesState, changes: readonly ValueChange[], writers: QlMatricesWriters = OWNERS): Promise<void> {
-  let lens: number | undefined, frame: number | undefined, address: number | undefined
+  let lens: number | undefined, frame: number | undefined, address: number | undefined, family: number | undefined
   for (const {key, value} of changes) {
     const why = qlMatricesStanding(state, key)
     if (why) throw new Error(why)
     if (key === 'm1.lens12') { if (!int(value) || value < 0 || value > 11) throw new Error('The lens is one of twelve, 0 to 11.'); lens = value }
     else if (key === 'm1.context_frame') { if (!int(value) || value < 1 || value > 7) throw new Error('The context frame is 1 to 7.'); frame = value }
     else if (key === 'form.address') { if (!int(value) || value < 0 || value > 63) throw new Error('The form is one of 64 addresses, 0 to 63.'); address = value }
+    else if (key === 'form.apply') {
+      const at = MATRIX_FAMILIES.indexOf(value as typeof MATRIX_FAMILIES[number])
+      if (at < 0) throw new Error('Apply takes one of QL\'s three matrices: complementary, moving-resting or same-quality.')
+      family = at
+    }
   }
   const acts: (() => void | Promise<void>)[] = []
   if (lens !== undefined || frame !== undefined) {
@@ -191,6 +205,7 @@ export async function applyQlMatricesChanges(state: QlMatricesState, changes: re
     acts.push(() => writers.setHold({root: row.pitches[0]!, key: row.key}))
   }
   if (address !== undefined) acts.push(() => writers.applyM3([{operation: 'select-form', address: address!}]))
+  if (family !== undefined) acts.push(() => writers.applyM3([{operation: 'apply-matrix', family: family!}]))
   for (const act of acts) await act()
 }
 
@@ -198,7 +213,7 @@ export async function applyQlMatricesChanges(state: QlMatricesState, changes: re
  * key no owner carries named with the route it waits on. */
 export function qlMatricesBinding(state: QlMatricesState, writers: QlMatricesWriters = OWNERS): DesignBinding {
   const standing: Record<string, Standing> = {...disabled(QL_MATRICES_ABSENT)}
-  for (const key of [...QL_MATRICES_WRITES, 'm2.tonics']) {
+  for (const key of [...QL_MATRICES_WRITES, 'm2.tonics', 'form.matrix']) {
     const why = qlMatricesStanding(state, key)
     if (why) standing[key] = {disabled: why}
   }

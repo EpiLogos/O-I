@@ -53,6 +53,9 @@ export const FIELD_ABSENT: Readonly<Record<FieldDesignFamily, Readonly<Record<st
   depth: {},
   resonance: {
     stations: 'The engine reports no stations for the plate (the editor reading\'s observation.stations; it computes none while the native field follows the domain).',
+    // What drives the plate now (expressions__resonance.tsx `drive`): the engine resolves it (its telemetry cymatic.driver, PointCloudField.ts
+    // lastResonanceDrive; resonanceDrive.ts ResolvedResonanceDrive), and the editor reading's observation does not carry it.
+    drive: 'What drives the plate now: no reading reaches it yet — missing op: the engine\'s resolved drive in the editor reading\'s observation (its telemetry cymatic.driver; packages/expressions-boundary/src/editor.ts observation carries no drive) (Expressions).',
     'body.source': 'No body source: the plate takes its Q factor, agitation and edge as rows of its own, and no owner holds body constants by tattva (QL\'s scene material is a declared policy too).',
     'tattva.name': NO_CONDITION,
     'tattva.fibre': NO_CONDITION,

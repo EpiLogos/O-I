@@ -9,6 +9,9 @@
 // thinking, acting, waiting, stalled, producing, done, failed), which the device reads from its needle and the last row of its thread; an agent
 // with no type keeps the shell's agent face. The Type page loads a pattern's preset: it writes Power and Heartbeat here and shows what the
 // other devices take. Full is the thread with the stage beside it: the run as a tree, the agent a creature at the zone the run has reached.
+// The stage plays `stage`, the session's run as the kernel's temporal events recorded it (face-rig.recorded-run/v1, the binding's
+// runFaces.ts stageRecordingOf): "The stage draws what the run's events say and nothing else" (manual §19.4 The stage). Where no run event
+// names the session, the stage says so; it never makes a run up from the thread.
 // In Anima or Aletheia the agent stands in a team space (QL `ql context-frame team-space`, `ql.vak-team-space/v1`): Team cell reads
 // its row (a context frame), the question that row asks of it by day or by night, and its depth (one of the six M domains), on
 // team.space ('Anima' | 'Aletheia', or 'none' when the agent is in no team), team.row, team.question and team.depth.
@@ -46,7 +49,7 @@ import {EnvironStage} from '../faces/EnvironStage'
 import {TypeBand} from '../faces/TypeBand'
 import {FAMILIES, PATTERNS, agentWrites, type RunState} from '../faces/agency'
 import {faceOf} from '../faces/figures'
-import {recordingFromThread, stateOfThread} from '../faces/runs'
+import {BEAT_MS, STALL_BEATS, stateOfThread, type Recording} from '../faces/runs'
 import {design as thread} from './thread'
 import {design as voice} from './voice'
 import './actuation__harness-model.css'
@@ -328,16 +331,24 @@ function TypeBands({p}: {p: ViewProps}) {
   return <TypeBand pattern={typeOfAgent(p.v)} state={runStateOf(p.v, lamp)} onChoose={disabled ? undefined : id => loadType(p, id)} stands={standsAs(p)} />
 }
 
+/** The session's run as the binding recorded it (`stage`), or undefined: a recording with its events, else no reading. */
+function stageOf(v: V): Recording | undefined {
+  const raw = json<unknown>(v, 'stage', undefined)
+  return raw && typeof raw === 'object' && Array.isArray((raw as {events?: unknown}).events) ? raw as Recording : undefined
+}
+/** What the stage says where no run event names the session (manual §19.4: the stage draws what the run's events say and nothing else). */
+export const NO_RUN_EVENT = 'No run event names this session yet.'
+
 /** Full: the thread, and beside it the stage: the run as a tree and the agent a creature at the zone it has reached (spec 24, 25). */
 function FullWithStage({p}: {p: ViewProps}) {
   const lamp = lightOf(p), state = runStateOf(p.v, lamp), type = typeOfAgent(p.v)
-  const rows = lines(p.v), age = numOf(p.v, 'age'), said = strOf(p.v, 'run')
-  const rec = useMemo(() => recordingFromThread(rows, {age, end: said === 'done' || said === 'failed' || said === 'producing' ? said : undefined}),
-    [JSON.stringify(rows), age, said]) // eslint-disable-line react-hooks/exhaustive-deps
+  const stageJson = strOf(p.v, 'stage')
+  const rec = useMemo(() => stageOf(p.v), [stageJson]) // eslint-disable-line react-hooks/exhaustive-deps
   return <div className="hm-full">
     <div className="hm-full-thread">{thread.full(threadOf(p))}</div>
     <aside className="hm-full-stage" aria-label="The run as a tree">
-      <EnvironStage run={rec} state={state} figure={type ? faceOf(type).id : 'serpent'} width={270} />
+      {rec ? <EnvironStage run={rec} state={state} figure={type ? faceOf(type).id : 'serpent'} width={270} />
+        : <p className="hm-full-stage-none" data-i={`The stage|${st(p, 'stage').disabled ?? NO_RUN_EVENT}`}>{NO_RUN_EVENT}</p>}
     </aside>
   </div>
 }
@@ -662,6 +673,16 @@ const SAMPLE_TURN = JSON.stringify({withheldLines: 20, withheldBlocks: 1, notice
     {event: 'PostToolUse', title: 'Receipts of the last edits', standing: 0, kept: 0, withheld: 5, suppressed: true},
   ]})
 
+// The gallery's sample run: what stageRecordingOf (agent/devices/runFaces.ts) makes of a session's temporal events — the sources read,
+// two generations, a return — each at its own instant from the first. The views never read this constant: it arrives on `stage`.
+const SAMPLE_STAGE = JSON.stringify({schema: 'face-rig.recorded-run/v1', what: 'the session agent-session/o-i-chat-1791392815-b898, as the kernel\'s temporal events',
+  source: {transcript: 'oi.temporal-events/v1', lines: [0, 4], from: '2026-10-21T09:00:00.000Z', to: '2026-10-21T09:01:10.000Z'}, beat: BEAT_MS, stallBeats: STALL_BEATS, length: 72000,
+  counts: {knowledge: 1, generation: 2, return: 1},
+  events: [{at: 0, kind: 'knowledge', subject_ref: 'session-space/o-i-chat-1791392815-b898', output: 'used source:project:O-I:ProjectCentral/docs/1-vision/dlw/DLW.md'},
+    {at: 30000, kind: 'generation', subject_ref: 'session-space/o-i-chat-1791392815-b898', output: 'generation gen_1'},
+    {at: 50000, kind: 'generation', subject_ref: 'session-space/o-i-chat-1791392815-b898', output: 'generation gen_2'},
+    {at: 70000, kind: 'return', subject_ref: 'session-space/o-i-chat-1791392815-b898'}]} satisfies Recording)
+
 // ---------------------------------------------------------------- the device
 
 export const design: DesignedDevice = {
@@ -675,6 +696,8 @@ export const design: DesignedDevice = {
     agent: 'Flint', autonomy: 'review', used: 7, age: 6,
     // The owner's material: the thread, and the lists the choosers offer (JSON).
     thread: sampleThread({bash: 'runs'}), models: JSON.stringify(SAMPLE_MODELS), harnesses: JSON.stringify(SAMPLE_HARNESSES),
+    // The session's run as the kernel's temporal events recorded it (the binding's runFaces.ts stageRecordingOf over oi.temporal-events/v1).
+    stage: SAMPLE_STAGE,
     // The Context page's readings (AIKit continuity): the pressure, the last turn's blocks, the armed star commands.
     'ctx.pressure': SAMPLE_PRESSURE, 'ctx.turn': SAMPLE_TURN, 'ctx.armed': JSON.stringify(['continuity-closeout']),
     // The carried pages' own values, under their prefixes.
@@ -713,8 +736,9 @@ export const design: DesignedDevice = {
         blocks: [{event: 'Prompt', title: 'Standing: authorship and the never-do card', standing: 6, kept: 0, withheld: 0}, {event: 'Prompt', title: 'Domain: the DLW manual', standing: 0, kept: 0, withheld: 12, suppressed: true},
           {event: 'PreToolUse', title: 'docs/dlw/DLW.md: its standing guidance', standing: 2, kept: 0, withheld: 9}, {event: 'PostToolUse', title: 'Receipts of the last edits', standing: 0, kept: 0, withheld: 10, suppressed: true}]})},
     'Not read': {light: 'unknown', used: -1, age: -1, thread: sampleThread({})},
+    'No run event yet': {stage: undefined},
     'No readings': {...Object.fromEntries(['light', 'effort', 'effortHeld', 'cap', 'input', 'quantize', 'heartbeat', 'beat', 'onStall', 'model', 'harness', 'draft', 'sent', 'agent', 'autonomy',
-      'used', 'age', 'thread', 'models', 'harnesses', 'ctx.pressure', 'ctx.turn', 'ctx.armed', 'new.open', 'new.for', 'new.kept', 'new.carries', 'new.worlds', 'new.skillsets'].map(k => [k, undefined])),
+      'used', 'age', 'thread', 'stage', 'models', 'harnesses', 'ctx.pressure', 'ctx.turn', 'ctx.armed', 'new.open', 'new.for', 'new.kept', 'new.carries', 'new.worlds', 'new.skillsets'].map(k => [k, undefined])),
       ...prefixed('speech.', NO_READINGS(voice), VOICE_SHARED),
       ...prefixed('custody.', NO_READINGS(custody), CUSTODY_SHARED), ...prefixed('id.', NO_READINGS(identity), IDENTITY_SHARED),
       ...prefixed('thread.', NO_READINGS(thread), THREAD_SHARED)},

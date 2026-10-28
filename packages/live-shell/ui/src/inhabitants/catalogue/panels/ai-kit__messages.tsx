@@ -8,7 +8,9 @@
 //             work and undelivered Communiques (AIKit `aikit gateway who --json`, aikit.population-reading/v1). state is working ·
 //             waiting · stalled · rest (rest: no occupant now; what you send waits for its next run). where is {mode, track, workcell}.
 //             `thread` is that agent's conversation (`aikit gateway conversation`), as the Thread's rows.
-//   groups    [{id, name, for, members: [agent id], join, last, at, unread}]: Central team members (`aikit gateway team`).
+//   groups    [{id, name, for, members: [agent id], join, last, at, unread}]: your groups, Central's agent sets (`central.agent-set.list
+//             {scope}`, root and the project's; messagesBinding.ts groupsOf), each with its members at the Positions their agents occupy.
+//             `aikit gateway team` acts on one admitted member's delivery and lists no groups.
 //   gateway   {state, waiting}: the Agency gateway's own reading (§19.10), for its mark in the head.
 //   conv.*    the open conversation, in the Thread's keys (thread, sessions, draft, input, sent…).
 // Writes: conv.sent sends a Communique to the open agent (`aikit gateway send`); a message dragged to a track becomes work

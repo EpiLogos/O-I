@@ -98,14 +98,19 @@ export interface UnitDecisionsRead {
 export const waitingDecisions = (read: UnitDecisionsRead | null | undefined): UnitDecision[] =>
   (read?.decisions ?? []).filter(decision => !read!.standings[decision.humanRequestRef]?.standing?.answered)
 
-/** The waiting decisions as Approvals' requests (software-factory__approvals.tsx rows {id, kind request, who, text, where, session, age}):
- * the question, the unit it stops, the session's agent, and how long the question has stood in Central where it does. Pure. */
+/** A unit decision's row in Approvals' queue: its values, and its own answers in Factory's words. */
+export type UnitRow = Record<string, Value | Readonly<Record<string, string>>>
+
+/** The waiting decisions as Approvals' requests (software-factory__approvals.tsx rows {id, kind request, who, text, where, session, age,
+ * options}): the question, the unit it stops, its two answers in Factory's words, the session's agent, and how long the question has stood
+ * in Central where it does. Pure. */
 export function unitRows(read: UnitDecisionsRead | null | undefined, session: {readonly agentName?: string | null; readonly agentRef?: string | null; readonly purpose?: string | null; readonly sessionRef: string} | null,
-  nowUnixMs: number | undefined): Record<string, Value>[] {
+  nowUnixMs: number | undefined): UnitRow[] {
   return waitingDecisions(read).map(decision => {
     const standing = read!.standings[decision.humanRequestRef]?.standing
     const who = session?.agentName ?? session?.agentRef ?? undefined
-    return {id: decision.humanRequestRef, kind: 'request', text: decision.question, ...(decision.unit ? {where: decision.unit} : {}), ...(who ? {who} : {}),
+    // The question's own answers, in Factory's words (UNIT_ANSWERS): Approve answers Resume, Deny answers Cancel (approvals' `options`).
+    return {id: decision.humanRequestRef, kind: 'request', text: decision.question, ...(decision.unit ? {where: decision.unit} : {}), options: {...UNIT_ANSWERS}, ...(who ? {who} : {}),
       ...(session ? {session: session.purpose ?? session.sessionRef} : {}),
       ...(standing?.receivedAt !== undefined && nowUnixMs ? {age: Math.max(0, Math.round(nowUnixMs / 1000 - standing.receivedAt))} : {})}
   })

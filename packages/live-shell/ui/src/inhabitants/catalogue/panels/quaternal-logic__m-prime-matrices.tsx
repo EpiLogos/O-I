@@ -6,8 +6,10 @@
 // ringed and carries the handle.
 //
 // Owners, keyed on their paths:
-//   m1.*          Quaternal Logic's M1 engine (crates/ql-mef/src/m1_engine.rs, `ql kernel m1`, `ql.m1.engine/v1`): its config
-//                 (family 0..5, row12, col12, tick12, lens12 0..11, context_frame 1..7, basis) written by its `select` action; m1.cells
+//   m1.*          Quaternal Logic's M1 engine (crates/ql-mef/src/m1_engine.rs, `ql kernel m1`, `ql.m1.engine/v1`): the cell inspected
+//                 (family 0..5, row12, col12, tick12), its consumer's config; m1.lens12 0..11 and m1.context_frame 1..7 are the transport's
+//                 key and scale ("Key, root and scale | Sets the lens and the mode. The Reading matrix follows them", manual §22.6
+//                 Transport), and m1.basis the order the served catalogue is read in; m1.cells
 //                 the family's 12 × 12 cells as [raw, digit root, decimal] (m1.rs `cell`: Bimba = row × position; decimal only within
 //                 10 × 10; family 5, the Quintessence, has no scalar, so its cells read none).
 //   m2.tonics     the 84 lens modes of the basis (`ql music modes`, `ql.music-modes/v1` lens_cf): for each lens, each mode's tonic.
@@ -15,7 +17,9 @@
 //                 (written by m3_reception `select-form`).
 //   form.partner  'complementary' | 'moving-resting' | 'same-quality', and form.scale 'codon' | 'hexagram': the matrix whose partner
 //                 shows beside each codon, base by base or trigram by trigram; form.partners the kernel's 64 partner addresses for
-//                 them (ql_m3_apply_matrix, ql_m3_apply_matrix_hexagram). Apply moves the form to its partner through `select-form`.
+//                 them (ql_m3_apply_matrix, ql_m3_apply_matrix_hexagram). form.matrix is the matrix the form stands under now (the M3
+//                 state's form.matrix_axis); Apply sets `form.apply` to it, m3_reception's own `apply-matrix {family}`, which moves the form to
+//                 its partner under that matrix, so a second press returns.
 // The Situation matrix has no owner yet (the M′ packets, QL-MEF #281, are commissioned, not landed), so it is named absent. Follow
 // has no owner operation (nothing reports the notes played or moves the cell with the sky), so it is not offered.
 //
@@ -40,6 +44,8 @@ const BASES = [{value: 'chromatic', label: 'Chromatic', does: 'The twelve notes 
 const FORMS = [{value: 'raw', label: 'Raw', does: 'The source value as it stands.'}, {value: 'dr', label: 'Root', does: 'Its digital root.'}, {value: 'decimal', label: 'Decimal', does: 'Its decimal value, within ten by ten.'}] as const
 const PARTNERS = [{value: 'complementary', label: 'Complementary', does: 'Complementary: A with T, C with G.'}, {value: 'moving-resting', label: 'Moving and resting', does: 'Moving and resting: A with G, T with C.'},
   {value: 'same-quality', label: 'Same quality', does: 'Same quality: A with C, T with G.'}] as const
+/** The matrix the form stands under, as Apply names it (QL's MatrixFamily, by the design's names). */
+const MATRIX_WORD: Readonly<Record<string, string>> = {'complementary': 'the complementary matrix', 'moving-resting': 'the moving and resting matrix', 'same-quality': 'the same-quality matrix'}
 const SCALES = [{value: 'codon', label: 'Codon', does: 'The partner base by base.'}, {value: 'hexagram', label: 'Hexagram', does: "The partner trigram by trigram: each trigram goes to the trigram whose pair is the partner of its pair."}] as const
 const MODES = ['Ionian', 'Dorian', 'Phrygian', 'Lydian', 'Mixolydian', 'Aeolian', 'Locrian']
 const lensLabel = (i: number) => `L${i >> 1}${i & 1 ? '′' : ''}`
@@ -196,9 +202,9 @@ function controls(p: ViewProps) {
       onChange={x => p.set('form.partner', x)} disabled={st(p, 'form.partner').disabled ?? formOnly(v)} />,
     scale: <Radio {...st(p, 'form.scale')} label="Scale" does="Base by base, or trigram by trigram." value={strOf(v, 'form.scale') ?? ''} options={SCALES} onChange={x => p.set('form.scale', x)}
       disabled={st(p, 'form.scale').disabled ?? formOnly(v)} />,
-    apply: <Action {...st(p, 'form.address')} label="Apply" does="Moves the cell to its partner. Press again to return."
-      onPress={() => { const a = intIn(v, 'form.address', 0, 63), to = a === undefined ? undefined : partnersOf(v)?.[a]; if (to !== undefined) p.set('form.address', to) }}
-      disabled={st(p, 'form.address').disabled ?? formOnly(v) ?? (intIn(v, 'form.address', 0, 63) === undefined || !partnersOf(v) ? 'No partner from the kernel for this cell.' : undefined)} />,
+    apply: <Action {...st(p, 'form.apply')} label="Apply" does={`Moves the form to its partner under ${MATRIX_WORD[strOf(v, 'form.matrix') ?? ''] ?? 'its matrix'}. Press again to return.`}
+      onPress={() => { const m = strOf(v, 'form.matrix'); if (m) p.set('form.apply', m) }}
+      disabled={st(p, 'form.apply').disabled ?? formOnly(v) ?? (strOf(v, 'form.matrix') === undefined ? 'No reading of the matrix the form stands under.' : undefined)} />,
     family: <ValueBox {...st(p, 'm1.family')} label="Family" does="The family of the source values: 0 to 5; the fifth, the Quintessence, has no scalar." value={intIn(v, 'm1.family', 0, 5) ?? NaN} def={0}
       scale={{min: 0, max: 5, step: 1}} format={x => String(x)} onChange={x => p.set('m1.family', x)} />,
   }
@@ -210,7 +216,7 @@ export const design: DesignedDevice = {
   kind: 'instrument',
   firstPage: 'matrix',
   defaults: {
-    matrix: 'oscillator', valueForm: 'raw', 'm1.basis': 'chromatic', 'm1.lens12': 0, 'm1.context_frame': 1, 'm1.family': 0, 'm1.row12': 3, 'm1.col12': 4, 'm1.tick12': 7, 'form.address': 17,
+    matrix: 'oscillator', valueForm: 'raw', 'm1.basis': 'chromatic', 'm1.lens12': 0, 'm1.context_frame': 1, 'm1.family': 0, 'm1.row12': 3, 'm1.col12': 4, 'm1.tick12': 7, 'form.address': 17, 'form.matrix': 'complementary',
     // `ql kernel m1` on fixtures/kernel/m1-engine-v1.request.json, family 0, each of the 144 cells: [raw, digit root, decimal].
     'm1.cells': '[[[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,null],[0,0,null]],[[0,0,0],[1,1,1],[2,2,2],[3,3,3],[4,4,4],[5,5,5],[6,6,6],[7,7,7],[8,8,8],[9,9,9],[10,1,null],[11,2,null]],[[0,0,0],[2,2,2],[4,4,4],[6,6,6],[8,8,8],[10,1,0],[12,3,2],[14,5,4],[16,7,6],[18,9,8],[20,2,null],[22,4,null]],[[0,0,0],[3,3,3],[6,6,6],[9,9,9],[12,3,2],[15,6,5],[18,9,8],[21,3,1],[24,6,4],[27,9,7],[30,3,null],[33,6,null]],[[0,0,0],[4,4,4],[8,8,8],[12,3,2],[16,7,6],[20,2,0],[24,6,4],[28,1,8],[32,5,2],[36,9,6],[40,4,null],[44,8,null]],[[0,0,0],[5,5,5],[10,1,0],[15,6,5],[20,2,0],[25,7,5],[30,3,0],[35,8,5],[40,4,0],[45,9,5],[50,5,null],[55,1,null]],[[0,0,0],[6,6,6],[12,3,2],[18,9,8],[24,6,4],[30,3,0],[36,9,6],[42,6,2],[48,3,8],[54,9,4],[60,6,null],[66,3,null]],[[0,0,0],[7,7,7],[14,5,4],[21,3,1],[28,1,8],[35,8,5],[42,6,2],[49,4,9],[56,2,6],[63,9,3],[70,7,null],[77,5,null]],[[0,0,0],[8,8,8],[16,7,6],[24,6,4],[32,5,2],[40,4,0],[48,3,8],[56,2,6],[64,1,4],[72,9,2],[80,8,null],[88,7,null]],[[0,0,0],[9,9,9],[18,9,8],[27,9,7],[36,9,6],[45,9,5],[54,9,4],[63,9,3],[72,9,2],[81,9,1],[90,9,null],[99,9,null]],[[0,0,null],[10,1,null],[20,2,null],[30,3,null],[40,4,null],[50,5,null],[60,6,null],[70,7,null],[80,8,null],[90,9,null],[100,1,null],[110,2,null]],[[0,0,null],[11,2,null],[22,4,null],[33,6,null],[44,8,null],[55,1,null],[66,3,null],[77,5,null],[88,7,null],[99,9,null],[110,2,null],[121,4,null]]]',
     // `ql music modes --json`, the chromatic basis: each lens's tonic for ionian … locrian.
@@ -238,7 +244,7 @@ export const design: DesignedDevice = {
     'Kernel, the ground conjugate': {'kernel.position': 0, 'kernel.face': 'conjugate', 'kernel.conjugate': 'qladdr:sixfold@1/direct/P0/d0',
       'kernel.complement': 'qladdr:sixfold@1/conjugate/P5/d0', 'kernel.class': 'implicate'},
     'Kernel, no answer': {'kernel.conjugate': undefined, 'kernel.complement': undefined, 'kernel.class': undefined, 'kernel.version': undefined},
-    'No readings': {'m1.cells': undefined, 'm2.tonics': undefined, 'm3.codons': undefined, 'm1.row12': undefined, 'm1.col12': undefined, 'm1.lens12': undefined, 'm1.context_frame': undefined, 'form.address': undefined, 'form.partner': undefined, 'form.scale': undefined, 'form.partners': undefined,
+    'No readings': {'m1.cells': undefined, 'm2.tonics': undefined, 'm3.codons': undefined, 'm1.row12': undefined, 'm1.col12': undefined, 'm1.lens12': undefined, 'm1.context_frame': undefined, 'form.address': undefined, 'form.matrix': undefined, 'form.partner': undefined, 'form.scale': undefined, 'form.partners': undefined,
       'kernel.position': undefined, 'kernel.face': undefined, 'kernel.depth': undefined, 'kernel.form': undefined, 'kernel.version': undefined, 'kernel.conjugate': undefined, 'kernel.complement': undefined, 'kernel.class': undefined},
   },
 

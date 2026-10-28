@@ -229,18 +229,19 @@ test('a change on the Field goes through the device that carries it, the editor\
 
 test('the Field draws on its binding in every view — no NaN, no undefined, never its fixtures — and its absent level is drawn unread', () => {
   const binding = field.fieldBinding(fieldInput().input)
-  // A gap of the design, not of the binding (PROPOSE, design lane): the widget's meter multiplies the level, which no owner carries, so its
-  // style reads --level:NaN; the design does not draw an absent level as unread. Named here so it is seen, and nothing else is let through.
+  // #757 closed the design's gap this test named (it was PROPOSE, design lane): the widget's meter draws an absent level unread, never
+  // --level:NaN, and nothing else is let through.
   const widget = renderToStaticMarkup(h(host.HostedDevice, {designed: DESIGNS.field, binding, view: 'widget', nav: {}}))
-  assert.equal((widget.match(/NaN/g) ?? []).length, 1)
-  assert.match(widget, /class="ref-meter"[^>]*style="--level:NaN"/)
-  const all = drawsClean(DESIGNS.field, binding, /42k|5 : 3/, [''], /style="--level:NaN"/)
+  assert.doesNotMatch(widget, /NaN/)
+  assert.match(widget, /class="ref-meter" data-unread="true"/)
+  const all = drawsClean(DESIGNS.field, binding, /42k|5 : 3/, [''])
   assert.ok(all.includes('120k'), 'Ink\'s count')
   assert.ok(all.includes('512 Hz'), 'Resonance\'s tone')
-  // The level, absent, is drawn unread: the ring alone and "—", nothing to turn. Its reason is the binding's standing; the design's dials
-  // spread no standing (expressions__field.tsx DIAL), so the words are not drawn on the dial — PROPOSE, design lane.
+  // The level, absent, is drawn unread: the ring alone and "—", nothing to turn; and since #757 its dial spreads its standing
+  // (expressions__field.tsx DIAL), so the binding's reason is drawn on the dial.
   assert.match(all, /role="slider" aria-label="Level"[^>]*aria-valuetext="no reading" aria-disabled="true"/)
   assert.match(binding.standing.level.disabled, /missing op/)
+  assert.ok(all.includes('missing op: a field-wide level'), 'the level\'s reason, on its dial')
 })
 
 test('(d) the Field stands at the Studio\'s head: published by the Studio over its field devices, drawn by the door at the Field\'s place in the Studio\'s Full', () => {
@@ -396,17 +397,24 @@ test('the M′ matrices read the real mode catalogue, the mode in force, the M3 
   assert.match(binding.standing['m1.cells'].disabled, /The engine opens on the Quintessence/)
   assert.match(binding.standing['m1.tick12'].disabled, /no M1 clock|nothing in the shell keeps an M1 clock/)
   const keys = classify(DESIGNS.matrices, binding)
-  assert.deepEqual(keys.reading.sort(), ['form.address', 'm1.basis', 'm1.col12', 'm1.context_frame', 'm1.family', 'm1.lens12', 'm1.row12', 'm2.tonics'])
+  assert.deepEqual(keys.reading.sort(), ['form.address', 'form.matrix', 'm1.basis', 'm1.col12', 'm1.context_frame', 'm1.family', 'm1.lens12', 'm1.row12', 'm2.tonics'])
+  // #757: the matrix the form stands under is the M3 state's own (form.matrix_axis 1, QL's MatrixFamily::ALL order).
+  assert.equal(binding.values['form.matrix'], 'moving-resting')
   assert.match(binding.standing['m3.codons'].disabled, /`ql kernel m3`/)
   for (const key of ['form.partners', 'form.partner', 'form.scale']) assert.match(binding.standing[key].disabled, /ql_m3_apply_matrix/, key)
   for (const key of ['kernel.conjugate', 'kernel.class', 'kernel.version', 'kernel.depth', 'kernel.form']) assert.match(binding.standing[key].disabled, /Choose a position and a face/, key)
   const controls = controlStanding(binding, setKeysOf('quaternal-logic__m-prime-matrices.tsx'))
-  assert.deepEqual(controls.written.sort(), ['form.address', 'm1.context_frame', 'm1.lens12'])
+  assert.deepEqual(controls.written.sort(), ['form.address', 'form.apply', 'm1.context_frame', 'm1.lens12'], 'Apply writes m3_reception\'s apply-matrix (#757)')
   assert.deepEqual(controls.local.sort(), ['kernel.face', 'kernel.position', 'm1.basis', 'm1.col12', 'm1.family', 'm1.row12', 'matrix', 'valueForm'])
   assert.deepEqual(controls.disabled.sort(), ['form.partner', 'form.scale'])
   await binding.write([{key: 'm1.lens12', value: 3}, {key: 'm1.context_frame', value: 2}, {key: 'form.address', value: 40}])
   assert.deepEqual(set, [{root: 5, key: 'chromatic/L1\'/dorian'}])
   assert.deepEqual(applied, [[{operation: 'select-form', address: 40}]])
+  // Apply: m3_reception's own apply-matrix {family}, under the matrix the form stands under (#757).
+  await binding.write([{key: 'form.apply', value: 'moving-resting'}])
+  assert.deepEqual(applied.at(-1), [{operation: 'apply-matrix', family: 1}])
+  await assert.rejects(binding.write([{key: 'form.apply', value: 'sideways'}]), /one of QL's three matrices/)
+  assert.match(qlMx.qlMatricesBinding({m3: NO_M3, modes: MODES, held: {}}, writers).standing['form.apply'].disabled, /No Nara identity is chosen/, 'no form: Apply says why')
   // Choosing a family reads its 144 cells from QL's M1 engine, one `ql kernel m1` each, through the kernel's ql_read.
   const asked = []
   m1.resetQlM1({call: async op => { asked.push(op); return m1Answer(op) }})

@@ -17,8 +17,13 @@
 //   chain      [{id, name, light, reading, fault?}]  its three devices with their lights and one reading each (the devices' own owners);
 //                                  `fault` is the owner's words where it reports one: the row stands orange
 //   seats      [{product, state, lane, claimedBy, workers, dirty, ahead, behind}]  one per project (`seat status --json`, SeatRow)
-//   working    [{agent, track, mode, instance?}]  the agents working here now, from the claims and the gateway's sessions (`aikit gateway
-//                                  who`); `instance` is the harness instance the agent runs in, where the gateway names its process
+//   project    string             the project the chain stands for: its seat's lane is the lane the folded workcell and a track's Works in
+//                                  read (none while that seat is free), never another project's
+//   worlds     [{receipt, world}]  the worlds `workcell worlds` lists for this cell where it lists several; the World page chooses among
+//                                  them (`worldReceipt`, the hand's choice) and none is assumed
+//   working    [{agent, track?, mode?, instance?}]  the agents working here now, from the claims and the gateway's sessions (`aikit gateway
+//                                  who`); a claim names its actor only, so mode and track stand none where nothing names them; `instance` is
+//                                  the harness instance the agent runs in, where the gateway names its process
 //   instances  [{ref, harness, liveness, pids, cpu?, rss?}]  the harness processes on this machine (`workcell instances list --json`:
 //                                  instance_ref, harness_ref, liveness live|stale, pids) with their cost (`workcell instances usage <ref>
 //                                  --pid <n> --json`: metrics.cpu_utilisation percent, metrics.memory_rss bytes); a metric the provider
@@ -72,7 +77,9 @@ type V = ViewProps['v']
 interface ChainDevice {readonly id: string; readonly name: string; readonly light?: string; readonly reading?: string; readonly fault?: string}
 interface Seat {readonly product: string; readonly state: string; readonly lane?: string | null; readonly claimedBy?: string | null; readonly workers?: readonly string[]
   readonly dirty?: number; readonly ahead?: number; readonly behind?: number}
-interface Worker {readonly agent: string; readonly track: string; readonly mode: string; readonly instance?: string}
+interface Worker {readonly agent: string; readonly track?: string; readonly mode?: string; readonly instance?: string}
+/** Where a worker works: its mode and its track, each none where nothing names it. */
+const whereOf = (w: Worker) => `${w.mode ?? NONE} · ${w.track ?? NONE}`
 interface Cell {readonly name: string; readonly light?: string; readonly lane?: string | null; readonly claimedBy?: string | null}
 interface Frame {readonly at: string; readonly dir: 'in' | 'out'; readonly kind: string; readonly note?: string}
 interface Instance {readonly ref: string; readonly harness: string; readonly liveness?: string; readonly pids?: readonly number[]; readonly cpu?: number; readonly rss?: number}
@@ -90,6 +97,9 @@ const text = (x: unknown): string | undefined => (typeof x === 'string' && x.len
 const count = (x: unknown): number | undefined => (typeof x === 'number' && Number.isFinite(x) ? x : undefined)
 const chainOf = (v: V) => (has(v, 'chain') ? json<unknown[]>(v, 'chain', []).filter((d): d is ChainDevice => rec(d) && typeof d.id === 'string' && typeof d.name === 'string') : undefined)
 const seatsOf = (v: V) => (has(v, 'seats') ? json<unknown[]>(v, 'seats', []).filter((s): s is Seat => rec(s) && typeof s.product === 'string') : undefined)
+/** The worlds listed for this cell where there are several to choose among (`worlds`); undefined otherwise. */
+const worldsOf = (v: V) => { const listed = has(v, 'worlds') ? json<unknown[]>(v, 'worlds', []).filter((x): x is {receipt: string; world: string} => rec(x) && typeof x.receipt === 'string' && typeof x.world === 'string') : []
+  return listed.length > 1 ? listed : undefined }
 const workingOf = (v: V) => (has(v, 'working') ? json<unknown[]>(v, 'working', []).filter((w): w is Worker => rec(w) && typeof w.agent === 'string') : undefined)
 const cellsOf = (v: V) => json<unknown[]>(v, 'workcells', []).filter((c): c is Cell => rec(c) && typeof c.name === 'string')
 const framesOf = (v: V) => json<unknown[]>(v, 'frames', []).filter((f): f is Frame => rec(f) && typeof f.kind === 'string')
@@ -165,8 +175,13 @@ function bindingState(b: Binding): {word: string; tone: Tone | undefined; fault:
 const healthTone = (h: string | undefined): Tone | undefined => (h === 'healthy' ? 'green' : h === 'degraded' ? 'accent' : h ? 'stall' : undefined)
 const healthLight = (h: string | undefined): LightState => (h === 'healthy' || h === 'degraded' ? 'lit' : h ? 'dark' : 'unknown')
 
-/** A seat's lane, as the folded head and Works in read it: the seat of the chosen product, or the first seat that holds a lane. */
-const laneOf = (v: V): string | undefined => { const seats = seatsOf(v); return seats?.find(s => s.lane)?.lane ?? undefined }
+/** A seat's lane, as the folded head and Works in read it: the seat of the project the chain stands for (`project`), none while it is free;
+ * with no project named, the first seat that holds a lane. */
+const laneOf = (v: V): string | undefined => {
+  const seats = seatsOf(v), project = strOf(v, 'project')?.toLowerCase()
+  if (project !== undefined) return seats?.find(s => s.product.toLowerCase() === project)?.lane ?? undefined
+  return seats?.find(s => s.lane)?.lane ?? undefined
+}
 
 /** The macros: four settings of the chain, each written by the device that holds it. */
 function macros(p: ViewProps, stack: boolean) {
@@ -196,7 +211,7 @@ function Working({v, size = 4}: {v: V; size?: number}) {
   const items: RowItem[] = working
     ? (working.length ? working.map(w => {
       const i = cost(w)
-      return {id: `${w.agent}:${w.track}`, name: w.agent, light: 'lit' as LightState, note: `${w.mode} · ${w.track} · ${i?.rss === undefined ? NONE : mb(i.rss)}`,
+      return {id: `${w.agent}:${w.track ?? ''}`, name: w.agent, light: 'lit' as LightState, note: `${whereOf(w)} · ${i?.rss === undefined ? NONE : mb(i.rss)}`,
         meter: <Meter value={i?.cpu === undefined ? undefined : clampTo(0, 1, i.cpu / 100)} label={`${w.agent}: processor`} />,
         does: i ? `${i.harness}, ${i.pids?.length ?? NONE} processes: processor ${i.cpu === undefined ? NONE : pctText(i.cpu)}, memory ${i.rss === undefined ? NONE : mb(i.rss)}.`
           : !instances ? 'No reading of the harness processes.' : 'The gateway does not name this agent\'s process.'}
@@ -278,6 +293,9 @@ function WorldBand({p}: {p: ViewProps}) {
   return <Band>
     <Section width={206}><WorldWell v={v} w={194} h={146} /></Section>
     <Section label="Run" width={104}>
+      {worldsOf(v) && <Chooser {...st(p, 'worldReceipt')} label="World" does="The worlds Workcell lists for this cell: choose the one the pages read. None is assumed." wide
+        value={strOf(v, 'worldReceipt') ?? ''} options={[{value: '', label: 'Choose a world'}, ...worldsOf(v)!.map(x => ({value: x.receipt, label: x.world}))]}
+        onChange={x => p.set('worldReceipt', x || undefined)} />}
       <Readout label="persists" does="How long the world's material is meant to last: ephemeral, the task or run, the candidate, the project or the workcell." value={world?.persistence} />
       <Readout label="keeps" does="What releasing the world does to its material: release, preserve, suspend or snapshot." value={world?.retention?.replace('-if-supported', '')} />
       <Readout label="state" does="The world's health as Workcell observes it." value={world?.state} tone={healthTone(world?.state)} />
@@ -737,6 +755,7 @@ export const design: DesignedDevice = {
       {product: 'ai-kit', state: 'claimed', lane: 'reads-round-2', claimedBy: 'claude-code:dlw-lead', workers: [], dirty: 0, ahead: 1, behind: 2},
       {product: 'central', state: 'free', lane: null, claimedBy: null, workers: [], dirty: 0, ahead: 0, behind: 0},
       {product: 'workcell', state: 'free', lane: null, claimedBy: null, workers: [], dirty: 0, ahead: 0, behind: 0}]),
+    project: 'O-I',
     working: JSON.stringify([
       {agent: 'dlw-lead', track: 'dlw/build', mode: 'Factory', instance: 'instance:claude-code:bbc22b5e'},
       {agent: 'uiux-lane-kit', track: 'UI/UX refinement', mode: 'Factory', instance: 'instance:claude-code:a7a018c8'},
@@ -774,6 +793,9 @@ export const design: DesignedDevice = {
         {id: 'landing', name: 'Git / landing', light: 'dark', reading: 'No lane'}]),
       seats: JSON.stringify([{product: 'o-i', state: 'free', lane: null}, {product: 'quaternal-logic', state: 'free', lane: null}]), working: '[]',
       run: undefined, world: 'null', lease: undefined, checkpoints: undefined, surfaces: undefined, omitted: undefined, 'want:connectivity:service:gliner25-decision/personal-workcell': undefined},
+    // `workcell worlds` lists two worlds for this cell: the World page asks which one the pages read; none is assumed.
+    'Two worlds for this cell': {worlds: JSON.stringify([{receipt: 'receipt:world-a', world: 'world:local:o-i:candidate'}, {receipt: 'receipt:world-b', world: 'world:local:o-i:dlw-build'}]),
+      worldReceipt: 'receipt:world-a'},
     'Nothing left behind': prefixed('left.', {findings: '[]'}),
     'Sandbox server down': prefixed('left.', {sandboxes: undefined, sources: JSON.stringify([LEFT_SOURCES[0], {...LEFT_SOURCES[1], refusal: 'the sandbox server did not answer'}])}),
     'No reading': {...Object.fromEntries(ALL.map(k => [k, undefined])), 'want:connectivity:service:gliner25-decision/personal-workcell': undefined},
@@ -857,7 +879,7 @@ function SeatsDoc({v}: {v: V}) {
     </table>
     <div className="wc-pane-side wc-pane-side--3">
       <section><h4>Working here</h4>
-        {workingOf(v)?.length ? <ul className="wc-list">{workingOf(v)!.map(w => <li key={`${w.agent}:${w.track}`}><b>{w.agent}</b> <span>{w.mode} · {w.track}</span></li>)}</ul>
+        {workingOf(v)?.length ? <ul className="wc-list">{workingOf(v)!.map(w => <li key={`${w.agent}:${w.track ?? ''}`}><b>{w.agent}</b> <span>{whereOf(w)}</span></li>)}</ul>
           : <p className="ref-doc-lead">{workingOf(v) ? 'Nobody works here now.' : 'No reading of who works here.'}</p>}
       </section>
       <section><h4>Harness processes</h4>
@@ -952,8 +974,9 @@ function WidgetView({p}: {p: ViewProps}) {
       </div>
       <div className="wc-tile-body">
         <p className="wc-tile-lane" data-i="Lane|The lane the chosen workcell's seat holds, and who claims it."><b>{cell ? (cell.lane ?? 'free') : NONE}</b>{cell?.lane ? ` · ${claim ?? NONE}` : ''}</p>
-        {working.length > 0 && <p className="wc-tile-who">{working.slice(0, 3).map(w => <button key={`${w.agent}:${w.track}`} type="button" className="wc-face"
-          data-i={`${w.agent}|Working here: ${w.mode} · ${w.track}. Click to select its track.`} onClick={() => p.set('track', w.track)}><i />{w.agent}</button>)}
+        {working.length > 0 && <p className="wc-tile-who">{working.slice(0, 3).map(w => <button key={`${w.agent}:${w.track ?? ''}`} type="button" className="wc-face"
+          data-i={`${w.agent}|Working here: ${whereOf(w)}.${w.track ? ' Click to select its track.' : ' Nothing names its track.'}`} disabled={!w.track}
+          onClick={() => { if (w.track) p.set('track', w.track) }}><i />{w.agent}</button>)}
           {working.length > 3 && <span>+{working.length - 3}</span>}</p>}
       </div>
       <TileGateways p={p} />
