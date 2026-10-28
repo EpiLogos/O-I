@@ -96,7 +96,8 @@ test('every key the design reads and every press it makes is classified — a re
   for (const key of ['acceptStep', 'previewStep', 'rereadSetup']) assert.ok(key in w.writes && !(key in w.refused), `${key}: Setup's press goes to its owner`)
   assert.match(w.writes.acceptStep, /apply/)
   assert.match(w.writes.acceptStep, /projectcentral\.init/)
-  for (const route of ['aikit init', 'aikit tree --expand registries', 'aikit credential discover', 'aikit harness auth']) assert.ok(w.reads.setup.includes(route), `Setup reads ${route}`)
+  for (const route of ['aikit init', 'aikit credential discover', 'aikit harness auth']) assert.ok(w.reads.setup.includes(route), `Setup reads ${route}`)
+  assert.ok(!w.reads.setup.includes('aikit tree') && !w.writes.acceptStep.includes('aikit tree'), 'who owns each skill root is init\'s answer: Setup reads no tree')
   for (const route of ['aikit adopt', 'aikit credential setup']) assert.ok(w.writes.acceptStep.includes(route), `Accept presses ${route}`)
   assert.doesNotMatch(json(w.reads) + json(w.writes), /SETUP_UNBOUND/, 'no step of Setup stands unbound')
   assert.equal(win.NO_SETUP, undefined, 'no blanket absence of Setup stands')
@@ -492,11 +493,9 @@ function scriptedSetup() {
       if (op.harness !== 'claude-code') throw new Error(`harness.unknown: no harness profile named ${op.harness}`)
       return REAL.harness_auth_claude.data
     }
-    if (op.op === 'aikit_read' && op.request.kind === 'init') return {roots: tools.map(tool => ({label: `@${tool.client}`, path: rootOf(tool), skills: tool.names.length, dead_symlinks: 0, missing_frontmatter: 0, problems: 0})),
-      root_count: tools.length, total_skills: tools.reduce((n, tool) => n + tool.names.length, 0), total_problems: 0}
+    if (op.op === 'aikit_read' && op.request.kind === 'init') return {roots: tools.map(tool => ({label: `@${tool.client}`, path: rootOf(tool), skills: tool.names.length, dead_symlinks: 0, missing_frontmatter: 0, problems: 0,
+      ownership: tool.standing, ...(tool.standing === 'adopted' ? {procedure: tool.procedure} : {})})), root_count: tools.length, total_skills: tools.reduce((n, tool) => n + tool.names.length, 0), total_problems: 0}
     if (op.op === 'aikit_read' && op.request.kind === 'collate') return {clusters: tools.flatMap(tool => tool.names.map(name => ({name, copies: 1, where: [{path: `${rootOf(tool)}/${name}`, root: `@${tool.client}`, version: null}]})))}
-    if (op.op === 'aikit_read' && op.request.kind === 'tree') return {rows: [{depth: 0, path: 'registries', summary: `${tools.length} registries`},
-      ...tools.map(tool => ({depth: 1, path: `registries/@${tool.client}`, summary: tool.standing === 'adopted' ? `adopted · ${tool.names.length} skills · procedure ${tool.procedure}` : `foreign · ${tool.names.length} skills`}))]}
     if (op.op === 'aikit_read' && op.request.kind === 'adopt-plan') {
       const tool = tools.find(row => rootOf(row) === op.request.root)
       if (!tool) throw new Error(`adopt.no_skills: \`${op.request.root}\` contains no valid Agent Skills`)
@@ -746,7 +745,8 @@ test('CODE-DERIVED — Setup\'s Harnesses and skills step is AIKit\'s reading of
   // AIKit's own answers on a scratch Arriving world (REAL): Claude Code detected, its two skills foreign, then adopted.
   const harnesses = win.setupHarnessClients(REAL.client_status.data)
   assert.deepEqual(harnesses, [{client: 'claude', harness: 'claude-code', folder: '/w/Arriving/.claude'}], 'the detected tools only: Codex is not installed')
-  const foreign = win.setupSkillRoots(REAL.init_foreign.data, REAL.collate_all.data, REAL.tree_foreign.data)
+  assert.equal(win.setupSkillRoots.length, 2, 'init and collate: who owns each root is init\'s answer, no tree is read')
+  const foreign = win.setupSkillRoots(REAL.init_foreign.data, REAL.collate_all.data)
   assert.deepEqual(foreign, [{label: '@claude', path: '/w/Arriving/.claude/skills', skills: 2, problems: 0, names: ['field-recording-log', 'weekly-review'], standing: 'foreign'}])
   const found = stepOf(win.setupValues({...base, harnesses: {state: 'read', harnesses, roots: foreign}}, held({})), 'harnesses')
   assert.equal(found.state, 'found')
@@ -754,9 +754,14 @@ test('CODE-DERIVED — Setup\'s Harnesses and skills step is AIKit\'s reading of
   assert.match(found.items[0].change, /AIKit adopts its 2 skills \(field-recording-log, weekly-review\) as skill\/claude\//)
   assert.match(found.items[0].change, /claude-code reads them where they were/)
   assert.match(found.items[0].change, /settings and instructions stay as they are/)
-  const adopted = win.setupSkillRoots(REAL.init_adopted.data, REAL.collate_all.data, REAL.tree_adopted.data)
+  const adopted = win.setupSkillRoots(REAL.init_adopted.data, REAL.collate_all.data)
   assert.equal(adopted[0].standing, 'adopted')
-  assert.match(adopted[0].procedure, /^prc_/, 'the Procedure AIKit adopted it by, from its tree')
+  assert.equal(adopted[0].procedure, REAL.adopt_applied.data.procedure, 'the Procedure AIKit adopted it by, as init names it')
+  // A root projected from a native generation (AIKit's init shape: ownership generated, with its generation) is held too.
+  const generated = win.setupSkillRoots({roots: [{...REAL.init_foreign.data.roots[0], ownership: 'generated', generation: 'gen_01'}]}, REAL.collate_all.data)
+  assert.deepEqual([generated[0].standing, generated[0].generation, generated[0].procedure], ['generated', 'gen_01', undefined])
+  // A root init names no ownership for (an AIKit older than init's ownership) is not taken as foreign: nothing is adopted on a guess.
+  assert.equal(win.setupSkillRoots({roots: [{...REAL.init_foreign.data.roots[0], ownership: undefined}]}, REAL.collate_all.data)[0].standing, 'unknown')
   const accepted = stepOf(win.setupValues({...base, harnesses: {state: 'read', harnesses, roots: adopted}}, held({})), 'harnesses')
   assert.equal(accepted.state, 'accepted', 'read back from AIKit: the root is adopted')
   assert.match(accepted.items[0].change, /AIKit holds its 2 skills .*adopted · procedure prc_/)
@@ -827,9 +832,10 @@ test('SCRIPTED — Harnesses and skills: Accept adopts each agent tool\'s skill 
   const adopt = calls.find(([, kind]) => kind === 'aikit_write adopt')[2].request
   assert.deepEqual(adopt, {kind: 'adopt', root: `${HOME}/.claude/skills`, namespace: 'claude', expect_digest: 'review:claude:1'}, 'the plan\'s review digest: AIKit applies only the bytes it surveyed')
   step = stepOf(win.setupValues(walk.snapshot(), held({})), 'harnesses')
-  assert.equal(step.state, 'accepted', 'read back from AIKit\'s tree: adopted')
+  assert.equal(step.state, 'accepted', 'read back from AIKit\'s init: adopted')
   await assert.rejects(walk.accept('harnesses', held({})), /Nothing is made twice/)
   assert.equal(calls.filter(([, kind]) => kind === 'aikit_write adopt').length, 1)
+  assert.ok(!calls.some(([, kind]) => kind === 'aikit_read tree'), 'Setup reads init alone for who owns each root')
 })
 
 test('SCRIPTED — Credentials: Accept binds the key you choose by the reference you give, never the key itself, reads it back bound, and makes nothing twice', async () => {

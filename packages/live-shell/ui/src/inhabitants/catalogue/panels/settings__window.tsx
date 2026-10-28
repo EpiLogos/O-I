@@ -121,7 +121,7 @@
 //   Where it stands refuses for it. Machines: acceptStep 'machines' is Central's machine.adopt-current binding its current machine
 //   to the Workcell this computer answers as (Workcell's status), read back by machine.declaration. Harnesses and skills:
 //   acceptStep 'harnesses' adopts each skill root AIKit reads as foreign through AIKit's own plan (`aikit adopt ROOT --namespace
-//   LABEL`, then `--yes --expect-digest` on its review digest), read back by `aikit tree` as adopted; the tool reads its skills where
+//   LABEL`, then `--yes --expect-digest` on its review digest), read back by `aikit init` as adopted; the tool reads its skills where
 //   they were. Credentials: acceptStep 'credentials' with credential and reference binds that key by reference (`aikit credential
 //   setup --ref`), read back by `aikit credential list`; a reference that names no store is refused before anything is sent.
 //   rereadSetup (setup discover, then AIKit, Workcell, Central's machine, Work and the folders elsewhere) exists. The binding:

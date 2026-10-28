@@ -358,13 +358,12 @@ export type AikitReadRequest =
   /** `aikit source list` (ai-kit#542): `{sources:[each as source show reads it], unreadable:[{id, code, message}]}`. */
   | {kind:"source-list"}
   | {kind:"collate";all?:boolean}
-  /** `aikit init` (discovery only): `{roots:[{label, path, skills, dead_symlinks, missing_frontmatter, problems}], root_count, total_skills,
-   * total_problems, npx_skills}` — the foreign skill roots on this computer. Setup's Harnesses and skills step. */
+  /** `aikit init` (discovery only): `{roots:[{label, path, skills, dead_symlinks, missing_frontmatter, problems, ownership, procedure?,
+   * generation?}], root_count, total_skills, total_problems, npx_skills}` — the skill roots on this computer and who owns each: `ownership`
+   * foreign, adopted (with the `procedure` that adopted it) or generated (with its `generation`). Setup's Harnesses and skills step. */
   | {kind:"init"}
-  /** `aikit tree [--expand P]…`: `{rows:[{path, summary, depth, expandable, expanded}], count}`. Expanding `registries` names each skill
-   * root by its label (`registries/@claude`) with AIKit's standing first in its summary: `foreign · N skills`, `adopted · N skills ·
-   * procedure P` or `generated · N skills · generation G`. */
-  | {kind:"tree";expand?:string[]}
+  /** `aikit adopt ROOT [--namespace N]` without --yes: `{source, namespace, capsules, review_digest, procedure, digest, diff, applied:
+   * false}`; `--yes --expect-digest` takes `review_digest`, never the saved Procedure's `digest` (settings/aikitAdoption.ts reads it). */
   | {kind:"adopt-plan";root:string;namespace?:string|null}
   /** `aikit procedure list|diff PROCEDURE`, `aikit bypass list`, `aikit unused`, `aikit explain [RESOURCE]`. */
   | {kind:"procedure-list"|"bypass-list"|"unused"}

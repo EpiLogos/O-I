@@ -23,6 +23,7 @@ import {appearanceValues, automationValues, credentialValues, folderOf, harnessV
   setupKeyFindings, setupNamespace, setupSkillRoots, setupValues, systemValues, type CredentialRow, type SetupCredentials, type SetupHarnesses, type SetupMachine, type SetupPreview,
   type SetupSnapshot, type SetupWorkFolder} from './windowValues'
 import {AdoptionController} from '../../../../../desktop/cradle/src/configuration/adoptionController'
+import {aikitAdoptionPlan, aikitAdoptRequest} from './aikitAdoption'
 import {PC_ACCEPT_ACTION, PC_INSPECT_ACTION, PC_PREVIEW_ACTION, acceptInput} from '../central/devices/pageGround'
 
 /** A press through its owner: it resolves with the owner's acknowledgement in its words (said on the Info line), or rejects with its refusal. */
@@ -668,8 +669,8 @@ const entryNames = (reading: unknown): string[] => {
  * through the cradle's AdoptionController, unchanged: status and discover read the ground; Accept makes a plan for Central's ground alone
  * (custom, products [central]: the desktop is a full install, and Setup adds and removes no product), applies it with its review token,
  * and reads it back. The Harnesses and skills step is AIKit's: the tools its client status detects, the skill roots `aikit init` finds,
- * their skills (`aikit collate --all`) and AIKit's standing for each (`aikit tree --expand registries`); Accept adopts each root AIKit reads
- * as foreign through its own reviewed plan (`aikit adopt ROOT --namespace LABEL`, then `--yes --expect-digest` on that plan's review
+ * with who owns each (its ownership: foreign, adopted or generated), and their skills (`aikit collate --all`); Accept adopts each root AIKit
+ * reads as foreign through its own reviewed plan (`aikit adopt ROOT --namespace LABEL`, then `--yes --expect-digest` on that plan's review
  * digest), so the skills are AIKit's and the tool keeps reading them where they were, and reads the root back adopted. The Credentials
  * step is AIKit's too: where `aikit credential discover` finds each key (never its value), the providers each detected tool reaches
  * (`aikit harness auth`) and the bindings AIKit keeps; Accept binds the key chosen by the reference the person gives (`aikit credential
@@ -715,16 +716,16 @@ export class SetupWalk {
     await this.readMachine()
     await this.readWork()
   }
-  /** AIKit's tools and skill roots (SetupHarnesses): its client status, `aikit init`, `aikit collate --all` and `aikit tree --expand
-   * registries`. AIKit's routes run from the world's ground (the kernel's route_ground), so they are read once there is one. */
+  /** AIKit's tools and skill roots (SetupHarnesses): its client status, `aikit init` (each root and who owns it) and `aikit collate --all`.
+   * AIKit's routes run from the world's ground (the kernel's route_ground), so they are read once there is one. */
   private async readHarnesses(): Promise<void> {
     const aikit = this.source.aikit
     if (!groundBound(this.controller.getSnapshot().discovery)) { this.harnesses = undefined; this.publish(); return }
     if (!aikit) { this.harnesses = {state: 'refused', error: NO_SETUP_AIKIT}; this.publish(); return }
     try {
-      const [status, init, collate, tree] = await Promise.all([aikit({op: 'harness_status'}), aikit({op: 'aikit_read', request: {kind: 'init'}}),
-        aikit({op: 'aikit_read', request: {kind: 'collate', all: true}}), aikit({op: 'aikit_read', request: {kind: 'tree', expand: ['registries']}})])
-      this.harnesses = {state: 'read', harnesses: setupHarnessClients(status), roots: setupSkillRoots(init, collate, tree)}
+      const [status, init, collate] = await Promise.all([aikit({op: 'harness_status'}), aikit({op: 'aikit_read', request: {kind: 'init'}}),
+        aikit({op: 'aikit_read', request: {kind: 'collate', all: true}})])
+      this.harnesses = {state: 'read', harnesses: setupHarnessClients(status), roots: setupSkillRoots(init, collate)}
     } catch (cause) { this.harnesses = {state: 'refused', error: words(cause)} }
     this.publish()
   }
@@ -817,11 +818,11 @@ export class SetupWalk {
     const said: string[] = []
     for (const root of pending) {
       const namespace = setupNamespace(root)
-      const plan = await aikit({op: 'aikit_read', request: {kind: 'adopt-plan', root: root.path, namespace}}) as {review_digest?: unknown; capsules?: unknown}
-      if (!plan || typeof plan.review_digest !== 'string' || !Array.isArray(plan.capsules)) throw new Error(`AIKit answered its adoption plan for ${root.path} in a form Setup does not read (review_digest and capsules expected).`)
+      const plan = aikitAdoptionPlan(await aikit({op: 'aikit_read', request: {kind: 'adopt-plan', root: root.path, namespace}}))
+      if (!plan) throw new Error(`AIKit answered its adoption plan for ${root.path} in a form Setup does not read (its source, namespace, capsules and review digest expected).`)
       if (plan.capsules.length !== root.skills) throw new Error(`${root.path} changed since it was read: AIKit's plan adopts ${plan.capsules.length} skills, not the ${root.skills} shown. Read again; nothing of it was adopted.`)
-      await aikit({op: 'aikit_write', request: {kind: 'adopt', root: root.path, namespace, expect_digest: plan.review_digest}})
-      said.push(`${root.skills} skill${root.skills === 1 ? '' : 's'} from ${toolOf(root.path) ?? root.label} (${plan.capsules.map(String).join(', ')})`)
+      await aikit({op: 'aikit_write', request: aikitAdoptRequest(plan)})
+      said.push(`${root.skills} skill${root.skills === 1 ? '' : 's'} from ${toolOf(root.path) ?? root.label} (${plan.capsules.join(', ')})`)
     }
     await this.readHarnesses()
     const after = this.harnesses?.state === 'read' ? this.harnesses.roots : []

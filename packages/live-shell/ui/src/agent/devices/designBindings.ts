@@ -26,6 +26,7 @@ import type {OwnerAcceptedValues} from './ownerAccepted'
 import type {TaskClip, TemporalEventLike} from '../agentRunModel'
 import {runStateOfSession, stageRecordingOf, threadRowsFrom} from './runFaces'
 import {armedOf, bypassesOf, contextPressureOf, contextTurnOf, historyOf, procedureDiffOf, proceduresOf, rootsOf, sourcesOf, unusedOf, whyOf, type AikitAnswer} from './aikitPages'
+import {aikitAdoptionPlan, aikitAdoptRequest, type AikitAdoptionPlan} from '../../settings/aikitAdoption'
 
 type Obj = Record<string, unknown>
 const isObj = (value: unknown): value is Obj => !!value && typeof value === 'object' && !Array.isArray(value)
@@ -730,12 +731,13 @@ export interface RackUpkeep {
   readonly write?: (request: {kind: string; [field: string]: unknown}) => Promise<unknown>
 }
 
-/** The adoption plan as the design reads it ({root, namespace, digest, isolation, items}), each field where AIKit names it. Pure. */
-export function adoptionOf(plan: unknown): Record<string, unknown> | null {
-  if (!isObj(plan)) return null
-  const items = Array.isArray(plan.items) ? plan.items.filter(isObj) : null
-  const kept = Object.fromEntries((['root', 'namespace', 'digest', 'isolation'] as const).flatMap(key => (typeof plan[key] === 'string' ? [[key, plan[key]]] : [])))
-  return Object.keys(kept).length || items ? {...kept, ...(items ? {items} : {})} : null
+/** AIKit's plan (settings/aikitAdoption.ts, the reading Setup adopts by) as the design reads it ({root, namespace, digest, items}): the root
+ * chosen the plan was read for, the review digest Apply presses (`aikit adopt --expect-digest` confirms it; the Procedure's own `digest` is
+ * not it), and a line for each capsule it adopts. AIKit refuses a plan whole, so every item adopts. Pure. */
+export function adoptionOf(plan: AikitAdoptionPlan, root: string): Record<string, unknown> {
+  const prefix = `skill/${plan.namespace}/`
+  return {root, namespace: plan.namespace, digest: plan.reviewDigest,
+    items: plan.capsules.map(capsule => ({name: capsule.startsWith(prefix) ? capsule.slice(prefix.length) : capsule, act: 'adopt'}))}
 }
 
 /** The upkeep pages' settings: the hand's own holds (skills.tsx: unusedOnly, source, adoptRoot, namespace, procedure, bypassScope, bypassReason),
@@ -755,7 +757,13 @@ export function rackBinding(id: string, input: RackInput, ports: ComposePorts | 
   const read = <T>(answer: AikitAnswer | undefined, map: (value: unknown) => T | null): T | null => (answer?.status === 'answered' ? map(answer.value) : null)
   const unused = read(upkeep.unused, unusedOf), roots = read(upkeep.collate, rootsOf), bypasses = read(upkeep.bypasses, bypassesOf)
   const sources = read(upkeep.sources, sourcesOf)
-  const listed = read(upkeep.procedures, proceduresOf), adoption = read(upkeep.adoption, adoptionOf)
+  // The design names a root by AIKit's label (collate's where[].root, `@claude`); `aikit adopt` takes its path. The hold is the path the
+  // chain asks the plan for, shown by its label.
+  const rootPath = (value: Value | undefined) => (typeof value === 'string' ? (roots?.find(row => row.root === value && typeof row.path === 'string')?.path as string | undefined) ?? value : undefined)
+  const rootLabel = (path: string) => (roots?.find(row => row.path === path && typeof row.root === 'string')?.root as string | undefined) ?? path
+  if (typeof view.adoptRoot === 'string') values.adoptRoot = rootLabel(view.adoptRoot)
+  const plan = read(upkeep.adoption, aikitAdoptionPlan)
+  const listed = read(upkeep.procedures, proceduresOf), adoption = plan ? adoptionOf(plan, typeof values.adoptRoot === 'string' ? values.adoptRoot : rootLabel(plan.source)) : null
   const diff = read(upkeep.procedure, procedureDiffOf)
   // The procedure chosen carries its kind and digest where AIKit's diff of it answered; the others stand by their ids.
   const procedures = listed && diff ? listed.map(row => (row.id === diff.id ? {...row, ...diff} : row)) : listed
@@ -808,13 +816,10 @@ export function rackBinding(id: string, input: RackInput, ports: ComposePorts | 
         if (typeof pressed?.reason !== 'string') throw Error('Issue: give a reason first.')
         return {kind, reason: pressed.reason, ...(typeof pressed.scope === 'string' && pressed.scope ? {scope: pressed.scope} : {})}
       }
-      case 'adoptApply': {
-        // Apply only the plan you reviewed: the digest pressed is the digest of the plan read.
-        if (!adoption || typeof adoption.digest !== 'string' || adoption.digest !== value) throw Error('Apply: the plan changed since you reviewed it, or names no digest; read it again with Preview.')
-        const root = typeof adoption.root === 'string' ? adoption.root : view.adoptRoot, namespace = typeof adoption.namespace === 'string' ? adoption.namespace : view.namespace
-        if (typeof root !== 'string' || !root) throw Error('Apply: choose a root and press Preview first.')
-        return {kind, root, ...(typeof namespace === 'string' && namespace ? {namespace} : {}), expect_digest: value}
-      }
+      case 'adoptApply':
+        // Apply only the plan you reviewed: the digest pressed is the review digest of the plan read, confirmed on the root AIKit surveyed.
+        if (!plan || !adoption || plan.reviewDigest !== value) throw Error('Apply: the plan changed since you reviewed it, or names no digest; read it again with Preview.')
+        return aikitAdoptRequest(plan)
       case 'procRun': {
         // `<id>@<digest>`: the procedure chosen, at the digest its diff names.
         const at = value.lastIndexOf('@'), procedure = at > 0 ? value.slice(0, at) : value, digest = at > 0 ? value.slice(at + 1) : ''
@@ -834,7 +839,7 @@ export function rackBinding(id: string, input: RackInput, ports: ComposePorts | 
     id,
     values,
     standing,
-    local: Object.fromEntries(RACK_UPKEEP_SETTINGS.map(key => [key, (value: Value | undefined) => holdView(id, key, value)])),
+    local: Object.fromEntries(RACK_UPKEEP_SETTINGS.map(key => [key, (value: Value | undefined) => holdView(id, key, key === 'adoptRoot' ? rootPath(value) : value)])),
     writes: RACK_WRITES,
     write: async changes => {
       for (const change of changes) {
@@ -844,7 +849,7 @@ export function rackBinding(id: string, input: RackInput, ports: ComposePorts | 
           // The package target is your choice for the next export, held here; Export itself has no carrier.
           case 'target': updateHolds(was => ({...was, compose: {...was.compose, target: String(change.value)}})); break
           // Preview: the root chosen, whose plan the chain then reads (a reading, never a write).
-          case 'adoptPreview': holdView(id, 'adoptRoot', typeof change.value === 'string' && change.value ? change.value : undefined); break
+          case 'adoptPreview': holdView(id, 'adoptRoot', typeof change.value === 'string' && change.value ? rootPath(change.value) : undefined); break
           case 'exported': {
             // AIKit's own export (`aikit set package export <set> --target <t> --out <dir>`), its refusal in AIKit's words.
             if (exportWhy) throw Error(exportWhy)
