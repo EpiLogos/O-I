@@ -244,7 +244,7 @@ export const design: DesignedDevice = {
     'frame.position': 2, 'frame.face': 'power', 'frame.grain': 'inner-four',
     // `ql mef lenses` (registry 1.0.0-q2), each with its six sublenses from the registry (ql-mef registry/{articulation,encounter,becoming}.rs).
     lenses: JSON.stringify([
-      {code: 'L0', name: 'Quaternal', face: 'day', square: 'articulation', sublenses: ['Why', 'What', 'How', 'Whom/Which/When', 'Where/Why-for', 'Why-so/Why-not']},
+      {code: 'L0', name: 'Quaternal', face: 'day', square: 'articulation', sublenses: ['Why', 'What', 'How', 'Who/Which/Whereby', 'Where/When/Whither', 'Why-for/Why-not']},
       {code: 'L0′', name: 'Archetypal-Numerical', face: 'night', square: 'articulation', sublenses: ['One/Unity', 'Two/Duality', 'Three/Triad', 'Four/Quaternity', 'Five/Pentad', 'Six/Hexad']},
       {code: 'L1', name: 'Causal', face: 'day', square: 'encounter', sublenses: ['Svātantrya', 'Material cause', 'Efficient cause', 'Formal cause', 'Final cause', 'Icchā Śakti / Will']},
       {code: 'L1′', name: 'Phenomenal', face: 'night', square: 'encounter', sublenses: ['Introversion', 'Sensation', 'Feeling', 'Thinking', 'Intuition', 'Extroversion']},
