@@ -7,7 +7,8 @@
 .techne-family { display: contents }
 .techne-instrument { flex: none; display: flex; min-height: 0 }
 .techne-instrument > .dp-folded { height: 100%; box-sizing: border-box }
-/* The strip reads the plain name, then the M′ address in the accent the mockup's strip gives its prefix (.ifold b). */
+/* The strip reads the plain name, then the holder's provenance where it has one (the Studio's Body), in the accent the mockup's strip
+   gives its prefix (.ifold b). Technē's instruments carry none. */
 .techne-instrument .dp-folded-reading { color: var(--accent) }
 .techne-device { position: relative; flex: none; display: flex; min-height: 0 }
 .techne-device > .dp-folded { height: 100%; box-sizing: border-box }

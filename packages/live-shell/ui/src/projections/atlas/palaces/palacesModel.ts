@@ -1,6 +1,6 @@
 // Palaces on the atlas, the readings (T-PALACES-ONTO-ATLAS; FOUNDATION §3 N4 "a palace is a place on the world you can enter";
 // DLW manual §8 "The palace gives a whole subject a building to live in: rooms that each hold a part of it, a path through them, a
-// guide who explains why each room is there … and doors out to other places and other people's worlds"; lock §8.2 "A Palace (M5′)
+// guide who explains why each room is there … and doors out to other places and other people's worlds"; lock §8.2 "A Palace
 // is a curated system over one corpus or project … its rooms are its curated sections; its path is its walks; its objects open at
 // their revision and are owned by the corpus, never by the room; its portals lead to other palaces and places").
 //

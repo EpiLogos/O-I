@@ -69,8 +69,8 @@ export interface SdkMode {
   readonly sessionView: string
   /** Rev 5: what the Arrangement view shows in this mode. */
   readonly arrangementView: string
-  /** The M′ address an instrument's plain view name conserves as provenance
-   * (Technē: M3′ for the Journey, M2′ for the Timeline). Never the name. */
+  /** Where an instrument's plain view name is declared, cited as provenance
+   * (Technē: the lock's §9.1 row). Never the name, and never an M′ number. */
   readonly viewProvenance?: {readonly sessionView?: string; readonly arrangementView?: string}
   /** Rev 5's slot meanings for this mode, per transport row. */
   readonly rows: readonly TransportRowMeaning[]

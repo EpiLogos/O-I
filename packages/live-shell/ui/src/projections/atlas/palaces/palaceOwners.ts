@@ -35,7 +35,7 @@ import {openWorldSubject, presentStage} from '../../../techne/subject/openSubjec
 import type {PresenceStorage} from '../../../../../../../desktop/cradle/src/techne/m0m5/journey/presence'
 import type {PalaceListedExpression, PalaceOwners} from './palaceSession'
 
-/** The pane payload each deep instrument opens through (frame/instruments.ts): the stage's lenses, the Graph for the M0′ ground, the
+/** The pane payload each deep instrument opens through (frame/instruments.ts): the stage's lenses, the Graph for the Project's ground, the
  * Earth for a place. A lens the shell has no pane for is refused by name. */
 export const INSTRUMENT_PAYLOADS: Readonly<Partial<Record<TechneInstrument, string>>> = {
   canvas: 'projection.expressions#canvas', timeline: 'projection.expressions#timeline', journey: 'projection.expressions#journey',

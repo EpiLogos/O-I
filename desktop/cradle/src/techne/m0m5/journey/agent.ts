@@ -1,6 +1,6 @@
 /**
  * The Journey's structured agency state (L5 Technē T5 — issue #216, §8) —
- * what `Aletheia_3 / Technē_3` can INSPECT and OPERATE.
+ * what the situated Aletheia and Technē roles can INSPECT and OPERATE.
  *
  * Law (wayfinder §16, dual-reading lock §16): each instrument publishes
  * sufficient structured state for its situated Agency to perceive — current
@@ -8,12 +8,12 @@
  * available native Actions, current scene focus, authority and disclosure
  * limits — and Agent operation uses the SAME ActionRefs as human operation,
  * never DOM/WebGL scraping, never a private chat loop, never a hidden command
- * queue. This module is that publication for M3′: a pure, deterministic,
+ * queue. This module is that publication for the Journey: a pure, deterministic,
  * JSON-safe reading of the Journey's own state. It executes nothing; the
  * governed operations it exposes go through the same routed ActionRefs the
  * human surface uses (./sequence's reorder proposal, ./compose's composition
  * proposal) with the C0′ participation regime attached — under
- * `human-engaged` a Technē_3-proposed change is marked for human acceptance;
+ * `human-engaged` a Technē-proposed change is marked for human acceptance;
  * the instrument itself still writes nothing.
  *
  * Erasable TypeScript: loadable by the renderer, Vite, and `node --test`.
@@ -28,19 +28,18 @@ import type { SequenceDraft } from "./sequence.ts";
 import { cutFor } from "./crossing.ts";
 import type { VakBinding, VakTraversal } from "./vak.ts";
 
-/** The situated role this state addresses: Aletheia_3 = M3 × S5′, whose
- * operative role while inhabiting M3′ is Technē_3. */
-export const TECHNE_3_ROLE = "aletheia_3/techne_3";
-export const JOURNEY_M_PRIME = 3;
+/** The situated roles this state addresses: Aletheia, which inhabits Technē's
+ * deep reading, and the Technē role that operates the Journey. Neither is
+ * bound to a coordinate: no instrument carries one (ql.techne/v1). */
+export const JOURNEY_ROLE = "aletheia/techne";
 
 /** The structured Journey state an Agency may inspect. JSON-safe throughout:
  * an agent session receives this through the ordinary disclosure channel,
  * not by reading the DOM. */
 export interface JourneyAgentState {
   contract: "ql.techne/v1";
-  role: typeof TECHNE_3_ROLE;
+  role: typeof JOURNEY_ROLE;
   instrument: TechneInstrument;
-  m_prime: typeof JOURNEY_M_PRIME;
   application_cut: ReturnType<typeof cutFor>;
   subject_ref: string;
   reading_ref: string;
@@ -75,9 +74,9 @@ export interface JourneyAgentState {
   /** Governance: what this Agency may propose and under which regime. */
   governance: {
     cpf_regime: "human-engaged" | "authorised-autonomous" | null;
-    /** Under human-engaged, Technē_3 changes are proposals awaiting human
+    /** Under human-engaged, Technē changes are proposals awaiting human
      * acceptance; under authorised-autonomous they are commissioned. */
-    techne_3_operation: "propose-await-human-acceptance" | "commissioned" | "unavailable";
+    techne_operation: "propose-await-human-acceptance" | "commissioned" | "unavailable";
     limits: string[];
   };
 }
@@ -114,9 +113,8 @@ export function journeyAgentState(input: {
   const warrantedCpf = vak?.binding.cpf ?? null;
   return {
     contract: "ql.techne/v1",
-    role: TECHNE_3_ROLE,
+    role: JOURNEY_ROLE,
     instrument: "journey",
-    m_prime: JOURNEY_M_PRIME,
     application_cut: cutFor("journey"),
     subject_ref: reading.subject.subject_ref,
     reading_ref: reading.reading_ref,
@@ -154,7 +152,7 @@ export function journeyAgentState(input: {
     expression_scene_focus_ref: currentSceneRef,
     governance: {
       cpf_regime: warrantedCpf,
-      techne_3_operation: warrantedCpf === null
+      techne_operation: warrantedCpf === null
         ? "unavailable"
         : warrantedCpf === "human-engaged"
           ? "propose-await-human-acceptance"
@@ -168,16 +166,16 @@ export function journeyAgentState(input: {
   };
 }
 
-/** The governance annotation for a Technē_3-authored route: the C0′ regime
+/** The governance annotation for a Technē-authored route: the C0′ regime
  * determines how the proposal stands, never whether the owner executes it —
  * authority stays the owner's. */
-export function techne3OperationStanding(state: JourneyAgentState): { standing: JourneyAgentState["governance"]["techne_3_operation"]; note: string } {
-  switch (state.governance.techne_3_operation) {
+export function techneOperationStanding(state: JourneyAgentState): { standing: JourneyAgentState["governance"]["techne_operation"]; note: string } {
+  switch (state.governance.techne_operation) {
     case "propose-await-human-acceptance":
-      return { standing: state.governance.techne_3_operation, note: "C0′ human-engaged: this Technē_3 change is a proposal — a human accepts or refuses it before the owner's revision discipline applies" };
+      return { standing: state.governance.techne_operation, note: "C0′ human-engaged: this Technē change is a proposal — a human accepts or refuses it before the owner's revision discipline applies" };
     case "commissioned":
-      return { standing: state.governance.techne_3_operation, note: "C0′ authorised-autonomous: this Technē_3 change is commissioned; it still routes through the owner's ActionRef and revision discipline" };
+      return { standing: state.governance.techne_operation, note: "C0′ authorised-autonomous: this Technē change is commissioned; it still routes through the owner's ActionRef and revision discipline" };
     case "unavailable":
-      return { standing: state.governance.techne_3_operation, note: "no C0′ regime is bound — governed agent operation is unavailable; the state stays inspectable" };
+      return { standing: state.governance.techne_operation, note: "no C0′ regime is bound — governed agent operation is unavailable; the state stays inspectable" };
   }
 }

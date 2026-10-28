@@ -428,10 +428,11 @@ implementation must enforce to deserve the word "rack". Restated for the builder
    of the slot's place.** The transport keeps its places fixed; where a
    slot keeps only its place, say so (as the aperture slot does, §4.3; the
    F/P column of DLW-PLAN §2).
-3. **Plain instrument names; the M′ address is provenance.** The deep
+3. **Plain instrument names, and no M′ number.** The deep
    instruments are project/graph, canvas, timeline, journey, places, palace
-   (D-F, `desktop/cradle/docs/world-shell/PROGRAMME.md` R9); an M′ coordinate appears only in a
-   provenance field, never as the face's name.
+   (D-F, `ProjectCentral/docs/0-ground/PROGRAMME.md` R9). Technē is one M′
+   layer, M5′ (manual §25.1), so its instruments carry no M′ number, in a
+   name or in a provenance field.
 4. **No coined names.** A control, device or act is named by what it does,
    in plain words; origin-return in particular gets no coined UI label.
 5. **Live-corpus M-labels are not Bimba coordinates.** The Live corpus's

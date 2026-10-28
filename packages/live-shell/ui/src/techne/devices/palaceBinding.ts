@@ -8,7 +8,7 @@
 // the doors out (returnToGround :618, openEntry :645, openRoom :674), entering (enterPalace :241) and Leave (leavePalace :288). The
 // design's sample is never a reading.
 //
-// The pages (O-I 757; the M5′ plate's sections, PalacePlate.tsx, which the design now carries): Enter lists the world's palaces
+// The pages (O-I 757; the Palace plate's sections, PalacePlate.tsx, which the design now carries): Enter lists the world's palaces
 // (palacesWorld.ts usePalaces, palacesModel.ts palaceLocationRows) and enters one; the Integral whole is the owner's whole of the
 // reading (whole.ts palaceWholeView), each entry opened in its own instrument; Compose is the draft composition the one Save writes;
 // Portals are the doors out — the Earth, each region's Expression, the places of the room the walk stands in. The world's palaces, the
@@ -50,7 +50,7 @@ import type {DesignBinding, Standing, Value, ValueChange, Values} from '../../fr
 import {palaceReturnAction, returnGroundInstrument} from '../../../../../../desktop/cradle/src/techne/m0m5/palace/return'
 import {palaceBookmarkLabel} from '../../../../../../desktop/cradle/src/techne/m0m5/palace/bookmarks'
 import {defaultBoardPoint, type BoardPoint} from '../../../../../../desktop/cradle/src/techne/m0m5/palace/board'
-import {PALACE_WIRED_INSTRUMENTS, palaceOpenRoute, palaceWholeView} from '../../../../../../desktop/cradle/src/techne/m0m5/palace/whole'
+import {PALACE_WIRED_INSTRUMENTS, palaceOpenRoute, palaceRegionName, palaceWholeView} from '../../../../../../desktop/cradle/src/techne/m0m5/palace/whole'
 import type {PalaceBookmark} from '../../../../../../desktop/cradle/src/techne/m0m5/palace/palace-state'
 import type {SuitePlace} from '../../projections/atlas/provider/suiteStanding'
 import {floorRooms, palaceLocationRows, roomOfStep, roomPlaces, type PalaceRoom, type PalaceRow} from '../../projections/atlas/palaces/palacesModel'
@@ -160,7 +160,7 @@ function wholeOf(here: PalaceInside) {
   const view = palaceWholeView(here.reading ?? null)
   const focus = walkOf(here).focus
   return view.regions.map(region => ({
-    key: region.key, name: `${region.m_prime === null ? 'close' : `M′${region.m_prime}`} · ${region.office}`, standing: region.standing.standing, line: region.standing.line,
+    key: region.key, name: palaceRegionName(region), standing: region.standing.standing, line: region.standing.line,
     ...(focus?.region === region.key ? {here: true} : {}),
     entries: region.entries.map((entry, index) => {
       const route = palaceOpenRoute(entry, PALACE_WIRED_INSTRUMENTS)
@@ -170,14 +170,14 @@ function wholeOf(here: PalaceInside) {
   }))
 }
 
-/** The doors out of the palace: the Earth first (the M0′ ground where the reading discloses it, else plain leaving), each region's one
+/** The doors out of the palace: the Earth first (the ground where the reading discloses it, else plain leaving), each region's one
  * Expression, then the places of the room the walk stands in (PalacePlate.tsx PortalsSection). */
 function portalsOf(here: PalaceInside, rooms: readonly PalaceRoom[], world: PalaceWorld | undefined) {
   const ground = !!here.reading && returnGroundInstrument(here.reading) !== null
   const focus = rooms.find(room => room.key === focusedRoom(here))
   const places = focus && world ? roomPlaces(focus, world.places) : []
   return {ground, places, rows: [
-    {id: 'ground', name: 'the Earth', kind: ground ? 'ground' : 'leave', note: ground ? 'Return to the M0′ ground: the Earth.' : 'The reading does not disclose the M0′ ground: leave the palace for the Earth.'},
+    {id: 'ground', name: 'the Earth', kind: ground ? 'ground' : 'leave', note: ground ? 'Return to the ground: the Earth.' : 'The reading does not disclose the ground: leave the palace for the Earth.'},
     ...rooms.filter(room => room.kind === 'region' && room.holds).map(room => ({id: `room:${room.key}`, name: room.holds!.title, kind: 'expression', note: `${room.name}: its one contained Expression.`})),
     ...places.map(place => ({id: `place:${place.ref}`, name: place.name, kind: 'place', note: `${focus!.name} stands at ${place.name} on the Earth.`})),
   ]}

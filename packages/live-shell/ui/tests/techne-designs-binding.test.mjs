@@ -353,6 +353,8 @@ test('the Palace\'s pages read the session: Enter the world\'s palaces, the Inte
   const view = whole.palaceWholeView(state.reading)
   const regions = JSON.parse(values.whole)
   assert.deepEqual(regions.map(region => region.key), view.regions.map(region => region.key))
+  // #753: a region is named by its office, never by an M′ number; the walk's two closes (sources, agencies) still read as closes.
+  assert.deepEqual(regions.map(region => region.name), view.regions.map(region => ['sources', 'agency'].includes(region.key) ? `close · ${region.office}` : region.office))
   assert.deepEqual(regions.map(region => region.line), view.regions.map(region => region.standing.line), 'each region\'s line is the owner\'s')
   assert.deepEqual(regions[0].entries.map(entry => entry.ref), view.regions[0].entries.map(entry => entry.ref))
   assert.equal(regions[0].entries[0].id, `${view.regions[0].key}:0`)
@@ -370,6 +372,7 @@ test('the Palace\'s pages read the session: Enter the world\'s palaces, the Inte
   // Portals: the way back to the Earth first, then each region's Expression, then the places of the room the walk stands in.
   const portals = JSON.parse(values.portals)
   assert.equal(portals[0].id, 'ground')
+  assert.doesNotMatch(portals[0].note, /M[0-5]′/, 'the way back names the ground, never an M′ number (#753)')
   assert.ok(portals.some(row => row.id === `room:${regionSceneRef(EXPR, 'Walk')}` && row.kind === 'expression' && row.name === 'expression:walk'))
   // A `scene` room: a Scene that is neither the overview, a constellation nor a region keeps its kind.
   const other = {key: `${EXPR}:scene:other`, name: 'Other', kind: 'scene', members: [], holds: null, saved: true}

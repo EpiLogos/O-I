@@ -11,7 +11,7 @@
 //     one CAS-gated edit; the owner's integral reading (wikiReadingProvider.ts readWikiSceneTechne, scope "expression"); the routed
 //     Return through the `kernel-expression` channel's invoke_action (packages/expressions-boundary/src/cradle.ts:124); the presence
 //     store over the atlas's workspace memory; the shell's own doors to open an object;
-//   - "Return to ground" re-opens M0′, which in the shell is the Earth itself (lock §0.1.3: "Technē's 0 instrument is the Earth and solar
+//   - "Return to ground" re-opens the ground, which in the shell is the Earth itself (lock §0.1.3: "Technē's 0 instrument is the Earth and solar
 //     system together with its graph view"): leaving the palace is the return.
 //
 // Laws kept from the frame: the kernel Expression is the only store of record (a region is a real Scene of the palace's Expression,
@@ -284,7 +284,7 @@ export async function enterPalace(palace: PalaceRow, at: {roomKey?: string} = {}
   }
 }
 
-/** Leave the palace for the Earth (the outside, M0′). */
+/** Leave the palace for the Earth (the outside, the ground). */
 export function leavePalace(line: string | null = null): void {
   ++generation
   stopWalking()
@@ -590,7 +590,7 @@ export function refuseReturn(): void {
 }
 
 /** Accept: the proposal's own route goes to the owner through the kernel-expression channel's invoke_action; the owner re-reads the
- * reading the proposal came from and decides. Only an invoked receipt crosses back to M0′ (palaceInstrument.tsx:399 acceptReturn). */
+ * reading the proposal came from and decides. Only an invoked receipt crosses back to the ground (palaceInstrument.tsx:399 acceptReturn). */
 export async function acceptReturn(): Promise<void> {
   const here = inside()
   if (!here?.proposal || !here.reading || here.accepting || !here.proposal.receipt?.routed || !owners) return
@@ -613,12 +613,12 @@ export async function acceptReturn(): Promise<void> {
   }
 }
 
-/** The one return to the M0′ ground (palaceInstrument.tsx:238 returnToGround). In the shell the ground is the Earth: leaving the
+/** The one return to the ground (palaceInstrument.tsx:238 returnToGround). In the shell the ground is the Earth: leaving the
  * palace is the return. A reading that discloses no ground keeps the visitor here, and says so. */
 export function returnToGround(line: string | null = null): void {
   const here = inside()
   if (!here?.reading) return
-  if (!returnGroundInstrument(here.reading)) { say('This reading does not disclose the M0′ ground as available, so the Palace has nothing to return to.'); return }
+  if (!returnGroundInstrument(here.reading)) { say('This reading does not disclose the ground as available, so the Palace has nothing to return to.'); return }
   leavePalace(line ?? `Returned from ${here.palace.title} to the Earth.`)
 }
 

@@ -1,5 +1,5 @@
 /**
- * The M3′ proving reading (issue #216) — the lane's local proving input for
+ * The Journey proving reading (issue #216) — the lane's local proving input for
  * the source-backed three-Scene walk.
  *
  * Provenance: composed from the pinned TB0 specimen
@@ -96,7 +96,7 @@ export function provingReading(): TechneReading {
       lens_ref: "mef:lens:L5@1",
       sublens_ref: null,
       context_frame_ref: PROVING_CONTEXT_FRAME,
-      refraction_summary: "The one M′ field read through the L5 office: six deep instruments as M0′–M5′ Technē faces over the 6×6 direct-conjugate shape, with 3:3 Cosmic/Personal as parent readings and Expression as the conjugate 3:3 body.",
+      refraction_summary: "The field read through the L5 office: Technē's six deep instruments over the 6×6 direct-conjugate shape, with 3:3 Cosmic/Personal as parent readings and Expression as the 3:3 body.",
       harmonic_reading: null,
       geometric_reading: null,
       vak_source_ref: PROVING_VAK_SOURCE,
@@ -206,12 +206,12 @@ export function provingReading(): TechneReading {
     ],
     disclosure: {
       instruments: [
-        { instrument: "project", available: true, m_prime: 0, reading: "4:2-deep" },
-        { instrument: "canvas", available: true, m_prime: 1, reading: "4:2-deep" },
-        { instrument: "timeline", available: true, m_prime: 2, reading: "4:2-deep" },
-        { instrument: "journey", available: true, m_prime: 3, reading: "4:2-deep" },
-        { instrument: "place", available: true, m_prime: 4, reading: "4:2-deep" },
-        { instrument: "palace", available: false, m_prime: 5, reading: "4:2-deep", reason: "no bound integral composition is disclosed for this subject" },
+        { instrument: "project", available: true, reading: "4:2-deep" },
+        { instrument: "canvas", available: true, reading: "4:2-deep" },
+        { instrument: "timeline", available: true, reading: "4:2-deep" },
+        { instrument: "journey", available: true, reading: "4:2-deep" },
+        { instrument: "place", available: true, reading: "4:2-deep" },
+        { instrument: "palace", available: false, reading: "4:2-deep", reason: "no bound integral composition is disclosed for this subject" },
         { instrument: "expressions", available: true, reading: "3:3-conjugate" },
       ],
       degraded: [

@@ -28,10 +28,11 @@ export const TECHNE_CONTRACT = "ql.techne/v1";
 // Reading (ql.techne/reading/v1)
 // ---------------------------------------------------------------------------
 
-/** The instrument set of the one M′ field's two readings (amended
- * 2026-09-16, owner-ratified; grounds: QL-MEF #73/#201/#42). The six 4:2
- * deep instruments bind M0′–M5′; `expressions` is the conjugate 3:3
- * Expression reading, not a deep instrument. */
+/** The instrument set: Technē's six deep instruments and `expressions`, the
+ * 3:3 Expression reading, which is not a deep instrument (grounds: QL-MEF
+ * #73/#201/#42). The instruments are named by their work and carry no M′
+ * numbers: the four-and-two binding to M0′–M5′ was withdrawn by the owner on
+ * 19 Oct 2026. */
 export type TechneInstrument =
   | "project"
   | "canvas"
@@ -51,24 +52,11 @@ export const TECHNE_INSTRUMENTS: readonly TechneInstrument[] = [
   "expressions",
 ] as const;
 
-/** Which reading of the one M′ field an aperture carries. Crossing changes
- * the mode of disclosure and available operations, never the subject. */
+/** Which reading an aperture carries: Technē's deep reading (wire name
+ * "4:2-deep", kept for compatibility) or the 3:3 Expression reading. Crossing
+ * changes the mode of disclosure and available operations, never the
+ * subject. */
 export type TechneReadingKind = "4:2-deep" | "3:3-conjugate";
-
-/** The M′ office an instrument is the Technē face of; null on the conjugate
- * 3:3 Expression reading — Expression is not a deep instrument and binds no
- * M′ office (the canonical binding's `TechneInstrument::m_prime`). */
-export function mPrimeOf(instrument: TechneInstrument): number | null {
-  switch (instrument) {
-    case "project": return 0;
-    case "canvas": return 1;
-    case "timeline": return 2;
-    case "journey": return 3;
-    case "place": return 4;
-    case "palace": return 5;
-    case "expressions": return null;
-  }
-}
 
 /** The application cut an instrument belongs to: expressions ↔ 3:3-conjugate,
  * the six deep instruments ↔ 4:2-deep (the canonical binding's
@@ -179,8 +167,7 @@ export interface TechneQlWarrant {
 
 export interface WarrantedQlReading {
   address?: string | null;
-  /** TB0-1: warranted canonical M-coordinate ref of the reading itself.
-   * M′ instrument bindings stay on the disclosure entries. */
+  /** TB0-1: warranted canonical M-coordinate ref of the reading itself. */
   m_coordinate_ref?: string | null;
   shape_ref?: string | null;
   constellation_ref?: string | null;
@@ -308,9 +295,6 @@ export interface TechneDisclosureEntry {
   available: boolean;
   /** Required when available is false; capability honesty, never hidden. */
   reason?: string;
-  /** The M′ office this instrument is the Technē face of. Absent on the
-   * conjugate 3:3 reading. */
-  m_prime?: number;
   reading?: TechneReadingKind;
 }
 
@@ -344,11 +328,11 @@ export interface AgencyRole {
   role: AgencyRoleKind;
   /** The coordinate i this situated role inhabits (M_i × S4′/S5′). */
   m_index: number;
-  /** Anima binds the 3:3 reading; Aletheia/Technē the 4:2 reading;
+  /** Anima binds the 3:3 reading; Aletheia/Technē Technē's deep reading;
    * Guardian stewardship spans both and may leave this absent. */
   reading?: TechneReadingKind;
-  /** The instrument this role operates: the M_i′ deep instrument for
-   * Technē; the Expression reading for Anima. */
+  /** The instrument this role operates: a deep instrument for Technē; the
+   * Expression reading for Anima. */
   instrument?: TechneInstrument;
   /** The canonical Guardian anchoring this situated role. Present does not
    * mean identical: Guardian_i != Anima_i != Technē_i. */
@@ -452,7 +436,7 @@ export interface DisclosureSession {
   subject_ref: string;
   selection: DisclosureSelection;
   instrument: TechneInstrument;
-  /** TB0-1: the active reading of the one M′ field. Consistent with
+  /** TB0-1: the active reading. Consistent with
    * `instrument`: expressions ↔ 3:3-conjugate; the six deep instruments ↔
    * 4:2-deep. */
   application_cut?: TechneReadingKind;
@@ -723,14 +707,11 @@ function validateDisclosure(value: unknown, label: string, errors: string[]): vo
   value.instruments.forEach((entry, index) => {
     const entryLabel = `${label}.instruments[${index}]`;
     if (!isObject(entry)) { errors.push(`${entryLabel}: must be an object`); return; }
-    keysAllowed(entry, ["instrument", "available", "reason", "m_prime", "reading"], entryLabel, errors);
+    keysAllowed(entry, ["instrument", "available", "reason", "reading"], entryLabel, errors);
     if (!isInstrument(entry.instrument)) errors.push(`${entryLabel}.instrument: not an instrument`);
     if (typeof entry.available !== "boolean") { errors.push(`${entryLabel}.available: boolean`); return; }
     if (entry.available === false && !ref(entry.reason)) errors.push(`${entryLabel}: an unavailable instrument requires a reason`);
     if (entry.reason !== undefined && !stringOrNull(entry.reason)) errors.push(`${entryLabel}.reason: must be a string or null`);
-    if (entry.m_prime !== undefined && (typeof entry.m_prime !== "number" || !Number.isInteger(entry.m_prime) || entry.m_prime < 0 || entry.m_prime > 5)) {
-      errors.push(`${entryLabel}.m_prime: must be an integer 0-5 (the field has M′0–M′5 only)`);
-    }
     if (entry.reading !== undefined && entry.reading !== "4:2-deep" && entry.reading !== "3:3-conjugate") {
       errors.push(`${entryLabel}.reading: must be "4:2-deep" or "3:3-conjugate"`);
     }
@@ -763,9 +744,9 @@ const AGENCY_ROLE_KINDS: readonly string[] = ["guardian", "anima", "aletheia", "
 
 /** The situated-Agency role law (the TB0 binding law, executable): Anima
  * inhabits the 3:3 reading and operates only the Expression reading;
- * Aletheia/Technē inhabit the 4:2 reading; Technē operates its own
- * coordinate's deep instrument; Guardian stewardship spans both and is not
- * bound to one reading. A binding is a role over existing machinery, never
+ * Aletheia/Technē inhabit Technē's deep reading; Technē operates a deep
+ * instrument (none is bound to a coordinate); Guardian stewardship spans both
+ * and is not bound to one reading. A binding is a role over existing machinery, never
  * a canonical identity replacement. */
 export function validateAgencyRole(value: unknown, label: string, errors: string[]): void {
   if (!isObject(value)) { errors.push(`${label}: must be an object`); return; }
@@ -784,15 +765,12 @@ export function validateAgencyRole(value: unknown, label: string, errors: string
   const reading = value.reading as TechneReadingKind | null | undefined;
   const instrument = value.instrument as TechneInstrument | undefined;
   if (value.role === "anima") {
-    if (reading !== undefined && reading !== null && reading !== "3:3-conjugate") errors.push(`${label}: Anima_i inhabits the 3:3 conjugate reading, not the 4:2 deep reading`);
+    if (reading !== undefined && reading !== null && reading !== "3:3-conjugate") errors.push(`${label}: Anima_i inhabits the 3:3 conjugate reading, not Technē's deep reading`);
     if (instrument !== undefined && instrument !== "expressions") errors.push(`${label}: Anima_i operates the Expression reading, not a deep instrument`);
   }
   if (value.role === "aletheia" || value.role === "techne") {
-    if (reading !== undefined && reading !== null && reading !== "4:2-deep") errors.push(`${label}: Aletheia_i/Technē_i inhabit the 4:2 deep reading, not the 3:3 conjugate reading`);
-    if (value.role === "techne" && instrument !== undefined && mPrimeOf(instrument) !== value.m_index) {
-      const bound = mPrimeOf(instrument);
-      errors.push(`${label}: Technē_${value.m_index} operates its own coordinate's deep instrument (M′${value.m_index}); the binding names ${String(instrument)}${bound === null ? " (no M′ office)" : ` (M′${bound})`}`);
-    }
+    if (reading !== undefined && reading !== null && reading !== "4:2-deep") errors.push(`${label}: Aletheia_i/Technē_i inhabit Technē's deep reading, not the 3:3 conjugate reading`);
+    if (value.role === "techne" && instrument === "expressions") errors.push(`${label}: Technē_i operates a deep instrument, not the Expression reading`);
   }
 }
 

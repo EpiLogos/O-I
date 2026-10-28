@@ -1,5 +1,5 @@
-// The M4′ World / Places instrument, open on the rack (T-PLACES-ONTO-ATLAS; FOUNDATION §4 "Places is the Archetypal-Earth atlas,
-// alone"; lock §2.5 M4′ "planet builder: body, landmass, climate, sky, locations, relations; scales system · body · region ·
+// The World / Places instrument, open on the rack (T-PLACES-ONTO-ATLAS; FOUNDATION §4 "Places is the Archetypal-Earth atlas,
+// alone"; lock §2.5, World / Places: "planet builder: body, landmass, climate, sky, locations, relations; scales system · body · region ·
 // palace"; the mockup's M4 plate, world-shell-mockup.html:1447-1461 `deviceDetail` k==='M4' and its controls :1385-1397 — knobs for
 // Sea level, Continents, Relief, Warmth, Moisture, Ice caps, Atmosphere, Clouds, Axial tilt; segmented Body, Coast, Kind, Relations;
 // Locations and Relations as tight lists; manual §17.2 World, Whole: "View, Body, Landmass, Climate, Sky, Locations, Earth layers").
@@ -15,7 +15,7 @@
 // (presentAtlasView, the lens bar's), Whole field the globe's own (atlasFaceActions setWholeField, the face body's), a press on a place
 // turns the Earth (the atlas's own navigation), a Relations row narrows the globe through the atlas's one filter (shell/filter.ts), the
 // find chooses through the field's own search (data/search.ts), and Place offers a draft to the subject's time-and-place editor
-// (placeTool.ts) — the plate never writes a coordinate. The devices M4′ holds (the globe, the Earth ⇄ Graph switch, the QL sky) stand as
+// (placeTool.ts) — the plate never writes a coordinate. The devices World / Places holds (the globe, the Earth ⇄ Graph switch, the QL sky) stand as
 // marks on the sections that draw their controls: a press shows one whole in the pool, ⤢ opens it in a pane.
 //
 // The plate's head is the panel kit's (InstrumentPlate.tsx; manual §16.9) and its display section is the Earth's live well
@@ -503,7 +503,7 @@ function FramesSection({handle}: {handle: AtlasHandle | null}) {
  * view), then Relations, then the builder; the mockup's Body, Landmass, Climate, Sky and Locations stand longest (:1447-1461). */
 const FOLD_ORDER = ['frames', 'layers', 'view', 'relations', 'climate', 'sky', 'landmass', 'worlds', 'locations']
 
-/** The M4′ World / Places plate over the open atlas. `held` are the devices the families declare this instrument holds (the globe,
+/** The World / Places plate over the open atlas. `held` are the devices the families declare this instrument holds (the globe,
  * the Earth ⇄ Graph switch, the QL sky): each stands as a mark on the section that draws its controls — none is dropped. */
 export function PlacesPlate({held, focused, onFold, onFull}: Pick<OwnPlateProps, 'held' | 'focused' | 'onFold' | 'onFull'>) {
   const handle = useAtlasLive()
@@ -514,7 +514,7 @@ export function PlacesPlate({held, focused, onFold, onFull}: Pick<OwnPlateProps,
   const others = heldMarksOf(held.filter(entry => !placed.includes(entry.face)))
   const located = standing.counts.located, unlocated = standing.places.filter(place => !place.located).length
   const presentation: FacePresentation = {family: 'techne', faceId: 'techne:m4', title: 'World / Places', icon: 'placed',
-    owner: ['M4′', 'Technē', 'Earth · root anchor', focused ? 'open on the focused pane' : 'opened here'].join(' · ')}
+    owner: ['Technē', 'Earth · root anchor', focused ? 'open on the focused pane' : 'opened here'].join(' · ')}
   const well = wellSection('techne:m4')
   const sections: PlateSection[] = [
     {id: 'body', title: 'Body', cols: 2, note: <HeldMarks devices={[...inSection(['globe-engine', 'mode-switch']), ...others]} />, children: <BodySection />},

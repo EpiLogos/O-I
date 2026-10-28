@@ -1,5 +1,5 @@
 /**
- * Palace composition state (L5 Technē M5′, QL-MEF #218) — the session-scoped
+ * Palace composition state (L5 Technē, QL-MEF #218) — the session-scoped
  * presentation state of the Palace surface: whether the integral composition
  * is bound, each region's arrangement, and the visitor's bookmarks.
  *
@@ -220,7 +220,7 @@ export function resetPalaceCompositions() {
 // ---------------------------------------------------------------------------
 
 /** One step of the guided traversal: a region and the native ref standing
- * there, in canonical M0′→M5′ order and spatial walk order within each
+ * there, in canonical instrument order and spatial walk order within each
  * region. */
 export interface PalaceTraversalStep {
   region: PalaceRegionKey;

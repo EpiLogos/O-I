@@ -3,7 +3,7 @@
  * already owns here. No DOM, no store, no second graph.
  *
  * Moved here verbatim from the frame's `expressions-app/field-studies-journeys/src/palaceWhole.ts` (at fdc302870) when palaces
- * moved onto the atlas (T-PALACES-ONTO-ATLAS, FOUNDATION §3 N4): the frame's Palace lens retired, and the atlas's M5 plate
+ * moved onto the atlas (T-PALACES-ONTO-ATLAS, FOUNDATION §3 N4): the frame's Palace lens retired, and the atlas's Palace plate
  * (`packages/live-shell/ui/src/projections/atlas/palaces/`) reads the whole through this owner seam. The frame's host-request
  * builders (`palaceInstrumentOpenRequest`, `palaceSourceOpenRequest`) retired with the lens: the atlas opens an object through
  * the shell's own owners, never a frame summon.
@@ -87,7 +87,6 @@ export function palaceStanding(reading: TechneReading, region: PalaceRegion): Pa
 
 export interface PalaceWholeRegion {
   key: PalaceRegionKey;
-  m_prime: number | null;
   office: string;
   standing: PalaceStandingView;
   entries: PalaceRegionEntry[];
@@ -100,14 +99,19 @@ export interface PalaceWholeView {
   regions: PalaceWholeRegion[];
 }
 
-/** The integral whole of one reading, in canonical M0′→M5′ order. A reading
+/** The name a surface gives a region: its office. The regions carry no M′ number (ql.techne/v1 withdrew it, EpiLogos/O-I #753);
+ * the walk's two closes, the sources and the situated agencies (the regions that had none), still read as closes. */
+export function palaceRegionName(region: {key: PalaceRegionKey; office: string}): string {
+  return region.key === "sources" || region.key === "agency" ? `close · ${region.office}` : region.office;
+}
+
+/** The integral whole of one reading, in canonical order, Project → Palace. A reading
  * with no reading yet is an honest absence; a reading with nothing to compose
  * names the disclosure's own reason. */
 export function palaceWholeView(reading: TechneReading | null): PalaceWholeView {
   if (!reading) return {available: false, reason: null, regions: []};
   const regions: PalaceWholeRegion[] = palaceRegions(reading).map((region) => ({
     key: region.key,
-    m_prime: region.m_prime,
     office: region.office,
     standing: palaceStanding(reading, region),
     entries: region.entries,
@@ -226,7 +230,7 @@ export interface PalaceWalkStep {
   locus: PalaceLocus;
 }
 
-/** Every occupied locus of the whole, in walk order: regions M0′→M5′, loci in
+/** Every occupied locus of the whole, in walk order: regions Project → Palace, loci in
  * spatial order within each region. Empty when the reading composes nothing. */
 export function palaceWalkSteps(reading: TechneReading | null): PalaceWalkStep[] {
   if (!reading) return [];

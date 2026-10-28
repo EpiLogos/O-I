@@ -1,6 +1,6 @@
 /**
- * Palace Return (L5 Technē M5′, QL-MEF #218) — the Recognition/Return leg
- * that closes the canonical traversal back into M0′ ground.
+ * Palace Return (L5 Technē, QL-MEF #218) — the Recognition/Return leg
+ * that closes the canonical traversal back into the Project ground.
  *
  * Laws carried here:
  *   - the Return routes a NATIVE owner Action (the reading's disclosed
@@ -12,7 +12,7 @@
  *     explicit unrouted receipt and mutates NOTHING: no reading field, no
  *     composition, no bookmark changes (the rejected leg is provable);
  *   - after an accepted (routed) Return, the renewed ground is re-opened by
- *     crossing to the M0′ project aperture on the same DisclosureSession —
+ *     crossing to the project aperture on the same DisclosureSession —
  *     subject, selection basis and agent session ride along untouched;
  *   - no stochastic identity; every input is a pure function of the reading
  *     and the composition.
@@ -123,7 +123,7 @@ export function palaceReturnRoute(reading: TechneReading, composition: PalaceCom
   };
 }
 
-/** The M0′ aperture the renewed ground re-opens into: the project instrument
+/** The aperture the renewed ground re-opens into: the project instrument
  * when the reading discloses it available, else null (honest absence — the
  * closure then stays in the palace with the receipt as its evidence). */
 export function returnGroundInstrument(reading: TechneReading): "project" | null {
@@ -131,7 +131,7 @@ export function returnGroundInstrument(reading: TechneReading): "project" | null
   return entry?.available ? "project" : null;
 }
 
-/** Re-open M0′ on the renewed ground — expressed as the crossing affordance
+/** Re-open the Project on the renewed ground — expressed as the crossing affordance
  * the surface performs through the shared session. Kept here so the closure
  * order (Return first, then re-open) is one testable function. */
 export function returnCrossing(reading: TechneReading): { instrument: "project" } | null {
@@ -202,7 +202,7 @@ export function palaceAcceptRequest(proposal: PalaceReturnProposal, readingReque
   };
 }
 
-/** One Accept outcome, named in one line. Only an invoked receipt is accepted, and only an accepted Return crosses back to M0′
+/** One Accept outcome, named in one line. Only an invoked receipt is accepted, and only an accepted Return crosses back to the ground
  * (`returnCrossing`). Every other state is named by the owner's own words or the routing law's refusal. */
 export type PalaceAcceptOutcome =
   | { accepted: true; line: string; crossing: { instrument: "project" } | null }
@@ -221,7 +221,7 @@ export function palaceAcceptOutcome(reading: TechneReading, proposal: PalaceRetu
   const owner = String(dispatch.owner_operation ?? dispatch.owner ?? action);
   switch (dispatch.state) {
     case "invoked":
-      return { accepted: true, line: `Accepted: ${action} invoked by ${owner}. Returning to M0′.`, crossing: returnCrossing(reading) };
+      return { accepted: true, line: `Accepted: ${action} invoked by ${owner}. Returning to the ground.`, crossing: returnCrossing(reading) };
     case "owner_refused":
       return { accepted: false, line: `Not accepted: ${owner} refused ${action}: ${String(dispatch.message ?? "no reason given")}.`, crossing: null };
     case "unsupported_action":

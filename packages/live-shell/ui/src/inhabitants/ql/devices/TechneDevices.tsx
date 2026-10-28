@@ -23,7 +23,7 @@
 // Palace, the Knowledge graph — then the holder's own plate where it keeps controls no design carries yet (the frame's chrome, the
 // palace's composition), then its effects: the Lens after every instrument a reading plays through (techne/devices/techneDesigns.ts
 // TECHNE_CHAINS). The Timeline and Light were retired as devices of their own in the 22 Oct manual rewrite: the timeline is Technē's
-// Arrangement view (§17.5), so M2′'s own plate stands first; Light is the Canvas's Light page (§17.4). The knowledge graph's three faces (scope, filters, display) no longer stand on its
+// Arrangement view (§17.5), so the Timeline's own plate stands first; Light is the Canvas's Light page (§17.4). The knowledge graph's three faces (scope, filters, display) no longer stand on its
 // chain: the Knowledge graph's design carries their parameters on its Reach, Filters and Display pages, on the same owner.
 import {useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode, type RefObject} from 'react'
 import {DeviceView} from '../../../frame/devices/DeviceView'
@@ -297,13 +297,13 @@ const FAMILY_NAMES: Readonly<Record<string, string>> = {
 }
 
 /** The instruments the atlas is (T-PLACES-ONTO-ATLAS, T-PALACES-ONTO-ATLAS): the 0 instrument, the Earth and solar system with its graph
- * (shell/paneInstrument.ts); M4′ World / Places — "Places is the Archetypal-Earth atlas, alone" (owner, 14 Oct; FOUNDATION §4); and M5′
+ * (shell/paneInstrument.ts); World / Places — "Places is the Archetypal-Earth atlas, alone" (owner, 14 Oct; FOUNDATION §4); and the
  * Palace / Integral Whole — "Palaces live in the atlas … There is no separate palace surface" (FOUNDATION §3 N4). The frame's own Places
- * and Palace lenses retire, so M4′ and M5′ open the atlas, never the stage. */
+ * and Palace lenses retire, so World / Places and the Palace open the atlas, never the stage. */
 const ATLAS_INSTRUMENTS: readonly string[] = [instrumentOfPane('projection.earth', null, 'earth') ?? 'techne:m0', 'techne:m4', 'techne:m5']
 
-/** The atlas instrument the rack stands open while a palace is entered: M5′, whose plate holds the palace's controls (the atlas's palace
- * scale is M5′'s, lock §2.5 "scales system · body · region · palace"). A registration by the atlas's own state, never a mode branch. */
+/** The atlas instrument the rack stands open while a palace is entered: the Palace, whose plate holds the palace's controls (the atlas's
+ * palace scale is the Palace's, lock §2.5 "scales system · body · region · palace"). A registration by the atlas's own state, never a mode branch. */
 export function atlasInstrumentNow(focus: string | null, palace: 'outside' | 'entering' | 'inside'): string | null {
   return focus && ATLAS_INSTRUMENTS.includes(focus) && palace !== 'outside' ? 'techne:m5' : focus
 }
@@ -332,7 +332,8 @@ function openOnFocusedPane(id: string): void {
 
 /** The instrument the focused pane stands once a fold's press has opened its door: the Earth pane's for the atlas's instruments (the
  * one already focused when it is the atlas's), the pressed lens itself on the stage. A press holds across the focus change it causes —
- * lane T, 15 Oct (code-reading): pressing M4′ while another pane was focused opened the Earth, the focus moved to M0, and M4′ folded
+ * lane T, 15 Oct (code-reading): pressing World / Places while another pane was focused opened the Earth, the focus moved to the Project,
+ * and World / Places folded
  * again, so a second press was needed. */
 export function focusAfterOpening(id: string, current: string | null): string | null {
   const door = instrumentDoorOf(id)
@@ -378,11 +379,11 @@ function sectionDeviceOf(entry: TechneEntry): SectionDevice & {face: string} {
   ]}
 }
 
-/** The instruments whose plate is their own (a registration by holder, never a mode branch): M0′ Project, the Earth and its graph as one
+/** The instruments whose plate is their own (a registration by holder, never a mode branch): the Project, the Earth and its graph as one
  * plate — the globe, Graph tools, Earth ⇄ Graph and Deep time drawn as its sections, and the stage's own controls while the stage stands in
- * its project lens (ProjectPlate.tsx); M1′–M3′, the hosted stage's instruments in the
- * manual's groups (projections/stageInstruments/StageInstrumentPlate.tsx STAGE_OWN_PLATES); M4′ World / Places, the atlas's planet plate
- * (projections/atlas/places/PlacesPlate.tsx); M5′ Palace / Integral Whole, the palace's controls — its rooms, path, guide, whole,
+ * its project lens (ProjectPlate.tsx); the Canvas, the Timeline and the Journey, the hosted stage's instruments in the
+ * manual's groups (projections/stageInstruments/StageInstrumentPlate.tsx STAGE_OWN_PLATES); World / Places, the atlas's planet plate
+ * (projections/atlas/places/PlacesPlate.tsx); the Palace / Integral Whole, the palace's controls — its rooms, path, guide, whole,
  * composition, portals and Return (projections/atlas/palaces/PalacePlate.tsx). Every other instrument stands as its families' plate. */
 const OWN_PLATES: Readonly<Record<string, (props: OwnPlateProps) => ReactNode>> = {
   'techne:m0': props => <ProjectPlate {...props} />,
@@ -428,8 +429,9 @@ function InstrumentBody({holder, entries, headed, focused, onFold, onFull}: {hol
     sections={families.length ? families : [{id: 'none', title: 'Controls', children: <SectionNote word="none">No family declares a device this instrument holds yet.</SectionNote>}]} />
 }
 
-/** An instrument folded to its title: the kit's Folded strip, its M′ address its one reading (the mockup's folds, world-shell-mockup.html
- * :153 .ifold, read "M4 World / Places"); pressing its title opens it on the focused pane. */
+/** An instrument folded to its title: the kit's Folded strip (the mockup's folds, world-shell-mockup.html:153 .ifold), its one reading the
+ * holder's provenance where it has one (the Studio's Body: M1+M2+M3) — Technē's instruments carry no M′ number, so theirs is the name
+ * alone; pressing its title opens it on the focused pane. */
 function InstrumentFold({holder, count, onOpen}: {holder: HolderDeclaration; count: number; onOpen: () => void}) {
   return <div className="techne-instrument" data-instrument={holder.id} data-expanded="false" data-device-count={count} data-rack="strip"
     data-i={`${holder.title}|${holder.provenance ? `${holder.provenance} · ` : ''}${count ? `${count} device${count === 1 ? '' : 's'}` : 'no device declared yet'}. Click to open it on the focused pane.`}>
@@ -530,11 +532,11 @@ export function TechneDevices({manifests, focusInstrument = null, instrumentRead
   const published = useMemo(() => [...entries, ...designs], [entries, designs])
   usePublished(published)
   // The instrument opened here (a fold pressed) holds until the focus changes; a new focus stands its own instrument open. While a palace
-  // is entered the atlas stands at its palace scale, so the Earth pane's instrument stands as M5′ (atlasInstrumentNow).
+  // is entered the atlas stands at its palace scale, so the Earth pane's instrument stands as the Palace (atlasInstrumentNow).
   const palace = useSyncExternalStore(subscribePalace, () => palaceState().phase, () => palaceState().phase)
   // `id` null: the person folded the open instrument by its ▾, so none stands open until a fold or a Compact is pressed.
   const [opened, setOpened] = useState<{focus: string | null; id: string | null} | null>(null)
-  // Entering a palace stands M5′ open over whatever atlas fold was pressed; leaving keeps M5′ open, its plate back on the world's palaces.
+  // Entering a palace stands the Palace open over whatever atlas fold was pressed; leaving keeps it open, its plate back on the world's palaces.
   const wasInside = useRef(palace !== 'outside')
   useEffect(() => {
     const now = palace !== 'outside'

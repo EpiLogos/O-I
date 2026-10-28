@@ -17,6 +17,7 @@ import {
   palaceWalkAt,
   palaceWalkResume,
   palaceRegionOpenRoute,
+  palaceRegionName,
   SCENE_REGION_STANDING,
 } from "../../../../desktop/cradle/src/techne/m0m5/palace/whole.ts";
 import {recallOver} from "../../../../desktop/cradle/src/techne/m0m5/palace/recall.ts";
@@ -25,14 +26,14 @@ const ANCHOR = "oi.expression:palace";
 
 const DISCLOSURE = (palaceAvailable, palaceReason) => ({
   instruments: [
-    {instrument: "project", available: true, m_prime: 0, reading: "4:2-deep"},
-    {instrument: "canvas", available: true, m_prime: 1, reading: "4:2-deep"},
-    {instrument: "timeline", available: true, m_prime: 2, reading: "4:2-deep"},
-    {instrument: "journey", available: true, m_prime: 3, reading: "4:2-deep"},
-    {instrument: "place", available: true, m_prime: 4, reading: "4:2-deep"},
+    {instrument: "project", available: true, reading: "4:2-deep"},
+    {instrument: "canvas", available: true, reading: "4:2-deep"},
+    {instrument: "timeline", available: true, reading: "4:2-deep"},
+    {instrument: "journey", available: true, reading: "4:2-deep"},
+    {instrument: "place", available: true, reading: "4:2-deep"},
     palaceAvailable
-      ? {instrument: "palace", available: true, m_prime: 5, reading: "4:2-deep"}
-      : {instrument: "palace", available: false, reason: palaceReason, m_prime: 5, reading: "4:2-deep"},
+      ? {instrument: "palace", available: true, reading: "4:2-deep"}
+      : {instrument: "palace", available: false, reason: palaceReason, reading: "4:2-deep"},
     {instrument: "expressions", available: true, reading: "3:3-conjugate"},
   ],
   application_cuts: [{cut: "4:2-deep", available: true}],
@@ -40,7 +41,7 @@ const DISCLOSURE = (palaceAvailable, palaceReason) => ({
   suggestions: [],
 });
 
-/** A reading that discloses every M′ family the integral whole can compose. */
+/** A reading that discloses every facet family the integral whole can compose. */
 const FULL = {
   contract: "ql.techne/v1",
   reading_ref: "ql.techne:reading:palace-whole",
@@ -95,7 +96,7 @@ test("fixtures satisfy the Technè reading contract", () => {
 
 // ---- T14: the integral whole composes the reading's real facets -----------
 
-test("T14: the integral whole shows every disclosed facet family in M0'→M5' order, each ref verbatim", () => {
+test("T14: the integral whole shows every disclosed facet family in the walk's order, Project → Palace, each ref verbatim", () => {
   const view = palaceWholeView(FULL);
   assert.equal(view.available, true);
   assert.deepEqual(
@@ -112,6 +113,14 @@ test("T14: the integral whole shows every disclosed facet family in M0'→M5' or
   const world = view.regions.find((region) => region.key === "world");
   assert.equal(world.entries[0].ref, "place:here");
   assert.equal(world.entries[0].label, "Here");
+});
+
+test("#753: a region is named by its office and carries no M′ number; the walk's two closes read as closes", () => {
+  const view = palaceWholeView(FULL);
+  assert.ok(view.regions.every((region) => !("m_prime" in region)), "no region carries an M′ number");
+  assert.deepEqual(view.regions.map(palaceRegionName), [
+    "Project / ground", "Canvas / constellation", "Relation field", "Journey / scenes", "World / places", "Expression (3:3)", "close · Sources / provenance",
+  ]);
 });
 
 test("T14: a facet-less region is absent — no placeholder region, no invented beat or source", () => {

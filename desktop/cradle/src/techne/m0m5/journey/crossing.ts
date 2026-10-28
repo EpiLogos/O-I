@@ -1,5 +1,5 @@
 /**
- * The M3′ crossing (L5 Technē T5 — issue #216) — the formal 4:2 ↔ 3:3
+ * The Journey crossing (L5 Technē T5 — issue #216) — the formal Technē ↔ 3:3
  * bridge law, executable. Journey is the hinge: entering a scene crosses the
  * DisclosureSession onto the conjugate 3:3 Expression reading carrying the
  * EXACT scene ref; returning restores the exact Journey position. Locked
@@ -48,7 +48,7 @@ export function crossCutGuard(current: TechneInstrument, target: TechneInstrumen
     throw new Error(`crossing refused: ${current} already carries the ${cutFor(current)} cut — a crossing moves between the two readings, never onto itself`);
   }
   if (cutFor(current) === cutFor(target)) {
-    throw new Error(`crossing refused: ${current} → ${target} stays inside the ${cutFor(current)} cut — the M3′ bridge crosses 4:2 ↔ 3:3`);
+    throw new Error(`crossing refused: ${current} → ${target} stays inside the ${cutFor(current)} cut — the Journey bridge crosses Technē ↔ 3:3`);
   }
 }
 

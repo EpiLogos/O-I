@@ -78,7 +78,7 @@ test('the focused M4′ stands as one plate in the mockup\'s six sections; the o
   assert.ok(order.every(at => at > 0), 'every section stands')
   assert.deepEqual([...order].sort((a, b) => a - b), order, 'in the mockup\'s order')
   assert.match(out, />World \/ Places</)
-  assert.match(out, /<header class="dp-head dp-head--plate" data-i="World \/ Places\|M4′ · Technē · Earth · root anchor · open on the focused pane">/, 'the kit\'s head; who owns it is the status bar\'s words')
+  assert.match(out, /<header class="dp-head dp-head--plate" data-i="World \/ Places\|Technē · Earth · root anchor · open on the focused pane">/, 'the kit\'s head; who owns it is the status bar\'s words')
   // lane BT: the Earth's own well stands first (DEVICE-UI §7), and says which reading is missing — no atlas mounted, no likely planet
   assert.match(out, /data-section="display"[^>]*><div class="dp-display"[^>]*><svg[^>]*><text[^>]*>the Earth<\/text><text[^>]*>not mounted<\/text><\/svg><\/div>/, 'the well names the missing Earth')
   assert.ok(out.indexOf('data-section="display"') < out.indexOf('data-section="body"'), 'the well at the plate\'s left')

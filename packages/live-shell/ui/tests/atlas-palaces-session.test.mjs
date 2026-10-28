@@ -337,7 +337,7 @@ test('Return: proposing writes nothing; Accept sends the proposal through the ow
   assert.deepEqual(calls.invoked[0].reading_request, {expression_ref: EXPR, revision: 4, scene_ref: OVERVIEW, scope: 'expression'}, 'the owner re-reads the reading the proposal came from')
   assert.equal(calls.invoked[0].actor, 'human:techne-palace')
   assert.equal(session.palaceState().phase, 'outside', 'an invoked Return crosses back to the ground: the Earth')
-  assert.equal(session.palaceState().line, 'Accepted: aikit.wiki.stage invoked by aikit.wiki.stage. Returning to M0′.')
+  assert.equal(session.palaceState().line, 'Accepted: aikit.wiki.stage invoked by aikit.wiki.stage. Returning to the ground.')
   // a refusal is said and the visitor stays
   fresh()
   owners({invoke: () => ({state: 'refused', reason: 'stale: the proposal was made from reading reading:old'})})
@@ -367,7 +367,7 @@ test('Return to ground leaves the palace for the Earth, only when the reading di
   await session.enterPalace(ROW)
   session.returnToGround()
   assert.equal(session.palaceState().phase, 'inside')
-  assert.match(session.inside().line, /does not disclose the M0′ ground/)
+  assert.match(session.inside().line, /does not disclose the ground/)
 })
 
 test('an object opens through its owner: a region its one Expression, a room its Scene, a subject the subject door, an entry its instrument; what its route refuses is named (T16)', async () => {

@@ -215,10 +215,12 @@ export function liveExemplarFor(semantic: LiveSemantic): string {
 
 export interface HolderDeclaration {
   readonly id: string
-  /** The plain name the holder presents as (lock §9.4: the name, never the M′ address). */
+  /** The plain name the holder presents as (lock §9.4): an instrument is named by its work, never by an M′ number. */
   readonly title: string
   readonly liveSemantic: LiveSemantic
-  /** A Technē instrument's M′ address, kept as provenance and never as its name. */
+  /** The coordinates a holder stands on, kept as provenance and never as its name, where it has them (the Studio's Body: M1+M2+M3).
+   * Technē's instruments carry none: Technē is one M′ layer, M5′, and its instruments are named by their work (PROGRAMME R9; manual
+   * §25.1). */
   readonly provenance?: string
   /** The faces this holder holds, as `family/face`. Declared for the Studio
    * sections and the Clip detail; the Expressions faces' `heldBy` derives from
@@ -247,15 +249,15 @@ export const DETAIL_CLIP_HOLDER: HolderDeclaration = {
     'expressions/text', 'expressions/blueprint', 'expressions/arrange', 'expressions/body'],
 }
 
-/** The six Technē instruments: each an instrument, its plain name kept beside
- * its M′ provenance (lock §2.5, §4.9). */
+/** The six Technē instruments: each an instrument, named by its work (lock §2.5, §4.9; PROGRAMME R9). The ids keep their old
+ * order-keys (`techne:m0` … `techne:m5`); they are keys, never said. */
 export const TECHNE_INSTRUMENTS: readonly HolderDeclaration[] = [
-  {id: 'techne:m0', title: 'Project', provenance: 'M0′', liveSemantic: 'device-instrument'},
-  {id: 'techne:m1', title: 'Canvas', provenance: 'M1′', liveSemantic: 'device-instrument'},
-  {id: 'techne:m2', title: 'Timeline', provenance: 'M2′', liveSemantic: 'device-instrument'},
-  {id: 'techne:m3', title: 'Journey', provenance: 'M3′', liveSemantic: 'device-instrument'},
-  {id: 'techne:m4', title: 'World', provenance: 'M4′', liveSemantic: 'device-instrument'},
-  {id: 'techne:m5', title: 'Palace', provenance: 'M5′', liveSemantic: 'device-instrument'},
+  {id: 'techne:m0', title: 'Project', liveSemantic: 'device-instrument'},
+  {id: 'techne:m1', title: 'Canvas', liveSemantic: 'device-instrument'},
+  {id: 'techne:m2', title: 'Timeline', liveSemantic: 'device-instrument'},
+  {id: 'techne:m3', title: 'Journey', liveSemantic: 'device-instrument'},
+  {id: 'techne:m4', title: 'World', liveSemantic: 'device-instrument'},
+  {id: 'techne:m5', title: 'Palace', liveSemantic: 'device-instrument'},
 ]
 
 /** The standalone instruments any pane can hold in any mode (owner ruling, 13 Oct 2026; lock §8.1): the knowledge graph —

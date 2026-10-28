@@ -1,4 +1,4 @@
-// The Place tool of the M4′ World / Places plate (T-PLACES-ONTO-ATLAS; lane-4 T17 click to create, T18 the owner's basis law, T19
+// The Place tool of the World / Places plate (T-PLACES-ONTO-ATLAS; lane-4 T17 click to create, T18 the owner's basis law, T19
 // refine with honest precision; manual §2 "place things on it and name them"). Ported from the frame map's authoring surface, which
 // retires (psychogeographic/PsychogeographicMap.tsx's context menu and marker drag, researchInstruments.tsx:1496-1527's route): the
 // pure draft contract is the frame's own, used in place (vendor psychogeographic/placeAuthoring.ts — prefillFromClick,

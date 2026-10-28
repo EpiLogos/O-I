@@ -12,7 +12,7 @@
  * The rail's choice is kept per viewer (localStorage, versioned key, every
  * access guarded) exactly like the material scenes: refs and presentation
  * only, never content. It renders correctly with storage empty, blocked or
- * corrupt — the ground instrument M0′ is the default first view.
+ * corrupt — the ground instrument (the Project) is the default first view.
  */
 import {useSyncExternalStore} from "react";
 import {clampTabListWidth, TAB_PRESENTATIONS, type TabPresentation} from "../workspace/mode";

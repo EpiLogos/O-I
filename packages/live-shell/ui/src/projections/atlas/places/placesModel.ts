@@ -1,4 +1,4 @@
-// M4′ World / Places on the atlas, the plate's readings (T-PLACES-ONTO-ATLAS; FOUNDATION §4 "Places is the Archetypal-Earth atlas,
+// World / Places on the atlas, the plate's readings (T-PLACES-ONTO-ATLAS; FOUNDATION §4 "Places is the Archetypal-Earth atlas,
 // alone"; DLW manual §2 "Earth is there too, the one world nobody built … You place things on it"). Pure: owner readings in, rows
 // out. No DOM, no React, no store, no transport.
 //
