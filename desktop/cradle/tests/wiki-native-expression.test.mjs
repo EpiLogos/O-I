@@ -113,7 +113,11 @@ test('actual Wiki becomes native Scenes with exact identities; repeated open pre
   // an explicit invalidation notification, not a claimed native file mutation.
   assert.deepEqual(applyWikiProjectionReceipt({event:'file_changed',path:sourceReading.wikiBasis.path,seq:1000000},transport),['central']);
   assert.equal(wikiReadingOf(getWikiProjectionState().standings.central),undefined,'stale source is unavailable immediately, before its real reread returns');
-  await assert.rejects(ensureWikiProjectionReading(register,transport),/source reading changed|invalidated/);
+  // The receipt started the register's own reread, so an ensure waits for that
+  // outcome rather than refusing (src/techne/wikiProjectionStore.ts:285-287); the
+  // unchanged source answers with its unchanged basis.
+  const reread=await ensureWikiProjectionReading(register,transport);
+  assert.equal(reread.wikiBasis.revision,sourceReading.wikiBasis.revision,'the receipt reread answers from the unchanged source');
   const refreshed=await refreshWikiProjectionReading(register,transport);
   assert.equal(refreshed.wikiBasis.revision,sourceReading.wikiBasis.revision,'read-only test left real source bytes unchanged');
   const afterRefresh=await readWikiSceneTechne(transport,request);

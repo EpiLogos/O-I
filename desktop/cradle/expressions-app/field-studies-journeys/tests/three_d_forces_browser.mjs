@@ -4,7 +4,8 @@
  * real studio controls and reads settled GPU particle state back through the
  * engine's own diagnostics.
  *
- * Run with the dev server up:  node tests/three_d_forces_browser.mjs
+ * Run against the frame's build:  node scripts/browser-harnesses.mjs three_d_forces
+ * (or with a dev server up, OI_TEST_URL naming it).
  */
 import { chromium } from 'playwright';
 

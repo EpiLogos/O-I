@@ -1,5 +1,9 @@
 # Native parity acceptance
 
+This procedure is the Expressions repository's from before the app was vendored into O-I
+(`32450cff0`). Its reference checkouts, parity bundle and workflow never entered O-I;
+here the frame's harnesses run through `field-studies-journeys/scripts/browser-harnesses.mjs`.
+
 ## Reproduce
 
 Use Node 22, the lockfile and the immutable source checkouts below. The permanent

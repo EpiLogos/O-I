@@ -882,3 +882,100 @@ jobs:
           name: collection-native-evidence-${{ github.sha }}
           path: desktop/cradle/tests/artifacts/collection-source/
           if-no-files-found: warn
+
+  # ------------------------------------------- frame native readings
+  # The hosted frame's native-reading tests (field-studies-journeys/tests/
+  # *-native.test.mjs) skip in its landing suite: each reads an artifact only
+  # the native owners make. Here pinned Central and AIKit with this tip's kernel
+  # bridge and oi make them in a disposable World (commissioned synthetic
+  # material, no personal ground), and the tests must run: a skip fails.
+  frame-native-readings:
+    if: ${{ inputs.focused-development != true }}
+    name: Frame native readings from exact Central, AIKit and kernel
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      CENTRAL_SHA: e3246d2142b0613065e6da248261d2a539ffeafe
+      AIKIT_SHA: 395efaf838dd2f25c161ef2c7dad63584871512c
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: EpiLogos/Central
+          ref: ${{ env.CENTRAL_SHA }}
+          path: native-central
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: EpiLogos/ai-kit
+          ref: ${{ env.AIKIT_SHA }}
+          path: native-aikit
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            desktop/cradle/package-lock.json
+            desktop/cradle/expressions-app/package-lock.json
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2.9.2
+        with:
+          workspaces: |
+            desktop/cradle/kernel
+            cli
+            native-central
+            native-aikit
+      - name: Build the owners — this tip's kernel bridge and oi, pinned ctrl and aikit
+        run: |
+          set -euo pipefail
+          test "$(git -C native-central rev-parse HEAD)" = "$CENTRAL_SHA"
+          test "$(git -C native-aikit rev-parse HEAD)" = "$AIKIT_SHA"
+          cargo build --locked --manifest-path desktop/cradle/kernel/Cargo.toml --bin walk-bridge
+          cargo build --locked --manifest-path cli/Cargo.toml --bin oi
+          cargo build --locked --manifest-path native-central/Cargo.toml -p ctrl
+          cargo build --locked --manifest-path native-aikit/Cargo.toml -p aikit-cli --bin aikit
+          {
+            echo "OI_KERNEL_BIN=$GITHUB_WORKSPACE/desktop/cradle/kernel/target/debug/walk-bridge"
+            echo "OI_BIN=$GITHUB_WORKSPACE/cli/target/debug/oi"
+            echo "OI_CENTRAL_CTRL_BIN=$GITHUB_WORKSPACE/native-central/target/debug/ctrl"
+            echo "OI_AIKIT_BIN=$GITHUB_WORKSPACE/native-aikit/target/debug/aikit"
+            echo "READINGS=$RUNNER_TEMP/native-readings"
+          } >> "$GITHUB_ENV"
+      - name: Install the locked graphs the producers and the frame import
+        run: |
+          npm ci --prefix desktop/cradle --no-audit --no-fund
+          npm ci --prefix desktop/cradle/expressions-app --no-audit --no-fund
+      # One disposable World serves both producers: the stress material is its
+      # Wiki, and the Wiki regression needs a Factory project in its catalogue.
+      - name: Produce the native readings — the Timeline stress receipt and the Wiki construction
+        working-directory: desktop/cradle
+        run: |
+          set -euo pipefail
+          mkdir -p "$READINGS"
+          OI_TIMELINE_STRESS_DIR="$READINGS/world" \
+            node --experimental-strip-types --import ./tests/ts-register.mjs tests/prepare-timeline-native-stress.mjs
+          mkdir "$READINGS/world/Central/Work/Factory"
+          "$OI_CENTRAL_CTRL_BIN" --root "$READINGS/world/Central" --json action run projectcentral.init '{"project":"Factory","project_id":"factory"}'
+          OI_NATIVE_WIKI_EXPRESSION=1 OI_NATIVE_WIKI_EVIDENCE_DIR="$READINGS/wiki" \
+          OI_CENTRAL_ROOT="$READINGS/world/Central" CENTRAL_ROOT="$READINGS/world/Central" AIKIT_HOME="$READINGS/world/aikit-home" \
+            node ../../scripts/node-test.mjs --no-skips --experimental-strip-types --import=./tests/ts-register.mjs tests/wiki-native-expression.test.mjs
+      - name: The frame's native-reading tests against those readings, none skipped
+        working-directory: desktop/cradle/expressions-app
+        run: |
+          OI_NATIVE_TIMELINE_PROOF="$READINGS/world/native-stress-proof.json" \
+          OI_RESEARCH_NATIVE_ARTIFACT="$READINGS/wiki/wiki-native-artifact.json" \
+            node ../../../scripts/node-test.mjs --no-skips "field-studies-journeys/tests/*-native.test.mjs"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: frame-native-readings-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/native-readings/world/native-stress-proof.json
+            ${{ runner.temp }}/native-readings/world/native-binary-snapshot.json
+            ${{ runner.temp }}/native-readings/world/native-commands.ndjson
+            ${{ runner.temp }}/native-readings/world/failure.json
+            ${{ runner.temp }}/native-readings/wiki/
+          if-no-files-found: warn

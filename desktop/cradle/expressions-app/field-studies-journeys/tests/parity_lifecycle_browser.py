@@ -1,11 +1,14 @@
 from pathlib import Path
 import json
-from harness import browser_session
-R=Path(__file__).resolve().parents[1];E=R/'evidence-native';HTML=(R/'public/index.html').read_text()
+from harness import browser_session,EVIDENCE
+R=Path(__file__).resolve().parents[1];E=EVIDENCE;HTML=(R/'public/index.html').read_text()
 results=[]
 with browser_session({'width':1440,'height':1000}) as (_,ctx,p):
  errors=[];p.on('pageerror',lambda e:errors.append(str(e)))
- p.set_content(HTML,wait_until='load');p.wait_for_function('__FIELD_STUDIES__?.inspect()?.particleCount===62000');p.wait_for_timeout(3500);p.evaluate('__FIELD_STUDIES__.pause()');s=p.evaluate('__FIELD_STUDIES__.getState()');g=p.evaluate('__FIELD_STUDIES__.inspect(true)');assert all(isinstance(x,(int,float)) and abs(x)<1e30 for x in g['positions']);assert g['steps']>0
+ p.set_content(HTML,wait_until='load');p.wait_for_function('__FIELD_STUDIES__?.inspect()?.particleCount===62000')
+ # A fresh start opens on the entry gate; the person continues into the open field.
+ assert p.locator('#entry-gate').is_visible();p.locator('#entry-gate [data-action="entry-dismiss"]').click()
+ p.wait_for_timeout(3500);p.evaluate('__FIELD_STUDIES__.pause()');s=p.evaluate('__FIELD_STUDIES__.getState()');g=p.evaluate('__FIELD_STUDIES__.inspect(true)');assert all(isinstance(x,(int,float)) and abs(x)<1e30 for x in g['positions']);assert g['steps']>0
  results.append({'id':'DEFAULT-62000-LIVE','ok':True,'particles':62000,'physicsSteps':g['steps'],'renderFps':s['fps'],'note':'Measured software-renderer sample, not a target-device or 30-fps guarantee.'})
  p.screenshot(path=str(E/'parity-workspace.png'));p.locator('[data-action="library"]').first.click();p.wait_for_timeout(600);p.screenshot(path=str(E/'parity-library.png'));p.locator('[data-action="close-library"]').first.click()
  before=p.evaluate('__FIELD_STUDIES__.getDocument()')

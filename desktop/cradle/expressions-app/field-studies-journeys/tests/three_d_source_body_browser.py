@@ -7,7 +7,8 @@ uniformity law makes: an image mask sampled while the volume is off stays a
 flat card, switching the volume on gives the already-loaded mask a real body
 without re-uploading it, and a second mask scene gains the same body.
 
-Run with the dev server up:  python tests/three_d_source_body_browser.py
+Run against the frame's build:  node scripts/browser-harnesses.mjs three_d_source_body
+(or with a dev server up, OI_TEST_URL naming it).
 """
 from pathlib import Path
 import os

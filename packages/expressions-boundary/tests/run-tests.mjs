@@ -10,6 +10,8 @@ import {spawnSync} from 'node:child_process';
 const directory=fileURLToPath(new URL('.',import.meta.url));
 const owned=mkdtempSync(join(tmpdir(),'oi-expressions-boundary-tests-'));
 let failures=0;
+const suites=readdirSync(directory).filter(file=>file.endsWith('.test.mjs')).sort();
+if(!suites.length){console.error('expressions-boundary: no tests/*.test.mjs to run');rmSync(owned,{recursive:true,force:true});process.exit(1)}
 // Suites that replay archived readings of the owner's actual World (recovery
 // reads, kernel acknowledgements). That material is the owner's and stays off
 // this public repository: the suite runs where it is present and is skipped,
@@ -21,7 +23,7 @@ const OWNER_EVIDENCE_SUITES={
   'native-recovery-scene-integration.test.mjs':['native-recovery-checkpoint-read-20261008.json','native-recovery-draft-read-20261008.json'],
   'recovery-library-retention.test.mjs':['native-recovery-conflict-reading-2026-10-08.json'],
 };
-for(const file of readdirSync(directory).filter(file=>file.endsWith('.test.mjs')).sort()) {
+for(const file of suites) {
   const absent=(OWNER_EVIDENCE_SUITES[file]??[]).filter(name=>!existsSync(OWNER_EVIDENCE+name));
   if(absent.length){console.log(`skip ${file} — owner World evidence absent on this machine (${absent.join(', ')})`);continue}
   const result=spawnSync(process.execPath,['--experimental-webstorage',`--localstorage-file=${join(owned,file+'.storage')}`,

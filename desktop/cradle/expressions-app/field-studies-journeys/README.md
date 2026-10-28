@@ -47,9 +47,9 @@ editing guides and optionally include authored text.
 Use the root commands documented in `../README.md`. `tests/native_gpu.py` checks
 real floating-point GPU data. `tests/native_browser.py` exercises the native editor
 and decodes PNG/video/artifact exports. `tests/module_browser.py` checks the default
-served entry and its portable-export bundle. `tests/browser.py` and
-`docs/TEST_REPORT.md` are retained **pre-integration preview evidence**, not proof
-of native acceptance.
+served entry and its portable-export bundle. `scripts/browser-harnesses.mjs` runs
+every harness, as the candidate job does. `docs/TEST_REPORT.md` is retained
+**pre-integration preview evidence**, not proof of native acceptance.
 
 Exact runtime checkpoints, instantaneous physical seeking, controlled offline
 clip rendering and guaranteed hardware recording rates are not advertised as

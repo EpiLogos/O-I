@@ -4,11 +4,14 @@ No generated mockups, changed URL policies, or replacement simulation.
 """
 from pathlib import Path
 import json, traceback
-from harness import browser_session
+from harness import browser_session,secure_page,EVIDENCE
 ROOT=Path(__file__).resolve().parents[1]
-E=ROOT/'evidence-native';E.mkdir(exist_ok=True)
+E=EVIDENCE
 HTML=(ROOT/'public/index.html').read_text()
 STORAGE="<script>window.__TEST_STORAGE__={};Object.defineProperty(window,'localStorage',{value:{getItem:k=>window.__TEST_STORAGE__[k]??null,setItem:(k,v)=>window.__TEST_STORAGE__[k]=String(v),removeItem:k=>delete window.__TEST_STORAGE__[k]},configurable:true});</script>"
+# Browser storage refused, as a browser with site data blocked refuses it (the
+# explicit unavailable-storage case; an https page otherwise has storage).
+NO_STORAGE="<script>Object.defineProperty(window,'localStorage',{get(){throw new DOMException('The operation is insecure.','SecurityError')},configurable:true});</script>"
 results=[];errors=[]
 def require(value,why):
  if not value:raise AssertionError(why)
@@ -20,7 +23,7 @@ def gpu(p):return p.evaluate('window.__FIELD_STUDIES__.inspect(true)')
 def act(p,name,tail=''):
  p.locator('[data-action="'+name+'"]'+tail).filter(visible=True).first.click(timeout=20000);p.wait_for_timeout(90)
 def open_page(p,fixture,storage=True):
- start=(STORAGE if storage else '')+'<script>window.__JOURNEY__='+json.dumps(fixture).replace('</','<\\/')+';</script>'
+ start=(STORAGE if storage else NO_STORAGE)+'<script>window.__JOURNEY__='+json.dumps(fixture).replace('</','<\\/')+';</script>'
  p.set_content(HTML.replace('<head>','<head>'+start,1),wait_until='load');p.wait_for_function('!!window.__FIELD_STUDIES__?.inspect()');p.evaluate('window.__FIELD_STUDIES__.pause()');p.wait_for_timeout(100)
 def drag(p,x,y,dx,dy,shift=False):
  if shift:p.keyboard.down('Shift')
@@ -99,13 +102,13 @@ try:
   p.screenshot(path=str(E/'expressions-mobile.png'));p.locator('.workspace-cluster .header-menu-toggle').click();p.wait_for_timeout(120);act(p,'library');p.wait_for_timeout(100);check('Library remains a scrollable single-column page on small screens',p.locator('#library-page').evaluate('e=>e.scrollHeight>e.clientHeight') and p.evaluate('document.documentElement.scrollWidth<=innerWidth'))
   p.screenshot(path=str(E/'expressions-library-mobile.png'));p.evaluate('window.__FIELD_STUDIES__.dispose()')
   # True trusted touch events on the controller; no synthetic event masquerading as a device test.
-  tc=browser.new_context(viewport={'width':900,'height':700},has_touch=True,reduced_motion='reduce');tp=tc.new_page();open_page(tp,fixture)
+  tc=browser.new_context(viewport={'width':900,'height':700},has_touch=True,reduced_motion='reduce');tp=secure_page(tc);open_page(tp,fixture)
   before=doc(tp);cdp=tc.new_cdp_session(tp)
   cdp.send('Input.dispatchTouchEvent',{'type':'touchStart','touchPoints':[{'x':450,'y':300}]});cdp.send('Input.dispatchTouchEvent',{'type':'touchMove','touchPoints':[{'x':475,'y':320}]});cdp.send('Input.dispatchTouchEvent',{'type':'touchEnd','touchPoints':[]});tp.wait_for_timeout(100)
   check('Touch drag on the stage places nothing and applies no field force',not state(tp)['pointerActive'] and doc(tp)==before)
   tp.evaluate('window.__FIELD_STUDIES__.dispose()');tc.close()
   # The same file is still usable without localStorage; import retains a session card.
-  p3=ctx.new_page();p3.emulate_media(reduced_motion='reduce');open_page(p3,fixture,False)
+  p3=secure_page(ctx);p3.emulate_media(reduced_motion='reduce');open_page(p3,fixture,False)
   p3.locator('#import-file').set_input_files({'name':'portable.json','mimeType':'application/json','buffer':payload.encode()});p3.wait_for_timeout(400)
   check('Storage-unavailable import remains in-session and offers honest portable export',p3.locator('[data-action="load-saved"][data-id="imported-expression"]').count()==1 and 'Browser storage is unavailable' in p3.locator('#library-page').inner_text())
   p3.evaluate('window.__FIELD_STUDIES__.dispose()');p3.close()

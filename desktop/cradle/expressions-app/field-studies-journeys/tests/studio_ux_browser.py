@@ -1,6 +1,7 @@
-"""Manual verification: scene transport, automation-editor transport, physics pause.
+"""Acceptance: scene transport, automation-editor transport, physics pause.
 
-Run with the dev server up:  /usr/local/bin/python3 tests/verify_studio_ux.py
+Run against the frame's build:  node scripts/browser-harnesses.mjs studio_ux
+(or with a dev server up, OI_TEST_URL naming it).
 """
 from pathlib import Path
 import json, os, sys
