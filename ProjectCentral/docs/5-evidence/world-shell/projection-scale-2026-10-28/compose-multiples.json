@@ -1,0 +1,174 @@
+[
+ {
+  "multiple": 1,
+  "owner_rows": 1016,
+  "owner_edges": 1345,
+  "declarations": {
+   "state": "available",
+   "places": 0,
+   "times": 0,
+   "types": 5
+  },
+  "field": {
+   "occurrences": 1007,
+   "located": 0,
+   "dated": 0,
+   "archetypes": 18,
+   "families": 17,
+   "parallels": 0,
+   "joins": 22
+  },
+  "model": {
+   "occ": 1007,
+   "located": 0
+  },
+  "graph": {
+   "nodes": 1042,
+   "edges": 1642,
+   "nodes_by_kind": {
+    "archetype": 18,
+    "family": 17,
+    "occurrence": 1007
+   },
+   "edges_by_kind": {
+    "tie": 50,
+    "instance": 1007,
+    "parallel": 585
+   }
+  },
+  "cpu_ms": {
+   "compose": 27.9,
+   "model": 5.4,
+   "graph_build": 8.6
+  }
+ },
+ {
+  "multiple": 4,
+  "owner_rows": 4064,
+  "owner_edges": 5380,
+  "declarations": {
+   "state": "available",
+   "places": 0,
+   "times": 0,
+   "types": 5
+  },
+  "field": {
+   "occurrences": 4028,
+   "located": 0,
+   "dated": 0,
+   "archetypes": 69,
+   "families": 18,
+   "parallels": 0,
+   "joins": 65
+  },
+  "model": {
+   "occ": 4028,
+   "located": 0
+  },
+  "graph": {
+   "nodes": 4115,
+   "edges": 6506,
+   "nodes_by_kind": {
+    "archetype": 69,
+    "family": 18,
+    "occurrence": 4028
+   },
+   "edges_by_kind": {
+    "tie": 138,
+    "instance": 4028,
+    "parallel": 2340
+   }
+  },
+  "cpu_ms": {
+   "compose": 100.9,
+   "model": 23,
+   "graph_build": 39.2
+  }
+ },
+ {
+  "multiple": 16,
+  "owner_rows": 16256,
+  "owner_edges": 21520,
+  "declarations": {
+   "state": "available",
+   "places": 0,
+   "times": 0,
+   "types": 5
+  },
+  "field": {
+   "occurrences": 16112,
+   "located": 0,
+   "dated": 0,
+   "archetypes": 273,
+   "families": 18,
+   "parallels": 0,
+   "joins": 233
+  },
+  "model": {
+   "occ": 16112,
+   "located": 0
+  },
+  "graph": {
+   "nodes": 16403,
+   "edges": 25958,
+   "nodes_by_kind": {
+    "archetype": 273,
+    "family": 18,
+    "occurrence": 16112
+   },
+   "edges_by_kind": {
+    "tie": 486,
+    "instance": 16112,
+    "parallel": 9360
+   }
+  },
+  "cpu_ms": {
+   "compose": 339.2,
+   "model": 126.3,
+   "graph_build": 52.9
+  }
+ },
+ {
+  "multiple": 64,
+  "owner_rows": 65024,
+  "owner_edges": 86080,
+  "declarations": {
+   "state": "available",
+   "places": 0,
+   "times": 0,
+   "types": 5
+  },
+  "field": {
+   "occurrences": 64448,
+   "located": 0,
+   "dated": 0,
+   "archetypes": 1089,
+   "families": 18,
+   "parallels": 0,
+   "joins": 905
+  },
+  "model": {
+   "occ": 64448,
+   "located": 0
+  },
+  "graph": {
+   "nodes": 65555,
+   "edges": 103766,
+   "nodes_by_kind": {
+    "archetype": 1089,
+    "family": 18,
+    "occurrence": 64448
+   },
+   "edges_by_kind": {
+    "tie": 1878,
+    "instance": 64448,
+    "parallel": 37440
+   }
+  },
+  "cpu_ms": {
+   "compose": 2361.4,
+   "model": 1517.7,
+   "graph_build": 257.2
+  }
+ }
+]

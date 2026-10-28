@@ -1,0 +1,134 @@
+[
+ {
+  "surface": "atlas-graph",
+  "multiple": 1,
+  "occurrences": 1007,
+  "graph_nodes": 1042,
+  "graph_edges": 1642,
+  "shown_nodes": 1042,
+  "shown_edges": 1642,
+  "ctor_ms": 19.2,
+  "show_ms": 80.1,
+  "settle_frames": 65,
+  "settled": true,
+  "settle_seconds_at_60fps_floor": 1.51,
+  "frame_settling_ms": {
+   "median": 13.2,
+   "p95": 17
+  },
+  "step_ms": {
+   "median": 1.6
+  },
+  "draw_settling_ms": {
+   "median": 11.6,
+   "p95": 14.9
+  },
+  "draw_rest_ms": {
+   "median": 8.2,
+   "p95": 18
+  },
+  "tick_ms": {
+   "median": 0.8,
+   "p95": 0.9
+  }
+ },
+ {
+  "surface": "atlas-graph",
+  "multiple": 4,
+  "occurrences": 4028,
+  "graph_nodes": 4063,
+  "graph_edges": 6418,
+  "shown_nodes": 4063,
+  "shown_edges": 6418,
+  "ctor_ms": 10.6,
+  "show_ms": 347.8,
+  "settle_frames": 104,
+  "settled": true,
+  "settle_seconds_at_60fps_floor": 3.51,
+  "frame_settling_ms": {
+   "median": 33.7,
+   "p95": 34.5
+  },
+  "step_ms": {
+   "median": 15.3
+  },
+  "draw_settling_ms": {
+   "median": 18.4,
+   "p95": 19.1
+  },
+  "draw_rest_ms": {
+   "median": 16,
+   "p95": 16.3
+  },
+  "tick_ms": {
+   "median": 15.4,
+   "p95": 15.5
+  }
+ },
+ {
+  "surface": "atlas-graph",
+  "multiple": 16,
+  "occurrences": 16112,
+  "graph_nodes": 16147,
+  "graph_edges": 25522,
+  "shown_nodes": 16147,
+  "shown_edges": 25522,
+  "ctor_ms": 34.4,
+  "show_ms": 1677.8,
+  "settle_frames": 25,
+  "settled": false,
+  "settle_seconds_at_60fps_floor": 6.28,
+  "frame_settling_ms": {
+   "median": 244.5,
+   "p95": 305.6
+  },
+  "step_ms": {
+   "median": 204
+  },
+  "draw_settling_ms": {
+   "median": 39.9,
+   "p95": 47.7
+  },
+  "draw_rest_ms": {
+   "median": 36,
+   "p95": 40
+  },
+  "tick_ms": {
+   "median": 204.3,
+   "p95": 220
+  }
+ },
+ {
+  "surface": "atlas-graph",
+  "multiple": 64,
+  "occurrences": 64448,
+  "graph_nodes": 64483,
+  "graph_edges": 101938,
+  "shown_nodes": 64483,
+  "shown_edges": 101938,
+  "ctor_ms": 137.5,
+  "show_ms": 4106,
+  "settle_frames": 4,
+  "settled": false,
+  "settle_seconds_at_60fps_floor": 9.92,
+  "frame_settling_ms": {
+   "median": 2516.2,
+   "p95": 2799.3
+  },
+  "step_ms": {
+   "median": 2396.1
+  },
+  "draw_settling_ms": {
+   "median": 108.9,
+   "p95": 120.1
+  },
+  "draw_rest_ms": {
+   "median": 80.6,
+   "p95": 90.1
+  },
+  "tick_ms": {
+   "median": 3680.9,
+   "p95": 5390.9
+  }
+ }
+]

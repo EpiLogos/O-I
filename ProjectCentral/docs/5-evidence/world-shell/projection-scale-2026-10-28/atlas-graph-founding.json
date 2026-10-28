@@ -1,0 +1,101 @@
+[
+ {
+  "surface": "atlas-graph",
+  "multiple": 1,
+  "occurrences": 2854,
+  "graph_nodes": 3456,
+  "graph_edges": 13960,
+  "shown_nodes": 3456,
+  "shown_edges": 13960,
+  "ctor_ms": 22.8,
+  "show_ms": 71.8,
+  "settle_frames": 52,
+  "settled": true,
+  "settle_seconds_at_60fps_floor": 2.38,
+  "frame_settling_ms": {
+   "median": 41.6,
+   "p95": 44
+  },
+  "step_ms": {
+   "median": 4.1
+  },
+  "draw_settling_ms": {
+   "median": 37.5,
+   "p95": 39.9
+  },
+  "draw_rest_ms": {
+   "median": 33.7,
+   "p95": 34.4
+  },
+  "tick_ms": {
+   "median": 1.7,
+   "p95": 2
+  }
+ },
+ {
+  "surface": "atlas-graph",
+  "multiple": 4,
+  "occurrences": 11416,
+  "graph_nodes": 12018,
+  "graph_edges": 51793,
+  "shown_nodes": 12018,
+  "shown_edges": 51793,
+  "ctor_ms": 42.2,
+  "show_ms": 67.9,
+  "settle_frames": 99,
+  "settled": true,
+  "settle_seconds_at_60fps_floor": 4.88,
+  "frame_settling_ms": {
+   "median": 49.9,
+   "p95": 53.5
+  },
+  "step_ms": {
+   "median": 6.3
+  },
+  "draw_settling_ms": {
+   "median": 43.3,
+   "p95": 44.4
+  },
+  "draw_rest_ms": {
+   "median": 38.8,
+   "p95": 42.9
+  },
+  "tick_ms": {
+   "median": 5.8,
+   "p95": 6.1
+  }
+ },
+ {
+  "surface": "atlas-graph",
+  "multiple": 16,
+  "occurrences": 45664,
+  "graph_nodes": 46266,
+  "graph_edges": 203125,
+  "shown_nodes": 46266,
+  "shown_edges": 203125,
+  "ctor_ms": 203.3,
+  "show_ms": 256.9,
+  "settle_frames": 15,
+  "settled": false,
+  "settle_seconds_at_60fps_floor": 1.96,
+  "frame_settling_ms": {
+   "median": 123,
+   "p95": 184.8
+  },
+  "step_ms": {
+   "median": 67.3
+  },
+  "draw_settling_ms": {
+   "median": 52.5,
+   "p95": 92.1
+  },
+  "draw_rest_ms": {
+   "median": 46.2,
+   "p95": 49
+  },
+  "tick_ms": {
+   "median": 65.8,
+   "p95": 66.6
+  }
+ }
+]

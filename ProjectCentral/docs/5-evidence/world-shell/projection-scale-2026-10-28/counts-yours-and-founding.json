@@ -1,0 +1,374 @@
+{
+ "yours_union_over_root_and_17_project_registers_and_shared_field": {
+  "distinct_nodes": 1042,
+  "distinct_edges": 922,
+  "nodes_by_owner": {
+   "ai-kit": 999,
+   "wiki": 1,
+   "shared-field": 42
+  },
+  "nodes_by_kind": {
+   "knowledge-node": 563,
+   "capability": 329,
+   "knowledge-source": 79,
+   "knowledge-space": 24,
+   "hosted-practice": 18,
+   "hosted-wiki-node": 7,
+   "hosted-wiki-space": 5,
+   "hosted-curated-artifact": 4,
+   "action": 3,
+   "hosted-world-position": 3,
+   "hosted-workcell": 2,
+   "hosted-central-world": 2,
+   "host": 1,
+   "wiki-space": 1,
+   "hosted-activity": 1
+  }
+ },
+ "per_register_reads_cold": [
+  {
+   "tag": "yours-p01-central_wiki-cold",
+   "input": "central_wiki",
+   "wall_s": 0.014,
+   "bytes": 1033,
+   "nodes": 1,
+   "edges": 0,
+   "truncated": false
+  },
+  {
+   "tag": "yours-p01-aikit_resolution-cold",
+   "input": "aikit_resolution",
+   "wall_s": 1.422,
+   "bytes": 269212,
+   "nodes": 475,
+   "edges": 110,
+   "truncated": false
+  },
+  {
+   "tag": "yours-p02-central_wiki-cold",
+   "input": "central_wiki",
+   "wall_s": 0.013,
+   "bytes": 1694,
+   "nodes": 2,
+   "edges": 3,
+   "truncated": false
+  },
+  {
+   "tag": "yours-p02-aikit_resolution-cold",
+   "input": "aikit_resolution",
+   "wall_s": 1.03,
+   "bytes": 250885,
+   "nodes": 473,
+   "edges": 84,
+   "truncated": false
+  },
+  {
+   "tag": "yours-p03-central_wiki-cold",
+   "input": "central_wiki",
+   "wall_s": 0.014,
+   "bytes": 1054,
+   "nodes": 1,
+   "edges": 0,
+   "truncated": false
+  },
+  {
+   "tag": "yours-p03-aikit_resolution-cold",
+   "input": "aikit_resolution",
+   "wall_s": 4.567,
+   "bytes": 237481,
+   "nodes": 459,
+   "edges": 70,
+   "truncated": false
+  },
+  {
+   "tag": "yours-p04-central_wiki-cold",
+   "input": "central_wiki",
+   "wall_s": 0.015,
+   "bytes": 1025,
+   "nodes": 1,
+   "edges": 0,
+   "truncated": false
+  },
+  {
+   "tag": "yours-p04-aikit_resolution-cold",
+   "input": "aikit_resolution",
+   "wall_s": 0.903,
+   "bytes": 289633,
+   "nodes": 493,
+   "edges": 130,
+   "truncated": false
+  },
+  {
+   "tag": "yours-p05-central_wiki-cold",
+   "input": "central_wiki",
+   "wall_s": 0.014,
+   "bytes": 1026,
+   "nodes": 1,
+   "edges": 0,
+   "truncated": false
+  },
+  {
+   "tag": "yours-p05-aikit_resolution-cold",
+   "input": "aikit_resolution",
+   "wall_s": 0.792,
+   "bytes": 236486,
+   "nodes": 459,
+   "edges": 70,
+   "truncated": false
+  },
+  {
+   "tag": "yours-p06-central_wiki-cold",
+   "input": "central_wiki",
+   "wall_s": 0.014,
+   "bytes": 1022,
+   "nodes": 1,
+   "edges": 0,
+   "truncated": false
+  },
+  {
+   "tag": "yours-p06-aikit_resolution-cold",
+   "input": "aikit_resolution",
+   "wall_s": 1.424,
+   "bytes": 236480,
+   "nodes": 459,
+   "edges": 70,
+   "truncated": false
+  },
+  {
+   "tag": "yours-p07-central_wiki-cold",
+   "input": "central_wiki",
+   "wall_s": 0.014,
+   "bytes": 1018,
+   "nodes": 1,
+   "edges": 0,
+   "truncated": false
+  },
+  {
+   "tag": "yours-p07-aikit_resolution-cold",
+   "input": "aikit_resolution",
+   "wall_s": 1.159,
+   "bytes": 272282,
+   "nodes": 478,
+   "edges": 113,
+   "truncated": false
+  },
+  {
+   "tag": "yours-p08-central_wiki-cold",
+   "input": "central_wiki",
+   "wall_s": 0.015,
+   "bytes": 1668,
+   "nodes": 2,
+   "edges": 3,
+   "truncated": false
+  },
+  {
+   "tag": "yours-p08-aikit_resolution-cold",
+   "input": "aikit_resolution",
+   "wall_s": 10.021,
+   "bytes": 940560,
+   "nodes": 757,
+   "edges": 930,
+   "truncated": false
+  },
+  {
+   "tag": "yours-p09-central_wiki-cold",
+   "input": "central_wiki",
+   "wall_s": 0.015,
+   "bytes": 1021,
+   "nodes": 1,
+   "edges": 0,
+   "truncated": false
+  },
+  {
+   "tag": "yours-p09-aikit_resolution-cold",
+   "input": "aikit_resolution",
+   "wall_s": 0.782,
+   "bytes": 236173,
+   "nodes": 459,
+   "edges": 69,
+   "truncated": false
+  },
+  {
+   "tag": "yours-p10-central_wiki-cold",
+   "input": "central_wiki",
+   "wall_s": 0.014,
+   "bytes": 1716,
+   "nodes": 2,
+   "edges": 3,
+   "truncated": false
+  },
+  {
+   "tag": "yours-p10-aikit_resolution-cold",
+   "input": "aikit_resolution",
+   "wall_s": 1.19,
+   "bytes": 245824,
+   "nodes": 466,
+   "edges": 77,
+   "truncated": false
+  },
+  {
+   "tag": "yours-p11-central_wiki-cold",
+   "input": "central_wiki",
+   "wall_s": 0.014,
+   "bytes": 1804,
+   "nodes": 2,
+   "edges": 3,
+   "truncated": false
+  },
+  {
+   "tag": "yours-p11-aikit_resolution-cold",
+   "input": "aikit_resolution",
+   "wall_s": 1.213,
+   "bytes": 243715,
+   "nodes": 466,
+   "edges": 77,
+   "truncated": false
+  },
+  {
+   "tag": "yours-p12-central_wiki-cold",
+   "input": "central_wiki",
+   "wall_s": 0.014,
+   "bytes": 1716,
+   "nodes": 2,
+   "edges": 3,
+   "truncated": false
+  },
+  {
+   "tag": "yours-p12-aikit_resolution-cold",
+   "input": "aikit_resolution",
+   "wall_s": 1.601,
+   "bytes": 244058,
+   "nodes": 466,
+   "edges": 77,
+   "truncated": false
+  },
+  {
+   "tag": "yours-p13-central_wiki-cold",
+   "input": "central_wiki",
+   "wall_s": 0.015,
+   "bytes": 1065,
+   "nodes": 1,
+   "edges": 0,
+   "truncated": false
+  },
+  {
+   "tag": "yours-p13-aikit_resolution-cold",
+   "input": "aikit_resolution",
+   "wall_s": 0.788,
+   "bytes": 236534,
+   "nodes": 459,
+   "edges": 70,
+   "truncated": false
+  },
+  {
+   "tag": "yours-p14-central_wiki-cold",
+   "input": "central_wiki",
+   "wall_s": 0.014,
+   "bytes": 1066,
+   "nodes": 1,
+   "edges": 0,
+   "truncated": false
+  },
+  {
+   "tag": "yours-p14-aikit_resolution-cold",
+   "input": "aikit_resolution",
+   "wall_s": 1.273,
+   "bytes": 307396,
+   "nodes": 513,
+   "edges": 150,
+   "truncated": false
+  },
+  {
+   "tag": "yours-p15-central_wiki-cold",
+   "input": "central_wiki",
+   "wall_s": 0.016,
+   "bytes": 1050,
+   "nodes": 1,
+   "edges": 0,
+   "truncated": false
+  },
+  {
+   "tag": "yours-p15-aikit_resolution-cold",
+   "input": "aikit_resolution",
+   "wall_s": 0.803,
+   "bytes": 236522,
+   "nodes": 459,
+   "edges": 70,
+   "truncated": false
+  },
+  {
+   "tag": "yours-p16-central_wiki-cold",
+   "input": "central_wiki",
+   "wall_s": 0.014,
+   "bytes": 1066,
+   "nodes": 1,
+   "edges": 0,
+   "truncated": false
+  },
+  {
+   "tag": "yours-p16-aikit_resolution-cold",
+   "input": "aikit_resolution",
+   "wall_s": 4.707,
+   "bytes": 236401,
+   "nodes": 459,
+   "edges": 69,
+   "truncated": false
+  },
+  {
+   "tag": "yours-p17-central_wiki-cold",
+   "input": "central_wiki",
+   "wall_s": 0.015,
+   "bytes": 1029,
+   "nodes": 1,
+   "edges": 0,
+   "truncated": false
+  },
+  {
+   "tag": "yours-p17-aikit_resolution-cold",
+   "input": "aikit_resolution",
+   "wall_s": 0.887,
+   "bytes": 278053,
+   "nodes": 483,
+   "edges": 120,
+   "truncated": false
+  }
+ ],
+ "yours_root_field_forms": {
+  "forms_with_members": 17,
+  "largest_five": [
+   526,
+   329,
+   79,
+   24,
+   18
+  ],
+  "sum_members_squared": 392179
+ },
+ "founding_corpus": {
+  "source": "Work/Archetypal-Earth dist/data/field.json (public repository), counts only",
+  "occurrences": 2854,
+  "located": 2815,
+  "by_precision": {
+   "region": 1039,
+   "place": 1567,
+   "culture": 209,
+   "none": 39
+  },
+  "dated": 2854,
+  "families": 561,
+  "archetypes": 27,
+  "theoretics": 14,
+  "parallel_ids": 7159,
+  "distinct_1deg_cells": 524,
+  "top10_1deg_cells_share": 0.467,
+  "forms_with_members": 372,
+  "largest_five_forms": [
+   136,
+   124,
+   102,
+   78,
+   75
+  ],
+  "sum_members_squared": 106414
+ }
+}

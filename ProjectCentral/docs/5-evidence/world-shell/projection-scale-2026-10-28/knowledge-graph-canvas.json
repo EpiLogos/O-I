@@ -1,0 +1,65 @@
+[
+ {
+  "meta": {
+   "nodes": 974,
+   "edges": 1286,
+   "layout_ticks": 300,
+   "layout_ms": 719
+  },
+  "pan_frame_callback_ms": {
+   "n": 40,
+   "median": 2.4,
+   "p95": 4.4,
+   "max": 4.9
+  },
+  "pointermove_handler_ms": {
+   "n": 80,
+   "median": 0,
+   "p95": 0.1,
+   "max": 0.1
+  },
+  "errors": []
+ },
+ {
+  "meta": {
+   "nodes": 3896,
+   "edges": 5144,
+   "layout_ticks": 300,
+   "layout_ms": 3846
+  },
+  "pan_frame_callback_ms": {
+   "n": 40,
+   "median": 5,
+   "p95": 7.2,
+   "max": 13.1
+  },
+  "pointermove_handler_ms": {
+   "n": 80,
+   "median": 0,
+   "p95": 0.1,
+   "max": 0.1
+  },
+  "errors": []
+ },
+ {
+  "meta": {
+   "nodes": 15584,
+   "edges": 20576,
+   "layout_ticks": 60,
+   "layout_ms": 3881
+  },
+  "pan_frame_callback_ms": {
+   "n": 40,
+   "median": 9,
+   "p95": 10.3,
+   "max": 25.6
+  },
+  "pointermove_handler_ms": {
+   "n": 80,
+   "median": 0,
+   "p95": 0,
+   "max": 0.1
+  },
+  "errors": []
+ }
+]
