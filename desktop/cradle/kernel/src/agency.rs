@@ -589,6 +589,11 @@ impl Client {
         if let Some(home) = &self.home {
             command.env("AIKIT_HOME", home);
         }
+        // AIKit derives the task's Central root from it, as the other
+        // agent operations carry the World's root.
+        if let Some(root) = std::env::var_os("OI_CENTRAL_ROOT") {
+            command.env("CENTRAL_ROOT", root);
+        }
         command.arg("-C").arg(cwd);
         command.args(["encounter-task-configure", "--agent-session", agent_session]);
         command.arg("--request-json").arg(request.to_string());

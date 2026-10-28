@@ -1,0 +1,397 @@
+{
+  "_provenance": "REAL, 28 Oct 2026 (O-I #768 follow-up: the drop sends only the task's own purpose, source and ref; AIKit derives the rest). This lane's AIKit (ai-kit feat/task-configure-derive-768 on cbaeaa76, encounter_task_derive.rs), the installed Central (ctrl daa58e1f), Actuation (07db09eb) and Workcell boundary (~/.local/bin/workcell-write-boundary), and a walk-bridge built from the O-I seat (dlw/build-lane), on a scratch World (HOME, AIKIT_HOME and OI_HOME isolated; CENTRAL_ROOT the scratch World) whose project O-I carries a copy of the owner's standing Agency template. Sessions were made by the kernel's own encounter_provision, as the desktop makes them (encounter-agency-mint without --for-task, opened on the one configured provider, the walk's controlled ACP fixture). The shell's Factory maker (agent/clipBinding.ts taskMaker) dropped wiki:anchor:lived-in through the bridge. `request` is the encounter_task_configure op it sent to a provisioned session re-minted with --for-task; `answer` the kernel's outcome data (AIKit's aikit.encounter-task/v1 record: the request AIKit derived, Central's NOW allocation, Workcell's inspection); `settings_after` the session's settings read back after it; `refusal` the kernel's error for the same drop on a provisioned session as the desktop mints it (no --for-task); `underivable` its error on a session attached with no Agency that never opened.",
+  "request": {
+    "op": "encounter_task_configure",
+    "project": "O-I",
+    "agent_session": "agent-session/o-i-chat-1793216477-10e0",
+    "request": {
+      "purpose": "The lived-in world",
+      "source": "wiki:anchor:lived-in",
+      "task_ref": "task:the-lived-in-world-mvsisj87"
+    }
+  },
+  "answer": {
+    "agency_revision": "rev/aikit-mint-1793216477-68d6",
+    "allocation": {
+      "allocation": {
+        "artifact_bounds": {
+          "bulky_evidence": "download to evidence_cache; record finding, source and sha256 in T",
+          "max_file_bytes": 52428800,
+          "on_close": "payloads remaining in T are replaced by <name>.swept.json tombstones",
+          "refused_kinds": {
+            "archive_suffixes": [
+              ".zip",
+              ".tar",
+              ".tgz",
+              ".gz",
+              ".xz",
+              ".zst",
+              ".bz2",
+              ".7z",
+              ".dmg",
+              ".pkg",
+              ".ipa",
+              ".apk"
+            ],
+            "directories": [
+              "cargo target (CACHEDIR.TAG)",
+              "node_modules"
+            ],
+            "symlinks": "never followed"
+          }
+        },
+        "artifact_namespace": "T",
+        "automatic_agent_or_model_invocation": false,
+        "created": true,
+        "evidence_cache": "/private/tmp/claude-501/-Users-admin-Central/c55001ab-1082-4cbc-9e73-930a0b173f72/scratchpad/b768d/prove/home/Library/Caches/central/evidence/3e2f8988efff5a0b6c9c8f35286196ac80d242e8a21c0b738092afa695227690",
+        "now_ref": "central:now:project:O-I:3e2f8988efff5a0b6c9c8f35286196ac80d242e8a21c0b738092afa695227690",
+        "permitted_artifact_kinds": [
+          "plans",
+          "findings",
+          "coordination",
+          "tracking"
+        ],
+        "policy": {
+          "enforcement": "material-filesystem",
+          "expires_at_unix_seconds": 1793216779,
+          "explicit_protected_paths": [],
+          "issued_at_unix_seconds": 1793216479,
+          "native_enforcement": "only operations routed through Central; consumers enforce their actual coverage",
+          "outside_writes_prevented": false,
+          "protected_paths": [
+            "/private/tmp/claude-501/-Users-admin-Central/c55001ab-1082-4cbc-9e73-930a0b173f72/scratchpad/b768d/prove/world/.central",
+            "/private/tmp/claude-501/-Users-admin-Central/c55001ab-1082-4cbc-9e73-930a0b173f72/scratchpad/b768d/prove/world/Control/relations/source-relations.json",
+            "/private/tmp/claude-501/-Users-admin-Central/c55001ab-1082-4cbc-9e73-930a0b173f72/scratchpad/b768d/prove/world/Control/user",
+            "/private/tmp/claude-501/-Users-admin-Central/c55001ab-1082-4cbc-9e73-930a0b173f72/scratchpad/b768d/prove/world/Work/O-I/.central",
+            "/private/tmp/claude-501/-Users-admin-Central/c55001ab-1082-4cbc-9e73-930a0b173f72/scratchpad/b768d/prove/world/Work/O-I/ProjectCentral",
+            "/private/tmp/claude-501/-Users-admin-Central/c55001ab-1082-4cbc-9e73-930a0b173f72/scratchpad/b768d/prove/world/Work/O-I/ProjectCentral/agents/now/clearings/3e2f8988efff5a0b6c9c8f35286196ac80d242e8a21c0b738092afa695227690/now.json"
+          ],
+          "required_coverage": [
+            "descendant-processes",
+            "file-content",
+            "file-creation",
+            "file-removal",
+            "rename-link",
+            "truncate"
+          ],
+          "revision": "central.content-fnv1a64/v1:1882:13248d761b91be76",
+          "root_scope_ref": "control:root",
+          "schema": "central.effective-placement-policy/v1",
+          "scope_ref": "project:O-I",
+          "sources": [
+            {
+              "authority_refs": [
+                {
+                  "revision": "central.content-fnv1a64/v1:404:43e8fafe86cf8383",
+                  "source_ref": "central:source:control:root:Control/user/placement.json"
+                }
+              ],
+              "revision": "central.content-fnv1a64/v1:404:43e8fafe86cf8383",
+              "source": {
+                "agent_retrieval_allowed": true,
+                "path": "Control/user/placement.json",
+                "provenance": "human-adopted",
+                "ref": "central:source:control:root:Control/user/placement.json",
+                "roles": [
+                  "work-placement-policy"
+                ],
+                "standing": "architecture-contract",
+                "treatment": "projectcentral-user"
+              }
+            }
+          ],
+          "writable_destinations": [
+            {
+              "anchor": {
+                "device": 16777232,
+                "existing_ancestor": "/private/tmp/claude-501/-Users-admin-Central/c55001ab-1082-4cbc-9e73-930a0b173f72/scratchpad/b768d/prove/world/Work/O-I",
+                "exists": true,
+                "inode": 229943270,
+                "path": "/private/tmp/claude-501/-Users-admin-Central/c55001ab-1082-4cbc-9e73-930a0b173f72/scratchpad/b768d/prove/world/Work/O-I"
+              },
+              "class": "repository",
+              "path": "/private/tmp/claude-501/-Users-admin-Central/c55001ab-1082-4cbc-9e73-930a0b173f72/scratchpad/b768d/prove/world/Work/O-I"
+            },
+            {
+              "anchor": {
+                "device": 16777232,
+                "existing_ancestor": "/private/tmp/claude-501/-Users-admin-Central/c55001ab-1082-4cbc-9e73-930a0b173f72/scratchpad/b768d/prove/world/Work/O-I/ProjectCentral/agents/now/clearings/3e2f8988efff5a0b6c9c8f35286196ac80d242e8a21c0b738092afa695227690/T",
+                "exists": true,
+                "inode": 229946007,
+                "path": "/private/tmp/claude-501/-Users-admin-Central/c55001ab-1082-4cbc-9e73-930a0b173f72/scratchpad/b768d/prove/world/Work/O-I/ProjectCentral/agents/now/clearings/3e2f8988efff5a0b6c9c8f35286196ac80d242e8a21c0b738092afa695227690/T"
+              },
+              "class": "now-artifact",
+              "path": "/private/tmp/claude-501/-Users-admin-Central/c55001ab-1082-4cbc-9e73-930a0b173f72/scratchpad/b768d/prove/world/Work/O-I/ProjectCentral/agents/now/clearings/3e2f8988efff5a0b6c9c8f35286196ac80d242e8a21c0b738092afa695227690/T"
+            }
+          ]
+        },
+        "record": {
+          "archive_ref": null,
+          "continuation_refs": [],
+          "created_at_unix_seconds": 1793216479,
+          "lifecycle": "active",
+          "now_ref": "central:now:project:O-I:3e2f8988efff5a0b6c9c8f35286196ac80d242e8a21c0b738092afa695227690",
+          "obligations": [],
+          "participant_refs": [
+            "agent/o-i-chat"
+          ],
+          "policy_revision_at_allocation": "central.content-fnv1a64/v1:1882:13248d761b91be76",
+          "purpose": "The lived-in world",
+          "schema": "central.now-clearing/v1",
+          "scope_ref": "project:O-I",
+          "source_ref": "central:source:project:O-I:ProjectCentral/agents/now/clearings/3e2f8988efff5a0b6c9c8f35286196ac80d242e8a21c0b738092afa695227690/now.json",
+          "source_refs": [],
+          "task_ref": "task:the-lived-in-world-mvsisj87"
+        },
+        "revision": {
+          "byte_len": 713,
+          "revision": "central.content-fnv1a64/v1:713:c6b5bf3a023c5c67"
+        },
+        "schema": "central.now-allocation/v1",
+        "source": {
+          "agent_retrieval_allowed": true,
+          "path": "ProjectCentral/agents/now/clearings/3e2f8988efff5a0b6c9c8f35286196ac80d242e8a21c0b738092afa695227690/now.json",
+          "provenance": "agent-maintained",
+          "ref": "central:source:project:O-I:ProjectCentral/agents/now/clearings/3e2f8988efff5a0b6c9c8f35286196ac80d242e8a21c0b738092afa695227690/now.json",
+          "roles": [
+            "now-clearing"
+          ],
+          "standing": "current-development-state",
+          "treatment": "generated-derived"
+        },
+        "writable_destination": "/private/tmp/claude-501/-Users-admin-Central/c55001ab-1082-4cbc-9e73-930a0b173f72/scratchpad/b768d/prove/world/Work/O-I/ProjectCentral/agents/now/clearings/3e2f8988efff5a0b6c9c8f35286196ac80d242e8a21c0b738092afa695227690/T"
+      },
+      "request": {
+        "central_root": "/private/tmp/claude-501/-Users-admin-Central/c55001ab-1082-4cbc-9e73-930a0b173f72/scratchpad/b768d/prove/world",
+        "ctrl_bin": "/Users/admin/Library/Application Support/OI/products/central/daa58e1fd0dd41a63c39b2f43ea7a81f641541f9f4d35502705b3fbfbe5092e2/bin/ctrl",
+        "participant_refs": [
+          "agent/o-i-chat"
+        ],
+        "project": "O-I",
+        "purpose": "The lived-in world",
+        "source_refs": [],
+        "task_ref": "task:the-lived-in-world-mvsisj87"
+      }
+    },
+    "cleanup": null,
+    "cwd_anchor": {
+      "device": 16777232,
+      "inode": 229943270,
+      "path": "/private/tmp/claude-501/-Users-admin-Central/c55001ab-1082-4cbc-9e73-930a0b173f72/scratchpad/b768d/prove/world/Work/O-I",
+      "schema": "aikit.task-working-directory-anchor/v1"
+    },
+    "inspection": {
+      "capabilities": {
+        "abi": null,
+        "coverage": [
+          "file-content",
+          "file-creation",
+          "file-removal",
+          "rename-link",
+          "truncate",
+          "descendant-processes"
+        ],
+        "path_binding": "canonical path rules; object identity revalidated before launch; external replacement during execution is not confined",
+        "policy_authority": "supplied; Workcell does not recognise or interpret governance",
+        "profile_version": 1,
+        "provider": "macos-seatbelt",
+        "reason": null,
+        "schema": "workcell.write-boundary-capabilities/v1",
+        "scope": "unprivileged launched process and descendants; regular filesystem writes only",
+        "stdio": "null input and pipe output; other inherited descriptors close-on-exec",
+        "supported": true,
+        "uncovered": [
+          "metadata-chmod-chown-xattr-time",
+          "read-confidentiality",
+          "network-and-delegated-services",
+          "preexisting-hardlink-aliases",
+          "outside-processes",
+          "live-policy-revocation",
+          "privileged-workloads",
+          "device-ioctl",
+          "external-mount-or-rename-of-granted-objects"
+        ]
+      },
+      "objects": [
+        {
+          "identity": "16777232:229946007",
+          "path": "/private/tmp/claude-501/-Users-admin-Central/c55001ab-1082-4cbc-9e73-930a0b173f72/scratchpad/b768d/prove/world/Work/O-I/ProjectCentral/agents/now/clearings/3e2f8988efff5a0b6c9c8f35286196ac80d242e8a21c0b738092afa695227690/T"
+        }
+      ],
+      "protected_objects": [
+        {
+          "identity": "16777232:229943266",
+          "path": "/private/tmp/claude-501/-Users-admin-Central/c55001ab-1082-4cbc-9e73-930a0b173f72/scratchpad/b768d/prove/world/.central"
+        },
+        {
+          "identity": "16777232:229943286",
+          "path": "/private/tmp/claude-501/-Users-admin-Central/c55001ab-1082-4cbc-9e73-930a0b173f72/scratchpad/b768d/prove/world/Control/relations/source-relations.json"
+        },
+        {
+          "identity": "16777232:229943261",
+          "path": "/private/tmp/claude-501/-Users-admin-Central/c55001ab-1082-4cbc-9e73-930a0b173f72/scratchpad/b768d/prove/world/Control/user"
+        },
+        {
+          "identity": "16777232:229943854",
+          "path": "/private/tmp/claude-501/-Users-admin-Central/c55001ab-1082-4cbc-9e73-930a0b173f72/scratchpad/b768d/prove/world/Work/O-I/.central"
+        },
+        {
+          "identity": "16777232:229943271",
+          "path": "/private/tmp/claude-501/-Users-admin-Central/c55001ab-1082-4cbc-9e73-930a0b173f72/scratchpad/b768d/prove/world/Work/O-I/ProjectCentral"
+        },
+        {
+          "identity": "16777232:229946020",
+          "path": "/private/tmp/claude-501/-Users-admin-Central/c55001ab-1082-4cbc-9e73-930a0b173f72/scratchpad/b768d/prove/world/Work/O-I/ProjectCentral/agents/now/clearings/3e2f8988efff5a0b6c9c8f35286196ac80d242e8a21c0b738092afa695227690/now.json"
+        }
+      ],
+      "requirements": {
+        "authority_ref": "authority:owner",
+        "expires_at_unix_ms": 1793216779000,
+        "policy_ref": "central:source:control:root:Control/user/placement.json",
+        "policy_revision": "central.content-fnv1a64/v1:1882:13248d761b91be76",
+        "protected_paths": [
+          "/private/tmp/claude-501/-Users-admin-Central/c55001ab-1082-4cbc-9e73-930a0b173f72/scratchpad/b768d/prove/world/.central",
+          "/private/tmp/claude-501/-Users-admin-Central/c55001ab-1082-4cbc-9e73-930a0b173f72/scratchpad/b768d/prove/world/Control/relations/source-relations.json",
+          "/private/tmp/claude-501/-Users-admin-Central/c55001ab-1082-4cbc-9e73-930a0b173f72/scratchpad/b768d/prove/world/Control/user",
+          "/private/tmp/claude-501/-Users-admin-Central/c55001ab-1082-4cbc-9e73-930a0b173f72/scratchpad/b768d/prove/world/Work/O-I/.central",
+          "/private/tmp/claude-501/-Users-admin-Central/c55001ab-1082-4cbc-9e73-930a0b173f72/scratchpad/b768d/prove/world/Work/O-I/ProjectCentral",
+          "/private/tmp/claude-501/-Users-admin-Central/c55001ab-1082-4cbc-9e73-930a0b173f72/scratchpad/b768d/prove/world/Work/O-I/ProjectCentral/agents/now/clearings/3e2f8988efff5a0b6c9c8f35286196ac80d242e8a21c0b738092afa695227690/now.json"
+        ],
+        "required_coverage": [
+          "descendant-processes",
+          "file-content",
+          "file-creation",
+          "file-removal",
+          "rename-link",
+          "truncate"
+        ],
+        "schema": "workcell.write-boundary/v1",
+        "writable_paths": [
+          "/private/tmp/claude-501/-Users-admin-Central/c55001ab-1082-4cbc-9e73-930a0b173f72/scratchpad/b768d/prove/world/Work/O-I/ProjectCentral/agents/now/clearings/3e2f8988efff5a0b6c9c8f35286196ac80d242e8a21c0b738092afa695227690/T"
+        ]
+      },
+      "requirements_digest": "sha256:e19d6613fd6294acaa3391484ccf4b6623919691e0f16dfadd77a82da04659eb",
+      "schema": "workcell.prepared-write-boundary/v1",
+      "state": "prepared-not-executed"
+    },
+    "launcher": {
+      "argv": [
+        "/Users/admin/.cache/oi-build-lane-768d-target/debug/aikit",
+        "session-space",
+        "encounter-task-exec",
+        "--agent-session",
+        "agent-session/o-i-chat-1793216477-10e0",
+        "--expected-revision",
+        "task-binding/01M620G0KZSCZAWYFZJ2XG7NS2"
+      ],
+      "id": "task-2db1163035894b4506a2baa166d593a6225a50c9dd44cc9c09067655c0a42d1e",
+      "label": "Controlled ACP fixture (walk addressed-provider)",
+      "protocol": "acp"
+    },
+    "material": null,
+    "prepared_run": null,
+    "ready": true,
+    "request": {
+      "authority_ref": "authority:owner",
+      "central": {
+        "central_root": "/private/tmp/claude-501/-Users-admin-Central/c55001ab-1082-4cbc-9e73-930a0b173f72/scratchpad/b768d/prove/world",
+        "ctrl_bin": "/Users/admin/Library/Application Support/OI/products/central/daa58e1fd0dd41a63c39b2f43ea7a81f641541f9f4d35502705b3fbfbe5092e2/bin/ctrl",
+        "participant_refs": [
+          "agent/o-i-chat"
+        ],
+        "project": "O-I",
+        "purpose": "The lived-in world",
+        "source_refs": [],
+        "task_ref": "task:the-lived-in-world-mvsisj87"
+      },
+      "cwd": "/private/tmp/claude-501/-Users-admin-Central/c55001ab-1082-4cbc-9e73-930a0b173f72/scratchpad/b768d/prove/world/Work/O-I",
+      "material_host": null,
+      "prepared_run_scope": null,
+      "provider": {
+        "argv": [
+          "python3",
+          "-u",
+          "/Users/admin/Central/worktrees/env-2/o-i/desktop/cradle/walk/fixtures/addressed-provider.py",
+          "acp",
+          "/private/tmp/claude-501/-Users-admin-Central/c55001ab-1082-4cbc-9e73-930a0b173f72/scratchpad/b768d/prove/provider.log"
+        ],
+        "id": "task-agent",
+        "label": "Controlled ACP fixture (walk addressed-provider)",
+        "protocol": "acp"
+      },
+      "selected_directories": [],
+      "source": "wiki:anchor:lived-in",
+      "workcell_boundary_bin": "/Users/admin/.local/bin/workcell-write-boundary"
+    },
+    "requirements": {
+      "authority_ref": "authority:owner",
+      "expires_at_unix_ms": 1793216779000,
+      "policy_ref": "central:source:control:root:Control/user/placement.json",
+      "policy_revision": "central.content-fnv1a64/v1:1882:13248d761b91be76",
+      "protected_paths": [
+        "/private/tmp/claude-501/-Users-admin-Central/c55001ab-1082-4cbc-9e73-930a0b173f72/scratchpad/b768d/prove/world/.central",
+        "/private/tmp/claude-501/-Users-admin-Central/c55001ab-1082-4cbc-9e73-930a0b173f72/scratchpad/b768d/prove/world/Control/relations/source-relations.json",
+        "/private/tmp/claude-501/-Users-admin-Central/c55001ab-1082-4cbc-9e73-930a0b173f72/scratchpad/b768d/prove/world/Control/user",
+        "/private/tmp/claude-501/-Users-admin-Central/c55001ab-1082-4cbc-9e73-930a0b173f72/scratchpad/b768d/prove/world/Work/O-I/.central",
+        "/private/tmp/claude-501/-Users-admin-Central/c55001ab-1082-4cbc-9e73-930a0b173f72/scratchpad/b768d/prove/world/Work/O-I/ProjectCentral",
+        "/private/tmp/claude-501/-Users-admin-Central/c55001ab-1082-4cbc-9e73-930a0b173f72/scratchpad/b768d/prove/world/Work/O-I/ProjectCentral/agents/now/clearings/3e2f8988efff5a0b6c9c8f35286196ac80d242e8a21c0b738092afa695227690/now.json"
+      ],
+      "required_coverage": [
+        "descendant-processes",
+        "file-content",
+        "file-creation",
+        "file-removal",
+        "rename-link",
+        "truncate"
+      ],
+      "schema": "workcell.write-boundary/v1",
+      "writable_paths": [
+        "/private/tmp/claude-501/-Users-admin-Central/c55001ab-1082-4cbc-9e73-930a0b173f72/scratchpad/b768d/prove/world/Work/O-I/ProjectCentral/agents/now/clearings/3e2f8988efff5a0b6c9c8f35286196ac80d242e8a21c0b738092afa695227690/T"
+      ]
+    },
+    "revision": "task-binding/01M620G0KZSCZAWYFZJ2XG7NS2",
+    "schema": "aikit.encounter-task/v1"
+  },
+  "settings_after": {
+    "agent_session": "agent-session/o-i-chat-1793216477-10e0",
+    "previous_task": null,
+    "revision": null,
+    "schema": "aikit.encounter-session-settings/v1",
+    "standing": "The person's settings for this session and its bound task: intent the owners of launch, model and delivery read. Colour null takes the session's colour; an empty envelope inherits the session's value; a null loop cap sets no cap; Repeat's levels stay empty until chosen, and its variable, levels, repeats and stop when do not change while its takes run (a change starts a new set once they end); the source is the constellation the task was made of until another is set, and null when it was made of none. A bound task's take_run is the run a Repeat's takes share in Actuation's words \u2014 the task and the session's own agent as an agent-jsonl body \u2014 or why there is none.",
+    "task": {
+      "active": true,
+      "autonomy": [],
+      "colour": null,
+      "effort": [],
+      "envelope_linked": true,
+      "envelope_mode": "automation",
+      "form": "technical",
+      "launch": "trigger",
+      "loop": false,
+      "loop_cap": null,
+      "loop_until": "done",
+      "name": "The lived-in world",
+      "quantize": "global",
+      "register": "plain",
+      "repeat_levels": [],
+      "repeat_repeats": 3,
+      "repeat_stop": "done",
+      "repeat_variable": "condition",
+      "set": [],
+      "source": "wiki:anchor:lived-in",
+      "take_run": {
+        "refused": "The session's agent has opened, but AIKit observed no model on it: a take holds the session's model, and this agent advertised none."
+      },
+      "takes": null,
+      "task_ref": "task:the-lived-in-world-mvsisj87",
+      "then": "next"
+    },
+    "track": {
+      "set": [],
+      "solo": false,
+      "telemetry": true
+    }
+  },
+  "refusal": "encounter.runtime: Current Agency does not authorise this task, authority or participant",
+  "underivable": "encounter.task_underivable: No task is made from this purpose alone: the session's standing does not give its participant (central.participant_refs): the session has no Agency binding; its authority (authority_ref): the session has no Agency binding; its Central World and Project (central.central_root, central.project): it is the World of the session's working directory, which is not known; its provider (provider): the session has never opened, so the agent it works with and where are not known; its working directory (cwd): the session has never opened, so the agent it works with and where are not known. Repair the session, or send the whole request."
+}

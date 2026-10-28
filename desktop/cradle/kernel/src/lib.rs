@@ -669,9 +669,10 @@ pub enum KernelOp {
     /// Make one session's task through the owner's
     /// `encounter-task-configure` (`aikit.encounter-task/v1`; manual §10.3: a
     /// constellation dropped on a session's track makes "a task in Factory"):
-    /// the request — the task's Central placement, provider, working
-    /// directory, Workcell boundary, authority and the constellation it is
-    /// made of (`source`) — travels verbatim, against `expected_revision`
+    /// the request — the short form `{purpose, source, task_ref}`, whose
+    /// Central placement, provider, working directory, Workcell boundary,
+    /// participant and authority AIKit derives from the session, or the whole
+    /// form naming them — travels verbatim, against `expected_revision`
     /// (absent while the session holds no task). The session must be
     /// attached to one of the Project's spaces. AIKit allocates, prepares and
     /// keeps the task; its record or its refusal passes through verbatim, and

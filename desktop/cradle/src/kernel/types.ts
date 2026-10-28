@@ -1055,12 +1055,16 @@ export interface KnowledgeReading { document?: unknown; resource: string; provid
 export interface KnowledgeHit { address: KnowledgeAddress; resource: string; label: string; kind: string; snippet: string; provider: string; authority: string }
 export interface KnowledgeRelations { nodes: {resource: string; label: string; kind: string; address?: KnowledgeAddress}[]; edges: {from: string; to: string; relation: string;reference?:string;authored_relation?:import('../knowledge/wikiDocument').WikiEvidence;origin?:string|{provider?:string;revision?:string;authority?:string}}[]; truncated: boolean; warnings: string[] }
 
-/** Several sessions' readings in the order asked; a session no retained SessionSpace holds answers its refusal. */
-/** A task as AIKit makes it (`encounter-task-configure`; ai-kit encounter_task.rs TaskRequest, which refuses a field it does not know): its
- * Central placement (central_placement.rs CentralTaskRequest: the Central owner and World it is allocated in, its ref, purpose and
- * participants), the protocol child that works it, its working directory and the directories it may write, the Workcell boundary that
- * confines it, the authority it works under, and the constellation it is made of (`source`, the wiki ref of its whole; ai-kit ecac1f35). */
-export interface EncounterTaskRequest {
+/** A task as AIKit makes it (`encounter-task-configure`): short — what is the task's own, its purpose, the constellation it is made of
+ * (`source`, the wiki ref of its whole) and its ref — with AIKit completing the rest from the session's own standing (ai-kit
+ * encounter_task_derive.rs: the agent and authority its Agency holds, the Central World and Project it works in, the agent it opened on and
+ * where, the Workcell boundary), or whole (EncounterTaskWholeRequest). */
+export type EncounterTaskRequest = {purpose: string; source?: string; task_ref?: string} | EncounterTaskWholeRequest
+/** A task's whole request (ai-kit encounter_task.rs TaskRequest, which refuses a field it does not know): its Central placement
+ * (central_placement.rs CentralTaskRequest: the Central owner and World it is allocated in, its ref, purpose and participants), the protocol
+ * child that works it, its working directory and the directories it may write, the Workcell boundary that confines it, the authority it
+ * works under, and the constellation it is made of (`source`; ai-kit ecac1f35). */
+export interface EncounterTaskWholeRequest {
   central: {ctrl_bin: string; central_root: string; project: string | null; task_ref: string; purpose: string; participant_refs: string[]
     source_refs: string[]; parent_now_ref?: string; workcell_ref?: string; work_refs?: unknown[]}
   provider: Record<string, unknown>
@@ -1074,6 +1078,7 @@ export interface EncounterTaskRequest {
   repertoire?: unknown
   source?: string
 }
+/** Several sessions' readings in the order asked; a session no retained SessionSpace holds answers its refusal. */
 export interface EncounterSessionSettingsList {
   schema: 'aikit.encounter-session-settings-list/v1'
   readings: (EncounterSessionSettingsReading | {agent_session: string; refused: string})[]

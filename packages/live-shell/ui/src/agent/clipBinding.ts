@@ -25,7 +25,7 @@ import {madeOfValues, withMadeOf, type ClipSource} from '../frame/detail/clipSou
 import {CONSTELLATION_DRAG} from '../frame/browser/constellationFocus'
 import {constellationNamed, constellationsNow, useConstellations, type Constellation} from '../owners/constellations'
 import {kernelOp} from '../../../../../desktop/cradle/src/kernel/bridge'
-import type {CentralLocation, EncounterSessionSettingsReading, EncounterTaskRequest, FactoryAttemptArtifacts, KernelTransportStatus, NativeDirectory} from '../../../../../desktop/cradle/src/kernel/types'
+import type {CentralLocation, EncounterSessionSettingsReading, FactoryAttemptArtifacts, KernelTransportStatus, NativeDirectory} from '../../../../../desktop/cradle/src/kernel/types'
 import {attemptArtifacts} from '../../../../../desktop/cradle/src/contributions/factory/desk/factoryReads'
 import {listFiles, resolveFileLocation} from '../../../../../desktop/cradle/src/files/client'
 import {useAttemptTakes} from '../owners/attemptTakes'
@@ -444,24 +444,14 @@ export function useFactoryClip(): ClipBinding | null {
 
 // ---------------------------------------------------------------------------------------------------------------- the drop
 
-/** Why a session that holds no task gets no new one: AIKit makes a task only of a whole request — the task's Central placement, the protocol
- * child that works it, its working directory, its Workcell boundary and its authority (`encounter-task-configure`) — and no session of the
- * project holds a prepared task to take that basis from (taskBasisOf). */
-const noBasis = (label: string, project: string) => `${label} holds no task, and no session of ${project} holds a prepared task whose Central `
-  + 'placement, protocol child, working directory, Workcell boundary and authority a new task can take: AIKit makes a task only of a whole '
-  + 'request (encounter-task-configure). Prepare one task on the project, or drop the constellation on a session that works a task.'
-/** Why a session that holds no task gets no new one: AIKit's task names its agent as the participant, and the session names none. */
-const noAgent = (label: string) => `${label} holds no task and names no agent, so no task is made of it here: AIKit's task names the agent `
-  + 'that works it (its participant), and the session\'s Agency names none.'
-
 /** Factory's clip of a constellation (manual §10.3: "Drag it onto a track and this mode makes its own clip of it, with the constellation as
  * its source: … a task in Factory"; §16.7 Make this mode's clip; §19.1 the Clip panel's Constellation: "The one the task was made of"):
  * a session's track holds the one task AIKit binds to the session, so the drop makes that task of the constellation — the task's own
  * settings take it as their `source` on AIKit, written against the revision read (the owner's CAS), and AIKit's reading gives the source
- * back. A session that holds no task is given a new one made of the constellation through AIKit's task creation (makeNewTaskOf), on the
- * basis a task its project's other sessions (`peers`) hold. Every reader of the session's settings is asked again. */
+ * back. A session that holds no task is given a new one made of the constellation through AIKit's task creation (makeNewTaskOf). Every
+ * reader of the session's settings is asked again. */
 export async function makeTaskOf(transport: KernelTransportStatus, session: SessionAddress,
-  constellation: {readonly ref: string; readonly title: string}, project = SETTINGS_PROJECT, peers: readonly string[] = []): Promise<WorldActionReceipt> {
+  constellation: {readonly ref: string; readonly title: string}, project = SETTINGS_PROJECT): Promise<WorldActionReceipt> {
   const {ref, title} = constellation
   const owner = readSettingsOf(transport, project, session.sessionRef)
   const read = async (): Promise<{reading: EncounterSessionSettingsReading} | {error: string}> => {
@@ -471,7 +461,7 @@ export async function makeTaskOf(transport: KernelTransportStatus, session: Sess
   const before = await read()
   if ('error' in before) return {ok: false, error: `${session.label}'s settings were not read, so no task is made of ${title}: ${before.error}`}
   const task = before.reading.task
-  if (!task) return makeNewTaskOf(transport, session, constellation, project, peers)
+  if (!task) return makeNewTaskOf(transport, session, constellation, project)
   const written = await kernelOp(transport, {op: 'encounter_session_settings', project, agent_session: session.sessionRef,
     request: {task: {task_ref: task.task_ref, set: {source: ref}}}, ...(before.reading.revision ? {expected_revision: before.reading.revision} : {})})
   if (written.error || written.outcome?.result !== SETTINGS_RESULT) return {ok: false, error: `AIKit did not make ${task.name} of ${title}: ${written.error ?? 'it gave no reading'}`}
@@ -487,36 +477,10 @@ export async function makeTaskOf(transport: KernelTransportStatus, session: Sess
   return {ok: true, note: `${task.name} on ${session.label} is made of ${title}; AIKit reads the task's source as ${title}.`}
 }
 
-/** The session a drop lands on: its ref, its name in words, and the agent its Agency names (the track's agentRef). */
+/** The session a drop lands on: its ref and its name in words. */
 export interface SessionAddress {
   readonly sessionRef: string
   readonly label: string
-  readonly agentRef?: string | null
-}
-
-/** A prepared task's request as AIKit records it (aikit.encounter-task/v1 `request`), read loosely: its fields are the owner's. */
-type RecordedRequest = Record<string, unknown> & {central?: Record<string, unknown>}
-
-/** The basis a new task of the project takes (makeNewTaskOf): the request of the newest prepared task a session of the project holds — one
- * owner read of the peers' settings names which hold a task (`encounter_session_settings_list`), and each of those tasks is read
- * (`encounter_task_read`); a task whose preparation has not completed (`ready` false) is no basis. Newest by its revision
- * (`task-binding/<ULID>`, which sorts by time). Null when no peer holds a prepared task. */
-export async function taskBasisOf(transport: KernelTransportStatus, project: string, peers: readonly string[]): Promise<{request: RecordedRequest} | {error: string} | null> {
-  const sessions = [...new Set(peers)].slice(0, 256)
-  if (!sessions.length) return null
-  const listed = await kernelOp(transport, {op: 'encounter_session_settings_list', project, agent_sessions: sessions})
-  if (listed.error || listed.outcome?.result !== 'encounter_session_settings_list_reading') return {error: listed.error ?? 'AIKit did not read the sessions\' settings'}
-  const holding = listed.outcome.data.readings.flatMap(reading => 'refused' in reading || !reading.task ? [] : [reading.agent_session])
-  let newest: {revision: string; request: RecordedRequest} | null = null
-  for (const agent_session of holding) {
-    const read = await kernelOp(transport, {op: 'encounter_task_read', project, agent_session})
-    if (read.error || read.outcome?.result !== 'encounter_task_reading') continue
-    const record = read.outcome.data as {schema?: unknown; ready?: unknown; revision?: unknown; request?: unknown} | null
-    if (!record || record.schema !== 'aikit.encounter-task/v1' || record.ready !== true || typeof record.revision !== 'string') continue
-    if (!record.request || typeof record.request !== 'object' || !('central' in record.request)) continue
-    if (!newest || record.revision > newest.revision) newest = {revision: record.revision, request: record.request as RecordedRequest}
-  }
-  return newest ? {request: newest.request} : null
 }
 
 /** A new task's ref: the constellation's name, slugged, and the moment it was made (base 36), so two drops never name one task. */
@@ -525,43 +489,17 @@ export function newTaskRef(title: string, at = Date.now()): string {
   return `task:${slug || 'constellation'}-${at.toString(36)}`
 }
 
-/** A new task's request (AIKit encounter-task-configure; ai-kit encounter_task.rs TaskRequest, which refuses a field it does not know): the
- * project's basis — the Central owner and World its NOW is allocated in, the protocol child that works it, its working directory and the
- * directories it may write, the Workcell boundary that confines it and the authority it works under, each as the basis task's request
- * names it — and what is the new task's own: its ref, its purpose (the constellation's name), its participant (the session's agent) and
- * its source (the constellation). The basis task's own relations (its NOW parent, workcell and work refs, its sources), its prepared run,
- * its material host and its repertoire are its own and do not travel. Pure. */
-export function newTaskRequest(basis: RecordedRequest, task: {taskRef: string; purpose: string; participant: string; source: string}): EncounterTaskRequest {
-  const central = basis.central ?? {}
-  const text = (value: unknown): string => (typeof value === 'string' ? value : '')
-  const texts = (value: unknown): string[] => (Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [])
-  const protectedDirectories = texts(basis.additional_protected_directories)
-  return {
-    central: {ctrl_bin: text(central.ctrl_bin), central_root: text(central.central_root), project: typeof central.project === 'string' ? central.project : null,
-      task_ref: task.taskRef, purpose: task.purpose, participant_refs: [task.participant], source_refs: []},
-    provider: (basis.provider && typeof basis.provider === 'object' ? basis.provider : {}) as Record<string, unknown>,
-    cwd: text(basis.cwd),
-    selected_directories: texts(basis.selected_directories),
-    ...(protectedDirectories.length ? {additional_protected_directories: protectedDirectories} : {}),
-    ...(typeof basis.workcell_boundary_bin === 'string' ? {workcell_boundary_bin: basis.workcell_boundary_bin} : {}),
-    authority_ref: text(basis.authority_ref),
-    source: task.source,
-  }
-}
-
-/** A session that holds no task, given a new one made of the constellation (manual §10.3 "a task in Factory"): its request is the project's
- * basis with the task's own ref, purpose, agent and source (newTaskRequest), made through AIKit's task creation
- * (`encounter_task_configure`, kernel agency.rs task_configure) — AIKit allocates its NOW with Central, has Workcell inspect its boundary,
- * and refuses in its own words what the session's Agency does not authorise — and AIKit's settings give the source back. */
+/** A session that holds no task, given a new one made of the constellation (manual §10.3 "a task in Factory"). The drop names only what is
+ * the task's own — its ref, its purpose (the constellation's name) and its source (the constellation) — and AIKit's task creation
+ * (`encounter_task_configure`, kernel agency.rs task_configure; ai-kit encounter_task_derive.rs) completes the rest from the session's own
+ * standing: the agent and authority its Agency holds, the Central World and Project it works in, the agent it opened on and where, and the
+ * Workcell boundary. AIKit allocates the task's NOW with Central and has Workcell inspect its boundary, and refuses in its own words what it
+ * cannot derive or the session's Agency does not authorise; AIKit's settings give the source back. */
 export async function makeNewTaskOf(transport: KernelTransportStatus, session: SessionAddress, constellation: {readonly ref: string; readonly title: string},
-  project: string, peers: readonly string[]): Promise<WorldActionReceipt> {
+  project: string): Promise<WorldActionReceipt> {
   const {ref, title} = constellation
-  if (!session.agentRef) return {ok: false, error: noAgent(session.label)}
-  const basis = await taskBasisOf(transport, project, peers.filter(peer => peer !== session.sessionRef))
-  if (!basis) return {ok: false, error: noBasis(session.label, project)}
-  if ('error' in basis) return {ok: false, error: `${session.label} holds no task, and the tasks of ${project} were not read, so no task is made of ${title}: ${basis.error}`}
   const taskRef = newTaskRef(title)
-  const request = newTaskRequest(basis.request, {taskRef, purpose: title, participant: session.agentRef, source: ref})
+  const request = {purpose: title, source: ref, task_ref: taskRef}
   const made = await kernelOp(transport, {op: 'encounter_task_configure', project, agent_session: session.sessionRef, request})
   // Every reader of the session's task and settings is asked again (the track's clips, the Clip panel, the mixer row), whatever AIKit
   // answered: a refused preparation may still have left its record.
@@ -581,21 +519,20 @@ export async function makeNewTaskOf(transport: KernelTransportStatus, session: S
 type Maker = NonNullable<WorldTrackActions['makeClip']>
 
 /** The maker the Factory set carries (frame/tracks/useFactoryTracks.ts; frame/tracks/clipMakers.ts withClipMaker): a constellation dropped
- * on a session's track makes that session's task of it (makeTaskOf), or, on a session that holds none, a new task of it on the basis the
- * other sessions' tasks give (makeNewTaskOf). A drop on another track, or of a ref the wiki's reading does not hold, is refused in words. */
+ * on a session's track makes that session's task of it (makeTaskOf), or, on a session that holds none, a new task of it that AIKit completes
+ * from the session's standing (makeNewTaskOf). A drop on another track, or of a ref the wiki's reading does not hold, is refused in words. */
 export function taskMaker(transport: KernelTransportStatus, tracks: readonly AgentSessionTrack[],
   named: (ref: string) => Constellation | null = ref => constellationNamed(constellationsNow().rows, ref)): Maker {
   return {accepts: CONSTELLATION_DRAG,
     op: 'AIKit encounter-session-settings: the session\'s task takes the constellation as its source (task.source); on a session that holds '
-      + 'none, AIKit encounter-task-configure makes a new task of it; its source read back from AIKit',
+      + 'none, AIKit encounter-task-configure makes a new task of its purpose and source, the rest from the session\'s standing; its source read '
+      + 'back from AIKit',
     run: async (trackId: string, payload: string): Promise<WorldActionReceipt> => {
       const track = tracks.find(item => trackKey(item) === trackId && !item.group)
       if (!track) return {ok: false, error: 'Only a session\'s track makes a task of a constellation: drop it on a session.'}
       const ref = payload.trim()
       const found = named(ref)
       if (!found) return {ok: false, error: `${ref} is no constellation the wiki's reading holds now.`}
-      const peers = tracks.filter(item => !item.group && item.sessionRef !== track.sessionRef).map(item => item.sessionRef)
-      return makeTaskOf(transport, {sessionRef: track.sessionRef, label: track.agentName ?? track.purpose ?? track.sessionRef, agentRef: track.agentRef},
-        found, SETTINGS_PROJECT, peers)
+      return makeTaskOf(transport, {sessionRef: track.sessionRef, label: track.agentName ?? track.purpose ?? track.sessionRef}, found)
     }}
 }
