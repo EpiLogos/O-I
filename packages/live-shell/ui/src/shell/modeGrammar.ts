@@ -59,8 +59,8 @@ export interface SlotMeaning {
 }
 
 /** One presentation's meaning: what the icon shows, and what the view holds.
- * `provenance` conserves an instrument's M′ address (Technē's M3′, M2′ …)
- * beside its plain name: the address is not the name, and is not deleted. */
+ * `provenance` cites where a presentation's meaning is declared (the lock's
+ * §9.1 Technē row) beside its plain name: the citation is not the name. */
 export interface PresentationMeaning {
   readonly label: string
   readonly meaning: string
@@ -117,7 +117,7 @@ export interface ModeBrowserCategory {
 export interface CentreComposition {
   readonly label: string
   readonly meaning: string
-  /** The instrument's M′ address, conserved as provenance (Technē only). */
+  /** Where the centre's meaning is declared, cited as provenance (Technē's instruments carry no M′ number). */
   readonly provenance?: string
 }
 
@@ -463,7 +463,7 @@ const techne: SurfModeGrammar = {
     {id: 'techne-places', label: 'Places', group: 'World', mark: 'map', kindMark: 'place', family: 'quaternal-logic', state: 'cut',
       hint: 'Earth places — the places your owners declare, each at the owner\'s own precision or named unlocated. Select one to hold it as the subject; double-click or Enter opens it in the Scene that carries it.'},
     {id: 'techne-palaces', label: 'Palaces', group: 'World', mark: 'palace', kindMark: 'palace', family: 'quaternal-logic', state: 'cut',
-      hint: 'Palaces — M5′ as places you enter on the Earth: one per register of your world, its rooms its Scenes (FOUNDATION N4).'},
+      hint: 'Palaces — the Palace as places you enter on the Earth: one per register of your world, its rooms its Scenes (FOUNDATION N4).'},
     {id: 'techne-journeys', label: 'Journeys', group: 'World', mark: 'journey', kindMark: 'journey', family: 'quaternal-logic', state: 'waiting',
       hint: 'Journeys — the walk stops (place · occasion · artefact · narration), read from the World\'s walks; when no walk is carried the stops hold their places, named.'},
   ],

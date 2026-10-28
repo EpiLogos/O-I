@@ -36,11 +36,11 @@
 // (oneAgentBinding.ts carryPages): the Seat is Git / landing's Seat page (`seat.`, §19.17) beside its Checkouts page (`co.`, Ground hygiene's
 // census, §19.16); the machine is the Remote carrier's Machine page (`mc.`, §18.7, §19.18); Capture skill is the Skillset rack's Capture page
 // (`capture.`, §19.11); the Decision helper is the Agentset rack's Helper page (`helper.`, §19.20); the Knowledge route is Scope's Knowledge
-// page (§19.9), whose settings Scope refuses in the route's own words until a binding maps the route's readings onto them; the Experiment is a
-// task launched with Repeat and its takes compared (§19.5), so no device of it stands. Link is the transport's (§19.19): the frame publishes it. Every device of this chain is published whichever chain is drawn,
-// so the pool, a pane and the rail keep them. The bindings: sessionChainBindings.ts, receiptBindings.ts, workcellBindings.ts. The Run, Tasks and Runs
-// are no chain devices (a task's panels, the session's mixer row and lanes, its takes — Clip view's and the views'); the Run and Runs stay
-// published for the browser's Runs (AgentShellBrowser.tsx).
+// page (§19.9), whose settings and readings Scope stands refused and absent by what each lacks (designBindings.ts scopeBinding); the
+// Experiment is a task launched with Repeat and its takes compared (§19.5), so no device of it stands. Link is the transport's (§19.19): the
+// frame publishes it. Every device of this chain is published whichever chain is drawn, so the pool, a pane and the rail keep them. The
+// bindings: sessionChainBindings.ts, receiptBindings.ts, workcellBindings.ts. The Run, Tasks and Runs are no devices (a task's panels, the
+// session's mixer row and lanes, its takes — Clip view's and the views'), and nothing publishes them: the browser lists none (ticket 788).
 import {Fragment, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type DragEvent} from 'react'
 import {DeviceView} from '../../frame/devices/DeviceView'
 import {publishDevice, publishedDevice, selectDevice, subscribeDeviceDoor} from '../../frame/devices/deviceDoor'
@@ -423,8 +423,9 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   const agentsetCarrying = useMemo(() => carryPages(agentsetDesignBinding, helperStands ? [{page: HELPER_PAGE, binding: helperDesignBinding}] : []),
     [agentsetDesignBinding, helperStands, helperDesignBinding])
 
-  // The Main track's reader: Approvals on the Gateway's own approvals key, the shown session's consent requests and the project's source
-  // returns (lane K1's source_returns_read). The Ledger is a monitor on the rail (AgentRailDevices.tsx).
+  // The Main track's reader: Approvals on the shown session's consent requests and the project's source returns (lane K1's
+  // source_returns_read); the default answer is the Gateway's, never Approvals' (ticket 788). The Ledger is a monitor on the rail
+  // (AgentRailDevices.tsx).
   const receipts = useMemo(() => receiptDevices(), [])
   const designsReceipts = {approvals: useDesign(APPROVALS_DESIGN, true)}
   const shownTrack = shown ? tracks?.find(item => item.sessionRef === shown && !item.group) ?? null : null
@@ -452,8 +453,9 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   const approvalsDesignBinding = useMemo(() => {
     const state = observedState(shownHandle)
     const actions = shownHandle && 'actions' in shownHandle ? shownHandle.actions : undefined
-    const binding = approvalsBinding({gateway: gatewayDesignBinding?.values ?? {}, session: shownTrack, encounter: state?.reading ?? null, holds,
-      returns: returned, tracks, nowUnixMs: sessions?.nowUnixMs ?? Date.now(), units, person}, gatewayDesignBinding,
+    // Approvals is handed no Gateway: the default answer is the Gateway's own, set on the Gateway (§19.14, §19.2; ticket 788).
+    const binding = approvalsBinding({session: shownTrack, encounter: state?.reading ?? null, holds,
+      returns: returned, tracks, nowUnixMs: sessions?.nowUnixMs ?? Date.now(), units, person},
       {...(actions ? {permission: (id, decision) => actions.permission(id, decision)} : {}),
         approve: row => acceptSourceReturn(transport, RACK_PROJECT, row, person),
         // Deny on a proposal (§19.14): Central's projectcentral.source.return_reject through invoke_action (sourceReturnAccept.ts).
@@ -468,7 +470,7 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
     // withOwnerRequests), as Central's Approvals carries them; Open marks an item opened here, after opening an owner's request.
     return withOwnerRequests(commented, {...ownerRequests, nowUnixMs: sessions?.nowUnixMs || Date.now()}, openNotificationTarget,
       {opened: openedOf(viewHolds(holds, APPROVALS_ID).opened), hold: ids => holdView(APPROVALS_ID, 'opened', openedHold(ids))})
-  }, [shownHandle, gatewayDesignBinding, shownTrack, holds, returned, tracks, sessions?.nowUnixMs, transport, person, units, agentDraft, agentWrite, ownerRequests])
+  }, [shownHandle, shownTrack, holds, returned, tracks, sessions?.nowUnixMs, transport, person, units, agentDraft, agentWrite, ownerRequests])
 
   // A workcell's devices (§19.23): Git / landing's Seat page (the seat instrument), starting at the selected workcell's seat of the project;
   // the Remote carrier (Workcell's status) with its Machine page; and the workcell rack, which stands on the rail too (the Workcells tile), so

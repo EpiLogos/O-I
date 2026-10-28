@@ -1,7 +1,7 @@
 /**
  * The one-reading bridge (T3, 2026-09-19) — from the cradle's ONE current
  * `TechneDisclosureState` (techneReading.ts) to the shapes the ported QL
- * M1′–M5′ instruments consume: one full `TechneReading` (ql.techne/v1) and
+ * deep instruments consume: one full `TechneReading` (ql.techne/v1) and
  * one `DisclosureSession` for the arrangement's subject.
  *
  * Laws this bridge keeps (owner wayfinder 2026-09-19 §20–§22, §VI–§VII):
@@ -68,7 +68,6 @@ export function bridgeReading(disclosure: TechneDisclosureState): TechneReading 
         instrument: entry.instrument,
         available: entry.available,
         ...(entry.reason ? {reason: entry.reason} : {}),
-        ...(entry.mPrime !== undefined ? {m_prime: entry.mPrime} : {}),
         ...(entry.reading ? {reading: entry.reading} : {}),
       })),
       ...(reading.disclosure.degraded.length

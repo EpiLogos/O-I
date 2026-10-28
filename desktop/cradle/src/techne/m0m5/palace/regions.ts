@@ -1,7 +1,7 @@
 /**
- * The Palace integral architecture (L5 Technē M5′, QL-MEF #218) — regions
+ * The Palace integral architecture (L5 Technē, QL-MEF #218) — regions
  * composed from the reading's REAL refs, in the canonical traversal order
- * M0′→M5′ (dual-reading lock §12).
+ * Project → Palace (dual-reading lock §12).
  *
  * Laws carried here:
  *   - every entry ref is a native ref of the reading, verbatim — never
@@ -24,7 +24,7 @@
 import type { TechneInstrument, TechneReading } from "../../contract.ts";
 import { clampLocus, locusKey, locusOrder, PALACE_LOCI_PER_ROOM, PALACE_ROOMS, type PalaceLocus } from "./composition.ts";
 
-/** The region keys, in canonical traversal order M0′→M5′; sources and the
+/** The region keys, in canonical traversal order, Project → Palace; sources and the
  * situated-Agency floor close the walk. */
 export type PalaceRegionKey =
   | "ground"
@@ -67,8 +67,6 @@ export interface PalaceRegionEntry {
 /** One region of the integral whole. */
 export interface PalaceRegion {
   key: PalaceRegionKey;
-  /** The M′ office; null for the sources/agency closes. */
-  m_prime: number | null;
   office: string;
   entries: PalaceRegionEntry[];
 }
@@ -79,7 +77,7 @@ export function palaceRegions(reading: TechneReading): PalaceRegion[] {
   const regions = new Map<PalaceRegionKey, PalaceRegion>();
   const add = (region: PalaceRegion) => regions.set(region.key, region);
 
-  // M0′ ground: the bounded whole and its members.
+  // The ground: the bounded whole and its members.
   const ground: PalaceRegionEntry[] = [];
   if (reading.whole) {
     ground.push({
@@ -92,9 +90,9 @@ export function palaceRegions(reading: TechneReading): PalaceRegion[] {
       ground.push({ kind: "ground", ref, label: "member", open_instrument: "project" });
     }
   }
-  if (ground.length > 0) add({ key: "ground", m_prime: 0, office: "Project / ground", entries: ground });
+  if (ground.length > 0) add({ key: "ground", office: "Project / ground", entries: ground });
 
-  // M1′ canvas: the warranted constellation/shape/address refs.
+  // The canvas: the warranted constellation/shape/address refs.
   const canvas: PalaceRegionEntry[] = [];
   const ql = reading.ql;
   if (ql) {
@@ -114,9 +112,9 @@ export function palaceRegions(reading: TechneReading): PalaceRegion[] {
       }
     }
   }
-  if (canvas.length > 0) add({ key: "canvas", m_prime: 1, office: "Canvas / constellation", entries: canvas });
+  if (canvas.length > 0) add({ key: "canvas", office: "Canvas / constellation", entries: canvas });
 
-  // M2′ relation field: the temporal facets' continuity refs.
+  // The relation field: the temporal facets' continuity refs.
   const relation: PalaceRegionEntry[] = [];
   for (const facet of reading.temporal ?? []) {
     const carriers: [string | undefined, string, string | undefined][] = [
@@ -140,9 +138,9 @@ export function palaceRegions(reading: TechneReading): PalaceRegion[] {
       }
     }
   }
-  if (relation.length > 0) add({ key: "relation", m_prime: 2, office: "Relation field", entries: relation });
+  if (relation.length > 0) add({ key: "relation", office: "Relation field", entries: relation });
 
-  // M3′ journey: the bound scenes.
+  // The journey: the bound scenes.
   const journey: PalaceRegionEntry[] = [];
   for (const binding of reading.expressions ?? []) {
     if (binding.scene_ref) {
@@ -156,9 +154,9 @@ export function palaceRegions(reading: TechneReading): PalaceRegion[] {
       });
     }
   }
-  if (journey.length > 0) add({ key: "journey", m_prime: 3, office: "Journey / scenes", entries: journey });
+  if (journey.length > 0) add({ key: "journey", office: "Journey / scenes", entries: journey });
 
-  // M4′ world: the place readings.
+  // The world: the place readings.
   const world: PalaceRegionEntry[] = [];
   for (const place of reading.spatial ?? []) {
     world.push({
@@ -170,7 +168,7 @@ export function palaceRegions(reading: TechneReading): PalaceRegion[] {
       source: place.source_ref ?? null,
     });
   }
-  if (world.length > 0) add({ key: "world", m_prime: 4, office: "World / places", entries: world });
+  if (world.length > 0) add({ key: "world", office: "World / places", entries: world });
 
   // 3:3 expression reading: the Expression bindings, verbatim.
   const expression: PalaceRegionEntry[] = (reading.expressions ?? []).map((binding) => ({
@@ -181,7 +179,7 @@ export function palaceRegions(reading: TechneReading): PalaceRegion[] {
     open_instrument: "expressions" as const,
     note: binding.composition_ref ? `composition ${binding.composition_ref}` : undefined,
   }));
-  if (expression.length > 0) add({ key: "expression", m_prime: 5, office: "Expression (3:3)", entries: expression });
+  if (expression.length > 0) add({ key: "expression", office: "Expression (3:3)", entries: expression });
 
   // Sources: exact provenance, depth disclosed in the palace itself.
   const sources: PalaceRegionEntry[] = (reading.provenance ?? []).map((provenance) => ({
@@ -192,7 +190,7 @@ export function palaceRegions(reading: TechneReading): PalaceRegion[] {
     open_instrument: null,
     note: [provenance.native_owner, provenance.standing].filter(Boolean).join(" · ") || undefined,
   }));
-  if (sources.length > 0) add({ key: "sources", m_prime: null, office: "Sources / provenance", entries: sources });
+  if (sources.length > 0) add({ key: "sources", office: "Sources / provenance", entries: sources });
 
   // The situated-Agency floor: role bindings co-referenced, never executed.
   const agency: PalaceRegionEntry[] = [];
@@ -202,13 +200,13 @@ export function palaceRegions(reading: TechneReading): PalaceRegion[] {
       agency.push({
         kind: "agency",
         ref,
-        label: `${binding.role} M′${binding.m_index}`,
+        label: `${binding.role} M${binding.m_index}`,
         open_instrument: null,
         note: binding.role,
       });
     }
   }
-  if (agency.length > 0) add({ key: "agency", m_prime: null, office: "Situated agencies", entries: agency });
+  if (agency.length > 0) add({ key: "agency", office: "Situated agencies", entries: agency });
 
   return PALACE_REGION_ORDER.map((key) => regions.get(key)).filter((region) => region !== undefined);
 }

@@ -1,5 +1,5 @@
 /**
- * The Palace's presentation persistence (L5 Technē M5′, lane-5 T21) — the arrangement, the walk position and the bookmarks
+ * The Palace's presentation persistence (L5 Technē, lane-5 T21) — the arrangement, the walk position and the bookmarks
  * of one Palace, saved on change and restored on mount, in the discipline of the Journey's presence owner
  * (`../journey/presence.ts`): plain serialisable state, one storage key, keyed by the reading basis
  * (`subject_ref` + NUL + `reading_ref`), validated strictly per entry, a corrupt or foreign payload restoring nothing,

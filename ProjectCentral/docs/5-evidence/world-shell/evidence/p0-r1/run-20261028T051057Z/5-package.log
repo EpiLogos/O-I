@@ -1,0 +1,22 @@
+/Users/admin/Central/Work/O-I/target/p0-r1/20261028T051057Z/package/.shell-stage-6lre6zdy/oi-desktop-bundle/app/O-I Shell Candidate.app: replacing existing signature
+{
+  "standing": "packaged-bytes-only",
+  "archive": "/Users/admin/Central/Work/O-I/target/p0-r1/20261028T051057Z/package/oi-cradle-0.1.0-aarch64-apple-darwin.tar.gz",
+  "sha256": "9cd8beb7c2a4964c8a8b4fc0d0bbf6108833cef76d3064c9ddeba85136d2c257",
+  "backing_id": "0/1/2",
+  "product_ids": [
+    "central",
+    "actuation",
+    "ai-kit"
+  ],
+  "native_installer": [
+    "oi",
+    "desktop",
+    "install",
+    "--bundle",
+    "/Users/admin/Central/Work/O-I/target/p0-r1/20261028T051057Z/package/oi-cradle-0.1.0-aarch64-apple-darwin.tar.gz",
+    "--backing",
+    "0/1/2"
+  ],
+  "installed_acceptance": "pending"
+}

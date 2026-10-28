@@ -4,7 +4,7 @@
 // invoke_action …' (the session's acceptReturn over the owners) and atlas-palaces-plate.test.mjs (the M5 plate's Return section).
 // The Accept request is built from the proposal the Palace made, names the reading it came from, and
 // carries the reading request the owner re-reads. Its reply is qualified into one status line; only an invoked receipt
-// crosses back to M0′. A proposal the law did not route is never sent.
+// crosses back to the ground. A proposal the law did not route is never sent.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {provingReading} from '../../../../desktop/cradle/src/techne/m0m5/journey/proving-reading.ts';
@@ -32,12 +32,12 @@ test('a proposal the routing law did not route, or one with nothing to return, i
   assert.equal(palaceAcceptRequest(palaceReturnProposal(reading, deriveComposition(reading)), readingRequest), null);
 });
 
-test('an invoked receipt is accepted in one line and crosses back to M0′ on the reading', () => {
+test('an invoked receipt is accepted in one line and crosses back to the ground on the reading', () => {
   const reading = provingReading();
   const proposal = palaceReturnProposal(reading, bound(reading));
   const outcome = palaceAcceptOutcome(reading, proposal, {state: 'dispatched', dispatch: {state: 'invoked', owner_operation: proposal.route.action_ref, data: {}}});
   assert.equal(outcome.accepted, true);
-  assert.equal(outcome.line, `Accepted: ${proposal.route.action_ref} invoked by ${proposal.route.action_ref}. Returning to M0′.`);
+  assert.equal(outcome.line, `Accepted: ${proposal.route.action_ref} invoked by ${proposal.route.action_ref}. Returning to the ground.`);
   assert.deepEqual(outcome.crossing, returnCrossing(reading));
 });
 

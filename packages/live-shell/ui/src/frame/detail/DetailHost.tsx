@@ -75,7 +75,7 @@ export function DetailHost({sides = {front: 'clip', hidden: {clip: false, device
   const waiting = !selected.ref && !registration.clipUngated
   const deviceKey = instrument ? 'instrument' : reading.mode
   if (shown.device) visited.current.add(deviceKey)
-  // The head names the instrument the rack stands open over the focused pane's (M4′ or M5′ over the Earth's M0′; lane BT), not the pane's.
+  // The head names the instrument the rack stands open over the focused pane's (World / Places or the Palace over the Earth's Project; lane BT), not the pane's.
   const standing = useStandingInstrument(instrument)
   const head = registration.head.device({detail: reading, selected, instrument: standing === undefined ? instrument : (standing as typeof instrument)})
   const clipHead = registration.head.clip({detail: reading, selected, instrument: null})

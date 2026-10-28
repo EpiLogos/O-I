@@ -1,7 +1,7 @@
 // The instrument the Technē rack stands open, by the focused pane's instrument (TechneDevices.tsx `open`). The focused pane names one
-// instrument (shell/paneInstrument.ts), but the rack can stand another open over it: a fold pressed (M4′ World / Places over the Earth
-// pane's M0′), a palace entered (M5′), or every instrument folded. The Device side's head names the instrument actually standing (lead,
-// 16 Oct: the detail head read "Project open…" while M4′/M5′ stood), so the rack publishes it here and the head reads it.
+// instrument (shell/paneInstrument.ts), but the rack can stand another open over it: a fold pressed (World / Places over the Earth
+// pane's Project), a palace entered (the Palace), or every instrument folded. The Device side's head names the instrument actually standing (lead,
+// 16 Oct: the detail head read "Project open…" while World / Places or the Palace stood), so the rack publishes it here and the head reads it.
 import {useSyncExternalStore} from 'react'
 
 const standing = new Map<string, string | null>()

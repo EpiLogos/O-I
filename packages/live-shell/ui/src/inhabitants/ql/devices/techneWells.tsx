@@ -2,18 +2,18 @@
 // mark from the device's values or readings, by the device's own law. Do not draw a likely picture. When a reading is missing, say which
 // one in the well"), one well per instrument, drawn at any size: the Compact's on the rack (techneCompacts.tsx) and the open plate's display
 // section (ProjectPlate.tsx, StageInstrumentPlate.tsx, PlacesPlate.tsx, PalacePlate.tsx). Each reads only what its owner reports:
-//   M0′ / M4′ the Earth — the mounted atlas's own state, drawn by the globe's own geometry: the body as the camera sees it (the camera's
+//   the Project and World: the Earth — the mounted atlas's own state, drawn by the globe's own geometry: the body as the camera sees it (the camera's
 //          axes, globe/engine.ts camera), its lit side from the sky's Sun (sky/layer.ts sunDir, as globe/engine.ts lights it), and every
 //          located occurrence where the globe stands it (data/model.ts `dir`, `located`, `colour`) at the presence the deep-time clock
 //          gives it (data/time.ts timeVisibility, the law the globe's shader runs); on its Graph side, the graph's own picture (graph/
 //          view.ts draws it to its canvas; the well shows that canvas, scaled);
-//   M1′ the Canvas — the frame's published zoom (presentedChrome.ts canvas:look) as the part of the board the pane shows, its Snap as the
+//   the Canvas — the frame's published zoom (presentedChrome.ts canvas:look) as the part of the board the pane shows, its Snap as the
 //          grid, and the frame's selection (hostedApp.ts HostedAppState.selection); the board's items are not published, and the well
 //          says so;
-//   M2′ the Timeline — the ruler with the shared window's two edges (techne/session.ts time_window), the lens the frame stands in;
-//   M3′ the Journey — the walk's stops as cells, the one it stands on lit (HostedAppState sceneIndex, sceneCount, sceneName,
+//   the Timeline — the ruler with the shared window's two edges (techne/session.ts time_window), the lens the frame stands in;
+//   the Journey — the walk's stops as cells, the one it stands on lit (HostedAppState sceneIndex, sceneCount, sceneName,
 //          journeyPlaying);
-//   M5′ the Palace — the floor: the rooms where the board stands them, in path order, the path between their doors and the room the walk
+//   the Palace — the floor: the rooms where the board stands them, in path order, the path between their doors and the room the walk
 //          stands in (palacesModel.ts floorRooms, floorBounds — the floor's own law, PalaceFloor.tsx).
 // The picture moves only when its readings move: the atlas's own notices, the frame's announcements, the palace's session, and the camera
 // read again only while it turns.
@@ -183,7 +183,7 @@ export function useGraphWell(handle: AtlasHandle | null, {w, h}: WellSize): Well
     corner: c.local ? `${c.depth} step${c.depth === 1 ? '' : 's'} · ${stats.nodes}` : `whole · ${stats.nodes}`}
 }
 
-/** M0′: the Earth, or its Graph side, as the atlas stands. */
+/** The Project: the Earth, or its Graph side, as the atlas stands. */
 export function useProjectWell(size: WellSize): Well & {raw?: boolean} {
   const handle = useAtlasLive()
   const view = useAtlasView()
@@ -193,7 +193,7 @@ export function useProjectWell(size: WellSize): Well & {raw?: boolean} {
   return view === 'graph' ? graph : earth
 }
 
-/** M4′: the World — the Earth. */
+/** World: the Earth. */
 export function useWorldWell(size: WellSize): Well {
   const handle = useAtlasLive()
   return useEarthWell(handle, size)
@@ -209,7 +209,7 @@ export function stageWhy(view: FrameChromeView, lens: string): string | undefine
 
 const elsewhereLines = (view: FrameChromeView): string[] => (view.reading ? ['the stage is', `in ${view.reading.lens} lens`] : ['no stage', 'reported yet'])
 
-/** M1′: the board — the part the pane shows at the frame's zoom, the grid when Snap is on, the selection; the items are not published. */
+/** The Canvas: the board — the part the pane shows at the frame's zoom, the grid when Snap is on, the selection; the items are not published. */
 export function useCanvasWell({w, h}: WellSize): Well {
   const view = useFrameChrome()
   const state = useHostedChrome()?.state ?? null
@@ -247,7 +247,7 @@ export function useWindowWords(): string {
   return edges ? `${edges.from ?? '…'} – ${edges.to ?? '…'}` : 'all time'
 }
 
-/** M2′: the ruler with the window you read over — its two edges, or all time — and the lens the frame stands in. */
+/** The Timeline: the ruler with the window you read over — its two edges, or all time — and the lens the frame stands in. */
 export function useTimelineWell({w, h}: WellSize): Well {
   const view = useFrameChrome()
   const edges = useWindowEdges()
@@ -267,7 +267,7 @@ export function useTimelineWell({w, h}: WellSize): Well {
   return {picture, corner: lit?.short ?? lit?.label ?? (view.reading?.lens === 'timeline' ? undefined : view.reading ? `${view.reading.lens} lens` : undefined), label}
 }
 
-/** M3′: the walk's stops as cells in order, the one it stands on lit, a mark while it walks. */
+/** The Journey: the walk's stops as cells in order, the one it stands on lit, a mark while it walks. */
 export function useJourneyWell({w, h}: WellSize): Well {
   const state = useHostedChrome()?.state ?? null
   const label = 'The walk: its stops in order, the one it stands on lit; ▶ while it walks.'
@@ -290,7 +290,7 @@ export function useJourneyWell({w, h}: WellSize): Well {
 
 // ── the Palace: the floor ─────────────────────────────────────────────────────────────────────────────────────────────────────
 
-/** M5′: the floor — the rooms where the board stands them, the path between their doors, the room the walk stands in. */
+/** The Palace: the floor — the rooms where the board stands them, the path between their doors, the room the walk stands in. */
 export function usePalaceWell({w, h}: WellSize): Well {
   const state = useSyncExternalStore(subscribePalace, palaceState, palaceState)
   const {rows} = usePalaces()

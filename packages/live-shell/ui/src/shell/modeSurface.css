@@ -96,7 +96,7 @@
 .mode-centre-ruler-lane-name { font-size: 10px; color: var(--text-dim); padding: 0 8px; border-right: 1px solid var(--line) }
 .mode-centre-ruler-note { font-size: 10px; color: var(--text-faint); padding: 4px 8px }
 
-/* Technē · Session — the M3′ Journey: walk stops at the mockup's scene-row
+/* Technē · Session — the Journey: walk stops at the mockup's scene-row
    grammar (six coloured columns + the scene-launcher column). */
 .mode-centre-journey { display: flex; flex-direction: column }
 .mode-centre-journey-heads, .mode-centre-journey-row { display: grid; grid-template-columns: 74px repeat(6, minmax(84px, 1fr)); gap: 4px }
@@ -109,7 +109,7 @@
 .mode-centre-record { font-size: 10px; color: var(--text-dim); background: var(--bg-1); border: 1px solid var(--line); padding: 2px 8px; cursor: pointer }
 .mode-centre-record:hover { color: var(--text) }
 
-/* Technē · Arrangement — the M2′ Relation Field surface. */
+/* Technē · Arrangement — the Relation Field surface. */
 .mode-centre-relation { display: flex; flex-direction: column; gap: 5px }
 .mode-centre-lens-row { display: flex; gap: 4px; padding-bottom: 4px; border-bottom: 1px solid var(--line) }
 .mode-centre-lens { padding: 2px 8px; font-size: 10px; color: var(--text-dim); background: var(--bg-1); border: 1px solid var(--line) }

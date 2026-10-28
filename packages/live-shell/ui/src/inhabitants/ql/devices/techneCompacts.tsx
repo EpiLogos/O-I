@@ -32,7 +32,7 @@ const NOT_MOUNTED = 'The Earth has not mounted in this session: the World draws 
 
 interface CompactBody {readonly well: Well & {raw?: boolean}; readonly macros: ReactNode}
 
-// ── M0′ Project: the Earth, or its graph ──
+// ── the Project: the Earth, or its graph ──
 
 function ProjectCompact(): CompactBody {
   const handle = useAtlasLive()
@@ -53,7 +53,7 @@ function ProjectCompact(): CompactBody {
   </>}
 }
 
-// ── M1′–M3′: the stage's instruments, read from the frame's published chrome while the stage stands in their lens ──
+// ── the Canvas, the Timeline, the Journey: the stage's instruments, read from the frame's published chrome while the stage stands in their lens ──
 
 /** One of the frame's own controls, by its words, pressed through its one runner (frameChrome.tsx). */
 function frameControl(view: FrameChromeView, homes: Parameters<typeof controlsAt>[1], label: string | RegExp): FrameChromeControl | undefined {
@@ -109,7 +109,7 @@ function JourneyCompact(): CompactBody {
   </>}
 }
 
-// ── M4′ World: the body with its phase ──
+// ── World: the body with its phase ──
 
 function WorldCompact(): CompactBody {
   const handle = useAtlasLive()
@@ -128,7 +128,7 @@ function WorldCompact(): CompactBody {
   </>}
 }
 
-// ── M5′ Palace: the plan of the rooms, the path, your room ──
+// ── the Palace: the plan of the rooms, the path, your room ──
 
 function PalaceCompact(): CompactBody {
   const state = useSyncExternalStore(subscribePalace, palaceState, palaceState)
@@ -163,7 +163,7 @@ function CompactBodyOf({id}: {id: string}) {
 }
 
 /** An instrument on the rack at its Compact size: the kit's head (its light, its mark, its name — pressed, it opens on the focused pane —
- * and ⤢) and its body. Its M′ address is said on the status bar, never drawn (lock §9.4). */
+ * and ⤢) and its body. Who owns it is said on the status bar, never drawn (lock §9.4). */
 export function InstrumentCompact({holder, mark, light, onOpen}: {holder: HolderDeclaration; mark: IconName; light: 'lit' | 'dark' | 'unknown'; onOpen: () => void}) {
   const words = `Open ${holder.title} on the focused pane, with every setting on its plate.`
   return <section className="techne-compact" data-instrument={holder.id} data-expanded="compact" data-rack="compact" aria-label={`${holder.title}, compact`}>

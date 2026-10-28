@@ -1,6 +1,6 @@
 /**
- * The Canvas structured state for the situated Agencies (L5 Technē M1′,
- * QL-MEF #214) — what `Aletheia_1 / Technē_1` perceives of this instrument
+ * The Canvas structured state for the situated Agencies (L5 Technē,
+ * QL-MEF #214) — what the situated Aletheia and Technē roles perceive of this instrument
  * through native refs and typed state, never screenshots or DOM
  * reconstruction (wayfinder §17; TB0 situated-Agency floor).
  *
@@ -20,9 +20,10 @@
  *     warranted — and never assign a QL coordinate because a layout
  *     resembles one;
  *   - the situated-Agency role bindings carried verbatim from the reading
- *     (including honest absence: a reading that situates Technē_2 does not
- *     become Technē_1 just because Canvas is open);
- *   - cut disclosure, so the M1′ ↔ 3:3 crossing is available as state.
+ *     (including honest absence: a Technē role the reading situates on another
+ *     instrument does not become the Canvas's just because Canvas is open; no
+ *     instrument is bound to a coordinate);
+ *   - cut disclosure, so the Canvas ↔ 3:3 crossing is available as state.
  *
  * Erasable TypeScript: loadable by the renderer, Vite, and `node --test`.
  */
@@ -42,7 +43,6 @@ import { viewAddressedRefs } from "./view.ts";
 
 export interface CanvasAgencyState {
   instrument: "canvas";
-  m_prime: 1;
   application_cut: "4:2-deep";
   subject_ref: string;
   reading_ref: string;
@@ -89,11 +89,11 @@ export interface CanvasAgencyState {
   } | null;
   warranted_ql_note: string;
   /** The situated-Agency role bindings the reading itself discloses,
-   * verbatim — plus the honest local report of THIS instrument's Technē_1
-   * binding (present only when the reading situates it). */
+   * verbatim — plus the honest local report of the Technē role operating THIS
+   * instrument (present only when the reading situates one on it). */
   agency_roles: AgencyRole[];
-  techne_1_binding: AgencyRole | null;
-  techne_1_note: string;
+  techne_binding: AgencyRole | null;
+  techne_note: string;
   disclosure: TechneReading["disclosure"];
   authority_note: "arrangement/frames/views are presentation state; typed relations and sources change only through the disclosed native Actions";
 }
@@ -115,12 +115,11 @@ export function canvasAgencyState(args: {
   const outside = relations.filter((relation) => !placedRefs.has(relation.from_ref) || !placedRefs.has(relation.to_ref));
   const ql = reading.ql;
   const roles = reading.agency ?? [];
-  const techne1 = roles.find((role) => role.role === "techne" && role.m_index === 1 && role.instrument === "canvas") ?? null;
+  const techne = roles.find((role) => role.role === "techne" && role.instrument === "canvas") ?? null;
 
   const warrant = ql?.warrant;
   return {
     instrument: "canvas",
-    m_prime: 1,
     application_cut: "4:2-deep",
     subject_ref: reading.subject.subject_ref,
     reading_ref: reading.reading_ref,
@@ -177,10 +176,10 @@ export function canvasAgencyState(args: {
         ? `layout standing: ${warrant.result_class} — warrant ${warrant.provenance_ref}`
         : "no warranted QL reading is disclosed — arrangements here are presentation only, never QL",
     agency_roles: structuredClone(roles) as unknown as AgencyRole[],
-    techne_1_binding: techne1 ? (structuredClone(techne1) as unknown as AgencyRole) : null,
-    techne_1_note: techne1
-      ? `Technē_1 is situated on canvas by the reading (session ${techne1.agent_session_ref ?? "unspecified"})`
-      : `the reading situates no Technē_1 canvas binding — roles present: ${
+    techne_binding: techne ? (structuredClone(techne) as unknown as AgencyRole) : null,
+    techne_note: techne
+      ? `Technē_${techne.m_index} operates the canvas by the reading (session ${techne.agent_session_ref ?? "unspecified"})`
+      : `the reading situates no Technē role on the canvas — roles present: ${
           roles.map((role) => `${role.role}@M${role.m_index}${role.instrument ? `/${role.instrument}` : ""}`).join(", ") || "none"
         }`,
     disclosure: structuredClone(reading.disclosure) as unknown as CanvasAgencyState["disclosure"],

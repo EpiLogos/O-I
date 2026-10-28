@@ -169,9 +169,9 @@ export interface TechneLens {
 export const LENSES: readonly TechneLens[] = [
   {id: 'project-graph', name: 'Project / graph', mark: 'lib', state: 'cut', atlas: 'graph', owner: 'the Earth atlas — its Graph view (the constellation, lock §8.1)'},
   {id: 'canvas', name: 'Canvas', mark: 'pane', state: 'waiting', owner: 'the canvas owner (the instrument-editors packet)'},
-  {id: 'timeline', name: 'Timeline', mark: 'arrangement', state: 'cut', presentation: 'arrangement', owner: 'the World cut — the Timeline (M2′)'},
-  {id: 'journey', name: 'Journey', mark: 'journey', state: 'cut', presentation: 'session', owner: 'the World cut — the Journey (M3′)'},
-  {id: 'places', name: 'Places', mark: 'placed', state: 'cut', atlas: 'earth', owner: 'the Earth atlas — the globe (Places, M4′)'},
+  {id: 'timeline', name: 'Timeline', mark: 'arrangement', state: 'cut', presentation: 'arrangement', owner: 'the World cut — the Timeline'},
+  {id: 'journey', name: 'Journey', mark: 'journey', state: 'cut', presentation: 'session', owner: 'the World cut — the Journey'},
+  {id: 'places', name: 'Places', mark: 'placed', state: 'cut', atlas: 'earth', owner: 'the Earth atlas — the globe (Places)'},
   {id: 'palace', name: 'Palace', mark: 'palace', state: 'waiting', owner: 'the Palace owner (the integral composition)'},
 ]
 

@@ -6,7 +6,7 @@
 //   reading the kernel's `central` inspect carries: an unattributed removal and a native operation's addition). No change in any
 //   horizon on this machine names an agent, so the agent's change below is a FIXTURE shaped as ctrl/src/source_horizon.rs SourceChange.
 // - FIXTURE: AIKit's consent request (desktop/cradle/src/encounter/client.ts NativePermission; the real views read on 16 Oct held none),
-//   the Gateway's values and binding. Every port records its calls: no approval is answered, no owner state is written.
+//   and the ports Approvals is handed. Every port records its calls: no approval is answered, no owner state is written.
 // - SCRIPTED: the two catalogue designs rendered through the runtime's host (deviceHost.HostedDevice) to static markup.
 import test from 'node:test'
 import assert from 'node:assert/strict'
@@ -136,24 +136,29 @@ test('the Ledger only reads: its filters are the view\'s; Open log selects the r
   bind.resetHolds()
 })
 
-test('Approvals: the Default answer is the Gateway\'s approvals key — the same read and the same write; the queue is the shown session\'s consent requests', async () => {
+// REPLACED (#788): "Approvals: the Default answer is the Gateway's approvals key — the same read and the same write". §19.14: "the default
+// answer is the Gateway's Approvals (§19.2). Approvals shows them and never sets them", and the redrawn design (software-factory__approvals
+// .tsx) draws no `approvals`. The default answer is read and set on the Gateway alone: its `approvals` row, through kernel
+// harness_agent_control configure {approvals} (designBindings.ts GATEWAY_KEYS; factory-devices.test.mjs, factory-design-binding.test.mjs).
+// Approvals is handed no Gateway.
+test('REPLACED (#788) — Approvals reads and sets no default answer (the Gateway\'s, §19.2, §19.14); the queue is the shown session\'s consent requests', async () => {
   bind.resetHolds()
   const calls = []
-  const gateway = {write: async changes => { calls.push(['gateway', ...changes.map(change => [change.key, change.value])]) }, standing: {}}
   const ports = {permission: async (id, decision) => { calls.push(['permission', id, decision]) }}
-  const input = {gateway: {approvals: 'session', transport: 'ws'}, session: SESSION, encounter: encounter([CONSENT]), holds: bind.chainHolds()}
-  const binding = rec.approvalsBinding(input, gateway, ports)
-  assert.equal(binding.values.approvals, 'session', 'the Gateway\'s own reading')
+  const input = {session: SESSION, encounter: encounter([CONSENT]), holds: bind.chainHolds()}
+  const binding = rec.approvalsBinding(input, ports)
+  assert.equal(binding.values.approvals, undefined, 'no default answer is read here: it is the Gateway\'s')
+  assert.equal(binding.writes('approvals'), false, 'nor set here')
+  assert.equal(binding.standing.approvals, undefined, 'and no standing claims the key')
+  await assert.rejects(() => binding.write([{key: 'approvals', value: 'ask'}]), /approvals is a reading/)
   assert.deepEqual(JSON.parse(binding.values.queue), [{id: 'req-7', kind: 'request', text: 'rm -rf dist', who: 'aletheia', where: 'execute', session: 'Explain run'}])
   // REPLACED (#772): the view starts at §19.14's defaults — Show All (the design's words; Both is no Show of the redrawn design), Order
   // Oldest first, Follow On (approvals-answers-binding.test.mjs).
   assert.deepEqual([binding.values.light, binding.values.show, binding.values.order, binding.values.follow], ['lit', 'all', 'oldest', true])
-  await binding.write([{key: 'approvals', value: 'ask'}])
   await binding.write([{key: 'allowOnce', value: 'req-7'}])
   await binding.write([{key: 'allowAlways', value: 'req-7'}])
   await binding.write([{key: 'deny', value: 'req-7'}])
   assert.deepEqual(calls, [
-    ['gateway', ['approvals', 'ask']],
     ['permission', 'req-7', {outcome: 'selected', option_id: 'o1'}],
     ['permission', 'req-7', {outcome: 'selected', option_id: 'o2'}],
     ['permission', 'req-7', {outcome: 'selected', option_id: 'o3'}],
@@ -171,7 +176,7 @@ test('Approvals: the Default answer is the Gateway\'s approvals key — the same
   // none passed it stands disabled in those words.
   assert.equal(binding.standing.approve.disabled, rec.APPROVE_UNWIRED)
   await assert.rejects(() => binding.write([{key: 'approve', value: 'x'}]), /no acceptance port is passed here/)
-  assert.equal(calls.length, 4, 'no refusal dispatched anything')
+  assert.equal(calls.length, 3, 'no refusal dispatched anything')
   binding.local.show('requests')
   binding.local.pick('req-7')
   const after = rec.approvalsValues({...input, holds: bind.chainHolds()})
@@ -181,17 +186,16 @@ test('Approvals: the Default answer is the Gateway\'s approvals key — the same
 
 test('Approvals with nothing to answer: no session shown, no consent verb, or nothing waiting — each said', async () => {
   bind.resetHolds()
-  const none = rec.approvalsBinding({gateway: {}, session: null, encounter: null, holds: bind.chainHolds()}, null, {})
+  const none = rec.approvalsBinding({session: null, encounter: null, holds: bind.chainHolds()}, {})
   assert.equal(none.values.queue, undefined, 'no session shown: the queue is not read')
   assert.match(none.standing.allowOnce.disabled, /No session is shown/)
-  await assert.rejects(() => none.write([{key: 'approvals', value: 'ask'}]), /Gateway is not drawn on its owner/)
-  const refused = rec.approvalsBinding({gateway: {}, session: SESSION, encounter: encounter([CONSENT], [{...PERMIT, enabled: false, reason: 'There is no active provider turn'}]), holds: bind.chainHolds()}, null, {permission: async () => assert.fail('not sent')})
+  // REPLACED (#788): "the default answer refused where the Gateway is not drawn" and "the Gateway's standing for the shared key": Approvals
+  // shares no key with the Gateway now; the Gateway's own row stands for its `approvals` (factory-devices.test.mjs).
+  const refused = rec.approvalsBinding({session: SESSION, encounter: encounter([CONSENT], [{...PERMIT, enabled: false, reason: 'There is no active provider turn'}]), holds: bind.chainHolds()}, {permission: async () => assert.fail('not sent')})
   assert.equal(refused.standing.deny.disabled, 'There is no active provider turn', 'the encounter\'s own reason')
   await assert.rejects(() => refused.write([{key: 'deny', value: 'req-7'}]), /no active provider turn/)
-  const empty = rec.approvalsValues({gateway: {}, session: SESSION, encounter: encounter([]), holds: bind.chainHolds()})
+  const empty = rec.approvalsValues({session: SESSION, encounter: encounter([]), holds: bind.chainHolds()})
   assert.deepEqual([empty.queue, empty.light], ['[]', 'dark'], 'nothing waits: an empty queue, read')
-  const standing = rec.approvalsBinding({gateway: {}, session: SESSION, encounter: encounter([]), holds: bind.chainHolds()}, {standing: {approvals: {disabled: 'the row is not adopted'}}}, {}).standing
-  assert.equal(standing.approvals.disabled, 'the row is not adopted', 'the Gateway\'s standing for the shared key')
 })
 
 test('the two designs draw on their bindings in all five views — no NaN, no undefined, never their fixtures — each refusal drawn as why', () => {
@@ -201,7 +205,7 @@ test('the two designs draw on their bindings in all five views — no NaN, no un
     [ledgerDesign, rec.ledgerBinding({ground: ground([AGENT, NATIVE]), groundError: null, holds: bind.chainHolds()}, {openSession: () => null}), /re-plan port|Cairn|review #482|fixtures\/handoff/, []],
     // The manual (§19.14): how long a request waits and what happens then are the Agent's Wait and On no answer, and the default
     // answer is the Gateway's; Approvals shows them and sets none, so no Wait control stands here to carry its refusal.
-    [approvalsDesign, rec.approvalsBinding({gateway: {approvals: 'ask'}, session: SESSION, encounter: encounter([CONSENT]), holds: bind.chainHolds()}, null, {}),
+    [approvalsDesign, rec.approvalsBinding({session: SESSION, encounter: encounter([CONSENT]), holds: bind.chainHolds()}, {}),
       /setModel|Kite|recursive delete/, []],
   ]
   for (const [design, binding, fixture, reasons] of cases) {
@@ -227,7 +231,7 @@ test('the rail\'s Ledger and Approvals are their devices\' own widgets (§23.9, 
     assert.equal(claimed.bare, true)
     const device = rec.receiptDevices()[widgetId === 'ledger' ? 'ledger' : 'approvals']
     const binding = widgetId === 'ledger' ? rec.ledgerBinding({ground: ground([AGENT]), groundError: null, holds: bind.chainHolds()}, {openSession: () => null})
-      : rec.approvalsBinding({gateway: {}, session: SESSION, encounter: encounter([CONSENT]), holds: bind.chainHolds()}, null, {})
+      : rec.approvalsBinding({session: SESSION, encounter: encounter([CONSENT]), holds: bind.chainHolds()}, {})
     door.publishDevice(deviceId, {device, binding})
     try {
       const tile = renderToStaticMarkup(createElement(claimed.Body, {subject: null, pinned: false}))
@@ -246,7 +250,9 @@ test('the rail\'s Ledger and Approvals are their devices\' own widgets (§23.9, 
   assert.doesNotMatch(view, /placed\(LEDGER_ID/, 'the Ledger stands on no chain (§19.13 "Kind: monitor")')
   assert.match(read('agent/devices/AgentRailDevices.tsx'), /publish\(LEDGER_ID, ledger\)/, 'and stays published, for the rail and a pane, by the rail\'s publisher in every mode')
   assert.match(view, /case 'approvals': return placed\(APPROVALS_ID, receipts\.approvals, approvalsDesignBinding, [^\n]*'data-main-slot': 'approvals'/, 'Approvals on the Main track (§19.14)')
-  assert.match(view, /approvalsBinding\(\{gateway: gatewayDesignBinding\?\.values \?\? \{\}, session: shownTrack/, 'the Gateway\'s values and the shown session')
+  // REPLACED (#788): "the Gateway's values and the shown session" — Approvals is handed the shown session, never the Gateway (§19.14).
+  assert.match(view, /approvalsBinding\(\{session: shownTrack, encounter:/, 'the shown session')
+  assert.doesNotMatch(view, /approvalsBinding\(\{gateway|gatewayDesignBinding,\s*\{\.\.\.\(actions/, 'no Gateway handed to Approvals')
   assert.match(read('agent/devices/AgentRailDevices.tsx'), /useCentralGroundAnswer\(transport\)/, 'the window\'s one ground answer')
   assert.doesNotMatch(read('agent/devices/receiptBindings.ts'), /\.defaults\[|\.fixtures|catalogue\/panels\//, 'the bindings read no design default or fixture')
 })

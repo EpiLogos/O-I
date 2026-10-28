@@ -176,13 +176,20 @@ test('Approvals on both Main tracks: the project\'s returned work that waits (K1
   assert.deepEqual(rows, [{id: entries[0].return_ref, kind: 'proposal', who: 'Flint', text: 'ProjectCentral/docs/1-vision/dlw/DLW.md', where: 'ProjectCentral/docs/1-vision/dlw/DLW.md', session: 'Docs pass', age: 90}],
     'a pending return waits; an accepted one does not')
   designs.resetHolds()
-  const values = receipts.approvalsValues({gateway: {}, session: null, encounter: null, holds: designs.chainHolds(), returns: {entries}, tracks, nowUnixMs: minted + 90_000})
+  const values = receipts.approvalsValues({session: null, encounter: null, holds: designs.chainHolds(), returns: {entries}, tracks, nowUnixMs: minted + 90_000})
   assert.equal(JSON.parse(values.queue).length, 1)
   assert.equal(values.light, 'lit')
-  assert.equal(receipts.approvalsValues({gateway: {}, session: null, encounter: null, holds: designs.chainHolds()}).queue, undefined, 'unread: no queue, never an empty one')
-  const binding = receipts.approvalsBinding({gateway: {}, session: null, encounter: null, holds: designs.chainHolds(), returns: {entries}}, null, {}, 'central:main:approvals')
+  assert.equal(receipts.approvalsValues({session: null, encounter: null, holds: designs.chainHolds()}).queue, undefined, 'unread: no queue, never an empty one')
+  const binding = receipts.approvalsBinding({session: null, encounter: null, holds: designs.chainHolds(), returns: {entries}}, {}, 'central:main:approvals')
   assert.equal(binding.id, 'central:main:approvals')
   // REPLACED (W2): Approve is Central's projectcentral.source.return_accept, handed in as the chain's port; a chain that passes none
   // (here, as Central's Main track does today) stands it disabled in those words (tests/w2-hookups-binding.test.mjs carries the write).
   assert.equal(binding.standing.approve.disabled, receipts.APPROVE_UNWIRED)
+  // REPLACED (#788): Central's Approvals stood the default answer disabled as a key of its own ("no owner operation carries it for
+  // Central's agent yet"). The default answer is the Gateway's and Approvals never sets it (§19.14), so neither chain hands Approvals a
+  // Gateway or stands its `approvals`.
+  assert.equal(binding.standing.approvals, undefined, 'Approvals stands no default answer')
+  for (const file of ['central/devices/CentralDevices.tsx', 'agent/devices/FactoryDeviceChain.tsx']) {
+    assert.doesNotMatch(await source(file), /approvalsBinding\(\{gateway|approvals: \{disabled: CENTRAL_DEFAULT_ANSWER\}/, `${file}: Approvals is handed no Gateway`)
+  }
 })

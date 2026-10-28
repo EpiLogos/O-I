@@ -1,0 +1,730 @@
+A new version of SpacetimeDB is available: v2.13.0 (current: v2.8.1)
+Run `spacetime version upgrade` to update.
+
+Generating TypeScript module bindings for module shared-field/spacetimedb
+Build finished successfully.
+Skipping private tables during codegen: activity_liveness_backing, admission_decision, admitted_contribution_backing, contact, contact_policy, contact_rate, contribution_index_decision, contribution_index_policy, contribution_ingress_backing, contribution_ingress_rate, contribution_receipt, exchange_grant, exchange_request, exchange_use, explore_entry_backing, explore_relation_backing, field_authority, field_day_backing, field_day_revision, field_now_backing, field_now_revision, field_owner, field_presence_backing, field_presence_connection_backing, field_read_grant, participant_backing, projection_backing, shared_field_backing, shared_stage_backing, stage_follower, watch.
+Creating directory shared-field/spacetimedb/module_bindings/types
+Creating directory shared-field/spacetimedb/module_bindings/types
+Generate finished successfully.
+shared-field client bundled into /Users/admin/Central/worktrees/env-2/o-i/shared-field/dist-client
+
+> live-shell-ui@0.1.0 build
+> tsc --noEmit && vite build
+
+vite v6.4.4 building for production...
+transforming...
+✓ 2038 modules transformed.
+rendering chunks...
+[plugin vite:reporter] 
+(!) /Users/admin/Central/worktrees/env-2/o-i/packages/live-shell/ui/src/shell/TrailWidget.tsx is dynamically imported by /Users/admin/Central/worktrees/env-2/o-i/packages/live-shell/ui/src/shell/widgets.tsx but also statically imported by /Users/admin/Central/worktrees/env-2/o-i/packages/live-shell/ui/src/components/TransportBar.tsx, /Users/admin/Central/worktrees/env-2/o-i/packages/live-shell/ui/src/shell/ModeContextDock.tsx, dynamic import will not move module into another chunk.
+
+[plugin vite:reporter] 
+(!) /Users/admin/Central/worktrees/env-2/o-i/packages/live-shell/ui/src/timeline/runTrackAdapter.ts is dynamically imported by /Users/admin/Central/worktrees/env-2/o-i/packages/live-shell/ui/src/timeline/registerWorldTrackAdapters.ts but also statically imported by /Users/admin/Central/worktrees/env-2/o-i/packages/live-shell/ui/src/projections/useWorldTemporalReading.ts, dynamic import will not move module into another chunk.
+
+[plugin vite:reporter] 
+(!) /Users/admin/Central/worktrees/env-2/o-i/packages/live-shell/ui/src/timeline/expressionsTrackAdapter.ts is dynamically imported by /Users/admin/Central/worktrees/env-2/o-i/packages/live-shell/ui/src/timeline/registerWorldTrackAdapters.ts but also statically imported by /Users/admin/Central/worktrees/env-2/o-i/packages/live-shell/ui/src/frame/tracks/modeTracks.ts, dynamic import will not move module into another chunk.
+
+[plugin vite:reporter] 
+(!) /Users/admin/Central/worktrees/env-2/o-i/packages/live-shell/ui/src/inhabitants/qlSkyEarthAdapter.ts is dynamically imported by /Users/admin/Central/worktrees/env-2/o-i/packages/live-shell/ui/src/projections/atlas/AtlasProjectionPanel.tsx but also statically imported by /Users/admin/Central/worktrees/env-2/o-i/packages/live-shell/ui/src/projections/atlas/AtlasProjectionPanel.tsx, dynamic import will not move module into another chunk.
+
+[plugin vite:reporter] 
+(!) /Users/admin/Central/worktrees/env-2/o-i/desktop/cradle/src/visuals/customThemes.ts is dynamically imported by /Users/admin/Central/worktrees/env-2/o-i/packages/live-shell/ui/src/native/configuration.ts but also statically imported by /Users/admin/Central/worktrees/env-2/o-i/desktop/cradle/src/visuals/ParticleExpression.tsx, /Users/admin/Central/worktrees/env-2/o-i/desktop/cradle/src/visuals/presentation.ts, dynamic import will not move module into another chunk.
+
+computing gzip size...
+ui-dist/index.html                                                0.45 kB │ gzip:     0.28 kB
+ui-dist/assets/KaTeX_Size4-Regular-Dl5lxZxV.woff2                 4.93 kB
+ui-dist/assets/KaTeX_Size2-Regular-Dy4dx90m.woff2                 5.21 kB
+ui-dist/assets/KaTeX_Size1-Regular-mCD8mA8B.woff2                 5.47 kB
+ui-dist/assets/KaTeX_Caligraphic-Regular-Di6jR-x-.woff2           6.91 kB
+ui-dist/assets/KaTeX_Caligraphic-Bold-Dq_IR9rO.woff2              6.91 kB
+ui-dist/assets/KaTeX_Script-Regular-D3wIWfF6.woff2                9.64 kB
+ui-dist/assets/KaTeX_SansSerif-Regular-DDBCnlJ7.woff2            10.34 kB
+ui-dist/assets/KaTeX_Fraktur-Regular-CTYiF6lA.woff2              11.32 kB
+ui-dist/assets/KaTeX_Fraktur-Bold-CL6g_b3V.woff2                 11.35 kB
+ui-dist/assets/KaTeX_SansSerif-Italic-C3H0VqGB.woff2             12.03 kB
+ui-dist/assets/KaTeX_SansSerif-Bold-D1sUS0GD.woff2               12.22 kB
+ui-dist/assets/KaTeX_Typewriter-Regular-CO6r4hn1.woff2           13.57 kB
+ui-dist/assets/KaTeX_Math-BoldItalic-CZnvNsCZ.woff2              16.40 kB
+ui-dist/assets/KaTeX_Math-Italic-t53AETM-.woff2                  16.44 kB
+ui-dist/assets/KaTeX_Main-BoldItalic-DxDJ3AOS.woff2              16.78 kB
+ui-dist/assets/KaTeX_Main-Italic-NWA7e6Wa.woff2                  16.99 kB
+ui-dist/assets/layout.worker-DG1t3xZc.js                         19.55 kB
+ui-dist/assets/KaTeX_Main-Bold-Cx986IdX.woff2                    25.32 kB
+ui-dist/assets/KaTeX_Main-Regular-B22Nviop.woff2                 26.27 kB
+ui-dist/assets/KaTeX_AMS-Regular-BQhdFMY1.woff2                  28.08 kB
+ui-dist/assets/bodyWorker-Bdkht_OL.js                            33.93 kB
+ui-dist/assets/atlas-earth__globe-engine-tn0RQdqM.css             0.00 kB │ gzip:     0.02 kB
+ui-dist/assets/quaternal-logic__chakra-F42xaqqY.css               0.14 kB │ gzip:     0.12 kB
+ui-dist/assets/TechneCentre-C4Jb3GKR.css                          0.34 kB │ gzip:     0.22 kB
+ui-dist/assets/quaternal-logic__sky-modulation-BhNkLsAK.css       0.44 kB │ gzip:     0.24 kB
+ui-dist/assets/ComputerView-DlgKXPFk.css                          0.47 kB │ gzip:     0.24 kB
+ui-dist/assets/central__document-lc0H7W83.css                     0.57 kB │ gzip:     0.33 kB
+ui-dist/assets/TerminalSurface-GiaEZJXQ.css                       0.71 kB │ gzip:     0.35 kB
+ui-dist/assets/quaternal-logic__sky-CGqSF6Cu.css                  0.73 kB │ gzip:     0.36 kB
+ui-dist/assets/NativeExpressionCollections-3Avc3xUm.css           1.03 kB │ gzip:     0.43 kB
+ui-dist/assets/Automations-CJWGYyax.css                           1.05 kB │ gzip:     0.45 kB
+ui-dist/assets/point-cloud-host-DCwXqXPi.css                      1.59 kB │ gzip:     0.55 kB
+ui-dist/assets/BrowserSurface-DFE0KTs_.css                        1.69 kB │ gzip:     0.66 kB
+ui-dist/assets/expressions__contacts-gz4ejzcn.css                 1.76 kB │ gzip:     0.65 kB
+ui-dist/assets/expressions__pointer-Rq2u3Q4J.css                  1.78 kB │ gzip:     0.68 kB
+ui-dist/assets/PreparedContextView-CEsgfNFP.css                   1.91 kB │ gzip:     0.73 kB
+ui-dist/assets/TextEditor-DiVFpzWm.css                            1.99 kB │ gzip:     0.65 kB
+ui-dist/assets/central__packet-CnCe7z9s.css                       2.03 kB │ gzip:     0.73 kB
+ui-dist/assets/WikiFactsEditor-C3lk5UWp.css                       2.19 kB │ gzip:     0.76 kB
+ui-dist/assets/expressions__medium-TjVipLEB.css                   2.36 kB │ gzip:     0.68 kB
+ui-dist/assets/expressions__relational-4C_e2Rw5.css               2.46 kB │ gzip:     0.72 kB
+ui-dist/assets/expressions__studio-Czz6Hy0R.css                   2.54 kB │ gzip:     0.91 kB
+ui-dist/assets/widgets__terminal-BbwGaV6L.css                     2.89 kB │ gzip:     0.94 kB
+ui-dist/assets/NodeDetails-BHHmqctt.css                           2.96 kB │ gzip:     1.00 kB
+ui-dist/assets/software-factory__prompt-pads-COSBK2G8.css         3.10 kB │ gzip:     1.13 kB
+ui-dist/assets/AgentShellDeviceDetail-CtwTAFqz.css                3.30 kB │ gzip:     0.98 kB
+ui-dist/assets/knowledge-graph__graph-Bo8lWVhk.css                3.36 kB │ gzip:     1.04 kB
+ui-dist/assets/techne__journey-BlyqX6fg.css                       3.50 kB │ gzip:     1.08 kB
+ui-dist/assets/IconTabStrip-kkQ98uKG.css                          3.68 kB │ gzip:     1.07 kB
+ui-dist/assets/designsLoad-C-n8bq28.css                           3.70 kB │ gzip:     1.11 kB
+ui-dist/assets/central__search-B5vZxmbt.css                       3.71 kB │ gzip:     1.16 kB
+ui-dist/assets/systemOverlay-R_mGdIh4.css                         3.78 kB │ gzip:     1.02 kB
+ui-dist/assets/software-factory__ledger-C0X9d5Ox.css              3.90 kB │ gzip:     1.15 kB
+ui-dist/assets/software-factory__run-map-hWc3dv4Y.css             3.93 kB │ gzip:     1.16 kB
+ui-dist/assets/ai-kit__messages-zxFPpSf6.css                      4.12 kB │ gzip:     1.22 kB
+ui-dist/assets/DiffPage-CI567mZt.css                              4.22 kB │ gzip:     1.31 kB
+ui-dist/assets/KnowledgeSurface-BXBn0jgq.css                      4.29 kB │ gzip:     1.18 kB
+ui-dist/assets/software-factory__approvals-C4yhAMH_.css           4.65 kB │ gzip:     1.34 kB
+ui-dist/assets/workcell__workcell-BfR2LUXd.css                    4.75 kB │ gzip:     1.29 kB
+ui-dist/assets/FocusedInstrumentComposition-DvLUgmaz.css          4.91 kB │ gzip:     1.33 kB
+ui-dist/assets/EpiLogosSurface-CWeAuKCW.css                       5.10 kB │ gzip:     1.47 kB
+ui-dist/assets/workcell__git-seat-DgRQBYmD.css                    5.19 kB │ gzip:     1.47 kB
+ui-dist/assets/xterm-6GBZ9nXN.css                                 5.24 kB │ gzip:     1.91 kB
+ui-dist/assets/MaterialSurface-CeTXFcB3.css                       5.69 kB │ gzip:     1.48 kB
+ui-dist/assets/dlw__session-grid-CZvVE7f5.css                     5.77 kB │ gzip:     1.61 kB
+ui-dist/assets/CrewFace-CdBS723q.css                              5.91 kB │ gzip:     1.69 kB
+ui-dist/assets/AgencySurface-D9Y1vZgC.css                         6.02 kB │ gzip:     1.46 kB
+ui-dist/assets/workcell__link-mgCm-7mT.css                        7.05 kB │ gzip:     1.73 kB
+ui-dist/assets/dlw__arrangement-ruler-T7WEnRjv.css                7.06 kB │ gzip:     1.72 kB
+ui-dist/assets/actuation__gateway-BpS_SdjR.css                    7.74 kB │ gzip:     1.82 kB
+ui-dist/assets/ObjectPage-CqA0AfhR.css                            7.92 kB │ gzip:     1.92 kB
+ui-dist/assets/workcell__remote-carrier-DX8FarPK.css              8.06 kB │ gzip:     1.92 kB
+ui-dist/assets/ExpressionView-BxZf1o5U.css                        8.54 kB │ gzip:     1.98 kB
+ui-dist/assets/software-factory__agentset-rack-BS78SwgD.css       8.87 kB │ gzip:     2.06 kB
+ui-dist/assets/settings__window-BjlqICl7.css                      9.08 kB │ gzip:     2.18 kB
+ui-dist/assets/thread-CTNtQgjd.css                                9.21 kB │ gzip:     2.20 kB
+ui-dist/assets/actuation__harness-model-CjJvoPJZ.css              9.24 kB │ gzip:     2.11 kB
+ui-dist/assets/SettingsWorkspace-CjdvI16s.css                    16.53 kB │ gzip:     3.66 kB
+ui-dist/assets/agentShell-BhXIxq_y.css                           17.64 kB │ gzip:     3.62 kB
+ui-dist/assets/nativeDeviceRackModel-C-_n3MBJ.css                18.46 kB │ gzip:     3.90 kB
+ui-dist/assets/SourceSurface-CRXAKwVP.css                        20.24 kB │ gzip:     3.49 kB
+ui-dist/assets/rows-DmfK1Nk8.css                                 23.52 kB │ gzip:     4.11 kB
+ui-dist/assets/SystemPanel-BTYt-CSo.css                          25.03 kB │ gzip:     4.44 kB
+ui-dist/assets/explore-IK0ugnUA.css                              27.70 kB │ gzip:     4.75 kB
+ui-dist/assets/FlowSurface-yYFqTyBH.css                          28.82 kB │ gzip:     5.04 kB
+ui-dist/assets/Detached-DFapakfM.css                             33.27 kB │ gzip:     6.16 kB
+ui-dist/assets/NativeWorldDetail-3Z9z8uvO.css                    33.47 kB │ gzip:     5.97 kB
+ui-dist/assets/Workbench-BhxsnFzZ.css                            38.64 kB │ gzip:     6.66 kB
+ui-dist/assets/WorldBrowser-C7S8Gb00.css                         43.65 kB │ gzip:     6.47 kB
+ui-dist/assets/NativeAgencyParticipation-BVYyYGk9.css            46.82 kB │ gzip:     7.90 kB
+ui-dist/assets/index-D-THy1eJ.css                                66.94 kB │ gzip:    13.67 kB
+ui-dist/assets/FactoryCentre-CWgkvIV9.css                        75.03 kB │ gzip:    11.98 kB
+ui-dist/assets/App-B2IQDD7N.css                                  81.93 kB │ gzip:    14.02 kB
+ui-dist/assets/mount--sGg_hS7.css                                89.45 kB │ gzip:    17.93 kB
+ui-dist/assets/FieldSurface-BCsZUyv6.css                         90.88 kB │ gzip:    19.18 kB
+ui-dist/assets/deviceRelay-DtWxILg6.css                         121.47 kB │ gzip:    21.71 kB
+ui-dist/assets/firstSend-BshQHEWK.js                              0.06 kB │ gzip:     0.08 kB
+ui-dist/assets/CanvasHost-fEFF-bnC.js                             0.20 kB │ gzip:     0.18 kB
+ui-dist/assets/published-BpZXwTnw.js                              0.22 kB │ gzip:     0.18 kB
+ui-dist/assets/earthReading-DX4oVIUQ.js                           0.24 kB │ gzip:     0.15 kB
+ui-dist/assets/summon-DcsSwPyu.js                                 0.25 kB │ gzip:     0.20 kB
+ui-dist/assets/relativeTime-L2xNZcI0.js                           0.26 kB │ gzip:     0.18 kB
+ui-dist/assets/knowledgeGraphHandle-CMc_53F0.js                   0.27 kB │ gzip:     0.20 kB
+ui-dist/assets/threadTrack-OEVDmdrp.js                            0.28 kB │ gzip:     0.22 kB
+ui-dist/assets/terminalReadings-DVC7LdvI.js                       0.35 kB │ gzip:     0.24 kB
+ui-dist/assets/EncounterObserver-CWhHYb1r.js                      0.37 kB │ gzip:     0.27 kB
+ui-dist/assets/lens-CD3niqrY.js                                   0.38 kB │ gzip:     0.26 kB
+ui-dist/assets/walk-CHCPn-bQ.js                                   0.49 kB │ gzip:     0.31 kB
+ui-dist/assets/PersonalSurface-Dz4Ovgc2.js                        0.60 kB │ gzip:     0.39 kB
+ui-dist/assets/OwnerRefusal-Cbm_Tseg.js                           0.61 kB │ gzip:     0.34 kB
+ui-dist/assets/load-Dv18dsNv.js                                   0.64 kB │ gzip:     0.44 kB
+ui-dist/assets/handleLaws-BmdGdXnT.js                             0.66 kB │ gzip:     0.36 kB
+ui-dist/assets/walkFocus-kH6tbjBr.js                              0.66 kB │ gzip:     0.44 kB
+ui-dist/assets/descriptor-B3c7kuhQ.js                             0.69 kB │ gzip:     0.40 kB
+ui-dist/assets/TerminalRailWidget-CtJoRDiV.js                     0.70 kB │ gzip:     0.44 kB
+ui-dist/assets/world-C3UiDE2G.js                                  0.72 kB │ gzip:     0.36 kB
+ui-dist/assets/selection-Dj4o737v.js                              0.79 kB │ gzip:     0.46 kB
+ui-dist/assets/scope-I6WaItX3.js                                  0.82 kB │ gzip:     0.41 kB
+ui-dist/assets/charts-BRCJmvW2.js                                 0.84 kB │ gzip:     0.44 kB
+ui-dist/assets/deskModel-DiCMU-Uh.js                              0.91 kB │ gzip:     0.48 kB
+ui-dist/assets/frames-fD17fpkf.js                                 1.03 kB │ gzip:     0.58 kB
+ui-dist/assets/camera-qM7KV7X1.js                                 1.04 kB │ gzip:     0.62 kB
+ui-dist/assets/qlTrackRoles-DQQM3oTk.js                           1.21 kB │ gzip:     0.52 kB
+ui-dist/assets/descriptor-BczT_GjS.js                             1.27 kB │ gzip:     0.70 kB
+ui-dist/assets/event-CNdo2oXa.js                                  1.44 kB │ gzip:     0.69 kB
+ui-dist/assets/event-kqnQVVZh.js                                  1.44 kB │ gzip:     0.69 kB
+ui-dist/assets/nowsClose-DLHw3zXF.js                              1.49 kB │ gzip:     0.75 kB
+ui-dist/assets/RefusalCard-C7WiHbSu.js                            1.55 kB │ gzip:     0.80 kB
+ui-dist/assets/qlPhysicsTrackAdapter-D5STss3t.js                  1.57 kB │ gzip:     0.85 kB
+ui-dist/assets/mode-options-CCw9Zjoi.js                           1.66 kB │ gzip:     0.79 kB
+ui-dist/assets/noteDevices-CBVHbJ18.js                            1.67 kB │ gzip:     0.85 kB
+ui-dist/assets/design-DMR7uP-S.js                                 1.68 kB │ gzip:     0.88 kB
+ui-dist/assets/descriptor-BzOXEnn4.js                             1.75 kB │ gzip:     0.88 kB
+ui-dist/assets/recipes-FtLn_Hsj.js                                1.83 kB │ gzip:     0.87 kB
+ui-dist/assets/client-BNLMhNsI.js                                 1.85 kB │ gzip:     0.85 kB
+ui-dist/assets/IconTabStrip-WYP166wy.js                           1.90 kB │ gzip:     1.00 kB
+ui-dist/assets/settings-CK0YVFAa.js                               1.90 kB │ gzip:     0.97 kB
+ui-dist/assets/ComponentSelection-Bb_p7sNQ.js                     1.99 kB │ gzip:     1.01 kB
+ui-dist/assets/landing-BmXYJ0eK.js                                2.07 kB │ gzip:     1.15 kB
+ui-dist/assets/useLayout-Jc1r9UlJ.js                              2.17 kB │ gzip:     1.07 kB
+ui-dist/assets/monitor-Ckv3iQIW.js                                2.19 kB │ gzip:     1.05 kB
+ui-dist/assets/load-B6KDVJDg.js                                   2.27 kB │ gzip:     0.89 kB
+ui-dist/assets/walk-strip-DB5Ky1G2.js                             2.36 kB │ gzip:     1.12 kB
+ui-dist/assets/rulerWindow-69MBBMTn.js                            2.39 kB │ gzip:     1.03 kB
+ui-dist/assets/graphProgress-CD30AKPL.js                          2.40 kB │ gzip:     1.06 kB
+ui-dist/assets/practiceWorld-DDYjleRy.js                          2.42 kB │ gzip:     1.26 kB
+ui-dist/assets/qlAudioTrackAdapter-DNzcATd1.js                    2.43 kB │ gzip:     1.22 kB
+ui-dist/assets/core-DhEqZVGG.js                                   2.44 kB │ gzip:     0.98 kB
+ui-dist/assets/core-B7RaWXyQ.js                                   2.44 kB │ gzip:     0.98 kB
+ui-dist/assets/nativeContext-D3La8iIJ.js                          2.52 kB │ gzip:     1.15 kB
+ui-dist/assets/amplify-DMmjiEZw.js                                2.54 kB │ gzip:     1.23 kB
+ui-dist/assets/lifecycle-BrJPetTp.js                              2.55 kB │ gzip:     1.12 kB
+ui-dist/assets/aionTimeline-Bs6JipdL.js                           2.57 kB │ gzip:     1.26 kB
+ui-dist/assets/TechneCentre-DyN4AktS.js                           2.62 kB │ gzip:     1.30 kB
+ui-dist/assets/LibraryHost-DXnUy0aE.js                            2.69 kB │ gzip:     1.29 kB
+ui-dist/assets/navigate-BwbWwqP9.js                               2.69 kB │ gzip:     1.12 kB
+ui-dist/assets/descriptor-hksAmjjr.js                             2.74 kB │ gzip:     1.04 kB
+ui-dist/assets/store-BCYV3n_b.js                                  2.82 kB │ gzip:     1.30 kB
+ui-dist/assets/live-helices-DDMchgt0.js                           2.91 kB │ gzip:     1.24 kB
+ui-dist/assets/OwnerActions-ef3FUrLJ.js                           3.11 kB │ gzip:     1.23 kB
+ui-dist/assets/AgentShellContext-DRyRXm38.js                      3.15 kB │ gzip:     1.54 kB
+ui-dist/assets/AgentWidget-CWFWe0jZ.js                            3.26 kB │ gzip:     1.60 kB
+ui-dist/assets/icons-BcS8WVjY.js                                  3.43 kB │ gzip:     1.36 kB
+ui-dist/assets/amplify-view-ZNOhBGpS.js                           3.47 kB │ gzip:     1.38 kB
+ui-dist/assets/Glyph-BdU-QdJw.js                                  3.76 kB │ gzip:     1.87 kB
+ui-dist/assets/pageOccurrences-CS1h_e1c.js                        3.77 kB │ gzip:     1.92 kB
+ui-dist/assets/creature-serpent-BAbFWt-M.js                       3.81 kB │ gzip:     1.50 kB
+ui-dist/assets/filter-Dq30wg2z.js                                 4.04 kB │ gzip:     1.48 kB
+ui-dist/assets/ui-BM5QGeAY.js                                     4.06 kB │ gzip:     2.09 kB
+ui-dist/assets/hostSave-CMWfhwQ_.js                               4.18 kB │ gzip:     1.54 kB
+ui-dist/assets/suiteProvider-DiNXPVp9.js                          4.27 kB │ gzip:     2.13 kB
+ui-dist/assets/dreamsHost-BmoI_z_z.js                             4.38 kB │ gzip:     2.16 kB
+ui-dist/assets/placeAuthoring-C_wYeRrx.js                         4.56 kB │ gzip:     1.79 kB
+ui-dist/assets/dreamJournal-B-P_JU-P.js                           4.80 kB │ gzip:     2.04 kB
+ui-dist/assets/creature-ring-HUAQ8YVJ.js                          5.00 kB │ gzip:     2.51 kB
+ui-dist/assets/expression-presentation-Bw_stsr5.js                5.20 kB │ gzip:     1.58 kB
+ui-dist/assets/dom-DwTRK5KJ.js                                    5.22 kB │ gzip:     2.62 kB
+ui-dist/assets/filters-_V2wYGAK.js                                5.65 kB │ gzip:     2.30 kB
+ui-dist/assets/factoryReads-D5bFZuoU.js                           5.80 kB │ gzip:     2.28 kB
+ui-dist/assets/PacketWidget-BbIGnEsO.js                           5.88 kB │ gzip:     2.63 kB
+ui-dist/assets/corpusProvider-BLRJiXb9.js                         6.00 kB │ gzip:     2.40 kB
+ui-dist/assets/nativeCues-BX5fY3bJ.js                             6.18 kB │ gzip:     2.54 kB
+ui-dist/assets/createInPlace-DjY5fZSq.js                          6.34 kB │ gzip:     2.61 kB
+ui-dist/assets/rows-D8bnHegq.js                                   6.62 kB │ gzip:     3.12 kB
+ui-dist/assets/ComputerView-Bt2U2O0o.js                           6.80 kB │ gzip:     2.69 kB
+ui-dist/assets/modes-DyH42TZr.js                                  7.07 kB │ gzip:     2.64 kB
+ui-dist/assets/deskStore-LrhbKHRF.js                              7.25 kB │ gzip:     2.77 kB
+ui-dist/assets/widgets__web-CaJRJGGv.js                           7.32 kB │ gzip:     3.16 kB
+ui-dist/assets/widgets__trail-gsTBUaon.js                         7.69 kB │ gzip:     3.31 kB
+ui-dist/assets/live__filter-Dy5RELyB.js                           7.96 kB │ gzip:     3.28 kB
+ui-dist/assets/dreams-CC9YoBWS.js                                 8.11 kB │ gzip:     3.30 kB
+ui-dist/assets/live__reverb-CKR01cT9.js                           8.17 kB │ gzip:     3.10 kB
+ui-dist/assets/systemOverlay-C_FD4G81.js                          8.57 kB │ gzip:     3.87 kB
+ui-dist/assets/Automations-InTtVI8V.js                            8.58 kB │ gzip:     3.07 kB
+ui-dist/assets/widgets__wiki-r8e6mvI-.js                          8.60 kB │ gzip:     3.52 kB
+ui-dist/assets/live__delay-D7u8Zn_9.js                            8.98 kB │ gzip:     3.43 kB
+ui-dist/assets/AgentRailDevices-DPYlDT6V.js                       9.01 kB │ gzip:     4.01 kB
+ui-dist/assets/coincidences-CTwO5VmE.js                           9.04 kB │ gzip:     3.75 kB
+ui-dist/assets/ModeContextDock-R0poHSnD.js                        9.24 kB │ gzip:     3.28 kB
+ui-dist/assets/agentShell-BZGbT_JO.js                             9.29 kB │ gzip:     4.16 kB
+ui-dist/assets/expressions__focus-Brw7O8UH.js                     9.49 kB │ gzip:     3.79 kB
+ui-dist/assets/AddressedComposer-CCOMMHfw.js                      9.58 kB │ gzip:     3.15 kB
+ui-dist/assets/alchemy-B__pCpln.js                                9.64 kB │ gzip:     3.52 kB
+ui-dist/assets/SystemReadings-hkNpbCEK.js                         9.67 kB │ gzip:     3.76 kB
+ui-dist/assets/creature-fishes-DtPvZCUf.js                        9.86 kB │ gzip:     4.24 kB
+ui-dist/assets/symbols-CcrkUVi0.js                                9.91 kB │ gzip:     3.68 kB
+ui-dist/assets/PreparedContextView-C9luccSC.js                   10.01 kB │ gzip:     3.46 kB
+ui-dist/assets/lens-DXuvnOeL.js                                  10.10 kB │ gzip:     4.02 kB
+ui-dist/assets/expressions__ink-QWYY2YbJ.js                      10.40 kB │ gzip:     4.11 kB
+ui-dist/assets/quaternal-logic__resonator-bank-DhaXk4-O.js       10.57 kB │ gzip:     4.15 kB
+ui-dist/assets/BrowserSurface-Ci6uWxsE.js                        10.62 kB │ gzip:     3.95 kB
+ui-dist/assets/live__dynamics-C3siv-vw.js                        11.34 kB │ gzip:     3.87 kB
+ui-dist/assets/view-yGsBVfJn.js                                  11.37 kB │ gzip:     4.73 kB
+ui-dist/assets/orbits-EN4k6DUd.js                                11.40 kB │ gzip:     4.47 kB
+ui-dist/assets/expressions__colour-B2wxnbIU.js                   11.57 kB │ gzip:     4.34 kB
+ui-dist/assets/DiffPage-CgpeY9xR.js                              11.65 kB │ gzip:     4.43 kB
+ui-dist/assets/spacetimedb-DBq3NDeD.js                           12.35 kB │ gzip:     4.00 kB
+ui-dist/assets/widgets__nows-B-IPmiii.js                         12.55 kB │ gzip:     4.71 kB
+ui-dist/assets/theory-C5eS6fpr.js                                12.81 kB │ gzip:     4.70 kB
+ui-dist/assets/techne-B2Twy_JM.js                                12.81 kB │ gzip:     4.70 kB
+ui-dist/assets/expressions__depth-D3pKD6sS.js                    12.97 kB │ gzip:     4.60 kB
+ui-dist/assets/widgets__terminal-DjMmfHFl.js                     13.01 kB │ gzip:     5.01 kB
+ui-dist/assets/software-factory__ledger-rlagIO2i.js              13.21 kB │ gzip:     4.86 kB
+ui-dist/assets/quaternal-logic__chakra-IhTJx8_e.js               13.47 kB │ gzip:     5.58 kB
+ui-dist/assets/environ-species-C6-BG5Cj.js                       13.62 kB │ gzip:     3.75 kB
+ui-dist/assets/window-CnWQI8OY.js                                14.07 kB │ gzip:     3.49 kB
+ui-dist/assets/expressions__pointer-BMy_HepO.js                  14.12 kB │ gzip:     5.41 kB
+ui-dist/assets/expressions__field-CMTxxMd6.js                    14.14 kB │ gzip:     5.37 kB
+ui-dist/assets/expressions__resonance-DGJ06EmI.js                14.27 kB │ gzip:     5.33 kB
+ui-dist/assets/expressions__morph-CiAIj55I.js                    14.72 kB │ gzip:     5.29 kB
+ui-dist/assets/environ-growth-DVjvWEk4.js                        14.94 kB │ gzip:     6.50 kB
+ui-dist/assets/quaternal-logic__deck-nVID5Bal.js                 15.21 kB │ gzip:     5.87 kB
+ui-dist/assets/live__exact-ratio-CS8AEeCd.js                     15.27 kB │ gzip:     5.93 kB
+ui-dist/assets/ComposerChips-2vpWV3Vb.js                         15.37 kB │ gzip:     5.09 kB
+ui-dist/assets/creature-ground-2dKVd4ut.js                       15.50 kB │ gzip:     6.35 kB
+ui-dist/assets/central__packet-DFqNQuIV.js                       15.83 kB │ gzip:     6.01 kB
+ui-dist/assets/AgentDockTileBody-B61L2qJZ.js                     15.92 kB │ gzip:     5.14 kB
+ui-dist/assets/ai-kit__messages-D2pXR8yN.js                      15.99 kB │ gzip:     6.22 kB
+ui-dist/assets/EpiLogosSurface-D7CUDp9B.js                       16.23 kB │ gzip:     5.38 kB
+ui-dist/assets/hostedApp-BrpFwkI8.js                             16.33 kB │ gzip:     5.49 kB
+ui-dist/assets/environ-kit-Cc1_e_3z.js                           16.40 kB │ gzip:     6.86 kB
+ui-dist/assets/dlw__session-grid-C_4OKQ_p.js                     16.85 kB │ gzip:     6.29 kB
+ui-dist/assets/expressions__contacts-USYnRj3k.js                 16.91 kB │ gzip:     5.80 kB
+ui-dist/assets/PointCloudHost-Bd2pk-hb.js                        17.04 kB │ gzip:     6.18 kB
+ui-dist/assets/expressions__medium-BKLnwJC8.js                   17.14 kB │ gzip:     6.71 kB
+ui-dist/assets/widgets__files-B7p1sYzf.js                        17.62 kB │ gzip:     6.09 kB
+ui-dist/assets/expressions__relational-CLEEnGof.js               18.12 kB │ gzip:     6.66 kB
+ui-dist/assets/software-factory__prompt-pads-Cdj0rLx4.js         18.47 kB │ gzip:     6.73 kB
+ui-dist/assets/ObjectPage-CK-m35A8.js                            18.65 kB │ gzip:     6.64 kB
+ui-dist/assets/FocusedInstrumentComposition-DY_P-u-O.js          18.73 kB │ gzip:     6.30 kB
+ui-dist/assets/live__scale-mapping-DLpiFKrr.js                   18.75 kB │ gzip:     6.98 kB
+ui-dist/assets/creature-crew-D7Qft4Dg.js                         19.46 kB │ gzip:     8.22 kB
+ui-dist/assets/stage-serpent-tree-REEDfAFr.js                    19.99 kB │ gzip:     8.77 kB
+ui-dist/assets/figures-ZtPDuVYI.js                               20.25 kB │ gzip:     8.03 kB
+ui-dist/assets/factory-C148YPtC.js                               20.41 kB │ gzip:     7.23 kB
+ui-dist/assets/workcell__link-CFRjon23.js                        20.43 kB │ gzip:     7.00 kB
+ui-dist/assets/quaternal-logic__sky-modulation-BZ6xGnx0.js       20.69 kB │ gzip:     7.81 kB
+ui-dist/assets/central-B2Jq4DDT.js                               21.74 kB │ gzip:     7.48 kB
+ui-dist/assets/TerminalSurface-C_tS4cD_.js                       22.12 kB │ gzip:     7.67 kB
+ui-dist/assets/expressions__studio-otoNsOrq.js                   22.42 kB │ gzip:     8.07 kB
+ui-dist/assets/creature-swim-6GAofB0s.js                         22.81 kB │ gzip:     9.95 kB
+ui-dist/assets/useAgentChainReading-CD1avWQi.js                  22.88 kB │ gzip:     7.94 kB
+ui-dist/assets/software-factory__run-map-DqdhMCzk.js             23.29 kB │ gzip:     8.11 kB
+ui-dist/assets/WikiFactsEditor-DjO5CNYy.js                       23.44 kB │ gzip:     7.95 kB
+ui-dist/assets/techne__journey-CJevRykO.js                       24.23 kB │ gzip:     8.67 kB
+ui-dist/assets/quaternal-logic__m-prime-matrices-B2Cb65UP.js     24.70 kB │ gzip:     8.20 kB
+ui-dist/assets/contribution-return-CDXLM4Op.js                   25.07 kB │ gzip:     7.91 kB
+ui-dist/assets/quaternal-logic__m3-clock-DQjEhKHd.js             25.57 kB │ gzip:     8.79 kB
+ui-dist/assets/view-zCOr9LdA.js                                  26.08 kB │ gzip:     9.32 kB
+ui-dist/assets/techne__lens-cqmprIJ_.js                          26.87 kB │ gzip:     9.01 kB
+ui-dist/assets/astrology-DWxVNZDt.js                             26.90 kB │ gzip:    10.48 kB
+ui-dist/assets/crew-monarch-CL-HhOT0.js                          26.97 kB │ gzip:     9.97 kB
+ui-dist/assets/live-Oc36pCne.js                                  27.17 kB │ gzip:     9.01 kB
+ui-dist/assets/crew-honeybee-BiSjYLNh.js                         27.92 kB │ gzip:    11.76 kB
+ui-dist/assets/NodeDetails-xsGeyojy.js                           28.46 kB │ gzip:     8.80 kB
+ui-dist/assets/MaterialSurface-Y_2CbIEg.js                       28.81 kB │ gzip:    10.31 kB
+ui-dist/assets/software-factory__approvals-BlWU_1h5.js           28.86 kB │ gzip:     9.66 kB
+ui-dist/assets/central__docs-lIbAYlWg.js                         28.94 kB │ gzip:     9.72 kB
+ui-dist/assets/quaternal-logic__sky-Cc3oFod6.js                  29.62 kB │ gzip:    10.76 kB
+ui-dist/assets/AgencySurface-BYa8DvI3.js                         29.80 kB │ gzip:     8.74 kB
+ui-dist/assets/view-Bit2txVe.js                                  30.45 kB │ gzip:    11.44 kB
+ui-dist/assets/FactoryLive-DwZ6yRsr.js                           32.85 kB │ gzip:    10.83 kB
+ui-dist/assets/central__document-CGvJ-2UV.js                     33.22 kB │ gzip:    11.09 kB
+ui-dist/assets/index-plkrKmBG.js                                 34.77 kB │ gzip:    12.03 kB
+ui-dist/assets/creature-monarch-tCnboSjc.js                      35.51 kB │ gzip:    13.69 kB
+ui-dist/assets/session-D93A3xjP.js                               35.57 kB │ gzip:    10.48 kB
+ui-dist/assets/expressions-DLbdLU3G.js                           36.47 kB │ gzip:    11.97 kB
+ui-dist/assets/software-factory__agentset-rack-BUQvhUbn.js       37.17 kB │ gzip:    12.54 kB
+ui-dist/assets/creature-monarch-flight-BuAMd4BH.js               37.58 kB │ gzip:    14.95 kB
+ui-dist/assets/techne__palace-DznZ8qVa.js                        38.56 kB │ gzip:    12.85 kB
+ui-dist/assets/central__search-COk86lIo.js                       38.60 kB │ gzip:    12.40 kB
+ui-dist/assets/markdown-ZEBG2QZA.js                              38.91 kB │ gzip:    13.21 kB
+ui-dist/assets/development-BGZt9UaG.js                           40.56 kB │ gzip:    14.04 kB
+ui-dist/assets/liveObjects-DZIMMAwZ.js                           40.98 kB │ gzip:    11.60 kB
+ui-dist/assets/returnTracks-poVFDlWZ.js                          41.01 kB │ gzip:    13.78 kB
+ui-dist/assets/environ-tree-Bp-twRWB.js                          41.26 kB │ gzip:    17.33 kB
+ui-dist/assets/thread-CUQgGyo5.js                                41.59 kB │ gzip:    13.83 kB
+ui-dist/assets/dlw__arrangement-ruler-C9wJr-CT.js                41.72 kB │ gzip:    13.76 kB
+ui-dist/assets/CrewFace-DP2jyp69.js                              41.74 kB │ gzip:    15.15 kB
+ui-dist/assets/atlas-earth__globe-engine-C0kGUjl8.js             42.13 kB │ gzip:    15.61 kB
+ui-dist/assets/knowledge-graph__graph-3gxwnuMS.js                42.74 kB │ gzip:    14.77 kB
+ui-dist/assets/creature-bull-BiBYTS2X.js                         46.06 kB │ gzip:    16.33 kB
+ui-dist/assets/workcell__git-seat-CZpaItU_.js                    46.19 kB │ gzip:    15.23 kB
+ui-dist/assets/crew-ant-DP52mC8E.js                              46.37 kB │ gzip:    18.45 kB
+ui-dist/assets/centralDeviceWrites-BMld7q2o.js                   46.43 kB │ gzip:    16.10 kB
+ui-dist/assets/techne__canvas-DK4d9kK_.js                        48.04 kB │ gzip:    16.81 kB
+ui-dist/assets/workcell__remote-carrier-BZER6Jsh.js              49.27 kB │ gzip:    14.99 kB
+ui-dist/assets/creature-crab--RFgROvq.js                         50.06 kB │ gzip:    18.77 kB
+ui-dist/assets/actuation__gateway-Bc0u5WU_.js                    52.61 kB │ gzip:    16.86 kB
+ui-dist/assets/run-refinement-close-2026-10-18-Tfp2w7aA.js       52.69 kB │ gzip:     7.35 kB
+ui-dist/assets/Detached-X6BJBN-h.js                              53.31 kB │ gzip:    17.09 kB
+ui-dist/assets/natal-BLbxHtE-.js                                 53.51 kB │ gzip:    23.93 kB
+ui-dist/assets/creature-ant-BfMJWg1y.js                          54.25 kB │ gzip:    19.02 kB
+ui-dist/assets/creature-horse-DRJGV2B5.js                        56.04 kB │ gzip:    20.28 kB
+ui-dist/assets/creature-eagle-BhjMnaHY.js                        56.16 kB │ gzip:    21.41 kB
+ui-dist/assets/modeFrames-CAiNSpMA.js                            56.43 kB │ gzip:    18.86 kB
+ui-dist/assets/SourceSurface-DAT4NrPn.js                         57.92 kB │ gzip:    18.11 kB
+ui-dist/assets/creature-ram-BPxTXz5E.js                          59.12 kB │ gzip:    21.50 kB
+ui-dist/assets/workcell__workcell-CPbrY64q.js                    59.20 kB │ gzip:    17.65 kB
+ui-dist/assets/contributionPresentation-RuD-O3wB.js              60.77 kB │ gzip:    17.37 kB
+ui-dist/assets/creature-honeybee-yGlccybg.js                     63.01 kB │ gzip:    22.54 kB
+ui-dist/assets/AgentShellDeviceDetail-Bz8mcv25.js                63.06 kB │ gzip:    22.36 kB
+ui-dist/assets/creature-body-D1x6vtFj.js                         78.97 kB │ gzip:    33.71 kB
+ui-dist/assets/settings__window-m2it6G9x.js                      82.23 kB │ gzip:    22.48 kB
+ui-dist/assets/creature-kit-DCGGxRBh.js                          85.65 kB │ gzip:    36.41 kB
+ui-dist/assets/maskFace-Bg1qdxAi.js                              86.16 kB │ gzip:    32.59 kB
+ui-dist/assets/ExpressionView-DwhD-EYS.js                        87.74 kB │ gzip:    23.93 kB
+ui-dist/assets/nativeDeviceRackModel-Cu4oSlQB.js                 89.82 kB │ gzip:    28.53 kB
+ui-dist/assets/FlowSurface-hfUA1rt2.js                           90.13 kB │ gzip:    28.24 kB
+ui-dist/assets/KnowledgeSurface-6Pa7xQGY.js                      90.16 kB │ gzip:    28.46 kB
+ui-dist/assets/actuation__harness-model-CZukXDTM.js              92.92 kB │ gzip:    30.96 kB
+ui-dist/assets/Workbench-DTraDt5l.js                             95.80 kB │ gzip:    29.73 kB
+ui-dist/assets/Icon-Be9a_1k-.js                                 100.33 kB │ gzip:    35.28 kB
+ui-dist/assets/view-BpW3Wmfa.js                                 106.08 kB │ gzip:    35.71 kB
+ui-dist/assets/NativeWorldDetail-BcQiMgyg.js                    107.54 kB │ gzip:    34.88 kB
+ui-dist/assets/nativeBridge-DRWlICQ8.js                         110.80 kB │ gzip:    36.51 kB
+ui-dist/assets/creature-lion-DzYowfDp.js                        112.82 kB │ gzip:    44.57 kB
+ui-dist/assets/NativeAgencyParticipation-8xq-AfGX.js            115.97 kB │ gzip:    35.95 kB
+ui-dist/assets/SettingsWorkspace-CiPftoyh.js                    121.07 kB │ gzip:    32.84 kB
+ui-dist/assets/FactoryCentre-hr5sDuv3.js                        134.54 kB │ gzip:    38.88 kB
+ui-dist/assets/ExploreSurface-SUW1UzXU.js                       138.01 kB │ gzip:    38.19 kB
+ui-dist/assets/FieldSurface-CtBTwgV0.js                         140.46 kB │ gzip:    48.49 kB
+ui-dist/assets/SystemPanel-CVZJNmrY.js                          145.89 kB │ gzip:    41.60 kB
+ui-dist/assets/TextEditor-okwCAqxs.js                           169.09 kB │ gzip:    62.74 kB
+ui-dist/assets/cards-uBPDhowo.js                                174.16 kB │ gzip:    47.85 kB
+ui-dist/assets/designsLoad-CwY0Ud0a.js                          179.43 kB │ gzip:    53.05 kB
+ui-dist/assets/WorldBrowser-_fdT_-24.js                         208.88 kB │ gzip:    61.23 kB
+ui-dist/assets/xterm-XOw-FC4b.js                                334.21 kB │ gzip:    84.42 kB
+ui-dist/assets/index-CuYs1kNP.js                                450.20 kB │ gzip:   155.63 kB
+ui-dist/assets/mount-UkAqNaec.js                                642.00 kB │ gzip:   180.16 kB
+ui-dist/assets/App-CtEM_sgF.js                                  716.85 kB │ gzip:   241.38 kB
+ui-dist/assets/deviceRelay-B3dC02kg.js                          773.66 kB │ gzip:   259.84 kB
+ui-dist/assets/engineSurface-ezNN47QG.js                        849.80 kB │ gzip:   228.17 kB
+ui-dist/assets/index-4FfNqF9a.js                              1,414.18 kB │ gzip:   426.63 kB
+ui-dist/assets/NativeExpressionCollections-DuBYMLGy.js        1,527.29 kB │ gzip: 1,139.12 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 12.61s
+
+> oi-expressions-app@0.3.0 build
+> npm run build:journeys && vite build
+
+
+> oi-expressions-app@0.3.0 build:journeys
+> node field-studies-journeys/scripts/build.mjs
+
+Native standalone built: 7.36 MB; no runtime requests, external fonts or preview renderer.
+vite v6.4.3 building for production...
+transforming...
+node_modules/zod/v4/core/util.js (400:0): A comment
+
+"// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
+
+in "node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+node_modules/zod/v4/core/regexes.js (74:0): A comment
+
+"/** Anchors a pattern source. The interpolation lives here rather than at the call site because
+ * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
+ * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
+
+in "node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+✓ 3545 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/render.html                                        0.83 kB │ gzip:     0.44 kB
+dist/library.html                                       0.93 kB │ gzip:     0.46 kB
+dist/legacy.html                                        1.02 kB │ gzip:     0.50 kB
+dist/index.html                                         1.18 kB │ gzip:     0.50 kB
+dist/assets/inter-v12-latin-100-BQDzDElq.woff2         16.55 kB
+dist/assets/inter-v12-latin-regular-YtgfLPRn.woff2     16.71 kB
+dist/assets/inter-v12-latin-900-CMga-52B.woff2         17.18 kB
+dist/assets/inter-v12-latin-300-DEbyFmpd.woff2         17.33 kB
+dist/assets/inter-v12-latin-200-BxfrU12A.woff2         17.34 kB
+dist/assets/inter-v12-latin-500-DfX5FI9E.woff2         17.55 kB
+dist/assets/inter-v12-latin-600-BvOeHRLc.woff2         17.66 kB
+dist/assets/inter-v12-latin-800-Bdy4lAMa.woff2         17.76 kB
+dist/assets/inter-v12-latin-700-Bj1B9WKG.woff2         17.78 kB
+dist/assets/inter-v12-latin-100-46Mq0mOp.woff          21.24 kB
+dist/assets/inter-v12-latin-regular-CahmJf_6.woff      21.42 kB
+dist/assets/inter-v12-latin-900-ORHAl5ZU.woff          21.98 kB
+dist/assets/inter-v12-latin-300-f7r92Nkj.woff          22.16 kB
+dist/assets/inter-v12-latin-200-DXfqWPZg.woff          22.24 kB
+dist/assets/inter-v12-latin-500-BQ2gQN_M.woff          22.52 kB
+dist/assets/inter-v12-latin-600-D01NXWOK.woff          22.64 kB
+dist/assets/inter-v12-latin-700-B5TOIllR.woff          22.68 kB
+dist/assets/inter-v12-latin-800-DFVvDWwT.woff          22.71 kB
+dist/assets/legacy-BDp5ex7a.css                        78.10 kB │ gzip:    12.21 kB
+dist/assets/libraryCards-XqdI4u4s.css                 139.51 kB │ gzip:    27.34 kB
+dist/assets/main-DtTGtziP.css                         313.94 kB │ gzip:    50.50 kB
+dist/assets/library-BuBtVrb1.js                         4.02 kB │ gzip:     1.99 kB
+dist/assets/render-BUxEybiN.js                          4.97 kB │ gzip:     2.41 kB
+dist/assets/factoryPresets-B-P7_r89.js                 14.60 kB │ gzip:     3.96 kB
+dist/assets/production-D56Aevf0.js                     34.99 kB │ gzip:    12.14 kB
+dist/assets/transportState-v5k1_MxQ.js                 59.60 kB │ gzip:    20.73 kB
+dist/assets/module-D8iBLRih.js                         77.29 kB │ gzip:    27.59 kB
+dist/assets/nativeBridge-CBKQAB40.js                  127.00 kB │ gzip:    42.59 kB
+dist/assets/legacy-lFYX_nww.js                        183.87 kB │ gzip:    43.98 kB
+dist/assets/jsx-runtime-Dp6EQp1X.js                   243.25 kB │ gzip:    76.32 kB
+dist/assets/native-48B9X9Wg.js                        432.75 kB │ gzip:    83.17 kB
+dist/assets/PointCloudField-DeC4Yy5G.js               797.59 kB │ gzip:   213.19 kB
+dist/assets/libraryCards-kjistohx.js                1,672.97 kB │ gzip: 1,182.31 kB
+dist/assets/main-BHWyCifV.js                        2,952.11 kB │ gzip:   896.41 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 5.34s
+{"archive": {"path": "/Users/admin/Central/Work/O-I/target/p0-r1/20261028T051057Z/stage.sources/sources.tar.gz", "sha256": "8a9c1c94c2e27fa55728efef67ecabd7e4abc1404ed45768879c7558140dd6aa", "size_bytes": 68261613}, "basis_inputs": [{"path": "/Users/admin/Central/Work/O-I/target/p0-r1/20261028T051057Z/stage.frontend-source.json", "role": "frontend-prebuild-basis", "sha256": "1d170162aa6cda7a1b451eacff7d29df9721028e2cfb4c13954b3c94d7affe57", "size_bytes": 588071}, {"path": "/Users/admin/Central/Work/O-I/target/p0-r1/20261028T051057Z/stage/declared-source-basis.json", "role": "staging-basis", "sha256": "56e617eeb42ceac941b664f41d6c4d90a9a79bbc3e95a8462d993c355d0f7277", "size_bytes": 2776448}, {"path": "/Users/admin/Central/Work/O-I/target/p0-r1/20261028T051057Z/cli-release-basis.json", "role": "suite-release-basis", "sha256": "6cea28fc7f6b7afad0119159e989281915718c5312ce18ada6ed6d5364a98fca", "size_bytes": 955234}], "manifest_sha256": "9a2e4cc94b5f1ac69a7127c15b0ac3b77cabce243a60ca256c03325c401ddf05", "phase_tree_sha256": {"broad-staging": "0b2e6e9350baa6180c7233f9c6c208505b34c996751c5db287f9f0e7745cb2c7", "frontend-prebuild": "0b2e6e9350baa6180c7233f9c6c208505b34c996751c5db287f9f0e7745cb2c7", "native-normal-build": "707457f0acbe4387956193dffc1078591c7310cb6b0592b6917fcfe671ec8518", "suite-normal-build": "dfe5edbfcf195869668e7ed953f2c9645c30849abbeb23f90f348050e28d192b"}, "schema": "oi.build-source-archive/v1", "source_bytes": 176179245, "source_dirty": false, "source_revision": "4286f61b3475859d1baf242e23ec087e7d69fb80", "standing": "verified declared input bytes; build completion remains separately qualified", "suite_release_artifact": {"path": "/Users/admin/Central/Work/O-I/target/release/oi", "sha256": "436323016d10d71365799a060b8897211d501c1e061e05b47bace572d325ec30", "size_bytes": 17166160}, "unique_objects": 9622, "unique_source_paths": 10026}
+        Warn --no-sign flag detected: Signing will be skipped.
+        Info Looking up installed tauri packages to check mismatched versions...
+   Compiling proc-macro2 v1.0.107
+   Compiling quote v1.0.47
+   Compiling syn v2.0.119
+   Compiling syn v3.0.5
+   Compiling synstructure v0.13.2
+   Compiling zerofrom-derive v0.1.7
+   Compiling yoke-derive v0.8.2
+   Compiling serde_core v1.0.229
+   Compiling serde_derive v1.0.229
+   Compiling zerovec-derive v0.11.6
+   Compiling displaydoc v0.2.7
+   Compiling siphasher v1.0.3
+   Compiling phf_shared v0.13.1
+   Compiling fastrand v2.5.0
+   Compiling phf_generator v0.13.1
+   Compiling stable_deref_trait v1.2.1
+   Compiling libc v0.2.189
+   Compiling cfg-if v1.0.4
+   Compiling memchr v2.8.3
+   Compiling find-msvc-tools v0.1.12
+   Compiling cc v1.4.5
+   Compiling zerofrom v0.1.8
+   Compiling serde v1.0.229
+   Compiling smallvec v1.16.0
+   Compiling yoke v0.8.3
+   Compiling getrandom v0.4.3
+   Compiling zerovec v0.11.8
+   Compiling itoa v1.0.18
+   Compiling phf_macros v0.13.1
+   Compiling typeid v1.0.3
+   Compiling thiserror v1.0.69
+   Compiling time-core v0.1.9
+   Compiling num-conv v0.2.2
+   Compiling tinystr v0.8.4
+   Compiling phf_codegen v0.13.1
+   Compiling zmij v1.0.23
+   Compiling thiserror-impl v1.0.69
+   Compiling writeable v0.6.4
+   Compiling strsim v0.11.1
+   Compiling erased-serde v0.4.10
+   Compiling litemap v0.8.3
+   Compiling ident_case v1.0.1
+   Compiling serde_json v1.0.151
+   Compiling darling_core v0.23.0
+   Compiling icu_locale_core v2.3.0
+   Compiling potential_utf v0.1.6
+   Compiling zerotrie v0.2.5
+   Compiling thiserror-impl v2.0.20
+   Compiling utf8_iter v1.0.4
+   Compiling anyhow v1.0.104
+   Compiling icu_collections v2.3.0
+   Compiling parking_lot_core v0.9.12
+   Compiling icu_provider v2.3.1
+   Compiling darling_macro v0.23.0
+   Compiling icu_normalizer_data v2.3.0
+   Compiling icu_properties_data v2.3.0
+   Compiling new_debug_unreachable v1.0.6
+   Compiling scopeguard v1.2.0
+   Compiling lock_api v0.4.14
+   Compiling darling v0.23.0
+   Compiling phf v0.13.1
+   Compiling string_cache_codegen v0.6.1
+   Compiling bitflags v2.13.1
+   Compiling precomputed-hash v0.1.1
+   Compiling winnow v1.0.4
+   Compiling toml_parser v1.1.3+spec-1.1.0
+   Compiling web_atoms v0.2.6
+   Compiling parking_lot v0.12.5
+   Compiling serde_with_macros v3.22.0
+   Compiling icu_normalizer v2.3.0
+   Compiling icu_properties v2.3.0
+   Compiling serde_spanned v1.1.1
+   Compiling ctor-proc-macro v0.0.7
+   Compiling toml_writer v1.1.2+spec-1.1.0
+   Compiling idna_adapter v1.2.2
+   Compiling string_cache v0.9.0
+   Compiling objc2-exception-helper v0.1.1
+   Compiling semver v1.0.28
+   Compiling percent-encoding v2.3.2
+   Compiling log v0.4.34
+   Compiling dtoa v1.0.11
+   Compiling dtoa-short v0.3.5
+   Compiling indexmap v1.9.3
+   Compiling form_urlencoded v1.2.2
+   Compiling idna v1.1.0
+   Compiling uuid v1.26.0
+   Compiling tendril v0.5.1
+   Compiling selectors v0.36.1
+   Compiling aho-corasick v1.1.5
+   Compiling toml_datetime v1.1.1+spec-1.1.0
+   Compiling cssparser-macros v0.6.1
+   Compiling derive_more-impl v2.1.1
+   Compiling regex-syntax v0.8.11
+   Compiling unic-char-range v0.9.0
+   Compiling byteorder v1.5.0
+   Compiling camino v1.2.5
+   Compiling alloc-no-stdlib v2.0.4
+   Compiling unic-common v0.9.0
+   Compiling unic-ucd-version v0.9.0
+   Compiling alloc-stdlib v0.2.4
+   Compiling unic-char-property v0.9.0
+   Compiling regex-automata v0.4.18
+   Compiling derive_more v2.1.1
+   Compiling cssparser v0.36.0
+   Compiling toml v1.1.5+spec-1.1.0
+   Compiling markup5ever v0.38.0
+   Compiling url v2.5.8
+   Compiling swift-rs v1.0.8
+   Compiling thiserror v2.0.20
+   Compiling servo_arc v0.4.3
+   Compiling serde_derive_internals v0.29.1
+   Compiling hashbrown v0.17.1
+   Compiling deranged v0.5.8
+   Compiling schemars v0.8.22
+   Compiling equivalent v1.0.2
+   Compiling fnv v1.0.7
+   Compiling hashbrown v0.12.3
+   Compiling objc2 v0.6.4
+   Compiling powerfmt v0.2.0
+   Compiling bit-vec v0.8.0
+   Compiling rustc-hash v2.1.3
+   Compiling bit-set v0.8.0
+   Compiling time v0.3.55
+   Compiling cfb v0.7.3
+   Compiling indexmap v2.14.2
+   Compiling schemars_derive v0.8.22
+   Compiling html5ever v0.38.0
+   Compiling regex v1.13.1
+   Compiling unic-ucd-ident v0.9.0
+   Compiling brotli-decompressor v5.0.3
+   Compiling jsonptr v0.6.3
+   Compiling cargo-platform v0.1.9
+   Compiling quick-xml v0.41.0
+   Compiling bytes v1.12.1
+   Compiling dunce v1.0.5
+   Compiling base64 v0.22.1
+   Compiling foldhash v0.2.0
+   Compiling objc2-encode v4.1.0
+   Compiling dyn-clone v1.0.20
+   Compiling same-file v1.0.6
+   Compiling base64 v0.21.7
+   Compiling walkdir v2.5.0
+   Compiling dom_query v0.27.0
+   Compiling plist v1.10.0
+   Compiling http v1.5.0
+   Compiling cargo_metadata v0.19.2
+   Compiling json-patch v3.0.1
+   Compiling brotli v8.0.4
+   Compiling urlpattern v0.3.0
+   Compiling serde-untagged v0.1.9
+   Compiling infer v0.19.0
+   Compiling ctor v0.8.0
+   Compiling serde_with v3.22.0
+   Compiling glob v0.3.4
+   Compiling tauri-utils v2.9.3
+   Compiling crc32fast v1.5.1
+   Compiling block2 v0.6.2
+   Compiling objc2-core-foundation v0.3.2
+   Compiling rustc_version v0.4.1
+   Compiling toml_datetime v0.7.5+spec-1.1.0
+   Compiling winnow v0.7.15
+   Compiling option-ext v0.2.0
+   Compiling dirs-sys v0.5.0
+   Compiling toml v0.9.12+spec-1.1.0
+   Compiling embed-resource v3.0.11
+   Compiling objc2-foundation v0.3.2
+   Compiling heck v0.5.0
+   Compiling objc2-app-kit v0.3.2
+   Compiling tauri-winres v0.3.6
+   Compiling cargo_toml v0.22.3
+   Compiling dirs v6.0.0
+   Compiling core-foundation-sys v0.8.7
+   Compiling simd-adler32 v0.3.10
+   Compiling tauri-build v2.6.3
+   Compiling generic-array v0.14.7
+   Compiling time-macros v0.2.32
+   Compiling typenum v1.20.1
+   Compiling adler2 v2.0.1
+   Compiling core-foundation v0.10.1
+   Compiling tauri-plugin v2.6.3
+   Compiling raw-window-handle v0.6.2
+   Compiling crossbeam-utils v0.8.22
+   Compiling miniz_oxide v0.9.1
+   Compiling tauri v2.11.5
+   Compiling dpi v0.1.2
+   Compiling cookie v0.18.2
+   Compiling flate2 v1.1.10
+   Compiling crypto-common v0.1.7
+   Compiling block-buffer v0.10.4
+   Compiling miniz_oxide v0.8.9
+   Compiling fdeflate v0.3.7
+   Compiling foreign-types-macros v0.2.4
+   Compiling foreign-types-shared v0.3.1
+   Compiling bitflags v1.3.2
+   Compiling png v0.17.16
+   Compiling foreign-types v0.5.0
+   Compiling digest v0.10.7
+   Compiling crossbeam-channel v0.5.16
+   Compiling core-graphics-types v0.2.0
+   Compiling objc2-web-kit v0.3.2
+   Compiling dispatch2 v0.3.1
+   Compiling cpufeatures v0.2.17
+   Compiling wry v0.55.1
+   Compiling tauri-runtime v2.11.3
+   Compiling sha2 v0.10.9
+   Compiling core-graphics v0.25.0
+   Compiling ico v0.5.0
+   Compiling unicode-segmentation v1.13.3
+   Compiling tauri-runtime-wry v2.11.4
+   Compiling keyboard-types v0.7.0
+   Compiling png v0.18.1
+   Compiling tauri-codegen v2.6.3
+   Compiling tao v0.35.3
+   Compiling getrandom v0.3.4
+   Compiling tauri-plugin-fs v2.5.2
+   Compiling serialize-to-javascript-impl v0.1.2
+   Compiling pin-project-lite v0.2.17
+   Compiling tokio v1.53.1
+   Compiling serialize-to-javascript v0.1.2
+   Compiling tauri-macros v2.6.3
+   Compiling muda v0.19.3
+   Compiling window-vibrancy v0.6.0
+   Compiling serde_repr v0.1.21
+   Compiling coremidi-sys v3.2.1
+   Compiling cfg_aliases v0.1.1
+   Compiling mime v0.3.17
+   Compiling embed_plist v1.2.2
+   Compiling nix v0.28.0
+   Compiling tauri-plugin-dialog v2.7.1
+   Compiling tauri-plugin-opener v2.5.5
+   Compiling rfd v0.16.0
+   Compiling notify-types v2.1.0
+   Compiling fsevent-sys v4.1.0
+   Compiling midir v0.11.1
+   Compiling live-set v0.1.0 (/Users/admin/Central/worktrees/env-2/o-i/packages/live-set)
+   Compiling notify v8.2.0
+   Compiling coremidi v0.9.2
+   Compiling filedescriptor v0.8.3
+   Compiling oi-cradle v0.1.0 (/Users/admin/Central/worktrees/env-2/o-i/desktop/cradle/src-tauri)
+   Compiling serial2 v0.2.38
+   Compiling open v5.4.4
+   Compiling downcast-rs v1.2.1
+   Compiling shell-words v1.1.1
+   Compiling portable-pty v0.9.0
+   Compiling oi-cradle-kernel v0.1.0 (/Users/admin/Central/worktrees/env-2/o-i/desktop/cradle/kernel)
+    Finished `release` profile [optimized] target(s) in 7m 34s
+       Built application at: /Users/admin/Central/Work/O-I/target/release/oi-cradle
+    Bundling O-I Shell Candidate.app (/Users/admin/Central/Work/O-I/target/release/bundle/macos/O-I Shell Candidate.app)
+        Warn Skipping signing due to --no-sign flag.
+    Finished 1 bundle at:
+        /Users/admin/Central/Work/O-I/target/release/bundle/macos/O-I Shell Candidate.app
+
+{
+  "standing": "native-feature-build-bytes",
+  "stage": "/Users/admin/Central/Work/O-I/target/p0-r1/20261028T051057Z/stage",
+  "native_app": "/Users/admin/Central/Work/O-I/target/release/bundle/macos/O-I Shell Candidate.app",
+  "footprint": "/Users/admin/Central/Work/O-I/target/p0-r1/20261028T051057Z/stage/footprint.json",
+  "source_revision": "4286f61b3475859d1baf242e23ec087e7d69fb80",
+  "source_tree_sha256": "0b2e6e9350baa6180c7233f9c6c208505b34c996751c5db287f9f0e7745cb2c7",
+  "functional_acceptance": "pending"
+}

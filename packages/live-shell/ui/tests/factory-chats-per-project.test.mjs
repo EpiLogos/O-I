@@ -478,12 +478,27 @@ test('a double-click opens the chat\'s thread where the shell has the session; e
   const oi = await chatOf('O-I', S_CHAT_OLD), acp = await chatOf('Factory', S_ACP)
   const tracks = new Set([model.chatTrackKey(oi)])
   assert.deepEqual(model.threadOpening(oi, tracks, true), {kind: 'open', trackKey: model.chatTrackKey(oi), label: 'Desktop chat conversation', pane: true})
-  assert.equal(model.threadOpening(oi, tracks, false).pane, false, 'without a Thread device on the chain the thread opens in the shell\'s thread view')
+  // REPLACED (#788): "without a Thread device on the chain the thread opens in the shell's thread view". The Thread is no device of its own
+  // (#725, #772): it is the Agent's Thread page and the Agent's Full (§19.4 Views, Full: "The thread, and beside it the stage"), so the pane
+  // opens with the Agent on the chain.
+  assert.equal(model.threadOpening(oi, tracks, false).pane, false, 'without the Agent on the chain the thread opens in the shell\'s thread view')
   const refused = model.threadOpening(acp, tracks, true)
   assert.equal(refused.kind, 'refused')
   assert.match(refused.words, /Factory/)
   assert.match(refused.words, /O-I/, 'the thread reads the agency of the one project the shell mounts')
   assert.equal(model.threadOpening(oi, null, true).kind, 'refused', 'no sessions provider, no thread')
+})
+
+test('REPLACED (#788) — a chat\'s thread opens full in a pane as the Agent\'s Full, never as a Thread device (§19.4 Views)', () => {
+  // Was: the rows asked whether THREAD_DEVICE_ID stood on the door and opened it in a pane. Nothing publishes it (#725, #772): the Agent
+  // carries the Thread as its page and its Full (FactoryDeviceChain.tsx openAgentThread), so the rows ask for the Agent and open it.
+  const rows = source('agent/FactoryChatsRows.tsx')
+  assert.doesNotMatch(rows, /THREAD_DEVICE_ID|threadBinding/, 'no retired Thread device read or opened')
+  assert.match(rows, /const AGENT_ID = chainDeviceId\('agent'\)/, 'the Agent on the session\'s chain')
+  assert.match(rows, /const agentOnChain = useIsPublished\(AGENT_ID\)/)
+  assert.match(rows, /openInstrument\(DEVICE_PANE_KIND, undefined, \{ref: AGENT_ID, title: opening\.label\}\)/, 'its Full, the thread, in a pane')
+  assert.match(source('agent/devices/FactoryDeviceChain.tsx'), /const openAgentThread = \(\) => openDevice\(chainDeviceId\('agent'\), 'Agent'\)/,
+    'the same door the chain\'s own ⤢ opens')
 })
 
 // ---- the category stands in Factory's browser ----------------------------------------------------------------------------
@@ -494,6 +509,8 @@ test('Factory\'s browser has a Projects category of material, and the existing c
   assert.equal(projects.label, 'Projects')
   assert.equal(projects.kind, 'material', 'chats are opened, not run: the running kind stays sessions and agents')
   assert.deepEqual(agentBrowser.AGENT_BROWSER_CATEGORIES.filter(category => category.kind === 'running').map(category => category.id), ['sess', 'agents'])
+  // REPLACED (#788): the Runs category is gone with the retired Run and Runs; a session's attempts are its track's take lanes (§19.1).
+  assert.deepEqual(agentBrowser.AGENT_BROWSER_CATEGORIES.map(category => category.id), ['sess', 'context', 'agents', 'skillsets', 'git', 'projects'])
   const body = source('agent/AgentShellBrowser.tsx')
   assert.match(body, /category === 'projects'/)
   assert.match(body, /FactoryChatsRows/)

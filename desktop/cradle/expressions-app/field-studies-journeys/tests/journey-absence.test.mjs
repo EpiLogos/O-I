@@ -27,7 +27,7 @@ function reading(overrides = {}) {
     expressions: [{expression_ref: EXPRESSION, revision: '7', scene_ref: ONE}],
     actions: [],
     disclosure: {
-      instruments: [{instrument: 'journey', available: true, m_prime: 3, reading: '4:2-deep'}],
+      instruments: [{instrument: 'journey', available: true, reading: '4:2-deep'}],
       application_cuts: [{cut: '4:2-deep', available: true}],
       degraded: [],
       suggestions: [],

@@ -98,7 +98,12 @@ for (const testCase of fixtures.cases) {
       const [head, tail] = expect.islandAfter;
       // The kept stretches are the island's own bytes: before the new entry only the revision's value moves.
       assert.ok(testCase.island.endsWith(tail), "the bytes after the new entry are the island's own");
-      assert.equal(testCase.island.slice(0, -tail.length).replace(`"revision":${doc.meta.revision}`, `"revision":${next.meta.revision}`), head,
+      // The revision's value as the island spells it: a hand-written `3.0` is 3 (#798), and the append writes the next count.
+      const revision = /("revision":)(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)/;
+      const before = testCase.island.slice(0, -tail.length);
+      assert.equal(Number(before.match(revision)[2]), doc.meta.revision, "the island's revision is the count this form read");
+      assert.equal(next.meta.revision, doc.meta.revision + 1, "the append counts on from the revision as read");
+      assert.equal(before.replace(revision, `$1${next.meta.revision}`), head,
         "the bytes before the new entry are the island's own, the revision's value apart");
       // With this form's entry between them they read as exactly this form's result.
       assert.deepEqual(JSON.parse(`${head},${JSON.stringify(entry)}${tail}`), clone(next));

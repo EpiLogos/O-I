@@ -107,10 +107,12 @@ test('every holder names a legal Live semantic and a unique id; the six Technē 
     assert.ok(semantics.isLiveSemantic(holder.liveSemantic), `${holder.id} occupies "${holder.liveSemantic}"`)
   }
   assert.deepEqual(semantics.TECHNE_INSTRUMENTS.map(holder => holder.id), ['techne:m0', 'techne:m1', 'techne:m2', 'techne:m3', 'techne:m4', 'techne:m5'])
-  assert.deepEqual(semantics.TECHNE_INSTRUMENTS.map(holder => holder.provenance), ['M0′', 'M1′', 'M2′', 'M3′', 'M4′', 'M5′'])
+  // REPLACED (#753): each Technē holder kept an M′ address (M0′–M5′) as provenance beside its plain name. Technē's instruments carry no
+  // M′ number (PROGRAMME R9; manual §25.1: M′ names only the app layers, and Technē is one of them, M5′), so each is its plain name alone.
+  assert.deepEqual(semantics.TECHNE_INSTRUMENTS.map(holder => holder.title), ['Project', 'Canvas', 'Timeline', 'Journey', 'World', 'Palace'])
   for (const instrument of semantics.TECHNE_INSTRUMENTS) {
     assert.equal(instrument.liveSemantic, 'device-instrument', `${instrument.id} is an instrument, never an effect`)
-    assert.notEqual(instrument.title, instrument.provenance, 'the plain name is the name; the M′ address is provenance')
+    assert.equal(instrument.provenance, undefined, `${instrument.id} carries no M′ number`)
   }
   assert.equal(semantics.DETAIL_CLIP_HOLDER.liveSemantic, 'detail-clip')
   assert.equal(semantics.isHolder('detail:clip'), true)

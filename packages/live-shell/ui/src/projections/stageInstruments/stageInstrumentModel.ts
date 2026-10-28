@@ -1,4 +1,4 @@
-// The plates of the Technē instruments the hosted stage draws — M1′ Canvas, M2′ Timeline, M3′ Journey (T-FRAME-CHROME-ONTO-PLATES; lock
+// The plates of the Technē instruments the hosted stage draws — the Canvas, the Timeline, the Journey (T-FRAME-CHROME-ONTO-PLATES; lock
 // §2.5 "drawn as one instrument frame with sections"; the mockup's deviceDetail k==='M1'/'M2'/'M3', world-shell-mockup.html:1457-1459).
 // Their sections are the manual's own groups for each — DLW.md §17.4 Canvas "Whole: All parameters, in five groups: Tools, Lines,
 // Relation, Look, Views"; §17.4 Timeline "four groups: Lens, Readings, Standing, Window"; §17.5 Journey "four groups: Stops, Pace,
@@ -96,8 +96,8 @@ export const CARRIED_BY_DESIGN: Readonly<Record<StageInstrumentId, {readonly sec
   // Journey: Play and Stop of the saved scenes (the journey stage command) and the presented beat's Enter (its crossing).
   'techne:m3': {sections: [], labels: [/^(Play|Stop) saved scenes$/, /^Enter in Expression$/]},
 }
-/** Whether a catalogue design heads the instrument's chain (techne/devices/techneDesigns.ts TECHNE_CHAINS): the Canvas heads M1′ and the
- * Journey M3′, and its display is the picture. No design heads M2′ since the Timeline was retired (§17.5), so its plate draws its own well. */
+/** Whether a catalogue design heads the instrument's chain (techne/devices/techneDesigns.ts TECHNE_CHAINS): the Canvas's design heads the Canvas and the
+ * Journey's the Journey, and its display is the picture. No design heads the Timeline since its design was retired (§17.5), so its plate draws its own well. */
 export const HEADED_BY_DESIGN: Readonly<Record<StageInstrumentId, boolean>> = {'techne:m1': true, 'techne:m2': false, 'techne:m3': true}
 
 /** Whether the design carries one of the frame's controls. */

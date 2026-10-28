@@ -103,7 +103,7 @@ const REFUSE = {
   prove: missing('Prove', 'the run\'s proof `aikit praxis method prove --method <ref> --proof-json` takes (its Activity, Return, Evidence and verification refs; the member holds no run receipt)', 'AIKit'),
   reach: missing('Reach', 'the scope reach write on the world device\'s apply path (WO-SF2)', 'Software Factory'),
   // Scope's Knowledge page (§19.12 Knowledge, which took in the Knowledge route of §19.9 in the 22 Oct manual rewrite): its settings by the
-  // design's own keys (scope.tsx), each refused in the Knowledge route's own words (knowledgeRouteBinding.ts KNOWLEDGE_REFUSE).
+  // design's own keys (scope.tsx), each refused by the owner operation it lacks; the route has no binding of its own (ticket 788).
   knowledgeSources: missing('The sources the agent may search', 'a lens-level request on the AgentProfile — Central\'s knowledge_source_refs carries source refs, not lenses, and agent-profile.save writes that list', 'Central'),
   searchFirst: missing('Search first', 'a per-agent order of search and links on the route', 'AIKit'),
   linkDepth: missing('Link depth', 'a per-agent depth on `aikit knowledge relations` (the kernel asks depth 2 for every caller: knowledge.rs RELATIONS_DEPTH)', 'AIKit'),
@@ -971,8 +971,8 @@ export function scopeValues(held: ChainHolds): Values {
 }
 
 /** Scope's Knowledge page's readings (§19.12 Knowledge; scope.tsx `route`, `routeWhy`, `readings`, `reading`), absent in the Knowledge
- * route's own words (knowledgeRouteBinding.ts KNOWLEDGE_ABSENT, §19.9): no reading of the route's standing for the agent reaches the chain,
- * nor of the pages it read. */
+ * route's own words (§19.9; the route has no binding of its own since ticket 788): no reading of the route's standing for the agent reaches
+ * the chain, nor of the pages it read. */
 export const SCOPE_KNOWLEDGE_ABSENT: Readonly<Record<string, string>> = {
   route: 'Route: no reading reaches it yet — missing op: a reading of the route\'s standing for the agent (AIKit).',
   routeWhy: 'Route: no reading reaches it yet — missing op: a reading of the route\'s standing for the agent (AIKit).',

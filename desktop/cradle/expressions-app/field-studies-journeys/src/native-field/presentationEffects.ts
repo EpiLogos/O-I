@@ -18,6 +18,14 @@
  *     quantum shorter, so every repeat lands one Time after the last;
  *   - the DynamicsCompressorNode adds its own makeup, 0.6 of the reduction at full level (Web Audio's "fullRangeMakeupGain"), so the
  *     makeup stage takes that back before it adds the effect's Makeup: the curve is the design's static curve.
+ * One engine's ConvolverNode needs a correction of its own. WebKit on Linux (its GStreamer ports, WebKitGTK and WPE) lets the Nyquist bin of
+ * every block its convolver transforms through unconvolved: FFTFrame::multiply multiplies the packed layout of Apple's FFT, where that bin
+ * rides in the DC's imaginary part, and the GStreamer frame keeps it unpacked at the end, where nothing multiplies it. What comes out is the
+ * response plus a buzz at half the sample rate that follows the input, block by block, for as long as the response lasts: an impulse through
+ * a Decay 1 s body measured 3.05 s to fall 60 dB (Playwright's WebKit on Linux; tests/mr-resonator-bank.test.mjs). Where the page's one
+ * measure finds it (convolverLeaksNyquist), the bank rings each side through a convolver whose response stands beside silence: the two halves
+ * leak alike, and the silent half's output, the leak alone, is taken from the other's. That is four convolutions where one served (10 s of
+ * noise through 1440 bodies renders in 1.5 s there, 0.4 s before); elsewhere the bank is one plain convolver.
  *
  * The room is generated, not sampled: noise falling 60 dB in Decay, its bright part falling faster with Damping (to a fifth of the
  * Decay at 100 %), after six early reflections spaced by Size — the law the design draws (catalogue/panels/live__reverb.tsx Tail).
@@ -136,6 +144,25 @@ export function resonatorImpulse(sampleRate: number, params: ResonatorParams): F
   return build.data;
 }
 
+let nyquistLeak: boolean | undefined;
+let nyquistMeasure: Promise<boolean> | undefined;
+/** Whether this engine's convolver lets each block's Nyquist bin through unconvolved (see the head of this file), measured once a page:
+ * an impulse through a response of silence comes out silent from a convolver that convolves. Without Web Audio there is nothing to leak. */
+export function convolverLeaksNyquist(): Promise<boolean> {
+  if (nyquistMeasure) return nyquistMeasure;
+  const verdict = (leaks: boolean) => (nyquistLeak = leaks);
+  if (typeof OfflineAudioContext !== 'function') return nyquistMeasure = Promise.resolve(verdict(false));
+  try {
+    const context = new OfflineAudioContext(1, 1024, 48000);
+    const impulse = context.createBuffer(1, 1, 48000), source = context.createBufferSource(), convolver = context.createConvolver();
+    impulse.getChannelData(0)[0] = 1; source.buffer = impulse;
+    // Longer than the first 128 frames, which the engines convolve directly, so the response reaches the transformed blocks.
+    convolver.normalize = false; convolver.buffer = context.createBuffer(1, 512, 48000);
+    wire(source, convolver, context.destination); source.start(0);
+    return nyquistMeasure = context.startRendering().then(out => verdict(out.getChannelData(0).some(x => x !== 0)), () => verdict(false));
+  } catch { return nyquistMeasure = Promise.resolve(verdict(false)); }
+}
+
 export class PresentationEffects {
   /** Where the level connects. */
   readonly input: GainNode;
@@ -155,8 +182,9 @@ export class PresentationEffects {
   readonly #dynamics: {in: GainNode; dry: GainNode; compressor: DynamicsCompressorNode; makeup: GainNode; wet: GainNode; out: GainNode};
   readonly #delay: {in: GainNode; send: GainNode; line: DelayNode; loop: DelayNode; tone: BiquadFilterNode; feedback: GainNode; wet: GainNode; out: GainNode};
   readonly #reverb: {in: GainNode; dry: GainNode; pre: DelayNode; convolver: ConvolverNode; wet: GainNode; out: GainNode};
-  /** The bank's ringing is made only when it first sounds: a bank that is never put on the chain costs one gain node. */
-  readonly #resonator: {in: GainNode; dry: GainNode; wet: GainNode; out: GainNode; convolver: ConvolverNode | null};
+  /** The bank's ringing is made only when it first sounds: a bank that is never put on the chain costs one gain node. The ringing is its
+   * convolvers (one, or one a side where the engine leaks), where the bank's input joins it, and whether it is joined. */
+  readonly #resonator: {in: GainNode; dry: GainNode; wet: GainNode; out: GainNode; ring: {convolvers: ConvolverNode[]; entry: AudioNode; joined: boolean} | null};
 
   constructor(context: BaseAudioContext, output: AudioNode, state: EffectsState, defer: Defer = later) {
     this.#context = context; this.#output = output; this.#defer = defer; this.#state = state;
@@ -185,7 +213,7 @@ export class PresentationEffects {
     filter.biquad.Q.value = 0; delay.tone.type = 'lowpass'; delay.tone.Q.value = 20 * Math.log10(Math.SQRT1_2);
     dynamics.compressor.knee.value = 0;
     // Resonator bank: the dry and, while it sounds, the ringing (in → convolver → wet), blended by Mix.
-    const resonator = {in: gain(), dry: gain(), wet: gain(), out: gain(), convolver: null as ConvolverNode | null};
+    const resonator = {in: gain(), dry: gain(), wet: gain(), out: gain(), ring: null};
     wire(resonator.in, resonator.dry, resonator.out);
     wire(resonator.wet, resonator.out);
     this.#filter = filter; this.#dynamics = dynamics; this.#delay = delay; this.#reverb = reverb; this.#resonator = resonator;
@@ -274,37 +302,79 @@ export class PresentationEffects {
     const z = this.#resonator;
     if (!sounds) {
       this.#cancelRing?.(); this.#cancelRing = null; this.#ring = null;
-      if (z.convolver) z.in.disconnect(z.convolver);
+      this.#join(false);
       return;
     }
-    if (!z.convolver) {
+    if (!z.ring) {
       const convolver = this.#keep(this.#context.createConvolver());
       // Not renormalised: Tilt and Gain are the bank's own, the response's size is the bodies' weights.
       convolver.normalize = false;
       wire(convolver, z.wet);
-      z.convolver = convolver;
+      z.ring = {convolvers: [convolver], entry: convolver, joined: false};
     }
-    z.in.connect(z.convolver);
+    this.#join(true);
     const key = `${params.root}/${params.division}/${params.span}/${params.decay}/${params.tilt}`;
     if (key === this.#ring) return;
     this.#ring = key;
     this.#cancelRing?.(); this.#cancelRing = null;
-    const convolver = z.convolver, rate = this.#context.sampleRate, first = convolver.buffer === null;
+    const ring = z.ring, rate = this.#context.sampleRate, first = ring.convolvers[0]!.buffer === null;
     const start = () => {
       this.#cancelRing = null;
       if (this.#closed) return;
-      const build = new ResonatorImpulse(rate, params);
+      // The first response waits for the page's measure of the convolver (once, a few milliseconds).
+      const measure = convolverLeaksNyquist();
+      if (nyquistLeak === undefined) {
+        let live = true;
+        void measure.then(() => { if (live) start(); });
+        this.#cancelRing = () => { live = false; };
+        return;
+      }
+      const leaks = nyquistLeak, build = new ResonatorImpulse(rate, params);
       const slice = () => {
         this.#cancelRing = null;
         if (this.#closed) return;
         if (!build.step(RESONATOR_SLICE_WORK)) { this.#cancelRing = this.#defer(slice, 0); return; }
-        const buffer = this.#context.createBuffer(1, build.data.length, rate);
+        if (leaks) this.#unleak();
+        // Where the engine leaks, the response stands beside silence (the head of this file).
+        const buffer = this.#context.createBuffer(leaks ? 2 : 1, build.data.length, rate);
         buffer.copyToChannel(build.data, 0);
-        convolver.buffer = buffer;
+        for (const convolver of ring.convolvers) convolver.buffer = buffer;
       };
       slice();
     };
     this.#cancelRing = this.#defer(start, first ? 0 : ROOM_PAUSE_MS);
+  }
+
+  /** Join the bank's input to its ringing, or part them: a node is parted only from what it is joined to. */
+  #join(joined: boolean) {
+    const z = this.#resonator, ring = z.ring;
+    if (!ring || ring.joined === joined) return;
+    if (joined) z.in.connect(ring.entry); else z.in.disconnect(ring.entry);
+    ring.joined = joined;
+  }
+
+  /** Where the engine's convolver leaks (convolverLeaksNyquist): one convolver a side, each over the response beside silence, and from each
+   * side's response half its silent half (the leak alone) taken away. Made once, before the first response is in, so nothing has rung yet. */
+  #unleak() {
+    const z = this.#resonator, ring = z.ring!, context = this.#context;
+    if (ring.convolvers.length === 2) return;
+    const joined = ring.joined;
+    this.#join(false);
+    // The input as two sides: a mono sound on both, a stereo sound (a reverb before the bank) on its own.
+    const sides = this.#keep(context.createGain());
+    sides.channelCount = 2; sides.channelCountMode = 'explicit'; sides.channelInterpretation = 'speakers';
+    const split = this.#keep(context.createChannelSplitter(2)), merge = this.#keep(context.createChannelMerger(2));
+    wire(sides, split);
+    const convolvers = [ring.convolvers[0]!, this.#keep(context.createConvolver())];
+    convolvers.forEach((convolver, side) => {
+      const halves = this.#keep(context.createChannelSplitter(2)), leak = this.#keep(context.createGain());
+      convolver.normalize = false; convolver.disconnect(); leak.gain.value = -1;
+      split.connect(convolver, side); convolver.connect(halves);
+      halves.connect(merge, 0, side); halves.connect(leak, 1); leak.connect(merge, 0, side);
+    });
+    merge.connect(z.wet);
+    ring.convolvers = convolvers; ring.entry = sides;
+    this.#join(joined);
   }
 
   /** Generate the room for these settings, once the edits pause; the first room is made at once. */

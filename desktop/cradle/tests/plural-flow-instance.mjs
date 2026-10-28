@@ -109,6 +109,27 @@ try {
     assert.doesNotMatch(island.slice(sharedHead.length, -sharedTail.length), /<\/script|<!--/i, `${shared.name}: the island can neither close itself nor open a comment`);
     assert.equal(JSON.parse(island).entries.at(-1).html, shared.request.html, `${shared.name}: an app append writes its text with its letters`);
   }
+
+  // Every shared island case through createInPlace's own island writes (#798): a page tied to its world (tieWorld) and a new
+  // Flow's meta (withFlowMeta) write only what they add, after meta's last member, through the host's splice. Every other byte
+  // stays as written: key order, integers past 2^53, a revision spelt `3.0`, and the letters after an escaped `<\/`.
+  const create = await server.ssrLoadModule("/src/flow/createInPlace.ts");
+  for (const shared of fixtures.cases.filter(c => c.op === "append-island")) {
+    const sharedFile = withIsland(readFileSync(root + "documents/ql-flow.html", "utf8"), shared.island);
+    const metaEnd = '},"entries":[';
+    assert.ok(JSON.parse(shared.island.slice(0, shared.island.indexOf(metaEnd) + 1) + "}").meta, `${shared.name}: meta closes where the entries open`);
+    const added = member => withIsland(sharedFile, shared.island.replace(metaEnd, `,${member}${metaEnd}`));
+    const tied = create.tieWorld(sharedFile, "central:wiki:project:O-I");
+    assert.equal(tied, added('"world":"central:wiki:project:O-I"'), `${shared.name}: a world tie writes only meta.world; every other byte stays as written`);
+    assert.deepEqual(instance.parseInstance(tied), {...JSON.parse(shared.island), meta: {...JSON.parse(shared.island).meta, world: "central:wiki:project:O-I"}},
+      `${shared.name}: the tied island reads as the document with its world, the letters after <\\/ as written`);
+    const kept = create.withFlowMeta(sharedFile, {practice: "sitting", sitting: {schema: "oi.sitting/v1", note: "</SCRIPT>"}});
+    assert.equal(kept, added('"practice":"sitting","sitting":{"schema":"oi.sitting/v1","note":"<\\/SCRIPT>"}'),
+      `${shared.name}: a Flow's meta at creation writes only what it is made for, escaped with its letters; every other byte stays as written`);
+    assert.equal(instance.parseInstance(kept).meta.sitting.note, "</SCRIPT>", `${shared.name}: what the meta adds reads back with its letters`);
+    assert.equal(create.tieWorld(kept, "central:wiki:root"), added('"practice":"sitting","sitting":{"schema":"oi.sitting/v1","note":"<\\/SCRIPT>"},"world":"central:wiki:root"'),
+      `${shared.name}: a page made for a practice in a world takes both, each where it is written`);
+  }
   console.log("plural-flow instance: ok");
 } finally {
   await server.close();

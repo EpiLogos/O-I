@@ -28,9 +28,6 @@ function SettingsPanel() {
     observer.observe(inhabitant, { attributes: true, attributeFilter: ['hidden'] })
     return () => observer.disconnect()
   }, [])
-  useEffect(() => {
-    if (visible && !host.request) dialog.current?.querySelector<HTMLInputElement>('input[type="search"]')?.focus()
-  }, [visible])
   useEffect(()=>{
     if(!visible)return
     const frame=anchor.current?.closest<HTMLElement>('.frame')

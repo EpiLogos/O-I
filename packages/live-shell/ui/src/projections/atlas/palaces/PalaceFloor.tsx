@@ -1,7 +1,7 @@
-// The palace drawn inside: the atlas's palace scale (T-PALACES-ONTO-ATLAS; lock §2.5 M4′ "scales system · body · region · palace", §7.1
+// The palace drawn inside: the atlas's palace scale (T-PALACES-ONTO-ATLAS; lock §2.5, World / Places: "scales system · body · region · palace", §7.1
 // "Sky = a scale of the globe … System · Body · Region · Palace scales"; the mockup's palace interior, world-shell-mockup.html:1222-1249
 // palaceSVG — rooms, the guided path numbered through them, the objects each room holds, the portals out — and its View list
-// "Palace — Inside Bollingen Tower (M5′)", :1518).
+// "Palace — Inside Bollingen Tower", :1518).
 //
 // Archetypal-Earth holds no palace code of its own (Work/Archetypal-Earth at 4faf013 names none); its modes are the worked foundation
 // (lock §8.2), and the frame's Palace lens was the palace's only face. So this is the frame's board (field-studies-journeys/src/
@@ -157,7 +157,7 @@ function Floor({inside}: {inside: PalaceInside}) {
   }
 
   return <div className="atlas-palace" data-palace-phase="inside" data-palace={inside.palace.key}
-    data-i={`${inside.palace.title}|Inside the palace (M5′): ${rooms.length} room${rooms.length === 1 ? '' : 's'} along its path. Drag a room to place it; shift-drag to select rooms; drag the floor to pan, wheel to zoom; double-click a room to open it. Escape returns to the Earth.`}>
+    data-i={`${inside.palace.title}|Inside the palace: ${rooms.length} room${rooms.length === 1 ? '' : 's'} along its path. Drag a room to place it; shift-drag to select rooms; drag the floor to pan, wheel to zoom; double-click a room to open it. Escape returns to the Earth.`}>
     {rooms.length === 0 && <p className="atlas-palace__line" role="status">This palace holds no room yet.</p>}
     <svg ref={svg} className="atlas-palace__plan" viewBox={`${box.x} ${box.y} ${box.width} ${box.height}`} preserveAspectRatio="xMidYMid meet"
       onPointerDown={grabFloor} onPointerMove={move} onPointerUp={release} onPointerCancel={() => setGesture(null)} onWheel={wheel}

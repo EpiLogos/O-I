@@ -1,7 +1,7 @@
 /**
- * Palace structured state for the situated agencies (L5 Technē M5′, QL-MEF
+ * Palace structured state for the situated agencies (L5 Technē, QL-MEF
  * #218 §9) — the structured description of the current composition that
- * Aletheia_5 / Technē_5 (and Epii, the canonical M5 Guardian) co-reference
+ * the situated Aletheia and Technē roles (and the Guardian anchoring them) co-reference
  * instead of scraping any DOM or reconstructing UI text.
  *
  * Laws carried here:
@@ -30,7 +30,7 @@ export interface PalaceAgentState {
   };
   composition: {
     bound: boolean;
-    regions: { key: string; office: string; m_prime: number | null; entry_refs: string[] }[];
+    regions: { key: string; office: string; entry_refs: string[] }[];
     bookmarks: { region: string; ref: string }[];
   };
   /** The reading's own Expression/Scene bindings, verbatim. */
@@ -88,7 +88,6 @@ export function palaceAgentState(reading: TechneReading, composition: PalaceComp
       regions: composition.regions.map((region) => ({
         key: region.key,
         office: region.office,
-        m_prime: region.m_prime,
         entry_refs: region.entries.map((entry) => entry.ref),
       })),
       bookmarks: composition.bookmarks.map((bookmark) => ({ region: bookmark.region, ref: bookmark.ref })),

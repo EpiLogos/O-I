@@ -55,7 +55,7 @@ function reading() {
     provenance: [],
     expressions: [{expression_ref: EXPRESSION, revision: '7', scene_ref: ONE}, {expression_ref: EXPRESSION, revision: '7', scene_ref: TWO}],
     actions: [],
-    disclosure: {instruments: [{instrument: 'journey', available: true, m_prime: 3, reading: '4:2-deep'}], application_cuts: [], degraded: [], suggestions: []},
+    disclosure: {instruments: [{instrument: 'journey', available: true, reading: '4:2-deep'}], application_cuts: [], degraded: [], suggestions: []},
   };
 }
 

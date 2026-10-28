@@ -1,14 +1,14 @@
 /**
- * The M0′ situated-Agency operating state (L5 Technē, issue #213 §7) — the
- * structured state through which `Aletheia_0 / Technē_0` locates, inspects,
- * traverses, proposes and Returns over the M0′ instrument using native refs.
+ * The Project situated-Agency operating state (L5 Technē, issue #213 §7) — the
+ * structured state through which the situated Aletheia and Technē roles locate, inspect,
+ * traverse, propose and Return over the Project instrument using native refs.
  *
  * Laws kept here (dual-reading lock §16, #213 §7, TB0-1 role floor):
  *   - an Agency reads THIS state (the contract types and the bounded view),
  *     never the DOM and never a private graph parse;
  *   - the role bindings are the reading's own `agency[]` disclosure — this
  *     module never mints a role, a session ref or a profile ref; when no
- *     Technē_0/Aletheia_0 binding is disclosed, that absence is carried
+ *     role is disclosed operating the Project, that absence is carried
  *     honestly with its reason;
  *   - locate/traverse are READS over disclosed facts; propose/execute enter
  *     as a TechneActionRoute through the adapter and only the native owner
@@ -28,7 +28,7 @@ import {
 } from "../../contract.ts";
 import type { ProjectView } from "./projections.ts";
 
-/** The operating state one situated Agency perceives of the M0′ instrument
+/** The operating state one situated Agency perceives of the Project instrument
  * (dual-reading lock §16: current subject/whole, active instrument/cut,
  * selection/aperture, source/revision/provenance, available Actions,
  * authority and disclosure limits). */
@@ -58,24 +58,24 @@ export interface TechnaeOperatingState {
   };
   /** The reading's own situated-Agency bindings, verbatim. */
   agency: AgencyRole[];
-  /** The Technē_0/Aletheia_0 binding for THIS coordinate, when disclosed. */
-  technae_0: AgencyRole | null;
-  /** Explicit absence reason when technae_0 is null (honest absence). */
-  technae_0_absence_reason: string | null;
+  /** The Technē (else Aletheia) binding that operates THIS instrument, when
+   * disclosed. No instrument is bound to a coordinate, so the binding is found
+   * by its instrument, never by its m_index. */
+  techne_binding: AgencyRole | null;
+  /** Explicit absence reason when techne_binding is null (honest absence). */
+  techne_absence_reason: string | null;
   /** The native Actions disclosed for this subject, verbatim. */
   actions: NativeActionRef[];
 }
 
-const M0 = 0;
-
 /**
- * The operating state of the M0′ instrument for one reading/session/view.
+ * The operating state of the Project instrument for one reading/session/view.
  * Pure: reads the contract types only; absence stays absent with a reason.
  */
 export function technaeState(reading: TechneReading, session: DisclosureSession | null, view: ProjectView | null): TechnaeOperatingState {
   const bindings = reading.agency ?? [];
-  const coordinate = bindings.filter((role) => role.m_index === M0 && (role.role === "techne" || role.role === "aletheia"));
-  const technae0 = coordinate.find((role) => role.role === "techne") ?? coordinate[0] ?? null;
+  const operating = bindings.filter((role) => role.instrument === "project" && (role.role === "techne" || role.role === "aletheia"));
+  const binding = operating.find((role) => role.role === "techne") ?? operating[0] ?? null;
   return {
     subject_ref: reading.subject.subject_ref,
     native_owner: reading.subject.native_owner,
@@ -115,11 +115,11 @@ export function technaeState(reading: TechneReading, session: DisclosureSession 
       })),
     },
     agency: bindings.map((role) => ({ ...role })),
-    technae_0: technae0 ? { ...technae0 } : null,
-    technae_0_absence_reason: technae0
+    techne_binding: binding ? { ...binding } : null,
+    techne_absence_reason: binding
       ? null
       : bindings.length
-        ? "the reading discloses agency bindings, but none is an Aletheia_0/Technē_0 operating this coordinate"
+        ? "the reading discloses agency bindings, but none is a Technē or Aletheia role operating the Project"
         : "the reading discloses no situated-Agency bindings — the role floor is absent for this subject, not hidden",
     actions: (reading.actions ?? []).map((action) => ({ ...action })),
   };
@@ -188,7 +188,7 @@ export function agencyRoute(state: TechnaeOperatingState, actionRef: string): Te
       // Disclosure context only — the route never carries authority with it;
       // execution and authority stay with the native owner.
       application_cut: instrumentReading("project"),
-      acting_role: state.technae_0 ? `agency:${state.technae_0.role}:M${state.technae_0.m_index}` : "m0-prime-surface",
+      acting_role: state.techne_binding ? `agency:${state.techne_binding.role}:M${state.techne_binding.m_index}` : "project-surface",
     },
   };
 }

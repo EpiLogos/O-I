@@ -56,8 +56,8 @@ jobs:
           npm ci --prefix desktop/cradle/expressions-app --no-audit --no-fund
           npm --prefix desktop/cradle/expressions-app run build
           (cd desktop/cradle/expressions-app && npx tsc --noEmit)
+          (cd desktop/cradle && npx playwright install --with-deps chromium webkit)
           npm --prefix desktop/cradle/expressions-app test
-          (cd desktop/cradle/expressions-app && node --test field-studies-journeys/tests/kernel-document-bridge.test.mjs field-studies-journeys/tests/native-composition.test.mjs field-studies-journeys/tests/native-selection-queue.test.mjs)
           tar -czf "$RUNNER_TEMP/techne-evidence/expressions-app-runtime.tar.gz" -C desktop/cradle/expressions-app node_modules dist field-studies-journeys/build
       - name: Build the actual integrated cradle
         run: npm --prefix desktop/cradle run build

@@ -250,8 +250,6 @@ export function centralVoiceBinding(state: AnswerVoiceState, why: string | null,
 
 /** The thread page Central's Agent carries keeps its view (pin, the shown session, the filters) under its own hold. */
 const CENTRAL_THREAD_HOLD = `${CENTRAL_AGENT_ID}/thread`
-/** Approvals on Central: the default answer is the Gateway's (Factory's Main track); the dialogue binding carries none. */
-const CENTRAL_DEFAULT_ANSWER = 'Default answer: no owner operation carries it for Central\'s agent yet — missing op: kernel:nara_dialogue {action: configure, session_ref, approvals: ask | session | always} (AIKit).'
 
 /** The device's pop-out, where its face declares one: the native device window the host offers (seam 8). Its identity is the
  * family, the face and the aperture the face reads (inhabitants/inhabitantRack.tsx:186-207 — the rack's own rule). */
@@ -528,7 +526,8 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
   const ownerRequests = useOwnerRequests(transport)
   const approvals = useMemo(() => {
     const actions = answerHandle && 'actions' in answerHandle ? answerHandle.actions : undefined
-    const binding = approvalsBinding({gateway: {}, session: naraTrack, encounter: answerObserved?.reading ?? null, holds, returns: returned, tracks: agency.tracks, nowUnixMs: nowUnixMs || Date.now()}, null,
+    // Approvals is handed no Gateway and stands no default answer: that answer is the Gateway's, never Approvals' (§19.14; ticket 788).
+    const binding = approvalsBinding({session: naraTrack, encounter: answerObserved?.reading ?? null, holds, returns: returned, tracks: agency.tracks, nowUnixMs: nowUnixMs || Date.now()},
       {...(actions ? {permission: (id, decision) => actions.permission(id, decision)} : {}), approve: row => acceptSourceReturn(transport, APPROVALS_PROJECT, row, person),
         reject: row => rejectSourceReturn(transport, APPROVALS_PROJECT, row)},
       CENTRAL_APPROVALS_ID)
@@ -542,7 +541,7 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
     const opened = openedOf(viewHolds(holds, APPROVALS_ID).opened)
     const requested = withOwnerRequests(commented, {...ownerRequests, nowUnixMs: nowUnixMs || Date.now()}, openNotificationTarget,
       {opened, hold: ids => holdView(APPROVALS_ID, 'opened', openedHold(ids))})
-    return {...requested, standing: {...requested.standing, approvals: {disabled: CENTRAL_DEFAULT_ANSWER}}}
+    return requested
   }, [answerHandle, naraTrack, answerObserved, holds, returned, agency.tracks, nowUnixMs, transport, person, agentDraft, agentWrite, ownerRequests])
   const others = useMemo(() => centralAgentDevices(), [])
   // Docs (§18.5) on the selected world (pageDevices.ts useDocsDevice, pageBindings.ts docsBinding): the world's account on six tiers on

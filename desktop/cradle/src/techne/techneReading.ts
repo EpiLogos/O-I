@@ -23,13 +23,14 @@ import {useEffect, useState} from "react";
 export const TECHNE_CONTRACT = "ql.techne/v1";
 
 /** The disclosure vocabulary's instrument ids (schema `$defs.Instrument`):
- * the six 4:2 deep instruments bind M0′–M5′; `expressions` is the conjugate
- * 3:3 Expression reading, not a deep instrument. */
+ * Technē's six deep instruments, named by their work and carrying no M′
+ * numbers; `expressions` is the conjugate 3:3 Expression reading, not a deep
+ * instrument. */
 export const TECHNE_INSTRUMENT_IDS = ["project", "canvas", "timeline", "journey", "place", "palace", "expressions"] as const;
 export type TechneInstrumentId = typeof TECHNE_INSTRUMENT_IDS[number];
 export const isTechneInstrumentId = (value: unknown): value is TechneInstrumentId => TECHNE_INSTRUMENT_IDS.includes(value as TechneInstrumentId);
 
-/** Which reading of the one M′ field an aperture carries. */
+/** Which reading an aperture carries: Technē's deep reading or the 3:3 Expression reading. */
 export type TechneReadingKind = "4:2-deep" | "3:3-conjugate";
 
 /** The subject a reading is over, in its native identity. */
@@ -46,8 +47,6 @@ export interface InstrumentDisclosure {
   instrument: TechneInstrumentId;
   available: boolean;
   reason?: string;
-  /** The M′ office this instrument is the Technè face of (0–5). */
-  mPrime?: number;
   reading?: TechneReadingKind;
 }
 
@@ -93,9 +92,8 @@ export function parseTechneReading(value: unknown): TechneReading | null {
     if (!isTechneInstrumentId(item.instrument) || typeof item.available !== "boolean") return null;
     const reason = text(item.reason);
     if (!item.available && !reason) return null; // the schema's unavailable-reason law
-    if (item.m_prime !== undefined && (typeof item.m_prime !== "number" || !Number.isInteger(item.m_prime) || item.m_prime < 0 || item.m_prime > 5)) return null;
     if (item.reading !== undefined && item.reading !== "4:2-deep" && item.reading !== "3:3-conjugate") return null;
-    instruments.push({instrument: item.instrument, available: item.available, reason, mPrime: item.m_prime, reading: item.reading});
+    instruments.push({instrument: item.instrument, available: item.available, reason, reading: item.reading});
   }
   const pairs = (value: unknown): {instrument: TechneInstrumentId; reason: string}[] => Array.isArray(value) ? value.flatMap((entry): {instrument: TechneInstrumentId; reason: string}[] => {
     if (!entry || typeof entry !== "object") return [];

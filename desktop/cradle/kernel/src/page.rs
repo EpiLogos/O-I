@@ -1814,6 +1814,81 @@ else:
         );
     }
 
+    /// The shared case with the counter hand-written `3.0` and an island-closing tag in mixed case (#798): a field write counts on
+    /// from 3, as Central's append and the page's and host's saves do, writing `4` where `3.0` stood. Every other byte stays as
+    /// written, the `3.0` of unknown metadata and the letters after an escaped `<\/` among them.
+    #[cfg(unix)]
+    #[test]
+    fn a_flow_field_write_counts_on_from_a_revision_written_with_a_fraction() {
+        let cases: Value = serde_json::from_str(include_str!(
+            "../../documents/fixtures/plural-flow-cases.json"
+        ))
+        .unwrap();
+        let case = cases["cases"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|case| {
+                case["name"]
+                    == "every-writer-counts-on-from-a-revision-written-3.0-and-keeps-the-letters"
+            })
+            .unwrap();
+        let island = case["island"].as_str().unwrap();
+        assert!(island.contains(r#""revision":3.0,"#), "{island}");
+        let stub = Stub::new("island-counted");
+        let path = "Control/user/flows/flow-counted.html";
+        let at = stub.put(path, &page_of(island));
+        let held = || std::fs::read_to_string(stub.home.join(path.replace('/', "_"))).unwrap();
+        let mut kernel = crate::Kernel::new(stub.client.clone());
+        let mut revision = read(&stub.client, &at).unwrap()["revision"]
+            .as_str()
+            .unwrap()
+            .to_string();
+        let mut write = |field: &str, value: Value| {
+            let done = kernel
+                .apply(crate::KernelOp::Page {
+                    request: Request::MutateField {
+                        location: at.clone(),
+                        expected_revision: revision.clone(),
+                        field: field.into(),
+                        value,
+                    },
+                })
+                .unwrap();
+            let crate::KernelOpResult::PageReading { data } = done.result else {
+                panic!("a page mutation")
+            };
+            assert_eq!(data["outcome"], "written");
+            revision = data["revision"].as_str().unwrap().to_string();
+        };
+
+        // The count goes on from 3: the value `3.0` is replaced where it stands, by 4.
+        write("title", json!("Counted on from </SCRIPT>"));
+        let titled = island
+            .replace(
+                r#""title":"Counted on""#,
+                r#""title":"Counted on from <\/SCRIPT>""#,
+            )
+            .replace(r#""revision":3.0,"#, r#""revision":4,"#);
+        assert_ne!(titled, island);
+        assert_eq!(held(), page_of(&titled));
+        assert_eq!(
+            read_island(&held()).unwrap()["meta"]["title"],
+            "Counted on from </SCRIPT>"
+        );
+
+        // And on from 4.
+        write("view", json!("journal"));
+        assert_eq!(
+            held(),
+            page_of(
+                &titled
+                    .replace(r#""view":"dialogue""#, r#""view":"journal""#)
+                    .replace(r#""revision":4,"#, r#""revision":5,"#)
+            )
+        );
+    }
+
     /// #797: a hand-written island may spell its counter with a zero fraction (`"revision": 1.0`, WRITTEN). JSON has one kind of
     /// number and the page and host read it as 1 (plural.ts `appendContribution`, `doc.meta.revision + 1`), so the kernel counts
     /// on from it too, rather than starting the count again.

@@ -20,8 +20,9 @@ claimRailWidget('messages', MESSAGES_ID)
 // harness_agent_read receipt (MOVED, lane BF2).
 claimRailWidget('frames', FRAMES_ID)
 // The rail's Ledger and Approvals are the Main track's devices' widgets the same way (§23.9, §23.10; agent/devices/receiptBindings.ts):
-// the Ledger on Central's change horizon, Approvals on the Gateway's approvals key and the shown session's consent requests. They
-// replaced these tiles' raw task-record receipts (MOVED, lane BF3).
+// the Ledger on Central's change horizon, Approvals on what waits for your answer: the shown session's consent requests and the returns,
+// requests and decisions its owners raise (the default answer is the Gateway's, never Approvals': §19.14, ticket 788). They replaced these
+// tiles' raw task-record receipts (MOVED, lane BF3).
 claimRailWidget('ledger', LEDGER_ID)
 claimRailWidget('approvals', APPROVALS_ID)
 // The Workcells tile is the workcell rack's widget (§19.23 Widget; workcellRackBinding.ts), and lists every gateway your machines reach, with

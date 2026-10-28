@@ -619,7 +619,7 @@ host.tools.append(saveGlyph);
     if(currentKey===key&&!destroyed){message(typeof notice==='function'?notice():notice??'Saved');if(lens==='m1'){const view=host.nativeView();if(view&&host.sceneId()===canvas.sceneId){const updated=nativeCanvas(view,host.sceneId());render(canvasNode(updated,state,epoch));}else if(refresh||deferredRefresh)await load('m1');}}
     if(!materialInFlight){const pending=deferredRefresh;deferredRefresh=false;if(pending&&lens&&currentKey!==key)await load(lens);}
     return null;
-   }).catch(error=>{const said=error instanceof Error?error.message:String(error);saveState('held');if(currentKey===key&&!destroyed)message(said);return said;});
+   }).catch(error=>{saveState('held');const said=error instanceof Error?error.message:String(error);if(currentKey===key&&!destroyed)message(said);return said;});
    mutations=done.then(()=>{});
    return done;
   };

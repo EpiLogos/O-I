@@ -1,6 +1,6 @@
-// The plate of a Technē instrument the hosted stage draws — M1′ Canvas, M2′ Timeline or M3′ Journey — open on the rack
+// The plate of a Technē instrument the hosted stage draws — the Canvas, the Timeline or the Journey — open on the rack
 // (T-FRAME-CHROME-ONTO-PLATES; lock §2.5; manual §17.4–§17.6; the mockup's M1/M2/M3 plates, world-shell-mockup.html:1457-1459). Beside
-// the atlas's M4′ and M5′ plates (projections/atlas/places/PlacesPlate.tsx, palaces/PalacePlate.tsx), registered the same way
+// the atlas's World / Places and Palace plates (projections/atlas/places/PlacesPlate.tsx, palaces/PalacePlate.tsx), registered the same way
 // (inhabitants/ql/devices/TechneDevices.tsx OWN_PLATES). The pane draws only the instrument's material; every control the frame drew
 // over it — the research tools dock, the canvas's zoom keys and minimap toggle, the selected card's panel, the scene bar, the masthead —
 // stands here in the manual's groups (stageInstrumentModel.ts), read from the frame's published chrome and pressed through its one
@@ -16,7 +16,7 @@
 // Lane W4-Technē: an instrument's catalogue design (techne:canvas, techne:journey) heads its chain on the frame's own research reading and
 // acts (techne/devices/frameBindings.ts), so this plate keeps only what the design does not carry yet (stageInstrumentModel.ts
 // CARRIED_BY_DESIGN): no well (the design's display is the picture), no waiting rows (the design draws those parameters with their reasons),
-// no group or control the design reads and writes itself. M2′'s design, the Timeline, was retired in the 22 Oct manual rewrite (§17.5: the
+// no group or control the design reads and writes itself. The Timeline's design was retired in the 22 Oct manual rewrite (§17.5: the
 // timeline is Arrangement view), so its plate draws its own well first and every group (HEADED_BY_DESIGN).
 import type {ReactNode} from 'react'
 import type {FrameChromeControl} from '@epilogos/expressions-boundary'
@@ -31,10 +31,10 @@ import {CARRIED_BY_DESIGN, EXPRESSION_SECTION, HEADED_BY_DESIGN, STAGE_PLATES, c
 import {wellSection} from '../../inhabitants/ql/devices/techneWells'
 import './stageInstrumentPlate.css'
 
-const TITLES: Readonly<Record<StageInstrumentId, {title: string; provenance: string; icon: IconName; lens: string}>> = {
-  'techne:m1': {title: 'Canvas', provenance: 'M1′', icon: 'form', lens: 'canvas'},
-  'techne:m2': {title: 'Timeline', provenance: 'M2′', icon: 'arrangement', lens: 'timeline'},
-  'techne:m3': {title: 'Journey', provenance: 'M3′', icon: 'journey', lens: 'journey'},
+const TITLES: Readonly<Record<StageInstrumentId, {title: string; icon: IconName; lens: string}>> = {
+  'techne:m1': {title: 'Canvas', icon: 'form', lens: 'canvas'},
+  'techne:m2': {title: 'Timeline', icon: 'arrangement', lens: 'timeline'},
+  'techne:m3': {title: 'Journey', icon: 'journey', lens: 'journey'},
 }
 
 /** The frame's save glyph (field-studies-journeys researchInstruments.tsx:424 `.research-save-glyph`, read through presentedChrome.ts:225 as
@@ -105,7 +105,7 @@ export function StageInstrumentPlate({id, focused, families = [], onFold, onFull
   const standing = view.reading?.lens ?? null
   const elsewhere = standing !== null && standing !== meta.lens
   const presentation: FacePresentation = {family: 'techne', faceId: id, title: meta.title, icon: meta.icon,
-    owner: [meta.provenance, 'Technē', 'the Expressions stage', focused ? 'open on the focused pane' : 'opened here',
+    owner: ['Technē', 'the Expressions stage', focused ? 'open on the focused pane' : 'opened here',
       view.presentation === 'frame' ? 'its controls in the pane at full size' : null].filter(Boolean).join(' · ')}
   // The picture is the design's display, at the head of the chain: the plate draws no second well. With no design at its head, the
   // plate's own well is its picture, first and never folded.
@@ -126,7 +126,7 @@ export function StageInstrumentPlate({id, focused, families = [], onFold, onFull
     footer={view.refusal ? <p className="stage-plate-fault" role="alert">{view.refusal}</p> : undefined} />
 }
 
-/** The stage instruments' own plates, registered by holder beside M4′ and M5′ (inhabitants/ql/devices/TechneDevices.tsx OWN_PLATES). */
+/** The stage instruments' own plates, registered by holder beside World / Places and the Palace (inhabitants/ql/devices/TechneDevices.tsx OWN_PLATES). */
 export const STAGE_OWN_PLATES: Readonly<Record<StageInstrumentId, (props: OwnPlateProps) => ReactNode>> = {
   'techne:m1': ({focused, families, onFold, onFull}) => <StageInstrumentPlate id="techne:m1" focused={focused} families={families} onFold={onFold} onFull={onFull} />,
   'techne:m2': ({focused, families, onFold, onFull}) => <StageInstrumentPlate id="techne:m2" focused={focused} families={families} onFold={onFold} onFull={onFull} />,

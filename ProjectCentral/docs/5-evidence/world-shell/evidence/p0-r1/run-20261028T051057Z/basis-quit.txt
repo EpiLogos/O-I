@@ -1,0 +1,23 @@
+seat=/Users/admin/Central/worktrees/env-2/o-i
+branch=dlw/build-lane
+head=9dae5668dbbf1c176e3fff113f581a5abc828901
+stamp=20261028T051057Z
+out=/Users/admin/Central/Work/O-I/target/p0-r1/20261028T051057Z
+target=/Users/admin/Central/Work/O-I/target
+backing=0/1/2
+mode=quit
+runner_sha256=cd756eda91eb1d059e017db3808b03feb7138bd14a28bc335211a8088456b9d8
+status:
+ M desktop/cradle/expressions-app/field-studies-journeys/src/native-field/presentationEffects.ts
+ M desktop/cradle/expressions-app/field-studies-journeys/tests/mr-resonator-bank.test.mjs
+?? ProjectCentral/docs/5-evidence/world-shell/evidence/p0-r1/run-20261028T051057Z/2-host-marker.json
+?? ProjectCentral/docs/5-evidence/world-shell/evidence/p0-r1/run-20261028T051057Z/2-native-checkout-drift.json
+?? ProjectCentral/docs/5-evidence/world-shell/evidence/p0-r1/run-20261028T051057Z/6-host-marker.json
+?? ProjectCentral/docs/5-evidence/world-shell/evidence/p0-r1/run-20261028T051057Z/7-catalogue.json
+?? ProjectCentral/docs/5-evidence/world-shell/evidence/p0-r1/run-20261028T051057Z/7-composition.json
+?? ProjectCentral/docs/5-evidence/world-shell/evidence/p0-r1/run-20261028T051057Z/7-ctrl-version.txt
+?? ProjectCentral/docs/5-evidence/world-shell/evidence/p0-r1/run-20261028T051057Z/7-hosted-contributions.txt
+?? ProjectCentral/docs/5-evidence/world-shell/evidence/p0-r1/run-20261028T051057Z/7-window-capture.png
+?? ProjectCentral/docs/5-evidence/world-shell/evidence/p0-r1/run-20261028T051057Z/basis-all.txt
+?? ProjectCentral/docs/5-evidence/world-shell/evidence/p0-r1/run-20261028T051057Z/basis-readback.txt
+?? ProjectCentral/docs/5-evidence/world-shell/evidence/p0-r1/run-20261028T051057Z/launch.pid

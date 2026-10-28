@@ -22,7 +22,7 @@
 // stepWalk). Rename (`rename`) and Delete (`delete`) act on the bookmark of the room you stand in, sending its name as drawn; the new
 // name is the one in Name (`draft`).
 //
-// The Whole's pages (the M5′ plate's sections, PalacePlate.tsx): Palace (the walk, the board, the bookmarks and the Return), Enter,
+// The Whole's pages (the Palace plate's sections, PalacePlate.tsx): Palace (the walk, the board, the bookmarks and the Return), Enter,
 // Integral whole, Compose and Portals.
 //   Enter     `palaces` [{key, name, rooms, line, door, here?}]: the world's palaces; `chosen` the hand's choice; Enter (`enter`) goes
 //             in, Door (`door`) turns the Earth to its door (manual §17.7 "To enter, select the palace on the World and choose Enter").
@@ -514,7 +514,7 @@ function WholeBands({p}: {p: ViewProps}) {
     why: e.refused, does: `${e.ref}${e.note ? ` · ${e.note}` : ''} — press to open it in its own instrument.`}))
   return <Band>
     <Section label="Regions" width={206}>
-      <Rows does="The integral whole of the palace's reading, one row a region, in M′ order: what each rests on, and how many entries it holds." items={items} size={7}
+      <Rows does="The integral whole of the palace's reading, one row a region, in the walk's order: what each rests on, and how many entries it holds." items={items} size={7}
         selected={shown?.key} onSelect={id => p.set('wholeRegion', id)} />
     </Section>
     <Section label={shown ? shown.name : 'Entries'} grow>
@@ -644,14 +644,14 @@ export const design: DesignedDevice = {
     chosen: 'o-i',
     // The integral whole (whole.ts palaceWholeView over the proving reading), each region's line its own.
     whole: JSON.stringify([
-      {key: 'ground', name: 'M′0 · Project / ground', standing: 'free', here: true, line: 'free mnemonic composition over the reading\'s own refs — no warranted QL structure stands behind this form',
+      {key: 'ground', name: 'Project / ground', standing: 'free', here: true, line: 'free mnemonic composition over the reading\'s own refs — no warranted QL structure stands behind this form',
         entries: [{id: 'ground:0', ref: 'ql.techne:whole:fixture:l5-techne-contract-ground', label: 'bounded whole', here: true},
           {id: 'ground:1', ref: 'central:source:control:root:Work/Quaternal-Logic/docs/L5-TECHNE-DUAL-READING-LOCK.md', label: 'member'}]},
-      {key: 'canvas', name: 'M′1 · Canvas / constellation', standing: 'warranted', line: 'stands in the warranted QL reading (canonical; ql:shape:1.0.0:6x6:direct-conjugate)',
+      {key: 'canvas', name: 'Canvas / constellation', standing: 'warranted', line: 'stands in the warranted QL reading (canonical; ql:shape:1.0.0:6x6:direct-conjugate)',
         entries: [{id: 'canvas:0', ref: 'ql.techne:constellation:fixture:l5-dual-reading', label: 'constellation', note: 'canonical'}, {id: 'canvas:1', ref: 'ql:shape:1.0.0:6x6:direct-conjugate', label: 'shape', note: 'canonical'}]},
-      {key: 'journey', name: 'M′3 · Journey / scenes', standing: 'free', line: 'free mnemonic composition over the reading\'s own refs — no warranted QL structure stands behind this form',
+      {key: 'journey', name: 'Journey / scenes', standing: 'free', line: 'free mnemonic composition over the reading\'s own refs — no warranted QL structure stands behind this form',
         entries: [{id: 'journey:0', ref: 'oi:expression:l5-dual-reading/scene/ground', label: 'scene'}, {id: 'journey:1', ref: 'oi:expression:l5-dual-reading/scene/crossing', label: 'scene'}]},
-      {key: 'expression', name: 'M′5 · Expression (3:3)', standing: 'owner', line: 'composes the Expression owner\'s own composition ref; arrangement here is presentation state',
+      {key: 'expression', name: 'Expression (3:3)', standing: 'owner', line: 'composes the Expression owner\'s own composition ref; arrangement here is presentation state',
         entries: [{id: 'expression:0', ref: 'oi:expression:l5-dual-reading', label: 'expression', note: 'composition oi:composition:l5-dual-reading-integral'}]},
       {key: 'sources', name: 'close · Sources / provenance', standing: 'free', line: 'free mnemonic composition over the reading\'s own refs — no warranted QL structure stands behind this form',
         entries: [{id: 'sources:0', ref: 'central:source:control:root:Work/Quaternal-Logic/docs/L5-TECHNE-DUAL-READING-LOCK.md', label: 'source', note: 'central · architecture-contract',
@@ -663,7 +663,7 @@ export const design: DesignedDevice = {
       {ref: 'expression:techne-m0.o-i', title: 'O-I — wiki local whole', revision: 2, composed: false}]),
     revision: 7, basedOn: 7, busy: false, regionName: '', regionPick: 'Earth',
     // Portals: the way back to the Earth, then the Earth region's Expression.
-    portals: JSON.stringify([{id: 'ground', name: 'the Earth', kind: 'ground', note: 'Return to the M0′ ground: the Earth.'},
+    portals: JSON.stringify([{id: 'ground', name: 'the Earth', kind: 'ground', note: 'Return to the ground: the Earth.'},
       {id: 'room:earth', name: 'Archetypal-Earth — wiki local whole', kind: 'expression', note: 'Earth: its one contained Expression.'}]),
     places: 0,
   },

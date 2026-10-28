@@ -21,7 +21,7 @@ import {sceneSpatialFacets,type SceneSpatialReading} from "./spatialFacets";
  * source.
  *
  * The Expression and Actions facets (added 2026-09-19 for the Journey save
- * lane): when the register's standing kernel document exists (the M0′
+ * lane): when the register's standing kernel document exists (the Project
  * projection opened it), the reading binds that Expression —
  * `expressions[0]` with its ref and revision — and discloses the kernel's
  * own edit action `oi.expression.edit`, so Journey composes real scenes
@@ -51,7 +51,7 @@ import {useSyncExternalStore} from "react";
 
 /** The reading's Expression facet source: the register's standing kernel
  * document (ready/drift phases) or the projection's own document
- * (projected/opening) — the SAME document the M0′ centre presents, never a
+ * (projected/opening) — the SAME document the Project's centre presents, never a
  * second read. */
 export function wikiExpressionDocumentFor(registerKey: string): ExpressionDocument | undefined {
   const standing = getWikiProjectionState().standings[registerKey];
@@ -60,7 +60,7 @@ export function wikiExpressionDocumentFor(registerKey: string): ExpressionDocume
 
 /** The Technē field's EFFECTIVE subject (parent integration, 2026-09-19):
  * the workspace's selected subject when one is selected, else the mode's own
- * ground — the current register's wiki local whole. This is the M0′ law the
+ * ground — the current register's wiki local whole. This is the Project's law the
  * owner wayfinder §14 names (the web IS the opening; no material is
  * required): the disclosure, the session and the HUD stand on the register's
  * whole even before the person selects anything. The subject is stable per
@@ -119,15 +119,15 @@ function relationOf(edge: WikiRelationEdge, sourceRef: string) {
 function disclosureFor(hasTemporalBasis: boolean, hasExpression: boolean, hasSpatial: boolean) {
   return {
     instruments: [
-      {instrument: "project", available: true, m_prime: 0, reading: "4:2-deep"},
-      {instrument: "canvas", available: true, m_prime: 1, reading: "4:2-deep"},
-      {instrument: "timeline", available: hasTemporalBasis, m_prime: 2, reading: "4:2-deep",
+      {instrument: "project", available: true, reading: "4:2-deep"},
+      {instrument: "canvas", available: true, reading: "4:2-deep"},
+      {instrument: "timeline", available: hasTemporalBasis, reading: "4:2-deep",
         ...(hasTemporalBasis ? {} : {reason: "the register's wiki reading carries no temporal facets"})},
-      {instrument: "journey", available: hasExpression, m_prime: 3, reading: "4:2-deep",
-        ...(hasExpression ? {} : {reason: "the register's Expression generation is not open in this window — enter its Web (M0′) first, and Journey composes into it"})},
-      {instrument: "place", available: hasSpatial, m_prime: 4, reading: "4:2-deep",
+      {instrument: "journey", available: hasExpression, reading: "4:2-deep",
+        ...(hasExpression ? {} : {reason: "the register's Expression generation is not open in this window — enter its Web first, and Journey composes into it"})},
+      {instrument: "place", available: hasSpatial, reading: "4:2-deep",
         ...(hasSpatial ? {} : {reason: "the register's wiki reading carries no spatial facets"})},
-      {instrument: "palace", available: true, m_prime: 5, reading: "4:2-deep"},
+      {instrument: "palace", available: true, reading: "4:2-deep"},
     ],
     degraded: [],
     suggestions: [],
@@ -172,7 +172,7 @@ export function wikiReadingPayload(input: {
   const edges = relations?.state === "available" ? relations.edges : [];
   const hasTemporalBasis = edges.some(edge => typeof edge.revision === "string" && edge.revision.length > 0);
   const hasExpression = !!document;
-  // M4′: the register's own spatial facets (declared places + hard geography
+  // Places: the register's own spatial facets (declared places + hard geography
   // relations), never an invented coordinate. Empty → place stays absent.
   const spatial = placeFacetsFromReading(reading);
   return {

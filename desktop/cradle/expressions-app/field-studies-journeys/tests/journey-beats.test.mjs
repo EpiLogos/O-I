@@ -42,7 +42,7 @@ function reading(overrides = {}) {
     actions: [{action_ref: 'oi.expression.edit', native_owner: 'oi.cradle.kernel', authority: 'owner', summary: 'Edit the bound Expression'}],
     disclosure: {
       instruments: [
-        {instrument: 'journey', available: true, m_prime: 3, reading: '4:2-deep'},
+        {instrument: 'journey', available: true, reading: '4:2-deep'},
       ],
       application_cuts: [{cut: '4:2-deep', available: true}],
       degraded: [],

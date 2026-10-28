@@ -1,0 +1,1 @@
+{"manifest": "/Users/admin/Central/Work/O-I/target/p0-r1/20261028T051057Z/core-product-bindings.json", "sha256": "546c34f18186675bdac4cdfcf9d3da4179e0f994c9f586ceaee52843103a4cbb", "backing_id": "0/1/2", "product_ids": ["central", "actuation", "ai-kit"], "standing": "frozen actual input bytes; packaging and native runtime acceptance pending"}

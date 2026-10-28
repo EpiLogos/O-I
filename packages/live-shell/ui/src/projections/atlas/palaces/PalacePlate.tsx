@@ -1,4 +1,4 @@
-// The M5′ Palace / Integral Whole instrument, open on the rack (T-PALACES-ONTO-ATLAS; FOUNDATION §3 N4; lock §2.5 "M5′ Palace (rooms, path,
+// The Palace / Integral Whole instrument, open on the rack (T-PALACES-ONTO-ATLAS; FOUNDATION §3 N4; lock §2.5, the Palace "(rooms, path,
 // guide, portals)"; the mockup's M5 plate, world-shell-mockup.html:1461 — Rooms, Path (guided · free, the guide), Portals — and its
 // device row's folded "M5 Palace / Integral Whole"; manual §17.7 Palace, Whole: "Rooms, Path, Board, Return"). Drawn in the device craft
 // (ProjectCentral/docs/1-vision/dlw/DLW.md §16; the panel kit and frame/devices/plateControls.tsx): the rooms and the bookmarks as rows that page, the path,
@@ -16,7 +16,7 @@
 // The head is the panel kit's (InstrumentPlate.tsx; manual §16.9).
 //
 // Brought to the catalogue's design (lane W4-Technē; T-COVERAGE §1.4): the Palace's design (techne:palace, catalogue/panels/
-// techne__palace.tsx) now heads M5′'s chain on the palace session (techne/devices/palaceBinding.ts), with the floor in its display and
+// techne__palace.tsx) now heads the Palace's chain on the palace session (techne/devices/palaceBinding.ts), with the floor in its display and
 // every control it carries — Room, Start, Back, Next, Path, Order, Guide, Floor, Audience, Snap, Lines, the bookmarks' Name and Keep,
 // Propose, Accept, Refuse and Leave. This plate keeps only what the design does not carry yet: the world's palaces and Enter (outside),
 // the rooms' Open and the regions' order, empty and remove, the guide's warrant line, the walk locus by locus, the bookmarks' Rename and
@@ -31,7 +31,7 @@ import {Icon} from '../../../inhabitants/sdk/Icon'
 import type {FacePresentation} from '../../../inhabitants/sdk/define'
 import {palaceComposition} from '../../../../../../../desktop/cradle/src/techne/m0m5/palace/palace-state'
 import {palaceBookmarkLabel, PALACE_BOOKMARK_NAME_LIMIT} from '../../../../../../../desktop/cradle/src/techne/m0m5/palace/bookmarks'
-import {PALACE_WIRED_INSTRUMENTS, palaceOpenRoute, palaceWholeView} from '../../../../../../../desktop/cradle/src/techne/m0m5/palace/whole'
+import {PALACE_WIRED_INSTRUMENTS, palaceOpenRoute, palaceRegionName, palaceWholeView} from '../../../../../../../desktop/cradle/src/techne/m0m5/palace/whole'
 import {useAtlasHandle, useSuiteStanding} from '../AtlasProjectionPanel'
 import type {AtlasHandle} from '../mount'
 import {selectedSubject} from '../places/PlacesPlate'
@@ -175,14 +175,14 @@ function WholeSection({here}: {here: PalaceInside}) {
   if (!whole.available) return <PlateLine text={whole.reason ? `Unavailable: ${whole.reason}.` : here.readingReason ? `Unavailable: ${here.readingReason}.` : 'The reading is not yet disclosed.'} />
   const shown = whole.regions.find(candidate => candidate.key === region) ?? null
   if (!shown) return <PlateRows size={6} active={focus ? `region:${focus.region}` : null} onPress={id => setRegion(id.slice('region:'.length))}
-    rows={whole.regions.map(entry => ({id: `region:${entry.key}`, name: `${entry.m_prime === null ? 'close' : `M′${entry.m_prime}`} · ${entry.office}`,
+    rows={whole.regions.map(entry => ({id: `region:${entry.key}`, name: palaceRegionName(entry),
       mark: <span className="palace-standing-mark" data-region={entry.key} data-standing={entry.standing.standing} />, note: `${entry.entries.length} · ${entry.standing.standing}`,
       does: `${entry.standing.line} Press to show its ${entry.entries.length} entr${entry.entries.length === 1 ? 'y' : 'ies'}.`}))} />
   const entryAt = (id: string) => shown.entries.find((entry, index) => id === `entry:${entry.kind}:${entry.ref}:${index}`) ?? null
   return <PlateRows size={6} active={shown.entries.flatMap((entry, index) => focus?.region === shown.key && focus.ref === entry.ref ? [`entry:${entry.kind}:${entry.ref}:${index}`] : [])}
     onPress={id => { if (id === 'back') { setRegion(null); return } const entry = entryAt(id); if (entry) openEntry(entry) }}
     rows={[
-      {id: 'back', name: `‹ ${shown.m_prime === null ? 'close' : `M′${shown.m_prime}`} · ${shown.office}`, mark: <span className="palace-standing-mark" data-standing={shown.standing.standing} />,
+      {id: 'back', name: `‹ ${palaceRegionName(shown)}`, mark: <span className="palace-standing-mark" data-standing={shown.standing.standing} />,
         note: shown.standing.standing, does: `${shown.standing.line} Press to go back to every region.`},
       ...shown.entries.map((entry, index) => {
         const route = palaceOpenRoute(entry, PALACE_WIRED_INSTRUMENTS)
@@ -222,12 +222,12 @@ function PortalsSection({here, handle}: {here: PalaceInside; handle: AtlasHandle
   const focus = focusedRoom(here)
   const focused = rooms.find(room => room.key === focus)
   const places = focused ? roomPlaces(focused, standing.places) : []
-  // the way back to the M0′ ground — the Earth — is the first door out (palaceInstrument.tsx:464 "Return to ground"); a reading that does
+  // the way back to the ground — the Earth — is the first door out (palaceInstrument.tsx:464 "Return to ground"); a reading that does
   // not disclose the ground leaves the plain way out, saying so
   const ground = !!here.reading && here.reading.disclosure.instruments.some(entry => entry.instrument === 'project' && entry.available)
   const rows: PlateRow[] = [
     {id: 'ground', name: '↩ the Earth', mark: <Icon name="ret" size={10} />, note: ground ? 'ground' : 'leave',
-      does: ground ? 'Return to the M0′ ground: the Earth (Escape)' : 'The reading does not disclose the M0′ ground; leave the palace for the Earth (Escape)'},
+      does: ground ? 'Return to the ground: the Earth (Escape)' : 'The reading does not disclose the ground; leave the palace for the Earth (Escape)'},
     ...regions.map(room => ({id: `room:${room.key}`, name: `→ ${room.holds!.title}`, mark: <Icon name="direct" size={10} />, note: 'Expression', does: `${room.name}: its one contained Expression — open it`})),
     ...places.map(place => ({id: `place:${place.ref}`, name: `→ ${place.name}`, mark: <Icon name="placed" size={10} />, note: 'place', does: `Leave for ${place.name} on the Earth`})),
   ]
@@ -264,7 +264,7 @@ export const START_FOLDED_INSIDE: readonly string[] = ['whole', 'compose']
 const FOLD_ORDER_INSIDE = ['compose', 'whole', 'portals', 'bookmarks', 'return', 'walk']
 const OUTSIDE = ['portals']
 
-/** The M5′ Palace / Integral Whole plate. `held` are the devices the families declare this instrument holds: their marks stand on the
+/** The Palace / Integral Whole plate. `held` are the devices the families declare this instrument holds: their marks stand on the
  * plate's first section. Entering or leaving a palace stands the plate anew, with that side's sections folded as they start. */
 type PalacePlateProps = Pick<OwnPlateProps, 'held' | 'focused' | 'onFold' | 'onFull'> & {startFolded?: readonly string[]}
 
@@ -286,7 +286,7 @@ function PalacePlateAt({held, focused, startFolded, onFold, onFull}: PalacePlate
   const outsideNote = (what: string) => <PlateLine text={`Enter a palace: ${what}`} word="enter" name="Palace" light="unknown" />
   const marks = <HeldMarks devices={heldMarksOf(held)} />
   const presentation: FacePresentation = {family: 'techne', faceId: 'techne:m5', title: 'Palace / Integral Whole', icon: 'palace',
-    owner: ['M5′', 'Technē', here ? `${here.palace.title} r${here.doc.revision}` : 'the palaces of your world', focused ? 'open on the focused pane' : 'opened here'].filter(Boolean).join(' · ')}
+    owner: ['Technē', here ? `${here.palace.title} r${here.doc.revision}` : 'the palaces of your world', focused ? 'open on the focused pane' : 'opened here'].filter(Boolean).join(' · ')}
   const sections: PlateSection[] = [...(here ? [
     fold({id: 'rooms', title: 'Rooms', width: 236, note: <>{`${roomsNow(here).length} along the path`}{marks}</>, children: <RoomsSection here={here} />}),
     fold({id: 'walk', title: 'Walk', width: 160, note: here.walking ? 'walking' : undefined, children: <WalkSection here={here} />}),

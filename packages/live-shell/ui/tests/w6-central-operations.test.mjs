@@ -93,7 +93,7 @@ const base = {messagesAgents: undefined, nowUnixMs: NOW}
 /** Central's Approvals as its chain builds it with nothing else waiting (CentralDevices.tsx: no session shown, no return read), with the owners'
  * requests laid in; `kept` the view's opened items. */
 const approvalsWith = (input, open, kept) => rail.withOwnerRequests(
-  receipts.approvalsBinding({gateway: {}, session: null, encounter: null, holds: chainBind.chainHolds()}, null, {}, 'central:main:approvals'), input, open, kept)
+  receipts.approvalsBinding({session: null, encounter: null, holds: chainBind.chainHolds()}, {}, 'central:main:approvals'), input, open, kept)
 const queueOf = binding => JSON.parse(binding.values.queue)
 
 test('a kept record is the design\'s request: its ref, the local clock time it came, its words, its caller, its callback as Open, and the provider\'s delivery or refusal', () => {

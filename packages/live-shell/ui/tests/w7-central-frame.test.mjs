@@ -2,8 +2,7 @@
 //   1. the world's track head opens the track's Workspace device in a pane (§18.1), its Name, Folder and Ground the selected world's;
 //   2. the Day's close-out verify (design package D5, §18.2);
 //   3. widgets:notifications (design package D10, §23.9): a monitor, its rail tile and its Full;
-//   4. settings:window (design package D9) is parked on dlw/settings-window-port until its design has a place for every behaviour
-//      the window has today (T-COVERAGE §2.1);
+//   4. settings:window (design package D9, §10.10) landed with #758; its tests are tests/settings-window.test.mjs;
 //   5. the Session grid and the Arrangement ruler against their designs (T-COVERAGE §1.4).
 // Channels: SCRIPTED (the views and the catalogue designs rendered to static markup through the runtime's host; the pure bindings; a
 // recording hand for every press). No owner state is written. Not a screen pass: the on-screen legs are the lead's.
@@ -160,7 +159,7 @@ test('Notifications\' readings stand in Approvals: Messages\' waiting agents rea
   assert.equal(carried.messages, 2, 'the agents that wait for you or have stalled')
   const unread = rail.ownerRequestsValues({messagesAgents: undefined, nowUnixMs: 0})
   assert.deepEqual([unread.messages, unread.rows, unread.desktop], [undefined, null, undefined], 'no device read: absent, never zero')
-  const own = receipts.approvalsBinding({gateway: {}, session: null, encounter: null, holds: chainBind.chainHolds()}, null, {}, 'central:main:approvals')
+  const own = receipts.approvalsBinding({session: null, encounter: null, holds: chainBind.chainHolds()}, {}, 'central:main:approvals')
   const binding = rail.withOwnerRequests(own, {messagesAgents: agents, nowUnixMs: 0, ledger: {status: 'reading'}})
   assert.equal(binding.values.messages, 2)
   assert.deepEqual(binding.waiting, ['desktop'], 'the desktop\'s notice waits for personal.notifications.list')

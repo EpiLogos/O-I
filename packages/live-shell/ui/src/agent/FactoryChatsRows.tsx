@@ -26,7 +26,7 @@ import {trackKey} from './agentRunModel'
 import {AGENT_CHAIN_MIME} from './agentChainDrag'
 import {useAgentSessionsOptional} from './AgentSessionsProvider'
 import {useAgentShellOptional} from './AgentShellContext'
-import {THREAD_DEVICE_ID} from './devices/threadBinding'
+import {chainDeviceId} from './devices/agentChainDevices'
 import {
   chatKey, chatTrackKey, chatWords, encodeChatDrag, lastActivityOf, projectChatsOf, projectsOfWorlds, setActiveChatDrag, threadOpening,
   type ChatEvent, type ChatGlanceReading, type FactoryChat, type ProjectChats, type Said,
@@ -36,6 +36,11 @@ import './agentShell.css'
 
 /** How many of a project's chats, from the top of the list, have their view read (one owner process each, one after another). */
 export const CHATS_READ = 16
+
+/** The Agent on the session's chain, whose Full is the thread (DLW §19.4 Views: Full "The thread, and beside it the stage"): the Thread is
+ * no device of its own since tickets 725 and 772, but the Agent's Thread page, and the chain's ⤢ opens the Agent the same way
+ * (devices/FactoryDeviceChain.tsx openAgentThread). */
+const AGENT_ID = chainDeviceId('agent')
 
 /** The Worlds rows' key, so the one `world_browse` answer is shared (shell/ModeBrowser.tsx useListing: [family, transport, place]). */
 const worldsKey = (transport: unknown): string => JSON.stringify(['world_browse', transport, 'worlds'])
@@ -155,20 +160,20 @@ function ProjectReader({project, needle}: {project: string; needle: string}) {
   const [said, setSaid] = useState<string | null>(null)
   const shell = useAgentShellOptional()
   const sessions = useAgentSessionsOptional()
-  const threadOnChain = useIsPublished(THREAD_DEVICE_ID)
+  const agentOnChain = useIsPublished(AGENT_ID)
   const trackKeys = useMemo(() => sessions ? new Set(sessions.tracks.filter(track => !track.group).map(trackKey)) : null, [sessions])
   const ports: ProjectChatsPorts = {
     said,
     openThread: chat => {
-      const opening = threadOpening(chat, shell ? trackKeys : null, threadOnChain)
+      const opening = threadOpening(chat, shell ? trackKeys : null, agentOnChain)
       if (opening.kind === 'refused') { setSaid(opening.words); return }
       setSaid(null)
-      // The Sessions rows' own path: THE selection moves to the session and the shell's thread view follows it; with the Thread
-      // device on the chain, it opens full in a pane as well (the Runs rows' pane door).
+      // The Sessions rows' own path: THE selection moves to the session and the shell's thread view follows it; with the Agent on the
+      // chain, the Agent opens full in a pane as well, its Full the selected session's thread (ticket 788: was the retired Thread device).
       shell?.setSelectedTrackId(opening.trackKey, opening.label)
       shell?.openThread(opening.trackKey)
       if (opening.pane) {
-        try { openInstrument(DEVICE_PANE_KIND, undefined, {ref: THREAD_DEVICE_ID, title: opening.label}) } catch (cause) { setSaid(cause instanceof Error ? cause.message : String(cause)) }
+        try { openInstrument(DEVICE_PANE_KIND, undefined, {ref: AGENT_ID, title: opening.label}) } catch (cause) { setSaid(cause instanceof Error ? cause.message : String(cause)) }
       }
     },
   }

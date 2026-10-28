@@ -34,7 +34,7 @@ import {useLivingPlan} from './livingPlan'
 import {useLensRegistry} from './lensRegistry'
 
 /** Each instrument's chain on the rack: the design that is the instrument (where the instrument is not the holder's own plate, the
- * World of M0′ and M4′, or M2′ since its Timeline was retired), then its effects, left to right. The Timeline (M2′'s head) and Light were
+ * World of the Project and of World / Places, or the Timeline since its design was retired), then its effects, left to right. The Timeline's design (its head) and Light were
  * retired as devices of their own in the 22 Oct manual rewrite: the timeline is Technē's Arrangement view, and Light is the Canvas's Light
  * page, carried by the Canvas's binding (useTechneDesignBindings). */
 export const TECHNE_CHAINS: Readonly<Record<string, {readonly head?: string; readonly effects: readonly string[]}>> = {
@@ -94,7 +94,7 @@ const LIGHT = lightBinding()
  * stands on the rack (`graph`). */
 export function useTechneDesignBindings({graph, surface}: {graph: boolean; surface: KnowledgeGraphSurface | null}): Readonly<Record<string, DesignBinding>> {
   const palace = useSyncExternalStore(subscribePalace, palaceState, palaceState)
-  // The Palace's world (its Enter page and its places as doors out): the world's palaces, read once as the M5′ plate reads them
+  // The Palace's world (its Enter page and its places as doors out): the world's palaces, read once as the Palace plate reads them
   // (palacesWorld.ts readPalaces), the Earth's places (the suite standing), and the turn to a place on the mounted atlas.
   const palaces = usePalaces()
   const suite = useSuiteStanding()

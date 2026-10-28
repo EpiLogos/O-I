@@ -34,12 +34,12 @@ const READING = {
   actions: [{action_ref: "oi.probe.action", native_owner: "aikit", authority: "owner"}],
   disclosure: {
     instruments: [
-      {instrument: "project", available: true, m_prime: 0, reading: "4:2-deep"},
-      {instrument: "canvas", available: true, m_prime: 1, reading: "4:2-deep"},
-      {instrument: "timeline", available: true, m_prime: 2, reading: "4:2-deep"},
-      {instrument: "journey", available: true, m_prime: 3, reading: "4:2-deep"},
-      {instrument: "place", available: true, m_prime: 4, reading: "4:2-deep"},
-      {instrument: "palace", available: false, reason: "the reading names no unclaimed composition", m_prime: 5, reading: "4:2-deep"},
+      {instrument: "project", available: true, reading: "4:2-deep"},
+      {instrument: "canvas", available: true, reading: "4:2-deep"},
+      {instrument: "timeline", available: true, reading: "4:2-deep"},
+      {instrument: "journey", available: true, reading: "4:2-deep"},
+      {instrument: "place", available: true, reading: "4:2-deep"},
+      {instrument: "palace", available: false, reason: "the reading names no unclaimed composition", reading: "4:2-deep"},
       {instrument: "expressions", available: true, reading: "3:3-conjugate"},
     ],
     application_cuts: [{cut: "4:2-deep", available: true}],
@@ -57,7 +57,7 @@ const READ = {standing: "read", reading: {
   subject: {subjectRef: READING.subject.subject_ref, nativeOwner: READING.subject.native_owner, kind: READING.subject.kind},
   disclosure: {
     instruments: READING.disclosure.instruments.map((entry) => ({
-      instrument: entry.instrument, available: entry.available, reason: entry.reason, mPrime: entry.m_prime, reading: entry.reading,
+      instrument: entry.instrument, available: entry.available, reason: entry.reason, reading: entry.reading,
     })),
     degraded: [], suggestions: [],
   },
@@ -89,6 +89,20 @@ test("the bridge prefers a full contract reading and otherwise composes the disc
   // A drifted raw payload is refused at the seam, never guessed into shape.
   const drifted = bridgeReading({standing: "read", reading: READ.reading, raw: {...READING, extra_field: true}});
   assert.equal(drifted.whole, undefined, "the refused raw falls back to the subset composition");
+});
+
+test("an instrument disclosure carries no M′ number: a numbered entry is refused, and the bridge never carries one", () => {
+  // ql.techne/v1 dropped m_prime (QL-MEF 3c08974): Technē's instruments are named by their work, never numbered M0′–M5′.
+  const numbered = structuredClone(READING);
+  numbered.disclosure.instruments[0].m_prime = 0;
+  assert.match(validateReading(numbered).errors.join(" "), /m_prime/, "the contract copy refuses the withdrawn field, as QL's copy does");
+  // A stale producer that still sends it degrades to the subset composition, which carries no number.
+  const stale = {standing: "read", reading: {...READ.reading, disclosure: {...READ.reading.disclosure,
+    instruments: READ.reading.disclosure.instruments.map((entry, index) => ({...entry, mPrime: index}))}}, raw: numbered};
+  const bridged = bridgeReading(stale);
+  assert.equal(bridged.whole, undefined, "the numbered raw payload is refused at the seam");
+  assert.equal(validateReading(bridged).valid, true);
+  assert.ok(bridged.disclosure.instruments.every((entry) => !("m_prime" in entry)), "no disclosure entry the bridge composes carries m_prime");
 });
 
 // ---- (3) the ONE session ----------------------------------------------------
@@ -150,7 +164,7 @@ test("crossCut (the dual-reading crossing) is refused onto the occupied cut and 
   assert.deepEqual(crossed.session.selection.focus_refs, session.selection.focus_refs);
 });
 
-// ---- (4) the M3′ Journey real-ref law ----------------------------------------
+// ---- (4) the Journey real-ref law -------------------------------------------
 
 test("journey beats are the reading's own Expression scene refs, verbatim", () => {
   const model = beats(READING);

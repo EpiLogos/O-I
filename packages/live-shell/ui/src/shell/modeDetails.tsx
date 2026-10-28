@@ -79,8 +79,8 @@ export interface ChainDrop {
   readonly receive: (payload: string) => string | null
 }
 
-/** An instrument by the plain name its holder declares (inhabitants/sdk/semantics.ts; its M′ address is provenance, never
- * its name): "Timeline", "Knowledge graph". */
+/** An instrument by the plain name its holder declares (inhabitants/sdk/semantics.ts; Technē's instruments carry no M′ number):
+ * "Timeline", "Knowledge graph". */
 export function instrumentName(id: PaneInstrumentId): string {
   return [...TECHNE_INSTRUMENTS, ...STANDALONE_INSTRUMENTS].find(item => item.id === id)?.title ?? id
 }

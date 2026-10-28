@@ -8,7 +8,7 @@
 //   - an entry saved before naming, or with no bookmarks at all, loads unchanged; a corrupt bookmark field refuses the whole entry;
 //   - the named start is the default landing when no walk position is saved, and a saved position resumes where it stood;
 //   - each region family's Open routes to the instrument its M′ office names, or to the source surface for provenance;
-//   - Return to ground re-opens the M0′ ground with no object ref, and an accepted Return's receipt is kept on the session only.
+//   - Return to ground re-opens the ground with no object ref, and an accepted Return's receipt is kept on the session only.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {provingReading} from '../../../../desktop/cradle/src/techne/m0m5/journey/proving-reading.ts';
@@ -231,7 +231,7 @@ test('each region family’s Open lands in the instrument its office names, on t
 // (Retired with the frame's lens: 'the frame asks for an instrument with its ref, and for a source with the Scene it stands in' — its
 // replacement is atlas-palaces-session.test.mjs 'an object opens through its owner …'.)
 
-test('Return to ground re-opens the M0′ ground with no object ref, and only when the reading discloses it', () => {
+test('Return to ground re-opens the ground with no object ref, and only when the reading discloses it', () => {
   const reading = provingReading();
   assert.equal(returnGroundInstrument(reading), 'project');
   const hidden = structuredClone(reading);
@@ -244,7 +244,7 @@ test('Return to ground re-opens the M0′ ground with no object ref, and only wh
 test('an accepted Return’s receipt stays on the session and is never saved, so a reload does not carry it', () => {
   resetPalaceCompositions();
   const reading = provingReading();
-  const line = 'Accepted: aikit.wiki.stage invoked by aikit. Returning to M0′.';
+  const line = 'Accepted: aikit.wiki.stage invoked by aikit. Returning to the ground.';
   storeComposition({...palaceComposition(reading), receipt: line});
   const storage = memoryStorage();
   assert.equal(savePalaceComposition(storage, palaceComposition(reading), reading), true);

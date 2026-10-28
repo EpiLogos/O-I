@@ -130,6 +130,22 @@ append, the page's own save, the host's save and the kernel's field writes.
 The kernel now also reads a hand-written `meta.revision` of `3.0` as 3, as the
 page and host do, so its next write stores 4 rather than restarting at 1.
 
+*Note, 28 Oct 2026, #798.* Two writers still differed from the note above.
+`createInPlace`'s world tie and Flow meta (`desktop/cradle/src/flow/createInPlace.ts`
+`tieWorld`, `withFlowMeta`) wrote the whole island again and lowercased the
+letters after an escaped `<\/`. They now read the island as the host does
+(`flow/instance.ts` `parseInstance`) and write through `plural.ts`
+`spliceIsland`. A page made in a world, or for a practice, changes only
+`meta.world`, `bindings.worldRef` or the meta it is made for. Central's append
+read `meta.revision` with `as_i64`, so a hand-written `3.0` read as 0. It refused
+a basis revision the document had reached, and its count restarted at 1. It now
+reads the revision by the kernel's rule (`flow_append.rs` `flow_revision`): a
+whole number from 0 to 2^53, in any spelling, is that number. The shared case
+`every-writer-counts-on-from-a-revision-written-3.0-and-keeps-the-letters` holds
+`"revision":3.0`, `<\/SCRIPT>` and `<\/Script>`. It passes through Central's
+append, the page's own save, the host's save, the kernel's field writes and
+`createInPlace`.
+
 The departed/queued/running tests exercise real EncounterService and Central
 files with scripted ACP processes. Their `need_ctrl!` guard can return early
 without `AIKIT_TEST_CENTRAL_CTRL`; a passing runner without that native binary

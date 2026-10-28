@@ -198,7 +198,10 @@ test('on the tree: the catalogue\'s designs load through the panels\' glob (pane
   for (const design of ['techne__palace.tsx', 'software-factory__ledger.tsx', 'workcell__remote-carrier.tsx']) {
     assert.ok(product.has(ui(`src/inhabitants/catalogue/panels/${design}`)), `${design}: the shell loads it through import.meta.glob('./*__*.tsx')`)
   }
-  assert.ok(!product.has(ui('src/agent/devices/knowledgeRouteBinding.ts')), 'knowledgeRouteBinding.ts: nothing the candidate loads names it')
+  // REPLACED (#788): "knowledgeRouteBinding.ts: nothing the candidate loads names it" — the retired Knowledge route's binding was deleted
+  // (its page is Scope's Knowledge page, §19.12). A file nothing names stays unreached on the fixture tree above (src/unnamed.html); on the
+  // tree, the agent chain's devices hold no file the candidate does not load.
+  assert.deepEqual(unreachedUnder([ui('src/agent/devices')], product).map(file => relative(repo, file)), [], 'every file of the agent devices is product')
 })
 
 test('on the tree: the shell is reached, and a module only types name is not, unless it declares only types', () => {

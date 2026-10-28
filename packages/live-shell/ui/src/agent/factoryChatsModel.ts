@@ -271,18 +271,18 @@ export function decodeChatDrag(encoded: string): FactoryChat | null {
 // ---- the thread -------------------------------------------------------------------------------------------------------------
 
 export type ThreadOpening =
-  | {readonly kind: 'open'; readonly trackKey: string; readonly label: string; /** Open the Thread device in a pane too (it stands on the chain). */ readonly pane: boolean}
+  | {readonly kind: 'open'; readonly trackKey: string; readonly label: string; /** Open the Agent full in a pane too, its Full the thread (it stands on the chain). */ readonly pane: boolean}
   | {readonly kind: 'refused'; readonly words: string}
 
 /** Where a chat's thread can be read. The thread pane follows a session the shell's sessions provider holds, and that provider reads
  * one project's agency (widgets/agentConversation.ts CONVERSATION_PROJECT): a chat of another project, in no space that project
  * shares, has no thread there — said, not faked. `trackKeys` null: no provider is mounted above the browser. */
-export function threadOpening(chat: FactoryChat, trackKeys: ReadonlySet<string> | null, threadOnChain: boolean): ThreadOpening {
+export function threadOpening(chat: FactoryChat, trackKeys: ReadonlySet<string> | null, agentOnChain: boolean): ThreadOpening {
   const label = chat.purpose ?? chat.spaceLabel ?? chat.sessionRef
   if (!trackKeys) return {kind: 'refused', words: `The thread of “${label}” is not read here: the agent sessions are not mounted above this browser.`}
   const key = chatTrackKey(chat)
   if (!trackKeys.has(key)) {
     return {kind: 'refused', words: `The thread of “${label}” is not read here: the thread pane follows the sessions the shell mounts, which are ${CONVERSATION_PROJECT}'s, and this chat of ${chat.project} is in none of ${CONVERSATION_PROJECT}'s spaces.`}
   }
-  return {kind: 'open', trackKey: key, label, pane: threadOnChain}
+  return {kind: 'open', trackKey: key, label, pane: agentOnChain}
 }
