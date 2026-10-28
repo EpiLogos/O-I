@@ -27,13 +27,14 @@ import {parseInstance, type QlDoc} from '../../../../../desktop/cradle/src/flow/
 import {circleHolder, containerOf, ENTRY_KINDS} from '../../../../../desktop/cradle/src/flow/plural'
 import {currentIdentity, type CurrentIdentity} from '../../../../../desktop/cradle/src/nara/identity/current'
 import {ANSWER_NO_EXPRESSION, ANSWER_NO_IDENTITY, answerThis} from '../../../../../desktop/cradle/src/nara/answerThis'
+import {practiceOfIsland} from '../../../../../desktop/cradle/src/nara/practiceWorld'
 import {useAgentShellOptional} from '../agent/AgentShellContext'
 import {useHostedChrome} from '../projections/expressionsPaneHost'
 import {useBeingSky} from '../inhabitants/ql/devices/beingSky'
 import type {CentralLocation, KernelTransportStatus, NativeDirectory, PageField} from '../../../../../desktop/cradle/src/kernel/types'
 import {writePageField} from '../../../../../desktop/cradle/src/personal/pageOwner'
 import type {Value, Values} from '../frame/devices/designed'
-import {clipBinding, clipHostId, useViewHoldsVersion, viewHoldsOf, type ClipBinding, type ClipWiring} from '../frame/detail/clipBinding'
+import {clipBinding, clipHostId, useViewHoldsVersion, viewHoldsOf, type ClipBinding, type ClipWiring, type OpenInChoice} from '../frame/detail/clipBinding'
 import {madeOfValues, withMadeOf, type ClipSource} from '../frame/detail/clipSource'
 import {MADE_OF} from '../inhabitants/catalogue/clips/design'
 import {useConstellations, type Constellation} from '../owners/constellations'
@@ -415,11 +416,28 @@ const PAGE_VIEW: Readonly<Record<string, string>> = {
   'notes.anchor': 'what the next note stands on: the selection, its entry, or the page',
 }
 
+/** Why a Flow that keeps no journey has no Reading to open (its Open in's closed choice). */
+export const NO_READING = 'This Flow keeps no journey, so it has no Reading: only a journey opens as Reading, its cards laid out as an Expression.'
+
+/** A Flow's Open in (manual §18.1 Opening a page; §24.1 "A concern … Opens as: Flow, or Reading as an Expression"; §24.4): its Flow —
+ * Dialogue, Flow and Journal are its own views, chosen at its head, and any of them opens it as its Flow — and its Reading, which only a
+ * journey's Flow has: one that keeps its journey, or a journey's page made from New… (desktop/cradle/src/nara/practiceWorld.ts
+ * practiceOfIsland, the rule the page owner keeps in kernel/src/page.rs journey_flow). Written through `opensAs`. Pure. */
+export function flowOpenIn(island: unknown, opensAs: Value | undefined): OpenInChoice[] {
+  const reading = opensAs === 'reading'
+  return [
+    {way: 'flow', label: 'Flow', chosen: !reading},
+    {way: 'reading', label: 'Reading', chosen: reading, ...(practiceOfIsland(island) === 'journey' ? {} : {closed: NO_READING})},
+  ]
+}
+
 /** The page's binding over its reading: the save outcome where the reached page is this file; the page's own fields written through
- * the page owner where a writer is given. Pure. */
+ * the page owner where a writer is given; a Flow's Open in. Pure. */
 export function centralClipBinding(reading: CentralReading, input: {colour?: string | null; reached?: DocumentInPane | null; write?: PageWrite | null; answer?: AnswerHand | null;
   /** The wiki's constellations, which name the page's source (owners/constellations.ts). */
-  constellations?: readonly Constellation[] | null}): ClipBinding {
+  constellations?: readonly Constellation[] | null
+  /** The page's clip on its world's track (its Central-relative path), where the reading is the browser's subject for it. */
+  clip?: string}): ClipBinding {
   const source = centralSourceOf(reading.values)
   const values: Record<string, Value> = {...reading.values, ...madeOfValues(source, input.constellations)}
   if (input.colour && !values.colour) values.colour = input.colour
@@ -434,7 +452,8 @@ export function centralClipBinding(reading: CentralReading, input: {colour?: str
   const view = (): Values => ({...values, ...viewDefaults, ...viewHoldsOf(clipHostId('central', ref))})
   const writable = input.write && reading.location && reading.island && ['flow', 'being', 'thing'].includes(String(values.kind))
   const wiring = withMadeOf(writable ? pageWiring(input.write!, values.kind, reading.island, here, view, input.answer ?? null) : CENTRAL_WIRING, source)
-  return clipBinding({mode: 'central', ref, values, wiring, placed: true, viewDefaults})
+  const openIn = values.kind === 'flow' && reading.island ? flowOpenIn(reading.island, values.opensAs) : undefined
+  return clipBinding({mode: 'central', ref, values, wiring, placed: true, viewDefaults, ...(input.clip ? {clip: input.clip} : {}), ...(openIn ? {openIn} : {})})
 }
 /** Who the next entry belongs to by default: in a Circle the one who holds the word (flow/plural.ts circleHolder: Speak as passes round
  * the participants in order, manual §24.5), else you. */
@@ -590,7 +609,9 @@ export function useCentralClip(): ClipBinding | null {
     const answering = answeringHand({transport, location, island, identity: currentIdentity(), expressionRef: scene?.expression_ref ?? null, arm,
       after: () => { setWritten(n => n + 1); if (location && reached?.location?.ref === location.ref) reached.reread?.() }})
     const values = answer.phase === 'reading' ? {kind: FORM[subject.kind], name} : {...answer.values, ...beingSky}
-    return centralClipBinding({ref, values, location, island}, {colour, reached, write, answer: answering, constellations})
+    // A page's clip on its world's track is its Central-relative path, the subject selecting it opens (timeline/centralTrackAdapter.ts
+    // centralSubjectOfClip): the clip's menu acts through this binding.
+    return centralClipBinding({ref, values, location, island}, {colour, reached, write, answer: answering, constellations, ...(subject.kind === 'note' ? {clip: subject.path} : {})})
   }
   if (resolved?.state === 'absent') return centralClipBinding({ref: `occasion:${resolved.ref}`, values: {name: resolved.ref,
     page: JSON.stringify(pageOfText(`The retained occasion ${resolved.ref} is no longer in the temporal reading. The spine keeps its basis; nothing opens for it here.`))}}, {colour, constellations})

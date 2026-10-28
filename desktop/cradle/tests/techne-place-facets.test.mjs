@@ -1,5 +1,5 @@
 /**
- * The M4′ PlaceFacet producer (parent integration, 2026-09-22) — the local
+ * World's PlaceFacet producer (parent integration, 2026-09-22) — the local
  * spatial producer gate G3 of the L5 Technē Instrument Wayfinder recorded
  * missing. Unit proofs that it derives REAL ql.techne/v1 spatial facets from
  * what a register's wiki ground actually discloses, and NOTHING when it does

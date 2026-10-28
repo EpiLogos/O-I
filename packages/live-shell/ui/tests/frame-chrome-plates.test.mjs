@@ -1,5 +1,5 @@
 // T-FRAME-CHROME-ONTO-PLATES: the hosted frame draws only its field in a pane; every control its chrome drew there stands on a device —
-// the research canvas's, timeline's and journey's on the M1′, M2′ and M3′ plates in the manual's groups (DLW.md §17.4–§17.6), the
+// the research canvas's, timeline's and journey's on the Canvas, Timeline and Journey plates in the manual's groups (DLW.md §17.4–§17.6), the
 // Expressions stage's on the Studio — read from the frame's published chrome and pressed through its one runner. The shell declares the
 // presentation ('devices', in a pane of any size: manual §20.1, owner 20 Oct) from the transport, which stands in
 // every mode. Rendered server-side with production modules in memory (the loader of atlas-places-plate.test.mjs).
@@ -61,7 +61,8 @@ const CANVAS = {lens: 'canvas', controls: [
   control('save/a:native-save', 'work', 'Save (⌘S)', {short: undefined}),
   control('save/a:undo', 'work', 'Undo edit'),
   control('save/l:Nara', 'nara', 'Nara', {kind: 'toggle', pressed: false}),
-  control('lens/a:lens:canvas', 'lens', 'M1′ Canvas · Constellation', {kind: 'toggle', pressed: true}),
+  // The frame's Lens studio names each instrument by its work (#801; field-studies-journeys/src/lensStudio.ts LENSES), never by M′.
+  control('lens/a:lens:canvas', 'lens', 'Canvas · Constellation', {kind: 'toggle', pressed: true}),
   control('scene/a:previous', 'scene', 'Previous scene (←)'),
   control('scene/l:Acts', 'scene', 'Acts', {title: 'Roles, reusable material and act playback', kind: 'toggle', pressed: false}),
   control('tools/l:Note', 'canvas:tools', 'Note'),
@@ -75,12 +76,12 @@ const CANVAS = {lens: 'canvas', controls: [
 const state = (chrome, extra = {}) => ({hostMode: 'techne', lens: 'canvas', sceneIndex: 0, sceneCount: 1, presentation: 'devices', chrome, ...extra})
 const run = async () => ({ok: true})
 
-test('M1′ Canvas stands as one plate of the groups its design does not carry and the Expression, each frame control in its home', () => {
+test('the Canvas stands as one plate of the groups its design does not carry and the Expression, each frame control in its home', () => {
   publishHostedChrome({state: state(CANVAS), run, faults: []})
   try {
     const out = plate('techne:m1')
-    assert.match(out, /data-instrument="techne:m1"[^>]*data-stage-plate="canvas"/, 'the stage plate stands open for M1′')
-    // W4-Technē: the Canvas design (techne:canvas) heads M1′'s chain and carries Look whole — zoom, Fit, the overview — with Mode, Grid and
+    assert.match(out, /data-instrument="techne:m1"[^>]*data-stage-plate="canvas"/, 'the stage plate stands open for the Canvas')
+    // W4-Technē: the Canvas design (techne:canvas) heads the Canvas's chain and carries Look whole — zoom, Fit, the overview — with Mode, Grid and
     // the save state, on the frame's research reading and acts (stageInstrumentModel.ts CARRIED_BY_DESIGN): the plate draws none of them.
     const order = ['tools', 'lines', 'relation', 'views', 'expression'].map(id => out.indexOf(`data-section="${id}"`))
     assert.ok(order.every(at => at > 0), 'every group the design does not carry stands')
@@ -107,7 +108,7 @@ test('M1′ Canvas stands as one plate of the groups its design does not carry a
   }
 })
 
-test('M2′ and M3′ stand in their manual groups; a lens the stage does not stand in says so rather than drawing another lens\'s tools', () => {
+test('the Timeline and the Journey stand in their manual groups; a lens the stage does not stand in says so rather than drawing another lens\'s tools', () => {
   assert.deepEqual(STAGE_PLATES['techne:m2'].map(section => section.title), ['Lens', 'Readings', 'Standing', 'Window'])
   assert.deepEqual(STAGE_PLATES['techne:m3'].map(section => section.title), ['Stops', 'Pace', 'Transitions', 'Takes'])
   assert.deepEqual(STAGE_PLATES['techne:m1'].map(section => section.title), ['Tools', 'Lines', 'Relation', 'Look', 'Views'])

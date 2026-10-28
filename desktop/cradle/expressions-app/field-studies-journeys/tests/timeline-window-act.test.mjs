@@ -1,5 +1,5 @@
 // Lane-2 T17 — the frame side of the explicit window act. The Timeline's one control is the session's own shared-window
-// control: its verb names what it asserts on M2′ ("Read over this window"), it is labelled with the window it will assert,
+// control: its verb names what it asserts on the Timeline ("Read over this window"), it is labelled with the window it will assert,
 // and nothing in the Timeline's view-state path (zoom, pan, projection) writes the window. Source-scripted: each check re-reads its file.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -19,7 +19,7 @@ test('the window control is labelled with the window it will assert, via the con
   assert.doesNotMatch(writer, /Time\{declared\?' · bounded'/, 'the old bounded-only label is gone');
 });
 
-test('the M2′ act is named by its verb; Places keeps its plain Apply', async () => {
+test('the Timeline\'s act is named by its verb; Places keeps its plain Apply', async () => {
   const writer = await read('src/sharedTimeWindow.tsx');
   assert.match(writer, /export const TIMELINE_ACT_LABEL='Read over this window';/);
   assert.match(writer, /\{busy\?'Applying…':applyLabel\}/);

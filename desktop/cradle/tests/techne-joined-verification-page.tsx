@@ -4,7 +4,7 @@
  * KnowledgeSurface + the live imported PointCloudHost, one kernel), and adds
  * ONLY the minimal `oi:open-scene-constellation` relay contract that the real
  * composition root (CradleFrame) owns in production, so the Canvas → Wiki
- * scene/subject handoff (M1′ "Edit constellation") has a real listener to
+ * scene/subject handoff (the Canvas's "Edit constellation") has a real listener to
  * negate. The listener's mode is toggled from the walk via
  * `window.__RELAY_MODE__` ('complete' | 'refuse') — never production code,
  * only this disposable test root's own minimal stand-in for CradleFrame's

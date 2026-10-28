@@ -11,7 +11,7 @@ import type {TracksSelection} from '../tracks/SessionGrid'
 import {ObjectMenu} from './ObjectMenu'
 import {entryForKey, objectKeyAct, objectMenu, undoable, type ObjectContext, type ObjectRun, type ObjectTarget} from './objectActions'
 import {recordStep} from './undo'
-import {hostedClip, writeClip} from './objectDoor'
+import {bindsClip, hostedClip, subscribeHostedClip, writeClip} from './objectDoor'
 import {opensMenu, useObjectMenu} from './useObjectMenu'
 import {publishObjectCommands} from './commandDoor'
 
@@ -82,12 +82,27 @@ export function useTracksMenu({set, selection, view, press, folded, fold}: {set:
     else if (target.kind === 'track') latest.current.selection.select({kind: 'track', ref: target.id, title: target.name})
   }
 
+  /** The object the standing menu lists: its acts are read again when its Clip view publishes it (below). */
+  const shown = useRef<ObjectTarget | null>(null)
+
   /** Open an object's menu: selected first, its acts read once Clip view has taken the selection (two frames). */
   const open = (target: ObjectTarget, x: number, y: number, trigger: HTMLElement | null, source: 'pointer' | 'keyboard') => {
     select(target)
     // A short wait, not animation frames: a frame never comes in a window the system holds hidden, and the menu must still open.
-    setTimeout(() => menu.openAt(x, y, objectMenu(target, latest.current.set, context()), target.name, trigger, source), 40)
+    setTimeout(() => { shown.current = target; menu.openAt(x, y, objectMenu(target, latest.current.set, context()), target.name, trigger, source) }, 40)
   }
+
+  // While a clip's menu stands, each binding its Clip view publishes for it reads the clip's acts again: a page read after the menu opened
+  // brings what it says (its facts' standing, its Open in), where it stands, without moving the menu or its focus.
+  const refresh = menu.refresh
+  useEffect(() => {
+    if (!menu.isOpen) { shown.current = null; return }
+    return subscribeHostedClip(binding => {
+      const target = shown.current
+      if (!binding || target?.kind !== 'clip' || !bindsClip(binding, target.id)) return
+      refresh(objectMenu(target, latest.current.set, context()))
+    })
+  }, [menu.isOpen, refresh, context])
 
   const onContextMenu = (event: ReactMouseEvent<HTMLElement>) => {
     const target = objectAt(event.target as Element, latest.current.set)

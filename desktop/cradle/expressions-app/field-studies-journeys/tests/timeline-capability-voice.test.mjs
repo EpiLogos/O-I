@@ -1,5 +1,5 @@
 // lane-2 T25 — capability honesty as the instrument's voice. The chronology, the Relations tab and the
-// M2′ status line render from one availability voice (vendor timeline/availabilityVoice.ts), fed by the
+// The Timeline's status line render from one availability voice (vendor timeline/availabilityVoice.ts), fed by the
 // authority's own `projectionAvailability`. Three fixture readings: no temporal facets; temporal facets with
 // no relations; relations with no dates. Each absence keeps its honest sentence and gains its positive twin.
 import assert from 'node:assert/strict';
@@ -111,7 +111,7 @@ test('the plural and the count come from the same availability data, never a pla
  assert.equal(absent.relations.reason,api.NO_RELATIONS_REASON);
 });
 
-// The consumers: the chronology toolbar and the M2′ status line are wired to the one voice, and every
+// The consumers: the chronology toolbar and the Timeline's status line are wired to the one voice, and every
 // disabled control names its reason in its title.
 const instruments=await readFile(resolve(engine,'src/researchInstruments.tsx'),'utf8');
 

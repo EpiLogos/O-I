@@ -822,7 +822,7 @@ test('the designs draw on their bindings in every view and page — no NaN, no u
 
 test('(d) each design stands where the manual puts it: the instrument at the head of its open chain, then its effects — the Lens after every instrument', () => {
   session.resetPalaceSession()
-  // REPLACED (#725): Light after the Canvas, and the Timeline at the head of M2′ — Light is the Canvas's Light page (§17.4), the timeline
+  // REPLACED (#725): Light after the Canvas, and the Timeline at the head of the Timeline's chain — Light is the Canvas's Light page (§17.4), the timeline
   // Technē's Arrangement view (§17.5, §16.1 "Technē's timeline is Arrangement view, not an instrument of its own"): neither stands on a chain.
   assert.deepEqual(designs.TECHNE_CHAINS['techne:m1'], {head: 'techne:canvas', effects: ['techne:lens']})
   assert.deepEqual(designs.TECHNE_CHAINS['techne:m2'], {effects: ['techne:lens']})
@@ -836,7 +836,7 @@ test('(d) each design stands where the manual puts it: the instrument at the hea
   for (const [instrument, head, plate, effectIds] of [
     ['techne:m5', 'techne:palace', 'data-palace-plate="true"', ['techne:lens']],
     ['techne:m1', 'techne:canvas', 'data-stage-plate="canvas"', ['techne:lens']],
-    // REPLACED (#725): M2′ was headed by the Timeline's design — retired (§17.5); its own plate stands first, then the Lens.
+    // REPLACED (#725): the Timeline was headed by the Timeline's design — retired (§17.5); its own plate stands first, then the Lens.
     ['techne:m2', null, 'data-stage-plate="timeline"', ['techne:lens']],
     ['techne:m3', 'techne:journey', 'data-stage-plate="journey"', ['techne:lens']],
     ['techne:m0', null, 'data-project-plate="true"', ['techne:lens']],
@@ -863,7 +863,7 @@ test('(d) each design stands where the manual puts it: the instrument at the hea
   assert.doesNotMatch(graph, /No family declares a device this instrument holds yet/, 'no empty plate after the design')
   // A design stands on no chain whose instrument is not its own.
   const timeline = renderToStaticMarkup(createElement(InstrumentDeviceDetail, {transport, instrument: 'techne:m2'}))
-  for (const id of ['techne:palace', 'techne:canvas', 'techne:light', 'techne:timeline', 'knowledge-graph:graph']) assert.doesNotMatch(timeline, new RegExp(`data-device-id="${id}" data-chain-place`), `${id} is not on M2′'s chain`)
+  for (const id of ['techne:palace', 'techne:canvas', 'techne:light', 'techne:timeline', 'knowledge-graph:graph']) assert.doesNotMatch(timeline, new RegExp(`data-device-id="${id}" data-chain-place`), `${id} is not on the Timeline's chain`)
 })
 
 test('the bindings name their owners and copy no design: no default, no fixture, no catalogue import, shell tokens only', () => {

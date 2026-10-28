@@ -1,4 +1,4 @@
-/** M2′ Relation Field — pure layout/filter proof (no DOM, no native fixture).
+/** The Timeline's Relation Field — pure layout/filter proof (no DOM, no native fixture).
  * Loads `../src/relationFieldView.tsx` and its m0m5 model dependencies
  * (`src/techne/m0m5/timeline/{relations,lanes,standing}.ts`) through the same
  * esbuild-in-tmp pattern `research-instruments-native.test.mjs` uses to cross

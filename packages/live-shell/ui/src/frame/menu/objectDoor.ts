@@ -7,11 +7,19 @@ import type {ClipBinding} from '../detail/clipBinding'
 
 let held: ClipBinding | null = null
 const waiting = new Set<(binding: ClipBinding) => void>()
+const listeners = new Set<(binding: ClipBinding | null) => void>()
 
 /** The hosted clip publishes its binding while Clip view holds it (null as it leaves). */
 export function publishHostedClip(binding: ClipBinding | null): void {
   held = binding
   if (binding) for (const wake of [...waiting]) wake(binding)
+  for (const listener of [...listeners]) listener(binding)
+}
+
+/** Hear each binding Clip view publishes (an open menu reads the clip's acts again once the clip is read). Returns the withdrawal. */
+export function subscribeHostedClip(listener: (binding: ClipBinding | null) => void): () => void {
+  listeners.add(listener)
+  return () => { listeners.delete(listener) }
 }
 
 /** The binding Clip view holds now, if any. */
@@ -28,9 +36,10 @@ export function showClipView(): boolean {
   return true
 }
 
-/** A clip's ref as its Clip view names it: the clip's own id, or that id with the owner's suffix (Factory's `#task/n`). Pure. */
-export const bindsClip = (binding: Pick<ClipBinding, 'ref'>, clipId: string): boolean =>
-  binding.ref === clipId || binding.ref.startsWith(`${clipId}#`) || clipId.startsWith(`${binding.ref}#`)
+/** A clip's ref as its Clip view names it: the clip's own id, or that id with the owner's suffix (Factory's `#task/n`), or the clip the
+ * binding says it holds where its ref is another's (a Central page: the browser's subject for it). Pure. */
+export const bindsClip = (binding: Pick<ClipBinding, 'ref' | 'clip'>, clipId: string): boolean =>
+  binding.ref === clipId || binding.ref.startsWith(`${clipId}#`) || clipId.startsWith(`${binding.ref}#`) || binding.clip === clipId
 
 /** The clip's binding: the one Clip view holds when it is this clip's, else Clip view brought forward and its binding awaited (the
  * selection is the shell's, made before the act). Refuses in words when no Clip view comes to hold it. */

@@ -25,6 +25,24 @@ export interface ClipBinding extends DesignBinding {
   readonly placed?: boolean
   /** Tabs of the design this clip lacks, by id (an audio clip has no Notes, no MPE and no MIDI tools): Clip view leaves them out. */
   readonly lacks?: readonly string[]
+  /** The set's clip this binding holds, where the clip's id on the track is not the binding's ref: a Central page selected on a world's
+   * track is the browser's subject (`subject:note:<path>`), and its clip is the page's Central-relative path. */
+  readonly clip?: string
+  /** Open in (manual §18.1 "choose Open in from its menu"): the ways the clip opens when it is launched, as its page keeps them, each
+   * written through this binding's `opensAs`. A choice the clip has nothing for stays closed and says why. Absent: the clip has none. */
+  readonly openIn?: readonly OpenInChoice[]
+}
+
+/** One way a clip opens when it is launched, for its Open in menu. */
+export interface OpenInChoice {
+  /** The value the clip's `opensAs` takes. */
+  readonly way: string
+  /** The way's name, as the menu says it after "Open in". */
+  readonly label: string
+  /** Whether the clip opens this way now, as its owner read it. */
+  readonly chosen: boolean
+  /** Why the clip has nothing for this way, in its owner's words: the choice stays closed. */
+  readonly closed?: string
 }
 
 /** The three keys that hold which tab each place shows (clips/design.ts TAB_KEY): always the view's. */
@@ -75,6 +93,8 @@ export function clipBinding(input: {
   readonly lacks?: readonly string[]
   /** The view's starting value of a key it holds, until the hand moves it (a fold, the tab a clip opens on). */
   readonly viewDefaults?: Readonly<Record<string, Value>>
+  readonly clip?: string
+  readonly openIn?: readonly OpenInChoice[]
 }): ClipBinding {
   const id = clipHostId(input.mode, input.ref)
   const held = viewHoldsOf(id)
@@ -101,6 +121,8 @@ export function clipBinding(input: {
     local,
     ...(input.placed ? {placed: true} : {}),
     ...(input.lacks?.length ? {lacks: input.lacks} : {}),
+    ...(input.clip ? {clip: input.clip} : {}),
+    ...(input.openIn?.length ? {openIn: input.openIn} : {}),
     // A write the owner takes and a refused one both reach `write`, so the refusal is said in the wiring's own words.
     writes: key => key in input.wiring.acts || find(input.wiring.refused, key) !== undefined,
     write: async (changes: readonly ValueChange[]) => {

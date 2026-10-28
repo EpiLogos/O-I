@@ -482,14 +482,14 @@ try {
   }
   await page.screenshot({path: resolve(out, '01-negatives-done.png')});
 
-  // ═══ V2 — lens continuity M0′→M1′→M2′→M3′→M4′→M5′→M0′ (§28) ═══
+  // ═══ V2 — lens continuity Project→Canvas→Timeline→Journey→World→Palace→Project (§28) ═══
   {
     await frame.evaluate(() => {
       window.__REMOUNTS__ = 0;
       const target = document.getElementById('research-workspace');
       if (target) new MutationObserver(muts => {if (muts.some(m => m.type === 'childList' && (m.addedNodes.length || m.removedNodes.length))) window.__REMOUNTS__++;}).observe(target, {childList: true});
     });
-    // M4′ Places and M5′ Palace are the shell's Earth atlas now (T-PLACES-ONTO-ATLAS, T-PALACES-ONTO-ATLAS): the frame's chooser offers neither
+    // World · Places and the Palace are the shell's Earth atlas now (T-PLACES-ONTO-ATLAS, T-PALACES-ONTO-ATLAS): the frame's chooser offers neither
     const order = ['project', 'canvas', 'timeline', 'journey', 'project'];
     const trail = [];
     const errorsBefore = errors.length;
@@ -501,7 +501,7 @@ try {
     }
     probe.lensTrail = trail;
     receipt.remounts = await frame.evaluate(() => window.__REMOUNTS__);
-    check(trail.every(row => row.native_ref === expectedRef), 'The native Expression ref persists across every lens switch, M0′ through M5′ back to M0′');
+    check(trail.every(row => row.native_ref === expectedRef), 'The native Expression ref persists across every lens switch, from the Project round to the Project');
     check(new Set(trail.map(row => row.sceneIndex)).size === 1, 'The active Scene persists across lens switches (no lens change resets the Scene)');
     check(errors.length === errorsBefore, `No uncaught application errors while cycling all six lenses (${errors.slice(errorsBefore).join('; ')})`);
     check(trail.every((row, i) => row.activeLens === order[i]), 'Each requested lens actually became the active instrument (real switch, not a no-op)');

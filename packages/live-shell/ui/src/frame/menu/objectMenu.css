@@ -15,6 +15,10 @@
 .object-menu-item[disabled] { color: var(--text-faint); pointer-events: none }
 .object-menu-item[data-tone=destructive]:not([disabled]) { color: var(--rec) }
 .object-menu-item[data-tone=destructive][data-active] { background: var(--rec); color: var(--bg-0) }
+/* One of a set of ways (Open in's): a radio's ring before its name, filled for the way standing (a drawn mark, no glyph). */
+.object-menu-item[role=menuitemradio] .object-menu-label::before { content: ''; display: inline-block; width: 5px; height: 5px; margin: 0 6px 1px 0;
+  border: 1px solid currentColor; border-radius: 50%; vertical-align: middle; opacity: .6 }
+.object-menu-item[role=menuitemradio][aria-checked=true] .object-menu-label::before { background: currentColor; opacity: 1 }
 .object-menu-swatches { display: grid; grid-template-columns: repeat(14, 1fr); gap: 1px; padding: 4px 10px 5px }
 .object-menu-swatches button { aspect-ratio: 1; min-height: 6px; padding: 0; border: 1px solid transparent; cursor: default }
 .object-menu-swatches button:hover, .object-menu-swatches button[aria-pressed=true] { border-color: var(--text) }

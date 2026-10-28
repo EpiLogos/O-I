@@ -4,7 +4,7 @@
  * sixfold ring from member cardinality — a constellation with no wiki-
  * declared position stays "radial" (no shape claimed), and only a wiki-
  * warranted position ever selects the "ql-constellation" scheme. Reuses the
- * same law the M1′ Canvas layout states in its own comment (position 0 at
+ * same law the Canvas layout states in its own comment (position 0 at
  * the top, clockwise 60° steps) rather than inventing a parallel one.
  *
  * Run: node --experimental-strip-types --import ./tests/ts-register.mjs

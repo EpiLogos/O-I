@@ -1,4 +1,4 @@
-// T-PLACES-ONTO-ATLAS: the M4′ World / Places plate's readings, over the suite's places (projections/atlas/places/placesModel.ts). The
+// T-PLACES-ONTO-ATLAS: the World / Places plate's readings, over the suite's places (projections/atlas/places/placesModel.ts). The
 // frame's Places map retires (FOUNDATION §4); what it showed of a place — its precision grammar (lane-4 T10), its relation layers and
 // legend (T8), its routes and hierarchy (T11, T12), its provenance (T13) and its standing class (T30) — is read here from what the
 // owners declare, through the cradle's own authorities (world.ts, project.ts). Pure: no DOM.

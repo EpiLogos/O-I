@@ -1,4 +1,4 @@
-// Lane BT (16 Oct): Technē's instruments are devices on the owner's panel kit. Every M0′–M5′ plate stands on the kit's head (inhabitants/
+// Lane BT (16 Oct): Technē's instruments are devices on the owner's panel kit. Every instrument's plate stands on the kit's head (inhabitants/
 // sdk/panel.tsx PanelHead: the activator, the expand toggle, the name, the held mark, the pages, the device's own acts, the place's marks, ▦ —
 // docs/dlw/DEVICE-UI.md §4.1), its display section first with a well drawn from its owner's readings, a missing reading said in the well
 // (§7); no sentence stands in a plate (§1): the frame's save state and status line are lights, a group with nothing says one word; a
@@ -90,13 +90,13 @@ test('an instrument plate stands on the kit\'s head; its display section is firs
 })
 
 test('every Technē instrument\'s open plate has its well first, drawn from its owner, a missing reading said in the well', () => {
-  // REPLACED (#725): M2′'s picture was the Timeline design's display at the head of its chain — the Timeline was retired as a device of its
+  // REPLACED (#725): the Timeline's picture was the Timeline design's display at the head of its chain — the Timeline was retired as a device of its
   // own in the 22 Oct manual rewrite (§17.5 "Technē's timeline is Arrangement view"; §16.1 "Technē's timeline is Arrangement view, not an
-  // instrument of its own"), so no design heads M2′'s chain, and its open plate draws its own well first, as M0′'s and M4′'s do: the shared
+  // instrument of its own"), so no design heads the Timeline's chain, and its open plate draws its own well first, as the Project's and World's do: the shared
   // window, read from the session (all time while it holds none).
   const words = {'techne:m0': /the Earth<\/text><text[^>]*>not mounted/, 'techne:m4': /the Earth<\/text><text[^>]*>not mounted/, 'techne:m2': /all time/}
-  assert.ok(!plate('techne:m2').includes('data-device-id="techne:timeline"'), 'no Timeline device on M2′\'s chain')
-  // W4-Technē: M1′ and M3′'s pictures are their designs' displays (techne:canvas, techne:journey) at the head of their chains on the frame's
+  assert.ok(!plate('techne:m2').includes('data-device-id="techne:timeline"'), 'no Timeline device on the Timeline\'s chain')
+  // W4-Technē: the Canvas's and the Journey's pictures are their designs' displays (techne:canvas, techne:journey) at the head of their chains on the frame's
   // research reading; their stage plates draw no second well. The wells still draw each instrument's Compact on the rack.
   for (const [id, design] of [['techne:m1', 'techne:canvas'], ['techne:m3', 'techne:journey']]) {
     const out = plate(id)
@@ -106,10 +106,10 @@ test('every Technē instrument\'s open plate has its well first, drawn from its 
   assert.match(wellOf(wells.useCanvasWell), /no stage<\/text><text[^>]*>reported yet/, 'the Canvas well says which reading is missing')
   assert.match(wellOf(wells.useTimelineWell), /all time/)
   assert.match(wellOf(wells.useJourneyWell), /no walk<\/text><text[^>]*>reported yet/)
-  // W4-Technē: M5′'s picture is the Palace design's own well (its floor), at the head of M5′'s chain on the palace session; the plate after
+  // W4-Technē: the Palace's picture is the Palace design's own well (its floor), at the head of the Palace's chain on the palace session; the plate after
   // it keeps what the design does not carry, and draws no second well (techne-designs-binding.test.mjs draws the design's well).
   const m5 = plate('techne:m5')
-  assert.ok(m5.indexOf('data-device-id="techne:palace" data-chain-place="head"') >= 0 && m5.indexOf('data-device-id="techne:palace"') < m5.indexOf('data-instrument="techne:m5" data-expanded="true"'), 'the Palace design heads M5′')
+  assert.ok(m5.indexOf('data-device-id="techne:palace" data-chain-place="head"') >= 0 && m5.indexOf('data-device-id="techne:palace"') < m5.indexOf('data-instrument="techne:m5" data-expanded="true"'), 'the Palace design heads the Palace')
   assert.doesNotMatch(m5.slice(m5.indexOf('data-instrument="techne:m5" data-expanded="true"')), /data-section="display"/, 'no second well')
   for (const [id, said] of Object.entries(words)) {
     const out = plate(id)
@@ -124,7 +124,7 @@ test('every Technē instrument\'s open plate has its well first, drawn from its 
   }
 })
 
-/** The frame's chrome on the canvas lens, with the two readings the lead saw drawn as text on M1′'s TOOLS: the status line and the save glyph. */
+/** The frame's chrome on the canvas lens, with the two readings the lead saw drawn as text on the Canvas's TOOLS: the status line and the save glyph. */
 const CANVAS = {lens: 'canvas', controls: [
   control('tools/l:Snap', 'canvas:tools', 'Snap', {kind: 'toggle', pressed: true}),
   control('tools/l:O-I — wiki overview', 'canvas:tools', 'O-I — wiki overview', {kind: 'reading', value: 'O-I — wiki overview'}),
@@ -134,7 +134,7 @@ const CANVAS = {lens: 'canvas', controls: [
 const state = (chrome, extra = {}) => ({hostMode: 'techne', lens: chrome.lens, sceneIndex: 0, sceneCount: 1, presentation: 'devices', chrome, ...extra})
 const run = async () => ({ok: true})
 
-test('M1′: the status line is a light, never text (the save state is the design\'s); its well draws the pane at the frame\'s zoom and the selection', () => {
+test('the Canvas: the status line is a light, never text (the save state is the design\'s); its well draws the pane at the frame\'s zoom and the selection', () => {
   publishHostedChrome({state: state(CANVAS, {selection: [{id: 'card:1', name: 'The Stone'}]}), run, faults: []})
   try {
     const out = plate('techne:m1')
@@ -148,13 +148,13 @@ test('M1′: the status line is a light, never text (the save state is the desig
     assert.match(well, /class="dp-curve-on"/, 'the part of the board the pane shows')
     assert.match(well, /1 selected · The Stone/, 'what is selected')
     assert.match(well, /<circle[^>]*r="0\.8"/, 'Snap on: the grid')
-    assert.deepEqual(sentences(out.slice(out.indexOf('data-instrument="techne:m1" data-expanded="true"'), out.indexOf('data-section="expression"'))), [], 'no sentence drawn in M1′\'s groups')
+    assert.deepEqual(sentences(out.slice(out.indexOf('data-instrument="techne:m1" data-expanded="true"'), out.indexOf('data-section="expression"'))), [], 'no sentence drawn in the Canvas\'s groups')
   } finally {
     publishHostedChrome(null)
   }
 })
 
-test('a parameter no owner carried is its design\'s now: the stage plates draw no waiting row (M1′ Tool, Relation type, Standing; M2′ Deep time, Strata; M3′ Take)', () => {
+test('a parameter no owner carried is its design\'s now: the stage plates draw no waiting row (the Canvas\'s Tool, Relation type, Standing; the Timeline\'s Deep time, Strata; the Journey\'s Take)', () => {
   const cases = [
     ['techne:m1', {lens: 'canvas', controls: []}, ['Tool', 'Relation type', 'Standing']],
     ['techne:m2', {lens: 'timeline', controls: []}, ['Deep time', 'Strata']],
@@ -171,13 +171,13 @@ test('a parameter no owner carried is its design\'s now: the stage plates draw n
     }
   }
   // REPLACED (#725): "the Timeline design carries the shared window whole" — the Timeline was retired as a device of its own (§17.5 "Technē's
-  // timeline is Arrangement view"), so no design carries M2′'s groups: the plate keeps them all, with its own well first (above), and Deep time
+  // timeline is Arrangement view"), so no design carries the Timeline's groups: the plate keeps them all, with its own well first (above), and Deep time
   // and Strata are Arrangement view's ruler settings (§17.1 "Arrangement view: the timeline"), drawn by no plate.
-  assert.deepEqual(CARRIED_BY_DESIGN['techne:m2'], {sections: [], labels: []}, 'nothing of M2′ is carried by a design')
+  assert.deepEqual(CARRIED_BY_DESIGN['techne:m2'], {sections: [], labels: []}, 'nothing of the Timeline is carried by a design')
   assert.deepEqual(CARRIED_BY_DESIGN['techne:m1'].sections, ['look'], 'the Canvas design carries Look whole')
 })
 
-test('M3′: the walk\'s stops as cells, the one it stands on lit, its place at the top right', () => {
+test('the Journey: the walk\'s stops as cells, the one it stands on lit, its place at the top right', () => {
   publishHostedChrome({state: state({lens: 'journey', controls: []}, {sceneCount: 3, sceneIndex: 1, sceneName: 'Gather', journeyPlaying: true}), run, faults: []})
   try {
     const well = wellOf(wells.useJourneyWell)
@@ -194,7 +194,7 @@ test('M3′: the walk\'s stops as cells, the one it stands on lit, its place at 
 test('the rack says which instrument stands open, so the Device side\'s head can name it (standingInstrument.ts)', async () => {
   assert.equal(Standing.standingInstrument('techne:m0'), undefined, 'no rack has said: the focus stands')
   Standing.publishStandingInstrument('techne:m0', 'techne:m4')
-  assert.equal(Standing.standingInstrument('techne:m0'), 'techne:m4', 'M4′ stands over the Earth pane\'s M0′')
+  assert.equal(Standing.standingInstrument('techne:m0'), 'techne:m4', 'World stands over the Earth pane\'s Project')
   Standing.publishStandingInstrument('techne:m0', null)
   assert.equal(Standing.standingInstrument('techne:m0'), null, 'every instrument folded')
   Standing.publishStandingInstrument('techne:m0', undefined)

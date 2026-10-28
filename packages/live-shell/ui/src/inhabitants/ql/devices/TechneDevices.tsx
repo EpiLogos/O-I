@@ -10,8 +10,8 @@
 // title to open it again"), or standing as its Compact where the row has room, around the ONE open instrument: the focused pane's,
 // drawn as one plate whose columns are the families whose devices it holds. Clicking a folded instrument opens it on the focused pane
 // through the instrument door (the mockup's `data-instr`), and stands it open here whatever the door answers. With no instrument
-// focused, the faces no Technē instrument holds (the QL field/PCM owner and its waiting kin) stand after the folds as they did before:
-// the admitted one open, the waiting ones folded.
+// focused, the faces no Technē instrument holds (the QL field/PCM owner and its waiting kin, and the M′ matrices, which the app layers'
+// racks hold: #801) stand after the folds as they did before: the admitted ones open, the waiting ones folded.
 //
 // Every head is the panel kit's (inhabitants/sdk/panel.tsx; manual §16.9): a fold is the kit's Folded strip (its light, its name, its
 // readings, read downward), the open plate's head carries ▾ (fold it to its title: every instrument then stands as its Compact or its

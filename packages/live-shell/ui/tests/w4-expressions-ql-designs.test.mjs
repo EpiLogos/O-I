@@ -625,17 +625,20 @@ test('the Timeline reads the chronology\'s relation links and card categories as
   assert.match(drawnElsewhere.standing.links.disabled, /The chronology is not drawn now/)
 })
 
-test('(d) the Binding skin and the M′ matrices are admitted where §22 and §16.16 put them: on M3′\'s rack through the M3 clock, on the M′ instruments\' racks', () => {
+test('(d) the Binding skin and the M′ matrices are admitted where §22 and §16.16 put them: on the Journey through the M3 clock, on the app layers\' racks', () => {
   const faces = inhabitantManifest('quaternal-logic').faces
   const clock = faces.find(face => face.id === 'm3-clock'), matrices = faces.find(face => face.id === 'm-prime-matrices')
   assert.ok(clock && matrices)
-  // REPLACED (#725): Binding admitted as a face of its own, held by M3′'s rack and the Studio's body — it is the M3 clock's Binding skin now
-  // (§22.8; §22.3 "the Torus and the Studio's body chain can draw the same skin"): M3′'s rack holds it through the clock.
+  // REPLACED (#725): Binding admitted as a face of its own, held by the Journey and the Studio's body — it is the M3 clock's Binding skin
+  // now (§22.8; §22.3 "the Torus and the Studio's body chain can draw the same skin"): the Journey holds it through the clock.
   assert.equal(faces.find(face => face.id === 'binding'), undefined, 'no Binding face')
   assert.equal(clock.admission, undefined, 'the M3 clock, which carries the skin, is admitted')
-  assert.ok(clock.heldBy.includes('techne:m3'), 'M3′\'s rack holds the clock')
+  assert.ok(clock.heldBy.includes('techne:m3'), 'the Journey holds the clock')
   assert.equal(matrices.admission, undefined, 'the matrices are admitted (quaternalLogicFamilyManifest.ts: no longer "waiting")')
-  assert.deepEqual(matrices.heldBy, ['techne:m1', 'techne:m2', 'techne:m3', 'techne:m4'])
+  // REPLACED (#801): held by techne:m1–m4, Technē's instruments standing in for the app layers. Their layers are the insides of the
+  // racks of the Torus (M1′), the Sky (M2′), the M3 clock (M3′) and the Chakra (M4′) (§22.6, §16.16).
+  assert.deepEqual(matrices.heldBy, ['rack:torus', 'rack:sky', 'rack:m3-clock', 'rack:chakra'])
+  assert.ok(!matrices.heldBy.some(holder => holder.startsWith('techne:')), 'no Technē instrument holds the matrices')
   for (const design of [DESIGNS.m3clock, DESIGNS.matrices]) {
     assert.equal(design.views, undefined, `${design.id}: an instrument, every view`)
     for (const view of views) assert.equal(host.viewIn(design, view), view, `${design.id} ${view}`)
@@ -649,8 +652,10 @@ test('(d) the Binding skin and the M′ matrices are admitted where §22 and §1
   }
   assert.ok('binding.cell.hexagram' in entries.find(item => item.device.id === 'quaternal-logic:m3-clock').binding.values, 'the clock carries the Binding skin\'s readings')
   assert.ok(!entries.some(item => item.device.id === 'quaternal-logic:binding'), 'no Binding device on the rack')
-  const m3Rack = entries.filter(entry => entry.face.heldBy?.includes('techne:m3')).map(entry => entry.face.id)
-  for (const face of ['m3-clock', 'deck', 'm-prime-matrices']) assert.ok(m3Rack.includes(face), `M3′'s rack holds ${face}`)
+  const journey = entries.filter(entry => entry.face.heldBy?.includes('techne:m3')).map(entry => entry.face.id)
+  for (const face of ['m3-clock', 'deck']) assert.ok(journey.includes(face), `the Journey holds ${face}`)
+  const m3Rack = entries.filter(entry => entry.face.heldBy?.includes('rack:m3-clock')).map(entry => entry.face.id)
+  assert.deepEqual(m3Rack, ['m-prime-matrices'], 'the M3 clock\'s rack holds the M′ matrices, whose Form is M3′')
 })
 
 // ---------------------------------------------------------------------------------------------------------------- the Torus's stage

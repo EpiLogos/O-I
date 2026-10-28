@@ -1,4 +1,4 @@
-// The M0′ currentness seam (the remainer the 13-step walk named): a kernel
+// The Project's currentness seam (the remainer the 13-step walk named): a kernel
 // `file_changed` receipt whose path is a register's wiki basis invalidates
 // that register's cached reading — the one projection store re-reads the
 // local whole and re-projects, and a fresh reading stands as "projected"
@@ -102,7 +102,7 @@ test("a changed wiki basis invalidates, re-reads and re-projects; everything els
   await waitFor(() => standingOf("central")?.phase === "projected", "the first projection");
   const first = standingOf("central");
   const firstRef = first.projection.document.expression_ref;
-  assert.match(firstRef, /^expression:techne-m0\.central\./, "the projection carries the register's stable Technè M0′ identity");
+  assert.match(firstRef, /^expression:techne-m0\.central\./, "the projection carries the register's stable Technè Project identity");
   assert.equal(first.projection.constellations[0].members.length, 2, "the first generation carries the wiki's two members");
   assert.equal(first.reading.wikiBasis.revision, "rev-1");
 
@@ -115,7 +115,7 @@ test("a changed wiki basis invalidates, re-reads and re-projects; everything els
   assert.deepEqual(invalidated, ["central"], "the register whose basis changed is invalidated");
   await waitFor(() => standingOf("central")?.phase === "projected" && standingOf("central").reading.wikiBasis.revision === "rev-2", "the fresh generation");
   const second = standingOf("central");
-  // Stable identity, revision carries the drift (Technè M0′ owner direction 2026-09-19;
+  // Stable identity, revision carries the drift (the Technè Project's owner direction 2026-09-19;
   // WIKI-CONSTELLATION-SPEC currentness law — "Unchanged members retain identities",
   // recomposition is deliberate; wikiExpression.ts: "stable identity and revision are
   // separate", wikiProjectionStore.ts: "a changed wiki is drift, not permission to remint

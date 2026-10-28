@@ -1,4 +1,4 @@
-/** The M0′–M5′ instruments as ONE Expressions HUD in the ACTUAL imported application (owner
+/** Technē's instruments as ONE Expressions HUD in the ACTUAL imported application (owner
  * wayfinder §§2, 13–19, 28): the compact instrument chooser and the floating
  * Studio stand in the current mount's Technē cut, each lens presents its real
  * operating controls or an honest facet state, and switching lenses never
@@ -30,7 +30,7 @@ const page = await browser.newPage({viewport: {width: 1200, height: 820}});
 const errors = [];
 page.on('pageerror', error => errors.push(String(error)));
 
-// M4′ Places and M5′ Palace are the shell's Earth atlas now (T-PLACES-ONTO-ATLAS, T-PALACES-ONTO-ATLAS): the frame's chooser offers neither.
+// World · Places and the Palace are the shell's Earth atlas now (T-PLACES-ONTO-ATLAS, T-PALACES-ONTO-ATLAS): the frame's chooser offers neither.
 const LENSES = ['project', 'canvas', 'timeline', 'journey'];
 const receipt = {schema: 'oi.techne-lens-studio/v1', standing: 'current-app instrument surface in a real browser; native operations are a separate host-channel proof', passed: false, lenses: []};
 
@@ -42,10 +42,10 @@ try {
   await page.waitForFunction(() => window.__FIELD_STUDIES__ && window.__FIELD_STUDIES__.getState);
   assert.equal((await state()).hostMode, 'techne', 'the application boots in the Technē cut');
 
-  // The chooser stands in Technē mode with the frame's instruments in M′ order.
+  // The chooser stands in Technē mode with the frame's instruments in the rail's order.
   await page.waitForSelector('#lens-chooser:not([hidden])');
   const choices = await page.locator('#lens-chooser .lens-choice').evaluateAll(nodes => nodes.map(n => n.dataset.lens));
-  assert.deepEqual(choices, LENSES, 'the chooser carries M0′–M3′ in order');
+  assert.deepEqual(choices, LENSES, 'the chooser carries the Project, the Canvas, the Timeline and the Journey, in order');
 
   // This standalone CI probe has no native host. It must not fabricate a
   // source field; positive component/owner acceptance belongs to native tests.

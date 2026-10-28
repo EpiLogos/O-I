@@ -112,9 +112,11 @@ const QUATERNAL_LOGIC_MANIFEST: InhabitantManifest = {
         id: 'm-prime-matrices',
         presentations: ['expanded', 'full'],
         liveSemantic: 'device-instrument',
-        // The four layers are the insides of the instruments' racks (manual §22.6, §16.16): open a layer from the rack of its instrument —
-        // M1′ to M4′ — or all four here; it opens on a chain and as a pane.
-        heldBy: ['techne:m1', 'techne:m2', 'techne:m3', 'techne:m4'],
+        // The four layers are the insides of the racks of the instruments of the map (manual §22.6, §16.16): the Oscillator is M1′'s Ananda,
+        // the Reading M1′'s modes with M2′'s lenses, the Form M3′, the Situation M4′'s seven centres. The app layers' racks hold them — the
+        // Torus's, the Sky's, the M3 clock's and the Chakra's (sdk/semantics.ts LAYER_RACKS) — and no Technē instrument does (#801): open a
+        // layer from the rack of its instrument, or all four here; it opens on a chain and as a pane.
+        heldBy: ['rack:torus', 'rack:sky', 'rack:m3-clock', 'rack:chakra'],
         invariant: {generates: 'kernel:m3_reception'},
         note: 'What the torus is made of, in four layers (manual §22.6; ql/devices/qlMatrices.ts). The Reading is QL\'s mode catalogue (ql.music-modes/v1 through the kernel\'s music_modes_read), '
           + 'its cell the Live transport\'s mode in force; the Form\'s cell is the person\'s M3 form, moved by m3_reception\'s select-form. The Oscillator waits on `ql kernel m1`, the codons and '

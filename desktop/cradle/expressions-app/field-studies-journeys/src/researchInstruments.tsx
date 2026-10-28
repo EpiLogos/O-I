@@ -232,9 +232,9 @@ function TrailControl({initial,listen,control}:{initial:TraversalFold|null;liste
 /** 'm4' stays the app's instrument id while the frame's app.ts still names it; it opens no map (T-PLACES-ONTO-ATLAS, below). */
 export type ResearchInstrument='m1'|'m2'|'m4';
 /** T-PLACES-ONTO-ATLAS: Places is the Archetypal-Earth atlas, alone (owner, 14 Oct; FOUNDATION §4). The frame's Places map, its overlays
- * and its lens retired; M4′ World / Places is the shell's Earth pane, its controls on the M4 plate and the one transport
+ * and its lens retired; World / Places is the shell's Earth pane, its controls on the World plate and the one transport
  * (packages/live-shell/ui/src/projections/atlas/places/). What this lens says when it is asked for. */
-export const PLACES_MOVED='Places is the Earth atlas now: open Earth (M4′ World · Places) from the browser\'s Instruments. It follows the place and window this work shares.';
+export const PLACES_MOVED='Places is the Earth atlas now: open Earth (World · Places) from the browser\'s Instruments. It follows the place and window this work shares.';
 /** Lane-2 T21's carry: the event's place becomes the shared session's spatial focus through the owner's compare-and-set write (null
  * clears it), and the Earth atlas, which follows that focus, turns to it. Same discipline as writeSharedTimeWindow: the acknowledged
  * reply must still address this source and Scene. */

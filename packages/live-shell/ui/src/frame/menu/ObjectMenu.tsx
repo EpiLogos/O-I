@@ -2,7 +2,8 @@
 //
 // The object menu as drawn (manual §10.9): the object's name at its head, its acts with their keys at the right, Live's palette as a
 // row of colours where the object takes a colour. A disabled entry is drawn faint and says why on the Info line (data-i); a
-// destructive one is drawn in the record colour, so an act that takes something away never looks like one that cannot run.
+// destructive one is drawn in the record colour, so an act that takes something away never looks like one that cannot run. One of a
+// set of ways (Open in's) is a radio item, the way standing checked.
 import {createPortal} from 'react-dom'
 import type {useObjectMenu} from './useObjectMenu'
 import './objectMenu.css'
@@ -23,7 +24,8 @@ export function ObjectMenu({menu}: {menu: Menu}) {
           aria-pressed={item.current?.toUpperCase() === colour.toUpperCase()} style={{background: colour}}
           onClick={() => { menu.close(true); item.onPick?.(colour) }} />)}
       </div>
-      return <button key={item.id} type="button" role="menuitem" {...getItemProps(index)} className="object-menu-item"
+      return <button key={item.id} type="button" role={item.checked === undefined ? 'menuitem' : 'menuitemradio'} aria-checked={item.checked}
+        {...getItemProps(index)} className="object-menu-item"
         data-act={item.id} data-tone={item.tone === 'destructive' ? 'destructive' : undefined} data-active={active === index || undefined}
         aria-disabled={item.disabled || undefined} disabled={item.disabled}
         data-i={item.disabled && item.why ? `${item.label}|${item.why}` : undefined} title={item.disabled ? item.why : undefined}>

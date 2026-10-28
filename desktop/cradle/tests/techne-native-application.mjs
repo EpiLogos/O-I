@@ -76,22 +76,22 @@ try{
  const ref=saved.expression_ref;
  await commit();
  const unchanged=await op({op:'expression',request:{operation:'inspect',expression_ref:ref}});check(unchanged.data.document.revision===saved.revision,'An unchanged Scene does not generate a new native revision after JSON key ordering');
- // The M0′–M5′ Lens Studio stands on the SAME open native construction, not a
- // hardcoded surface: select the M3′ Journey instrument and it discloses the
+ // The Lens Studio stands on the SAME open native construction, not a
+ // hardcoded surface: select the Journey instrument and it discloses the
  // real Expression (its basis and its Scenes) and carries the NATIVE commit
- // (not a browser save); switching to M1′ keeps the same construction — the
+ // (not a browser save); switching to the Canvas keeps the same construction — the
  // subject is carried, never reset (§28 lens continuity over a real subject).
  await frame.locator('#lens-chooser .lens-choice[data-lens="journey"]').click();
  // The reconciled Lens Studio shows no raw refs (consolidation §4); the open
  // construction's identity is read from the native working state instead.
  const m3basis=await frame.evaluate(()=>window.__FIELD_STUDIES__.nativeWorking()?.native_ref??'');
- check(m3basis===ref,'The M3′ instrument stands on the exact open native construction, not a hardcoded blank');
+ check(m3basis===ref,'The Journey stands on the exact open native construction, not a hardcoded blank');
  await frame.locator('#timeline-panel:not([hidden])').waitFor();
  // E01: the journey timeline shows the Scenes on the time track by default and as the compact strip when collapsed; either
  // presentation discloses each Scene as one choose-scene clip, so the count is taken across both.
  const stripScenes=await frame.locator('#timeline-panel :is(.scene-strip, .scene-track-lane) [data-action="choose-scene"]').count(),nativeScenes=await frame.evaluate(()=>window.__FIELD_STUDIES__.getDocument().scenes.length);
- check(stripScenes>0&&stripScenes===nativeScenes,'M3′ Journey discloses the real Scenes of the construction in its Scene timeline');
- check(await frame.locator('#app > .masthead #native-save').isVisible(),'M3′ commits Scenes through the native owner (masthead Save), not a browser save');
+ check(stripScenes>0&&stripScenes===nativeScenes,'The Journey discloses the real Scenes of the construction in its Scene timeline');
+ check(await frame.locator('#app > .masthead #native-save').isVisible(),'The Journey commits Scenes through the native owner (masthead Save), not a browser save');
  await frame.locator('#lens-chooser .lens-choice[data-lens="canvas"]').click();
  check(await frame.evaluate(()=>window.__FIELD_STUDIES__.nativeWorking()?.native_ref??'')===m3basis,'The open construction survives a lens change — the subject is carried, not reset');
  await frame.evaluate(()=>document.querySelector('[data-action="deep-verso"]').click());await page.waitForFunction(()=>window.__TECHNE_HOST_PROOF__.summons.some(s=>s.kind==='verso'&&s.subject));

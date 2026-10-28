@@ -4,7 +4,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import {bridgeReading, groundSelection, ensureSession, resetSessionAlignment} from "../src/techne/m0m5/reading.ts";
-import {validateReading, validateSession, crossCutSession} from "../src/techne/contract.ts";
+import {validateReading, validateSession, crossCutSession, validateAgencyRole} from "../src/techne/contract.ts";
 import {createDisclosureSessionStore, coReferenced} from "../src/techne/session.ts";
 import {beats, sceneTitle} from "../src/techne/m0m5/journey/beats.ts";
 import {composeSceneProposal, EXPRESSION_EDIT_ACTION} from "../src/techne/m0m5/journey/compose.ts";
@@ -103,6 +103,19 @@ test("an instrument disclosure carries no M′ number: a numbered entry is refus
   assert.equal(bridged.whole, undefined, "the numbered raw payload is refused at the seam");
   assert.equal(validateReading(bridged).valid, true);
   assert.ok(bridged.disclosure.instruments.every((entry) => !("m_prime" in entry)), "no disclosure entry the bridge composes carries m_prime");
+});
+
+test("an agency role's coordinate out of the field is refused in the app layers' names, never as a numbered instrument (#801)", () => {
+  // Manual §25.1: the six are the app layers of the six M subsystems — M0′ the ground, M1′ to M3′ Live, M4′ Expressions, M5′ Technē.
+  const errors = [];
+  validateAgencyRole({role: "guardian", m_index: 6}, "agency[0]", errors);
+  assert.equal(errors.length, 1);
+  assert.match(errors[0], /^agency\[0\]\.m_index: /);
+  assert.match(errors[0], /M0′ the ground, M1′ to M3′ Live, M4′ Expressions, M5′ Technē/, "it names the six app layers");
+  assert.doesNotMatch(errors[0], /M′[0-5]/, "no M′ number is written index-first, as an instrument's was");
+  const fine = [];
+  validateAgencyRole({role: "guardian", m_index: 5}, "agency[0]", fine);
+  assert.deepEqual(fine, [], "M5′ is an app layer");
 });
 
 // ---- (3) the ONE session ----------------------------------------------------

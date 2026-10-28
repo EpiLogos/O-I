@@ -753,7 +753,7 @@ export function validateAgencyRole(value: unknown, label: string, errors: string
   keysAllowed(value, ["role", "m_index", "reading", "instrument", "guardian_ref", "agent_session_ref", "profile_ref", "authority", "privacy"], label, errors);
   if (!AGENCY_ROLE_KINDS.includes(value.role as string)) { errors.push(`${label}.role: guardian, anima, aletheia or techne`); return; }
   if (typeof value.m_index !== "number" || !Number.isInteger(value.m_index) || value.m_index < 0 || value.m_index > 5) {
-    errors.push(`${label}.m_index: must be an integer 0-5 (the field has M′0–M′5 only)`);
+    errors.push(`${label}.m_index: must be an integer 0-5, the app layer the role stands on (M0′ the ground, M1′ to M3′ Live, M4′ Expressions, M5′ Technē)`);
     return;
   }
   if (value.reading !== undefined && value.reading !== null && value.reading !== "4:2-deep" && value.reading !== "3:3-conjugate") {
