@@ -21,6 +21,8 @@ import type {RosterAgent} from '../../../../../../desktop/cradle/src/agency/rost
 import type {PageField} from '../../../../../../desktop/cradle/src/kernel/types'
 import {groundValues, lastKeptThought, thoughtValues, type FlowThought, type ThoughtHand, type WorkspaceGround} from './pageGround'
 import {civilDayName} from './dayBinding'
+import type {ActionAnswer} from './centralActions'
+import {rootOfDoctor, scaffoldOfPlan} from '../../inhabitants/centralHygieneModel'
 import {civilDateOf, clockOf, headOf, wordsOfHtml, type DayPage, type FlowPage, type PageEntry} from './pageReadings'
 
 // ---------------------------------------------------------------------------------------------------------------- the wiring
@@ -348,23 +350,54 @@ export const WORKSPACE_WIRING: DesignWiring = {
   },
 }
 
-/** Docs (DLW §18.5; catalogue/panels/central__docs.tsx): the world's account on six tiers, on a world's chain after Scope. What it reads of
- * the world now is its subject — the track's world, which the Workspace's head read before it (the Workspace was retired into the track's
- * head and Docs in the 22 Oct manual rewrite, §18.1). Its readings of the account and its acts wait for its binding to the six tiers (the PR
- * #705 handoff's own item): Central's projectcentral.docs.inspect and projectcentral.ground.inspect, central.doctor and
- * central.world.reproject.plan, AIKit's knowledge frame; each is absent or disabled naming that. */
+/** Docs (DLW §18.5; catalogue/panels/central__docs.tsx): the world's account on six tiers, on a world's chain after Scope, bound to the six
+ * tiers on Central's own readings (ticket 772, the PR 705 handoff's item) — each read through invoke_action, each refusal in Central's words:
+ *   - the Tiers page: `projectcentral.docs.inspect {project}` (central.development-field-reading/v1, ctrl/src/development_field.rs): each tier's
+ *     sources at their revision, the sources no tier holds (Unbound), whether the world has its account, the experiences it means to give
+ *     (`ux`) and the returns written against them (`ex`); Recognised is `projectcentral.ground.inspect {project}`'s recognised_sources, each with
+ *     the provenance and standing Central recorded (a source it does not list is no ground: false);
+ *   - the Make page: `central.doctor` (the parts every Central root must hold) and `central.world.reproject.plan {project}` (the world's
+ *     scaffold, present and missing);
+ *   - the acts, each the person's own press the kernel carries (action.rs PERSON_ACTS), then the account read again: Relate
+ *     (`projectcentral.docs.tier.relate`), Recognise (`projectcentral.ground.apply`, the document left where it is), Ensure
+ *     (`projectcentral.docs.ensure`), Reproject (`central.world.reproject.apply`) and Initialise root (`central.init`).
+ * Meaning and Moved since stand absent, each naming the reading it waits for (DOCS_MEANING_ABSENT, DOCS_MOVED_ABSENT). */
 export const DOCS_DESIGN = 'central:docs'
-const DOCS_UNBOUND = (what: string) => `${what}: Docs' binding to the six tiers has not landed yet (the PR #705 handoff's item), so this reading is not taken here.`
-const DOCS_ACT_UNBOUND = (what: string, op: string) => `${what}: Docs' binding to the six tiers has not landed yet (the PR #705 handoff's item), so the press does not reach ${op} from here.`
+/** The readings Docs asks, by the key of DocsReadings. */
+export const DOCS_ACTIONS = {inspect: 'projectcentral.docs.inspect', ground: 'projectcentral.ground.inspect', doctor: 'central.doctor', plan: 'central.world.reproject.plan'} as const
+/** Meaning (§18.5 "Whether the code still holds what the source says, by the law the project wrote for them"): AIKit verifies one law it is
+ * handed (`aikit knowledge reflection verify -`, aikit.reflection-verdict/v1; the kernel's aikit_read reflection-verify), and nothing lists the
+ * laws a project wrote. `aikit knowledge frame` (the kernel's aikit_read knowledge-frame) answers a context pack of readings, not a verdict. */
+export const DOCS_MEANING_ABSENT = 'Meaning: not read — missing op: the reflection laws a project declares, listed by AIKit (`aikit knowledge reflection verify` verifies one law handed to it, through the kernel\'s aikit_read reflection-verify, and no reading names the laws a world wrote; `aikit knowledge frame` answers readings, not a verdict) (AIKit).'
+/** Moved since (§18.5 "What moved since the source was last read against the work"): Central's change horizon counts the changes after a
+ * consumer's cursor, and no reading of a source against the work stands to set one (Meaning is not read). */
+export const DOCS_MOVED_ABSENT = 'Moved since: not read — missing op: when each source was last read against the work (Central\'s projectcentral.change.horizon counts the changes after a consumer\'s cursor, and Docs holds none while Meaning is unread) (Central).'
+/** Your world: Central's account is a project's (projectcentral.docs.inspect reads one project). */
+export const DOCS_NO_PROJECT = 'Your world has no project account to read: projectcentral.docs.inspect reads one project, and your root is none (Control/self is the root\'s own, made by central.self.ensure).'
+/** No kernel carrier: Central cannot be asked. */
+export const DOCS_NO_CARRIER = 'The kernel carrier is unavailable here, so Central cannot be asked.'
+/** Binding a source as an intended experience or a return names its own ref (ux.relate's ux_ref; ex.relate's ex_ref and the experiences it
+ * answers), which the press does not carry. */
+export const DOCS_RELATE_UX_EX = 'Relate as an intended experience or a return: Central\'s projectcentral.docs.ux.relate takes the experience\'s own ref (ux_ref), and ex.relate the return\'s (ex_ref) and the experiences it answers (ux_refs); the press names neither, so it is not asked.'
 export const DOCS_WIRING: DesignWiring = {
   design: DOCS_DESIGN,
   keys: ['light', 'subject', 'subjects', 'tier', 'show', 'provenance', 'standing', 'refresh', 'source', 'bindAs', 'sources', 'root', 'scaffold', 'account', 'ux', 'ex',
     'relate', 'recognise', 'readNow', 'openSource', 'ensure', 'reproject', 'initRoot'],
   reads: {
+    light: 'whether the account stands: lit when Central answered projectcentral.docs.inspect, dark when it refused',
     subject: 'the track\'s world: its project as Central discloses it (world browse: central/centralWorlds.ts readWorlds), or Central for your world',
     subjects: 'the track\'s world (its folders and notes are not listed yet)',
+    sources: `each tier's sources and the unbound ones at their revision (projectcentral.docs.inspect), each recognised as Central records it (projectcentral.ground.inspect recognised_sources). ${DOCS_MEANING_ABSENT} ${DOCS_MOVED_ABSENT}`,
+    root: 'the parts every Central root must hold (central.doctor)', scaffold: 'the world\'s ProjectCentral scaffold, present and missing (central.world.reproject.plan)',
+    account: 'whether the world has its account (projectcentral.docs.inspect self_aperture)', ux: 'the experiences the world means to give (projectcentral.docs.inspect ux)',
+    ex: 'the returns written against them (projectcentral.docs.inspect ex)',
   },
-  writes: {},
+  writes: {
+    relate: 'the person\'s Relate of a tier: projectcentral.docs.tier.relate {project, source_ref, tier, acceptance human-accepted} (invoke_action, action.rs PERSON_ACTS)',
+    recognise: 'the person\'s Recognise: projectcentral.ground.apply {project, source, provenance, standing, treatment retain-native-in-place, acceptance human-accepted} (PERSON_ACTS)',
+    ensure: 'the person\'s Ensure: projectcentral.docs.ensure {project} (PERSON_ACTS)', reproject: 'the person\'s Reproject: central.world.reproject.apply {project} (PERSON_ACTS)',
+    initRoot: 'the person\'s Initialise root: central.init (PERSON_ACTS)', readNow: 'the four readings asked of Central again',
+  },
   local: {
     tier: 'the tier in front (the first that needs you, by default)', show: 'Everything, or Needs you (the default)',
     provenance: 'who made a source you would recognise (Human-authored by default): held for Recognise',
@@ -372,39 +405,151 @@ export const DOCS_WIRING: DesignWiring = {
     refresh: 'when Docs reads again (On open by default)', source: 'the source chosen', bindAs: 'the tier, experience or return a source is bound as: held for Relate',
   },
   refused: {
-    relate: DOCS_ACT_UNBOUND('Relate', 'projectcentral.docs.tier.relate, ux.relate or ex.relate'),
-    recognise: DOCS_ACT_UNBOUND('Recognise', 'projectcentral.ground.apply'),
-    readNow: DOCS_ACT_UNBOUND('Read now', 'the account\'s readings'),
-    openSource: DOCS_ACT_UNBOUND('Open', 'the Document'),
-    ensure: DOCS_ACT_UNBOUND('Ensure', 'projectcentral.docs.ensure'),
-    reproject: DOCS_ACT_UNBOUND('Reproject', 'central.world.reproject.apply'),
-    initRoot: DOCS_ACT_UNBOUND('Initialise root', 'central.init'),
+    openSource: 'Open in the Document: the Document opens a Day, a Flow or a page (central/documents/centralDocuments.ts CentralDocumentTarget), and a world\'s source is none of them — missing op: the Document opening a world source by its ref (Central).',
   },
-  absent: {
-    light: DOCS_UNBOUND('Whether the account stands'),
-    sources: DOCS_UNBOUND('The sources on each tier (projectcentral.docs.inspect, projectcentral.ground.inspect, aikit knowledge frame)'),
-    root: DOCS_UNBOUND('The root\'s parts (central.doctor)'),
-    scaffold: DOCS_UNBOUND('The world\'s scaffold (central.world.reproject.plan)'),
-    account: DOCS_UNBOUND('Whether the world has its account (projectcentral.docs.inspect)'),
-    ux: DOCS_UNBOUND('The intended experiences (projectcentral.docs.inspect)'),
-    ex: DOCS_UNBOUND('The returns (projectcentral.docs.inspect)'),
-  },
+  absent: {},
 }
 
-/** Docs' readings (DOCS_WIRING): the track's world as its subject, the view's own keys at their defaults (§18.5 Parameters). */
-export function docsValues(id: string, world: TrackWorld | null): Values {
+/** What Central answered for Docs: each reading, or its refusal in Central's words; a reading not asked is left out. */
+export interface DocsReadings {
+  readonly inspect?: ActionAnswer
+  readonly ground?: ActionAnswer
+  readonly doctor?: ActionAnswer
+  readonly plan?: ActionAnswer
+}
+/** Docs' writers: one of the person's own Central acts through invoke_action (centralDeviceWrites.ts centralWrite), and the readings asked
+ * again. */
+export interface DocsPorts {
+  readonly central?: (action: string, input: Readonly<Record<string, unknown>>) => Promise<unknown>
+  readonly reread?: () => Promise<void> | void
+}
+
+const docRec = (x: unknown): Record<string, unknown> | null => (x && typeof x === 'object' && !Array.isArray(x) ? x as Record<string, unknown> : null)
+const docText = (x: unknown): string | undefined => (typeof x === 'string' && x ? x : undefined)
+const docList = (x: unknown): unknown[] => (Array.isArray(x) ? x : [])
+const answerOf = (answer: ActionAnswer | undefined): unknown => (answer?.status === 'answered' ? answer.value : undefined)
+const refusedOf = (answer: ActionAnswer | undefined): string | undefined => (answer?.status === 'refused' ? answer.error : undefined)
+/** Central's development-field reading, or null when the answer is not one. */
+const fieldOf = (answer: ActionAnswer | undefined): Record<string, unknown> | null => {
+  const data = docRec(answerOf(answer))
+  return data && data.schema === 'central.development-field-reading/v1' ? data : null
+}
+/** A resolved source's path (Central's ResolvedDevelopmentSource; null where a bound ref no longer resolves). */
+const pathOfSource = (source: unknown): string | undefined => docText(docRec(source)?.path)
+
+/** The sources on the six tiers and the unbound ones, in the design's shape ({path, tier, rev, hints, recognised}), each recognised as the
+ * ground inspection records it: {provenance, standing} where Central lists it, false where it does not, left out where it was not read. */
+function docsSources(field: Record<string, unknown>, ground: unknown): Record<string, unknown>[] {
+  const groundRec = docRec(ground)
+  const recognised = groundRec && Array.isArray(groundRec.recognised_sources)
+    ? new Map(groundRec.recognised_sources.flatMap(row => { const r = docRec(row), path = docText(r?.path); return r && path ? [[path, {provenance: docText(r.provenance) ?? 'unresolved', standing: docText(r.standing) ?? 'unresolved'}] as const] : [] }))
+    : null
+  const row = (source: unknown, tier: number | null): Record<string, unknown>[] => {
+    const r = docRec(source), path = pathOfSource(source)
+    if (!r || !path) return []
+    const rev = docText(docRec(r.revision)?.revision)
+    return [{path, tier, ...(rev ? {rev} : {}), hints: [], ...(recognised ? {recognised: recognised.get(path) ?? false} : {})}]
+  }
+  const tiers = docList(field.tier_bindings).flatMap(binding => {
+    const b = docRec(binding)
+    return b && typeof b.tier === 'number' && b.tier >= 0 && b.tier <= 5 ? docList(b.sources).flatMap(source => row(source, b.tier as number)) : []
+  }).sort((a, b) => (a.tier as number) - (b.tier as number))
+  return [...tiers, ...docList(docRec(field.self_aperture)?.unbound_sources).flatMap(source => row(source, null))]
+}
+
+/** Docs' readings (DOCS_WIRING): the track's world as its subject; the account, its experiences and returns, the root's parts and the
+ * world's scaffold where Central answered; the view's own keys at their defaults (§18.5 Parameters). Pure. */
+export function docsValues(id: string, world: TrackWorld | null, readings: DocsReadings = {}): Values {
   const values: Record<string, Value> = {}
   if (world) {
     const subject = world.project ?? 'central'
     values.subject = subject
     values.subjects = JSON.stringify([subject])
   }
+  const field = fieldOf(readings.inspect)
+  if (field) {
+    values.light = 'lit'
+    values.sources = JSON.stringify(docsSources(field, answerOf(readings.ground)))
+    const aperture = docRec(field.self_aperture)
+    if (aperture && typeof aperture.exists === 'boolean') values.account = JSON.stringify({exists: aperture.exists})
+    values.ux = JSON.stringify(docList(field.ux).flatMap(row => { const r = docRec(row), ref = docText(r?.ux_ref); return r && ref ? [{ref, source: pathOfSource(r.source) ?? ''}] : [] }))
+    values.ex = JSON.stringify(docList(field.ex).flatMap(row => {
+      const r = docRec(row), ref = docText(r?.ex_ref)
+      return r && ref ? [{ref, source: pathOfSource(r.source) ?? '', ux: docList(r.ux_refs).filter((x): x is string => typeof x === 'string')}] : []
+    }))
+  } else if (refusedOf(readings.inspect)) values.light = 'dark'
+  const root = rootOfDoctor(answerOf(readings.doctor))
+  if (root) values.root = JSON.stringify({root: root.root, valid: root.valid, checks: root.checks})
+  const scaffold = scaffoldOfPlan(answerOf(readings.plan))
+  if (scaffold) values.scaffold = JSON.stringify(scaffold)
   return withHeld(id, DOCS_WIRING, values, {show: 'needs', provenance: 'human-authored', standing: 'design-commitment', refresh: 'open'})
 }
 
-/** Docs' binding: its subject read, every reading of the account absent and every act disabled, each naming the binding it waits for. */
-export function docsBinding(id: string, world: TrackWorld | null): DesignBinding {
-  return pageBinding(id, DOCS_WIRING, docsValues(id, world), {})
+/** Why each reading Docs draws stands empty now: Central's refusal word for word, your root's having no project, or not answered yet. */
+function docsStanding(world: TrackWorld | null, readings: DocsReadings): Record<string, Standing> {
+  const standing: Record<string, Standing> = {}
+  const account = !world?.project ? DOCS_NO_PROJECT : refusedOf(readings.inspect) ?? (fieldOf(readings.inspect) ? undefined
+    : readings.inspect?.status === 'answered' ? 'Central answered the account in a form Docs does not read (central.development-field-reading/v1 expected).' : undefined)
+  if (account) for (const key of ['sources', 'account', 'ux', 'ex']) standing[key] = {disabled: account}
+  const root = refusedOf(readings.doctor)
+  if (root) standing.root = {disabled: root}
+  const scaffold = !world?.project ? DOCS_NO_PROJECT : refusedOf(readings.plan)
+  if (scaffold) standing.scaffold = {disabled: scaffold}
+  return standing
+}
+
+/** The person's acts through Central, each the press on what the account last read, then the account read again. */
+function docsActs(world: TrackWorld | null, readings: DocsReadings, ports: DocsPorts): Record<string, (value: Value) => Promise<void>> {
+  const project = world?.project ?? null
+  const again = async () => { if (ports.reread) await ports.reread() }
+  const central = async (action: string, input: Readonly<Record<string, unknown>>) => {
+    if (!ports.central) throw new Error(DOCS_NO_CARRIER)
+    await ports.central(action, input)
+    await again()
+  }
+  const named = (what: string) => { if (!project) throw new Error(`${what}: ${DOCS_NO_PROJECT}`); return project }
+  const asked = (value: Value): Record<string, unknown> => {
+    try { return docRec(JSON.parse(String(value))) ?? {} } catch { return {} }
+  }
+  return {
+    relate: async value => {
+      const press = asked(value), at = named('Relate')
+      if (press.as === 'ux' || press.as === 'ex') throw new Error(DOCS_RELATE_UX_EX)
+      const tier = typeof press.as === 'string' && /^[0-5]$/.test(press.as) ? Number(press.as) : null
+      if (tier === null) throw new Error('Relate: choose the tier (0 to 5) the source is bound as first.')
+      const path = docText(press.source)
+      const unbound = docList(docRec(fieldOf(readings.inspect)?.self_aperture)?.unbound_sources).map(docRec).find(row => row && row.path === path)
+      const ref = docText(unbound?.ref)
+      if (!path || !ref) throw new Error(`Relate: ${path ?? 'that source'} is not among the unbound sources Central last read; read the account again.`)
+      await central('projectcentral.docs.tier.relate', relateInputOf(at, tier, ref))
+    },
+    recognise: async value => {
+      const press = asked(value), at = named('Recognise')
+      const source = docText(press.source)
+      if (!source) throw new Error('Recognise: choose a source first.')
+      if (typeof press.provenance !== 'string' || typeof press.standing !== 'string') throw new Error('Recognise: choose its provenance and standing first.')
+      await central('projectcentral.ground.apply', {project: at, source, provenance: press.provenance, standing: press.standing, treatment: 'retain-native-in-place', acceptance: 'human-accepted'})
+    },
+    ensure: async () => { await central('projectcentral.docs.ensure', {project: named('Ensure')}) },
+    reproject: async () => { await central('central.world.reproject.apply', {project: named('Reproject')}) },
+    initRoot: async () => { await central('central.init', {}) },
+    readNow: async () => {
+      if (!ports.reread) throw new Error(DOCS_NO_CARRIER)
+      await ports.reread()
+    },
+  }
+}
+/** The held Relate is the person's acceptance of the relation (pageGround.ts relateInput's shape). */
+const relateInputOf = (project: string, tier: number, sourceRef: string): Record<string, unknown> => ({project, source_ref: sourceRef, tier, acceptance: 'human-accepted'})
+
+/** Docs' binding: the account on Central's readings, each refusal in its words; the person's acts through Central, each standing disabled
+ * where no carrier reaches it; Open refused naming what the Document opens. */
+export function docsBinding(id: string, world: TrackWorld | null, readings: DocsReadings = {}, ports: DocsPorts = {}): DesignBinding {
+  const why: Record<string, string> = {}
+  if (!ports.central) for (const key of ['relate', 'recognise', 'ensure', 'reproject', 'initRoot']) why[key] = DOCS_NO_CARRIER
+  else if (!world?.project) for (const key of ['relate', 'recognise', 'ensure', 'reproject']) why[key] = DOCS_NO_PROJECT
+  if (!ports.reread) why.readNow = DOCS_NO_CARRIER
+  return pageBinding(id, DOCS_WIRING, docsValues(id, world, readings), docsActs(world, readings, ports), why, docsStanding(world, readings))
 }
 
 export const PAGE_WIRINGS: readonly DesignWiring[] = [DOCUMENT_WIRING, FLOW_WIRING, TEXT_WIRING, HIGHLIGHT_WIRING, NOTES_WIRING, BEINGS_WIRING, THINGS_WIRING, WORKSPACE_WIRING, DOCS_WIRING]

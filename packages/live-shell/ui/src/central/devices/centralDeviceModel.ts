@@ -133,8 +133,8 @@ function tableRows(deviceInstance: string, group: string, extra: Readonly<Record
     .map(row => ({...row, title: humanise(row.key), group, ...extra[row.key]}) as SdkParamRow)
 }
 
-/** Why Docs reads nothing yet: no binding hosts its design. */
-export const DOCS_WAITS = 'Docs is not bound yet: the world\'s account on six tiers waits for its binding over Central\'s projectcentral.docs.inspect and projectcentral.ground.inspect and AIKit\'s knowledge frame (the six-tier binding the PR #705 handoff names).'
+/** Why Docs' generic plate reads nothing: the account is drawn on Docs' own design, whose binding carries it (pageBindings.ts docsBinding). */
+export const DOCS_WAITS = 'Docs draws the world\'s account on its own design (pageBindings.ts docsBinding, on Central\'s projectcentral.docs.inspect, projectcentral.ground.inspect, central.doctor and central.world.reproject.plan); this plate carries none of its readings.'
 
 const DAY_ABSENT = 'No Day reading yet: Central\'s ground answers for today, or select a Day in the browser\'s ground.'
 
@@ -175,8 +175,8 @@ function rowsFor(face: InhabitantFaceDeclaration, reads: CentralReads): SdkParam
       ...tableRows('agent', 'Identity', {identity: {compact: true}}),
       reading(faceId, 'roster', 'Roster', 'Identity', 'string', {compact: true, disclosure: 'Accepted agents on the roster (central.agent-profile-roster/v1).'}),
     ]
-    // Docs (§18.5) on its generic plate: its design waits for its binding to the six tiers (Central's projectcentral.docs.inspect and
-    // projectcentral.ground.inspect, AIKit's knowledge frame), so its one row says what it waits for.
+    // Docs (§18.5) on its generic plate: the account is its design's (pageBindings.ts docsBinding), so the plate's one row says where it is
+    // drawn.
     case 'docs': return [
       reading(faceId, 'account', 'Account', 'Tiers', 'string', {compact: true, disclosure: DOCS_WAITS}),
     ]

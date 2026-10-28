@@ -313,8 +313,27 @@ export const APPROVALS_REFUSE = {
  * person's press (central/devices/sourceReturnAccept.ts), but this chain does not pass it. */
 export const APPROVE_UNWIRED = 'Approve: this chain does not carry Central\'s projectcentral.source.return_accept to the return (no acceptance port is passed here).'
 
-/** The view's settings and the manual's starting value of each (§19.16: Both, Oldest first). */
-export const APPROVALS_VIEW: Readonly<Record<string, Value>> = {show: 'both', order: 'oldest'}
+/** Deny on a proposal where the chain hands no rejecting port (ApprovalsPorts.reject): Central declines a waiting return through
+ * projectcentral.source.return_reject {project, return_ref} (ctrl source_return.rs; the kernel's flow.rs source_return_reject), carried
+ * through invoke_action as every answer to a return is (centralWrite), but this chain does not pass it. */
+export const REJECT_UNWIRED = 'Deny: this chain does not carry Central\'s projectcentral.source.return_reject to the return (no rejecting port is passed here).'
+/** The answers to a review and a recognition (§19.14 "What waits"), each refused with what Approvals is not handed or the op it lacks: no
+ * review row stands in the queue (the take you choose to stand is chosen in the take lanes, through Factory's factory_owner
+ * attempt-receiving: owners/attemptTakes.ts, factoryTakes.ts), and no recognition row (the Run's return is the journey reading the Run map
+ * reads, which carries Recognise and Close: runMapBinding.ts). */
+const NO_REVIEW = 'no review waits in this queue: Approvals is not handed the take you chose to stand (the take lanes choose it through Factory\'s factory_owner attempt-receiving, agent/factoryTakes.ts), so no review row stands to answer.'
+const NO_RECOGNITION = 'no recognition waits in this queue: Approvals is not handed the journey reading\'s returns (the Run map reads the Run and carries Recognise and Close: agent/devices/runMapBinding.ts).'
+export const APPROVALS_ANSWERS_REFUSED: Readonly<Record<string, string>> = {
+  confirm: `Confirm: ${NO_REVIEW}`,
+  reviewChanges: `Changes on a review: ${NO_REVIEW}`,
+  collect: `Collect: ${NO_REVIEW} Workcell's collect is a reading of the take's world (workcell_read collect on its receipt).`,
+  recognise: `Recognise: ${NO_RECOGNITION} Factory takes it as factory_owner Recognise.`,
+  close: `Close: ${NO_RECOGNITION} Factory takes it as factory_owner RunClose, after your Recognition.`,
+  continue: missing('Continue', '`factory development mutate` for ContinueCommission through the kernel (the kernel issues the mutation only for a Recognition, and none waits in this queue)', 'Software Factory'),
+}
+
+/** The view's settings and the manual's starting value of each (§19.14 Parameters: Show All, Order Oldest first, Follow On). */
+export const APPROVALS_VIEW: Readonly<Record<string, Value>> = {show: 'all', order: 'oldest', follow: true}
 const APPROVALS_LOCAL = [...Object.keys(APPROVALS_VIEW), 'pick'] as const
 
 export interface ApprovalsInput {
@@ -400,6 +419,9 @@ export interface ApprovalsPorts {
   /** Accept one returned proposal through Central (projectcentral.source.return_accept, the person's press: sourceReturnAccept.ts
    * acceptSourceReturn), with the row as Central lists it. Rejects with the refusal, or Central's words. Absent: Approve stands disabled. */
   readonly approve?: (row: SourceReturnEntry) => Promise<unknown>
+  /** Decline one returned proposal through Central (projectcentral.source.return_reject {project, return_ref}), with the row as Central lists
+   * it. Rejects with Central's words. Absent: Deny on a proposal stands disabled. */
+  readonly reject?: (row: SourceReturnEntry) => Promise<unknown>
   /** Answer one unit decision's question through Central's receiving Review (the kernel's `receiving` op, the person's press), in the
    * register its return belongs to. Absent: no carrier stands. */
   readonly answerUnit?: (project: string | null, review: {kind: 'review'; return_ref: string; expected_return_revision: string; disposition: 'answered'; answer: string}) => Promise<unknown>
@@ -430,13 +452,16 @@ export function approvalsBinding(input: ApprovalsInput, gateway: Pick<DesignBind
   if (verb && !unitsWait) for (const key of ['allowOnce', 'allowAlways', 'deny']) standing[key] = {disabled: verb}
   if (gateway?.standing?.approvals) standing.approvals = gateway.standing.approvals
   if (!ports.approve) standing.approve = {disabled: APPROVE_UNWIRED}
+  if (!ports.reject) standing.reject = {disabled: REJECT_UNWIRED}
+  for (const [key, why] of Object.entries(APPROVALS_ANSWERS_REFUSED)) standing[key] = {disabled: why}
   return {
     // `id` is the chain's own (Factory's Main track, or Central's: CentralDevices.tsx); the view's settings are the one Approvals'.
     id,
     values: approvalsValues(input),
     standing,
     local: Object.fromEntries(APPROVALS_LOCAL.map(key => [key, (value: Value | undefined) => holdView(APPROVALS_ID, key, value)])),
-    writes: key => key === 'approvals' || key === 'allowOnce' || key === 'allowAlways' || key === 'deny' || key === 'approve' || key in APPROVALS_REFUSE,
+    writes: key => key === 'approvals' || key === 'allowOnce' || key === 'allowAlways' || key === 'deny' || key === 'approve' || key === 'reject' || key in APPROVALS_REFUSE
+      || key in APPROVALS_ANSWERS_REFUSED,
     write: async (changes: readonly ValueChange[]) => {
       for (const {key, value} of changes) {
         if (key === 'approvals') {
@@ -469,6 +494,16 @@ export function approvalsBinding(input: ApprovalsInput, gateway: Pick<DesignBind
           await ports.approve(row)
           continue
         }
+        if (key === 'reject') {
+          // Deny on a proposal: the return as Central lists it, still waiting.
+          if (!ports.reject) throw Error(REJECT_UNWIRED)
+          if (!input.returns) throw Error('Deny: Central\'s source returns have not answered, so no proposal stands to decline.')
+          const row = input.returns.entries.find(entry => entry.return_ref === value)
+          if (!row || (row.status !== 'pending' && row.status !== 'applying')) throw Error('Deny: that proposal waits no more among the returns Central lists now.')
+          await ports.reject(row)
+          continue
+        }
+        if (key in APPROVALS_ANSWERS_REFUSED) throw Error(APPROVALS_ANSWERS_REFUSED[key])
         throw Error(APPROVALS_REFUSE[key as keyof typeof APPROVALS_REFUSE] ?? reading(key))
       }
     },

@@ -67,7 +67,8 @@ test('the three devices are keyed to their designs exactly, from the Workcell fa
   const devices = cell.workcellDevices()
   // REPLACED (#725): four devices, the Seat among them — the Seat was retired as a device of its own in the 22 Oct manual rewrite (§19.17
   // "Claiming a seat … is the Seat page of Git / landing"): the family admits no Seat face, and Git / landing's design draws the Seat page.
-  assert.equal(devices.seat, null, 'no Seat device: Workcell admits no seat face')
+  // REPLACED (ticket 772): "the Seat's constructor answers null" — it is gone: the workcell's devices name no Seat.
+  assert.equal('seat' in devices, false, 'no Seat device: no constructor stands')
   assert.ok(Object.keys(gitDesign.defaults).some(key => key.startsWith(SEAT_PAGE.prefix)), 'Git / landing\'s design carries the Seat page\'s keys under seat.')
   for (const [device, design] of [[devices.carrier, carrierDesign], [devices.link, linkDesign]]) {
     assert.ok(device, `${design.id}: the family admits the face`)
@@ -278,7 +279,8 @@ test('the chain places them where the manual does: a workcell\'s chain — the R
   // binding under `gw.` on the workcell rack's (AgentRailDevices.tsx).
   const rail = read('agent/devices/AgentRailDevices.tsx')
   assert.match(rail, /rackBinding\(\{reading, holds, carrier\}/, 'the gateways\' carrier line reads the carrier')
-  assert.match(rail, /carryPages\(ownWorkcell, \[\{page: GATEWAYS_PAGE, binding: gateways\}\]\)/, 'the Workcells tile carries the gateways')
+  // REPLACED (ticket 772): the rack carries its Left behind page too (§19.23; workcell-left-behind-page.test.mjs).
+  assert.match(rail, /carryPages\(ownWorkcell, \[\{page: GATEWAYS_PAGE, binding: gateways\}, \{page: LEFT_BEHIND_PAGE, binding: leftBehind\}\]\)/, 'the Workcells tile carries the gateways')
   assert.match(rail, /chain === 'remote-carrier' \? CARRIER_ID/, 'choosing that line shows the carrier whole')
   // REPLACED (R4, lane K1): the Seat reads the seat instrument through the kernel (seat_status_read); on a workcell's chain it starts at
   // that workcell's seat.

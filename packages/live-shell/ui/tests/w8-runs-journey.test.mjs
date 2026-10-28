@@ -144,10 +144,12 @@ test('Runs draws the Journey of the Run it shows (the Journey view); unread, ref
   bind.resetHolds()
 })
 
-test('the chain hands Runs the Journey of the Run it shows, read from the take\'s state and ref', () => {
+test('REPLACED (ticket 772) — the chain hands no Runs device a Journey: Runs is no device; the Journey\'s reader stays', () => {
+  // Was "the chain hands Runs the Journey of the Run it shows, read from the take's state and ref". The Runs device answered null since
+  // ticket 725 (§19.1: a run's attempts are the track's takes; how the work came to the run is the Run map's Journey, §19.25), so the
+  // Journey it was handed was drawn nowhere; ticket 772 removed the dead wiring. The Journey's reader (runJourney.ts) and runsBinding's
+  // drawing of it (above) stay for the place that draws them.
   const view = read('agent/devices/FactoryDeviceChain.tsx')
-  assert.match(view, /const runJourney = useRunJourney\(transport, shownState, shownRun\)/)
-  // REPLACED (lane W12): Runs is handed its Outputs too (each attempt's world receipt, what was collected, Collect).
-  assert.match(view, /\{takes: shownTakes, choose: runTakes\.choose, \.\.\.\(shownRun \? \{journey: runJourney\} : \{\}\),/)
+  assert.doesNotMatch(view, /useRunJourney|runsDesignBinding/, 'no Runs binding is wired on the chain')
   assert.match(read('agent/devices/runJourney.ts'), /op: 'factory_development_read', state_path: statePath, read, subject/)
 })

@@ -17,19 +17,14 @@
 // turn (the speak result's receipt, not kept), the turn itself (Kokoro measures no word or phone timing: agent/faceVoice.ts).
 // Speed, Mouth, Affect, Interrupt, Egress, Console and Voice stand disabled with the operation each lacks. Pure.
 import type {DesignBinding, Standing, Value, Values} from '../../frame/devices/designed'
-import type {DeviceInstance} from '../../frame/devices/deviceRuntime'
 import type {AnswerVoiceState, VoiceKey} from '../../central/devices/answerVoice'
-import {familyFaceDevice} from './mainTrackBindings'
 
 export const VOICE_DESIGN = 'actuation:voice'
 /** Voice on the door: after the Agent on the track the Answer speaks on (Central's chain places it: CentralDevices.tsx). */
 export const VOICE_ID = 'central:voice'
 
-/** Voice as a device of the runtime: Actuation's admitted `voice` face (actuationFamilyManifest.ts), so designKey('actuation', 'voice')
- * is the design's id by the family's own declaration. Null when the family does not admit it. */
-export function voiceDevice(id: string = VOICE_ID): DeviceInstance | null {
-  return familyFaceDevice(id, 'actuation', 'voice', 'Voice', 'form')
-}
+// Voice has no device of its own (tickets 725 and 772): it is the Agent's Voice page (§19.21, §19.4; oneAgentBinding.ts VOICE_PAGE, `speech.`).
+// This module is the page's binding.
 
 const missing = (what: string, op: string, owner: string) => `${what}: no owner operation carries it yet — missing op: ${op} (${owner}).`
 const unread = (what: string, op: string, owner: string) => `${what}: no reading reaches it yet — missing op: ${op} (${owner}).`

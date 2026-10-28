@@ -4,7 +4,7 @@ standing: agent-inference
 scope: ordinary plural Flow dispatch, recovery and incorporation
 diagram_refs: ["plural-flow.mmd"]
 design_refs: ["../experience/STORIES.md", "../experience/CASES.md"]
-updated: 2026-09-30
+updated: 2026-10-28
 ---
 # How does an interrupted Flow return?
 
@@ -76,6 +76,29 @@ D10 remains open at this cut. Hosted SharedField/Gateway-native transport,
 facilitated team budgets/cancel, independent two-human participation, Workcell
 succession and installed pointer/keyboard completion still need their named
 acceptance. These are not implied by the ordinary native route.
+
+*Note, 28 Oct 2026.* D10 is closed (#766). The verifier found that Central's
+append wrote the whole island back with its keys in alphabetical order and
+rounded integers in unknown metadata. Measured on Central `3adbfabf98fc`,
+integers that fit in 64 bits survived and larger ones did not:
+`18446744073709551617` came back as `1.8446744073709552e+19`. A JavaScript
+reader already rounds anything above 2^53. The append now writes only what it
+owns into the island as it stands: the new entry after the last one,
+`meta.revision`, and the binding a verified caller sets. Every other byte stays
+as written. The shared case `an-append-keeps-every-island-byte-it-does-not-own`
+in `desktop/cradle/documents/fixtures/plural-flow-cases.json` has keys out of
+order and integers above 2^53 and 2^64. It passes in Central's
+`ctrl/tests/flow_append.rs` and in `desktop/cradle/tests/plural-flow.test.mjs`.
+
+The transport line above was true at this cut and is not true now. AIKit #477
+(merged 1 Oct, `4f89f5c0`) gave Flow encounter requests to another Workcell
+the gateway carrier. AIKit's `docs/implementation/GATEWAY-OPERATIONS-ACCEPTANCE.md`
+("Native remote Flow delivery", read at `693ab2b0`) records two Flow requests
+delivered from the Mac to Omarchy over that relay with ssh broken throughout,
+each reply included once, with a controlled ACP body. Still unshown on that
+route: a model body, the real Omarchy gateway as the relay target, the reverse
+direction and a person using the desktop. Hosted SharedField and the other
+items stand as listed.
 
 The departed/queued/running tests exercise real EncounterService and Central
 files with scripted ACP processes. Their `need_ctrl!` guard can return early

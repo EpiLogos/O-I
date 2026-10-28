@@ -57,7 +57,13 @@ export const GRAPH_SETTERS: Readonly<Record<string, string>> = {
 /** The keys that write through the handle's own acts. */
 const HANDLE_KEYS = ['selected', 'minimap'] as const
 const VIEW_KEYS = [...Object.keys(GRAPH_SETTERS), ...HANDLE_KEYS, 'clear'] as const
-export const GRAPH_LOCAL = ['budget', ...APERTURE_REQUEST] as const
+/** Sessions (§17.3 "What a subject reaches": open only, or open and closed) is the view's own; the design keys it `reach.closed`. */
+export const GRAPH_LOCAL = ['budget', ...APERTURE_REQUEST, 'reach.closed'] as const
+/** What a subject reaches (§17.3, which took in Impact's reach of §18.6; knowledge-graph__graph.tsx `reach.` keys): References and Sessions
+ * are Impact's legs on the browser's selected folder, note or Day (central/devices/groundDevices.ts useImpactDevice: a folder's listing,
+ * op files_list; the NOW register, op now kind:list), and the graph's binding is handed neither that selection nor a kernel carrier here. */
+export const REACH_ABSENT = 'What a subject reaches: not read here — the Knowledge graph\'s binding (techne/devices/techneDesigns.ts useTechneDesignBindings) is handed neither the browser\'s selected folder, note or Day nor a kernel carrier, which Impact\'s legs read it through (central/devices/groundDevices.ts useImpactDevice: op files_list, op now kind:list).'
+const REACH_READINGS = ['reach.subject', 'reach.references', 'reach.sessions'] as const
 
 /** The kernel graph op's answer as the window holds it. */
 export interface GraphRead {
@@ -79,6 +85,8 @@ export function graphValues(surface: KnowledgeGraphSurface | null, read: GraphRe
   const values: Record<string, Value> = {}
   values.light = surface ? 'lit' : 'dark'
   put(values, 'budget', surface ? GRAPH_READ_NODES : held.budget ?? read?.nodes)
+  // Sessions (§17.3): Open only by default, the hand's own.
+  put(values, 'reach.closed', held['reach.closed'] ?? false)
   if (read?.reading) values.reading = JSON.stringify(read.reading)
   if (!surface) return values
   const f = surface.filters
@@ -147,6 +155,7 @@ export async function graphWrite(surface: KnowledgeGraphSurface | null, changes:
 /** Why a key of the design has no reading now. */
 export function graphAbsent(surface: KnowledgeGraphSurface | null, read: GraphRead | null, key: string): string {
   if (key in GRAPH_REFUSE) return GRAPH_REFUSE[key as keyof typeof GRAPH_REFUSE]
+  if ((REACH_READINGS as readonly string[]).includes(key)) return REACH_ABSENT
   if (key === 'reading') return read?.status === 'refused' ? `The kernel graph op refused: ${read.error ?? 'no reason given'}.` : surface ? 'The open graph has not read its first part yet.' : 'The kernel graph op has not answered yet.'
   if (!surface) return NOT_OPEN
   if (key === 'minimap') return missing('Minimap', 'the overview toggle on the open graph\'s handle', 'the knowledge graph')
@@ -168,6 +177,7 @@ export function graphBinding(surface: KnowledgeGraphSurface | null, read: GraphR
   const values: Record<string, Value> = {...graphValues(surface, read, held), ...livingPlanValues(plan)}
   for (const key of APERTURE_REQUEST) if (held[key] !== undefined) values[key] = held[key]!
   for (const key of GRAPH_READINGS) if (!(key in values) && !(key in standing)) standing[key] = {disabled: graphAbsent(surface, read, key)}
+  for (const key of REACH_READINGS) standing[key] = {disabled: REACH_ABSENT}
   return {
     id: GRAPH_ID,
     values,

@@ -31,10 +31,10 @@ export const CUSTODY_ID = 'factory:custody'
 export const AGENTSET_ID = 'factory:agentset'
 export const SESSION_DEVICE_IDS: readonly string[] = [RUN_ID, CUSTODY_ID, AGENTSET_ID]
 
-/** The three as devices of the runtime, each of its admitted face (designKey(family, face.id) is its design's id); null when the family
- * does not admit the face. */
-export const sessionDevices = (): {run: DeviceInstance | null; custody: DeviceInstance | null; agentset: DeviceInstance | null} => ({
-  run: familyFaceDevice(RUN_ID, 'software-factory', 'run-device', 'Run', 'arrangement'),
+/** The session's devices of the runtime, each of its admitted face (designKey(family, face.id) is its design's id); null when the family
+ * does not admit the face. The Run was retired (tickets 725 and 772: a session's course is its track in Arrangement view, §16.1); RUN_ID
+ * stays so a stale door entry is cleared. */
+export const sessionDevices = (): {custody: DeviceInstance | null; agentset: DeviceInstance | null} => ({
   custody: familyFaceDevice(CUSTODY_ID, 'software-factory', 'agent-custody', 'Custody', 'arm'),
   agentset: familyFaceDevice(AGENTSET_ID, 'software-factory', 'agentset-rack', 'Agentset rack', 'bind'),
 })
@@ -83,7 +83,7 @@ export interface RunInput {
 
 const minutes = (ms: number) => Math.max(0, Math.round(ms / 6000) / 10)
 
-/** A session's tasks as the Run reads them (software-factory__run-device.tsx:13-14): the Tasks device's rows, and `from` and `last`,
+/** A session's tasks as the Run reads them (the lanes under a track in Arrangement view, dlw__arrangement-ruler.tsx:39; the Run was retired into it, §16.1): the Tasks device's rows, and `from` and `last`,
  * the minutes before the reading instant at which the task began and its output last moved. A state nobody said is left out. */
 export function runTaskRows(track: AgentSessionTrack, nowUnixMs: number): Record<string, Value>[] {
   return track.tasks.filter(task => !task.softStop).map((task: TaskClip) => ({
@@ -229,7 +229,7 @@ export const CUSTODY_GRANTS_REFUSE = {
   revokePerson: 'Revoke: the current person is no longer the one this page was drawn for; nothing was sent to Actuation.',
 } as const
 
-/** One grant of Actuation's listing as the design's row (software-factory__agent-custody.tsx:17-21): {ref, holder, issuedBy, operations,
+/** One grant of Actuation's listing as the design's row (agent-custody.tsx:21-22, the Agent's Custody page's Grants): {ref, holder, issuedBy, operations,
  * worlds, issuedAt (s), revoked: {at, reason} | null}. `expiresAt` is left out: an Actuation authority record carries no expiry. Pure. */
 export function grantRows(listing: unknown): Record<string, unknown>[] | null {
   const doc = listing && typeof listing === 'object' && !Array.isArray(listing) ? listing as Record<string, unknown> : null
@@ -266,7 +266,7 @@ export interface CustodyPorts {
   readonly personNow?: () => string | null
 }
 
-/** The next grant's settings and the revocation's reason: the hand's own holds (software-factory__agent-custody.tsx:21-22). */
+/** The next grant's settings and the revocation's reason: the hand's own holds (agent-custody.tsx:23-24). */
 export const CUSTODY_GRANT_SETTINGS: readonly string[] = ['grant:determine-agency', 'grant:configure-agency', 'grant:actualise-agency', 'grant:reintegrate-return',
   'grant:world', 'grant:expires', 'revoke:reason']
 

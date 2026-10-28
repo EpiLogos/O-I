@@ -181,9 +181,11 @@ test('5 · Runs\' Outputs: the attempt\'s world is the listed receipt whose worl
   const take = takes.takeOf('s', {attempt_ref: 'attempt:1', run_ref: 'run:1', state_path: '/s.json', task_ref: 't', workflow_unit: 'unit:check'}, record)
   assert.equal(take.materialWorldRef, LISTED.world_ref, 'the execution body\'s materialWorldRef')
   assert.equal(takes.takeOf('s', {attempt_ref: 'attempt:2', run_ref: 'run:1', state_path: '/s.json', task_ref: 't'}, {...record, attemptRef: 'attempt:2', disposition: {body: {}}}).materialWorldRef, null)
+  // REPLACED (ticket 772): "the chain finds each attempt's world receipt and reads `workcell collect` on it for Runs" — Runs is no device
+  // (its constructor answered null since ticket 725; §19.1 puts a run's outputs beside its results on the Results tile), so the chain's wiring
+  // of its Outputs was drawn nowhere and is gone. runsBinding's own reading of the outputs and its Collect stay, asserted below.
   const chain = read('agent/devices/FactoryDeviceChain.tsx')
-  assert.match(chain, /listed\?\.worlds\.find\(row => row\.worldRef === take\.materialWorldRef\)/)
-  assert.match(chain, /workcellReadOp\(\{kind: 'collect', receipt\}\)/)
+  assert.doesNotMatch(chain, /runsDesignBinding|workcellReadOp\(\{kind: 'collect'/, 'no Runs Outputs wired on the chain')
   bind.resetHolds()
   const asked = []
   const COLLECT = {world_ref: LISTED.world_ref, outputs: [{logical_ref: 'output:report', material_locator: '/w/out/report.md', provenance: 'workcell'}], omissions: []}

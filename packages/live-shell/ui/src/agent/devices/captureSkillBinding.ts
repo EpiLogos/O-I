@@ -23,9 +23,7 @@
 // Source, Minutes, Form and Scope are the hand's settings; marks is the shell's one set (designBindings.ts SHELL_MARK_SET). Pure, apart
 // from the view holds (designBindings.ts holdView).
 import type {DesignBinding, Standing, Value, ValueChange, Values} from '../../frame/devices/designed'
-import type {DeviceInstance} from '../../frame/devices/deviceRuntime'
 import {SHELL_MARK_SET, chainHolds, holdView, viewHolds, type ChainHolds} from './designBindings'
-import {familyFaceDevice} from './mainTrackBindings'
 import {refusalWords} from './ownerRoutes'
 
 type Obj = Record<string, unknown>
@@ -35,8 +33,8 @@ const str = (value: unknown): string | undefined => (typeof value === 'string' &
 export const CAPTURE_SKILL_DESIGN = 'ai-kit:capture-skill'
 export const CAPTURE_SKILL_ID = 'factory:capture-skill'
 
-/** Capture skill as a device of the runtime: AIKit's admitted `capture-skill` face (aiKitFamilyManifest.ts). Null when not admitted. */
-export const captureSkillDevice = (): DeviceInstance | null => familyFaceDevice(CAPTURE_SKILL_ID, 'ai-kit', 'capture-skill', 'Capture skill', 'cap')
+// Capture skill has no device of its own (tickets 725 and 772): it is the Skillset rack's Capture page (§19.11; oneAgentBinding.ts CAPTURE_PAGE,
+// `capture.`). This module is the page's binding.
 
 const missing = (what: string, op: string, owner: string) => `${what}: no owner operation carries it yet — missing op: ${op} (${owner}).`
 const unread = (what: string, op: string, owner: string) => `${what}: no reading reaches it yet — missing op: ${op} (${owner}).`

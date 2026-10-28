@@ -439,7 +439,8 @@ test('(d) the chain and the rail carry the owner routes where the manual puts th
   // REPLACED (#725): Gateways and the Agency gateway stood on the rail too — Gateways is listed on the Workcells tile (§19.3: the rack carries
   // it under `gw.`), and the agency gateway is the Gateway's agency build, its mark in the head of Messages (§19.10).
   assert.match(rail, /RAIL_AGENT_DEVICE_IDS: readonly string\[\] = \[MESSAGES_ID, FRAMES_ID, LEDGER_ID, WORKCELL_RACK_ID\]/, 'Messages, the Frames tile and the monitors stay on the rail')
-  assert.match(rail, /carryPages\(ownWorkcell, \[\{page: GATEWAYS_PAGE, binding: gateways\}\]\)/, 'the Workcells tile lists the gateways')
+  // REPLACED (#772): the tile carries the gateways first, then the Left behind page (left., DLW §19.23 "What a run leaves behind").
+  assert.match(rail, /carryPages\(ownWorkcell, \[\{page: GATEWAYS_PAGE, binding: gateways\}, \{page: LEFT_BEHIND_PAGE, binding: leftBehind\}\]\)/, 'the Workcells tile lists the gateways')
   for (const file of ['agent/devices/ownerRoutes.ts', 'agent/devices/workcellReads.ts', 'agent/devices/workcellBindings.ts', 'agent/devices/mainTrackBindings.ts', 'agent/devices/messagesBinding.ts']) {
     assert.doesNotMatch(read(file), /\.defaults\[|\.fixtures|catalogue\/panels\//, `${file}: no design default or fixture`)
     assert.deepEqual(read(file).match(/#[0-9a-fA-F]{3,8}\b/g) ?? [], [], `${file}: shell tokens only`)

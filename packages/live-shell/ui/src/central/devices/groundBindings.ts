@@ -49,7 +49,7 @@ export const HYGIENE_WIRING: DesignWiring = {
   design: HYGIENE_DESIGN,
   keys: ['light', 'machine', 'machineRef', ...HYGIENE_RINGS.map(ring => `look:${ring}`), 'faults', 'refresh', 'tend', ...TENDER_KEYS.map(key => `allow:${key}`),
     'as:provenance', 'as:standing', 'readAge', 'machines', 'disk', 'seats', 'worktrees', 'branches', 'root', 'scaffold', 'authored', 'worlds', 'sandboxes', 'sources',
-    'findings', 'reread', ...TENDER_KEYS, 'sel', 'ask', ...HYGIENE_RINGS.map(ring => `page:${ring}`), 'receipt', 'receipts'],
+    'findings', 'reread', ...TENDER_KEYS, 'sel', 'ask', ...HYGIENE_RINGS.map(ring => `page:${ring}`), 'page:findings', 'receipt', 'receipts'],
   reads: {
     light: 'the census stands: lit when an owner answered, dark when every source refused',
     machineRef: 'Workcell\'s own workcell_ref (op workcell_status_read; centralHygieneModel.ts workcellRefOf)',
@@ -72,6 +72,8 @@ export const HYGIENE_WIRING: DesignWiring = {
     tend: 'Tending (§18.5: Propose by default): the hand\'s own setting, Off, Propose or Write, over the tenders that have a writer',
     ...Object.fromEntries(Object.keys(HYGIENE_WRITERS).map(key => [`allow:${key}`, 'whether the device offers the tender (§18.5 Allowed tenders: On by default)'])),
     ...Object.fromEntries(HYGIENE_RINGS.flatMap(ring => [[`look:${ring}`, 'which rings the device draws'], [`page:${ring}`, 'the list\'s page']])),
+    // The findings' page on the pages that carry the census since ticket 725: Git / landing's Checkouts (`co.`) and the Workcell's Left behind (`left.`).
+    'page:findings': 'the findings list\'s page',
     'as:provenance': 'who made a document you would recognise (Human-authored by default, §18.5): held for Recognise',
     'as:standing': 'what a document you would recognise stands as (Design commitment by default, §18.5): held for Recognise',
   },

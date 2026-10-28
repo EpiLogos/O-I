@@ -24,11 +24,11 @@ import {useReachedDocument, type DocumentInPane} from '../documents/documentDoor
 import {centralDeviceId, type CentralReads} from './centralDeviceModel'
 import {appendFlowEntry, centralWrite, setFlowMeta} from './centralDeviceWrites'
 import {civilDayName, type DayAperture} from './dayBinding'
-import {documentBinding, flowBinding, highlightBinding, holdsVersion, notesBinding, subscribeHolds, textBinding, workspaceBinding, type BookWorkspace, type TrackWorld,
-  type PageMaterial, type ReachedPage} from './pageBindings'
+import {DOCS_ACTIONS, docsBinding, documentBinding, flowBinding, highlightBinding, holdsVersion, notesBinding, subscribeHolds, textBinding, workspaceBinding, type BookWorkspace,
+  type DocsPorts, type TrackWorld, type PageMaterial, type ReachedPage} from './pageBindings'
 import {readDayPage, readFlowPage, wordsOfHtml, type FlowPage} from './pageReadings'
 import {dateOfDayPath} from '../daySurface'
-import {actionAnswerOf, centralActionOp, useCentralAction, useDayDieReading, type ActionAnswer} from './useCentralReadings'
+import {actionAnswerOf, centralActionOp, useCentralAction, useCentralActionAsked, useDayDieReading, type ActionAnswer} from './useCentralReadings'
 import {kernelOp, kernelRead} from '../../../../../../desktop/cradle/src/kernel/bridge'
 import {CONTEMPLATE_FLOW_ACTION, PC_ACCEPT_ACTION, PC_INSPECT_ACTION, PC_PREVIEW_ACTION, PC_DOCS_ENSURE_ACTION, PC_DOCS_INSPECT_ACTION, PC_TIER_RELATE_ACTION, acceptInput, relateInput,
   lastKeptThought, type FlowThought, type ThoughtHand, type WorkspaceGround} from './pageGround'
@@ -182,6 +182,30 @@ export function useFlowThought(transport: KernelTransportStatus, flowRef: string
   }, [transport, flowRef])
   return {state, hand}
 }
+
+/** Docs on the track's world (DLW §18.5; pageBindings.ts docsBinding): Central's four readings of its account — the tiers and their
+ * sources (projectcentral.docs.inspect), what it recognises as ground (projectcentral.ground.inspect), the root's parts (central.doctor) and
+ * the world's scaffold (central.world.reproject.plan) — held for the window as every Central reading is (useCentralActionAsked), asked again on
+ * Read now and after each of the person's presses (centralWrite, action.rs PERSON_ACTS). Your world (no project) asks only the root's. */
+export function useDocsDevice(transport: KernelTransportStatus, id: string, world: TrackWorld | null): DesignBinding {
+  const project = world?.project ?? null
+  const input = useMemo(() => (project ? {project} : null), [project])
+  const inspect = useCentralActionAsked(transport, DOCS_ACTIONS.inspect, input)
+  const ground = useCentralActionAsked(transport, DOCS_ACTIONS.ground, input)
+  const doctor = useCentralActionAsked(transport, DOCS_ACTIONS.doctor, NO_INPUT)
+  const plan = useCentralActionAsked(transport, DOCS_ACTIONS.plan, input)
+  useSyncExternalStore(subscribeHolds, holdsVersion, holdsVersion)
+  const holds = holdsVersion()
+  const readAgain = useMemo(() => [inspect.again, ground.again, doctor.again, plan.again], [inspect.again, ground.again, doctor.again, plan.again])
+  const ports = useMemo((): DocsPorts => (transport.kind === 'unavailable' ? {} : {
+    central: (action, input) => centralWrite(transport, action, input),
+    reread: () => { for (const again of readAgain) again() },
+  }), [transport, readAgain])
+  return useMemo(() => docsBinding(id, world, {...(project ? {inspect: inspect.answer, ground: ground.answer, plan: plan.answer} : {}), doctor: doctor.answer}, ports),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- the holds' version re-binds the view's own keys
+    [id, world, project, inspect.answer, ground.answer, doctor.answer, plan.answer, ports, holds])
+}
+const NO_INPUT: Readonly<Record<string, unknown>> = {}
 
 /** The Workspace's Ground and Self pages (pageGround.ts): Central's inspection and self reading of the workspace's project world, held for
  * the window; the preview asked by a press; and the person's Accept, Ensure and Relate, written through invoke_action as the person's own

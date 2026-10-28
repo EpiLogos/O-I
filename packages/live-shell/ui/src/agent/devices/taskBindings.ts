@@ -21,11 +21,9 @@
 // handed in, the attempts are absent and Stands stands disabled, saying so. Its view settings are the shell's. Pure, apart from the
 // view holds (designBindings.ts holdView).
 import type {DesignBinding, Standing, Value, ValueChange, Values} from '../../frame/devices/designed'
-import type {DeviceInstance} from '../../frame/devices/deviceRuntime'
 import type {AgentSessionTrack} from '../agentRunModel'
 import {holdView, viewHolds, type ChainHolds} from './designBindings'
 import {sessionRowsOf} from './threadBinding'
-import {familyFaceDevice} from './mainTrackBindings'
 import type {EncounterSessionSettingsReading, KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
 import type {FactoryTake, TakeState} from '../factoryTakes'
 import {journeyOf, type RunJourneyRead} from './runJourney'
@@ -38,11 +36,9 @@ export const RUNS_DESIGN = 'software-factory:attempt-review'
 export const TASKS_ID = 'factory:tasks'
 export const RUNS_ID = 'factory:runs'
 
-/** Software Factory's tasks and runs as devices of the runtime, of their admitted faces (designKey is the design's id): `tasks` is the
- * family's own (softwareFactoryFamilyManifest.ts), `attempt-review` the extension declared onto it (worldShellFamilies.ts). Null when
- * the family does not admit the face. */
-export const tasksDevice = (): DeviceInstance | null => familyFaceDevice(TASKS_ID, 'software-factory', 'tasks', 'Tasks', 'session')
-export const runsDevice = (): DeviceInstance | null => familyFaceDevice(RUNS_ID, 'software-factory', 'attempt-review', 'Runs', 'arrangement')
+// Tasks and Runs have no devices of their own (tickets 725 and 772): a task is a clip, its attempts the track's takes in Arrangement view
+// (§16.1, §19.1). Their ids stay so a stale door entry is cleared (FactoryDeviceChain.tsx); their bindings stay for the tests that read the
+// owners through them.
 
 const missing = (what: string, op: string, owner: string) => `${what}: no owner operation carries it yet — missing op: ${op} (${owner}).`
 const disabled = (reasons: Readonly<Record<string, string>>): Record<string, Standing> =>
@@ -142,7 +138,7 @@ export interface TasksInput {
   readonly settings?: TaskSeamContext | null
 }
 
-/** The session's tasks as the design reads them (software-factory__tasks.tsx:8-9): {n, name, state, idle} — a state the owner and the
+/** The session's tasks as the design reads them (a task is a clip: clips/factory.tsx:38 STATE_WORD; the Tasks device was retired into it, §16.1): {n, name, state, idle} — a state the owner and the
  * activity do not say is left out, never guessed; idle is a stalled task's seconds since its last output. */
 export function taskRowsOf(track: AgentSessionTrack, nowUnixMs: number): Record<string, Value>[] {
   return track.tasks.filter(task => !task.softStop).map(task => ({

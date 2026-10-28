@@ -58,8 +58,9 @@ export const CARRIER_ID = 'factory:main:remote-carrier'
 export const LINK_ID = 'factory:main:link'
 export const WORKCELL_DEVICE_IDS: readonly string[] = [SEAT_ID, CARRIER_ID, LINK_ID]
 
-export const workcellDevices = (): {seat: DeviceInstance | null; carrier: DeviceInstance | null; link: DeviceInstance | null} => ({
-  seat: familyFaceDevice(SEAT_ID, 'workcell', 'seat', 'Seat', 'lib'),
+/** The workcell's devices of the runtime. The Seat was retired into Git / landing's Seat page (tickets 725 and 772: §19.17; oneAgentBinding.ts
+ * SEAT_PAGE, `seat.`); SEAT_ID stays so a stale door entry is cleared. */
+export const workcellDevices = (): {carrier: DeviceInstance | null; link: DeviceInstance | null} => ({
   carrier: familyFaceDevice(CARRIER_ID, 'workcell', 'remote-carrier', 'Remote carrier', 'link'),
   link: familyFaceDevice(LINK_ID, 'workcell', 'link', 'Link', 'linkChain'),
 })
@@ -131,7 +132,7 @@ export const SEAT_ABSENT = {
 export const SEAT_UNREAD = 'The seat instrument has not answered yet (kernel seat_status_read, `seat status --json`: it takes 20–30 s).'
 const SEAT_LOCAL = ['product', 'seat', 'lane', 'joinAs', 'zone', 'keepDirt', 'floor', 'sel', 'page:zones'] as const
 
-/** The seat instrument's reading as the Seat's rows and disk (workcell__seat.tsx:7-12): the hygiene model's seat rows
+/** The seat instrument's reading as the Seat's rows and disk (Git / landing's Seat page, workcell__git-seat.tsx:27-30 `seat.seats`; the Seat was retired into it, §19.17): the hygiene model's seat rows
  * (centralHygieneModel.ts parseSeatStatusJson — the live pose, the counts, the drift, the admission), each with its zones from the same
  * reading — none on a free seat, where a zone is a lane's leftover and no claim — and each workcell's disk with the register's floor.
  * Null when the reading is not the instrument's JSON. */
@@ -375,7 +376,7 @@ export function carrierValues(answer: WorkcellAnswer, holds: ChainHolds, shows?:
   return values
 }
 
-/** The carrier as one chain of the Gateways rack (actuation__gateways-rack.tsx:7-9 `state` and `why`): composed when a machine is
+/** The carrier as one chain of the Gateways rack (the Workcells tile's gateways, workcell__workcell.tsx:62-63 `state` and `why`): composed when a machine is
  * connected, refused in the owner's words when Workcell refused the read, nothing while unread. */
 export function carrierChainState(answer: WorkcellAnswer): {state?: 'ready' | 'composed' | 'refused'; why?: string} {
   if (answer.status === 'refused') return {state: 'refused', why: answer.error ?? 'Workcell refused its status read.'}

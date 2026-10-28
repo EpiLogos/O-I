@@ -27,6 +27,7 @@ import {agentAddress} from '../../inhabitants/agentParamAddresses'
 import {useWorkcellAnswer} from '../../owners/readers'
 import {useOptionalContinuity} from '../../continuity/workspace'
 import {actionAnswerOf, centralActionOp, useCentralAction, useCentralGroundAnswer} from '../../central/devices/useCentralReadings'
+import {useHygieneDevice} from '../../central/devices/groundDevices'
 import {useAgentSessionsOptional} from '../AgentSessionsProvider'
 import {useAgentShellOptional} from '../AgentShellContext'
 import {fireWritePath} from '../agentNativeDispatch'
@@ -34,7 +35,7 @@ import {trackKey} from '../agentRunModel'
 import {chainDeviceId, slotRows} from './agentChainDevices'
 import {gatewayBinding, useChainHolds, viewHolds} from './designBindings'
 import {AGENCY_GATEWAY_ID, FRAMES_ID, FRAMES_VIEW, framesBinding, journalAsks, journalSessions, mainDevices, rackBinding} from './mainTrackBindings'
-import {GATEWAYS_PAGE, carryPages} from './oneAgentBinding'
+import {GATEWAYS_PAGE, LEFT_BEHIND_PAGE, carryPages} from './oneAgentBinding'
 import {MESSAGES_ID, PERSON_ACTS, madeOf, messagesBinding, messagesDevice, positionRefs, type MessagesPorts} from './messagesBinding'
 import {runStateOfSession} from './runFaces'
 import {hostState} from '../../frame/devices/deviceHost'
@@ -225,7 +226,10 @@ export function AgentRailDevices() {
   }, [cellName, seats, asked, reading, holds, gatewayPort, workcellAnswer, doctor, instanceList, usages, transport, workcellWrite, worlds.answer, materialOp, material, materialRead.refresh, lastReconcile, picked.chosen?.receipt,
     leaseRead.answer, checkpointsRead.answer])
   // The Workcells tile lists every gateway your machines reach, with its state (§19.3, §19.23 Widget): the gateways' own binding under `gw.`.
-  const workcell = useMemo(() => carryPages(ownWorkcell, [{page: GATEWAYS_PAGE, binding: gateways}]), [ownWorkcell, gateways])
+  // What runs left behind (§19.23, the rack's Left behind page): Ground hygiene's census of this machine's worlds and sandboxes under `left.`,
+  // read while the rack stands (groundDevices.ts useHygieneDevice, the census Git / landing's Checkouts page carries too).
+  const leftBehind = useHygieneDevice(transport, asked)
+  const workcell = useMemo(() => carryPages(ownWorkcell, [{page: GATEWAYS_PAGE, binding: gateways}, {page: LEFT_BEHIND_PAGE, binding: leftBehind}]), [ownWorkcell, gateways, leftBehind])
 
   // Publish each one again only when its own binding moves; withdraw them all with this publisher.
   const devices = useMemo((): Readonly<Record<string, DeviceInstance | null>> => ({
