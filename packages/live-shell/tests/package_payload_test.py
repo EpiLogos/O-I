@@ -43,19 +43,23 @@ class PayloadQualification(unittest.TestCase):
             self.assertEqual(selected, backing)
             self.assertEqual(identities, native['products'])
 
-    def test_full_suite_is_explicit_native_membership_with_smaller_default_retained(self):
-        self.assertEqual(self.footprint['backing']['default'], '0/1/2')
+    def test_the_desktop_is_a_full_install(self):
+        # Manual §10.10, §10.11; O-I #738: every product is there from the first open, and no partial backing remains.
+        self.assertEqual(self.footprint['backing']['default'], 'full-suite')
+        self.assertEqual(list(self.footprint['backing']['options']), ['full-suite'])
         self.assertEqual(self.footprint['backing']['options']['full-suite']['products'], [
             'central', 'actuation', 'ai-kit', 'software-factory', 'workcell', 'quaternal-logic',
         ])
+        bindings = {'schema': 'oi.live-shell-products/v1', 'products': [{'id': 'central'}, {'id': 'actuation'}]}
+        for retired in ('0/1', '0/1/2'):
+            with self.assertRaisesRegex(ValueError, 'absent from native footprint'):
+                payload.qualify_profile(self.footprint, retired, bindings)
 
-    def test_excluded_product_is_refused_even_when_installed_globally(self):
-        backing = '0/1'
-        ids = self.footprint['backing']['options'][backing]['products']
-        self.assertTrue(Path('/Users/admin/.local/bin/aikit').is_file(), 'This installed-world case needs the actual extra product')
-        bindings = {'schema': 'oi.live-shell-products/v1', 'products': [{'id': identity} for identity in [*ids, 'ai-kit']]}
+    def test_a_product_outside_the_backing_is_refused(self):
+        footprint = {'schema': 'oi.desktop-footprint/v1', 'backing': {'default': 'core', 'options': {'core': {'products': ['central', 'actuation']}}}}
+        bindings = {'schema': 'oi.live-shell-products/v1', 'products': [{'id': identity} for identity in ['central', 'actuation', 'ai-kit']]}
         with self.assertRaisesRegex(ValueError, 'excluded products must be absent'):
-            payload.qualify_profile(self.footprint, backing, bindings)
+            payload.qualify_profile(footprint, 'core', bindings)
 
     def test_real_managed_native_binary_is_read_without_global_lookup(self):
         path = Path('/Users/admin/.local/bin/ctrl').resolve()

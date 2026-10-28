@@ -188,14 +188,20 @@ with browser_session({'width': 1280, 'height': 900}) as (_, ctx, page):
         }""")
 
     page.evaluate("""() => document.querySelector('[data-action="automation-play"]').click()""")
-    page.wait_for_timeout(400)
+    wait_until(page, """() => {
+      const lane = window.__FIELD_STUDIES__.getDocument().scenes[0].automation.at(-1);
+      return (window.__FIELD_STUDIES__.telemetry()?.live ?? []).some(v => v.id === (lane.nativeId ?? lane.id));
+    }""")
     ph = lane_phase(page)
     check('the editor transport plays the automations', ph is not None and not ph['done'], ph)
     check('editor play re-enabled and fired the lane',
           page.evaluate("() => window.__FIELD_STUDIES__.getDocument().scenes[0].automation.at(-1).enabled"))
 
     page.evaluate("""() => document.querySelector('[data-action="automation-pause"]').click()""")
-    page.wait_for_timeout(400)
+    wait_until(page, """() => {
+      const lane = window.__FIELD_STUDIES__.getDocument().scenes[0].automation.at(-1);
+      return !lane.enabled && !(window.__FIELD_STUDIES__.telemetry()?.live ?? []).some(v => v.id === (lane.nativeId ?? lane.id));
+    }""")
     check('editor pause holds every group at base',
           not page.evaluate("() => window.__FIELD_STUDIES__.getDocument().scenes[0].automation.at(-1).enabled")
           and lane_phase(page) is None, lane_phase(page))

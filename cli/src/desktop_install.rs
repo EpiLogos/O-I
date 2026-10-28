@@ -245,9 +245,11 @@ pub fn stage_bundle(
             work_dir.display()
         )
     })?;
-    let stage_id = format!(".desktop-stage-{}", now_ms());
+    // Named by the process as well as the moment, and made fresh: two `oi`
+    // runs starting in the same millisecond never unpack into one stage.
+    let stage_id = format!(".desktop-stage-{}-{}", now_ms(), std::process::id());
     let dir = work_dir.join(stage_id);
-    fs::create_dir_all(&dir)
+    fs::create_dir(&dir)
         .map_err(|error| format!("cannot create staging directory {}: {error}", dir.display()))?;
     let unpack_result = unpack_bundle(bundle_path, &dir).and_then(|root| {
         let manifest_json = fs::read_to_string(root.join("BUNDLE.json")).map_err(|error| {
@@ -1158,6 +1160,33 @@ fn require_native_app_resources(
     Ok(())
 }
 
+/// The backing an update carries: the one asked for, else the installed one; and when the
+/// bundle no longer offers the installed one (the partial backings 0/1 and 0/1/2 were retired:
+/// the desktop is a full install, manual §10.10, §10.11; O-I #738), the bundle's own default.
+pub fn update_backing(
+    footprint: &DesktopFootprint,
+    installed: &str,
+    requested: Option<String>,
+) -> String {
+    requested.unwrap_or_else(|| {
+        if footprint.backing.options.contains_key(installed) {
+            installed.to_owned()
+        } else {
+            footprint.backing.default.clone()
+        }
+    })
+}
+
+/// Whether an update moves an install off a backing the bundle no longer offers onto the
+/// bundle's default; any other change of backing stays a separate installation.
+pub fn carries_retired_backing(
+    footprint: &DesktopFootprint,
+    installed: &str,
+    backing_id: &str,
+) -> bool {
+    !footprint.backing.options.contains_key(installed) && backing_id == footprint.backing.default
+}
+
 pub fn plan_update(
     staged: &StagedBundle,
     data_root: &Path,
@@ -1200,7 +1229,9 @@ pub fn plan_update(
     {
         return Err("installed footprint does not bind the receipt-owned resources".into());
     }
-    if previous.backing.requested != backing_id {
+    if previous.backing.requested != backing_id
+        && !carries_retired_backing(&staged.footprint, &previous.backing.requested, backing_id)
+    {
         return Err("Desktop update must retain the installed backing; choose a separate candidate installation for another backing".into());
     }
     let mut install =
@@ -2193,10 +2224,10 @@ mod tests {
     use super::*;
 
     #[test]
-    fn embedded_footprint_is_valid_and_defaults_to_operational_core_backing() {
+    fn embedded_footprint_is_valid_and_defaults_to_the_full_install() {
         let footprint = load_embedded_footprint().unwrap();
         assert_eq!(footprint.schema, FOOTPRINT_SCHEMA);
-        assert_eq!(footprint.backing.default, "0/1/2");
+        assert_eq!(footprint.backing.default, "full-suite");
         assert!(footprint.targets.contains_key("x86_64-unknown-linux-gnu"));
         assert!(footprint.targets.contains_key("aarch64-apple-darwin"));
         assert!(footprint
@@ -2205,17 +2236,15 @@ mod tests {
             .any(|statement| statement.contains("Central ground")));
     }
 
+    // The desktop is a full install (manual §10.10, §10.11; O-I #738): the
+    // partial backings 0/1 and 0/1/2 are retired.
     #[test]
-    fn native_footprint_names_full_suite_without_replacing_smaller_backings() {
+    fn native_footprint_offers_only_the_full_install() {
         let footprint = load_embedded_footprint().unwrap();
-        assert_eq!(footprint.backing.default, "0/1/2");
+        assert_eq!(footprint.backing.default, "full-suite");
         assert_eq!(
-            footprint.backing.options["0/1"].products,
-            ["central", "actuation"]
-        );
-        assert_eq!(
-            footprint.backing.options["0/1/2"].products,
-            ["central", "actuation", "ai-kit"]
+            footprint.backing.options.keys().collect::<Vec<_>>(),
+            ["full-suite"]
         );
         assert_eq!(
             footprint.backing.options["full-suite"].products,
@@ -2228,6 +2257,27 @@ mod tests {
                 "quaternal-logic",
             ]
         );
+    }
+
+    #[test]
+    fn an_update_carries_a_retired_backing_to_the_full_install() {
+        let footprint = load_embedded_footprint().unwrap();
+        // An install recorded on a retired partial backing updates onto the full install.
+        assert_eq!(update_backing(&footprint, "0/1/2", None), "full-suite");
+        assert!(carries_retired_backing(&footprint, "0/1/2", "full-suite"));
+        assert!(carries_retired_backing(&footprint, "0/1", "full-suite"));
+        // An offered backing is kept, and an explicit request stands as asked.
+        assert_eq!(update_backing(&footprint, "full-suite", None), "full-suite");
+        assert_eq!(
+            update_backing(&footprint, "0/1/2", Some("full-suite".into())),
+            "full-suite"
+        );
+        assert!(!carries_retired_backing(
+            &footprint,
+            "full-suite",
+            "full-suite"
+        ));
+        assert!(!carries_retired_backing(&footprint, "0/1/2", "0/1"));
     }
 
     #[test]

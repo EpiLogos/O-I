@@ -74,6 +74,16 @@ mod remembered_world {
     /// Keep a reading the owner gave, taken under `epoch` (the signal before
     /// it was asked).
     pub(crate) fn keep(suite_cli: &Path, epoch: Option<u64>, reading: &serde_json::Value) {
+        // A world not yet qualified (no Workcell binding) is asked again each
+        // time, as a failed reading is: what qualifies it (the ground's
+        // current machine, in a ground made after the change watch started)
+        // may lie outside what the watch covers.
+        if reading["current_machine"]["workcell_ref"]
+            .as_str()
+            .is_none_or(str::is_empty)
+        {
+            return;
+        }
         *HELD.lock().unwrap_or_else(|e| e.into_inner()) = Some(Held {
             suite_cli: suite_cli.to_path_buf(),
             at: Instant::now(),

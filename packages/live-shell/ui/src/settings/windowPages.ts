@@ -8,7 +8,7 @@
 // bar's Info line, as the components said them under their controls. Nothing here invents a value.
 import {useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore} from 'react'
 import type {Value} from '../frame/devices/designed'
-import type {ChangeRequest, ScopeAddress, SettingsAdapter} from './adapter'
+import type {ChangeRequest, ScopeAddress, SettingsAdapter, SetupSource} from './adapter'
 import type {KernelOp, PresentationDocument, PresentationTheme} from '../../../../../desktop/cradle/src/kernel/types'
 import type {HarnessReading} from '../../../../../desktop/cradle/src/configuration/harnessSource'
 import type {ProfileDocument} from '../../../../../desktop/cradle/src/configuration/contracts'
@@ -19,7 +19,11 @@ import {refusalLine, scalarEntries} from '../agent/RefusalCard'
 import {connectionBasis, machineBasis, validateMachine, type MachineConnection, type RemoteMachineDeclaration} from './machines'
 import {authorityAllowsTrigger, eligibleProofs, routineBasis, scheduleFromInput, type RoutineAuthoringOptions, type RoutineAuthoringResult, type ScheduleShape} from './routines'
 import {appearanceValues, automationValues, credentialValues, folderOf, harnessValues, machineValues, NO_AUTHORING, NO_HARNESS, NO_INVOKE, NO_MACHINES, NO_NAVIGATE, NO_PRODUCTS,
-  NO_PROFILES, NO_VISUALS, productValues, profileValues, systemValues, type CredentialRow} from './windowValues'
+  NO_PROFILES, NO_SETUP_AIKIT, NO_SETUP_SOURCE, NO_VISUALS, groundBound, productValues, profileValues, SECRET_REFERENCE, setupFolder, setupHarnessClients, setupHarnessProviders,
+  setupKeyFindings, setupNamespace, setupSkillRoots, setupValues, systemValues, type CredentialRow, type SetupCredentials, type SetupHarnesses, type SetupMachine, type SetupPreview,
+  type SetupSnapshot, type SetupWorkFolder} from './windowValues'
+import {AdoptionController} from '../../../../../desktop/cradle/src/configuration/adoptionController'
+import {PC_ACCEPT_ACTION, PC_INSPECT_ACTION, PC_PREVIEW_ACTION, acceptInput} from '../central/devices/pageGround'
 
 /** A press through its owner: it resolves with the owner's acknowledgement in its words (said on the Info line), or rejects with its refusal. */
 export type Act = (value: Value) => Promise<string | void>
@@ -40,6 +44,8 @@ const words = (cause: unknown): string => (cause instanceof Error ? cause.messag
 /** A read's refusal, said on the page's control nearest it. */
 const refusedOn = (key: string, error: string | null): Record<string, string> => (error ? {[key]: error} : {})
 const text = (value: Value | undefined): string => (typeof value === 'string' ? value.trim() : '')
+/** An owner's answer field as words: a string, trimmed, else empty. */
+const word = (value: unknown): string => (typeof value === 'string' ? value.trim() : '')
 /** A list the window holds as a JSON string (the design's multi-choice toggles). */
 const listOf = (value: Value | undefined): string[] => {
   if (typeof value !== 'string' || !value) return []
@@ -648,4 +654,367 @@ export function useProductsPage(adapter: SettingsAdapter, enabled: boolean): Pag
         },
       }}
   }, [adapter, read.value, read.error, read.refresh, ran, read])
+}
+
+// ---------------------------------------------------------------------------------------------------------------- Setup (manual §10.11)
+
+const SETUP_MAKES = {create: 'create', keep: 'adopt', copy: 'migrate'} as const
+const entryNames = (reading: unknown): string[] => {
+  const entries = reading && typeof reading === 'object' ? (reading as {entries?: unknown}).entries : undefined
+  return Array.isArray(entries) ? entries.flatMap(entry => (entry && typeof (entry as {name?: unknown}).name === 'string' ? [(entry as {name: string}).name] : [])) : []
+}
+
+/** Setup as the window walks it (manual §10.11), over its owners (settings/adapter.ts SetupSource). The Ground step is native oi's adoption
+ * through the cradle's AdoptionController, unchanged: status and discover read the ground; Accept makes a plan for Central's ground alone
+ * (custom, products [central]: the desktop is a full install, and Setup adds and removes no product), applies it with its review token,
+ * and reads it back. The Harnesses and skills step is AIKit's: the tools its client status detects, the skill roots `aikit init` finds,
+ * their skills (`aikit collate --all`) and AIKit's standing for each (`aikit tree --expand registries`); Accept adopts each root AIKit reads
+ * as foreign through its own reviewed plan (`aikit adopt ROOT --namespace LABEL`, then `--yes --expect-digest` on that plan's review
+ * digest), so the skills are AIKit's and the tool keeps reading them where they were, and reads the root back adopted. The Credentials
+ * step is AIKit's too: where `aikit credential discover` finds each key (never its value), the providers each detected tool reaches
+ * (`aikit harness auth`) and the bindings AIKit keeps; Accept binds the key chosen by the reference the person gives (`aikit credential
+ * setup --ref`), a place in a store and never a key, and reads it back from AIKit's list. The Machines step makes this computer a workcell: it reads the Workcell this computer answers as (Workcell's status)
+ * and Central's current machine (machine.declaration), and Accept binds the one to the other (machine.adopt-current), so the world
+ * qualifies. The Projects step is Central's Work: work.list and each member's projectcentral.inspect, then the folders of work that stand
+ * elsewhere under the world's folder (work.candidates). A folder elsewhere comes into Work first — Central keeps a project in its Work, never
+ * by reference elsewhere: Preview asks work.bring.preview, Accept presses work.bring on its digest and reads Work back, the original kept.
+ * A folder of Work becomes a project: Preview asks Central's adopt or migrate preview (Create's plan is the inspection: Central has no
+ * preview of projectcentral.init); Accept presses projectcentral.init, adopt or migrate as previewed, and reads the folder back. Each Accept
+ * answers only once its owner reads the change back. Plain, so the window's hook and a headless walk drive the same presses. */
+export class SetupWalk {
+  readonly controller: AdoptionController
+  private folders: SetupSnapshot['folders'] = {state: 'unread'}
+  private plan: SetupPreview | null = null
+  private machine: SetupMachine | undefined = undefined
+  private harnesses: SetupHarnesses | undefined = undefined
+  private credentials: SetupCredentials | undefined = undefined
+  private brought: string | null = null
+  private current: SetupSnapshot
+  private listeners = new Set<() => void>()
+  readonly source: SetupSource
+  constructor(source: SetupSource) {
+    this.source = source
+    this.controller = new AdoptionController(source.adoption)
+    this.current = this.compose()
+    this.controller.subscribe(() => this.publish())
+  }
+  snapshot = (): SetupSnapshot => this.current
+  subscribe = (listener: () => void): (() => void) => { this.listeners.add(listener); return () => { this.listeners.delete(listener) } }
+  private compose(): SetupSnapshot {
+    return {adoption: this.controller.getSnapshot(), folders: this.folders, plan: this.plan, machine: this.machine, brought: this.brought, harnesses: this.harnesses, credentials: this.credentials}
+  }
+  private publish(): void { this.current = this.compose(); for (const listener of [...this.listeners]) listener() }
+
+  /** Read every step again: native oi's ground, then, once there is a ground, AIKit's tools, skill roots and keys, this computer's
+   * Workcell and Central's machine, Central's Work and the folders of work elsewhere. A refusal stands in the reading, in its owner's
+   * words; nothing is retried. */
+  async read(): Promise<void> {
+    await this.controller.refresh()
+    await this.readHarnesses()
+    await this.readCredentials()
+    await this.readMachine()
+    await this.readWork()
+  }
+  /** AIKit's tools and skill roots (SetupHarnesses): its client status, `aikit init`, `aikit collate --all` and `aikit tree --expand
+   * registries`. AIKit's routes run from the world's ground (the kernel's route_ground), so they are read once there is one. */
+  private async readHarnesses(): Promise<void> {
+    const aikit = this.source.aikit
+    if (!groundBound(this.controller.getSnapshot().discovery)) { this.harnesses = undefined; this.publish(); return }
+    if (!aikit) { this.harnesses = {state: 'refused', error: NO_SETUP_AIKIT}; this.publish(); return }
+    try {
+      const [status, init, collate, tree] = await Promise.all([aikit({op: 'harness_status'}), aikit({op: 'aikit_read', request: {kind: 'init'}}),
+        aikit({op: 'aikit_read', request: {kind: 'collate', all: true}}), aikit({op: 'aikit_read', request: {kind: 'tree', expand: ['registries']}})])
+      this.harnesses = {state: 'read', harnesses: setupHarnessClients(status), roots: setupSkillRoots(init, collate, tree)}
+    } catch (cause) { this.harnesses = {state: 'refused', error: words(cause)} }
+    this.publish()
+  }
+  /** AIKit's keys and bindings (SetupCredentials): `aikit credential discover` (presence only), the providers `aikit harness auth` names
+   * for each detected tool (a refusal named on its tool), and `aikit credential list` (metadata only). */
+  private async readCredentials(): Promise<void> {
+    const aikit = this.source.aikit
+    if (!groundBound(this.controller.getSnapshot().discovery)) { this.credentials = undefined; this.publish(); return }
+    if (!aikit) { this.credentials = {state: 'refused', error: NO_SETUP_AIKIT}; this.publish(); return }
+    try {
+      const tools = this.harnesses?.state === 'read' ? this.harnesses.harnesses : setupHarnessClients(await aikit({op: 'harness_status'}))
+      const [discover, list, providers] = await Promise.all([aikit({op: 'credential_discover'}), aikit({op: 'credential_list'}),
+        Promise.all(tools.map(tool => aikit({op: 'harness_auth_describe', harness: tool.harness}).then(auth => setupHarnessProviders(tool, auth),
+          (cause: unknown) => [{harness: tool.harness, ...(tool.folder ? {folder: tool.folder} : {}), provider: '', unread: `AIKit did not say which providers ${tool.harness} reaches: ${words(cause)}`}])))])
+      this.credentials = {state: 'read', findings: setupKeyFindings(discover), providers: providers.flat(), bindings: credentialMetadata(list)}
+    } catch (cause) { this.credentials = {state: 'refused', error: words(cause)} }
+    this.publish()
+  }
+  /** Workcell's status (the Workcell this computer answers as) and Central's current machine's Workcell bindings (none until adopted). */
+  private async readMachine(): Promise<void> {
+    if (!groundBound(this.controller.getSnapshot().discovery)) { this.machine = undefined; this.publish(); return }
+    const status = this.source.workcell
+      ? await this.source.workcell().then(reading => (reading && typeof reading === 'object' ? reading as Record<string, unknown> : {error: 'Workcell answered no status.'}), (cause: unknown) => ({error: words(cause)}))
+      : {error: 'Setup reaches no Workcell here (SetupSource.workcell).'}
+    const declaration = await this.source.central('machine.declaration', {role: 'current'}).catch(() => null)
+    const bindings = declaration && typeof declaration === 'object' ? (declaration as {declaration?: {bindings?: unknown}}).declaration?.bindings : undefined
+    const bound = Array.isArray(bindings) ? bindings.flatMap(binding => {
+      const row = binding as {kind?: unknown; reference?: unknown}
+      return row?.kind === 'workcell' && typeof row.reference === 'string' ? [row.reference] : []
+    }) : []
+    this.machine = {state: 'read', workcell: typeof status.error === 'string' ? {error: status.error} : status, bound}
+    this.publish()
+  }
+  private async readWork(): Promise<void> {
+    if (!groundBound(this.controller.getSnapshot().discovery)) { this.folders = {state: 'unread'}; this.publish(); return }
+    try {
+      const listing = await this.source.central('work.list', {})
+      const items = (listing && typeof listing === 'object' && Array.isArray((listing as {items?: unknown}).items) ? (listing as {items: unknown[]}).items : [])
+        .flatMap(item => { const row = item as {name?: unknown; path?: unknown}; return typeof row?.name === 'string' && typeof row.path === 'string' ? [{name: row.name, path: row.path}] : [] })
+      const folders = await Promise.all(items.map(async ({name, path}): Promise<SetupWorkFolder> => {
+        const [inspection, listed] = await Promise.all([
+          this.source.central(PC_INSPECT_ACTION, {project: name}).catch((cause: unknown) => ({refused: words(cause)})),
+          this.source.central('central.files.list', {path: `Work/${name}`}).catch(() => null),
+        ])
+        const names = entryNames(listed)
+        const parts = names.includes('ProjectCentral') ? entryNames(await this.source.central('central.files.list', {path: `Work/${name}/ProjectCentral`}).catch(() => null)) : []
+        return {name, path, place: 'work', inspection, material: names.filter(entry => entry !== 'ProjectCentral' && !entry.startsWith('.')), parts}
+      }))
+      // The folders of work elsewhere under the world's folder; a refusal to read them leaves Work's own standing, and is said.
+      let elsewhere: string | undefined
+      const candidates = await this.source.central('work.candidates', {}).catch((cause: unknown) => { elsewhere = words(cause); return null })
+      const found = (candidates && typeof candidates === 'object' && Array.isArray((candidates as {items?: unknown}).items) ? (candidates as {items: unknown[]}).items : [])
+        .flatMap((item): SetupWorkFolder[] => {
+          const row = item as {name?: unknown; path?: unknown; relative?: unknown; signals?: unknown}
+          if (typeof row?.name !== 'string' || typeof row.path !== 'string') return []
+          const signals = Array.isArray(row.signals) ? row.signals.filter((signal): signal is string => typeof signal === 'string') : []
+          return [{name: row.name, path: row.path, place: 'elsewhere', ...(typeof row.relative === 'string' ? {relative: row.relative} : {}), signals, inspection: null, material: [], parts: []}]
+        })
+      this.folders = {state: 'read', folders: [...folders, ...found], ...(elsewhere ? {elsewhere} : {})}
+    } catch (cause) { this.folders = {state: 'refused', error: words(cause)} }
+    this.publish()
+  }
+
+  /** Accept a step (held): Ground through native oi, Harnesses and skills and Credentials through AIKit, Machines and Projects through
+   * Central. */
+  async accept(step: string, held: Held): Promise<string> {
+    if (step === 'ground') return this.acceptGround()
+    if (step === 'harnesses') return this.acceptHarnesses()
+    if (step === 'credentials') return this.acceptCredential(held)
+    if (step === 'machines') return this.acceptMachine()
+    if (step === 'projects') return this.acceptProject(held)
+    throw new Error(`${step} is no step of Setup.`)
+  }
+  /** Connects each tool's skills to AIKit (manual §10.11): each root AIKit reads as foreign is adopted through AIKit's own plan for it,
+   * pressed on that plan's review digest — AIKit applies only the bytes it surveyed — once the plan adopts as many skills as were read
+   * (a root changed since is refused, and nothing of it is adopted). Read back from AIKit: the root adopted, still keeping its skills.
+   * A root adopted before this one fails stays adopted; nothing is made twice. */
+  private async acceptHarnesses(): Promise<string> {
+    const aikit = this.source.aikit
+    if (!aikit) throw new Error(NO_SETUP_AIKIT)
+    if (!groundBound(this.controller.getSnapshot().discovery)) throw new Error(SETUP_GROUND_FIRST)
+    // What the step showed is what Accept adopts: the reading the person saw, not a fresh one (a refusal is read again).
+    if (this.harnesses?.state !== 'read') await this.readHarnesses()
+    const reading = this.harnesses
+    if (reading?.state !== 'read') throw new Error(reading?.error ?? 'AIKit did not read your agent tools.')
+    const keeping = reading.roots.filter(root => root.skills > 0), pending = keeping.filter(root => root.standing === 'foreign')
+    if (!keeping.length) throw new Error('Nothing found to bring in: AIKit finds no agent tool\'s skills on this computer.')
+    if (!pending.length) throw new Error('Accepted: AIKit holds every skill root here already. Nothing is made twice.')
+    const toolOf = (path: string) => reading.harnesses.find(tool => tool.folder && path.startsWith(`${tool.folder}/`))?.harness
+    const said: string[] = []
+    for (const root of pending) {
+      const namespace = setupNamespace(root)
+      const plan = await aikit({op: 'aikit_read', request: {kind: 'adopt-plan', root: root.path, namespace}}) as {review_digest?: unknown; capsules?: unknown}
+      if (!plan || typeof plan.review_digest !== 'string' || !Array.isArray(plan.capsules)) throw new Error(`AIKit answered its adoption plan for ${root.path} in a form Setup does not read (review_digest and capsules expected).`)
+      if (plan.capsules.length !== root.skills) throw new Error(`${root.path} changed since it was read: AIKit's plan adopts ${plan.capsules.length} skills, not the ${root.skills} shown. Read again; nothing of it was adopted.`)
+      await aikit({op: 'aikit_write', request: {kind: 'adopt', root: root.path, namespace, expect_digest: plan.review_digest}})
+      said.push(`${root.skills} skill${root.skills === 1 ? '' : 's'} from ${toolOf(root.path) ?? root.label} (${plan.capsules.map(String).join(', ')})`)
+    }
+    await this.readHarnesses()
+    const after = this.harnesses?.state === 'read' ? this.harnesses.roots : []
+    for (const root of pending) {
+      const now = after.find(row => row.label === root.label)
+      if (!now || now.standing === 'foreign' || now.standing === 'unknown' || now.skills !== root.skills) throw new Error(`AIKit answered aikit adopt, but ${root.path} does not read back adopted with its ${root.skills} skills. Read again.`)
+    }
+    return `AIKit adopted ${said.join('; ')} and reads them back as its own; each tool reads them where they were, its settings and instructions as they are.`
+  }
+  /** Binds the key chosen by the reference the person gives (manual §10.11): `aikit credential setup CREDENTIAL --ref REFERENCE`, a place in
+   * a store and never a key — a reference that names no store is refused before anything is sent. Read back from AIKit's list. */
+  private async acceptCredential(held: Held): Promise<string> {
+    const aikit = this.source.aikit
+    if (!aikit) throw new Error(NO_SETUP_AIKIT)
+    if (!groundBound(this.controller.getSnapshot().discovery)) throw new Error(SETUP_GROUND_FIRST)
+    if (this.credentials?.state !== 'read') await this.readCredentials()
+    const reading = this.credentials
+    if (reading?.state !== 'read') throw new Error(reading?.error ?? 'AIKit did not read your keys.')
+    const bound = new Set(reading.bindings.filter(row => !row.revoked).map(row => row.credential))
+    const open = reading.findings.filter(row => row.credential && !row.bound && !bound.has(row.credential))
+    const credential = text(held('credential')) || open[0]?.credential
+    if (!credential) throw new Error(bound.size ? 'Accepted: every key found is bound. Nothing is made twice.' : 'Nothing found to bring in: AIKit finds no provider\'s key on this computer.')
+    if (bound.has(credential)) throw new Error(`Accepted: ${credential} is bound already. Nothing is made twice.`)
+    if (!open.some(row => row.credential === credential)) throw new Error(`${credential} is no key AIKit found here. Read again.`)
+    const reference = text(held('reference'))
+    if (!reference) throw new Error('Give where the key lies in your secure store first: op://, keychain://, pass:// or varlock://.')
+    if (!SECRET_REFERENCE.test(reference)) throw new NotAReference()
+    await aikit({op: 'credential_setup', credential, reference})
+    await this.readCredentials()
+    const now = this.credentials?.state === 'read' ? this.credentials.bindings.find(row => row.credential === credential && !row.revoked) : undefined
+    if (!now || now.reference !== reference) throw new Error(`AIKit answered aikit credential setup, but ${credential} does not read back bound to ${reference}. Read again.`)
+    return `AIKit bound ${credential} by reference to ${reference}, and reads it back: the key stays where it lies; the DLW never shows it and never keeps it.`
+  }
+  /** Makes this computer a workcell (manual §10.11): Central's current machine bound to the Workcell this computer answers as, read back
+   * from Central's declaration; then the host reads its world again, which now qualifies (`oi current-world` reads that binding). */
+  private async acceptMachine(): Promise<string> {
+    if (!groundBound(this.controller.getSnapshot().discovery)) throw new Error('Make your ground first: Central keeps your machines in its ground.')
+    await this.readMachine()
+    const machine = this.machine
+    if (!machine) throw new Error('Make your ground first: Central keeps your machines in its ground.')
+    if ('error' in machine.workcell) throw new Error(`Workcell did not say which Workcell this computer is: ${machine.workcell.error}`)
+    const ref = word(machine.workcell.workcell_ref)
+    if (!ref) throw new Error('Workcell\'s status names no Workcell for this computer. Nothing was sent.')
+    if (machine.bound.includes(ref)) throw new Error(`Accepted: Central's current machine is bound to Workcell ${ref} already. Nothing is made twice.`)
+    await this.source.central('machine.adopt-current', {role: 'current', workcell_ref: ref})
+    await this.readMachine()
+    if (!this.machine?.bound.includes(ref)) throw new Error(`Central answered machine.adopt-current, but its current machine does not read back bound to ${ref}. Read again.`)
+    this.source.groundChanged?.()
+    return `Central adopted this computer as your current machine, bound to Workcell ${ref}, and read it back. Your world is read again with it.`
+  }
+  private async acceptGround(): Promise<string> {
+    if (!this.controller.getSnapshot().discovery) await this.controller.refresh()
+    const before = this.controller.getSnapshot()
+    if (!before.discovery) throw new Error(before.error ?? 'Native oi did not read your ground.')
+    if (before.unresolved) throw new Error('An earlier adoption is unresolved in native oi\'s journal: read it again before another write. Nothing was sent.')
+    if (groundBound(before.discovery)) throw new Error('Accepted: Central keeps your ground here already. Nothing is made twice.')
+    const ground = before.discovery.selected_ground ?? before.discovery.suggested_ground
+    this.controller.select({composition: 'custom', ground, desktop: 'keep', bundle: null, bundle_sha256: null, products: ['central'], remove_products: []})
+    await this.controller.plan()
+    const planned = this.controller.getSnapshot()
+    if (planned.error) throw new Error(planned.error)
+    if (!planned.plan || planned.step !== 'review') throw new Error('Native oi made no plan to review. Nothing was sent.')
+    if (planned.plan.blocked.length) throw new Error(planned.plan.blocked.join(' '))
+    const made = planned.plan.steps.some(row => row.operation.kind === 'establish_ground')
+    await this.controller.apply()
+    const applied = this.controller.getSnapshot()
+    if (applied.disposition !== 'verified') throw new Error(applied.error ?? `Native oi answered ${applied.disposition ?? 'nothing'}; its journal decides. Read again; nothing is retried.`)
+    await this.controller.refresh()
+    await this.readHarnesses()
+    await this.readCredentials()
+    await this.readMachine()
+    await this.readWork()
+    this.source.groundChanged?.()
+    if (!groundBound(this.controller.getSnapshot().discovery)) throw new Error('Native oi applied the plan, but its reading does not show the ground bound. Read again.')
+    return made ? `Central made your ground at ${ground} and checked it. Your world's state is kept beside it.` : `Central keeps your ground at ${ground}, where it was. Nothing in it moved.`
+  }
+
+  /** The Projects step's choice on the held keys, checked as the design closes its choices; the folder's own row with it. A folder
+   * elsewhere has one choice: Into Work (`bring`), Central's copy; what to make of it is chosen once it stands in Work. */
+  private chosen(held: Held): {row: SetupWorkFolder; make: keyof typeof SETUP_MAKES | 'bring'; where: string; wiki?: string} {
+    if (this.folders.state === 'refused') throw new Error(this.folders.error)
+    if (this.folders.state !== 'read') throw new Error('Make your ground first: Central reads its Work once there is a ground.')
+    const rows = this.folders.folders, brought = rows.find(folder => folder.path === this.brought)?.path
+    const path = text(held('folder')) || brought || rows[0]?.path
+    const row = rows.find(folder => folder.path === path)
+    if (!row) throw new Error('Choose a folder of your ground\'s Work, or one that stands elsewhere.')
+    if (row.place === 'elsewhere') {
+      const where = text(held('where')) || 'work'
+      if (where !== 'work') throw new Error(`Central keeps a project in your ground's Work, never by reference elsewhere: bring ${row.name} Into Work. Its original stays where it was.`)
+      return {row, make: 'bring', where}
+    }
+    const folder = setupFolder(row), finds = folder.finds, wikis = folder.wikis as string[]
+    if (finds === 'unreadable') throw new Error(`${row.name}: its ProjectCentral cannot be read. Mend its manifest by hand.`)
+    if (finds === 'ground') throw new Error(`${row.name}: its ground is in place. Nothing to make.`)
+    const where = text(held('where')) || 'stands'
+    if (where === 'work') throw new Error(`${row.name} stands in Work already.`)
+    const make = text(held('make'))
+    if (make !== 'create' && make !== 'keep' && make !== 'copy') throw new Error('Choose what to make first.')
+    if (make === 'create' && finds !== 'none') throw new Error(`${row.name} keeps a wiki: keep it in place or copy it in.`)
+    if (make !== 'create' && finds === 'none') throw new Error(`${row.name} keeps no wiki.`)
+    const wiki = wikis.length === 1 ? wikis[0] : text(held('wiki')) || undefined
+    if (make !== 'create' && (!wiki || !wikis.includes(wiki))) throw new Error('Choose the wiki first: Central does not choose for you.')
+    return {row, make, where, ...(make !== 'create' && wiki ? {wiki} : {})}
+  }
+  /** Preview: the steps Central would take, in order. Nothing changes. */
+  async preview(held: Held): Promise<void> {
+    const {row, make, where, wiki} = this.chosen(held)
+    let lines: string[]
+    if (make === 'bring') {
+      const data = await this.source.central('work.bring.preview', {source_path: row.path})
+      const plan = data && typeof data === 'object' ? data as {operations?: unknown; digest?: unknown} : {}
+      if (!Array.isArray(plan.operations) || typeof plan.digest !== 'string') throw new Error('Central answered its bring preview in a form Setup does not read (work-bring-plan expected).')
+      this.plan = {folder: row.path, make, where, lines: plan.operations.map(String), digest: plan.digest}
+      this.publish()
+      return
+    }
+    if (make === 'create') {
+      const reason = row.inspection && typeof row.inspection === 'object' ? (row.inspection as {reason?: unknown}).reason : undefined
+      lines = [`Central makes ProjectCentral round ${row.name} (projectcentral.init): its user and agents parts and its wiki.`, ...(typeof reason === 'string' && reason ? [reason] : []), 'Nothing in the folder moves.']
+    } else {
+      const data = await this.source.central(PC_PREVIEW_ACTION[SETUP_MAKES[make] as 'adopt' | 'migrate'], {project: row.name, source: wiki})
+      const operations = data && typeof data === 'object' && Array.isArray((data as {operations?: unknown}).operations) ? (data as {operations: unknown[]}).operations.map(String) : null
+      if (!operations) throw new Error(`Central answered its ${SETUP_MAKES[make]} preview in a form Setup does not read (projectcentral-mutation-plan expected).`)
+      lines = operations
+    }
+    this.plan = {folder: row.path, make, where, ...(wiki ? {wiki} : {}), lines}
+    this.publish()
+  }
+  private async acceptProject(held: Held): Promise<string> {
+    const {row, make, where, wiki} = this.chosen(held)
+    const plan = this.plan
+    if (!plan || plan.folder !== row.path || plan.make !== make || plan.where !== where || plan.wiki !== wiki) throw new Error('Preview first: Accept makes what the preview listed.')
+    if (make === 'bring') return this.acceptBring(row, plan)
+    const treatment = SETUP_MAKES[make]
+    await this.source.central(PC_ACCEPT_ACTION[treatment], acceptInput(row.name, treatment, wiki ?? null))
+    this.plan = null
+    await this.readWork()
+    const after = this.folders.state === 'read' ? this.folders.folders.find(folder => folder.name === row.name) : undefined
+    if (!after || setupFolder(after).finds !== 'ground') throw new Error(`Central answered ${PC_ACCEPT_ACTION[treatment]}, but ${row.name} does not read back with its ground in place. Read again.`)
+    return `Central made ${row.name}'s ProjectCentral beside its material${wiki ? `, its wiki ${make === 'keep' ? 'kept in place' : 'copied in'}` : ''}. It reads back in place.`
+  }
+  /** A folder elsewhere comes into Work as previewed: Central's work.bring on the preview's digest (a folder changed since is refused in
+   * Central's words, and nothing is copied), read back from Work. The copy is the folder shown next. */
+  private async acceptBring(row: SetupWorkFolder, plan: SetupPreview): Promise<string> {
+    const receipt = await this.source.central('work.bring', {source_path: row.path, expected_digest: plan.digest})
+    const name = receipt && typeof receipt === 'object' ? word((receipt as {name?: unknown}).name) : ''
+    const target = receipt && typeof receipt === 'object' ? word((receipt as {target_ref?: unknown}).target_ref) : ''
+    this.plan = null
+    await this.readWork()
+    const copy = this.folders.state === 'read' ? this.folders.folders.find(folder => folder.place === 'work' && folder.name === name) : undefined
+    if (!name || !copy) throw new Error(`Central answered work.bring, but ${target || row.name} does not read back in your ground's Work. Read again.`)
+    this.brought = copy.path
+    this.publish()
+    return `Central brought ${row.name} into your ground's Work as ${target || `Work/${name}`}, read back equal to it; the original stays at ${row.path}. Choose what to make of it there.`
+  }
+}
+
+/** AIKit's steps wait for the ground: its routes run from it (the kernel's route_ground). */
+const SETUP_GROUND_FIRST = 'Make your ground first: AIKit\'s routes run from your ground.'
+/** A reference that names no store: refused before anything is sent, and the field is cleared (it may hold the key itself). */
+export class NotAReference extends Error {
+  constructor() { super('A reference names where the key lies in your store: op://, keychain://, pass:// or varlock://, never the key itself. Nothing was sent.') }
+}
+
+const noSetup: SetupSnapshot = {adoption: {}, folders: {state: 'unread'}, plan: null}
+const noSetupSnapshot = () => noSetup
+/** Setup (manual §10.11) on the window's binding: the SetupWalk over the adapter's setup source, read when the page opens and for each
+ * new source; its values on the choices you hold (choices: the held folder, make, wiki and where, so a preview stands only for them). */
+export function useSetupPage(adapter: SettingsAdapter, enabled: boolean, held: Held, done: (keys: readonly string[]) => void, choices: readonly unknown[]): PagePart {
+  const source = adapter.setup
+  const walk = useMemo(() => (source ? new SetupWalk(source) : null), [source])
+  const snapshot = useSyncExternalStore(walk?.subscribe ?? noSubscription, walk?.snapshot ?? noSetupSnapshot, walk?.snapshot ?? noSetupSnapshot)
+  useEffect(() => { if (enabled && walk) void walk.read() }, [enabled, walk])
+  return useMemo((): PagePart => {
+    if (!walk) return {values: {}, acts: {}, why: {acceptStep: NO_SETUP_SOURCE, previewStep: NO_SETUP_SOURCE, rereadSetup: NO_SETUP_SOURCE}, refused: {}, reread: async () => {}}
+    const why: Record<string, string> = {}
+    if (snapshot.adoption.busy) why.acceptStep = why.rereadSetup = 'Waiting for native oi…'
+    const refusal = snapshot.folders.state === 'refused' ? snapshot.folders.error : null
+    return {values: setupValues(snapshot, held), why, refused: refusedOn('rereadSetup', refusal), reread: enabled ? () => walk.read() : async () => {},
+      acts: {
+        acceptStep: async step => {
+          try {
+            const said = await walk.accept(String(step), held)
+            done(step === 'credentials' ? ['credential', 'reference'] : ['make', 'wiki', ...(step === 'projects' ? ['folder', 'where'] : [])])
+            return said
+          } catch (cause) {
+            if (cause instanceof NotAReference) done(['reference'])
+            throw cause
+          }
+        },
+        previewStep: async () => { await walk.preview(held) },
+        rereadSetup: async () => { await walk.read() },
+      }}
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- the held choices name what the values read
+  }, [walk, snapshot, held, done, enabled, ...choices])
 }

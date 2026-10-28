@@ -15,5 +15,9 @@ export function configureSettingsHost(adapter: SettingsAdapter, ...frameReturn: 
 }
 /** Parent selects world.settings alongside this call; the work remains mounted. */
 export function openSettings(request: SettingsRequest | null): void { host = { ...host, request }; publish() }
+/** Settings opened on Setup (manual §10.11): the first time the DLW opens on a world with no ground, and wherever Setup is asked for. */
+export function setupRequest(returnLabel = 'Back to work'): SettingsRequest {
+  return { requestId: crypto.randomUUID(), page: 'setup', scope: { scope_kind: 'machine', scope_ref: null }, returnLabel }
+}
 export function getSettingsHostSnapshot(): SettingsHost { return host }
 export function useSettingsHost(): SettingsHost { return useSyncExternalStore(listener => { listeners.add(listener); return () => listeners.delete(listener) }, getSettingsHostSnapshot) }

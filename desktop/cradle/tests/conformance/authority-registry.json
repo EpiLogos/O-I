@@ -322,6 +322,18 @@
     },
     {
       "owner": "src-tauri/src/native_shell.rs",
+      "operation": "fs::read",
+      "rationale": "The world the candidate opens (O-I #738): reads the register of worlds the computer's own user keeps beside the candidate's configuration, and the native composition's ground that another world may never stand in.",
+      "spec_ref": "O-I #738 (a world is a folder you choose); docs/experience/LOCAL-CAMPAIGN.md §2.2; docs/cradle/02-ARCHITECTURE.md §5/§12"
+    },
+    {
+      "owner": "src-tauri/src/native_shell.rs",
+      "operation": "fs::create_dir_all",
+      "rationale": "The world the candidate opens (O-I #738): makes the folder of the register of worlds before a switch of worlds keeps it.",
+      "spec_ref": "O-I #738 (a world is a folder you choose); docs/experience/LOCAL-CAMPAIGN.md §2.2; docs/cradle/02-ARCHITECTURE.md §5/§12"
+    },
+    {
+      "owner": "src-tauri/src/native_shell.rs",
       "operation": "fs::write",
       "rationale": "Filesystem use inside the native shell's declared host duty for this file.",
       "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"

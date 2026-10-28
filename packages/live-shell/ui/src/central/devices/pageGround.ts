@@ -20,7 +20,7 @@
 //
 // Pure: no React, no transport. The readers are pageDevices.ts.
 import type {Value} from '../../frame/devices/designed'
-import type {ActionAnswer} from './useCentralReadings'
+import type {ActionAnswer} from './centralActions'
 
 const rec = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value)
 const txt = (value: unknown): string | undefined => (typeof value === 'string' && value ? value : undefined)

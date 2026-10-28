@@ -60,8 +60,10 @@
 //               declaration may expect (`workcell machine list` control_operations); workcell the workcell they belong to.
 // Setup (manual §10.11; the kernel's `setup` op over native oi's adoption: discover, plan, apply with the plan's review token):
 //               setup [{step: ground | harnesses | credentials | machines | projects, state: found | accepted, items: [{name, where?,
-//               change?, why?}]}]  what each step found, the change Accept would make, or why setup leaves it alone; setupStep the
-//               step shown; setupPlan [text] the steps the owner would take, in order, once you press Preview.
+//               change?, why?, credential?, bound?}]}]  what each step found, the change Accept would make, or why setup leaves it alone
+//               (a Credentials row names the credential it binds, and whether it is bound); setupStep the step shown; setupPlan [text]
+//               the steps the owner would take, in order, once you press Preview. credential (the key the Credentials step binds) and
+//               reference (where it lies in your secure store: a reference, never the key) are your choices there.
 //               folders [{path, title, place: work | elsewhere, finds: none | one | many | unreadable | ground, wikis: [path],
 //               material: [name], central: [part]}]  the folders the Projects step read: what it found, the wikis a folder keeps, its
 //               own material and the ProjectCentral parts already there; folder, make (create | keep | copy), wiki and where
@@ -110,11 +112,20 @@
 //   enableRoutine <ref> with new.grant, reprove <ref> with new.reproof, createRoutine (new.name, new.description, new.method,
 //   new.proof, new.trigger — a new schedule with new.repeat and new.schedule — new.authority, new.profile, new.scopes), checkCreation (a
 //   waiting creation read back, never sent again): RoutineAuthoringSource.
-//   acceptStep <step> (setup apply on the plan whose changes the step's table shows, held): exists for Ground, Harnesses and
-//   skills, Credentials and Machines. For Projects, previewStep 'projects' (Preview: the plan, read into `setupPlan`) and acceptStep
-//   'projects' with folder, make, wiki and where: the adoption plan carries no project step yet, so no owner op makes a
-//   ProjectCentral round a folder or keeps or copies its wiki. rereadSetup (setup discover) exists. The window does not bind the
-//   `setup` op yet: Setup's readings stand absent and its presses refused, naming it.
+//   acceptStep <step> (held): Ground is native oi's reviewed plan for Central's ground (setup plan, then apply with its review token),
+//   read back by setup discover. For Projects, previewStep 'projects' (Preview: Central's projectcentral.adopt.preview or
+//   migrate.preview, read into `setupPlan`; Create's plan is Central's inspection) and acceptStep 'projects' with folder, make and
+//   wiki: Central's projectcentral.init, adopt or migrate, read back by projectcentral.inspect. A folder that stands elsewhere under
+//   the world's folder (Central's work.candidates, place elsewhere) comes Into Work first: Preview is Central's work.bring.preview,
+//   Accept its work.bring on that preview's digest, read back by work.list, the original kept; Central keeps a project in its Work, so
+//   Where it stands refuses for it. Machines: acceptStep 'machines' is Central's machine.adopt-current binding its current machine
+//   to the Workcell this computer answers as (Workcell's status), read back by machine.declaration. Harnesses and skills:
+//   acceptStep 'harnesses' adopts each skill root AIKit reads as foreign through AIKit's own plan (`aikit adopt ROOT --namespace
+//   LABEL`, then `--yes --expect-digest` on its review digest), read back by `aikit tree` as adopted; the tool reads its skills where
+//   they were. Credentials: acceptStep 'credentials' with credential and reference binds that key by reference (`aikit credential
+//   setup --ref`), read back by `aikit credential list`; a reference that names no store is refused before anything is sent.
+//   rereadSetup (setup discover, then AIKit, Workcell, Central's machine, Work and the folders elsewhere) exists. The binding:
+//   settings/windowPages.ts SetupWalk.
 //   The host stands each act without an owner disabled, with that reason. A press that turns the page is a click inside the window,
 //   which reads the page it turned to.
 // A key the owner has not reported is absent: its cell draws "—", and the page names the missing reading.
@@ -435,6 +446,39 @@ function ProjectsStep({p}: {p: ViewProps}) {
   </div>
 }
 
+/** The Credentials step (manual §10.11): where each provider's key lies — the place, never the value — and the binding Accept makes: AIKit
+ * binds the key you choose by the reference you give, where it lies in your secure store. The key itself never enters the window. */
+function CredentialsStep({p, reading}: {p: ViewProps; reading: Rec | undefined}) {
+  const v = p.v, items = Array.isArray(reading?.items) ? reading!.items.filter(rec) : undefined
+  const open = items?.filter(r => txt(r.credential) && r.bound !== true && !txt(r.why)) ?? []
+  const chosen = open.find(r => r.credential === strOf(v, 'credential'))?.credential ?? open[0]?.credential, reference = strOf(v, 'reference') ?? ''
+  const [shown, pager] = usePaged(items ?? [], 7)
+  return <>
+    <table className="st-tbl">
+      <Cols w={[150, 210, undefined]} />
+      <thead><tr><th>Found {pager}</th><th>Where it lies</th><th>The binding Accept makes</th></tr></thead>
+      <tbody>{items === undefined ? <tr><td colSpan={3} className="st-none">Not read yet.</td></tr>
+        : items.length === 0 ? <tr><td colSpan={3} className="st-none">Nothing found.</td></tr>
+        : shown.map((r, i) => {
+          const id = txt(r.credential), pick = !!id && open.includes(r)
+          return <tr key={i} className={pick ? 'st-pick' : undefined} data-focus={pick && id === chosen ? 'true' : undefined} data-read={txt(r.why) || r.bound === true ? 'true' : undefined}
+            onClick={pick ? () => p.set('credential', id) : undefined}>
+            <td><b>{txt(r.name) ?? NONE}</b>{txt(r.why) && <i className="st-why" data-i={`Left alone|${r.why}`}>!</i>}</td>
+            <td className="st-ref">{txt(r.where) ?? NONE}</td>
+            <td className="st-dim">{txt(r.why) ? 'left as it is' : txt(r.change) ?? NONE}</td>
+          </tr>
+        })}</tbody>
+    </table>
+    <div className="st-form">
+      <Readout label="state" does="Found: Accept would bind the key chosen. Accepted: every key found is bound." value={txt(reading?.state)} />
+      <TextField label="Reference" does="Where the key lies in your secure store: op://, keychain://, pass:// or varlock://. Never the key itself." value={reference} placeholder="op://…"
+        onChange={open.length ? x => p.set('reference', x) : undefined} />
+      <Action {...st(p, 'acceptStep')} hold label="Accept" does="AIKit binds the key chosen by the reference you give. The value stays in your store: the window never shows it and never keeps it." onPress={() => p.set('acceptStep', 'credentials')}
+        disabled={!open.length ? (txt(reading?.state) === 'accepted' ? 'Accepted.' : 'Nothing found to bring in.') : !reference ? 'Give where the key lies in your store first.' : undefined} />
+    </div>
+  </>
+}
+
 function SetupPage({p}: {p: ViewProps}) {
   const v = p.v, steps = list(v, 'setup'), accepted = steps?.filter(s => s.state === 'accepted').length
   const at = (STEPS.find(s => s.id === strOf(v, 'setupStep'))?.id ?? STEPS.find(s => steps?.find(r => r.step === s.id)?.state !== 'accepted')?.id ?? 'ground') as StepId
@@ -450,7 +494,7 @@ function SetupPage({p}: {p: ViewProps}) {
         onClick={() => { p.set('setupStep', s.id); p.set('setupPlan', undefined) }}>
         <Lamp state={steps ? STEP_LIGHT[txt(r?.state) ?? ''] ?? 'unknown' : 'unknown'} tone="green" /><i>{i + 1}</i>{s.label}</button>
     })}</nav>
-    {at === 'projects' ? <ProjectsStep p={p} /> : <>
+    {at === 'projects' ? <ProjectsStep p={p} /> : at === 'credentials' ? <CredentialsStep p={p} reading={reading} /> : <>
       <table className="st-tbl">
         <Cols w={[150, 210, undefined]} />
         <thead><tr><th>Found {pager}</th><th>Where</th><th>The change Accept makes</th></tr></thead>
@@ -1144,8 +1188,8 @@ const SETUP_DONE = [
     {name: 'pi', where: '~/.pi', change: 'connected through its adapter'},
     {name: 'Hermes', where: '~/.hermes', why: 'Its session settings cannot be read here.'}]},
   {step: 'credentials', state: 'accepted', items: [
-    {name: 'Anthropic', where: 'keychain://aikit/anthropic', change: 'bound by reference'},
-    {name: 'OpenAI', where: 'keychain://aikit/openai', change: 'bound by reference'}]},
+    {name: 'ANTHROPIC_API_KEY', where: 'process environment', credential: 'credential:anthropic', bound: true, change: 'credential:anthropic is bound by reference to keychain://aikit/anthropic'},
+    {name: 'OPENAI_API_KEY', where: '~/code/tide/.env', credential: 'credential:openai', bound: true, change: 'credential:openai is bound by reference to keychain://aikit/openai'}]},
   {step: 'machines', state: 'accepted', items: [
     {name: 'This Mac', where: 'workcell:mac', change: 'a workcell'},
     {name: 'omarchy', where: '100.92.62.101', change: 'prepared as a place to work · its settings kept'}]},
@@ -1265,7 +1309,8 @@ export const design: DesignedDevice = {
       setup: dump([
         {step: 'ground', state: 'found', items: [{name: 'Your ground', where: '~/Central', change: 'adopt it where it is · nothing in it moves'}]},
         {step: 'harnesses', state: 'found', items: [{name: 'Claude Code', where: '~/.claude', change: 'connect through its adapter'}, {name: 'Codex', where: '~/.codex', change: 'connect through its adapter'}]},
-        {step: 'credentials', state: 'found', items: [{name: 'Anthropic', where: 'keychain://aikit/anthropic', change: 'bind by reference'}, {name: 'ANTHROPIC_API_KEY', where: '~/.zshrc', why: 'A key outside a secure store is named, never read.'}]},
+        {step: 'credentials', state: 'found', items: [{name: 'ANTHROPIC_API_KEY', where: 'process environment', credential: 'credential:anthropic', change: 'AIKit binds credential:anthropic by the reference you give · the key stays where it lies'},
+          {name: 'openai for codex', where: '~/.codex', why: 'codex login keeps its own credential store; the API key delivers only when credential:openai is bound'}]},
         {step: 'machines', state: 'found', items: [{name: 'This Mac', where: 'this computer', change: 'make it a workcell'}]},
         {step: 'projects', state: 'found', items: []},
       ]),

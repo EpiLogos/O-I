@@ -37,11 +37,18 @@
 #                                          accessibility tree, scoped to the pid;
 #                                          waits for the parent's exit code
 #
-# Backing: `P0R1_BACKING` names a footprint backing: `0/1` or `0/1/2` (the
-# default, central, actuation, ai-kit) or `full-suite`, which adds software
-# factory, workcell and quaternal-logic. A backing that carries QL freezes it
-# from the active managed receipt and needs the QL native inputs below. Owners
-# outside the chosen backing are disclosed as excluded, not faked.
+# Backing: the desktop is a full install (manual §10.10, §10.11; O-I #738), so
+# the candidate carries the footprint's one backing, `full-suite`: central,
+# actuation, ai-kit, software factory, workcell and quaternal-logic. QL is frozen
+# from the active managed receipt and needs the QL native inputs below. The
+# partial backings 0/1 and 0/1/2 are retired.
+#
+# World: a launch opens the world `P0R1_WORLD` names (O-I #738; LOCAL-CAMPAIGN
+# §2.2): a starting world's folder (packages/live-shell/starting-worlds.py makes
+# Bare and Arriving, keeps Lived-in), or "$HOME" for Yours, the owner's own. A
+# launch never opens a world nobody named, so a run leaves nothing behind as
+# Yours's remembered state. The candidate keeps every product's state for a
+# world under its folder; readback reads that world's candidate configuration.
 #
 # Heavy outputs (captures, stage, archive, extracted app) go to $OUT under the
 # target pool. Logs are written to $OUT/logs while the run is live, never into
@@ -65,13 +72,16 @@ OUT="$TARGET/p0-r1/$STAMP"
 LOGS="$OUT/logs"
 EVID_RUN="$EVID/run-$STAMP"
 RE="/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/evidence"
-BACKING="${P0R1_BACKING:-0/1/2}"
-case "$BACKING" in
-  0/1|0/1/2|full-suite) ;;
-  *) echo "P0R1_BACKING must be 0/1, 0/1/2 or full-suite (got $BACKING)" >&2; exit 1 ;;
-esac
-# The candidate's profile is per backing (the host qualifies the same path).
-CANDIDATE_HOME="$HOME/.config/oi-shell-candidate/${BACKING//\//-}"
+BACKING=full-suite
+if [[ -n "${P0R1_BACKING:-}" && "$P0R1_BACKING" != full-suite ]]; then
+  echo "The desktop is a full install: the partial backings are retired (P0R1_BACKING=$P0R1_BACKING)" >&2; exit 1
+fi
+WORLD="${P0R1_WORLD:-}"
+if [[ "$MODE" == launch || "$MODE" == all ]]; then
+  if [[ -z "$WORLD" || ! -d "$WORLD" ]]; then
+    echo "Name the world the run opens: P0R1_WORLD=<folder> (a starting world from starting-worlds.py, or \$HOME for Yours)" >&2; exit 1
+  fi
+fi
 # freeze-product-bindings.py requires QL's explicit native inputs when the
 # backing carries quaternal-logic (ql_export, runtime, provider, dependency and
 # source-correspondence records). They default to the integrated v012 inputs;
@@ -79,12 +89,9 @@ CANDIDATE_HOME="$HOME/.config/oi-shell-candidate/${BACKING//\//-}"
 # export receipt must describe the export it names.
 RE_QL="${P0R1_QL_INPUTS:-$RE/full-suite-inputs-20261008/inputs}"
 QL_EXPORT="${P0R1_QL_EXPORT:-/Users/admin/Central/Work/Quaternal-Logic/target/native-composition/ql-sky}"
-FREEZE_QL=()
-if [[ "$BACKING" == full-suite ]]; then
-  FREEZE_QL=(--ql-export "$QL_EXPORT" --ql-export-receipt "$RE_QL/ql-export-receipt.json"
-             --runtime-inventory "$RE_QL/runtime-inventory.json" --provider-sources "$RE_QL/provider-sources.json"
-             --dependency-source "$RE_QL/dependency-source.json" --source-correspondence "$RE_QL/source-correspondence.json")
-fi
+FREEZE_QL=(--ql-export "$QL_EXPORT" --ql-export-receipt "$RE_QL/ql-export-receipt.json"
+           --runtime-inventory "$RE_QL/runtime-inventory.json" --provider-sources "$RE_QL/provider-sources.json"
+           --dependency-source "$RE_QL/dependency-source.json" --source-correspondence "$RE_QL/source-correspondence.json")
 ACTIVE_RECEIPT="/Users/admin/Library/Application Support/OI/receipts/updates/active.json"
 NOTICES_INPUT="$RE/full-suite-inputs-20261008/notices-input-ready.json"
 NODE_ARCHIVES="$RE/application-node-runtime-20261008"
@@ -102,7 +109,7 @@ trap sync_evidence EXIT
 
 {
   echo "seat=$SEAT"; echo "branch=$(git branch --show-current)"; echo "head=$(git rev-parse HEAD)"
-  echo "stamp=$STAMP"; echo "out=$OUT"; echo "target=$TARGET"; echo "backing=$BACKING"; echo "mode=$MODE"
+  echo "stamp=$STAMP"; echo "out=$OUT"; echo "target=$TARGET"; echo "backing=$BACKING"; echo "world=${WORLD:-unnamed}"; echo "mode=$MODE"
   echo "runner_sha256=$(shasum -a 256 "$0" | cut -d' ' -f1)"
   echo "status:"; git status --porcelain=v1 --untracked-files=normal
 } > "$LOGS/basis-$MODE.txt"
@@ -187,16 +194,18 @@ if [[ "$MODE" == launch || "$MODE" == all ]]; then
   run 6-seal /usr/bin/codesign --verify --strict --all-architectures "$APP"
   cp "$APP/Contents/Resources/live-shell-host.json" "$LOGS/6-host-marker.json"
   rm -f "$LOGS/launch.pid" "$LOGS/quit-exit-code.txt"
-  step "6-launch: $APP/Contents/MacOS/oi-cradle (background; a detached parent waits on it)"
+  echo "$WORLD" >"$LOGS/world.txt"
+  step "6-launch: $APP/Contents/MacOS/oi-cradle in the world $WORLD (background; a detached parent waits on it)"
   # The waiting parent outlives this script; it is the process whose wait
-  # yields the host's real exit status when the window is quit.
+  # yields the host's real exit status when the window is quit. The world is
+  # named to the host by OI_WORLD_FOLDER (world_folder.rs).
   nohup bash -c '
-    "$1/Contents/MacOS/oi-cradle" >"$2/6-launch.log" 2>&1 &
+    OI_WORLD_FOLDER="$3" "$1/Contents/MacOS/oi-cradle" >"$2/6-launch.log" 2>&1 &
     pid=$!; echo "$pid" >"$2/launch.pid"
     wait "$pid"; code=$?
     echo "$code" >"$2/quit-exit-code.txt"
     echo "== $(date -u +%FT%TZ) 6-launch: pid $pid exited $code" >>"$2/steps.log"
-  ' p0r1-launch "$APP" "$LOGS" >/dev/null 2>&1 &
+  ' p0r1-launch "$APP" "$LOGS" "$WORLD" >/dev/null 2>&1 &
   for _ in 1 2 3 4 5 6 7 8 9 10; do [[ -s "$LOGS/launch.pid" ]] && break; sleep 1; done
   step "6-launch: pid $(cat "$LOGS/launch.pid")"
 fi
@@ -204,7 +213,9 @@ fi
 if [[ "$MODE" == readback ]]; then
   PID="$(cat "$LOGS/launch.pid")"
   kill -0 "$PID" 2>/dev/null || { step "7-readback: pid $PID is not running"; exit 1; }
-  # Owner discovery as prepare() wrote it for this launch.
+  # Owner discovery as prepare() wrote it for this launch, in the world it opened
+  # (native_shell.rs profile_homes: the world's own candidate configuration).
+  CANDIDATE_HOME="$(cat "$LOGS/world.txt")/.config/oi-shell-candidate/$BACKING"
   cp "$CANDIDATE_HOME/composition.json" "$LOGS/7-composition.json"
   cp "$CANDIDATE_HOME/catalogue.json" "$LOGS/7-catalogue.json"
   ls -la "$CANDIDATE_HOME/hosted/contribution/" >"$LOGS/7-hosted-contributions.txt" 2>&1 || true

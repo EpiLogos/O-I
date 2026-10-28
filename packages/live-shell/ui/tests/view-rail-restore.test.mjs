@@ -32,5 +32,5 @@ test('a view carries the rail stamp as a boolean and refuses anything else under
 test('the dock is read only from a stamped view; every save stamps it; alsPath stays unset until a set stands', async () => {
   const app = await readFile(new URL('../src/App.tsx', import.meta.url), 'utf8')
   assert.match(app, /setDock\(view\?\.rail \? view\.dock \?\? opening\.dock : opening\.dock\)/)
-  assert.match(app, /checkpointApplicationView\(\{alsPath: state\.path \?\? restored\?\.alsPath \?\? undefined, rail: true,/)
+  assert.match(app, /checkpointApplicationView\(\{alsPath: state\.path \?\? \(worldPending \? restored\?\.alsPath : ofWorld\(restored\?\.alsPath\)\) \?\? undefined, rail: true,/)
 })

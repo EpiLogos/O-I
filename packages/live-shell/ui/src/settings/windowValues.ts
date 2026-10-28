@@ -9,13 +9,14 @@ import type {ChangeSetDocument, ConfigResolution, ContributionMount, PlanBundle,
 import {basisChanged, categoryOf, displayValue, draftOwnerChanged, editableValue, isSensitiveSetting, rawValue, settingHelp, settingKey, settingWords, tableRepresentation,
   type Draft, type SettingEntry} from './model'
 import type {HarnessReading} from '../../../../../desktop/cradle/src/configuration/harnessSource'
-import {effectiveChatDefault} from '../../../../../desktop/cradle/src/configuration/harnessSource'
+import {effectiveChatDefault, shapeHarnessClients} from '../../../../../desktop/cradle/src/configuration/harnessSource'
 import type {ProfileDocument} from '../../../../../desktop/cradle/src/configuration/contracts'
 import type {SystemCompositionReading} from '../../../../../desktop/cradle/src/workspace/settings/types'
 import type {PresentationDocument} from '../../../../../desktop/cradle/src/kernel/types'
 import type {MachineConnection, RemoteMachineDeclaration} from './machines'
 import type {Invocation, MethodRow, RoutineDetail, RoutineList} from '../../../../../desktop/cradle/src/contributions/automations/client'
 import {actionMessage, nextOccurrenceTimes} from '../../../../../desktop/cradle/src/contributions/automations/client'
+import type {AdoptionDiscovery, AdoptionState} from '../../../../../desktop/cradle/src/configuration/adoptionController'
 
 export const SETTINGS_WINDOW_ID = 'settings:window'
 
@@ -411,6 +412,260 @@ export function systemValues(reading: SystemCompositionReading | null): Record<s
       ...(setting.kind === 'secret' ? {} : {declared: setting.axes.declared, effective: setting.axes.effective, active: setting.axes.active, staged: setting.axes.staged})})))}]))}
 }
 
+// ---------------------------------------------------------------------------------------------------------------- Setup (manual §10.11)
+
+/** One folder Setup's Projects step reads. In the ground's Work (place `work`): work.list's member, its projectcentral.inspect (or the
+ * refusal in Central's words), its own material (central.files.list of the folder, hidden entries and ProjectCentral aside) and the
+ * parts of its ProjectCentral already there (central.files.list of ProjectCentral). Standing elsewhere under the world's folder (place
+ * `elsewhere`): work.candidates's member, with the signals Central found it by (git, agents, claude, wiki, obsidian); Central inspects
+ * no ProjectCentral outside its Work, so it has none. */
+export interface SetupWorkFolder {readonly name: string; readonly path: string; readonly place?: 'work' | 'elsewhere'; readonly relative?: string; readonly signals?: readonly string[]
+  readonly inspection: unknown; readonly material: readonly string[]; readonly parts: readonly string[]}
+/** A preview Setup asked for: the folder and the choices it was asked on, the steps Central would take, in order, and for a folder brought
+ * into Work, the digest Central's work.bring is pressed on. */
+export interface SetupPreview {readonly folder: string; readonly make: string; readonly where: string; readonly wiki?: string; readonly lines: readonly string[]; readonly digest?: string}
+/** The Machines step as Setup reads it: the Workcell this computer answers as (`workcell status --json`: workcell_ref, its source and
+ * health, or Workcell's refusal) and the Workcells Central's current machine is bound to (machine.declaration's workcell bindings;
+ * none until it is adopted). */
+export interface SetupMachine {readonly state: 'read'; readonly workcell: {readonly workcell_ref?: unknown; readonly workcell_ref_source?: unknown; readonly health?: unknown} | {readonly error: string}; readonly bound: readonly string[]}
+/** A detected agent tool as the Harnesses and skills step reads it (`aikit client status`): AIKit's client and harness names and its
+ * folder. Only the tools AIKit detects on this computer; one that is not installed is not a tool you use. */
+export interface SetupHarness {readonly client: string; readonly harness: string; readonly folder?: string}
+/** A skill root AIKit discovers (`aikit init`: its label, path, valid skills and problems), the skills `aikit collate --all` names in it,
+ * and AIKit's standing for it (`aikit tree --expand registries`, the first word of the root's row: foreign, adopted with the procedure
+ * that adopted it, or generated with its generation). */
+export interface SetupSkillRoot {readonly label: string; readonly path: string; readonly skills: number; readonly problems: number; readonly names: readonly string[]
+  readonly standing: string; readonly procedure?: string; readonly generation?: string}
+/** The Harnesses and skills step: the tools and the skill roots, or AIKit's refusal to read them, in its words. */
+export type SetupHarnesses = {readonly state: 'read'; readonly harnesses: readonly SetupHarness[]; readonly roots: readonly SetupSkillRoot[]} | {readonly state: 'refused'; readonly error: string}
+/** A key AIKit's discovery finds (`aikit credential discover`, presence only): where it lies and its name, never its value; the credential
+ * a binding of it satisfies (AIKit's proposal; none for a name AIKit knows no provider for) and whether that is bound. */
+export interface SetupKeyFinding {readonly source: string; readonly location: string; readonly name: string; readonly credential?: string; readonly bound: boolean}
+/** A provider a detected tool reaches (`aikit harness auth <harness>`): the variable that carries its key, and its own login in AIKit's
+ * words; or AIKit's refusal to say (`unread`). */
+export interface SetupHarnessProvider {readonly harness: string; readonly folder?: string; readonly provider: string; readonly envVar?: string; readonly ownLogin?: string; readonly unread?: string}
+/** The Credentials step: the keys found, the providers the tools reach and AIKit's bindings (metadata only), or AIKit's refusal. */
+export type SetupCredentials = {readonly state: 'read'; readonly findings: readonly SetupKeyFinding[]; readonly providers: readonly SetupHarnessProvider[]; readonly bindings: readonly CredentialRow[]}
+  | {readonly state: 'refused'; readonly error: string}
+/** What Setup holds: native oi's adoption state for the Ground step (the cradle's AdoptionController snapshot), AIKit for the Harnesses
+ * and skills and Credentials steps, Central's Work and the folders of work elsewhere for the Projects step (`elsewhere`: Central's
+ * refusal to read them, in its words), Workcell and Central for the Machines step, the preview asked last, and the folder brought into
+ * Work last (shown next until you choose another). */
+export interface SetupSnapshot {
+  readonly adoption: Partial<Pick<AdoptionState, 'discovery' | 'plan' | 'error' | 'busy' | 'unresolved'>>
+  readonly folders: {readonly state: 'unread'} | {readonly state: 'read'; readonly folders: readonly SetupWorkFolder[]; readonly elsewhere?: string} | {readonly state: 'refused'; readonly error: string}
+  readonly plan: SetupPreview | null
+  readonly machine?: SetupMachine
+  readonly brought?: string | null
+  readonly harnesses?: SetupHarnesses
+  readonly credentials?: SetupCredentials
+}
+
+/** Whether native oi reads the ground as bound and recognised: the Ground step's change is made. Pure. */
+export function groundBound(discovery: AdoptionDiscovery | undefined): boolean {
+  if (!discovery?.bound_ground || discovery.ground.outcome !== 'recognized') return false
+  return [discovery.selected_ground, discovery.ground.canonical_path].includes(discovery.bound_ground)
+}
+
+/** The Ground step from native oi's discovery (oi.setup/v1): the ground bound and recognised (accepted), a new one Central would make in
+ * the folder chosen, an existing one adopted where it is, or one Central cannot read, named with its reason. A refused read or a blocked
+ * plan stands on the row in native oi's words. Undefined before any reading. Pure. */
+export function setupGroundStep(adoption: SetupSnapshot['adoption']): Record<string, unknown> | undefined {
+  const discovery = adoption.discovery
+  if (!discovery) return adoption.error ? {step: 'ground', state: 'found', items: [{name: 'Your ground', why: adoption.error}]} : undefined
+  const where = discovery.selected_ground ?? discovery.suggested_ground
+  if (groundBound(discovery)) return {step: 'ground', state: 'accepted', items: [{name: 'Your ground', where, change: 'Central keeps it here · nothing in it moved'}]}
+  const outcome = discovery.ground.outcome
+  const item: Record<string, string> = outcome === 'new' ? {name: 'A new ground', where, change: 'Central makes your ground here and checks it · nothing else is made'}
+    : outcome === 'recognized' ? {name: 'Your ground', where, change: 'Central adopts it where it is · nothing in it moves'}
+      : {name: 'Your ground', where, why: discovery.ground.reason ?? `Central did not recognise ${where} as a ground it can read.`}
+  const why = adoption.plan?.blocked.length ? adoption.plan.blocked.join(' ') : adoption.error
+  return {step: 'ground', state: 'found', items: [why ? {...item, why} : item]}
+}
+
+const PC_PARTS = ['user', 'agents', 'wiki', 'now'] as const
+/** A folder as the Projects step draws it: what Central finds there (projectcentral.inspect: no wiki, one, several, a ProjectCentral
+ * it cannot read, or the ground in place), the wikis a folder keeps to adopt, its material and the ProjectCentral parts already there.
+ * A folder elsewhere is what work.candidates found: an OKF wiki at its top (`wiki.json`), or none; nothing of ProjectCentral. Pure. */
+export function setupFolder(row: SetupWorkFolder): Record<string, unknown> {
+  if (row.place === 'elsewhere') {
+    const wikis = row.signals?.includes('wiki') ? ['wiki.json'] : []
+    return {path: row.path, title: row.name, place: 'elsewhere', finds: wikis.length ? 'one' : 'none', wikis, material: [...row.material], central: []}
+  }
+  const inspection = rec(row.inspection) ? row.inspection : {}
+  const errors = Array.isArray(inspection.manifest_errors) ? inspection.manifest_errors : []
+  const manifest = rec(inspection.manifest) ? inspection.manifest : null
+  const candidates = (Array.isArray(inspection.wiki_candidates) ? inspection.wiki_candidates : []).flatMap(row => (rec(row) && txt(row.source) ? [txt(row.source)!] : []))
+  const finds = !txt(inspection.outcome) || errors.length || (manifest && inspection.outcome !== 'already_conformant') ? 'unreadable'
+    : inspection.outcome === 'already_conformant' ? 'ground' : !candidates.length ? 'none' : candidates.length === 1 ? 'one' : 'many'
+  const central = PC_PARTS.filter(part => (part === 'wiki' ? !!manifest && rec(manifest.wiki) : row.parts.includes(part)))
+  return {path: row.path, title: row.name, place: 'work', finds, wikis: finds === 'ground' || finds === 'unreadable' ? [] : candidates, material: [...row.material], central}
+}
+
+/** The choices the Projects step stands on, as the design reads them: the folder shown (the one you chose, else the one brought into
+ * Work last, else the first), what to make, where (a folder of Work where it stands; a folder elsewhere Into Work, since Central keeps a
+ * project in its Work), and the wiki (the folder's one, else the one you chose). Pure. */
+export function setupChoice(folders: readonly Record<string, unknown>[], held: (key: string) => Value | undefined, brought?: string | null): {folder?: string; make?: string; where: string; wiki?: string} {
+  const chosen = txt(held('folder')) ?? txt(brought), folder = folders.find(f => f.path === chosen) ?? folders[0]
+  const wikis = Array.isArray(folder?.wikis) ? folder!.wikis as string[] : []
+  const wiki = wikis.length === 1 ? wikis[0] : txt(held('wiki'))
+  const where = txt(held('where')) ?? (folder?.place === 'elsewhere' ? 'work' : 'stands')
+  return {...(txt(folder?.path) ? {folder: txt(folder!.path)} : {}), ...(txt(held('make')) ? {make: txt(held('make'))} : {}), where, ...(wiki ? {wiki} : {})}
+}
+
+/** The Machines step (manual §10.11: "Makes this computer a workcell") from Workcell and Central: this computer as the Workcell it
+ * answers as, accepted once Central's current machine is bound to that Workcell; a binding to another Workcell, or a refusal, named in
+ * its owner's words. Undefined before it is read. Pure. */
+export function setupMachineStep(machine: SetupMachine | undefined): Record<string, unknown> | undefined {
+  if (!machine) return undefined
+  const workcell = machine.workcell
+  if ('error' in workcell) return {step: 'machines', state: 'found', items: [{name: 'This computer', why: `Workcell did not say which Workcell this computer is: ${workcell.error}`}]}
+  const ref = txt(workcell.workcell_ref)
+  if (!ref) return {step: 'machines', state: 'found', items: [{name: 'This computer', why: 'Workcell\'s status names no Workcell for this computer.'}]}
+  if (machine.bound.includes(ref)) return {step: 'machines', state: 'accepted', items: [{name: 'This computer', where: ref, change: `Central's current machine is bound to Workcell ${ref}`}]}
+  const item: Record<string, string> = {name: 'This computer', where: ref, change: `Central adopts this computer as your current machine, bound to Workcell ${ref}${txt(workcell.workcell_ref_source) ? ` (Workcell's ${txt(workcell.workcell_ref_source)} identity)` : ''}`}
+  if (machine.bound.length) item.why = `Central's current machine is bound to ${machine.bound.join(', ')}, not to ${ref}: resolve the binding in Control/machines/current.json first. Nothing is rebound.`
+  return {step: 'machines', state: 'found', items: [item]}
+}
+
+/** The tools AIKit detects on this computer, from its client status (harnessSource.ts shapeHarnessClients): each one's client, harness and
+ * folder. A tool AIKit does not detect is not one you use. Pure. */
+export function setupHarnessClients(status: unknown): SetupHarness[] {
+  return shapeHarnessClients(status).filter(row => row.detected).map(row => ({client: row.client, harness: row.harness, ...(folderOf(row.config_dir) ? {folder: folderOf(row.config_dir)} : {})}))
+}
+
+/** The skill roots AIKit discovers (`aikit init`'s roots), each with the skills `aikit collate --all` names under its label, and the
+ * standing AIKit's tree gives it (`aikit tree --expand registries`: the row `registries/<label>`, whose summary opens with the standing,
+ * then `procedure P` or `generation G`). A root the tree does not name stands `unknown`. Pure. */
+export function setupSkillRoots(init: unknown, collate: unknown, tree: unknown): SetupSkillRoot[] {
+  const roots = rec(init) && Array.isArray(init.roots) ? init.roots.filter(rec) : []
+  const clusters = rec(collate) && Array.isArray(collate.clusters) ? collate.clusters.filter(rec) : []
+  const rows = rec(tree) && Array.isArray(tree.rows) ? tree.rows.filter(rec) : []
+  return roots.flatMap((root): SetupSkillRoot[] => {
+    const label = txt(root.label), path = txt(root.path)
+    if (!label || !path) return []
+    const names = clusters.filter(cluster => Array.isArray(cluster.where) && cluster.where.some(where => rec(where) && where.root === label)).flatMap(cluster => (txt(cluster.name) ? [cluster.name as string] : []))
+    const summary = txt(rows.find(row => row.path === `registries/${label}`)?.summary) ?? ''
+    const parts = summary.split(' · ')
+    const procedure = parts.find(part => part.startsWith('procedure '))?.slice('procedure '.length), generation = parts.find(part => part.startsWith('generation '))?.slice('generation '.length)
+    return [{label, path, skills: typeof root.skills === 'number' ? root.skills : 0, problems: typeof root.problems === 'number' ? root.problems : 0, names: [...names].sort(),
+      standing: parts[0] && ['foreign', 'adopted', 'generated'].includes(parts[0]) ? parts[0] : 'unknown', ...(procedure ? {procedure} : {}), ...(generation ? {generation} : {})}]
+  })
+}
+/** The namespace a root's skills are adopted under: AIKit's own label for the root, without its @ (`@claude` → `skill/claude/…`). */
+export const setupNamespace = (root: Pick<SetupSkillRoot, 'label'>): string => root.label.replace(/^@/, '')
+const SETUP_HELD = new Set(['adopted', 'generated'])
+const skillsWord = (n: number) => `${n} skill${n === 1 ? '' : 's'}`
+
+/** The Harnesses and skills step (manual §10.11: "Each agent tool you use, with its settings, its instructions and its skills"): each skill
+ * root under the tool whose folder holds it (else under AIKit's label for it), the change Accept makes — AIKit adopts its skills, and the
+ * tool reads them where they were, its settings and instructions as they are — or, once AIKit holds the root, that it does. A tool with
+ * no skills, and a root AIKit cannot place, are named and left alone. Accepted once AIKit holds every root that keeps skills. Pure. */
+export function setupHarnessStep(reading: SetupHarnesses | undefined): Record<string, unknown> | undefined {
+  if (!reading) return undefined
+  if (reading.state === 'refused') return {step: 'harnesses', state: 'found', items: [{name: 'Your agent tools', why: reading.error}]}
+  const ownerOf = (root: SetupSkillRoot) => reading.harnesses.find(tool => tool.folder && (root.path === tool.folder || root.path.startsWith(`${tool.folder}/`)))
+  const items: Record<string, unknown>[] = reading.roots.map(root => {
+    const tool = ownerOf(root), name = tool?.harness ?? root.label, by = tool?.harness ?? 'The tool'
+    const listed = root.names.length ? ` (${root.names.join(', ')})` : ''
+    if (!root.skills) return {name, where: root.path, why: 'It keeps no skills AIKit can read: nothing to adopt.'}
+    if (SETUP_HELD.has(root.standing)) return {name, where: root.path,
+      change: `AIKit holds its ${skillsWord(root.skills)}${listed} (${root.standing}${root.procedure ? ` · procedure ${root.procedure}` : root.generation ? ` · generation ${root.generation}` : ''}) · ${by} reads them where they were`}
+    if (root.standing !== 'foreign') return {name, where: root.path, why: `AIKit does not say whether it holds these skills (its tree names no standing for ${root.label}): they are left as they are.`}
+    return {name, where: root.path, change: `AIKit adopts its ${skillsWord(root.skills)}${listed} as skill/${setupNamespace(root)}/… · ${by} reads them where they were · its settings and instructions stay as they are${root.problems ? ` · AIKit names ${root.problems} entr${root.problems === 1 ? 'y' : 'ies'} it cannot read` : ''}`}
+  })
+  for (const tool of reading.harnesses) if (!reading.roots.some(root => ownerOf(root) === tool)) items.push({name: tool.harness, where: tool.folder ?? tool.client, why: 'It keeps no skills here: nothing to adopt. Its settings stay as they are.'})
+  const keeping = reading.roots.filter(root => root.skills > 0)
+  return {step: 'harnesses', state: keeping.length && keeping.every(root => SETUP_HELD.has(root.standing)) ? 'accepted' : 'found', items}
+}
+
+/** AIKit's discovery findings (`aikit credential discover`): each key's source, place and name, the credential AIKit proposes for it, and
+ * whether that is bound. Discovery is presence only; there is no field a value could travel in. Pure. */
+export function setupKeyFindings(discover: unknown): SetupKeyFinding[] {
+  const findings = rec(discover) && Array.isArray(discover.findings) ? discover.findings.filter(rec) : []
+  return findings.flatMap((row): SetupKeyFinding[] => {
+    const location = txt(row.location), name = txt(row.name)
+    if (!location || !name) return []
+    return [{source: txt(row.source) ?? 'unknown', location, name, ...(txt(row.proposed_credential_ref) ? {credential: row.proposed_credential_ref as string} : {}), bound: row.already_bound === true}]
+  })
+}
+/** The providers a detected tool reaches, from AIKit's auth options for it (`aikit harness auth <harness>`: the variable that carries each
+ * provider's key, and the tool's own login in AIKit's words), by provider. Pure. */
+export function setupHarnessProviders(tool: SetupHarness, auth: unknown): SetupHarnessProvider[] {
+  const rows = (key: string) => (rec(auth) && Array.isArray(auth[key]) ? (auth[key] as unknown[]).filter(rec) : [])
+  const provider = (row: Record<string, unknown>) => txt(row.provider_ref)?.replace(/^provider:/, '')
+  const names = [...new Set([...rows('env_var'), ...rows('own_login')].flatMap(row => (provider(row) ? [provider(row)!] : [])))]
+  return names.map(name => {
+    const envVar = txt(rows('env_var').find(row => provider(row) === name)?.env_var), ownLogin = txt(rows('own_login').find(row => provider(row) === name)?.note)
+    return {harness: tool.harness, ...(tool.folder ? {folder: tool.folder} : {}), provider: name, ...(envVar ? {envVar} : {}), ...(ownLogin ? {ownLogin} : {})}
+  })
+}
+/** The credential a provider's key binds as (AIKit's own convention, `credential:<provider>`: discovery proposes it, client status names it). */
+const credentialFor = (provider: string) => `credential:${provider}`
+/** The schemes of a stored-secret reference AIKit declares (`aikit credential setup --ref`): a place in a store, never a key. */
+export const SECRET_REFERENCE = /^(keychain|op|pass|varlock):\/\/\S+$/
+
+/** The Credentials step (manual §10.11: "Where each provider's key lies: the place, never the value"; Accept "binds each key by
+ * reference"): each key AIKit found, where it lies and the binding Accept makes of it by the reference you give (the one you chose shows
+ * it), or that it is bound and to what; a name AIKit knows no provider for is left as it is; each provider a detected tool reaches that no
+ * key or binding covers is named with how the tool reaches it (its own login, in AIKit's words) and left alone; a binding AIKit keeps
+ * that no finding shows stands as bound. Accepted once a key is bound and none found waits. Pure. */
+export function setupCredentialStep(reading: SetupCredentials | undefined, held: (key: string) => Value | undefined): Record<string, unknown> | undefined {
+  if (!reading) return undefined
+  if (reading.state === 'refused') return {step: 'credentials', state: 'found', items: [{name: 'Your keys', why: reading.error}]}
+  const bound = new Map(reading.bindings.filter(row => !row.revoked).map(row => [row.credential, row.reference]))
+  const open = reading.findings.filter(row => row.credential && !row.bound && !bound.has(row.credential))
+  const chosen = txt(held('credential')) ?? open[0]?.credential, reference = txt(held('reference'))
+  const items: Record<string, unknown>[] = reading.findings.map(row => {
+    if (!row.credential) return {name: row.name, where: row.location, why: `AIKit knows no provider for ${row.name}: it is left as it is.`}
+    if (row.bound || bound.has(row.credential)) return {name: row.name, where: row.location, credential: row.credential, bound: true,
+      change: `${row.credential} is bound by reference${bound.get(row.credential) ? ` to ${bound.get(row.credential)}` : ''} · the key stays where it lies`}
+    return {name: row.name, where: row.location, credential: row.credential,
+      change: `AIKit binds ${row.credential} ${row.credential === chosen && reference ? `to ${reference}` : 'by the reference you give'} · the key stays where it lies; the DLW never shows it and never keeps it`}
+  })
+  const covered = new Set([...reading.findings.flatMap(row => (row.credential ? [row.credential] : [])), ...bound.keys()])
+  for (const [credential, where] of bound) if (!reading.findings.some(row => row.credential === credential))
+    items.push({name: credential, where: where ?? credential, credential, bound: true, change: `bound by reference${where ? ` to ${where}` : ''}`})
+  for (const provider of reading.providers) {
+    if (provider.unread) { items.push({name: provider.harness, where: provider.folder ?? provider.harness, why: provider.unread}); continue }
+    if (covered.has(credentialFor(provider.provider))) continue
+    covered.add(credentialFor(provider.provider))
+    items.push({name: `${provider.provider} for ${provider.harness}`, where: provider.folder ?? provider.harness,
+      why: provider.ownLogin ?? `No key for it lies on this computer${provider.envVar ? ` (${provider.envVar} is not set)` : ''}.`})
+  }
+  return {step: 'credentials', state: bound.size && !open.length ? 'accepted' : 'found', items}
+}
+
+/** Setup's values (the design's setup, folders and setupPlan): the Ground step from native oi; Harnesses and skills and Credentials from
+ * AIKit; Machines from Workcell and Central; once there is a ground, the Projects step from Central's Work, accepted once a project
+ * stands with its ground; the preview, only for the choices it was asked on. A step not read yet stands absent. Pure. */
+export function setupValues(snapshot: SetupSnapshot, held: (key: string) => Value | undefined): Record<string, Value> {
+  const values: Record<string, Value> = {}
+  const steps: Record<string, unknown>[] = []
+  const ground = setupGroundStep(snapshot.adoption)
+  if (ground) steps.push(ground)
+  const harnesses = setupHarnessStep(snapshot.harnesses)
+  if (harnesses) steps.push(harnesses)
+  const credentials = setupCredentialStep(snapshot.credentials, held)
+  if (credentials) steps.push(credentials)
+  const machines = setupMachineStep(snapshot.machine)
+  if (machines) steps.push(machines)
+  if (snapshot.folders.state === 'read') {
+    const folders = snapshot.folders.folders.map(setupFolder)
+    values.folders = json(folders)
+    const elsewhere = snapshot.folders.elsewhere
+    steps.push({step: 'projects', state: folders.some(folder => folder.finds === 'ground') ? 'accepted' : 'found', items: elsewhere ? [{name: 'Folders of work elsewhere', why: elsewhere}] : []})
+    const plan = snapshot.plan, choice = setupChoice(folders, held, snapshot.brought)
+    // Defaults the design reads where you chose nothing: the folder brought in last, and a folder elsewhere comes Into Work.
+    if (!txt(held('folder')) && choice.folder && choice.folder === txt(snapshot.brought)) values.folder = choice.folder
+    if (!txt(held('where')) && choice.where === 'work') values.where = 'work'
+    // A preview stands only for the choices it was asked on; bringing a folder in is asked on the folder and where alone.
+    if (plan && plan.folder === choice.folder && plan.where === choice.where && (plan.make === 'bring' || (plan.make === choice.make && plan.wiki === choice.wiki))) values.setupPlan = json(plan.lines)
+  }
+  if (steps.length) values.setup = json(steps)
+  return values
+}
+
 // ---------------------------------------------------------------------------------------------------------------- the classification
 
 /** A page's capability this adapter does not carry (the development and unavailable adapters carry few; native/configuration.ts binds them). */
@@ -426,8 +681,9 @@ export const NO_NAVIGATE = (what: string) => `${what} stands beside its instrume
 export const NO_WORKCELL_SECRETS = 'Workcell\'s secret references, projections and scan (`workcell system --json` keys.references, `workcell secret projections`, `workcell secret scan`): no kernel route reaches them yet (T-COVERAGE §1.2).'
 export const NO_SECURE_FIELD = 'Enter key: a write-only key goes to the native host\'s own secure field, never through the window; no host qualifies that capability here (SettingsAdapter.canEnterCredentialMaterial).'
 export const NO_STANDING = 'A route\'s standing (unproven, observed, usable) is AIKit\'s model field (`aikit model-catalogue show`), which model_catalogue does not carry yet.'
-/** Setup (manual §10.11) is not bound in this window: the kernel op exists (desktop/cradle/src/kernel/types.ts `setup`), and nothing here calls it. */
-export const NO_SETUP = 'Setup (manual §10.11): the kernel op `setup` (desktop/cradle/src/kernel/types.ts, the adoption controller\'s discover, plan and apply) is not bound to this window yet; Settings opens on Harnesses & models.'
+export const NO_SETUP_SOURCE = NO('Setup', 'setup')
+/** Why Setup's AIKit steps stand unread where the host hands Setup no AIKit (SetupSource.aikit). */
+export const NO_SETUP_AIKIT = 'Setup reaches no AIKit here (SetupSource.aikit): Harnesses and skills and Credentials are AIKit\'s.'
 
 /** Every key the design reads or presses, by where it stands. */
 export const SETTINGS_WINDOW_WIRING = {
@@ -459,6 +715,9 @@ export const SETTINGS_WINDOW_WIRING = {
     visualLayer: 'the renderer\'s visual layer (SettingsAdapter.visualPreferences)', welcome: 'the renderer\'s welcome scene (SettingsAdapter.visualPreferences)',
     products: 'each product\'s mount and operations (system_composition_read)', ran: 'the last operation\'s answer (product_action_run)',
     system: 'each owner\'s System disclosure on its four axes (system_composition_read)',
+    setup: 'Setup\'s steps (manual §10.11): Ground from native oi\'s adoption (the kernel op `setup`: status and discover; bound and recognised is accepted); Machines from Workcell\'s status (op workcell_status_read) and Central\'s machine.declaration of role current, accepted once that binds the Workcell this computer answers as; Projects from Central\'s Work, accepted once a project stands with its ground. Harnesses and skills from AIKit: the tools its client status detects (op harness_status), the skill roots aikit init discovers (aikit_read init), the skills aikit collate --all names in each, and each root\'s standing in aikit tree --expand registries (foreign, adopted, generated), accepted once AIKit holds every root that keeps skills. Credentials from AIKit: where aikit credential discover finds each key (presence only), the providers aikit harness auth names for each detected tool (op harness_auth_describe) and the bindings aikit credential list keeps (metadata only), accepted once a key is bound and none found waits; items carry the credential a row binds, and bound',
+    folders: 'the folders of the ground\'s Work (Central work.list), each with Central\'s projectcentral.inspect, its material and its ProjectCentral parts (central.files.list); then the folders of work that stand elsewhere under the world\'s folder (Central work.candidates)',
+    setupPlan: 'the preview of the folder and choices shown: Central\'s projectcentral.adopt.preview or projectcentral.migrate.preview operations; for Create, the inspection Central plans projectcentral.init on; for a folder elsewhere, Central\'s work.bring.preview',
   },
   writes: {
     plan: 'config_plan_reviewed', apply: 'config_apply_reviewed', reset: 'config_reset on the reading digest', keep: 'the draft re-based on the current reading (the window\'s own)',
@@ -476,6 +735,9 @@ export const SETTINGS_WINDOW_WIRING = {
     checkCreation: 'RoutineAuthoringSource.readResult: a waiting creation read back, never sent again',
     addMachine: 'RemoteMachinesSource.add', connect: 'RemoteMachinesSource.connect', disconnect: 'RemoteMachinesSource.disconnect', removeMachine: 'RemoteMachinesSource.remove',
     openElsewhere: 'the setting\'s own editor beside its instrument (SettingsAdapter.navigate)', 'pick:<ref>': 'the system picker (SettingsAdapter.pickResource)',
+    acceptStep: 'Ground: native oi\'s reviewed plan (the kernel op `setup`: plan, then apply with its review token; Central only — custom, products [central]) read back by discover. Machines: Central\'s machine.adopt-current (role current, the Workcell this computer answers as), read back by machine.declaration; the host then reads its world again. Projects: a folder elsewhere comes into Work by Central\'s work.bring on its preview\'s digest, read back by work.list; a folder of Work becomes a project by Central\'s projectcentral.init, adopt or migrate as previewed, read back by projectcentral.inspect. Harnesses and skills: for each skill root AIKit reads as foreign, AIKit\'s plan (aikit_read adopt-plan: aikit adopt ROOT --namespace LABEL, nothing moves) and, when it adopts the skills read, aikit adopt ROOT --namespace LABEL --yes --expect-digest on its review digest (aikit_write adopt), read back by aikit tree as adopted and aikit init as still keeping its skills; the tool keeps reading them where they were. Credentials: aikit credential setup CREDENTIAL --ref REFERENCE (op credential_setup with the reference you give, never material) for the key chosen, read back by aikit credential list; a reference that names no store (op://, keychain://, pass://, varlock://) is refused before anything is sent',
+    previewStep: 'Central\'s projectcentral.adopt.preview or migrate.preview for the folder and wiki chosen; Create previews from Central\'s inspection (it has no preview of projectcentral.init); a folder elsewhere previews Central\'s work.bring.preview',
+    rereadSetup: 'native oi\'s status and discover, then AIKit\'s tools, skill roots, keys and bindings, Workcell\'s status and Central\'s machine declaration, Central\'s Work and the folders of work elsewhere, read again',
   },
   local: {
     search: 'what you search for', hit: 'the search result ↑/↓ marked', scope: 'the scope a page\'s settings are read and changed at', focus: 'the setting a press or a request opened',
@@ -483,20 +745,19 @@ export const SETTINGS_WINDOW_WIRING = {
     context: 'Automations\' work context', routine: 'the routine chosen', product: 'the product chosen', owner: 'whose System reading shows', axes: 'four axes or the configuration',
     adding: 'the open form', rotating: 'the credential whose reference you replace', chatDefault: 'a provider chosen, not yet applied', themeDraft: 'an appearance chosen, not yet applied',
     setupStep: 'the Setup step shown', folder: 'the folder the Projects step shows', make: 'what to make of it', wiki: 'its wiki to keep or copy', where: 'where it is adopted',
+    credential: 'the key the Credentials step binds (a found key\'s credential)', reference: 'where that key lies in your secure store, which Accept binds it to: a reference, never the key',
     'new.<field>': 'the open form\'s fields', 'draft:<ref>': 'your local change of a setting, until Review and Apply',
   },
   refused: {
     enterKey: NO_SECURE_FIELD, scan: NO_WORKCELL_SECRETS, revokeProjection: NO_WORKCELL_SECRETS,
-    acceptStep: NO_SETUP, previewStep: NO_SETUP, rereadSetup: NO_SETUP,
   },
   absent: {
     secretRefs: NO_WORKCELL_SECRETS, projections: NO_WORKCELL_SECRETS, outside: NO_WORKCELL_SECRETS,
-    setup: NO_SETUP, folders: NO_SETUP, setupPlan: NO_SETUP,
   },
 } as const
 
 /** The design keys the window holds as its own (SETTINGS_WINDOW_WIRING.local), exact. */
 export const SETTINGS_LOCAL_KEYS = ['search', 'hit', 'scope', 'focus', 'details', 'show', 'context', 'routine', 'product', 'owner', 'axes', 'adding', 'rotating', 'chatDefault', 'themeDraft',
-  'setupStep', 'folder', 'make', 'wiki', 'where',
+  'setupStep', 'folder', 'make', 'wiki', 'where', 'credential', 'reference',
   'new.name', 'new.description', 'new.method', 'new.proof', 'new.trigger', 'new.repeat', 'new.schedule', 'new.authority', 'new.profile', 'new.scopes', 'new.grant', 'new.reproof',
   'new.label', 'new.endpoint', 'new.credential', 'new.reference', 'new.note', 'new.expects'] as const

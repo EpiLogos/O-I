@@ -1,5 +1,7 @@
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState, type ComponentProps, type CSSProperties, type RefObject } from 'react'
 import {BOOK_MODE_OF_SHELL, useContinuity} from './continuity/workspace'
+import {rememberedSetOfWorld} from './continuity/applicationView'
+import {nativeHost} from './native/application'
 import { PARAMETER_BROWSE_EVENT } from './components/nativeDrag'
 import type { NativeDetailConfigurationIntent } from './components/NativeWorldDetail'
 import {NativeInputRetentionProvider,nativeInputBinding} from './components/NativeInputRetention'
@@ -142,8 +144,13 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
   const centreIntent = useRef<{key: string; panel: string; tab?: 'session' | 'arrangement'} | null>(null)
   const [restoration, restorePath] = useState({workspaceId: workspace.workspaceId, path: restored?.alsPath})
   const config = useShellConfig()
+  // The open world's own sets alone reopen (manual §10.4; O-I #738): the native host names the world, and until it has been
+  // read nothing remembered opens; a set outside the world's Central is neither reopened nor kept again as remembered.
+  const worldPending = nativeHost() && !config
+  const setsGround = config?.world ? config.world_scope?.personal_ground ?? config.personal_ground ?? null : undefined
+  const ofWorld = (path: string | null | undefined) => rememberedSetOfWorld(path, setsGround)
   const rememberedPath = restoration.workspaceId === workspace.workspaceId ? restoration.path : restored?.alsPath
-  const initialPath = rememberedPath === undefined ? config?.default_set : rememberedPath ?? undefined
+  const initialPath = worldPending ? undefined : rememberedPath === undefined ? config?.default_set : ofWorld(rememberedPath) ?? undefined
   const state = useSetSummary(initialPath, workspace.workspaceId)
   const deep = useSetDocument(state.set)
   const [detailMode, changeDetailMode] = useState<DetailMode>(restored?.detailMode ?? opening.detailMode)
@@ -436,9 +443,9 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
   }, [restoreKey, restoredKey, continuity.applicationView])
   useEffect(() => {
     if (restoredKey !== restoreKey) return
-    continuity.checkpointApplicationView({alsPath: state.path ?? restored?.alsPath ?? undefined, rail: true, tab: timelinePane, selection: liveHeld, browserCategory,
+    continuity.checkpointApplicationView({alsPath: state.path ?? (worldPending ? restored?.alsPath : ofWorld(restored?.alsPath)) ?? undefined, rail: true, tab: timelinePane, selection: liveHeld, browserCategory,
       browser, detail:nativeEditorPresented?nativeEditorReturn!.detail:detail, dock, browserWidth, detailHeight:keptDetailHeight(detailExpansions.current,frameKey,detailHeight), centerPanel:mainView !== 'pane' ? 'world.set' : nativeEditorPresented?nativeEditorReturn!.centerPanel:centerPanel, detailMode:nativeEditorPresented?nativeEditorReturn!.detailMode:detailMode, settingsPresented, settingsReturn: workspace.mode === 'expressions' || workspace.mode === 'techne' ? workspace.mode : undefined, mixer})
-  }, [restoredKey, restoreKey, state.path, timelinePane, mainView, mixer, liveHeld, browserCategory, browser, detail, dock, browserWidth, detailHeight, centerPanel, detailMode, nativeEditorReturn, nativeEditorPresented, settingsPresented, workspace.mode, continuity.checkpointApplicationView])
+  }, [restoredKey, restoreKey, state.path, timelinePane, mainView, mixer, liveHeld, browserCategory, browser, detail, dock, browserWidth, detailHeight, centerPanel, detailMode, nativeEditorReturn, nativeEditorPresented, settingsPresented, workspace.mode, continuity.checkpointApplicationView, worldPending, setsGround])
   // The view keys (manual §10.1, §10.8; shell/workspaceAreas.ts frameToggleOf, read by the key as well as its character — macOS
   // gives ⌥L as "¬"). They are the window's: taken before any pane's own keys (the Workbench's keymap binds ⌥⌘R to its layout
   // restore, desktop/cradle/src/surface/keys.ts:94; ⌥⌘R is Live's return tracks here), wherever the focus stands.

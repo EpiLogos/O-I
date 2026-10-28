@@ -14,6 +14,8 @@ mod ground_dialog;
 mod material_protocol;
 mod app_assets;
 mod native_shell;
+#[cfg(feature = "native_shell")]
+mod world_folder;
 mod walk_diagnostics;
 mod midi;
 mod downloads;
@@ -157,6 +159,17 @@ fn main() {
             .iter()
             .map(|window| (window.label.clone(), Some(id)))
             .collect();
+    }
+    // Any world but Yours keeps what its pages store apart (O-I #738): its main and
+    // detached windows share a WebKit store named by its folder. Yours keeps its own.
+    #[cfg(feature = "native_shell")]
+    if let Some(id) = native_shell::world_store() {
+        for window in &mut context.config_mut().app.windows {
+            window.data_store_identifier = Some(id);
+        }
+        for (_, store) in &mut seated {
+            *store = Some(id);
+        }
     }
     let builder = material_protocol::register(tauri::Builder::default());
     builder
@@ -302,6 +315,8 @@ fn main() {
                         if let Err(error)=native_shell::request_close(app,code.unwrap_or(0),false){native_shell::report_close_failure(app,error);}
                     }
                 }
+                // A switch of worlds closed the application; it opens again in the chosen world.
+                tauri::RunEvent::Exit => native_shell::relaunch(),
                 _=>{}
             }
             #[cfg(not(feature = "native_shell"))]

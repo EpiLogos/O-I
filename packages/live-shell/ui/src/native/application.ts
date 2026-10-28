@@ -37,6 +37,9 @@ export interface ShellConfig {
   backing_id?: string
   profile_scope?: {backing_id: string; configuration_home: string; active_profile: unknown}
   onboarding?: boolean
+  /** The world this launch opened (live_shell_config's world, native_shell.rs; O-I #738): its name and folder, Yours (the
+   * computer's own homes) or another, and the worlds there are to open. Absent on the development bridge and older hosts. */
+  world?: {name: string; folder: string; native: boolean; notice?: string | null; worlds?: {name: string; folder: string; native: boolean; open: boolean}[]}
   expressions_entry?: string
   saved_works?: unknown
   /** The installed host's qualified source basis (live_shell_config in

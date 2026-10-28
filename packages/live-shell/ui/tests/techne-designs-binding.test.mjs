@@ -707,8 +707,8 @@ test('the Lens reads QL\'s lens registry, frames and provider operations through
   lenses.resetLensRegistry()
 })
 
-// REAL (tests/fixtures/ql-mef-lenses-sublenses-2026-10-21.json): `ql mef lenses` with each lens's six sublenses (QL-MEF pull 349).
-const QL_SUBLENSES = JSON.parse(readFileSync(new URL('./fixtures/ql-mef-lenses-sublenses-2026-10-21.json', import.meta.url), 'utf8'))
+// REAL (tests/fixtures/ql-mef-lenses-sublenses-2026-10-28.json): `ql mef lenses` with each lens's six sublenses (QL-MEF b87dfee08, the ruled L0).
+const QL_SUBLENSES = JSON.parse(readFileSync(new URL('./fixtures/ql-mef-lenses-sublenses-2026-10-28.json', import.meta.url), 'utf8'))
 
 test('the Lens draws each lens\'s six sublenses where QL carries them, and holds the lens and sublens you choose (REAL answer)', async () => {
   const lenses = await import('../src/techne/devices/lensRegistry.ts')

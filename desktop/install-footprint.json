@@ -5,17 +5,9 @@
   "managed_root": "products/desktop",
   "bin_shim": "oi-cradle",
   "backing": {
-    "default": "0/1/2",
-    "note": "Packaging default for a new Desktop install, per the composition lock section 3. It is a disclosure, not an action: the backing products install through their own flows and adding or removing the Desktop never reinstalls ground, reconstitutes Agents or renames Projects.",
+    "default": "full-suite",
+    "note": "The desktop is a full install (manual §10.10, §10.11; O-I #738): every product it carries is there from the first open, and Setup adds none and removes none. It is a disclosure, not an action: the backing products install through their own flows and adding or removing the Desktop never reinstalls ground, reconstitutes Agents or renames Projects.",
     "options": {
-      "0/1": {
-        "label": "Central + Actuation",
-        "products": ["central", "actuation"]
-      },
-      "0/1/2": {
-        "label": "Central + Actuation + AIKit",
-        "products": ["central", "actuation", "ai-kit"]
-      },
       "full-suite": {
         "label": "Central + Actuation + AIKit + Software Factory + Workcell + Quaternal Logic",
         "products": ["central", "actuation", "ai-kit", "software-factory", "workcell", "quaternal-logic"]

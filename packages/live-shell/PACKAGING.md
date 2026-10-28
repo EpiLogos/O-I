@@ -59,10 +59,16 @@ the default comes from `backing.default`. Exact identity sets must match. Extra
 installed products do not enter the candidate. No PATH/catalogue/managed-global
 search fills a missing binding. Full six-product membership requires its actual
 native footprint backing entry; this script cannot invent one from a count.
-The commissioned native extension adds `full-suite` with the six named owners,
-keeping `0/1`, `0/1/2` and the `0/1/2` default intact. It is a Desktop backing
-offer permitted by the composition lock's richer-backing rule, not a new World
-mode or an instruction to install six products for ordinary smaller use.
+The desktop is a full install (manual §10.10, §10.11; O-I #738): the footprint's
+one backing, `full-suite`, names the six owners and is its default. The partial
+backings `0/1` and `0/1/2` are retired; an everyday install recorded on one
+updates onto the full install (`oi desktop update`).
+
+The candidate keeps no state of its own outside the world it opens: launched
+with `OI_WORLD_FOLDER=<folder>` (or the register of worlds the computer's own
+user keeps), every product's home is that folder, and the computer's own world,
+Yours, keeps its homes where they stand (`src-tauri/src/world_folder.rs`). The
+starting worlds are made, kept and reset by `starting-worlds.py`.
 
 `runtime.rs::qualify(app_root, footprint_bytes)` verifies source/marker identity,
 all declared bytes, exact asset inventory, notice bytes, native product descriptor
@@ -87,9 +93,8 @@ Required artifact gate after actual host adaptation: package the real `.app`,
 install via the native installer into an isolated owned destination, disconnect
 the source checkout from resolution, launch the actual installed app, and
 exercise same-origin Expressions, native owner discovery, retained document
-read/edit/save/reopen and mode continuity. Repeat with a native smaller backing,
-excluded products genuinely absent from its payload, and managed-global products
-present but unavailable as fallback. Remove/tamper an asset and a required owner
+read/edit/save/reopen and mode continuity, with managed-global products present
+but unavailable as fallback. Remove/tamper an asset and a required owner
 binary; observe refusal, repair through the owner, and replay the original task.
 Record exact source/build/installed digests and independent verification. Until
 then the standing is prepared source and packaged bytes, with functional native

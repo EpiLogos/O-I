@@ -27,10 +27,11 @@ class FreezeBindingsTests(unittest.TestCase):
     def test_selection_uses_actual_native_footprint_and_excludes_other_installed_products(self):
         for backing, spec in self.footprint['backing']['options'].items():
             self.assertEqual(self.freeze.selection(self.footprint, backing), spec['products'])
-        small = self.freeze.selection(self.footprint, '0/1')
-        self.assertTrue(set(small) < set(self.receipts['products']))
-        with self.assertRaisesRegex(ValueError, 'backing'):
-            self.freeze.selection(self.footprint, 'invented-backing')
+        # The desktop is a full install (O-I #738): the partial backings are retired and refused like an invented one.
+        self.assertEqual(list(self.footprint['backing']['options']), ['full-suite'])
+        for retired in ('0/1', '0/1/2', 'invented-backing'):
+            with self.assertRaisesRegex(ValueError, 'backing'):
+                self.freeze.selection(self.footprint, retired)
 
     def test_real_managed_main_and_companion_digests_and_dirty_flags(self):
         products = {}

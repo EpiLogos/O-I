@@ -430,7 +430,7 @@ function SoundTab(p: ClipProps) {
   const blocks: Block[] = voiced.map(s => {
     const snd = objects[s.id]!.sound!
     return {id: s.id, lane: s.id, at: Number(snd.attack ?? 0), len: Math.max(0.1, end - Number(snd.attack ?? 0) - Number(snd.release ?? 0)), glide: Number(snd.release ?? 0),
-      label: snd.follow === true ? `follows the plate · gain ${Number(snd.gain).toFixed(2)}` : `${snd.frequency} Hz · gain ${Number(snd.gain).toFixed(2)} · ${snd.wave}`, tone: 'green' as const,
+      label: `${snd.name ? String(snd.name) : 'no name or mode'} · gain ${Number(snd.gain).toFixed(2)}`, tone: 'green' as const,
       does: `${s.name}'s voice: it rises over its attack, holds, and fades over its release.`}
   })
   const underH = Math.max(60, Math.round(p.room.h * 0.4))
@@ -458,14 +458,14 @@ const SYMBOLS: Glyph[] = [
 const obj = (x: number, y: number, extra: Obj = {}): Obj => ({
   formation: {x, y, z: 0, w: 0.65, h: 0.86, scale: 1, rotation: 0, share: 1, tint: 0, enabled: true, locked: false, shape: 'glyph · ring of 160 points'},
   force: {kind: 'attract', strength: 0, spin: 0, radius: 200, cx: x, cy: y, cz: 0},
-  sound: {voice: false, follow: true, frequency: 220, gain: 0.2, wave: 'sine', attack: 0.08, release: 0.8, pan: 0},
+  sound: {voice: false, name: '', gain: 0.2, attack: 0.08, release: 0.8},
   meaning: {centre: 'none', source: 'canonical', activation: 'constant', colourGain: 1, resonanceGain: 1, globalGain: 1, radiusSource: 'force', radius: 220, falloff: 'gaussian', metric: 'plane', blend: 'weighted', modulations: ''},
   ...extra,
 })
 const OBJECTS: Record<string, Obj> = {
-  sun: obj(0, 0.4, {force: {kind: 'attract', strength: 5, spin: 3, radius: 640, cx: 0, cy: 0.4, cz: 0}, sound: {voice: true, follow: false, frequency: 330, gain: 0.3, wave: 'sine', attack: 2, release: 1.5, pan: 0},
+  sun: obj(0, 0.4, {force: {kind: 'attract', strength: 5, spin: 3, radius: 640, cx: 0, cy: 0.4, cz: 0}, sound: {voice: true, name: 'Lydian', gain: 0.3, attack: 2, release: 1.5},
     meaning: {centre: 'solar plexus', source: 'canonical', activation: 'live resonant affinity', colourGain: 4, resonanceGain: 2, globalGain: 1, radiusSource: 'force', radius: 220, falloff: 'gaussian', metric: 'plane', blend: 'weighted', modulations: 'force strength → colour gain, 40'}}),
-  moon: obj(-1.2, 0.8, {sound: {voice: true, follow: true, frequency: 220, gain: 0.2, wave: 'triangle', attack: 1, release: 2, pan: -0.6}}),
+  moon: obj(-1.2, 0.8, {sound: {voice: true, name: 'Dorian', gain: 0.2, attack: 1, release: 2}}),
   tree: obj(1.1, -0.6), river: obj(0, -1.4), eye: obj(-0.6, -0.2), hand: obj(0.8, 0.9),
 }
 const LANES: AutoLane[] = [

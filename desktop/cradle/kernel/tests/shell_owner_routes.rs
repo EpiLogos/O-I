@@ -3875,3 +3875,86 @@ fn workcell_reads_a_worlds_leases_and_checkpoints_and_takes_one() {
     );
     let _ = fs::remove_dir_all(&dir);
 }
+
+/// Setup's Harnesses and skills step (manual §10.11, O-I #738): AIKit's
+/// discovery of the skill roots on this computer (`aikit init`) and its
+/// standing for each (`aikit tree --expand registries`: foreign, adopted or
+/// generated), before and after the person's adoption; reads, carried as
+/// AIKit answered them.
+#[test]
+fn aikit_reads_the_skill_roots_setup_adopts_and_their_standing() {
+    let _held = hold();
+    let dir = scratch("aikit-setup-roots");
+    let aikit = Fake::new(&dir, "aikit");
+    let _bin = Bound::set("OI_AIKIT_BIN", &aikit.bin);
+    // AIKit's own answers on a scratch Arriving world (REAL, its folder written /w/Arriving).
+    let real = fixture("aikit-setup-harnesses-credentials-2026-10-28.json");
+    for (request, key, argv) in [
+        (json!({"kind": "init"}), "init_foreign", "init --json"),
+        (json!({"kind": "init"}), "init_adopted", "init --json"),
+        (
+            json!({"kind": "tree", "expand": ["registries"]}),
+            "tree_foreign",
+            "tree --expand registries --json",
+        ),
+        (
+            json!({"kind": "tree", "expand": ["registries"]}),
+            "tree_adopted",
+            "tree --expand registries --json",
+        ),
+    ] {
+        aikit.answer(&real[key]);
+        aikit.forget();
+        let (outcome, form) = dispatched(
+            no_central(&dir),
+            op(json!({"op": "aikit_read", "request": request})),
+        );
+        let outcome = outcome.unwrap_or_else(|error| panic!("{key}: {error}"));
+        assert_eq!(form, "owner-read", "{key}");
+        assert!(outcome.receipts.is_empty(), "{key}: a read records nothing");
+        assert_eq!(
+            reading(&outcome).1,
+            real[key]["data"],
+            "{key}: AIKit's reading, verbatim"
+        );
+        assert_eq!(aikit.asked(), [argv], "{key}");
+    }
+    // The standing moves with the adoption, in AIKit's words.
+    let row = |key: &str| {
+        real[key]["data"]["rows"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|row| row["path"] == "registries/@claude")
+            .unwrap()["summary"]
+            .as_str()
+            .unwrap()
+            .to_owned()
+    };
+    assert!(row("tree_foreign").starts_with("foreign · 2 skills"));
+    assert!(row("tree_adopted").starts_with("adopted · 2 skills · procedure prc_"));
+    // A document without the reading's list is not that reading.
+    for (request, missing) in [
+        (json!({"kind": "init"}), "roots"),
+        (json!({"kind": "tree", "expand": ["registries"]}), "rows"),
+    ] {
+        aikit.answer(&envelope(json!({"skills": 2})));
+        let (outcome, _) = dispatched(
+            no_central(&dir),
+            op(json!({"op": "aikit_read", "request": request})),
+        );
+        let error = outcome.unwrap_err();
+        assert!(error.contains(missing), "{missing}: {error}");
+    }
+    // Adopting a root twice is AIKit's refusal, in its words (REAL).
+    aikit.refuse(Some(&real["adopt_plan_again"]), "", 1);
+    let (outcome, _) = dispatched(
+        no_central(&dir),
+        op(json!({"op": "aikit_read", "request": {"kind": "adopt-plan",
+            "root": "/w/Arriving/.claude/skills", "namespace": "claude"}})),
+    );
+    assert!(outcome
+        .unwrap_err()
+        .contains("may cross the requested authority boundary"));
+    let _ = fs::remove_dir_all(&dir);
+}
