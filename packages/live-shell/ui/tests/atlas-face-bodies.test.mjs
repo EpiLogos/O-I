@@ -176,7 +176,7 @@ test('the graph body shows the constellation’s own controls, at the atlas’s 
   const out = withAtlas(atlasHandle({graph}), () => html(createElement(AtlasFaceBody, {faceId: 'graph-tools'})))
   assert.match(out, /data-graph="open"/)
   assert.doesNotMatch(out, /Steps/, 'steps belong to a local graph, as in GraphTools')
-  for (const label of ['Occurrences', 'Archetypes', 'Theoretics', 'Families', 'Jung', 'Inferred', 'Site', 'Sky anchors', 'Reframe graph']) {
+  for (const label of ['Occurrences', 'Archetypes', 'Theoretics', 'Families', 'Source', 'Inferred', 'Site', 'Sky anchors', 'Reframe graph']) {
     assert.match(out, new RegExp(`>${label}<`), `${label} is drawn`)
   }
   for (const row of FORCE_ROWS) {

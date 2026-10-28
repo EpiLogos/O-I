@@ -1,7 +1,8 @@
 // The Place tool of the World / Places plate (T-PLACES-ONTO-ATLAS; lane-4 T17 click to create, T18 the owner's basis law, T19
 // refine with honest precision; manual §2 "place things on it and name them"). Ported from the frame map's authoring surface, which
 // retires (psychogeographic/PsychogeographicMap.tsx's context menu and marker drag, researchInstruments.tsx:1496-1527's route): the
-// pure draft contract is the frame's own, used in place (vendor psychogeographic/placeAuthoring.ts — prefillFromClick,
+// pure draft contract is the frame's own, used in place (desktop/cradle/src/techne/m0m5/place/authoring.ts, moved there from the vendor's
+// psychogeographic/placeAuthoring.ts when that folder retired, #762 — prefillFromClick,
 // moveProposal, placeDraftForAdd/Move, validatePlaceDraft, the route notices), and the owner call is the one the frame's route
 // reached: the Wiki's time-and-place editor, offered the draft for the subject (desktop/cradle/src/knowledge/WikiFactsEditor.tsx:24
 // offerConstellationRoute, as desktop/cradle/src/CradleFrame.tsx:1134 offered it), which answers on `oi:constellation-result`
@@ -23,7 +24,7 @@
 import {
   addRouteNotice, constellationResultNotice, formatCoordinate, moveProposal, moveRouteNotice, placeDraftForAdd, placeDraftForMove,
   prefillFromClick, validatePlaceDraft,
-} from '../../../../../../../desktop/cradle/expressions-app/vendor/research-canvas/packages/canvas/src/psychogeographic/placeAuthoring';
+} from '../../../../../../../desktop/cradle/src/techne/m0m5/place/authoring';
 import type {MapPlaceDraft} from '../../../../../../../desktop/cradle/src/knowledge/WikiFactsEditor';
 import {suggestName} from '../src/globe/body';
 

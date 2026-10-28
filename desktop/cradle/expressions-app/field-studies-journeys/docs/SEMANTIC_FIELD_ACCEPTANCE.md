@@ -6,16 +6,11 @@
 npm run lint
 npm test
 npm run build
-npm run test:journeys
-npm run test:gpu
-npm run test:workspace
-python field-studies-journeys/tests/semantic_field_browser.py
-npm run test:browser
-python field-studies-journeys/tests/module_browser.py
+node field-studies-journeys/scripts/browser-harnesses.mjs gpu workspace semantic_field native_browser module
 ```
 
-The final two served/media gates are authoritative in GitHub Actions when a local
-browser policy blocks localhost or MediaRecorder completion.
+The candidate job's browser step runs every harness the same way; it is
+authoritative when a local browser policy blocks localhost or MediaRecorder completion.
 
 ## Architectural assertions
 

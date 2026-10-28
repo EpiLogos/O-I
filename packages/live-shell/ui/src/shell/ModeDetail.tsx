@@ -1,8 +1,7 @@
 /**
- * The per-mode detail compositions and the Technē lens bar — the shell
- * frame's reading of WORLD-SHELL-DESIGN Revision 4's detail table and
- * Revision 3's lens navigation, drawn only from what the landed lanes
- * declared.
+ * The per-mode detail compositions — the shell frame's reading of
+ * WORLD-SHELL-DESIGN Revision 4's detail table, drawn only from what the
+ * landed lanes declared.
  *
  * - Base · Devices: the ground's family chain through the device runtime
  *   (src/central/devices) — the Day and Approvals on the Main track; the
@@ -23,12 +22,11 @@
  *   that instrument holds stand open, the others fold to their titles.
  *   The Device side follows the focused pane's instrument in every mode
  *   (paneInstrument.ts); this chain is the instrument's devices in any mode.
- * - Technē lens bar: the six lenses by their plain actual names (the
- *   programme's naming ruling) — timeline and journey drive the landed
- *   World cut's two presentations; project / graph and places drive the
- *   Earth atlas's two views; the other two hold their places as declared
- *   waiting lenses. The bar stands over the centre in every mode whose
- *   centre holds an instrument pane (paneInstrument.ts showsLensBar).
+ * - The Technē lens bar is retired (#762): it was reached only by tests once
+ *   the instruments moved into the browser. Its instruments open from the
+ *   browser's Instruments section and the instrument door
+ *   (frame/instruments.ts, frame/instrumentDoor.ts), the atlas's two views
+ *   from the Earth ⇄ Graph device and the Project plate's View.
  *
  * Nothing here invents an owner: every waiting state names its owner, and
  * the rack renders what the manifests declare — no more.
@@ -39,13 +37,11 @@ import {inhabitantManifest, type InhabitantManifest} from '../inhabitants/manife
 import {useQlInstrumentFeed} from '../live/torusInstrument'
 import {useDeviceWindowHost} from '../native/detachedKinds'
 import type {CentralSubjectSelection} from '../inhabitants/CentralSubjectDetail'
-import {Icon, type IconName} from '../inhabitants/sdk/Icon'
-import {useAtlasView, type AtlasView} from '../projections/atlas/AtlasProjectionPanel'
 import type {KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
 import type {WorldTimelineView} from '../projections/useWorldTemporalReading'
 import {ATLAS_FAMILY_ID} from '../projections/atlas/atlasFamilyManifest'
 import {admitKnowledgeGraphFamily} from '../inhabitants/knowledgeGraphFamilyManifest'
-import {hostedLensOfBarId, type HostedLens, type PaneInstrumentId} from './paneInstrument'
+import type {PaneInstrumentId} from './paneInstrument'
 import type {DayDocumentStanding} from '../central/centralVertical'
 import {centralRackApertures} from '../central/centralRack'
 import {useCentralSelection} from '../central/useCentralSelection'
@@ -147,102 +143,6 @@ export function InstrumentDeviceDetail({transport, instrument, centralDevices = 
     )
   }
   return <TechneInstrumentsDetail transport={transport} focusInstrument={instrument} />
-}
-
-// ————————————————————————————————————————————————————————————————————————
-// The Technē lens bar (Revision 3: lens navigation is its own axis — never
-// the transport's, never the surf's).
-
-/** One lens: a `cut` opens the World cut's presentation (`presentation`) or the Earth atlas in one of its views (`atlas`);
- * a `waiting` lens holds its place and names its owner. */
-export interface TechneLens {
-  id: string
-  name: string
-  mark: string
-  state: 'cut' | 'waiting'
-  presentation?: 'session' | 'arrangement'
-  atlas?: AtlasView
-  owner: string
-}
-
-/** The six lenses by their plain actual names, with the declared mark each would wear. */
-export const LENSES: readonly TechneLens[] = [
-  {id: 'project-graph', name: 'Project / graph', mark: 'lib', state: 'cut', atlas: 'graph', owner: 'the Earth atlas — its Graph view (the constellation, lock §8.1)'},
-  {id: 'canvas', name: 'Canvas', mark: 'pane', state: 'waiting', owner: 'the canvas owner (the instrument-editors packet)'},
-  {id: 'timeline', name: 'Timeline', mark: 'arrangement', state: 'cut', presentation: 'arrangement', owner: 'the World cut — the Timeline'},
-  {id: 'journey', name: 'Journey', mark: 'journey', state: 'cut', presentation: 'session', owner: 'the World cut — the Journey'},
-  {id: 'places', name: 'Places', mark: 'placed', state: 'cut', atlas: 'earth', owner: 'the Earth atlas — the globe (Places)'},
-  {id: 'palace', name: 'Palace', mark: 'palace', state: 'waiting', owner: 'the Palace owner (the integral composition)'},
-]
-
-/** The Factory centre's Expressions lens (T-EXPRESSIONS-PANE-LEASE). It opens the Expressions pane beside the agent, which presents the
- * one hosted Expressions surface (the centre's frame, retained: no second frame, no second native lease). It is a Factory-bar entry
- * only: the six World cut lenses in every other mode are unchanged. */
-export const FACTORY_EXPRESSIONS_LENS: TechneLens = {id: 'expressions', name: 'Expressions', mark: 'pane', state: 'cut', owner: 'the one hosted Expressions surface, presented from the centre (its frame and native lease are not duplicated)'}
-
-/** The plain reason a lens cannot open as a pane in the Factory centre, or null when it can. Factory's Workbench tree admits the Earth
- * atlas (its Graph view, Project / graph, and its Earth view, Places), the Timeline projection's pane body (Timeline, m2, and
- * Journey, m3, its two presentations) and the Expressions pane (the one hosted surface, presented). Every other waiting lens names its owner. */
-export function factoryLensReason(lens: TechneLens): string | null {
-  if (lens.id === 'project-graph' || lens.id === 'places' || lens.id === 'timeline' || lens.id === 'journey' || lens.id === 'expressions') return null
-  return `${lens.name} (planned) — the button holds its place; ${lens.owner} is still to be mounted here`
-}
-
-/** The instrument pane a Factory lens press opens inside the Workbench tree, or null when the press opens nothing. Timeline and
- * Journey both open the one Timeline pane (projection.timeline); the lens's presentation is that pane's own presentation. */
-export function factoryLensPane(lens: TechneLens): 'projection.earth' | 'projection.constellation' | 'projection.timeline' | 'projection.expressions' | null {
-  if (factoryLensReason(lens) !== null) return null
-  if (lens.id === 'expressions') return 'projection.expressions'
-  if (lens.presentation) return 'projection.timeline'
-  return lens.atlas === 'graph' ? 'projection.constellation' : 'projection.earth'
-}
-
-export function TechneLensBar({presentation, atlasOpen, onLens, hosted = null, factory = false, expressionsFocused = false}: {
-  /** The presentation lens in force; null when the focused pane holds no presentation (Factory's agent tab), so no Timeline or
-   * Journey lens reads as pressed. */
-  presentation: 'session' | 'arrangement' | null
-  /** the Earth atlas is the open centre pane: the World cut's lenses are not pressed while it is */
-  atlasOpen: boolean
-  onLens: (lens: TechneLens) => void
-  /** The hosted Expressions pane stands focused: the bar reads and drives its lens (null lens = none reported yet). Absent = the World cut / Earth bar. */
-  hosted?: {lens: HostedLens | null} | null
-  /** The Factory centre: a lens is reachable only when its pane is admitted (factoryLensReason); the rest stay visible, disabled, titled with their reason. */
-  factory?: boolean
-  /** The focused Factory pane is the Expressions pane: its Factory-bar entry reads pressed. */
-  expressionsFocused?: boolean
-}) {
-  const atlasView = useAtlasView()
-  // The Factory bar carries the Expressions entry beside the six World cut lenses; every other mode's bar is the six unchanged.
-  const entries = factory ? [...LENSES, FACTORY_EXPRESSIONS_LENS] : LENSES
-  // Hosted focus: the bar's entries are the hosted lenses (paneInstrument's one table); every entry with a hosted lens is reachable.
-  const reachable = (lens: TechneLens) => factory ? factoryLensReason(lens) === null : hosted ? hostedLensOfBarId(lens.id) !== null : lens.state === 'cut'
-  const pressed = (lens: TechneLens) => lens.id === 'expressions'
-    ? expressionsFocused
-    : hosted
-    ? hostedLensOfBarId(lens.id) === hosted.lens
-    : lens.atlas
-      ? atlasOpen && atlasView === lens.atlas
-      : !atlasOpen && lens.presentation === presentation
-  const focused = entries.find(lens => reachable(lens) && pressed(lens))
-  return <nav className="techne-lens-bar" data-lens={focused?.id ?? null} data-hosted={hosted ? 'true' : undefined} aria-label="Technē lenses">
-    <span className="techne-lens-title">Lenses</span>
-    {entries.map(lens => (
-      <button key={lens.id} type="button" className="techne-lens" data-lens-state={factory ? (reachable(lens) ? 'cut' : 'waiting') : hosted && hostedLensOfBarId(lens.id) ? 'cut' : lens.state}
-        aria-pressed={reachable(lens) && pressed(lens)}
-        disabled={!reachable(lens)}
-        title={factory
-          ? (factoryLensReason(lens) ?? `${lens.name} — ${lens.owner}`)
-          : hosted
-          ? (hostedLensOfBarId(lens.id) ? `${lens.name} — the hosted Expressions lens` : `${lens.name} — not a hosted Expressions lens`)
-          : lens.state === 'cut'
-            ? `${lens.name} — ${lens.owner}`
-            : `${lens.name} (planned) — the button holds its place; ${lens.owner} is still to be mounted here`}
-        onClick={() => onLens(lens)}>
-        <Icon name={lens.mark as IconName} size={13} />
-        <span>{lens.name}</span>
-      </button>
-    ))}
-  </nav>
 }
 
 /** The World cut's honest status line — one reading, for the mode

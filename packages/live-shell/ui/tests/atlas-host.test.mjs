@@ -2,13 +2,11 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import {readFile, readdir} from 'node:fs/promises'
 import {register} from 'node:module'
-import {createElement} from 'react'
-import {renderToStaticMarkup} from 'react-dom/server'
 
-// The Earth projection's shell host (T-ATLAS-HOST, host leg): the lens bar's cut and pressed states, the workspace-scoped
-// memory of the atlas, the admission of the centre panel and the two pane kinds, and the honest refusals. Production
-// modules in memory (the mode-grammar loader pattern): .ts/.tsx transpiled, CSS and JSON stubbed. The atlas itself is
-// not mounted here: it needs WebGL and a kernel; its mount is UNVERIFIED headless and is verified on screen.
+// The Earth projection's shell host (T-ATLAS-HOST, host leg): the workspace-scoped memory of the atlas, the admission of the centre
+// panel and the two pane kinds, and the honest refusals. Production modules in memory (the mode-grammar loader pattern): .ts/.tsx
+// transpiled, CSS and JSON stubbed. The atlas itself is not mounted here: it needs WebGL and a kernel; its mount is UNVERIFIED headless
+// and is verified on screen.
 const compiler = new URL('../node_modules/typescript/lib/typescript.js', import.meta.url).href
 register(`data:text/javascript,${encodeURIComponent(`
 import ts from ${JSON.stringify(compiler)};
@@ -34,14 +32,6 @@ export async function load(u, c, n) {
     compilerOptions: {target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext, jsx: ts.JsxEmit.ReactJSX}}).outputText};
 }`)}`, import.meta.url)
 
-const html = element => renderToStaticMarkup(element)
-const lensesOf = out => (out.match(/<button[\s\S]*?<\/button>/g) ?? []).map(button => ({
-  name: button.match(/<span>([^<]+)<\/span>/)?.[1],
-  state: button.match(/data-lens-state="([^"]+)"/)?.[1],
-  pressed: button.match(/aria-pressed="(true|false)"/)?.[1] === 'true',
-  disabled: /disabled=""/.test(button),
-}))
-const lensNamed = (out, name) => lensesOf(out).find(lens => lens.name === name)
 const panelSource = new URL('../src/projections/atlas/AtlasProjectionPanel.tsx', import.meta.url)
 
 // Admission before any workspace is bound: the door refuses honestly, and claims nothing.
@@ -68,35 +58,11 @@ test('the Earth pane kinds are admitted once; a door with no bound workspace ref
   )
 })
 
-test('the lens bar cuts Places and Project / graph to the Earth atlas and keeps the rest honest', async () => {
-  const {TechneLensBar} = await import('../src/shell/ModeDetail.tsx')
-  const out = html(createElement(TechneLensBar, {presentation: 'session', atlasOpen: false, onLens() {}}))
-  assert.equal(lensNamed(out, 'Places').state, 'cut', 'Places is cut')
-  assert.equal(lensNamed(out, 'Project / graph').state, 'cut', 'Project / graph is cut')
-  assert.equal(lensNamed(out, 'Timeline').state, 'cut')
-  assert.equal(lensNamed(out, 'Journey').state, 'cut')
-  assert.equal(lensNamed(out, 'Canvas').state, 'waiting', 'Canvas holds its place, named')
-  assert.equal(lensNamed(out, 'Palace').state, 'waiting', 'Palace holds its place, named')
-  assert.equal(lensNamed(out, 'Canvas').disabled, true, 'a waiting lens is disabled')
-  assert.equal(lensNamed(out, 'Places').disabled, false, 'a cut lens is live')
-})
-
-test('the lens bar presses the open lens: the atlas view while the atlas is the centre, the World cut otherwise', async () => {
-  const {TechneLensBar} = await import('../src/shell/ModeDetail.tsx')
-  const {presentAtlasView} = await import('../src/projections/atlas/AtlasProjectionPanel.tsx')
-  const pressed = out => lensesOf(out).filter(lens => lens.pressed).map(lens => lens.name)
-
-  presentAtlasView('graph')
-  assert.deepEqual(pressed(html(createElement(TechneLensBar, {presentation: 'session', atlasOpen: true, onLens() {}}))), ['Project / graph'],
-    'the graph view presses Project / graph and nothing else')
-
-  presentAtlasView('earth')
-  assert.deepEqual(pressed(html(createElement(TechneLensBar, {presentation: 'session', atlasOpen: true, onLens() {}}))), ['Places'],
-    'the globe view presses Places')
-
-  assert.deepEqual(pressed(html(createElement(TechneLensBar, {presentation: 'session', atlasOpen: false, onLens() {}}))), ['Journey'],
-    'with the World cut open, the atlas lenses are not pressed and the presentation is')
-})
+// The Technē lens bar retired (#762: ModeDetail's TechneLensBar was reached only by tests). Retired: 'the lens bar cuts Places and Project /
+// graph to the Earth atlas and keeps the rest honest' → atlas-places-plate.test.mjs 'World / Places opens the atlas, never the stage's
+// retired Places lens' (the instrument door) and f2-panes.test.mjs 'the Instruments list names instruments …'; 'the lens bar presses the
+// open lens: the atlas view while the atlas is the centre …' → atlas-face-bodies.test.mjs 'the mode switch is the atlas view …: a choice
+// made on the face is the view the pane follows' and techne-devices.test.mjs (the Earth ⇄ Graph device reads the view mirror).
 
 test('the atlas memory is bound to the workspace namespace and to one workspace id at a time', async () => {
   const {bindAtlasScope, atlasMemoryStorage} = await import('../src/projections/atlas/AtlasProjectionPanel.tsx')

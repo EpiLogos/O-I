@@ -1,4 +1,4 @@
-// T-PLACES-ONTO-ATLAS: Places is the atlas, alone (owner, 14 Oct; FOUNDATION §4). The M4′ World / Places instrument opens the Earth
+// T-PLACES-ONTO-ATLAS: Places is the atlas, alone (owner, 14 Oct; FOUNDATION §4). The World / Places instrument opens the Earth
 // pane and stands on the rack as one plate in the mockup's six sections (world-shell-mockup.html:1447-1461): Body, Landmass, Climate,
 // Sky, Locations, Relations. Its controls are the plate's and the transport's — none is drawn in the pane. Rendered server-side over
 // the suite's published standing, with production modules in memory (the loader of techne-devices.test.mjs). Also: Technē's transport
@@ -65,12 +65,12 @@ const PLACES = [
 const standing = {...IDLE_STANDING, phase: 'ready', readAt: '2026-10-15T10:00:00Z', places: PLACES,
   counts: {...IDLE_STANDING.counts, located: 2, places: 3, unlocatedPlaces: 1}}
 
-test('M4′ World / Places opens the atlas, never the stage\'s retired Places lens', () => {
+test('World / Places opens the atlas, never the stage\'s retired Places lens', () => {
   assert.deepEqual(chain.instrumentDoorOf('techne:m4'), {kind: 'projection.earth'})
   assert.deepEqual(chain.instrumentDoorOf('techne:m0'), {kind: 'projection.earth'})
 })
 
-test('the focused M4′ stands as one plate in the mockup\'s six sections; the others fold; nothing it holds is dropped', () => {
+test('the focused World stands as one plate in the mockup\'s six sections; the others fold; nothing it holds is dropped', () => {
   resetSuiteStanding()
   const out = M4()
   assert.match(out, /data-instrument="techne:m4"[^>]*data-places-plate="true"/, 'the Places plate stands open')
@@ -84,7 +84,7 @@ test('the focused M4′ stands as one plate in the mockup\'s six sections; the o
   assert.ok(out.indexOf('data-section="display"') < out.indexOf('data-section="body"'), 'the well at the plate\'s left')
   assert.doesNotMatch(out, /inst-head-reading/, 'no reading in the head: the scale is the well\'s corner')
   for (const id of ['techne:m0', 'techne:m1', 'techne:m2', 'techne:m3', 'techne:m5']) assert.match(out, new RegExp(`data-instrument="${id}" data-expanded="false"`), `${id} folds`)
-  // each device M4′ holds stands as its mark on the section that draws its controls: every setting in the pool, full size in a pane
+  // each device World holds stands as its mark on the section that draws its controls: every setting in the pool, full size in a pane
   const body = out.slice(out.indexOf('data-section="body"'), out.indexOf('data-section="landmass"'))
   assert.match(body, /class="plate-held-mark" data-device="atlas-earth:globe-engine"/, 'the globe stands in Body')
   assert.match(body, /class="plate-held-mark" data-device="atlas-earth:mode-switch"/, 'the Earth ⇄ Graph switch stands in Body')

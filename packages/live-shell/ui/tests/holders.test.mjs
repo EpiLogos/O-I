@@ -6,8 +6,8 @@ import {register} from 'node:module'
 // The holders (DEVICE-SEMANTICS-LOCK §4.8, §4.9; ticket T-HOLDERS). Every face
 // names the device that holds it (`heldBy`); the gate refuses a naming it cannot
 // stand behind. Four gate rules: a known holder; an admitted Technē face held by a
-// techne:* instrument; an Expressions face held by exactly one holder; an effect
-// never held by a techne:* instrument.
+// techne:* instrument or an app layer's rack (#801); an Expressions face held by
+// exactly one holder; an effect never held by a techne:* instrument.
 
 // Production modules in memory (the house loader pattern, as live-semantics.test.mjs).
 const root = new URL('../../../../', import.meta.url)
@@ -59,13 +59,15 @@ test('the standing world passes the holder rules: every door face names known ho
   assert.deepEqual(find('atlas-earth', 'time-control').heldBy, ['techne:m2', 'techne:m0'], 'the Earth pane\'s clock is the 0 instrument\'s too')
   assert.deepEqual(find('quaternal-logic', 'torus').heldBy, ['studio:body'])
   assert.deepEqual(find('quaternal-logic', 'sky').heldBy, ['techne:m4', 'techne:m2'])
-  // Lane W4: the M′ matrices are admitted on the racks of the instruments whose layers they show (manual §22.6, §16.16).
-  assert.deepEqual(find('quaternal-logic', 'm-prime-matrices').heldBy, ['techne:m1', 'techne:m2', 'techne:m3', 'techne:m4'])
+  // REPLACED (#801): the M′ matrices were held by techne:m1–m4, Technē's Canvas, Timeline, Journey and World standing in for the app
+  // layers' racks. Their four layers are the insides of the racks of the instruments of the map (manual §22.6, §16.16): the Torus's (M1′),
+  // the Sky's (M2′), the M3 clock's (M3′) and the Chakra's (M4′). No Technē instrument holds them.
+  assert.deepEqual(find('quaternal-logic', 'm-prime-matrices').heldBy, ['rack:torus', 'rack:sky', 'rack:m3-clock', 'rack:chakra'])
   // REPLACED (#725): Binding on M3′'s rack and the Studio's body — Binding is the M3 clock's Binding skin now (§22.8; §22.3 "The clock's
-  // Skin chooses Wheel or Binding; the Torus and the Studio's body chain can draw the same skin"): M3′'s rack holds it through the M3 clock,
-  // and the Studio's body through the Torus it holds (asserted above).
+  // Skin chooses Wheel or Binding; the Torus and the Studio's body chain can draw the same skin"): the Journey holds it through the M3
+  // clock, and the Studio's body through the Torus it holds (asserted above).
   assert.equal(find('quaternal-logic', 'binding'), undefined, 'Binding is no face of its own')
-  assert.ok(find('quaternal-logic', 'm3-clock').heldBy.includes('techne:m3'), 'M3′\'s rack holds the M3 clock, whose skin Binding is')
+  assert.ok(find('quaternal-logic', 'm3-clock').heldBy.includes('techne:m3'), 'the Journey holds the M3 clock, whose skin Binding is')
   // T-WORLDS W4: the Deck and the Chakra read their owners — your personal layer (the Studio's Nara chain) and a Technē instrument.
   assert.deepEqual(find('quaternal-logic', 'deck').heldBy, ['studio:nara', 'techne:m3'])
   assert.deepEqual(find('quaternal-logic', 'chakra').heldBy, ['studio:nara', 'techne:m2'])
@@ -117,6 +119,25 @@ test('every holder names a legal Live semantic and a unique id; the six Technē 
   assert.equal(semantics.DETAIL_CLIP_HOLDER.liveSemantic, 'detail-clip')
   assert.equal(semantics.isHolder('detail:clip'), true)
   assert.equal(semantics.isHolder('studio:nowhere'), false)
+})
+
+test('the app layers\' racks are holders, apart from Technē\'s instruments: the Torus (M1′), the Sky (M2′), the M3 clock (M3′), the Chakra (M4′) (#801)', () => {
+  // Manual §16.16 "Each instrument shows its rack on its Rack page: the Torus, the Sky, the M3 clock, and the Chakra for M4′"; §22.6 "The
+  // four layers are the insides of the instruments' racks … Open a layer from the rack of its instrument"; §25.1: M′ names the app layers.
+  const racks = semantics.LAYER_RACKS
+  assert.deepEqual(racks.map(rack => rack.id), ['rack:torus', 'rack:sky', 'rack:m3-clock', 'rack:chakra'])
+  assert.deepEqual(racks.map(rack => rack.title), ['Torus', 'Sky', 'M3 clock', 'Chakra'], 'each rack is named by the device whose Rack page it is')
+  assert.deepEqual(racks.map(rack => rack.provenance), ['M1′', 'M2′', 'M3′', 'M4′'], 'its app layer is its provenance, never its name')
+  for (const rack of racks) {
+    assert.ok(semantics.HOLDERS.includes(rack), `${rack.id} is a known holder`)
+    assert.ok(!semantics.TECHNE_INSTRUMENTS.includes(rack), `${rack.id} is no Technē instrument`)
+    assert.deepEqual(rack.holds, ['quaternal-logic/m-prime-matrices'], `${rack.id} holds the M′ matrices, its layer of them`)
+  }
+  // The gate keeps its teeth: an admitted Technē face held by a layer's rack stands; held by no holder, or by a rack that is none, it is refused.
+  const face = heldBy => ({id: 'probe', liveSemantic: 'device-instrument', invariant: {generates: 'kernel:m3_reception'}, heldBy})
+  assert.deepEqual(faultsOf(face(['rack:sky']), 'quaternal-logic'), [])
+  assert.ok(faultsOf(face([]), 'quaternal-logic').some(fault => /held by a techne:\* instrument or an app layer's rack/.test(fault)))
+  assert.ok(faultsOf(face(['rack:nowhere']), 'quaternal-logic').some(fault => /not a known holder/.test(fault)))
 })
 
 test('the Clip detail holds the Expressions scene and its automation, and what left the Studio for the scene\'s Clip view (lock §9.1, §9.4, §0.3.7; R4)', () => {

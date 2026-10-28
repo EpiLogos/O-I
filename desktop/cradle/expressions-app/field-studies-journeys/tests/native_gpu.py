@@ -1,6 +1,6 @@
 from pathlib import Path
 import json,base64
-from harness import browser_session
+from harness import browser_session,EVIDENCE
 root=Path(__file__).resolve().parents[1]
 with browser_session({'width':640,'height':480}) as (_,ctx,page):
  errors=[]
@@ -9,7 +9,7 @@ with browser_session({'width':640,'height':480}) as (_,ctx,page):
  page.set_content('<!doctype html><html><body></body></html>')
  page.add_script_tag(content=(root/'build/native-harness.js').read_text())
  results=page.evaluate((root/'tests/native-gpu.js').read_text())
- evidence=root/'evidence-native';evidence.mkdir(exist_ok=True)
+ evidence=EVIDENCE
  capture=page.evaluate('window.__gpuCapture')
  if capture:(evidence/'gpu-capture.png').write_bytes(base64.b64decode(capture.split(',')[1]))
  print(json.dumps({'results':results,'browserErrors':errors},indent=2))

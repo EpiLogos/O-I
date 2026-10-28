@@ -85,6 +85,12 @@ export function timelineReading(): TimelineHostReading | null {
   return reading
 }
 
+/** Hear each publish, as a plain subscription (a host outside React: the World's walk follows the spine it publishes,
+ * projections/atlas/walks/walksHost.ts). Returns the release. */
+export function subscribeTimelineReading(listener: () => void): () => void {
+  return subscribeTo(readingListeners, listener)
+}
+
 /** The published reading, as a hook: a pane body re-renders when the App publishes a new one. */
 export function useTimelineReading(): TimelineHostReading | null {
   return useSyncExternalStore(listener => subscribeTo(readingListeners, listener), () => reading, () => reading)

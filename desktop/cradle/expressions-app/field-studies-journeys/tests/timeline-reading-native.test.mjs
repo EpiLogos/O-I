@@ -3,10 +3,14 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {build} from 'esbuild';
 import {fileURLToPath} from 'node:url';
+// The receipt desktop/cradle/tests/prepare-timeline-native-stress.mjs writes, as
+// timeline-density-native reads it; cross-product.yml (frame-native-readings) produces it.
 const artifact=process.env.OI_NATIVE_TIMELINE_PROOF;
-test('Timeline filters and occurrence previews consume retained actual native readings',{skip:!artifact},async()=>{
+test('Timeline filters and occurrence previews consume retained actual native readings',{skip:!artifact?'Set OI_NATIVE_TIMELINE_PROOF to an actual native stress receipt':false},async()=>{
  const actual=JSON.parse(await readFile(artifact,'utf8'));
- assert.ok(actual.schema.startsWith('oi.native-'));assert.ok(actual.reading.temporal.length);
+ assert.equal(actual.schema,'oi.synthetic-timeline-stress/v1');
+ for(const owner of ['OI_KERNEL_BIN','OI_AIKIT_BIN','OI_CENTRAL_CTRL_BIN'])assert.match(actual.binaries?.[owner]?.sha256??'',/^[0-9a-f]{64}$/,`${owner}: the receipt names the native owner that admitted its material`);
+ assert.ok(actual.reading.temporal.length);
  const source=fileURLToPath(new URL('../src/',import.meta.url));
  const compiled=await build({stdin:{contents:"export {readingInstruments,nativeInstrumentTitles,nativeInstrumentPreviews} from './researchInstrumentsData.ts';export {kernelDocumentToJourney} from './kernelDocumentBridge.ts';export {createTechneTransport} from '../../vendor/research-canvas/packages/desktop-api/src/techneTransport.ts';",resolveDir:source},tsconfig:fileURLToPath(new URL('../tsconfig.json',import.meta.url)),bundle:true,platform:'node',format:'esm',write:false,logLevel:'silent'});
  const api=await import('data:text/javascript;base64,'+Buffer.from(compiled.outputFiles[0].text).toString('base64'));
@@ -18,7 +22,8 @@ test('Timeline filters and occurrence previews consume retained actual native re
  assert.equal((await data.dataSource.loadTimelineView(undefined,{tags:{include:['not-disclosed-by-this-owner']}})).nodes.length,0,'tag include no longer silently returns every card');
  assert.equal((await data.dataSource.loadTimelineView(undefined,{tags:{include:[]}})).nodes.length,0,'explicit empty include means none');
  assert.deepEqual((await data.dataSource.loadTimelineView(undefined,{tags:{exclude:['not-disclosed-by-this-owner']}})).nodes,all.nodes);
- assert.equal(data.dataSource.styleCapability.available,false);assert.match(data.dataSource.styleCapability.reason,/native Scene/);
+ // T16 (b27e76828): a card colour persists through the Scene's timeline layout record, so style stands available on a native reading.
+ assert.deepEqual(data.dataSource.styleCapability,{available:true});
  assert.equal(data.dataSource.archetypeCapability.available,false);
  assert.equal(JSON.stringify(actual.document),before,'view filtering and text preview never mutate native work');
  // Production transport contract correctness independent of owner admission:

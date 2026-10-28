@@ -51,10 +51,15 @@ export function missingAct(op: string, actions: WorldTrackActions | undefined): 
 
 const sep = (id: string): ObjectMenuItem => ({id, type: 'separator'})
 
+/** Whether Clip view's binding holds this clip: its own id, that id with the owner's suffix, or the clip the binding says it holds (a
+ * Central page, read as the browser's subject for it). Pure. */
+const holdsClip = (binding: ClipBinding | null, clipId: string): binding is ClipBinding =>
+  !!binding && (binding.ref === clipId || binding.ref.startsWith(`${clipId}#`) || binding.clip === clipId)
+
 /** A clip's own fact through its Clip view: enabled where the binding takes it (or where Clip view is not holding it yet — it comes
  * forward and the owner answers), disabled with the owner's words where the binding refuses it. Pure. */
 function clipFact(binding: ClipBinding | null, clipId: string, key: string): {disabled?: boolean; why?: string} {
-  if (!binding || !(binding.ref === clipId || binding.ref.startsWith(`${clipId}#`))) return {}
+  if (!holdsClip(binding, clipId)) return {}
   const refused = binding.standing?.[key]?.disabled
   if (refused) return {disabled: true, why: refused}
   if (!binding.writes?.(key)) return {disabled: true, why: `${key}: a reading — the owner reports it, and nothing in Clip view changes it.`}
@@ -79,7 +84,8 @@ function clipMenu(target: Extract<ObjectTarget, {kind: 'clip'}>, set: WorldTrack
   const readOnly = set.tracks.find(track => track.id === target.trackId)?.readOnly === true
   const {press, binding} = context
   // Its own facts as its Clip view reads them, where Clip view holds this clip.
-  const held = binding && (binding.ref === target.id || binding.ref.startsWith(`${target.id}#`)) ? binding.values : null
+  const holding = holdsClip(binding, target.id) ? binding : null
+  const held = holding ? holding.values : null
   const named = target.name
   const fact = (key: string) => readOnly ? {disabled: true, why: READ_ONLY} : clipFact(binding, target.id, key)
   const write = (key: string, value: unknown, was: unknown, what: string) => () => press(`${key}:${target.id}`, what,
@@ -113,6 +119,19 @@ function clipMenu(target: Extract<ObjectTarget, {kind: 'clip'}>, set: WorldTrack
     items.push(sep('s-open'))
     if (a.openFile) items.push(act('open', 'Open', undefined, a.openFile, 'work.open', a, () => press(`open:${target.id}`, `Open ${named}`, () => a.openFile!.run(target.id))))
     if (a.revealFile) items.push(act('reveal', 'Reveal', undefined, a.revealFile, 'work.reveal', a, () => press(`reveal:${target.id}`, `Reveal ${named}`, () => a.revealFile!.run(target.id))))
+  }
+  // Open in (§18.1 Opening a page: "choose Open in from its menu … A choice the page has nothing for stays closed and says why"; §24.1 "A
+  // concern … Opens as: Flow, or Reading as an Expression"): how the clip opens when it is launched, a fact the clip keeps and its Clip
+  // view writes (Central: the page owner's launch field, central/clipBinding.ts `opensAs`), read back when Clip view reads the clip
+  // again; Launch then opens it so. Listed where Clip view holds the clip and says its ways; the way it opens now is checked.
+  const ways = holding?.openIn ?? []
+  if (ways.length) {
+    items.push(sep('s-open-in'))
+    const standing = fact('opensAs')
+    const was = ways.find(way => way.chosen)?.way
+    for (const way of ways) items.push({id: `open-in:${way.way}`, label: `Open in ${way.label}`, checked: way.chosen,
+      ...(way.closed ? {disabled: true, why: way.closed} : standing),
+      ...(way.chosen ? {} : {onSelect: write('opensAs', way.way, was ?? null, `Open ${named} in ${way.label}`)})})
   }
   // Show in Browser, for a clip made of a constellation (§10.9; §16.7): the Clip panel's own press, through the clip's binding, so it
   // selects the constellation in the browser — and stands dark, saying why, for a clip made of none. It changes nothing, so a track read

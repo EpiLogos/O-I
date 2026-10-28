@@ -5,6 +5,7 @@ import { el } from '../ui/dom';
 import { icon } from '../ui/icons';
 import { later, listen } from '../ui/lifetime';
 import type { Cancel } from '../ui/lifetime';
+import { providerLabels } from '../data/labels';
 
 const SEEN = 'aae.landing.seen';
 
@@ -17,7 +18,10 @@ export function setLandingStore(store: SeenStore | null): void {
   hostStore = store;
 }
 
-export const LANDING_COPY = 'I built this to see Jung’s whole field in one place: every archetype, symbol and instance he wrote about, set where and when it appeared and cited to the page. Everything in it connects back to one centre, which Jung called the Self. That’s where it starts.';
+/** The landing line: the provider's own words for its field (FieldMeta.provider.labels.landing), read when it is shown. */
+export function landingCopy(): string {
+  return providerLabels().landing;
+}
 
 function seen(): boolean {
   if (!hostStore) return true;
@@ -37,7 +41,7 @@ export class Landing {
   maybeShow(parent: HTMLElement, onStart: () => void): boolean {
     if (seen()) return false;
     const start = el('button', { type: 'button', class: 'ld-start', onclick: () => { this.dismiss(); onStart(); } }, [icon('self', 17), el('span', { text: 'Start at the Self' })]);
-    this.root = el('section', { class: 'landing', 'aria-label': 'Welcome' }, [el('p', { class: 'ld-copy', text: LANDING_COPY }), start]);
+    this.root = el('section', { class: 'landing', 'aria-label': 'Welcome' }, [el('p', { class: 'ld-copy', text: landingCopy() }), start]);
     parent.append(this.root);
     document.body.classList.add('landing-on');
     // the line arrives after the field has had a moment on its own

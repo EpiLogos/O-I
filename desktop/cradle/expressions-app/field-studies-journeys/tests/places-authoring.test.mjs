@@ -2,8 +2,10 @@
  * their source basis; refusals shown verbatim), T19 (drag to refine, precision
  * kept). Pure proof, no DOM, no maplibre, no kernel.
  *
- * Loads `vendor/research-canvas/packages/canvas/src/psychogeographic/placeAuthoring.ts`
- * through the same esbuild-in-tmp pattern as `places-navigation.test.mjs`.
+ * Loads `desktop/cradle/src/techne/m0m5/place/authoring.ts` — the draft contract, moved
+ * out of the vendor's psychogeographic folder beside the place owner when the frame's
+ * Places map and its folder retired (#762) — through the same esbuild-in-tmp pattern
+ * as `places-navigation.test.mjs`.
  *
  * The refusal strings are the native owner's own words, copied from
  * `desktop/cradle/kernel/src/construction.rs` (the source-basis and exact-revision
@@ -24,10 +26,23 @@ const require=createRequire(resolve(engine,'../package.json'));
 const {build}=require('esbuild');
 
 let api;
+
+test('the draft contract stands beside the place owner, and the vendor\'s psychogeographic folder is gone (#762)',async()=>{
+ const {existsSync,readFileSync}=await import('node:fs');
+ assert.ok(existsSync(resolve(engine,'../../src/techne/m0m5/place/authoring.ts')),'the contract stands in m0m5/place');
+ assert.ok(!existsSync(resolve(engine,'../vendor/research-canvas/packages/canvas/src/psychogeographic')),'the folder is gone');
+ const material=readFileSync(resolve(engine,'src/researchMaterial.ts'),'utf8');
+ assert.doesNotMatch(material,/from '[^']*psychogeographic/,'the closed basemap ids stand beside the material that admits them');
+ for(const reader of ['src/kernelExpressions.ts','../../src/expressions/PointCloudHost.tsx','../../src/knowledge/WikiFactsEditor.tsx','../../src/CradleFrame.tsx','../../../../packages/live-shell/ui/src/projections/atlas/places/placeTool.ts']){
+  const text=readFileSync(resolve(engine,reader),'utf8');
+  assert.match(text,/techne\/m0m5\/place\/authoring['"]/,`${reader} reads the contract where it stands`);
+ }
+});
+
 test.before(async()=>{
  const temporary=await mkdtemp(join(tmpdir(),'oi-places-authoring-'));
  try{
-  const source=resolve(engine,'../vendor/research-canvas/packages/canvas/src/psychogeographic/placeAuthoring.ts');
+  const source=resolve(engine,'../../src/techne/m0m5/place/authoring.ts');
   const out=join(temporary,'places-authoring.mjs');
   await build({
    stdin:{contents:`export * from ${JSON.stringify(source)};`,resolveDir:engine},

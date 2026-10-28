@@ -1466,279 +1466,6 @@
   color: #6f6f7d;
 }
 
-:where(.research-instrument) .psychogeographic-lens {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  overflow: auto;
-  background:
-    radial-gradient(120% 80% at 50% -8%, #111a26 0%, var(--ob-bg) 60%);
-  color: var(--ob-ink);
-  font-family: var(--ob-sans);
-  overscroll-behavior: contain;
-}
-
-:where(.research-instrument) .psychogeographic-lens > * {
-  flex-shrink: 0;
-}
-
-:where(.research-instrument) .psychogeographic-toolbar {
-  position: sticky;
-  top: 0;
-  z-index: var(--z-reading-bar);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--ob-space-4);
-  padding: var(--ob-space-3) var(--ob-space-5);
-  background: rgba(12, 17, 25, 0.92);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid var(--ob-line);
-}
-
-:where(.research-instrument) .psychogeographic-toolbar h2 {
-  margin: 0;
-  font-family: var(--ob-serif);
-  font-size: var(--ob-text-xl);
-  font-weight: 500;
-  letter-spacing: -0.01em;
-}
-
-:where(.research-instrument) .psychogeographic-toolbar h2::before {
-  content: "";
-  display: inline-block;
-  width: 7px;
-  height: 7px;
-  margin-right: 9px;
-  border-radius: 50%;
-  background: var(--ob-accent);
-  box-shadow: 0 0 0 3px rgba(121, 192, 212, 0.16);
-  vertical-align: 1px;
-}
-
-:where(.research-instrument) .psychogeographic-lens button,
-:where(.research-instrument) .street-view-surface button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  min-height: var(--ob-hit-sm);
-  padding: 0 13px;
-  border: 1px solid var(--ob-line-2);
-  border-radius: var(--ob-radius-input);
-  background: var(--ob-panel);
-  color: var(--ob-dim);
-  font: 500 12px/1 var(--ob-sans);
-  cursor: pointer;
-  transition: color 130ms ease, background-color 130ms ease, border-color 130ms ease;
-}
-
-:where(.research-instrument) .psychogeographic-lens button:hover:not(:disabled),
-:where(.research-instrument) .street-view-surface button:hover:not(:disabled) {
-  color: var(--ob-ink);
-  border-color: var(--ob-line-3);
-  background: var(--ob-panel-2);
-}
-
-:where(.research-instrument) .psychogeographic-lens button:focus-visible,
-:where(.research-instrument) .street-view-surface button:focus-visible {
-  outline: 2px solid var(--ob-accent);
-  outline-offset: 1px;
-}
-
-:where(.research-instrument) .psychogeographic-lens button:disabled,
-:where(.research-instrument) .street-view-surface button:disabled {
-  opacity: 0.42;
-  cursor: not-allowed;
-}
-
-:where(.research-instrument) .psychogeographic-lens button[data-active="true"] {
-  background: var(--ob-tint);
-  border-color: rgba(121, 192, 212, 0.36);
-  color: var(--ob-accent);
-}
-
-:where(.research-instrument) .psychogeographic-empty {
-  margin: auto;
-  max-width: 34rem;
-  padding: var(--ob-space-7) var(--ob-space-6);
-  border: 1px dashed var(--ob-line-2);
-  border-radius: var(--ob-radius-card);
-  background: rgba(12, 17, 25, 0.55);
-  color: var(--ob-dim);
-  font-family: var(--ob-serif);
-  font-size: var(--ob-text-lg);
-  line-height: var(--ob-leading-normal);
-  text-align: center;
-}
-
-:where(.research-instrument) .psychogeographic-empty {
-  margin: auto;
-  max-width: 34rem;
-  padding: var(--ob-space-7) var(--ob-space-6);
-  border: 1px dashed var(--ob-line-2);
-  border-radius: var(--ob-radius-card);
-  background: rgba(12, 17, 25, 0.55);
-  text-align: center;
-}
-
-:where(.research-instrument) .psychogeographic-empty > p {
-  margin: 0;
-  color: var(--ob-dim);
-  font-family: var(--ob-serif);
-  font-size: var(--ob-text-lg);
-  line-height: var(--ob-leading-normal);
-}
-
-:where(.research-instrument) .psychogeographic-empty__hint {
-  margin-top: var(--ob-space-3) !important;
-  color: var(--ob-faint) !important;
-  font-family: var(--ob-mono) !important;
-  font-size: var(--ob-text-xs) !important;
-  letter-spacing: 0.04em;
-}
-
-:where(.research-instrument) .street-view-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--ob-space-4);
-  margin: auto;
-  max-width: 34rem;
-  padding: var(--ob-space-7) var(--ob-space-6);
-  border: 1px dashed var(--ob-line-2);
-  border-radius: var(--ob-radius-card);
-  background: rgba(12, 17, 25, 0.55);
-}
-
-:where(.research-instrument) .street-view-empty p {
-  margin: 0;
-  color: var(--ob-dim);
-  font-family: var(--ob-serif);
-  font-size: var(--ob-text-lg);
-  line-height: var(--ob-leading-normal);
-  text-align: center;
-}
-
-:where(.research-instrument) .psychogeographic-error {
-  margin: auto;
-  max-width: 34rem;
-  padding: var(--ob-space-4) var(--ob-space-5);
-  border: 1px solid rgba(217, 138, 122, 0.4);
-  border-radius: var(--ob-radius-card);
-  background: rgba(217, 138, 122, 0.08);
-  color: #eab3a6;
-  font-family: var(--ob-mono);
-  font-size: var(--ob-text-sm);
-  line-height: var(--ob-leading-normal);
-  text-align: center;
-}
-
-:where(.research-instrument) .psychogeographic-lens [data-testid="psychogeographic-loading"] {
-  margin: auto;
-  color: var(--ob-faint);
-  font-family: var(--ob-mono);
-  font-size: var(--ob-text-xs);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-:where(.research-instrument) .psychogeographic-surface {
-  display: grid;
-  gap: var(--ob-space-4);
-  padding: var(--ob-space-5);
-}
-
-:where(.research-instrument) .psychogeographic-map {
-  width: 100%;
-  min-height: min(58vh, 540px);
-  border: 1px solid var(--ob-line-2);
-  border-radius: var(--ob-radius-card);
-  background:
-    linear-gradient(180deg, rgba(12, 17, 25, 0.9), rgba(9, 13, 19, 0.94)),
-    repeating-linear-gradient(0deg, var(--ob-line) 0 1px, transparent 1px 40px);
-  overflow: hidden;
-}
-
-:where(.research-instrument) .psychogeographic-connection,
-:where(.research-instrument) .street-view-connection {
-  width: fit-content;
-  max-width: 100%;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 5px 10px;
-  border: 1px solid var(--ob-line-2);
-  border-radius: var(--ob-radius-pill);
-  background: var(--ob-panel);
-  color: var(--ob-dim);
-  font-family: var(--ob-mono);
-  font-size: 9.5px;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-}
-
-:where(.research-instrument) .psychogeographic-connection::before,
-:where(.research-instrument) .street-view-connection::before {
-  content: "";
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--ob-live);
-}
-
-:where(.research-instrument) .psychogeographic-connection[data-state="offline"]::before,
-:where(.research-instrument) .street-view-connection[data-state="offline"]::before {
-  background: var(--ob-faint);
-  box-shadow: none;
-}
-
-:where(.research-instrument) .psychogeographic-connection[data-state="active"]::before,
-:where(.research-instrument) .street-view-connection[data-state="active"]::before {
-  background: var(--ob-amber);
-  box-shadow: 0 0 7px var(--ob-amber);
-}
-
-:where(.research-instrument) .psychogeographic-lens [data-testid="psychogeographic-opt-in-live"],
-:where(.research-instrument) .psychogeographic-lens [data-testid="psychogeographic-refresh-tiles"] {
-  width: fit-content;
-  margin-left: var(--ob-space-5);
-}
-
-:where(.research-instrument) .psychogeographic-stops {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--ob-space-2);
-  margin: 0;
-  padding: 0 var(--ob-space-5) var(--ob-space-5);
-  list-style: none;
-}
-
-:where(.research-instrument) .psychogeographic-stops button {
-  min-height: 30px;
-  padding: 0 11px;
-  border: 1px solid var(--ob-line-2);
-  border-radius: var(--ob-radius-pill);
-  background: var(--ob-panel);
-  color: var(--ob-dim);
-  font-size: 11px;
-  cursor: pointer;
-  transition: color 130ms ease, border-color 130ms ease;
-}
-
-:where(.research-instrument) .psychogeographic-stops button:hover {
-  color: var(--ob-accent);
-  border-color: rgba(121, 192, 212, 0.4);
-}
-
-:where(.research-instrument) .psychogeographic-surface [role="alert"] {
-  margin-top: var(--ob-space-2);
-  color: var(--ob-danger);
-  font-family: var(--ob-mono);
-  font-size: var(--ob-text-sm);
-}
-
 :where(.research-instrument) .street-view-surface {
   display: grid;
   gap: var(--ob-space-4);
@@ -2145,25 +1872,14 @@
     grid-template-columns: 1fr;
   }
 
-  :where(.research-instrument) .psychogeographic-toolbar {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  :where(.research-instrument) .psychogeographic-map {
-    min-height: 44vh;
-  }
-
-  :where(.research-instrument) .psychogeographic-surface,
-:where(.research-instrument) .street-view-surface {
+  :where(.research-instrument) .street-view-surface {
     padding-left: var(--ob-space-3);
     padding-right: var(--ob-space-3);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  :where(.research-instrument) .psychogeographic-lens *,
-:where(.research-instrument) .street-view-surface * {
+  :where(.research-instrument) .street-view-surface * {
     transition: none !important;
   }
 }
@@ -2330,19 +2046,6 @@
 @media(max-width:600px){:where(.research-instrument) .canvas-zoom-controls{right:calc(var(--oi-space-3,12px) + 118px + 8px)}}
 :where(.research-instrument) .canvas-zoom-readout-host{position:absolute;inset:0;pointer-events:none;z-index:6}
 :where(.research-instrument) .canvas-zoom-readout{position:absolute;left:12px;bottom:16px;padding:2px 8px;border-radius:4px;background:var(--panel);color:var(--ink);font:11px/1.4 system-ui,sans-serif;font-variant-numeric:tabular-nums}
-
-/* lane-4 T4/T5: the basemap stack's layer rows (imagery, terrain) and the live-sources switch. */
-:where(.research-instrument) .psychogeographic-layers-panel [data-testid="places-basemap"] input[type=checkbox],
-:where(.research-instrument) .psychogeographic-layers-panel [data-testid="places-basemap"] input[type=range]{accent-color:var(--accent)}
-:where(.research-instrument) .psychogeographic-layers-panel [data-testid="places-basemap"] input:disabled{opacity:.45}
-:where(.research-instrument) .psychogeographic-layers-panel [data-testid="places-basemap"] input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-:where(.research-instrument) .psychogeographic-layers-panel [data-testid="places-basemap"] li[data-state="unavailable"] > label{opacity:.75}
-
-/* lane-4 T14-T16: the docked time control on the Places map. Geometry is the map's own inline layout; these rules add state and focus only, from tokens. */
-:where(.research-instrument) .places-time button:disabled,:where(.research-instrument) .places-time select:disabled{opacity:.4;cursor:default}
-:where(.research-instrument) .places-time button:focus-visible,:where(.research-instrument) .places-time select:focus-visible,:where(.research-instrument) .places-time [role="slider"]:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-:where(.research-instrument) .places-time input[type=checkbox]{accent-color:var(--accent)}
-:where(.research-instrument) .places-time-track[aria-disabled="true"] .places-time-window{opacity:.4}
 
 /* lane-1 A2: shapes, stickies and text on the Research Canvas. Quiet by
  * default: shapes are stroke-only unless one palette fill is chosen; stickies
@@ -2558,9 +2261,6 @@
 }
 /* review-3: a sticky is a light paper in every scene, so its label carries its own dark ink, not the scene's --ink. */
 :where(.research-instrument) .canvas-object--sticky{color:var(--canvas-object-ink,#25251e)}
-/* lane-4 T20-T21: the Places tool row's named-view controls take the instrument's own tokens. */
-:where(.research-instrument) .research-places-view-select{font:inherit;font-size:11px;color:var(--ob-ink);background:transparent;border:1px solid var(--ob-line-3);border-radius:6px;padding:2px 6px}
-:where(.research-instrument) .research-places-view-save{font:inherit;font-size:11px;color:var(--ob-ink);background:transparent;border:1px solid var(--ob-line-3);border-radius:6px;padding:2px 8px;cursor:pointer}
 
 /* lane-1 A7-A8 — present over saved frames. Presenting hides the Canvas's own floating chrome (zoom controls, overview, guides, zoom readout) and takes pointer input away: the presentation moves by keys only. The host hides the panels; fullscreen shows the Canvas alone. Tokens only. */
 :where(.research-instrument) .research-canvas--presenting .canvas-zoom-controls,:where(.research-instrument) .research-canvas--presenting .research-minimap-toggle,:where(.research-instrument) .research-canvas--presenting .navigation-minimap,:where(.research-instrument) .research-canvas--presenting .canvas-guides{display:none}

@@ -238,7 +238,7 @@ test('through the row, each writer moves the same graph state the face body read
     const ties = await dispatch.fireWritePath(rowOf('ties'), ['site'], CTX)
     assert.equal(ties.kind, 'fired', ties.reason)
     assert.deepEqual(graph.controls().ties, ['site'])
-    assert.match(drawGraph('graph-tools'), /aria-pressed="false"[^>]*>Jung</, 'the face shows the relation switched off')
+    assert.match(drawGraph('graph-tools'), /aria-pressed="false"[^>]*>Source</, 'the face shows the relation switched off')
 
     const kinds = await dispatch.fireWritePath(rowOf('kinds'), ['family'], CTX)
     assert.equal(kinds.kind, 'fired', kinds.reason)

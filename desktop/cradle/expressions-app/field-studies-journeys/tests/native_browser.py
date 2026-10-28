@@ -3,8 +3,8 @@ Local inline content; the storage test double is explicit. No network or browser
 """
 from pathlib import Path
 import json,base64,traceback,struct
-from harness import browser_session
-ROOT=Path(__file__).resolve().parents[1];E=ROOT/'evidence-native';E.mkdir(exist_ok=True)
+from harness import browser_session,secure_page,fresh_document,first_difference,EVIDENCE
+ROOT=Path(__file__).resolve().parents[1];E=EVIDENCE
 HTML=(ROOT/'public/index.html').read_text()
 # lane-3 E18: the Library is one record per document; this reads the newest complete copy of each (the two slots are #a and #b).
 LIBRARY_RECORDS='(()=>{const m={};for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(!k.startsWith("oi.field-studies.journey-library.v2.doc."))continue;const e=JSON.parse(localStorage.getItem(k));const id=k.replace(/#[ab]$/,"");if(!m[id]||e.seq>m[id].seq)m[id]=e;}return Object.values(m).map(e=>JSON.parse(e.body));})()'
@@ -16,20 +16,23 @@ def check(name,fn):
  evidence=fn();results.append({'name':name,'ok':True,'evidence':evidence});print('PASS',name,flush=True)
 def state(p):return p.evaluate('window.__FIELD_STUDIES__.getState()')
 def doc(p):return p.evaluate('window.__FIELD_STUDIES__.getDocument()')
+# The document as a file holds it: JSON drops a field whose value is undefined.
+def doc_json(p):return p.evaluate('JSON.parse(JSON.stringify(window.__FIELD_STUDIES__.getDocument()))')
 def current(p):return doc(p)['scenes'][state(p)['sceneIndex']]
 def inspect(p,read=False):return p.evaluate('(r)=>window.__FIELD_STUDIES__.inspect(r)',read)
 def settle(p):
  if not state(p)['libraryOpen']:p.wait_for_function('!window.__FIELD_STUDIES__.getState().needsFrame',timeout=15000)
 def act(p,name,extra=''):
  selector=f'[data-action="{name}"]'+extra;modal=p.locator('dialog[open] '+selector).filter(visible=True);loc=modal if modal.count() else p.locator(selector).filter(visible=True);loc.first.click(timeout=20000);p.wait_for_timeout(65);settle(p)
+# A control can stand in more than one panel (the Live rack mirrors the Image suite); the person uses the one on screen.
 def reveal(p,selector):
- p.locator(selector).first.evaluate('(el)=>{for(let p=el.parentElement;p;p=p.parentElement)if(p.tagName==="DETAILS")p.open=true;}')
+ p.locator(selector).evaluate_all('(els)=>{for(const el of els)for(let p=el.parentElement;p;p=p.parentElement)if(p.tagName==="DETAILS")p.open=true;}')
 def fill(p,path,value):
- selector=f'[data-bind="{path}"]:not([type="range"])';reveal(p,selector);el=p.locator(selector).first;el.fill(str(value));el.press('Tab');p.wait_for_timeout(65);settle(p)
+ selector=f'[data-bind="{path}"]:not([type="range"])';reveal(p,selector);el=p.locator(selector).filter(visible=True).first;el.fill(str(value));el.press('Tab');p.wait_for_timeout(65);settle(p)
 def load(p,j):
  if p.evaluate('!!window.__FIELD_STUDIES__'):p.evaluate('window.__FIELD_STUDIES__.dispose()')
  start=STORAGE+'<script>window.__JOURNEY__='+json.dumps(j).replace('</','<\\/')+';</script>'
- p.set_content(HTML.replace('<head>','<head>'+start,1),wait_until='load');p.wait_for_function('!!window.__FIELD_STUDIES__?.inspect()');p.evaluate('window.__FIELD_STUDIES__.pause()');p.wait_for_timeout(100)
+ fresh_document(p);p.set_content(HTML.replace('<head>','<head>'+start,1),wait_until='load');p.wait_for_function('!!window.__FIELD_STUDIES__?.inspect()');p.evaluate('window.__FIELD_STUDIES__.pause()');p.wait_for_timeout(100)
 def equivalent(a,b,keys):return all(a[k]==b[k] for k in keys)
 try:
  with browser_session({'width':1440,'height':1000},'reduce') as (browser,ctx,p):
@@ -82,11 +85,11 @@ try:
   # Persistence and file artifacts.
   act(p,'library');
   with p.expect_download() as d:act(p,'export-json')
-  jpath=E/'acceptance.journey.json';d.value.save_as(jpath);exported=json.loads(jpath.read_text());require(exported==doc(p))
+  jpath=E/'acceptance.journey.json';d.value.save_as(jpath);exported=json.loads(jpath.read_text());live=doc_json(p);require(exported==live,'export differs from the live document at '+str(first_difference(exported,live)))
   check('Journey configuration export contains the actual authored document',lambda:{'scenes':len(exported['scenes']),'entities':len(exported['scenes'][0]['entities'])})
   with p.expect_download() as d:act(p,'export-artifact')
-  artifact=E/'acceptance-artifact.html';d.value.save_as(artifact);p2=ctx.new_page();p2.emulate_media(reduced_motion='reduce');p2.set_content(artifact.read_text().replace('<head>','<head>'+STORAGE,1),wait_until='load');p2.wait_for_function('!!window.__FIELD_STUDIES__?.inspect()')
-  check('Self-contained living artifact reopens with native engine, editor and all authored state',lambda:require(doc(p2)==exported and state(p2)['engine']=='Native particle field' and p2.locator('#present-return').is_visible()))
+  artifact=E/'acceptance-artifact.html';d.value.save_as(artifact);p2=secure_page(ctx);p2.emulate_media(reduced_motion='reduce');p2.set_content(artifact.read_text().replace('<head>','<head>'+STORAGE,1),wait_until='load');p2.wait_for_function('!!window.__FIELD_STUDIES__?.inspect()')
+  check('Self-contained living artifact reopens with native engine, editor and all authored state',lambda:require(doc_json(p2)==exported and state(p2)['engine']=='Native particle field' and p2.locator('#present-return').is_visible()))
   p2.evaluate('window.__FIELD_STUDIES__.dispose()');p2.close()
   # True GPU image export, actually decoded by the browser.
   act(p,'close-library');act(p,'capture-options')
@@ -96,20 +99,27 @@ try:
   imageEvidence=p.evaluate('async(data)=>{const i=new Image();i.src="data:image/png;base64,"+data;await i.decode();const c=document.createElement("canvas");c.width=i.width;c.height=i.height;const x=c.getContext("2d");x.drawImage(i,0,0);const a=x.getImageData(0,0,c.width,c.height).data;let count=0;for(let k=3;k<a.length;k+=4)if(a[k]>16)count++;return {width:i.width,height:i.height,marked:count};}',base64.b64encode(raw).decode())
   after=inspect(p,True);check('PNG decodes actual visible native marks and leaves GPU state unchanged',lambda:(require(imageEvidence['marked']>100 and equivalent(before,after,['simTime','steps','seeds','positions'])),imageEvidence)[1])
   # Real recording / review / decode, opening editor must not alter recording dimensions.
+  # A mark is a pixel at least 32 levels darker than the frame's paper (its median red): the lossy
+  # encoding lightens each dot, so a fixed level counted a varying share of them; a blank frame counts none.
+  # The frame is read at 0.6 s of media time however fast this machine decodes, not after a fixed wall-clock wait.
   act(p,'capture-options');p.locator('details.image-output summary').click();p.locator('#capture-transparent').uncheck();act(p,'record-video');p.wait_for_timeout(1300);p.evaluate("window.__FIELD_STUDIES__.openEditor('motion')");p.wait_for_timeout(1000);act(p,'stop-record');p.locator('#recording-review').wait_for(state='visible',timeout=20000);p.evaluate('window.__FIELD_STUDIES__.pause()')
   p.wait_for_function('document.querySelector("#recording-review").readyState>=2',timeout=15000)
-  video=p.evaluate('async()=>{const v=document.querySelector("#recording-review");await v.play();await new Promise(r=>setTimeout(r,650));v.pause();const c=document.createElement("canvas");c.width=v.videoWidth;c.height=v.videoHeight;const x=c.getContext("2d");x.drawImage(v,0,0);const data=x.getImageData(0,0,c.width,c.height).data;let marks=0;for(let i=0;i<data.length;i+=4)if(data[i]<160)marks++;return {width:v.videoWidth,height:v.videoHeight,currentTime:v.currentTime,decodedFrames:v.getVideoPlaybackQuality().totalVideoFrames,marks,png:c.toDataURL()};}')
+  video=p.evaluate('async()=>{const v=document.querySelector("#recording-review");await v.play();const started=performance.now();while(v.currentTime<.6&&!v.ended&&performance.now()-started<15000)await new Promise(r=>setTimeout(r,40));v.pause();const c=document.createElement("canvas");c.width=v.videoWidth;c.height=v.videoHeight;const x=c.getContext("2d");x.drawImage(v,0,0);const data=x.getImageData(0,0,c.width,c.height).data;const reds=[];for(let i=0;i<data.length;i+=4)reds.push(data[i]);reds.sort((a,b)=>a-b);const paper=reds[reds.length>>1];let marks=0;for(let i=0;i<data.length;i+=4)if(data[i]<=paper-32)marks++;return {width:v.videoWidth,height:v.videoHeight,currentTime:v.currentTime,decodedFrames:v.getVideoPlaybackQuality().totalVideoFrames,paper,marks,png:c.toDataURL()};}')
   (E/'decoded-performance.png').write_bytes(base64.b64decode(video.pop('png').split(',')[1]))
   with p.expect_download() as d:act(p,'save-video')
   movie=E/'native-performance.webm';d.value.save_as(movie)
-  check('Recorded performance plays, decodes multiple frames and preserves fixed output dimensions',lambda:(require(video['width']==1280 and video['height']==889 and video['currentTime']>.1 and video['decodedFrames']>1 and video['marks']>100),{**video,'bytes':movie.stat().st_size})[1])
+  check('Recorded performance plays, decodes multiple frames and preserves fixed output dimensions',lambda:(require(video['width']==1280 and video['height']==889 and video['currentTime']>.1 and video['decodedFrames']>1 and video['marks']>100,'recorded video '+json.dumps(video)),{**video,'bytes':movie.stat().st_size})[1])
   act(p,'close-dialog');
   # File import and original retention, then origin-local save / reload.
-  p.locator('#import-file').set_input_files(str(jpath));p.wait_for_timeout(400);require(doc(p)==exported)
+  p.locator('#import-file').set_input_files(str(jpath));p.wait_for_timeout(400);require(doc_json(p)==exported)
   storage=p.evaluate('window.__TEST_STORAGE__');saved=p.evaluate(LIBRARY_RECORDS);require(any(j['id']==exported['id'] for j in saved))
   reloadStart=STORAGE+'<script>delete window.__JOURNEY__;Object.assign(window.__TEST_STORAGE__,'+json.dumps(storage).replace('</','<\\/')+');</script>'
-  p.evaluate('window.__FIELD_STUDIES__.dispose()');p.set_content(HTML.replace('<head>','<head>'+reloadStart,1),wait_until='load');p.wait_for_function('!!window.__FIELD_STUDIES__?.inspect()')
-  check('Browser-save reload and file import restore editable configuration without changing source file',lambda:require(doc(p)==exported and json.loads(jpath.read_text())==exported))
+  p.evaluate('window.__FIELD_STUDIES__.dispose()');fresh_document(p);p.set_content(HTML.replace('<head>','<head>'+reloadStart,1),wait_until='load');p.wait_for_function('!!window.__FIELD_STUDIES__?.inspect()')
+  check('Browser-save reload and file import restore editable configuration without changing source file',lambda:require(doc_json(p)==exported and json.loads(jpath.read_text())==exported))
+  # The reload restored the open Library; behind it the entry gate offers the restored work, and the person continues it.
+  if state(p)['libraryOpen']:act(p,'close-library')
+  p.locator('#entry-gate [data-action="entry-continue"]').wait_for(state='visible',timeout=15000);require(p.locator('#entry-gate [data-action="entry-continue"]').is_enabled(),'a reload offers to continue the restored work')
+  act(p,'entry-continue');require(doc_json(p)==exported and not p.locator('#entry-gate').is_visible(),'continuing keeps the restored work')
   # Non-destructive preset preview.
   before=doc(p)
   if state(p)['libraryOpen']:act(p,'close-library')
@@ -122,7 +132,7 @@ try:
   check('Small window retains pause and dismissible motion controls without page overflow',lambda:require(p.locator('#play-button').is_visible() and p.locator('[data-action="close-studio"]').is_visible() and p.evaluate('document.documentElement.scrollWidth<=innerWidth+1')))
   p.evaluate('window.__FIELD_STUDIES__.dispose()')
   # Real touch pointer event delivered by browser input system.
-  touch=browser.new_context(viewport={'width':900,'height':700},has_touch=True,reduced_motion='reduce');tp=touch.new_page();load(tp,fixture);act(tp,'tool-pin');tp.touchscreen.tap(470,265);tp.wait_for_timeout(120)
+  touch=browser.new_context(viewport={'width':900,'height':700},has_touch=True,reduced_motion='reduce');tp=secure_page(touch);load(tp,fixture);act(tp,'tool-pin');tp.touchscreen.tap(470,265);tp.wait_for_timeout(120)
   check('Touch placement creates exactly one selected attractor on the plane',lambda:require(len(current(tp)['entities'])==3 and state(tp)['tool']=='select' and current(tp)['entities'][-1]['force']['kind']=='attract'))
   tp.evaluate('window.__FIELD_STUDIES__.dispose()');touch.close()
 except Exception as e:

@@ -456,8 +456,8 @@ export class GlobeEngine {
     const camDist = this.camera.position.length();
     // the radians of the body one pixel spans, under the camera (the sky's finest detail is drawn only where a pixel is smaller than it)
     this.earth.pxRad.value = (2 * Math.tan((FOV * Math.PI) / 360) * Math.max(camDist - 1, 0.02)) / Math.max(this.height, 1);
-    // the far plane follows the Earth's distance (the sky is drawn about the Sun); the near plane may follow the focus
-    const planes = depthPlanes(camDist, !!this.sky, this.rig.dist, this.sky?.approach ?? 0);
+    // the far plane follows the Earth's distance (the sky is drawn about the Sun); the near plane may follow the focus and the held body
+    const planes = depthPlanes(camDist, !!this.sky, this.rig.dist, this.sky?.approach ?? 0, this.sky?.heldDistance(this.camera.position) ?? Infinity);
     this.camera.near = planes.near;
     this.camera.far = planes.far;
     this.camera.updateMatrixWorld();

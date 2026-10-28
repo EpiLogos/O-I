@@ -226,7 +226,9 @@ test('a throw part way through the attach leaves no observer, subscription, foll
 
 test('a clean attach and close leave no observer or subscription behind', async () => {
   const attached = await panel.attachAtlas({element: pane(), transport, follow: true})
-  assert.equal(observersLive, 1)
+  // two observers while the atlas stands: the view mirror's (the atlas's body[data-mode]) and the pane chrome's (#762: what the atlas draws
+  // over the globe, read for the World and the Lens, projections/atlas/paneChrome.ts); both released with it
+  assert.equal(observersLive, 2)
   // T-PLACES-ONTO-ATLAS: three disclosure subscriptions while the atlas stands — the Sun's (the window's instant), Places' (the shared
   // spatial focus turns the Earth, places/placesHost.ts) and the body drawer's (the window's instant is the occasion the body's weather stands
   // at, system/bodyDraw.ts; T-PROCEDURAL-BODY); all released with it

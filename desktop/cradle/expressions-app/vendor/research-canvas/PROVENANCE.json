@@ -180,8 +180,6 @@
     "packages/canvas/src/canvas/navigationGeometry.ts",
     "packages/canvas/src/canvas/CanvasGuides.tsx",
     "packages/canvas/src/canvas/ZoomReadout.tsx",
-    "packages/canvas/src/psychogeographic/basemapSources.ts",
-    "packages/canvas/src/psychogeographic/placeAuthoring.ts",
     "packages/canvas/src/canvas/CanvasObjectNodes.tsx",
     "packages/canvas/src/timeline/causeChain.ts",
     "packages/canvas/src/timeline/nesting.ts",

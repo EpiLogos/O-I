@@ -9,8 +9,8 @@ export function clipText(text: string, max: number): string {
 }
 
 /**
- * [C2-b14, comment-only] The provider's year display is human truth and can be
- * long prose ("c. 250 (sleep begins); woke under Theodosius II"). Labels want the lead.
+ * The provider's year display is human truth and can be long prose
+ * ("c. 250 (sleep begins); woke under Theodosius II"). Labels want the lead.
  */
 export function eraShort(display: string, max = 24): string {
   let t = display.replace(/\s*\([^)]*\)/g, ' ').split(';')[0].replace(/\s+/g, ' ').trim();

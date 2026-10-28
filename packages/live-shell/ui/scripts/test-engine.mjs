@@ -37,6 +37,11 @@ const selected = readdirSync(tests)
   .sort()
   .map(name => ({name, hits: reaches(join(tests, name))}))
   .filter(test => test.hits.size)
+// `node --test` with no file falls back to its own discovery across desktop/cradle; a suite that finds nothing fails.
+if (!selected.length) {
+  console.error('test-engine: no desktop/cradle/tests/*.test.mjs reaches a file the candidate imports')
+  process.exit(1)
+}
 
 if (process.argv.includes('--list')) {
   for (const test of selected) console.log(`${test.name}  ${[...test.hits].join(' ')}`)

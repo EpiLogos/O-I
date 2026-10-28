@@ -28,6 +28,11 @@ const files = readdirSync(join(ui, 'tests'))
   .filter(name => name.endsWith('.test.mjs') && !webstorage.has(name) && !needsLiveStack.has(name))
   .sort()
   .map(name => join('tests', name))
+// `node --test` with no file falls back to its own discovery from this folder; a suite that finds nothing fails.
+if (!files.length) {
+  console.error('test-all: no tests/*.test.mjs to run')
+  process.exit(1)
+}
 
 // The page templates the pages suites read (desktop/cradle/documents/oi-beings.html, oi-things.html …) are generated, never kept:
 // they are built here first, as the cradle's own build does (desktop/cradle/package.json prebuild), so the suite needs no earlier

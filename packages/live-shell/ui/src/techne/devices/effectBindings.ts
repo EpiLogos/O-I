@@ -13,7 +13,13 @@
 //     refraction request (`ql wiki refract`, QL-MEF pull 350), drawn on QL's registry entry for the lens; the request itself waits for
 //     that target and a kernel route. The mode and operation stand refused with what QL lacks. The proposals have no producer even then: QL's WikiFrame refraction engine leaves every reading's relation and traversal candidates
 //     empty (QL-MEF crates/ql-wiki/src/refraction.rs:787-788), and `ql techne reading` carries none.
+//   - A lens's own controls are the Lens's (§17.11; O-I ticket 762): the Earth pane stands a non-Field lens's title and controls down (its panel's
+//     handle, close, walk rail, tabs and fields; Aion's epochs, rail, close and ring convention; the Red Book's and the dynamical lens's
+//     rails and closes) and the Lens draws them, each the atlas's own control pressed (projections/atlas/paneChrome.ts): `pane.title`,
+//     `pane.controls`, and the hand `pane.press`. While no atlas lens draws any, both are absent.
 import type {DesignBinding, Value, ValueChange} from '../../frame/devices/designed'
+import {pressPane, type PaneChromeReading} from '../../projections/atlas/paneChrome'
+import {notePlaceTool} from '../../projections/atlas/places/placeTool'
 import {LENS_DESIGN, LIGHT_DESIGN, disabled, handsFor, missing, refusal} from './designDevices'
 import {registryKeys, type LensRegistry} from './lensRegistry'
 
@@ -104,10 +110,12 @@ export function canvasCarryingLight(canvas: DesignBinding, light: DesignBinding)
 }
 /** The Lens on Quaternal Logic: the registry's lists where QL has answered them, the lens and sublens the view holds, every other key
  * absent with what it waits for, the mode, operation and probe refused naming what QL or the shell lacks. */
-export const lensBinding = (registry?: LensRegistry, held: Readonly<Record<string, Value>> = {}): DesignBinding => {
+export const lensBinding = (registry?: LensRegistry, held: Readonly<Record<string, Value>> = {}, pane?: PaneChromeReading): DesignBinding => {
   const binding = unreached(LENS_ID, LENS_REFUSE, [], NO_TARGET)
   const lists = registry ? registryKeys(registry) : {values: {}, standing: {}}
   const hands = Object.fromEntries(LENS_LOCAL.flatMap(key => (held[key] === undefined ? [] : [[key, held[key]!]])))
-  return {...binding, values: {...lists.values, ...hands}, standing: {...binding.standing, ...disabled(LENS_ABSENT), ...lists.standing},
-    local: handsFor(LENS_ID, LENS_LOCAL)}
+  // the atlas lens's own title and controls, as the Earth pane drew them before it stood them down
+  const own: Record<string, Value> = pane && pane.controls.length ? {'pane.controls': JSON.stringify(pane.controls), ...(pane.title ? {'pane.title': pane.title} : {})} : {}
+  return {...binding, values: {...lists.values, ...hands, ...own}, standing: {...binding.standing, ...disabled(LENS_ABSENT), ...lists.standing},
+    local: {...handsFor(LENS_ID, LENS_LOCAL), 'pane.press': value => { if (value !== undefined) pressPane(value, notePlaceTool) }}}
 }

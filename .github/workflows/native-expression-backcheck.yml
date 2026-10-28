@@ -13,6 +13,7 @@ on:
       - 'packages/oi-design-system/expressions-engine/shell/**'
       - 'packages/oi-design-system/expressions-engine/PROVENANCE.json'
       - 'scripts/vendor-expressions-engine.mjs'
+      - 'scripts/node-test.mjs'
       - 'packages/oi-design-system/expressions-engine/oi/**'
       - '.github/workflows/native-expression-backcheck.yml'
   workflow_dispatch:

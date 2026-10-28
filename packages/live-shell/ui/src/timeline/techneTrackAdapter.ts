@@ -36,11 +36,19 @@
 // - actions: only through the owners that exist. A walk stop is stood through the one rule the Timeline and the Journey share
 //   (timeline/journeyWalks.ts walkStopFocus → timeline/walkFocus.ts applyWalkStopFocus: its occasion on the spine, or its epoch
 //   in the atlas) and launches the Expression it carries through the shell's own door (JourneyPresentation.openExpression, the
-//   workspace's requestExpression). No controls handed in, or no stop in the set, no actions: the grid stays read-only. There is
-//   no owner op that stops a walk or records one, so neither is offered.
+//   workspace's requestExpression). No controls handed in, or no stop in the set, no actions: the grid stays read-only. A walk is
+//   recorded and stopped on the transport (Record, Stop: the World's walk, projections/atlas/places/placesTransport.ts), not from a
+//   slot of the grid, so neither is offered here.
+// - recorded walks (O-I #760; manual §17.1 Takes, "Press Record and go somewhere new ... the walk lies along the ruler"): the takes the
+//   World recorded and the views it kept, read from their owner (projections/atlas/walks/walkRecord.ts recordedWalksOf, the walk's
+//   Expression), handed in as `recorded` and laid in the Journeys stream as every other walk is. A stop kept at a moment lies at it: an
+//   instant (an occasion's, `recorded.instants`) among the hours of its civil day, as a run receipt is placed; a span by its year on the
+//   deep-time scale (the stop's `year`). A stop kept at no moment stands at a "no time" slot, in order. A stop of one is stood by the World,
+//   never the spine (useTechneTracks.ts).
 // - R3 (manual §17.1 "The mixer row", §16.6): every track's mixer row — Activator shows or hides the reading, Solo shows only the
 //   soloed, Arm lets the instrument write into the track; its input is its sources, its output the instrument it plays through;
-//   Monitor is none. None of the three has an owner op yet, and each says which. The Main track is the stops. A reading that
+//   Monitor is none. Arm is the World's one write arm on a recorded walk's track while the World is open (`recorded.arm`); a reading's
+//   own track takes no writes. The Main track is the stops. A reading that
 //   extends another lies under it as a take lane (lock §9.1: "readings that extend a reading (layers, never rewrites)"): its events
 //   are the take's stretches, and since a later reading never erases an earlier one, no comp copies it into the main lane.
 //
@@ -78,7 +86,7 @@ export const TECHNE_MIXER: WorldMixer = {
   solo: {meaning: 'Shows only the soloed readings',
     disabled: missingOp('Solo', 'shell.setReadingSolo(layerId, on) — read by the ruler and the instruments as the Activator is', 'shell · Technē')},
   arm: {meaning: 'Lets the instrument write into the track: a recorded walk, or a stop you place',
-    disabled: missingOp('Arm', 'a walk the instrument records and a stop it places — atlas walk.record {walk_ref, stops: [{clip_ref, year?, place?}]} and walk.place_stop {walk_ref, at, clip_ref} through the atlas provider', 'Technē')},
+    disabled: 'Arm: the World is the instrument that writes into a track, a recorded walk, and it arms only while it is open in a pane. Open Earth from the browser\'s Instruments, or press the transport\'s Arm there.'},
   input: {meaning: 'A track\'s material comes from its sources, each at its revision', route: 'Sources'},
   output: {meaning: 'The instrument it plays through: the World, the Timeline, the Journey, the Palace or the graph', route: 'Instrument'},
 }
@@ -133,6 +141,12 @@ export const READING_THREAD_WALK_KIND = 'aion-thread'
 export const FIELD_THREAD_WALK_KIND = 'field-thread'
 export const REDBOOK_WALK_KIND = 'redbook'
 export const DYNAMICS_ROUTE_WALK_KIND = 'dynamics-route'
+/** The walks the World recorded (a take) and kept (the views kept as Scenes), as projections/atlas/walks/walkRecord.ts recordedWalksOf
+ * writes them. */
+export const RECORDED_WALK_KIND = 'recorded-walk'
+export const KEPT_VIEWS_KIND = 'kept-views'
+/** A walk the World recorded or kept: a stop of it is stood by the World, never the spine. */
+export const isRecordedWalk = (walk: Pick<WorldWalk, 'kind'>): boolean => walk.kind === RECORDED_WALK_KIND || walk.kind === KEPT_VIEWS_KIND
 /** The World cut's run lanes — the only civil kinds that are Technē's stream. */
 export const RUN_TRACK_KINDS: ReadonlySet<string> = new Set(['run', 'run-overflow'])
 const RUN_OVERFLOW_KIND = 'run-overflow'
@@ -182,6 +196,9 @@ export interface TechneReading {
   controls?: TechneControls
   /** Which readings stand on the ruler (timeline/readingShown.ts), and its writes; absent, every reading stands and the row says so. */
   shown?: {state: ReadingShown; show(trackId: string, on: boolean): void; solo(trackId: string, on: boolean): void}
+  /** The walks the World recorded and kept, read from their owner, and its write arm while the World is open (absent `arm`: closed).
+   * `instants`: the stops kept at an instant, by stop id (walkRecord.ts recordedInstantsOf), laid among the hours of their civil day. */
+  recorded?: {walks: readonly WorldWalk[]; instants?: ReadonlyMap<string, number>; armed: boolean; arm?(on: boolean): TechneReceipt}
 }
 
 /** The World cut's temporal read as this adapter reads it. */
@@ -219,11 +236,14 @@ const WALK_WORDS: Readonly<Record<string, string>> = {
   [FIELD_THREAD_WALK_KIND]: 'a subject\'s occurrences',
   [REDBOOK_WALK_KIND]: 'a journey · the Red Book',
   [DYNAMICS_ROUTE_WALK_KIND]: 'a journey · the dynamics route',
+  [RECORDED_WALK_KIND]: 'a journey · a walk the World recorded, a take',
+  [KEPT_VIEWS_KIND]: 'a journey · the views the World kept, each a Scene',
 }
 
 function walkKindText(walk: WorldWalk): string {
   const stops = walk.stops.length
-  return `${WALK_WORDS[walk.kind] ?? `a journey · ${walk.kind}`} · ${walk.derived ? 'derived on read' : 'curated'} · ${plural(stops, 'stop', 'stops')}`
+  const standing = walk.derived ? 'derived on read' : isRecordedWalk(walk) ? 'kept by its Expression' : 'curated'
+  return `${WALK_WORDS[walk.kind] ?? `a journey · ${walk.kind}`} · ${standing} · ${plural(stops, 'stop', 'stops')}`
 }
 
 /** What the Earth says about itself, in the counts it publishes (provider/suiteStanding.ts). */
@@ -282,6 +302,12 @@ interface Draft {
   place: Place
 }
 
+/** An instant's place among the civil days: its UTC day and minute; null for an instant outside the four-digit years a day key names. */
+function civilPlaceAt(instant: number): Place | null {
+  const key = new Date(instant).toISOString().slice(0, 10)
+  return isDate(key) ? {kind: 'civil', day: key, minute: clamp(Math.round((instant - dayStartMs(key)) / 60000), 0, MINUTES_PER_DAY - 1)} : null
+}
+
 /** A run receipt's place: its instant, held inside the civil day the owner's day_ref names (never the day before). */
 function civilPlaceOf(event: TemporalEventRow | undefined): {place: Place; instant: number | null} {
   if (!event) return {place: {kind: 'none'}, instant: null}
@@ -323,6 +349,8 @@ export function projectTechneTracks(reading: TechneReading): WorldTrackSet {
   }
   const walks: WorldWalk[] = []
   for (const walk of journeyWalksOf(sets)) if (!walks.some(seen => seen.id === walk.id)) walks.push(walk)
+  // The World's recorded walks, read from their owner whatever the civil read's state: they are Journeys.
+  for (const walk of reading.recorded?.walks ?? []) if (!walks.some(seen => seen.id === walk.id)) walks.push(walk)
   const layers: WorldTrackLayer[] = []
   const sections: WorldTrackSection[] = []
   // A section's span is in its family's own units (worldTrackAdapter.ts). An Aion epoch's and a Red Book section's are years; a
@@ -389,6 +417,7 @@ export function projectTechneTracks(reading: TechneReading): WorldTrackSet {
   const drafts: Draft[] = []
   const usedClipIds = new Set<string>()
   const stopClipIds = new Map<WorldWalk, string[]>()
+  const recordedInstants = reading.recorded?.instants
   for (const walk of orderedWalks) {
     const trackId = trackOfWalk.get(walk) as string
     const total = walk.stops.length
@@ -403,6 +432,8 @@ export function projectTechneTracks(reading: TechneReading): WorldTrackSet {
       usedClipIds.add(id)
       ids.push(id)
       const year = finite(stop.year) ? stop.year : finite(source?.span?.start) ? source?.span?.start : undefined
+      // A recorded stop kept at an instant lies among its day's hours; only a walk the World recorded names one.
+      const instant = isRecordedWalk(walk) ? recordedInstants?.get(stop.id) : undefined
       const next = walk.stops[index + 1]
       drafts.push({
         clip: {
@@ -411,7 +442,7 @@ export function projectTechneTracks(reading: TechneReading): WorldTrackSet {
           ...(source?.standing ? {standing: source.standing} : {}),
           ...(next ? {launch: {follow: `stop ${index + 2}/${total} · ${next.label}`}} : {}),
         },
-        place: year !== undefined ? {kind: 'year', year} : {kind: 'none'},
+        place: (finite(instant) ? civilPlaceAt(instant) : null) ?? (year !== undefined ? {kind: 'year', year} : {kind: 'none'}),
       })
     })
     stopClipIds.set(walk, ids)
@@ -558,9 +589,29 @@ export function projectTechneTracks(reading: TechneReading): WorldTrackSet {
   if (shown) set.actions = {...set.actions, mixer: {...set.actions?.mixer,
     activator: {op: READING_SHOWN_OP, run: (trackId, on) => { shown.show(trackId, on); return {ok: true, note: on ? 'The reading stands on the ruler.' : 'The reading leaves the ruler; its track stays.'} }},
     solo: {op: READING_SHOWN_OP, run: (trackId, on) => { shown.solo(trackId, on); return {ok: true, note: on ? 'Only this reading stands on the ruler.' : 'Every shown reading stands again.'} }}}}
+  // Arm (manual §17.1 "Lets the instrument write into the track: a recorded walk, or a stop you place"): while the World is open its one
+  // write arm is pressed from a recorded walk's track as from the transport; a reading's track says why it takes no writes.
+  const recorded = reading.recorded
+  if (recorded?.arm) {
+    const arm = recorded.arm
+    const writable = new Set(journeyLanes.flatMap(lane => lane.walk && isRecordedWalk(lane.walk) ? [lane.track.id] : []))
+    for (const track of tracks) if (writable.has(track.id)) track.mix = {...track.mix, arm: recorded.armed}
+    set.mixer = {...set.mixer, arm: {meaning: TECHNE_MIXER.arm!.meaning, grain: 'one arm: the World writes every recorded walk'}}
+    set.actions = {...set.actions, mixer: {...set.actions?.mixer, arm: {op: WALK_ARM_OP, run: (trackId, on) => writable.has(trackId) ? arm(on)
+      : {ok: false, error: 'This track is a reading or a stream: its material belongs to its sources, so the World writes nothing into it. Arm a recorded walk, or press the transport\'s Arm.'}}}}
+  }
   set.main = {name: 'Main', chain: []}
   set.lanes = {takes: techneTakeLanes(tracks, clips, layers), absent: TECHNE_LANES_ABSENT}
   return set
+}
+
+/** The op a recorded walk's Arm runs: the World's write arm. */
+export const WALK_ARM_OP = 'the World\'s write arm (projections/atlas/walks/walkSession.ts): Record keeps a take in the walk\'s Expression only while armed'
+
+/** The walk and the stop a clip of this set stands for, when it is a walk stop's own clip (`techne:stop:<walk>:<n>`); null otherwise. */
+export function walkStopOfClip(clipId: string): {walkId: string; index: number} | null {
+  const found = /^techne:stop:(.+):(\d+)$/.exec(clipId)
+  return found ? {walkId: found[1], index: Number(found[2]) - 1} : null
 }
 
 // ── actions ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────

@@ -415,15 +415,20 @@ test('with no focus the six fold and the faces no instrument holds stand after t
   assert.match(out, /data-ql-instrument/, 'the owner\'s body is its picture')
   assert.match(out, /data-face-id="torus"[^>]*data-expanded="false"/)
   assert.match(out, /class="dp-folded-title"[^>]*aria-label="Unfold Torus \/ field"/, 'a folded device opens from its title, by the kit\'s fold')
-  assert.doesNotMatch(out, /data-face-id="m-prime-matrices"|data-face-id="binding"/, 'the M′ matrices and Binding are the M′ instruments\', inside their folds (lane W4)')
+  // REPLACED (#801): "the M′ matrices and Binding are the M′ instruments', inside their folds (lane W4)". No Technē instrument holds the
+  // matrices: the app layers' racks do (the Torus's, the Sky's, the M3 clock's, the Chakra's; manual §22.6 "open all four here"), so with no
+  // instrument focused they stand after the folds as their own device. Binding is the M3 clock's skin, no face of its own.
+  assert.match(out, /data-face-id="m-prime-matrices"[^>]*data-expanded="true"/, 'the M′ matrices stand after the folds, open')
+  assert.ok(out.indexOf('data-face-id="m-prime-matrices"') > out.indexOf('data-instrument="techne:m5"'), 'after the six, never inside one')
+  assert.doesNotMatch(out, /data-face-id="binding"/, 'Binding is the M3 clock\'s skin')
   assert.doesNotMatch(out, /data-face-id="deck"/, 'the Deck is the Journey\'s, inside its fold (T-WORLDS W4)')
   assert.doesNotMatch(out, /data-face-id="graph-tools"/)
   assert.doesNotMatch(out, /data-face-id="sky"/, 'the sky is the Timeline\'s and the World\'s, inside their folds')
 })
 
-test('a fold\'s press holds across the focus change it causes: M4′ pressed from another pane stays open once the Earth takes focus (lane T, 15 Oct)', () => {
-  // Pressing M4′ while the stage (M1) is focused opens the Earth pane; the focus then stands the Earth's own instrument (M0). The press
-  // is recorded against that focus, so M4′ is the open plate when it arrives — not folded again behind M0.
+test('a fold\'s press holds across the focus change it causes: World pressed from another pane stays open once the Earth takes focus (lane T, 15 Oct)', () => {
+  // Pressing World while the stage's Canvas is focused opens the Earth pane; the focus then stands the Earth's own instrument (the
+  // Project). The press is recorded against that focus, so World is the open plate when it arrives — not folded again behind the Project.
   assert.equal(chain.focusAfterOpening('techne:m4', 'techne:m1'), 'techne:m0')
   assert.equal(chain.focusAfterOpening('techne:m4', null), 'techne:m0', 'from no focused instrument, too')
   assert.equal(chain.focusAfterOpening('techne:m4', 'techne:m0'), 'techne:m0', 'the Earth already focused keeps its focus')
@@ -434,9 +439,9 @@ test('a fold\'s press holds across the focus change it causes: M4′ pressed fro
 test('a fold opens its instrument: the door each instrument opens through is the pane that holds it', () => {
   assert.deepEqual(chain.instrumentDoorOf('techne:m0'), {kind: 'projection.earth'}, 'the Earth pane is the 0 instrument')
   assert.deepEqual(chain.instrumentDoorOf('techne:m1'), {kind: 'projection.expressions', lens: 'canvas'})
-  // T-PLACES-ONTO-ATLAS: M4′ World / Places is the atlas, alone (FOUNDATION §4) — it opens the Earth pane, never the stage's lens
+  // T-PLACES-ONTO-ATLAS: World / Places is the atlas, alone (FOUNDATION §4) — it opens the Earth pane, never the stage's lens
   assert.deepEqual(chain.instrumentDoorOf('techne:m4'), {kind: 'projection.earth'}, 'Places is the atlas')
-  // T-PALACES-ONTO-ATLAS: palaces live in the atlas (FOUNDATION §3 N4) — M5′ opens the Earth pane too, never the stage's retired lens
+  // T-PALACES-ONTO-ATLAS: palaces live in the atlas (FOUNDATION §3 N4) — the Palace opens the Earth pane too, never the stage's retired lens
   // (atlas-palaces-plate.test.mjs pins the press holding across the focus it causes)
   assert.deepEqual(chain.instrumentDoorOf('techne:m5'), {kind: 'projection.earth'}, 'a palace is a place on the world you enter')
   assert.equal(chain.instrumentDoorOf('knowledge-graph'), null)

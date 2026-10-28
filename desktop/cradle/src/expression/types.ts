@@ -22,7 +22,8 @@ export interface SceneTrigger {trigger_ref:string;occasion:TriggerOccasion;targe
 export interface ProfileAdoption {profile_ref:string;revision:number;source_basis?:ReadingRef|null;overridden_parameters?:Record<string,Parameter>}
 export interface ScenePresentation {schema:"oi.journey-scene/v1";scene:Record<string,unknown>;saved?:Record<string,unknown>|null}
 export interface CompositionPresentation {schema:"oi.journey-properties/v1";description:string;loop:boolean;shared?:Record<string,unknown>}
-export interface Scene {presentation?:ScenePresentation|null;scene_ref:string;revision:number;title:string;entity_refs:string[];body?:SceneBody|null;triggers?:SceneTrigger[]}
+/** `private`: a room the Palace draws under cloud to every audience but you (O-I #761); omitted while open (kernel expression.rs Scene). */
+export interface Scene {presentation?:ScenePresentation|null;scene_ref:string;revision:number;title:string;entity_refs:string[];body?:SceneBody|null;triggers?:SceneTrigger[];private?:boolean}
 export interface Relation {native_owner?:string;binding_ref:string;relation:ReadingRef;from_entity_ref:string;to_entity_ref:string;provenance:ReadingRef[]}
 export interface Representation {kind:"live"|"image"|"video"|"html"|"embed"|"projection";representation:ReadingRef;provenance:ReadingRef[]}
 export interface RefinementDecision {state:"accepted"|"rejected";actor:string;reason:string;decided_at_revision:number;corrections:Change[]}
@@ -43,6 +44,7 @@ export type Change =
  | {change:"rename";title:string}
  | {change:"composition_set";presentation:CompositionPresentation}
  | {change:"scene_rename";scene_ref:string;title:string}
+ | {change:"scene_private";scene_ref:string;private:boolean}
  | {change:"scene_remove"|"scene_material_clear";scene_ref:string}
  | {change:"scene_material_set";scene_ref:string;presentation:ScenePresentation}
  | {change:"scene_create";scene_ref:string;title:string}

@@ -88,7 +88,7 @@ import {createNativeMaterialController} from '../../../../../packages/expression
 import {requestNativeMaterialEditor} from '../../../../../packages/expressions-boundary/src/materialEditor';
 import {worldRequest} from './worldChannel';
 import {installLensStudio,PALACE_MOVED,type LensId} from './lensStudio.js';
-import {installResearchInstruments} from './researchInstruments.js';
+import {installResearchInstruments,PLACES_MOVED} from './researchInstruments.js';
 import {journeyReadingOf} from './researchReading.js';
 import {stageReadingOf} from './stageReading.js';
 import {readFrameCondition} from './instrumentCondition.js';
@@ -316,7 +316,6 @@ function renderInspector(){const content=$('inspector-content');if(!inspectorOpe
 // listeners), replacing the generic detail-groups content above.
 if(studioSection==='native'&&nativeField)content.replaceChildren(nativeField.panel);
 if(studioSection==='blueprint'&&!search)content.replaceChildren(blueprintHome);
-if(studioSection==='places'&&!search)content.replaceChildren(placesHome);
 if(studioSection==='canvas'&&!search)content.replaceChildren(canvasHome);
 $('inspector-title').textContent=document.querySelector<HTMLElement>('[data-action="studio-section"][aria-current="page"]')?.textContent??'Studio';
  document.querySelectorAll<HTMLButtonElement>('[data-action="tab"]').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.value===tab)));
@@ -957,7 +956,7 @@ function renderLive(){const parts=liveWorkspaceHTML(liveContext(),workspace);con
 // Docking swaps the studio's anchor side, so a width/height transition would teleport it: invert the layout change, then play the transform back.
 function flipPanel(el:HTMLElement,mutate:()=>void){el.style.transition='none';el.style.transform='';const a=el.getBoundingClientRect();mutate();const b=el.getBoundingClientRect(),dx=a.left-b.left,dy=a.top-b.top,sx=b.width?a.width/b.width:1,sy=b.height?a.height/b.height:1;if(!b.width||!b.height||(!dx&&!dy&&Math.abs(sx-1)<.002&&Math.abs(sy-1)<.002)){el.style.transition='';return;}const done=(ev:TransitionEvent)=>{if(ev.target!==el||ev.propertyName!=='transform')return;el.removeEventListener('transitionend',done);el.style.transition='';el.style.transformOrigin='';};el.addEventListener('transitionend',done);el.style.transformOrigin='top left';el.style.transform=`translate(${dx}px,${dy}px) scale(${sx},${sy})`;void el.offsetWidth;el.style.transition='transform .25s cubic-bezier(.2,.8,.2,1)';el.style.transform='';}
 function setStudio(open:boolean){if(!open)draftSchedule.flushNow('studio');pointer.active=false;if(open)journeyPlaying=false;studioOpen=open;inspectorOpen=open;editing=open||cursorTool==='select';renderAll();}
-function renderAll(){syncDeepLinkAddress();blueprintHUD?.refresh();if(studioDocked&&studioOpen&&beltOpen){beltWasOpen=true;beltOpen=false;}if(!studioDocked&&beltWasOpen){beltWasOpen=false;beltOpen=true;}if((inspectorOpen||contextKind)&&(tool==='pin'||tool==='formation')){tool=cursorTool;railExpanded=false;}if(beltPickerOpen){inspectorOpen=false;contextKind='';timelineOpen=false;shapePickerOpen=false;modesOpen=false;captureOpen=false;}else if(inspectorOpen){contextKind='';timelineOpen=false;shapePickerOpen=false;modesOpen=false;captureOpen=false;}else if(contextKind){timelineOpen=false;shapePickerOpen=false;modesOpen=false;captureOpen=false;}else if(timelineOpen){shapePickerOpen=false;modesOpen=false;captureOpen=false;}sanitiseSelection();sceneBodies?.refresh();workspace.entries=clone(store.document.shared!.toolbelt);if(tab==='motion')studioSection=motionTab==='automation'?'automation':motionTab==='sequence'?'sequence':motionTab==='focus'?'focus':'motion';else if(tab==='objects'&&!['formations','layout'].includes(studioSection))studioSection='formations';else if(tab==='scene'&&!['scene','text'].includes(studioSection))studioSection='scene';else if(tab==='field'&&!['physics','pointer','relational','collision','appearance','volume','resonance','native','blueprint','places','canvas'].includes(studioSection))studioSection='physics';studioOpen=inspectorOpen&&editing;if(railKey!=='objects'||tool!=='select')railKey=tool;if(transitionDuration&&transitionSceneId!==scene().id){transitionDuration=0;$('transition-canvas').hidden=true;}theme();document.body.classList.toggle('studio-open',studioOpen);$('inspector').classList.toggle('is-studio',studioOpen);$('inspector').classList.toggle('docked',studioDocked);const dockButton=$('dock-studio');if(dockButton){dockButton.setAttribute('aria-pressed',String(studioDocked));dockButton.title=studioDocked?'Return the studio to full size':'Dock the studio where the toolbelt sits';dockButton.innerHTML=icon(studioDocked?'expand':'collapse');}$<HTMLSelectElement>('workspace-appearance').value=workspace.appearance;document.querySelectorAll<HTMLElement>('[data-action="studio-section"]').forEach(b=>b.setAttribute('aria-current',b.dataset.value===studioSection?'page':'false'));document.body.classList.toggle('editing',editing);document.body.classList.toggle('presentation',presenting);document.body.classList.toggle('editing-text',editing&&tool==='text');
+function renderAll(){syncDeepLinkAddress();blueprintHUD?.refresh();if(studioDocked&&studioOpen&&beltOpen){beltWasOpen=true;beltOpen=false;}if(!studioDocked&&beltWasOpen){beltWasOpen=false;beltOpen=true;}if((inspectorOpen||contextKind)&&(tool==='pin'||tool==='formation')){tool=cursorTool;railExpanded=false;}if(beltPickerOpen){inspectorOpen=false;contextKind='';timelineOpen=false;shapePickerOpen=false;modesOpen=false;captureOpen=false;}else if(inspectorOpen){contextKind='';timelineOpen=false;shapePickerOpen=false;modesOpen=false;captureOpen=false;}else if(contextKind){timelineOpen=false;shapePickerOpen=false;modesOpen=false;captureOpen=false;}else if(timelineOpen){shapePickerOpen=false;modesOpen=false;captureOpen=false;}sanitiseSelection();sceneBodies?.refresh();workspace.entries=clone(store.document.shared!.toolbelt);if(tab==='motion')studioSection=motionTab==='automation'?'automation':motionTab==='sequence'?'sequence':motionTab==='focus'?'focus':'motion';else if(tab==='objects'&&!['formations','layout'].includes(studioSection))studioSection='formations';else if(tab==='scene'&&!['scene','text'].includes(studioSection))studioSection='scene';else if(tab==='field'&&!['physics','pointer','relational','collision','appearance','volume','resonance','native','blueprint','canvas'].includes(studioSection))studioSection='physics';studioOpen=inspectorOpen&&editing;if(railKey!=='objects'||tool!=='select')railKey=tool;if(transitionDuration&&transitionSceneId!==scene().id){transitionDuration=0;$('transition-canvas').hidden=true;}theme();document.body.classList.toggle('studio-open',studioOpen);$('inspector').classList.toggle('is-studio',studioOpen);$('inspector').classList.toggle('docked',studioDocked);const dockButton=$('dock-studio');if(dockButton){dockButton.setAttribute('aria-pressed',String(studioDocked));dockButton.title=studioDocked?'Return the studio to full size':'Dock the studio where the toolbelt sits';dockButton.innerHTML=icon(studioDocked?'expand':'collapse');}$<HTMLSelectElement>('workspace-appearance').value=workspace.appearance;document.querySelectorAll<HTMLElement>('[data-action="studio-section"]').forEach(b=>b.setAttribute('aria-current',b.dataset.value===studioSection?'page':'false'));document.body.classList.toggle('editing',editing);document.body.classList.toggle('presentation',presenting);document.body.classList.toggle('editing-text',editing&&tool==='text');
  if(!$('inspector').hidden)studioScroll=$('inspector-content').scrollTop;$('inspector').hidden=!inspectorOpen||!editing;$('tool-rail').hidden=presenting;$('view-controls').hidden=!editing||!(tool==='pin'||shapePickerOpen||placementStep)||!!contextKind||inspectorOpen;$('coordinates').hidden=presenting||libraryOpen;$('timeline-panel').hidden=!timelineOpen;$('shape-picker').hidden=!shapePickerOpen||!editing;$('present-return').hidden=!presenting;
  $('scene-number').textContent=String(sceneIndex+1).padStart(2,'0');$('scene-name').textContent=scene().name;
  $('scene-picker').setAttribute('aria-expanded',String(timelineOpen));$('scene-state').textContent=sceneSaveState(store.document,scene());
@@ -1373,7 +1372,6 @@ let blueprintHUD:ReturnType<typeof installBlueprintHUD>|undefined;
 // Studio-owned homes for instrument controls (re-parented, never re-rendered).
 const blueprintHome=document.createElement('div');blueprintHome.className='blueprint-home';
 const journeyHome=document.createElement('div');journeyHome.className='journey-reading-home';journeyHome.hidden=true;$('app').append(journeyHome);
-const placesHome=document.createElement('div');placesHome.className='places-home';
 const canvasHome=document.createElement('div');canvasHome.className='canvas-home';
 // A blank boot frame is not a new chosen work. Retain the host's native
 // reference until recovery succeeds or the user explicitly opens a draft.
@@ -2547,7 +2545,7 @@ function applyNativeView(view:KernelConversion,preservePosition=false,adoptionHi
 const researchHoldReason='The physical instrument is inactive';
 let researchSuspension:symbol|null=null;
 function setInstrumentSurface(lens:LensId|null){
- const research=lens==='canvas'||lens==='timeline'||lens==='place';
+ const research=lens==='canvas'||lens==='timeline';
  document.body.classList.toggle('research-active',research);
  document.body.dataset.activeInstrument=lens??'expression';
  $('stage').inert=research;
@@ -2566,7 +2564,7 @@ function activateInstrument(lens:LensId){
  const carried=carriedFocus?.lens===lens?carriedFocus.ref:undefined;
  // A Studio section that belongs to the instrument being left does not stay
  // open, empty, over the next one.
- const owned:Record<string,LensId>={places:'place',canvas:'canvas'};
+ const owned:Record<string,LensId>={canvas:'canvas'};
  if(owned[studioSection]&&owned[studioSection]!==lens){inspectorOpen=false;studioSection='formations';tab='objects';}
  setInstrumentSurface(lens);
  pointer.active=false;
@@ -2575,14 +2573,16 @@ function activateInstrument(lens:LensId){
  researchPreview=false;
  // M0/M3/M5 are operating modes of this same Expression and Scene engine.
  // Mature Research Canvas tools are mounted by the research instrument adapter.
- if(lens==='canvas'||lens==='timeline'||lens==='place'){if(propertyTake)finishPropertyTake();if(recorder.active){recorder.stop();toast('Recording stopped before opening the research instrument.');}void researchInstruments?.open(lens==='canvas'?'m1':lens==='timeline'?'m2':'m4',carried);}
+ if(lens==='canvas'||lens==='timeline'){if(propertyTake)finishPropertyTake();if(recorder.active){recorder.stop();toast('Recording stopped before opening the research instrument.');}void researchInstruments?.open(lens==='canvas'?'m1':'m2',carried);}
  else researchInstruments?.close();
  if(lens==='project'){sequenceOpen=false;timelineOpen=false;inspectorOpen=false;contextKind='';beltPickerOpen=false;}
  if(lens==='journey'){sequenceOpen=false;timelineOpen=true;inspectorOpen=false;contextKind='';beltPickerOpen=false;}
  journeyHome.hidden=lens!=='journey';
  if(lens==='journey')void journeyInstrument?.open().then(()=>journeyInstrument?.returnFromCrossing()).then(()=>carried===undefined?undefined:journeyInstrument?.focusBeat(carried)); // T11: a crossed beat returns by ref, through the owner.
  else journeyInstrument?.close();
- if(lens==='place'){editing=true;inspectorOpen=true;contextKind='';tab='field';studioSection='places';}
+ // Places is the shell's Earth atlas now (T-PLACES-ONTO-ATLAS; FOUNDATION §4; #762 retired the frame's place lens): asked for, the frame
+ // says where Places went, as it does for the Palace.
+ if(lens==='place')toast(PLACES_MOVED,8000);
  // M5′ Palace is the shell's Earth atlas now (T-PALACES-ONTO-ATLAS; FOUNDATION §3 N4): asked for, the frame says where it went.
  if(lens==='palace')toast(PALACE_MOVED,8000);
  renderAll();announceHostState();
@@ -2772,7 +2772,7 @@ function ownResearchConnection(ref:string){const value=nativeWorkspace?.nativeVi
 function connectionKind(kind:string){if(!kind.trim()||kind.length>120)throw new Error('Choose a connection type of 1–120 characters.');return encodeURIComponent(kind.trim());}
 function assertConnectionMembers(sceneId:string,source:string,target:string){researchScene(sceneId);const members=nativeWorkspace?.nativeView()?.bindings[sceneId]?.member_refs;if(!members?.includes(source)||!members.includes(target))throw new Error('Both connection endpoints must belong to the current native Scene.');}
 researchInstruments=installResearchInstruments({
- container:researchContainer,tools:researchTools,inspector:researchInspector,placesHome,canvasHome,pageMembers:delta=>nativeWorkspace?nativeWorkspace.page(delta):Promise.resolve(false),read:readTechneReading,
+ container:researchContainer,tools:researchTools,inspector:researchInspector,canvasHome,pageMembers:delta=>nativeWorkspace?nativeWorkspace.page(delta):Promise.resolve(false),read:readTechneReading,
  // Lane-4 T23: Places' "Open in Timeline" records the Timeline instrument here, so the instrument state matches the lens it loads.
  activateInstrument:lens=>activateInstrument(lens),
  sceneMaterial:id=>clone(researchScene(id)),

@@ -1,6 +1,7 @@
-"""Manual verification: scene transport, automation-editor transport, physics pause.
+"""Acceptance: scene transport, automation-editor transport, physics pause.
 
-Run with the dev server up:  /usr/local/bin/python3 tests/verify_studio_ux.py
+Run against the frame's build:  node scripts/browser-harnesses.mjs studio_ux
+(or with a dev server up, OI_TEST_URL naming it).
 """
 from pathlib import Path
 import json, os, sys
@@ -120,6 +121,10 @@ with browser_session({'width': 1280, 'height': 900}) as (_, ctx, page):
     page.wait_for_timeout(400)
     st = state(page)
     check('play runs the scene', st['scenePlaying'] and st['playing'], st)
+    try:
+        page.wait_for_function(f"() => window.__FIELD_STUDIES__.getState().simTime > {sim_a}", timeout=5000)
+    except Exception:
+        pass
     sim_b = state(page)['simTime']
     check('playing the scene never touches the physics clock', sim_b > sim_a, f'sim {sim_a:.2f} → {sim_b:.2f}')
     head_a = page.evaluate("() => document.getElementById('global-time').textContent")
@@ -137,7 +142,12 @@ with browser_session({'width': 1280, 'height': 900}) as (_, ctx, page):
     check('the transport reads Play again after the scene ends', icon_now == 'Play scene (Space)', icon_now)
     head_c = page.evaluate("() => document.getElementById('global-time').textContent")
     page.evaluate("""() => document.getElementById('play-button').click()""")
-    page.wait_for_timeout(300)
+    # The readout repaints on the next frame; a software-WebGL runner draws at
+    # about 2 fps, so wait for the restart rather than a fixed interval.
+    try:
+        page.wait_for_function("() => document.getElementById('global-time').textContent.startsWith('0.')", timeout=3000)
+    except Exception:
+        pass
     head_d = page.evaluate("() => document.getElementById('global-time').textContent")
     check('pressing Play again restarts the scene from its top', head_d.startswith('0.'), f'{head_c} → {head_d}')
 
@@ -203,7 +213,7 @@ with browser_session({'width': 1280, 'height': 900}) as (_, ctx, page):
         const live = (window.__FIELD_STUDIES__.telemetry()?.live ?? []).find(v => v.id === nativeId);
         phases.push(live ? live.phase : -1);
         const wraps = phases.slice(1).filter((p, i) => p < 0.5 && phases[i] > 0.8).length;
-        (wraps < 2 && performance.now() - t0 < 40000) ? setTimeout(step, 150) : res({phases, wraps, ms: performance.now() - t0});
+        (wraps < 2 && performance.now() - t0 < 120000) ? setTimeout(step, 150) : res({phases, wraps, ms: performance.now() - t0});
       };
       step();
     })""")

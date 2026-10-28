@@ -7,7 +7,8 @@ uniformity law makes: an image mask sampled while the volume is off stays a
 flat card, switching the volume on gives the already-loaded mask a real body
 without re-uploading it, and a second mask scene gains the same body.
 
-Run with the dev server up:  python tests/three_d_source_body_browser.py
+Run against the frame's build:  node scripts/browser-harnesses.mjs three_d_source_body
+(or with a dev server up, OI_TEST_URL naming it).
 """
 from pathlib import Path
 import os
@@ -66,6 +67,14 @@ def check(name, ok, detail=''):
 def wait_for_span(page, min_span, timeout_ms=120000):
     try:
         page.wait_for_function(f'() => ({SPAN_EXPR})() > {min_span}', timeout=timeout_ms)
+        return True
+    except Exception:
+        return False
+
+
+def wait_for_flat(page, max_span, timeout_ms=60000):
+    try:
+        page.wait_for_function(f'() => ({SPAN_EXPR})() < {max_span}', timeout=timeout_ms)
         return True
     except Exception:
         return False
@@ -162,6 +171,10 @@ with browser_session({'width': 1280, 'height': 900}) as (_, ctx, page):
     # scene I's toggle-after-load path.
     page.evaluate("window.__FIELD_STUDIES__.setScene(5)")
     page.wait_for_timeout(3000)
+    # The transition carries scene I's body over and outlasts any fixed wait on
+    # a slow software-WebGL runner; wait for scene VI's own flat card, so the
+    # span read below is the second mask's and not scene I's.
+    wait_for_flat(page, 20)
     second_name = page.evaluate("window.__FIELD_STUDIES__.getDocument().scenes[5].name")
     # Not asserted: the 2.5s scene transition is still settling here, so the
     # span carries over particles from scene I's body. Scene I pins the flat

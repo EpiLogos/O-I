@@ -1,8 +1,8 @@
-// T-PALACES-ONTO-ATLAS: palaces live in the atlas (FOUNDATION §3 N4). M5′ Palace / Integral Whole opens the Earth pane (never the stage's
+// T-PALACES-ONTO-ATLAS: palaces live in the atlas (FOUNDATION §3 N4). The Palace / Integral Whole opens the Earth pane (never the stage's
 // retired Palace lens) and stands on the rack as one plate: outside a palace, the world's palaces (the mockup's Palaces) and the doors the
 // Earth's selection stands at; inside, the mockup's Rooms, Path (guided · free, the guide) and Portals, with the whole, the composition
 // and the Return beside them (world-shell-mockup.html:1461). The palace itself is drawn in the pane at the atlas's palace scale
-// (PalaceFloor.tsx) with no control in it; M4′'s Locations kind `palace` lists the palaces. Rendered server-side with production
+// (PalaceFloor.tsx) with no control in it; World's Locations kind `palace` lists the palaces. Rendered server-side with production
 // modules in memory (the loader of atlas-places-plate.test.mjs), over owners standing in for the live ones.
 import test from 'node:test'
 import assert from 'node:assert/strict'
@@ -86,7 +86,7 @@ const reading = () => {
 const opened = []
 const OWNERS = {
   inspect: async () => structuredClone(DOC), readWhole: async () => reading(), list: async () => [{expression_ref: 'expression:gate', title: 'Gate', revision: 1}],
-  edit: async () => ({state: 'ready', document: DOC}), invoke: async () => ({state: 'refused', reason: 'not here'}), hold: async () => EXPR,
+  edit: async () => ({state: 'ready', document: DOC}), receiving: async () => { throw Error('not here') }, hold: async () => EXPR,
   projection: () => ({overviewSceneRef: OVERVIEW, constellations: [{sceneRef: STONE}]}), storage: () => null, session: createDisclosureSessionStore(),
   open: {expression: ref => { opened.push(ref); return 'opened' }, scene: () => 'opened', subject: () => 'opened', instrument: () => 'opened', source: () => 'opened'},
 }
@@ -102,24 +102,24 @@ async function enter() {
   await new Promise(resolve => setImmediate(resolve))
 }
 
-test('M5′ Palace opens the Earth pane, never the stage\'s retired Palace lens, and the press holds across the focus it causes', () => {
+test('the Palace opens the Earth pane, never the stage\'s retired Palace lens, and the press holds across the focus it causes', () => {
   assert.deepEqual(chain.instrumentDoorOf('techne:m5'), {kind: 'projection.earth'})
   const earth = instrumentOfPane('projection.earth', null, 'earth')
-  assert.equal(chain.focusAfterOpening('techne:m5', 'techne:m1'), earth, 'pressed from the stage: the Earth takes the focus, and M5′ holds')
+  assert.equal(chain.focusAfterOpening('techne:m5', 'techne:m1'), earth, 'pressed from the stage: the Earth takes the focus, and the Palace holds')
   assert.equal(chain.focusAfterOpening('techne:m5', 'techne:m4'), 'techne:m4', 'from another atlas instrument the focus stands')
-  // while a palace is entered the Earth pane stands as M5′ — the atlas's palace scale is M5′'s
+  // while a palace is entered the Earth pane stands as the Palace — the atlas's palace scale is the Palace's
   assert.equal(chain.atlasInstrumentNow(earth, 'inside'), 'techne:m5')
   assert.equal(chain.atlasInstrumentNow(earth, 'outside'), earth)
   assert.equal(chain.atlasInstrumentNow('techne:m2', 'inside'), 'techne:m2', 'a pane that is not the atlas keeps its instrument')
 })
 
-test('outside, the focused M5′ is the Palace design, then its plate: the world\'s palaces open, and Portals folded until a palace is entered', async () => {
+test('outside, the focused Palace is the Palace design, then its plate: the world\'s palaces open, and Portals folded until a palace is entered', async () => {
   session.resetPalaceSession()
   setWikiProjectionRegisters([{key: 'central', title: 'Central'}, {key: 'Archetypal-Earth', title: 'Archetypal-Earth', project: 'Archetypal-Earth'}])
   const out = M5()
   assert.match(out, /data-instrument="techne:m5"[^>]*data-palace-plate="true"/, 'the Palace plate stands open')
   assert.match(out, />Palace \/ Integral Whole</, 'the mockup\'s plate title')
-  // W4-Technē: the Palace design (techne:palace) heads M5′'s chain on the palace session and carries Rooms, Path and Board itself
+  // W4-Technē: the Palace design (techne:palace) heads the Palace's chain on the palace session and carries Rooms, Path and Board itself
   // (techne-designs-binding.test.mjs); the plate after it keeps the world's palaces, Enter and the portals.
   assert.ok(out.indexOf('data-device-id="techne:palace" data-chain-place="head"') >= 0, 'the Palace design heads the chain')
   assert.ok(out.indexOf('data-device-id="techne:palace"') < out.indexOf('data-palace-plate="true"'), 'the design before the plate')
@@ -134,7 +134,7 @@ test('outside, the focused M5′ is the Palace design, then its plate: the world
   assert.doesNotMatch(out, /<svg[^>]*class="atlas-palace__plan"/, 'the plate draws no palace: the pane does')
 })
 
-test('inside, the Palace design heads M5′ with the palace\'s controls (Rooms, Path, Board, Return); the plate keeps the rooms\' Open, the walk by locus, the bookmarks\' Rename and Delete, the portals (the ground first), the whole and the composition', async () => {
+test('inside, the Palace design heads the Palace with the palace\'s controls (Rooms, Path, Board, Return); the plate keeps the rooms\' Open, the walk by locus, the bookmarks\' Rename and Delete, the portals (the ground first), the whole and the composition', async () => {
   await enter()
   const folded = M5()
   // W4-Technē: the Palace design (techne:palace) carries Room, Start, Back, Next, Path, Order, Guide, Floor, Audience, Snap, Lines, Keep,
@@ -190,7 +190,7 @@ test('the palace is drawn in the pane: its rooms along the guided path, their ob
   assert.equal(html(createElement(PalaceFloor)), '', 'outside, the pane is the Earth')
 })
 
-test('M4′\'s Locations kind `palace` goes live: the palaces of the world, each at its door', () => {
+test('World\'s Locations kind `palace` goes live: the palaces of the world, each at its door', () => {
   session.resetPalaceSession()
   const out = M4()
   assert.match(out, /role="radio" aria-checked="false">palace</, 'the kind is offered, not disabled')

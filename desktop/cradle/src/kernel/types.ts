@@ -196,22 +196,37 @@ export type ActuationWriteRequest =
   /** `actuation-research comparison.run` (O-I 795): the run a Repeat makes its takes through. The request is Actuation's own less its
    * operation and root, which the kernel names and reserves (`$OI_HOME/desktop/takes/…`). Answers ActuationComparisonTakes. */
   | {kind:"comparison-run";request:ActuationComparisonRunRequest};
-/** Actuation's comparison request (research comparison.rs run_with): each condition (1–3; absent, Actuation's default three) run
- * `repetitions` times (1–32), each take in its own World; `run` is the common run every take shares (its research task, body, steps
- * and calls, and the QL owner a non-classic condition needs); `basis` the revisions the takes are held to. */
+/** Actuation's comparison request (research comparison.rs run_with): its `variable` (absent, the condition) over its `levels` (1–3; the
+ * condition with none, Actuation's default three; `conditions` is the condition's older name for them), each level run `repetitions`
+ * times (1–32), each take in its own World and ended by `stop` (absent, its runtime's own end). `run` is the common run every take
+ * shares: a catalogue `task_id` or a provided `task` (a session's own), its body (a variable other than the condition is applied by an
+ * sdk-jsonl or agent-jsonl body, which reads its level back), steps and calls, and the QL owner a non-classic condition needs; `basis`
+ * the revisions the takes are held to. */
 export interface ActuationComparisonRunRequest {
   trace_ref: string
   repetitions: number
+  variable?: 'condition' | 'model' | 'effort' | 'skillset' | 'budget' | 'autonomy'
+  levels?: string[]
   conditions?: string[]
+  stop?: {when: 'done' | 'turns' | 'time' | 'pass'; turns?: number; time_ms?: number}
   run: Record<string, unknown>
   basis?: Record<string, unknown>
   streams?: unknown[]
 }
-/** The takes a comparison made (the kernel's reading of the `ql-series1-run/0.3` manifest, which stays whole at `manifest_path`). */
+/** How a take's stop condition ended it (research execution.rs StopWhen): whether it was met, why, and at which turn. */
+export interface ActuationTakeStop {
+  when: 'done' | 'turns' | 'time' | 'pass'; turns?: number; time_ms?: number; met: boolean
+  reason?: string; at_turn?: number; elapsed_ms?: number
+}
+/** The takes a comparison made (the kernel's reading of the `ql-series1-run/0.3` manifest, which stays whole at `manifest_path`): what
+ * varied over which levels, and each take's level, condition, agent and how its stop condition ended it. The variable, levels, stop,
+ * agent and level are null from an Actuation before O-I 795's own-task comparison. */
 export interface ActuationComparisonTakes {
   schema: 'ql-series1-run/0.3'; trace_ref: string; root: string; manifest_path: string; takes: number
-  records: {condition: string; repetition: number; ordinal: number; trace_ref: string; status: string | null; error: string | null
-    elapsed_ms: number | null; total_tokens: number | null; receipt_path: string}[]
+  variable: string | null; levels: string[] | null; stop: ActuationTakeStop | {when: string} | null
+  records: {condition: string; variable: string | null; level: string | null; agent: string | null; repetition: number; ordinal: number
+    trace_ref: string; status: string | null; error: string | null; elapsed_ms: number | null; model_calls: number | null
+    total_tokens: number | null; stop: ActuationTakeStop | null; receipt_path: string}[]
   held_constants_valid: boolean; determination: string; provider_mode: string; human_acceptance: boolean
 }
 /** `ql kernel m1` (answers ql.m1.engine/v1), `ql scene compose` (ql.scene/v1), `ql scene world` (ql.scene-world/v1). */

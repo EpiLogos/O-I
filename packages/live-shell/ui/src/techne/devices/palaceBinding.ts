@@ -1,11 +1,12 @@
 // The Palace (manual §17.7, techne:palace) on its owner: the palace you stand in, as the palace session holds it
 // (projections/atlas/palaces/palaceSession.ts — "One store the M5 Palace / Integral Whole plate and the atlas's floor plan both read,
 // and every act on the palace, each through its owner"). Ported, not recreated: every reading is the session's, every write one of
-// its acts — the rooms (roomsNow :187), the walk (walkOf :193, focusedRoom :201, moveWalk :325, stepWalk :334), the board (held
-// positions, moveRooms :414, setSnap :435), the path and the guide (setPath :440, setGuide :444), the bookmarks (bookmarkHere :370,
-// renameBookmark :393, deleteBookmark :403), the composition (addTo :471, addAsNewRegion :480, addRegion :490, removeMember :497,
-// moveRegion :503, removeRegion :514, revert :523, save :532), the Return (proposeReturn :579, refuseReturn :587, acceptReturn :594),
-// the doors out (returnToGround :618, openEntry :645, openRoom :674), entering (enterPalace :241) and Leave (leavePalace :288). The
+// its acts — the rooms (roomsNow :211), the walk (walkOf :217, focusedRoom :225, moveWalk :354, stepWalk :363), the board (held
+// positions, moveRooms :460, setSnap :481), the path and the guide (setPath :486, setGuide :490), Floor and Audience (setArrangement
+// :501, setAudience :495), the bookmarks (bookmarkHere :416, renameBookmark :439, deleteBookmark :449), the composition (addTo :529,
+// addAsNewRegion :538, addRegion :548, removeMember :555, moveRegion :561, removeRegion :572, revert :581, save :590), the Return
+// (proposeReturn :673, refuseReturn :724, acceptReturn :738), the doors out (returnToGround :750, openEntry :777, openRoom :806),
+// entering (enterPalace :265) and Leave (leavePalace :312). The
 // design's sample is never a reading.
 //
 // The pages (O-I 757; the Palace plate's sections, PalacePlate.tsx, which the design now carries): Enter lists the world's palaces
@@ -21,8 +22,10 @@
 //               owner's own: overview, constellation, region or scene (palacesModel.ts PalaceRoomKind)
 //   x<i>, y<i>  where the owner's floor stands room i (palacesModel.ts floorRooms: its held point, PalaceInside.held, else the board's
 //               own default, board.ts boardPositions)
-//   floor       'board': the owner's composition is a board (PalaceInside.held, PalaceFloor.tsx draws its board); no owner holds the
-//               fixed floor of loci, so Floor stands disabled with that operation
+//   floor       the session's Arrangement (PalaceInside.arrangement, setArrangement): 'board', the free board (PalaceInside.held), or
+//               'loci', the fixed floor of six rooms with four places (palacesModel.ts lociFloor; O-I 761), where no room is dragged
+//   audience    the session's Audience (PalaceInside.audience, setAudience): me · field · public; a room the owner marks private
+//               (`rooms[i].private`, the kernel Scene's own flag) is drawn under cloud for field and public (O-I 761)
 //   lines       the owner's floor draws the path's line between the rooms' doors exactly while the path is guided (PalaceFloor.tsx,
 //               techneWells.tsx usePalaceWell): a reading of the path, never set alone
 //   path, guide, snap   the session's own (PalaceInside.path, guide, snap)
@@ -35,7 +38,8 @@
 //   bookmarks   the session's bookmarks, `name~roomkey;…`, each at the room its step stands in
 //   route       the governed route the Return goes to: the proposal's receipt once proposed, else the first governed-write action the
 //               palace's reading names ('' when it names none); absent while the reading has not come
-//   proposal    none · routed · unrouted · accepted · refused, from the session's proposal and acceptance
+//   proposal    none · routed · unrouted · accepted · refused, from the session's proposal, the Return its owner holds (`sent`: routed,
+//               waiting for the owner's answer) and the owner's answer, read back (palaceReturn.ts; O-I 761)
 //   gone        whether a region's one Expression is gone from the kernel's list (liveRefs); absent until the list is known
 //   palaces     the world's palaces [{key, name, rooms, line, door, here?}] (the host's PalaceWorld; palaceLocationRows)
 //   whole       the integral whole [{key, name, standing, line, here?, entries: [{id, ref, label, note?, refused?, here?}]}]
@@ -45,7 +49,7 @@
 //   portals     the doors out [{id, name, kind (ground · leave · expression · place), note?}]; places: how many places the room has
 //   draft, chosen, regionName, wholeRegion, regionPick   held by the hand: the bookmark's name, the palace chosen on Enter, a new
 //               region's name, the region shown on the Integral whole, the region picked on Compose
-//   order, audience     no owner operation: absent, and their controls stand disabled naming it
+//   order       no owner operation: absent, and its control stands disabled naming it
 import type {DesignBinding, Standing, Value, ValueChange, Values} from '../../frame/devices/designed'
 import {palaceReturnAction, returnGroundInstrument} from '../../../../../../desktop/cradle/src/techne/m0m5/palace/return'
 import {palaceBookmarkLabel} from '../../../../../../desktop/cradle/src/techne/m0m5/palace/bookmarks'
@@ -58,7 +62,7 @@ import {palacesWaiting, type PalacesLoad} from '../../projections/atlas/palaces/
 import {
   acceptReturn, addAsNewRegion, addRegion, addTo, bookmarkHere, deleteBookmark, enterPalace, focusedRoom, leavePalace, liveRefs, moveRegion, moveRooms,
   moveWalk, openEntry, openRoom, palaceState, proposeReturn, refuseReturn, removeMember, removeRegion, renameBookmark, returnToGround, revert, roomsNow, save,
-  setGuide, setPath, setSnap, stepWalk, walkOf, type PalaceInside, type PalaceState,
+  setArrangement, setAudience, setGuide, setPath, setSnap, stepWalk, walkOf, type PalaceInside, type PalaceState,
 } from '../../projections/atlas/palaces/palaceSession'
 import {PALACE_DESIGN, disabled, handsFor, missing, put, refusal} from './designDevices'
 
@@ -67,8 +71,6 @@ export const PALACE_ID = PALACE_DESIGN
 /** The keys no owner operation takes: each stands disabled with the operation it waits for. */
 export const PALACE_REFUSE = {
   order: missing('Order', 'a spatial walk order held by the palace (palaceSession walks the whole\'s own path only)', 'Technē palace'),
-  floor: missing('Floor', 'the fixed floor of six rooms with four places (method of loci); the owner draws its free board only', 'Technē palace'),
-  audience: missing('Audience', 'an audience view of the palace — who sees which room (no owner discloses how the field or the public sees it)', 'Technē palace'),
   lines: 'The floor draws the path\'s line exactly while the path is guided (PalaceFloor.tsx): set Path to show or hide it; no owner operation draws it alone.',
 } as const
 
@@ -77,7 +79,7 @@ const ENTERING = 'The palace is being entered: its rooms stand when its owner an
 /** Where the host hands the Palace no world: the palaces to enter, the Earth's places and the turn to them are the host's. */
 export const NO_WORLD = 'The world\'s palaces and the Earth\'s places are not handed to the Palace here (the host hands them from palacesWorld.ts usePalaces and the suite standing).'
 /** The keys that act on the palace you stand in: disabled with NOT_INSIDE outside it. */
-const ACTS = ['path', 'guide', 'snap', 'at', 'keep', 'propose', 'accept', 'refuse', 'leave',
+const ACTS = ['path', 'guide', 'snap', 'floor', 'audience', 'at', 'keep', 'propose', 'accept', 'refuse', 'leave',
   'step', 'rename', 'delete', 'open', 'region', 'add', 'earlier', 'later', 'empty', 'remove', 'save', 'revert', 'portal'] as const
 /** The acts that stand anywhere: entering a palace, and turning the Earth to its door. */
 const WORLD_ACTS = ['enter', 'door'] as const
@@ -99,6 +101,8 @@ export interface PalaceActs {
   readonly setPath: typeof setPath
   readonly setGuide: typeof setGuide
   readonly setSnap: typeof setSnap
+  readonly setArrangement: typeof setArrangement
+  readonly setAudience: typeof setAudience
   readonly moveWalk: typeof moveWalk
   readonly stepWalk: typeof stepWalk
   readonly moveRooms: typeof moveRooms
@@ -124,7 +128,7 @@ export interface PalaceActs {
   /** The session's status line after an act (the owner's own words for a refusal). */
   readonly line: () => string | null
 }
-export const SESSION_ACTS: PalaceActs = {setPath, setGuide, setSnap, moveWalk, stepWalk, moveRooms, bookmarkHere, renameBookmark, deleteBookmark, proposeReturn,
+export const SESSION_ACTS: PalaceActs = {setPath, setGuide, setSnap, setArrangement, setAudience, moveWalk, stepWalk, moveRooms, bookmarkHere, renameBookmark, deleteBookmark, proposeReturn,
   acceptReturn, refuseReturn, leavePalace, enterPalace, openEntry, openRoom, returnToGround, addRegion, addTo, addAsNewRegion, moveRegion, removeMember,
   removeRegion, save, revert, line: () => palaceState().line ?? null}
 
@@ -134,14 +138,16 @@ const plain = (text: string) => text.replace(/[;~]/g, '·')
 /** One room as the design lists it, in the owner's kind. */
 function roomOf(room: PalaceRoom): Record<string, unknown> {
   return {key: room.key, name: room.name, short: room.name, kind: room.kind,
-    members: room.members.slice(0, 4).map(member => member.title), more: Math.max(0, room.members.length - 4), ...(room.holds ? {holds: room.holds.title} : {})}
+    members: room.members.slice(0, 4).map(member => member.title), more: Math.max(0, room.members.length - 4), ...(room.holds ? {holds: room.holds.title} : {}),
+    ...(room.private ? {private: true} : {})}
 }
 
 /** The Return's state in the design's words. */
 function proposalOf(here: PalaceInside): string {
   if (here.acceptance) return here.acceptance.accepted ? 'accepted' : 'refused'
+  if (here.sent || here.accepting) return 'routed'
   if (!here.proposal) return 'none'
-  return here.proposal.receipt?.routed ? 'routed' : 'unrouted'
+  return here.proposal.refusal ? 'unrouted' : 'routed'
 }
 
 /** The bookmarks that stand in a room, in the session's order, each with its room. */
@@ -204,7 +210,8 @@ export function palaceValues(state: PalaceState, held: Readonly<Record<string, V
   const rooms = roomsNow(here)
   values.rooms = JSON.stringify(rooms.map(roomOf))
   floorRooms(rooms, here.held, null, []).forEach((room, i) => { put(values, `x${i}`, room.x); put(values, `y${i}`, room.y) })
-  values.floor = 'board'
+  values.floor = here.arrangement
+  values.audience = here.audience
   values.path = here.path
   values.lines = here.path === 'guided'
   values.guide = here.guide
@@ -318,6 +325,7 @@ export async function palaceWrite(state: PalaceState, changes: readonly ValueCha
   for (const {key, value} of inner) {
     const board = /^([xy])(\d+)$/.exec(key)
     if (board) {
+      if (here.arrangement === 'loci') throw Error('The fixed floor stands its rooms itself: set Floor to Board to place a room.')
       const room = rooms[Number(board[2])]
       if (!room || typeof value !== 'number') throw Error(`${key}: no room stands at that place on the board.`)
       // The other coordinate: this gesture's, else the board's held point, else where the board stands the room by its own law.
@@ -330,6 +338,8 @@ export async function palaceWrite(state: PalaceState, changes: readonly ValueCha
       case 'path': if (value !== 'guided' && value !== 'free') throw Error(`Path is guided or free, never ${String(value)}.`); acts.setPath(value); break
       case 'guide': acts.setGuide(value === true); break
       case 'snap': acts.setSnap(value === true); break
+      case 'floor': if (value !== 'board' && value !== 'loci') throw Error(`Floor is Board or Loci, never ${String(value)}.`); acts.setArrangement(value); break
+      case 'audience': if (value !== 'me' && value !== 'field' && value !== 'public') throw Error(`Audience is Me, Field or Public, never ${String(value)}.`); acts.setAudience(value); break
       case 'at': {
         const room = rooms[Number(value)]
         if (!room) throw Error('No room stands at that place on the walk.')
@@ -408,10 +418,10 @@ export async function palaceWrite(state: PalaceState, changes: readonly ValueCha
       }
       case 'propose':
         if (!here.reading) throw Error(here.readingReason ? `The palace has no reading to return: ${here.readingReason}` : 'The palace\'s reading has not come yet, so there is nothing to return.')
-        acts.proposeReturn()
+        await acts.proposeReturn()
         break
       case 'accept': await acts.acceptReturn(); break
-      case 'refuse': acts.refuseReturn(); break
+      case 'refuse': await acts.refuseReturn(); break
       case 'leave': acts.leavePalace('Left the palace for the Earth.'); break
       default: throw refusal(PALACE_REFUSE, key)
     }

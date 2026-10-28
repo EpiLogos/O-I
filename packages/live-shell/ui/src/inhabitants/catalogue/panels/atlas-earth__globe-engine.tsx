@@ -8,7 +8,10 @@
 // shell.setAtlasView, shell.setAtlasWholeField and shell.setAtlasCursor / AllTime / Play / Cumulative (inhabitants/ql/devices/
 // atlasDevices.ts:34-51). The graph's steps, forces, relations, kinds, occurrences and sky anchors are the graph-tools rows (same file,
 // :35-44). The scale is the camera's: a reading (projections/atlas/places/placesModel.ts atlasScaleOf). Aperture and View as have no
-// owner yet; the panel keeps them, off, with the owner's reason (PlacesPlate.tsx:153-156).
+// owner yet; the panel keeps them, off, with the owner's reason (PlacesPlate.tsx:153-156). What the atlas drew over the globe stands here,
+// the pane holding the material alone (O-I #762; manual §16.3 Full, "No controls"): the subject in focus with its line and its acts, the
+// closes of the reading cards (Space, Focus) and the graph's display (Graph, Display), each the atlas's own control, pressed through
+// `pane.press` (projections/atlas/paneChrome.ts; catalogue/panels/paneControls.tsx).
 //
 // Bindable: the material the picture shows is value keys, never a constant here. `places` is the JSON list of the field's occurrences,
 // {id, name, lat, lon, year, precision: 'exact' | 'region', relation, what, own?}, where `own: true` marks a place that the scope names
@@ -22,6 +25,8 @@ import {Action, Band, Chooser, Dial, Display, Folded, Handle, Panel, Radio, Read
 import {NONE, boolOf, clampTo, json, numOf, shown, st, strOf, type DesignedDevice, type ViewProps} from './design'
 import {WORLD_BODY_GENERATOR, WORLD_BODY_GENERATOR_VERSION, bodyDisc, isWorldBody, parseWorldBody, shoreOf, type BodyLook, type WorldBodyRecord} from '../../../projections/atlas/src/globe/body'
 import {discPngUrl} from '../../../projections/atlas/body/discPng'
+import {providerLabels} from '../../../projections/atlas/src/data/labels'
+import {PaneControls, paneControlsOf, paneReadings, paneTitle} from './paneControls'
 import './atlas-earth__globe-engine.css'
 
 type V = ViewProps['v']
@@ -581,6 +586,29 @@ const locationRows = (v: V): RowItem[] => {
   return all.map(at => { const d = body ? shoreOf(body.record, at.lat, at.lon) : undefined; return {id: at.id, name: at.name, light: d ? (d.shore ? 'dark' : 'lit') : 'unknown', tone: 'value', note: d?.shore ? 'shore' : at.kind ?? 'place'} })
 }
 
+// ---------------------------------------------------------------- what the pane drew over the globe, here (O-I #762)
+
+/** The subject in focus, its line and its acts — the way out, its ties, where it hangs in the sky, Follow the thread, Reading — and the
+ * closes of the reading cards: the atlas's own, as the pane drew them before it stood them down. */
+function focusSection(p: ViewProps) {
+  const controls = paneControlsOf(p.v, ['focus', 'closes'])
+  const line = paneReadings(controls ?? []).find(text => text !== paneTitle(p.v))
+  return <Section label="Focus" grow>
+    <Readout label="subject" does="The subject the Earth has in focus, and the line it reads it by." value={controls ? paneTitle(p.v) ?? 'none' : undefined} />
+    {line && <Readout label="line" does="The subject's line, as the Earth reads it." value={line} />}
+    {controls ? <PaneControls p={p} controls={controls} /> : <Readout label="acts" does="The acts on the subject in focus stand here once the Earth is open." value={undefined} />}
+  </Section>
+}
+
+/** How the graph is drawn — node size, link width, text fade, Reset: the graph's own settings, as the pane drew them. */
+function displaySection(p: ViewProps) {
+  const controls = paneControlsOf(p.v, ['graph'])
+  return <Section label="Display" grow>
+    {controls?.length ? <PaneControls p={p} controls={controls} />
+      : <Readout label="display" does="How the graph is drawn: its settings stand here once the Graph view has been shown." value={undefined} />}
+  </Section>
+}
+
 // ---------------------------------------------------------------- the pane: the material itself
 
 const MARK = {exact: 'solid', region: 'outline'} as const
@@ -594,7 +622,7 @@ function FullWorld({v}: {v: V}) {
       <g className="dp-display" style={{background: 'none', border: 'none'}}>
         {graph ? <>
           <GraphArt v={v} w={760} h={420} size="big" />
-          <text x={14} y={392} className="dp-axis">Ties: Jung solid, inferred dashed, site faint.</text>
+          <text x={14} y={392} className="dp-axis">{`Ties: ${providerLabels().basisOwn} solid, inferred dashed, site faint.`}</text>
           <text x={14} y={404} className="dp-axis">Amber: an archetype. Teal: a form of the field.</text>
         </> : <>
           <SpaceArt v={v} w={520} h={420} size="big" />
@@ -694,6 +722,22 @@ export const design: DesignedDevice = {
       {id: 'study', name: 'The study', lat: 22, lon: 10, kind: 'place'}, {id: 'book', name: 'The book', lat: -8, lon: 34, kind: 'palace'},
       {id: 'oi', name: 'O:I', lat: 38, lon: -18, kind: 'place'}, {id: 'mara', name: 'To Mara’s world', lat: -30, lon: -6, kind: 'portal'},
     ]),
+    // What the pane drew over the globe (O-I #762): Quaternity in focus with its line and acts, as the atlas's focus label reads
+    // (ui/focus-label.ts), and the graph's display settings (graph/settings.ts DISPLAY_ROWS).
+    'pane.title': 'Quaternity',
+    'pane.controls': JSON.stringify([
+      {id: 'focus/Quaternity', region: 'focus', kind: 'reading', label: 'Quaternity', value: 'Quaternity'},
+      {id: 'focus/A form of the field, in 48 instances', region: 'focus', kind: 'reading', label: 'A form of the field, in 48 instances', value: 'A form of the field, in 48 instances'},
+      {id: 'focus/‹ the whole field', region: 'focus', kind: 'button', label: '‹ the whole field'},
+      {id: 'focus/Four', region: 'focus', kind: 'button', label: 'Four'},
+      {id: 'focus/Follow the thread', region: 'focus', kind: 'button', label: 'Follow the thread'},
+      {id: 'focus/See in sky (the Sun)', region: 'focus', kind: 'button', label: 'See in sky (the Sun)'},
+      {id: 'focus/Reading', region: 'focus', kind: 'button', label: 'Reading'},
+      ...[['size', 'Node size', .5, 2, 'How large every node is drawn. The layout does not move.'], ['links', 'Link width', .4, 2.5, 'How thick every relation is drawn. The layout does not move.'],
+        ['text', 'Text fade', .5, 2, 'How soon the names of smaller forms appear as you come close. More names them sooner.']].map(([, label, min, max, tip]) =>
+        ({id: `graph/${label}: ${tip}`, region: 'graph', kind: 'number', label: `${label}: ${tip}`, title: tip, value: '1', min, max, step: .05})),
+      {id: 'graph/Reset', region: 'graph', kind: 'button', label: 'Reset', title: 'Restore the drawing as it was'},
+    ]),
   },
   fixtures: {
     'Whole Earth, all time': {},
@@ -702,10 +746,11 @@ export const design: DesignedDevice = {
     'Graph, three steps': {view: 'graph', depth: 3, skyAnchors: true},
     'A wetter, rougher body': {seed: 7, seaLevel: .38, continents: 3.1, relief: .9, coast: 'fjord', moisture: .85, warmth: .4, iceCaps: .55, clouds: .6, tilt: 32},
     'Earth chosen': {body: 'earth'},
+    'Nothing in focus': {'pane.title': undefined, 'pane.controls': JSON.stringify([])},
     'No readings': Object.fromEntries(['light', 'view', 'scale', 'cursor', 'allTime', 'playing', 'cumulative', 'scope', 'wholeField', 'relation', 'selected', 'placeArmed', 'placePage', 'baseKind',
       'graphOpen', 'local', 'depth', 'centre', 'repel', 'link', 'distance', 'tieJung', 'tieInferred', 'tieSite', 'kindArchetype', 'kindTheoretic', 'kindFamily', 'occurrences', 'skyAnchors',
       'places', 'sky', 'graph', 'subject', 'body', 'bodyName', 'seed', 'seaLevel', 'continents', 'relief', 'coast', 'warmth', 'moisture', 'iceCaps', 'atmosphere', 'clouds', 'tilt',
-      'placeKind', 'locations', 'bodyRecord', 'bodyLook', 'bodyTime', 'generationNote'].map(k => [k, undefined])),
+      'placeKind', 'locations', 'bodyRecord', 'bodyLook', 'bodyTime', 'generationNote', 'pane.title', 'pane.controls'].map(k => [k, undefined])),
   },
 
   folded: p => <Folded title="World" light={light(p)} readings={strOf(p.v, 'view') === 'graph' ? ['graph', depthText(p.v)] : [shown(p.v, 'scale'), whenOf(p.v) ?? NONE]} onUnfold={p.nav.unfold} />,
@@ -794,6 +839,7 @@ export const design: DesignedDevice = {
           <Chooser wide label="View as" does="Who you look as: me, the field or the public." value="" options={[{value: 'me', label: 'Me'}, {value: 'field', label: 'Field'}, {value: 'public', label: 'Public'}]} disabled={NO_VIEW_AS} />
         </Section>
       </Band>
+      <Band>{focusSection(p)}</Band>
     </> : <>
       <Band>
         <Section width={198}><GraphDisplay v={p.v} set={p.set} standing={p.standing} w={186} h={146} size="whole" /></Section>
@@ -806,7 +852,7 @@ export const design: DesignedDevice = {
       </Band>
       <Band>
         <Section label="Ties" width={76}>
-          {flag(p, 'tieJung', 'Jung', 'Follow the links that Jung makes himself.')}
+          {flag(p, 'tieJung', providerLabels().basisOwn, `Follow the links the field's own source makes: ${providerLabels().basisOwn}.`)}
           {flag(p, 'tieInferred', 'Inferred', 'Follow the links that the field infers.')}
           {flag(p, 'tieSite', 'Site', 'Follow the links that a site makes.')}
         </Section>
@@ -820,6 +866,7 @@ export const design: DesignedDevice = {
           {flag(p, 'skyAnchors', 'Sky anchors', 'Hold the Sun, the Moon and the planets to their places in the sky.')}
           <Readout label="sky" value={boolOf(p.v, 'skyAnchors') === undefined ? undefined : boolOf(p.v, 'skyAnchors') ? 'on' : 'off'} does="The sky layer of the graph: off, loading, on or unavailable." />
         </Section>
+        {displaySection(p)}
       </Band>
     </>}
   </Panel>,

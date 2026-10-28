@@ -32,6 +32,13 @@
 // 'relate' | 'synthesise'), frame.position (0..5), frame.face ('any' | 'name' | 'power'), frame.grain ('any' | 'inner-four' |
 // 'outer-two'). No kernel op reaches `ql techne reading` or the frame reading yet: the binding owes both routes, and until then the host
 // stands these writes disabled with that reason.
+//
+// A lens's own controls are the Lens's (§17.11; O-I #762): where an instrument draws a lens of its own over its pane — the Earth's Theory,
+// Aion, the Red Book, Astrology, Dreams, Symbols, Coincidences, Alchemy — the pane stands that lens's title and controls down and the
+// Lens draws them on its Lens page under the lens's name: `pane.title`, `pane.controls` (the controls as the pane publishes them,
+// projections/atlas/paneChrome.ts) and the hand `pane.press`, which presses the instrument's own control (catalogue/panels/paneControls.tsx).
+// Absent while no instrument draws a lens of its own.
+import {PaneControls, paneControlsOf, paneTitle} from './paneControls'
 import {Band, Chooser, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, Tile, type LightState, type Option, type RowItem} from '../../sdk/panel'
 import {NONE, clampTo, has, json, numOf, st, strOf, type DesignedDevice, type ViewProps} from './design'
 
@@ -217,6 +224,14 @@ const LENS_DOES = 'The material through the lens: the subject and its members, t
 const FRAME_DOES = 'The six positions of the material, the seven frames at their places: Name above, Power below. The probe stands at a position; the frames the owner reads there light.'
 const PAGES = [{id: 'lens', label: 'Lens'}, {id: 'frame', label: 'Frame'}]
 
+/** The instrument's own lens, where one draws over its pane: its title and its controls, each the instrument's own, pressed through
+ * `pane.press`. Nothing while no instrument reports one. */
+function instrumentLens(p: ViewProps) {
+  const controls = paneControlsOf(p.v)
+  if (!controls?.length) return null
+  return <Band><Section label={paneTitle(p.v) ?? 'In the pane'} grow><PaneControls p={p} controls={controls} /></Section></Band>
+}
+
 const lensCorner = (v: V) => { const l = lensOf(v); return off(v) ? 'off' : l ? `${l.face === 'night' ? 'night' : 'day'} · ${l.square}` : NONE }
 
 export const design: DesignedDevice = {
@@ -229,7 +244,7 @@ export const design: DesignedDevice = {
     'frame.position': 2, 'frame.face': 'power', 'frame.grain': 'inner-four',
     // `ql mef lenses` (registry 1.0.0-q2), each with its six sublenses from the registry (ql-mef registry/{articulation,encounter,becoming}.rs).
     lenses: JSON.stringify([
-      {code: 'L0', name: 'Quaternal', face: 'day', square: 'articulation', sublenses: ['Why', 'What', 'How', 'Whom/Which/When', 'Where/Why-for', 'Why-so/Why-not']},
+      {code: 'L0', name: 'Quaternal', face: 'day', square: 'articulation', sublenses: ['Why', 'What', 'How', 'Who/Which/Whereby', 'Where/When/Whither', 'Why-for/Why-not']},
       {code: 'L0′', name: 'Archetypal-Numerical', face: 'night', square: 'articulation', sublenses: ['One/Unity', 'Two/Duality', 'Three/Triad', 'Four/Quaternity', 'Five/Pentad', 'Six/Hexad']},
       {code: 'L1', name: 'Causal', face: 'day', square: 'encounter', sublenses: ['Svātantrya', 'Material cause', 'Efficient cause', 'Formal cause', 'Final cause', 'Icchā Śakti / Will']},
       {code: 'L1′', name: 'Phenomenal', face: 'night', square: 'encounter', sublenses: ['Introversion', 'Sensation', 'Feeling', 'Thinking', 'Intuition', 'Extroversion']},
@@ -282,12 +297,17 @@ export const design: DesignedDevice = {
       'reading.degraded': JSON.stringify([{instrument: 'timeline', reason: 'Factory runs carry no wall-clock time; run lanes render from handoff-declared windows'}]),
       'frame.mapping': undefined, 'frame.status': undefined, 'frame.frames': undefined, 'frame.missing': undefined},
     // The owner's frame law on three probes at position 2.
+    // The Earth's Theory lens open, its panel stood down in the pane: its tabs and its walk rail on the Lens (#762).
+    'The Earth\'s Theory lens': {'pane.title': 'Theory', 'pane.controls': JSON.stringify([
+      {id: 'panel/Close', region: 'panel', kind: 'button', label: 'Close'}, {id: 'panel/Expand the panel', region: 'panel', kind: 'button', label: 'Expand the panel'},
+      ...['Libido', 'Number', 'Opposites', 'Individuation'].map((name, i) => ({id: `panel/${name}`, region: 'panel', kind: 'toggle', label: name, pressed: i === 0})),
+      {id: 'panel/Previous', region: 'panel', kind: 'button', label: 'Previous'}, {id: 'panel/Next', region: 'panel', kind: 'button', label: 'Next'}])},
     'Frame, no grain · partial': {'frame.grain': 'any', 'frame.status': 'partial', 'frame.missing': JSON.stringify(['grain'])},
     'Frame, no face · ambiguous': {'frame.face': 'any', 'frame.grain': 'any', 'frame.status': 'ambiguous', 'frame.frames': JSON.stringify(['CF3', 'CF4'])},
     'Frame, power at the ground · none': {'frame.position': 0, 'frame.face': 'power', 'frame.grain': 'outer-two', 'frame.status': 'none', 'frame.frames': JSON.stringify([])},
     'No readings': Object.fromEntries(['lens.mode', 'lens.lens', 'lens.sublens', 'lens.operation', 'frame.position', 'frame.face', 'frame.grain', 'lenses', 'frames', 'service',
       'reading.subject', 'reading.members', 'reading.lens', 'reading.frame', 'reading.class', 'reading.evidence', 'reading.provider', 'reading.summary', 'reading.instruments', 'reading.degraded',
-      'proposals', 'frame.mapping', 'frame.status', 'frame.frames', 'frame.missing'].map(k => [k, undefined])),
+      'proposals', 'frame.mapping', 'frame.status', 'frame.frames', 'frame.missing', 'pane.title', 'pane.controls'].map(k => [k, undefined])),
   },
 
   folded: p => <Folded title="Lens" light={lightOf(p)} readings={[lensOf(p.v) ? `${lensOf(p.v)!.code} ${lensOf(p.v)!.name}` : NONE, carried(p.v) ?? NONE]} onUnfold={p.nav.unfold} />,
@@ -320,6 +340,7 @@ export const design: DesignedDevice = {
               copy={strOf(p.v, 'reading.subject')} />
           </Section>
         </Band>
+        {instrumentLens(p)}
       </> : <>
         <Band>
           <Section width={w + 12}><Display w={w} h={146} label="The frame" does={`${FRAME_DOES} Drag handle 1 along the line for the position.`} corner={frameAnswer(p.v) ?? NONE}>

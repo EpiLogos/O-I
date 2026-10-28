@@ -40,6 +40,20 @@
 .palace-steps text { font-size: 9.5px; fill: var(--tower); text-anchor: middle; font-family: var(--font-ui) }
 .palace-marquee { fill: var(--accent-soft); stroke: var(--accent); stroke-dasharray: 4 3 }
 
+/* O-I 761: a private room under cloud for Field and Public (its wall faint, a cloud over it, never its name or objects); the fixed floor
+   of the method of loci (four places to a room, an object's place held, an empty room of the floor faint) */
+.palace-room--clouded { cursor: default }
+.palace-room--clouded .palace-room__wall { fill: color-mix(in srgb, var(--text) 6%, transparent); stroke: var(--text-faint); stroke-dasharray: 2 3 }
+.palace-room--clouded .palace-room__name { fill: var(--text-faint) }
+.palace-cloud circle, .palace-cloud rect { fill: color-mix(in srgb, var(--text) 30%, transparent) }
+.palace-room--loci { cursor: pointer }
+.palace-room--empty .palace-room__wall { stroke: var(--text-faint); stroke-dasharray: 4 4; fill: none }
+.palace-room--empty .palace-room__name { fill: var(--text-faint) }
+.palace-place rect { fill: none; stroke: var(--line-strong) }
+.palace-place[data-held="true"] rect { fill: var(--bg-0); fill-opacity: .85 }
+.palace-place text { font-size: 10px; fill: var(--text-faint); font-family: var(--font-ui) }
+.palace-place[data-held="true"] text { fill: var(--text) }
+
 /* the M5 plate (PalacePlate.tsx): rows and switches of the plate's controls (frame/devices/plateControls.css); what only a palace has */
 .palace-room-n { width: 14px; text-align: right; flex: none }
 .palace-standing-mark { flex: none; width: 7px; height: 7px; border-radius: 50%; border: 1px solid var(--text-faint) }

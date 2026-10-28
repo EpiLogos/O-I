@@ -7,11 +7,25 @@
 // never a second clock. Its button and its readings move here, to the one transport: Play presses the atlas's own button (the walk
 // when one stands, else the Earth's clock, which writes the window's end as it plays, through the shared clock's commit), Stop pauses
 // what plays, and punch-in and punch-out read the window's two edges. The scrubber stays the Deep time device (atlasFaceBodies.tsx).
+//
+// O-I #760: the World's own writes on the same transport (manual §10.5 Technē column: Arm "Let the instrument write", Record "Record a
+// walk", Stop "Stop the walk", Capture "Keep the view as a scene"; §17.2 Transport: "Record — Records a walk. Each place you visit becomes
+// a stop", "Capture — Keeps the present view as a scene"). Arm, Record and Capture press the World's walk (walks/walkSession.ts), which
+// keeps a take or a view in the walk's Expression through its owner. While Record runs, Stop keeps the take; while a recorded take
+// walks, Play and Stop are its own and the time signature reads which stop of how many; with a stop of a take selected, Play walks the
+// take from it. Otherwise Play and Stop stay the atlas's time, above. Tempo sets the walk's pace (manual §17.2 Transport, "Tempo — Sets how
+// long the walk dwells at each stop"): the one pace the Palace's walk keeps (palaces/palaceSession.ts walkPace, stepTempo), so outside a
+// palace › quickens the World's walk and ‹ slows it, and inside one the palace's own binding serves it.
 import {useEffect, useState, useSyncExternalStore} from 'react'
 import type {SlotBinding, TransportBindings} from '../../../frame/transport/slots'
 import {disclosureSession} from '../../../../../../../desktop/cradle/src/techne/session'
+import type {WorldSelection} from '../../../../../../../desktop/cradle/src/workspace/store'
 import {useAtlasHandle} from '../AtlasProjectionPanel'
 import {windowEdgeYear} from '../sharedClock'
+import {walkStopOfClip} from '../../../timeline/techneTrackAdapter'
+import {takeWalkId} from '../walks/walkRecord'
+import {WALK_NOT_ARMED, WALK_NOT_OPEN, walkSession, type WalkState} from '../walks/walkSession'
+import {stepTempo, subscribeWalkPace, walkPace} from '../palaces/palaceSession'
 
 /** What the transport reads of the atlas's time: whether it stands, the walk that holds its button, and whether its clock plays. */
 export interface AtlasTimeReading {
@@ -74,4 +88,92 @@ export function atlasTimeBindings(time: AtlasTimeReading, window: {from: string 
 /** The bindings the Technē transport adds for the atlas's time. */
 export function useAtlasTimeBindings(): TransportBindings {
   return atlasTimeBindings(useAtlasTime(), useSharedWindow())
+}
+
+// ── the World's walk (O-I #760) ──────────────────────────────────────────
+
+/** A stop of a recorded take, as THE selection names it. */
+export interface SelectedWalkStop {walkId: string; index: number; name: string}
+
+/** The acts the walk's slots press (walks/walkSession.ts). */
+export interface WalkActs {
+  arm(on: boolean): void
+  record(): void
+  stop(): void
+  capture(): void
+  play(walkId: string, from: number): string | null
+  halt(): void
+  /** Tempo's step: › (+1) quickens the walk's pace, ‹ (-1) slows it */
+  tempo(direction: 1 | -1): void
+}
+
+const plural = (count: number, one: string, many: string): string => `${count} ${count === 1 ? one : many}`
+
+/** Technē's Arm, Record, Capture and Tempo over the World's walk, and Play, Stop and the time signature while it records or walks. Pure over
+ * the walk's reading and its pace (ms), so the binding and the tests read the same words. Slots it does not take are absent: the atlas's
+ * time serves them. */
+export function walkBindings(state: WalkState, acts: WalkActs, selected: SelectedWalkStop | null, paceMs: number = walkPace()): TransportBindings {
+  const said = state.line ? ` ${state.line}` : ''
+  if (!state.bound) {
+    const refused = {refused: WALK_NOT_OPEN}
+    return {arm: refused, record: refused, capture: refused}
+  }
+  const pace = paceMs / 1000
+  const busy = state.busy ? 'The walk\'s owner is still answering the last act.' : null
+  const recording = state.recording
+  const bindings: TransportBindings = {
+    arm: recording ? {lit: true, refused: 'Arm holds while Record runs: press Stop to keep the take, then disarm.'}
+      : {press: () => acts.arm(!state.armed), lit: state.armed,
+        title: state.armed ? `Instrument writes — armed: Record writes a walk into its Expression. Press to disarm.${said}` : `Instrument writes — let the World write: armed, Record keeps a walk.${said}`},
+    record: recording ? {press: acts.stop, lit: true, title: `Record — recording: ${plural(recording.stops.length, 'stop', 'stops')} so far, each a place, moment or thing you visited. Press to stop and keep the take.${said}`}
+      : busy ? {refused: busy}
+      : !state.armed ? {refused: WALK_NOT_ARMED}
+      : {press: acts.record, lit: false, title: `Record — record a walk: each place, moment or thing you visit on the World becomes a stop, and Stop keeps it as a take.${said}`},
+    capture: busy ? {refused: busy}
+      : {press: acts.capture, title: `Capture — keep the present view, its window and the filter in force as a Scene of the walk${recording ? ', and a stop of the take that carries it' : ''}.${said}`},
+    tempo: {step: acts.tempo, readout: {value: `${pace} s`, title: `Tempo — the walk dwells ${pace} s at each stop. › quickens it, ‹ slows it.`},
+      title: 'Tempo — sets how long the walk dwells at each stop: › quickens the walk, ‹ slows it.'},
+  }
+  if (recording) {
+    bindings.stop = {press: acts.stop, title: `Stop — stop recording and keep the take of ${plural(recording.stops.length, 'stop', 'stops')}.`}
+    bindings.signature = {readout: {value: `${recording.stops.length}/${recording.stops.length}`, title: `Stop n/N — recording: stop ${recording.stops.length} is the last you visited.`}}
+    return bindings
+  }
+  const playing = state.playing
+  if (playing) {
+    bindings.play = {press: acts.halt, lit: true, title: `Walk — the recorded walk is walking, stop ${playing.index + 1} of ${playing.total}; press to stop it there.`}
+    bindings.stop = {press: acts.halt, title: `Stop — stop the walk at stop ${playing.index + 1}.`}
+    bindings.signature = {readout: {value: `${playing.index + 1}/${playing.total}`, title: `Stop n/N — stop ${playing.index + 1} of ${playing.total} of the recorded walk.`}}
+    return bindings
+  }
+  if (selected) {
+    bindings.play = {press: () => { acts.play(selected.walkId, selected.index) }, lit: false,
+      title: `Walk — walk ${selected.name} from stop ${selected.index + 1}: each stop stands on the World at its moment, ${pace} s each.`}
+  }
+  return bindings
+}
+
+/** The recorded take a selection stands on: a stop's clip of a take the walk keeps. */
+export function selectedWalkStop(state: WalkState, selection: Pick<WorldSelection, 'kind' | 'ref'> | null | undefined): SelectedWalkStop | null {
+  if (!selection || selection.kind !== 'clip' || state.reading.phase !== 'read') return null
+  const stop = walkStopOfClip(selection.ref)
+  const take = stop ? state.reading.walk.takes.find(row => takeWalkId(row.name) === stop.walkId) : undefined
+  return stop && take && stop.index < take.stops.length ? {walkId: stop.walkId, index: stop.index, name: take.name} : null
+}
+
+const WALK_ACTS: WalkActs = {
+  arm: on => walkSession.arm(on),
+  record: () => walkSession.record(),
+  stop: () => { void walkSession.stop() },
+  capture: () => { void walkSession.capture() },
+  play: (walkId, from) => walkSession.play(walkId, from),
+  halt: () => walkSession.halt(),
+  tempo: stepTempo,
+}
+
+/** The bindings the Technē transport adds for the World's walk, with THE selection a take's stop may stand on. */
+export function useWalkBindings(selection: Pick<WorldSelection, 'kind' | 'ref'> | null | undefined): TransportBindings {
+  const state = useSyncExternalStore(walkSession.subscribe, walkSession.get, walkSession.get)
+  const pace = useSyncExternalStore(subscribeWalkPace, walkPace, walkPace)
+  return walkBindings(state, WALK_ACTS, selectedWalkStop(state, selection), pace)
 }

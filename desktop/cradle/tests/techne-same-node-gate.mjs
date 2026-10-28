@@ -330,12 +330,12 @@ try {
   check(register.objects.some(o => o.ref === recorded[0].ref), 'Independent readback: the native Wiki register (source of truth) still holds the typed relationship after restart');
   await page.screenshot({path: resolve(out, '05-reopened.png')});
 
-  // ——— Same member through M3′ Journey and an independent Library readback ———
+  // ——— Same member through the Journey and an independent Library readback ———
   await frame.locator('[data-action="lens"][data-lens="journey"]').first().click();
   await frame.locator('#timeline-panel:not([hidden])').waitFor();
   const journey = await frame.evaluate(id => {const d = window.__FIELD_STUDIES__.getDocument(), st = window.__FIELD_STUDIES__.getState(); const sc = d.scenes[st.sceneIndex]; const e = sc?.entities.find(v => v.id === id); return {strip: document.querySelectorAll('#timeline-panel :is(.scene-strip, .scene-track-lane) [data-action="choose-scene"]').length, scene: sc?.name, force: e?.force.strength, tint: e?.tint, steps: e?.sequence.steps.length, doc: d.id};}, viewA);
   probe.journey = journey;
-  check(journey.strip > 0 && journey.force === reopenedA.force.strength && journey.tint === reopenedA.tint && journey.steps === reopenedA.sequence.steps.length, 'M3′ Journey shows the same Scene with the same member, material and object states');
+  check(journey.strip > 0 && journey.force === reopenedA.force.strength && journey.tint === reopenedA.tint && journey.steps === reopenedA.sequence.steps.length, 'The Journey shows the same Scene with the same member, material and object states');
   await frame.evaluate(() => document.querySelector('[data-action="library"]').click());
   await frame.locator('#library-page:not([hidden])').waitFor();
   check(await frame.evaluate(() => getComputedStyle(document.getElementById('lens-chooser')).display === 'none'), 'The Technē instrument chooser does not float over the full-page Library');

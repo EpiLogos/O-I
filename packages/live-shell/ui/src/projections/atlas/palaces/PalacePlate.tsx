@@ -21,6 +21,10 @@
 // Propose, Accept, Refuse and Leave. This plate keeps only what the design does not carry yet: the world's palaces and Enter (outside),
 // the rooms' Open and the regions' order, empty and remove, the guide's warrant line, the walk locus by locus, the bookmarks' Rename and
 // Delete, the Return's attribution and receipt, the portals, the integral whole and the composition.
+//
+// O-I 761: each saved room carries its privacy (☁: mark it private, or open it again — one CAS-gated edit through palaceSession.ts
+// markPrivate); under the Field and Public audiences a private room's row and its doors stand under cloud, as the floor draws it; the
+// Return names the author and the owner the owner read back, and the owner's receipt.
 
 import {useEffect, useMemo, useState, useSyncExternalStore} from 'react'
 import {InstrumentPlate, heldMarksOf, type PlateSection} from '../../../frame/devices/InstrumentPlate'
@@ -36,10 +40,10 @@ import {useAtlasHandle, useSuiteStanding} from '../AtlasProjectionPanel'
 import type {AtlasHandle} from '../mount'
 import {selectedSubject} from '../places/PlacesPlate'
 import {turnAtlasTo} from '../places/placesHost'
-import {palaceLocationRows, palacesHolding, roomPlaces, type PalaceRoom, type PalaceRow} from './palacesModel'
+import {palaceLocationRows, palacesHolding, roomPlaces, underCloud, type PalaceRoom, type PalaceRow} from './palacesModel'
 import {palacesWaiting, readPalaces, usePalaces} from './palacesWorld'
 import {
-  addAsNewRegion, addRegion, addTo, deleteBookmark, enterPalace, focusedRoom, inside, jumpBookmark, leavePalace,
+  addAsNewRegion, addRegion, addTo, deleteBookmark, enterPalace, focusedRoom, inside, jumpBookmark, leavePalace, markPrivate,
   moveRegion, moveWalk, openEntry, openRoom, palaceState, removeMember, removeRegion, renameBookmark,
   returnToGround, revert, roomsNow, save, selectRooms, stepWalk, subscribePalace, walkOf,
   type PalaceInside,
@@ -118,15 +122,21 @@ function RoomsSection({here}: {here: PalaceInside}) {
   }
   const rows: PlateRow[] = rooms.map((room, index) => {
     const region = room.kind === 'region' ? here.regions.findIndex(row => row.name === room.name) : -1
+    if (underCloud(room, here.audience)) return {id: room.key, name: 'Private room', mark: <span className="dp-row-note palace-room-n">{index + 1}</span>, dim: true, note: 'under cloud',
+      does: 'A private room. It stays under cloud for this audience; set Audience to Me to see it.'}
+    const privacy = room.saved ? <button type="button" aria-label={room.private ? `Open ${room.name} to every audience` : `Mark ${room.name} private`} aria-pressed={room.private}
+      data-i={room.private ? 'Private|Under cloud to every audience but you. Press to open it again.' : 'Private|Mark the room private: it stays under cloud to every audience but you.'}
+      disabled={here.busy} onClick={() => void markPrivate(room.key, !room.private)}>{'\u2601\uFE0E'}</button> : undefined
     return {id: room.key, name: room.name, mark: <span className="dp-row-note palace-room-n">{index + 1}</span>, dim: room.kind !== 'region' && !room.members.length,
-      note: room.kind === 'region' ? room.holds ? `→ ${room.holds.title}` : 'empty' : `${room.members.length} refs`,
-      does: `${room.name} — ${ROOM_KIND_WORDS[room.kind]}${room.key === focus ? ', where the walk stands' : ''}. Press to stand the walk here; double-click to open it.`,
+      note: `${room.kind === 'region' ? room.holds ? `→ ${room.holds.title}` : 'empty' : `${room.members.length} refs`}${room.private ? ' · private' : ''}`,
+      does: `${room.name} — ${ROOM_KIND_WORDS[room.kind]}${room.private ? ', private' : ''}${room.key === focus ? ', where the walk stands' : ''}. Press to stand the walk here; double-click to open it.`,
       acts: region >= 0 ? <>
+        {privacy}
         <button type="button" aria-label={`Move ${room.name} earlier on the path`} disabled={here.busy || region === 0} onClick={() => moveRegion(room.name, -1)}>↑</button>
         <button type="button" aria-label={`Move ${room.name} later on the path`} disabled={here.busy || region === regionNames.length - 1} onClick={() => moveRegion(room.name, 1)}>↓</button>
         {room.holds && <button type="button" aria-label={`Empty ${room.name}`} data-i="Empty|Take its Expression out." disabled={here.busy} onClick={() => removeMember(room.name)}>○</button>}
         <button type="button" aria-label={`Remove ${room.name}`} data-i="Remove|Remove the region (on Save)." disabled={here.busy} onClick={() => removeRegion(room.name)}>×</button>
-      </> : undefined}
+      </> : privacy}
   })
   return <>
     <PlateRows size={5} rows={rows} active={[...here.selected, ...(focus ? [focus] : [])]} onPress={press} onOpen={openRoom} empty="This palace holds no room yet." />
@@ -218,10 +228,11 @@ function ComposeSection({here}: {here: PalaceInside}) {
 function PortalsSection({here, handle}: {here: PalaceInside; handle: AtlasHandle | null}) {
   const standing = useSuiteStanding()
   const rooms = roomsNow(here)
-  const regions = rooms.filter(room => room.kind === 'region' && room.holds)
+  // a private room's doors stay under cloud for every portal but yours (manual §17.7 Rules)
+  const regions = rooms.filter(room => room.kind === 'region' && room.holds && !underCloud(room, here.audience))
   const focus = focusedRoom(here)
   const focused = rooms.find(room => room.key === focus)
-  const places = focused ? roomPlaces(focused, standing.places) : []
+  const places = focused && !underCloud(focused, here.audience) ? roomPlaces(focused, standing.places) : []
   // the way back to the ground — the Earth — is the first door out (palaceInstrument.tsx:464 "Return to ground"); a reading that does
   // not disclose the ground leaves the plain way out, saying so
   const ground = !!here.reading && here.reading.disclosure.instruments.some(entry => entry.instrument === 'project' && entry.available)
@@ -245,14 +256,13 @@ function PortalsSection({here, handle}: {here: PalaceInside; handle: AtlasHandle
 
 function ReturnSection({here}: {here: PalaceInside}) {
   const receipt = here.reading ? palaceComposition(here.reading).receipt : undefined
-  const proposal = here.proposal
-  // The Palace device proposes, accepts and refuses; this section keeps the owner's words about it: who it is attributed to, where it is
-  // routed and under what authority, the receipt an accepted Return left.
+  const proposal = here.proposal, sent = here.sent
+  // The Palace device proposes, accepts and refuses; this section keeps the owner's words about it: the author and the owner the owner
+  // read back, the route, and the receipt an accepted Return left (O-I 761).
   return <>
     {!proposal && receipt && <PlateLine tone="saved" text={receipt} />}
-    {proposal && <PlateLine text={proposal.receipt?.routed
-      ? `${proposal.attribution} Routed to ${proposal.receipt.action_ref} under ${proposal.receipt.authority ?? 'the owner'}; the native owner decides.`
-      : `${proposal.attribution || 'No Return is attributed.'} Not routed: ${proposal.refusal ?? 'the routing law refused it'}.`} />}
+    {sent && <PlateLine text={`${sent.author} proposed ${sent.return_ref} to ${sent.owner} on ${proposal?.receipt?.action_ref ?? 'its route'}; it is ${sent.status}, and the owner decides.`} />}
+    {proposal && !sent && proposal.refusal && <PlateLine tone="refused" text={`Not routed: ${proposal.refusal}. Nothing was sent.`} />}
     {here.acceptance && <PlateLine tone={here.acceptance.accepted ? 'saved' : 'refused'} text={here.acceptance.line} />}
   </>
 }
@@ -279,7 +289,7 @@ function PalacePlateAt({held, focused, startFolded, onFold, onFull}: PalacePlate
   const state = usePalace()
   const here = inside()
   useEffect(() => { readPalaces() }, [])
-  const spoken = here ? !!(here.proposal || here.acceptance || (here.reading && palaceComposition(here.reading).receipt)) : false
+  const spoken = here ? !!(here.proposal || here.sent || here.acceptance || (here.reading && palaceComposition(here.reading).receipt)) : false
   const ids = here ? ['rooms', 'walk', ...(spoken ? ['return'] : []), 'bookmarks', 'portals', 'whole', 'compose'] : ['palaces', ...OUTSIDE]
   const fit = usePlateFit(ids.join('|'), here ? FOLD_ORDER_INSIDE : [...OUTSIDE].reverse(), false, startFolded ?? (here ? START_FOLDED_INSIDE : OUTSIDE))
   const fold = (section: Omit<PlateSection, 'folded' | 'onFold'>): PlateSection => ({...section, folded: fit.folded.has(section.id), onFold: () => fit.press(section.id)})
@@ -290,7 +300,7 @@ function PalacePlateAt({held, focused, startFolded, onFold, onFull}: PalacePlate
   const sections: PlateSection[] = [...(here ? [
     fold({id: 'rooms', title: 'Rooms', width: 236, note: <>{`${roomsNow(here).length} along the path`}{marks}</>, children: <RoomsSection here={here} />}),
     fold({id: 'walk', title: 'Walk', width: 160, note: here.walking ? 'walking' : undefined, children: <WalkSection here={here} />}),
-    ...(spoken ? [fold({id: 'return', title: 'Return', width: 220, note: here.proposal ? 'proposed' : undefined, children: <ReturnSection here={here} />})] : []),
+    ...(spoken ? [fold({id: 'return', title: 'Return', width: 220, note: here.sent ? 'proposed' : undefined, children: <ReturnSection here={here} />})] : []),
     fold({id: 'bookmarks', title: 'Bookmarks', width: 210, note: here.bookmarks.length ? `${here.bookmarks.length}` : undefined, children: <BookmarksSection here={here} />}),
     fold({id: 'portals', title: 'Portals', width: 200, children: <PortalsSection here={here} handle={handle} />}),
     fold({id: 'whole', title: 'Integral whole', width: 260, note: here.reading === undefined ? 'reading' : here.reading ? undefined : 'refused', children: <WholeSection here={here} />}),

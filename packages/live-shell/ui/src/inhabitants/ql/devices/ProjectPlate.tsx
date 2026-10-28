@@ -8,7 +8,7 @@
 //
 // Ported, not recreated: every control is the face bodies' own act (inhabitants/atlasFaceBodies.tsx :74-221) through the same handlers
 // (inhabitants/atlasFaceActions.ts — stepDepth's setter, toggleKind, toggleTie, toggleOccurrences, toggleSky, setForce, resetForces,
-// scrubClock, allTime, playOrPause, toggleCumulative, setWholeField; the view through presentAtlasView, the lens bar's), each read back
+// scrubClock, allTime, playOrPause, toggleCumulative, setWholeField; the view through presentAtlasView, the Earth ⇄ Graph device's), each read back
 // from the one mounted atlas on its own notices; a control the atlas cannot take now waits with the body's own words. The devices the Project
 // holds stand as marks on the sections that draw their controls (every setting in the pool, full size in a pane).
 //
@@ -29,6 +29,7 @@ import type {FacePresentation} from '../../sdk/define'
 import {presentAtlasView, useAtlasView} from '../../../projections/atlas/AtlasProjectionPanel'
 import type {AtlasHandle} from '../../../projections/atlas/mount'
 import {DEFAULT_FORCES, FORCE_ROWS, forceMultiple} from '../../../projections/atlas/src/graph/forces'
+import {DEFAULT_TIE_BASES} from '../../../projections/atlas/src/types/field'
 import {formatYear} from '../../../projections/atlas/src/data/time'
 import {atlasScale, subscribeAtlasScale} from '../../../projections/atlas/places/placesHost'
 import {controlsAt, useFrameChrome} from '../../../components/expressions/studio/frameChrome'
@@ -56,7 +57,7 @@ function ViewSection({handle}: {handle: AtlasHandle | null}) {
   const scale = useSyncExternalStore(subscribeAtlasScale, atlasScale, atlasScale)
   const scope = handle?.ctl.globeScope
   return <>
-    <PlateRadio inline label="View" does="Space or Graph: the same material, as bodies or by connection — the atlas's own switch, the lens bar's."
+    <PlateRadio inline label="View" does="Space or Graph: the same material, as bodies or by connection — the atlas's own switch, the Earth ⇄ Graph device's."
       value={view} options={[{value: 'earth', label: 'Space'}, {value: 'graph', label: 'Graph'}]} onChange={next => presentAtlasView(next)} />
     <PlateReading label="Scale" value={scale ?? '—'} does="How close you look, as the atlas stands: field, system, body, region or place. The camera sets it." />
     <PlateRadio inline label="Scope" does={scope?.scope ? `The globe draws ${scope.scope.label} alone, or the whole field.` : 'The mode’s set alone, or the whole field.'}
@@ -81,8 +82,9 @@ function GraphSection({handle}: {handle: AtlasHandle | null}) {
       <Toggle label="Occurrences" does="Draw each occurrence as dust around its form." on={!!c?.dust} onChange={graph ? () => toggleOccurrences(graph) : undefined} disabled={why} />
     </div>
     <div className="plate-keys plate-span" role="group" aria-label="Family to archetype relations">
-      {(c?.bases ?? [{id: 'jung', label: 'Jung'}, {id: 'inferred', label: 'Inferred'}, {id: 'site', label: 'Site'}]).map(basis =>
-        <Toggle key={basis.id} label={basis.label} does={`Draw the ties ${basis.label === 'Jung' ? 'Jung states' : basis.label === 'Inferred' ? 'that are inferred' : 'a site states'}.`} tone="value"
+      {/* the graph's declared bases, strongest first; before it opens, the port's own, whose first is named by the provider (data/labels.ts) */}
+      {(c?.bases ?? DEFAULT_TIE_BASES).map((basis, i) =>
+        <Toggle key={basis.id} label={basis.label} does={`Draw the ${basis.label} ties: ${i === 0 ? 'those the field’s own source states' : basis.id === 'inferred' ? 'those the field infers' : basis.id === 'site' ? 'those a site states' : 'those of this basis'}.`} tone="value"
           on={!!c?.ties.includes(basis.id)} onChange={graph ? () => toggleTie(graph, basis.id) : undefined} disabled={why} />)}
       <Toggle label="Sky anchors" does={c?.sky === 'unavailable' ? 'The sky’s data is unavailable.' : 'Bodies stand at their geocentric ecliptic longitudes; in a local graph they are ordinary neighbours.'}
         on={skyOn} onChange={graph ? () => toggleSky(graph) : undefined} disabled={why ?? (c?.sky === 'loading' ? 'Loading the sky…' : undefined)} />

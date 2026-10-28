@@ -49,3 +49,11 @@ const editor = await page.evaluate(`(() => ({
 console.log('layers editor:', JSON.stringify(editor));
 console.log('page errors:', errors.length ? errors.slice(0, 2) : 'none');
 await browser.close();
+const verdicts = {
+  'the laminated showcase is a library starting point': found,
+  'head, not donut: the face layers fill the centre in depth': headVerdict,
+  'the layers editor holds three depth bands': editor.rows === 3 && new Set(editor.depths).size === 3,
+  'no page errors': errors.length === 0,
+};
+for (const [name, ok] of Object.entries(verdicts)) console.log((ok ? 'PASS ' : 'FAIL ') + name);
+if (Object.values(verdicts).some(ok => !ok)) process.exit(1);

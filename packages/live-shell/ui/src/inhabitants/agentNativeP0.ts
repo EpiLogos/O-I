@@ -48,6 +48,8 @@ import {admitFamilyManifest, familyManifest, onFamilyManifestReset} from './fami
 // production (where import order already admits it).
 import {atlasFamilyManifest} from '../projections/atlas/atlasFamilyManifest.ts'
 import {FORCE_ROWS, type Forces} from '../projections/atlas/src/graph/forces.ts'
+// The bases a relation is drawn by, strongest first: the first is named by the provider (data/labels.ts basisOwn), never here.
+import {DEFAULT_TIE_BASES} from '../projections/atlas/src/types/field.ts'
 import {CLOCK_DOMAIN, DEPTH_RANGE, KIND_NAMES, TIE_BASE_IDS} from './atlasFaceActions.ts'
 // [T-WORLDS §5 W3] your world's body on the globe: its choices, its settings and their ranges (the owner's, ai-kit WorldBody::validate).
 import {BODY_CHOICES, WORLD_BODY_SETTINGS, bodyWriter} from '../projections/atlas/body/worldBody.ts'
@@ -183,7 +185,10 @@ const P0_ROWS: AdoptedArtifacts[] = [
       {
         family: 'atlas-earth', deviceInstance: 'graph-tools', key: 'ties', title: 'Relations', type: 'enumerated',
         values: [...TIE_BASE_IDS], writePath: 'shell.setAtlasTies',
-        disclosure: 'Which relations are drawn between families and archetypes, by basis, strongest first (Jung, Inferred, Site, as the graph declares them). Write the full set you want on; the graph toggles only the bases that differ. A basis the live graph does not declare is refused by name.',
+        // read when it is shown: the first basis is the provider's word, bound once the field has loaded
+        get disclosure() {
+          return `Which relations are drawn between families and archetypes, by basis, strongest first (${DEFAULT_TIE_BASES.map(basis => basis.label).join(', ')}, as the graph declares them). Write the full set you want on; the graph toggles only the bases that differ. A basis the live graph does not declare is refused by name.`
+        },
       },
       {
         family: 'atlas-earth', deviceInstance: 'graph-tools', key: 'kinds', title: 'Kinds drawn', type: 'enumerated',

@@ -49,6 +49,8 @@ jobs:
             packages/live-shell
       - name: Install the browser engines used by the declared landing gates
         run: |
+          python -m pip install -r desktop/cradle/expressions-app/field-studies-journeys/tests/requirements.txt
+          python -m playwright install --with-deps chromium
           npm ci --prefix desktop/cradle --no-audit --no-fund
           cd desktop/cradle
           npx playwright install --with-deps chromium webkit

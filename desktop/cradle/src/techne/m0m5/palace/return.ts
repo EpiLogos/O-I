@@ -139,14 +139,6 @@ export function returnCrossing(reading: TechneReading): { instrument: "project" 
   return ground ? { instrument: ground } : null;
 }
 
-/** The arrangement order of the 3:3 expression floor — re-exported for the
- * agent-state module so the walk order has exactly one definition. */
-export function composedExpressionOrder(reading: TechneReading, composition: PalaceComposition): string[] {
-  return arrangementOrder(composition.expressions).filter((ref) =>
-    palaceElements(reading).some((element) => element.expression_ref === ref),
-  );
-}
-
 /** The actor a Palace Return is attributed to: the human at the Palace, as the composition's own Expression edits name it. */
 export const PALACE_RETURN_ACTOR = "human:techne-palace";
 
@@ -178,61 +170,4 @@ export function palaceReturnProposal(reading: TechneReading, composition: Palace
   const count = shaped?.composed_refs.length ?? 0;
   const attribution = `Proposed by ${PALACE_RETURN_ACTOR} from reading ${reading.reading_ref} of subject ${reading.subject.subject_ref}: ${count} native refs in arrangement order, to ${route.action_ref}, awaiting human acceptance.`;
   return { route, receipt, attribution, refusal: receipt.routed ? null : receipt.reason ?? "the routing law refused this route" };
-}
-
-/** The reading request the owner re-reads at Accept: the same one the Palace read its reading by. */
-export interface PalaceAcceptReadingRequest {
-  expression_ref: string;
-  revision: number;
-  scene_ref: string;
-}
-
-/** The frame's routed Return for `kernel-expression`: the proposal's own route, the reading it was made from (the route's basis),
- * the reading request the owner re-reads, and the actor it is attributed to. Null when the proposal routed nothing. */
-export function palaceAcceptRequest(proposal: PalaceReturnProposal, readingRequest: PalaceAcceptReadingRequest) {
-  if (!proposal.route || !proposal.receipt?.routed) return null;
-  const basis = (proposal.route.input as { basis_ref?: unknown } | undefined)?.basis_ref;
-  if (typeof basis !== "string" || basis.length === 0) return null;
-  return {
-    operation: "invoke_action" as const,
-    route: proposal.route,
-    reading_ref: basis,
-    reading_request: { ...readingRequest, scope: "expression" as const },
-    actor: PALACE_RETURN_ACTOR,
-  };
-}
-
-/** One Accept outcome, named in one line. Only an invoked receipt is accepted, and only an accepted Return crosses back to the ground
- * (`returnCrossing`). Every other state is named by the owner's own words or the routing law's refusal. */
-export type PalaceAcceptOutcome =
-  | { accepted: true; line: string; crossing: { instrument: "project" } | null }
-  | { accepted: false; line: string; crossing: null };
-
-export function palaceAcceptOutcome(reading: TechneReading, proposal: PalaceReturnProposal, raw: unknown): PalaceAcceptOutcome {
-  const action = proposal.route?.action_ref ?? "the Return";
-  const reply = raw && typeof raw === "object" ? (raw as { state?: unknown; reason?: unknown; dispatch?: unknown }) : null;
-  if (reply?.state === "refused") {
-    return { accepted: false, line: `Not accepted: ${String(reply.reason)}.`, crossing: null };
-  }
-  const dispatch = reply?.state === "dispatched" && reply.dispatch && typeof reply.dispatch === "object"
-    ? (reply.dispatch as { state?: unknown; owner_operation?: unknown; owner?: unknown; message?: unknown; detail?: unknown })
-    : null;
-  if (!dispatch) return { accepted: false, line: `Not accepted: the owner returned no dispatch receipt for ${action}.`, crossing: null };
-  const owner = String(dispatch.owner_operation ?? dispatch.owner ?? action);
-  switch (dispatch.state) {
-    case "invoked":
-      return { accepted: true, line: `Accepted: ${action} invoked by ${owner}. Returning to the ground.`, crossing: returnCrossing(reading) };
-    case "owner_refused":
-      return { accepted: false, line: `Not accepted: ${owner} refused ${action}: ${String(dispatch.message ?? "no reason given")}.`, crossing: null };
-    case "unsupported_action":
-      return { accepted: false, line: `Not accepted: ${String(dispatch.owner ?? owner)} does not support ${action}: ${String(dispatch.detail ?? "no detail")}.`, crossing: null };
-    case "malformed_ref":
-      return { accepted: false, line: `Not accepted: the ref for ${action} is malformed: ${String(dispatch.detail ?? "no detail")}.`, crossing: null };
-    case "unknown_owner":
-      return { accepted: false, line: `Not accepted: no native owner answers ${action}.`, crossing: null };
-    case "owner_unavailable":
-      return { accepted: false, line: `Not accepted: ${owner} is unavailable: ${String(dispatch.detail ?? "no detail")}.`, crossing: null };
-    default:
-      return { accepted: false, line: `Not accepted: the owner returned an unknown dispatch state for ${action}.`, crossing: null };
-  }
 }

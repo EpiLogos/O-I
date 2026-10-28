@@ -19,6 +19,7 @@ on:
       - 'packages/expressions-boundary/**'
       - 'packages/oi-design-system/**'
       - 'shared-field/**'
+      - 'scripts/node-test.mjs'
       - '.github/workflows/desktop.yml'
   workflow_dispatch:
 
@@ -118,7 +119,8 @@ jobs:
 
   candidate:
     runs-on: ubuntu-24.04
-    timeout-minutes: 40
+    # 40 until the frame's eleven browser harnesses joined the browser step (#799: 4.6 minutes of software WebGL on the Mac; CI's figure comes from its first run).
+    timeout-minutes: 55
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -160,7 +162,7 @@ jobs:
       - name: Shared engine architecture conformance and bounded debt
         if: always()
         working-directory: desktop/cradle
-        run: node --test tests/conformance/*.test.mjs
+        run: node ../../scripts/node-test.mjs "tests/conformance/*.test.mjs"
       # The frame suite drives Chromium and WebKit (me2, mr) through desktop/cradle's Playwright, as the component
       # contracts below do, so the engines are installed before it.
       - name: Install browser engines for the frame suite and the component contracts
@@ -182,11 +184,23 @@ jobs:
         run: |
           npm --prefix desktop/cradle/expressions-app run build
           npm --prefix packages/live-shell/ui run build
+      # The frame's harnesses (field-studies-journeys/tests/*_browser.py, *_gpu.py)
+      # drive Chromium through Python Playwright at the version they pin.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: desktop/cradle/expressions-app/field-studies-journeys/tests/requirements.txt
+      - name: Install Python Playwright and its Chromium for the frame's harnesses
+        run: |
+          python -m pip install -r desktop/cradle/expressions-app/field-studies-journeys/tests/requirements.txt
+          python -m playwright install --with-deps chromium
       # Browser contracts over components the candidate mounts (each fixture's
       # subject is candidate-reachable) and the hosted frame; none needs a live
       # native service. Contracts whose subject only the legacy desktop reaches
-      # are not run here.
-      - name: Browser contracts — search, text editor, Expression stage, canvas surfaces, frame formations, frame effects
+      # are not run here. The frame's harnesses are found by name and run against
+      # the production builds made above.
+      - name: Browser contracts — search, text editor, Expression stage, canvas surfaces, frame formations, frame effects, frame harnesses
         working-directory: desktop/cradle
         run: |
           node tests/search-overlay.mjs
@@ -195,6 +209,7 @@ jobs:
           node tests/canvas-editor-browser.mjs
           node tests/formation-native-regressions.mjs
           node tests/native-expression-effects-browser.mjs
+          node expressions-app/field-studies-journeys/scripts/browser-harnesses.mjs
       - name: Retain browser contract evidence
         if: always()
         uses: actions/upload-artifact@v4

@@ -1,7 +1,7 @@
-// lane-2 T24 — focus mode and fullscreen for the M2′ stage. The stage reuses the lane-3 E23 focus model and
+// lane-2 T24 — focus mode and fullscreen for the Timeline's stage. The stage reuses the lane-3 E23 focus model and
 // fullscreen request (focusMode.ts): no second implementation. Proven here: the generic session restores exactly
 // what focus began from; a refused or thrown fullscreen request never ends focus; the release is idempotent;
-// the M2′ block wires F, Escape, the fullscreen exit and the hidden chrome, and its title documents the keys.
+// the Timeline's block wires F, Escape, the fullscreen exit and the hidden chrome, and its title documents the keys.
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {mkdtemp,readFile,rm} from 'node:fs/promises';
@@ -92,12 +92,12 @@ test('releasing the stage fullscreen exits only a fullscreen the document holds,
  }
 });
 
-// The M2′ block: the wiring lives in researchInstruments.tsx's chronology region and reads the shared model.
+// The Timeline's block: the wiring lives in researchInstruments.tsx's chronology region and reads the shared model.
 const instruments=await readFile(resolve(engine,'src/researchInstruments.tsx'),'utf8');
 const styles=await readFile(resolve(engine,'src/styles.css'),'utf8');
 const focusModeSrc=await readFile(resolve(engine,'src/focusMode.ts'),'utf8');
 
-test('the M2′ stage holds its focus at install scope on the shared controller, and keeps one key listener there',()=>{
+test('the Timeline\'s stage holds its focus at install scope on the shared controller, and keeps one key listener there',()=>{
  assert.match(instruments,/import \{createStageFocus,releaseStageFullscreen,requestStageFullscreenOn\} from '\.\/focusMode';/);
  assert.match(instruments,/const stageFocus=createStageFocus\(\{stage:body,chrome:host\.tools,markKey:'timelineFocus'\}\);/,'one stage focus per install, on the shared controller (focusMode.ts)');
  assert.match(instruments,/let timelineFocusOff:\(\(\)=>void\)\|null=null;/,'one stage key listener per install');
@@ -111,7 +111,7 @@ test('the stage focus ends at install scope: unmount ends it, every load (a lens
  assert.ok(install>=0&&declared>install&&declared<load,'endTimelineFocus is declared in the install scope, before load');
  const unmountLine=instruments.split('\n').find(line=>/function unmount\(\)/.test(line))??'';
  assert.match(unmountLine,/endTimelineFocus\(\);/,'unmount() ends the stage focus, so the shared tools come back');
- assert.match(unmountLine,/timelineFocusOff\?\.\(\);timelineFocusOff=null;/,'unmount() releases the stage key listener; the M2′ load re-attaches it');
+ assert.match(unmountLine,/timelineFocusOff\?\.\(\);timelineFocusOff=null;/,'unmount() releases the stage key listener; the Timeline\'s load re-attaches it');
  // T-PLACES-ONTO-ATLAS: the Places layers flush that came first retired with the frame's Places map; a lens change still unmounts first
  assert.match(instruments,/async function load\(selected:ResearchInstrument\)\{\s*const generation=\+\+epoch;unmount\(\);/,'a lens change unmounts before it reads');
  assert.match(instruments,/destroy\(\)\{[^\n]*unmount\(\);/,'destroy unmounts, so the stage focus and its listener are released');

@@ -35,8 +35,8 @@ Library browsing pauses the physical clock and returns without hidden elapsed-ti
 
 ## Acceptance
 
-Run `npm run lint`, `npm test`, `npm run build`, `npm run test:journeys`,
-`npm run test:gpu`, `npm run test:browser` and `npm run test:workspace`.
+Run `npm run lint`, `npm test`, `npm run build` and
+`node field-studies-journeys/scripts/browser-harnesses.mjs` (the GPU, browser and workspace harnesses among them).
 The unchanged native GPU suite checks real force/state behavior. The adapted original
 25-workflow browser suite still decodes native PNG, video and exported living HTML.
 The 23 model tests include rail transitions, camera independence and preset-fork isolation.

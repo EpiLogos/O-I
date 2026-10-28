@@ -67,7 +67,6 @@ const CEILING = {
     'src/projections/useWorldTemporalReading.ts': 1,
     'src/shell/liveSelection.ts': 1,
     'src/shell/ModeContextDock.tsx': 2,
-    'src/shell/ModeDetail.tsx': 3,
     'src/shell/ModeTransportBar.tsx': 4,
     'src/timeline/centralTrackAdapter.ts': 4,
     'src/timeline/techneTrackAdapter.ts': 2,

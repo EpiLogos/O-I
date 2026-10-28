@@ -14,7 +14,8 @@ Integration branch: `agent/native-engine-journeys`.
 | GPU acceptance | 5 suites passed | Actual float-buffer forces, state continuity, single stepping, combined resonance and projection/capture |
 | Native browser acceptance | 25 workflows passed | Real editor input, motion, save/import/export, touch/mobile, PNG, decoded live video and portable reopening |
 
-Evidence is written to `field-studies-journeys/evidence-native/` by the scripts.
+Evidence is written to `FIELD_EVIDENCE_DIR` (by default `desktop/cradle/tests/artifacts/field-studies-journeys/`,
+untracked) by `scripts/browser-harnesses.mjs`.
 The CI review artifact includes JSON results, screenshots, video and the tested
 portable HTML. The earlier `docs/TEST_REPORT.md` is preview-era evidence only.
 

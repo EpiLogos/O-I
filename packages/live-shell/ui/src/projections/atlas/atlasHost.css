@@ -28,12 +28,6 @@
   inset: 0;
 }
 
-/* The Technē lens bar claims the top strip, as it does for the composition residence. */
-.center-body[data-lens-bar="true"] .atlas-host {
-  margin-top: 25px;
-  height: calc(100% - 25px);
-}
-
 .atlas-host-status {
   position: absolute;
   left: 12px;
@@ -64,6 +58,26 @@
 .atlas-host .time,
 .atlas-host .mode-switch,
 .atlas-host .sh-corner {
+  display: none;
+}
+
+/* The pane holds the material alone (#762; manual §16.3 Full: "The material itself … No controls"; §17.11: a lens's controls are the
+   Lens's). What the atlas still drew over the globe stands down here, every element still mounted with its own handler and state: the
+   focus label (its name, line and acts), the graph's settings, the closes of the reading cards, and a non-Field lens's own controls —
+   its panel's handle, close, walk rail, tabs and fields, Aion's epochs, rails and ring convention, the Red Book's and the dynamical
+   lens's rails. The devices draw them and press the atlas's own (paneChrome.ts PANE_CHROME_REGIONS, one list with this rule: the
+   focus label's acts, the display and the closes on the World; the lens's title and controls on the Lens; the graph's other settings
+   on the Project plate's Graph and Forces). The readings stay, with the links in their text. */
+.atlas-host .lens-panel :is(.lp-handle, .lp-close, .lp-foot, .th-tab, form, input, select, textarea),
+.atlas-host .aion .aion-epochs,
+.atlas-host .aion .rb-rail,
+.atlas-host .rv-close,
+.atlas-host .aion-ring select,
+.atlas-host .redbook .rb-rail,
+.atlas-host .dynamics .dy-rail,
+.atlas-host .focus-label,
+.atlas-host .dp-close,
+.atlas-host .gv-tools {
   display: none;
 }
 

@@ -209,9 +209,9 @@ export function liveExemplarFor(semantic: LiveSemantic): string {
 // the holders (lock §4.8, §4.9; ticket T-HOLDERS, lead's design 13 Oct 2026).
 // Every face names the device that holds it (`heldBy`); the gate checks the
 // naming. A holder is a device the instrument frame presents: a Studio section
-// (the Expressions device chain, in the mockup's order), the Clip detail, or
-// one of the six Technē instruments. Holders are declaration only: no face
-// changes behaviour because it is held.
+// (the Expressions device chain, in the mockup's order), the Clip detail, one
+// of the six Technē instruments, or an app layer's rack (#801). Holders are
+// declaration only: no face changes behaviour because it is held.
 
 export interface HolderDeclaration {
   readonly id: string
@@ -260,14 +260,28 @@ export const TECHNE_INSTRUMENTS: readonly HolderDeclaration[] = [
   {id: 'techne:m5', title: 'Palace', liveSemantic: 'device-instrument'},
 ]
 
+/** The racks of the instruments of the map, one for each of the app layers M1′ to M4′ (manual §16.16 "Each instrument shows its rack on its
+ * Rack page: the Torus, the Sky, the M3 clock, and the Chakra for M4′"; §22.9). M′ names the app layer here, as §25.1 allows, and stands as
+ * provenance; each rack is named by the device whose Rack page it is. They are not Technē's instruments (#801): the M′ matrices' four layers
+ * are the insides of these racks (§22.6 "Open a layer from the rack of its instrument"), so the racks hold them. */
+export const LAYER_RACKS: readonly HolderDeclaration[] = [
+  {id: 'rack:torus', title: 'Torus', provenance: 'M1′', liveSemantic: 'device-instrument', holds: ['quaternal-logic/m-prime-matrices']},
+  {id: 'rack:sky', title: 'Sky', provenance: 'M2′', liveSemantic: 'device-instrument', holds: ['quaternal-logic/m-prime-matrices']},
+  {id: 'rack:m3-clock', title: 'M3 clock', provenance: 'M3′', liveSemantic: 'device-instrument', holds: ['quaternal-logic/m-prime-matrices']},
+  {id: 'rack:chakra', title: 'Chakra', provenance: 'M4′', liveSemantic: 'device-instrument', holds: ['quaternal-logic/m-prime-matrices']},
+]
+
 /** The standalone instruments any pane can hold in any mode (owner ruling, 13 Oct 2026; lock §8.1): the knowledge graph —
  * the wiki constellation — is its own instrument, not one of Technē's six. */
 export const STANDALONE_INSTRUMENTS: readonly HolderDeclaration[] = [
   {id: 'knowledge-graph', title: 'Knowledge graph', liveSemantic: 'device-instrument'},
 ]
 
-/** Every known holder: the Studio sections, the Clip detail, the Technē instruments, the standalone instruments. */
-export const HOLDERS: readonly HolderDeclaration[] = [...STUDIO_SECTIONS, DETAIL_CLIP_HOLDER, ...TECHNE_INSTRUMENTS, ...STANDALONE_INSTRUMENTS]
+/** Every known holder: the Studio sections, the Clip detail, the Technē instruments, the app layers' racks, the standalone instruments. */
+export const HOLDERS: readonly HolderDeclaration[] = [...STUDIO_SECTIONS, DETAIL_CLIP_HOLDER, ...TECHNE_INSTRUMENTS, ...LAYER_RACKS, ...STANDALONE_INSTRUMENTS]
+
+/** Whether a holder is one of the app layers' racks (LAYER_RACKS). */
+const isLayerRack = (holder: string): boolean => LAYER_RACKS.some(rack => rack.id === holder)
 
 export function isHolder(candidate: unknown): boolean {
   return typeof candidate === 'string' && HOLDERS.some(holder => holder.id === candidate)
@@ -477,11 +491,13 @@ export function validateFaceSemantic(face: SemanticFace, context: SemanticContex
   const held = face.heldBy ?? []
   for (const holder of held) {
     if (!isHolder(holder)) {
-      claim(`heldBy "${holder}" is not a known holder — name a Studio section, the Clip detail or a Technē instrument (${list(HOLDERS.map(known => known.id))}) (lock §4.8, §4.9)`)
+      claim(`heldBy "${holder}" is not a known holder — name a Studio section, the Clip detail, a Technē instrument or an app layer's rack (${list(HOLDERS.map(known => known.id))}) (lock §4.8, §4.9)`)
     }
   }
-  if (face.admission !== 'waiting' && checkedModes.includes('techne') && !held.some(holder => holder.startsWith('techne:'))) {
-    claim('an admitted Technē face is held by a techne:* instrument — name the instrument in heldBy (lock §4.9); a waiting face is exempt until its owner lands')
+  // A face whose layer is a part of an app layer's rack is held by that rack, not by a Technē instrument standing in for it (#801; manual
+  // §22.6, §16.16): the M′ matrices.
+  if (face.admission !== 'waiting' && checkedModes.includes('techne') && !held.some(holder => holder.startsWith('techne:') || isLayerRack(holder))) {
+    claim('an admitted Technē face is held by a techne:* instrument or an app layer\'s rack — name it in heldBy (lock §4.9); a waiting face is exempt until its owner lands')
   }
   if ((semantic === 'device-audio-fx' || semantic === 'device-midi-fx') && held.some(holder => holder.startsWith('techne:'))) {
     claim('an effect cannot be held by a techne:* instrument — a Technē chain device is an instrument, never an effect (lock §5.2)')

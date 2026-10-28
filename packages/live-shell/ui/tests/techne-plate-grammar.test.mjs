@@ -95,7 +95,7 @@ test('the sheets: the row and its sections never scroll, a hairline between sect
   assert.doesNotMatch(controls, /\.plate-row[^{]*\{[^}]*background: var\(--bg-1\)/, 'a row is a line with a hairline under it, never a framed box')
 })
 
-/** The macros each instrument's manual entry names for its Compact (DLW.md §17.2–§17.7 Presentations; M0′ stands on §17.2's grammar). */
+/** The macros each instrument's manual entry names for its Compact (DLW.md §17.2–§17.7 Presentations; the Project stands on §17.2's grammar). */
 const MACROS = {
   'techne:m0': ['Depth', 'Scope', 'Ghosts', 'Labels'], 'techne:m1': ['Tool', 'Snap', 'Relation', 'Standing'], 'techne:m2': ['Lens', 'Window', 'Floor', 'Readings'],
   'techne:m3': ['Pace', 'Arrival', 'Loop', 'Narration'], 'techne:m4': ['Scale', 'Aperture', 'View as', 'Occasion'], 'techne:m5': ['Path', 'Guide', 'Audience', 'Return'],
@@ -129,7 +129,7 @@ test('the rack stands an instrument Compact where the row has room, its fold els
   assert.match(rack, /rack\.shown\.has\(holder\.id\)\s*\? <InstrumentCompact[^\n]*onOpen=\{press\}/, 'a Compact where it fits, opening as the fold did')
   assert.match(rack, /: <InstrumentFold key=\{holder\.id\} holder=\{holder\} count=\{held\.length\} onOpen=\{press\} \/>/, 'its fold elsewhere, its press unchanged')
   assert.match(rack, /item\.classList\.contains\('inst-plate'\) \? Number\(item\.dataset\.naturalWidth\)/, 'the open plate first, at the width its sections ask')
-  assert.match(rack, /'techne:m0': props => <ProjectPlate \{\.\.\.props\} \/>/, 'M0′ is one plate of its own (no boxed sub-devices)')
+  assert.match(rack, /'techne:m0': props => <ProjectPlate \{\.\.\.props\} \/>/, 'the Project is one plate of its own (no boxed sub-devices)')
 })
 
 test('the focused instrument takes the whole device row: no strip that receives nothing ends it (source reading)', async () => {

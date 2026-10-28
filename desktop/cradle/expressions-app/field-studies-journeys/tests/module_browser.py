@@ -1,8 +1,8 @@
 """Serve the built multi-page app on a local-only test port; verify default entry and export."""
 from pathlib import Path
 import json,threading,functools,http.server
-from harness import browser_session
-R=Path(__file__).resolve().parents[2];E=R/'field-studies-journeys/evidence-native';E.mkdir(exist_ok=True)
+from harness import browser_session,EVIDENCE
+R=Path(__file__).resolve().parents[2];E=EVIDENCE
 class Quiet(http.server.SimpleHTTPRequestHandler):
  def log_message(self,*args):pass
 server=http.server.ThreadingHTTPServer(('127.0.0.1',0),functools.partial(Quiet,directory=str(R/'dist')))
@@ -14,7 +14,9 @@ try:
   p.wait_for_function('window.__FIELD_STUDIES__?.inspect()?.particleCount===62000')
   assert p.evaluate('window.__FIELD_STUDIES__.capabilities.kind')=='production'
   p.screenshot(path=str(E/'review-opening.png'))
-  p.locator('[data-action="library"]').click()
+  # The default entry opens on the entry gate; its Open Library is the person's way to the Library from there.
+  assert p.locator('#entry-gate').is_visible(),'the default entry opens on the entry gate'
+  p.locator('#entry-gate [data-action="entry-open"]').click();p.locator('#library-page').wait_for(state='visible')
   with p.expect_download() as d:p.locator('#library-page [data-action="export-artifact"]').click()
   out=E/'module-export.html';d.value.save_as(out);assert 'window.__JOURNEY__=' in out.read_text()
   assert 'Native particle field' in out.read_text()

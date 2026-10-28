@@ -12,7 +12,7 @@
 // setters as one BodySet on the revision read; or Earth, the one world nobody built ("Earth is given. You cannot change its land"), whose
 // knobs stand with no reading and say why — never a value nobody holds. What the plate shows is only what the owners return: the suite's places (provider/suiteStanding.ts), the QL owner's Sun (the attach's Sun
 // reading), the atlas's own state. What it writes goes through the owners: the Earth ⇄ Graph switch is the atlas's own
-// (presentAtlasView, the lens bar's), Whole field the globe's own (atlasFaceActions setWholeField, the face body's), a press on a place
+// (presentAtlasView, AtlasProjectionPanel.tsx), Whole field the globe's own (atlasFaceActions setWholeField, the face body's), a press on a place
 // turns the Earth (the atlas's own navigation), a Relations row narrows the globe through the atlas's one filter (shell/filter.ts), the
 // find chooses through the field's own search (data/search.ts), and Place offers a draft to the subject's time-and-place editor
 // (placeTool.ts) — the plate never writes a coordinate. The devices World / Places holds (the globe, the Earth ⇄ Graph switch, the QL sky) stand as
@@ -162,7 +162,7 @@ function ViewSection({handle}: {handle: AtlasHandle | null}) {
   const wholeWhy = !handle ? NOT_MOUNTED : !whole?.scope ? 'No mode’s set is set aside on the globe, so there is no whole-field choice to make.' : undefined
   return <>
     <PlateReading label="Scale" value={scale ?? '—'} does="How close you look, as the atlas stands: field, system, body, region or place. The camera sets it." />
-    <PlateRadio inline label="View" does="Space or Graph: the same material, as bodies or by connection — the atlas's own switch, the lens bar's."
+    <PlateRadio inline label="View" does="Space or Graph: the same material, as bodies or by connection — the atlas's own switch."
       value={view} options={[{value: 'earth', label: 'Space'}, {value: 'graph', label: 'Graph'}]} onChange={next => presentAtlasView(next)} />
     <PlateRadio inline label="Aperture" value={null} options={['World', 'Local', 'Shared', 'Federated'].map(label => ({value: label.toLowerCase(), label}))}
       disabled="How far you look: no owner opens the shared or federated field to the atlas yet." />

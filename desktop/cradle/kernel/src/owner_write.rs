@@ -720,9 +720,10 @@ fn receiving_write(request: &ReceivingRequest) -> bool {
 
 /// The receiving acts that are the person's own (Central refuses them from any
 /// other author): an authored field or metadata edit, a review, an inclusion,
-/// a recovery; and a contribution the person carries in for an agent, naming
-/// it as its producer. A producer's own submission never carries the person's
-/// authority.
+/// a recovery; a contribution the person carries in for an agent, naming it
+/// as its producer; and the person's own proposal, which names no producer
+/// (a Palace's Return, O-I #761). A producer's own submission never carries
+/// the person's authority.
 fn receiving_person_act(request: &ReceivingRequest) -> bool {
     match request {
         ReceivingRequest::MutateField { .. }
@@ -745,6 +746,18 @@ fn receiving_person_act(request: &ReceivingRequest) -> bool {
             producer["actor_kind"].as_str(),
             Some("agent" | "native-service")
         ),
+        // The person's own proposal (O-I #761, a Palace's Return: manual §17.7 "The owner of the sources receives a proposal that
+        // carries your name"): a request Return of kind proposal, targeting no document and declaring no producer, so Central keeps the
+        // authenticated person as its author. A question is asked of the person, never by them; an agent's proposal names its producer.
+        ReceivingRequest::Submit {
+            request: Some(request),
+            proposal: None,
+            declared_producer: None,
+            source_ref: None,
+            document_id: None,
+            expected_source_revision: None,
+            ..
+        } => request["kind"].as_str() == Some("proposal"),
         _ => false,
     }
 }
@@ -1103,6 +1116,37 @@ mod tests {
             "occurred_at_unix_seconds": 1, "proposal": proposal,
             "declared_producer": {"ref": "human:other", "actor_kind": "human", "attribution": "claimed"}}}))),
             "only an agent's or a native service's work is carried"
+        );
+    }
+
+    /// O-I #761: the person's own Return from a Palace (manual §17.7 "The owner of the sources receives a proposal that carries your
+    /// name") is a request Return of kind proposal that the person raises under their own name: no document target and no declared
+    /// producer, so Central keeps the authenticated person as its author. It carries the person's authority; a question, an agent's
+    /// proposal, and a proposal that also names a document still go without it.
+    #[test]
+    fn the_person_s_own_proposal_carries_the_person_s_authority() {
+        let request = |value: serde_json::Value| -> ReceivingRequest {
+            serde_json::from_value(value).unwrap()
+        };
+        let proposal = serde_json::json!({"kind": "proposal", "subject": "Return from Central", "proposed_owner_ref": "central:source:w"});
+        assert!(receiving_person_act(&request(
+            serde_json::json!({"Submit": {"producer_key": "palace-return:1", "occurred_at_unix_seconds": 1, "request": proposal}})
+        )));
+        assert!(
+            !receiving_person_act(&request(serde_json::json!({"Submit": {
+            "producer_key": "p", "occurred_at_unix_seconds": 1, "request": {"kind": "question", "subject": "q"}}}))),
+            "a question asks the person; the person never asks it of themselves"
+        );
+        assert!(
+            !receiving_person_act(&request(serde_json::json!({"Submit": {
+            "producer_key": "p", "occurred_at_unix_seconds": 1, "request": proposal,
+            "declared_producer": {"ref": "agent-session/a", "actor_kind": "agent", "attribution": "claimed"}}}))),
+            "an agent's proposal is never the person's"
+        );
+        assert!(
+            !receiving_person_act(&request(serde_json::json!({"Submit": {
+            "producer_key": "p", "source_ref": "s", "document_id": "d", "occurred_at_unix_seconds": 1, "request": proposal}}))),
+            "a request targets no document"
         );
     }
 

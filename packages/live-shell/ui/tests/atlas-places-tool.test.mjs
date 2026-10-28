@@ -1,4 +1,4 @@
-// T-PLACES-ONTO-ATLAS: the Place tool of the M4′ World / Places plate (projections/atlas/places/placeTool.ts) — lane-4 T17 click to
+// T-PLACES-ONTO-ATLAS: the Place tool of the World / Places plate (projections/atlas/places/placeTool.ts) — lane-4 T17 click to
 // create, T18 the owner's basis law, T19 refine with honest precision, re-homed from the frame's Places map onto the atlas. The atlas
 // never writes a coordinate: it offers a draft to the subject's time-and-place editor (the owner call the frame's route reached,
 // WikiFactsEditor.tsx offerConstellationRoute) and shows the owner's answer in its own words. The owner here is a recording stand-in.
@@ -24,7 +24,7 @@ export async function load(u, c, n) {
 }`)}`, import.meta.url)
 
 const tool = await import('../src/projections/atlas/places/placeTool.ts')
-const authoring = await import('../../../../desktop/cradle/expressions-app/vendor/research-canvas/packages/canvas/src/psychogeographic/placeAuthoring.ts')
+const authoring = await import('../../../../desktop/cradle/src/techne/m0m5/place/authoring.ts')
 
 let calls
 const owner = () => ({

@@ -5,15 +5,17 @@ simultaneously without reseed or browser errors.
 """
 from pathlib import Path
 import json, math
-from harness import browser_session
+from harness import browser_session,EVIDENCE
 ROOT=Path(__file__).resolve().parents[1]
-E=ROOT/'evidence-native';E.mkdir(exist_ok=True)
+E=EVIDENCE
 HTML=(ROOT/'public/index.html').read_text()
 STORAGE="<script>window.__TEST_STORAGE__={};Object.defineProperty(window,'localStorage',{value:{getItem:k=>window.__TEST_STORAGE__[k]??null,setItem:(k,v)=>window.__TEST_STORAGE__[k]=String(v),removeItem:k=>delete window.__TEST_STORAGE__[k]},configurable:true});</script>"
 with browser_session({'width':1280,'height':820},'reduce') as (_,ctx,p):
     errors=[];p.on('pageerror',lambda e:errors.append(str(e)))
     p.set_content('<body></body>');p.add_script_tag(content=(ROOT/'build/native-harness.js').read_text())
-    fixture=p.evaluate('''()=>{
+    # The fixture crosses as JSON text, as a journey file does: a field the page leaves
+    # undefined is absent, never the null a structured return would make of it.
+    fixture=json.loads(p.evaluate('''()=>{
       const preset=NATIVE_TEST.COMPOSITION_PRESETS.find(p=>p.id==='chakra_cymatic');
       const built=preset.build();
       const entities=[...built.entities,
@@ -25,8 +27,8 @@ with browser_session({'width':1280,'height':820},'reduce') as (_,ctx,p):
         semanticField:built.semanticField,resonanceDrive:built.resonanceDrive,
         automations:[{id:'stress-lfo',path:'fluid.curlScale',enabled:true,type:'lfo',waveform:'sine',min:.8,max:1.6,rateHz:.35,phase:0,blend:'replace'}]
       });
-      return NATIVE_TEST.nativeSnapshotToJourney({schemaVersion:5,name:'Semantic full allocation',config});
-    }''')
+      return JSON.stringify(NATIVE_TEST.nativeSnapshotToJourney({schemaVersion:5,name:'Semantic full allocation',config}));
+    }'''))
     start=STORAGE+'<script>window.__JOURNEY__='+json.dumps(fixture).replace('</','<\\/')+';</script>'
     p.set_content(HTML.replace('<head>','<head>'+start,1),wait_until='load')
     p.wait_for_function('window.__FIELD_STUDIES__?.inspect()?.particleCount===62000',timeout=30000)

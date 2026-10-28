@@ -14,10 +14,13 @@ test('actual hosted chooser renders every native instrument as one accessible ta
   const compiled=await build({stdin:{contents:"export {LensChooser} from './lensStudio.ts';export {IconTab,IconTabStrip} from '../../../src/workspace/primitives/IconTabStrip.tsx';export {createElement} from 'react';export {renderToStaticMarkup} from 'react-dom/server';",resolveDir:source},tsconfig:join(source,'../tsconfig.json'),alias:{react:join(source,'../../node_modules/react'),'react-dom':join(source,'../../node_modules/react-dom')},loader:{'.css':'empty'},bundle:true,platform:'node',format:'cjs',write:false,logLevel:'silent'});
   const file=join(scratch,'chooser.cjs');await writeFile(file,compiled.outputFiles[0].text);
   const api=createRequire(import.meta.url)(file);
-  // T-PLACES-ONTO-ATLAS: M4′ World · Places is the shell's Earth atlas, alone; T-PALACES-ONTO-ATLAS: M5′ Palace lives in that atlas, with
-  // no separate palace surface. The frame's chooser offers neither (the M5′ instrument is the shell's: packages/live-shell/ui/tests/
+  // T-PLACES-ONTO-ATLAS: World · Places is the shell's Earth atlas, alone; T-PALACES-ONTO-ATLAS: the Palace lives in that atlas, with
+  // no separate palace surface. The frame's chooser offers neither (the Palace is the shell's: packages/live-shell/ui/tests/
   // atlas-palaces-plate.test.mjs)
   const ids=['project','canvas','timeline','journey'];
+  // #801 (manual §25.1: M′ names only the app layers): each instrument is named by its work, as the cradle's DEEP_INSTRUMENTS name it.
+  const work={project:'Web · Project · Wiki — the source-backed ground',canvas:'Canvas · Constellation — the composed surface',
+   timeline:'Relation field · Timeline — the relation field in time',journey:'Journey · Scenes — the traversal of scenes'};
   for(const active of ids){
    const html=api.renderToStaticMarkup(api.createElement(api.LensChooser,{active}));
    assert.equal((html.match(/role="tablist"/g)||[]).length,1);
@@ -29,9 +32,13 @@ test('actual hosted chooser renders every native instrument as one accessible ta
     assert.ok(row.includes('data-action="lens"'),'activation stays on native delegated operation');
     assert.ok(row.includes(`tabindex="${ids[index]===active?'0':'-1'}"`));
     assert.ok(!row.includes('lens-studio'),'no separate instrument panel is addressed');
-    assert.match(row,/aria-label="M[0-5]′ [^"]+"/);
-    assert.match(row,/title="M[0-5]′ — [^"]+"/);
+    // REPLACED (#801): the tab's label and title were "M<n>′ <label>" and "M<n>′ — <label>", numbering the instrument by M′.
+    assert.ok(row.includes(`aria-label="${work[ids[index]].split(' — ')[0]}"`),'the tab is named by its instrument');
+    assert.ok(row.includes(`title="${work[ids[index]]}"`),'its title says the instrument\'s work');
+    assert.doesNotMatch(row,/M[0-5]′|M′[0-5]/,'no M′ number names an instrument');
    }
+   assert.ok(/<div\b[^>]*role="tablist"[^>]*>/.exec(html)[0].includes('aria-label="Instruments"'),'the group is the Instruments, with no M′ range');
+   assert.doesNotMatch(html,/M[0-5]′|M′[0-5]/);
    assert.equal((html.match(/class="lens-glyph"/g)||[]).length,ids.length);
    assert.equal((html.match(/<svg\b/g)||[]).length,ids.length,'exactly the frame\'s instrument SVGs');
    assert.ok(!html.includes('lens-hide')&&!html.includes('lens-bar'),'the chooser lives in the masthead; there is no floating bar to hide');

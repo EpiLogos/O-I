@@ -9,10 +9,11 @@
  *     it from the owner's inspected document and the Scene it reads the whole at (`palaceBasisOf`);
  *   - `palaceSnapshot` and `palaceComposeReply`, from the frame's wiring of the kernel Expression owner (`app.ts:2730`, `:2737`):
  *     the document facts `planRegions` diffs against, and the owner's answer to the one CAS-gated edit;
- *   - `palaceTrailStep`, the law of the boundary's Palace hop (`packages/expressions-boundary/src/timeWindow.ts:164` palaceHop, which
- *     the frame reached through `palaceHop.ts` and the `techne-time-window` channel): an Open on a Palace object records one
- *     endpoint hop on the session's one history, only while the session stands on this Palace's own reading and on the Expression
- *     instrument; anything else is refused by name and nothing is recorded.
+ *   - `palaceTrailStep`, the law of the boundary's Palace hop (timeWindow.ts `palaceHop`, which the frame reached through
+ *     `palaceHop.ts` and the `techne-time-window` channel; the hop retired with the frame's Palace lens in #762 at 522a8a9c7, and this
+ *     is now the one place the law stands): an Open on a Palace object records one endpoint hop on the session's one history, only while
+ *     the session stands on this Palace's own reading and on the Expression instrument; anything else is refused by name and nothing is
+ *     recorded.
  *
  * Erasable TypeScript: loadable by the renderer, Vite, and `node --test`.
  */
@@ -80,7 +81,7 @@ export function palaceEditRequest(expression_ref: string, expected_revision: num
   return {operation: 'edit' as const, expression_ref, expected_revision, actor: 'human:techne-palace', changes};
 }
 
-/** Record one Palace trail step on the session's one history (timeWindow.ts:164 palaceHop's law). The session must stand on this
+/** Record one Palace trail step on the session's one history (the law of the retired boundary hop, timeWindow.ts palaceHop before #762). The session must stand on this
  * Palace's own reading and on the Expression instrument; otherwise the step is refused by name and nothing is recorded. */
 export function palaceTrailStep(store: DisclosureSessionStore, reading: TechneReading, ref: string): void {
   if (typeof ref !== 'string' || !ref.trim() || ref.length > 2048) throw Error('A Palace trail step names one object ref');

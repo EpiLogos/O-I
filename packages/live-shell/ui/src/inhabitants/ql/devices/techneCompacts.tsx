@@ -16,7 +16,8 @@ import {OwnerDial, PlateRadio} from '../../../frame/devices/plateControls'
 import {atlasScale, subscribeAtlasScale} from '../../../projections/atlas/places/placesHost'
 import {formatYear} from '../../../projections/atlas/src/data/time'
 import {controlsAt, useFrameChrome, type FrameChromeView} from '../../../components/expressions/studio/frameChrome'
-import {inside, palaceState, proposeReturn, setGuide, setPath, subscribePalace} from '../../../projections/atlas/palaces/palaceSession'
+import {inside, palaceState, proposeReturn, setAudience, setGuide, setPath, subscribePalace} from '../../../projections/atlas/palaces/palaceSession'
+import type {PalaceAudience} from '../../../projections/atlas/palaces/palacesModel'
 import {allTime, scrubClock, setWholeField} from '../../atlasFaceActions'
 import {stageWhy, useAtlasLive, useCanvasWell, useJourneyWell, usePalaceWell, useProjectWell, useTimelineWell, useWindowWords, useWorldWell, type Well} from './techneWells'
 import type {FrameChromeControl} from '@epilogos/expressions-boundary'
@@ -140,8 +141,9 @@ function PalaceCompact(): CompactBody {
       options={[{value: 'guided', label: 'Guided'}, {value: 'free', label: 'Free'}]} onChange={here ? next => setPath(next) : undefined} disabled={why} />
     <PlateRadio stack label="Guide" does="The guide says why the focused room stands where it does." value={here ? (here.guide ? 'on' : 'off') : null}
       options={[{value: 'on', label: 'On'}, {value: 'off', label: 'Off'}]} onChange={here ? next => setGuide(next === 'on') : undefined} disabled={why} />
-    {waitingChooser('Audience', ['Me', 'Field', 'Public'], 'No owner discloses how the field or the public sees the palace yet; you see it as yours.')}
-    <Action label="Return" does="Shape the palace's Return as an attributable proposal: nothing is written." onPress={here ? proposeReturn : undefined}
+    <PlateRadio stack label="Audience" does="Shows the palace as Me, Field or Public sees it: a private room stays under cloud for Field and Public." value={here?.audience ?? null}
+      options={[{value: 'me', label: 'Me'}, {value: 'field', label: 'Field'}, {value: 'public', label: 'Public'}]} onChange={here ? next => setAudience(next as PalaceAudience) : undefined} disabled={why} />
+    <Action label="Return" does="Send the rooms, in your order, to the route the reading names, as a proposal with your name. No source is written." onPress={here ? () => void proposeReturn() : undefined}
       disabled={why ?? (here?.busy || !here?.reading ? 'The palace has no reading to return yet.' : undefined)} />
   </>}
 }

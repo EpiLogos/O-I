@@ -4,8 +4,14 @@
  * map's modules: a material check cannot pull the map's own import graph into every build that reads the Scene.
  * The camera capture and the playback timeline live in placeTours.ts, which re-exports this module.
  *
- * Laws: refs are verbatim strings of at most 1024 UTF-16 units; a recorded stop carries no temporal, route or dated-place
- * field; a journey binding is a pair of refs that the journey's own beat list decides on, never a copy.
+ * Laws: refs are verbatim strings of at most 1024 UTF-16 units; a recorded stop carries no route, no dated-place field and no
+ * temporal field but its moment; a journey binding is a pair of refs that the journey's own beat list decides on, never a copy.
+ *
+ * O-I #760 (manual §17.1 Takes, "each place, moment or thing you visit becomes a stop"; §17.6, a Journey's stop has "a place, a moment,
+ * a scene and a few words"): a stop may keep the moment it was made at — a window in the shared window's own shape ({from, to}, each
+ * a string of at most 64 UTF-16 units or null, at least one edge named; techne/contract.ts DisclosureSession.time_window) — and the
+ * thing it visited, by its owner's ref. Absent is none: a moment or a thing is never null. The kernel admits the same
+ * (kernel/src/expression_scene.rs place_tour_stop); tests/place-material-parity.test.mjs holds the two to one case list.
  */
 /** The bounds a tour admits. The native material, when it holds tours, mirrors these numbers. */
 export const TOUR_LIMIT=16;
@@ -14,6 +20,8 @@ export const TOUR_CAPTION_MAX=280;
 export const TOUR_HOLD_MAX_MS=60000;
 export const TOUR_NAME_MAX=160;
 export const TOUR_REF_MAX=1024;
+/** A moment's edge: a timestamp as the shared window holds one, at most this many UTF-16 units (the window's own bound). */
+export const TOUR_MOMENT_EDGE_MAX=64;
 /** The flight between two stops, by its own duration (the map eases it). Reduced motion removes it. */
 export const TOUR_FLIGHT_MS=1800;
 
@@ -23,19 +31,26 @@ const RESERVED_TOUR_NAMES=new Set(['__proto__','constructor','prototype']);
 /** A journey binding: the journey's own beat identity, verbatim. */
 export interface PlaceTourBinding {expression_ref:string;scene_ref:string}
 
-/** One stop. `place_ref` is null when the camera names no disclosed place. `binding` is absent when no journey holds the stop. */
+/** A stop's moment: a window in the shared window's shape. One edge may be open (null); not both. */
+export interface PlaceTourMoment {from:string|null;to:string|null}
+
+/** One stop. `place_ref` is null when the camera names no disclosed place. `binding` is absent when no journey holds the stop.
+ * `moment` is absent when the stop keeps no time; `thing_ref` is absent when it visited no thing. */
 export interface PlaceTourStop {
   place_ref:string|null;
   viewport:{x:number;y:number;zoom:number;pitch:number;bearing:number};
   caption:string|null;
   hold_ms:number;
   binding?:PlaceTourBinding;
+  moment?:PlaceTourMoment;
+  thing_ref?:string;
 }
 
 /** A tour: an ordered, bounded list of stops. */
 export interface PlaceTourRecord {stops:PlaceTourStop[]}
 
-const STOP_KEYS=['place_ref','viewport','caption','hold_ms','binding'];
+const STOP_KEYS=['place_ref','viewport','caption','hold_ms','binding','moment','thing_ref'];
+const MOMENT_KEYS=['from','to'];
 const VIEWPORT_KEYS=['x','y','zoom','pitch','bearing'];
 const BINDING_KEYS=['expression_ref','scene_ref'];
 
@@ -75,8 +90,17 @@ export function placeTourProblem(value:unknown):string|null{
      const binding=stop.binding;
      if(!isObject(binding)||!onlyKeys(binding,BINDING_KEYS)||!ref(binding.expression_ref)||!ref(binding.scene_ref))return `${at} journey binding is not a pair of refs.`;
     }
+    if(stop.moment!==undefined&&!placeTourMoment(stop.moment))return `${at} moment is not a window: a from and a to, each a time of at most ${TOUR_MOMENT_EDGE_MAX} characters or open, and not both open.`;
+    if(stop.thing_ref!==undefined&&!ref(stop.thing_ref))return `${at} names a thing that is not a ref.`;
   }
   return null;
+}
+
+/** A stop's moment as the law admits it: closed, both edges present, each a bounded string or null, and at least one named. */
+export function placeTourMoment(value:unknown):value is PlaceTourMoment{
+ if(!isObject(value)||!onlyKeys(value,MOMENT_KEYS)||!MOMENT_KEYS.every(key=>Object.hasOwn(value,key)))return false;
+ const edge=(bound:unknown)=>bound===null||typeof bound==='string'&&bound.length<=TOUR_MOMENT_EDGE_MAX;
+ return edge(value.from)&&edge(value.to)&&(value.from!==null||value.to!==null);
 }
 
 /** The tour with one stop added at the end. Returns the new record, or the refusal in the owner's words. */

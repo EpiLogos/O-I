@@ -70,7 +70,7 @@ const BRIDGE = {kind: 'bridge', url: 'http://kernel.test'}
 /** QL's lens registry, as `ql mef lenses --json` answered it on 28 Oct (registry 1.0.0-q2): the lenses this fixture's members stand in. */
 const sub = (code, labels) => labels.map((label, position) => ({label, position, sublensRef: `mef:sublens:${code}.${position}@1`}))
 const LENSES = [
-  {lensRef: 'mef:lens:L0@1', code: 'L0', name: 'Quaternal', face: 'day', square: 'articulation', sublenses: sub('L0', ['Why', 'What', 'How', 'Whom/Which/When', 'Where/Why-for', 'Why-so/Why-not'])},
+  {lensRef: 'mef:lens:L0@1', code: 'L0', name: 'Quaternal', face: 'day', square: 'articulation', sublenses: sub('L0', ['Why', 'What', 'How', 'Who/Which/Whereby', 'Where/When/Whither', 'Why-for/Why-not'])},
   {lensRef: 'mef:lens:L1@1', code: 'L1', name: 'Causal', face: 'day', square: 'encounter',
     sublenses: sub('L1', ['Svātantrya', 'Material cause', 'Efficient cause', 'Formal cause', 'Final cause', 'Icchā Śakti / Will'])},
   {lensRef: "mef:lens:L1'@1", code: "L1'", name: 'Phenomenal', face: 'night', square: 'encounter', sublenses: sub("L1'", ['a', 'b', 'c', 'd', 'e', 'f'])},

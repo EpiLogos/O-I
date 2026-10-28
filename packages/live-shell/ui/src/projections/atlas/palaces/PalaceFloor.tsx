@@ -15,10 +15,15 @@
 // shift-drag the floor to select rooms with a marquee; drag the floor to pan, wheel to zoom (the viewport saved once settled);
 // double-click a room to open it (a region opens its one contained Expression, any other room its own Scene); click an object to open
 // it through its owner. Every room says why it is there in the Info view's hover (the guide's words, T18).
+//
+// O-I 761 (manual §17.7): a private room draws under cloud for the Field and Public audiences — its wall and a cloud, never its name,
+// its objects or its door, and it does not open; to you it is clear. Method of loci draws the fixed floor instead of the board: six rooms
+// of four places, three across and two down (palacesModel.ts lociFloor, composition.ts's bounded space), the palace's rooms laid in path
+// order and their objects in their places; nothing on it is dragged, since the floor is fixed.
 
 import {useMemo, useRef, useState, useSyncExternalStore, type PointerEvent as ReactPointerEvent, type WheelEvent as ReactWheelEvent} from 'react'
 import {palaceWholeView, type PalaceStandingView} from '../../../../../../../desktop/cradle/src/techne/m0m5/palace/whole'
-import {floorBounds, floorEdges, floorRooms, ROOM_SIZE, type FloorRoom, type PalaceRoom} from './palacesModel'
+import {floorBounds, floorEdges, floorRooms, lociFloor, ROOM_SIZE, underCloud, type FloorRoom, type LociRoom, type PalaceRoom} from './palacesModel'
 import {focusedRoom, liveRefs, moveRooms, openMember, openRoom, palaceState, roomsNow, selectRooms, setViewport, subscribePalace, type PalaceInside} from './palaceSession'
 
 /** What each kind of room is, in the guide's words. */
@@ -45,6 +50,46 @@ type Gesture =
   /** the floor dragged: the pointer's client point at the grab, the pan then, the pan now */
   | {kind: 'pan'; grab: Point; start: Point; at: Point}
   | {kind: 'marquee'; from: Point; to: Point}
+
+/** What a private room says to an audience it is clouded from. */
+const CLOUDED = 'Private room|A private room. It stays under cloud for this audience.'
+
+/** A cloud over a clouded room: its mark, drawn from tokens (palaces.css). */
+function Cloud({x, y}: {x: number; y: number}) {
+  return <g className="palace-cloud" transform={`translate(${x} ${y})`}>
+    <circle cx={-26} cy={6} r={18} /><circle cx={0} cy={-6} r={24} /><circle cx={28} cy={6} r={18} /><rect x={-44} y={6} width={90} height={18} rx={9} />
+  </g>
+}
+
+/** A room under cloud: its wall and a cloud, at its place; nothing of it is named, shown or opened. */
+function CloudedRoom({room, x, y, onPointerDown}: {room: PalaceRoom; x: number; y: number; onPointerDown: (event: ReactPointerEvent<SVGGElement>, key: string) => void}) {
+  return <g className="palace-room palace-room--clouded" data-room={room.key} data-kind={room.kind} data-clouded="true" data-i={CLOUDED}
+    onPointerDown={event => onPointerDown(event, room.key)}>
+    <rect className="palace-room__wall" x={x} y={y} width={ROOM_SIZE.width} height={ROOM_SIZE.height} />
+    <text className="palace-room__name" x={x + 10} y={y + 20}>Private room</text>
+    <Cloud x={x + ROOM_SIZE.width / 2} y={y + ROOM_SIZE.height / 2 + 6} />
+  </g>
+}
+
+/** One room of the fixed floor (Method of loci): its four places, two by two, each with the object that stands in it. */
+function LociRoomView({loci, clouded, why, onPointerDown}: {loci: LociRoom; clouded: boolean; why: string; onPointerDown: (event: ReactPointerEvent<SVGGElement>, key: string) => void}) {
+  const {room, x, y} = loci
+  if (room && clouded) return <g data-loci-room={loci.index}><CloudedRoom room={room} x={x} y={y} onPointerDown={onPointerDown} />{loci.places.map((_, place) => <g key={place} data-place={place} />)}</g>
+  const pw = (ROOM_SIZE.width - 30) / 2, ph = (ROOM_SIZE.height - 44) / 2
+  return <g className={room ? 'palace-room palace-room--loci' : 'palace-room palace-room--loci palace-room--empty'} data-loci-room={loci.index} data-room={room?.key}
+    data-kind={room?.kind} data-focused={loci.focused ? 'true' : undefined} data-i={room ? `${room.name}|${why}` : `Room ${loci.index + 1}|A room of the fixed floor that no room of the palace stands in yet.`}
+    onPointerDown={room ? event => onPointerDown(event, room.key) : undefined} onDoubleClick={room ? () => openRoom(room.key) : undefined}>
+    <rect className="palace-room__wall" x={x} y={y} width={ROOM_SIZE.width} height={ROOM_SIZE.height} />
+    <text className="palace-room__name" x={x + 10} y={y + 20}>{room ? (room.name.length > 30 ? `${room.name.slice(0, 29)}…` : room.name) : `Room ${loci.index + 1}`}</text>
+    {loci.places.map((object, place) => {
+      const px = x + 10 + (place % 2) * (pw + 10), py = y + 30 + Math.floor(place / 2) * (ph + 4)
+      return <g key={place} className="palace-place" data-place={place} data-held={object ? 'true' : undefined}>
+        <rect x={px} y={py} width={pw} height={ph} />
+        <text x={px + 6} y={py + ph / 2 + 4}>{object ? (object.length > 14 ? `${object.slice(0, 13)}…` : object) : '—'}</text>
+      </g>
+    })}
+  </g>
+}
 
 function Room({floor, why, onPointerDown}: {floor: FloorRoom; why: string; onPointerDown: (event: ReactPointerEvent<SVGGElement>, key: string) => void}) {
   const {room, x, y} = floor
@@ -79,18 +124,23 @@ export function PalaceFloor() {
 function Floor({inside}: {inside: PalaceInside}) {
   const svg = useRef<SVGSVGElement>(null)
   const [gesture, setGesture] = useState<Gesture | null>(null)
-  const rooms = useMemo(() => roomsNow(inside), [inside.savedRooms, inside.regions, inside.doc])
+  const all = useMemo(() => roomsNow(inside), [inside.savedRooms, inside.regions, inside.doc])
   // free exploration draws no path and no walk focus: the rooms stand to be entered in any order (the plate's Path)
   const guided = inside.path === 'guided'
   const focus = guided ? focusedRoom(inside) : null
-  // a room being dragged stands where the pointer has it (a preview: nothing is held until the release)
+  // Method of loci: the fixed floor, six rooms of four places; the palace's rooms past the sixth stand on no place of it
+  const loci = useMemo(() => (inside.arrangement === 'loci' ? lociFloor(all, focus) : null), [inside.arrangement, all, focus])
+  const rooms = loci ? loci.rooms.flatMap(entry => (entry.room ? [entry.room] : [])) : all
+  const clouded = (room: PalaceRoom) => underCloud(room, inside.audience)
+  // a room being dragged stands where the pointer has it (a preview: nothing is held until the release); the fixed floor holds its own
   const held = gesture?.kind === 'room' && gesture.moved ? {...inside.held, [gesture.key]: gesture.at} : inside.held
-  const floor = floorRooms(rooms, held, focus, inside.selected)
+  const floor = loci ? loci.rooms.flatMap(entry => (entry.room ? [{room: entry.room, x: entry.x, y: entry.y, focused: entry.focused, selected: inside.selected.includes(entry.room.key)}] : []))
+    : floorRooms(rooms, held, focus, inside.selected)
   const edges = floorEdges(rooms, inside.doc.expression_ref, liveRefs(inside))
   const whole = useMemo(() => palaceWholeView(inside.reading ?? null), [inside.reading])
   // every room is a Scene of the palace: the reading stands them in its journey region, whose standing the guide says (T18)
   const standing = whole.regions.find(region => region.key === 'journey')?.standing ?? null
-  const bounds = useMemo(() => floorBounds(floorRooms(rooms, inside.held, null, [])), [rooms, inside.held])
+  const bounds = useMemo(() => floorBounds(loci ? loci.rooms : floorRooms(rooms, inside.held, null, [])), [loci, rooms, inside.held])
   const zoom = inside.viewport?.zoom ?? 1
   const pan: Point = gesture?.kind === 'pan' ? gesture.at : {x: inside.viewport?.x ?? 0, y: inside.viewport?.y ?? 0}
   const box = {x: bounds.x - pan.x, y: bounds.y - pan.y, width: bounds.width / zoom, height: bounds.height / zoom}
@@ -112,6 +162,8 @@ function Floor({inside}: {inside: PalaceInside}) {
     event.stopPropagation()
     const room = at.get(key)
     if (!room) return
+    // the fixed floor's rooms stand where the floor stands them: a press selects, nothing is dragged
+    if (loci) { selectRooms(event.shiftKey ? toggle(inside.selected, key) : [key]); return }
     const start = {x: room.x, y: room.y}
     setGesture({kind: 'room', key, grab: point(event.clientX, event.clientY), start, at: start, moved: false, shift: event.shiftKey})
   }
@@ -156,9 +208,10 @@ function Floor({inside}: {inside: PalaceInside}) {
     if (next !== zoom) setViewport({x: pan.x, y: pan.y, zoom: next})
   }
 
-  return <div className="atlas-palace" data-palace-phase="inside" data-palace={inside.palace.key}
-    data-i={`${inside.palace.title}|Inside the palace: ${rooms.length} room${rooms.length === 1 ? '' : 's'} along its path. Drag a room to place it; shift-drag to select rooms; drag the floor to pan, wheel to zoom; double-click a room to open it. Escape returns to the Earth.`}>
-    {rooms.length === 0 && <p className="atlas-palace__line" role="status">This palace holds no room yet.</p>}
+  return <div className="atlas-palace" data-palace-phase="inside" data-palace={inside.palace.key} data-arrangement={inside.arrangement} data-audience={inside.audience}
+    data-i={`${inside.palace.title}|Inside the palace: ${all.length} room${all.length === 1 ? '' : 's'} along its path${loci ? ', laid on the fixed floor of six rooms with four places in each' : ''}. ${loci ? 'Press a room to select it' : 'Drag a room to place it'}; shift-drag to select rooms; drag the floor to pan, wheel to zoom; double-click a room to open it. Escape returns to the Earth.`}>
+    {all.length === 0 && !loci && <p className="atlas-palace__line" role="status">This palace holds no room yet.</p>}
+    {loci && loci.beyond > 0 && <p className="atlas-palace__line" role="status">{`The fixed floor holds six rooms: ${loci.beyond} more of this palace stand${loci.beyond === 1 ? 's' : ''} on the board.`}</p>}
     <svg ref={svg} className="atlas-palace__plan" viewBox={`${box.x} ${box.y} ${box.width} ${box.height}`} preserveAspectRatio="xMidYMid meet"
       onPointerDown={grabFloor} onPointerMove={move} onPointerUp={release} onPointerCancel={() => setGesture(null)} onWheel={wheel}
       role="img" aria-label={`${inside.palace.title}: the palace's rooms and its path`}>
@@ -167,13 +220,17 @@ function Floor({inside}: {inside: PalaceInside}) {
           const from = at.get(edge.source), to = at.get(edge.target)
           if (!from || !to) return null
           const a = door(from), b = door(to)
-          return <g key={edge.id} data-edge={edge.kind} data-i={`Path|${edge.reason}`}>
+          // a path into or out of a clouded room names neither it nor what it holds
+          const hidden = clouded(from.room) || clouded(to.room)
+          return <g key={edge.id} data-edge={edge.kind} data-i={`Path|${hidden ? 'The guided path runs through a private room.' : edge.reason}`}>
             <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} />
-            {edge.label && <text x={(a.x + b.x) / 2} y={(a.y + b.y) / 2 - 6}>{edge.label}</text>}
+            {edge.label && !hidden && <text x={(a.x + b.x) / 2} y={(a.y + b.y) / 2 - 6}>{edge.label}</text>}
           </g>
         })}
       </g>}
-      {floor.map(room => <Room key={room.room.key} floor={room} why={roomWhy(room.room, standing)} onPointerDown={grabRoom} />)}
+      {loci ? loci.rooms.map(entry => <LociRoomView key={entry.index} loci={entry} clouded={!!entry.room && clouded(entry.room)} why={entry.room ? roomWhy(entry.room, standing) : ''} onPointerDown={grabRoom} />)
+        : floor.map(room => clouded(room.room) ? <CloudedRoom key={room.room.key} room={room.room} x={room.x} y={room.y} onPointerDown={grabRoom} />
+          : <Room key={room.room.key} floor={room} why={roomWhy(room.room, standing)} onPointerDown={grabRoom} />)}
       {guided && <g className="palace-steps">
         {floor.map((room, index) => <g key={room.room.key} data-focused={room.focused ? 'true' : undefined}>
           <circle cx={door(room).x} cy={door(room).y} r={9} />

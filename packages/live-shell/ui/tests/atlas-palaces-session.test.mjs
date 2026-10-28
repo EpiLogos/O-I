@@ -2,9 +2,9 @@
 // (palaceOwners.ts binds those). Every act of the frame's retired Palace lens (field-studies-journeys/src/palaceInstrument.tsx at
 // fdc302870) is exercised here through the owner it goes to: entering reads the kernel's document, the owner's whole and the presence
 // store (T14, T21); the walk rides the transport (T17); a floor drag is presentation (T15); bookmarks and the named start (T24); one Save
-// is one CAS-gated edit of the palace's Expression, its readback checked (T20); the Return is a proposal, accepted through the owner's
-// invoke_action (T19); an object opens through its owner, or its route says why not (T16). Each owner reply here is the shape the live
-// owner returns; no native reply is claimed by these tests.
+// is one CAS-gated edit of the palace's Expression, its readback checked (T20); the Return is a proposal sent to the route the reading
+// names, Central's receiving, and answered there (T19, O-I #761; it replaced the owner's invoke_action); an object opens through its
+// owner, or its route says why not (T16). Each owner reply here is the shape the live owner returns; no native reply is claimed by these tests.
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {register} from 'node:module'
@@ -78,7 +78,7 @@ function memoryStorage() {
 const ROW = {key: 'central', title: 'Central', project: null, expression_ref: EXPR, revision: 4, held: true, standing: 'open', rooms: []}
 
 function owners(over = {}) {
-  const calls = {edits: [], invoked: [], opened: [], inspected: 0, held: []}
+  const calls = {edits: [], receiving: [], opened: [], inspected: 0, held: []}
   let doc = documentAt(4)
   const storage = over.storage === undefined ? memoryStorage() : over.storage
   const store = over.session ?? createDisclosureSessionStore()
@@ -92,7 +92,14 @@ function owners(over = {}) {
       doc = documentAt(doc.revision + 1, [{name: 'Walk', member: 'expression:walk'}, {name: 'Gate', member: 'expression:gate'}])
       return {state: 'ready', document: structuredClone(doc)}
     },
-    invoke: async request => { calls.invoked.push(structuredClone(request)); return over.invoke ? over.invoke(request) : {state: 'dispatched', dispatch: {state: 'invoked', owner_operation: 'aikit.wiki.stage'}} },
+    receiving: async (project, request) => {
+      calls.receiving.push([project, structuredClone(request)])
+      if (over.receiving) return over.receiving(project, request)
+      const record = status => ({schema: 'central.receiving-reading/v1', return_ref: 'central:return:control:root:r1', revision: `rev-${status}`,
+        record: {kind: 'request', status, author: {principal_ref: 'human:you', actor_kind: 'human'}, request: calls.receiving[0][1].request,
+          review: status === 'pending' ? null : {disposition: status, reviewer_ref: 'human:you'}}})
+      return record(request.kind === 'ask' ? 'pending' : 'accepted')
+    },
     hold: async key => { calls.held.push(key); return EXPR },
     projection: () => PROJECTION,
     storage: () => storage,
@@ -320,35 +327,40 @@ test('the draft composes: one Expression per region, removal explicit, reorder a
   assert.equal(session.inside().line, 'Cancelled — no mutation.')
 })
 
-test('Return: proposing writes nothing; Accept sends the proposal through the owner\'s invoke_action, and an invoked receipt returns to the Earth (T19)', async () => {
+// REPLACED (O-I #761): 'Return: proposing writes nothing; Accept sends the proposal through the owner's invoke_action, and an invoked
+// receipt returns to the Earth (T19)'. The reading's route for new knowledge is Central's receiving now, so Propose sends the proposal
+// there and Accept is the owner's answer, read back; the invoke_action route never routed (the register's reading disclosed no governed
+// write). Its pins carry over: a routed proposal reaches the owner, nothing of the presence store is written, an accepted Return crosses
+// to the Earth, a refusal is said and the visitor stays, Refuse clears. The owner's shapes are pinned in atlas-palaces-return.test.mjs and
+// atlas-palaces-finish.test.mjs.
+test('Return: Propose sends the proposal to the route the reading names; Accept is the owner\'s answer, read back, and an accepted Return returns to the Earth (T19)', async () => {
   fresh()
-  const {calls, storage} = owners()
+  const {calls, storage} = owners({readWhole: async () => ({...readingAt(documentAt(4)), actions: [{action_ref: 'central.receiving.submit', native_owner: 'central', authority: 'governed-write', expected_effects: []}]})})
   await session.enterPalace(ROW)
   const stored = storage.map.get(PALACE_PRESENCE_KEY)
-  session.proposeReturn()
+  await session.proposeReturn()
   const here = session.inside()
   assert.equal(here.proposal.receipt.routed, true)
-  assert.equal(here.proposal.route.action_ref, 'aikit.wiki.stage')
-  assert.equal(here.line, 'Return proposed, awaiting human acceptance. Nothing has been written.')
-  assert.equal(storage.map.get(PALACE_PRESENCE_KEY), stored, 'a proposal writes nothing')
+  assert.equal(here.proposal.route.action_ref, 'central.receiving.submit')
+  assert.equal(calls.receiving[0][1].request.kind, 'proposal')
+  assert.equal(here.sent.author, 'human:you')
+  assert.match(here.line, /^Proposed to .* as human:you: central:return:control:root:r1\. It waits for the owner's answer; nothing changed in the sources\.$/)
+  assert.equal(storage.map.get(PALACE_PRESENCE_KEY), stored, 'a proposal writes nothing to the presence store')
   await session.acceptReturn()
-  assert.equal(calls.invoked.length, 1)
-  assert.equal(calls.invoked[0].operation, 'invoke_action')
-  assert.deepEqual(calls.invoked[0].reading_request, {expression_ref: EXPR, revision: 4, scene_ref: OVERVIEW, scope: 'expression'}, 'the owner re-reads the reading the proposal came from')
-  assert.equal(calls.invoked[0].actor, 'human:techne-palace')
-  assert.equal(session.palaceState().phase, 'outside', 'an invoked Return crosses back to the ground: the Earth')
-  assert.equal(session.palaceState().line, 'Accepted: aikit.wiki.stage invoked by aikit.wiki.stage. Returning to the ground.')
+  assert.deepEqual(calls.receiving.map(([, request]) => request.kind), ['ask', 'review', 'read'])
+  assert.equal(session.palaceState().phase, 'outside', 'an accepted Return crosses back to the ground: the Earth')
+  assert.match(session.palaceState().line, /^Accepted: .* keeps central:return:control:root:r1 as accepted, by human:you/)
   // a refusal is said and the visitor stays
   fresh()
-  owners({invoke: () => ({state: 'refused', reason: 'stale: the proposal was made from reading reading:old'})})
+  owners({receiving: () => { throw Error('stale: the owner moved on') }})
   await session.enterPalace(ROW)
-  session.proposeReturn()
-  await session.acceptReturn()
+  session.inside().reading.actions = [{action_ref: 'central.receiving.submit', native_owner: 'central', authority: 'governed-write', expected_effects: []}]
+  await session.proposeReturn()
   assert.equal(session.palaceState().phase, 'inside')
-  assert.deepEqual(session.inside().acceptance, {line: 'Not accepted: stale: the proposal was made from reading reading:old.', accepted: false})
-  session.refuseReturn()
+  assert.deepEqual(session.inside().acceptance, {line: 'Not sent: stale: the owner moved on.', accepted: false})
+  await session.refuseReturn()
   assert.equal(session.inside().proposal, null)
-  assert.equal(session.inside().line, 'Return refused. Nothing was written.')
+  assert.equal(session.inside().line, 'Return refused. Nothing was sent.')
 })
 
 test('Return to ground leaves the palace for the Earth, only when the reading discloses the ground', async () => {

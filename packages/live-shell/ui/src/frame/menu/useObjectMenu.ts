@@ -19,6 +19,8 @@ export type ObjectMenuItem =
       readonly disabled?: boolean
       /** Why it stands disabled, in its owner's words (or the operation it waits for). */
       readonly why?: string
+      /** One of a set of ways, the one standing checked (drawn as a radio item: Open in's ways). Absent: a plain act. */
+      readonly checked?: boolean
       readonly onSelect?: (id: string) => void}
 
 export interface ObjectMenuPlacement {readonly left: number; readonly top: number; readonly width: number; readonly maxHeight: number}
@@ -108,6 +110,11 @@ export function useObjectMenu({width = 216}: {width?: number} = {}) {
     setActive(source === 'keyboard' ? (steppable(entries)[0] ?? -1) : -1)
   }, [width])
 
+  /** The entries read again while the menu stands (the clip's Clip view read it after the menu opened): its place and its focus stay. */
+  const refresh = useCallback((entries: readonly ObjectMenuItem[]) => {
+    if (opened.current && entries.length) setItems(entries)
+  }, [])
+
   const choose = useCallback((index: number) => {
     const item = list.current[index]
     if (!item || item.type === 'separator' || item.type === 'swatches' || item.disabled) return
@@ -194,7 +201,7 @@ export function useObjectMenu({width = 216}: {width?: number} = {}) {
     onClick: () => choose(index),
   })
 
-  return {isOpen, active, items, subject, placement, openAt, close, menuRef, menuProps, getItemProps}
+  return {isOpen, active, items, subject, placement, openAt, refresh, close, menuRef, menuProps, getItemProps}
 }
 
 /** The menu key, or ⇧F10, on a focused object: open its menu from the keyboard. Pure. */

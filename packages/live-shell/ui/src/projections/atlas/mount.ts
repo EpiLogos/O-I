@@ -31,6 +31,7 @@ import { historyExtent } from './src/aion/model';
 import { loadProvider, type CorpusBundle } from './provider/corpusProvider';
 import { setSkyProvider, type SkyProvider } from './provider/skyProvider';
 import { setPublishedSource } from './src/data/published';
+import { setProviderLabels } from './src/data/labels';
 import { loadRedbook } from './src/redbook/load';
 import type { Family, Occurrence } from './src/types/field';
 import type { SeamChange } from './src/data/occurrenceSeam';
@@ -110,6 +111,9 @@ export async function mountAtlas(options: AtlasMountOptions): Promise<AtlasHandl
     if (options.sky) setSkyProvider(options.sky);
     const bundle: CorpusBundle = await loadProvider(options.provider);
     const { field } = bundle;
+    // [C2-b8] the provider names its corpus in its own words: bound before anything is drawn, as the found boot binds them
+    // after loadField (main.ts @ pin); a provider that gives none reads in the neutral voice (src/data/labels.ts)
+    setProviderLabels(field.meta.provider.labels);
     const history = bundle.history;
     const symbols = bundle.symbols;
     // [C2-a3, r2] the corpus slot rides the bundle; absent ⇒ no cite is a link
@@ -175,6 +179,7 @@ export async function mountAtlas(options: AtlasMountOptions): Promise<AtlasHandl
         // document and global listener, timer, frame and observer the atlas installed, and the atlas's marks on the body
         engine.dispose();
         life.dispose();
+        setProviderLabels(null);
         globe.replaceChildren();
         app.replaceChildren();
       },
@@ -183,6 +188,7 @@ export async function mountAtlas(options: AtlasMountOptions): Promise<AtlasHandl
   } catch (err) {
     built?.dispose();
     life.dispose();
+    setProviderLabels(null);
     console.error(err);
     if (loading) {
       loading.classList.add('failed');
