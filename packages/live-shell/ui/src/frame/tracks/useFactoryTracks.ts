@@ -101,8 +101,9 @@ export const useFactoryTracks: UseModeTracks = reading => {
     } catch (cause) { return {ok: false as const, error: cause instanceof Error ? cause.message : String(cause)} }
   }, [transport])
   // A Repeat's press (§19.1 The Launch panel): its takes through Actuation's comparison run, the set started and ended on AIKit
-  // (agent/sessionSettings.ts makeTakes). The run every take shares — a task of Actuation's research catalogue and the model body that
-  // runs it — reaches the shell for no session's own task, so the press says what it waits for (TAKES_WHY.noRun) and writes nothing.
+  // (agent/sessionSettings.ts makeTakes). Actuation runs the session's own task with its agent as the body; the run in its words —
+  // the task as a provided task, the agent as an agent-jsonl body — is AIKit's to hand, and nothing hands it yet, so the press says
+  // what it waits for (TAKES_WHY.noRun) and writes nothing.
   const repeat = useMemo(() => transport.kind === 'unavailable' ? undefined
     : (session: string) => makeTakes(transport, SETTINGS_PROJECT, session, null), [transport])
   // The workcells of the machine's register as return tracks, and each session's Works in (§19.23): the seat register, read once.

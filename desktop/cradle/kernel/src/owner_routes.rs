@@ -208,16 +208,21 @@ pub enum ActuationWrite {
     },
     /// `actuation-research comparison.run` (Actuation research comparison.rs
     /// `run_with`), the run a Repeat makes its takes through (O-I manual
-    /// §19.1 The Launch panel: "Each run is a take"; O-I #795): each level
-    /// (`conditions`, 1–3; absent, Actuation's own default three) run
-    /// `repetitions` times (1–32), each trial in its own World under one
-    /// dedicated empty root. The request is Actuation's own, as the desk
-    /// hands it, less what the kernel provides: the operation's name and
-    /// the root, which the kernel reserves in its own state
+    /// §19.1 The Launch panel: "Each run is a take"; O-I #795): Repeat's
+    /// `variable` (absent, the condition) over its `levels` (1–3; the
+    /// condition with none, Actuation's own default three), each level run
+    /// `repetitions` times (1–32) and ended by `stop` (Repeat's Stop when),
+    /// each trial in its own World under one dedicated empty root. Its `run`
+    /// may name a session's own task (a provided `task`) with the session's
+    /// agent as the body (an agent-jsonl process that reads back each
+    /// take's level). The request is Actuation's own, as the desk hands it,
+    /// less what the kernel provides: the operation's name and the root,
+    /// which the kernel reserves in its own state
     /// (`$OI_HOME/desktop/takes/…`, else `~/.oi/desktop/takes/…`) from the
     /// run's `trace_ref`, so one set of takes never reuses another's.
     /// Actuation writes the plan, each trial's receipt and the manifest
-    /// there; the reading names the root and each take.
+    /// there; the reading names the root and each take: its level, its
+    /// condition, its agent and how its stop condition ended it.
     ComparisonRun { request: Value },
 }
 
@@ -1716,10 +1721,13 @@ fn fields_of(route: &str, manifest: Value) -> Result<Value, Error> {
     )
 }
 
-/// The takes a comparison made, as its manifest records them: each take's
-/// condition, repetition, place and outcome, and where its receipt is kept.
-/// The whole manifest stays in the root (`manifest.json`), with every
-/// trial's own record.
+/// The takes a comparison made, as its manifest records them: what varied
+/// over which levels and what ended each take, then each take's level,
+/// condition, agent, repetition, place, turns and outcome, how its stop
+/// condition ended it, and where its receipt is kept. The whole manifest
+/// stays in the root (`manifest.json`), with every trial's own record. An
+/// Actuation before its own-task comparison names no variable, levels,
+/// agent or stop: those read null.
 fn takes_of(manifest: &Value, root: &str) -> Value {
     let records = manifest["records"].as_array().cloned().unwrap_or_default();
     let takes: Vec<Value> = records
@@ -1727,13 +1735,18 @@ fn takes_of(manifest: &Value, root: &str) -> Value {
         .map(|record| {
             serde_json::json!({
                 "condition": record["condition"],
+                "variable": record["variable"],
+                "level": record["level"],
+                "agent": record["agent"],
                 "repetition": record["repetition"],
                 "ordinal": record["ordinal"],
                 "trace_ref": record["trace_ref"],
                 "status": record["status"],
                 "error": record["error"],
                 "elapsed_ms": record["elapsed_ms"],
+                "model_calls": record["model_calls"],
                 "total_tokens": record["total_tokens"],
+                "stop": record["stop"],
                 "receipt_path": record["receipt_path"],
             })
         })
@@ -1743,6 +1756,9 @@ fn takes_of(manifest: &Value, root: &str) -> Value {
         "trace_ref": manifest["trace_ref"],
         "root": root,
         "manifest_path": format!("{root}/manifest.json"),
+        "variable": manifest["variable"],
+        "levels": manifest["levels"],
+        "stop": manifest["stop"],
         "takes": records.len(),
         "records": takes,
         "held_constants_valid": manifest["held_constants"]["valid"],

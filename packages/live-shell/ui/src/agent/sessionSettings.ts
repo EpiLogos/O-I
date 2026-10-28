@@ -183,9 +183,11 @@ export async function writeSessionSettings(transport: KernelTransportStatus, pro
 
 // ---------------------------------------------------------------------------------------------------------------- Repeat's takes
 
-/** The run every take of a Repeat shares, in Actuation's own words (research comparison.rs run_with): `run` names a task of its research
- * catalogue, the model body that runs it, its steps and calls, and the QL owner a non-classic condition needs; `basis` the revisions the
- * takes are held to. */
+/** The run every take of a Repeat shares, in Actuation's own words (research comparison.rs run_with, application.rs run): `run` names the
+ * session's own task as Actuation's provided task (`task`: its id, prompt, success conditions and the test a Test pass reads), the
+ * session's agent as the body (`body`, protocol agent-jsonl: the agent's process, which applies the level each take is given and reads
+ * it back), and its steps and calls; `basis` the revisions the takes are held to. Its carrier is AIKit's, which owns the session's task
+ * and its agent. */
 export interface ResearchRun {
   readonly run: Record<string, unknown>
   readonly basis?: Record<string, unknown>
@@ -194,20 +196,23 @@ export interface ResearchRun {
 /** Why a Repeat makes no takes, in words. */
 export const TAKES_WHY = {
   notRepeat: 'This task is not launched with Repeat: set Launch mode to Repeat first.',
-  condition: 'Actuation\'s comparison run varies the condition only (classic and Quaternal Logic\'s conditions); it holds the model, effort, '
-    + 'skillset, budget and autonomy constant across its takes — missing op: a comparison that varies them (Actuation).',
-  noRun: 'Actuation\'s comparison run takes a task of its research catalogue and a supplied model body that runs it; neither reaches the '
-    + 'shell for this session\'s task — missing op: the session\'s own task and agent as a comparison\'s research task and body (Actuation, AIKit).',
+  levels: (variable: string) => `Repeat's levels are not set: name one to three values of ${variable} for the takes to run over. `
+    + 'The default of three is a count; only the condition has values of its own.',
+  noRun: 'Actuation runs a comparison over a session\'s own task with its agent as the body, but nothing hands the shell this session\'s '
+    + 'task and agent in Actuation\'s words — missing op: the session\'s task as a provided task and its agent as an agent-jsonl body (AIKit).',
 } as const
 
-/** The comparison request a Repeat's takes run with: Repeats are its repetitions, Levels its conditions (none chosen, Actuation runs its
- * own default three — "Levels: 1–3 values. Default: Three", §19.1). Or why Actuation cannot make them. Pure. */
+/** The comparison request a Repeat's takes run with (§19.1 The Launch panel): Variable is what it varies, Levels the values it takes
+ * (the condition with none chosen runs Actuation's own default three — "Levels: 1–3 values. Default: Three"; any other variable needs
+ * its values), Repeats its repetitions, and Stop when the condition that ends each take. Or why Actuation cannot make them. Pure. */
 export function comparisonRequestOf(task: NonNullable<EncounterSessionSettingsReading['task']>, traceRef: string, research: ResearchRun | null):
   {request: ActuationComparisonRunRequest} | {refused: string} {
   if (task.launch !== 'repeat') return {refused: TAKES_WHY.notRepeat}
-  if (task.repeat_variable !== 'condition') return {refused: TAKES_WHY.condition}
+  const variable = task.repeat_variable
+  if (variable !== 'condition' && !task.repeat_levels.length) return {refused: TAKES_WHY.levels(variable)}
   if (!research) return {refused: TAKES_WHY.noRun}
-  return {request: {trace_ref: traceRef, repetitions: task.repeat_repeats, ...(task.repeat_levels.length ? {conditions: [...task.repeat_levels]} : {}),
+  return {request: {trace_ref: traceRef, repetitions: task.repeat_repeats, variable,
+    ...(task.repeat_levels.length ? {levels: [...task.repeat_levels]} : {}), stop: {when: task.repeat_stop},
     run: research.run, ...(research.basis ? {basis: research.basis} : {})}}
 }
 

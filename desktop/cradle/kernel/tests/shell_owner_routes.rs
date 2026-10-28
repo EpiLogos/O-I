@@ -708,6 +708,83 @@ fn a_repeats_takes_run_through_actuations_comparison_run_in_a_root_the_kernel_re
 }
 
 #[test]
+fn a_repeat_over_a_sessions_own_task_reads_back_what_each_take_varied_and_how_it_stopped() {
+    let _held = hold();
+    let dir = scratch("comparison-own-task");
+    let research = Fake::new(&dir, "actuation-research");
+    let _bin = Bound::set("OI_ACTUATION_RESEARCH_BIN", &research.bin);
+    let _home = Bound::set("OI_HOME", dir.join("oi-home"));
+    // Actuation's own comparison over a session's own task with its agent as
+    // the body (REAL, 28 Oct 2026): effort over low and high, Stop when Test pass.
+    let real = fixture("actuation-comparison-own-task-2026-10-28.json");
+    research.answer(&real["answer"]);
+    let (outcome, form) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "actuation_write", "request": {"kind": "comparison-run", "request": real["request"]}}),
+        ),
+    );
+    let outcome = outcome.unwrap();
+    assert_eq!(form, "owner-write");
+    let asked: Value = serde_json::from_str(&research.stdin()).unwrap();
+    // The variable, its levels and the stop condition reach Actuation as the
+    // desk wrote them; the task and the agent body are the run's own.
+    for field in ["variable", "levels", "stop", "run", "repetitions"] {
+        assert_eq!(asked[field], real["request"][field], "{field}");
+    }
+    assert_eq!(asked["run"]["task"]["id"], "task:session/s-795");
+    assert_eq!(asked["run"]["body"]["protocol"], "agent-jsonl");
+    let (route, data, _) = reading(&outcome);
+    assert_eq!(route, "actuation-research comparison.run");
+    assert_eq!(data["variable"], "effort");
+    assert_eq!(data["levels"], json!(["low", "high"]));
+    assert_eq!(data["stop"], json!({"when": "pass"}));
+    assert_eq!(data["takes"], 2);
+    let takes: Vec<(String, String, String, u64, bool, String)> = data["records"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|take| {
+            (
+                take["level"].as_str().unwrap().into(),
+                take["condition"].as_str().unwrap().into(),
+                take["status"].as_str().unwrap().into(),
+                take["model_calls"].as_u64().unwrap(),
+                take["stop"]["met"].as_bool().unwrap(),
+                take["agent"].as_str().unwrap().into(),
+            )
+        })
+        .collect();
+    let agent = "agent:session/s-795".to_owned();
+    assert_eq!(
+        takes,
+        [
+            (
+                "low".into(),
+                "classic".into(),
+                "completed".into(),
+                2,
+                true,
+                agent.clone()
+            ),
+            (
+                "high".into(),
+                "classic".into(),
+                "completed".into(),
+                1,
+                true,
+                agent
+            )
+        ],
+        "each take's level, the held condition, and the turn its stop condition ended it"
+    );
+    assert_eq!(data["records"][0]["variable"], "effort");
+    assert_eq!(data["records"][0]["stop"]["reason"], "its test passes");
+    assert_eq!(data["held_constants_valid"], true);
+    let _ = fs::remove_dir_all(&dir);
+}
+
+#[test]
 fn ql_reads_carry_the_m1_engine_and_the_scene_verbatim() {
     let _held = hold();
     let dir = scratch("ql");

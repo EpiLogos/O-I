@@ -178,8 +178,12 @@ async function readSettings() {
   await entry.retry(`epoch-${Math.random()}`)
   return entry
 }
-/** The research run every take shares: Actuation's own fields (a task of its catalogue and a supplied body). */
-const research = {run: {task_id: 'S1-SKILL-001', max_steps: 2, max_calls: 2, body: {fixture_provider: true}}, basis: {host_id: 'ordinary'}}
+/** The run every take shares, in Actuation's own words: the session's own task (a provided task) and its agent as the body (an
+ * agent-jsonl process that reads back the level it is given). Its carrier is AIKit's; this is what one hands the shell. */
+const research = {run: {task: {id: 'task:fixtures', prompt: 'Run the fixtures.', successConditions: ['the fixtures pass']},
+  max_steps: 4, max_calls: 16, body: {protocol: 'agent-jsonl', fixture_provider: false, session_timeout_ms: 600000,
+    configuration: {provider: 'anthropic', model: 'claude-x', agent: 'agent:ses-795'}, process: {program: '/opt/aikit', args: [], cwd: '/',
+      environment: {}, timeout_ms: 600000, output_limit: 1048576}}}, basis: {host_id: 'ordinary'}}
 
 test('Repeat\'s takes: the set starts on AIKit, Actuation\'s comparison run makes the takes, and the set ends with what it made', async () => {
   const kernel = scriptedKernel(reading())
@@ -192,11 +196,25 @@ test('Repeat\'s takes: the set starts on AIKit, Actuation\'s comparison run make
   assert.deepEqual(writes.map(op => op.op), ['encounter_session_settings', 'actuation_write', 'encounter_session_settings'])
   assert.deepEqual(writes[0].request, {takes: {start: {task_ref: 'task:fixtures', trace_ref: trace}}})
   assert.equal(writes[0].expected_revision, 'session-settings/0', 'started against the revision that stands')
-  assert.deepEqual(writes[1].request, {kind: 'comparison-run', request: {trace_ref: trace, repetitions: 3, run: research.run, basis: research.basis}},
-    'Repeats are the comparison\'s repetitions; no levels chosen, so Actuation runs its own default three')
+  assert.deepEqual(writes[1].request, {kind: 'comparison-run', request: {trace_ref: trace, repetitions: 3, variable: 'condition',
+    stop: {when: 'done'}, run: research.run, basis: research.basis}},
+    'Repeats are the comparison\'s repetitions, Stop when its stop; no levels chosen, so Actuation runs its own default three conditions')
   assert.deepEqual(writes[2].request, {takes: {end: {task_ref: 'task:fixtures', trace_ref: trace, outcome: 'made', takes: 9, root: `/oi/desktop/takes/${trace}`}}})
   assert.equal(writes[2].expected_revision, 'session-settings/1')
   assert.equal(kernel.reading.task.takes.ended.outcome, 'made')
+})
+
+test('Repeat\'s variable, levels and stop when are the comparison\'s: a setting of the session\'s agent varies over its levels', async () => {
+  for (const [variable, levels, stop] of [['effort', ['low', 'high'], 'pass'], ['model', ['claude-x', 'claude-y'], 'turns'],
+    ['autonomy', ['review'], 'time'], ['skillset', ['a', 'b', 'c'], 'done'], ['budget', ['10'], 'done']]) {
+    const kernel = scriptedKernel(reading({repeat_variable: variable, repeat_levels: levels, repeat_repeats: 2, repeat_stop: stop}))
+    await readSettings()
+    const made = await settings.makeTakes(transport, project, 'ses-795', research)
+    assert.equal(made.ok, true, `${variable}: ${made.error}`)
+    const writes = kernel.sent.filter(op => op.request)
+    assert.deepEqual(writes[1].request.request, {trace_ref: writes[0].request.takes.start.trace_ref, repetitions: 2, variable, levels,
+      stop: {when: stop}, run: research.run, basis: research.basis}, variable)
+  }
 })
 
 test('Repeat\'s levels are the comparison\'s conditions; a run that fails ends the set failed, in Actuation\'s words', async () => {
@@ -206,7 +224,8 @@ test('Repeat\'s levels are the comparison\'s conditions; a run that fails ends t
   const made = await settings.makeTakes(transport, project, 'ses-795', research)
   assert.equal(made.ok, false); assert.match(made.error, /comparison requires an empty dedicated root/)
   const writes = kernel.sent.filter(op => op.request)
-  assert.deepEqual(writes[1].request.request.conditions, ['classic', 'ql-deep']); assert.equal(writes[1].request.request.repetitions, 2)
+  assert.equal(writes[1].request.request.variable, 'condition')
+  assert.deepEqual(writes[1].request.request.levels, ['classic', 'ql-deep']); assert.equal(writes[1].request.request.repetitions, 2)
   assert.equal(writes[2].request.takes.end.outcome, 'failed')
   assert.match(writes[2].request.takes.end.reason, /comparison requires an empty dedicated root/)
 })
@@ -214,7 +233,7 @@ test('Repeat\'s levels are the comparison\'s conditions; a run that fails ends t
 test('Repeat refuses, before any write, what Actuation\'s comparison run cannot make', async () => {
   for (const [over, said] of [
     [{launch: 'trigger'}, /Launch mode to Repeat/],
-    [{repeat_variable: 'model', repeat_levels: ['opus']}, /varies the condition only/],
+    [{repeat_variable: 'model', repeat_levels: []}, /Repeat's levels[\s\S]*model/],
   ]) {
     const kernel = scriptedKernel(reading(over))
     await readSettings()
@@ -222,11 +241,13 @@ test('Repeat refuses, before any write, what Actuation\'s comparison run cannot 
     assert.equal(made.ok, false); assert.match(made.error, said)
     assert.deepEqual(kernel.sent.filter(op => op.request), [], 'nothing is written')
   }
-  // No research run reaches the shell: the press says what Actuation's comparison run takes, and writes nothing.
-  const kernel = scriptedKernel(reading())
+  // No run of the session's own task reaches the shell: the press names what is missing — AIKit's carrier of the session's task and
+  // agent — and not Actuation, which runs a session's own task with its agent as the body over any of Repeat's variables.
+  const kernel = scriptedKernel(reading({repeat_variable: 'effort', repeat_levels: ['low', 'high']}))
   await readSettings()
   const bare = await settings.makeTakes(transport, project, 'ses-795', null)
-  assert.equal(bare.ok, false); assert.match(bare.error, /research task[\s\S]*body/)
+  assert.equal(bare.ok, false); assert.match(bare.error, /missing op: [^.]*\(AIKit\)/)
+  assert.doesNotMatch(bare.error, /varies the condition only|research catalogue|\(Actuation/)
   assert.deepEqual(kernel.sent.filter(op => op.request), [])
 })
 

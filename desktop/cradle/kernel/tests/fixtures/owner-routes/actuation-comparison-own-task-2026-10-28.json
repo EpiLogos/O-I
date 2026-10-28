@@ -1,0 +1,1097 @@
+{
+  "_provenance": "Actuation research (actuation-research 0.2.1 release built from Actuation feat/comparison-own-task-795 over 2e6d40e, run on a scratch HOME) answering comparison.run on 2026-10-28 for O-I #795: a session's own task as a provided task (its test /usr/bin/grep), its agent as an agent-jsonl body stubbed at the process boundary (a scripted /bin/sh agent that reads back its level and acts in its World), Repeat's variable effort over levels low and high, one repetition, Stop when Test pass. Low took two turns (the stop condition asked it to continue), high one; both met their stop. The request is the desk's (no root or operation: the kernel names them).",
+  "request": {
+    "trace_ref": "takes:s-795-own-task",
+    "repetitions": 1,
+    "variable": "effort",
+    "levels": [
+      "low",
+      "high"
+    ],
+    "stop": {
+      "when": "pass"
+    },
+    "basis": {
+      "host_id": "ordinary",
+      "host_revision": "2e6d40ea011caff069fe6e00eb38ad88b5b71ad2+795",
+      "benchmark_revision": "own-task",
+      "runner_revision": "actuation-research-release",
+      "review_contract_revision": "rc-1",
+      "network_policy_digest": "none"
+    },
+    "run": {
+      "task": {
+        "id": "task:session/s-795",
+        "prompt": "Make answer.txt say 42.",
+        "successConditions": [
+          "answer.txt says 42"
+        ],
+        "starting_workspace": {
+          "answer.txt": "0\n"
+        },
+        "test": {
+          "program": "/usr/bin/grep",
+          "args": [
+            "-qx",
+            "42",
+            "answer.txt"
+          ],
+          "timeout_ms": 10000,
+          "output_limit": 65536
+        }
+      },
+      "max_steps": 4,
+      "max_calls": 16,
+      "body": {
+        "protocol": "agent-jsonl",
+        "fixture_provider": true,
+        "session_timeout_ms": 60000,
+        "configuration": {
+          "provider": "fixture",
+          "model": "m-1",
+          "agent": "agent:session/s-795"
+        },
+        "process": {
+          "program": "/private/tmp/claude-501/-Users-admin-Central/c55001ab-1082-4cbc-9e73-930a0b173f72/scratchpad/b795b/proof/bin/agent.sh",
+          "args": [],
+          "cwd": "/tmp",
+          "environment": {
+            "PATH": "/usr/bin:/bin"
+          },
+          "timeout_ms": 60000,
+          "output_limit": 1048576
+        }
+      }
+    }
+  },
+  "answer": {
+    "schema": "ql-series1-run/0.3",
+    "trace_ref": "takes:s-795-own-task",
+    "task": {
+      "id": "task:session/s-795",
+      "category": "provided",
+      "prompt": "Make answer.txt say 42.",
+      "successConditions": [
+        "answer.txt says 42"
+      ],
+      "verificationProtocol": [
+        "Run the task's own test in its World after the run; exit 0 passes."
+      ],
+      "test": {
+        "program": "/usr/bin/grep",
+        "args": [
+          "-qx",
+          "42",
+          "answer.txt"
+        ],
+        "timeout_ms": 10000,
+        "output_limit": 65536
+      }
+    },
+    "benchmark_revision": "own-task",
+    "host": {
+      "id": "ordinary",
+      "revision": "2e6d40ea011caff069fe6e00eb38ad88b5b71ad2+795"
+    },
+    "variable": "effort",
+    "levels": [
+      "low",
+      "high"
+    ],
+    "conditions": [
+      "classic"
+    ],
+    "stop": {
+      "when": "pass"
+    },
+    "determination": "pending-human-review",
+    "provider_mode": "fixture",
+    "fixture_provider": true,
+    "records": [
+      {
+        "condition": "classic",
+        "repetition": 0,
+        "ordinal": 0,
+        "trace_ref": "takes:s-795-own-task:trial:0",
+        "status": "completed",
+        "error": null,
+        "prompt": "Make answer.txt say 42.",
+        "success_conditions": [
+          "answer.txt says 42"
+        ],
+        "starting_workspace": {
+          "answer.txt": "0\n"
+        },
+        "final_workspace": {
+          "answer.txt": "42\n"
+        },
+        "verification": {
+          "protocol": "provided-task-test",
+          "observations": {
+            "test": {
+              "ok": true,
+              "code": 0,
+              "stdout": "",
+              "stderr": ""
+            },
+            "workspaceChanged": true
+          },
+          "objective_check": "test",
+          "answer": "met",
+          "objective_checks_pass": true
+        },
+        "outcome": {
+          "report": {
+            "status": "completed",
+            "runtime": "classic",
+            "runtimeVersion": "0.1.0-foundation",
+            "runId": "takes:s-795-own-task:trial:0",
+            "iterations": 2,
+            "modelCalls": 2,
+            "capabilityCalls": 0,
+            "outcome": "answer.txt now says 42",
+            "history": [
+              {
+                "role": "user",
+                "content": "Make answer.txt say 42."
+              },
+              {
+                "role": "assistant",
+                "content": "answer.txt now says 41",
+                "capabilityCalls": [],
+                "usage": {
+                  "total_tokens": 5
+                },
+                "raw": {
+                  "agent": null,
+                  "output": "answer.txt now says 41",
+                  "decoding": "agent-turn"
+                },
+                "repairs": 0
+              },
+              {
+                "role": "user",
+                "content": "The task's own check does not pass yet. Continue the task until it does."
+              },
+              {
+                "role": "assistant",
+                "content": "answer.txt now says 42",
+                "capabilityCalls": [],
+                "usage": {
+                  "total_tokens": 5
+                },
+                "raw": {
+                  "agent": null,
+                  "output": "answer.txt now says 42",
+                  "decoding": "agent-turn"
+                },
+                "repairs": 0
+              }
+            ]
+          },
+          "evidence_refs": [
+            "takes:s-795-own-task:trial:0:classic:0",
+            "takes:s-795-own-task:trial:0:classic:1"
+          ]
+        },
+        "model": {
+          "provider": "fixture",
+          "model": "m-1"
+        },
+        "fixture_provider": true,
+        "provider_mode": "fixture",
+        "host": {
+          "id": "ordinary",
+          "revision": "2e6d40ea011caff069fe6e00eb38ad88b5b71ad2+795"
+        },
+        "host_revision": "2e6d40ea011caff069fe6e00eb38ad88b5b71ad2+795",
+        "host_composition_fingerprint": null,
+        "benchmark_revision": "own-task",
+        "task_revision": "84a4f7d04de4bb54ad3df37e85aa54d586f79a2857e0b755fba2202e58f8b17c",
+        "runner_revision": "actuation-research-release",
+        "review_contract_revision": "rc-1",
+        "prompt_digest": "28e91b661e992884871987e8d30af04b2df3354ae3877abbd5b07a8abe3b8e9c",
+        "success_constraints_digest": "4709e9ed6ef24cfa90356c5edda59966b4ec285d56421e41e4941bf601a2abb5",
+        "start_state_digest": "9406e6158253067e63331d06cdc919015348441611ce879d083760d60a10d404",
+        "capability_contract_digest": "1bca74b9082ea7490979012b56118c65892b6d9107719a1ed72e626ca3c5b864",
+        "verification_protocol_digest": "8f0e81702073473c06eb1161eb7589d954e42f7b46ecddb35b46ab4147d4ac04",
+        "execution_budget_digest": "54c06bde9b4a964590595c23a25e32396cf2634d9ea3a5ef19e0209eee5be628",
+        "network_policy_digest": "none",
+        "elapsed_ms": 92,
+        "model_calls": 2,
+        "capability_calls": 0,
+        "total_tokens": 10,
+        "usage_partial": false,
+        "receipt_path": "trial-000-low/receipt.json",
+        "record": {
+          "result": {
+            "schema": "actuation.research-run/v1",
+            "runtime": "classic",
+            "status": "completed",
+            "task": {
+              "id": "task:session/s-795",
+              "category": "provided",
+              "prompt": "Make answer.txt say 42.",
+              "successConditions": [
+                "answer.txt says 42"
+              ],
+              "verificationProtocol": [
+                "Run the task's own test in its World after the run; exit 0 passes."
+              ],
+              "test": {
+                "program": "/usr/bin/grep",
+                "args": [
+                  "-qx",
+                  "42",
+                  "answer.txt"
+                ],
+                "timeout_ms": 10000,
+                "output_limit": 65536
+              }
+            },
+            "task_revision": "84a4f7d04de4bb54ad3df37e85aa54d586f79a2857e0b755fba2202e58f8b17c",
+            "trace_ref": "takes:s-795-own-task:trial:0",
+            "model_body": {
+              "protocol": "agent-jsonl",
+              "source": null,
+              "fixture_provider": true,
+              "provider": "fixture",
+              "model": "m-1",
+              "provider_mode": "fixture",
+              "preflight": {
+                "ready": true,
+                "provider": "fixture",
+                "model": "m-1",
+                "agent": "agent:session/s-795",
+                "level": {
+                  "variable": "effort",
+                  "value": "low"
+                }
+              },
+              "agent": "agent:session/s-795",
+              "level": {
+                "variable": "effort",
+                "value": "low"
+              },
+              "acting": true,
+              "turn_repairs": {
+                "malformed_reask_max": 2,
+                "empty_act_reask": true
+              }
+            },
+            "workspace": {
+              "before": {
+                "answer.txt": "0\n"
+              },
+              "after": {
+                "answer.txt": "42\n"
+              }
+            },
+            "execution": {
+              "report": {
+                "status": "completed",
+                "runtime": "classic",
+                "runtimeVersion": "0.1.0-foundation",
+                "runId": "takes:s-795-own-task:trial:0",
+                "iterations": 2,
+                "modelCalls": 2,
+                "capabilityCalls": 0,
+                "outcome": "answer.txt now says 42",
+                "history": [
+                  {
+                    "role": "user",
+                    "content": "Make answer.txt say 42."
+                  },
+                  {
+                    "role": "assistant",
+                    "content": "answer.txt now says 41",
+                    "capabilityCalls": [],
+                    "usage": {
+                      "total_tokens": 5
+                    },
+                    "raw": {
+                      "agent": null,
+                      "output": "answer.txt now says 41",
+                      "decoding": "agent-turn"
+                    },
+                    "repairs": 0
+                  },
+                  {
+                    "role": "user",
+                    "content": "The task's own check does not pass yet. Continue the task until it does."
+                  },
+                  {
+                    "role": "assistant",
+                    "content": "answer.txt now says 42",
+                    "capabilityCalls": [],
+                    "usage": {
+                      "total_tokens": 5
+                    },
+                    "raw": {
+                      "agent": null,
+                      "output": "answer.txt now says 42",
+                      "decoding": "agent-turn"
+                    },
+                    "repairs": 0
+                  }
+                ]
+              },
+              "evidence_refs": [
+                "takes:s-795-own-task:trial:0:classic:0",
+                "takes:s-795-own-task:trial:0:classic:1"
+              ]
+            },
+            "body_evidence": {
+              "schema": "actuation.sdk-session/v1",
+              "status": "completed",
+              "finalization_status": "completed",
+              "process_retirement": {
+                "observation": {
+                  "phase": "retirement",
+                  "spawned": true,
+                  "direct_child_reaped": true,
+                  "exit_code": null,
+                  "signal": 9,
+                  "signal_forbidden": false,
+                  "term_signal_attempted": false,
+                  "kill_signal_attempted": true,
+                  "direct_kill_attempted": false,
+                  "group_absent": false,
+                  "terminal_group_owner_only_observed": false,
+                  "unreaped_owner_observed_before_signal": true,
+                  "retirement_deadline_exhausted": false,
+                  "reply_observed": true,
+                  "stdout_observed_bytes": null,
+                  "stderr_observed_bytes": null,
+                  "captured_stdout_bytes": 0,
+                  "captured_stderr_bytes": 0,
+                  "capture_truncated": false,
+                  "capture_read_failed": false
+                }
+              },
+              "preflight": {
+                "ready": true,
+                "provider": "fixture",
+                "model": "m-1",
+                "agent": "agent:session/s-795",
+                "level": {
+                  "variable": "effort",
+                  "value": "low"
+                }
+              },
+              "responses": [
+                {
+                  "type": "response",
+                  "id": "actuation-prime-1",
+                  "command": "preflight",
+                  "success": true,
+                  "data": {
+                    "ready": true,
+                    "provider": "fixture",
+                    "model": "m-1",
+                    "agent": "agent:session/s-795",
+                    "level": {
+                      "variable": "effort",
+                      "value": "low"
+                    }
+                  }
+                },
+                {
+                  "type": "response",
+                  "id": "actuation-prime-2",
+                  "command": "turn",
+                  "success": true,
+                  "data": {
+                    "status": "completed",
+                    "output": "answer.txt now says 41",
+                    "usage": {
+                      "total_tokens": 5
+                    }
+                  }
+                },
+                {
+                  "type": "response",
+                  "id": "actuation-prime-3",
+                  "command": "turn",
+                  "success": true,
+                  "data": {
+                    "status": "completed",
+                    "output": "answer.txt now says 42",
+                    "usage": {
+                      "total_tokens": 5
+                    }
+                  }
+                },
+                {
+                  "type": "response",
+                  "id": "actuation-prime-4",
+                  "command": "finalize",
+                  "success": true,
+                  "data": {
+                    "turns": 2
+                  }
+                }
+              ],
+              "failures": [],
+              "finalization": {
+                "turns": 2
+              },
+              "provider_evidence": "not-assessed",
+              "human_acceptance": false
+            },
+            "observations": [
+              {
+                "event_type": "model_requested",
+                "value": {
+                  "request": {
+                    "id": "task:session/s-795",
+                    "taskId": "task:session/s-795",
+                    "runId": "takes:s-795-own-task:trial:0",
+                    "input": "Make answer.txt say 42.",
+                    "successConditions": [
+                      "answer.txt says 42"
+                    ],
+                    "maxSteps": 4
+                  },
+                  "payload": {
+                    "history": [
+                      {
+                        "role": "user",
+                        "content": "Make answer.txt say 42."
+                      }
+                    ],
+                    "iteration": 1
+                  },
+                  "capabilities": [
+                    "list_files",
+                    "read_file",
+                    "write_file",
+                    "run_tests"
+                  ]
+                }
+              },
+              {
+                "event_type": "model_returned",
+                "value": {
+                  "ok": true,
+                  "result": {
+                    "content": "answer.txt now says 41",
+                    "capabilityCalls": [],
+                    "usage": {
+                      "total_tokens": 5
+                    },
+                    "raw": {
+                      "agent": null,
+                      "output": "answer.txt now says 41",
+                      "decoding": "agent-turn"
+                    },
+                    "repairs": 0
+                  }
+                }
+              },
+              {
+                "event_type": "model_requested",
+                "value": {
+                  "request": {
+                    "id": "task:session/s-795",
+                    "taskId": "task:session/s-795",
+                    "runId": "takes:s-795-own-task:trial:0",
+                    "input": "Make answer.txt say 42.",
+                    "successConditions": [
+                      "answer.txt says 42"
+                    ],
+                    "maxSteps": 4
+                  },
+                  "payload": {
+                    "history": [
+                      {
+                        "role": "user",
+                        "content": "Make answer.txt say 42."
+                      },
+                      {
+                        "role": "assistant",
+                        "content": "answer.txt now says 41",
+                        "capabilityCalls": [],
+                        "usage": {
+                          "total_tokens": 5
+                        },
+                        "raw": {
+                          "agent": null,
+                          "output": "answer.txt now says 41",
+                          "decoding": "agent-turn"
+                        },
+                        "repairs": 0
+                      },
+                      {
+                        "role": "user",
+                        "content": "The task's own check does not pass yet. Continue the task until it does."
+                      }
+                    ],
+                    "iteration": 2
+                  },
+                  "capabilities": [
+                    "list_files",
+                    "read_file",
+                    "write_file",
+                    "run_tests"
+                  ]
+                }
+              },
+              {
+                "event_type": "model_returned",
+                "value": {
+                  "ok": true,
+                  "result": {
+                    "content": "answer.txt now says 42",
+                    "capabilityCalls": [],
+                    "usage": {
+                      "total_tokens": 5
+                    },
+                    "raw": {
+                      "agent": null,
+                      "output": "answer.txt now says 42",
+                      "decoding": "agent-turn"
+                    },
+                    "repairs": 0
+                  }
+                }
+              }
+            ],
+            "verification": {
+              "protocol": "provided-task-test",
+              "observations": {
+                "test": {
+                  "ok": true,
+                  "code": 0,
+                  "stdout": "",
+                  "stderr": ""
+                },
+                "workspaceChanged": true
+              },
+              "objective_check": "test",
+              "answer": "met",
+              "objective_checks_pass": true
+            },
+            "model_calls": 2,
+            "capability_calls": 0,
+            "elapsed_ms": 71,
+            "budget": {
+              "limits": {
+                "max_steps": 4,
+                "max_depth": 2,
+                "max_contexts": 8,
+                "max_trace_bytes": 8388608,
+                "max_reentries": 0
+              },
+              "max_calls": 16
+            },
+            "evidence_standing": "D-unless-separately-exercised-and-attested",
+            "provider_evidence": "not-assessed",
+            "human_acceptance": false,
+            "factory_ancestry": "not-supplied",
+            "stop": {
+              "when": "pass",
+              "reason": "its test passes",
+              "at_turn": 2,
+              "elapsed_ms": 41,
+              "met": true
+            }
+          },
+          "events": [
+            {
+              "channel": "runtime",
+              "event_id": "takes:s-795-own-task:trial:0:classic:0",
+              "event_type": "run_started",
+              "run_id": "takes:s-795-own-task:trial:0",
+              "sequence": 0,
+              "runtime": "classic",
+              "payload": {
+                "task_id": "task:session/s-795"
+              }
+            },
+            {
+              "channel": "runtime",
+              "event_id": "takes:s-795-own-task:trial:0:classic:1",
+              "event_type": "run_completed",
+              "run_id": "takes:s-795-own-task:trial:0",
+              "sequence": 1,
+              "runtime": "classic",
+              "payload": {
+                "iteration": 2,
+                "outcome": "answer.txt now says 42"
+              }
+            }
+          ],
+          "durable_stream": false
+        },
+        "human_acceptance": false,
+        "provider_evidence": "not-assessed",
+        "variable": "effort",
+        "level": "low",
+        "agent": "agent:session/s-795",
+        "stop": {
+          "when": "pass",
+          "reason": "its test passes",
+          "at_turn": 2,
+          "elapsed_ms": 41,
+          "met": true
+        },
+        "body_configuration_digest": "c219f231b76121965bdddece6454048de94958acc9a0ededbf606bb1c76bf6b9"
+      },
+      {
+        "condition": "classic",
+        "repetition": 0,
+        "ordinal": 1,
+        "trace_ref": "takes:s-795-own-task:trial:1",
+        "status": "completed",
+        "error": null,
+        "prompt": "Make answer.txt say 42.",
+        "success_conditions": [
+          "answer.txt says 42"
+        ],
+        "starting_workspace": {
+          "answer.txt": "0\n"
+        },
+        "final_workspace": {
+          "answer.txt": "42\n"
+        },
+        "verification": {
+          "protocol": "provided-task-test",
+          "observations": {
+            "test": {
+              "ok": true,
+              "code": 0,
+              "stdout": "",
+              "stderr": ""
+            },
+            "workspaceChanged": true
+          },
+          "objective_check": "test",
+          "answer": "met",
+          "objective_checks_pass": true
+        },
+        "outcome": {
+          "report": {
+            "status": "completed",
+            "runtime": "classic",
+            "runtimeVersion": "0.1.0-foundation",
+            "runId": "takes:s-795-own-task:trial:1",
+            "iterations": 1,
+            "modelCalls": 1,
+            "capabilityCalls": 0,
+            "outcome": "answer.txt now says 42",
+            "history": [
+              {
+                "role": "user",
+                "content": "Make answer.txt say 42."
+              },
+              {
+                "role": "assistant",
+                "content": "answer.txt now says 42",
+                "capabilityCalls": [],
+                "usage": {
+                  "total_tokens": 5
+                },
+                "raw": {
+                  "agent": null,
+                  "output": "answer.txt now says 42",
+                  "decoding": "agent-turn"
+                },
+                "repairs": 0
+              }
+            ]
+          },
+          "evidence_refs": [
+            "takes:s-795-own-task:trial:1:classic:0",
+            "takes:s-795-own-task:trial:1:classic:1"
+          ]
+        },
+        "model": {
+          "provider": "fixture",
+          "model": "m-1"
+        },
+        "fixture_provider": true,
+        "provider_mode": "fixture",
+        "host": {
+          "id": "ordinary",
+          "revision": "2e6d40ea011caff069fe6e00eb38ad88b5b71ad2+795"
+        },
+        "host_revision": "2e6d40ea011caff069fe6e00eb38ad88b5b71ad2+795",
+        "host_composition_fingerprint": null,
+        "benchmark_revision": "own-task",
+        "task_revision": "84a4f7d04de4bb54ad3df37e85aa54d586f79a2857e0b755fba2202e58f8b17c",
+        "runner_revision": "actuation-research-release",
+        "review_contract_revision": "rc-1",
+        "prompt_digest": "28e91b661e992884871987e8d30af04b2df3354ae3877abbd5b07a8abe3b8e9c",
+        "success_constraints_digest": "4709e9ed6ef24cfa90356c5edda59966b4ec285d56421e41e4941bf601a2abb5",
+        "start_state_digest": "9406e6158253067e63331d06cdc919015348441611ce879d083760d60a10d404",
+        "capability_contract_digest": "1bca74b9082ea7490979012b56118c65892b6d9107719a1ed72e626ca3c5b864",
+        "verification_protocol_digest": "8f0e81702073473c06eb1161eb7589d954e42f7b46ecddb35b46ab4147d4ac04",
+        "execution_budget_digest": "54c06bde9b4a964590595c23a25e32396cf2634d9ea3a5ef19e0209eee5be628",
+        "network_policy_digest": "none",
+        "elapsed_ms": 69,
+        "model_calls": 1,
+        "capability_calls": 0,
+        "total_tokens": 5,
+        "usage_partial": false,
+        "receipt_path": "trial-001-high/receipt.json",
+        "record": {
+          "result": {
+            "schema": "actuation.research-run/v1",
+            "runtime": "classic",
+            "status": "completed",
+            "task": {
+              "id": "task:session/s-795",
+              "category": "provided",
+              "prompt": "Make answer.txt say 42.",
+              "successConditions": [
+                "answer.txt says 42"
+              ],
+              "verificationProtocol": [
+                "Run the task's own test in its World after the run; exit 0 passes."
+              ],
+              "test": {
+                "program": "/usr/bin/grep",
+                "args": [
+                  "-qx",
+                  "42",
+                  "answer.txt"
+                ],
+                "timeout_ms": 10000,
+                "output_limit": 65536
+              }
+            },
+            "task_revision": "84a4f7d04de4bb54ad3df37e85aa54d586f79a2857e0b755fba2202e58f8b17c",
+            "trace_ref": "takes:s-795-own-task:trial:1",
+            "model_body": {
+              "protocol": "agent-jsonl",
+              "source": null,
+              "fixture_provider": true,
+              "provider": "fixture",
+              "model": "m-1",
+              "provider_mode": "fixture",
+              "preflight": {
+                "ready": true,
+                "provider": "fixture",
+                "model": "m-1",
+                "agent": "agent:session/s-795",
+                "level": {
+                  "variable": "effort",
+                  "value": "high"
+                }
+              },
+              "agent": "agent:session/s-795",
+              "level": {
+                "variable": "effort",
+                "value": "high"
+              },
+              "acting": true,
+              "turn_repairs": {
+                "malformed_reask_max": 2,
+                "empty_act_reask": true
+              }
+            },
+            "workspace": {
+              "before": {
+                "answer.txt": "0\n"
+              },
+              "after": {
+                "answer.txt": "42\n"
+              }
+            },
+            "execution": {
+              "report": {
+                "status": "completed",
+                "runtime": "classic",
+                "runtimeVersion": "0.1.0-foundation",
+                "runId": "takes:s-795-own-task:trial:1",
+                "iterations": 1,
+                "modelCalls": 1,
+                "capabilityCalls": 0,
+                "outcome": "answer.txt now says 42",
+                "history": [
+                  {
+                    "role": "user",
+                    "content": "Make answer.txt say 42."
+                  },
+                  {
+                    "role": "assistant",
+                    "content": "answer.txt now says 42",
+                    "capabilityCalls": [],
+                    "usage": {
+                      "total_tokens": 5
+                    },
+                    "raw": {
+                      "agent": null,
+                      "output": "answer.txt now says 42",
+                      "decoding": "agent-turn"
+                    },
+                    "repairs": 0
+                  }
+                ]
+              },
+              "evidence_refs": [
+                "takes:s-795-own-task:trial:1:classic:0",
+                "takes:s-795-own-task:trial:1:classic:1"
+              ]
+            },
+            "body_evidence": {
+              "schema": "actuation.sdk-session/v1",
+              "status": "completed",
+              "finalization_status": "completed",
+              "process_retirement": {
+                "observation": {
+                  "phase": "retirement",
+                  "spawned": true,
+                  "direct_child_reaped": true,
+                  "exit_code": null,
+                  "signal": 9,
+                  "signal_forbidden": false,
+                  "term_signal_attempted": false,
+                  "kill_signal_attempted": true,
+                  "direct_kill_attempted": false,
+                  "group_absent": false,
+                  "terminal_group_owner_only_observed": false,
+                  "unreaped_owner_observed_before_signal": true,
+                  "retirement_deadline_exhausted": false,
+                  "reply_observed": true,
+                  "stdout_observed_bytes": null,
+                  "stderr_observed_bytes": null,
+                  "captured_stdout_bytes": 0,
+                  "captured_stderr_bytes": 0,
+                  "capture_truncated": false,
+                  "capture_read_failed": false
+                }
+              },
+              "preflight": {
+                "ready": true,
+                "provider": "fixture",
+                "model": "m-1",
+                "agent": "agent:session/s-795",
+                "level": {
+                  "variable": "effort",
+                  "value": "high"
+                }
+              },
+              "responses": [
+                {
+                  "type": "response",
+                  "id": "actuation-prime-1",
+                  "command": "preflight",
+                  "success": true,
+                  "data": {
+                    "ready": true,
+                    "provider": "fixture",
+                    "model": "m-1",
+                    "agent": "agent:session/s-795",
+                    "level": {
+                      "variable": "effort",
+                      "value": "high"
+                    }
+                  }
+                },
+                {
+                  "type": "response",
+                  "id": "actuation-prime-2",
+                  "command": "turn",
+                  "success": true,
+                  "data": {
+                    "status": "completed",
+                    "output": "answer.txt now says 42",
+                    "usage": {
+                      "total_tokens": 5
+                    }
+                  }
+                },
+                {
+                  "type": "response",
+                  "id": "actuation-prime-3",
+                  "command": "finalize",
+                  "success": true,
+                  "data": {
+                    "turns": 1
+                  }
+                }
+              ],
+              "failures": [],
+              "finalization": {
+                "turns": 1
+              },
+              "provider_evidence": "not-assessed",
+              "human_acceptance": false
+            },
+            "observations": [
+              {
+                "event_type": "model_requested",
+                "value": {
+                  "request": {
+                    "id": "task:session/s-795",
+                    "taskId": "task:session/s-795",
+                    "runId": "takes:s-795-own-task:trial:1",
+                    "input": "Make answer.txt say 42.",
+                    "successConditions": [
+                      "answer.txt says 42"
+                    ],
+                    "maxSteps": 4
+                  },
+                  "payload": {
+                    "history": [
+                      {
+                        "role": "user",
+                        "content": "Make answer.txt say 42."
+                      }
+                    ],
+                    "iteration": 1
+                  },
+                  "capabilities": [
+                    "list_files",
+                    "read_file",
+                    "write_file",
+                    "run_tests"
+                  ]
+                }
+              },
+              {
+                "event_type": "model_returned",
+                "value": {
+                  "ok": true,
+                  "result": {
+                    "content": "answer.txt now says 42",
+                    "capabilityCalls": [],
+                    "usage": {
+                      "total_tokens": 5
+                    },
+                    "raw": {
+                      "agent": null,
+                      "output": "answer.txt now says 42",
+                      "decoding": "agent-turn"
+                    },
+                    "repairs": 0
+                  }
+                }
+              }
+            ],
+            "verification": {
+              "protocol": "provided-task-test",
+              "observations": {
+                "test": {
+                  "ok": true,
+                  "code": 0,
+                  "stdout": "",
+                  "stderr": ""
+                },
+                "workspaceChanged": true
+              },
+              "objective_check": "test",
+              "answer": "met",
+              "objective_checks_pass": true
+            },
+            "model_calls": 1,
+            "capability_calls": 0,
+            "elapsed_ms": 53,
+            "budget": {
+              "limits": {
+                "max_steps": 4,
+                "max_depth": 2,
+                "max_contexts": 8,
+                "max_trace_bytes": 8388608,
+                "max_reentries": 0
+              },
+              "max_calls": 16
+            },
+            "evidence_standing": "D-unless-separately-exercised-and-attested",
+            "provider_evidence": "not-assessed",
+            "human_acceptance": false,
+            "factory_ancestry": "not-supplied",
+            "stop": {
+              "when": "pass",
+              "reason": "its test passes",
+              "at_turn": 1,
+              "elapsed_ms": 24,
+              "met": true
+            }
+          },
+          "events": [
+            {
+              "channel": "runtime",
+              "event_id": "takes:s-795-own-task:trial:1:classic:0",
+              "event_type": "run_started",
+              "run_id": "takes:s-795-own-task:trial:1",
+              "sequence": 0,
+              "runtime": "classic",
+              "payload": {
+                "task_id": "task:session/s-795"
+              }
+            },
+            {
+              "channel": "runtime",
+              "event_id": "takes:s-795-own-task:trial:1:classic:1",
+              "event_type": "run_completed",
+              "run_id": "takes:s-795-own-task:trial:1",
+              "sequence": 1,
+              "runtime": "classic",
+              "payload": {
+                "iteration": 1,
+                "outcome": "answer.txt now says 42"
+              }
+            }
+          ],
+          "durable_stream": false
+        },
+        "human_acceptance": false,
+        "provider_evidence": "not-assessed",
+        "variable": "effort",
+        "level": "high",
+        "agent": "agent:session/s-795",
+        "stop": {
+          "when": "pass",
+          "reason": "its test passes",
+          "at_turn": 1,
+          "elapsed_ms": 24,
+          "met": true
+        },
+        "body_configuration_digest": "c219f231b76121965bdddece6454048de94958acc9a0ededbf606bb1c76bf6b9"
+      }
+    ],
+    "held_constants": {
+      "prompt": true,
+      "success_constraints": true,
+      "start_state": true,
+      "model": true,
+      "capabilities": true,
+      "verification": true,
+      "budget": true,
+      "host_revision": true,
+      "host_composition": true,
+      "network_policy": true,
+      "benchmark_revision": true,
+      "task_revision": true,
+      "runner_revision": true,
+      "review_contract_revision": true,
+      "body_configuration": true,
+      "condition": true,
+      "valid": true,
+      "mismatches": [],
+      "held": [
+        "prompt",
+        "success_constraints",
+        "start_state",
+        "model",
+        "capabilities",
+        "verification",
+        "budget",
+        "host_revision",
+        "host_composition",
+        "network_policy",
+        "benchmark_revision",
+        "task_revision",
+        "runner_revision",
+        "review_contract_revision",
+        "body_configuration",
+        "condition"
+      ]
+    },
+    "provider_evidence": "not-assessed",
+    "human_acceptance": false
+  }
+}
