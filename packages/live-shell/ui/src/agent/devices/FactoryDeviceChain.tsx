@@ -21,18 +21,23 @@
 // Full — on their owners (oneAgentBinding.ts composes sessionChainBindings.ts custodyBinding, central/devices/identityBinding.ts and
 // threadBinding.ts onto the Agent's own binding under `custody.*`, `id.*`, `thread.*`), so no Thread, Custody or Agent identity stands
 // beside it any more; the Agent's ⤢ opens its own Full, the thread, on the session's own conversation (the thread pane's encounter
-// observer: EncounterObservers.tsx). The Gateway's Full is the Frames monitor (§19.2 "The full Gateway is the frame monitor";
-// mainTrackBindings.ts).
+// observer: EncounterObservers.tsx). The Gateway's Full is its Frames page at pane size (§19.2 Frames; the rail's Frames tile is its widget,
+// mainTrackBindings.ts FRAMES_ID).
 //
 // Where each stands (lane W1-Factory; factoryPlaces.ts holds the chains, and this file draws exactly those): a session's chain is "Agent,
-// skills rack, scope" (§16.2), a group's led by the Agentset rack (§19.15) and the Decision helper (§19.20); "A track has no gateway and
-// no landing of its own" (§19.23). With no session selected, or the Main head, the Device side is the Main track's chain: the Experiment,
-// then Approvals (§16.2, §19.1). With a workcell's return track selected it is that workcell's chain: the workcell rack, the Gateway, the
-// Remote carrier, Git / landing with the Seat inside it (§16.2, §19.23). The monitors — the Ledger (§19.13), the Frames monitor (§19.6) and
-// Gateways (§19.3) — stand on the rail and full in a pane, never on a chain (§16.1); so does Messages, an instrument born on the rail
-// (§19.24), with the Agency gateway's mark in its head (§19.10), which has no chain place. Those, and the workcell rack (its widget is the
-// Workcells tile), stand on the rail in every mode, so the rail's publisher holds them (AgentRailDevices.tsx) and this chain draws the rack
-// from the door. Link is the transport's (§19.19): the frame publishes it. Every device of this chain is published whichever chain is drawn,
+// skills rack, scope" (§16.2), a group's led by the Agentset rack (§19.15); "A track has no gateway and no landing of its own" (§19.23).
+// With no session selected, or the Main head, the Device side is the Main track's chain: the Run map, Approvals and the prompt pads (§16.2,
+// §19.1). With a workcell's return track selected it is that workcell's chain: the workcell rack, the Gateway, the Remote carrier, Git /
+// landing with the Seat inside it (§16.2, §19.23). The Ledger (§19.13), a monitor, stands on the rail and full in a pane, never on a chain
+// (§16.1); so does Messages, an instrument born on the rail (§19.24), with the Gateway's agency build's mark in its head (§19.10). Those,
+// and the workcell rack (its widget is the Workcells tile, which lists the gateways: §19.3), stand on the rail in every mode, so the rail's
+// publisher holds them (AgentRailDevices.tsx) and this chain draws the rack from the door.
+// Retired in the 22 Oct manual rewrite, each a page of the device that carries it, hosted by prefixing the retired device's own binding
+// (oneAgentBinding.ts carryPages): the Seat is Git / landing's Seat page (`seat.`, §19.17) beside its Checkouts page (`co.`, Ground hygiene's
+// census, §19.16); the machine is the Remote carrier's Machine page (`mc.`, §18.7, §19.18); Capture skill is the Skillset rack's Capture page
+// (`capture.`, §19.11); the Decision helper is the Agentset rack's Helper page (`helper.`, §19.20); the Knowledge route is Scope's Knowledge
+// page (§19.9), whose settings Scope refuses in the route's own words until a binding maps the route's readings onto them; the Experiment is a
+// task launched with Repeat and its takes compared (§19.5), so no device of it stands. Link is the transport's (§19.19): the frame publishes it. Every device of this chain is published whichever chain is drawn,
 // so the pool, a pane and the rail keep them. The bindings: sessionChainBindings.ts, receiptBindings.ts, workcellBindings.ts. The Run, Tasks and Runs
 // are no chain devices (a task's panels, the session's mixer row and lanes, its takes — Clip view's and the views'); the Run and Runs stay
 // published for the browser's Runs (AgentShellBrowser.tsx).
@@ -66,16 +71,20 @@ import {chainPicture, type PictureContext} from './AgentDevicePictures'
 import {
   AGENT_DESIGN, AGENT_P0_ROWS, GATEWAY_DESIGN, LANDING_DESIGN, MEMBER_DESIGN, MEMBER_DEVICE_ID, RACK_DESIGN, SCOPE_DESIGN, SLOT_DESIGN_FACE, agentBinding, designWaits,
   gatewayBinding, memberBinding,
-  memberChains, rackBinding, scopeBinding, seatedProfile, useChainHolds, viewHolds, type AgentRows, type MemberPorts, type RackUpkeep,
+  holdView, memberChains, rackBinding, scopeBinding, seatedProfile, useChainHolds, viewHolds, type AgentRows, type MemberPorts, type RackUpkeep,
 } from './designBindings'
 import {useOwnerAccepted} from './ownerAccepted'
 import {useSelectedSkillChain} from './skillRackSelection'
 import {useAgentChainReading} from './useAgentChainReading'
 import {RACK_PROJECT, composePorts, useRackReading} from './useRackReading'
 import {observedState, useEncounterSessions} from './EncounterObservers'
-import {EXPERIMENT_DESIGN, EXPERIMENT_ID, FRAMES_ID, experimentBinding, mainDevices} from './mainTrackBindings'
+import {EXPERIMENT_ID, FRAMES_ID, mainDevices} from './mainTrackBindings'
 import {THREAD_DEVICE_ID, shownSession, threadBinding, threadJson} from './threadBinding'
-import {composeAgentBinding} from './oneAgentBinding'
+import {CAPTURE_PAGE, CHECKOUTS_PAGE, HELPER_PAGE, MACHINE_PAGE, SEAT_PAGE, carryPages, composeAgentBinding} from './oneAgentBinding'
+import {useHygieneDevice} from '../../central/devices/groundDevices'
+import {openNotificationTarget, useOwnerRequests} from '../../widgets/railDevices'
+import {openedOf, withOwnerRequests} from '../../widgets/railBindings'
+import {useMachineDevice} from '../../central/devices/machineDevice'
 import {useIdentityDevice} from '../../central/devices/agentChainDevices'
 import {PERSONAL_ANCHOR_ACTION, acceptSourceReturn, personRefOf} from '../../central/devices/sourceReturnAccept'
 import {commentSourceReturn, withReturnComments} from '../../central/devices/sourceReturnComment'
@@ -93,17 +102,16 @@ import {
   AGENTSET_DESIGN, AGENTSET_ID, CUSTODY_ID, RUN_ID, SESSION_DEVICE_IDS, agentsetBinding, custodyBinding, runBinding, sessionDevices, type CustodyPorts,
 } from './sessionChainBindings'
 import {APPROVALS_DESIGN, APPROVALS_ID, approvalsBinding, receiptDevices} from './receiptBindings'
-import {CARRIER_DESIGN, CARRIER_ID, SEAT_DESIGN, SEAT_ID, carrierBinding, connectionLabels, gitBinding, planRunOf, runDemandOf, seatBinding, workcellDevices, type SeatPorts} from './workcellBindings'
+import {CARRIER_DESIGN, CARRIER_ID, SEAT_ID, carrierBinding, connectionLabels, gitBinding, planRunOf, runDemandOf, seatBinding, workcellDevices, type SeatPorts} from './workcellBindings'
 import {ROUTE_WORDS, aikitWriteOp, deskActorOf, factoryOwnerWrite, ownerRouteWrite, refusalWords, seatWriteOp, workcellReadOp} from './ownerRoutes'
 import {worldsOf} from './workcellMaterial'
 import {currentIdentity} from '../../../../../../desktop/cradle/src/nara/identity/current'
 import {WORKCELL_RACK_DESIGN, WORKCELL_RACK_ID, chosenWorld, workcellGitReading} from './workcellRackBinding'
 import {AGENT_SLOTS, chainSlots, factoryPlace, type FactorySlot} from './factoryPlaces'
-import {KNOWLEDGE_ROUTE_DESIGN, KNOWLEDGE_ROUTE_ID, knowledgeRouteBinding, knowledgeRouteDevice} from './knowledgeRouteBinding'
 import {useOwnerOp} from '../../owners/ownerCall'
 import type {AikitWriteRequest, KernelOp} from '../../../../../../desktop/cradle/src/kernel/types'
-import {DECISION_HELPER_DESIGN, DECISION_HELPER_ID, decisionHelperBinding, decisionHelperDevice} from './decisionHelperBinding'
-import {CAPTURE_SKILL_DESIGN, CAPTURE_SKILL_ID, captureSkillBinding, captureSkillDevice, type CaptureSkillPorts} from './captureSkillBinding'
+import {decisionHelperBinding} from './decisionHelperBinding'
+import {captureSkillBinding, type CaptureSkillPorts} from './captureSkillBinding'
 import {RUN_MAP_DESIGN, RUN_MAP_ID, runMapBinding, runMapDevice} from './runMapBinding'
 import {PROMPT_PADS_DESIGN, PROMPT_PADS_ID, padsLocation, promptPadsBinding, promptPadsDevice, type PromptPadsPorts} from './promptPadsBinding'
 import {useDecisionHelperReadings} from './decisionHelperReads'
@@ -138,9 +146,8 @@ type ChainDropTarget = {kind: 'zone'; label: string} | {kind: 'card'; id: string
 const FACTORY_IDENTITY_ID = `${chainDeviceId('agent')}/identity`
 /** Central's personal anchor takes no input: one held object, so the read is asked once. */
 const NO_INPUT: Readonly<Record<string, unknown>> = Object.freeze({})
-/** AIKit's knowledge status for the project the session works in (the kernel's knowledge op, Request::Status): each lens's answer. */
-const KNOWLEDGE_STATUS: KernelOp = Object.freeze({op: 'knowledge' as const, project: RACK_PROJECT, request: {action: 'status' as const}})
-/** AIKit's capture inbox (lane W3's aikit_read {inbox}), read while Capture skill stands on the armed track's chain (§19.11). */
+/** AIKit's capture inbox (lane W3's aikit_read {inbox}), read while the Skillset rack stands on the armed track's chain, for its Capture page
+ * (§19.11). */
 const CAPTURE_INBOX: KernelOp = Object.freeze({op: 'aikit_read' as const, request: {kind: 'inbox' as const, project: RACK_PROJECT}})
 /** Where Factory keeps the shell's project (factory_owner locate), for the Prompt pads' bank. */
 const PADS_LOCATE: KernelOp = Object.freeze({op: 'factory_owner' as const, request: {kind: 'locate', project: RACK_PROJECT}})
@@ -319,10 +326,9 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
       receipts: outputs.receipts, collected, ...(collectPort ? {collect: collectPort} : {}), outputsWhy: outputs.why} : undefined),
   [sessionTrack, holds, runTakes, shownTakes, shownRun, runJourney, outputs, collected, collectPort])
 
-  // Factory's Main track devices: the Experiment on its chain. The monitors — Gateways, the Frames monitor the Gateway opens full, the Ledger —
-  // Messages, the Agency gateway and the workcell rack stand on the rail in every mode: AgentRailDevices.tsx publishes them, not this chain.
+  // Factory's Main track devices: the Run map, Approvals and the Prompt pads (below). The Ledger, Messages, the Frames tile (the Gateway's
+  // widget) and the workcell rack stand on the rail in every mode: AgentRailDevices.tsx publishes them, not this chain.
   const main = useMemo(() => mainDevices(), [])
-  const designsOf = {experiment: useDesign(EXPERIMENT_DESIGN, true)}
   // Workcell's status, the window's one answer (owners/readers.ts): the Remote carrier's machines.
   const workcellAnswer = useWorkcellAnswer(transport).reading
   // The Prompt pads (§19.22, lane W8): the shell's project located by Factory, its bank read, each setting written through pads-write.
@@ -338,7 +344,7 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
     located: {status: padsLocated.status, value: padsLocated.value?.data ?? null, error: padsLocated.error},
     ...(padsBankOp ? {bank: {status: padsBank.status, value: padsBank.value?.data ?? null, error: padsBank.error}} : {}), holds,
   }), [padsLocated, padsBank, padsBankOp, holds])
-  const mainBindings = useMemo(() => ({experiment: experimentBinding(holds), runMap: runMapBinding(holds), pads: promptPadsBinding(padsInput, padsPorts)}), [holds, padsInput, padsPorts])
+  const mainBindings = useMemo(() => ({runMap: runMapBinding(holds), pads: promptPadsBinding(padsInput, padsPorts)}), [holds, padsInput, padsPorts])
   // The Run map and the Prompt pads (§19.25, §19.22, lane W7): bound, standing where Software Factory's family admits their faces.
   const runMapDev = useMemo(() => runMapDevice(), [])
   const padsDev = useMemo(() => promptPadsDevice(), [])
@@ -392,18 +398,12 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   const groupTrack = track && track.group ? track : null
   const place = factoryPlace({sessionRef, group: !!groupTrack, workcell})
   const cellName = place.kind === 'workcell' ? place.name : null
-  // The Knowledge route (§19.9): inside Scope on a session's chain, for the seated agent; AIKit's status asked once while that chain stands.
-  const knowledgeOn = sessionRef != null && cellName == null
-  const knowledgeDesign = useDesign(KNOWLEDGE_ROUTE_DESIGN, true)
-  const knowledgeDevice = useMemo(() => knowledgeRouteDevice(), [])
-  const knowledgeStatus = useOwnerOp(transport, knowledgeOn ? KNOWLEDGE_STATUS : null, 'knowledge').reading
-  const knowledgeDesignBinding = useMemo(() => knowledgeRouteBinding({status: knowledgeStatus.status === 'answered' ? knowledgeStatus.value?.data ?? null : null,
-    statusError: knowledgeStatus.status === 'refused' ? knowledgeStatus.error ?? null : null, project: RACK_PROJECT, profile}), [knowledgeStatus, profile])
-  // Capture skill (§19.11, lane W7): on the armed track's chain — the selected session's, never a group's — after Scope. It reads the
-  // proposal that waits in AIKit's inbox and writes Accept through aikit_write promote.
-  const captureDevice = useMemo(() => captureSkillDevice(), [])
-  const captureDesign = useDesign(CAPTURE_SKILL_DESIGN, true)
-  const captureOn = knowledgeOn && !groupTrack && !!captureDevice
+  // A session's own chain stands (not a workcell's).
+  const sessionChain = sessionRef != null && cellName == null
+  // The Skillset rack's Capture page (§19.11, lane W7; Capture skill was retired into it in the 22 Oct manual rewrite): on the armed
+  // track's chain — the selected session's, never a group's. It reads the proposal that waits in AIKit's inbox and writes Accept through
+  // aikit_write promote.
+  const captureOn = sessionChain && !groupTrack
   const captureInbox = useOwnerOp(transport, captureOn ? CAPTURE_INBOX : null, 'owner_route_reading').reading
   const capturePorts = useMemo((): CaptureSkillPorts => (transport.kind !== 'unavailable'
     ? {promote: (candidate, id) => ownerRouteWrite(transport, aikitWriteOp({kind: 'promote', project: RACK_PROJECT, candidate, ...(id ? {id} : {})}), '`aikit promote`')} : {}), [transport])
@@ -451,9 +451,28 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
     [agentDesignBinding, custodyDesignBinding, identityDesignBinding, threadDesignBinding])
   // The line where you type @ (§18.4): an @ word in the Agent's composer opens Search in a pane on it (central/searchPane.tsx).
   useAtSearch(typeof oneAgent?.values.draft === 'string' ? oneAgent.values.draft : undefined)
+  // Git / landing's Seat page: the seat instrument, starting at the selected workcell's seat of the project.
+  const seatsUnread = seats.status === 'refused' && seats.error ? seats.error : undefined
+  // Join and Release (lane W3): the seat instrument through the kernel's seat_write, attributed to the desk's actor — the person's ref when
+  // an identity is current, else the desktop's own (ownerRoutes.ts deskActorOf). The claim it writes is read back on the next seat reading.
+  const deskActor = deskActorOf(currentIdentity()?.reading.person_ref ?? null)
+  const machineRef = workcellAnswer.status === 'answered' && workcellAnswer.value && typeof (workcellAnswer.value as {workcell_ref?: unknown}).workcell_ref === 'string'
+    ? (workcellAnswer.value as {workcell_ref: string}).workcell_ref : undefined
+  const seatPorts = useMemo((): SeatPorts => (transport.kind !== 'unavailable'
+    ? {seat: request => ownerRouteWrite(transport, seatWriteOp(request), request.kind === 'join' ? ROUTE_WORDS.join : ROUTE_WORDS.release)} : {}), [transport])
+  const seatDesignBinding = useMemo(() => seatBinding({status: seats.status === 'answered' ? seats.value : null, ...(seatsUnread ? {unread: seatsUnread} : {}),
+    project: RACK_PROJECT, branch: reading.gitRepo.branch ?? null, workcell: cellName, ...(machineRef ? {machineRef} : {}), actor: deskActor, holds}, seatPorts),
+  [seats, seatsUnread, reading.gitRepo.branch, cellName, machineRef, deskActor, holds, seatPorts])
+  // The pages the chain's devices carry (oneAgentBinding.ts carryPages): the Skillset rack's Capture page; Git / landing's Seat page and, on
+  // a workcell's chain, its Checkouts page (Ground hygiene's census).
+  const rackCarrying = useMemo(() => (rackDesignBinding ? carryPages(rackDesignBinding, captureOn ? [{page: CAPTURE_PAGE, binding: captureDesignBinding}] : []) : null),
+    [rackDesignBinding, captureOn, captureDesignBinding])
+  const checkouts = useHygieneDevice(transport, cellName != null)
+  const gitCarrying = useMemo(() => (gitDesignBinding ? carryPages(gitDesignBinding, [{page: SEAT_PAGE, binding: seatDesignBinding}, ...(cellName != null ? [{page: CHECKOUTS_PAGE, binding: checkouts}] : [])]) : null),
+    [gitDesignBinding, seatDesignBinding, cellName, checkouts])
   const bindings: Readonly<Record<string, DesignBinding | null>> = useMemo(() => ({
-    gateway: gatewayDesignBinding, agent: oneAgent, skillset: rackDesignBinding, world: scopeDesignBinding, git: gitDesignBinding,
-  }), [gatewayDesignBinding, oneAgent, rackDesignBinding, scopeDesignBinding, gitDesignBinding])
+    gateway: gatewayDesignBinding, agent: oneAgent, skillset: rackCarrying, world: scopeDesignBinding, git: gitCarrying,
+  }), [gatewayDesignBinding, oneAgent, rackCarrying, scopeDesignBinding, gitCarrying])
 
   // The session's own devices (lane BF3): the Run (published for the browser's Runs, on no chain) and — for a group — the Agentset rack.
   const ownDevices = useMemo(() => sessionDevices(), [])
@@ -466,14 +485,14 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   const runDesignBinding = useMemo(() => runBinding({session: sessionTrack, tracks, nowUnixMs: sessions?.nowUnixMs ?? 0, agent: agentDesignBinding?.values ?? {}, holds},
     {select: ref => { selectSession(ref) }}), [sessionTrack, tracks, sessions?.nowUnixMs, agentDesignBinding, holds, selectSession])
   const agentsetDesignBinding = useMemo(() => agentsetBinding({group: groupTrack, tracks, models, holds, nowUnixMs: sessions?.nowUnixMs ?? 0}), [groupTrack, tracks, models, holds, sessions?.nowUnixMs])
-  // The Decision helper (§19.20, T-AGENCY K5): on a group's chain, after its members (the Agentset rack), on AIKit's decision provider and
-  // QL's team space — read only while it stands there.
-  const helperDevice = useMemo(() => decisionHelperDevice(), [])
-  const helperDesign = useDesign(DECISION_HELPER_DESIGN, true)
-  const helperStands = sessionRef != null && !!groupTrack && !!helperDevice
+  // The Agentset rack's Helper page (§19.20, T-AGENCY K5; the Decision helper was retired into it in the 22 Oct manual rewrite): on a
+  // group's chain, on AIKit's decision provider and QL's team space — read only while the rack stands there.
+  const helperStands = sessionRef != null && !!groupTrack
   const helperReadings = useDecisionHelperReadings(transport, helperStands)
   const helperDesignBinding = useMemo(() => decisionHelperBinding({status: helperReadings.status, teamSpace: helperReadings.teamSpace, holds}),
     [helperReadings.status, helperReadings.teamSpace, holds])
+  const agentsetCarrying = useMemo(() => carryPages(agentsetDesignBinding, helperStands ? [{page: HELPER_PAGE, binding: helperDesignBinding}] : []),
+    [agentsetDesignBinding, helperStands, helperDesignBinding])
 
   // The Main track's reader: Approvals on the Gateway's own approvals key, the shown session's consent requests and the project's source
   // returns (lane K1's source_returns_read). The Ledger is a monitor on the rail (AgentRailDevices.tsx).
@@ -500,6 +519,7 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   // projectcentral.source.return_comment (central/devices/sourceReturnComment.ts); once Central keeps it, the composer is cleared.
   const agentDraft = typeof oneAgent?.values.draft === 'string' ? oneAgent.values.draft : null
   const agentWrite = oneAgent?.write
+  const ownerRequests = useOwnerRequests(transport)
   const approvalsDesignBinding = useMemo(() => {
     const state = observedState(shownHandle)
     const actions = shownHandle && 'actions' in shownHandle ? shownHandle.actions : undefined
@@ -508,28 +528,22 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
       {...(actions ? {permission: (id, decision) => actions.permission(id, decision)} : {}),
         approve: row => acceptSourceReturn(transport, RACK_PROJECT, row, person),
         ...(transport.kind !== 'unavailable' ? {answerUnit: (project, review) => receiving(transport, project, review).catch(cause => { throw new Error(refusalWords(cause instanceof Error ? cause.message : String(cause))) })} : {})})
-    return withReturnComments(binding, {returns: returned, comment: agentDraft}, {
+    const commented = withReturnComments(binding, {returns: returned, comment: agentDraft}, {
       send: (row, words) => commentSourceReturn(transport, RACK_PROJECT, row, words, person),
       after: () => { void agentWrite?.([{key: 'draft', value: ''}]) },
     })
-  }, [shownHandle, gatewayDesignBinding, shownTrack, holds, returned, tracks, sessions?.nowUnixMs, transport, person, units, agentDraft, agentWrite])
+    // Notifications' readings wait here under Requests (§23.9; the Notifications device was retired into Approvals in the 22 Oct manual
+    // rewrite): the requests Central keeps for personal.notify, Messages' waiting agents and the desktop's notice (railBindings.ts
+    // withOwnerRequests), as Central's Approvals carries them; Open marks an item opened here, after opening an owner's request.
+    return withOwnerRequests(commented, {...ownerRequests, nowUnixMs: sessions?.nowUnixMs || Date.now()}, openNotificationTarget,
+      {opened: openedOf(viewHolds(holds, APPROVALS_ID).opened), hold: ids => holdView(APPROVALS_ID, 'opened', JSON.stringify(ids))})
+  }, [shownHandle, gatewayDesignBinding, shownTrack, holds, returned, tracks, sessions?.nowUnixMs, transport, person, units, agentDraft, agentWrite, ownerRequests])
 
-  // A workcell's devices (§19.23): the Seat inside Git / landing (the seat instrument), starting at the selected workcell's seat of the
-  // project; the Remote carrier (Workcell's status); and the workcell rack, which stands on the rail too (the Workcells tile), so the rail's
-  // publisher holds it (AgentRailDevices.tsx) and this chain draws it from the door.
+  // A workcell's devices (§19.23): Git / landing's Seat page (the seat instrument), starting at the selected workcell's seat of the project;
+  // the Remote carrier (Workcell's status) with its Machine page; and the workcell rack, which stands on the rail too (the Workcells tile), so
+  // the rail's publisher holds it (AgentRailDevices.tsx) and this chain draws it from the door.
   const cells = useMemo(() => workcellDevices(), [])
-  const designsCells = {seat: useDesign(SEAT_DESIGN, true), carrier: useDesign(CARRIER_DESIGN, true), rack: useDesign(WORKCELL_RACK_DESIGN, true)}
-  const seatsUnread = seats.status === 'refused' && seats.error ? seats.error : undefined
-  // Join and Release (lane W3): the seat instrument through the kernel's seat_write, attributed to the desk's actor — the person's ref when
-  // an identity is current, else the desktop's own (ownerRoutes.ts deskActorOf). The claim it writes is read back on the next seat reading.
-  const deskActor = deskActorOf(currentIdentity()?.reading.person_ref ?? null)
-  const machineRef = workcellAnswer.status === 'answered' && workcellAnswer.value && typeof (workcellAnswer.value as {workcell_ref?: unknown}).workcell_ref === 'string'
-    ? (workcellAnswer.value as {workcell_ref: string}).workcell_ref : undefined
-  const seatPorts = useMemo((): SeatPorts => (transport.kind !== 'unavailable'
-    ? {seat: request => ownerRouteWrite(transport, seatWriteOp(request), request.kind === 'join' ? ROUTE_WORDS.join : ROUTE_WORDS.release)} : {}), [transport])
-  const seatDesignBinding = useMemo(() => seatBinding({status: seats.status === 'answered' ? seats.value : null, ...(seatsUnread ? {unread: seatsUnread} : {}),
-    project: RACK_PROJECT, branch: reading.gitRepo.branch ?? null, workcell: cellName, ...(machineRef ? {machineRef} : {}), actor: deskActor, holds}, seatPorts),
-  [seats, seatsUnread, reading.gitRepo.branch, cellName, machineRef, deskActor, holds, seatPorts])
+  const designsCells = {carrier: useDesign(CARRIER_DESIGN, true), rack: useDesign(WORKCELL_RACK_DESIGN, true)}
   // The Remote carrier: Workcell's status, and each listed connection's record (`workcell connections show`, lane W3); its Standing page's
   // offers (`workcell discover`) and each connection's probe (`workcell connections probe`, a read that never writes the record; lane W10).
   const carrierLabels = connectionLabels(workcellAnswer)
@@ -552,6 +566,10 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
     {discover, ...(carrierLabels.length ? {probe} : {}), run: {ref: carrierRun, ...(planRun.why ? {why: planRun.why} : {}), ...(carrierRun ? {show: runShow} : {}), ...(keptPath ? {plan: runPlan.answer} : {})}},
     keptPath && transport.kind !== 'unavailable' ? {replan: runPlan.refresh} : {}),
   [workcellAnswer, holds, shows, discover, probe, carrierLabels.length, carrierRun, planRun.why, runShow, keptPath, runPlan.answer, runPlan.refresh, transport])
+  // The Remote carrier's Machine page (§18.7, §19.18 "The Machine page"; Central's Machine was retired into it in the 22 Oct manual
+  // rewrite): Central's machine readings under `mc.`, read while a workcell's chain stands.
+  const machine = useMachineDevice(transport, cellName != null)
+  const carrierCarrying = useMemo(() => carryPages(carrierDesignBinding, [{page: MACHINE_PAGE, binding: machine}]), [carrierDesignBinding, machine])
   // The rack as the rail's publisher holds it, watched alone (another device's publish does not redraw the chain).
   const rackEntry = useSyncExternalStore(subscribeDeviceDoor, () => publishedDevice(WORKCELL_RACK_ID), () => publishedDevice(WORKCELL_RACK_ID))
 
@@ -568,28 +586,18 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   }, [chain, bindings, memberDevice, memberDesignBinding, main.frames]) // the pictures read the reading `chain` is built from
   useEffect(() => { publishDevice(TASKS_ID, tasks ? {device: tasks, binding: tasksDesignBinding} : null) }, [tasks, tasksDesignBinding])
   useEffect(() => { publishDevice(RUNS_ID, runs ? {device: runs, binding: runsDesignBinding} : null) }, [runs, runsDesignBinding])
-  useEffect(() => { if (main.experiment) publishDevice(EXPERIMENT_ID, {device: main.experiment, binding: mainBindings.experiment}) }, [main, mainBindings])
   useEffect(() => { publishDevice(RUN_MAP_ID, runMapDev ? {device: runMapDev, binding: mainBindings.runMap} : null) }, [runMapDev, mainBindings])
   useEffect(() => { publishDevice(PROMPT_PADS_ID, padsDev ? {device: padsDev, binding: mainBindings.pads} : null) }, [padsDev, mainBindings])
   useEffect(() => {
-    const own = [[RUN_ID, ownDevices.run, runDesignBinding], [AGENTSET_ID, ownDevices.agentset, agentsetDesignBinding],
-      [APPROVALS_ID, receipts.approvals, approvalsDesignBinding], [SEAT_ID, cells.seat, seatDesignBinding], [CARRIER_ID, cells.carrier, carrierDesignBinding]] as const
+    const own = [[RUN_ID, ownDevices.run, runDesignBinding], [AGENTSET_ID, ownDevices.agentset, agentsetCarrying],
+      [APPROVALS_ID, receipts.approvals, approvalsDesignBinding], [CARRIER_ID, cells.carrier, carrierCarrying]] as const
     for (const [id, device, designBinding] of own) publishDevice(id, device ? {device, binding: designBinding} : null)
-  }, [ownDevices, receipts, cells, runDesignBinding, agentsetDesignBinding, approvalsDesignBinding, seatDesignBinding, carrierDesignBinding])
-  // The Knowledge route stands on the door while a session's chain does (the pool and a pane draw it from there).
-  useEffect(() => { publishDevice(KNOWLEDGE_ROUTE_ID, knowledgeOn && knowledgeDevice ? {device: knowledgeDevice, binding: knowledgeDesignBinding} : null) },
-    [knowledgeOn, knowledgeDevice, knowledgeDesignBinding])
-  useEffect(() => () => { publishDevice(KNOWLEDGE_ROUTE_ID, null) }, [])
-  useEffect(() => { publishDevice(CAPTURE_SKILL_ID, captureOn && captureDevice ? {device: captureDevice, binding: captureDesignBinding} : null) },
-    [captureOn, captureDevice, captureDesignBinding])
-  useEffect(() => () => { publishDevice(CAPTURE_SKILL_ID, null) }, [])
-  useEffect(() => { publishDevice(DECISION_HELPER_ID, helperStands && helperDevice ? {device: helperDevice, binding: helperDesignBinding} : null) },
-    [helperStands, helperDevice, helperDesignBinding])
-  useEffect(() => () => { publishDevice(DECISION_HELPER_ID, null) }, [])
+  }, [ownDevices, receipts, cells, runDesignBinding, agentsetCarrying, approvalsDesignBinding, carrierCarrying])
   useEffect(() => () => {
-    // The Thread and Custody no longer publish (the Agent carries them); their ids are cleared once, so nothing stale stands on the door.
-    // The Link is the transport's (§19.19), and the rail's agent devices — Messages, Gateways, the Agency gateway, Frames, the Ledger, the
-    // workcell rack — are the rail's publisher's (AgentRailDevices.tsx RAIL_AGENT_DEVICE_IDS): none of them is withdrawn here.
+    // The Thread and Custody no longer publish (the Agent carries them), nor the Seat (Git / landing's Seat page) nor the Experiment; their
+    // ids are cleared once, so nothing stale stands on the door. The Link is the transport's (§19.19), and the rail's agent devices —
+    // Messages, Frames, the Ledger, the workcell rack — are the rail's publisher's (AgentRailDevices.tsx RAIL_AGENT_DEVICE_IDS): none of
+    // them is withdrawn here.
     for (const id of [...CHAIN_DEVICE_IDS, MEMBER_DEVICE_ID, THREAD_DEVICE_ID, CUSTODY_ID, TASKS_ID, RUNS_ID, EXPERIMENT_ID, ...SESSION_DEVICE_IDS, APPROVALS_ID,
       SEAT_ID, CARRIER_ID, RUN_MAP_ID, PROMPT_PADS_ID]) publishDevice(id, null)
   }, [])
@@ -725,8 +733,7 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   )
 
   /** One of the agent chain's slots (agentChainDevices.ts) at its compact size: its grip, its drop target, the device inside it where one
-   * stands there (the rack's member, §19.7; the Knowledge route inside Scope, §19.9; the Seat inside Git / landing, §19.17). Its press
-   * shows it whole in the pool. */
+   * stands there (the rack's member, §19.7). Its press shows it whole in the pool. */
   const slotPlate = (slotId: FactorySlot) => {
     const entry = chain.find(item => item.slot.id === slotId)
     if (!entry) return null
@@ -742,13 +749,9 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
           slot.id === 'agent'
             ? {icon: 'pane', label: 'Open the Agent full in a pane: its thread', onPress: openAgentThread}
             : slot.id === 'gateway' && main.frames
-              ? {icon: 'pane', label: 'Open the Frames monitor in a pane', onPress: () => openDevice(FRAMES_ID, 'Frames')}
+              ? {icon: 'pane', label: 'Open the Gateway\'s Frames in a pane', onPress: () => openDevice(FRAMES_ID, 'Frames')}
               : {icon: 'pane', label: `Open ${slot.title} full size in a pane`, onPress: () => openFull(slot.id, slot.title)},
         ]} />
-        {/* The Seat stands inside Git / landing (§19.17). */}
-        {slot.id === 'git' && placed(SEAT_ID, cells.seat, seatDesignBinding, designsCells.seat ? SEAT_DESIGN : undefined, 'the Seat', {member: true})}
-        {/* The Knowledge route stands inside Scope (§16.1, §19.9). */}
-        {slot.id === 'world' && knowledgeOn && placed(KNOWLEDGE_ROUTE_ID, knowledgeDevice, knowledgeDesignBinding, knowledgeDesign ? KNOWLEDGE_ROUTE_DESIGN : undefined, 'the Knowledge route', {member: true})}
         {/* The rack's chosen chain, inside the rack (§19.7): the member device. Its press shows it whole in the pool. */}
         {slot.id === 'skillset' && memberDevice && memberDesignBinding && (
           <div className="factory-slot__member" data-device={memberDevice.id} onClick={event => event.stopPropagation()}>
@@ -766,33 +769,19 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   const plate = (slot: FactorySlot) => {
     if (AGENT_SLOTS.has(slot)) return slotPlate(slot)
     switch (slot) {
-      // A group's chain (§19.15): the Agentset rack leads it, one chain for each of the group's sessions; the Decision helper after the
-      // team's members (§19.20): one helper answers every member.
-      case 'agentset': return placed(AGENTSET_ID, ownDevices.agentset, agentsetDesignBinding, designsOwn.agentset ? AGENTSET_DESIGN : undefined, 'the Agentset rack',
+      // A group's chain (§19.15): the Agentset rack leads it, one chain for each of the group's sessions, its Helper page the team's
+      // decision helpers (§19.20).
+      case 'agentset': return placed(AGENTSET_ID, ownDevices.agentset, agentsetCarrying, designsOwn.agentset ? AGENTSET_DESIGN : undefined, 'the Agentset rack',
         {attrs: {'data-session-slot': 'agentset'}})
-      case 'decision-helper': return helperStands ? placed(DECISION_HELPER_ID, helperDevice, helperDesignBinding, helperDesign ? DECISION_HELPER_DESIGN : undefined, 'the Decision helper',
-        {attrs: {'data-session-slot': 'decision-helper'}}) : null
-      // The Main track (§16.2, §19.1): the Experiment that compares sessions, then Approvals, where every proposal waits (§19.14).
-      case 'experiment': return main.experiment && (
-        <div className="factory-slot" data-main-slot="experiment" data-device={EXPERIMENT_ID} data-design={designsOf.experiment ? EXPERIMENT_DESIGN : undefined}
-          onClick={() => selectDevice(EXPERIMENT_ID)}>
-          <DeviceView device={main.experiment} size="compact" binding={mainBindings.experiment} actions={[
-            {icon: 'detail', label: 'Show the Experiment whole in the pool', onPress: () => selectDevice(EXPERIMENT_ID)},
-            {icon: 'pane', label: 'Open the Experiment\'s result full size in a pane', onPress: () => openDevice(EXPERIMENT_ID, 'Experiment')},
-          ]} />
-        </div>
-      )
+      // The Main track (§16.2, §19.1): the Run map, then Approvals, where every proposal waits (§19.14), then the Prompt pads.
       case 'approvals': return placed(APPROVALS_ID, receipts.approvals, approvalsDesignBinding, designsReceipts.approvals ? APPROVALS_DESIGN : undefined, 'Approvals', {attrs: {'data-main-slot': 'approvals'}})
       case 'run-map': return placed(RUN_MAP_ID, runMapDev, mainBindings.runMap, designsMain.runMap ? RUN_MAP_DESIGN : undefined, 'the Run map', {attrs: {'data-main-slot': 'run-map'}})
       case 'prompt-pads': return placed(PROMPT_PADS_ID, padsDev, mainBindings.pads, designsMain.pads ? PROMPT_PADS_DESIGN : undefined, 'the Prompt pads', {attrs: {'data-main-slot': 'prompt-pads'}})
       // A workcell's chain (§19.23): its rack leads, then the road — the Remote carrier names the machine it runs on (§19.18).
       case 'workcell': return rackEntry?.binding ? placed(WORKCELL_RACK_ID, rackEntry.device, rackEntry.binding, designsCells.rack ? WORKCELL_RACK_DESIGN : undefined,
         `the workcell ${cellName ?? ''}`.trim(), {attrs: {'data-workcell-slot': 'workcell'}}) : null
-      case 'remote-carrier': return placed(CARRIER_ID, cells.carrier, carrierDesignBinding, designsCells.carrier ? CARRIER_DESIGN : undefined, 'the Remote carrier',
+      case 'remote-carrier': return placed(CARRIER_ID, cells.carrier, carrierCarrying, designsCells.carrier ? CARRIER_DESIGN : undefined, 'the Remote carrier',
         {attrs: {'data-workcell-slot': 'remote-carrier'}})
-      // The armed track's Capture skill (§19.11), after Scope.
-      case 'capture': return captureOn ? placed(CAPTURE_SKILL_ID, captureDevice, captureDesignBinding, captureDesign ? CAPTURE_SKILL_DESIGN : undefined, 'Capture skill',
-        {attrs: {'data-session-slot': 'capture'}}) : null
       default: return null
     }
   }
@@ -800,7 +789,7 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   // The place's chain, left to right, with the visible drop slot while a card slides (it opens under the pointer among the agent chain's
   // slots and closes on release). It never lies: a slot is not a landing, the owner operation (here: the refusal naming the missing order
   // op) is.
-  const slots = chainSlots(place, {helper: helperStands, capture: captureOn, runMap: !!runMapDev, pads: !!padsDev})
+  const slots = chainSlots(place, {runMap: !!runMapDev, pads: !!padsDev})
   let slotIndex = 0
   const plates = slots.map(slot => {
     const atGap = AGENT_SLOTS.has(slot) && held?.kind === 'reorder' && gap === slotIndex
@@ -830,12 +819,12 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
       >
         {/* Factory's Main track (DLW §16.2, §19.1): with no session selected, or the Main head, the Device side is the Main track's chain. */}
         {place.kind === 'main' && <div className="factory-main" data-track="main" aria-label="Main track"
-          data-i="Main track|Factory's Main track: the Experiment that compares sessions, and Approvals, where every proposal waits. The gateways, the frames and the ledger are monitors on the rail; Link is the transport's.">
+          data-i="Main track|Factory's Main track: the Run map, Approvals, where every proposal waits, and the Prompt pads. The ledger is a monitor on the rail; the frames are the Gateway's; Link is the transport's.">
           {plates}
         </div>}
         {/* A workcell's return track (§19.23): its chain is the road in and out, shared by every track that works in it. */}
         {place.kind === 'workcell' && <div className="factory-main factory-workcell" data-track={workcellTrackId(place.name)} aria-label={`Workcell ${place.name}`}
-          data-i={`Workcell ${place.name}|Its chain: the workcell's rack, the Gateway, the Remote carrier, and Git / landing with the Seat inside it. Every track that works in ${place.name} shares it.`}>
+          data-i={`Workcell ${place.name}|Its chain: the workcell's rack, the Gateway, the Remote carrier, and Git / landing with its Seat page. Every track that works in ${place.name} shares it.`}>
           {plates}{trailingGap}
         </div>}
         {/* A selected session shows its own chain: Agent, skills rack, scope (§16.2); a group's led by its Agentset rack. */}

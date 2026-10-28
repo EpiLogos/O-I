@@ -173,9 +173,12 @@ test('the four templates draw in the shell\'s paper family: the same names, the 
 
 test('the shell\'s page faces carry no paper of their own: every page sheet reads the family\'s tokens', () => {
   const PAPER_HEX = /#(EFEFED|FAFAF8|F7F7F5|E4E4E1|6E6E6A|A3A39E|A6A6A1|C9C9C4|1a1a18|20231f|282c26|eeeee8|b2b7aa|8e9688|555e50)\b/i
-  for (const file of ['central/documents/centralDocuments.css', 'inhabitants/DocumentDayDieFace.tsx', 'inhabitants/catalogue/panels/central__beings.tsx',
-    'inhabitants/catalogue/panels/central__things.tsx', 'inhabitants/catalogue/panels/central__document.tsx', 'inhabitants/catalogue/panels/central__text.css',
-    'inhabitants/catalogue/panels/central__notes.css', 'inhabitants/catalogue/panels/central__highlight.css', 'inhabitants/catalogue/panels/central__highlight.tsx']) {
+  // REPLACED (#725): the Beings, Things, Text, Notes and Highlight panels (central__beings.tsx, central__things.tsx, central__text.css,
+  // central__notes.css, central__highlight.css/.tsx) were retired in the 22 Oct manual rewrite: a page's Beings and Things are its Clip panel and
+  // editor tabs, and Text, Highlight and Notes its tools in Clip view (PROGRAMME R25 item 4; §16.1, §18.1 Clip view), drawn by Central's clip
+  // design (catalogue/clips/central.tsx and its sheet clips.css), which is held to the same rule.
+  for (const file of ['central/documents/centralDocuments.css', 'inhabitants/DocumentDayDieFace.tsx', 'inhabitants/catalogue/panels/central__document.tsx',
+    'inhabitants/catalogue/clips/central.tsx', 'inhabitants/catalogue/clips/clips.css', 'inhabitants/catalogue/panels/central__docs.tsx']) {
     const text = read(`../src/${file}`).replace(/\/\*[\s\S]*?\*\//g, '').replace(/var\(--[a-z-]+, #[0-9a-f]+\)/gi, '')
     assert.doesNotMatch(text, PAPER_HEX, file)
   }

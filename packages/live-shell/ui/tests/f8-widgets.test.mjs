@@ -50,7 +50,10 @@ test('the registry holds every tile of both old docks, once each (code-reading: 
   const listed = name => JSON.parse(registry.match(new RegExp(`${name}[^=]*= (\\[[^\\]]*\\])`))[1].replace(/'/g, '"'))
   const ids = ['agent', ...listed('MODE_TILES'), ...listed('AGENT_TILES')]
   assert.equal(new Set(ids).size, ids.length, 'no widget twice')
-  for (const id of ['agent', 'packet', 'trail', 'field', 'nows', 'sky', 'terminal', 'files', 'web', 'graph', 'diff', 'frames', 'ledger', 'approvals']) assert.ok(ids.includes(id), id)
+  // REPLACED (#725): the Diff tile — retired in the 22 Oct manual rewrite: reading what changed is the Diff page of Files (§23.4, §23.2), so
+  // the Files tile holds it and no Diff tile is registered.
+  for (const id of ['agent', 'packet', 'trail', 'field', 'nows', 'sky', 'terminal', 'files', 'web', 'graph', 'frames', 'ledger', 'approvals']) assert.ok(ids.includes(id), id)
+  assert.ok(!ids.includes('diff'), 'no Diff tile: Files carries the Diff page')
   // Sessions, Agents and Results left the rail: they are views now (DLW §16.1 "The views are not devices"; lock §0.3.1; R4).
   for (const id of ['sessions', 'agents', 'results']) assert.ok(!ids.includes(id), `${id} is a view, not a widget`)
   for (const id of DEFAULT_WIDGETS) assert.ok(ids.includes(id), `default ${id} is registered`)

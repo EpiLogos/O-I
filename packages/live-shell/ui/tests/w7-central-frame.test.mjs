@@ -144,51 +144,52 @@ test('the Day\'s close-out stays absent naming its owner\'s missing route: Centr
   assert.match(day.NO_CLOSEOUT, /missing op: an aikit_read route for `work continuity closeout verify`/)
 })
 
-// ── 3. Notifications (design package D10) ───────────────────────────────────────────────────────────────────────────────────────────
+// ── 3. Notifications (design package D10) — since #725, Approvals' Requests ───────────────────────────────────────────────────────
 
-test('Notifications: a monitor on the rail and in a pane; Messages\' waiting agents and Approvals\' queue read off their own devices; before Central answers, requests and the provider absent naming its reading', async () => {
+test('Notifications\' readings stand in Approvals: Messages\' waiting agents read off their own device, the owners\' requests in its queue; before Central answers, the requests and the desktop absent naming their reading', async () => {
+  // REPLACED (#725): the Notifications monitor on the rail and in a pane (widgets__notifications.tsx) — retired into Approvals (§23.9 "What an
+  // owner or an agent raises for you to decide … waits in Approvals, under Requests"). Approvals is the device that draws them now
+  // (railBindings.ts withOwnerRequests): Messages' waiting count as its `messages`, the owners' requests as queue rows of kind request.
   const rail = await import('../src/widgets/railBindings.ts')
-  const {design} = await import('../src/inhabitants/catalogue/panels/widgets__notifications.tsx')
-  assert.equal(design.kind, 'monitor')
-  assert.deepEqual(viewsOf(design).filter(view => view !== 'popout').sort(), ['full', 'widget'], 'a monitor: its rail tile and its Full')
-  // Messages' own agents (each in its occupant's run state) and Approvals' own queue: counted, never derived again.
+  const receipts = await import('../src/agent/devices/receiptBindings.ts')
+  const chainBind = await import('../src/agent/devices/designBindings.ts')
+  const {design} = await import('../src/inhabitants/catalogue/panels/software-factory__approvals.tsx')
+  // Messages' own agents (each in its occupant's run state): counted, never derived again.
   const agents = JSON.stringify([{id: 'position:flint', name: 'Flint', state: 'stalled'}, {id: 'position:nara', name: 'Nara', state: 'waiting'}, {id: 'position:kite', name: 'Kite', state: 'working'}, {id: 'position:lilt', name: 'Lilt'}])
-  const queue = JSON.stringify([{id: 'r1', kind: 'proposal'}, {id: 'q1', kind: 'request'}])
-  const values = rail.notificationsValues({messagesAgents: agents, approvalsQueue: queue, nowMinutes: 1052})
-  assert.deepEqual([values.waiting, values.proposals, values.now], [2, 2, 1052])
-  const unread = rail.notificationsValues({messagesAgents: undefined, approvalsQueue: undefined, nowMinutes: 0})
-  assert.deepEqual([unread.waiting, unread.proposals], [undefined, undefined], 'no device read: absent, never zero')
-  const held = {}
-  const opened = []
-  const binding = rail.notificationsBinding('widgets:notifications', {messagesAgents: agents, approvalsQueue: queue, nowMinutes: 1052}, held,
-    {local: {show: v => { held.show = v }}, messages: () => opened.push('messages'), approvals: () => opened.push('approvals')})
-  assert.deepEqual([binding.values.show, binding.values.follow], ['all', true], 'Show All and Follow On (§23.9)')
-  for (const key of ['requests', 'provider']) assert.equal(binding.values[key], undefined, `${key}: absent`)
-  for (const key of ['requests', 'provider']) assert.match(rail.NOTIFICATIONS_ABSENT[key], /personal\.notifications\.list/)
-  binding.local.messages(true); binding.local.approvals(true)
-  assert.deepEqual(opened, ['messages', 'approvals'], 'Messages ▸ and Approvals ▸ open the devices; nothing is written')
-  await assert.rejects(binding.write([{key: 'open', value: 'n1'}]), /personal\.notifications\.list/)
+  const carried = rail.ownerRequestsValues({messagesAgents: agents, nowUnixMs: 0})
+  assert.equal(carried.messages, 2, 'the agents that wait for you or have stalled')
+  const unread = rail.ownerRequestsValues({messagesAgents: undefined, nowUnixMs: 0})
+  assert.deepEqual([unread.messages, unread.rows, unread.desktop], [undefined, null, undefined], 'no device read: absent, never zero')
+  const own = receipts.approvalsBinding({gateway: {}, session: null, encounter: null, holds: chainBind.chainHolds()}, null, {}, 'central:main:approvals')
+  const binding = rail.withOwnerRequests(own, {messagesAgents: agents, nowUnixMs: 0, ledger: {status: 'reading'}})
+  assert.equal(binding.values.messages, 2)
+  assert.deepEqual(binding.waiting, ['desktop'], 'the desktop\'s notice waits for personal.notifications.list')
+  assert.equal(binding.values.queue, undefined, 'no request read: absent, never an empty queue')
+  // DELETED (#725): "Messages ▸ and Approvals ▸ open the devices" — the Notifications monitor that stood apart from both is gone (§23.9); its
+  // requests stand in Approvals itself, and its foot says how many wait in Messages.
   const keys = designKeys(design)
-  const local = ['show', 'follow', 'selected', 'opened', 'now'], read = ['waiting', 'proposals'], absent = ['requests', 'provider']
-  assert.deepEqual([...keys].sort(), [...local, ...read, ...absent].sort(), 'every key: the view\'s own, a reading, or absent with its reason')
-  drawsOn(design, binding, /Morning checks failed|Kev decision service down|Flint asks for a decision|macOS Notification Centre/)
-  assert.match(hosted(design, binding).map(([, m]) => m).join(''), /No reading of the requests/)
+  for (const key of ['messages', 'desktop', 'queue']) assert.ok(keys.includes(key), `Approvals reads ${key}`)
+  const all = drawsOn(design, binding, /prop:setModel|setModel/)
+  assert.match(all, /2 wait in Messages/, 'Messages\' waiting agents, in Approvals\' foot')
 })
 
-test('Notifications\' rail tile is registered right after Approvals, and the door ids it reads are the devices\' own', async () => {
+test('Notifications\' rail tile is gone; Approvals\' tile and the door ids it reads are the devices\' own', async () => {
   const {readFile} = await import('node:fs/promises')
+  // REPLACED (#725): "registered right after Approvals" — the Notifications tile is retired with its device (§23.9); Approvals' own tile stands.
   const widgets = await readFile(new URL('../src/shell/widgets.tsx', import.meta.url), 'utf8')
-  const tiles = widgets.indexOf("'ledger', 'approvals']"), notify = widgets.indexOf("{id: 'notifications'"), wiki = widgets.indexOf("{id: 'wiki'")
-  assert.ok(tiles > 0 && notify > tiles && notify < wiki, 'the agent tiles (ending with Approvals), then Notifications, then the other rail-born devices')
+  assert.ok(widgets.includes("'ledger', 'approvals']"), 'the agent tiles end with Approvals')
+  assert.doesNotMatch(widgets, /\{id: 'notifications'/, 'no Notifications tile')
   const railDevices = await readFile(new URL('../src/widgets/railDevices.tsx', import.meta.url), 'utf8')
-  assert.match(railDevices, /\{id: 'notifications', title: 'Notifications'/, 'claimed for its device with the other rail-born devices')
+  assert.doesNotMatch(railDevices, /\{id: 'notifications', title: 'Notifications'/, 'no Notifications device among the rail-born devices')
   const messages = await readFile(new URL('../src/agent/devices/messagesBinding.ts', import.meta.url), 'utf8')
   assert.match(messages, /export const MESSAGES_ID = 'ai-kit:messages'/)
+  assert.match(railDevices, /export const NOTIFY_MESSAGES_ID = 'ai-kit:messages'/, 'the rail reads Messages\' agents off its own device')
   const receipts = await readFile(new URL('../src/agent/devices/receiptBindings.ts', import.meta.url), 'utf8')
   assert.match(receipts, /export const APPROVALS_ID = 'factory:main:approvals'/)
   const central = await readFile(new URL('../src/central/devices/CentralDevices.tsx', import.meta.url), 'utf8')
   assert.match(central, /export const CENTRAL_APPROVALS_ID = 'central:main:approvals'/)
-  assert.match(railDevices, /NOTIFY_APPROVALS_IDS = \['central:main:approvals', 'factory:main:approvals'\]/)
+  // REPLACED (#725): NOTIFY_APPROVALS_IDS (the monitor read Approvals' queue off the door) — Approvals carries the requests itself.
+  assert.match(central, /withOwnerRequests\(commented, /, 'Central\'s Approvals carries the owners\' requests')
 })
 
 // ── 5. the Session grid and the Arrangement ruler against their designs (T-COVERAGE §1.4) ───────────────────────────────────────────

@@ -1,6 +1,7 @@
 // W6, the Central owner operations that did not exist, bound in the shell (T-COVERAGE §1.5, the Central row):
 //   1. Notifications' requests and provider: the requests Central keeps for personal.notify (personal.notifications.list,
-//      central.notification-ledger/v1: ctrl/src/notification.rs, EpiLogos/Central#288), and a request's Open;
+//      central.notification-ledger/v1: ctrl/src/notification.rs, EpiLogos/Central#288), and a request's Open. Since the 22 Oct manual rewrite
+//      (#725) they wait in Approvals, under Requests (§23.9): Approvals carries them (railBindings.ts withOwnerRequests);
 //   2. Open and Reveal of a page's file or a world's folder through work.open / work.reveal by Central-relative path (EpiLogos/Central#289);
 //      the track and clip menus that call them are frame/menu's (PROPOSE in the lane's return).
 // Channels: SCRIPTED (the catalogue design rendered to static markup through the runtime's host; the pure bindings over documents shaped as
@@ -42,7 +43,11 @@ const {createElement} = await import('react')
 const {renderToStaticMarkup} = await import('react-dom/server')
 const host = await import('../src/frame/devices/deviceHost.tsx')
 const rail = await import('../src/widgets/railBindings.ts')
-const {design} = await import('../src/inhabitants/catalogue/panels/widgets__notifications.tsx')
+// REPLACED (#725): the Notifications design (widgets__notifications.tsx) was retired into Approvals (§23.9 "What an owner or an agent raises
+// for you to decide … waits in Approvals, under Requests"): its readings are drawn by the Approvals design on Approvals' binding.
+const {design} = await import('../src/inhabitants/catalogue/panels/software-factory__approvals.tsx')
+const receipts = await import('../src/agent/devices/receiptBindings.ts')
+const chainBind = await import('../src/agent/devices/designBindings.ts')
 
 const escaped = text => text.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#x27;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 const viewsOf = design => design.views ?? ['folded', 'compact', 'whole', 'full', 'widget']
@@ -83,7 +88,13 @@ const LEDGER = {
   ],
 }
 const answered = {status: 'answered', value: LEDGER}
-const base = {messagesAgents: undefined, approvalsQueue: undefined, nowMinutes: 600}
+const NOW = at(10, 0)
+const base = {messagesAgents: undefined, nowUnixMs: NOW}
+/** Central's Approvals as its chain builds it with nothing else waiting (CentralDevices.tsx: no session shown, no return read), with the owners'
+ * requests laid in; `kept` the view's opened items. */
+const approvalsWith = (input, open, kept) => rail.withOwnerRequests(
+  receipts.approvalsBinding({gateway: {}, session: null, encounter: null, holds: chainBind.chainHolds()}, null, {}, 'central:main:approvals'), input, open, kept)
+const queueOf = binding => JSON.parse(binding.values.queue)
 
 test('a kept record is the design\'s request: its ref, the local clock time it came, its words, its caller, its callback as Open, and the provider\'s delivery or refusal', () => {
   const ledger = rail.notificationLedgerOf(LEDGER)
@@ -104,55 +115,67 @@ test('a kept record is the design\'s request: its ref, the local clock time it c
   assert.equal(rail.dayStartMs(at(9, 5)), at(0, 0), 'today starts at the local midnight')
 })
 
-test('Notifications draws the requests and the provider Central keeps, never its fixture; Open opens the request\'s target through the shell\'s hand and only then holds it opened', async () => {
+test('Approvals draws the requests and the provider Central keeps, never its fixture; Open opens the request\'s target through the shell\'s hand and only then holds it opened', async () => {
+  // REPLACED (#725): Notifications' own binding and drawing — retired into Approvals (§23.9); the requests are Approvals' queue rows of kind
+  // request, the provider's availability its desktop notice, and Open its Open.
   const held = {}
   const opened = []
-  const hands = {local: {opened: v => { held.opened = v }, selected: v => { held.selected = v }}, messages: () => {}, approvals: () => {},
-    open: async target => { opened.push(target) }}
-  const binding = rail.notificationsBinding('widgets:notifications', {...base, ledger: answered}, {}, hands)
-  assert.equal(JSON.parse(binding.values.requests).length, 2)
-  assert.equal(JSON.parse(binding.values.provider).provider, 'macos.applescript-notification-center')
-  assert.equal(binding.standing, undefined, 'Open stands once the requests are read')
-  assert.equal(binding.waiting, undefined)
-  const all = drawsOn(design, binding, /Morning checks failed|Kev decision service down|Flint asks for a decision|macOS Notification Centre/)
+  const kept = () => ({opened: held.opened ?? [], hold: ids => { held.opened = ids }})
+  const open = async target => { opened.push(target) }
+  const binding = approvalsWith({...base, ledger: answered}, open, kept())
+  const requests = queueOf(binding).filter(row => row.kind === 'request')
+  assert.equal(requests.length, 2)
+  assert.deepEqual(requests.map(row => [row.id, row.who, row.text, row.age]), [['central:notification:2-1', 'routine:checks', 'Routine kept red', 3300],
+    ['central:notification:1-1', 'central:day', 'Day close waits on Face 5.', 7200]], 'each by its words (a request with no title by its body), its caller and how long it waited')
+  assert.equal(requests[0].urgent, true, 'a critical request is urgent')
+  assert.equal(binding.values.desktop, 'shown', 'the provider is available: your computer shows a notice')
+  assert.equal(binding.waiting, undefined, 'nothing waits once the requests are read')
+  const all = drawsOn(design, binding, /prop:setModel|setModel|Morning checks failed|Kev decision service down/)
   assert.match(all, /Routine kept red/)
   assert.match(all, /Day close waits on Face 5\./, 'a request with no title is drawn by its body')
   await binding.write([{key: 'open', value: 'central:notification:2-1'}])
   assert.deepEqual(opened, ['https://github.com/EpiLogos/O-I/actions/runs/7'])
-  assert.deepEqual([JSON.parse(held.opened), held.selected], [['central:notification:2-1'], 'central:notification:2-1'])
-  // A request that names nothing to open, a ref Central does not keep, and a hand that refuses: each refuses in words, and nothing is held.
+  assert.deepEqual(held.opened, ['central:notification:2-1'])
+  assert.equal(queueOf(approvalsWith({...base, ledger: answered}, open, kept())).find(row => row.id === 'central:notification:2-1').opened, true, 'held, it is drawn opened')
+  // A request that names nothing to open, a ref Approvals does not hold, and a hand that refuses: each refuses in words, and nothing is held.
   delete held.opened
-  await assert.rejects(binding.write([{key: 'open', value: 'central:notification:1-1'}]), /names nothing to open/)
-  await assert.rejects(binding.write([{key: 'open', value: 'central:notification:9-9'}]), /keeps no request central:notification:9-9/)
-  const refusing = rail.notificationsBinding('widgets:notifications', {...base, ledger: answered}, {}, {...hands,
-    open: async target => { throw new Error(`Open: no route in the shell opens ${target} yet`) }})
+  await assert.rejects(approvalsWith({...base, ledger: answered}, open, kept()).write([{key: 'open', value: 'central:notification:1-1'}]), /names nothing to open/)
+  await assert.rejects(approvalsWith({...base, ledger: answered}, open, kept()).write([{key: 'open', value: 'central:notification:9-9'}]), /no item central:notification:9-9 waits/)
+  const refusing = approvalsWith({...base, ledger: answered}, async target => { throw new Error(`Open: no route in the shell opens ${target} yet`) }, kept())
   await assert.rejects(refusing.write([{key: 'open', value: 'central:notification:2-1'}]), /no route in the shell opens https:/)
   assert.equal(held.opened, undefined, 'a refused open is not held as opened')
 })
 
-test('before Central answers, the requests wait; where it refuses, Open says why in Central\'s words and the requests stay absent', async () => {
-  const hands = {local: {}, messages: () => {}, approvals: () => {}, open: async () => {}}
-  const reading = rail.notificationsBinding('widgets:notifications', {...base, ledger: {status: 'reading'}}, {}, hands)
-  assert.deepEqual(reading.waiting, ['requests', 'provider'])
-  assert.equal(reading.values.requests, undefined)
+test('before Central answers, the requests wait; where it refuses, Approvals says why in Central\'s words and the requests stay absent', async () => {
+  // REPLACED (#725): Notifications' waiting and Open's refusal — in Approvals the desktop's notice waits, and carries Central's refusal.
+  const reading = approvalsWith({...base, ledger: {status: 'reading'}})
+  assert.deepEqual(reading.waiting, ['desktop'])
+  assert.equal(reading.values.queue, undefined, 'no request is read, and nothing else waits')
   const words = 'The kernel routes personal.notifications.list to no owner (desktop/cradle/kernel/src/action.rs invoke).'
-  const refused = rail.notificationsBinding('widgets:notifications', {...base, ledger: {status: 'refused', error: words}}, {}, hands)
-  assert.equal(refused.values.requests, undefined)
-  assert.equal(refused.values.provider, undefined)
-  assert.ok(refused.standing.open.disabled.includes(words), 'Open is disabled with Central\'s (or the kernel\'s) own words')
-  await assert.rejects(refused.write([{key: 'open', value: 'x'}]), /routes personal\.notifications\.list to no owner/)
-  const noProvider = rail.notificationsBinding('widgets:notifications', {...base, ledger: {status: 'answered', value: {...LEDGER, provider: null,
-    provider_error: 'No eligible Connector implements UserNotification.'}}}, {}, hands)
-  assert.equal(noProvider.values.provider, undefined, 'no provider selected: absent, never a guessed one')
-  assert.equal(JSON.parse(noProvider.values.requests).length, 2)
+  const refused = approvalsWith({...base, ledger: {status: 'refused', error: words}})
+  assert.equal(refused.values.queue, undefined)
+  assert.equal(refused.values.desktop, undefined)
+  assert.ok(refused.standing.desktop.disabled.includes(words), 'the desktop\'s notice is disabled with Central\'s (or the kernel\'s) own words')
+  await assert.rejects(refused.write([{key: 'open', value: 'x'}]), /no item x waits/)
+  const noProvider = approvalsWith({...base, ledger: {status: 'answered', value: {...LEDGER, provider: null,
+    provider_error: 'No eligible Connector implements UserNotification.'}}})
+  assert.equal(noProvider.values.desktop, undefined, 'no provider selected: absent, never a guessed one')
+  assert.equal(queueOf(noProvider).length, 2)
+  const unavailable = approvalsWith({...base, ledger: {status: 'answered', value: {...LEDGER, provider: {...LEDGER.provider, available: false}}}})
+  assert.equal(unavailable.values.desktop, 'refused', 'a provider that cannot show: refused')
 })
 
-test('the rail device reads today\'s requests from Central through invoke_action, and Open goes where the shell has a route', async () => {
+test('Approvals reads today\'s requests from Central through invoke_action, and Open goes where the shell has a route', async () => {
   const {readFile} = await import('node:fs/promises')
   const source = await readFile(new URL('../src/widgets/railDevices.tsx', import.meta.url), 'utf8')
   assert.match(source, /centralActionOp\(NOTIFY_LIST_ACTION, \{since_unix_ms: since\}\)/, 'personal.notifications.list since the local midnight')
-  assert.match(source, /useNotificationsBinding\(transport\)/)
-  assert.match(source, /open: openNotificationTarget/)
+  // REPLACED (#725): the rail's Notifications device read them (useNotificationsBinding) — the rail's reader is now useOwnerRequests, and
+  // Central's Approvals carries what it reads, Open through openNotificationTarget.
+  assert.match(source, /export function useOwnerRequests\(transport/)
+  assert.doesNotMatch(source, /useNotificationsBinding|id: 'notifications'/, 'no Notifications device on the rail')
+  const central = await readFile(new URL('../src/central/devices/CentralDevices.tsx', import.meta.url), 'utf8')
+  assert.match(central, /const ownerRequests = useOwnerRequests\(transport\)/)
+  assert.match(central, /withOwnerRequests\(commented, \{\.\.\.ownerRequests, nowUnixMs: nowUnixMs \|\| Date\.now\(\)\}, openNotificationTarget,/)
   assert.match(source, /plugin:opener\|open_url/, 'an https:// target through the host\'s opener, as Expressions opens a reference')
   assert.match(source, /no router for oi:\/\/ addresses/, 'an oi:// target refuses naming the missing router')
   assert.equal(rail.NOTIFY_LIST_ACTION, 'personal.notifications.list')

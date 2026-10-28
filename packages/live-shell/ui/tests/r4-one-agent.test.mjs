@@ -203,8 +203,11 @@ test('Scope on Central carries Context & world\'s readings in Scope\'s keys; the
   assert.equal(scope.values.receipts, context.receipts, 'the session\'s receipts')
   const places = JSON.parse(String(scope.values.reads))
   assert.deepEqual(places.map(place => [place.id, place.ring]), [['packet', 0], ['world', 3]])
-  for (const key of ['reach', 'writeMode', 'knowledge', 'writes', 'basis']) assert.equal(scope.values[key], undefined, `${key}: no owner reports it`)
-  for (const key of ['reach', 'writeMode', 'knowledge']) assert.match(scope.standing[key].disabled, /no owner operation carries it yet — missing op:/, key)
+  // REPLACED (#725): Knowledge was one key; Scope's redrawn design draws its Knowledge page (§19.12, which took in the Knowledge route of §19.9)
+  // on its own keys — the sources, Search first, Link depth, Read budget, and Read again and Forget — each refused with the op it lacks.
+  const KNOWLEDGE = ['src.wiki', 'src.project', 'src.code', 'searchFirst', 'linkDepth', 'readBudget', 'readAgain', 'forget']
+  for (const key of ['reach', 'writeMode', ...KNOWLEDGE, 'writes', 'basis', 'route', 'readings']) assert.equal(scope.values[key], undefined, `${key}: no owner reports it`)
+  for (const key of ['reach', 'writeMode', ...KNOWLEDGE]) assert.match(scope.standing[key].disabled, /no owner operation carries it yet — missing op:/, key)
   await assert.rejects(() => scope.write([{key: 'writeMode', value: 'draft'}]), /Write mode: no owner operation/)
   scope.local.reachPending(2)
   assert.equal(world.centralScopeBinding(world.CENTRAL_SCOPE_ID, input).values.reachPending, 2, 'a raised reach waits for Confirm, held')

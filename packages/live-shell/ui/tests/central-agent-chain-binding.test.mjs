@@ -9,6 +9,9 @@
 // SCRIPTED against a FAKE OWNER (a stubbed kernel bridge holding one prepared context and answering op encounter context edit as
 // AIKit does) for Take out; SSR of each design's views on the binding's values. Every write goes to a fixture; nothing reaches the
 // owner's real ground. Not a screen pass: the native legs are the lead's.
+// Since the 22 Oct manual rewrite (#725): Context & world is Scope (PROGRAMME R25 item 5; §19.12), drawn by Software Factory's Scope design
+// on Central's readings (contextWorldBinding.ts centralScopeBinding); Agent identity's design is a plain module the Agent carries as its
+// Identity page (agent-identity.tsx); the Answer is the Agent (R25 item 5), and the packet a Send carries is the Packet's own.
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {readFile} from 'node:fs/promises'
@@ -60,11 +63,12 @@ const {loadWorldShellFamilies} = await import('../src/inhabitants/worldShellFami
 loadWorldShellFamilies()
 const central = inhabitantManifest('central')
 const panel = name => import(`../src/inhabitants/catalogue/panels/central__${name}.tsx`).then(module => module.design)
+// REPLACED (#725): Context & world's and the Answer's designs are retired; Agent identity's is a plain module now (the Agent's Identity page).
 const DESIGNS = {
   [packet.PACKET_DESIGN]: await panel('packet'), [search.SEARCH_DESIGN]: await panel('search'),
-  [world.CONTEXT_WORLD_DESIGN]: await panel('context-world'), [identity.IDENTITY_DESIGN]: await panel('agent-identity'),
+  [identity.IDENTITY_DESIGN]: (await import('../src/inhabitants/catalogue/panels/agent-identity.tsx')).design,
 }
-const ANSWER = await panel('nara-conversation')
+const {scope: SCOPE} = await import('../src/inhabitants/catalogue/panels/scope.tsx')
 const WIRINGS = [packet.PACKET_WIRING, search.SEARCH_WIRING, world.CONTEXT_WORLD_WIRING, identity.IDENTITY_WIRING]
 
 const html = element => renderToStaticMarkup(element)
@@ -77,12 +81,17 @@ const parse = value => JSON.parse(value)
 /** A design key the wiring holds: by name, or by its pattern (`r:<id>` holds `r:doc`). */
 const wired = (wiring, key) => wiring.keys.includes(key) || wiring.keys.some(pattern => pattern.includes(':<') && key.startsWith(pattern.slice(0, pattern.indexOf('<'))))
 
-test('every key of the four designs is wired: a reading, a write, the view\'s own, refused with its reason, or absent with its reason', () => {
+test('every key of the four designs is wired: a reading, a write, the view\'s own, refused with its reason, or absent with its reason', async () => {
   for (const wiring of WIRINGS) {
     const design = DESIGNS[wiring.design]
-    assert.ok(design, `${wiring.design}: the catalogue holds the design`)
-    assert.equal(design.id, wiring.design)
-    for (const key of [...Object.keys(design.fixtures['No readings']), ...Object.keys(design.defaults)]) assert.ok(wired(wiring, key), `${wiring.design}: the design's key "${key}" is wired`)
+    // REPLACED (#725): Context & world's design is retired (Context & world is Scope, R25 item 5); its wiring stays for Scope's binding on
+    // Central, and every key Scope is given there is a key Scope's design reads (below).
+    if (wiring === world.CONTEXT_WORLD_WIRING) assert.equal(design, undefined, `${wiring.design}: retired from the catalogue`)
+    else {
+      assert.ok(design, `${wiring.design}: the catalogue holds the design`)
+      assert.equal(design.id, wiring.design)
+      for (const key of [...Object.keys(design.fixtures['No readings']), ...Object.keys(design.defaults)]) assert.ok(wired(wiring, key), `${wiring.design}: the design's key "${key}" is wired`)
+    }
     for (const key of wiring.keys) {
       const placed = [wiring.reads, wiring.writes, wiring.local, wiring.refused, wiring.absent].some(table => key in table)
       assert.ok(placed, `${wiring.design}: "${key}" is read, written, held, refused or absent`)
@@ -91,10 +100,24 @@ test('every key of the four designs is wired: a reading, a write, the view\'s ow
   }
   // The acts each design presses are its keys too (central__packet.tsx: capture, clear, answer, takeOut).
   for (const act of ['capture', 'clear', 'answer', 'takeOut']) assert.ok(packet.PACKET_WIRING.keys.includes(act), `the Packet's act "${act}" is wired`)
+  // Scope on Central: every key its binding gives is a key Scope's design reads, or a place's own request (r:<id>, w:<id>), and every
+  // control it refuses says why in words.
+  // The design's keys: its defaults and fixtures, and the acts and controls it presses by name (p.set, st(p, …) in scope.tsx).
+  const scopeSource = await readFile(new URL('../src/inhabitants/catalogue/panels/scope.tsx', import.meta.url), 'utf8')
+  const scopeKeys = new Set([...Object.keys(SCOPE.defaults), ...Object.values(SCOPE.fixtures ?? {}).flatMap(fixture => Object.keys(fixture)),
+    ...[...scopeSource.matchAll(/(?:p\.set|st)\((?:p, )?'([^']+)'/g)].map(match => match[1])])
+  const onCentral = world.centralScopeBinding(chain.CENTRAL_SCOPE_ID, {answer: {bound: true, session: 'agent-session/x'}, horizon: null, document: null, packet: {items: 1, session: 'agent-session/x'}})
+  for (const key of [...Object.keys(onCentral.values), ...Object.keys(onCentral.standing)]) assert.ok(scopeKeys.has(key) || /^[rw]:/.test(key), `Scope reads "${key}"`)
+  for (const [key, standing] of Object.entries(onCentral.standing)) assert.ok(standing.disabled.length > 20, `Scope: "${key}" says why in words`)
 })
 
-test('each device is published under the id its design draws, from a face the family declares', () => {
-  const faces = {packet: 'device-audio-fx', search: 'device-instrument', 'context-world': undefined, 'agent-identity': undefined}
+test('each device is published under the id its design draws, from a face the family declares', async () => {
+  // REPLACED (#725): Context & world — retired, declared no more; Scope stands in its place on Central's chain, its design Software
+  // Factory's (CentralDevices.tsx centralAgentDevices).
+  assert.ok(!central.faces.some(candidate => candidate.id === 'context-world'), 'Context & world is retired')
+  const {scope} = (await import('../src/central/devices/CentralDevices.tsx')).centralAgentDevices()
+  assert.deepEqual([scope.id, designKey(scope.family, scope.face.id)], [chain.CENTRAL_SCOPE_ID, SCOPE.id], 'Scope, drawn by its own design')
+  const faces = {packet: 'device-audio-fx', search: 'device-instrument', 'agent-identity': undefined}
   for (const [face, semantic] of Object.entries(faces)) {
     const declared = central.faces.find(candidate => candidate.id === face)
     assert.ok(declared, `the family declares ${face}`)
@@ -236,20 +259,21 @@ test('Take out reaches AIKit as op encounter context edit at the revision read, 
   }
 })
 
-test('the Answer shows the packet its Send carries — the Packet\'s, only when prepared for the Answer\'s own session', () => {
+test('the packet a Send carries is the Packet\'s own: its Answer this sends it with its own conversation, and refuses where none stands; the Packet draws each item\'s whole size', () => {
+  // REPLACED (#725): "the Answer shows the packet its Send carries — the Packet's, only when prepared for the Answer's own session" — the
+  // Answer was retired ("Answer is the Agent on a page's chain", PROGRAMME R25 item 5), and the Agent's design draws no packet. The Packet's
+  // own Answer this (§18.3) is the Send that carries it: on the conversation the Packet was prepared for (CentralDevices.tsx usePacketDevice:
+  // the reading and the Send are the same conversation's), refused in words where no conversation stands.
   holds.resetHolds()
   const items = packet.packetValues('central:packet', {reading: {context: prepared([TEXT_ITEM, OBSERVED_ITEM])}, companion: 'Fizz', bound: true}).packet
-  const base = {nara: {state: 'bound', session: SESSION, resume: false}, roster: [], page: {title: 'Flow · flow-2026-10-03-1432'}}
-  assert.equal(answer.answerValues('central:nara-conversation', {...base, packet: {items, session: SESSION}}).packet, items)
-  assert.equal(answer.answerValues('central:nara-conversation', {...base, packet: {items, session: 'agent-session/another'}}).packet, undefined, 'another conversation\'s packet is not this answer\'s')
-  assert.equal(answer.answerValues('central:nara-conversation', {...base, nara: {state: 'unbound', session: null}, packet: {items, session: null}}).packet, undefined)
-  // The Answer draws each item by its label and its UTF-8 bytes as its size (central__nara-conversation.tsx Packet, sizeOf), though the
-  // item's words show only how it opens.
-  const full = html(createElement(() => ANSWER.full(props(answer.answerBinding('central:nara-conversation', {...base, packet: {items, session: SESSION}}, {bind: null, send: null})))))
-  const kb = bytes => `${bytes < 10240 ? (bytes / 1024).toFixed(1) : Math.round(bytes / 1024)} KB`
-  assert.match(full, /aria-label="Packet"/)
-  assert.match(full, /oi-things\.html/, 'the item by its label')
-  assert.match(full, new RegExp(`<small>${kb(new TextEncoder().encode(PAGE).length)}</small>`), 'the whole item\'s bytes, not the words shown')
+  assert.ok(items, 'the packet prepared for the conversation')
+  assert.equal(packet.answerRefusal({companion: 'Fizz', bound: false, draft: 'x', busy: false, items: 2}), 'No Fizz conversation stands, so nothing receives the packet yet.')
+  const unbound = packet.packetBinding('central:packet', {reading: {context: prepared([TEXT_ITEM, OBSERVED_ITEM])}, companion: 'Fizz', bound: false}, {edit: null, send: null})
+  assert.match(unbound.standing.answer.disabled, /No Fizz conversation stands/, 'Answer this stands disabled: no conversation receives the packet')
+  // The item's whole size, not the words shown (the Answer drew it as bytes; the Packet draws the whole entry's characters, `chars`).
+  const full = html(createElement(() => DESIGNS[packet.PACKET_DESIGN].full(props(packet.packetBinding('central:packet', {reading: {context: prepared([OBSERVED_ITEM])}, companion: 'Fizz', bound: true},
+    {edit: null, send: null})))))
+  assert.match(full, new RegExp(`\\b${PAGE.length}\\b`), 'the whole item\'s size, not the words shown')
 })
 
 // ─────────────────────────────────────────────────────────────────────────────────────────────────── Search
@@ -429,8 +453,11 @@ test('each design draws its five views on its binding — the packet\'s items, t
     [search.SEARCH_DESIGN]: search.searchBinding('central:search', {query: 'ground', hits: HITS, rows: ROWS, pending: []}, ['O-I']),
     [identity.IDENTITY_DESIGN]: identity.identityBinding('central:agent-identity', {roster: {agents: ROSTER}, extras: identity.profileExtrasOf(RAW_ROSTER), talkingTo: FLINT,
       card: {agent: FLINT, world: null, card: CARD}}),
-    [world.CONTEXT_WORLD_DESIGN]: world.contextWorldBinding('central:context-world', {answer: {bound: true, session: SESSION}, horizon: HORIZON, document: 'Flow · x', packet: {items: 2, session: SESSION}}),
   }
+  // REPLACED (#725): Context & world's design drew its places and receipts — Context & world is Scope (R25 item 5): Scope's design draws its
+  // places on Central's binding (centralScopeBinding), and the receipts with their revisions are that binding's own values (Scope draws a
+  // receipt count from the places it may write, which no owner lists).
+  const scopeBinding = world.centralScopeBinding(chain.CENTRAL_SCOPE_ID, {answer: {bound: true, session: SESSION}, horizon: HORIZON, document: 'Flow · x', packet: {items: 2, session: SESSION}})
   for (const [id, binding] of Object.entries(all)) {
     for (const view of VIEWS) assert.doesNotThrow(() => html(createElement(() => DESIGNS[id][view](props(binding)))), `${id} ${view} draws`)
   }
@@ -441,9 +468,13 @@ test('each design draws its five views on its binding — the packet\'s items, t
   assert.match(packetFull, new RegExp(`${TEXT.length + PAGE.length}`), 'the total size at the foot')
   assert.match(draw(search.SEARCH_DESIGN, 'full'), /Consult authored ground/, 'the owner\'s result')
   assert.match(draw(identity.IDENTITY_DESIGN, 'whole'), /Flint/, 'the agent\'s name')
-  const worldFull = draw(world.CONTEXT_WORLD_DESIGN, 'full')
-  assert.match(worldFull, /2 sources an agent may retrieve/, 'the place the agent may read, by what it is (the pane names a place by its path)')
-  assert.match(worldFull, /30d29048 → b4a2c96a/, 'a receipt with its revisions either side')
+  for (const view of VIEWS) assert.doesNotThrow(() => html(createElement(() => SCOPE[view](props(scopeBinding)))), `Scope ${view} draws`)
+  const scopeWhole = html(createElement(() => SCOPE.whole(props(scopeBinding))))
+  assert.match(scopeWhole, /Your world/, 'the place the agent may read, by its name')
+  assert.match(scopeWhole, /Packet/, 'and the packet its turn carries')
+  assert.match(parse(scopeBinding.values.reads)[1].path, /^2 sources an agent may retrieve/, 'the place\'s path rides along with it')
+  const [newest, older] = parse(scopeBinding.values.receipts)
+  assert.deepEqual([older.before, older.after, newest.after], ['30d29048', 'b4a2c96a', 'cbf29ce4'], 'a receipt with its revisions either side')
   // No reading at all: each design draws the absence in words, never the design's own sample.
   for (const [id, design] of Object.entries(DESIGNS)) {
     const bare = {values: {}, standing: {}}

@@ -1,6 +1,10 @@
 // Lane BC2: Central's page family on Central's readings and writes — the catalogue's Document, Flow, Text, Highlight, Notes, Beings,
 // Things and Workspace designs (inhabitants/catalogue/panels/central__*.tsx) bound by central/devices/pageBindings.ts over the
 // owners the hosted faces already read (central/devices/pageReadings.ts), placed on Central's chain by CentralDevices.tsx.
+// Since the 22 Oct manual rewrite (#725) the Flow, Text, Highlight, Notes, Beings, Things and Workspace designs are retired: a page's Beings,
+// Things and Flow are its Clip panel and editor tabs, Text, Highlight and Notes its tools (PROGRAMME R25 item 4; §16.1, §18.1), drawn by
+// Central's clip design (catalogue/clips/central.tsx); the Workspace is the track's head and Docs (§18.1). Their bindings stay and are
+// checked here on their own values; the drawings are re-asserted on the clip design.
 // Channels: SCRIPTED (pure bindings over a fixture Flow island shaped as the real one, flow-2026-10-03-1432.html; the real file read
 // READ-ONLY where this machine holds it); SCRIPTED against a FAKE OWNER (a stubbed kernel bridge holding one Flow file and checking
 // the CAS as central.files.write does) for the Flow's next entry; SSR of each design's views on the binding's values. Not a screen
@@ -52,11 +56,13 @@ const {loadWorldShellFamilies} = await import('../src/inhabitants/worldShellFami
 loadWorldShellFamilies()
 const central = inhabitantManifest('central')
 const panel = name => import(`../src/inhabitants/catalogue/panels/central__${name}.tsx`).then(module => module.design)
-const DESIGNS = {
-  [bindings.DOCUMENT_DESIGN]: await panel('document'), [bindings.FLOW_DESIGN]: await panel('flow-document'), [bindings.TEXT_DESIGN]: await panel('text'),
-  [bindings.HIGHLIGHT_DESIGN]: await panel('highlight'), [bindings.NOTES_DESIGN]: await panel('notes'), [bindings.BEINGS_DESIGN]: await panel('beings'),
-  [bindings.THINGS_DESIGN]: await panel('things'), [bindings.WORKSPACE_DESIGN]: await panel('workspace'),
-}
+// REPLACED (#725): the eight page designs — the Document stands, Docs joins it (§18.5); the other six and the Workspace are retired (above).
+const DESIGNS = {[bindings.DOCUMENT_DESIGN]: await panel('document'), [bindings.DOCS_DESIGN]: await panel('docs')}
+/** The page family's designs the 22 Oct manual rewrite retired: their files are gone from the catalogue. */
+const RETIRED = [bindings.FLOW_DESIGN, bindings.TEXT_DESIGN, bindings.HIGHLIGHT_DESIGN, bindings.NOTES_DESIGN, bindings.BEINGS_DESIGN, bindings.THINGS_DESIGN, bindings.WORKSPACE_DESIGN]
+const {loadClip} = await import('../src/inhabitants/catalogue/clips/index.ts')
+const centralClip = await import('../src/central/clipBinding.ts')
+const CLIP = await loadClip('central')
 
 // ── a Flow, shaped as the real one (Control/user/flows/flow-2026-10-03-1432.html: format v4, an agent participant whose entries name
 // sources and artifacts) with the person, a reply, a branch, a highlight, an emphasis, a heading, a quote, a note and a packet item ──
@@ -93,11 +99,17 @@ const flowMaterial = {form: 'flow', page: PAGE, refusal: null}
 
 test('every key of every page design is wired: a reading, a write, the view\'s own, refused with its reason, or absent with its reason', () => {
   for (const wiring of bindings.PAGE_WIRINGS) {
-    const design = DESIGNS[wiring.design]
-    assert.ok(design, `${wiring.design}: the catalogue holds the design`)
-    assert.equal(design.id, wiring.design)
-    const declared = Object.keys(design.fixtures['No readings'])
-    for (const key of declared) assert.ok(wiring.keys.includes(key), `${wiring.design}: the design's key "${key}" is in the wiring`)
+    // REPLACED (#725): a retired design's keys are not checked against its file (the file is gone); its wiring still places every key and
+    // says every refusal in words, since Central's clip binding refuses in the page family's own words (clipBinding.ts CENTRAL_WIRING).
+    if (RETIRED.includes(wiring.design)) {
+      assert.ok(!existsSync(new URL(`../src/inhabitants/catalogue/panels/${wiring.design.replace(':', '__')}.tsx`, import.meta.url)), `${wiring.design}: retired from the catalogue`)
+    } else {
+      const design = DESIGNS[wiring.design]
+      assert.ok(design, `${wiring.design}: the catalogue holds the design`)
+      assert.equal(design.id, wiring.design)
+      const declared = Object.keys(design.fixtures['No readings'])
+      for (const key of declared) assert.ok(wiring.keys.includes(key), `${wiring.design}: the design's key "${key}" is in the wiring`)
+    }
     for (const key of wiring.keys) {
       const placed = [wiring.reads, wiring.writes, wiring.local, wiring.refused, wiring.absent].some(table => key in table)
       assert.ok(placed, `${wiring.design}: "${key}" is read, written, held, refused or absent`)
@@ -107,13 +119,15 @@ test('every key of every page design is wired: a reading, a write, the view\'s o
 })
 
 test('each page device is published under the id its design draws: designKey(family, face) === design.id', () => {
-  for (const face of ['document', 'flow-document', 'text', 'highlight', 'notes', 'beings', 'things', 'workspace']) {
+  // REPLACED (#725): the eight page faces — the Document and Docs are the family's page faces now; the others are retired, declared no more.
+  for (const face of ['document', 'docs']) {
     const declared = central.faces.find(candidate => candidate.id === face)
     assert.ok(declared, `the family declares ${face}`)
     const device = model.centralDevice(declared, {})
     assert.equal(designKey(device.family, device.face.id), `central:${face}`)
     assert.ok(DESIGNS[`central:${face}`], `the catalogue's design central:${face}`)
   }
+  for (const face of ['flow-document', 'text', 'highlight', 'notes', 'beings', 'things', 'workspace']) assert.ok(!central.faces.some(candidate => candidate.id === face), `${face}: retired`)
 })
 
 // ─────────────────────────────────────────────────────────────────────────────────────────────────── the page, read
@@ -368,11 +382,13 @@ test('the Workspace reads the book: its name, project, open mode, each mode\'s p
 
 // ─────────────────────────────────────────────────────────────────────────────────────────────────── the place on the chain
 
-test('REPLACED placement (DLW §16.2, R4): no page face stands on a chain — the family\'s chain faces are the Day, the Packet, Ground hygiene, Machine and Impact, reached document or not', () => {
+test('REPLACED placement (DLW §16.2, R4): no page face stands on a chain — the family\'s chain faces are the Day, the Packet and Docs, reached document or not', () => {
   // Was: the Flow first on a reached Flow's chain, then the Document, Text, Highlight and Notes, the Packet, then the agent's devices. The
   // page family is a page's Clip panel, editor tabs and tools now (§16.1, lock §0.3.4); its designs and bindings stand for Clip view.
+  // REPLACED (#725): W4's Ground hygiene, Machine and Impact — retired (§19.16, §18.7, §18.6); Docs, the page family's account of the world,
+  // follows Scope on every world (§16.2, §18.5).
   const ids = chain.placedFaces(central.faces).map(face => face.id)
-  assert.deepEqual(ids, ['day-die', 'packet', 'ground-hygiene', 'machine', 'impact'])
+  assert.deepEqual(ids, ['day-die', 'packet', 'docs'])
   for (const page of ['workspace', 'flow-document', 'beings', 'things', 'document', 'text', 'highlight', 'notes']) assert.ok(!ids.includes(page), `${page} stands on no chain`)
 })
 
@@ -382,64 +398,72 @@ const html = element => renderToStaticMarkup(element)
 const props = binding => ({v: binding.values, owner: binding.values, set: () => {}, nav: {}, page: '', setPage: () => {}, standing: binding.standing})
 const VIEWS = ['folded', 'compact', 'whole', 'widget']
 
-test('each design draws its five views on the binding — the Document an open Flow\'s template, title and save state; the Flow its entries and people', () => {
+test('each design draws its views on the binding — the Document an open Flow\'s template, title and save state; the Flow\'s Clip view its entries and people', () => {
   bindings.resetHolds()
-  const roster = [{ref: 'agent/central-guardian', name: 'Central Guardian', accepted: true}]
-  const all = {
-    [bindings.DOCUMENT_DESIGN]: bindings.documentBinding('central:document', reachedFlow(), flowMaterial),
-    [bindings.FLOW_DESIGN]: bindings.flowBinding('central:flow-document', reachedFlow(), flowMaterial, roster, null),
-    [bindings.TEXT_DESIGN]: bindings.textBinding('central:text', reachedFlow(), flowMaterial),
-    [bindings.HIGHLIGHT_DESIGN]: bindings.highlightBinding('central:highlight', reachedFlow(), flowMaterial),
-    [bindings.NOTES_DESIGN]: bindings.notesBinding('central:notes', reachedFlow(), flowMaterial),
-  }
-  for (const [id, binding] of Object.entries(all)) {
-    for (const view of [...VIEWS, 'full']) assert.doesNotThrow(() => html(createElement(() => DESIGNS[id][view](props(binding)))), `${id} ${view} draws`)
-  }
-  const whole = html(createElement(() => DESIGNS[bindings.DOCUMENT_DESIGN].whole(props(all[bindings.DOCUMENT_DESIGN]))))
+  const document = bindings.documentBinding('central:document', reachedFlow(), flowMaterial)
+  for (const view of [...VIEWS, 'full']) assert.doesNotThrow(() => html(createElement(() => DESIGNS[bindings.DOCUMENT_DESIGN][view](props(document)))), `${bindings.DOCUMENT_DESIGN} ${view} draws`)
+  const whole = html(createElement(() => DESIGNS[bindings.DOCUMENT_DESIGN].whole(props(document))))
   assert.match(whole, /Flow v0\.4/, 'the template')
   assert.match(whole, /Factory original development Run/, 'the title')
   assert.match(whole, />saved</, 'the save state')
-  const flowWhole = html(createElement(() => DESIGNS[bindings.FLOW_DESIGN].whole(props(all[bindings.FLOW_DESIGN]))))
-  assert.match(flowWhole, /Factory coordinator/, 'the people')
-  assert.match(flowWhole, /You/)
-  assert.match(flowWhole, />5</, 'five entries')
-  const widget = html(createElement(() => DESIGNS[bindings.FLOW_DESIGN].widget(props(all[bindings.FLOW_DESIGN]))))
-  assert.match(widget, /What if the image fails breaks\?/, 'the last entries')
+  // REPLACED (#725): the Flow, Text, Highlight and Notes designs drew their views on their bindings — retired: the Flow is the page's
+  // Participants panel and its Dialogue, Flow and Journal editor tabs, and Text, Highlight and Notes its tools in Clip view (PROGRAMME R25
+  // item 4; §16.1, §18.1 Clip view). Central's clip design draws each of them on the same page, read by its clip binding.
+  const clipBinding = centralClip.centralClipBinding({ref: 'subject:note:user/flows/flow-2026-10-03-1432.html', values: centralClip.flowValues(PAGE), location: LOCATION}, {})
+  const clipProps = {v: {...CLIP.defaults, ...Object.fromEntries(Object.keys(CLIP.defaults).map(key => [key, undefined])), ...clipBinding.values}, set: () => {}, standing: clipBinding.standing,
+    size: 'detail', room: {w: 720, h: 420}}
+  const tabs = [...CLIP.panel, ...CLIP.tools, ...CLIP.editor].filter(tab => !tab.shows || tab.shows(clipProps.v))
+  assert.deepEqual(tabs.map(tab => tab.id), ['clip', 'people', 'text', 'highlight', 'notes', 'dialogue', 'flow', 'journal', 'source'], 'a Flow: its Participants and its three editor tabs')
+  for (const tab of tabs) assert.doesNotThrow(() => html(createElement(() => tab.draw(clipProps))), `clip ${tab.id} draws`)
+  const drawTab = id => html(createElement(() => tabs.find(tab => tab.id === id).draw(clipProps)))
+  const people = drawTab('people')
+  assert.match(people, /Factory coordinator/, 'the people')
+  assert.match(people, /You/)
+  const dialogue = drawTab('dialogue')
+  assert.equal(JSON.parse(clipProps.v.entries).length, 5, 'five entries')
+  assert.match(dialogue, /What if the image fails breaks\?/, 'the last entries')
+  assert.match(dialogue, /Which unit starts first\?/)
 })
 
 // ─────────────────────────────────────────────────────────────────────────────────────────────────── the Answer
 
 const answer = await import('../src/central/devices/answerBinding.ts')
-const ANSWER = await panel('nara-conversation')
+const {design: AGENT} = await import('../src/inhabitants/catalogue/panels/actuation__harness-model.tsx')
 
-test('the Answer is wired on every key, and draws the bound session\'s exchange as the Agent and the Thread draw it (lane BF2\'s rows, one read)', async () => {
+test('the Agent on Central draws the bound session\'s exchange as the Thread draws it (lane BF2\'s rows, one read); its run settings refused naming their op', async () => {
+  // REPLACED (#725): "the Answer is wired on every key, and draws the bound session's exchange" — the Answer was retired as a device of its
+  // own ("Answer is the Agent on a page's chain", PROGRAMME R25 item 5): the same owners draw the one Agent's design (actuation:harness-model)
+  // on Central (answerBinding.ts centralAgentBinding), the dialogue binding its light, the roster's agent of the binding's role its name, the
+  // exchange its thread, the session's Send its composer.
   bindings.resetHolds()
-  for (const key of Object.keys(ANSWER.fixtures['No readings'])) assert.ok(answer.ANSWER_WIRING.keys.includes(key), `"${key}" is wired`)
-  for (const key of answer.ANSWER_WIRING.keys) {
-    const table = answer.ANSWER_WIRING
-    assert.ok([table.reads, table.writes, table.local, table.refused, table.absent].some(t => key in t), `"${key}" placed`)
-  }
-  assert.equal(designKey('central', 'nara-conversation'), ANSWER.id)
+  assert.ok(!existsSync(new URL('../src/inhabitants/catalogue/panels/central__nara-conversation.tsx', import.meta.url)), 'the Answer\'s design is retired')
   const roster = [{ref: 'agent/nara', name: 'Nara', accepted: true, role: 'nara', purpose: 'Answers in this Expression.'}, {ref: 'agent/x', name: 'X', accepted: false}]
   const observed = {status: {state: 'Resident'}, reading: {blocks: [{id: 1, kind: 'user', text: 'Which unit starts first?'}, {id: 2, kind: 'assistant', text: 'The first, once the image is repaired.'}], permissions: []}}
   const sent = []
-  const input = {nara: {state: 'bound', session: 'session:fixture', resume: false}, observed, roster, page: {title: 'Flow · flow-2026-10-03-1432', packet: '[]'}}
-  const binding = answer.answerBinding('central:nara-conversation', input, {bind: async () => {}, send: async text => { sent.push(text) }})
+  const input = {nara: {state: 'bound', session: 'session:fixture', resume: false}, observed, roster, page: {title: 'Flow · flow-2026-10-03-1432'}}
+  const binding = answer.centralAgentBinding(answer.CENTRAL_AGENT_ID, input, {bind: async () => {}, send: async text => { sent.push(text) }})
   const v = binding.values
-  assert.deepEqual([v.light, v.agent, v.state, v.document, v.resume, v.draft], ['lit', 'agent/nara', 'idle', 'Flow · flow-2026-10-03-1432', false, ''])
+  assert.deepEqual([v.light, v.agent, v.draft], ['lit', 'Nara', ''])
   assert.deepEqual(JSON.parse(v.thread).map(row => [row.kind, row.text]), [['you', 'Which unit starts first?'], ['agent', 'The first, once the image is repaired.']])
-  assert.deepEqual(JSON.parse(v.agents).map(agent => agent.id), ['agent/nara'], 'accepted agents only')
-  for (const key of ['answerAs', 'writes', 'effort', 'context', 'entry', 'sources']) assert.equal(v[key], undefined, `${key}: no owner reports it`)
+  for (const key of ['effort', 'model', 'harness', 'cap', 'input', 'quantize', 'heartbeat']) {
+    assert.equal(v[key], undefined, `${key}: no owner reports it`)
+    assert.equal(binding.standing[key].disabled, answer.CENTRAL_AGENT_REFUSED[key], `${key}: refused naming its op`)
+  }
   await binding.write([{key: 'sent', value: 'And then?'}])
   assert.deepEqual(sent, ['And then?'], 'the question goes to the session\'s own Send')
-  await assert.rejects(() => binding.write([{key: 'accept', value: true}]), /consent request/)
+  await assert.rejects(() => binding.write([{key: 'effort', value: 'high'}]), /missing op: kernel:nara_dialogue/)
   // Not bound: dark, no thread, Send disabled with the reason.
-  const unbound = answer.answerBinding('central:nara-conversation', {...input, nara: {state: 'unbound', session: null}, observed: undefined}, {bind: null, send: null})
+  const unbound = answer.centralAgentBinding(answer.CENTRAL_AGENT_ID, {...input, nara: {state: 'unbound', session: null}, observed: undefined}, {bind: null, send: null})
   assert.deepEqual([unbound.values.light, unbound.values.thread], ['dark', undefined])
   assert.match(unbound.standing.sent.disabled, /not bound/)
   await assert.rejects(() => unbound.write([{key: 'light', value: 'lit'}]), /No conversation is selected/)
   const props = b => ({v: b.values, owner: b.values, set: () => {}, nav: {}, page: '', setPage: () => {}, standing: b.standing})
-  for (const view of [...VIEWS, 'full']) assert.doesNotThrow(() => html(createElement(() => ANSWER[view](props(binding)))), `Answer ${view} draws`)
+  for (const view of [...VIEWS, 'full']) assert.doesNotThrow(() => html(createElement(() => AGENT[view](props(binding)))), `Agent ${view} draws`)
+  // The Agent's own `thread` is the exchange its tile draws (the agent's tile in Messages, §19.24); its Full is the Thread page's, carried
+  // under `thread.` (r4-one-agent.test.mjs).
+  const tile = html(createElement(() => AGENT.widget(props(binding))))
+  assert.match(tile, /Which unit starts first\?/, 'the exchange drawn: your words')
+  assert.match(tile, /The first, once the image is repaired\./, 'and the agent\'s')
 })
 
 test('a Flow\'s title and view are its file\'s meta: written on the revision read, the page\'s counter moved by one; a Day has neither', async () => {

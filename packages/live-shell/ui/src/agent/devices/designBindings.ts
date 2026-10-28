@@ -102,7 +102,14 @@ const REFUSE = {
   run: missing('Run', 'the exact JSON input `aikit praxis method run <ref> --input` takes (the kernel\'s aikit_write method-run carries it; the member has no field for it)', 'AIKit'),
   prove: missing('Prove', 'the run\'s proof `aikit praxis method prove --method <ref> --proof-json` takes (its Activity, Return, Evidence and verification refs; the member holds no run receipt)', 'AIKit'),
   reach: missing('Reach', 'the scope reach write on the world device\'s apply path (WO-SF2)', 'Software Factory'),
-  knowledge: 'Knowledge: set on the Knowledge route inside this Scope (§19.9), whose lenses wait on a lens-level request on the AgentProfile (knowledgeRouteBinding.ts).',
+  // Scope's Knowledge page (§19.12 Knowledge, which took in the Knowledge route of §19.9 in the 22 Oct manual rewrite): its settings by the
+  // design's own keys (scope.tsx), each refused in the Knowledge route's own words (knowledgeRouteBinding.ts KNOWLEDGE_REFUSE).
+  knowledgeSources: missing('The sources the agent may search', 'a lens-level request on the AgentProfile — Central\'s knowledge_source_refs carries source refs, not lenses, and agent-profile.save writes that list', 'Central'),
+  searchFirst: missing('Search first', 'a per-agent order of search and links on the route', 'AIKit'),
+  linkDepth: missing('Link depth', 'a per-agent depth on `aikit knowledge relations` (the kernel asks depth 2 for every caller: knowledge.rs RELATIONS_DEPTH)', 'AIKit'),
+  readBudget: missing('Read budget', 'a per-agent ceiling on the pages a task opens', 'AIKit'),
+  readAgain: 'Read again: no reading of the pages the agent read stands here (`aikit knowledge history` records each route with an empty context), so none stands to read again.',
+  forget: 'Forget: no reading of the pages the agent read stands here, so none stands to forget (`aikit knowledge forget destination <resource>` reaches AIKit through the kernel\'s aikit_write since lane W3 round 3).',
   place: missing('A place in reach', 'the scope places write (WO-SF2)', 'Software Factory'),
   scope: 'Choose where the composition applies — Home, Project or Session — then Preview.',
   noPlan: 'Nothing is previewed: press Preview, read the change, then Apply.',
@@ -134,7 +141,9 @@ export const REFUSED_WRITES: Readonly<Record<string, Readonly<Record<string, str
   [AGENT_DESIGN]: {light: REFUSE.power, cap: REFUSE.budget, heartbeat: REFUSE.heartbeat},
   [RACK_DESIGN]: {set: REFUSE.set, exported: REFUSE.export},
   [MEMBER_DESIGN]: {reviewed: REFUSE.trust, run: REFUSE.run, proved: REFUSE.prove},
-  [SCOPE_DESIGN]: {reach: REFUSE.reach, writeMode: REFUSE.writeMode, knowledge: REFUSE.knowledge},
+  [SCOPE_DESIGN]: {reach: REFUSE.reach, writeMode: REFUSE.writeMode, 'src.wiki': REFUSE.knowledgeSources, 'src.project': REFUSE.knowledgeSources,
+    'src.code': REFUSE.knowledgeSources, searchFirst: REFUSE.searchFirst, linkDepth: REFUSE.linkDepth, readBudget: REFUSE.readBudget, readAgain: REFUSE.readAgain,
+    forget: REFUSE.forget},
 }
 
 // ---------------------------------------------------------------------------------------------------------------- the hold store
@@ -948,7 +957,7 @@ export function scopeValues(held: ChainHolds): Values {
   return values
 }
 
-const SCOPE_WRITES = (key: string) => ['reach', 'writeMode', 'knowledge'].includes(key) || key.startsWith('w:')
+const SCOPE_WRITES = (key: string) => ['reach', 'writeMode'].includes(key) || key in REFUSED_WRITES[SCOPE_DESIGN]! || key.startsWith('w:')
 
 /** A raised reach the view holds: a ring, or none (Cancel's drop). */
 const reachOf = (value: Value | undefined): number | undefined => {
@@ -981,7 +990,8 @@ export function scopeBinding(id: string, held: ChainHolds, writeModeRow: SdkPara
           if (receipt.kind === 'refused') throw Error(receipt.reason)
           continue
         }
-        if (key === 'knowledge') throw Error(REFUSE.knowledge)
+        const refused = REFUSED_WRITES[SCOPE_DESIGN]![key]
+        if (refused) throw Error(refused)
         if (key.startsWith('w:')) throw Error(REFUSE.place)
         throw Error(REFUSE.reading(key))
       }

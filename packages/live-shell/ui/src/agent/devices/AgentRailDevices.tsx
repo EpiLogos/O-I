@@ -1,7 +1,9 @@
 // The rail's agent devices, published in every mode (lane W1-Factory): Messages (DLW §19.24 "born on the widget rail, and opens full in a
-// pane, in every mode"), the monitors Gateways (§19.3), Frames (§19.6) and the Ledger (§19.13) — "On the rail, and full in a pane. Never on a
-// chain" (§16.1) — the Agency gateway, whose mark stands in the head of Messages and as a line of Gateways (§19.10), and the workcell rack,
-// whose widget is the Workcells tile (§19.23). They stand on the rail whether or not Factory's chain is mounted, so they are published here,
+// pane, in every mode"), the Ledger (§19.13) — a monitor, "On the rail, and full in a pane. Never on a chain" (§16.1) — the Frames tile, which
+// is the Gateway's widget (§19.6), and the workcell rack, whose widget is the Workcells tile (§19.23), listing every gateway your machines
+// reach with its state (§19.3: the Gateways monitor was retired into it in the 22 Oct manual rewrite, its reading carried under `gw.`). The
+// Agency gateway is the Gateway's agency build, whose mark stands in the head of Messages (§19.10): Messages reads the same gateway answer
+// (messagesBinding.ts), and no device of its own stands. They stand on the rail whether or not Factory's chain is mounted, so they are published here,
 // once, beside the rail's own publisher (widgets/railDevices.tsx RailDevices draws this), and never by FactoryDeviceChain.tsx, which draws
 // the workcell rack on a workcell's chain from the door.
 //
@@ -31,7 +33,8 @@ import {fireWritePath} from '../agentNativeDispatch'
 import {trackKey} from '../agentRunModel'
 import {chainDeviceId, slotRows} from './agentChainDevices'
 import {gatewayBinding, useChainHolds, viewHolds} from './designBindings'
-import {AGENCY_GATEWAY_ID, FRAMES_ID, FRAMES_VIEW, GATEWAYS_RACK_ID, agencyBinding, framesBinding, journalAsks, journalSessions, mainDevices, rackBinding} from './mainTrackBindings'
+import {AGENCY_GATEWAY_ID, FRAMES_ID, FRAMES_VIEW, framesBinding, journalAsks, journalSessions, mainDevices, rackBinding} from './mainTrackBindings'
+import {GATEWAYS_PAGE, carryPages} from './oneAgentBinding'
 import {MESSAGES_ID, PERSON_ACTS, madeOf, messagesBinding, messagesDevice, positionRefs, type MessagesPorts} from './messagesBinding'
 import {runStateOfSession} from './runFaces'
 import {hostState} from '../../frame/devices/deviceHost'
@@ -49,7 +52,7 @@ import {useActuationRead, useGatewayEcology, useGatewayReplays, useInstanceUsage
 
 /** The rail's agent devices this publisher holds, by id: withdrawn with it. Approvals is not among them — it is Factory's Main track
  * effect (§19.14), published by its chain. */
-export const RAIL_AGENT_DEVICE_IDS: readonly string[] = [MESSAGES_ID, GATEWAYS_RACK_ID, AGENCY_GATEWAY_ID, FRAMES_ID, LEDGER_ID, WORKCELL_RACK_ID]
+export const RAIL_AGENT_DEVICE_IDS: readonly string[] = [MESSAGES_ID, FRAMES_ID, LEDGER_ID, WORKCELL_RACK_ID]
 
 /** Why the seat instrument is not asked: it is slow, so it is read only where its reading is drawn. */
 export const SEATS_NOT_ASKED = 'The seat instrument is asked while the Workcells tile is open or a workcell\'s return track is selected (`seat status` is slow, so it is not read for a closed tile).'
@@ -76,7 +79,7 @@ export function AgentRailDevices() {
   const {reading, transport, binding, resolved} = useAgentChainReading(null)
   const holds = useChainHolds()
 
-  // The Agency gateway, Gateways and Frames: the gateway's own answer; the Remote carrier's line from Workcell's status.
+  // The gateways (carried by the Workcells tile) and the Frames: the gateway's own answer; the Remote carrier's line from Workcell's status.
   const main = useMemo(() => mainDevices(), [])
   const workcellAnswer = useWorkcellAnswer(transport).reading
   const carrier = useMemo(() => carrierChainState(workcellAnswer), [workcellAnswer])
@@ -85,7 +88,6 @@ export function AgentRailDevices() {
     if (shown) selectDevice(shown)
   }, [])
   const gateways = useMemo(() => rackBinding({reading, holds, carrier}, {show: showChain}), [reading, holds, carrier, showChain])
-  const agency = useMemo(() => agencyBinding(reading, holds), [reading, holds])
   // The Frames monitor's frames (lane W6): AIKit's own gateway journal — its ecology names the sessions and their Streams, and each Stream of
   // the session chosen is replayed from where its last Keep frames begin. Refusals are AIKit's words (the installed AIKit may not carry
   // `gateway replay` yet), drawn as the reason.
@@ -194,7 +196,7 @@ export function AgentRailDevices() {
       if (request.kind === 'reconcile') setLastReconcile({receipt: request.receipt, answer: answer.data})
       return answer
     } : undefined), [transport])
-  const workcell = useMemo(() => {
+  const ownWorkcell = useMemo(() => {
     const git = gitValues(cellName ? workcellGitReading(seats, cellName, RACK_PROJECT) : reading, holds)
     const seatsUnread = !asked ? SEATS_NOT_ASKED : seats.status === 'refused' && seats.error ? seats.error : undefined
     return workcellRackBinding({name: cellName, project: RACK_PROJECT, seats: seats.status === 'answered' ? seats.value : null, ...(seatsUnread ? {seatsUnread} : {}),
@@ -206,16 +208,16 @@ export function AgentRailDevices() {
       ...(workcellWrite ? {workcell: workcellWrite} : {})})
   }, [cellName, seats, asked, reading, holds, gatewayPort, workcellAnswer, doctor, instanceList, usages, transport, workcellWrite, worlds.answer, materialOp, material, materialRead.refresh, lastReconcile, picked.chosen?.receipt,
     leaseRead.answer, checkpointsRead.answer])
+  // The Workcells tile lists every gateway your machines reach, with its state (§19.3, §19.23 Widget): the gateways' own binding under `gw.`.
+  const workcell = useMemo(() => carryPages(ownWorkcell, [{page: GATEWAYS_PAGE, binding: gateways}]), [ownWorkcell, gateways])
 
   // Publish each one again only when its own binding moves; withdraw them all with this publisher.
   const devices = useMemo((): Readonly<Record<string, DeviceInstance | null>> => ({
-    [MESSAGES_ID]: messagesDevice(), [GATEWAYS_RACK_ID]: main.rack, [AGENCY_GATEWAY_ID]: main.agency, [FRAMES_ID]: main.frames,
+    [MESSAGES_ID]: messagesDevice(), [FRAMES_ID]: main.frames,
     [LEDGER_ID]: receipts.ledger, [WORKCELL_RACK_ID]: workcellRackDevice(),
   }), [main, receipts])
   const publish = (id: string, designBinding: DesignBinding) => { const device = devices[id]; publishDevice(id, device ? {device, binding: designBinding} : null) }
   useEffect(() => { publish(MESSAGES_ID, messages) }, [devices, messages]) // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(() => { publish(GATEWAYS_RACK_ID, gateways) }, [devices, gateways]) // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(() => { publish(AGENCY_GATEWAY_ID, agency) }, [devices, agency]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { publish(FRAMES_ID, frames) }, [devices, frames]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { publish(LEDGER_ID, ledger) }, [devices, ledger]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { publish(WORKCELL_RACK_ID, workcell) }, [devices, workcell]) // eslint-disable-line react-hooks/exhaustive-deps
