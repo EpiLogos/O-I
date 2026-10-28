@@ -9,8 +9,9 @@
 //     its constellation (`ql wiki refract -`, the kernel's ql_read wiki-refract, QL-MEF #350).
 //   - Commit through a frame is AIKit's construction action (`aikit.constellation.apply`: frame_set and role_set, on the frame's revision
 //     and the register's file revision; construction.ts saveConstruction), read back by reading the register again.
-//   - Commit through a lens has no owner operation yet: AIKit's construction action keeps no reading on a constellation. Its control
-//     stands refused, naming the operation (the patch for AIKit is the ticket's, O-I #769).
+//   - Commit through a lens is the same action's reading_put (ai-kit f2c6ae59, knowledge_construction.rs Change::ReadingPut): QL's reading
+//     through the lens at the sublens it is turned to, as QL's provider disclosed it, kept on the constellation as a proposal on the
+//     construction revision it read, replacing one with the same reading ref; read back by reading the register again.
 import {detectTransport, kernelOp} from '../../../../../desktop/cradle/src/kernel/bridge'
 import type {KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
 import {CONSTRUCTION, editConstruction, readRegister, saveConstruction, type NativeConstruction, type WikiRegister}
@@ -18,11 +19,7 @@ import {CONSTRUCTION, editConstruction, readRegister, saveConstruction, type Nat
 import {ensureLensRegistry, lensRegistry} from '../techne/devices/lensRegistry'
 import type {Constellation} from './constellations'
 import {frameCommitChanges, frameReading, groovesOf, lensReadingOf, refractionRequest, snapshotHash, standsOfConstellation, standsOfConstruction,
-  type Groove, type Stand} from '../frame/browser/grooves'
-
-/** Commit through a lens: the operation AIKit lacks, in the shell's one sentence for it (frame/detail/clipBinding.ts missingOp). */
-export const LENS_COMMIT_MISSING = 'Commit of a lens\'s reading: no owner operation carries it yet — missing op: aikit.constellation.apply reading_put (AIKit). '
-  + 'AIKit\'s construction action keeps a constellation\'s frame, members, roles, relations and compositions, and no reading through a lens.'
+  type Groove, type LensGroove, type LensReading, type Stand} from '../frame/browser/grooves'
 
 const say = (cause: unknown): string => (cause instanceof Error ? cause.message : String(cause))
 /** The project a constellation's register is scoped to, as its register says (owners/constellations.ts); none for your world's. */
@@ -61,6 +58,24 @@ export async function extractGroovesFrom(constellation: Constellation, options: 
   }
 }
 
+/** QL's reading of a constellation as its owner keeps it, through a lens at a sublens (`ql wiki refract -`, the kernel's ql_read
+ * wiki-refract), with the provider QL names for it (its WikiReading's provider.provider_ref). Reads only. */
+async function refract(constellation: Constellation, kept: Kept, lens: LensGroove, sublens: number | null, transport: KernelTransportStatus): Promise<Answer<{reading: LensReading; provider: string | null}>> {
+  const frameRef = kept.construction?.ref, revision = kept.construction?.revision
+  const hash = await snapshotHash({ref: constellation.ref, frameRef, revision, stands: kept.stands})
+  const request = refractionRequest({constellation, stands: kept.stands, lens, sublens, hash, frameRef, revision})
+  const answer = await kernelOp(transport, {op: 'ql_read', request: {kind: 'wiki-refract', request}})
+  if (answer.outcome == null) return {ok: false, error: answer.error ?? 'Quaternal Logic did not answer `ql wiki refract`.'}
+  const outcome = answer.outcome as {result?: string; data?: unknown}
+  if (outcome.result !== 'owner_route_reading') return {ok: false, error: `The kernel answered \`${outcome.result ?? 'unknown'}\`, not \`ql wiki refract\`.`}
+  const read = lensReadingOf(outcome.data)
+  if (!read.ok) return {ok: false, error: read.why}
+  const readings = (outcome.data as {readings?: unknown}).readings
+  const found = Array.isArray(readings) ? readings.find(row => (row as {reading_ref?: unknown} | null)?.reading_ref === read.reading.readingRef) as {provider?: {provider_ref?: unknown}} | undefined : undefined
+  const provider = typeof found?.provider?.provider_ref === 'string' && found.provider.provider_ref ? found.provider.provider_ref : null
+  return {ok: true, reading: read.reading, provider}
+}
+
 /** A clip's constellation read through a groove (§16.5: "The clip is read through what you choose, and its source stays as it is"):
  * a frame by its roles, a lens by QL's refraction, at the sublens it is turned to. Reads only. */
 export async function readThrough(input: {constellation: Constellation; groove: Groove; sublens: number | null; transport?: KernelTransportStatus}): Promise<Answer<{words: string}>> {
@@ -68,33 +83,40 @@ export async function readThrough(input: {constellation: Constellation; groove: 
     const transport = input.transport ?? detectTransport()
     const kept = await keptOf(input.constellation, transport)
     if (input.groove.kind === 'frame') return {ok: true, words: frameReading(input.groove, kept.stands).words}
-    const frameRef = kept.construction?.ref, revision = kept.construction?.revision
-    const hash = await snapshotHash({ref: input.constellation.ref, frameRef, revision, stands: kept.stands})
-    const request = refractionRequest({constellation: input.constellation, stands: kept.stands, lens: input.groove, sublens: input.sublens, hash, frameRef, revision})
-    const answer = await kernelOp(transport, {op: 'ql_read', request: {kind: 'wiki-refract', request}})
-    if (answer.outcome == null) return {ok: false, error: answer.error ?? 'Quaternal Logic did not answer `ql wiki refract`.'}
-    const outcome = answer.outcome as {result?: string; data?: unknown}
-    if (outcome.result !== 'owner_route_reading') return {ok: false, error: `The kernel answered \`${outcome.result ?? 'unknown'}\`, not \`ql wiki refract\`.`}
-    const read = lensReadingOf(outcome.data)
-    return read.ok ? {ok: true, words: read.reading.words} : {ok: false, error: read.why}
+    const read = await refract(input.constellation, kept, input.groove, input.sublens, transport)
+    return read.ok ? {ok: true, words: read.reading.words} : read
   } catch (cause) {
     return {ok: false, error: say(cause)}
   }
 }
 
+/** The change that keeps QL's reading through a lens on a constellation (AIKit's reading_put): the reading as QL's provider disclosed it,
+ * a proposal on the construction revision it read. Pure. */
+export function lensCommitChange(reading: LensReading, provider: string, basisRevision: number): Record<string, unknown> {
+  return {change: 'reading_put', reading: {reading_ref: reading.readingRef, lens_ref: reading.lensRef, ...(reading.sublensRef ? {sublens_ref: reading.sublensRef} : {}),
+    disclosure: reading.words, result_class: reading.resultClass, provider_ref: provider, basis_revision: basisRevision, standing: 'proposed'}}
+}
+
+/** The readings AIKit keeps on a construction (`aikit.constellation/v1` readings; none where it keeps none). */
+const keptReadings = (construction: NativeConstruction | null): readonly {reading_ref?: unknown; disclosure?: unknown}[] => {
+  const readings = (construction?.[CONSTRUCTION] as {readings?: unknown} | undefined)?.readings
+  return Array.isArray(readings) ? readings : []
+}
+
 /** Commit (§16.7): the clip's reading written into the wiki through AIKit, where the constellation keeps it for every mode, and read back
- * from AIKit. Through a frame, the constellation takes the frame's form and each member the role at its address; through a lens, refused
- * with the operation AIKit lacks. Nothing else writes. */
+ * from AIKit. Through a frame, the constellation takes the frame's form and each member the role at its address; through a lens, the
+ * constellation keeps QL's reading at the sublens turned, as a proposal. Nothing else writes. */
 export async function commitReading(input: {constellation: Constellation; groove: Groove; sublens: number | null; transport?: KernelTransportStatus}): Promise<Answer<{note: string; revision: number}>> {
   const {constellation, groove} = input
-  if (groove.kind === 'lens') return {ok: false, error: LENS_COMMIT_MISSING}
+  const keeps = groove.kind === 'lens' ? {what: 'a reading', change: 'reading_put'} : {what: 'a form', change: 'frame_set'}
   if (constellation.kind !== 'frame') return {ok: false, error: `${constellation.title} is a space of your wiki, not a constellation someone authored round a question: `
-    + 'the wiki keeps a form only on an authored constellation (AIKit\'s frame_set acts on its aikit.constellation/v1 frame).'}
+    + `the wiki keeps ${keeps.what} only on an authored constellation (AIKit's ${keeps.change} acts on its aikit.constellation/v1 frame).`}
   try {
     const transport = input.transport ?? detectTransport()
     const project = projectOf(constellation)
     const kept = await keptOf(constellation, transport)
     if (!kept.register || !kept.construction) return {ok: false, error: `${constellation.title} is not in the register Central discloses now: read the wiki again and Commit again.`}
+    if (groove.kind === 'lens') return await commitLens({constellation, groove, sublens: input.sublens, register: kept.register, construction: kept.construction, stands: kept.stands}, project, transport)
     const request = editConstruction(kept.construction, frameCommitChanges(groove, kept.construction))
     const saved = await saveConstruction(transport, project, kept.register, request, [])
     // Read back from the owner: the register again, and the constellation as AIKit now keeps it.
@@ -107,4 +129,22 @@ export async function commitReading(input: {constellation: Constellation; groove
   } catch (cause) {
     return {ok: false, error: `Commit did not land: ${say(cause)}`}
   }
+}
+
+/** Commit through a lens: QL's reading of the constellation as AIKit keeps it now, kept on it by AIKit's reading_put, and read back. */
+async function commitLens(input: {constellation: Constellation; groove: LensGroove; sublens: number | null; register: WikiRegister; construction: NativeConstruction; stands: readonly Stand[]},
+  project: string | undefined, transport: KernelTransportStatus): Promise<Answer<{note: string; revision: number}>> {
+  const {constellation, groove, sublens, register, construction} = input
+  const read = await refract(constellation, {register, construction, stands: input.stands}, groove, sublens, transport)
+  if (!read.ok) return {ok: false, error: `Commit did not land: ${read.error}`}
+  if (!read.provider) return {ok: false, error: `Commit did not land: Quaternal Logic named no provider for its reading of ${constellation.title}, and AIKit keeps a reading only with the provider that disclosed it.`}
+  const request = editConstruction(construction, [lensCommitChange(read.reading, read.provider, construction.revision)])
+  const saved = await saveConstruction(transport, project, register, request, [])
+  // Read back from the owner: the register again, and the reading as AIKit now keeps it on the constellation.
+  const after = await keptOf(constellation, transport)
+  const keptNow = keptReadings(after.construction).find(row => row.reading_ref === read.reading.readingRef)
+  if (!after.construction || after.construction.revision !== saved.revision || keptNow?.disclosure !== read.reading.words)
+    return {ok: false, error: `AIKit saved ${constellation.title} (revision ${saved.revision}), but reading the wiki back does not show its reading through ${groove.name}. Read the wiki again before you Commit again.`}
+  const through = sublens === null ? groove.name : `${groove.name}, ${groove.sublenses[sublens]?.label ?? `sublens ${sublens}`},`
+  return {ok: true, revision: saved.revision, note: `${constellation.title} keeps its reading through ${through} in the wiki (revision ${saved.revision}), as a proposal: ${read.reading.words}`}
 }

@@ -25,12 +25,17 @@
 //   aperture.*   QL's living-wiki plan (livingPlan.ts: `ql wiki living-plan` through the kernel's ql_read wiki-living-plan): the request is
 //                the view's own (mode, positions, context, full, budget), the admitted and omitted positions, the depth and the refraction
 //                QL's answer, or its refusal in its words
+//   reach.*      what the browser's selected folder, note or Day reaches (§17.3, which took in Impact's reach of §18.6): Impact's legs, read
+//                by Technē's carrier (techneDesigns.ts useTechneDesignBindings: the book's selection; groundDevices.ts readFilesLeg, a
+//                folder's listing through op files_list; readNowLeg, the NOW register through op now kind:list, projected by
+//                centralImpactModel.ts projectSessions) — each list, or its owner's refusal in its words
 import type {DesignBinding, Standing, Value, ValueChange, Values} from '../../frame/devices/designed'
 import type {KnowledgeGraphSurface} from '../../../../../../desktop/cradle/src/knowledge/knowledgeGraphHandle'
 import type {GraphReading} from '../../../../../../desktop/cradle/src/knowledge/graph'
 import type {EmphasisGroup} from '../../../../../../desktop/cradle/src/knowledge/graphEmphasis'
 import {GRAPH_DESIGN, disabled, handsFor, missing, put, refusal} from './designDevices'
 import {APERTURE_READINGS, APERTURE_REQUEST, livingPlanState, livingPlanValues, livingPlanWhy, type LivingPlanState} from './livingPlan'
+import {projectSessions, type DirectoryEntryRow, type ImpactSessionTouch, type ImpactSubject, type NowListRow} from '../../inhabitants/centralImpactModel'
 
 export const GRAPH_ID = GRAPH_DESIGN
 /** The read's own node bound when the hand has set none (graphProgress.ts progressiveGraph: `maxNodes ?? 4096`). */
@@ -62,10 +67,56 @@ const VIEW_KEYS = [...Object.keys(GRAPH_SETTERS), ...HANDLE_KEYS, 'clear'] as co
 /** Sessions (§17.3 "What a subject reaches": open only, or open and closed) is the view's own; the design keys it `reach.closed`. */
 export const GRAPH_LOCAL = ['budget', ...APERTURE_REQUEST, 'reach.closed'] as const
 /** What a subject reaches (§17.3, which took in Impact's reach of §18.6; knowledge-graph__graph.tsx `reach.` keys): References and Sessions
- * are Impact's legs on the browser's selected folder, note or Day (central/devices/groundDevices.ts useImpactDevice: a folder's listing,
- * op files_list; the NOW register, op now kind:list), and the graph's binding is handed neither that selection nor a kernel carrier here. */
-export const REACH_ABSENT = 'What a subject reaches: not read here — the Knowledge graph\'s binding (techne/devices/techneDesigns.ts useTechneDesignBindings) is handed neither the browser\'s selected folder, note or Day nor a kernel carrier, which Impact\'s legs read it through (central/devices/groundDevices.ts useImpactDevice: op files_list, op now kind:list).'
+ * are Impact's legs on the browser's selected folder, note or Day, which Technē's carrier reads (readGraphReach) and hands the binding.
+ * With nothing selected, each waits for a selection. */
+export const REACH_NO_SUBJECT = 'What a subject reaches: select a folder, a note or a Day in the browser, and the reader lists what a change to it would reach.'
+/** A note's or a Day's References (§17.3 "References are the files and pages that mention it"): Impact's references leg is a folder's listing
+ * (op files_list); no owner carries the files and pages that mention a note or a Day. */
+export const REACH_NO_FILE_MAP = 'References of a note or a Day: not read — missing op: the files and pages that mention it (a file map); Impact\'s references leg lists a folder only (op files_list) (Central).'
 const REACH_READINGS = ['reach.subject', 'reach.references', 'reach.sessions'] as const
+
+/** What the browser's selection reaches, as Impact's legs answered: the subject, the folder's listing (a folder only) and the sessions whose
+ * work names the subject's project, each list with its owner's refusal; `reading` while the legs are asked. */
+export interface GraphReach {
+  readonly subject: ImpactSubject
+  readonly reading?: boolean
+  readonly references?: {readonly entries: readonly DirectoryEntryRow[]; readonly refusal: string | null}
+  readonly sessions?: {readonly touches: readonly ImpactSessionTouch[]; readonly refusal: string | null}
+}
+/** Impact's legs, as the carrier reads them (groundDevices.ts readFilesLeg, readNowLeg). */
+export interface ReachLegs {
+  readonly files: (subject: ImpactSubject) => Promise<{readonly entries: readonly DirectoryEntryRow[]; readonly boundaryOp: string; readonly refusal: string | null} | undefined>
+  readonly now: () => Promise<{readonly records: readonly NowListRow[]; readonly boundaryOp: string; readonly refusal: string | null}>
+}
+
+/** Read what a subject reaches through Impact's legs: the folder's listing (a folder only), and the NOW records projected onto the subject
+ * as Impact projects them (centralImpactModel.ts projectSessions). A refused leg keeps its refusal and contributes no rows. */
+export async function readGraphReach(subject: ImpactSubject, legs: ReachLegs): Promise<GraphReach> {
+  const [files, now] = await Promise.all([legs.files(subject), legs.now()])
+  return {subject,
+    ...(files ? {references: {entries: files.refusal ? [] : files.entries, refusal: files.refusal}} : {}),
+    sessions: {touches: now.refusal ? [] : projectSessions(now.records, subject, now.boundaryOp), refusal: now.refusal}}
+}
+
+/** The reach's readings (knowledge-graph__graph.tsx `reach.` keys): the subject, each list Impact's legs answered, or its refusal. Pure. */
+export function reachValues(reach: GraphReach | null): Record<string, Value> {
+  const values: Record<string, Value> = {}
+  if (!reach) return values
+  values['reach.subject'] = JSON.stringify({kind: reach.subject.kind, path: reach.subject.path, ref: reach.subject.ref ?? null})
+  if (reach.references?.refusal) values['reach.refusal:references'] = reach.references.refusal
+  else if (reach.references) values['reach.references'] = JSON.stringify(reach.references.entries)
+  if (reach.sessions?.refusal) values['reach.refusal:sessions'] = reach.sessions.refusal
+  else if (reach.sessions) values['reach.sessions'] = JSON.stringify(reach.sessions.touches.map(({nowRef, purpose, lifecycle, work}) => ({nowRef, purpose, lifecycle, work})))
+  return values
+}
+
+/** Why a reach reading stands empty: nothing selected, or a note's or Day's references, which no owner carries. */
+function reachStanding(reach: GraphReach | null): Record<string, Standing> {
+  const standing: Record<string, Standing> = {}
+  if (!reach) for (const key of REACH_READINGS) standing[key] = {disabled: REACH_NO_SUBJECT}
+  else if (reach.subject.kind !== 'folder') standing['reach.references'] = {disabled: REACH_NO_FILE_MAP}
+  return standing
+}
 
 /** The kernel graph op's answer as the window holds it. */
 export interface GraphRead {
@@ -162,7 +213,7 @@ export async function graphWrite(surface: KnowledgeGraphSurface | null, changes:
 /** Why a key of the design has no reading now. */
 export function graphAbsent(surface: KnowledgeGraphSurface | null, read: GraphRead | null, key: string): string {
   if (key in GRAPH_REFUSE) return GRAPH_REFUSE[key as keyof typeof GRAPH_REFUSE]
-  if ((REACH_READINGS as readonly string[]).includes(key)) return REACH_ABSENT
+  if ((REACH_READINGS as readonly string[]).includes(key)) return REACH_NO_SUBJECT
   if (key === 'reading') return read?.status === 'refused' ? `The kernel graph op refused: ${read.error ?? 'no reason given'}.` : surface ? 'The open graph has not read its first part yet.' : 'The kernel graph op has not answered yet.'
   if (!surface) return NOT_OPEN
   if (key === 'minimap') return missing('Minimap', 'the overview toggle on the open graph\'s handle', 'the knowledge graph')
@@ -170,9 +221,9 @@ export function graphAbsent(surface: KnowledgeGraphSurface | null, read: GraphRe
 }
 const GRAPH_READINGS = ['reading', 'selected', 'groups'] as const
 
-/** The Knowledge graph's binding on the open graph and the kernel's reading. */
+/** The Knowledge graph's binding on the open graph and the kernel's reading, and what the browser's selection reaches. */
 export function graphBinding(surface: KnowledgeGraphSurface | null, read: GraphRead | null, writes: GraphWrites, held: Readonly<Record<string, Value>> = {},
-  plan: LivingPlanState = livingPlanState()): DesignBinding {
+  plan: LivingPlanState = livingPlanState(), reach: GraphReach | null = null): DesignBinding {
   const standing: Record<string, Standing> = disabled(GRAPH_REFUSE)
   // The Aperture page: QL's plan for the request you hold (livingPlan.ts).
   for (const key of APERTURE_READINGS) standing[key] = {disabled: livingPlanWhy(plan)}
@@ -181,15 +232,17 @@ export function graphBinding(surface: KnowledgeGraphSurface | null, read: GraphR
     if (surface.filters.scope !== 'local') standing.depth = {disabled: NOT_LOCAL}
     standing.budget = {disabled: SURFACE_BOUND}
   }
-  const values: Record<string, Value> = {...graphValues(surface, read, held), ...livingPlanValues(plan)}
+  const values: Record<string, Value> = {...graphValues(surface, read, held), ...livingPlanValues(plan), ...reachValues(reach)}
   for (const key of APERTURE_REQUEST) if (held[key] !== undefined) values[key] = held[key]!
   for (const key of GRAPH_READINGS) if (!(key in values) && !(key in standing)) standing[key] = {disabled: graphAbsent(surface, read, key)}
-  for (const key of REACH_READINGS) standing[key] = {disabled: REACH_ABSENT}
+  Object.assign(standing, reachStanding(reach))
+  const waiting = [...(read === null || (read.status === 'reading' && !read.reading) ? ['reading', ...(plan.busy ? APERTURE_READINGS : [])] : plan.busy && !plan.reading.ok ? APERTURE_READINGS : []),
+    ...(reach?.reading ? ['reach.references', 'reach.sessions'] : [])]
   return {
     id: GRAPH_ID,
     values,
     standing,
-    ...(read === null || (read.status === 'reading' && !read.reading) ? {waiting: ['reading', ...(plan.busy ? APERTURE_READINGS : [])]} : plan.busy && !plan.reading.ok ? {waiting: [...APERTURE_READINGS]} : {}),
+    ...(waiting.length ? {waiting} : {}),
     local: handsFor(GRAPH_ID, GRAPH_LOCAL),
     writes: key => key in GRAPH_REFUSE || key in GRAPH_SETTERS || (HANDLE_KEYS as readonly string[]).includes(key) || key.startsWith('g:'),
     write: changes => graphWrite(surface, changes, writes),

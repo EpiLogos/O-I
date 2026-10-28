@@ -154,6 +154,7 @@ const writes = sent => sent.filter(body => body.op === 'invoke_action' && !body.
 const QL_ANSWER = request => ({contract: 'ql-mef/wiki-refraction/v1', status: 'complete', target_ref: request.target.target_ref, target_snapshot_hash: request.target.target_snapshot_hash, notices: [],
   readings: [{contract: 'ql-mef/wiki-refraction/v1', reading_ref: `ql-mef:reading:registry:${request.target.target_ref}:L1`, reading_type: 'MEF-derived', target_ref: request.target.target_ref,
     lens_ref: request.lenses[0].lens_ref, ...(request.lenses[0].sublens_ref ? {sublens_ref: request.lenses[0].sublens_ref} : {}), disclosure: `Causal / Efficient cause refractive reading of ${request.target.target_ref}`,
+    provider: {provider_ref: 'ql-mef:provider:registry-disclosure', provider_version: '1.0.0', health: 'available'},
     explanation: 'QL-MEF refracted stable target without mutating client identity', result_class: 'deterministic'}]})
 
 const has = command => spawnSync('sh', ['-c', `command -v ${command}`]).status === 0
@@ -343,16 +344,97 @@ test('Commit writes the clip\'s reading through a frame into the wiki through AI
   } finally { rmSync(dir, {recursive: true, force: true}) }
 })
 
-test('Commit of a lens\'s reading stands refused, naming the operation AIKit lacks; it writes nothing', async () => {
+/** AIKit's construction action as it takes reading_put (ai-kit f2c6ae59, knowledge_construction.rs Change::ReadingPut): the reading kept on
+ * the constellation's construction, replaced by its reading ref, on the revision it read; the register written anew. Scripted. */
+function keepsReadings(state) {
+  return (request, basis) => {
+    const objects = JSON.parse(basis).objects
+    const row = objects.find(o => o.ref === request.frame_ref)
+    if (!row || row.revision !== request.expected_revision) return {ok: false, error: 'stale construction revision'}
+    for (const change of request.changes) {
+      if (change.change !== 'reading_put') return {ok: false, error: `the script keeps readings only, not ${change.change}`}
+      if (change.reading.standing !== 'proposed' || change.reading.basis_revision !== request.expected_revision) return {ok: false, error: 'a kept reading stands as a proposal on the revision it read'}
+      const meta = row['aikit.constellation/v1']
+      meta.readings = [...(meta.readings ?? []).filter(r => r.reading_ref !== change.reading.reading_ref), change.reading]
+    }
+    row.revision += 1
+    state.text = content({objects})
+    return {ok: true, data: {schema: 'aikit.constellation-action-result/v1', frame_ref: row.ref, revision: row.revision, persisted: true, state: 'saved', reading: {frame: row, construction: row['aikit.constellation/v1'], relations: []}}}
+  }
+}
+
+test('Commit of a lens\'s reading keeps QL\'s reading on the constellation through AIKit\'s reading_put, as a proposal; it is read back from AIKit', async () => {
   const [, lens] = TAKEN()
-  const owner = kernel({text: () => content(REGISTER), apply: () => assert.fail('nothing is written'), refract: QL_ANSWER})
+  const state = {text: content(REGISTER)}
+  const owner = kernel({text: () => state.text, apply: keepsReadings(state), refract: QL_ANSWER})
   const committed = await withKernel(owner, () => owners.commitReading({constellation: TURNING, groove: lens, sublens: 2, transport: BRIDGE}))
-  assert.equal(committed.ok, false)
-  assert.match(committed.error, /missing op: aikit\.constellation\.apply reading_put \(AIKit\)/)
-  assert.deepEqual(writes(owner.sent), [])
-  const space = await withKernel(owner, () => owners.commitReading({constellation: O_I, groove: TAKEN()[0], sublens: null, transport: BRIDGE}))
-  assert.equal(space.ok, false, 'a space keeps no frame: no one authored it round a question')
+  assert.equal(committed.ok, true, committed.error)
+  assert.equal(committed.revision, 3, 'AIKit\'s revision after the write')
+  assert.match(committed.note, /The day's turning keeps its reading through L1 Causal, Efficient cause, in the wiki \(revision 3\), as a proposal/)
+  const apply = owner.sent.filter(body => body.op === 'invoke_action' && body.invocation.action === 'aikit.constellation.apply')
+  assert.equal(apply.length, 1, 'only Commit writes, once')
+  assert.equal(apply[0].invocation.target_ref, 'wiki:frame:turning')
+  const request = apply[0].invocation.input.request
+  assert.equal(request.expected_revision, 2, 'on the construction revision the reading read')
+  assert.deepEqual(request.changes, [{change: 'reading_put', reading: {reading_ref: `ql-mef:reading:registry:${TARGET}:L1`, lens_ref: 'mef:lens:L1@1', sublens_ref: 'mef:sublens:L1.2@1',
+    disclosure: `Causal / Efficient cause refractive reading of ${TARGET}`, result_class: 'deterministic', provider_ref: 'ql-mef:provider:registry-disclosure', basis_revision: 2, standing: 'proposed'}}],
+  'QL\'s reading as its provider disclosed it, kept as a proposal on the revision it read')
+  const asked = owner.sent.filter(body => body.op === 'ql_read')
+  assert.equal(asked.length, 1, 'the reading is QL\'s, asked once for the Commit')
+  assert.equal(asked[0].request.request.target.target_revision, 2)
+  // Read back from the owner: the register as AIKit wrote it holds the reading.
+  const after = decodeRegister(fileOf(state.text), 'project:O-I:wiki').frames.find(f => f.ref === 'wiki:frame:turning')
+  assert.equal(after['aikit.constellation/v1'].readings[0].disclosure, `Causal / Efficient cause refractive reading of ${TARGET}`)
+  // An owner that saves and keeps nothing is not a Commit.
+  const forgetful = {text: content(REGISTER)}
+  const lost = kernel({text: () => forgetful.text, apply: (request, basis) => { const done = keepsReadings({})(request, basis); return done }, refract: QL_ANSWER})
+  const unkept = await withKernel(lost, () => owners.commitReading({constellation: TURNING, groove: lens, sublens: 2, transport: BRIDGE}))
+  assert.equal(unkept.ok, false)
+  assert.match(unkept.error, /reading the wiki back does not show/)
+  // A space keeps no reading: no one authored it round a question.
+  const space = await withKernel(owner, () => owners.commitReading({constellation: O_I, groove: lens, sublens: null, transport: BRIDGE}))
+  assert.equal(space.ok, false)
   assert.match(space.error, /O-I is a space of your wiki/)
+  // QL that gives no reading leaves nothing to keep, and nothing is written.
+  const silent = kernel({text: () => content(REGISTER), apply: () => assert.fail('nothing is written'), refract: request => ({...QL_ANSWER(request), status: 'unavailable', readings: [], notices: ['provider unavailable']})})
+  const none = await withKernel(silent, () => owners.commitReading({constellation: TURNING, groove: lens, sublens: 2, transport: BRIDGE}))
+  assert.equal(none.ok, false)
+  assert.match(none.error, /provider unavailable/)
+  assert.deepEqual(writes(silent.sent), [])
+})
+
+/** Whether the AIKit on PATH takes reading_put (`aikit wiki-construct capabilities`). */
+const takesReadingPut = () => {
+  if (!has('aikit')) return false
+  try { return JSON.parse(spawnSync('aikit', ['wiki-construct', 'capabilities', '--json'], {encoding: 'utf8'}).stdout).data.changes.includes('reading_put') } catch { return false }
+}
+
+test('Commit of a lens\'s reading through the real AIKit keeps it on the constellation; AIKit reads it back', {skip: takesReadingPut() ? false : 'the AIKit on PATH does not take reading_put yet (ai-kit feat/reading-put-and-reflection-laws)'}, async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'oi-769-lens-'))
+  try {
+    mkdirSync(join(dir, 'aikit-home'))
+    const aikit = realAikit(dir)
+    writeFileSync(aikit.file, content({objects: [SPACE, ...NODES]}))
+    const created = aikit.apply({schema: 'aikit.constellation-action/v1', frame_ref: 'wiki:frame:turning', expected_revision: 0, actor_ref: 'human:cradle-wiki', operation_ref: 'operation:wiki:turning',
+      changes: [{change: 'create', anchor_ref: TARGET, title: 'The day\'s turning', inquiry: {question: 'What does The day\'s turning hold?'}, space_refs: ['wiki:space:o-i'], frame: PAIR},
+        {change: 'member_add', member: {subject_ref: 'wiki:node:ground', participation: {participation_ref: 'participation:wiki:g', role_ref: `${PAIR_KEY}:role:direct:0`, sources: [], note: ''}}},
+        {change: 'member_add', member: {subject_ref: 'wiki:node:material', participation: {participation_ref: 'participation:wiki:t', role_ref: `${PAIR_KEY}:role:direct:1`, sources: [], note: ''}}}]}, aikit.text())
+    assert.equal(created.ok, true, created.error)
+    const owner = kernel({text: aikit.text, apply: aikit.apply, refract: QL_ANSWER})
+    const [, lens] = TAKEN()
+    const committed = await withKernel(owner, () => owners.commitReading({constellation: TURNING, groove: lens, sublens: 2, transport: BRIDGE}))
+    assert.equal(committed.ok, true, committed.error)
+    const kept = aikit.inspect('wiki:frame:turning')['aikit.constellation/v1'].readings
+    assert.equal(kept.length, 1)
+    assert.equal(kept[0].sublens_ref, 'mef:sublens:L1.2@1')
+    assert.equal(kept[0].standing, 'proposed')
+    // Read through the whole lens and Commit again: the same reading ref is replaced, not added.
+    const again = await withKernel(owner, () => owners.commitReading({constellation: TURNING, groove: lens, sublens: null, transport: BRIDGE}))
+    assert.equal(again.ok, true, again.error)
+    const replaced = aikit.inspect('wiki:frame:turning')['aikit.constellation/v1'].readings
+    assert.equal(replaced.length, 1, 'the same reading ref is replaced')
+    assert.equal(replaced[0].sublens_ref, undefined, 'read through the whole lens')
+  } finally { rmSync(dir, {recursive: true, force: true}) }
 })
 
 // ---------------------------------------------------------------------------------------------------------------- templates

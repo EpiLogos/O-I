@@ -1,0 +1,60 @@
+{
+  "_source": "REAL: ai-kit feat/reading-put-and-reflection-laws f2c6ae59 (debug build), 28 Oct 2026, on a scratch project: `aikit knowledge reflection laws --json` and `aikit knowledge reflection verify - --json` with the listed law; each envelope's data.",
+  "laws": {
+    "automatic_agent_or_model_invocation": false,
+    "declared_in": ".aikit/reflection-laws",
+    "laws": [
+      {
+        "law": {
+          "constitutive_relations": [],
+          "id": "law/docs-meaning",
+          "mappings": [
+            {
+              "coordinate": "§18.5 Meaning",
+              "description": null,
+              "description_relation": null,
+              "expected_implementation_revision": null,
+              "implementation": "code:symbol:pageBindings::docsMeaning",
+              "relation": "implemented-by",
+              "semantic": "wiki:node:dlw/docs-meaning"
+            }
+          ],
+          "source": "central:source:project:O-I:ProjectCentral/docs/1-vision/dlw/DLW.md",
+          "source_revision": "central.content-fnv1a64/v1:12:0000000000000001",
+          "unique_implementation": true
+        },
+        "path": ".aikit/reflection-laws/docs-meaning.json"
+      }
+    ],
+    "unreadable": [
+      {
+        "error": "not a ReflectionLaw: key must be a string at line 1 column 2",
+        "path": ".aikit/reflection-laws/draft.json"
+      }
+    ],
+    "version": "aikit.reflection-laws/v1"
+  },
+  "verdict": {
+    "automatic_agent_or_model_invocation": false,
+    "law": "law/docs-meaning",
+    "map_bindings": 0,
+    "verification": {
+      "issues": [
+        {
+          "detail": "missing reflected binding wiki:node:dlw/docs-meaning -> code:symbol:pageBindings::docsMeaning",
+          "kind": "missing",
+          "relation_ref": "§18.5 Meaning"
+        },
+        {
+          "detail": "implementation endpoint code:symbol:pageBindings::docsMeaning is absent",
+          "kind": "missing",
+          "relation_ref": "§18.5 Meaning"
+        }
+      ],
+      "law": "law/docs-meaning",
+      "passed": false,
+      "source_revision": "central.content-fnv1a64/v1:12:0000000000000001"
+    },
+    "version": "aikit.reflection-verdict/v1"
+  }
+}

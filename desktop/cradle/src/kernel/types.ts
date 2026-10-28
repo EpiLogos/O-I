@@ -332,8 +332,12 @@ export type AikitReadRequest =
   /** `aikit knowledge frame ADDRESS… [--query Q]`: at least one address. */
   | {kind:"knowledge-frame";addresses:string[];query?:string|null}
   /** `aikit knowledge reflection verify -` (ai-kit#541), the target-owned `ReflectionLaw` on stdin: `aikit.reflection-verdict/v1`
-   * `{law, map_bindings, verification:{law, source_revision, passed, issues:[{kind, relation_ref, detail}]}}` (Impact's Meaning). */
-  | {kind:"reflection-verify";law:Record<string,unknown>};
+   * `{law, map_bindings, verification:{law, source_revision, passed, issues:[{kind, relation_ref, detail}]}}` (Docs' Meaning), asked in
+   * the named world's ground, whose ProjectMap it is (else the root's). */
+  | {kind:"reflection-verify";law:Record<string,unknown>;project?:string|null}
+  /** `aikit knowledge reflection laws` (O-I #786): the laws a world declares in its `.aikit/reflection-laws/`, `aikit.reflection-laws/v1`
+   * `{declared_in, laws:[{path, law}], unreadable:[{path, error}]}`, asked in the named world's ground (else the root's). */
+  | {kind:"reflection-laws";project?:string|null};
 export type AikitWriteRequest =
   /** `aikit capture TITLE` with the body on stdin; `capture_kind` is the owner's `--kind`. */
   | {kind:"capture";project?:string|null;title:string;body:string;capture_kind?:string|null;export?:string[];scope?:string|null;source_ref?:string|null;by?:string|null}

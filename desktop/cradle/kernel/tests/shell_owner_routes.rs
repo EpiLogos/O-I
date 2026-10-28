@@ -105,7 +105,7 @@ impl Fake {
                 "#!/bin/sh\n\
                  printf '%s\\n' \"$*\" >> \"{d}/argv.txt\"\n\
                  cat > \"{d}/stdin.txt\"\n\
-                 printf 'position=%s\\nbinary=%s\\nroot=%s\\nsandbox_key=%s\\n' \"$OI_POSITION_REF\" \"$FACTORY_NATIVE_CENTRAL_BINARY\" \"$FACTORY_NATIVE_CENTRAL_ROOT\" \"$OPEN_SANDBOX_API_KEY\" > \"{d}/env.txt\"\n\
+                 printf 'position=%s\\nbinary=%s\\nroot=%s\\nsandbox_key=%s\\ncwd=%s\\n' \"$OI_POSITION_REF\" \"$FACTORY_NATIVE_CENTRAL_BINARY\" \"$FACTORY_NATIVE_CENTRAL_ROOT\" \"$OPEN_SANDBOX_API_KEY\" \"$(pwd -P)\" > \"{d}/env.txt\"\n\
                  case \"$(cat \"{d}/mode\")\" in\n\
                  refuse) cat \"{d}/refuse.json\" 2>/dev/null; cat \"{d}/refuse.txt\" >&2 2>/dev/null; exit \"$(cat \"{d}/refuse.exit\" 2>/dev/null || echo 2)\" ;;\n\
                  raw) cat \"{d}/answer.txt\" ;;\n\
@@ -2296,6 +2296,84 @@ fn aikit_verifies_a_reflection_law_handed_on_stdin() {
         ),
     );
     assert!(outcome.unwrap_err().contains("aikit.reflection-verdict/v1"));
+    let _ = fs::remove_dir_all(&dir);
+}
+
+/// O-I #786: Docs' Meaning lists the reflection laws a world declares
+/// (`aikit knowledge reflection laws`, `aikit.reflection-laws/v1`) and asks
+/// each one's verdict, both in that world's own ground, where AIKit resolves
+/// the project whose laws and ProjectMap they are.
+#[test]
+fn aikit_lists_a_worlds_reflection_laws_and_verifies_each_in_that_worlds_ground() {
+    let _held = hold();
+    let dir = scratch("aikit-reflection-laws");
+    let central = fake_central(&dir);
+    let aikit = Fake::new(&dir, "aikit");
+    let _bin = Bound::set("OI_AIKIT_BIN", &aikit.bin);
+    let ground = fs::canonicalize(dir.join("Work/O-I")).unwrap();
+    // AIKit's own listing and verdict (REAL, ai-kit f2c6ae59), replayed.
+    let real = fixture("aikit-reflection-laws-2026-10-28.json");
+    aikit.answer(&envelope(real["laws"].clone()));
+    let (outcome, form) = dispatched(
+        kernel(&central),
+        op(json!({"op": "aikit_read", "request": {"kind": "reflection-laws", "project": "O-I"}})),
+    );
+    let outcome = outcome.unwrap();
+    assert_eq!(form, "owner-read");
+    assert!(outcome.receipts.is_empty(), "a listing moves nothing");
+    let (route, data, _) = reading(&outcome);
+    assert_eq!(route, "aikit knowledge reflection laws");
+    assert_eq!(data, real["laws"], "AIKit's listing, verbatim");
+    assert_eq!(aikit.asked(), ["knowledge reflection laws --json"]);
+    assert!(
+        aikit.env().contains(&format!("cwd={}\n", ground.display())),
+        "asked in the world's own ground: {}",
+        aikit.env()
+    );
+    // Each listed law's verdict, asked in the same ground.
+    aikit.forget();
+    aikit.answer(&envelope(real["verdict"].clone()));
+    let law = real["laws"]["laws"][0]["law"].clone();
+    let (outcome, _) = dispatched(
+        kernel(&central),
+        op(
+            json!({"op": "aikit_read", "request": {"kind": "reflection-verify", "law": law, "project": "O-I"}}),
+        ),
+    );
+    let (route, data, _) = reading(&outcome.unwrap());
+    assert_eq!(route, "aikit knowledge reflection verify");
+    assert_eq!(data["verification"]["issues"][0]["kind"], "missing");
+    assert_eq!(serde_json::from_str::<Value>(&aikit.stdin()).unwrap(), law);
+    assert!(
+        aikit.env().contains(&format!("cwd={}\n", ground.display())),
+        "{}",
+        aikit.env()
+    );
+    // A world Central does not disclose is refused before AIKit is asked.
+    aikit.forget();
+    let (outcome, _) = dispatched(
+        kernel(&central),
+        op(
+            json!({"op": "aikit_read", "request": {"kind": "reflection-laws", "project": "Elsewhere"}}),
+        ),
+    );
+    assert!(outcome.is_err());
+    assert!(aikit.asked().is_empty());
+    // Another document is not a listing.
+    aikit.answer(&envelope(
+        json!({"version": "aikit.reflection-laws/v1", "laws": {}}),
+    ));
+    let (outcome, _) = dispatched(
+        kernel(&central),
+        op(json!({"op": "aikit_read", "request": {"kind": "reflection-laws"}})),
+    );
+    assert!(outcome.unwrap_err().contains("laws"));
+    aikit.answer(&envelope(json!({"laws": [], "unreadable": []})));
+    let (outcome, _) = dispatched(
+        kernel(&central),
+        op(json!({"op": "aikit_read", "request": {"kind": "reflection-laws"}})),
+    );
+    assert!(outcome.unwrap_err().contains("aikit.reflection-laws/v1"));
     let _ = fs::remove_dir_all(&dir);
 }
 

@@ -14,10 +14,13 @@
 //             The tier bindings and the unbound sources are Central's (`projectcentral.docs.inspect`: the six tier bindings and the
 //             sources no tier holds); a document's kind is a tag on its source. Recognised is Central's (`projectcentral.ground.inspect`:
 //             recognised_sources with provenance and standing; a source whose name suggests a vision, an intent, an experience or a
-//             design waits, and so does a passage kept with Remember). Meaning is AIKit's project reflection (`aikit knowledge frame`,
-//             aikit.project-reflection/v1: each mapping of the project's law, holds or how it does not); no law binds: none. Moved since
-//             is the count of changes since the source was last read against the work (Central's change horizon). A source that cannot
-//             be read carries the refusal in the owner's words and its readings stay empty.
+//             design waits, and so does a passage kept with Remember). Meaning is AIKit's verdict on each reflection law the world
+//             declares on the source (`aikit knowledge reflection laws`, then `aikit knowledge reflection verify -` for each law,
+//             aikit.reflection-verdict/v1: each mapping of the law, holds or how it does not); no law reads it: none. Moved since is the
+//             count of changes Central's change horizon kept to the source since the revision its law read it at
+//             (`projectcentral.change.horizon`). A source that cannot be read carries the refusal in the owner's words and its readings
+//             stay empty.
+//   refusal:meaning, refusal:moved   why Meaning or Moved since is not read, in AIKit's or Central's words; its ticks stay hollow
 //   root      {root, valid, checks: [{path, valid}]}  central.doctor: the parts every Central root must hold
 //   scaffold  {project, present: [path], missing: [path]}  central.world.reproject.plan {project}: the world's ProjectCentral scaffold
 //   account   {exists}  projectcentral.docs.inspect's aperture: whether the world has its account
@@ -26,7 +29,7 @@
 //   refresh (manual | open), source (the source chosen), bindAs ('0'…'5' | 'ux' | 'ex').
 // Acts, each on its own key: relate (JSON {as, source}: `projectcentral.docs.tier.relate`, `ux.relate`, `ex.relate`, held; only a person
 //   binds a return), recognise (JSON {source, provenance, standing}: `projectcentral.ground.apply`, held; only a person recognises),
-//   readNow (every reading again; Meaning's `aikit knowledge frame` has no kernel op yet), openSource (the source in the Document),
+//   readNow (every reading again, Meaning and Moved since with them), openSource (the source in the Document),
 //   ensure (`projectcentral.docs.ensure`), reproject (`central.world.reproject.apply`), initRoot (`central.init`). Next is the hand's: it
 //   points the tier and Relate at the next tier that has no source. Each act returns a receipt.
 // A key the owner does not report is absent: its control draws "—", and the picture names the missing reading.
@@ -246,6 +249,10 @@ function sourceRows(v: V, sources: readonly Source[] | undefined, tier: number |
   return [...(here.length ? here : [{id: 'empty', name: tier === undefined ? NONE : `No source at tier ${tier}${needs && sources.some(s => s.tier === tier) ? ' needs you' : ''}`, light: 'unknown' as LightState}]), ...loose]
 }
 
+/** Why holding or unmoved stays hollow, in the owners' words, where they refused. */
+const unreadOf = (v: V) => [['Meaning', strOf(v, 'refusal:meaning')], ['Moved since', strOf(v, 'refusal:moved')]]
+  .map(([what, why]) => (why ? ` ${what} is not read: ${why}` : '')).join('')
+
 function TiersBands({p}: {p: ViewProps}) {
   const sources = sourcesOf(p.v), tier = tierOf(p.v, sources), chosen = sources?.find(s => s.path === strOf(p.v, 'source')), [page, setPage] = useState(0)
   const at = strOf(p.v, 'bindAs'), here = sources?.filter(s => s.tier === tier) ?? []
@@ -266,7 +273,7 @@ function TiersBands({p}: {p: ViewProps}) {
     </Band>
     <Band>
       <Section grow><Rows label={tier === undefined ? 'Sources' : `Tier ${tier} · ${TIER_NAME[tier]} · ${here.length} source${here.length === 1 ? '' : 's'}`}
-        does="The sources of the tier in front, then those no tier holds. Four ticks on each: bound, recognised, holding, unmoved. Choose one to recognise it or relate it."
+        does={`The sources of the tier in front, then those no tier holds. Four ticks on each: bound, recognised, holding, unmoved. Choose one to recognise it or relate it.${unreadOf(p.v)}`}
         items={sourceRows(p.v, sources, tier)} size={7} page={page} onPage={setPage} selected={chosen?.path} onSelect={id => { if (id !== 'none' && id !== 'empty') p.set('source', id) }} /></Section>
     </Band>
     <Band>

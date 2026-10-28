@@ -2,10 +2,14 @@
 //   Tiers: projectcentral.docs.inspect {project} (central.development-field-reading/v1: each tier's sources, the unbound ones, the
 //   experiences and their returns, whether the world has its account); Recognised: projectcentral.ground.inspect {project}
 //   (recognised_sources, each with its provenance and standing); Make: central.doctor (the root's parts) and central.world.reproject.plan
-//   {project} (the world's scaffold). Meaning and Moved since stand absent, each naming the reading it waits for.
+//   {project} (the world's scaffold). Meaning (O-I #786): each reflection law the world declares, listed by AIKit (`aikit knowledge
+//   reflection laws`, the kernel's aikit_read reflection-laws) and its verdict asked (`aikit knowledge reflection verify -`, aikit_read
+//   reflection-verify), both in the world's ground; Moved since: Central's change horizon (projectcentral.change.horizon {project}) counted
+//   after the source revision each law was last read against the work at.
 // Channels: REAL — the owners' answers below are Central's own, run 28 Oct 2026 on O-I (`ctrl --json action run <id> '{"project":"O-I"}'`),
-//   trimmed to one source a tier and two unbound ones, the machine's root written <root>; SCRIPTED — Central's writes go to a recording
-//   port, never to the owner. Not a screen pass.
+//   trimmed to one source a tier and two unbound ones, the machine's root written <root>; AIKit's listing and verdict are its own (REAL,
+//   ai-kit f2c6ae59 on a scratch project, 28 Oct), re-aimed at O-I's sources; the horizon is SCRIPTED in Central's shape
+//   (ctrl/src/source_horizon.rs SourceHorizon); SCRIPTED — Central's writes go to a recording port, never to the owner. Not a screen pass.
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {register} from 'node:module'
@@ -68,12 +72,10 @@ test('Docs reads the six tiers, the unbound sources and their recognition from C
   const loose = sources.filter(row => row.tier === null)
   assert.deepEqual(loose.map(row => [row.path, row.recognised]), [['ProjectCentral/docs/1-vision/dlw/gallery.mjs', false], ['ProjectCentral/docs/1-vision/dlw/render.mjs', false]],
     'a source no tier holds stands unbound, and Central recognises it as no ground')
-  // Meaning and Moved since: no source carries them, and the binding names the reading each waits for.
+  // Meaning and Moved since are not read until AIKit lists the world's laws: no source carries them (each tick hollow).
   assert.ok(sources.every(row => !('meaning' in row) && !('moved' in row)))
-  assert.match(pages.DOCS_WIRING.reads.sources, /Meaning/)
-  assert.match(pages.DOCS_MEANING_ABSENT, /aikit knowledge reflection verify/)
-  assert.match(pages.DOCS_MEANING_ABSENT, /missing op/)
-  assert.match(pages.DOCS_MOVED_ABSENT, /projectcentral\.change\.horizon/)
+  assert.match(pages.DOCS_WIRING.reads.sources, /aikit knowledge reflection laws/)
+  assert.match(pages.DOCS_WIRING.reads.sources, /projectcentral\.change\.horizon/)
   assert.deepEqual(JSON.parse(binding.values.account), {exists: true})
   assert.deepEqual([JSON.parse(binding.values.ux), JSON.parse(binding.values.ex)], [[], []], 'O-I binds no experience and no return yet: Central says so')
   const root = JSON.parse(binding.values.root)
@@ -88,6 +90,98 @@ test('Docs reads the six tiers, the unbound sources and their recognition from C
   assert.doesNotMatch(markup, /\bNaN\b|undefined|data-device-fault/, 'every view draws, and no absent key is drawn as text')
   assert.match(markup, /CORE-PRIMITIVE-FIELD\.md/)
   assert.doesNotMatch(markup, /No reading of the account/)
+})
+
+// ---------------------------------------------------------------------------------------------------------------- Meaning and Moved since
+
+const VISION = REAL.inspect.tier_bindings[1].sources[0], MATRIX = REAL.inspect.tier_bindings[2].sources[0]
+/** A law the world writes in its `.aikit/reflection-laws/` (AIKit's listing, REAL in shape: ai-kit f2c6ae59), on one of O-I's sources. */
+const LAW = (id, source, revision, coordinate, implementation) => ({id, source: source.ref, source_revision: revision, unique_implementation: true,
+  mappings: [{coordinate, semantic: `wiki:node:${id}`, implementation, relation: 'implemented-by', description: null, description_relation: null, expected_implementation_revision: null}],
+  constitutive_relations: []})
+const VISION_LAW = LAW('law/vision', VISION, VISION.revision.revision, '§1 Vision', 'code:symbol:shell::vision')
+const MATRIX_LAW = LAW('law/matrix', MATRIX, 'central.content-fnv1a64/v1:40000:aaaaaaaaaaaaaaaa', 'Capability matrix', 'code:symbol:matrix::rows')
+const LISTING = {automatic_agent_or_model_invocation: false, declared_in: '.aikit/reflection-laws', version: 'aikit.reflection-laws/v1',
+  laws: [{path: '.aikit/reflection-laws/matrix.json', law: MATRIX_LAW}, {path: '.aikit/reflection-laws/vision.json', law: VISION_LAW}],
+  unreadable: [{path: '.aikit/reflection-laws/draft.json', error: 'not a ReflectionLaw: key must be a string at line 1 column 2'}]}
+/** AIKit's verdict (aikit.reflection-verdict/v1, REAL in shape): the issues it found, by the coordinate they name. */
+const VERDICT = (law, issues) => ({automatic_agent_or_model_invocation: false, law: law.id, map_bindings: 0, version: 'aikit.reflection-verdict/v1',
+  verification: {issues, law: law.id, passed: issues.length === 0, source_revision: law.source_revision}})
+const VERDICTS = {'law/vision': answered(VERDICT(VISION_LAW, [])),
+  'law/matrix': answered(VERDICT(MATRIX_LAW, [{detail: 'missing reflected binding wiki:node:law/matrix -> code:symbol:matrix::rows', kind: 'missing', relation_ref: 'Capability matrix'},
+    {detail: 'implementation endpoint code:symbol:matrix::rows is absent', kind: 'missing', relation_ref: 'Capability matrix'}]))}
+/** Central's change horizon (central.source-change-horizon/v1) for O-I: the matrix moved three times since an earlier revision, twice since
+ * the law read it; the vision has not moved since its law read it. */
+const change = (cursor, source, before, after) => ({schema: 'central.source-change/v1', change_ref: `central:change:project:O-I:${cursor}`, cursor, world_ref: 'project:O-I',
+  source_ref: source.ref, source_path: source.path, before_revision: before, after_revision: after, kind: 'modified', provider: 'central.filesystem-reconcile/v1'})
+const HORIZON = {schema: 'central.source-change-horizon/v1', world_ref: 'project:O-I', cursor: 9, provider: 'central.filesystem-reconcile/v1', consumer_cursors: {},
+  sources: [{binding: {ref: VISION.ref, path: VISION.path}, revision: VISION.revision}, {binding: {ref: MATRIX.ref, path: MATRIX.path}, revision: MATRIX.revision}],
+  changes: [change(2, MATRIX, null, 'central.content-fnv1a64/v1:39000:9999999999999999'), change(4, MATRIX, 'central.content-fnv1a64/v1:39000:9999999999999999', MATRIX_LAW.source_revision),
+    change(6, MATRIX, MATRIX_LAW.source_revision, 'central.content-fnv1a64/v1:41000:bbbbbbbbbbbbbbbb'), change(8, MATRIX, 'central.content-fnv1a64/v1:41000:bbbbbbbbbbbbbbbb', MATRIX.revision.revision),
+    change(9, VISION, null, VISION.revision.revision)]}
+
+test('Docs\' Meaning is each law the world declares, verified by AIKit; Moved since counts Central\'s changes since the law read its source', () => {
+  pages.resetHolds()
+  const binding = pages.docsBinding(ID, OI, {...READINGS, meaning: answered({laws: LISTING, verdicts: VERDICTS}), horizon: answered(HORIZON)})
+  const sources = JSON.parse(binding.values.sources)
+  const row = path => sources.find(r => r.path === path)
+  assert.equal(row(VISION.path).meaning, 'holds', 'the vision\'s law holds')
+  assert.deepEqual(row(VISION.path).mappings, [{coordinate: '§1 Vision', implementation: 'code:symbol:shell::vision', state: 'holds'}])
+  assert.equal(row(VISION.path).moved, 0, 'nothing moved since its law read it')
+  assert.equal(row(MATRIX.path).meaning, 'missing', 'how the matrix\'s law does not hold, in AIKit\'s word')
+  assert.deepEqual(row(MATRIX.path).mappings, [{coordinate: 'Capability matrix', implementation: 'code:symbol:matrix::rows', state: 'missing',
+    detail: 'missing reflected binding wiki:node:law/matrix -> code:symbol:matrix::rows; implementation endpoint code:symbol:matrix::rows is absent'}])
+  assert.equal(row(MATRIX.path).moved, 2, 'two changes since the revision its law read, not the one before it')
+  for (const other of sources.filter(r => r.path !== VISION.path && r.path !== MATRIX.path)) {
+    assert.equal(other.meaning, 'none', `${other.path}: no law binds it`)
+    assert.ok(!('moved' in other), `${other.path}: never read against the work, so nothing to count from`)
+  }
+  assert.match(binding.values['refusal:meaning'], /draft\.json is not a law: not a ReflectionLaw/, 'a file that is not a law is named')
+  assert.equal(binding.values['refusal:moved'], undefined)
+  // Drawn: the matrix waits on its meaning, and says how often it moved.
+  const markup = drawn(binding)
+  assert.doesNotMatch(markup, /\bNaN\b|undefined|data-device-fault/)
+  assert.match(markup, /Meaning: missing/)
+  assert.match(markup, /Moved 2 times since it was last read/)
+})
+
+test('Meaning and Moved since stand unread in their owners\' words when AIKit or Central refuses', () => {
+  pages.resetHolds()
+  const words = 'aikit knowledge reflection laws: no project is resolved here'
+  const refused = pages.docsBinding(ID, OI, {...READINGS, meaning: {status: 'refused', error: words}})
+  const rows = JSON.parse(refused.values.sources)
+  assert.ok(rows.every(row => !('meaning' in row) && !('moved' in row)), 'nothing read: every tick hollow')
+  assert.match(refused.values['refusal:meaning'], /no project is resolved here/)
+  assert.match(drawn(refused), /Meaning is not read: aikit knowledge reflection laws: no project is resolved here/, 'the refusal is drawn in AIKit\'s words')
+  const verdictRefused = pages.docsBinding(ID, OI, {...READINGS, meaning: answered({laws: LISTING, verdicts: {...VERDICTS, 'law/matrix': {status: 'refused', error: 'AIKit could not build the ProjectMap'}}}),
+    horizon: {status: 'refused', error: 'Central could not reconcile the horizon'}})
+  const sources = JSON.parse(verdictRefused.values.sources)
+  const matrix = sources.find(r => r.path === MATRIX.path)
+  assert.ok(!('meaning' in matrix), 'a law whose verdict was refused leaves its source unread')
+  assert.equal(sources.find(r => r.path === VISION.path).meaning, 'holds')
+  assert.match(verdictRefused.values['refusal:meaning'], /law\/matrix: AIKit could not build the ProjectMap/)
+  assert.ok(sources.every(row => !('moved' in row)), 'Moved since stands unread while Central refuses its horizon')
+  assert.equal(verdictRefused.values['refusal:moved'], 'Central could not reconcile the horizon')
+})
+
+test('Meaning is read from AIKit through the kernel: the laws a world declares, then each law\'s verdict, both in that world\'s ground', async () => {
+  const asked = []
+  const ask = async request => {
+    asked.push(request)
+    if (request.kind === 'reflection-laws') return LISTING
+    if (request.law.id === 'law/matrix') throw new Error('AIKit could not build the ProjectMap')
+    return VERDICTS[request.law.id].value
+  }
+  const meaning = await pages.readDocsMeaning('O-I', ask)
+  assert.deepEqual(asked, [{kind: 'reflection-laws', project: 'O-I'}, {kind: 'reflection-verify', law: MATRIX_LAW, project: 'O-I'}, {kind: 'reflection-verify', law: VISION_LAW, project: 'O-I'}],
+    'the listing, then each listed law as written, in the world\'s ground')
+  assert.equal(meaning.laws, LISTING)
+  assert.deepEqual(meaning.verdicts['law/matrix'], {status: 'refused', error: 'AIKit could not build the ProjectMap'})
+  assert.deepEqual(meaning.verdicts['law/vision'], VERDICTS['law/vision'])
+  // The horizon is asked only when a law names the revision it read its source at.
+  assert.deepEqual(pages.docsHorizonInput('O-I', answered({laws: LISTING, verdicts: VERDICTS})), {project: 'O-I'})
+  assert.equal(pages.docsHorizonInput('O-I', answered({laws: {...LISTING, laws: []}, verdicts: {}})), null)
+  assert.equal(pages.docsHorizonInput(null, answered({laws: LISTING, verdicts: VERDICTS})), null)
 })
 
 test('Docs\' experiences and returns are Central\'s ux and ex, each named by its ref and source', () => {
