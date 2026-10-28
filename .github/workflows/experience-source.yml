@@ -5,7 +5,11 @@ on:
       - 'docs/experience/**'
       - 'skills/experience-campaign/**'
       - 'scripts/experience_map.py'
+      - 'scripts/shell_matrix_views.py'
       - 'tests/experience/**'
+      - 'ProjectCentral/user/capability-matrix.*'
+      - 'ProjectCentral/docs/1-vision/dlw/DLW.md'
+      - 'packages/live-shell/ui/src/inhabitants/capabilityHomes.ts'
       - '.github/workflows/experience-source.yml'
   push:
     branches: [main, agent/paired-experience-campaign]
@@ -13,7 +17,11 @@ on:
       - 'docs/experience/**'
       - 'skills/experience-campaign/**'
       - 'scripts/experience_map.py'
+      - 'scripts/shell_matrix_views.py'
       - 'tests/experience/**'
+      - 'ProjectCentral/user/capability-matrix.*'
+      - 'ProjectCentral/docs/1-vision/dlw/DLW.md'
+      - 'packages/live-shell/ui/src/inhabitants/capabilityHomes.ts'
       - '.github/workflows/experience-source.yml'
 permissions:
   contents: read
@@ -28,6 +36,10 @@ jobs:
         env:
           PYTHONDONTWRITEBYTECODE: '1'
         run: python3 -m unittest discover -s tests/experience -p 'test_*.py' -v
+      - name: The S-whole matrix's story view and capability homes equal their derivation
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: python3 scripts/shell_matrix_views.py --check
       - name: Compile source to UX and capability-matrix readings
         env:
           PYTHONDONTWRITEBYTECODE: '1'

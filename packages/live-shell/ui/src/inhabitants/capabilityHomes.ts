@@ -12,6 +12,12 @@
  *   lives on, with no device behind it (the lock names these: the frame
  *   grammar, kernel, verification, embodiment and surface host).
  *
+ * The two tables are a view of the S-whole capability matrix
+ * (`ProjectCentral/user/capability-matrix.csv`): each home is carried by its
+ * capability's row in `extensions.capability_homes`, with the manual's home
+ * beside the semantic this code reads (O-I #736). Edit the matrix and run
+ * `python3 scripts/shell_matrix_views.py --write`; `--check` fails on drift.
+ *
  * Declarations only. Owners write and faces read; nothing here writes, and
  * no store is added. */
 
@@ -33,8 +39,12 @@ const AI_KIT = 'ai-kit'
 const WORKCELL = 'workcell'
 const ACTUATION = 'actuation'
 
-/** Family homes, in the T-CAPABILITY-HOMES table order. */
+// BEGIN GENERATED: capability homes from ProjectCentral/user/capability-matrix.csv (each row's extensions.capability_homes).
+// Edit the matrix, then run `python3 scripts/shell_matrix_views.py --write`.
+
+/** Family homes, in the matrix's home order. */
 export const CAPABILITY_HOMES: readonly CapabilityHome[] = [
+  // T-CAPABILITY-HOMES-25 (DLW lead, 13 Oct 2026)
   {ref: 'cap.o-i.session-observatory', family: SOFTWARE_FACTORY, semantic: 'Factory arrangement — the run viewer (run-device)'},
   {ref: 'cap.o-i.flow-loop', family: CENTRAL, semantic: 'the Flow track + document devices (flow-document)'},
   {ref: 'cap.suite.agent-creation-chain', family: AI_KIT, semantic: 'Factory browser New — create a track (an agent profile)'},
@@ -51,7 +61,7 @@ export const CAPABILITY_HOMES: readonly CapabilityHome[] = [
   {ref: 'cap.software-factory.agent-agency-contract', family: SOFTWARE_FACTORY, semantic: "the Agent device's custody (agent-custody)"},
   {ref: 'cap.suite.workcell-placement-intent', family: WORKCELL, semantic: "the Factory World device's placement (seat)"},
   {ref: 'cap.suite.explicit-co-internality', family: ACTUATION, semantic: 'the agency ontology (gateway → agent chain)'},
-  // the landed refs without a family scope (`devices:gaps --all`; lead, 13 Oct 2026, T-CAPABILITY-HOMES-LANDED)
+  // T-CAPABILITY-HOMES-LANDED (devices:gaps --all; DLW lead, 13 Oct 2026)
   {ref: 'cap.suite.suite-skills-composition', family: AI_KIT, semantic: 'the Skillset rack (suite SkillSets as chains)'},
   {ref: 'cap.suite.authored-relation-surface', family: CENTRAL, semantic: 'the Text document device over the Wiki category (authored wikilinks)'},
   {ref: 'cap.suite.git-provider', family: WORKCELL, semantic: 'the Git device (git-seat): the repository facts as readings'},
@@ -59,6 +69,7 @@ export const CAPABILITY_HOMES: readonly CapabilityHome[] = [
 
 /** Shell-homed capabilities: ref → the shell surface it is. No device. */
 export const SHELL_CAPABILITIES: Readonly<Record<string, string>> = {
+  // T-CAPABILITY-HOMES-25 (DLW lead, 13 Oct 2026)
   'cap.o-i.search-aperture': 'Browser search, every mode',
   'cap.o-i.rooted-world-navigator': 'Browser places',
   'cap.o-i.currentworld-reading': 'the status bar run context',
@@ -69,12 +80,11 @@ export const SHELL_CAPABILITIES: Readonly<Record<string, string>> = {
   'cap.o-i.cradle-verification': "the shell's verification harness",
   'cap.o-i.desktop-embodiment': 'the native window (embodiment)',
   'cap.o-i.desktop-surface-host': 'the shell surface host',
-  // landed refs (T-CAPABILITY-HOMES-LANDED): the Link semantic — the shared field (lock §1, §3)
+  // T-CAPABILITY-HOMES-LANDED (devices:gaps --all; DLW lead, 13 Oct 2026)
   'cap.suite.shared-field-grammar': 'the shared field (Link): identity, participant, projection, presence',
   'cap.suite.shared-field-projection-contract': 'the shared field (Link): projection and participation contract',
   'cap.o-i.shared-field-front-door': 'the shared field (Link): the front door a player projects through',
   'cap.suite.research-commons': 'the shared field (Link): the research commons',
-  // the World as the shell reads it (status bar run context, Info view, the neutral door)
   'cap.suite.existing-world-adoption': 'the status bar run context: the World as adopted',
   'cap.o-i.inhabitation-reading': 'the status bar run context: which World, constituted how',
   'cap.suite.explain-chain': 'the Info view: provenance explained in place',
@@ -82,6 +92,7 @@ export const SHELL_CAPABILITIES: Readonly<Record<string, string>> = {
   'cap.o-i.omarchy-integration': 'the native window (embodiment) on an Omarchy host',
   'cap.suite.physical-reference-world': "the shell's verification harness (the reference-world acceptance)",
 }
+// END GENERATED: capability homes
 
 /** Declare each family's homes as one additive extension per family:
  * `<family>:capability-homes`, no faces, the refs in `capabilities`, and a
