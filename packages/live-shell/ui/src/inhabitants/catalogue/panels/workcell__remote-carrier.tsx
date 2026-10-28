@@ -26,8 +26,12 @@
 //                               degraded · unsatisfiable; planned_bindings: logical_ref, necessity, offer_ref; degradations and omissions:
 //                               requirement, necessity, reason); {status, bindings: [{ref, necessity, offer}], degradations, omissions}.
 //                               No kernel route reaches plan yet.
+//   runs       string[]         the runs `workcell worlds` names for the chosen world (the run-ledger slugs whose record names its
+//                               world_ref), where it names several: the Standing page chooses whose needs the plan lays on the offers
+//                               (`planRun`), and none is assumed. One run is that run; none stands absent with why.
 // The Standing page draws the offers and the plan; the Route page the connections. Act: replan (asks `workcell plan` again).
-// The shell holds and the owner is asked to write:  where ('this' · 'connected'), machine (a connection label).
+// The shell holds and the owner is asked to write:  where ('this' · 'connected'), machine (a connection label). The shell holds:
+//   planRun (the run chosen among `runs`).
 //
 // The Machine page (§19.18 "The Machine page"): what you declared for the machine beside what it holds, made good where it can be, and
 // the way back to it. Its values stand under `mc.`: a binding hosts the page by prefixing the machine's own binding. The owner is Central
@@ -349,6 +353,15 @@ const offersOf = (v: V): Offer[] | undefined => {
 }
 const needs = (x: unknown): Need[] => (Array.isArray(x) ? x.flatMap((n): Need[] => { const r = n && typeof n === 'object' ? n as Record<string, unknown> : {}; const q = text(r.requirement)
   return q ? [{requirement: q, necessity: text(r.necessity), reason: text(r.reason)}] : [] }) : [])
+/** The runs to choose among, where the owner names several for the chosen world; undefined otherwise. */
+const runsOf = (v: V): string[] | undefined => {
+  const raw = json<unknown>(v, 'runs', undefined)
+  const runs = Array.isArray(raw) ? raw.filter((r): r is string => typeof r === 'string' && r.length > 0) : []
+  return runs.length > 1 ? runs : undefined
+}
+const runChooser = (p: ViewProps, runs: readonly string[]) => <Chooser {...st(p, 'planRun')} label="Run" wide
+  does="The runs Workcell names for the chosen world. Choose the one whose needs the plan lays on the offers. None is assumed."
+  value={strOf(p.v, 'planRun') ?? ''} options={[{value: '', label: 'Choose a run'}, ...runs.map(run => ({value: run, label: run}))]} onChange={x => p.set('planRun', x || undefined)} />
 const planOf = (v: V): Plan | undefined => {
   const raw = json<unknown>(v, 'plan', undefined)
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return undefined
@@ -401,7 +414,7 @@ function OffersDisplay({v, w, h}: {v: V; w: number; h: number}) {
 }
 
 function StandingBands({p}: {p: ViewProps}) {
-  const v = p.v, offers = offersOf(v), plan = planOf(v)
+  const v = p.v, offers = offersOf(v), plan = planOf(v), runs = runsOf(v)
   const items: RowItem[] = !plan ? [{id: 'none', name: 'No reading of the plan', light: 'unknown'}] : [
     ...plan.omissions.map((o): RowItem => ({id: `o:${o.requirement}`, name: needName(o.requirement), light: 'dark', note: `${o.necessity ?? NONE} · not met`, why: o.reason ?? 'Workcell gave no reason.'})),
     ...plan.degradations.map((d): RowItem => ({id: `d:${d.requirement}`, name: needName(d.requirement), light: 'lit', tone: 'accent', note: `${d.necessity ?? NONE} · degraded`, why: d.reason ?? 'Workcell gave no reason.'})),
@@ -411,6 +424,7 @@ function StandingBands({p}: {p: ViewProps}) {
   return <Band>
     <Section width={206}><OffersDisplay v={v} w={194} h={146} /></Section>
     <Section label="Plan" width={104}>
+      {runs && runChooser(p, runs)}
       <Readout label="plan" does="Whether the machine's offers meet the run's needs: satisfiable, degraded (a preferred need is met poorly) or unsatisfiable (a required need is not met)."
         value={plan?.status ? PLAN_WORD[plan.status] ?? plan.status : undefined} tone={planTone(plan?.status)} />
       <Readout label="offers up" does="Offers that answer healthy, of all the machine offers." value={offers ? `${offers.filter(o => o.health === 'healthy').length}/${offers.length}` : undefined} tone="green" />
@@ -858,7 +872,7 @@ const PLAN_UNMET = {status: 'unsatisfiable', bindings: [PLAN.bindings[0]!],
     {requirement: 'exposure:preview', necessity: 'optional', reason: 'no offer supports this material requirement'}]}
 
 /** Every key the owners report or the shell holds: the "No readings" fixture drops all of them. */
-const KEYS = ['light', 'here', 'where', 'machine', 'machines', 'offers', 'plan', ...Object.keys(MACHINE_DEFAULTS).map(k => `mc.${k}`)]
+const KEYS = ['light', 'here', 'where', 'machine', 'machines', 'offers', 'plan', 'runs', 'planRun', ...Object.keys(MACHINE_DEFAULTS).map(k => `mc.${k}`)]
 const NOTHING: Record<string, undefined> = Object.fromEntries(KEYS.map(k => [k, undefined]))
 const PAGE_IDS = ['route', 'standing', 'machine'] as const
 const pageOf = (p: ViewProps): (typeof PAGE_IDS)[number] => (p.page === 'standing' || p.page === 'machine' ? p.page : 'route')
@@ -874,6 +888,8 @@ export const design: DesignedDevice = {
     'Reads only, one grant ended': {},
     'A plan that cannot be met': {light: 'lit', where: 'connected', machine: 'omarchy', machines: JSON.stringify(READY), offers: JSON.stringify(OFFERS_OMARCHY), plan: JSON.stringify(PLAN_UNMET)},
     'Ready and carried': {light: 'lit', where: 'connected', machine: 'omarchy', machines: JSON.stringify(READY)},
+    // `workcell worlds` names two runs for the chosen world (read 28 Oct: this cell's run ledger): the Standing page asks whose plan to read.
+    'Two runs for this world': {runs: JSON.stringify(['development-entry-build-20261008', 'development-entry-build-20261008-r2']), planRun: 'development-entry-build-20261008-r2'},
     'This Mac, nothing declared': prefixed('mc.', {role: 'current',
       declared: JSON.stringify({bindings: [{kind: 'workcell', reference: 'workcell:mac'}], capabilities: [], packages: [], configurations: [], services: []}),
       observed: JSON.stringify({capabilities: OBSERVED_CAPS, packages: [], configurations: [], services: []}), plan: JSON.stringify({entries: [], summary: {satisfied: 0, missing: 0, changeable: 0, unsupported: 0}}),

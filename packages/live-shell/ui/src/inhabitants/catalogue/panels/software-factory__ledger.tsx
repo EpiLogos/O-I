@@ -18,9 +18,11 @@
 // Value keys. The shell holds:  period (run · today · all), agent (all, or one agent's name), outcome (all · landed · waiting ·
 //   approved · commented · refused), order (newest · agent · task), task (the receipt you read). Each action sets its own key: openLog.
 // The owner reports:  light (lit · dark), today (the civil day, YYYY-MM-DD), run (the run the track holds), used, cap (turns),
-//   tokensIn, tokensOut, spend (USD), and receipts, JSON: rows of {n, name, agent, outcome, run, day, time, by, files}. A file is
-//   {path, kind, from, to}. A reading the owner does not have is left out of the row. A key it has not reported arrives absent, and
-//   the views draw "—" and name the missing reading.
+//   tokensIn, tokensOut, spend (USD), and receipts, JSON: rows of {ref, n?, name, agent, outcome, run, day, time, by, files}. A file is
+//   {path, kind, from, to}. A receipt is keyed by its ref: a change's change_ref, a return's return_ref; `task` and Open log carry it. `n`
+//   is the owner's own number where it gives one (the change horizon's cursor); a return has none and draws none. A row with no ref is no
+//   receipt. A reading the owner does not have is left out of the row. A key it has not reported arrives absent, and the views draw "—"
+//   and name the missing reading.
 // - A receipt's `cond` is the condition the agent worked under, as Factory retains it with the run: {method, revision, body, context}.
 //   method and revision are the Method-classified Skill the work ran under; body is the body conditions that carried it, each a short
 //   name; context is the context it resolved in (factory/src/journey_praxis.rs:55 JourneyPraxisReturn method_ref, method_revision,
@@ -57,7 +59,7 @@ const PERIODS: readonly Option<string>[] = [
 const ORDERS: readonly Option<string>[] = [
   {value: 'newest', label: 'Newest', does: 'The newest receipt first.'},
   {value: 'agent', label: 'Agent', does: 'Receipts grouped under the agent that made them.'},
-  {value: 'task', label: 'Task', does: 'Receipts in the order of the task numbers.'},
+  {value: 'task', label: 'Task', does: 'Receipts by their number, where the owner gives one; the proposals, which carry none, after them.'},
 ]
 const OUTCOME_OPTIONS: readonly Option<string>[] = [
   {value: 'all', label: 'All', does: 'Receipts with any outcome.'},
@@ -83,7 +85,10 @@ interface File {readonly path: string; readonly kind?: Kind; readonly from?: str
 /** The condition the agent worked under: the Method and its revision, the body conditions, the context it resolved in. */
 interface Cond {readonly method?: string; readonly revision?: string; readonly body?: readonly string[]; readonly context?: string}
 interface Receipt {
-  readonly n: number
+  /** The owner's ref for the receipt: the key the list, `task` and Open log go by. */
+  readonly ref: string
+  /** The owner's own number, where it gives one (the change horizon's cursor); a return carries none. */
+  readonly n?: number
   readonly name?: string
   readonly agent?: string
   readonly outcome?: Outcome
@@ -104,18 +109,25 @@ function receiptsOf(v: V): Receipt[] | undefined {
   if (!Array.isArray(raw)) return undefined
   const list: Receipt[] = []
   for (const o of objects(raw)) {
-    const n = finite(o.n)
-    if (n === undefined) continue
+    const ref = word(o.ref)
+    if (ref === undefined) continue
     const files = Array.isArray(o.files) ? objects(o.files).flatMap((f): File[] => { const path = word(f.path); return path ? [{path, kind: KINDS.find(k => k === f.kind), from: word(f.from), to: word(f.to)}] : [] }) : undefined
     const c = o.cond && typeof o.cond === 'object' && !Array.isArray(o.cond) ? o.cond as Record<string, unknown> : undefined
     const cond = c ? {method: word(c.method), revision: word(c.revision), body: Array.isArray(c.body) ? c.body.filter((b): b is string => typeof b === 'string' && b.length > 0) : undefined, context: word(c.context)} : undefined
-    list.push({n, name: word(o.name), agent: word(o.agent), outcome: OUTCOMES.find(x => x === o.outcome), run: word(o.run), day: word(o.day), time: word(o.time), by: word(o.by), files, cond})
+    list.push({ref, n: finite(o.n), name: word(o.name), agent: word(o.agent), outcome: OUTCOMES.find(x => x === o.outcome), run: word(o.run), day: word(o.day), time: word(o.time), by: word(o.by), files, cond})
   }
   return list
 }
 
 const stamp = (r: Receipt) => `${r.day ?? ''} ${r.time ?? ''}`
-const newest = (a: Receipt, b: Receipt) => (stamp(a) < stamp(b) ? 1 : stamp(a) > stamp(b) ? -1 : b.n - a.n)
+/** The owner's number for ordering: a receipt with none after every one that has one. */
+const numbered = (a: Receipt, b: Receipt) => (a.n === undefined ? (b.n === undefined ? 0 : 1) : b.n === undefined ? -1 : a.n - b.n)
+const byRef = (a: Receipt, b: Receipt) => a.ref.localeCompare(b.ref)
+const newest = (a: Receipt, b: Receipt) => (stamp(a) < stamp(b) ? 1 : stamp(a) > stamp(b) ? -1 : -numbered(a, b) || byRef(a, b))
+/** A receipt's number as drawn: `#n` where the owner gives one, else nothing. */
+const numberOf = (r: Receipt) => (r.n === undefined ? undefined : `#${r.n}`)
+/** A receipt as one line: its number where it has one, and its name. */
+const titleOf = (r: Receipt) => [numberOf(r), r.name ?? NONE].filter(Boolean).join(' ')
 
 interface Shown {
   readonly all: readonly Receipt[]
@@ -132,14 +144,14 @@ function shownOf(v: V): Shown | undefined {
   const gap = period === 'today' && today === undefined ? 'No reading of the date' : period === 'run' && run === undefined ? 'No reading of the run' : undefined
   const kept = all.filter(r => (period === 'today' && today !== undefined ? r.day === today : period === 'run' && run !== undefined ? r.run === run : true)
     && (agent === undefined || agent === 'all' || r.agent === agent) && (outcome === undefined || outcome === 'all' || r.outcome === outcome))
-  const rows = order === 'task' ? [...kept].sort((a, b) => a.n - b.n)
+  const rows = order === 'task' ? [...kept].sort((a, b) => numbered(a, b) || byRef(a, b))
     : order === 'agent' ? [...kept].sort((a, b) => (a.agent ?? '￿').localeCompare(b.agent ?? '￿') || newest(a, b))
       : [...kept].sort(newest)
   return {all, rows, gap}
 }
 
 /** The receipt you read, from all the receipts (a filter may hide it from the list, not from the receipt). */
-const currentOf = (v: V): Receipt | undefined => { const n = numOf(v, 'task'); return n === undefined ? undefined : receiptsOf(v)?.find(r => r.n === n) }
+const currentOf = (v: V): Receipt | undefined => { const ref = strOf(v, 'task'); return ref === undefined ? undefined : receiptsOf(v)?.find(r => r.ref === ref) }
 const countOf = (s: Shown | undefined, o: Outcome): number | undefined => (s ? s.all.filter(r => r.outcome === o).length : undefined)
 const agentsOf = (v: V): string[] => [...new Set((receiptsOf(v) ?? []).flatMap(r => (r.agent ? [r.agent] : [])))].sort()
 
@@ -177,13 +189,12 @@ const COND_DOES = 'The Method the agent worked under, at its revision; the body 
 
 function Receipts({p, size, label}: {p: ViewProps; size: number; label?: string}) {
   const s = shownOf(p.v)
-  const items: RowItem[] = (s?.rows ?? []).map(r => ({id: String(r.n), name: `#${r.n} ${r.name ?? NONE}`, light: r.outcome === undefined ? 'unknown' : r.outcome === 'refused' ? 'dark' : 'lit',
+  const items: RowItem[] = (s?.rows ?? []).map(r => ({id: r.ref, name: titleOf(r), light: r.outcome === undefined ? 'unknown' : r.outcome === 'refused' ? 'dark' : 'lit',
     tone: r.outcome ? TONE[r.outcome] : 'accent', note: r.outcome ? r.outcome : undefined, why: r.outcome === 'waiting' ? 'Waits for your answer.' : undefined,
     does: `${r.agent ?? 'The owner does not name the agent'}. Press to read the receipt.`}))
-  const sel = numOf(p.v, 'task')
   return s
     ? <Rows label={label} does="The last receipts. The tick is the outcome. Press a line to read its receipt." items={items} size={size}
-        selected={sel === undefined ? undefined : String(sel)} onSelect={id => { p.set('task', Number(id)); p.nav.full?.() }} />
+        selected={strOf(p.v, 'task')} onSelect={id => { p.set('task', id); p.nav.full?.() }} />
     : <p className="sfl-none">No reading of the receipts.</p>
 }
 
@@ -206,7 +217,7 @@ function Head({p}: {p: ViewProps}) {
     {orderRadio(p)}
     {outcomeChooser(p)}
     {agentChooser(p)}
-    <Action {...st(p, 'openLog')} label="Open log" does={r ? `${SAYS.log} #${r.n}.` : SAYS.log} onPress={r ? () => p.set('openLog', r.n) : undefined} />
+    <Action {...st(p, 'openLog')} label="Open log" does={r ? `${SAYS.log} ${titleOf(r)}.` : SAYS.log} onPress={r ? () => p.set('openLog', r.ref) : undefined} />
   </>} />
 }
 
@@ -219,10 +230,10 @@ function Pane({p}: {p: ViewProps}) {
         {!s && <p className="sfl-none">No reading of the receipts.</p>}
         {s && s.rows.length === 0 && <p className="sfl-none">No receipt matches.{s.gap ? ` ${s.gap}.` : ''}</p>}
         <ol>
-          {(s?.rows ?? []).map(x => <li key={x.n}>
-            <button type="button" className="sfl-line" aria-pressed={x.n === r?.n} onClick={() => p.set('task', x.n)} data-outcome={x.outcome}
-              data-i={`#${x.n} ${x.name ?? ''}|${x.outcome ? `${WORD[x.outcome]}. ${SAYS_OUTCOME[x.outcome]}` : 'The owner does not say how it ended.'}`}>
-              <i /><span>#{x.n}</span><b>{x.name ?? NONE}</b><span>{x.agent ?? NONE}</span><span>{x.day && x.time ? `${x.day.slice(5)} ${x.time}` : NONE}</span><span>{x.files ? x.files.length : NONE}</span>
+          {(s?.rows ?? []).map(x => <li key={x.ref}>
+            <button type="button" className="sfl-line" aria-pressed={x.ref === r?.ref} onClick={() => p.set('task', x.ref)} data-outcome={x.outcome}
+              data-i={`${titleOf(x)}|${x.outcome ? `${WORD[x.outcome]}. ${SAYS_OUTCOME[x.outcome]}` : 'The owner does not say how it ended.'}`}>
+              <i /><span>{numberOf(x) ?? NONE}</span><b>{x.name ?? NONE}</b><span>{x.agent ?? NONE}</span><span>{x.day && x.time ? `${x.day.slice(5)} ${x.time}` : NONE}</span><span>{x.files ? x.files.length : NONE}</span>
             </button>
           </li>)}
         </ol>
@@ -230,8 +241,9 @@ function Pane({p}: {p: ViewProps}) {
       <aside className="sfl-receipt" aria-label="Receipt">
         {!r && <p className="sfl-none">{s ? 'Press a receipt to read it.' : 'No reading of the receipts.'}</p>}
         {r && <>
-          <h3>#{r.n} <b>{r.name ?? NONE}</b></h3>
+          <h3>{numberOf(r) ? `${numberOf(r)} ` : ''}<b>{r.name ?? NONE}</b></h3>
           <dl>
+            <dt>Ref</dt><dd className="sfl-ref">{r.ref}</dd>
             <dt>Outcome</dt><dd data-outcome={r.outcome}>{outcomeWord(r) ?? NONE}</dd>
             <dt>Agent</dt><dd>{r.agent ?? NONE}</dd>
             <dt>Accepted by</dt><dd>{r.by ?? NONE}</dd>
@@ -255,21 +267,22 @@ function Pane({p}: {p: ViewProps}) {
 
 // ---------------------------------------------------------------- the gallery's readings (the owner's names and shapes, as the binding supplies them)
 
+// The landed receipts are the change horizon's (a change_ref and its cursor); the others are source returns (a return_ref, no number).
 const SAMPLE_RECEIPTS = [
-  {n: 214, name: 'drop old captures', agent: 'Kite', outcome: 'waiting', run: 'run:2', day: '2026-10-16', time: '10:48',
+  {ref: 'central:return:project:o-i:1792144080000000000-4242', name: 'drop old captures', agent: 'Kite', outcome: 'waiting', run: 'run:2', day: '2026-10-16', time: '10:48',
     cond: {method: 'capture-pass', revision: '3', body: ['Haiku 4.5', 'env-2'], context: '9 sources'},
     files: [{path: 'Work/O-I/docs/dlw/DLW.md', kind: 'modified', from: 'b3:51d0aa', to: 'b3:7c2e19'}]},
-  {n: 213, name: 'map field → plan', agent: 'Flint', outcome: 'approved', by: 'You', run: 'run:2', day: '2026-10-16', time: '10:05',
+  {ref: 'central:return:project:o-i:1792141500000000000-4242', name: 'map field → plan', agent: 'Flint', outcome: 'approved', by: 'You', run: 'run:2', day: '2026-10-16', time: '10:05',
     cond: {method: 'port-plan', revision: '7', body: ['Sonnet 4.6', 'env-1'], context: '14 sources'},
     files: [{path: 'packages/live-shell/ui/src/inhabitants/agentParamAddresses.ts', kind: 'modified', from: 'b3:2a90e4', to: 'b3:d18b36'}, {path: 'portPlan.ts', kind: 'added', to: 'b3:9f2c41'}]},
-  {n: 212, name: 're-plan port', agent: 'Flint', outcome: 'landed', run: 'run:2', day: '2026-10-16', time: '09:12',
+  {ref: 'central:change:project:O-I:212', n: 212, name: 're-plan port', agent: 'Flint', outcome: 'landed', run: 'run:2', day: '2026-10-16', time: '09:12',
     cond: {method: 'port-plan', revision: '7', body: ['Sonnet 4.6', 'env-1'], context: '11 sources'},
     files: [{path: 'portPlan.ts', kind: 'modified', from: 'b3:9f2c41', to: 'b3:41ae07'}]},
-  {n: 211, name: 'survey the widget tree', agent: 'Cairn', outcome: 'refused', run: 'run:2', day: '2026-10-16', time: '08:30',
+  {ref: 'central:return:project:o-i:1792135800000000000-4180', name: 'survey the widget tree', agent: 'Cairn', outcome: 'refused', run: 'run:2', day: '2026-10-16', time: '08:30',
     files: [{path: 'Control/user/flows/flow-2026-10-03-1432.md', kind: 'modified', from: 'b3:6e07f3', to: 'b3:c4a5d2'}]},
-  {n: 209, name: 'review #482 notes', agent: 'Cairn', outcome: 'commented', run: 'run:1', day: '2026-10-15', time: '17:52',
+  {ref: 'central:return:project:o-i:1792083120000000000-3977', name: 'review #482 notes', agent: 'Cairn', outcome: 'commented', run: 'run:1', day: '2026-10-15', time: '17:52',
     files: [{path: 'Work/O-I/docs/dlw/DLW.md §16', kind: 'modified', from: 'b3:08bb91', to: 'b3:e3f764'}]},
-  {n: 205, name: 'generate fixtures', agent: 'Kite', outcome: 'landed', run: 'run:1', day: '2026-10-15', time: '16:10',
+  {ref: 'central:change:project:O-I:205', n: 205, name: 'generate fixtures', agent: 'Kite', outcome: 'landed', run: 'run:1', day: '2026-10-15', time: '16:10',
     files: [{path: 'fixtures/handoff.json', kind: 'added', to: 'b3:77d3a0'}, {path: 'fixtures/old-handoff.json', kind: 'removed', from: 'b3:31c8e5'}]},
 ]
 
@@ -278,12 +291,12 @@ export const design = railAndPane({
   title: 'Ledger',
   kind: 'monitor',
   defaults: {
-    light: 'lit', period: 'today', agent: 'all', outcome: 'all', order: 'newest', task: 212, today: '2026-10-16', run: 'run:2',
+    light: 'lit', period: 'today', agent: 'all', outcome: 'all', order: 'newest', task: 'central:change:project:O-I:212', today: '2026-10-16', run: 'run:2',
     used: 5, cap: 12, tokensIn: 128400, tokensOut: 21300, receipts: JSON.stringify(SAMPLE_RECEIPTS),
   },
   fixtures: {
     'Today, on the lead session': {},
-    'Waiting for you': {task: 214, outcome: 'waiting'},
+    'Waiting for you': {task: 'central:return:project:o-i:1792144080000000000-4242', outcome: 'waiting'},
     'No readings': {light: undefined, period: undefined, agent: undefined, outcome: undefined, order: undefined, task: undefined, today: undefined, run: undefined,
       used: undefined, cap: undefined, tokensIn: undefined, tokensOut: undefined, spend: undefined, receipts: undefined},
   },

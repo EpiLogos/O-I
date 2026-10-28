@@ -99,7 +99,9 @@ test('the Ledger reads Central\'s change horizon: a change an agent made is a re
   assert.deepEqual([real.light, real.today], ['lit', '2026-10-16'])
   const values = rec.ledgerValues({ground: ground([NATIVE, AGENT, REMOVED]), groundError: null, holds: bind.chainHolds()})
   // 13:30 UTC is 14:30 in the policy's zone (Europe/London, BST): the Day's own clock.
-  assert.deepEqual(JSON.parse(values.receipts), [{n: 831, agent: 'agent:aletheia', outcome: 'landed', day: '2026-10-16', time: '14:30',
+  // REPLACED (#757 part two): a receipt is keyed by its ref, the change's change_ref, and keeps the horizon's number as `n`
+  // (w757-designs-what-the-build-found.test.mjs, the Ledger keyed by ref).
+  assert.deepEqual(JSON.parse(values.receipts), [{ref: 'central:change:control:root:831', n: 831, agent: 'agent:aletheia', outcome: 'landed', day: '2026-10-16', time: '14:30',
     files: [{path: 'Control/agents/now/day/2026-10-16.md', kind: 'modified', from: 'central.content-fnv1a64/v1:1:aa', to: 'central.content-fnv1a64/v1:2:bb'}],
     session: 'agent-session/fx-aletheia'}])
   assert.deepEqual([values.period, values.agent, values.outcome, values.order], ['today', 'all', 'all', 'newest'], 'the manual\'s starting filters, the view\'s own')
@@ -118,15 +120,18 @@ test('the Ledger only reads: its filters are the view\'s; Open log selects the r
   bind.resetHolds()
   const opened = []
   const binding = rec.ledgerBinding({ground: ground([AGENT, NATIVE]), groundError: null, holds: bind.chainHolds()}, {openSession: ref => { opened.push(ref); return null }})
+  // REPLACED (#757 part two): the receipt you read and Open log go by the receipt's ref, never a number (w757-designs-what-the-build-found
+  // .test.mjs, the Ledger keyed by ref); the horizon's number names no receipt.
   binding.local.outcome('landed')
-  binding.local.task(831)
+  binding.local.task(AGENT.change_ref)
   const after = rec.ledgerValues({ground: ground([AGENT]), groundError: null, holds: bind.chainHolds()})
-  assert.deepEqual([after.outcome, after.task], ['landed', 831])
-  await binding.write([{key: 'openLog', value: 831}])
+  assert.deepEqual([after.outcome, after.task], ['landed', AGENT.change_ref])
+  await binding.write([{key: 'openLog', value: AGENT.change_ref}])
   assert.deepEqual(opened, ['agent-session/fx-aletheia'])
-  await assert.rejects(() => binding.write([{key: 'openLog', value: 7}]), /not in the change horizon/)
+  await assert.rejects(() => binding.write([{key: 'openLog', value: 'central:change:control:root:7'}]), /not in the Ledger/)
+  await assert.rejects(() => binding.write([{key: 'openLog', value: 831}]), /not in the Ledger/, 'the horizon\'s number is no key')
   const gone = rec.ledgerBinding({ground: ground([AGENT]), groundError: null, holds: bind.chainHolds()}, {openSession: () => 'This agent session is not among Factory\'s sessions here.'})
-  await assert.rejects(() => gone.write([{key: 'openLog', value: 831}]), /not among Factory's sessions/)
+  await assert.rejects(() => gone.write([{key: 'openLog', value: AGENT.change_ref}]), /not among Factory's sessions/)
   await assert.rejects(() => binding.write([{key: 'receipts', value: '[]'}]), /is a reading/)
   bind.resetHolds()
 })

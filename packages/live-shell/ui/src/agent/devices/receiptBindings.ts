@@ -13,8 +13,9 @@
 // The proposals stand in the Ledger too (lane W9), from Central's source returns (the kernel's source_returns_read, central.source-returns/v1,
 // the read Approvals makes): a pending or applying return is Waiting, or Commented once a reviewer commented on it (its entry's `comments`,
 // Central PR 290: the count of the comments the return keeps); an accepted one is Approved and a rejected one Refused (source_return.rs
-// statuses). A return carries no receipt number: its row's `n` is the instant Central minted it (its ref names it, in ms), and who accepted
-// it is not in the list, so `by` is left out.
+// statuses). Every receipt is keyed by its ref (O-I 757): a change by its `change_ref`, a return by its `return_ref`. A change keeps the
+// horizon's own number (`n`, its cursor); a return carries none, so its row has no `n` — the instant Central minted it (its ref names it)
+// is when it was made, drawn as its day and time, never as a number. Who accepted it is not in the list, so `by` is left out.
 //
 // Approvals' Default answer is the Gateway's `approvals` key — the same read (agentChainDevices.ts gatewayDisclosed) and the same write
 // (the Gateway row, kernel harness_agent_control configure {approvals}); its queue is the shown session's pending consent requests
@@ -119,12 +120,18 @@ export function usageTotalsOf(listing: unknown): {records: number; tokensIn?: {s
   }
 }
 
-/** The agent session of the receipt you read (the view's `task`), when it names one: whose usage the Ledger's head reads. Pure. */
+/** A receipt row as the Ledger's binding reads it back: its ref, and the session it names. */
+type ReceiptKey = {readonly ref: string; readonly session?: string}
+const receiptsIn = (values: Values): ReceiptKey[] => (typeof values.receipts === 'string' ? JSON.parse(values.receipts) as ReceiptKey[] : [])
+/** The receipt you read (the view's `task`, a receipt's ref), or undefined. */
+const chosenIn = (values: Values, receipts: readonly ReceiptKey[]): ReceiptKey | undefined =>
+  (typeof values.task === 'string' ? receipts.find(row => row.ref === values.task) : undefined)
+
+/** The agent session of the receipt you read (the view's `task`, a receipt's ref), when it names one: whose usage the Ledger's head
+ * reads. Pure. */
 export function ledgerReceiptSession(input: Pick<LedgerInput, 'ground' | 'returns' | 'tracks' | 'holds'>): string | null {
   const values = ledgerValues({...input, groundError: null})
-  const receipts = typeof values.receipts === 'string' ? JSON.parse(values.receipts) as {n: number; session?: string}[] : []
-  const chosen = typeof values.task === 'number' ? receipts.find(row => row.n === values.task) : undefined
-  return chosen?.session ?? null
+  return chosenIn(values, receiptsIn(values))?.session ?? null
 }
 
 /** One civil instant as the Day writes it, in the policy's time zone (else this machine's). */
@@ -138,19 +145,21 @@ function civil(unixSeconds: number, timeZone: string | undefined): {day: string;
 
 const KINDS = new Set(['added', 'modified', 'removed'])
 
-/** The receipts of a change horizon (software-factory__ledger.tsx:16-19 `receipts`): each change an agent made — its actor kind is
- * `agent`, or it names an agent session — newest first, as {n (the horizon's cursor), agent (the actor), outcome landed, day, time (in
- * the civil time zone), files [{path, kind, from, to}], session}. A change no agent made is not a receipt. */
+/** The receipts of a change horizon (software-factory__ledger.tsx `receipts`): each change an agent made — its actor kind is `agent`, or
+ * it names an agent session — newest first, as {ref (its change_ref), n (the horizon's cursor), agent (the actor), outcome landed, day,
+ * time (in the civil time zone), files [{path, kind, from, to}], session}. A change no agent made is not a receipt; a change with no
+ * change_ref is not a SourceChange (source_horizon.rs:118), so it is none either. */
 export function receiptRows(horizon: unknown, timeZone: string | undefined): Record<string, Value | readonly unknown[]>[] {
   const changes = isObj(horizon) && Array.isArray(horizon.changes) ? horizon.changes : []
   const rows: Record<string, Value | readonly unknown[]>[] = []
   for (const change of changes) {
-    if (!isObj(change) || typeof change.cursor !== 'number') continue
+    if (!isObj(change) || typeof change.cursor !== 'number' || !str(change.change_ref)) continue
     const session = str(change.agent_session_ref)
     if (change.actor_kind !== 'agent' && !session) continue
     const at = typeof change.observed_at_unix_seconds === 'number' ? civil(change.observed_at_unix_seconds, timeZone) : null
     const path = str(change.source_path)
     rows.push({
+      ref: String(change.change_ref),
       n: change.cursor,
       ...(str(change.actor) ? {agent: String(change.actor)} : {}),
       outcome: 'landed',
@@ -172,19 +181,25 @@ function returnOutcome(entry: SourceReturnEntry): string | undefined {
   return entry.status === 'accepted' ? 'approved' : entry.status === 'rejected' ? 'refused' : undefined
 }
 
-/** Central's source returns as Ledger receipts (software-factory__ledger.tsx `receipts`): {n (the instant Central minted it, ms), name (the
- * source it proposes to change), agent (the session's agent, else its session), outcome, day, time (minted, in the civil time zone), session}.
- * A return whose ref names no instant has no `n` and is left out. Pure. */
+/** Central's source returns as Ledger receipts (software-factory__ledger.tsx `receipts`): {ref (its return_ref), name (the source it
+ * proposes to change), agent (the session's agent, else its session), outcome, day, time (minted, in the civil time zone), session}. A return
+ * carries no number, so its row has no `n`; one whose ref names no instant stands with no day and no time. Pure. */
 export function returnReceiptRows(entries: readonly SourceReturnEntry[], tracks: readonly AgentSessionTrack[] | null | undefined, timeZone: string | undefined): Record<string, Value>[] {
-  return entries.flatMap(entry => {
+  return entries.map(entry => {
     const minted = returnMintedMs(entry.return_ref)
-    if (minted === null) return []
     const outcome = returnOutcome(entry)
     const track = tracks?.find(item => item.sessionRef === entry.agent_session_ref)
-    const at = civil(Math.floor(minted / 1000), timeZone)
-    return [{n: minted, name: pathOfSource(entry.source_ref), agent: track?.agentName ?? track?.agentRef ?? entry.agent_session_ref, ...(outcome ? {outcome} : {}),
-      day: at.day, time: at.time, session: entry.agent_session_ref}]
+    const at = minted === null ? null : civil(Math.floor(minted / 1000), timeZone)
+    return {ref: entry.return_ref, name: pathOfSource(entry.source_ref), agent: track?.agentName ?? track?.agentRef ?? entry.agent_session_ref, ...(outcome ? {outcome} : {}),
+      ...(at ? {day: at.day, time: at.time} : {}), session: entry.agent_session_ref}
   })
+}
+
+/** Newest first across the change horizon and the returns: by the civil instant each was made (one zone, so `day time` orders), then by
+ * the horizon's number, then by ref; a receipt with no instant comes last. */
+const newestFirst = (a: Record<string, unknown>, b: Record<string, unknown>): number => {
+  const at = (row: Record<string, unknown>) => (typeof row.day === 'string' && typeof row.time === 'string' ? `${row.day} ${row.time}` : '')
+  return at(b).localeCompare(at(a)) || (typeof b.n === 'number' ? b.n : -1) - (typeof a.n === 'number' ? a.n : -1) || String(a.ref).localeCompare(String(b.ref))
 }
 
 const timeData = (ground: LedgerGround | null) => (ground?.time?.state === 'ready' && isObj(ground.time.data) ? ground.time.data : null)
@@ -201,7 +216,7 @@ export function ledgerValues(input: LedgerInput): Values {
     const policy = time && isObj(time.policy) ? time.policy : null
     const zone = policy ? str(policy.timezone) : undefined
     const proposed = input.returns ? returnReceiptRows(input.returns.entries, input.tracks, zone) : []
-    values.receipts = JSON.stringify([...receiptRows(sources.data, zone), ...proposed].sort((a, b) => Number(b.n) - Number(a.n)))
+    values.receipts = JSON.stringify([...receiptRows(sources.data, zone), ...proposed].sort(newestFirst))
     values.light = 'lit'
   } else if (sources || input.groundError) values.light = 'dark'
   const time = timeData(input.ground)
@@ -268,12 +283,12 @@ export function ledgerUsage(session: string | null, usage: SessionUsage | null |
  * Open log selects the receipt's agent session, whose log Clip view shows. A key no owner reports stands absent with what it waits for. */
 export function ledgerBinding(input: LedgerInput, ports: LedgerPorts): DesignBinding {
   const values: Record<string, Value> = {...ledgerValues(input)}
-  const receipts = typeof values.receipts === 'string' ? JSON.parse(values.receipts) as {n: number; session?: string}[] : []
+  const receipts = receiptsIn(values)
   const why = ledgerWaits(input)
   const unread = why ?? 'Central\'s ground has not answered yet (the kernel\'s central inspect carries the change horizon and the civil date).'
   const standing: Record<string, Standing> = Object.fromEntries(Object.entries(LEDGER_ABSENT).map(([key, reason]) => [key, {disabled: reason}]))
   // The chosen receipt's session's tokens and spend, from Actuation's usage records (lane K0).
-  const chosen = typeof values.task === 'number' ? receipts.find(row => row.n === values.task) : undefined
+  const chosen = chosenIn(values, receipts)
   const usage = ledgerUsage(chosen?.session ?? null, input.usage, !!chosen)
   Object.assign(values, usage.values)
   for (const key of ['tokensIn', 'tokensOut', 'spend']) {
@@ -291,8 +306,8 @@ export function ledgerBinding(input: LedgerInput, ports: LedgerPorts): DesignBin
     write: async (changes: readonly ValueChange[]) => {
       for (const {key, value} of changes) {
         if (key !== 'openLog') throw Error(reading(key))
-        const receipt = receipts.find(row => row.n === Number(value))
-        if (!receipt) throw Error('That receipt is not in the change horizon.')
+        const receipt = receipts.find(row => row.ref === value)
+        if (!receipt) throw Error('That receipt is not in the Ledger: a receipt is chosen by its ref.')
         if (!receipt.session) throw Error('This change names no agent session, so there is no task log to open.')
         const refused = ports.openSession(receipt.session)
         if (refused) throw Error(refused)

@@ -285,3 +285,124 @@ test('the Workcell\'s World page chooses among the worlds Workcell lists for the
   assert.match(page, /Choose a world/, 'none is assumed')
   assert.match(rack.workcellRackBinding.toString(), /values\.worlds = JSON\.stringify\(picked\.listed/, 'the binding hands the listed worlds to the chooser')
 })
+
+// ---------------------------------------------------------------- software-factory__ledger: the receipts keyed by their ref (part two)
+
+test('the Ledger keys each receipt by its ref: a change by its change_ref, a return by its return_ref, and a return draws no number', async () => {
+  // DLW §19.13: "Every write has a receipt, and every receipt is in the Ledger." Central's source returns carry no number (source_return.rs
+  // mints `<prefix><unix nanos>-<pid>`): the instant is when, never which.
+  const bind = await import('../src/agent/devices/designBindings.ts')
+  const rec = await import('../src/agent/devices/receiptBindings.ts')
+  const ledger = await panel('software-factory__ledger')
+  // The horizon's change as `projectcentral.change.horizon` answered it for O-I on 28 Oct (change_ref, cursor), made an agent's (FIXTURE).
+  const change = {schema: 'central.source-change/v1', change_ref: 'central:change:project:O-I:481', cursor: 481, source_path: 'docs/a.json', kind: 'added',
+    after_revision: 'central.content-fnv1a64/v1:1:aa', before_revision: null, observed_at_unix_seconds: 1793160515, actor: 'agent:kite', actor_kind: 'agent', agent_session_ref: 'session:kite'}
+  const minted = 1_793_160_600_000
+  const ret = {return_ref: `central:return:project:o-i:${minted}000000-4242`, source_ref: 'central:source:project:O-I:docs/b.md', basis_revision: 'r1', status: 'pending',
+    agent_session_ref: 'session:flint', current_revision: 'r1'}
+  const bare = {...ret, return_ref: 'central:return:project:o-i:no-instant', source_ref: 'central:source:project:O-I:docs/c.md', agent_session_ref: 'session:cairn'}
+  const [row] = rec.receiptRows({changes: [change]}, 'Europe/London')
+  assert.equal(row.ref, 'central:change:project:O-I:481', 'a change is keyed by its change_ref')
+  assert.equal(row.n, 481, 'and keeps the horizon\'s own number')
+  const returns = rec.returnReceiptRows([ret, bare], [], 'Europe/London')
+  assert.deepEqual(returns.map(r => r.ref), [ret.return_ref, bare.return_ref], 'a return is keyed by its return_ref; one whose ref names no instant still stands')
+  for (const r of returns) assert.ok(!('n' in r), 'a return carries no number: its minted instant is never drawn as one')
+  assert.deepEqual([returns[1].day, returns[1].time], [undefined, undefined], 'no instant, no day and no time')
+  // The receipt you read and Open log go by ref.
+  bind.resetHolds()
+  const ground = {sources: {state: 'ready', data: {changes: [change]}}, time: {state: 'ready', data: {civil_date: '2026-10-28', policy: {timezone: 'Europe/London'}}}}
+  const opened = []
+  const binding = rec.ledgerBinding({ground, groundError: null, holds: bind.chainHolds(), returns: {entries: [ret]}, tracks: []}, {openSession: ref => { opened.push(ref); return null }})
+  binding.local.task(ret.return_ref)
+  assert.equal(rec.ledgerReceiptSession({ground, holds: bind.chainHolds(), returns: {entries: [ret]}, tracks: []}), 'session:flint', 'the chosen receipt\'s session, by ref')
+  await binding.write([{key: 'openLog', value: ret.return_ref}])
+  await binding.write([{key: 'openLog', value: change.change_ref}])
+  assert.deepEqual(opened, ['session:flint', 'session:kite'])
+  await assert.rejects(() => binding.write([{key: 'openLog', value: minted}]), /not in the Ledger/, 'a minted instant is no key')
+  bind.resetHolds()
+  // The design: rows by ref, the chosen one by ref, no number where the owner gives none.
+  const receipts = JSON.stringify([{ref: ret.return_ref, name: 'docs/b.md', agent: 'flint', outcome: 'waiting', day: '2026-10-28', time: '10:10'},
+    {ref: change.change_ref, n: 481, agent: 'kite', outcome: 'landed', day: '2026-10-28', time: '09:48', files: [{path: 'docs/a.json', kind: 'added'}]},
+    {n: 7, name: 'no ref', outcome: 'landed'}])
+  const full = draw(ledger, 'full', {...ledger.defaults, period: 'all', receipts, task: ret.return_ref})
+  assert.match(full, /<h3>[^<]*<b>docs\/b\.md<\/b><\/h3>/, 'the receipt you read is chosen by its ref')
+  assert.ok(full.includes(escaped(ret.return_ref)), 'the receipt shows its ref')
+  assert.doesNotMatch(full, new RegExp(`#${minted}|#NaN|undefined`), 'no number is made up for a return')
+  assert.match(full, /#481/, 'a change keeps the horizon\'s number')
+  assert.doesNotMatch(full, /no ref/, 'a row with no ref is no receipt')
+  const tile = draw(ledger, 'widget', {...ledger.defaults, period: 'all', receipts, task: change.change_ref})
+  assert.match(tile, new RegExp(`data-selected="true"[^>]*data-id="${change.change_ref}"`), 'the tile\'s rows are keyed by ref, the chosen one by its ref')
+})
+
+// ---------------------------------------------------------------- workcell__remote-carrier: a chooser among the runs a world names (part two)
+
+test('the Remote carrier\'s Standing page chooses among the runs Workcell names for the chosen world (`runs`, `planRun`), none assumed', async () => {
+  // DLW §19.18 Plan: "The run's needs laid on those offers." `workcell worlds` names each world's runs (the run-ledger slugs whose record
+  // names its world_ref; read 28 Oct: run slugs such as development-entry-build-20261008 and its -r2); several wait for the hand's choice.
+  const bind = await import('../src/agent/devices/designBindings.ts')
+  const cells = await import('../src/agent/devices/workcellBindings.ts')
+  const carrier = await panel('workcell__remote-carrier')
+  const runs = ['development-entry-build-20261008', 'development-entry-build-20261008-r2']
+  const status = {status: 'answered', value: {workcell_ref: 'workcell:mac', connections: []}}
+  bind.resetHolds()
+  const world = {worldRef: 'world:f067aac49a6184e6', runs}
+  const unchosen = cells.planRunOf(world, {read: true}, undefined)
+  const several = cells.carrierBinding(status, bind.chainHolds(), undefined, {run: {...unchosen, runs}})
+  assert.equal(several.values.runs, JSON.stringify(runs), 'the runs the world names reach the chooser')
+  assert.equal(several.values.planRun, undefined, 'none is assumed')
+  assert.match(several.standing.plan.disabled, /choose one; none is assumed/)
+  several.local.planRun(runs[1])
+  const chosen = cells.planRunOf(world, {read: true}, bind.viewHolds(bind.chainHolds(), cells.CARRIER_ID).planRun)
+  assert.equal(chosen.ref, runs[1], 'the hand\'s choice is the run the plan reads')
+  assert.equal(cells.carrierBinding(status, bind.chainHolds(), undefined, {run: {...chosen, runs}}).values.planRun, runs[1], 'and the chooser shows it')
+  const one = cells.carrierBinding(status, bind.chainHolds(), undefined, {run: {ref: runs[0], runs: [runs[0]]}})
+  assert.equal(one.values.runs, undefined, 'one run is that run: nothing to choose')
+  assert.match(one.standing.runs.disabled, /nothing to choose/)
+  const none = cells.carrierBinding(status, bind.chainHolds(), undefined, {run: {ref: null, why: 'The run\'s plan: no run in this cell\'s ledger names world:x.', runs: []}})
+  assert.equal(none.standing.runs.disabled, 'The run\'s plan: no run in this cell\'s ledger names world:x.', 'no run: the reason the plan gives')
+  bind.resetHolds()
+  // The chain hands the world's runs to the carrier.
+  const chain = source('agent/devices/FactoryDeviceChain.tsx')
+  assert.match(chain, /const carrierRunsKey = carrierWorld\?\.runs \? carrierWorld\.runs\.join\('\\n'\) : null/, 'the chosen world\'s runs')
+  assert.match(chain, /run: \{ref: carrierRun, runs: carrierRuns,/, 'the world\'s runs reach material.run')
+  // The design draws the chooser where several runs stand, and sets planRun.
+  const page = draw(carrier, 'whole', {...carrier.defaults, runs: JSON.stringify(runs), planRun: runs[1]}, {page: 'standing'})
+  assert.match(page, /Choose a run/, 'none is assumed')
+  for (const run of runs) assert.ok(page.includes(run), `the chooser offers ${run}`)
+  assert.doesNotMatch(draw(carrier, 'whole', {...carrier.defaults, runs: undefined}, {page: 'standing'}), /Choose a run/, 'no chooser where nothing names several runs')
+})
+
+// ---------------------------------------------------------------- techne__palace: the pages, the scene kind, the guide, the locus, Rename and Delete (part two)
+
+test('the Palace draws its pages — Enter, Integral whole, Compose, Portals — a Scene room as a scene, the guide in the owner\'s words, the walk locus by locus, and Rename and Delete', async () => {
+  // DLW §17.7: "To enter, select the palace on the World and choose Enter"; "Open an object, and it opens in its own instrument"; "The
+  // guide says why the selected room stands where it does"; "Walk through a portal to leave the Palace"; "Bookmark a position".
+  const palace = await panel('techne__palace')
+  const v = palace.defaults
+  const pages = Object.fromEntries(['palace', 'enter', 'whole', 'compose', 'portals'].map(page => [page, draw(palace, 'whole', v, {page})]))
+  assert.match(pages.enter, /Palaces of your world/)
+  assert.match(pages.enter, /Quaternal-Logic/, 'the Enter page lists the world\'s palaces')
+  assert.match(pages.enter, />Enter</)
+  assert.match(pages.whole, /M′1 · Canvas \/ constellation/, 'the Integral whole lists the owner\'s regions')
+  assert.match(pages.whole, /ql\.techne:whole:fixture:l5-techne-contract-ground/, 'and the entries of the region the walk stands in')
+  assert.match(pages.compose, /Save composition/)
+  assert.match(pages.compose, /O-I — wiki local whole/, 'Compose lists the kernel\'s Expressions')
+  assert.match(pages.portals, /the Earth/, 'Portals lists the doors out')
+  assert.match(pages.palace, /Locus ›/, 'the walk steps locus by locus')
+  assert.match(pages.palace, /1\/23 · Project \/ ground/)
+  assert.match(pages.palace, />Rename</)
+  assert.match(pages.palace, />Delete</)
+  // The guide says the owner's line, and what each room rests on; with neither reported, it says so and invents no form.
+  const full = draw(palace, 'full', {...v, warrant: 'stands in the warranted QL reading (canonical)', rests: 'warranted'})
+  assert.match(full, /Its form: stands in the warranted QL reading \(canonical\)\./)
+  assert.match(full, /constellation · warranted/)
+  const unread = draw(palace, 'full', {...v, warrant: undefined, rests: undefined})
+  assert.match(unread, /No reading of what it rests on\./)
+  assert.doesNotMatch(unread, /free form|free mnemonic composition: no warranted QL structure/, 'no fixed form where the owner has not said')
+  // A Scene room is a scene, in the guide's words (PalaceFloor.tsx ROOM_WORDS).
+  const scene = draw(palace, 'compact', {...v, ...palace.fixtures['A Scene room']})
+  assert.ok(scene.includes(escaped('A Scene of the palace\'s Expression.')), 'a Scene room keeps its kind')
+  // No reading: every page draws, and draws no NaN and no undefined.
+  const none = {...v, ...palace.fixtures['No readings']}
+  for (const page of ['palace', 'enter', 'whole', 'compose', 'portals']) assert.doesNotMatch(draw(palace, 'whole', none, {page}), /\bNaN\b|undefined/, page)
+})

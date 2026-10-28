@@ -107,7 +107,89 @@ function specifiersOf(file, types) {
     : text
   const named = ts.preProcessFile(code, true, true).importedFiles.map(entry => entry.fileName)
   const urls = [...code.matchAll(/new\s+URL\(\s*['"](\.{1,2}\/[^'"]+)['"]\s*,\s*import\.meta\.url\s*\)/g)].map(match => match[1])
-  return [...named, ...urls]
+  return [...named, ...urls, ...(code.includes('import.meta.glob') ? globbed(file, code) : [])]
+}
+
+/**
+ * The files an `import.meta.glob` names, as relative specifiers: Vite expands each call at build time into one import per matched file
+ * (lazy or eager, both bundled), so every match is loaded as surely as a static import. Patterns are string literals, alone or in an array;
+ * a pattern starting `./` or `../` is the file's own directory, `/` the Vite root (the nearest folder above that holds a vite.config), and
+ * a `!` pattern takes its matches out. A glob with a query (`{query: '?raw'}`, `{as: 'raw'}`) ships its files as text or URLs: they are
+ * reached and not followed. An aliased pattern is not expanded (none stands in the product today).
+ */
+function globbed(file, code) {
+  const source = ts.createSourceFile(file, code, ts.ScriptTarget.ES2022, true, file.endsWith('x') ? ts.ScriptKind.TSX : ts.ScriptKind.TS)
+  const found = []
+  const visit = node => {
+    if (ts.isCallExpression(node) && ts.isPropertyAccessExpression(node.expression) && node.expression.name.text === 'glob'
+      && ts.isMetaProperty(node.expression.expression) && node.expression.expression.name.text === 'meta') {
+      const [first, second] = node.arguments
+      const patterns = first && ts.isStringLiteralLike(first) ? [first.text]
+        : first && ts.isArrayLiteralExpression(first) ? first.elements.filter(ts.isStringLiteralLike).map(element => element.text) : []
+      const query = second && ts.isObjectLiteralExpression(second) ? globQuery(second) : ''
+      found.push(...globFiles(file, patterns).map(match => `${match}${query}`))
+    }
+    ts.forEachChild(node, visit)
+  }
+  visit(source)
+  return found
+}
+
+/** The query a glob's options give its imports (`query: '?raw'`, or the older `as: 'raw'`), or ''. */
+function globQuery(options) {
+  for (const property of options.properties) {
+    if (!ts.isPropertyAssignment(property) || !property.initializer || !ts.isStringLiteralLike(property.initializer)) continue
+    const key = property.name && (ts.isIdentifier(property.name) || ts.isStringLiteralLike(property.name)) ? property.name.text : ''
+    if (key === 'query') return property.initializer.text.startsWith('?') ? property.initializer.text : `?${property.initializer.text}`
+    if (key === 'as') return `?${property.initializer.text}`
+  }
+  return ''
+}
+
+/** A glob pattern as a regular expression over `/`-separated paths: `**` any depth, `*` and `?` within one segment, `{a,b}` either. */
+function globRegExp(pattern) {
+  let out = ''
+  for (let i = 0; i < pattern.length; i++) {
+    const c = pattern[i]
+    if (c === '*' && pattern[i + 1] === '*') { out += pattern[i + 2] === '/' ? '(?:.*/)?' : '.*'; i += pattern[i + 2] === '/' ? 2 : 1 }
+    else if (c === '*') out += '[^/]*'
+    else if (c === '?') out += '[^/]'
+    else if (c === '{') { const end = pattern.indexOf('}', i); out += `(?:${pattern.slice(i + 1, end).split(',').map(part => part.replace(/[.+^$()|[\]\\]/g, '\\$&')).join('|')})`; i = end }
+    else out += c.replace(/[.+^$()|[\]\\]/g, '\\$&')
+  }
+  return new RegExp(`^${out}$`)
+}
+
+/** The Vite root a `/` pattern names from this file: the nearest folder above it that holds a vite.config. */
+function viteRoot(file) {
+  for (let dir = dirname(file); dir !== dirname(dir); dir = dirname(dir)) {
+    if (readdirSync(dir).some(name => /^vite\.config\.[cm]?[jt]s$/.test(name))) return dir
+  }
+  return null
+}
+
+/** The files a glob call's patterns match, each as a specifier relative to the file. */
+function globFiles(file, patterns) {
+  const base = dirname(file)
+  const absolute = pattern => {
+    if (pattern.startsWith('./') || pattern.startsWith('../')) return resolve(base, pattern)
+    if (pattern.startsWith('/')) { const root = viteRoot(file); return root ? join(root, pattern) : null }
+    return null
+  }
+  const taken = new Set(), dropped = new Set()
+  for (const raw of patterns) {
+    const negated = raw.startsWith('!'), path = absolute(negated ? raw.slice(1) : raw)
+    if (!path) continue
+    const fixed = path.split('/').findIndex(segment => /[*?{]/.test(segment))
+    const dir = fixed < 0 ? dirname(path) : path.split('/').slice(0, fixed).join('/')
+    if (!existsSync(dir) || !statSync(dir).isDirectory()) continue
+    const matcher = globRegExp(path)
+    for (const candidate of filesUnder(dir)) if (matcher.test(candidate)) (negated ? dropped : taken).add(candidate)
+  }
+  return [...taken].filter(match => !dropped.has(match)).sort().map(match => {
+    const rel = relative(base, match)
+    return rel.startsWith('.') ? rel : `./${rel}`
+  })
 }
 
 /** A module that declares only types: its build output is empty (the transpile has already erased every import its types
@@ -119,9 +201,11 @@ export function declaresOnlyTypes(file) {
   return code.replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, '').replace(/^\s*export \{\};?\s*$/gm, '').trim() === ''
 }
 
-/** The file a specifier names from `from`, or null when it leaves the tree (a package) or names nothing. */
+/** The file a specifier names from `from`, or null when it leaves the tree (a package) or names nothing. A specifier with a query
+ * (`?raw`, `?url`) names any file the build carries as text or a URL — an HTML form, an SVG, Markdown — not only source. */
 export function resolveFrom(specifier, from) {
   const path = specifier.split('?')[0]
+  const query = specifier.includes('?')
   const aliased = from.startsWith(FRAME + '/') && FRAME_ALIASES[path] ? FRAME_ALIASES[path]
     : from.startsWith(FRAME + '/') && path.startsWith('@/') ? join(FRAME, path.slice(2)) : path
   if (aliased.startsWith('/')) return existsSync(aliased) ? aliased : null
@@ -138,7 +222,7 @@ export function resolveFrom(specifier, from) {
   if (!aliased.startsWith('.')) return null
   const base = resolve(dirname(from), aliased)
   for (const candidate of [base, base.replace(/\.js$/, '.ts'), base.replace(/\.js$/, '.tsx'), `${base}.ts`, `${base}.tsx`, `${base}/index.ts`, `${base}/index.tsx`]) {
-    if (existsSync(candidate) && statSync(candidate).isFile() && (SOURCE.test(candidate) || ASSET.test(candidate))) return candidate
+    if (existsSync(candidate) && statSync(candidate).isFile() && (query || SOURCE.test(candidate) || ASSET.test(candidate))) return candidate
   }
   return null
 }
@@ -146,7 +230,7 @@ export function resolveFrom(specifier, from) {
 /**
  * Every file reachable from the roots, mapped to the first file that reached it (a root maps to its page). Source files
  * are followed; CSS is followed through @import; JSON is a leaf; a file named with a query (`?raw`, `?url`) is shipped as
- * text or a URL, so it is reached but not followed.
+ * text or a URL, so it is reached, whatever its kind (an HTML form, an SVG), but not followed.
  */
 export function walk(roots, {types = false} = {}) {
   const reachedBy = new Map()
@@ -156,7 +240,8 @@ export function walk(roots, {types = false} = {}) {
     const file = queue.pop()
     for (const specifier of specifiers(file, {types})) {
       const target = resolveFrom(specifier, file)
-      if (!target || reachedBy.has(target) || !(SOURCE.test(target) || ASSET.test(target) || DATA.test(target))) continue
+      // A query names a leaf the build carries whatever its kind (an HTML form imported ?raw); without one, only source, CSS and JSON.
+      if (!target || reachedBy.has(target) || !(specifier.includes('?') || SOURCE.test(target) || ASSET.test(target) || DATA.test(target))) continue
       reachedBy.set(target, file)
       if (!specifier.includes('?') && !DATA.test(target)) queue.push(target)
     }

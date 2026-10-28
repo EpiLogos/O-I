@@ -10,7 +10,7 @@
 // `views`): an instrument stands on a chain and full in a pane and keeps a tile; an effect stands on a chain, and the manual gives the Lens
 // a Full and a Widget too (§17.11 Views). The 22 Oct manual rewrite retired the Timeline and Light as devices of their own: the timeline is
 // Technē's Arrangement view (§17.5), and Light is the Canvas's Light page (§17.4), carried by the Canvas's binding (canvasCarryingLight).
-import {useMemo, useSyncExternalStore} from 'react'
+import {useEffect, useMemo, useSyncExternalStore} from 'react'
 import type {DesignBinding} from '../../frame/devices/designed'
 import type {DeviceInstance} from '../../frame/devices/deviceRuntime'
 import type {InhabitantFaceDeclaration} from '../../inhabitants/manifest'
@@ -19,10 +19,13 @@ import type {KnowledgeGraphSurface} from '../../../../../../desktop/cradle/src/k
 import {disclosureSession} from '../../../../../../desktop/cradle/src/techne/session'
 import {useHostedChrome} from '../../projections/expressionsPaneHost'
 import {palaceState, subscribePalace} from '../../projections/atlas/palaces/palaceSession'
+import {readPalaces, usePalaces} from '../../projections/atlas/palaces/palacesWorld'
+import {useAtlasHandle, useSuiteStanding} from '../../projections/atlas/AtlasProjectionPanel'
+import {turnAtlasTo} from '../../projections/atlas/places/placesHost'
 import {writeThroughOwner} from '../../inhabitants/ql/devices/ownerWrite'
 import {setFilters} from '../../inhabitants/knowledgeGraphFaceActions'
 import {CANVAS_DESIGN, GRAPH_DESIGN, JOURNEY_DESIGN, LENS_DESIGN, PALACE_DESIGN, designDevice, heldFor, useHolds} from './designDevices'
-import {palaceBinding} from './palaceBinding'
+import {SESSION_ACTS, palaceBinding, type PalaceWorld} from './palaceBinding'
 import {canvasBinding, journeyBinding, type FrameReadings} from './frameBindings'
 import {graphBinding, surfaceRead, GRAPH_READ_NODES, type GraphWrites} from './graphBinding'
 import {useGraphRead} from './graphRead'
@@ -91,6 +94,14 @@ const LIGHT = lightBinding()
  * stands on the rack (`graph`). */
 export function useTechneDesignBindings({graph, surface}: {graph: boolean; surface: KnowledgeGraphSurface | null}): Readonly<Record<string, DesignBinding>> {
   const palace = useSyncExternalStore(subscribePalace, palaceState, palaceState)
+  // The Palace's world (its Enter page and its places as doors out): the world's palaces, read once as the M5′ plate reads them
+  // (palacesWorld.ts readPalaces), the Earth's places (the suite standing), and the turn to a place on the mounted atlas.
+  const palaces = usePalaces()
+  const suite = useSuiteStanding()
+  const atlas = useAtlasHandle()
+  useEffect(() => { readPalaces() }, [])
+  const palaceWorld = useMemo((): PalaceWorld => ({rows: palaces.rows, load: palaces.load, places: suite.places,
+    ...(atlas ? {turn: place => { turnAtlasTo(atlas, place) }} : {})}), [palaces.rows, palaces.load, suite.places, atlas])
   const holds = useHolds()
   const hosted = useHostedChrome()
   const session = useSyncExternalStore(disclosureSession.subscribe, () => disclosureSession.get(), () => null)
@@ -106,11 +117,11 @@ export function useTechneDesignBindings({graph, surface}: {graph: boolean; surfa
     const frame: FrameReadings = {state: hosted?.state ?? null, run: hosted?.run ?? null,
       window: session ? session.time_window ? {from: session.time_window.from, to: session.time_window.to} : null : undefined}
     return {
-      [PALACE_DESIGN]: palaceBinding(palace, heldFor(PALACE_DESIGN)),
+      [PALACE_DESIGN]: palaceBinding(palace, heldFor(PALACE_DESIGN), SESSION_ACTS, palaceWorld),
       [CANVAS_DESIGN]: canvasCarryingLight(canvasBinding(frame, heldFor(CANVAS_DESIGN)), LIGHT),
       [JOURNEY_DESIGN]: journeyBinding(frame),
       [LENS_DESIGN]: lensBinding(lensLists, heldFor(LENS_DESIGN)),
       [GRAPH_DESIGN]: graphBinding(surface, read, GRAPH_WRITES, heldFor(GRAPH_DESIGN), plan),
     }
-  }, [palace, holds, hosted, session, read, surface, plan, lensLists])
+  }, [palace, palaceWorld, holds, hosted, session, read, surface, plan, lensLists])
 }

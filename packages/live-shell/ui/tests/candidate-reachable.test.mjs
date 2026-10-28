@@ -147,6 +147,60 @@ test('the frame\'s own code is product through its page, not through the shell: 
   assert.ok(product.has(app), 'the frame\'s page loads it')
 })
 
+test('import.meta.glob reaches what its patterns match, as Vite bundles it: relative and root patterns, arrays, negations; a ?raw glob ships text', t => {
+  const root = fixture(t, {
+    'vite.config.mjs': 'export default {}',
+    'index.html': '<!doctype html><script type="module" src="/src/main.ts"></script>',
+    'src/main.ts': [
+      "const panels = import.meta.glob<{design: unknown}>('./panels/*__*.tsx')",
+      "const vendor = import.meta.glob(['./vendor/*.js', '!./vendor/skipped.js'], {eager: true})",
+      "const deep = import.meta.glob('/src/deep/**/*.ts')",
+      "const texts = import.meta.glob('./texts/*.md', {query: '?raw', import: 'default'})",
+      'export {panels, vendor, deep, texts}',
+    ].join('\n'),
+    'src/panels/a__one.tsx': "import {shared} from '../shared'\nexport const design = shared",
+    'src/panels/plain.tsx': 'export const notMatched = 1',
+    'src/shared.ts': 'export const shared = 1',
+    'src/vendor/kept.js': 'export const kept = 1',
+    'src/vendor/skipped.js': 'export const skipped = 1',
+    'src/deep/x/y/leaf.ts': 'export const leaf = 1',
+    'src/texts/note.md': "import './never'",
+    'src/never.ts': 'export const never = 1',
+  })
+  const reached = names(root, walk([[join(root, 'src/main.ts'), join(root, 'index.html')]]).keys())
+  for (const file of ['src/panels/a__one.tsx', 'src/shared.ts', 'src/vendor/kept.js', 'src/deep/x/y/leaf.ts']) assert.ok(reached.includes(file), `${file}: a glob the build keeps loads it`)
+  assert.ok(!reached.includes('src/panels/plain.tsx'), 'a file the pattern does not match is not reached')
+  assert.ok(!reached.includes('src/vendor/skipped.js'), 'a negated pattern takes its match out')
+  assert.ok(!reached.includes('src/never.ts'), 'a glob with a query ships its files as text: they are not followed')
+})
+
+test('a file imported with a query (`?raw`, `?url`) is reached as a leaf whatever its kind — an HTML form, an SVG — and its text is not followed', t => {
+  const root = fixture(t, {
+    'index.html': '<!doctype html><script type="module" src="/src/main.ts"></script>',
+    'src/main.ts': "import form from '../documents/form.html?raw'\nimport mark from './mark.svg?url'\nimport copy from './copy.md?raw'\nexport {form, mark, copy}",
+    'documents/form.html': '<!doctype html><script type="module" src="./never.ts"></script>',
+    'documents/never.ts': 'export const never = 1',
+    'src/mark.svg': '<svg/>',
+    'src/copy.md': 'text',
+    'src/unnamed.html': '<p></p>',
+  })
+  const reached = names(root, walk([[join(root, 'src/main.ts'), join(root, 'index.html')]]).keys())
+  for (const file of ['documents/form.html', 'src/mark.svg', 'src/copy.md']) assert.ok(reached.includes(file), `${file}: the build carries it as text or a URL`)
+  assert.ok(!reached.includes('documents/never.ts'), 'a ?raw file is text: what it names is not followed')
+  assert.ok(!reached.includes('src/unnamed.html'), 'a file nothing names is not reached')
+})
+
+test('on the tree: the Flow\'s form (desktop/cradle/documents/ql-flow.html) is product: the shell imports it with ?raw', () => {
+  assert.ok(product.has(join(repo, 'desktop/cradle/documents/ql-flow.html')), 'DocumentFlowFace.tsx and flow/instance.ts import it with ?raw; the candidate\'s build carries it')
+})
+
+test('on the tree: the catalogue\'s designs load through the panels\' glob (panels/index.ts), and a file nothing names stays unreached', () => {
+  for (const design of ['techne__palace.tsx', 'software-factory__ledger.tsx', 'workcell__remote-carrier.tsx']) {
+    assert.ok(product.has(ui(`src/inhabitants/catalogue/panels/${design}`)), `${design}: the shell loads it through import.meta.glob('./*__*.tsx')`)
+  }
+  assert.ok(!product.has(ui('src/agent/devices/knowledgeRouteBinding.ts')), 'knowledgeRouteBinding.ts: nothing the candidate loads names it')
+})
+
 test('on the tree: the shell is reached, and a module only types name is not, unless it declares only types', () => {
   assert.ok(product.has(ui('src/App.tsx')))
   assert.ok(product.has(ui('src/shell/liveSelection.ts')), 'SetSelection\'s owner carries code the shell runs')
