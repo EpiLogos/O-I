@@ -4,7 +4,9 @@
 //   - the law, the bodies and the impulse response the graph convolves with are pure and are read here in node;
 //   - the graph itself is rendered in a real browser's OfflineAudioContext, in Chromium and in WebKit (the desktop host is WebKit on
 //     macOS), and what comes out is measured: Off is the input exactly, Mix 0 is the dry, Gain scales the ringing, each body rings at its
-//     pitch and for Decay seconds (the -60 dB time), Tilt is a slope across the span.
+//     pitch and for Decay seconds (the -60 dB time), Tilt is a slope across the span, a stereo sound rings on its own sides. WebKit on Linux
+//     (CI's) leaks each block's Nyquist bin through its convolver; the bank corrects it where the page's measure finds it, and the measure's
+//     verdict is printed with each engine's measurements.
 //
 //   node --test desktop/cradle/expressions-app/field-studies-journeys/tests/mr-resonator-bank.test.mjs
 //
@@ -31,7 +33,7 @@ await esbuild.build({absWorkingDir: journeys, entryPoints: [join(native, 'effect
 const law = await import(pathToFileURL(join(out, 'effectsLaw.mjs')));
 const fx = await import(pathToFileURL(join(out, 'presentationEffects.mjs')));
 const browserBundle = (await esbuild.build({absWorkingDir: journeys, bundle: true, format: 'iife', globalName: 'bank', write: false, logLevel: 'silent',
-  stdin: {resolveDir: native, loader: 'ts', contents: `export {PresentationEffects, resonatorImpulse} from './presentationEffects.ts';
+  stdin: {resolveDir: native, loader: 'ts', contents: `export {PresentationEffects, resonatorImpulse, convolverLeaksNyquist} from './presentationEffects.ts';
     export {initialEffects, editEffects, editEffectChain, resonatorBodies, resonatorRootHz} from './effectsLaw.ts';`}})).outputFiles[0].text;
 
 const RATE = 48000;
@@ -162,13 +164,17 @@ test('the impulse response: a body rings at its pitch for Decay (−60 dB), ever
 
 // ── the graph, wired ────────────────────────────────────────────────────────
 
-/** An audio context that records its nodes and their edges (the shape of tests/native-expression-effects.test.mjs). */
+/** An audio context that records its nodes and their edges (the shape of tests/native-expression-effects.test.mjs). As a browser does, it
+ * refuses to part a node from one it is not joined to. */
 function recording() {
   const nodes = [];
   const param = value => ({value, setValueAtTime(v) { this.value = v; }, setTargetAtTime(v) { this.value = v; }});
   const node = (kind, extra = {}) => {
     const n = {kind, out: new Set(), connect(target) { this.out.add(target); return target; },
-      disconnect(target) { if (target === undefined) this.out.clear(); else this.out.delete(target); }, ...extra};
+      disconnect(target) {
+        if (target === undefined) this.out.clear();
+        else if (!this.out.delete(target)) throw new Error(`InvalidAccessError: the ${this.kind} is not connected to that ${target.kind}`);
+      }, ...extra};
     nodes.push(n); return n;
   };
   const context = {sampleRate: 48000, currentTime: 0, destination: {kind: 'destination', out: new Set()},
@@ -223,6 +229,8 @@ test('the graph: the bank stands in the chain\'s order, its ringing joins only w
   state = law.editEffects(state, 'resonator', 'on', false); graph.apply(state);
   assert.ok(r.nodes.every(node => !node.out.has(convolver)), 'off: nothing feeds the ringing');
   assert.equal(dry.gain.value, 1); assert.equal(wet.gain.value, 0);
+  state = law.editEffects(state, 'filter', 'cutoff', 2000);
+  assert.doesNotThrow(() => graph.apply(state), 'an edit while the bank is off parts nothing twice');
   state = law.editEffects(state, 'resonator', 'on', true); state = law.editEffectChain(state, ['filter']); graph.apply(state);
   assert.ok(r.nodes.every(node => !node.out.has(convolver)), 'off the chain: nothing feeds the ringing');
   graph.dispose();
@@ -240,8 +248,10 @@ for (const [engine, launcher] of [['Chromium', chromium], ['WebKit', webkit]]) {
     await page.addScriptTag({content: browserBundle});
     const r = await page.evaluate(async FALL60Source => {
       const FALL60 = new Function('RATE', `return ${FALL60Source}`)(48000);
-      const {PresentationEffects, initialEffects, editEffects, editEffectChain, resonatorImpulse} = window.bank;
+      const {PresentationEffects, initialEffects, editEffects, editEffectChain, resonatorImpulse, convolverLeaksNyquist} = window.bank;
       const RATE = 48000;
+      // The bank makes its first response once the page has measured the convolver; the renders below give it no time, so it is awaited.
+      const leaks = await convolverLeaksNyquist();
       const state = (edits, chain = ['resonator']) => edits.reduce((s, [key, value]) => editEffects(s, 'resonator', key, value), editEffectChain(initialEffects(), chain));
       async function render(edits, signal, seconds, chain) {
         const context = new OfflineAudioContext(1, Math.round(seconds * RATE), RATE);
@@ -261,7 +271,7 @@ for (const [engine, launcher] of [['Chromium', chromium], ['WebKit', webkit]]) {
       const goertzel = (data, hz) => { const w = 2 * Math.PI * hz / RATE, k = 2 * Math.cos(w); let s1 = 0, s2 = 0; for (let i = 0; i < data.length; i++) { const s = data[i] + k * s1 - s2; s2 = s1; s1 = s; } return Math.sqrt(s1 * s1 + s2 * s2 - k * s1 * s2); };
       const C3 = 130.81279;
       const fall60 = FALL60;
-      const out = {};
+      const out = {convolverLeaksNyquist: leaks};
       { // Off is the input exactly; so is Mix 0; and a bank off every chain.
         const off = await render([['on', false]], sine(997), 0.25); out.offDiff = maxDiff(off.out, off.input);
         const mix0 = await render([['mix', 0]], sine(997), 0.25); out.mix0Diff = maxDiff(mix0.out, mix0.input);
@@ -278,6 +288,15 @@ for (const [engine, launcher] of [['Chromium', chromium], ['WebKit', webkit]]) {
           const y = await render([['division', 3600], ['span', 1], ['decay', decay], ['mix', 100]], impulse, decay * 1.5 + 0.2);
           out.rings.push({decay, measured: fall60(y.out), ms: y.ms});
         } }
+      { // A stereo sound (a reverb before the bank makes one) rings on its own sides: an impulse on the left alone.
+        const context = new OfflineAudioContext(2, Math.round(0.275 * RATE), RATE);
+        const buffer = context.createBuffer(2, context.length, RATE); buffer.getChannelData(0)[0] = 1;
+        const source = context.createBufferSource(); source.buffer = buffer;
+        const graph = new PresentationEffects(context, context.destination, state([['division', 3600], ['span', 1], ['decay', 0.05], ['mix', 100]]),
+          run => { run(); return () => {}; });
+        source.connect(graph.input); source.start(0);
+        const y = await context.startRendering();
+        out.stereo = {left: fall60(y.getChannelData(0)), rightPeak: y.getChannelData(1).reduce((m, x) => Math.max(m, Math.abs(x)), 0)}; }
       { // The pitches: an impulse through 30° x 12 at C and 24° x 15 at A rings at every body and at nothing between.
         out.pitches = [];
         for (const [division, parts, root] of [[300, 12, 0], [240, 15, 9], [3600, 1, 4]]) {
@@ -313,6 +332,9 @@ for (const [engine, launcher] of [['Chromium', chromium], ['WebKit', webkit]]) {
       assert.ok(ring.measured !== null, `Decay ${ring.decay}: the ringing falls 60 dB inside the render`);
       near(ring.measured / ring.decay, 1, 0.05, `${engine}: Decay ${ring.decay} s rings 60 dB down in ${ring.measured} s`);
     }
+    assert.ok(r.stereo.left !== null, 'a stereo sound: its left side falls 60 dB inside the render');
+    near(r.stereo.left / 0.05, 1, 0.05, `${engine}: a stereo sound's left side rings 60 dB down in ${r.stereo.left} s, Decay 0.05 s`);
+    assert.equal(r.stereo.rightPeak, 0, `${engine}: and its silent right side stays silent`);
     for (const pitch of r.pitches) assert.ok(pitch.weakestPeakOverStrongestValleyDb > 15, `${engine}: ${pitch.parts} to the octave, every body rings over every gap: ${pitch.weakestPeakOverStrongestValleyDb.toFixed(1)} dB`);
     near(r.tiltDb, 11.54, 0.5, `${engine}: Tilt 1 lifts the highest of two octaves 11.5 dB over the lowest`);
     for (const row of r.cost) assert.ok(row.renderMsFor10sAudio < 10000, `${engine}: ${row.name} renders 10 s of audio in ${row.renderMsFor10sAudio} ms, faster than it plays`);
