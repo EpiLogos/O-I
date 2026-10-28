@@ -56,7 +56,8 @@ def surface_contract(product_id: str) -> dict:
 
 
 def live_main(repository: str) -> str:
-    observed = run(["git", "ls-remote", repository, "refs/heads/main"])
+    print("+ git ls-remote", repository, "refs/heads/main", flush=True)
+    observed = subprocess.run(["git", "ls-remote", repository, "refs/heads/main"], text=True, capture_output=True, check=False)
     if observed.returncode != 0:
         fail(f"cannot inspect live main for {repository}")
     fields = observed.stdout.strip().split()
