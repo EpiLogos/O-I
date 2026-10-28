@@ -42,8 +42,9 @@ import {fileOperation, listFiles, readFile, type FileMutation} from "../files/cl
 import {kernelOp} from "../kernel/bridge";
 import type {CentralLocation, KernelTransportStatus} from "../kernel/types";
 import {resolveDocumentForm, type DocumentForm} from "./documentForms";
-import {instanceFileName, mintBlankInstance} from "./instance";
+import {instanceFileName, mintBlankInstance, parseInstance} from "./instance";
 import {inPlacePlacementFor, localStamp, stampCopy} from "./placement";
+import {spliceIsland} from "./plural";
 
 export interface HumanGround {root: string; baseRef: string; basePath: string; project?: string}
 
@@ -89,19 +90,23 @@ async function createThroughSourceDoor(transport: KernelTransportStatus, project
 /** The forms that are a world's pages (manual §18.1 "A clip is a page: a Being, a Thing, a Flow"). */
 const WORLD_PAGE_FORMS: ReadonlySet<string> = new Set(["document-01", "document-beings", "document-things"]);
 
+const QL_DOC = /(<script type="application\/json" id="ql-doc">)([\s\S]*?)(<\/script>)/;
+interface IslandDoc {profile?: string; meta?: Record<string, unknown>; bindings?: Record<string, unknown>; entries?: unknown}
+/** The page with `doc` written into its island as the host's save writes it (instance.ts embedDocument, plural.ts spliceIsland):
+ * only what `doc` changed is written, and every other byte stays as written: key order, a number as spelt (`"revision": 3.0`),
+ * the letters after an escaped `<\/` (#798). The island is read as every Flow reader reads it (instance.ts parseInstance). */
+const spliced = (html: string, doc: IslandDoc): string =>
+  html.replace(QL_DOC, (_all, open: string, island: string, close: string) => open + spliceIsland(island, doc) + close);
+
 /** A page's island tied to its world: a Being's or Thing's `bindings.worldRef`, a Flow's `meta.world` (kernel/src/page.rs reads
  * the same keys). Every other byte stays as it was; a page with no island is returned as it is. */
 export function tieWorld(html: string, worldRef: string): string {
-  const QL_DOC = /(<script type="application\/json" id="ql-doc">)([\s\S]*?)(<\/script>)/;
-  const match = html.match(QL_DOC);
-  if (!match) return html;
-  let doc: {profile?: string; meta?: Record<string, unknown>; bindings?: Record<string, unknown>; entries?: unknown};
-  try { doc = JSON.parse(match[2].replace(/<\\\/script/gi, "</script").replace(/<\\!--/g, "<!--")); } catch { return html; }
+  let doc: IslandDoc;
+  try { doc = parseInstance(html); } catch { return html; }
   if (doc.profile === "oi.page/v1") doc.bindings = {...(doc.bindings ?? {}), worldRef};
   else if (doc.meta && Array.isArray(doc.entries)) doc.meta = {...doc.meta, world: worldRef};
   else return html;
-  const json = JSON.stringify(doc).replace(/</g, "\\u003c").replace(/\u2028/g, "\\u2028").replace(/\u2029/g, "\\u2029");
-  return html.replace(QL_DOC, (_all, open: string, _body: string, close: string) => open + json + close);
+  return spliced(html, doc);
 }
 
 /** The keys of a Flow's meta that are its mint's own: what it is made for never names them. */
@@ -112,14 +117,11 @@ const MINTED_META: ReadonlySet<string> = new Set(["documentId", "created", "revi
 export function withFlowMeta(html: string, meta: Readonly<Record<string, unknown>>): string {
   const own = Object.keys(meta).filter(key => MINTED_META.has(key));
   if (own.length) throw new Error(`A new Flow's ${own.join(", ")} ${own.length > 1 ? "are" : "is"} its own: nothing sets ${own.length > 1 ? "them" : "it"} at creation.`);
-  const QL_DOC = /(<script type="application\/json" id="ql-doc">)([\s\S]*?)(<\/script>)/;
-  const match = html.match(QL_DOC);
-  if (!match) throw new Error("The Flow carries no ql-doc island, so nothing is kept in its meta.");
-  const doc = JSON.parse(match[2].replace(/<\\\/script/gi, "</script").replace(/<\\!--/g, "<!--")) as {meta?: Record<string, unknown>; entries?: unknown};
+  if (!QL_DOC.test(html)) throw new Error("The Flow carries no ql-doc island, so nothing is kept in its meta.");
+  const doc: IslandDoc = parseInstance(html);
   if (!doc.meta || !Array.isArray(doc.entries)) throw new Error("This page is no Flow, so it keeps no Flow meta.");
   doc.meta = {...doc.meta, ...meta};
-  const json = JSON.stringify(doc).replace(/</g, "\\u003c").replace(/\u2028/g, "\\u2028").replace(/\u2029/g, "\\u2029");
-  return html.replace(QL_DOC, (_all, open: string, _body: string, close: string) => open + json + close);
+  return spliced(html, doc);
 }
 
 export async function createFormInPlace(transport: KernelTransportStatus, form: DocumentForm, options: {project?: string; projects?: readonly {name?: string; path?: string}[]; now?: Date;
