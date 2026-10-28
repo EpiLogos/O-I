@@ -100,6 +100,15 @@ route: a model body, the real Omarchy gateway as the relay target, the reverse
 direction and a person using the desktop. Hosted SharedField and the other
 items stand as listed.
 
+*Note, 28 Oct 2026, later.* The form's own save and the host's save
+(`embedDocument`) now write only what changed, as Central's append does (#785,
+`desktop/cradle/src/flow/plural.ts` `spliceIsland`, ported from Central's
+`flow_append.rs`). The case `an-append-keeps-every-island-byte-it-does-not-own`
+passes through the host's save and the page's own "Save complete copy".
+Central's copy of the shared cases is pinned to O:I's source by sha256 in
+`ctrl/tests/flow_append.rs`. The kernel's own field writes (`page.rs`
+`mutate_field`) still re-sort the island's keys (#793).
+
 The departed/queued/running tests exercise real EncounterService and Central
 files with scripted ACP processes. Their `need_ctrl!` guard can return early
 without `AIKIT_TEST_CENTRAL_CTRL`; a passing runner without that native binary

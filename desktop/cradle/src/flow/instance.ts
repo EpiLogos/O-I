@@ -1,5 +1,5 @@
 import templateHtml from "../../documents/ql-flow.html?raw";
-import {appendContribution, containerOf, defaultParticipants, isCurrentFormat, legacyParticipantKey, type EntryKind, type PluralEntry, type PluralParticipant, type Relation} from "./plural";
+import {appendContribution, containerOf, defaultParticipants, isCurrentFormat, legacyParticipantKey, spliceIsland, type EntryKind, type PluralEntry, type PluralParticipant, type Relation} from "./plural";
 /** The ratified flow carrier (PROPOSAL-FLOW-DAY-LOGICS-2026-09-13-2): a flow
  * file is one self-contained instance of the 0/1 form — `entries` (the
  * conversational thread), `journal` pages, `notes`, `packet`, `media` — with
@@ -65,9 +65,13 @@ export function parseInstance(html: string): QlDoc {
   if (!match) throw new Error("This file is not a 0/1 dialogue/flow document — its embedded document state is missing.");
   return JSON.parse(match[1].replace(/<\\\/script/gi, "</script").replace(/<\\!--/g, "<!--")) as QlDoc;
 }
+/** The file with `doc` written into its island. Only what `doc` changed from what the island reads as is written; every
+ * other byte of the island (key order, number spellings, integers past 2^53 that no JavaScript reader holds exactly)
+ * stays as written (plural.ts spliceIsland, #785). */
 export function embedDocument(shell: string, doc: QlDoc): string {
-  if (!QL_DOC.test(shell)) throw new Error("This file is not a 0/1 dialogue/flow document — its embedded document state is missing.");
-  const json = JSON.stringify(doc).replace(/<\/script/gi, "<\\/script").replace(/<!--/g, "<\\u0021--");
+  const island = shell.match(QL_DOC);
+  if (!island) throw new Error("This file is not a 0/1 dialogue/flow document — its embedded document state is missing.");
+  const json = spliceIsland(island[1], doc);
   return shell.replace(QL_DOC, () => '<script type="application/json" id="ql-doc">' + json + "</script>");
 }
 const escapeHtml = (s: string) => s.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c] as string);

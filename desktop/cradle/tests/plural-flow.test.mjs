@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import {readFile} from "node:fs/promises";
 import {
   appendContribution, upgradeDocument, validateDocument, readableEntries, buildThreads, relationsOf, portableCopy,
-  canonicalJson, sha256, Refusal, FORMAT_VERSION,
+  canonicalJson, sha256, Refusal, FORMAT_VERSION, spliceIsland,
 } from "../src/flow/plural.ts";
 
 const fixtures = JSON.parse(await readFile(new URL("../documents/fixtures/plural-flow-cases.json", import.meta.url), "utf8"));
@@ -89,7 +89,8 @@ for (const testCase of fixtures.cases) {
     } else if (testCase.op === "append-island") {
       // D10 (O:I #766), the form's half: the island as written is a document this form appends to, and the bytes the
       // native writer must leave are exactly this form's result. JSON.parse rounds integers above 2^53 here, as every
-      // JavaScript reader does; keeping them exact is the native writer's, proved in Central's tests/flow_append.rs.
+      // JavaScript reader does; the native writer keeps them exact (Central's tests/flow_append.rs), and so does this
+      // form's own save, which splices (#785, the spliceIsland tests below).
       const {doc: next, entry, outcome} = appendContribution(clone(doc), clone(testCase.request), testCase.caller);
       assert.equal(outcome, expect.outcome);
       assert.equal(entry.attribution.basis, expect.attribution);
@@ -147,4 +148,44 @@ test("reading a document with an audience this form does not know never throws a
   assert.deepEqual(readableEntries(doc, "b").map(e => e.id), []);
   assert.deepEqual(readableEntries(doc, "a").map(e => e.id), ["e1"]);
   assert.deepEqual(validateDocument(doc).map(i => i.code).filter(c => c === "invalid-audience"), ["invalid-audience"]);
+});
+
+// A save writes into the island only what the page changed (#785), as Central's append does (#766): a JavaScript reader
+// rounds integers past 2^53 and moves integer-like keys first, so the island is never re-serialised from what it read.
+test("a page save of the shared island case writes the page's append and keeps every other byte", () => {
+  const islandCase = fixtures.cases.find(c => c.name === "an-append-keeps-every-island-byte-it-does-not-own");
+  const page = appendContribution(JSON.parse(islandCase.island), clone(islandCase.request), islandCase.caller);
+  const [head, tail] = islandCase.expect.islandAfter;
+  assert.equal(spliceIsland(islandCase.island, page.doc), `${head},${JSON.stringify(page.entry)}${tail}`);
+});
+
+// A hand-written island: spacing, number spellings, an escape, a duplicate key, an integer-like key and integers no
+// JavaScript number holds.
+const written = '{ "meta": {"revision": 1.0, "2": "integer-like", "big": 18446744073709551617, "view": "dialogue", "view": "flow"},\n'
+  + '  "entries": [ {"id": "a", "html": "<p>one<\\/p>", "n": 1e2}, {"id": "b", "html": "x"} ,{"id": "c", "html": "y", "t": 9007199254740993} ],\n'
+  + '  "notes": [ 1, 2.50, 3 ], "x-kept": {"z": 1, "a": [true, null]} }';
+
+test("a save that changes nothing writes the island back byte for byte", () => {
+  assert.equal(spliceIsland(written, JSON.parse(written)), written);
+});
+
+test("a save replaces only the values the page changed, where they stand", () => {
+  const doc = JSON.parse(written);
+  doc.meta.revision = 2; doc.meta.view = "journal"; doc.entries[1].html = "</script><!--"; doc.notes[1] = 4;
+  assert.equal(spliceIsland(written, doc), written
+    .replace('"revision": 1.0', '"revision": 2')
+    .replace('"view": "flow"', '"view": "journal"')
+    .replace('"html": "x"', '"html": "<\\/script><\\u0021--"')
+    .replace("2.50", "4"));
+});
+
+test("a save removes what the page removed and adds what it added, keeping the bytes of what stayed", () => {
+  const doc = JSON.parse(written);
+  delete doc.meta.big; doc.meta.current = "c"; delete doc["x-kept"];
+  doc.entries.splice(1, 1); doc.entries[0].html = "<p>won</p>";
+  doc.entries.unshift({id: "o", html: "w"}); doc.entries.push({id: "d", html: "z"});
+  assert.equal(spliceIsland(written, doc),
+    '{ "meta": {"revision": 1.0, "2": "integer-like", "view": "dialogue", "view": "flow","current":"c"},\n'
+    + '  "entries": [ {"id":"o","html":"w"},{"id": "a", "html": "<p>won</p>", "n": 1e2} ,{"id": "c", "html": "y", "t": 9007199254740993},{"id":"d","html":"z"} ],\n'
+    + '  "notes": [ 1, 2.50, 3 ] }');
 });
