@@ -1129,6 +1129,12 @@ export type EncounterEnvelopePoint = [number, string | number]
  * The Clip panel and The Launch panel; ai-kit encounter_task_settings.rs): Loop with its stop condition and cap (null: none), Launch mode,
  * Then, what a Repeat varies (its levels empty until chosen) and the task's source. Hand off to is retired: the task is dragged onto
  * another session's track. */
+/** The run a Repeat's takes share (ai-kit encounter_take_body.rs `take_run`): `run` is Actuation's comparison run (research
+ * comparison.rs run_with) over the session's bound task as a provided task, with the session's own agent as the body — AIKit itself,
+ * `aikit session-space encounter-take-body`, speaking agent-jsonl, which opens a fresh resident of the agent in each take's World and
+ * reads back the level it applied — and `basis` the revisions the takes are held to; or AIKit's words for why there is none (a session
+ * whose agent never opened, or whose model AIKit never observed). */
+export type EncounterTakeRun = {run: Record<string, unknown>; basis?: Record<string, unknown>} | {refused: string}
 export interface EncounterSessionSettingsReading {
   schema: 'aikit.encounter-session-settings/v1'
   agent_session: string
@@ -1146,6 +1152,9 @@ export interface EncounterSessionSettingsReading {
     source?: string | null
     /** The Repeat's set of takes that stands; null until one starts. Absent from an AIKit before O-I 795. */
     takes?: EncounterTakesSet | null
+    /** The run a Repeat's takes share, in Actuation's own words, or why AIKit has none (EncounterTakeRun). Absent from an AIKit
+     * before O-I 795's take body. */
+    take_run?: EncounterTakeRun
   }
   previous_task: null | {task_ref: string; set: Record<string, unknown>}
   standing: string

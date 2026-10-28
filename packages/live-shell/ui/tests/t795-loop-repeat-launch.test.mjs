@@ -41,6 +41,7 @@ const settings = await import('../src/agent/sessionSettings.ts')
 const factory = await import('../src/agent/clipBinding.ts')
 const {settingsReadingEntry} = await import('../src/owners/readers.ts')
 const {trackKey} = await import('../src/agent/agentRunModel.ts')
+const {repeatPress} = await import('../src/frame/tracks/useFactoryTracks.ts')
 
 const NOW = Date.UTC(2026, 9, 28, 12, 0, 0)
 const session = (state, n = 1) => ({sessionRef: 'ses-795', purpose: 'run the fixtures', agentRef: null, agentName: 'Fizz', agentAccepted: true,
@@ -178,9 +179,11 @@ async function readSettings() {
   await entry.retry(`epoch-${Math.random()}`)
   return entry
 }
-/** The run every take shares, in Actuation's own words: the session's own task (a provided task) and its agent as the body (an
- * agent-jsonl process that reads back the level it is given). Its carrier is AIKit's; this is what one hands the shell. */
-const research = {run: {task: {id: 'task:fixtures', prompt: 'Run the fixtures.', successConditions: ['the fixtures pass']},
+/** The run every take shares, in Actuation's own words: the session's own task (a provided task, here with the test a Test pass reads)
+ * and its agent as the body (an agent-jsonl process that reads back the level it is given). Its carrier is AIKit's; this is what one
+ * hands the shell. */
+const research = {run: {task: {id: 'task:fixtures', prompt: 'Run the fixtures.', successConditions: ['the fixtures pass'],
+    test: {program: '/usr/bin/grep', args: ['-qx', 'pass', 'fixtures.out'], timeout_ms: 10000, output_limit: 65536}},
   max_steps: 4, max_calls: 16, body: {protocol: 'agent-jsonl', fixture_provider: false, session_timeout_ms: 600000,
     configuration: {provider: 'anthropic', model: 'claude-x', agent: 'agent:ses-795'}, process: {program: '/opt/aikit', args: [], cwd: '/',
       environment: {}, timeout_ms: 600000, output_limit: 1048576}}}, basis: {host_id: 'ordinary'}}
@@ -241,14 +244,66 @@ test('Repeat refuses, before any write, what Actuation\'s comparison run cannot 
     assert.equal(made.ok, false); assert.match(made.error, said)
     assert.deepEqual(kernel.sent.filter(op => op.request), [], 'nothing is written')
   }
-  // No run of the session's own task reaches the shell: the press names what is missing — AIKit's carrier of the session's task and
-  // agent — and not Actuation, which runs a session's own task with its agent as the body over any of Repeat's variables.
+  // An AIKit before O-I 795's take body hands no run with the settings: the press names what is missing — AIKit's carrier of the
+  // session's task and agent — and not Actuation, which runs a session's own task with its agent as the body over any variable.
   const kernel = scriptedKernel(reading({repeat_variable: 'effort', repeat_levels: ['low', 'high']}))
   await readSettings()
   const bare = await settings.makeTakes(transport, project, 'ses-795', null)
   assert.equal(bare.ok, false); assert.match(bare.error, /missing op: [^.]*\(AIKit\)/)
   assert.doesNotMatch(bare.error, /varies the condition only|research catalogue|\(Actuation/)
+  // AIKit hands its refusal instead of a run (a session whose agent never opened): the press says AIKit's words and writes nothing.
+  const never = 'The session\'s agent has never opened: a take runs a fresh resident of the agent the session opened on.'
+  const refused = await settings.makeTakes(transport, project, 'ses-795', {refused: never})
+  assert.equal(refused.ok, false); assert.match(refused.error, /AIKit has no run for this session's takes/)
+  assert.ok(refused.error.includes(never), refused.error)
   assert.deepEqual(kernel.sent.filter(op => op.request), [])
+})
+
+/** The run AIKit hands with the session's settings (ai-kit encounter_take_body.rs take_run, as `aikit session-space
+ * encounter-session-settings` reads it on a scratch home, 28 Oct 2026): the bound task as Actuation's provided task and the session's
+ * own agent as an agent-jsonl body — AIKit itself, `encounter-take-body`. */
+const handed = {run: {task: {id: 'task:fixtures', prompt: 'run the fixtures', successConditions: []},
+  body: {protocol: 'agent-jsonl', fixture_provider: false, session_timeout_ms: 1800000,
+    configuration: {provider: 'take-peer', model: 'test/a', agent: 'ses-795'},
+    process: {program: '/opt/aikit/bin/aikit', args: ['session-space', 'encounter-take-body', '--session', 'ses-795', '--socket', '/tmp/aikit-0/owner.sock'],
+      cwd: '/', environment: {AIKIT_HOME: '/home/me/.aikit'}, timeout_ms: 1800000, output_limit: 16777216}},
+  max_steps: 8, max_calls: 64},
+  basis: {host_id: 'aikit-encounter-take-body', host_revision: '0.1.0', benchmark_revision: 'own-task', runner_revision: '0.1.0',
+    review_contract_revision: null, network_policy_digest: null}}
+
+test('AIKit\'s run for the takes reads off the session\'s settings: a run, AIKit\'s refusal, or nothing from an AIKit before it', () => {
+  assert.deepEqual(settings.takeRunOf(reading({take_run: handed}).task), handed)
+  assert.deepEqual(settings.takeRunOf(reading({take_run: {refused: 'never opened'}}).task), {refused: 'never opened'})
+  assert.equal(settings.takeRunOf(reading().task), null, 'an AIKit before the take body hands nothing')
+  assert.equal(settings.takeRunOf(null), null)
+})
+
+test('Repeat\'s press runs the takes over the run AIKit hands with the session\'s settings', async () => {
+  const start = reading({repeat_variable: 'effort', repeat_levels: ['low', 'high'], repeat_repeats: 1, repeat_stop: 'turns', take_run: handed})
+  const kernel = scriptedKernel(start)
+  await readSettings()
+  // The grid's press, as useFactoryTracks wires it: the settings the tracks read hand the run.
+  const press = repeatPress(transport, ref => ref === 'ses-795' ? start : undefined)
+  const made = await press('ses-795')
+  assert.equal(made.ok, true, made.error)
+  const writes = kernel.sent.filter(op => op.request)
+  assert.deepEqual(writes.map(op => op.op), ['encounter_session_settings', 'actuation_write', 'encounter_session_settings'])
+  assert.deepEqual(writes[1].request.request, {trace_ref: writes[0].request.takes.start.trace_ref, repetitions: 1, variable: 'effort',
+    levels: ['low', 'high'], stop: {when: 'turns'}, run: handed.run, basis: handed.basis})
+  // Test pass reads the task's own test, and AIKit's run carries none: refused before any write, not after AIKit starts a set.
+  const passing = reading({repeat_variable: 'effort', repeat_levels: ['low'], repeat_stop: 'pass', take_run: handed})
+  const untested = scriptedKernel(passing)
+  await readSettings()
+  const pass = await repeatPress(transport, () => passing)('ses-795')
+  assert.equal(pass.ok, false); assert.match(pass.error, /Test pass[\s\S]*test/)
+  assert.deepEqual(untested.sent.filter(op => op.request), [])
+  // Settings that hand AIKit's refusal: the press says it, before any write.
+  const refusing = reading({take_run: {refused: 'The session\'s agent has never opened.'}})
+  const quiet = scriptedKernel(refusing)
+  await readSettings()
+  const said = await repeatPress(transport, () => refusing)('ses-795')
+  assert.equal(said.ok, false); assert.match(said.error, /never opened/)
+  assert.deepEqual(quiet.sent.filter(op => op.request), [])
 })
 
 test('Clip view: while the takes run, Repeat\'s fields stand disabled with the manual\'s words, and the takes made stand read', async () => {

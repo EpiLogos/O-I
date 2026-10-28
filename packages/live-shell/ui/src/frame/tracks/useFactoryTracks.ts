@@ -18,7 +18,7 @@
 // `dispatch('arm', 'shell.setWriteArm', …)`), through the same registered setter (inhabitants/sdk/shellSetters.ts), its light the
 // agent shell's flag, which the setter bridge moves only when the owner accepts (agent/shellSetterBridge.ts).
 import {useMemo} from 'react'
-import type {KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
+import type {EncounterSessionSettingsReading, KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
 import {useAgencySessions} from '../../agent/useAgencySessions'
 import {useAgentSessionsOptional} from '../../agent/AgentSessionsProvider'
 import {useAgentShellOptional} from '../../agent/AgentShellContext'
@@ -29,7 +29,7 @@ import {shellSetter} from '../../inhabitants/sdk/shellSetters'
 import {factoryTrackAdapter, type FactoryControls, type FactorySettingsPort, type FactoryWriteArm} from '../../timeline/factoryTrackAdapter'
 import {useSettingsAnswers} from '../../owners/readers'
 import {useAttemptTakes} from '../../owners/attemptTakes'
-import {makeTakes, trackSettingChange, writeSessionSettings} from '../../agent/sessionSettings'
+import {makeTakes, takeRunOf, trackSettingChange, writeSessionSettings} from '../../agent/sessionSettings'
 import {SETTINGS_PROJECT, taskMaker} from '../../agent/clipBinding'
 import {withClipMaker} from './clipMakers'
 import {encounter} from '../../../../../../desktop/cradle/src/encounter/client'
@@ -100,12 +100,9 @@ export const useFactoryTracks: UseModeTracks = reading => {
       return {ok: true as const, note: 'Stopped this session\'s running turn; the session stays, and the harness\'s other sessions run on.'}
     } catch (cause) { return {ok: false as const, error: cause instanceof Error ? cause.message : String(cause)} }
   }, [transport])
-  // A Repeat's press (§19.1 The Launch panel): its takes through Actuation's comparison run, the set started and ended on AIKit
-  // (agent/sessionSettings.ts makeTakes). Actuation runs the session's own task with its agent as the body; the run in its words —
-  // the task as a provided task, the agent as an agent-jsonl body — is AIKit's to hand, and nothing hands it yet, so the press says
-  // what it waits for (TAKES_WHY.noRun) and writes nothing.
+  // A Repeat's press (§19.1 The Launch panel): its takes over the run AIKit hands with the session's settings (repeatPress).
   const repeat = useMemo(() => transport.kind === 'unavailable' ? undefined
-    : (session: string) => makeTakes(transport, SETTINGS_PROJECT, session, null), [transport])
+    : repeatPress(transport, session => own.get(session)), [transport, own])
   // The workcells of the machine's register as return tracks, and each session's Works in (§19.23): the seat register, read once.
   const seats = useSeatStatusAnswer(transport, transport.kind !== 'unavailable').reading
   const register = seats.status === 'answered' ? seats.value : null
@@ -114,6 +111,14 @@ export const useFactoryTracks: UseModeTracks = reading => {
   // A chat dragged from Factory's Projects (DLW §19.1) reopens on the empty track; an agent still starts a new agent there.
   const set = withChatSeat(factoryTrackAdapter.project({tracks: agency.tracks, nowUnixMs: Date.now(), controls, ...(events ? {events} : {}), writeArm, ...(settings ? {settings} : {}), ...(takes ? {takes} : {}), ...(sessionStop ? {sessionStop} : {}), ...(repeat ? {repeat} : {})}), {transport})
   return factoryTrackSet(set, register, seats.status === 'refused' ? seats.error : null, transport, agency.tracks)
+}
+
+/** A Repeat's press (§19.1 The Launch panel: "Each run is a take"): its takes through Actuation's comparison run, the set started and
+ * ended on AIKit (agent/sessionSettings.ts makeTakes), over the run AIKit hands with the session's settings — the session's own task
+ * and its agent as an agent-jsonl body (`task.take_run`, takeRunOf). Where AIKit hands its refusal, or an AIKit before the take body
+ * hands nothing, the press says so in words and writes nothing. Pure. */
+export function repeatPress(transport: KernelTransportStatus, settingsOf: (session: string) => EncounterSessionSettingsReading | null | undefined) {
+  return (session: string) => makeTakes(transport, SETTINGS_PROJECT, session, takeRunOf(settingsOf(session)?.task))
 }
 
 /** Factory's set as the pane draws it: the register's workcells as return tracks and each session's Works in (withWorkcells), and its
