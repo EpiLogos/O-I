@@ -489,13 +489,14 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
   isBusy:()=>busy||composing||(controller.reading as any).status==='opening',
   fieldLive:()=>!!(engine as any).retainedTopology?.(),
  });
- /** A Jankó chord from the Live keyboard: the owner's own played voices for each pitch class, struck as one act through the owner's strike.
-  * Any silent class refuses the whole chord by name (planJankoStrike); nothing is synthesised here. */
- const playJanko=async(pitchClasses:number[],amplitude:number):Promise<void>=>{
+ /** A Jankó chord from the Live keyboard: the owner's own played voices for each pitch class, struck as one act through the owner's strike,
+  * now or at `at`, the owner's sample cursor a player scheduled it at (O-I #809). Any silent class refuses the whole chord by name
+  * (planJankoStrike); nothing is synthesised here. */
+ const playJanko=async(pitchClasses:number[],amplitude:number,at?:string):Promise<void>=>{
   const reading=controller.reading as any;
   const plan=planJankoStrike(reading.instrument?.influence?.played_addresses,pitchClasses);
   if(plan.refusal)throw new Error(plan.refusal);
-  await controller.playVoices(plan.refs,amplitude);
+  await controller.playVoices(plan.refs,amplitude,at);
  };
  /** A touch on the torus (DLW §21.2 "What strikes the Torus": "A touch | The point of the surface you touch"): what the press strikes
   * (surfaceTouch.ts touchStrike, from the stage as the engine is handed it and the engine's own projection), struck through the owner's

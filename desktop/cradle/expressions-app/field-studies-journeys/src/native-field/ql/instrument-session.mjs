@@ -327,12 +327,28 @@ export class InstrumentSession {
     } finally { this.#busy = false; }
   }
 
-  /** A played excitation: strike named voices of the standing instrument now.
-   * Each act names a native mode reference (disclosed on the owner's influence
-   * voices) with an impulse in modal metres. Serialized with data delivery like
-   * every other owner operation; the reply's end-of-block targets present the
-   * struck body, so sound and visible displacement share the native state. */
-  async strike(strikes) {
+  /** The sample a played act lands at (O-I #809): absent, the owner's cursor;
+   * given, an exact cursor at or after the acknowledged one. A sample behind it
+   * is sound already rendered, refused before any exchange as the owner refuses it. */
+  #landing(at) {
+    if (at === undefined) return {};
+    need(typeof at === 'string' && /^(0|[1-9][0-9]{0,19})$/.test(at) && BigInt(at) <= U64,
+      'a strike names the sample it lands at as an exact sample cursor');
+    const cursor = this.#native.samples_elapsed;
+    need(BigInt(at) >= BigInt(cursor),
+      `a strike at sample ${at} is behind the owner's cursor ${cursor}: that sound is already rendered`);
+    return { at_samples_elapsed: at };
+  }
+
+  /** A played excitation: strike named voices of the standing instrument, now
+   * or at `at_samples_elapsed`, the sample of the continuation it lands at: a
+   * player schedules ahead on the audio clock and the owner lands the act in its
+   * render at exactly that sample (O-I #809). Each act names a native mode
+   * reference (disclosed on the owner's influence voices) with an impulse in
+   * modal metres. Serialized with data delivery like every other owner
+   * operation; the reply's end-of-block targets present the struck body, so
+   * sound and visible displacement share the native state. */
+  async strike(strikes, { at_samples_elapsed } = {}) {
     need(Array.isArray(strikes) && strikes.length > 0 && strikes.length <= 4096, 'a strike act names 1..4096 voices');
     const acts = strikes.map(act => {
       need(act && typeof act.mode_ref === 'string' && act.mode_ref.length > 0 && act.mode_ref.length <= 2048,
@@ -342,7 +358,7 @@ export class InstrumentSession {
         'strike amplitude must be two finite metres');
       return { mode_ref: act.mode_ref, amplitude: [act.amplitude[0], act.amplitude[1]] };
     });
-    return this.operate({ operation: 'strike', strikes: acts });
+    return this.operate({ operation: 'strike', strikes: acts, ...this.#landing(at_samples_elapsed) });
   }
 
   /** A played excitation of the torus surface: strike the standing body at the
@@ -356,8 +372,9 @@ export class InstrumentSession {
    * delivery like every other owner operation; the reply's end-of-block targets
    * present the struck body, so sound and visible displacement share the
    * native state. An angle outside the sampled sheet is refused, never reduced:
-   * the mode shapes change sign across its seam. */
-  async strikeAt(points) {
+   * the mode shapes change sign across its seam. `at_samples_elapsed` names the
+   * sample the act lands at, as for `strike`. */
+  async strikeAt(points, { at_samples_elapsed } = {}) {
     need(Array.isArray(points) && points.length > 0 && points.length <= STRIKE_AT_MAX_POINTS,
       `a strike-at act names 1..${STRIKE_AT_MAX_POINTS} points`);
     const acts = points.map(point => {
@@ -368,7 +385,7 @@ export class InstrumentSession {
         `a struck point's amplitude must be two finite metres within ${STRIKE_AT_MAX_METRES.toFixed(1)}`);
       return { theta: point.theta, phi: point.phi, amplitude: [point.amplitude[0], point.amplitude[1]] };
     });
-    return this.operate({ operation: 'strike-at', points: acts });
+    return this.operate({ operation: 'strike-at', points: acts, ...this.#landing(at_samples_elapsed) });
   }
 
   /** A Nara-constituted scene owner's reception: `input` (seven supplied centre

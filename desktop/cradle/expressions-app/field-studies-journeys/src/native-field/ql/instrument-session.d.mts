@@ -11,11 +11,12 @@ export class InstrumentSession {
  influence(): Promise<any>;
  /** The Ta-Onta procedural stage's scoped disclosure (ql.stage-state/v1): a read on the one owner. */
  stageState(): Promise<any>;
- /** A played excitation: strike named scene voices by native mode reference, amplitude in modal metres. */
- strike(strikes: Array<{mode_ref: string; amplitude: [number, number]}>): Promise<any>;
+ /** A played excitation: strike named scene voices by native mode reference, amplitude in modal metres; now, or at `at_samples_elapsed`,
+  * the exact sample cursor of the owner's continuation it lands at (O-I #809), refused when behind the acknowledged cursor. */
+ strike(strikes: Array<{mode_ref: string; amplitude: [number, number]}>, when?: {at_samples_elapsed?: string}): Promise<any>;
  /** A strike at points of the torus (QL-MEF #342 `strike-at`): each voice is excited by its own shape at each (theta, phi) in [0, 2π); 1..64 points
   * are one act, refused whole when a point is off the sheet or an impulse passes the material policy. */
- strikeAt(points: Array<{theta: number; phi: number; amplitude: [number, number]}>): Promise<any>;
+ strikeAt(points: Array<{theta: number; phi: number; amplitude: [number, number]}>, when?: {at_samples_elapsed?: string}): Promise<any>;
  /** Frozen copy of every admitted owner act and the aggregate advance data plane. */
  journal(): any;
  readonly lastInfluence: any;

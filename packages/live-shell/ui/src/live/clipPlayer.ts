@@ -11,19 +11,24 @@
 //               command (live/janko/jankoInput.ts), its pitch class at velocity over 127, which the frame strikes as the owner's played
 //               voices for that key (nativeField.ts playJanko). Keys struck together at one velocity are one act, as a chord is.
 //               Nothing here synthesises a sound: a refusal is the owner's, named.
-//   the time    each note-on's moment is measured from the press, at the set's tempo, on one monotonic clock: never summed from timers,
-//               so a late wake never drifts the clip. The path that strikes allocates no plan and does no UI work: the passes are planned
-//               when the clip is read, and the state the transport draws changes only on play, stop, a new refusal or a missed note.
-//               A note-on later than CLIP_MISSED_AFTER_SECONDS is let go and counted, never struck late in a burst (the owner's own
-//               pump law: "never a catch-up burst", instrument-session.mjs pump).
-// The owner strikes "now" (instrument-session.mjs strike and strikeAt take no time), so a note sounds behind the sound the owner has
-// already scheduled, one presentation lookahead late, on the owner's block. Placing it on the owner's audio clock needs a strike at a
-// sample cursor, which the owner does not take yet.
+//   the time    the owner's audio clock (O-I #809; the musical law: schedule ahead on the audio clock). At the press the player reads it
+//               (the `audio-clock` stage command: the sample its rendered sound stands at, its rate, its lookahead and its block) and
+//               anchors the clip's start one owner lookahead past that sound. Each note-on's sample is the anchor plus its time from the
+//               start at the set's tempo, and it strikes with that sample (`at_samples_elapsed`): the owner lands it in its render at
+//               exactly that sample (QL-MEF instrument session and native render), never on its block and never "now". The player sends
+//               each note-on as its sample comes within one owner lookahead of the owner's render, waking on the page's monotonic clock;
+//               the wake only carries the note there, so a late wake never moves it. A wake later than the owner's slack (its lookahead
+//               less the block it may render meanwhile) would land behind the owner's cursor: that note-on is let go and counted, never
+//               struck late in a burst (the owner's own pump law: "never a catch-up burst", instrument-session.mjs pump). The path that
+//               strikes allocates no plan and does no UI work: the passes are planned when the clip is read, and the state the transport
+//               draws changes only on play, stop, a new refusal or a missed note.
+//   Stop        nothing more is sent; a note-on already sent lands at its sample, within one owner lookahead, as everything the owner
+//               has rendered sounds out.
 //
 // Ported from: the store with its owners handed in (inhabitants/ql/devices/qlSitting.ts: now, later, cancel, its bell rung through
 // commitLiveStage); the chord as one act (live/janko/jankoInput.ts flush); the clip's markers (packages/live-set/src/edit.rs markers).
 import {useEffect, useSyncExternalStore} from 'react'
-import type {StageCommand, StageResult} from '@epilogos/expressions-boundary'
+import type {StageAudioClock, StageCommand, StageResult} from '@epilogos/expressions-boundary'
 import {detectTransport, kernelOp} from '../../../../../desktop/cradle/src/kernel/bridge'
 import type {LiveClipAt, LiveClipReading} from '../../../../../desktop/cradle/src/kernel/types'
 import type {WorldSelection} from '../../../../../desktop/cradle/src/workspace/store'
@@ -33,10 +38,7 @@ import {setSelectionOf} from '../shell/liveSelection'
 import {clipAtOf} from './liveWrites'
 import {commitLiveStage, useLiveTorusReading, type LiveTorusState} from './torusInstrument'
 
-/** A note-on this late (seconds) at its wake is let go and counted as missed rather than struck late. A quarter second: a wake that
- * late is a stalled thread, not a slow timer, and striking what it passed would burst its backlog at once. */
-export const CLIP_MISSED_AFTER_SECONDS = 0.25
-/** A timer may wake a hair before its moment; a strike due within this many seconds is struck at that wake. */
+/** A timer may wake a hair before its moment; a strike due within this many seconds is sent at that wake. */
 const DUE_EARLY_SECONDS = 0.002
 
 export type JankoCommand = Extract<StageCommand, {command: 'janko'}>
@@ -109,15 +111,17 @@ export function clipPlan(clip: LiveClipReading): ClipPlan {
 /** Where the clip stands: the set's file, the track, and its arrangement index or session slot. */
 export interface ClipAddress {readonly path: string; readonly track: number; readonly at: LiveClipAt}
 
-/** What the player reaches: the set's owner, the torus's owner, and the clock. Tests hand in their own. */
+/** What the player reaches: the set's owner, the torus's owner and its audio clock, and the page's clock. Tests hand in their own. */
 export interface ClipPlayerOwners {
   /** The clip whole, from the set's owner; a refusal throws in the owner's words. */
   readonly read: (address: ClipAddress) => Promise<LiveClipReading>
+  /** The torus owner's audio clock, read once per press (readAudioClock); a refusal throws in the owner's words. */
+  readonly clock: () => Promise<StageAudioClock>
   /** One strike through the torus's owner, settling with its answer. */
   readonly strike: (command: StageCommand) => Promise<StageResult>
   /** Tell `changed` when the set the clip stands in is read again (a write, Live saving it). Returns the unsubscribe. */
   readonly watch: (address: ClipAddress, changed: () => void) => () => void
-  /** The clock, in seconds: monotonic. */
+  /** The page's clock, in seconds: monotonic. It only paces when a note-on is sent; the note's time is its sample. */
   readonly now: () => number
   readonly later: (run: () => void, ms: number) => unknown
   readonly cancel: (handle: unknown) => void
@@ -150,13 +154,37 @@ export interface ClipPlayer {
 const IDLE: ClipPlayState = {playing: null, starting: false, refused: null, missed: 0, fault: null}
 const said = (cause: unknown) => cause instanceof Error ? cause.message : String(cause)
 
+/** Where a press stands on the owner's audio clock: the sample the clip's start lands at (one owner lookahead past the sound it has
+ * rendered), the owner's rate, and how late a wake may be and still land a note-on (the lookahead less the block the owner may render
+ * meanwhile); or why the clock leaves no time to strike ahead. Pure. */
+export type ClipTiming = {readonly anchor: bigint; readonly rate: number; readonly slack: number} | {readonly refused: string}
+
+export function clipTiming(clock: StageAudioClock): ClipTiming {
+  const slack = clock.lookahead_seconds - clock.block_frames / clock.sample_rate
+  if (!(slack > 0)) return {refused: 'The torus renders its whole lookahead in one block, so it leaves no time to strike ahead of it.'}
+  return {anchor: BigInt(clock.samples_elapsed) + BigInt(Math.round(clock.lookahead_seconds * clock.sample_rate)), rate: clock.sample_rate, slack}
+}
+
+/** The owner's audio clock through a stage channel (the `audio-clock` stage command, which the frame answers from its native field's
+ * controller): the clock its answer carries, or its refusal thrown in its words. */
+export async function readAudioClock(commit: (command: StageCommand) => Promise<StageResult>): Promise<StageAudioClock> {
+  const answer = await commit({command: 'audio-clock'})
+  if (!answer.ok) throw new Error(answer.error)
+  if (!answer.clock) throw new Error('The torus answered without its audio clock')
+  return answer.clock
+}
+
 interface Run {
   readonly address: ClipAddress
   /** Seconds per beat at the tempo the clip plays at. */
   readonly spb: number
+  /** The page clock's reading when the owner's clock was read: a note-on is sent at origin + its time from the clip's start. */
+  readonly origin: number
+  /** Where the clip stands on the owner's audio clock. */
+  readonly timing: Extract<ClipTiming, {anchor: bigint}>
   plan: Extract<ClipPlan, {ok: true}>
   pass: ClipPass
-  /** The clock's reading at the pass's first beat. */
+  /** Seconds from the clip's start to the pass's first beat. */
   passStart: number
   /** The next act of the pass. */
   index: number
@@ -179,15 +207,16 @@ export function createClipPlayer(owners: ClipPlayerOwners): ClipPlayer {
   const failed = (cause: unknown) => answer({ok: false, error: said(cause)})
   const missed = (count: number) => { if (count > 0) publish({missed: state.missed + count}) }
 
-  const send = (strike: ClipStrike) => {
-    let command: StageCommand = strike.command
+  /** One act, struck to land at its own sample (`seconds` from the clip's start). */
+  const send = (r: Run, strike: ClipStrike, seconds: number) => {
+    let keys = strike.command.pitch_classes
     const chances = strike.chances
     if (chances) {
-      const keys = strike.command.pitch_classes.filter((_, i) => chances[i]! >= 1 || owners.random() < chances[i]!)
+      keys = keys.filter((_, i) => chances[i]! >= 1 || owners.random() < chances[i]!)
       if (keys.length === 0) return
-      command = {...strike.command, pitch_classes: keys}
     }
-    owners.strike(command).then(answer, failed)
+    const at_samples_elapsed = String(r.timing.anchor + BigInt(Math.round(seconds * r.timing.rate)))
+    owners.strike({...strike.command, pitch_classes: keys, at_samples_elapsed}).then(answer, failed)
   }
 
   const halt = () => {
@@ -199,33 +228,36 @@ export function createClipPlayer(owners: ClipPlayerOwners): ClipPlayer {
     was.unwatch()
   }
 
-  /** Wait for the pass's next act, or for its end. */
+  /** Seconds from the clip's start to `beat` of the run's pass. */
+  const timeOf = (r: Run, beat: number) => r.passStart + (beat - r.pass.from) * r.spb
+
+  /** Wait until the pass's next act comes within one owner lookahead of the owner's render, or for the pass's end. */
   const arm = (r: Run) => {
     const next = r.pass.strikes[r.index]
-    const due = r.passStart + ((next ? next.beat : r.pass.to) - r.pass.from) * r.spb
-    r.timer = owners.later(next ? r.fire : r.turn, Math.max(0, (due - owners.now()) * 1000))
+    const sendAt = r.origin + timeOf(r, next ? next.beat : r.pass.to)
+    r.timer = owners.later(next ? r.fire : r.turn, Math.max(0, (sendAt - owners.now()) * 1000))
   }
 
-  /** Strike every act whose moment has come; one too late is let go. */
+  /** Send every act whose time has come, each to land at its own sample; one whose wake is past the owner's slack is let go. */
   const fire = (r: Run) => {
     if (r !== run) return
     r.timer = null
-    const now = owners.now(), strikes = r.pass.strikes
+    const now = owners.now() - r.origin, strikes = r.pass.strikes
     let late = 0
     while (r.index < strikes.length) {
       const strike = strikes[r.index]!
-      const due = r.passStart + (strike.beat - r.pass.from) * r.spb
-      if (due > now + DUE_EARLY_SECONDS) break
+      const seconds = timeOf(r, strike.beat)
+      if (seconds > now + DUE_EARLY_SECONDS) break
       r.index++
-      if (now - due > CLIP_MISSED_AFTER_SECONDS) late++
-      else send(strike)
+      if (now - seconds > r.timing.slack) late++
+      else send(r, strike, seconds)
     }
     missed(late)
     arm(r)
   }
 
   /** The pass ends: the loop comes round again, or the clip has played to its end. Loops a stall passed whole are skipped, their
-   * note-ons missed. */
+   * note-ons missed. A note-on at the loop's start is sent in this same wake, never one wake later. */
   const turn = (r: Run) => {
     if (r !== run) return
     r.timer = null
@@ -234,11 +266,11 @@ export function createClipPlayer(owners: ClipPlayerOwners): ClipPlayer {
     r.passStart += (r.pass.to - r.pass.from) * r.spb
     r.pass = again
     r.index = 0
-    const length = (again.to - again.from) * r.spb, now = owners.now()
+    const length = (again.to - again.from) * r.spb, now = owners.now() - r.origin
     let late = 0
-    while (r.passStart + length + CLIP_MISSED_AFTER_SECONDS < now) { late += again.strikes.length; r.passStart += length }
+    while (r.passStart + length + r.timing.slack < now) { late += again.strikes.length; r.passStart += length }
     missed(late)
-    arm(r)
+    fire(r)
   }
 
   /** The clip was read again while it plays: its edit plays from the next pass; a clip that is gone stops. */
@@ -252,9 +284,9 @@ export function createClipPlayer(owners: ClipPlayerOwners): ClipPlayer {
     }, cause => { if (r === run) publish({fault: `The clip's edit was not read, so it plays as it was: ${said(cause)}`}) })
   }
 
-  const begin = (address: ClipAddress, bpm: number, plan: Extract<ClipPlan, {ok: true}>) => {
-    const r: Run = {address, spb: 60 / bpm, plan, pass: plan.first, passStart: owners.now(), index: 0, timer: null, unwatch: () => {},
-      fire: () => fire(r), turn: () => turn(r)}
+  const begin = (address: ClipAddress, bpm: number, plan: Extract<ClipPlan, {ok: true}>, timing: Extract<ClipTiming, {anchor: bigint}>) => {
+    const r: Run = {address, spb: 60 / bpm, origin: owners.now(), timing, plan, pass: plan.first, passStart: 0, index: 0, timer: null,
+      unwatch: () => {}, fire: () => fire(r), turn: () => turn(r)}
     run = r
     r.unwatch = owners.watch(address, () => retake(r))
     publish({starting: false, playing: {address, name: plan.name, bpm}})
@@ -272,8 +304,14 @@ export function createClipPlayer(owners: ClipPlayerOwners): ClipPlayer {
       owners.read(address).then(clip => {
         if (mine !== press) return
         const plan = clipPlan(clip)
-        if (!plan.ok) publish({starting: false, fault: plan.reason})
-        else begin(address, bpm, plan)
+        if (!plan.ok) { publish({starting: false, fault: plan.reason}); return }
+        // The owner's clock is read last, so the clip's anchor stands on the sound the owner has rendered as the clip begins.
+        return owners.clock().then(clock => {
+          if (mine !== press) return
+          const timing = clipTiming(clock)
+          if ('refused' in timing) publish({starting: false, fault: timing.refused})
+          else begin(address, bpm, plan, timing)
+        }, cause => { if (mine === press) publish({starting: false, fault: `The torus did not read its audio clock: ${said(cause)}`}) })
       }, cause => { if (mine === press) publish({starting: false, fault: `The set's owner did not read the clip: ${said(cause)}`}) })
     },
     stop() {
@@ -297,6 +335,7 @@ function candidateOwners(): ClipPlayerOwners {
       if (answer.error || answer.outcome?.result !== 'live_clip_reading') throw new Error(answer.error ?? 'The set\'s owner did not answer the clip')
       return answer.outcome.reading.clip
     },
+    clock: () => readAudioClock(commitLiveStage),
     strike: command => commitLiveStage(command),
     watch: (address, changed) => subscribeSet(address.path, changed),
     now: () => performance.now() / 1000,
