@@ -138,7 +138,12 @@ with browser_session({'width': 1280, 'height': 900}) as (_, ctx, page):
     check('the transport reads Play again after the scene ends', icon_now == 'Play scene (Space)', icon_now)
     head_c = page.evaluate("() => document.getElementById('global-time').textContent")
     page.evaluate("""() => document.getElementById('play-button').click()""")
-    page.wait_for_timeout(300)
+    # The readout repaints on the next frame; a software-WebGL runner draws at
+    # about 2 fps, so wait for the restart rather than a fixed interval.
+    try:
+        page.wait_for_function("() => document.getElementById('global-time').textContent.startsWith('0.')", timeout=3000)
+    except Exception:
+        pass
     head_d = page.evaluate("() => document.getElementById('global-time').textContent")
     check('pressing Play again restarts the scene from its top', head_d.startswith('0.'), f'{head_c} → {head_d}')
 
