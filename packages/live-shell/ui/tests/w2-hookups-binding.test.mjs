@@ -151,14 +151,14 @@ const PENDING = {return_ref: `central:return:project:o-i:${minted}000000-4242`, 
   status: 'pending', agent_session_ref: 'agent-session/flint', current_revision: 'r1'}
 const MOVED = {...PENDING, return_ref: 'central:return:project:o-i:1792300001000000000-4243', current_revision: 'r2'}
 const PERSON = accept.personRefOf(W2.personalAnchor.data)
-const input = returns => ({gateway: {}, session: null, encounter: null, holds: bind.chainHolds(), returns, nowUnixMs: minted + 60_000})
+const input = returns => ({session: null, encounter: null, holds: bind.chainHolds(), returns, nowUnixMs: minted + 60_000})
 const approveVia = (url, person = PERSON) => ({approve: row => accept.acceptSourceReturn(bridge(url), 'O-I', row, person)})
 
 test('Approve accepts the chosen proposal through projectcentral.source.return_accept on its basis, by the person Central\'s anchor names', async () => {
   bind.resetHolds()
   assert.equal(PERSON, 'central:source:control:root:Control/user/identity', 'REAL: the human grant\'s principal')
   const owner = kernel({'projectcentral.source.return_accept': {status: 'accepted'}})
-  const binding = rec.approvalsBinding(input({entries: [PENDING]}), null, approveVia('http://approve.fixture'))
+  const binding = rec.approvalsBinding(input({entries: [PENDING]}), approveVia('http://approve.fixture'))
   assert.equal(binding.writes('approve'), true)
   assert.equal(binding.standing.approve, undefined, 'with the port, Approve stands enabled')
   await withKernel(owner, () => binding.write([{key: 'approve', value: PENDING.return_ref}]))
@@ -173,14 +173,14 @@ test('Approve accepts the chosen proposal through projectcentral.source.return_a
 test('Approve refused in words before Central is asked: a moved source, no person named, a proposal not listed, no returns read, no port (drawn)', async () => {
   bind.resetHolds()
   const owner = kernel({'projectcentral.source.return_accept': () => assert.fail('not asked')})
-  const binding = rec.approvalsBinding(input({entries: [PENDING, MOVED]}), null, approveVia('http://approve.fixture'))
+  const binding = rec.approvalsBinding(input({entries: [PENDING, MOVED]}), approveVia('http://approve.fixture'))
   await assert.rejects(withKernel(owner, () => binding.write([{key: 'approve', value: MOVED.return_ref}])), /the source moved since the agent proposed this \(its basis r1, now r2\)/)
   await assert.rejects(withKernel(owner, () => binding.write([{key: 'approve', value: 'central:return:project:o-i:gone'}])), /not among the returns Central lists now/)
-  const nobody = rec.approvalsBinding(input({entries: [PENDING]}), null, approveVia('http://approve.fixture', null))
+  const nobody = rec.approvalsBinding(input({entries: [PENDING]}), approveVia('http://approve.fixture', null))
   await assert.rejects(withKernel(owner, () => nobody.write([{key: 'approve', value: PENDING.return_ref}])), /personal anchor has not named the person/)
-  const unread = rec.approvalsBinding(input(null), null, approveVia('http://approve.fixture'))
+  const unread = rec.approvalsBinding(input(null), approveVia('http://approve.fixture'))
   await assert.rejects(withKernel(owner, () => unread.write([{key: 'approve', value: PENDING.return_ref}])), /source returns have not answered/)
-  const unwired = rec.approvalsBinding(input({entries: [PENDING]}), null, {})
+  const unwired = rec.approvalsBinding(input({entries: [PENDING]}), {})
   assert.equal(unwired.standing.approve.disabled, rec.APPROVE_UNWIRED)
   await assert.rejects(unwired.write([{key: 'approve', value: PENDING.return_ref}]), /no acceptance port is passed here/)
   // REPLACED (lane W9): Changes has its owner now; unwrapped by a chain's comment hand it says so (sourceReturnComment.ts withReturnComments).

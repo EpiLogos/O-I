@@ -511,7 +511,7 @@ test('Scope: no owner reports a reach, a write mode, places or receipts, so none
   assert.deepEqual(calls, [['shell.setWriteArm', true]])
   await assert.rejects(() => scope().write([{key: 'writeMode', value: 'draft'}]), /draft awaits its writer/)
   // REPLACED (#725): the single `knowledge` key "set on the Knowledge route inside this Scope" — the Knowledge route was retired into Scope's
-  // Knowledge page (§19.9, §19.12), whose settings are refused here in the route's own words (knowledgeRouteBinding.ts KNOWLEDGE_REFUSE).
+  // Knowledge page (§19.9, §19.12), whose settings are refused here by the operations they lack (designBindings.ts REFUSED_WRITES).
   await assert.rejects(() => scope().write([{key: 'linkDepth', value: 3}]), /Link depth: no owner operation carries it yet — missing op: a per-agent depth on `aikit knowledge relations`/)
   await assert.rejects(() => scope().write([{key: 'readBudget', value: 10}]), /Read budget: no owner operation carries it yet — missing op: a per-agent ceiling/)
   await assert.rejects(() => scope().write([{key: 'searchFirst', value: false}]), /Search first: no owner operation carries it yet/)

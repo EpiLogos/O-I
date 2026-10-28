@@ -160,7 +160,7 @@ test('Notifications\' readings stand in Approvals: Messages\' waiting agents rea
   assert.equal(carried.messages, 2, 'the agents that wait for you or have stalled')
   const unread = rail.ownerRequestsValues({messagesAgents: undefined, nowUnixMs: 0})
   assert.deepEqual([unread.messages, unread.rows, unread.desktop], [undefined, null, undefined], 'no device read: absent, never zero')
-  const own = receipts.approvalsBinding({gateway: {}, session: null, encounter: null, holds: chainBind.chainHolds()}, null, {}, 'central:main:approvals')
+  const own = receipts.approvalsBinding({session: null, encounter: null, holds: chainBind.chainHolds()}, {}, 'central:main:approvals')
   const binding = rail.withOwnerRequests(own, {messagesAgents: agents, nowUnixMs: 0, ledger: {status: 'reading'}})
   assert.equal(binding.values.messages, 2)
   assert.deepEqual(binding.waiting, ['desktop'], 'the desktop\'s notice waits for personal.notifications.list')

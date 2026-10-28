@@ -103,8 +103,8 @@ function fakeKernel(answer) {
   globalThis.fetch = async (url, init) => { const op = JSON.parse(init.body); ops.push(op); return {json: async () => answer(op)} }
   return {transport: {kind: 'bridge', url: 'http://fake-kernel.test'}, ops, restore: () => { globalThis.fetch = was }}
 }
-const approvals = (over = {}, ports = {}) => rec.approvalsBinding({gateway: {}, session: SHOWN, encounter: null, holds: bind.chainHolds(), returns: {entries: []},
-  nowUnixMs: 1_792_600_090_000, units: READ(), person: PERSON, ...over}, null, ports)
+const approvals = (over = {}, ports = {}) => rec.approvalsBinding({session: SHOWN, encounter: null, holds: bind.chainHolds(), returns: {entries: []},
+  nowUnixMs: 1_792_600_090_000, units: READ(), person: PERSON, ...over}, ports)
 
 // ------------------------------------------------------------------------------------------------------------- unit decisions
 

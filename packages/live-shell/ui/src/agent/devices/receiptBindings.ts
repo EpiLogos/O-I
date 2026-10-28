@@ -17,11 +17,13 @@
 // horizon's own number (`n`, its cursor); a return carries none, so its row has no `n` — the instant Central minted it (its ref names it)
 // is when it was made, drawn as its day and time, never as a number. Who accepted it is not in the list, so `by` is left out.
 //
-// Approvals' Default answer is the Gateway's `approvals` key — the same read (agentChainDevices.ts gatewayDisclosed) and the same write
-// (the Gateway row, kernel harness_agent_control configure {approvals}); its queue is the shown session's pending consent requests
-// (AIKit's encounter view `permissions`, the Thread's own reading, threadBinding.ts pendingPermissions), each answered with the
-// harness's own choice (allow once, allow always, reject) through the encounter's `permission` verb. Wait and On no answer have no
-// owner write (Hermes' approvals.timeout is not a harness_agent_control configure field, harnessAgentControl.ts:14-25); the proposals are
+// Approvals neither reads nor sets the default answer (§19.14: "the default answer is the Gateway's Approvals (§19.2). Approvals shows them
+// and never sets them"; the redrawn design draws no `approvals`): it is the Gateway's own `approvals` row, read and set on the Gateway
+// (agentChainDevices.ts gatewayDisclosed, kernel harness_agent_control configure {approvals}), and Approvals is handed no Gateway (ticket
+// 788). Its queue is the shown session's pending consent requests (AIKit's encounter view `permissions`, the Thread's own reading,
+// threadBinding.ts pendingPermissions), each answered with the harness's own choice (allow once, allow always, reject) through the
+// encounter's `permission` verb. Wait and On no answer, the Agent's, have no owner reading or write (Hermes' approvals.timeout is not a
+// harness_agent_control configure field, harnessAgentControl.ts:14-25); the proposals are
 // Central's source returns, which the kernel reads since lane K1 (`source_returns_read`, central.source-returns/v1: workcellReads.ts) —
 // the pending and applying ones stand in the queue. Approve accepts one through Central's projectcentral.source.return_accept, the person's
 // press the kernel carries (central/devices/sourceReturnAccept.ts, handed in as a port). Changes comments on the waiting return through
@@ -352,8 +354,6 @@ export const APPROVALS_VIEW: Readonly<Record<string, Value>> = {show: 'all', ord
 const APPROVALS_LOCAL = [...Object.keys(APPROVALS_VIEW), 'pick'] as const
 
 export interface ApprovalsInput {
-  /** The Gateway's values (designBindings.ts gatewayValues): its `approvals` is this device's Default answer. */
-  readonly gateway: Values
   /** Central's source returns of the project (kernel source_returns_read), null while unread; the agency tracks name their agents. */
   readonly returns?: {readonly entries: readonly SourceReturnEntry[]} | null
   readonly tracks?: readonly AgentSessionTrack[] | null
@@ -416,7 +416,6 @@ export function approvalsValues(input: ApprovalsInput): Values {
   const view = viewHolds(input.holds, APPROVALS_ID)
   for (const [key, value] of Object.entries(APPROVALS_VIEW)) values[key] = view[key] ?? value
   put(values, 'pick', view.pick)
-  put(values, 'approvals', input.gateway.approvals)
   const requests = input.session && input.encounter ? queueRows(pendingPermissions(input.encounter), input.session) : null
   const proposals = input.returns ? proposalRows(input.returns.entries, input.tracks, input.nowUnixMs) : null
   const units = input.units ? unitRows(input.units, input.session, input.nowUnixMs) : null
@@ -454,10 +453,10 @@ function choiceFor(request: NativePermission, answer: 'allowOnce' | 'allowAlways
   return null
 }
 
-/** Approvals' binding: the Default answer through the Gateway's own write (one key, one row); each answer to a request through the
- * shown session's encounter, with the harness's own choice; Approve through Central's acceptance (the `approve` port); the view's
- * settings held by the shell; Wait, On no answer and Changes stand disabled with what they lack. */
-export function approvalsBinding(input: ApprovalsInput, gateway: Pick<DesignBinding, 'write' | 'standing'> | null, ports: ApprovalsPorts, id: string = APPROVALS_ID): DesignBinding {
+/** Approvals' binding: each answer to a request through the shown session's encounter, with the harness's own choice; Approve through
+ * Central's acceptance (the `approve` port); the view's settings held by the shell; Wait, On no answer and Changes stand disabled with what
+ * they lack. The default answer is the Gateway's, never set here (§19.14). */
+export function approvalsBinding(input: ApprovalsInput, ports: ApprovalsPorts, id: string = APPROVALS_ID): DesignBinding {
   const requests = input.encounter ? pendingPermissions(input.encounter) : []
   const standing: Record<string, Standing> = disabled(APPROVALS_REFUSE)
   const verb = !input.session ? 'No session is shown: select one, or pin the Thread to one.' : !input.encounter ? 'The session\'s conversation is not read yet.'
@@ -465,7 +464,6 @@ export function approvalsBinding(input: ApprovalsInput, gateway: Pick<DesignBind
   // A unit decision needs no conversation: while one waits, each answer is judged at the press, on the item chosen.
   const unitsWait = waitingDecisions(input.units).length > 0
   if (verb && !unitsWait) for (const key of ['allowOnce', 'allowAlways', 'deny']) standing[key] = {disabled: verb}
-  if (gateway?.standing?.approvals) standing.approvals = gateway.standing.approvals
   if (!ports.approve) standing.approve = {disabled: APPROVE_UNWIRED}
   if (!ports.reject) standing.reject = {disabled: REJECT_UNWIRED}
   for (const [key, why] of Object.entries(APPROVALS_ANSWERS_REFUSED)) standing[key] = {disabled: why}
@@ -475,15 +473,10 @@ export function approvalsBinding(input: ApprovalsInput, gateway: Pick<DesignBind
     values: approvalsValues(input),
     standing,
     local: Object.fromEntries(APPROVALS_LOCAL.map(key => [key, (value: Value | undefined) => holdView(APPROVALS_ID, key, value)])),
-    writes: key => key === 'approvals' || key === 'allowOnce' || key === 'allowAlways' || key === 'deny' || key === 'approve' || key === 'reject' || key in APPROVALS_REFUSE
+    writes: key => key === 'allowOnce' || key === 'allowAlways' || key === 'deny' || key === 'approve' || key === 'reject' || key in APPROVALS_REFUSE
       || key in APPROVALS_ANSWERS_REFUSED,
     write: async (changes: readonly ValueChange[]) => {
       for (const {key, value} of changes) {
-        if (key === 'approvals') {
-          if (!gateway?.write) throw Error('The Gateway is not drawn on its owner here, so nothing carries the default answer.')
-          await gateway.write([{key, value}])
-          continue
-        }
         if (key === 'allowOnce' || key === 'allowAlways' || key === 'deny') {
           if (waitingDecisions(input.units).some(item => item.humanRequestRef === value)) {
             const asked = unitAnswer(input.units, value, key, input.person ?? null)

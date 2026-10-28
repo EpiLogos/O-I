@@ -67,6 +67,9 @@ pub fn central_action(action: &str) -> bool {
 /// tenders (init-root, reproject-scaffold, recognise-source). Central admits these on the person's native authority, so the kernel carries the host's token
 /// for exactly these (flow.rs `for_person`: read in the native process, never supplied by the desk), as it does for Open today
 /// and a page's Launch. Every other invocation goes without it, and Central refuses an act it does not grant in its own words.
+/// Approvals' Deny and Changes on a returned source (`projectcentral.source.return_reject`, `projectcentral.source.return_comment`)
+/// are not among them: Central admits both without that authority (ctrl source_return.rs: a rejection marks the Return and a comment
+/// keeps a declared `commented_by_ref`; neither changes a source or reads the token), so the token is not handed to them (O-I #788).
 pub const PERSON_ACTS: [&str; 28] = [
     "central.now.lifecycle",
     "central.day.settings.write",
@@ -524,6 +527,21 @@ mod tests {
             "central.world.reproject.plan",
             "projectcentral.ground.plan",
         ] {
+            assert!(!person_act(id), "{id} carries no person authority");
+        }
+    }
+
+    /// O-I #788: a returned source's Deny and Changes are invoked as the person presses them, but Central admits both without the
+    /// person's native authority (ctrl source_return.rs: `return_reject` marks the waiting Return rejected and `return_comment` keeps a
+    /// declared `commented_by_ref`; neither changes a source nor reads the host's token). The token goes only where Central asks for it.
+    #[test]
+    fn answers_central_admits_without_native_authority_carry_none() {
+        assert!(person_act("projectcentral.source.return_accept"));
+        for id in [
+            "projectcentral.source.return_reject",
+            "projectcentral.source.return_comment",
+        ] {
+            assert!(central_action(id), "{id} is Central's");
             assert!(!person_act(id), "{id} carries no person authority");
         }
     }
