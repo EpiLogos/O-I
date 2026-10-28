@@ -8,7 +8,7 @@ import {renderToStaticMarkup} from 'react-dom/server'
 // Production modules in memory, the pane-instrument.test.mjs loader pattern. The atlas itself needs WebGL and a DOM to
 // mount, so the atlas's state is held here by its own classes (TimeModel, createTimeScale) and by a graph surface with
 // the same setters the GraphView exposes; the bodies are read through the same handle the pane publishes.
-const compiler = new URL('file:///Users/admin/Central/worktrees/env-2/o-i/packages/live-shell/ui/node_modules/typescript/lib/typescript.js', import.meta.url).href
+const compiler = new URL('../node_modules/typescript/lib/typescript.js', import.meta.url).href
 register(`data:text/javascript,${encodeURIComponent(`
 import ts from ${JSON.stringify(compiler)};
 import {readFile} from 'node:fs/promises';
@@ -33,16 +33,16 @@ export async function load(u, c, n) {
     compilerOptions: {target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext, jsx: ts.JsxEmit.ReactJSX}}).outputText};
 }`)}`, import.meta.url)
 
-const {TechneInstrumentsDetail} = await import('/Users/admin/Central/worktrees/env-2/o-i/packages/live-shell/ui/src/shell/ModeDetail.tsx')
-const {AtlasFaceBody, ATLAS_FACE_IDS, isAtlasFaceId} = await import('/Users/admin/Central/worktrees/env-2/o-i/packages/live-shell/ui/src/inhabitants/atlasFaceBodies.tsx')
-const actions = await import('/Users/admin/Central/worktrees/env-2/o-i/packages/live-shell/ui/src/inhabitants/atlasFaceActions.ts')
-const {inhabitantManifest} = await import('/Users/admin/Central/worktrees/env-2/o-i/packages/live-shell/ui/src/inhabitants/manifest.ts')
-const {ATLAS_FAMILY_ID} = await import('/Users/admin/Central/worktrees/env-2/o-i/packages/live-shell/ui/src/projections/atlas/atlasFamilyManifest.ts')
-const {publishAtlasHandle, presentAtlasView} = await import('/Users/admin/Central/worktrees/env-2/o-i/packages/live-shell/ui/src/projections/atlas/AtlasProjectionPanel.tsx')
-const {TimeModel} = await import('/Users/admin/Central/worktrees/env-2/o-i/packages/live-shell/ui/src/projections/atlas/src/state/timeModel.ts')
-const {createTimeScale, formatYear} = await import('/Users/admin/Central/worktrees/env-2/o-i/packages/live-shell/ui/src/projections/atlas/src/data/time.ts')
-const {DEFAULT_FORCES, FORCE_ROWS, forceMultiple} = await import('/Users/admin/Central/worktrees/env-2/o-i/packages/live-shell/ui/src/projections/atlas/src/graph/forces.ts')
-const {DEFAULT_TIE_BASES} = await import('/Users/admin/Central/worktrees/env-2/o-i/packages/live-shell/ui/src/projections/atlas/src/types/field.ts')
+const {TechneInstrumentsDetail} = await import('../src/shell/ModeDetail.tsx')
+const {AtlasFaceBody, ATLAS_FACE_IDS, isAtlasFaceId} = await import('../src/inhabitants/atlasFaceBodies.tsx')
+const actions = await import('../src/inhabitants/atlasFaceActions.ts')
+const {inhabitantManifest} = await import('../src/inhabitants/manifest.ts')
+const {ATLAS_FAMILY_ID} = await import('../src/projections/atlas/atlasFamilyManifest.ts')
+const {publishAtlasHandle, presentAtlasView} = await import('../src/projections/atlas/AtlasProjectionPanel.tsx')
+const {TimeModel} = await import('../src/projections/atlas/src/state/timeModel.ts')
+const {createTimeScale, formatYear} = await import('../src/projections/atlas/src/data/time.ts')
+const {DEFAULT_FORCES, FORCE_ROWS, forceMultiple} = await import('../src/projections/atlas/src/graph/forces.ts')
+const {DEFAULT_TIE_BASES} = await import('../src/projections/atlas/src/types/field.ts')
 
 const html = element => renderToStaticMarkup(element)
 const transport = {kind: 'unavailable', reason: 'the test carrier is down'}
@@ -105,8 +105,8 @@ test('the 0 instrument is one plate: its sections draw the four atlas faces\' co
   assert.doesNotMatch(out, /data-atlas-face=/, 'no face body is boxed inside the plate')
   assert.doesNotMatch(out, /docks when its material is selected/, 'no atlas face shows the empty-slot notice')
   // the pool and a pane still show each face whole, its body its picture (the door publishes the same entries)
-  const {techneEntries} = await import('/Users/admin/Central/worktrees/env-2/o-i/packages/live-shell/ui/src/inhabitants/ql/devices/TechneDevices.tsx')
-  const {atlasReading} = await import('/Users/admin/Central/worktrees/env-2/o-i/packages/live-shell/ui/src/inhabitants/ql/devices/atlasDevices.ts')
+  const {techneEntries} = await import('../src/inhabitants/ql/devices/TechneDevices.tsx')
+  const {atlasReading} = await import('../src/inhabitants/ql/devices/atlasDevices.ts')
   const entries = techneEntries([inhabitantManifest(ATLAS_FAMILY_ID)], {atlas: atlasReading(null, 'earth'), surface: null, torus: null, instrumentReading: null})
   for (const id of ATLAS_FACE_IDS) {
     const entry = entries.find(candidate => candidate.face.id === id)
@@ -115,7 +115,7 @@ test('the 0 instrument is one plate: its sections draw the four atlas faces\' co
 })
 
 test('the 0 instrument\'s plate reads the mounted atlas and draws the faces\' controls in the device craft, each through the bodies\' own acts', async () => {
-  const {ProjectPlate} = await import('/Users/admin/Central/worktrees/env-2/o-i/packages/live-shell/ui/src/inhabitants/ql/devices/ProjectPlate.tsx')
+  const {ProjectPlate} = await import('../src/inhabitants/ql/devices/ProjectPlate.tsx')
   const graph = new FakeGraph()
   graph.state.local = true
   graph.state.depth = 2

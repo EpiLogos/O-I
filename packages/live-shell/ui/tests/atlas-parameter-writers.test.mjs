@@ -8,7 +8,7 @@ import {renderToStaticMarkup} from 'react-dom/server'
 // shell.setAtlas* writer; each writer is registered in the shell's setter bridge and drives the SAME atlas face action the
 // face body calls, on the one mounted atlas. The declared domains are read live from FORCE_ROWS, the TimeModel, the
 // GraphView's controls() and its own setDepth clamp. Production modules in memory, the atlas-face-bodies.test.mjs loader.
-const compiler = new URL('file:///Users/admin/Central/worktrees/env-2/o-i/packages/live-shell/ui/node_modules/typescript/lib/typescript.js', import.meta.url).href
+const compiler = new URL('../node_modules/typescript/lib/typescript.js', import.meta.url).href
 register(`data:text/javascript,${encodeURIComponent(`
 import ts from ${JSON.stringify(compiler)};
 import {readFile} from 'node:fs/promises';
@@ -34,23 +34,23 @@ export async function load(u, c, n) {
   return {format: 'module', shortCircuit: true, source: out.split('import.meta.env').join('({BASE_URL: "/"})')};
 }`)}`, import.meta.url)
 
-const door = await import('/Users/admin/Central/worktrees/env-2/o-i/packages/live-shell/ui/src/inhabitants/familyManifest.ts')
-const five = await import('/Users/admin/Central/worktrees/env-2/o-i/packages/live-shell/ui/src/inhabitants/loadAgentShellFamilies.ts')
-const p0 = await import('/Users/admin/Central/worktrees/env-2/o-i/packages/live-shell/ui/src/inhabitants/agentNativeP0.ts')
-const sdkDefine = await import('/Users/admin/Central/worktrees/env-2/o-i/packages/live-shell/ui/src/inhabitants/sdk/define.ts')
-const sdkValidate = await import('/Users/admin/Central/worktrees/env-2/o-i/packages/live-shell/ui/src/inhabitants/sdk/validate.ts')
-const adoptRows = await import('/Users/admin/Central/worktrees/env-2/o-i/packages/live-shell/ui/src/inhabitants/sdk/adoptVerifiedRows.ts')
-const sdkSetters = await import('/Users/admin/Central/worktrees/env-2/o-i/packages/live-shell/ui/src/inhabitants/sdk/shellSetters.ts')
-const dispatch = await import('/Users/admin/Central/worktrees/env-2/o-i/packages/live-shell/ui/src/agent/agentNativeDispatch.ts')
-const bridge = await import('/Users/admin/Central/worktrees/env-2/o-i/packages/live-shell/ui/src/agent/shellSetterBridge.ts')
-const faceBodies = await import('/Users/admin/Central/worktrees/env-2/o-i/packages/live-shell/ui/src/inhabitants/atlasFaceBodies.tsx')
-const {publishAtlasHandle, presentAtlasView} = await import('/Users/admin/Central/worktrees/env-2/o-i/packages/live-shell/ui/src/projections/atlas/AtlasProjectionPanel.tsx')
-const {TimeModel} = await import('/Users/admin/Central/worktrees/env-2/o-i/packages/live-shell/ui/src/projections/atlas/src/state/timeModel.ts')
-const {createTimeScale, formatYear} = await import('/Users/admin/Central/worktrees/env-2/o-i/packages/live-shell/ui/src/projections/atlas/src/data/time.ts')
-const {GraphView} = await import('/Users/admin/Central/worktrees/env-2/o-i/packages/live-shell/ui/src/projections/atlas/src/graph/view.ts')
-const {DEFAULT_FORCES, FORCE_ROWS, forceMultiple} = await import('/Users/admin/Central/worktrees/env-2/o-i/packages/live-shell/ui/src/projections/atlas/src/graph/forces.ts')
-const {DEFAULT_KINDS} = await import('/Users/admin/Central/worktrees/env-2/o-i/packages/live-shell/ui/src/projections/atlas/src/graph/settings.ts')
-const {tieBases} = await import('/Users/admin/Central/worktrees/env-2/o-i/packages/live-shell/ui/src/projections/atlas/src/types/field.ts')
+const door = await import('../src/inhabitants/familyManifest.ts')
+const five = await import('../src/inhabitants/loadAgentShellFamilies.ts')
+const p0 = await import('../src/inhabitants/agentNativeP0.ts')
+const sdkDefine = await import('../src/inhabitants/sdk/define.ts')
+const sdkValidate = await import('../src/inhabitants/sdk/validate.ts')
+const adoptRows = await import('../src/inhabitants/sdk/adoptVerifiedRows.ts')
+const sdkSetters = await import('../src/inhabitants/sdk/shellSetters.ts')
+const dispatch = await import('../src/agent/agentNativeDispatch.ts')
+const bridge = await import('../src/agent/shellSetterBridge.ts')
+const faceBodies = await import('../src/inhabitants/atlasFaceBodies.tsx')
+const {publishAtlasHandle, presentAtlasView} = await import('../src/projections/atlas/AtlasProjectionPanel.tsx')
+const {TimeModel} = await import('../src/projections/atlas/src/state/timeModel.ts')
+const {createTimeScale, formatYear} = await import('../src/projections/atlas/src/data/time.ts')
+const {GraphView} = await import('../src/projections/atlas/src/graph/view.ts')
+const {DEFAULT_FORCES, FORCE_ROWS, forceMultiple} = await import('../src/projections/atlas/src/graph/forces.ts')
+const {DEFAULT_KINDS} = await import('../src/projections/atlas/src/graph/settings.ts')
+const {tieBases} = await import('../src/projections/atlas/src/types/field.ts')
 
 const TRANSPORT = {kind: 'bridge', url: 'http://kernel.test'}
 const BINDING = 'cursor'
@@ -356,7 +356,7 @@ test('with the atlas mounted but its graph unopened, the graph writers refuse by
 })
 
 test('the writers drive the atlas face actions the body calls, not copies of them', async () => {
-  const source = await (await import('node:fs/promises')).readFile(new URL('/Users/admin/Central/worktrees/env-2/o-i/packages/live-shell/ui/src/agent/shellSetterBridge.ts', import.meta.url), 'utf8')
+  const source = await (await import('node:fs/promises')).readFile(new URL('../src/agent/shellSetterBridge.ts', import.meta.url), 'utf8')
   assert.match(source, /from '\.\.\/inhabitants\/atlasFaceActions\.ts'/, 'the bridge imports the face actions')
   for (const action of ['stepDepth', 'setForce', 'toggleTie', 'toggleKind', 'toggleOccurrences', 'toggleSky', 'scrubClock', 'allTime', 'playOrPause', 'toggleCumulative']) {
     assert.match(source, new RegExp(`\\b${action}\\(`), `${action} is called by a writer`)
