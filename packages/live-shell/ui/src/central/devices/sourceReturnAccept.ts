@@ -56,7 +56,8 @@ export async function acceptSourceReturn(transport: KernelTransportStatus, proje
 
 /** Approvals' Deny on a proposal (manual §19.14 "Approve, Changes or Deny"): Central declines a waiting return without touching its source
  * (`projectcentral.source.return_reject {project, return_ref}`, ctrl source_return.rs; the kernel's flow.rs source_return_reject reads the
- * same answer), through invoke_action as the comment on a return goes (sourceReturnComment.ts). */
+ * same answer), through invoke_action as the person's press: the kernel carries the person's native credential for it (PERSON_ACTS), and
+ * Central refuses a Deny without it (O-I #805). */
 export const RETURN_REJECT_ACTION = 'projectcentral.source.return_reject'
 
 /** Decline the return through Central. Resolves with Central's reading; throws the refusal, or Central's words. */

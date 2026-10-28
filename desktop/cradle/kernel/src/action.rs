@@ -59,7 +59,7 @@ pub fn central_action(action: &str) -> bool {
 }
 
 /// The person's own presses that reach Central as Actions (T-COVERAGE §1.1): closing a NOW; the Day's settings, its moves'
-/// records, its rollover and its close-out carry; accepting a returned source; making, keeping and removing an agent and a
+/// records, its rollover and its close-out carry; accepting and denying a returned source; making, keeping and removing an agent and a
 /// group; a world's relations; a document's own edit; a workspace's Accept (init, adopt, migrate) and its Docs' Ensure and Relate
 /// (manual §18.1 Ground, "accept it there"; §18.5 Docs), its UX and EX relations — Central's `projectcentral.docs.*` ids (its
 /// first `projectcentral.self.*` ids still answer there as deprecated aliases; the kernel presses the docs ids); the Machine's
@@ -67,16 +67,18 @@ pub fn central_action(action: &str) -> bool {
 /// tenders (init-root, reproject-scaffold, recognise-source). Central admits these on the person's native authority, so the kernel carries the host's token
 /// for exactly these (flow.rs `for_person`: read in the native process, never supplied by the desk), as it does for Open today
 /// and a page's Launch. Every other invocation goes without it, and Central refuses an act it does not grant in its own words.
-/// Approvals' Deny and Changes on a returned source (`projectcentral.source.return_reject`, `projectcentral.source.return_comment`)
-/// are not among them: Central admits both without that authority (ctrl source_return.rs: a rejection marks the Return and a comment
-/// keeps a declared `commented_by_ref`; neither changes a source or reads the token), so the token is not handed to them (O-I #788).
-pub const PERSON_ACTS: [&str; 28] = [
+/// Approvals' Deny on a returned source (`projectcentral.source.return_reject`) is the person's alone (manual §19.14, "Deny is always
+/// yours"), and Central admits it only on that authority (ctrl source_return.rs, O-I #805). Approvals' Changes
+/// (`projectcentral.source.return_comment`) is not among these: Central keeps a comment's declared `commented_by_ref` and reads no
+/// token for it, so the token is not handed to it (O-I #788).
+pub const PERSON_ACTS: [&str; 29] = [
     "central.now.lifecycle",
     "central.day.settings.write",
     "central.day.move.record",
     "central.day.rollover",
     "central.day.close-carry",
     "projectcentral.source.return_accept",
+    "projectcentral.source.return_reject",
     "agent-profile.express",
     "agent-profile.accept",
     "agent-profile.save",
@@ -531,18 +533,24 @@ mod tests {
         }
     }
 
-    /// O-I #788: a returned source's Deny and Changes are invoked as the person presses them, but Central admits both without the
-    /// person's native authority (ctrl source_return.rs: `return_reject` marks the waiting Return rejected and `return_comment` keeps a
-    /// declared `commented_by_ref`; neither changes a source nor reads the host's token). The token goes only where Central asks for it.
+    /// O-I #805: Deny on a returned source is the person's alone (manual §19.14, "Deny is always yours"), and Central admits
+    /// `return_reject` only on the person's native authority (ctrl source_return.rs), so the kernel carries the host's token for it as
+    /// it does for Approve. Changes (`return_comment`) keeps a declared `commented_by_ref` and reads no token (O-I #788), so the token
+    /// goes only where Central asks for it.
     #[test]
-    fn answers_central_admits_without_native_authority_carry_none() {
-        assert!(person_act("projectcentral.source.return_accept"));
+    fn deny_carries_the_persons_authority_and_changes_carries_none() {
         for id in [
+            "projectcentral.source.return_accept",
             "projectcentral.source.return_reject",
-            "projectcentral.source.return_comment",
         ] {
             assert!(central_action(id), "{id} is Central's");
-            assert!(!person_act(id), "{id} carries no person authority");
+            assert!(person_act(id), "{id} is the person's press");
         }
+        let changes = "projectcentral.source.return_comment";
+        assert!(central_action(changes), "{changes} is Central's");
+        assert!(
+            !person_act(changes),
+            "{changes} carries no person authority"
+        );
     }
 }

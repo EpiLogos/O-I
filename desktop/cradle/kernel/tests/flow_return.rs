@@ -193,12 +193,20 @@ fn world_source_and_explicit_return_preserve_owner_identity_and_refusal() {
             "session:test-2",
         )
         .unwrap();
-    let rejected = client
-        .source_return_reject("Editor", &second.proposal.return_ref)
-        .unwrap();
-    assert_eq!(rejected.proposal.status, "rejected");
-    assert!(!rejected.authored_source_mutated);
-    assert!(!rejected.automatic_agent_or_model_invocation);
+    // Deny is the person's (O-I #805, DLW §19.14): a client without the person's native credential is refused and the Return stays pending.
+    let refused = client.source_return_reject("Editor", &second.proposal.return_ref);
+    assert!(
+        matches!(refused, Err(OwnerCallError::Refused { .. })),
+        "{refused:?}"
+    );
+    assert_eq!(
+        client
+            .source_return_read("Editor", &second.proposal.return_ref)
+            .unwrap()
+            .proposal
+            .status,
+        "pending"
+    );
 
     fs::remove_dir_all(root).unwrap();
 }
