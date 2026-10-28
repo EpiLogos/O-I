@@ -4,13 +4,17 @@ import type { Model } from '../data/model';
 import { occurrenceImage } from '../data/model';
 import { symbolReading } from './symbol-reading';
 import { clear, el, onReadGesture, plate } from './dom';
-import { clipText, citeLine, placeLine } from './format';
+import { citeLine, clipText, placeLine } from './format';
 import { glyphOf, type SkyTies } from '../sky/ties';
+import { bodyOfLocus, locusPhrase } from '../data/skyplace';
+import type { Occurrence } from '../types/field';
 import type { BodyKey } from '../types/sky';
 
 export interface RevealHandlers {
   onParallel(occId: string): void;
   onThread(): void;
+  /** whether the family's thread has stops enough to walk (two): the controller's own plan, so a filter is honoured */
+  canThread?(familyId: string): boolean;
   onParallelThread(): void;
   onDeep(): void;
   onClose(): void;
@@ -55,19 +59,18 @@ export class Reveal {
       const text = el('div', { class: 'rv-text' });
       text.append(el('h2', { class: 'rv-name', text: o.label }));
       text.append(el('p', { class: 'rv-line', text: placeLine(m, o) }));
-      if (o.quote) text.append(el('blockquote', { class: 'rv-quote', text: o.quote }));
+      if (o.quote) text.append(o.caption ? el('p', { class: 'rv-caption', text: o.quote }) : el('blockquote', { class: 'rv-quote', text: o.quote }));
       // a quote takes the place of a second paragraph: the reveal stays short
       const paras = o.body.filter(Boolean).slice(0, o.quote ? 1 : 2);
       paras.forEach((p) => text.append(el('p', { class: 'rv-para', text: clipText(p, o.quote ? 260 : 220) })));
       if (o.cites.length) {
         const j = o.cites[0];
-        // [C2-b8] the cite prefix is the provider's own word from its published labels
-        const prefix = m.field.meta.provider.labels?.citePrefix;
-        text.append(el('p', { class: 'rv-jung' }, [el('span', { class: 'rv-jung-mark', 'aria-hidden': 'true', text: '◦' }), citeLine(j, prefix)]));
+        text.append(el('p', { class: 'rv-jung' }, [el('span', { class: 'rv-jung-mark', 'aria-hidden': 'true', text: '◦' }), citeLine(j)]));
       }
       const symbolic = symbolReading(m, o.familyId, id => this.h.onFamily(id), true);
       if (symbolic) text.append(symbolic);
-      const tie = this.skyRow(o.familyId, gen);
+      // an occurrence that hangs in the sky says where itself; one that does not takes its family's standing tie, if any
+      const tie = o.sky?.length ? this.hangRow(o) : this.skyRow(o.familyId, gen);
       if (tie) text.append(tie);
       const par = o.parallelIds.map((id) => m.occIndex.get(id)).filter((i): i is number => i !== undefined && !!m.located[i]).slice(0, 4);
       if (par.length) {
@@ -84,7 +87,9 @@ export class Reveal {
         text.append(row);
       }
       clear(this.foot);
-      this.foot.append(el('button', { class: 'link-quiet', type: 'button', text: 'Follow the thread', onclick: () => this.h.onThread() }));
+      // a thread walks places on the Earth, and one stop is no walk: a family with fewer than two placed members has none
+      const threadable = this.h.canThread ? this.h.canThread(o.familyId) : (m.famMem.get(o.familyId) ?? []).filter((i) => m.located[i]).length >= 2;
+      if (threadable) this.foot.append(el('button', { class: 'link-quiet', type: 'button', text: 'Follow the thread', onclick: () => this.h.onThread() }));
       if (par.length) this.foot.append(el('button', { class: 'link-quiet', type: 'button', text: 'Trace the parallels', onclick: () => this.h.onParallelThread() }));
       this.foot.append(el('button', { class: 'link-quiet', type: 'button', text: 'Reading', onclick: () => this.h.onDeep() }));
       this.body.append(text);
@@ -104,6 +109,18 @@ export class Reveal {
     this.root.inert = false;
     this.root.setAttribute('aria-hidden', 'false');
     this.root.classList.add('on');
+  }
+
+  /** Where this occurrence hangs in the sky: each place a door to its body, in the words the data gives it. */
+  private hangRow(o: Occurrence): HTMLElement | null {
+    if (!this.h.onBody || !o.sky?.length) return null;
+    const row = el('p', { class: 'rv-sky' });
+    row.append(el('span', { class: 'rv-sky-mark', 'aria-hidden': 'true', text: '◦' }), 'In the sky: ');
+    o.sky.forEach((l, i) => {
+      if (i) row.append(' · ');
+      row.append(el('button', { class: 'link-quiet rv-sky-body', type: 'button', title: l.basis === 'jung' ? 'tie basis: jung' : `placed by the field’s joins (basis: ${l.basis})`, onclick: () => this.h.onBody?.(bodyOfLocus(l)) }, [locusPhrase(l)]));
+    });
+    return row;
   }
 
   /** A quiet line when the family stands in a tie with a body of the sky. The index loads once, after the card is up. */

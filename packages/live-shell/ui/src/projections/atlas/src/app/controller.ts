@@ -3,7 +3,8 @@
 import { CHART_RADIUS } from '../sky/chart-overlay';
 import type { Model, Subject } from '../data/model';
 import { scopeOf } from '../data/scope';
-import { archetypesOfFamily, selfSubject, subjectExists, subjectLine, subjectName, subjectOccurrences, subjectPalette } from '../data/model';
+import { archetypesOfFamily, selfSubject, subjectExists, subjectLine, subjectName, subjectOccurrences, subjectPalette, subjectSky } from '../data/model';
+import { bodyName, locusPhrase } from '../data/skyplace';
 import { angleBetween, dirFromLatLon, fitDistance, latLonFromDir, spreadOf, worldDistance, type Vec3 } from '../data/geo';
 import { averagePalettes, rgbToHex, WORLD_PALETTE, type RGBPalette } from '../data/palette';
 import { buildSearchIndex, refreshOccurrenceEntry, type SearchIndex, type SearchResult } from '../data/search';
@@ -57,6 +58,7 @@ import { loadLensData } from '../lenses/ui';
 import { SkyTies } from '../sky/ties';
 import { followSize, later, listen, whenIdle } from '../ui/lifetime';
 import { systemViewLatLon } from '../sky/frames';
+import { frameExtent } from '../sky/rings';
 import { approachDist, EARTH_FIELD_EXIT, isSkyApproachBody, skyMaxDist, SETTLE, STAGE_EDGES, SKY_ENTER, SKY_EXIT, SYSTEM_VIEW_ELEVATION, systemHomeDist, systemViewLongitude } from '../sky/stages';
 import { BODY_KEYS, type BodyKey } from '../types/sky';
 
@@ -205,6 +207,7 @@ export class Controller {
     this.reveal = new Reveal(root, m, {
       onParallel: (id) => this.openOccurrenceId(id),
       onThread: () => this.followThread(),
+      canThread: (familyId) => this.plan('family', familyId).length >= 2,
       onParallelThread: () => this.followParallels(),
       onDeep: () => this.setDeep(true),
       onClose: () => this.stepBack(),
@@ -216,6 +219,7 @@ export class Controller {
       onClose: () => this.closeReading(),
       onSubject: (s) => this.navigate(focusOn(this.state, s)),
       onOccurrence: (id) => this.openOccurrenceId(id),
+      onBody: (key) => this.openBody(key),
       onCite: openCite,
       passage: passages,
     });
@@ -1385,7 +1389,10 @@ export class Controller {
         const p = eph.geo(b.key, ms);
         if (p) lon[b.key] = p.lon;
       }
-      return { source: { bodies: ties.bodies, ties: ties.ties, lon }, asOf: `as of ${formatMoment(ms)}` };
+      // every body is a place the field's occurrences can hang at (a card on its wheel, a sephira on its body)
+      const hangs: NonNullable<SkyAnchorSource['hangs']> = [];
+      for (const o of this.m.occ) for (const l of o.sky ?? []) if (l.body) hangs.push({ body: l.body, occ: o.id });
+      return { source: { bodies: ties.bodies, ties: ties.ties, lon, hangs }, asOf: `as of ${formatMoment(ms)}` };
     } catch (err) {
       console.warn(err);
       return null;
@@ -1487,9 +1494,10 @@ export class Controller {
   /** How far the camera stands from `key` for its disc to fill the view (Earth radii). */
   private approachDistOf(key: BodyKey, aspect: number): number {
     const body = this.skyLayer?.data.bodies.find((b) => b.key === key);
-    // every held body carries its satellites, whose outer orbit is 1.86 discs wide: the disc is kept to 42% of the width so
-    // the orbit and its names fit a phone, live sky and birth sky alike (a desktop's 30% of the height is the tighter bound)
-    return approachDist(body?.radiusKm ?? 6371.0084, FOV, aspect, 0.42);
+    // every held body carries its satellites, whose outer orbit stands 2.55 held radii off it: the held object is kept to
+    // 34% of the width, so the orbit (87% of it) and its names fit a phone, live sky and birth sky alike (a desktop's 30% of
+    // the height is the tighter bound). A ringed body is held as the planet and its rings together (`frameExtent`).
+    return approachDist((body?.radiusKm ?? 6371.0084) * frameExtent(key), FOV, aspect, 0.34);
   }
 
   /**
@@ -2019,7 +2027,8 @@ export class Controller {
     let subject: string | null = null;
     let selected: string | null = null;
     let emphasis: number[] | null = null;
-    const keyOf = (sub: Subject): string | null => (sub.type === 'archetype' ? `a:${sub.id}` : sub.type === 'family' ? `f:${sub.id}` : null);
+    // every node of the graph is a subject it can hold: a theoretic is focused as an archetype or a form is
+    const keyOf = (sub: Subject): string | null => (sub.type === 'archetype' ? `a:${sub.id}` : sub.type === 'family' ? `f:${sub.id}` : sub.type === 'theoretic' ? `t:${sub.id}` : null);
     if (v.kind === 'focus') {
       subject = keyOf(v.subject);
       if (!subject) emphasis = subjectOccurrences(m, v.subject);
@@ -2079,6 +2088,7 @@ export class Controller {
       const { t, id } = this.splitKey(key);
       if (t === 'b') return this.onGraphBody(id as BodyKey);
       if (t === 'a') return this.navigate(focusOn(earth, { type: 'archetype', id }));
+      if (t === 't') return this.navigate(focusOn(earth, { type: 'theoretic', id }));
       if (t === 'f') return this.navigate(focusOn(earth, { type: 'family', id }));
       const occ = this.occurrenceState(earth, id);
       if (occ) return this.navigate(occ);
@@ -2266,10 +2276,20 @@ export class Controller {
       }
     }
     if (subject.type === 'family' || subject.type === 'archetype') {
-      // a thread walks placed occurrences: a subject with none has no thread, and the label says why (no dead link)
-      const all = subjectOccurrences(this.m, subject);
-      if (all.some((i) => this.m.located[i])) content.links!.push({ text: 'Follow the thread', onClick: () => this.followThread() });
-      else content.line = [content.line, all.length ? `No thread: its ${all.length === 1 ? 'one instance has' : `${all.length} instances have`} no recorded place.` : 'No thread: the field records no instance of it yet.'].filter(Boolean).join(' ');
+      // a thread walks the occurrences placed on the Earth; a subject with none offers no thread and says nothing of it —
+      // what it does hold (a place in the sky, a passage that names no place) is shown by its own door, never by a negation
+      // (and a thread of one stop goes nowhere — navigate() returns such a request to the focus — so it is not offered)
+      if (this.plan(subject.type, subject.id).length >= 2) content.links!.push({ text: 'Follow the thread', onClick: () => this.followThread() });
+      // where it hangs in the sky: the places its occurrences hold, each a door to that body
+      const places = subjectSky(m, subject);
+      // an archetype that spans many forms hangs everywhere: a handful of arbitrary places would mislead, so it names none
+      const hangs = (subject.type === 'archetype' && places.length > 4 ? [] : places.slice(0, 4)).map((h) => {
+        const body: BodyKey = h.at === 'zodiac' || h.at === 'pole' ? 'terra' : h.at;
+        const text = h.loci.length === 1 ? locusPhrase(h.loci[0].locus)
+          : h.at === 'zodiac' ? 'the zodiac' : h.at === 'pole' ? 'the heavens round the North Pole' : bodyName(h.at);
+        return { text, onClick: () => this.openBody(body) };
+      });
+      if (hangs.length) content.hangs = hangs;
     }
     // persistent sky door: return to the sky we left, or open the body's sky when the subject has a tie
     this.addSeeInSky(content, subject);

@@ -4,8 +4,9 @@ import type { AeonEvent, Epoch, HistoryReading } from '../types/history';
 import { clear, el } from '../ui/dom';
 import { CONVENTION_INFO, CONVENTIONS, conventionTicks, equinoxPlace, type Convention } from './precession';
 import {
-  abbreviate, aquarianRows, crossCheck, placesAt, sectorOf, signOf, signSpans, SKY_CLOCK_LEDE, SKY_CLOCK_TWO_CLOCKS, spanText, yearText,
+  abbreviate, aquarianRows, crossCheck, placesAt, sectorOf, signOf, signSpans, skyClockLede, SKY_CLOCK_TWO_CLOCKS, spanText, yearText,
 } from './skyclock';
+import { providerLabels } from '../data/labels';
 
 const SVG = 'http://www.w3.org/2000/svg';
 function svg<K extends keyof SVGElementTagNameMap>(tag: K, attrs: Record<string, string | number> = {}, children: SVGElement[] = []): SVGElementTagNameMap[K] {
@@ -140,12 +141,12 @@ export function skyClockDisclosure(reading: HistoryReading, subject: Epoch | Aeo
   const isEvent = 'epochId' in subject;
   // an event stands at its year; an epoch is read at the middle of its span
   const year = isEvent ? subject.year : (subject.from + subject.to) / 2;
-  const body = el('div', { class: 'aion-sc-body' }, [el('p', { class: 'aion-sc-lede', text: SKY_CLOCK_LEDE })]);
+  const body = el('div', { class: 'aion-sc-body' }, [el('p', { class: 'aion-sc-lede', text: skyClockLede() })]);
 
   if (sign) {
     const rows = signSpans(reading, sign).map((r): [string, string, boolean] => [r.label, `${spanText(r.from, r.to, r.approximate)}${r.to > now ? ' · the end is a calculation' : ''}${r.note ? ` · ${r.note}` : ''}`, r.primary]);
     body.append(table(`The equinox in ${sign}`, rows));
-    if (!isEvent && subject.parentId) body.append(el('p', { class: 'aion-sc-note', text: 'The two fishes are Jung’s division of Pisces; no astronomical convention divides it.' }));
+    if (!isEvent && subject.parentId) body.append(el('p', { class: 'aion-sc-note', text: providerLabels().skyClockFishes }));
   }
 
   const when = isEvent ? `${subject.yearDisplay}` : `the middle of this span, ${yearText(year)}`;

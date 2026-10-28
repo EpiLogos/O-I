@@ -2,6 +2,7 @@
 import type { Cite, Occurrence } from '../types/field';
 import type { Model } from '../data/model';
 import { clipText, eraShort } from '../data/text';
+import { providerLabels } from '../data/labels';
 
 export { clipText, eraShort };
 
@@ -25,12 +26,10 @@ export function shortLocator(loc: string): string {
   return t.length > 36 ? clipText(t, 36) : t;
 }
 
-/** [C2-b8] One cite as a line. Was `jungLine` with a literal 'Jung' prefix; the
- * prefix is now the provider's own word, passed in from its published labels
- * (default: none). The ¶/pdf locator parsing stays — it is what the corpus index
- * anchors. */
-export function citeLine(c: Cite, prefix?: string): string {
-  return [prefix, shortWork(c.workTitle), c.year, shortLocator(c.locator)].filter(Boolean).join(' · ');
+/** One cite as a line. The voice is whose words the passage is: the cite's own when it names one (Crowley, Burt,
+ * Neumann …), else the provider's word for its author (FieldMeta.provider.labels.citePrefix; none by default). */
+export function citeLine(c: Cite, prefix: string = providerLabels().citePrefix): string {
+  return [c.voice ?? prefix, shortWork(c.workTitle), c.year, shortLocator(c.locator)].filter(Boolean).join(' · ');
 }
 
 /** work key → the title (and the year, when every cite of that work agrees on one) the field's own cites give it. */
@@ -63,7 +62,7 @@ export function passageCite(m: Model, work: string, locator: string): Cite {
 }
 
 export function passageLine(m: Model, work: string, locator: string): string {
-  return citeLine(passageCite(m, work, locator)); // [C2-b7] citeLine (found: jungLine)
+  return citeLine(passageCite(m, work, locator));
 }
 
 

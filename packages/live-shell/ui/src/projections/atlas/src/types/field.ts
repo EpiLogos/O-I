@@ -11,6 +11,9 @@
 // and the vault's own vocabulary (subject, Jung cites) stays in that provider's
 // published data, never here.
 
+import type { BodyKey } from './sky';
+import { providerLabels } from '../data/labels';
+
 export type ArchetypeId = string; // slug, e.g. "great-mother"
 export type TheoreticId = string; // slug, e.g. "psychoid"
 export type FamilyId = string; // slug, e.g. "serpent"
@@ -26,8 +29,10 @@ export interface TieBasisDecl {
   id: TieBasis;
   label: string;
 }
+/** [C2-b8, O-I #755] the founding triple's strongest basis is named in the provider's own words (data/labels.ts
+ * basisOwn: the founding field's word from its labels, else neutral), read when drawn; the code names no corpus. */
 export const DEFAULT_TIE_BASES: TieBasisDecl[] = [
-  { id: 'jung', label: 'Jung' },
+  { id: 'jung', get label() { return providerLabels().basisOwn; } },
   { id: 'inferred', label: 'Inferred' },
   { id: 'site', label: 'Site' },
 ];
@@ -57,6 +62,28 @@ export type LocusType =
 /** How trustworthy lat/lon is. "culture" = placed at the tradition's centroid. */
 export type GeoPrecision = 'place' | 'region' | 'culture' | 'none';
 
+/**
+ * Where in the sky an occurrence hangs — its extraterrestrial place, independent of its Earth place (`lat/lon/geoPrecision`):
+ * it may have either, both, or neither. The card rings' own geometry (src/sky/cards.ts), so a ring and a place cannot
+ * disagree. A body (the planet itself, the Moon, the Earth as a body of the sky), a ring of it, an ecliptic span.
+ *   body    at the body itself (a sephira, an element on the Earth)
+ *   wheel   on the body's decan wheel, at an ecliptic span (a pip card, at its decan, on its ruler's wheel)
+ *   rank    on the body's rank ring (the cards of its number, the Atu attributed to it)
+ *   zodiac  the zodiac itself, no body: a sign, a decan, a court card's thirty degrees, a sign's Atu
+ *   pole    the heavens round the celestial pole (the Princesses); `slot` is the quadrant
+ * `lon`/`span` are ecliptic degrees (start and width; may wrap past 360). `slot` is the suit order (wands, cups, swords,
+ * disks) on a rank ring or a pole quadrant. `basis` says where the attribution comes from; `via` the join ids it rests on.
+ */
+export interface SkyLocus {
+  body?: BodyKey;
+  ring: 'body' | 'wheel' | 'rank' | 'zodiac' | 'pole';
+  lon?: number;
+  span?: number;
+  slot?: number;
+  basis: TieBasis;
+  via: string[];
+}
+
 export interface ImageRef {
   /** Site-relative path, e.g. "img/families/serpent.jpg" (served from public/). */
   src: string;
@@ -81,6 +108,8 @@ export interface Cite {
   year: string;
   /** Locator as written, e.g. "fig. 131, ¶357 (pdf p268)". */
   locator: string;
+  /** Whose words the passage is, when not Jung's ("Crowley", "Burt", "von Franz"); absent means Jung. */
+  voice?: string;
 }
 
 /**
@@ -231,10 +260,110 @@ export interface Occurrence {
   cites: Cite[];
   /** Short verbatim quote from the record body, when present. */
   quote?: string;
+  /** the quote is a plate caption as printed (an object label), shown as one, never as a quotation */
+  caption?: true;
   /** Plain-text paragraphs of the record body. */
   body: string[];
   parallelIds: OccurrenceId[]; // resolvable parallels only
+  /**
+   * Where it hangs in the sky, when a source puts it there (the Thoth card on its ruler's decan wheel, a sign on the
+   * zodiac). Independent of the Earth place: `lat/lon` stay 0,0 and `geoPrecision` 'none' when this is its only place.
+   */
+  sky?: SkyLocus[];
   image?: ImageRef; // occurrence-specific image when one was found
+}
+
+/**
+ * The provider's own words for every line that names whose field this is, whose word a tie is, or whose reading a page
+ * follows (C2-b8): the corpus is named by its provider, in data, never in code. Each key is optional; the code holds a
+ * neutral default for each (src/data/labels.ts), so a field whose provider gives none reads in a voice that names no one.
+ * Archetypal Earth's own words are its provider data: curation/provider.json, published as field.json meta.provider.
+ */
+export interface ProviderLabels {
+  /** the landing line (shell/landing.ts) */
+  landing?: string;
+  /** the Aion lens's line in the menu (shell/lens.ts) */
+  lensAion?: string;
+  /** the Astrology lens's line in the menu (shell/lens.ts) */
+  lensAstrology?: string;
+  /** the Aion reading's line in its Options (aion/view.ts) */
+  readingTagline?: string;
+  /** the title of the J chip: a passage asserted in the reading's own text (aion/view.ts) */
+  readingOwnText?: string;
+  /** the equal-months convention's name (aion/precession.ts) */
+  conventionOwn?: string;
+  /** the sky clock's opening sentences (aion/skyclock.ts) */
+  skyClockLede?: string;
+  /** the row of the reading's own span of a sign (aion/skyclock.ts) */
+  skyClockOwnSpan?: string;
+  /** the note under a sign the reading divides in two (aion/skyclock-view.ts) */
+  skyClockFishes?: string;
+  /** whose conditional dating of Aquarius the rows give (aion/skyclock-view.ts) */
+  skyClockMarkBy?: string;
+  /** the J chip's title on a concept's quotation (dynamics/marks.ts) */
+  dynamicsOwnText?: string;
+  /** the V chip's title: another reader's reading, not the author's (dynamics/marks.ts) */
+  dynamicsOtherText?: string;
+  /** the Options row that opens the Theory lens (dynamics/view.ts, lenses/theory.ts) */
+  theoryRoute?: string;
+  /** the heading over the author's own lines (lenses/theory.ts, ui/deep.ts) */
+  voiceHeading?: string;
+  /** the strongest basis's name: the tie filter and the joins' own system (graph/tools.ts, ui/related.ts) */
+  basisOwn?: string;
+  /** after a tie the author makes (ui/deep.ts) */
+  tieOwnNote?: string;
+  /** the heading over the works an archetype is cited from (ui/deep.ts) */
+  citesHeading?: string;
+  /** the heading over an occurrence's cites (ui/deep.ts) */
+  citesMeet?: string;
+  /** the voice a cite reads in when it names none of its own (ui/format.ts) */
+  citePrefix?: string;
+  /** a tie the author makes, as the sky and the Astrology walk name it (lenses/astrology.ts, sky/orbits.ts) */
+  tieOwnLink?: string;
+  /** the Astrology lens's opening line (lenses/astrology.ts) */
+  astrologyIntro?: string;
+  /** the line under the Sun, where every walk ends (lenses/astrology.ts) */
+  astrologySun?: string;
+  /** the atlas's own links, beside the author's (lenses/astrology.ts) */
+  astrologyOtherTies?: string;
+  /** the atlas's own links, where the author gives none (lenses/astrology.ts) */
+  astrologyOtherTiesOnly?: string;
+  /** the Charts option's description (lenses/astrology.ts) */
+  astrologyCharts?: string;
+  /** the link from four to the quaternity (lenses/card-reading.ts) */
+  quaternityLink?: string;
+  /** the framing a coincidence log opens (lenses/coincidences.ts) */
+  coincidencesFraming?: string;
+  /** the Dreams lens's opening line (lenses/dreams.ts) */
+  dreamsIntro?: string;
+  /** the framing a dream journal opens (lenses/dreams.ts) */
+  dreamsMethod?: string;
+  /** the Symbols lens's opening line (lenses/symbols.ts) */
+  symbolsIntro?: string;
+  /** what the field holds, when a symbol is not in it (lenses/symbols.ts) */
+  symbolsNone?: string;
+  /** an archetype the author ties to an image (practice/amplify-view.ts) */
+  amplifyTieOwn?: string;
+  /** the note over an image's dreams and visions (practice/amplify-view.ts) */
+  amplifyDreams?: string;
+  /** an image with no definition (practice/amplify-view.ts) */
+  amplifyNoDefinition?: string;
+  /** a dream or vision that is the author's own (practice/amplify-view.ts, lenses/depth.ts) */
+  subjectOwn?: string;
+  /** the Red Book's opening line (redbook/view.ts) */
+  redbookLede?: string;
+  /** what a birth chart is read in (sky/chart.ts) */
+  birthFraming?: string;
+  /** what a birth chart states and does not (sky/chart.ts) */
+  birthLimits?: string;
+}
+
+/** Who publishes the field: a stable id, its name (the one place the corpus is named), and its own words. */
+export interface FieldProvider {
+  id: string;
+  /** with its article, as it reads after "Drawn from" */
+  name: string;
+  labels?: ProviderLabels;
 }
 
 export interface FieldMeta {
@@ -245,9 +374,9 @@ export interface FieldMeta {
     id: string;
     name: string;
     home?: string;
-    /** [C2-b8] The provider's own words for the cite surfaces; the code carries
-     * generic defaults. This is how the founding provider keeps its words as data. */
-    labels?: { citesHeading?: string; citesMeet?: string; citePrefix?: string; readingTagline?: string };
+    /** [C2-b8] The provider's own words for every line that names the corpus (ProviderLabels); the code carries
+     * neutral defaults (data/labels.ts). This is how the founding provider keeps its words as data. */
+    labels?: ProviderLabels;
   };
   /** [C2 §1.3] Optional freshness line, provider-declared (was the vault ledger heading). */
   freshness?: string;

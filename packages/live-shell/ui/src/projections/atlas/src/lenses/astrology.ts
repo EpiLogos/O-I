@@ -24,6 +24,7 @@ import { cardReading, type FieldPages } from './card-reading';
 import { practice, saveFile } from '../practice/store';
 import { loadLensData, privacyLine, quoteBlock, type LensQuote } from './ui';
 import { creditLine } from '../ui/credit';
+import { providerLabels } from '../data/labels';
 
 /** Apply a culture's planet names onto the standing Astrology sky (Charts stay put). */
 function astrologySky(path: string[], culture?: string | null): ReturnType<typeof astrologyAt> {
@@ -51,7 +52,7 @@ interface AstrologyData {
   yours?: { line: string; none: string | null };
 }
 
-const BASIS: Record<Tie['basis'], string> = { jung: 'Jung’s own link', inferred: 'the atlas’s inference', site: 'the atlas’s own link' };
+const BASIS: Record<Tie['basis'], string> = { get jung() { return providerLabels().tieOwnLink; }, inferred: 'the atlas’s inference', site: 'the atlas’s own link' };
 const ASPECT_WORD: Record<string, string> = { conjunction: 'conjunct', opposition: 'opposite', trine: 'trine', square: 'square', sextile: 'sextile' };
 const fmtDeg = (d: number) => `${Math.floor(d)}°`;
 const placeIn = (c: SidecarChart, k: ChartBody) => { const p = c.bodies[k as BodyKey]!; return `${p.sign} ${fmtDeg(p.degree)}${p.retrograde ? ' (retrograde)' : ''}`; };
@@ -175,7 +176,7 @@ export function mount(ctx: LensContext): LensInstance {
     const yours = data.yours;
     const body: (HTMLElement | null)[] = [
       yours ? el('p', { class: 'th-line', text: yours.line }) : privacyLine('Your birth data and your chart are kept only in this browser’s storage, and you can delete them below.'),
-      yours ? null : el('p', { class: 'th-line', text: 'Enter a birthday and you get a walk through that sky, planet by planet, with what Jung and Kathleen Burt wrote about each planet and sign. Jung’s own chart is here as the first one, so you can read yours beside his.' }),
+      yours ? null : el('p', { class: 'th-line', text: providerLabels().astrologyIntro }),
       data.frame[0] ? quoteBlock(data.frame[0], ctx.passages) : null,
       prefill && !yours ? el('p', { class: 'lp-note', text: 'Filled in from the link you opened. Nothing is kept until you cast the chart.' }) : null,
       yours ? (mine ? chartCard(mine, false) : el('p', { class: 'lp-note', text: yours.none ?? '' }))
@@ -188,7 +189,7 @@ export function mount(ctx: LensContext): LensInstance {
       el('hr', { class: 'lp-divider' }),
       el('h3', { class: 'as-h3', text: 'Where every chart meets the field' }),
       selfDiagram(),
-      el('p', { class: 'th-line', text: 'Every walk here ends at the Sun, and Jung reads the sun as a symbol of the self. So whoever’s chart it is, the line runs to the same centre.' }),
+      el('p', { class: 'th-line', text: providerLabels().astrologySun }),
       sunToSelf() ? quoteBlock(sunToSelf()!, ctx.passages, { compact: true }) : null,
       el('button', { type: 'button', class: 'th-link', onclick: () => ctx.descend({ type: 'archetype', id: 'self' }) }, [el('span', { text: 'The Self on the globe' }), icon('next', 14)]),
       el('details', { class: 'as-more' }, [
@@ -367,7 +368,7 @@ export function mount(ctx: LensContext): LensInstance {
       ...r.quotes.map((q) => quoteBlock(q, ctx.passages)),
       jungTies.length ? el('h3', { class: 'as-h3', text: `What ${r.name} touches in the field` }) : null,
       ...jungTies.map(once).map(tieBlock),
-      otherTies.length ? el('details', { class: 'as-more' }, [el('summary', { text: jungTies.length ? 'Links the atlas draws, not Jung' : 'Links the atlas draws (Jung gives none)' }), ...otherTies.map(once).map(tieBlock)]) : null,
+      otherTies.length ? el('details', { class: 'as-more' }, [el('summary', { text: jungTies.length ? providerLabels().astrologyOtherTies : providerLabels().astrologyOtherTiesOnly }), ...otherTies.map(once).map(tieBlock)]) : null,
       signQuote || r.burt.length ? el('h3', { class: 'as-h3', text: `${r.name} in ${pos.sign}, as Kathleen Burt reads it` }) : null,
       signQuote ? quoteBlock(signQuote, ctx.passages, { compact: true }) : null,
       ...r.burt.slice(0, 2).map((q) => quoteBlock(q, ctx.passages, { compact: true })),
@@ -572,7 +573,7 @@ export function mount(ctx: LensContext): LensInstance {
       : null;
     ctx.setControls([modeOptions([
       optionGroup('Read the chart', [
-        optionAction('Charts', () => goPath([]), { pressed: !path[0], description: 'Jung’s chart and your birth form' }),
+        optionAction('Charts', () => goPath([]), { pressed: !path[0], description: providerLabels().astrologyCharts }),
         walk,
       ]),
       optionGroup('Names', names),

@@ -2,8 +2,10 @@
 // related forms. A wide translucent sheet; the globe stays visible behind it.
 import { later, nextFrame } from './lifetime';
 import type { Model, Subject } from '../data/model';
-import { archetypesOfFamily, occurrenceImage, subjectName, subjectOccurrences } from '../data/model';
-import type { Cite, Occurrence } from '../types/field';
+import { archetypesOfFamily, occurrenceImage, subjectName, subjectOccurrences, subjectSky } from '../data/model';
+import { bodyOfLocus, locusPhrase } from '../data/skyplace';
+import type { BodyKey } from '../types/sky';
+import type { Cite, Occurrence, TieBasis } from '../types/field';
 import { clear, el, plate } from './dom';
 import { sanitiseTitle } from './credit';
 import { closeGlyph } from './reveal';
@@ -14,6 +16,7 @@ import { tieBases } from '../types/field';
 import { loadLensData, qlBlock, qlSource, quoteBlock, stillFigure, type LensQuote, type QL } from '../lenses/ui';
 import { NUMBER_ARCHETYPES } from '../lenses/deep-fields';
 import { relatedPlates, relatedRows, SYSTEM_LABEL } from './related';
+import { providerLabels } from '../data/labels';
 
 /** The part of a page the renderer reads: its reading line, its sections with their quotations, the subjects it reaches. */
 interface PageBody {
@@ -53,12 +56,23 @@ interface NumbersData {
   pages: Record<string, NumberPage>;
 }
 /** The number archetypes one to ten: NUMBER_ARCHETYPES (src/lenses/deep-fields) — the ids their pages answer to. */
+/** [§8.4 host, C2-b5/b8] The words after a tie: the strongest basis's own, else read here — never the latter dressed as the
+ * former. A provider that declares its bases names the strongest by its declared label; one that declares none is the
+ * founding triple, whose strongest is named in its own words (FieldMeta.provider.labels.tieOwnNote, data/labels.ts). */
+function tieNote(m: Model, basis: TieBasis | undefined): string {
+  const declared = m.field.meta.ties?.bases;
+  if (declared?.length) return basis === declared[0].id ? ` (${declared[0].label}’s tie)` : ' (read here)';
+  return basis === tieBases(m.field.meta)[0]?.id ? providerLabels().tieOwnNote : ' (read here)';
+}
+
 const WORD: Record<number, string> = { 1: 'one', 2: 'two', 3: 'three', 4: 'four', 5: 'five', 6: 'six', 7: 'seven', 8: 'eight', 9: 'nine', 10: 'ten' };
 
 export interface DeepHandlers {
   onClose(): void;
   onSubject(s: Subject): void;
   onOccurrence(id: string): void;
+  /** open a body of the sky (the places a subject hangs at are doors to it) */
+  onBody?(key: BodyKey): void;
   // [C2-a3, from the corpus lane's c9732df] present when the corpus index is
   // available: an occurrence's cite lines become deep links into the passage.
   onCite?(work: string, locator: string): void;
@@ -91,15 +105,21 @@ export class DeepSheet {
 
   show(t: DeepTarget) {
     const key = t.kind === 'subject' ? `s:${t.subject.type}:${t.subject.id}` : `o:${t.occId}`;
-    if (!(this.open && key === this.key)) {
+    const fresh = !(this.open && key === this.key);
+    // unhidden first: a display:none scroller ignores scrollTop, and the browser gives back the offset it had when it
+    // was hidden, so a reading that opened after a scrolled one opened part-way down
+    this.root.hidden = false;
+    if (fresh) {
       this.key = key;
       clear(this.article);
       if (t.kind === 'subject') this.renderSubject(t.subject);
       else this.renderOccurrence(t.occId);
       this.scroller.scrollTop = 0;
     }
-    this.root.hidden = false;
-    nextFrame(() => this.root.classList.add('on'));
+    nextFrame(() => {
+      this.root.classList.add('on');
+      if (fresh) this.scroller.scrollTop = 0;
+    });
     this.open = true;
     this.scroller.focus({ preventScroll: true });
   }
@@ -146,11 +166,12 @@ export class DeepSheet {
         tied.forEach(({ t, arch: other }, i) => {
           if (i) row.append(' · ');
           row.append(el('button', { class: 'link-quiet', type: 'button', text: other!.name, onclick: () => this.h.onSubject({ type: 'archetype', id: other!.id }) }));
-          row.append(el('span', { class: 'dp-basis', text: t.basis === 'jung' ? ' (Jung’s tie)' : ' (read here)' }));
+          row.append(el('span', { class: 'dp-basis', text: tieNote(m, t.basis) }));
         });
         a.append(row);
       }
       if (NUMBER_ARCHETYPES.has(s.id)) this.appendNumberPage(s.id);
+      this.appendSkyHangs(s);
       this.appendRelated(s);
       this.appendCites(subjectOccurrences(m, s).map((i) => m.occ[i]));
     } else if (s.type === 'family') {
@@ -164,6 +185,7 @@ export class DeepSheet {
         a.append(el('blockquote', { class: 'dp-def' }, [el('p', { text: fam.definition.text }), el('footer', { text: fam.definition.cite })]));
       }
       fam.body.filter(Boolean).forEach((p) => a.append(el('p', { class: 'dp-para', text: p })));
+      this.appendSkyHangs(s);
       this.appendFieldPage(s);
       const symbolic = symbolReading(m, fam.id, id => this.h.onSubject({ type: 'family', id }));
       if (symbolic) a.append(symbolic);
@@ -176,10 +198,8 @@ export class DeepSheet {
           if (!arch) return;
           if (i) row.append(' · ');
           row.append(el('button', { class: 'link-quiet', type: 'button', text: arch.name, onclick: () => this.h.onSubject({ type: 'archetype', id: arch.id }) }));
-          // the strongest declared basis's own tie vs. one this site reads in — never present the latter as theirs
-          // [C2-b8] the basis label is the provider's declared word (meta.ties.bases), not a code literal
-          const bases = tieBases(m.field.meta);
-          row.append(el('span', { class: 'dp-basis', text: t.basis === bases[0]?.id ? ` (${bases[0].label}’s tie)` : ' (read here)' }));
+          // the strongest basis's own tie vs. one this site reads in — never present the latter as theirs (tieNote)
+          row.append(el('span', { class: 'dp-basis', text: tieNote(m, t.basis) }));
         });
         a.append(row);
       }
@@ -215,6 +235,33 @@ export class DeepSheet {
       this.appendCites(idx.map((i) => m.occ[i]));
     }
     this.appendFooter();
+  }
+
+  /**
+   * Where the subject hangs in the sky: the places its occurrences hold (a card on its ruler's decan wheel, a sign on the
+   * zodiac), each a door to that body. Nothing when it hangs nowhere — and nothing said of that.
+   */
+  private appendSkyHangs(s: Subject): void {
+    if (!this.h.onBody) return;
+    const seen = new Set<string>();
+    const doors: { text: string; body: BodyKey }[] = [];
+    for (const h of subjectSky(this.model, s)) {
+      for (const { locus } of h.loci) {
+        const text = locusPhrase(locus);
+        if (seen.has(text)) continue;
+        seen.add(text);
+        doors.push({ text, body: bodyOfLocus(locus) });
+      }
+    }
+    // an archetype that spans many forms hangs everywhere: a handful of arbitrary places would mislead, so it names none
+    if (!doors.length || (s.type === 'archetype' ? doors.length > 6 : false)) return;
+    doors.length = Math.min(doors.length, 8);
+    const p = el('p', { class: 'dp-sky' }, [el('span', { class: 'dp-sky-lead', text: 'In the sky: ' })]);
+    doors.forEach((d, i) => {
+      if (i) p.append(' · ');
+      p.append(el('button', { class: 'link-quiet', type: 'button', text: d.text, onclick: () => this.h.onBody?.(d.body) }));
+    });
+    this.article.append(p);
   }
 
   /** The field-pages data: absent in a build without it, and the rejection is caught here, never shown. */
@@ -269,7 +316,7 @@ export class DeepSheet {
         // Jung's own tie vs. one this site reads in — the same wording as the archetypal ground above
         const text: (Node | null)[] = [
           el('button', { class: 'link-quiet', type: 'button', text: r.name, onclick: () => this.h.onSubject(r.other) }),
-          el('span', { class: 'dp-basis', text: r.basis === 'jung' ? ' (Jung’s tie)' : ' (read here)' }),
+          el('span', { class: 'dp-basis', text: tieNote(this.model, r.basis) }),
           r.voice ? el('span', { class: 'dp-basis', text: ` · ${r.voice}` }) : null,
           el('p', { class: 'lp-note', text: r.note }),
         ];
@@ -342,7 +389,7 @@ export class DeepSheet {
         el('p', { class: 'th-line', text: p.line }),
       ];
       if (p.jung.length) {
-        out.push(el('h3', { class: 'as-h3', text: 'Jung' }));
+        out.push(el('h3', { class: 'as-h3', text: providerLabels().voiceHeading }));
         for (const q of p.jung) out.push(quoteBlock(q, this.h.passage));
       }
       if (p.vonFranz.length) {
@@ -413,8 +460,7 @@ export class DeepSheet {
       if (e) e.n++; else seen.set(k, { c, n: 1 });
     }
     if (!seen.size) return;
-    // [C2-b8] heading is the provider's own word, from its published labels (was 'Jung’s texts')
-    this.article.append(el('h3', { class: 'dp-sub', text: this.model.field.meta.provider.labels?.citesHeading ?? 'Cited texts' }));
+    this.article.append(el('h3', { class: 'dp-sub', text: providerLabels().citesHeading }));
     const ul = el('ul', { class: 'dp-cites' });
     [...seen.values()].sort((a, b) => b.n - a.n).slice(0, 14).forEach(({ c }) => {
       ul.append(el('li', {}, [shortWork(c.workTitle), el('span', { class: 'dp-cite-year', text: ` ${c.year}` })]));
@@ -436,18 +482,12 @@ export class DeepSheet {
       a.append(plate(img, { credit: true, className: 'dp-figure', palette: fam?.palette, eager: true, alt: o.title }));
       if (img.sourceUrl) a.append(el('p', { class: 'dp-source' }, [sanitiseTitle(img.title) ? `${sanitiseTitle(img.title)} — ` : '', el('a', { href: img.sourceUrl, target: '_blank', rel: 'noopener noreferrer', text: 'source' })]));
     }
-    if (o.quote) a.append(el('blockquote', { class: 'dp-def' }, [el('p', { text: o.quote })]));
+    if (o.quote) a.append(o.caption ? el('p', { class: 'dp-caption', text: o.quote }) : el('blockquote', { class: 'dp-def' }, [el('p', { text: o.quote })]));
     o.body.filter(Boolean).forEach((p) => a.append(el('p', { class: 'dp-para', text: p })));
     if (o.cites.length) {
-      // [C2-b8] heading and cite prefix are the provider's own words from its published labels
-      // (was 'Where Jung meets it' + the literal 'Jung' prefix)
-      const prefix = this.model.field.meta.provider.labels?.citePrefix;
-      a.append(el('h3', { class: 'dp-sub', text: this.model.field.meta.provider.labels?.citesMeet ?? 'Where the reading meets it' }));
+      a.append(el('h3', { class: 'dp-sub', text: providerLabels().citesMeet }));
       const ul = el('ul', { class: 'dp-cites' });
-      // [C2-a3, adapted from c9732df] the cite renders through this sheet's own
-      // link builder (the found commit's citeLine method, renamed for the
-      // format.ts formatter of the same name this amended file already uses)
-      o.cites.forEach((c) => ul.append(el('li', {}, [this.citeLink(c, prefix)])));
+      o.cites.forEach((c) => ul.append(el('li', {}, [this.citeLink(c)])));
       a.append(ul);
     }
     if (fam) {
@@ -469,10 +509,9 @@ export class DeepSheet {
     this.appendFooter();
   }
 
-  /** [C2-a3, from c9732df] A cite line; when the corpus holds the work it opens
-   * the actual passage. An unresolvable cite is no link at all. */
-  private citeLink(c: Cite, prefix?: string): HTMLElement {
-    const text = citeLine(c, prefix);
+  /** A cite line; when the corpus holds the work it opens the actual passage. */
+  private citeLink(c: Cite): HTMLElement {
+    const text = citeLine(c);
     if (!this.h.onCite || !this.h.passage?.known(c.work)) return el('span', { text });
     return el('button', { class: 'link-quiet dp-cite-link', type: 'button', text, title: 'Open the passage in the corpus', 'aria-label': `${text} — open the passage`, onclick: () => this.h.onCite!(c.work, c.locator) });
   }
