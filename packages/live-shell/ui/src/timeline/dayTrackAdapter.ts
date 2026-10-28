@@ -33,7 +33,7 @@ interface DayLane {
 }
 
 const LANES: DayLane[] = [
-  {id: 'central-day', name: 'Central · day', kind: 'day', streams: new Set(['central-now', 'wiki-returns'])},
+  {id: 'central-day', name: 'Central · day', kind: 'day', streams: new Set(['central-now', 'wiki-returns', 'central-day'])},
   {id: 'machines-now', name: 'Machines · NOW', kind: 'machine-now', streams: new Set(['aikit-history'])},
   {id: 'kernel-log', name: 'Kernel · event log', kind: 'kernel-log', streams: new Set(['kernel-event-log'])},
 ];

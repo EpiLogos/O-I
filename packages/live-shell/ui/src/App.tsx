@@ -1,5 +1,5 @@
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState, type ComponentProps, type CSSProperties, type RefObject } from 'react'
-import {useContinuity} from './continuity/workspace'
+import {BOOK_MODE_OF_SHELL, useContinuity} from './continuity/workspace'
 import { PARAMETER_BROWSE_EVENT } from './components/nativeDrag'
 import type { NativeDetailConfigurationIntent } from './components/NativeWorldDetail'
 import {NativeInputRetentionProvider,nativeInputBinding} from './components/NativeInputRetention'
@@ -62,7 +62,7 @@ import {registerAtlasHost} from './projections/atlas/registerAtlasHost'
 import {registerTimelineHost} from './projections/timelinePane'
 import {registerCentralDocumentPane} from './central/documents/CentralDocumentPane'
 import {registerDevicePane} from './frame/devices/devicePane'
-import {createSpineEncounterBridge} from './projections/encounterBridge'
+import {createSpineEncounterBridge, moveTo} from './projections/encounterBridge'
 import {createEncounterLink, type EncounterLink} from './projections/encounterLink'
 import {setTimelinePanePresentation, useTimelinePanePresentation, usePublishTimelineReading} from './projections/timelinePaneHost'
 import {useAtlasHandle, useAtlasView} from './projections/atlas/AtlasProjectionPanel'
@@ -365,12 +365,15 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
    * mode and world context ride the one book (the bridge publishes both);
    * no surface closes, every resident stays mounted-concealed. The right
    * dock is part of the frame in every mode (Rev 4): entering a ground or
-   * agency mode opens it — an opening, never a closing. */
+   * agency mode opens it — an opening, never a closing. A mode switch is a
+   * move (manual §10.7): the trail grows by the place it lands on, which Back
+   * returns to (projections/encounterBridge.ts moveTo). */
   const chooseMode = (next: SurfMode) => {
     presentSettings(false)
-    continuity.setContext(context => ({...context, world: next === 'base' ? 'central' : undefined}))
+    const shell = next === 'live' ? 'audio' : next
+    continuity.setContext(context => moveTo({...context, world: next === 'base' ? 'central' : undefined}, BOOK_MODE_OF_SHELL[shell]))
     // The mode's own frame returns with its layout (the restore below); nothing here sets another mode's parts.
-    continuity.setMode(next === 'live' ? 'audio' : next)
+    continuity.setMode(shell)
   }
   // The Library page's workspace-mode request, relayed by LibraryHost on oi:host-workspace-mode. The mode switch is the mode rail's
   // own (chooseMode). The one open door (workspace.expressionToOpen) carries two request kinds: a kernel ref (requestExpression), or,

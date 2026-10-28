@@ -852,8 +852,8 @@ var QlPlural = (() => {
     meta.projection = { kind: "shared-copy", sourceDocumentId: doc.meta.documentId ?? null, sourceRevision: doc.meta.revision, at: at ?? null, withheld };
     return next;
   }
-  const readIsland = (text) => JSON.parse(text.replace(/<\\\/script/gi, "<\/script").replace(/<\\(!--)/g, "<$1"));
-  const islandJson = (value) => JSON.stringify(value).replace(/<\/script/gi, "<\\/script").replace(/<[!]--/g, "<\\u0021--");
+  const readIsland = (text) => JSON.parse(text.replace(/<\\\/(script)/gi, "</$1").replace(/<\\(!--)/g, "<$1"));
+  const islandJson = (value) => JSON.stringify(value).replace(/<\/(script)/gi, "<\\/$1").replace(/<[!]--/g, "<\\u0021--");
   const islandUnlocated = () => new Error("The Flow's document state could not be located for the save; nothing was written");
   function islandSpace(text, at) {
     while (at < text.length && (text[at] === " " || text[at] === "	" || text[at] === "\n" || text[at] === "\r")) at++;

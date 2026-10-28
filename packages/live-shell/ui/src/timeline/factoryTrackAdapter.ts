@@ -33,7 +33,7 @@
 //   (`factory_owner` attempt-receiving); Factory receives a whole attempt, so a stretch dragged across a take chooses the take and
 //   copies no part of it. The same attempts stack under the task's clip (`takes`), matched by the task_ref they serve.
 // - launch (W4): how a task plays once launched, what follows it and when a launch lands are its own settings on AIKit
-//   (`encounter-session-settings` `task`: launch, then and handoff_to, quantize — its defaults stated), read with the session's Telemetry
+//   (`encounter-session-settings` `task`: launch, then, quantize — its defaults stated), read with the session's Telemetry
 //   and Solo and carried only onto the task whose task_ref they name. Factory reads no expected length for a task, so no clip carries
 //   progress.
 // - R3 (manual §19.1 "The mixer row", §16.6): each session's mixer row — Monitor is Watch (In · Auto · Off), the activator is
@@ -94,13 +94,12 @@ export const FACTORY_SEAT_OP = 'harness_agent_control:new — starts a NEW agent
 export const FACTORY_RETRY_OP = `${FACTORY_GRAIN} · harness_agent_control:restart — the bound harness's stalled task, from its last good step; the owner takes no session`
 export const FACTORY_BATCH_OP = `${FACTORY_GRAIN} · harness_agent_control:resume — the bound harness's queued tasks; the owner takes no row`
 
-/** A session's current task's own settings as AIKit states them (`encounter-session-settings` `task`, its defaults stated: launch once,
- * then next, quantize global): how it plays once launched, what follows it (a handoff names whom to), and when a launch lands. */
+/** A session's current task's own settings as AIKit states them (`encounter-session-settings` `task`, its defaults stated: launch trigger,
+ * then next, quantize global): how it plays once launched, what follows it on its own track, and when a launch lands. */
 export interface FactoryTaskSettings {
   task_ref: string
   launch: string
   then: string
-  handoff_to: string | null
   quantize: string
 }
 
@@ -113,9 +112,9 @@ export interface FactorySettingsPort {
 }
 
 /** A task's launch in the owner's words (manual §3: launch quantize and follow actions; the design's mode): the mode as AIKit names
- * it, the follow as its `then` (a handoff with whom it hands to), the quantize as its word with spaces. */
+ * it, the follow as its `then`, the quantize as its word with spaces. */
 export function factoryTaskLaunch(task: FactoryTaskSettings): ClipLaunch {
-  const follow = task.then === 'handoff' ? (task.handoff_to ? `handoff to ${task.handoff_to}` : 'handoff') : task.then
+  const follow = task.then
   return {...(task.launch ? {mode: task.launch} : {}), ...(follow ? {follow} : {}), ...(task.quantize ? {quantize: task.quantize.replace(/-/g, ' ')} : {})}
 }
 

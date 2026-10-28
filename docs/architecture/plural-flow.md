@@ -109,6 +109,27 @@ Central's copy of the shared cases is pinned to O:I's source by sha256 in
 `ctrl/tests/flow_append.rs`. The kernel's own field writes (`page.rs`
 `mutate_field`) still re-sort the island's keys (#793).
 
+*Note, 28 Oct 2026, later still.* The note above is no longer true. The
+kernel's field writes now splice too (#793: `desktop/cradle/kernel/src/page/island.rs`,
+ported from Central's `flow_append.rs` and `plural.ts`), so a title, container
+or note write leaves every island byte it does not change exactly as written.
+Values the kernel adds, such as a new note, are written by its own serialiser.
+The page writer and Central's append still lowercase the letters after an
+escaped `<\/`, so a Flow whose text holds a mixed-case `</SCRIPT` is refused
+on save (#797).
+
+*Note, 28 Oct 2026, #797.* The paragraph above is no longer true. The page
+writer (`plural.ts` `islandJson`, used by the page's own save and the host's
+save) and Central's append (`flow_append.rs` `flow_island_escape`) now keep the
+letters after an escaped `<\/`, as the kernel's writer does. The page's and
+host's readers (`plural.ts` `readIsland`, `flow/instance.ts` `parseInstance`)
+read them back as written. A Flow whose text holds `</SCRIPT>` or `</Script>`
+now saves and appends unchanged. The shared case
+`an-escaped-island-closing-tag-keeps-its-letters` passes through Central's
+append, the page's own save, the host's save and the kernel's field writes.
+The kernel now also reads a hand-written `meta.revision` of `3.0` as 3, as the
+page and host do, so its next write stores 4 rather than restarting at 1.
+
 The departed/queued/running tests exercise real EncounterService and Central
 files with scripted ACP processes. Their `need_ctrl!` guard can return early
 without `AIKIT_TEST_CENTRAL_CTRL`; a passing runner without that native binary

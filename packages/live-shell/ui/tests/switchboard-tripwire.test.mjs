@@ -64,7 +64,6 @@ const CEILING = {
     'src/native/Workbench.tsx': 2,
     'src/panels/expressions.tsx': 10,
     'src/projections/atlas/src/sky/live.ts': 2,
-    'src/projections/encounterBridge.ts': 1,
     'src/projections/useWorldTemporalReading.ts': 1,
     'src/shell/liveSelection.ts': 1,
     'src/shell/ModeContextDock.tsx': 2,

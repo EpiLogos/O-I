@@ -65,7 +65,9 @@ const events = [
 ]
 const taskRef = `${trackKey(track)}#task/1`
 
-test('Factory: the task THE selection names maps onto clip:factory — its name, state, turns, log inside its span, and the hand-off sessions', () => {
+// REPLACED (#787): "…and the hand-off sessions" — Hand off to is retired (§19.1: the task is dragged onto another session's track), so the
+// clip offers no session list.
+test('Factory: the task THE selection names maps onto clip:factory — its name, state, turns and log inside its span', () => {
   resetViewHolds()
   const binding = factory.factoryClipBinding({ref: taskRef, tracks: [track, other], events, colour: 'var(--fizz)'})
   assert.equal(binding.mode, 'factory')
@@ -77,8 +79,8 @@ test('Factory: the task THE selection names maps onto clip:factory — its name,
   const log = parse(v, 'log')
   assert.deepEqual(log.map(row => [row.at, row.tool, row.text]), [[60, 'tool.read', 'read widgets/handoff.tsx'], [540, 'tool.bash', 'pnpm test bridge']],
     'the session\'s own events inside the task\'s span, at seconds from its start, each the owner\'s kind and words')
-  assert.deepEqual(parse(v, 'sessions'), [{id: 'ses-300', name: 'widget tests'}], 'Hand off to offers the other sessions')
-  for (const key of ['launch', 'then', 'handoff', 'quantize', 'style.register', 'style.form', 'env.agent.effort', 'env.agent.autonomy', 'active'])
+  assert.equal('sessions' in v, false, 'Hand off to is retired: no session list')
+  for (const key of ['launch', 'then', 'loop', 'loop.cap', 'repeat.levels', 'quantize', 'style.register', 'style.form', 'env.agent.effort', 'env.agent.autonomy', 'active'])
     assert.equal(key in v, false, `${key}: no owner reports it, so it reaches the view absent`)
   assert.equal(v['view.panel'], 'launch', 'a running task opens on its Launch tab beside the log, as the manual puts it first')
   assert.equal(factory.factoryClipBinding({ref: 'nothing:here', tracks: [track], events}), null, 'a selection that names no session names no clip')
@@ -87,7 +89,8 @@ test('Factory: the task THE selection names maps onto clip:factory — its name,
 
 test('Factory: where the session\'s settings are not read, every per-task setting stands disabled saying so, and a refused change keeps it', async () => {
   const binding = factory.factoryClipBinding({ref: taskRef, tracks: [track], events: null})
-  for (const key of ['launch', 'then', 'handoff', 'quantize', 'env.agent.effort', 'env.agent.autonomy', 'style.register', 'name']) {
+  // REPLACED (#787): Hand off to is retired; Loop and what a Repeat varies are the session's settings now.
+  for (const key of ['launch', 'then', 'loop', 'loop.until', 'repeat.variable', 'quantize', 'env.agent.effort', 'env.agent.autonomy', 'style.register', 'name']) {
     assert.equal(binding.standing[key]?.disabled, SETTINGS_WHY.notHere, `${key} stands disabled saying why`)
     await assert.rejects(binding.write([{key, value: 'x'}]), {message: SETTINGS_WHY.notHere})
   }
@@ -102,12 +105,14 @@ test('Factory: a setting writes through its seam with the session\'s settings (f
   TASK_SEAMS.launch = {send: async (task, value, context) => { sent.push([task, value, context.project]) }}
   try {
     const context = {transport: {kind: 'unavailable', reason: 'test'}, project: 'O-I', settings: {schema: 'aikit.encounter-session-settings/v1', agent_session: 'ses-214',
-      revision: null, track: {telemetry: true, solo: false, set: []}, task: {task_ref: 'task:t', name: 'correlate occurrences', launch: 'once', then: 'next', quantize: 'global',
-        envelope_mode: 'automation', envelope_linked: true, effort: [], autonomy: [], register: 'plain', form: 'technical', active: true, colour: null, handoff_to: null, set: []},
+      revision: null, track: {telemetry: true, solo: false, set: []}, task: {task_ref: 'task:t', name: 'correlate occurrences', launch: 'trigger', then: 'next', quantize: 'global',
+        loop: false, loop_until: 'done', loop_cap: null, repeat_variable: 'condition', repeat_levels: [], repeat_repeats: 3, repeat_stop: 'done',
+        envelope_mode: 'automation', envelope_linked: true, effort: [], autonomy: [], register: 'plain', form: 'technical', active: true, colour: null, set: []},
       previous_task: null, standing: 's'}}
     const binding = factory.factoryClipBinding({ref: taskRef, tracks: [track], events: null, settings: context})
     assert.equal(binding.standing.launch, undefined, 'no longer disabled')
-    // REPLACED (#772): the clip presses a manual's launch mode (Gate); the seam asks the owner its own word (factory-clip-owner-words.test.mjs).
+    // REPLACED (#787): the clip presses a launch mode (Gate) and the seam carries it to the owner as it is, AIKit's word being the manual's
+    // (factory-clip-owner-words.test.mjs).
     await binding.write([{key: 'launch', value: 'gate'}])
     assert.deepEqual(sent, [[{sessionRef: 'ses-214', n: 1}, 'gate', 'O-I']])
   } finally { TASK_SEAMS.launch = was }

@@ -5,9 +5,11 @@ import {register} from 'node:module'
 
 // Production source in memory, same loader as the sibling native tests.
 // The spine here is a fixture shaped like the shell's; it is not a workspace
-// book and nothing here claims a native owner.
+// book and nothing here claims a native owner. The bridge writes through the
+// book's own trail law (desktop/cradle/src/workspace/store.ts), whose imports
+// name no extension, so the loader resolves them as the bundler does.
 const compiler = new URL('../node_modules/typescript/lib/typescript.js', import.meta.url).href
-register(`data:text/javascript,${encodeURIComponent(`import ts from ${JSON.stringify(compiler)};import {readFile} from 'node:fs/promises';export async function load(u,c,n){if(u.endsWith('.css'))return {format:'module',shortCircuit:true,source:'export {}'};if(!u.endsWith('.ts')&&!u.endsWith('.tsx'))return n(u,c);return {format:'module',shortCircuit:true,source:ts.transpileModule(await readFile(new URL(u),'utf8'),{fileName:new URL(u).pathname,compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext,jsx:ts.JsxEmit.ReactJSX}}).outputText}}`)}`, import.meta.url)
+register(`data:text/javascript,${encodeURIComponent(`import ts from ${JSON.stringify(compiler)};import {readFile} from 'node:fs/promises';export async function resolve(s,c,n){try{return await n(s,c)}catch(e){if(!s.startsWith('.'))throw e;for(const x of ['.ts','.tsx','/index.ts']){try{return await n(s+x,c)}catch{}}throw e}}export async function load(u,c,n){if(u.endsWith('.css'))return {format:'module',shortCircuit:true,source:'export {}'};if(u.endsWith('.json'))return {format:'module',shortCircuit:true,source:'export default '+await readFile(new URL(u),'utf8')};if(!u.endsWith('.ts')&&!u.endsWith('.tsx'))return n(u,c);return {format:'module',shortCircuit:true,source:ts.transpileModule(await readFile(new URL(u),'utf8'),{fileName:new URL(u).pathname,compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext,jsx:ts.JsxEmit.ReactJSX}}).outputText}}`)}`, import.meta.url)
 
 // The Timeline presentation mapping (projections/timelinePresentation.ts: the encounter → Session or Arrangement for the World
 // cut's residence) was read by nothing once the tracks pane became the centre and was deleted on 15 Oct (FOUNDATION §7): the

@@ -25,8 +25,16 @@
 import type {EncounterBridge, EncounterListener, EncounterSnapshot} from '../../../../../desktop/cradle/src/surface/projectionModules';
 import type {CandidateWorkspace} from '../continuity';
 import type {WorkspaceReading} from '../shell/workspaceTypes';
-import type {TrailStop} from '../../../../../desktop/cradle/src/workspace/store';
+import {moveOnTrail, readOnTrail, stopOf, type WorldContext} from '../../../../../desktop/cradle/src/workspace/store';
 import type {WorkspaceMode} from '../../../../../desktop/cradle/src/workspace/mode';
+
+/** A move into `mode` (manual §10.7: "Every place you go is kept on the trail"): the trail grows by the place it lands on — the
+ * mode, the world, THE selection, the subject and the reading, which ride through — stamped with its time. chooseMode makes a mode
+ * switch one (App.tsx); the spine's subject transition below makes a subject change one. The book's own trail law
+ * (desktop/cradle/src/workspace/store.ts) adds nothing for the place you stand on, and keeps the return after a walk. */
+export function moveTo(context: WorldContext, mode: WorkspaceMode, at: number = Date.now()): WorldContext {
+  return moveOnTrail(context, stopOf(mode, context, at));
+}
 
 export interface SpineEncounterBridge extends EncounterBridge {
   /** Deliver the current spine reading to every live registration. The
@@ -77,29 +85,24 @@ export function createSpineEncounterBridge(
     },
     transition(intent) {
       const book = latest.current.book;
+      // The mode a stop is made in: the book's own tree mode (Central's tree names none).
+      const mode = (): WorkspaceMode => book.current.layout?.mode ?? 'base';
       if (intent.kind === 'subject') {
         // Selection propagates as an encounter transition into the ONE
         // WorldContext owner. Refs and titles only — never content.
-        // A subject change is a new encounter: the trail grows by the stop
-        // it came from (encounter.ts: the trail grows on every subject
-        // transition), so the encounter link can push it and Back walks it.
-        // Re-selecting the same subject is no transition.
-        const mode = latest.current.workspace.mode;
+        // A subject change is a move: the trail grows by the place it lands on (encounter.ts: the trail grows on every
+        // transition), and where it came from is the stop before it, which Back reaches. Re-selecting the same subject is no
+        // transition.
         book.setContext(context => {
           const next = {ref: intent.ref, kind: intent.subjectKind, title: intent.title};
           if (context.subject?.ref !== undefined && context.subject.ref === intent.ref) return {...context, subject: next};
-          // A stop is where the person came FROM: with no previous subject there is nothing to walk back to, so the trail
-          // is unchanged (the first subject opens an encounter; it leaves no stop).
-          const stop = trailStopFrom(String(mode), context.subject);
-          return {...context, subject: next, trail: stop ? [...(context.trail ?? []), stop] : context.trail};
+          return moveTo({...context, subject: next}, mode());
         });
         return;
       }
       if (intent.kind === 'occasion') {
-        book.setContext(context => ({
-          ...context,
-          reading: {ref: intent.ref, ...(intent.position ? {position: intent.position} : {})},
-        }));
+        // An occasion change is a move; a new point in the reading you stand on is where you stand (the book's readOnTrail).
+        book.setContext(context => readOnTrail(context, mode(), {ref: intent.ref, ...(intent.position ? {position: intent.position} : {})}, Date.now()));
         return;
       }
       // 'present' is pane-local by contract (the projection's own cut —
@@ -108,12 +111,4 @@ export function createSpineEncounterBridge(
       // the contract, not a swallowed write.
     },
   };
-}
-
-/** The trail stop a subject transition leaves: where the person came from. */
-export function trailStopFrom(mode: string, previous: {ref?: string; kind?: string; title?: string} | undefined): TrailStop | null {
-  // A transition with no previous subject leaves no stop: a stop with no subject behind it is not a place to return to.
-  if (!previous?.ref) return null;
-  const stopMode = (mode === 'audio' ? 'base' : mode) as WorkspaceMode;
-  return {mode: stopMode, label: previous.title || stopMode, surfaceRef: previous.ref, surfaceKind: previous.kind};
 }

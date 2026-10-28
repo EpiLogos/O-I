@@ -61,6 +61,8 @@ pub enum EventKind {
     Now,
     Kernel,
     Knowledge,
+    /// A Central Day's own moment: the instant its Day was opened (`central-day`).
+    Day,
 }
 
 /// One of the twelve working-thought readings of the NOW thought stream.

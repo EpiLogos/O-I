@@ -1,5 +1,5 @@
 // A Factory task's settings on their owner (AIKit `encounter-session-settings`, kernel `encounter_session_settings`): the Clip view's
-// Clip and Launch panels and Envelopes, and the Tasks device's Mode, Then, To, Effort, Autonomy and style, read from the owner's
+// Clip and Launch panels and Envelopes, and the Tasks device's Mode, Then, Effort, Autonomy and style, read from the owner's
 // reading and written to it against the revision that stands. Channels: FIXTURE readings shaped as the owner gives them
 // (aikit.encounter-session-settings/v1); a SCRIPTED owner behind the kernel bridge's fetch that keeps the revision, refuses a stale
 // one in its words and answers each change with its reading; production modules in memory through r2-clip-bindings' loader.
@@ -53,7 +53,8 @@ const defaults = (overrides = {}, revision = null) => ({
   schema: 'aikit.encounter-session-settings/v1', agent_session: 'ses-214', revision,
   track: {telemetry: true, solo: false, set: []},
   task: {task_ref: 'task:correlate', name: 'correlate occurrences', colour: null, active: true, register: 'plain', form: 'technical',
-    launch: 'once', then: 'next', handoff_to: null, quantize: 'global', envelope_mode: 'automation', envelope_linked: true,
+    loop: false, loop_until: 'done', loop_cap: null, launch: 'trigger', then: 'next', quantize: 'global', repeat_variable: 'condition',
+    repeat_levels: [], repeat_repeats: 3, repeat_stop: 'done', envelope_mode: 'automation', envelope_linked: true,
     effort: [], autonomy: [], set: [], ...overrides},
   previous_task: null, standing: 'intent',
 })
@@ -89,13 +90,12 @@ const contextOf = entry => ({transport, project, settings: entry.snapshot().valu
 // ---------------------------------------------------------------------------------------------------------------- mapping
 
 test('the owner\'s reading lands on clip:factory\'s keys: Quantize in the design\'s words, the envelopes as editor rows', () => {
-  const values = settings.clipValuesOfSettings(defaults({name: 'Fixtures', colour: 'var(--fizz)', launch: 'loop', then: 'handoff',
-    handoff_to: 'ses-300', quantize: 'next-tool', effort: [[0, 'medium'], [28, 'high']], autonomy: [[0, 'review']]}))
+  const values = settings.clipValuesOfSettings(defaults({name: 'Fixtures', colour: 'var(--fizz)', loop: true, launch: 'gate', then: 'again',
+    quantize: 'next-tool', effort: [[0, 'medium'], [28, 'high']], autonomy: [[0, 'review']]}))
   assert.equal(values.name, 'Fixtures'); assert.equal(values.colour, 'var(--fizz)')
-  // REPLACED (#772): "the owner's Launch loop and Then handoff land as they are" — clip:factory speaks the manual's launch modes and follow
-  // actions (§19.1 The Launch panel), so the owner's loop is the Clip panel's Loop (On) and names no launch mode, and its handoff is no follow
-  // action (Then absent; the session it names stays Hand off to's). The word-by-word mapping: factory-clip-owner-words.test.mjs.
-  assert.equal('launch' in values, false); assert.equal(values.loop, true); assert.equal('then' in values, false); assert.equal(values.handoff, 'ses-300')
+  // REPLACED (#787): #772 read the owner's loop as Loop with no launch mode and its handoff as no follow action, Hand off to beside it.
+  // AIKit speaks the manual's words now, Loop its own setting and Hand off to retired: each lands as it is (factory-clip-owner-words.test.mjs).
+  assert.equal(values.launch, 'gate'); assert.equal(values.loop, true); assert.equal(values.then, 'again'); assert.equal('handoff' in values, false)
   assert.equal(values.quantize, 'next tool', 'the owner\'s next-tool is the design\'s "next tool"')
   assert.deepEqual(JSON.parse(values['env.agent.effort']), [[0, 2], [28, 3]], 'Automation: a level is its row')
   assert.deepEqual(JSON.parse(values['env.agent.autonomy']), [[0, 2]])
@@ -109,10 +109,10 @@ test('the owner\'s reading lands on clip:factory\'s keys: Quantize in the design
 test('a control\'s change becomes the owner\'s request: its words, null for a cleared field, the points carried with a mode', () => {
   const reading = defaults({effort: [[0, 'medium'], [28, 'high']], autonomy: [[0, 'auto']]})
   const set = (setting, value) => settings.taskSettingChange(setting, value, reading).change.task.set
-  // REPLACED (#772): the press carries the manual's word (Gate), and the owner is asked its own (hold).
-  assert.deepEqual(set('launch', 'gate'), {launch: 'hold'})
+  // REPLACED (#787): #772 asked the owner its own word (hold) for the manual's Gate; AIKit's word is Gate. Hand off to (handoff_to) is
+  // retired: the Tasks device's To names the drag that replaces it (factory-clip-owner-words.test.mjs).
+  assert.deepEqual(set('launch', 'gate'), {launch: 'gate'})
   assert.deepEqual(set('quantize', 'next turn'), {quantize: 'next-turn'})
-  assert.deepEqual(set('handoff', 'ses-300'), {handoff_to: 'ses-300'})
   assert.deepEqual(set('name', '  '), {name: null}, 'an emptied name returns to the task\'s purpose')
   assert.deepEqual(set('effort', JSON.stringify([[0, 1], [40, 4]])), {effort: [[0, 'low'], [40, 'max']]})
   assert.deepEqual(set('envelopeMode', 'modulation'), {envelope_mode: 'modulation', effort: [[0, 0], [28, 1]], autonomy: [[0, 1]]},
@@ -125,19 +125,20 @@ test('a control\'s change becomes the owner\'s request: its words, null for a cl
 })
 
 test('the Tasks device reads one level at the task\'s time and sets one for the whole task', () => {
-  const reading = defaults({effort: [[0, 'low'], [30, 'high']], autonomy: [[0, 'review']], launch: 'loop', handoff_to: 'ses-300'})
+  const reading = defaults({effort: [[0, 'low'], [30, 'high']], autonomy: [[0, 'review']], launch: 'toggle', loop: true})
   assert.equal(settings.levelAt([[0, 'low'], [30, 'high']], 10, false), 'low')
   assert.equal(settings.levelAt([[0, 'low'], [30, 'high']], 45, false), 'high')
   assert.equal(settings.levelAt([], 45, false), 'inherit', 'an empty envelope inherits')
   assert.equal(settings.levelAt([[0, 1]], 5, true), null, 'a step is not a level')
-  assert.deepEqual(settings.tasksDeviceValues(reading, 45), {mode: 'loop', then: 'next', register: 'plain', form: 'technical', to: 'ses-300', effort: 'high', autonomy: 'review'})
+  // REPLACED (#787): Mode read the owner's loop and To its handoff_to; Mode is AIKit's launch mode now and Hand off to is retired.
+  assert.deepEqual(settings.tasksDeviceValues(reading, 45), {mode: 'toggle', then: 'next', register: 'plain', form: 'technical', effort: 'high', autonomy: 'review'})
   const stepped = {...reading, task: {...reading.task, envelope_mode: 'modulation', effort: [[0, 1]], autonomy: [[0, -1]]}}
   assert.equal('effort' in settings.tasksDeviceValues(stepped, 5), false, 'under Modulation the device draws no level')
   const change = settings.tasksDeviceChange('effort', 'max', stepped).change.task.set
   assert.deepEqual(change, {envelope_mode: 'automation', effort: [[0, 'max']], autonomy: [[0, 'suggest']]}, 'the other envelope carried into Automation')
   assert.deepEqual(settings.tasksDeviceChange('autonomy', 'inherit', reading).change.task.set.autonomy, [], 'Inherit clears the envelope')
-  assert.deepEqual(settings.tasksDeviceChange('mode', 'hold', reading).change.task.set, {launch: 'hold'})
-  assert.deepEqual(settings.tasksDeviceChange('to', 'ses-400', reading).change.task.set, {handoff_to: 'ses-400'})
+  assert.deepEqual(settings.tasksDeviceChange('mode', 'gate', reading).change.task.set, {launch: 'gate'})
+  assert.match(settings.tasksDeviceChange('to', 'ses-400', reading).refused, /drag the task onto that session's track/)
   assert.match(settings.tasksDeviceChange('effort', 'turbo', reading).refused, /Effort takes one of inherit, low, medium, high, max/)
 })
 
@@ -145,7 +146,8 @@ test('the Tasks device reads one level at the task\'s time and sets one for the 
 
 test('Clip view: every setting stands disabled saying why until the session\'s settings are read', () => {
   const unread = factory.factoryClipBinding({ref: taskRef, tracks: [track], events: null})
-  for (const key of ['name', 'launch', 'then', 'handoff', 'quantize', 'env.agent.effort', 'env.mode', 'active'])
+  // REPLACED (#787): Hand off to is retired; Loop and what a Repeat varies are the session's settings too.
+  for (const key of ['name', 'launch', 'then', 'loop', 'loop.cap', 'repeat.levels', 'quantize', 'env.agent.effort', 'env.mode', 'active'])
     assert.equal(unread.standing[key]?.disabled, settings.SETTINGS_WHY.notHere, key)
   const reading = factory.factoryClipBinding({ref: taskRef, tracks: [track], events: null, settings: {transport, project, settings: null}})
   assert.equal(reading.standing.launch?.disabled, settings.SETTINGS_WHY.reading)
@@ -154,13 +156,14 @@ test('Clip view: every setting stands disabled saying why until the session\'s s
 })
 
 test('Clip view: the owner\'s values stand on the clip, and each change is written to the owner against the revision that stands', async () => {
-  const owner = scriptedOwner(defaults({name: 'Fixtures', launch: 'loop', quantize: 'now'}, 'session-settings/0'))
+  const owner = scriptedOwner(defaults({name: 'Fixtures', loop: true, launch: 'toggle', quantize: 'now'}, 'session-settings/0'))
   const entry = await readSettings()
   const binding = factory.factoryClipBinding({ref: taskRef, tracks: [track], events: null, settings: contextOf(entry)})
   assert.equal(binding.values.name, 'Fixtures', 'the name as set wins over the task\'s title')
-  // REPLACED (#772): the owner's loop reads as the Clip panel's Loop, not as a launch mode (factory-clip-owner-words.test.mjs).
-  assert.equal(binding.values.loop, true); assert.equal('launch' in binding.values, false); assert.equal(binding.values.quantize, 'now')
-  assert.equal(binding.standing.launch, undefined, 'enabled on its owner')
+  // REPLACED (#787): #772 read the owner's loop as Loop and no launch mode; AIKit keeps Loop and the launch mode apart.
+  assert.equal(binding.values.loop, true); assert.equal(binding.values.launch, 'toggle'); assert.equal(binding.values.quantize, 'now')
+  for (const key of ['launch', 'then', 'loop', 'loop.until', 'loop.cap', 'repeat.variable', 'repeat.levels', 'repeat.repeats', 'repeat.stop'])
+    assert.equal(binding.standing[key], undefined, `${key}: enabled on its owner`)
   await binding.write([{key: 'then', value: 'stop'}])
   const write = owner.sent.find(op => op.request)
   assert.deepEqual(write, {op: 'encounter_session_settings', project: 'O-I', agent_session: 'ses-214', expected_revision: 'session-settings/0',
@@ -171,6 +174,22 @@ test('Clip view: the owner\'s values stand on the clip, and each change is writt
   await next.write([{key: 'env.agent.effort', value: JSON.stringify([[0, 3]])}])
   assert.equal(owner.sent.filter(op => op.request).at(-1).expected_revision, 'session-settings/1', 'the next change is made on the new revision')
   assert.deepEqual(entry.snapshot().value.task.effort, [[0, 'high']])
+})
+
+test('Clip view: Loop and what a Repeat varies are written to AIKit in its words, against the revision that stands', async () => {
+  const owner = scriptedOwner(defaults({}, 'session-settings/0'))
+  const entry = await readSettings()
+  const write = async (key, value) => factory.factoryClipBinding({ref: taskRef, tracks: [track], events: null, settings: contextOf(entry)}).write([{key, value}])
+  await write('loop', true)
+  await write('loop.cap', 5)
+  await write('launch', 'repeat')
+  await write('repeat.levels', 'opus, sonnet')
+  await write('then', 'again')
+  assert.deepEqual(owner.sent.filter(op => op.request).map(op => [op.expected_revision, op.request.task.set]), [
+    ['session-settings/0', {loop: true}], ['session-settings/1', {loop_cap: 5}], ['session-settings/2', {launch: 'repeat'}],
+    ['session-settings/3', {repeat_levels: ['opus', 'sonnet']}], ['session-settings/4', {then: 'again'}]])
+  const read = factory.factoryClipBinding({ref: taskRef, tracks: [track], events: null, settings: contextOf(entry)}).values
+  assert.deepEqual([read.loop, read['loop.cap'], read.launch, read['repeat.levels'], read.then], [true, 5, 'repeat', 'opus, sonnet', 'again'])
 })
 
 test('Clip view: a change made on a revision that moved is refused in the owner\'s words', async () => {
@@ -188,19 +207,20 @@ test('Tasks device: Mode, To and a single Effort go to the owner; Launch, Retry 
   const entry = await readSettings()
   const input = {session: track, tracks: [track], nowUnixMs: T(14, 30), selectedTask: 1, agent: {}, settings: contextOf(entry)}
   const binding = tasks.tasksBinding(input, null, {selectTask() {}, queue: async () => {}})
-  assert.equal(binding.values.mode, 'once'); assert.equal(binding.values.effort, 'inherit')
+  // REPLACED (#787): the Tasks device read the owner's once and wrote its loop; AIKit's words are the manual's.
+  assert.equal(binding.values.mode, 'trigger'); assert.equal(binding.values.effort, 'inherit')
   for (const key of ['mode', 'then', 'to', 'effort', 'autonomy', 'register', 'form']) assert.equal(binding.standing[key], undefined, key)
-  await binding.write([{key: 'mode', value: 'loop'}])
+  await binding.write([{key: 'mode', value: 'toggle'}])
   assert.equal(owner.sent.filter(op => op.request)[0].expected_revision, undefined, 'a session with no settings yet is written without a revision')
   const after = tasks.tasksBinding({...input, settings: contextOf(entry)}, null, {selectTask() {}, queue: async () => {}})
   await after.write([{key: 'effort', value: 'high'}])
   assert.deepEqual(entry.snapshot().value.task.effort, [[0, 'high']])
-  assert.equal(entry.snapshot().value.task.launch, 'loop')
+  assert.equal(entry.snapshot().value.task.launch, 'toggle')
   // REPLACED (lane K0): the three are Software Factory's, and each names what it needs (a task clip names no Run or unit).
   for (const key of ['launch', 'retry', 'stopAfter']) assert.equal(after.standing[key].disabled, tasks.TASKS_REFUSE[key], key)
   const unread = tasks.tasksBinding({...input, settings: null}, null, {selectTask() {}, queue: async () => {}})
   assert.equal(unread.standing.mode.disabled, settings.SETTINGS_WHY.notHere)
-  await assert.rejects(() => unread.write([{key: 'mode', value: 'hold'}]), {message: settings.SETTINGS_WHY.notHere})
+  await assert.rejects(() => unread.write([{key: 'mode', value: 'gate'}]), {message: settings.SETTINGS_WHY.notHere})
 })
 
 test('the mixer row: each session\'s Telemetry and Solo read its own settings, and a press writes that session\'s alone', async () => {

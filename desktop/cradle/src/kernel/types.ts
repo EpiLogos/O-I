@@ -1045,11 +1045,13 @@ export interface EncounterSessionSettingsRequest {
   track?: {telemetry?: boolean | null; solo?: boolean | null}
   task?: {task_ref: string; set: Partial<Record<EncounterTaskSettingKey, unknown>>}
 }
-export type EncounterTaskSettingKey = 'name' | 'colour' | 'active' | 'register' | 'form' | 'launch' | 'then' | 'handoff_to' | 'quantize'
-  | 'envelope_mode' | 'envelope_linked' | 'effort' | 'autonomy'
+export type EncounterTaskSettingKey = 'name' | 'colour' | 'active' | 'register' | 'form' | 'loop' | 'loop_until' | 'loop_cap' | 'launch' | 'then'
+  | 'quantize' | 'repeat_variable' | 'repeat_levels' | 'repeat_repeats' | 'repeat_stop' | 'envelope_mode' | 'envelope_linked' | 'effort' | 'autonomy'
 /** An envelope point: [seconds from the task's start, a level word under Automation or a step −2…+2 under Modulation]. */
 export type EncounterEnvelopePoint = [number, string | number]
-/** The owner's reading: every value as it stands (defaults stated), `set` naming what the person set. */
+/** The owner's reading: every value as it stands (defaults stated), `set` naming what the person set. Its words are the manual's (§19.1
+ * The Clip panel and The Launch panel; ai-kit encounter_task_settings.rs): Loop with its stop condition and cap (null: none), Launch mode,
+ * Then, and what a Repeat varies (its levels empty until chosen). Hand off to is retired: the task is dragged onto another session's track. */
 export interface EncounterSessionSettingsReading {
   schema: 'aikit.encounter-session-settings/v1'
   agent_session: string
@@ -1057,8 +1059,10 @@ export interface EncounterSessionSettingsReading {
   track: {telemetry: boolean; solo: boolean; set: string[]}
   task: null | {
     task_ref: string; name: string; colour: string | null; active: boolean; register: 'plain' | 'warm' | 'terse'
-    form: 'technical' | 'narrative' | 'list'; launch: 'once' | 'hold' | 'loop'; then: 'next' | 'handoff' | 'stop'; handoff_to: string | null
-    quantize: 'global' | 'now' | 'next-tool' | 'next-turn'; envelope_mode: 'automation' | 'modulation'; envelope_linked: boolean
+    form: 'technical' | 'narrative' | 'list'; loop: boolean; loop_until: 'done' | 'pass'; loop_cap: number | null
+    launch: 'trigger' | 'gate' | 'toggle' | 'repeat'; then: 'next' | 'again' | 'stop'; quantize: 'global' | 'now' | 'next-tool' | 'next-turn'
+    repeat_variable: 'condition' | 'model' | 'effort' | 'skillset' | 'budget' | 'autonomy'; repeat_levels: string[]; repeat_repeats: number
+    repeat_stop: 'turns' | 'time' | 'done' | 'pass'; envelope_mode: 'automation' | 'modulation'; envelope_linked: boolean
     effort: EncounterEnvelopePoint[]; autonomy: EncounterEnvelopePoint[]; set: string[]
   }
   previous_task: null | {task_ref: string; set: Record<string, unknown>}

@@ -5,19 +5,18 @@
 // FactoryTaskLogDetail). Ported from:
 //   - the task THE selection names, or a session track's first task (shell/modeDetails.tsx FactoryClip, :93-107 as it stood);
 //   - the task itself — its title, state, start and last activity — from the agency reading's track (agent/agentRunModel.ts TaskClip);
-//     the session's budget as the task's turns (FactoryTaskLogDetail's budget row); the session list for Hand off to
-//     (agent/devices/threadBinding.ts sessionRowsOf);
+//     the session's budget as the task's turns (FactoryTaskLogDetail's budget row);
 //   - the log: the session's temporal events (the sessions provider's one read, agentRunModel.ts eventsForSession), within the task's
 //     own span (its start to the next task's), each the owner's own row — its time, its kind and what it says (FactoryTaskLogDetail).
-//   - the task's own settings — its name and colour as the person set them, its activator, output style, Launch, Then, Hand off to,
-//     Quantize and envelopes — from the session's settings on their owner (AIKit `encounter-session-settings`, agent/sessionSettings.ts),
-//     every default stated by the owner.
+//   - the task's own settings — its name and colour as the person set them, its activator, output style, Loop with its stop condition
+//     and cap, Launch mode, Then, Quantize, what a Repeat varies, and envelopes — from the session's settings on their owner (AIKit
+//     `encounter-session-settings`, agent/sessionSettings.ts), every default stated by the owner, in the manual's words, which are the
+//     owner's: read and written as they are, with no table between them.
 // Every per-task setting writes through its seam in agent/devices/taskBindings.ts TASK_SEAMS, against the settings' standing
 // revision. The Intent panel (§19.1, the design's D3 panel) has no reading a kernel route reaches: its keys stand absent and its writes
-// refused, each with the operation it waits for (INTENT_ABSENT, INTENT_REFUSED). The manual's Loop (the Clip panel) and Repeat (the
-// Launch panel: what varies between the runs, Compare, the takes) have no owner field yet: they stand absent and refused the same way
-// (LAUNCH_ABSENT, LAUNCH_REFUSED); whether the task loops is read from the owner's Launch loop, and Launch and Then are read in the manual's
-// words where the owner's mean the same (sessionSettings.ts). Pure, apart from the hook at the end.
+// refused, each with the operation it waits for (INTENT_ABSENT, INTENT_REFUSED). Of the Launch panel, Compare and the takes a Repeat made
+// stand absent and refused the same way (LAUNCH_ABSENT, LAUNCH_REFUSED). Hand off to is retired: the task is dragged onto another
+// session's track (§19.1). Pure, apart from the hook at the end.
 import type {Value, Values} from '../frame/devices/designed'
 import {clipBinding, type ClipBinding, type ClipWiring} from '../frame/detail/clipBinding'
 import {useViewHoldsVersion} from '../frame/detail/clipBinding'
@@ -97,8 +96,6 @@ export function factoryClipValues(track: AgentSessionTrack, task: TaskClip | nul
   // The turns are the session's budget reading: the agency reading budgets a session, and a task runs on its session's turns.
   put(values, 'turns.used', track.budget.used)
   put(values, 'turns.cap', track.budget.max)
-  values.sessions = JSON.stringify(input.tracks.filter(item => !item.group && item.sessionRef !== track.sessionRef)
-    .map(item => ({id: item.sessionRef, name: item.purpose ?? item.agentName ?? item.sessionRef.slice(0, 12)})))
   if (input.events) {
     const log = taskLogOf(track, task, input.events)
     values.log = JSON.stringify(log)
@@ -110,8 +107,10 @@ export function factoryClipValues(track: AgentSessionTrack, task: TaskClip | nul
 
 /** The design's keys, each to the seam it writes through (taskBindings.ts TASK_SEAMS). */
 const SETTING_OF: Readonly<Record<string, TaskSetting>> = {
-  name: 'name', colour: 'colour', active: 'active', 'style.register': 'register', 'style.form': 'form', launch: 'launch', then: 'then',
-  handoff: 'handoff', quantize: 'quantize', 'env.agent.effort': 'effort', 'env.agent.autonomy': 'autonomy', 'env.mode': 'envelopeMode', 'env.linked': 'envelopeLink',
+  name: 'name', colour: 'colour', active: 'active', 'style.register': 'register', 'style.form': 'form', loop: 'loop', 'loop.until': 'loopUntil',
+  'loop.cap': 'loopCap', launch: 'launch', then: 'then', quantize: 'quantize', 'repeat.variable': 'repeatVariable', 'repeat.levels': 'repeatLevels',
+  'repeat.repeats': 'repeatRepeats', 'repeat.stop': 'repeatStop', 'env.agent.effort': 'effort', 'env.agent.autonomy': 'autonomy', 'env.mode': 'envelopeMode',
+  'env.linked': 'envelopeLink',
 }
 
 /** The Intent panel's readings (manual §19.1 "The Intent panel"; clip:factory, D3): what the task is for, its source, its success conditions,
@@ -133,29 +132,14 @@ export const INTENT_REFUSED: Readonly<Record<string, string>> = {
   criterion: 'A success condition: no owner operation carries it yet — missing op: a success-condition write on the bounded intent of the project-development ledger (Software Factory has none) (Software Factory).',
 }
 
-/** Loop and Repeat (manual §16.5, §19.1 The Clip panel and The Launch panel): the session's settings owner (AIKit
- * `encounter-session-settings`) still speaks Launch as once · hold · loop and Then as next · handoff · stop — whether the task loops is read
- * from its loop (sessionSettings.ts clipValuesOfSettings), but there is no Loop stop condition or cap and no Repeat fields; the takes a Repeat makes are the take lanes' reading (AIKit encounter_task_attempts_list), not handed to
- * Clip view; and no owner compares takes. Each key stands absent, and each control refused, with the operation it waits for. */
-const SESSION_SETTINGS = 'AIKit `encounter-session-settings` (kernel encounter_session_settings) keeps Launch as once · hold · loop and no'
+/** Compare and the takes (manual §19.1 The Launch panel): Loop, the launch mode and what a Repeat varies are the session's settings (AIKit
+ * `encounter-session-settings`), but the takes a Repeat makes are the take lanes' reading (AIKit encounter_task_attempts_list), not handed to
+ * Clip view, and no owner compares takes. Each stands absent, and Compare refused, with the operation it waits for. */
 export const LAUNCH_ABSENT: Readonly<Record<string, string>> = {
-  'loop.until': `Loop's stop condition: no reading reaches it yet — ${SESSION_SETTINGS} stop condition for a loop (AIKit).`,
-  'loop.cap': `Loop's cap: no reading reaches it yet — ${SESSION_SETTINGS} cap for a loop (AIKit).`,
-  'repeat.variable': `Repeat's Variable: no reading reaches it yet — ${SESSION_SETTINGS} Repeat launch or its fields (AIKit).`,
-  'repeat.levels': `Repeat's Levels: no reading reaches them yet — ${SESSION_SETTINGS} Repeat launch or its fields (AIKit).`,
-  'repeat.repeats': `Repeat's Repeats: no reading reaches it yet — ${SESSION_SETTINGS} Repeat launch or its fields (AIKit).`,
-  'repeat.stop': `Repeat's Stop when: no reading reaches it yet — ${SESSION_SETTINGS} Repeat launch or its fields (AIKit).`,
   compare: 'Compare: no reading reaches it yet — missing op: no owner compares takes side by side (Software Factory).',
   takes: 'The takes a Repeat made: not handed to Clip view — the take lanes read them (AIKit encounter_task_attempts_list, each Run by factory_attempt_read) (AIKit).',
 }
 export const LAUNCH_REFUSED: Readonly<Record<string, string>> = {
-  loop: 'Loop: no owner operation carries it yet — missing op: a Loop field on the task\'s session settings of its own (encounter-session-settings keeps loop as one of Launch\'s words, so setting it would replace the launch mode) (AIKit).',
-  'loop.until': 'Loop\'s stop condition: no owner operation carries it yet — missing op: a loop stop condition on the task\'s session settings (AIKit).',
-  'loop.cap': 'Loop\'s cap: no owner operation carries it yet — missing op: a loop cap on the task\'s session settings (AIKit).',
-  'repeat.variable': 'Repeat\'s Variable: no owner operation carries it yet — missing op: Repeat and its fields on the task\'s session settings (AIKit).',
-  'repeat.levels': 'Repeat\'s Levels: no owner operation carries it yet — missing op: Repeat and its fields on the task\'s session settings (AIKit).',
-  'repeat.repeats': 'Repeat\'s Repeats: no owner operation carries it yet — missing op: Repeat and its fields on the task\'s session settings (AIKit).',
-  'repeat.stop': 'Repeat\'s Stop when: no owner operation carries it yet — missing op: Repeat and its fields on the task\'s session settings (AIKit).',
   compare: 'Compare: no owner operation carries it yet — missing op: a comparison of takes (Software Factory).',
 }
 
@@ -174,15 +158,17 @@ export function factoryWiring(task: TaskAddress | null, context: TaskSeamContext
     reads: {
       name: 'the task\'s name as set on the session\'s settings, else its purpose (the task\'s title)', colour: 'the colour set on the session\'s settings, else the session track\'s colour (the tracks pane)',
       active: 'the session\'s settings: the task\'s activator', 'style.register': 'the session\'s settings: the task\'s register', 'style.form': 'the session\'s settings: the task\'s form',
-      launch: 'the session\'s settings: Launch, in the manual\'s words where the owner\'s mean the same — once is Trigger, hold is Gate (sessionSettings.ts); while the owner keeps loop, no launch mode is read (OWNER_LOOP_WORDS)',
-      then: 'the session\'s settings: Then — next is Next task, stop is Stop; while the owner keeps handoff, no follow action is read (OWNER_HANDOFF_WORDS)',
-      loop: 'the session\'s settings: whether Launch is the owner\'s loop, which runs the task again after each finish (On) or not (Off)',
-      handoff: 'the session\'s settings: Hand off to',
+      launch: 'the session\'s settings: Launch mode — trigger · gate · toggle · repeat, the owner\'s words as the design\'s',
+      then: 'the session\'s settings: Then, the follow action on the task\'s own track — next · again · stop',
+      loop: 'the session\'s settings: Loop, which runs the task again after each finish (On) or not (Off)',
+      'loop.until': 'the session\'s settings: Loop\'s stop condition — done · pass', 'loop.cap': 'the session\'s settings: Loop\'s cap, the most runs (absent: none)',
+      'repeat.variable': 'the session\'s settings: Repeat\'s Variable', 'repeat.levels': 'the session\'s settings: Repeat\'s Levels, comma-separated (absent: none chosen)',
+      'repeat.repeats': 'the session\'s settings: Repeat\'s Repeats', 'repeat.stop': 'the session\'s settings: Repeat\'s Stop when',
       quantize: 'the session\'s settings: Quantize', 'env.mode': 'the session\'s settings: the envelopes\' mode', 'env.linked': 'the session\'s settings: the envelopes\' link',
       'env.agent.effort': 'the session\'s settings: the Effort envelope', 'env.agent.autonomy': 'the session\'s settings: the Autonomy envelope',
       state: 'the task\'s state: queued · running · stalled · done (agentRunModel.ts), left out where the owner and the activity do not say',
       'turns.used': 'the session\'s budget: turns used', 'turns.cap': 'the session\'s budget: turns allowed',
-      sessions: 'the other sessions of the agency reading, for Hand off to', log: 'the session\'s temporal events inside the task\'s span',
+      log: 'the session\'s temporal events inside the task\'s span',
       elapsed: 'the task\'s start to its last activity, in seconds',
     },
     absent: {...INTENT_ABSENT, ...LAUNCH_ABSENT},

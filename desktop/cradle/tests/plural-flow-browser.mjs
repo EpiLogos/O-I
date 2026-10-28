@@ -106,15 +106,17 @@ try {
   // The page's own save of the shared island case (#785). Opening places the page's cursor (meta.journalCurrent,
   // meta.current) and saving stamps meta.exported; those are the page's changes and the only ones written. Every other
   // byte of the island stays as written: key order, number spellings and integers no JavaScript number holds.
-  const islandCase = fixtures.cases.find(c => c.name === "an-append-keeps-every-island-byte-it-does-not-own");
-  const islandPath = join(dir, "island.html");
-  writeFileSync(islandPath, template.replace(island, () => '<script type="application/json" id="ql-doc">' + islandCase.island + "</script>"));
-  await page.goto("file://" + islandPath);
-  await page.waitForSelector("article.entry");
-  const kept = (await saved("Save complete copy")).match(island)[1];
-  const pageMeta = /,"(journalCurrent|current|exported)":(null|"[^"]*")/g;
-  assert.deepEqual([...kept.matchAll(pageMeta)].map(m => m[1]).sort(), ["current", "exported", "journalCurrent"], "the page's own changes are written");
-  assert.equal(kept.replace(pageMeta, ""), islandCase.island, "the page's save keeps every island byte it did not change");
+  // Every shared island case, among them an island-closing tag in mixed case the page must keep with its letters (#797).
+  for (const islandCase of fixtures.cases.filter(c => c.op === "append-island")) {
+    const islandPath = join(dir, `island-${islandCase.name}.html`);
+    writeFileSync(islandPath, template.replace(island, () => '<script type="application/json" id="ql-doc">' + islandCase.island + "</script>"));
+    await page.goto("file://" + islandPath);
+    await page.waitForSelector("article.entry");
+    const kept = (await saved("Save complete copy")).match(island)[1];
+    const pageMeta = /,"(journalCurrent|current|exported)":(null|"[^"]*")/g;
+    assert.deepEqual([...kept.matchAll(pageMeta)].map(m => m[1]).sort(), ["current", "exported", "journalCurrent"], `${islandCase.name}: the page's own changes are written`);
+    assert.equal(kept.replace(pageMeta, ""), islandCase.island, `${islandCase.name}: the page's save keeps every island byte it did not change`);
+  }
 } finally {
   await browser.close();
 }

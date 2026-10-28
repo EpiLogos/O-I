@@ -1,8 +1,10 @@
 // One agent session's settings on their owner (AIKit `encounter-session-settings`, kernel `encounter_session_settings`): the track's
-// Telemetry and Solo, and its bound task's name, colour, activator, output style, Launch, Then, Hand off to, Quantize and envelopes
-// (manual §19.1 Clip view, the Launch panel and the Envelopes). The owner keeps them under a revision with their history and states
-// every default; this module maps its reading onto the keys of the designed clip `clip:factory` and a control's change back onto the
-// owner's request, and writes it against the revision that stands. Pure, apart from `writeSessionSettings`.
+// Telemetry and Solo, and its bound task's name, colour, activator, output style, Loop, Launch mode, Then, Quantize, what a Repeat varies
+// and envelopes (manual §19.1 Clip view, the Clip and Launch panels and the Envelopes). The owner keeps them under a revision with their
+// history and states every default, in the manual's words (ai-kit encounter_task_settings.rs: Launch mode trigger · gate · toggle ·
+// repeat, Then next · again · stop, Loop's stop condition done · pass, Repeat's variable and stop when); this module puts its reading on
+// the keys of the designed clip `clip:factory` and a control's change on the owner's request, each word as it is — the owner judges
+// it — and writes it against the revision that stands. Pure, apart from `writeSessionSettings`.
 import type {Value, Values} from '../frame/devices/designed'
 import {kernelOp} from '../../../../../desktop/cradle/src/kernel/bridge'
 import type {EncounterEnvelopePoint, EncounterSessionSettingsReading, EncounterSessionSettingsRequest, KernelTransportStatus}
@@ -40,24 +42,9 @@ const MODULATION_ROWS = 5
 const QUANTIZE_TO_OWNER: Readonly<Record<string, string>> = {global: 'global', now: 'now', 'next tool': 'next-tool', 'next turn': 'next-turn'}
 const QUANTIZE_TO_DESIGN: Readonly<Record<string, string>> = Object.fromEntries(Object.entries(QUANTIZE_TO_OWNER).map(([d, o]) => [o, d]))
 
-/** The manual's launch modes and follow actions (§19.1 The Launch panel: Trigger · Gate · Toggle · Repeat; Next task · Again · Stop) in the
- * owner's words (ai-kit encounter_task_settings.rs:28-29: Launch once · hold · loop, Then next · handoff · stop): Trigger is once and Gate is
- * hold; Next task and Stop are the owner's own. Toggle, Repeat and Again have no owner word. */
-const LAUNCH_TO_OWNER: Readonly<Record<string, string>> = {trigger: 'once', gate: 'hold'}
-const THEN_TO_OWNER: Readonly<Record<string, string>> = {next: 'next', stop: 'stop'}
-const LAUNCH_TO_DESIGN: Readonly<Record<string, string>> = Object.fromEntries(Object.entries(LAUNCH_TO_OWNER).map(([d, o]) => [o, d]))
-const THEN_TO_DESIGN: Readonly<Record<string, string>> = Object.fromEntries(Object.entries(THEN_TO_OWNER).map(([d, o]) => [o, d]))
-const WORD: Readonly<Record<string, string>> = {trigger: 'Trigger', gate: 'Gate', toggle: 'Toggle', repeat: 'Repeat', next: 'Next task', again: 'Again', stop: 'Stop'}
-/** The owner's loop (encounter_task_executor.rs:701-708: the task is submitted again after each finish) is the Clip panel's Loop, which
- * names no launch mode; so Launch mode reads nothing while it stands. */
-export const OWNER_LOOP_WORDS = 'Launch mode: the session\'s settings keep Launch as loop, which is the Clip panel\'s Loop (the task runs again after each finish) and names no launch mode (AIKit encounter-session-settings).'
-/** The owner's handoff is no follow action (§19.1 "Next task, Again and Stop are Live's follow actions, and like Live's they stay on the
- * clip's own track. To hand the work to another session, drag the task onto that session's track"); so Then reads nothing while it stands. */
-export const OWNER_HANDOFF_WORDS = 'Then: the session\'s settings keep Then as handoff, which the manual makes no follow action (to hand the work to another session, drag the task onto that session\'s track) (AIKit encounter-session-settings).'
-/** A launch mode or a follow action with no owner word, refused naming the words the owner keeps. */
-const NO_OWNER_WORD = (setting: 'launch' | 'then', word: string): string => setting === 'launch'
-  ? `${WORD[word] ?? word}: no owner operation carries it yet — missing op: a ${WORD[word] ?? word} launch on the task's session settings, which keep Launch as once · hold · loop (AIKit).`
-  : `${WORD[word] ?? word}: no owner operation carries it yet — missing op: an ${WORD[word] ?? word} follow action on the task's session settings, which keep Then as next · handoff · stop (AIKit).`
+/** Hand off to is retired with Then's handoff on the owner (manual §19.1 The Launch panel: "To hand the work to another session, drag the
+ * task onto that session's track"). */
+export const HANDOFF_RETIRED = 'Hand off to: retired with Then\'s handoff on the session\'s settings (AIKit encounter-session-settings) — to hand the work to another session, drag the task onto that session\'s track.'
 
 type Envelope = 'effort' | 'autonomy'
 const levelsOf = (envelope: Envelope): readonly string[] => envelope === 'effort' ? EFFORT_LEVELS : AUTONOMY_LEVELS
@@ -89,7 +76,9 @@ const parseRows = (value: Value): [number, number][] | null => {
   } catch { return null }
 }
 
-/** The owner's reading on the design's keys. Name and colour as the owner states them (a null colour takes the session's). */
+/** The owner's reading on the design's keys. Name and colour as the owner states them (a null colour takes the session's); Loop, Launch
+ * mode, Then and what a Repeat varies in the owner's words, which are the design's: a null cap and levels not yet chosen stand absent, and
+ * the levels read as the design writes them, comma-separated. */
 export function clipValuesOfSettings(reading: EncounterSessionSettingsReading | null): Values {
   const task = reading?.task
   if (!task) return {}
@@ -101,14 +90,11 @@ export function clipValuesOfSettings(reading: EncounterSessionSettingsReading | 
     'env.agent.autonomy': JSON.stringify(rowsOfPoints(task.autonomy, 'autonomy', modulation)),
   }
   if (task.colour) values.colour = task.colour
-  if (task.handoff_to) values.handoff = task.handoff_to
-  // Launch and Then in the manual's words where the owner's mean the same (Trigger, Gate; Next task, Stop); the owner's loop is the Clip
-  // panel's Loop and names no launch mode (OWNER_LOOP_WORDS); its handoff is no follow action (OWNER_HANDOFF_WORDS).
-  const launch = LAUNCH_TO_DESIGN[task.launch]
-  if (launch) values.launch = launch
-  if (launch || task.launch === 'loop') values.loop = task.launch === 'loop'
-  const then = THEN_TO_DESIGN[task.then]
-  if (then) values.then = then
+  const own = (key: string, value: Value | null | undefined) => { if (value !== null && value !== undefined) values[key] = value }
+  own('loop', task.loop); own('loop.until', task.loop_until); own('loop.cap', task.loop_cap)
+  own('launch', task.launch); own('then', task.then)
+  own('repeat.variable', task.repeat_variable); own('repeat.repeats', task.repeat_repeats); own('repeat.stop', task.repeat_stop)
+  if (task.repeat_levels?.length) values['repeat.levels'] = task.repeat_levels.join(', ')
   return values
 }
 
@@ -120,21 +106,33 @@ export function taskSettingChange(setting: TaskSetting, value: Value, reading: E
   if (!task) return {refused: SETTINGS_WHY.noTask}
   const set = (fields: Record<string, unknown>) => ({change: {task: {task_ref: task.task_ref, set: fields}}})
   const text = (x: Value) => typeof x === 'string' && x.trim() ? x.trim() : null
+  // A number as the control gives it, cleared as none; what is not a number goes as written, for the owner to refuse in its words
+  // (JSON would carry NaN as null, which clears the field).
+  const count = (x: Value): unknown => {
+    if (typeof x === 'number') return Number.isFinite(x) ? x : String(x)
+    const written = text(x)
+    return written === null ? null : Number.isFinite(Number(written)) ? Number(written) : written
+  }
   switch (setting) {
     case 'name': return set({name: text(value)})
     case 'colour': return set({colour: text(value)})
     case 'active': return typeof value === 'boolean' ? set({active: value}) : {refused: 'The clip activator is on or off.'}
     case 'register': return set({register: text(value)})
     case 'form': return set({form: text(value)})
-    case 'launch':
-    case 'then': {
-      const word = text(value) ?? ''
-      const owner = (setting === 'launch' ? LAUNCH_TO_OWNER : THEN_TO_OWNER)[word]
-      if (owner) return set({[setting]: owner})
-      if (word in WORD) return {refused: NO_OWNER_WORD(setting, word)}
-      return {refused: setting === 'launch' ? 'Launch mode is Trigger, Gate, Toggle or Repeat.' : 'Then is Next task, Again or Stop.'}
+    case 'loop': return typeof value === 'boolean' ? set({loop: value}) : {refused: 'Loop is on or off.'}
+    case 'loopUntil': return set({loop_until: text(value)})
+    case 'loopCap': return set({loop_cap: count(value)})
+    // The owner's words are the design's: each goes as the control says it, and the owner refuses a word it does not take, in its words.
+    case 'launch': return set({launch: text(value)})
+    case 'then': return set({then: text(value)})
+    case 'repeatVariable': return set({repeat_variable: text(value)})
+    case 'repeatLevels': {
+      // The design writes the levels as text, comma-separated; the owner keeps them as a list and refuses more than three.
+      const levels = typeof value === 'string' ? value.split(',').map(level => level.trim()).filter(Boolean) : []
+      return set({repeat_levels: levels.length ? levels : null})
     }
-    case 'handoff': return set({handoff_to: text(value)})
+    case 'repeatRepeats': return set({repeat_repeats: count(value)})
+    case 'repeatStop': return set({repeat_stop: text(value)})
     case 'quantize': {
       const word = text(value)
       return set({quantize: word === null ? null : QUANTIZE_TO_OWNER[word] ?? word})
@@ -198,7 +196,6 @@ export function tasksDeviceValues(reading: EncounterSessionSettingsReading | nul
   if (!task) return {}
   const modulation = task.envelope_mode === 'modulation'
   const values: Record<string, Value> = {mode: task.launch, then: task.then, register: task.register, form: task.form}
-  if (task.handoff_to) values.to = task.handoff_to
   const effort = levelAt(task.effort, elapsedSeconds, modulation), autonomy = levelAt(task.autonomy, elapsedSeconds, modulation)
   if (effort) values.effort = effort
   if (autonomy) values.autonomy = autonomy
@@ -214,14 +211,15 @@ export type TasksDeviceSetting = typeof TASKS_DEVICE_SETTINGS[number]
 export function tasksDeviceChange(key: TasksDeviceSetting, value: Value, reading: EncounterSessionSettingsReading | null):
   {change: EncounterSessionSettingsRequest} | {refused: string} {
   switch (key) {
-    // The Tasks design speaks the owner's own words (once · hold · loop; next · handoff · stop), so its Mode and Then go to the owner as they are.
+    // The owner's words are the manual's (trigger · gate · toggle · repeat; next · again · stop), so Mode and Then go to the owner as they are.
     case 'mode':
     case 'then': {
       const task = reading?.task
       if (!reading || !task) return taskSettingChange(key === 'mode' ? 'launch' : 'then', value, reading)
       return {change: {task: {task_ref: task.task_ref, set: {[key === 'mode' ? 'launch' : 'then']: typeof value === 'string' && value.trim() ? value.trim() : null}}}}
     }
-    case 'to': return taskSettingChange('handoff', value, reading)
+    // Hand off to is retired: the work moves when the task is dragged onto another session's track.
+    case 'to': return {refused: HANDOFF_RETIRED}
     case 'register': return taskSettingChange('register', value, reading)
     case 'form': return taskSettingChange('form', value, reading)
     case 'effort':

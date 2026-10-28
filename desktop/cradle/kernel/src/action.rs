@@ -119,8 +119,9 @@ pub fn reads_only(client: &CentralClient, invocation: &ActionInvocation) -> bool
 }
 
 /// Central's own word on what each Action does: the `mutation_class` of every id in its catalogue (`action.list`,
-/// `read-only` | `locally-mutating` | `externally-mutating`), read once per Central owner (`CentralClient::owner_identity`)
-/// and kept for the process. An id the kept catalogue does not hold (a newer Central) asks again, at most once a minute.
+/// `read-only` | `derived-reconciling` | `locally-mutating` | `externally-mutating`), read once per Central owner
+/// (`CentralClient::owner_identity`) and kept for the process. An id the kept catalogue does not hold (a newer Central) asks
+/// again, at most once a minute.
 struct Catalogue {
     classes: std::collections::HashMap<String, String>,
     read_at: std::time::Instant,
@@ -136,13 +137,20 @@ fn catalogues() -> &'static std::sync::Mutex<std::collections::HashMap<String, C
 /// How long a catalogue that lacks an id, or that could not be read, stands before Central is asked again.
 const CATALOGUE_RETRY: std::time::Duration = std::time::Duration::from_secs(60);
 
+/// Central's class for a read that reconciles its derived `.central` state (the Source Change Horizon, a Return's record)
+/// with the ground it observes and changes no authored source (O-I #756): `projectcentral.source.read`, `source.returns`,
+/// `source.return_read`, `change.horizon`.
+pub(crate) const DERIVED_RECONCILING: &str = "derived-reconciling";
+
 impl CentralClient {
-    /// Whether a Central action only reads, by Central's own `mutation_class` (`read-only`). Where Central's catalogue
-    /// cannot be read, or does not name the id, the kernel's suffix classification stands in (read_cache.rs
+    /// Whether a Central action only reads, so running it withdraws no retained reading, by Central's own
+    /// `mutation_class`: `read-only`, or `derived-reconciling` — what such a run writes lies under `.central`, and the
+    /// change watch moves the scope it lies in and no other (watch.rs; the horizon, the sources' own cache, moves none). Where
+    /// Central's catalogue cannot be read, or does not name the id, the kernel's suffix classification stands in (read_cache.rs
     /// `central_reads`), and an action it does not recognise is a write.
     pub(crate) fn reads(&self, action: &str) -> bool {
         match self.mutation_class(action) {
-            Some(class) => class == "read-only",
+            Some(class) => class == "read-only" || class == DERIVED_RECONCILING,
             None => crate::read_cache::central_reads(action),
         }
     }

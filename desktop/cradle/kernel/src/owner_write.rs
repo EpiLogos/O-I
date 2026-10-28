@@ -1069,9 +1069,12 @@ if action == "central.world":
     ok({"schema": "central.world-map/v1", "root": "/tmp", "work": {"projects": []}})
     sys.exit(0)
 if action == "action.list":
-    # Central's catalogue (`ctrl --json action list`, 21 Oct 2026): two of its rows, as it classes them.
+    # Central's catalogue (`ctrl --json action list`, 21 Oct 2026; the reconciles' class, O-I #756): four of its rows, as
+    # it classes them.
     ok({"actions": [{"id": "machine.account", "mutation_class": "read-only"},
-                    {"id": "machine.apply", "mutation_class": "locally-mutating"}]})
+                    {"id": "machine.apply", "mutation_class": "locally-mutating"},
+                    {"id": "projectcentral.source.read", "mutation_class": "derived-reconciling"},
+                    {"id": "projectcentral.source.transfer.resolve", "mutation_class": "locally-mutating"}]})
     sys.exit(0)
 while os.path.exists(gate):
     time.sleep(0.02)
@@ -1446,14 +1449,20 @@ else:
     }
 
     /// Central's own `mutation_class` decides (action.rs `CentralClient::reads`): `machine.account`, which no suffix of the
-    /// kernel's names as a reading, keeps the derived readings; `machine.apply` still retires them. The catalogue is read
-    /// once for the owner.
+    /// kernel's names as a reading, keeps the derived readings, and so does `projectcentral.source.read`, a reconcile of
+    /// Central's derived state (`derived-reconciling`, O-I #756); `machine.apply` still retires them, and so does
+    /// `projectcentral.source.transfer.resolve`, which the kernel's `.resolve` suffix would call a reading. The catalogue is
+    /// read once for the owner.
     #[test]
     fn centrals_own_mutation_class_decides_whether_an_action_retires_the_readings() {
         let central = FakeCentral::new("mutation-class");
         assert!(
             !crate::read_cache::central_reads("machine.account"),
             "no suffix of the kernel's names it: only Central's word classes it"
+        );
+        assert!(
+            crate::read_cache::central_reads("projectcentral.source.transfer.resolve"),
+            "the suffix rule calls it a reading: only Central's word classes it a write"
         );
         let kernel = Mutex::new(central.kernel());
         let probe = || {
@@ -1463,25 +1472,36 @@ else:
                 .reads
                 .get("knowledge:probe", Duration::from_secs(600))
         };
-        kernel
-            .lock()
-            .unwrap()
-            .reads
-            .put("knowledge:probe".into(), serde_json::json!({"kept": true}));
+        let keep = || {
+            kernel
+                .lock()
+                .unwrap()
+                .reads
+                .put("knowledge:probe".into(), serde_json::json!({"kept": true}))
+        };
+        keep();
         let invoke = |action: &str| {
             op(serde_json::json!({"op": "invoke_action",
                 "invocation": {"action": action, "target_ref": format!("central:action:{action}"), "input": {}}}))
         };
-        let (read, _) = dispatch(&kernel, invoke("machine.account"));
-        read.unwrap();
-        assert_eq!(
-            probe(),
-            Some(serde_json::json!({"kept": true})),
-            "a read-only action keeps the readings"
-        );
-        let (written, _) = dispatch(&kernel, invoke("machine.apply"));
-        written.unwrap();
-        assert_eq!(probe(), None, "a mutating action retires them");
+        for (action, class) in [
+            ("machine.account", "a read-only action"),
+            ("projectcentral.source.read", "a reconcile of derived state"),
+        ] {
+            let (read, _) = dispatch(&kernel, invoke(action));
+            read.unwrap();
+            assert_eq!(
+                probe(),
+                Some(serde_json::json!({"kept": true})),
+                "{class} keeps the readings"
+            );
+        }
+        for action in ["machine.apply", "projectcentral.source.transfer.resolve"] {
+            keep();
+            let (written, _) = dispatch(&kernel, invoke(action));
+            written.unwrap();
+            assert_eq!(probe(), None, "{action}, a mutating action, retires them");
+        }
         assert_eq!(
             central.calls("action.list"),
             1,

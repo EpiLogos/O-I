@@ -678,13 +678,15 @@ interface IslandChild {key?: IslandSpan; value: IslandSpan}
 /** One child of a rewritten container: a child the island already holds (by its index), or a new one, as text. */
 interface IslandPiece {from?: number; text: string}
 
-/** The island as every Flow reader reads it: the legacy `<\/script` and `<\!--` escapes read back as written content. This
- * module is embedded in the form's own page (documents/embed-plural.mjs), so its source never spells a comment opening: an
- * inline script holding one is parsed by other rules, and a later `</script>` in the page would not close it. */
-const readIsland = (text: string): unknown => JSON.parse(text.replace(/<\\\/script/gi, "</script").replace(/<\\(!--)/g, "<$1"));
-/** JSON written into the island: `</script` and a comment opening must not survive inside it, so the island can never
- * close itself (flow/instance.ts writes the same escapes). */
-const islandJson = (value: unknown): string => JSON.stringify(value).replace(/<\/script/gi, "<\\/script").replace(/<[!]--/g, "<\\u0021--");
+/** The island as every Flow reader reads it: the legacy `<\/script` and `<\!--` escapes read back as written content, the
+ * letters after `<\/` as written (#797). This module is embedded in the form's own page (documents/embed-plural.mjs), so its
+ * source never spells a comment opening: an inline script holding one is parsed by other rules, and a later `</script>` in
+ * the page would not close it. */
+const readIsland = (text: string): unknown => JSON.parse(text.replace(/<\\\/(script)/gi, "</$1").replace(/<\\(!--)/g, "<$1"));
+/** JSON written into the island: `</script`, in any case, and a comment opening must not survive inside it, so the island
+ * can never close itself (flow/instance.ts writes the same escapes). The letters after `<\/` are kept as written, so
+ * `</SCRIPT` reads back as itself (#797; kernel/src/page/island.rs `escape`, #793). */
+const islandJson = (value: unknown): string => JSON.stringify(value).replace(/<\/(script)/gi, "<\\/$1").replace(/<[!]--/g, "<\\u0021--");
 const islandUnlocated = () => new Error("The Flow's document state could not be located for the save; nothing was written");
 
 function islandSpace(text: string, at: number): number {

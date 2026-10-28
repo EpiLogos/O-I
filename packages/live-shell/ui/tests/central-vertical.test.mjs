@@ -287,3 +287,13 @@ test('the wiki subject grammar: only explicit wiki:node refs are named, in order
   ])
   assert.deepEqual(vertical.namedWikiSubjects('the wiki node sample-node-a, central:wiki:project:Sample'), [], 'prose and space refs are not nodes')
 })
+
+test('a Day\'s opening lands on Central · day at its instant (#756: the kernel\'s central-day stream)', () => {
+  // The kernel emits a day-open moment on stream central-day once Central's Day reading states when it opened (opened_at_unix_seconds);
+  // a Day that states none yields no moment. The Day track honestly receives that stream.
+  const opening = {stream: 'central-day', kind: 'day', civil_instant: '2026-10-28T04:26:42Z',
+    stream_position: 'central:day:control:root:2026-10-28#opened', subject_ref: 'central:day:control:root:2026-10-28'}
+  const lane = dayTrack.dayTrackLaneOf(opening)
+  assert.equal(lane?.id, 'central-day')
+  assert.equal(lane?.kind, 'day')
+})
