@@ -64,10 +64,14 @@ export function categoryOf(entry: SettingEntry): CategoryId {
   if (/^oi:|storage|recovery|saving|installation|update/.test(ref)) return 'products'
   return 'inspection'
 }
+/** The words a search matches a setting by, beyond its title: the owner's description, its identities and the task words it is known by. */
+export function settingWords(spec: SettingSpec, owner: string): string {
+  return `${spec.description ?? ''} ${spec.setting_ref} ${spec.native_ref} ${owner} ${synonyms[spec.setting_ref] ?? ''}`.replace(/\s+/g, ' ').trim()
+}
 export function searchSettings(entries: SettingEntry[], query: string): SettingEntry[] {
   const words = query.toLowerCase().trim().split(/\s+/).filter(Boolean)
   return entries.filter(({ spec, owner }) => {
-    const text = `${spec.title} ${spec.description} ${spec.setting_ref} ${spec.native_ref} ${owner} ${synonyms[spec.setting_ref] ?? ''}`.toLowerCase()
+    const text = `${spec.title} ${settingWords(spec, owner)}`.toLowerCase()
     return words.every(word => text.includes(word))
   }).sort((a, b) => {
     const q = query.toLowerCase().trim()

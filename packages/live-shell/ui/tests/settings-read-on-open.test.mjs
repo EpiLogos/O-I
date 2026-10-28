@@ -88,7 +88,10 @@ test('the Preferences workspace reads its registry and resolutions only once it 
   const source = await readFile(new URL('../src/settings/SettingsWorkspace.tsx', import.meta.url), 'utf8')
   assert.match(source, /const \[wanted, setWanted\] = useState\(active \|\| !!request\)/, 'wanted from the first opening or request')
   assert.match(source, /if \(!wanted && \(active \|\| request\)\) setWanted\(true\)/, 'opening (active) or a contextual request asks for it, once')
-  const registryEffect = source.slice(source.indexOf('useEffect(() => {\n    if (!wanted) return'), source.indexOf('}, [adapter, adapter.ownerEpoch, wanted])'))
+  // The registry's effect: behind the gate, read again for a new adapter or owner epoch, or when Read again is pressed (registryRead).
+  const start = source.indexOf('useEffect(() => {\n    if (!wanted) return'), end = source.indexOf('}, [adapter, adapter.ownerEpoch, wanted, registryRead])')
+  assert.ok(start >= 0 && end > start, 'the registry\'s effect, gated, with its dependencies')
+  const registryEffect = source.slice(start, end)
   assert.match(registryEffect, /adapter\.readRegistry\(\)/, 'the registry read stands behind the gate')
   assert.match(source, /if \(loading\) return\n    let cancelled = false\n    const pairs/, 'resolutions wait for the registry, which waits for the gate')
   const panel = await readFile(new URL('../src/panels/settings.tsx', import.meta.url), 'utf8')

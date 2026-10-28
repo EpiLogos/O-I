@@ -6,9 +6,12 @@ import {readFile, readdir} from 'node:fs/promises'
 // guard is textual on purpose: a refusal that reaches a panel as a JSON
 // dump is caught by reading the source, not by a render that might not
 // happen to trigger it. Two rules:
-//   1. The refusal surfaces named by the ticket (NativeMaterialBrowser,
-//      ProductPreferences) carry no JSON.stringify and no safeJson at all, and
-//      route their refusals through OwnerRefusal.
+//   1. The refusal surfaces named by the ticket (NativeMaterialBrowser, and
+//      Settings' product operations) carry no JSON.stringify and no safeJson
+//      at all, and route their refusals through OwnerRefusal — or, for
+//      Settings, whose page is the catalogue design (settings:window), through
+//      the one refusal reader OwnerRefusal reads (refusalLine), said by the
+//      device host on the refused control.
 //   2. Across src, a preformatted JSON dump is allowed only in the developer
 //      disclosures listed below, each with its reason. A new raw dump fails
 //      the guard until it is either disclosed as a developer view with a
@@ -28,7 +31,7 @@ async function walk(dir, base = '') {
 const read = rel => readFile(new URL(rel, src), 'utf8')
 
 // The owner-refusal surfaces the ticket names: no JSON dump may remain in them.
-const REFUSAL_SURFACES = ['components/NativeMaterialBrowser.tsx', 'settings/ProductPreferences.tsx']
+const REFUSAL_SURFACES = ['components/NativeMaterialBrowser.tsx']
 
 // The one serialisation a refusal surface may keep: the native-outcome receipt,
 // folded beneath the owner's words as a developer view (PATH §10 item 18, the
@@ -40,7 +43,6 @@ const FOLDED_RECEIPTS = {
 // Developer disclosures that may still preformat JSON, with the reason each is
 // not an owner refusal (the rescope in the ticket's Resolution).
 const DEVELOPER_DISCLOSURES = {
-  'settings/SettingsWorkspace.tsx': 'developer plan blocks and the acknowledgement of a settings apply (rescope: plan blocks are not refusals; the acknowledgement dump is a carried follow-up)',
   'components/NativeInputRetention.tsx': 'the input gesture receipt of a retained copy (an input record, not an owner refusal)',
   'agent/RefusalCard.tsx': 'the verbatim receipt folded behind a summary, never the surface (the refusal line is the surface)',
   'components/NativeMaterialBrowser.tsx': 'the native-outcome receipt of a refused material operation, folded beneath the owner\'s words as a developer view (allowlisted by name, PATH §10 item 18)',
@@ -67,6 +69,17 @@ test('the named owner-refusal surfaces carry no raw JSON serialisation outside t
     assert.match(views[0], /JSON\.stringify\(/, `${rel}: the serialisation sits inside the folded receipt`)
     assert.match(views[0], /<summary>Developer view/, `${rel}: the receipt is labelled as a developer view`)
   }
+})
+
+test('Settings\' product operations, retired from settings/ProductPreferences.tsx into the design, refuse in the owner\'s words through the one refusal reader, never a JSON dump', async () => {
+  // settings/windowPages.ts useProductsPage: a refused or failed operation rejects with refusalLine's words; the host says them on the control.
+  const text = await read('settings/windowPages.ts')
+  const products = text.slice(text.indexOf('export function useProductsPage'))
+  assert.match(text, /import \{refusalLine, scalarEntries\} from '\.\.\/agent\/RefusalCard'/, 'the one refusal reader')
+  assert.match(products, /throw new Error\(refusalLine\(answer\.error, /, 'a refused operation: the owner\'s words')
+  assert.match(products, /throw new Error\(refusalLine\(outputWords\(data\.output\), /, 'a failed operation: the owner\'s words')
+  assert.doesNotMatch(products, /JSON\.stringify\(|safeJson\(|<pre/, 'no serialised receipt')
+  assert.doesNotMatch(await read('settings/SettingsWorkspace.tsx'), /<pre|JSON\.stringify\(/, 'the window carries no plan or acknowledgement dump: an owner\'s raw record never stands on a page (§10.10 Rules)')
 })
 
 test('the run-context and carrier call sites read the carrier through carrierOf, never a second kind-only reading', async () => {

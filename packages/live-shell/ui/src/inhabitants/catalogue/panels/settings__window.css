@@ -8,6 +8,8 @@
 .st-search .dp-cell { align-items: stretch; }
 .st-source { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; color: var(--text-dim, #a2a7ad); font-size: 10.5px; white-space: nowrap; }
 .st-source em { font-style: normal; color: var(--dp-on); }
+.st-unread { font-size: 10.5px; white-space: nowrap; }
+.st-top > .dp-cell--action { flex: none; }
 
 .st-main { flex: 1 1 auto; min-height: 0; display: flex; }
 .st-nav { flex: 0 0 148px; display: flex; flex-direction: column; padding: 4px 0; background: var(--bg-0, #26292d); border-right: 1px solid var(--line, #24262a); overflow: hidden; }
@@ -76,7 +78,21 @@
 .st-form--grid .dp-cell--text, .st-form--grid .dp-cell--chooser { width: 100%; }
 .st-chosen { align-self: center; margin-right: 4px; font-weight: 500; }
 .st-cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
-.st-scope { flex: none; width: 240px; }
+/* Applies to, at the head of each page's owner settings: its name and its chooser on one line. */
+.st-head-scope .dp-cell--chooser { flex-direction: row; align-items: center; gap: 6px; width: 230px; }
+.st-head-scope .dp-cell--chooser .dp-label { flex: none; text-transform: none; letter-spacing: 0; }
+/* A setting's name opens its Details; its help is said on the Info line. */
+.st-name { color: var(--text, #d4d7da); font-size: 11px; text-align: left; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle; }
+.st-name[aria-expanded="true"] b { color: var(--dp-on); }
+.st-details { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px 14px; margin: 0; padding: 3px 0 4px; font-size: 10.5px; }
+.st-details > div { display: flex; align-items: baseline; gap: 6px; min-width: 0; height: 16px; white-space: nowrap; overflow: hidden; }
+.st-details dt { flex: none; width: 92px; color: var(--text-faint, #71767c); }
+.st-details dd { margin: 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; color: var(--text, #d4d7da); }
+.st-details dd small { margin-left: 6px; color: var(--text-faint, #71767c); }
+/* A form's row of choices (expected operations, context scopes): its name, then its toggles. */
+.st-form--wrap { flex-wrap: wrap; align-items: center; gap: 4px 8px; padding-top: 0; }
+.st-form-label { flex: none; font-size: 10px; color: var(--text-dim, #a2a7ad); }
+.st-form-wide { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
 .st-note { margin: 4px 0 0; font-size: 10.5px; color: var(--text-dim, #a2a7ad); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .st-list { list-style: none; margin: 0; padding: 0; font-size: 11px; }
 .st-list li { display: flex; align-items: baseline; gap: 8px; height: 20px; border-bottom: 1px solid color-mix(in srgb, var(--line, #24262a) 70%, transparent); white-space: nowrap; overflow: hidden; }
