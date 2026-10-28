@@ -161,6 +161,12 @@ jobs:
         if: always()
         working-directory: desktop/cradle
         run: node --test tests/conformance/*.test.mjs
+      # The frame suite drives Chromium and WebKit (me2, mr) through desktop/cradle's Playwright, as the component
+      # contracts below do, so the engines are installed before it.
+      - name: Install browser engines for the frame suite and the component contracts
+        if: always()
+        working-directory: desktop/cradle
+        run: npx playwright install --with-deps chromium webkit
       - name: Hosted Expressions frame suite
         if: always()
         working-directory: desktop/cradle/expressions-app
@@ -176,9 +182,6 @@ jobs:
         run: |
           npm --prefix desktop/cradle/expressions-app run build
           npm --prefix packages/live-shell/ui run build
-      - name: Install browser engines for the component contracts
-        working-directory: desktop/cradle
-        run: npx playwright install --with-deps chromium webkit
       # Browser contracts over components the candidate mounts (each fixture's
       # subject is candidate-reachable) and the hosted frame; none needs a live
       # native service. Contracts whose subject only the legacy desktop reaches
