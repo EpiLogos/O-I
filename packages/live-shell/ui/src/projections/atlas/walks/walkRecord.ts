@@ -24,11 +24,15 @@
 // recordedInstantsOf for a moment that is an instant); a stop of no moment stands at a "no time" slot. A kept view keeps the shared window
 // it was taken in and the atlas's filter in force (`filter`, the atlas's own query, src/shell/filter.ts filterQuery; G4).
 //
+// An event made of a constellation (O-I #768; manual §10.3 "an event in Technē", §17.1 the Clip panel's Constellation, "The event's source")
+// is a Scene of the same Expression whose body is the constellation as a knowledge whole (madeEventChanges), the body Expressions' own drop
+// sets; the walk's reading lists it among its events, and the ruler lays it on a reading of its own.
+//
 // Pure TypeScript. No React, no atlas engine.
 import {TOUR_CAPTION_MAX, TOUR_LIMIT, TOUR_STOP_LIMIT, placeTourProblem, type PlaceTourMoment, type PlaceTourRecord, type PlaceTourStop} from '../../../../../../../desktop/cradle/expressions-app/field-studies-journeys/src/placeTourRecord'
 import {applyResearchMaterial, type PlaceTimeWindowRecord, type PlaceViewRecord} from '../../../../../../../desktop/cradle/expressions-app/field-studies-journeys/src/researchMaterial'
 import {blankScene, clone, type Scene as FrameScene} from '../../../../../../../desktop/cradle/expressions-app/field-studies-journeys/src/model'
-import type {Change, ExpressionDocument, Scene} from '../../../../../../../desktop/cradle/src/expression/types'
+import type {Change, ExpressionDocument, Scene, SceneBody} from '../../../../../../../desktop/cradle/src/expression/types'
 import type {WorldWalk, WorldWalkStop} from '../../../timeline/worldTrackAdapter'
 import {KEPT_VIEWS_KIND, RECORDED_WALK_KIND, isRecordedWalk} from '../../../timeline/techneTrackAdapter'
 import {wrapLon} from '../src/data/geo'
@@ -155,6 +159,14 @@ export interface KeptView {
   readonly view: PlaceViewRecord
 }
 
+/** One event made of a constellation (O-I #768): a Scene of the walk's Expression whose body is the constellation as a knowledge whole. */
+export interface MadeEvent {
+  readonly sceneRef: string
+  readonly title: string
+  /** the constellation it was made of: its whole's ref, as the Scene's body keeps it */
+  readonly source: string
+}
+
 /** What the owner keeps of a world's walk, read from its Expression. */
 export interface WalkReading {
   readonly expressionRef: string
@@ -164,6 +176,8 @@ export interface WalkReading {
   readonly takesSceneRef: string
   readonly takes: readonly WalkTake[]
   readonly views: readonly KeptView[]
+  /** the events made of constellations, in Scene order */
+  readonly events: readonly MadeEvent[]
 }
 
 interface ResearchShape {
@@ -176,7 +190,8 @@ const researchOf = (scene: Scene): ResearchShape | null => {
 }
 
 /** The walk as its owner's document holds it: the takes in the first Scene's material, in name order; a kept view in each other Scene whose
- * material keeps one, in Scene order. A tour the frame's law refuses is left out rather than drawn wrong. */
+ * material keeps one, in Scene order; an event in each other Scene whose body is a knowledge whole, in Scene order. A tour the frame's law
+ * refuses is left out rather than drawn wrong. */
 export function walkReadingOf(document: ExpressionDocument): WalkReading {
   const [first, ...rest] = document.scenes
   const tours = (first ? researchOf(first)?.placeTours : undefined) ?? {}
@@ -187,7 +202,9 @@ export function walkReadingOf(document: ExpressionDocument): WalkReading {
     const view = kept[scene.title] ?? Object.values(kept)[0]
     return view ? [{sceneRef: scene.scene_ref, title: scene.title, view}] : []
   })
-  return {expressionRef: document.expression_ref, revision: document.revision, title: document.title, takesSceneRef: first?.scene_ref ?? '', takes, views}
+  const events = rest.flatMap((scene): MadeEvent[] => scene.body?.carrier === 'knowledge_whole' && scene.body.subject_ref
+    ? [{sceneRef: scene.scene_ref, title: scene.title, source: scene.body.subject_ref}] : [])
+  return {expressionRef: document.expression_ref, revision: document.revision, title: document.title, takesSceneRef: first?.scene_ref ?? '', takes, views, events}
 }
 
 /** The frame's Scene a native Scene presents: its own material, or the frame's blank Scene under the native Scene's ref and title. */
@@ -227,6 +244,25 @@ export function keptViewChanges(document: ExpressionDocument, sceneRef: string, 
   const scene = frameSceneOf({scene_ref: sceneRef, title, presentation: null})
   applyResearchMaterial(scene, {type: 'place-view-save', name: title, place: view})
   return [{change: 'scene_create', scene_ref: sceneRef, title}, material(sceneRef, scene, null)]
+}
+
+/** A new event Scene's ref in the walk's Expression, not yet held. */
+export function madeEventSceneRef(document: ExpressionDocument): string {
+  const taken = new Set(document.scenes.map(scene => scene.scene_ref))
+  for (let index = 1; ; index++) {
+    const ref = `${document.expression_ref}:scene:event-${index}`
+    if (!taken.has(ref)) return ref
+  }
+}
+
+/** The changes that make an event of a constellation (O-I #768; manual §10.3 "Drag it onto a track and this mode makes its own clip of it,
+ * with the constellation as its source: … an event in Technē"): a Scene named for it whose body is the constellation as a knowledge whole —
+ * the body the Expression owner keeps for a scene made of a constellation (expressions-app nativeSceneBody.ts bodyFromKnowledgeWhole, the
+ * one Expressions' drop sets). The event states no date and no place, so it keeps none (§17.1: "An empty place stays empty"). */
+export function madeEventChanges(document: ExpressionDocument, sceneRef: string, title: string, body: SceneBody): Change[] {
+  if (document.scenes.length >= 64) throw Error('The walk\'s Expression holds 64 Scenes, as many as an Expression may: no event can be made in it.')
+  if (body.carrier !== 'knowledge_whole') throw Error('An event made of a constellation keeps the constellation as a knowledge whole.')
+  return [{change: 'scene_create', scene_ref: sceneRef, title}, {change: 'scene_body_set', scene_ref: sceneRef, body}]
 }
 
 /** The present view as the record keeps it: the camera, the shared window the World stands in (null: all time), and the atlas's filter in

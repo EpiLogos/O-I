@@ -45,6 +45,9 @@
 //   instant (an occasion's, `recorded.instants`) among the hours of its civil day, as a run receipt is placed; a span by its year on the
 //   deep-time scale (the stop's `year`). A stop kept at no moment stands at a "no time" slot, in order. A stop of one is stood by the World,
 //   never the spine (useTechneTracks.ts).
+// - events made of constellations (O-I #768; manual §10.3 "Drag it onto a track and this mode makes its own clip of it … an event in
+//   Technē"): the Scenes of the walk's Expression whose body is a constellation (walkRecord.ts MadeEvent), handed in as `recorded.events`
+//   and laid on one reading of their own (MADE_EVENTS_TRACK_ID), each at a "no time" slot: a constellation states no date.
 // - R3 (manual §17.1 "The mixer row", §16.6): every track's mixer row — Activator shows or hides the reading, Solo shows only the
 //   soloed, Arm lets the instrument write into the track; its input is its sources, its output the instrument it plays through;
 //   Monitor is none. Arm is the World's one write arm on a recorded walk's track while the World is open (`recorded.arm`); a reading's
@@ -198,8 +201,19 @@ export interface TechneReading {
   shown?: {state: ReadingShown; show(trackId: string, on: boolean): void; solo(trackId: string, on: boolean): void}
   /** The walks the World recorded and kept, read from their owner, and its write arm while the World is open (absent `arm`: closed).
    * `instants`: the stops kept at an instant, by stop id (walkRecord.ts recordedInstantsOf), laid among the hours of their civil day. */
-  recorded?: {walks: readonly WorldWalk[]; instants?: ReadonlyMap<string, number>; armed: boolean; arm?(on: boolean): TechneReceipt}
+  recorded?: {walks: readonly WorldWalk[]; instants?: ReadonlyMap<string, number>; armed: boolean; arm?(on: boolean): TechneReceipt
+    /** The events made of constellations the walk's Expression keeps (walkRecord.ts MadeEvent), laid on a reading track of their own. */
+    events?: readonly MadeEventRow[]}
 }
+
+/** An event made of a constellation, as its owner keeps it (projections/atlas/walks/walkRecord.ts MadeEvent): a Scene of the World's walk
+ * Expression whose body is the constellation. */
+export interface MadeEventRow {readonly sceneRef: string; readonly title: string; readonly source: string}
+/** The reading track the events made of constellations lie on, and each event's clip (O-I #768; manual §10.3 "an event in Technē"). */
+export const MADE_EVENTS_TRACK_ID = 'techne:made-events'
+export const madeEventClipId = (sceneRef: string): string => `techne:made:${sceneRef}`
+/** The Scene a clip of this set stands for, when it is an event made of a constellation; null otherwise. */
+export const madeEventOfClip = (clipId: string | null | undefined): string | null => clipId?.startsWith('techne:made:') ? clipId.slice('techne:made:'.length) : null
 
 /** The World cut's temporal read as this adapter reads it. */
 export function worldReadingOf(source: WorldTimelineSource | undefined): TechneWorldReading {
@@ -398,6 +412,11 @@ export function projectTechneTracks(reading: TechneReading): WorldTrackSet {
     }
   }
   for (const walk of readingWalks) if (!laned.has(walk)) readingLanes.push(walkLane(walk, 'readings'))
+  // The events made of constellations (O-I #768): one reading of their own, its events kept by the World's walk Expression. They state no
+  // date, so each stands at a "no time" slot, in the order they were made.
+  const made = reading.recorded?.events ?? []
+  if (made.length) readingLanes.push({track: {id: MADE_EVENTS_TRACK_ID, name: 'Made of constellations', color: colourOf('readings'),
+    kind: `reading · ${plural(made.length, 'event', 'events')} made of constellations, each a Scene of the World's walk Expression`}})
   const occurrenceLanes = walks.filter(walk => walk.layerId === undefined && walk.kind === FIELD_THREAD_WALK_KIND).map(walk => walkLane(walk, 'occurrences'))
   const journeyLanes = walks.filter(walk => walk.layerId === undefined && walk.kind !== FIELD_THREAD_WALK_KIND).map(walk => walkLane(walk, 'journeys'))
   const runLanes: Lane[] = [...trackById.values()].filter(source => RUN_TRACK_KINDS.has(source.kind)).map(source => ({
@@ -472,6 +491,11 @@ export function projectTechneTracks(reading: TechneReading): WorldTrackSet {
     }
   }
   columns.push(...eventRows)
+  for (const event of made) {
+    const row = `techne:row:made:${event.sceneRef}`
+    columns.push({id: row, name: `no time · ${event.title}`})
+    drafts.push({clip: {id: madeEventClipId(event.sceneRef), trackId: MADE_EVENTS_TRACK_ID, columnId: row, label: event.title}, place: {kind: 'none'}})
+  }
 
   // Run receipts: a row each, newest first, as Central lists its days.
   const runDrafts: {draft: Draft; instant: number | null; name: string}[] = []

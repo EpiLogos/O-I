@@ -609,6 +609,8 @@ export type KernelOp =
   | {op:"live_clip_read";path:string;track:number;clip:LiveClipAt}
   // Change a clip's settings (the design's words) and/or a MIDI clip's notes against the set's revision; refusals name Live's values.
   | {op:"live_clip_write";path:string;expected_revision:string;track:number;clip:LiveClipAt;set?:Record<string,unknown>;notes?:LiveNote[];envelopes?:{device:string;parameter:string;points:[number,number][]}[]}
+  // Make a MIDI clip in an empty session slot of a MIDI part against the set's revision (O-I #768: Live's clip of a constellation); its source kept beside the set.
+  | {op:"live_clip_create";path:string;expected_revision:string;track:number;scene?:number;length:number;set?:Record<string,unknown>;notes:LiveNote[];source?:string}
   // Change one control of a track's mixer row (activator, solo, arm, monitor, or a send by its index, 0 = Send A) against the set's revision.
   | {op:"live_track_mixer_write";path:string;expected_revision:string;track:number;control:"activator"|"solo"|"arm"|"monitor"|"send";value:boolean|"in"|"auto"|"off"|number;index?:number}
   // Comp: copy a stretch (beats) of a track's take lane into its main lane against the set's revision; the copy carries its take's TakeId.
@@ -675,6 +677,11 @@ export type KernelOp =
    * envelopes. Without `request` it reads; with it, a change made against `expected_revision` (absent while the session has none).
    * The owner's reading or refusal passes through verbatim. */
   | {op:"encounter_session_settings";project:string;agent_session:string;request?:EncounterSessionSettingsRequest;expected_revision?:string}
+  /** Make one session's task (AIKit `encounter-task-configure`, aikit.encounter-task/v1; manual §10.3: a constellation dropped on a
+   * session's track makes "a task in Factory"): the request travels verbatim, against `expected_revision` (absent while the session holds
+   * no task). AIKit allocates the task's NOW with Central and has Workcell inspect its boundary; its record (result
+   * `encounter_task_reading`) or its refusal passes through verbatim. */
+  | {op:"encounter_task_configure";project:string;agent_session:string;request:EncounterTaskRequest;expected_revision?:string}
   /** Several sessions' settings read at once (aikit.encounter-session-settings-list/v1), so a view of many tracks asks once. */
   | {op:"encounter_session_settings_list";project:string;agent_sessions:string[]}
   /** Several sessions' served attempts read at once (aikit.encounter-task-attempts-list/v1): for each session, the Factory attempts
@@ -1048,6 +1055,29 @@ export interface KnowledgeReading { document?: unknown; resource: string; provid
 export interface KnowledgeHit { address: KnowledgeAddress; resource: string; label: string; kind: string; snippet: string; provider: string; authority: string }
 export interface KnowledgeRelations { nodes: {resource: string; label: string; kind: string; address?: KnowledgeAddress}[]; edges: {from: string; to: string; relation: string;reference?:string;authored_relation?:import('../knowledge/wikiDocument').WikiEvidence;origin?:string|{provider?:string;revision?:string;authority?:string}}[]; truncated: boolean; warnings: string[] }
 
+/** A task as AIKit makes it (`encounter-task-configure`): short — what is the task's own, its purpose, the constellation it is made of
+ * (`source`, the wiki ref of its whole) and its ref — with AIKit completing the rest from the session's own standing (ai-kit
+ * encounter_task_derive.rs: the agent and authority its Agency holds, the Central World and Project it works in, the agent it opened on and
+ * where, the Workcell boundary), or whole (EncounterTaskWholeRequest). */
+export type EncounterTaskRequest = {purpose: string; source?: string; task_ref?: string} | EncounterTaskWholeRequest
+/** A task's whole request (ai-kit encounter_task.rs TaskRequest, which refuses a field it does not know): its Central placement
+ * (central_placement.rs CentralTaskRequest: the Central owner and World it is allocated in, its ref, purpose and participants), the protocol
+ * child that works it, its working directory and the directories it may write, the Workcell boundary that confines it, the authority it
+ * works under, and the constellation it is made of (`source`; ai-kit ecac1f35). */
+export interface EncounterTaskWholeRequest {
+  central: {ctrl_bin: string; central_root: string; project: string | null; task_ref: string; purpose: string; participant_refs: string[]
+    source_refs: string[]; parent_now_ref?: string; workcell_ref?: string; work_refs?: unknown[]}
+  provider: Record<string, unknown>
+  cwd: string
+  selected_directories: string[]
+  additional_protected_directories?: string[]
+  workcell_boundary_bin?: string
+  prepared_run_scope?: unknown
+  authority_ref: string
+  material_host?: unknown
+  repertoire?: unknown
+  source?: string
+}
 /** Several sessions' readings in the order asked; a session no retained SessionSpace holds answers its refusal. */
 export interface EncounterSessionSettingsList {
   schema: 'aikit.encounter-session-settings-list/v1'
@@ -1129,6 +1159,12 @@ export type EncounterEnvelopePoint = [number, string | number]
  * The Clip panel and The Launch panel; ai-kit encounter_task_settings.rs): Loop with its stop condition and cap (null: none), Launch mode,
  * Then, what a Repeat varies (its levels empty until chosen) and the task's source. Hand off to is retired: the task is dragged onto
  * another session's track. */
+/** The run a Repeat's takes share (ai-kit encounter_take_body.rs `take_run`): `run` is Actuation's comparison run (research
+ * comparison.rs run_with) over the session's bound task as a provided task, with the session's own agent as the body — AIKit itself,
+ * `aikit session-space encounter-take-body`, speaking agent-jsonl, which opens a fresh resident of the agent in each take's World and
+ * reads back the level it applied — and `basis` the revisions the takes are held to; or AIKit's words for why there is none (a session
+ * whose agent never opened, or whose model AIKit never observed). */
+export type EncounterTakeRun = {run: Record<string, unknown>; basis?: Record<string, unknown>} | {refused: string}
 export interface EncounterSessionSettingsReading {
   schema: 'aikit.encounter-session-settings/v1'
   agent_session: string
@@ -1146,6 +1182,9 @@ export interface EncounterSessionSettingsReading {
     source?: string | null
     /** The Repeat's set of takes that stands; null until one starts. Absent from an AIKit before O-I 795. */
     takes?: EncounterTakesSet | null
+    /** The run a Repeat's takes share, in Actuation's own words, or why AIKit has none (EncounterTakeRun). Absent from an AIKit
+     * before O-I 795's take body. */
+    take_run?: EncounterTakeRun
   }
   previous_task: null | {task_ref: string; set: Record<string, unknown>}
   standing: string
@@ -1164,6 +1203,8 @@ export interface LiveClipReading {
   follow: boolean | null; followA: string | null; followB: string | null; chance: number | null; linked: boolean | null; multiplier: number | null
   launch: string | null; legato: boolean | null; quantize: string | null; launchVelocity: number | null
   envelopes: LiveEnvelope[]; notes?: (LiveNote & {id: number; vel: number; chance: number; on: boolean})[]
+  /** The constellation the clip was made of, as the DLW's record beside the set keeps it (null: none); `sourceRefused`: why it could not be read. */
+  source?: string | null; sourceRefused?: string
 }
 /** An envelope: what it moves (the device and parameter its target sits under) and its points [[beat, value]…]. */
 export interface LiveEnvelope {target: string; device: string; parameter: string; points: [number, number][]}

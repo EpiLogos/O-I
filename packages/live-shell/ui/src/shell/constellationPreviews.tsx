@@ -3,11 +3,12 @@
 // through a lens; in Live, its sound"; §3: "Each mode offers the constellation in focus what that mode does"). A table, never a branch:
 // the browser's Constellations rows draw the mode's entry (frame/browser/ConstellationRows.tsx). Every preview is drawn from the wiki's
 // reading of the constellation alone (owners/constellations.ts) and changes nothing.
-import type {ComponentType} from 'react'
+import {Fragment, type ComponentType} from 'react'
 import type {SurfMode} from './modeGrammar'
 import type {ConstellationPreviewProps} from '../frame/browser/ConstellationRows'
 import type {Constellation} from '../owners/constellations'
-import {CLIP_MAKERS_REFUSED} from '../frame/tracks/clipMakers'
+import {transcribeConstellation} from '../live/constellationClip'
+import {useLiveJankoWindow} from '../live/janko/jankoLayout'
 import '../frame/browser/constellationPreview.css'
 
 const gathered = (c: Constellation) => c.members.length ? c.members : null
@@ -81,13 +82,21 @@ function TechnePreview({constellation: c}: ConstellationPreviewProps) {
   </section>
 }
 
-/** Live sounds it: through Live's clip of it, whose notes strike the torus as it plays (manual §21.2 What strikes the Torus). No owner
- * transcribes a constellation into a clip's notes yet, so the preview says what it would sound through and which operation it waits on. */
+/** Live sounds it: through Live's clip of it, whose notes strike the torus as it plays (manual §21.2 What strikes the Torus). The preview is
+ * the transcription Live would make of it on the Jankó surface the owner serves (live/constellationClip.ts transcribeConstellation): each
+ * placed member's key, struck together, and the members that strike none. Reading the surface the keyboard holds changes nothing. */
 function LivePreview({constellation: c}: ConstellationPreviewProps) {
+  const surface = useLiveJankoWindow()
+  const made = surface?.ok ? transcribeConstellation(c, surface.window) : null
+  const said = made?.refused ?? (surface && !surface.ok ? `The Jankó surface is not served (${surface.fault}), so the keys its members strike are not named yet.`
+    : 'Dropped on a part, Live transcribes it into a clip whose notes strike the keys its members stand at on the Jankó surface.')
   return <section className="cp" data-preview-mode="live" aria-label={`What Live makes of ${c.title}`}>
     <Head c={c} line="its sound" />
-    <p className="cp-said">Live sounds it through its clip of it: dropped on a part, it is transcribed into a clip whose notes strike the torus as it plays.</p>
-    <p className="cp-said cp-waits">{CLIP_MAKERS_REFUSED.live}</p>
+    {made && made.refused === undefined ? <>
+      <p className="cp-said">Dropped on a part, Live transcribes it into a clip: these keys struck together, as one chord.</p>
+      <dl className="cp-facts">{made.struck.map((row, i) => <Fragment key={`${row.member}-${i}`}><dt>{row.member}</dt><dd>{row.key}</dd></Fragment>)}</dl>
+      {made.left.length > 0 && <p className="cp-said cp-waits">{made.left.join('; ')}.</p>}
+    </> : <p className="cp-said">{said}</p>}
   </section>
 }
 

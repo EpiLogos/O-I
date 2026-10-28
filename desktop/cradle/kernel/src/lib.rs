@@ -666,6 +666,24 @@ pub enum KernelOp {
         #[serde(default)]
         expected_revision: Option<String>,
     },
+    /// Make one session's task through the owner's
+    /// `encounter-task-configure` (`aikit.encounter-task/v1`; manual §10.3: a
+    /// constellation dropped on a session's track makes "a task in Factory"):
+    /// the request — the short form `{purpose, source, task_ref}`, whose
+    /// Central placement, provider, working directory, Workcell boundary,
+    /// participant and authority AIKit derives from the session, or the whole
+    /// form naming them — travels verbatim, against `expected_revision`
+    /// (absent while the session holds no task). The session must be
+    /// attached to one of the Project's spaces. AIKit allocates, prepares and
+    /// keeps the task; its record or its refusal passes through verbatim, and
+    /// the kernel builds nothing and keeps nothing.
+    EncounterTaskConfigure {
+        project: String,
+        agent_session: String,
+        request: serde_json::Value,
+        #[serde(default)]
+        expected_revision: Option<String>,
+    },
     /// Several sessions' settings read at once (the owner's
     /// `aikit.encounter-session-settings-list/v1`), so a view of many tracks
     /// asks once. Every session must be attached to one of the Project's
@@ -1154,6 +1172,28 @@ pub enum KernelOp {
         /// when empty).
         #[serde(default)]
         envelopes: Option<Vec<serde_json::Value>>,
+    },
+    /// Make a MIDI clip in an empty session slot of a MIDI part against the
+    /// set's revision (O-I #768: Live's clip of a constellation): in
+    /// `scene`'s slot or the part's first empty one, `length` beats long and
+    /// looped, with `set`'s settings in the design's words and `notes`, made
+    /// in the document's own shape from a MIDI clip the set already holds;
+    /// `source`, a constellation's ref, is kept as the clip's source in the
+    /// DLW's record beside the set (`live_set::sources`). Writes the user's
+    /// files, not kernel state. Answers `{clip, at, revision}`.
+    LiveClipCreate {
+        path: String,
+        expected_revision: String,
+        track: usize,
+        #[serde(default)]
+        scene: Option<usize>,
+        length: f64,
+        #[serde(default)]
+        set: Option<serde_json::Map<String, serde_json::Value>>,
+        #[serde(default)]
+        notes: Vec<serde_json::Value>,
+        #[serde(default)]
+        source: Option<String>,
     },
     /// Change one control of a track's mixer row (activator, solo, arm,
     /// monitor, or a send by its `index`: 0 is Send A) against the set's
@@ -2981,6 +3021,7 @@ impl Kernel {
             | KernelOp::LiveDeviceParamWrite { .. }
             | KernelOp::LiveClipRead { .. }
             | KernelOp::LiveClipWrite { .. }
+            | KernelOp::LiveClipCreate { .. }
             | KernelOp::LiveTrackMixerWrite { .. }
             | KernelOp::LiveTakeComp { .. }
             | KernelOp::LiveGroovePoolRead { .. }
@@ -3485,6 +3526,7 @@ impl Kernel {
             | KernelOp::AgencyRead { .. }
             | KernelOp::EncounterTaskRead { .. }
             | KernelOp::EncounterSessionSettings { .. }
+            | KernelOp::EncounterTaskConfigure { .. }
             | KernelOp::EncounterSessionSettingsList { .. }
             | KernelOp::EncounterTaskAttemptsList { .. }
             | KernelOp::ModelRoster { .. }

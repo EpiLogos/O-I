@@ -539,7 +539,9 @@ test('the hook reads the World cut as it is published — no second poller — a
   draw({world: undefined})
   assert.deepEqual(seen.tracks.map(track => track.id), STREAM_TRACKS, 'with no published reading the streams still stand')
   assert.match(seen.tracks[0].kind, /civil field is unread \(the shell publishes no World reading to this pane\)/)
-  assert.equal(seen.actions, undefined)
+  // REPLACED (O-I #768, part three): with no reading the set carried no actions at all. It still carries no stop to stand, and now takes a
+  // constellation dropped on its tracks, which makes an event in the World's walk Expression whatever the civil read's state.
+  assert.deepEqual(Object.keys(seen.actions ?? {}), ['makeClip'], 'no stop to stand; only the drop that makes an event')
 })
 
 test('the hook wears the Earth\'s standing from the store the atlas host already reads', () => {

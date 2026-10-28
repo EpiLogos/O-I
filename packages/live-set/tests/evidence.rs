@@ -358,3 +358,55 @@ fn comps_sends_and_grooves_on_a_copy_of_a_real_set() {
     }
     std::fs::remove_dir_all(&dir).unwrap();
 }
+
+/// O-I #768: a clip Live makes of a constellation, on a copy of the real
+/// template (its session slots all empty, its MIDI clips in the arrangement):
+/// the new clip takes the document's own shape from an arrangement clip, sits
+/// in the part's first slot, reads back whole with its source, and the set's
+/// own reader lists it in that slot. Skipped without the evidence tree.
+#[test]
+fn a_clip_made_on_a_copy_of_the_real_template_reads_back_with_its_source() {
+    let Some(root) = template_root() else { return };
+    let dir = std::env::temp_dir().join(format!("live-set-evidence-made-{}", std::process::id()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let path = dir.join("template.als");
+    std::fs::write(&path, live_set::write_gz(&root).unwrap()).unwrap();
+    let path = path.to_str().unwrap().to_string();
+    let d = SetDocument::of(&root).unwrap();
+    let midi = d
+        .tracks
+        .iter()
+        .position(|t| t.kind == TrackKind::Midi && t.session_slots.first() == Some(&None))
+        .expect("a MIDI part with an empty first slot");
+    let revision = live_set::api::set_json(&path).unwrap()["revision"]
+        .as_str()
+        .unwrap()
+        .to_string();
+    let mut set = serde_json::Map::new();
+    set.insert("name".into(), serde_json::json!("The lived-in world"));
+    let notes = [serde_json::json!({"p": 62, "at": 0, "len": 4, "vel": 100})];
+    let made = live_set::edit::clip_create(
+        &path,
+        &revision,
+        midi,
+        None,
+        4.0,
+        Some(&set),
+        &notes,
+        Some("wiki:anchor:lived-in"),
+    )
+    .unwrap();
+    assert_eq!(made["at"], serde_json::json!({"slot": 0}));
+    let back = live_set::edit::clip_json(&path, midi, live_set::edit::ClipAt::Slot(0)).unwrap();
+    assert_eq!(back["clip"]["name"], "The lived-in world");
+    assert_eq!(back["clip"]["source"], "wiki:anchor:lived-in");
+    assert_eq!(back["clip"]["notes"].as_array().unwrap().len(), 1);
+    let reread = live_set::open_als(std::path::Path::new(&path)).unwrap();
+    let after = SetDocument::of(&reread).unwrap();
+    assert_eq!(
+        after.tracks[midi].session_slots[0].as_deref(),
+        Some("The lived-in world"),
+        "the set's own reader lists the clip in its slot"
+    );
+    std::fs::remove_dir_all(&dir).unwrap();
+}

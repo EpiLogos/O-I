@@ -8,7 +8,7 @@
 import type {Value, Values} from '../frame/devices/designed'
 import {kernelOp} from '../../../../../desktop/cradle/src/kernel/bridge'
 import type {ActuationComparisonRunRequest, ActuationComparisonTakes, EncounterEnvelopePoint, EncounterSessionSettingsReading,
-  EncounterSessionSettingsRequest, KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
+  EncounterSessionSettingsRequest, EncounterTakeRun, KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
 import {settingsReadingEntry} from '../owners/readers'
 import {routeAnswerOf} from './devices/ownerRoutes'
 import type {TaskSetting} from './devices/taskBindings'
@@ -187,10 +187,19 @@ export async function writeSessionSettings(transport: KernelTransportStatus, pro
  * session's own task as Actuation's provided task (`task`: its id, prompt, success conditions and the test a Test pass reads), the
  * session's agent as the body (`body`, protocol agent-jsonl: the agent's process, which applies the level each take is given and reads
  * it back), and its steps and calls; `basis` the revisions the takes are held to. Its carrier is AIKit's, which owns the session's task
- * and its agent. */
+ * and its agent: the session's settings hand it (`task.take_run`, takeRunOf). */
 export interface ResearchRun {
   readonly run: Record<string, unknown>
   readonly basis?: Record<string, unknown>
+}
+
+/** The run AIKit hands with a session's settings for its takes (`task.take_run`): the run, AIKit's words for why there is none, or null
+ * from an AIKit before O-I 795's take body. Pure. */
+export function takeRunOf(task: EncounterSessionSettingsReading['task'] | null | undefined): ResearchRun | {refused: string} | null {
+  const handed: EncounterTakeRun | undefined = task?.take_run
+  if (!handed) return null
+  if ('refused' in handed) return {refused: handed.refused}
+  return {run: handed.run, ...(handed.basis ? {basis: handed.basis} : {})}
 }
 
 /** Why a Repeat makes no takes, in words. */
@@ -198,19 +207,27 @@ export const TAKES_WHY = {
   notRepeat: 'This task is not launched with Repeat: set Launch mode to Repeat first.',
   levels: (variable: string) => `Repeat's levels are not set: name one to three values of ${variable} for the takes to run over. `
     + 'The default of three is a count; only the condition has values of its own.',
-  noRun: 'Actuation runs a comparison over a session\'s own task with its agent as the body, but nothing hands the shell this session\'s '
-    + 'task and agent in Actuation\'s words — missing op: the session\'s task as a provided task and its agent as an agent-jsonl body (AIKit).',
+  noRun: 'Actuation runs a comparison over a session\'s own task with its agent as the body, but this AIKit hands the shell no run for '
+    + 'the session\'s takes — missing op: `take_run` on the session\'s task settings, the task as a provided task and its agent as an '
+    + 'agent-jsonl body, `encounter-take-body` (AIKit).',
+  refused: (words: string) => `AIKit has no run for this session's takes: ${words}`,
+  noTest: 'Stop when Test pass reads the task\'s own test, and the run AIKit hands for this task carries none (AIKit keeps no test for '
+    + 'a task): choose Task done, a Turn cap or a Time cap.',
 } as const
 
 /** The comparison request a Repeat's takes run with (§19.1 The Launch panel): Variable is what it varies, Levels the values it takes
  * (the condition with none chosen runs Actuation's own default three — "Levels: 1–3 values. Default: Three"; any other variable needs
  * its values), Repeats its repetitions, and Stop when the condition that ends each take. Or why Actuation cannot make them. Pure. */
-export function comparisonRequestOf(task: NonNullable<EncounterSessionSettingsReading['task']>, traceRef: string, research: ResearchRun | null):
-  {request: ActuationComparisonRunRequest} | {refused: string} {
+export function comparisonRequestOf(task: NonNullable<EncounterSessionSettingsReading['task']>, traceRef: string,
+  research: ResearchRun | {refused: string} | null): {request: ActuationComparisonRunRequest} | {refused: string} {
   if (task.launch !== 'repeat') return {refused: TAKES_WHY.notRepeat}
   const variable = task.repeat_variable
   if (variable !== 'condition' && !task.repeat_levels.length) return {refused: TAKES_WHY.levels(variable)}
   if (!research) return {refused: TAKES_WHY.noRun}
+  if ('refused' in research) return {refused: TAKES_WHY.refused(research.refused)}
+  // Actuation refuses Test pass for a provided task without its test (comparison.rs); said here, before AIKit starts a set.
+  const runTask = research.run.task as {test?: unknown} | undefined
+  if (task.repeat_stop === 'pass' && runTask && !runTask.test) return {refused: TAKES_WHY.noTest}
   return {request: {trace_ref: traceRef, repetitions: task.repeat_repeats, variable,
     ...(task.repeat_levels.length ? {levels: [...task.repeat_levels]} : {}), stop: {when: task.repeat_stop},
     run: research.run, ...(research.basis ? {basis: research.basis} : {})}}
@@ -223,8 +240,8 @@ type Receipt = {ok: true; note: string} | {ok: false; error: string}
  * second set while one runs), Actuation's comparison run makes the takes in a root the kernel reserves (kernel actuation_write
  * comparison-run), and the set ends on AIKit with what it made, or failed with Actuation's words. Refused, before any write, where the
  * task is not launched with Repeat or Actuation cannot make its takes (comparisonRequestOf). */
-export async function makeTakes(transport: KernelTransportStatus, project: string, agentSession: string, research: ResearchRun | null,
-  now: () => number = Date.now): Promise<Receipt> {
+export async function makeTakes(transport: KernelTransportStatus, project: string, agentSession: string,
+  research: ResearchRun | {refused: string} | null, now: () => number = Date.now): Promise<Receipt> {
   const standing = settingsReadingEntry(transport, project, agentSession).snapshot()
   const task = standing.status === 'answered' ? (standing.value as EncounterSessionSettingsReading | null)?.task ?? null : null
   if (!task) return {ok: false, error: SETTINGS_WHY.reading}

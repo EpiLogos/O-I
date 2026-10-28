@@ -25,6 +25,16 @@ def click_section(page, value):
 def section_current(page):
     return page.evaluate("""() => document.querySelector('[data-action="studio-section"][aria-current="page"]')?.dataset.value ?? null""")
 
+def wait_until(page, expression, timeout_ms=5000):
+    # The candidate and landing jobs draw software WebGL at a few frames a
+    # second; a check that something advanced waits for it, bounded, rather
+    # than reading after a fixed interval.
+    try:
+        page.wait_for_function(expression, timeout=timeout_ms)
+    except Exception:
+        pass
+
+
 def state(page):
     return page.evaluate("() => window.__FIELD_STUDIES__.getState()")
 
@@ -41,7 +51,7 @@ with browser_session({'width': 1280, 'height': 900}) as (_, ctx, page):
 
     # ---- 1. The field breathes without any transport press --------------------
     sim_a = state(page)['simTime']
-    page.wait_for_timeout(600)
+    wait_until(page, f"() => window.__FIELD_STUDIES__.getState().simTime > {sim_a}")
     sim_b = state(page)['simTime']
     check('physics and morph run by default, with nothing playing', sim_b > sim_a, f'{sim_a:.2f} → {sim_b:.2f}')
     check('the scene playhead starts held', not state(page)['scenePlaying'])
@@ -101,7 +111,7 @@ with browser_session({'width': 1280, 'height': 900}) as (_, ctx, page):
       el.checked = false;
       el.dispatchEvent(new Event('change', {bubbles: true}));
     }""")
-    page.wait_for_timeout(700)
+    wait_until(page, f"() => window.__FIELD_STUDIES__.getState().simTime > {sim_b}")
     sim_c = state(page)['simTime']
     check('lifting Pause physics releases the field', sim_c > sim_b, f'{sim_b:.2f} → {sim_c:.2f}')
 
@@ -121,14 +131,11 @@ with browser_session({'width': 1280, 'height': 900}) as (_, ctx, page):
     page.wait_for_timeout(400)
     st = state(page)
     check('play runs the scene', st['scenePlaying'] and st['playing'], st)
-    try:
-        page.wait_for_function(f"() => window.__FIELD_STUDIES__.getState().simTime > {sim_a}", timeout=5000)
-    except Exception:
-        pass
+    wait_until(page, f"() => window.__FIELD_STUDIES__.getState().simTime > {sim_a}")
     sim_b = state(page)['simTime']
     check('playing the scene never touches the physics clock', sim_b > sim_a, f'sim {sim_a:.2f} → {sim_b:.2f}')
     head_a = page.evaluate("() => document.getElementById('global-time').textContent")
-    page.wait_for_timeout(800)
+    wait_until(page, f"() => document.getElementById('global-time').textContent !== {json.dumps(head_a)}")
     head_b = page.evaluate("() => document.getElementById('global-time').textContent")
     check('the playhead advances while the scene plays', head_a != head_b, f'{head_a} → {head_b}')
     # The scene ends by itself and the transport returns to Play.
@@ -142,12 +149,7 @@ with browser_session({'width': 1280, 'height': 900}) as (_, ctx, page):
     check('the transport reads Play again after the scene ends', icon_now == 'Play scene (Space)', icon_now)
     head_c = page.evaluate("() => document.getElementById('global-time').textContent")
     page.evaluate("""() => document.getElementById('play-button').click()""")
-    # The readout repaints on the next frame; a software-WebGL runner draws at
-    # about 2 fps, so wait for the restart rather than a fixed interval.
-    try:
-        page.wait_for_function("() => document.getElementById('global-time').textContent.startsWith('0.')", timeout=3000)
-    except Exception:
-        pass
+    wait_until(page, "() => document.getElementById('global-time').textContent.startsWith('0.')")
     head_d = page.evaluate("() => document.getElementById('global-time').textContent")
     check('pressing Play again restarts the scene from its top', head_d.startswith('0.'), f'{head_c} → {head_d}')
 

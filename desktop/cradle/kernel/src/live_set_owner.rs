@@ -16,6 +16,10 @@
 //! `.als` on disk is refused. The write itself replaces the file atomically
 //! (`live_set::api`), so a crash never leaves a half-written set.
 //!
+//! A clip of a constellation is made in an empty slot (`live_clip_create`,
+//! O-I #768), its source kept in the DLW's record beside the set
+//! (`live_set::sources`) and read back with the clip by `live_clip_read`.
+//!
 //! Beside the clip and the mixer row (`live_set::edit`): a track's sends
 //! written through the mixer write (`control: "send"` with its index), a
 //! stretch of a take comped into the main lane (`live_take_comp`), and the
@@ -126,6 +130,33 @@ pub fn execute(op: &KernelOp) -> Option<Result<KernelOpResult, String>> {
                     set.as_ref(),
                     notes.as_deref(),
                     envelopes.as_deref(),
+                )
+                .map(|reading| KernelOpResult::LiveClipReading { reading })
+            }),
+        KernelOp::LiveClipCreate {
+            path,
+            expected_revision,
+            track,
+            scene,
+            length,
+            set,
+            notes,
+            source,
+        } => native_document(path)
+            .and_then(|()| admitted_for_write(path))
+            .and_then(|()| {
+                let _gate = WRITE_GATE
+                    .lock()
+                    .unwrap_or_else(|poisoned| poisoned.into_inner());
+                live_set::edit::clip_create(
+                    path,
+                    expected_revision,
+                    *track,
+                    *scene,
+                    *length,
+                    set.as_ref(),
+                    notes,
+                    source.as_deref(),
                 )
                 .map(|reading| KernelOpResult::LiveClipReading { reading })
             }),
@@ -498,6 +529,67 @@ mod tests {
             matches!(mixed, Some(Ok(KernelOpResult::LiveTrackMixerReading { ref reading })) if reading["mixer"]["solo"] == json!(true))
         );
         let _ = std::fs::remove_file(&path);
+    }
+
+    /// One MIDI part whose first slot holds a clip in Live 12's own shape and whose second is empty.
+    const MAKE_FIXTURE: &str = r#"<Ableton><LiveSet><Tracks><MidiTrack Id="7"><Name><EffectiveName Value="Keys" /></Name><Color Value="26" /><DeviceChain><Mixer><Speaker><Manual Value="true" /></Speaker><SoloSink Value="false" /></Mixer><MainSequencer><MonitoringEnum Value="1" /><Recorder><IsArmed Value="false" /></Recorder><ClipSlotList><ClipSlot Id="0"><ClipSlot><Value><MidiClip Id="0" Time="0"><CurrentStart Value="0" /><CurrentEnd Value="8" /><Loop><LoopStart Value="0" /><LoopEnd Value="8" /><StartRelative Value="0" /><LoopOn Value="false" /><OutMarker Value="8" /><HiddenLoopStart Value="0" /><HiddenLoopEnd Value="8" /></Loop><Name Value="Riff" /><Annotation Value="" /><Color Value="14" /><LaunchMode Value="1" /><LaunchQuantisation Value="0" /><Envelopes><Envelopes /></Envelopes><Legato Value="true" /><GrooveSettings><GrooveId Value="-1" /></GrooveSettings><Disabled Value="false" /><VelocityAmount Value="0" /><FollowAction><FollowTime Value="4" /><IsLinked Value="true" /><LoopIterations Value="1" /><FollowActionA Value="4" /><FollowActionB Value="0" /><FollowChanceA Value="100" /><FollowChanceB Value="0" /><JumpIndexA Value="1" /><JumpIndexB Value="1" /><FollowActionEnabled Value="true" /></FollowAction><Notes><KeyTracks /><NoteIdGenerator><NextId Value="1" /></NoteIdGenerator></Notes><ScaleInformation><RootNote Value="0" /><Name Value="Major" /></ScaleInformation><IsInKey Value="true" /></MidiClip></Value></ClipSlot></ClipSlot><ClipSlot Id="1"><ClipSlot><Value /></ClipSlot></ClipSlot></ClipSlotList></MainSequencer></DeviceChain></MidiTrack></Tracks><MainTrack><DeviceChain><Mixer><Tempo><Manual Value="120" /></Tempo></Mixer></DeviceChain></MainTrack><Scenes><Scene /><Scene /></Scenes></LiveSet></Ableton>"#;
+
+    /// O-I #768: Live makes its clip of a constellation through the owner: only on a set it has read and on its revision, in the
+    /// part's first empty slot, with its notes, and its source kept beside the set and read back with the clip.
+    #[test]
+    fn a_clip_of_a_constellation_is_made_on_a_read_set_and_reads_back_with_its_source() {
+        let dir = std::env::temp_dir().join(format!("live-set-owner-{}-make", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let file = dir.join("make.als");
+        std::fs::write(
+            &file,
+            live_set::write_gz(&live_set::xml::parse(MAKE_FIXTURE).unwrap()).unwrap(),
+        )
+        .unwrap();
+        let path = file.to_string_lossy().into_owned();
+        let op: KernelOp = serde_json::from_value(json!({"op": "live_clip_create", "path": path, "expected_revision": "sha256:none", "track": 0, "length": 4,
+            "set": {"name": "The lived-in world"}, "notes": [{"p": 62, "at": 0, "len": 4, "vel": 100}], "source": "wiki:anchor:lived-in"}))
+        .unwrap();
+        let unread = match execute(&op) {
+            Some(Err(error)) => error,
+            other => panic!("refusal expected, got {other:?}"),
+        };
+        assert!(
+            unread.contains("Read this Live set before writing"),
+            "{unread}"
+        );
+        let read = match execute(&KernelOp::LiveClipRead {
+            path: path.clone(),
+            track: 0,
+            clip: json!({"slot": 0}),
+        }) {
+            Some(Ok(KernelOpResult::LiveClipReading { reading })) => reading,
+            other => panic!("clip reading expected, got {other:?}"),
+        };
+        assert_eq!(read["clip"]["source"], serde_json::Value::Null);
+        let mut request = serde_json::to_value(&op).unwrap();
+        request["expected_revision"] = read["revision"].clone();
+        let made = match execute(&serde_json::from_value(request).unwrap()) {
+            Some(Ok(KernelOpResult::LiveClipReading { reading })) => reading,
+            other => panic!("clip reading expected, got {other:?}"),
+        };
+        assert_eq!(made["at"], json!({"slot": 1}));
+        assert_eq!(made["clip"]["name"], "The lived-in world");
+        assert_eq!(made["clip"]["source"], "wiki:anchor:lived-in");
+        let back = match execute(&KernelOp::LiveClipRead {
+            path: path.clone(),
+            track: 0,
+            clip: json!({"slot": 1}),
+        }) {
+            Some(Ok(KernelOpResult::LiveClipReading { reading })) => reading,
+            other => panic!("clip reading expected, got {other:?}"),
+        };
+        assert_eq!(
+            back["clip"]["source"], "wiki:anchor:lived-in",
+            "the source reads back from the owner"
+        );
+        assert_eq!(back["clip"]["notes"][0]["p"], 62);
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     /// A MIDI track with two take lanes (TakeId 1 and 2), its main lane holding take 1, sends to one return, and a Groove Pool

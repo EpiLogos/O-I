@@ -23,6 +23,8 @@ export interface ConstellationMember {
   readonly title: string
   /** The sixfold position the wiki itself declares for it, or null. */
   readonly position: number | null
+  /** The QL face the wiki declares for that position (`direct`, `prime`), or null (techne/wikiExpression.ts ProjectedMember). */
+  readonly face: 'direct' | 'prime' | null
 }
 
 /** One constellation of your wiki, as its register discloses it. */
@@ -74,7 +76,7 @@ export function constellationsOf(state: {readonly registers: readonly WikiRegist
       const question = constellation.kind === 'frame' ? frames.find(frame => frame.anchor_ref === constellation.wholeRef)?.question : undefined
       rows.push({ref: constellation.wholeRef, title: constellation.title, ...(question ? {question} : {}), kind: constellation.kind,
         register: register.key, registerTitle: register.title, ...(register.project ? {project: register.project} : {}),
-        members: constellation.members.map(member => ({ref: member.subjectRef, title: member.title, position: member.position}))})
+        members: constellation.members.map(member => ({ref: member.subjectRef, title: member.title, position: member.position, face: member.face ?? null}))})
     }
   }
   return {rows, reading, unread, registers: state.registers.length}

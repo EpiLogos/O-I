@@ -42,7 +42,7 @@ import {useSelectedClip} from '../frame/detail/ClipBox'
 import {useDetailReading} from '../frame/detail/detailReading'
 import {useTimelinePanePresentation} from '../projections/timelinePaneHost'
 import {parseFactoryTaskRef} from '../timeline/factoryTrackAdapter'
-import {readSettingsOf, settingsReadingEntry, useSettingsAnswer} from '../owners/readers'
+import {readSettingsOf, settingsReadingEntry, taskReadingEntry, useSettingsAnswer} from '../owners/readers'
 import {useAgentSessionsOptional} from './AgentSessionsProvider'
 import {eventsForSession, trackKey, type AgentSessionTrack, type TaskClip, type TemporalEventLike} from './agentRunModel'
 import {TASK_SEAMS, type TaskAddress, type TaskSeamContext, type TaskSetting} from './devices/taskBindings'
@@ -444,17 +444,13 @@ export function useFactoryClip(): ClipBinding | null {
 
 // ---------------------------------------------------------------------------------------------------------------- the drop
 
-/** Why a session can take no task made of a constellation: it holds none (AIKit binds a session's task when the session is prepared for it,
- * `encounter-task-configure`, whose request names the constellation as the task's `source`; the shell does not prepare tasks). */
-const noTask = (label: string) => `${label} holds no task, so no task is made of it here: AIKit binds a session's task when the session is prepared `
-  + 'for one (encounter-task-configure, whose request takes the constellation as the task\'s source); drop it on a session that works a task.'
-
 /** Factory's clip of a constellation (manual §10.3: "Drag it onto a track and this mode makes its own clip of it, with the constellation as
  * its source: … a task in Factory"; §16.7 Make this mode's clip; §19.1 the Clip panel's Constellation: "The one the task was made of"):
  * a session's track holds the one task AIKit binds to the session, so the drop makes that task of the constellation — the task's own
  * settings take it as their `source` on AIKit, written against the revision read (the owner's CAS), and AIKit's reading gives the source
- * back. A session that holds no task is refused in words (noTask). Every reader of the session's settings is asked again. */
-export async function makeTaskOf(transport: KernelTransportStatus, session: {readonly sessionRef: string; readonly label: string},
+ * back. A session that holds no task is given a new one made of the constellation through AIKit's task creation (makeNewTaskOf). Every
+ * reader of the session's settings is asked again. */
+export async function makeTaskOf(transport: KernelTransportStatus, session: SessionAddress,
   constellation: {readonly ref: string; readonly title: string}, project = SETTINGS_PROJECT): Promise<WorldActionReceipt> {
   const {ref, title} = constellation
   const owner = readSettingsOf(transport, project, session.sessionRef)
@@ -465,7 +461,7 @@ export async function makeTaskOf(transport: KernelTransportStatus, session: {rea
   const before = await read()
   if ('error' in before) return {ok: false, error: `${session.label}'s settings were not read, so no task is made of ${title}: ${before.error}`}
   const task = before.reading.task
-  if (!task) return {ok: false, error: noTask(session.label)}
+  if (!task) return makeNewTaskOf(transport, session, constellation, project)
   const written = await kernelOp(transport, {op: 'encounter_session_settings', project, agent_session: session.sessionRef,
     request: {task: {task_ref: task.task_ref, set: {source: ref}}}, ...(before.reading.revision ? {expected_revision: before.reading.revision} : {})})
   if (written.error || written.outcome?.result !== SETTINGS_RESULT) return {ok: false, error: `AIKit did not make ${task.name} of ${title}: ${written.error ?? 'it gave no reading'}`}
@@ -481,15 +477,56 @@ export async function makeTaskOf(transport: KernelTransportStatus, session: {rea
   return {ok: true, note: `${task.name} on ${session.label} is made of ${title}; AIKit reads the task's source as ${title}.`}
 }
 
+/** The session a drop lands on: its ref and its name in words. */
+export interface SessionAddress {
+  readonly sessionRef: string
+  readonly label: string
+}
+
+/** A new task's ref: the constellation's name, slugged, and the moment it was made (base 36), so two drops never name one task. */
+export function newTaskRef(title: string, at = Date.now()): string {
+  const slug = title.normalize('NFKD').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 48).replace(/-+$/, '')
+  return `task:${slug || 'constellation'}-${at.toString(36)}`
+}
+
+/** A session that holds no task, given a new one made of the constellation (manual §10.3 "a task in Factory"). The drop names only what is
+ * the task's own — its ref, its purpose (the constellation's name) and its source (the constellation) — and AIKit's task creation
+ * (`encounter_task_configure`, kernel agency.rs task_configure; ai-kit encounter_task_derive.rs) completes the rest from the session's own
+ * standing: the agent and authority its Agency holds, the Central World and Project it works in, the agent it opened on and where, and the
+ * Workcell boundary. AIKit allocates the task's NOW with Central and has Workcell inspect its boundary, and refuses in its own words what it
+ * cannot derive or the session's Agency does not authorise; AIKit's settings give the source back. */
+export async function makeNewTaskOf(transport: KernelTransportStatus, session: SessionAddress, constellation: {readonly ref: string; readonly title: string},
+  project: string): Promise<WorldActionReceipt> {
+  const {ref, title} = constellation
+  const taskRef = newTaskRef(title)
+  const request = {purpose: title, source: ref, task_ref: taskRef}
+  const made = await kernelOp(transport, {op: 'encounter_task_configure', project, agent_session: session.sessionRef, request})
+  // Every reader of the session's task and settings is asked again (the track's clips, the Clip panel, the mixer row), whatever AIKit
+  // answered: a refused preparation may still have left its record.
+  for (const entry of [settingsReadingEntry(transport, project, session.sessionRef), taskReadingEntry(transport, project, session.sessionRef)]) {
+    const epoch = entry.snapshot().epoch
+    if (epoch !== null) void entry.refresh(epoch)
+  }
+  if (made.error || made.outcome?.result !== 'encounter_task_reading') return {ok: false, error: `AIKit did not make a task of ${title} on ${session.label}: ${made.error ?? 'it gave no task record'}`}
+  const after = await readSettingsOf(transport, project, session.sessionRef)()
+  if ('error' in after) return {ok: false, error: `AIKit made a task of ${title} on ${session.label}, but its settings were not read back: ${after.error}`}
+  const kept = after.value.task
+  if (!kept || kept.task_ref !== taskRef) return {ok: false, error: `AIKit made a task of ${title}, but ${session.label}'s settings read ${kept ? `another task (${kept.task_ref})` : 'no task'}.`}
+  if (kept.source !== ref) return {ok: false, error: `AIKit made ${kept.name} on ${session.label}, but reads its source as ${kept.source ?? 'none'}, not ${ref}.`}
+  return {ok: true, note: `${session.label} has a new task made of ${title} (${kept.task_ref}); AIKit reads its source as ${title}.`}
+}
+
 type Maker = NonNullable<WorldTrackActions['makeClip']>
 
 /** The maker the Factory set carries (frame/tracks/useFactoryTracks.ts; frame/tracks/clipMakers.ts withClipMaker): a constellation dropped
- * on a session's track makes that session's task of it (makeTaskOf). A drop on another track, or of a ref the wiki's reading does not
- * hold, is refused in words. */
+ * on a session's track makes that session's task of it (makeTaskOf), or, on a session that holds none, a new task of it that AIKit completes
+ * from the session's standing (makeNewTaskOf). A drop on another track, or of a ref the wiki's reading does not hold, is refused in words. */
 export function taskMaker(transport: KernelTransportStatus, tracks: readonly AgentSessionTrack[],
   named: (ref: string) => Constellation | null = ref => constellationNamed(constellationsNow().rows, ref)): Maker {
   return {accepts: CONSTELLATION_DRAG,
-    op: 'AIKit encounter-session-settings: the session\'s task takes the constellation as its source (task.source), read back from AIKit',
+    op: 'AIKit encounter-session-settings: the session\'s task takes the constellation as its source (task.source); on a session that holds '
+      + 'none, AIKit encounter-task-configure makes a new task of its purpose and source, the rest from the session\'s standing; its source read '
+      + 'back from AIKit',
     run: async (trackId: string, payload: string): Promise<WorldActionReceipt> => {
       const track = tracks.find(item => trackKey(item) === trackId && !item.group)
       if (!track) return {ok: false, error: 'Only a session\'s track makes a task of a constellation: drop it on a session.'}

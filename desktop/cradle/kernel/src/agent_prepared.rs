@@ -205,6 +205,13 @@ enum AgentRead {
         request: Option<Value>,
         expected_revision: Option<String>,
     },
+    /// The owner's task creation (`encounter-task-configure`): a write, its
+    /// request verbatim.
+    TaskConfigure {
+        agent_session: String,
+        request: Value,
+        expected_revision: Option<String>,
+    },
     SettingsList {
         agent_sessions: Vec<String>,
     },
@@ -433,6 +440,23 @@ impl PreparedAgent {
                     )?,
                 }
             }
+            AgentRead::TaskConfigure {
+                agent_session,
+                request,
+                expected_revision,
+            } => {
+                let project_ref =
+                    project_ref(&self.client, &self.aikit, &self.reads, project, &cwd)?;
+                KernelOpResult::EncounterTaskReading {
+                    data: self.aikit.task_configure(
+                        &cwd,
+                        &project_ref,
+                        agent_session,
+                        request,
+                        expected_revision.as_deref(),
+                    )?,
+                }
+            }
             AgentRead::SettingsList { agent_sessions } => {
                 let project_ref =
                     project_ref(&self.client, &self.aikit, &self.reads, project, &cwd)?;
@@ -502,7 +526,8 @@ impl PreparedAgent {
 }
 
 impl Kernel {
-    /// `AgencyRead`, `Encounter`, `EncounterTaskRead`, `EncounterSessionSettings`, `AgentDefinition`,
+    /// `AgencyRead`, `Encounter`, `EncounterTaskRead`, `EncounterSessionSettings`,
+    /// `EncounterTaskConfigure`, `AgentDefinition`,
     /// `ModelRoster`, `HarnessAgentRead`, `HarnessStatus` and
     /// `ModelCatalogue`, prepared under the kernel lock; every other op is
     /// not an agent read.
@@ -529,6 +554,19 @@ impl Kernel {
             } => (
                 Some(project.clone()),
                 AgentRead::Settings {
+                    agent_session: agent_session.clone(),
+                    request: request.clone(),
+                    expected_revision: expected_revision.clone(),
+                },
+            ),
+            KernelOp::EncounterTaskConfigure {
+                project,
+                agent_session,
+                request,
+                expected_revision,
+            } => (
+                Some(project.clone()),
+                AgentRead::TaskConfigure {
                     agent_session: agent_session.clone(),
                     request: request.clone(),
                     expected_revision: expected_revision.clone(),
@@ -664,6 +702,21 @@ elif verb == "encounter":
                                            "events": [], "more": False}}))
 elif verb == "encounter-task-read":
     print("null")
+elif verb == "encounter-task-configure":
+    flag = lambda name: args[args.index(name) + 1] if name in args else None
+    with open(log + ".task-configure.request.json", "w") as handle:
+        handle.write(flag("--request-json"))
+    kept = log + ".task-configure.json"
+    if os.path.exists(kept):
+        answer = open(kept).read()
+        if answer.startswith("!"):
+            sys.stderr.write(answer[1:])
+            sys.exit(2)
+        print(answer)
+    else:
+        print(json.dumps({"schema": "aikit.encounter-task/v1", "revision": "task-binding/new", "ready": True,
+                          "request": json.loads(flag("--request-json")), "expected": flag("--expected-revision"),
+                          "agent_session": flag("--agent-session")}))
 elif verb == "encounter-session-settings":
     flag = lambda name: args[args.index(name) + 1] if name in args else None
     sessions = [args[i + 1] for i, arg in enumerate(args) if arg == "--agent-session"]
@@ -755,6 +808,10 @@ else:
         fn drop(&mut self) {
             for path in [&self.executable, &self.script, &self.log, &self.gate] {
                 let _ = std::fs::remove_file(path);
+            }
+            // What a task creation was handed and told to answer (FAKE_AIKIT).
+            for side in [".task-configure.json", ".task-configure.request.json"] {
+                let _ = std::fs::remove_file(format!("{}{side}", self.log.display()));
             }
         }
     }
@@ -1012,5 +1069,117 @@ else:
             .apply(list(&["agent-session/x", "agent-session/elsewhere"]))
             .is_err());
         assert_eq!(aikit.calls("encounter-task-attempts"), 2);
+    }
+
+    #[test]
+    fn task_configure_carries_the_request_to_the_owner_for_an_attached_session_only() {
+        let owner = crate::tests::FakeOwner::spawn_counter("task-configure");
+        let aikit = FakeAikit::new("task-configure");
+        let mut kernel = owner.kernel_with_agency(aikit.client());
+        let configure = |agent_session: &str, request: &Value, expected: Option<&str>| {
+            KernelOp::EncounterTaskConfigure {
+                project: String::new(),
+                agent_session: agent_session.into(),
+                request: request.clone(),
+                expected_revision: expected.map(Into::into),
+            }
+        };
+        // The request travels verbatim; the owner's record comes back as it answered.
+        let request = serde_json::json!({
+            "central": {"task_ref": "task:of-a-constellation", "purpose": "A constellation"},
+            "cwd": "/w", "source": "wiki:constellation/a"
+        });
+        let made = kernel
+            .apply(configure("agent-session/x", &request, None))
+            .unwrap();
+        assert!(matches!(
+            made.result,
+            KernelOpResult::EncounterTaskReading { ref data }
+                if data["schema"] == "aikit.encounter-task/v1"
+                    && data["request"] == request
+                    && data["expected"].is_null()
+                    && data["agent_session"] == "agent-session/x"
+        ));
+        // Prepared again against the revision read: the revision travels too.
+        let again = kernel
+            .apply(configure(
+                "agent-session/x",
+                &request,
+                Some("task-binding/new"),
+            ))
+            .unwrap();
+        assert!(matches!(
+            again.result,
+            KernelOpResult::EncounterTaskReading { ref data } if data["expected"] == "task-binding/new"
+        ));
+        // Another Project's session never reaches the owner.
+        assert!(kernel
+            .apply(configure("agent-session/elsewhere", &request, None))
+            .is_err());
+        assert_eq!(aikit.calls("encounter-task-configure"), 2);
+        // An answer that is not the owner's task record is refused, never passed on as one.
+        let kept = PathBuf::from(format!("{}.task-configure.json", aikit.log.display()));
+        std::fs::write(&kept, r#"{"schema":"aikit.encounter-session-settings/v1"}"#).unwrap();
+        let refused = kernel
+            .apply(configure("agent-session/x", &request, None))
+            .unwrap_err();
+        assert!(refused.contains("task record"), "{refused}");
+        // The owner's refusal passes through in its own words.
+        std::fs::write(
+            &kept,
+            "!Current Agency does not authorise this task, authority or participant",
+        )
+        .unwrap();
+        let refused = kernel
+            .apply(configure("agent-session/x", &request, None))
+            .unwrap_err();
+        assert_eq!(
+            refused,
+            "Current Agency does not authorise this task, authority or participant"
+        );
+        let _ = std::fs::remove_file(&kept);
+    }
+
+    /// The real exchange (tests/fixtures/owner-routes/aikit-task-configure-2026-10-28.json): the request the shell's Factory maker sent
+    /// reaches AIKit as it was sent, AIKit's record comes back as AIKit wrote it, and AIKit's refusal for a session with no Agency in
+    /// AIKit's own words.
+    #[test]
+    fn task_configure_carries_the_real_exchange_verbatim() {
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/owner-routes/aikit-task-configure-2026-10-28.json"
+        ))
+        .unwrap();
+        let owner = crate::tests::FakeOwner::spawn_counter("task-configure-real");
+        let aikit = FakeAikit::new("task-configure-real");
+        let mut kernel = owner.kernel_with_agency(aikit.client());
+        let kept = PathBuf::from(format!("{}.task-configure.json", aikit.log.display()));
+        let received = PathBuf::from(format!(
+            "{}.task-configure.request.json",
+            aikit.log.display()
+        ));
+        std::fs::write(&kept, fixture["answer"].to_string()).unwrap();
+        let op = KernelOp::EncounterTaskConfigure {
+            project: String::new(),
+            agent_session: "agent-session/x".into(),
+            request: fixture["request"]["request"].clone(),
+            expected_revision: None,
+        };
+        let made = kernel.apply(op.clone()).unwrap();
+        let KernelOpResult::EncounterTaskReading { data } = made.result else {
+            panic!("AIKit's task record is the outcome");
+        };
+        assert_eq!(data, fixture["answer"], "AIKit's record, as AIKit wrote it");
+        let sent: Value =
+            serde_json::from_str(&std::fs::read_to_string(&received).unwrap()).unwrap();
+        assert_eq!(
+            sent, fixture["request"]["request"],
+            "the request, as the shell sent it"
+        );
+        let refusal = fixture["refusal"].as_str().unwrap();
+        std::fs::write(&kept, format!("!{refusal}")).unwrap();
+        assert_eq!(kernel.apply(op).unwrap_err(), refusal);
+        for path in [&kept, &received] {
+            let _ = std::fs::remove_file(path);
+        }
     }
 }

@@ -452,6 +452,7 @@ impl PreparedRead {
             | KernelOp::LiveDeviceParamWrite { .. }
             | KernelOp::LiveClipRead { .. }
             | KernelOp::LiveClipWrite { .. }
+            | KernelOp::LiveClipCreate { .. }
             | KernelOp::LiveTrackMixerWrite { .. }
             | KernelOp::LiveTakeComp { .. }
             | KernelOp::LiveGroovePoolRead { .. }

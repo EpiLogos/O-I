@@ -34,6 +34,7 @@ import {useTechneTracks} from './useTechneTracks'
 import {worldCut} from './useWorldCut'
 import {withClipMaker} from './clipMakers'
 import {sceneMaker} from '../../components/expressions/clip/clipBinding'
+import {liveClipMaker} from '../../live/constellationClip'
 import type {JourneyPresentation} from '../../timeline/journeyWalks'
 
 export interface TracksReading {
@@ -185,12 +186,18 @@ export const tracksOf = (answer: WorldTrackSet | ModeTracksWaiting | null): Worl
 
 export const MODE_TRACKS: Readonly<Record<SurfMode, UseModeTracks>> = {
   // With no set open Live is waiting — the empty Session says how to open one (the reading's waiting words), not "no tracks".
-  live: reading => reading.set ? liveSetTrackAdapter.project({set: reading.set, document: reading.document, colors: reading.colors,
-    ...liveSetWrites(reading.set.path)}) : null,
+  // A constellation dropped on a part makes Live's clip of it (live/constellationClip.ts liveClipMaker, O-I #768).
+  live: reading => reading.set ? liveTracks(reading.set, reading.document, reading.colors) : null,
   base: worldCut(useCentralTracks),
   factory: worldCut(useFactoryTracks),
   techne: worldCut(useTechneTracks),
   expressions: expressionsTracks,
+}
+
+/** Live's tracks: the open set's parts, its writes, and Live's clip of a constellation dropped on a part. Pure. */
+export function liveTracks(set: SetSummary, document: SetDocument | null, colors?: readonly string[], maker = liveClipMaker(set.path)): WorldTrackSet {
+  const tracks = liveSetTrackAdapter.project({set, document, colors, ...liveSetWrites(set.path)})
+  return maker ? withClipMaker(tracks, maker) : tracks
 }
 
 /** Whose operations each mode's object acts are, in the words a missing act names (manual §10.9; each mode's action table,

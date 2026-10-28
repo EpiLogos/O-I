@@ -13,7 +13,7 @@
 // A Scene clip of the open Expression selected in Technē is an Expressions clip: the Expressions binding hosts it (the selected
 // clip's mode). An event and a stop have no tools and no envelopes. Their launch settings (arrival, transition, curve, switch) have
 // no owner yet, and refuse in the journey owner's words. Pure, apart from the hook at the end.
-import {useEffect, useState} from 'react'
+import {useEffect, useState, useSyncExternalStore} from 'react'
 import {standingOf} from '../../../../../desktop/cradle/src/techne/m0m5/timeline/standing'
 import type {Value, Values} from '../frame/devices/designed'
 import {clipBinding, missingOp, useViewHoldsVersion, type ClipBinding, type ClipWiring} from '../frame/detail/clipBinding'
@@ -25,6 +25,14 @@ import type {WorldTimelineView} from '../projections/useWorldTemporalReading'
 import {useTimelinePanePresentation} from '../projections/timelinePaneHost'
 import {chooseHeldScene, hasScenes, useSubjectOpenings, type SubjectOpening} from './subject/subjectOpenings'
 import {sceneRowsOf} from './subject/worldRows'
+import {CONSTELLATION_DRAG} from '../frame/browser/constellationFocus'
+import {madeEventOfClip} from '../timeline/techneTrackAdapter'
+import type {WorldActionReceipt, WorldTrackActions} from '../timeline/worldTrackAdapter'
+import {walkSession, type WalkSession} from '../projections/atlas/walks/walkSession'
+import type {MadeEvent} from '../projections/atlas/walks/walkRecord'
+import {answerKnowledgeWhole, liveKnowledgeWholeSource, type KnowledgeWholeSource} from '../native/wikiSubjectStanding'
+import {bodyFromKnowledgeWhole} from '../../../../../desktop/cradle/expressions-app/field-studies-journeys/src/nativeSceneBody'
+import type {SceneBody} from '../../../../../desktop/cradle/src/expression/types'
 
 /** The design's standing words (clips/techne.tsx STANDING). */
 const STANDINGS = new Set(['fact', 'claim', 'inference', 'guess', 'dispute', 'gap'])
@@ -172,6 +180,25 @@ export interface TechneClipInput {
   /** The wiki's constellations, which gather the event's subject (owners/constellations.ts), and whether a register is still being read. */
   readonly constellations?: readonly Constellation[] | null
   readonly wikiPending?: boolean
+  /** The events made of constellations, as the World's walk Expression was last read (walkSession.ts); null while it is unread. */
+  readonly made?: readonly MadeEvent[] | null
+}
+
+/** Where an event made of a constellation keeps its source: its Scene's body in the World's walk Expression. */
+export const MADE_EVENT_SOURCE = 'the World\'s walk Expression (kernel expression owner): the event Scene\'s body, the constellation as a knowledge whole'
+
+/** An event made of a constellation (O-I #768): its name, what it is, and its Scene as its source ref; its source the constellation its
+ * Scene's body keeps, read from the walk's owner — unread until the walk's Expression is read. Null when the selected clip is none. Pure. */
+export function madeEventOf(selected: SelectedClip, made: readonly MadeEvent[] | null | undefined): {values: Values; source: ClipSource} | null {
+  const sceneRef = madeEventOfClip(selected.clip?.id ?? selected.ref)
+  if (!sceneRef) return null
+  const event = made?.find(row => row.sceneRef === sceneRef)
+  const values: Record<string, Value> = {kind: 'event', name: event?.title ?? selected.clip?.label ?? sceneRef, 'event.kind': 'made of a constellation', 'source.ref': sceneRef}
+  put(values, 'colour', selected.track?.color)
+  put(values, 'span', spanOf(selected))
+  const source: ClipSource = event ? {made: 'of', ref: event.source, by: MADE_EVENT_SOURCE}
+    : {made: 'unread', why: 'The World\'s walk Expression is not read here, so the event\'s constellation is not named yet: open Earth to read it.'}
+  return {values, source}
 }
 
 /** Technē's clip binding: a World subject, a walk stop, or the World cut's event, in that order; null when none stands. Pure. */
@@ -183,6 +210,9 @@ export function techneClipBinding(input: TechneClipInput): ClipBinding | null {
     return clipBinding({mode: 'techne', ref: `subject:${input.worldSubject.ref}`, values: {...worldSubjectValues(input.worldSubject, input.opening), ...madeOfValues(source, rows)},
       wiring: withMadeOf(subjectWiring(input.worldSubject, input.opening), source), placed: true, viewDefaults: {'view.editor': 'material'}})
   }
+  const made = madeEventOf(selected, input.made)
+  if (made) return clipBinding({mode: 'techne', ref: selected.ref ?? selected.clip!.id, values: {...made.values, ...madeOfValues(made.source, rows)},
+    wiring: withMadeOf(TECHNE_WIRING, made.source), placed: input.placed, viewDefaults: {'view.editor': 'material'}})
   const stop = walkStopValues(selected)
   if (stop) return clipBinding({mode: 'techne', ref: selected.ref ?? selected.clip!.id, values: stop, wiring: withMadeOf(TECHNE_WIRING, STOP_SOURCE), placed: input.placed})
   if (input.worldCut && input.world) {
@@ -204,8 +234,36 @@ export function useTechneClip(): ClipBinding | null {
   useEffect(() => world?.spine.subscribe(() => setTick(value => value + 1)), [world])
   useViewHoldsVersion()
   const wiki = useConstellations()
+  const walk = useSyncExternalStore(walkSession.subscribe, walkSession.get, walkSession.get)
   // Until the World has disclosed the registers nothing is read, and while a register is read the source may still be found there:
   // either way it is unread, never "None".
   return techneClipBinding({worldCut, world, worldSubject, opening: worldSubject ? openings.get(worldSubject.ref) : undefined, selected,
-    placed: presentation === 'arrangement', constellations: wiki.registers > 0 ? wiki.rows : null, wikiPending: wiki.reading.length > 0})
+    placed: presentation === 'arrangement', constellations: wiki.registers > 0 ? wiki.rows : null, wikiPending: wiki.reading.length > 0,
+    made: walk.reading.phase === 'read' ? walk.reading.walk.events : null})
+}
+
+type Maker = NonNullable<WorldTrackActions['makeClip']>
+
+/** Technē's clip of a constellation (manual §10.3: "Drag it onto a track and this mode makes its own clip of it, with the constellation as its
+ * source: … an event in Technē"; §16.7 Make this mode's clip; §17.1 the Clip panel's Constellation, "The event's source"). The owner is
+ * the one that already keeps Technē's walks and kept views: the kernel Expression owner, in the World's walk Expression (walkRecord.ts).
+ * The event is a Scene there whose body is the constellation as a knowledge whole, the body Expressions' own drop sets: its reading is
+ * the wiki's (native/wikiSubjectStanding.ts answerKnowledgeWhole, the answer the frame reads), placed by the frame's own law
+ * (expressions-app nativeSceneBody.ts bodyFromKnowledgeWhole). The walk's session keeps it, saves it to the works home and reads its
+ * source back (walkSession.ts make), so a relaunch reads it from the file. A ref the wiki does not read is refused in its words. */
+export function techneEventMaker(session: Pick<WalkSession, 'make'> = walkSession, wholes: KnowledgeWholeSource = liveKnowledgeWholeSource): Maker {
+  return {accepts: CONSTELLATION_DRAG,
+    op: 'the wiki\'s reading of the constellation\'s whole, then the World\'s walk Expression: a Scene whose body is that whole (scene_create, scene_body_set), saved and read back',
+    run: async (_trackId: string, payload: string): Promise<WorldActionReceipt> => {
+      const ref = payload.trim()
+      let body: SceneBody, title: string
+      try {
+        const whole = await answerKnowledgeWhole({ref}, wholes)
+        body = bodyFromKnowledgeWhole(whole, ref) as SceneBody
+        title = whole.title?.trim() || ref
+      } catch (cause) {
+        return {ok: false, error: cause instanceof Error ? cause.message : String(cause)}
+      }
+      return session.make({ref, title}, body)
+    }}
 }

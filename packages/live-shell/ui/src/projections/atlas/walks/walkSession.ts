@@ -25,15 +25,19 @@
 // Sets how long the walk dwells at each stop"), the one the Palace's walk keeps (palaces/palaceSession.ts walkPace): a stop is recorded at
 // it and a take walks at it.
 //
+// O-I #768: a constellation dropped on Technē's tracks makes an event of it here (`make`): a Scene of the walk's Expression whose body is
+// the constellation as a knowledge whole (walkRecord.ts madeEventChanges), kept by the same one edit, save and readback as a take, and
+// answered by the source the owner reads back. The World must be open: its Expression is the world's.
+//
 // Pure TypeScript, no React. The host binds the owners and the World while the Earth stands (walksHost.ts).
 import {TOUR_FLIGHT_MS} from '../../../../../../../desktop/cradle/expressions-app/field-studies-journeys/src/placeTourRecord'
 import {materialFileName} from '../../../../../../../desktop/cradle/expressions-app/field-studies-journeys/src/reuse'
 import {requireExpressionOutcome} from '../../../../../../../desktop/cradle/src/knowledge/expressionOutcome'
 import {requireSavedExpression} from '../../../../../../../desktop/cradle/src/knowledge/expressionSaveReceipt'
 import type {CentralLocation} from '../../../../../../../desktop/cradle/src/kernel/types'
-import type {Change, ExpressionDocument, ExpressionRequest, ExpressionResult} from '../../../../../../../desktop/cradle/src/expression/types'
+import type {Change, ExpressionDocument, ExpressionRequest, ExpressionResult, SceneBody} from '../../../../../../../desktop/cradle/src/expression/types'
 import {
-  KEPT_VIEWS_WALK_ID, WALK_ACTOR, cameraOf, keptViewChanges, keptViewSceneRef, nextTakeName, stopOfVisit, takeChanges, takeWalkId, viewRecordOf, visitKey,
+  KEPT_VIEWS_WALK_ID, WALK_ACTOR, cameraOf, keptViewChanges, keptViewSceneRef, madeEventChanges, madeEventSceneRef, nextTakeName, stopOfVisit, takeChanges, takeWalkId, viewRecordOf, visitKey,
   walkExpressionRef, walkExpressionTitle, walkReadingOf, withStop,
   type AtlasCamera, type PlaceTimeWindowRecord, type PlaceTourMoment, type PlaceTourStop, type WalkReading, type WalkVisit,
 } from './walkRecord'
@@ -110,6 +114,8 @@ export interface WalkSession {
   /** Stop: end the recording and keep the take, or stop the walk that walks */
   stop(): Promise<void>
   capture(): Promise<void>
+  /** make an event of a constellation (O-I #768): a Scene of the walk's Expression whose body is the constellation, kept and read back */
+  make(made: {readonly ref: string; readonly title: string}, body: SceneBody): Promise<{ok: true; note: string} | {ok: false; error: string}>
   read(): Promise<void>
   /** walk a recorded take from stop `from`, or reopen a kept view; the refusal, or null once it stands */
   play(walkId: string, from: number): string | null
@@ -121,6 +127,8 @@ const timer: Later = (run, ms) => { const id = setTimeout(run, ms); return () =>
 
 export const WALK_NOT_OPEN = 'The World is not open in this session, so there is nothing to record or keep. Open Earth from the browser\'s Instruments.'
 export const WALK_NOT_ARMED = 'Arm lets the World write: arm it, then Record.'
+/** Why a constellation dropped on Technē's tracks makes no event while the World is closed: the event is kept by the World's own Expression. */
+export const EVENT_NOT_OPEN = 'Technē keeps the events you make in the World\'s walk Expression, and the World is not open in this session: open Earth from the browser\'s Instruments, then drop the constellation again.'
 const BUSY = 'The walk\'s owner is still answering the last act.'
 
 const INITIAL: WalkState = {bound: false, armed: false, recording: null, reading: {phase: 'unread'}, busy: false, playing: null, line: null}
@@ -379,6 +387,33 @@ export function createWalkSession({later = timer}: {later?: Later} = {}): WalkSe
           line: `Kept the view as the Scene ${title} of ${kept.walk.title}${carried}.${unsaved(kept.saveRefusal)}`})
       } catch (cause) {
         if (mine === generation) set({busy: false, line: `The view was not kept: ${said(cause)}.`})
+      }
+    },
+    async make(made, body) {
+      if (!owners || !world) return {ok: false, error: EVENT_NOT_OPEN}
+      if (state.busy) return {ok: false, error: BUSY}
+      const mine = generation
+      let sceneRef = ''
+      const refuse = (error: string) => { set({line: error}); return {ok: false as const, error} }
+      set({busy: true, line: `Making an event of ${made.title}…`})
+      try {
+        const kept = await keep(document => {
+          sceneRef = madeEventSceneRef(document)
+          return madeEventChanges(document, sceneRef, made.title, body)
+        })
+        if (mine !== generation) return {ok: false, error: 'The World closed while the event was made, so it was not read back.'}
+        set({busy: false, reading: {phase: 'read', walk: kept.walk, saved: kept.saved}})
+        // The source as the owner reads it back: the new Scene's body, never the ref the drop carried.
+        const back = kept.walk.events.find(event => event.sceneRef === sceneRef)
+        if (!back) return refuse(`The walk's Expression made the event ${made.title}, but its owner reads no event Scene ${sceneRef} back.`)
+        if (back.source !== made.ref) return refuse(`The walk's Expression made the event ${made.title}, but its owner reads its source as ${back.source}, not ${made.ref}.`)
+        const line = `Made the event ${made.title} in ${kept.walk.title}; its owner reads its source as the constellation.${unsaved(kept.saveRefusal)}`
+        set({line})
+        return {ok: true, note: line}
+      } catch (cause) {
+        const error = `No event was made of ${made.title}: ${said(cause)}.`
+        if (mine === generation) set({busy: false, line: error})
+        return {ok: false, error}
       }
     },
     read,

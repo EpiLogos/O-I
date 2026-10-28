@@ -437,6 +437,15 @@
       "reason": "Built 18 Oct with a kernel test (the list read, its membership refusal). 19 Oct: the underlying single-session read was exercised repeatedly while verifying encounter_session_settings's own effect (see that entry); the list form itself and its native candidate walk remain unexercised. No executed native walk is recorded here for encounter_session_settings_list; retain explicit operation-specific coverage debt until a walk names it."
     },
     {
+      "op": "encounter_task_configure",
+      "native_owner": "kernel/src/agency.rs",
+      "spec_ref": "ProjectCentral/docs/1-vision/dlw/DLW.md \u00a710.3 and \u00a716.7 (Make this mode's clip: a task in Factory), \u00a719.1 The Clip panel (Constellation); AIKit encounter_task.rs (encounter-task-configure, its request's source)",
+      "status": "unverified",
+      "scenarios": [],
+      "owner_lane": "A/native verification",
+      "reason": "Built 28 Oct (O-I #768) with a kernel test (agent_prepared task_configure_carries_the_request_to_the_owner_for_an_attached_session_only: the request and revision verbatim, the attachment gate, the record check, the owner's refusal in its words) and a shell test of the Factory drop. No executed native walk through the candidate shell is recorded here for encounter_task_configure; retain explicit operation-specific coverage debt until a walk names it."
+    },
+    {
       "op": "encounter_task_attempts_list",
       "native_owner": "kernel/src/agency.rs",
       "spec_ref": "docs/world-shell/wayfinder/tickets/T-TRACKS-FACTORY-sessions-and-tasks.md State of record (the FT row, moved from PATH \u00a77); AIKit docs/implementation/CAW-TASK-DISPATCH.md (encounter-task-attempts)",
@@ -871,6 +880,15 @@
       "scenarios": [],
       "owner_lane": "A/native verification",
       "reason": "Ported from the 8787 owner-service seam; no directly attributable executed native walk is recorded here for live_set_read; retain explicit operation-specific coverage debt until its owner supplies a receipt."
+    },
+    {
+      "op": "live_clip_create",
+      "native_owner": "kernel/src/live_set_owner.rs",
+      "spec_ref": "ProjectCentral/docs/1-vision/dlw/DLW.md \u00a710.3 (Make this mode's clip), \u00a721.1 the Clip panel's Constellation and \u00a721.2 What strikes the Torus; packages/live-set/src/edit.rs clip_create, packages/live-set/src/sources.rs",
+      "status": "unverified",
+      "scenarios": [],
+      "owner_lane": "A/native verification",
+      "reason": "Built 28 Oct (O-I #768) with live-set unit tests, a clip made on a copy of the real Live 12 template, and kernel tests; no executed native walk is recorded here for live_clip_create; retain explicit operation-specific coverage debt until a walk names it."
     },
     {
       "op": "live_take_comp",
