@@ -12,7 +12,7 @@
 import {useRef, type CSSProperties, type MouseEvent, type ReactNode} from 'react'
 import {Action, Chooser, Handle, Radio, Toggle, ValueBox, type Option, type Standing, type Tone} from '../../sdk/panel'
 import {has, strOf, type Value} from '../panels/design'
-import {TAB_KEY, type ClipProps, type ClipTab, type DesignedClip, type Place} from './design'
+import {MADE_OF, TAB_KEY, type ClipProps, type ClipTab, type DesignedClip, type Place} from './design'
 import './clips.css'
 
 /** Live's measures, at the kit's control size. */
@@ -461,4 +461,19 @@ export const write = (p: ClipProps, key: string, value: unknown) => p.set(key, J
 /** A momentary act a design draws as Live's buttons (Duplicate, Transform, Generate): the press is recorded on its key. */
 export function Press({p, k, label, does, why}: {p: ClipProps; k: string; label: string; does: string; why?: string}) {
   return <Action label={label} does={does} disabled={why} onPress={() => p.set(k, Date.now())} />
+}
+
+/** The clip's source, in every mode's Clip panel (manual §16.5: "The Clip panel names it under Constellation, in every mode, and Show in
+ * Browser beside it selects it in the browser (§10.3)"), as Live's Clip panel names an audio clip's sample with Show in Browser beside
+ * it: two cells, for a design's Row (labelled Constellation) or its Fields. `what` names the clip in the mode's words (the page, the
+ * task, the scene, the event, the clip). */
+export function MadeOf({p, what}: {p: ClipProps; what: string}) {
+  const ref = strOf(p.v, MADE_OF.ref)
+  const What = `${what[0]!.toUpperCase()}${what.slice(1)}`
+  const why = p.standing?.[MADE_OF.show]?.disabled ?? (ref ? undefined : `${What} was made of no constellation.`)
+  return <>
+    <Fact label="Constellation" does={`${What}'s source, as a sample is an audio clip's. Changing ${what} leaves the constellation as it is.`}
+      value={strOf(p.v, MADE_OF.name)} />
+    <Press p={p} k={MADE_OF.show} label="Show in Browser" does="Selects the constellation in the browser, and keeps it selected when you change mode." why={why} />
+  </>
 }

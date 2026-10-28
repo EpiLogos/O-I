@@ -54,7 +54,7 @@ node gates/run.mjs landing --skip site-contracts --keep-going --json
     candidate imports);
   - conformance, the frame suite and the Expressions boundary;
   - the production builds;
-  - five browser contracts over candidate-reachable components;
+  - six browser contracts over candidate-reachable components;
   - the live-* crates;
   - the site and publication contract tests.
 

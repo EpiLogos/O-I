@@ -69,4 +69,10 @@ export interface DesignedClip {
 
 /** The value keys that hold which tab each place shows. */
 export const TAB_KEY = {panel: 'view.panel', tools: 'view.tools', editor: 'view.editor'} as const
+
+/** The value keys of the clip's source, the same in every mode (manual §16.5: "A clip's source is its constellation, as a sample is an
+ * audio clip's. The Clip panel names it under Constellation, in every mode, and Show in Browser beside it selects it in the browser"):
+ * the constellation's name as the clip's owner reports it ("None" when the owner says the clip was made of none), its ref, and the
+ * Show in Browser press. */
+export const MADE_OF = {name: 'madeOf', ref: 'madeOf.ref', show: 'madeOf.show'} as const
 export type Place = keyof typeof TAB_KEY

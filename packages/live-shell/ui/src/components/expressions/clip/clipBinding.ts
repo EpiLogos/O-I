@@ -23,6 +23,8 @@ import type {Entity, NativeEditorBasis, NativeEditorChange, NativeEditorReading,
 import type {NativeSceneEditIntent} from '../../../../../../expressions-boundary/src/sceneEdits'
 import type {Value, Values} from '../../../frame/devices/designed'
 import {clipBinding, missingOp, useViewHoldsVersion, type ClipBinding, type ClipWiring} from '../../../frame/detail/clipBinding'
+import {madeOfValues, withMadeOf, type ClipSource} from '../../../frame/detail/clipSource'
+import {useConstellations, type Constellation} from '../../../owners/constellations'
 import {useSelectedClip} from '../../../frame/detail/ClipBox'
 import {useDetailReading} from '../../../frame/detail/detailReading'
 import {useTimelinePanePresentation} from '../../../projections/timelinePaneHost'
@@ -234,10 +236,26 @@ export function layerChanges(reading: NativeEditorReading, next: readonly Layer[
 }
 
 const parsed = <T,>(value: Value): T => JSON.parse(String(value)) as T
+
+/** A scene's source (manual §20.1 The Clip panel: "Constellation — The one the scene was made of — The scene's source"), as the
+ * Expression's owner keeps it: the scene's body, when it carries a knowledge whole (the native carrier `knowledge_whole`, expression/
+ * types.ts CarrierKind), is the constellation the scene was made of; any other body, or none (the live engine composition), is made of
+ * none. A scene whose body is not disclosed is unread. Pure. */
+export function sceneSourceOf(native: NativeEditorReading['nativeScene'] | null | undefined): ClipSource {
+  if (!native) return {made: 'unread', why: 'The scene\'s body is not disclosed by its owner, so its constellation is not read.'}
+  const body = native.body
+  if (body?.carrier === 'knowledge_whole') return {made: 'of', ref: body.subject_ref, by: 'the scene\'s body: a knowledge whole, its subject (the Expression\'s owner)'}
+  return {made: 'none', by: 'the scene\'s body (the Expression\'s owner): a knowledge whole is the constellation a scene is made of'}
+}
 const EXPRESSIONS = 'Expressions (the retained native editor, expressions-app hostEditor)'
 
 /** clip:expressions's wiring on one reading and its request door. */
 export function expressionsWiring(reading: NativeEditorReading, request: EditorRequest | null, present?: (editor: 'source' | 'layers' | 'placement', basis: NativeEditorBasis) => void,
+  held: Readonly<Record<string, Value>> = {}): ClipWiring {
+  return withMadeOf(sceneWiring(reading, request, present, held), sceneSourceOf(reading.nativeScene))
+}
+
+function sceneWiring(reading: NativeEditorReading, request: EditorRequest | null, present?: (editor: 'source' | 'layers' | 'placement', basis: NativeEditorBasis) => void,
   held: Readonly<Record<string, Value>> = {}): ClipWiring {
   const send = async (sent: NativeEditorRequest) => { await answered(request, sent) }
   const scene_ref = reading.basis.scene_ref
@@ -327,6 +345,8 @@ export interface ExpressionsClipInput {
   readonly placed?: boolean
   /** The owner's mode catalogue, for the voice's "Name or mode" row; null while it is not read. */
   readonly modes?: QlMusicModes | null
+  /** The wiki's constellations, which name the scene's source (owners/constellations.ts). */
+  readonly constellations?: readonly Constellation[] | null
 }
 
 /** Expressions' clip binding: the presented scene of the open Expression, or null while none is read. Pure. */
@@ -338,7 +358,8 @@ export function expressionsClipBinding(input: ExpressionsClipInput): ClipBinding
   const first = clipBinding({mode: 'expressions', ref, values: {}, wiring: expressionsWiring(reading, input.request, input.present), viewDefaults: defaults})
   // The arrange plan reads the view's own choices (its rule, plane and objects), as held now.
   const wiring = expressionsWiring(reading, input.request, input.present, first.values)
-  return clipBinding({mode: 'expressions', ref, values: expressionsClipValues(reading, input.colour, input.modes ?? null), wiring, placed: input.placed, viewDefaults: defaults})
+  const values = {...expressionsClipValues(reading, input.colour, input.modes ?? null), ...madeOfValues(sceneSourceOf(reading.nativeScene), input.constellations)}
+  return clipBinding({mode: 'expressions', ref, values, wiring, placed: input.placed, viewDefaults: defaults})
 }
 
 /** The presented scene's clip binding, from the retained native editor. */
@@ -350,7 +371,8 @@ export function useExpressionsClip(): ClipBinding | null {
   useViewHoldsVersion()
   const editor = workspace.editor
   const modes = useLiveModeCatalogue().reading
+  const constellations = useConstellations().rows
   return expressionsClipBinding({reading: workspace.editorReading ?? null, request: editor ? operation => editor.request(operation) : null,
     present: native.presentNativeEditor, colour: selected.track?.color, placed: presentation === 'arrangement',
-    modes: modes.state === 'ready' ? modes.catalogue : null})
+    modes: modes.state === 'ready' ? modes.catalogue : null, constellations})
 }

@@ -33,6 +33,9 @@ import type {CentralLocation, KernelTransportStatus, NativeDirectory, PageField}
 import {writePageField} from '../../../../../desktop/cradle/src/personal/pageOwner'
 import type {Value, Values} from '../frame/devices/designed'
 import {clipBinding, clipHostId, useViewHoldsVersion, viewHoldsOf, type ClipBinding, type ClipWiring} from '../frame/detail/clipBinding'
+import {madeOfValues, withMadeOf, type ClipSource} from '../frame/detail/clipSource'
+import {MADE_OF} from '../inhabitants/catalogue/clips/design'
+import {useConstellations, type Constellation} from '../owners/constellations'
 import {useSelectedClip} from '../frame/detail/ClipBox'
 import {useDetailReading} from '../frame/detail/detailReading'
 import type {CentralSubjectSelection} from '../inhabitants/CentralSubjectDetail'
@@ -124,6 +127,9 @@ export function pageIslandValues(doc: unknown): Values | null {
   for (const [key, from] of [['world', bindings.worldRef], ['subject', bindings.subjectRef], ['expression', bindings.expressionRef]] as const) if (typeof from === 'string' && from) values[key] = from
   if (family === 'beings' && (bindings.kind === 'person' || bindings.kind === 'agent')) values.being = bindings.kind
   Object.assign(values, ownValues(meta))
+  // The constellation the page was made of (manual §18.1 The Clip panel: "The one the page was made of … The page's source"): its ref,
+  // as the page's island keeps it from its first write (flow/createInPlace.ts tieMadeOf).
+  if (typeof bindings.constellationRef === 'string' && bindings.constellationRef) values[MADE_OF.ref] = bindings.constellationRef
   if (Array.isArray(bindings.categories)) values.office = [1, 2, 3, 4].filter(n => (bindings.categories as unknown[]).includes(`C${n}`)).join(',')
   if (Array.isArray(bindings.sources)) values.sources = JSON.stringify(bindings.sources.map(record).filter((s): s is Record<string, unknown> => s !== null)
     .map(source => `${text(source.ref) ?? ''}${text(source.revision) ? ` @ ${text(source.revision)}` : ''}`))
@@ -150,6 +156,8 @@ function ownValues(meta: Record<string, unknown>): Record<string, Value> {
   const values: Record<string, Value> = {}
   if (typeof meta.colour === 'string' && meta.colour) values.colour = meta.colour
   if (typeof meta.container === 'string' && meta.container) values.container = meta.container
+  // A Flow keeps the constellation it was made of in its meta (flow/createInPlace.ts tieMadeOf).
+  if (typeof meta.constellation === 'string' && meta.constellation) values[MADE_OF.ref] = meta.constellation
   const launch = record(meta.launch) ?? {}
   if (typeof launch.opensAs === 'string') values.opensAs = launch.opensAs
   if (typeof launch.opensIn === 'string') values.opensIn = launch.opensIn
@@ -229,8 +237,8 @@ export const fileValues = (content: string, fallbackKind: string): Values => fil
 
 // ---------------------------------------------------------------------------------------------------------------- the wiring
 
-/** clip:central's wiring: every key the design draws or sets, in the page family's own words. */
-export const CENTRAL_WIRING: ClipWiring = {
+/** clip:central's wiring before its source: every key the design draws or sets, in the page family's own words. */
+const PAGE_WIRING: ClipWiring = {
   reads: {
     name: 'the page\'s title: a Flow\'s meta.title, an oi.page meta.title, else the file\'s or the clip\'s own name', colour: 'the page\'s own colour (meta.colour), else its track\'s colour (the tracks pane)',
     kind: 'the page\'s form: Flow, Being, Thing, Day, or the file\'s kind', template: 'the template the page names, at its version', revision: 'the owner\'s CAS revision of the bytes',
@@ -270,6 +278,20 @@ export const CENTRAL_WIRING: ClipWiring = {
     stop: 'A page is a stop on no walk until it joins the atlas as an occurrence (T-WORLDS W2).',
   },
 }
+
+/** Where the page owner keeps a page's source (kernel/src/page.rs reads the island whole). */
+const PAGE_SOURCE = 'the page\'s island: an oi.page page\'s bindings.constellationRef, a Flow\'s meta.constellation (the page owner, kernel/src/page.rs)'
+/** What Central reads of a clip's source: the constellation a page's island names; a page that names none was made of none; anything
+ * that is no page keeps none of its own. Pure. */
+export function centralSourceOf(values: Values): ClipSource {
+  const ref = values[MADE_OF.ref]
+  if (typeof ref === 'string' && ref) return {made: 'of', ref, by: PAGE_SOURCE}
+  if (['flow', 'being', 'thing', 'page'].includes(String(values.kind))) return {made: 'none', by: PAGE_SOURCE}
+  return {made: 'unread', why: 'Only a page keeps the constellation it was made of, in its island: a Day, a note or a folder keeps none of its own.'}
+}
+
+/** clip:central's wiring: every key the design draws or sets, in the page family's own words. */
+export const CENTRAL_WIRING: ClipWiring = withMadeOf(PAGE_WIRING, {made: 'none', by: PAGE_SOURCE})
 
 // ---------------------------------------------------------------------------------------------------------------- the readings
 
@@ -378,8 +400,11 @@ const PAGE_VIEW: Readonly<Record<string, string>> = {
 
 /** The page's binding over its reading: the save outcome where the reached page is this file; the page's own fields written through
  * the page owner where a writer is given. Pure. */
-export function centralClipBinding(reading: CentralReading, input: {colour?: string | null; reached?: DocumentInPane | null; write?: PageWrite | null; answer?: AnswerHand | null}): ClipBinding {
-  const values: Record<string, Value> = {...reading.values}
+export function centralClipBinding(reading: CentralReading, input: {colour?: string | null; reached?: DocumentInPane | null; write?: PageWrite | null; answer?: AnswerHand | null;
+  /** The wiki's constellations, which name the page's source (owners/constellations.ts). */
+  constellations?: readonly Constellation[] | null}): ClipBinding {
+  const source = centralSourceOf(reading.values)
+  const values: Record<string, Value> = {...reading.values, ...madeOfValues(source, input.constellations)}
   if (input.colour && !values.colour) values.colour = input.colour
   const reached = input.reached
   const here = reached && reading.location && reached.location?.ref === reading.location.ref ? reached : null
@@ -391,7 +416,7 @@ export function centralClipBinding(reading: CentralReading, input: {colour?: str
     ...(values.container && values.container !== 'none' ? {entryKind: 'observe'} : {})}
   const view = (): Values => ({...values, ...viewDefaults, ...viewHoldsOf(clipHostId('central', ref))})
   const writable = input.write && reading.location && reading.island && ['flow', 'being', 'thing'].includes(String(values.kind))
-  const wiring = writable ? pageWiring(input.write!, values.kind, reading.island, here, view, input.answer ?? null) : CENTRAL_WIRING
+  const wiring = withMadeOf(writable ? pageWiring(input.write!, values.kind, reading.island, here, view, input.answer ?? null) : CENTRAL_WIRING, source)
   return clipBinding({mode: 'central', ref, values, wiring, placed: true, viewDefaults})
 }
 /** Who the next entry belongs to by default: in a Circle the one who holds the word (flow/plural.ts circleHolder: Speak as passes round
@@ -505,6 +530,8 @@ export function useCentralClip(): ClipBinding | null {
   const reached = useReachedDocument()
   useViewHoldsVersion()
   useSpine(world)
+  // The wiki's constellations name a page's source (owners/constellations.ts).
+  const constellations = useConstellations().rows
   const subject = centralSubject
   const resolved = subject || !world ? null : resolveCentralOccasion(world.spine.occasion(), world.source.events)
   const occasion = resolved?.state === 'selected' ? resolved.selection : null
@@ -550,15 +577,15 @@ export function useCentralClip(): ClipBinding | null {
         }
       }}
     const values = answer.phase === 'reading' ? {kind: FORM[subject.kind], name} : {...answer.values, ...beingSky}
-    return centralClipBinding({ref, values, location, island}, {colour, reached, write, answer: answering})
+    return centralClipBinding({ref, values, location, island}, {colour, reached, write, answer: answering, constellations})
   }
   if (resolved?.state === 'absent') return centralClipBinding({ref: `occasion:${resolved.ref}`, values: {name: resolved.ref,
-    page: JSON.stringify(pageOfText(`The retained occasion ${resolved.ref} is no longer in the temporal reading. The spine keeps its basis; nothing opens for it here.`))}}, {colour})
-  if (mainDay) return centralClipBinding({ref: `main:${mainDay.dayRef}`, values: day ?? {kind: 'day', name: `Day · ${mainDay.civilDate}`}}, {colour})
+    page: JSON.stringify(pageOfText(`The retained occasion ${resolved.ref} is no longer in the temporal reading. The spine keeps its basis; nothing opens for it here.`))}}, {colour, constellations})
+  if (mainDay) return centralClipBinding({ref: `main:${mainDay.dayRef}`, values: day ?? {kind: 'day', name: `Day · ${mainDay.civilDate}`}}, {colour, constellations})
   if (!occasion) return null
   const ref = `occasion:${occasion.subjectRef}:${occasion.instantUnixMs ?? 'undated'}`
-  if (occasion.kind === 'day') return centralClipBinding({ref, values: day ?? {kind: 'day'}}, {colour})
-  return centralClipBinding({ref, values: occasionAnswer && occasionAnswer.phase !== 'reading' ? occasionAnswer.values : {name: occasion.summary ?? occasion.subjectRef}}, {colour})
+  if (occasion.kind === 'day') return centralClipBinding({ref, values: day ?? {kind: 'day'}}, {colour, constellations})
+  return centralClipBinding({ref, values: occasionAnswer && occasionAnswer.phase !== 'reading' ? occasionAnswer.values : {name: occasion.summary ?? occasion.subjectRef}}, {colour, constellations})
 }
 
 /** Re-read when the ONE spine's occasion moves (CentralClipChooser.tsx subscribed the same way). */

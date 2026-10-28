@@ -109,6 +109,22 @@ export function tieWorld(html: string, worldRef: string): string {
   return spliced(html, doc);
 }
 
+/** A page made of a constellation (manual §10.3: "Drag it onto a track and this mode makes its own clip of it, with the constellation as
+ * its source: a page in Central"; §18.1 The Clip panel: "Constellation — The one the page was made of — The page's source"): its island
+ * names the constellation's ref and takes its title from its first write — a Being's or Thing's `bindings.constellationRef` and
+ * `meta.title`, a Flow's `meta.constellation` and `meta.title` (central clipBinding.ts reads the same keys). Every other byte stays as it
+ * was; a page with no island is returned as it is. */
+export function tieMadeOf(html: string, madeOf: {readonly ref: string; readonly title: string}): string {
+  let doc: IslandDoc;
+  try { doc = parseInstance(html); } catch { return html; }
+  if (doc.profile === "oi.page/v1") {
+    doc.bindings = {...(doc.bindings ?? {}), constellationRef: madeOf.ref};
+    doc.meta = {...(doc.meta ?? {}), title: madeOf.title};
+  } else if (doc.meta && Array.isArray(doc.entries)) doc.meta = {...doc.meta, constellation: madeOf.ref, title: madeOf.title};
+  else return html;
+  return spliced(html, doc);
+}
+
 /** The keys of a Flow's meta that are its mint's own: what it is made for never names them. */
 const MINTED_META: ReadonlySet<string> = new Set(["documentId", "created", "revision", "participants", "format", "upgrade"]);
 
@@ -129,14 +145,17 @@ export async function createFormInPlace(transport: KernelTransportStatus, form: 
   worldRef?: string;
   /** What a Flow page is made for, kept in its meta from its first write (T-WORLDS W4: a practice page's `meta.practice`, a sitting's
    * record): merged into a Flow's meta. Its identity (documentId, created, revision, participants, format) is the mint's, never this. */
-  meta?: Readonly<Record<string, unknown>>}): Promise<CreatedCopy> {
+  meta?: Readonly<Record<string, unknown>>;
+  /** The constellation a page form is made of: its island names it as its source, and takes its title, from its first write. */
+  madeOf?: {readonly ref: string; readonly title: string}}): Promise<CreatedCopy> {
   const now = options.now ?? new Date();
   // Goal, Vision and Mockup are asked for in the scope's own human ground —
   // through the owner's authored creation door; so is a world's page in a
   // project's scope (the project's world keeps its pages in its own folder).
   // Every other form lands at Central's first-save door (Control/user/flows).
   const worldPage = WORLD_PAGE_FORMS.has(form.kind);
-  const tied = (html: string) => worldPage && options.worldRef ? tieWorld(html, options.worldRef) : html;
+  const placed = (html: string) => worldPage && options.worldRef ? tieWorld(html, options.worldRef) : html;
+  const tied = (html: string) => worldPage && options.madeOf ? tieMadeOf(placed(html), options.madeOf) : placed(html);
   const tie = (html: string) => options.meta && form.kind === "document-01" ? withFlowMeta(tied(html), options.meta) : tied(html);
   const inPlace = form.kind === "document-goal" || form.kind === "document-vision" || form.kind === "document-mockup" || (worldPage && !!options.project);
   if (inPlace && (form.kind !== "document-goal") && !options.project) {

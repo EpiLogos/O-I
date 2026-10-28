@@ -186,7 +186,7 @@ jobs:
       # subject is candidate-reachable) and the hosted frame; none needs a live
       # native service. Contracts whose subject only the legacy desktop reaches
       # are not run here.
-      - name: Browser contracts — search, text editor, Expression stage, canvas surfaces, frame formations
+      - name: Browser contracts — search, text editor, Expression stage, canvas surfaces, frame formations, frame effects
         working-directory: desktop/cradle
         run: |
           node tests/search-overlay.mjs
@@ -194,6 +194,7 @@ jobs:
           node tests/expression-provider-lifecycle.mjs
           node tests/canvas-editor-browser.mjs
           node tests/formation-native-regressions.mjs
+          node tests/native-expression-effects-browser.mjs
       - name: Retain browser contract evidence
         if: always()
         uses: actions/upload-artifact@v4

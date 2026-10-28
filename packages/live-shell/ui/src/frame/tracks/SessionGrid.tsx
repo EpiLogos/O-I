@@ -227,6 +227,7 @@ export function SessionGridView({set, selection, folded, onFold, receipt, onPres
   const {here: stalledHere} = stalledLanes(set, tree)
   const launch = set.actions?.launch, launchStop = set.actions?.launchStop, stopTrack = set.actions?.stopTrack, retry = set.actions?.retry, seat = set.actions?.seat
   const removeTrack = set.actions?.removeTrack
+  const makeClip = set.actions?.makeClip
   const recordSlot = set.actions?.recordSlot, launchTrack = set.actions?.launchTrack
   const mainName = set.main?.name
   const mainTitle = set.main ? `${mainName} · its chain: ${set.main.chain.length ? set.main.chain.join(', ') : 'none named'}` : undefined
@@ -272,8 +273,16 @@ export function SessionGridView({set, selection, folded, onFold, receipt, onPres
         // A track merged from another reading takes none of the set's actions.
         const owned = !track.readOnly
         const trackLaunch = owned ? launch : undefined, trackStop = owned ? stopTrack : undefined
+        // A constellation dropped on the track makes the mode's clip of it (manual §10.3, §16.7 Make this mode's clip): the track takes
+        // the set's drag type and the owner answers where the drop landed. A return track and a track read from another reading take none.
+        const maker = makeClip && owned && !track.returns ? makeClip : null
+        const makeKey = `make:${track.id}`
         return <div key={track.id} className={`trk${level ? ' sub' : ''}${track.returns ? ' trk-return' : ''}`} role="row" style={{...style, ...(rails.length ? {'--rails': rails.length} : {})} as CSSProperties}
-          data-track={track.id} data-depth={level || undefined} data-group={foldable ? 'true' : undefined} data-stalled={lit ? 'true' : undefined}>
+          data-track={track.id} data-make-clip={maker ? 'open' : undefined} data-depth={level || undefined} data-group={foldable ? 'true' : undefined} data-stalled={lit ? 'true' : undefined}
+          data-receipt={maker ? receiptMark(receipt, makeKey) : undefined}
+          onDragOver={maker ? event => { if (event.dataTransfer.types.includes(maker.accepts)) { event.preventDefault(); event.dataTransfer.dropEffect = 'copy' } } : undefined}
+          onDrop={maker ? event => { const payload = event.dataTransfer.getData(maker.accepts); if (!payload) return; event.preventDefault()
+            onPress(makeKey, `Make ${track.name}'s clip`, () => maker.run(track.id, payload)) } : undefined}>
           {rails.length > 0 && <span className="rails" aria-hidden="true">{rails.map((colour, i) => <i key={i} style={{background: colour}} />)}</span>}
           {foldable && <button type="button" className="gf" aria-expanded={open} aria-label={`${open ? 'Fold' : 'Unfold'} ${track.name}`}
             title={`${open ? 'Fold' : 'Unfold'} the ${members.length} under ${track.name}`} onClick={() => onFold(track.id)}>{open ? '▼' : '▶'}</button>}

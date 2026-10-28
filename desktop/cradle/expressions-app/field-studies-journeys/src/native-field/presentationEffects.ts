@@ -26,6 +26,16 @@
  * measure finds it (convolverLeaksNyquist), the bank rings each side through a convolver whose response stands beside silence: the two halves
  * leak alike, and the silent half's output, the leak alone, is taken from the other's. That is four convolutions where one served (10 s of
  * noise through 1440 bodies renders in 1.5 s there, 0.4 s before); elsewhere the bank is one plain convolver.
+ * The reverb's room rings the same way where the leak is found, a side at a time (#unleakRoom; its two halves were two convolutions already,
+ * so four where two served), with two things more, because the room, unlike the bank's bodies, is loud at half the sample rate. The same
+ * convolver never multiplies the response's own Nyquist bin either, so the subtraction alone leaves each block's share of it out (an impulse
+ * through a Decay 2.4 s room: what was left over peaked 22 dB under the room); every block of a response it transforms starts on a multiple
+ * of 64 frames (NYQUIST_BLOCK), so the room is made with nothing at half the sample rate in any 64-frame block (reverbImpulse) and nothing
+ * is there to multiply. And the convolver normalises a response by the power of all its channels, so each side's half, standing beside silence, takes
+ * back the share of the room's power the silence left out. Uncorrected, Decay 2.4 s rang 60 dB down in 4.37 s and the leak peaked 4 dB over
+ * the room; corrected, the room comes out as in Chromium (tests/native-expression-effects-browser.mjs). The price there is twice the work:
+ * 10 s of noise through a Decay 2.4 s room renders in 2.1 s (1.05 s before), through Decay 20 s in 11.2 s (5.6 s); Chromium, unchanged,
+ * 0.9 s and 6.7 s (Omarchy, 4 cores, load 0.9).
  *
  * The room is generated, not sampled: noise falling 60 dB in Decay, its bright part falling faster with Damping (to a fifth of the
  * Decay at 100 %), after six early reflections spaced by Size — the law the design draws (catalogue/panels/live__reverb.tsx Tail).
@@ -51,6 +61,9 @@ export type Defer = (run: () => void, ms: number) => () => void;
 const later: Defer = (run, ms) => { const timer = setTimeout(run, ms); return () => clearTimeout(timer); };
 
 const SMOOTH = 0.015, ROOM_PAUSE_MS = 60, MAX_DELAY = 6, MAX_PREDELAY = 0.3, MAX_ROOM = 22, QUANTUM = 128;
+/** The frames every block of a response a convolver transforms starts on. Measured on Linux WebKit: its first transformed block begins at
+ * frame 64, and a room with nothing at half the sample rate in any 64-frame block comes out exact (tests/native-expression-effects-browser.mjs). */
+const NYQUIST_BLOCK = 64;
 /** The bank's response lasts this many Decays: at 1.25 it is cut 75 dB down, far under what can be heard of a 60 dB fall. */
 export const RESONATOR_TAIL = 1.25;
 /** The most body-samples one slice of the response's making adds (about 10 to 20 ms on this machine). */
@@ -69,7 +82,8 @@ function noise(seed: number): () => number {
 }
 
 /** The room's impulse response, two channels: early reflections by Size, then noise falling 60 dB in Decay, its bright part (what a
- * one-pole low-pass at 2 kHz leaves out) falling 60 dB in Decay·(1 − 0.8·Damping). */
+ * one-pole low-pass at 2 kHz leaves out) falling 60 dB in Decay·(1 − 0.8·Damping). Each block of NYQUIST_BLOCK frames then sums to nothing at
+ * half the sample rate (the head of this file). */
 export function reverbImpulse(sampleRate: number, size: number, decay: number, damping: number): Float32Array[] {
   const length = Math.max(1, Math.ceil(Math.min(MAX_ROOM, decay * 1.1 + 0.05) * sampleRate));
   const bright = decay * (1 - 0.8 * damping / 100), gap = (3 + size / 100 * 27) / 1000;
@@ -88,6 +102,14 @@ export function reverbImpulse(sampleRate: number, size: number, decay: number, d
     for (let k = 0; k < 6; k++) {
       const at = Math.round(gap * (k + 1) * sampleRate);
       if (at < length) out[at] = out[at]! + (channel === k % 2 ? 1 : -1) * dbToGain(-60 * gap * (k + 1) / decay - 3 * k);
+    }
+    // Each block's part at half the sample rate (its alternating mean) is taken out: under 2 % of the room's power, 96 % of that above 22 kHz.
+    for (let at = 0; at < length; at += NYQUIST_BLOCK) {
+      const end = Math.min(length, at + NYQUIST_BLOCK);
+      let sum = 0;
+      for (let i = at; i < end; i++) sum += i % 2 ? -out[i]! : out[i]!;
+      const mean = sum / (end - at);
+      for (let i = at; i < end; i++) out[i] = out[i]! - (i % 2 ? -mean : mean);
     }
     return out;
   });
@@ -181,7 +203,10 @@ export class PresentationEffects {
   readonly #filter: {in: GainNode; dry: GainNode; drive: GainNode; biquad: BiquadFilterNode; wet: GainNode; out: GainNode};
   readonly #dynamics: {in: GainNode; dry: GainNode; compressor: DynamicsCompressorNode; makeup: GainNode; wet: GainNode; out: GainNode};
   readonly #delay: {in: GainNode; send: GainNode; line: DelayNode; loop: DelayNode; tone: BiquadFilterNode; feedback: GainNode; wet: GainNode; out: GainNode};
-  readonly #reverb: {in: GainNode; dry: GainNode; pre: DelayNode; convolver: ConvolverNode; wet: GainNode; out: GainNode};
+  /** The room's convolver and, where the engine leaks, the room a side at a time (#unleakRoom): each side's convolver and the gains that take
+   * back its share of the room's level, from its half and from its silent half. */
+  readonly #reverb: {in: GainNode; dry: GainNode; pre: DelayNode; convolver: ConvolverNode; wet: GainNode; out: GainNode;
+    sides: {convolver: ConvolverNode; room: GainNode; leak: GainNode}[] | null};
   /** The bank's ringing is made only when it first sounds: a bank that is never put on the chain costs one gain node. The ringing is its
    * convolvers (one, or one a side where the engine leaks), where the bank's input joins it, and whether it is joined. */
   readonly #resonator: {in: GainNode; dry: GainNode; wet: GainNode; out: GainNode; ring: {convolvers: ConvolverNode[]; entry: AudioNode; joined: boolean} | null};
@@ -206,7 +231,8 @@ export class PresentationEffects {
     wire(delay.tone, delay.feedback, delay.loop, delay.tone);
     wire(delay.tone, delay.wet, delay.out);
     // Reverb: the dry and the room after the pre-delay, blended by Dry/wet; the room's path joins only while the reverb sounds.
-    const reverb = {in: gain(), dry: gain(), pre: this.#keep(context.createDelay(MAX_PREDELAY)), convolver: this.#keep(context.createConvolver()), wet: gain(), out: gain()};
+    const reverb = {in: gain(), dry: gain(), pre: this.#keep(context.createDelay(MAX_PREDELAY)), convolver: this.#keep(context.createConvolver()), wet: gain(), out: gain(),
+      sides: null};
     wire(reverb.in, reverb.dry, reverb.out);
     wire(reverb.pre, reverb.convolver, reverb.wet, reverb.out);
     reverb.convolver.normalize = true;
@@ -377,7 +403,7 @@ export class PresentationEffects {
     this.#join(joined);
   }
 
-  /** Generate the room for these settings, once the edits pause; the first room is made at once. */
+  /** Generate the room for these settings, once the edits pause; the first room is made at once, once the page has measured its convolver. */
   #roomFor(size: number, decay: number, damping: number, now: boolean) {
     const key = `${size}/${decay}/${damping}`;
     if (key === this.#room) return;
@@ -386,13 +412,56 @@ export class PresentationEffects {
     const make = () => {
       this.#cancelRoom = null;
       if (this.#closed) return;
-      const channels = reverbImpulse(this.#context.sampleRate, size, decay, damping);
-      const buffer = this.#context.createBuffer(2, channels[0]!.length, this.#context.sampleRate);
-      channels.forEach((data, channel) => buffer.copyToChannel(data, channel));
-      this.#reverb.convolver.buffer = buffer;
+      // The first room waits for the page's measure of the convolver (once, a few milliseconds).
+      const measure = convolverLeaksNyquist();
+      if (nyquistLeak === undefined) {
+        let live = true;
+        void measure.then(() => { if (live) make(); });
+        this.#cancelRoom = () => { live = false; };
+        return;
+      }
+      const rate = this.#context.sampleRate, channels = reverbImpulse(rate, size, decay, damping);
+      if (!nyquistLeak) {
+        const buffer = this.#context.createBuffer(2, channels[0]!.length, rate);
+        channels.forEach((data, channel) => buffer.copyToChannel(data, channel));
+        this.#reverb.convolver.buffer = buffer;
+        return;
+      }
+      // Where the engine leaks, each side's half of the room stands beside silence, and takes back its share of the room's power.
+      const sides = this.#unleakRoom(), power = channels.map(data => data.reduce((sum, x) => sum + x * x, 0)), whole = power[0]! + power[1]!;
+      channels.forEach((data, side) => {
+        const {convolver, room, leak} = sides[side]!, buffer = this.#context.createBuffer(2, data.length, rate);
+        buffer.copyToChannel(data, 0);
+        convolver.buffer = buffer;
+        room.gain.value = Math.sqrt(power[side]! / whole); leak.gain.value = -room.gain.value;
+      });
     };
     if (now || this.#reverb.convolver.buffer === null) make();
     else this.#cancelRoom = this.#defer(make, ROOM_PAUSE_MS);
+  }
+
+  /** Where the engine's convolver leaks (convolverLeaksNyquist): the room a side at a time, as the bank rings (#unleak). Each side's convolver
+   * holds that side's half of the room beside silence, and from its output the silent half's, the leak alone, is taken away. The convolver
+   * normalises a response by the power of all its channels, so a half beside silence comes out louder than in the whole room by the root of the
+   * room's power over the half's: each side takes that back (#roomFor). Made once, before the first room is in, so nothing has rung yet. */
+  #unleakRoom(): {convolver: ConvolverNode; room: GainNode; leak: GainNode}[] {
+    const r = this.#reverb, context = this.#context;
+    if (r.sides) return r.sides;
+    // The pre-delay's sound as two sides: a mono sound on both, a stereo sound (a bank before the reverb) on its own.
+    const sides = this.#keep(context.createGain());
+    sides.channelCount = 2; sides.channelCountMode = 'explicit'; sides.channelInterpretation = 'speakers';
+    const split = this.#keep(context.createChannelSplitter(2)), merge = this.#keep(context.createChannelMerger(2));
+    r.pre.disconnect(r.convolver); r.convolver.disconnect();
+    wire(r.pre, sides, split);
+    merge.connect(r.wet);
+    r.sides = [r.convolver, this.#keep(context.createConvolver())].map((convolver, side) => {
+      const halves = this.#keep(context.createChannelSplitter(2)), room = this.#keep(context.createGain()), leak = this.#keep(context.createGain());
+      convolver.normalize = true;
+      split.connect(convolver, side); convolver.connect(halves);
+      halves.connect(room, 0); halves.connect(leak, 1); room.connect(merge, 0, side); leak.connect(merge, 0, side);
+      return {convolver, room, leak};
+    });
+    return r.sides;
   }
 
   /** The state this graph sounds. */

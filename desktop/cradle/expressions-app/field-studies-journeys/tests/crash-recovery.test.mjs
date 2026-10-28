@@ -19,6 +19,13 @@ function expression(id,name,updatedAt,scenes=1){
 }
 const material=j=>{const c=clone(j);delete c.updatedAt;return JSON.stringify(c);};
 function sessionStore(){const map=new Map();return {map,getItem:k=>map.has(k)?map.get(k):null,setItem:(k,v)=>{map.set(k,v);}};}
+/** Run `body` on a page whose tab store (the global sessionStorage) is `store`, or on a page with none; Node's own is put back after. Node
+ * has no global sessionStorage before 25 and has one from 25 on, so a test that reads the page's tab store says which page it means. */
+function onPage(store,body){
+ const own=Object.getOwnPropertyDescriptor(globalThis,'sessionStorage');
+ Object.defineProperty(globalThis,'sessionStorage',{value:store,configurable:true,writable:true});
+ try{return body();}finally{if(own)Object.defineProperty(globalThis,'sessionStorage',own);else delete globalThis.sessionStorage;}
+}
 
 test('a clean exit offers nothing, even when the draft has edits the saved copy lacks', ()=>{
  const saved=expression('e1','Saved',T0),draft=expression('e1','Saved',T1,2);
@@ -88,14 +95,17 @@ test('a long name is cut so the copy still names its origin within the 160-chara
 });
 
 test('the session mark: absent is clean, open is unclean, closed is clean, and an unreadable mark counts as unclean', ()=>{
- const s=sessionStore();
- assert.equal(readUncleanExit(s),false,'first run is clean');
- markSessionOpen(s,new Date());
- assert.equal(readUncleanExit(s),true,'a page that opened and never closed');
- markSessionClosed(s,new Date());
- assert.equal(readUncleanExit(s),false,'a page that quit cleanly');
- s.setItem(SESSION_MARK_KEY+'.shared','{broken');
- assert.equal(readUncleanExit(s),true,'an unreadable mark cannot prove a clean exit');
+ // On a page with no tab store every page shares the one id; on a page with one, the tab's own id is the mark's.
+ for(const tab of [undefined,markStore()])onPage(tab,()=>{
+  const s=sessionStore(),id=tab?tabInstance(tab):'shared';
+  assert.equal(readUncleanExit(s),false,'first run is clean');
+  markSessionOpen(s,new Date());
+  assert.equal(readUncleanExit(s),true,'a page that opened and never closed');
+  markSessionClosed(s,new Date());
+  assert.equal(readUncleanExit(s),false,'a page that quit cleanly');
+  s.setItem(SESSION_MARK_KEY+'.'+id,'{broken');
+  assert.equal(readUncleanExit(s),true,'an unreadable mark cannot prove a clean exit');
+ });
 });
 
 test('offer clock names hh:mm:ss today and the date otherwise', ()=>{
@@ -166,7 +176,8 @@ test('E19b: each tab has its own id, kept across a reload of that tab; a page wi
  assert.match(idA,/^[A-Za-z0-9-]{8,64}$/,'the id is a bounded token');
  assert.equal(tabInstance(a),idA,'a reload of the same tab keeps its id');
  assert.equal(a.map.get(TAB_INSTANCE_KEY),idA,'the id is kept in the tab store');
- assert.equal(tabInstance(undefined),'shared','no tab store means the one shared id');
+ assert.equal(onPage(undefined,()=>tabInstance()),'shared','no tab store means the one shared id');
+ assert.equal(onPage(a,()=>tabInstance()),idA,'a page reads its own id from its tab store');
  const denied={getItem:()=>{throw new Error('denied');},setItem:()=>{throw new Error('denied');}};
  assert.equal(tabInstance(denied),'shared','a denied tab store never throws');
 });

@@ -38,6 +38,7 @@ import {BrowserReadingProvider, MODE_POOL_FACES, browserSourcesOf, type BrowserR
 import {TracksPane} from './frame/tracks/TracksPane'
 import {showMainView, tabMainView, togglePaneView, useMainView, type MainView} from './shell/mainView'
 import {publishClipViewDoor} from './frame/menu/objectDoor'
+import {publishBrowserDoor} from './frame/browser/constellationFocus'
 import {OBJECT_ACT_OF, runObjectCommand, type MenuCommand} from './frame/menu/commandDoor'
 import {redoStep, undoStep} from './frame/menu/undo'
 import {openInstrument, publishStageLensDriver} from './frame/instrumentDoor'
@@ -498,6 +499,12 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
   useEffect(() => {
     publishClipViewDoor(() => { changeDetailMode('clip'); setHiddenSides(hidden => ({...hidden, clip: false})); setDetail(true) })
     return () => publishClipViewDoor(null)
+  }, [])
+  // Show in Browser (manual §16.7) brings the browser forward on the category it names: the constellations, with the clip's selected
+  // (frame/browser/constellationFocus.ts). The category is the book's one choice, so it holds when the mode changes.
+  useEffect(() => {
+    publishBrowserDoor(key => { chooseBrowserCategory(key); setBrowser(true) })
+    return () => publishBrowserDoor(null)
   }, [])
   // The focus keys (Live 12's Move Focus, manual §10.2): ⌥ and a digit brings the part forward and gives it the keys.
   const focusPart = useRef<(target: FocusTarget) => void>(() => {})

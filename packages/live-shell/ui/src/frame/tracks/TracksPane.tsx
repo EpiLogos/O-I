@@ -4,6 +4,7 @@
 import {useTimelinePanePresentation, useTimelineReading, type TimelineHostReading} from '../../projections/timelinePaneHost'
 import {useEffect} from 'react'
 import {MODE_OWNERS, MODE_TRACKS} from './modeTracks'
+import {MODE_CLIP_MAKERS, withClipMaker} from './clipMakers'
 import {publishTrackRows} from '../keys/keyDoors'
 import {publishShownTracks} from './tracksDoor'
 import {SessionGrid} from './SessionGrid'
@@ -23,9 +24,12 @@ export function TracksPane({pinnedRef}: {pinnedRef?: string} = {}) {
 function ModeTracksView({reading, pinnedRef}: {reading: TimelineHostReading; pinnedRef?: string}) {
   const presented = useTimelinePanePresentation()
   const projected = MODE_TRACKS[reading.mode](reading)
-  // Each set names whose ops its object acts are, for the acts its owner does not carry yet (frame/menu/objectActions.ts).
-  const set = projected && !('waiting' in projected) && !projected.actions?.owner
+  // Each set names whose ops its object acts are, for the acts its owner does not carry yet (frame/menu/objectActions.ts), and takes a
+  // constellation dropped on a track: its own maker, else its mode's refusal in its owner's words (clipMakers.ts MODE_CLIP_MAKERS).
+  const named = projected && !('waiting' in projected) && !projected.actions?.owner
     ? {...projected, actions: {...projected.actions, owner: MODE_OWNERS[reading.mode]}} : projected
+  const maker = MODE_CLIP_MAKERS[reading.mode]
+  const set = named && !('waiting' in named) && maker ? withClipMaker(named, maker) : named
   const selection = {ref: pinnedRef ?? reading.selectedRef, select: reading.selectTrackItem}
   // The row keys launch the stops drawn here (F9), so they read the set this pane shows.
   useEffect(() => { publishTrackRows(set && !('waiting' in set) ? {set, presented} : null); return () => publishTrackRows(null) })

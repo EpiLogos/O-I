@@ -7,6 +7,7 @@
 import type {ClipBinding} from '../detail/clipBinding'
 import type {WorldTrackActions, WorldTrackSet} from '../../timeline/worldTrackAdapter'
 import {LIVE_CLIP_PALETTE} from '../../live/livePalette'
+import {MADE_OF} from '../../inhabitants/catalogue/clips/design'
 import type {ObjectMenuItem} from './useObjectMenu'
 import type {UndoStep} from './undo'
 
@@ -113,6 +114,12 @@ function clipMenu(target: Extract<ObjectTarget, {kind: 'clip'}>, set: WorldTrack
     if (a.openFile) items.push(act('open', 'Open', undefined, a.openFile, 'work.open', a, () => press(`open:${target.id}`, `Open ${named}`, () => a.openFile!.run(target.id))))
     if (a.revealFile) items.push(act('reveal', 'Reveal', undefined, a.revealFile, 'work.reveal', a, () => press(`reveal:${target.id}`, `Reveal ${named}`, () => a.revealFile!.run(target.id))))
   }
+  // Show in Browser, for a clip made of a constellation (§10.9; §16.7): the Clip panel's own press, through the clip's binding, so it
+  // selects the constellation in the browser — and stands dark, saying why, for a clip made of none. It changes nothing, so a track read
+  // from another reading keeps it.
+  items.push(sep('s-source'))
+  items.push({id: 'show-in-browser', label: 'Show in Browser', ...clipFact(binding, target.id, MADE_OF.show),
+    onSelect: () => press(`show:${target.id}`, `Show ${named}'s constellation in the browser`, () => context.writeClip(target.id, MADE_OF.show, Date.now()))})
   const colour = fact('colour')
   items.push(sep('s4'))
   items.push({id: 'colour', type: 'swatches', label: 'Colour', colours: LIVE_CLIP_PALETTE, current: typeof held?.colour === 'string' ? held.colour : null, ...colour,

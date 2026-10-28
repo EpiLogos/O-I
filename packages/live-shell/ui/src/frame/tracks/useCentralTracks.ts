@@ -52,6 +52,10 @@ import {
 } from '../../timeline/centralTrackAdapter'
 import type {WorldTrackSet} from '../../timeline/worldTrackAdapter'
 import type {TracksReading} from './modeTracks'
+import {refusingMaker, withClipMaker} from './clipMakers'
+import {CONSTELLATION_DRAG} from '../browser/constellationFocus'
+import {constellationNamed, constellationsNow} from '../../owners/constellations'
+import {makePageOf} from '../../central/madeOfConstellation'
 
 /** The day records through the owner's listing route (the browser's Days rows read the same). A refusal is the reading, named. */
 export async function readDayRecords(transport: KernelTransportStatus | undefined): Promise<CentralDayRecordsReading> {
@@ -95,6 +99,23 @@ export function withWorldSeat(set: WorldTrackSet, worlds: CentralWorldsReading, 
       return {ok: false, error: why(world) ?? `${world.name} cannot come into today: no kernel carrier reaches Central here, so nothing writes today's set.`}
     },
   }}}
+}
+
+/** A constellation dropped on a world's track makes a Thing page of it in that world, its source read back from the page owner (manual
+ * §10.3; central/madeOfConstellation.ts). A drop on another track, or of a ref the wiki's reading does not hold, is refused in words.
+ * Pure. */
+export function withPageMaker(set: WorldTrackSet, worlds: readonly CentralWorld[], transport: KernelTransportStatus | null): WorldTrackSet {
+  if (!transport) return withClipMaker(set, refusingMaker('A page of a constellation: no kernel carrier reaches Central here, so no page is made.'))
+  return withClipMaker(set, {accepts: CONSTELLATION_DRAG,
+    op: 'Central\'s creation door (projectcentral.source.create, or central.files.write in your world), then the page owner\'s read (kernel/src/page.rs)',
+    run: async (trackId: string, payload: string) => {
+      const world = worlds.find(item => centralWorldTrackId(item.ref) === trackId)
+      if (!world) return {ok: false, error: 'Only a world\'s track makes a page of a constellation: drop it on a world.'}
+      const ref = payload.trim()
+      const found = constellationNamed(constellationsNow().rows, ref)
+      if (!found) return {ok: false, error: `${ref} is no constellation the wiki's reading holds now.`}
+      return makePageOf(transport, world, {ref, title: found.title})
+    }})
 }
 
 /** The world's Docs on the door (central/devices/CentralDevices.tsx publishes it on the world's chain, DLW §16.2, §18.5). */
@@ -192,7 +213,7 @@ export function useCentralTracks(reading: TracksReading): WorldTrackSet {
   const histories = usePageHistories(transport, inSet, pages, epoch)
   // A world the set cannot take now is refused on the Day's own ground reading, the one the Day device reads (useCentralGroundAnswer).
   const groundReading = ground.reading, groundError = ground.error
-  return useMemo(() => withWorldSeat(withWorksIn(projectCentralTracks({civil, worlds, set, pages, playing, controls, colours, practice, histories, nowMs: Date.now()}), register, projectOf,
-    seats.status === 'refused' ? seats.error : null), worlds, world => bringInRefusal(world.name, groundReading, groundError)),
-  [civil, worlds, set, pages, playing, controls, colours, practice, histories, register, projectOf, seats, groundReading, groundError])
+  return useMemo(() => withPageMaker(withWorldSeat(withWorksIn(projectCentralTracks({civil, worlds, set, pages, playing, controls, colours, practice, histories, nowMs: Date.now()}), register, projectOf,
+    seats.status === 'refused' ? seats.error : null), worlds, world => bringInRefusal(world.name, groundReading, groundError)), inSet, usable),
+  [civil, worlds, set, pages, playing, controls, colours, practice, histories, register, projectOf, seats, groundReading, groundError, inSet, usable])
 }

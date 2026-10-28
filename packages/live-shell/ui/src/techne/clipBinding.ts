@@ -17,6 +17,8 @@ import {useEffect, useState} from 'react'
 import {standingOf} from '../../../../../desktop/cradle/src/techne/m0m5/timeline/standing'
 import type {Value, Values} from '../frame/devices/designed'
 import {clipBinding, missingOp, useViewHoldsVersion, type ClipBinding, type ClipWiring} from '../frame/detail/clipBinding'
+import {madeOfValues, withMadeOf, type ClipSource} from '../frame/detail/clipSource'
+import {constellationOfSubject, useConstellations, type Constellation} from '../owners/constellations'
 import {useSelectedClip, type SelectedClip} from '../frame/detail/ClipBox'
 import {useDetailReading} from '../frame/detail/detailReading'
 import type {WorldTimelineView} from '../projections/useWorldTemporalReading'
@@ -108,8 +110,8 @@ const SUBJECT_KIND: Readonly<Record<string, string>> = {location: 'Location · a
 const JOURNEY = 'Technē journey (the World cut\'s walks, timeline/techneTrackAdapter.ts)'
 const STOP_SETTING = (what: string, field: string) => missingOp(what, `walk_stop_set {walk, stop, ${field}} → the stop at its new reading`, JOURNEY)
 
-/** clip:techne's wiring: every key the design draws or sets. */
-export const TECHNE_WIRING: ClipWiring = {
+/** clip:techne's wiring before its source: every key the design draws or sets. */
+const EVENT_WIRING: ClipWiring = {
   reads: {
     kind: 'event (the World cut\'s occasion, a World subject) or stop (a walk\'s stop clip)', name: 'the occasion\'s summary; the stop\'s or the subject\'s name',
     colour: 'the clip\'s track colour', 'event.kind': 'the event row\'s kind; what a subject is', standing: 'the owner\'s verbatim standing, where it is one of the six',
@@ -131,6 +133,24 @@ export const TECHNE_WIRING: ClipWiring = {
   },
 }
 
+/** Where an event's source is read (manual §17.1 The Clip panel: "Constellation — A constellation of your wiki — The event's source"): the
+ * wiki, whose constellation is the subject's own whole or gathers it (owners/constellations.ts constellationOfSubject). */
+const WIKI_GATHERS = 'the wiki: the constellation whose whole the event\'s subject is, or that gathers it (owners/constellations.ts)'
+
+/** clip:techne's wiring: every key the design draws or sets. */
+export const TECHNE_WIRING: ClipWiring = withMadeOf(EVENT_WIRING, {made: 'none', by: WIKI_GATHERS})
+
+/** An event's or a World subject's source: the constellation the wiki gathers its subject in, or none once every register is read;
+ * unread while the wiki, or a register that may gather it, is still being read. Pure. */
+export function subjectSourceOf(subjectRef: string | null | undefined, constellations: readonly Constellation[] | null | undefined, pending = false): ClipSource {
+  const unread: ClipSource = {made: 'unread', why: 'The wiki is still being read, so the constellation that gathers the event is not named yet.'}
+  if (!constellations) return unread
+  const found = constellationOfSubject(constellations, subjectRef)
+  return found ? {made: 'of', ref: found.ref, by: WIKI_GATHERS} : pending ? unread : {made: 'none', by: WIKI_GATHERS}
+}
+/** A walk's stop names no thing the wiki could gather (TECHNE_WIRING absent 'stop.thing'). */
+const STOP_SOURCE: ClipSource = {made: 'unread', why: 'A walk\'s stop names no thing, so no constellation gathers it: the walk keeps no stop\'s thing yet.'}
+
 /** A World subject's wiring: clip:techne's, and the subject door's own act — open another Scene that carries it (WorldSubjectClip.tsx's
  * press on a Scene row, `chooseHeldScene`), by its row in the material. The design's Material rows draw no press yet (PROPOSE): the
  * act stands ready for `material.open` with the row's index. */
@@ -149,21 +169,27 @@ export interface TechneClipInput {
   readonly opening?: SubjectOpening
   readonly selected: SelectedClip
   readonly placed?: boolean
+  /** The wiki's constellations, which gather the event's subject (owners/constellations.ts), and whether a register is still being read. */
+  readonly constellations?: readonly Constellation[] | null
+  readonly wikiPending?: boolean
 }
 
 /** Technē's clip binding: a World subject, a walk stop, or the World cut's event, in that order; null when none stands. Pure. */
 export function techneClipBinding(input: TechneClipInput): ClipBinding | null {
   const {selected} = input
+  const rows = input.constellations
   if (input.worldSubject) {
-    return clipBinding({mode: 'techne', ref: `subject:${input.worldSubject.ref}`, values: worldSubjectValues(input.worldSubject, input.opening), wiring: subjectWiring(input.worldSubject, input.opening),
-      placed: true, viewDefaults: {'view.editor': 'material'}})
+    const source = subjectSourceOf(input.worldSubject.ref, rows, input.wikiPending)
+    return clipBinding({mode: 'techne', ref: `subject:${input.worldSubject.ref}`, values: {...worldSubjectValues(input.worldSubject, input.opening), ...madeOfValues(source, rows)},
+      wiring: withMadeOf(subjectWiring(input.worldSubject, input.opening), source), placed: true, viewDefaults: {'view.editor': 'material'}})
   }
   const stop = walkStopValues(selected)
-  if (stop) return clipBinding({mode: 'techne', ref: selected.ref ?? selected.clip!.id, values: stop, wiring: TECHNE_WIRING, placed: input.placed})
+  if (stop) return clipBinding({mode: 'techne', ref: selected.ref ?? selected.clip!.id, values: stop, wiring: withMadeOf(TECHNE_WIRING, STOP_SOURCE), placed: input.placed})
   if (input.worldCut && input.world) {
     const event = worldEventValues(input.world, selected)
-    if (event) return clipBinding({mode: 'techne', ref: selected.ref ?? `occasion:${String(event.name)}`, values: event, wiring: TECHNE_WIRING, placed: input.placed,
-      viewDefaults: {'view.editor': 'relations'}})
+    const source = subjectSourceOf(input.world.spine.occasion()?.basis.ref, rows, input.wikiPending)
+    if (event) return clipBinding({mode: 'techne', ref: selected.ref ?? `occasion:${String(event.name)}`, values: {...event, ...madeOfValues(source, rows)},
+      wiring: withMadeOf(TECHNE_WIRING, source), placed: input.placed, viewDefaults: {'view.editor': 'relations'}})
   }
   return null
 }
@@ -177,6 +203,9 @@ export function useTechneClip(): ClipBinding | null {
   const [, setTick] = useState(0)
   useEffect(() => world?.spine.subscribe(() => setTick(value => value + 1)), [world])
   useViewHoldsVersion()
+  const wiki = useConstellations()
+  // Until the World has disclosed the registers nothing is read, and while a register is read the source may still be found there:
+  // either way it is unread, never "None".
   return techneClipBinding({worldCut, world, worldSubject, opening: worldSubject ? openings.get(worldSubject.ref) : undefined, selected,
-    placed: presentation === 'arrangement'})
+    placed: presentation === 'arrangement', constellations: wiki.registers > 0 ? wiki.rows : null, wikiPending: wiki.reading.length > 0})
 }

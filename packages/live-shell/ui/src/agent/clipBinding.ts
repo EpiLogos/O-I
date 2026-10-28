@@ -18,7 +18,8 @@
 // stand absent and refused the same way (LAUNCH_ABSENT, LAUNCH_REFUSED). Hand off to is retired: the task is dragged onto another
 // session's track (§19.1). Pure, apart from the hook at the end.
 import type {Value, Values} from '../frame/devices/designed'
-import {clipBinding, type ClipBinding, type ClipWiring} from '../frame/detail/clipBinding'
+import {clipBinding, missingOp, type ClipBinding, type ClipWiring} from '../frame/detail/clipBinding'
+import {withMadeOf, type ClipSource} from '../frame/detail/clipSource'
 import {useViewHoldsVersion} from '../frame/detail/clipBinding'
 import {useSelectedClip} from '../frame/detail/ClipBox'
 import {useDetailReading} from '../frame/detail/detailReading'
@@ -143,8 +144,19 @@ export const LAUNCH_REFUSED: Readonly<Record<string, string>> = {
   compare: 'Compare: no owner operation carries it yet — missing op: a comparison of takes (Software Factory).',
 }
 
+/** A task's source (manual §19.1 The Clip panel: "Constellation — The one the task was made of — The task's source"): no owner keeps it
+ * yet. The task's own settings are AIKit's (encounter-session-settings, ai-kit encounter_task_settings.rs), and they hold no source, so
+ * the key stands absent and Show in Browser names the operation AIKit lacks (PROPOSE, O-I #768). */
+export const TASK_SOURCE: ClipSource = {made: 'unread', why: missingOp('The task\'s constellation',
+  'task_source {session, task} → the constellation_ref the task was made of, kept with the task\'s settings, and set when a constellation dropped on a session\'s track makes the task',
+  'AIKit encounter-session-settings')}
+
 /** clip:factory's wiring: every key the design draws or sets. */
 export function factoryWiring(task: TaskAddress | null, context: TaskSeamContext | null = null): ClipWiring {
+  return withMadeOf(taskWiring(task, context), TASK_SOURCE)
+}
+
+function taskWiring(task: TaskAddress | null, context: TaskSeamContext | null): ClipWiring {
   const acts: Record<string, (value: Value) => Promise<void>> = {}
   const refused: Record<string, string> = {}
   const why = task ? settingsRefusal(context, task.n) : 'No task is selected: select a task on a session\'s track.'

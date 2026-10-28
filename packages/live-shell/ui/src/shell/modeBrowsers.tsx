@@ -20,6 +20,9 @@ import type {IconName} from '../inhabitants/sdk/icons'
 import {InstrumentsSection} from '../frame/InstrumentsSection'
 import {LiveGroovePool} from '../frame/browser/LiveGroovePool'
 import {useWorkbenchOpeners} from '../native/workbenchDoor'
+import {ConstellationRows} from '../frame/browser/ConstellationRows'
+import {CONSTELLATIONS} from '../frame/browser/constellationFocus'
+import {MODE_CONSTELLATION_PREVIEWS} from './constellationPreviews'
 
 // Expressions' browser loads with Expressions' rows, not with the shell (shell/loadWhenDrawn.ts).
 const WorldBrowser = loadWhenDrawn<{controlled?: ControlledBrowser}>('Expressions\' browser', () => import('../components/WorldBrowser').then(module => module.WorldBrowser))
@@ -80,11 +83,20 @@ function SurfacesRows({controlled}: {controlled: ControlledBrowser}) {
   </div>
 }
 function InstrumentsRows() { return <InstrumentsSection /> }
+/** The constellations of your wiki, in every mode (manual §10.3 Material), each previewed as this mode makes it (constellationPreviews.tsx). */
+function ConstellationsRows({controlled}: {controlled: ControlledBrowser}) {
+  const mode = useBrowserReading()?.mode ?? 'live'
+  return <ConstellationRows controlled={controlled} Preview={MODE_CONSTELLATION_PREVIEWS[mode]} />
+}
 
 const AGENTS: BrowserSource = {id: 'agents', categories: AGENT_BROWSER_CATEGORIES, Body: AgentRows}
 /** Outside Factory, the running agent sessions only (Factory browses the whole agent browser). */
 const SESSIONS: BrowserSource = {id: 'sessions', categories: AGENT_BROWSER_CATEGORIES.filter(category => category.id === 'sess'), Body: AgentRows}
 const SHARED: readonly BrowserSource[] = [
+  {id: CONSTELLATIONS.source, categories: [{id: CONSTELLATIONS.category, label: 'Constellations', kind: 'material', mark: <Icon name="orbit" size={12} />,
+    hint: 'the constellations of your wiki: select one to preview what this mode makes of it, drag one onto a track and this mode makes its own clip of it',
+    info: 'The constellations of your wiki, the same in every mode. Select one and its preview at the foot of the list shows what this mode makes of it; it stays selected when you change mode. Drag one onto a track and this mode makes its own clip of it, with the constellation as its source. Show in Browser, beside a clip\'s Constellation, selects it here.'}],
+    Body: ConstellationsRows},
   {id: 'instruments', categories: [{id: 'instruments', label: 'Instruments', kind: 'instruments', mark: <Icon name="techne" size={12} />, hint: 'open one in a pane'}], Body: InstrumentsRows},
   {id: 'surfaces', categories: [{id: 'surfaces', label: 'Surfaces', kind: 'instruments', mark: <Icon name="browser" size={12} />, hint: 'sources, hosted surfaces, a terminal, a web page — open in a pane'}], Body: SurfacesRows},
 ]
