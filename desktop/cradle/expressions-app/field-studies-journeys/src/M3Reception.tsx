@@ -9,7 +9,7 @@ type PageOperation=Exclude<M3Operation['operation'],'set-matrix'>;
 
 /** Gestures go to the native transactional owner. Hiding this view never
  * advances a clock, resets a form or writes a personal reading. */
-export function NaraM3({basis,selectionKey,current,disabled,onCurrent,onPresent,presented}:{
+export function M3Reception({basis,selectionKey,current,disabled,onCurrent,onPresent,presented}:{
  basis:InstrumentBasis|null;selectionKey:string;current:NativeCurrentReading|null;
  disabled:boolean;onCurrent:(value:NativeCurrentReading)=>void;
  onPresent:(reading:NativeM3Reading|null)=>void;presented:boolean;

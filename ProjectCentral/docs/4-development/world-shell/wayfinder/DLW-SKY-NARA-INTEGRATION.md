@@ -98,7 +98,7 @@ The port stipulations are real and precise — with one important word about
   starter ≠ live Nara"); `IdentityComposition.tsx` (elemental proportions,
   planetary contributions, centre evidence, coefficient policy);
   `NaraCurrentSky.tsx` ("Dated sky is a separate native calculation… **All
-  quaternion arithmetic stays in QL**"); `NaraM3.tsx` (M3 gestures to the
+  quaternion arithmetic stays in QL**"); `M3Reception.tsx` (M3 gestures to the
   native transactional owner: forms, apertures, clock steps).
 
 ## 2. The synthesis — how the pieces join
@@ -323,7 +323,7 @@ The premise lands in four already-named layers:
 
 The Expressions application's energetic view (the seven-centre scene,
 `IdentityComposition` elemental proportions and planetary contributions,
-`NaraCurrentSky`, `NaraM3`, the kundalini/chakra journeys in the starter
+`NaraCurrentSky`, `M3Reception`, the kundalini/chakra journeys in the starter
 collections) is **M4's lived body** — and it is already bound to the same
 native ground the sky will bind to: centres keyed to coordinates, Earth a
 separate occurrence, quaternions in QL. Its integration is therefore not a

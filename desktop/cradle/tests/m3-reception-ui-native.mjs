@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /** Production Nara instrument and channel -> real native M3/current owners.
  * Source-mounted UI proof; retained GPU and installed app are separate runs.
- * node tests/nara-m3-ui-native.mjs /absolute/native-config.json /absolute/output
+ * node tests/m3-reception-ui-native.mjs /absolute/native-config.json /absolute/output
  */
 import assert from 'node:assert/strict';
 import {readFile,writeFile,mkdir} from 'node:fs/promises';
@@ -23,7 +23,7 @@ const native=async request=>{
 };
 const original=await native({op:'expression',request:{operation:'inspect',expression_ref:config.binding.expression_ref}});
 const expression_ref='expression:controlled-m3-ui-'+randomUUID();
-const fork=await native({op:'expression',request:{operation:'fork',expression_ref:original.document.expression_ref,expected_revision:original.document.revision,new_expression_ref:expression_ref,actor:'agent:nara-m3-ui-verification'}});
+const fork=await native({op:'expression',request:{operation:'fork',expression_ref:original.document.expression_ref,expected_revision:original.document.revision,new_expression_ref:expression_ref,actor:'agent:m3-reception-ui-verification'}});
 const saved=await native({op:'nara_identity',request:{operation:'open',source_ref:config.binding.source_ref}});
 // A distinct controlled profile prevents this UI's explicit Save from moving
 // another live replay's identity revision. All determinants remain native.
@@ -128,7 +128,7 @@ try{
  assert.deepEqual((await native({op:'nara_identity',request:{operation:'open',source_ref:selected.source.source_ref}})).source,selected.source);
  checks.push('Invalid form is refused through the native owner and leaves form, activity and saved identity unchanged');
  assert.deepEqual(errors,[]);await page.screenshot({path:path.join(output,'native-form-ui.png'),fullPage:true});
- const files=['tests/nara-m3-ui-native.mjs','src/nara/nativeM3.ts','src/expressions/naraChannel.ts','expressions-app/field-studies-journeys/src/naraM3.tsx','expressions-app/field-studies-journeys/src/naraInstrument.tsx','expressions-app/field-studies-journeys/src/naraFormField.ts'];
+ const files=['tests/m3-reception-ui-native.mjs','src/nara/nativeM3.ts','src/expressions/naraChannel.ts','expressions-app/field-studies-journeys/src/M3Reception.tsx','expressions-app/field-studies-journeys/src/naraInstrument.tsx','expressions-app/field-studies-journeys/src/naraFormField.ts'];
  const sources=Object.fromEntries(await Promise.all(files.map(async file=>[file,createHash('sha256').update(await readFile(file)).digest('hex')])));
  await writeFile(path.join(output,'receipt.json'),JSON.stringify({schema:'oi.m3-reception-ui-native-verification/v1',checks,sources,expression_ref,first,enabled,changed,geometry,limits:['Production source-mounted Nara UI, relay and native owner; retained GPU and installed app proofs are separate','Controlled identity remains as explicit saved native test material in the controlled World']},null,2));
  console.log(JSON.stringify({ok:true,checks:checks.length,output}));
