@@ -6,15 +6,18 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtemp, rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
-import {join, resolve} from 'node:path';
-import {pathToFileURL} from 'node:url';
+import {join} from 'node:path';
+import {fileURLToPath, pathToFileURL} from 'node:url';
 import {build} from 'esbuild';
 import * as THREE from 'three';
 import {ControlledAudio, ControlledSceneOwner} from './native-expression-fixture.mjs';
 
-const src = resolve('expressions-app/field-studies-journeys/src');
+// Named from this file, so the suite passes from any directory and the shared engine suite (packages/live-shell/ui/scripts/test-engine.mjs)
+// finds the product files it reaches.
+const here = path => fileURLToPath(new URL(path, import.meta.url));
 const temp = await mkdtemp(join(tmpdir(), 'native-effects-tests-'));
-await build({entryPoints: [join(src, 'native-field/controller.ts'), join(src, 'native-field/effectsLaw.ts'), join(src, 'native-field/presentationEffects.ts')],
+await build({entryPoints: [here('../expressions-app/field-studies-journeys/src/native-field/controller.ts'), here('../expressions-app/field-studies-journeys/src/native-field/effectsLaw.ts'),
+  here('../expressions-app/field-studies-journeys/src/native-field/presentationEffects.ts')],
   bundle: true, platform: 'node', format: 'esm', outdir: temp, outExtension: {'.js': '.mjs'}});
 const {NativeFieldController} = await import(pathToFileURL(join(temp, 'controller.mjs')));
 const law = await import(pathToFileURL(join(temp, 'effectsLaw.mjs')));
@@ -141,6 +144,22 @@ test('the room falls 60 dB in Decay, its bright part faster with Damping, and th
   // Damping, at the device's rate: what changes sample to sample (the bright part) is far less at half the decay in a damped room.
   const device = 48000, highs = data => { let s = 0; const from = Math.round(decay / 2 * device), to = from + 4000; for (let i = from + 1; i < to; i++) s += (data[i] - data[i - 1]) ** 2; return s }
   assert.ok(highs(reverbImpulse(device, 50, decay, 100)[0]) < highs(reverbImpulse(device, 50, decay, 0)[0]) / 10, 'a damped room is darker');
+});
+
+test('the room carries nothing at half the sample rate in any block of 64 frames, so a convolver that cannot multiply that bin has nothing there to multiply', () => {
+  // WebKit on Linux never multiplies the Nyquist bin of a block it transforms, and every block of a response it transforms starts on a
+  // multiple of 64 frames (presentationEffects.ts, the head); the browser check renders the consequence, native-expression-effects-browser.mjs.
+  for (const [rate, size, decay, damping] of [[48000, 50, 2.4, 40], [48000, 0, 0.2, 0], [48000, 100, 20, 100], [44100, 30, 0.7, 10]]) {
+    reverbImpulse(rate, size, decay, damping).forEach((data, side) => {
+      let worst = 0;
+      for (let at = 0; at < data.length; at += 64) {
+        let sum = 0; for (let i = at; i < Math.min(data.length, at + 64); i++) sum += i % 2 ? -data[i] : data[i];
+        worst = Math.max(worst, Math.abs(sum));
+      }
+      // Each stored sample rounds by at most 2⁻²⁴ of itself (|sample| ≤ 1), so 64 of them by under 4e-6.
+      assert.ok(worst < 4e-6, `${rate} Hz, Size ${size} %, Decay ${decay} s, Damping ${damping} %, side ${side}: a 64-frame block sums to ${worst} at Nyquist`);
+    });
+  }
 });
 
 test('an empty chain joins the level to the device; the chain\'s order is the path the sound takes, and a new order rewires it', () => {

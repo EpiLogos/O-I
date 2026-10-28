@@ -1,16 +1,23 @@
 // The torus's four effects as a real browser sounds them (native-field/presentationEffects.ts): each check renders a known signal
 // through the graph in an OfflineAudioContext at the device's 48 kHz and measures what comes out. Off passes the input unchanged;
 // the filter cuts what its type cuts; the compressor lowers what is over its threshold; the delay repeats after its time; the reverb's
-// tail falls 60 dB in its decay. Run: node tests/native-expression-effects-browser.mjs (headless Chromium and WebKit, Playwright; the
-// desktop host is WebKit on macOS).
+// tail falls 60 dB in its decay. The reverb is also rendered in stereo (DLW §21.5 Reverb: Size, Decay, Damping, Pre-delay, Dry/wet): after
+// the Pre-delay each side is that side's generated room (reverbImpulse, whose law tests/native-expression-effects.test.mjs reads), at one
+// level for both sides and as loud as in Chromium, beside the dry at 1 − Dry/wet, and nothing else; at Damping 0 each side's tail falls
+// 60 dB in Decay; a sound on one side rings on that side alone. WebKit on Linux (CI's) leaks each block's Nyquist bin through its convolver;
+// the reverb corrects it where the page's measure finds it, and the measure's verdict is printed with each engine's measurements.
+// Run: node tests/native-expression-effects-browser.mjs (headless Chromium and WebKit, Playwright; the desktop host is WebKit on macOS),
+// from any directory.
 import {build} from 'esbuild';
 import {chromium, webkit} from 'playwright';
-import {resolve} from 'node:path';
+import {fileURLToPath} from 'node:url';
 import assert from 'node:assert/strict';
 
-const src = resolve('expressions-app/field-studies-journeys/src/native-field');
-const bundle = await build({stdin: {contents: `export {PresentationEffects} from './presentationEffects.ts'; export {initialEffects, editEffects, editEffectChain} from './effectsLaw.ts';`,
+const src = fileURLToPath(new URL('../expressions-app/field-studies-journeys/src/native-field', import.meta.url));
+const bundle = await build({stdin: {contents: `export {PresentationEffects, reverbImpulse, convolverLeaksNyquist} from './presentationEffects.ts'; export {initialEffects, editEffects, editEffectChain} from './effectsLaw.ts';`,
   resolveDir: src, loader: 'ts'}, bundle: true, format: 'iife', globalName: 'effects', write: false});
+/** The reverb's level for each room and side, as Chromium sounds it. */
+let reference;
 for (const [engine, launcher] of [['Chromium', chromium], ['WebKit', webkit]]) {
 const browser = await launcher.launch();
 try {
@@ -18,8 +25,10 @@ try {
   await page.setContent('<!doctype html><title>effects</title>');
   await page.addScriptTag({content: bundle.outputFiles[0].text});
   const results = await page.evaluate(async () => {
-    const {PresentationEffects, initialEffects, editEffects, editEffectChain} = window.effects;
+    const {PresentationEffects, initialEffects, editEffects, editEffectChain, reverbImpulse, convolverLeaksNyquist} = window.effects;
     const RATE = 48000;
+    // The reverb makes its first room once the page has measured its convolver; the renders below give it no time, so it is awaited.
+    const leaks = await convolverLeaksNyquist();
     // Each check puts on the chain the effects its edits name, in that order, unless it names the chain itself.
     const state = edits => { const named = [...new Set(edits.filter(([e]) => e !== 'chain').map(([e]) => e))];
       const chain = edits.find(([e]) => e === 'chain')?.[1] ?? named;
@@ -69,6 +78,56 @@ try {
     { const v = await render([['reverb', 'on', true], ['reverb', 'decay', 1], ['reverb', 'predelay', 50], ['reverb', 'mix', 100], ['reverb', 'damping', 0]], impulse, 1.6);
       const start = rms(v.out, 2400 + 480, 2400 + 4800), late = rms(v.out, Math.round((0.05 + 0.95) * RATE), Math.round((0.05 + 1.05) * RATE));
       r.reverbBeforePredelay = Math.max(...v.out.slice(0, 2300).map(Math.abs)); r.reverbFallDb = db(late / start); r.reverbStart = start; }
+    r.convolverLeaksNyquist = leaks;
+    /** Render a mono sound, or a stereo one, through the effects into two channels. */
+    async function stereo(edits, left, right, seconds) {
+      const context = new OfflineAudioContext(2, Math.round(seconds * RATE), RATE);
+      const buffer = context.createBuffer(right ? 2 : 1, context.length, RATE);
+      for (let i = 0; i < context.length; i++) { buffer.getChannelData(0)[i] = left(i); if (right) buffer.getChannelData(1)[i] = right(i); }
+      const source = context.createBufferSource(); source.buffer = buffer;
+      const graph = new PresentationEffects(context, context.destination, state(edits), run => { run(); return () => {}; });
+      source.connect(graph.input); source.start(0);
+      const out = await context.startRendering();
+      return [out.getChannelData(0), out.getChannelData(1)];
+    }
+    /** How long a tail takes to fall 60 dB: the slope of its energy decay curve (Schroeder's backward integral) between 5 and 35 dB under its
+     * start (tests/mr-resonator-bank.test.mjs). */
+    const fall60 = data => {
+      const edc = new Float64Array(data.length); let sum = 0;
+      for (let i = data.length - 1; i >= 0; i--) { sum += data[i] * data[i]; edc[i] = sum; }
+      const level = i => 10 * Math.log10(edc[i] / edc[0]);
+      let a = 0; while (a < edc.length && level(a) > -5) a++;
+      let b = a; while (b < edc.length && level(b) > -35) b++;
+      return b >= edc.length ? null : -60 * ((b - a) / RATE) / (level(b) - level(a));
+    };
+    /** What an impulse made of one side: the dry at 1 − Dry/wet and, from the Pre-delay on, the side's room at Dry/wet times one level (the
+     * level that fits best, by least squares); what is left over, at its peak, in dB under the room's peak; and the tail's 60 dB fall. */
+    function side(y, room, at, wet) {
+      const dry = i => (1 - wet) * impulse(i);
+      let yh = 0, hh = 0;
+      for (let i = 0; i < room.length && at + i < y.length; i++) { yh += (y[at + i] - dry(at + i)) * room[i]; hh += room[i] * room[i]; }
+      const level = yh / hh / wet;
+      let residual = 0, peak = 0;
+      for (let i = 0; i < y.length; i++) {
+        const tail = i >= at && i - at < room.length ? wet * level * room[i - at] : 0;
+        residual = Math.max(residual, Math.abs(y[i] - dry(i) - tail)); peak = Math.max(peak, Math.abs(tail));
+      }
+      return {level, residualDb: db(residual / peak), fall60: fall60(y.subarray(at))};
+    }
+    // An impulse through the reverb, each side measured against its room: the shortest, the default and the longest Decay at Damping 0, with
+    // Size and Pre-delay at their ends, then the defaults whole (Damping 40 %, Dry/wet 22 %).
+    r.rooms = [];
+    for (const [decay, size, damping, predelay, mix] of [[0.2, 0, 0, 0, 100], [2.4, 50, 0, 20, 100], [20, 100, 0, 250, 100], [2.4, 50, 40, 20, 22]]) {
+      const room = reverbImpulse(RATE, size, decay, damping), at = Math.round(predelay / 1000 * RATE);
+      const out = await stereo([['reverb', 'on', true], ['reverb', 'size', size], ['reverb', 'decay', decay], ['reverb', 'damping', damping], ['reverb', 'predelay', predelay],
+        ['reverb', 'mix', mix]], impulse, null, (at + room[0].length) / RATE + 0.1);
+      r.rooms.push({decay, size, damping, predelay, mix, sides: out.map((y, index) => side(y, room[index], at, mix / 100))});
+    }
+    { // A stereo sound (a resonator bank before the reverb makes one) rings on its own sides: an impulse on the left alone.
+      const room = reverbImpulse(RATE, 50, 0.2, 0);
+      const [left, right] = await stereo([['reverb', 'on', true], ['reverb', 'decay', 0.2], ['reverb', 'damping', 0], ['reverb', 'predelay', 0], ['reverb', 'mix', 100]],
+        impulse, () => 0, room[0].length / RATE + 0.1);
+      r.stereo = {left: side(left, room[0], 0, 1), rightPeak: right.reduce((m, x) => Math.max(m, Math.abs(x)), 0)}; }
     return r;
   });
   console.log(engine, JSON.stringify(results));
@@ -87,6 +146,24 @@ try {
   assert.ok(results.delayBetween < 0.01, 'nothing between the repeats');
   assert.ok(results.reverbBeforePredelay < 1e-4, 'silence for the pre-delay');
   assert.ok(results.reverbStart > 1e-4 && results.reverbFallDb < -45 && results.reverbFallDb > -70, `the tail falls about 60 dB in its decay: ${results.reverbFallDb.toFixed(1)} dB`);
+  // The room is as loud in every engine as in Chromium (measured first), whose convolver every check here has found exact; levels agree to a
+  // thousandth (under 0.01 dB), well over the engines' own rounding of the room's power.
+  reference ??= results.rooms.map(room => room.sides.map(side => side.level));
+  results.rooms.forEach((room, row) => {
+    const what = `${engine}: Decay ${room.decay} s, Size ${room.size} %, Damping ${room.damping} %, Pre-delay ${room.predelay} ms, Dry/wet ${room.mix} %`;
+    const [left, right] = room.sides;
+    assert.ok(Math.abs(left.level / right.level - 1) < 1e-3, `${what}: one level for both sides of the room, ${left.level} and ${right.level}`);
+    room.sides.forEach((side, index) => {
+      const name = index ? 'right' : 'left';
+      assert.ok(side.residualDb < -80, `${what}: the ${name} side is its room and the dry, nothing else (what is left over peaks ${side.residualDb.toFixed(1)} dB under the room)`);
+      assert.ok(Math.abs(side.level / reference[row][index] - 1) < 1e-3, `${what}: the ${name} side's room is as loud as Chromium makes it, ${side.level} against ${reference[row][index]}`);
+      if (room.damping !== 0) return;
+      assert.ok(side.fall60 !== null, `${what}: the ${name} tail falls 60 dB inside the render`);
+      assert.ok(Math.abs(side.fall60 / room.decay - 1) <= 0.05, `${what}: the ${name} tail falls 60 dB in ${side.fall60} s`);
+    });
+  });
+  assert.ok(results.stereo.left.residualDb < -80, `${engine}: a sound on the left alone rings as the left room (what is left over peaks ${results.stereo.left.residualDb.toFixed(1)} dB under it)`);
+  assert.equal(results.stereo.rightPeak, 0, `${engine}: and the silent right side stays silent`);
   console.log(`effects: every check passed in ${engine}`);
 } finally { await browser.close(); }
 }

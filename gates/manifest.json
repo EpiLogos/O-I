@@ -1,6 +1,6 @@
 {
   "schema": "oi.gate-manifest/v1",
-  "updated": "2026-10-14",
+  "updated": "2026-10-28",
   "law": "A change is landed when main contains it AND the landing-tier receipt is green at that exact tip. Installs, snapshots and physical acceptance are separate concerns and never gate a landing. Every gate here is derived from a GitHub Actions workflow, with provenance recorded: CI and local run the same commands, so a green landing receipt means no CI surprise in the covered surface.",
   "tiers": {
     "landing": "Run and pass at the exact tip before pushing toward main. Serialised, minutes, no runner-only infrastructure. The pre-push guard enforces a green receipt for HEAD. It gates the desktop being built \u2014 the candidate shell, its hosted Expressions frame, the shared engine it imports, the live-* crates, the kernel \u2014 and the CLI and site; the legacy everyday desktop is frozen and gated by nothing.",
@@ -236,7 +236,7 @@
       "provenance": {
         "workflow": "desktop.yml",
         "job": "candidate",
-        "step": "Browser contracts \u2014 search, text editor, Expression stage, canvas surfaces, frame formations"
+        "step": "Browser contracts \u2014 search, text editor, Expression stage, canvas surfaces, frame formations, frame effects"
       },
       "command": "node tests/search-overlay.mjs"
     },
@@ -248,7 +248,7 @@
       "provenance": {
         "workflow": "desktop.yml",
         "job": "candidate",
-        "step": "Browser contracts \u2014 search, text editor, Expression stage, canvas surfaces, frame formations"
+        "step": "Browser contracts \u2014 search, text editor, Expression stage, canvas surfaces, frame formations, frame effects"
       },
       "command": "node tests/text-editor-appearance.mjs"
     },
@@ -260,7 +260,7 @@
       "provenance": {
         "workflow": "desktop.yml",
         "job": "candidate",
-        "step": "Browser contracts \u2014 search, text editor, Expression stage, canvas surfaces, frame formations"
+        "step": "Browser contracts \u2014 search, text editor, Expression stage, canvas surfaces, frame formations, frame effects"
       },
       "command": "node tests/expression-provider-lifecycle.mjs"
     },
@@ -272,7 +272,7 @@
       "provenance": {
         "workflow": "desktop.yml",
         "job": "candidate",
-        "step": "Browser contracts \u2014 search, text editor, Expression stage, canvas surfaces, frame formations"
+        "step": "Browser contracts \u2014 search, text editor, Expression stage, canvas surfaces, frame formations, frame effects"
       },
       "command": "node tests/canvas-editor-browser.mjs"
     },
@@ -284,9 +284,21 @@
       "provenance": {
         "workflow": "desktop.yml",
         "job": "candidate",
-        "step": "Browser contracts \u2014 search, text editor, Expression stage, canvas surfaces, frame formations"
+        "step": "Browser contracts \u2014 search, text editor, Expression stage, canvas surfaces, frame formations, frame effects"
       },
       "command": "node tests/formation-native-regressions.mjs"
+    },
+    {
+      "name": "browser-frame-effects",
+      "tier": "landing",
+      "area": "browser",
+      "cwd": "desktop/cradle",
+      "provenance": {
+        "workflow": "desktop.yml",
+        "job": "candidate",
+        "step": "Browser contracts \u2014 search, text editor, Expression stage, canvas surfaces, frame formations, frame effects"
+      },
+      "command": "node tests/native-expression-effects-browser.mjs"
     },
     {
       "name": "live-crates",
