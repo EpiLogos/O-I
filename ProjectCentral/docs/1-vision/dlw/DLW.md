@@ -123,6 +123,8 @@ turning inside a person.
 
 We are all, in a sense, aliens to one another.
 
+**Stories:** SH01, WO01–WO07, CB04, TY08, TO06, TO08, TO14
+
 ## 3. One grammar
 
 If you have used Live, you already know how to hold the DLW. If you haven't,
@@ -260,6 +262,8 @@ sample is a Live audio clip's: select a clip in any mode and its Clip panel
 names the constellation, and Show in Browser keeps it in front of you as you
 change mode (§10.3).
 
+**Stories:** SU07, WV12, WT01, WA09, WA11–WA13, WB04, FC10–FC12, LG04, XA03, FA07, TJ08
+
 ## 4. Three times
 
 Whatever you are working with, you can meet it in three times.
@@ -279,6 +283,8 @@ What you keep is **recorded** — a take, a walk laid along the ruler, a day
 closed into what it taught. It sits in Arrangement view to be edited, played
 back, and given to someone who will play it in their own world, where it is
 live again.
+
+**Stories:** WV15, TO01
 
 ## 5. Central — the day's work
 
@@ -371,6 +377,8 @@ In Central you:
 - see the day written down as you lived it, and add what only you know;
 - let the day close into what it taught.
 
+**Stories:** CT01, CT02, CP10, CA06–CA10, CC01, TY03
+
 ## 6. Factory — worlds making worlds
 
 You need to set agents to work on something larger than one session can hold,
@@ -448,6 +456,8 @@ In Factory you:
 - decide once where agents work, on which machine, and how their work lands;
 - steer, pause or stop the work, and approve what agents propose;
 - keep finished work as a workflow to run again.
+
+**Stories:** FA05, FA11, FS01, FS02, FS04, FK02–FK04, FK07, FK08, FE03, FT04, FJ01, FN06
 
 ## 7. Expressions — the living medium
 
@@ -533,6 +543,8 @@ In Expressions you:
   into palaces and into other worlds;
 - let an agent show what it found as something you see and hear;
 - stay with the field and listen.
+
+**Stories:** UI06, XS04, XC01, XF04, XF07, XT11, XA04–XA07, XA12–XA17, TO15, TO16
 
 ## 8. Technē — crafting knowledge
 
@@ -632,6 +644,8 @@ In Technē you:
 - build it a palace someone else can enter;
 - read it through one lens at a time.
 
+**Stories:** TN01
+
 ## 9. Live — the instrument
 
 You need an instrument you can play: the sound of the logic itself, from a
@@ -694,6 +708,8 @@ In Live you:
 - shape the sound with devices, and keep it as a state to return to;
 - ring the M3 clock's cut through the Resonator bank;
 - record, edit, layer and arrange what you play.
+
+**Stories:** LT01, LT02, LT05, LB07, LM01, LM03, LE08, LR03, XT11, XA10
 
 ## 10. Working the window
 
@@ -806,6 +822,8 @@ A Terminal follows the room of the workcell its track works in. A message to
 an agent goes to the agent through Messages (§10.6). It never types into the
 agent's room.
 
+**Stories:** DV05, SU07, WN01–WN07, WN09, WN11–WN13, WN15, WT01–WT03, WT06–WT09, LV15, LR10, XA08, GA10, GD11, TT06, TT07, TM02
+
 ### 10.2 Session view, Arrangement view and Pane view
 
 Each mode has one set of tracks, and the main area shows it in one of three
@@ -895,6 +913,8 @@ use them.
 Looking away unloads nothing. Come back to a pane, a set or a mode you left and it is there at once as you left it, scrolled and selected where you were. What changed while you were away is read again in place, with the last reading standing until the new one arrives, and a slow folder in the browser never holds back a page you already know.
 
 If the DLW stops without warning, it opens again on what it kept: the set, its panes and what they held, and the writing it had kept on this machine but not yet saved, back on its page beside the revision it began from. A part of the window it cannot read is set aside with its reason while the rest opens; it is never replaced by an empty window. A page changed elsewhere in the meantime shows as a conflict, never as a quiet replacement of what you wrote.
+
+**Stories:** UI02, UI05, SU08, WN08, WN10, WV01–WV11, WV16, WV17, FL02, FL11, LV08, LE08, LN14, LF03, LF09, XA04, FA02, FS03
 
 ### 10.3 The browser and the pool
 
@@ -1002,6 +1022,8 @@ as Live's does (§16.7).
 The pool shows nothing else. A device opens whole in its band above the
 chain, and an instrument opens in a pane.
 
+**Stories:** SU07, WI14, WB01–WB09, FC02, FC03, CL01, FL12, LV02, LF01, LF02, LF06, LG01, LG06, XS01, XS02, XA01, XA16, FA10, FY02, TK02
+
 ### 10.4 Devices
 
 A device does one job to the material in front of it. An instrument makes
@@ -1087,6 +1109,8 @@ by reference. So "intent" has three homes. An agent's expression is the
 agent's. A task's intent is the task's, in its Intent panel. A project's
 originating intent is tier 0 of its Docs.
 
+**Stories:** EX04, WD01–WD09, WD13, CD11, LT11, LP08
+
 ### 10.5 The transport
 
 The transport keeps Live's controls in Live's places in every kind of work.
@@ -1121,6 +1145,8 @@ The day opens and closes by itself. No hours are set in the instrument:
 Central keeps the day's bounds, and the transport and the Day show them. A
 run that should start by itself at a time is a routine in Settings (§10.10).
 
+**Stories:** WT09, CT01–CT08, CP04, CA07, CA09, CA10, CC01, LV13–LV15, LM01, LN02, XC02, XA11, FK01, FK02, FK04, FK06–FK12, FE01–FE06, RR08, RC01, TX01–TX15
+
 ### 10.6 Widgets
 
 The rail on the right holds widgets: small live views of whatever you want to
@@ -1152,6 +1178,8 @@ Widgets are plugins. You can set each one up the way your work needs, and
 anyone can build new ones. To add a widget, install it from the browser's
 Devices.
 
+**Stories:** EX04, WN13, WG01, WG03, WG05, WG06, WG08, WG09, LT10, LE07, FJ09, RA07, FQ01, NP10
+
 ### 10.7 Going back
 
 Every place you go is kept on the trail. To go back, press Back at the head of
@@ -1159,6 +1187,8 @@ the title line, or select a stop on the Trail widget (§23.5). You return to the
 same place, the same page and the same point in the reading. Forward goes the
 other way, until you go somewhere new. Changing your kind of work never closes
 anything, and every place can be linked to and opened again.
+
+**Stories:** WT04, WM07, TN08
 
 ### 10.8 Keys
 
@@ -1207,6 +1237,8 @@ anything, and every place can be linked to and opened again.
 
 Keys never play notes, and single letters never act, while you are typing in a
 document.
+
+**Stories:** WN06–WN08, WN14, WV13, WV14, WT05, WT10, WA10, LV04, LT03, LN14, LR06, LR08, LR09, XT06
 
 ### 10.9 Acts and menus
 
@@ -1260,6 +1292,8 @@ instrument keeps it. C turns a macro, and S plays a note of the Jankó
 keyboard, so Solo and Arm wait in the track's menu. U folds the selected
 group. 0 switches off what is selected; with nothing selected that can be
 switched off, it launches the tenth row.
+
+**Stories:** WN09, WA01–WA09, WA14, WA15, FL09, LN15, LR01, LR09, FA04, FA11
 
 ### 10.10 Settings
 
@@ -1397,6 +1431,8 @@ running session keeps its harness, its model and its composition.
   the drift column.
 - To find a setting fast, press ⌘, then ⌘F and type a word of its name.
 
+**Stories:** MC02, UI07, SU01, WS01–WS08, WP01–WP12, FP06, FV10
+
 ### 10.11 Bringing in what you have
 
 You need to start from the work and the tools you already have, keep them
@@ -1465,6 +1501,8 @@ Setup reads a folder and says what it found. It draws the folder with its own ma
 - A key's value is never shown and never kept.
 - What setup cannot read is named and kept as it was.
 - Accept and Remove are held.
+
+**Stories:** AD01–AD04, AD06, AD08, MC02, UI07, SU02–SU05, WI01–WI13, FL01, CW02, LF05, TY01
 
 ---
 
@@ -1629,6 +1667,8 @@ up. It cannot approve its own work.
 
 *The Truth's as much what ever was*
 *As what's ever anew.*
+
+**Stories:** XA13, RW13, NP11
 
 ## 14. What the game warns
 
@@ -1887,6 +1927,8 @@ Harnesses and their skills, credentials and other machines come in through
 adapters, which keep each thing's own form and its function, and leave a
 reference in the DLW (§10.11).
 
+**Stories:** WD01, WD09, CA08
+
 ### 16.2 Chains on tracks
 
 A track holds one stream of material. Its chain holds the devices that the
@@ -1910,6 +1952,8 @@ are pages of these three devices.
 A device is not tied to a mode. It goes wherever its material is. An agent and
 its skills work on a Central page as well as on a Factory session. The world
 draws any track that has places. The sky can move a parameter in any mode.
+
+**Stories:** CW08
 
 ### 16.3 Six views
 
@@ -1947,6 +1991,8 @@ line across the head of the pane.
   controls, because its material is its devices: the same devices, with the
   same values, as on its chain, and its macros stand at its head. A monitor
   has no Device view, so its settings stand in the head of its pane.
+
+**Stories:** WD02, WD05
 
 ### 16.4 Opening, folding and hiding
 
@@ -1989,6 +2035,8 @@ shows.
 | The mixer | ⌥⌘M, or Mixer at the bottom right. |
 | A device's expanded view | ▸ on its head, or Esc. |
 | A device's window | ↗ on its head, or the window's own close. |
+
+**Stories:** WN02, WN04, WD03–WD08, WD10–WD12
 
 ### 16.5 Clip view and Device view
 
@@ -2053,6 +2101,8 @@ holds changes with the kind of clip.
 | When its owner cannot be reached | The clip keeps its last content, dimmed, and cannot be edited. | The device keeps its last picture, dimmed, and its light is dark. |
 | When something fails | The edit that failed stays in the editor. One line in the status bar says what failed. | The value that failed returns to the owner's value. One line in the status bar says what failed. |
 | What is kept | The clip's content and settings are kept by its owner. The tab in front is kept with the set. | The chain and its settings are kept by their owners. Which device stands expanded is kept with the set. |
+
+**Stories:** WA03, WA11, WA12, WD01, FC01, FC09, CL03, TK04, TL11
 
 ### 16.6 Tracks, Session view and Arrangement view
 
@@ -2230,6 +2280,8 @@ hold Alt to turn it off while you drag.
   scrub bar stands beside it.
 - Every mode uses the same states, the same stop buttons and the same keys.
 
+**Stories:** WN06, WV12–WV14, WT05–WT08, WT10, WA04, WA06, WA08, WA10, WA13, LV04, LV05, LV08, LR04, LR06, LR08, LR10, LR11, XT01–XT06, XT10, FA13, GA03, GA05
+
 ### 16.7 The browser and the pool
 
 There is one browser, the same in every mode (§10.3). It holds four kinds of
@@ -2293,6 +2345,8 @@ Commit writes the groove into the clip's notes.
   so nothing shows from the set alone; what it could not keep, such as a
   draft never saved, it names as it opens.
 
+**Stories:** WI14, WB01–WB06, WB09, CL01, CL02, CL04–CL06, LV02, LB08, LF01, LF02, LF06, LG02, LG06, LG07, XS02, XA02
+
 ### 16.8 Play, record and automation
 
 Play launches clips. Each clip's track runs through its chain, and the
@@ -2323,6 +2377,8 @@ and says separately whether what it shows still stands now. Any device may
 read any of these times, and a modulator may take one as its source. One
 time becomes another only by a rule stated for that crossing: the transport
 never moves the day, and a past occasion never passes for now.
+
+**Stories:** LR05, LR07, FS10, FT10
 
 ### 16.9 How a device looks
 
@@ -2808,6 +2864,8 @@ caption: Scope. Raise the reach and it waits for you to confirm. Teal is what th
 | Full | The world the agent may touch, with its receipts on the places it wrote. | |
 | Widget | Small rings, the reach, the write mode, the receipts. | |
 
+**Stories:** LT11, LB01, LB02
+
 ### 16.16 Instruments of the map
 
 You need to play the system's own structure, not a picture of it. Each
@@ -2906,6 +2964,8 @@ and its frame: positions 1 to 4 working, 0 and 5 framing. Three and three is
 its first three positions going out and its last three coming back. On the
 Torus, Pulse mix sets the balance of the two.
 
+**Stories:** LQ08–LQ11, XA12
+
 ### 16.17 The entries that follow
 
 Each device below has the same parts: what it is for, where it lives, its
@@ -2945,6 +3005,8 @@ page and a terminal. They belong to no single mode. Drag one into any pane, in
 any mode, and it brings its own controls to Device view. Session view and
 Arrangement view are not among them: they are two views of the mode's set
 (§10.2), and no pane holds them.
+
+**Stories:** UI02, XA09
 
 ### 17.1 Technē: tracks and clips
 
@@ -3200,6 +3262,8 @@ The Main track holds the stops. In Session view its row launchers stand at the e
 - To make a slow arrival, set Arrival to Fade and raise Transition time.
 - To record a walk, press Record and go from place to place. Stop recording and the walk lies along the ruler, ready to edit and give away.
 
+**Stories:** FC07, XA05, TK01, TK03, TK05–TK10, TE01–TE10, TA01–TA08, TR01–TR12, TV01–TV09, TN01, TN04, TN06–TN08
+
 ### 17.2 World
 
 **Product:** Technē · **Kind:** instrument · **Pane:** any pane, in every mode
@@ -3423,6 +3487,10 @@ The widget shows your planet, small, with its phase and today's sky. Click it to
 - To find a place in a source, select the place in Place scale and open its source.
 - To keep a view for a walk, press Capture.
 
+**Source:** MapLibre GL JS (Google Earth, Cesium and QGIS surveyed); Archetypal Earth (ported as code)
+
+**Stories:** SH01, WV15, WO01–WO07, TW01–TW12, TY01–TY11, TO01–TO18
+
 ### 17.3 Knowledge graph
 
 **Product:** Technē · **Kind:** instrument · **Pane:** any pane, in every mode
@@ -3592,6 +3660,10 @@ The widget shows the neighbourhood of the selection. The centre is marked. A col
 - To follow a line of thought, turn Arrows on and read along the lines.
 - To read a note through its whole frame, turn Whole frame on and leave the budget at 6.
 - To check a move before you make it, select the folder and read its References.
+
+**Source:** Obsidian 1.7.7 (graph and links); tldraw, Excalidraw, Obsidian `.canvas`, Miro's documentation (canvas and graph)
+
+**Stories:** KN02, KN03, TG01–TG11, TS01–TS08, TQ01–TQ05, TM04
 
 ### 17.4 Canvas
 
@@ -3796,6 +3868,10 @@ The widget shows the map of the Canvas you hold and the count of proposals that 
 - To find a card in a large map, use Find, then Fit.
 - To see what a question still lacks, give it a form. The open roles are what you have not found yet.
 
+**Source:** tldraw, Excalidraw, Obsidian `.canvas`, Miro's documentation; QL's own system (the forms)
+
+**Stories:** SH04, XA17, TE08, TC01–TC14, TI01–TI06, TF01–TF07
+
 ### 17.5 Timeline
 
 Technē's timeline is Arrangement view (§17.1): one ruler that measures either the time of your sessions or the history of what you study, with readings as layers of tracks, epochs along the top, and every event at its standing.
@@ -3947,6 +4023,10 @@ The widget shows the stop you are on, its narration and a play button. Click the
 - To show a source, open it from its stop and choose Return to scene when you finish.
 - To compare two tellings, record both and keep each as a take.
 
+**Source:** Godot's animation state machine, Twine 2, Unity Timeline's documentation; Archetypal Earth (ported as code)
+
+**Stories:** XA05, TJ01–TJ10, TN02–TN07
+
 ### 17.7 Palace
 
 **Product:** Technē · **Kind:** instrument · **Pane:** any pane, in every mode
@@ -4089,6 +4169,10 @@ The widget shows the plan of the Palace you hold, small, with the room you stand
 - To keep dreams or notes to yourself, put them in a private room.
 - To bring a reader to a related place, add a portal from the room that mentions it.
 - To report a finding, arrange the objects in the order of your argument and choose Return.
+
+**Source:** Godot's animation state machine, Twine 2, Unity Timeline's documentation
+
+**Stories:** SH01, SH04, XA06, TP01–TP12, TU01–TU08
 
 ### 17.8 Document
 
@@ -4263,6 +4347,10 @@ The widget shows the page you hold, small, with its save state and the size of i
 - To draft by voice, press Record, talk, and set Overdub to add each answer as a new entry.
 - To redesign your Things, change the template once. Every Thing then follows it.
 
+**Source:** Obsidian 1.7.7 (saving, plugins, graph and links)
+
+**Stories:** KN06, WR02–WR04, CP09, CP10, CJ08, TD01–TD08, TB01–TB09, TH01–TH05
+
 ### 17.9 Terminal
 
 **Product:** Central · **Kind:** instrument · **Pane:** any pane, in every mode
@@ -4365,6 +4453,10 @@ The widget shows the live shell. A line below it says "following" and shows the 
 - To keep a server in view, pin a Terminal to its room and move it to the rail.
 - To search a long log, raise Scrollback before you start the command.
 - To hand a routine to an agent, press Capture, run it once, and give the example to the agent.
+
+**Source:** VS Code's workbench (MIT)
+
+**Stories:** UI04, TT01–TT10, TM02
 
 ### 17.11 Lens
 
@@ -4511,6 +4603,10 @@ The widget shows the lens with its rays, the lens's name, how many instruments t
 - To compare two ways of seeing, put two Lenses on the chain, each with its own lens, and solo the reading.
 - To find which frame a step of your material stands in, leave Face and Grain on Any and narrow them one at a time.
 - To read the material plain, set Mode to Off. The instruments it stands in still show.
+
+**Source:** Ableton Live 12.0.25 (an effect on a chain); QL's own system
+
+**Stories:** TQ04, TL01–TL10
 
 ## 18. Central
 
@@ -4794,6 +4890,8 @@ When the day closes, what still plays carries into tomorrow's set, playing, with
 - To find a thought again, anchor the note to the passage and not to the page.
 - To read the page without distraction, set the notes' Show to Off.
 
+**Stories:** WK03, AG06, KN05, WR02–WR04, WR06, WR07, FC04, FL10, CW01–CW11, CM01–CM06, CT06, CP01–CP09, CP11, CJ01–CJ13, CB01–CB09, CA01, CA06–CA09, CA11, CA13, CC07, CC09, XA14, FM05
+
 ### 18.2 Day
 
 **Product:** Central · **Kind:** instrument · **Track:** Central's Main track
@@ -4996,6 +5094,10 @@ in the pane that has focus.
 - To keep a long run off your list of tasks, let it show on face 2 only. Face 1
   holds what you decided to do.
 
+**Source:** Obsidian 1.7.7 (saving)
+
+**Stories:** WR01, WR05, WR06, CT02, DY01–DY13, CC01–CC09
+
 ### 18.3 Packet
 
 **Product:** Central · **Kind:** effect · **Chain:** a world's track, before the agent
@@ -5088,6 +5190,10 @@ The widget shows the list of items. Each line names the source and the text. The
 - To keep an answer on one point, add only the passages about that point.
 - To keep a cost low, set a Limit before you add long entries.
 - To ask again with the same material, set After sending to Keep.
+
+**Source:** Obsidian 1.7.7 (saving); VS Code's workbench (the code-editor side)
+
+**Stories:** WR03, CT04, CT08, CA01–CA06, CA12
 
 ### 18.4 Search (@)
 
@@ -5313,6 +5419,10 @@ The widget shows the search line, the last results and your aliases. Type @ in t
 - To ask what could serve a task, type `@# @5` and the task. Then include the tools you want with `+`.
 - To read what a coordinate of the map says, type `vak:` and the coordinate, then raise Vāk depth.
 
+**Source:** Ableton Live 12.0.25 (the browser's search); VS Code's workbench (the command line over anything)
+
+**Stories:** KN01, SH02, UI01, CS01–CS12, CG01–CG06
+
 ### 18.5 Docs
 
 **Product:** Central, with AIKit · **Kind:** effect · **Chain:** a world's track in Central, after its scope
@@ -5437,6 +5547,10 @@ The widget shows the small ladder and how many sources wait. Press a rung to ope
 - To make your vision document count as ground, recognise it as Human-authored and Your position.
 - To bring an old project up to date, open Make and press Reproject.
 - Before you call a design done, read its Meaning. A stale mapping means the code moved after its meaning was last checked.
+
+**Source:** Obsidian 1.7.7 (graph and links); VS Code's workbench (the code-editor side)
+
+**Stories:** AD03, KN05, CD01–CD14, FS05, FW08, RF11, DO01, DO03
 
 ### 18.6 Impact
 
@@ -5690,6 +5804,8 @@ caption: The Agents tile: each agent a creature, standing at the zone its run ha
 - To see who is stuck, look for the amber stations in Agents.
 - To carry on yesterday's work with an agent, find the chat under its project and drag it onto an empty track.
 
+**Stories:** PX06, DV01, DV03, DV04, FC05, FA01–FA08, FA10–FA13, FS01, FS02, FS04–FS10, FK03, FK06, FK07, FK10, FE05, FT01–FT10, FJ06, RA04, FN02, GA01, GA04, GA09, GA10, GB13
+
 ### 19.2 Gateway
 
 **Product:** Actuation, through the harness's own control · **Kind:** connection · **Chain:** first device on a workcell's chain
@@ -5851,6 +5967,10 @@ The widget shows the link diagram, the readiness state and the last frames. Clic
 - To keep a slow build from being flagged, set Stall after to 5 min on the workcell where the build runs.
 - To see what a stalled session did last, open the Frames page and filter to that session.
 - To let a trusted agent work without prompts, set Approvals to Session before you press Play.
+
+**Source:** OpenRig (BEHAVIOURS.md §3: liveness verdicts; §15: honest unknown); Buzz's agent system (CONTRACT Behaviours 2 and 4: heartbeat liveness, permission requests)
+
+**Stories:** AG07, MC06, DV05, FE02, FE03, FE06, FQ08–FQ11, GB01–GB13, RF09
 
 ### 19.3 Gateways
 
@@ -6298,13 +6418,21 @@ value that an agent moved shows that agent's name.
 - To read a stall at a glance, look at the face: a frozen creature on a grey zone is a stall.
 - When an agent seems to forget its guidance late in a long session, open Context. At depleted or critical pressure, ordinary guidance no longer enters; start a fresh session for the next task.
 
+**Source:** Grok Bot 0.68.1 (Factory's agent client: mid-task updates, drafts awaiting approval, voice); Buzz's agent system (steer as the default mid-turn path, diff cards in the thread); OpenRig (BEHAVIOURS.md §4: occupant generations); Ableton Live 12.0.25 (transport, clip envelopes, a device's presets)
+
+**Stories:** GV03, AG01, AG02, AG04, AG09, UI04, FA01, FA09, FK01–FK05, FK07–FK10, FE01, FE02, FE05, FE06, RA06, FN01, FN03–FN10, FI01–FI09, FY01–FY07, FM01–FM03, FM05, FX11, FD09, FV01–FV12, RW01, RO03, RF03, RF13, NV06
+
 ### 19.5 Experiment
 
 An experiment is a task launched with Repeat, each run a take, and the takes set side by side with Compare (§19.1): the question is the task's Intent, what varies stands on its Launch panel, and the readings are the takes'.
 
+**Stories:** PX06
+
 ### 19.6 Frames monitor
 
 What passed between the shell and the harness, frame by frame, is the Gateway's Frames page and its Full (§19.2); its tile on the rail is the Gateway's widget.
+
+**Stories:** GB10
 
 ### 19.7 Skillset rack
 
@@ -6547,6 +6675,10 @@ when you change mode.
 - When Sources shows copies that differ, adopt the tree that holds the copy you
   keep. The other copies then read the same skill.
 
+**Source:** Grok Bot 0.68.1 (workflows learned by demonstration, on the Capture page); Ableton Live 12.0.25 (Capture)
+
+**Stories:** PX03, RK01–RK11, RS01–RS09, RC01–RC08, RW08
+
 ### 19.8 Skill, Method, Methodology
 
 **Product:** AIKit · **Kind:** effect · **Chain:** one chain inside a Skillset rack
@@ -6687,6 +6819,8 @@ for a Method.
 - To find when a member stopped working, open History and read the last
   orange mark.
 
+**Stories:** GV03, RK09, RM01–RM09
+
 ### 19.9 Knowledge route
 
 Which knowledge an agent may look up, and how far it may follow links, is the Knowledge page of Scope (§19.12). Which of its readings rest on a source that moved is read in Docs (§18.5).
@@ -6806,6 +6940,8 @@ caption: Scope, on a fixture of readings.
   short.
 - To try a risky change, set Write mode to Draft and review the draft.
 
+**Stories:** AG03, FK11, FW01–FW09
+
 ### 19.13 Ledger
 
 **Product:** Software Factory · **Kind:** monitor · **Rail:** the Ledger tile on the rail, and a pane, in every mode
@@ -6863,6 +6999,10 @@ Full's head carries the receipts shown, those made today, those waiting, the tur
 - To prepare the Day's face 2, read today's Ledger first.
 - To audit one agent, set Agent to that agent and Period to All.
 - To find why two runs of one task came out differently, open both receipts and compare their Worked under lines.
+
+**Source:** OpenRig (BEHAVIOURS.md §11: append-only transitions and stated outcomes)
+
+**Stories:** RR01–RR08
 
 ### 19.14 Approvals
 
@@ -6975,6 +7115,10 @@ The widget shows a small lake and the cards that wait. Each card names who asked
 - To clear many proposals fast, set Order to By risk and read the risky ones first.
 - To stop a deploy from leaving at night, leave the Agent's On no answer at Hold.
 - If no notice reaches your desktop, your computer refuses to show them. Allow them in its settings.
+
+**Source:** Buzz's agent system (CONTRACT Behaviour 4: diff cards and the owner gate); Grok Bot 0.68.1 (drafts awaiting approval)
+
+**Stories:** WR04, DV03, WM12, CA08, FJ04, FJ07, FJ08, FJ10, RA01–RA09, FD09, RC06, FQ14, GL08, RF10
 
 ### 19.15 Agentset rack
 
@@ -7144,6 +7288,10 @@ The widget is the Agents tile (§19.1): each member a creature, standing at the 
 - To read the returns only when every member has finished, leave Join on All.
 - To act on one member's return, set Join to None.
 
+**Source:** Ableton Live 12.0.25 (racks, chains, macros); Buzz's agent system (teams of agents); QL's own system (decision helpers)
+
+**Stories:** AG09, MC07, FI04, FM04, FX01–FX10, FD01–FD09, RO02, RF06
+
 ### 19.16 Git / landing
 
 **Product:** Workcell · **Kind:** connection · **Chain:** last device on a workcell's chain, with the Seat inside it
@@ -7302,6 +7450,10 @@ The widget shows the branch, the changes, the checks and the Land button.
 - To test a change before anyone sees it, keep Push on Off and read the diff.
 - To get a second view, land as a draft merge request and ask a reviewer.
 - To clear a seat after a merge, press Release on the Seat page.
+
+**Source:** OpenRig (BEHAVIOURS.md §3–§5: a durable seat whose occupants change; §17: refusals that name the state)
+
+**Stories:** GL01–GL15, RF11, RF12
 
 ### 19.17 Seat
 
@@ -7478,6 +7630,10 @@ On the Route and Standing pages, the widget shows the machine name, its dot and 
 - To find out why a carrier is refused, read its reason in the Standing row.
 - Before you move a long run to another machine, read its Standing page: a need it cannot meet shows as an orange cross.
 
+**Source:** Grok Bot 0.68.1 (local execution beside a remote computer); Buzz's agent system (where an agent runs as a first-class choice)
+
+**Stories:** MC01, MC02, GD01–GD07, GD11
+
 ### 19.19 Link
 
 **Product:** Workcell · **Kind:** connection · **Stands:** in the transport, in every mode
@@ -7542,6 +7698,10 @@ The widget shows the peers and the link state.
 #### Tips
 - To follow a run on a far machine, turn Link on and select its session.
 - To keep a machine private for a while, remove it from Machines.
+
+**Source:** Ableton Live 12.0.25 (Link)
+
+**Stories:** GD08–GD10
 
 ### 19.20 Decision helper
 
@@ -7681,6 +7841,10 @@ beside the count of timed pads and of pads running now.
   keeps its schedule.
 - When a pad's corner turns orange, press the pad and read its last run: the
   stall names what it waits for.
+
+**Source:** Ableton Live 12.0.25 (Drum Rack pads, choke groups); Grok Bot 0.68.1 (demonstrated workflows saved as scheduled skills)
+
+**Stories:** FP01–FP12
 
 ### 19.23 Workcell
 
@@ -7869,6 +8033,10 @@ click a line to open that gateway's Frames page (§19.2).
 - To look at a run's preview, open its Exposure page and press Open.
 - To keep a run's outputs and let its shell go, set the shell's fate to Release and keep the rest.
 
+**Source:** Ableton Live 12.0.25 (return tracks, sends); OpenRig (BEHAVIOURS.md §3: stable seat identity; §13: snapshot and restore; §16: terminal providers); Grok Bot 0.68.1 (a remote computer per run beside a local execution daemon)
+
+**Stories:** MC06, MC08, GA01–GA03, GA05–GA09, GR01–GR07
+
 ### 19.24 Messages
 
 **Product:** AIKit, with Central · **Kind:** instrument · **Rail:** born on the widget rail, and opens full in a pane, in every mode
@@ -7954,6 +8122,10 @@ settings and the Gateway's mark across its head (§19.2).
 - To find who needs you, leave Order on Needs you and read the top of the list.
 - To start a piece of work by talking, write to the agent, then drag its face onto an empty track.
 - To bring two agents into one conversation, make a group of them.
+
+**Source:** Buzz's agent system (agents as members, open relays between agents, per-agent working state); OpenRig (BEHAVIOURS.md §9: the send guard; CROSSWALK §9: delivery at the recipient's next turn)
+
+**Stories:** AG06, AG07, WG09, CJ06, CJ12, FM02, FQ01–FQ07, FQ11–FQ14
 
 ### 19.25 Run map
 
@@ -8087,6 +8259,10 @@ the nodes that wait.
 - To see why a run exists, open the pane and read the head: what the commission asked for.
 - To see how the work came this far, read the journey along the foot of the pane.
 - Before you recognise a run, read its attempt's review in Approvals (§19.14).
+
+**Source:** OpenRig (BEHAVIOURS.md §11: closure reasons and the handed-off chain; §17: a refusal names the current state and the next operation)
+
+**Stories:** DV04, FJ01–FJ10, TO18
 
 ## 20. Expressions
 
@@ -8449,6 +8625,8 @@ Export, in the File menu, writes a picture, a film or the Expression itself to a
 - To try a form fast, draw it with the Form tool, then press Capture.
 - To work on one symbol, select it and open the Expression tab.
 
+**Stories:** UI01, UI02, FC06, XS01, XS03–XS15, XC01–XC12, XG01–XG13, XF08, XF13, XF14, XT01, XT04, XT07, XT08, XT10, XT12, XT13, XA07–XA09, XA15
+
 ### 20.2 Field
 
 **Product:** Expressions · **Kind:** instrument · **Track:** An Expression
@@ -8565,6 +8743,10 @@ The widget shows a small copy of the field and a level meter. The meter shows th
 - To study one symbol, set Lights to Dim and select the symbol.
 - To follow the planets, set Key source to Sky.
 
+**Source:** Shotcut with MLT, Olive
+
+**Stories:** XC09, XF01–XF07, XF12, XR07, XT07, XT09, XT15, XA10
+
 ### 20.3 Studio
 
 **Product:** Expressions · **Kind:** rack · **Track:** An Expression. It fills Device view in Expressions, and its Full stands beside the field in Pane view.
@@ -8679,6 +8861,10 @@ owner answers a change.
 - To see a device at full size, choose it in Chains and press Pane.
 - To keep a few controls together across scenes, choose them once: the macros stand in every scene.
 
+**Source:** Shotcut with MLT, Olive
+
+**Stories:** XF09–XF15
+
 ### 20.4 Physics
 
 **Product:** Expressions · **Kind:** effect · **Chain:** An Expression's chain, after the Field
@@ -8776,6 +8962,10 @@ The widget shows the swirl picture and the four macros. Turn a macro on the widg
 - To freeze the field for a still, set Time scale to 0, then capture.
 - To make a calm field, set Turbulence and Thermal jitter to 0.
 
+**Source:** Shotcut with MLT, Olive
+
+**Stories:** XM01–XM03, XT13
+
 ### 20.5 Pointer
 
 **Product:** Expressions · **Kind:** effect · **Chain:** An Expression's chain, after the Field
@@ -8865,6 +9055,10 @@ The widget shows the disc and the four macros. Turn a macro on the widget to set
 - To play the field like an instrument, set Mode to Attract and move slowly.
 - To clear a space, click with Shove.
 - To keep one scene's pointer feel, set Scope to Local.
+
+**Source:** Shotcut with MLT, Olive
+
+**Stories:** XM04, XM05
 
 ### 20.6 Relational
 
@@ -8960,6 +9154,10 @@ The widget shows the centres, the four macros and the light. Click the light to 
 - To keep a swirl tight, lower Swirl radius.
 - To make the centres push, set Gravity pull below 0.
 
+**Source:** Shotcut with MLT, Olive
+
+**Stories:** XM06
+
 ### 20.7 Medium
 
 **Product:** Expressions · **Kind:** effect · **Chain:** An Expression's chain, after the Field
@@ -9044,6 +9242,10 @@ The widget shows the flow picture, the four macros and the light. Click the ligh
 - To make a smoky trail, raise Splat gain and Persistence.
 - To keep the field fast on a small computer, lower Grid to 128.
 - To let particles drift with a gesture, raise Coupling.
+
+**Source:** Shotcut with MLT, Olive
+
+**Stories:** XM07
 
 ### 20.8 Contacts
 
@@ -9135,6 +9337,10 @@ The widget shows the two pictures, the four macros and the light. Click the ligh
 - To make a sound that rattles, raise Wall bounce and Contact stiffness.
 - To make the particles flow like grains, raise Contact viscosity.
 - To stop a wall from breaking, set Wall integrity to 0.
+
+**Source:** Shotcut with MLT, Olive
+
+**Stories:** XM08, XM09
 
 ### 20.9 Morph
 
@@ -9235,6 +9441,10 @@ The widget shows the drive curve, the four macros and the light. Click the light
 - To make a beating morph, set Law to Beat and make the two rates close.
 - To rest at each form, raise Dwell ratio.
 
+**Source:** Shotcut with MLT, Olive
+
+**Stories:** XM10, XM11
+
 ### 20.10 Focus
 
 **Product:** Expressions · **Kind:** effect · **Chain:** An Expression's chain, after the Field
@@ -9328,6 +9538,10 @@ The widget shows the route and the three macros. Turn a macro on the widget to s
 - To use the focus as the resonance, set the Resonance device's driver to Focus.
 - To skip a formation without deleting it, turn it off on the route.
 - To make a slow loop, raise Glide to 8 s.
+
+**Source:** Shotcut with MLT, Olive
+
+**Stories:** XM12, XM13, XR05
 
 ### 20.11 Colour
 
@@ -9427,6 +9641,10 @@ The widget shows the palette strip, the four macros and the light. Click the lig
 - To make a dark field, set the Background mode to Vignette and lower Glow.
 - To match the paper to the palette, choose Harmonize paper.
 
+**Source:** Shotcut with MLT, Olive
+
+**Stories:** XL01–XL05
+
 ### 20.12 Ink
 
 **Product:** Expressions · **Kind:** effect · **Chain:** An Expression's chain, after the Field
@@ -9518,6 +9736,10 @@ The widget shows the patch of marks and the four macros. Turn a macro on the wid
 - To draw like chalk, raise Imperfect edges and lower Opacity.
 - To keep a slow computer fast, lower Particle count first.
 - To make fine writing, lower Min size and Max size together.
+
+**Source:** Shotcut with MLT, Olive
+
+**Stories:** XL06, XL07
 
 ### 20.13 Depth
 
@@ -9613,6 +9835,10 @@ The widget shows the cross-section, the four macros and the light. Click the lig
 - To make a soft cloud, set Profile to Dome and raise Jitter.
 - To make a flat plan again, set Projection to Orthographic.
 - To show distance only, leave the body off and use Aerial fade.
+
+**Source:** Shotcut with MLT, Olive
+
+**Stories:** XL08, XL09
 
 ### 20.14 Resonance
 
@@ -9725,6 +9951,10 @@ The widget shows the plate picture, the four macros and the light. Click the lig
 - To sweep a figure slowly, set Glide to 20 s and Dwell to 5 s.
 - To tune the field to the sky, set Key source to Sky on the Field.
 - To see the lines better, raise Transport gain.
+
+**Source:** QL's own system (the modes of M2′)
+
+**Stories:** XR01–XR09
 
 ## 21. Live
 
@@ -9965,6 +10195,8 @@ Live's Main track carries the scenes. Each row has a launch button with the scen
 - To move a piece from one mode to another, give each clip its own mode.
 - To keep the best pass of a phrase, record several, then comp the takes.
 
+**Stories:** FC08, LV01–LV07, LV09–LV12, LT03–LT08, LT10, LT13, LM02, LM03, LM06–LM09, LN01–LN13, LN15, LR01, LR04, LR05, LR12, LF07, LG05, LP12
+
 ### 21.2 Torus
 
 **Product:** Live · **Kind:** instrument · **Track:** A Live part. It is the one instrument of Live. The same torus turns at the centre of every Expression.
@@ -10200,6 +10432,10 @@ The widget shows the small live torus with a level meter. Click the torus to ope
 - To share a sound, save the state as a preset and give the preset to a friend.
 - To let the form fold itself as the ring turns, bind a fold procedure and give it a budget.
 
+**Source:** Ableton Live 12.0.25 (object model, device decodes)
+
+**Stories:** FC08, LV13, LT01, LT02, LT04, LT09, LT10, LT12, LB01–LB07, LB09–LB13, LM01, LR02, LR03, LK10, XA10
+
 ### 21.3 Scale mapping
 
 **Product:** Live · **Kind:** effect · **Chain:** A Live part's chain, before the torus
@@ -10310,6 +10546,10 @@ The widget shows the mode name and the ring. Click the ring to open the device i
 - To hear a mode without any wrong notes, turn the device on and play freely.
 - To play in the hour's maqām, set Set by to Sky.
 
+**Source:** Ableton Live 12.0.25 (session model, device decodes)
+
+**Stories:** LM01, LM03–LM06, LM15
+
 ### 21.4 Exact-ratio tuning
 
 **Product:** Live · **Kind:** effect · **Chain:** A Live part's chain, before the torus
@@ -10402,6 +10642,10 @@ The widget shows the reference note and a short list of ratios. Click the list t
 - To check an export, set Error to Show and read the cents.
 - To tune to a planet, set Ratio set to Source ratios and choose its scale.
 - To send tuning to a hardware synth, choose MPE with a Bend range of 48.
+
+**Source:** Ableton Live 12.0.25 (session model, device decodes)
+
+**Stories:** LM10–LM14
 
 ### 21.5 Effects
 
@@ -10539,6 +10783,10 @@ caption: Reverb, on a fixture of readings.
 - To keep a long chord clear, put the Dynamics effect before the Delay.
 - To thicken a sound, set the Delay's mix to 15% and its feedback to 20%.
 - To keep a dry take, leave the Reverb off while you record.
+
+**Source:** Ableton Live 12.0.25 (device decodes)
+
+**Stories:** LE01–LE08, LP01
 
 ## 22. Quaternal Logic: the sky and the clock
 
@@ -10718,6 +10966,10 @@ The widget shows each body with its degree. The Sky widget is on the rail in eve
 - To know whose hour it is, read the marked planet on the ring.
 - To read your sky beside a friend's, ask them to share theirs, then set Whose to them.
 
+**Source:** QL's own system; Ableton Live 12.0.25 (device decodes, for the device's grammar)
+
+**Stories:** SH05, LM05, LS01–LS13, NI02, NI04
+
 ### 22.2 Sky modulation
 
 **Product:** Quaternal Logic · **Kind:** effect · **Chain:** Any track's chain. On a Live part, its targets are the torus and its effects.
@@ -10812,6 +11064,10 @@ The widget shows the planets, with their degrees. Click a planet to open its ass
 - To give each note its own colour, set Scope to Per note.
 - To compare two skies, set the date, record a phrase, then change the date and record again.
 - To remove a planet, clear its assignment.
+
+**Source:** QL's own system; Ableton Live 12.0.25 (device decodes)
+
+**Stories:** LP01–LP12
 
 ### 22.3 M3 clock
 
@@ -11035,6 +11291,10 @@ The widget shows a small wheel with its position. Click the wheel to open the M3
 - To read the shadow of a moment, set Turn to Second.
 - To compare the two seeds, read a position, change Seed, and read it again.
 
+**Source:** QL's own system; Ableton Live 12.0.25 (racks, device decodes)
+
+**Stories:** LK01–LK10, LK12, LJ01–LJ08
+
 ### 22.4 Deck
 
 **Product:** Quaternal Logic · **Kind:** instrument · **Track:** Any track. It is a device on a reading, and a pane when you open it full.
@@ -11155,6 +11415,10 @@ The widget shows the last spread, with its theme. Click the spread to open the D
 - To find a relation to your own writing, record the reading and link the entry.
 - To return to an old reading, open the journey and select the spread.
 
+**Source:** QL's own system
+
+**Stories:** LD01–LD12, NP11
+
 ### 22.5 Chakra
 
 **Product:** Quaternal Logic · **Kind:** instrument · **Track:** Any track. It is a device on a reading, and the personal layer of the Studio.
@@ -11268,6 +11532,10 @@ The widget shows seven discs with the planet of each. Click a disc to open its c
 - To compare two people under one sky, view each person's natal distribution separately.
 - Your personal layer stays private. Nothing shares it.
 - To read a past day, set the Sky to that day.
+
+**Source:** QL's own system
+
+**Stories:** LH01–LH07
 
 ### 22.6 M′ matrices
 
@@ -11406,6 +11674,10 @@ The widget shows the small grid with the cell marked. Click the grid to open the
 - To check a source value, set Value form to Raw, then to Digital root.
 - To see which positions frame and which work, step the address round with Complement and read its class.
 
+**Source:** QL's own system; Ableton Live 12.0.25 (racks)
+
+**Stories:** LQ01–LQ07
+
 ### 22.7 Resonator bank
 
 **Product:** Quaternal Logic · **Kind:** effect · **Chain:** after the torus, on a Live part or in the Studio's body chain
@@ -11509,6 +11781,10 @@ The widget shows the small circle with its cut. Click it to open the bank in the
 - To hear the space between the notes, set an aperture that does not divide twelve.
 - To make a long, bright wash, raise Decay and Tilt.
 
+**Source:** QL's own system; Ableton Live 12.0.25 (racks, device decodes)
+
+**Stories:** LK11–LK15
+
 ### 22.8 Binding
 
 Which codons a matrix holds together, and how strongly, drawn as colour charges bound by strings, is the Binding skin of the M3 clock (§22.3).
@@ -11516,6 +11792,8 @@ Which codons a matrix holds together, and how strongly, drawn as colour charges 
 ### 22.9 Rack
 
 What an instrument of the map is made of, and what it still lacks, is that instrument's Rack page: the Torus's, the Sky's, the M3 clock's and, for M4′, the Chakra's (§16.16).
+
+**Stories:** LQ08
 
 ## 23. Widgets
 
@@ -11585,6 +11863,8 @@ height.
 - To compare two sessions, pin one tile on the first and open a second tile on the other.
 - To start a day with the same tiles, save them as a preset.
 
+**Stories:** WG01–WG08, WG11
+
 ### 23.2 Files
 
 **Product:** Central, with AIKit · **Kind:** monitor · **Rail:** the widget rail on the right, and a pane
@@ -11638,6 +11918,10 @@ Full has two pages. Files: its head carries the files changed and read and the l
 - To review a run fast, set Show to Changed only.
 - To review a big change, set Layout to Side by side.
 
+**Source:** interior.dev (the shell's kit); VS Code's workbench (the code-editor side)
+
+**Stories:** UI04, WM01–WM05
+
 ### 23.3 Web
 
 **Product:** Central · **Kind:** monitor · **Rail:** the widget rail on the right, and a pane
@@ -11679,9 +11963,15 @@ Full's head carries the agent, when it read the page and how many pages it read,
 #### Tips
 - To check a claim, open the page and read the marked text.
 
+**Source:** interior.dev (the shell's kit); VS Code's workbench (the code-editor side)
+
+**Stories:** UI04, WM06
+
 ### 23.4 Diff
 
 Reading what changed before you approve it, the uncommitted changes and those an agent proposes, is the Diff page of Files (§23.2).
+
+**Stories:** UI04, WM04
 
 ### 23.5 Trail
 
@@ -11729,6 +12019,10 @@ Full's head carries the stop you stand on, the stops kept and the stop chosen, w
 #### Tips
 - To undo a wrong turn, select the stop before it.
 
+**Source:** interior.dev (the shell's kit); VS Code's workbench (the code-editor side)
+
+**Stories:** UI04, WM07
+
 ### 23.6 NOWs
 
 **Product:** Central · **Kind:** monitor · **Rail:** the widget rail on the right, and a pane
@@ -11773,6 +12067,10 @@ Full's head carries the day, the time and its zone, the day's state and the coun
 #### Tips
 - To end the day clean, close each open moment before the day closes.
 
+**Source:** interior.dev (the shell's kit); VS Code's workbench (the code-editor side)
+
+**Stories:** WR05, UI04, WM08–WM10, RF12, TO17
+
 ### 23.7 Wiki
 
 **Product:** Central · **Kind:** monitor · **Rail:** the widget rail on the right, and a pane
@@ -11813,13 +12111,21 @@ Full's head carries the page's kind, its links and the page the agent read last,
 #### Tips
 - To check what an agent knew, open the page it read.
 
+**Source:** interior.dev (the shell's kit); VS Code's workbench (the code-editor side)
+
+**Stories:** UI04, WM11
+
 ### 23.8 Calendar
 
 A calendar is not a device of the DLW. It is a widget a third party may offer, installed from the browser's Devices, and it carries the badge of a widget from outside.
 
+**Stories:** WG08
+
 ### 23.9 Notifications
 
 What an owner or an agent raises for you to decide, such as a routine that failed or a service that stopped answering, waits in Approvals, under Requests (§19.14).
+
+**Stories:** WM12
 
 ## 24. Nara: practice
 
@@ -11884,6 +12190,8 @@ In Session view the clip shows the time left as a ring. Stop ends the sitting no
 - Nara keeps no second journal. Everything it knows of you is in your own pages, at their revisions.
 - What you write never changes your identity. A correction to your identity is its own act.
 
+**Stories:** NP01–NP09, NP11, NV01–NV06, NS01–NS09, NK01
+
 ### 24.2 Journal and dreams
 
 **Product:** Central, with Quaternal Logic · **Clip:** a journal or a dream journal on the practice world
@@ -11902,6 +12210,8 @@ Select an image in a dream and choose **Amplify**. Nara lays beside it the place
 
 - Dreams are kept in the dream journal's page, in your ground. Nothing is kept in the window alone.
 - An amplification names its source. Nara does not say what a dream means.
+
+**Stories:** NJ01–NJ07
 
 ### 24.3 Sitting
 
@@ -11934,6 +12244,8 @@ Launch a journey as Reading and it opens as an Expression: its cards and lines l
 - A correction supersedes without erasing. The first reading stays.
 - A card's place in your journey does not change your identity, and an act on your M3 clock happens only when you make it.
 
+**Stories:** NP11, NK01–NK10
+
 ### 24.5 Containers
 
 **Product:** Central, with Quaternal Logic · **Clip:** a flow held as a container
@@ -11959,6 +12271,8 @@ In a container, an entry also says what kind of entry it is:
 - An observation, an interpretation and a choice stay apart. A later interpretation does not rewrite an observation.
 - Leaving a container is an entry of its own.
 
+**Stories:** NC01–NC06
+
 ### 24.6 Identity and your sky
 
 **Product:** Quaternal Logic, with Central · **Clip:** your own Being page
@@ -11976,6 +12290,8 @@ Launch your page as Sky and your natal sky opens beside today's: the planets whe
 - Your natal sky comes from your identity. The shell does not compute a second chart.
 - Sharing your sky gives consent to see it. It never writes your identity.
 
+**Stories:** SU06, NI01–NI05
+
 ### 24.7 Nara over the field
 
 **Product:** Expressions, with Quaternal Logic · **Chain:** the Studio's Nara chain (§20.3)
@@ -11986,6 +12302,8 @@ Open the Nara chain in an Expression and your personal layer lies over the field
 
 - Your readings never enter the Expression. Saving or sharing the Expression carries none of your layer.
 - A move of focus is undone by its checkpoint.
+
+**Stories:** XF15, NF01–NF05
 
 ### 24.8 Lenses and returns
 
@@ -12009,6 +12327,8 @@ What a practice teaches you can return to the Day's face 5, and from there, once
 - A lens reading is a reading. It does not replace what you wrote.
 - Nothing in a practice writes the shared map. A pattern reaches your knowledge only after you review it.
 
+**Stories:** NL01–NL08
+
 ### 24.9 Where each practice stands in Nara's map
 
 | Practice | Nara's branch |
@@ -12028,6 +12348,8 @@ the same work the same way, so that what you learn about one in Central still
 holds when you meet it in Technē. The agent world is that one way of working,
 and Ta-Onta is its interface: one set of operations, reached by the same names
 whether an agent calls them, you press them, or a program sends them.
+
+**Stories:** RW01
 
 ### 25.1 Two faces of one field
 
@@ -12121,6 +12443,8 @@ other keeps the coordinate you stand on, the moment and the reading. It
 changes only which face is in front of you, and never what a thing is, where
 it came from or who owns it.
 
+**Stories:** RW12
+
 ### 25.2 One act, in order
 
 The agents are not layers of the field. The six Epi-Logos agents, one for
@@ -12202,6 +12526,8 @@ adds its own mark and never wipes out an earlier one.
 
 You also need to say, in plain words, that something did not go well, and have it looked into. Say it to the agent as you would to a colleague: this did not go well; this rule is being misread; the agents keep using one thing as a reason for another. Your words are kept as yours, as a question, not a verdict. The agent finds the work you mean and shows you how far it will look before it looks any wider. It sets what was meant beside what came back, with what the work was given, what it actually read and what it did, and names the kind of difference it found: a poor result, too much cost or repetition, missing context, a rule that never reached the agent or was read against its words, a machine that failed, or a test that expected the wrong thing. It brings the evidence for and against, says what it cannot know, and proposes a next step with its owner: keep the observation, test it, change a practice, propose a clarification of the rule, or commission a repair. The original work stays as it was, and a rule changes only when you accept the change.
 
+**Stories:** FD07, RW13, RO01–RO06
+
 ### 25.3 Six powers
 
 Ta-Onta gives an agent six powers. Each reaches through to the product that
@@ -12231,6 +12557,8 @@ The teams in §19.4 carry these powers: Anima composes the act, and Aletheia
 returns it. Each member stands at a depth, one of the six M domains, and a
 decision helper in the team's rack answers any of them.
 
+**Stories:** RW02–RW07
+
 ### 25.4 Carried practice
 
 The six powers come to an agent as practice it carries (§19.7), in the same
@@ -12249,6 +12577,8 @@ so, and nothing stands in for it.
 
 Each of the six products has a guardian among your agents: the agent that keeps the practice which operates that product. It is the product's own agent, under the name it already has, never made again from a list. A finding from real work becomes a proposal to its practice, and the practice changes only when you accept the proposal, after it has worked again on a fresh task. Rejected proposals and older revisions are kept. One success never changes the practice by itself, and only a lesson that holds for every product goes up to the practice of the whole suite.
 
+**Stories:** RK11, RW08, RW09
+
 ### 25.5 Agents and M1-2-3′
 
 Agents reach the other face through the modes that play it, with the same six
@@ -12258,6 +12588,8 @@ Expressions it composes a scene over all three: it finds premade characters,
 scenes and material before it makes anything new, steps the scene in time, and
 saves what it made as material others can reuse, tied to its sources. What the
 ground knows and an agent writes can then be seen and heard, not only read.
+
+**Stories:** RW10, RW11
 
 ### 25.6 Agent types and process types
 
@@ -12411,3 +12743,5 @@ caption: The queue as a lake: four items wait, so it stands half full. One reque
 - Earth, places and weather belong to the World (§17.2). A creature or an
   environ never stands on a world's body, and no one animal stands for the
   agent.
+
+**Stories:** FY01, FY06, FY07, RF01–RF13
