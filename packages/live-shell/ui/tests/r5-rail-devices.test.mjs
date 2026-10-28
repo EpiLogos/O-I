@@ -5,18 +5,24 @@ import assert from 'node:assert/strict'
 // reported. The mappings are pure (src/widgets/railBindings.ts); the publisher (railDevices.tsx) reads and publishes them.
 const rail = await import('../src/widgets/railBindings.ts')
 
-test('the Trail hands the book\'s stops oldest first, with their time where the book stamped one, and where you stand', () => {
+test('the Trail hands the book\'s stops oldest first, each keyed by its place on the trail, with its time where the book stamped one, and the stop you stand on', () => {
+  // One place can stand at several stops (the same document in Central, then Technē): the design keys a stop by its ref, so the
+  // binding keys each by its place on the trail, and `here` is the stop the book stands on (#764), not a ref several stops share.
   const stops = [
     {mode: 'base', surfaceKind: 'day', surfaceRef: 'day:2026-10-17', label: 'Saturday 17 Oct', at: 1792200000000},
     {mode: 'factory', surfaceKind: 'session', surfaceRef: 'session:fizz', label: 'Fizz', position: 'turn 3'},
+    {mode: 'techne', surfaceKind: 'day', surfaceRef: 'day:2026-10-17', label: 'Saturday 17 Oct', at: 1792200060000},
   ]
-  const values = rail.trailValues(stops, 'session:fizz')
+  const values = rail.trailValues(stops, 1)
   assert.deepEqual(JSON.parse(values.stops), [
-    {mode: 'base', surfaceKind: 'day', surfaceRef: 'day:2026-10-17', label: 'Saturday 17 Oct', at: 1792200000000},
-    {mode: 'factory', surfaceKind: 'session', surfaceRef: 'session:fizz', label: 'Fizz', position: 'turn 3'},
+    {mode: 'base', surfaceKind: 'day', surfaceRef: '0', label: 'Saturday 17 Oct', at: 1792200000000},
+    {mode: 'factory', surfaceKind: 'session', surfaceRef: '1', label: 'Fizz', position: 'turn 3'},
+    {mode: 'techne', surfaceKind: 'day', surfaceRef: '2', label: 'Saturday 17 Oct', at: 1792200060000},
   ])
-  assert.equal(values.here, 'session:fizz')
+  assert.equal(values.here, '1')
   assert.equal(rail.trailValues([], null).here, undefined, 'standing nowhere leaves `here` absent')
+  assert.equal(rail.trailIndexOf('2'), 2, 'a stop pressed on the design names its place on the trail')
+  for (const ref of [undefined, '', 'day:2026-10-17', '-1', '1.5']) assert.equal(rail.trailIndexOf(ref), null, `${ref} names no stop`)
 })
 
 test('the Diff reads Central\'s central.git-diff/v1 by its own fields, a count it did not make left out', () => {

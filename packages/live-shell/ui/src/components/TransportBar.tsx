@@ -2,10 +2,11 @@ import { Icon as CutIcon } from '../inhabitants/sdk/Icon'
 import { MODE_GRAMMAR, surfModeOf, type SurfMode } from '../shell/modeGrammar'
 import type { ModeTransportReadouts } from '../shell/ModeTransportBar'
 import { MODE_TITLE, ModeTransport } from '../shell/modeTransports'
-import { useContext, useEffect, useState } from 'react'
+import { useContext } from 'react'
 import { useOptionalContinuity } from '../continuity/workspace'
 import { returnToStop } from '../shell/TrailWidget'
 import { trailSteps } from '../frame/encounter/encounterRows'
+import { standingOn } from '../../../../../desktop/cradle/src/workspace/store'
 import type { MainView } from '../shell/mainView'
 import { ShellConfigContext } from '../shell/useSet'
 import { useSpineRevision } from '../shell/ModeTransportBar'
@@ -68,21 +69,18 @@ export function TransportBar({ tempoBpm, name, mode, view, setView, chooseMode, 
   </div></header>
 }
 
-/** Back and Forward at the head of the title line (manual §10.7): one stop along the trail each way, through the trail's one
- * return (shell/TrailWidget.tsx returnToStop), never a second writer. */
+/** Back and Forward at the head of the title line (manual §10.7: "To go back, press Back at the head of the title line … Forward
+ * goes the other way, until you go somewhere new"): one stop along the book's trail each way from the stop you stand on, through
+ * the trail's one return (shell/TrailWidget.tsx returnToStop), never a second writer. The place on the trail is the book's
+ * (WorldContext.trailAt), so the Trail's own press moves it too, and a move — which lands on the newest stop — leaves Forward
+ * nothing. The browser's ‹ › walk only the categories the browser has shown (frame/browser/Browser.tsx): what the browser shows,
+ * never where you are, so they add no stop and move no place on this trail. */
 function TitleTrail() {
   const continuity = useOptionalContinuity()
-  const trail = continuity?.current.context?.trail ?? []
-  // The line's place on the trail: the newest stop, until Back or Forward moves it; a new stop brings it to the newest again.
-  const [cursor, setCursor] = useState(trail.length - 1)
-  useEffect(() => { setCursor(trail.length - 1) }, [trail.length])
-  const steps = trailSteps(trail.length, cursor)
-  const go = (index: number | null) => {
-    const stop = index === null ? undefined : trail[index]
-    if (!continuity || !stop || index === null) return
-    setCursor(index)
-    returnToStop(continuity, stop)
-  }
+  const context = continuity?.current.context
+  const trail = context?.trail ?? []
+  const steps = trailSteps(trail.length, standingOn(context ?? {}))
+  const go = (index: number | null) => { if (continuity && index !== null) returnToStop(continuity, index) }
   const back = steps.back === null ? null : trail[steps.back]
   const forward = steps.forward === null ? null : trail[steps.forward]
   return <span className="title-trail">

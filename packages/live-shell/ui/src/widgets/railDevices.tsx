@@ -35,7 +35,9 @@ import type {DeviceInstance} from '../frame/devices/deviceRuntime'
 import type {IconName} from '../inhabitants/sdk/Icon'
 import {useWidgetReading} from './widgetReading'
 import type {OwnerReading} from '../owners/ownerReading'
-import {NOTIFY_LIST_ACTION, dayStartMs, diffFilesOf, filesOf, nowsCloseWrites, nowsValues, pagesOf, put, trailValues, wikiPagesOf, type NotifyLedgerAnswer} from './railBindings'
+import {NOTIFY_LIST_ACTION, dayStartMs, diffFilesOf, filesOf, nowsCloseWrites, nowsValues, pagesOf, put, trailIndexOf, trailValues, wikiPagesOf, type NotifyLedgerAnswer} from './railBindings'
+import {returnToStop} from '../shell/TrailWidget'
+import {standingOn} from '../../../../../desktop/cradle/src/workspace/store'
 import {DIFF_PAGE, carryPages} from '../agent/devices/oneAgentBinding'
 import {openInstrument} from '../frame/instrumentDoor'
 import {DEVICE_PANE_KIND} from '../frame/devices/devicePane'
@@ -86,23 +88,17 @@ function useTrailBinding(): DesignBinding {
   const continuity = useOptionalContinuity()
   const context = continuity?.current.context
   const {holds, local} = useHolds(['limit', 'chosen'])
-  // The latest book, for the one move a press makes (the binding stays the same object while the trail does).
-  const latest = useRef({continuity, context})
-  latest.current = {continuity, context}
+  // The latest book, for the one walk a press makes (the binding stays the same object while the trail does).
+  const latest = useRef(continuity)
+  latest.current = continuity
   const returnTo = useMemo(() => (ref: Value | undefined) => {
-    const {continuity: book, context: now} = latest.current
-    const stop = now?.trail?.find(item => (item.surfaceRef ?? item.label) === ref)
-    if (!book || !stop) return
-    book.switchMode(stop.mode)
-    if (stop.surfaceRef && stop.surfaceKind) {
-      const selection = {mode: stop.mode, kind: stop.surfaceKind, ref: stop.surfaceRef, title: stop.label, track: stop.position}
-      book.setContext(current => ({...current, selection}))
-    }
+    const book = latest.current, index = trailIndexOf(ref)
+    if (book && index !== null) returnToStop(book, index)
   }, [])
-  const open = !!continuity, trail = context?.trail, here = context?.selection?.ref ?? null
+  const open = !!continuity, trail = context?.trail, standing = trail?.length ? standingOn(context ?? {}) : null
   return useMemo(() => ({id: railDeviceId('trail'),
-    values: withHolds(open ? trailValues(trail ?? [], here) : {reason: 'The workspace book is not open'}, holds),
-    local: {...local, return: returnTo}}), [open, trail, here, holds, local, returnTo])
+    values: withHolds(open ? trailValues(trail ?? [], standing) : {reason: 'The workspace book is not open'}, holds),
+    local: {...local, return: returnTo}}), [open, trail, standing, holds, local, returnTo])
 }
 
 // ---------------------------------------------------------------------------------------------------------------- the Diff

@@ -6,9 +6,10 @@ import {register} from 'node:module'
 // The store here is a fixture shaped like the workspace book (its setContext /
 // switchMode contract); the window is a fake history stack with real Back.
 const compiler = new URL('../node_modules/typescript/lib/typescript.js', import.meta.url).href
-register(`data:text/javascript,${encodeURIComponent(`import ts from ${JSON.stringify(compiler)};import {readFile} from 'node:fs/promises';export async function load(u,c,n){if(u.endsWith('.css'))return {format:'module',shortCircuit:true,source:'export {}'};if(!u.endsWith('.ts')&&!u.endsWith('.tsx'))return n(u,c);return {format:'module',shortCircuit:true,source:ts.transpileModule(await readFile(new URL(u),'utf8'),{fileName:new URL(u).pathname,compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext,jsx:ts.JsxEmit.ReactJSX}}).outputText}}`)}`, import.meta.url)
+// The bridge writes through the book's own trail law (desktop/cradle/src/workspace/store.ts), whose imports name no extension.
+register(`data:text/javascript,${encodeURIComponent(`import ts from ${JSON.stringify(compiler)};import {readFile} from 'node:fs/promises';export async function resolve(s,c,n){try{return await n(s,c)}catch(e){if(!s.startsWith('.'))throw e;for(const x of ['.ts','.tsx','/index.ts']){try{return await n(s+x,c)}catch{}}throw e}}export async function load(u,c,n){if(u.endsWith('.css'))return {format:'module',shortCircuit:true,source:'export {}'};if(u.endsWith('.json'))return {format:'module',shortCircuit:true,source:'export default '+await readFile(new URL(u),'utf8')};if(!u.endsWith('.ts')&&!u.endsWith('.tsx'))return n(u,c);return {format:'module',shortCircuit:true,source:ts.transpileModule(await readFile(new URL(u),'utf8'),{fileName:new URL(u).pathname,compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext,jsx:ts.JsxEmit.ReactJSX}}).outputText}}`)}`, import.meta.url)
 
-const {createSpineEncounterBridge, trailStopFrom} = await import('../src/projections/encounterBridge.ts')
+const {createSpineEncounterBridge} = await import('../src/projections/encounterBridge.ts')
 const {createEncounterLink, inboundPlan, mergeLinkSearch} = await import('../src/projections/encounterLink.ts')
 
 // A store fixture with the workspace book's contract: context merges through
@@ -16,7 +17,8 @@ const {createEncounterLink, inboundPlan, mergeLinkSearch} = await import('../src
 const fixtureStore = (context = {}, mode = 'base') => {
   const workspace = {mode, accessEpoch: 1}
   const book = {
-    current: {context},
+    // The book's tree mode (Layout.mode): the mode a stop is made in.
+    current: {context, layout: {mode}},
     setContext(change) {
       const next = change(book.current.context ?? {})
       book.current.context = {...next, trail: next.trail?.slice(-24)}
@@ -24,6 +26,7 @@ const fixtureStore = (context = {}, mode = 'base') => {
     },
     switchMode(next) {
       workspace.mode = next
+      book.current.layout = {mode: next}
     },
   }
   const bridge = createSpineEncounterBridge({current: {book, workspace}})
@@ -76,10 +79,16 @@ test('outbound: a new encounter pushes, a refinement replaces, an unchanged enco
   assert.match(w.current(), /subject=stone1950/)
   assert.match(w.current(), /kind=artefact/)
 
+  // Replaces "an occasion is a refinement of the same encounter: replaceState" (#764): an occasion change is a move, so the trail
+  // grows and the link pushes; a new point in the reading you stand on is no move, and names no key the link writes.
   store.bridge.transition({kind: 'occasion', ref: 'reading:9', position: 'p.214'})
   link.publish()
-  assert.equal(w.calls.at(-1)[0], 'replace', 'an occasion is a refinement of the same encounter: replaceState')
+  assert.equal(w.calls.at(-1)[0], 'push', 'an occasion change is a move: a new encounter, pushState')
   assert.match(w.current(), /occasion=reading%3A9/)
+  const entries = w.entries().length
+  store.bridge.transition({kind: 'occasion', ref: 'reading:9', position: 'p.220'})
+  link.publish()
+  assert.equal(w.entries().length, entries, 'a new point in the same reading adds no history entry')
 
   const before = w.calls.length
   link.publish()
@@ -140,8 +149,7 @@ test('popstate: Back walks the trail the sync pushed, and forward returns to it'
   store.bridge.transition({kind: 'subject', ref: 'b', subjectKind: 'artefact', title: 'B'})
   link.publish()
   assert.equal(w.entries().length, 3, 'the initial entry and one entry per encounter')
-  assert.equal(store.book.current.context.trail.length, 1, 'only a transition from a subject leaves a trail stop; the first encounter leaves none')
-  assert.equal(store.book.current.context.trail[0].surfaceRef, 'a', 'the stop names where the person came from')
+  assert.deepEqual(store.book.current.context.trail.map(stop => stop.surfaceRef), ['a', 'b'], 'each subject transition leaves the place it goes to (#764)')
 
   w.back()
   assert.equal(store.book.current.context.subject.ref, 'a', 'Back restores the previous encounter')
@@ -211,12 +219,16 @@ test('detached windows keep their own query: no listener, no write, no apply', (
   link.dispose()
 })
 
-test('the bridge: a subject transition leaves the stop it came from; the same subject is no transition', () => {
+test('the bridge: a subject transition leaves the stop it goes to, stamped; the same subject is no transition', () => {
+  // Replaces "leaves the stop it came from" (#764): every move leaves the place it lands on (the port of encounter.ts `encounter`),
+  // so where it came from is the stop before it, and Back reaches it from the book's place on the trail.
   const store = fixtureStore({subject: {ref: 'first', kind: 'artefact', title: 'First'}}, 'techne')
   store.bridge.transition({kind: 'subject', ref: 'second', subjectKind: 'artefact', title: 'Second'})
   const ctx = store.book.current.context
   assert.equal(ctx.subject.ref, 'second')
-  assert.deepEqual(ctx.trail.at(-1), {mode: 'techne', label: 'First', surfaceRef: 'first', surfaceKind: 'artefact'})
+  const {at, ...stop} = ctx.trail.at(-1)
+  assert.equal(typeof at, 'number', 'the stop carries its time')
+  assert.deepEqual(stop, {mode: 'techne', label: 'Second', surfaceRef: 'second', surfaceKind: 'artefact', subject: {ref: 'second', kind: 'artefact', title: 'Second'}})
   store.bridge.transition({kind: 'subject', ref: 'second', subjectKind: 'artefact', title: 'Second'})
   assert.equal(store.book.current.context.trail.length, 1, 'the same subject does not grow the trail')
 })
@@ -225,18 +237,20 @@ test('the link helpers: an address with no subject, and a stop for a mode with n
   assert.equal(inboundPlan('?projection=earth').carried.arrangement, 'base', 'projection alone names an encounter, arrangement defaults to base')
   assert.equal(inboundPlan('?other=1'), null, 'a query with no encounter key names none')
   assert.equal(mergeLinkSearch('?dev=1&arr=old', 'arr=base&ap=0'), 'arr=base&ap=0&dev=1', 'link keys are replaced, other keys kept')
-  assert.equal(trailStopFrom('audio', undefined), null, 'with no previous subject there is no stop to leave')
-  assert.equal(trailStopFrom('audio', {title: 'no ref'}), null, 'a previous subject without a ref is no stop either')
-  assert.deepEqual(trailStopFrom('audio', {ref: 'a', kind: 'artefact', title: 'A'}), {mode: 'base', label: 'A', surfaceRef: 'a', surfaceKind: 'artefact'})
+  // trailStopFrom is retired (#764): the stop a move leaves is the book's stopOf (desktop/cradle/src/workspace/store.ts), proved in
+  // w1-pool-and-encounter.test.mjs '#764 each kind of move adds one stop'.
 })
 
-test('the bridge: the first subject leaves no stop, so the legacy return chip shows no meaningless trail entry', () => {
+test('the bridge: the first subject is a place like any other: it leaves its stop', () => {
+  // Replaces "the first subject leaves no stop, so the legacy return chip shows no meaningless trail entry" (#764): the chip was the
+  // legacy cradle frame's (CradleFrame.tsx, which the candidate does not reach); the title line's Back walks the trail from the stop
+  // you stand on, so the first place is a stop to come back to.
   const store = fixtureStore({}, 'base')
   store.bridge.transition({kind: 'subject', ref: 'first', subjectKind: 'artefact', title: 'First'})
   assert.equal(store.book.current.context.subject.ref, 'first')
-  assert.equal(store.book.current.context.trail, undefined, 'no previous subject, so no trail stop')
+  assert.deepEqual(store.book.current.context.trail.map(stop => [stop.mode, stop.surfaceRef]), [['base', 'first']])
   store.bridge.transition({kind: 'subject', ref: 'second', subjectKind: 'artefact', title: 'Second'})
-  assert.deepEqual(store.book.current.context.trail, [{mode: 'base', label: 'First', surfaceRef: 'first', surfaceKind: 'artefact'}], 'the second transition leaves the real stop')
+  assert.deepEqual(store.book.current.context.trail.map(stop => [stop.mode, stop.surfaceRef]), [['base', 'first'], ['base', 'second']])
 })
 
 test('no write-back loop: a render that still shows the pre-apply store is not written over the link', () => {

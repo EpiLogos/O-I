@@ -49,6 +49,8 @@ const areas = await import('../src/shell/workspaceAreas.ts')
 const surfaceTypes = await import('../../../../desktop/cradle/src/surface/types.ts')
 const devices = await import('../src/frame/devices/deviceDoor.ts')
 const {workspaceTint, nameFromDrop} = await import('../src/frame/browser/WorkspacePool.tsx')
+const encounterBridge = await import('../src/projections/encounterBridge.ts')
+const trailWidget = await import('../src/shell/TrailWidget.tsx')
 const source = path => readFile(new URL(`../src/${path}`, import.meta.url), 'utf8')
 const h = React.createElement
 const value = (list, key) => list.find(row => row.key === key)
@@ -239,4 +241,139 @@ test('in Live the pool\'s other face is the set\'s own Groove Pool, read and wri
     assert.match(face, write)
   assert.match(face, /useLiveGrooves\(path\)/, 'the face holds no groove of its own: it reads the set\'s')
   assert.match(face, /Global Amount/)
+})
+
+// ── #764 going back: Back and Forward over one trail (manual §10.7, §23.5) ──
+// Channels: SCRIPTED — the book's trail law (desktop/cradle/src/workspace/store.ts) driven the way the shell drives it: chooseMode's
+// move (projections/encounterBridge.ts moveTo), the book's select (selectOnTrail), the spine bridge's subject and occasion
+// transitions, and the one return the title line's Back and Forward and the Trail share (shell/TrailWidget.tsx returnToStop).
+// CODE-READING — chooseMode, the title line, the Trail's binding. NOT a screen pass: the walk on the native candidate is the lead's.
+
+/** A fixture with the workspace book's contract: the context through its one bounded writer, the tree mode through switchMode. */
+const trailBook = (context = {}, mode = 'base') => {
+  const book = {
+    current: {context, layout: {mode}},
+    setContext(change) { book.current = {...book.current, context: store.boundedContext(change(book.current.context ?? {}))} },
+    switchMode(next) { book.current = {...book.current, layout: {...book.current.layout, mode: next}} },
+  }
+  const bridge = encounterBridge.createSpineEncounterBridge({current: {book, get workspace() { return {mode: book.current.layout.mode, accessEpoch: 1} }}})
+  return {book, bridge, trail: () => book.current.context.trail ?? [], context: () => book.current.context, mode: () => book.current.layout.mode,
+    /** chooseMode's two writes (App.tsx): the move into the mode with the world it enters, then the tree. */
+    chooseMode: (next, world, at) => { book.setContext(c => encounterBridge.moveTo({...c, world}, next, at)); book.switchMode(next) }}
+}
+const SECRET = 'The whole text of the passage, which no stop holds.'
+const SHAPE = {stop: ['mode', 'label', 'at', 'surfaceRef', 'surfaceKind', 'position', 'world', 'selection', 'subject', 'reading'],
+  selection: ['mode', 'kind', 'ref', 'title', 'track'], subject: ['ref', 'kind', 'title', 'project'], reading: ['ref', 'position']}
+/** Refs, titles, positions and a time: every key a stop holds is one of these, every value a short string or a number. */
+const contentFree = stop => {
+  for (const key of Object.keys(stop)) assert.ok(SHAPE.stop.includes(key), `a stop holds no ${key}`)
+  for (const part of ['selection', 'subject', 'reading']) for (const key of Object.keys(stop[part] ?? {})) assert.ok(SHAPE[part].includes(key), `a stop's ${part} holds no ${key}`)
+  assert.doesNotMatch(JSON.stringify(stop), /whole text/, 'no content reaches a stop')
+}
+
+test('#764 each kind of move adds one stop, stamped with its time, and no stop carries content', () => {
+  const f = trailBook({}, 'live')
+  const T = Date.UTC(2026, 9, 28, 9, 0)
+  f.chooseMode('base', 'central', T)
+  assert.equal(f.trail().length, 1, 'a mode switch adds one stop')
+  assert.deepEqual(f.trail()[0], {mode: 'base', label: 'Central', at: T, world: 'central'}, 'the place it lands on: the mode, the world it enters')
+  f.book.setContext(c => store.selectOnTrail(c, {mode: 'base', kind: 'file', ref: 'Work/essay.md', title: 'Essay', content: SECRET}, T + 1))
+  assert.equal(f.trail().length, 2, 'a selection adds one stop')
+  f.bridge.transition({kind: 'subject', ref: 'wiki:node:mercurius', subjectKind: 'subject', title: 'Mercurius', content: SECRET})
+  assert.equal(f.trail().length, 3, 'a subject change adds one stop')
+  f.bridge.transition({kind: 'occasion', ref: 'occasion:day-2026-10-28', position: '¶2', content: SECRET})
+  assert.equal(f.trail().length, 4, 'an occasion change adds one stop')
+  f.chooseMode('techne', undefined, T + 4)
+  assert.equal(f.trail().length, 5, 'and so does the next mode switch')
+  const kept = f.trail().length
+  f.chooseMode('techne', undefined, T + 5)
+  assert.equal(f.trail().length, kept, 'choosing the mode you stand in is no move')
+  f.book.setContext(c => store.selectOnTrail(c, {mode: 'base', kind: 'file', ref: 'Work/essay.md', title: 'Essay'}, T + 6))
+  assert.equal(f.trail().length, kept, 'selecting what is selected is no move')
+  f.bridge.transition({kind: 'subject', ref: 'wiki:node:mercurius', subjectKind: 'subject', title: 'Mercurius'})
+  assert.equal(f.trail().length, kept, 'the same subject is no move')
+  f.bridge.transition({kind: 'occasion', ref: 'occasion:day-2026-10-28', position: '¶9'})
+  assert.equal(f.trail().length, kept, 'a new point in the reading you stand on is no move')
+  assert.deepEqual(f.trail().at(-1).reading, {ref: 'occasion:day-2026-10-28', position: '¶9'}, 'the stop you stand on takes it')
+  for (const stop of f.trail()) { assert.equal(typeof stop.at, 'number', `${stop.label} carries its time`); contentFree(stop) }
+})
+
+test('#764 Back and Forward walk one trail: Central, the document at its passage, Technē, Expressions; back to the passage and forward again', () => {
+  const f = trailBook({}, 'live')
+  const T = Date.UTC(2026, 9, 28, 9, 0)
+  const essay = {mode: 'base', kind: 'file', ref: 'Work/essay.md', title: 'Essay'}
+  f.chooseMode('base', 'central', T)
+  f.book.setContext(c => store.selectOnTrail(c, essay, T + 60e3))
+  // The document's pane names where its reading stands (the occasion intent), then the person scrolls to a passage.
+  f.bridge.transition({kind: 'occasion', ref: essay.ref, position: '¶3'})
+  f.bridge.transition({kind: 'occasion', ref: essay.ref, position: '¶7'})
+  f.chooseMode('techne', undefined, T + 120e3)
+  f.chooseMode('expressions', undefined, T + 180e3)
+  assert.deepEqual(f.trail().map(stop => [stop.mode, stop.label, stop.position ?? null]),
+    [['base', 'Central', null], ['base', 'Essay', '¶7'], ['techne', 'Essay', '¶7'], ['expressions', 'Essay', '¶7']])
+  // The title line: a step from the book's place on the trail, through the one return.
+  const step = direction => {
+    const index = rows.trailSteps(f.trail().length, store.standingOn(f.context()))[direction]
+    assert.notEqual(index, null, `${direction} stands`)
+    trailWidget.returnToStop(f.book, index)
+  }
+  const kept = f.trail().length
+  step('back')
+  assert.equal(f.mode(), 'techne', 'one Back: Technē')
+  step('back')
+  assert.equal(f.mode(), 'base', 'Back again: Central')
+  assert.deepEqual(f.context().selection, essay, 'on the document')
+  assert.deepEqual(f.context().reading, {ref: essay.ref, position: '¶7'}, 'at the passage')
+  assert.equal(f.context().world, 'central')
+  assert.equal(f.context().trailAt, 1, 'the book holds the stop you stand on')
+  assert.equal(f.trail().length, kept, 'walking adds no stop')
+  step('forward'); step('forward')
+  assert.equal(f.mode(), 'expressions', 'Forward returns to Expressions')
+  assert.equal(f.context().trailAt, undefined, 'standing on the newest stop again')
+  assert.equal(rows.trailSteps(f.trail().length, store.standingOn(f.context())).forward, null, 'Forward waits at the newest stop')
+  assert.equal(f.trail().length, kept)
+  for (const stop of f.trail()) assert.match(trailWidget.stopTime(stop), /^\d\d:\d\d$/, `the Trail lists ${stop.label} with its time`)
+  // Somewhere new after a walk: the return is kept, then the new place, so Back goes where you were and nothing you went to is lost.
+  step('back'); step('back')
+  f.chooseMode('factory', undefined, T + 240e3)
+  assert.deepEqual(f.trail().slice(-2).map(stop => [stop.mode, stop.label]), [['base', 'Essay'], ['factory', 'Essay']])
+  assert.equal(f.trail().length, kept + 2, 'the return, then the new place; the stops walked past are kept')
+  assert.equal(rows.trailSteps(f.trail().length, store.standingOn(f.context())).forward, null, 'Forward waits: you went somewhere new')
+  step('back')
+  assert.equal(f.mode(), 'base')
+  assert.deepEqual(f.context().reading, {ref: essay.ref, position: '¶7'}, 'Back goes where you were')
+})
+
+test('#764 the stop you stand on is the book\'s: it decodes with the trail and follows the bound', () => {
+  const trail = Array.from({length: 3}, (_, i) => ({mode: 'base', label: `S${i}`, at: i}))
+  assert.equal(store.decodeWorldContext({trail, trailAt: 1}).trailAt, 1)
+  assert.equal(store.decodeWorldContext({trail, trailAt: 2}).trailAt, undefined, 'the newest stop is where an unwalked trail stands')
+  assert.equal(store.decodeWorldContext({trail, trailAt: 7}).trailAt, undefined, 'a place off the trail is none')
+  const long = Array.from({length: 30}, (_, i) => ({mode: 'base', label: `S${i}`}))
+  assert.equal(store.decodeWorldContext({trail: long, trailAt: 10}).trailAt, 4, 'the bound keeps the same stop')
+  assert.equal(store.boundedContext({trail: long, trailAt: 10}).trailAt, 4)
+  assert.equal(store.boundedContext({trail: long, trailAt: 2}).trailAt, undefined, 'a stop the bound drops is stood on no longer')
+  const place = {mode: 'techne', label: 'Essay', at: 5, world: 'central', selection: {mode: 'base', kind: 'file', ref: 'Work/essay.md', title: 'Essay'},
+    subject: {ref: 'wiki:node:m', kind: 'subject', title: 'M'}, reading: {ref: 'Work/essay.md', position: '¶7'}}
+  const decoded = store.decodeWorldContext({trail: [place, {...place, reading: {position: 'no ref'}, selection: {ref: 'x'}}]}).trail
+  // Each part decodes as the context's own does (an absent optional field read as undefined).
+  assert.equal(decoded[0].world, 'central')
+  assert.deepEqual(decoded[0].selection, {...place.selection, track: undefined})
+  assert.deepEqual(decoded[0].subject, {...place.subject, project: undefined})
+  assert.deepEqual(decoded[0].reading, place.reading)
+  assert.equal(decoded[1].reading, undefined, 'a damaged reading is dropped')
+  assert.equal(decoded[1].selection, undefined, 'a damaged selection is dropped')
+})
+
+test('#764 chooseMode, the title line and the Trail move and walk through the one law (code-reading)', async () => {
+  const app = await source('App.tsx')
+  assert.match(app, /const chooseMode = \(next: SurfMode\) => \{[\s\S]*?continuity\.setContext\(context => moveTo\(\{\.\.\.context, world: [^}]*\}, BOOK_MODE_OF_SHELL\[shell\]\)\)[\s\S]*?continuity\.setMode\(shell\)/,
+    'a mode switch is a move: it appends the place it lands on')
+  const bar = await source('components/TransportBar.tsx')
+  assert.match(bar, /trailSteps\(trail\.length, standingOn\(context \?\? \{\}\)\)/, 'the title line steps from the book\'s place on the trail')
+  assert.match(bar, /returnToStop\(continuity, index\)/, 'through the one return')
+  assert.doesNotMatch(bar, /useState\(trail\.length - 1\)/, 'the line keeps no place of its own')
+  const rail = await source('widgets/railDevices.tsx')
+  assert.match(rail, /returnToStop\(book, index\)/, 'the Trail returns through the same')
+  assert.doesNotMatch(rail, /book\.switchMode\(stop\.mode\)/, 'and has no return of its own')
 })

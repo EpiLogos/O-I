@@ -5,7 +5,7 @@ import { useEffect, useRef, useState, type SetStateAction } from "react";
 import { activateSurface, groupsOf, openBinding, redockBinding } from "../surface/engine";
 import { decodeLayout } from "../surface/persist";
 import { freshLayout, type LayoutState } from "../surface/types";
-import {clampTabListWidth,upgradeTabPresentation,isWorkspaceMode,TREE_MODES,WORKSPACE_MODES,type WorkspaceMode} from "../workspace/mode";
+import {clampTabListWidth,upgradeTabPresentation,isWorkspaceMode,MODE_CURATION,TREE_MODES,WORKSPACE_MODES,type WorkspaceMode} from "../workspace/mode";
 import {focusedInstrumentBinding,focusedInstrumentSource,subscribeFocusedInstrumentOpen} from "../instrument/source";
 import {setActiveListingWorkspace} from "../files/listingStore";
 
@@ -66,11 +66,17 @@ export interface Workspace {
 /** The selected world is independent of the arrangement: entering Epi-Logos
  * selects its world, and examining one of its Expressions in Technè or opening
  * its source in Base is still within Epi-Logos until the person leaves it.
- * `trail` is the route back: each drill-through records where it came from so
- * "return" lands on the same mode, surface and reading position. Refs and
- * positions only — never content, never an authority reading. */
+ * `trail` is the route back (manual §10.7): every place you go is a stop, and
+ * Back, Forward and the Trail return to the same mode, surface and reading
+ * position. Refs and positions only — never content, never an authority reading. */
 export type WorldRef = "central" | "epi-logos";
-export interface TrailStop { mode: WorkspaceMode; surfaceRef?: string; surfaceKind?: string; label: string; position?: string; at?: number }
+/** One place on the trail. `surfaceRef`, `surfaceKind`, `label` and `position` are what the stop shows: the thing it stood on
+ * and its track or point in the reading. `world`, `selection`, `subject` and `reading` are the place it returns to, exactly;
+ * a stop made before stops named their whole place carries only the first four, and returns as it did (its thing selected). */
+export interface TrailStop {
+  mode: WorkspaceMode; surfaceRef?: string; surfaceKind?: string; label: string; position?: string; at?: number;
+  world?: WorldRef; selection?: WorldSelection; subject?: WorldContext["subject"]; reading?: WorldContext["reading"];
+}
 /** THE selection (FOUNDATION F1): one value for the whole window — a Day, a document, a clip, a track, a task, a scene.
  * Every pane that follows the selection reads it here; each move is a trail stop. `ref` is the owner's ref (or the
  * Central-relative path for ground material); `track` names the track a clip sits on. Refs only, never content. */
@@ -81,6 +87,85 @@ export interface WorldContext {
   reading?: { ref: string; position?: string };
   selection?: WorldSelection;
   trail?: TrailStop[];
+  /** The stop you stand on, once Back, Forward or the Trail has walked the trail (manual §23.5 "the stop you stand on");
+   * absent, the newest. A move clears it. */
+  trailAt?: number;
+}
+
+// ---- the trail (manual §10.7, §23.5) — ported from encounter.ts `encounter` and `returnTo` onto the book's one shape ----
+
+const pick = <T extends object>(value: T | undefined, fields: readonly (keyof T)[]): Partial<T> =>
+  Object.fromEntries(fields.flatMap(field => value?.[field] === undefined ? [] : [[field, value[field]]])) as Partial<T>;
+/** The parts of a place a stop keeps, by name: refs, titles, positions. Whatever else rides on a value stays off the trail. */
+const placeParts = (context: WorldContext) => ({
+  world: context.world,
+  selection: context.selection && pick(context.selection, ["mode", "kind", "ref", "title", "track"]) as WorldSelection,
+  subject: context.subject && pick(context.subject, ["ref", "kind", "title", "project"]) as WorldContext["subject"],
+  reading: context.reading && pick(context.reading, ["ref", "position"]) as WorldContext["reading"],
+});
+/** The stop you stand on: the book's walked place, else the newest. */
+export const standingOn = (context: WorldContext): number => context.trailAt ?? (context.trail?.length ?? 0) - 1;
+/** The place a move lands on, as a stop, stamped with the move's time: the mode, the world, THE selection, the subject and the
+ * reading. It shows THE selection (else the subject, else the reading) and its track or point in the reading. */
+export function stopOf(mode: WorkspaceMode, context: WorldContext, at: number): TrailStop {
+  const {world, selection, subject, reading} = placeParts(context);
+  const shown = selection ? {surfaceRef: selection.ref, surfaceKind: selection.kind} : subject?.ref ? {surfaceRef: subject.ref, ...(subject.kind ? {surfaceKind: subject.kind} : {})}
+    : reading ? {surfaceRef: reading.ref} : {};
+  const shownPosition = selection?.track ?? reading?.position;
+  return {mode, label: selection?.title ?? subject?.title ?? MODE_CURATION[mode].label, ...shown, ...(shownPosition !== undefined ? {position: shownPosition} : {}), at,
+    ...(world ? {world} : {}), ...(selection ? {selection} : {}), ...(subject ? {subject} : {}), ...(reading ? {reading} : {})};
+}
+/** A stop made before stops named their whole place: its thing is the selection it returns to. */
+const legacyStop = (stop: TrailStop) => !stop.selection && !stop.subject && !stop.reading && stop.surfaceRef !== undefined;
+const legacySelection = (stop: TrailStop): WorldSelection | undefined => stop.surfaceRef && stop.surfaceKind
+  ? {mode: stop.mode, kind: stop.surfaceKind, ref: stop.surfaceRef, title: stop.label, ...(stop.position !== undefined ? {track: stop.position} : {})} : undefined;
+const placeKey = (stop: TrailStop) => {
+  const selection = legacyStop(stop) ? legacySelection(stop) : stop.selection;
+  return JSON.stringify([stop.mode, stop.world ?? null, selection ? [selection.mode, selection.kind, selection.ref, selection.track ?? null] : null,
+    stop.subject ? [stop.subject.ref ?? null, stop.subject.kind ?? null] : null, stop.reading ? [stop.reading.ref, stop.reading.position ?? null] : null]);
+};
+/** A move (encounter.ts `encounter`: the trail grows by one on every transition): the trail grows by the place you go to. Going to
+ * the place you stand on is no move. When Back, Forward or the Trail has walked you to an earlier stop, the walk ends here: the
+ * stop you stood on is kept again as a return (encounter.ts `returnTo`: a return appends, it does not rewind), then the new place,
+ * so Back from it goes where you were and every place you went stays on the trail. */
+export function moveOnTrail(context: WorldContext, stop: TrailStop): WorldContext {
+  const trail = context.trail ?? [], standingStop = trail[standingOn(context)];
+  if (standingStop && placeKey(standingStop) === placeKey(stop)) return context;
+  const {trailAt: walked, ...rest} = context;
+  return {...rest, trail: [...trail, ...(walked !== undefined && standingStop ? [{...standingStop, at: stop.at}] : []), stop]};
+}
+/** Selecting (the book's `select`): THE selection, and a move to it; selecting what is selected is no move. */
+export function selectOnTrail(context: WorldContext, selection: WorldSelection, at: number): WorldContext {
+  const heldSelection = context.selection, moved = {...context, selection: placeParts({selection}).selection};
+  if (heldSelection && heldSelection.ref === selection.ref && heldSelection.kind === selection.kind && heldSelection.mode === selection.mode) return moved;
+  return moveOnTrail(moved, stopOf(selection.mode, moved, at));
+}
+/** A point in a reading. When the stop you stand on names that reading, or the thing it is the reading of, the point is where you
+ * stand (manual §10.7 "the same point in the reading"): the stop takes it and keeps its time, and no stop is added. Another
+ * reading is an occasion change: a move. */
+export function readOnTrail(context: WorldContext, mode: WorkspaceMode, reading: {ref: string; position?: string}, at: number): WorldContext {
+  const moved = {...context, reading: placeParts({reading}).reading};
+  const trail = context.trail ?? [], here = standingOn(context), standingStop = trail[here];
+  if (!standingStop || legacyStop(standingStop) || ![standingStop.reading?.ref, standingStop.selection?.ref, standingStop.subject?.ref].includes(reading.ref)) return moveOnTrail(moved, stopOf(mode, moved, at));
+  const refined = stopOf(standingStop.mode, {world: standingStop.world, selection: standingStop.selection, subject: standingStop.subject, reading: moved.reading}, standingStop.at ?? at);
+  return {...moved, trail: trail.map((stop, index) => index === here ? refined : stop)};
+}
+/** A walk (Back, Forward, a stop pressed on the Trail): stand on stop `index` — the world, selection, subject and reading it names,
+ * restored exactly — adding no stop. The caller stands the book in the stop's mode. A stop made before stops named their whole
+ * place returns as it did: its thing selected, the rest as it stands. */
+export function walkTrail(context: WorldContext, index: number): WorldContext {
+  const trail = context.trail ?? [], stop = trail[index];
+  if (!stop) return context;
+  const {trailAt: _walked, world: _world, selection: _selection, subject: _subject, reading: _reading, ...rest} = context;
+  const returnPlace = legacyStop(stop) ? {...context, selection: legacySelection(stop) ?? context.selection} : {world: stop.world, selection: stop.selection, subject: stop.subject, reading: stop.reading};
+  const named = Object.fromEntries(Object.entries({world: returnPlace.world, selection: returnPlace.selection, subject: returnPlace.subject, reading: returnPlace.reading}).filter(([, value]) => value !== undefined));
+  return {...rest, ...named, ...(index < trail.length - 1 ? {trailAt: index} : {})};
+}
+/** The book's bound on the trail (TRAIL_LIMIT): the oldest stops fall away, and the stop you stand on stays the same stop. */
+export function boundedContext(context: WorldContext): WorldContext {
+  const {trailAt, ...rest} = context, dropped = Math.max((context.trail?.length ?? 0) - TRAIL_LIMIT, 0);
+  const shifted = trailAt === undefined ? undefined : trailAt - dropped;
+  return {...rest, trail: context.trail?.slice(dropped), ...(shifted !== undefined && shifted >= 0 && shifted < (context.trail?.length ?? 0) - dropped - 1 ? {trailAt: shifted} : {})};
 }
 /** A named set (manual §10.2): an arrangement of panes, instruments and the frame's parts, kept under a name and
  * returned to from the browser. The layout is the mode's own tree with its application view; refs only. */
@@ -151,21 +236,42 @@ function decodeRecentPlaces(raw: unknown): WorkspaceRecentPlace[] | undefined {
 function stampActiveVisited(book: WorkspaceBook): WorkspaceBook {
   return { ...book, workspaces: book.workspaces.map(w => w.id === book.active ? { ...w, lastVisitedAt: w.lastVisitedAt ?? Date.now() } : w) };
 }
+const decodeWorld = (given: unknown): WorldRef | undefined => given === "epi-logos" ? "epi-logos" : given === "central" ? "central" : undefined;
+// These readers, and the trail's locals above, take names of their own: the storage conformance scanner
+// (tests/conformance/source.mjs) follows identifiers by name across the file, and a declaration under a name its walk already
+// visits (`raw`, `o`, `standing`, `place`, `at` …) reroutes the walk from the book's draft key.
+function decodeSubject(given: unknown): WorldContext["subject"] {
+  const g = given as Record<string, unknown> | undefined;
+  return g && typeof g === "object" && text(g.title) ? { ref: text(g.ref), kind: text(g.kind, 64), title: text(g.title)!, project: text(g.project) } : undefined;
+}
+function decodeReading(given: unknown): WorldContext["reading"] {
+  const g = given as Record<string, unknown> | undefined;
+  return g && typeof g === "object" && text(g.ref) ? { ref: text(g.ref)!, position: text(g.position) } : undefined;
+}
+function decodeSelection(given: unknown): WorldSelection | undefined {
+  const g = given as Record<string, unknown> | undefined;
+  return g && typeof g === "object" && isWorkspaceMode(g.mode) && text(g.kind, 64) && text(g.ref, 4096) && text(g.title)
+    ? { mode: g.mode, kind: text(g.kind, 64)!, ref: text(g.ref, 4096)!, title: text(g.title)!, track: text(g.track, 4096) } : undefined;
+}
 export function decodeWorldContext(raw: unknown): WorldContext | undefined {
   if (!raw || typeof raw !== "object") return undefined;
   const r = raw as Record<string, unknown>;
-  const subjectRaw = r.subject as Record<string, unknown> | undefined;
-  const readingRaw = r.reading as Record<string, unknown> | undefined;
-  const subject = subjectRaw && typeof subjectRaw === "object" && text(subjectRaw.title) ? { ref: text(subjectRaw.ref), kind: text(subjectRaw.kind, 64), title: text(subjectRaw.title)!, project: text(subjectRaw.project) } : undefined;
-  const reading = readingRaw && typeof readingRaw === "object" && text(readingRaw.ref) ? { ref: text(readingRaw.ref)!, position: text(readingRaw.position) } : undefined;
-  const trail = Array.isArray(r.trail) ? r.trail.flatMap((stop): TrailStop[] => {
+  const subject = decodeSubject(r.subject);
+  const reading = decodeReading(r.reading);
+  const stops = Array.isArray(r.trail) ? r.trail.flatMap((stop): TrailStop[] => {
     const o = stop as Record<string, unknown> | null;
-    return o && typeof o === "object" && isWorkspaceMode(o.mode) && text(o.label) ? [{ mode: o.mode, label: text(o.label)!, surfaceRef: text(o.surfaceRef), surfaceKind: text(o.surfaceKind, 64), position: text(o.position), at: typeof o.at === "number" && Number.isFinite(o.at) ? o.at : undefined }] : [];
-  }).slice(-TRAIL_LIMIT) : undefined;
-  const selectionRaw = r.selection as Record<string, unknown> | undefined;
-  const selection = selectionRaw && typeof selectionRaw === "object" && isWorkspaceMode(selectionRaw.mode) && text(selectionRaw.kind, 64) && text(selectionRaw.ref, 4096) && text(selectionRaw.title)
-    ? { mode: selectionRaw.mode, kind: text(selectionRaw.kind, 64)!, ref: text(selectionRaw.ref, 4096)!, title: text(selectionRaw.title)!, track: text(selectionRaw.track, 4096) } : undefined;
-  const context: WorldContext = { world: r.world === "epi-logos" ? "epi-logos" : r.world === "central" ? "central" : undefined, subject, reading, selection, trail: trail?.length ? trail : undefined };
+    if (!o || typeof o !== "object" || !isWorkspaceMode(o.mode) || !text(o.label)) return [];
+    // The place a stop returns to, where it names one: each part decoded as the context's own, a damaged part dropped.
+    const stopWorld = decodeWorld(o.world), stopSelection = decodeSelection(o.selection), stopSubject = decodeSubject(o.subject), stopReading = decodeReading(o.reading);
+    return [{ mode: o.mode, label: text(o.label)!, surfaceRef: text(o.surfaceRef), surfaceKind: text(o.surfaceKind, 64), position: text(o.position), at: typeof o.at === "number" && Number.isFinite(o.at) ? o.at : undefined,
+      ...(stopWorld ? { world: stopWorld } : {}), ...(stopSelection ? { selection: stopSelection } : {}), ...(stopSubject ? { subject: stopSubject } : {}), ...(stopReading ? { reading: stopReading } : {}) }];
+  }) : undefined;
+  const trail = stops?.slice(-TRAIL_LIMIT);
+  const selection = decodeSelection(r.selection);
+  // The stop you stand on, kept the same stop through the bound; the newest, or a place off the trail, is none.
+  const trailAt = typeof r.trailAt === "number" && Number.isInteger(r.trailAt) && stops && trail ? r.trailAt - (stops.length - trail.length) : undefined;
+  const context: WorldContext = { world: decodeWorld(r.world), subject, reading, selection, trail: trail?.length ? trail : undefined,
+    ...(trailAt !== undefined && trail && trailAt >= 0 && trailAt < trail.length - 1 ? { trailAt } : {}) };
   return context.world || context.subject || context.reading || context.selection || context.trail ? context : undefined;
 }
 /** What crosses a mode switch on the layout itself: the side-region widths,
@@ -668,15 +774,10 @@ export function useWorkspaces(options: WorkspaceStorageOptions = {}) {
   const applyWidgets = (id: string) => update(w => applyWidgetPreset(w, id));
   const widenWidgets = (width: number) => update(w => setWidgetRailWidth(w, width));
   /** Move THE selection (WorldContext.selection) and record the move on the trail — the one writer every mode uses. */
-  const select = (selection: WorldSelection | null) => setContext(context => {
-    if (!selection) return { ...context, selection: undefined };
-    const same = context.selection && context.selection.ref === selection.ref && context.selection.kind === selection.kind && context.selection.mode === selection.mode;
-    const stop: TrailStop = { mode: selection.mode, surfaceRef: selection.ref, surfaceKind: selection.kind, label: selection.title, position: selection.track, at: Date.now() };
-    return { ...context, selection, trail: same ? context.trail : [...(context.trail ?? []), stop] };
-  });
+  const select = (selection: WorldSelection | null) => setContext(context => selection ? selectOnTrail(context, selection, Date.now()) : { ...context, selection: undefined });
   const moveSurface=(surfaceId:string,into:"tree"|"side")=>update(w=>moveWorkspaceSurface(w,surfaceId,into));
-  /** The world-context layer's one writer. `trail` pushes are bounded. */
-  const setContext = (change: (context: WorldContext) => WorldContext) => update(w => { const next = change(w.context ?? {}); return { ...w, context: { ...next, trail: next.trail?.slice(-TRAIL_LIMIT) } }; });
+  /** The world-context layer's one writer. `trail` pushes are bounded, and the stop you stand on stays the same stop. */
+  const setContext = (change: (context: WorldContext) => WorldContext) => update(w => ({ ...w, context: boundedContext(change(w.context ?? {})) }));
   /** Presentation writes name the workspace they were made in: a disclosure
    * or scroll that resolves after an owner round trip must land in that
    * workspace even when the active one has moved on. Defaults to the active

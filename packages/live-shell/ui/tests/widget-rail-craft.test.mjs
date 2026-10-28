@@ -150,17 +150,19 @@ test('Answer this is the conversation\'s own Send, and says which owner conditio
   assert.match(widget, /nativeContext\(transport, CONVERSATION_PROJECT, session, \{operation: 'read'\}\)/, 'the packet is read from its owner')
 })
 
-test('the trail draws THE selection\'s stops newest first as lines; a stop with no recorded time draws none (headless SSR)', () => {
+test('the trail draws the book\'s stops newest first as lines, the stop you stand on marked; a stop with no recorded time draws none (headless SSR)', () => {
+  // The book's order (oldest first); the stop you stand on is the book's (#764: WorldContext.trailAt), not a selection several stops share.
   const stops = [{mode: 'techne', surfaceRef: 'wiki:m', surfaceKind: 'subject', label: 'Mercurius'}, {mode: 'base', surfaceRef: 'day:1', surfaceKind: 'day', label: 'Bollingen', at: Date.UTC(2026, 9, 14, 12, 24)}]
-  const markup = html(React.createElement(TrailStops, {stops, here: {ref: 'day:1', kind: 'day'}, onReturn: noop}))
+  const returned = []
+  const markup = html(React.createElement(TrailStops, {stops, standing: 0, onReturn: index => returned.push(index)}))
   assert.equal((markup.match(/class="mode-dock-line trail-stop"/g) ?? []).length, 2)
-  assert.match(markup, /aria-current="location"[\s\S]*?Bollingen/, 'the current selection is marked')
+  assert.match(markup, /Bollingen[\s\S]*aria-current="location"[\s\S]*?Mercurius/, 'newest first; the stop you stand on is marked')
   assert.match(markup, /class="mode-dock-line-lead"><\/span><span class="mode-dock-line-text">Mercurius/, 'no time is guessed')
   assert.equal(stopTime(stops[0]), null)
   assert.match(stopTime(stops[1]), /^\d\d:\d\d$/)
   assert.equal(trailGlance(stops).count, 2)
   assert.equal(trailGlance([]), null)
-  assert.match(html(React.createElement(TrailStops, {stops: [], here: null, onReturn: noop})), /Every place you go is kept here/)
+  assert.match(html(React.createElement(TrailStops, {stops: [], standing: null, onReturn: noop})), /Every place you go is kept here/)
 })
 
 test('the widget files name no mode; the frame stays mode-blind (code-reading)', async () => {

@@ -13,14 +13,21 @@ export const put = (values: Record<string, Value>, key: string, value: Value | n
   if (value !== null && value !== undefined && !(typeof value === 'number' && !Number.isFinite(value))) values[key] = value
 }
 
-/** The Trail's binding (widgets__trail.tsx): the book's stops oldest first, as the book keeps them; the place you stand on; a stop's
- * return is the shell's own move (the mode it was in, then the same thing selected — shell/TrailWidget.tsx returnTo). */
-export function trailValues(stops: readonly TrailStop[] | undefined, here: string | null): Record<string, Value> {
+/** The Trail's binding (widgets__trail.tsx): the book's stops oldest first, as the book keeps them, and the stop you stand on; a stop's
+ * return is the shell's own walk (shell/TrailWidget.tsx returnToStop). The design keys a stop by its ref, and one place can stand at
+ * several stops (the same document in Central, then in Technē), so each stop is keyed by its place on the trail: `here` is the stop
+ * the book stands on (WorldContext.trailAt, else the newest), and a press names the stop it was. */
+export function trailValues(stops: readonly TrailStop[] | undefined, standing: number | null): Record<string, Value> {
   const values: Record<string, Value> = {}
-  if (stops) put(values, 'stops', JSON.stringify(stops.map(stop => ({mode: stop.mode, surfaceKind: stop.surfaceKind, surfaceRef: stop.surfaceRef,
-    label: stop.label, ...(stop.position !== undefined ? {position: stop.position} : {}), ...(typeof (stop as {at?: unknown}).at === 'number' ? {at: (stop as {at: number}).at} : {})}))))
-  put(values, 'here', here)
+  if (stops) put(values, 'stops', JSON.stringify(stops.map((stop, index) => ({mode: stop.mode, surfaceKind: stop.surfaceKind, surfaceRef: String(index),
+    label: stop.label, ...(stop.position !== undefined ? {position: stop.position} : {}), ...(typeof stop.at === 'number' ? {at: stop.at} : {})}))))
+  if (stops?.length && standing !== null && standing >= 0 && standing < stops.length) put(values, 'here', String(standing))
   return values
+}
+
+/** The stop a press on the Trail's design names: its place on the trail, or null. */
+export function trailIndexOf(ref: Value | undefined): number | null {
+  return typeof ref === 'string' && /^\d+$/.test(ref) ? Number(ref) : null
 }
 
 /** One changed file as the Diff design reads it (widgets__diff.tsx): Central's DiffFile (desktop/cradle/src/git/diffModel.ts) by its
