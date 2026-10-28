@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {documentToChanges,invertEdit,saveKernelExpression,installKernelExpressions,kernelExpressionsAvailable,KERNEL_EDIT_BUDGET} from '../build/kernelExpressions.js';
 import {DocumentStore,withComposite} from '../build/store.js';
+import {NativeWorking} from '../build/nativeWorking.js';
 
 // E16: atomic composite edits. A multi-step gesture is one labelled undo step,
 // and its whole change list reaches the kernel as ONE edit. A failure anywhere
@@ -82,6 +83,9 @@ function applyChanges(doc,changes){
    case 'parameter_set':{const e=entity(c.entity_ref);(e.parameters[c.parameter]??={value:c.value,automation:null}).value=c.value;break;}
    case 'collections_set':d.collections=[...c.collections];break;
    case 'focus':d.selection={scene_ref:c.scene_ref,entity_ref:c.entity_ref};break;
+   case 'scene_material_set':scene(c.scene_ref).presentation=clone(c.presentation);break;
+   case 'scene_material_clear':delete scene(c.scene_ref).presentation;break;
+   case 'composition_set':d.presentation=clone(c.presentation);break;
    default:throw new Error(`the test applier has no rule for ${c.change}`);
   }
  }
@@ -103,10 +107,8 @@ test('happy path: a composite is one undo entry, its whole change list is one ke
  assert.equal(store.undoLabel(),'Split scene');
  const forward=documentToChanges(kernel.doc,store.document);
  assert.ok('changes' in forward,forward.error);
- const gesture=store.committedGesture();
- assert.ok(gesture,'the committed step carries its gesture id');
  assert.equal(store.attachKernelEdit(forward.changes,invertEdit(kernel.doc,applyChanges(kernel.doc,forward.changes))),true);
- const saved=await saveKernelExpression(store.document,{changes:forward.changes,expectedRevision:kernel.doc.revision,gesture});
+ const saved=await saveKernelExpression(store.document,{changes:forward.changes,expectedRevision:kernel.doc.revision});
  assert.equal(saved.ok,true,saved.error);
  assert.equal(kernel.submitted.length,1,'exactly one edit reached the kernel');
  assert.equal(saved.revision,head().revision+1,'the kernel revision advanced by one');
@@ -124,7 +126,6 @@ test('acceptance: a failure injected at every step leaves the document byte-equa
   assert.equal(store.undoStack.length,0,`step ${failAt}: no undo entry`);
   assert.equal(store.redoStack.length,0,`step ${failAt}: no redo entry`);
   assert.equal(store.transactionOpen,false,`step ${failAt}: no gesture is left open`);
-  assert.equal(store.committedGesture(),null);
   assert.equal(kernel.submitted.length,0,`step ${failAt}: no edit was submitted`);
   assert.equal(kernel.doc.revision,head().revision,'the kernel revision is unchanged');
   // The store is usable afterwards: the next gesture is one entry.
@@ -203,43 +204,8 @@ test('a failed composite leaves no step to attach a kernel edit to',()=>{
  assert.equal(store.undoStack.at(-1).changes,undefined);
 });
 
-test('a split of one gesture across two kernel edits is refused by name; the second submission never reaches the kernel',async()=>{
- reset();
- const store=new DocumentStore(head());
- withComposite(store,'Split scene',doc=>split(doc));
- const forward=documentToChanges(kernel.doc,store.document);
- const gesture=store.committedGesture();
- const whole=await saveKernelExpression(store.document,{changes:forward.changes,expectedRevision:3,gesture});
- assert.equal(whole.ok,true,whole.error);
- const again=await saveKernelExpression(store.document,{changes:forward.changes.slice(-1),expectedRevision:4,gesture});
- assert.equal(again.ok,false);
- assert.match(again.error,/already submitted as one kernel edit/);
- assert.equal(kernel.submitted.length,1,'the refused second edit was never submitted');
-});
-
-test('a conflicted gesture is spent: its retry is refused by name, and the kernel is untouched by the retry',async()=>{
- reset();
- const store=new DocumentStore(head());
- withComposite(store,'Split scene',doc=>split(doc));
- const forward=documentToChanges(head(),store.document);
- const gesture=store.committedGesture();
- kernel.doc.revision=7;
- const conflict=await saveKernelExpression(store.document,{changes:forward.changes,expectedRevision:3,gesture});
- assert.equal(conflict.ok,false);
- assert.match(conflict.error,/revision conflict/);
- const retry=await saveKernelExpression(store.document,{changes:forward.changes,expectedRevision:7,gesture});
- assert.equal(retry.ok,false);
- assert.match(retry.error,/already submitted as one kernel edit/);
- assert.equal(kernel.submitted.length,1);
-});
-
-test('a gesture id must be a nonempty string',async()=>{
- reset();
- const r=await saveKernelExpression(head(),{changes:[{change:'focus',scene_ref:A,entity_ref:null}],expectedRevision:3,gesture:''});
- assert.equal(r.ok,false);
- assert.match(r.error,/nonempty string/);
- assert.equal(kernel.submitted.length,0);
-});
+// Retired with the gesture-id guard (O-I #763, E15h): 'a split of one gesture across two kernel edits is refused by name', 'a
+// conflicted gesture is spent', 'a gesture id must be a nonempty string'. Replaced by the E15h test at the end of this file.
 
 test('an edit over the one-edit budget is refused whole before any submission; exactly the budget is accepted',async()=>{
  reset();
@@ -251,4 +217,41 @@ test('an edit over the one-edit budget is refused whole before any submission; e
  const exact=await saveKernelExpression(head(),{changes:Array.from({length:KERNEL_EDIT_BUDGET},()=>focus),expectedRevision:3});
  assert.equal(exact.ok,true,exact.error);
  assert.equal(kernel.submitted.length,1);
+});
+
+// E15h (O-I #763): the gesture-id guard was test-only. It refused a second explicit edit carrying the same gesture through
+// saveKernelExpression, a path no product code sends a composite through: the product submits a composite inside a Save
+// (NativeWorking.commitRecorded), whose one edit is the whole document's difference from the owner's basis, so one gesture
+// cannot be split across edits and a refused Save is re-made whole on the next. This test is the replacement of the retired
+// guard tests ('a split of one gesture across two kernel edits is refused by name', 'a conflicted gesture is spent', 'a gesture
+// id must be a nonempty string'): the same law, on the path the product runs.
+test('E15h: a composite reaches the owner whole inside one Save; a refused Save lands none of it, and the next Save carries all of it once',async()=>{
+ const owner={doc:clone(head()),edits:[]};
+ const work=new NativeWorking({mint:()=>'expression:unused',checkpoint:async()=>{},file:async()=>assert.fail('No file owner in this test'),
+  expression:async request=>{
+   if(request.operation==='inspect')return {state:'ready',document:clone(owner.doc)};
+   if(request.operation!=='edit')assert.fail(`unexpected owner operation ${request.operation}`);
+   owner.edits.push(clone(request));
+   if(request.expected_revision!==owner.doc.revision)return {state:'revision_conflict',current_revision:owner.doc.revision,expression_ref:E};
+   owner.doc=applyChanges(owner.doc,request.changes);owner.doc.revision+=1;
+   return {state:'ready',document:clone(owner.doc)};
+  }});
+ const store=new DocumentStore((await work.adopt(clone(owner.doc))).journey);
+ withComposite(store,'Retitle',doc=>{doc.name='Composite retitled';doc.scenes[0].name='Alpha retitled';});
+ assert.equal(store.undoStack.length,1);
+ const snapshot=()=>({journey:clone(store.document),sceneId:store.document.scenes[0].id,entityId:null});
+ // Another writer moved the owner: the Save is refused and none of the composite lands.
+ owner.doc={...clone(owner.doc),collections:['alpha','elsewhere'],revision:owner.doc.revision+1};
+ await assert.rejects(work.commitRecorded(snapshot()),/revision_conflict/);
+ assert.deepEqual([owner.doc.title,owner.doc.scenes[0].title],['Composite','Alpha']);
+ // The next Save carries the whole composite once, on the owner's current basis.
+ const saved=await work.commitRecorded(snapshot());
+ assert.equal(owner.edits.length,2,'the refused Save and the one that landed');
+ assert.deepEqual(owner.edits[1].changes.filter(c=>c.change==='rename'||c.change==='scene_rename').map(c=>[c.change,c.title]),
+  [['rename','Composite retitled'],['scene_rename','Alpha retitled']],'both steps of the gesture ride the one edit');
+ assert.deepEqual([owner.doc.title,owner.doc.scenes[0].title,owner.doc.collections],['Composite retitled','Alpha retitled',['alpha','elsewhere']]);
+ assert.deepEqual(saved.checkpoint.changes,owner.edits[1].changes);
+ // The guard and its gesture ids are gone from the store and the save path.
+ assert.equal('committedGesture' in store,false);
+ assert.equal('gesture' in store.undoStack[0],false);
 });

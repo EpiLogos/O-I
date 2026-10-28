@@ -1376,6 +1376,9 @@ const canvasHome=document.createElement('div');canvasHome.className='canvas-home
 // A blank boot frame is not a new chosen work. Retain the host's native
 // reference until recovery succeeds or the user explicitly opens a draft.
 let awaitingNativeBoot=startsWithNativeReference;
+// The store's revision when the local journey standing in the frame was opened (0: the opening canvas). A local draft left with
+// no edits since is not made a work when another work opens (O-I #763); one with edits is.
+let localOpenedRevision=0;
 let researchInstruments:ReturnType<typeof installResearchInstruments>|undefined;
 let journeyInstrument:ReturnType<typeof installJourneyInstrument>|undefined;
 let journeyPositionRestored=false; // T9: the saved journey Scene is reopened once per page, from the first native load that can read it.
@@ -1430,7 +1433,7 @@ function recordAdoptionAfterSave(localId:string,wasBound:boolean){
  const adoption={ref:view.document.expression_ref,title:view.document.title,at:new Date().toISOString()};
  try{if(!recordLibraryAdoption(localId,adoption)&&store.document.id===localId)saveToLibrary(store.document,adoptedLocalOrigin(adoption));}catch{/* The link is recorded again by the next save. */}
 }
-function applyJourney(j:Journey,native=false,adoptionHistory:'record'|'acknowledge'='record',acknowledgement:'preserve'|'retire'='preserve'){journeyNavigation++;if(native)kernelScratchId=null;if(!native){awaitingNativeBoot=false;void nativeWorkspace?.changed(j);}if(propertyTake)finishPropertyTake();trackPreview=false;rememberWork(j.id);studioOpen=false;j.scenes.forEach(checkNativeLimits);sessionExpressions.set(store.document.id,clone(store.document));sessionExpressions.set(j.id,clone(j));try{if(!deletedLibraryIds.has(store.document.id))saveToLibrary(store.document,kernelOriginFor(store.document));}catch{toast('The previous expression is retained in Undo; browser storage is unavailable. Export it before closing this page.',6500);}if(native&&adoptionHistory==='acknowledge'&&store.document.id===j.id)store.acknowledge(initialiseSceneSaves(initialiseBelts(j)),acknowledgement);else store.change('Open expression',()=>{store.document=clone(initialiseSceneSaves(initialiseBelts(j)));});store.document.updatedAt=j.updatedAt;sceneIndex=0;selected=[];camera=defaultCamera();applySceneView();transitionDuration=0;$('transition-canvas').hidden=true;sceneElapsed=0;journeyPlaying=false;editing=false;inspectorOpen=false;timelineOpen=false;cursorTool='interact';tool='interact';railKey='interact';railExpanded=false;shapePickerOpen=false;closeDialogs();libraryOpen=false;modesOpen=false;try{history.replaceState(null,'',location.pathname+location.search);}catch{}markSaved();renderAll();}
+function applyJourney(j:Journey,native=false,adoptionHistory:'record'|'acknowledge'='record',acknowledgement:'preserve'|'retire'='preserve'){journeyNavigation++;if(native)kernelScratchId=null;if(!native){awaitingNativeBoot=false;void nativeWorkspace?.changed(j);}if(propertyTake)finishPropertyTake();trackPreview=false;rememberWork(j.id);studioOpen=false;j.scenes.forEach(checkNativeLimits);sessionExpressions.set(store.document.id,clone(store.document));sessionExpressions.set(j.id,clone(j));try{if(!deletedLibraryIds.has(store.document.id))saveToLibrary(store.document,kernelOriginFor(store.document));}catch{toast('The previous expression is retained in Undo; browser storage is unavailable. Export it before closing this page.',6500);}if(native&&adoptionHistory==='acknowledge'&&store.document.id===j.id)store.acknowledge(initialiseSceneSaves(initialiseBelts(j)),acknowledgement);else store.change('Open expression',()=>{store.document=clone(initialiseSceneSaves(initialiseBelts(j)));});store.document.updatedAt=j.updatedAt;sceneIndex=0;selected=[];camera=defaultCamera();applySceneView();transitionDuration=0;$('transition-canvas').hidden=true;sceneElapsed=0;journeyPlaying=false;editing=false;inspectorOpen=false;timelineOpen=false;cursorTool='interact';tool='interact';railKey='interact';railExpanded=false;shapePickerOpen=false;closeDialogs();libraryOpen=false;modesOpen=false;try{history.replaceState(null,'',location.pathname+location.search);}catch{}if(!native)localOpenedRevision=store.revision;markSaved();renderAll();}
 function openKeep(){captureOpen=!captureOpen;modesOpen=false;pointer.active=false;
  if(captureOpen){inspectorOpen=false;contextKind='';timelineOpen=false;beltPickerOpen=false;shapePickerOpen=false;}renderAll();}
 function renderImageSuite(){sourceEditorEpoch++;readCapture();if(!selectedEntity()){const e=scene().entities.find(e=>e.kind==='formation');if(e)selected=[e.id];} $('capture-panel').innerHTML=`<header><h3>Image suite</h3>${ib('capture-options','close','Close image suite')}</header>${imageSuiteHTML(scene(),selected[0],stepIndex)}<details class="image-output"><summary>Capture output settings</summary><div class="two-col"><label class="control"><span>Output size</span><select id="capture-width"><option value="1280">1280</option><option value="1440">1440</option><option value="1920">1920</option><option value="3840">3840 · PNG</option></select></label><label class="control"><span>Frame</span><select id="capture-aspect"><option value="stage">Current stage</option><option value="16:9">16:9</option><option value="1:1">1:1</option><option value="9:16">9:16</option></select></label></div><label class="toggle-row"><span>Include page text</span><input id="capture-text" type="checkbox" ${captureSettings.includeText?'checked':''}><i></i></label><label class="toggle-row"><span>Transparent PNG</span><input id="capture-transparent" type="checkbox" ${captureSettings.transparent?'checked':''}><i></i></label><p class="control-note">Clean artwork only. Aspect changes centre-crop the current view. Silent live video requests 30 fps; 2-minute / 128 MB limit.</p></details>`;
@@ -2611,13 +2614,15 @@ function ownerWriteRefusal():string|null{const label=store.spanningLabel;if(labe
 function asCanvasImportOwnerCall<T>(call:()=>T):T{canvasImportOwnerCall=true;try{return call();}finally{canvasImportOwnerCall=false;}}
 // An untouched opening canvas is not recovery material (:243), awaited boot or not: a draft is retained for an edit or for an open
 // native work only (lane W, 15 Oct — the door's Scene and New were refused while the frame stood on its own blank canvas).
-nativeWorkspace=installNativeWorkspace({shouldRetainDraft:()=>store.revision!==0||!!nativeWorkspace?.nativeView(),anchor:()=>store.kernelSaveAnchor(),recordSave:(anchor,checkpoint)=>{if(!store.attachKernelCheckpoint(anchor,checkpoint))toast('Saved. Undo cannot reverse this Save on the native owner, because the step it began from has moved.',7000);},snapshot:()=>({journey:clone(store.document),sceneId:scene().id,entityId:selected[0]??null}),version:()=>store.revision,load:applyNativeView,toast,gate:ownerWriteRefusal,refresh:()=>{needsFrame=true;renderAll();},summon:(kind,subject)=>hostRequest({request:'summon',detail:{kind,subject}}),correspondence:(rows,selection)=>{nativeConnectionRows=rows;nativeSelectedRelation=selection;needsFrame=true;},status:showNativeStatus,chooseRecovery:request=>askRecoveryChoice(request.draft,{...request.offer,revision:request.revision}),followed:(_ref,readThrough)=>{const panels=followedPanels(readThrough);if(panels.sequence!==null)sequenceOpen=panels.sequence;if(panels.inspector!==null)inspectorOpen=panels.inspector;renderAll();}});
+nativeWorkspace=installNativeWorkspace({shouldRetainDraft:()=>store.revision!==0||!!nativeWorkspace?.nativeView(),localDraftEdited:()=>store.revision!==localOpenedRevision,anchor:()=>store.kernelSaveAnchor(),recordSave:(anchor,checkpoint)=>{if(!store.attachKernelCheckpoint(anchor,checkpoint))toast('Saved. Undo cannot reverse this Save on the native owner, because the step it began from has moved.',7000);},snapshot:()=>({journey:clone(store.document),sceneId:scene().id,entityId:selected[0]??null}),version:()=>store.revision,load:applyNativeView,toast,gate:ownerWriteRefusal,refresh:()=>{needsFrame=true;renderAll();},summon:(kind,subject)=>hostRequest({request:'summon',detail:{kind,subject}}),correspondence:(rows,selection)=>{nativeConnectionRows=rows;nativeSelectedRelation=selection;needsFrame=true;},status:showNativeStatus,chooseRecovery:request=>askRecoveryChoice(request.draft,{...request.offer,revision:request.revision}),followed:(_ref,readThrough)=>{const panels=followedPanels(readThrough);if(panels.sequence!==null)sequenceOpen=panels.sequence;if(panels.inspector!==null)inspectorOpen=panels.inspector;renderAll();}});
 const retainedEditor=createRetainedNativeEditor({
  store,sceneId:()=>scene().id,nativeView:()=>nativeWorkspace?.nativeView(),
  selection:()=>({entity_ids:[...selected],step_id:scene().entities.find(e=>e.id===selected[0])?.sequence.steps[stepIndex]?.id??null}),
  nativeSelect:async(sceneId,entityId)=>await nativeWorkspace!.select(sceneId,entityId),
  commit:async()=>await commitNativeRecorded(),change:(label,mutate)=>changed(mutate,true,label),
- afterHistory:()=>{applySceneView();markSaved();overlayDirty=true;needsFrame=true;renderAll();},
+ // The DLW's own Undo and Redo (the Studio's head, the device editors) take the frame's one step, never a local step followed by
+ // a Save (E15f, O-I #763): a step that crosses a recorded Save is compensated on its owner, and a refusal returns by name.
+ history:async direction=>{const step=await historyStep(direction);if(step)throw Error(step.refused);},
  selectLocal:(entityId,index)=>{selected=entityId===null?[]:[entityId];stepIndex=index;overlayDirty=true;needsFrame=true;renderAll();},
  openEditor:(editor,entityId,index)=>{
   selected=[entityId];stepIndex=index;pointer.active=false;editing=true;
@@ -2764,7 +2769,7 @@ function canvasImportHost(sceneId:string):CanvasImportHost{
    if(!now||before===null||(before as {revision?:number}).revision===now.revision)return;
    const compensation=invertEdit(before,now);
    if(!('changes' in compensation))throw new Error(compensation.reason);
-   await asCanvasImportOwnerCall(()=>nativeWorkspace!.replayCheckpoint(compensation.changes,before));
+   await asCanvasImportOwnerCall(()=>nativeWorkspace!.replayCheckpoint(compensation.changes,{from:now,to:before}));
   },
  };
 }
@@ -2993,35 +2998,46 @@ async function commitNativeRecorded():Promise<boolean|undefined>{
 /** One Undo or Redo step. A step that crosses a recorded Save replays that Save's
  * kernel edit through its native owner first, and the local step follows only when
  * the owner acknowledges it. A refusal is named by the workspace; the history stays
- * as it was. Steps the kernel never held are undone locally, as before. */
+ * as it was. Steps the kernel never held are undone locally, as before. The one step
+ * for every door: the menu, the keys and the frame's buttons (stepHistory), and the DLW's
+ * own Undo and Redo, which arrive through the editor receiver (O-I #763, E15f). It returns
+ * the refusal by name when no step was taken, with how long the frame's own doors toast it
+ * (`toast` null: they say nothing more, because the workspace already named it or, as
+ * before, a second press waits silently on the first), and null when the step was taken
+ * or there was nothing to step. */
 let historyStepping=false;
-async function stepHistory(direction:'undo'|'redo'):Promise<void>{
- if(historyStepping)return;
- // A .canvas import is open: Undo and Redo wait and say why, through the toast; they never throw.
+async function historyStep(direction:'undo'|'redo'):Promise<{refused:string;toast:number|null}|null>{
+ if(historyStepping)return {refused:`The last ${direction==='undo'?'Undo':'Redo'} is still waiting for its native owner. Nothing was changed.`,toast:null};
+ // A .canvas import is open: Undo and Redo wait and say why; they never throw.
  const openImport=store.spanningLabel;
- if(openImport!==null){toast(historyWaitReason(direction,openImport),4200);return;}
+ if(openImport!==null)return {refused:historyWaitReason(direction,openImport),toast:4200};
  if(store.transactionOpen)store.finish();
  const plan=direction==='undo'?store.undoPlan():store.redoPlan();
- if(!plan)return;
+ if(!plan)return null;
  const label=plan.label,kernel=plan.kernel,entry=direction==='undo'?store.undoStack.at(-1):store.redoStack.at(-1);
- if(kernel&&'refused' in kernel){toast(`Cannot ${direction} ${label}: ${kernel.reason} Nothing was changed.`,7000);return;}
+ if(kernel&&'refused' in kernel)return {refused:`Cannot ${direction} ${label}: ${kernel.reason} Nothing was changed.`,toast:7000};
  let stepped:boolean;
  if(kernel&&'changes' in kernel&&kernel.changes.length){
   const expected=store.checkpointAt(direction);
-  if(!expected||!nativeWorkspace){toast(`Cannot ${direction} ${label}: its recorded native state is not held. Nothing was changed.`,7000);return;}
+  if(!expected||!nativeWorkspace)return {refused:`Cannot ${direction} ${label}: its recorded native state is not held. Nothing was changed.`,toast:7000};
   historyStepping=true;
   try{
-   if(!await nativeWorkspace.replayCheckpoint(kernel.changes,direction==='undo'?expected.before:expected.after))return;
-   if((direction==='undo'?store.undoStack.at(-1):store.redoStack.at(-1))!==entry){toast('The history changed while the native owner answered. The saved edit was reversed there; save to reconcile this draft.',7000);return;}
+   if(!await nativeWorkspace.replayCheckpoint(kernel.changes,direction==='undo'?{from:expected.after,to:expected.before}:{from:expected.before,to:expected.after}))return {refused:nativeState?.text||`Cannot ${direction} ${label}: its native owner did not acknowledge it. Nothing was changed.`,toast:null};
+   if((direction==='undo'?store.undoStack.at(-1):store.redoStack.at(-1))!==entry)return {refused:'The history changed while the native owner answered. The saved edit was reversed there; save to reconcile this draft.',toast:7000};
    stepped=direction==='undo'?store.undoAccepted():store.redo({compensated:true});
   }finally{historyStepping=false;}
  }else{
   stepped=direction==='undo'?(kernel?store.undoAccepted():store.undo()):store.redo(kernel?{compensated:true}:undefined);
  }
- if(!stepped)return;
+ if(!stepped)return null;
  markSaved();renderAll();
  if(researchInstruments?.active()){await commitResearch();await researchInstruments.refresh();}
  toast(direction==='undo'?`${historyToast('undo',label)} Simulation time has not been rewound.`:historyToast('redo',label),2200);
+ return null;
+}
+async function stepHistory(direction:'undo'|'redo'):Promise<void>{
+ const step=await historyStep(direction);
+ if(step&&step.toast!==null)toast(step.refused,step.toast);
 }
 let nativeState:import('./nativeWorkspace.js').NativeStatus|null=null;
 function showNativeStatus(state:import('./nativeWorkspace.js').NativeStatus){

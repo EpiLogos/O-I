@@ -101,7 +101,10 @@ test('actual follow of already retained native work leaves dirty material, clock
 });
 test('actual follow refuses before destination reading/adoption when departing draft cannot be durably retained',async()=>{
  const {store,work}=working(),host={snapshot:()=>({journey:structuredClone(store.document)}),version:()=>store.revision,shouldRetainDraft:()=>true},calls=[];
- const run=execute(`()=>{let followGeneration=0;return ${callback(files.workspace,'followOpen')};}`,{host,work,opens:{cancel:()=>{}},hostedRecovery:()=>true,recoveryBinding:()=>binding,captureNativeAdoption,clone,writeDraft:async()=>{calls.push('retain');throw closed},persistDraft:async()=>{calls.push('retain');throw closed},readBoundWorkingDraft:()=>assert.fail('Refused departing draft must precede destination read')})();
+ const run=execute(`()=>{let followGeneration=0;return ${callback(files.workspace,'followOpen')};}`,{host,work,opens:{cancel:()=>{}},hostedRecovery:()=>true,recoveryBinding:()=>binding,captureNativeAdoption,clone,writeDraft:async()=>{calls.push('retain');throw closed},persistDraft:async()=>{calls.push('retain');throw closed},readBoundWorkingDraft:()=>assert.fail('Refused departing draft must precede destination read'),
+  // O-I #763: the departing draft goes through retainDeparting; a native work's draft is retained by persistDraft, never made a second work.
+  retainDeparting:execute(callback(files.workspace,'retainDeparting'),{hostedRecovery:()=>true,work,host,selectedDraftAddress:()=>null,persistDraft:async()=>{calls.push('retain');throw closed},
+   keepDraftAsWork:()=>assert.fail('A native work\'s draft is never made a second work'),nativeExpressionRequest:()=>assert.fail('No owner request'),carry:()=>{}})})();
  const before=work.state;await assert.rejects(run('expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1',{...binding,expression_ref:'expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1'}),error=>error===closed);
  assert.deepEqual(calls,['retain']);assert.deepEqual(work.state,before);
 });

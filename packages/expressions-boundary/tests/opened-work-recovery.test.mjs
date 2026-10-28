@@ -12,6 +12,7 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import {readFile} from 'node:fs/promises';
+import {createHash} from 'node:crypto';
 import {ExpressionsHost, CHANNEL_VERSION, mountExpressionsApplication} from '../src/index.ts';
 import {RecoveryAdmission} from '../src/recoveryBinding.ts';
 
@@ -19,10 +20,12 @@ const root = new URL('../../../', import.meta.url);
 const author = new URL('desktop/cradle/expressions-app/field-studies-journeys/src/', root);
 const ts = (await import(new URL('desktop/cradle/node_modules/typescript/lib/typescript.js', root).href)).default;
 const {NativeWorking, validateWorkingRecord} = await import(new URL('nativeWorking.ts', author));
-const {validateJourney, clone} = await import(new URL('model.ts', author));
-const {captureNativeAdoption} = await import(new URL('nativeWorkspace.ts', author));
+const {validateJourney, clone, blankJourney} = await import(new URL('model.ts', author));
+const nativeWorkspaceModule = await import(new URL('nativeWorkspace.ts', author));
+const {captureNativeAdoption, isGenuineWorkspaceSwitch} = nativeWorkspaceModule;
+const {draftBasis} = await import(new URL('draftStorage.ts', author));
 const {draftJourney} = await import(new URL('recovery.ts', author));
-const {draftValue} = await import(new URL('draftStorage.ts', author));
+const {draftValue, keepOwnerQuarantine, readOwnerQuarantine, removeOwnerQuarantineEntry} = await import(new URL('draftStorage.ts', author));
 const sources = {};
 for (const name of ['nativeRecovery', 'recovery', 'nativeWorkspace']) {
   const path = new URL(`${name}.ts`, author);
@@ -47,17 +50,45 @@ const inner = name => {
   let found;
   const walk = node => {if (!found && ts.isVariableDeclaration(node) && node.name.getText(sources.nativeWorkspace) === name) found = node; ts.forEachChild(node, walk);};
   walk(sources.nativeWorkspace);
-  return found.initializer.getText(sources.nativeWorkspace);
+  return found?.initializer.getText(sources.nativeWorkspace);
 };
 const execute = (text, scope) => new Function(...Object.keys(scope), `${emit(`const run=${text};`)}\nreturn run;`)(...Object.values(scope));
+/** A method of the object installNativeWorkspace returns (its `changed`), run unchanged as a function over the given state. */
+const method = (name, scope) => {
+  let found;
+  const walk = node => {if (!found && ts.isMethodDeclaration(node) && node.name.getText(sources.nativeWorkspace) === name) found = node; ts.forEachChild(node, walk);};
+  walk(sources.nativeWorkspace);
+  const text = found.getText(sources.nativeWorkspace).replace(/^async /, 'async function ');
+  return new Function(...Object.keys(scope), `${emit(text)}\nreturn ${name};`)(...Object.values(scope));
+};
 
 const SCHEMA = 'oi.expression-recovery/v1';
-/** Scripted stub of the kernel recovery owner (see the header): only read and write, as the kernel answers them. */
+/** Scripted stub of the kernel recovery owner (see the header): read and write, and the draft quarantine's keep and remove
+ * (expression_recovery.rs KeepDraftQuarantine / RemoveDraftQuarantine: one record per Expression keyed by its ref, an entry
+ * identity that is the digest of its text, compare-and-set on the record's revision), as the kernel answers them. */
 function recoveryOwner() {
   const records = new Map(), calls = [];
   let sequence = 0;
+  const quarantine = async request => {
+    const key = `${request.scope}:draft_quarantine:${request.expression_ref}`, previous = records.get(key);
+    if ((previous?.revision ?? null) !== request.expected_revision) return {schema: SCHEMA, state: 'revision_conflict', current_revision: previous?.revision ?? null};
+    const entries = structuredClone(previous?.value.entries ?? []);
+    if (request.operation === 'keep_draft_quarantine') {
+      const id = createHash('sha256').update(request.text).digest('hex');
+      if (entries.some(entry => entry.id === id)) return {schema: SCHEMA, state: 'quarantine_kept', kept: false, entry_id: id, revision: previous.revision};
+      entries.push({id, draft_id: request.draft_id, reason: request.reason, kept_at_unix_ms: 1, text: request.text});
+    } else if (!entries.some(entry => entry.id === request.entry_id)) throw Error('No kept draft with that identity is quarantined for this Expression. Nothing was removed.');
+    const kept = entries.filter(entry => entry.id !== request.entry_id);
+    const record = {id: request.expression_ref, scope: request.scope, kind: 'draft_quarantine', revision: ++sequence,
+      value: {schema: 'oi.draft-quarantine/v1', expression_ref: request.expression_ref, entries: kept}};
+    records.set(key, record);
+    return request.operation === 'keep_draft_quarantine'
+      ? {schema: SCHEMA, state: 'quarantine_kept', kept: true, entry_id: kept.at(-1).id, revision: record.revision}
+      : {schema: SCHEMA, state: 'quarantine_entry_removed', entry_id: request.entry_id, remaining: kept.length, revision: record.revision};
+  };
   const channel = async request => {
     calls.push(structuredClone(request));
+    if (request.operation === 'keep_draft_quarantine' || request.operation === 'remove_draft_quarantine') return quarantine(request);
     const key = `${request.scope}:${request.kind}:${request.id}`;
     if (request.operation === 'read') return {schema: SCHEMA, state: 'ready', record: structuredClone(records.get(key) ?? null)};
     if (request.operation !== 'write') throw Error(`The scripted owner answers read and write only, not ${request.operation}`);
@@ -108,9 +139,9 @@ function frameRecovery(nativeRecoveryRequest) {
   const state = {bindings: new Map(), drafts: new Map(), selected: null, revisions: new Map(), queues: new Map(),
     readReceipts: new WeakMap(), latestReadRevisions: new Map()};
   const native = load(sources.nativeRecovery, ['qualifyRecoveryBinding', 'bindNativeRecovery', 'recoveryBinding', 'selectedRecovery',
-    'acceptRecoveryDraft', 'acceptAbsentRecoveryCheckpoint', 'selectNativeRecovery', 'draftRecoveryAddress', 'key', 'rememberReading',
+    'acceptRecoveryDraft', 'acceptAbsentRecoveryCheckpoint', 'selectNativeRecovery', 'draftRecoveryAddress', 'selectedDraftAddress', 'key', 'rememberReading',
     'nativeRead', 'nativeWrite', 'serial'], {...state, nativeRecoveryRequest, hostedRecovery: () => true, hostedScope: () => 'techne'});
-  const recovery = load(sources.recovery, ['checkpointReading', 'readBoundWorkingDraft', 'writeWorkingCheckpoint', 'writeDraft'],
+  const recovery = load(sources.recovery, ['checkpointReading', 'readBoundWorkingDraft', 'writeWorkingCheckpoint', 'readWorkingCheckpoint', 'writeDraft'],
     {...native, hostedRecovery: () => true, validateJourney, draftJourney, validateWorkingRecord, draftValue,
       recoveryStore: () => assert.fail('A hosted frame never uses the browser checkpoint store')});
   const checkpoint = execute(inner('checkpoint'), {draftRecoveryAddress: native.draftRecoveryAddress, writeWorkingCheckpoint: recovery.writeWorkingCheckpoint});
@@ -217,6 +248,176 @@ test('the frame follows a host-opened work with no checkpoint: none yet, the own
   assert.equal(found.record.draft_id, ref);
   assert.deepEqual(found.record.view.document, document);
   assert.deepEqual(found.recoveryRecords.map(row => [row.kind, row.revision]), [['checkpoint', 1], ['draft', 2]]);
+});
+
+test('an opened work keeps and clears its kept drafts through the host: both reach the owner at the work\'s own address', async t => {
+  // O-I #763: the admission refused keep_draft_quarantine and remove_draft_quarantine ("Unsupported native recovery operation"),
+  // and the quarantine read with them, so an Expression the DLW opens could neither keep a superseded draft nor clear one.
+  const owner = recoveryOwner(), ref = 'expression:authored-7c1d', document = ownerDocument(ref);
+  const kernel = async () => ({state: 'ready', expression_ref: ref, document: structuredClone(document)});
+  const a = await hosted(t, owner, {selectOpenedWorks: true});
+  const frame = frameRecovery(a.nativeRecoveryRequest), opening = follower(frame, kernel), send = a.nativeRecoveryRequest;
+  a.host.openExpression(ref, 'world.expressions');
+  await opening.follow(ref, a.opened()[0].recovery);
+  owner.calls.length = 0;
+  const text = JSON.stringify(draftValue({...opening.work.state.view.journey, name: 'Set aside'}));
+  // Keep: the frame's own sequence (draftStorage.ts keepOwnerQuarantine: read, keep, read back), through the host.
+  const kept = await keepOwnerQuarantine(send, {expressionRef: ref, scope: 'expressions', draftId: ref, reason: 'Superseded by the saved copy.', text});
+  assert.equal(kept.kept, true);
+  assert.deepEqual((await readOwnerQuarantine(send, ref, 'expressions')).entries.map(entry => [entry.id, entry.draft_id, entry.text]), [[kept.entryId, ref, text]]);
+  // Clear: the kept draft is removed by its identity, at the revision read at the call.
+  assert.equal(await removeOwnerQuarantineEntry(send, ref, 'expressions', kept.entryId), 0);
+  assert.deepEqual((await readOwnerQuarantine(send, ref, 'expressions')).entries, []);
+  assert.deepEqual(owner.calls.map(({operation, scope, kind, id, expression_ref}) => [operation, scope, kind ?? null, id ?? expression_ref]), [
+    ['read', 'expressions', 'draft_quarantine', ref], ['keep_draft_quarantine', 'expressions', null, ref], ['read', 'expressions', 'draft_quarantine', ref],
+    ['read', 'expressions', 'draft_quarantine', ref],
+    ['read', 'expressions', 'draft_quarantine', ref], ['remove_draft_quarantine', 'expressions', null, ref],
+    ['read', 'expressions', 'draft_quarantine', ref],
+  ], 'every keep and clear reached the owner, at the selected scope and the work\'s own ref');
+
+  // Anything outside that address is refused by the host before the owner is asked.
+  owner.calls.length = 0;
+  const keep = {operation: 'keep_draft_quarantine', scope: 'expressions', expression_ref: ref, draft_id: ref, reason: 'r', text, expected_revision: 3};
+  await assert.rejects(keepOwnerQuarantine(send, {expressionRef: 'expression:never-opened', scope: 'expressions', draftId: 'expression:never-opened', reason: 'r', text}), /outside the host-selected address/);
+  await assert.rejects(send({operation: 'read', scope: 'techne', kind: 'draft_quarantine', id: ref}), /outside the host-selected address/);
+  await assert.rejects(send({...keep, scope: 'techne'}), /outside the host-selected address/);
+  await assert.rejects(send({...keep, draft_id: 'draft-never-read'}), /not the draft of the selected native work/);
+  await assert.rejects(send({...keep, text: 7}), /verbatim text and its reason/);
+  await assert.rejects(send({...keep, expected_revision: 0}), /revision basis/);
+  await assert.rejects(send({operation: 'remove_draft_quarantine', scope: 'expressions', expression_ref: ref, entry_id: 'not-a-digest', expected_revision: 3}), /exact identity/);
+  await assert.rejects(send({operation: 'write', scope: 'expressions', kind: 'draft_quarantine', id: ref, expected_revision: 3, value: {}}), /Unsupported native recovery operation/);
+  await assert.rejects(send({operation: 'remove', scope: 'expressions', kind: 'draft_quarantine', id: ref, expected_revision: 3}), /Unsupported native recovery operation/);
+  assert.deepEqual(owner.calls, [], 'no refused request reaches the owner');
+});
+
+test('the frame\'s own canvas, booted on or switched to, reads no checkpoint the host never addressed; a work\'s own draft still reads its own', async t => {
+  // O-I #763: in a hosted frame, nativeWorkspace's changed() read the working checkpoint of whatever journey stood in the frame at
+  // its own id, an address the host never selected, so the host refused it and the frame's status read "Native recovery was not
+  // adopted…" with its Save marked failed. A local journey has no native checkpoint; only a draft the host addressed has one.
+  const owner = recoveryOwner(), ref = 'expression:authored-2f9a', document = ownerDocument(ref);
+  const kernel = async () => ({state: 'ready', expression_ref: ref, document: structuredClone(document)});
+  const a = await hosted(t, owner, {selectOpenedWorks: true});
+  const frame = frameRecovery(a.nativeRecoveryRequest), notes = [], restored = [];
+  const canvas = {...blankJourney(), name: 'The mark'};
+  let standing = canvas;
+  const changed = method('changed', {isGenuineWorkspaceSwitch, bootState: {booted: false}, opens: {cancel() {}}, restoreGeneration: 0,
+    selections: {cancel() {}}, work: {detach() {}, restore: (record, journey) => restored.push([record.draft_id, journey.id])},
+    host: {correspondence() {}, shouldRetainDraft: () => true, snapshot: () => ({journey: standing})}, hostedRecovery: () => true,
+    draftRecoveryAddress: frame.draftRecoveryAddress, selectedDraftAddress: frame.selectedDraftAddress,
+    readWorkingCheckpoint: frame.readWorkingCheckpoint, update() {}, lastFailure: false, status: text => notes.push(text)});
+  await changed(canvas);
+  assert.deepEqual(notes, [], 'the canvas is not refused: nothing names a failed recovery');
+  assert.deepEqual(owner.calls, []);
+  // The work the host opened: its checkpoint stands at its selected address, and its draft id is that address's, so it is read there.
+  const opening = follower(frame, kernel);
+  a.host.openExpression(ref, 'world.expressions');
+  await opening.follow(ref, a.opened()[0].recovery);
+  const view = opening.work.state.view;
+  standing = view.journey;
+  owner.calls.length = 0;
+  await changed(view.journey);
+  assert.deepEqual(notes, []);
+  assert.deepEqual(owner.calls.map(({operation, scope, kind, id}) => [operation, scope, kind, id]), [['read', 'expressions', 'checkpoint', ref]]);
+  assert.deepEqual(restored, [[ref, view.journey.id]]);
+});
+
+/** The owner's works home (kernel expression_home.rs WORKS_HOME) as its `list` discloses it. */
+const HOME = {schema: 'central.path-ref/v1', ref: 'central:path:/scratch/Central:Control/user/flows', root: '/scratch/Central', path: 'Control/user/flows'};
+/** A scripted Expression owner for New's route: list (with its home), create, the composition edit a fresh draft makes
+ * (scene_rename, scene_material_set), inspect and save_as, as the kernel answers them. */
+function expressionOwner(open) {
+  const held = new Map(open.map(doc => [doc.expression_ref, structuredClone(doc)])), files = [], calls = [];
+  const channel = async request => {
+    calls.push(structuredClone(request));
+    if (request.operation === 'list') return {schema: 'oi.expression-list/v1', expressions: [], unreadable: [], home: {path: HOME.path, state: 'listed', location: HOME, truncated: false}};
+    if (request.operation === 'inspect') return {state: 'ready', expression_ref: request.expression_ref, document: structuredClone(held.get(request.expression_ref))};
+    if (request.operation === 'create') {
+      const doc = {...ownerDocument(request.expression_ref), title: request.title};
+      held.set(doc.expression_ref, doc);
+      return {state: 'ready', document: structuredClone(doc)};
+    }
+    if (request.operation === 'edit') {
+      const doc = structuredClone(held.get(request.expression_ref));
+      if (request.expected_revision !== doc.revision) return {state: 'revision_conflict', current_revision: doc.revision, expression_ref: doc.expression_ref};
+      for (const change of request.changes) {
+        const scene = doc.scenes.find(row => row.scene_ref === change.scene_ref);
+        if (change.change === 'scene_rename') scene.title = change.title;
+        else if (change.change === 'scene_material_set') scene.presentation = structuredClone(change.presentation);
+        else assert.fail(`the scripted owner has no rule for ${change.change}`);
+      }
+      doc.revision++;
+      held.set(doc.expression_ref, doc);
+      return {state: 'ready', document: structuredClone(doc)};
+    }
+    if (request.operation === 'save_as') {
+      const doc = held.get(request.expression_ref);
+      if (request.expected_revision !== doc.revision) return {state: 'revision_conflict', current_revision: doc.revision};
+      const path = `${request.parent.path}/${request.name}`;
+      files.push({path, document: structuredClone(doc)});
+      return {state: 'saved', persisted: true, readback_verified: true, owner_operation: 'central.files.create',
+        file: {location: {...HOME, ref: `central:path:/scratch/Central:${path}`, path}, revision: `file-r${files.length}`}};
+    }
+    assert.fail(`unexpected owner operation ${request.operation}`);
+  };
+  return {channel, calls, held, files};
+}
+
+test('a local draft edited and then left is kept as a work in its world\'s folder by New\'s route, and the other work opens', async t => {
+  // O-I #763 (#709): an edited local draft in a hosted frame had no recovery address, so retaining it before another work opened
+  // was refused by the host and the open stopped. It is now kept as a work: the owner's works home first, then the frame's own
+  // create and composition edit, then save_as into that home and read back; only then does the other work open.
+  const owner = recoveryOwner(), ref = 'expression:authored-5e60';
+  const works = expressionOwner([ownerDocument(ref)]);
+  const a = await hosted(t, owner, {selectOpenedWorks: true});
+  const frame = frameRecovery(a.nativeRecoveryRequest), carried = [], loaded = [];
+  const sketch = {...blankJourney(), name: 'Morning sketch'};
+  const work = new NativeWorking({expression: works.channel, file: () => assert.fail('No file operation'), checkpoint: frame.checkpoint, mint: () => 'expression:unused'});
+  let edited = false;
+  const host = {snapshot: () => ({journey: sketch, sceneId: sketch.scenes[0].id, entityId: null}), version: () => 3, shouldRetainDraft: () => true,
+    localDraftEdited: () => edited, load: view => loaded.push(view), followed: () => {}};
+  // The frame's own retention of the draft being left, run unchanged: persistDraft writes a draft the host addressed.
+  const persistDraft = execute(inner('persistDraft'), {hostedRecovery: () => true, writeDraft: frame.writeDraft, unkeptDrafts: new Map(), heldDrafts: new Set(),
+    draftBasisOf: execute(inner('draftBasisOf'), {work, draftBasis})});
+  const departing = inner('retainDeparting');
+  const retainDeparting = departing && execute(departing, {hostedRecovery: () => true, work, host, selectedDraftAddress: frame.selectedDraftAddress, persistDraft,
+    keepDraftAsWork: nativeWorkspaceModule.keepDraftAsWork, nativeExpressionRequest: works.channel, carry: text => carried.push(text)});
+  const follow = execute(`()=>{let followGeneration=0;return ${inner('followOpen')};}`, {
+    host, work, opens: {cancel: () => {}}, hostedRecovery: () => true, recoveryBinding: frame.recoveryBinding, selectedRecovery: frame.selectedRecovery,
+    status: () => {}, update: () => {}, captureNativeAdoption, clone, persistDraft, retainDeparting,
+    requireAdoption: current => {if (!current()) throw Error('superseded');}, readBoundWorkingDraft: frame.readBoundWorkingDraft,
+    readWorkingDraft: () => assert.fail('A host-opened work never discovers a checkpoint by its ref'), hostedScope: () => 'techne',
+    settleRecovery: async found => found, actPerforms: async () => false, acceptWorkingRecoveryBasis: () => {},
+    readKernelExpression: async reference => (await works.channel({operation: 'inspect', expression_ref: reference})).document,
+    selectNativeRecovery: frame.selectNativeRecovery, readThrough: null, restoreGeneration: 0, selections: {cancel: () => {}}, markLoaded: () => {},
+  })();
+  // Opened and left unedited, the local draft is kept already (the browser Library) and is not made a work again.
+  const other = 'expression:authored-0d1e';
+  works.held.set(other, ownerDocument(other));
+  a.host.openExpression(other, 'world.expressions');
+  await follow(other, a.opened()[0].recovery);
+  assert.deepEqual(works.calls.map(call => call.operation), ['inspect'], 'nothing is made of an unedited local draft');
+  assert.equal(loaded.length, 1);
+  // Edited, it is a work in the folder: created, composed and saved there, before anything of the other work was read.
+  edited = true;
+  works.calls.length = 0;
+  loaded.length = 0;
+  work.detach();
+  a.host.openExpression(ref, 'world.expressions');
+  await follow(ref, a.opened()[1].recovery);
+  const kept = [...works.held.keys()].find(key => key !== ref && key !== other);
+  assert.match(kept ?? '', /^expression:authored-[0-9a-f-]{36}$/, 'the draft is a new native Expression');
+  assert.deepEqual(works.calls.map(call => call.operation), ['list', 'create', 'edit', 'save_as', 'inspect']);
+  const save = works.calls.find(call => call.operation === 'save_as');
+  assert.deepEqual(save.parent, HOME, 'saved into the home the owner disclosed');
+  assert.match(save.name, /^morning-sketch-[0-9a-f]{8}\.expression\.json$/);
+  assert.equal(works.files[0].document.title, 'Morning sketch');
+  assert.equal(works.files[0].document.scenes[0].title, sketch.scenes[0].name);
+  assert.deepEqual(carried, [`"Morning sketch" was kept as a work: ${works.files[0].path}.`]);
+  // Nothing was written at an address the host never selected; the other work opened at its own.
+  assert.deepEqual(owner.calls.map(({operation, kind, id}) => [operation, kind, id]), [['read', 'checkpoint', other], ['write', 'checkpoint', other],
+    ['read', 'checkpoint', ref], ['write', 'checkpoint', ref]]);
+  assert.equal(loaded.length, 1);
+  assert.equal(work.state.view.document.expression_ref, ref);
 });
 
 test('an absent checkpoint at a non-canonical address is still refused, and nothing is written', async t => {

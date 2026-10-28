@@ -39,3 +39,15 @@ test('a native open captured before boot settles survives boot\'s own associatio
  changed();
  assert.equal(adoption(),false,'a real journey switch after boot must still refuse a now-stale adoption');
 });
+
+// O-I #763: leaving a local draft for another work keeps it as a work in its folder only when it was edited since it was opened
+// (the workspace side, run unchanged, is packages/expressions-boundary/tests/opened-work-recovery.test.mjs). app.ts is a DOM entry
+// that cannot load under node: its wiring is read from the source (code-reading).
+test('code-reading: the app tells the workspace whether the local draft standing in the frame was edited since it was opened',async()=>{
+ const fs=await import('node:fs');
+ const app=fs.readFileSync(new URL('../src/app.ts',import.meta.url),'utf8');
+ assert.match(app,/localDraftEdited:\(\)=>store\.revision!==localOpenedRevision,/,'the workspace is told by the store\'s revision since the open');
+ const apply=app.slice(app.indexOf('function applyJourney('),app.indexOf('\n',app.indexOf('function applyJourney(')));
+ assert.match(apply,/if\(!native\)localOpenedRevision=store\.revision;markSaved\(\);renderAll\(\);\}$/,'a local open records where its edits begin, after the open itself');
+ assert.match(app,/let localOpenedRevision=0;/,'the opening canvas begins unedited');
+});

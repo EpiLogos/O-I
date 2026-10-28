@@ -11,7 +11,11 @@ import {readWorkingCheckpoint,readWorkingDraft,readBoundWorkingDraft,acceptWorki
 // lane-3 E19b: the hosted recovery choice uses the same offer and plan as the browser boot.
 import {settleHostedDraft,bootWasUnclean,draftBasis,type RecoveryChoice} from './draftStorage.js';
 import type {RecoveryRecord} from '../../../src/expressions/recoveryTypes';
-import {hostedRecovery,hostedScope,recoveryBinding,selectedRecovery,draftRecoveryAddress,selectNativeRecovery} from './nativeRecovery.js';
+import {hostedRecovery,hostedScope,recoveryBinding,selectedRecovery,draftRecoveryAddress,selectedDraftAddress,selectNativeRecovery} from './nativeRecovery.js';
+import {materialFileName} from './reuse.js';
+import {requireSavedExpression} from '../../../src/knowledge/expressionSaveReceipt';
+import type {ExpressionResult} from '../../../src/expression/types';
+import type {CentralLocation} from '../../../src/kernel/types';
 import {kernelDocumentToJourney,type KernelConversion,type KernelExpressionDocument} from './kernelDocumentBridge.js';
 import {nestedDocumentReads} from './nestedReads.js';
 import {type NestedDocumentLike,type NestedGraph} from './nestedOccurrence.js';
@@ -49,6 +53,9 @@ export interface KernelCheckpointRecord {changes:KernelChange[];before:unknown;a
 export interface NativeActRecord {label:string;record:KernelCheckpointRecord|{refused:string;reason:string}}
 export interface NativeWorkspaceHost {
  shouldRetainDraft?:()=>boolean;
+ /** Whether the local draft standing in the frame has edits since it was opened (O-I #763). One opened and left unedited is
+  * already kept, in the browser Library, and is not made a work again. */
+ localDraftEdited?:()=>boolean;
  snapshot:()=>WorkingSnapshot;
  version:()=>number;
  /** `act`: an adoption the app's own native act produced, recorded as ONE labelled undo step ('act').
@@ -101,6 +108,23 @@ export function captureNativeAdoption(host:Pick<NativeWorkspaceHost,'snapshot'|'
 export function isGenuineWorkspaceSwitch(state:{booted:boolean}):boolean{
  const first=!state.booted;state.booted=true;return !first;
 }
+/** O-I #763 (#709): a local draft edited in a hosted frame has no recovery address the host selected, so it cannot be kept as a
+ * draft when another work opens. It is kept as a work in its world's folder instead, by New's route (the shell's openStarter and
+ * saveIntoHome, packages/live-shell/ui/src/components/nativeExpressionCommands.ts:176-219): the works home the owner's list
+ * discloses is read first, so a home it cannot list refuses before anything is made; the draft is committed as a new native
+ * Expression by the frame's own create and composition edit (NativeWorking.commit); and it is saved into that home with save_as,
+ * whose receipt says the file was written and read back. A refusal at any step throws the owner's own words. */
+export async function keepDraftAsWork(owner:(request:Record<string,unknown>)=>Promise<unknown>,journey:Journey,id:string=crypto.randomUUID()):Promise<{expression_ref:string;title:string;path:string}>{
+ const home=(await owner({operation:'list'}) as {home?:{path?:string;location?:CentralLocation;error?:string}}|null)?.home;
+ if(!home?.location)throw new Error(home?.error?`The works home ${home.path??''} is unavailable: ${home.error}`:'The native owner disclosed no works home.');
+ const ref=`expression:authored-${id}`;
+ const working=new NativeWorking({expression:owner,file:()=>Promise.reject(new Error('A kept draft is saved by the owner\'s save_as.')),checkpoint:async()=>undefined,mint:()=>ref});
+ const document=await working.commit({journey,sceneId:journey.scenes[0].id,entityId:null});
+ const reply=await owner({operation:'save_as',expression_ref:ref,expected_revision:document.revision,parent:home.location,
+  name:materialFileName(`${journey.name} ${id.slice(0,8)}`),operation_ref:`operation:expression:${id}`,actor:'human:expressions-app',actor_kind:'human'}) as ExpressionResult;
+ requireSavedExpression(reply);
+ return {expression_ref:ref,title:document.title,path:reply.file.location.path};
+}
 export function installNativeWorkspace(host:NativeWorkspaceHost){
  const checkpoint=async(id:string,value:unknown)=>{
   const address=draftRecoveryAddress(id);
@@ -111,6 +135,7 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
  let busy=false,notice='',lastFailure=false,restoreGeneration=0;const bootState={booted:false};
  // E19: a kept draft's notice is carried into the next status line, so it is never dropped; the drafts this session holds are not overwritten by a write that adds no edits.
  let keptNotice='';const heldDrafts=new Set<string>();
+ const carry=(text:string)=>{keptNotice=keptNotice?`${keptNotice} ${text}`:text;};
  // E19: a draft no place keeps (owner or browser) is held here with its named reason: no edit is written over its native row until a kept slot is freed.
  const unkeptDrafts=new Map<string,string>();
  let ownerIdle:Promise<void>=Promise.resolve();
@@ -179,6 +204,14 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
   await writeDraft(journey,undefined,basis);
   if(basis?.edited)heldDrafts.delete(journey.id);
  };
+ // The draft being left as another work opens. A native work's draft and a draft the host addressed are kept at that address; an
+ // edited local draft in a hosted frame has none, so it is kept as a work in its world's folder (keepDraftAsWork, O-I #763).
+ const retainDeparting=async(journey:Journey):Promise<void>=>{
+  if(!hostedRecovery()||work.state?.view||selectedDraftAddress(journey.id))return persistDraft(journey);
+  if(host.localDraftEdited?.()===false)return;
+  const kept=await keepDraftAsWork(nativeExpressionRequest,journey);
+  carry(`"${journey.name}" was kept as a work: ${kept.path}.`);
+ };
  const retainSubmitted=async(snapshot:WorkingSnapshot)=>{
   const generation=restoreGeneration;
   await persistDraft(snapshot.journey);
@@ -202,13 +235,13 @@ const recoveryOffered=new Set<string>();
   if(settled.kind==='draft'){unkeptDrafts.delete(draftId);return found;}
   heldDrafts.add(draftId);
   if(settled.unkept!==undefined)unkeptDrafts.set(draftId,settled.unkept);else unkeptDrafts.delete(draftId);
-  if(settled.kept)keptNotice=settled.kept;
+  if(settled.kept)carry(settled.kept);
   return {...found,journey:settled.journey,recoveryRecords:found.recoveryRecords?.filter(item=>item.kind==='checkpoint')};
  };
  const adopt=async(raw:KernelExpressionDocument,current:()=>boolean,file?:NativeFile)=>{
   requireAdoption(current);
   const old=clone(host.snapshot());
-  if(host.shouldRetainDraft?.()!==false)await persistDraft(old.journey); // retain authored work, not an untouched boot canvas
+  if(host.shouldRetainDraft?.()!==false)await retainDeparting(old.journey); // retain authored work, not an untouched boot canvas
   requireAdoption(current);
   const view=await work.adopt(raw,file,current);
   requireAdoption(current);
@@ -237,7 +270,7 @@ const recoveryOffered=new Set<string>();
   const captured=captureNativeAdoption(host,()=>followGeneration),current=()=>generation===followGeneration&&captured();
   // Retain the departing draft before reading the destination's exact records.
   // A refusal leaves both copies in place and cannot accept a newer CAS basis.
-  if(host.shouldRetainDraft?.()!==false)await persistDraft(clone(host.snapshot().journey));
+  if(host.shouldRetainDraft?.()!==false)await retainDeparting(clone(host.snapshot().journey));
   requireAdoption(current);
   const found=address?await readBoundWorkingDraft(address):await readWorkingDraft(reference,hostedRecovery()?hostedScope():'expressions');
   requireAdoption(current);
@@ -269,7 +302,7 @@ const recoveryOffered=new Set<string>();
   const address=hostedRecovery()?selectedRecovery(reference):null,found=address?await readBoundWorkingDraft(address):await readWorkingDraft(reference,hostedRecovery()?hostedScope():'expressions');requireAdoption(current);
   const recovered=found?await settleRecovery(found,current):found;requireAdoption(current);
   if(recovered){
-   if(host.shouldRetainDraft?.()!==false)await persistDraft(clone(host.snapshot().journey));requireAdoption(current);
+   if(host.shouldRetainDraft?.()!==false)await retainDeparting(clone(host.snapshot().journey));requireAdoption(current);
    acceptWorkingRecoveryBasis(recovered,current);
    const view=await work.reopenCheckpoint(recovered.record,recovered.journey,current);
    requireAdoption(current);
@@ -480,7 +513,9 @@ const recoveryOffered=new Set<string>();
   async changed(journey:Journey){
    if(isGenuineWorkspaceSwitch(bootState)){opens.cancel();restoreGeneration++;selections.cancel();}
    const generation=restoreGeneration;work.detach();host.correspondence({},null);
-   if(hostedRecovery()&&host.shouldRetainDraft?.()===false){update();return;}
+   // In a hosted frame only a draft the host addressed has a native working checkpoint; the frame's own canvas has none, and
+   // reading one at its own id would be refused (O-I #763).
+   if(hostedRecovery()&&(host.shouldRetainDraft?.()===false||!selectedDraftAddress(journey.id))){update();return;}
    try{const address=draftRecoveryAddress(journey.id);
     const record=await readWorkingCheckpoint(address.checkpoint_id,address.scope);
     if(generation!==restoreGeneration||host.snapshot().journey.id!==journey.id)return;if(record)work.restore(record,journey);update();}
@@ -580,12 +615,12 @@ const recoveryOffered=new Set<string>();
   // a failed save. Navigation still invalidates work addressed to the old doc.
   commit:async()=>(await commitRecorded())!==false,
   commitRecorded,
-  /** E15c: replay one recorded Save's kernel edit — an Undo's compensation
-   * (`expected` = the document before the Save) or a Redo's forward edit
-   * (`expected` = the document after it) — at the acknowledged basis. A refusal,
-   * such as a revision conflict, is named in the status and toast; it returns false. */
-  replayCheckpoint:(changes:KernelChange[],expected:unknown)=>mutate(async()=>{
-   await work.replayKernelEdit(changes,expected as KernelExpressionDocument);
+  /** E15c: replay one recorded Save's kernel edit — an Undo's compensation (from the
+   * document the Save left to the one before it) or a Redo's forward edit (from the one it
+   * found to the one after it) — at the acknowledged basis. A refusal, such as a document
+   * that has moved (E15g) or a revision conflict, is named in the status and toast; it returns false. */
+  replayCheckpoint:(changes:KernelChange[],documents:{from:unknown;to:unknown})=>mutate(async()=>{
+   await work.replayKernelEdit(changes,documents as {from:KernelExpressionDocument;to:KernelExpressionDocument});
    status('Recorded Save acknowledged by its native owner.');
   }),
  };

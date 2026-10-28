@@ -322,9 +322,12 @@ test('a work presented after boot is listed once per distinct ref, never in a lo
 
 test('code-reading: the Expressions panel lists the works after boot in every case, registers the owner channel, and lists a work it first presents', async () => {
   const panel = await read('panels/expressions.tsx')
-  assert.match(panel, /import \{enumerateWorks, needsListing, setExpressionOwner\} from '\.\.\/components\/nativeExpressionCommands'/)
-  assert.match(panel, /const existing = knownRef \|\| initial \? \[\] : await enumerate\(\)/, 'no held address: listed before mount, to choose the first work')
-  assert.match(panel, /if \(knownRef \|\| initial\) void enumerate\(\)\.catch\(fail\)/, 'a known open work: listed after mount (the former skip)')
+  assert.match(panel, /import \{enumerateWorks, needsListing, setExpressionOwner, type NativeWorkRow\} from '\.\.\/components\/nativeExpressionCommands'/)
+  assert.match(panel, /const boot = knownRef \|\| initial \? null : await enumerate\(\)\.then\(works => \(\{works\}\), cause => \(\{cause\}\)\)/, 'no held address: listed before mount, to choose the first work')
+  assert.match(panel, /const existing = boot && 'works' in boot \? boot\.works : \[\]/)
+  // O-I #763: a known open work, or a boot whose own listing failed, is listed after mount until the owner answers
+  // (the former `void enumerate().catch(fail)` never asked again; expressions-opened-recovery.test.mjs runs the listing).
+  assert.match(panel, /if \(!boot \|\| 'cause' in boot\) \{[\s\S]*?void listWorksUntilAnswered\(enumerate, \{/, 'a known open work: listed after mount (the former skip)')
   assert.match(panel, /return enumerateWorks\(request => owners\.channels\['kernel-expression'\]\(request, context\(\)\), works => workspaceRef\.current\.publishWorks\(works\)/)
   assert.match(panel, /needsListing\(presentedRef, listedFor, workspaceRef\.current\.nativeWorks\)/)
   assert.match(panel, /setExpressionOwner\(request => owners\.channels\['kernel-expression'\]\(request, context\(\)\)\)/)

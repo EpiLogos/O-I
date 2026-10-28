@@ -496,7 +496,9 @@ test('E19 notice: a kept draft names what happened and where the kept copy is; t
  assert.match(quarantineNotice('superseded',true),/^An older draft of this Expression was kept aside \(not opened\); the saved version opened\. The verbatim copy is in this Expression's quarantine in the native owner, and its draft record is kept too\.$/);
  assert.match(quarantineNotice('superseded',false),/A verbatim copy is in the Library quarantine of this browser\.$/);
  assert.ok(nw.includes("notice=keptNotice?`${text} ${keptNotice}`:text;keptNotice='';"),'the notice rides the next status line, and is never dropped');
- assert.ok(nw.includes('if(settled.kept)keptNotice=settled.kept;'),'the settle sets the notice');
+ assert.ok(nw.includes('if(settled.kept)carry(settled.kept);'),'the settle sets the notice');
+ // O-I #763: a notice already carried in the same open (a draft left and kept as a work) stays beside it.
+ assert.ok(nw.includes("const carry=(text:string)=>{keptNotice=keptNotice?`${keptNotice} ${text}`:text;};"),'a carried notice is added to, never replaced');
  assert.ok(app.includes("toast(quarantineNotice('superseded',false),9000)"),'the browser superseded quarantine is never silent');
  assert.ok(app.includes("toast(quarantineNotice('chosen',false),9000)"),'the browser keep-saved choice is never silent');
 });

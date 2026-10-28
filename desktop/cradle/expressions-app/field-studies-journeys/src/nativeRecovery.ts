@@ -57,9 +57,13 @@ export const hostedScope=():RecoveryScope=>
  * or freshly opened Expression — is addressed by its own id in the aperture's
  * scope, so leaving it can still be acknowledged and recovered. */
 export function draftRecoveryAddress(id:string):{scope:RecoveryScope;checkpoint_id:string}{
+ return selectedDraftAddress(id)??{scope:hostedRecovery()?hostedScope():'expressions',checkpoint_id:id};
+}
+/** The address the host selected for this draft (a checkpoint read there proved it), or null. In a hosted frame a draft with
+ * none, such as the frame's own canvas, has no native working checkpoint and nothing may be written for it (O-I #763). */
+export function selectedDraftAddress(id:string):{scope:RecoveryScope;checkpoint_id:string}|null{
  const bound=drafts.get(id);
- if(bound)return {scope:bound.scope,checkpoint_id:bound.checkpoint_id};
- return {scope:hostedRecovery()?hostedScope():'expressions',checkpoint_id:id};
+ return bound?{scope:bound.scope,checkpoint_id:bound.checkpoint_id}:null;
 }
 export const recoveryScope=():RecoveryScope=>{
  if(selected)return selected.scope;

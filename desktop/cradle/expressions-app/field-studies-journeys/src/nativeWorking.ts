@@ -165,6 +165,13 @@ function withoutRevisions(document:unknown):unknown{
  for(const entity of Object.values(value.entities??{}))delete entity.revision;
  return value;
 }
+/** E15g: the document an Undo or Redo stands on, without where the person stands in it: its revision counters and its
+ * selection are not what a Save changes (manual §10, Undo and Redo), so neither moves it. */
+function withoutStanding(document:unknown):unknown{
+ const value=withoutRevisions(document) as {selection?:unknown};
+ delete value.selection;
+ return value;
+}
 function readDocument(value:unknown,reference:string):KernelExpressionDocument {
  const result=value as {state?:string;expression_ref?:string;document?:KernelExpressionDocument}|null;
  if(result?.state==='revision_conflict'&&result.expression_ref===reference)throw new Error('revision_conflict: the native Expression changed; inspect its current basis before trying again');
@@ -488,12 +495,16 @@ export class NativeWorking {
   }finally{this.inFlight=false;}
  }
  /** E15c: replay one recorded Save's kernel edit at the acknowledged basis. `changes`
-  * is the Undo's compensation (`expected` = the document before the Save) or the Redo's
-  * forward edit (`expected` = the document after it). It carries the same pending,
-  * acknowledgement and readback checks as a Save and is never forced: a revision
-  * conflict is refused by name, the pending intent is cleared (the owner refused it),
-  * and nothing is written. */
- async replayKernelEdit(changes:KernelChange[],expected:KernelExpressionDocument):Promise<KernelExpressionDocument>{
+  * is the Undo's compensation (`from` = the document the Save left, `to` = the one before
+  * it) or the Redo's forward edit (`from` = the document the Save found, `to` = the one
+  * after it). E15g (O-I #763): the owner's document is read first, and the edit stands
+  * only on `from`, at the revision this work holds; a document that has moved is refused
+  * by name before anything is written. Where the person stands (the selection) is not part
+  * of that document, so a selection made since moves nothing and is kept unless the Save
+  * itself set it. Otherwise it carries the same pending, acknowledgement and readback
+  * checks as a Save and is never forced: a revision conflict is refused by name, the
+  * pending intent is cleared (the owner refused it), and nothing is written. */
+ async replayKernelEdit(changes:KernelChange[],documents:{from:KernelExpressionDocument;to:KernelExpressionDocument}):Promise<KernelExpressionDocument>{
   const epoch=this.begin();
   try{
    const record=this.record?clone(this.record):undefined;
@@ -503,8 +514,14 @@ export class NativeWorking {
    const view=basis.view;
    if(!view)throw new Error('Open a native Expression before undoing or redoing a saved edit');
    if(!changes.length)throw new Error('This recorded Save has no kernel changes to replay');
-   const request:ConnectionEdit={operation:'edit',expression_ref:view.document.expression_ref,expected_revision:view.document.revision,actor:'human:expressions-app',changes:clone(changes) as unknown as Record<string,unknown>[]};
-   const want=withoutRevisions(expected);
+   const reference=view.document.expression_ref;
+   const current=readDocument(await this.ports.expression({operation:'inspect',expression_ref:reference}),reference);
+   if(current.revision!==view.document.revision||!same(withoutStanding(current),withoutStanding(documents.from))){
+    throw new Error(`document_moved: "${current.title}" is native revision ${current.revision}, not the document this Save left; the recorded Save was not undone or redone and nothing was written. Save or reopen to reconcile this draft first`);
+   }
+   const request:ConnectionEdit={operation:'edit',expression_ref:reference,expected_revision:view.document.revision,actor:'human:expressions-app',changes:clone(changes) as unknown as Record<string,unknown>[]};
+   const focused=changes.some(change=>change.change==='focus'||change.change==='relation_focus');
+   const want=withoutRevisions({...documents.to,selection:focused?documents.to.selection:current.selection});
    await this.persist({...basis,pending:{kind:'compensation',request}},epoch);
    const raw=await this.ports.expression({...request}) as {state?:string;current_revision?:unknown}|null;
    if(raw?.state==='revision_conflict'){
