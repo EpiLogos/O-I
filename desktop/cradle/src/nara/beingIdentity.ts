@@ -3,7 +3,7 @@
  *
  * A Being page's Subject (`bindings.subjectRef`, kernel/src/page.rs) is a person's ref. The identity it names is read through the
  * identity owner, `nara_identity` (kernel/src/nara_identity.rs): `list` finds the saved identity whose person it is, `open` reads it at
- * its revision. Its layers are the identity matrix's own rows (M4.0-0 … M4.0-5: birthdate, chart, Jungian, Gene Keys, Human Design,
+ * its revision, and `calculate` runs QL's natal calculation of exactly the profile opened (an open runs none). Its layers are the identity matrix's own rows (M4.0-0 … M4.0-5: birthdate, chart, Jungian, Gene Keys, Human Design,
  * quintessence), each present with its source or absent with QL's reason. The birth sky is the identity's own natal chart
  * (`ql.nara-natal/v1` `sky.bodies`): the shell computes no second chart, and the atlas's own natal engine is never used for a person.
  * Nothing here writes: the identity is the identity owner's, and a reading changes nothing. Pure apart from the two owner reads. */
@@ -66,6 +66,18 @@ export function natalOf(reading: IdentityReading): {bodies: NatalBody[]} | {reas
   return {bodies: natal.sky.bodies.map(body => ({body: body.body, longitude_degrees: body.longitude_degrees, retrograde: body.retrograde === true}))};
 }
 
+/** The birth sky of an identity opened at its revision. The owner's `open` reads the saved profile through QL's inspection, which runs
+ * no natal calculation (its chart layer stands absent, "Natal calculation has not run for this input"; read on a scratch root, 28 Oct),
+ * so the chart is QL's `calculate` of exactly that profile: a calculation of another input is not this identity's chart. */
+async function calculatedNatal(transport: KernelTransportStatus, opened: IdentityReading): Promise<{reading: IdentityReading; natal: ReturnType<typeof natalOf>}> {
+  const calculated = await naraIdentity(transport, {operation: "calculate", profile: opened.profile});
+  const reading = calculated.reading;
+  if (!reading || reading.input_revision !== opened.input_revision || reading.person_ref !== opened.person_ref) {
+    return {reading: opened, natal: {reason: "The identity owner calculated another profile, not this identity's: its birth sky is not shown."}};
+  }
+  return {reading, natal: natalOf(reading)};
+}
+
 /** The saved identity of one person, at its revision: the one chosen, when it is theirs, else the one the identity owner lists for them.
  * Two saved identities naming one person are refused rather than chosen between. */
 export async function readPersonIdentity(transport: KernelTransportStatus, person_ref: string): Promise<BeingIdentityReading> {
@@ -81,9 +93,22 @@ export async function readPersonIdentity(transport: KernelTransportStatus, perso
   const opened = await naraIdentity(transport, {operation: "open", source_ref: source.source_ref});
   if (!opened.reading || !opened.source) return {ok: false, reason: opened.error ?? "The identity owner opened no reading of this identity."};
   if (opened.reading.person_ref !== person_ref) return {ok: false, reason: "The identity owner answered for another person."};
-  const natal = natalOf(opened.reading);
-  return {ok: true, identity: {person_ref, name: opened.reading.profile?.name ?? null, source: opened.source, layers: identityLayers(opened.reading),
+  const {reading, natal} = await calculatedNatal(transport, opened.reading);
+  return {ok: true, identity: {person_ref, name: opened.reading.profile?.name ?? null, source: opened.source, layers: identityLayers(reading),
     natal: "bodies" in natal ? natal.bodies : null, natalWhy: "reason" in natal ? natal.reason : null}};
+}
+
+/** Your saved identity (manual §24.6 "Your birth is the first layer, and Setup asks for your date of birth as soon as your ground is made"):
+ * the one you chose in the Nara instrument, else the one identity your ground keeps. Two or more, none chosen, are not guessed between;
+ * none saved says so. Reads the identity owner's listing only. */
+export async function yourIdentitySource(transport: KernelTransportStatus): Promise<{ok: true; person_ref: string; name: string | null; source: IdentitySource} | {ok: false; reason: string}> {
+  const chosen = currentIdentity();
+  if (chosen) return {ok: true, person_ref: chosen.reading.person_ref, name: chosen.reading.profile?.name ?? null, source: {source_ref: chosen.source.source_ref, revision: chosen.source.revision}};
+  const listed = (await naraIdentity(transport, {operation: "list"})).profiles ?? [];
+  if (!listed.length) return {ok: false, reason: "No identity is saved yet: Setup asks for your date of birth, or give it in the identity of the Studio's Nara chain."};
+  if (listed.length > 1) return {ok: false, reason: `${listed.length} identities are saved and none is chosen: choose yours in the Nara instrument.`};
+  const [yours] = listed;
+  return {ok: true, person_ref: yours!.person_ref, name: yours!.name ?? null, source: {source_ref: yours!.source_ref, revision: yours!.revision}};
 }
 
 /** The identity a Being page holds by reference, or why it holds none. */

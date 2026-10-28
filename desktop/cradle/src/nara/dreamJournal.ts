@@ -7,8 +7,8 @@
  *   what the dream adds  the person's reply to it: the latest reply stands as the answer, and the earlier ones stay;
  *   a removed dream      refused: a dream in your journal is kept, and corrected rather than erased;
  *   an amplification     Source entries on the dream (manual §24.2 "each as a Source entry with where it comes from"): each place the
- *                        image has stood before in the works your worlds hold, named with its source; it says what the image has
- *                        meant to others and leaves the meaning to you.
+ *                        image has stood before in your pages, your knowledge and the works your worlds hold, named with where it came
+ *                        from and its source; it says what the image has meant to others and to you, and leaves the meaning to you.
  * The shapes below are the ones this module writes; an entry the person wrote in the Flow itself, with no relation, reads as a dream of
  * its own words, dated by when it was written. */
 import {appendEntry, htmlToText, parseInstance, textToHtml, type QlDoc} from "../flow/instance";
@@ -145,10 +145,19 @@ export function applyDreamWrite(html: string, write: DreamWrite, now: Date = new
     : appendEntry(html, write.answer, {html: answerHtml(write.answer), relations: [relation]}, now).html;
 }
 
-/** One place an image has stood before (projections/atlas/src/practice/amplify.ts: a dated instance of its family, its dreams and
- * visions first), with where it comes from: the works and locators the field cites for it. */
+/** Where a place was found (manual §24.2 "Amplify from: Your pages · Your knowledge · The works of your worlds"). */
+export type AmplifySource = "pages" | "knowledge" | "works";
+/** How each source is named in its Source entry. */
+export const AMPLIFY_FROM_WORDS: Readonly<Record<AmplifySource, string>> = {pages: "your pages", knowledge: "your knowledge", works: "the works of your worlds"};
+
+/** One place an image has stood before, with where it comes from: in the works of your worlds, a dated instance of its family
+ * (projections/atlas/src/practice/amplify.ts, its dreams and visions first) with the works and locators the field cites for it; in your
+ * pages, a passage of a practice page; in your knowledge, a source AIKit keeps (amplifySources.ts). */
 export interface AmplifiedPlace {
+  /** The place's own id: an occurrence of the field, or (from your pages, your knowledge) the passage or the source it is. */
   readonly occurrenceId: string;
+  /** Where it was found; the works of your worlds when absent. */
+  readonly from?: AmplifySource;
   readonly title: string;
   readonly when: string;
   readonly place: string;
@@ -159,11 +168,13 @@ export interface AmplifiedPlace {
 /** The operation a Source entry is written under: one per dream, image and place, so amplifying the same image again lays nothing twice. */
 export const amplifyOperation = (dreamId: string, familyId: string, occurrenceId: string): string => `amplify:${dreamId}:${familyId}:${occurrenceId}`;
 
-/** A Source entry's html: the image, the place it has stood before, and its sources. It interprets nothing. Pure. */
+/** A Source entry's html: the image, the place it has stood before, and where it came from — your pages, your knowledge or the works of
+ * your worlds — with its sources. It interprets nothing. Pure. */
 export function amplificationHtml(image: string, at: AmplifiedPlace): string {
   const where = [at.when, at.place].filter(part => part.trim()).map(escape).join(", ");
+  const from = AMPLIFY_FROM_WORDS[at.from ?? "works"];
   return `<p class="dream-source"><strong>${escape(image)}</strong> has stood here before: ${escape(at.title)}${where ? ` (${where})` : ""}, a ${escape(at.kind)}.</p>`
-    + `<p class="dream-source-from">${at.sources.length ? `From ${at.sources.map(source => escape(source.label)).join("; ")}.` : "The field names no source for it."}</p>`;
+    + `<p class="dream-source-from">${at.sources.length ? `From ${from}: ${at.sources.map(source => escape(source.label)).join("; ")}.` : `From ${from}; the field names no source for it.`}</p>`;
 }
 
 /** The journal's html with the Source entries of one amplification on a dream: each place not laid before, with its sources as the
@@ -177,8 +188,12 @@ export function applyAmplification(html: string, dreamId: string, image: {family
     const operationRef = amplifyOperation(dreamId, image.familyId, place.occurrenceId);
     if (held.has(operationRef)) continue;
     const current = parseInstance(next);
-    const relations: Relation[] = [{type: "source", entryId: dreamId, ref: `atlas:occurrence:${place.occurrenceId}`, revision: current.meta.revision},
-      ...place.sources.map(source => ({type: "source" as const, ref: source.ref}))];
+    // The entry stands on the dream it amplifies, and names where the place is: the field's occurrence, else (your pages, your knowledge)
+    // the passage or the source itself, then the rest of its sources.
+    const works = (place.from ?? "works") === "works";
+    const [first, ...rest] = place.sources;
+    const relations: Relation[] = [{type: "source", entryId: dreamId, ref: works ? `atlas:occurrence:${place.occurrenceId}` : first?.ref ?? place.occurrenceId, revision: current.meta.revision},
+      ...(works ? place.sources : rest).map(source => ({type: "source" as const, ref: source.ref}))];
     next = appendEntry(next, `${image.name}: ${place.title}`, {html: amplificationHtml(image.name, place), relations, operationRef}, now).html;
     laid++;
   }

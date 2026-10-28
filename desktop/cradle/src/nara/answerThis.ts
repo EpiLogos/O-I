@@ -10,7 +10,15 @@
  * The selected entry's words are the passage. The page's practice places the turn in Nara's map (practice.ts practiceOfFlow: a journal,
  * a dream journal, a journey, a container, else an open conversation), and the kernel composes the lived context from the page
  * (nativeDialogue.ts answerFromPages). When Nara's turn has completed, the answer is kept in the Flow through nativeReturn.ts
- * (readNativeAnswer, retainAnswerInFlow: the owner's CAS, the answer naming each passage it drew on and replying to the passage). */
+ * (readNativeAnswer, retainAnswerInFlow: the owner's CAS, the answer naming each passage it drew on and replying to the passage).
+ *
+ * Arm decides how the answer arrives (manual §24.1 "Arm — Lets Nara write into your practice pages directly, each write with a receipt.
+ * Off by default: every answer arrives as a proposal"; §19.4 "With Arm off, each change arrives as a proposal card; with Arm on, it lands
+ * directly with a receipt"). The track's Arm is the shell's one write arm (frame/tracks/useCentralTracks.ts).
+ *   Arm off   Nara answers in her conversation, and the completed answer is read back from it (readNativeAnswer: the turn completed, its
+ *             basis this page's passage); nothing is written in the page. The answer waits on its page as a proposal (answerProposals).
+ *   Arm on    the answer is written into the Flow on the revision read, and the write's receipt is read back from Central (the Flow read
+ *             again holds exactly the entry kept). A proposal already waiting on the entry is the answer kept: Nara is not asked again. */
 import {encounter, type EncounterReading} from "../encounter/client";
 import {htmlToText} from "../flow/instance";
 import {readFlowInstance} from "../flow/instances";
@@ -56,6 +64,63 @@ export interface AnswerThisInput {
   readonly entryId: string;
   /** The project the conversation is bound under; the Nara channel's by default. */
   readonly project?: string;
+  /** The track's Arm (the shell's write arm): on, the answer is written with a receipt; off (the default), it arrives as a proposal. */
+  readonly arm?: boolean;
+}
+
+/** An answer that waits for you: Nara's completed answer in her conversation, read back from it, not yet written in its page. */
+export interface AnswerProposal {
+  readonly page: string;
+  readonly location: CentralLocation;
+  /** The entry it answers. */
+  readonly entryId: string;
+  readonly dialogue: NativeDialogue;
+  readonly blockId: number;
+  readonly agentSession: string;
+  readonly answer: string;
+  /** How many of your passages the answer was asked from. */
+  readonly passages: number;
+}
+
+/** The receipt of an answer written in its page, as Central read it back. */
+export interface AnswerReceipt {
+  readonly page: string;
+  readonly entryId: string;
+  readonly revision: string;
+  readonly already: boolean;
+  readonly agent: "Nara" | "Epii";
+  readonly agentSession: string;
+  /** The entry it answers. */
+  readonly answering: string;
+  readonly passages: number;
+}
+
+export type AnswerOutcome = {readonly kind: "proposed"; readonly proposal: AnswerProposal} | {readonly kind: "written"; readonly receipt: AnswerReceipt};
+
+/** The proposals that wait, by page. Held for the window: the answer itself stays in Nara's conversation, where it can be kept from the Nara
+ * instrument as well. */
+const waiting = new Map<string, AnswerProposal[]>();
+
+/** The answers that wait on a page, oldest first. */
+export function answerProposals(page: string): AnswerProposal[] {
+  return [...(waiting.get(page) ?? [])];
+}
+
+function propose(proposal: AnswerProposal): void {
+  const held = (waiting.get(proposal.page) ?? []).filter(p => p.blockId !== proposal.blockId || p.agentSession !== proposal.agentSession);
+  waiting.set(proposal.page, [...held, proposal]);
+}
+
+function answered(page: string, entryId: string): void {
+  const held = (waiting.get(page) ?? []).filter(p => p.entryId !== entryId);
+  if (held.length) waiting.set(page, held); else waiting.delete(page);
+}
+
+/** What an Answer this came to, in words. Pure. */
+export function answerWords(outcome: AnswerOutcome): string {
+  if (outcome.kind === "proposed") return `${outcome.proposal.dialogue.role === "epii" ? "Epii" : "Nara"}'s answer is a proposal and waits for you: Arm is off, so nothing was written in the page. Arm the track and Answer this again to keep it, or keep it from the Nara instrument.`;
+  const r = outcome.receipt;
+  return `${r.agent} wrote ${r.agent === "Nara" ? "her" : "its"} answer into the page as entry ${r.entryId} at revision ${r.revision}, naming ${r.passages} of your passages: its receipt.${r.already ? " It was already kept." : ""}`;
 }
 
 export interface AnswerThisSteps {
@@ -98,13 +163,27 @@ export function answeredBlock(blocks: readonly {id: number; kind: string; text: 
   return null;
 }
 
-/** Answer this: the passage asked of Nara from the person's pages, and the completed answer kept in the Flow with the passages it drew
- * on. Refuses, asking nothing, when no identity, Expression or bound conversation stands. */
-export async function answerThis(input: AnswerThisInput, steps: Partial<AnswerThisSteps> = {}): Promise<{entryId: string; revision: string; already: boolean; passages: number}> {
+/** Write an answer read back from Nara into its Flow, and read the receipt back from Central. */
+async function keep(input: AnswerThisInput, s: AnswerThisSteps, dialogue: NativeDialogue, block: number, passages: number): Promise<AnswerOutcome> {
+  const answer = await s.read(input.transport, dialogue, block);
+  const flow = await s.flow(input.transport, input.location);
+  const kept = await s.retain(input.transport, flow, answer);
+  answered(input.location.ref, input.entryId);
+  return {kind: "written", receipt: {page: input.location.ref, entryId: kept.entryId, revision: kept.revision, already: kept.already,
+    agent: dialogue.role === "epii" ? "Epii" : "Nara", agentSession: dialogue.provisioning.agent_session, answering: input.entryId, passages}};
+}
+
+/** Answer this: the passage asked of Nara from the person's pages; with Arm on, the completed answer written in the Flow with the passages
+ * it drew on and its receipt; with Arm off, the answer read back from Nara's conversation and left as a proposal. Refuses, asking nothing,
+ * when no identity, Expression or bound conversation stands. */
+export async function answerThis(input: AnswerThisInput, steps: Partial<AnswerThisSteps> = {}): Promise<AnswerOutcome> {
   const s = {...STEPS, ...steps};
   if (!input.identity) throw new Error(ANSWER_NO_IDENTITY);
   if (!input.expressionRef) throw new Error(ANSWER_NO_EXPRESSION);
   const passage = passageOf(input.island, input.entryId);
+  // Armed, an answer already waiting on this entry is the one kept: Nara is not asked again.
+  const proposal = input.arm ? answerProposals(input.location.ref).filter(p => p.entryId === input.entryId).at(-1) : undefined;
+  if (proposal) return keep(input, s, proposal.dialogue, proposal.blockId, proposal.passages);
   const dialogue = await s.lookup(input.transport, input.project ?? NARA_CHANNEL_PROJECT, input.identity, input.expressionRef, "nara");
   if (!dialogue) throw new Error(ANSWER_UNBOUND);
   const before = await s.view(input.transport, dialogue);
@@ -119,8 +198,12 @@ export async function answerThis(input: AnswerThisInput, steps: Partial<AnswerTh
     await s.sleep(s.everyMs);
     block = answeredBlock((await s.view(input.transport, dialogue)).blocks, after);
   }
+  const passages = lived.context.passages.length;
+  if (input.arm) return keep(input, s, dialogue, block, passages);
+  // Arm off: the answer is read back from Nara's conversation (its turn completed, its basis this passage) and waits on its page.
   const answer = await s.read(input.transport, dialogue, block);
-  const flow = await s.flow(input.transport, input.location);
-  const kept = await s.retain(input.transport, flow, answer);
-  return {entryId: kept.entryId, revision: kept.revision, already: kept.already, passages: lived.context.passages.length};
+  const proposed: AnswerProposal = {page: input.location.ref, location: input.location, entryId: input.entryId, dialogue, blockId: answer.blockId,
+    agentSession: dialogue.provisioning.agent_session, answer: answer.answer, passages};
+  propose(proposed);
+  return {kind: "proposed", proposal: proposed};
 }

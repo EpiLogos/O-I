@@ -12,13 +12,18 @@
 // the dream journal in the practice world, through Central's own creation door.
 //
 // Amplify: the lens's own Amplify — opening an image of a dream, the image buttons titled "Amplify this image" (src/lenses/dreams.ts,
-// route #/dreams/<dream>/<image>, which reads the dream from the store as it opens) — runs the ported pure amplify over the field's model,
-// and the places that image has stood before (its dreams and visions first) are laid on the dream as Source entries, each with the
-// sources the field cites. The same image on the same dream lays nothing twice. It interprets nothing. The route is read when the lens
-// reads its dream, so the binding adds no listener of its own to the window.
+// route #/dreams/<dream>/<image>, which reads the dream from the store as it opens) — lays on the dream, as Source entries, the places
+// that image has stood before (manual §24.2): in your pages (the passages of your practice pages that use its name, composed by QL
+// through nara_lived_context), in your knowledge (AIKit's knowledge search) and in the works of your worlds (the ported pure amplify over
+// the field's model, its dreams and visions first), each naming where it came from (desktop/cradle/src/nara/amplifySources.ts). Amplify
+// from turns each source on or off (all on). A source that does not answer is said in its owner's words, and the others still lay. The
+// same image on the same dream lays nothing twice. It interprets nothing. The route is read when the lens reads its dream, so the
+// binding adds no listener of its own to the window.
 import type {CentralLocation, KernelTransportStatus} from '../../../../../../../desktop/cradle/src/kernel/types'
-import type {AmplifiedPlace, DreamRecord, DreamWrite} from '../../../../../../../desktop/cradle/src/nara/dreamJournal'
-import {findPracticePage, makePracticePage, practiceWorldOf, type PracticeWorldLike} from '../../../../../../../desktop/cradle/src/nara/practiceWorld'
+import type {AmplifiedPlace, AmplifySource, DreamRecord, DreamWrite} from '../../../../../../../desktop/cradle/src/nara/dreamJournal'
+import {findPracticePage, makePracticePage, practicePages, practiceWorldOf, type PracticeWorldLike} from '../../../../../../../desktop/cradle/src/nara/practiceWorld'
+import {readKnowledgePlaces, readPagePlaces, type AmplifiedImage} from '../../../../../../../desktop/cradle/src/nara/amplifySources'
+import {yourIdentitySource} from '../../../../../../../desktop/cradle/src/nara/beingIdentity'
 import {readWorlds} from '../../../central/centralWorlds'
 import type {Model} from '../src/data/model'
 import {amplify} from '../src/practice/amplify'
@@ -45,7 +50,16 @@ export interface DreamJournalOwners {
   readonly read: (location: CentralLocation) => Promise<{html: string; revision: string; doc: Parameters<JournalModule['dreamsOfFlow']>[0]}>
   readonly write: (location: CentralLocation, revision: string, html: string) => Promise<{outcome: string}>
   readonly said: (text: string) => void
+  /** Where Amplify looks besides the field: your pages and your knowledge, each read from its owner (absent, that source lays nothing). */
+  readonly amplify?: {
+    readonly pages?: (ask: {image: AmplifiedImage; dreamId: string}) => Promise<AmplifiedPlace[]>
+    readonly knowledge?: (image: AmplifiedImage) => Promise<AmplifiedPlace[]>
+  }
 }
+
+/** Amplify from (manual §24.2): where Amplify looks, each On or Off; all On by default. */
+export type AmplifyFrom = Readonly<Record<AmplifySource, boolean>>
+export const AMPLIFY_FROM_ALL: AmplifyFrom = {pages: true, knowledge: true, works: true}
 
 export function kernelDreamOwners(transport: KernelTransportStatus, said: (text: string) => void = () => {}): DreamJournalOwners {
   return {
@@ -61,6 +75,20 @@ export function kernelDreamOwners(transport: KernelTransportStatus, said: (text:
     read: async location => (await flowRoutes()).readFlowInstance(transport, location),
     write: async (location, revision, html) => (await flowRoutes()).writeFlowInstance(transport, location, revision, html),
     said,
+    amplify: {
+      // Your pages: the practice world's pages, read for the person your saved identity names.
+      pages: async ({image, dreamId}) => {
+        const you = await yourIdentitySource(transport)
+        if (!you.ok) throw new Error(you.reason)
+        const worlds = await readWorlds(transport)
+        if (worlds.state !== 'read') throw new Error(worlds.state === 'unavailable' ? worlds.reason : 'Central has not disclosed its worlds yet.')
+        const practice = practiceWorldOf(worlds.worlds)
+        if (!practice) throw new Error('Central discloses no world your practice is kept in.')
+        const pages = await practicePages(transport, practice.world)
+        return readPagePlaces(transport, {subject_ref: you.person_ref, image, dreamId, pages})
+      },
+      knowledge: image => readKnowledgePlaces(transport, image),
+    },
   }
 }
 
@@ -73,8 +101,10 @@ export interface DreamJournalBinding {
   start(): void
   /** Lay amplifications from the field's model: the lens's Amplify, by its route. */
   attach(model: Model): void
-  /** Wait for every write asked so far. */
+  /** Wait for every write asked so far, the amplifications being gathered included. */
   settled(): Promise<void>
+  /** Wait for the amplifications asked so far to be gathered from their sources (and their writes asked). */
+  amplified(): Promise<void>
   /** Why the journal is not read or not written, when it is not. */
   fault(): string | null
   dispose(): void
@@ -108,7 +138,9 @@ export function bindDreamJournal(input: {base: Storage; owners: DreamJournalOwne
   /** Where the lens's route is read (the window's location; tests give their own). */
   location?: {readonly hash: string} | null;
   /** The field's model while the atlas is mounted (the pane's own handle); `attach` gives one too. */
-  model?: () => Model | null}): DreamJournalBinding {
+  model?: () => Model | null
+  /** Where Amplify looks (all on by default). */
+  amplifyFrom?: AmplifyFrom}): DreamJournalBinding {
   const {base, owners} = input
   let dreams: DreamRecord[] = []
   let world: PracticeWorldLike | null = null
@@ -119,6 +151,8 @@ export function bindDreamJournal(input: {base: Storage; owners: DreamJournalOwne
   let lib: JournalModule | null = null
   let disposed = false
   const amplified = new Set<string>()
+  const amplifyFrom: AmplifyFrom = {...AMPLIFY_FROM_ALL, ...input.amplifyFrom}
+  let amplifying: Promise<void> = Promise.resolve()
   const fail = (what: string, cause: unknown) => {
     reason = `${what}: ${cause instanceof Error ? cause.message : String(cause)}`
     owners.said(reason)
@@ -213,12 +247,37 @@ export function bindDreamJournal(input: {base: Storage; owners: DreamJournalOwne
     if (!route || !field) return
     const key = `${route.dreamId}:${route.familyId}`
     if (amplified.has(key) || !dreams.some(dream => dream.id === route.dreamId)) return
-    const found = placesOf(field, route.familyId)
-    if (!found || !found.places.length) return
+    const family = field.famById.get(route.familyId)
+    if (!family) return
     amplified.add(key)
-    const journalLib = lib
-    if (!journalLib) return
-    void write(html => journalLib.applyAmplification(html, route.dreamId, {familyId: route.familyId, name: found.name}, found.places).html, `The amplification of ${found.name}`)
+    const image: AmplifiedImage = {familyId: route.familyId, name: family.name}
+    const dreamId = route.dreamId
+    amplifying = amplifying.then(async () => {
+      const places = await gather(field, image, dreamId)
+      const journalLib = lib
+      // Nothing found anywhere: the image may be amplified again later.
+      if (!places.length || !journalLib || disposed) { amplified.delete(key); return }
+      await write(html => journalLib.applyAmplification(html, dreamId, image, places).html, `The amplification of ${image.name}`)
+    })
+  }
+
+  /** The places the image has stood before, from each source Amplify looks in, in the manual's order: your pages, your knowledge, the
+   * works of your worlds. A source that does not answer is said, and lays nothing. */
+  async function gather(field: Model, image: AmplifiedImage, dreamId: string): Promise<AmplifiedPlace[]> {
+    const read = async (source: 'pages' | 'knowledge', run: (() => Promise<AmplifiedPlace[]>) | null): Promise<AmplifiedPlace[]> => {
+      if (!amplifyFrom[source] || !run) return []
+      try { return await run() } catch (cause) {
+        owners.said(`Amplify from ${source === 'pages' ? 'your pages' : 'your knowledge'} did not answer: ${cause instanceof Error ? cause.message : String(cause)}`)
+        return []
+      }
+    }
+    const pages = owners.amplify?.pages, known = owners.amplify?.knowledge
+    const [fromPages, fromKnowledge] = await Promise.all([
+      read('pages', pages ? () => pages({image, dreamId}) : null),
+      read('knowledge', known ? () => known(image) : null),
+    ])
+    const works = amplifyFrom.works ? placesOf(field, image.familyId)?.places ?? [] : []
+    return [...fromPages, ...fromKnowledge, ...works]
   }
 
   return {
@@ -226,7 +285,8 @@ export function bindDreamJournal(input: {base: Storage; owners: DreamJournalOwne
     ready,
     start,
     attach(next) { model = next; onRoute() },
-    settled: () => queue,
+    settled: () => amplifying.then(() => queue),
+    amplified: () => amplifying,
     fault: () => reason,
     dispose() { model = null; disposed = true },
   }

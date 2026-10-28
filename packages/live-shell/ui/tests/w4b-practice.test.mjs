@@ -317,11 +317,12 @@ test('the atlas\'s dreams are read from the dream journal and written back as it
 
 // ── Answer this ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 
-test('Answer this finds the bound conversation, asks from the page, waits for Nara and keeps the answer; without a binding it says what is missing', async () => {
+test('Answer this finds the bound conversation, asks from the page, waits for Nara and, armed, keeps the answer; without a binding it says what is missing', async () => {
   const location = {schema: 'central.path-ref/v1', ref: 'ref:journal', root: 'R', path: 'Work/personal/ProjectCentral/user/journal.html'}
   const island = {meta: {practice: 'journal'}, entries: [{id: 'e1', html: '<p>Why does the morning feel so wide?</p>'}]}
   const identity = {selection_ref: 's', source: {source_ref: 'id', revision: '1'}, reading: {person_ref: 'person:frank', nara_ref: 'nara:frank'}}
-  const base = {transport: {kind: 'bridge', url: 'x'}, identity, expressionRef: 'expression:room', location, island, entryId: 'e1'}
+  // Armed (the track's Arm, manual §24.1): the answer is written with its receipt. Unarmed it waits as a proposal (t765-nara-practice.test.mjs).
+  const base = {transport: {kind: 'bridge', url: 'x'}, identity, expressionRef: 'expression:room', location, island, entryId: 'e1', arm: true}
   await assert.rejects(answer.answerThis({...base, identity: null}), /none is chosen/)
   await assert.rejects(answer.answerThis({...base, expressionRef: null}), /bound to an open Expression/)
   await assert.rejects(answer.answerThis(base, {lookup: async () => null}), /no conversation bound to this Expression/)
@@ -334,7 +335,7 @@ test('Answer this finds the bound conversation, asks from the page, waits for Na
     lookup: async (_t, project, who, expression, role) => { assert.deepEqual([project, who.reading.person_ref, expression, role], ['O-I', 'person:frank', 'expression:room', 'nara']); return dialogue },
     view: async () => views.shift() ?? views.at(-1),
     ask: async (_t, ask) => { asked.push(ask); return {lived: {context: {passages: [{key: 'p1'}, {key: 'p2'}]}}, basis: {}} },
-    read: async (_t, _d, block) => ({blockId: block}),
+    read: async (_t, dialogue, block) => ({dialogue, blockId: block}),
     flow: async () => ({location}),
     retain: async (_t, _flow, nara) => { kept.push(nara); return {revision: 'r2', entryId: 'nara-answer-1', already: false} },
     sleep: async () => {}, everyMs: 1, waitMs: 100,
@@ -342,7 +343,7 @@ test('Answer this finds the bound conversation, asks from the page, waits for Na
   assert.equal(asked[0].practice.kind, 'journal', 'the page\'s practice places the turn')
   assert.equal(asked[0].answering.passage, 'Why does the morning feel so wide?')
   assert.equal(kept[0].blockId, 6, 'the answer to the question asked, once its turn completed')
-  assert.deepEqual(done, {entryId: 'nara-answer-1', revision: 'r2', already: false, passages: 2})
+  assert.deepEqual(done, {kind: 'written', receipt: {page: 'ref:journal', entryId: 'nara-answer-1', revision: 'r2', already: false, agent: 'Nara', agentSession: 'agent-session/1', answering: 'e1', passages: 2}})
   assert.throws(() => answer.answeredBlock([{id: 9, kind: 'user', text: 'q'}, {id: 10, kind: 'error', text: ''}], 8), /in an error/)
   assert.equal(answer.answeredBlock([{id: 9, kind: 'user', text: 'q'}, {id: 10, kind: 'assistant', text: 'part'}], 8), null, 'still answering')
 })
@@ -363,18 +364,20 @@ test('a Being page holds its person by its Subject; the identity\'s layers stand
     [['M4.0-0', true, 'r1', null], ['M4.0-3', false, null, 'No Gene Keys reading is given.']])
   assert.deepEqual(being.natalOf(reading), {bodies: [{body: 'Sun', longitude_degrees: 169.38, retrograde: false}]})
   assert.match(being.natalOf({...reading, natal: null}).reason, /no natal chart/)
-  // Read through nara_identity: list finds the person's saved identity, open reads it at its revision.
+  // Read through nara_identity: list finds the person's saved identity, open reads it at its revision (QL's inspection: no chart, as the
+  // real owner answers), and calculate runs QL's natal calculation of exactly that profile.
   const calls = []
   globalThis.fetch = async (_url, init) => {
     const op = JSON.parse(init.body); calls.push(op.request.operation)
     const data = op.request.operation === 'list' ? {schema: 'oi.nara-identity/v1', profiles: [{source_ref: 'id:frank', revision: 'r7', name: 'Frank', person_ref: 'person:frank'}]}
-      : {schema: 'oi.nara-identity/v1', source: {source_ref: 'id:frank', revision: 'r7'}, reading: {...reading, schema: 'ql.nara-identity-reading/v1'}}
+      : op.request.operation === 'calculate' ? {schema: 'oi.nara-identity/v1', reading: {...reading, schema: 'ql.nara-identity-reading/v1'}}
+      : {schema: 'oi.nara-identity/v1', source: {source_ref: 'id:frank', revision: 'r7'}, reading: {...reading, natal: null, schema: 'ql.nara-identity-reading/v1'}}
     return {json: async () => ({ok: true, outcome: {result: 'nara_identity', data}})}
   }
   identityCurrent.clearCurrentIdentity()
   const read = await being.readBeingIdentity({kind: 'bridge', url: 'x'}, page({subjectRef: 'person:frank', kind: 'person'}))
   assert.equal(read.ok, true)
-  assert.deepEqual(calls, ['list', 'open'])
+  assert.deepEqual(calls, ['list', 'open', 'calculate'])
   assert.equal(read.identity.source.revision, 'r7')
   assert.equal(read.identity.natal.length, 1)
   const sky = await import('../src/inhabitants/ql/devices/qlSky.ts')
