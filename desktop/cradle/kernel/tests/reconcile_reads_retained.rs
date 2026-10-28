@@ -252,33 +252,46 @@ fn a_save_and_a_flow_read_retire_nothing_they_did_not_change() {
         "central:return:project:x:1",
         json!({"project": "X", "return_ref": "central:return:project:x:1"}),
     );
-    wait_for("the recovered record to be announced", || {
-        announced
-            .lock()
-            .unwrap()
-            .iter()
-            .any(|(scopes, _)| scopes.iter().any(|scope| scope == "project:X"))
-    });
-    assert!(
-        announced.lock().unwrap().iter().all(|(scopes, _)| scopes
-            .iter()
-            .all(|scope| scope == "project:X" || scope == "work")),
-        "only Project X moved (and `work`, which counts every project): {:?}",
-        announced.lock().unwrap()
-    );
-    std::thread::sleep(FLOOR);
-    assert!(now_root().is_ok());
-    assert_eq!(
-        starts(&dir, "central.now.list"),
-        2,
-        "the root's reading stands"
-    );
-    assert!(now_x().is_ok());
-    assert_eq!(
-        starts(&dir, "central.now.list"),
-        3,
-        "Project X's reading is read again"
-    );
+    // Linux watches only Control, each ProjectCentral, the git refs and worktrees (watch.rs:21): a record under `Work/X/.central`
+    // is not announced there, and X's reading stands on its time-to-live. Where the whole root is watched (FSEvents), the
+    // recovered record moves Project X alone and X's reading is read again.
+    if cfg!(target_os = "linux") {
+        std::thread::sleep(FLOOR);
+        assert!(now_root().is_ok());
+        assert_eq!(
+            starts(&dir, "central.now.list"),
+            2,
+            "the root's reading stands"
+        );
+    } else {
+        wait_for("the recovered record to be announced", || {
+            announced
+                .lock()
+                .unwrap()
+                .iter()
+                .any(|(scopes, _)| scopes.iter().any(|scope| scope == "project:X"))
+        });
+        assert!(
+            announced.lock().unwrap().iter().all(|(scopes, _)| scopes
+                .iter()
+                .all(|scope| scope == "project:X" || scope == "work")),
+            "only Project X moved (and `work`, which counts every project): {:?}",
+            announced.lock().unwrap()
+        );
+        std::thread::sleep(FLOOR);
+        assert!(now_root().is_ok());
+        assert_eq!(
+            starts(&dir, "central.now.list"),
+            2,
+            "the root's reading stands"
+        );
+        assert!(now_x().is_ok());
+        assert_eq!(
+            starts(&dir, "central.now.list"),
+            3,
+            "Project X's reading is read again"
+        );
+    }
     let since = traced_since(&trace, mark);
     assert!(
         retired(&since).is_empty(),
