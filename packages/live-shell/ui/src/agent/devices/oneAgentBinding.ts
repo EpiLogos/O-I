@@ -19,6 +19,9 @@ export interface CarriedPage {
   readonly prefix: string
   readonly shared: readonly string[]
   readonly owns?: readonly string[]
+  /** A page key whose owner names it otherwise: the page's key (unprefixed) → the owner's (the Left behind page's Recover is the census's
+   * Reconcile). */
+  readonly named?: Readonly<Record<string, string>>
 }
 
 // The shared keys restate the design's (actuation__harness-model.tsx:18-20 CUSTODY_SHARED, IDENTITY_SHARED, THREAD_SHARED); the R4 test
@@ -47,6 +50,10 @@ export const MACHINE_PAGE: CarriedPage = {prefix: 'mc.', shared: []}
 export const CAPTURE_PAGE: CarriedPage = {prefix: 'capture.', shared: []}
 /** The Agentset rack's Helper page (§19.20 "on the rack's Helper page"; software-factory__agentset-rack.tsx `helper.` keys). */
 export const HELPER_PAGE: CarriedPage = {prefix: 'helper.', shared: []}
+/** The Workcell rack's Left behind page (§19.23 "What a run leaves behind"; workcell__workcell.tsx `left.` keys): Ground hygiene's census
+ * under `left.` (its worlds, sandboxes, findings and sources, as the Checkouts page carries its seats), its Recover the census's Reconcile
+ * (`workcell --receipt R reconcile --desired <binding>=present`). */
+export const LEFT_BEHIND_PAGE: CarriedPage = {prefix: 'left.', shared: [], named: {recover: 'reconcile'}}
 
 export interface CarriedBindings {
   readonly custody?: DesignBinding | null
@@ -70,7 +77,7 @@ function route(carried: readonly Carried[], key: string): {binding: DesignBindin
   for (const {page, binding} of carried) {
     if (key.startsWith(page.prefix)) {
       const own = key.slice(page.prefix.length)
-      return page.shared.includes(own) ? {binding: null, key} : {binding, key: own}
+      return page.shared.includes(own) ? {binding: null, key} : {binding, key: page.named?.[own] ?? own}
     }
     if (page.owns?.includes(key)) return {binding, key}
   }
@@ -80,9 +87,10 @@ function route(carried: readonly Carried[], key: string): {binding: DesignBindin
 /** A carried page's record laid into the Agent's keys: its own keys under the prefix, the shared keys it owns as they are; the shared
  * keys it does not own are the Agent's, so they are left out. */
 function lay<T>(into: Record<string, T>, page: CarriedPage, record: Readonly<Record<string, T>> | undefined): void {
+  const pageKey = Object.fromEntries(Object.entries(page.named ?? {}).map(([mine, owners]) => [owners, mine]))
   for (const [key, value] of Object.entries(record ?? {})) {
     if (page.shared.includes(key)) { if (page.owns?.includes(key)) into[key] = value }
-    else into[page.prefix + key] = value
+    else into[page.prefix + (pageKey[key] ?? key)] = value
   }
 }
 

@@ -107,8 +107,9 @@ test('Factory: a setting writes through its seam with the session\'s settings (f
       previous_task: null, standing: 's'}}
     const binding = factory.factoryClipBinding({ref: taskRef, tracks: [track], events: null, settings: context})
     assert.equal(binding.standing.launch, undefined, 'no longer disabled')
-    await binding.write([{key: 'launch', value: 'loop'}])
-    assert.deepEqual(sent, [[{sessionRef: 'ses-214', n: 1}, 'loop', 'O-I']])
+    // REPLACED (#772): the clip presses a manual's launch mode (Gate); the seam asks the owner its own word (factory-clip-owner-words.test.mjs).
+    await binding.write([{key: 'launch', value: 'gate'}])
+    assert.deepEqual(sent, [[{sessionRef: 'ses-214', n: 1}, 'gate', 'O-I']])
   } finally { TASK_SEAMS.launch = was }
 })
 

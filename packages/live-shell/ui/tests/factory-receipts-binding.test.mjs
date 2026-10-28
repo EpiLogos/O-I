@@ -140,7 +140,9 @@ test('Approvals: the Default answer is the Gateway\'s approvals key — the same
   const binding = rec.approvalsBinding(input, gateway, ports)
   assert.equal(binding.values.approvals, 'session', 'the Gateway\'s own reading')
   assert.deepEqual(JSON.parse(binding.values.queue), [{id: 'req-7', kind: 'request', text: 'rm -rf dist', who: 'aletheia', where: 'execute', session: 'Explain run'}])
-  assert.deepEqual([binding.values.light, binding.values.show, binding.values.order], ['lit', 'both', 'oldest'])
+  // REPLACED (#772): the view starts at §19.14's defaults — Show All (the design's words; Both is no Show of the redrawn design), Order
+  // Oldest first, Follow On (approvals-answers-binding.test.mjs).
+  assert.deepEqual([binding.values.light, binding.values.show, binding.values.order, binding.values.follow], ['lit', 'all', 'oldest', true])
   await binding.write([{key: 'approvals', value: 'ask'}])
   await binding.write([{key: 'allowOnce', value: 'req-7'}])
   await binding.write([{key: 'allowAlways', value: 'req-7'}])

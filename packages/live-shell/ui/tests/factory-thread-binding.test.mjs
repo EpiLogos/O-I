@@ -220,7 +220,8 @@ test('the Thread writes the owners\' way: the composer and Input through the Age
   // (§19.4: the thread is the Agent's Full; PROGRAMME R25 item 5 "the Agent carries Custody, Identity and the Thread (as its Full)"), so
   // Software Factory admits no Thread face, and the Agent's design carries the Thread's design under `thread.` (oneAgentBinding.ts
   // THREAD_PAGE): each of the Thread's own keys is the Agent's under that prefix.
-  assert.equal(thread.threadDevice(), null, 'no Thread device of its own')
+  // REPLACED (#772): "the Thread's constructor answers null" — the retired constructor is gone: the module exports none.
+  assert.equal('threadDevice' in thread, false, 'no Thread device of its own: no constructor stands')
   const ownThread = Object.keys(threadDesign.defaults).filter(key => !THREAD_PAGE.shared.includes(key))
   assert.ok(ownThread.length > 0)
   for (const key of ownThread) assert.ok(`${THREAD_PAGE.prefix}${key}` in agentDesign.defaults, `the Agent carries the Thread's ${key} as ${THREAD_PAGE.prefix}${key}`)

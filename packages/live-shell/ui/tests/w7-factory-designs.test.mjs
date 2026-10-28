@@ -161,7 +161,8 @@ test('2 · Capture skill is the Skillset rack\'s Capture page on the armed track
   // retired it as a device of its own (§19.11: "Turning something you did by hand into a skill is the Capture page of the Skillset rack
   // (§19.7)"): AIKit admits no capture-skill face, no chain has a Capture plate, and the rack carries the capture binding under `capture.`
   // while it stands on a session's (the armed track's) chain.
-  assert.equal(capture.captureSkillDevice(), null, 'no Capture skill device of its own')
+  // REPLACED (#772): the retired constructor is gone: the module exports none.
+  assert.equal('captureSkillDevice' in capture, false, 'no Capture skill device of its own: no constructor stands')
   for (const key of Object.keys(captureDesign.defaults)) assert.ok(`capture.${key}` in rackDesign.defaults, `the rack carries capture.${key}`)
   assert.deepEqual(places.chainSlots({kind: 'session', group: false}), ['agent', 'skillset', 'world'])
   assert.deepEqual(places.chainSlots({kind: 'session', group: true}), ['agentset', 'agent', 'skillset', 'world'])

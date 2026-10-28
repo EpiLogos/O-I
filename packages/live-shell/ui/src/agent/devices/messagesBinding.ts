@@ -112,7 +112,7 @@ export const MESSAGES_ABSENT: Readonly<Record<string, string>> = {
   'conv.light': MESSAGES_REFUSE.session, 'conv.age': MESSAGES_REFUSE.session, 'conv.writes': MESSAGES_REFUSE.session,
 }
 
-/** The writes no owner carries, by key: the conversation's own controls (the Thread's Full under `conv.`, software-factory__thread.tsx:
+/** The writes no owner carries, by key: the conversation's own controls (the Thread's Full under `conv.`, thread.tsx:8-17:
  * Input, Voice, the proposal's and the stall's buttons, a spawn row's open). Send (`conv.sent`) and a drop onto a track (`delegate`) write
  * through AIKit's gateway (MessagesPorts.gateway). */
 export const MESSAGES_REFUSED: Readonly<Record<string, string>> = {
@@ -163,7 +163,7 @@ export function positionRefs(population: unknown): string[] {
 }
 
 /** The open agent's conversation (useConversationAnswer.ts: the Communiques to and from its Position) as the Thread's rows
- * (software-factory__thread.tsx:10): what its Position sent is the agent's, by its name; what another Position sent stands under that
+ * (thread.tsx:12-17): what its Position sent is the agent's, by its name; what another Position sent stands under that
  * Position's name. No Position stands for you, so no row is yours. The journal's order is kept. */
 export function conversationRows(conversation: unknown, names: ReadonlyMap<string, string>): Record<string, string>[] | null {
   if (!isObj(conversation) || !str(conversation.position_ref) || !Array.isArray(conversation.communiques)) return null

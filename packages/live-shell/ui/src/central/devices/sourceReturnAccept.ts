@@ -53,3 +53,15 @@ export async function acceptSourceReturn(transport: KernelTransportStatus, proje
   if ('refused' in asked) throw new Error(asked.refused)
   return centralWrite(transport, RETURN_ACCEPT_ACTION, asked.input, project ?? undefined)
 }
+
+/** Approvals' Deny on a proposal (manual §19.14 "Approve, Changes or Deny"): Central declines a waiting return without touching its source
+ * (`projectcentral.source.return_reject {project, return_ref}`, ctrl source_return.rs; the kernel's flow.rs source_return_reject reads the
+ * same answer), through invoke_action as the comment on a return goes (sourceReturnComment.ts). */
+export const RETURN_REJECT_ACTION = 'projectcentral.source.return_reject'
+
+/** Decline the return through Central. Resolves with Central's reading; throws the refusal, or Central's words. */
+export async function rejectSourceReturn(transport: KernelTransportStatus, project: string | null, row: SourceReturnRow | null): Promise<unknown> {
+  if (!project) throw new Error('Deny: a return belongs to a project, and none is named here.')
+  if (!row || typeof row.return_ref !== 'string' || !row.return_ref) throw new Error('Deny: choose a returned proposal first.')
+  return centralWrite(transport, RETURN_REJECT_ACTION, {project, return_ref: row.return_ref}, project)
+}

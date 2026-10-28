@@ -239,7 +239,8 @@ test('REPLACED (#725) — Voice is the Agent\'s Voice page: Actuation admits no 
   // Was "Voice is Actuation's admitted face, an effect; it stands on no Factory chain (Central's chain places it after its Agent)". The 22 Oct
   // manual rewrite retired Voice as a device of its own (§19.21: "How an agent speaks, the body, the voice and what moves the face's mouth, is
   // the Agent's Voice page (§19.4)"): Central's Agent carries it under `speech.` (oneAgentBinding.ts VOICE_PAGE; CentralDevices.tsx).
-  assert.equal(vb.voiceDevice(), null, 'Actuation admits no voice face')
+  // REPLACED (#772): the retired constructor is gone: the module exports none.
+  assert.equal('voiceDevice' in vb, false, 'no Voice device: no constructor stands')
   for (const place of [{kind: 'main'}, {kind: 'workcell', name: 'env-1'}, {kind: 'session', group: false}, {kind: 'session', group: true}]) {
     assert.ok(!places.chainSlots(place).some(slot => places.SLOT_DEVICE[slot].design === 'actuation:voice'), 'no Factory chain carries it')
   }

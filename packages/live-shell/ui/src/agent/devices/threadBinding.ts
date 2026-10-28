@@ -20,12 +20,10 @@
 // operation for one session, so they stand disabled with the operation they lack. The view's own keys (pin, the shown session, the
 // filters) are held by the shell (DesignBinding.local); choosing a session moves THE selection. Pure.
 import type {DesignBinding, Standing, Value, ValueChange, Values} from '../../frame/devices/designed'
-import type {DeviceInstance} from '../../frame/devices/deviceRuntime'
 import type {EncounterAction, EncounterReading, EncounterStatus, NativePermission, PermissionDecision} from '../../../../../../desktop/cradle/src/encounter/client'
 import {describePermission} from '../../../../../../desktop/cradle/src/agent/chat/PermissionCard'
 import type {AgentSessionTrack} from '../agentRunModel'
 import {holdView, viewHolds, type ChainHolds} from './designBindings'
-import {familyFaceDevice} from './mainTrackBindings'
 
 type Obj = Record<string, unknown>
 const isObj = (value: unknown): value is Obj => !!value && typeof value === 'object' && !Array.isArray(value)
@@ -35,16 +33,12 @@ export const THREAD_DESIGN = 'software-factory:thread'
 /** The Thread's id on the door: one Thread for the session chain, the Agent's Full and the rail. */
 export const THREAD_DEVICE_ID = 'factory:thread'
 
-/** The Thread as a device of the runtime: Software Factory's admitted thread face (softwareFactoryFamilyManifest.ts; designKey(
- * 'software-factory', 'thread') is the design's id). Its values are its design's, from the binding below; it declares no rows of the
- * address table (none is addressed to it). Null when the family does not admit the face. */
-export function threadDevice(): DeviceInstance | null {
-  return familyFaceDevice(THREAD_DEVICE_ID, 'software-factory', 'thread', 'Thread', 'session')
-}
+// The Thread has no device of its own (tickets 725 and 772): it is the Agent's Thread page (oneAgentBinding.ts THREAD_PAGE, `thread.`), and the
+// Agent's Full (§19.4). This module is the page's binding.
 
 // ---------------------------------------------------------------------------------------------------------------- the rows
 
-/** One row of the stream, as the Thread and the Agent read `thread` (software-factory__thread.tsx:10-13). */
+/** One row of the stream, as the Thread and the Agent read `thread` (thread.tsx:12-17). */
 export interface ThreadRow {
   readonly who?: string
   readonly kind: 'you' | 'agent' | 'tool' | 'proposal' | 'text'
@@ -175,7 +169,7 @@ export function threadLight(status: EncounterStatus | undefined): 'lit' | 'dark'
   return state === 'Resident' || state === 'TurnInFlight' || state === 'InterruptRequested' ? 'lit' : state === 'Disconnected' || state === 'Released' ? 'dark' : 'unknown'
 }
 
-/** The sessions the Session chooser offers (software-factory__thread.tsx:14 `sessions`): each agency session (a SessionSpace group is
+/** The sessions the Session chooser offers (thread.tsx:18 `sessions`): each agency session (a SessionSpace group is
  * not a conversation), named by the owner's purpose, its agent from the roster, its turns from the task record. The reading discloses
  * no session parent (agentRunModel.ts GROUP_DISCLOSURE) and no model, so neither is given. */
 export function sessionRowsOf(tracks: readonly AgentSessionTrack[]): Record<string, Value>[] {
@@ -211,7 +205,7 @@ export const THREAD_ABSENT = {
   thoughts: 'The Run\'s retained thought: no reading reaches it yet — missing op: Factory\'s cognitive view (factory.build-cognitive-view/v1) through the kernel (T-COVERAGE §1.2, Software Factory: "the cognitive view (Run Thought)") (Software Factory).',
   operative: 'The condition the agent worked under: no reading reaches it yet — missing op: a read of the project-development ledger through the kernel (T-COVERAGE §1.2, Software Factory: "a read of the project-development ledger (bounded intent, success criteria, PraxisCondition)") (Software Factory).',
 } as const
-/** The Thought page's filters: the shell's own holds (software-factory__thread.tsx: subject, producer, anchor, life). */
+/** The Thought page's filters: the shell's own holds (thread.tsx:21-27: subject, producer, anchor, life). */
 const THOUGHT_FILTERS = ['subject', 'producer', 'anchor', 'life'] as const
 
 /** The keys whose refusal is fixed by name (the host draws each control disabled with its reason). */

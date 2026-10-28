@@ -50,14 +50,12 @@ import type {DeviceInstance} from '../../frame/devices/deviceRuntime'
 import {useDesign} from '../../frame/devices/designs'
 import {openInstrument} from '../../frame/instrumentDoor'
 import {agentAddress} from '../../inhabitants/agentParamAddresses'
-import {useRosterAnswer, useSettingsAnswer} from '../../owners/readers'
+import {useRosterAnswer} from '../../owners/readers'
 import {SETTINGS_PROJECT} from '../clipBinding'
 import {useAgentSessionsOptional} from '../AgentSessionsProvider'
 import {useAgentShell, type AgentDeviceId} from '../AgentShellContext'
 import {threadTrackOf} from '../threadTrack'
 import {trackKey} from '../agentRunModel'
-import {useOptionalContinuity} from '../../continuity/workspace'
-import {parseFactoryTaskRef} from '../../timeline/factoryTrackAdapter'
 import {
   AGENT_CHAIN_MIME, MISSING_OPS, activeChainDrag, chainDropDecision, chainInsertIndex, decodeChainDrag, dropZoneLine,
   encodeChainDrag, missingOpRemedy, setActiveChainDrag, type ActiveChainDrag, type AgentChainSlotId,
@@ -86,24 +84,23 @@ import {openNotificationTarget, useOwnerRequests} from '../../widgets/railDevice
 import {openedHold, openedOf, withOwnerRequests} from '../../widgets/railBindings'
 import {useMachineDevice} from '../../central/devices/machineDevice'
 import {useIdentityDevice} from '../../central/devices/agentChainDevices'
-import {PERSONAL_ANCHOR_ACTION, acceptSourceReturn, personRefOf} from '../../central/devices/sourceReturnAccept'
+import {PERSONAL_ANCHOR_ACTION, acceptSourceReturn, personRefOf, rejectSourceReturn} from '../../central/devices/sourceReturnAccept'
 import {commentSourceReturn, withReturnComments} from '../../central/devices/sourceReturnComment'
 import {receiving} from '../../../../../../desktop/cradle/src/receiving/client'
 import {useUnitDecisions, waitingDecisions} from './unitDecisions'
 import {useCentralAction} from '../../central/devices/useCentralReadings'
 import {useAtSearch} from '../../central/searchPane'
 import {useModelCatalogue} from './useModelCatalogue'
-import {RUNS_ID, TASKS_ID, runsBinding, runsDevice, runsOfTakes, tasksBinding, tasksDevice} from './taskBindings'
-import {useRunJourney} from './runJourney'
+import {RUNS_ID, TASKS_ID} from './taskBindings'
 import {useAttemptTakes} from '../../owners/attemptTakes'
 import {useTaskAnswer, useWorkcellAnswer} from '../../owners/readers'
 import {usePopulationAnswer} from './usePopulationAnswer'
 import {
-  AGENTSET_DESIGN, AGENTSET_ID, CUSTODY_ID, RUN_ID, SESSION_DEVICE_IDS, agentsetBinding, custodyBinding, runBinding, sessionDevices, type CustodyPorts,
+  AGENTSET_DESIGN, AGENTSET_ID, CUSTODY_ID, SESSION_DEVICE_IDS, agentsetBinding, custodyBinding, sessionDevices, type CustodyPorts,
 } from './sessionChainBindings'
 import {APPROVALS_DESIGN, APPROVALS_ID, approvalsBinding, receiptDevices} from './receiptBindings'
 import {CARRIER_DESIGN, CARRIER_ID, SEAT_ID, carrierBinding, connectionLabels, gitBinding, planRunOf, runDemandOf, seatBinding, workcellDevices, type SeatPorts} from './workcellBindings'
-import {ROUTE_WORDS, aikitWriteOp, deskActorOf, factoryOwnerWrite, ownerRouteWrite, refusalWords, seatWriteOp, workcellReadOp} from './ownerRoutes'
+import {ROUTE_WORDS, aikitWriteOp, deskActorOf, factoryOwnerWrite, ownerRouteWrite, refusalWords, seatWriteOp} from './ownerRoutes'
 import {worldsOf} from './workcellMaterial'
 import {currentIdentity} from '../../../../../../desktop/cradle/src/nara/identity/current'
 import {WORKCELL_RACK_DESIGN, WORKCELL_RACK_ID, chosenWorld, workcellGitReading} from './workcellRackBinding'
@@ -260,71 +257,9 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
     })
   }, [shownHandle, selectedThread, sessionRef, tracks, sessions?.nowUnixMs, agentDesignBinding, holds, shell])
 
-  // Tasks (§19.12): the selected session's clips and the task THE selection names; a new task goes the Agent's way (its new-task
-  // row). Runs (§19.11): the session's work's attempts — none read, the agency reading names no run. Both published on the door
-  // (the pool, a pane, the rail); their own places — the Clip side, the browser's Runs — are other lanes' (proposed).
-  const continuity = useOptionalContinuity()
-  const selection = continuity?.current.context?.selection
-  const sessionTrack = track && !track.group ? track : null
-  const selectedTask = useMemo(() => {
-    // A clip of this session's track names the task (its ref is `<track>#task/<n>`, and its track is this session's own).
-    const named = selection?.kind === 'clip' ? parseFactoryTaskRef(selection.ref) : null
-    return named && sessionTrack && named.trackId === trackKey(sessionTrack) ? named.n : null
-  }, [selection, sessionTrack])
-  const tasks = useMemo(() => tasksDevice(), [])
-  const runs = useMemo(() => runsDevice(), [])
-  // The session's own settings (AIKit encounter-session-settings): the selected task's Mode, Then, To, Effort, Autonomy and style.
-  const settingsAnswer = useSettingsAnswer(sessions?.transport ?? {kind: 'unavailable', reason: 'No sessions provider is mounted here.'},
-    sessions && sessionTrack ? sessionTrack.sessionRef : null, SETTINGS_PROJECT)
-  const settingsReading = settingsAnswer.reading.status === 'answered' ? settingsAnswer.reading.value : null
-  const settingsRefused = settingsAnswer.reading.error
-  const settingsContext = useMemo(() => sessions && sessionTrack ? {transport: sessions.transport, project: SETTINGS_PROJECT, settings: settingsReading, refused: settingsRefused} : null,
-    [sessions, sessionTrack, settingsReading, settingsRefused])
-  const tasksDesignBinding = useMemo(() => tasksBinding({session: sessionTrack, tracks, nowUnixMs: sessions?.nowUnixMs ?? 0, selectedTask, agent: agentDesignBinding?.values ?? {}, settings: settingsContext},
-    agentDesignBinding, {
-      selectTask: n => {
-        if (!sessionTrack || !continuity) return
-        const title = sessionTrack.tasks.find(clip => clip.n === n)?.title ?? `Task ${n}`
-        continuity.select({mode: 'factory', kind: 'clip', ref: `${trackKey(sessionTrack)}#task/${n}`, title, track: trackKey(sessionTrack)})
-      },
-      queue: async text => { const receipt = await write(AGENT_P0_ROWS.newTask, text); if (receipt.kind === 'refused') throw Error(receipt.reason) },
-    }), [sessionTrack, tracks, sessions?.nowUnixMs, selectedTask, agentDesignBinding, continuity, write, settingsContext])
-  // Runs reads the session's attempts as its take lanes do (owners/attemptTakes.ts), and Stands chooses one through Factory's own receiving.
-  const runTakes = useAttemptTakes(transport, sessionTrack ? [sessionTrack.sessionRef] : [], SETTINGS_PROJECT)
-  // The Journey of the Run Runs shows (lane W8, runJourney.ts): its state and ref are the take's.
-  const shownTakes = useMemo(() => (runTakes && sessionTrack ? runTakes.of(sessionTrack.sessionRef) : null), [runTakes, sessionTrack])
-  const heldWork = viewHolds(holds, RUNS_ID).work
-  const shownRun = shownTakes ? runsOfTakes(shownTakes, typeof heldWork === 'string' ? heldWork : undefined).work ?? null : null
-  const shownState = shownRun ? shownTakes?.find(take => take.runRef === shownRun)?.statePath ?? null : null
-  const runJourney = useRunJourney(transport, shownState, shownRun)
-  // Runs' Outputs (W12): each attempt's world is the receipt `workcell worlds` lists whose world_ref is the attempt's materialWorldRef;
-  // Collect reads `workcell collect` on it (a read: Workcell's collect changes no state), held for this window.
-  const takeWorlds = useMemo(() => [...new Set((shownTakes ?? []).flatMap(take => (take.materialWorldRef ? [take.materialWorldRef] : [])))], [shownTakes])
-  const runWorlds = useWorkcellRead(transport, takeWorlds.length ? {kind: 'worlds'} : null).answer
-  const [collected, setCollected] = useState<Record<string, {value?: unknown; error?: string}>>({})
-  const outputs = useMemo(() => {
-    const listed = runWorlds.status === 'answered' ? worldsOf(runWorlds.value) : null
-    const receipts = Object.fromEntries((shownTakes ?? []).flatMap(take => {
-      const world = take.materialWorldRef ? listed?.worlds.find(row => row.worldRef === take.materialWorldRef) : undefined
-      return world ? [[take.attemptRef, world.receipt]] : []
-    }))
-    const why = !takeWorlds.length ? 'no attempt of this session names the Workcell world it ran in (its execution body\'s materialWorldRef).'
-      : runWorlds.status === 'refused' ? runWorlds.error ?? 'Workcell refused its world receipts.'
-        : runWorlds.status === 'reading' ? 'Workcell has not answered its world receipts yet (`workcell worlds`).'
-          : !listed ? '`workcell worlds` answered something other than its world receipts.'
-            : 'no receipt `workcell worlds` lists is the world an attempt names (a receipt written elsewhere with `--receipt` is not listed).'
-    return {receipts, why}
-  }, [shownTakes, takeWorlds.length, runWorlds])
-  const collectPort = useMemo(() => (transport.kind !== 'unavailable' ? async (attempt: string, receipt: string) => {
-    try {
-      const answer = await ownerRouteWrite(transport, workcellReadOp({kind: 'collect', receipt}), '`workcell collect`')
-      setCollected(was => ({...was, [attempt]: {value: answer.data}}))
-    } catch (cause) { setCollected(was => ({...was, [attempt]: {error: cause instanceof Error ? cause.message : String(cause)}})); throw cause }
-  } : undefined), [transport])
-  const runsDesignBinding = useMemo(() => runsBinding(sessionTrack?.sessionRef ?? null, holds,
-    runTakes && sessionTrack ? {takes: shownTakes, choose: runTakes.choose, ...(shownRun ? {journey: runJourney} : {}),
-      receipts: outputs.receipts, collected, ...(collectPort ? {collect: collectPort} : {}), outputsWhy: outputs.why} : undefined),
-  [sessionTrack, holds, runTakes, shownTakes, shownRun, runJourney, outputs, collected, collectPort])
+  // The Tasks and Runs devices were retired (ticket 725: a task is a clip, its attempts the track's takes in Arrangement view, §16.1, §19.1),
+  // and their constructors with them (ticket 772): a task's settings are its Clip view's (agent/clipBinding.ts useFactoryClip), its attempts the
+  // take lanes' (owners/attemptTakes.ts), and the Journey the Run map's (§19.25).
 
   // Factory's Main track devices: the Run map, Approvals and the Prompt pads (below). The Ledger, Messages, the Frames tile (the Gateway's
   // widget) and the workcell rack stand on the rail in every mode: AgentRailDevices.tsx publishes them, not this chain.
@@ -474,16 +409,10 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
     gateway: gatewayDesignBinding, agent: oneAgent, skillset: rackCarrying, world: scopeDesignBinding, git: gitCarrying,
   }), [gatewayDesignBinding, oneAgent, rackCarrying, scopeDesignBinding, gitCarrying])
 
-  // The session's own devices (lane BF3): the Run (published for the browser's Runs, on no chain) and — for a group — the Agentset rack.
+  // The session's own device (lane BF3): for a group, the Agentset rack. (The Run was retired, ticket 725, and its constructor with it, ticket 772:
+  // a session's course is its track in Arrangement view, §16.1.)
   const ownDevices = useMemo(() => sessionDevices(), [])
   const designsOwn = {agentset: useDesign(AGENTSET_DESIGN, true)}
-  const selectSession = useCallback((ref: string) => {
-    const chosen = tracks?.find(item => item.sessionRef === ref && !item.group)
-    if (chosen) shell.setSelectedTrackId(trackKey(chosen))
-    return chosen ? null : 'This agent session is not among Factory\'s sessions here.'
-  }, [tracks, shell])
-  const runDesignBinding = useMemo(() => runBinding({session: sessionTrack, tracks, nowUnixMs: sessions?.nowUnixMs ?? 0, agent: agentDesignBinding?.values ?? {}, holds},
-    {select: ref => { selectSession(ref) }}), [sessionTrack, tracks, sessions?.nowUnixMs, agentDesignBinding, holds, selectSession])
   const agentsetDesignBinding = useMemo(() => agentsetBinding({group: groupTrack, tracks, models, holds, nowUnixMs: sessions?.nowUnixMs ?? 0}), [groupTrack, tracks, models, holds, sessions?.nowUnixMs])
   // The Agentset rack's Helper page (§19.20, T-AGENCY K5; the Decision helper was retired into it in the 22 Oct manual rewrite): on a
   // group's chain, on AIKit's decision provider and QL's team space — read only while the rack stands there.
@@ -527,6 +456,8 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
       returns: returned, tracks, nowUnixMs: sessions?.nowUnixMs ?? Date.now(), units, person}, gatewayDesignBinding,
       {...(actions ? {permission: (id, decision) => actions.permission(id, decision)} : {}),
         approve: row => acceptSourceReturn(transport, RACK_PROJECT, row, person),
+        // Deny on a proposal (§19.14): Central's projectcentral.source.return_reject through invoke_action (sourceReturnAccept.ts).
+        reject: row => rejectSourceReturn(transport, RACK_PROJECT, row),
         ...(transport.kind !== 'unavailable' ? {answerUnit: (project, review) => receiving(transport, project, review).catch(cause => { throw new Error(refusalWords(cause instanceof Error ? cause.message : String(cause))) })} : {})})
     const commented = withReturnComments(binding, {returns: returned, comment: agentDraft}, {
       send: (row, words) => commentSourceReturn(transport, RACK_PROJECT, row, words, person),
@@ -584,15 +515,13 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
     if (memberDevice && memberDesignBinding) publishDevice(memberDevice.id, {device: memberDevice, binding: memberDesignBinding})
     else publishDevice(MEMBER_DEVICE_ID, null)
   }, [chain, bindings, memberDevice, memberDesignBinding, main.frames]) // the pictures read the reading `chain` is built from
-  useEffect(() => { publishDevice(TASKS_ID, tasks ? {device: tasks, binding: tasksDesignBinding} : null) }, [tasks, tasksDesignBinding])
-  useEffect(() => { publishDevice(RUNS_ID, runs ? {device: runs, binding: runsDesignBinding} : null) }, [runs, runsDesignBinding])
   useEffect(() => { publishDevice(RUN_MAP_ID, runMapDev ? {device: runMapDev, binding: mainBindings.runMap} : null) }, [runMapDev, mainBindings])
   useEffect(() => { publishDevice(PROMPT_PADS_ID, padsDev ? {device: padsDev, binding: mainBindings.pads} : null) }, [padsDev, mainBindings])
   useEffect(() => {
-    const own = [[RUN_ID, ownDevices.run, runDesignBinding], [AGENTSET_ID, ownDevices.agentset, agentsetCarrying],
+    const own = [[AGENTSET_ID, ownDevices.agentset, agentsetCarrying],
       [APPROVALS_ID, receipts.approvals, approvalsDesignBinding], [CARRIER_ID, cells.carrier, carrierCarrying]] as const
     for (const [id, device, designBinding] of own) publishDevice(id, device ? {device, binding: designBinding} : null)
-  }, [ownDevices, receipts, cells, runDesignBinding, agentsetCarrying, approvalsDesignBinding, carrierCarrying])
+  }, [ownDevices, receipts, cells, agentsetCarrying, approvalsDesignBinding, carrierCarrying])
   useEffect(() => () => {
     // The Thread and Custody no longer publish (the Agent carries them), nor the Seat (Git / landing's Seat page) nor the Experiment; their
     // ids are cleared once, so nothing stale stands on the door. The Link is the transport's (§19.19), and the rail's agent devices —

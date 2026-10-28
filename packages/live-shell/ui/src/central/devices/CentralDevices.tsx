@@ -37,7 +37,7 @@
 // it may read and write is Software Factory's Scope (software-factory:context-write-mode) on Context & world's owners
 // (contextWorldBinding.ts centralScopeBinding). The Packet and the Agent share the encounter observers mounted here: one per session
 // (lane BF2's EncounterObservers.tsx), never a session read twice.
-import {useEffect, useMemo, useRef, useSyncExternalStore, type ReactNode} from 'react'
+import {useEffect, useMemo, useRef, type ReactNode} from 'react'
 import type {CentralLocation, KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
 import {DeviceView} from '../../frame/devices/DeviceView'
 import {publishDevice, selectDevice, type OwnFull, type PublishedDevice} from '../../frame/devices/deviceDoor'
@@ -61,8 +61,7 @@ import {beginDayMove, centralWrite, centralWriters, closeCarry, openToday, openT
 import {turnDay, useDayInPane} from '../documents/documentDoor'
 import {dayDesignBinding, dayFactsOf, dayValuesOf, type DayFacts} from './dayBinding'
 import {useCentralAction, useCentralGroundAnswer, useDayDieReading, useDayOwnReadings, useNaraReading, useRosterReading, type DayDieAperture} from './useCentralReadings'
-import {usePageDevices} from './pageDevices'
-import {docsBinding, holdsVersion, subscribeHolds} from './pageBindings'
+import {useDocsDevice, usePageDevices} from './pageDevices'
 import {CENTRAL_AGENT_ID, centralAgentBinding, centralAgentRef} from './answerBinding'
 import {useAnswerVoice} from './useAnswerVoice'
 import {observedState, useEncounterSessions, type ObservedSession} from '../../agent/devices/EncounterObservers'
@@ -82,7 +81,7 @@ import {useHeldRead, useOwnerOp} from '../../owners/ownerCall'
 import {readWorlds, type CentralWorld, type CentralWorldsReading} from '../centralWorlds'
 import {voiceBinding} from '../../agent/devices/voiceBinding'
 import {voiceBodyReadings, type AnswerVoiceState, type VoiceKey} from './answerVoice'
-import {PERSONAL_ANCHOR_ACTION, acceptSourceReturn, personRefOf} from './sourceReturnAccept'
+import {PERSONAL_ANCHOR_ACTION, acceptSourceReturn, personRefOf, rejectSourceReturn} from './sourceReturnAccept'
 import {commentSourceReturn, withReturnComments} from './sourceReturnComment'
 import {useRosterAgents} from '../../owners/readers'
 import {bindConversation} from './centralDeviceWrites'
@@ -530,7 +529,8 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
   const approvals = useMemo(() => {
     const actions = answerHandle && 'actions' in answerHandle ? answerHandle.actions : undefined
     const binding = approvalsBinding({gateway: {}, session: naraTrack, encounter: answerObserved?.reading ?? null, holds, returns: returned, tracks: agency.tracks, nowUnixMs: nowUnixMs || Date.now()}, null,
-      {...(actions ? {permission: (id, decision) => actions.permission(id, decision)} : {}), approve: row => acceptSourceReturn(transport, APPROVALS_PROJECT, row, person)},
+      {...(actions ? {permission: (id, decision) => actions.permission(id, decision)} : {}), approve: row => acceptSourceReturn(transport, APPROVALS_PROJECT, row, person),
+        reject: row => rejectSourceReturn(transport, APPROVALS_PROJECT, row)},
       CENTRAL_APPROVALS_ID)
     // Changes (W6): a comment on the return, in the words written in the thread — the Agent's composer here — through Central's
     // projectcentral.source.return_comment (sourceReturnComment.ts); once Central keeps it, the composer is cleared.
@@ -545,11 +545,9 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
     return {...requested, standing: {...requested.standing, approvals: {disabled: CENTRAL_DEFAULT_ANSWER}}}
   }, [answerHandle, naraTrack, answerObserved, holds, returned, agency.tracks, nowUnixMs, transport, person, agentDraft, agentWrite, ownerRequests])
   const others = useMemo(() => centralAgentDevices(), [])
-  // Docs (§18.5) on the selected world (pageBindings.ts docsBinding): its subject is the track's world; its readings of the account and its
-  // acts wait for its binding to the six tiers (the PR #705 handoff's own item), each naming that.
-  const docsWorld = pageWorld.world
-  const holdsNow = useSyncExternalStore(subscribeHolds, holdsVersion, holdsVersion)
-  const docs = useMemo(() => docsBinding(DOCS_DEVICE_ID, docsWorld), [docsWorld, holdsNow]) // eslint-disable-line react-hooks/exhaustive-deps -- the holds' version re-binds the view's own keys
+  // Docs (§18.5) on the selected world (pageDevices.ts useDocsDevice, pageBindings.ts docsBinding): the world's account on six tiers on
+  // Central's own readings, and the person's presses through Central.
+  const docs = useDocsDevice(transport, DOCS_DEVICE_ID, pageWorld.world)
   const bindingOf = (id: string): DesignBinding | null => (id === DAY_DEVICE_ID ? dayBinding : id === PACKET_DEVICE_ID ? packet : id === DOCS_DEVICE_ID ? docs : null)
   // What stands on the door now; a device that left the chain leaves the door too. The family's faces that stand on no chain (the page
   // family, Agent identity, Context & world, Search) are cleared once, so nothing stale of them stays on the door.

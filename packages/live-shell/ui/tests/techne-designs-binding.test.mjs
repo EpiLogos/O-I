@@ -344,7 +344,8 @@ test('the Knowledge graph on the open graph (its handle: view state, its own rea
   assert.equal(field.standing.depth.disabled, graphB.NOT_LOCAL)
   await assert.rejects(() => field.write([{key: 'depth', value: 2}]), /local view/)
   const closed = graphB.graphBinding(null, answered, writes)
-  assert.deepEqual(Object.keys(closed.values).sort(), ['budget', 'light', 'reading'], 'with no graph open: the root register\'s reading and the light alone')
+  // REPLACED (#772): the hand's own Sessions (reach.closed, Open only by default) stands too, as Budget does (knowledge-graph-reach.test.mjs).
+  assert.deepEqual(Object.keys(closed.values).sort(), ['budget', 'light', 'reach.closed', 'reading'], 'with no graph open: the root register\'s reading, the light and the hand\'s own')
   assert.equal(closed.values.light, 'dark')
   for (const key of ['scope', 'depth', 'text', 'labels', 'zoom', 'clear', 'selected', 'minimap']) assert.equal(closed.standing[key].disabled, graphB.NOT_OPEN, key)
   await assert.rejects(() => closed.write([{key: 'scope', value: 'local'}]), /not open/)
@@ -616,8 +617,9 @@ test('(b) every key each design reads is an owner reading, absent with a reason,
   // Light's binding, which the Canvas's binding carries. The manual's Canvas settings that no binding carries yet are named here, so that no
   // other control goes unchecked.
   const CANVAS_WAITING = ['tool', 'snap', 'shape', 'relation', 'autosave', 'label']
-  // The Knowledge graph's View, Standing floor and Sessions (DLW §17.3): the manual's settings that graphBinding does not carry yet.
-  const GRAPH_WAITING = ['view', 'floor', 'reach.closed']
+  // The Knowledge graph's View and Standing floor (DLW §17.3): the manual's settings that graphBinding does not carry yet. (#772: Sessions,
+  // reach.closed, is the hand's own now — knowledge-graph-reach.test.mjs.)
+  const GRAPH_WAITING = ['view', 'floor']
   for (const [name, file, binding, absent] of cases) {
     const design = DESIGNS[name.split(' ')[0]]
     const sorted = classify(design, binding, absent)

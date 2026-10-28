@@ -122,11 +122,16 @@ test('Runs without the take lanes\' reading handed in reads no attempts and hold
   bind.resetHolds()
 })
 
-test('the chain publishes Tasks and Runs with their bindings, on the selected session and the task THE selection names', () => {
+test('REPLACED (ticket 772) — the chain publishes no Tasks and no Runs: a task is a clip and its attempts the track\'s takes (§16.1, §19.1)', () => {
+  // Was "the chain publishes Tasks and Runs with their bindings, on the selected session and the task THE selection names". Since ticket
+  // 725 their constructors answered null (Software Factory admits no tasks or attempt-review face), so the door held nothing; ticket 772
+  // removed the constructors and the chain's wiring of their bindings. A task's settings are its Clip view's (agent/clipBinding.ts
+  // useFactoryClip, which reads the selected task THE selection names); a new task goes the Agent's new-task row (designBindings.ts
+  // AGENT_P0_ROWS, the Agent's own composer). The bindings stay, with their tests above.
   const view = readFileSync(new URL('../src/agent/devices/FactoryDeviceChain.tsx', import.meta.url), 'utf8')
-  assert.match(view, /publishDevice\(TASKS_ID, tasks \? \{device: tasks, binding: tasksDesignBinding\} : null\)/)
-  assert.match(view, /publishDevice\(RUNS_ID, runs \? \{device: runs, binding: runsDesignBinding\} : null\)/)
-  assert.match(view, /parseFactoryTaskRef\(selection\.ref\)/, 'the selected task is THE selection\'s clip')
-  assert.match(view, /queue: async text => \{ const receipt = await write\(AGENT_P0_ROWS\.newTask, text\)/, 'a new task goes the Agent\'s new-task row')
+  assert.doesNotMatch(view, /tasksDevice|runsDevice|tasksDesignBinding|runsDesignBinding/, 'no Tasks or Runs device, and no binding wired for one')
+  const own = readFileSync(new URL('../src/agent/devices/taskBindings.ts', import.meta.url), 'utf8')
+  assert.doesNotMatch(own, /export const (tasksDevice|runsDevice)\b/, 'no constructor stands')
+  assert.match(readFileSync(new URL('../src/agent/clipBinding.ts', import.meta.url), 'utf8'), /parseFactoryTaskRef/, 'the selected task is THE selection\'s clip, in Clip view')
   assert.deepEqual(readFileSync(new URL('../src/agent/devices/taskBindings.ts', import.meta.url), 'utf8').match(/#[0-9a-fA-F]{3,8}\b/g) ?? [], [], 'shell tokens only')
 })

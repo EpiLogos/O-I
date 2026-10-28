@@ -92,7 +92,10 @@ test('the owner\'s reading lands on clip:factory\'s keys: Quantize in the design
   const values = settings.clipValuesOfSettings(defaults({name: 'Fixtures', colour: 'var(--fizz)', launch: 'loop', then: 'handoff',
     handoff_to: 'ses-300', quantize: 'next-tool', effort: [[0, 'medium'], [28, 'high']], autonomy: [[0, 'review']]}))
   assert.equal(values.name, 'Fixtures'); assert.equal(values.colour, 'var(--fizz)')
-  assert.equal(values.launch, 'loop'); assert.equal(values.then, 'handoff'); assert.equal(values.handoff, 'ses-300')
+  // REPLACED (#772): "the owner's Launch loop and Then handoff land as they are" — clip:factory speaks the manual's launch modes and follow
+  // actions (§19.1 The Launch panel), so the owner's loop is the Clip panel's Loop (On) and names no launch mode, and its handoff is no follow
+  // action (Then absent; the session it names stays Hand off to's). The word-by-word mapping: factory-clip-owner-words.test.mjs.
+  assert.equal('launch' in values, false); assert.equal(values.loop, true); assert.equal('then' in values, false); assert.equal(values.handoff, 'ses-300')
   assert.equal(values.quantize, 'next tool', 'the owner\'s next-tool is the design\'s "next tool"')
   assert.deepEqual(JSON.parse(values['env.agent.effort']), [[0, 2], [28, 3]], 'Automation: a level is its row')
   assert.deepEqual(JSON.parse(values['env.agent.autonomy']), [[0, 2]])
@@ -106,16 +109,18 @@ test('the owner\'s reading lands on clip:factory\'s keys: Quantize in the design
 test('a control\'s change becomes the owner\'s request: its words, null for a cleared field, the points carried with a mode', () => {
   const reading = defaults({effort: [[0, 'medium'], [28, 'high']], autonomy: [[0, 'auto']]})
   const set = (setting, value) => settings.taskSettingChange(setting, value, reading).change.task.set
-  assert.deepEqual(set('launch', 'hold'), {launch: 'hold'})
+  // REPLACED (#772): the press carries the manual's word (Gate), and the owner is asked its own (hold).
+  assert.deepEqual(set('launch', 'gate'), {launch: 'hold'})
   assert.deepEqual(set('quantize', 'next turn'), {quantize: 'next-turn'})
   assert.deepEqual(set('handoff', 'ses-300'), {handoff_to: 'ses-300'})
   assert.deepEqual(set('name', '  '), {name: null}, 'an emptied name returns to the task\'s purpose')
   assert.deepEqual(set('effort', JSON.stringify([[0, 1], [40, 4]])), {effort: [[0, 'low'], [40, 'max']]})
   assert.deepEqual(set('envelopeMode', 'modulation'), {envelope_mode: 'modulation', effort: [[0, 0], [28, 1]], autonomy: [[0, 1]]},
     'each point keeps its row, read as the new mode reads it')
-  assert.equal(settings.taskSettingChange('launch', 'loop', reading).change.task.task_ref, 'task:correlate', 'bound to the task it was made on')
-  assert.equal(settings.taskSettingChange('launch', 'loop', null).refused, settings.SETTINGS_WHY.reading)
-  assert.equal(settings.taskSettingChange('launch', 'loop', {...reading, task: null}).refused, settings.SETTINGS_WHY.noTask)
+  // REPLACED (#772): the launch pressed is a manual's word (Trigger), as the clip sends it.
+  assert.equal(settings.taskSettingChange('launch', 'trigger', reading).change.task.task_ref, 'task:correlate', 'bound to the task it was made on')
+  assert.equal(settings.taskSettingChange('launch', 'trigger', null).refused, settings.SETTINGS_WHY.reading)
+  assert.equal(settings.taskSettingChange('launch', 'trigger', {...reading, task: null}).refused, settings.SETTINGS_WHY.noTask)
   assert.match(settings.taskSettingChange('active', 'yes', reading).refused, /on or off/)
 })
 
@@ -153,7 +158,8 @@ test('Clip view: the owner\'s values stand on the clip, and each change is writt
   const entry = await readSettings()
   const binding = factory.factoryClipBinding({ref: taskRef, tracks: [track], events: null, settings: contextOf(entry)})
   assert.equal(binding.values.name, 'Fixtures', 'the name as set wins over the task\'s title')
-  assert.equal(binding.values.launch, 'loop'); assert.equal(binding.values.quantize, 'now')
+  // REPLACED (#772): the owner's loop reads as the Clip panel's Loop, not as a launch mode (factory-clip-owner-words.test.mjs).
+  assert.equal(binding.values.loop, true); assert.equal('launch' in binding.values, false); assert.equal(binding.values.quantize, 'now')
   assert.equal(binding.standing.launch, undefined, 'enabled on its owner')
   await binding.write([{key: 'then', value: 'stop'}])
   const write = owner.sent.find(op => op.request)
@@ -172,7 +178,8 @@ test('Clip view: a change made on a revision that moved is refused in the owner\
   const entry = await readSettings()
   const binding = factory.factoryClipBinding({ref: taskRef, tracks: [track], events: null, settings: contextOf(entry)})
   owner.reading = {...owner.reading, revision: 'session-settings/elsewhere'}
-  await assert.rejects(binding.write([{key: 'launch', value: 'hold'}]), /Session settings revision conflict; read the current settings and write again/)
+  // REPLACED (#772): the clip presses the manual's Gate (the owner's hold).
+  await assert.rejects(binding.write([{key: 'launch', value: 'gate'}]), /Session settings revision conflict; read the current settings and write again/)
   assert.equal(entry.snapshot().value.revision, 'session-settings/elsewhere', 'the refusal reads the settings again')
 })
 

@@ -16,7 +16,8 @@
 // revision. The Intent panel (§19.1, the design's D3 panel) has no reading a kernel route reaches: its keys stand absent and its writes
 // refused, each with the operation it waits for (INTENT_ABSENT, INTENT_REFUSED). The manual's Loop (the Clip panel) and Repeat (the
 // Launch panel: what varies between the runs, Compare, the takes) have no owner field yet: they stand absent and refused the same way
-// (LAUNCH_ABSENT, LAUNCH_REFUSED). Pure, apart from the hook at the end.
+// (LAUNCH_ABSENT, LAUNCH_REFUSED); whether the task loops is read from the owner's Launch loop, and Launch and Then are read in the manual's
+// words where the owner's mean the same (sessionSettings.ts). Pure, apart from the hook at the end.
 import type {Value, Values} from '../frame/devices/designed'
 import {clipBinding, type ClipBinding, type ClipWiring} from '../frame/detail/clipBinding'
 import {useViewHoldsVersion} from '../frame/detail/clipBinding'
@@ -133,12 +134,11 @@ export const INTENT_REFUSED: Readonly<Record<string, string>> = {
 }
 
 /** Loop and Repeat (manual §16.5, §19.1 The Clip panel and The Launch panel): the session's settings owner (AIKit
- * `encounter-session-settings`) still speaks Launch as once · hold · loop and Then as next · handoff · stop, with no Loop stop condition
- * or cap and no Repeat fields; the takes a Repeat makes are the take lanes' reading (AIKit encounter_task_attempts_list), not handed to
+ * `encounter-session-settings`) still speaks Launch as once · hold · loop and Then as next · handoff · stop — whether the task loops is read
+ * from its loop (sessionSettings.ts clipValuesOfSettings), but there is no Loop stop condition or cap and no Repeat fields; the takes a Repeat makes are the take lanes' reading (AIKit encounter_task_attempts_list), not handed to
  * Clip view; and no owner compares takes. Each key stands absent, and each control refused, with the operation it waits for. */
 const SESSION_SETTINGS = 'AIKit `encounter-session-settings` (kernel encounter_session_settings) keeps Launch as once · hold · loop and no'
 export const LAUNCH_ABSENT: Readonly<Record<string, string>> = {
-  loop: `Loop: no reading reaches it yet — ${SESSION_SETTINGS} Loop field of its own (AIKit).`,
   'loop.until': `Loop's stop condition: no reading reaches it yet — ${SESSION_SETTINGS} stop condition for a loop (AIKit).`,
   'loop.cap': `Loop's cap: no reading reaches it yet — ${SESSION_SETTINGS} cap for a loop (AIKit).`,
   'repeat.variable': `Repeat's Variable: no reading reaches it yet — ${SESSION_SETTINGS} Repeat launch or its fields (AIKit).`,
@@ -149,7 +149,7 @@ export const LAUNCH_ABSENT: Readonly<Record<string, string>> = {
   takes: 'The takes a Repeat made: not handed to Clip view — the take lanes read them (AIKit encounter_task_attempts_list, each Run by factory_attempt_read) (AIKit).',
 }
 export const LAUNCH_REFUSED: Readonly<Record<string, string>> = {
-  loop: 'Loop: no owner operation carries it yet — missing op: a Loop field on the task\'s session settings (encounter-session-settings has Launch once · hold · loop only) (AIKit).',
+  loop: 'Loop: no owner operation carries it yet — missing op: a Loop field on the task\'s session settings of its own (encounter-session-settings keeps loop as one of Launch\'s words, so setting it would replace the launch mode) (AIKit).',
   'loop.until': 'Loop\'s stop condition: no owner operation carries it yet — missing op: a loop stop condition on the task\'s session settings (AIKit).',
   'loop.cap': 'Loop\'s cap: no owner operation carries it yet — missing op: a loop cap on the task\'s session settings (AIKit).',
   'repeat.variable': 'Repeat\'s Variable: no owner operation carries it yet — missing op: Repeat and its fields on the task\'s session settings (AIKit).',
@@ -174,7 +174,10 @@ export function factoryWiring(task: TaskAddress | null, context: TaskSeamContext
     reads: {
       name: 'the task\'s name as set on the session\'s settings, else its purpose (the task\'s title)', colour: 'the colour set on the session\'s settings, else the session track\'s colour (the tracks pane)',
       active: 'the session\'s settings: the task\'s activator', 'style.register': 'the session\'s settings: the task\'s register', 'style.form': 'the session\'s settings: the task\'s form',
-      launch: 'the session\'s settings: Launch', then: 'the session\'s settings: Then', handoff: 'the session\'s settings: Hand off to',
+      launch: 'the session\'s settings: Launch, in the manual\'s words where the owner\'s mean the same — once is Trigger, hold is Gate (sessionSettings.ts); while the owner keeps loop, no launch mode is read (OWNER_LOOP_WORDS)',
+      then: 'the session\'s settings: Then — next is Next task, stop is Stop; while the owner keeps handoff, no follow action is read (OWNER_HANDOFF_WORDS)',
+      loop: 'the session\'s settings: whether Launch is the owner\'s loop, which runs the task again after each finish (On) or not (Off)',
+      handoff: 'the session\'s settings: Hand off to',
       quantize: 'the session\'s settings: Quantize', 'env.mode': 'the session\'s settings: the envelopes\' mode', 'env.linked': 'the session\'s settings: the envelopes\' link',
       'env.agent.effort': 'the session\'s settings: the Effort envelope', 'env.agent.autonomy': 'the session\'s settings: the Autonomy envelope',
       state: 'the task\'s state: queued · running · stalled · done (agentRunModel.ts), left out where the owner and the activity do not say',

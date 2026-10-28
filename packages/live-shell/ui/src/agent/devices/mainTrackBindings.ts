@@ -118,7 +118,7 @@ export interface RackInput {
   readonly carrier?: {readonly state?: 'ready' | 'composed' | 'refused'; readonly why?: string}
 }
 
-/** One chain's row (actuation__gateways-rack.tsx:7-10): its state from the reading that reaches it, the refusal in the owner's words.
+/** One chain's row (the Workcells tile's gateways, workcell__workcell.tsx:62-63 `gw.chains`; the Gateways rack was retired into it, ticket 725): its state from the reading that reaches it, the refusal in the owner's words.
  * The Hermes harness is read through AIKit's gateway, so with that gateway down it is not read at all; the Actuation gateway has no
  * reading a kernel op reaches; the Remote carrier's is Workcell's status. */
 function chainRow(id: string, name: string, answer: GatewayAnswer, doc: unknown, carrier: RackInput['carrier']): Record<string, Value> {
@@ -227,13 +227,13 @@ export function agencyBinding(reading: Pick<AgentChainReading, 'gatewayAdmitted'
 // shell holds carries a run record or a manifest: the research store keeps them, and no kernel route lists or reads it. So the declaration
 // stays unwritten, and the runs, the state and the earlier Experiments (whose `mismatches` held would answer) stay absent, each saying so.
 const EXPERIMENT_OP = 'Actuation\'s matched comparison run, `actuation-research comparison.run` (research comparison.rs run_with), which the kernel does not route because it runs models'
-/** Every statement and reading the Experiment asks the owner to write (actuation__experiment.tsx:13-19). */
+/** Every statement and reading the Experiment asks the owner to write (a task launched with Repeat, clips/factory.tsx:5-7 `repeat.*`, `compare`, `takes`; the Experiment was retired into it, §19.5). */
 export const EXPERIMENT_WRITES: readonly string[] = ['question', 'task', 'variable', 'levels', 'agents', 'repeats', 'stop', 'capTurns', 'capTime',
   'readTokens', 'readTime', 'readCalls', 'readTests', 'readSpend', 'readStalls', 'beat', 'compare', 'fork']
 export const EXPERIMENT_REFUSE = missing('The Experiment', EXPERIMENT_OP, 'Actuation')
 /** What the comparison's readings would read, and why none is handed them. */
 const NO_RUN_RECORDS = 'the run records or the manifest of a comparison run to hand Actuation\'s comparison readings (the kernel\'s actuation_read {comparison held|assess|mask|review} reads only what it is handed; the research store keeps them, and no kernel route lists or reads it)'
-/** The Experiment's readings, each absent with what it waits for (actuation__experiment.tsx:20-23). */
+/** The Experiment's readings, each absent with what it waits for (clips/factory.tsx:5-7; agent/clipBinding.ts LAUNCH_ABSENT). */
 export const EXPERIMENT_ABSENT: Readonly<Record<string, string>> = {
   light: `The light: no reading reaches it yet — missing op: ${NO_RUN_RECORDS} (Actuation).`,
   state: `Draft, running or done: no reading reaches it yet — missing op: ${NO_RUN_RECORDS} (Actuation).`,
@@ -326,7 +326,7 @@ export function journalAsks(sessions: readonly JournalSession[], chosen: Value |
  * harness; the model's message, delta and result came back. Every other kind names no direction, and none is given it. */
 export const FRAME_DIRECTION: Readonly<Record<string, 'in' | 'out'>> = {'human-message': 'out', 'model-message': 'in', 'model-delta': 'in', 'model-result': 'in'}
 
-/** One replay's frames as the monitor's rows (actuation__frames-monitor.tsx:16 {seq?, dir, kind, session, at, note}): the event's sequence,
+/** One replay's frames as the monitor's rows (the Gateway's Frames page, actuation__gateway.tsx:27-28 `frames` {seq?, dir, kind, session, at, note}; the Frames monitor was retired into it, §19.6): the event's sequence,
  * its kind and the direction its kind names, the session, and its content where it is words. The journal gives no instant, so `at` is left
  * out. Null when the answer is not the replay of a Stream. Pure. */
 export function journalFrames(replay: unknown, session: string): Record<string, Value>[] | null {
@@ -376,7 +376,7 @@ export function journalValues(journal: FramesJournal | undefined, chosen: Value 
   return {values, ...(why ? {why} : {})}
 }
 
-/** The monitor's values: the Gateway's own readings under the Gateway's own names (actuation__frames-monitor.tsx:8-13 — one reading,
+/** The monitor's values: the Gateway's own readings under the Gateway's own names (actuation__gateway.tsx:22-28, the Frames page — one reading,
  * the same as the Gateway device's: designBindings.ts gatewayValues), the view's settings and the frame opened, and the frames of AIKit's
  * gateway journal for the session chosen (journalValues). */
 export function framesValues(gateway: GatewayInput, holds: ChainHolds, journal?: FramesJournal): Values {

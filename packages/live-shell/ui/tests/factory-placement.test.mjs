@@ -184,7 +184,8 @@ test('the chain draws the plan and no other plate: no Gateways rack, Agency gate
   // binding under `gw.`, and Messages reads the agency gateway's answer itself.
   for (const id of ['MESSAGES_ID', 'FRAMES_ID', 'LEDGER_ID', 'WORKCELL_RACK_ID']) assert.match(rail, new RegExp(`publish\\(${id}, `), `${id} is published`)
   for (const id of ['GATEWAYS_RACK_ID', 'AGENCY_GATEWAY_ID']) assert.doesNotMatch(rail, new RegExp(`publish\\(${id}, `), `${id} is not published`)
-  assert.match(rail, /carryPages\(ownWorkcell, \[\{page: GATEWAYS_PAGE, binding: gateways\}\]\)/, 'the Workcells tile carries the gateways')
+  // REPLACED (#772): the tile carries the gateways first, then the Left behind page (left., DLW §19.23 "What a run leaves behind").
+  assert.match(rail, /carryPages\(ownWorkcell, \[\{page: GATEWAYS_PAGE, binding: gateways\}, \{page: LEFT_BEHIND_PAGE, binding: leftBehind\}\]\)/, 'the Workcells tile carries the gateways')
   assert.match(view, /SEAT_ID, CARRIER_ID, RUN_MAP_ID, PROMPT_PADS_ID\]\) publishDevice\(id, null\)/, 'withdrawn with the chain — never the Link, never the rail\'s')
   const detail = read('agent/AgentShellDeviceDetail.tsx')
   assert.match(detail, /import \{workcellOfTrack\} from '\.\.\/frame\/tracks\/returnTracks'/)

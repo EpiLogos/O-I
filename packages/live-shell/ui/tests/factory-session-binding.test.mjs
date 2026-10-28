@@ -196,7 +196,10 @@ test('the chain places them where the manual does: Custody on the one Agent, the
   // REPLACED (R4): the Run stood after the landing; the chain is §16.2's (Agent, skills rack, scope — lane W1-Factory) — the Run is
   // published for the browser's Runs only.
   assert.doesNotMatch(view, /placed\(RUN_ID/, 'the Run stands on no chain')
-  assert.match(view, /\[RUN_ID, ownDevices\.run, runDesignBinding\]/, 'the Run stays published')
+  // REPLACED (ticket 772): "the Run stays published" — its constructor answered null since ticket 725 (Software Factory admits no run-device
+  // face), so the door held nothing; constructor and publication are gone. A session's course is its track in Arrangement view (§16.1).
+  assert.doesNotMatch(view, /ownDevices\.run|runDesignBinding/, 'no Run is published')
+  assert.equal('run' in own.sessionDevices(), false, 'no Run device: no constructor stands')
   // REPLACED (lane W1-Factory): the chain draws its place's plan (factoryPlaces.ts chainSlots — a group's leads with the Agentset rack).
   // REPLACED (#725): the rack stood on its own binding — it carries its Helper page now (§19.20 "A decision helper is an agent of type
   // Settle in a team's Agentset rack, on the rack's Helper page"; the Decision helper was retired into it in the 22 Oct manual rewrite), so

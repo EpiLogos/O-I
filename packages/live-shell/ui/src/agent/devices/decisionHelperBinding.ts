@@ -10,16 +10,13 @@
 // log and the counts (no owner records the helper's invocations yet), When and Deadline (no owner holds them), each instrument's
 // measured admission. Every write stands disabled with the operation it lacks. Pure, apart from the view's own hold.
 import type {DesignBinding, Standing, Value, Values} from '../../frame/devices/designed'
-import type {DeviceInstance} from '../../frame/devices/deviceRuntime'
 import {holdView, viewHolds, type ChainHolds} from './designBindings'
-import {familyFaceDevice} from './mainTrackBindings'
 
 export const DECISION_HELPER_DESIGN = 'ai-kit:decision-helper'
 export const DECISION_HELPER_ID = 'factory:decision-helper'
 
-/** The helper as a device of the runtime, of AIKit's admitted face; null when the family does not admit it. */
-export const decisionHelperDevice = (): DeviceInstance | null =>
-  familyFaceDevice(DECISION_HELPER_ID, 'ai-kit', 'decision-helper', 'Decision helper', 'select')
+// The Decision helper has no device of its own (tickets 725 and 772): it is the Agentset rack's Helper page (§19.20; oneAgentBinding.ts HELPER_PAGE,
+// `helper.`). This module is the page's binding.
 
 const missing = (what: string, op: string, owner: string) => `${what}: no owner operation carries it yet — missing op: ${op} (${owner}).`
 

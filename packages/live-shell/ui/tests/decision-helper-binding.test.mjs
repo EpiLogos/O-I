@@ -125,7 +125,8 @@ test('REPLACED (#725) — AIKit admits no Decision helper of its own: the Agents
   // Decision helper as a device of its own (§19.20: "A decision helper is an agent of type Settle in a team's Agentset rack, on the rack's
   // Helper page (§19.15)"): the rack carries the helper's binding under `helper.` (oneAgentBinding.ts HELPER_PAGE; FactoryDeviceChain.tsx
   // agentsetCarrying), and the rack's design draws it on its Helper page.
-  assert.equal(helper.decisionHelperDevice(), null, 'the ai-kit family admits no decision-helper face')
+  // REPLACED (#772): the retired constructor is gone: the module exports none.
+  assert.equal('decisionHelperDevice' in helper, false, 'no Decision helper device: no constructor stands')
   const own = helper.decisionHelperBinding({status: STATUS, teamSpace: TEAM, holds: bind.chainHolds()})
   const rack = carry.carryPages(session.agentsetBinding({group: null, tracks: null, holds: bind.chainHolds()}), [{page: carry.HELPER_PAGE, binding: own}])
   for (const [key, value] of Object.entries(own.values)) assert.deepEqual(rack.values[`helper.${key}`], value, `the rack carries the helper's ${key}`)
