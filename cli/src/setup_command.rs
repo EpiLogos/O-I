@@ -249,16 +249,14 @@ fn setup_desktop_plan(selection: &AdoptionSelection) -> Result<Option<Value>, St
         platform_target()?,
         &env::temp_dir(),
     )?;
-    let backing = if selection.composition == "0/1" {
-        "0/1"
-    } else {
-        "0/1/2"
-    };
+    // The desktop is a full install (manual §10.10, §10.11; O-I #738): its
+    // backing is the bundle's own, whichever composition the world adopts.
+    let backing = staged.footprint.backing.default.clone();
     serde_json::to_value(oi_cli::desktop_install::plan_install(
         &staged,
         &data_root,
         &desktop_home()?,
-        backing,
+        &backing,
         &desktop_product_probe,
     )?)
     .map(Some)

@@ -21,7 +21,38 @@ pub fn install(app: &AppHandle, arrangements: &[Arrangement], active: &str) -> t
         match keys { Some(keys) => built.accelerator(keys).build(app), None => built.build(app) }
     };
     let settings = item("app.settings", "Settings…", Some("CmdOrCtrl+,"))?;
-    let application = SubmenuBuilder::new(app, "O-I").item(&settings).separator().hide().hide_others().separator().quit().build()?;
+    let application = SubmenuBuilder::new(app, "O-I").item(&settings).separator();
+    // The world the DLW stands on is a folder you choose (O-I #738): Yours, a world opened before, or another folder.
+    #[cfg(feature = "native_shell")]
+    let application = {
+        let mut worlds = SubmenuBuilder::new(app, "Worlds");
+        for world in crate::native_shell::worlds() {
+            let (Some(name), Some(folder)) = (world["name"].as_str(), world["folder"].as_str())
+            else {
+                continue;
+            };
+            let label = if world["open"] == true {
+                format!("✓ {name}")
+            } else {
+                name.to_owned()
+            };
+            worlds = worlds.text(format!("world.open:{folder}"), label);
+        }
+        application
+            .item(
+                &worlds
+                    .separator()
+                    .text("world.choose", "Open World…")
+                    .build()?,
+            )
+            .separator()
+    };
+    let application = application
+        .hide()
+        .hide_others()
+        .separator()
+        .quit()
+        .build()?;
     // Undo and Redo are the shell's: its undo list, or the text field's own while one holds the focus. Cut, Copy, Paste and Select
     // All stay the text system's.
     let undo = item("edit.undo", "Undo", Some("CmdOrCtrl+Z"))?;
@@ -89,6 +120,11 @@ pub fn is_command(id: &str) -> bool {
 }
 
 pub fn dispatch(app: &AppHandle, id: &str) {
+    #[cfg(feature = "native_shell")]
+    if id.starts_with("world.") {
+        crate::native_shell::world_menu(app, id);
+        return;
+    }
     if is_command(id) {
         // The shell's commands go to the main window's frame, which routes each to the view that stands.
         if let Some(window) = app.get_window("main") { let _ = window.emit("oi:command", id); }

@@ -45,6 +45,15 @@ mod candidate {
 
     pub static PAYLOAD: OnceLock<runtime::QualifiedPayload> = OnceLock::new();
     static RUNTIME: OnceLock<Value> = OnceLock::new();
+    /// The world this launch opened (world_folder.rs), the computer's own home, and the
+    /// environment the process was launched with, for a switch of worlds.
+    static WORLD: OnceLock<World> = OnceLock::new();
+    static NATIVE_HOME: OnceLock<PathBuf> = OnceLock::new();
+    static LAUNCH_ENV: OnceLock<Vec<(std::ffi::OsString, std::ffi::OsString)>> = OnceLock::new();
+    /// The relaunch a switch of worlds asked for, run as the application exits.
+    static RELAUNCH: std::sync::Mutex<Option<Vec<(std::ffi::OsString, std::ffi::OsString)>>> =
+        std::sync::Mutex::new(None);
+    use crate::world_folder::{self, World};
     // Product namespace aliases are the native explicit override contracts,
     // not a second capability catalogue.
     const OWNERS: &[(&str, &str, &str, &str)] = &[
@@ -128,6 +137,135 @@ mod candidate {
                     .ok_or_else(|| format!("Suite product has no host owner: {id}"))
             })
             .collect()
+    }
+
+    /// The candidate's own configuration and data homes in a world: under the world's folder,
+    /// which for Yours is the computer's own home, so Yours keeps them where they stand.
+    pub fn profile_homes(world: &World, backing_id: &str) -> (PathBuf, PathBuf) {
+        let profile = backing_id.replace('/', "-");
+        (
+            world
+                .folder
+                .join(".config/oi-shell-candidate")
+                .join(&profile),
+            super::continuity_admission::data_home(&world.folder, backing_id),
+        )
+    }
+
+    /// A JSON document that may be absent.
+    fn read_optional(path: &Path) -> Result<Option<Value>, String> {
+        if !path.is_file() {
+            return Ok(None);
+        }
+        runtime::unique_json(&fs::read(path).map_err(|e| format!("{}: {e}", path.display()))?)
+            .map(Some)
+    }
+
+    /// The world this launch opens, entered: for any world but Yours every product's home
+    /// becomes the world's folder before anything reads one (world_folder.rs).
+    fn enter_world() -> Result<World, String> {
+        let native_home = std::env::var_os(world_folder::NATIVE_HOME_ENV)
+            .filter(|v| !v.is_empty())
+            .or_else(|| std::env::var_os("HOME"))
+            .map(PathBuf::from)
+            .ok_or("Candidate needs the native user's HOME")?;
+        let register = read_optional(&world_folder::register_path(&native_home))?;
+        let native_ground = read_optional(&native_home.join(".config/oi/composition.json"))
+            .ok()
+            .flatten()
+            .and_then(|c| c["personal_ground"].as_str().map(PathBuf::from));
+        let explicit = std::env::var_os(world_folder::FOLDER_ENV)
+            .filter(|v| !v.is_empty())
+            .map(PathBuf::from);
+        let world = world_folder::resolve(
+            &native_home,
+            explicit.as_deref(),
+            register.as_ref(),
+            &world_folder::guarded(&native_home, native_ground.as_deref()),
+        )?;
+        for (name, value) in world_folder::environment(&world, &native_home) {
+            match value {
+                Some(value) => std::env::set_var(name, value),
+                None => std::env::remove_var(name),
+            }
+        }
+        NATIVE_HOME
+            .set(native_home)
+            .map_err(|_| "The world was already entered")?;
+        WORLD
+            .set(world.clone())
+            .map_err(|_| "The world was already entered".to_string())?;
+        Ok(world)
+    }
+
+    /// The open world's webview store (world_folder.rs `store_identifier`); Yours keeps its own.
+    pub fn world_store() -> Option<[u8; 16]> {
+        WORLD.get().and_then(world_folder::store_identifier)
+    }
+
+    /// The worlds to open, Yours first, the open one marked (the application menu's Worlds).
+    pub fn worlds() -> Vec<Value> {
+        let (Some(world), Some(native_home)) = (WORLD.get(), NATIVE_HOME.get()) else {
+            return Vec::new();
+        };
+        let register = read_optional(&world_folder::register_path(native_home))
+            .ok()
+            .flatten();
+        world_folder::listing(register.as_ref(), world, native_home)
+    }
+
+    /// Open another world: checked as a launch would check it, kept in the register, and
+    /// relaunched from the launch's own environment when the application has closed.
+    pub fn open_world(folder: &Path) -> Result<(), String> {
+        let native_home = NATIVE_HOME.get().ok_or("No world is open")?;
+        let register_path = world_folder::register_path(native_home);
+        let register = read_optional(&register_path)?;
+        let native_ground = read_optional(&native_home.join(".config/oi/composition.json"))
+            .ok()
+            .flatten()
+            .and_then(|c| c["personal_ground"].as_str().map(PathBuf::from));
+        let world = world_folder::resolve(
+            native_home,
+            Some(folder),
+            register.as_ref(),
+            &world_folder::guarded(native_home, native_ground.as_deref()),
+        )?;
+        let next = world_folder::register_opened(register.as_ref(), &world)?;
+        if let Some(parent) = register_path.parent() {
+            fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+        }
+        write_atomic(&register_path, &next)?;
+        let launch = LAUNCH_ENV.get().cloned().unwrap_or_default();
+        *RELAUNCH.lock().map_err(|_| "Relaunch state unavailable")? = Some(
+            world_folder::relaunch_environment(&launch, native_home, &world.folder),
+        );
+        Ok(())
+    }
+
+    /// Forget a relaunch whose close did not complete.
+    pub fn cancel_relaunch() {
+        if let Ok(mut relaunch) = RELAUNCH.lock() {
+            *relaunch = None;
+        }
+    }
+
+    /// Run the relaunch a switch of worlds asked for (main.rs, on the application's exit). It
+    /// starts this same executable by its path.
+    pub fn relaunch() {
+        let Some(environment) = RELAUNCH.lock().ok().and_then(|mut r| r.take()) else {
+            return;
+        };
+        let Ok(executable) = std::env::current_exe() else {
+            return;
+        };
+        if let Err(error) = std::process::Command::new(executable)
+            .env_clear()
+            .envs(environment)
+            .stdin(std::process::Stdio::null())
+            .spawn()
+        {
+            eprintln!("The chosen world could not open: {error}");
+        }
     }
 
     fn write_atomic(path: &Path, value: &Value) -> Result<(), String> {
@@ -219,6 +357,7 @@ mod candidate {
     }
 
     pub fn prepare() -> Result<(), String> {
+        let _ = LAUNCH_ENV.set(std::env::vars_os().collect());
         let executable = std::env::current_exe()
             .map_err(|e| e.to_string())?
             .canonicalize()
@@ -275,17 +414,12 @@ mod candidate {
         {
             return Err("This process is not the qualified native host/suite CLI".into());
         }
-        let home = std::env::var_os("HOME")
-            .map(PathBuf::from)
-            .ok_or("Candidate needs the native user's HOME")?;
-        // Backing-specific state prevents a full bundle's registrations leaking
-        // into a smaller candidate. Retained product homes/ground stay native.
-        let candidate_home = home
-            .join(".config/oi-shell-candidate")
-            .join(payload.backing_id.replace('/', "-"));
-        let data_home = home
-            .join("Library/Application Support/OI-Shell-Candidate")
-            .join(payload.backing_id.replace('/', "-"));
+        // The world this launch opens (O-I #738): Yours keeps every home where it
+        // stands; any other world is one folder, and every product's home, the
+        // candidate's own configuration and its continuity are kept under it.
+        let world = enter_world()?;
+        let home = world.folder.clone();
+        let (candidate_home, data_home) = profile_homes(&world, &payload.backing_id);
         fs::create_dir_all(&candidate_home).map_err(|e| e.to_string())?;
         let cache_home = data_home.join("caches");
         fs::create_dir_all(&cache_home).map_err(|e| e.to_string())?;
@@ -511,19 +645,23 @@ mod candidate {
         result["expression_transport"] =
             json!({"kind":"unix","socket":runtime["expression_socket"]});
         result["source_dirty"] = json!(payload.source_dirty);
+        // The world this launch opened (O-I #738), and the worlds there are to open.
+        if let Some(world) = WORLD.get() {
+            result["world"] = json!({"name":world.name,"folder":world.folder,"native":world.native,
+                "notice":world.notice,"worlds":worlds()});
+        }
         Ok(result)
     }
 
-    /// The candidate's own data home and backing directory, from the qualified payload.
+    /// The open world's candidate data home and backing directory: the continuity
+    /// admission and the workspace book are the world's own (O-I #738).
     fn continuity_home() -> Result<(PathBuf, String), String> {
         let payload = PAYLOAD
             .get()
             .ok_or("Native candidate has not qualified its payload")?;
-        let home = std::env::var_os("HOME")
-            .map(PathBuf::from)
-            .ok_or("Candidate needs the native user's HOME")?;
+        let world = WORLD.get().ok_or("No world is open")?;
         Ok((
-            super::continuity_admission::data_home(&home, &payload.backing_id),
+            profile_homes(world, &payload.backing_id).1,
             super::continuity_admission::backing_dir(&payload.backing_id),
         ))
     }
@@ -562,6 +700,197 @@ mod candidate {
             .and_then(|v| v["owner_home"].as_str())
             .ok_or("Native Expression owner home is unavailable")?;
         kernel.attach_act_store(Path::new(home))
+    }
+
+    // The candidate's own configuration and data — composition, catalogue,
+    // workspace book, continuity admission — are the open world's (O-I #738).
+    #[cfg(test)]
+    mod world_home_tests {
+        use super::profile_homes;
+        use crate::world_folder::World;
+        use std::path::{Path, PathBuf};
+
+        fn world(folder: &str, native: bool) -> World {
+            World {
+                name: "w".into(),
+                folder: PathBuf::from(folder),
+                native,
+                notice: None,
+            }
+        }
+
+        #[test]
+        fn another_world_keeps_the_candidates_own_state_under_its_folder() {
+            let (config, data) = profile_homes(&world("/w/Bare", false), "full-suite");
+            assert_eq!(
+                config,
+                Path::new("/w/Bare/.config/oi-shell-candidate/full-suite")
+            );
+            assert_eq!(
+                data,
+                Path::new("/w/Bare/Library/Application Support/OI-Shell-Candidate/full-suite")
+            );
+        }
+
+        /// The launch's world entry, run in a child of this test binary so its
+        /// environment is a real process environment: a scratch native home, a
+        /// world under scratch, inherited product homes pointing at the native one.
+        #[test]
+        fn entering_a_world_points_every_product_home_at_it() {
+            const CHILD: &str = "OI_WORLD_ENTRY_TEST_CHILD";
+            const KEYS: [&str; 8] = [
+                "HOME",
+                "AIKIT_HOME",
+                "OI_HOME",
+                "OI_CENTRAL_ROOT",
+                "XDG_CONFIG_HOME",
+                "CODEX_HOME",
+                "OI_NATIVE_HOME",
+                "OI_WORLD_FOLDER",
+            ];
+            if std::env::var_os(CHILD).is_some() {
+                let world = super::enter_world().unwrap();
+                let env: serde_json::Map<String, serde_json::Value> = KEYS
+                    .iter()
+                    .map(|k| ((*k).to_owned(), serde_json::json!(std::env::var(k).ok())))
+                    .collect();
+                println!(
+                    "WORLD-ENTRY {}",
+                    serde_json::json!({"folder": world.folder, "name": world.name, "native": world.native,
+                        "store": super::world_store().is_some(), "env": env})
+                );
+                return;
+            }
+            let scratch = std::env::temp_dir().join(format!(
+                "oi-world-entry-{}-{}",
+                std::process::id(),
+                std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap()
+                    .as_nanos()
+            ));
+            let native = scratch.join("home");
+            let bare = scratch.join("worlds/Bare");
+            std::fs::create_dir_all(native.join("Central/Work")).unwrap();
+            std::fs::create_dir_all(native.join(".config/oi")).unwrap();
+            std::fs::create_dir_all(&bare).unwrap();
+            let (native, bare) = (native.canonicalize().unwrap(), bare.canonicalize().unwrap());
+            std::fs::write(
+                native.join(".config/oi/composition.json"),
+                serde_json::json!({"personal_ground": native.join("Central")}).to_string(),
+            )
+            .unwrap();
+            let run = |folder: Option<&Path>| -> serde_json::Value {
+                let mut child = std::process::Command::new(std::env::current_exe().unwrap());
+                child
+                    .args([
+                        "--exact",
+                        "native_shell::candidate::world_home_tests::entering_a_world_points_every_product_home_at_it",
+                        "--nocapture",
+                        "--test-threads=1",
+                    ])
+                    .env_clear()
+                    .env("PATH", std::env::var_os("PATH").unwrap_or_default())
+                    .env(CHILD, "1")
+                    .env("HOME", &native)
+                    .env("AIKIT_HOME", native.join(".aikit"))
+                    .env("OI_HOME", native.join(".config/oi"))
+                    .env("OI_CENTRAL_ROOT", native.join("Central"))
+                    .env("XDG_CONFIG_HOME", native.join(".config"))
+                    .env("CODEX_HOME", native.join(".codex"));
+                if let Some(folder) = folder {
+                    child.env(crate::world_folder::FOLDER_ENV, folder);
+                }
+                let output = child.output().unwrap();
+                let stdout = String::from_utf8_lossy(&output.stdout);
+                let line = stdout
+                    .lines()
+                    .find_map(|l| l.split_once("WORLD-ENTRY ").map(|(_, entry)| entry))
+                    .unwrap_or_else(|| {
+                        panic!(
+                            "no world entry: {stdout}{}",
+                            String::from_utf8_lossy(&output.stderr)
+                        )
+                    });
+                serde_json::from_str(line).unwrap()
+            };
+            let path = |p: &Path| serde_json::json!(p.display().to_string());
+
+            // A folder named at launch: every product home is the world's folder.
+            let entered = run(Some(&bare));
+            assert_eq!(entered["native"], false);
+            assert_eq!(entered["name"], "Bare");
+            assert_eq!(entered["store"], true);
+            assert_eq!(entered["env"]["HOME"], path(&bare));
+            assert_eq!(entered["env"]["OI_NATIVE_HOME"], path(&native));
+            for cleared in [
+                "AIKIT_HOME",
+                "OI_HOME",
+                "OI_CENTRAL_ROOT",
+                "XDG_CONFIG_HOME",
+                "CODEX_HOME",
+            ] {
+                assert_eq!(
+                    entered["env"][cleared],
+                    serde_json::Value::Null,
+                    "{cleared}"
+                );
+            }
+
+            // The register names the world last opened; Yours, with no register, changes nothing.
+            let yours = run(None);
+            assert_eq!(yours["native"], true);
+            assert_eq!(yours["store"], false);
+            assert_eq!(yours["env"]["HOME"], path(&native));
+            assert_eq!(yours["env"]["AIKIT_HOME"], path(&native.join(".aikit")));
+            std::fs::create_dir_all(native.join(".config/oi-shell-candidate")).unwrap();
+            std::fs::write(
+                crate::world_folder::register_path(&native),
+                serde_json::json!({"schema": crate::world_folder::REGISTER_SCHEMA, "current": bare,
+                    "worlds": [{"name": "Bare world", "folder": bare}]})
+                .to_string(),
+            )
+            .unwrap();
+            let registered = run(None);
+            assert_eq!(registered["name"], "Bare world");
+            assert_eq!(registered["env"]["HOME"], path(&bare));
+
+            // A world in or over Yours never opens.
+            let refused = std::process::Command::new(std::env::current_exe().unwrap())
+                .args([
+                    "--exact",
+                    "native_shell::candidate::world_home_tests::entering_a_world_points_every_product_home_at_it",
+                    "--test-threads=1",
+                ])
+                .env_clear()
+                .env(CHILD, "1")
+                .env("HOME", &native)
+                .env(crate::world_folder::FOLDER_ENV, native.join("Central"))
+                .output()
+                .unwrap();
+            assert!(
+                !refused.status.success(),
+                "a world inside Yours's Central refused"
+            );
+            std::fs::remove_dir_all(&scratch).unwrap();
+        }
+
+        #[test]
+        fn yours_keeps_its_profile_where_it_stands() {
+            let (config, data) = profile_homes(&world("/Users/me", true), "full-suite");
+            assert_eq!(
+                config,
+                Path::new("/Users/me/.config/oi-shell-candidate/full-suite")
+            );
+            assert_eq!(
+                data,
+                Path::new("/Users/me/Library/Application Support/OI-Shell-Candidate/full-suite")
+            );
+            assert_eq!(
+                data,
+                super::super::continuity_admission::data_home(Path::new("/Users/me"), "full-suite")
+            );
+        }
     }
 
     // The candidate footprint is desktop/install-footprint.json with only its
@@ -604,16 +933,26 @@ mod candidate {
             assert_eq!(universe, widest);
         }
 
+        // The desktop is a full install (manual §10.10, §10.11; O-I #738): its one
+        // backing carries every product the host owns, and no partial backing remains.
         #[test]
-        fn default_backing_leaves_named_products_outside_it() {
+        fn the_desktop_is_a_full_install() {
             let footprint = footprint();
             let universe = suite_product_ids(&footprint).unwrap();
             let default = footprint["backing"]["default"].as_str().unwrap();
             let admitted = ids(&footprint["backing"]["options"][default]["products"]);
-            assert!(admitted.iter().all(|id| universe.contains(id)));
-            assert!(
-                universe.len() > admitted.len(),
-                "default backing excludes part of the suite"
+            assert_eq!(admitted, universe);
+            assert_eq!(
+                universe,
+                OWNERS
+                    .iter()
+                    .map(|(owner, ..)| owner.to_string())
+                    .collect::<Vec<_>>()
+            );
+            assert_eq!(
+                footprint["backing"]["options"].as_object().unwrap().len(),
+                1,
+                "no partial backing"
             );
         }
 
@@ -658,6 +997,39 @@ mod candidate {
 pub use candidate::attach_act_store;
 #[cfg(feature = "native_shell")]
 pub use candidate::prepare;
+#[cfg(feature = "native_shell")]
+pub use candidate::{relaunch, world_store, worlds};
+
+/// The application menu's Worlds (menus.rs): open Yours, a world in the register, or a folder
+/// chosen now. The application closes as Quit closes it, then opens again in that world.
+#[cfg(feature = "native_shell")]
+pub(crate) fn world_menu(app: &tauri::AppHandle, id: &str) {
+    use tauri_plugin_dialog::DialogExt;
+    let app = app.clone();
+    let id = id.to_owned();
+    // The folder picker blocks; menu events arrive on the main thread.
+    std::thread::spawn(move || {
+        let folder = match id.strip_prefix("world.open:") {
+            Some(folder) => Some(std::path::PathBuf::from(folder)),
+            None if id == "world.choose" => app
+                .dialog()
+                .file()
+                .set_title("Choose the folder of a world")
+                .blocking_pick_folder()
+                .and_then(|file| file.into_path().ok()),
+            None => None,
+        };
+        let Some(folder) = folder else { return };
+        let opened = candidate::open_world(&folder)
+            .and_then(|()| application_close::request(&app, 0, false));
+        if let Err(error) = opened {
+            app.dialog()
+                .message(error)
+                .title("The world did not open")
+                .blocking_show();
+        }
+    });
+}
 
 #[cfg(any(test, feature = "native_shell"))]
 fn candidate_asset_view_allowed(
@@ -951,6 +1323,8 @@ mod application_close {
         Ok(targets)
     }
     fn report_request(app:&AppHandle,id:Option<&str>,error:String){
+        // A close that failed opens no other world later.
+        super::candidate::cancel_relaunch();
         let _=app.emit("oi:application-close-failed",serde_json::json!({"request_id":id,"error":error}));
         if let Some(main)=app.get_webview_window("main"){let _=main.set_focus();}
     }

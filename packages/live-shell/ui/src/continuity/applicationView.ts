@@ -57,6 +57,15 @@ export function validateCandidateApplicationView(raw: unknown): CandidateApplica
   }))
   try {return JSON.parse(JSON.stringify(snapshot)) as CandidateApplicationView} catch {return null}
 }
+/** A remembered set as the open world reopens it (manual §10.4: a set from another world, or a copy a test left behind, is
+ * never reopened as remembered state; O-I #708, #738). `ground` is the world's Central as the native host names it: a set
+ * inside it stands, anything else is not reopened (null), and a world with no ground yet reopens none. `undefined` is a host
+ * that names no world (the development bridge), which filters nothing. */
+export function rememberedSetOfWorld(path: string | null | undefined, ground: string | null | undefined): string | null | undefined {
+  if (path === undefined || path === null || ground === undefined) return path
+  const root = ground?.replace(/\/+$/, '')
+  return root && path.startsWith(`${root}/`) ? path : null
+}
 export function candidateApplicationEnvelope(raw: unknown): ApplicationViewEnvelope | undefined {
   const payload = validateCandidateApplicationView(raw)
   return payload ? decodeApplicationView({schema:'oi.application-view/v1',version:1,app_id:CANDIDATE_APP_ID,payload}) : undefined

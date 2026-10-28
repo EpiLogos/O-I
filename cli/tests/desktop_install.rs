@@ -298,7 +298,7 @@ fn plan_recognizes_before_any_mutation() {
         "plan not printed:\n{stdout}"
     );
     assert!(
-        stdout.contains("0/1/2"),
+        stdout.contains("full-suite"),
         "plan does not disclose the default backing:\n{stdout}"
     );
     assert!(
@@ -318,10 +318,17 @@ fn install_writes_receipt_and_owned_resources() {
     let receipt: Value =
         serde_json::from_str(&fs::read_to_string(sandbox.installed_receipt()).unwrap()).unwrap();
     assert_eq!(receipt["schema"], "oi.installed-desktop/v1");
-    assert_eq!(receipt["backing"]["requested"], "0/1/2");
+    assert_eq!(receipt["backing"]["requested"], "full-suite");
     assert_eq!(
         receipt["backing"]["products"],
-        serde_json::json!(["central", "actuation", "ai-kit"])
+        serde_json::json!([
+            "central",
+            "actuation",
+            "ai-kit",
+            "software-factory",
+            "workcell",
+            "quaternal-logic"
+        ])
     );
     assert_eq!(receipt["bundle"]["sha256"], sha256_of(&archive));
 
@@ -367,12 +374,18 @@ fn install_rejects_unknown_backing_and_records_selected_backing() {
     assert_refusal(&out, "unknown backing composition");
     assert!(!sandbox.installed_receipt().exists());
 
-    let out = install(&sandbox, &archive, &["--backing", "0/1"]);
+    // The partial backings are retired: the desktop is a full install (O-I #738).
+    for retired in ["0/1", "0/1/2"] {
+        let out = install(&sandbox, &archive, &["--backing", retired]);
+        assert_refusal(&out, "unknown backing composition");
+        assert!(!sandbox.installed_receipt().exists());
+    }
+
+    let out = install(&sandbox, &archive, &["--backing", "full-suite"]);
     assert_success(&out);
     let receipt: Value =
         serde_json::from_str(&fs::read_to_string(sandbox.installed_receipt()).unwrap()).unwrap();
-    assert_eq!(receipt["backing"]["requested"], "0/1");
-    assert_eq!(receipt["backing"]["label"], "Central + Actuation");
+    assert_eq!(receipt["backing"]["requested"], "full-suite");
 }
 
 #[test]

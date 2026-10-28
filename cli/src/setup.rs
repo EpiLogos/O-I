@@ -70,7 +70,7 @@ pub fn choices() -> Vec<Choice> {
         Choice {
             id: mode.frame.into(), title: mode.name.into(),
             description: match mode.frame {
-                "00/00" => "Integrated application; normal new backing is Central, Actuation and AIKit.",
+                "00/00" => "Integrated application; a full install of every product it carries.",
                 "0/1" => "Durable ground and agency; retain your existing harness and tools.",
                 "0/1/2" => "Ground, agency, context, models, capabilities and sessions.",
                 "0/1/2/3" => "Add durable development through Software Factory; Direct sessions stay Direct.",

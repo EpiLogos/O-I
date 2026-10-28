@@ -37,8 +37,9 @@ fn command_desktop(args: &[OsString]) -> Result<i32, String> {
   oi desktop knowledge CWD REQUEST_JSON\n\
   oi desktop session-spaces CWD PROJECT_REF\n\
 All operation results are JSON. Knowledge accepts the kernel Request contract.\n\
-Backing compositions (default 0/1/2) are disclosed in the plan and recorded in\n\
-the receipt; backing products themselves install through their own flows, so\n\
+The desktop is a full install (backing full-suite), disclosed in the plan and\n\
+recorded in the receipt; an install recorded on a retired partial backing\n\
+updates onto it. Backing products themselves install through their own flows, so\n\
 Desktop add/remove never reconstitutes Agents, renames Projects or reinstalls\n\
 ground. Window, tab and workspace arrangement remain in the running app's\n\
 native menu."
@@ -162,7 +163,7 @@ fn parse_desktop_install_options(args: &[&str]) -> Result<DesktopInstallOptions,
             "--backing" => {
                 let id = args
                     .get(index + 1)
-                    .ok_or_else(|| "--backing requires a composition id such as 0/1 or 0/1/2".to_owned())?;
+                    .ok_or_else(|| "--backing requires a composition id such as full-suite".to_owned())?;
                 options.backing = Some((*id).to_owned());
                 index += 1;
             }
@@ -351,7 +352,11 @@ fn command_desktop_update(args: &[&str]) -> Result<i32, String> {
     )?;
     let installed = oi_cli::desktop_install::load_installed_receipt(&data_root)?
         .ok_or("no installed Desktop receipt to update")?;
-    let backing = options.backing.unwrap_or(installed.backing.requested);
+    let backing = oi_cli::desktop_install::update_backing(
+        &staged.footprint,
+        &installed.backing.requested,
+        options.backing,
+    );
     let plan = oi_cli::desktop_install::plan_update(
         &staged,
         &data_root,
