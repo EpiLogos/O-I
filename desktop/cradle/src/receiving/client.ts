@@ -5,7 +5,9 @@ import type {KernelTransportStatus} from "../kernel/types";
 export type ReceivingRequest =
   | {kind:"list";after?:number;limit?:number;open?:boolean}
   | {kind:"read";return_ref:string}
-  | {kind:"submit";producer_key:string;source_ref:string;document_id:string;expected_source_revision:string;occurred_at_unix_seconds:number;task_ref?:string;proposal:Record<string,unknown>}
+  /** A contribution to a document. `declared_producer` names whose work the carrier delivers (Central keeps the carrier as the
+   * author and the producer as its declaration): the person quoting Nara's answer into the Day names Nara's session. */
+  | {kind:"submit";producer_key:string;source_ref:string;document_id:string;expected_source_revision:string;occurred_at_unix_seconds:number;task_ref?:string;proposal:Record<string,unknown>;declared_producer?:DeclaredProducer}
   /** Ask the person to decide: a request Return with no document target. */
   | {kind:"ask";producer_key:string;occurred_at_unix_seconds:number;request:OwnerRequest;summary?:string;evidence_refs?:string[];declared_producer?:DeclaredProducer;now_ref?:string;task_ref?:string}
   | {kind:"document";source_ref:string;document_id:string}
@@ -22,7 +24,7 @@ export type ReceivingWireRequest=
 export function receivingWire(request:ReceivingRequest):ReceivingWireRequest{switch(request.kind){
  case"list":return {List:{after:request.after,limit:request.limit,open:request.open}};
  case"read":return {Read:{return_ref:request.return_ref}};
- case"submit":return {Submit:{producer_key:request.producer_key,source_ref:request.source_ref,document_id:request.document_id,expected_source_revision:request.expected_source_revision,occurred_at_unix_seconds:request.occurred_at_unix_seconds,task_ref:request.task_ref,proposal:request.proposal}};
+ case"submit":return {Submit:{producer_key:request.producer_key,source_ref:request.source_ref,document_id:request.document_id,expected_source_revision:request.expected_source_revision,occurred_at_unix_seconds:request.occurred_at_unix_seconds,task_ref:request.task_ref,proposal:request.proposal,declared_producer:request.declared_producer}};
  case"ask":return {Submit:{producer_key:request.producer_key,occurred_at_unix_seconds:request.occurred_at_unix_seconds,request:request.request,summary:request.summary,evidence_refs:request.evidence_refs,declared_producer:request.declared_producer,now_ref:request.now_ref,task_ref:request.task_ref}};
  case"document":return {Document:{source_ref:request.source_ref,document_id:request.document_id}};
  case"review":return {Review:{return_ref:request.return_ref,expected_return_revision:request.expected_return_revision,disposition:request.disposition,expected_source_revision:request.expected_source_revision,note:request.note,answer:request.answer}};

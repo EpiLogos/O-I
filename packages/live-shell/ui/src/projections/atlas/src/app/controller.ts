@@ -1813,7 +1813,7 @@ export class Controller {
       return;
     }
     try {
-      const [{ natalChart, natalWindow, birthInstant }, { chartSources }, data] = await Promise.all([
+      const [{ natalWindow, birthInstant }, { chartOf, chartSources, YOU }, data] = await Promise.all([
         import('../astro/natal'), import('../astro/charts'), loadLensData<{ people: CuratedPerson[] }>('astrology'),
       ]);
       if (gen !== this.natalGen) return;
@@ -1825,14 +1825,17 @@ export class Controller {
         if (this.state.sky?.natal === id) this.navigate(astrologyAt([]), { replace: true });
         return;
       }
-      const chart = natalChart(rec.birth);
-      const ms = birthInstant(rec.birth);
-      const eph = new SkyEphemeris(dataWithWindow(layer.data, natalWindow(ms)));
+      // [§8.4 host, O-I #765] a chart its owner holds (your identity's, QL's) is drawn as it is, at its owner's moment, and travels on no
+      // window computed here: the bodies stay where the clock has them, and the held line says so
+      const chart = chartOf(rec);
+      const ms = rec.chart ? Date.parse(rec.chart.utc) : birthInstant(rec.birth);
       this.natalChart = chart;
       layer.chart.set(chart);
       layer.chart.setOptions({ aspects: true, houses: false });
-      layer.travel(eph, ms, duration, true);
-      this.skyView.setHeld(`The sky is held at ${rec.label === 'You' ? 'your birth' : `${rec.label}’s birth`}, ${formatMoment(ms)}${chart.timeKnown ? '' : ' (local noon: no time was given)'}.`);
+      if (!rec.chart) layer.travel(new SkyEphemeris(dataWithWindow(layer.data, natalWindow(ms))), ms, duration, true);
+      this.skyView.setHeld(rec.chart
+        ? `${rec.id === YOU ? 'Your' : `${rec.label}’s`} birth chart stands over the sky as its owner calculated it, ${formatMoment(ms)}; the planets stay where the clock has them.`
+        : `The sky is held at ${rec.label === 'You' ? 'your birth' : `${rec.label}’s birth`}, ${formatMoment(ms)}${chart.timeKnown ? '' : ' (local noon: no time was given)'}.`);
       // the ring stands around the Earth at the scale of the system: bring the camera out to see it
       if (visible && this.engine.rig.dist < STAGE_EDGES.handoff && !this.approachFor(this.state.sky)) this.enterSkyView(this.engine.reduced);
     } catch (e) {

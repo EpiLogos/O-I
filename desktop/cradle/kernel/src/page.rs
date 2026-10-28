@@ -482,13 +482,22 @@ fn highlight_page(
     Ok(marks.remove(at))
 }
 
-/// How a page opens when it is launched (manual §18.1 "The Launch panel"): kept in the page's `meta.launch`.
+/// Whether a Flow is a journey's: it keeps its journey (`meta.journey`, as QL returned it), or it is a journey's page made from New…
+/// that holds none yet (`meta.practice`), as the shell reads it (desktop/cradle/src/nara/practiceWorld.ts practiceOfIsland).
+fn journey_flow(island: &Value) -> bool {
+    island["meta"]["journey"].is_object() || island["meta"]["practice"] == json!("journey")
+}
+
+/// How a page opens when it is launched (manual §18.1 "The Launch panel"): kept in the page's `meta.launch`. A journey's Flow opens
+/// as Reading too (§24.4 "Launch a journey as Reading and it opens as an Expression").
 fn launch_field(island: &mut Value, page: bool, value: &Value) -> Result<Value, String> {
     let asked = value
         .as_object()
         .ok_or("A page's launch is a record: opensAs, opensIn, seats")?;
     let ways: &[&str] = if page {
         &["page", "reading", "walk", "sky"]
+    } else if journey_flow(island) {
+        &["dialogue", "flow", "journal", "reading"]
     } else {
         &["dialogue", "flow", "journal"]
     };
@@ -1424,6 +1433,53 @@ mod tests {
             Value::Null
         );
         assert!(exchange["meta"].get("container").is_none());
+    }
+
+    /// Manual §24.4 "Launch a journey as Reading and it opens as an Expression": a journey's Flow (one that keeps its journey, or a
+    /// journey's page made from New… that holds none yet) opens as Reading too; every other Flow opens only as its own views.
+    #[test]
+    fn a_journey_s_flow_opens_as_reading_and_no_other_flow_does() {
+        let journey = json!({"schema": "ql.nara-oracle-journey/v1", "journey_ref": "journey:d", "revision": 2});
+        for mut held in [
+            json!({"meta": {"title": "A concern", "revision": 1, "journey": journey}, "entries": [], "notes": []}),
+            json!({"meta": {"title": "Journey", "revision": 1, "practice": "journey"}, "entries": [], "notes": []}),
+        ] {
+            assert_eq!(
+                apply_field(
+                    &mut held,
+                    "launch",
+                    &json!({"opensAs": "reading"}),
+                    &stamp()
+                )
+                .unwrap(),
+                json!({"opensAs": "reading"})
+            );
+            assert_eq!(held["meta"]["launch"]["opensAs"], "reading");
+            apply_field(
+                &mut held,
+                "launch",
+                &json!({"opensAs": "journal"}),
+                &stamp(),
+            )
+            .unwrap();
+            assert_eq!(
+                held["meta"]["launch"]["opensAs"], "journal",
+                "its own views stand as before"
+            );
+        }
+        let mut exchange = flow();
+        let error = apply_field(
+            &mut exchange,
+            "launch",
+            &json!({"opensAs": "reading"}),
+            &stamp(),
+        )
+        .unwrap_err();
+        assert!(error.contains("dialogue, flow, journal"), "{error}");
+        assert!(
+            exchange["meta"].get("launch").is_none(),
+            "a refusal keeps nothing"
+        );
     }
 
     #[test]

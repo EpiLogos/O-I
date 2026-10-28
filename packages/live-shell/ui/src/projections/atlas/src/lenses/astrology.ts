@@ -11,8 +11,8 @@ import { ASTROLOGY_LIVE, astrologyAt, astrologyLive } from '../state/store';
 import type { BirthPrefill } from '../state/router';
 import type { LensContext, LensInstance } from '../shell/lens';
 import { modeOptions, optionAction, optionGroup } from '../ui/mode-options';
-import { birthProblems, deviceOffset, meanTimeOffset, natalChart, type BirthData, type ChartBody } from '../astro/natal';
-import { chartSources, forgetLocalChart, saveLocalChart, YOU, type ChartRecord, type CuratedPerson } from '../astro/charts';
+import { birthProblems, deviceOffset, meanTimeOffset, type BirthData, type ChartBody } from '../astro/natal';
+import { chartOf, chartSources, forgetLocalChart, saveLocalChart, YOU, type ChartRecord, type CuratedPerson } from '../astro/charts';
 import type { BodyKey, GazetteerPlace, SidecarChart } from '../types/sky';
 import { findPlaces, formatCoordinates } from '../sky/gazetteer';
 import { SIGNS } from '../sky/frames';
@@ -40,11 +40,15 @@ interface AstrologyData {
   version: 1;
   gazetteer: { source: { claim: string }; places: GazetteerPlace[] };
   frame: LensQuote[];
-  pillars: LensQuote;
-  order: { bodies: ChartBody[]; line: string; quote: LensQuote };
+  /** [C2] a quotation the provider does not publish is not drawn */
+  pillars?: LensQuote | null;
+  order: { bodies: ChartBody[]; line: string; quote?: LensQuote | null };
   bodies: Record<ChartBody, BodyReading>;
   signs: Record<string, LensQuote>;
   people: (CuratedPerson & { quote: LensQuote; portrait?: Portrait | null })[];
+  /** [§8.4 host, O-I #765] where your chart comes from, named by the provider that holds it: then the lens keeps no chart and offers no
+   * form of its own (`none`: why it holds no chart for you) */
+  yours?: { line: string; none: string | null };
 }
 
 const BASIS: Record<Tie['basis'], string> = { jung: 'Jung’s own link', inferred: 'the atlas’s inference', site: 'the atlas’s own link' };
@@ -84,7 +88,7 @@ export function mount(ctx: LensContext): LensInstance {
   const refreshCharts = () => {
     charts.clear();
     if (!data) return;
-    for (const rec of chartSources(data.people)) charts.set(rec.id, { rec, chart: natalChart(rec.birth) });
+    for (const rec of chartSources(data.people)) charts.set(rec.id, { rec, chart: chartOf(rec) });
   };
 
   // the walk opens its sheet at half height: on a phone the body it holds stands in the space above it
@@ -168,12 +172,14 @@ export function mount(ctx: LensContext): LensInstance {
         ]),
       ]);
     };
+    const yours = data.yours;
     const body: (HTMLElement | null)[] = [
-      privacyLine('Your birth data and your chart are kept only in this browser’s storage, and you can delete them below.'),
-      el('p', { class: 'th-line', text: 'Enter a birthday and you get a walk through that sky, planet by planet, with what Jung and Kathleen Burt wrote about each planet and sign. Jung’s own chart is here as the first one, so you can read yours beside his.' }),
-      quoteBlock(data.frame[0], ctx.passages),
-      prefill ? el('p', { class: 'lp-note', text: 'Filled in from the link you opened. Nothing is kept until you cast the chart.' }) : null,
-      mine && !editing && !prefill ? chartCard(mine, true) : form(prefill ? undefined : mine?.rec, prefill),
+      yours ? el('p', { class: 'th-line', text: yours.line }) : privacyLine('Your birth data and your chart are kept only in this browser’s storage, and you can delete them below.'),
+      yours ? null : el('p', { class: 'th-line', text: 'Enter a birthday and you get a walk through that sky, planet by planet, with what Jung and Kathleen Burt wrote about each planet and sign. Jung’s own chart is here as the first one, so you can read yours beside his.' }),
+      data.frame[0] ? quoteBlock(data.frame[0], ctx.passages) : null,
+      prefill && !yours ? el('p', { class: 'lp-note', text: 'Filled in from the link you opened. Nothing is kept until you cast the chart.' }) : null,
+      yours ? (mine ? chartCard(mine, false) : el('p', { class: 'lp-note', text: yours.none ?? '' }))
+        : mine && !editing && !prefill ? chartCard(mine, true) : form(prefill ? undefined : mine?.rec, prefill),
       jung ? chartCard(jung, false) : null,
       jung ? el('p', { class: 'lp-note', text: jung.rec.line ?? '' }) : null,
       jung?.rec.timeSource ? el('p', { class: 'lp-note', text: `The time is from ${jung.rec.timeSource}` }) : null,
@@ -189,7 +195,7 @@ export function mount(ctx: LensContext): LensInstance {
         el('summary', { text: 'Why planets, in a book about the psyche' }),
         ...data.frame.slice(1).map((q) => quoteBlock(q, ctx.passages, { compact: true })),
       ]),
-      mine ? el('div', { class: 'lp-row as-own' }, [
+      mine && !yours ? el('div', { class: 'lp-row as-own' }, [
         el('button', { type: 'button', class: 'lp-btn quiet', onclick: () => saveFile('my-chart.json', practice.exportAll()) }, [icon('export', 14), el('span', { text: 'Save a copy' })]),
         el('button', { type: 'button', class: 'lp-btn quiet', onclick: () => { if (confirm('Delete your chart from this browser?')) { forgetLocalChart(); refreshCharts(); ctx.refreshNatal(); renderHome(); } } }, [icon('trash', 14), el('span', { text: 'Delete my chart' })]),
       ]) : null,
@@ -362,16 +368,16 @@ export function mount(ctx: LensContext): LensInstance {
       jungTies.length ? el('h3', { class: 'as-h3', text: `What ${r.name} touches in the field` }) : null,
       ...jungTies.map(once).map(tieBlock),
       otherTies.length ? el('details', { class: 'as-more' }, [el('summary', { text: jungTies.length ? 'Links the atlas draws, not Jung' : 'Links the atlas draws (Jung gives none)' }), ...otherTies.map(once).map(tieBlock)]) : null,
-      el('h3', { class: 'as-h3', text: `${r.name} in ${pos.sign}, as Kathleen Burt reads it` }),
+      signQuote || r.burt.length ? el('h3', { class: 'as-h3', text: `${r.name} in ${pos.sign}, as Kathleen Burt reads it` }) : null,
       signQuote ? quoteBlock(signQuote, ctx.passages, { compact: true }) : null,
       ...r.burt.slice(0, 2).map((q) => quoteBlock(q, ctx.passages, { compact: true })),
       r.burt.length > 2 ? el('details', { class: 'as-more' }, [el('summary', { text: `More from Burt on ${r.name} (${r.burt.length - 2})` }), ...r.burt.slice(2).map((q) => quoteBlock(q, ctx.passages, { compact: true }))]) : null,
       aspects.length ? el('div', { class: 'as-aspects' }, [el('h3', { class: 'as-h3', text: 'How it stands to the others' }), el('ul', {}, aspects.map((a) => el('li', { text: a })))]) : null,
-      i === 0 ? quoteBlock(data.pillars, ctx.passages, { compact: true }) : null,
+      i === 0 && data.pillars ? quoteBlock(data.pillars, ctx.passages, { compact: true }) : null,
       last ? el('hr', { class: 'lp-divider' }) : null,
       last ? el('h3', { class: 'as-h3', text: 'Where the walk ends' }) : null,
       last ? selfDiagram() : null,
-      last ? quoteBlock(data.order.quote, ctx.passages, { compact: true }) : null,
+      last && data.order.quote ? quoteBlock(data.order.quote, ctx.passages, { compact: true }) : null,
       last ? el('button', { type: 'button', class: 'lp-btn primary as-to-self', onclick: () => ctx.descend({ type: 'archetype', id: 'self' }) }, [icon('self', 15), el('span', { text: 'Go to the Self' })]) : null,
       el('div', { class: 'th-step' }, [
         el('button', { type: 'button', class: 'icon-btn', 'aria-label': 'Previous planet', disabled: i === 0, onclick: () => ctx.setPath([chartId, order[i - 1]]) }, [icon('back')]),
