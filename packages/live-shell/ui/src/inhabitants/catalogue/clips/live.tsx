@@ -9,7 +9,7 @@
 // envelope's breakpoints on `env.<device>.<control>` (JSON [[beat, value]…]).
 import {Chooser, Dial, Radio, Toggle, ValueBox, type Option} from '../../sdk/panel'
 import {has, numOf, strOf} from '../panels/design'
-import {Caption, EnvelopeEditor, Fields, LaneGrid, Pair, PlaceField, Press, Row, Rows, Rule, Said, StemLane, Wide, choice, flag, place, read, span, write, type Block, type Lane, type Point} from './clipKit'
+import {Caption, EnvelopeEditor, Fields, LaneGrid, MadeOf, Pair, PlaceField, Press, Row, Rows, Rule, Said, StemLane, Wide, choice, flag, place, read, span, write, type Block, type Lane, type Point} from './clipKit'
 import type {ClipProps, DesignedClip} from './design'
 
 // ---------------------------------------------------------------- the clip's mode
@@ -149,6 +149,7 @@ const beats = (p: ClipProps, key: string, label: string, does: string, min: numb
 
 function ClipPanel(p: ClipProps) {
   return <>
+    <Fields><MadeOf p={p} what="the clip" /></Fields>
     <Fields>
       {beats(p, 'start', 'Start', 'Where the clip starts.', 0, 64, place)}
       {beats(p, 'end', 'End', 'Where the clip ends.', 0, 64, place)}
@@ -367,6 +368,7 @@ export const clip: DesignedClip = {
   head: {name: 'name', colour: 'colour', active: 'active'},
   defaults: {
     name: 'Melody', colour: 'var(--sel)', active: true, notes: JSON.stringify(MELODY), mpe: JSON.stringify({}), note: 'n4', playhead: 0,
+    madeOf: 'The day\'s turning', 'madeOf.ref': 'wiki:anchor:days-turning',
     start: 0, end: 8, loop: true, position: 0, length: 8, 'sig.num': 4, 'sig.den': 4, groove: 'none', scale: true, root: 0, mode: 'ionian', 'set.root': 0, 'set.mode': 'ionian',
     follow: true, followA: 'next', followB: 'none', chance: 100, linked: true, multiplier: 1, launch: 'trigger', legato: false, quantize: 'global', launchVelocity: 0,
     interval: 0, stretch: 1, setGrid: '1/16', humanize: 10, transform: 'arpeggiate', 'arp.style': 'up', 'arp.distance': 12, 'arp.steps': 2, 'arp.rate': '1/32', 'arp.gate': 100,

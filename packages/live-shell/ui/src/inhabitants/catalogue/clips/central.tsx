@@ -17,7 +17,7 @@
 import type {ReactNode} from 'react'
 import {Action, Chooser, Radio, TextField, Toggle, ValueBox} from '../../sdk/panel'
 import {has, numOf, strOf} from '../panels/design'
-import {COLOURS, Fact, Fields, Rows, Row, Said, Wide, choice, flag, read} from './clipKit'
+import {COLOURS, Fact, Fields, MadeOf, Rows, Row, Said, Wide, choice, flag, read} from './clipKit'
 import type {ClipProps, DesignedClip} from './design'
 
 type V = ClipProps['v']
@@ -34,6 +34,7 @@ function ClipPanel(p: ClipProps) {
     <Row label="Title"><TextField label="Title" does="The page's title, on the clip's colour." value={strOf(p.v, 'name') ?? ''} onChange={x => p.set('name', x)} /></Row>
     <Row label="Colour"><Chooser label="Colour" does="The colour of the clip on the grid and the ruler. A page takes its world's colour." value={choice(p.v, 'colour')} options={COLOURS} onChange={x => p.set('colour', x)} /></Row>
     <Row label="Kind"><Fact label="Kind" does="What sort of page it is. The kind sets the form's fields." value={KIND_WORD[kindOf(p.v)] ?? strOf(p.v, 'kind')} /></Row>
+    <Row label="Constellation"><MadeOf p={p} what="the page" /></Row>
     <Row label="Template"><Fact label="Template" does="The design that draws the page, at the version the page opened with. A new version does not change an old page." value={strOf(p.v, 'template')} /></Row>
     <Row label="Revision"><Fact label="Revision" does="The saved revision the page stands on." value={strOf(p.v, 'revision')} /></Row>
     <Row label="Save"><Fact label="Save state" does="The outcome of the last save. A stale or conflicting save keeps your draft and shows what changed." value={save ? save[0]!.toUpperCase() + save.slice(1) : undefined}
@@ -295,6 +296,7 @@ export const clip: DesignedClip = {
   head: {name: 'name', colour: 'colour'},
   defaults: {
     kind: 'being', name: 'Hildegard of Bingen', colour: 'var(--honey)', template: 'Beings · standard @ 7', revision: 'a41c9e2', save: 'saved',
+    madeOf: 'Viriditas', 'madeOf.ref': 'wiki:anchor:viriditas',
     world: 'Your world', subject: 'Hildegard of Bingen', being: 'person', office: '2,3', sources: JSON.stringify(['Scivias, ed. Führkötter @ r3', 'Physica @ r1', 'Ordo Virtutum @ r2']),
     place: 'Disibodenberg', anchor: '49.8155 N, 7.6602 E', expression: 'Viriditas · scene 1', layout: 'portrait', tone: 'paper',
     page: JSON.stringify(BEING_PAGE), notes: JSON.stringify(BEING_NOTES), source: BEING_SOURCE, selected: 'p2',

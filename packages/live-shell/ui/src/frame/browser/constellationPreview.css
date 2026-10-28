@@ -1,0 +1,21 @@
+/* A constellation's preview at the foot of the browser (shell/constellationPreviews.tsx): what the mode makes of it, at the rows'
+   rhythm — the head a row (its name, then what this mode makes of it, faint), the rendering under it, 10–11px, nothing scrolls. */
+.cp { display: flex; flex-direction: column; gap: 4px; padding: 4px 6px 6px; font-size: 10.5px; line-height: 1.4; color: var(--text-dim) }
+.cp-head { display: flex; align-items: baseline; gap: 6px; min-width: 0 }
+.cp-head b { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 400; font-size: 11px; color: var(--text) }
+.cp-head span { flex: none; margin-left: auto; font-size: 9.5px; color: var(--text-faint) }
+.cp-title { margin: 2px 0 0; font-size: 12px; font-weight: 600; color: var(--text) }
+.cp-intro { margin: 0; font-style: italic }
+.cp-sections { margin: 0; padding-left: 16px }
+.cp-said { margin: 0; color: var(--text-faint) }
+.cp-facts { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 2px 8px; margin: 0 }
+.cp-facts dt { color: var(--text-faint) }
+.cp-facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; color: var(--text) }
+.cp-form { width: 120px; height: 112px; align-self: center }
+.cp-ring { fill: none; stroke: var(--line, #3a3f45); stroke-width: 1 }
+.cp-ray { stroke: var(--line, #3a3f45); stroke-width: .75 }
+.cp-glyph { fill: var(--accent) }
+.cp-whole { fill: var(--text) }
+.cp-lens { border-collapse: collapse; width: 100% }
+.cp-lens th { padding: 1px 8px 1px 0; text-align: left; font-weight: 400; white-space: nowrap; color: var(--text-faint) }
+.cp-lens td { padding: 1px 0; color: var(--text) }

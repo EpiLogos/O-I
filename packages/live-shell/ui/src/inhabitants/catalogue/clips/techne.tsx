@@ -9,7 +9,7 @@
 // `source.text`, `source.ref`, `source.revision`, `source.admitted`.
 import {Chooser, ValueBox} from '../../sdk/panel'
 import {numOf, strOf} from '../panels/design'
-import {Fact, Fields, Rows, Row, Rule, Said, Wide, choice, read} from './clipKit'
+import {Fact, Fields, MadeOf, Rows, Row, Rule, Said, Wide, choice, read} from './clipKit'
 import type {ClipProps, DesignedClip} from './design'
 
 const STANDING: Readonly<Record<string, {word: string; line: 'solid' | 'dashed' | 'dotted'; tone?: 'stall' | 'green' | 'value'}>> = {
@@ -32,6 +32,7 @@ function ClipPanel(p: ClipProps) {
   return <Rows>
     <Row label="Name"><Fact label="Name" does="The event's name, as its source gives it." value={strOf(p.v, 'name')} /></Row>
     <Row label="Kind"><Fact label="Kind" does="What sort of event it is, as its stream names it." value={strOf(p.v, 'event.kind')} /></Row>
+    <Row label="Constellation"><MadeOf p={p} what="the event" /></Row>
     <Row label="Standing"><Fact label="Standing" does={`How sure anyone is of it. Its line on the ruler is ${standing?.line ?? 'drawn by its standing'}. Placement does not raise it.`}
       value={standing?.word} tone={standing?.tone} /></Row>
     <Row label="Date"><Fact label="Date" does="When it happened, at the precision its source states, in the source's words." value={strOf(p.v, 'date')} /></Row>
@@ -155,6 +156,7 @@ export const clip: DesignedClip = {
   head: {name: 'name', colour: 'colour'},
   defaults: {
     kind: 'event', name: 'Council of Nicaea', colour: 'var(--w-ariadne)', 'event.kind': 'Council', standing: 'fact', date: '325 (May – August)', span: '20 May 325 – 25 Aug 325',
+    madeOf: 'The Constantinian settlement', 'madeOf.ref': 'wiki:anchor:constantinian-settlement',
     place: 'Nicaea, Bithynia', 'source.ref': 'Eusebius, Vita Constantini III.6', 'source.revision': 'r12', 'source.admitted': 'Admitted · reading Late antiquity · 3 Oct',
     parent: 'The Constantinian settlement', material: JSON.stringify(NICAEA_MATERIAL), relations: JSON.stringify(NICAEA_RELATIONS), constellation: JSON.stringify(NICAEA_GRAPH),
     'source.text': NICAEA_SOURCE, arrival: 'global', follow: 'next', transition: 1, curve: 'linear', switch: 'once',

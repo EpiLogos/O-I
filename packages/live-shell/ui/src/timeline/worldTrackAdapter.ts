@@ -169,6 +169,10 @@ export interface WorldTrackActions {
   /** Seat what is dropped on the empty track (manual §10.3: "To seat an agent, drag it onto an empty track"): the drag type
    * the set accepts, and the owner op that seats it. The dropped payload reaches `run` as the drag carried it. */
   seat?: {op: string; accepts: string; run(payload: string): unknown};
+  /** Make this mode's clip of what is dropped on a track (manual §10.3: "Drag it onto a track and this mode makes its own clip of it, with
+   * the constellation as its source"): the drag type the set accepts, and the owner op that makes the clip on the track the drop landed
+   * on. The payload is the dragged constellation's ref. */
+  makeClip?: {op: string; accepts: string; run(trackId: string, payload: string): unknown};
   /** Take a track out of the set (Live: select the track, Delete): the inverse of `seat`. What the track holds stays where its owner
    * keeps it; only the set no longer holds the track. */
   removeTrack?: {op: string; run(trackId: string): unknown};

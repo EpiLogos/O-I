@@ -17,6 +17,7 @@
 // not in the design yet (PROPOSE). Pure, apart from the hook at the end.
 import type {Value, Values} from '../frame/devices/designed'
 import {clipBinding, clipHostId, missingOp, useViewHoldsVersion, viewHoldsOf, type ClipBinding, type ClipWiring} from '../frame/detail/clipBinding'
+import {withMadeOf, type ClipSource} from '../frame/detail/clipSource'
 import {useSelectedClip} from '../frame/detail/ClipBox'
 import {useDetailReading} from '../frame/detail/detailReading'
 import {useLiveModeInForce} from '../native/liveModeCatalogue'
@@ -176,10 +177,22 @@ export function toolPress(key: string, whole: LiveClipWholeReading, view: Readon
 /** The MIDI tools' presses. */
 const NOTE_PRESSES = ['duplicate', 'fitToScale', 'invert', 'addInterval', 'double', 'halve', 'setLength', 'humanize.press', 'reverse', 'legatoNotes', 'transform.press', 'generate.press', 'randomize']
 
+/** A Live clip's source (manual §21.1 The Clip panel: "Constellation — The clip's source when Live made it of a constellation"): no owner
+ * keeps it yet. The set's owner (packages/live-set) reads and writes the `.als`, whose MIDI clip has no source of its own, and the DLW's
+ * own set, whose clips refer to the constellation's nodes (manual §10.3 Sets, files and media), is not built; so the key stands absent
+ * and Show in Browser names the operation the set's owner lacks. */
+export const LIVE_SOURCE: ClipSource = {made: 'unread', why: missingOp('The clip\'s constellation',
+  'live_clip_source {path, track, clip} → the constellation the clip was made of, kept by the DLW\'s set beside the .als', 'kernel · live-set')}
+
 /** clip:live's wiring on the set's owner: where the clip is read whole, every setting, tool and Mixer envelope writes to it; where it
  * is not (no set path, the kernel out of reach), each says why. */
 export function liveWiring(address: LiveClipAddress | null, whole: LiveClipWholeReading | null, hostId: string, unread: string | null,
   sends: readonly LiveSend[] | null = null): ClipWiring {
+  return withMadeOf(clipWiring(address, whole, hostId, unread, sends), LIVE_SOURCE)
+}
+
+function clipWiring(address: LiveClipAddress | null, whole: LiveClipWholeReading | null, hostId: string, unread: string | null,
+  sends: readonly LiveSend[] | null): ClipWiring {
   const why = !address ? 'No clip of an open set is selected.' : !whole ? `The clip is not read whole yet${unread ? `: ${unread}` : ''}.` : null
   const acts: Record<string, (value: Value) => Promise<void>> = {}
   const refused: Record<string, string> = {...REFUSED}
