@@ -2,9 +2,9 @@
 // draws 28 slots in Live's places and knows no mode; this table names, per mode, what a slot does and whose op it is —
 // manual §10.5's table, one column per mode. A slot with no binding is drawn waiting with its grammar meaning; a binding
 // enables a slot only with a write path, and a light only with a reading. The working controls move here from the old
-// bars: Live's mode in force (root, scale) and its key and MIDI maps; Technē's Back to Now, occasion steps and instrument
-// arm; Factory's run, stop, voice, steer, effort, heartbeat, quantize and write arm (shell/transports); Expressions' scene
-// play, stop, take, arm, loop, time scale and scrub; Central's Day, its die and bounds, the packet and the ground's carrier
+// bars: Live's mode in force (root, scale) and its key and MIDI maps; Technē's Back to Now, occasion steps, and the World's
+// Arm, Record and Capture over its walk (projections/atlas/places/placesTransport.ts walkBindings); Factory's run, stop, voice,
+// steer, effort, heartbeat, quantize and write arm (shell/transports); Expressions' scene play, stop, take, arm, loop, time scale and scrub; Central's Day, its die and bounds, the packet and the ground's carrier
 // (shell/transports/useCentralTransport.tsx); every mode's real readouts. The title line above the bar is registered here too
 // (MODE_TITLE): THE selection with its world and day, or — in Live — the open set.
 import {useEffect} from 'react'
@@ -15,7 +15,7 @@ import {transportBindingForSlot, transportBindingRow} from '../inhabitants/sdk/d
 import type {SdkModeName} from '../inhabitants/sdk/modes'
 import type {TimeSpine} from '../timeline/timeSpine'
 import type {PaneInstrumentId} from './paneInstrument'
-import {instrumentArmControl, occasionStepControl, returnToNowControl, useSpineRevision, type ModeTransportReadouts} from './ModeTransportBar'
+import {occasionStepControl, returnToNowControl, useSpineRevision, type ModeTransportReadouts} from './ModeTransportBar'
 import {Transport} from '../frame/transport/Transport'
 import type {SlotWords, TransportBindings} from '../frame/transport/slots'
 import {PITCH_CLASS_NAMES} from '../live/modes'
@@ -28,7 +28,7 @@ import {useCentralTransport} from './transports/useCentralTransport'
 import {useSittingTransport} from '../inhabitants/ql/devices/qlSitting'
 import {civilDayLabel} from './transports/transportReadings'
 import {civilDateOfDayRef} from '../central/centralVertical'
-import {useAtlasTimeBindings} from '../projections/atlas/places/placesTransport'
+import {useAtlasTimeBindings, useWalkBindings} from '../projections/atlas/places/placesTransport'
 import {useLiveClipPlay} from '../live/clipPlayer'
 import {useOptionalContinuity} from '../continuity/workspace'
 import {usePalaceWalkBindings} from '../projections/atlas/palaces/palaceTransport'; import {useFramePresentation} from '../components/expressions/studio/framePresentation'
@@ -98,11 +98,14 @@ const useLiveTransport: UseModeTransport = ({tempoBpm}) => {
   }
 }
 
-const useTechneTransport: UseModeTransport = ({readouts, timeSpine, focusedInstrument}) => {
+const useTechneTransport: UseModeTransport = ({readouts, timeSpine}) => {
   useSpineRevision(timeSpine)
   // Places is the atlas (T-PLACES-ONTO-ATLAS): Play and Stop press the atlas's one time button (the walk that stands, else the Earth's
   // clock through the shared window), and punch-in and punch-out read the window's edges (projections/atlas/places/placesTransport.ts).
   const atlasTime = useAtlasTimeBindings()
+  // The World writes (O-I #760): Arm lets it, Record keeps a take of the places you visit, Capture keeps the view as a Scene; while a take
+  // records or walks, Play, Stop and Stop n/N are its own, and with a stop of a take selected Play walks the take from it.
+  const walk = useWalkBindings(useOptionalContinuity()?.current.context?.selection)
   // While a palace is entered its walk takes the one button (T-PALACES-ONTO-ATLAS, lane-5 T17): Play walks the palace locus by locus, Stop
   // holds it still, Walk pace and Stop n/8 read its dwell and its locus (projections/atlas/palaces/palaceTransport.ts); outside, none.
   const palaceWalk = usePalaceWalkBindings()
@@ -110,7 +113,7 @@ const useTechneTransport: UseModeTransport = ({readouts, timeSpine, focusedInstr
   // spine's own civil reading stands in (timeline/timeSpine.ts `now().dayRef`).
   const now = readouts?.position, day = civilDayLabel(civilDateOfDayRef(timeSpine?.now()?.dayRef))
   const clock = now && day && /\d/.test(now.value) ? {position: {readout: {value: `${now.value} · ${day}`, title: now.title}}} : {}
-  const bindings: TransportBindings = {...readoutsOf(readouts), ...clock, ...atlasTime, ...palaceWalk, arm: {control: instrumentArmControl(slotMeaning('techne', 'arm'), focusedInstrument)}}
+  const bindings: TransportBindings = {...readoutsOf(readouts), ...clock, ...atlasTime, ...walk, ...palaceWalk}
   if (!timeSpine) return bindings
   const brace = timeSpine.transport().loopClipIds
   const length = slotMeaning('techne', 'loop-length')

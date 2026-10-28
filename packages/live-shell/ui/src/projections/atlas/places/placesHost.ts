@@ -11,6 +11,8 @@
 //   palaces/palaceSession.ts; the field is the shared field's, never reached here), read on the globe's own frame and published only on change.
 // - The Place tool's click (placeTool.ts): while it is armed, the point under a click on the globe is read through the atlas's own
 //   surface maths (globe/zoom.ts surfacePointAt, data/geo.ts latLonFromDir) — the click itself stays the globe's.
+// - A place the World turns to (turnAtlasTo, the one door every "fly to a place" goes through) is a place you visit: while Record runs it is
+//   a stop of the walk (O-I #760, walks/walkSession.ts noteWalkVisit), with the camera the turn frames it at.
 // - The Place tool's owner (placeTool.ts PlaceOwner): the draft is offered to the subject's time-and-place editor
 //   (WikiFactsEditor.tsx offerConstellationRoute); the subject is opened where that editor stands (the Graph and source surface,
 //   `oi:epi-open-knowledge`, panels/knowledge.tsx); after the owner saves, the world is read again and the subject's occurrence is
@@ -30,6 +32,7 @@ import {bindPlaceOwner, notePlaceTool, placeAnswered, placeAt, placeToolState, s
 import {palaceState} from '../palaces/palaceSession';
 import {shownBody} from '../body/worldBody';
 import {systemActs, systemBodies} from '../system/systemStore';
+import {noteWalkVisit} from '../walks/walkSession';
 
 /** The body the globe draws under a click: your world's body while it is shown, else null (the Earth). */
 export function drawnBody(): DrawnBody | null {
@@ -121,17 +124,28 @@ function whenCameraFree(handle: AtlasHandle, fly: () => void, later: (run: () =>
 export function turnAtlasTo(handle: AtlasHandle, place: SuitePlace | undefined, later: (run: () => void, ms: number) => Cancel = lifetimeLater): boolean {
   const turn = turnToPlace(place, handle.model.occ, drawnBody());
   if (!turn) return false;
+  // A place the World turns to is a place you visit: a stop of the walk while Record runs (O-I #760; walks/walkSession.ts).
+  const visited = place as SuitePlace;
+  const camera = turn.kind === 'fly' ? {lat: turn.lat, lon: turn.lon, dist: turn.dist} : {lat: visited.lat ?? 0, lon: visited.lon ?? 0, dist: framingDistance(visited.precision)};
   if (turn.kind === 'select') {
     const index = handle.model.occIndex.get(turn.occId);
     if (index === undefined) return false;
     handle.ctl.navigate({view: {kind: 'manifest', occId: turn.occId, context: {type: 'family', id: handle.model.occ[index].familyId}}, deep: false,
       ...(handle.ctl.state.graph ? {graph: true as const} : {})});
+    noteWalkVisit({placeRef: visited.ref, name: visited.name, camera});
     return true;
   }
+  flyAtlasTo(handle, turn.lat, turn.lon, turn.dist, later);
+  noteWalkVisit({placeRef: visited.ref, name: visited.name, camera});
+  return true;
+}
+
+/** Fly the mounted atlas's camera to a point from wherever it is: from the sky or the Graph it returns to the Earth first, as turnAtlasTo does,
+ * and the flight waits for the sky's descent. `ms`, when given, is the flight's length (a recorded walk's stop arrives in its own time). */
+export function flyAtlasTo(handle: AtlasHandle, lat: number, lon: number, dist: number, later: (run: () => void, ms: number) => Cancel = lifetimeLater, ms?: number): void {
   const {sky, graph} = handle.ctl.state;
   if (sky) handle.ctl.navigate(WORLD); else if (graph) handle.ctl.toggleMode();
-  whenCameraFree(handle, () => handle.engine.rig.flyTo(turn.lat, turn.lon, turn.dist), later);
-  return true;
+  whenCameraFree(handle, () => ms === undefined ? handle.engine.rig.flyTo(lat, lon, dist) : handle.engine.rig.flyTo(lat, lon, dist, {duration: ms / 1000}), later);
 }
 
 /** Select a location of your body: it becomes the shared spatial focus, the place every instrument follows (techne/session.ts setSpatialFocus;

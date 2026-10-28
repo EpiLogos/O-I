@@ -9,6 +9,10 @@
 // read stands as a named, empty track (timeline/techneTrackAdapter.ts). Registered as `techne: worldCut(useTechneTracks)` in
 // modeTracks.ts.
 //
+// The World's recorded walks (O-I #760) are read from the walk's own store (projections/atlas/walks/walkSession.ts, which the atlas host
+// binds and reads through the walk's owner): its takes and kept views as walks (walkRecord.ts recordedWalksOf), and its one write arm while
+// the World is open. A stop of one is stood by the World (the session's play: a take walks on from it, a kept view reopens), never the spine.
+//
 // Its actions go through the owners that exist: a walk stop is stood by the rule the Timeline and the Journey share
 // (timeline/journeyWalks.ts walkStopFocus → timeline/walkFocus.ts applyWalkStopFocus: its occasion on the spine, or its epoch in
 // the atlas), and the Expression it carries is opened through the shell's own door — `journey.openExpression`, the workspace's
@@ -26,6 +30,9 @@ import type {WorldTrackSet} from '../../timeline/worldTrackAdapter'
 import type {WorldTimelineView} from '../../projections/useWorldTemporalReading'
 import type {TracksReading} from './modeTracks'
 import {setReadingShown, setReadingSolo, useReadingShown} from '../../timeline/readingShown'
+import {isRecordedWalk} from '../../timeline/techneTrackAdapter'
+import {walkSession, type WalkSession} from '../../projections/atlas/walks/walkSession'
+import {recordedWalksOf} from '../../projections/atlas/walks/walkRecord'
 
 /** The published reading, with the Expression door the frame hands it. */
 export type TechneTracksReading = TracksReading & {journey?: JourneyPresentation}
@@ -38,10 +45,11 @@ const NO_WORLD = 'The shell publishes no World reading to this pane, so no stop 
 const applyThroughOwner: ApplyFocus = async (focus, selectOccasion) => (await import('../../timeline/walkFocus')).applyWalkStopFocus(focus, selectOccasion)
 
 /** The owners behind the actions. `live` is read at the moment of the launch: the shell remakes its door and the World view on
- * every render, and a launch must not hold the ones a past render saw. */
-export function techneControls(live: () => {view: WorldTimelineView | undefined; door: ((ref: string) => void) | undefined}, apply: ApplyFocus = applyThroughOwner): TechneControls {
+ * every render, and a launch must not hold the ones a past render saw. A recorded walk's stop is the World's to stand (`walks`). */
+export function techneControls(live: () => {view: WorldTimelineView | undefined; door: ((ref: string) => void) | undefined}, apply: ApplyFocus = applyThroughOwner, walks: Pick<WalkSession, 'play'> = walkSession): TechneControls {
   return {
     stand: (walk, stop) => {
+      if (isRecordedWalk(walk)) return Promise.resolve(walks.play(walk.id, walk.stops.indexOf(stop)))
       const view = live().view
       return view ? apply(walkStopFocus(walk, stop, view.source.eventByClipId), view.selectOccasion) : Promise.resolve(NO_WORLD)
     },
@@ -62,5 +70,15 @@ export function useTechneTracks(reading: TracksReading): WorldTrackSet {
   const world = useMemo(() => worldReadingOf(source), [source])
   const shownState = useReadingShown()
   const shown = useMemo(() => ({state: shownState, show: setReadingShown, solo: setReadingSolo}), [shownState])
-  return useMemo(() => projectTechneTracks({world, earth, controls, shown}), [world, earth, controls, shown])
+  const walk = useSyncExternalStore(walkSession.subscribe, walkSession.get, walkSession.get)
+  const recorded = useMemo(() => ({
+    walks: walk.reading.phase === 'read' ? recordedWalksOf(walk.reading.walk) : [],
+    armed: walk.armed,
+    ...(walk.bound ? {arm: (on: boolean) => {
+      walkSession.arm(on)
+      const after = walkSession.get()
+      return after.armed === on ? {ok: true as const, note: after.line ?? ''} : {ok: false as const, error: after.line ?? 'The World did not take the arm.'}
+    }} : {}),
+  }), [walk.reading, walk.armed, walk.bound])
+  return useMemo(() => projectTechneTracks({world, earth, controls, shown, recorded}), [world, earth, controls, shown, recorded])
 }

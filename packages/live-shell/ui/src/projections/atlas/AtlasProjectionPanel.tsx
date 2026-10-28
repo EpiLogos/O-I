@@ -33,6 +33,7 @@ import {notePlaceTool} from './places/placeTool'
 import type {DreamJournalBinding} from './practice/dreamsHost'
 import type {YourChartBinding} from './practice/chartsHost'
 import {bindPalaces, type PalacesBinding} from './palaces/palacesHost'
+import {bindWalks, setWalkWorld, type WalksBinding} from './walks/walksHost'
 import {bindWorldBody, chooseBody, kernelWorldBodyOwner} from './body/worldBody'
 import {bindBodyDraw} from './system/bodyDraw'
 import {followAnchor, pressLocation} from './system/bodyLocations'
@@ -459,6 +460,7 @@ async function attachClaimed(options: AtlasAttachOptions, progress: {teardown: (
   let withdrawReading: () => void = () => {}
   let places: PlacesBinding | null = null
   let palaces: PalacesBinding | null = null
+  let walks: WalksBinding | null = null
   let body: {dispose(): void} | null = null
   let bodyDraw: {dispose(): void} | null = null
   let system: SystemOverlayBinding | null = null
@@ -486,6 +488,7 @@ async function attachClaimed(options: AtlasAttachOptions, progress: {teardown: (
     withdrawReading()
     places?.dispose()
     palaces?.dispose()
+    walks?.dispose()
     body?.dispose()
     bodyDraw?.dispose()
     system?.dispose()
@@ -525,6 +528,9 @@ async function attachClaimed(options: AtlasAttachOptions, progress: {teardown: (
   // at the atlas's palace scale; its owners read and write through this transport, and its presence through the atlas's workspace memory
   // (palaces/palacesHost.ts).
   palaces = bindPalaces({element, transport, storage: atlasMemoryStorage})
+  // The World's walk (O-I #760): Record keeps a take of the places you visit and Capture keeps the view as a Scene, both in the walk's
+  // Expression through its owner over this transport; the read of the walk lays its takes on Technē's ruler (walks/walksHost.ts).
+  walks = bindWalks({handle: mounted, transport})
   // Your world's body (T-WORLDS §5 W3): read from its owner (the root register's space, AIKit's `aikit.world-body/v1`), and the view's choice of
   // which body to look at (body/worldBody.ts); the Earth stays given. It reads and draws nothing: one drawer draws the globe's body, with the look
   // its world's readings give it and the weather of the shared occasion (system/bodyDraw.ts; T-PROCEDURAL-BODY §6 item 3).
@@ -733,6 +739,9 @@ export function AtlasEarthPane() {
   useEffect(() => {
     bindAtlasScope({namespace, workspaceId})
   }, [namespace, workspaceId])
+  // The world the walk belongs to is the book's (walks/walksHost.ts).
+  const world = continuity.current.context?.world
+  useEffect(() => { setWalkWorld(world) }, [world])
 
   useEffect(() => {
     const element = wrapper.current

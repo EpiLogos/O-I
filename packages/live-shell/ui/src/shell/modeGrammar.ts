@@ -500,7 +500,7 @@ const techne: SurfModeGrammar = {
     {id: 'rate', label: 'Carrier', fn: 'the carrier and its round-trip'},
     {id: 'cpu', label: 'Projected', fn: 'share of your World projected into the field'},
   ],
-  waitingNote: 'The lenses\' instruments are declared and waiting (the Quaternal Logic family holds their faces); the walk\'s writers wait for the journey owner.',
+  waitingNote: 'The lenses\' instruments are declared and waiting (the Quaternal Logic family holds their faces); the World writes the walk (Arm, Record, Capture) while it is open.',
 }
 
 /** Revision 5's tables: one record per surf mode. Order is the surf's order. */
