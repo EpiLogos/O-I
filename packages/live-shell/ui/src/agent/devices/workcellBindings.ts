@@ -335,8 +335,9 @@ export interface CarrierMaterial {
   readonly discover?: WorkcellAnswer
   readonly probe?: WorkcellAnswer
   /** The chosen world's run (planRunOf), its `workcell run show`, and the plan of its kept demand; absent: not read here. `why` says why
-   * there is no run, in words. */
-  readonly run?: {readonly ref: string | null; readonly why?: string; readonly show?: WorkcellAnswer; readonly plan?: WorkcellAnswer}
+   * there is no run, in words. `runs` are the runs `workcell worlds` names for that world (Workcell PR 122): where it names several, the
+   * Standing page chooses among them (`planRun`, the hand's choice) and none is assumed. */
+  readonly run?: {readonly ref: string | null; readonly why?: string; readonly runs?: readonly string[] | null; readonly show?: WorkcellAnswer; readonly plan?: WorkcellAnswer}
 }
 
 /** The chosen world's run for the Plan, from `workcell worlds`'s `runs` (EpiLogos/Workcell PR 122): one slug is that run; several wait
@@ -366,6 +367,13 @@ export function carrierValues(answer: WorkcellAnswer, holds: ChainHolds, shows?:
   if (offers) values.offers = JSON.stringify(offers)
   const plan = material.run?.plan?.status === 'answered' ? planOf(material.run.plan.value) : null
   if (plan) values.plan = JSON.stringify(plan)
+  // Several runs named for the chosen world: the chooser's runs, and the hand's choice where it is one of them (planRunOf's own rule).
+  const runs = material.run?.runs
+  if (runs && runs.length > 1) {
+    values.runs = JSON.stringify(runs)
+    const chosen = viewHolds(holds, CARRIER_ID).planRun
+    if (typeof chosen === 'string' && runs.includes(chosen)) values.planRun = chosen
+  }
   if (answer.status !== 'answered') return values
   put(values, 'here', isObj(answer.value) ? str(answer.value.workcell_ref) : undefined)
   const machines = carrierMachines(answer.value, shows, material.probe?.status === 'answered' ? probesByLabel(material.probe.value) : {})
@@ -415,6 +423,9 @@ export function carrierBinding(answer: WorkcellAnswer, holds: ChainHolds, shows?
   const kept = material.run?.show?.status === 'answered' && runDemandOf(material.run.show.value)?.standing === 'kept'
   if (kept && ports.replan && material.run?.plan) delete standing.replan
   else if (material.run) standing.replan = {disabled: whyPlan ? `Plan again: ${whyPlan}` : 'Plan again: the kernel carrier is unavailable here, so Workcell cannot be asked.'}
+  // The runs to choose among stand only where Workcell names several for the chosen world; else why there is no choice.
+  if (!('runs' in values)) standing.runs = {disabled: material.run?.runs?.length === 1 ? 'Workcell names one run for this world: the plan reads it, and there is nothing to choose.'
+    : material.run?.why ?? CARRIER_ABSENT.plan}
   if ('offers' in values) delete standing.offers
   else if (material.discover?.status === 'refused') standing.offers = {disabled: material.discover.error ?? CARRIER_ABSENT.offers}
   else if (material.discover?.status === 'reading') standing.offers = {disabled: 'What the place can provide: Workcell has not answered `workcell discover` yet.'}

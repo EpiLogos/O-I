@@ -92,7 +92,8 @@ test('Ledger · the chosen receipt\'s session\'s tokens and spend are Actuation\
   bind.resetHolds()
   const none = ledger(null)
   for (const key of ['tokensIn', 'tokensOut', 'spend']) assert.equal(none.standing[key].disabled, receipts.LEDGER_USAGE_WHY.noReceipt, key)
-  bind.holdView(receipts.LEDGER_ID, 'task', 41)
+  // REPLACED (#757 part two): the receipt you read is held by its ref, not the horizon's number.
+  bind.holdView(receipts.LEDGER_ID, 'task', 'change:41')
   assert.equal(receipts.ledgerReceiptSession({ground: GROUND, holds: bind.chainHolds()}), 'session:a', 'the session whose usage is read')
   const read = ledger({session: 'session:a', ...answered(ACTUATION.usage_list_session)})
   assert.deepEqual([read.values.tokensIn, read.values.tokensOut, read.values.spend], [30, 3, 0.5])

@@ -15,16 +15,37 @@
 // not reported stays absent: the well says what it lacks in words, the kit draws "—". The sample (defaults) is Central's own
 // palace: its overview Scene and the constellations of its wiki (wikiExpression.ts; Control/agents/wiki/wiki.json child spaces), and
 // one hand-made region that holds the Archetypal-Earth Expression as a door.
+//
+// The guide and the walk (palaceBinding.ts): `warrant` is the guide's words for where the walk stands, the owner's line for the region
+// of the integral whole its step belongs to; `rests` what every room rests on (warranted · owner · free, the whole's journey region:
+// PalaceFloor.tsx). `locus`, `loci` and `office` are the walk locus by locus; Step (`step`, ±1) moves it one locus (palaceSession.ts
+// stepWalk). Rename (`rename`) and Delete (`delete`) act on the bookmark of the room you stand in, sending its name as drawn; the new
+// name is the one in Name (`draft`).
+//
+// The Whole's pages (the M5′ plate's sections, PalacePlate.tsx): Palace (the walk, the board, the bookmarks and the Return), Enter,
+// Integral whole, Compose and Portals.
+//   Enter     `palaces` [{key, name, rooms, line, door, here?}]: the world's palaces; `chosen` the hand's choice; Enter (`enter`) goes
+//             in, Door (`door`) turns the Earth to its door (manual §17.7 "To enter, select the palace on the World and choose Enter").
+//   Whole     `whole` [{key, name, standing, line, here?, entries: [{id, ref, label, note?, refused?, here?}]}]: the integral whole of the
+//             reading, each region with the line that says what it rests on; `wholeRegion` the region shown; Open (`open`, an entry's
+//             id) opens the object in its own instrument (§17.7 "Open an object, and it opens in its own instrument").
+//   Compose   `regions` [{name, holds?, ref?}] the draft's regions in path order, `removed` those staged for removal; `eligible` [{ref,
+//             title, revision, composed}] the kernel's Expressions; `revision` and `basedOn` the owner's revision and the draft's; `busy`
+//             while a Save runs. The hand holds `regionName` and `regionPick`. Acts: region (+ Region), add (an Expression's ref),
+//             earlier, later, empty, remove (a region's name), save, revert.
+//   Portals   `portals` [{id, name, kind: ground · leave · expression · place, note?}]: the doors out of the room you stand in; `places`
+//             how many places that room has on the Earth; Go (`portal`, a door's id) walks through it (§17.7 "Walk through a portal
+//             to leave the Palace").
 import type {ReactNode} from 'react'
-import {Action, Band, Chooser, Dial, Display, Folded, Handle, Panel, Radio, Readout, Section, TextField, Tile, Toggle, type LightState, type Standing} from '../../sdk/panel'
+import {Action, Band, Chooser, Dial, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, TextField, Tile, Toggle, type LightState, type RowItem, type Standing, type Tone} from '../../sdk/panel'
 import {NONE, boolOf, clampTo, has, json, numOf, shown, st, strOf, type DesignedDevice, type Value, type ViewProps} from './design'
 
 type V = ViewProps['v']
 type SetFn = ViewProps['set']
-type Kind = 'overview' | 'constellation' | 'region'
+type Kind = 'overview' | 'constellation' | 'region' | 'scene'
 type Pt = {x: number; y: number}
 
-const KINDS: readonly Kind[] = ['overview', 'constellation', 'region']
+const KINDS: readonly Kind[] = ['overview', 'constellation', 'region', 'scene']
 
 interface Room {
   readonly key: string; readonly name: string; readonly short: string; readonly kind?: Kind
@@ -35,13 +56,18 @@ interface Room {
   readonly private?: boolean
 }
 
-/** What each kind of room is, in the guide's words (PalaceFloor.tsx ROOM_WORDS), and the form every room here rests on (whole.ts regionArchaeology). */
+/** What each kind of room is, in the guide's words (PalaceFloor.tsx ROOM_WORDS). */
 const WORDS: Record<Kind, string> = {
   overview: "The register's overview: the wholes of its constellations stand here.",
   constellation: 'A constellation of the register: one of its curated sections, holding the subjects it gathers.',
   region: 'A region composed by hand: it holds one Expression, a door to another palace.',
+  scene: "A Scene of the palace's Expression.",
 }
-const FORM = 'free mnemonic composition: no warranted QL structure stands behind this form'
+/** What a room rests on, in a room's corner (whole.ts PalaceStanding): warranted QL structure, the owner's own composition, or free form. */
+const RESTS: Readonly<Record<string, string>> = {warranted: 'warranted', owner: "owner's composition", free: 'free form'}
+const restsWord = (v: V): string | undefined => { const r = strOf(v, 'rests'); return r === undefined ? undefined : RESTS[r] ?? r }
+/** A room's corner line: its kind, and what it rests on where the owner says. */
+const roomLine = (v: V, room: Room | undefined) => [room?.kind ?? NONE, restsWord(v)].filter(Boolean).join(' · ')
 const RETURN_WORDS: Record<string, string> = {none: 'none', routed: 'proposed', unrouted: 'no route', accepted: 'sent', refused: 'refused'}
 /** The same states in a widget's big readout, four letters at most. */
 const RETURN_SHORT: Record<string, string> = {none: '—', routed: 'wait', unrouted: 'void', accepted: 'sent', refused: '—'}
@@ -232,7 +258,7 @@ function Plan({p, w, h, handles, text, names}: {p: ViewProps; w: number; h: numb
     {text && (focus !== undefined && k !== undefined
       ? <text x={6} y={h - 15} className="dp-ink">{`${k + 1}  ${list[focus]?.short ?? NONE}`}</text>
       : <text x={6} y={h - 15} className="dp-ink-dim">{NO_ROOM}</text>)}
-    {text && boolOf(v, 'guide') === true && focus !== undefined && <text x={6} y={h - 5} className="dp-axis">{`${list[focus]?.kind ?? NONE} · free form`}</text>}
+    {text && boolOf(v, 'guide') === true && focus !== undefined && <text x={6} y={h - 5} className="dp-axis">{roomLine(v, list[focus])}</text>}
     {setAt && handles >= 1 && d1 && <Handle n={1} shape="ring" x={clampTo(6, w - 6, f.X(d1.x))} y={clampTo(6, h - bottom, f.Y(d1.y))} label="You" does="Drag to a room: you stand in it."
       onDrag={(x, y) => { const room = nearest(x, y); if (room !== undefined) enter(v, setAt, room) }} onReset={() => setAt('at', 0)} />}
     {handles === 2 && floor === 'board' && focus !== undefined && c2 && <Handle n={2} x={clampTo(6, w - 6, f.X(c2.x + RW / 2))} y={clampTo(6, h - bottom, f.Y(c2.y + RH / 2))} label="Room" does="Drag: place the room on the board. The position is presentation."
@@ -312,7 +338,7 @@ function Floor({v}: {v: V}) {
           {gone && <text x={x + rw - u(10)} y={y + u(24)} textAnchor="end" style={ink(8.5, 'var(--stall)')}>gone</text>}
         </g>}
         {r.kind === 'region' && !r.holds && !under && floor === 'board' && <text x={x + u(10)} y={y + u(49)} style={ink(9, 'var(--text-faint)')}>no Expression yet</text>}
-        {!under && floor === 'board' && r.more === 0 && <text x={x + u(10)} y={y + rh - u(8)} style={ink(8, 'var(--text-faint)')}>{`${r.kind ?? NONE} · free form`}</text>}
+        {!under && floor === 'board' && r.more === 0 && <text x={x + u(10)} y={y + rh - u(8)} style={ink(8, 'var(--text-faint)')}>{roomLine(v, r)}</text>}
         {mark && !under && <g data-i={`Bookmark · ${mark.name}|The walk and the board are kept here.`}><path d={`M${x + rw - 11} ${y}L${x + rw - 2} ${y}L${x + rw - 2} ${y + 13}L${x + rw - 6.5} ${y + 9}L${x + rw - 11} ${y + 13}Z`} style={{fill: 'var(--sel)'}} /></g>}
       </g>
     })}
@@ -326,7 +352,7 @@ function Floor({v}: {v: V}) {
     {boolOf(v, 'guide') === true && (room
       ? <g>
         <text x={14} y={380} style={ink(10.5, 'var(--text)')}>{`${room.name} — ${kindWords(room)}`}</text>
-        <text x={14} y={396} style={ink(10, 'var(--text-dim)')}>{`Its form: ${FORM}.`}</text>
+        <text x={14} y={396} style={ink(10, 'var(--text-dim)')}>{has(v, 'warrant') ? clip(`Its form: ${strOf(v, 'warrant')}.`, 128) : 'No reading of what it rests on.'}</text>
       </g>
       : <text x={14} y={380} style={ink(10.5, 'var(--text-dim)')}>{NO_ROOM}</text>)}
   </g>
@@ -376,6 +402,15 @@ const walkTo = (p: ViewProps, k: number) => { const n = order(p.v).length; if (n
 /** Back and Next step from where you stand: with no reading of that, they cannot. */
 const stepWhy = (v: V) => walkWhy(v) ?? (at(v) === undefined ? NO_ROOM : undefined)
 const start = (p: ViewProps) => <Action {...stand(p, 'at', walkWhy(p.v))} label="Start" does="Goes to the first room of the path." onPress={() => p.set('at', 0)} />
+/** The walk locus by locus, as `k/n · office`, or undefined when the owner has not said. */
+const locusText = (v: V): string | undefined => {
+  const k = numOf(v, 'locus'), n = numOf(v, 'loci'), office = strOf(v, 'office')
+  return k === undefined || n === undefined ? undefined : `${k + 1}/${n}${office ? ` · ${office}` : ''}`
+}
+const locusReadout = (p: ViewProps) => <Readout label="locus" does="The locus the walk stands on, of all the loci of the integral whole, and its office." value={locusText(p.v)} />
+const locusWhy = (v: V) => (numOf(v, 'loci') === 0 ? 'Nothing stands in the integral whole: the walk has no locus.' : undefined)
+const locusBack = (p: ViewProps) => <Action {...stand(p, 'step', locusWhy(p.v))} label="‹ Locus" does="Steps the walk back one locus. It wraps at the start." onPress={() => p.set('step', -1)} />
+const locusNext = (p: ViewProps) => <Action {...stand(p, 'step', locusWhy(p.v))} label="Locus ›" does="Steps the walk on one locus. It wraps at the end." onPress={() => p.set('step', 1)} />
 const back = (p: ViewProps) => <Action {...stand(p, 'at', stepWhy(p.v))} label="‹ Back" does="Goes to the room before this one. The walk wraps at the start." onPress={() => walkTo(p, (at(p.v) ?? 0) - 1)} />
 const next = (p: ViewProps) => <Action {...stand(p, 'at', stepWhy(p.v))} label="Next ›" does="Goes to the room after this one. The walk wraps at the end." onPress={() => walkTo(p, (at(p.v) ?? 0) + 1)} />
 
@@ -391,6 +426,19 @@ const keepMark = (p: ViewProps) => {
   const name = (strOf(p.v, 'draft') ?? '').trim(), mk = marks(p.v)
   const why = here(p.v) === undefined ? NO_ROOM : mk === undefined ? 'No reading of the bookmarks.' : !name ? 'Type a name first.' : markHere(p.v) ? 'This room has a bookmark.' : undefined
   return <Action {...stand(p, 'keep', why)} label="Keep" does="Saves the room you stand in under the name. One bookmark for each room." onPress={() => p.set('keep', true)} />
+}
+
+/** Rename and Delete act on the bookmark of the room you stand in: why they cannot, or undefined. */
+const markWhy = (v: V) => (marks(v) === undefined ? 'No reading of the bookmarks.' : !markHere(v) ? 'No bookmark stands in this room. Choose one, or Keep one first.' : undefined)
+const renameMark = (p: ViewProps) => {
+  const name = (strOf(p.v, 'draft') ?? '').trim(), mark = markHere(p.v)
+  return <Action {...stand(p, 'rename', markWhy(p.v) ?? (!name ? 'Type the new name in Name first.' : undefined))} label="Rename"
+    does="Gives the bookmark of the room you stand in the name in Name." onPress={mark ? () => p.set('rename', mark.name) : undefined} />
+}
+const deleteMark = (p: ViewProps) => {
+  const mark = markHere(p.v)
+  return <Action {...stand(p, 'delete', markWhy(p.v))} label="Delete" does="Removes the bookmark of the room you stand in. The room and the walk stay."
+    onPress={mark ? () => p.set('delete', mark.name) : undefined} />
 }
 
 const propose = (p: ViewProps, label = 'Propose') => {
@@ -411,6 +459,148 @@ const refuse = (p: ViewProps) => {
 const leave = (p: ViewProps) => <Action {...st(p, 'leave')} label="Leave" does="Leaves the palace for the Earth." onPress={() => p.set('leave', true)} />
 
 const head = (p: ViewProps) => ({light: light(p), onFold: p.nav.fold, onFull: p.nav.full})
+
+// ---------------------------------------------------------------- the Whole's pages: Enter, Integral whole, Compose, Portals
+
+const rec = (x: unknown): x is Record<string, unknown> => !!x && typeof x === 'object' && !Array.isArray(x)
+const text_ = (x: unknown): string | undefined => (typeof x === 'string' && x.length > 0 ? x : undefined)
+/** A JSON list of the owner's, its rows read safely; undefined when the owner has not reported it. */
+function listOf<T>(v: V, key: string, row: (x: Record<string, unknown>) => T | undefined): T[] | undefined {
+  const raw = json<unknown>(v, key, undefined)
+  return Array.isArray(raw) ? raw.flatMap(x => { const r = rec(x) ? row(x) : undefined; return r === undefined ? [] : [r] }) : undefined
+}
+/** Why a list is not drawn: the host's reason for its key, else that it has not come. */
+const whyOf = (p: ViewProps, key: string, what: string) => st(p, key).disabled ?? `No reading of ${what}.`
+
+interface PalaceRow {readonly key: string; readonly name: string; readonly rooms?: number; readonly line?: string; readonly door: boolean; readonly here: boolean}
+const palacesOf = (v: V) => listOf(v, 'palaces', (x): PalaceRow | undefined => (text_(x.key) && text_(x.name)
+  ? {key: x.key as string, name: x.name as string, rooms: typeof x.rooms === 'number' ? x.rooms : undefined, line: text_(x.line), door: x.door === true, here: x.here === true} : undefined))
+
+function EnterBands({p}: {p: ViewProps}) {
+  const v = p.v, palaces = palacesOf(v), chosen = strOf(v, 'chosen'), row = palaces?.find(x => x.key === chosen)
+  const items: RowItem[] = (palaces ?? []).map(x => ({id: x.key, name: x.name, light: x.door ? 'lit' : 'dark', tone: x.here ? 'value' : undefined,
+    note: x.here ? 'here' : x.rooms === undefined ? undefined : `${x.rooms} rooms`, why: x.door ? undefined : x.line, does: `${x.name} — ${x.line ?? NONE}. Press to choose it.`}))
+  return <Band>
+    <Section label="Palaces of your world" grow>
+      {palaces ? <Rows does="The palaces of your world: a register's Expression each. Lit: it has a door on the Earth. Press one to choose it." items={items} size={6}
+        selected={chosen} onSelect={id => p.set('chosen', id)} /> : <p className="ref-doc-lead">{whyOf(p, 'palaces', 'the palaces of your world')}</p>}
+      {palaces && palaces.length === 0 && <p className="ref-doc-lead">No register of your world holds a palace yet.</p>}
+    </Section>
+    <Section label="Enter" width={150}>
+      <Readout label="palace" does="The palace you chose." value={row?.name} />
+      <Readout label="rooms" does="How many rooms it has." value={row?.rooms} />
+      <Action {...stand(p, 'enter', row ? undefined : 'Choose a palace first.')} label="Enter" does={row ? `Enter ${row.name}: ${row.line ?? NONE}.` : 'Enters the palace you chose.'}
+        onPress={row ? () => p.set('enter', row.key) : undefined} />
+      <Action {...stand(p, 'door', !row ? 'Choose a palace first.' : !row.door ? `${row.name} has no door on the Earth: no subject it holds declares a place.` : undefined)} label="Door"
+        does="Turns the Earth to the palace's door." onPress={row ? () => p.set('door', row.key) : undefined} />
+    </Section>
+  </Band>
+}
+
+interface WholeEntry {readonly id: string; readonly ref: string; readonly label?: string; readonly note?: string; readonly refused?: string; readonly here: boolean}
+interface WholeRegion {readonly key: string; readonly name: string; readonly standing?: string; readonly line?: string; readonly here: boolean; readonly entries: readonly WholeEntry[]}
+const wholeOf = (v: V) => listOf(v, 'whole', (x): WholeRegion | undefined => (text_(x.key) && text_(x.name) ? {key: x.key as string, name: x.name as string, standing: text_(x.standing),
+  line: text_(x.line), here: x.here === true, entries: (Array.isArray(x.entries) ? x.entries : []).flatMap((e): WholeEntry[] => (rec(e) && text_(e.id) && text_(e.ref)
+    ? [{id: e.id as string, ref: e.ref as string, label: text_(e.label), note: text_(e.note), refused: text_(e.refused), here: e.here === true}] : []))} : undefined))
+const standingTone = (s: string | undefined): Tone | undefined => (s === 'warranted' ? 'green' : s === 'owner' ? 'value' : undefined)
+
+function WholeBands({p}: {p: ViewProps}) {
+  const v = p.v, regions = wholeOf(v)
+  if (!regions) return <Band><Section label="Integral whole" grow><p className="ref-doc-lead">{whyOf(p, 'whole', 'the integral whole')}</p></Section></Band>
+  const picked = strOf(v, 'wholeRegion'), shown = regions.find(r => r.key === picked) ?? regions.find(r => r.here) ?? regions[0]
+  const items: RowItem[] = regions.map(r => ({id: r.key, name: r.name, light: 'lit', tone: standingTone(r.standing), note: `${r.entries.length} · ${r.standing ? RESTS[r.standing] ?? r.standing : NONE}`,
+    does: `${r.line ?? 'No reading of what it rests on.'}${r.here ? ' The walk stands here.' : ''} Press to show its entries.`}))
+  const entries: RowItem[] = (shown?.entries ?? []).map(e => ({id: e.id, name: e.ref, light: e.refused ? 'dark' : 'lit', tone: e.here ? 'value' : undefined, note: e.label,
+    why: e.refused, does: `${e.ref}${e.note ? ` · ${e.note}` : ''} — press to open it in its own instrument.`}))
+  return <Band>
+    <Section label="Regions" width={206}>
+      <Rows does="The integral whole of the palace's reading, one row a region, in M′ order: what each rests on, and how many entries it holds." items={items} size={7}
+        selected={shown?.key} onSelect={id => p.set('wholeRegion', id)} />
+    </Section>
+    <Section label={shown ? shown.name : 'Entries'} grow>
+      {shown?.line && <p className="ref-doc-lead">{shown.line}</p>}
+      {shown && (entries.length ? <Rows does="The region's entries. Press one to open it in its own instrument, at its own revision. Dark: no instrument opens it here." items={entries} size={6}
+        onSelect={writable(p, 'open') ? id => p.set('open', id) : undefined} /> : <p className="ref-doc-lead">This region holds no entry.</p>)}
+    </Section>
+  </Band>
+}
+
+interface Draft {readonly name: string; readonly holds?: string; readonly ref?: string}
+interface Eligible {readonly ref: string; readonly title: string; readonly revision?: number; readonly composed: boolean}
+const draftOf = (v: V) => listOf(v, 'regions', (x): Draft | undefined => (text_(x.name) ? {name: x.name as string, holds: text_(x.holds), ref: text_(x.ref)} : undefined))
+const eligibleOf = (v: V) => listOf(v, 'eligible', (x): Eligible | undefined => (text_(x.ref) && text_(x.title)
+  ? {ref: x.ref as string, title: x.title as string, revision: typeof x.revision === 'number' ? x.revision : undefined, composed: x.composed === true} : undefined))
+
+function ComposeBands({p}: {p: ViewProps}) {
+  const v = p.v, drafts = draftOf(v), eligible = eligibleOf(v), pick = strOf(v, 'regionPick'), at = drafts?.findIndex(d => d.name === pick) ?? -1
+  const picked = at >= 0 ? drafts![at] : undefined, busy = boolOf(v, 'busy') === true
+  const revision = numOf(v, 'revision'), basedOn = numOf(v, 'basedOn'), behind = revision !== undefined && basedOn !== undefined && revision > basedOn
+  const name = (strOf(v, 'regionName') ?? '').trim()
+  const regionWhy = (move?: number) => (busy ? 'A Save is running.' : !picked ? 'Choose a region first.'
+    : move === -1 && at === 0 ? 'It stands first on the path.' : move === 1 && at === drafts!.length - 1 ? 'It stands last on the path.' : undefined)
+  const open = drafts?.find(d => !d.holds)
+  return <><Band>
+    <Section label="Regions" width={206}>
+      {drafts ? <Rows does="The regions of the draft, in the order of the path. Press one to choose it." items={drafts.map(d => ({id: d.name, name: d.name, light: d.holds ? 'lit' : 'dark',
+        note: d.holds ? `→ ${d.holds}` : 'empty', does: d.holds ? `${d.name} holds ${d.holds}.` : `${d.name} holds no Expression yet.`}))} size={5} selected={pick}
+        onSelect={id => p.set('regionPick', id)} /> : <p className="ref-doc-lead">{whyOf(p, 'regions', 'the draft')}</p>}
+      {drafts && drafts.length === 0 && <p className="ref-doc-lead">The draft has no region. Name one and press + Region.</p>}
+    </Section>
+    <Section label="Region" cols={2}>
+      {span(2, <TextField {...st(p, 'regionName')} label="Name" does="Names a new region." value={strOf(v, 'regionName') ?? ''} placeholder="New region" onChange={x => p.set('regionName', x)} />)}
+      {span(2, <Action {...stand(p, 'region', busy ? 'A Save is running.' : !name ? 'Name the region first.' : drafts?.some(d => d.name === name) ? 'A region of that name stands already.' : undefined)}
+        label="+ Region" does="Adds a region to the path. It is written on Save." onPress={() => p.set('region', true)} />)}
+      <Action {...stand(p, 'earlier', regionWhy(-1))} label="Earlier" does="Moves the region one place earlier on the path." onPress={picked ? () => p.set('earlier', picked.name) : undefined} />
+      <Action {...stand(p, 'later', regionWhy(1))} label="Later" does="Moves the region one place later on the path." onPress={picked ? () => p.set('later', picked.name) : undefined} />
+      <Action {...stand(p, 'empty', regionWhy() ?? (picked && !picked.holds ? 'It holds no Expression.' : undefined))} label="Empty" does="Takes its Expression out of the region."
+        onPress={picked ? () => p.set('empty', picked.name) : undefined} />
+      <Action {...stand(p, 'remove', regionWhy())} label="Remove" does="Removes the region. It is removed on Save." onPress={picked ? () => p.set('remove', picked.name) : undefined} />
+    </Section>
+    <Section label="Expressions" grow>
+      {eligible ? <Rows does={`The kernel's other Expressions. Press one to put it ${open ? `into ${open.name}` : 'in a region of its own'}: a region holds one.`}
+        items={eligible.map(e => ({id: e.ref, name: e.title, light: e.composed ? 'lit' : 'dark', note: e.composed ? 'composed' : e.revision === undefined ? undefined : `r${e.revision}`,
+          does: `${e.ref}${e.revision === undefined ? '' : ` · revision ${e.revision}`}`}))} size={5}
+        onSelect={writable(p, 'add') && !busy ? id => { if (!eligible.find(e => e.ref === id)?.composed) p.set('add', id) } : undefined} />
+        : <p className="ref-doc-lead">{whyOf(p, 'eligible', "the kernel's Expressions")}</p>}
+    </Section>
+  </Band>
+  <Band>
+    <Section label="Save" grow cols={4}>
+      <Readout label="revision" does="The revision of the palace's Expression the owner discloses." value={revision} />
+      <Readout label="draft at" does="The revision the draft began at. Save is one edit gated on it." value={basedOn} tone={behind ? 'stall' : undefined} />
+      <Readout label="removing" does="Regions removed from the draft, written on Save." value={numOf(v, 'removed')} />
+      <Readout label="saving" does="Whether a Save runs now." value={boolOf(v, 'busy') === undefined ? undefined : busy ? 'yes' : 'no'} tone={busy ? 'accent' : undefined} />
+      {span(2, <Action {...stand(p, 'save', busy ? 'A Save is running.' : behind ? 'Revert first: the owner moved on.' : undefined)} label="Save composition"
+        does="One edit of the palace's Expression, gated on the revision the draft began at." onPress={() => p.set('save', true)} />)}
+      {span(2, <Action {...stand(p, 'revert', busy ? 'A Save is running.' : undefined)} label="Revert" does="Takes the owner's current composition. The draft is dropped." onPress={() => p.set('revert', true)} />)}
+    </Section>
+  </Band></>
+}
+
+interface Portal {readonly id: string; readonly name: string; readonly kind?: string; readonly note?: string}
+const portalsOf = (v: V) => listOf(v, 'portals', (x): Portal | undefined => (text_(x.id) && text_(x.name) ? {id: x.id as string, name: x.name as string, kind: text_(x.kind), note: text_(x.note)} : undefined))
+const PORTAL_MARK: Readonly<Record<string, string>> = {ground: '↩', leave: '↩', expression: '→', place: '→'}
+
+function PortalsBands({p}: {p: ViewProps}) {
+  const v = p.v, portals = portalsOf(v)
+  return <Band>
+    <Section label="Doors out" grow>
+      {portals ? <Rows does="The doors out of the room you stand in: the way back to the Earth, each region's Expression, the places the room stands at. Press one to walk through it."
+        items={portals.map(x => ({id: x.id, name: `${PORTAL_MARK[x.kind ?? ''] ?? '→'} ${x.name}`, light: 'lit', tone: x.kind === 'place' ? 'value' : undefined, note: x.kind, does: x.note}))} size={6}
+        onSelect={writable(p, 'portal') ? id => p.set('portal', id) : undefined} /> : <p className="ref-doc-lead">{whyOf(p, 'portals', 'the doors out')}</p>}
+    </Section>
+    <Section label="Here" width={120}>
+      <Readout label="room" does="The room you stand in." value={roomShort(v) === NONE ? undefined : roomShort(v)} />
+      <Readout label="places" does="The places on the Earth the room you stand in stands at: each is a door out." value={numOf(v, 'places')} />
+      <Readout label="doors" does="The doors out, the Earth among them." value={portals?.length} />
+      {leave(p)}
+    </Section>
+  </Band>
+}
+
+const PAGE_IDS = ['palace', 'enter', 'whole', 'compose', 'portals'] as const
+const pageOf = (p: ViewProps): (typeof PAGE_IDS)[number] => ((PAGE_IDS as readonly string[]).includes(p.page) ? p.page as (typeof PAGE_IDS)[number] : 'palace')
+const PAGES = [{id: 'palace', label: 'Palace'}, {id: 'enter', label: 'Enter'}, {id: 'whole', label: 'Whole'}, {id: 'compose', label: 'Compose'}, {id: 'portals', label: 'Portals'}]
 /** The Return's state in the readout's words, or undefined when the owner has not reported it. */
 const returnWord = (v: V, words: Record<string, string>) => { const state = strOf(v, 'proposal'); return state === undefined ? undefined : words[state] }
 /** The room you stand in, by its short name, or "—" when the owner has not said. */
@@ -422,6 +612,7 @@ export const design: DesignedDevice = {
   id: 'techne:palace',
   title: 'Palace',
   kind: 'instrument',
+  firstPage: 'palace',
   defaults: {
     light: 'lit', palace: 'Central',
     // The rooms in the owner's Scene order: the overview, the constellations (child spaces of the wiki), then the hand-made region.
@@ -440,13 +631,59 @@ export const design: DesignedDevice = {
     x0: 100, y0: 100, x1: 400, y1: 100, x2: 700, y2: 100, x3: 400, y3: 400, x4: 100, y4: 400, x5: 700, y5: 400,
     // Readings: what the owner reports, never set from here. The wiki reading names no governed-write route (wikiReadingProvider.ts:140).
     route: '', proposal: 'none', gone: false,
+    // The walk locus by locus and the guide's words, in the shapes of the owner's proving reading (journey/proving-reading.ts through
+    // whole.ts palaceWalkSteps and palaceStanding): 23 loci, the first in the ground region.
+    locus: 0, loci: 23, office: 'Project / ground', rests: 'free',
+    warrant: 'free mnemonic composition over the reading\'s own refs — no warranted QL structure stands behind this form',
+    // Enter: the world's palaces (palacesModel.ts palaceLocationRows), the one you stand in marked.
+    palaces: JSON.stringify([
+      {key: 'central', name: 'Central', rooms: 6, line: '6 rooms, none placed on the Earth: no subject it holds declares a place', door: false, here: true},
+      {key: 'o-i', name: 'O-I', rooms: 5, line: 'door at Royal Observatory, Greenwich (Sky) · 1 of 5 rooms on the Earth', door: true},
+      {key: 'quaternal-logic', name: 'Quaternal-Logic', rooms: 0, line: 'its Expression is opening', door: false},
+    ]),
+    chosen: 'o-i',
+    // The integral whole (whole.ts palaceWholeView over the proving reading), each region's line its own.
+    whole: JSON.stringify([
+      {key: 'ground', name: 'M′0 · Project / ground', standing: 'free', here: true, line: 'free mnemonic composition over the reading\'s own refs — no warranted QL structure stands behind this form',
+        entries: [{id: 'ground:0', ref: 'ql.techne:whole:fixture:l5-techne-contract-ground', label: 'bounded whole', here: true},
+          {id: 'ground:1', ref: 'central:source:control:root:Work/Quaternal-Logic/docs/L5-TECHNE-DUAL-READING-LOCK.md', label: 'member'}]},
+      {key: 'canvas', name: 'M′1 · Canvas / constellation', standing: 'warranted', line: 'stands in the warranted QL reading (canonical; ql:shape:1.0.0:6x6:direct-conjugate)',
+        entries: [{id: 'canvas:0', ref: 'ql.techne:constellation:fixture:l5-dual-reading', label: 'constellation', note: 'canonical'}, {id: 'canvas:1', ref: 'ql:shape:1.0.0:6x6:direct-conjugate', label: 'shape', note: 'canonical'}]},
+      {key: 'journey', name: 'M′3 · Journey / scenes', standing: 'free', line: 'free mnemonic composition over the reading\'s own refs — no warranted QL structure stands behind this form',
+        entries: [{id: 'journey:0', ref: 'oi:expression:l5-dual-reading/scene/ground', label: 'scene'}, {id: 'journey:1', ref: 'oi:expression:l5-dual-reading/scene/crossing', label: 'scene'}]},
+      {key: 'expression', name: 'M′5 · Expression (3:3)', standing: 'owner', line: 'composes the Expression owner\'s own composition ref; arrangement here is presentation state',
+        entries: [{id: 'expression:0', ref: 'oi:expression:l5-dual-reading', label: 'expression', note: 'composition oi:composition:l5-dual-reading-integral'}]},
+      {key: 'sources', name: 'close · Sources / provenance', standing: 'free', line: 'free mnemonic composition over the reading\'s own refs — no warranted QL structure stands behind this form',
+        entries: [{id: 'sources:0', ref: 'central:source:control:root:Work/Quaternal-Logic/docs/L5-TECHNE-DUAL-READING-LOCK.md', label: 'source', note: 'central · architecture-contract',
+          refused: 'a source has no instrument surface here: its depth stays in the palace'}]},
+    ]),
+    // Compose: the draft (the Earth region of the rooms above) and the kernel's other Expressions.
+    regions: JSON.stringify([{name: 'Earth', holds: 'Archetypal-Earth — wiki local whole', ref: 'expression:techne-m0.archetypal-earth'}]), removed: 0,
+    eligible: JSON.stringify([{ref: 'expression:techne-m0.archetypal-earth', title: 'Archetypal-Earth — wiki local whole', revision: 3, composed: true},
+      {ref: 'expression:techne-m0.o-i', title: 'O-I — wiki local whole', revision: 2, composed: false}]),
+    revision: 7, basedOn: 7, busy: false, regionName: '', regionPick: 'Earth',
+    // Portals: the way back to the Earth, then the Earth region's Expression.
+    portals: JSON.stringify([{id: 'ground', name: 'the Earth', kind: 'ground', note: 'Return to the M0′ ground: the Earth.'},
+      {id: 'room:earth', name: 'Archetypal-Earth — wiki local whole', kind: 'expression', note: 'Earth: its one contained Expression.'}]),
+    places: 0,
   },
   fixtures: {
     'The Central palace': {},
     'A routed Return': {route: 'aikit.wiki.stage', proposal: 'routed', at: 3},
     'The fixed floor': {floor: 'loci', at: 2, gone: true},
+    // Outside every palace: the Enter page lists the world's palaces; nothing of a palace is read.
+    'Outside, choosing a palace': {light: 'dark', ...Object.fromEntries(['palace', 'rooms', 'floor', 'path', 'guide', 'snap', 'lines', 'at', 'bookmarks', 'route', 'proposal', 'gone',
+      'locus', 'loci', 'office', 'rests', 'warrant', 'whole', 'regions', 'removed', 'eligible', 'revision', 'basedOn', 'busy', 'portals', 'places', 'regionPick'].map(k => [k, undefined])),
+      palaces: JSON.stringify([{key: 'central', name: 'Central', rooms: 6, line: '6 rooms, none placed on the Earth: no subject it holds declares a place', door: false},
+        {key: 'o-i', name: 'O-I', rooms: 5, line: 'door at Royal Observatory, Greenwich (Sky) · 1 of 5 rooms on the Earth', door: true}])},
+    // A Scene room: a Scene of the palace's Expression that is neither its overview, a constellation nor a hand-made region.
+    'A Scene room': {rooms: JSON.stringify([
+      {key: 'overview', name: 'Central — wiki overview', short: 'Overview', kind: 'overview', members: ['User identity'], more: 0},
+      {key: 'notes', name: 'Field notes', short: 'Notes', kind: 'scene', members: ['A place provider reconciles like the floor'], more: 0}]), at: 1, bookmarks: ''},
+    'A Save running': {busy: true, regionPick: 'Earth'},
     'No readings': Object.fromEntries(['light', 'palace', 'rooms', 'floor', 'path', 'order', 'guide', 'snap', 'lines', 'audience', 'at', 'draft', 'bookmarks',
-      'x0', 'y0', 'x1', 'y1', 'x2', 'y2', 'x3', 'y3', 'x4', 'y4', 'x5', 'y5', 'route', 'proposal', 'gone'].map(k => [k, undefined])),
+      'x0', 'y0', 'x1', 'y1', 'x2', 'y2', 'x3', 'y3', 'x4', 'y4', 'x5', 'y5', 'route', 'proposal', 'gone', 'locus', 'loci', 'office', 'rests', 'warrant', 'palaces', 'chosen',
+      'whole', 'wholeRegion', 'regions', 'removed', 'eligible', 'revision', 'basedOn', 'busy', 'regionName', 'regionPick', 'portals', 'places'].map(k => [k, undefined])),
   },
 
   folded: p => <Folded title="Palace" light={light(p)} readings={[shown(p.v, 'palace'), roomShort(p.v)]} onUnfold={p.nav.unfold} />,
@@ -458,13 +695,17 @@ export const design: DesignedDevice = {
     </Section>
   </Panel>,
 
-  whole: p => <Panel title="Palace" view="whole" {...head(p)}>
+  whole: p => {
+    const page = pageOf(p)
+    return <Panel title="Palace" view="whole" {...head(p)} pages={PAGES} page={page} onPage={p.setPage}>
+    {page === 'enter' ? <EnterBands p={p} /> : page === 'whole' ? <WholeBands p={p} /> : page === 'compose' ? <ComposeBands p={p} /> : page === 'portals' ? <PortalsBands p={p} /> : <>
     <Band>
       <Section width={206}><PlanWell p={p} w={194} h={146} handles={2} names /></Section>
       <Section label="Walk" cols={3} grow>
         {span(3, roomChooser(p))}
         {pathRadio(p)}{orderRadio(p)}{guideToggle(p)}
         {start(p)}{back(p)}{next(p)}
+        {locusReadout(p)}{locusBack(p)}{locusNext(p)}
       </Section>
     </Band>
     <Band>
@@ -474,6 +715,7 @@ export const design: DesignedDevice = {
       <Section label="Bookmarks" cols={2}>
         {span(2, bookmarkChooser(p))}{span(2, markName(p))}{keepMark(p)}
         <Readout label="kept" does="The positions you saved." value={marks(p.v)?.length} />
+        {renameMark(p)}{deleteMark(p)}
       </Section>
       <Section label="Return" cols={3} grow>
         {span(3, <Readout label="route" does="Where the reading sends a Return. The first governed route it names." value={strOf(p.v, 'route') || undefined} />)}
@@ -481,8 +723,9 @@ export const design: DesignedDevice = {
         <Readout label="return" does="The state of the Return." value={returnWord(p.v, RETURN_WORDS)} tone={strOf(p.v, 'proposal') === 'unrouted' ? 'stall' : undefined} />
         {leave(p)}
       </Section>
-    </Band>
-  </Panel>,
+    </Band></>}
+  </Panel>
+  },
 
   full: p => <div className="ref-pane-body ref-pane-body--dark">
     <svg viewBox={`0 0 ${PANE.w} ${PANE.h}`} width="100%" height="100%" preserveAspectRatio="xMidYMid meet" className="ref-pane-svg" aria-label="The palace">

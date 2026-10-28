@@ -299,6 +299,7 @@ var QlPlural = (() => {
     relationsOf: () => relationsOf,
     requestDigest: () => requestDigest,
     sha256: () => sha256,
+    spliceIsland: () => spliceIsland,
     upgradeDocument: () => upgradeDocument,
     validateDocument: () => validateDocument,
     withSession: () => withSession
@@ -851,6 +852,138 @@ var QlPlural = (() => {
     meta.projection = { kind: "shared-copy", sourceDocumentId: doc.meta.documentId ?? null, sourceRevision: doc.meta.revision, at: at ?? null, withheld };
     return next;
   }
+  const readIsland = (text) => JSON.parse(text.replace(/<\\\/script/gi, "<\/script").replace(/<\\(!--)/g, "<$1"));
+  const islandJson = (value) => JSON.stringify(value).replace(/<\/script/gi, "<\\/script").replace(/<[!]--/g, "<\\u0021--");
+  const islandUnlocated = () => new Error("The Flow's document state could not be located for the save; nothing was written");
+  function islandSpace(text, at) {
+    while (at < text.length && (text[at] === " " || text[at] === "	" || text[at] === "\n" || text[at] === "\r")) at++;
+    return at;
+  }
+  function islandChildren(text, open) {
+    const close = text[open] === "{" ? "}" : text[open] === "[" ? "]" : "";
+    if (!close) throw islandUnlocated();
+    const children = [];
+    let at = islandSpace(text, open + 1);
+    if (text[at] === close) return { children, end: at + 1 };
+    for (; ; ) {
+      let key;
+      if (close === "}") {
+        key = islandValue(text, at);
+        at = islandSpace(text, key.end);
+        if (text[at] !== ":") throw islandUnlocated();
+        at = islandSpace(text, at + 1);
+      }
+      const value = islandValue(text, at);
+      children.push({ key, value });
+      at = islandSpace(text, value.end);
+      if (text[at] === ",") at = islandSpace(text, at + 1);
+      else if (text[at] === close) return { children, end: at + 1 };
+      else throw islandUnlocated();
+    }
+  }
+  function islandValue(text, at) {
+    const first = text[at];
+    if (first === '"') {
+      for (let i2 = at + 1; i2 < text.length; i2++) {
+        if (text[i2] === "\\") i2++;
+        else if (text[i2] === '"') return { start: at, end: i2 + 1 };
+      }
+      throw islandUnlocated();
+    }
+    if (first === "{" || first === "[") return { start: at, end: islandChildren(text, at).end };
+    let i = at;
+    while (i < text.length && !",]} 	\n\r".includes(text[i])) i++;
+    if (i === at) throw islandUnlocated();
+    return { start: at, end: i };
+  }
+  const isRecord = (value) => typeof value === "object" && value !== null && !Array.isArray(value);
+  const own = (record, key) => Object.prototype.hasOwnProperty.call(record, key);
+  function sameJson(a, b) {
+    if (a === b) return true;
+    if (Array.isArray(a) || Array.isArray(b)) return Array.isArray(a) && Array.isArray(b) && a.length === b.length && a.every((x, i) => sameJson(x, b[i]));
+    if (!isRecord(a) || !isRecord(b)) return false;
+    const keys = Object.keys(a);
+    return keys.length === Object.keys(b).length && keys.every((key) => own(b, key) && sameJson(a[key], b[key]));
+  }
+  function identityOf(value) {
+    if (!isRecord(value)) return null;
+    return typeof value.id === "string" ? `id:${value.id}` : typeof value.key === "string" ? `key:${value.key}` : null;
+  }
+  function sameElement(a, b) {
+    const x = identityOf(a), y = identityOf(b);
+    return x !== null || y !== null ? x === y : sameJson(a, b);
+  }
+  function islandContainer(text, span, children, pieces) {
+    const startOf = (child) => (child.key ?? child.value).start;
+    const close = span.end - 1;
+    const lead = children.length ? text.slice(span.start + 1, startOf(children[0])) : text.slice(span.start + 1, close);
+    const trail = children.length ? text.slice(children[children.length - 1].value.end, close) : "";
+    let out = text[span.start] + lead;
+    pieces.forEach((piece, i) => {
+      if (i) out += piece.from ? text.slice(children[piece.from - 1].value.end, startOf(children[piece.from])) : ",";
+      out += piece.text;
+    });
+    return out + trail + text[close];
+  }
+  function islandObject(text, span, before, after) {
+    const { children } = islandChildren(text, span.start);
+    const names = children.map((child) => readIsland(text.slice(child.key.start, child.key.end)));
+    const pieces = [];
+    children.forEach((child, i) => {
+      const name = names[i];
+      if (!own(after, name)) return;
+      const value = names.lastIndexOf(name) === i ? islandSplice(text, child.value, before[name], after[name]) : text.slice(child.value.start, child.value.end);
+      pieces.push({ from: i, text: text.slice(child.key.start, child.value.start) + value });
+    });
+    for (const name of Object.keys(after)) if (!own(before, name)) pieces.push({ text: `${islandJson(name)}:${islandJson(after[name])}` });
+    return islandContainer(text, span, children, pieces);
+  }
+  function islandArray(text, span, before, after) {
+    const { children } = islandChildren(text, span.start);
+    const pieces = [];
+    const kept = (i2, j2) => pieces.push({ from: i2, text: islandSplice(text, children[i2].value, before[i2], after[j2]) });
+    let head = 0, tail = 0;
+    while (head < before.length && head < after.length && sameElement(before[head], after[head])) head++;
+    while (tail < before.length - head && tail < after.length - head && sameElement(before[before.length - 1 - tail], after[after.length - 1 - tail])) tail++;
+    for (let k = 0; k < head; k++) kept(k, k);
+    const n = before.length - head - tail, m = after.length - head - tail;
+    const width = m + 1, run = new Uint32Array(n * m <= 1e6 ? (n + 1) * width : 0);
+    if (run.length) for (let i2 = n - 1; i2 >= 0; i2--) for (let j2 = m - 1; j2 >= 0; j2--)
+      run[i2 * width + j2] = sameElement(before[head + i2], after[head + j2]) ? run[(i2 + 1) * width + j2 + 1] + 1 : Math.max(run[(i2 + 1) * width + j2], run[i2 * width + j2 + 1]);
+    let gone = [], added = [];
+    const settle = () => {
+      if (gone.length === added.length && [...gone.map((i2) => before[i2]), ...added.map((j2) => after[j2])].every((value) => identityOf(value) === null)) gone.forEach((i2, k) => kept(i2, added[k]));
+      else added.forEach((j2) => pieces.push({ text: islandJson(after[j2]) }));
+      gone = [];
+      added = [];
+    };
+    let i = 0, j = 0;
+    while (i < n || j < m) {
+      if (i < n && j < m && run.length && sameElement(before[head + i], after[head + j]) && run[i * width + j] === run[(i + 1) * width + j + 1] + 1) {
+        settle();
+        kept(head + i++, head + j++);
+      } else if (j >= m || i < n && run.length && run[(i + 1) * width + j] >= run[i * width + j + 1]) gone.push(head + i++);
+      else if (i >= n || run.length) added.push(head + j++);
+      else gone.push(head + i++);
+    }
+    settle();
+    for (let k = tail; k > 0; k--) kept(before.length - k, after.length - k);
+    return islandContainer(text, span, children, pieces);
+  }
+  function islandSplice(text, span, before, after) {
+    if (sameJson(before, after)) return text.slice(span.start, span.end);
+    if (text[span.start] === "{" && isRecord(before) && isRecord(after)) return islandObject(text, span, before, after);
+    if (text[span.start] === "[" && Array.isArray(before) && Array.isArray(after)) return islandArray(text, span, before, after);
+    return islandJson(after);
+  }
+  function spliceIsland(island, doc) {
+    const before = readIsland(island);
+    const after = JSON.parse(JSON.stringify(doc));
+    const root = islandValue(island, islandSpace(island, 0));
+    const text = island.slice(0, root.start) + islandSplice(island, root, before, after) + island.slice(root.end);
+    if (!sameJson(readIsland(text), after)) throw new Error("The save could not be placed in the Flow as written; nothing was written");
+    return text;
+  }
   return __toCommonJS(stdin_exports);
 })();
 </script>
@@ -1169,8 +1302,10 @@ function exportCopy(shared){
   clearTimeout(revTimer); let d=JSON.parse(JSON.stringify(D)); if(shared===true) d=QlPlural.portableCopy(d,now());
   d.meta.title=clean(d.meta.title||''); d.entries.forEach(e=>e.html=clean(e.html)); (d.journal||[]).forEach(j=>j.html=clean(j.html)); d.notes.forEach(n=>{ n.text=clean(n.text); (n.replies||[]).forEach(r=>r.text=clean(r.text)); }); d.media.forEach(m=>m.caption=clean(m.caption||''));
   d.meta.exported=now();
-  const json=JSON.stringify(d).replace(/<\/script/gi,'<\\/script').replace(/<!--/g,'<\\u0021--');
-  const html=SHELL.replace(/<script type="application\/json" id="ql-doc">[\s\S]*?<\/script>/,()=>'<script type="application/json" id="ql-doc">'+json+'</script>')
+  /* only what the page changed is written into the island as it stands: every other byte stays as written (#785). The
+     closing tag below is spelled <\/script> so that it can never close this script element. */
+  const json=QlPlural.spliceIsland($('#ql-doc').textContent,d);
+  const html=SHELL.replace(/<script type="application\/json" id="ql-doc">[\s\S]*?<\/script>/,()=>'<script type="application/json" id="ql-doc">'+json+'<\/script>')
     .replace(/<noscript id="snapshot">[\s\S]*?<\/noscript>/,()=>'<noscript id="snapshot">'+snapshot(d)+'</noscript>')
     .replace(/<title>[\s\S]*?<\/title>/,'<title>'+esc(plain(d.meta.title)||'Dialogue')+'</title>');
   const blob=new Blob([html],{type:'text/html'}); const a=h('a',{href:URL.createObjectURL(blob),download:(plain(d.meta.title).trim().replace(/[^\w]+/g,'-').toLowerCase()||'dialogue')+(shared===true?'-shared':'')+'.html'}); document.body.append(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),4000); dirty=false;

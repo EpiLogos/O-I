@@ -69,6 +69,25 @@ try {
   assert.equal(appended.entries.at(-1).author, "F");
   assert.equal(appended.entries.at(-1).authorKey, undefined, "a legacy form gains no plural fields by being written");
   assert.equal(appended.meta.format, undefined);
+
+  // A page save of the shared island case (#785). The page reads the island as every JavaScript reader does (integers
+  // past 2^53 rounded, integer-like keys first) and makes its change, here the case's append; the host reads what the
+  // page holds through the bridge and embeds it into the file's own bytes (live-shell inhabitants/DocumentFlowFace.tsx
+  // saveToOwner: embedDocument(instance.html, the island read)). Only the page's change is written: the island is
+  // exactly the case's islandAfter around the new entry, and no byte outside the island moves.
+  const islandCase = fixtures.cases.find(c => c.name === "an-append-keeps-every-island-byte-it-does-not-own");
+  const islandTag = /(<script type="application\/json" id="ql-doc">)[\s\S]*?(<\/script>)/;
+  const withIsland = (html, island) => html.replace(islandTag, (_, open, close) => open + island + close);
+  const file = withIsland(readFileSync(root + "documents/ql-flow.html", "utf8"), islandCase.island);
+  const page = plural.appendContribution(instance.parseInstance(file), JSON.parse(JSON.stringify(islandCase.request)), islandCase.caller);
+  const bridged = JSON.parse(JSON.stringify(page.doc));
+  const [head, tail] = islandCase.expect.islandAfter;
+  assert.equal(instance.embedDocument(file, bridged), withIsland(file, `${head},${JSON.stringify(page.entry)}${tail}`),
+    "a page save writes only the page's change into the island; every other byte stays as written");
+  // The app's own append writes through the same path and keeps the same bytes.
+  const viaAppend = instance.appendEntry(file, "", {participant: {key: "p-ada", initial: "D", kind: "agent"}, html: "<p>Through the app.</p>"});
+  for (const kept of ['"x-ledger":{"zeta":"written first","alpha":9007199254740993,"mid":{"z":18446744073709551617,"a":-9223372036854775809}}', '"x-trace":{"tick":9007199254740995,"by":"page"}', islandCase.expect.islandAfter[1]])
+    assert.ok(viaAppend.html.includes(kept), `an app append keeps ${kept.slice(0, 40)} as written`);
   console.log("plural-flow instance: ok");
 } finally {
   await server.close();

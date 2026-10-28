@@ -489,14 +489,18 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   const runLedger = carrierWorlds.status === 'answered' ? worldsOf(carrierWorlds.value)?.runLedger : undefined
   const planRun = planRunOf(carrierWorld, runLedger, viewHolds(holds, CARRIER_ID).planRun)
   const carrierRun = planRun.ref
+  // The runs the chosen world names, for the Standing page's chooser where there are several (O-I 757): held by their content, since the
+  // listing is read anew each render. A run slug holds no line break, so the slugs joined by one are their key.
+  const carrierRunsKey = carrierWorld?.runs ? carrierWorld.runs.join('\n') : null
+  const carrierRuns = useMemo(() => (carrierRunsKey === null ? null : carrierRunsKey ? carrierRunsKey.split('\n') : []), [carrierRunsKey])
   const runShow = useWorkcellRead(transport, carrierRun ? {kind: 'run-show', run: carrierRun} : null).answer
   const keptDemand = runShow.status === 'answered' ? runDemandOf(runShow.value) : null
   const keptPath = keptDemand?.standing === 'kept' ? keptDemand.path ?? null : null
   const runPlan = useWorkcellRead(transport, keptPath ? {kind: 'plan', demand: {demand_json: keptPath}} : null)
   const carrierDesignBinding = useMemo(() => carrierBinding(workcellAnswer, holds, shows,
-    {discover, ...(carrierLabels.length ? {probe} : {}), run: {ref: carrierRun, ...(planRun.why ? {why: planRun.why} : {}), ...(carrierRun ? {show: runShow} : {}), ...(keptPath ? {plan: runPlan.answer} : {})}},
+    {discover, ...(carrierLabels.length ? {probe} : {}), run: {ref: carrierRun, runs: carrierRuns, ...(planRun.why ? {why: planRun.why} : {}), ...(carrierRun ? {show: runShow} : {}), ...(keptPath ? {plan: runPlan.answer} : {})}},
     keptPath && transport.kind !== 'unavailable' ? {replan: runPlan.refresh} : {}),
-  [workcellAnswer, holds, shows, discover, probe, carrierLabels.length, carrierRun, planRun.why, runShow, keptPath, runPlan.answer, runPlan.refresh, transport])
+  [workcellAnswer, holds, shows, discover, probe, carrierLabels.length, carrierRun, carrierRuns, planRun.why, runShow, keptPath, runPlan.answer, runPlan.refresh, transport])
   // The Remote carrier's Machine page (§18.7, §19.18 "The Machine page"; Central's Machine was retired into it in the 22 Oct manual
   // rewrite): Central's machine readings under `mc.`, read while a workcell's chain stands.
   const machine = useMachineDevice(transport, cellName != null)

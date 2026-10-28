@@ -658,3 +658,179 @@ export function portableCopy(doc: QlDoc, at?: string): QlDoc {
   meta.projection = {kind: "shared-copy", sourceDocumentId: doc.meta.documentId ?? null, sourceRevision: doc.meta.revision, at: at ?? null, withheld};
   return next;
 }
+
+// ---------- writing the island as written (#785) ----------
+//
+// A JavaScript reader rounds integers past 2^53 and moves integer-like keys first, so a page that parses the island and
+// writes it back with JSON.stringify rewrites bytes nobody changed (D10 of #558, the native append's half closed by
+// #766). A save therefore writes into the island's own text only what differs between the island as read and the
+// document the page now holds; every other byte (key order, spacing, number spellings, escapes, integers no JavaScript
+// number holds) stays as written. Ported from Central's append, ctrl/src/flow_append.rs (Central 3144ba8): the scanner
+// is `island_space`/`island_children`/`island_value` (:109-185), keys are read as `island_object` reads them (:188-202),
+// a duplicate key's live value is the last (`island_find`, :213-220), a new member follows the last (`island_set`,
+// :221-240), the reading and writing escapes are `flow_unescape`/`flow_island_escape` (:63-87), and the read-back guard
+// is `flow_splice_append`'s (:295-301). Central owns three known members; a page owns whatever it changed, so the members
+// to write are found by comparing what was read with what is held.
+
+interface IslandSpan {start: number; end: number}
+/** One child of an object (with its key's span) or of an array (without). */
+interface IslandChild {key?: IslandSpan; value: IslandSpan}
+/** One child of a rewritten container: a child the island already holds (by its index), or a new one, as text. */
+interface IslandPiece {from?: number; text: string}
+
+/** The island as every Flow reader reads it: the legacy `<\/script` and `<\!--` escapes read back as written content. This
+ * module is embedded in the form's own page (documents/embed-plural.mjs), so its source never spells a comment opening: an
+ * inline script holding one is parsed by other rules, and a later `</script>` in the page would not close it. */
+const readIsland = (text: string): unknown => JSON.parse(text.replace(/<\\\/script/gi, "</script").replace(/<\\(!--)/g, "<$1"));
+/** JSON written into the island: `</script` and a comment opening must not survive inside it, so the island can never
+ * close itself (flow/instance.ts writes the same escapes). */
+const islandJson = (value: unknown): string => JSON.stringify(value).replace(/<\/script/gi, "<\\/script").replace(/<[!]--/g, "<\\u0021--");
+const islandUnlocated = () => new Error("The Flow's document state could not be located for the save; nothing was written");
+
+function islandSpace(text: string, at: number): number {
+  while (at < text.length && (text[at] === " " || text[at] === "\t" || text[at] === "\n" || text[at] === "\r")) at++;
+  return at;
+}
+/** The children of the object or array opening at `open`, and the end of the container. */
+function islandChildren(text: string, open: number): {children: IslandChild[]; end: number} {
+  const close = text[open] === "{" ? "}" : text[open] === "[" ? "]" : "";
+  if (!close) throw islandUnlocated();
+  const children: IslandChild[] = [];
+  let at = islandSpace(text, open + 1);
+  if (text[at] === close) return {children, end: at + 1};
+  for (;;) {
+    let key: IslandSpan | undefined;
+    if (close === "}") {
+      key = islandValue(text, at);
+      at = islandSpace(text, key.end);
+      if (text[at] !== ":") throw islandUnlocated();
+      at = islandSpace(text, at + 1);
+    }
+    const value = islandValue(text, at);
+    children.push({key, value});
+    at = islandSpace(text, value.end);
+    if (text[at] === ",") at = islandSpace(text, at + 1);
+    else if (text[at] === close) return {children, end: at + 1};
+    else throw islandUnlocated();
+  }
+}
+/** The value starting at `at`. Only called on text that already read as JSON. */
+function islandValue(text: string, at: number): IslandSpan {
+  const first = text[at];
+  if (first === '"') {
+    for (let i = at + 1; i < text.length; i++) {
+      if (text[i] === "\\") i++;
+      else if (text[i] === '"') return {start: at, end: i + 1};
+    }
+    throw islandUnlocated();
+  }
+  if (first === "{" || first === "[") return {start: at, end: islandChildren(text, at).end};
+  let i = at;
+  while (i < text.length && !",]} \t\n\r".includes(text[i])) i++;
+  if (i === at) throw islandUnlocated();
+  return {start: at, end: i};
+}
+
+type Json = null | boolean | number | string | Json[] | {[key: string]: Json};
+const isRecord = (value: Json): value is {[key: string]: Json} => typeof value === "object" && value !== null && !Array.isArray(value);
+const own = (record: {[key: string]: Json}, key: string): boolean => Object.prototype.hasOwnProperty.call(record, key);
+/** Equal as JSON reads: objects by their members, whatever their order. */
+function sameJson(a: Json, b: Json): boolean {
+  if (a === b) return true;
+  if (Array.isArray(a) || Array.isArray(b)) return Array.isArray(a) && Array.isArray(b) && a.length === b.length && a.every((x, i) => sameJson(x, b[i]));
+  if (!isRecord(a) || !isRecord(b)) return false;
+  const keys = Object.keys(a);
+  return keys.length === Object.keys(b).length && keys.every(key => own(b, key) && sameJson(a[key], b[key]));
+}
+/** What makes a list's element the same element after a change: an entry's (or note's, page's, item's) `id`, a
+ * participant's `key`; anything else is the same only when it is equal. */
+function identityOf(value: Json): string | null {
+  if (!isRecord(value)) return null;
+  return typeof value.id === "string" ? `id:${value.id}` : typeof value.key === "string" ? `key:${value.key}` : null;
+}
+function sameElement(a: Json, b: Json): boolean {
+  const x = identityOf(a), y = identityOf(b);
+  return x !== null || y !== null ? x === y : sameJson(a, b);
+}
+
+/** A container written again from its children: each kept child with the separator it was written with, a new one after a
+ * comma; the container's leading and trailing space as written. */
+function islandContainer(text: string, span: IslandSpan, children: IslandChild[], pieces: IslandPiece[]): string {
+  const startOf = (child: IslandChild) => (child.key ?? child.value).start;
+  const close = span.end - 1;
+  const lead = children.length ? text.slice(span.start + 1, startOf(children[0])) : text.slice(span.start + 1, close);
+  const trail = children.length ? text.slice(children[children.length - 1].value.end, close) : "";
+  let out = text[span.start] + lead;
+  pieces.forEach((piece, i) => {
+    if (i) out += piece.from ? text.slice(children[piece.from - 1].value.end, startOf(children[piece.from])) : ",";
+    out += piece.text;
+  });
+  return out + trail + text[close];
+}
+function islandObject(text: string, span: IslandSpan, before: {[key: string]: Json}, after: {[key: string]: Json}): string {
+  const {children} = islandChildren(text, span.start);
+  const names = children.map(child => readIsland(text.slice(child.key!.start, child.key!.end)) as string);
+  const pieces: IslandPiece[] = [];
+  children.forEach((child, i) => {
+    const name = names[i];
+    if (!own(after, name)) return; // removed: every occurrence of the key goes
+    // The value a reader keeps is the key's last occurrence; an earlier duplicate stays as written.
+    const value = names.lastIndexOf(name) === i ? islandSplice(text, child.value, before[name], after[name]) : text.slice(child.value.start, child.value.end);
+    pieces.push({from: i, text: text.slice(child.key!.start, child.value.start) + value});
+  });
+  for (const name of Object.keys(after)) if (!own(before, name)) pieces.push({text: `${islandJson(name)}:${islandJson(after[name])}`});
+  return islandContainer(text, span, children, pieces);
+}
+function islandArray(text: string, span: IslandSpan, before: Json[], after: Json[]): string {
+  const {children} = islandChildren(text, span.start);
+  const pieces: IslandPiece[] = [];
+  const kept = (i: number, j: number) => pieces.push({from: i, text: islandSplice(text, children[i].value, before[i], after[j])});
+  // The elements that stayed, in order: the unchanged ends, then the longest common run of the middle.
+  let head = 0, tail = 0;
+  while (head < before.length && head < after.length && sameElement(before[head], after[head])) head++;
+  while (tail < before.length - head && tail < after.length - head && sameElement(before[before.length - 1 - tail], after[after.length - 1 - tail])) tail++;
+  for (let k = 0; k < head; k++) kept(k, k);
+  const n = before.length - head - tail, m = after.length - head - tail;
+  // Longest common subsequence over the middle; past a million cells the middle is written whole.
+  const width = m + 1, run = new Uint32Array(n * m <= 1_000_000 ? (n + 1) * width : 0);
+  if (run.length) for (let i = n - 1; i >= 0; i--) for (let j = m - 1; j >= 0; j--)
+    run[i * width + j] = sameElement(before[head + i], after[head + j]) ? run[(i + 1) * width + j + 1] + 1 : Math.max(run[(i + 1) * width + j], run[i * width + j + 1]);
+  // Between two kept elements, as many removed as added with no identity among them are those elements changed in place.
+  let gone: number[] = [], added: number[] = [];
+  const settle = () => {
+    if (gone.length === added.length && [...gone.map(i => before[i]), ...added.map(j => after[j])].every(value => identityOf(value) === null)) gone.forEach((i, k) => kept(i, added[k]));
+    else added.forEach(j => pieces.push({text: islandJson(after[j])}));
+    gone = []; added = [];
+  };
+  let i = 0, j = 0;
+  while (i < n || j < m) {
+    if (i < n && j < m && run.length && sameElement(before[head + i], after[head + j]) && run[i * width + j] === run[(i + 1) * width + j + 1] + 1) {
+      settle(); kept(head + i++, head + j++);
+    } else if (j >= m || (i < n && run.length && run[(i + 1) * width + j] >= run[i * width + j + 1])) gone.push(head + i++);
+    else if (i >= n || run.length) added.push(head + j++);
+    else gone.push(head + i++);
+  }
+  settle();
+  for (let k = tail; k > 0; k--) kept(before.length - k, after.length - k);
+  return islandContainer(text, span, children, pieces);
+}
+/** The text of the value at `span`, read as `before`, now `after`: as written when they read the same; a container that
+ * changed keeps what stayed in it; anything else is written new. */
+function islandSplice(text: string, span: IslandSpan, before: Json, after: Json): string {
+  if (sameJson(before, after)) return text.slice(span.start, span.end);
+  if (text[span.start] === "{" && isRecord(before) && isRecord(after)) return islandObject(text, span, before, after);
+  if (text[span.start] === "[" && Array.isArray(before) && Array.isArray(after)) return islandArray(text, span, before, after);
+  return islandJson(after);
+}
+
+/** The island text (what stands between the `ql-doc` tags) with `doc` written into it. Only what `doc` changed from what the
+ * island reads as is written; every other byte stays as written. The result must read as exactly `doc` (as JSON reads
+ * it), or nothing is written. */
+export function spliceIsland(island: string, doc: unknown): string {
+  const before = readIsland(island) as Json;
+  const after = JSON.parse(JSON.stringify(doc)) as Json;
+  const root = islandValue(island, islandSpace(island, 0));
+  const text = island.slice(0, root.start) + islandSplice(island, root, before, after) + island.slice(root.end);
+  if (!sameJson(readIsland(text) as Json, after)) throw new Error("The save could not be placed in the Flow as written; nothing was written");
+  return text;
+}

@@ -89,7 +89,8 @@ const transport = {kind: 'unavailable', reason: 'the test carrier is down'}
 
 /** The pages each design's Whole declares (its `pages`), by design. */
 // REPLACED (#725): the Canvas's pages take its Light page (§17.4), which took in Light's device; the Timeline's design was retired (§17.5).
-const PAGES = {'techne:journey': ['walk', 'seams'], 'techne:canvas': ['board', 'lines', 'form', 'light'], 'techne:lens': ['lens', 'frame'],
+// #757 (part two): the Palace's Whole has its pages — the palace you stand in, Enter, the Integral whole, Compose and Portals.
+const PAGES = {'techne:palace': ['palace', 'enter', 'whole', 'compose', 'portals'], 'techne:journey': ['walk', 'seams'], 'techne:canvas': ['board', 'lines', 'form', 'light'], 'techne:lens': ['lens', 'frame'],
   'knowledge-graph:graph': ['reach', 'filters', 'display', 'aperture']}
 const pagesOf = design => PAGES[design.id] ?? []
 function hostedAll(design, binding) {
@@ -310,6 +311,138 @@ test('the Palace writes through the session\'s acts: path, guide, snap, the walk
   await palaceB.palaceBinding(session.palaceState()).write([{key: 'path', value: 'free'}, {key: 'guide', value: false}])
   assert.deepEqual([session.inside().path, session.inside().guide], ['free', false])
   assert.equal(palaceB.palaceValues(session.palaceState()).lines, false, 'a free path draws no line')
+  session.resetPalaceSession()
+})
+
+// O-I #757 (part two), the Palace's rows: the Enter, Compose, Integral whole and Portals pages; a `scene` room kind; the guide's words
+// from the owner; locus stepping; bookmark Rename and Delete. Each reads the palace session (palaceSession.ts) and writes one of its acts.
+const whole = await import('../../../../desktop/cradle/src/techne/m0m5/palace/whole.ts')
+/** The world as the host hands it (palacesWorld.ts usePalaces; the suite standing's places; the mounted atlas's turn). Its one place is
+ * declared by `subject` (FIXTURE, SuitePlace's shape). */
+function worldOf(turned = [], subject = 'wiki:node:tower') {
+  const place = {ref: 'place:bollingen', name: 'Bollingen', kind: 'declared', owner: 'fixture', source: 'fixture', located: true, subject_ref: subject}
+  return {rows: [ROW, {key: 'o-i', title: 'O-I', project: 'O-I', expression_ref: null, revision: null, held: false, standing: 'not read yet', rooms: []}],
+    load: {phase: 'read'}, places: [place], turn: at => { turned.push(at.ref) }}
+}
+/** The palace with a room that holds the walk's first step (a Scene binding that step's subject), the walk standing on it: the proving
+ * reading's steps stand in no room of the fixture's document, so this is how a room the walk stands in is had here. */
+function rooted(state) {
+  const step = session.walkOf(state).steps[0]
+  const room = {key: `${EXPR}:scene:proving`, name: 'Proving', kind: 'scene', members: [{entity_ref: 'p', subject_ref: step.ref, title: 'the proving step'}], holds: null, saved: true}
+  return {state: {...state, walkMoved: 0, savedRooms: [...state.savedRooms, room]}, step, room}
+}
+/** Stand-in acts that record their calls (palaceSession.ts's own names), answering as the session would. */
+function recordingActs() {
+  const calls = []
+  const acts = {calls, line: () => null}
+  for (const name of ['setPath', 'setGuide', 'setSnap', 'moveWalk', 'moveRooms', 'proposeReturn', 'acceptReturn', 'refuseReturn', 'leavePalace', 'stepWalk',
+    'deleteBookmark', 'enterPalace', 'openEntry', 'openRoom', 'returnToGround', 'addTo', 'addAsNewRegion', 'moveRegion', 'removeMember', 'removeRegion', 'save', 'revert'])
+    acts[name] = (...args) => { calls.push([name, ...args]) }
+  for (const name of ['bookmarkHere', 'renameBookmark', 'addRegion']) acts[name] = (...args) => { calls.push([name, ...args]); return true }
+  return acts
+}
+
+test('the Palace\'s pages read the session: Enter the world\'s palaces, the Integral whole its regions, Compose the draft, Portals the doors; the guide and the locus are the owner\'s', async () => {
+  const state = await enter()
+  const values = palaceB.palaceValues(state, {}, worldOf())
+  // Enter (manual §17.7 "To enter, select the palace on the World and choose Enter"): the world's palaces, the one you stand in marked.
+  const palaces = JSON.parse(values.palaces)
+  assert.deepEqual(palaces.map(row => [row.key, row.name, row.here === true]), [['central', 'Central', true], ['o-i', 'O-I', false]])
+  assert.match(palaces[1].line, /not read yet/, 'a palace not read says so in the owner\'s words')
+  // The Integral whole: the owner's regions, each with its standing and its line, each entry openable or refused by its route.
+  const view = whole.palaceWholeView(state.reading)
+  const regions = JSON.parse(values.whole)
+  assert.deepEqual(regions.map(region => region.key), view.regions.map(region => region.key))
+  assert.deepEqual(regions.map(region => region.line), view.regions.map(region => region.standing.line), 'each region\'s line is the owner\'s')
+  assert.deepEqual(regions[0].entries.map(entry => entry.ref), view.regions[0].entries.map(entry => entry.ref))
+  assert.equal(regions[0].entries[0].id, `${view.regions[0].key}:0`)
+  // The walk locus by locus, and the guide's words for where it stands (PalacePlate.tsx's warrant line, now the design's).
+  const walk = session.walkOf(state)
+  assert.deepEqual([values.locus, values.loci, values.office], [walk.index, walk.steps.length, walk.focus.office])
+  assert.equal(values.warrant, view.regions.find(region => region.key === walk.focus.region).standing.line, 'the guide says the owner\'s line, never a fixed one')
+  const journey = view.regions.find(region => region.key === 'journey')
+  if (journey) assert.equal(values.rests, journey.standing.standing, 'every room rests on the journey region\'s standing (PalaceFloor.tsx)')
+  else assert.match(palaceB.palaceAbsent(state, 'rests'), /journey/)
+  // Compose: the draft's regions in path order, the kernel's Expressions, the revisions the Save is gated on.
+  assert.deepEqual(JSON.parse(values.regions), [{name: 'Walk', holds: 'expression:walk', ref: 'expression:walk'}])
+  assert.deepEqual(JSON.parse(values.eligible), [{ref: 'expression:walk', title: 'Walk', revision: 2, composed: true}])
+  assert.deepEqual([values.revision, values.basedOn, values.busy, values.removed], [4, 4, false, 0])
+  // Portals: the way back to the Earth first, then each region's Expression, then the places of the room the walk stands in.
+  const portals = JSON.parse(values.portals)
+  assert.equal(portals[0].id, 'ground')
+  assert.ok(portals.some(row => row.id === `room:${regionSceneRef(EXPR, 'Walk')}` && row.kind === 'expression' && row.name === 'expression:walk'))
+  // A `scene` room: a Scene that is neither the overview, a constellation nor a region keeps its kind.
+  const other = {key: `${EXPR}:scene:other`, name: 'Other', kind: 'scene', members: [], holds: null, saved: true}
+  const withScene = palaceB.palaceValues({...state, savedRooms: [...state.savedRooms, other]})
+  assert.deepEqual(JSON.parse(withScene.rooms).find(room => room.key === other.key), {key: other.key, name: 'Other', short: 'Other', kind: 'scene', members: [], more: 0})
+  // Without the host's world, Enter and the places say why.
+  const bare = palaceB.palaceBinding(state)
+  assert.equal(bare.values.palaces, undefined)
+  assert.match(bare.standing.palaces.disabled, /not handed/)
+  assert.match(bare.standing.enter.disabled, /not handed/)
+  assert.match(bare.standing.places.disabled, /not handed/)
+  session.resetPalaceSession()
+})
+
+test('the Palace\'s acts go through the session: Enter and Door from anywhere; the locus, Rename and Delete, Open, the composition and the portals inside; refusals in words', async () => {
+  const state = await enter()
+  const turned = []
+  const acts = recordingActs()
+  const world = worldOf(turned)
+  // outside: Enter the chosen palace; the other acts wait for a palace
+  const outside = palaceB.palaceBinding({phase: 'outside'}, {chosen: 'central'}, acts, world)
+  assert.deepEqual(JSON.parse(outside.values.palaces).map(row => row.key), ['central', 'o-i'], 'outside, the Enter page lists the palaces')
+  await outside.write([{key: 'enter', value: true}])
+  assert.equal(acts.calls.at(-1)[0], 'enterPalace')
+  assert.equal(acts.calls.at(-1)[1].key, 'central', 'Enter enters the chosen palace')
+  await assert.rejects(() => outside.write([{key: 'enter', value: 'nowhere'}]), /not among your world's palaces/)
+  await assert.rejects(() => outside.write([{key: 'door', value: true}]), /no room of Central stands on the Earth|door/)
+  for (const key of ['step', 'rename', 'delete', 'open', 'region', 'add', 'save', 'portal']) assert.equal(outside.standing[key].disabled, palaceB.NOT_INSIDE, key)
+  // inside
+  const view = whole.palaceWholeView(state.reading)
+  const binding = palaceB.palaceBinding(state, {draft: 'The gate', regionName: 'Tower walk'}, acts, world)
+  const before = acts.calls.length
+  await binding.write([{key: 'step', value: 1}, {key: 'step', value: -1}])
+  await binding.write([{key: 'open', value: `${view.regions[0].key}:0`}])
+  await binding.write([{key: 'region', value: true}, {key: 'add', value: 'expression:walk'}, {key: 'empty', value: 'Walk'}, {key: 'remove', value: 'Walk'}])
+  await binding.write([{key: 'save', value: true}, {key: 'revert', value: true}, {key: 'portal', value: 'ground'}, {key: 'portal', value: `room:${regionSceneRef(EXPR, 'Walk')}`}])
+  assert.deepEqual(acts.calls.slice(before).map(call => call[0]), ['stepWalk', 'stepWalk', 'openEntry', 'addRegion', 'addAsNewRegion', 'removeMember', 'removeRegion', 'save', 'revert',
+    'returnToGround', 'openRoom'])
+  const made = acts.calls.slice(before)
+  assert.deepEqual([made[0][1], made[1][1]], [1, -1], 'a locus forward, a locus back')
+  assert.deepEqual(made[2][1], view.regions[0].entries[0], 'Open opens the entry the owner\'s whole names')
+  assert.equal(made[3][1], 'Tower walk', 'a region named by the hand')
+  assert.deepEqual(made[4].slice(1), ['expression:walk', 'Walk'], 'Walk is filled already, so the Expression goes in as a region of its own')
+  // The path order of two regions: Second moves before Walk; the ends refuse in words.
+  const two = palaceB.palaceBinding({...state, regions: [...state.regions, {name: 'Second', scene_ref: null, member: null}]}, {}, acts, world)
+  await two.write([{key: 'earlier', value: 'Second'}])
+  assert.deepEqual(acts.calls.at(-1), ['moveRegion', 'Second', -1])
+  await assert.rejects(() => two.write([{key: 'earlier', value: 'Walk'}]), /first on the path/)
+  await assert.rejects(() => two.write([{key: 'later', value: 'Second'}]), /last on the path/)
+  await assert.rejects(() => binding.write([{key: 'earlier', value: 'Nowhere'}]), /not a region of this palace's draft/)
+  await assert.rejects(() => binding.write([{key: 'open', value: 'nowhere:9'}]), /not in the integral whole/)
+  await assert.rejects(() => binding.write([{key: 'add', value: 'expression:unknown'}]), /not among the kernel's Expressions/)
+  await assert.rejects(() => palaceB.palaceBinding(state, {}, acts, world).write([{key: 'region', value: true}]), /Name the region first/)
+  await assert.rejects(() => binding.write([{key: 'step', value: 2}]), /one locus/)
+  // Bookmark Rename and Delete act on the bookmark of the room the walk stands in, by its ref; with none there, they say so.
+  await assert.rejects(() => binding.write([{key: 'rename', value: true}]), /No bookmark stands/)
+  const {state: there, step, room} = rooted(state)
+  const marked = {...there, bookmarks: [{region: step.region, ref: step.ref, locus: step.locus, name: 'Gate'}]}
+  assert.equal(palaceB.palaceValues(marked).bookmarks, `Gate~${room.key}`, 'the room\'s bookmark, as the design reads it')
+  const named = palaceB.palaceBinding(marked, {draft: 'The gate'}, acts, world)
+  await named.write([{key: 'rename', value: 'Gate'}, {key: 'delete', value: 'Gate'}])
+  assert.deepEqual(acts.calls.slice(-2).map(call => call[0]), ['renameBookmark', 'deleteBookmark'])
+  assert.deepEqual(acts.calls.at(-2).slice(1), [step.ref, 'The gate'], 'renamed by its ref, to the name typed')
+  assert.equal(acts.calls.at(-1)[1], marked.bookmarks[0], 'deleted: the session\'s own bookmark')
+  await assert.rejects(() => named.write([{key: 'delete', value: 'Another'}]), /moved/, 'a bookmark changed under the press is not touched')
+  await assert.rejects(() => palaceB.palaceBinding(marked, {}, acts, world).write([{key: 'rename', value: 'Gate'}]), /Type the new name/)
+  // The places of the room the walk stands in are portals too: leaving for one turns the Earth there.
+  const atPlace = palaceB.palaceBinding(there, {}, acts, worldOf(turned, step.ref))
+  assert.ok(JSON.parse(atPlace.values.portals).some(row => row.id === 'place:place:bollingen' && row.kind === 'place'))
+  assert.equal(atPlace.values.places, 1)
+  await atPlace.write([{key: 'portal', value: 'place:place:bollingen'}])
+  assert.deepEqual([acts.calls.at(-1)[0], turned], ['leavePalace', ['place:bollingen']])
+  await assert.rejects(() => atPlace.write([{key: 'portal', value: 'place:elsewhere'}]), /no door out/)
   session.resetPalaceSession()
 })
 
@@ -847,4 +980,12 @@ test('the graph\'s Aperture page asks QL\'s living-wiki plan for the request it 
   host.resetHost(binding.id)
   assert.doesNotMatch(markup, /\bNaN\b|undefined|data-device-fault/)
   plan.resetLivingPlan()
+})
+
+test('the chain hands the Palace its world: the palaces to Enter, the Earth\'s places as doors, and the turn to a place (DLW §17.7)', () => {
+  // "To enter, select the palace on the World and choose Enter." and "Walk through a portal to leave the Palace." (DLW §17.7): without
+  // the world the binding draws Enter and the doors disabled, saying the world is not handed here.
+  const source = readFileSync(new URL('../src/techne/devices/techneDesigns.ts', import.meta.url), 'utf8')
+  assert.match(source, /palaceBinding\(palace, heldFor\(PALACE_DESIGN\), SESSION_ACTS, palaceWorld\)/, 'the Palace binding is handed its world')
+  assert.match(source, /places: suite\.places/, 'the doors are the Earth\'s places')
 })

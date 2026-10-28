@@ -200,7 +200,7 @@ test('4 · Changes: a comment on the waiting return in the words written in the 
 
 // ------------------------------------------------------------------------------------------------------------------ the Ledger
 
-test('5 · the Ledger: Central\'s source returns as receipts — Waiting, Commented once a comment is kept, Approved, Refused — minted instant as n', () => {
+test('5 · the Ledger: Central\'s source returns as receipts — Waiting, Commented once a comment is kept, Approved, Refused — keyed by their ref', () => {
   const minted = 1_792_157_400_000
   const entry = (n, status, over = {}) => ({return_ref: `central:return:project:o-i:${minted + n}000000-1`, source_ref: `central:source:project:O-I:docs/${n}.md`, basis_revision: 'r1',
     status, agent_session_ref: 'agent-session/fx-aletheia', current_revision: 'r1', ...over})
@@ -208,9 +208,13 @@ test('5 · the Ledger: Central\'s source returns as receipts — Waiting, Commen
     {...entry(7, 'pending'), return_ref: 'central:return:project:o-i:no-instant'}]
   const tracks = [{sessionRef: 'agent-session/fx-aletheia', agentName: 'aletheia'}]
   const rows = rec.returnReceiptRows(entries, tracks, 'Europe/London')
+  // REPLACED (#757 part two): a return is keyed by its return_ref and carries no number; one whose ref names no instant stands with no
+  // day or time, where it was left out for want of a number (w757-designs-what-the-build-found.test.mjs, the Ledger keyed by ref).
   assert.deepEqual(rows.map(row => [row.name, row.outcome]), [['docs/1.md', 'commented'], ['docs/2.md', 'waiting'], ['docs/3.md', 'waiting'], ['docs/4.md', 'approved'],
-    ['docs/5.md', 'refused'], ['docs/6.md', undefined]], 'a ref naming no instant has no n and is left out; a status Central may add later says no outcome')
-  assert.deepEqual(rows[0], {n: minted + 1, name: 'docs/1.md', agent: 'aletheia', outcome: 'commented', day: '2026-10-16', time: '14:30', session: 'agent-session/fx-aletheia'})
+    ['docs/5.md', 'refused'], ['docs/6.md', undefined], ['docs/7.md', 'waiting']], 'every return stands; a status Central may add later says no outcome')
+  assert.deepEqual(rows[0], {ref: entries[0].return_ref, name: 'docs/1.md', agent: 'aletheia', outcome: 'commented', day: '2026-10-16', time: '14:30', session: 'agent-session/fx-aletheia'})
+  assert.deepEqual([rows[6].ref, rows[6].day, rows[6].time], ['central:return:project:o-i:no-instant', undefined, undefined], 'no instant: no day, no time, and still its ref')
+  for (const row of rows) assert.ok(!('n' in row), 'a return carries no number')
   for (const row of rows) assert.ok(!('by' in row), 'who accepted is not in the list')
   // Through the Ledger's binding, beside the change horizon's receipts; Open log opens the return's session.
   const opened = []
@@ -218,9 +222,11 @@ test('5 · the Ledger: Central\'s source returns as receipts — Waiting, Commen
   const receipts = JSON.parse(ledger.values.receipts)
   assert.equal(receipts.filter(row => row.outcome === 'commented').length, 1)
   assert.equal(receipts.filter(row => row.outcome === 'landed').length, 1)
-  return ledger.write([{key: 'openLog', value: minted + 1}]).then(() => assert.deepEqual(opened, ['agent-session/fx-aletheia']))
+  // REPLACED (#757 part two): Open log goes by the receipt's ref, never the minted instant.
+  return ledger.write([{key: 'openLog', value: entries[0].return_ref}]).then(() => assert.deepEqual(opened, ['agent-session/fx-aletheia']))
 })
-const GROUND = {sources: {state: 'ready', data: {schema: 'central.source-change-horizon/v1', changes: [{cursor: 831, source_path: 'Control/agents/now/day/2026-10-16.md', kind: 'modified',
+// The change carries its change_ref, as every SourceChange does (source_horizon.rs:118; read on 28 Oct: `central:change:project:O-I:481`).
+const GROUND = {sources: {state: 'ready', data: {schema: 'central.source-change-horizon/v1', changes: [{change_ref: 'central:change:control:root:831', cursor: 831, source_path: 'Control/agents/now/day/2026-10-16.md', kind: 'modified',
   observed_at_unix_seconds: 1792157400, actor: 'agent:aletheia', actor_kind: 'agent', agent_session_ref: 'agent-session/fx-aletheia'}]}},
   time: {state: 'ready', data: {civil_date: '2026-10-16', policy: {timezone: 'Europe/London'}}}}
 
