@@ -62,3 +62,11 @@ test('code-reading: a failed boot listing leaves the frame to mount on no work; 
   assert.doesNotMatch(panel, /if \(knownRef \|\| initial\) void enumerate\(\)\.catch\(fail\)/, 'a known work\'s listing is asked again too')
   assert.match(after, /openNative\(first\)/, 'a late answer opens the first work, as a boot that listed would have')
 })
+
+// O-I #763: a draft the frame keeps as a work is saved into the works home by the frame (nativeWorkspace.ts keepDraftAsWork) while another work
+// opens; that other work may be listed already, so nothing made the browser list again and the kept work stayed out of it until a restart.
+// The frame now asks its host to list its works again (app.ts keptAsWork → works-changed), and the panel answers (code-reading).
+test('code-reading: the panel lists the works again when the frame says it changed them', () => {
+  const answer = panel.slice(panel.indexOf('onHostRequest: request => {'), panel.indexOf('onStudioResult:'))
+  assert.match(answer, /if \(request\.request === 'works-changed'\) void enumerate\(\)\.catch\(fail\)/)
+})

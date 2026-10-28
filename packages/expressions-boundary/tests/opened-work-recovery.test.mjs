@@ -369,12 +369,14 @@ test('a local draft edited and then left is kept as a work in its world\'s folde
   const owner = recoveryOwner(), ref = 'expression:authored-5e60';
   const works = expressionOwner([ownerDocument(ref)]);
   const a = await hosted(t, owner, {selectOpenedWorks: true});
-  const frame = frameRecovery(a.nativeRecoveryRequest), carried = [], loaded = [];
+  const frame = frameRecovery(a.nativeRecoveryRequest), carried = [], loaded = [], keptAs = [];
   const sketch = {...blankJourney(), name: 'Morning sketch'};
   const work = new NativeWorking({expression: works.channel, file: () => assert.fail('No file operation'), checkpoint: frame.checkpoint, mint: () => 'expression:unused'});
   let edited = false;
   const host = {snapshot: () => ({journey: sketch, sceneId: sketch.scenes[0].id, entityId: null}), version: () => 3, shouldRetainDraft: () => true,
-    localDraftEdited: () => edited, load: view => loaded.push(view), followed: () => {}};
+    localDraftEdited: () => edited, load: view => loaded.push(view), followed: () => {},
+    // O-I #763: told of each draft kept as a work, so its Library copy opens that work and the host lists its works again (app.ts).
+    keptAsWork: (journey, kept) => keptAs.push([journey.id, kept.expression_ref, kept.title, kept.path])};
   // The frame's own retention of the draft being left, run unchanged: persistDraft writes a draft the host addressed.
   const persistDraft = execute(inner('persistDraft'), {hostedRecovery: () => true, writeDraft: frame.writeDraft, unkeptDrafts: new Map(), heldDrafts: new Set(),
     draftBasisOf: execute(inner('draftBasisOf'), {work, draftBasis})});
@@ -396,6 +398,7 @@ test('a local draft edited and then left is kept as a work in its world\'s folde
   a.host.openExpression(other, 'world.expressions');
   await follow(other, a.opened()[0].recovery);
   assert.deepEqual(works.calls.map(call => call.operation), ['inspect'], 'nothing is made of an unedited local draft');
+  assert.deepEqual(keptAs, [], 'and nothing is told of one');
   assert.equal(loaded.length, 1);
   // Edited, it is a work in the folder: created, composed and saved there, before anything of the other work was read.
   edited = true;
@@ -413,6 +416,7 @@ test('a local draft edited and then left is kept as a work in its world\'s folde
   assert.equal(works.files[0].document.title, 'Morning sketch');
   assert.equal(works.files[0].document.scenes[0].title, sketch.scenes[0].name);
   assert.deepEqual(carried, [`"Morning sketch" was kept as a work: ${works.files[0].path}.`]);
+  assert.deepEqual(keptAs, [[sketch.id, kept, 'Morning sketch', works.files[0].path]], 'the frame is told of the work the draft was kept as, once');
   // Nothing was written at an address the host never selected; the other work opened at its own.
   assert.deepEqual(owner.calls.map(({operation, kind, id}) => [operation, kind, id]), [['read', 'checkpoint', other], ['write', 'checkpoint', other],
     ['read', 'checkpoint', ref], ['write', 'checkpoint', ref]]);

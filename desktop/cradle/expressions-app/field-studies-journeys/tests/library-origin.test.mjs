@@ -5,7 +5,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {blankJourney,validateJourney} from '../build/model.js';
-import {readLibraryWithOrigins,readLibrary,saveToLibrary,libraryOriginFrom,recordLibraryAdoption,adoptedLocalOrigin,libraryOpenPlan} from '../build/store.js';
+import {readLibraryWithOrigins,readLibrary,saveToLibrary,libraryOriginFrom,recordLibraryAdoption,adoptedLocalOrigin,libraryOpenPlan,linkLibraryCopy} from '../build/store.js';
 
 class MemoryStorage{
  constructor(){this.map=new Map();}
@@ -131,4 +131,30 @@ test('an adoption link on a local entry is read back with a clean origin', () =>
     {kind:'local-draft',adopted_into:ADOPTED,adopted_title:'T'.repeat(160),adopted_at:'2026-10-14'});
   assert.deepEqual(libraryOpenPlan(undefined,true), {kind:'local'});
   assert.deepEqual(libraryOpenPlan({kind:'kernel-ref',ref:KERNEL},true), {kind:'local'}, 'a kernel-ref entry opens as it always has');
+});
+
+// O-I #763: a local draft left for another work is kept as a work in its world's folder (nativeWorkspace.ts keepDraftAsWork). Its Library
+// copy records that work, so reopening the copy opens the work, never a second copy of it. The copy is linked whether the Library held it
+// already or not (the frame saves the departing draft to the Library only as the other work opens, after the keep).
+test('O-I #763: a draft kept as a work links its Library copy to the work, held already or not; reopening it opens the work', () => {
+  storage.map.clear();
+  const KEPT='expression:authored-5e60aa00-0000-4000-8000-000000000000';
+  const kept=adoption(KEPT,'Morning sketch','2026-10-28T23:00:00.000Z');
+  const absent=documentNamed('sketch-absent','Morning sketch');
+  linkLibraryCopy(absent,kept);
+  assert.deepEqual(readLibrary().find(j=>j.id==='sketch-absent'),validateJourney(absent),'an absent copy is saved whole');
+  assert.deepEqual(libraryOpenPlan(originOf('sketch-absent'),true),{kind:'kernel-first',ref:KEPT,title:'Morning sketch'});
+  const held=documentNamed('sketch-held','Held sketch');
+  saveToLibrary(held);
+  linkLibraryCopy(held,kept);
+  assert.deepEqual(libraryOpenPlan(originOf('sketch-held'),true),{kind:'kernel-first',ref:KEPT,title:'Morning sketch'});
+  // The departing draft's own Library save, which names no origin, keeps the link (app.ts applyJourney).
+  saveToLibrary(absent);
+  assert.equal(originOf('sketch-absent').adopted_into,KEPT);
+  assert.equal(readLibrary().filter(j=>j.id==='sketch-absent').length,1,'one copy, never a second');
+  // A copy bound to its own kernel ref is not a local draft: the link does not apply to it, and it is left as it is.
+  saveToLibrary(documentNamed('sketch-bound','Bound sketch'),{kind:'kernel-ref',ref:KERNEL});
+  linkLibraryCopy(documentNamed('sketch-bound','Bound sketch, edited'),kept);
+  assert.deepEqual(originOf('sketch-bound'),{kind:'kernel-ref',ref:KERNEL});
+  assert.equal(readLibrary().find(j=>j.id==='sketch-bound').name,'Bound sketch');
 });

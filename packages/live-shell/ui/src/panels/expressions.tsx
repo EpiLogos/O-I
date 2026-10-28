@@ -311,6 +311,9 @@ export function ExpressionsPanel() {
           }
           // The frame's source and graph summons (native/hostedSummons.ts); every other kind is named there as not handled.
           if (request.request === 'summon') answerSummon(request)
+          // The frame saved a work into the works home that it does not present (a left draft kept as a work, O-I #763): the works are
+          // listed again, so the browser shows it at once.
+          if (request.request === 'works-changed') void enumerate().catch(fail)
         },
         onStudioResult: result => {if (live && !result.ok) setFault(result.error)},
       })

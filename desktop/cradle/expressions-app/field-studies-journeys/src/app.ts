@@ -4,7 +4,7 @@ import {installNativeField} from "./nativeField";
 import {announceInstrument} from "./native-field/ql/instrumentAnnouncement.mjs";
 import "./native-field/liveCut.css";
 import {SESSION_KEY,SessionState,validateSession,writeDraft,readDraft,readDrafts,removeDraft,applyRecoveryPlan,quarantineView,restoreQuarantinedDraft,listOwnerQuarantine,removeOwnerKeptDraft,restoreOwnerKeptDraft} from './recovery';
-import {ownerQuarantineRows} from './draftStorage';
+import {ownerQuarantineRows,ownerKeptUnreadableText} from './draftStorage';
 import type {OwnerQuarantineSection} from './expressions';
 // lane-3 E17-E19: one draft scheduler, the draft/saved offer and the session mark.
 import {DraftSchedule,draftStatusLine} from './draftSchedule';
@@ -46,7 +46,7 @@ import {COLOR_PALETTES,hexToRgb,isLightHex} from '../../src/engine/colorPalettes
 import {CHAKRA_PROFILE_ID} from '../../src/engine/semantics/chakraProfile';
 import type {SemanticBinding,SemanticColorCoupling,SemanticFieldConfig} from '../../src/engine/semantics/semanticTypes';
 import {Journey,Scene,Entity,EntityLayer,TextLayer,Tool,Shape,Vec3,clone,uid,clamp,fieldStudies,oiMark,rethemeMark,sevenCentres,smallLanguage,blankJourney,blankScene,entity,pin,chakraEntities,validateJourney,AutomationLane,SCENE_TRANSITION_MIN,SCENE_TRANSITION_MAX,type MarkThemeReading} from './model.js';
-import {DocumentStore,readLibrary,readLibraryWithOrigins,saveToLibrary,removeFromLibrary,recordLibraryAdoption,adoptedLocalOrigin,libraryOpenPlan,type LibraryOrigin} from './store.js';
+import {DocumentStore,readLibrary,readLibraryWithOrigins,saveToLibrary,removeFromLibrary,recordLibraryAdoption,adoptedLocalOrigin,linkLibraryCopy,libraryOpenPlan,type LibraryOrigin} from './store.js';
 import {decorateLibraryCard,libraryCardStanding,kernelCopyRefusalMessage,localCopyIdFor} from './libraryCards.js';
 import {bindingEditLabel,connectActLabel,historyTitle,historyToast,historyWaitReason,KERNEL_UPDATE_LABEL,OUTSIDE_UPDATE_REASON,researchMaterialLabel} from './undoLabels.js';
 import {defaultCamera,cameraForSceneView,project,unproject,facePlane,stageScale,stageCentre,basis,Camera} from './camera.js';
@@ -69,7 +69,7 @@ import {defaultCapture,CaptureSettings,CaptureTransition,download,slug,createOut
 const $=<T extends HTMLElement=HTMLElement>(id:string)=>document.getElementById(id) as T;
 import {mountShell,iconButton as ib} from './shell.js';
 import {RailItem,railPressed} from './rail.js';
-import {featuredExpressions,startingPoints,nativeSeven,forkExpression,libraryHTML,modesHTML,compositionCover,collectionBinsOf,collectionsWith,parseCollectionFilter,type CollectionBins,type CollectionFilter,type LibraryStanding} from './expressions.js';
+import {featuredExpressions,startingPoints,nativeSeven,forkExpression,libraryHTML,modesHTML,compositionCover,collectionBinsOf,collectionsWith,parseCollectionFilter,ownerKeptRemovalText,ownerKeptRemovedText,type CollectionBins,type CollectionFilter,type LibraryStanding} from './expressions.js';
 import {setModeCatalogueReader} from './native-field/modeStore.js';
 import {installKernelExpressions,kernelExpressionsAvailable,readMusicModes,readTechneReading,techneConstellationRelate,listKernelExpressions,nativeExpressionRequest,invertEdit} from './kernelExpressions.js';
 import {hostedRecovery} from './nativeRecovery.js';
@@ -1316,7 +1316,7 @@ function refreshOwnerQuarantine(message?:string){
  if(!address){ownerListing=null;if(libraryOpen)renderLibrary();return;}
  ownerListingPending=true;
  void listOwnerQuarantine(address.expressionRef,address.scope)
-  .then(reading=>{ownerListing={address,rows:ownerQuarantineRows(reading.entries),message,...(reading.unreadable!==undefined?{error:`The native owner cannot read the kept drafts of this Expression, so none are listed and none were removed or overwritten. ${reading.unreadable}`}:{})};})
+  .then(reading=>{ownerListing={address,rows:ownerQuarantineRows(reading.entries),message,...(reading.unreadable!==undefined?{error:ownerKeptUnreadableText(reading.unreadable)}:{})};})
   .catch(cause=>{ownerListing={address,rows:[],error:`The native owner could not read the kept drafts of this Expression. ${cause instanceof Error?cause.message:String(cause)}`};})
   .finally(()=>{ownerListingPending=false;if(libraryOpen)renderLibrary();});
 }
@@ -1647,7 +1647,7 @@ async function action(name:string,el:HTMLElement,event?:Event){const s=scene(),s
  // E19: the owner's kept draft becomes a Library copy by the same path as the browser quarantine; the kept draft stays where it is.
  case 'restore-owner-kept':{const id=el.dataset.id!,address=ownerListing?.address;if(!address)break;void restoreOwnerKeptDraft(address.expressionRef,address.scope,id).then(copy=>{refreshOwnerQuarantine(`Restored as a Library copy: ${copy.name}`);refreshQuarantine();toast('Restored as a Library copy.');}).catch(cause=>refreshOwnerQuarantine(cause instanceof Error?cause.message:String(cause)));break;}
  // E19: removing a kept draft is an explicit, confirmed request. Nothing else calls the owner's remove.
- case 'remove-owner-kept':{const id=el.dataset.id!,row=ownerListing?.rows.find(r=>r.id===id),address=ownerListing?.address;if(!row||!address)break;confirmChange('Remove this kept draft?',`The kept copy "${row.name}" (${row.reason}) is removed from this Expression's quarantine in the native owner. Nothing else is removed: the saved copy and the open Expression stay as they are.`,()=>{void removeOwnerKeptDraft(address.expressionRef,address.scope,row.id).then(remaining=>refreshOwnerQuarantine(`Removed. ${remaining} kept ${remaining===1?'draft remains':'drafts remain'}.`)).catch(cause=>refreshOwnerQuarantine(cause instanceof Error?cause.message:String(cause)));});break;}
+ case 'remove-owner-kept':{const id=el.dataset.id!,row=ownerListing?.rows.find(r=>r.id===id),address=ownerListing?.address;if(!row||!address)break;confirmChange('Remove this kept draft?',ownerKeptRemovalText(row),()=>{void removeOwnerKeptDraft(address.expressionRef,address.scope,row.id).then(remaining=>refreshOwnerQuarantine(ownerKeptRemovedText(remaining))).catch(cause=>refreshOwnerQuarantine(cause instanceof Error?cause.message:String(cause)));});break;}
  case 'delete-saved':{const id=el.dataset.id!;confirmChange('Remove this saved copy?','Only this understood saved expression is removed. Other saved and unreadable entries are retained. The active expression remains open.',()=>{removeFromLibrary(id);deletedLibraryIds.add(id);void removeDraft(id).catch(error);if(store.document.id===id)draftSchedule.cancel();sessionExpressions.delete(id);covers.delete(id);renderLibrary();});break;}
 
  case 'edit':edit(!inspectorOpen,selectedEntity()?'objects':'field');break;
@@ -2614,7 +2614,9 @@ function ownerWriteRefusal():string|null{const label=store.spanningLabel;if(labe
 function asCanvasImportOwnerCall<T>(call:()=>T):T{canvasImportOwnerCall=true;try{return call();}finally{canvasImportOwnerCall=false;}}
 // An untouched opening canvas is not recovery material (:243), awaited boot or not: a draft is retained for an edit or for an open
 // native work only (lane W, 15 Oct — the door's Scene and New were refused while the frame stood on its own blank canvas).
-nativeWorkspace=installNativeWorkspace({shouldRetainDraft:()=>store.revision!==0||!!nativeWorkspace?.nativeView(),localDraftEdited:()=>store.revision!==localOpenedRevision,anchor:()=>store.kernelSaveAnchor(),recordSave:(anchor,checkpoint)=>{if(!store.attachKernelCheckpoint(anchor,checkpoint))toast('Saved. Undo cannot reverse this Save on the native owner, because the step it began from has moved.',7000);},snapshot:()=>({journey:clone(store.document),sceneId:scene().id,entityId:selected[0]??null}),version:()=>store.revision,load:applyNativeView,toast,gate:ownerWriteRefusal,refresh:()=>{needsFrame=true;renderAll();},summon:(kind,subject)=>hostRequest({request:'summon',detail:{kind,subject}}),correspondence:(rows,selection)=>{nativeConnectionRows=rows;nativeSelectedRelation=selection;needsFrame=true;},status:showNativeStatus,chooseRecovery:request=>askRecoveryChoice(request.draft,{...request.offer,revision:request.revision}),followed:(_ref,readThrough)=>{const panels=followedPanels(readThrough);if(panels.sequence!==null)sequenceOpen=panels.sequence;if(panels.inspector!==null)inspectorOpen=panels.inspector;renderAll();}});
+// O-I #763: a local draft left for another work and kept as a work in its folder: its Library copy opens that work, never a second copy,
+// and the host lists its works again, so its browser shows the work at once.
+nativeWorkspace=installNativeWorkspace({shouldRetainDraft:()=>store.revision!==0||!!nativeWorkspace?.nativeView(),localDraftEdited:()=>store.revision!==localOpenedRevision,keptAsWork:(journey,kept)=>{try{linkLibraryCopy(journey,{ref:kept.expression_ref,title:kept.title,at:new Date().toISOString()});}catch{/* The work stands in its folder; the browser Library is unavailable, so its copy keeps no link. */}hostRequest({request:'works-changed'});},anchor:()=>store.kernelSaveAnchor(),recordSave:(anchor,checkpoint)=>{if(!store.attachKernelCheckpoint(anchor,checkpoint))toast('Saved. Undo cannot reverse this Save on the native owner, because the step it began from has moved.',7000);},snapshot:()=>({journey:clone(store.document),sceneId:scene().id,entityId:selected[0]??null}),version:()=>store.revision,load:applyNativeView,toast,gate:ownerWriteRefusal,refresh:()=>{needsFrame=true;renderAll();},summon:(kind,subject)=>hostRequest({request:'summon',detail:{kind,subject}}),correspondence:(rows,selection)=>{nativeConnectionRows=rows;nativeSelectedRelation=selection;needsFrame=true;},status:showNativeStatus,chooseRecovery:request=>askRecoveryChoice(request.draft,{...request.offer,revision:request.revision}),followed:(_ref,readThrough)=>{const panels=followedPanels(readThrough);if(panels.sequence!==null)sequenceOpen=panels.sequence;if(panels.inspector!==null)inspectorOpen=panels.inspector;renderAll();}});
 const retainedEditor=createRetainedNativeEditor({
  store,sceneId:()=>scene().id,nativeView:()=>nativeWorkspace?.nativeView(),
  selection:()=>({entity_ids:[...selected],step_id:scene().entities.find(e=>e.id===selected[0])?.sequence.steps[stepIndex]?.id??null}),

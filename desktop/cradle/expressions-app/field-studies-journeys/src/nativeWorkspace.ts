@@ -4,7 +4,7 @@ import type {BlueprintIntent} from './nativeBlueprint.js';
  * recover and file-save through the owner. It has no panel of its own; its
  * standing reaches the app's Save control and Studio footer via host.status. */
 import {clone,type Journey} from './model.js';
-import {NativeWorking,type NativeCheckpoint,type NativeFile,type NativeWorkingRecord,type WorkingSnapshot} from './nativeWorking.js';
+import {NativeWorking,makeWork,worksHomeLocation,type NativeCheckpoint,type NativeFile,type NativeWorkingRecord,type WorkingSnapshot} from './nativeWorking.js';
 import {kernelExpressionsAvailable,listKernelExpressions,readKernelExpression,nativeExpressionRequest,nativeFileRequest,documentToChanges,type KernelChange} from './kernelExpressions.js';
 import type {KernelSaveAnchor} from './store.js';
 import {readWorkingCheckpoint,readWorkingDraft,readBoundWorkingDraft,acceptWorkingRecoveryBasis,writeWorkingCheckpoint,writeDraft,keepHostedDraft,readDraftRow,draftRowBasis,draftRowText,markNativeDraftKept} from './recovery.js';
@@ -12,9 +12,6 @@ import {readWorkingCheckpoint,readWorkingDraft,readBoundWorkingDraft,acceptWorki
 import {settleHostedDraft,bootWasUnclean,draftBasis,type RecoveryChoice} from './draftStorage.js';
 import type {RecoveryRecord} from '../../../src/expressions/recoveryTypes';
 import {hostedRecovery,hostedScope,recoveryBinding,selectedRecovery,draftRecoveryAddress,selectedDraftAddress,selectNativeRecovery} from './nativeRecovery.js';
-import {materialFileName} from './reuse.js';
-import {requireSavedExpression} from '../../../src/knowledge/expressionSaveReceipt';
-import type {ExpressionResult} from '../../../src/expression/types';
 import type {CentralLocation} from '../../../src/kernel/types';
 import {kernelDocumentToJourney,type KernelConversion,type KernelExpressionDocument} from './kernelDocumentBridge.js';
 import {nestedDocumentReads} from './nestedReads.js';
@@ -56,6 +53,9 @@ export interface NativeWorkspaceHost {
  /** Whether the local draft standing in the frame has edits since it was opened (O-I #763). One opened and left unedited is
   * already kept, in the browser Library, and is not made a work again. */
  localDraftEdited?:()=>boolean;
+ /** A local draft left for another work was kept as a work in its world's folder (O-I #763): its Library copy then opens that work, and
+  * the host lists its works again, so the browser shows it at once. */
+ keptAsWork?:(journey:Journey,kept:{expression_ref:string;title:string;path:string})=>void;
  snapshot:()=>WorkingSnapshot;
  version:()=>number;
  /** `act`: an adoption the app's own native act produced, recorded as ONE labelled undo step ('act').
@@ -109,21 +109,15 @@ export function isGenuineWorkspaceSwitch(state:{booted:boolean}):boolean{
  const first=!state.booted;state.booted=true;return !first;
 }
 /** O-I #763 (#709): a local draft edited in a hosted frame has no recovery address the host selected, so it cannot be kept as a
- * draft when another work opens. It is kept as a work in its world's folder instead, by New's route (the shell's openStarter and
- * saveIntoHome, packages/live-shell/ui/src/components/nativeExpressionCommands.ts:176-219): the works home the owner's list
- * discloses is read first, so a home it cannot list refuses before anything is made; the draft is committed as a new native
- * Expression by the frame's own create and composition edit (NativeWorking.commit); and it is saved into that home with save_as,
- * whose receipt says the file was written and read back. A refusal at any step throws the owner's own words. */
+ * draft when another work opens. It is kept as a work in its world's folder instead, by New's one route (nativeWorking.ts makeWork, the
+ * shell's New and starters take it too): the works home the owner's list discloses is read first, so a home it cannot list refuses before
+ * anything is made; the draft is made a new native Expression and saved into that home, read back. A refusal at any step throws the
+ * owner's own words, a refused file among them: the draft is kept only once it stands as a work in its folder. */
 export async function keepDraftAsWork(owner:(request:Record<string,unknown>)=>Promise<unknown>,journey:Journey,id:string=crypto.randomUUID()):Promise<{expression_ref:string;title:string;path:string}>{
- const home=(await owner({operation:'list'}) as {home?:{path?:string;location?:CentralLocation;error?:string}}|null)?.home;
- if(!home?.location)throw new Error(home?.error?`The works home ${home.path??''} is unavailable: ${home.error}`:'The native owner disclosed no works home.');
- const ref=`expression:authored-${id}`;
- const working=new NativeWorking({expression:owner,file:()=>Promise.reject(new Error('A kept draft is saved by the owner\'s save_as.')),checkpoint:async()=>undefined,mint:()=>ref});
- const document=await working.commit({journey,sceneId:journey.scenes[0].id,entityId:null});
- const reply=await owner({operation:'save_as',expression_ref:ref,expected_revision:document.revision,parent:home.location,
-  name:materialFileName(`${journey.name} ${id.slice(0,8)}`),operation_ref:`operation:expression:${id}`,actor:'human:expressions-app',actor_kind:'human'}) as ExpressionResult;
- requireSavedExpression(reply);
- return {expression_ref:ref,title:document.title,path:reply.file.location.path};
+ const home:CentralLocation=worksHomeLocation((await owner({operation:'list'}) as {home?:{path?:string;location?:CentralLocation;error?:string}}|null)?.home);
+ const made=await makeWork(owner,{journey},{id,home});
+ if(made.refused!==null||!made.saved)throw new Error(made.refused??'The works home was not written.');
+ return {expression_ref:made.document.expression_ref,title:made.document.title,path:made.saved.path};
 }
 export function installNativeWorkspace(host:NativeWorkspaceHost){
  const checkpoint=async(id:string,value:unknown)=>{
@@ -211,6 +205,7 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
   if(host.localDraftEdited?.()===false)return;
   const kept=await keepDraftAsWork(nativeExpressionRequest,journey);
   carry(`"${journey.name}" was kept as a work: ${kept.path}.`);
+  host.keptAsWork?.(journey,kept);
  };
  const retainSubmitted=async(snapshot:WorkingSnapshot)=>{
   const generation=restoreGeneration;

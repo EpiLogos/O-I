@@ -1,9 +1,7 @@
 import type {NativeEditorReply} from '../../../../expressions-boundary/src/editor';
-import {NativeWorking} from '../../../../../desktop/cradle/expressions-app/field-studies-journeys/src/nativeWorking';
+import {WORK_ACCESS_RETIRED, WORK_ACTOR, WorkNotMade, makeWork, worksHomeLocation} from '../../../../../desktop/cradle/expressions-app/field-studies-journeys/src/nativeWorking';
 import type {Journey} from '../../../../../desktop/cradle/expressions-app/field-studies-journeys/src/model';
-import {materialFileName} from '../../../../../desktop/cradle/expressions-app/field-studies-journeys/src/reuse';
 import {requireExpressionOutcome} from '../../../../../desktop/cradle/src/knowledge/expressionOutcome';
-import {requireSavedExpression} from '../../../../../desktop/cradle/src/knowledge/expressionSaveReceipt';
 import type {CentralLocation} from '../../../../../desktop/cradle/src/kernel/types';
 import type {ExpressionResult} from '../../../../../desktop/cradle/src/expression/types';
 
@@ -69,10 +67,10 @@ let listedHome: WorksHome | null = null;
 export function setExpressionOwner(channel: ExpressionChannel | null): void {ownerChannel = channel; listedHome = null;}
 export function expressionOwner(): ExpressionChannel | null {return ownerChannel;}
 
-/** The frame's own actor on every native write (nativeWorking.ts:380, nativeMaterials.ts:43). */
-export const OPEN_ACTOR = 'human:expressions-app';
+/** The frame's own actor on every native write (nativeWorking.ts WORK_ACTOR, nativeMaterials.ts:43). */
+export const OPEN_ACTOR = WORK_ACTOR;
 export const OWNER_UNATTACHED = 'The native Expressions owner is not attached yet. Open Expressions once it has loaded, then try again.';
-export const ACCESS_RETIRED = 'The native access changed before this finished. Nothing further was written; read the works list before trying again.';
+export const ACCESS_RETIRED = WORK_ACCESS_RETIRED;
 
 /** One row of the owner's `list` (oi.expression-list/v1). An open work is held by the owner. A closed one (`open: false`) lives
  * only as its file in the owner's works home (kernel expression_home.rs WORKS_HOME, FOUNDATION N1) and opens from that file
@@ -101,9 +99,7 @@ export async function enumerateWorks(channel: ExpressionChannel, publish: (works
  * (the home is named once, in the kernel), listed afresh when none is held. A home the owner could not list refuses with
  * the owner's own reason. */
 export async function worksHome(channel: ExpressionChannel): Promise<CentralLocation> {
-  const home = listedHome?.location ? listedHome : (await channel({operation: 'list'}) as WorksReading | null)?.home;
-  if (home?.location) return home.location;
-  throw Error(home?.error ? `The works home ${home.path ?? ''} is unavailable: ${home.error}` : 'The native owner disclosed no works home.');
+  return worksHomeLocation(listedHome?.location ? listedHome : (await channel({operation: 'list'}) as WorksReading | null)?.home)
 }
 
 /** The row the published works list holds for `ref` when that work lives only as its file in the works home, else null. */
@@ -162,71 +158,43 @@ export type OpenOutcome =
   | {ok: false; error: string; expression_ref: string | null};
 
 const failure = (cause: unknown): string => cause instanceof Error ? cause.message : String(cause);
-const unusedFile = (): Promise<never> => Promise.reject(Error('The shell saves through the kernel-expression save_as, not the frame file port.'));
 /** A list refresh that follows a settled outcome: its failure is a warning beside the outcome, never a replacement for it. */
 const refreshed = (ports: OpenPorts): Promise<string | null> =>
   ports.refresh().then(() => null, cause => `The works list could not be refreshed: ${failure(cause)}`);
-/** save_as into the works home (`ports.parent`): the file the owner wrote and read back, or the owner's own refusal. A
- * refused save does not take the work back: the owner holds a committed native Expression (the frame keeps a native commit
- * and a saved file as separate acts, QUICK_GUIDE_STANDING). */
-async function saveIntoHome(ports: OpenPorts, channel: ExpressionChannel, document: {expression_ref: string; revision: number}, name: string, id: string): Promise<{saved: {path: string; revision: string} | null; refused: string | null}> {
-  if (!ports.parent) return {saved: null, refused: null};
+/** A work made by New's one route (the frame's nativeWorking.ts makeWork: made, then saved into the works home `ports.parent`), then the
+ * open door, then the works list read again. A refused file save does not take the work back: the owner holds a committed native
+ * Expression (the frame keeps a native commit and a saved file as separate acts, QUICK_GUIDE_STANDING), so the work opens and the row
+ * carries the owner's refusal. A refused create or edit stops before the open, naming a work the owner may already hold. */
+async function openMade(ports: OpenPorts, channel: ExpressionChannel, made: {journey: Journey} | {title: string}): Promise<OpenOutcome> {
   try {
-    const parent = await ports.parent();
-    const reply = await channel({operation: 'save_as', expression_ref: document.expression_ref, expected_revision: document.revision, parent,
-      name: materialFileName(name), operation_ref: `operation:expression:${id}`, actor: OPEN_ACTOR, actor_kind: 'human'}) as ExpressionResult;
-    requireSavedExpression(reply);
-    return {saved: {path: reply.file.location.path, revision: reply.file.revision}, refused: null};
-  } catch (cause) {return {saved: null, refused: failure(cause)};}
+    const {document, saved, refused} = await makeWork(channel, made, {id: ports.uuid(), home: ports.parent, current: () => ports.current()})
+    if (!ports.current()) throw new WorkNotMade(ACCESS_RETIRED, document.expression_ref)
+    ports.open(document.expression_ref)
+    return {ok: true, expression_ref: document.expression_ref, title: document.title, saved, refused, warning: await refreshed(ports)}
+  } catch (cause) {
+    await refreshed(ports)
+    return {ok: false, error: failure(cause), expression_ref: cause instanceof WorkNotMade ? cause.expression_ref : null}
+  }
 }
 
-/** Open on a Featured, Starter or preset row. The sequence is the frame's own native commit of a forked starter
- * (field-studies-journeys/src/nativeWorking.ts:367 commitRecorded: create, then the composition edit built by
- * kernelComposition.ts:55 prepareCompositionEdit), then save_as into the owner's works home (actPanel.ts:132-136,
- * nativeMaterials.ts:271), so the work is listed again after a restart, then the open door. `journey` is the starter already forked (expressions.ts:42
- * forkExpression), so its identity is fresh. A refusal of the create or the edit stops the sequence with the owner's own
- * text. A refusal of the file save does not take the work back: the owner holds a committed native Expression (the frame
- * keeps a native commit and a saved file as separate acts, QUICK_GUIDE_STANDING), so the work opens and the row carries
- * the owner's refusal. fork is not used here: its source must be a document the owner already holds, and a starter is the
- * frame's own Journey, not an owner document. */
+/** Open on a Featured, Starter or preset row: the starter is made a work by New's one route — the frame's own native commit of the forked
+ * starter (nativeWorking.ts commitRecorded: create, then the composition edit built by kernelComposition.ts prepareCompositionEdit), then
+ * save_as into the owner's works home (actPanel.ts:132-136, nativeMaterials.ts:271), so the work is listed again after a restart — then
+ * the open door. `journey` is the starter already forked (expressions.ts:42 forkExpression), so its identity is fresh. fork is not used
+ * here: its source must be a document the owner already holds, and a starter is the frame's own Journey, not an owner document. */
 export async function openStarter(ports: OpenPorts, journey: Journey): Promise<OpenOutcome> {
   const channel = ports.expression;
   if (!channel) return {ok: false, error: OWNER_UNATTACHED, expression_ref: null};
-  const id = ports.uuid(), ref = `expression:authored-${id}`;
-  const working = new NativeWorking({expression: channel, file: unusedFile, checkpoint: async () => undefined, mint: () => ref});
-  try {
-    const document = await working.commit({journey, sceneId: journey.scenes[0].id, entityId: null});
-    if (!ports.current()) throw Error(ACCESS_RETIRED);
-    const {saved, refused} = await saveIntoHome(ports, channel, document, `${journey.name} ${id.slice(0, 8)}`, id);
-    if (!ports.current()) throw Error(ACCESS_RETIRED);
-    ports.open(document.expression_ref);
-    return {ok: true, expression_ref: document.expression_ref, title: document.title, saved, refused, warning: await refreshed(ports)};
-  } catch (cause) {
-    await refreshed(ports);
-    return {ok: false, error: failure(cause), expression_ref: working.state?.view?.document.expression_ref ?? null};
-  }
+  return openMade(ports, channel, {journey});
 }
 
-/** New: one create with a fresh ref and title (nativeWorking.ts:380 is the frame's create), then save_as into the works
- * home at once, so New is listed again after a restart (FOUNDATION N1), then the open door. The work is one empty Scene. A
- * refused file save leaves the work open with the owner's text, as in openStarter. */
+/** New: an empty work of one Scene by New's one route — one create with a fresh ref and title (nativeWorking.ts makeWork), then save_as
+ * into the works home at once, so New is listed again after a restart (FOUNDATION N1) — then the open door. A refused file save leaves
+ * the work open with the owner's text, as in openStarter. */
 export async function newExpression(ports: OpenPorts, title: string): Promise<OpenOutcome> {
   const channel = ports.expression;
   if (!channel) return {ok: false, error: OWNER_UNATTACHED, expression_ref: null};
-  const id = ports.uuid(), ref = `expression:authored-${id}`;
-  try {
-    const created = await channel({operation: 'create', expression_ref: ref, title, actor: OPEN_ACTOR}) as ExpressionResult;
-    requireExpressionOutcome(created, 'Expression create');
-    if (created?.state !== 'ready' || created.document?.expression_ref !== ref) throw Error(`Expression create: the native owner did not return the new Expression (${created?.state ?? 'no state'}).`);
-    if (!ports.current()) throw Error(ACCESS_RETIRED);
-    const {saved, refused} = await saveIntoHome(ports, channel, created.document, `${title} ${id.slice(0, 8)}`, id);
-    if (!ports.current()) throw Error(ACCESS_RETIRED);
-    ports.open(ref);
-    return {ok: true, expression_ref: ref, title: created.document.title, saved, refused, warning: await refreshed(ports)};
-  } catch (cause) {
-    await refreshed(ports);
-    return {ok: false, error: failure(cause), expression_ref: null};
-  }
+  return openMade(ports, channel, {title});
 }
 
 /** Shell help copy. The quick guide is the app's own text (field-studies-journeys/src/shell.ts, the guide dialog). */
