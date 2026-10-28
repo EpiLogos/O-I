@@ -165,8 +165,8 @@ export async function nativeImportTheme(call: Call, text: string, fileName: stri
 }
 
 /** Setup's owners over the host's kernel channel (settings/adapter.ts SetupSource): the kernel's `setup` op through the cradle's adoption
- * transport (configuration/adoptionNative.ts) and Central's actions through invoke_action (central/devices/centralActions.ts), each
- * answering in its owner's words. It needs no qualified world: Setup is what makes one. `groundChanged` is the host's read of its world. */
+ * transport (configuration/adoptionNative.ts), Central's actions through invoke_action (central/devices/centralActions.ts) and Workcell's
+ * status (workcell_status_read), each answering in its owner's words. It needs no qualified world: Setup is what makes one. `groundChanged` is the host's read of its world. */
 export function nativeSetup(transport: KernelTransportStatus, groundChanged?: () => void): SetupSource {
   const call = (op: KernelOp) => kernelOp(transport, op)
   return {
@@ -177,6 +177,12 @@ export function nativeSetup(transport: KernelTransportStatus, groundChanged?: ()
       const read = actionAnswerOf({status: 'answered', value: answer.outcome?.result === 'action_dispatched' ? answer.outcome : null, error: null}, action)
       if (read.status === 'answered') return read.value
       throw new Error(read.status === 'refused' ? read.error : `${action} did not answer.`)
+    },
+    async workcell() {
+      const answer = await call({op: 'workcell_status_read'})
+      if (answer.error) throw new Error(answer.error)
+      if (answer.outcome?.result !== 'workcell_status_reading') throw new Error('Workcell\'s status did not answer.')
+      return answer.outcome.data
     },
     ...(groundChanged ? {groundChanged} : {}),
   }

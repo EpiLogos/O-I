@@ -414,18 +414,29 @@ export function systemValues(reading: SystemCompositionReading | null): Record<s
 
 // ---------------------------------------------------------------------------------------------------------------- Setup (manual §10.11)
 
-/** One folder of the ground's Work as Central reads it for Setup's Projects step: work.list's member, its projectcentral.inspect (or the
+/** One folder Setup's Projects step reads. In the ground's Work (place `work`): work.list's member, its projectcentral.inspect (or the
  * refusal in Central's words), its own material (central.files.list of the folder, hidden entries and ProjectCentral aside) and the
- * parts of its ProjectCentral already there (central.files.list of ProjectCentral). */
-export interface SetupWorkFolder {readonly name: string; readonly path: string; readonly inspection: unknown; readonly material: readonly string[]; readonly parts: readonly string[]}
-/** A preview Setup asked for: the folder and the choices it was asked on, and the steps Central would take, in order. */
-export interface SetupPreview {readonly folder: string; readonly make: string; readonly where: string; readonly wiki?: string; readonly lines: readonly string[]}
-/** What Setup holds: native oi's adoption state for the Ground step (the cradle's AdoptionController snapshot), Central's Work for the
- * Projects step, and the preview asked last. */
+ * parts of its ProjectCentral already there (central.files.list of ProjectCentral). Standing elsewhere under the world's folder (place
+ * `elsewhere`): work.candidates's member, with the signals Central found it by (git, agents, claude, wiki, obsidian); Central inspects
+ * no ProjectCentral outside its Work, so it has none. */
+export interface SetupWorkFolder {readonly name: string; readonly path: string; readonly place?: 'work' | 'elsewhere'; readonly relative?: string; readonly signals?: readonly string[]
+  readonly inspection: unknown; readonly material: readonly string[]; readonly parts: readonly string[]}
+/** A preview Setup asked for: the folder and the choices it was asked on, the steps Central would take, in order, and for a folder brought
+ * into Work, the digest Central's work.bring is pressed on. */
+export interface SetupPreview {readonly folder: string; readonly make: string; readonly where: string; readonly wiki?: string; readonly lines: readonly string[]; readonly digest?: string}
+/** The Machines step as Setup reads it: the Workcell this computer answers as (`workcell status --json`: workcell_ref, its source and
+ * health, or Workcell's refusal) and the Workcells Central's current machine is bound to (machine.declaration's workcell bindings;
+ * none until it is adopted). */
+export interface SetupMachine {readonly state: 'read'; readonly workcell: {readonly workcell_ref?: unknown; readonly workcell_ref_source?: unknown; readonly health?: unknown} | {readonly error: string}; readonly bound: readonly string[]}
+/** What Setup holds: native oi's adoption state for the Ground step (the cradle's AdoptionController snapshot), Central's Work and the
+ * folders of work elsewhere for the Projects step (`elsewhere`: Central's refusal to read them, in its words), Workcell and Central for
+ * the Machines step, the preview asked last, and the folder brought into Work last (shown next until you choose another). */
 export interface SetupSnapshot {
   readonly adoption: Partial<Pick<AdoptionState, 'discovery' | 'plan' | 'error' | 'busy' | 'unresolved'>>
-  readonly folders: {readonly state: 'unread'} | {readonly state: 'read'; readonly folders: readonly SetupWorkFolder[]} | {readonly state: 'refused'; readonly error: string}
+  readonly folders: {readonly state: 'unread'} | {readonly state: 'read'; readonly folders: readonly SetupWorkFolder[]; readonly elsewhere?: string} | {readonly state: 'refused'; readonly error: string}
   readonly plan: SetupPreview | null
+  readonly machine?: SetupMachine
+  readonly brought?: string | null
 }
 
 /** Whether native oi reads the ground as bound and recognised: the Ground step's change is made. Pure. */
@@ -451,9 +462,14 @@ export function setupGroundStep(adoption: SetupSnapshot['adoption']): Record<str
 }
 
 const PC_PARTS = ['user', 'agents', 'wiki', 'now'] as const
-/** A folder of Work as the Projects step draws it: what Central finds there (projectcentral.inspect: no wiki, one, several, a ProjectCentral
- * it cannot read, or the ground in place), the wikis a folder keeps to adopt, its material and the ProjectCentral parts already there. Pure. */
+/** A folder as the Projects step draws it: what Central finds there (projectcentral.inspect: no wiki, one, several, a ProjectCentral
+ * it cannot read, or the ground in place), the wikis a folder keeps to adopt, its material and the ProjectCentral parts already there.
+ * A folder elsewhere is what work.candidates found: an OKF wiki at its top (`wiki.json`), or none; nothing of ProjectCentral. Pure. */
 export function setupFolder(row: SetupWorkFolder): Record<string, unknown> {
+  if (row.place === 'elsewhere') {
+    const wikis = row.signals?.includes('wiki') ? ['wiki.json'] : []
+    return {path: row.path, title: row.name, place: 'elsewhere', finds: wikis.length ? 'one' : 'none', wikis, material: [...row.material], central: []}
+  }
   const inspection = rec(row.inspection) ? row.inspection : {}
   const errors = Array.isArray(inspection.manifest_errors) ? inspection.manifest_errors : []
   const manifest = rec(inspection.manifest) ? inspection.manifest : null
@@ -464,13 +480,30 @@ export function setupFolder(row: SetupWorkFolder): Record<string, unknown> {
   return {path: row.path, title: row.name, place: 'work', finds, wikis: finds === 'ground' || finds === 'unreadable' ? [] : candidates, material: [...row.material], central}
 }
 
-/** The choices the Projects step stands on, as the design reads them: the folder shown (the first, until you choose), what to make, where,
- * and the wiki (the folder's one, else the one you chose). Pure. */
-export function setupChoice(folders: readonly Record<string, unknown>[], held: (key: string) => Value | undefined): {folder?: string; make?: string; where: string; wiki?: string} {
-  const chosen = txt(held('folder')), folder = folders.find(f => f.path === chosen) ?? folders[0]
+/** The choices the Projects step stands on, as the design reads them: the folder shown (the one you chose, else the one brought into
+ * Work last, else the first), what to make, where (a folder of Work where it stands; a folder elsewhere Into Work, since Central keeps a
+ * project in its Work), and the wiki (the folder's one, else the one you chose). Pure. */
+export function setupChoice(folders: readonly Record<string, unknown>[], held: (key: string) => Value | undefined, brought?: string | null): {folder?: string; make?: string; where: string; wiki?: string} {
+  const chosen = txt(held('folder')) ?? txt(brought), folder = folders.find(f => f.path === chosen) ?? folders[0]
   const wikis = Array.isArray(folder?.wikis) ? folder!.wikis as string[] : []
   const wiki = wikis.length === 1 ? wikis[0] : txt(held('wiki'))
-  return {...(txt(folder?.path) ? {folder: txt(folder!.path)} : {}), ...(txt(held('make')) ? {make: txt(held('make'))} : {}), where: txt(held('where')) ?? 'stands', ...(wiki ? {wiki} : {})}
+  const where = txt(held('where')) ?? (folder?.place === 'elsewhere' ? 'work' : 'stands')
+  return {...(txt(folder?.path) ? {folder: txt(folder!.path)} : {}), ...(txt(held('make')) ? {make: txt(held('make'))} : {}), where, ...(wiki ? {wiki} : {})}
+}
+
+/** The Machines step (manual §10.11: "Makes this computer a workcell") from Workcell and Central: this computer as the Workcell it
+ * answers as, accepted once Central's current machine is bound to that Workcell; a binding to another Workcell, or a refusal, named in
+ * its owner's words. Undefined before it is read. Pure. */
+export function setupMachineStep(machine: SetupMachine | undefined): Record<string, unknown> | undefined {
+  if (!machine) return undefined
+  const workcell = machine.workcell
+  if ('error' in workcell) return {step: 'machines', state: 'found', items: [{name: 'This computer', why: `Workcell did not say which Workcell this computer is: ${workcell.error}`}]}
+  const ref = txt(workcell.workcell_ref)
+  if (!ref) return {step: 'machines', state: 'found', items: [{name: 'This computer', why: 'Workcell\'s status names no Workcell for this computer.'}]}
+  if (machine.bound.includes(ref)) return {step: 'machines', state: 'accepted', items: [{name: 'This computer', where: ref, change: `Central's current machine is bound to Workcell ${ref}`}]}
+  const item: Record<string, string> = {name: 'This computer', where: ref, change: `Central adopts this computer as your current machine, bound to Workcell ${ref}${txt(workcell.workcell_ref_source) ? ` (Workcell's ${txt(workcell.workcell_ref_source)} identity)` : ''}`}
+  if (machine.bound.length) item.why = `Central's current machine is bound to ${machine.bound.join(', ')}, not to ${ref}: resolve the binding in Control/machines/current.json first. Nothing is rebound.`
+  return {step: 'machines', state: 'found', items: [item]}
 }
 
 /** Setup's values (the design's setup, folders and setupPlan): the Ground step from native oi; once there is a ground, the Projects step
@@ -481,12 +514,19 @@ export function setupValues(snapshot: SetupSnapshot, held: (key: string) => Valu
   const steps: Record<string, unknown>[] = []
   const ground = setupGroundStep(snapshot.adoption)
   if (ground) steps.push(ground)
+  const machines = setupMachineStep(snapshot.machine)
+  if (machines) steps.push(machines)
   if (snapshot.folders.state === 'read') {
     const folders = snapshot.folders.folders.map(setupFolder)
     values.folders = json(folders)
-    steps.push({step: 'projects', state: folders.some(folder => folder.finds === 'ground') ? 'accepted' : 'found', items: []})
-    const plan = snapshot.plan, choice = setupChoice(folders, held)
-    if (plan && plan.folder === choice.folder && plan.make === choice.make && plan.where === choice.where && plan.wiki === choice.wiki) values.setupPlan = json(plan.lines)
+    const elsewhere = snapshot.folders.elsewhere
+    steps.push({step: 'projects', state: folders.some(folder => folder.finds === 'ground') ? 'accepted' : 'found', items: elsewhere ? [{name: 'Folders of work elsewhere', why: elsewhere}] : []})
+    const plan = snapshot.plan, choice = setupChoice(folders, held, snapshot.brought)
+    // Defaults the design reads where you chose nothing: the folder brought in last, and a folder elsewhere comes Into Work.
+    if (!txt(held('folder')) && choice.folder && choice.folder === txt(snapshot.brought)) values.folder = choice.folder
+    if (!txt(held('where')) && choice.where === 'work') values.where = 'work'
+    // A preview stands only for the choices it was asked on; bringing a folder in is asked on the folder and where alone.
+    if (plan && plan.folder === choice.folder && plan.where === choice.where && (plan.make === 'bring' || (plan.make === choice.make && plan.wiki === choice.wiki))) values.setupPlan = json(plan.lines)
   }
   if (steps.length) values.setup = json(steps)
   return values
@@ -496,7 +536,6 @@ export function setupValues(snapshot: SetupSnapshot, held: (key: string) => Valu
 export const SETUP_UNBOUND: Readonly<Record<string, string>> = {
   harnesses: 'Harnesses and skills: AIKit\'s adoption of an agent tool and its skills (aikit init, aikit adopt) is not bound to Setup yet; Harnesses & models and Skills & methods read each harness.',
   credentials: 'Credentials: AIKit\'s discovery and binding by reference (credential_discover, credential_setup) stand on the Credentials page; Setup does not read them yet.',
-  machines: 'Machines: making this computer a workcell (Central\'s machine.adopt-current with Workcell\'s binding) is not bound to Setup yet; Machines & services reads Workcell\'s machines.',
 }
 
 // ---------------------------------------------------------------------------------------------------------------- the classification
@@ -546,9 +585,9 @@ export const SETTINGS_WINDOW_WIRING = {
     visualLayer: 'the renderer\'s visual layer (SettingsAdapter.visualPreferences)', welcome: 'the renderer\'s welcome scene (SettingsAdapter.visualPreferences)',
     products: 'each product\'s mount and operations (system_composition_read)', ran: 'the last operation\'s answer (product_action_run)',
     system: 'each owner\'s System disclosure on its four axes (system_composition_read)',
-    setup: 'Setup\'s steps (manual §10.11): Ground from native oi\'s adoption (the kernel op `setup`: status and discover; bound and recognised is accepted); Projects from Central\'s Work, accepted once a project stands with its ground. Harnesses and skills, Credentials and Machines are not read by Setup yet (SETUP_UNBOUND)',
-    folders: 'the folders of the ground\'s Work (Central work.list), each with Central\'s projectcentral.inspect, its material and its ProjectCentral parts (central.files.list)',
-    setupPlan: 'the preview of the folder and choices shown: Central\'s projectcentral.adopt.preview or projectcentral.migrate.preview operations; for Create, the inspection Central plans projectcentral.init on',
+    setup: 'Setup\'s steps (manual §10.11): Ground from native oi\'s adoption (the kernel op `setup`: status and discover; bound and recognised is accepted); Machines from Workcell\'s status (op workcell_status_read) and Central\'s machine.declaration of role current, accepted once that binds the Workcell this computer answers as; Projects from Central\'s Work, accepted once a project stands with its ground. Harnesses and skills and Credentials are not read by Setup yet (SETUP_UNBOUND)',
+    folders: 'the folders of the ground\'s Work (Central work.list), each with Central\'s projectcentral.inspect, its material and its ProjectCentral parts (central.files.list); then the folders of work that stand elsewhere under the world\'s folder (Central work.candidates)',
+    setupPlan: 'the preview of the folder and choices shown: Central\'s projectcentral.adopt.preview or projectcentral.migrate.preview operations; for Create, the inspection Central plans projectcentral.init on; for a folder elsewhere, Central\'s work.bring.preview',
   },
   writes: {
     plan: 'config_plan_reviewed', apply: 'config_apply_reviewed', reset: 'config_reset on the reading digest', keep: 'the draft re-based on the current reading (the window\'s own)',
@@ -566,9 +605,9 @@ export const SETTINGS_WINDOW_WIRING = {
     checkCreation: 'RoutineAuthoringSource.readResult: a waiting creation read back, never sent again',
     addMachine: 'RemoteMachinesSource.add', connect: 'RemoteMachinesSource.connect', disconnect: 'RemoteMachinesSource.disconnect', removeMachine: 'RemoteMachinesSource.remove',
     openElsewhere: 'the setting\'s own editor beside its instrument (SettingsAdapter.navigate)', 'pick:<ref>': 'the system picker (SettingsAdapter.pickResource)',
-    acceptStep: 'Ground: native oi\'s reviewed plan (the kernel op `setup`: plan, then apply with its review token; Central only — custom, products [central]) read back by discover. Projects: Central\'s projectcentral.init, adopt or migrate as previewed, read back by projectcentral.inspect. The other steps refuse naming their owner (SETUP_UNBOUND)',
-    previewStep: 'Central\'s projectcentral.adopt.preview or migrate.preview for the folder and wiki chosen; Create previews from Central\'s inspection (it has no preview of projectcentral.init)',
-    rereadSetup: 'native oi\'s status and discover, then Central\'s Work, read again',
+    acceptStep: 'Ground: native oi\'s reviewed plan (the kernel op `setup`: plan, then apply with its review token; Central only — custom, products [central]) read back by discover. Machines: Central\'s machine.adopt-current (role current, the Workcell this computer answers as), read back by machine.declaration; the host then reads its world again. Projects: a folder elsewhere comes into Work by Central\'s work.bring on its preview\'s digest, read back by work.list; a folder of Work becomes a project by Central\'s projectcentral.init, adopt or migrate as previewed, read back by projectcentral.inspect. The other steps refuse naming their owner (SETUP_UNBOUND)',
+    previewStep: 'Central\'s projectcentral.adopt.preview or migrate.preview for the folder and wiki chosen; Create previews from Central\'s inspection (it has no preview of projectcentral.init); a folder elsewhere previews Central\'s work.bring.preview',
+    rereadSetup: 'native oi\'s status and discover, then Workcell\'s status and Central\'s machine declaration, Central\'s Work and the folders of work elsewhere, read again',
   },
   local: {
     search: 'what you search for', hit: 'the search result ↑/↓ marked', scope: 'the scope a page\'s settings are read and changed at', focus: 'the setting a press or a request opened',

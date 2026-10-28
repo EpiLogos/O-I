@@ -394,7 +394,12 @@ test('the pages the window drew before are retired with the port: the design dra
 function scriptedSetup() {
   const calls = []
   const GROUND = '/w/Bare/Central'
-  const world = {bound: null, outcome: 'new', journal: null, work: new Map()}
+  // `elsewhere`: the folders of work under the world's folder outside its ground (work.candidates), by their path relative to it;
+  // `machine`: the Workcell Central's current machine is bound to (Control/machines/current.json), null until adopted.
+  const world = {bound: null, outcome: 'new', journal: null, work: new Map(), elsewhere: new Map(), machine: null,
+    workcell: {ok: true, workcell_ref: 'workcell:local', workcell_ref_source: 'default', health: 'healthy', state_root: '/w/Bare/.workcell'}}
+  const HOME = '/w/Bare'
+  const digestOf = relative => `digest:${relative}:${world.elsewhere.get(relative).revision}`
   const discovery = () => ({schema: 'oi.setup/v1', basis: 'basis-1', data_root: '/w/Bare/data', composition_path: '/w/Bare/.config/oi-shell-candidate/full-suite/composition.json',
     target: 'macos/aarch64', bound_ground: world.bound, suggested_ground: GROUND, selected_ground: GROUND,
     ground: world.outcome === 'new' ? {outcome: 'new', canonical_path: GROUND, note: 'Native Central initialization requires explicit review.'}
@@ -436,6 +441,32 @@ function scriptedSetup() {
       const names = sub === 'ProjectCentral' ? ['agents', 'user', 'project.json'] : [...row.material, ...(row.made ? ['ProjectCentral'] : []), '.git']
       return {schema: 'central.directory-reading/v1', entries: names.map(entry => ({name: entry, kind: entry.includes('.') && entry !== '.git' ? 'file' : 'directory'}))}
     }
+    if (action === 'work.candidates') return {home: HOME, ground: GROUND, max_depth: 4, visited: 12, truncated: false,
+      items: [...world.elsewhere].sort(([a], [b]) => (a < b ? -1 : 1)).map(([relative, row]) => ({name: relative.split('/').pop(), path: `${HOME}/${relative}`, relative, signals: row.signals}))}
+    if (action === 'work.bring.preview' || action === 'work.bring') {
+      const relative = input.source_path.slice(HOME.length + 1), row = world.elsewhere.get(relative)
+      if (!row) throw new Error(`Nothing stands at ${input.source_path}.`)
+      const name = input.name ?? relative.split('/').pop()
+      if (world.work.has(name)) throw new Error(`Work/${name} is there already: bring the folder in under another name, or adopt Work/${name} where it stands.`)
+      if (action === 'work.bring.preview') return {source_path: input.source_path, name, target: `${GROUND}/Work/${name}`, target_ref: `Work/${name}`, git: row.signals.includes('git'),
+        entries: {files: 9, folders: 3, links: 0, bytes: 1200}, digest: digestOf(relative),
+        operations: [`Copy ${input.source_path} into your ground's Work as Work/${name}: 9 files, 3 folders and 0 links, 1200 bytes, each file's mode and modification time kept.`,
+          ...(row.signals.includes('git') ? ['Its git repository (.git) comes with it: the history, the branches and the working tree as they stand.'] : []),
+          `The original stays at ${input.source_path}; nothing in it moves or changes.`]}
+      if (input.expected_digest !== digestOf(relative)) throw new Error(`${input.source_path} changed since its preview (or no preview was named): preview it again. Nothing was copied.`)
+      world.work.set(name, {material: row.material, wikis: [], made: false})
+      return {source_path: input.source_path, name, target: `${GROUND}/Work/${name}`, target_ref: `Work/${name}`, digest: input.expected_digest, verified: true, original: 'kept'}
+    }
+    if (action === 'machine.declaration') {
+      if (!world.machine) throw new Error('Machine declaration for current is missing at Control/machines/current.json.')
+      return {declaration: {schema: 'central.machine/v1', version: 1, role: input.role, capabilities: [], bindings: [{kind: 'workcell', reference: world.machine}]}, source: {path: 'Control/machines/current.json'}}
+    }
+    if (action === 'machine.adopt-current') {
+      if (world.machine && world.machine !== input.workcell_ref) throw new Error(`Machine declaration for current already binds a different Workcell: ${world.machine}.`)
+      const outcome = world.machine ? 'unchanged' : 'created'
+      world.machine = input.workcell_ref
+      return {schema: 'central.machine-adoption/v1', outcome, role: input.role, workcell_ref: input.workcell_ref, declaration: {role: input.role, bindings: [{kind: 'workcell', reference: world.machine}]}}
+    }
     if (action === 'projectcentral.adopt.preview') return {operations: [`Keep ${input.source} in place as a participating source`, 'Create ProjectCentral/agents/wiki/wiki.json'], source: input.source, preserves_source: true}
     if (action === 'projectcentral.init' || action === 'projectcentral.adopt') {
       const row = project(input.project); row.made = true
@@ -443,7 +474,8 @@ function scriptedSetup() {
     }
     throw new Error(`unexpected ${action}`)
   }
-  return {source: {adoption, central, groundChanged: () => calls.push(['groundChanged'])}, calls, world, GROUND}
+  const workcell = async () => { calls.push(['workcell']); return world.workcell }
+  return {source: {adoption, central, workcell, groundChanged: () => calls.push(['groundChanged'])}, calls, world, GROUND, HOME}
 }
 const held = values => key => values[key]
 const stepOf = (values, step) => JSON.parse(values.setup).find(row => row.step === step)
@@ -542,7 +574,7 @@ test('SCRIPTED — Setup\'s refusals name their owner: a step Setup does not rea
   world.work.set('essays', {material: ['drafts', 'wiki'], wikis: ['wiki/wiki.json'], made: false})
   world.work.set('garden', {material: ['notes', 'site'], wikis: ['notes/wiki/wiki.json', 'site/wiki/wiki.json'], made: false})
   await walk.read()
-  for (const step of ['harnesses', 'credentials', 'machines']) await assert.rejects(walk.accept(step, held({})), /AIKit|Workcell|machine/, `${step}: names its owner`)
+  for (const step of ['harnesses', 'credentials']) await assert.rejects(walk.accept(step, held({})), /AIKit/, `${step}: names its owner`)
   const garden = '/w/Bare/Central/Work/garden', essays = '/w/Bare/Central/Work/essays'
   await assert.rejects(walk.preview(held({folder: garden, make: 'keep'})), /Choose the wiki/)
   await assert.rejects(walk.preview(held({folder: essays, make: 'create'})), /keeps a wiki/)
@@ -551,6 +583,112 @@ test('SCRIPTED — Setup\'s refusals name their owner: a step Setup does not rea
   assert.match(JSON.parse(win.setupValues(walk.snapshot(), held({folder: essays, make: 'keep'})).setupPlan).join(' '), /Keep wiki\/wiki\.json in place/)
   await walk.accept('projects', held({folder: essays, make: 'keep'}))
   assert.equal(JSON.parse(win.setupValues(walk.snapshot(), held({})).folders).find(f => f.title === 'essays').finds, 'ground')
+})
+
+test('CODE-DERIVED — the Projects step lists the folders of work that stand elsewhere (Central\'s work.candidates) after Work\'s own; a folder elsewhere goes Into Work unless you choose otherwise', () => {
+  const discovery = {bound_ground: '/w/A/Central', selected_ground: '/w/A/Central', ground: {outcome: 'recognized', canonical_path: '/w/A/Central'}}
+  const folders = [
+    {name: 'sketches', path: '/w/A/Central/Work/sketches', place: 'work', inspection: {outcome: 'create_project_central', manifest: null, manifest_errors: [], wiki_candidates: []}, material: ['src'], parts: []},
+    {name: 'field-notes', path: '/w/A/code/field-notes', place: 'elsewhere', relative: 'code/field-notes', signals: ['git', 'agents', 'claude'], inspection: null, material: [], parts: []},
+    {name: 'essays', path: '/w/A/essays', place: 'elsewhere', relative: 'essays', signals: ['wiki'], inspection: null, material: [], parts: []},
+  ]
+  const snapshot = {adoption: {discovery}, folders: {state: 'read', folders}, plan: null}
+  const drawn = JSON.parse(win.setupValues(snapshot, held({})).folders)
+  assert.deepEqual(drawn.map(f => [f.title, f.place, f.finds]), [['sketches', 'work', 'none'], ['field-notes', 'elsewhere', 'none'], ['essays', 'elsewhere', 'one']])
+  assert.deepEqual(drawn[2].wikis, ['wiki.json'], 'the OKF wiki Central found at the folder\'s top')
+  assert.equal(win.setupValues(snapshot, held({})).where, undefined, 'a folder of Work: where it stands')
+  assert.equal(win.setupValues(snapshot, held({folder: '/w/A/code/field-notes'})).where, 'work', 'a folder elsewhere comes Into Work')
+  assert.equal(win.setupValues(snapshot, held({folder: '/w/A/code/field-notes', where: 'stands'})).where, undefined, 'your choice stands over the default')
+  const refused = win.setupValues({...snapshot, folders: {state: 'read', folders: folders.slice(0, 1), elsewhere: 'work.candidates reads the folders of work under your home, and no home is known.'}}, held({}))
+  assert.match(stepOf(refused, 'projects').items[0].why, /no home is known/, 'a refused reading of the folders elsewhere stands on the step in Central\'s words')
+  // A folder brought in is the one shown next, until you choose another.
+  const brought = win.setupValues({...snapshot, brought: '/w/A/Central/Work/field-notes', folders: {state: 'read', folders: [...folders, {name: 'field-notes', path: '/w/A/Central/Work/field-notes', place: 'work', inspection: {outcome: 'create_project_central', manifest: null, manifest_errors: [], wiki_candidates: []}, material: ['log.py'], parts: []}]}}, held({}))
+  assert.equal(brought.folder, '/w/A/Central/Work/field-notes')
+})
+
+test('CODE-DERIVED — Setup\'s Machines step is Workcell\'s identity and Central\'s current machine: found until Central\'s current machine is bound to the Workcell this computer answers as', () => {
+  const discovery = {bound_ground: '/w/A/Central', selected_ground: '/w/A/Central', ground: {outcome: 'recognized', canonical_path: '/w/A/Central'}}
+  const base = {adoption: {discovery}, folders: {state: 'read', folders: []}, plan: null}
+  const workcell = {workcell_ref: 'workcell:local', workcell_ref_source: 'default', health: 'healthy'}
+  const found = stepOf(win.setupValues({...base, machine: {state: 'read', workcell, bound: []}}, held({})), 'machines')
+  assert.equal(found.state, 'found')
+  assert.deepEqual([found.items[0].name, found.items[0].where], ['This computer', 'workcell:local'])
+  assert.match(found.items[0].change, /Central adopts this computer as your current machine, bound to Workcell workcell:local/)
+  const accepted = stepOf(win.setupValues({...base, machine: {state: 'read', workcell, bound: ['workcell:local']}}, held({})), 'machines')
+  assert.equal(accepted.state, 'accepted')
+  const other = stepOf(win.setupValues({...base, machine: {state: 'read', workcell, bound: ['workcell:mac']}}, held({})), 'machines')
+  assert.equal(other.state, 'found')
+  assert.match(other.items[0].why, /bound to workcell:mac/)
+  const unread = stepOf(win.setupValues({...base, machine: {state: 'read', workcell: {error: 'workcell: state root is not writable'}, bound: []}}, held({})), 'machines')
+  assert.match(unread.items[0].why, /not writable/)
+  assert.equal(stepOf(win.setupValues(base, held({})), 'machines'), undefined, 'not read yet: absent')
+  assert.equal(win.SETUP_UNBOUND.machines, undefined, 'Machines is bound')
+})
+
+test('SCRIPTED — Arriving: a folder of work that stands outside the ground is brought into Work as previewed, its original kept, and then becomes a project there', async () => {
+  const {source, calls, world, GROUND, HOME} = scriptedSetup()
+  world.elsewhere.set('code/field-notes', {signals: ['git', 'agents', 'claude'], material: ['AGENTS.md', 'log.py'], revision: 1})
+  world.elsewhere.set('Vault', {signals: ['obsidian'], material: ['Home.md'], revision: 1})
+  const walk = new settingsPages.SetupWalk(source)
+  await walk.read()
+  assert.ok(!calls.some(([, action]) => action === 'work.candidates'), 'nothing elsewhere is read before there is a ground')
+  await walk.accept('ground', held({}))
+  let values = win.setupValues(walk.snapshot(), held({}))
+  const folders = JSON.parse(values.folders)
+  assert.deepEqual(folders.map(f => [f.title, f.place]), [['Vault', 'elsewhere'], ['field-notes', 'elsewhere']])
+  const notes = `${HOME}/code/field-notes`
+  await assert.rejects(walk.preview(held({folder: notes, where: 'stands'})), /Central keeps a project in your ground's Work/, 'a project stands in Work, never by reference elsewhere')
+  await assert.rejects(walk.accept('projects', held({folder: notes})), /Preview first/)
+  await walk.preview(held({folder: notes}))
+  values = win.setupValues(walk.snapshot(), held({folder: notes}))
+  const lines = JSON.parse(values.setupPlan).join(' ')
+  assert.match(lines, /Copy .*code\/field-notes into your ground's Work as Work\/field-notes/)
+  assert.match(lines, /git repository/)
+  assert.match(lines, /original stays/)
+  assert.ok(!calls.some(([, action]) => action === 'work.bring'), 'Preview changes nothing')
+  // The folder changes after its preview: Accept refuses in Central's words and nothing is copied.
+  world.elsewhere.get('code/field-notes').revision = 2
+  await assert.rejects(walk.accept('projects', held({folder: notes})), /changed since its preview/)
+  await walk.preview(held({folder: notes}))
+  const said = await walk.accept('projects', held({folder: notes}))
+  assert.match(said, /field-notes/)
+  assert.match(said, /original stays/)
+  assert.deepEqual(calls.findLast(([, action]) => action === 'work.bring')[2], {source_path: notes, expected_digest: 'digest:code/field-notes:2'})
+  values = win.setupValues(walk.snapshot(), held({}))
+  const brought = `${GROUND}/Work/field-notes`
+  assert.equal(values.folder, brought, 'the folder brought in is shown next')
+  assert.deepEqual(JSON.parse(values.folders).map(f => [f.title, f.place]), [['field-notes', 'work'], ['Vault', 'elsewhere'], ['field-notes', 'elsewhere']],
+    'read back from Central: the copy stands in Work, and the original still stands where it was')
+  // Then it becomes a project where it now stands.
+  await walk.preview(held({make: 'create'}))
+  await walk.accept('projects', held({make: 'create'}))
+  assert.deepEqual(calls.find(([, action]) => action === 'projectcentral.init')[2], {project: 'field-notes', project_id: 'field-notes'})
+  assert.equal(stepOf(win.setupValues(walk.snapshot(), held({})), 'projects').state, 'accepted')
+  await walk.preview(held({folder: notes})).then(() => assert.fail('a second copy under the same name'), cause => assert.match(String(cause), /Work\/field-notes is there already/))
+})
+
+test('SCRIPTED — Machines: Accept binds Central\'s current machine to the Workcell this computer answers as, reads it back, and the host reads its world again', async () => {
+  const {source, calls, world} = scriptedSetup()
+  const walk = new settingsPages.SetupWalk(source)
+  await walk.read()
+  await assert.rejects(walk.accept('machines', held({})), /Make your ground first/)
+  await walk.accept('ground', held({}))
+  const changed = calls.filter(([kind]) => kind === 'groundChanged').length
+  let machines = stepOf(win.setupValues(walk.snapshot(), held({})), 'machines')
+  assert.equal(machines.state, 'found')
+  assert.equal(machines.items[0].where, 'workcell:local')
+  const said = await walk.accept('machines', held({}))
+  assert.match(said, /workcell:local/)
+  assert.deepEqual(calls.find(([, action]) => action === 'machine.adopt-current')[2], {role: 'current', workcell_ref: 'workcell:local'})
+  assert.equal(world.machine, 'workcell:local')
+  machines = stepOf(win.setupValues(walk.snapshot(), held({})), 'machines')
+  assert.equal(machines.state, 'accepted', 'read back from Central\'s machine declaration')
+  assert.ok(calls.filter(([kind]) => kind === 'groundChanged').length > changed, 'the host reads its world again: it qualifies with the binding')
+  await assert.rejects(walk.accept('machines', held({})), /Nothing is made twice/)
+  // A declaration bound to another Workcell is Central's conflict, named; nothing is rebound.
+  world.machine = 'workcell:mac'
+  await walk.read()
+  await assert.rejects(walk.accept('machines', held({})), /already binds a different Workcell: workcell:mac/)
 })
 
 test('SCRIPTED — the first time the DLW opens (no ground yet), Settings opens on Setup; a contextual request opens Setup too', async () => {

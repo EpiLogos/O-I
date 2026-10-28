@@ -113,10 +113,13 @@
 //   acceptStep <step> (held): Ground is native oi's reviewed plan for Central's ground (setup plan, then apply with its review token),
 //   read back by setup discover. For Projects, previewStep 'projects' (Preview: Central's projectcentral.adopt.preview or
 //   migrate.preview, read into `setupPlan`; Create's plan is Central's inspection) and acceptStep 'projects' with folder, make and
-//   wiki: Central's projectcentral.init, adopt or migrate, read back by projectcentral.inspect. A folder that stands outside the
-//   ground's Work (where: work, or a folder elsewhere) has no Central op yet. Harnesses and skills, Credentials and Machines are not
-//   read by Setup yet; their Accept names the owner (settings/windowValues.ts SETUP_UNBOUND). rereadSetup (setup discover, then
-//   Central's Work) exists. The binding: settings/windowPages.ts SetupWalk.
+//   wiki: Central's projectcentral.init, adopt or migrate, read back by projectcentral.inspect. A folder that stands elsewhere under
+//   the world's folder (Central's work.candidates, place elsewhere) comes Into Work first: Preview is Central's work.bring.preview,
+//   Accept its work.bring on that preview's digest, read back by work.list, the original kept; Central keeps a project in its Work, so
+//   Where it stands refuses for it. Machines: acceptStep 'machines' is Central's machine.adopt-current binding its current machine
+//   to the Workcell this computer answers as (Workcell's status), read back by machine.declaration. Harnesses and skills and
+//   Credentials are not read by Setup yet; their Accept names the owner (settings/windowValues.ts SETUP_UNBOUND). rereadSetup (setup
+//   discover, then Workcell, Central's machine, Work and the folders elsewhere) exists. The binding: settings/windowPages.ts SetupWalk.
 //   The host stands each act without an owner disabled, with that reason. A press that turns the page is a click inside the window,
 //   which reads the page it turned to.
 // A key the owner has not reported is absent: its cell draws "—", and the page names the missing reading.

@@ -20,7 +20,7 @@ import {connectionBasis, machineBasis, validateMachine, type MachineConnection, 
 import {authorityAllowsTrigger, eligibleProofs, routineBasis, scheduleFromInput, type RoutineAuthoringOptions, type RoutineAuthoringResult, type ScheduleShape} from './routines'
 import {appearanceValues, automationValues, credentialValues, folderOf, harnessValues, machineValues, NO_AUTHORING, NO_HARNESS, NO_INVOKE, NO_MACHINES, NO_NAVIGATE, NO_PRODUCTS,
   NO_PROFILES, NO_SETUP_SOURCE, NO_VISUALS, groundBound, productValues, profileValues, SETUP_UNBOUND, setupFolder, setupValues, systemValues, type CredentialRow,
-  type SetupPreview, type SetupSnapshot, type SetupWorkFolder} from './windowValues'
+  type SetupMachine, type SetupPreview, type SetupSnapshot, type SetupWorkFolder} from './windowValues'
 import {AdoptionController} from '../../../../../desktop/cradle/src/configuration/adoptionController'
 import {PC_ACCEPT_ACTION, PC_INSPECT_ACTION, PC_PREVIEW_ACTION, acceptInput} from '../central/devices/pageGround'
 
@@ -43,6 +43,8 @@ const words = (cause: unknown): string => (cause instanceof Error ? cause.messag
 /** A read's refusal, said on the page's control nearest it. */
 const refusedOn = (key: string, error: string | null): Record<string, string> => (error ? {[key]: error} : {})
 const text = (value: Value | undefined): string => (typeof value === 'string' ? value.trim() : '')
+/** An owner's answer field as words: a string, trimmed, else empty. */
+const word = (value: unknown): string => (typeof value === 'string' ? value.trim() : '')
 /** A list the window holds as a JSON string (the design's multi-choice toggles). */
 const listOf = (value: Value | undefined): string[] => {
   if (typeof value !== 'string' || !value) return []
@@ -664,14 +666,20 @@ const entryNames = (reading: unknown): string[] => {
 /** Setup as the window walks it (manual §10.11), over its owners (settings/adapter.ts SetupSource). The Ground step is native oi's adoption
  * through the cradle's AdoptionController, unchanged: status and discover read the ground; Accept makes a plan for Central's ground alone
  * (custom, products [central]: the desktop is a full install, and Setup adds and removes no product), applies it with its review token,
- * and reads it back. The Projects step is Central's Work: work.list and each member's projectcentral.inspect; Preview asks Central's
- * adopt or migrate preview (Create's plan is the inspection: Central has no preview of projectcentral.init); Accept presses
- * projectcentral.init, adopt or migrate as previewed, and reads the folder back. Each Accept answers only once its owner reads the change
- * back. Plain, so the window's hook and a headless walk drive the same presses. */
+ * and reads it back. The Machines step makes this computer a workcell: it reads the Workcell this computer answers as (Workcell's status)
+ * and Central's current machine (machine.declaration), and Accept binds the one to the other (machine.adopt-current), so the world
+ * qualifies. The Projects step is Central's Work: work.list and each member's projectcentral.inspect, then the folders of work that stand
+ * elsewhere under the world's folder (work.candidates). A folder elsewhere comes into Work first — Central keeps a project in its Work, never
+ * by reference elsewhere: Preview asks work.bring.preview, Accept presses work.bring on its digest and reads Work back, the original kept.
+ * A folder of Work becomes a project: Preview asks Central's adopt or migrate preview (Create's plan is the inspection: Central has no
+ * preview of projectcentral.init); Accept presses projectcentral.init, adopt or migrate as previewed, and reads the folder back. Each Accept
+ * answers only once its owner reads the change back. Plain, so the window's hook and a headless walk drive the same presses. */
 export class SetupWalk {
   readonly controller: AdoptionController
   private folders: SetupSnapshot['folders'] = {state: 'unread'}
   private plan: SetupPreview | null = null
+  private machine: SetupMachine | undefined = undefined
+  private brought: string | null = null
   private current: SetupSnapshot
   private listeners = new Set<() => void>()
   readonly source: SetupSource
@@ -683,14 +691,30 @@ export class SetupWalk {
   }
   snapshot = (): SetupSnapshot => this.current
   subscribe = (listener: () => void): (() => void) => { this.listeners.add(listener); return () => { this.listeners.delete(listener) } }
-  private compose(): SetupSnapshot { return {adoption: this.controller.getSnapshot(), folders: this.folders, plan: this.plan} }
+  private compose(): SetupSnapshot { return {adoption: this.controller.getSnapshot(), folders: this.folders, plan: this.plan, machine: this.machine, brought: this.brought} }
   private publish(): void { this.current = this.compose(); for (const listener of [...this.listeners]) listener() }
 
-  /** Read every step again: native oi's ground, then Central's Work once there is a ground. A refusal stands in the reading, in its
-   * owner's words; nothing is retried. */
+  /** Read every step again: native oi's ground, then, once there is a ground, this computer's Workcell and Central's machine, Central's
+   * Work and the folders of work elsewhere. A refusal stands in the reading, in its owner's words; nothing is retried. */
   async read(): Promise<void> {
     await this.controller.refresh()
+    await this.readMachine()
     await this.readWork()
+  }
+  /** Workcell's status (the Workcell this computer answers as) and Central's current machine's Workcell bindings (none until adopted). */
+  private async readMachine(): Promise<void> {
+    if (!groundBound(this.controller.getSnapshot().discovery)) { this.machine = undefined; this.publish(); return }
+    const status = this.source.workcell
+      ? await this.source.workcell().then(reading => (reading && typeof reading === 'object' ? reading as Record<string, unknown> : {error: 'Workcell answered no status.'}), (cause: unknown) => ({error: words(cause)}))
+      : {error: 'Setup reaches no Workcell here (SetupSource.workcell).'}
+    const declaration = await this.source.central('machine.declaration', {role: 'current'}).catch(() => null)
+    const bindings = declaration && typeof declaration === 'object' ? (declaration as {declaration?: {bindings?: unknown}}).declaration?.bindings : undefined
+    const bound = Array.isArray(bindings) ? bindings.flatMap(binding => {
+      const row = binding as {kind?: unknown; reference?: unknown}
+      return row?.kind === 'workcell' && typeof row.reference === 'string' ? [row.reference] : []
+    }) : []
+    this.machine = {state: 'read', workcell: typeof status.error === 'string' ? {error: status.error} : status, bound}
+    this.publish()
   }
   private async readWork(): Promise<void> {
     if (!groundBound(this.controller.getSnapshot().discovery)) { this.folders = {state: 'unread'}; this.publish(); return }
@@ -705,18 +729,46 @@ export class SetupWalk {
         ])
         const names = entryNames(listed)
         const parts = names.includes('ProjectCentral') ? entryNames(await this.source.central('central.files.list', {path: `Work/${name}/ProjectCentral`}).catch(() => null)) : []
-        return {name, path, inspection, material: names.filter(entry => entry !== 'ProjectCentral' && !entry.startsWith('.')), parts}
+        return {name, path, place: 'work', inspection, material: names.filter(entry => entry !== 'ProjectCentral' && !entry.startsWith('.')), parts}
       }))
-      this.folders = {state: 'read', folders}
+      // The folders of work elsewhere under the world's folder; a refusal to read them leaves Work's own standing, and is said.
+      let elsewhere: string | undefined
+      const candidates = await this.source.central('work.candidates', {}).catch((cause: unknown) => { elsewhere = words(cause); return null })
+      const found = (candidates && typeof candidates === 'object' && Array.isArray((candidates as {items?: unknown}).items) ? (candidates as {items: unknown[]}).items : [])
+        .flatMap((item): SetupWorkFolder[] => {
+          const row = item as {name?: unknown; path?: unknown; relative?: unknown; signals?: unknown}
+          if (typeof row?.name !== 'string' || typeof row.path !== 'string') return []
+          const signals = Array.isArray(row.signals) ? row.signals.filter((signal): signal is string => typeof signal === 'string') : []
+          return [{name: row.name, path: row.path, place: 'elsewhere', ...(typeof row.relative === 'string' ? {relative: row.relative} : {}), signals, inspection: null, material: [], parts: []}]
+        })
+      this.folders = {state: 'read', folders: [...folders, ...found], ...(elsewhere ? {elsewhere} : {})}
     } catch (cause) { this.folders = {state: 'refused', error: words(cause)} }
     this.publish()
   }
 
-  /** Accept a step (held): Ground through native oi, Projects through Central; the others name the owner they wait on. */
+  /** Accept a step (held): Ground through native oi, Machines and Projects through Central; the others name the owner they wait on. */
   async accept(step: string, held: Held): Promise<string> {
     if (step === 'ground') return this.acceptGround()
+    if (step === 'machines') return this.acceptMachine()
     if (step === 'projects') return this.acceptProject(held)
     throw new Error(SETUP_UNBOUND[step] ?? `${step} is no step of Setup.`)
+  }
+  /** Makes this computer a workcell (manual §10.11): Central's current machine bound to the Workcell this computer answers as, read back
+   * from Central's declaration; then the host reads its world again, which now qualifies (`oi current-world` reads that binding). */
+  private async acceptMachine(): Promise<string> {
+    if (!groundBound(this.controller.getSnapshot().discovery)) throw new Error('Make your ground first: Central keeps your machines in its ground.')
+    await this.readMachine()
+    const machine = this.machine
+    if (!machine) throw new Error('Make your ground first: Central keeps your machines in its ground.')
+    if ('error' in machine.workcell) throw new Error(`Workcell did not say which Workcell this computer is: ${machine.workcell.error}`)
+    const ref = word(machine.workcell.workcell_ref)
+    if (!ref) throw new Error('Workcell\'s status names no Workcell for this computer. Nothing was sent.')
+    if (machine.bound.includes(ref)) throw new Error(`Accepted: Central's current machine is bound to Workcell ${ref} already. Nothing is made twice.`)
+    await this.source.central('machine.adopt-current', {role: 'current', workcell_ref: ref})
+    await this.readMachine()
+    if (!this.machine?.bound.includes(ref)) throw new Error(`Central answered machine.adopt-current, but its current machine does not read back bound to ${ref}. Read again.`)
+    this.source.groundChanged?.()
+    return `Central adopted this computer as your current machine, bound to Workcell ${ref}, and read it back. Your world is read again with it.`
   }
   private async acceptGround(): Promise<string> {
     if (!this.controller.getSnapshot().discovery) await this.controller.refresh()
@@ -736,19 +788,27 @@ export class SetupWalk {
     const applied = this.controller.getSnapshot()
     if (applied.disposition !== 'verified') throw new Error(applied.error ?? `Native oi answered ${applied.disposition ?? 'nothing'}; its journal decides. Read again; nothing is retried.`)
     await this.controller.refresh()
+    await this.readMachine()
     await this.readWork()
     this.source.groundChanged?.()
     if (!groundBound(this.controller.getSnapshot().discovery)) throw new Error('Native oi applied the plan, but its reading does not show the ground bound. Read again.')
     return made ? `Central made your ground at ${ground} and checked it. Your world's state is kept beside it.` : `Central keeps your ground at ${ground}, where it was. Nothing in it moved.`
   }
 
-  /** The Projects step's choice on the held keys, checked as the design closes its choices; the folder's own row with it. */
-  private chosen(held: Held): {row: SetupWorkFolder; make: keyof typeof SETUP_MAKES; where: string; wiki?: string} {
+  /** The Projects step's choice on the held keys, checked as the design closes its choices; the folder's own row with it. A folder
+   * elsewhere has one choice: Into Work (`bring`), Central's copy; what to make of it is chosen once it stands in Work. */
+  private chosen(held: Held): {row: SetupWorkFolder; make: keyof typeof SETUP_MAKES | 'bring'; where: string; wiki?: string} {
     if (this.folders.state === 'refused') throw new Error(this.folders.error)
     if (this.folders.state !== 'read') throw new Error('Make your ground first: Central reads its Work once there is a ground.')
-    const rows = this.folders.folders, path = text(held('folder')) || rows[0]?.path
+    const rows = this.folders.folders, brought = rows.find(folder => folder.path === this.brought)?.path
+    const path = text(held('folder')) || brought || rows[0]?.path
     const row = rows.find(folder => folder.path === path)
-    if (!row) throw new Error('Choose a folder of your ground\'s Work.')
+    if (!row) throw new Error('Choose a folder of your ground\'s Work, or one that stands elsewhere.')
+    if (row.place === 'elsewhere') {
+      const where = text(held('where')) || 'work'
+      if (where !== 'work') throw new Error(`Central keeps a project in your ground's Work, never by reference elsewhere: bring ${row.name} Into Work. Its original stays where it was.`)
+      return {row, make: 'bring', where}
+    }
     const folder = setupFolder(row), finds = folder.finds, wikis = folder.wikis as string[]
     if (finds === 'unreadable') throw new Error(`${row.name}: its ProjectCentral cannot be read. Mend its manifest by hand.`)
     if (finds === 'ground') throw new Error(`${row.name}: its ground is in place. Nothing to make.`)
@@ -766,6 +826,14 @@ export class SetupWalk {
   async preview(held: Held): Promise<void> {
     const {row, make, where, wiki} = this.chosen(held)
     let lines: string[]
+    if (make === 'bring') {
+      const data = await this.source.central('work.bring.preview', {source_path: row.path})
+      const plan = data && typeof data === 'object' ? data as {operations?: unknown; digest?: unknown} : {}
+      if (!Array.isArray(plan.operations) || typeof plan.digest !== 'string') throw new Error('Central answered its bring preview in a form Setup does not read (work-bring-plan expected).')
+      this.plan = {folder: row.path, make, where, lines: plan.operations.map(String), digest: plan.digest}
+      this.publish()
+      return
+    }
     if (make === 'create') {
       const reason = row.inspection && typeof row.inspection === 'object' ? (row.inspection as {reason?: unknown}).reason : undefined
       lines = [`Central makes ProjectCentral round ${row.name} (projectcentral.init): its user and agents parts and its wiki.`, ...(typeof reason === 'string' && reason ? [reason] : []), 'Nothing in the folder moves.']
@@ -782,6 +850,7 @@ export class SetupWalk {
     const {row, make, where, wiki} = this.chosen(held)
     const plan = this.plan
     if (!plan || plan.folder !== row.path || plan.make !== make || plan.where !== where || plan.wiki !== wiki) throw new Error('Preview first: Accept makes what the preview listed.')
+    if (make === 'bring') return this.acceptBring(row, plan)
     const treatment = SETUP_MAKES[make]
     await this.source.central(PC_ACCEPT_ACTION[treatment], acceptInput(row.name, treatment, wiki ?? null))
     this.plan = null
@@ -789,6 +858,20 @@ export class SetupWalk {
     const after = this.folders.state === 'read' ? this.folders.folders.find(folder => folder.name === row.name) : undefined
     if (!after || setupFolder(after).finds !== 'ground') throw new Error(`Central answered ${PC_ACCEPT_ACTION[treatment]}, but ${row.name} does not read back with its ground in place. Read again.`)
     return `Central made ${row.name}'s ProjectCentral beside its material${wiki ? `, its wiki ${make === 'keep' ? 'kept in place' : 'copied in'}` : ''}. It reads back in place.`
+  }
+  /** A folder elsewhere comes into Work as previewed: Central's work.bring on the preview's digest (a folder changed since is refused in
+   * Central's words, and nothing is copied), read back from Work. The copy is the folder shown next. */
+  private async acceptBring(row: SetupWorkFolder, plan: SetupPreview): Promise<string> {
+    const receipt = await this.source.central('work.bring', {source_path: row.path, expected_digest: plan.digest})
+    const name = receipt && typeof receipt === 'object' ? word((receipt as {name?: unknown}).name) : ''
+    const target = receipt && typeof receipt === 'object' ? word((receipt as {target_ref?: unknown}).target_ref) : ''
+    this.plan = null
+    await this.readWork()
+    const copy = this.folders.state === 'read' ? this.folders.folders.find(folder => folder.place === 'work' && folder.name === name) : undefined
+    if (!name || !copy) throw new Error(`Central answered work.bring, but ${target || row.name} does not read back in your ground's Work. Read again.`)
+    this.brought = copy.path
+    this.publish()
+    return `Central brought ${row.name} into your ground's Work as ${target || `Work/${name}`}, read back equal to it; the original stays at ${row.path}. Choose what to make of it there.`
   }
 }
 
@@ -808,7 +891,7 @@ export function useSetupPage(adapter: SettingsAdapter, enabled: boolean, held: H
     const refusal = snapshot.folders.state === 'refused' ? snapshot.folders.error : null
     return {values: setupValues(snapshot, held), why, refused: refusedOn('rereadSetup', refusal), reread: enabled ? () => walk.read() : async () => {},
       acts: {
-        acceptStep: async step => { const said = await walk.accept(String(step), held); done(['make', 'wiki']); return said },
+        acceptStep: async step => { const said = await walk.accept(String(step), held); done(['make', 'wiki', ...(step === 'projects' ? ['folder', 'where'] : [])]); return said },
         previewStep: async () => { await walk.preview(held) },
         rereadSetup: async () => { await walk.read() },
       }}
