@@ -151,7 +151,9 @@ export interface WorldClipTake {
  * Each names the owner op it runs; a family that declares none leaves its grid read-only. Selection is the shell's own
  * (WorldContext.selection), never an action. */
 export interface WorldTrackActions {
-  launch?: {op: string; run(clipId: string): unknown};
+  /** A clip's launch. `release`, where a family gives it, is the launch let go: a clip whose launch mode holds it (Live's Gate, manual
+   * §19.1 The Launch panel: "runs it only while you hold the launch") launches on the press and is released when the press ends. */
+  launch?: {op: string; run(clipId: string): unknown; release?(clipId: string): unknown};
   launchStop?: {op: string; run(columnId: string): unknown};
   /** `grain`, when given, is this stop's own (null: it acts on the one track pressed), said instead of the set's. */
   stopTrack?: {op: string; run(trackId: string): unknown; grain?: string | null};

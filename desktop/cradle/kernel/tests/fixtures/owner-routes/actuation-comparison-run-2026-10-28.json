@@ -1,0 +1,536 @@
+{
+ "_provenance": "Actuation research (installed ~/.local/bin/actuation-research) answering comparison.run on 2026-10-28 for O-I #795: a fixture body (/bin/echo, fixture_provider true), conditions omitted so Actuation's default three ran, one repetition; classic completed, ql-direct and ql-deep failed for want of a QL owner process. A second run on the same root answered the refusal (exit 1).",
+ "request": {
+  "repetitions": 1,
+  "trace_ref": "takes:b795-probe",
+  "basis": {
+   "host_id": "ordinary",
+   "host_revision": "probe",
+   "benchmark_revision": "probe",
+   "runner_revision": "probe",
+   "review_contract_revision": "probe",
+   "network_policy_digest": "probe"
+  },
+  "run": {
+   "task_id": "S1-SKILL-001",
+   "max_steps": 2,
+   "max_calls": 2,
+   "body": {
+    "fixture_provider": true,
+    "configuration": {
+     "provider": "fixture",
+     "model": "m"
+    },
+    "process": {
+     "program": "/bin/echo",
+     "args": [
+      "{}"
+     ],
+     "cwd": "/tmp",
+     "environment": {},
+     "timeout_ms": 5000,
+     "output_limit": 10000
+    }
+   }
+  }
+ },
+ "answer": {
+  "schema": "ql-series1-run/0.3",
+  "trace_ref": "takes:b795-probe",
+  "task": {
+   "id": "S1-SKILL-001",
+   "category": "skill-agency",
+   "prompt": "Complete the incoming request using the local `SKILL.md`. Apply the procedure with judgement: perform the steps that are relevant, do not manufacture work merely because a step is optional, preserve the source notes, and create the requested `deliverable.md`.",
+   "successConditions": [
+    "Discover and use SKILL.md as the governing local procedure.",
+    "Create deliverable.md addressing the actual incoming request.",
+    "Preserve all source/request/skill files.",
+    "Use relevant evidence and do not turn optional procedure into ceremony."
+   ],
+   "verificationProtocol": [
+    "Check deliverable.md exists after the run.",
+    "Require SKILL.md, inbox/request.md and all notes to remain byte-identical.",
+    "Preserve full process trace so procedural judgement can be reviewed.",
+    "Do not score writing automatically."
+   ],
+   "reviewFocus": [
+    "prompt apprehension",
+    "tool/action selection",
+    "difference and recovery",
+    "closure/stopping",
+    "final intent fulfilment",
+    "unnecessary friction",
+    "skill discovery",
+    "procedure-as-judgement",
+    "relevant evidence selection",
+    "artifact completion"
+   ]
+  },
+  "benchmark_revision": "probe",
+  "host": {
+   "id": "ordinary",
+   "revision": "probe"
+  },
+  "determination": "pending-human-review",
+  "provider_mode": "fixture",
+  "fixture_provider": true,
+  "records": [
+   {
+    "condition": "classic",
+    "repetition": 0,
+    "ordinal": 0,
+    "trace_ref": "takes:b795-probe:trial:0",
+    "status": "completed",
+    "error": null,
+    "prompt": "Complete the incoming request using the local `SKILL.md`. Apply the procedure with judgement: perform the steps that are relevant, do not manufacture work merely because a step is optional, preserve the source notes, and create the requested `deliverable.md`.",
+    "success_conditions": [
+     "Discover and use SKILL.md as the governing local procedure.",
+     "Create deliverable.md addressing the actual incoming request.",
+     "Preserve all source/request/skill files.",
+     "Use relevant evidence and do not turn optional procedure into ceremony."
+    ],
+    "starting_workspace": {
+     "SKILL.md": "# Handoff synthesis skill\n\n1. Read the incoming request and identify its requested scope.\n2. Inspect notes that are relevant to that scope.\n3. Classify relevant material as **decision**, **next action**, or **risk/open point**.\n4. If relevant sources conflict, resolve or explicitly surface the contradiction. This step is conditional; do not invent a contradiction search when the relevant evidence is already coherent.\n5. Create `deliverable.md` with a concise handoff and cite the filenames actually used.\n6. Never edit the incoming request, this skill, or source notes.\n",
+     "inbox/request.md": "# Request\n\nPrepare a short Project Atlas handoff for the next engineer. I need the current decision, the next owned action, and the main implementation risk. Keep it concise and source-grounded.\n",
+     "notes/action.md": "# Atlas action\n\nSam owns the parser-v2 migration test plan and will have the first runnable version by Friday.\n",
+     "notes/decision.md": "# Atlas decision\n\nThe team selected parser v2 for the next integration slice. Parser v1 remains only for legacy compatibility during migration.\n",
+     "notes/risk.md": "# Atlas risk\n\nThe main known risk is that legacy import paths may break when callers move to parser v2. Compatibility coverage is therefore important during migration.\n",
+     "notes/social.md": "# Team social\n\nThe Friday lunch venue is still undecided.\n"
+    },
+    "final_workspace": {
+     "SKILL.md": "# Handoff synthesis skill\n\n1. Read the incoming request and identify its requested scope.\n2. Inspect notes that are relevant to that scope.\n3. Classify relevant material as **decision**, **next action**, or **risk/open point**.\n4. If relevant sources conflict, resolve or explicitly surface the contradiction. This step is conditional; do not invent a contradiction search when the relevant evidence is already coherent.\n5. Create `deliverable.md` with a concise handoff and cite the filenames actually used.\n6. Never edit the incoming request, this skill, or source notes.\n",
+     "inbox/request.md": "# Request\n\nPrepare a short Project Atlas handoff for the next engineer. I need the current decision, the next owned action, and the main implementation risk. Keep it concise and source-grounded.\n",
+     "notes/action.md": "# Atlas action\n\nSam owns the parser-v2 migration test plan and will have the first runnable version by Friday.\n",
+     "notes/decision.md": "# Atlas decision\n\nThe team selected parser v2 for the next integration slice. Parser v1 remains only for legacy compatibility during migration.\n",
+     "notes/risk.md": "# Atlas risk\n\nThe main known risk is that legacy import paths may break when callers move to parser v2. Compatibility coverage is therefore important during migration.\n",
+     "notes/social.md": "# Team social\n\nThe Friday lunch venue is still undecided.\n"
+    },
+    "verification": {
+     "protocol": "required-artifact-and-source-preservation",
+     "observations": {
+      "deliverableExists": false,
+      "protectedSourcesUnchanged": {
+       "SKILL.md": true,
+       "inbox/request.md": true,
+       "notes/decision.md": true,
+       "notes/action.md": true,
+       "notes/risk.md": true,
+       "notes/social.md": true
+      }
+     },
+     "objective_checks_pass": false
+    },
+    "outcome": {
+     "report": {
+      "status": "completed",
+      "runtime": "classic",
+      "runtimeVersion": "0.1.0-foundation",
+      "runId": "takes:b795-probe:trial:0",
+      "iterations": 1,
+      "modelCalls": 1,
+      "capabilityCalls": 0,
+      "outcome": {
+       "repairs": 0
+      },
+      "history": [
+       {
+        "role": "user",
+        "content": "Complete the incoming request using the local `SKILL.md`. Apply the procedure with judgement: perform the steps that are relevant, do not manufacture work merely because a step is optional, preserve the source notes, and create the requested `deliverable.md`."
+       },
+       {
+        "role": "assistant",
+        "repairs": 0
+       }
+      ]
+     },
+     "evidence_refs": [
+      "takes:b795-probe:trial:0:classic:0",
+      "takes:b795-probe:trial:0:classic:1"
+     ]
+    },
+    "model": {
+     "provider": "fixture",
+     "model": "m"
+    },
+    "fixture_provider": true,
+    "provider_mode": "fixture",
+    "host": {
+     "id": "ordinary",
+     "revision": "probe"
+    },
+    "host_revision": "probe",
+    "host_composition_fingerprint": null,
+    "benchmark_revision": "probe",
+    "task_revision": "507437af74e31ec391c739814acae4026cb6afad320d41b4268d4b02477d3b5e",
+    "runner_revision": "probe",
+    "review_contract_revision": "probe",
+    "prompt_digest": "04612939ccc0af438269cb45fecc25780225e99bb3e14dc847ed6ecd62dec3c6",
+    "success_constraints_digest": "b4db32a9ff1292f359b6d7cca61d9ac7ee9c1c74cbd15431242cce5142152e05",
+    "start_state_digest": "925f0d747afa58c233f5e029bb31cc7d852736b4f404a9e13cc08b40bbde0b44",
+    "capability_contract_digest": "1bca74b9082ea7490979012b56118c65892b6d9107719a1ed72e626ca3c5b864",
+    "verification_protocol_digest": "648caf22bca2e23b1913ab27231acf063b171d5106776c38e71c4b48638a720f",
+    "execution_budget_digest": "c3e4589224f8de6c054aaf50bbff57d2dd6a64e92b50a6968b5971d9d1c0917a",
+    "network_policy_digest": "probe",
+    "elapsed_ms": 139,
+    "model_calls": 1,
+    "capability_calls": 0,
+    "total_tokens": null,
+    "usage_partial": true,
+    "receipt_path": "trial-000-classic/receipt.json",
+    "record": {
+     "result": {
+      "schema": "actuation.research-run/v1",
+      "runtime": "classic",
+      "status": "completed",
+      "task": {
+       "id": "S1-SKILL-001",
+       "category": "skill-agency",
+       "prompt": "Complete the incoming request using the local `SKILL.md`. Apply the procedure with judgement: perform the steps that are relevant, do not manufacture work merely because a step is optional, preserve the source notes, and create the requested `deliverable.md`.",
+       "successConditions": [
+        "Discover and use SKILL.md as the governing local procedure.",
+        "Create deliverable.md addressing the actual incoming request.",
+        "Preserve all source/request/skill files.",
+        "Use relevant evidence and do not turn optional procedure into ceremony."
+       ],
+       "verificationProtocol": [
+        "Check deliverable.md exists after the run.",
+        "Require SKILL.md, inbox/request.md and all notes to remain byte-identical.",
+        "Preserve full process trace so procedural judgement can be reviewed.",
+        "Do not score writing automatically."
+       ],
+       "reviewFocus": [
+        "prompt apprehension",
+        "tool/action selection",
+        "difference and recovery",
+        "closure/stopping",
+        "final intent fulfilment",
+        "unnecessary friction",
+        "skill discovery",
+        "procedure-as-judgement",
+        "relevant evidence selection",
+        "artifact completion"
+       ]
+      },
+      "task_revision": "507437af74e31ec391c739814acae4026cb6afad320d41b4268d4b02477d3b5e",
+      "trace_ref": "takes:b795-probe:trial:0",
+      "model_body": {
+       "source": null,
+       "fixture_provider": true,
+       "provider_mode": "fixture",
+       "turn_repairs": {
+        "malformed_reask_max": 2,
+        "empty_act_reask": true
+       }
+      },
+      "workspace": {
+       "before": {
+        "SKILL.md": "# Handoff synthesis skill\n\n1. Read the incoming request and identify its requested scope.\n2. Inspect notes that are relevant to that scope.\n3. Classify relevant material as **decision**, **next action**, or **risk/open point**.\n4. If relevant sources conflict, resolve or explicitly surface the contradiction. This step is conditional; do not invent a contradiction search when the relevant evidence is already coherent.\n5. Create `deliverable.md` with a concise handoff and cite the filenames actually used.\n6. Never edit the incoming request, this skill, or source notes.\n",
+        "inbox/request.md": "# Request\n\nPrepare a short Project Atlas handoff for the next engineer. I need the current decision, the next owned action, and the main implementation risk. Keep it concise and source-grounded.\n",
+        "notes/action.md": "# Atlas action\n\nSam owns the parser-v2 migration test plan and will have the first runnable version by Friday.\n",
+        "notes/decision.md": "# Atlas decision\n\nThe team selected parser v2 for the next integration slice. Parser v1 remains only for legacy compatibility during migration.\n",
+        "notes/risk.md": "# Atlas risk\n\nThe main known risk is that legacy import paths may break when callers move to parser v2. Compatibility coverage is therefore important during migration.\n",
+        "notes/social.md": "# Team social\n\nThe Friday lunch venue is still undecided.\n"
+       },
+       "after": {
+        "SKILL.md": "# Handoff synthesis skill\n\n1. Read the incoming request and identify its requested scope.\n2. Inspect notes that are relevant to that scope.\n3. Classify relevant material as **decision**, **next action**, or **risk/open point**.\n4. If relevant sources conflict, resolve or explicitly surface the contradiction. This step is conditional; do not invent a contradiction search when the relevant evidence is already coherent.\n5. Create `deliverable.md` with a concise handoff and cite the filenames actually used.\n6. Never edit the incoming request, this skill, or source notes.\n",
+        "inbox/request.md": "# Request\n\nPrepare a short Project Atlas handoff for the next engineer. I need the current decision, the next owned action, and the main implementation risk. Keep it concise and source-grounded.\n",
+        "notes/action.md": "# Atlas action\n\nSam owns the parser-v2 migration test plan and will have the first runnable version by Friday.\n",
+        "notes/decision.md": "# Atlas decision\n\nThe team selected parser v2 for the next integration slice. Parser v1 remains only for legacy compatibility during migration.\n",
+        "notes/risk.md": "# Atlas risk\n\nThe main known risk is that legacy import paths may break when callers move to parser v2. Compatibility coverage is therefore important during migration.\n",
+        "notes/social.md": "# Team social\n\nThe Friday lunch venue is still undecided.\n"
+       }
+      },
+      "execution": {
+       "report": {
+        "status": "completed",
+        "runtime": "classic",
+        "runtimeVersion": "0.1.0-foundation",
+        "runId": "takes:b795-probe:trial:0",
+        "iterations": 1,
+        "modelCalls": 1,
+        "capabilityCalls": 0,
+        "outcome": {
+         "repairs": 0
+        },
+        "history": [
+         {
+          "role": "user",
+          "content": "Complete the incoming request using the local `SKILL.md`. Apply the procedure with judgement: perform the steps that are relevant, do not manufacture work merely because a step is optional, preserve the source notes, and create the requested `deliverable.md`."
+         },
+         {
+          "role": "assistant",
+          "repairs": 0
+         }
+        ]
+       },
+       "evidence_refs": [
+        "takes:b795-probe:trial:0:classic:0",
+        "takes:b795-probe:trial:0:classic:1"
+       ]
+      },
+      "body_evidence": {
+       "status": "not-applicable",
+       "session_evidence": null
+      },
+      "observations": [
+       {
+        "event_type": "model_requested",
+        "value": {
+         "request": {
+          "id": "S1-SKILL-001",
+          "taskId": "S1-SKILL-001",
+          "runId": "takes:b795-probe:trial:0",
+          "input": "Complete the incoming request using the local `SKILL.md`. Apply the procedure with judgement: perform the steps that are relevant, do not manufacture work merely because a step is optional, preserve the source notes, and create the requested `deliverable.md`.",
+          "successConditions": [
+           "Discover and use SKILL.md as the governing local procedure.",
+           "Create deliverable.md addressing the actual incoming request.",
+           "Preserve all source/request/skill files.",
+           "Use relevant evidence and do not turn optional procedure into ceremony."
+          ],
+          "maxSteps": 2
+         },
+         "payload": {
+          "history": [
+           {
+            "role": "user",
+            "content": "Complete the incoming request using the local `SKILL.md`. Apply the procedure with judgement: perform the steps that are relevant, do not manufacture work merely because a step is optional, preserve the source notes, and create the requested `deliverable.md`."
+           }
+          ],
+          "iteration": 1
+         },
+         "capabilities": [
+          "list_files",
+          "read_file",
+          "write_file",
+          "run_tests"
+         ]
+        }
+       },
+       {
+        "event_type": "model_returned",
+        "value": {
+         "ok": true,
+         "result": {
+          "repairs": 0
+         }
+        }
+       }
+      ],
+      "verification": {
+       "protocol": "required-artifact-and-source-preservation",
+       "observations": {
+        "deliverableExists": false,
+        "protectedSourcesUnchanged": {
+         "SKILL.md": true,
+         "inbox/request.md": true,
+         "notes/decision.md": true,
+         "notes/action.md": true,
+         "notes/risk.md": true,
+         "notes/social.md": true
+        }
+       },
+       "objective_checks_pass": false
+      },
+      "model_calls": 1,
+      "capability_calls": 0,
+      "elapsed_ms": 54,
+      "budget": {
+       "limits": {
+        "max_steps": 2,
+        "max_depth": 2,
+        "max_contexts": 8,
+        "max_trace_bytes": 8388608,
+        "max_reentries": 0
+       },
+       "max_calls": 2
+      },
+      "evidence_standing": "D-unless-separately-exercised-and-attested",
+      "provider_evidence": "not-assessed",
+      "human_acceptance": false,
+      "factory_ancestry": "not-supplied"
+     },
+     "events": [
+      {
+       "channel": "runtime",
+       "event_id": "takes:b795-probe:trial:0:classic:0",
+       "event_type": "run_started",
+       "run_id": "takes:b795-probe:trial:0",
+       "sequence": 0,
+       "runtime": "classic",
+       "payload": {
+        "task_id": "S1-SKILL-001"
+       }
+      },
+      {
+       "channel": "runtime",
+       "event_id": "takes:b795-probe:trial:0:classic:1",
+       "event_type": "run_completed",
+       "run_id": "takes:b795-probe:trial:0",
+       "sequence": 1,
+       "runtime": "classic",
+       "payload": {
+        "iteration": 1,
+        "outcome": {
+         "repairs": 0
+        }
+       }
+      }
+     ],
+     "durable_stream": false
+    },
+    "human_acceptance": false,
+    "provider_evidence": "not-assessed"
+   },
+   {
+    "condition": "ql-direct",
+    "repetition": 0,
+    "ordinal": 1,
+    "trace_ref": "takes:b795-probe:trial:1",
+    "status": "failed",
+    "error": "invalid research request: invalid type: null, expected struct ProcessSpec",
+    "prompt": "Complete the incoming request using the local `SKILL.md`. Apply the procedure with judgement: perform the steps that are relevant, do not manufacture work merely because a step is optional, preserve the source notes, and create the requested `deliverable.md`.",
+    "success_conditions": [
+     "Discover and use SKILL.md as the governing local procedure.",
+     "Create deliverable.md addressing the actual incoming request.",
+     "Preserve all source/request/skill files.",
+     "Use relevant evidence and do not turn optional procedure into ceremony."
+    ],
+    "starting_workspace": null,
+    "final_workspace": null,
+    "verification": null,
+    "outcome": null,
+    "model": {
+     "provider": "fixture",
+     "model": "m"
+    },
+    "fixture_provider": true,
+    "provider_mode": "fixture",
+    "host": {
+     "id": "ordinary",
+     "revision": "probe"
+    },
+    "host_revision": "probe",
+    "host_composition_fingerprint": null,
+    "benchmark_revision": "probe",
+    "task_revision": "507437af74e31ec391c739814acae4026cb6afad320d41b4268d4b02477d3b5e",
+    "runner_revision": "probe",
+    "review_contract_revision": "probe",
+    "prompt_digest": "04612939ccc0af438269cb45fecc25780225e99bb3e14dc847ed6ecd62dec3c6",
+    "success_constraints_digest": "b4db32a9ff1292f359b6d7cca61d9ac7ee9c1c74cbd15431242cce5142152e05",
+    "start_state_digest": "925f0d747afa58c233f5e029bb31cc7d852736b4f404a9e13cc08b40bbde0b44",
+    "capability_contract_digest": "1bca74b9082ea7490979012b56118c65892b6d9107719a1ed72e626ca3c5b864",
+    "verification_protocol_digest": "648caf22bca2e23b1913ab27231acf063b171d5106776c38e71c4b48638a720f",
+    "execution_budget_digest": "c3e4589224f8de6c054aaf50bbff57d2dd6a64e92b50a6968b5971d9d1c0917a",
+    "network_policy_digest": "probe",
+    "elapsed_ms": 1,
+    "model_calls": null,
+    "capability_calls": null,
+    "total_tokens": null,
+    "usage_partial": false,
+    "receipt_path": "trial-001-ql-direct/receipt.json",
+    "record": {
+     "result": {
+      "schema": "actuation.research-run/v1",
+      "runtime": "ql-direct",
+      "trace_ref": "takes:b795-probe:trial:1",
+      "status": "failed",
+      "error": "invalid research request: invalid type: null, expected struct ProcessSpec",
+      "human_acceptance": false,
+      "provider_evidence": "not-assessed"
+     },
+     "events": [],
+     "durable_stream": false
+    },
+    "human_acceptance": false,
+    "provider_evidence": "not-assessed"
+   },
+   {
+    "condition": "ql-deep",
+    "repetition": 0,
+    "ordinal": 2,
+    "trace_ref": "takes:b795-probe:trial:2",
+    "status": "failed",
+    "error": "invalid research request: invalid type: null, expected struct ProcessSpec",
+    "prompt": "Complete the incoming request using the local `SKILL.md`. Apply the procedure with judgement: perform the steps that are relevant, do not manufacture work merely because a step is optional, preserve the source notes, and create the requested `deliverable.md`.",
+    "success_conditions": [
+     "Discover and use SKILL.md as the governing local procedure.",
+     "Create deliverable.md addressing the actual incoming request.",
+     "Preserve all source/request/skill files.",
+     "Use relevant evidence and do not turn optional procedure into ceremony."
+    ],
+    "starting_workspace": null,
+    "final_workspace": null,
+    "verification": null,
+    "outcome": null,
+    "model": {
+     "provider": "fixture",
+     "model": "m"
+    },
+    "fixture_provider": true,
+    "provider_mode": "fixture",
+    "host": {
+     "id": "ordinary",
+     "revision": "probe"
+    },
+    "host_revision": "probe",
+    "host_composition_fingerprint": null,
+    "benchmark_revision": "probe",
+    "task_revision": "507437af74e31ec391c739814acae4026cb6afad320d41b4268d4b02477d3b5e",
+    "runner_revision": "probe",
+    "review_contract_revision": "probe",
+    "prompt_digest": "04612939ccc0af438269cb45fecc25780225e99bb3e14dc847ed6ecd62dec3c6",
+    "success_constraints_digest": "b4db32a9ff1292f359b6d7cca61d9ac7ee9c1c74cbd15431242cce5142152e05",
+    "start_state_digest": "925f0d747afa58c233f5e029bb31cc7d852736b4f404a9e13cc08b40bbde0b44",
+    "capability_contract_digest": "1bca74b9082ea7490979012b56118c65892b6d9107719a1ed72e626ca3c5b864",
+    "verification_protocol_digest": "648caf22bca2e23b1913ab27231acf063b171d5106776c38e71c4b48638a720f",
+    "execution_budget_digest": "c3e4589224f8de6c054aaf50bbff57d2dd6a64e92b50a6968b5971d9d1c0917a",
+    "network_policy_digest": "probe",
+    "elapsed_ms": 1,
+    "model_calls": null,
+    "capability_calls": null,
+    "total_tokens": null,
+    "usage_partial": false,
+    "receipt_path": "trial-002-ql-deep/receipt.json",
+    "record": {
+     "result": {
+      "schema": "actuation.research-run/v1",
+      "runtime": "ql-deep",
+      "trace_ref": "takes:b795-probe:trial:2",
+      "status": "failed",
+      "error": "invalid research request: invalid type: null, expected struct ProcessSpec",
+      "human_acceptance": false,
+      "provider_evidence": "not-assessed"
+     },
+     "events": [],
+     "durable_stream": false
+    },
+    "human_acceptance": false,
+    "provider_evidence": "not-assessed"
+   }
+  ],
+  "held_constants": {
+   "prompt": true,
+   "success_constraints": true,
+   "start_state": true,
+   "model": true,
+   "capabilities": true,
+   "verification": true,
+   "budget": true,
+   "host_revision": true,
+   "host_composition": true,
+   "network_policy": true,
+   "benchmark_revision": true,
+   "task_revision": true,
+   "runner_revision": true,
+   "review_contract_revision": true,
+   "valid": true,
+   "mismatches": []
+  },
+  "provider_evidence": "not-assessed",
+  "human_acceptance": false
+ },
+ "refusal": {
+  "schema": "actuation.research-error/v1",
+  "error": "comparison requires an empty dedicated root"
+ }
+}

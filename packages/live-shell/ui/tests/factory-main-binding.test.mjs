@@ -99,13 +99,14 @@ test('the Agency gateway: its light and refusal from whether it answered; every 
   bind.resetHolds()
 })
 
-test('the Experiment: no kernel op reaches Actuation\'s comparison, so nothing is drawn as declared or run, and every statement says so', async () => {
+test('the Experiment: retired into a task launched with Repeat, it declares and runs nothing itself, and every statement says where it lives', async () => {
   bind.resetHolds()
   assert.deepEqual(main.experimentValues(bind.chainHolds()), {})
   const binding = main.experimentBinding(bind.chainHolds())
   for (const key of main.EXPERIMENT_WRITES) assert.equal(binding.standing[key].disabled, main.EXPERIMENT_REFUSE, key)
-  // REPLACED (lane W3): the comparison's readings are routed, its run is not (it runs models), and nothing here holds the records they read.
-  assert.match(main.EXPERIMENT_REFUSE, /missing op: Actuation's matched comparison run, `actuation-research comparison\.run` \(research comparison\.rs run_with\), which the kernel does not route because it runs models/)
+  // REPLACED (O-I 795): "which the kernel does not route because it runs models" — the kernel routes the run now (actuation_write
+  // comparison-run), a task launched with Repeat makes its takes through it, and the Experiment's statements are that task's.
+  assert.match(main.EXPERIMENT_REFUSE, /missing op: the Experiment's own statements: it was retired into a task launched with Repeat \(§19\.5\)[\s\S]*`actuation-research comparison\.run` \(research comparison\.rs run_with; kernel actuation_write comparison-run/)
   for (const key of Object.keys(main.EXPERIMENT_ABSENT)) assert.match(binding.standing[key].disabled, /missing op:/, key)
   await assert.rejects(() => binding.write([{key: 'repeats', value: 5}]), /run_with/)
   binding.local.plot('time')

@@ -29,7 +29,7 @@ import {shellSetter} from '../../inhabitants/sdk/shellSetters'
 import {factoryTrackAdapter, type FactoryControls, type FactorySettingsPort, type FactoryWriteArm} from '../../timeline/factoryTrackAdapter'
 import {useSettingsAnswers} from '../../owners/readers'
 import {useAttemptTakes} from '../../owners/attemptTakes'
-import {trackSettingChange, writeSessionSettings} from '../../agent/sessionSettings'
+import {makeTakes, trackSettingChange, writeSessionSettings} from '../../agent/sessionSettings'
 import {SETTINGS_PROJECT, taskMaker} from '../../agent/clipBinding'
 import {withClipMaker} from './clipMakers'
 import {encounter} from '../../../../../../desktop/cradle/src/encounter/client'
@@ -100,13 +100,18 @@ export const useFactoryTracks: UseModeTracks = reading => {
       return {ok: true as const, note: 'Stopped this session\'s running turn; the session stays, and the harness\'s other sessions run on.'}
     } catch (cause) { return {ok: false as const, error: cause instanceof Error ? cause.message : String(cause)} }
   }, [transport])
+  // A Repeat's press (§19.1 The Launch panel): its takes through Actuation's comparison run, the set started and ended on AIKit
+  // (agent/sessionSettings.ts makeTakes). The run every take shares — a task of Actuation's research catalogue and the model body that
+  // runs it — reaches the shell for no session's own task, so the press says what it waits for (TAKES_WHY.noRun) and writes nothing.
+  const repeat = useMemo(() => transport.kind === 'unavailable' ? undefined
+    : (session: string) => makeTakes(transport, SETTINGS_PROJECT, session, null), [transport])
   // The workcells of the machine's register as return tracks, and each session's Works in (§19.23): the seat register, read once.
   const seats = useSeatStatusAnswer(transport, transport.kind !== 'unavailable').reading
   const register = seats.status === 'answered' ? seats.value : null
   if (!agency.tracks.length && agency.error) return {waiting: `The agent sessions are unread: ${agency.error}`}
   if (!agency.tracks.length && agency.loading) return {waiting: 'The agent sessions arrive when the agency read answers.'}
   // A chat dragged from Factory's Projects (DLW §19.1) reopens on the empty track; an agent still starts a new agent there.
-  const set = withChatSeat(factoryTrackAdapter.project({tracks: agency.tracks, nowUnixMs: Date.now(), controls, ...(events ? {events} : {}), writeArm, ...(settings ? {settings} : {}), ...(takes ? {takes} : {}), ...(sessionStop ? {sessionStop} : {})}), {transport})
+  const set = withChatSeat(factoryTrackAdapter.project({tracks: agency.tracks, nowUnixMs: Date.now(), controls, ...(events ? {events} : {}), writeArm, ...(settings ? {settings} : {}), ...(takes ? {takes} : {}), ...(sessionStop ? {sessionStop} : {}), ...(repeat ? {repeat} : {})}), {transport})
   return factoryTrackSet(set, register, seats.status === 'refused' ? seats.error : null, transport, agency.tracks)
 }
 

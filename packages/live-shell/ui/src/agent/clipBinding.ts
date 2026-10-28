@@ -144,15 +144,22 @@ export const INTENT_REFUSED: Readonly<Record<string, string>> = {
 }
 
 /** Compare and the takes (manual §19.1 The Launch panel): Loop, the launch mode and what a Repeat varies are the session's settings (AIKit
- * `encounter-session-settings`), but the takes a Repeat makes are the take lanes' reading (AIKit encounter_task_attempts_list), not handed to
- * Clip view, and no owner compares takes. Each stands absent, and Compare refused, with the operation it waits for. */
+ * `encounter-session-settings`), and so is the set of takes a Repeat runs (`task.takes`, O-I 795): the takes it made are read once the
+ * set ends. Before a set stands, the takes are absent; no owner compares takes, so Compare stands absent and refused with the operation it
+ * waits for. */
 export const LAUNCH_ABSENT: Readonly<Record<string, string>> = {
   compare: 'Compare: no reading reaches it yet — missing op: no owner compares takes side by side (Software Factory).',
-  takes: 'The takes a Repeat made: not handed to Clip view — the take lanes read them (AIKit encounter_task_attempts_list, each Run by factory_attempt_read) (AIKit).',
+  // REPLACED (O-I 795): "not handed to Clip view — the take lanes read them": a Repeat's set of takes is now the task's settings on AIKit.
+  takes: 'The takes a Repeat made: no set of takes stands yet — a Repeat\'s press starts one on AIKit (encounter-session-settings task.takes), its takes made by Actuation\'s comparison run (AIKit).',
 }
 export const LAUNCH_REFUSED: Readonly<Record<string, string>> = {
   compare: 'Compare: no owner operation carries it yet — missing op: a comparison of takes (Software Factory).',
 }
+
+/** Repeat's fields, which do not change while its takes run (§19.1 The Launch panel: "Once the first run starts, these do not change. A
+ * change starts a new set of takes"; AIKit refuses them in the same words). */
+const REPEAT_KEYS: ReadonlySet<string> = new Set(['repeat.variable', 'repeat.levels', 'repeat.repeats', 'repeat.stop'])
+const takesRunning = (trace: string) => `Once the first run starts, these do not change: the takes ${trace} are running. A change starts a new set of takes once they end.`
 
 /** A task's source (manual §19.1 The Clip panel: "Constellation — The one the task was made of — The task's source, as a sample is an
  * audio clip's"): the task's own settings on AIKit keep it (encounter-session-settings `task.source`, ai-kit encounter_task_settings.rs:
@@ -181,10 +188,12 @@ function taskWiring(task: TaskAddress | null, context: TaskSeamContext | null): 
   const acts: Record<string, (value: Value) => Promise<void>> = {}
   const refused: Record<string, string> = {}
   const why = task ? settingsRefusal(context, task.n) : 'No task is selected: select a task on a session\'s track.'
+  const takes = why ? null : context?.settings?.task?.takes ?? null
   for (const [key, setting] of Object.entries(SETTING_OF)) {
     const seam = TASK_SEAMS[setting]
     if (seam.refused) refused[key] = seam.refused
     else if (why || !task || !context) refused[key] = why ?? 'No task is selected: select a task on a session\'s track.'
+    else if (takes?.running && REPEAT_KEYS.has(key)) refused[key] = takesRunning(takes.trace_ref)
     else acts[key] = value => seam.send(task, value, context)
   }
   return {
@@ -195,7 +204,7 @@ function taskWiring(task: TaskAddress | null, context: TaskSeamContext | null): 
       then: 'the session\'s settings: Then, the follow action on the task\'s own track — next · again · stop',
       loop: 'the session\'s settings: Loop, which runs the task again after each finish (On) or not (Off)',
       'loop.until': 'the session\'s settings: Loop\'s stop condition — done · pass', 'loop.cap': 'the session\'s settings: Loop\'s cap, the most runs (absent: none)',
-      'repeat.variable': 'the session\'s settings: Repeat\'s Variable', 'repeat.levels': 'the session\'s settings: Repeat\'s Levels, comma-separated (absent: none chosen)',
+      'repeat.variable': 'the session\'s settings: Repeat\'s Variable', 'repeat.levels': 'the session\'s settings: Repeat\'s Levels, comma-separated (absent: none chosen, and Actuation\'s comparison run takes its own default three conditions)',
       'repeat.repeats': 'the session\'s settings: Repeat\'s Repeats', 'repeat.stop': 'the session\'s settings: Repeat\'s Stop when',
       quantize: 'the session\'s settings: Quantize', 'env.mode': 'the session\'s settings: the envelopes\' mode', 'env.linked': 'the session\'s settings: the envelopes\' link',
       'env.agent.effort': 'the session\'s settings: the Effort envelope', 'env.agent.autonomy': 'the session\'s settings: the Autonomy envelope',
@@ -203,8 +212,9 @@ function taskWiring(task: TaskAddress | null, context: TaskSeamContext | null): 
       'turns.used': 'the session\'s budget: turns used', 'turns.cap': 'the session\'s budget: turns allowed',
       log: 'the session\'s temporal events inside the task\'s span',
       elapsed: 'the task\'s start to its last activity, in seconds',
+      ...(takes ? {takes: 'the session\'s settings: the Repeat\'s set of takes (task.takes) — the takes it made, read once the set ends'} : {}),
     },
-    absent: {...INTENT_ABSENT, ...LAUNCH_ABSENT},
+    absent: {...INTENT_ABSENT, ...(takes ? {compare: LAUNCH_ABSENT.compare} : LAUNCH_ABSENT)},
     acts,
     view: {
       fold: 'Fold keeps only the lanes of the tools the agent used: how the log shows, not the log',

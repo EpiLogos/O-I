@@ -109,7 +109,9 @@ const WRITING_OPS: ReadonlySet<string> = new Set(["invoke_action", "file_operati
   "chat_default_discard", "credential_setup", "credential_rotate", "credential_revoke", "client_install", "product_action_run", "dictation_configure", "working_surface_attachment",
   "encounter_provision", "flow_participant_provision", "config_apply_reviewed",
   // Lane W3's owner routes that write (kernel/src/owner_routes.rs).
-  "gateway_write", "workcell_write", "seat_write", "aikit_write"]);
+  "gateway_write", "workcell_write", "seat_write", "aikit_write",
+  // Actuation's authority acts and its comparison run (a Repeat's takes, O-I 795) write Actuation's ground.
+  "actuation_write"]);
 /** Ops that read or write by their request's verb (`kind`, `operation` or `action`). */
 const MIXED_OPS: ReadonlySet<string> = new Set(["central", "now", "page", "expression", "expression_recovery", "encounter_session_settings", "knowledge", "agent_definition",
   "encounter", "receiving", "factory_owner", "routine", "shared_field", "ground", "setup", "a2a_exchange",

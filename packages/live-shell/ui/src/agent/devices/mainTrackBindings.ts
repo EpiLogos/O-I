@@ -221,12 +221,13 @@ export function agencyBinding(reading: Pick<AgentChainReading, 'gatewayAdmitted'
 // ---------------------------------------------------------------------------------------------------------------- the Experiment
 
 // Lane W3 routes Actuation's research comparison's READINGS (desktop/cradle/kernel/src/owner_routes.rs ActuationRead::Comparison:
-// `actuation-research comparison.held|assess|mask|review` over the records or manifest handed) and not its run: comparison.run executes
-// model bodies, so no kernel route asks it. Each reading reads what a run made — held takes the run records (`records`: it answers `valid`
+// `actuation-research comparison.held|assess|mask|review` over the records or manifest handed); O-I 795 routes its run
+// (ActuationWrite::ComparisonRun), which a task launched with Repeat makes its takes through — the Experiment was retired into it (§19.5),
+// so its statements are that task's (its Intent and its Launch panel), not this device's. Each reading reads what a run made — held takes the run records (`records`: it answers `valid`
 // and the held constants that differ, `mismatches`), assess, mask and review take a run's manifest (ql-series1-run/0.3) — and no reading the
 // shell holds carries a run record or a manifest: the research store keeps them, and no kernel route lists or reads it. So the declaration
 // stays unwritten, and the runs, the state and the earlier Experiments (whose `mismatches` held would answer) stay absent, each saying so.
-const EXPERIMENT_OP = 'Actuation\'s matched comparison run, `actuation-research comparison.run` (research comparison.rs run_with), which the kernel does not route because it runs models'
+const EXPERIMENT_OP = 'the Experiment\'s own statements: it was retired into a task launched with Repeat (§19.5), whose Intent holds the question and whose Launch panel what varies (AIKit encounter-session-settings), its takes made by Actuation\'s matched comparison run, `actuation-research comparison.run` (research comparison.rs run_with; kernel actuation_write comparison-run, O-I 795)'
 /** Every statement and reading the Experiment asks the owner to write (a task launched with Repeat, clips/factory.tsx:5-7 `repeat.*`, `compare`, `takes`; the Experiment was retired into it, §19.5). */
 export const EXPERIMENT_WRITES: readonly string[] = ['question', 'task', 'variable', 'levels', 'agents', 'repeats', 'stop', 'capTurns', 'capTime',
   'readTokens', 'readTime', 'readCalls', 'readTests', 'readSpend', 'readStalls', 'beat', 'compare', 'fork']

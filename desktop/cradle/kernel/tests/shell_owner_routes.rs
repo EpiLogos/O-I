@@ -589,6 +589,125 @@ fn the_research_comparisons_assessments_are_reads_of_the_supplied_manifest() {
 }
 
 #[test]
+fn a_repeats_takes_run_through_actuations_comparison_run_in_a_root_the_kernel_reserves() {
+    let _held = hold();
+    let dir = scratch("comparison-run");
+    let research = Fake::new(&dir, "actuation-research");
+    let _bin = Bound::set("OI_ACTUATION_RESEARCH_BIN", &research.bin);
+    let _home = Bound::set("OI_HOME", dir.join("oi-home"));
+    // The installed harness's own comparison run (REAL, 28 Oct 2026): Actuation's
+    // default three conditions, one repetition, a fixture body.
+    let real = fixture("actuation-comparison-run-2026-10-28.json");
+    research.answer(&real["answer"]);
+    let (outcome, form) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "actuation_write", "request": {"kind": "comparison-run", "request": real["request"]}}),
+        ),
+    );
+    let outcome = outcome.unwrap();
+    assert_eq!(form, "owner-write");
+    assert_eq!(research.asked(), ["--json"]);
+    let asked: Value = serde_json::from_str(&research.stdin()).unwrap();
+    assert_eq!(
+        asked["operation"], "comparison.run",
+        "the kernel names the operation"
+    );
+    assert_eq!(asked["repetitions"], real["request"]["repetitions"]);
+    assert_eq!(
+        asked["run"], real["request"]["run"],
+        "the run's fields are the desk's"
+    );
+    assert!(
+        asked.get("conditions").is_none(),
+        "no levels: Actuation's own default three"
+    );
+    // The kernel reserves the comparison's dedicated root in its own state.
+    let root = asked["root"].as_str().expect("a root");
+    assert!(
+        root.starts_with(dir.join("oi-home/desktop/takes").to_str().unwrap()),
+        "{root}"
+    );
+    assert!(Path::new(root).is_dir());
+    let (route, data, _) = reading(&outcome);
+    assert_eq!(route, "actuation-research comparison.run");
+    assert_eq!(data["schema"], "ql-series1-run/0.3");
+    assert_eq!(data["trace_ref"], "takes:b795-probe");
+    assert_eq!(data["root"], root);
+    assert_eq!(data["takes"], 3, "one take per condition and repetition");
+    let takes: Vec<(String, String)> = data["records"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|take| {
+            (
+                take["condition"].as_str().unwrap().into(),
+                take["status"].as_str().unwrap().into(),
+            )
+        })
+        .collect();
+    assert_eq!(
+        takes,
+        [
+            ("classic".into(), "completed".into()),
+            ("ql-direct".into(), "failed".into()),
+            ("ql-deep".into(), "failed".into())
+        ]
+    );
+    assert_eq!(data["held_constants_valid"], true);
+    assert_eq!(data["determination"], "pending-human-review");
+    let wire = receipts(&outcome);
+    assert_eq!(wire[0]["owner"], "actuation");
+    assert_eq!(wire[0]["ref"], "takes:b795-probe");
+    // The same takes again: their root is reserved, so nothing is asked.
+    research.forget();
+    let (outcome, _) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "actuation_write", "request": {"kind": "comparison-run", "request": real["request"]}}),
+        ),
+    );
+    let error = outcome.unwrap_err();
+    assert!(error.contains("already"), "{error}");
+    assert!(research.asked().is_empty());
+    // Actuation's refusal, in its words (REAL: a root that is not empty).
+    research.refuse(Some(&real["refusal"]), "", 1);
+    let mut fresh = real["request"].clone();
+    fresh["trace_ref"] = json!("takes:b795-probe-2");
+    let (outcome, _) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "actuation_write", "request": {"kind": "comparison-run", "request": fresh}}),
+        ),
+    );
+    let error = outcome.unwrap_err();
+    assert!(
+        error.contains("comparison requires an empty dedicated root"),
+        "{error}"
+    );
+    // What the kernel reserves, or what is not this run, asks nothing.
+    research.forget();
+    for (field, value) in [
+        ("root", json!("/tmp/elsewhere")),
+        ("operation", json!("comparison.assess")),
+        ("trace_ref", json!(null)),
+    ] {
+        let mut bad = real["request"].clone();
+        bad["trace_ref"] = json!(format!("takes:bad-{field}"));
+        bad[field] = value;
+        let (outcome, _) = dispatched(
+            no_central(&dir),
+            op(
+                json!({"op": "actuation_write", "request": {"kind": "comparison-run", "request": bad}}),
+            ),
+        );
+        assert_eq!(kind(&outcome.unwrap_err()), "incompatible", "{field}");
+    }
+    assert!(research.asked().is_empty());
+    let _ = fs::remove_dir_all(&dir);
+}
+
+#[test]
 fn ql_reads_carry_the_m1_engine_and_the_scene_verbatim() {
     let _held = hold();
     let dir = scratch("ql");
