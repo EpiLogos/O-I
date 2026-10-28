@@ -38,6 +38,9 @@ test('the reads the shell makes at start-up and on its pages never retire held a
     {op: 'factory_owner', request: {kind: 'action-list'}},
     {op: 'factory_owner', request: {kind: 'current-work'}},
     {op: 'factory_owner', request: {kind: 'locate'}},
+    // A Return's reading and the files it names (O-I #759: the Factory clip reads them on each selection).
+    {op: 'factory_owner', request: {kind: 'attempt-return'}},
+    {op: 'factory_owner', request: {kind: 'attempt-artifacts'}},
     {op: 'shared_field', request: {kind: 'snapshot'}},
     {op: 'receiving', project: null, request: {List: {limit: 5}}},
     {op: 'routine', request: {action: 'history'}},

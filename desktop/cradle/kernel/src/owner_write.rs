@@ -188,8 +188,9 @@ impl PreparedWrite {
                     owner_read::disclosed(&self.world.read()?, project)?;
                 }
                 // The person's own acts on a document (an authored field, a
-                // review, an inclusion, a recovery) carry the person's native
-                // authority; a producer's submission never does.
+                // review, an inclusion, a recovery, an agent's answer the
+                // person carries in, naming its producer) carry the person's
+                // native authority; a producer's own submission never does.
                 let client = if receiving_person_act(request) {
                     self.client.for_person()
                 } else {
@@ -719,17 +720,33 @@ fn receiving_write(request: &ReceivingRequest) -> bool {
 
 /// The receiving acts that are the person's own (Central refuses them from any
 /// other author): an authored field or metadata edit, a review, an inclusion,
-/// a recovery.
-/// A submission is a producer's and never carries the person's authority.
+/// a recovery; and a contribution the person carries in for an agent, naming
+/// it as its producer. A producer's own submission never carries the person's
+/// authority.
 fn receiving_person_act(request: &ReceivingRequest) -> bool {
-    matches!(
-        request,
+    match request {
         ReceivingRequest::MutateField { .. }
-            | ReceivingRequest::MutateMeta { .. }
-            | ReceivingRequest::Review { .. }
-            | ReceivingRequest::Include { .. }
-            | ReceivingRequest::Recover { .. }
-    )
+        | ReceivingRequest::MutateMeta { .. }
+        | ReceivingRequest::Review { .. }
+        | ReceivingRequest::Include { .. }
+        | ReceivingRequest::Recover { .. } => true,
+        // The person carrying an agent's work into a document of theirs (Nara's answer quoted into the Day: nativeReturn.ts
+        // proposeAnswerForDay): Central authenticates every Return's carrier, keeps it as the author, and keeps the producer the
+        // carrier declares (Central docs/CAW-NATIVE-CONSUMER-INTERFACES.md "Receiving": "The credential stays the authenticated
+        // `author`; an Agent credential may not declare a different producer"). The kernel holds no credential but the person's, so
+        // a contribution that names the agent (or native service) whose work it carries is the person's press. An Agent's ask, and a
+        // submission naming no producer, go without it, and Central refuses them in its own words.
+        ReceivingRequest::Submit {
+            proposal: Some(_),
+            request: None,
+            declared_producer: Some(producer),
+            ..
+        } => matches!(
+            producer["actor_kind"].as_str(),
+            Some("agent" | "native-service")
+        ),
+        _ => false,
+    }
 }
 
 /// Central's Day writes; its other requests are prepared reads.
@@ -1050,6 +1067,43 @@ mod tests {
         assert!(!receiving_person_act(&request(
             serde_json::json!({"Document": {"source_ref": "s", "document_id": "d"}})
         )));
+    }
+
+    /// O-I #765: the person's quotation of an agent's answer into their Day (Nara's instrument, nativeReturn.ts proposeAnswerForDay)
+    /// is the person's press, carried as theirs: Central authenticates every Return's carrier and keeps the producer it declares
+    /// (Central docs/CAW-NATIVE-CONSUMER-INTERFACES.md "Receiving"). A contribution that names the agent whose work the person carries
+    /// goes with the person's authority; an Agent's ask, and a submission that declares no producer, still go without it.
+    #[test]
+    fn the_person_s_quotation_of_an_agent_s_answer_carries_the_person_s_authority() {
+        let request = |value: serde_json::Value| -> ReceivingRequest {
+            serde_json::from_value(value).unwrap()
+        };
+        let nara = serde_json::json!({"ref": "agent-session/nara-1", "actor_kind": "agent", "attribution": "claimed"});
+        let proposal = serde_json::json!({"operation": "field.append", "field_id": "p0", "contribution_id": "c", "html": "<p>a</p>"});
+        assert!(receiving_person_act(&request(
+            serde_json::json!({"Submit": {
+            "producer_key": "p", "source_ref": "s", "document_id": "d", "expected_source_revision": "r",
+            "occurred_at_unix_seconds": 1, "proposal": proposal, "declared_producer": nara}})
+        )));
+        assert!(
+            !receiving_person_act(&request(serde_json::json!({"Submit": {
+            "producer_key": "p", "source_ref": "s", "document_id": "d", "expected_source_revision": "r",
+            "occurred_at_unix_seconds": 1, "proposal": proposal}}))),
+            "a contribution that names no producer is not the person's"
+        );
+        assert!(
+            !receiving_person_act(&request(serde_json::json!({"Submit": {
+            "producer_key": "p", "occurred_at_unix_seconds": 1, "request": {"kind": "question", "subject": "q"},
+            "declared_producer": nara}}))),
+            "an Agent's ask is never the person's"
+        );
+        assert!(
+            !receiving_person_act(&request(serde_json::json!({"Submit": {
+            "producer_key": "p", "source_ref": "s", "document_id": "d", "expected_source_revision": "r",
+            "occurred_at_unix_seconds": 1, "proposal": proposal,
+            "declared_producer": {"ref": "human:other", "actor_kind": "human", "attribution": "claimed"}}}))),
+            "only an agent's or a native service's work is carried"
+        );
     }
 
     /// A Central stand-in for owner writes: logs each action as it starts,

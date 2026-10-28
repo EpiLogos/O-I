@@ -3142,6 +3142,116 @@ fn factory_lists_the_custody_it_holds_before_an_assignment() {
     let _ = fs::remove_dir_all(&dir);
 }
 
+/// O-I #759: the artifacts a Factory attempt's Return names, read through
+/// Factory and carried verbatim, with where that Project's ground lies in
+/// Central's World so the shell opens a resolved file through Central.
+#[test]
+fn factory_reads_the_artifacts_a_return_names_and_places_their_ground_in_centrals_world() {
+    let _held = hold();
+    let dir = scratch("attempt-artifacts");
+    let factory = Fake::new(&dir, "factory");
+    let central = fake_central(&dir);
+    let _bin = Bound::set("OI_FACTORY_BIN", &factory.bin);
+    let _ctrl = Bound::set("OI_CENTRAL_CTRL_BIN", &central);
+    let state = dir.join("Work/O-I/.factory/development-state.json");
+    // Factory's own reading of a returned attempt (REAL, the owner's
+    // `attempt artifacts` over a placed Project, 28 Oct 2026); its root is the
+    // capture's scratch root, set here to the root each case names.
+    let real = fixture("factory-attempt-artifacts-2026-10-28.json");
+    let run = real["reading"]["runRef"].as_str().unwrap().to_owned();
+    let answer = |root: &Path| {
+        let mut reading = real["reading"].clone();
+        reading["projectRoot"] = json!(root);
+        reading
+    };
+    let ask = || {
+        dispatched(
+            kernel(&central),
+            op(
+                json!({"op": "factory_owner", "request": {"kind": "attempt-artifacts",
+                "state_path": state, "run_ref": run, "attempt_ref": "attempt:z-old"}}),
+            ),
+        )
+    };
+    let data = |outcome: &KernelOpOutcome| {
+        let wire = serde_json::to_value(&outcome.result).unwrap();
+        assert_eq!(wire["result"], "factory_development_reading", "{wire}");
+        wire["data"].clone()
+    };
+
+    // The Project is O-I, under Central's root.
+    factory.answer(&answer(&dir.join("Work/O-I")));
+    let (outcome, form) = ask();
+    let outcome = outcome.unwrap();
+    assert_eq!(form, "owner-read");
+    assert!(outcome.receipts.is_empty(), "a reading records nothing");
+    assert_eq!(
+        factory.asked(),
+        [format!(
+            "attempt artifacts {} {run} attempt:z-old --json",
+            state.display()
+        )]
+    );
+    let read = data(&outcome);
+    assert_eq!(read["contract"], "oi.factory-attempt-artifacts/v1");
+    assert_eq!(
+        read["ground"],
+        json!({"state": "placed", "project": "O-I", "path": "Work/O-I"})
+    );
+    // Factory's rows, verbatim: a resolved ref with its file, a refused one
+    // with Factory's reason.
+    assert_eq!(read["reading"]["artifacts"], real["reading"]["artifacts"]);
+    let rows = read["reading"]["artifacts"].as_array().unwrap();
+    let resolved = rows
+        .iter()
+        .find(|row| row["state"] == "file")
+        .expect("a resolved ref");
+    assert_eq!(resolved["file"]["path"], "docs/report.md");
+    let refused = rows
+        .iter()
+        .find(|row| row["ref"] == "artifact:test")
+        .expect("the returned artifact");
+    assert_eq!(refused["state"], "refused");
+    assert!(
+        refused["reason"]
+            .as_str()
+            .unwrap()
+            .contains("execution:test"),
+        "{refused}"
+    );
+
+    // Central's own root is the ground itself.
+    factory.answer(&answer(&dir));
+    let read = data(&ask().0.unwrap());
+    assert_eq!(
+        read["ground"],
+        json!({"state": "placed", "project": null, "path": ""})
+    );
+    // A root Central does not disclose stays outside, with the reason.
+    let elsewhere = dir.join("elsewhere");
+    fs::create_dir_all(&elsewhere).unwrap();
+    factory.answer(&answer(&elsewhere));
+    let read = data(&ask().0.unwrap());
+    assert_eq!(read["ground"]["state"], "outside");
+    assert!(
+        read["ground"]["why"]
+            .as_str()
+            .unwrap()
+            .contains("not a root Central discloses"),
+        "{read}"
+    );
+    // An answer about another attempt is not this one.
+    let mut other = answer(&dir);
+    other["attemptRef"] = json!("attempt:other");
+    factory.answer(&other);
+    assert_eq!(kind(&ask().0.unwrap_err()), "incompatible");
+    // An attempt the Run does not retain: Factory's refusal in its words (REAL).
+    factory.refuse(None, real["refused"].as_str().unwrap(), 2);
+    let error = ask().0.unwrap_err();
+    assert!(error.contains("is not retained in"), "{error}");
+    let _ = fs::remove_dir_all(&dir);
+}
+
 #[test]
 fn a_returns_entry_carries_its_comment_count_where_central_gives_one() {
     let entry = |extra: Value| {

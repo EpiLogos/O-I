@@ -7,7 +7,10 @@
 //     it opens as its page, and the words say why. As Sky, a Being opens as its page and the Sky reads its Subject's birth sky
 //     (inhabitants/ql/devices/practiceLaunch.ts skyOfBeing); a Thing holds no placement in the sky, so it opens as its page and says so
 //     ("a being or a thing with no … placement in the sky says so", manual §18.1).
-//   - A Flow opens as its Flow. Dialogue, Flow and Journal are the Flow's own views, chosen at its head; it opens on its own.
+//   - A Flow opens as its Flow. Dialogue, Flow and Journal are the Flow's own views, chosen at its head; it opens on its own. A journey's
+//     Flow launched as Reading opens as an Expression instead (manual §24.4 "Launch a journey as Reading and it opens as an Expression
+//     … Your writing stays in the journey's flow, which remains where you write"): the Reading scene is opened by the journey's own
+//     launch (inhabitants/ql/devices/practiceLaunch.ts, nara/journeyReading.ts), and the Flow is left where it is.
 //   - Opens in a window: a pane becomes a window through its own ↗; the launch opens the page in the focused pane and says so.
 // Pure apart from `openLaunched`, which reads the page through its owner and opens it in the pane tree.
 import type {CentralLocation, KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
@@ -43,6 +46,12 @@ export function launchOpeningOf(form: string, location: CentralLocation, island:
     const waits = opensAs !== 'sky' ? '' : form === 'being' ? '; the Sky reads its Being\'s birth sky'
       : '; a Thing holds no placement in the sky, so Sky stays closed for it'
     return {open: {target: {form: 'page', kind: form, location}, beside: opensIn === 'pane'}, words: `opened as its page ${where}${waits}${windowWords}`}
+  }
+  // A journey's Flow that keeps its journey, launched as Reading: its Reading scene opens (one made from New… that holds none yet has
+  // nothing to lay out, so it opens as its Flow while its Deck asks for its theme).
+  const journey = record(record(island).meta).journey
+  if (form === 'flow' && launch.opensAs === 'reading' && journey && typeof journey === 'object' && !Array.isArray(journey)) {
+    return {open: null, words: 'opened as an Expression: the journey\'s Reading scene, in Expressions; its writing stays in its Flow, where you write'}
   }
   if (form === 'flow') {
     const view = launch.opensAs === 'dialogue' || launch.opensAs === 'journal' ? launch.opensAs : null

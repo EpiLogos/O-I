@@ -31,6 +31,7 @@ import {SUITE_PROVIDER_ID, describeProgress, describeStanding, subscribeSuiteSta
 import {bindPlaces, selectLocation, type PlacesBinding} from './places/placesHost'
 import {notePlaceTool} from './places/placeTool'
 import type {DreamJournalBinding} from './practice/dreamsHost'
+import type {YourChartBinding} from './practice/chartsHost'
 import {bindPalaces, type PalacesBinding} from './palaces/palacesHost'
 import {bindWorldBody, chooseBody, kernelWorldBodyOwner} from './body/worldBody'
 import {bindBodyDraw} from './system/bodyDraw'
@@ -219,6 +220,8 @@ const sharedStorage = workspaceStorage()
 
 /** The dream journal the practice store's dreams are bound to (practice/dreamsHost.ts), one per attach. */
 let practiceDreams: DreamJournalBinding | null = null
+/** Your chart, the practice store's charts bound to your saved identity (practice/chartsHost.ts), one per attach. */
+let practiceCharts: YourChartBinding | null = null
 
 /** The atlas's memory Storage, as the host binds it (exported for the host tests). */
 export function atlasMemoryStorage(): Storage {
@@ -406,7 +409,13 @@ async function attachClaimed(options: AtlasAttachOptions, progress: {teardown: (
   practiceDreams?.dispose()
   const {bindDreamJournal, kernelDreamOwners} = await import('./practice/dreamsHost')
   practiceDreams = bindDreamJournal({base: sharedStorage, owners: kernelDreamOwners(transport, notePlaceTool), model: () => mountedAtlas?.model ?? null, deferred: true})
-  practice.setPracticeStorage(practiceDreams.storage)
+  // Your chart is your saved identity's (manual §24.6, practice/chartsHost.ts): the store's charts are QL's calculation of your identity,
+  // read through its owner, and the Astrology lens keeps none of its own; its material is published with it, corpus-neutral.
+  practiceCharts?.dispose()
+  const {bindYourChart, kernelYourChart} = await import('./practice/chartsHost')
+  const yourChart = bindYourChart({base: practiceDreams.storage, read: kernelYourChart(transport), said: notePlaceTool, deferred: true})
+  practiceCharts = yourChart
+  practice.setPracticeStorage(yourChart.storage)
   const [{registerCorpusProvider}, {suiteProvider}, {mountAtlas}] = await Promise.all([
     import('./provider/corpusProvider'),
     import('./provider/suiteProvider'),
@@ -430,7 +439,7 @@ async function attachClaimed(options: AtlasAttachOptions, progress: {teardown: (
   // The Earth stands on the field as loaded: the QL Sun is not awaited before the mount, since the kernel's dated read can
   // stall for its whole deadline and a stalled sky would leave the Earth blank. The follower below makes the first read
   // through the same seam; until it answers, the status line states the Sun as not yet read.
-  const bundle = loaded
+  const bundle = {...loaded, published: yourChart.published(loaded.published ?? null)}
   registerCorpusProvider({...provider, load: async () => bundle}, {asDefault: true})
   // T-ATLAS-TIME: the clock is a face of the shell's one shared time window (the session the native owner also writes).
   const mounted: AtlasHandle = await mountAtlas({globe, app, provider: SUITE_PROVIDER_ID,
@@ -480,6 +489,7 @@ async function attachClaimed(options: AtlasAttachOptions, progress: {teardown: (
     system?.dispose()
     systemClock?.dispose()
     practiceDreams?.dispose()
+    practiceCharts?.dispose()
     cancelReread()
     follower?.dispose()
     // the words directly: a teardown may run before the Sun's first state is made

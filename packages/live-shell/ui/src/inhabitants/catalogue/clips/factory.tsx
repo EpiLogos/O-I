@@ -26,6 +26,9 @@
 // carries its evidence (ConclusiveCriterionWithoutEvidence refuses one without).
 // Writes: `intent` goes to `factory development field set`, which has no kernel op yet, so the binding stands it disabled with that
 // reason. `criterion` (a new success condition) has no owner operation at all: it stands disabled here with that reason.
+// Under Return, what the run returned (O-I #759): `returned`, JSON rows {id, name, role, opens, why?} — each artifact and piece of
+// evidence the task's returned attempts name, as Factory resolves it (`factory attempt artifacts`); `open` (a row's id) opens it beside
+// you through Central's file route; a row that does not open carries Factory's reason. `returned.page` is the view's page of them.
 import {Chooser, Radio, Rows as List, TextField, type Option, type RowItem} from '../../sdk/panel'
 import {NONE, json, numOf, strOf} from '../panels/design'
 import {COLOURS, EnvelopeEditor, Fact, Fields, LaneGrid, GrooveOf, GrooveReading, GrooveSwap, MadeOf, grooved, Rows, Row, Rule, Said, Wide, choice, fit, read, write, type Block, type Lane, type Mark, type Point} from './clipKit'
@@ -123,6 +126,29 @@ const verdictOf = (list: readonly Criterion[] | undefined): Verdict | undefined 
   return list.some(c => c.state === 'unsatisfied') ? 'unsatisfied' : list.some(c => c.state === 'indeterminate') ? 'indeterminate' : 'satisfied'
 }
 const VERDICT_TONE = {satisfied: 'green', unsatisfied: 'stall', indeterminate: undefined} as const
+
+/** What the run returned (`returned`, JSON rows {id, name, role, opens, why?}): each artifact and piece of evidence its Return names, as
+ * Factory resolved it. One that opens is lit and opens beside you (`open`, its id); one that does not is dark and says why. */
+interface Returned {readonly id: string; readonly name: string; readonly role: string; readonly opens: boolean; readonly why?: string}
+function returnedOf(v: ClipProps['v']): Returned[] | undefined {
+  const raw = json<unknown>(v, 'returned', undefined)
+  if (!Array.isArray(raw)) return undefined
+  return raw.flatMap((o): Returned[] => {
+    if (!o || typeof o !== 'object') return []
+    const r = o as Record<string, unknown>
+    return typeof r.id === 'string' && typeof r.name === 'string' ? [{id: r.id, name: r.name, role: typeof r.role === 'string' ? r.role : '', opens: r.opens === true,
+      ...(typeof r.why === 'string' ? {why: r.why} : {})}] : []
+  })
+}
+function ReturnedRows({p}: {p: ClipProps}) {
+  const list = returnedOf(p.v)
+  if (list === undefined) return <Said>No reading of what the run returned.</Said>
+  if (!list.length) return <Said>The run has returned nothing yet.</Said>
+  const items: RowItem[] = list.map(item => ({id: item.id, name: item.name, light: item.opens ? 'lit' : 'dark', note: item.role || undefined,
+    ...(item.opens ? {does: 'Opens beside you.'} : {why: item.why || 'It does not open.'})}))
+  return <List label="Returned" does="What the run returned: its artifacts and the evidence that shows them. Click one to open it beside you; one that does not open says why."
+    items={items} size={2} page={numOf(p.v, 'returned.page') ?? 0} onPage={n => p.set('returned.page', n)} onSelect={id => p.set('open', id)} />
+}
 const NO_CRITERION_OWNER = 'No owner writes a success condition yet: Factory keeps the bounded intent in its project ledger, which no route reaches.'
 
 function IntentPanel(p: ClipProps) {
@@ -141,6 +167,7 @@ function IntentPanel(p: ClipProps) {
     <Row label="Add"><TextField {...p.standing?.criterion} disabled={p.standing?.criterion?.disabled ?? NO_CRITERION_OWNER} label="Add" does="A new success condition: how you will know the task made its difference. Press Enter to add it." value={strOf(p.v, 'criterion') ?? ''} placeholder="How you will know" onChange={x => p.set('criterion', x.trim() || undefined)} /></Row>
     <Rule />
     <Row label="Return"><Fact label="Return" does="Across the conditions: not met if one is not met, open if one is open, met when all are met." value={verdict ? VERDICT_WORD[verdict] : undefined} tone={verdict ? VERDICT_TONE[verdict] : undefined} /></Row>
+    <ReturnedRows p={p} />
     <Row label="Context"><Fact label="Context" does="What the task may read for this intent, as AIKit resolved it, and the constraints it keeps." value={strOf(p.v, 'context') === undefined ? undefined : `${strOf(p.v, 'context')}${numOf(p.v, 'constraints') !== undefined ? ` · ${numOf(p.v, 'constraints')} limits` : ''}`} /></Row>
   </Rows>
 }
@@ -281,11 +308,14 @@ export const clip: DesignedClip = {
     'An experiment with Repeat': {launch: 'repeat', 'repeat.variable': 'model', 'repeat.levels': 'opus, sonnet, haiku', 'repeat.repeats': 4, 'repeat.stop': 'pass', compare: 'every', takes: 7},
     'Its intent, returned': {'view.panel': 'intent', state: 'done', criteria: JSON.stringify([
       {id: 'c1', text: 'Every widget has a hand-off fixture', state: 'satisfied', evidence: 2}, {id: 'c2', text: 'Old fixture ids are kept', state: 'satisfied', evidence: 1},
-      {id: 'c3', text: 'pnpm test bridge passes', state: 'indeterminate'}])},
+      {id: 'c3', text: 'pnpm test bridge passes', state: 'indeterminate'}]),
+      returned: JSON.stringify([{id: 'central:source:control:root:fixtures/handoff.json', name: 'fixtures/handoff.json', role: 'artifact', opens: true},
+        {id: 'evidence:bridge-tests', name: 'evidence:bridge-tests', role: 'evidence', opens: false,
+          why: 'the Return names evidence:bridge-tests, and no Factory record binds it to a file'}])},
     'Its envelopes': {'view.editor': 'envelopes', 'env.mode': 'modulation', 'env.agent.effort': JSON.stringify([[0, 2], [30, 3], [45, 1]])},
     'No readings': {state: undefined, 'turns.used': undefined, 'turns.cap': undefined, log: undefined, elapsed: undefined, launch: undefined, then: undefined, quantize: undefined, loop: undefined,
       'loop.until': undefined, 'loop.cap': undefined, 'repeat.variable': undefined, 'repeat.levels': undefined, 'repeat.repeats': undefined, 'repeat.stop': undefined, compare: undefined, takes: undefined,
-      intent: undefined, 'intent.source': undefined, criteria: undefined, context: undefined, constraints: undefined},
+      intent: undefined, 'intent.source': undefined, criteria: undefined, context: undefined, constraints: undefined, returned: undefined},
   },
   panel: [
     {id: 'clip', label: 'Clip', does: 'The task\'s name, colour, state, turns, output style and loop.', draw: ClipPanel},

@@ -7,7 +7,7 @@
  * refusal comes back in the owner's own words.
  */
 import {kernelOp} from "../../../kernel/bridge";
-import type {KernelTransportStatus} from "../../../kernel/types";
+import type {FactoryAttemptArtifacts, KernelTransportStatus} from "../../../kernel/types";
 import {developmentRead, ownerRefusalText} from "../development";
 import type {Scope} from "../../../workspace/scope";
 import type {DeskSourceRef, JourneyReading, ProjectLocation, ProjectReading, RunCloseReceipt, RunReading} from "./runModel";
@@ -27,6 +27,7 @@ export type FactoryOwnerRequest =
   | {kind: "telemetry-digest"; state_path: string}
   | {kind: "telemetry-lookback" | "telemetry-day"; state_path: string; day?: string; from_day?: string; through_day?: string}
   | {kind: "attempt-return"; state_path: string; run_ref: string; attempt_ref: string}
+  | {kind: "attempt-artifacts"; state_path: string; run_ref: string; attempt_ref: string}
   | {kind: "action-list"; state_path: string; project_ref: string; run_ref: string}
   | {kind: "action-invoke"; state_path: string; project_ref: string; run_ref: string; request: unknown}
   | {kind: "recognise"; state_path: string; journey_ref: string; subject_ref: string; basis_refs?: string[]}
@@ -134,6 +135,10 @@ export const watchTelemetry = (transport: KernelTransportStatus, statePath: stri
 
 export const attemptReturn = (transport: KernelTransportStatus, statePath: string, runRef: string, attemptRef: string) =>
   factoryOwner<Record<string, unknown>>(transport, {kind: "attempt-return", state_path: statePath, run_ref: runRef, attempt_ref: attemptRef});
+
+/** The files one attempt's Return names, as Factory resolves them, with where its Project's ground lies in Central's World (O-I #759). */
+export const attemptArtifacts = (transport: KernelTransportStatus, statePath: string, runRef: string, attemptRef: string) =>
+  factoryOwner<FactoryAttemptArtifacts>(transport, {kind: "attempt-artifacts", state_path: statePath, run_ref: runRef, attempt_ref: attemptRef});
 
 export const recognise = (transport: KernelTransportStatus, statePath: string, journeyRef: string, subjectRef: string, basisRefs: string[] = []) =>
   factoryOwner<{contract?: string; status?: string; record?: unknown}>(transport, {kind: "recognise", state_path: statePath, journey_ref: journeyRef, subject_ref: subjectRef, basis_refs: basisRefs});

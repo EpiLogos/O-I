@@ -111,6 +111,21 @@ export async function yourIdentitySource(transport: KernelTransportStatus): Prom
   return {ok: true, person_ref: yours!.person_ref, name: yours!.name ?? null, source: {source_ref: yours!.source_ref, revision: yours!.revision}};
 }
 
+/** Your saved identity's natal chart, whole (manual §24.6 "Your natal sky comes from your identity. The shell does not compute a second
+ * chart"): your identity (yourIdentitySource) opened at its revision, and QL's calculation of exactly that profile (calculatedNatal), its
+ * `ql.nara-natal/v1` as QL returned it with the profile it was calculated from; or why there is none, in the owner's words. Reads only. */
+export async function readYourNatal(transport: KernelTransportStatus): Promise<{ok: true; person_ref: string; name: string | null; source: IdentitySource;
+  profile: IdentityReading["profile"]; natal: NonNullable<IdentityReading["natal"]>} | {ok: false; reason: string}> {
+  const you = await yourIdentitySource(transport);
+  if (!you.ok) return you;
+  const opened = await naraIdentity(transport, {operation: "open", source_ref: you.source.source_ref});
+  if (!opened.reading || !opened.source) return {ok: false, reason: opened.error ?? "The identity owner opened no reading of your identity."};
+  if (opened.reading.person_ref !== you.person_ref) return {ok: false, reason: "The identity owner answered for another person."};
+  const {reading, natal} = await calculatedNatal(transport, opened.reading);
+  if ("reason" in natal) return {ok: false, reason: natal.reason};
+  return {ok: true, person_ref: you.person_ref, name: opened.reading.profile?.name ?? you.name, source: opened.source, profile: reading.profile, natal: reading.natal!};
+}
+
 /** The identity a Being page holds by reference, or why it holds none. */
 export async function readBeingIdentity(transport: KernelTransportStatus, island: unknown): Promise<BeingIdentityReading> {
   const subject = beingSubject(island);

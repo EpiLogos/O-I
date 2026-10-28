@@ -5,7 +5,7 @@ import type {KernelTransportStatus} from '../kernel/types';
 import {appendEntry, textToHtml, type QlDocParticipant} from '../flow/instance';
 import {readFlowInstance, writeFlowInstance, type FlowInstance} from '../flow/instances';
 import {dayRead, type DayReading} from '../day/client';
-import {receiving, type DocumentReading, type ReceivingPage, type ReceivingRequest, type ReturnReading} from '../receiving/client';
+import {receiving, type DeclaredProducer, type DocumentReading, type ReceivingPage, type ReceivingRequest, type ReturnReading} from '../receiving/client';
 import type {NativeDialogue} from './nativeDialogue';
 import {nativeTextRuns} from './nativeTranscript';
 import {nativeEpii} from './nativeEpii';
@@ -261,6 +261,11 @@ async function existingDayQuotation(transport: KernelTransportStatus, target: Na
   }
   throw new Error('The native receiving history exceeds this bounded duplicate check. No quotation was submitted.');
 }
+/** Whose answer a quotation carries: the agent session it was answered in (Central's `declared_producer`, an agent; verified, because
+ * the answer is re-read from that session's own transcript before it is submitted). Pure. */
+export function answerProducer(answer: NativeAnswer): DeclaredProducer {
+  return {ref: answer.dialogue.provisioning.agent_session, actor_kind: 'agent', attribution: 'verified'};
+}
 export async function proposeAnswerForDay(transport: KernelTransportStatus, target: NativeDayTarget, fieldId: string, answer: NativeAnswer): Promise<ReturnReading> {
   if (!target.fields.some(field => field.id === fieldId)) throw new Error('Choose a field disclosed by this native Day.');
   const id = await answerId(answer), key = `${target.document.source.ref}:${id}`;
@@ -274,10 +279,14 @@ export async function proposeAnswerForDay(transport: KernelTransportStatus, targ
     if (retained) return retained;
     const existing = daySubmissions.get(key);
     if (existing && existing.proposal.field_id !== fieldId) throw new Error('This answer already targets another field in this Day. Review the pending quotation in Inbox.');
+    // The quotation is the person's press, carried by the person's authority (Central keeps the authenticated carrier as the Return's
+    // author), and it names whose answer it carries: the agent session the answer was read back from just above (verifyNativeAnswer
+    // re-reads it from AIKit's transcript). The kernel carries the person's credential for exactly such a submission (owner_write.rs
+    // receiving_person_act); one that named no producer would go without it.
     const request: Submission = existing ?? {kind: 'submit', producer_key: `${id}:${await digest(target.document.source.ref)}`,
       source_ref: target.document.source.ref, document_id: target.document.document_id,
       expected_source_revision: target.document.revision.revision, occurred_at_unix_seconds: Math.floor(Date.now() / 1000),
-      proposal: {operation: 'field.append', field_id: fieldId, contribution_id: id, html}};
+      proposal: {operation: 'field.append', field_id: fieldId, contribution_id: id, html}, declared_producer: answerProducer(answer)};
     // Keep exact request bytes on an uncertain retry: Central's producer key is idempotent.
     daySubmissions.set(key, request);
     const result = await receiving<ReturnReading>(transport, null, request);

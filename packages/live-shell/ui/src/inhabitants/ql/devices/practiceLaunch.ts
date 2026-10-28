@@ -2,7 +2,9 @@
 // page's moment is open (desktop/cradle/src/personal/pageOwner.ts onPageLaunched):
 //   a journey's page   opens its Deck journey (qlDeck.ts openDeckJourney), once: launching it again while the Deck holds it reads
 //                      nothing again, and the read never deals — reopening a journey never deals again (kernel/src/nara_journey.rs);
-//                      a journey's page made from New… that holds no journey yet opens on the Deck asking for its theme;
+//                      a journey's page made from New… that holds no journey yet opens on the Deck asking for its theme. Launched as
+//                      Reading (its launch's Opens as, kernel/src/page.rs), a journey opens as an Expression: its cards and lines laid
+//                      out in a Reading scene through the Expression owner (desktop/cradle/src/nara/journeyReading.ts, §24.4);
 //   a Being page       launched as Sky gives the Sky its natal source: the Being's Subject's saved identity, read through nara_identity
 //                      (desktop/cradle/src/nara/beingIdentity.ts), its own natal chart; absent, the Sky says why. The page opens in
 //                      a pane of its own (central/documents/centralDocuments.ts `page`), beside what is open.
@@ -10,6 +12,7 @@
 import {dayRead} from '../../../../../../../desktop/cradle/src/day/client'
 import type {CentralLocation, KernelTransportStatus} from '../../../../../../../desktop/cradle/src/kernel/types'
 import {readBeingIdentity} from '../../../../../../../desktop/cradle/src/nara/beingIdentity'
+import {openJourneyReading} from '../../../../../../../desktop/cradle/src/nara/journeyReading'
 import {currentIdentity} from '../../../../../../../desktop/cradle/src/nara/identity/current'
 import {findPracticePage, makePracticePage, practiceOfIsland, practiceWorldOf} from '../../../../../../../desktop/cradle/src/nara/practiceWorld'
 import {detectTransport} from '../../../../../../../desktop/cradle/src/kernel/bridge'
@@ -51,12 +54,25 @@ export async function skyOfBeing(transport: KernelTransportStatus, location: Cen
   await openInPane({form: 'page', kind: 'being', location})
 }
 
-/** The answer to one page's launch. */
-export async function answerLaunch(launched: PageLaunch, transport: KernelTransportStatus): Promise<void> {
+/** What a page's launch reaches: the page through its owner, a journey's Reading and its Deck (tests give their own). */
+export interface LaunchSteps {
+  readonly read: (location: CentralLocation) => Promise<{location: CentralLocation; island: unknown; title: string | null}>
+  readonly reading: (location: CentralLocation) => Promise<unknown>
+  readonly deck: (location: CentralLocation, island: unknown, title: string | null) => Promise<void>
+}
+
+/** The answer to one page's launch. A journey launched as Reading opens its Reading scene (a journey with none read yet has nothing to
+ * lay out, and opens its Deck, which asks for its theme); otherwise it opens its Deck. */
+export async function answerLaunch(launched: PageLaunch, transport: KernelTransportStatus, steps: Partial<LaunchSteps> = {}): Promise<void> {
   if (launched.form !== 'flow' && launched.form !== 'being') return
-  const reading = await readPageOwned(transport, launched.location)
+  const s: LaunchSteps = {read: location => readPageOwned(transport, location), reading: location => openJourneyReading(transport, location),
+    deck: (location, island, title) => openJourneyOfPage(transport, location, island, title), ...steps}
+  const reading = await s.read(launched.location)
   if (launched.form === 'flow') {
-    if (practiceOfIsland(reading.island) === 'journey') await openJourneyOfPage(transport, reading.location, reading.island, reading.title)
+    if (practiceOfIsland(reading.island) !== 'journey') return
+    const opensAs = record(record(record(reading.island)?.meta)?.launch)?.opensAs
+    if (opensAs === 'reading' && record(record(record(reading.island)?.meta)?.journey)) await s.reading(reading.location)
+    else await s.deck(reading.location, reading.island, reading.title)
     return
   }
   const opensAs = record(record(record(reading.island)?.meta)?.launch)?.opensAs

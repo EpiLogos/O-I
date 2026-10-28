@@ -18,13 +18,24 @@
 // refused, each with the operation it waits for (INTENT_ABSENT, INTENT_REFUSED). Of the Launch panel, Compare and the takes a Repeat made
 // stand absent and refused the same way (LAUNCH_ABSENT, LAUNCH_REFUSED). Hand off to is retired: the task is dragged onto another
 // session's track (§19.1). Pure, apart from the hook at the end.
+import {useContext, useEffect, useMemo, useRef, useState} from 'react'
 import type {Value, Values} from '../frame/devices/designed'
 import {clipBinding, type ClipBinding, type ClipWiring} from '../frame/detail/clipBinding'
 import {madeOfValues, withMadeOf, type ClipSource} from '../frame/detail/clipSource'
 import {CONSTELLATION_DRAG} from '../frame/browser/constellationFocus'
 import {constellationNamed, constellationsNow, useConstellations, type Constellation} from '../owners/constellations'
 import {kernelOp} from '../../../../../desktop/cradle/src/kernel/bridge'
-import type {EncounterSessionSettingsReading, KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
+import type {CentralLocation, EncounterSessionSettingsReading, FactoryAttemptArtifacts, KernelTransportStatus, NativeDirectory} from '../../../../../desktop/cradle/src/kernel/types'
+import {attemptArtifacts} from '../../../../../desktop/cradle/src/contributions/factory/desk/factoryReads'
+import {listFiles, resolveFileLocation} from '../../../../../desktop/cradle/src/files/client'
+import {useAttemptTakes} from '../owners/attemptTakes'
+import type {DocumentEntry} from '../central/documents/centralDocuments'
+import {Workspace} from '../shell/workspaceContext'
+import type {WorkspaceReading} from '../shell/workspaceTypes'
+import type {LayoutState} from '../../../../../desktop/cradle/src/surface/types'
+import {useOptionalContinuity} from '../continuity/workspace'
+import {parseCentralPathRef} from '../central/centralVertical'
+import type {FactoryTake} from './factoryTakes'
 import type {WorldActionReceipt, WorldTrackActions} from '../timeline/worldTrackAdapter'
 import {useViewHoldsVersion} from '../frame/detail/clipBinding'
 import {useSelectedClip} from '../frame/detail/ClipBox'
@@ -92,10 +103,115 @@ export interface FactoryClipInput {
   readonly settings?: TaskSeamContext | null
   /** The wiki's constellations, which name the task's source (owners/constellations.ts). */
   readonly constellations?: readonly Constellation[] | null
+  /** What the task's returned attempts named, as Factory resolved it, and how one opens; null where nothing reads it here. */
+  readonly returned?: ReturnedPort | null
+}
+
+// ---------------------------------------------------------------------------------------------------------------- what the run returned
+
+/** One ref a returned attempt's Return names, as Factory resolved it (O-I #759; `factory attempt artifacts`, factory.attempt-artifact-
+ * reading/v1, through the kernel's factory_owner `attempt-artifacts`). Manual §19.1 The Intent panel: "After the run returns, each
+ * condition carries its answer: met or not met with the evidence that shows it"; DLW.md:397-398: "the files it touched … click any of
+ * them and it opens beside you". `opens` is how Central's file route reaches it: a file Factory resolved in its Project's ground, by
+ * Central's listing of its folder (`path` under Central's root, the ground's path then the file's); Central's own path identity, by
+ * Central's resolver. Null when it does not open, and `why` then says why in the owner's words: Factory's reason for a ref it refused,
+ * or why its Project's ground is not one Central discloses. */
+export interface ReturnedFile {
+  readonly ref: string
+  readonly name: string
+  readonly roles: readonly string[]
+  readonly attemptRef: string
+  readonly opens: {readonly via: 'listing'; readonly path: string} | {readonly via: 'resolve'; readonly ref: string} | null
+  readonly why: string | null
+}
+
+/** The task's Return as read: every ref its returned attempts name, or why it is not read here. */
+export type ReturnedReading = {readonly state: 'read'; readonly files: readonly ReturnedFile[]} | {readonly state: 'absent'; readonly why: string}
+
+/** The reading and the open the clip's `open` act goes through (openReturnedFile over the window's owners and its focused pane). */
+export interface ReturnedPort {
+  readonly reading: ReturnedReading
+  readonly open: (file: ReturnedFile) => Promise<void>
+}
+
+const joined = (ground: string, path: string): string => (ground ? `${ground.replace(/\/+$/, '')}/${path}` : path)
+
+/** One attempt's Return as Factory resolved it, with the kernel's placement of its Project's ground in Central's World. Pure. */
+export function returnedFilesOf(answer: FactoryAttemptArtifacts): ReturnedFile[] {
+  const {reading, ground} = answer
+  return reading.artifacts.map((row): ReturnedFile => {
+    const base = {ref: row.ref, roles: row.roles, attemptRef: reading.attemptRef}
+    if (row.state === 'file') {
+      return ground.state === 'placed'
+        ? {...base, name: row.file.path, opens: {via: 'listing', path: joined(ground.path, row.file.path)}, why: null}
+        : {...base, name: row.file.path, opens: null, why: ground.why}
+    }
+    if (row.state === 'central-path') return {...base, name: parseCentralPathRef(row.centralPath)?.path ?? row.ref, opens: {via: 'resolve', ref: row.centralPath}, why: null}
+    return {...base, name: row.ref, opens: null, why: row.reason}
+  })
+}
+
+/** Read the Return of each returned take (`call` is Factory's read through the kernel, attemptArtifacts). A take that has not returned
+ * has no Return to read. A refused read stays as one row naming the attempt, with the owner's words. Never throws. */
+export async function readReturnedFiles(call: (take: FactoryTake) => Promise<FactoryAttemptArtifacts>, takes: readonly FactoryTake[]): Promise<ReturnedReading> {
+  const files: ReturnedFile[] = []
+  for (const take of takes.filter(item => item.state === 'returned')) {
+    try {
+      for (const file of returnedFilesOf(await call(take))) if (!files.some(item => item.ref === file.ref)) files.push(file)
+    } catch (cause) {
+      files.push({ref: take.attemptRef, name: `${take.attemptRef}'s Return`, roles: [], attemptRef: take.attemptRef, opens: null,
+        why: cause instanceof Error ? cause.message : String(cause)})
+    }
+  }
+  return {state: 'read', files}
+}
+
+/** The owners an open goes through: Central's listing of a folder, Central's resolver of its own path identity, and the window's open of
+ * a listed file into the focused pane (useOpenCentralDocument.ts openFile). */
+export interface ReturnedOpenPorts {
+  readonly list: (path: string) => Promise<NativeDirectory>
+  readonly resolve: (ref: string) => Promise<CentralLocation>
+  readonly open: (entry: DocumentEntry) => Promise<void>
+}
+
+const baseName = (path: string): string => path.split('/').filter(Boolean).pop() ?? path
+
+/** Open one returned file beside you. A file Factory resolved is found in Central's listing of its folder, so Central mints its location
+ * (files.rs resolve_material's law: a name not in a real Central listing is never reached); a Central path is resolved by Central. A ref
+ * that does not open throws its reason. */
+export async function openReturnedFile(file: ReturnedFile, ports: ReturnedOpenPorts): Promise<void> {
+  if (!file.opens) throw new Error(`${file.name} does not open: ${file.why ?? 'no owner resolves it to a file'}`)
+  if (file.opens.via === 'resolve') {
+    const location = await ports.resolve(file.opens.ref)
+    return ports.open({name: baseName(location.path), location, kind: 'file', retrieval_allowed: true})
+  }
+  const path = file.opens.path
+  const folder = path.includes('/') ? path.slice(0, path.lastIndexOf('/')) : ''
+  const directory = await ports.list(folder)
+  const entry = directory.entries.find(item => item.location?.path === path)
+  if (!entry) throw new Error(`Central's listing of ${folder || 'its root'} holds no ${baseName(path)}, so it does not open.`)
+  return ports.open(entry)
+}
+
+/** The rows the design draws (clips/factory.tsx Returned): each ref once, its role, whether it opens, and why not. Pure. */
+export function returnedRowsOf(files: readonly ReturnedFile[]): {id: string; name: string; role: string; opens: boolean; why?: string}[] {
+  return files.map(file => ({id: file.ref, name: file.name, role: file.roles.join(', '), opens: file.opens !== null, ...(file.opens ? {} : {why: file.why ?? ''})}))
+}
+
+const RETURNED_ONE_TASK = 'The session\'s owner holds one bound task: what its attempts returned is the first task\'s on the track.'
+const RETURNED_NOT_HERE = 'What the task\'s attempts returned is not read here: no sessions provider reads the session\'s attempts.'
+const RETURNED_NO_TASK = 'No task is selected: select a task on a session\'s track.'
+
+/** Why the task's Return is not on the clip, or null when it is. */
+function returnedWhy(task: TaskAddress | null, returned: ReturnedPort | null | undefined): string | null {
+  if (!task) return RETURNED_NO_TASK
+  if (task.n !== 1) return RETURNED_ONE_TASK
+  if (!returned) return RETURNED_NOT_HERE
+  return returned.reading.state === 'absent' ? returned.reading.why : null
 }
 
 /** The task's readings on the design's keys. A key no owner reports is left out (the design draws "—"). Pure. */
-export function factoryClipValues(track: AgentSessionTrack, task: TaskClip | null, input: Pick<FactoryClipInput, 'tracks' | 'events' | 'colour' | 'settings' | 'constellations'>): Values {
+export function factoryClipValues(track: AgentSessionTrack, task: TaskClip | null, input: Pick<FactoryClipInput, 'tracks' | 'events' | 'colour' | 'settings' | 'constellations' | 'returned'>): Values {
   const values: Record<string, Value> = {}
   // The task's source, the constellation it was made of, named from the wiki (taskSourceOf).
   Object.assign(values, madeOfValues(taskSourceOf(task ? {sessionRef: track.sessionRef, n: task.n} : null, input.settings ?? null), input.constellations))
@@ -107,6 +223,11 @@ export function factoryClipValues(track: AgentSessionTrack, task: TaskClip | nul
   // The turns are the session's budget reading: the agency reading budgets a session, and a task runs on its session's turns.
   put(values, 'turns.used', track.budget.used)
   put(values, 'turns.cap', track.budget.max)
+  // What the task's returned attempts named: the session's bound task is the first on its track (returnedWhy).
+  const returned = input.returned?.reading
+  if (task && !returnedWhy({sessionRef: track.sessionRef, n: task.n}, input.returned) && returned?.state === 'read') {
+    values.returned = JSON.stringify(returnedRowsOf(returned.files))
+  }
   if (input.events) {
     const log = taskLogOf(track, task, input.events)
     values.log = JSON.stringify(log)
@@ -180,8 +301,28 @@ const SETTINGS_WHY_NO_TASK = 'No task is bound to this session: its owner keeps 
 export const SOURCE_UNKEPT = 'The task\'s source is not read: the AIKit installed here keeps no source in a task\'s settings (its reading names none); install an AIKit that does.'
 
 /** clip:factory's wiring: every key the design draws or sets. */
-export function factoryWiring(task: TaskAddress | null, context: TaskSeamContext | null = null): ClipWiring {
-  return withMadeOf(taskWiring(task, context), taskSourceOf(task, context))
+export function factoryWiring(task: TaskAddress | null, context: TaskSeamContext | null = null, returned: ReturnedPort | null = null): ClipWiring {
+  return withReturned(withMadeOf(taskWiring(task, context), taskSourceOf(task, context)), task, returned)
+}
+
+/** The Return's rows on the wiring: `returned` read from Factory, `open` the act that opens one beside you, `returned.page` the view's.
+ * Where nothing is read, `returned` is absent and `open` refused, both in the same words. */
+function withReturned(wiring: ClipWiring, task: TaskAddress | null, returned: ReturnedPort | null): ClipWiring {
+  const why = returnedWhy(task, returned)
+  const files = returned?.reading.state === 'read' ? returned.reading.files : []
+  const open = async (value: Value) => {
+    const file = files.find(item => item.ref === value)
+    if (!file || !returned) throw new Error(`The task's Return names no ${String(value)}, so nothing opens.`)
+    await returned.open(file)
+  }
+  return {
+    ...wiring,
+    reads: {...wiring.reads, returned: 'Factory\'s reading of what the task\'s returned attempts name (factory attempt artifacts): each ref, the file it resolves to, or Factory\'s reason'},
+    acts: why ? wiring.acts : {...wiring.acts, open},
+    view: {...wiring.view, 'returned.page': 'the page of returned files Clip view shows'},
+    absent: why ? {...wiring.absent, returned: why} : wiring.absent,
+    refused: why ? {...wiring.refused, open: why} : wiring.refused,
+  }
 }
 
 function taskWiring(task: TaskAddress | null, context: TaskSeamContext | null): ClipWiring {
@@ -232,7 +373,44 @@ export function factoryClipBinding(input: FactoryClipInput): ClipBinding | null 
   const {track, task, trackId} = chosen
   const address: TaskAddress | null = task ? {sessionRef: track.sessionRef, n: task.n} : null
   return clipBinding({mode: 'factory', ref: task ? `${trackId}#task/${task.n}` : trackId, values: factoryClipValues(track, task, input),
-    wiring: factoryWiring(address, input.settings ?? null), placed: input.placed, viewDefaults: {'view.panel': 'launch', 'view.editor': 'log', fold: true}})
+    wiring: factoryWiring(address, input.settings ?? null, input.returned ?? null), placed: input.placed, viewDefaults: {'view.panel': 'launch', 'view.editor': 'log', fold: true}})
+}
+
+/** What a file opens through: the shell's workspace (its file route) and the book whose focused pane it opens in. */
+interface PaneHold {
+  readonly workspace: WorkspaceReading | null
+  readonly book: {setLayout: (update: (layout: LayoutState) => LayoutState) => void} | null
+}
+
+/** Open a listed file beside you, as the browser's Files rows open one (useOpenCentralDocument.ts centralDocumentOpener openFile: a Flow
+ * in its pane, any other file through the Workbench's file route, in the focused pane). The opener is loaded when a file is opened, so
+ * the clip's module does not carry the document panes. */
+async function openInPane(held: PaneHold, entry: DocumentEntry): Promise<void> {
+  const workspace = held.workspace
+  if (!workspace) throw new Error('No shell workspace is mounted here, so no file opens.')
+  const {centralDocumentOpener} = await import('../central/documents/useOpenCentralDocument')
+  return centralDocumentOpener({workspace: {current: workspace}, book: {current: held.book}}).openFile(entry)
+}
+
+const RETURNED_READING = 'Factory is reading what the task\'s returned attempts name.'
+const RETURNED_TAKES_UNREAD = 'What the task returned is not read: AIKit has not said which attempts the session\'s bound task serves.'
+
+/** The selected session's returned takes, each Return read through Factory (attemptArtifacts) once per set of takes. */
+function useReturnedFiles(transport: KernelTransportStatus, takes: readonly FactoryTake[] | null): ReturnedReading {
+  const returned = takes?.filter(take => take.state === 'returned') ?? null
+  const key = returned ? JSON.stringify(returned.map(take => [take.statePath, take.runRef, take.attemptRef])) : null
+  const transportKey = JSON.stringify(transport)
+  const [reading, setReading] = useState<{key: string | null; value: ReturnedReading}>({key: null, value: {state: 'absent', why: RETURNED_READING}})
+  useEffect(() => {
+    if (key === null || !returned) return
+    let live = true
+    void readReturnedFiles(take => attemptArtifacts(transport, take.statePath, take.runRef, take.attemptRef), returned)
+      .then(value => { if (live) setReading({key, value}) })
+    return () => { live = false }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key, transportKey])
+  if (key === null) return {state: 'absent', why: RETURNED_TAKES_UNREAD}
+  return reading.key === key ? reading.value : {state: 'absent', why: RETURNED_READING}
 }
 
 /** The selected task's clip binding, from the frame's detail reading, THE selection and the sessions provider. */
@@ -250,8 +428,18 @@ export function useFactoryClip(): ClipBinding | null {
   const settings: TaskSeamContext | null = sessions && sessionRef
     ? {transport, project: SETTINGS_PROJECT, settings: answer.reading.status === 'answered' ? answer.reading.value : null, refused: answer.reading.error} : null
   const constellations = useConstellations().rows
+  // What the task's attempts returned: the session's takes (AIKit says which attempts its bound task serves, Factory what each is),
+  // each returned one's Return read through Factory, and a file opened beside you through Central's file route.
+  const takes = useAttemptTakes(transport, sessions && sessionRef ? [sessionRef] : [], SETTINGS_PROJECT)
+  const files = useReturnedFiles(transport, sessionRef ? takes?.of(sessionRef) ?? null : null)
+  const held = useRef<PaneHold>({workspace: null, book: null})
+  held.current = {workspace: useContext(Workspace), book: useOptionalContinuity()}
+  const returned = useMemo<ReturnedPort | null>(() => sessions && sessionRef ? {reading: files, open: file => openReturnedFile(file, {
+    list: path => listFiles(transport, path), resolve: ref => resolveFileLocation(transport, ref), open: entry => openInPane(held.current, entry)})} : null,
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  [files, sessions, sessionRef, JSON.stringify(transport)])
   return factoryClipBinding({ref: selected.ref, tracks: factory.tracks, events: sessions ? sessions.events : null, colour, placed: presentation === 'arrangement', settings,
-    constellations})
+    constellations, returned})
 }
 
 // ---------------------------------------------------------------------------------------------------------------- the drop
