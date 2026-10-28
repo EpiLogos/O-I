@@ -339,8 +339,10 @@ export function prepareNativeSceneMaterialEdit(view: KernelConversion, basis: Na
 }
 
 /** The body carriers a host can resolve today: the app reads their exact native reading (nativeSceneBody.ts prepareNativeSceneBody) and
- * renders them (sceneBodies.ts). Every other carrier is refused by name until a resolver and a renderer both exist. */
-export const SCENE_BODY_HOST_CARRIERS = ['text_source', 'image_media'] as const;
+ * presents them (sceneBodies.ts) — text and image inline, a knowledge whole (a constellation of the wiki, read on the knowledge-whole
+ * channel, protocol.ts KNOWLEDGE_WHOLE_CHANNEL) as its Thing card, which is how the kernel admits a body no renderer draws
+ * (expression_carrier.rs BodyCapability::DegradesToThing). Every other carrier is refused by name until a resolver exists. */
+export const SCENE_BODY_HOST_CARRIERS = ['text_source', 'image_media', 'knowledge_whole'] as const;
 export type NativeSceneBodyHostCarrier = (typeof SCENE_BODY_HOST_CARRIERS)[number];
 
 /** What the host must read before the planner can run. `none`: nothing to read. `read`: resolve this exact native subject. `refuse`:

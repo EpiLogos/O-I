@@ -232,12 +232,16 @@ test('the register burst holds one knowledge read slot, never the realm\'s whole
   } finally { stub.restore() }
 })
 
-test('the pane owners gain exactly the one channel; every other channel and the attach hook are kept', () => {
+test('the pane owners gain exactly the wiki\'s two channels; every other channel and the attach hook are kept', () => {
+  // REPLACED (O-I #768, part two): the owners gained the one standing channel; they gain the knowledge whole's too (knowledge-whole), the
+  // reading the frame places a constellation as a scene's body from.
   const base = {channels: {'kernel-expression': async () => 'kernel', 'central-read': async () => 'read'}, unavailableReason: undefined}
   const owners = withWikiSubjectStanding(base, source())
   assert.equal(owners.channels['kernel-expression'], base.channels['kernel-expression'])
   assert.equal(owners.channels['central-read'], base.channels['central-read'])
   assert.equal(typeof owners.channels[WIKI_SUBJECT_STANDING_CHANNEL], 'function')
+  assert.equal(typeof owners.channels['knowledge-whole'], 'function')
+  assert.deepEqual(Object.keys(owners.channels).sort(), ['central-read', 'kernel-expression', 'knowledge-whole', WIKI_SUBJECT_STANDING_CHANNEL].sort())
   assert.equal(base.channels[WIKI_SUBJECT_STANDING_CHANNEL], undefined, 'the qualified owners are not mutated')
 })
 

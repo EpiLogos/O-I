@@ -14,8 +14,11 @@ import {kernelRead} from '../../../../../desktop/cradle/src/kernel/bridge'
 import {boundedKnowledgeChain} from '../../../../../desktop/cradle/src/knowledge/client'
 import type {KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
 import {publishWikiNativeRegisters, wikiNativeRegisters} from '../../../../../desktop/cradle/src/techne/wikiNativeExpression'
-import {captureWikiProjectionAccess, ensureWikiStanding, getWikiProjectionState, wikiSubjectStandings, type ProjectedSubjectStanding} from '../../../../../desktop/cradle/src/techne/wikiProjectionStore'
-import {WIKI_SUBJECT_STANDING_CHANNEL, type ChannelContext, type ExpressionsOwners, type WikiSubjectStandingReply, type WikiSubjectStandingRequest} from '@epilogos/expressions-boundary'
+import {captureWikiProjectionAccess, ensureWikiStanding, getWikiProjectionState, wikiProjectionOf, wikiSubjectStandings, type ProjectedSubjectStanding, type RegisterStanding}
+  from '../../../../../desktop/cradle/src/techne/wikiProjectionStore'
+import type {WikiRegister} from '../../../../../desktop/cradle/src/techne/wikiExpression'
+import {KNOWLEDGE_WHOLE_CHANNEL, WIKI_SUBJECT_STANDING_CHANNEL, type ChannelContext, type ExpressionsOwners, type KnowledgeWholeReading, type KnowledgeWholeRequest,
+  type WikiSubjectStandingReply, type WikiSubjectStandingRequest} from '@epilogos/expressions-boundary'
 import {readShellConfig, shellTransport} from './application'
 
 /** The owner's reading, as this answerer needs it. Injectable for tests; the live source is the one projection state. */
@@ -147,7 +150,61 @@ export function wikiStandingChannel(source: WikiStandingSource = liveWikiStandin
     answerWikiSubjectStanding(request as WikiSubjectStandingRequest, context.state?.nativeScene, source)
 }
 
-/** The Expressions pane's owners with this one channel added. Every other channel is the qualified owner's, unchanged. */
-export function withWikiSubjectStanding(owners: ExpressionsOwners, source: WikiStandingSource = liveWikiStandingSource): ExpressionsOwners {
-  return {...owners, channels: {...owners.channels, [WIKI_SUBJECT_STANDING_CHANNEL]: wikiStandingChannel(source)}}
+// ---------------------------------------------------------------------------------------------------------------- the knowledge whole
+
+/** O-I #768: the frame places a constellation as a scene's body (a knowledge whole, DLW §16.5, §20.1) from the wiki's own reading of the
+ * whole: the subject reading the one projection binds the whole's entity to (techne/wikiExpression.ts projectWikiExpression: the whole's
+ * `subject` — its ref, owner, source reading and the readings it was observed through), with its name and register. A child space is
+ * read in its own register. Null when no read register discloses the whole. Pure. */
+export function knowledgeWholeOf(state: {readonly registers: readonly WikiRegister[]; readonly standings: Readonly<Record<string, RegisterStanding>>},
+  ref: string): KnowledgeWholeReading | null {
+  for (const register of state.registers) {
+    const projection = wikiProjectionOf(state.standings[register.key])
+    const whole = projection?.constellations.find(row => row.wholeRef === ref && !row.disclosedChild)
+    const subject = whole ? projection!.document.entities[whole.wholeEntityRef]?.subject : undefined
+    const reading = subject?.sources[0]
+    if (!whole || !subject || !reading || subject.subject_ref !== ref) continue
+    return {requested_ref: ref, ref: subject.subject_ref, native_owner: subject.native_owner, title: whole.title, register: register.key,
+      reading: {...reading}, provenance: subject.readings.map(row => ({...row}))}
+  }
+  return null
+}
+
+/** What the knowledge-whole answer reads: the registers loaded once (the standing's own load), and the whole the projection holds. */
+export interface KnowledgeWholeSource {
+  loadRegisters(): Promise<void>
+  wholeOf(ref: string): KnowledgeWholeReading | null
+  unreadRegisters(): readonly {key: string; reason: string}[]
+}
+export const liveKnowledgeWholeSource: KnowledgeWholeSource = {
+  loadRegisters: liveWikiStandingSource.loadRegisters,
+  wholeOf: ref => knowledgeWholeOf(getWikiProjectionState(), ref),
+  unreadRegisters: liveWikiStandingSource.unreadRegisters,
+}
+
+/** Answer one exact request: the whole as the wiki reads it, or a named refusal (a register not loaded, or a ref no read register
+ * discloses — with the register that could not be read, when one could not). */
+export async function answerKnowledgeWhole(request: KnowledgeWholeRequest, source: KnowledgeWholeSource = liveKnowledgeWholeSource): Promise<KnowledgeWholeReading> {
+  try {
+    await source.loadRegisters()
+  } catch (cause) {
+    throw new Error(`The wiki registers were not loaded, so ${request.ref} is not read: ${cause instanceof Error ? cause.message : String(cause)}`)
+  }
+  const whole = source.wholeOf(request.ref)
+  if (whole) return whole
+  const unread = source.unreadRegisters()
+  throw new Error(`${request.ref} is no constellation the wiki's read registers disclose`
+    + (unread.length ? `; the register ${unread[0].key} could not be read (${unread[0].reason}).` : '.'))
+}
+
+/** The channel owner. The boundary has already read the request exactly (protocol.ts readKnowledgeWholeRequest). */
+export function knowledgeWholeChannel(source: KnowledgeWholeSource = liveKnowledgeWholeSource) {
+  return async (request: unknown): Promise<KnowledgeWholeReading> => answerKnowledgeWhole(request as KnowledgeWholeRequest, source)
+}
+
+/** The Expressions pane's owners with the wiki's two answers to the frame added: where a subject stands in the wiki, and a knowledge
+ * whole's reading. Every other channel is the qualified owner's, unchanged. */
+export function withWikiSubjectStanding(owners: ExpressionsOwners, source: WikiStandingSource = liveWikiStandingSource,
+  wholes: KnowledgeWholeSource = liveKnowledgeWholeSource): ExpressionsOwners {
+  return {...owners, channels: {...owners.channels, [WIKI_SUBJECT_STANDING_CHANNEL]: wikiStandingChannel(source), [KNOWLEDGE_WHOLE_CHANNEL]: knowledgeWholeChannel(wholes)}}
 }

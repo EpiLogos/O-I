@@ -3,6 +3,7 @@ import {toNativeEntity} from '../../../../../desktop/cradle/expressions-app/fiel
 import type {ActMaterialContract} from '../../../../expressions-boundary/src/nativeMaterials';
 import {loopIntent, sceneFocused} from '../components/nativeScenePlayback';
 import type {NativeSceneEditIntent} from '../../../../expressions-boundary/src/sceneEdits';
+import type {NativeSceneMaterialIntent} from '../../../../expressions-boundary/src/sceneMaterialEdits';
 
 /** Presentation identities are tuples, never invented native references. The
  * complete material stays with the retained Expressions document owner. */
@@ -150,6 +151,17 @@ export function readNativeExpressionsContent(reading: NativeEditorReading): Nati
 type SceneAction<T> = T extends NativeSceneEditorRequest ? Omit<T, 'operation' | 'basis' | 'intent_epoch'> : never;
 export type NativeSceneAction = SceneAction<NativeSceneEditorRequest>;
 
+/** The acts a gesture of several owner steps takes (a constellation dropped on a track adds a scene, then sets its body:
+ * components/expressions/clip/clipBinding.ts makeSceneOf): each step stands on the reading the step before it was answered with. */
+export interface NativeSceneGestureActions {
+  /** The basis the acts were captured on. */
+  readonly basis: NativeEditorBasis;
+  sceneEdit(intent: NativeSceneEditIntent): Promise<NativeEditorReply>;
+  sceneMaterial(intent: NativeSceneMaterialIntent): Promise<NativeEditorReply>;
+  readNow(): Promise<NativeEditorReply>;
+  after(reading: NativeEditorReading): NativeSceneGestureActions;
+}
+
 /** Each handler captures the displayed native basis. The receiver refuses a
  * stale action; a newer reading never silently retargets an existing gesture. */
 export function createNativeContentActions(content: NativeExpressionsContent, controller: Pick<NativeEditorController, 'request'>) {
@@ -157,6 +169,7 @@ export function createNativeContentActions(content: NativeExpressionsContent, co
   const refuse = (error: string): Promise<NativeEditorReply> => Promise.resolve({ok: false, error});
   const clip = (id: string) => content.clip_sources.find(value => value.id === id);
   return {
+    basis: {...basis},
     listActs(): Promise<NativeEditorReply> {
       return controller.request({operation:'material',basis,action:'list-acts'});
     },
@@ -191,6 +204,16 @@ export function createNativeContentActions(content: NativeExpressionsContent, co
       if (!selection) return refuse('Select a scene of the Expression first: the owner edits from the selection it holds.');
       return controller.request({operation: 'scene-edit', basis, intent_epoch: content.playback.intent_epoch,
         native_selection: structuredClone(selection), intent});
+    },
+    /** One change of the Scene's body or triggers on the captured basis: the same scene-material request the body device sends
+     * (components/NativeSceneFace.body.tsx). The host reads the body's exact native reading before the owner writes it. */
+    sceneMaterial(intent: NativeSceneMaterialIntent): Promise<NativeEditorReply> {
+      return controller.request({operation: 'scene-material', basis, intent});
+    },
+    /** The same acts on a newer reading the owner answered a step with, so a gesture's next step stands on that basis and selection,
+     * never on the one it began from (each action captures its basis: a stale one is refused). */
+    after(reading: NativeEditorReading): NativeSceneGestureActions {
+      return createNativeContentActions(readNativeExpressionsContent(reading), controller);
     },
     selectField(): Promise<NativeEditorReply> {
       return controller.request({operation: 'select-field', basis});

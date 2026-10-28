@@ -56,6 +56,11 @@ const trigger = (id, occasion, target) => ({trigger_ref: `${EXPR}:trigger:${id}`
 const textBody = (over = {}) => ({carrier: 'text_source', subject_ref: NOTES, native_owner: 'central', reading: {ref: NOTES, revision: 'r1', availability: 'available'},
   provenance: [{ref: NOTES, revision: 'r1', availability: 'available'}], actions: [ACTION], presentation: 'inline', capability: {state: 'renderable'},
   span: null, recursion: null, ...over})
+const LIVED = 'wiki:anchor:lived-in'
+// A knowledge whole, shaped as bodyFromKnowledgeWhole (nativeSceneBody.ts) returns it: the wiki's own subject reading, drawn as its Thing.
+const wholeBody = () => ({carrier: 'knowledge_whole', subject_ref: LIVED, native_owner: 'wiki', reading: {ref: LIVED, revision: '2', availability: 'available'},
+  provenance: [{ref: 'wiki:Work/O-I/ProjectCentral/agents/wiki/wiki.json', revision: 'w9', availability: 'available'}], actions: [], presentation: 'preview',
+  capability: {state: 'degrades_to_thing', reason: 'A knowledge whole is drawn as its Thing: its name, and the wiki it is read from.'}, span: null, recursion: null})
 const imageBody = () => ({carrier: 'image_media', subject_ref: ARTWORK, native_owner: 'central', reading: {ref: ARTWORK, revision: 'a1', availability: 'available'},
   provenance: [{ref: ARTWORK, revision: 'a1', availability: 'available'}], actions: [], presentation: 'inline', capability: {state: 'renderable'}, span: null, recursion: null})
 
@@ -78,8 +83,14 @@ function reading(current, {body = null, triggers = []} = {}) {
 
 // ---- Boundary: the read gate, the planner and the trigger grammar ----
 
-test('the body gate names every carrier the host cannot resolve, and reads only text and image', () => {
-  assert.deepEqual([...SCENE_BODY_HOST_CARRIERS], ['text_source', 'image_media'])
+test('the body gate names every carrier the host cannot resolve, and reads text, image and a knowledge whole', () => {
+  // REPLACED (O-I #768): the host resolved text and image only; a knowledge whole (a constellation of the wiki) is resolved now, read
+  // through the wiki's one projection (expressions-boundary protocol.ts KNOWLEDGE_WHOLE_CHANNEL, nativeSceneBody.ts).
+  assert.deepEqual([...SCENE_BODY_HOST_CARRIERS], ['text_source', 'image_media', 'knowledge_whole'])
+  assert.deepEqual(sceneMaterialReadRequirement({family: 'body', body: {operation: 'set', carrier: 'knowledge_whole', subject_ref: LIVED}}),
+    {kind: 'read', carrier: 'knowledge_whole', subject_ref: LIVED, span: null})
+  assert.match(sceneMaterialReadRequirement({family: 'body', body: {operation: 'set', carrier: 'knowledge_whole', subject_ref: LIVED, span: null}}).problem,
+    /Unsupported Scene body operand: span/)
   assert.deepEqual(sceneMaterialReadRequirement({family: 'body', body: {operation: 'clear'}}), {kind: 'none'})
   assert.deepEqual(sceneMaterialReadRequirement({family: 'trigger', trigger: {operation: 'detach', trigger_ref: 'x'}}), {kind: 'none'})
   assert.deepEqual(sceneMaterialReadRequirement({family: 'body', body: {operation: 'set', carrier: 'text_source', subject_ref: NOTES, span: {start: 1, end: 4}}}),
@@ -110,6 +121,17 @@ test('the planner applies an admitted presentation and refuses one the disclosed
   assert.throws(() => prepareNativeSceneMaterialEdit(current, basis(current), set('degraded'), textBody()), /presentation must match disclosed capability/)
   assert.throws(() => prepareNativeSceneMaterialEdit(current, basis(current), set('sideways'), textBody()), /Unknown Scene body presentation/)
   assert.equal(SCENE_BODY_PRESENTATIONS.length, 4)
+})
+
+test('the planner sets a resolved knowledge whole as the Scene\'s body, drawn honestly as its Thing', () => {
+  const current = view()
+  const whole = {family: 'body', body: {operation: 'set', carrier: 'knowledge_whole', subject_ref: LIVED}}
+  const plan = prepareNativeSceneMaterialEdit(current, basis(current), whole, wholeBody())
+  assert.deepEqual(plan.changes, [{change: 'scene_body_set', scene_ref: SCENE, body: wholeBody()}])
+  assert.throws(() => prepareNativeSceneMaterialEdit(current, basis(current), {family: 'body', body: {...whole.body, presentation: 'inline'}}, wholeBody()),
+    /presentation must match disclosed capability/, 'a knowledge whole has no inline renderer')
+  assert.throws(() => prepareNativeSceneMaterialEdit(current, basis(current), {family: 'body', body: {...whole.body, subject_ref: 'wiki:anchor:other'}}, wholeBody()),
+    /different subject or carrier/)
 })
 
 test('each trigger occasion and target kind plans exactly one scene_trigger_attach with the admitted target', () => {
@@ -225,10 +247,11 @@ test('the summary names the body carrier or none, and the trigger count; an abse
   assert.equal(bodySummary({...reading(current), nativeScene: undefined}), 'Scene body not disclosed')
 })
 
-test('carrier options: nine admitted carriers, only text and image settable, each other named as having no host resolver', () => {
+test('carrier options: nine admitted carriers, text, image and a knowledge whole settable, each other named as having no host resolver', () => {
   const options = carrierOptions()
   assert.deepEqual(options.map(row => row.carrier), [...SCENE_BODY_CARRIERS])
-  assert.deepEqual(options.filter(row => row.resolvable).map(row => row.carrier), ['text_source', 'image_media'])
+  // REPLACED (O-I #768): only text and image were settable; a knowledge whole is resolved now (SCENE_BODY_HOST_CARRIERS).
+  assert.deepEqual(options.filter(row => row.resolvable).map(row => row.carrier), ['text_source', 'image_media', 'knowledge_whole'])
   assert.equal(options.find(row => row.carrier === 'glyph_form').reason, 'no host resolver yet')
   assert.match(options.find(row => row.carrier === 'engine_composition').reason, /Clear body/)
 })
@@ -259,6 +282,11 @@ test('the body form builds only the admitted set shapes; a problem keeps the req
   // Each set the form builds is read by the gate exactly as the planner expects.
   assert.deepEqual(sceneMaterialReadRequirement(span.intent), {kind: 'read', carrier: 'text_source', subject_ref: NOTES, span: {start: 2, end: 9}})
   assert.deepEqual(sceneMaterialReadRequirement(image.intent), {kind: 'read', carrier: 'image_media', subject_ref: ARTWORK, span: null})
+  // A knowledge whole is drawn as its Thing, so it is set at Preview or Degraded, never Inline; its set carries no span.
+  const known = bodySetIntent({carrier: 'knowledge_whole', presentation: 'preview', subject: LIVED, spanStart: '0', spanEnd: '0'})
+  assert.deepEqual(known.intent, {family: 'body', body: {operation: 'set', carrier: 'knowledge_whole', subject_ref: LIVED, presentation: 'preview'}})
+  assert.deepEqual(sceneMaterialReadRequirement(known.intent), {kind: 'read', carrier: 'knowledge_whole', subject_ref: LIVED, span: null})
+  assert.match(bodySetIntent({carrier: 'knowledge_whole', presentation: 'inline', subject: LIVED, spanStart: '0', spanEnd: '0'}).problem, /needs a capability/)
 })
 
 test('trigger forms build the four admitted targets, and each one is accepted by the planner', () => {

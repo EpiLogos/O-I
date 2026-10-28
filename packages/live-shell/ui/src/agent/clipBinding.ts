@@ -9,27 +9,33 @@
 //   - the log: the session's temporal events (the sessions provider's one read, agentRunModel.ts eventsForSession), within the task's
 //     own span (its start to the next task's), each the owner's own row — its time, its kind and what it says (FactoryTaskLogDetail).
 //   - the task's own settings — its name and colour as the person set them, its activator, output style, Loop with its stop condition
-//     and cap, Launch mode, Then, Quantize, what a Repeat varies, and envelopes — from the session's settings on their owner (AIKit
-//     `encounter-session-settings`, agent/sessionSettings.ts), every default stated by the owner, in the manual's words, which are the
-//     owner's: read and written as they are, with no table between them.
+//     and cap, Launch mode, Then, Quantize, what a Repeat varies, envelopes and its source (the constellation it was made of, taskSourceOf)
+//     — from the session's settings on their owner (AIKit `encounter-session-settings`, agent/sessionSettings.ts), every default stated by
+//     the owner, in the manual's words, which are the owner's: read and written as they are, with no table between them.
+// A constellation dropped on a session's track makes the session's task of it (makeTaskOf, the maker the Factory set carries: taskMaker).
 // Every per-task setting writes through its seam in agent/devices/taskBindings.ts TASK_SEAMS, against the settings' standing
 // revision. The Intent panel (§19.1, the design's D3 panel) has no reading a kernel route reaches: its keys stand absent and its writes
 // refused, each with the operation it waits for (INTENT_ABSENT, INTENT_REFUSED). Of the Launch panel, Compare and the takes a Repeat made
 // stand absent and refused the same way (LAUNCH_ABSENT, LAUNCH_REFUSED). Hand off to is retired: the task is dragged onto another
 // session's track (§19.1). Pure, apart from the hook at the end.
 import type {Value, Values} from '../frame/devices/designed'
-import {clipBinding, missingOp, type ClipBinding, type ClipWiring} from '../frame/detail/clipBinding'
-import {withMadeOf, type ClipSource} from '../frame/detail/clipSource'
+import {clipBinding, type ClipBinding, type ClipWiring} from '../frame/detail/clipBinding'
+import {madeOfValues, withMadeOf, type ClipSource} from '../frame/detail/clipSource'
+import {CONSTELLATION_DRAG} from '../frame/browser/constellationFocus'
+import {constellationNamed, constellationsNow, useConstellations, type Constellation} from '../owners/constellations'
+import {kernelOp} from '../../../../../desktop/cradle/src/kernel/bridge'
+import type {EncounterSessionSettingsReading, KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
+import type {WorldActionReceipt, WorldTrackActions} from '../timeline/worldTrackAdapter'
 import {useViewHoldsVersion} from '../frame/detail/clipBinding'
 import {useSelectedClip} from '../frame/detail/ClipBox'
 import {useDetailReading} from '../frame/detail/detailReading'
 import {useTimelinePanePresentation} from '../projections/timelinePaneHost'
 import {parseFactoryTaskRef} from '../timeline/factoryTrackAdapter'
-import {useSettingsAnswer} from '../owners/readers'
+import {readSettingsOf, settingsReadingEntry, useSettingsAnswer} from '../owners/readers'
 import {useAgentSessionsOptional} from './AgentSessionsProvider'
 import {eventsForSession, trackKey, type AgentSessionTrack, type TaskClip, type TemporalEventLike} from './agentRunModel'
 import {TASK_SEAMS, type TaskAddress, type TaskSeamContext, type TaskSetting} from './devices/taskBindings'
-import {clipValuesOfSettings, settingsRefusal} from './sessionSettings'
+import {clipValuesOfSettings, settingsRefusal, SETTINGS_RESULT} from './sessionSettings'
 
 /** The register the sessions provider reads its agency in (AgentSessionsProvider.tsx PROJECT): the session's settings are read there. */
 export const SETTINGS_PROJECT = 'O-I'
@@ -84,11 +90,15 @@ export interface FactoryClipInput {
   readonly placed?: boolean
   /** The selected session's settings on their owner, and where they are written; null where nothing reads them. */
   readonly settings?: TaskSeamContext | null
+  /** The wiki's constellations, which name the task's source (owners/constellations.ts). */
+  readonly constellations?: readonly Constellation[] | null
 }
 
 /** The task's readings on the design's keys. A key no owner reports is left out (the design draws "—"). Pure. */
-export function factoryClipValues(track: AgentSessionTrack, task: TaskClip | null, input: Pick<FactoryClipInput, 'tracks' | 'events' | 'colour' | 'settings'>): Values {
+export function factoryClipValues(track: AgentSessionTrack, task: TaskClip | null, input: Pick<FactoryClipInput, 'tracks' | 'events' | 'colour' | 'settings' | 'constellations'>): Values {
   const values: Record<string, Value> = {}
+  // The task's source, the constellation it was made of, named from the wiki (taskSourceOf).
+  Object.assign(values, madeOfValues(taskSourceOf(task ? {sessionRef: track.sessionRef, n: task.n} : null, input.settings ?? null), input.constellations))
   put(values, 'name', task?.title ?? track.purpose)
   put(values, 'colour', input.colour)
   // The bound task's settings, as the owner states them (its name as set, else its purpose; a colour set, else the track's).
@@ -144,16 +154,27 @@ export const LAUNCH_REFUSED: Readonly<Record<string, string>> = {
   compare: 'Compare: no owner operation carries it yet — missing op: a comparison of takes (Software Factory).',
 }
 
-/** A task's source (manual §19.1 The Clip panel: "Constellation — The one the task was made of — The task's source"): no owner keeps it
- * yet. The task's own settings are AIKit's (encounter-session-settings, ai-kit encounter_task_settings.rs), and they hold no source, so
- * the key stands absent and Show in Browser names the operation AIKit lacks (PROPOSE, O-I #768). */
-export const TASK_SOURCE: ClipSource = {made: 'unread', why: missingOp('The task\'s constellation',
-  'task_source {session, task} → the constellation_ref the task was made of, kept with the task\'s settings, and set when a constellation dropped on a session\'s track makes the task',
-  'AIKit encounter-session-settings')}
+/** A task's source (manual §19.1 The Clip panel: "Constellation — The one the task was made of — The task's source, as a sample is an
+ * audio clip's"): the task's own settings on AIKit keep it (encounter-session-settings `task.source`, ai-kit encounter_task_settings.rs:
+ * the constellation the task was made with, until the person sets another; null when it was made of none). It REPLACES part one's
+ * TASK_SOURCE, which stood absent naming a missing `task_source` op. Where the settings are not read here, or name no task, the key is
+ * unread with that reason (sessionSettings.ts settingsRefusal). Pure. */
+export function taskSourceOf(task: TaskAddress | null, context: TaskSeamContext | null): ClipSource {
+  const why = task ? settingsRefusal(context, task.n) : 'No task is selected: select a task on a session\'s track.'
+  const settings = context?.settings?.task
+  if (why || !settings) return {made: 'unread', why: why ?? SETTINGS_WHY_NO_TASK}
+  // An AIKit installed before it kept a task's source reads no `source` at all: unread, never None.
+  if (!('source' in settings)) return {made: 'unread', why: SOURCE_UNKEPT}
+  return settings.source ? {made: 'of', ref: settings.source, by: SOURCE_BY} : {made: 'none', by: SOURCE_BY}
+}
+const SOURCE_BY = 'the task\'s settings on AIKit (encounter-session-settings task.source)'
+const SETTINGS_WHY_NO_TASK = 'No task is bound to this session: its owner keeps no settings for a task it does not hold.'
+/** The settings reading of an AIKit that does not keep a task's source yet (installed before ai-kit a3f43f84). */
+export const SOURCE_UNKEPT = 'The task\'s source is not read: the AIKit installed here keeps no source in a task\'s settings (its reading names none); install an AIKit that does.'
 
 /** clip:factory's wiring: every key the design draws or sets. */
 export function factoryWiring(task: TaskAddress | null, context: TaskSeamContext | null = null): ClipWiring {
-  return withMadeOf(taskWiring(task, context), TASK_SOURCE)
+  return withMadeOf(taskWiring(task, context), taskSourceOf(task, context))
 }
 
 function taskWiring(task: TaskAddress | null, context: TaskSeamContext | null): ClipWiring {
@@ -218,5 +239,65 @@ export function useFactoryClip(): ClipBinding | null {
   const answer = useSettingsAnswer(transport, sessions ? sessionRef : null, SETTINGS_PROJECT)
   const settings: TaskSeamContext | null = sessions && sessionRef
     ? {transport, project: SETTINGS_PROJECT, settings: answer.reading.status === 'answered' ? answer.reading.value : null, refused: answer.reading.error} : null
-  return factoryClipBinding({ref: selected.ref, tracks: factory.tracks, events: sessions ? sessions.events : null, colour, placed: presentation === 'arrangement', settings})
+  const constellations = useConstellations().rows
+  return factoryClipBinding({ref: selected.ref, tracks: factory.tracks, events: sessions ? sessions.events : null, colour, placed: presentation === 'arrangement', settings,
+    constellations})
+}
+
+// ---------------------------------------------------------------------------------------------------------------- the drop
+
+/** Why a session can take no task made of a constellation: it holds none (AIKit binds a session's task when the session is prepared for it,
+ * `encounter-task-configure`, whose request names the constellation as the task's `source`; the shell does not prepare tasks). */
+const noTask = (label: string) => `${label} holds no task, so no task is made of it here: AIKit binds a session's task when the session is prepared `
+  + 'for one (encounter-task-configure, whose request takes the constellation as the task\'s source); drop it on a session that works a task.'
+
+/** Factory's clip of a constellation (manual §10.3: "Drag it onto a track and this mode makes its own clip of it, with the constellation as
+ * its source: … a task in Factory"; §16.7 Make this mode's clip; §19.1 the Clip panel's Constellation: "The one the task was made of"):
+ * a session's track holds the one task AIKit binds to the session, so the drop makes that task of the constellation — the task's own
+ * settings take it as their `source` on AIKit, written against the revision read (the owner's CAS), and AIKit's reading gives the source
+ * back. A session that holds no task is refused in words (noTask). Every reader of the session's settings is asked again. */
+export async function makeTaskOf(transport: KernelTransportStatus, session: {readonly sessionRef: string; readonly label: string},
+  constellation: {readonly ref: string; readonly title: string}, project = SETTINGS_PROJECT): Promise<WorldActionReceipt> {
+  const {ref, title} = constellation
+  const owner = readSettingsOf(transport, project, session.sessionRef)
+  const read = async (): Promise<{reading: EncounterSessionSettingsReading} | {error: string}> => {
+    const answer = await owner()
+    return 'error' in answer ? {error: answer.error} : {reading: answer.value}
+  }
+  const before = await read()
+  if ('error' in before) return {ok: false, error: `${session.label}'s settings were not read, so no task is made of ${title}: ${before.error}`}
+  const task = before.reading.task
+  if (!task) return {ok: false, error: noTask(session.label)}
+  const written = await kernelOp(transport, {op: 'encounter_session_settings', project, agent_session: session.sessionRef,
+    request: {task: {task_ref: task.task_ref, set: {source: ref}}}, ...(before.reading.revision ? {expected_revision: before.reading.revision} : {})})
+  if (written.error || written.outcome?.result !== SETTINGS_RESULT) return {ok: false, error: `AIKit did not make ${task.name} of ${title}: ${written.error ?? 'it gave no reading'}`}
+  const after = await read()
+  // Every reader of the session's settings is asked again (the Clip panel, the mixer row), as a settings write does (sessionSettings.ts).
+  const entry = settingsReadingEntry(transport, project, session.sessionRef)
+  const epoch = entry.snapshot().epoch
+  if (epoch !== null) void entry.refresh(epoch)
+  if ('error' in after) return {ok: false, error: `AIKit kept ${title} as ${task.name}'s source, but did not read it back: ${after.error}`}
+  const kept = after.reading.task
+  if (!kept || kept.task_ref !== task.task_ref) return {ok: false, error: `AIKit kept the change, but its settings now read another task than ${task.name}.`}
+  if (kept.source !== ref) return {ok: false, error: `AIKit kept the change, but reads ${task.name}'s source as ${kept.source ?? 'none'}, not ${ref}.`}
+  return {ok: true, note: `${task.name} on ${session.label} is made of ${title}; AIKit reads the task's source as ${title}.`}
+}
+
+type Maker = NonNullable<WorldTrackActions['makeClip']>
+
+/** The maker the Factory set carries (frame/tracks/useFactoryTracks.ts; frame/tracks/clipMakers.ts withClipMaker): a constellation dropped
+ * on a session's track makes that session's task of it (makeTaskOf). A drop on another track, or of a ref the wiki's reading does not
+ * hold, is refused in words. */
+export function taskMaker(transport: KernelTransportStatus, tracks: readonly AgentSessionTrack[],
+  named: (ref: string) => Constellation | null = ref => constellationNamed(constellationsNow().rows, ref)): Maker {
+  return {accepts: CONSTELLATION_DRAG,
+    op: 'AIKit encounter-session-settings: the session\'s task takes the constellation as its source (task.source), read back from AIKit',
+    run: async (trackId: string, payload: string): Promise<WorldActionReceipt> => {
+      const track = tracks.find(item => trackKey(item) === trackId && !item.group)
+      if (!track) return {ok: false, error: 'Only a session\'s track makes a task of a constellation: drop it on a session.'}
+      const ref = payload.trim()
+      const found = named(ref)
+      if (!found) return {ok: false, error: `${ref} is no constellation the wiki's reading holds now.`}
+      return makeTaskOf(transport, {sessionRef: track.sessionRef, label: track.agentName ?? track.purpose ?? track.sessionRef}, found)
+    }}
 }

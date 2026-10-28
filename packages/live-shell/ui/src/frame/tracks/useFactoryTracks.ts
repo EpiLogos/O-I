@@ -30,13 +30,15 @@ import {factoryTrackAdapter, type FactoryControls, type FactorySettingsPort, typ
 import {useSettingsAnswers} from '../../owners/readers'
 import {useAttemptTakes} from '../../owners/attemptTakes'
 import {trackSettingChange, writeSessionSettings} from '../../agent/sessionSettings'
-import {SETTINGS_PROJECT} from '../../agent/clipBinding'
+import {SETTINGS_PROJECT, taskMaker} from '../../agent/clipBinding'
+import {withClipMaker} from './clipMakers'
 import {encounter} from '../../../../../../desktop/cradle/src/encounter/client'
 import {tellOwnerChanged} from '../../owners/notices'
 import type {UseModeTracks} from './modeTracks'
 import {useSeatStatusAnswer} from '../../agent/devices/workcellReads'
 import {withReturns, withWorksIn, workcellReturns} from './returnTracks'
 import type {WorldTrackSet} from '../../timeline/worldTrackAdapter'
+import type {AgentSessionTrack} from '../../agent/agentRunModel'
 
 const WRITE_ARM = 'shell.setWriteArm'
 
@@ -105,7 +107,15 @@ export const useFactoryTracks: UseModeTracks = reading => {
   if (!agency.tracks.length && agency.loading) return {waiting: 'The agent sessions arrive when the agency read answers.'}
   // A chat dragged from Factory's Projects (DLW §19.1) reopens on the empty track; an agent still starts a new agent there.
   const set = withChatSeat(factoryTrackAdapter.project({tracks: agency.tracks, nowUnixMs: Date.now(), controls, ...(events ? {events} : {}), writeArm, ...(settings ? {settings} : {}), ...(takes ? {takes} : {}), ...(sessionStop ? {sessionStop} : {})}), {transport})
-  return withWorkcells(set, register, seats.status === 'refused' ? seats.error : null)
+  return factoryTrackSet(set, register, seats.status === 'refused' ? seats.error : null, transport, agency.tracks)
+}
+
+/** Factory's set as the pane draws it: the register's workcells as return tracks and each session's Works in (withWorkcells), and its
+ * tracks taking a constellation dropped on them — which makes the session's task of it, its source kept on AIKit (agent/clipBinding.ts
+ * taskMaker). Pure. */
+export function factoryTrackSet(set: WorldTrackSet, register: unknown, refused: string | null, transport: KernelTransportStatus,
+  tracks: readonly AgentSessionTrack[]): WorldTrackSet {
+  return withClipMaker(withWorkcells(set, register, refused), taskMaker(transport, tracks))
 }
 
 /** Factory's set with the register's workcells as its return tracks and each session's Works in (§19.23): every session works in the

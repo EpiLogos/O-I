@@ -195,15 +195,45 @@ const track = {sessionRef: 'ses-214', purpose: 'correlate occurrences', agentRef
   depth: 0, parentRef: null, group: false, memberRefs: [], needle: null, telemetryOn: false, budget: {used: 2, max: 12}, disclosure: null,
   tasks: [{n: 1, title: 'correlate occurrences', state: 'running', startUnixMs: T(13, 41), lastActivityUnixMs: T(14, 24), softStop: false, disclosure: null}]}
 
-test('Factory and Live: no owner keeps a task\'s or a Live clip\'s source yet — the key stands absent and Show in Browser names the missing operation', () => {
+/** One session's settings as AIKit reads them (aikit.encounter-session-settings/v1, ai-kit encounter_task_settings.rs `reading`), its bound
+ * task's `source` the constellation it was made of (ai-kit e78b5986). FIXTURE shaped as the owner's reading, not a capture. */
+function settingsOf(source, {revision = 'session-settings/01', task = true} = {}) {
+  return {schema: 'aikit.encounter-session-settings/v1', agent_session: 'ses-214', revision, track: {telemetry: true, solo: false, set: []},
+    task: task ? {task_ref: 'task:fixtures', name: 'correlate occurrences', colour: null, active: true, register: 'plain', form: 'technical', loop: false,
+      loop_until: 'done', loop_cap: null, launch: 'trigger', then: 'next', quantize: 'global', repeat_variable: 'condition', repeat_levels: [], repeat_repeats: 3,
+      repeat_stop: 'done', envelope_mode: 'automation', envelope_linked: true, source, effort: [], autonomy: [], set: source ? ['source'] : []} : null,
+    previous_task: null, standing: 'The person\'s settings for this session and its bound task.'}
+}
+const BRIDGE = {kind: 'bridge', url: 'http://kernel.test'}
+const seam = settings => ({transport: BRIDGE, project: 'O-I', settings, refused: null})
+
+test('Factory: a task\'s source is the constellation its settings on AIKit name (task.source), named from the wiki; a task made of none says None', () => {
+  // REPLACED (O-I #768, part two): the key stood absent naming a missing `task_source` op on AIKit (agent/clipBinding.ts TASK_SOURCE); AIKit's
+  // task settings keep the source now (ai-kit a3f43f84, e78b5986), so the binding reads it (agent/clipBinding.ts taskSourceOf).
   resetViewHolds()
-  const task = factory.factoryClipBinding({ref: `${trackKey(track)}#task/1`, tracks: [track], events: []})
-  assert.equal(MADE_OF.name in task.values, false)
-  assert.match(task.standing[MADE_OF.show].disabled, /missing op: .*task_source.*AIKit/)
-  for (const wiring of [factory.factoryWiring({sessionRef: 'ses-214', n: 1}), live.LIVE_WIRING]) {
-    assert.ok(wiring.absent[MADE_OF.name], 'the source is absent, with why')
-    assert.match(wiring.refused[MADE_OF.show], /missing op/)
-  }
+  const ref = `${trackKey(track)}#task/1`
+  const made = factory.factoryClipBinding({ref, tracks: [track], events: [], settings: seam(settingsOf(LIVED)), constellations: ROWS})
+  assert.equal(made.values[MADE_OF.ref], LIVED)
+  assert.equal(made.values[MADE_OF.name], 'The lived-in world')
+  assert.equal(made.standing[MADE_OF.show], undefined, 'Show in Browser stands lit')
+  const none = factory.factoryClipBinding({ref, tracks: [track], events: [], settings: seam(settingsOf(null)), constellations: ROWS})
+  assert.equal(none.values[MADE_OF.name], 'None')
+  assert.match(none.standing[MADE_OF.show].disabled, /made of no constellation/)
+  const unread = factory.factoryClipBinding({ref, tracks: [track], events: [], settings: null, constellations: ROWS})
+  assert.equal(MADE_OF.name in unread.values, false, 'unread settings name no source, never None')
+  assert.match(unread.standing[MADE_OF.show].disabled, /not read here/)
+  const older = settingsOf(null); delete older.task.source
+  const unkept = factory.factoryClipBinding({ref, tracks: [track], events: [], settings: seam(older), constellations: ROWS})
+  assert.equal(MADE_OF.name in unkept.values, false, 'an AIKit that keeps no source is unread, never None')
+  assert.equal(unkept.standing[MADE_OF.show].disabled, factory.SOURCE_UNKEPT)
+  const wiring = factory.factoryWiring({sessionRef: 'ses-214', n: 1}, seam(settingsOf(LIVED)))
+  assert.match(wiring.reads[MADE_OF.ref], /AIKit/)
+  assert.equal(JSON.stringify(wiring).includes('task_source'), false, 'no missing op stands on Factory\'s source')
+})
+
+test('Live: no owner keeps a Live clip\'s source yet — the key stands absent and Show in Browser names the missing operation', () => {
+  assert.ok(live.LIVE_WIRING.absent[MADE_OF.name], 'the source is absent, with why')
+  assert.match(live.LIVE_WIRING.refused[MADE_OF.show], /missing op/)
   assert.match(live.LIVE_WIRING.refused[MADE_OF.show], /live_clip_source.*live-set/)
 })
 
@@ -306,10 +336,157 @@ test('a mode whose owner cannot make its clip of a constellation yet takes the d
     assert.equal(answer.error, CLIP_MAKERS_REFUSED[mode])
     assert.match(answer.error, /missing op/, `${mode}: the refusal names the missing operation`)
   }
-  assert.deepEqual(Object.keys(MODE_CLIP_MAKERS).sort(), ['expressions', 'factory', 'live', 'techne'], 'Central brings its own maker on its set')
+  // REPLACED (O-I #768, part two): Factory and Expressions refused the drop naming AIKit's task_create and the knowledge_whole resolver; their
+  // sets bring their own makers now (agent/clipBinding.ts taskMaker on useFactoryTracks.ts; components/expressions/clip/clipBinding.ts
+  // sceneMaker on modeTracks.ts expressionsTracks), as Central's does.
+  assert.deepEqual(Object.keys(MODE_CLIP_MAKERS).sort(), ['live', 'techne'], 'Central, Factory and Expressions bring their own makers on their sets')
   const own = {op: 'own', accepts: owners.CONSTELLATION_DRAG, run: noop}
   const set = {columns: [], tracks: [], clips: [], actions: {makeClip: own}}
   assert.equal(withClipMaker(set, MODE_CLIP_MAKERS.live), set, 'a set that brings its own maker keeps it')
+})
+
+/** AIKit's session settings behind the bridge's fetch (FIXTURE): one session's reading, written against its revision (the owner's CAS) and
+ * read back; a write answers the owner's refusal when the revision moved. */
+function settingsKernel(reading) {
+  const sent = []
+  let held = reading
+  const answer = data => ({json: async () => ({ok: true, outcome: {result: 'encounter_session_settings_reading', data}})})
+  const fetch = async (_url, init) => {
+    const body = JSON.parse(init.body)
+    sent.push(body)
+    if (body.op !== 'encounter_session_settings') return {json: async () => ({ok: false, error: `the fixture kernel answers no ${body.op}`})}
+    if (!body.request) return answer(held)
+    if (body.expected_revision !== held.revision) return {json: async () => ({ok: false, error: 'Session settings revision conflict; read the current settings and write again'})}
+    const source = body.request.task.set.source
+    held = settingsOf(source, {revision: 'session-settings/02'})
+    return answer(held)
+  }
+  return {sent, fetch}
+}
+
+test('Factory: a constellation dropped on a session\'s track makes the session\'s task of it — AIKit keeps it as the task\'s source and reads it back', async () => {
+  const aikit = settingsKernel(settingsOf(null))
+  const session = {sessionRef: 'ses-214', label: 'Fizz'}
+  const receipt = await withKernel(aikit, () => factory.makeTaskOf(BRIDGE, session, {ref: LIVED, title: 'The lived-in world'}))
+  assert.equal(receipt.ok, true, receipt.error)
+  assert.match(receipt.note, /The lived-in world/)
+  const writes = aikit.sent.filter(body => body.request)
+  assert.deepEqual(writes.map(body => [body.request, body.expected_revision]), [[{task: {task_ref: 'task:fixtures', set: {source: LIVED}}}, 'session-settings/01']],
+    'one write: the bound task\'s source, against the revision read')
+  assert.ok(aikit.sent.indexOf(writes[0]) < aikit.sent.length - 1 && !aikit.sent.at(-1).request, 'the source is read back from AIKit after the write')
+  const idle = settingsKernel(settingsOf(null, {task: false}))
+  const untasked = await withKernel(idle, () => factory.makeTaskOf(BRIDGE, session, {ref: LIVED, title: 'The lived-in world'}))
+  assert.equal(untasked.ok, false)
+  assert.match(untasked.error, /Fizz holds no task/)
+  assert.equal(idle.sent.some(body => body.request), false, 'a session with no task is written nothing')
+  // The maker the Factory set carries: a session's track takes the drop; anything else, or a ref the wiki does not hold, is refused in words.
+  const maker = factory.taskMaker(BRIDGE, [track], ref => owners.constellationNamed(ROWS, ref))
+  assert.equal(maker.accepts, owners.CONSTELLATION_DRAG)
+  assert.match((await maker.run('elsewhere', LIVED)).error, /session's track/)
+  assert.match((await maker.run(trackKey(track), 'wiki:anchor:gone')).error, /no constellation the wiki/)
+  const dropped = await withKernel(settingsKernel(settingsOf(null)), () => maker.run(trackKey(track), LIVED))
+  assert.equal(dropped.ok, true, dropped.error)
+  // The Factory set the pane draws carries it (useFactoryTracks.ts factoryTrackSet): its tracks take the drop.
+  const {factoryTrackSet} = await import('../src/frame/tracks/useFactoryTracks.ts')
+  const drawn = factoryTrackSet({columns: [], tracks: [{id: trackKey(track), name: 'Fizz'}], clips: []}, null, null, BRIDGE, [track])
+  assert.equal(drawn.actions.makeClip.accepts, owners.CONSTELLATION_DRAG)
+  assert.match(drawn.actions.makeClip.op, /AIKit encounter-session-settings/)
+})
+
+/** The open Expression's owner behind the composition's actions (FIXTURE, the request door createNativeContentActions answers through):
+ * an added scene stands presented, its body set on the basis the add answered, and the owner's read discloses that body. */
+function expressionOwner({refuseBody = null, stay = false} = {}) {
+  const requests = []
+  const EXPR = 'expression:open'
+  // Each scene as the owner's inventory lists it (expressions-boundary scenes.ts): its title, its pacing and whether it holds material.
+  const row = (scene_ref, title) => ({scene_ref, title, native_title: title, snapshot: {duration: 8}, working: {duration: 8}, material: {available: true}})
+  let scenes = [row(`${EXPR}:scene:main`, 'Main')], presented = scenes[0], revision = 4, body = null
+  const reading = () => ({basis: {expression_ref: EXPR, revision, scene_ref: presented.scene_ref, authored_revision: 0},
+    nativeScene: {scene_ref: presented.scene_ref, body: presented.body ?? null, triggers: []},
+    nativeSelection: {scene_ref: presented.scene_ref}, scenes: {basis: {expression_ref: EXPR, revision}, scenes, loop: false, timing: {saved: {available: true}}},
+    playback: {scene_ref: presented.scene_ref, intent_epoch: revision}, scene: {id: presented.scene_ref, name: presented.title, entities: [], morph: {dwell: 0.5}},
+    entityOccurrences: {}, selection: {entity_ids: [], step_id: null}, history: {}, standing: {busy: false, pending: false, notice: null}})
+  const request = async sent => {
+    requests.push(sent)
+    if (sent.operation === 'read') return {ok: true, reading: reading()}
+    if (sent.operation === 'scene-edit' && sent.intent.operation === 'add') {
+      const added = row(`${EXPR}:scene:${scenes.length + 1}`, sent.intent.title)
+      scenes = [...scenes, added]; if (!stay) presented = added; revision++
+      return {ok: true, reading: reading()}
+    }
+    if (sent.operation === 'scene-edit' && sent.intent.operation === 'remove') {
+      scenes = scenes.filter(row => row.scene_ref !== sent.intent.scene_ref); presented = scenes[0]; revision++
+      return {ok: true, reading: reading()}
+    }
+    if (sent.operation === 'scene-material') {
+      if (refuseBody) return {ok: false, error: refuseBody}
+      if (sent.basis.scene_ref !== presented.scene_ref || sent.basis.revision !== revision) return {ok: false, error: 'The captured native Expression revision changed; nothing was written'}
+      body = {carrier: sent.intent.body.carrier, subject_ref: sent.intent.body.subject_ref, native_owner: 'wiki', presentation: 'preview'}
+      presented.body = body; revision++
+      return {ok: true, reading: reading()}
+    }
+    return {ok: false, error: `the fixture owner answers no ${sent.operation}`}
+  }
+  return {requests, request, reading, scenes: () => scenes}
+}
+
+test('Expressions: a constellation dropped on a track adds a scene whose body is the constellation, through the Expression owner\'s scene write, read back', async () => {
+  const {createNativeContentActions, readNativeExpressionsContent} = await import('../src/shell/nativeContent.ts')
+  const owner = expressionOwner()
+  const actions = createNativeContentActions(readNativeExpressionsContent(owner.reading()), {request: owner.request})
+  const receipt = await expressions.makeSceneOf(actions, {ref: LIVED, title: 'The lived-in world'})
+  assert.equal(receipt.ok, true, receipt.error)
+  assert.match(receipt.note, /The lived-in world/)
+  assert.deepEqual(owner.requests.map(row => row.operation === 'scene-edit' ? `scene-edit ${row.intent.operation}` : row.operation),
+    ['scene-edit add', 'scene-material', 'read'], 'the owner\'s scene write, then the body on the scene it added, then its read')
+  assert.equal(owner.requests[0].intent.title, 'The lived-in world', 'the scene takes the constellation\'s name')
+  const material = owner.requests[1]
+  assert.deepEqual(material.intent, {family: 'body', body: {operation: 'set', carrier: 'knowledge_whole', subject_ref: LIVED}})
+  assert.equal(material.basis.scene_ref, 'expression:open:scene:2', 'the body is set on the scene the add made, at the revision it answered')
+  assert.equal(expressions.sceneSourceOf(owner.reading().nativeScene).ref, LIVED, 'the scene\'s source reads back from the Expression\'s owner')
+  // A body the owner refuses leaves nothing half-made: the scene the drop added is removed, and the receipt says why.
+  const refusing = expressionOwner({refuseBody: 'The wiki reading of wiki:anchor:lived-in is not loaded'})
+  const failed = await expressions.makeSceneOf(createNativeContentActions(readNativeExpressionsContent(refusing.reading()), {request: refusing.request}),
+    {ref: LIVED, title: 'The lived-in world'})
+  assert.equal(failed.ok, false)
+  assert.match(failed.error, /not loaded[\s\S]*removed/)
+  assert.deepEqual(refusing.scenes().map(row => row.scene_ref), ['expression:open:scene:main'])
+  // An owner that keeps the old scene presented after the add gets no body set on that scene.
+  const staying = expressionOwner({stay: true})
+  const kept = await expressions.makeSceneOf(createNativeContentActions(readNativeExpressionsContent(staying.reading()), {request: staying.request}),
+    {ref: LIVED, title: 'The lived-in world'})
+  assert.match(kept.error, /presents the scene it had/)
+  assert.equal(staying.requests.some(row => row.operation === 'scene-material'), false, 'the scene the gesture began from is never given the body')
+  // The maker the Expressions set carries: an open composition takes the drop; with none open, or a ref the wiki does not hold, it refuses.
+  const source = {owner: 'expressions', content: null, actions, isPresented: () => true}
+  const maker = expressions.sceneMaker(source, ref => owners.constellationNamed(ROWS, ref))
+  assert.equal(maker.accepts, owners.CONSTELLATION_DRAG)
+  assert.match((await maker.run('expression:open', 'wiki:anchor:gone')).error, /no constellation the wiki/)
+  assert.match((await expressions.sceneMaker(undefined).run('expression:open', LIVED)).error, /No Expression is open/)
+  // The Expressions set the pane draws carries it (modeTracks.ts expressionsTracks): the open Expression's tracks take the drop.
+  const {expressionsTracks} = await import('../src/frame/tracks/modeTracks.ts')
+  const content = readNativeExpressionsContent(expressionOwner().reading())
+  const drawn = expressionsTracks({set: null, document: null, native: content, session: {...source, content}})
+  assert.equal(drawn.actions.makeClip.accepts, owners.CONSTELLATION_DRAG)
+  assert.match(drawn.actions.makeClip.op, /scene write/)
+})
+
+test('the frame\'s knowledge whole is the wiki\'s own reading of the constellation\'s whole, from the one projection, or a refusal in words', async () => {
+  const {knowledgeWholeOf, answerKnowledgeWhole} = await import('../src/native/wikiSubjectStanding.ts')
+  const whole = knowledgeWholeOf(STATE, LIVED)
+  assert.equal(whole.requested_ref, LIVED)
+  assert.equal(whole.ref, LIVED)
+  assert.equal(whole.native_owner, 'wiki')
+  assert.equal(whole.title, 'The lived-in world')
+  assert.equal(whole.register, 'O-I')
+  assert.deepEqual(whole.reading, {ref: LIVED, revision: 'r1', availability: 'available'})
+  assert.ok(whole.provenance.some(row => row.ref === 'wiki:wiki.json' && row.revision === 'r1'), 'its provenance names the wiki it was read from')
+  assert.equal(knowledgeWholeOf(STATE, OI_ROOT).title, 'O-I', 'a space is a constellation too')
+  assert.equal(knowledgeWholeOf(STATE, 'wiki:anchor:gone'), null)
+  const loaded = {loadRegisters: async () => {}, wholeOf: ref => knowledgeWholeOf(STATE, ref), unreadRegisters: () => []}
+  assert.deepEqual(await answerKnowledgeWhole({ref: LIVED}, loaded), whole)
+  await assert.rejects(answerKnowledgeWhole({ref: 'wiki:anchor:gone'}, loaded), /no constellation the wiki/)
+  await assert.rejects(answerKnowledgeWhole({ref: LIVED}, {...loaded, loadRegisters: async () => { throw new Error('no World') }}), /not loaded[\s\S]*no World/)
 })
 
 test('the clip\'s menu carries Show in Browser (manual §10.9): it runs through the clip\'s Clip view, and a clip made of none says why it is dark', async () => {
