@@ -1,10 +1,10 @@
 //! The page owner op (T-WORLDS §4, W2; manual §18.1 "The clip"): a Being, a Thing or a Flow is a page, kept as one HTML file
 //! whose fields live in its `ql-doc` island (desktop/cradle/src/document/identity.ts QL_DOC; personal/page.mjs, flow/instance.ts).
 //! The kernel reads a page and lists a world's pages through Central's file owner (files.rs), and writes one field of a page on the
-//! revision it was read at: the island is read, the field set by its own rule, the page's counter moved by one, and the file
-//! written back with that revision — through the source owner's CAS for a page in a project's human ground, else through
-//! `central.files.write` — refused, overwriting nothing, when the file moved since. Every write answers with a receipt: the
-//! field, the revision it stood on and the one it now stands on.
+//! revision it was read at: the island is read, the field set by its own rule, the page's counter moved by one, only what changed
+//! written into the island as it stands (island.rs), and the file written back with that revision — through the source owner's
+//! CAS for a page in a project's human ground, else through `central.files.write` — refused, overwriting nothing, when the file
+//! moved since. Every write answers with a receipt: the field, the revision it stood on and the one it now stands on.
 //!
 //! The fields (manual §18.1 "The Clip panel", the Being/Thing ties and the Flow's World; the tools' notes and highlights):
 //! title, colour, world, subject, kind (a Being: person or agent), office (C1–C4), sources, place, anchor, expression, layout,
@@ -18,6 +18,8 @@ use crate::files::{self, Location};
 use crate::flow::CentralClient;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Map, Value};
+
+mod island;
 
 const ISLAND_OPEN: &str = r#"<script type="application/json" id="ql-doc">"#;
 const ISLAND_CLOSE: &str = "</script>";
@@ -90,22 +92,18 @@ pub fn island_span(html: &str) -> Option<(usize, usize)> {
 pub fn read_island(html: &str) -> Result<Value, String> {
     let (start, end) =
         island_span(html).ok_or("This file is no page: it carries no ql-doc island")?;
-    let text = html[start..end]
-        .replace(r"<\/script", "</script")
-        .replace(r"<\!--", "<!--");
-    serde_json::from_str(&text)
+    serde_json::from_str(&island::unescape(&html[start..end]))
         .map_err(|error| format!("The page's island does not read as JSON: {error}"))
 }
 
-/// The page with its island replaced, serialised as the page's own serialiser does (flow/instance.ts `embedDocument`: `</script` and
-/// `<!--` escaped, so the island can never close itself or open a comment).
+/// The page with `island` written into its island as the page's own save writes it (flow/instance.ts `embedDocument`, plural.ts
+/// `spliceIsland`, #785): only what `island` changed from what the island reads as is written, and every other byte (key order,
+/// spacing, number spellings, escapes, integers no 64-bit number holds) stays as written (island.rs, #793). What it writes has
+/// `</script` and `<!--` escaped, so the island can never close itself or open a comment.
 pub fn embed_island(html: &str, island: &Value) -> Result<String, String> {
     let (start, end) =
         island_span(html).ok_or("This file is no page: it carries no ql-doc island")?;
-    let text = serde_json::to_string(island)
-        .map_err(|error| error.to_string())?
-        .replace("</script", r"<\/script")
-        .replace("<!--", r"<\u0021--");
+    let text = island::splice(&html[start..end], island)?;
     Ok(format!("{}{}{}", &html[..start], text, &html[end..]))
 }
 
@@ -1000,6 +998,89 @@ mod tests {
             .contains("no ql-doc island"));
     }
 
+    /// A hand-written island (plural-flow.test.mjs, the spliceIsland cases of #785): spacing, number spellings, an escape, a
+    /// duplicate key, an integer-like key and integers no 64-bit number holds.
+    const WRITTEN: &str = concat!(
+        r#"{ "meta": {"revision": 1.0, "2": "integer-like", "big": 18446744073709551617, "view": "dialogue", "view": "flow"},"#,
+        "\n",
+        r#"  "entries": [ {"id": "a", "html": "<p>one<\/p>", "n": 1e2}, {"id": "b", "html": "x"} ,{"id": "c", "html": "y", "t": 9007199254740993} ],"#,
+        "\n",
+        r#"  "notes": [ 1, 2.50, 3 ], "x-kept": {"z": 1, "a": [true, null]} }"#
+    );
+
+    fn page_of(island: &str) -> String {
+        format!("<!doctype html><title>t</title>{ISLAND_OPEN}{island}{ISLAND_CLOSE}<p>body</p>")
+    }
+
+    #[test]
+    fn a_write_that_changes_nothing_writes_the_island_back_byte_for_byte() {
+        let html = page_of(WRITTEN);
+        assert_eq!(
+            embed_island(&html, &read_island(&html).unwrap()).unwrap(),
+            html
+        );
+    }
+
+    #[test]
+    fn a_write_replaces_only_the_values_it_changed_where_they_stand() {
+        let html = page_of(WRITTEN);
+        let mut island = read_island(&html).unwrap();
+        island["meta"]["revision"] = json!(2);
+        island["meta"]["view"] = json!("journal");
+        island["entries"][1]["html"] = json!("</script></SCRIPT><!--");
+        island["notes"][1] = json!(4);
+        let written = embed_island(&html, &island).unwrap();
+        assert_eq!(
+            written,
+            page_of(
+                &WRITTEN
+                    .replace(r#""revision": 1.0"#, r#""revision": 2"#)
+                    .replace(r#""view": "flow""#, r#""view": "journal""#)
+                    .replace(
+                        r#""html": "x""#,
+                        r#""html": "<\/script><\/SCRIPT><\u0021--""#
+                    )
+                    .replace("2.50", "4")
+            )
+        );
+        let (start, end) = island_span(&written).unwrap();
+        let text = written[start..end].to_ascii_lowercase();
+        assert!(
+            !text.contains("</script") && !text.contains("<!--"),
+            "the island can neither close itself nor open a comment: {text}"
+        );
+        assert_eq!(
+            read_island(&written).unwrap(),
+            island,
+            "an island-closing tag in any case is escaped and reads back as written"
+        );
+    }
+
+    #[test]
+    fn a_write_removes_what_it_removed_and_adds_what_it_added_keeping_the_bytes_of_what_stayed() {
+        let html = page_of(WRITTEN);
+        let mut island = read_island(&html).unwrap();
+        island["meta"].as_object_mut().unwrap().remove("big");
+        island["meta"]["current"] = json!("c");
+        island.as_object_mut().unwrap().remove("x-kept");
+        let entries = island["entries"].as_array_mut().unwrap();
+        entries.remove(1);
+        entries[0]["html"] = json!("<p>won</p>");
+        entries.insert(0, json!({"id": "o", "html": "w"}));
+        entries.push(json!({"id": "d", "html": "z"}));
+        // What the write adds is the kernel's own, written as its serialiser writes it; what stayed keeps its bytes.
+        assert_eq!(
+            embed_island(&html, &island).unwrap(),
+            page_of(concat!(
+                r#"{ "meta": {"revision": 1.0, "2": "integer-like", "view": "dialogue", "view": "flow","current":"c"},"#,
+                "\n",
+                r#"  "entries": [ {"html":"w","id":"o"},{"id": "a", "html": "<p>won</p>", "n": 1e2} ,{"id": "c", "html": "y", "t": 9007199254740993},{"html":"z","id":"d"} ],"#,
+                "\n",
+                r#"  "notes": [ 1, 2.50, 3 ] }"#
+            ))
+        );
+    }
+
     #[test]
     fn the_form_is_read_from_the_island() {
         assert_eq!(form_of(&being()), "being");
@@ -1562,6 +1643,84 @@ else:
         assert!(
             log.contains("projectcentral.source.write") && !log.contains("central.files.write"),
             "{log}"
+        );
+    }
+
+    /// The shared case with keys out of order and integers past 2^53 and 2^64 (D10 of #558, #766; plural-flow.md, the notes of
+    /// 28 Oct): each field write through the kernel leaves every island byte it did not change exactly as written (#793).
+    #[cfg(unix)]
+    #[test]
+    fn a_flow_field_write_keeps_every_island_byte_it_does_not_change() {
+        let cases: Value = serde_json::from_str(include_str!(
+            "../../documents/fixtures/plural-flow-cases.json"
+        ))
+        .unwrap();
+        let case = cases["cases"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|case| case["name"] == "an-append-keeps-every-island-byte-it-does-not-own")
+            .unwrap();
+        let island = case["island"].as_str().unwrap();
+        let stub = Stub::new("island-bytes");
+        let path = "Control/user/flows/flow-island.html";
+        let at = stub.put(path, &page_of(island));
+        let held = || std::fs::read_to_string(stub.home.join(path.replace('/', "_"))).unwrap();
+        let mut kernel = crate::Kernel::new(stub.client.clone());
+        let mut revision = read(&stub.client, &at).unwrap()["revision"]
+            .as_str()
+            .unwrap()
+            .to_string();
+        let mut write = |field: &str, value: Value| -> Value {
+            let done = kernel
+                .apply(crate::KernelOp::Page {
+                    request: Request::MutateField {
+                        location: at.clone(),
+                        expected_revision: revision.clone(),
+                        field: field.into(),
+                        value,
+                    },
+                })
+                .unwrap();
+            let crate::KernelOpResult::PageReading { data } = done.result else {
+                panic!("a page mutation")
+            };
+            assert_eq!(data["outcome"], "written");
+            revision = data["revision"].as_str().unwrap().to_string();
+            data["value"].clone()
+        };
+
+        // A title is replaced where it stands, and the page's counter with it.
+        write("title", json!("Kept bytes"));
+        let titled = island
+            .replace(r#""title":"Exact bytes""#, r#""title":"Kept bytes""#)
+            .replace(r#""revision":3"#, r#""revision":4"#);
+        assert_ne!(titled, island);
+        assert_eq!(held(), page_of(&titled));
+
+        // A member the record lacks goes after its last member.
+        write("container", json!("circle"));
+        let contained = titled
+            .replace(
+                r#""role":"contributor"}]},"entries""#,
+                r#""role":"contributor"}],"container":"circle"},"entries""#,
+            )
+            .replace(r#""revision":4"#, r#""revision":5"#);
+        assert_eq!(held(), page_of(&contained));
+
+        // A note joins the notes as the kernel writes it; taken away, the list is as it was.
+        let note = write("note.add", json!({"entry": "e-q", "text": "kept"}));
+        let noted = contained
+            .replace(
+                r#""notes":[]"#,
+                &format!(r#""notes":[{}]"#, serde_json::to_string(&note).unwrap()),
+            )
+            .replace(r#""revision":5"#, r#""revision":6"#);
+        assert_eq!(held(), page_of(&noted));
+        write("note.remove", json!({"id": note["id"]}));
+        assert_eq!(
+            held(),
+            page_of(&contained.replace(r#""revision":5"#, r#""revision":7"#))
         );
     }
 
