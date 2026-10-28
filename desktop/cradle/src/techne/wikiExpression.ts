@@ -235,7 +235,10 @@ const GOLDEN_ANGLE = 137.50776405;
 // ---------------------------------------------------------------------------
 // The projection (pure): reading → oi.expression/v1 document
 
-export interface ProjectedMember { entityRef: string; subjectRef: string; title: string; position: number | null }
+/** `face`: the QL face the wiki declares for the member's position (O-I #768) — a frame member's `conjugate` flag, else the node's own
+ * `ql.face` facet, in the kernel's code (`direct`, `prime`; QL ql-core face.rs kernel_code, whose `conjugate` is `prime`). Null where the
+ * wiki declares none. */
+export interface ProjectedMember { entityRef: string; subjectRef: string; title: string; position: number | null; face: "direct" | "prime" | null }
 export interface ProjectedConstellation {
   index: number;
   kind: "space" | "frame";
@@ -339,6 +342,18 @@ function declaredPosition(kind: "space" | "frame", memberRef: string, constellat
   const node = nodes.nodes.find(candidate => candidate.ref === memberRef);
   const position = node?.ql?.position;
   return typeof position === "number" ? position : null;
+}
+
+/** The QL face the wiki declares for a member's position (O-I #768), from where that position came (declaredPosition): a frame
+ * constellation member's own position with its `conjugate` flag (true: the prime face; false: the direct; absent: none declared), else the
+ * node's own `ql.position` with its `ql.face` facet (`direct`; `prime` or `conjugate` for the prime). Null = none declared. */
+function declaredFace(kind: "space" | "frame", memberRef: string, constellation: WikiConstellation | undefined, nodes: WikiReading & { state: "ready" }): "direct" | "prime" | null {
+  if (kind === "frame" && constellation) {
+    const member = (constellation.members ?? []).find(candidate => candidate.ref === memberRef);
+    if (member && typeof member.position === "number") return typeof member.conjugate === "boolean" ? (member.conjugate ? "prime" : "direct") : null;
+  }
+  const face = nodes.nodes.find(candidate => candidate.ref === memberRef)?.ql?.face;
+  return face === "direct" ? "direct" : face === "prime" || face === "conjugate" ? "prime" : null;
 }
 
 const SCENE_ENTITY_BUDGET = 2048; // semantic composition, distinct from the renderer window
@@ -460,7 +475,7 @@ export function projectWikiExpression(input: WikiRegisterReading & { state: "rea
       };
       entitySubjects.set(entityRef, memberRef);
       sceneEntityRefs.push(entityRef);
-      return {entityRef, subjectRef: memberRef, title, position: declared};
+      return {entityRef, subjectRef: memberRef, title, position: declared, face: declaredFace(disclosure.kind, memberRef, disclosure.constellation, wiki)};
     });
 
     scenes.push({scene_ref: sceneRef, revision: 1, title: disclosure.title, entity_refs: sceneEntityRefs, body: null, triggers: []});

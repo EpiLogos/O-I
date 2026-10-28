@@ -609,6 +609,8 @@ export type KernelOp =
   | {op:"live_clip_read";path:string;track:number;clip:LiveClipAt}
   // Change a clip's settings (the design's words) and/or a MIDI clip's notes against the set's revision; refusals name Live's values.
   | {op:"live_clip_write";path:string;expected_revision:string;track:number;clip:LiveClipAt;set?:Record<string,unknown>;notes?:LiveNote[];envelopes?:{device:string;parameter:string;points:[number,number][]}[]}
+  // Make a MIDI clip in an empty session slot of a MIDI part against the set's revision (O-I #768: Live's clip of a constellation); its source kept beside the set.
+  | {op:"live_clip_create";path:string;expected_revision:string;track:number;scene?:number;length:number;set?:Record<string,unknown>;notes:LiveNote[];source?:string}
   // Change one control of a track's mixer row (activator, solo, arm, monitor, or a send by its index, 0 = Send A) against the set's revision.
   | {op:"live_track_mixer_write";path:string;expected_revision:string;track:number;control:"activator"|"solo"|"arm"|"monitor"|"send";value:boolean|"in"|"auto"|"off"|number;index?:number}
   // Comp: copy a stretch (beats) of a track's take lane into its main lane against the set's revision; the copy carries its take's TakeId.
@@ -1173,6 +1175,8 @@ export interface LiveClipReading {
   follow: boolean | null; followA: string | null; followB: string | null; chance: number | null; linked: boolean | null; multiplier: number | null
   launch: string | null; legato: boolean | null; quantize: string | null; launchVelocity: number | null
   envelopes: LiveEnvelope[]; notes?: (LiveNote & {id: number; vel: number; chance: number; on: boolean})[]
+  /** The constellation the clip was made of, as the DLW's record beside the set keeps it (null: none); `sourceRefused`: why it could not be read. */
+  source?: string | null; sourceRefused?: string
 }
 /** An envelope: what it moves (the device and parameter its target sits under) and its points [[beat, value]…]. */
 export interface LiveEnvelope {target: string; device: string; parameter: string; points: [number, number][]}

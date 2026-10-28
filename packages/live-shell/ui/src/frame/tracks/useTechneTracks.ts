@@ -9,6 +9,10 @@
 // read stands as a named, empty track (timeline/techneTrackAdapter.ts). Registered as `techne: worldCut(useTechneTracks)` in
 // modeTracks.ts.
 //
+// A constellation dropped on its tracks makes an event of it (O-I #768): a Scene of the World's walk Expression whose body is the
+// constellation (techne/clipBinding.ts techneEventMaker, through walkSession.ts make); the events made so lie on a reading of their own
+// (techneTrackAdapter.ts MADE_EVENTS_TRACK_ID), read from the same store as the walks.
+//
 // The World's recorded walks (O-I #760) are read from the walk's own store (projections/atlas/walks/walkSession.ts, which the atlas host
 // binds and reads through the walk's owner): its takes and kept views as walks (walkRecord.ts recordedWalksOf) with the stops kept at an
 // instant (recordedInstantsOf), and its one write arm while the World is open. A stop of one is stood by the World (the session's play: a
@@ -26,7 +30,7 @@ import {useMemo, useRef, useSyncExternalStore} from 'react'
 import {subscribeSuiteStanding, suiteStanding} from '../../projections/atlas/provider/suiteStanding'
 import {walkStopFocus, type JourneyPresentation, type WalkStopFocus} from '../../timeline/journeyWalks'
 import type {TemporalEventRow} from '../../timeline/timeSpine'
-import {projectTechneTracks, worldReadingOf, type TechneControls} from '../../timeline/techneTrackAdapter'
+import {projectTechneTracks, worldReadingOf, type TechneControls, type TechneReading} from '../../timeline/techneTrackAdapter'
 import type {WorldTrackSet} from '../../timeline/worldTrackAdapter'
 import type {WorldTimelineView} from '../../projections/useWorldTemporalReading'
 import type {TracksReading} from './modeTracks'
@@ -34,6 +38,8 @@ import {setReadingShown, setReadingSolo, useReadingShown} from '../../timeline/r
 import {isRecordedWalk} from '../../timeline/techneTrackAdapter'
 import {walkSession, type WalkSession} from '../../projections/atlas/walks/walkSession'
 import {recordedInstantsOf, recordedWalksOf} from '../../projections/atlas/walks/walkRecord'
+import {techneEventMaker} from '../../techne/clipBinding'
+import {withClipMaker} from './clipMakers'
 
 /** The published reading, with the Expression door the frame hands it. */
 export type TechneTracksReading = TracksReading & {journey?: JourneyPresentation}
@@ -74,6 +80,7 @@ export function useTechneTracks(reading: TracksReading): WorldTrackSet {
   const walk = useSyncExternalStore(walkSession.subscribe, walkSession.get, walkSession.get)
   const recorded = useMemo(() => ({
     walks: walk.reading.phase === 'read' ? recordedWalksOf(walk.reading.walk) : [],
+    events: walk.reading.phase === 'read' ? walk.reading.walk.events : [],
     ...(walk.reading.phase === 'read' ? {instants: recordedInstantsOf(walk.reading.walk)} : {}),
     armed: walk.armed,
     ...(walk.bound ? {arm: (on: boolean) => {
@@ -82,5 +89,13 @@ export function useTechneTracks(reading: TracksReading): WorldTrackSet {
       return after.armed === on ? {ok: true as const, note: after.line ?? ''} : {ok: false as const, error: after.line ?? 'The World did not take the arm.'}
     }} : {}),
   }), [walk.reading, walk.armed, walk.bound])
-  return useMemo(() => projectTechneTracks({world, earth, controls, shown, recorded}), [world, earth, controls, shown, recorded])
+  return useMemo(() => techneTracksOf({world, earth, controls, shown, recorded}), [world, earth, controls, shown, recorded])
+}
+
+const TECHNE_EVENT_MAKER = techneEventMaker()
+
+/** Technē's set: its streams, and a constellation dropped on its tracks makes an event of it in the World's walk Expression
+ * (techne/clipBinding.ts techneEventMaker). Pure. */
+export function techneTracksOf(reading: TechneReading, maker: NonNullable<NonNullable<WorldTrackSet['actions']>['makeClip']> = TECHNE_EVENT_MAKER): WorldTrackSet {
+  return withClipMaker(projectTechneTracks(reading), maker)
 }

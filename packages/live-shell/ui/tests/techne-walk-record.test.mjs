@@ -79,6 +79,13 @@ function kernel(disk = new Map()) {
       if (material.name !== scene.title) throw Error('Scene name and native title disagree; rename through the native Scene operation')
       for (const tour of Object.values(material.research?.placeTours ?? {})) if (placeTourProblem(tour)) throw Error('Invalid place tour')
       scene.presentation = copy(change.presentation)
+    } else if (change.change === 'scene_body_set') {
+      // O-I #768: the owner keeps a scene's body as it is given, refusing one that names no owner or revision (expression_carrier.rs validate_body).
+      const scene = doc.scenes.find(row => row.scene_ref === change.scene_ref)
+      if (!scene) throw Error('Unknown Scene')
+      const body = change.body
+      if (!body?.subject_ref || !body.native_owner || !body.reading?.ref || !body.reading?.revision) throw Error('Scene body requires owner and revision')
+      scene.body = copy(body)
     } else throw Error(`the fixture keeps no ${change.change}`)
   }
   return {
@@ -635,6 +642,69 @@ test('(f) the walk keeps the Palace\'s Tempo: stops are recorded at the pace, a 
   palace.resetPalaceSession()
 })
 
+// ── O-I #768: an event made of a constellation ─────────────────────────────
+
+const LIVED = 'wiki:anchor:lived-in'
+/** The wiki's reading of a constellation's whole, as the shell answers the frame (native/wikiSubjectStanding.ts knowledgeWholeOf). FIXTURE. */
+const WHOLE = {requested_ref: LIVED, ref: LIVED, native_owner: 'wiki', title: 'The lived-in world', register: 'O-I',
+  reading: {ref: LIVED, revision: 'wiki:frame:lived@2', availability: 'available'}, provenance: [{ref: 'wiki:frame:lived', revision: '2', availability: 'available'}]}
+
+test('an event made of a constellation is a Scene of the World\'s walk Expression whose body is the constellation; it lies on a reading and reads back after a relaunch', async () => {
+  const {bodyFromKnowledgeWhole} = await import('../../../../desktop/cradle/expressions-app/field-studies-journeys/src/nativeSceneBody.ts')
+  const body = bodyFromKnowledgeWhole(WHOLE, LIVED)
+  const closed = createWalkSession({later: clock().later})
+  const refused = await closed.make({ref: LIVED, title: 'The lived-in world'}, body)
+  const {EVENT_NOT_OPEN} = await import('../src/projections/atlas/walks/walkSession.ts')
+  assert.deepEqual(refused, {ok: false, error: EVENT_NOT_OPEN}, 'with the World closed the drop is refused in words, and nothing is written')
+
+  const owner = kernel(), here = world(), session = createWalkSession({later: clock().later})
+  session.bind(owner, here.port)
+  await session.read()
+  await recordTake(session, [BOLLINGEN])
+  const made = await session.make({ref: LIVED, title: 'The lived-in world'}, body)
+  assert.equal(made.ok, true, made.error)
+  assert.match(made.note, /The lived-in world/)
+  const edit = owner.calls.lastIndexOf('edit')
+  assert.ok(edit >= 0 && owner.calls.slice(edit).includes('save') && owner.calls.at(-1) === 'inspect', 'one edit, saved to its file, then read back')
+  const reading = session.get().reading
+  assert.equal(reading.phase, 'read')
+  assert.deepEqual(reading.walk.events, [{sceneRef: `${WALK}:scene:event-1`, title: 'The lived-in world', source: LIVED}])
+  assert.deepEqual(reading.walk.takes.map(take => take.name), ['Take 01'], 'the walk\'s takes stand as they were')
+  assert.deepEqual(reading.walk.views, [], 'an event is no kept view')
+  const scene = owner.documents.get(WALK).scenes.find(row => row.scene_ref === `${WALK}:scene:event-1`)
+  assert.equal(scene.body.carrier, 'knowledge_whole')
+  assert.equal(scene.body.subject_ref, LIVED, 'the owner keeps the constellation as the Scene\'s body')
+
+  // The ruler: a reading of its own, the event at a "no time" slot (it states no date).
+  const set = adapter.projectTechneTracks({world: {state: 'unavailable', reason: 'no civil read in this test'},
+    recorded: {walks: record.recordedWalksOf(reading.walk), events: reading.walk.events, armed: false}})
+  const track = set.tracks.find(row => row.id === adapter.MADE_EVENTS_TRACK_ID)
+  assert.ok(track, 'the events made of constellations lie on a track')
+  assert.match(track.kind, /^reading · 1 event made of constellations/)
+  const clip = set.clips.find(row => row.trackId === adapter.MADE_EVENTS_TRACK_ID)
+  assert.equal(clip.id, adapter.madeEventClipId(`${WALK}:scene:event-1`))
+  assert.equal(clip.label, 'The lived-in world')
+  assert.equal(adapter.madeEventOfClip(clip.id), `${WALK}:scene:event-1`)
+  assert.match(set.ruler.label(clip.at.start), /^no time/)
+  assert.equal(set.tracks.some(row => row.id === adapter.techneStreamTrackId('readings')), false, 'the Readings stream is no longer empty')
+
+  // A relaunch: a fresh owner over the same works home reads the event and its source from the file.
+  const fresh = createWalkSession({later: clock().later})
+  fresh.bind(kernel(owner.disk), world().port)
+  await fresh.read()
+  assert.deepEqual(fresh.get().reading.walk.events, [{sceneRef: `${WALK}:scene:event-1`, title: 'The lived-in world', source: LIVED}])
+
+  // A second event is a second Scene; a conflict leaves nothing half-made and says so.
+  const second = await session.make({ref: LIVED, title: 'The lived-in world'}, body)
+  assert.equal(second.ok, true, second.error)
+  assert.deepEqual(session.get().reading.walk.events.map(event => event.sceneRef), [`${WALK}:scene:event-1`, `${WALK}:scene:event-2`])
+  const broken = {...body, native_owner: ''}
+  const no = await session.make({ref: LIVED, title: 'The lived-in world'}, broken)
+  assert.equal(no.ok, false)
+  assert.match(no.error, /No event was made of The lived-in world: .*owner and revision/)
+  assert.equal(session.get().reading.walk.events.length, 2, 'a refused body adds no Scene')
+})
+
 // ── the real owner ─────────────────────────────────────────────────────────
 
 // SCRIPTED against the real kernel: the walk-bridge binary (OI_KERNEL_WALK_BRIDGE) over a scratch Central root (OI_CENTRAL_CTRL_BIN), with
@@ -679,6 +749,10 @@ test('the real owner keeps the take and the view, and a relaunched owner reads t
     here.state.filter = 'k=dream&e=1900..1961'
     await session.capture()
     assert.deepEqual(session.get().reading.walk.views.map(view => view.title), ['Bollingen'], session.get().line)
+    // O-I #768: an event made of a constellation, kept by the real owner as a Scene whose body is the knowledge whole.
+    const {bodyFromKnowledgeWhole} = await import('../../../../desktop/cradle/expressions-app/field-studies-journeys/src/nativeSceneBody.ts')
+    const made = await session.make({ref: LIVED, title: 'The lived-in world'}, bodyFromKnowledgeWhole(WHOLE, LIVED))
+    assert.equal(made.ok, true, made.error)
     await stop()
     await start()
     const fresh = createWalkSession({later: clock().later})
@@ -690,6 +764,7 @@ test('the real owner keeps the take and the view, and a relaunched owner reads t
     assert.deepEqual(reading.walk.takes[0].stops.map(stand), [[BOLLINGEN.ref, null, null], [KUSNACHT.ref, RUN, null], [DELPHI.ref, RUN, TOWER]], 'each stop\'s moment and thing, read back after the relaunch')
     assert.deepEqual(reading.walk.views[0].view.window, WINDOW)
     assert.equal(reading.walk.views[0].view.filter, 'k=dream&e=1900..1961', 'the view\'s filter in force, read back after the relaunch')
+    assert.deepEqual(reading.walk.events.map(event => [event.title, event.source]), [['The lived-in world', LIVED]], 'the event and its source, read back after the relaunch')
     const camera = record.cameraOf(reading.walk.views[0].view.viewport)
     for (const key of ['lat', 'lon', 'dist']) assert.ok(Math.abs(camera[key] - {lat: BOLLINGEN.lat, lon: BOLLINGEN.lon, dist: 2.25}[key]) < 1e-9, key)
   } finally {

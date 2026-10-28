@@ -873,6 +873,15 @@
       "reason": "Ported from the 8787 owner-service seam; no directly attributable executed native walk is recorded here for live_set_read; retain explicit operation-specific coverage debt until its owner supplies a receipt."
     },
     {
+      "op": "live_clip_create",
+      "native_owner": "kernel/src/live_set_owner.rs",
+      "spec_ref": "ProjectCentral/docs/1-vision/dlw/DLW.md \u00a710.3 (Make this mode's clip), \u00a721.1 the Clip panel's Constellation and \u00a721.2 What strikes the Torus; packages/live-set/src/edit.rs clip_create, packages/live-set/src/sources.rs",
+      "status": "unverified",
+      "scenarios": [],
+      "owner_lane": "A/native verification",
+      "reason": "Built 28 Oct (O-I #768) with live-set unit tests, a clip made on a copy of the real Live 12 template, and kernel tests; no executed native walk is recorded here for live_clip_create; retain explicit operation-specific coverage debt until a walk names it."
+    },
+    {
       "op": "live_take_comp",
       "native_owner": "kernel/src/live_set_owner.rs",
       "spec_ref": "ProjectCentral/docs/1-vision/dlw/DLW.md \u00a716.6 Arrangement view (take lanes) and \u00a721.1 Takes and Arrangement lanes; packages/live-set/src/edit.rs",

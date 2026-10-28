@@ -10,6 +10,7 @@ pub mod api;
 pub mod edit;
 pub mod model;
 pub mod rules;
+pub mod sources;
 pub mod xml;
 
 use flate2::read::GzDecoder;

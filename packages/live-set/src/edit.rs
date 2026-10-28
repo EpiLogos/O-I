@@ -1641,8 +1641,11 @@ fn edit(
 /// One clip, whole, with the set's revision.
 pub fn clip_json(path: &str, track: usize, at: ClipAt) -> Result<Value, String> {
     let (bytes, root) = open(path)?;
-    let clip = clip_at(track_at(&root, track)?, at)?;
-    Ok(json!({"clip": clip_reading(&root, clip), "revision": revision(&bytes)}))
+    let part = track_at(&root, track)?;
+    let clip = clip_at(part, at)?;
+    Ok(
+        json!({"clip": with_source(path, part, at, clip_reading(&root, clip)), "revision": revision(&bytes)}),
+    )
 }
 
 /// Change one clip's settings and, for a MIDI clip, its notes; answer the
@@ -1674,8 +1677,269 @@ pub fn clip_write(
         }
         Ok(())
     })?;
-    let clip = clip_at(track_at(&root, track)?, at)?;
-    Ok(json!({"clip": clip_reading(&root, clip), "revision": new_revision}))
+    let part = track_at(&root, track)?;
+    let clip = clip_at(part, at)?;
+    Ok(
+        json!({"clip": with_source(path, part, at, clip_reading(&root, clip)), "revision": new_revision}),
+    )
+}
+
+/// The source the DLW's record keeps for one clip (`sources.rs`), set on its
+/// reading as `source` (its constellation's ref, or null when it was made of
+/// none); a record that cannot be read leaves `source` null and says why in
+/// `sourceRefused`, so the clip still reads.
+fn with_source(path: &str, track: &Element, at: ClipAt, mut reading: Value) -> Value {
+    let found = track
+        .attr("Id")
+        .ok_or_else(|| {
+            "the track carries no Id in the document, so no source is kept for its clips"
+                .to_string()
+        })
+        .and_then(|id| crate::sources::source_of(std::path::Path::new(path), id, at));
+    if let Value::Object(fields) = &mut reading {
+        match found {
+            Ok(source) => {
+                fields.insert(
+                    "source".into(),
+                    source.map(Value::String).unwrap_or(Value::Null),
+                );
+            }
+            Err(why) => {
+                fields.insert("source".into(), Value::Null);
+                fields.insert("sourceRefused".into(), Value::String(why));
+            }
+        }
+    }
+    reading
+}
+
+/// The longest clip made here, in beats.
+const MADE_LENGTH_MAX: f64 = 4096.0;
+
+/// A blank MIDI clip in the shape of `donor`, a MIDI clip the set already
+/// holds: the document's own element names and nesting, as Live wrote them,
+/// with everything the donor carried of its own cleared — its place, its
+/// markers (the new clip loops from 0 to `length`), its name and info text,
+/// its envelopes, its notes and their expression, and its follow action,
+/// launch, groove and own mode set to a new clip's (Live's: trigger, global
+/// quantize, no legato, no groove, no mode of its own, no follow action). It
+/// wears its part's colour, as a new clip does in Live.
+fn blank_clip(
+    root: &Element,
+    donor: &Element,
+    track_colour: Option<&str>,
+    length: f64,
+) -> Result<Element, String> {
+    let mut clip = donor.clone();
+    clip.set_attr("Time", "0");
+    let end = number_text(length);
+    set_value(&mut clip, "CurrentStart", "0")?;
+    set_value(&mut clip, "CurrentEnd", &end)?;
+    let looped = clip
+        .child_mut("Loop")
+        .ok_or("the clip carries no Loop in the document")?;
+    for (name, value) in [
+        ("LoopStart", "0"),
+        ("LoopEnd", end.as_str()),
+        ("StartRelative", "0"),
+        ("LoopOn", "true"),
+        ("OutMarker", end.as_str()),
+        ("HiddenLoopStart", "0"),
+        ("HiddenLoopEnd", end.as_str()),
+    ] {
+        set_value(looped, name, value)?;
+    }
+    for name in ["Name", "Annotation"] {
+        if clip.child(name).is_some() {
+            set_value(&mut clip, name, "")?;
+        }
+    }
+    if let Some(colour) = track_colour {
+        if clip.child("Color").is_some() {
+            set_value(&mut clip, "Color", colour)?;
+        }
+    }
+    if let Some(list) = clip
+        .child_mut("Envelopes")
+        .and_then(|e| e.child_mut("Envelopes"))
+    {
+        list.children.clear();
+    }
+    if let Some(notes) = clip.child_mut("Notes") {
+        if let Some(store) = notes
+            .child_mut("PerNoteEventStore")
+            .and_then(|s| s.child_mut("EventLists"))
+        {
+            store.children.clear();
+        }
+        if let Some(groups) = notes.child_mut("NoteProbabilityGroups") {
+            groups.children.clear();
+        }
+    }
+    let mut fresh = Map::new();
+    for (key, value) in [
+        ("active", json!(true)),
+        ("follow", json!(false)),
+        ("launch", json!("trigger")),
+        ("legato", json!(false)),
+        ("quantize", json!("global")),
+        ("launchVelocity", json!(0)),
+        ("groove", json!("none")),
+        ("scale", json!(false)),
+    ] {
+        fresh.insert(key.into(), value);
+    }
+    apply_settings(root, &mut clip, &fresh)?;
+    apply_notes(&mut clip, &[])?;
+    Ok(clip)
+}
+
+/// The MIDI clip a new one takes its shape from: one of the part's own (its
+/// slots, then its arrangement), else the first the set holds on any part.
+fn shape_donor(root: &Element, track: usize) -> Option<Element> {
+    let own = tracks(root).into_iter().nth(track);
+    let of = |track: &Element| -> Option<Element> {
+        let sequencer = track
+            .child("DeviceChain")
+            .and_then(|dc| dc.child("MainSequencer"))?;
+        let slots = sequencer
+            .child("ClipSlotList")
+            .into_iter()
+            .flat_map(|list| list.children.iter())
+            .filter_map(|slot| {
+                slot.child("ClipSlot")
+                    .and_then(|inner| inner.child("Value"))
+                    .and_then(|v| v.children.first())
+            });
+        let arranged = sequencer
+            .child("ClipTimeable")
+            .and_then(|h| h.child("ArrangerAutomation"))
+            .and_then(|a| a.child("Events"))
+            .into_iter()
+            .flat_map(|events| events.children.iter());
+        slots
+            .chain(arranged)
+            .find(|clip| {
+                clip.name == "MidiClip"
+                    && clip.child("Notes").is_some()
+                    && clip.child("Loop").is_some()
+            })
+            .cloned()
+    };
+    own.and_then(of).or_else(|| {
+        tracks(root)
+            .into_iter()
+            .filter(|t| t.name == "MidiTrack")
+            .find_map(of)
+    })
+}
+
+/// Make a MIDI clip in an empty session slot of a MIDI part (O-I #768; DLW
+/// §21.2 What strikes the Torus: "drop the constellation on a part and Live
+/// transcribes it into a clip"): in `scene`'s slot, or the part's first empty
+/// slot, `length` beats long and looped, with `set`'s settings (the design's
+/// words, as `clip_write` takes them) and `notes`; then keep `source` as its
+/// source in the DLW's record beside the set (`sources.rs`). The clip is made
+/// in the document's own shape, from a MIDI clip the set already holds
+/// (`blank_clip`), so Live opens it as its own; a set that holds none is
+/// refused in words. Answers the clip as it now stands with its source, where
+/// it was made, and the set's new revision. The `.als` is written first: a
+/// record that cannot be written leaves the clip made of nothing, and says so.
+#[allow(clippy::too_many_arguments)]
+pub fn clip_create(
+    path: &str,
+    expected_revision: &str,
+    track: usize,
+    scene: Option<usize>,
+    length: f64,
+    set: Option<&Map<String, Value>>,
+    notes: &[Value],
+    source: Option<&str>,
+) -> Result<Value, String> {
+    if !(length.is_finite() && length > 0.0 && length <= MADE_LENGTH_MAX) {
+        return Err(format!(
+            "A new clip's length is more than 0 and at most {} beats",
+            number_text(MADE_LENGTH_MAX)
+        ));
+    }
+    if let Some(source) = source {
+        crate::sources::checked_ref(source)?;
+    }
+    let mut made_at = None;
+    let (root, new_revision) = edit(path, expected_revision, |root| {
+        let reference = root.clone();
+        let part = track_at(&reference, track)?;
+        if part.name != "MidiTrack" {
+            return Err(
+                "Live makes a clip of a constellation on a MIDI part, and this track is not one"
+                    .into(),
+            );
+        }
+        let colour = value_of(part, "Color").map(str::to_string);
+        let donor = shape_donor(&reference, track).ok_or(
+            "The set holds no MIDI clip whose shape a new one can take: make one clip in Live, save the set, then drop the constellation again",
+        )?;
+        let mut clip = blank_clip(&reference, &donor, colour.as_deref(), length)?;
+        if let Some(set) = set {
+            apply_settings(&reference, &mut clip, set)?;
+        }
+        apply_notes(&mut clip, notes)?;
+        let slots = track_at_mut(root, track)?
+            .child_mut("DeviceChain")
+            .and_then(|dc| dc.child_mut("MainSequencer"))
+            .and_then(|s| s.child_mut("ClipSlotList"))
+            .ok_or("the part has no clip slots in the document")?;
+        let held = |slot: &Element| {
+            slot.child("ClipSlot")
+                .and_then(|inner| inner.child("Value"))
+                .is_none_or(|v| !v.children.is_empty())
+        };
+        let chosen = match scene {
+            Some(scene) => {
+                let slot = slots.children.get(scene).ok_or_else(|| format!("the part has no slot in scene {scene}"))?;
+                if held(slot) {
+                    return Err(format!("The slot in scene {} already holds a clip", scene + 1));
+                }
+                scene
+            }
+            None => slots
+                .children
+                .iter()
+                .position(|slot| !held(slot))
+                .ok_or("The part has no empty slot to make the clip in: add a scene, or clear a slot, then drop it again")?,
+        };
+        slots.children[chosen]
+            .child_mut("ClipSlot")
+            .and_then(|inner| inner.child_mut("Value"))
+            .ok_or("the slot carries no value in the document")?
+            .children = vec![clip];
+        made_at = Some(chosen);
+        Ok(())
+    })?;
+    let at = ClipAt::Slot(made_at.ok_or("the clip was not made")?);
+    let part = track_at(&root, track)?;
+    let mut refused = None;
+    if let Some(source) = source {
+        let kept = part
+            .attr("Id")
+            .ok_or_else(|| "the part carries no Id in the document".to_string())
+            .and_then(|id| {
+                crate::sources::set_source(std::path::Path::new(path), id, at, Some(source))
+            });
+        if let Err(why) = kept {
+            refused = Some(format!(
+                "The clip was made, but its source was not kept: {why}"
+            ));
+        }
+    }
+    let mut reading = with_source(path, part, at, clip_reading(&root, clip_at(part, at)?));
+    if let (Some(why), Value::Object(fields)) = (refused, &mut reading) {
+        fields.insert("sourceRefused".into(), Value::String(why));
+    }
+    let ClipAt::Slot(slot) = at else {
+        unreachable!()
+    };
+    Ok(json!({"clip": reading, "at": {"slot": slot}, "revision": new_revision}))
 }
 
 /// Change one control of a track's mixer row (a send by its index); answer
@@ -2501,5 +2765,223 @@ mod tests {
         ));
         assert_eq!(groove_pool_read(&none).unwrap()["grooves"], json!([]));
         assert_eq!(groove_pool_read(&none).unwrap()["amount"], Value::Null);
+    }
+
+    // ------------------------------------------------------------ a clip made of a constellation (O-I #768)
+
+    fn notes_of(clip: &Value) -> Vec<(i64, f64, f64, f64)> {
+        let mut out: Vec<_> = clip["notes"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|n| {
+                (
+                    n["p"].as_i64().unwrap(),
+                    n["at"].as_f64().unwrap(),
+                    n["len"].as_f64().unwrap(),
+                    n["vel"].as_f64().unwrap(),
+                )
+            })
+            .collect();
+        out.sort_by(|a, b| a.partial_cmp(b).unwrap());
+        out
+    }
+
+    #[test]
+    fn a_clip_is_made_in_the_first_empty_slot_of_a_midi_part_in_the_sets_own_shape_and_keeps_its_source(
+    ) {
+        let (_dir, path) = set_file();
+        let read = clip_json(&path, 0, SLOT).unwrap();
+        let revision = read["revision"].as_str().unwrap().to_string();
+        assert_eq!(
+            read["clip"]["source"],
+            Value::Null,
+            "a clip Live did not make of a constellation has none"
+        );
+        let mut set = Map::new();
+        set.insert("name".into(), json!("The lived-in world"));
+        let notes = [
+            json!({"p": 62, "at": 0, "len": 4, "vel": 100}),
+            json!({"p": 69, "at": 0, "len": 4, "vel": 100}),
+        ];
+        let made = clip_create(
+            &path,
+            &revision,
+            0,
+            None,
+            4.0,
+            Some(&set),
+            &notes,
+            Some("wiki:anchor:lived-in"),
+        )
+        .unwrap();
+        assert_eq!(
+            made["at"],
+            json!({"slot": 1}),
+            "the part's first empty slot"
+        );
+        assert_ne!(made["revision"], json!(revision));
+        let clip = &made["clip"];
+        assert_eq!(clip["kind"], "midi");
+        assert_eq!(clip["name"], "The lived-in world");
+        assert_eq!(clip["source"], "wiki:anchor:lived-in");
+        assert_eq!(
+            notes_of(clip),
+            vec![(62, 0.0, 4.0, 100.0), (69, 0.0, 4.0, 100.0)]
+        );
+        assert_eq!(
+            (clip["start"].as_f64(), clip["end"].as_f64()),
+            (Some(0.0), Some(4.0))
+        );
+        assert_eq!(
+            (clip["position"].as_f64(), clip["length"].as_f64()),
+            (Some(0.0), Some(4.0))
+        );
+        assert_eq!(clip["loop"], true);
+        assert_eq!(
+            clip["follow"], false,
+            "a new clip follows no action, whatever the clip it took its shape from"
+        );
+        assert_eq!(
+            clip["scale"], false,
+            "and has no mode of its own: it follows the set's mode in force"
+        );
+        assert_eq!(clip["groove"], Value::Null);
+        assert_eq!(
+            clip["colourIndex"].as_f64(),
+            Some(26.0),
+            "it wears its part's colour, as a new clip in Live does"
+        );
+        // Read back from the file: the clip and its source.
+        let back = clip_json(&path, 0, ClipAt::Slot(1)).unwrap();
+        assert_eq!(back["clip"]["source"], "wiki:anchor:lived-in");
+        assert_eq!(back["clip"]["name"], "The lived-in world");
+        assert_eq!(notes_of(&back["clip"]), notes_of(clip));
+        // The clip it took its shape from stands as it was, made of nothing.
+        let donor = clip_json(&path, 0, SLOT).unwrap();
+        assert_eq!(donor["clip"]["name"], "E-Piano");
+        assert_eq!(notes_of(&donor["clip"]).len(), 2);
+        assert_eq!(donor["clip"]["source"], Value::Null);
+        // An edit changes the clip, never its source.
+        let mut rename = Map::new();
+        rename.insert("name".into(), json!("Lived, again"));
+        let edited = clip_write(
+            &path,
+            back["revision"].as_str().unwrap(),
+            0,
+            ClipAt::Slot(1),
+            Some(&rename),
+            None,
+            None,
+        )
+        .unwrap();
+        assert_eq!(edited["clip"]["source"], "wiki:anchor:lived-in");
+        assert!(
+            crate::sources::record_path(std::path::Path::new(&path)).exists(),
+            "the source is kept in the DLW's record beside the set"
+        );
+    }
+
+    #[test]
+    fn a_clip_is_made_only_where_the_part_can_take_it_and_the_set_gives_its_shape() {
+        let (_dir, path) = set_file();
+        let standing = clip_json(&path, 0, SLOT).unwrap()["revision"]
+            .as_str()
+            .unwrap()
+            .to_string();
+        let none = Map::new();
+        let notes = [json!({"p": 62, "at": 0, "len": 4})];
+        assert!(clip_create(
+            &path,
+            "sha256:stale",
+            0,
+            None,
+            4.0,
+            Some(&none),
+            &notes,
+            None
+        )
+        .unwrap_err()
+        .contains("changed since it was read"));
+        assert!(
+            clip_create(&path, &standing, 1, None, 4.0, Some(&none), &notes, None)
+                .unwrap_err()
+                .contains("MIDI part")
+        );
+        assert!(
+            clip_create(&path, &standing, 0, Some(0), 4.0, Some(&none), &notes, None)
+                .unwrap_err()
+                .contains("already holds a clip")
+        );
+        assert!(
+            clip_create(&path, &standing, 0, None, 0.0, Some(&none), &notes, None)
+                .unwrap_err()
+                .contains("length")
+        );
+        assert!(clip_create(
+            &path,
+            &standing,
+            0,
+            None,
+            4.0,
+            Some(&none),
+            &notes,
+            Some(" ")
+        )
+        .unwrap_err()
+        .contains("constellation's ref"));
+        assert_eq!(
+            clip_json(&path, 0, SLOT).unwrap()["revision"],
+            json!(standing),
+            "a refusal writes nothing"
+        );
+        // Filled: no empty slot is left.
+        let made = clip_create(&path, &standing, 0, None, 4.0, Some(&none), &notes, None).unwrap();
+        assert_eq!(
+            made["clip"]["source"],
+            Value::Null,
+            "a clip made of no constellation keeps none"
+        );
+        let full = clip_create(
+            &path,
+            made["revision"].as_str().unwrap(),
+            0,
+            None,
+            4.0,
+            Some(&none),
+            &notes,
+            None,
+        )
+        .unwrap_err();
+        assert!(full.contains("no empty slot"), "{full}");
+        // A set that holds no MIDI clip gives no shape to make one in.
+        let bare = SET
+            .replace(
+                &SET[SET.find("<ClipSlot Id=\"0\">").unwrap()
+                    ..SET.find("<ClipSlot Id=\"1\">").unwrap()],
+                "<ClipSlot Id=\"0\"><ClipSlot><Value/></ClipSlot></ClipSlot>\n",
+            )
+            .replace(
+                &SET[SET.find("<TakeLanes><TakeLanes>").unwrap()
+                    ..SET.find("<DeviceChain>").unwrap()],
+                "",
+            );
+        let (_bare_dir, bare_path) = set_file_of(&bare);
+        let bare_revision = {
+            let bytes = std::fs::read(&bare_path).unwrap();
+            revision(&bytes)
+        };
+        let shapeless = clip_create(
+            &bare_path,
+            &bare_revision,
+            0,
+            None,
+            4.0,
+            Some(&none),
+            &notes,
+            None,
+        )
+        .unwrap_err();
+        assert!(shapeless.contains("holds no MIDI clip"), "{shapeless}");
     }
 }

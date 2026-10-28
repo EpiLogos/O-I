@@ -17,7 +17,8 @@
 // not in the design yet (PROPOSE). Pure, apart from the hook at the end.
 import type {Value, Values} from '../frame/devices/designed'
 import {clipBinding, clipHostId, missingOp, useViewHoldsVersion, viewHoldsOf, type ClipBinding, type ClipWiring} from '../frame/detail/clipBinding'
-import {withMadeOf, type ClipSource} from '../frame/detail/clipSource'
+import {madeOfValues, withMadeOf, type ClipSource} from '../frame/detail/clipSource'
+import {useConstellations, type Constellation} from '../owners/constellations'
 import {useSelectedClip} from '../frame/detail/ClipBox'
 import {useDetailReading} from '../frame/detail/detailReading'
 import {useLiveModeInForce} from '../native/liveModeCatalogue'
@@ -177,18 +178,26 @@ export function toolPress(key: string, whole: LiveClipWholeReading, view: Readon
 /** The MIDI tools' presses. */
 const NOTE_PRESSES = ['duplicate', 'fitToScale', 'invert', 'addInterval', 'double', 'halve', 'setLength', 'humanize.press', 'reverse', 'legatoNotes', 'transform.press', 'generate.press', 'randomize']
 
-/** A Live clip's source (manual §21.1 The Clip panel: "Constellation — The clip's source when Live made it of a constellation"): no owner
- * keeps it yet. The set's owner (packages/live-set) reads and writes the `.als`, whose MIDI clip has no source of its own, and the DLW's
- * own set, whose clips refer to the constellation's nodes (manual §10.3 Sets, files and media), is not built; so the key stands absent
- * and Show in Browser names the operation the set's owner lacks. */
-export const LIVE_SOURCE: ClipSource = {made: 'unread', why: missingOp('The clip\'s constellation',
-  'live_clip_source {path, track, clip} → the constellation the clip was made of, kept by the DLW\'s set beside the .als', 'kernel · live-set')}
+/** Where a Live clip's source is kept: the DLW's record beside the set (packages/live-set sources.rs), read with the clip by its owner. */
+export const LIVE_SOURCE_KEPT = 'the DLW\'s record beside the set (packages/live-set sources.rs), read with the clip by the set\'s owner (kernel live_clip_read)'
+
+/** A Live clip's source (manual §21.1 The Clip panel: "Constellation — The clip's source when Live made it of a constellation, as a sample is
+ * an audio clip's"), as the set's owner reads it with the clip (O-I #768): the constellation's ref the DLW's record keeps for it (Live made
+ * it of that constellation, live/constellationClip.ts), or none; unread while the clip is not read whole, where the owner could not read
+ * the record (its words), or where it reports no source at all (an owner older than the record). Pure. */
+export function liveSourceOf(whole: LiveClipWholeReading | null, unread: string | null = null): ClipSource {
+  if (!whole) return {made: 'unread', why: `The clip is not read whole yet${unread ? `: ${unread}` : ''}, so its constellation is not named.`}
+  if (typeof whole.source === 'string' && whole.source) return {made: 'of', ref: whole.source, by: LIVE_SOURCE_KEPT}
+  if (whole.sourceRefused) return {made: 'unread', why: `The set's owner could not read the clip's source: ${whole.sourceRefused}`}
+  if (whole.source === null) return {made: 'none', by: LIVE_SOURCE_KEPT}
+  return {made: 'unread', why: 'The set\'s owner reports no source for its clips: the kernel serving this set is older than the DLW\'s record of a clip\'s source.'}
+}
 
 /** clip:live's wiring on the set's owner: where the clip is read whole, every setting, tool and Mixer envelope writes to it; where it
- * is not (no set path, the kernel out of reach), each says why. */
+ * is not (no set path, the kernel out of reach), each says why. Its source is the one the owner reads with the clip (liveSourceOf). */
 export function liveWiring(address: LiveClipAddress | null, whole: LiveClipWholeReading | null, hostId: string, unread: string | null,
   sends: readonly LiveSend[] | null = null): ClipWiring {
-  return withMadeOf(clipWiring(address, whole, hostId, unread, sends), LIVE_SOURCE)
+  return withMadeOf(clipWiring(address, whole, hostId, unread, sends), liveSourceOf(whole, unread))
 }
 
 function clipWiring(address: LiveClipAddress | null, whole: LiveClipWholeReading | null, hostId: string, unread: string | null,
@@ -261,6 +270,8 @@ export interface LiveClipInput {
   /** The clip whole, from the set's owner, and its refusal; absent where nothing reads it. */
   readonly whole?: LiveClipWholeReading | null
   readonly unread?: string | null
+  /** The wiki's constellations, which name the clip's source (owners/constellations.ts). */
+  readonly constellations?: readonly Constellation[] | null
 }
 
 /** The clip's ref: its track and its place, as the selection names it. */
@@ -278,7 +289,8 @@ export function liveClipBinding(input: LiveClipInput): ClipBinding | null {
   // The part's sends, as the set's owner reads its mixer row: the Send envelopes Clip view offers.
   const mixer = input.document?.tracks[input.selection.track]?.mixer
   const sends = mixer ? mixer.sends ?? [] : null
-  return clipBinding({mode: 'live', ref, values: liveClipValues(clip, input.mode, input.colour, whole, sends),
+  const source = liveSourceOf(whole, input.unread ?? null)
+  return clipBinding({mode: 'live', ref, values: {...liveClipValues(clip, input.mode, input.colour, whole, sends), ...madeOfValues(source, input.constellations)},
     wiring: liveWiring(address, whole, clipHostId('live', ref), input.unread ?? null, sends),
     placed: clip.at !== null, lacks: clip.kind ? LACKS_OF_KIND[clip.kind] : undefined})
 }
@@ -292,5 +304,7 @@ export function useLiveClip(): ClipBinding | null {
   const set = live.ctx?.set ?? null
   const at = clipAtOf(live.selection)
   const whole = useLiveClipWhole(set?.path ?? null, at ? live.selection.track : null, at)
-  return liveClipBinding({set, document: live.document, selection: live.selection, mode, colour: selected.track?.color, whole: whole.clip, unread: whole.error})
+  const wiki = useConstellations()
+  return liveClipBinding({set, document: live.document, selection: live.selection, mode, colour: selected.track?.color, whole: whole.clip, unread: whole.error,
+    constellations: wiki.registers > 0 ? wiki.rows : null})
 }

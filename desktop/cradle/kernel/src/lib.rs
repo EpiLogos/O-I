@@ -1155,6 +1155,28 @@ pub enum KernelOp {
         #[serde(default)]
         envelopes: Option<Vec<serde_json::Value>>,
     },
+    /// Make a MIDI clip in an empty session slot of a MIDI part against the
+    /// set's revision (O-I #768: Live's clip of a constellation): in
+    /// `scene`'s slot or the part's first empty one, `length` beats long and
+    /// looped, with `set`'s settings in the design's words and `notes`, made
+    /// in the document's own shape from a MIDI clip the set already holds;
+    /// `source`, a constellation's ref, is kept as the clip's source in the
+    /// DLW's record beside the set (`live_set::sources`). Writes the user's
+    /// files, not kernel state. Answers `{clip, at, revision}`.
+    LiveClipCreate {
+        path: String,
+        expected_revision: String,
+        track: usize,
+        #[serde(default)]
+        scene: Option<usize>,
+        length: f64,
+        #[serde(default)]
+        set: Option<serde_json::Map<String, serde_json::Value>>,
+        #[serde(default)]
+        notes: Vec<serde_json::Value>,
+        #[serde(default)]
+        source: Option<String>,
+    },
     /// Change one control of a track's mixer row (activator, solo, arm,
     /// monitor, or a send by its `index`: 0 is Send A) against the set's
     /// revision; the routings are read, not chosen.
@@ -2981,6 +3003,7 @@ impl Kernel {
             | KernelOp::LiveDeviceParamWrite { .. }
             | KernelOp::LiveClipRead { .. }
             | KernelOp::LiveClipWrite { .. }
+            | KernelOp::LiveClipCreate { .. }
             | KernelOp::LiveTrackMixerWrite { .. }
             | KernelOp::LiveTakeComp { .. }
             | KernelOp::LiveGroovePoolRead { .. }
