@@ -5,7 +5,7 @@ import {factsKey,factsRecorded,inspectFacts,prepareFacts,saveFacts,type FactsBas
 import {newRef} from './construction';
 import type {TimePlaceValues} from './ParticipationFacts';
 import type {TechnePlaceFacet} from '../techne/contract';
-import type {PlaceDraft} from '../../expressions-app/vendor/research-canvas/packages/canvas/src/psychogeographic/placeAuthoring';
+import type {PlaceDraft} from '../techne/m0m5/place/authoring';
 import './wikiConstruction.css';
 const OpenFacts=createContext<((reference:string,onSaved?:()=>void)=>void)|undefined>(undefined);
 const message=(error:unknown)=>error instanceof Error?error.message:String(error);

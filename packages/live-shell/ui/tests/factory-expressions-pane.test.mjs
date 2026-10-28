@@ -40,7 +40,6 @@ const pane = await import('../src/projections/expressionsPane.tsx')
 const frame = await import('../src/projections/framePlacement.ts')
 const {projectionModule} = await import('../../../../desktop/cradle/src/surface/projectionModules.ts')
 const {factoryFocusedPane, deviceInstrumentFor, instrumentOfPane} = await import('../src/shell/paneInstrument.ts')
-const {LENSES, FACTORY_EXPRESSIONS_LENS, factoryLensReason, factoryLensPane} = await import('../src/shell/ModeDetail.tsx')
 const {NATIVE_PRESENT_EXPRESSIONS} = await import('../src/native/openStudio.ts')
 
 const html = element => renderToStaticMarkup(element)
@@ -313,12 +312,10 @@ test('the placed residence stands at the placement\'s height, so the frame paint
   assert.equal(String(PLACED_RESIDENCE_STYLE.zIndex), PLACED_Z_INDEX)
 })
 
-test('the Factory Expressions entry is enabled with its real behaviour, and the bar of every other mode keeps its six lenses', () => {
-  assert.equal(factoryLensReason(FACTORY_EXPRESSIONS_LENS), null, 'the entry carries no disabled reason: its pane is admitted')
-  assert.equal(factoryLensPane(FACTORY_EXPRESSIONS_LENS), 'projection.expressions')
-  assert.equal(LENSES.length, 6, 'the World cut lens bar is unchanged')
-  assert.equal(LENSES.some(lens => lens.id === 'expressions'), false, 'the Expressions entry is a Factory-bar entry only')
-})
+// Retired with the Technē lens bar (#762: ModeDetail's TechneLensBar, its Factory Expressions entry and factoryLensPane were reached only by
+// tests): 'the Factory Expressions entry is enabled with its real behaviour, and the bar of every other mode keeps its six lenses' →
+// factory-instrument-panes.test.mjs 'a Factory pane kind the instruments open stands beside the seeded two once …' (projection.expressions
+// among them) and f2-panes.test.mjs 'the Instruments list names instruments …' (the browser's Instruments open the Expressions pane).
 
 test('a focused Expressions pane brings the hosted lens\'s instrument into the chain (manual §3); the focus names it', () => {
   const focus = factoryFocusedPane('projection.expressions')

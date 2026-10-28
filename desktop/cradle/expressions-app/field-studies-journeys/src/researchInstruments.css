@@ -60,20 +60,15 @@
  background:var(--paper);border:1px solid var(--line);border-radius:4px;
  padding:2px 6px;box-shadow:0 2px 6px rgba(0,0,0,.18);
 }
-.research-instrument-body>.timeline-surface,.research-instrument-body>.psychogeographic-map{height:100%}
-/* The offline map carries its own dark geography palette. Its controls must
-   not inherit the light Expressions field's dark foreground. */
-.research-instrument .psychogeographic-toolbar button{color:var(--ink);padding:5px 8px;border:1px solid transparent;border-radius:4px}
-.research-instrument .psychogeographic-toolbar button[data-active="true"]{border-color:currentColor}
-.research-instrument .psychogeographic-toolbar button:disabled{opacity:.45}
+.research-instrument-body>.timeline-surface{height:100%}
 
 .research-tool-actions{display:flex;flex-wrap:wrap;align-items:center;gap:6px}.research-tool-actions button,.research-tool-actions select{font:inherit;color:var(--ink);background:var(--paper);border:1px solid var(--line);padding:5px 8px}.research-tool-actions input[type=color]{width:28px;height:28px}.research-inspector-content{display:grid;gap:10px;padding:12px}.research-inspector-content label{display:flex;gap:8px;align-items:center;justify-content:space-between}.research-inspector-content input{min-width:0;max-width:130px}.research-instrument-status{border:0;padding:4px 8px;min-height:0}
 
-.research-places{position:absolute;inset:0;min-height:0}.research-places>.psychogeographic-map{height:100%}.research-street-view{position:absolute;bottom:12px;left:12px;width:min(340px,40%);max-height:40%;overflow:auto;z-index:11;background:var(--paper);color:var(--ink);border:1px solid var(--line)}.research-tool-actions details{position:relative}.research-tool-actions details[open]{max-width:340px}.research-tool-actions details p{font-size:11px;line-height:1.4}
+.research-tool-actions details{position:relative}.research-tool-actions details[open]{max-width:340px}.research-tool-actions details p{font-size:11px;line-height:1.4}
 
 /* The active instrument's tools join the Expressions rail as the same thin
    icon buttons: no second bar, no scrollbar, no boxed text buttons. */
-#instrument-tools :is(.research-tool-actions,.canvas-toolbar-hosted,.timeline-surface-controls,.timeline-toolbar,.timeline-filters,.timeline-frame,.psychogeographic-toolbar,.street-view-toolbar){position:static;display:contents;margin:0;padding:0;transform:none;background:none;border:0;box-shadow:none}
+#instrument-tools :is(.research-tool-actions,.canvas-toolbar-hosted,.timeline-surface-controls,.timeline-toolbar,.timeline-filters,.timeline-frame,.street-view-toolbar){position:static;display:contents;margin:0;padding:0;transform:none;background:none;border:0;box-shadow:none}
 #instrument-tools button{appearance:none;display:inline-flex;align-items:center;justify-content:center;gap:4px;flex:0 0 auto;height:28px;min-width:28px;padding:5px;border:0;border-radius:7px;background:transparent;color:var(--ui-ink);font:11px/1 var(--sans);cursor:pointer}
 #instrument-tools button svg{width:16px;height:16px}
 #instrument-tools button:hover{background:var(--ui-wash)}
@@ -108,16 +103,12 @@
 .research-instrument .timeline-node-card[data-lod=label] :is(.timeline-node-place,.timeline-node-summary){display:none}
 .research-instrument .timeline-node-card[data-lod=label] .timeline-node-resize{display:none}
 
-#research-inspector,.research-street-view{background:var(--hud-glass);color:var(--ui-ink);border:1px solid var(--ui-line);border-radius:12px;backdrop-filter:blur(18px)}
-.research-street-view{padding:14px}
-#research-inspector .places-location-panel{width:100%;min-width:240px}
-#research-inspector header,.research-street-view>header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px}
+#research-inspector{background:var(--hud-glass);color:var(--ui-ink);border:1px solid var(--ui-line);border-radius:12px;backdrop-filter:blur(18px)}
+#research-inspector header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px}
 #research-inspector header{padding:12px 16px;border-bottom:1px solid var(--ui-line)}
 #research-inspector .research-inspector-content>:not(header){margin:10px 16px}
 #research-inspector header h2{width:100%}
-#research-inspector button,.research-street-view>header button{color:var(--ui-ink);background:var(--ui-wash);border:1px solid var(--ui-line);border-radius:5px;padding:5px 8px;font:11px var(--sans)}
-.research-street-view[hidden]{display:none}
-.research-street-view>header h3{font:12px var(--sans)}
+#research-inspector button{color:var(--ui-ink);background:var(--ui-wash);border:1px solid var(--ui-line);border-radius:5px;padding:5px 8px;font:11px var(--sans)}
 
 /* R3 — semantic zoom/LOD (m0m5 interactions.ts labelsForZoom), presentation
    only: never resizes a card or an entity's own expressive body, only

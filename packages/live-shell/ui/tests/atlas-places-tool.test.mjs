@@ -24,7 +24,7 @@ export async function load(u, c, n) {
 }`)}`, import.meta.url)
 
 const tool = await import('../src/projections/atlas/places/placeTool.ts')
-const authoring = await import('../../../../desktop/cradle/expressions-app/vendor/research-canvas/packages/canvas/src/psychogeographic/placeAuthoring.ts')
+const authoring = await import('../../../../desktop/cradle/src/techne/m0m5/place/authoring.ts')
 
 let calls
 const owner = () => ({

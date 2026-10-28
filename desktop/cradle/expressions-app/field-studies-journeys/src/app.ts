@@ -88,7 +88,7 @@ import {createNativeMaterialController} from '../../../../../packages/expression
 import {requestNativeMaterialEditor} from '../../../../../packages/expressions-boundary/src/materialEditor';
 import {worldRequest} from './worldChannel';
 import {installLensStudio,PALACE_MOVED,type LensId} from './lensStudio.js';
-import {installResearchInstruments} from './researchInstruments.js';
+import {installResearchInstruments,PLACES_MOVED} from './researchInstruments.js';
 import {journeyReadingOf} from './researchReading.js';
 import {stageReadingOf} from './stageReading.js';
 import {readFrameCondition} from './instrumentCondition.js';
@@ -2547,7 +2547,7 @@ function applyNativeView(view:KernelConversion,preservePosition=false,adoptionHi
 const researchHoldReason='The physical instrument is inactive';
 let researchSuspension:symbol|null=null;
 function setInstrumentSurface(lens:LensId|null){
- const research=lens==='canvas'||lens==='timeline'||lens==='place';
+ const research=lens==='canvas'||lens==='timeline';
  document.body.classList.toggle('research-active',research);
  document.body.dataset.activeInstrument=lens??'expression';
  $('stage').inert=research;
@@ -2566,7 +2566,7 @@ function activateInstrument(lens:LensId){
  const carried=carriedFocus?.lens===lens?carriedFocus.ref:undefined;
  // A Studio section that belongs to the instrument being left does not stay
  // open, empty, over the next one.
- const owned:Record<string,LensId>={places:'place',canvas:'canvas'};
+ const owned:Record<string,LensId>={canvas:'canvas'};
  if(owned[studioSection]&&owned[studioSection]!==lens){inspectorOpen=false;studioSection='formations';tab='objects';}
  setInstrumentSurface(lens);
  pointer.active=false;
@@ -2575,14 +2575,16 @@ function activateInstrument(lens:LensId){
  researchPreview=false;
  // M0/M3/M5 are operating modes of this same Expression and Scene engine.
  // Mature Research Canvas tools are mounted by the research instrument adapter.
- if(lens==='canvas'||lens==='timeline'||lens==='place'){if(propertyTake)finishPropertyTake();if(recorder.active){recorder.stop();toast('Recording stopped before opening the research instrument.');}void researchInstruments?.open(lens==='canvas'?'m1':lens==='timeline'?'m2':'m4',carried);}
+ if(lens==='canvas'||lens==='timeline'){if(propertyTake)finishPropertyTake();if(recorder.active){recorder.stop();toast('Recording stopped before opening the research instrument.');}void researchInstruments?.open(lens==='canvas'?'m1':'m2',carried);}
  else researchInstruments?.close();
  if(lens==='project'){sequenceOpen=false;timelineOpen=false;inspectorOpen=false;contextKind='';beltPickerOpen=false;}
  if(lens==='journey'){sequenceOpen=false;timelineOpen=true;inspectorOpen=false;contextKind='';beltPickerOpen=false;}
  journeyHome.hidden=lens!=='journey';
  if(lens==='journey')void journeyInstrument?.open().then(()=>journeyInstrument?.returnFromCrossing()).then(()=>carried===undefined?undefined:journeyInstrument?.focusBeat(carried)); // T11: a crossed beat returns by ref, through the owner.
  else journeyInstrument?.close();
- if(lens==='place'){editing=true;inspectorOpen=true;contextKind='';tab='field';studioSection='places';}
+ // Places is the shell's Earth atlas now (T-PLACES-ONTO-ATLAS; FOUNDATION §4; #762 retired the frame's place lens): asked for, the frame
+ // says where Places went, as it does for the Palace.
+ if(lens==='place')toast(PLACES_MOVED,8000);
  // M5′ Palace is the shell's Earth atlas now (T-PALACES-ONTO-ATLAS; FOUNDATION §3 N4): asked for, the frame says where it went.
  if(lens==='palace')toast(PALACE_MOVED,8000);
  renderAll();announceHostState();

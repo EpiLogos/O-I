@@ -2,8 +2,6 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import {readFile} from 'node:fs/promises'
 import {register} from 'node:module'
-import {createElement} from 'react'
-import {renderToStaticMarkup} from 'react-dom/server'
 
 // The focused centre pane's instrument (owner ruling, 13 Oct 2026; paneInstrument.ts).
 // Production modules in memory, the mode-surface-fidelity loader pattern.
@@ -241,71 +239,29 @@ test('Factory opens with the agent tab focused, and every agent-shell chrome pie
   assert.match(app, /const agentShell = isFactoryMode\(frameMode\) && !settingsPresented/)
 })
 
-// Factory's lens bar (lead review): a press opens only an admitted pane body. Project / graph, Places, Timeline and Journey are
-// the admitted bodies (T-FACTORY-TIMELINE-PANE: Timeline and Journey are the one Timeline pane's two presentations). Canvas and
-// Palace stay visible but disabled, each titled with its plain reason.
-const {TechneLensBar, LENSES, factoryLensReason, factoryLensPane} = await import('../src/shell/ModeDetail.tsx')
-const decode = text => text.replace(/&#x27;/g, "'").replace(/&amp;/g, '&').replace(/&quot;/g, '"')
-const factoryBar = renderToStaticMarkup(createElement(TechneLensBar, {presentation: 'session', atlasOpen: true, onLens() {}, factory: true}))
-const lensButton = name => {
-  const part = factoryBar.split('<button').find(piece => piece.includes(`<span>${name}</span>`))
-  assert.ok(part, `${name} is on the bar`)
-  return part
-}
-const titleOf = name => decode(/title="([^"]*)"/.exec(lensButton(name))[1])
+// Factory's lens bar retired with the Technē lens bar (#762: ModeDetail's TechneLensBar was reached only by these tests). Retired: 'in
+// Factory the Timeline and Journey lenses … stay enabled', 'in Factory Canvas and Palace stay disabled with their planned reasons', 'in
+// Factory the Project / graph and Places lenses … stay enabled' and 'a Factory press on a disabled lens opens nothing' → 'an instrument opens
+// as a pane inside the tree, never by leaving the centre (the browser's Instruments, FOUNDATION F2)' above and f2-panes.test.mjs 'the
+// Instruments list names instruments …' (the browser's Instruments are the door now, and list only what opens). The panes the bar opened
+// are pinned by kind below, through the same openFactoryInstrumentPane the browser's door reaches.
 
-test('in Factory the Timeline and Journey lenses are the admitted Timeline pane and stay enabled', () => {
-  assert.doesNotMatch(lensButton('Timeline'), /disabled=""/)
-  assert.doesNotMatch(lensButton('Journey'), /disabled=""/)
-  assert.equal(titleOf('Timeline'), 'Timeline — the World cut — the Timeline')
-  assert.equal(titleOf('Journey'), 'Journey — the World cut — the Journey')
-  assert.equal(factoryLensPane(LENSES.find(lens => lens.id === 'timeline')), 'projection.timeline')
-  assert.equal(factoryLensPane(LENSES.find(lens => lens.id === 'journey')), 'projection.timeline')
-})
-
-test('in Factory Canvas and Palace stay disabled with their planned reasons', () => {
-  for (const name of ['Canvas', 'Palace']) {
-    assert.match(lensButton(name), /disabled=""/, `${name} is disabled`)
-    assert.match(titleOf(name), /\(planned\)/, `${name} names why it is not yet a pane`)
-  }
-})
-
-test('in Factory the Project / graph and Places lenses are the admitted Earth atlas panes and stay enabled', () => {
-  assert.doesNotMatch(lensButton('Project / graph'), /disabled=""/)
-  assert.doesNotMatch(lensButton('Places'), /disabled=""/)
-  assert.equal(factoryLensPane(LENSES.find(lens => lens.id === 'project-graph')), 'projection.constellation')
-  assert.equal(factoryLensPane(LENSES.find(lens => lens.id === 'places')), 'projection.earth')
-})
-
-test('a Factory press on a disabled lens opens nothing: the tree is unchanged', () => {
+test('a Factory pane kind the instruments open stands beside the seeded two once; the Timeline kind finds its Session pane standing', () => {
   const layout = seedFactoryCentre(freshLayout())
-  for (const lens of LENSES.filter(item => factoryLensReason(item) !== null)) {
-    const kind = factoryLensPane(lens)
-    const next = kind ? openFactoryInstrumentPane(layout, kind) : layout
-    assert.equal(next, layout, `${lens.name} opens nothing in Factory`)
-  }
-})
-
-test('a Factory press on an enabled lens opens its one admitted pane beside the seeded two; the Timeline lenses find theirs standing', () => {
-  const layout = seedFactoryCentre(freshLayout())
-  for (const lens of LENSES.filter(item => factoryLensReason(item) === null)) {
-    const kind = factoryLensPane(lens)
+  for (const kind of ['projection.earth', 'projection.constellation', 'projection.timeline', 'projection.expressions']) {
     const next = openFactoryInstrumentPane(layout, kind)
-    assert.equal(tabsOf(next).length, kind === FACTORY_TRACKS_KIND ? 2 : 3, `${lens.name} opens ${kind === FACTORY_TRACKS_KIND ? 'no new pane: the Session pane stands' : 'one pane'}`)
+    assert.equal(tabsOf(next).length, kind === FACTORY_TRACKS_KIND ? 2 : 3, `${kind} opens ${kind === FACTORY_TRACKS_KIND ? 'no new pane: the Session pane stands' : 'one pane'}`)
   }
 })
 
-test('Timeline and Journey open the one Timeline pane; the lens presentation is that pane\'s own presentation', () => {
-  const timeline = LENSES.find(lens => lens.id === 'timeline')
-  const journey = LENSES.find(lens => lens.id === 'journey')
-  assert.equal(timeline.presentation, 'arrangement')
-  assert.equal(journey.presentation, 'session')
-  assert.equal(factoryLensPane(timeline), 'projection.timeline')
-  assert.equal(factoryLensPane(journey), 'projection.timeline')
+test('the Timeline and the Journey are the one Timeline pane: opened twice, it stands once', () => {
   const layout = seedFactoryCentre(freshLayout())
-  const once = openFactoryInstrumentPane(openFactoryInstrumentPane(layout, factoryLensPane(timeline)), factoryLensPane(journey))
-  assert.equal(tabsOf(once).length, 2, 'the agent tab and the one Session pane: the two lenses share it, never a second')
+  const once = openFactoryInstrumentPane(openFactoryInstrumentPane(layout, 'projection.timeline'), 'projection.timeline')
+  assert.equal(tabsOf(once).length, 2, 'the agent tab and the one Session pane, never a second')
   assert.equal(Object.values(once.surfaces).filter(binding => binding.kind === FACTORY_TRACKS_KIND).length, 1, 'one binding of the tracks kind')
+  assert.equal(deviceInstrumentFor('expressions', 'world.expressions', null, 'graph', 'timeline'), null, 'Expressions mode is the pane’s own instrument')
+  assert.equal(deviceInstrumentFor('expressions', 'native.session', 'session', 'graph', 'timeline'), null, 'the native session pane keeps its own rack')
+  assert.equal(deviceInstrumentFor('expressions', 'native.arrangement', 'arrangement', 'graph', 'timeline'), null)
 })
 
 test('Tab moves between Session view and Arrangement view of the set, in Factory as in every mode (manual §10.2)', async () => {

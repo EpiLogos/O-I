@@ -19,7 +19,7 @@
  * listener up; it is not part of the consumed API. */
 import {validateJourney} from './model.js';
 import {kernelDocumentToJourney,KernelExpressionDocument,KernelEntity,KernelParameter,KernelSubject} from './kernelDocumentBridge.js';
-import {validatePlaceDraft,type PlaceDraft} from '../../vendor/research-canvas/packages/canvas/src/psychogeographic/placeAuthoring';
+import {validatePlaceDraft,type PlaceDraft} from '../../../src/techne/m0m5/place/authoring';
 
 const VERSION=1;
 type Pending={kind:string;resolve:(value:any)=>void;reject:(cause:Error)=>void;timer:number};

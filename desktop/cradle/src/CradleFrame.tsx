@@ -137,7 +137,7 @@ import {OPEN_OBJECT_EVENT,ObjectCentreLayer,encodeObjectRef,isOpenObjectDetail} 
 import {factoryCentreOwns} from "./contributions/factory/objectKinds";
 import {OPEN_AUTOMATIONS_EVENT, openAutomations} from "./contributions/automations/open";
 import {offerConstellationRoute} from "./knowledge/WikiFactsEditor";
-import type {PlaceDraft} from "../expressions-app/vendor/research-canvas/packages/canvas/src/psychogeographic/placeAuthoring";
+import type {PlaceDraft} from "./techne/m0m5/place/authoring";
 
 function snapshotOf(state: LayoutState): RestorePoint {
   return {

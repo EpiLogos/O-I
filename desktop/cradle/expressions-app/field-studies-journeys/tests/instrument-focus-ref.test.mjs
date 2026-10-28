@@ -16,7 +16,11 @@ test('the lens host-command reads the carried ref and passes it to the instrumen
   assert.match(handler, /\}else lensStudio\.select\(lens\);/, 'a press with no ref selects the lens exactly as before');
   assert.match(app, /let carriedFocus:\{lens:LensId;ref:string\}\|null=null;/, 'the carried focus is declared once');
   assert.match(app, /function activateInstrument\(lens:LensId\)\{\n const carried=carriedFocus\?\.lens===lens\?carriedFocus\.ref:undefined;/, 'activateInstrument reads the carried ref for the lens it activates');
-  assert.match(app, /researchInstruments\?\.open\(lens==='canvas'\?'m1':lens==='timeline'\?'m2':'m4',carried\)/, 'the canvas, timeline and place instruments receive the ref');
+  assert.match(app, /researchInstruments\?\.open\(lens==='canvas'\?'m1':'m2',carried\)/, 'the canvas and timeline instruments receive the ref');
+  // #762: the Places lens retired with the frame's map (Places is the shell's Earth atlas); asked for by a host command still naming it,
+  // it says where Places went, as the Palace lens does: it opens no research instrument, holds no stage and opens no Studio section.
+  assert.match(app, /if\(lens==='place'\)toast\(PLACES_MOVED,8000\);/, 'the place lens says where Places went');
+  assert.doesNotMatch(app, /studioSection='places'|places:'place'|lens==='place'\)\{|lens==='timeline'\|\|lens==='place'/, 'the place lens wires no frame Places surface');
   // T-PALACES-ONTO-ATLAS: the Palace lens retired; asked for, it says where palaces went (a carried room is entered on the atlas:
   // packages/live-shell/ui/tests/atlas-palaces-session.test.mjs pins the walk standing at the carried room, and the named refusal).
   assert.match(app, /if\(lens==='palace'\)toast\(PALACE_MOVED,8000\);/, 'the palace lens says where palaces went');

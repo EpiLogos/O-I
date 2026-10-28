@@ -2,6 +2,14 @@
  * Placemark authoring — lane-4 T17 (click to create), T18 (saved places carry
  * their source basis), T19 (drag to refine with honest precision).
  *
+ * Moved here, beside the place owner's other laws, from the vendor's
+ * `packages/canvas/src/psychogeographic/placeAuthoring.ts` (an O-I overlay, never
+ * upstream) when the frame's Places map and its folder retired (#762). Its
+ * readers: the atlas's Place tool (packages/live-shell/ui/src/projections/atlas/
+ * places/placeTool.ts), the Wiki's time-and-place editor (knowledge/
+ * WikiFactsEditor.tsx), the Expressions host (expressions/PointCloudHost.tsx)
+ * and the frame's kernel route (field-studies-journeys/src/kernelExpressions.ts).
+ *
  * Pure model: no DOM, no maplibre, no kernel. The renderer and the surface
  * read these functions, and `node --test` loads them through esbuild.
  *
@@ -15,7 +23,7 @@
  *    a place write without one, so the map does not propose one either.
  *  - A refusal is shown with the owner's own words, never paraphrased.
  */
-import type { TechnePlacePrecision } from "../../../../../../../src/techne/contract";
+import type { TechnePlacePrecision } from "../../contract";
 
 /** The hold that opens the menu on touch, in milliseconds (the platform's own long-press band). */
 export const LONG_PRESS_MS = 500;

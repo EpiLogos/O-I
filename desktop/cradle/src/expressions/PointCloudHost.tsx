@@ -44,7 +44,7 @@ import {
   type HostedAppState,
   KERNEL_CHANNEL_VERSION,
 } from "./hostedApp";
-import {validatePlaceDraft, type PlaceDraft} from "../../expressions-app/vendor/research-canvas/packages/canvas/src/psychogeographic/placeAuthoring";
+import {validatePlaceDraft, type PlaceDraft} from "../techne/m0m5/place/authoring";
 import {consumeTechneFieldOpen, peekTechneFieldLens, peekTechneFieldOpen, peekTechneFieldRefresh, subscribeTechneFieldOpen} from "./fieldOpen";
 import "./point-cloud-host.css";
 import {verifyInsertionSource} from "./sourceInsertion";

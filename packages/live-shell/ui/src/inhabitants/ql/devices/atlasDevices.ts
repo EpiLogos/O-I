@@ -1,6 +1,6 @@
 // The atlas family's four faces as devices of the runtime (T-DEVICES-TECHNE; lock §0.1.3: the Technē 0 instrument, the Earth and
 // solar system with its graph view, carries its full native controls on the Device side). Each device is read from the ONE
-// mounted atlas (projections/atlas/AtlasProjectionPanel.tsx `atlasHandle`) and the lens bar's view mirror, and written through the
+// mounted atlas (projections/atlas/AtlasProjectionPanel.tsx `atlasHandle`) and the view mirror (the Earth ⇄ Graph device's), and written through the
 // owner's armed setters (agent/shellSetterBridge.ts `registerAtlasShellSetters`), which drive the same face actions the face
 // bodies call. A control the owner cannot take now has no write path and says why, in the words the body uses; nothing is a default.
 //
@@ -28,7 +28,8 @@ import {
 import {suiteStanding} from '../../../projections/atlas/provider/suiteStanding'
 import {systemReading} from '../../../projections/atlas/system/systemStore'
 import {yourLocations, type BodyLocation} from '../../../projections/atlas/system/bodyLocations'
-import {PLACE_KINDS, choosePlaceKind, placeKindChoice, type PlaceKind} from '../../../projections/atlas/places/placeTool'
+import {PLACE_KINDS, choosePlaceKind, notePlaceTool, placeKindChoice, type PlaceKind} from '../../../projections/atlas/places/placeTool'
+import {paneChrome, pressPane, type PaneChromeReading} from '../../../projections/atlas/paneChrome'
 
 export const ATLAS_FAMILY = 'atlas-earth'
 
@@ -111,9 +112,12 @@ export interface AtlasReading {
   /** [T-PROCEDURAL-BODY §6 item 5] the look your own world's body is drawn with, as your system reads it (system/maturity.ts): the globe draws
    * the same, so the device's pictures are the globe's own body; absent while your system is not read */
   readonly look?: BodyLook
+  /** [#762] what the atlas drew over the globe that is the World's, stood down in the pane and read from it (projections/atlas/paneChrome.ts):
+   * the focus label's name, line and acts, the reading cards' closes, the graph's display settings; absent where it is not read */
+  readonly pane?: PaneChromeReading
 }
 
-/** Read the mounted atlas (null while none stands) and the view the lens bar presents. */
+/** Read the mounted atlas (null while none stands) and the view the Earth ⇄ Graph device presents. */
 export function atlasReading(handle: AtlasHandle | null, view: AtlasView): AtlasReading {
   const body = {state: worldBodyState(), choice: bodyChoice()}
   const standing = suiteStanding(), system = systemReading()
@@ -121,7 +125,8 @@ export function atlasReading(handle: AtlasHandle | null, view: AtlasView): Atlas
   const placeKind = placeKindChoice()
   const own = system.state === 'read' ? system.bodies.find(item => item.yours) : undefined
   const look = own ? {look: own.look} : {}
-  if (!handle) return {mounted: false, view, graph: null, clock: null, globe: null, body, locations, placeKind, ...look}
+  const pane = paneChrome('world')
+  if (!handle) return {mounted: false, view, graph: null, clock: null, globe: null, body, locations, placeKind, pane, ...look}
   const controls = handle.ctl.graphControls?.controls() ?? null
   const {scope, wholeField} = handle.ctl.globeScope
   return {
@@ -132,7 +137,7 @@ export function atlasReading(handle: AtlasHandle | null, view: AtlasView): Atlas
     },
     clock: {mode: handle.time.mode, cursorU: handle.time.cursorU, playing: handle.time.playing, cumulative: handle.time.cumulative},
     globe: {scopeLabel: scope ? scope.label : null, wholeField},
-    body, locations, placeKind, ...look,
+    body, locations, placeKind, pane, ...look,
   }
 }
 
@@ -199,6 +204,12 @@ export function atlasGlobeBinding(reading: AtlasReading): DesignBinding {
     if (reading.look) values.bodyLook = JSON.stringify(reading.look)
     if (shown.generator.version < WORLD_BODY_GENERATOR_VERSION) values.generationNote = `This body was built by generator ${shown.generator.version}; the current generator is ${WORLD_BODY_GENERATOR_VERSION}. Its next change rebuilds it.`
   }
+  // [#762] the focus label's acts, the closes of the reading cards and the graph's display, as the pane drew them before it stood them down
+  // (the World design's Focus and Display, catalogue/panels/paneControls.tsx); a press is the atlas's own control pressed
+  if (reading.mounted && reading.pane) {
+    values['pane.controls'] = JSON.stringify(reading.pane.controls)
+    if (reading.pane.title) values['pane.title'] = reading.pane.title
+  } else standing['pane.press'] = {disabled: NOT_MOUNTED}
   if (reading.body.choice === 'earth') standing.locations = {disabled: EARTH_LOCATIONS}
   else if (reading.body.choice === 'other') standing.locations = {disabled: NO_OTHER}
   else if ('unread' in reading.locations) standing.locations = {disabled: reading.locations.unread}
@@ -225,6 +236,7 @@ export function atlasGlobeBinding(reading: AtlasReading): DesignBinding {
     local: {
       body: value => { if (value === 'own' || value === 'earth' || value === 'other') chooseBody(value) },
       placeKind: value => { if ((PLACE_KINDS as readonly unknown[]).includes(value)) choosePlaceKind(value as PlaceKind) },
+      'pane.press': value => { if (value !== undefined) pressPane(value, notePlaceTool) },
     },
   }
 }

@@ -7,7 +7,6 @@ import {validateConnector,CONNECTOR_KEY_MAX,CONNECTOR_RECORD_MAX,type ResearchCo
 import {CANVAS_OBJECT_KINDS,CANVAS_TOOL_SPEC,STICKY_DEFAULT_PALETTE,isCanvasObjectKind,isPaletteKey,isShapeFill,isShapeGeometry,type CanvasObjectKind,type CanvasToolChoice,type PaletteKey,type ShapeFill,type ShapeGeometry} from './canvasShapes.js';
 import {EMBED_CARD_SIZE,MEDIA_CARD_SIZE,embedHost,embedUrlRecord,isCentralPathRef,mediaFileName,type CentralPathRef} from './canvasEmbeds.js';
 import {FRAME_TITLE_MAX,frameTitleRecord} from './canvasFrames.js';
-import {LIVE_BASEMAP_SOURCES,OFFLINE_GROUND_ID} from '../../vendor/research-canvas/packages/canvas/src/psychogeographic/basemapSources';
 import {TIMELINE_CATEGORY_IDS as CATEGORY_IDS} from './timelineCategoryIds';
 import {TOUR_LIMIT,placeTourNameProblem,placeTourProblem,type PlaceTourRecord} from './placeTourRecord.js';
 
@@ -46,7 +45,7 @@ export interface ResearchFrame {label:string;/** lane-1 A9: the owner's heading,
 export interface ResearchNamedView {viewport:ResearchViewport;selectedRefs:string[];frameOrder:string[];basis?:ViewBasis}
 /** lane-4 T20–T21: the Places standing classes a layer can read (the cradle's own vocabulary, placeReading). */
 export type PlaceStanding='factual'|'mythic'|'owner-vocabulary';
-/** lane-4 T20: the basemap rows as a view or the Scene keeps them. Keys are the basemap registry ids (closed; the kernel holds the same list). Never the owner's live-source allowance. */
+/** lane-4 T20: the basemap rows as a view or the Scene keeps them. Keys are the closed basemap ids (PLACE_BASEMAP_IDS; the kernel holds the same list). Never the owner's live-source allowance. */
 export interface PlaceBasemapRecord {terrainVisible:boolean;layers:Record<string,{visible:boolean;opacity:number}>}
 /** lane-4 T20–T21: the Places layer toggles and basemap rows. Absent `relations` or `standing` = every layer on; absent `basemap` = the offline ground only. */
 export interface PlaceLayersRecord {relations?:string[];standing?:PlaceStanding[];basemap?:PlaceBasemapRecord}
@@ -257,10 +256,13 @@ export function validateTimelineView(value:unknown):asserts value is TimelineVie
  require(Array.isArray(value.workingSetRefs)&&value.workingSetRefs.length<=TIMELINE_VIEW_REF_LIMIT&&value.workingSetRefs.every(ref)&&new Set(value.workingSetRefs).size===value.workingSetRefs.length,'Invalid timeline view working set');
 }
 function validateViewport(v:unknown):void{require(object(v),'Invalid research viewport');keys(v,['x','y','zoom','pitch','bearing']);require(finite(v.x,-1e8,1e8)&&finite(v.y,-1e8,1e8)&&finite(v.zoom,.001,1e5)&&(v.pitch===undefined||finite(v.pitch,0,85))&&(v.bearing===undefined||finite(v.bearing,-180,180)),'Research viewport exceeds its bound');}
-/** lane-4 T20: the closed Places vocabularies a view or the layer record admits. The ids are the basemap registry's own; the kernel holds the same list. */
+/** lane-4 T20: the closed Places vocabularies a view or the layer record admits. The kernel holds the same lists. */
 export const PLACE_VIEW_LIMIT=32;
 const PLACE_STANDINGS:readonly PlaceStanding[]=['factual','mythic','owner-vocabulary'];
-const PLACE_BASEMAP_IDS:readonly string[]=[OFFLINE_GROUND_ID,...LIVE_BASEMAP_SOURCES.map(source=>source.id)];
+/** The closed basemap ids: the bundled offline ground, then the retired map's network sources in its stacking order (OpenStreetMap, the
+ * two satellite layers, the place-name overlay). Kept here, beside the material that admits them, when the map's basemap registry and its
+ * psychogeographic folder retired (#762); the kernel holds the same list (desktop/cradle/kernel/src/expression_scene.rs BASEMAP_LAYER_IDS). */
+export const PLACE_BASEMAP_IDS:readonly string[]=['offline-ground','osm-street','eox-sentinel2','esri-imagery','esri-place-names'];
 /** The layer fields of a place view (its toggles and basemap rows); the caller passes only those fields. */
 function validatePlaceLayers(value:Record<string,any>):void{
  keys(value,['relations','standing','basemap']);

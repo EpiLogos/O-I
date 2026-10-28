@@ -4,8 +4,9 @@
  * exactly as the kernel does. The map's capture and restore of a view retired with the map; what moved to the atlas is named in
  * desktop/cradle/docs/world-shell/wayfinder/tickets/T-PLACES-ONTO-ATLAS.md (T20).
  *
- * Pure proof through the esbuild-in-tmp pattern: the material module and the basemap registry it validates against, plus the kernel's
- * validator read from its Rust source.
+ * Pure proof through the esbuild-in-tmp pattern: the material module and the closed basemap ids it validates against (the retired
+ * basemap registry's ids, kept beside the material when the map's psychogeographic folder went, #762), plus the kernel's validator
+ * read from its Rust source.
  */
 import assert from 'node:assert/strict';
 import test from 'node:test';
@@ -17,7 +18,6 @@ import {createRequire} from 'node:module';
 import {pathToFileURL,fileURLToPath} from 'node:url';
 
 const engine=resolve(fileURLToPath(new URL('..',import.meta.url)));
-const canvasDir=resolve(engine,'../vendor/research-canvas/packages/canvas/src/psychogeographic');
 const kernelSource=resolve(engine,'../../kernel/src/expression_scene.rs');
 const require=createRequire(resolve(engine,'../package.json'));
 const {build}=require('esbuild');
@@ -27,7 +27,7 @@ test.before(async()=>{
  const temporary=await mkdtemp(join(tmpdir(),'oi-places-views-'));
  try{
   const out=join(temporary,'places-views.mjs');
-  const entries={material:resolve(engine,'src/researchMaterial.ts'),sources:resolve(canvasDir,'basemapSources.ts')};
+  const entries={material:resolve(engine,'src/researchMaterial.ts')};
   const contents=Object.entries(entries).map(([name,file])=>`export * as ${name} from ${JSON.stringify(file)};`).join('\n');
   await build({stdin:{contents,resolveDir:engine},tsconfig:engine+'/tsconfig.json',bundle:true,platform:'node',format:'esm',outfile:out,logLevel:'warning'});
   api=await import(pathToFileURL(out));
@@ -92,7 +92,7 @@ test('the kernel holds the same closed lists the app does, and admits the same r
   assert.ok(match,`${name} is declared`);
   return [...match[1].matchAll(/"([^"]+)"/g)].map(entry=>entry[1]);
  };
- assert.deepEqual(list('BASEMAP_LAYER_IDS'),[api.sources.OFFLINE_GROUND_ID,...api.sources.LIVE_BASEMAP_SOURCES.map(source=>source.id)]);
+ assert.deepEqual(list('BASEMAP_LAYER_IDS'),[...api.material.PLACE_BASEMAP_IDS],'the material\'s closed basemap ids (moved beside it from the retired basemap registry, #762)');
  assert.deepEqual(list('PLACE_STANDINGS'),['factual','mythic','owner-vocabulary']);
  assert.match(kernel,/"connectors",\s*"placeViews",/,'the top-level keys admit placeViews');
  assert.match(kernel,/fn place_views_are_admitted_bounded_and_closed\(\)/);
@@ -102,4 +102,13 @@ test('no Places view is written from the frame any more: Places is the shell\'s 
  const instruments=read(resolve(engine,'src/researchInstruments.tsx'));
  assert.doesNotMatch(instruments,/place-view-save|place-layers-set|place-tour-save|PsychogeographicMap/);
  assert.match(instruments,/if\(selected==='m4'\)\{message\(PLACES_MOVED\)/,'asked for, the Places lens says where Places went');
+});
+
+test('the frame\'s stylesheets carry no rule of the retired Places map (#762): its surface, toolbar, layers, time control, location panel and street-view dock are gone', ()=>{
+ for(const sheet of ['src/researchInstrumentStyles.css','src/researchInstruments.css']){
+  const css=read(resolve(engine,sheet));
+  assert.doesNotMatch(css,/psychogeographic|places-basemap|places-time|places-location-panel|research-places|research-street-view/,`${sheet} names nothing of the map`);
+ }
+ // the Street View surface is the vendor's own and still drawn (vendor/research-canvas/packages/canvas/src/streetview): its rules stay
+ assert.match(read(resolve(engine,'src/researchInstrumentStyles.css')),/\.street-view-surface/);
 });

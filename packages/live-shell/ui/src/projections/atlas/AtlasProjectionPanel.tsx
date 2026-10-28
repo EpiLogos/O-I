@@ -12,7 +12,7 @@
 //
 // The view (Earth or Graph) has no home in the spine: the spine holds no presentation (projectionModules.ts). It is held
 // here as a mirror of the atlas controller's own mode, which the atlas writes to body[data-mode] (graph/switch.ts). The
-// atlas owns the state; the lens bar reads the mirror.
+// atlas owns the state; the Earth ⇄ Graph device and the plates' View read the mirror.
 
 import {useEffect, useRef, useState, useSyncExternalStore} from 'react'
 import type {KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
@@ -39,6 +39,7 @@ import {followAnchor, pressLocation} from './system/bodyLocations'
 import {enterWorld} from './system/enteredWorld'
 import type {SystemOverlayBinding} from './system/systemOverlay'
 import {bindSystemClock} from './system/systemClock'
+import {watchPaneChrome} from './paneChrome'
 import './atlasHost.css'
 
 /** The year the Earth shows, from the shared window: null while no window is in force (all time). */
@@ -127,7 +128,7 @@ function subscribeView(listener: () => void): () => void {
   return () => { viewListeners.delete(listener) }
 }
 
-/** The view the centre atlas presents, read by the lens bar. */
+/** The view the centre atlas presents, read by the Earth ⇄ Graph device and the plates' View. */
 export function useAtlasView(): AtlasView {
   return useSyncExternalStore(subscribeView, () => desiredView, () => desiredView)
 }
@@ -276,7 +277,7 @@ export interface AtlasAttachOptions {
   element: HTMLElement
   /** the kernel transport the corpus provider reads through */
   transport: KernelTransportStatus
-  /** the centre atlas follows the view the lens bar presents; a projection-kind door holds its own fixed view */
+  /** the centre atlas follows the view the devices present; a projection-kind door holds its own fixed view */
   follow: boolean
   /** the fixed view when not following */
   view?: AtlasView
@@ -462,6 +463,7 @@ async function attachClaimed(options: AtlasAttachOptions, progress: {teardown: (
   let bodyDraw: {dispose(): void} | null = null
   let system: SystemOverlayBinding | null = null
   let systemClock: {dispose(): void} | null = null
+  let chrome: {dispose(): void} | null = null
   // The Sun's words stand in the Info view's hover and on the M4 plate's Sky section (T-PLACES-ONTO-ATLAS), the same words in both.
   const setSunLine = (text: string | null) => {
     words.sun(text)
@@ -488,6 +490,7 @@ async function attachClaimed(options: AtlasAttachOptions, progress: {teardown: (
     bodyDraw?.dispose()
     system?.dispose()
     systemClock?.dispose()
+    chrome?.dispose()
     practiceDreams?.dispose()
     practiceCharts?.dispose()
     cancelReread()
@@ -509,6 +512,10 @@ async function attachClaimed(options: AtlasAttachOptions, progress: {teardown: (
   }
   progress.teardown = unmount
   publishAtlasHandle(mounted)
+  // The pane holds the material alone (#762; manual §16.3, §17.11): the atlas's chrome stands down in it (atlasHost.css) and is read here
+  // as the atlas redraws it — the focus label's acts, the graph's display and the Field's closes for the World, a non-Field lens's title
+  // and controls for the Lens (paneChrome.ts); a change tells the faces, so the World's reading is taken again.
+  chrome = watchPaneChrome(app, () => mounted.ctl.facesChanged?.())
   // The Earth has mounted on its own owners' reads: your dream journal is read now (practice/dreamsHost.ts).
   practiceDreams?.start()
   // Places is the atlas (T-PLACES-ONTO-ATLAS): the shared spatial focus turns it, the M4 plate reads its scale, and the Place tool

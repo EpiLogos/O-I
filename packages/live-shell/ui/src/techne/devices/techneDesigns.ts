@@ -38,6 +38,7 @@ import {useGraphRead} from './graphRead'
 import {canvasCarryingLight, lensBinding, lightBinding} from './effectBindings'
 import {useLivingPlan} from './livingPlan'
 import {useLensRegistry} from './lensRegistry'
+import {usePaneChrome} from '../../projections/atlas/paneChrome'
 
 /** Each instrument's chain on the rack: the design that is the instrument (where the instrument is not the holder's own plate, the
  * World of the Project and of World / Places, or the Timeline since its design was retired), then its effects, left to right. The Timeline's design (its head) and Light were
@@ -143,8 +144,10 @@ export function useTechneDesignBindings({graph, surface}: {graph: boolean; surfa
   const read = useMemo(() => (surface ? surfaceRead(surface) : rootRead), [surface, rootRead])
   // The Aperture page: QL's living-wiki plan for the request the graph's design holds (livingPlan.ts).
   const plan = useLivingPlan(holds[GRAPH_DESIGN])
-  // The Lens: QL's lens registry, frames and provider operations, read once (lensRegistry.ts).
+  // The Lens: QL's lens registry, frames and provider operations, read once (lensRegistry.ts); and a lens's own title and controls, as the
+  // Earth pane drew them before it stood them down (projections/atlas/paneChrome.ts; O-I ticket 762).
   const lensLists = useLensRegistry()
+  const lensPane = usePaneChrome('lens')
   // The graph's reach: what the browser's selected folder, note or Day reaches, through Impact's legs.
   const reach = useGraphReach(graph)
   return useMemo(() => {
@@ -154,8 +157,8 @@ export function useTechneDesignBindings({graph, surface}: {graph: boolean; surfa
       [PALACE_DESIGN]: palaceBinding(palace, heldFor(PALACE_DESIGN), SESSION_ACTS, palaceWorld),
       [CANVAS_DESIGN]: canvasCarryingLight(canvasBinding(frame, heldFor(CANVAS_DESIGN)), LIGHT),
       [JOURNEY_DESIGN]: journeyBinding(frame),
-      [LENS_DESIGN]: lensBinding(lensLists, heldFor(LENS_DESIGN)),
+      [LENS_DESIGN]: lensBinding(lensLists, heldFor(LENS_DESIGN), lensPane),
       [GRAPH_DESIGN]: graphBinding(surface, read, GRAPH_WRITES, heldFor(GRAPH_DESIGN), plan, reach),
     }
-  }, [palace, palaceWorld, holds, hosted, session, read, surface, plan, lensLists, reach])
+  }, [palace, palaceWorld, holds, hosted, session, read, surface, plan, lensLists, lensPane, reach])
 }

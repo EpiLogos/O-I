@@ -40,7 +40,6 @@ const host = await import('../src/projections/timelinePaneHost.ts')
 const pane = await import('../src/projections/timelinePane.tsx')
 const {projectionModule} = await import('../../../../desktop/cradle/src/surface/projectionModules.ts')
 const {factoryFocusedPane, deviceInstrumentFor} = await import('../src/shell/paneInstrument.ts')
-const {LENSES, factoryLensPane} = await import('../src/shell/ModeDetail.tsx')
 
 const app = await readFile(new URL('../src/App.tsx', import.meta.url), 'utf8')
 const html = element => renderToStaticMarkup(element)
@@ -113,14 +112,10 @@ test('a focused tracks pane holds no instrument of its own: its Device side is t
   }
 })
 
-test('the Timeline and Journey lenses reach the one Timeline pane kind, and the lens presentation is what the pane presents', () => {
-  for (const id of ['timeline', 'journey']) {
-    const lens = LENSES.find(item => item.id === id)
-    assert.equal(factoryLensPane(lens), 'projection.timeline')
-  }
-  assert.equal(LENSES.find(item => item.id === 'timeline').presentation, 'arrangement')
-  assert.equal(LENSES.find(item => item.id === 'journey').presentation, 'session')
-})
+// Retired with the Technē lens bar (#762: ModeDetail's TechneLensBar, LENSES and factoryLensPane were reached only by tests): 'the Timeline
+// and Journey lenses reach the one Timeline pane kind, and the lens presentation is what the pane presents' → factory-instrument-panes.test.mjs
+// 'the Timeline and the Journey are the one Timeline pane: opened twice, it stands once' and, above, 'a focused tracks pane holds no
+// instrument of its own' (the pane presents arrangement and session itself).
 
 test('App publishes the frame\'s reading through the door, with the mode it stands in; the lens bar and the World cut residence are gone (F2, F3)', () => {
   assert.match(app, /registerTimelineHost\(\)/)

@@ -34,7 +34,7 @@ export async function load(u, c, n) {
 
 const {instrumentOfPane, deviceInstrumentFor, HOSTED_INSTRUMENT, BAR_LENS_OF_HOSTED, hostedLensOfBarId} = await import('../src/shell/paneInstrument.ts')
 const {TECHNE_INSTRUMENTS} = await import('../src/inhabitants/sdk/semantics.ts')
-const {TechneInstrumentsDetail, InstrumentDeviceDetail, BaseDevicesDetail, TechneLensBar} = await import('../src/shell/ModeDetail.tsx')
+const {TechneInstrumentsDetail, InstrumentDeviceDetail, BaseDevicesDetail} = await import('../src/shell/ModeDetail.tsx')
 
 const html = element => renderToStaticMarkup(element)
 const transport = {kind: 'unavailable', reason: 'the test carrier is down'}
@@ -227,34 +227,9 @@ test('Expressions mode keeps its own native rack on its own panes, whatever lens
   assert.equal(deviceInstrumentFor('expressions', 'native.arrangement', 'arrangement', 'graph', 'timeline'), null)
 })
 
-const pressedBars = out => [...out.matchAll(/aria-pressed="true"/g)].length
-const barOf = out => (out.match(/data-lens="([^"]+)"/) ?? [])[1] ?? null
-const disabledCount = out => [...out.matchAll(/ disabled=""/g)].length
-
-test('the lens bar over the hosted pane presses the hosted lens and nothing else', () => {
-  for (const [lens, barId] of [['project', 'project-graph'], ['canvas', 'canvas'], ['timeline', 'timeline'], ['journey', 'journey'], ['place', 'places'], ['palace', 'palace']]) {
-    const out = html(createElement(TechneLensBar, {presentation: 'arrangement', atlasOpen: false, onLens() {}, hosted: {lens}}))
-    assert.equal(barOf(out), barId, `hosted ${lens} presses ${barId}`)
-    assert.equal(pressedBars(out), 1, `one press for hosted ${lens}`)
-    assert.match(out, /data-hosted="true"/)
-  }
-})
-
-test('over the hosted pane every lens entry is reachable (each names a hosted lens), so none is disabled', () => {
-  const out = html(createElement(TechneLensBar, {presentation: 'session', atlasOpen: false, onLens() {}, hosted: {lens: 'canvas'}}))
-  assert.equal(disabledCount(out), 0, 'the hosted lenses all stand on this bar')
-})
-
-test('the hosted pane with no lens reported presses nothing', () => {
-  const out = html(createElement(TechneLensBar, {presentation: 'session', atlasOpen: false, onLens() {}, hosted: {lens: null}}))
-  assert.equal(pressedBars(out), 0)
-  assert.equal(barOf(out), null)
-})
-
-test('the World cut and Earth bar is unchanged when no hosted pane is focused', () => {
-  const world = html(createElement(TechneLensBar, {presentation: 'arrangement', atlasOpen: false, onLens() {}}))
-  assert.equal(barOf(world), 'timeline', 'the World arrangement presses Timeline, as before')
-  assert.doesNotMatch(world, /data-hosted=/)
-  assert.equal(disabledCount(world), 2, 'Canvas and Palace still hold their places, waiting')
-  // The atlas press (Project / graph or Places) is pinned by atlas-host.test.mjs, which sets the atlas view.
-})
+// The Technē lens bar retired (#762: ModeDetail's TechneLensBar was reached only by tests; App draws no lens bar, pane-instrument-app.test.mjs).
+// Retired: 'the lens bar over the hosted pane presses the hosted lens and nothing else', 'over the hosted pane every lens entry is
+// reachable …', 'the hosted pane with no lens reported presses nothing' and 'the World cut and Earth bar is unchanged when no hosted pane is
+// focused' → 'the hosted Expressions pane follows the hosted lens in every mode the ruling covers' above (the instrument the frame's lens
+// stands in is the one the rack opens, nothing for no lens reported) and f2-panes.test.mjs 'the Instruments list names instruments …' (the
+// browser's Instruments open each instrument; a waiting one is not listed).

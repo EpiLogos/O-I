@@ -102,3 +102,54 @@ test('mount binds the field’s labels before the controller draws, and unbinds 
   assert.ok(bind < mount.indexOf('new Controller('), 'before the controller is built')
   assert.equal(mount.split('setProviderLabels(null)').length - 1, 2, 'released on dispose and on a failed mount')
 })
+
+// Carried from #755 to #762: the Technē devices outside the port named the founding corpus in their own copy (the World design's
+// graph legend and its first Ties flag, the Project plate's relation keys, the declared ties row). Each reads the provider's word for
+// its first basis (data/labels.ts basisOwn, bound by mount.ts from field.meta.provider.labels), never a name of its own.
+const DEVICES = ['inhabitants/catalogue/panels/atlas-earth__globe-engine.tsx', 'inhabitants/ql/devices/ProjectPlate.tsx', 'inhabitants/agentNativeP0.ts']
+  .map(path => new URL(`../src/${path}`, import.meta.url))
+
+test('no Technē device outside the port names the founding author in its copy', async () => {
+  const found = []
+  for (const url of DEVICES) {
+    const file = ts.createSourceFile(url.pathname, await readFile(url, 'utf8'), ts.ScriptTarget.Latest, true)
+    const visit = node => {
+      const text = ts.isJsxText(node) ? node.getText() : (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node) || ts.isTemplateHead(node) || ts.isTemplateMiddle(node) || ts.isTemplateTail(node)) ? node.text : null
+      // a value key (`tieJung`) is a data-shape id, not copy: only words a person reads count
+      if (text !== null && /Jung/.test(text) && !/^[a-z][A-Za-z]*$/.test(text)) found.push(`${url.pathname.split('/src/')[1]}:${file.getLineAndCharacterOfPosition(node.getStart()).line + 1} ${text.trim().slice(0, 60)}`)
+      ts.forEachChild(node, visit)
+    }
+    visit(file)
+  }
+  assert.deepEqual(found, [])
+})
+
+test('the World design, the Project plate and the declared ties row read the provider’s word for the first basis', async () => {
+  const {createElement} = await import('react')
+  const {renderToStaticMarkup} = await import('react-dom/server')
+  const {design} = await import('../src/inhabitants/catalogue/panels/atlas-earth__globe-engine.tsx')
+  const door = await import('../src/inhabitants/familyManifest.ts')
+  const {loadAgentShellFamilies} = await import('../src/inhabitants/loadAgentShellFamilies.ts')
+  const {adoptVerifiedRows} = await import('../src/inhabitants/sdk/adoptVerifiedRows.ts')
+  const {loadAgentNativeP0} = await import('../src/inhabitants/agentNativeP0.ts')
+  const {sdkParamRows} = await import('../src/inhabitants/sdk/define.ts')
+  door.resetFamilyManifestsForTest()
+  loadAgentShellFamilies()
+  adoptVerifiedRows()
+  loadAgentNativeP0()
+  const graph = () => renderToStaticMarkup(design.whole({v: design.defaults, set() {}, nav: {}, page: 'graph', setPage() {}}))
+  const full = () => renderToStaticMarkup(design.full({v: {...design.defaults, view: 'graph'}, set() {}, nav: {}, page: 'space', setPage() {}}))
+  const tiesRow = () => sdkParamRows('atlas-earth').find(row => row.deviceInstance === 'graph-tools' && row.key === 'ties').disclosure
+  setProviderLabels({basisOwn: 'The Founder'})
+  try {
+    assert.match(graph(), />The Founder</, 'the first Ties flag is the provider’s word')
+    assert.match(full(), /Ties: The Founder solid/, 'the graph legend names the first basis by the provider’s word')
+    assert.match(tiesRow(), /The Founder, Inferred, Site/, 'the declared ties row names the bases as the provider does')
+  } finally {
+    setProviderLabels(null)
+  }
+  assert.match(graph(), new RegExp(`>${NEUTRAL_LABELS.basisOwn}<`), 'unbound, the neutral word')
+  assert.match(full(), new RegExp(`Ties: ${NEUTRAL_LABELS.basisOwn} solid`))
+  const plate = await readFile(DEVICES[1], 'utf8')
+  assert.match(plate, /DEFAULT_TIE_BASES/, 'the Project plate’s relation keys fall back to the port’s own bases, whose first is the provider’s word')
+})
