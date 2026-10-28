@@ -2316,6 +2316,12 @@ async function runStageCommand(command:StageCommand){
    if(!nativeField)throw new Error('This application has no native instrument.');
    await nativeField.playJanko(command.pitch_classes,command.amplitude);
    break;
+  case 'strike-at':
+   // A strike at points of the torus (DLW §21.2 "What strikes the Torus"): the owner's own strike at those points, through the native
+   // field's controller (controller.ts playAt), as a touch on the stage strikes. Never synthesised.
+   if(!nativeField)throw new Error('This application has no native instrument.');
+   await nativeField.controller.playAt(command.points,command.amplitude);
+   break;
   case 'instrument':
    // The Live instrument's edits run the native field's own controller operations (nativeField.ts command): the same path as the Studio's controls.
    if(!nativeField)throw new Error('This application has no native instrument.');

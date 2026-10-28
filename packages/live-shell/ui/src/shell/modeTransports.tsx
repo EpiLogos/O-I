@@ -29,6 +29,8 @@ import {useSittingTransport} from '../inhabitants/ql/devices/qlSitting'
 import {civilDayLabel} from './transports/transportReadings'
 import {civilDateOfDayRef} from '../central/centralVertical'
 import {useAtlasTimeBindings} from '../projections/atlas/places/placesTransport'
+import {useLiveClipPlay} from '../live/clipPlayer'
+import {useOptionalContinuity} from '../continuity/workspace'
 import {usePalaceWalkBindings} from '../projections/atlas/palaces/palaceTransport'; import {useFramePresentation} from '../components/expressions/studio/framePresentation'
 
 /** What the bindings read from the frame: the mode's real readouts, the World's time spine, the focused instrument, Live's set. */
@@ -68,7 +70,11 @@ const useLiveTransport: UseModeTransport = ({tempoBpm}) => {
   const {reading, hold, refresh, groups, mode, line} = useLiveModeInForce()
   const ready = reading.state === 'ready'
   const choice = mode.state === 'in-force' ? mode.selection : null
+  // Play and Stop (manual §21.2 Transport, "Play | Plays the clips of the part on the torus"; Views, "In Clip view, the Torus plays the
+  // notes of the clip that you select"): the clip THE selection names, at the set's tempo.
+  const clip = useLiveClipPlay(useOptionalContinuity()?.current.context?.selection, tempoBpm)
   return {
+    ...clip,
     tempo: {readout: {value: tempoBpm?.toFixed(2) ?? '—', title: 'Tempo — the set\'s tempo · document read-only until the editing owner lands'}},
     root: {control: <select aria-label="Root note" title={`Root — the mode in force's root. ${line}`} disabled={!ready}
       value={ready ? String(hold.root) : ''} onChange={event => setLiveModeHold({root: Number(event.target.value)})}>
