@@ -194,7 +194,8 @@ test('the Timeline follows the nudge through its own render path; spatial writes
   assert.match(source, /if\(sharedTime\)followSharedTime\(\(\)=>render\(canvasNode2\(\)\)\);\s*render\(canvasNode2\(\)\);return;/, 'the Timeline follows, re-rendering through canvasNode2');
   // T-PLACES-ONTO-ATLAS: the frame's Places lens retired with its map; Places is the shell's Earth atlas, which follows the shared window
   // through its own clock (packages/live-shell/ui/tests/atlas-time-binding.test.mjs). Asked for, the frame's lens reads and follows nothing.
-  assert.match(source, /if\(selected==='m4'\)\{message\(PLACES_MOVED\);[^\n]*return;\}/, 'the retired Places lens follows nothing');
+  // REPLACED (#762): the unreachable 'm4' branch is gone, so no Places lens is left to follow anything (instrument-focus-ref.test.mjs).
+  assert.doesNotMatch(source, /selected==='m4'/, 'no retired Places lens is left to follow');
   assert.doesNotMatch(source, /renderPlaces/, 'no Places render path is left to follow');
   assert.match(source, /offSharedTimeNudges\?\.\(\);\s*offSharedTimeNudges=followSharedTimeNudges\(/, 'one follower at a time');
   assert.match(source, /destroy\(\)\{\+\+epoch;offSharedTimeNudges\?\.\(\);offSharedTimeNudges=null;/, 'destroy tears it down first');

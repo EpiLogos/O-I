@@ -229,8 +229,9 @@ function TrailControl({initial,listen,control}:{initial:TraversalFold|null;liste
  useEffect(()=>{listen(setTrail);},[]);
  return <>{control(trail)}</>;
 }
-/** 'm4' stays the app's instrument id while the frame's app.ts still names it; it opens no map (T-PLACES-ONTO-ATLAS, below). */
-export type ResearchInstrument='m1'|'m2'|'m4';
+/** The research lenses the frame opens: the Canvas (m1) and the Timeline (m2). REMOVED (#762): 'm4', the retired Places lens, which app.ts
+ * no longer opens — the place lens says where Places went instead (app.ts `if(lens==='place')toast(PLACES_MOVED,8000)`). */
+export type ResearchInstrument='m1'|'m2';
 /** T-PLACES-ONTO-ATLAS: Places is the Archetypal-Earth atlas, alone (owner, 14 Oct; FOUNDATION §4). The frame's Places map, its overlays
  * and its lens retired; World / Places is the shell's Earth pane, its controls on the World plate and the one transport
  * (packages/live-shell/ui/src/projections/atlas/places/). What this lens says when it is asked for. */
@@ -256,8 +257,6 @@ async function writeSharedSpatialFocusNow(basis:NativeTimeWindowBasis,reading:Te
 export interface ResearchInstrumentsHost {
  container:HTMLElement;
  tools:HTMLElement; inspector:HTMLElement;
- /** No longer read: the frame's Places lens retired (T-PLACES-ONTO-ATLAS). Kept while the frame's app.ts still passes it. */
- placesHome?:HTMLElement;
  /** The Studio's Canvas section: source focus, frames and saved views. */
  canvasHome?:HTMLElement;
  /** Page the Scene's loaded members (the renderer window) through the native
@@ -1070,8 +1069,6 @@ host.tools.append(saveGlyph);
  async function load(selected:ResearchInstrument){
   const generation=++epoch;unmount();mount.hidden=false;message('Reading…');
   const focusRef=pendingFocus;pendingFocus=undefined;
-  // T-PLACES-ONTO-ATLAS: the Places lens retired with the frame's map; asked for, it says where Places went, and reads nothing.
-  if(selected==='m4'){message(PLACES_MOVED);render(<p className="research-instrument-message" role="note">{PLACES_MOVED}</p>);return;}
   try{
    const view=host.nativeView(),sceneId=host.sceneId();
    const sameBasis=()=>{const now=host.nativeView();return host.sceneId()===sceneId&&now?.document.expression_ref===view?.document.expression_ref&&now?.document.revision===view?.document.revision;};

@@ -54,6 +54,17 @@ test("the Expression-wide payload binds every Scene in document order, validates
   assert.equal(model.unavailableReason, undefined);
 });
 
+// O-I #761 (manual §17.7 Return: "It sends them to the route that the reading names for new knowledge"): the Expression-wide reading a
+// Palace stands on names the register's route for new knowledge — Central's receiving, the wiki's one door — as its governed write.
+test("the Expression-wide reading names the register's route for new knowledge: Central's receiving, a governed write", () => {
+  const payload = wikiExpressionReadingPayload({register: REGISTER, reading: READY, document: DOCUMENT});
+  const governed = payload.actions.filter(action => action.authority === "governed-write");
+  assert.deepEqual(governed.map(action => [action.action_ref, action.native_owner]), [["central.receiving.submit", "central"]]);
+  assert.match(governed[0].summary, /proposal/);
+  assert.equal(payload.snapshot.basis_ref, "central:source:Control/agents/wiki/wiki.json", "the sources the Return is proposed to");
+  assert.equal(validateReading(payload).valid, true);
+});
+
 test("an Expression with no scenes yields no beats and the honest reason, never a beat", () => {
   const payload = wikiExpressionReadingPayload({register: REGISTER, reading: READY, document: {...DOCUMENT, scenes: []}});
   assert.deepEqual(validateReading(payload).errors, []);

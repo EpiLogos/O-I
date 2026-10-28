@@ -86,7 +86,7 @@ const reading = () => {
 const opened = []
 const OWNERS = {
   inspect: async () => structuredClone(DOC), readWhole: async () => reading(), list: async () => [{expression_ref: 'expression:gate', title: 'Gate', revision: 1}],
-  edit: async () => ({state: 'ready', document: DOC}), invoke: async () => ({state: 'refused', reason: 'not here'}), hold: async () => EXPR,
+  edit: async () => ({state: 'ready', document: DOC}), receiving: async () => { throw Error('not here') }, hold: async () => EXPR,
   projection: () => ({overviewSceneRef: OVERVIEW, constellations: [{sceneRef: STONE}]}), storage: () => null, session: createDisclosureSessionStore(),
   open: {expression: ref => { opened.push(ref); return 'opened' }, scene: () => 'opened', subject: () => 'opened', instrument: () => 'opened', source: () => 'opened'},
 }

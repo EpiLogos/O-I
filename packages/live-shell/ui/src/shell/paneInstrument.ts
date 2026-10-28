@@ -10,8 +10,8 @@
  * that already pairs lenses with panels:
  * - projection.earth → techne:m0 (Project): the Earth and solar system with
  *   the atlas's Graph view. Its two atlas views, Earth and Graph, are the one
- *   0 instrument (lock §8.1; the lens bar's Project / graph and Places lenses
- *   both stand on this pane, App.tsx `atlasOpen`).
+ *   0 instrument (lock §8.1; the Project / graph and Places views both stand
+ *   on this pane, App.tsx `atlasOpen`).
  * - world.knowledge → 'knowledge-graph': the wiki-constellation knowledge
  *   graph, a standalone instrument (owner correction, 13 Oct 2026). It is
  *   not the 0 instrument, and it has no device face declared yet: its Device
@@ -28,10 +28,10 @@
  * - native.workbench, native.agent, world.settings, documents and any other
  *   pane hold no instrument → null.
  *
- * Lens bar (owner ruling, lock §0.1: the Device side and the lens follow the
- * focused pane): when the hosted Expressions pane stands focused, the bar
- * reads and drives the hosted lens. The two vocabularies differ in two ids,
- * mapped in one table here (BAR_LENS_OF_HOSTED); the rest are identical.
+ * Lens bar: retired (#762) with shell/ModeDetail.tsx's TechneLensBar; a lens's
+ * controls stand on the Lens (manual §17.11), and the hosted lens the frame
+ * reports is read through HOSTED_INSTRUMENT alone. Its two-way table of bar ids
+ * (HOSTED_LENS_OF_BAR_ID, BAR_LENS_OF_HOSTED, hostedLensOfBarId) went with it.
  *
  * Mode gates. Live keeps its audio device chain whatever pane is focused: that
  * is MODE_DETAILS.live.ownsDeviceSide (shell/modeDetails.tsx), applied once, by
@@ -69,28 +69,6 @@ export const HOSTED_INSTRUMENT: Readonly<Record<HostedLens, TechneInstrumentId>>
   journey: 'techne:m3',
   place: 'techne:m4',
   palace: 'techne:m5',
-}
-
-/** The Technē lens bar's id → the hosted lens id, where the two vocabularies differ. Every other bar id is the hosted id. */
-export const HOSTED_LENS_OF_BAR_ID: Readonly<Record<string, HostedLens>> = {
-  'project-graph': 'project',
-  places: 'place',
-}
-
-/** The hosted lens → the Technē lens bar's id: the one table both directions read. */
-export const BAR_LENS_OF_HOSTED: Readonly<Record<HostedLens, string>> = {
-  project: 'project-graph',
-  canvas: 'canvas',
-  timeline: 'timeline',
-  journey: 'journey',
-  place: 'places',
-  palace: 'palace',
-}
-
-/** The hosted lens a lens bar entry drives, or null when the entry names no hosted lens. */
-export function hostedLensOfBarId(barId: string): HostedLens | null {
-  if (barId in HOSTED_LENS_OF_BAR_ID) return HOSTED_LENS_OF_BAR_ID[barId]
-  return (Object.keys(BAR_LENS_OF_HOSTED) as HostedLens[]).find(lens => BAR_LENS_OF_HOSTED[lens] === barId) ?? null
 }
 
 /** The centre panels whose device side stays the mode's own native rack, by mode (a registration, never a branch): in

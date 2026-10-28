@@ -160,6 +160,8 @@ export type KernelChange =
  |{change:"entity_add";scene_ref:string;entity_ref:string;title:string}
  |{change:"entity_remove";entity_ref:string}
  |{change:"entity_pin";entity_ref:string;pinned:boolean}
+ /** O-I #761: a Scene marked private (a Palace's private room) or open again — the Scene's own flag, as a pin is the entity's. */
+ |{change:"scene_private";scene_ref:string;private:boolean}
  |{change:"subject_bind";entity_ref:string;binding:KernelSubject}
  |{change:"subject_unbind";entity_ref:string}
  |{change:"parameter_set";entity_ref:string;parameter:string;value:string|number}
@@ -281,6 +283,8 @@ export function documentToChanges(current:unknown,edited:unknown):{changes:Kerne
  for(const [ref,scene] of editedScenes){
   const before=currentScenes.get(ref);
   if(before&&before.title!==scene.title)changes.push({change:'scene_rename',scene_ref:ref,title:String(scene.title??'')});
+  // O-I #761: a Scene's privacy rides as its own change (a created Scene starts open, so only a private one says so).
+  if(Boolean(before?.private)!==Boolean(scene.private))changes.push({change:'scene_private',scene_ref:ref,private:Boolean(scene.private)});
  }
  // The kernel appends created scenes, so after the removals and creations it
  // holds the surviving refs in their current order, then the created refs.

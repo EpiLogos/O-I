@@ -621,6 +621,7 @@ impl Serialize for SceneMetadata<'_> {
             performance: _,
             body,
             triggers,
+            private: _,
         } = self.0;
         let mut out = s.serialize_map(Some(5 + usize::from(presentation.is_some())))?;
         if let Some(presentation) = presentation {

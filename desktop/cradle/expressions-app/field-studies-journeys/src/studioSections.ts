@@ -6,8 +6,10 @@ export const STUDIO_SECTIONS = [
   ['relational', 'Relational forces'], ['collision', 'Collision & medium'], ['motion', 'Morph'], ['focus', 'Travelling focus'],
   ['appearance', 'Colour & material'], ['volume', '3D body & depth'], ['resonance', 'Resonance'], ['automation', 'Automation'],
   ['layout', 'Arrangement'], ['text', 'Page text'], ['native', 'Live instrument'], ['blueprint', 'Blueprint'],
-  ['canvas', 'Canvas views'], ['places', 'Places'], ['scene', 'Scene settings'],
+  ['canvas', 'Canvas views'], ['scene', 'Scene settings'],
 ] as const
+// REMOVED (#762): the empty 'places' section. Places is the shell's Earth atlas (T-PLACES-ONTO-ATLAS): asked for, the frame says where it
+// went (app.ts `if(lens==='place')toast(PLACES_MOVED,8000)`), and the World plate holds its controls.
 export type StudioSection = (typeof STUDIO_SECTIONS)[number][0]
 
 const SECTION_IDS: ReadonlySet<string> = new Set(STUDIO_SECTIONS.map(([id]) => id))

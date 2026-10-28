@@ -3,10 +3,12 @@
 // and sections ruled off beside it. The picture is the owner's own floor (projections/atlas/palaces/PalaceFloor.tsx): rooms of
 // 220 × 150 board units at the board's own default points (palacesModel / board.ts defaultBoardPoint: three to a row, a 300 stride),
 // the path between the rooms' doors, the room the walk stands in, objects in each room (four at most, as the owner shows them) and a
-// region's one Expression as a door. The controls front palaceSession.ts: Path (:440), Guide (:444), Snap (:435), the walk (:325,
-// :340, :334), bookmarks (:370, :382), the Return (:579, :594, :587) and Leave (:288). Floor, Order, Lines and Audience have no owner
-// operation yet (PalacePlate.tsx:139-180); the fixed floor takes the owner's own shape, three rooms across and two down with four
-// places in each (composition.ts PALACE_ROOMS, PALACE_LOCI_PER_ROOM).
+// region's one Expression as a door. The controls front palaceSession.ts: Path (:486), Guide (:490), Snap (:481), the walk (:354,
+// :369, :363), bookmarks (:416, :428), the Return (:673, :738, :724) and Leave (:312). Floor and Audience are the session's own (setArrangement,
+// setAudience; O-I 761): the fixed floor takes the owner's own shape, three rooms across and two down with four places in each
+// (composition.ts PALACE_ROOMS, PALACE_LOCI_PER_ROOM; palacesModel.ts lociFloor), and a private room stays under cloud for Field and
+// Public. Order and Lines have no owner operation of their own. The Return goes to the route the reading names, Central's receiving: Propose
+// sends it as a proposal with your name, and Accept and Refuse are the owner's answer, read back (palaceReturn.ts).
 //
 // Everything the picture shows is a value. `rooms` is a JSON list, in the owner's Scene order (the overview, the constellations of the
 // register's wiki, the hand-made regions): each room is {key, name, short, kind, members, more, holds?, private?}. Where a room stands
@@ -68,9 +70,9 @@ const RESTS: Readonly<Record<string, string>> = {warranted: 'warranted', owner: 
 const restsWord = (v: V): string | undefined => { const r = strOf(v, 'rests'); return r === undefined ? undefined : RESTS[r] ?? r }
 /** A room's corner line: its kind, and what it rests on where the owner says. */
 const roomLine = (v: V, room: Room | undefined) => [room?.kind ?? NONE, restsWord(v)].filter(Boolean).join(' · ')
-const RETURN_WORDS: Record<string, string> = {none: 'none', routed: 'proposed', unrouted: 'no route', accepted: 'sent', refused: 'refused'}
+const RETURN_WORDS: Record<string, string> = {none: 'none', routed: 'proposed', unrouted: 'no route', accepted: 'accepted', refused: 'refused'}
 /** The same states in a widget's big readout, four letters at most. */
-const RETURN_SHORT: Record<string, string> = {none: '—', routed: 'wait', unrouted: 'void', accepted: 'sent', refused: '—'}
+const RETURN_SHORT: Record<string, string> = {none: '—', routed: 'wait', unrouted: 'void', accepted: 'kept', refused: '—'}
 const NO_ROOM = 'No reading of your room.'
 const NO_RETURN = 'No reading of the Return.'
 
@@ -288,8 +290,8 @@ const routeText = (v: V) => strOf(v, 'route') || NONE
 /** The Return, in a line: what the owner says of it. */
 function returned(v: V): string {
   const state = strOf(v, 'proposal'), route = routeText(v)
-  return state === 'routed' ? `Return proposed to ${route}: it waits for you.` : state === 'unrouted' ? 'Return: the reading names no route. Nothing was sent.'
-    : state === 'accepted' ? `Return sent to ${route}. The owner decides.` : state === 'refused' ? 'Return refused. Nothing was sent.' : state === 'none' ? 'Return: nothing proposed.' : NO_RETURN
+  return state === 'routed' ? `Return proposed on ${route}: it waits for the owner's answer.` : state === 'unrouted' ? 'Return: the reading names no route. Nothing was sent.'
+    : state === 'accepted' ? `Return accepted on ${route}, with the owner's receipt.` : state === 'refused' ? 'Return refused. Nothing changed in the sources.' : state === 'none' ? 'Return: nothing proposed.' : NO_RETURN
 }
 
 function Floor({v}: {v: V}) {
@@ -444,17 +446,17 @@ const deleteMark = (p: ViewProps) => {
 const propose = (p: ViewProps, label = 'Propose') => {
   const own = st(p, 'propose'), unrouted = strOf(p.v, 'proposal') === 'unrouted'
   return <Action {...own} refused={own.refused ?? (unrouted ? 'The reading names no route. Nothing was sent.' : undefined)} label={label}
-    does="Shapes the objects, in the order you arranged them, as a proposal with your name. Nothing is written." onPress={() => p.set('propose', true)} />
+    does="Sends the objects, in the order you arranged them, to the route the reading names, as a proposal with your name. No source is written." onPress={() => p.set('propose', true)} />
 }
 const accept = (p: ViewProps) => {
   const state = strOf(p.v, 'proposal')
   return <Action {...stand(p, 'accept', state === undefined ? NO_RETURN : state === 'routed' ? undefined : 'Propose first. The reading must name a route.')} label="Accept"
-    does="Sends the proposal to its route. The owner of the sources decides." onPress={() => p.set('accept', true)} />
+    does="The owner of the sources accepts the proposal: it lands, with the owner's receipt." onPress={() => p.set('accept', true)} />
 }
 const refuse = (p: ViewProps) => {
   const state = strOf(p.v, 'proposal')
   return <Action {...stand(p, 'refuse', state === undefined ? NO_RETURN : state === 'routed' ? undefined : 'No proposal waits.')} label="Refuse"
-    does="Sets the proposal aside. Nothing is sent." onPress={() => p.set('refuse', true)} />
+    does="The owner of the sources refuses the proposal. Nothing changes in the sources." onPress={() => p.set('refuse', true)} />
 }
 const leave = (p: ViewProps) => <Action {...st(p, 'leave')} label="Leave" does="Leaves the palace for the Earth." onPress={() => p.set('leave', true)} />
 
@@ -629,8 +631,9 @@ export const design: DesignedDevice = {
     at: 0, draft: '', bookmarks: 'Start of the argument~overview',
     // The board's held points, by room: ai-kit and personal were swapped by hand; the rest stand where the board puts them.
     x0: 100, y0: 100, x1: 400, y1: 100, x2: 700, y2: 100, x3: 400, y3: 400, x4: 100, y4: 400, x5: 700, y5: 400,
-    // Readings: what the owner reports, never set from here. The wiki reading names no governed-write route (wikiReadingProvider.ts:140).
-    route: '', proposal: 'none', gone: false,
+    // Readings: what the owner reports, never set from here. The register's reading names Central's receiving as its route for new
+    // knowledge (wikiReadingProvider.ts knowledgeReturnAction).
+    route: 'central.receiving.submit', proposal: 'none', gone: false,
     // The walk locus by locus and the guide's words, in the shapes of the owner's proving reading (journey/proving-reading.ts through
     // whole.ts palaceWalkSteps and palaceStanding): 23 loci, the first in the ground region.
     locus: 0, loci: 23, office: 'Project / ground', rests: 'free',
@@ -669,7 +672,7 @@ export const design: DesignedDevice = {
   },
   fixtures: {
     'The Central palace': {},
-    'A routed Return': {route: 'aikit.wiki.stage', proposal: 'routed', at: 3},
+    'A routed Return': {proposal: 'routed', at: 3},
     'The fixed floor': {floor: 'loci', at: 2, gone: true},
     // Outside every palace: the Enter page lists the world's palaces; nothing of a palace is read.
     'Outside, choosing a palace': {light: 'dark', ...Object.fromEntries(['palace', 'rooms', 'floor', 'path', 'guide', 'snap', 'lines', 'at', 'bookmarks', 'route', 'proposal', 'gone',

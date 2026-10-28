@@ -5,9 +5,12 @@
 //   - the kernel Expression owner, through the same `kernel-expression` channel the frame's Palace lens called
 //     (field-studies-journeys/src/kernelExpressions.ts:122 listKernelExpressions, :128 readKernelExpression, :460 nativeExpressionRequest
 //     — the frame's edit at app.ts:2737), answered by the owner adapter the shell already builds for the hosted frame
-//     (packages/expressions-boundary/src/cradle.ts createCradleOwners): `inspect`, `list`, the one CAS-gated `edit`, and the routed
-//     Return's `invoke_action` (cradle.ts:124, the ke-invoke route: the owner re-reads the reading the proposal came from, decides,
-//     and only then dispatches through the kernel's action seam);
+//     (packages/expressions-boundary/src/cradle.ts createCradleOwners): `inspect`, `list` and the one CAS-gated `edit` (a Save's plan,
+//     and a room's privacy, O-I 761);
+//   - Central's receiving, the Return's route (O-I 761; desktop/cradle/src/receiving/client.ts `receiving`, the kernel's `receiving` op
+//     that Nara's quotation into the Day also takes, nara/nativeReturn.ts): the Return is submitted there, answered there and read back
+//     there. It replaced the routed Return's `invoke_action` (cradle.ts:124, the ke-invoke route), which named an action the register's
+//     reading never disclosed as a governed write;
 //   - the owner's integral reading through the same adapter's `techne-reading` channel (cradle.ts `readWikiSceneTechne`, scope
 //     "expression"), the reading the frame's Palace read at :629;
 //   - the register's Expression opened by its own owner when the kernel does not hold it yet
@@ -25,6 +28,7 @@
 import type {KernelTransportStatus} from '../../../../../../../desktop/cradle/src/kernel/types'
 import type {TechneInstrument} from '../../../../../../../desktop/cradle/src/techne/contract'
 import {disclosureSession} from '../../../../../../../desktop/cradle/src/techne/session'
+import {receiving} from '../../../../../../../desktop/cradle/src/receiving/client'
 import {getWikiProjectionState, requestWikiSelection, wikiProjectionOf} from '../../../../../../../desktop/cradle/src/techne/wikiProjectionStore'
 import {ensureWikiNativeExpression} from '../../../../../../../desktop/cradle/src/techne/wikiNativeExpression'
 import type {ChannelContext, ExpressionsOwners} from '@epilogos/expressions-boundary'
@@ -77,8 +81,11 @@ export function livePalaceOwners({transport, storage, said, live}: {transport: K
     },
     readWhole: async basis => (await channel('techne-reading'))({...basis, scope: 'expression'}, context()),
     list: async () => listedExpressions(await expression({operation: 'list'})),
-    edit: request => expression(request),
-    invoke: request => expression(request),
+    edit: request => expression(request as unknown as Record<string, unknown>),
+    receiving: (project, request) => {
+      if (!live()) return Promise.reject(Error('The native owner access changed before this operation completed'))
+      return receiving<unknown>(transport, project, request)
+    },
     hold: async key => {
       await liveWikiStandingSource.loadRegisters()
       const register = getWikiProjectionState().registers.find(row => row.key === key)

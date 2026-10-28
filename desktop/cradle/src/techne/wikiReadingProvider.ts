@@ -149,6 +149,24 @@ function expressionEditActions() {
   }];
 }
 
+/** The register's route for new knowledge (O-I #761; manual §17.7 Return: "It sends them to the route that the reading names for new
+ * knowledge. The owner of the sources receives a proposal that carries your name."): Central's receiving, the wiki's one door ("the return
+ * is the only door in … At the root register … the native `central.receiving.*` path — submit, human review, include", the
+ * central-wiki-return skill). A Return there is a request of kind proposal that targets no document: Central authenticates its carrier as
+ * its author, and the owner accepts or rejects it (`central.receiving.review`). Named on the Expression-wide reading a Palace stands on. */
+function knowledgeReturnAction() {
+  return {
+    action_ref: "central.receiving.submit",
+    native_owner: "central",
+    authority: "governed-write",
+    summary: "Return new knowledge to the owner of the register's sources as a proposal that carries your name; the owner accepts it or not",
+    expected_effects: [
+      "a request Return of kind proposal in Central's receiving, authored by the authenticated person; the sources are unchanged",
+      "the owner's answer (central.receiving.review) is read back from Central (central.receiving.read)",
+    ],
+  };
+}
+
 /** The pure wire-payload builder: one register's real wiki reading + the
  * register's standing Expression document (when one stands) → one
  * ql.techne/v1 payload. Exported for the unit seam — the provider and the
@@ -446,7 +464,7 @@ export function wikiExpressionReadingPayload(input: {
     expressions: document.scenes
       .filter(scene => typeof scene.scene_ref === "string" && scene.scene_ref.length > 0)
       .map(scene => ({expression_ref: document.expression_ref, revision: String(document.revision), scene_ref: scene.scene_ref})),
-    actions: expressionEditActions(),
+    actions: [...expressionEditActions(), knowledgeReturnAction()],
     disclosure,
   };
 }

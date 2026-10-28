@@ -61,9 +61,11 @@ test('the Studio section list is the nav: unique ids, and only those ids validat
   const ids = STUDIO_SECTIONS.map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
   // 19: the Palace's Studio section retired with the frame's Palace lens (T-PALACES-ONTO-ATLAS; the palace's controls are the shell's M5
-  // plate — atlas-palaces-plate.test.mjs)
-  assert.equal(ids.length, 19);
+  // plate — atlas-palaces-plate.test.mjs). 18 (#762): the empty Places section retired too; Places is the shell's Earth atlas, its controls
+  // on the World plate, and the frame's place lens says where it went (app.ts `if(lens==='place')toast(PLACES_MOVED,8000)`).
+  assert.equal(ids.length, 18);
   assert.equal(isStudioSection('palace'), false, 'no Studio section is the palace\'s');
+  assert.equal(isStudioSection('places'), false, 'no Studio section is Places\'');
   for (const id of ids) assert.equal(isStudioSection(id), true, id);
   for (const hostile of ['', 'Physics', 'physics ', 'constructor', '__proto__', 'toString', 'hasOwnProperty', '../physics', 'physics\n', 4, null, undefined, {}, ['physics']]) {
     assert.equal(isStudioSection(hostile), false, JSON.stringify(hostile));

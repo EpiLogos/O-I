@@ -143,6 +143,11 @@ pub struct Scene {
     /// ES1B declarative triggers (no executable script bodies, ever).
     #[serde(default)]
     pub triggers: Vec<crate::expression_trigger::SceneTrigger>,
+    /// A private room (O-I #761; manual §17.7 "It stays under cloud to every audience but you"): the Palace draws the Scene clouded to
+    /// every audience but its owner. Open by default and omitted from the wire when false (the `pinned` pattern of `Entity`), so every
+    /// Scene written before this field stays byte-identical; changes only through `Change::ScenePrivate`.
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub private: bool,
 }
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
@@ -619,6 +624,11 @@ pub enum Change {
         entity_ref: String,
         pinned: bool,
     },
+    /// Mark a Scene private, or open it again (O-I #761): one Scene's own flag, as `EntityPin` is one entity's.
+    ScenePrivate {
+        scene_ref: String,
+        private: bool,
+    },
     SubjectBind {
         entity_ref: String,
         binding: SubjectBinding,
@@ -906,7 +916,7 @@ pub fn capabilities() -> Value {
     json!({"schema":"oi.expression-capabilities/v1", "document_schema":SCHEMA,
         "operations":["capabilities","list","inspect","inspect_file","create","open","open_file","fork","edit","propose","review","export","save","save_as","invoke",
             "profile_define","profile_define_many","profile_inspect","profile_resolve","edition_create","edition_inspect","index","asset_admit","asset_traverse","asset_subject","restore","close"],
-        "changes":["rename","composition_set","scene_performance_set","scene_performance_edit","scene_performance_clear","scene_material_set","scene_material_clear","scene_blueprint_bind","scene_blueprint_transform","scene_blueprint_release","scene_rename","scene_remove","scene_create","scene_reorder","scene_compose","entity_add","entity_remove","entity_pin","subject_bind","subject_unbind","relation_bind","relation_remove","focus","relation_focus","parameter_set","parameter_automate","parameter_manual","representation_bind",
+        "changes":["rename","composition_set","scene_performance_set","scene_performance_edit","scene_performance_clear","scene_material_set","scene_material_clear","scene_blueprint_bind","scene_blueprint_transform","scene_blueprint_release","scene_rename","scene_remove","scene_create","scene_reorder","scene_compose","entity_add","entity_remove","entity_pin","scene_private","subject_bind","subject_unbind","relation_bind","relation_remove","focus","relation_focus","parameter_set","parameter_automate","parameter_manual","representation_bind",
             "scene_body_set","scene_body_clear","scene_trigger_attach","scene_trigger_detach","profile_adopt","profile_release","collections_set","reuse_set","reuse_clear"],
         "reuse":{"schema":REUSE_SCHEMA,"kinds":["character","scene","expression","gesture"],"accepts":["agent","object","text","value"],
             "law":"reusable material is an ordinary Expression document; roles are placeholders in Scene material (entities/text layers carrying role); refs must name this Expression's Scenes, entities and text layers",
@@ -1342,6 +1352,7 @@ impl Document {
                     performance: None,
                     body: None,
                     triggers: vec![],
+                    private: false,
                 });
             }
             Change::SceneRename { scene_ref, title } => {
@@ -1487,6 +1498,9 @@ impl Document {
             }
             Change::EntityPin { entity_ref, pinned } => {
                 self.entity(&entity_ref)?.pinned = pinned;
+            }
+            Change::ScenePrivate { scene_ref, private } => {
+                self.scene(&scene_ref)?.private = private;
             }
             Change::EntityRemove { entity_ref } => {
                 if self.entities.remove(&entity_ref).is_none() {
@@ -1914,6 +1928,7 @@ impl Application {
                         performance: None,
                         body: None,
                         triggers: vec![],
+                        private: false,
                     }],
                     entities: BTreeMap::new(),
                     relations: BTreeMap::new(),

@@ -26,7 +26,8 @@ import type {RegisterStanding} from '../../../../../../../desktop/cradle/src/tec
 import type {WikiProjection, WikiRegister} from '../../../../../../../desktop/cradle/src/techne/wikiExpression'
 import {regionSceneRef, type PalaceRegionSpec} from '../../../../../../../desktop/cradle/src/techne/m0m5/palace/composition'
 import {palaceGuidedEdges} from '../../../../../../../desktop/cradle/src/techne/m0m5/palace/whole'
-import {boardEdges, boardPositions, type BoardEdge, type BoardPositions} from '../../../../../../../desktop/cradle/src/techne/m0m5/palace/board'
+import {boardEdges, boardPositions, defaultBoardPoint, type BoardEdge, type BoardPositions} from '../../../../../../../desktop/cradle/src/techne/m0m5/palace/board'
+import {PALACE_LOCI_PER_ROOM, PALACE_ROOMS} from '../../../../../../../desktop/cradle/src/techne/m0m5/palace/composition'
 import type {SuitePlace} from '../provider/suiteStanding'
 
 // ── rooms ─────────────────────────────────────────────────────────────────
@@ -51,6 +52,8 @@ export interface PalaceRoom {
   readonly holds: {readonly expression_ref: string; readonly title: string} | null
   /** the owner's document carries this Scene */
   readonly saved: boolean
+  /** the owner marks the Scene private (kernel expression.rs Scene.private, O-I 761): a private room, under cloud to every audience but you */
+  readonly private: boolean
 }
 
 /** The Scene facts a room is read from (the kernel's ExpressionDocument, or the projection's). */
@@ -77,7 +80,7 @@ export function roomsOf(doc: RoomDocument, projection?: {readonly overviewSceneR
     const kind: PalaceRoomKind = region ? 'region' : scene.scene_ref === projection?.overviewSceneRef ? 'overview' : constellations.has(scene.scene_ref) ? 'constellation' : 'scene'
     const body = scene.body
     const holds = region && body?.carrier === 'expression_ref' && body.subject_ref ? {expression_ref: body.subject_ref, title: body.subject_ref} : null
-    return {key: scene.scene_ref, name: scene.title || scene.scene_ref, kind, members: membersOf(doc, scene.entity_refs ?? []), holds, saved: true}
+    return {key: scene.scene_ref, name: scene.title || scene.scene_ref, kind, members: membersOf(doc, scene.entity_refs ?? []), holds, saved: true, private: scene.private === true}
   })
 }
 
@@ -86,9 +89,10 @@ export function roomsOf(doc: RoomDocument, projection?: {readonly overviewSceneR
  * then the regions in the guided order). */
 export function composedRooms(saved: readonly PalaceRoom[], expressionRef: string, regions: readonly PalaceRegionSpec[]): PalaceRoom[] {
   const savedKeys = new Set(saved.map(room => room.key))
+  const privateKeys = new Set(saved.filter(room => room.private).map(room => room.key))
   const drafted = regions.map((region): PalaceRoom => {
     const key = region.scene_ref ?? regionSceneRef(expressionRef, region.name)
-    return {key, name: region.name, kind: 'region', members: [], saved: savedKeys.has(key),
+    return {key, name: region.name, kind: 'region', members: [], saved: savedKeys.has(key), private: privateKeys.has(key),
       holds: region.member ? {expression_ref: region.member.expression_ref, title: region.member.title || region.member.expression_ref} : null}
   })
   return [...saved.filter(room => room.kind !== 'region'), ...drafted]
@@ -217,7 +221,7 @@ export function floorEdges(rooms: readonly PalaceRoom[], anchorRef: string, live
 }
 
 /** The floor's extent: every room with a margin (the plan's viewBox before any zoom). */
-export function floorBounds(rooms: readonly FloorRoom[]): {x: number; y: number; width: number; height: number} {
+export function floorBounds(rooms: readonly Pick<FloorRoom, 'x' | 'y'>[]): {x: number; y: number; width: number; height: number} {
   if (!rooms.length) return {x: 0, y: 0, width: 800, height: 500}
   const left = Math.min(...rooms.map(room => room.x)) - FLOOR_MARGIN, top = Math.min(...rooms.map(room => room.y)) - FLOOR_MARGIN
   const right = Math.max(...rooms.map(room => room.x + ROOM_SIZE.width)) + FLOOR_MARGIN, bottom = Math.max(...rooms.map(room => room.y + ROOM_SIZE.height)) + FLOOR_MARGIN
@@ -228,4 +232,52 @@ export function floorBounds(rooms: readonly FloorRoom[]): {x: number; y: number;
 export function roomOfStep(rooms: readonly PalaceRoom[], ref: string | null): string | null {
   if (!ref) return null
   return rooms.find(room => room.key === ref)?.key ?? rooms.find(room => room.members.some(member => member.subject_ref === ref))?.key ?? null
+}
+
+// ── who sees a room (manual §17.7 Audience) ────────────────────────────────
+
+/** Audience: Me · Field · Public (manual §17.7 "Shows the Palace as that audience sees it. A private room stays under cloud for Field and
+ * Public."). Presentation of the drawing; nothing is written by changing it. */
+export type PalaceAudience = 'me' | 'field' | 'public'
+export const PALACE_AUDIENCES: readonly PalaceAudience[] = ['me', 'field', 'public']
+
+/** A private room is under cloud for every audience but you (manual §17.7 Rules). */
+export function underCloud(room: Pick<PalaceRoom, 'private'>, audience: PalaceAudience): boolean {
+  return room.private && audience !== 'me'
+}
+
+// ── Method of loci (manual §17.7 "A fixed floor is also available: six rooms with four places in each, for the old art of memory") ──
+
+/** Arrangement: Board · Method of loci (manual §17.7 Parameters). Presentation: it changes no object. */
+export type PalaceArrangement = 'board' | 'loci'
+
+/** The fixed floor's rooms: composition.ts's bounded memory space, three across and two down (PALACE_ROOMS). */
+export const LOCI_ROOMS = PALACE_ROOMS.columns * PALACE_ROOMS.rows
+
+/** One room of the fixed floor: where it stands (the board's own default point, board.ts defaultBoardPoint, three to a row: the same
+ * points the Palace design's fixed floor draws), the palace room laid in it (null when the palace has fewer rooms than the floor), its
+ * four places — each the object that stands there, in the room's own order, or null — and whether the walk stands in it. */
+export interface LociRoom {
+  readonly index: number
+  readonly x: number
+  readonly y: number
+  readonly room: PalaceRoom | null
+  readonly places: readonly (string | null)[]
+  readonly focused: boolean
+}
+
+/** The fixed floor, laid from the palace's rooms in path order (composition.ts defaultArrangement's law: in order, rooms row-major, the
+ * loci of each room in order, PALACE_LOCI_PER_ROOM to a room). A room's places hold its one Expression first, then its subjects. Rooms past
+ * the sixth stand on no place of the fixed floor; `beyond` counts them. Pure. */
+export function lociFloor(rooms: readonly PalaceRoom[], focusKey: string | null): {rooms: LociRoom[]; beyond: number} {
+  return {
+    rooms: Array.from({length: LOCI_ROOMS}, (_, index) => {
+      const room = rooms[index] ?? null
+      const objects = room ? [...(room.holds ? [room.holds.title] : []), ...room.members.map(member => member.title)] : []
+      const point = defaultBoardPoint(index)
+      return {index, x: point.x, y: point.y, room, focused: !!room && room.key === focusKey,
+        places: Array.from({length: PALACE_LOCI_PER_ROOM}, (_, place) => objects[place] ?? null)}
+    }),
+    beyond: Math.max(0, rooms.length - LOCI_ROOMS),
+  }
 }

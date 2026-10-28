@@ -261,7 +261,7 @@ test('the Palace on the palace session: every reading the session\'s own; the bo
   assert.deepEqual(rooms.map(room => [room.name, room.kind]), [['Central', 'overview'], ['The Stone', 'constellation'], ['The Tower', 'constellation'], ['Walk', 'region']])
   assert.deepEqual(rooms[1].members, ['the carving', 'Mercurius'], 'a room\'s members are its Scene\'s subjects, by the owner\'s titles')
   assert.equal(rooms[3].holds, 'expression:walk', 'a region holds its one Expression, named as the owner\'s document names it')
-  assert.deepEqual([values.palace, values.light, values.floor, values.path, values.lines, values.guide, values.snap], ['Central', 'lit', 'board', 'guided', true, true, false])
+  assert.deepEqual([values.palace, values.light, values.floor, values.audience, values.path, values.lines, values.guide, values.snap], ['Central', 'lit', 'board', 'me', 'guided', true, true, false])
   assert.deepEqual([values.x0, values.y0, values.x3, values.y3], [100, 100, 100, 400], 'each room where the owner\'s floor stands it (board.ts defaultBoardPoint)')
   assert.equal(values.proposal, 'none')
   assert.equal(values.gone, false, 'the kernel lists Walk: its door is whole')
@@ -271,10 +271,11 @@ test('the Palace on the palace session: every reading the session\'s own; the bo
   assert.equal(values.at, focus === null ? undefined : rooms.findIndex(room => room.key === focus), 'the room the walk stands in, or absent')
   if (values.at === undefined) assert.match(palaceB.palaceAbsent(state, 'at'), /stands on no room/)
   assert.equal(values.order, undefined, 'no owner holds a spatial order')
-  assert.equal(values.audience, undefined, 'no owner discloses an audience')
   assert.match(palaceB.palaceBinding(state).standing.order.disabled, /missing op/)
-  assert.match(palaceB.palaceBinding(state).standing.audience.disabled, /missing op/)
-  assert.match(palaceB.palaceBinding(state).standing.floor.disabled, /missing op/)
+  // REPLACED (O-I #761): Audience and Floor stood disabled naming a missing op; the session holds both now (setAudience, setArrangement),
+  // pinned in atlas-palaces-finish.test.mjs 'the Palace device takes Floor and Audience from the session …'.
+  assert.equal(palaceB.palaceBinding(state).standing.audience, undefined, 'Audience is the session\'s')
+  assert.equal(palaceB.palaceBinding(state).standing.floor, undefined, 'Floor is the session\'s')
   // outside
   session.leavePalace()
   const outside = palaceB.palaceBinding(session.palaceState())
@@ -286,7 +287,7 @@ test('the Palace on the palace session: every reading the session\'s own; the bo
 test('the Palace writes through the session\'s acts: path, guide, snap, the walk to a room, a room\'s place, Keep, the Return and Leave; refusals in words', async () => {
   const state = await enter()
   const acts = {calls: [], line: () => 'Not bookmarked: a test refusal.'}
-  for (const name of ['setPath', 'setGuide', 'setSnap', 'moveWalk', 'moveRooms', 'proposeReturn', 'acceptReturn', 'refuseReturn', 'leavePalace']) acts[name] = (...args) => { acts.calls.push([name, ...args]) }
+  for (const name of ['setPath', 'setGuide', 'setSnap', 'setArrangement', 'setAudience', 'moveWalk', 'moveRooms', 'proposeReturn', 'acceptReturn', 'refuseReturn', 'leavePalace']) acts[name] = (...args) => { acts.calls.push([name, ...args]) }
   acts.bookmarkHere = name => { acts.calls.push(['bookmarkHere', name]); return name !== 'refuse me' }
   const binding = palaceB.palaceBinding(state, {draft: 'Stone first'}, acts)
   await binding.write([{key: 'path', value: 'free'}, {key: 'guide', value: false}, {key: 'snap', value: true}])
@@ -298,7 +299,11 @@ test('the Palace writes through the session\'s acts: path, guide, snap, the walk
   await assert.rejects(() => binding.write([{key: 'path', value: 'spiral'}]), /guided or free/)
   await assert.rejects(() => palaceB.palaceBinding(state, {draft: 'refuse me'}, acts).write([{key: 'keep', value: true}]), /a test refusal/, 'the session\'s own words')
   await assert.rejects(() => palaceB.palaceBinding(state, {}, acts).write([{key: 'keep', value: true}]), /Type a name first/)
-  for (const key of ['order', 'floor', 'audience', 'lines']) await assert.rejects(() => binding.write([{key, value: 'x'}]), /missing op|Path/)
+  for (const key of ['order', 'lines']) await assert.rejects(() => binding.write([{key, value: 'x'}]), /missing op|Path/)
+  await assert.rejects(() => binding.write([{key: 'floor', value: 'x'}]), /Floor is Board or Loci/)
+  await assert.rejects(() => binding.write([{key: 'audience', value: 'x'}]), /Audience is Me, Field or Public/)
+  await binding.write([{key: 'floor', value: 'loci'}, {key: 'audience', value: 'field'}])
+  assert.deepEqual(acts.calls.slice(-2), [['setArrangement', 'loci'], ['setAudience', 'field']], 'Floor and Audience go to the session\'s acts')
   // the real session: the walk moves to the room asked, and the path and the guide are its own
   const live = palaceB.palaceBinding(session.palaceState())
   const rooms = JSON.parse(live.values.rooms)
@@ -792,7 +797,7 @@ test('the designs draw on their bindings in every view and page — no NaN, no u
   host.resetHost()
   const writes = {setter: async () => {}, patch: () => {}}
   const cases = [
-    [DESIGNS.palace, palaceB.palaceBinding(state), /Archetypal-Earth — wiki local whole|Start of the argument|ai-kit/, ['The Stone', 'Mercurius'], [palaceB.PALACE_REFUSE.audience]],
+    [DESIGNS.palace, palaceB.palaceBinding(state), /Archetypal-Earth — wiki local whole|Start of the argument|ai-kit/, ['The Stone', 'Mercurius'], [palaceB.PALACE_REFUSE.order]],
     [DESIGNS.palace, palaceB.palaceBinding({phase: 'outside'}), /Archetypal-Earth|Start of the argument|Actuation/, [], [palaceB.NOT_INSIDE]],
     [DESIGNS.graph, graphB.graphBinding(fakeSurface(), graphB.surfaceRead(fakeSurface()), writes), /Quaternal-Tarot|Point-Cloud-Demo|face-rig/, [], []],
     [DESIGNS.graph, graphB.graphBinding(null, null, writes), /Quaternal-Tarot|Point-Cloud-Demo|face-rig/, [], [graphB.NOT_OPEN]],

@@ -32,7 +32,8 @@ export async function load(u, c, n) {
     compilerOptions: {target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext, jsx: ts.JsxEmit.ReactJSX}}).outputText};
 }`)}`, import.meta.url)
 
-const {instrumentOfPane, deviceInstrumentFor, HOSTED_INSTRUMENT, BAR_LENS_OF_HOSTED, hostedLensOfBarId} = await import('../src/shell/paneInstrument.ts')
+const paneInstrument = await import('../src/shell/paneInstrument.ts')
+const {instrumentOfPane, deviceInstrumentFor, HOSTED_INSTRUMENT} = paneInstrument
 const {TECHNE_INSTRUMENTS} = await import('../src/inhabitants/sdk/semantics.ts')
 const {TechneInstrumentsDetail, InstrumentDeviceDetail, BaseDevicesDetail} = await import('../src/shell/ModeDetail.tsx')
 
@@ -198,15 +199,12 @@ test('the Expressions pane holds the instrument of the hosted lens the frame rep
   assert.equal(instrumentOfPane('world.expressions', 'session', 'graph', 'timeline'), 'techne:m2', 'the hosted lens wins over the World presentation')
 })
 
-test('the lens bar and the hosted frame speak one table: project-graph↔project and places↔place, the rest identical', () => {
-  assert.equal(BAR_LENS_OF_HOSTED.project, 'project-graph')
-  assert.equal(BAR_LENS_OF_HOSTED.place, 'places')
-  for (const lens of ['canvas', 'timeline', 'journey', 'palace']) assert.equal(BAR_LENS_OF_HOSTED[lens], lens)
-  for (const lens of HOSTED) assert.equal(hostedLensOfBarId(BAR_LENS_OF_HOSTED[lens]), lens, `round trip ${lens}`)
-  assert.equal(hostedLensOfBarId('project-graph'), 'project')
-  assert.equal(hostedLensOfBarId('places'), 'place')
-  assert.equal(hostedLensOfBarId('graph'), null, 'the Earth atlas graph view names no hosted lens')
-  assert.equal(hostedLensOfBarId('no.such.lens'), null)
+// REPLACED (#762): 'the lens bar and the hosted frame speak one table: project-graph↔project and places↔place, the rest identical'. The
+// Technē lens bar retired with shell/ModeDetail.tsx's TechneLensBar, and its table had no reader left but this test; the hosted lens the
+// frame reports is read through HOSTED_INSTRUMENT alone, pinned by 'the Expressions pane holds the instrument of the hosted lens the frame
+// reports' above.
+test('the retired lens bar leaves no table of its ids behind: the hosted lens is read through HOSTED_INSTRUMENT alone', () => {
+  for (const name of ['HOSTED_LENS_OF_BAR_ID', 'BAR_LENS_OF_HOSTED', 'hostedLensOfBarId']) assert.equal(name in paneInstrument, false, `${name} is gone`)
 })
 
 test('the hosted Expressions pane follows the hosted lens in every mode the ruling covers (Live\'s chain is the host\'s veto)', () => {

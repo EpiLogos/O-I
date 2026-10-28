@@ -737,6 +737,58 @@ fn entity_pin_holds_world_position_independent_of_blueprint_membership_and_defau
         .iter()
         .any(|c| c == "entity_pin"));
 }
+/// O-I #761 (manual §17.7 "Private room — A room that holds your own practice. It stays under cloud to every audience but you"):
+/// a room of a Palace is a Scene of its Expression, so the kernel's Expression owner is the one that marks it private and discloses
+/// it. The change is the entity_pin pattern on a Scene: open by default and omitted from the wire, so every Scene written before
+/// the field stays byte-identical; marking and unmarking are one CAS-gated edit each; an absent Scene is refused.
+#[test]
+fn scene_private_marks_a_room_private_defaults_open_and_omitted() {
+    let mut app = Application::default();
+    create(&mut app);
+    let created = apply(
+        &mut app,
+        json!({"operation":"inspect","expression_ref":"expression:test"}),
+    );
+    assert!(
+        created["document"]["scenes"][0].get("private").is_none(),
+        "a Scene is open by default, and the field is omitted"
+    );
+    let marked = edit(
+        &mut app,
+        1,
+        json!([{"change":"scene_private","scene_ref":"expression:test:scene:main","private":true}]),
+    );
+    assert_eq!(marked["document"]["revision"], 2);
+    assert_eq!(marked["document"]["scenes"][0]["private"], true);
+    // Round trip through export/open: the mark survives exactly.
+    let export = apply(
+        &mut app,
+        json!({"operation":"export","expression_ref":"expression:test","expected_revision":2}),
+    );
+    let mut fresh = Application::default();
+    let reopened = apply(
+        &mut fresh,
+        json!({"operation":"open","document":export["document"],"actor":"agent:fresh"}),
+    );
+    assert_eq!(reopened["document"]["scenes"][0]["private"], true);
+    let opened = edit(
+        &mut app,
+        2,
+        json!([{"change":"scene_private","scene_ref":"expression:test:scene:main","private":false}]),
+    );
+    assert!(opened["document"]["scenes"][0].get("private").is_none());
+    let invalid = request(
+        json!({"operation":"edit","expression_ref":"expression:test","expected_revision":3,"actor":"human:test",
+        "changes":[{"change":"scene_private","scene_ref":"expression:test:scene:missing","private":true}]}),
+    );
+    assert!(app.apply(&CentralClient::discover(), invalid).is_err());
+    let capabilities = apply(&mut app, json!({"operation":"capabilities"}));
+    assert!(capabilities["changes"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|c| c == "scene_private"));
+}
 #[test]
 fn a_constellation_larger_than_the_render_window_is_held_whole_not_truncated() {
     // Technē map §36: semantic cardinality is separate from the renderer's

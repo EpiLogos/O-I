@@ -101,7 +101,9 @@ test('the kernel holds the same closed lists the app does, and admits the same r
 test('no Places view is written from the frame any more: Places is the shell\'s Earth atlas', ()=>{
  const instruments=read(resolve(engine,'src/researchInstruments.tsx'));
  assert.doesNotMatch(instruments,/place-view-save|place-layers-set|place-tour-save|PsychogeographicMap/);
- assert.match(instruments,/if\(selected==='m4'\)\{message\(PLACES_MOVED\)/,'asked for, the Places lens says where Places went');
+ // REPLACED (#762): the research workspace's unreachable 'm4' branch is gone; the frame's place lens says where Places went
+ // (instrument-focus-ref.test.mjs 'the place instrument says where Places went').
+ assert.doesNotMatch(instruments,/selected==='m4'/,'no retired Places lens is left in the research workspace');
 });
 
 test('the frame\'s stylesheets carry no rule of the retired Places map (#762): its surface, toolbar, layers, time control, location panel and street-view dock are gone', ()=>{

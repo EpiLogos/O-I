@@ -8,16 +8,21 @@
 //   - the palace is the Expression of a Technē register, entered from the world (palacesModel.ts), not the Expression the stage has
 //     open; its basis is the owner's inspected document at one of its own Scenes (basis.ts palaceBasisOf), not the frame's conversion;
 //   - the owners are the candidate's own, bound by the host (palaceOwners.ts): the kernel's `expression` op for inspect, list and the
-//     one CAS-gated edit; the owner's integral reading (wikiReadingProvider.ts readWikiSceneTechne, scope "expression"); the routed
-//     Return through the `kernel-expression` channel's invoke_action (packages/expressions-boundary/src/cradle.ts:124); the presence
-//     store over the atlas's workspace memory; the shell's own doors to open an object;
+//     one CAS-gated edit; the owner's integral reading (wikiReadingProvider.ts readWikiSceneTechne, scope "expression"); the Return on the
+//     route the reading names for new knowledge, Central's receiving (palaceReturn.ts; O-I 761), where it replaced the frame's routed
+//     invoke_action; the presence store over the atlas's workspace memory; the shell's own doors to open an object;
 //   - "Return to ground" re-opens the ground, which in the shell is the Earth itself (lock §0.1.3: "Technē's 0 instrument is the Earth and solar
 //     system together with its graph view"): leaving the palace is the return.
 //
 // Laws kept from the frame: the kernel Expression is the only store of record (a region is a real Scene of the palace's Expression,
 // one Save is one CAS-gated edit diffed against the live document, its readback is checked); presentation (the board, the walk, the
-// bookmarks) persists only through the presence owner and never touches the Expression; proposing a Return writes nothing; every
-// refusal is said in the owner's words; nothing is opened on the palace's behalf that its own route refuses.
+// bookmarks, the arrangement, the audience, the tempo) persists only through the presence owner or the session and never touches the
+// Expression; a room is private only where the owner's document says so; a Return is a proposal at its owner and never writes a source;
+// every refusal is said in the owner's words; nothing is opened on the palace's behalf that its own route refuses.
+//
+// O-I 761 (manual §17.7): a private room (the kernel Scene's own `private`, marked by one CAS-gated edit) draws under cloud for Field
+// and Public; Arrangement lays the free board or the fixed floor of the method of loci; Tempo sets the walk's dwell; Return sends the
+// rooms in your order to the reading's route, Central's receiving, and Accept and Refuse are the owner's answer, read back.
 
 import {validateReading, type TechneInstrument, type TechneReading} from '../../../../../../../desktop/cradle/src/techne/contract'
 import type {DisclosureSessionStore} from '../../../../../../../desktop/cradle/src/techne/session'
@@ -25,13 +30,15 @@ import type {PresenceStorage} from '../../../../../../../desktop/cradle/src/tech
 import {discoverRegions, planRegions, regionSceneRef, type PalaceRegionSpec} from '../../../../../../../desktop/cradle/src/techne/m0m5/palace/composition'
 import {palaceComposition, removeBookmark, storeComposition, type PalaceBoardViewport, type PalaceBookmark, type PalaceComposition} from '../../../../../../../desktop/cradle/src/techne/m0m5/palace/palace-state'
 import {PALACE_UNPERSISTED_NOTICE, restorePalaceComposition, savePalaceComposition} from '../../../../../../../desktop/cradle/src/techne/m0m5/palace/presence'
-import {palaceAcceptOutcome, palaceAcceptRequest, palaceReturnProposal, returnGroundInstrument, type PalaceReturnProposal} from '../../../../../../../desktop/cradle/src/techne/m0m5/palace/return'
+import {palaceReturnProposal, returnCrossing, returnGroundInstrument, type PalaceReturnProposal} from '../../../../../../../desktop/cradle/src/techne/m0m5/palace/return'
+import type {ReceivingRequest} from '../../../../../../../desktop/cradle/src/receiving/client'
 import type {PalaceRegionEntry} from '../../../../../../../desktop/cradle/src/techne/m0m5/palace/regions'
 import {PALACE_WIRED_INSTRUMENTS, palaceOpenRoute, palaceRegionOpenRoute, palaceWalkAt, palaceWalkSteps, type PalaceWalkStep} from '../../../../../../../desktop/cradle/src/techne/m0m5/palace/whole'
 import {palaceBookmarkAdd, palaceBookmarkJump, palaceBookmarkLabel, palaceBookmarkRename, palaceLandingIndex, palaceStartStep} from '../../../../../../../desktop/cradle/src/techne/m0m5/palace/bookmarks'
 import {boardSelectionLine, forgetBoardRegion, moveBoardRegion, snapBoardPoint, validateBoardPositions, type BoardPoint, type BoardPositions} from '../../../../../../../desktop/cradle/src/techne/m0m5/palace/board'
 import {assertPalaceSource, palaceBasisOf, palaceComposeReply, palaceEditRequest, palaceSnapshot, palaceTrailStep, samePalaceComposition, type PalaceBasis, type PalaceDocument} from '../../../../../../../desktop/cradle/src/techne/m0m5/palace/basis'
-import {composedRooms, roomOfStep, roomsOf, type PalaceRoom, type PalaceRow} from './palacesModel'
+import {composedRooms, PALACE_AUDIENCES, roomOfStep, roomsOf, type PalaceArrangement, type PalaceAudience, type PalaceRoom, type PalaceRow} from './palacesModel'
+import {PALACE_RETURN_ROUTE, palaceReturnAsk, palaceReturnDecided, palaceReturnSent, type PalaceReturnSent} from './palaceReturn'
 
 // ── the owners ────────────────────────────────────────────────────────────
 
@@ -52,6 +59,15 @@ export interface PalaceOpeners {
   source(ref: string): string
 }
 
+/** The one CAS-gated edit that marks a room private or opens it again (kernel expression.rs Change::ScenePrivate). */
+export interface PalacePrivacyEdit {
+  operation: 'edit'
+  expression_ref: string
+  expected_revision: number
+  actor: string
+  changes: [{change: 'scene_private'; scene_ref: string; private: boolean}]
+}
+
 export interface PalaceOwners {
   /** the kernel's `expression` op, inspect: the palace's document (raw) */
   inspect(expressionRef: string): Promise<unknown>
@@ -59,10 +75,10 @@ export interface PalaceOwners {
   readWhole(basis: PalaceBasis): Promise<unknown>
   /** the kernel's Expressions, for a region's member */
   list(): Promise<PalaceListedExpression[]>
-  /** the one CAS-gated edit (raw reply) */
-  edit(request: ReturnType<typeof palaceEditRequest>): Promise<unknown>
-  /** the routed Return: the kernel-expression channel's invoke_action (raw reply) */
-  invoke(request: Record<string, unknown>): Promise<unknown>
+  /** the one CAS-gated edit (raw reply): a Save's plan, or a room's privacy */
+  edit(request: ReturnType<typeof palaceEditRequest> | PalacePrivacyEdit): Promise<unknown>
+  /** Central's receiving, the Return's route (desktop/cradle/src/receiving/client.ts receiving): the raw reading it answers */
+  receiving(project: string | null, request: ReceivingRequest): Promise<unknown>
   /** open the register's Expression in the kernel when it is not held yet (the owner's own open); resolves to the Expression's ref */
   hold(registerKey: string): Promise<string>
   /** the register's projection: which Scene is its overview, which its constellations */
@@ -126,10 +142,18 @@ export interface PalaceInside {
   readonly path: 'guided' | 'free'
   /** the mockup's Guide (m5.guide): the guide says why the focused room stands where it does (T18) */
   readonly guide: boolean
+  /** Audience (manual §17.7): the palace as that audience sees it; a private room is under cloud for Field and Public */
+  readonly audience: PalaceAudience
+  /** Arrangement (manual §17.7): the free board, or the fixed floor of six rooms with four places (Method of loci) */
+  readonly arrangement: PalaceArrangement
   readonly walkMoved: number | undefined
   readonly walking: boolean
+  /** Tempo (manual §17.7 Transport: "Sets how long the walk stays in a room"): how long the walk dwells at a locus */
+  readonly dwellMs: number
   readonly bookmarks: readonly PalaceBookmark[]
   readonly proposal: PalaceReturnProposal | null
+  /** the Return as its owner holds it, once proposed: its ref, its revision, its author and its owner, read back (palaceReturn.ts) */
+  readonly sent: PalaceReturnSent | null
   readonly acceptance: {readonly line: string; readonly accepted: boolean} | null
   readonly accepting: boolean
   /** the one status line (palaceInstrument.tsx:622 message) */
@@ -257,8 +281,8 @@ export async function enterPalace(palace: PalaceRow, at: {roomKey?: string} = {}
     const savedRooms = roomsOf(raw as Parameters<typeof roomsOf>[0], owners.projection(palace.key))
     const regions = discoverRegions(doc)
     set({phase: 'inside', palace, doc, savedRooms, draftDoc: doc, basis, reading: undefined, readingReason: null, regions, removed: [],
-      eligible: [], eligibleKnown: false, busy: false, held: {}, selected: [], viewport: null, snap: false, path: 'guided', guide: true, walkMoved: undefined, walking: false,
-      bookmarks: [], proposal: null, acceptance: null, accepting: false, line: null})
+      eligible: [], eligibleKnown: false, busy: false, held: {}, selected: [], viewport: null, snap: false, path: 'guided', guide: true, audience: 'me', arrangement: 'board',
+      walkMoved: undefined, walking: false, dwellMs: walkDwell, bookmarks: [], proposal: null, sent: null, acceptance: null, accepting: false, line: null})
     void listEligible(guard)
     // The rooms stand at once; the integral whole follows when its reading returns.
     const whole = await readWhole(basis)
@@ -306,8 +330,13 @@ async function listEligible(guard: number): Promise<void> {
 
 // ── T17: the walk, on the one transport ───────────────────────────────────
 
-/** How long the walk dwells at a locus while it walks (the transport's Walk pace). No owner sets a pace yet: the walk's own dwell. */
+/** How long the walk dwells at a locus while it walks, until Tempo changes it (the transport's Walk pace). */
 export const PALACE_WALK_DWELL_MS = 6000
+/** The dwells Tempo steps through (manual §17.7 Transport "Tempo — Sets how long the walk stays in a room"): › quickens the walk to the
+ * next shorter dwell, ‹ slows it to the next longer, and each end holds. The default stands in the middle. */
+export const PALACE_WALK_DWELLS_MS: readonly number[] = [2000, 3000, 4000, PALACE_WALK_DWELL_MS, 8000, 12000, 16000]
+/** The dwell Tempo last chose: it holds from palace to palace while the session lasts. */
+let walkDwell = PALACE_WALK_DWELL_MS
 let walkTimer: ReturnType<typeof setInterval> | null = null
 
 /** Session presentation saved on change (palaceInstrument.tsx:263 persist): the walk, the board and the bookmarks persist through
@@ -347,9 +376,26 @@ export function startWalking(): void {
   const here = inside()
   if (!here || walkTimer) return
   if (!walkOf(here).steps.length) { say('Nothing stands in the whole, so the walk focuses nothing.'); return }
-  walkTimer = setInterval(() => stepWalk(1), PALACE_WALK_DWELL_MS)
+  walkTimer = setInterval(() => stepWalk(1), here.dwellMs)
   ;(walkTimer as {unref?: () => void}).unref?.()
   patch({walking: true})
+}
+
+/** Tempo's step (the transport's ‹ ›): › (+1) quickens the walk to the next shorter dwell, ‹ (-1) slows it; a walk that walks goes on at
+ * the new dwell from where it stands. Each end of the dwells holds. */
+export function stepTempo(direction: 1 | -1): void {
+  const here = inside()
+  if (!here) return
+  const at = PALACE_WALK_DWELLS_MS.indexOf(here.dwellMs)
+  const next = PALACE_WALK_DWELLS_MS[Math.min(PALACE_WALK_DWELLS_MS.length - 1, Math.max(0, (at < 0 ? PALACE_WALK_DWELLS_MS.indexOf(PALACE_WALK_DWELL_MS) : at) - direction))]
+  if (next === here.dwellMs) return
+  walkDwell = next
+  patch({dwellMs: next})
+  if (walkTimer) {
+    clearInterval(walkTimer)
+    walkTimer = setInterval(() => stepWalk(1), next)
+    ;(walkTimer as {unref?: () => void}).unref?.()
+  }
 }
 
 /** Stop holds the walk still where it stands (T17's craft bar: a walk may hold still at a locus). */
@@ -443,6 +489,18 @@ export function setPath(path: 'guided' | 'free'): void {
 
 export function setGuide(guide: boolean): void {
   patch({guide})
+}
+
+/** Audience (manual §17.7): the palace as Me, Field or Public sees it. Presentation: nothing persists, nothing is written. */
+export function setAudience(audience: PalaceAudience): void {
+  if (!PALACE_AUDIENCES.includes(audience)) throw Error(`Audience is Me, Field or Public, never ${String(audience)}.`)
+  patch({audience})
+}
+
+/** Arrangement (manual §17.7 "Change Arrangement to Method of loci if you want the fixed floor"): presentation; it changes no object. */
+export function setArrangement(arrangement: PalaceArrangement): void {
+  if (arrangement !== 'board' && arrangement !== 'loci') throw Error(`Arrangement is Board or Method of loci, never ${String(arrangement)}.`)
+  patch({arrangement})
 }
 
 /** T15: the floor's pan and zoom. A pan or zoom fires per frame, so the save trails the last report (palaceInstrument.tsx:372). */
@@ -560,57 +618,131 @@ export async function save(): Promise<void> {
   }
 }
 
-/** After a Save the palace stands at the owner's new revision: its rooms read again, and its whole re-read at the new basis. */
-async function standAt(document: PalaceDocument, regions: readonly RegionDraft[], guard: number): Promise<void> {
+/** After a Save the palace stands at the owner's new revision: its rooms read again, and its whole re-read at the new basis. A privacy
+ * edit keeps the draft's staged removals (`removed`); a Save has written them. */
+async function standAt(document: PalaceDocument, regions: readonly RegionDraft[], guard: number, removed: readonly string[] = []): Promise<void> {
   const here = inside()
   if (!here || !owners) return
   const raw = await owners.inspect(document.expression_ref)
   if (guard !== generation) return
   const doc = palaceSnapshot(raw)
   const basis = palaceBasisOf(doc, here.basis.scene_ref)
-  patch({doc, draftDoc: doc, basis, savedRooms: roomsOf(raw as Parameters<typeof roomsOf>[0], owners.projection(here.palace.key)), regions: [...regions], removed: [], reading: undefined}, guard)
+  patch({doc, draftDoc: doc, basis, savedRooms: roomsOf(raw as Parameters<typeof roomsOf>[0], owners.projection(here.palace.key)), regions: [...regions], removed: [...removed], reading: undefined}, guard)
   const whole = await readWhole(basis)
   patch({reading: whole.reading, readingReason: whole.reason}, guard)
 }
 
-// ── T19: the Return ───────────────────────────────────────────────────────
+// ── O-I 761: a private room ──────────────────────────────────────────────
 
-/** Propose the Return over a bound view of the composition (palaceInstrument.tsx:389). Pure: nothing is written. */
-export function proposeReturn(): void {
+/** Mark a room private, or open it again (manual §17.7 "Private room — A room that holds your own practice. It stays under cloud to every
+ * audience but you"): one CAS-gated edit of the palace's Expression (kernel Change::ScenePrivate), gated on the revision the palace stands
+ * at; the owner's document is read again and must carry the mark. A room the owner's document does not hold yet is refused by name. */
+export async function markPrivate(key: string, mark: boolean): Promise<void> {
   const here = inside()
-  if (!here?.reading) return
-  const next = palaceReturnProposal(here.reading, {...palaceComposition(here.reading), bound: true})
-  patch({proposal: next, acceptance: null})
-  say(next.refusal ? `Return not routed: ${next.refusal}. Nothing was changed.` : 'Return proposed, awaiting human acceptance. Nothing has been written.')
-}
-
-export function refuseReturn(): void {
-  patch({proposal: null, acceptance: null})
-  say('Return refused. Nothing was written.')
-}
-
-/** Accept: the proposal's own route goes to the owner through the kernel-expression channel's invoke_action; the owner re-reads the
- * reading the proposal came from and decides. Only an invoked receipt crosses back to the ground (palaceInstrument.tsx:399 acceptReturn). */
-export async function acceptReturn(): Promise<void> {
-  const here = inside()
-  if (!here?.proposal || !here.reading || here.accepting || !here.proposal.receipt?.routed || !owners) return
-  const request = palaceAcceptRequest(here.proposal, {expression_ref: here.doc.expression_ref, revision: here.doc.revision, scene_ref: here.basis.scene_ref})
-  if (!request) { patch({acceptance: {line: 'Not accepted: the proposal has no routed action to invoke.', accepted: false}}); return }
-  const guard = generation, reading = here.reading, proposal = here.proposal
-  patch({accepting: true})
+  if (!here || here.busy || !owners) return
+  const room = roomsNow(here).find(candidate => candidate.key === key)
+  if (!room) return
+  if (!room.saved) { say(`Refused: ${room.name} is not saved yet, so the owner holds no room to mark. Save the composition first.`); return }
+  const guard = generation
+  patch({busy: true})
   try {
-    const raw = await owners.invoke(request as unknown as Record<string, unknown>)
+    const request: PalacePrivacyEdit = {operation: 'edit', expression_ref: here.doc.expression_ref, expected_revision: here.doc.revision, actor: 'human:techne-palace',
+      changes: [{change: 'scene_private', scene_ref: key, private: mark}]}
+    const result = palaceComposeReply(await owners.edit(request))
     if (guard !== generation) return
-    const outcome = palaceAcceptOutcome(reading, proposal, raw)
-    patch({acceptance: {line: outcome.line, accepted: outcome.accepted}}, guard)
-    // T24: an accepted Return's receipt is kept on this session, so the palace renders it when the visitor comes back to it.
-    if (outcome.accepted) storeComposition({...palaceComposition(reading), receipt: outcome.line})
-    if (outcome.crossing) returnToGround(outcome.line)
+    if (!result.ok) { say(`Not marked: ${result.reason}`); return }
+    await standAt(result.document, inside()?.regions ?? here.regions, guard, inside()?.removed ?? here.removed)
+    const now = inside()?.savedRooms.find(candidate => candidate.key === key)
+    if (now?.private !== mark) { say(`The owner returned revision ${result.document.revision}, but its document does not read ${room.name} as ${mark ? 'private' : 'open'}.`, guard); return }
+    say(mark ? `${room.name} is private: it stands under cloud to every audience but you (revision ${result.document.revision}).` : `${room.name} is open to every audience again (revision ${result.document.revision}).`, guard)
   } catch (error) {
-    patch({acceptance: {line: `Not accepted: ${messageOf(error)}.`, accepted: false}}, guard)
+    say(messageOf(error), guard)
+  } finally {
+    patch({busy: false}, guard)
+  }
+}
+
+// ── T19, O-I 761: the Return ─────────────────────────────────────────────
+
+/** Propose the Return (manual §17.7 "When you have a result, choose Return. The Palace sends the objects in the order you arranged them,
+ * with your intent for each room. It sends them to the route that the reading names for new knowledge. The owner of the sources receives
+ * a proposal that carries your name."). The routing law first (return.ts palaceReturnProposal, over a bound view of the composition): a
+ * reading that names no route, or a route other than Central's receiving, sends nothing and says so. Then the rooms, in your order, go to
+ * the owner as one request Return of kind proposal (palaceReturn.ts), and the owner's reading of it is checked against what was sent:
+ * its author is your name as the owner authenticated it. A proposal writes no source. */
+export async function proposeReturn(): Promise<void> {
+  const here = inside()
+  if (!here?.reading || here.accepting || !owners) return
+  if (here.sent) { say(`A Return waits for its owner's answer (${here.sent.return_ref}): accept or refuse it first.`); return }
+  const reading = here.reading, guard = generation
+  const next = palaceReturnProposal(reading, {...palaceComposition(reading), bound: true})
+  const refusal = next.refusal ?? (next.route?.action_ref !== PALACE_RETURN_ROUTE ? `the reading routes it to ${next.route?.action_ref}, and the Palace carries a Return only on ${PALACE_RETURN_ROUTE}` : null)
+  if (refusal) {
+    patch({proposal: {...next, refusal}, sent: null, acceptance: null})
+    say(`Return not routed: ${refusal}. Nothing was sent.`)
+    return
+  }
+  const ask = palaceReturnAsk({palace: here.palace.title, rooms: roomsNow(here), reading, proposal: next, now: Date.now()})
+  if (!ask) return
+  patch({proposal: next, sent: null, acceptance: null, accepting: true})
+  try {
+    const sent = palaceReturnSent(await owners.receiving(here.palace.project, ask), ask)
+    if (guard !== generation) return
+    patch({sent}, guard)
+    say(`Proposed to ${sent.owner} as ${sent.author}: ${sent.return_ref}. It waits for the owner's answer; nothing changed in the sources.`, guard)
+  } catch (error) {
+    patch({acceptance: {line: `Not sent: ${messageOf(error)}.`, accepted: false}}, guard)
   } finally {
     patch({accepting: false}, guard)
   }
+}
+
+/** The owner's answer to the waiting Return (manual §17.7 "The owner accepts it or not"; §19.14 "An approved proposal lands with a
+ * receipt"): one review pinned to the Return's revision, then the owner's reading of it, which must say the same (palaceReturn.ts
+ * palaceReturnDecided). The receipt is the owner's, read back, never the Palace's own words. */
+async function answerReturn(disposition: 'accepted' | 'rejected'): Promise<{line: string} | null> {
+  const here = inside()
+  if (!here?.sent || here.accepting || !owners) return null
+  const guard = generation, sent = here.sent, project = here.palace.project
+  patch({accepting: true})
+  try {
+    await owners.receiving(project, {kind: 'review', return_ref: sent.return_ref, expected_return_revision: sent.revision, disposition,
+      note: `${disposition === 'accepted' ? 'Accepted' : 'Refused'} in the Palace of ${here.palace.title}.`})
+    const decided = palaceReturnDecided(await owners.receiving(project, {kind: 'read', return_ref: sent.return_ref}), sent, disposition)
+    if (guard !== generation) return null
+    patch({sent: null, acceptance: {line: decided.line, accepted: disposition === 'accepted'}}, guard)
+    return decided
+  } catch (error) {
+    patch({acceptance: {line: `Not ${disposition}: ${messageOf(error)}.`, accepted: false}}, guard)
+    return null
+  } finally {
+    patch({accepting: false}, guard)
+  }
+}
+
+/** Refuse: the owner rejects the waiting Return (nothing changes in the sources); a proposal that was never sent is set aside. */
+export async function refuseReturn(): Promise<void> {
+  const here = inside()
+  if (!here) return
+  if (!here.sent) {
+    patch({proposal: null, acceptance: null})
+    say('Return refused. Nothing was sent.')
+    return
+  }
+  await answerReturn('rejected')
+}
+
+/** Accept: the owner accepts the waiting Return, and it lands with the owner's receipt, read back. The receipt is kept on this session, so
+ * the palace renders it when the visitor comes back (T24), and the ground opens again (manual §17.7 "After a Return that goes through,
+ * the ground opens again on the same subject"). */
+export async function acceptReturn(): Promise<void> {
+  const here = inside()
+  if (!here?.reading || !here.sent) return
+  const reading = here.reading
+  const decided = await answerReturn('accepted')
+  if (!decided) return
+  storeComposition({...palaceComposition(reading), receipt: decided.line})
+  if (returnCrossing(reading)) returnToGround(decided.line)
 }
 
 /** The one return to the ground (palaceInstrument.tsx:238 returnToGround). In the shell the ground is the Earth: leaving the
@@ -701,6 +833,7 @@ export function resetPalaceSession(): void {
   viewportTimer = null
   viewportPending = null
   persistFailed = false
+  walkDwell = PALACE_WALK_DWELL_MS
   owners = null
   set({phase: 'outside'})
 }

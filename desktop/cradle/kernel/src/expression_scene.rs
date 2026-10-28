@@ -1377,7 +1377,8 @@ fn timeline_view(value: &Value) -> Result<(), String> {
     }
     Ok(())
 }
-/// lane-4 T20: the basemap registry's own ids (basemapSources.ts). The app and this kernel hold one list; a JS test reads both.
+/// lane-4 T20: the closed basemap ids of a Places view, the frame's `PLACE_BASEMAP_IDS` (field-studies-journeys/src/researchMaterial.ts,
+/// beside the material since the basemap registry retired, #762). The frame and this kernel hold one list; places-views.test.mjs reads both.
 const BASEMAP_LAYER_IDS: &[&str] = &[
     "offline-ground",
     "osm-street",

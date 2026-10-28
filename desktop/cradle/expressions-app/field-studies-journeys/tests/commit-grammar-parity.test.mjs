@@ -48,7 +48,7 @@ const kinds=diff=>diff.changes.map(c=>c.change);
 // entities, names, membership, material and composition, and no relation,
 // subject, pin, body, trigger, profile, collection, reuse, automation or representation.
 const JOURNEY_KINDS=new Set(['rename','scene_create','scene_rename','scene_remove','scene_reorder','scene_compose','entity_add','entity_remove','scene_material_set','composition_set','focus']);
-const KERNEL_ONLY_KINDS=['entity_pin','subject_bind','subject_unbind','parameter_automate','parameter_manual','relation_bind','relation_remove','relation_focus','scene_body_set','scene_body_clear','scene_trigger_attach','scene_trigger_detach','scene_performance_set','scene_performance_clear','representation_bind','profile_adopt','profile_release','collections_set','reuse_set','reuse_clear'];
+const KERNEL_ONLY_KINDS=['entity_pin','scene_private','subject_bind','subject_unbind','parameter_automate','parameter_manual','relation_bind','relation_remove','relation_focus','scene_body_set','scene_body_clear','scene_trigger_attach','scene_trigger_detach','scene_performance_set','scene_performance_clear','representation_bind','profile_adopt','profile_release','collections_set','reuse_set','reuse_clear'];
 
 // Every field family, with the change it must yield or the named refusal it
 // must carry. The optional base is the state the family starts from.
@@ -75,6 +75,8 @@ const FAMILIES=[
  ['subject bound',e=>{e.entities[X].subject=clone(SUBJECT);},{kind:'subject_bind'}],
  ['subject cleared',e=>{e.entities[X].subject=null;},{kind:'subject_unbind'},withSubject],
  ['entity pinned',e=>{e.entities[X].pinned=true;},{kind:'entity_pin'}],
+ // O-I #761: a Scene the owner marks private (a Palace's private room) is the Scene's own flag, as a pin is the entity's.
+ ['scene private',e=>{e.scenes[1].private=true;},{kind:'scene_private'}],
  ['O:I connection bound',e=>{e.relations={[`${E}:relation:connection-2`]:{...clone(CONNECTION),binding_ref:`${E}:relation:connection-2`,relation:{ref:`${E}:relation:connection-2:connects`,revision:'1',availability:'available'}}};},{kind:'relation_bind'}],
  ['O:I connection removed',e=>{e.relations={};},{kind:'relation_remove'}],
  ['source relation bound',e=>{e.relations[SOURCE.binding_ref]=clone(SOURCE);},{refuse:'source_relation'}],
