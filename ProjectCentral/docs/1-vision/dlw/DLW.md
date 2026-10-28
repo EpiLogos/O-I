@@ -8273,18 +8273,15 @@ The glyph editor opens from Source, above the pages, or with a double-click on a
 | Radius | 20 to 2000 pixels | 200 | The reach of the force. |
 | Centre | X, Y, Z in stage units | The place of the symbol | Where the force acts. Drag the disc handle to pin the force away from the symbol. |
 
-**Sound** gives the symbol a voice.
+**Sound** gives the symbol a voice. The voice carries part of the torus's sound, and it sounds from where the symbol stands (§20.2).
 
 | Control | Values | Default | What it does |
 |---|---|---|---|
-| Voice | On · Off | Off | Lets the symbol sound. Add sound gives it a voice; Remove sound takes it away. |
-| Follow plate | On · Off | On | On makes the voice follow the pitch of the plate. Off keeps the pitch you set. |
-| Frequency | 1 to 20000 Hz | 220 | The pitch of the voice. When you set it, Follow plate turns off. |
+| Voice | On · Off | Off | Lets the symbol carry part of the torus's sound. Add sound gives it a voice; Remove sound takes it away. |
+| Name or mode | A mode or a name from M2′'s store of sound (§22.1), or None | None | What the voice carries. A mode carries the torus's sound at the mode's degrees over the torus's root, in every octave you can hear. |
 | Gain | 0 to 1 | 0.2 | The loudness of the voice. 0 is silent. |
-| Waveform | Sine · Triangle · Square · Sawtooth | Sine | The tone of the voice. |
 | Attack | 0 to 10 s | 0.08 | How long the voice takes to rise. |
 | Release | 0 to 30 s | 0.8 | How long the voice takes to fade. |
-| Pan | −1 to 1 | 0 | The place of the voice. −1 is left. 1 is right. |
 
 Drag the envelope handles to set Attack, Gain and Release.
 
@@ -8411,7 +8408,8 @@ Export, in the File menu, writes a picture, a film or the Expression itself to a
 - A bound figure has six members, in a fixed order. Bind and Release are separate acts. Release before you bind again.
 - The share of one formation is its Particle share divided by the total of all enabled formations. When the total is 0, the divisor is 1.
 - The forces of a symbol belong to its Force page. The steps of its sequence belong to the Sequence tab.
-- When you set Frequency, Follow plate turns off. When you turn Follow plate on, the plate sets the pitch again.
+- A voice has no pitch of its own. Its pitches are its mode's degrees over the torus's root, and its place between left and right is the symbol's place on the stage. Move the symbol and the voice moves with it.
+- While the torus is silent, every voice is silent. A voice with no name or mode is silent and says so. A voice whose name the store holds no sound for is silent too, and gives the store's reason.
 - Every change to a symbol's sound or meaning writes its whole sound or binding in one step.
 - A symbol with no sound has no voice. Remove sound returns it to this state.
 - Centre identity is not a plate station. A starter diagram of seven centres is not a live reading of a person.
@@ -8445,7 +8443,7 @@ Export, in the File menu, writes a picture, a film or the Expression itself to a
 - To compare two layouts, apply one, capture it, then apply the other.
 - To make a symbol the sun of the scene, set Force to Attract with Spin and a wide Radius. To clear space round a symbol, set Repel. To keep particles out of a hole, pin a Repel force on the hole.
 - To give a symbol more weight in the scene, raise Particle share. To make it leave the scene without deleting it, turn Enabled off.
-- To make a drone, set Attack to 4 s and Release to 10 s. To make a chord, give three symbols three frequencies in the ratio 4:5:6. To place a voice at the left, set Pan to −0.8.
+- To make a drone, set Attack to 4 s and Release to 10 s. To place a voice at the left, move its symbol to the left of the stage. To hear one mode from both sides, give it to two symbols and stand them apart.
 - To see a centre without a force, set Radius source to Independent. To make the colour pulse with the voice, add a modulation from Force strength to Colour gain. To make centres add up, set Blend to Additive.
 - To make the field breathe, put a slow sine on the viscosity. To fade a colour in, use a ramp with Ease in. To move several parameters as one, make one leader and follow it.
 - To try a form fast, draw it with the Form tool, then press Capture.
@@ -8479,9 +8477,10 @@ A symbol can carry a voice: a name or a mode from M2′'s store of sound (§22.1
 | Medium | Plate · Chamber | Plate | Chooses how the study of the modes is drawn: a flat plate or a three-dimensional chamber. |
 | Tempo | 20 to 240 | 96 | Sets how fast the field forms and breathes. |
 | Hold to change | A ratio, such as 5:3 | 5:3 | Sets how long a scene holds a figure compared with how long it changes. |
-| Key source | Torus · Sky · Manual | Torus | Torus tunes the field to what the torus plays. Sky takes the key from the sky over your world. Manual uses the resonance you set, to study the modes. |
+| Key source | Torus · Sky · Manual | Torus | Torus tunes the field to what the torus plays. Sky takes the key from the sky over your world. Manual uses the resonance you set, to study the modes. The key chooses the pitches only while the Resonance device's Frequency driver is Torus (§20.14). The other drivers keep their own drive. |
 | Resonance | 20 to 4000 Hz | 396 Hz | The frequency that the field is tuned to under Manual. |
-| Symbol voices | On · Off | On | Lets symbols carry the torus's sound to where they stand. |
+| Symbol voices | On · Off | On | Lets symbols carry the torus's sound to where they stand. Off silences every voice and leaves each symbol's voice as it is. |
+| Collisions strike | On · Off | Off | Under On, a collision in the field strikes the torus at the point where it happens (§21.2). |
 | Pulse | On · Off | Off | Pulses the field on the beat. |
 | Lights | Dim · Full | Full | Turns the lights down so that one symbol stands alone. |
 
@@ -8517,7 +8516,7 @@ The whole Field shows every parameter, in three groups.
 |---|---|
 | Sound | Sound, Level, Medium, Key source, Resonance |
 | Time | Tempo, Hold to change, Pulse |
-| Voices | Symbol voices, Lights |
+| Voices | Symbol voices, Collisions strike, Lights |
 
 ##### Full
 
@@ -10013,7 +10012,7 @@ The torus is the only source of sound, so everything that sounds strikes it.
 | A touch | The point of the surface you touch. |
 | A note in a clip | Its key's point, as the clip plays. |
 | The constellation in focus | Through Live's clip of it: drop the constellation on a part and Live transcribes it into a clip, whose notes strike their keys' points as it plays. The constellation stays as it is. |
-| A collision in the field | The point where it happens, when the collision is set to strike (§20.2). |
+| A collision in the field | The point where it happens, while the Field's Collisions strike is On (§20.2). |
 | A singlet | When a generation cell is non-dual, its one codon strikes the torus at the codon's place on the ring (§22.3). The form comes back to the body as a new act. |
 
 The surface carries the other two instruments as well. The planets of M2′ bend
