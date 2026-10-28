@@ -15,7 +15,7 @@
 // track's own material and stands in the Main column at the end, which carries each row's launcher, Stop All and Back to
 // Arrangement (lit when what plays differs from the ruler); an armed track's empty slots are record buttons (Live cap 35).
 import {useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent, type MouseEvent as ReactMouseEvent, type ReactNode} from 'react'
-import type {WorldTrack, WorldTrackClip, WorldTrackColumn, WorldTrackSection, WorldTrackSet} from '../../timeline/worldTrackAdapter'
+import type {WorldTrack, WorldTrackActions, WorldTrackClip, WorldTrackColumn, WorldTrackSection, WorldTrackSet} from '../../timeline/worldTrackAdapter'
 import {clipStandingAttributes, clipStandingEdge, clipStandingMark, clipStandingTag, clipStandingTitle} from './trackMarks'
 import {sectionFoldKey, sessionRowLayout, shownRowLayout} from './trackSections'
 import {mixerCells, type MixerCell} from './trackLanes'
@@ -212,6 +212,48 @@ const sectionRails = (chain: readonly WorldTrackSection[]) => chain.length > 0 &
 /** The stops an empty Session shows, as a new Live set does. */
 const EMPTY_STOPS: readonly WorldTrackColumn[] = Array.from({length: 8}, (_, i) => ({id: `empty:${i}`, name: String(i + 1)}))
 
+/** The launches held down now, by the press's key: a Gate's press stays held across the renders its own receipt causes. */
+const HELD_LAUNCHES = new Set<string>()
+const LAUNCH_KEYS = new Set([' ', 'Enter'])
+type Press = {stopPropagation(): void; preventDefault?(): void}
+type PointerPress = Press & {button?: number; pointerId?: number; currentTarget?: {setPointerCapture?(id: number): void}}
+type KeyPress = Press & {key: string; repeat?: boolean}
+
+/** How a clip's launch button takes a press (manual §19.1 The Launch panel). A clip whose launch mode is Gate — "runs it only while you
+ * hold the launch" — launches when the pointer or key goes down and is released (the family's `release`) when it comes up; every other
+ * clip launches on a click, as it always did (Toggle's second press and Repeat's takes are the family's own launch). Pure, apart from
+ * the held set. */
+export function clipLaunchPress(clip: Pick<WorldTrackClip, 'id' | 'label' | 'launch'>, launch: WorldTrackActions['launch'],
+  onPress: (key: string, what: string, run: () => unknown) => void, key: string) {
+  if (!launch) return {}
+  const press = () => onPress(key, `Launch ${clip.label}`, () => launch.run(clip.id))
+  const release = launch.release
+  if (clip.launch?.mode !== 'gate' || !release) return {onClick: (event: Press) => { event.stopPropagation(); press() }}
+  const down = () => { if (HELD_LAUNCHES.has(key)) return; HELD_LAUNCHES.add(key); press() }
+  const up = () => { if (!HELD_LAUNCHES.delete(key)) return; onPress(key, `Release ${clip.label}`, () => release(clip.id)) }
+  return {
+    // The pointer did the work; the click its release makes is not a second launch.
+    onClick: (event: Press) => { event.stopPropagation() },
+    onPointerDown: (event: PointerPress) => {
+      if (event.button !== undefined && event.button !== 0) return
+      event.stopPropagation()
+      if (event.pointerId !== undefined) event.currentTarget?.setPointerCapture?.(event.pointerId)
+      down()
+    },
+    onPointerUp: (event: Press) => { event.stopPropagation(); up() },
+    onPointerCancel: (event: Press) => { event.stopPropagation(); up() },
+    onKeyDown: (event: KeyPress) => {
+      if (!LAUNCH_KEYS.has(event.key)) return
+      event.preventDefault?.(); event.stopPropagation()
+      if (!event.repeat) down()
+    },
+    onKeyUp: (event: KeyPress) => {
+      if (!LAUNCH_KEYS.has(event.key)) return
+      event.preventDefault?.(); event.stopPropagation(); up()
+    },
+  }
+}
+
 export function SessionGridView({set, selection, folded, onFold, receipt, onPress, onDismiss, empty, menu}: SessionGridViewProps) {
   const hands = menu ? {ref: menu.rootRef, onContextMenu: menu.onContextMenu, onKeyDown: menu.onKeyDown} : {}
   const rows = set.columns
@@ -324,8 +366,8 @@ export function SessionGridView({set, selection, folded, onFold, receipt, onPres
                 title={`${clip.label} · ${word}${progress !== null ? ` · ${progress}% through, as its owner reads it` : ''}${mode ? ` · plays ${mode}` : ''}${clip.launch?.quantize ? ` · launches ${clip.launch.quantize}` : ''}${clip.launch?.follow ? ` · then ${clip.launch.follow}` : ''}${clip.takes?.length ? ` · ${clip.takes.length} takes` : ''}${clip.note ? ` · ${clip.note}` : ''}${clipStandingTitle(mark)}`}
                 {...clipStandingAttributes(mark)} style={mark || progress !== null ? {...(mark ? {borderLeft: clipStandingEdge(mark)} : {}), ...(progress !== null ? {'--p': progress} : {})} as CSSProperties : undefined}
                 onClick={() => selection.select({kind: 'clip', ref: clip.id, title: clip.label, track: clip.trackId})}>
-                <button type="button" className="tri" aria-label={`Launch ${clip.label}${grain}`} disabled={!trackLaunch} title={trackLaunch ? `Launch (${trackLaunch.op})` : owned ? 'No launch: the owner discloses no launch for this clip' : 'No launch: this track is read, not launched'}
-                  onClick={event => { event.stopPropagation(); if (trackLaunch) onPress(key, `Launch ${clip.label}`, () => trackLaunch.run(clip.id)) }} />
+                <button type="button" className="tri" aria-label={`Launch ${clip.label}${grain}`} disabled={!trackLaunch} title={trackLaunch ? `Launch (${trackLaunch.op})${mode === 'gate' && trackLaunch.release ? ' · held: it runs while you hold the launch' : ''}` : owned ? 'No launch: the owner discloses no launch for this clip' : 'No launch: this track is read, not launched'}
+                  {...clipLaunchPress(clip, trackLaunch, onPress, key)} />
                 <span className="cs-text">
                   <span className="cs-label">{clip.label}{clipStandingTag(mark)}</span>
                   {clipSecondLine(clip)}

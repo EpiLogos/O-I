@@ -192,7 +192,28 @@ export type ActuationReadRequest =
  * [--reason TEXT] --json` (answers `{revoked, authority_source_ref, revoked_at_unix_seconds}`). Actuation stamps the time. */
 export type ActuationWriteRequest =
   | {kind:"authority-issue";record:Record<string,unknown>}
-  | {kind:"authority-revoke";authority_source_ref:string;reason?:string|null};
+  | {kind:"authority-revoke";authority_source_ref:string;reason?:string|null}
+  /** `actuation-research comparison.run` (O-I 795): the run a Repeat makes its takes through. The request is Actuation's own less its
+   * operation and root, which the kernel names and reserves (`$OI_HOME/desktop/takes/…`). Answers ActuationComparisonTakes. */
+  | {kind:"comparison-run";request:ActuationComparisonRunRequest};
+/** Actuation's comparison request (research comparison.rs run_with): each condition (1–3; absent, Actuation's default three) run
+ * `repetitions` times (1–32), each take in its own World; `run` is the common run every take shares (its research task, body, steps
+ * and calls, and the QL owner a non-classic condition needs); `basis` the revisions the takes are held to. */
+export interface ActuationComparisonRunRequest {
+  trace_ref: string
+  repetitions: number
+  conditions?: string[]
+  run: Record<string, unknown>
+  basis?: Record<string, unknown>
+  streams?: unknown[]
+}
+/** The takes a comparison made (the kernel's reading of the `ql-series1-run/0.3` manifest, which stays whole at `manifest_path`). */
+export interface ActuationComparisonTakes {
+  schema: 'ql-series1-run/0.3'; trace_ref: string; root: string; manifest_path: string; takes: number
+  records: {condition: string; repetition: number; ordinal: number; trace_ref: string; status: string | null; error: string | null
+    elapsed_ms: number | null; total_tokens: number | null; receipt_path: string}[]
+  held_constants_valid: boolean; determination: string; provider_mode: string; human_acceptance: boolean
+}
 /** `ql kernel m1` (answers ql.m1.engine/v1), `ql scene compose` (ql.scene/v1), `ql scene world` (ql.scene-world/v1). */
 export type QlReadRequest = {kind:"kernel-m1"|"scene-compose"|"scene-world";request:unknown}
   /** `ql kernel ledger [coordinate]`: one exact M coordinate's view (`ql.m-ledger-view/v1`: coordinate, rows, relations,
@@ -1048,6 +1069,16 @@ export interface EncounterTaskAttemptsList {
 export interface EncounterSessionSettingsRequest {
   track?: {telemetry?: boolean | null; solo?: boolean | null}
   task?: {task_ref: string; set: Partial<Record<EncounterTaskSettingKey, unknown>>}
+  /** A Repeat's takes starting (only on a task launched with Repeat, one set at a time) or ending, by whoever runs them (O-I 795). */
+  takes?: {start: {task_ref: string; trace_ref: string}}
+    | {end: {task_ref: string; trace_ref: string; outcome: 'made' | 'failed' | 'stopped'; takes?: number; root?: string; reason?: string}}
+}
+/** A Repeat's set of takes (§19.1 The Launch panel: "Once the first run starts, these do not change"): the four fields as they stood at
+ * its first run, and how it ended. While `running`, AIKit refuses a change to Repeat's variable, levels, repeats or stop when. */
+export interface EncounterTakesSet {
+  trace_ref: string; started_at_unix_ms: number; running: boolean
+  variable: string; levels: string[]; repeats: number; stop: string
+  ended: null | {at_unix_ms: number; outcome: 'made' | 'failed' | 'stopped'; takes?: number; root?: string; reason?: string}
 }
 export type EncounterTaskSettingKey = 'name' | 'colour' | 'active' | 'register' | 'form' | 'loop' | 'loop_until' | 'loop_cap' | 'launch' | 'then'
   | 'quantize' | 'repeat_variable' | 'repeat_levels' | 'repeat_repeats' | 'repeat_stop' | 'envelope_mode' | 'envelope_linked' | 'source' | 'effort' | 'autonomy'
@@ -1072,6 +1103,8 @@ export interface EncounterSessionSettingsReading {
     /** The constellation the task was made of (§19.1 The Clip panel's Constellation): its whole's wiki ref, the one the task was made with
      * until the person sets another; null when it was made of none. Absent from an AIKit before O-I #768 (ai-kit a3f43f84). */
     source?: string | null
+    /** The Repeat's set of takes that stands; null until one starts. Absent from an AIKit before O-I 795. */
+    takes?: EncounterTakesSet | null
   }
   previous_task: null | {task_ref: string; set: Record<string, unknown>}
   standing: string

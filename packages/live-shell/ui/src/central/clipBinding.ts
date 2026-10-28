@@ -25,8 +25,9 @@ import {islandSpan} from '../../../../../desktop/cradle/src/document/identity'
 import {listFiles, readFile} from '../../../../../desktop/cradle/src/files/client'
 import {parseInstance, type QlDoc} from '../../../../../desktop/cradle/src/flow/instance'
 import {circleHolder, containerOf, ENTRY_KINDS} from '../../../../../desktop/cradle/src/flow/plural'
-import {currentIdentity} from '../../../../../desktop/cradle/src/nara/identity/current'
+import {currentIdentity, type CurrentIdentity} from '../../../../../desktop/cradle/src/nara/identity/current'
 import {ANSWER_NO_EXPRESSION, ANSWER_NO_IDENTITY, answerThis} from '../../../../../desktop/cradle/src/nara/answerThis'
+import {useAgentShellOptional} from '../agent/AgentShellContext'
 import {useHostedChrome} from '../projections/expressionsPaneHost'
 import {useBeingSky} from '../inhabitants/ql/devices/beingSky'
 import type {CentralLocation, KernelTransportStatus, NativeDirectory, PageField} from '../../../../../desktop/cradle/src/kernel/types'
@@ -373,9 +374,9 @@ function pageWiring(write: PageWrite, kind: Value | undefined, island: unknown, 
     },
   }
   const acts = Object.fromEntries(Object.entries(all).filter(([key]) => writes.has(key)))
-  // Answer this (manual §18.1, §24.1; nara/answerThis.ts): on a Flow, Nara answers the selected entry's words from your pages, and the
-  // answer is kept in the Flow naming each passage. Where no bound conversation can stand, it stays refused in words naming what is
-  // missing.
+  // Answer this (manual §18.1, §24.1; nara/answerThis.ts): on a Flow, Nara answers the selected entry's words from your pages; with the
+  // track armed the answer is written in the Flow naming each passage, with its receipt, and unarmed it waits as a proposal. Where no
+  // bound conversation can stand, it stays refused in words naming what is missing.
   const answering = flow && answer && 'ask' in answer ? answer : null
   if (answering) acts['act.answerthis'] = async () => {
     if (held?.dirty) throw new Error(DIRTY)
@@ -390,6 +391,22 @@ function pageWiring(write: PageWrite, kind: Value | undefined, island: unknown, 
 
 /** Answer this on a Flow (nara/answerThis.ts): the act on the selected entry, or why it cannot be made now. */
 export type AnswerHand = {readonly ask: (entryId: string) => Promise<void>} | {readonly refused: string}
+
+/** The hand Answer this acts through on a page read with its island: the bound Nara conversation is found for the chosen identity and the
+ * open Expression (nara/answerThis.ts), and the track's Arm — the shell's one write arm (frame/tracks/useCentralTracks.ts) — says whether
+ * the answer is written with a receipt or waits as a proposal (manual §24.1 Arm). After the act, `after` reads the page again. Null where
+ * no page is read; refused in words where no identity or Expression stands. Pure. */
+export function answeringHand(input: {transport: KernelTransportStatus; location: CentralLocation | null; island: unknown; identity: CurrentIdentity | null;
+  expressionRef: string | null; arm: boolean; after: () => void; run?: typeof answerThis}): AnswerHand | null {
+  const {transport, location, island, identity, expressionRef, arm, after} = input
+  if (!location || !island) return null
+  if (!identity) return {refused: ANSWER_NO_IDENTITY}
+  if (!expressionRef) return {refused: ANSWER_NO_EXPRESSION}
+  const run = input.run ?? answerThis
+  return {ask: async entryId => {
+    try { await run({transport, identity, expressionRef, location, island, entryId, arm}) } finally { after() }
+  }}
+}
 
 /** What the view holds for the passage acts (the next highlight's colour, the next note's timing and anchor). */
 const PAGE_VIEW: Readonly<Record<string, string>> = {
@@ -551,6 +568,8 @@ export function useCentralClip(): ClipBinding | null {
   // The open Expression a Nara conversation is bound to (the frame's native scene, as the M3 clock reads it), and a Being page's sky:
   // its Subject's saved identity, when it carries a natal chart (inhabitants/ql/devices/beingSky.ts).
   const scene = useHostedChrome()?.state?.nativeScene ?? null
+  // The track's Arm: the shell's one write arm (frame/tracks/useCentralTracks.ts "every world's Arm is the shell's one write arm").
+  const arm = useAgentShellOptional()?.writeArm === true
   const beingSky = useBeingSky(transport, subjectAnswer?.phase === 'read' ? subjectAnswer.island : undefined)
   if (subject) {
     const ref = `subject:${subject.kind}:${subject.path}`
@@ -565,17 +584,11 @@ export function useCentralClip(): ClipBinding | null {
         if (reached?.location?.ref === location.ref) reached.reread?.()
       }
     } : null
-    // Answer this: the bound Nara conversation is found for the chosen identity and the open Expression (nara/answerThis.ts); the
-    // answer kept, the page is read again.
+    // Answer this: the bound Nara conversation is found for the chosen identity and the open Expression (nara/answerThis.ts), under the
+    // track's Arm; after it, the page is read again.
     const island = answer.phase === 'read' ? answer.island : undefined
-    const identity = currentIdentity()
-    const answering: AnswerHand | null = !location || !island ? null : !identity ? {refused: ANSWER_NO_IDENTITY} : !scene ? {refused: ANSWER_NO_EXPRESSION}
-      : {ask: async entryId => {
-        try { await answerThis({transport, identity, expressionRef: scene.expression_ref, location, island, entryId}) } finally {
-          setWritten(n => n + 1)
-          if (reached?.location?.ref === location.ref) reached.reread?.()
-        }
-      }}
+    const answering = answeringHand({transport, location, island, identity: currentIdentity(), expressionRef: scene?.expression_ref ?? null, arm,
+      after: () => { setWritten(n => n + 1); if (location && reached?.location?.ref === location.ref) reached.reread?.() }})
     const values = answer.phase === 'reading' ? {kind: FORM[subject.kind], name} : {...answer.values, ...beingSky}
     return centralClipBinding({ref, values, location, island}, {colour, reached, write, answer: answering, constellations})
   }

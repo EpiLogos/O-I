@@ -170,7 +170,8 @@ pub enum ActuationRead {
     },
     /// `comparison.held|assess|mask|review` over the supplied records or
     /// manifest (`input`, an object: the kernel names the operation).
-    /// `comparison.run` executes model bodies and is not a reading.
+    /// `comparison.run` executes model bodies and is not a reading: it is
+    /// `ActuationWrite::ComparisonRun`.
     Comparison {
         operation: ComparisonRead,
         input: Value,
@@ -205,6 +206,19 @@ pub enum ActuationWrite {
         #[serde(default)]
         reason: Option<String>,
     },
+    /// `actuation-research comparison.run` (Actuation research comparison.rs
+    /// `run_with`), the run a Repeat makes its takes through (O-I manual
+    /// §19.1 The Launch panel: "Each run is a take"; O-I #795): each level
+    /// (`conditions`, 1–3; absent, Actuation's own default three) run
+    /// `repetitions` times (1–32), each trial in its own World under one
+    /// dedicated empty root. The request is Actuation's own, as the desk
+    /// hands it, less what the kernel provides: the operation's name and
+    /// the root, which the kernel reserves in its own state
+    /// (`$OI_HOME/desktop/takes/…`, else `~/.oi/desktop/takes/…`) from the
+    /// run's `trace_ref`, so one set of takes never reuses another's.
+    /// Actuation writes the plan, each trial's receipt and the manifest
+    /// there; the reading names the root and each take.
+    ComparisonRun { request: Value },
 }
 
 /// Quaternal Logic's derivations over a supplied request: the M1 engine
@@ -1173,6 +1187,14 @@ fn incompatible(message: String) -> Error {
     }
 }
 
+fn unavailable(message: String) -> Error {
+    Error {
+        kind: "unavailable".into(),
+        message,
+        operation_may_have_run: false,
+    }
+}
+
 /// Run one owner command through the owner-process limiter within its bound,
 /// and return the owner's JSON document. A non-zero exit, or a document that
 /// says `ok: false` whatever the exit, is the owner's refusal in its own
@@ -1550,7 +1572,190 @@ pub fn actuation_write(request: &ActuationWrite) -> Result<Written, String> {
 
 const LOCAL_AUTHORITY: &str = "actuation.local-authority/v1";
 
+/// Actuation's comparison manifest (research comparison.rs `run_with`).
+const COMPARISON_MANIFEST: &str = "ql-series1-run/0.3";
+/// A comparison runs every take in turn, each a model body's run of a task;
+/// the bound is for a run that never ends, and holds one owner place while
+/// it runs (owner_process.rs).
+const COMPARISON_LIMIT: Duration = Duration::from_secs(60 * 60);
+
+/// Where the kernel reserves a set of takes' dedicated root: its own state
+/// directory (`$OI_HOME/desktop`, else `~/.oi/desktop`, as slow_ops.rs
+/// keeps it), under `takes/`, named by the run's trace so a second set of
+/// the same takes finds its root taken.
+fn takes_root(trace_ref: &str) -> Result<PathBuf, Error> {
+    use sha2::{Digest, Sha256};
+    let home = std::env::var_os("OI_HOME")
+        .filter(|home| !home.is_empty())
+        .map(PathBuf::from)
+        .or_else(|| {
+            std::env::var_os("HOME")
+                .filter(|home| !home.is_empty())
+                .map(|home| PathBuf::from(home).join(".oi"))
+        })
+        .ok_or_else(|| {
+            unavailable("No state directory for the takes: neither OI_HOME nor HOME is set".into())
+        })?;
+    let readable: String = trace_ref
+        .chars()
+        .map(|c| {
+            if c.is_ascii_alphanumeric() || c == '-' || c == '.' {
+                c
+            } else {
+                '-'
+            }
+        })
+        .take(64)
+        .collect();
+    let digest = Sha256::digest(trace_ref.as_bytes());
+    let short: String = digest
+        .iter()
+        .take(6)
+        .map(|byte| format!("{byte:02x}"))
+        .collect();
+    Ok(home
+        .join("desktop")
+        .join("takes")
+        .join(format!("{readable}-{short}")))
+}
+
+fn comparison_run(request: &Value) -> Result<Written, Error> {
+    let route = "actuation-research comparison.run";
+    let Some(fields) = request.as_object() else {
+        return Err(incompatible(format!(
+            "{route} takes an object of its fields"
+        )));
+    };
+    if fields
+        .get("operation")
+        .is_some_and(|given| given.as_str() != Some("comparison.run"))
+    {
+        return Err(incompatible(format!(
+            "{route} was handed another operation"
+        )));
+    }
+    if fields.contains_key("root") {
+        return Err(incompatible(format!(
+            "{route}: the kernel reserves the takes' dedicated root; the request names none"
+        )));
+    }
+    let Some(trace_ref) = fields
+        .get("trace_ref")
+        .and_then(Value::as_str)
+        .filter(|trace| !trace.trim().is_empty())
+        .map(str::to_owned)
+    else {
+        return Err(incompatible(format!(
+            "{route} takes the takes' trace_ref, which names their root"
+        )));
+    };
+    let root = takes_root(&trace_ref)?;
+    let parent = root.parent().expect("takes root parent");
+    std::fs::create_dir_all(parent).map_err(|error| {
+        unavailable(format!(
+            "The takes' directory {} could not be made: {error}",
+            parent.display()
+        ))
+    })?;
+    if let Err(error) = std::fs::create_dir(&root) {
+        return Err(refused(
+            if error.kind() == std::io::ErrorKind::AlreadyExists {
+                format!("The takes {trace_ref} already have a root ({}): a set of takes runs once; a change starts a new set under a new trace", root.display())
+            } else {
+                format!(
+                    "The takes' root {} could not be reserved: {error}",
+                    root.display()
+                )
+            },
+            false,
+        ));
+    }
+    let root_text = root.to_string_lossy().into_owned();
+    let mut body = request.clone();
+    body["operation"] = "comparison.run".into();
+    body["root"] = root_text.clone().into();
+    let mut call = Call::new(
+        actuation_research(),
+        route,
+        words(&["--json"]),
+        COMPARISON_LIMIT,
+    );
+    call.effect = Effect::Write;
+    call.input = Some(object_bytes(&body)?);
+    let data = run(call)?;
+    // The harness answers a refusal with its own error document.
+    if data.get("schema").and_then(Value::as_str) == Some("actuation.research-error/v1") {
+        let stdout = object_bytes(&data)?;
+        return Err(refused(
+            crate::inhabitation::refusal_words(&stdout, b""),
+            false,
+        ));
+    }
+    let manifest = schema(route, data, COMPARISON_MANIFEST)?;
+    let manifest = fields_of(route, manifest)?;
+    Ok(Written {
+        reading: reading(route.into(), takes_of(&manifest, &root_text), Vec::new()),
+        moved: Some(Moved {
+            owner: "actuation",
+            action: route.into(),
+            reference: trace_ref,
+            revision: None,
+        }),
+    })
+}
+
+fn fields_of(route: &str, manifest: Value) -> Result<Value, Error> {
+    fields(
+        route,
+        manifest,
+        &[
+            ("trace_ref", Kind::Text),
+            ("records", Kind::List),
+            ("held_constants", Kind::Record),
+        ],
+    )
+}
+
+/// The takes a comparison made, as its manifest records them: each take's
+/// condition, repetition, place and outcome, and where its receipt is kept.
+/// The whole manifest stays in the root (`manifest.json`), with every
+/// trial's own record.
+fn takes_of(manifest: &Value, root: &str) -> Value {
+    let records = manifest["records"].as_array().cloned().unwrap_or_default();
+    let takes: Vec<Value> = records
+        .iter()
+        .map(|record| {
+            serde_json::json!({
+                "condition": record["condition"],
+                "repetition": record["repetition"],
+                "ordinal": record["ordinal"],
+                "trace_ref": record["trace_ref"],
+                "status": record["status"],
+                "error": record["error"],
+                "elapsed_ms": record["elapsed_ms"],
+                "total_tokens": record["total_tokens"],
+                "receipt_path": record["receipt_path"],
+            })
+        })
+        .collect();
+    serde_json::json!({
+        "schema": manifest["schema"],
+        "trace_ref": manifest["trace_ref"],
+        "root": root,
+        "manifest_path": format!("{root}/manifest.json"),
+        "takes": records.len(),
+        "records": takes,
+        "held_constants_valid": manifest["held_constants"]["valid"],
+        "determination": manifest["determination"],
+        "provider_mode": manifest["provider_mode"],
+        "human_acceptance": manifest["human_acceptance"],
+    })
+}
+
 fn actuation_written(request: &ActuationWrite) -> Result<Written, Error> {
+    if let ActuationWrite::ComparisonRun { request } = request {
+        return comparison_run(request);
+    }
     let (route, args, input, wanted, flag) = match request {
         ActuationWrite::AuthorityIssue { record } => {
             let Some(source) = record.get("authority_source_ref").and_then(Value::as_str) else {
@@ -1566,6 +1771,7 @@ fn actuation_written(request: &ActuationWrite) -> Result<Written, Error> {
                 "issued",
             )
         }
+        ActuationWrite::ComparisonRun { .. } => unreachable!("routed above"),
         ActuationWrite::AuthorityRevoke {
             authority_source_ref,
             reason,

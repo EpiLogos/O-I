@@ -157,7 +157,13 @@ export interface FactorySessionsReading {
   takes?: FactoryTakesPort
   /** Stop one session: cancel its running turn on its own encounter owner. Absent: a track's Stop is the harness's. */
   sessionStop?: (sessionRef: string) => Promise<FactoryControlReceipt>
+  /** Make a Repeat's takes (agent/sessionSettings.ts makeTakes): the session's task's set of takes, through Actuation's comparison run.
+   * Absent: a Repeat's press says what it waits for (FACTORY_REPEAT_ABSENT). */
+  repeat?: (sessionRef: string, label: string) => Promise<FactoryControlReceipt>
 }
+
+/** Why a Repeat's press makes no takes where no port is handed. */
+export const FACTORY_REPEAT_ABSENT = 'Repeat makes its takes through Actuation\'s comparison run (kernel actuation_write comparison-run), and no carrier reaches it here.'
 
 const missing = (what: string, op: string, owner: string) => `${what}: no owner operation carries it yet — missing op: ${op} (${owner}).`
 
@@ -298,6 +304,54 @@ function actionsFor(controls: FactoryControls, tracks: readonly WorldTrack[], cl
   }
 }
 
+/** A task's launch played by its Launch mode (manual §19.1 The Launch panel): "Trigger starts the task when you press its launch. Gate
+ * runs it only while you hold the launch. Toggle starts it with one press and stops it with the next. Repeat launches it again at each
+ * quantize step while you hold the launch, each run a take of its own." A launch is the harness's, as it always was (FACTORY_LAUNCH_OP);
+ * a stop is the session's own (`sessionStop`, its running turn cancelled), else the harness's. Gate's release stops what its press
+ * launched, and only a launch the owner took; Toggle's press on a running task stops it; Repeat makes its takes through the `repeat`
+ * port; Trigger, and a task whose mode no reading names, launches as it always did. */
+/** The launch each Gate's press made, by its clip, kept until its release: only a launch the owner took is stopped when it is let go. The
+ * grid projects a new set on every render (the press's own receipt is one cause), so the press and its release can reach two sets. */
+const GATE_HELD = new Map<string, Promise<unknown>>()
+
+function launchByMode(launch: {op: string; run(clipId: string): unknown}, clips: readonly WorldTrackClip[], sessionOf: ReadonlyMap<string, string>,
+  controls: FactoryControls, sessionStop: FactorySessionsReading['sessionStop'], repeat: FactorySessionsReading['repeat']): NonNullable<WorldTrackActions['launch']> {
+  const clipById = new Map(clips.map(clip => [clip.id, clip]))
+  const held = GATE_HELD
+  const stop = (clip: WorldTrackClip, pressed: string): Promise<FactoryControlReceipt> => {
+    const session = sessionOf.get(clip.trackId)
+    if (sessionStop && session) return sessionStop(session).then(receipt => receipt.ok
+      ? {...receipt, note: `${pressed} stopped this session's running turn. ${receipt.note}`} : {...receipt, error: `${pressed}: ${receipt.error}`})
+    return atWholeHarness(controls.control('stop'), pressed)
+  }
+  return {
+    op: launch.op,
+    run: clipId => {
+      const clip = clipById.get(clipId)
+      const mode = clip?.launch?.mode
+      if (!clip || !mode || mode === 'trigger') return launch.run(clipId)
+      if (mode === 'toggle' && clip.status === 'running') return stop(clip, `Toggle's second press on “${clip.label}”`)
+      if (mode === 'repeat') {
+        const session = sessionOf.get(clip.trackId)
+        if (!repeat || !session) return refused(`${clip.label} is launched with Repeat: ${FACTORY_REPEAT_ABSENT}`)
+        return repeat(session, clip.label)
+      }
+      const answer = Promise.resolve(launch.run(clipId))
+      if (mode === 'gate') held.set(clipId, answer)
+      return answer
+    },
+    release: clipId => {
+      const clip = clipById.get(clipId)
+      const pressed = held.get(clipId)
+      held.delete(clipId)
+      if (!clip || clip.launch?.mode !== 'gate' || !pressed) return undefined
+      return pressed.then((receipt): Promise<FactoryControlReceipt> | FactoryControlReceipt => (receipt as FactoryControlReceipt | undefined)?.ok
+        ? stop(clip, `Gate's release on “${clip.label}”`)
+        : {ok: false, error: `${clip.label}'s launch was not taken, so its release stops nothing.`})
+    },
+  }
+}
+
 export const factoryTrackAdapter: WorldTrackAdapter<FactorySessionsReading> = {
   id: FACTORY_TRACK_ADAPTER_ID,
   project(reading): WorldTrackSet {
@@ -434,6 +488,8 @@ export const factoryTrackAdapter: WorldTrackAdapter<FactorySessionsReading> = {
       const session = sessionOf.get(trackId)
       return session ? sessionStop(session) : refused(`"${trackId}" is not a session of this work.`)
     }}}
+    const launch = set.actions?.launch
+    if (launch && controls) set.actions = {...set.actions, launch: launchByMode(launch, clips, sessionOf, controls, sessionStop, reading.repeat)}
     if (port) {
       const own = (setting: 'telemetry' | 'solo') => (trackId: string, on: boolean) => {
         const session = sessionOf.get(trackId)

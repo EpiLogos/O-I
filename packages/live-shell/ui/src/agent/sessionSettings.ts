@@ -7,9 +7,10 @@
 // it — and writes it against the revision that stands. Pure, apart from `writeSessionSettings`.
 import type {Value, Values} from '../frame/devices/designed'
 import {kernelOp} from '../../../../../desktop/cradle/src/kernel/bridge'
-import type {EncounterEnvelopePoint, EncounterSessionSettingsReading, EncounterSessionSettingsRequest, KernelTransportStatus}
-  from '../../../../../desktop/cradle/src/kernel/types'
+import type {ActuationComparisonRunRequest, ActuationComparisonTakes, EncounterEnvelopePoint, EncounterSessionSettingsReading,
+  EncounterSessionSettingsRequest, KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
 import {settingsReadingEntry} from '../owners/readers'
+import {routeAnswerOf} from './devices/ownerRoutes'
 import type {TaskSetting} from './devices/taskBindings'
 
 export const SETTINGS_RESULT = 'encounter_session_settings_reading'
@@ -95,6 +96,8 @@ export function clipValuesOfSettings(reading: EncounterSessionSettingsReading | 
   own('launch', task.launch); own('then', task.then)
   own('repeat.variable', task.repeat_variable); own('repeat.repeats', task.repeat_repeats); own('repeat.stop', task.repeat_stop)
   if (task.repeat_levels?.length) values['repeat.levels'] = task.repeat_levels.join(', ')
+  // The takes a Repeat's set made, once it ends (O-I 795).
+  own('takes', task.takes?.ended?.takes)
   return values
 }
 
@@ -176,6 +179,74 @@ export async function writeSessionSettings(transport: KernelTransportStatus, pro
   // Every reader of these settings holds this one entry: the re-read reaches them all.
   await entry.refresh(epoch)
   return result.outcome.data
+}
+
+// ---------------------------------------------------------------------------------------------------------------- Repeat's takes
+
+/** The run every take of a Repeat shares, in Actuation's own words (research comparison.rs run_with): `run` names a task of its research
+ * catalogue, the model body that runs it, its steps and calls, and the QL owner a non-classic condition needs; `basis` the revisions the
+ * takes are held to. */
+export interface ResearchRun {
+  readonly run: Record<string, unknown>
+  readonly basis?: Record<string, unknown>
+}
+
+/** Why a Repeat makes no takes, in words. */
+export const TAKES_WHY = {
+  notRepeat: 'This task is not launched with Repeat: set Launch mode to Repeat first.',
+  condition: 'Actuation\'s comparison run varies the condition only (classic and Quaternal Logic\'s conditions); it holds the model, effort, '
+    + 'skillset, budget and autonomy constant across its takes — missing op: a comparison that varies them (Actuation).',
+  noRun: 'Actuation\'s comparison run takes a task of its research catalogue and a supplied model body that runs it; neither reaches the '
+    + 'shell for this session\'s task — missing op: the session\'s own task and agent as a comparison\'s research task and body (Actuation, AIKit).',
+} as const
+
+/** The comparison request a Repeat's takes run with: Repeats are its repetitions, Levels its conditions (none chosen, Actuation runs its
+ * own default three — "Levels: 1–3 values. Default: Three", §19.1). Or why Actuation cannot make them. Pure. */
+export function comparisonRequestOf(task: NonNullable<EncounterSessionSettingsReading['task']>, traceRef: string, research: ResearchRun | null):
+  {request: ActuationComparisonRunRequest} | {refused: string} {
+  if (task.launch !== 'repeat') return {refused: TAKES_WHY.notRepeat}
+  if (task.repeat_variable !== 'condition') return {refused: TAKES_WHY.condition}
+  if (!research) return {refused: TAKES_WHY.noRun}
+  return {request: {trace_ref: traceRef, repetitions: task.repeat_repeats, ...(task.repeat_levels.length ? {conditions: [...task.repeat_levels]} : {}),
+    run: research.run, ...(research.basis ? {basis: research.basis} : {})}}
+}
+
+type Receipt = {ok: true; note: string} | {ok: false; error: string}
+
+/** A Repeat's takes (manual §19.1 The Launch panel: "Each run is a take … Once the first run starts, these do not change. A change starts
+ * a new set of takes"): the set starts on AIKit (`encounter-session-settings` takes start, which freezes Repeat's fields and refuses a
+ * second set while one runs), Actuation's comparison run makes the takes in a root the kernel reserves (kernel actuation_write
+ * comparison-run), and the set ends on AIKit with what it made, or failed with Actuation's words. Refused, before any write, where the
+ * task is not launched with Repeat or Actuation cannot make its takes (comparisonRequestOf). */
+export async function makeTakes(transport: KernelTransportStatus, project: string, agentSession: string, research: ResearchRun | null,
+  now: () => number = Date.now): Promise<Receipt> {
+  const standing = settingsReadingEntry(transport, project, agentSession).snapshot()
+  const task = standing.status === 'answered' ? (standing.value as EncounterSessionSettingsReading | null)?.task ?? null : null
+  if (!task) return {ok: false, error: SETTINGS_WHY.reading}
+  const traceRef = `takes:${agentSession}:${now()}`
+  const composed = comparisonRequestOf(task, traceRef, research)
+  if ('refused' in composed) return {ok: false, error: composed.refused}
+  const said = (cause: unknown) => cause instanceof Error ? cause.message : String(cause)
+  const end = (fields: {outcome: 'made' | 'failed'; takes?: number; root?: string; reason?: string}) =>
+    writeSessionSettings(transport, project, agentSession, {takes: {end: {task_ref: task.task_ref, trace_ref: traceRef, ...fields}}})
+  try {
+    await writeSessionSettings(transport, project, agentSession, {takes: {start: {task_ref: task.task_ref, trace_ref: traceRef}}})
+  } catch (cause) { return {ok: false, error: `AIKit did not start the takes: ${said(cause)}`} }
+  let made: ActuationComparisonTakes
+  try {
+    made = routeAnswerOf(await kernelOp(transport, {op: 'actuation_write', request: {kind: 'comparison-run', request: composed.request}}),
+      '`actuation-research comparison.run`').data as ActuationComparisonTakes
+  } catch (cause) {
+    const reason = said(cause)
+    try { await end({outcome: 'failed', reason: reason.slice(0, 1024)}) } catch (ending) {
+      return {ok: false, error: `Actuation made no takes: ${reason}. AIKit did not end the set either: ${said(ending)}`}
+    }
+    return {ok: false, error: `Actuation made no takes: ${reason}`}
+  }
+  try { await end({outcome: 'made', takes: made.takes, root: made.root}) } catch (cause) {
+    return {ok: false, error: `Actuation made ${made.takes} takes in ${made.root}, but AIKit did not end the set: ${said(cause)}`}
+  }
+  return {ok: true, note: `Actuation's comparison run made ${made.takes} takes of ${task.name} (${traceRef}), kept in ${made.root}; AIKit ended the set.`}
 }
 
 // ---------------------------------------------------------------------------------------------------------------- the Tasks device

@@ -175,7 +175,8 @@ test('4 · the Experiment: its comparison readings read the records a run made, 
   bind.resetHolds()
   const binding = main.experimentBinding(bind.chainHolds())
   for (const key of main.EXPERIMENT_WRITES) assert.equal(binding.standing[key].disabled, main.EXPERIMENT_REFUSE, key)
-  assert.match(main.EXPERIMENT_REFUSE, /`actuation-research comparison\.run`.*does not route because it runs models/)
+  // REPLACED (O-I 795): the run was not routed; it is now (actuation_write comparison-run), for a task launched with Repeat.
+  assert.match(main.EXPERIMENT_REFUSE, /`actuation-research comparison\.run`.*kernel actuation_write comparison-run/)
   for (const key of ['light', 'state', 'runs', 'earlier']) assert.match(binding.standing[key].disabled, /the run records or the manifest of a comparison run to hand Actuation's comparison readings/, key)
   assert.match(binding.standing.earlier.disabled, /comparison\.held answers the differing constants of the records it is handed/)
   await assert.rejects(() => binding.write([{key: 'question', value: 'x'}]), /comparison\.run/)
