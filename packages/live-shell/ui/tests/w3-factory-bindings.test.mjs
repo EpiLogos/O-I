@@ -274,7 +274,8 @@ test('7 · the member\'s Trust records the review with AIKit (`aikit trust recor
     assert.deepEqual(kernel.ops, [{op: 'aikit_write', request: {kind: 'trust-record', project: 'O-I', capability: 'skill/aikit/wiki-inhabitation'}}])
   } finally { kernel.restore() }
   assert.equal(bind.memberBinding(bind.MEMBER_DEVICE_ID, rack, 'skill/aikit/wiki-inhabitation', bind.chainHolds()).standing.reviewed.disabled, bind.REFUSED_WRITES[bind.MEMBER_DESIGN].reviewed)
-  assert.match(bind.REFUSED_WRITES[bind.RACK_DESIGN].exported, /takes an absolute --out, and the rack has no field naming one/)
+  // #757: the rack names the directory now (Into, `outDir`), and Export is AIKit's own set-package-export (factory-design-binding.test.mjs).
+  assert.equal(bind.REFUSED_WRITES[bind.RACK_DESIGN].exported, undefined, 'Export is no longer refused by name')
   // AIKit's capture and promote: the only design with those controls is ai-kit:capture-skill, which no agent device binds or places yet.
   assert.doesNotMatch(read('agent/devices/FactoryDeviceChain.tsx') + read('agent/devices/AgentRailDevices.tsx'), /capture-skill/)
   bind.resetHolds()

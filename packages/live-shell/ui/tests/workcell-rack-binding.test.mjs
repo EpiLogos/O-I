@@ -137,8 +137,10 @@ test('(b) every key the design reads is an owner reading, absent with its missin
   const classes = Object.fromEntries(designKeys.map(key => [key, classify(binding, key)]))
   for (const [key, kind] of Object.entries(classes)) assert.ok(kind, `${key}: classified`)
   assert.deepEqual(Object.entries(classes).filter(([, kind]) => kind === 'reading').map(([key]) => key).sort(),
-    ['approvals', 'chain', 'light', 'machine', 'name', 'seats', 'stallAfter', 'transport', 'workcells'])
-  assert.deepEqual(Object.entries(classes).filter(([, kind]) => kind === 'local').map(([key]) => key).sort(), ['needed', 'openIn'])
+    ['approvals', 'chain', 'light', 'machine', 'name', 'project', 'seats', 'stallAfter', 'transport', 'workcells'], 'project: the chain\'s project, whose seat\'s lane the folded workcell reads (#757)')
+  assert.deepEqual(Object.entries(classes).filter(([, kind]) => kind === 'local').map(([key]) => key).sort(), ['needed', 'openIn', 'worldReceipt'],
+    'worldReceipt: the World page\'s choice among the worlds listed for the cell (#757)')
+  assert.match(binding.standing.worlds.disabled, /missing op:/, 'worlds: no world read here, the operation it waits for named')
   // REPLACED (lane W10): Services and the harness processes have their routes (doctor, instances list|usage); unread here they say where
   // they are read (w10-workcell-material.test.mjs reads them).
   for (const [key, kind] of Object.entries(classes)) {

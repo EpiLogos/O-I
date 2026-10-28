@@ -1,8 +1,10 @@
 // Session grid (manual §16.6): the shell's own Session view as an instrument that opens in a pane. Live's nearest: the Session view's
 // clip grid (a clip launcher with its scene launchers) — here the tracks are the mode's, the clips are its material, and a row is a stop.
 // The picture is the grid itself, drawn by the grid's own law (frame/tracks/SessionGrid.tsx): a clip stands in its track's column and its
-// row; a clip shows its state (waiting, running with no end, stopped, recording, stalled, done); a group folds its members and rolls their
-// clips up; a stalled lane lights its retry; the Main column holds the row launchers. The fixture is Factory's own mockup grid
+// row; a clip shows its state (waiting, running with no end, stopped, recording, stalled, done); a group folds its members, and in each row
+// where it has no clip of its own it rolls its members' clips up, folded or open, as the shell does (SessionGrid.tsx: "A group with no clip
+// of its own in this row rolls up its members'"); a member steps in behind one rail per ancestor, each in that ancestor's colour and the
+// track's whole height (tracks.css .rails); a stalled lane lights its retry; the Main column holds the row launchers. The fixture is Factory's own mockup grid
 // (desktop/cradle/docs/world-shell/agent-shell-mockup.html:470-478), because Factory is the mode whose owner reports clip states.
 import type {CSSProperties, KeyboardEvent} from 'react'
 import {Band, Chooser, Dial, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, Tile, Toggle, type LightState, type Option, type RowItem} from '../../sdk/panel'
@@ -159,7 +161,7 @@ function Grid({v, set, geo, uid, handle}: {v: Values; set?: ViewProps['set']; ge
                 : <rect x={x + cw - 4} y={y + 1} width={3} height={3} fill="var(--dp-well)" />)}
             </g>
           }
-          const rolled = t.group && isFolded ? descendants(t).flatMap(m => { const c = clipAt(m.id, r + 1); return c ? [{c, m}] : [] }) : []
+          const rolled = t.group ? descendants(t).flatMap(m => { const c = clipAt(m.id, r + 1); return c ? [{c, m}] : [] }) : []
           if (rolled.length) {
             const sw = (cw - 2) / rolled.length
             return <g key={r}>
@@ -210,9 +212,10 @@ function FullGrid({v}: {v: Values}) {
     <div className="sgd" role="grid" aria-label="Session">
       {cols.map(t => {
         const isFolded = folded(v, t)
-        return <div key={t.id} className="sgd-trk" role="row" style={{'--tc': t.c} as CSSProperties} data-silent={!active(v, t) || undefined}>
+        const rails = ancestors(t)
+        return <div key={t.id} className="sgd-trk" role="row" style={{'--tc': t.c, ...(rails.length ? {'--rails': rails.length} : {})} as CSSProperties} data-silent={!active(v, t) || undefined} data-rails={rails.length || undefined}>
+          {rails.length > 0 && <span className="sgd-rails" aria-hidden="true">{rails.map(a => <i key={a.id} style={{background: a.c}} />)}</span>}
           <div className="sgd-head">
-            {ancestors(t).map(a => <i key={a.id} className="sgd-rail" style={{background: a.c}} />)}
             {t.group && <span className="sgd-fold">{isFolded ? '▶' : '▼'}</span>}
             <b>{t.name}</b>
             {armed === t.id && <span className="sgd-arm" role="img" aria-label="Armed" />}
@@ -234,7 +237,7 @@ function FullGrid({v}: {v: Values}) {
                 </span>
               </div>
             }
-            const rolled = t.group && isFolded ? descendants(t).flatMap(mm => { const c = clipAt(mm.id, r + 1); return c ? [{c, mm}] : [] }) : []
+            const rolled = t.group ? descendants(t).flatMap(mm => { const c = clipAt(mm.id, r + 1); return c ? [{c, mm}] : [] }) : []
             if (rolled.length) return <div key={r} role="gridcell" className="sgd-cell sgd-roll">{rolled.map(({c, mm}) => <i key={mm.id} data-status={c.status} style={{'--tc': mm.c} as CSSProperties} />)}</div>
             return <div key={r} role="gridcell" className="sgd-cell" data-empty="true"><span className="sgd-stopsq" /></div>
           })}

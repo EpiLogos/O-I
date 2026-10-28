@@ -235,6 +235,8 @@ export function workcellRackValues(input: WorkcellRackInput): Values {
   if (instances) values.instances = JSON.stringify(instances)
   if (input.name == null) return values
   values.name = input.name
+  // The project the chain stands for: its seat's lane is the folded workcell's (workcell__workcell.tsx laneOf), none while that seat is free.
+  put(values, 'project', input.project)
   put(values, 'machine', str(input.chain.carrier.here))
   const seat = read ? workcellSeat(input.seats, input.name, input.project) : undefined
   values.chain = JSON.stringify(chainList(input, seat))
@@ -300,6 +302,11 @@ export function workcellRackBinding(input: WorkcellRackInput, ports: WorkcellRac
   if (picked) {
     for (const key of ['world', 'surfaces', 'omitted', 'readAt', 'run']) delete standing[key]
     if (picked.none) values.world = 'null'
+    // Several worlds listed for this cell: the World page's chooser among them (`worlds`), the hand's choice its `worldReceipt`; none assumed.
+    if (picked.listed.length > 1) {
+      values.worlds = JSON.stringify(picked.listed.map(world => ({receipt: world.receipt, world: world.worldRef})))
+      put(values, 'worldReceipt', view.worldReceipt)
+    }
     // The run the pages show: the world's one ledger run (Workcell PR 122), else the run its receipt names among its subjects.
     const subjects = picked.chosen?.subjects ?? {}
     const run = picked.chosen?.runs?.length === 1 ? picked.chosen.runs[0] : subjects.factory_run ?? subjects.run
@@ -363,6 +370,9 @@ export function workcellRackBinding(input: WorkcellRackInput, ports: WorkcellRac
     if (!('machine' in values)) standing.machine = {disabled: unread('The machine', 'the Remote carrier\'s reading of `workcell status` (it has not answered)', 'Workcell')}
     if (!('light' in values)) standing.light = {disabled: 'The light is a reading: the register and the workcell\'s gateway have not both answered.'}
   }
+  // The worlds to choose among stand only where Workcell lists several for this cell; else why there is no choice.
+  if (!('worlds' in values)) standing.worlds = {disabled: picked && !picked.why ? 'Workcell lists one world or none for this cell: there is nothing to choose.'
+    : picked?.why ?? WORKCELL_ABSENT.world!}
   return {
     id: WORKCELL_RACK_ID,
     values,

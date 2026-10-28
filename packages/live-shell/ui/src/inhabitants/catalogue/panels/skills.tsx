@@ -2,7 +2,9 @@
 // sets, each wearing its kind's woodcut mark in the set in use (icon-cut.html §7: the blade or the pen). Live's nearest: a rack
 // and its chain list, with nested racks for child sets. Membership grants no trust, authority or loading, so the picture is
 // the chain list with each member's evidence ladder: carried is not loaded, and loaded is not used. Every control here is an
-// AIKit operation: enable or disable through the profile, the scope a composition applies at, preview then apply, package.
+// AIKit operation: enable or disable through the profile, the scope a composition applies at, preview then apply, package. Export writes
+// the set's native package for the target you chose into the directory you name (`outDir`, an absolute path: `aikit set package export
+// <set> --target <t> --out <dir>`), its receipt beside it.
 //
 // Its pages keep the practice itself: Set (the composition, with an Unused filter), Sources (where the practice comes from, and the
 // skill trees on this machine that AIKit does not own), Adopt (bring a foreign tree under AIKit, previewed first) and Procedures (each
@@ -587,7 +589,9 @@ function SetBands({p}: {p: ViewProps}) {
       </Section>
       <Section label="Package" grow>
         <Radio does="The harness to package the set for. The set itself does not change." value={strOf(p.v, 'target') ?? ''} options={TARGETS} {...st(p, 'target')} stack onChange={x => p.set('target', x)} />
-        <Action {...st(p, 'exported')} label="Export" does="Write the native package and its receipt." onPress={has(p.v, 'target') ? () => p.set('exported', strOf(p.v, 'target')) : undefined} />
+        <TextField {...st(p, 'outDir')} label="Into" does="The directory the package is written into, as an absolute path. AIKit writes the package and its receipt there." wide
+          value={strOf(p.v, 'outDir') ?? ''} placeholder="/absolute/folder" onChange={x => p.set('outDir', x)} />
+        <Action {...st(p, 'exported')} label="Export" does="Write the native package and its receipt into the directory named Into." onPress={has(p.v, 'target') ? () => p.set('exported', strOf(p.v, 'target')) : undefined} />
         <Readout label="unsupported" does="Relations the target cannot carry. The receipt names each one." value={unsupported(p.v)} tone={unsupported(p.v) ? 'stall' : undefined} />
       </Section>
     </Band>
@@ -750,7 +754,7 @@ export const skills: DesignedDevice = {
   title: 'Skillset rack',
   kind: 'rack',
   firstPage: 'set',
-  defaults: {light: 'lit', set: 'central:documentation', scope: 'project', profile: 'baseline', compose: 'applied', target: 'claude',
+  defaults: {light: 'lit', set: 'central:documentation', scope: 'project', profile: 'baseline', compose: 'applied', target: 'claude', outDir: '/Users/you/Packages',
     marks: 'blade', revision: 'b3:9f2c41', author: 'Epi-Logos', 'req:experimental-development': false,
     // The owner's material, as the binding supplies it: the members, the sets and profiles to choose from, what each target drops.
     members: JSON.stringify(DOCUMENTATION),
@@ -769,7 +773,7 @@ export const skills: DesignedDevice = {
     'A candidate waits': {source: 'mattpocock', sources: JSON.stringify(SOURCES.map(x => (x.id === 'mattpocock' ? {...x, candidate: '3be07c55f1a82d64'} : x)))},
     'Before preview': {adoption: undefined, adoptRoot: '@codex', namespace: 'codex'},
     'Capturing, held for a secret': {'capture.recording': true, ...prefixed('capture.', captureSkill.fixtures?.Held ?? {})},
-    'No readings': {light: undefined, set: undefined, scope: undefined, profile: undefined, compose: undefined, target: undefined, revision: undefined,
+    'No readings': {light: undefined, set: undefined, scope: undefined, profile: undefined, compose: undefined, target: undefined, outDir: undefined, revision: undefined,
       author: undefined, members: undefined, sets: undefined, profiles: undefined, unsupported: undefined, unused: undefined, unusedOnly: undefined,
       sources: undefined, roots: undefined, source: undefined, adoptRoot: undefined, namespace: undefined, adoption: undefined, procedures: undefined,
       procedure: undefined, bypasses: undefined, bypassScope: undefined, bypassReason: undefined, ...prefixed('capture.', captureSkill.fixtures?.['No readings'] ?? {})}},

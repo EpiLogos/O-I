@@ -691,7 +691,6 @@ const askPosition = (p: ViewProps) => (id: string, on: boolean) => {
 function KnowledgeWhole({p}: {p: ViewProps}) {
   const [group, setGroup] = useState(0), [reachPage, setReachPage] = useState(0)
   const read = readingOf(p.v), c = read?.result.counts, budget = finite(numOf(p.v, 'budget')), bounded = c !== undefined && budget !== undefined && c.admitted > budget
-  const fit = read ? fitZoom(p, read) : undefined
   return <Panel title="Knowledge graph" view="whole" light={light(p)} onFold={p.nav.fold} onFull={p.nav.full}
     pages={[{id: 'reach', label: 'Reach'}, {id: 'filters', label: 'Filters'}, {id: 'display', label: 'Display'}, {id: 'aperture', label: 'Aperture'}]} page={p.page} onPage={p.setPage}>
     <Band>
@@ -754,8 +753,8 @@ function KnowledgeWhole({p}: {p: ViewProps}) {
         <Section width={168}><Rows label="Groups" does="Groups that you coloured. A group changes how nodes look, not what they are." items={groupRows(p)}
           onRequest={(id, x) => { if (!st(p, `g:${id}`).disabled) p.set(`g:${id}`, x) }} size={6} page={group} onPage={setGroup} /></Section>
         <Section label="Camera" cols={2} grow>
-          <Action {...st(p, 'zoom')} label="Fit" does="Set the zoom so that every shown node fits. The selection stays."
-            onPress={() => { if (fit !== undefined) p.set('zoom', fit) }} disabled={st(p, 'zoom').disabled ?? (fit === undefined ? 'No reading of the notes to fit.' : undefined)} />
+          <Action {...st(p, 'fit')} label="Fit" does="Set the zoom so that every shown node fits, as the graph's own Fit does. The selection stays."
+            onPress={() => p.set('fit', true)} disabled={st(p, 'fit').disabled ?? (read ? undefined : 'No reading of the notes to fit.')} />
           <Readout label="zoom" does="The graph's zoom." value={finite(numOf(p.v, 'zoom')) === undefined ? undefined : pctx(numOf(p.v, 'zoom')!)} tone="value" />
         </Section>
       </> : <>
@@ -772,13 +771,6 @@ function KnowledgeWhole({p}: {p: ViewProps}) {
   </Panel>
 }
 
-/** Fit: the zoom at which every shown node stands inside the well (the canvas's fit, within its zoom limits). */
-function fitZoom(p: ViewProps, read: Reading): number {
-  const places = placesOf(read.model, p.v)
-  let far = 1
-  for (const n of read.result.nodes) far = Math.max(far, places.get(n.ref)?.hop ?? 0)
-  return clampTo(ZOOM.min, ZOOM.max, (WORLD.y - 48) / (far * HOPS))
-}
 
 // ---------------------------------------------------------------- the pane: the graph, its chips, and the note beside it
 

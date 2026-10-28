@@ -94,10 +94,10 @@ const REFUSE = {
   reading: (key: string) => `${key} is a reading: its owner reports it; nothing here changes it.`,
   set: `The set on the chain: ${missingOpRemedy('skillset')} — missing op: ${MISSING_OPS.skillset}.`,
   // Lane W3 routes AIKit's store writes (desktop/cradle/kernel/src/owner_routes.rs AikitWrite; ownerRoutes.ts aikitWriteOp). Export's
-  // `aikit set package export SET --target T --out DIR` writes into an absolute directory the desk names, and the rack has no field naming
-  // one; Run's `aikit praxis method run REF --input JSON` takes the Method's exact input and Prove's `aikit praxis method prove --method REF
+  // `aikit set package export SET --target T --out DIR` writes into an absolute directory the rack's Into field names (`outDir`),
+  // through the rack's AIKit write (rackBinding: kind set-package-export); Run's `aikit praxis method run REF --input JSON` takes the Method's exact input and Prove's `aikit praxis method prove --method REF
   // --proof-json J` the run's proof, and the member carries neither. Trust writes (memberBinding, MemberPorts.trust).
-  export: missing('Export', 'the directory the package is written into (`aikit set package export <set> --target <t> --out <dir>` through the kernel\'s aikit_write takes an absolute --out, and the rack has no field naming one; the owner\'s own default, ./<package>-<target>, is relative to a working directory the kernel does not choose)', 'AIKit'),
+  export: 'Export: name the directory the package is written into, as an absolute path (Into): `aikit set package export <set> --target <t> --out <dir>` takes an absolute --out, and the owner\'s own default, ./<package>-<target>, is relative to a working directory the kernel does not choose.',
   trust: 'Trust: the kernel carrier is unavailable here, so AIKit cannot be asked (`aikit trust record <capability>` through the kernel\'s aikit_write).',
   run: missing('Run', 'the exact JSON input `aikit praxis method run <ref> --input` takes (the kernel\'s aikit_write method-run carries it; the member has no field for it)', 'AIKit'),
   prove: missing('Prove', 'the run\'s proof `aikit praxis method prove --method <ref> --proof-json` takes (its Activity, Return, Evidence and verification refs; the member holds no run receipt)', 'AIKit'),
@@ -139,7 +139,7 @@ export const AGENT_CONTEXT_ABSENT: Readonly<Record<string, string>> = {
  * refused. */
 export const REFUSED_WRITES: Readonly<Record<string, Readonly<Record<string, string>>>> = {
   [AGENT_DESIGN]: {light: REFUSE.power, cap: REFUSE.budget, heartbeat: REFUSE.heartbeat},
-  [RACK_DESIGN]: {set: REFUSE.set, exported: REFUSE.export},
+  [RACK_DESIGN]: {set: REFUSE.set},
   [MEMBER_DESIGN]: {reviewed: REFUSE.trust, run: REFUSE.run, proved: REFUSE.prove},
   [SCOPE_DESIGN]: {reach: REFUSE.reach, writeMode: REFUSE.writeMode, 'src.wiki': REFUSE.knowledgeSources, 'src.project': REFUSE.knowledgeSources,
     'src.code': REFUSE.knowledgeSources, searchFirst: REFUSE.searchFirst, linkDepth: REFUSE.linkDepth, readBudget: REFUSE.readBudget, readAgain: REFUSE.readAgain,
@@ -738,8 +738,9 @@ export function adoptionOf(plan: unknown): Record<string, unknown> | null {
   return Object.keys(kept).length || items ? {...kept, ...(items ? {items} : {})} : null
 }
 
-/** The upkeep pages' settings: the hand's own holds (skills.tsx: unusedOnly, source, adoptRoot, namespace, procedure, bypassScope, bypassReason). */
-export const RACK_UPKEEP_SETTINGS: readonly string[] = ['unusedOnly', 'source', 'adoptRoot', 'namespace', 'procedure', 'bypassScope', 'bypassReason']
+/** The upkeep pages' settings: the hand's own holds (skills.tsx: unusedOnly, source, adoptRoot, namespace, procedure, bypassScope, bypassReason),
+ * and Export's directory (outDir, the absolute --out of `aikit set package export`). */
+export const RACK_UPKEEP_SETTINGS: readonly string[] = ['unusedOnly', 'source', 'adoptRoot', 'namespace', 'procedure', 'bypassScope', 'bypassReason', 'outDir']
 
 const RACK_WRITES = (key: string) => key.startsWith('req:') || ['scope', 'profile', 'compose', 'target', 'exported', 'set', 'members', 'adoptPreview'].includes(key)
   || key in RACK_UPKEEP_REFUSE || key in RACK_UPKEEP_WRITES
@@ -771,6 +772,11 @@ export function rackBinding(id: string, input: RackInput, ports: ComposePorts | 
     if (!(key in values)) standing[key] = {disabled: absentWhy(key, answer)}
   }
   const noCarrier = 'The kernel carrier is unavailable here, so AIKit cannot be asked (aikit_write).'
+  // Export: the set on the chain, the target you chose and the directory you named (Into), through AIKit's set-package-export.
+  const outDir = typeof view.outDir === 'string' ? view.outDir : ''
+  const exportWhy = !upkeep.write ? noCarrier : typeof values.set !== 'string' ? 'Export: no set stands on the chain to package.'
+    : !outDir.startsWith('/') ? REFUSE.export : null
+  if (exportWhy) standing.exported = {disabled: exportWhy}
   if (!upkeep.write) for (const key of Object.keys(RACK_UPKEEP_WRITES)) standing[key] = {disabled: noCarrier}
   else {
     if (!sources) for (const key of ['sync', 'promote', 'rollback']) standing[key] = {disabled: standing.sources?.disabled ?? 'No source is read.'}
@@ -839,7 +845,14 @@ export function rackBinding(id: string, input: RackInput, ports: ComposePorts | 
           case 'target': updateHolds(was => ({...was, compose: {...was.compose, target: String(change.value)}})); break
           // Preview: the root chosen, whose plan the chain then reads (a reading, never a write).
           case 'adoptPreview': holdView(id, 'adoptRoot', typeof change.value === 'string' && change.value ? change.value : undefined); break
-          case 'exported': throw Error(REFUSE.export)
+          case 'exported': {
+            // AIKit's own export (`aikit set package export <set> --target <t> --out <dir>`), its refusal in AIKit's words.
+            if (exportWhy) throw Error(exportWhy)
+            const target = String(change.value ?? '')
+            if (!['openai', 'codex', 'claude', 'pi'].includes(target)) throw Error('Export: choose the harness to package the set for.')
+            await upkeep.write!({kind: 'set-package-export', ...(place.project ? {project: place.project} : {}), set: values.set as string, target, out: outDir})
+            break
+          }
           case 'set': throw Error(REFUSE.set)
           default: throw Error(RACK_UPKEEP_REFUSE[change.key] ?? REFUSE.reading(change.key))
         }

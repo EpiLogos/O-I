@@ -39,3 +39,5 @@
 .hm-full { position: absolute; inset: 0; display: flex; background: var(--bg-1, #33363b); }
 .hm-full-thread { position: relative; flex: 1 1 auto; min-width: 0; }
 .hm-full-stage { flex: none; width: 270px; display: flex; align-items: flex-start; border-left: 1px solid var(--line, #24262a); background: var(--bg-0, #26292d); }
+/* No run event names the session: the stage says so in its place, and draws no run (manual §19.4 The stage). */
+.hm-full-stage-none { margin: 14px 12px; color: var(--text-dim, #9aa0a6); font-size: 11px; }

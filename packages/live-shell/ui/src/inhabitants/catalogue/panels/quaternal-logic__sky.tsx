@@ -30,8 +30,10 @@
 // one you choose; the shell holds it), presence.consents [{target, name, consent, granted, permitted}] (what you have shared, each with the
 // owner's reading of it now), presence.shared [{subject, name, consent, granted, permitted}] (who has shared their sky with you), natal.of
 // ('self', or the subject whose ring you open; it opens only where their consent permits it). Acts: presence.share (the target's ref:
-// `nara_presence` publish with a new consent). Withdrawing a consent has no owner operation: it stands disabled with that reason.
+// `nara_presence` publish with a new consent) and presence.withdraw (the consent ref of the row you chose under You share with:
+// `nara_presence` withdraw, SharedField's withdraw_nara). The row you choose is the view's own.
 // The Rack page carries the rack of M2′ (the rack kit, map-rack.tsx), on the keys rack and rack.part.
+import {useState} from 'react'
 import {Action, Band, Chooser, Dial, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, Tile, Toggle, ValueBox, type LightState, type RowItem} from '../../sdk/panel'
 import {NONE, boolOf, clock, json, numOf, st, strOf, type DesignedDevice, type ViewProps} from './design'
 import {RACK_M2, RackBands} from './map-rack'
@@ -392,10 +394,11 @@ function FullSky({v}: {v: V}) {
 
 // ---------------------------------------------------------------- the Share page: consent, both ways
 
-interface Consent {readonly ref: string; readonly name: string; readonly granted?: string; readonly permitted?: boolean}
+interface Consent {readonly ref: string; readonly name: string; readonly consent?: string; readonly granted?: string; readonly permitted?: boolean}
 const consentsOf = (v: V, key: string, who: 'target' | 'subject'): Consent[] | undefined => { const raw = json<unknown>(v, key, undefined)
   return Array.isArray(raw) ? raw.flatMap((x): Consent[] => { const o = (x && typeof x === 'object' ? x : {}) as Record<string, unknown>
-    return typeof o[who] === 'string' ? [{ref: o[who] as string, name: typeof o.name === 'string' ? o.name : o[who] as string, granted: typeof o.granted === 'string' ? o.granted : undefined,
+    return typeof o[who] === 'string' ? [{ref: o[who] as string, name: typeof o.name === 'string' ? o.name : o[who] as string, consent: typeof o.consent === 'string' && o.consent ? o.consent : undefined,
+      granted: typeof o.granted === 'string' ? o.granted : undefined,
       permitted: typeof o.permitted === 'boolean' ? o.permitted : undefined}] : [] }) : undefined }
 const participantsOf = (v: V) => { const raw = json<unknown>(v, 'presence.participants', undefined)
   return Array.isArray(raw) ? raw.flatMap((x): {ref: string; name: string}[] => { const o = (x && typeof x === 'object' ? x : {}) as Record<string, unknown>
@@ -410,6 +413,11 @@ const ringWord = (v: V) => { const of = strOf(v, 'natal.of'); if (of === undefin
 function SharePage({p}: {p: ViewProps}) {
   const v = p.v, mine = consentsOf(v, 'presence.consents', 'target'), theirs = consentsOf(v, 'presence.shared', 'subject'), people = participantsOf(v), target = strOf(v, 'presence.target')
   const already = mine?.some(c => c.ref === target && c.permitted)
+  // The consent you chose to withdraw: a row of You share with, the view's own.
+  const [pick, setPick] = useState<string | undefined>(undefined)
+  const chosen = mine?.find(c => c.ref === pick)
+  const withdrawWhy = st(p, 'presence.withdraw').disabled ?? (!chosen ? 'Choose a consent you gave, under You share with.' : chosen.permitted === false ? 'That consent no longer permits: nothing to withdraw.'
+    : !chosen.consent ? 'No reading of that consent\'s ref.' : undefined)
   return <>
     <Band>
       <Section width={198}><SkyDisplay p={p} w={186} h={146} R={62} size="small" /></Section>
@@ -425,12 +433,14 @@ function SharePage({p}: {p: ViewProps}) {
           disabled={st(p, 'presence.target').disabled ?? (people?.length ? undefined : 'No reading of the world\'s participants.')} />
         <Action {...st(p, 'presence.share')} label="Share" does="Give them your consent to see your sky and your presence in this world. They see it; nothing of your identity is copied or changed."
           onPress={() => { if (target) p.set('presence.share', target) }} disabled={st(p, 'presence.share').disabled ?? (target === undefined ? 'Choose a person first.' : already ? 'You already share your sky with them.' : undefined)} />
-        <Action label="Withdraw" does="Take back a consent you gave." disabled="Central keeps each consent and has no operation to withdraw one yet." />
+        <Action {...st(p, 'presence.withdraw')} label="Withdraw" does={`Take back a consent you gave${chosen ? `: ${chosen.name}` : ''}. They no longer see your sky; the consent stays on the record, withdrawn.`} hold
+          onPress={() => { if (chosen?.consent) p.set('presence.withdraw', chosen.consent) }} disabled={withdrawWhy} />
         <Readout label="seen by" does="How many people your consent lets see your sky now." value={mine?.filter(c => c.permitted).length} tone="value" />
       </Section>
     </Band>
     <Band>
-      <Section label="You share with" width={252}><Rows does="Each person you have shared your sky with, and the day you did. Lit: the consent permits it now." items={consentRows(mine, 'Only you see your sky')} size={5} /></Section>
+      <Section label="You share with" width={252}><Rows does="Each person you have shared your sky with, and the day you did. Lit: the consent permits it now. Press a row to choose it for Withdraw."
+        items={consentRows(mine, 'Only you see your sky')} onSelect={mine?.length ? setPick : undefined} selected={pick} size={5} /></Section>
       <Section label="Shared with you" grow><Rows does="Each person who has shared their sky with you. Lit: you may open their ring now." items={consentRows(theirs, 'No one has shared a sky with you')} size={5} /></Section>
     </Band>
   </>

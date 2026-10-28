@@ -14,7 +14,9 @@
 // `desktop` (shown · refused: whether your computer shows a notice when an item arrives); `messages` (the agents that wait for you in
 // Messages); and `queue`, a JSON list of rows {id, kind proposal | request | review | recognition, who, text, where (a file or a tool),
 // session, age (seconds), flag (the owner's reason, for By risk), urgent, diff (lines, for a proposal), state ("denied" once declined), by,
-// opened, review, recognition}. A review carries the attempt's return set against what it was for (Factory's attempt reading and build
+// opened, review, recognition, options}. A request that is a decision carries `options`, the owner's own words for its two answers
+// ({allowOnce, deny}: Factory's unit decision offers "Resume bounded work" and "Cancel bounded work"), and its `where` is the unit it is
+// about, not a command: Approve and Deny then answer in those words. A review carries the attempt's return set against what it was for (Factory's attempt reading and build
 // view): {criteria: [{text, state satisfied | unsatisfied | indeterminate}], claims: [{statement, evidence}], requests: [{question}],
 // artefacts, evidence, receipt (Central linked a receipt to the Return), outputs}. A recognition carries the Run's return:
 // {run, course, summary, recognised?: {at}} (the journey reading's returns and recognitions).
@@ -92,6 +94,8 @@ interface Item {
   readonly opened?: boolean
   readonly review?: Review
   readonly recognition?: Recognition
+  /** A decision's own answers, in its owner's words: Approve's (allowOnce) and Deny's. Absent: a request to run something. */
+  readonly options?: {readonly allowOnce?: string; readonly deny?: string}
 }
 
 const word = (x: unknown): string | undefined => (typeof x === 'string' && x.length > 0 ? x : undefined)
@@ -105,6 +109,11 @@ function reviewOf(x: unknown): Review | undefined {
     claims: list(r.claims).flatMap(c => (word(c.statement) ? [{statement: c.statement as string, evidence: count(c.evidence) ?? 0}] : [])),
     requests: list(r.requests).flatMap(c => (word(c.question) ? [c.question as string] : [])),
     artefacts: count(r.artefacts), evidence: count(r.evidence), receipt: typeof r.receipt === 'boolean' ? r.receipt : undefined, outputs: count(r.outputs)}
+}
+/** A decision's own answers ({allowOnce, deny}), where the owner words them; undefined for a request to run something. */
+function optionsOf(x: unknown): Item['options'] {
+  const r = rec(x)
+  return r && (word(r.allowOnce) || word(r.deny)) ? {allowOnce: word(r.allowOnce), deny: word(r.deny)} : undefined
 }
 function recognitionOf(x: unknown): Recognition | undefined {
   const r = rec(x)
@@ -123,7 +132,7 @@ function queueOf(v: V): Item[] | undefined {
     rows.push({id: word(o.id) ?? `item:${n}`, kind: KINDS.includes(o.kind as Kind) ? o.kind as Kind : undefined, who: word(o.who), text: typeof o.text === 'string' ? o.text : '',
       where: word(o.where), session: word(o.session), age: typeof o.age === 'number' && Number.isFinite(o.age) && o.age >= 0 ? o.age : undefined, flag: word(o.flag), urgent: o.urgent === true,
       diff: Array.isArray(o.diff) ? o.diff.filter((l): l is string => typeof l === 'string') : undefined, denied: o.state === 'denied', by: word(o.by), opened: o.opened === true,
-      review: reviewOf(o.review), recognition: recognitionOf(o.recognition)})
+      review: reviewOf(o.review), recognition: recognitionOf(o.recognition), options: optionsOf(o.options)})
   }
   return rows
 }
@@ -255,7 +264,8 @@ function answers(p: ViewProps, item: Item | undefined, short?: boolean): ReactNo
   }
   const open = <Action key="open" {...st(p, 'open')} label="Open" does="Opens the item where it belongs: a run in Factory, a Day in Central, an agent in Messages. Marks it opened here; its owner is told nothing."
     disabled={st(p, 'open').disabled ?? why} onPress={item ? () => { p.set('pick', item.id); p.set('open', item.id) } : undefined} />
-  if (item?.kind === 'request') return [act('allowOnce', 'Approve', 'Approves the request. Nothing else is allowed by it.', true), act('deny', 'Deny', 'Declines the request. Its author is told.', true), open]
+  if (item?.kind === 'request') return [act('allowOnce', item.options?.allowOnce ?? 'Approve', item.options ? 'Answers the question so. Its owner takes the answer.' : 'Approves the request. Nothing else is allowed by it.', true),
+    act('deny', item.options?.deny ?? 'Deny', item.options ? 'Answers the question so. Its owner takes the answer.' : 'Declines the request. Its author is told.', true), open]
   if (item?.kind === 'review') return short ? [open] : [act('confirm', 'Confirm', 'The attempt stands. Read the conditions and the claims first.', true), act('reviewChanges', 'Changes', 'Asks for another attempt. Say what to change in the thread.'), open]
   if (item?.kind === 'recognition') { const r = item.recognition?.recognisedAt
     return short ? [open] : [act('recognise', 'Recognise', 'Your word that what the run returned is what its commission asked for.', false, r ? 'You recognised it.' : undefined),
@@ -405,7 +415,8 @@ function ApprovalsPane({p}: {p: ViewProps}) {
             {item.denied ? `declined${item.by ? ` · ${item.by}` : ''}` : left === undefined ? `waited ${ageText(item)}` : left >= 0 ? `waited ${ageText(item)} · the Agent's Wait ends in ${spanText(left)}` : `waited ${ageText(item)} · the Agent's Wait passed ${spanText(-left)} ago`}
           </div>
           <p className="ap-what">{item.text || NONE}</p>
-          {item.kind === 'request' && item.where && <pre className="ap-cmd" aria-label="What it asks">{item.where}</pre>}
+          {item.kind === 'request' && item.where && (item.options ? <p className="ap-note" aria-label="What it is about">About {item.where}.</p>
+            : <pre className="ap-cmd" aria-label="What it asks">{item.where}</pre>)}
           {item.kind === 'request' && <p className="ap-note" data-flagged={item.flag || item.urgent ? 'true' : undefined}>{item.urgent ? 'Urgent.' : item.flag ? `Flagged: ${item.flag}.` : 'Not flagged.'}</p>}
           {item.kind === 'proposal' && <pre className="ap-diff" aria-label="Diff">
             {item.diff === undefined ? 'No reading of the diff.' : item.diff.map((line, n) => <span key={n} data-d={line.startsWith('+') ? 'add' : line.startsWith('-') ? 'del' : undefined}>{line || ' '}{'\n'}</span>)}
@@ -418,8 +429,8 @@ function ApprovalsPane({p}: {p: ViewProps}) {
           {item.kind === undefined && <p className="ap-note">The kind of this item is not read.</p>}
           <div className="ap-do">
             {item.kind === 'request' ? <>
-              {paneButton(p, item, 'allowOnce', 'Approve', 'Approves the request.')}
-              {paneButton(p, item, 'deny', 'Deny', 'Declines the request. Its author is told.')}
+              {paneButton(p, item, 'allowOnce', item.options?.allowOnce ?? 'Approve', item.options ? 'Answers the question so.' : 'Approves the request.')}
+              {paneButton(p, item, 'deny', item.options?.deny ?? 'Deny', item.options ? 'Answers the question so.' : 'Declines the request. Its author is told.')}
               {paneButton(p, item, 'open', 'Open', 'Opens it where it belongs.')}
             </> : item.kind === 'proposal' ? <>
               {paneButton(p, item, 'approve', 'Approve', 'The change lands, with a receipt.')}
