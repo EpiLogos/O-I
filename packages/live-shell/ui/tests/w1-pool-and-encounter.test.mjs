@@ -2,8 +2,8 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import {register} from 'node:module'
 
-// W1 (T-WORLDS §3; manual §10.3, §16.4, §16.7): the pool under the browser holds your workspaces and nothing else (in Live, the set's
-// grooves behind a switch); a device opens whole in its band above the chain and never fills the pool; the browser's aperture slot is
+// W1 (T-WORLDS §3; manual §10.3, §16.4, §16.7): the pool under the browser held your workspaces and nothing else (O-I #769 replaced
+// them: the pool holds QL frames and MEF lenses, the set's grooves beside them in Live, and the workspaces are templates in the browser); a device opens whole in its band above the chain and never fills the pool; the browser's aperture slot is
 // gone — its context rows stand in the encounter bar above the panes, a document's Save and Re-read in its own head; the named sets
 // became workspaces, kept in the book with what each keeps.
 // Channels: SCRIPTED — the pool's acts as pure changes of a fixture book, the book's decode, the encounter rows, the trail's steps,
@@ -48,7 +48,9 @@ const store = await import('../../../../desktop/cradle/src/workspace/store.ts')
 const areas = await import('../src/shell/workspaceAreas.ts')
 const surfaceTypes = await import('../../../../desktop/cradle/src/surface/types.ts')
 const devices = await import('../src/frame/devices/deviceDoor.ts')
-const {workspaceTint, nameFromDrop} = await import('../src/frame/browser/WorkspacePool.tsx')
+// REPLACED (O-I #769): the pool's workspace face (frame/browser/WorkspacePool.tsx: workspaceTint, nameFromDrop) is retired — the pool holds
+// QL frames and MEF lenses (frame/browser/GroovePool.tsx), and a kept arrangement is a template in the browser (frame/browser/TemplateRows.tsx,
+// templates.ts). Their tests: tests/pool-frames-lenses.test.mjs. The book's workspace acts below still stand: templates are built on them.
 const encounterBridge = await import('../src/projections/encounterBridge.ts')
 const trailWidget = await import('../src/shell/TrailWidget.tsx')
 const source = path => readFile(new URL(`../src/${path}`, import.meta.url), 'utf8')
@@ -123,7 +125,6 @@ test('a dropped tab makes a new workspace of what is in front of you; the named 
   assert.equal(next.active, 'new'); const made = active(next)
   assert.equal(made.name, 'Flow · today'); assert.deepEqual(tags(made.layout), ['s-a-central']); assert.equal(made.kept.keptAt, 3)
   assert.equal(pool.workspaceFromFront(book(), '  ', 'x').active, 'a', 'no name, no workspace')
-  assert.equal(nameFromDrop('  ', 'Writing · kept'), 'Writing · kept'); assert.equal(nameFromDrop('Day', 'x'), 'Day')
   const withSets = {...book(), workspaces: [workspace('a', 'A', {sets: [{id: 's1', name: 'Two panes', mode: 'factory', layout: tree('factory', 'set'), savedAt: 42}]}), workspace('b', 'B')]}
   let n = 0
   const moved = pool.setsAsWorkspaces(withSets, () => `w${++n}`)
@@ -151,10 +152,8 @@ test('the book keeps what each workspace keeps, its Opens in, its kept context a
   assert.equal(store.decodePoolSettings({onLaunch: 'sideways'}), undefined, 'an unknown value is the default')
 })
 
-test('a workspace\'s colour is one of the shell\'s tokens, the same for the same workspace', () => {
-  assert.match(workspaceTint('abc'), /^var\(--[a-z-]+\)$/)
-  assert.equal(workspaceTint('abc'), workspaceTint('abc'))
-})
+// REPLACED (O-I #769): a workspace's colour in the pool is gone with the workspace rows; a groove's colour is GroovePool.tsx grooveTint,
+// tested in tests/pool-frames-lenses.test.mjs.
 
 // ── the encounter bar ─────────────────────────────────────────────────────
 
@@ -209,9 +208,11 @@ test('a device held in its band stands whole there, drawn by the band host; lett
   assert.equal(devices.flippedDeviceId(), null); assert.equal(devices.heldInBand('ql:sky'), false)
 })
 
-test('the pool holds the workspaces and nothing else; Whole stands only as the band; the aperture slot and the device pools are gone (code-reading)', async () => {
+// REPLACED (O-I #769): "the pool holds the workspaces" became "the pool holds QL frames and MEF lenses" (decision #709; manual §16.7):
+// the browser draws GroovePool, and the workspaces stand in the browser as templates (tests/pool-frames-lenses.test.mjs).
+test('the pool holds the frames and lenses and nothing else; Whole stands only as the band; the aperture slot and the device pools are gone (code-reading)', async () => {
   const browser = await source('frame/browser/Browser.tsx')
-  assert.match(browser, /<WorkspacePool grooves=\{poolFace\} \/>/)
+  assert.match(browser, /<GroovePool face=\{poolFace\} \/>/)
   assert.doesNotMatch(browser, /DevicePool|ApertureSlot|poolHost/)
   const view = await source('frame/devices/DeviceView.tsx')
   assert.match(view, /FRAME_OF_VIEW[^=]*= \{whole: 'flip'/)

@@ -64,3 +64,27 @@ test('an engine_composition body plans nothing renderable here — it is the liv
  const engine=validateSceneBody({carrier:'engine_composition',subject_ref:'expression:x',native_owner:'oi',reading:read('expression:x'),presentation:'live',capability:{state:'renderable'},span:null});
  assert.equal(engine.carrier,'engine_composition');
 });
+
+// O-I #768: a scene made of a constellation keeps it as its body — a knowledge whole, the scene's source (DLW §16.5, §20.1). The frame
+// resolves it from the wiki's own reading of the whole, which the host gives on the knowledge-whole channel (expressions-boundary
+// protocol.ts), and places it as the Thing it is: no renderer draws a constellation inside a scene, so it degrades honestly to its card.
+test('a knowledge whole becomes the scene body from the wiki\'s own reading, drawn as its Thing',async()=>{
+ const {bodyFromKnowledgeWhole}=await import('../build/nativeSceneBody.js');
+ const LIVED='wiki:anchor:lived-in',WIKI='wiki:Work/O-I/ProjectCentral/agents/wiki/wiki.json';
+ const whole={requested_ref:LIVED,ref:LIVED,native_owner:'wiki',title:'The lived-in world',register:'O-I',reading:read(LIVED,'2'),provenance:[read(WIKI,'w9'),read(LIVED,'2')]};
+ const placed=bodyFromKnowledgeWhole(whole,LIVED);
+ assert.deepEqual(validateSceneBody(placed),placed,'the kernel bridge admits it as a scene body');
+ assert.equal(placed.carrier,'knowledge_whole');
+ assert.equal(placed.subject_ref,LIVED);
+ assert.equal(placed.native_owner,'wiki');
+ assert.deepEqual(placed.reading,read(LIVED,'2'));
+ assert.deepEqual(placed.provenance,whole.provenance);
+ assert.equal(placed.presentation,'preview');
+ assert.equal(placed.capability.state,'degrades_to_thing');
+ assert.match(placed.capability.reason,/The lived-in world/);
+ assert.deepEqual(planBody(placed),{kind:'degraded',reason:placed.capability.reason},'the scene shows its card, never a fabricated renderer');
+ assert.equal(placed.span,null);assert.equal(placed.recursion,null);assert.deepEqual(placed.actions,[]);
+ for(const other of [{...whole,requested_ref:'wiki:anchor:other'},{...whole,ref:'wiki:anchor:other'},{...whole,reading:read('wiki:anchor:other','2')},
+  {...whole,native_owner:''},{...whole,reading:read(LIVED,'')}])
+  assert.throws(()=>bodyFromKnowledgeWhole(other,LIVED),/another|no valid revision|unqualified/);
+});

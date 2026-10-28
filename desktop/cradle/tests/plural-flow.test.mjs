@@ -44,6 +44,8 @@ for (const testCase of fixtures.cases) {
       if (expect.onBehalfOf) assert.deepEqual(entry.attribution.onBehalfOf, expect.onBehalfOf);
       if (expect.replyTo) assert.equal(entry.replyTo.entryId, expect.replyTo);
       if (expect.basisRevision !== undefined) assert.equal(entry.basisRevision, expect.basisRevision);
+      // The entry as written, its request digest among it: every owner writes this entry (#803).
+      if (expect.entry) assert.deepEqual(clone(entry), expect.entry, "the entry every owner writes");
       if (expect.converges) assert.deepEqual(relationsOf(entry).filter(r => r.type === "converge").map(r => r.entryId), expect.converges);
       for (const key of expect.noBinding ?? []) assert.notEqual(next.meta.participants.find(p => p.key === key).binding?.basis, "verified", "an unauthenticated caller binds no one");
       for (const [key, ref] of Object.entries(expect.binds ?? {})) assert.equal(next.meta.participants.find(p => p.key === key).binding.ref, ref);
@@ -94,6 +96,8 @@ for (const testCase of fixtures.cases) {
       const {doc: next, entry, outcome} = appendContribution(clone(doc), clone(testCase.request), testCase.caller);
       assert.equal(outcome, expect.outcome);
       assert.equal(entry.attribution.basis, expect.attribution);
+      // A whole number in any spelling is that number, written and hashed as the integer: every owner writes this entry (#803).
+      if (expect.entry) assert.deepEqual(clone(entry), expect.entry, "the entry every owner writes");
       assert.deepEqual(validateDocument(next).filter(i => i.code !== "legacy-format"), []);
       const [head, tail] = expect.islandAfter;
       // The kept stretches are the island's own bytes: before the new entry only the revision's value moves.

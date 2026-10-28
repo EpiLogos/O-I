@@ -1046,12 +1046,13 @@ export interface EncounterSessionSettingsRequest {
   task?: {task_ref: string; set: Partial<Record<EncounterTaskSettingKey, unknown>>}
 }
 export type EncounterTaskSettingKey = 'name' | 'colour' | 'active' | 'register' | 'form' | 'loop' | 'loop_until' | 'loop_cap' | 'launch' | 'then'
-  | 'quantize' | 'repeat_variable' | 'repeat_levels' | 'repeat_repeats' | 'repeat_stop' | 'envelope_mode' | 'envelope_linked' | 'effort' | 'autonomy'
+  | 'quantize' | 'repeat_variable' | 'repeat_levels' | 'repeat_repeats' | 'repeat_stop' | 'envelope_mode' | 'envelope_linked' | 'source' | 'effort' | 'autonomy'
 /** An envelope point: [seconds from the task's start, a level word under Automation or a step −2…+2 under Modulation]. */
 export type EncounterEnvelopePoint = [number, string | number]
 /** The owner's reading: every value as it stands (defaults stated), `set` naming what the person set. Its words are the manual's (§19.1
  * The Clip panel and The Launch panel; ai-kit encounter_task_settings.rs): Loop with its stop condition and cap (null: none), Launch mode,
- * Then, and what a Repeat varies (its levels empty until chosen). Hand off to is retired: the task is dragged onto another session's track. */
+ * Then, what a Repeat varies (its levels empty until chosen) and the task's source. Hand off to is retired: the task is dragged onto
+ * another session's track. */
 export interface EncounterSessionSettingsReading {
   schema: 'aikit.encounter-session-settings/v1'
   agent_session: string
@@ -1064,6 +1065,9 @@ export interface EncounterSessionSettingsReading {
     repeat_variable: 'condition' | 'model' | 'effort' | 'skillset' | 'budget' | 'autonomy'; repeat_levels: string[]; repeat_repeats: number
     repeat_stop: 'turns' | 'time' | 'done' | 'pass'; envelope_mode: 'automation' | 'modulation'; envelope_linked: boolean
     effort: EncounterEnvelopePoint[]; autonomy: EncounterEnvelopePoint[]; set: string[]
+    /** The constellation the task was made of (§19.1 The Clip panel's Constellation): its whole's wiki ref, the one the task was made with
+     * until the person sets another; null when it was made of none. Absent from an AIKit before O-I #768 (ai-kit a3f43f84). */
+    source?: string | null
   }
   previous_task: null | {task_ref: string; set: Record<string, unknown>}
   standing: string

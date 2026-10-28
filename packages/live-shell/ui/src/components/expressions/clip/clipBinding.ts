@@ -18,17 +18,21 @@
 // Writes go to the same owner requests those faces send: a scene edit (rename, pacing), a select, one `apply` of native changes
 // (parameter targets, entity settings, force mode, entity sound, automation, text layers, the arrange plan, a duplicate), a blueprint
 // transform, and `open` for a symbol's source. What the owner takes in a shape Clip view does not compose yet is refused naming that
-// shape; what no owner op carries is refused naming the missing op. Pure, apart from the hook at the end.
+// shape; what no owner op carries is refused naming the missing op. A constellation dropped on the open Expression's track makes a scene
+// whose body is that constellation (makeSceneOf, the maker the Expressions set carries: sceneMaker). Pure, apart from the hook at the end.
 import type {Entity, NativeEditorBasis, NativeEditorChange, NativeEditorReading, NativeEditorReply, NativeEditorRequest} from '../../../../../../expressions-boundary/src/editor'
 import type {NativeSceneEditIntent} from '../../../../../../expressions-boundary/src/sceneEdits'
 import type {Value, Values} from '../../../frame/devices/designed'
 import {clipBinding, missingOp, useViewHoldsVersion, type ClipBinding, type ClipWiring} from '../../../frame/detail/clipBinding'
 import {madeOfValues, withMadeOf, type ClipSource} from '../../../frame/detail/clipSource'
-import {useConstellations, type Constellation} from '../../../owners/constellations'
+import {constellationNamed, constellationsNow, useConstellations, type Constellation} from '../../../owners/constellations'
+import {CONSTELLATION_DRAG} from '../../../frame/browser/constellationFocus'
+import type {WorldActionReceipt, WorldTrackActions} from '../../../timeline/worldTrackAdapter'
+import type {NativeCompositionViewSource} from '../../../shell/compositionViews'
 import {useSelectedClip} from '../../../frame/detail/ClipBox'
 import {useDetailReading} from '../../../frame/detail/detailReading'
 import {useTimelinePanePresentation} from '../../../projections/timelinePaneHost'
-import {readNativeExpressionsContent} from '../../../shell/nativeContent'
+import {readNativeExpressionsContent, type NativeSceneGestureActions} from '../../../shell/nativeContent'
 import {useWorkspace} from '../../../shell/workspaceContext'
 import {FORMATION_SHAPE_LABELS, formationObjectChange, formationSettingChange} from '../../nativeEntityFace.formation'
 import {addedSound, carryFromValue, carryValue, resolvedSound, soundChange, soundWithField, voiceChoices} from '../../nativeEntityFace.sound'
@@ -248,6 +252,60 @@ export function sceneSourceOf(native: NativeEditorReading['nativeScene'] | null 
   return {made: 'none', by: 'the scene\'s body (the Expression\'s owner): a knowledge whole is the constellation a scene is made of'}
 }
 const EXPRESSIONS = 'Expressions (the retained native editor, expressions-app hostEditor)'
+
+const said = (reply: NativeEditorReply): string => reply.ok ? '' : reply.error
+/** A step that threw, as the refusal it is. */
+const refusal = (cause: unknown): {ok: false; error: string} => ({ok: false, error: cause instanceof Error ? cause.message : String(cause)})
+
+/** Expressions' clip of a constellation (manual §10.3: "Drag it onto a track and this mode makes its own clip of it, with the constellation
+ * as its source: … a scene in Expressions"; §16.7 Make this mode's clip; §20.1 the Clip panel's Constellation: "The one the scene was made
+ * of"). The open Expression's owner makes it in three steps, each on the reading the step before answered: its scene write adds a scene
+ * named for the constellation after the presented one (the scene-edit `add` the object menu's Insert sends), the scene's body is set to
+ * the constellation as a knowledge whole (the scene-material write the body device sends; the frame reads the whole from the wiki,
+ * nativeSceneBody.ts), and the owner's read gives the scene's source back (sceneSourceOf). A body the owner refuses takes the added scene
+ * away again, so a refusal leaves nothing half-made; the receipt says what happened. */
+export async function makeSceneOf(actions: NativeSceneGestureActions, constellation: {readonly ref: string; readonly title: string}): Promise<WorldActionReceipt> {
+  const {ref, title} = constellation
+  const added = await actions.sceneEdit({operation: 'add', title}).catch(refusal)
+  if (!added.ok) return {ok: false, error: `The Expression made no scene of ${title}: ${added.error}`}
+  const scene = added.reading.basis
+  // The body is set only on the scene the add presents: never on the scene the gesture began from.
+  if (scene.scene_ref === actions.basis.scene_ref) return {ok: false, error: `The Expression added a scene for ${title}, but its owner presents the scene it had, so no body was set on it.`}
+  const next = (() => { try { return actions.after(added.reading) } catch (cause) { return refusal(cause) } })()
+  const made = 'sceneMaterial' in next
+    ? await next.sceneMaterial({family: 'body', body: {operation: 'set', carrier: 'knowledge_whole', subject_ref: ref}}).catch(refusal) : next
+  if (!made.ok) {
+    const removed = 'sceneEdit' in next ? await next.sceneEdit({operation: 'remove', scene_ref: scene.scene_ref}).catch(refusal) : next
+    return {ok: false, error: `The Expression's owner did not make ${title} the new scene's body: ${made.error}. `
+      + (removed.ok ? 'The scene the drop added was removed.' : `The scene the drop added stands without it, and was not removed: ${said(removed)}`)}
+  }
+  const read = await actions.readNow().catch(refusal)
+  if (!read.ok) return {ok: false, error: `The scene ${title} was made of it, but the Expression's owner did not read it back: ${read.error}`}
+  if (read.reading.basis.scene_ref !== scene.scene_ref) return {ok: false, error: `The scene ${title} was made of it, but the Expression's owner now presents another scene, so its source was not read back.`}
+  const source = sceneSourceOf(read.reading.nativeScene)
+  if (source.made !== 'of' || source.ref !== ref) return {ok: false, error: `The Expression made the scene ${title}, but its owner reads `
+    + (source.made === 'of' ? `its source as ${source.ref}` : source.made === 'none' ? 'it as made of no constellation' : 'no source on it') + `, not ${ref}.`}
+  return {ok: true, note: `The Expression has a new scene, ${title}, made of the constellation; its owner reads the scene's source as ${title}.`}
+}
+
+type Maker = NonNullable<WorldTrackActions['makeClip']>
+
+/** The maker the Expressions set carries (frame/tracks/modeTracks.ts expressionsTracks; frame/tracks/clipMakers.ts withClipMaker): a
+ * constellation dropped on the open Expression's tracks makes a scene of it in that Expression, through the presented composition's
+ * acts. With no Expression presented, or a ref the wiki's reading does not hold, the drop is refused in words. */
+export function sceneMaker(source: NativeCompositionViewSource | null | undefined,
+  named: (ref: string) => Constellation | null = ref => constellationNamed(constellationsNow().rows, ref)): Maker {
+  return {accepts: CONSTELLATION_DRAG,
+    op: 'the open Expression\'s scene write (scene-edit add), then its body set to the constellation (scene-material: knowledge_whole), then the owner\'s read',
+    run: async (_trackId: string, payload: string): Promise<WorldActionReceipt> => {
+      const actions = source?.isPresented() ? source.actions : null
+      if (!actions) return {ok: false, error: 'No Expression is open here to make a scene in: open one, then drop the constellation on its track.'}
+      const ref = payload.trim()
+      const found = named(ref)
+      if (!found) return {ok: false, error: `${ref} is no constellation the wiki's reading holds now.`}
+      return makeSceneOf(actions, found)
+    }}
+}
 
 /** clip:expressions's wiring on one reading and its request door. */
 export function expressionsWiring(reading: NativeEditorReading, request: EditorRequest | null, present?: (editor: 'source' | 'layers' | 'placement', basis: NativeEditorBasis) => void,

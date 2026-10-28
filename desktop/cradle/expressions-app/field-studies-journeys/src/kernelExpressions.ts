@@ -488,6 +488,16 @@ export async function nativeSubjectTextRequest(ref:string):Promise<NativeSubject
  if(!data||typeof data.content!=='string')throw new Error(`the native owner returned no readable text for ${ref}`);
  return data;
 }
+/** O-I #768: a `knowledge_whole` body's subject is a constellation of the wiki, named by its whole's wiki ref. The host reads it from the
+ * wiki's own projection on the `knowledge-whole` channel (expressions-boundary protocol.ts KNOWLEDGE_WHOLE_CHANNEL, answered by the
+ * shell's native/wikiSubjectStanding.ts); this app never reads the wiki itself. */
+export type NativeKnowledgeWhole=import('../../../../../packages/expressions-boundary/src/protocol').KnowledgeWholeReading;
+export async function nativeKnowledgeWholeRequest(ref:string):Promise<NativeKnowledgeWhole>{
+ if(typeof ref!=='string'||!ref)throw new Error('nativeKnowledgeWholeRequest needs a wiki ref');
+ const data=await call<NativeKnowledgeWhole>('knowledge-whole',{request:{ref}});
+ if(!data||typeof data!=='object'||typeof data.ref!=='string')throw new Error(`the wiki returned no reading of ${ref}`);
+ return data;
+}
 export async function nativeSubjectBytesRequest(ref:string):Promise<NativeSubjectBytes>{
  if(typeof ref!=='string'||!ref)throw new Error('nativeSubjectBytesRequest needs a native subject ref');
  const data=await call<NativeSubjectBytes>('central-subject-bytes',{ref});

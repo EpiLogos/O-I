@@ -5,7 +5,7 @@ import {
   type HostedTechneLens, type HostTarget, type StudioSection,
 } from './protocol.ts';
 import {readStageResult, stageRequestMessage, type StageCommand, type StageResult} from './protocol.ts';
-import {readWikiSubjectStandingRequest, WIKI_SUBJECT_STANDING_CHANNEL} from './protocol.ts';
+import {KNOWLEDGE_WHOLE_CHANNEL, readKnowledgeWholeRequest, readWikiSubjectStandingRequest, WIKI_SUBJECT_STANDING_CHANNEL} from './protocol.ts';
 import {readFramePerformanceRequest, type PerformanceAction} from './protocol.ts';
 import {RecoveryAdmission, type RecoveryBinding} from './recoveryBinding.ts';
 import {onSharedTimeWindowChange, SHARED_TIME_NUDGE, type DisclosureSessionStore} from '../../../desktop/cradle/src/techne/session.ts';
@@ -265,6 +265,12 @@ export class ExpressionsHost {
         const standing = readWikiSubjectStandingRequest(request);
         if (!standing) throw Error('Malformed wiki-subject-standing request: a subject ref, an Expression ref and its revision are required');
         request = standing;
+      }
+      else if (kind === KNOWLEDGE_WHOLE_CHANNEL) {
+        // O-I #768: one wiki ref, read exactly; anything else is refused by name before the owner is asked.
+        const whole = readKnowledgeWholeRequest(request);
+        if (!whole) throw Error('Malformed knowledge-whole request: one wiki ref (wiki:…) is required');
+        request = whole;
       }
       else if (kind === 'expression-recovery') {
         const binding = this.recovery.admit(request);

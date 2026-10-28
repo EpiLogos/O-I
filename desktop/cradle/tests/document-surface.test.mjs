@@ -84,25 +84,46 @@ test("placement: vision is one per project at the ground root; mockups are dated
 test("creation stamp: the copy keeps every template byte except a fresh identity", async () => {
   const template = await read("ql-daily-die.html");
   const fixed = "123e4567-e89b-12d3-a456-426614174000";
-  const copy = stampCopy(template, new Date("2026-09-25T10:12:00"), () => fixed);
-  assert.notEqual(copy, template);
-  // Every byte outside the island is the template's, verbatim.
-  const open = "<script type=\"application/json\" id=\"ql-doc\">";
-  const head = template.indexOf(open);
-  const tail = template.lastIndexOf("</script>");
-  assert.ok(head > 0 && tail > head);
-  assert.equal(copy.slice(0, head), template.slice(0, head));
-  // The re-serialised island may be shorter than the template's pretty-
-  // printed one; the suffix is still the template's, byte for byte.
-  const tailLength = template.length - tail;
-  assert.equal(copy.slice(-tailLength), template.slice(tail));
+  const now = new Date("2026-09-25T10:12:00");
+  const copy = stampCopy(template, now, () => fixed);
+  // Only the identity's values move, where the template writes them, with the template's own spacing (#803): every other
+  // byte, inside the island and out, is the template's.
+  assert.equal(copy, template
+    .replace('"uuid": null', `"uuid": "${fixed}"`)
+    .replace('"created": null', `"created": "${now.toISOString()}"`)
+    .replace('"date": null', '"date": "2026-09-25"'));
   // The island itself parses back with the fresh identity and the day stamp.
+  const open = "<script type=\"application/json\" id=\"ql-doc\">";
+  const head = copy.indexOf(open);
   const island = JSON.parse(copy.slice(head + open.length, copy.indexOf("</script>", head)));
   assert.equal(island.meta.uuid, fixed);
-  assert.equal(new Date(island.meta.created).getTime(), new Date("2026-09-25T10:12:00").getTime(), "created is the same civil moment");
+  assert.equal(new Date(island.meta.created).getTime(), now.getTime(), "created is the same civil moment");
   assert.equal(island.meta.date, "2026-09-25");
   // A template without an island is copied verbatim.
   assert.equal(stampCopy("<html><body>no island</body></html>"), "<html><body>no island</body></html>");
+});
+
+test("creation stamp: a form's island keeps its key order, spellings and escapes; only the identity moves (#803)", async () => {
+  const fixed = "123e4567-e89b-12d3-a456-426614174000";
+  const now = new Date("2026-09-25T10:12:00");
+  const created = `"${now.toISOString()}"`;
+  // Every form that copies in place (Beings, Things, goal, vision): its documentId and created, and nothing else.
+  for (const name of ["oi-beings.html", "oi-things.html", "oi-goal.html", "oi-vision.html"]) {
+    const template = await read(name);
+    assert.equal(stampCopy(template, now, () => fixed), template.replace('"documentId":null', `"documentId":"${fixed}"`).replace('"created":null', `"created":${created}`), name);
+  }
+  // A person's own template as written: spacing, key order, a number spelt 3.0 or 1e2, an integer past 2^53, a bare `<` and
+  // markup in text, and an escaped `<\/SCRIPT>` with its letters. The stamp writes the identity through the host's splice
+  // (plural.ts spliceIsland), so none of them is respelt.
+  const page = island => `<!doctype html><html><body><main></main>\n<script type="application/json" id="ql-doc">${island}</script>\n<script>/* page */</script></body></html>`;
+  const written = text => `{\n  "profile": "oi.page/v1",\n  "meta": {"title": "${text}", "revision": 3.0, "documentId": null, "created" : null, "big": 9007199254740993},\n  "bindings": {"count": 1e2, "z": "first", "a": "second"}\n}`;
+  const stamped = text => written(text).replace('"documentId": null', `"documentId": "${fixed}"`).replace('"created" : null', `"created" : ${created}`);
+  const text = "a <b>bold</b> claim, 2 < 3, and <\\/SCRIPT> as written";
+  assert.equal(stampCopy(page(written(text)), now, () => fixed), page(stamped(text)), "every island byte but the identity's values stays as written");
+  // The legacy `<\!--` escape reads as every Flow reader reads it (plural.ts readIsland, flow/instance.ts parseInstance), so a
+  // template holding it is stamped too, never copied with the template's own identity.
+  const legacy = `${text}, and <\\!-- a comment opening`;
+  assert.equal(stampCopy(page(written(legacy)), now, () => fixed), page(stamped(legacy)), "a template with the legacy comment escape is stamped and kept");
 });
 
 const bridgeSource = await readFile(new URL("../src/context/document-host.js", import.meta.url), "utf8");

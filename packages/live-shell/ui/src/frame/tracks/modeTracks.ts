@@ -32,6 +32,8 @@ import {useFactoryTracks} from './useFactoryTracks'
 import {useCentralTracks} from './useCentralTracks'
 import {useTechneTracks} from './useTechneTracks'
 import {worldCut} from './useWorldCut'
+import {withClipMaker} from './clipMakers'
+import {sceneMaker} from '../../components/expressions/clip/clipBinding'
 import type {JourneyPresentation} from '../../timeline/journeyWalks'
 
 export interface TracksReading {
@@ -159,13 +161,15 @@ export function expressionsControls(source: NativeCompositionViewSource | undefi
 
 /** Expressions' tracks: the open Expression and its scenes, with what the presented composition and the frame's link add. A plain
  * read, no hook (the registration stays callable outside a render, as the clip readers call it): the frame's link is read as it
- * stands when the pane draws, and the pane draws again whenever the presented reading is published. */
+ * stands when the pane draws, and the pane draws again whenever the presented reading is published. Its tracks take a constellation
+ * dropped on them, which makes a scene of it in the open Expression (components/expressions/clip/clipBinding.ts sceneMaker). */
 export function expressionsTracks(reading: TracksReading): WorldTrackSet | null {
   const link = readFrameTakeLink()
   const source = reading.session ?? reading.arrangement
   const current = source?.currentReading?.() ?? null
   const held = link.state?.automationHeld
-  return nativeTracks(reading.native, reading.workName, {reading: current, controls: expressionsControls(source, link), ...(held !== undefined ? {held} : {})})
+  const set = nativeTracks(reading.native, reading.workName, {reading: current, controls: expressionsControls(source, link), ...(held !== undefined ? {held} : {})})
+  return set ? withClipMaker(set, sceneMaker(source)) : set
 }
 
 /** A mode's tracks: a hook over the published reading (a mode may read its own owner — Central's streams, Factory's

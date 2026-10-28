@@ -146,6 +146,27 @@ whole number from 0 to 2^53, in any spelling, is that number. The shared case
 append, the page's own save, the host's save, the kernel's field writes and
 `createInPlace`.
 
+*Note, 28 Oct 2026, #803.* Central still read three numbers differently from
+the page. Its append read a request's `basisRevision` and a reply's `revision`
+only as integers, while the page reads both as numbers: a basis written `3.0`
+was refused, and a reply at `5.0` against revision 4 went unchecked. It read
+`meta.format.version` the same way, so `"version":4.0` read as a legacy form.
+Central now reads all three as the page does (`flow_append.rs` `flow_count`,
+`flow_format_version`). It also holds a request's numbers as the page holds
+them (`flow_as_the_page_holds`): a whole number within 2^53 of zero, in any
+spelling, is written and hashed as the integer. The entry it writes and its
+request digest are therefore the page's. The forms' copy-stamp
+(`flow/placement.ts` `stampCopy`) wrote the whole island again, escaping every
+`<` and respelling its numbers. It now writes the new identity through
+`plural.ts` `spliceIsland`, so a copy of a Beings, Things, goal, vision or
+daily form changes only the values of `documentId`, `uuid`, `created` and a
+daily's `date`. The shared case
+`every-owner-reads-a-whole-number-in-any-spelling-as-its-value-and-hashes-the-integer`
+holds `"version":4.0`, a basis spelt `3.0` and a reply at `4.0`, and pins the
+entry every owner writes. It passes through Central's append, the page's own
+save, the host's save and `createInPlace`. Three more cases cover a reply at
+`5.0`, a format at `5.0` and a replay spelt `3` after `3.0`.
+
 The departed/queued/running tests exercise real EncounterService and Central
 files with scripted ACP processes. Their `need_ctrl!` guard can return early
 without `AIKIT_TEST_CENTRAL_CTRL`; a passing runner without that native binary

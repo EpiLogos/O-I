@@ -16,6 +16,7 @@ import {ClipView} from '../../inhabitants/catalogue/clips/clipKit'
 import {loadClip} from '../../inhabitants/catalogue/clips/index'
 import type {ClipMode, ClipProps, ClipSize, DesignedClip} from '../../inhabitants/catalogue/clips/design'
 import {clipShape, type ClipBinding} from './clipBinding'
+import {useClipGroove} from './clipGroove'
 import {publishHostedClip} from '../menu/objectDoor'
 
 /** Where the clip stands: its size and the room the place measured. */
@@ -54,8 +55,9 @@ export function clipAsDevice(design: DesignedClip, size: ClipSize, room: ClipPla
 
 const NAV = {}
 
-/** One clip, hosted: its mode's design on its binding, at its place. */
-export function HostedClip({binding, place}: {binding: ClipBinding; place: ClipPlace}) {
+/** One clip, hosted: its mode's design on its binding, with its groove from the pool (clipGroove.ts), at its place. */
+export function HostedClip({binding: owned, place}: {binding: ClipBinding; place: ClipPlace}) {
+  const binding = useClipGroove(owned)
   const {design, fault} = useClipDesign(binding.mode)
   // The object menu writes the clip's own facts through this binding while Clip view holds it (frame/menu/objectDoor.ts).
   useEffect(() => { publishHostedClip(binding); return () => publishHostedClip(null) }, [binding])

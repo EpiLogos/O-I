@@ -81,8 +81,11 @@ export function bodySetIntent(form: BodyForm): IntentResult {
   const subject = form.subject.trim()
   if (!subject) return refuse('Name the native file ref or path first')
   if (subject.length > SUBJECT_MAX) return refuse(`The native ref is at most ${SUBJECT_MAX} characters`)
-  const presentation = presentationProblem(form.presentation, 'renderable')
+  // A knowledge whole (a constellation of the wiki, O-I #768) has no renderer inside a scene: it is drawn as its Thing (nativeSceneBody.ts
+  // bodyFromKnowledgeWhole), so it is set at Preview or Degraded and carries no span.
+  const presentation = presentationProblem(form.presentation, form.carrier === 'knowledge_whole' ? 'degrades_to_thing' : 'renderable')
   if (presentation) return refuse(presentation)
+  if (form.carrier === 'knowledge_whole') return accept({family: 'body', body: {operation: 'set', carrier: 'knowledge_whole', subject_ref: subject, presentation: form.presentation}})
   if (form.carrier === 'image_media') return accept({family: 'body', body: {operation: 'set', carrier: 'image_media', subject_ref: subject, presentation: form.presentation}})
   const start = form.spanStart.trim(), end = form.spanEnd.trim()
   if ((start === '' || start === '0') && (end === '' || end === '0'))

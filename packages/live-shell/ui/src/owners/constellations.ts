@@ -35,6 +35,8 @@ export interface Constellation {
   readonly kind: 'space' | 'frame'
   /** The register that discloses it: "central" (your world) or the project's name. */
   readonly register: string
+  /** The project its register's reads are scoped to (the register's own `project`); absent for your world's register. */
+  readonly project?: string
   readonly registerTitle: string
   readonly members: readonly ConstellationMember[]
 }
@@ -71,7 +73,7 @@ export function constellationsOf(state: {readonly registers: readonly WikiRegist
       seen.add(constellation.wholeRef)
       const question = constellation.kind === 'frame' ? frames.find(frame => frame.anchor_ref === constellation.wholeRef)?.question : undefined
       rows.push({ref: constellation.wholeRef, title: constellation.title, ...(question ? {question} : {}), kind: constellation.kind,
-        register: register.key, registerTitle: register.title,
+        register: register.key, registerTitle: register.title, ...(register.project ? {project: register.project} : {}),
         members: constellation.members.map(member => ({ref: member.subjectRef, title: member.title, position: member.position}))})
     }
   }

@@ -12,7 +12,7 @@
 // `triggers`, `scenes` (the Expression's scenes, for Jump).
 import {Action, Chooser, Dial, Display, Radio, Section, TextField, Toggle, ValueBox, type Option} from '../../sdk/panel'
 import {numOf, strOf} from '../panels/design'
-import {Caption, COLOURS, EnvelopeEditor, Fields, LaneGrid, MadeOf, Rows, Row, Rule, Said, Wide, choice, read, write, type Block, type Lane} from './clipKit'
+import {Caption, COLOURS, EnvelopeEditor, Fields, LaneGrid, GrooveOf, GrooveReading, GrooveSwap, MadeOf, grooved, Rows, Row, Rule, Said, Wide, choice, read, write, type Block, type Lane} from './clipKit'
 import type {ClipProps, DesignedClip} from './design'
 
 type V = ClipProps['v']
@@ -55,6 +55,8 @@ function ClipPanel(p: ClipProps) {
   return <Rows>
     <Row label="Name"><TextField label="Scene name" does="The name of the clip. Press Enter to keep a change, Escape to undo it." value={strOf(p.v, 'name') ?? ''} onChange={x => p.set('name', x)} disabled={why} /></Row>
     <Row label="Constellation"><MadeOf p={p} what="the scene" /></Row>
+    <Row label="Groove"><GrooveOf p={p} /><GrooveSwap p={p} /></Row>
+    {grooved(p.v) && <Row label="Reading"><GrooveReading p={p} /></Row>}
     <Row label="Colour"><Chooser label="Colour" does="The colour of the clip on the grid and the ruler." value={choice(p.v, 'colour')} options={COLOURS} onChange={x => p.set('colour', x)} /></Row>
     <Row label="Duration"><ValueBox label="Duration" does="How long the scene holds before it changes. This is the clip's length." value={numOf(p.v, 'duration') ?? NaN} def={8} scale={{min: 0, max: 60, step: 0.5}} format={secs} onChange={x => p.set('duration', x)} disabled={why} /></Row>
     <Row label="Transition"><ValueBox label="Transition" does="How long the change to the next scene takes." value={numOf(p.v, 'transition') ?? NaN} def={2} scale={{min: 0, max: 60, step: 0.5}} format={secs} onChange={x => p.set('transition', x)} disabled={why} /></Row>

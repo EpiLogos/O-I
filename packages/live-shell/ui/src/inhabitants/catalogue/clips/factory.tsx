@@ -28,7 +28,7 @@
 // reason. `criterion` (a new success condition) has no owner operation at all: it stands disabled here with that reason.
 import {Chooser, Radio, Rows as List, TextField, type Option, type RowItem} from '../../sdk/panel'
 import {NONE, json, numOf, strOf} from '../panels/design'
-import {COLOURS, EnvelopeEditor, Fact, Fields, LaneGrid, MadeOf, Rows, Row, Rule, Said, Wide, choice, fit, read, write, type Block, type Lane, type Mark, type Point} from './clipKit'
+import {COLOURS, EnvelopeEditor, Fact, Fields, LaneGrid, GrooveOf, GrooveReading, GrooveSwap, MadeOf, grooved, Rows, Row, Rule, Said, Wide, choice, fit, read, write, type Block, type Lane, type Mark, type Point} from './clipKit'
 import type {ClipProps, DesignedClip} from './design'
 
 interface Entry {readonly at: number; readonly kind: 'tool' | 'spawn' | 'steer' | 'say' | 'stall'; readonly tool?: string; readonly text: string; readonly dur?: number; readonly state?: 'runs' | 'waits'; readonly heard?: string}
@@ -154,6 +154,8 @@ function ClipPanel(p: ClipProps) {
     <Row label="Name"><TextField label="Name" does="The task's name. It comes from the first message until you change it." value={strOf(p.v, 'name') ?? ''} onChange={x => p.set('name', x)} /></Row>
     <Row label="Colour"><Chooser label="Colour" does="The colour of the clip on the grid and the ruler. A task takes its session's colour." value={choice(p.v, 'colour')} options={COLOURS} onChange={x => p.set('colour', x)} /></Row>
     <Row label="Constellation"><MadeOf p={p} what="the task" /></Row>
+    <Row label="Groove"><GrooveOf p={p} /><GrooveSwap p={p} /></Row>
+    {grooved(p.v) && <Row label="Reading"><GrooveReading p={p} /></Row>}
     <Row label="State"><Fact label="State" does="How the task stands, as the session reports it." value={state ? STATE_WORD[state] ?? state : undefined}
       tone={state ? STATE_TONE[state as keyof typeof STATE_TONE] : undefined} /></Row>
     <Row label="Turns"><Fact label="Turns" does="The turns the task has used of the turns the agent's budget allows. The transport's time signature shows the same reading."

@@ -5,6 +5,7 @@
  * copy keeps. The flows-area placements stay with createInPlace's own
  * first-save-door logic.
  */
+import {spliceIsland} from "./plural";
 
 /** Local civil time only — never a UTC or scheduler stamp. */
 export function localStamp(now = new Date()): string {
@@ -30,22 +31,25 @@ export function inPlacePlacementFor(form: Pick<{kind: string; label: string}, "k
 }
 
 const QL_DOC = /(<script type="application\/json" id="ql-doc">)([\s\S]*?)(<\/script>)/;
+/** The island as every Flow reader reads it (flow/instance.ts parseInstance, plural.ts readIsland): the legacy `<\/script`
+ * and `<\!--` escapes read back as written content, the letters after `<\/` as written. */
+const readIsland = (text: string): unknown => JSON.parse(text.replace(/<\\\/(script)/gi, "</$1").replace(/<\\(!--)/g, "<$1"));
 
-/** A fresh identity for the copy; every other byte stays the template's. */
+/** A fresh identity for the copy; every other byte stays the template's. The identity is written through the host's splice
+ * (plural.ts spliceIsland, as createInPlace's tieWorld and withFlowMeta write, #798): only the values of `documentId`,
+ * `uuid`, `created` and a daily's `date` move, and the island's key order, spacing, number spellings (`3.0`, `1e2`,
+ * integers past 2^53) and escapes stay as the template writes them (#803). */
 export function stampCopy(template: string, now = new Date(), identity: () => string = () => crypto.randomUUID()): string {
   const match = template.match(QL_DOC);
   if (!match) return template;
   let doc: {meta?: Record<string, unknown>};
-  try { doc = JSON.parse(match[2]); } catch { return template; }
-  const meta = doc.meta;
+  try { doc = readIsland(match[2]) as typeof doc; } catch { return template; }
+  const meta = doc?.meta;
   if (!meta || typeof meta !== "object") return template;
   const id = identity();
   if ("documentId" in meta) meta.documentId = id;
   if ("uuid" in meta) meta.uuid = id;
   if ("created" in meta) meta.created = now.toISOString();
   if (meta.type === "daily" && "date" in meta) meta.date = localStamp(now).slice(0, 10);
-  // U+003C is escaped so no text can close the script (the page template's
-  // own jsonText law); JSON.parse reads it back unchanged.
-  const json = JSON.stringify(doc).replace(/</g, "\\u003c").replace(/\u2028/g, "\\u2028").replace(/\u2029/g, "\\u2029");
-  return template.replace(QL_DOC, (_all, open: string, _body: string, close: string) => open + json + close);
+  return template.replace(QL_DOC, (_all, open: string, island: string, close: string) => open + spliceIsland(island, doc) + close);
 }

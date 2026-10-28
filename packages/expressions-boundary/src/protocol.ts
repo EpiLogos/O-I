@@ -318,6 +318,33 @@ export function readWikiSubjectStandingRequest(raw: unknown): WikiSubjectStandin
   if (!object(raw) || !boundedText(raw.subject_ref, 512) || !expressionRef(raw.expression_ref) || !positiveInteger(raw.revision)) return null;
   return {subject_ref: raw.subject_ref, expression_ref: raw.expression_ref, revision: raw.revision};
 }
+// O-I #768: a scene made of a constellation keeps it as its body, a knowledge whole (DLW §16.5, §20.1). The frame resolves the whole it
+// places from the wiki's own reading of it: one typed request naming the whole's wiki ref, and one reply, matched by req on the boundary
+// channel. The owner answers from the one wiki projection the shell reads (live-shell native/wikiSubjectStanding.ts).
+export const KNOWLEDGE_WHOLE_CHANNEL = 'knowledge-whole';
+/** The longest wiki ref a whole is named by (AIKit keeps a task's source at the same bound, encounter_task_settings.rs). */
+export const KNOWLEDGE_WHOLE_REF_MAX = 1024;
+export interface KnowledgeWholeRequest {ref: string;}
+/** One reading of a constellation's whole, as the wiki discloses it: its subject reading, the readings it was observed through, its
+ * name and the register that holds it. `requested_ref` is the ref asked for, so the frame refuses an answer about another whole. */
+export interface KnowledgeWholeReading {
+  requested_ref: string;
+  ref: string;
+  native_owner: string;
+  title: string;
+  register: string;
+  reading: KnowledgeWholeReadingRef;
+  provenance: KnowledgeWholeReadingRef[];
+}
+/** A reading ref as the kernel keeps one (expression.rs ReadingRef; the frame's kernelDocumentBridge.ts KernelReadingRef). */
+export interface KnowledgeWholeReadingRef {ref: string; revision: string; availability: 'available' | 'unavailable' | 'withheld' | 'stale';}
+/** Parse one frame knowledge-whole request exactly: a wiki ref and nothing else. Anything else is null, refused by name. */
+export function readKnowledgeWholeRequest(raw: unknown): KnowledgeWholeRequest | null {
+  if (!object(raw) || Object.keys(raw).some(key => key !== 'ref')) return null;
+  const ref = raw.ref;
+  if (!boundedText(ref, KNOWLEDGE_WHOLE_REF_MAX) || !ref.startsWith('wiki:') || ref.length <= 'wiki:'.length || ref !== ref.trim()) return null;
+  return {ref};
+}
 export interface HostTarget {
   bindingId: string;
   epoch: number;
