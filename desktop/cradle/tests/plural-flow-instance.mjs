@@ -88,6 +88,27 @@ try {
   const viaAppend = instance.appendEntry(file, "", {participant: {key: "p-ada", initial: "D", kind: "agent"}, html: "<p>Through the app.</p>"});
   for (const kept of ['"x-ledger":{"zeta":"written first","alpha":9007199254740993,"mid":{"z":18446744073709551617,"a":-9223372036854775809}}', '"x-trace":{"tick":9007199254740995,"by":"page"}', islandCase.expect.islandAfter[1]])
     assert.ok(viaAppend.html.includes(kept), `an app append keeps ${kept.slice(0, 40)} as written`);
+
+  // Every shared island case through the host's save and the app's own append (#797: an island-closing tag in mixed case). The
+  // host reads the file as the hosted face draws it (parseInstance, live-shell DocumentFlowFace.tsx currentFlow) and embeds what the
+  // page holds. What either writes is escaped `<\/` with the letters after it as written; the island reads back as the document.
+  const escapedForIsland = value => JSON.stringify(value).replace(/<\/(script)/gi, "<\\/$1").replace(/<!--/g, "<\\u0021--");
+  const islandOf = html => html.match(/<script type="application\/json" id="ql-doc">([\s\S]*?)<\/script>/)[1];
+  for (const shared of fixtures.cases.filter(c => c.op === "append-island")) {
+    const sharedFile = withIsland(readFileSync(root + "documents/ql-flow.html", "utf8"), shared.island);
+    assert.deepEqual(instance.parseInstance(sharedFile), JSON.parse(shared.island), `${shared.name}: the host reads the island as the page does`);
+    const read = plural.appendContribution(instance.parseInstance(sharedFile), JSON.parse(JSON.stringify(shared.request)), shared.caller);
+    const [sharedHead, sharedTail] = shared.expect.islandAfter;
+    assert.equal(instance.embedDocument(sharedFile, JSON.parse(JSON.stringify(read.doc))), withIsland(sharedFile, `${sharedHead},${escapedForIsland(read.entry)}${sharedTail}`),
+      `${shared.name}: a host save writes only the page's change, escaped with its letters; every other byte stays as written`);
+    const appended = instance.appendEntry(sharedFile, "", {participant: {key: "p-ada", initial: "D", kind: "agent"}, html: shared.request.html});
+    const island = islandOf(appended.html);
+    const [kept, revision] = [sharedHead.split(/"revision":\d+/), JSON.parse(shared.island).meta.revision + 1];
+    assert.ok(island.startsWith(`${kept[0]}"revision":${revision}${kept[1]},`) && island.endsWith(sharedTail),
+      `${shared.name}: an app append keeps every island byte but the revision's as written`);
+    assert.doesNotMatch(island.slice(sharedHead.length, -sharedTail.length), /<\/script|<!--/i, `${shared.name}: the island can neither close itself nor open a comment`);
+    assert.equal(JSON.parse(island).entries.at(-1).html, shared.request.html, `${shared.name}: an app append writes its text with its letters`);
+  }
   console.log("plural-flow instance: ok");
 } finally {
   await server.close();

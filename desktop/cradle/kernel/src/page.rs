@@ -712,7 +712,19 @@ pub fn apply_field(
         other => return Err(format!("A Flow has no field {other} the page owner writes")),
     };
     let meta = object(island, "meta")?;
-    let counter = meta.get("revision").and_then(Value::as_u64).unwrap_or(0) + 1;
+    // A count in any spelling JSON reads as one: a hand-written `3.0` is 3, as the page and host read it (#797). The kernel
+    // keeps numbers as spelt (`arbitrary_precision`), so `as_u64` alone reads `3.0` as no count and starts the count again.
+    let count = |n: &serde_json::Number| {
+        n.as_u64().or_else(|| {
+            n.as_f64()
+                .filter(|f| f.fract() == 0.0 && (0.0..=9_007_199_254_740_992.0).contains(f))
+                .map(|f| f as u64)
+        })
+    };
+    let counter = match meta.get("revision") {
+        Some(Value::Number(n)) => count(n).unwrap_or(0),
+        _ => 0,
+    } + 1;
     meta.insert("revision".into(), json!(counter));
     Ok(set)
 }
@@ -1722,6 +1734,102 @@ else:
             held(),
             page_of(&contained.replace(r#""revision":5"#, r#""revision":7"#))
         );
+    }
+
+    /// The shared case with an island-closing tag in mixed case (#797): a field write keeps the `<\/SCRIPT>` and `<\/Script>`
+    /// the island holds as written, and what it writes escapes `</SCRIPT` and `</Script` with their letters, so it reads back
+    /// as itself. Central's append and the page's and host's saves run the same case.
+    #[cfg(unix)]
+    #[test]
+    fn a_flow_field_write_keeps_the_letters_of_an_escaped_island_closing_tag() {
+        let cases: Value = serde_json::from_str(include_str!(
+            "../../documents/fixtures/plural-flow-cases.json"
+        ))
+        .unwrap();
+        let case = cases["cases"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|case| case["name"] == "an-escaped-island-closing-tag-keeps-its-letters")
+            .unwrap();
+        let island = case["island"].as_str().unwrap();
+        let stub = Stub::new("island-letters");
+        let path = "Control/user/flows/flow-letters.html";
+        let at = stub.put(path, &page_of(island));
+        let held = || std::fs::read_to_string(stub.home.join(path.replace('/', "_"))).unwrap();
+        let mut kernel = crate::Kernel::new(stub.client.clone());
+        let mut revision = read(&stub.client, &at).unwrap()["revision"]
+            .as_str()
+            .unwrap()
+            .to_string();
+        let mut write = |field: &str, value: Value| {
+            let done = kernel
+                .apply(crate::KernelOp::Page {
+                    request: Request::MutateField {
+                        location: at.clone(),
+                        expected_revision: revision.clone(),
+                        field: field.into(),
+                        value,
+                    },
+                })
+                .unwrap();
+            let crate::KernelOpResult::PageReading { data } = done.result else {
+                panic!("a page mutation")
+            };
+            assert_eq!(data["outcome"], "written");
+            revision = data["revision"].as_str().unwrap().to_string();
+        };
+
+        // A title holding the tag in two cases is written with both escaped, letters kept.
+        write("title", json!("A </SCRIPT> and a </Script>"));
+        let titled = island
+            .replace(
+                r#""title":"Kept letters""#,
+                r#""title":"A <\/SCRIPT> and a <\/Script>""#,
+            )
+            .replace(r#""revision":3"#, r#""revision":4"#);
+        assert_eq!(held(), page_of(&titled));
+        assert_eq!(
+            read_island(&held()).unwrap()["meta"]["title"],
+            "A </SCRIPT> and a </Script>"
+        );
+
+        // An entry the write changes keeps, as written, the member holding the tags.
+        write("highlight.add", json!({"entry": "e-q", "passage": "Does"}));
+        let marked = titled
+            .replace(
+                r#""html":"<p>Does an escaped tag keep its letters?</p>""#,
+                r#""html":"<p><mark>Does</mark> an escaped tag keep its letters?</p>""#,
+            )
+            .replace(r#""revision":4"#, r#""revision":5"#);
+        assert_ne!(marked, titled);
+        assert_eq!(held(), page_of(&marked));
+        write(
+            "highlight.remove",
+            json!({"entry": "e-q", "passage": "Does"}),
+        );
+        assert_eq!(
+            held(),
+            page_of(&titled.replace(r#""revision":4"#, r#""revision":6"#))
+        );
+    }
+
+    /// #797: a hand-written island may spell its counter with a zero fraction (`"revision": 1.0`, WRITTEN). JSON has one kind of
+    /// number and the page and host read it as 1 (plural.ts `appendContribution`, `doc.meta.revision + 1`), so the kernel counts
+    /// on from it too, rather than starting the count again.
+    #[test]
+    fn a_counter_written_with_a_zero_fraction_counts_on_from_its_value() {
+        let mut island = read_island(&page_of(WRITTEN)).unwrap();
+        apply_field(&mut island, "title", &json!("Counted"), &stamp()).unwrap();
+        assert_eq!(island["meta"]["revision"], json!(2));
+        for (written, next) in [("3.0", 4), ("3e0", 4), ("30e-1", 4), ("0.0", 1), ("-0", 1)] {
+            let mut island = read_island(&page_of(&format!(
+                r#"{{"meta": {{"revision": {written}}}, "entries": []}}"#
+            )))
+            .unwrap();
+            apply_field(&mut island, "view", &json!("journal"), &stamp()).unwrap();
+            assert_eq!(island["meta"]["revision"], json!(next), "{written}");
+        }
     }
 
     #[cfg(unix)]

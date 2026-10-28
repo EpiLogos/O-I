@@ -63,7 +63,7 @@ const QL_DOC = /<script type="application\/json" id="ql-doc">([\s\S]*?)<\/script
 export function parseInstance(html: string): QlDoc {
   const match = html.match(QL_DOC);
   if (!match) throw new Error("This file is not a 0/1 dialogue/flow document — its embedded document state is missing.");
-  return JSON.parse(match[1].replace(/<\\\/script/gi, "</script").replace(/<\\!--/g, "<!--")) as QlDoc;
+  return JSON.parse(match[1].replace(/<\\\/(script)/gi, "</$1").replace(/<\\!--/g, "<!--")) as QlDoc;
 }
 /** The file with `doc` written into its island. Only what `doc` changed from what the island reads as is written; every
  * other byte of the island (key order, number spellings, integers past 2^53 that no JavaScript reader holds exactly)

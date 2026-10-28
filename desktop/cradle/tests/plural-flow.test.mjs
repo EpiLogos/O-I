@@ -159,6 +159,21 @@ test("a page save of the shared island case writes the page's append and keeps e
   assert.equal(spliceIsland(islandCase.island, page.doc), `${head},${JSON.stringify(page.entry)}${tail}`);
 });
 
+// What a save writes into the island is JSON with `</script`, in any case, written `<\/` and the letters after it as written,
+// and a comment opening written `<\u0021--` (#797: the escape lowercased the letters, so the read-back refused the save).
+const escapedForIsland = value => JSON.stringify(value).replace(/<\/(script)/gi, "<\\/$1").replace(/<!--/g, "<\\u0021--");
+for (const islandCase of fixtures.cases.filter(c => c.op === "append-island")) {
+  test(`a page save keeps the shared island case as written: ${islandCase.name}`, () => {
+    assert.equal(spliceIsland(islandCase.island, JSON.parse(islandCase.island)), islandCase.island, "a save that changes nothing writes the island back byte for byte");
+    const page = appendContribution(JSON.parse(islandCase.island), clone(islandCase.request), islandCase.caller);
+    const [head, tail] = islandCase.expect.islandAfter;
+    const saved = spliceIsland(islandCase.island, page.doc);
+    assert.equal(saved, `${head},${escapedForIsland(page.entry)}${tail}`);
+    assert.doesNotMatch(saved.slice(head.length, -tail.length), /<\/script|<!--/i, "the island can neither close itself nor open a comment");
+    assert.deepEqual(JSON.parse(saved), clone(page.doc), "the island reads back as exactly the page's document");
+  });
+}
+
 // A hand-written island: spacing, number spellings, an escape, a duplicate key, an integer-like key and integers no
 // JavaScript number holds.
 const written = '{ "meta": {"revision": 1.0, "2": "integer-like", "big": 18446744073709551617, "view": "dialogue", "view": "flow"},\n'
@@ -177,6 +192,14 @@ test("a save replaces only the values the page changed, where they stand", () =>
     .replace('"view": "flow"', '"view": "journal"')
     .replace('"html": "x"', '"html": "<\\/script><\\u0021--"')
     .replace("2.50", "4"));
+});
+
+test("a save keeps the letters of an island-closing tag it escapes, and of one the island holds", () => {
+  const holding = written.replace('"html": "y"', '"html": "<\\/SCRIPT>"');
+  const doc = JSON.parse(holding);
+  assert.equal(doc.entries[2].html, "</SCRIPT>");
+  doc.entries[1].html = "</SCRIPT></Script><!--";
+  assert.equal(spliceIsland(holding, doc), holding.replace('"html": "x"', '"html": "<\\/SCRIPT><\\/Script><\\u0021--"'));
 });
 
 test("a save removes what the page removed and adds what it added, keeping the bytes of what stayed", () => {
