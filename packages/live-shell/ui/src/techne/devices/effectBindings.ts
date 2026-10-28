@@ -1,6 +1,7 @@
-// Light (§17.10, techne:light) and the Lens (§17.11, techne:lens): the two effects on a reading's chain. Each stands where the manual
-// puts it and draws its design on what its owner answers here: every other key absent, every control disabled naming the operation it
-// waits for. Nothing is the design's sample.
+// Light and the Lens (§17.11, techne:lens). The Lens is an effect on a reading's chain: it stands where the manual puts it and draws its design
+// on what its owner answers here, every other key absent, every control disabled naming the operation it waits for. Light was retired as a
+// device of its own in the 22 Oct manual rewrite: it is the Canvas's Light page (§17.4 "The Light page", which took in §17.10's device), so
+// its binding is carried by the Canvas's (canvasCarryingLight). Nothing is a design's sample.
 //   - Light's engine is LightBox (optics/raytracer.ts traceRays, the design's header): it is not in this candidate's tree — no file of
 //     packages/live-shell/ui, desktop/cradle or the hosted frame holds it (searched 21 Oct for raytracer.ts, LightBox, traceRays) —
 //     and the Canvas board it lays its bench over is not published by the research frame (frameBindings.ts NO_BOARD).
@@ -20,7 +21,7 @@ export const LIGHT_ID = LIGHT_DESIGN
 export const LENS_ID = LENS_DESIGN
 
 const NO_ENGINE = missing('Light', 'a light trace over the Canvas board — LightBox (optics/raytracer.ts traceRays) is not in this candidate, and the research frame publishes no board', 'Technē')
-/** Light's controls (techne__light.tsx: light.on, light.source, light.card, light.elements, light.bounces, light.segments, light.spectrum,
+/** Light's controls (the Canvas's Light page, techne__canvas.tsx: light.on, light.source, light.card, light.elements, light.bounces, light.segments, light.spectrum,
  * light.rays, and the four transmissions). */
 export const LIGHT_REFUSE: Readonly<Record<string, string>> = Object.fromEntries(['light.on', 'light.source', 'light.card', 'light.elements', 'light.bounces', 'light.segments',
   'light.spectrum', 'light.rays', 'tx.fact', 'tx.claim', 'tx.inference', 'tx.guess'].map(key => [key, NO_ENGINE]))
@@ -69,6 +70,38 @@ function unreached(id: string, refuse: Readonly<Record<string, string>>, reading
 }
 
 export const lightBinding = (): DesignBinding => unreached(LIGHT_ID, LIGHT_REFUSE, LIGHT_READINGS, NO_ENGINE)
+
+/** The Light page's keys on the Canvas (techne__canvas.tsx: `light.*`, `tx.*` and the sensors' `sensor.power`): Light's controls and its one
+ * reading of its own. The Canvas's items and lines are the Canvas's own readings, never Light's. */
+export const LIGHT_PAGE_KEYS: readonly string[] = [...Object.keys(LIGHT_REFUSE), 'sensor.power']
+
+/** The Canvas carrying its Light page (§17.4): the Canvas's own binding, with Light's keys (LIGHT_PAGE_KEYS) read, refused and written on
+ * Light's binding — a value is its owner's, a change goes to the owner of its key, a refusal is that owner's. Pure. */
+export function canvasCarryingLight(canvas: DesignBinding, light: DesignBinding): DesignBinding {
+  const carried = (key: string) => LIGHT_PAGE_KEYS.includes(key)
+  const values = {...canvas.values}
+  const standing = {...(canvas.standing ?? {})}
+  for (const key of LIGHT_PAGE_KEYS) {
+    if (key in light.values) values[key] = light.values[key]!
+    else delete values[key]
+    const said = light.standing?.[key]
+    if (said) standing[key] = said
+    else delete standing[key]
+  }
+  return {...canvas, values, standing,
+    writes: key => (carried(key) ? (light.writes ? light.writes(key) : !!light.write) : (canvas.writes ? canvas.writes(key) : !!canvas.write)),
+    write: async (changes: readonly ValueChange[]) => {
+      const lights = changes.filter(change => carried(change.key)), own = changes.filter(change => !carried(change.key))
+      if (lights.length) {
+        if (!light.write) throw refusal(LIGHT_REFUSE, lights[0]!.key)
+        await light.write(lights)
+      }
+      if (own.length) {
+        if (!canvas.write) throw new Error(`${own[0]!.key}: a reading — the frame reports it, and nothing here changes it.`)
+        await canvas.write(own)
+      }
+    }}
+}
 /** The Lens on Quaternal Logic: the registry's lists where QL has answered them, the lens and sublens the view holds, every other key
  * absent with what it waits for, the mode, operation and probe refused naming what QL or the shell lacks. */
 export const lensBinding = (registry?: LensRegistry, held: Readonly<Record<string, Value>> = {}): DesignBinding => {

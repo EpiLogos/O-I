@@ -359,9 +359,12 @@ test('a face declared waiting is a dark device with no control: its standing and
   // T-WORLDS W4: the Deck reads the open journey (nara_journey), the Chakra your elements (nara_elemental).
   assert.notEqual(faceOf('quaternal-logic', 'deck').admission, 'waiting', 'the Deck draws on its owner (nara_journey)')
   assert.notEqual(faceOf('quaternal-logic', 'chakra').admission, 'waiting', 'the Chakra draws on its owner (nara_elemental)')
-  // Lane W4: the M′ matrices and Binding draw on their owners (qlMatrices.ts, qlBinding.ts); the torus face still waits.
+  // Lane W4: the M′ matrices draw on their owners (qlMatrices.ts); the torus face still waits.
   assert.notEqual(faceOf('quaternal-logic', 'm-prime-matrices').admission, 'waiting', 'the M′ matrices draw on the mode catalogue and the M3 form')
-  assert.notEqual(faceOf('quaternal-logic', 'binding').admission, 'waiting', 'Binding draws on the M3 form\'s hexagram')
+  // REPLACED (#725): "Binding draws on the M3 form's hexagram" as a face of its own — Binding is the M3 clock's Binding skin (§22.8, §22.3),
+  // so it draws on the M3 form through the clock, which is admitted on m3_reception (above); no Binding face is declared.
+  assert.equal(faceOf('quaternal-logic', 'binding'), undefined, 'no Binding face')
+  assert.equal(faceOf('quaternal-logic', 'm3-clock').invariant.generates, 'kernel:m3_reception', 'the clock that carries the skin reads and moves the M3 form')
   for (const id of ['torus']) {
     const face = faceOf('quaternal-logic', id)
     assert.equal(face.admission, 'waiting')

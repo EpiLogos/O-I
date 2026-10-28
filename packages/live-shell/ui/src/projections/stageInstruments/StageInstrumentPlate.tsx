@@ -13,10 +13,11 @@
 // save state is a light, one that is a line of words is a light whose words are the status bar's, a group the frame places nothing in
 // says one word with its reason on the status bar, and a parameter no owner carries draws disabled with its reason (§6 Disabled).
 //
-// Lane W4-Technē: each instrument's catalogue design (techne:canvas, techne:timeline, techne:journey) heads its chain on the frame's own
-// research reading and acts (techne/devices/frameBindings.ts), so this plate keeps only what the design does not carry yet
-// (stageInstrumentModel.ts CARRIED_BY_DESIGN): no well (the design's display is the picture), no waiting rows (the design draws those
-// parameters with their reasons), no group or control the design reads and writes itself.
+// Lane W4-Technē: an instrument's catalogue design (techne:canvas, techne:journey) heads its chain on the frame's own research reading and
+// acts (techne/devices/frameBindings.ts), so this plate keeps only what the design does not carry yet (stageInstrumentModel.ts
+// CARRIED_BY_DESIGN): no well (the design's display is the picture), no waiting rows (the design draws those parameters with their reasons),
+// no group or control the design reads and writes itself. M2′'s design, the Timeline, was retired in the 22 Oct manual rewrite (§17.5: the
+// timeline is Arrangement view), so its plate draws its own well first and every group (HEADED_BY_DESIGN).
 import type {ReactNode} from 'react'
 import type {FrameChromeControl} from '@epilogos/expressions-boundary'
 import {InstrumentPlate, SectionNote, type PlateSection} from '../../frame/devices/InstrumentPlate'
@@ -26,7 +27,8 @@ import type {IconName} from '../../inhabitants/sdk/icons'
 import {FrameControl, controlsAt, useFrameChrome, type FrameChromeView} from '../../components/expressions/studio/frameChrome'
 import {usePlateFit} from '../../frame/devices/plateFit'
 import type {OwnPlateProps} from '../../inhabitants/ql/devices/TechneDevices'
-import {CARRIED_BY_DESIGN, EXPRESSION_SECTION, STAGE_PLATES, carriedByDesign, type StageInstrumentId, type StageSection} from './stageInstrumentModel'
+import {CARRIED_BY_DESIGN, EXPRESSION_SECTION, HEADED_BY_DESIGN, STAGE_PLATES, carriedByDesign, type StageInstrumentId, type StageSection} from './stageInstrumentModel'
+import {wellSection} from '../../inhabitants/ql/devices/techneWells'
 import './stageInstrumentPlate.css'
 
 const TITLES: Readonly<Record<StageInstrumentId, {title: string; provenance: string; icon: IconName; lens: string}>> = {
@@ -105,8 +107,11 @@ export function StageInstrumentPlate({id, focused, families = [], onFold, onFull
   const presentation: FacePresentation = {family: 'techne', faceId: id, title: meta.title, icon: meta.icon,
     owner: [meta.provenance, 'Technē', 'the Expressions stage', focused ? 'open on the focused pane' : 'opened here',
       view.presentation === 'frame' ? 'its controls in the pane at full size' : null].filter(Boolean).join(' · ')}
-  // The picture is the design's display, at the head of the chain: the plate draws no second well.
+  // The picture is the design's display, at the head of the chain: the plate draws no second well. With no design at its head, the
+  // plate's own well is its picture, first and never folded.
+  const well = HEADED_BY_DESIGN[id] ? null : wellSection(id)
   const sections: PlateSection[] = [
+    ...(well ? [well] : []),
     ...groups.map(section => fold({id: section.id, title: section.title, width: section.width,
       children: elsewhere ? <SectionNote word={`${standing} lens`}>{`The stage stands in its ${standing} lens: open ${meta.title} on the focused pane to draw its ${section.title.toLowerCase()} here.`}</SectionNote>
         : view.reason && !view.reading ? <SectionNote word="waiting">{view.reason}</SectionNote> : <SectionBody id={id} section={section} view={view} />},

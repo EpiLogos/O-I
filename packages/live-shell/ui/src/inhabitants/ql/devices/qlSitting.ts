@@ -1,5 +1,7 @@
-// The Sitting (manual §24.3; the catalogue's design inhabitants/catalogue/panels/quaternal-logic__sitting.tsx, `quaternal-logic:sitting`;
-// T-WORLDS §6, W4): a still time with a bell to begin and end it, and a record that you sat.
+// The Sitting (manual §24.3; T-WORLDS §6, W4): a still time with a bell to begin and end it, and a record that you sat. The 22 Oct manual
+// rewrite retired the Sitting as a device of its own ("A sitting is a clip of the practice world's track (§24.1): its length, its bell and its
+// intervals stand in its Clip panel, and Play rings the bell and begins"): its design (quaternal-logic__sitting.tsx) and its face are gone and
+// no rack stands it (TechneDevices.tsx); this binding of its owners stays for the practice world's sitting clip.
 //   the time       the transport's: Play begins the sitting, Stop ends it now, the length ends it at its bell. `playing` and `elapsed`
 //                  are readings of that time while it plays (desktop/cradle/src/nara/sitting.ts);
 //   the bell       the field's own sound: the one instrument rings the bell's note as its own strike (live/torusInstrument.ts

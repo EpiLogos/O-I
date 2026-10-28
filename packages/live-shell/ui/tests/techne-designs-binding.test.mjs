@@ -1,7 +1,9 @@
 // Lane W4-Technē (T-COVERAGE §1.4): the unbound designs of Technē and the knowledge graph on their owners (src/techne/devices/**) —
-// techne:palace on the palace session, knowledge-graph:graph on the open graph's handle and the kernel graph op, techne:journey,
-// techne:timeline and techne:canvas on the research frame as it announces itself (and the session's shared window), techne:light and
-// techne:lens on no reachable owner — and where they stand: the head of the open instrument's chain, then its effects (manual §16.2).
+// techne:palace on the palace session, knowledge-graph:graph on the open graph's handle and the kernel graph op, techne:journey and
+// techne:canvas on the research frame as it announces itself, techne:lens on no reachable owner — and where they stand: the head of the
+// open instrument's chain, then its effects (manual §16.2). The 22 Oct manual rewrite retired techne:timeline (§17.5: the timeline is
+// Technē's Arrangement view; its binding, frameBindings.ts timelineBinding, is checked on its own values) and techne:light (§17.4: the
+// Canvas's Light page, its binding carried by the Canvas's, effectBindings.ts canvasCarryingLight) (#725).
 //
 // Channels:
 // - REAL (tests/fixtures/knowledge-graph-reading-2026-10-21.json): the kernel graph op's answer for the root register's wiki, read
@@ -71,9 +73,7 @@ const research = await import('../../../../desktop/cradle/expressions-app/field-
 const DESIGNS = {
   palace: (await import('../src/inhabitants/catalogue/panels/techne__palace.tsx')).design,
   journey: (await import('../src/inhabitants/catalogue/panels/techne__journey.tsx')).design,
-  timeline: (await import('../src/inhabitants/catalogue/panels/techne__timeline.tsx')).design,
   canvas: (await import('../src/inhabitants/catalogue/panels/techne__canvas.tsx')).design,
-  light: (await import('../src/inhabitants/catalogue/panels/techne__light.tsx')).design,
   lens: (await import('../src/inhabitants/catalogue/panels/techne__lens.tsx')).design,
   graph: (await import('../src/inhabitants/catalogue/panels/knowledge-graph__graph.tsx')).design,
 }
@@ -88,7 +88,8 @@ const escaped = text => text.replace(/&/g, '&amp;').replace(/"/g, '&quot;').repl
 const transport = {kind: 'unavailable', reason: 'the test carrier is down'}
 
 /** The pages each design's Whole declares (its `pages`), by design. */
-const PAGES = {'techne:journey': ['walk', 'seams'], 'techne:timeline': ['lens', 'filters'], 'techne:canvas': ['board', 'lines', 'form'], 'techne:lens': ['lens', 'frame'],
+// REPLACED (#725): the Canvas's pages take its Light page (§17.4), which took in Light's device; the Timeline's design was retired (§17.5).
+const PAGES = {'techne:journey': ['walk', 'seams'], 'techne:canvas': ['board', 'lines', 'form', 'light'], 'techne:lens': ['lens', 'frame'],
   'knowledge-graph:graph': ['reach', 'filters', 'display', 'aperture']}
 const pagesOf = design => PAGES[design.id] ?? []
 function hostedAll(design, binding) {
@@ -235,7 +236,9 @@ const answered = {status: 'answered', reading: REAL.outcome.reading, error: null
 // ================================================================================================================ the tests
 
 test('each design is keyed to the catalogue\'s exactly; none is registered over it; each has the views of its places (all six) and its kind', () => {
-  const kinds = {palace: 'instrument', journey: 'instrument', timeline: 'instrument', canvas: 'instrument', graph: 'instrument', light: 'effect', lens: 'effect'}
+  // REPLACED (#725): the Timeline (an instrument) and Light (an effect) were retired as devices of their own (§17.5, §17.4): no device of either.
+  for (const id of ['techne:timeline', 'techne:light']) assert.equal(designs.DESIGN_DEVICES.get(id), undefined, `${id}: retired, no device on the door`)
+  const kinds = {palace: 'instrument', journey: 'instrument', canvas: 'instrument', graph: 'instrument', lens: 'effect'}
   for (const [name, design] of Object.entries(DESIGNS)) {
     const device = designs.DESIGN_DEVICES.get(design.id)
     assert.ok(device, `${design.id} has its device`)
@@ -410,6 +413,7 @@ test('the Journey on the frame\'s research reading: the walk as its Journey docu
   assert.deepEqual(frameB.journeyBinding({state: null, run: null, window: undefined}).values, {}, 'no frame: nothing')
 })
 
+// The Timeline's design was retired (§17.5: Technē's timeline is Arrangement view); its binding's own readings and acts are checked here.
 test('the Timeline on the frame\'s research reading: its dated events, relations, span, projection, camera and views; its lens pressed on the frame\'s own tabs; the shared window through the session', async () => {
   const runs = [], written = []
   const frame = frameOf('timeline', {chrome: TIMELINE_CHROME, window: {from: instantOfYear(800), to: instantOfYear(1700)}, runs})
@@ -482,13 +486,26 @@ test('the Canvas on the frame\'s research reading: its cards, lines (the selecte
   assert.match(elsewhere.standing.mode.disabled, /timeline lens/, 'another lens: its controls say why')
 })
 
-test('Light: no reachable owner, so no reading and every control refused naming the operation', async () => {
+test('Light: no reachable owner, so no reading and every control refused naming the operation — on the Canvas that carries its page', async () => {
   const binding = effects.lightBinding()
   assert.deepEqual(binding.values, {})
   for (const key of Object.keys(effects.LIGHT_REFUSE)) {
     assert.match(binding.standing[key].disabled, /LightBox \(optics\/raytracer\.ts traceRays\)/, key)
     await assert.rejects(() => binding.write([{key, value: 1}]), /missing op/)
   }
+  // REPLACED (#725): Light stood as a device of its own after the Canvas; it is the Canvas's Light page now (§17.4 "The Light page", which
+  // took in §17.10's device), so the same refusals stand on the Canvas's binding, which carries Light's (effectBindings.ts canvasCarryingLight),
+  // and the Canvas's own keys stay the Canvas's.
+  const own = frameB.canvasBinding(frameOf('canvas', {chrome: CANVAS_CHROME}))
+  const canvas = effects.canvasCarryingLight(own, binding)
+  for (const key of Object.keys(effects.LIGHT_REFUSE)) {
+    assert.match(canvas.standing[key].disabled, /LightBox \(optics\/raytracer\.ts traceRays\)/, `canvas ${key}`)
+    assert.equal(canvas.writes(key), true, `canvas ${key}: the press reaches Light's refusal`)
+    await assert.rejects(() => canvas.write([{key, value: 1}]), /missing op/)
+  }
+  assert.match(canvas.standing['sensor.power'].disabled, /LightBox/, 'the sensors\' reading is Light\'s, absent with its reason')
+  for (const key of ['items', 'lines', 'mode']) assert.deepEqual([canvas.values[key], canvas.standing[key]], [own.values[key], own.standing?.[key]], `${key} stays the Canvas's own`)
+  assert.equal(canvas.writes('mode'), own.writes('mode'), 'a Canvas control still writes the Canvas\'s way')
 })
 
 // REAL (desktop/cradle/kernel/tests/fixtures/owner-routes/ql-registry-reads-2026-10-21.json): the installed ql's answers, 21 Oct.
@@ -589,16 +606,15 @@ test('(b) every key each design reads is an owner reading, absent with a reason,
     ['graph', 'knowledge-graph__graph.tsx', graphB.graphBinding(surface, graphB.surfaceRead(surface), writes), key => graphB.graphAbsent(surface, graphB.surfaceRead(surface), key)],
     ['graph (closed)', 'knowledge-graph__graph.tsx', graphB.graphBinding(null, null, writes), key => graphB.graphAbsent(null, null, key)],
     ['journey', 'techne__journey.tsx', frameB.journeyBinding(frame('journey')), key => frameB.journeyAbsent(frame('journey'), key)],
-    ['timeline', 'techne__timeline.tsx', frameB.timelineBinding(frame('timeline'), LAW([])), key => frameB.timelineAbsent(frame('timeline'), key)],
-    ['canvas', 'techne__canvas.tsx', frameB.canvasBinding(frame('canvas')), key => frameB.canvasAbsent(frame('canvas'), key)],
-    ['light', 'techne__light.tsx', effects.lightBinding(), effects.lightAbsent],
+    // REPLACED (#725): the Timeline's and Light's designs were retired (§17.5, §17.4); the Canvas is classified on the binding that carries
+    // its Light page (canvasCarryingLight), so Light's keys are checked where Light's design checked them.
+    ['canvas', 'techne__canvas.tsx', effects.canvasCarryingLight(frameB.canvasBinding(frame('canvas')), effects.lightBinding()), key => frameB.canvasAbsent(frame('canvas'), key)],
     ['lens', 'techne__lens.tsx', effects.lensBinding(), effects.lensAbsent],
   ]
   const summary = {}
-  // The Canvas carries the Light page (DLW §17.4, "The Light page", which took in §17.10's device): its controls are Light's, hosted by
-  // Light's own binding until the Canvas's binding carries them. The manual's Canvas settings that no binding carries yet are named here,
-  // so that no other control goes unchecked.
-  const light = effects.lightBinding()
+  // The Canvas carries the Light page (DLW §17.4, "The Light page", which took in §17.10's device): its controls are Light's, refused on
+  // Light's binding, which the Canvas's binding carries. The manual's Canvas settings that no binding carries yet are named here, so that no
+  // other control goes unchecked.
   const CANVAS_WAITING = ['tool', 'snap', 'shape', 'relation', 'autosave', 'label']
   // The Knowledge graph's View, Standing floor and Sessions (DLW §17.3): the manual's settings that graphBinding does not carry yet.
   const GRAPH_WAITING = ['view', 'floor', 'reach.closed']
@@ -611,7 +627,7 @@ test('(b) every key each design reads is an owner reading, absent with a reason,
       if (name === 'canvas' && CANVAS_WAITING.includes(key)) continue
       if (name.startsWith('graph') && GRAPH_WAITING.includes(key)) continue
       const carried = name === 'canvas' && /^(light|tx)\./.test(key)
-      if (carried) assert.ok(light.standing?.[key]?.disabled, `canvas: the Light page's ${key} stands refused on Light's binding`)
+      if (carried) assert.ok(binding.standing?.[key]?.disabled && binding.writes?.(key), `canvas: the Light page's ${key} stands refused on the Canvas, Light's refusal`)
       if (carried) continue
       const local = binding.local && key in binding.local
       const goes = binding.writes?.(key) === true
@@ -623,8 +639,12 @@ test('(b) every key each design reads is an owner reading, absent with a reason,
   // The classification as it stands (the RECEIPT's summary): nothing of a design's sample is a reading.
   // The Canvas reads two fewer of the frame's readings since the manual's Tool and Snap took the place of its pointer flags and grid toggle,
   // and the relation type that of Direction (DLW §17.4); the Knowledge graph reads fewer since Direction, Shared and Orphans left it (§17.3).
-  assert.ok(summary.palace.reading >= 20 && summary.graph.reading >= 16 && summary.timeline.reading >= 13 && summary.canvas.reading >= 14 && summary.journey.reading >= 30, JSON.stringify(summary))
-  assert.equal(summary.light.reading + summary.lens.reading, 0)
+  // REPLACED (#725): the Timeline's thirteen readings and Light's none — both designs retired (§17.5, §17.4); the Timeline's binding still
+  // reads them (its own test above), and Light, carried by the Canvas, reads none of its own still: none of the Light page's keys is a reading.
+  assert.ok(summary.palace.reading >= 20 && summary.graph.reading >= 16 && summary.canvas.reading >= 14 && summary.journey.reading >= 30, JSON.stringify(summary))
+  assert.equal(summary.lens.reading, 0)
+  const lightPage = effects.canvasCarryingLight(frameB.canvasBinding(frame('canvas')), effects.lightBinding())
+  assert.deepEqual(effects.LIGHT_PAGE_KEYS.filter(key => key in lightPage.values), [], 'the Light page reads nothing: its engine is not in this candidate')
   console.log('key classification', JSON.stringify(summary))
   session.resetPalaceSession()
 })
@@ -633,7 +653,6 @@ test('the designs draw on their bindings in every view and page — no NaN, no u
   const state = await enter()
   host.resetHost()
   const writes = {setter: async () => {}, patch: () => {}}
-  const timelineFrame = frameOf('timeline', {chrome: TIMELINE_CHROME, window: {from: instantOfYear(800), to: instantOfYear(1700)}})
   const cases = [
     [DESIGNS.palace, palaceB.palaceBinding(state), /Archetypal-Earth — wiki local whole|Start of the argument|ai-kit/, ['The Stone', 'Mercurius'], [palaceB.PALACE_REFUSE.audience]],
     [DESIGNS.palace, palaceB.palaceBinding({phase: 'outside'}), /Archetypal-Earth|Start of the argument|Actuation/, [], [palaceB.NOT_INSIDE]],
@@ -641,9 +660,10 @@ test('the designs draw on their bindings in every view and page — no NaN, no u
     [DESIGNS.graph, graphB.graphBinding(null, null, writes), /Quaternal-Tarot|Point-Cloud-Demo|face-rig/, [], [graphB.NOT_OPEN]],
     [DESIGNS.journey, frameB.journeyBinding(frameOf('journey')), /Nocturne|Fine, irregular stippling\. Form|Language/, ['Gather', 'Rounded grains find a shared current.'], [frameB.JOURNEY_REFUSE.snap]],
     [DESIGNS.journey, frameB.journeyBinding(frameOf('journey', {research: null})), /Nocturne|Fine, irregular stippling|Language/, [], []],
-    [DESIGNS.timeline, frameB.timelineBinding(timelineFrame, LAW([])), /Naassene|Kabbala|Late antiquity/, ['An event of the frame', '1700'], [frameB.TIMELINE_REFUSE.mode]],
-    [DESIGNS.canvas, frameB.canvasBinding(frameOf('canvas', {chrome: CANVAS_CHROME})), /Which centre speaks first|Sacral|Lower three/, ['A frame of the board', '84'], [frameB.CANVAS_REFUSE.promote]],
-    [DESIGNS.light, effects.lightBinding(), /The river dream|Grief, unsaid|Change jobs/, [], [effects.LIGHT_REFUSE['light.bounces']]],
+    // REPLACED (#725): the Timeline's and Light's own drawings — both designs retired (§17.5, §17.4). Light's refusal is drawn on the
+    // Canvas's Light page, on the binding that carries it.
+    [DESIGNS.canvas, effects.canvasCarryingLight(frameB.canvasBinding(frameOf('canvas', {chrome: CANVAS_CHROME})), effects.lightBinding()), /Which centre speaks first|Sacral|Lower three/,
+      ['A frame of the board', '84'], [frameB.CANVAS_REFUSE.promote, effects.LIGHT_REFUSE['light.bounces']]],
     [DESIGNS.lens, effects.lensBinding(), /l5-techne-instrument-constellation|registry-disclosure|Fourfold-Zero/, [], [effects.LENS_REFUSE['lens.mode']]],
   ]
   for (const [design, binding, fixture, shows, reasons] of cases) {
@@ -662,20 +682,24 @@ test('the designs draw on their bindings in every view and page — no NaN, no u
   session.resetPalaceSession()
 })
 
-test('(d) each design stands where the manual puts it: the instrument at the head of its open chain, then its effects — Light after the Canvas, the Lens after every instrument', () => {
+test('(d) each design stands where the manual puts it: the instrument at the head of its open chain, then its effects — the Lens after every instrument', () => {
   session.resetPalaceSession()
-  assert.deepEqual(designs.TECHNE_CHAINS['techne:m1'], {head: 'techne:canvas', effects: ['techne:light', 'techne:lens']})
-  assert.deepEqual(designs.TECHNE_CHAINS['techne:m2'], {head: 'techne:timeline', effects: ['techne:lens']})
+  // REPLACED (#725): Light after the Canvas, and the Timeline at the head of M2′ — Light is the Canvas's Light page (§17.4), the timeline
+  // Technē's Arrangement view (§17.5, §16.1 "Technē's timeline is Arrangement view, not an instrument of its own"): neither stands on a chain.
+  assert.deepEqual(designs.TECHNE_CHAINS['techne:m1'], {head: 'techne:canvas', effects: ['techne:lens']})
+  assert.deepEqual(designs.TECHNE_CHAINS['techne:m2'], {effects: ['techne:lens']})
   assert.deepEqual(designs.TECHNE_CHAINS['techne:m3'], {head: 'techne:journey', effects: ['techne:lens']})
   assert.deepEqual(designs.TECHNE_CHAINS['techne:m5'], {head: 'techne:palace', effects: ['techne:lens']})
   assert.deepEqual(designs.TECHNE_CHAINS['knowledge-graph'], {head: 'knowledge-graph:graph', effects: ['techne:lens']})
   for (const holder of ['techne:m0', 'techne:m4']) assert.deepEqual(designs.TECHNE_CHAINS[holder], {effects: ['techne:lens']}, `${holder}: the World is its own plate; the Lens after it`)
-  assert.deepEqual(designs.holdersOf('techne:light'), ['techne:m1'], 'Light stands only over the Canvas (§17.10)')
+  assert.deepEqual(designs.holdersOf('techne:light'), [], 'REPLACED (#725): Light stands on no chain: it is the Canvas\'s Light page (§17.4)')
+  assert.deepEqual(designs.holdersOf('techne:timeline'), [], 'the timeline stands on no chain: it is Arrangement view (§17.5)')
   // Rendered: the focused instrument's chain, in order — head, then its plate, then its effects.
   for (const [instrument, head, plate, effectIds] of [
     ['techne:m5', 'techne:palace', 'data-palace-plate="true"', ['techne:lens']],
-    ['techne:m1', 'techne:canvas', 'data-stage-plate="canvas"', ['techne:light', 'techne:lens']],
-    ['techne:m2', 'techne:timeline', 'data-stage-plate="timeline"', ['techne:lens']],
+    ['techne:m1', 'techne:canvas', 'data-stage-plate="canvas"', ['techne:lens']],
+    // REPLACED (#725): M2′ was headed by the Timeline's design — retired (§17.5); its own plate stands first, then the Lens.
+    ['techne:m2', null, 'data-stage-plate="timeline"', ['techne:lens']],
     ['techne:m3', 'techne:journey', 'data-stage-plate="journey"', ['techne:lens']],
     ['techne:m0', null, 'data-project-plate="true"', ['techne:lens']],
   ]) {
@@ -701,7 +725,7 @@ test('(d) each design stands where the manual puts it: the instrument at the hea
   assert.doesNotMatch(graph, /No family declares a device this instrument holds yet/, 'no empty plate after the design')
   // A design stands on no chain whose instrument is not its own.
   const timeline = renderToStaticMarkup(createElement(InstrumentDeviceDetail, {transport, instrument: 'techne:m2'}))
-  for (const id of ['techne:palace', 'techne:canvas', 'techne:light', 'knowledge-graph:graph']) assert.doesNotMatch(timeline, new RegExp(`data-device-id="${id}" data-chain-place`), `${id} is not on the Timeline's chain`)
+  for (const id of ['techne:palace', 'techne:canvas', 'techne:light', 'techne:timeline', 'knowledge-graph:graph']) assert.doesNotMatch(timeline, new RegExp(`data-device-id="${id}" data-chain-place`), `${id} is not on M2′'s chain`)
 })
 
 test('the bindings name their owners and copy no design: no default, no fixture, no catalogue import, shell tokens only', () => {

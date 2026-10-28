@@ -102,22 +102,25 @@ test('the L9 extension composes additively: the base manifest stays verbatim, th
   door.resetFamilyManifestsForTest()
   const base = (await import('../src/inhabitants/quaternalLogicFamilyManifest.ts')).quaternalLogicFamilyManifest()
   const baseJson = JSON.stringify(door.familyManifest('quaternal-logic'))
-  assert.equal(base.faces.length, 9, 'the base family\'s nine faces (lane W4 declared Binding)')
+  // REPLACED (#725): nine faces — the Sitting and Binding were retired as faces of their own in the 22 Oct manual rewrite (§24.3 "A sitting
+  // is a clip of the practice world's track"; §22.8 Binding "is the Binding skin of the M3 clock"), so the base declares seven.
+  assert.equal(base.faces.length, 7, 'the base family\'s seven faces')
+  for (const id of ['sitting', 'binding']) assert.ok(!base.faces.some(face => face.id === id), `${id}: retired`)
   extension.declareQlMusicalExtension()
   extension.declareQlMusicalExtension() // idempotent
   assert.equal(JSON.stringify(door.familyManifest('quaternal-logic')), baseJson, 'the door\'s base is never rewritten')
   const composed = schema.inhabitantManifest('quaternal-logic')
-  assert.equal(composed.faces.length, 10)
+  assert.equal(composed.faces.length, 8, 'REPLACED (#725): the seven base faces and the instrument (was ten, with the Sitting and Binding)')
   const face = composed.faces.find(face => face.id === 'ql-instrument')
   assert.ok(face)
   assert.equal(schema.faceKind(face), 'instrument')
   assert.equal(face.admission, 'admitted')
   assert.ok(face.note.length > 80)
   // The base's faces keep their standing untouched: the sky admitted on its transit read (lane BL), the M3 clock on m3_reception (R5),
-  // the Deck on nara_journey, the Chakra on nara_elemental and the Sitting on its owners (T-WORLDS W4), the Resonator bank on the clock, the mode and the stage (MR),
-  // the M′ matrices on the mode catalogue and the M3 form and Binding on the form's hexagram (lane W4), the torus waiting.
+  // the Deck on nara_journey and the Chakra on nara_elemental (T-WORLDS W4), the Resonator bank on the clock, the mode and the stage (MR),
+  // the M′ matrices on the mode catalogue and the M3 form (lane W4), the torus waiting. (The Sitting and Binding are retired: above.)
   for (const kept of composed.faces.filter(face => face.id !== 'ql-instrument')) {
-    if (['sky', 'm3-clock', 'deck', 'chakra', 'sitting', 'resonator-bank', 'm-prime-matrices', 'binding'].includes(kept.id)) { assert.notEqual(kept.admission, 'waiting', `${kept.id} stays admitted`); continue }
+    if (['sky', 'm3-clock', 'deck', 'chakra', 'resonator-bank', 'm-prime-matrices'].includes(kept.id)) { assert.notEqual(kept.admission, 'waiting', `${kept.id} stays admitted`); continue }
     assert.equal(kept.admission, 'waiting', `${kept.id} stays waiting`)
   }
   // The composed manifest validates through the generalised validators.

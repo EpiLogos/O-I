@@ -59,14 +59,20 @@ test('the standing world passes the holder rules: every door face names known ho
   assert.deepEqual(find('atlas-earth', 'time-control').heldBy, ['techne:m2', 'techne:m0'], 'the Earth pane\'s clock is the 0 instrument\'s too')
   assert.deepEqual(find('quaternal-logic', 'torus').heldBy, ['studio:body'])
   assert.deepEqual(find('quaternal-logic', 'sky').heldBy, ['techne:m4', 'techne:m2'])
-  // Lane W4: the M′ matrices are admitted on the racks of the instruments whose layers they show (manual §22.6, §16.16), Binding on M3′'s
-  // rack and the Studio's body (§16.16, §22.8).
+  // Lane W4: the M′ matrices are admitted on the racks of the instruments whose layers they show (manual §22.6, §16.16).
   assert.deepEqual(find('quaternal-logic', 'm-prime-matrices').heldBy, ['techne:m1', 'techne:m2', 'techne:m3', 'techne:m4'])
-  assert.deepEqual(find('quaternal-logic', 'binding').heldBy, ['techne:m3', 'studio:body'])
+  // REPLACED (#725): Binding on M3′'s rack and the Studio's body — Binding is the M3 clock's Binding skin now (§22.8; §22.3 "The clock's
+  // Skin chooses Wheel or Binding; the Torus and the Studio's body chain can draw the same skin"): M3′'s rack holds it through the M3 clock,
+  // and the Studio's body through the Torus it holds (asserted above).
+  assert.equal(find('quaternal-logic', 'binding'), undefined, 'Binding is no face of its own')
+  assert.ok(find('quaternal-logic', 'm3-clock').heldBy.includes('techne:m3'), 'M3′\'s rack holds the M3 clock, whose skin Binding is')
   // T-WORLDS W4: the Deck and the Chakra read their owners — your personal layer (the Studio's Nara chain) and a Technē instrument.
   assert.deepEqual(find('quaternal-logic', 'deck').heldBy, ['studio:nara', 'techne:m3'])
   assert.deepEqual(find('quaternal-logic', 'chakra').heldBy, ['studio:nara', 'techne:m2'])
-  assert.deepEqual(find('quaternal-logic', 'sitting').heldBy, ['studio:nara', 'techne:m2'], 'the Sitting: your personal layer, and the Timeline that times it')
+  // DELETED (#725): "the Sitting: your personal layer, and the Timeline that times it" — the manual removed the Sitting as a device (§24.3:
+  // "A sitting is a clip of the practice world's track (§24.1): its length, its bell and its intervals stand in its Clip panel, and Play rings
+  // the bell and begins"); no face of it is held anywhere.
+  assert.equal(find('quaternal-logic', 'sitting'), undefined, 'the Sitting is no face of its own')
   // The Studio table and the faces agree: a holder's non-Expressions references name it back.
   for (const holder of semantics.HOLDERS) {
     for (const reference of holder.holds ?? []) {

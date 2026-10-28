@@ -71,10 +71,11 @@ const torusDevice = await import(src('live/torusDevice.ts'))
 const pane = await import(src('projections/expressionsPaneHost.ts'))
 const {readFrameStage} = await import('../../../../desktop/cradle/expressions-app/field-studies-journeys/src/stageReading.ts')
 const {NATIVE_BINDINGS} = await import('@epilogos/expressions-boundary/parameters')
+// Binding's own design (quaternal-logic__binding.tsx) was retired in the 22 Oct manual rewrite (#725): it is the M3 clock's Binding skin (§22.3,
+// §22.8), drawn by the M3 clock's design under `binding.` on the clock's binding carrying Binding's (TechneDevices.tsx qlFaceEntry).
 const DESIGNS = {
   field: (await import(src('inhabitants/catalogue/panels/expressions__field.tsx'))).design,
   studio: (await import(src('inhabitants/catalogue/panels/expressions__studio.tsx'))).design,
-  binding: (await import(src('inhabitants/catalogue/panels/quaternal-logic__binding.tsx'))).design,
   matrices: (await import(src('inhabitants/catalogue/panels/quaternal-logic__m-prime-matrices.tsx'))).design,
   m3clock: (await import(src('inhabitants/catalogue/panels/quaternal-logic__m3-clock.tsx'))).design,
 }
@@ -121,6 +122,20 @@ function controlStanding(binding, keys) {
   }
   return out
 }
+/** The M3 clock's Binding skin as its own device's keys: the clock's `binding.` keys without the prefix (w4-family-classification's carriedOf). */
+const skinOf = design => {
+  const strip = values => Object.fromEntries(Object.entries(values).filter(([k]) => k.startsWith('binding.')).map(([k, x]) => [k.slice('binding.'.length), x]))
+  return {...design, id: `${design.id} binding.*`, defaults: strip(design.defaults), fixtures: Object.fromEntries(Object.entries(design.fixtures ?? {}).map(([n, f]) => [n, strip(f)]))}
+}
+/** The controls the Binding skin sets, read from the M3 clock's source, its skin's part (between its heading and the scoping of its keys). */
+const skinSetKeys = () => {
+  const source = read('inhabitants/catalogue/panels/quaternal-logic__m3-clock.tsx')
+  const part = source.slice(source.indexOf('// ================================================================ the Binding skin'), source.indexOf('const bindingOf = '))
+  return [...new Set([...part.matchAll(/\bset\('([^']+)'/g)].map(m => m[1]))]
+}
+/** The M3 clock as the rack stands it: its binding carrying the Binding skin (TechneDevices.tsx qlFaceEntry). */
+const clockEntry = m3 => chain.qlFaceEntry(inhabitantManifest('quaternal-logic').faces.find(face => face.id === 'm3-clock'), null, null, undefined, m3)
+
 function hostedAll(design, binding, pages = ['']) {
   const out = views.filter(view => view !== 'whole').map(view => [view, renderToStaticMarkup(h(host.HostedDevice, {designed: design, binding, view, nav: {}}))])
   for (const page of pages) {
@@ -315,18 +330,29 @@ test('the M3 clock reads the generation law and the cell of the form\'s hexagram
   assert.equal(binding.writes('law.matrix'), true)
   assert.equal(binding.writes('generation.positive'), false)
   assert.deepEqual(Object.keys(m3c.QL_M3_ABSENT), [], 'no key lacks its owner now')
-  // Skin and the Binding skin's `binding.` keys wait for qlM3Binding to carry them (DLW §22.3, "The Binding skin"): the skin's own keys are
-  // Binding's, hosted by prefixing its binding.
   const own = Object.fromEntries(Object.entries(DESIGNS.m3clock.defaults).filter(([key]) => key !== 'skin' && !key.startsWith('binding.')))
   const keys = classify({...DESIGNS.m3clock, defaults: own, fixtures: {}}, binding)
   assert.deepEqual(keys.absent.sort(), ['rack'], 'the rack, until it is read (qlRack.ts); the part is the view\'s own')
+  // REPLACED (#725): "Skin and the Binding skin's `binding.` keys wait for qlM3Binding to carry them" — the rack now stands the M3 clock on its
+  // binding carrying Binding's under `binding.` (§22.3 "The Binding skin"), and Skin is the clock's own choice (§22.3 Parameters: Wheel ·
+  // Binding): every key of the design is classified on that binding, the skin's absences Binding's own.
+  const carried = clockEntry(m3Of()).binding
+  const all = classify(DESIGNS.m3clock, carried)
+  assert.ok(all.local.includes('skin'), 'Skin is the clock\'s own choice')
+  assert.equal(carried.writes('skin'), false, 'Skin writes to no owner')
+  assert.deepEqual(all.absent.sort(), ['binding.coupling.alpha', 'binding.event.kind', 'binding.event.what', 'binding.m2.index', 'binding.nonet', 'binding.sound.stretchQ',
+    'binding.string.energy', 'binding.string.stretch', 'binding.values.negative', 'binding.values.positive', 'rack'], 'the rack, and what Binding names absent with its route')
+  assert.deepEqual(all.local.sort(), ['binding.charge.register', 'binding.coupling.scale', 'binding.nonets.show', 'binding.string.tension', 'open', 'rack.part', 'readout',
+    'reciprocal', 'skin', 'turn'], 'the clock\'s view and Binding\'s own physics')
+  for (const key of ['binding.nonet', 'binding.string.energy']) assert.equal(carried.standing[key].disabled, qlB.qlBindingBinding({m3: m3Of(), held: {}}).standing[key.slice('binding.'.length)].disabled, `${key}: Binding's own words`)
   assert.match(m3c.qlM3Binding(NO_M3).standing['law.matrix'].disabled, /No Nara identity is chosen/)
 })
 
 test('Binding draws the generation cell of the form\'s hexagram under its pairing, from the real state; the nonet, the events and its engine name their routes', () => {
   holds.resetHolds()
   const binding = qlB.qlBindingBinding({m3: m3Of(), held: {}})
-  assert.equal(binding.id, designKey('quaternal-logic', 'binding'))
+  // REPLACED (#725): "keyed to its design" — Binding's design was retired; its binding keeps its holds under its own id.
+  assert.equal(binding.id, qlB.QL_BINDING_DEVICE_ID)
   assert.deepEqual(binding.values, {'cell.hexagram': 17, 'pairing.matrix': 'moving-resting', 'cell.lower': 'CT', 'cell.upper': 'CC', 'cell.positive': 'CCC', 'cell.negative': 'CTC',
     'cell.nonDual': false, 'charges.positive': '[24,-8,8,8]', 'charges.negative': '[25,-9,7,9]'}, 'until a pairing is held, the matrix the form\'s law is read under')
   // Another pairing reads that matrix's cell, one of the three the state carries; Binding writes nothing to the form.
@@ -334,15 +360,21 @@ test('Binding draws the generation cell of the form\'s hexagram under its pairin
   const singlet = qlB.qlBindingBinding({m3: m3Of(), held: holds.heldFor(qlB.QL_BINDING_DEVICE_ID)})
   assert.deepEqual([singlet.values['cell.lower'], singlet.values['cell.positive'], singlet.values['cell.negative'], singlet.values['cell.nonDual']], ['GC', 'GCC', 'GCC', true],
     'complementary at hexagram 17 is non-dual: a singlet')
-  const keys = classify(DESIGNS.binding, binding)
-  assert.deepEqual(keys.local.sort(), [...qlB.QL_BINDING_LOCAL].filter(key => key !== 'pairing.matrix').sort(), 'its own physics and choices are the view\'s (the pairing reads as the law\'s until held)')
+  // REPLACED (#725): classified against Binding's own design, retired — against the M3 clock's Binding skin, the keys the clock draws under
+  // `binding.` (§22.3). Binding's on and off is the clock's Skin now (§22.3 "The clock's Skin chooses Wheel or Binding"), so the skin has no
+  // `on` of its own.
+  const keys = classify(skinOf(DESIGNS.m3clock), binding)
+  assert.deepEqual(keys.local.sort(), [...qlB.QL_BINDING_LOCAL].filter(key => key !== 'pairing.matrix' && key !== 'binding.on').sort(), 'its own physics and choices are the view\'s (the pairing reads as the law\'s until held)')
   for (const key of ['values.positive', 'values.negative']) assert.match(binding.standing[key].disabled, /names each codon's sequence and charges, not its sites' coin values/, key)
   assert.match(binding.standing.nonet.disabled, /ql_m3_epogdoon/)
   assert.match(binding.standing['event.kind'].disabled, /an inscription, a matrix change, a line change/)
   assert.match(binding.standing['string.energy'].disabled, /Binding's string engine/)
-  const controls = controlStanding(binding, setKeysOf('quaternal-logic__binding.tsx'))
-  assert.deepEqual(controls.disabled.sort(), ['skin', 'sound.stretchQ'])
+  // REPLACED (#725): Binding's own controls, Skin among them disabled — the skin's controls on the M3 clock (§22.3); Skin is the clock's own.
+  const controls = controlStanding(binding, skinSetKeys())
+  assert.deepEqual(controls.disabled.sort(), ['sound.stretchQ'])
   assert.deepEqual(controls.written, [], 'Binding writes to no owner')
+  const onClock = controlStanding(clockEntry(m3Of()).binding, skinSetKeys().map(key => `binding.${key}`))
+  assert.deepEqual([onClock.disabled, onClock.written], [['binding.sound.stretchQ'], []], 'the same on the M3 clock that carries the skin')
   const none = qlB.qlBindingBinding({m3: NO_M3, held: {}})
   assert.equal(none.values['cell.positive'], undefined)
   for (const key of ['cell.hexagram', 'cell.positive', 'charges.negative']) assert.match(none.standing[key].disabled, /No Nara identity is chosen/, key)
@@ -404,10 +436,15 @@ test('the M′ matrices read the real mode catalogue, the mode in force, the M3 
 
 test('Binding and the M′ matrices draw on their bindings in every view and page — no NaN, no undefined, never their fixtures — and each refusal says why', () => {
   holds.resetHolds()
-  const binding = qlB.qlBindingBinding({m3: m3Of(), held: {}})
-  const boundAll = drawsClean(DESIGNS.binding, binding, /inscribed|Complementary to moving and resting|Line 5 of hexagram|0\.573|1\.176/)
+  // REPLACED (#725): Binding drawn by its own design — retired; the M3 clock draws it as its Binding skin, on the binding that carries
+  // Binding's (§22.3), on the clock's Binding page.
+  const binding = clockEntry(m3Of()).binding
+  const boundAll = drawsClean(DESIGNS.m3clock, binding, /inscribed|Complementary to moving and resting|Line 5 of hexagram|0\.573|1\.176/, ['binding'])
   assert.ok(boundAll.includes('CT under CC'), 'the form\'s cell')
-  assert.ok(boundAll.includes(escaped(qlB.QL_BINDING_ABSENT.skin)), 'Skin names its missing route')
+  // REPLACED (#725): "Skin names its missing route" — the manual made Skin the M3 clock's own setting (§22.3 Parameters: "Skin | Wheel ·
+  // Binding | Wheel"), so it is held by the view, never refused.
+  assert.equal(typeof binding.local.skin, 'function', 'Skin is the view\'s to choose')
+  assert.ok(boundAll.includes(escaped(qlB.QL_BINDING_ABSENT['sound.stretchQ'])), 'Stretch → Q names its missing route')
   const matrices = qlMx.qlMatricesBinding({m3: m3Of(), modes: MODES, held: {}})
   const matrixAll = drawsClean(DESIGNS.matrices, matrices, /qladdr:sixfold@1|>explicate<|>implicate<|0\.1\.0-q1/, ['matrix', 'kernel'])
   assert.ok(matrixAll.includes('No reading of the oscillator'), 'the Quintessence\'s matrix is not read until a family is chosen')
@@ -415,7 +452,7 @@ test('Binding and the M′ matrices draw on their bindings in every view and pag
   holds.resetHolds()
 })
 
-test('today\'s centres: the installed ql\'s scene names no centre and is refused in words; the centres QL-MEF #345 composes draw on the Chakra and the Sitting', async () => {
+test('today\'s centres: the installed ql\'s scene names no centre and is refused in words; the centres QL-MEF #345 composes draw on the Chakra and stand in the sitting\'s binding', async () => {
   const chakra = await import(src('inhabitants/ql/devices/qlChakra.ts'))
   const sittingMod = await import(src('inhabitants/ql/devices/qlSitting.ts'))
   const centresMod = await import(src('inhabitants/ql/devices/qlCentres.ts'))
@@ -455,8 +492,9 @@ test('today\'s centres: the installed ql\'s scene names no centre and is refused
   assert.ok(chakraAll.includes('Mūlādhāra') && chakraAll.includes('Prithvi Tattva'), 'the Chakra draws QL\'s centre and tattva')
   const sitting = sittingMod.qlSittingBinding(sittingMod.qlSittingState(), state)
   assert.deepEqual(JSON.parse(sitting.values.centres).map(c => [c.ordinal, c.name]).slice(0, 2), [[1, 'Mūlādhāra'], [2, 'Svādhiṣṭhāna']])
-  const sittingDesign = (await import(src('inhabitants/catalogue/panels/quaternal-logic__sitting.tsx'))).design
-  drawsClean(sittingDesign, sitting, /06:40|21:15/)
+  // DELETED (#725): the Sitting's design drawn on that binding — the manual removed the Sitting as a device (§24.3: "A sitting is a clip of
+  // the practice world's track (§24.1): its length, its bell and its intervals stand in its Clip panel, and Play rings the bell and begins");
+  // its design is retired and the centres stand in its binding's own values (above).
   // With no sky, or the installed ql's scene, the centres stand absent with the reason.
   centresMod.resetQlCentres({call: async () => envelope(installed)})
   await centresMod.syncQlCentres({...sky, snapshotRef: installed.snapshot_ref, snapshot: {...snapshot, snapshot_ref: installed.snapshot_ref}})
@@ -532,7 +570,9 @@ test('the Rack pages read their instrument\'s rack from the map\'s ledger: posit
   assert.deepEqual(rack.positions[3].ledger, [true, true, true], 'the transcription engine: in the map, bound, verified (a row on it verified in C or Rust)')
   assert.deepEqual(rack.positions[1].ledger, [true, true, false], 'the I Ching: in the map, bound, not verified')
   assert.deepEqual(rack.positions[1].parts[0].ledger, [true, true, true], 'Qian: verified in C or Rust')
-  assert.deepEqual(rack.positions.map(p => p.device), ['quaternal-logic:binding', 'quaternal-logic:deck', 'quaternal-logic:m-prime-matrices', 'quaternal-logic:m3-clock',
+  // REPLACED (#725): position 0 (the reception) was worked in Binding — the nonets are the M3 clock's Binding skin now (§22.3 position 0:
+  // "The nonets of the clock's Binding skin"; qlRack.ts RACK_CARRIED).
+  assert.deepEqual(rack.positions.map(p => p.device), ['quaternal-logic:m3-clock', 'quaternal-logic:deck', 'quaternal-logic:m-prime-matrices', 'quaternal-logic:m3-clock',
     'quaternal-logic:deck', 'quaternal-logic:m3-clock'], 'the M3 clock\'s entry, "Where you work it"')
   // The M3 clock's Rack page draws it; the part is the view's own, the manual's 1 until chosen.
   const binding = m3c.qlM3Binding(m3Of(), state)
@@ -577,27 +617,32 @@ test('the Timeline reads the chronology\'s relation links and card categories as
   assert.match(drawnElsewhere.standing.links.disabled, /The chronology is not drawn now/)
 })
 
-test('(d) Binding and the M′ matrices are admitted where §22 and §16.16 put them: on M3′\'s rack and the Studio\'s body, on the M′ instruments\' racks', () => {
+test('(d) the Binding skin and the M′ matrices are admitted where §22 and §16.16 put them: on M3′\'s rack through the M3 clock, on the M′ instruments\' racks', () => {
   const faces = inhabitantManifest('quaternal-logic').faces
-  const binding = faces.find(face => face.id === 'binding'), matrices = faces.find(face => face.id === 'm-prime-matrices')
-  assert.ok(binding && matrices)
-  assert.equal(binding.admission, undefined, 'Binding is admitted')
+  const clock = faces.find(face => face.id === 'm3-clock'), matrices = faces.find(face => face.id === 'm-prime-matrices')
+  assert.ok(clock && matrices)
+  // REPLACED (#725): Binding admitted as a face of its own, held by M3′'s rack and the Studio's body — it is the M3 clock's Binding skin now
+  // (§22.8; §22.3 "the Torus and the Studio's body chain can draw the same skin"): M3′'s rack holds it through the clock.
+  assert.equal(faces.find(face => face.id === 'binding'), undefined, 'no Binding face')
+  assert.equal(clock.admission, undefined, 'the M3 clock, which carries the skin, is admitted')
+  assert.ok(clock.heldBy.includes('techne:m3'), 'M3′\'s rack holds the clock')
   assert.equal(matrices.admission, undefined, 'the matrices are admitted (quaternalLogicFamilyManifest.ts: no longer "waiting")')
-  assert.deepEqual(binding.heldBy, ['techne:m3', 'studio:body'])
   assert.deepEqual(matrices.heldBy, ['techne:m1', 'techne:m2', 'techne:m3', 'techne:m4'])
-  for (const design of [DESIGNS.binding, DESIGNS.matrices]) {
+  for (const design of [DESIGNS.m3clock, DESIGNS.matrices]) {
     assert.equal(design.views, undefined, `${design.id}: an instrument, every view`)
     for (const view of views) assert.equal(host.viewIn(design, view), view, `${design.id} ${view}`)
   }
   const entries = chain.techneEntries([inhabitantManifest('quaternal-logic')], {atlas: null, surface: null, torus: null, instrumentReading: null,
     m3: m3Of(), modes: MODES, held: {}})
-  for (const id of ['quaternal-logic:binding', 'quaternal-logic:m-prime-matrices']) {
+  for (const id of ['quaternal-logic:m3-clock', 'quaternal-logic:m-prime-matrices']) {
     const entry = entries.find(item => item.device.id === id)
     assert.ok(entry?.binding, `${id}: on the chain with its binding, not a waiting device`)
     assert.equal(`${entry.device.family}:${entry.device.face.id}`, id, `${id}: the door draws its catalogue design`)
   }
+  assert.ok('binding.cell.hexagram' in entries.find(item => item.device.id === 'quaternal-logic:m3-clock').binding.values, 'the clock carries the Binding skin\'s readings')
+  assert.ok(!entries.some(item => item.device.id === 'quaternal-logic:binding'), 'no Binding device on the rack')
   const m3Rack = entries.filter(entry => entry.face.heldBy?.includes('techne:m3')).map(entry => entry.face.id)
-  for (const face of ['m3-clock', 'deck', 'binding', 'm-prime-matrices']) assert.ok(m3Rack.includes(face), `M3′'s rack holds ${face}`)
+  for (const face of ['m3-clock', 'deck', 'm-prime-matrices']) assert.ok(m3Rack.includes(face), `M3′'s rack holds ${face}`)
 })
 
 // ---------------------------------------------------------------------------------------------------------------- the Torus's stage

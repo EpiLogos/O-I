@@ -8,7 +8,9 @@
 //   and the dated sky (tests/fixtures/ql-sky/transit-2026-09-28.json, the kernel's nara_identity transit as recorded).
 // - FIXTURE, owner-shaped: the retained editor's reading (as field-design-bindings.test.mjs), the torus's instrument reading with its
 //   effects (as torus-effects-binding.test.mjs and mr-resonator-bank-binding.test.mjs), the M3 reception (as ql-m3-clock-binding.test.mjs),
-//   the journey and the elements (as ql-deck-chakra-binding.test.mjs), the sitting's owners (as w4b-devices.test.mjs).
+//   the journey and the elements (as ql-deck-chakra-binding.test.mjs). (The Sitting's and Binding's designs were retired in the 22 Oct manual
+//   rewrite, #725: a sitting is a clip of the practice world's track, §24.3; Binding is the M3 clock's Binding skin, §22.3, carried by the
+//   clock's binding as the rack stands it, TechneDevices.tsx qlFaceEntry.)
 // - SCRIPTED: the control keys are read from each design's source (`set('key'`, `st(p, 'key')`, a helper's `(p, 'key'`).
 import test from 'node:test'
 import assert from 'node:assert/strict'
@@ -65,11 +67,12 @@ const sky = await import(src('inhabitants/ql/devices/qlSky.ts'))
 const m3 = await import(src('inhabitants/ql/devices/qlM3Clock.ts'))
 const deck = await import(src('inhabitants/ql/devices/qlDeck.ts'))
 const chakra = await import(src('inhabitants/ql/devices/qlChakra.ts'))
-const sitting = await import(src('inhabitants/ql/devices/qlSitting.ts'))
 const bank = await import(src('inhabitants/ql/devices/qlResonatorBank.ts'))
 const qlB = await import(src('inhabitants/ql/devices/qlBinding.ts'))
 const qlMx = await import(src('inhabitants/ql/devices/qlMatrices.ts'))
 const holds = await import(src('techne/devices/designDevices.ts'))
+const techne = await import(src('inhabitants/ql/devices/TechneDevices.tsx'))
+const {inhabitantManifest} = await import(src('inhabitants/manifest.ts'))
 const {parseQlMusicModes} = await import(src('live/modes.ts'))
 const {readFrameStage} = await import('../../../../desktop/cradle/expressions-app/field-studies-journeys/src/stageReading.ts')
 const {NATIVE_BINDINGS} = await import('@epilogos/expressions-boundary/parameters')
@@ -158,8 +161,6 @@ async function bindingsByDesign() {
   await deck.openDeckJourney(journey)
   chakra.resetQlChakra({call: async () => elemental})
   await chakra.syncQlChakra(chakraBasis)
-  sitting.resetQlSitting({owners: {ring: async () => ({ok: true}), keep: async () => null, today: async () => [], open: noop, now: () => Date.UTC(2026, 9, 21, 7),
-    later: () => ({}), cancel: noop}})
   const out = {}
   for (const family of fieldFamilies.FIELD_DESIGN_FAMILIES) out[`expressions:${family}`] = fieldFamilies.fieldDesignBinding(family, fieldDevice(r, family), r, sendOk)
   out['expressions:physics'] = physics.physicsDesignBinding(fieldDevice(r, 'physics'), r, noop)
@@ -173,12 +174,12 @@ async function bindingsByDesign() {
   out['quaternal-logic:torus'] = torus.torusDesignBinding(torusState, undefined, {}, stage)
   out['quaternal-logic:sky'] = sky.qlSkyBinding(skyState)
   out['quaternal-logic:sky-modulation'] = skyMod.skyModulationBinding(torusState, skyState)
-  out['quaternal-logic:m3-clock'] = m3.qlM3Binding(m3State)
+  // REPLACED (#725): the M3 clock on its own binding, with Binding beside it on its own — the clock carries its Binding skin now (§22.3), on the
+  // binding the rack stands it on (TechneDevices.tsx qlFaceEntry: qlM3Binding carrying qlBindingBinding under `binding.`).
+  out['quaternal-logic:m3-clock'] = techne.qlFaceEntry(inhabitantManifest('quaternal-logic').faces.find(face => face.id === 'm3-clock'), null, null, undefined, m3State).binding
   out['quaternal-logic:deck'] = deck.qlDeckBinding(deck.qlDeckState(), m3State)
   out['quaternal-logic:chakra'] = chakra.qlChakraBinding(chakra.qlChakraState(), skyState)
-  out['quaternal-logic:sitting'] = sitting.qlSittingBinding(sitting.qlSittingState())
   out['quaternal-logic:resonator-bank'] = bank.qlBankBinding(bank.QL_RESONATOR_CHAIN_ID, torusState, m3State, {root: 9, reason: null})
-  out['quaternal-logic:binding'] = qlB.qlBindingBinding({m3: m3State, held: {}})
   out['quaternal-logic:m-prime-matrices'] = qlMx.qlMatricesBinding({m3: m3State, modes: {reading: ready, hold}, held: {}})
   return out
 }
@@ -190,12 +191,14 @@ const UNBOUND = {
 // ---------------------------------------------------------------------------------------------------------------- the classification
 
 const keysOf = design => [...new Set([...Object.keys(design.defaults), ...Object.values(design.fixtures ?? {}).flatMap(fixture => Object.keys(fixture))])]
-/** Pages a design carries from another device, by prefix: their keys are hosted by prefixing that device's own binding (design.ts scoped). The
- * M3 clock carries the Binding skin under `binding.` (DLW §22.3, "The Binding skin"). */
-const CARRIED = {'quaternal-logic:m3-clock': {'binding.': 'quaternal-logic:binding'}}
-/** Keys the manual added that the design's binding does not carry yet, each named: the M3 clock's Skin (Wheel or Binding, §22.3), and the
- * Chakra's Rack page, M4′'s rack (§22.5; the M3 clock's binding reads its own through qlRack.ts rackPage). */
-const WAITING = {'quaternal-logic:m3-clock': ['skin'], 'quaternal-logic:chakra': ['rack', 'rack.part']}
+/** Pages a design carries from another device, by prefix, whose keys its binding does not host yet: each classified on that device's own
+ * binding (design.ts scoped). REPLACED (#725): the M3 clock's Binding skin (`binding.`) was classified on Binding's own binding — the clock's
+ * binding carries it now (bindingsByDesign), so none is left here. */
+const CARRIED = {}
+/** Keys the manual added that the design's binding does not carry yet, each named: the Chakra's Rack page, M4′'s rack (§22.5; the M3 clock's
+ * binding reads its own through qlRack.ts rackPage). REPLACED (#725): the M3 clock's Skin (Wheel or Binding, §22.3) waited too — it is the
+ * clock's own choice now (qlM3Clock.ts QL_M3_LOCAL). */
+const WAITING = {'quaternal-logic:chakra': ['rack', 'rack.part']}
 const keepIn = (design, keep) => ({...design, defaults: Object.fromEntries(Object.entries(design.defaults).filter(([k]) => keep(k))),
   fixtures: Object.fromEntries(Object.entries(design.fixtures ?? {}).map(([n, f]) => [n, Object.fromEntries(Object.entries(f).filter(([k]) => keep(k)))]))})
 /** The keys a design holds as its own: neither carried from another device nor waiting. */
@@ -282,7 +285,11 @@ test('(b) and (c) for every design of Expressions, Live and Quaternal Logic: eac
   assert.equal(bound['quaternal-logic:deck'].values['m3.card'], 'Ten of Wands')
   assert.match(deck.qlDeckBinding(deck.qlDeckState(), {...m3State, reading: null, reason: 'No Nara identity is chosen.'}).standing['m3.card'].disabled, /No Nara identity/)
   for (const id of Object.keys(bound)) assert.ok(table.some(row => row.design === id), `${id}: a design of the catalogue`)
-  // The two designs this lane binds, and the Field it publishes, take nothing back to an owner they do not name.
-  for (const id of ['expressions:field', 'quaternal-logic:binding', 'quaternal-logic:m-prime-matrices']) assert.deepEqual(table.find(row => row.design === id).controls.reading, [], id)
-  holds.resetHolds(); deck.resetQlDeck(); chakra.resetQlChakra(); sitting.resetQlSitting()
+  // The designs this lane binds, and the Field it publishes, take nothing back to an owner they do not name. REPLACED (#725): Binding's own
+  // design — retired; the M3 clock that carries its skin, every key of it (the skin's under `binding.`) included.
+  for (const id of ['expressions:field', 'quaternal-logic:m3-clock', 'quaternal-logic:m-prime-matrices']) assert.deepEqual(table.find(row => row.design === id).controls.reading, [], id)
+  const clock = table.find(row => row.design === 'quaternal-logic:m3-clock')
+  assert.ok(clock.local.includes('skin') && clock.read.includes('binding.cell.hexagram') && clock.absent.includes('binding.nonet'), 'the clock\'s Skin is its own; its Binding skin read and named absent on Binding\'s binding')
+  for (const id of ['quaternal-logic:binding', 'quaternal-logic:sitting']) assert.ok(!table.some(row => row.design === id), `${id}: retired, no design of the catalogue`)
+  holds.resetHolds(); deck.resetQlDeck(); chakra.resetQlChakra()
 })
