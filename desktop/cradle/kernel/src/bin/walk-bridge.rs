@@ -24,7 +24,7 @@
 //!                          `world.files.json` lists it and its bytes match
 //!                          the listed digest (`oi_cradle_kernel::world_resolve::serve`).
 //!
-//! Usage: cargo run --bin walk-bridge [--bind 127.0.0.1:4179]
+//! Usage: cargo run --bin walk-bridge [127.0.0.1:4179]
 
 use sha2::{Digest, Sha256};
 use std::cell::Cell;
