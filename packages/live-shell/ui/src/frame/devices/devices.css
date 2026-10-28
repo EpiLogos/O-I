@@ -68,6 +68,13 @@
 .device-window-size { position: absolute; right: 0; bottom: 0; width: 14px; height: 14px; cursor: nwse-resize; touch-action: none;
   background: linear-gradient(135deg, transparent 50%, var(--line-strong) 50%) }
 .device-window-size:focus-visible { outline: 1px solid var(--accent); outline-offset: -1px }
+/* The window's Info line, docked under its device (DeviceWindows.tsx WindowInfoLine): the status bar's line (styles.css
+   .statusbar-info-line), one row high; the host's own window stands its device over it (RelayedDevice.tsx). */
+.device-window-info { flex: none; height: 20px; padding: 2px 8px; line-height: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  border-top: 1px solid var(--line); background: var(--bg-0); color: var(--text-dim); font-size: 10px }
+.device-window-info b { color: var(--text); font-weight: 500; margin-right: 6px }
+.device-relayed-window { position: absolute; inset: 0; display: flex; flex-direction: column; min-width: 0 }
+.device-relayed-room { position: relative; flex: 1 1 auto; min-height: 0; overflow: hidden }
 
 /* The head's context menu (manual §16.4: "Right-click the head for Fold, Rename, Group, Save as preset, Hot-swap, Show automation
    and Map"; DeviceMenu.tsx): the device's name, then its acts; an act no owner carries yet stands dimmed, its reason on the Info

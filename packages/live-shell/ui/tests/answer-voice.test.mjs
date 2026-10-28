@@ -1,6 +1,6 @@
 // The Answer's voice (central:nara-conversation; DLW §19.4, §19.21): the session over the native voice owner (central/devices/
-// answerVoice.ts), the Answer's binding of it (answerBinding.ts: hears, speaks, voice, heard, and the view's own face keys), the voice's
-// loudness for the face's mouth (agent/faceVoice.ts) and the calls that move the mouth (agent/FaceStage.tsx mouthCalls).
+// answerVoice.ts), why it cannot open (useAnswerVoice.ts voiceAbsence; the Answer's own binding of it is retired, REPLACED below), the
+// voice's loudness for the face's mouth (agent/faceVoice.ts) and the calls that move the mouth (agent/FaceStage.tsx mouthCalls).
 // Channels: SCRIPTED against a FAKE OWNER — a stand-in for the kernel op nara_voice that answers open · listen · transcribe · speak ·
 // complete · close as nara_voice.rs does (a recording lease, a response lease, its refusals in its words), a fake microphone whose
 // blocks the test feeds, fake speakers whose sound the test ends. The real op (whisper.cpp, Kokoro) is not exercised here: it runs only
@@ -38,8 +38,6 @@ export async function load(u, c, n) {
 
 globalThis.document ??= {getElementById: () => null, createElement: () => ({}), head: {appendChild: () => {}}}
 const voiceModule = await import('../src/central/devices/answerVoice.ts')
-const answer = await import('../src/central/devices/answerBinding.ts')
-const holds = await import('../src/central/devices/pageBindings.ts')
 const faceVoice = await import('../src/agent/faceVoice.ts')
 const stage = await import('../src/agent/FaceStage.tsx')
 const {AnswerVoice, VOICE_OFF, EAR, EAR_START, hear, spokenAnswerOf, exchangeOf, microphoneWords} = voiceModule
@@ -283,43 +281,19 @@ test('the answer the owner speaks is the first block of the last completed answe
 
 // ── the binding ───────────────────────────────────────────────────────────
 
-const roster = [{ref: 'agent/nara', name: 'Nara', accepted: true, role: 'nara'}]
-const bound = {nara: {state: 'bound', session: 'session:fixture', resume: false}, observed: {status: {state: 'Resident'}, reading: {blocks: [], permissions: []}}, roster, page: null}
+// REPLACED (#806): the Answer's own binding (answerBinding.ts answerBinding, ANSWER_WIRING) served the Answer design retired in #804, and
+// is gone. Its two tests stand on the one Agent in tests/t804-retired-carries-answer-face.test.mjs:
+//   - "the Answer reports the voice its owner holds, writes Hears and Speaks to it, and holds the face's own keys for the session" →
+//     "the Agent's Voice page reports what the voice does now and writes Hears and Speaks to it" (voiceBinding.ts) and "where its voice
+//     is read, the one Agent holds its face's own keys for the session" (oneAgentBinding.ts);
+//   - "where the voice cannot open, Hears and Speaks stand disabled with the reason; a refusal stands on its key in the owner's words" →
+//     the same Voice page test (disabled with the reason, a refusal pressable again, what the voice does a reading) and "the marks and
+//     the Answer page write through the owners" (the marks disabled with the reason). Where no voice is read the Agent has no Voice page
+//     at all ("in Factory the Agent keeps the creature of its type").
+// Why the voice cannot open is still the voice's own reading (useAnswerVoice.ts voiceAbsence), kept here.
 
-test('the Answer reports the voice its owner holds, writes Hears and Speaks to it, and holds the face\'s own keys for the session', async () => {
-  holds.resetHolds()
-  for (const key of ['hears', 'speaks', 'voice', 'heard', 'chat', 'emotion', 'feeling.v', 'feeling.a', 'gaze.x', 'gaze.y', 'gesture', 'do']) assert.ok(answer.ANSWER_WIRING.keys.includes(key), key)
-  for (const key of ['hears', 'speaks']) assert.ok(key in answer.ANSWER_WIRING.writes && key in answer.ANSWER_WIRING.reads, `${key}: read and written`)
-  for (const key of ['voice', 'heard']) assert.ok(key in answer.ANSWER_WIRING.reads && !(key in answer.ANSWER_WIRING.writes), `${key}: a reading`)
-  const written = []
-  const state = {...VOICE_OFF, hears: 'on', voice: 'listening', heard: SAID}
-  const binding = answer.answerBinding('central:nara-conversation', {...bound, voice: state}, {bind: null, send: async () => {}, voice: {write: async (key, value) => { written.push([key, value]) }, why: null}})
-  const v = binding.values
-  assert.deepEqual([v.hears, v.speaks, v.voice, v.heard], ['on', 'off', 'listening', SAID])
-  assert.deepEqual([v.chat, v.emotion, v['feeling.v'], v['feeling.a'], v['gaze.x'], v['gaze.y'], v.gesture, v.do], ['on', 'neutral', 0, 0, 0, 0, 'nod', 0], 'the view\'s keys at rest')
-  await binding.write([{key: 'hears', value: 'off'}, {key: 'speaks', value: 'on'}])
-  assert.deepEqual(written, [['hears', 'off'], ['speaks', 'on']])
-  assert.equal(binding.standing.hears, undefined, 'it can open: nothing stands disabled')
-  // The view's own keys never reach an owner: they go to the one store, and every view of the Answer reads them.
-  for (const key of ['chat', 'emotion', 'feeling.v', 'gaze.x', 'gesture', 'do']) assert.equal(typeof binding.local[key], 'function', `${key} is the view's`)
-  binding.local.emotion('curious'); binding.local['feeling.v'](0.4); binding.local.do(3); binding.local.chat('off')
-  const again = answer.answerBinding('central:nara-conversation', {...bound, voice: state}, {bind: null, send: null, voice: null})
-  assert.deepEqual([again.values.emotion, again.values['feeling.v'], again.values.do, again.values.chat], ['curious', 0.4, 3, 'off'], 'another view reads the same face')
-  holds.resetHolds()
-})
-
-test('where the voice cannot open, Hears and Speaks stand disabled with the reason; a refusal stands on its key in the owner\'s words', async () => {
+test('why the voice cannot open: no native kernel, no bound conversation, or nothing — the voice\'s own reading', async () => {
   const noNative = 'Voice needs the desktop\'s own speech on this machine (the kernel op nara_voice: whisper.cpp hears, Kokoro speaks), and no native kernel stands here: the test carrier is down'
-  const closed = answer.answerBinding('central:nara-conversation', {...bound, voice: VOICE_OFF}, {bind: null, send: null, voice: {write: async () => {}, why: noNative}})
-  assert.equal(closed.standing.hears.disabled, noNative)
-  assert.equal(closed.standing.speaks.disabled, noNative)
-  await assert.rejects(() => closed.write([{key: 'hears', value: 'on'}]), /no native kernel stands here/)
-  const none = answer.answerBinding('central:nara-conversation', {...bound, voice: VOICE_OFF}, {bind: null, send: null})
-  assert.match(none.standing.hears.disabled, /No voice owner stands here/)
-  const refused = answer.answerBinding('central:nara-conversation', {...bound, voice: {...VOICE_OFF, refused: {speaks: 'The Kokoro model is not installed'}}},
-    {bind: null, send: async () => {}, voice: {write: async () => {}, why: null}})
-  assert.deepEqual(refused.standing.speaks, {refused: 'The Kokoro model is not installed'}, 'pressable again, with what the owner said')
-  await assert.rejects(() => refused.write([{key: 'voice', value: 'speaking'}]), /a reading/, 'what the voice does is the owner\'s to report')
   const {voiceAbsence} = await import('../src/central/devices/useAnswerVoice.ts')
   assert.equal(voiceAbsence({kind: 'unavailable', reason: 'the test carrier is down'}, true, true), noNative)
   assert.match(voiceAbsence({kind: 'tauri'}, false, false), /not bound/)

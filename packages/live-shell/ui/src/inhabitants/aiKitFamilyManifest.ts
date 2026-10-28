@@ -5,9 +5,10 @@ import type {InhabitantManifest} from './manifest.ts'
 export function aiKitFamilyManifest(): FamilyManifest {
   const manifest: InhabitantManifest = {
     id: 'ai-kit',
-    // `skillsets` is carried by browserEntries. `agents` and `skills` stay bare: each overlaps a mockup Factory entry
-    // owned by software-factory (factory-agents, factory-knowledge) and no owner has ruled whose they are — OPEN.
-    browser: ['agents', 'skills'],
+    // `skillsets` is carried by browserEntries, and `skills` with it: a skill is a member of a skillset (DLW §10.3 Devices, "racks
+    // such as skillsets"), and factory-knowledge, the mockup entry it overlapped, is gone (#804: the Knowledge route is Scope's
+    // Knowledge page, §19.9). `agents` stays bare: it overlaps software-factory's factory-agents and no owner has ruled whose it is — OPEN.
+    browser: ['agents'],
     browserEntries: [
       {id: 'skillsets', label: 'Skillsets', group: 'Ground', mark: 'lib', modes: ['factory'], state: 'waiting',
         hint: 'Accepted skill refs on the agent roster (op agent_definition_reading). The agent shell\'s own Skillsets column reads them; this composed browser has no row source for it yet.'},

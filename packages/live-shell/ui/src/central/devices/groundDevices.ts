@@ -38,6 +38,22 @@ import {actionAnswerOf, centralActionOp, useReceiptsMove} from './useCentralRead
 
 const REFUSAL = (error: unknown): string => (typeof error === 'string' ? error : String((error as {message?: string})?.message ?? error))
 
+/** Workcell's refusal as a sentence in its words (#806: the Left behind page read `{"kind":"unavailable","message":"No such file or
+ * directory (os error 2)","operation_may_have_run":false}` raw). The kernel carries Workcell's failure as its envelope (kernel
+ * material.rs Error: kind, message, operation_may_have_run) — a string on a refused op (owner_read.rs workcell_status, owner_routes.rs
+ * wire), an object on a material read's failure (native_owner_reading) — and the page says what was asked, Workcell's message, and
+ * whether anything ran. Words that are no envelope pass as they came. Pure. */
+export function workcellRefusal(asked: string, raw: unknown): string {
+  let envelope: unknown = raw
+  if (typeof raw === 'string') { try { envelope = JSON.parse(raw) } catch { return raw } }
+  const failure = envelope as {kind?: unknown; message?: unknown; operation_may_have_run?: unknown} | null
+  if (!failure || typeof failure !== 'object' || typeof failure.message !== 'string' || !failure.message.trim()) return typeof raw === 'string' ? raw : 'Workcell gave no words for it.'
+  const words = failure.message.trim().replace(/\.$/, '')
+  const ran = failure.operation_may_have_run === true
+  if (failure.kind === 'unavailable' && !ran) return `Workcell could not be started to read ${asked}: ${words}. Nothing ran.`
+  return `Workcell refused to read ${asked}: ${words}. ${ran ? 'It may have run in part.' : 'Nothing ran.'}`
+}
+
 type GraphLeg = {reading: GraphReading; boundaryOp: string; at: string; refusal: string | null}
 type FilesLeg = {entries: NativeDirectory['entries']; boundaryOp: string; at: string; refusal: string | null}
 type NowLeg = {records: readonly NowListRow[]; boundaryOp: string; at: string; refusal: string | null}
@@ -227,14 +243,14 @@ async function readHygieneWorlds(transport: KernelTransportStatus, epoch: string
   const status = workcell.snapshot()
   const cell = status.status === 'answered' ? status.value as {workcell_ref?: unknown; state_root?: unknown} | null : null
   if (!cell || typeof cell.workcell_ref !== 'string' || typeof cell.state_root !== 'string') {
-    sources.push({boundaryOp: PAGE_OPS.worlds, channel: 'kernel-op', at, refusal: status.status === 'refused' ? status.error ?? 'Workcell refused its status.'
+    sources.push({boundaryOp: PAGE_OPS.worlds, channel: 'kernel-op', at, refusal: status.status === 'refused' ? workcellRefusal('its status (`workcell status`)', status.error ?? 'Workcell refused its status.')
       : status.status === 'reading' ? 'Workcell has not answered its status yet.' : 'Workcell\'s status names no workcell_ref and state root, so no receipt can be told as this cell\'s.'})
     return undefined
   }
   let listing: ReturnType<typeof worldsOf> = null
   try {
     const call = await kernelRead(transport, workcellReadOp({kind: 'worlds'}), {fresh: again})
-    if (call.error) { sources.push({boundaryOp: PAGE_OPS.worlds, channel: 'kernel-op', at, refusal: refusalWords(call.error)}); return undefined }
+    if (call.error) { sources.push({boundaryOp: PAGE_OPS.worlds, channel: 'kernel-op', at, refusal: workcellRefusal('its worlds (`workcell worlds`)', call.error)}); return undefined }
     listing = worldsOf((call.outcome as {data?: unknown} | null)?.data)
   } catch (cause) { sources.push({boundaryOp: PAGE_OPS.worlds, channel: 'kernel-op', at, refusal: REFUSAL(cause)}); return undefined }
   if (!listing) { sources.push({boundaryOp: PAGE_OPS.worlds, channel: 'kernel-op', at, refusal: 'Workcell answered its worlds in a form the device does not read (workcell.world-receipts/v1 expected).'}); return undefined }
@@ -247,7 +263,8 @@ async function readHygieneWorlds(transport: KernelTransportStatus, epoch: string
       const outcome = call.outcome as {data?: unknown; failure?: {message?: unknown}} | null
       const material = call.error ? null : materialWorldOf(outcome?.data)
       if (!material) {
-        sources.push({boundaryOp: op, channel: 'kernel-op', at, refusal: call.error ? refusalWords(call.error) : typeof outcome?.failure?.message === 'string' ? outcome.failure.message
+        const asked = `${listed.worldRef}'s material (\`workcell material\`)`
+        sources.push({boundaryOp: op, channel: 'kernel-op', at, refusal: call.error ? workcellRefusal(asked, call.error) : typeof outcome?.failure?.message === 'string' ? workcellRefusal(asked, outcome.failure)
           : 'Workcell answered the material read with neither a reading nor its failure.'})
         return null
       }

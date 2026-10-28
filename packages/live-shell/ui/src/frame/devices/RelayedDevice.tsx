@@ -1,11 +1,13 @@
 // The second window's side of the relay (frame/devices/deviceRelay.ts): the popped-out device drawn in its own Pop-out view on the
 // binding the main window relays — readings and standing as they stand there, every change sent back to the owner through it and
 // answered in the owner's words. While no relay answers (a face popped out from elsewhere, a main window that relays none), the page
-// draws what it drew before.
+// draws what it drew before. The host's window has no status bar, so the device stands over the window's Info line (DeviceWindows.tsx
+// WindowInfoLine: a dimmed control says why there, §16.11).
 import type {KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
 import {relayedFullDraw} from './relayedFulls'
 import {useEffect, useMemo, useRef, useState, type ReactNode} from 'react'
 import {PlacedDevice} from './DeviceView'
+import {WINDOW_SAYS, WindowInfoLine, useWindowInfo} from './DeviceWindows'
 import type {DeviceInstance} from './deviceRuntime'
 import {RELAY_EVENTS, relayedBinding, type RelayAct, type RelayedSnapshot} from './deviceRelay'
 
@@ -58,7 +60,16 @@ export function RelayedDevice({bindingId, fallback, onClose, transport}: {bindin
   transport?: KernelTransportStatus}) {
   // Off the host there is no event bus to relay on: the page draws what it drew before, at once.
   if (!onHost()) return <>{fallback()}</>
-  return <Relayed bindingId={bindingId} fallback={fallback} onClose={onClose} transport={transport} />
+  return <HostWindow><Relayed bindingId={bindingId} fallback={fallback} onClose={onClose} transport={transport} /></HostWindow>
+}
+
+/** The host's own window: the device over the window's Info line, which reads what the pointer enters anywhere in the window. */
+function HostWindow({children}: {children: ReactNode}) {
+  const info = useWindowInfo()
+  return <div className="device-relayed-window" onMouseOver={info.onMouseOver} data-i={`Pop-out|${WINDOW_SAYS}`}>
+    <div className="device-relayed-room">{children}</div>
+    <WindowInfoLine info={info.info} />
+  </div>
 }
 
 const onHost = () => typeof window !== 'undefined' && !!(window as unknown as {__TAURI_INTERNALS__?: unknown}).__TAURI_INTERNALS__
