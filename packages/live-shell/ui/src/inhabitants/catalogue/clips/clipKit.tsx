@@ -12,7 +12,7 @@
 import {useRef, type CSSProperties, type MouseEvent, type ReactNode} from 'react'
 import {Action, Chooser, Handle, Radio, Toggle, ValueBox, type Option, type Standing, type Tone} from '../../sdk/panel'
 import {has, strOf, type Value} from '../panels/design'
-import {MADE_OF, TAB_KEY, type ClipProps, type ClipTab, type DesignedClip, type Place} from './design'
+import {GROOVE, MADE_OF, TAB_KEY, type ClipProps, type ClipTab, type DesignedClip, type Place} from './design'
 import './clips.css'
 
 /** Live's measures, at the kit's control size. */
@@ -476,4 +476,39 @@ export function MadeOf({p, what}: {p: ClipProps; what: string}) {
       value={strOf(p.v, MADE_OF.name)} />
     <Press p={p} k={MADE_OF.show} label="Show in Browser" does="Selects the constellation in the browser, and keeps it selected when you change mode." why={why} />
   </>
+}
+
+/** Groove, where Live's Groove stands in the Clip panel, in every mode (manual §16.5: "Groove, in the Clip panel, chooses a QL frame or an
+ * MEF lens from the pool, as Live's chooses a groove; in Live it also offers the set's grooves"): the pool's frames and lenses, and where
+ * the design passes `own`, the clip's own grooves under their own key (Live's set grooves, written to the set as before). Choosing one of
+ * the pool's leaves the clip's own groove playing; None clears both. */
+export function GrooveOf({p, own}: {p: ClipProps; own?: {readonly key: string; readonly options: readonly Option<string>[]}}) {
+  const pooled = read<{value: string; label: string; kind: string; from?: string}[]>(p.v, GROOVE.options, [])
+  const chosen = strOf(p.v, GROOVE.choice) ?? 'none'
+  const mine = own ? strOf(p.v, own.key) ?? 'none' : 'none'
+  const options: Option<string>[] = [{value: 'none', label: 'None', does: 'The clip is read as it is.'},
+    ...pooled.map(item => ({value: item.value, label: item.label, does: `${item.kind === 'frame' ? 'A QL frame: reads the clip by the roles of its form.' : 'An MEF lens: reads the clip through one way of seeing.'}${item.from ? ` Taken out of ${item.from}.` : ''}`})),
+    ...(own ? own.options.filter(item => item.value !== 'none').map(item => ({value: `own:${item.value}`, label: item.label, does: 'One of the set\'s grooves: it shapes how the clip plays.'})) : [])]
+  const value = chosen !== 'none' ? chosen : mine !== 'none' ? `own:${mine}` : 'none'
+  const choose = (x: string) => {
+    if (x.startsWith('own:') && own) { p.set(own.key, x.slice(4)); if (chosen !== 'none') p.set(GROOVE.choice, 'none'); return }
+    p.set(GROOVE.choice, x)
+    if (x === 'none' && own && mine !== 'none') p.set(own.key, 'none')
+  }
+  return <Chooser {...p.standing?.[GROOVE.choice]} label="Groove" does={`The frame or lens from the pool the clip is read through${own ? ', or one of the set\'s grooves' : ''}. The clip's source stays as it is; only Commit, in the pool, writes the reading into the wiki.`}
+    value={value} options={options} onChange={choose} />
+}
+
+/** Hot-swap beside Groove (§16.5: "Hot-swap tries another while the clip plays"): the next frame or lens in the pool. */
+export function GrooveSwap({p}: {p: ClipProps}) {
+  const pooled = read<unknown[]>(p.v, GROOVE.options, [])
+  return <Press p={p} k={GROOVE.swap} label="Hot-swap" does="Tries the next frame or lens in the pool on the clip." why={pooled.length ? undefined : 'The pool holds no frame or lens yet: drop a constellation on the pool.'} />
+}
+
+/** Whether the clip is read through a groove from the pool: its Reading shows only then (§16.5: "What a clip lacks, Clip view leaves out"). */
+export const grooved = (v: ClipProps['v']): boolean => (strOf(v, GROOVE.choice) ?? 'none') !== 'none'
+
+/** The clip as read through its groove, in the owner's words (a frame's roles, QL's refraction through a lens). */
+export function GrooveReading({p}: {p: ClipProps}) {
+  return <Fact label="Reading" does="The clip read through the frame or lens chosen in Groove. Its source stays as it is." value={strOf(p.v, GROOVE.reading)} />
 }

@@ -23,6 +23,7 @@ import {useWorkbenchOpeners} from '../native/workbenchDoor'
 import {ConstellationRows} from '../frame/browser/ConstellationRows'
 import {CONSTELLATIONS} from '../frame/browser/constellationFocus'
 import {MODE_CONSTELLATION_PREVIEWS} from './constellationPreviews'
+import {TemplateRows} from '../frame/browser/TemplateRows'
 
 // Expressions' browser loads with Expressions' rows, not with the shell (shell/loadWhenDrawn.ts).
 const WorldBrowser = loadWhenDrawn<{controlled?: ControlledBrowser}>('Expressions\' browser', () => import('../components/WorldBrowser').then(module => module.WorldBrowser))
@@ -97,6 +98,10 @@ const SHARED: readonly BrowserSource[] = [
     hint: 'the constellations of your wiki: select one to preview what this mode makes of it, drag one onto a track and this mode makes its own clip of it',
     info: 'The constellations of your wiki, the same in every mode. Select one and its preview at the foot of the list shows what this mode makes of it; it stays selected when you change mode. Drag one onto a track and this mode makes its own clip of it, with the constellation as its source. Show in Browser, beside a clip\'s Constellation, selects it here.'}],
     Body: ConstellationsRows},
+  {id: 'templates', categories: [{id: 'templates', label: 'Templates', kind: 'material', mark: <Icon name="arrangement" size={12} />,
+    hint: 'arrangements to start a set from again: double-click one to start your set from it',
+    info: 'Templates: arrangements you kept to start from again, the same in every mode (manual §10.3, §16.7). Select one and its preview says what it keeps; double-click it and your set takes its panes, its layouts and its rail, and the template stays as it is. Save Set as Template… keeps the arrangement in front of you as a new one.'}],
+    Body: TemplateRows},
   {id: 'instruments', categories: [{id: 'instruments', label: 'Instruments', kind: 'instruments', mark: <Icon name="techne" size={12} />, hint: 'open one in a pane'}], Body: InstrumentsRows},
   {id: 'surfaces', categories: [{id: 'surfaces', label: 'Surfaces', kind: 'instruments', mark: <Icon name="browser" size={12} />, hint: 'sources, hosted surfaces, a terminal, a web page — open in a pane'}], Body: SurfacesRows},
 ]
@@ -111,11 +116,11 @@ export const MODE_BROWSERS: Readonly<Record<SurfMode, () => readonly BrowserSour
   factory: () => [AGENTS],
 }
 
-/** What a mode's pool face is given: the set open in Live (its grooves are the set's own). */
+/** What a mode's set grooves are given: the set open in Live (its grooves are the set's own). */
 export interface PoolFaceContext {readonly setPath: string | null}
 
-/** The pool's other face by mode (manual §16.7: "In Live a switch at the pool's head shows the set's grooves instead, as Live's pool
- * does"): a table, never a branch. A mode not named here has the workspaces alone. */
+/** The set's grooves in the pool by mode (manual §16.7: "In Live mode the set's own grooves stand beside the frames and lenses, as Live's
+ * do"): a table, never a branch. A mode not named here has the frames and lenses alone (frame/browser/GroovePool.tsx). */
 export const MODE_POOL_FACES: Readonly<Partial<Record<SurfMode, (context: PoolFaceContext) => {label: string; face: ReactNode}>>> = {
   live: ({setPath}) => ({label: 'Grooves', face: <LiveGroovePool path={setPath} />}),
 }

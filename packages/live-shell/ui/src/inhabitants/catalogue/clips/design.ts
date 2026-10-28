@@ -75,4 +75,11 @@ export const TAB_KEY = {panel: 'view.panel', tools: 'view.tools', editor: 'view.
  * the constellation's name as the clip's owner reports it ("None" when the owner says the clip was made of none), its ref, and the
  * Show in Browser press. */
 export const MADE_OF = {name: 'madeOf', ref: 'madeOf.ref', show: 'madeOf.show'} as const
+
+/** The value keys of the clip's groove from the pool, the same in every mode (manual §16.5: "Groove, in the Clip panel, chooses a QL frame
+ * or an MEF lens from the pool, as Live's chooses a groove … Hot-swap tries another while the clip plays. The clip is read through what
+ * you choose, and its source stays as it is"): the groove chosen ("none" for none), the pool's grooves as options (JSON
+ * [{value, label, kind}]), the clip's reading through it, and the Hot-swap press. Kept by the pool (frame/browser/poolStore.ts), never by
+ * the clip's owner. */
+export const GROOVE = {choice: 'pool.groove', options: 'pool.grooves', reading: 'pool.reading', swap: 'pool.swap'} as const
 export type Place = keyof typeof TAB_KEY

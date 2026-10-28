@@ -37,7 +37,7 @@ const STANDING = {
   // A colour input's empty value, not a paint.
   'components/expressions/studio/frameChrome.tsx': {'#808080': 1},
   'shell/ownerReadback.css': {}, 'frame/paneGrammar.css': {}, 'frame/transport/transport.css': {}, 'frame/browser/browser.css': {},
-  'frame/browser/workspacePool.css': {}, 'frame/tracks/tracks.css': {}, 'frame/detail/detail.css': {}, 'frame/widgets/deviceWidgets.css': {},
+  'frame/browser/pool.css': {}, 'frame/tracks/tracks.css': {}, 'frame/detail/detail.css': {}, 'frame/widgets/deviceWidgets.css': {},
   'components/expressions/studio/frameChrome.css': {},
   'components/TransportBar.tsx': {}, 'components/StatusBar.tsx': {}, 'frame/transport/Transport.tsx': {}, 'frame/widgets/WidgetRail.tsx': {},
   'shell/ModeBrowser.tsx': {}, 'shell/ModeDetail.tsx': {}, 'shell/ModeContextDock.tsx': {}, 'shell/ModeTransportBar.tsx': {},

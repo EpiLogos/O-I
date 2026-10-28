@@ -9,7 +9,7 @@
 // envelope's breakpoints on `env.<device>.<control>` (JSON [[beat, value]…]).
 import {Chooser, Dial, Radio, Toggle, ValueBox, type Option} from '../../sdk/panel'
 import {has, numOf, strOf} from '../panels/design'
-import {Caption, EnvelopeEditor, Fields, LaneGrid, MadeOf, Pair, PlaceField, Press, Row, Rows, Rule, Said, StemLane, Wide, choice, flag, place, read, span, write, type Block, type Lane, type Point} from './clipKit'
+import {Caption, EnvelopeEditor, Fields, LaneGrid, GrooveOf, GrooveReading, GrooveSwap, MadeOf, grooved, Pair, PlaceField, Press, Row, Rows, Rule, Said, StemLane, Wide, choice, flag, place, read, span, write, type Block, type Lane, type Point} from './clipKit'
 import type {ClipProps, DesignedClip} from './design'
 
 // ---------------------------------------------------------------- the clip's mode
@@ -144,6 +144,9 @@ const GENERATORS: readonly Option<string>[] = [
   ['rhythm', 'Rhythm', 'Writes a rhythm on one pitch.'], ['seed', 'Seed', 'Writes notes at random within a range.'], ['shape', 'Shape', 'Writes a melody that follows a drawn shape.'], ['stacks', 'Stacks', 'Writes chords.'],
 ].map(([value, label, does]) => ({value: value!, label: label!, does}))
 
+/** The set's grooves Live's Groove offers (Live's own; the clip's groove is written to the set as before). */
+const SET_GROOVES: readonly Option<string>[] = [{value: 'none', label: 'None'}, {value: 'swing 16-55', label: 'Swing 16-55'}, {value: 'mpc 8-60', label: 'MPC 8-60'}]
+
 const beats = (p: ClipProps, key: string, label: string, does: string, min: number, max: number, format: (x: number) => string) =>
   <PlaceField label={label} does={does} value={numOf(p.v, key)} min={min} max={max} format={format} onChange={x => p.set(key, x)} onSet={() => p.set(key, numOf(p.v, 'playhead') ?? 0)} />
 
@@ -167,8 +170,9 @@ function ClipPanel(p: ClipProps) {
         <ValueBox label="Signature" does="The clip's own metre: beats in a bar." value={numOf(p.v, 'sig.num') ?? NaN} def={4} scale={{min: 1, max: 99, step: 1}} format={x => String(x)} onChange={x => p.set('sig.num', x)} />
         <ValueBox label="Signature, the beat" does="The clip's own metre: the note that counts as a beat." value={numOf(p.v, 'sig.den') ?? NaN} def={4} scale={{min: 1, max: 16, step: 1}} format={x => String(x)} onChange={x => p.set('sig.den', x)} />
       </Pair>
-      <Chooser label="Groove" does="The groove applied to the clip. Hot-swap tries another; Commit writes it into the notes." value={choice(p.v, 'groove', 'none')} onChange={x => p.set('groove', x)}
-        options={[{value: 'none', label: 'None'}, {value: 'swing 16-55', label: 'Swing 16-55'}, {value: 'mpc 8-60', label: 'MPC 8-60'}]} />
+      <GrooveOf p={p} own={{key: 'groove', options: SET_GROOVES}} />
+      <GrooveSwap p={p} />
+      {grooved(p.v) && <Wide><GrooveReading p={p} /></Wide>}
     </Fields>
     <Rule />
     <Caption>Scale</Caption>

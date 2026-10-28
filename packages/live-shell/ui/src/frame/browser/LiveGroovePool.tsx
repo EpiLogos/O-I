@@ -1,5 +1,6 @@
-// The pool's other face in Live (manual §16.7: "In Live a switch at the pool's head shows the set's grooves instead, as Live's pool
-// does … Groove, Base, Quantize, Timing, Random and Velocity for each of the set's grooves, Global Amount at the foot"). Every value
+// The set's grooves in Live's pool (manual §16.7: "In Live mode the set's own grooves stand beside the frames and lenses, as Live's do:
+// Groove, Base, Quantize, Timing, Random and Velocity for each, Global Amount at the foot, and “Drop clips or grooves here” when there
+// are none"; drawn beside them by GroovePool.tsx). Every value
 // is the set's, read through its owner (live/liveGrooves.ts: kernel live_groove_pool_read) and written into it on the set's standing
 // revision (live_groove_pool_write); a refusal stands under the table in the owner's words, and the set is read again either way.
 // The face holds no groove of its own: a number is written when the hand lets go of it (Enter, or leaving the field).
@@ -54,7 +55,7 @@ export function LiveGroovePool({path}: {path: string | null}) {
     </div>
     {pool.grooves.length
       ? <ul className="groove-pool-rows">{pool.grooves.map(row)}</ul>
-      : <p className="groove-pool-empty">The set's pool holds no grooves: drag one from the browser's Grooves onto a clip and Live keeps it here.</p>}
+      : <p className="groove-pool-empty" data-i="Grooves|The set's pool holds no grooves yet: drag one from the browser's Grooves onto a clip and Live keeps it here.">Drop clips or grooves here</p>}
     <div className="groove-pool-footer">
       <span>Global Amount</span>
       <Amount label="Global Amount" value={pool.amount} min={range.min} max={range.max} write={value => run(() => writeLiveGlobalGroove(path, value))} />

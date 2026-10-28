@@ -2,14 +2,15 @@
 // a selected row's preview at the foot of the list ("its preview shows at the foot of the list, where Live plays a sample you
 // select"), and the pool beneath. It knows no mode: the frame hands it the mode's row sources (shell/modeBrowsers.tsx), the
 // sources every mode shares, and the pool's other face where the mode has one (Live's grooves); each source's body draws its
-// rows under the browser's control and portals its preview into the foot. The pool holds your workspaces and nothing else
-// (WorkspacePool.tsx): a device stands whole in its band above the chain, an instrument in a pane. A category's words are its
+// rows under the browser's control and portals its preview into the foot. The pool holds QL frames and MEF lenses, and in Live the
+// set's grooves beside them, and nothing else (GroovePool.tsx): a device stands whole in its band above the chain, an instrument in a
+// pane, and a reusable arrangement is a template among the rows (TemplateRows.tsx). A category's words are its
 // row's Info (data-i). Drawn at the mockup's floor (world-shell-mockup .bsearch/.bcats/.bres/.bitem; browser.css).
 import {useEffect, useMemo, useRef, useState, type ReactNode} from 'react'
 import {useBrowserSearchRequest} from '../keys/keyDoors'
 import {BROWSER_KINDS, type BrowserCategory, type BrowserSource} from './browserKinds'
 import {EMPTY_TRAIL, visitCategory, walkTrail} from './browserTrail'
-import {WorkspacePool} from './WorkspacePool'
+import {GroovePool} from './GroovePool'
 import '../../components/WorldBrowser.css'
 import './browser.css'
 
@@ -22,7 +23,7 @@ export interface BrowserProps {
    * here falls back to the first. Left out, the browser holds the choice itself. */
   category?: string | null
   onCategory?: (key: string) => void
-  /** The pool's other face, where the mode registers one (Live's grooves, manual §16.7): its switch label and face. */
+  /** The set's grooves, where the mode registers them (Live's, manual §16.7): their caption and face, beside the frames and lenses. */
   poolFace?: {label: string; face: ReactNode} | null
   /** Whether the pool stands under the browser (⌥⌘6 shows or hides it, as Live's Groove Pool). */
   pool?: boolean
@@ -84,7 +85,7 @@ export function Browser({sources, category, onCategory, poolFace = null, pool = 
         <div ref={setPreviewHost} className="one-browser-preview" aria-label="Preview" />
       </div>
     </div>
-    {pool && <section className="one-browser-pool" aria-label="Pool"><WorkspacePool grooves={poolFace} /></section>}
+    {pool && <section className="one-browser-pool" aria-label="Pool"><GroovePool face={poolFace} /></section>}
   </aside>
 }
 
