@@ -10,7 +10,8 @@ const fixtures = JSON.parse(await readFile(new URL("../documents/fixtures/plural
 const clone = value => JSON.parse(JSON.stringify(value));
 
 function prepared(testCase) {
-  const doc = clone(testCase.doc);
+  // An island case carries the exact text between the ql-doc tags; this form reads it as any JavaScript reader does.
+  const doc = testCase.island === undefined ? clone(testCase.doc) : JSON.parse(testCase.island);
   for (const [path, value] of Object.entries(testCase.mutate ?? {})) {
     const parts = path.split(".");
     const last = parts.pop();
@@ -85,6 +86,21 @@ for (const testCase of fixtures.cases) {
       const roots = buildThreads(current);
       assert.equal(roots.length, 1);
       assert.equal(roots[0].children.length, 2, "both replies are siblings of the one question");
+    } else if (testCase.op === "append-island") {
+      // D10 (O:I #766), the form's half: the island as written is a document this form appends to, and the bytes the
+      // native writer must leave are exactly this form's result. JSON.parse rounds integers above 2^53 here, as every
+      // JavaScript reader does; keeping them exact is the native writer's, proved in Central's tests/flow_append.rs.
+      const {doc: next, entry, outcome} = appendContribution(clone(doc), clone(testCase.request), testCase.caller);
+      assert.equal(outcome, expect.outcome);
+      assert.equal(entry.attribution.basis, expect.attribution);
+      assert.deepEqual(validateDocument(next).filter(i => i.code !== "legacy-format"), []);
+      const [head, tail] = expect.islandAfter;
+      // The kept stretches are the island's own bytes: before the new entry only the revision's value moves.
+      assert.ok(testCase.island.endsWith(tail), "the bytes after the new entry are the island's own");
+      assert.equal(testCase.island.slice(0, -tail.length).replace(`"revision":${doc.meta.revision}`, `"revision":${next.meta.revision}`), head,
+        "the bytes before the new entry are the island's own, the revision's value apart");
+      // With this form's entry between them they read as exactly this form's result.
+      assert.deepEqual(JSON.parse(`${head},${JSON.stringify(entry)}${tail}`), clone(next));
     } else if (testCase.op === "validate") {
       assert.deepEqual([...new Set(validateDocument(doc).map(i => i.code))].filter(c => c !== "legacy-format"), expect.issues);
     } else if (testCase.op === "read") {
