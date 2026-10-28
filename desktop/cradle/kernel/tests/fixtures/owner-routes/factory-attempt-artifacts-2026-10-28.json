@@ -1,0 +1,92 @@
+{
+  "_source": "the owner's own reading, REAL: Factory's `attempt artifacts <state> <run> attempt:z-old --json` (EpiLogos/Factory feat/attempt-artifact-read-759, its test World placed as control:root with docs/report.md beside a folder, a symlink and refs it refuses), 28 Oct 2026; projectRoot was the capture's scratch root and is replaced; `refused` is Factory's stderr for an attempt the Run does not retain (exit 2)",
+  "reading": {
+    "artifacts": [
+      {
+        "reason": "Factory keeps artifact:test as the artifact execution:test returned for project:01ARZ3NDEKTSV4RRFFQ69G5FAW at revision 947ce7a: a record, with no file of its own",
+        "ref": "artifact:test",
+        "roles": [
+          "artifact"
+        ],
+        "state": "refused"
+      },
+      {
+        "reason": "Factory refuses docs in control:root's ground: docs is not a regular file",
+        "ref": "central:source:control:root:docs",
+        "roles": [
+          "artifact"
+        ],
+        "state": "refused"
+      },
+      {
+        "file": {
+          "bytes": 9,
+          "contentDigest": "ac3caea8a7bb9cf6199efa6c4247c62648cd50c1b77391cc01afc8dd095d9a21",
+          "path": "docs/report.md"
+        },
+        "ref": "central:source:control:root:docs/report.md",
+        "roles": [
+          "artifact"
+        ],
+        "state": "file"
+      },
+      {
+        "centralPath": "central:path:/ground:docs/report.md",
+        "ref": "central:path:/ground:docs/report.md",
+        "roles": [
+          "evidence"
+        ],
+        "state": "central-path"
+      },
+      {
+        "reason": "it names another Project's ground; Factory resolves files only in its own Project's ground (control:root)",
+        "ref": "central:source:central-project:Elsewhere:docs/report.md",
+        "roles": [
+          "evidence"
+        ],
+        "state": "refused"
+      },
+      {
+        "reason": "Factory refuses ../outside.md in control:root's ground: invalid artifact scope: scope paths must be relative UTF-8 paths without parent traversal",
+        "ref": "central:source:control:root:../outside.md",
+        "roles": [
+          "evidence"
+        ],
+        "state": "refused"
+      },
+      {
+        "reason": "Factory refuses docs/linked.md in control:root's ground: docs/linked.md is not a regular file",
+        "ref": "central:source:control:root:docs/linked.md",
+        "roles": [
+          "evidence"
+        ],
+        "state": "refused"
+      },
+      {
+        "reason": "Factory found no readable file at docs/missing.md in control:root's ground: No such file or directory (os error 2)",
+        "ref": "central:source:control:root:docs/missing.md",
+        "roles": [
+          "evidence"
+        ],
+        "state": "refused"
+      },
+      {
+        "reason": "the Return names evidence:test-return, and no Factory record binds it to a file",
+        "ref": "evidence:test-return",
+        "roles": [
+          "evidence"
+        ],
+        "state": "refused"
+      }
+    ],
+    "attemptRef": "attempt:z-old",
+    "contract": "factory.attempt-artifact-reading/v1",
+    "projectKey": "control:root",
+    "projectRef": "project:0000000000JTF08GBQ137C62BZ",
+    "projectRoot": "<the capture scratch root: each case sets its own>",
+    "returnRef": "return:test",
+    "revision": 5,
+    "runRef": "run:01ARZ3NDEKTSV4RRFFQ69G5FBD"
+  },
+  "refused": "factory: attempt attempt:absent is not retained in run:01ARZ3NDEKTSV4RRFFQ69G5FBD"
+}

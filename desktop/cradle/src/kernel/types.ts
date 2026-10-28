@@ -1065,6 +1065,32 @@ export interface EncounterTaskAttemptsList {
   schema: 'aikit.encounter-task-attempts-list/v1'
   readings: (EncounterTaskAttemptsReading | {agent_session: string; refused: string})[]
 }
+/** One ref an attempt's Return names, as Factory resolved it (`factory.attempt-artifact-reading/v1`, O-I #759): its file in the
+ * Project's ground (`path` relative to that ground, its size and blake3 digest), Central's own path identity carried as it is, or
+ * refused with Factory's reason. */
+export type FactoryReturnedRef = {ref: string; roles: ('artifact' | 'evidence')[]} & (
+  | {state: 'file'; file: {path: string; bytes: number; contentDigest: string | null}}
+  | {state: 'central-path'; centralPath: string}
+  | {state: 'refused'; reason: string})
+/** `factory attempt artifacts <state> <run-ref> <attempt-ref>`: every ref the attempt's Return names, once (none before it returns). */
+export interface FactoryAttemptArtifactReading {
+  contract: 'factory.attempt-artifact-reading/v1'
+  projectRef: string
+  projectKey: string | null
+  projectRoot: string | null
+  runRef: string
+  attemptRef: string
+  revision: number
+  returnRef: string | null
+  artifacts: FactoryReturnedRef[]
+}
+/** The kernel's `factory_owner` `attempt-artifacts` answer (kernel/src/factory.rs): Factory's reading verbatim, and where its Project's
+ * ground lies in Central's World — `placed` with the ground's path under Central's root (`""` for the root), else why not. */
+export interface FactoryAttemptArtifacts {
+  contract: 'oi.factory-attempt-artifacts/v1'
+  reading: FactoryAttemptArtifactReading
+  ground: {state: 'placed'; project: string | null; path: string} | {state: 'outside' | 'unplaced'; why: string}
+}
 /** A change to one session's settings: `null` returns a field to its default. Task fields bind to the session's bound task. */
 export interface EncounterSessionSettingsRequest {
   track?: {telemetry?: boolean | null; solo?: boolean | null}

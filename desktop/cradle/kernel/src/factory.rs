@@ -285,6 +285,19 @@ pub enum OwnerRequest {
         run_ref: String,
         attempt_ref: String,
     },
+    /// `factory attempt artifacts <state> <run-ref> <attempt-ref>` →
+    /// `factory.attempt-artifact-reading/v1` (O-I #759): each ref the
+    /// attempt's Return names, resolved by Factory to its file in the
+    /// Project's ground or to Central's path identity, or refused with
+    /// Factory's reason. The kernel carries the reading verbatim and adds
+    /// where that Project's ground lies in Central's World (`ground`), from
+    /// Central's own world reading, so the shell opens a file through
+    /// Central's file route and constructs no path identity.
+    AttemptArtifacts {
+        state_path: PathBuf,
+        run_ref: String,
+        attempt_ref: String,
+    },
     /// `factory action list <state> <project-ref> <run-ref>`.
     ActionList {
         state_path: PathBuf,
@@ -542,6 +555,7 @@ impl OwnerRequest {
         matches!(
             self,
             OwnerRequest::Locate { .. }
+                | OwnerRequest::AttemptArtifacts { .. }
                 | OwnerRequest::AttemptDecisionSubmit { .. }
                 | OwnerRequest::AttemptDecisionRead { .. }
         )
@@ -566,6 +580,7 @@ impl OwnerRequest {
                 | OwnerRequest::TelemetryLookback { .. }
                 | OwnerRequest::TelemetryDay { .. }
                 | OwnerRequest::AttemptReturn { .. }
+                | OwnerRequest::AttemptArtifacts { .. }
                 | OwnerRequest::ActionList { .. }
                 | OwnerRequest::Inhabitation { .. }
                 | OwnerRequest::CurrentWork { .. }
@@ -1174,6 +1189,41 @@ pub(crate) fn locate_roots(
     }
 }
 
+/// Where a Factory Project's ground lies in Central's World: the root Factory
+/// names for its Project (`projectRoot`, the root its placement was located
+/// at) set against the roots Central discloses (`locate_roots`, the same roots
+/// `factory project locate` is asked at). `placed` carries the ground's path
+/// under Central's root (`""` for the root itself, `Work/O-I` for a project),
+/// so a file Factory resolved is reached through Central's own listing, and
+/// Central mints its location. A root Central does not disclose stays
+/// outside, with the reason; a state with no placement has no ground.
+pub(crate) fn ground_in_world(world: &Value, project_root: Option<&str>) -> Value {
+    let Some(project_root) = project_root else {
+        return serde_json::json!({"state": "unplaced",
+            "why": "Factory names no Project ground for this state, so none of its files is placed in Central's World"});
+    };
+    let named = Path::new(project_root).canonicalize().ok();
+    let same = |root: &Path| named.is_some() && root.canonicalize().ok() == named;
+    let roots = locate_roots(world, None, true).unwrap_or_default();
+    let central = roots.first().map(|(_, root)| root.clone());
+    for (project, root) in &roots {
+        if !same(root) {
+            continue;
+        }
+        let path = match (project, &central) {
+            (None, _) => String::new(),
+            (Some(_), Some(central)) => root
+                .strip_prefix(central)
+                .map(|path| path.to_string_lossy().into_owned())
+                .unwrap_or_default(),
+            (Some(_), None) => continue,
+        };
+        return serde_json::json!({"state": "placed", "project": project, "path": path});
+    }
+    serde_json::json!({"state": "outside",
+        "why": format!("Factory's Project root {project_root} is not a root Central discloses, so Central's file route does not open its files")})
+}
+
 /// One discovery row per root, each root located concurrently; each answer
 /// stands on its own — an absent source (no Factory state set up there) is
 /// not a refusal, and one refusal never hides the others.
@@ -1442,6 +1492,41 @@ pub fn owner(request: OwnerRequest, world: Option<&Value>) -> Result<Value, Erro
                     "Factory answered an unexpected attempt Return contract",
                 ))
             }
+        }
+        OwnerRequest::AttemptArtifacts {
+            state_path,
+            run_ref,
+            attempt_ref,
+        } => {
+            let world = world.ok_or_else(|| {
+                incompatible("Central's world reading is required to place a Return's files")
+            })?;
+            let args: Vec<std::ffi::OsString> = vec![
+                "attempt".into(),
+                "artifacts".into(),
+                path_arg(&state_path),
+                run_ref.clone().into(),
+                attempt_ref.clone().into(),
+                "--json".into(),
+            ];
+            let reading = expect_contract(
+                owner_call(&args, None)?,
+                &["factory.attempt-artifact-reading/v1"],
+            )?;
+            if reading["runRef"].as_str() != Some(&run_ref)
+                || reading["attemptRef"].as_str() != Some(&attempt_ref)
+                || !reading["artifacts"].is_array()
+            {
+                return Err(incompatible(
+                    "Factory answered the artifacts of another Run or attempt",
+                ));
+            }
+            let ground = ground_in_world(world, reading["projectRoot"].as_str());
+            Ok(serde_json::json!({
+                "contract": "oi.factory-attempt-artifacts/v1",
+                "reading": reading,
+                "ground": ground,
+            }))
         }
         OwnerRequest::ActionList {
             state_path,
@@ -2717,6 +2802,16 @@ mod owner_tests {
             locate_roots(&world, Some("Z"), false).is_err(),
             "a project outside the ground is refused"
         );
+    }
+
+    #[test]
+    fn a_ground_is_placed_only_on_a_root_central_discloses_and_that_exists() {
+        let world = serde_json::json!({"root": "/no-such-ground-759",
+            "work": {"projects": [{"name": "A", "path": "Work/A"}]}});
+        assert_eq!(ground_in_world(&world, None)["state"], "unplaced");
+        // Two roots that do not exist are never the same root.
+        let ground = ground_in_world(&world, Some("/no-such-ground-759/Work/A"));
+        assert_eq!(ground["state"], "outside", "{ground}");
     }
 
     #[test]
