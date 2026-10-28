@@ -86,7 +86,12 @@ test('the standing world passes the gate, and every admitted face occupies a Liv
       assert.ok(semantics.isLiveSemantic(face.liveSemantic), `${manifest.id}/${face.id} occupies "${face.liveSemantic}"`)
     }
   }
-  assert.equal(sdkValidate.semanticRegistry().length, 64, 'the world carries its 64 faces (38 + the L7 day-now + the knowledge graph’s 3, T-KNOWLEDGE-GRAPH-DEVICE + Central\'s page family\'s 7, lane BC2 + Software Factory\'s thread, tasks and agentset rack, lane BF3 + Central\'s packet and search, lane BC3 + Quaternal Logic\'s Sitting, T-WORLDS W4 + AIKit\'s Decision helper, T-AGENCY K5 + Quaternal Logic\'s Resonator bank, MR + AIKit\'s Messages and Workcell\'s workcell rack, lane W1-Factory + Actuation\'s Voice, lane W4 + Central\'s Machine, lane W4 for Central + Quaternal Logic\'s Binding, lane W4 for Expressions, Live and Quaternal Logic + Software Factory\'s Run map and Prompt pads, lane W7 for Factory)')
+  // REPLACED (#725): 65 faces — the 22 Oct manual rewrite retired 27 of them into the pages, clips and views of other devices (Actuation's
+  // Gateways rack, Experiment, Frames monitor and Voice; AIKit's Knowledge route, Agency gateway, Capture skill and Decision helper; Central's
+  // Context & world, Machine, Ground hygiene, Impact, Flow, Nara conversation, Workspace, Beings, Things, Text, Highlight and Notes; Quaternal
+  // Logic's Sitting and Binding; Software Factory's Run, Thread, Tasks and attempt review; Workcell's Seat). Software Factory's Custody and
+  // Central's Agent identity stay, the halves the one Agent joins (§19.4 "One agent, three owners"): 65 − 27 = 38.
+  assert.equal(sdkValidate.semanticRegistry().length, 38, 'the world carries its 38 faces')
 })
 
 test('the semantic registry is locked to its reviewed snapshot (lock §5.6)', async () => {

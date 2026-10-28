@@ -144,14 +144,20 @@ test('the gate fails a declared generating instrument that has no write row, and
 // ── Central: every declared face, with and without an owner standing ─────────────────────────────────────────────────────────────
 
 test('Central: every declared face\'s instance keeps its declaration, whatever the owners are doing', () => {
-  assert.ok(centralInstances.length >= 2 * 7, 'every declared face is built, bare and answered')
+  // REPLACED (#725): at least seven faces — the 22 Oct manual rewrite retired the Nara conversation, the Flow, Context & world, Ground hygiene,
+  // Impact, Machine and the page family's Workspace, Beings, Things, Text, Highlight and Notes; the family declares six now (the Day die,
+  // Agent identity, the Document, Docs, the Packet and Search), each built bare and answered.
+  assert.equal(centralFaces.length, 6, 'the six faces Central declares')
+  assert.equal(centralInstances.length, 2 * centralFaces.length, 'every declared face is built, bare and answered')
   const faults = centralInstances.flatMap(({instance}) => declarationFaults(instance))
   assert.deepEqual(faults, [])
-  // The two instruments in particular, and the clip: the reviewer\'s objection, named.
+  // The instruments in particular: the reviewer\'s objection, named.
   const by = id => central.centralDevice(centralFaces.find(face => face.id === id), {})
   assert.deepEqual(by('day-die').rows.filter(row => row.writePath).map(row => [row.key, row.writePath]), [['face', 'kernel:receiving']])
-  assert.deepEqual(by('nara-conversation').rows.filter(row => row.writePath).map(row => [row.key, row.writePath]), [['bound', 'kernel:nara_dialogue']])
-  assert.deepEqual(by('flow-document').rows.find(row => row.key === 'state').values, ['draft', 'saved', 'edited since save'], 'the Flow\'s states are a row')
+  // DELETED (#725): the Nara conversation's `bound` row on kernel:nara_dialogue and the Flow's states row — the manual removed both devices
+  // ("Answer is the Agent on a page's chain", PROGRAMME R25 item 5; "Flow, Beings and Things are a page's Clip panel and editor tabs", item 4).
+  // The Agent's light binds the dialogue on that op (central-devices-chain.test.mjs), and the Flow's states are its binding's reading.
+  for (const id of ['nara-conversation', 'flow-document']) assert.ok(!centralFaces.some(face => face.id === id), `${id}: retired`)
 })
 
 // ── the other families this gate can reach ────────────────────────────────────────────────────────────────────────────────────────

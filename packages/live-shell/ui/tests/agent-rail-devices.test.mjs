@@ -77,7 +77,7 @@ const read = path => readFileSync(new URL(`../src/${path}`, import.meta.url), 'u
 const settle = () => new Promise(resolve => setTimeout(resolve, 0))
 const CARRIER = {kind: 'unavailable', reason: 'No kernel carrier in this suite.'}
 
-test('with no Factory chain mounted, the rail\'s agent devices are published — Messages, Gateways, the Agency gateway, Frames, the Ledger, the workcell rack', async () => {
+test('with no Factory chain mounted, the rail\'s agent devices are published — Messages, Frames (the Gateway\'s widget), the Ledger, the workcell rack with the gateways', async () => {
   const container = new Element_('div')
   document_.body.appendChild(container)
   const root = createRoot(container)
@@ -85,9 +85,12 @@ test('with no Factory chain mounted, the rail\'s agent devices are published —
   await settle()
   try {
     for (const id of model.CHAIN_DEVICE_IDS) assert.equal(door.publishedDevice(id), undefined, `${id}: no Factory chain stands`)
-    assert.deepEqual(rail.RAIL_AGENT_DEVICE_IDS, [msg.MESSAGES_ID, main.GATEWAYS_RACK_ID, main.AGENCY_GATEWAY_ID, main.FRAMES_ID, rec.LEDGER_ID, rack.WORKCELL_RACK_ID])
-    const designs = {[msg.MESSAGES_ID]: 'ai-kit:messages', [main.GATEWAYS_RACK_ID]: 'actuation:gateways-rack', [main.AGENCY_GATEWAY_ID]: 'ai-kit:agency-gateway',
-      [main.FRAMES_ID]: 'actuation:frames-monitor', [rec.LEDGER_ID]: 'software-factory:ledger', [rack.WORKCELL_RACK_ID]: 'workcell:workcell'}
+    // REPLACED (#725): Gateways and the Agency gateway among them, and Frames drawn by the Frames monitor — the 22 Oct manual rewrite retired
+    // the three: the gateways are listed on the Workcells tile (§19.3), the agency gateway is the Gateway's agency build whose mark stands in
+    // the head of Messages (§19.10), and the rail's Frames is the Gateway's widget (§19.6).
+    assert.deepEqual(rail.RAIL_AGENT_DEVICE_IDS, [msg.MESSAGES_ID, main.FRAMES_ID, rec.LEDGER_ID, rack.WORKCELL_RACK_ID])
+    for (const id of [main.GATEWAYS_RACK_ID, main.AGENCY_GATEWAY_ID]) assert.equal(door.publishedDevice(id), undefined, `${id}: retired, not published`)
+    const designs = {[msg.MESSAGES_ID]: 'ai-kit:messages', [main.FRAMES_ID]: 'actuation:gateway', [rec.LEDGER_ID]: 'software-factory:ledger', [rack.WORKCELL_RACK_ID]: 'workcell:workcell'}
     for (const id of rail.RAIL_AGENT_DEVICE_IDS) {
       const entry = door.publishedDevice(id)
       assert.ok(entry, `${id} is published`)
@@ -100,8 +103,15 @@ test('with no Factory chain mounted, the rail\'s agent devices are published —
     assert.match(messages.standing.agents.disabled, /No kernel carrier in this suite/)
     assert.equal(door.publishedDevice(rack.WORKCELL_RACK_ID).binding.standing.seats?.disabled ?? door.publishedDevice(rack.WORKCELL_RACK_ID).binding.standing.name?.disabled,
       'No workcell is selected: select a workcell\'s return track (⌥⌘R) to read its chain.', 'no workcell selected: the rack says so')
-    assert.equal(door.publishedDevice(main.AGENCY_GATEWAY_ID).binding.values.light, undefined, 'no gateway answered: no light, never a default')
+    // REPLACED (#725): the Agency gateway's own light — its mark in the head of Messages (§19.10) is Messages' `gateway` reading.
+    assert.equal(messages.values.gateway, undefined, 'no gateway answered: no reading, never a default')
     assert.match(messages.standing.gateway.disabled, /has not answered/, 'the Agency gateway\'s mark says why it is dark')
+    // REPLACED (#725): the Gateways monitor's chains — the Workcells tile carries them under `gw.` (§19.3): every registered gateway, by the
+    // manual's name; the harness gateways unread, so with no state; the Remote carrier's line Workcell's status, refused in its words.
+    const gateways = JSON.parse(door.publishedDevice(rack.WORKCELL_RACK_ID).binding.values['gw.chains'])
+    assert.deepEqual(gateways.map(row => row.name), ['Hermes gateway', 'AIKit agency gateway', 'Actuation gateway', 'Remote carrier'])
+    assert.ok(gateways.slice(0, 3).every(row => row.state === undefined), 'no gateway read: no state, never a default')
+    assert.deepEqual(gateways[3], {id: 'remote-carrier', name: 'Remote carrier', state: 'refused', why: 'No kernel carrier in this suite.'})
   } finally {
     flushSync(() => root.unmount())
     document_.body.removeChild(container)
@@ -115,7 +125,7 @@ test('one publisher: the rail\'s own publisher draws it in every mode; Factory\'
   assert.match(railDevices, /return <AgentRailDevices \/>/, 'drawn by RailDevices, which App mounts with the rail in every mode')
   const chain = read('agent/devices/FactoryDeviceChain.tsx')
   for (const id of ['MESSAGES_ID', 'GATEWAYS_RACK_ID', 'AGENCY_GATEWAY_ID', 'LEDGER_ID']) assert.doesNotMatch(chain, new RegExp(`\\b${id}\\b`), `${id}: not the chain's`)
-  assert.doesNotMatch(chain, /publishDevice\(FRAMES_ID/, 'the Frames monitor: not the chain\'s to publish (its Gateway\'s ⤢ still opens it)')
+  assert.doesNotMatch(chain, /publishDevice\(FRAMES_ID/, 'the Frames tile: not the chain\'s to publish (its Gateway\'s ⤢ still opens it)')
   assert.doesNotMatch(chain, /publishDevice\(WORKCELL_RACK_ID|\[WORKCELL_RACK_ID, /, 'the workcell rack is drawn from the door, not published by the chain')
   assert.match(chain, /useSyncExternalStore\(subscribeDeviceDoor, \(\) => publishedDevice\(WORKCELL_RACK_ID\)/)
   // REPLACED (lane W11): the chain reads the same held population answer for Custody's Positions (one keyed read for the window).

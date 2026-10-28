@@ -4,33 +4,30 @@
 //
 // The day's process is the device's: its work moves from face to face by five pads, drawn in the well beside the net, as a Drum
 // Rack's pads stand in its display. Tasks 0 → 1, Patterns 2 → 3, Context 2 → 4, Synthesis 1–4 → 5, Close 5 → tomorrow's 0. A
-// pad shows the faces it moves between, what it gave when it last ran, the time it ran, when it runs by itself and whether its
-// proposals wait for you. Press a pad and its move runs now; click its record under it to see that move's Prompt and Runs at in
-// the Moves section and to turn the die to the face it fills. Face 2 needs no pad: it fills from every machine's NOW. Close is the
-// close routine, the same act as Close now (one parameter, `closeNow`).
-// Each move's keys: `run_<move>` the press; `at_<move>` Runs at (Off, Day start, Rollover, or a time); `prompt_<move>` the Prompt;
-// readings `last_<move>` (minutes after midnight it last ran; -1 not yet today), `gave_<move>` (what its last run gave) and
-// `running_<move>`. A pad's waiting dot is its face's own count of proposals (`c1p` for Tasks, `c3p` for Patterns).
+// pad shows the faces it moves between, what it gave when it last ran, the time it ran and whether its proposals wait for you.
+// Press a pad and its move runs now; click its record under it to see that move's Prompt in the Moves section and to turn the die to
+// the face it fills. Face 2 needs no pad: it fills from every machine's NOW. Close is the close routine, the same act as Close now
+// (one parameter, `closeNow`), and it also runs by itself when the day closes. No pad keeps a time: a move wanted at a set time is a
+// routine in Settings, Automations (§10.10), and the Day's agent writes as Scope and Arm allow (§16.1), so the Day has no Agent writes.
+// Each move's keys: `run_<move>` the press; `prompt_<move>` the Prompt; readings `last_<move>` (minutes after midnight it last ran;
+// -1 not yet today), `gave_<move>` (what its last run gave) and `running_<move>`. A pad's waiting dot is its face's own count of
+// proposals (`c1p` for Tasks, `c3p` for Patterns).
+// The day's bounds are Central's readings, never set here (§18.2 Two Days at a time): `rollover` when tomorrow's Day opens beside
+// today's (minutes after midnight; below zero, no Day opens by itself) and `dayStart` when tomorrow becomes today and today closes
+// (Central's civil day boundary).
 // Close-out, beside Close: `closeout` is AIKit's reading of what the close left behind ({verified, clauses: [{clause, state, detail}]},
 // `aikit work continuity closeout verify --json`: each clause continuation-registered | previous-handoff-superseded |
 // learned-material-recorded | deferred-work-registered, pass | fail | skipped, with AIKit's own detail). Verify (`verifyCloseout`)
 // reads it again; the kernel has no route to it yet, so the host stands Verify disabled with that reason.
 import {useState} from 'react'
-import {Action, Band, Chooser, Dial, Display, Folded, Panel, Radio, Readout, Section, TextField, Tile, Toggle, ValueBox, type LightState} from '../../sdk/panel'
+import {Action, Band, Chooser, Dial, Display, Folded, Panel, Radio, Readout, Section, TextField, Tile, Toggle, type LightState} from '../../sdk/panel'
 import {NONE, boolOf, clock, cradleDocuments, grown, has, json, numOf, on, shown, st, strOf, type DesignedDevice, type ViewProps} from './design'
 
 const FACES = ['Ground', 'Definition', 'Operation', 'Pattern', 'Context', 'Synthesis'] as const
 const AT: Record<number, [number, number]> = {2: [1, 0], 4: [0, 1], 0: [1, 1], 1: [2, 1], 5: [3, 1], 3: [1, 2]}
-const WRITES = [{value: 'off', label: 'Off', does: 'The agent does not write.'}, {value: 'propose', label: 'Propose', does: 'Each agent entry waits for you to accept it.'},
-  {value: 'write', label: 'Write', does: 'Agent entries go in directly, each with a receipt.'}] as const
 const SOURCES = [['src_central', 'Central'], ['src_factory', 'Factory'], ['src_expressions', 'Expr.'], ['src_techne', 'Technē'], ['src_live', 'Live']] as const
-/** A time that can be Off: the step below midnight is Off. */
-const TIME = {min: -15, max: 1425, step: 15}
-const timeOrOff = (x: number) => (x < 0 ? 'Off' : clock(x))
-/** When a move runs by itself (manual §18.2 Runs at): Off, Day start or Rollover, the three steps below midnight, or a time. */
-const RUNS_AT = {min: -45, max: 1425, step: 15}
-const atWord = (x: number) => (x <= -45 ? 'Off' : x <= -30 ? 'Day start' : x < 0 ? 'Rollover' : clock(x))
-const atMark = (x: number) => (x <= -45 ? '' : x <= -30 ? '↻ start' : x < 0 ? '↻ roll' : `↻ ${clock(x)}`)
+/** A bound of the day, as Central reports it: a clock time; below zero, no Day opens by itself. Absent: "—". */
+const bound = (v: ViewProps['v'], key: string) => { const x = numOf(v, key); return x === undefined ? undefined : x < 0 ? 'Off' : clock(x) }
 
 /** The five moves, in the order the faces read (manual §18.2 Moves). `face` is the face the move fills; `press` the key its pad
  * presses (the Close pad is Close now). */
@@ -44,9 +41,10 @@ const MOVES = [
 type MoveId = typeof MOVES[number]['id']
 /** Where a move's proposals wait, counted on the face it fills (the faces' own keys, never a second count). */
 const WAITS: Partial<Record<MoveId, string>> = {tasks: 'c1p', patterns: 'c3p'}
-/** What stands beside the well in an expanded Whole: Time 78, Faces 150, Moves 160, Agent 140, Close's least, and each section's rule. */
-const BESIDE_WELL = 78 + 150 + 160 + 140 + 96 + 6 * 12 + 24
-const MOVE_KEYS = MOVES.flatMap(m => [`at_${m.id}`, `prompt_${m.id}`, `last_${m.id}`, `running_${m.id}`, ...(m.id === 'close' ? [] : [`gave_${m.id}`])])
+/** What stands beside the well in an expanded Whole: Bounds 92, Faces 150, Moves 146, Sources 70, the counts 56, Close's least, and
+ * each section's rule. */
+const BESIDE_WELL = 92 + 150 + 146 + 70 + 56 + 96 + 7 * 12 + 24
+const MOVE_KEYS = MOVES.flatMap(m => [`prompt_${m.id}`, `last_${m.id}`, `running_${m.id}`, ...(m.id === 'close' ? [] : [`gave_${m.id}`])])
 
 /** What each face holds now (readings): the count drawn in its square, "—" where the owner reports none, and whether the agent
  * has proposals waiting on it. */
@@ -85,15 +83,15 @@ function Net({v, set, cell, x0, y0, names}: {v: ViewProps['v']; set?: ViewProps[
 }
 
 /** The pads: one for each move, in a row beside the net. A pad is lit while its move runs, dotted where its proposals wait, dim where
- * no owner runs it (its standing says why in the status bar). Under each pad its record: when it last ran and what it gave, and
- * when it runs by itself. */
+ * no owner runs it (its standing says why in the status bar). Under each pad its record: when it last ran; under Close, when the day
+ * closes, where the close routine runs by itself then. */
 function Pads({p, x0, y0, w, h, chosen, choose}: {p: ViewProps; x0: number; y0: number; w: number; h: number; chosen: MoveId; choose: (m: MoveId) => void}) {
   const gap = 5, pw = (w - gap * (MOVES.length - 1)) / MOVES.length, ph = Math.min(pw, h - 26)
   return <g role="group" aria-label="The Day's moves">
     {MOVES.map((m, i) => {
       const x = x0 + i * (pw + gap), why = st(p, m.press).disabled
       const running = on(p.v, `running_${m.id}`), waits = (numOf(p.v, WAITS[m.id] ?? '') ?? 0) > 0
-      const last = numOf(p.v, `last_${m.id}`), at = numOf(p.v, `at_${m.id}`)
+      const last = numOf(p.v, `last_${m.id}`), closes = m.id === 'close' && on(p.v, 'closeRoutine') ? bound(p.v, 'dayStart') : undefined
       const gave = m.id === 'close' ? undefined : numOf(p.v, `gave_${m.id}`)
       const run = () => { if (!why) p.set(m.press, true) }
       return <g key={m.id} opacity={why ? 0.4 : 1}>
@@ -109,12 +107,12 @@ function Pads({p, x0, y0, w, h, chosen, choose}: {p: ViewProps; x0: number; y0: 
           {waits && <circle cx={x + pw - 6} cy={y0 + 6} r={2.4} fill="var(--dp-on)" />}
         </g>
         <g role="button" aria-label={`${m.name}: its record`} tabIndex={0} style={{cursor: 'pointer'}}
-          data-i={`${m.name}'s record|When it last ran and when it runs by itself. Click to set its Prompt and Runs at, and turn the die to the face it fills.`}
+          data-i={`${m.name}'s record|When it last ran${m.id === 'close' ? ', and when the day closes and the routine runs by itself' : ''}. Click to set its Prompt, and turn the die to the face it fills.`}
           onClick={() => { choose(m.id); if (m.id !== 'close') p.set('face', m.face) }}
           onKeyDown={e => { if (e.key === 'Enter') { choose(m.id); if (m.id !== 'close') p.set('face', m.face) } }}>
           <rect x={x} y={y0 + ph + 1} width={pw} height={24} fill="transparent" />
           <text x={x + 1} y={y0 + ph + 11} className="dp-axis" style={{fontVariantNumeric: 'tabular-nums'}}>{last === undefined ? NONE : last < 0 ? 'not yet' : clock(last)}</text>
-          <text x={x + 1} y={y0 + ph + 21} className="dp-axis" style={{fontSize: 7.5}}>{at === undefined ? NONE : atMark(at)}</text>
+          {closes !== undefined && <text x={x + 1} y={y0 + ph + 21} className="dp-axis" style={{fontSize: 7.5}}>↻ {closes}</text>}
         </g>
       </g>
     })}
@@ -138,23 +136,22 @@ function DieAndMoves({p, w, h, chosen, choose}: {p: ViewProps; w: number; h: num
   </Display>
 }
 
-/** The Moves section: the chosen move's Prompt and Runs at (manual §18.2 Pad settings). */
+/** The Moves section: the chosen move's Prompt (manual §18.2 Pad setting). A move keeps no time of its own. */
 function MoveSettings({p, chosen, choose}: {p: ViewProps; chosen: MoveId; choose: (m: MoveId) => void}) {
   const m = MOVES.find(x => x.id === chosen)!
   return <>
-    <Chooser label="Move" does="The move whose Prompt and Runs at you set." value={chosen} options={MOVES.map(x => ({value: x.id, label: `${x.name} · ${x.faces}`}))}
+    <Chooser label="Move" does="The move whose Prompt you set." value={chosen} options={MOVES.map(x => ({value: x.id, label: `${x.name} · ${x.faces}`}))}
       onChange={x => choose(x as MoveId)} />
     <TextField {...st(p, `prompt_${m.id}`)} label="Prompt" does={`What ${m.name} asks of the agent. Change it to make the move yours.`} wide
       value={strOf(p.v, `prompt_${m.id}`) ?? ''} placeholder={NONE} onChange={x => p.set(`prompt_${m.id}`, x)} />
-    <ValueBox {...st(p, `at_${m.id}`)} label="Runs at" does={`When ${m.name} runs by itself: Off, Day start, Rollover or a time.`}
-      value={numOf(p.v, `at_${m.id}`) ?? NaN} def={m.id === 'close' ? -30 : -45} scale={RUNS_AT} format={atWord} onChange={x => p.set(`at_${m.id}`, x)} />
   </>
 }
 
 /** The Whole's two halves share the chosen move: the pads in the well choose it, the Moves section sets it. */
 function Whole({p}: {p: ViewProps}) {
   const [chosen, choose] = useState<MoveId>('tasks')
-  // Expanded, the well takes the room the other sections leave (Time, Faces, Moves, Agent and Close stand at their size beside it).
+  // Expanded, the well takes the room the other sections leave (Bounds, Faces, Moves, Sources, the counts and Close stand at their size
+  // beside it).
   const w = grown(p, 376, BESIDE_WELL, 620)
   return <Panel title="Day" view="whole" {...head(p)} page={p.page} onPage={p.setPage}
     pages={[{id: 'today', label: shortDate(p.v, 'date')},
@@ -163,9 +160,10 @@ function Whole({p}: {p: ViewProps}) {
       <Section width={w + 12}><DieAndMoves p={p} w={w} h={146} chosen={chosen} choose={choose} /></Section>
     </Band>
     <Band>
-      <Section label="Time" width={78}>
-        <ValueBox label="Day start" does="When tomorrow becomes today. Off uses Central's civil day boundary." value={numOf(p.v, 'dayStart') ?? NaN} def={-15} scale={TIME} format={timeOrOff} onChange={x => p.set('dayStart', x)} />
-        <ValueBox label="Rollover" does="When tomorrow's Day opens beside today's." value={numOf(p.v, 'rollover') ?? NaN} def={-15} scale={TIME} format={timeOrOff} onChange={x => p.set('rollover', x)} />
+      {/* The day's bounds are Central's readings: no hours are set on the Day (§18.2). */}
+      <Section label="Bounds" width={92}>
+        <Readout label="opens tomorrow" does="When tomorrow's Day opens beside today's, as Central keeps it. Off: no Day opens by itself." value={bound(p.v, 'rollover')} />
+        <Readout label="closes" does="When tomorrow becomes today and today closes: Central's civil day. The close routine runs by itself then." value={bound(p.v, 'dayStart')} />
       </Section>
       <Section label="Faces" cols={2} width={150}>
         <Dial label="Face" does="Turns the die to this face." value={numOf(p.v, 'face') ?? NaN} def={0} scale={{min: 0, max: 5, step: 1}} format={f => FACES[f]!} onChange={x => p.set('face', x)} />
@@ -175,20 +173,22 @@ function Whole({p}: {p: ViewProps}) {
             options={[{value: 'day', label: 'The standard Day · v4'}, {value: 'day-quiet', label: 'Quiet Day · v1'}]} onChange={x => p.set('template', x)} />
         </div>
       </Section>
-      <Section label="Moves" width={160}><MoveSettings p={p} chosen={chosen} choose={choose} /></Section>
+      <Section label="Moves" width={146}><MoveSettings p={p} chosen={chosen} choose={choose} /></Section>
     </Band>
     <Band>
-      <Section label="Agent" cols={2} width={140}>
-        <Radio {...st(p, 'agentWrites')} label="Writes" does="Off, Propose or Write: how every move's entries arrive." value={strOf(p.v, 'agentWrites') ?? ''} options={WRITES} stack onChange={x => p.set('agentWrites', x)} />
+      <Section label="Sources" width={70}>
         <div style={{display: 'grid', rowGap: 3, width: '100%'}}>
           {SOURCES.map(([key, name]) => toggle(p, key, name, `${name} sends entries to faces 2 and 4.`, 'value'))}
         </div>
       </Section>
+      <Section width={56}>
+        <Readout label="waiting" does="Agent proposals that wait for you, on faces 1 and 3." value={waiting(p.v)} tone="accent" />
+        <Readout label="running" does="Sessions running now, on face 2." value={numOf(p.v, 'c2run')} tone="value" />
+      </Section>
       <Section label="Close" grow>
-        {toggle(p, 'closeRoutine', 'Routine', "At day close: summarise, send what you learned to your knowledge, carry face 5's proposal to tomorrow's face 0.")}
+        {closeRoutine(p)}
         {closeNow(p)}
         {openToday(p)}
-        <Readout label="closes" does="The time today closes." value={has(p.v, 'dayStart') ? (numOf(p.v, 'dayStart')! < 0 ? 'civil' : clock(numOf(p.v, 'dayStart')!)) : undefined} />
         {closeoutPair(p)}
       </Section>
     </Band>
@@ -208,7 +208,6 @@ function Refusal({v, w, y}: {v: ViewProps['v']; w: number; y: number}) {
 const light = (p: ViewProps) => (strOf(p.owner ?? p.v, 'light') ?? 'unknown') as LightState
 const head = (p: ViewProps) => ({light: light(p), onFold: p.nav.fold, onFull: p.nav.full})
 const shortDate = (v: ViewProps['v'], key: string) => strOf(v, key)?.slice(0, 6) ?? NONE
-const faceName = (v: ViewProps['v']) => { const f = numOf(v, 'face'); return f === undefined ? 'No face open' : `${f} · ${FACES[f] ?? NONE}` }
 const openToday = (p: ViewProps, label = 'Open today') => <Action label={label} does="Asks Central to open today's Day. Used when the Day it points at is stale."
   onPress={() => p.set('openToday', true)} disabled={on(p.v, 'canOpenToday') ? undefined : 'Today is open, or Central cannot open it now.'} />
 /** Close now (manual §18.2): Central closes the Day; what still plays carries into the next Day. The owner reports `canClose`. */
@@ -230,6 +229,9 @@ const closeoutPair = (p: ViewProps) => { const c = closeout(p.v)
       value={c.word} tone={c.ok ? 'green' : c.word ? 'stall' : undefined} />
     <Action {...st(p, 'verifyCloseout')} label="Verify" does="Reads the close back: a continuation registered, earlier handoffs closed, learning recorded, deferred work registered." onPress={() => p.set('verifyCloseout', true)} />
   </div> }
+/** The proposals that wait for you: face 1's tasks and face 3's patterns, as the faces count them. */
+const waiting = (v: ViewProps['v']) => { const a = numOf(v, 'c1p'), b = numOf(v, 'c3p'); return a === undefined && b === undefined ? undefined : (a ?? 0) + (b ?? 0) }
+const closeRoutine = (p: ViewProps, label = 'Routine') => toggle(p, 'closeRoutine', label, "When the day closes: summarise it, send what you learned to your knowledge, carry face 5's proposal to tomorrow's face 0.")
 const toggle = (p: ViewProps, key: string, label: string, does: string, tone?: 'value') => {
   const now = boolOf(p.v, key)
   return <Toggle key={key} label={label} does={does} tone={tone} on={now === true} unknown={now === undefined} onChange={x => p.set(key, x)} />
@@ -241,12 +243,11 @@ export const day: DesignedDevice = {
   kind: 'instrument',
   firstPage: 'today',
   defaults: {
-    light: 'lit', face: 1, view: 'die', dayStart: -15, rollover: 1320, closeRoutine: true, agentWrites: 'propose', template: 'day',
-    src_central: true, src_factory: true, src_expressions: true, src_techne: true, src_live: false,
-    // Readings: what the device reports, never set from here.
-    date: 'Wed 15 Oct', tomorrow: 'Thu 16 Oct', tomorrowOpen: true, c0: 3, c1: 6, c1p: 2, c2done: 4, c2run: 2, c2queue: 3, c3: 2, c3p: 1, c4: 7, c5: 0,
-    // The moves: when each runs by itself (the owner's default: Off, and Close at Day start) and what it asks of the agent.
-    at_tasks: -45, at_patterns: -45, at_context: -45, at_synthesis: -45, at_close: -30,
+    light: 'lit', face: 1, view: 'die', closeRoutine: true, template: 'day',
+    src_central: true, src_factory: true, src_expressions: true, src_techne: true, src_live: true,
+    // Readings: what the device reports, never set from here. The bounds are Central's: tomorrow opens at 22:00, the day closes at 04:00.
+    rollover: 1320, dayStart: 240, date: 'Wed 15 Oct', tomorrow: 'Thu 16 Oct', tomorrowOpen: true, c0: 3, c1: 6, c1p: 2, c2done: 4, c2run: 2, c2queue: 3, c3: 2, c3p: 1, c4: 7, c5: 0,
+    // The moves: what each asks of the agent.
     prompt_tasks: 'Read face 0 and propose tasks in three tiers: must, should, could.',
     prompt_patterns: 'Read what ran and propose patterns, each with the items that show it.',
     prompt_context: "Gather the moments, people, places and files the day's sessions touched, each with its author.",
@@ -260,13 +261,13 @@ export const day: DesignedDevice = {
       {clause: 'learned-material-recorded', state: 'pass'}, {clause: 'deferred-work-registered', state: 'skipped', detail: 'No Factory Run ledger bound to this session.'}]}),
   },
   fixtures: {
-    'A working day': {canClose: true, running_context: true, at_patterns: 960, closeout: JSON.stringify({verified: true, clauses: [{clause: 'continuation-registered', state: 'pass'},
+    'A working day': {canClose: true, running_context: true, closeout: JSON.stringify({verified: true, clauses: [{clause: 'continuation-registered', state: 'pass'},
       {clause: 'previous-handoff-superseded', state: 'pass'}, {clause: 'learned-material-recorded', state: 'pass'}, {clause: 'deferred-work-registered', state: 'pass'}]})},
     'Stale pointer': {light: 'dark', refusal: 'The native today pointer is stale: it names 13 Oct. Open today to move it.', canOpenToday: true, canClose: undefined, face: undefined,
       date: 'Fri 16 Oct', tomorrow: undefined, tomorrowOpen: undefined, c0: undefined, c1: undefined, c1p: undefined, c2done: undefined, c2run: undefined,
       c2queue: undefined, c3: undefined, c3p: undefined, c4: undefined, c5: undefined,
-      ...Object.fromEntries(MOVE_KEYS.filter(k => !k.startsWith('at_') && !k.startsWith('prompt_')).map(k => [k, undefined]))},
-    'No readings': Object.fromEntries(['light', 'face', 'view', 'dayStart', 'rollover', 'closeRoutine', 'agentWrites', 'template', 'src_central', 'src_factory',
+      ...Object.fromEntries(MOVE_KEYS.filter(k => !k.startsWith('prompt_')).map(k => [k, undefined]))},
+    'No readings': Object.fromEntries(['light', 'face', 'view', 'dayStart', 'rollover', 'closeRoutine', 'template', 'src_central', 'src_factory',
       'src_expressions', 'src_techne', 'src_live', 'date', 'tomorrow', 'tomorrowOpen', 'c0', 'c1', 'c1p', 'c2done', 'c2run', 'c2queue', 'c3', 'c3p', 'c4', 'c5', 'canClose', 'closeout',
       ...MOVE_KEYS].map(k => [k, undefined])),
   },
@@ -277,14 +278,15 @@ export const day: DesignedDevice = {
     <Section width={152}>
       <Display w={140} h={146} label="The die" does="The open face is lit. A dot marks agent proposals that wait for you." corner={shortDate(p.v, 'date')}>
         <Net v={p.v} set={p.set} cell={32} x0={6} y0={22} names={false} />
-        {has(p.v, 'refusal') ? <Refusal v={p.v} w={140} y={100} /> : <text x={6} y={138} className="dp-ink-dim">{faceName(p.v)}</text>}
+        {/* The reading under the net says when tomorrow opens (Central's bound). */}
+        {has(p.v, 'refusal') ? <Refusal v={p.v} w={140} y={100} /> : <text x={6} y={138} className="dp-ink-dim" data-i="Tomorrow opens|When tomorrow's Day opens beside today's, as Central keeps it.">tomorrow opens {bound(p.v, 'rollover') ?? NONE}</text>}
       </Display>
     </Section>
     <Section label="Macros" cols={2}>
       <Dial label="Face" does="Turns the die." value={numOf(p.v, 'face') ?? NaN} def={0} scale={{min: 0, max: 5, step: 1}} format={f => `${f}`} onChange={x => p.set('face', x)} />
-      <ValueBox label="Rollover" does="When tomorrow's Day opens beside today's." value={numOf(p.v, 'rollover') ?? NaN} def={-15} scale={TIME} format={timeOrOff} onChange={x => p.set('rollover', x)} />
-      <Radio label="Agent" does="How agent entries arrive." value={strOf(p.v, 'agentWrites') ?? ''} options={WRITES} stack onChange={x => p.set('agentWrites', x)} />
-      {/* Close now is wider than a macro column (56 px): it takes a row across both, inside the device. */}
+      <Radio label="View" does="The die, or one face unfolded flat." value={strOf(p.v, 'view') ?? ''} options={[{value: 'die', label: 'Die'}, {value: 'flat', label: 'Flat'}]} stack onChange={x => p.set('view', x)} />
+      {/* Close routine and Close now are wider than a macro column (56 px): each takes a row across both, inside the device. */}
+      <div style={{gridColumn: 'span 2', width: '100%', display: 'flex', justifyContent: 'center'}}>{closeRoutine(p, 'Close routine')}</div>
       <div style={{gridColumn: 'span 2', width: '100%', display: 'flex', justifyContent: 'center'}}>{closeNow(p)}</div>
     </Section>
   </Panel>,

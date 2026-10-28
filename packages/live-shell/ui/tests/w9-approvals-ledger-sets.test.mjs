@@ -190,7 +190,10 @@ test('4 · Changes: a comment on the waiting return in the words written in the 
   assert.deepEqual(sent, [[PENDING.return_ref, 'Name the second source too.']])
   assert.deepEqual(cleared, [true])
   const view = read('agent/devices/FactoryDeviceChain.tsx')
-  assert.match(view, /return withReturnComments\(binding, \{returns: returned, comment: agentDraft\}, \{\n\s*send: \(row, words\) => commentSourceReturn\(transport, RACK_PROJECT, row, words, person\),\n\s*after: \(\) => \{ void agentWrite\?\.\(\[\{key: 'draft', value: ''\}\]\) \},/)
+  // REPLACED (#725): the comment hand was the binding returned — it is laid under Notifications' readings now (§23.9: what an owner raises
+  // waits in Approvals, under Requests; railBindings.ts withOwnerRequests), so the comment-wrapped binding is what that carry receives.
+  assert.match(view, /const commented = withReturnComments\(binding, \{returns: returned, comment: agentDraft\}, \{\n\s*send: \(row, words\) => commentSourceReturn\(transport, RACK_PROJECT, row, words, person\),\n\s*after: \(\) => \{ void agentWrite\?\.\(\[\{key: 'draft', value: ''\}\]\) \},/)
+  assert.match(view, /return withOwnerRequests\(commented, /)
   assert.match(view, /const agentDraft = typeof oneAgent\?\.values\.draft === 'string' \? oneAgent\.values\.draft : null/)
 })
 

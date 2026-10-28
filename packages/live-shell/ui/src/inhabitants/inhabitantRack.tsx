@@ -28,8 +28,6 @@ import type {CentralLocation, KernelTransportStatus} from '../../../../../deskto
 import {faceKind, faceStandsAlone, type InhabitantFaceDeclaration, type InhabitantManifest} from './manifest.ts'
 import {deviceBindingId, deviceIdentityFault, popOutApertureFault, type DeviceDetachIdentity} from '../native/detachedKinds'
 import {DocumentDayDieFace} from './DocumentDayDieFace'
-import {FlowFace} from './DocumentFlowFace'
-import {NaraConversationFace} from './ConversationNaraFace'
 import {QlInstrumentBody, qlInstrumentLight, qlInstrumentStanding} from './qlInstrumentDevice'
 import {AtlasFaceBody, isAtlasFaceId} from './atlasFaceBodies'
 import {KnowledgeFaceBody, isKnowledgeFaceId} from './knowledgeGraphFaceBodies'
@@ -110,36 +108,21 @@ interface FaceProps {
 /** Each face's named mark of the cut — the header's kind reading. A face
  * without a clear named mark carries none; the note still speaks. */
 const FACE_MARKS: Readonly<Record<string, IconName | KindShapeName>> = Object.freeze({
-  'context-world': 'world',
   'agent-identity': 'agent',
-  'ground-hygiene': 'location',
-  'impact': 'expression',
   'day-die': 'day',
-  'flow-document': 'doc',
-  'nara-conversation': 'agent',
   'gateway': 'linkChain',
-  'gateways-rack': 'chain',
-  'experiment': 'run',
-  'frames-monitor': 'detail',
   'skillset-rack': 'lib',
-  'knowledge-route': 'search',
-  'agency-gateway': 'link',
-  'capture-skill': 'cap',
   'agent-custody': 'agent',
   'ledger': 'lib',
-  'run-device': 'run',
-  'attempt-review': 'run',
   'git-seat': 'chain',
   'remote-carrier': 'earth',
   'link': 'link',
-  'seat': 'placed',
   'ql-instrument': 'expr',
   'sky': 'expr',
   'torus': 'expr',
   'm3-clock': 'metro',
   'deck': 'lib',
   'chakra': 'form',
-  'sitting': 'loop',
   'm-prime-matrices': 'techne',
 })
 
@@ -161,8 +144,8 @@ function InhabitantFace({face, manifest, transport, day, flow, conversation, pro
   // every face (held → expanded, the rest folded). Without a focus, a face
   // starts folded, as before.
   const focused = focusInstrument != null && (face.heldBy ?? []).includes(focusInstrument)
-  // A face whose aperture stands (a Day for the die, a conversation for the Nara face) docks expanded: the selected material's body.
-  const apertureStands = (face.id === 'day-die' && !!day) || (face.id === 'nara-conversation' && !!conversation)
+  // A face whose aperture stands (a Day for the die) docks expanded: the selected material's body.
+  const apertureStands = face.id === 'day-die' && !!day
   const [expanded, setExpanded] = useState(focused || apertureStands)
   useEffect(() => { setExpanded(focused || apertureStands) }, [focusInstrument, apertureStands])
   const kind = faceKind(face)
@@ -270,15 +253,10 @@ interface FaceReads {
  * window of their own, from the identity alone, is `faceStandsAlone` (manifest.ts): the same faces pop out, and the device
  * door refuses the rest by name. */
 export function faceBodyFor(face: InhabitantFaceDeclaration, reads: FaceReads): ReactNode | null {
-  const {transport, day, flow, conversation, projects, instrumentReading} = reads
+  const {transport, day, projects, instrumentReading} = reads
   if (face.id === 'day-die' && day) {
     return <DocumentDayDieFace transport={transport} project={day.project} sourceRef={day.sourceRef}
       documentId={day.documentId} projects={projects}/>
-  }
-  if (face.id === 'flow-document' && flow) return <FlowFace transport={transport} location={flow.location}/>
-  if (face.id === 'nara-conversation') {
-    return <NaraConversationFace transport={transport} project={conversation?.project ?? null}
-      expressionRef={conversation?.expressionRef ?? null} conversation={conversation?.conversation ?? null}/>
   }
   // [L9 musical family] the QL field/PCM owner's instrument face. The reading arrives as the host received it (raw); the
   // face parses it and renders the honest refusing state where no owner reading stands.
@@ -335,39 +313,24 @@ const FACE_TITLES: Readonly<Record<string, string>> = Object.freeze({
   'knowledge-scope': 'Scope',
   'knowledge-filters': 'Filters',
   'knowledge-display': 'Display',
-  'context-world': 'Context · world',
   'agent-identity': 'Agent identity',
-  'ground-hygiene': 'Ground hygiene',
-  'impact': 'Impact',
   'day-die': 'Day die',
-  'flow-document': 'Flow',
-  'nara-conversation': 'Conversation',
   'gateway': 'Gateway',
-  'gateways-rack': 'Gateways',
   'harness-model': 'Harness · model',
-  'experiment': 'Experiment',
-  'frames-monitor': 'Frames monitor',
   'skillset-rack': 'Skillset rack',
   'skill-device': 'Skill device',
-  'knowledge-route': 'Knowledge route',
-  'agency-gateway': 'Agency gateway',
-  'capture-skill': 'Capture → skill',
   'agent-custody': 'Agent custody',
   'context-write-mode': 'Write mode',
   'ledger': 'Ledger',
   'approvals': 'Approvals',
-  'run-device': 'Run',
-  'attempt-review': 'Attempt review',
   'git-seat': 'Git seat',
   'remote-carrier': 'Remote carrier',
   'link': 'Link',
-  'seat': 'Seat',
   'sky': 'Sky',
   'torus': 'Torus / field',
   'm3-clock': 'M3 clock',
   'deck': 'Deck',
   'chakra': 'Chakra',
-  'sitting': 'Sitting',
   'm-prime-matrices': 'M′ matrices',
   'ql-instrument': 'QL field / PCM owner',
 })

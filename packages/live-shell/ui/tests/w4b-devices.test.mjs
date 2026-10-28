@@ -2,9 +2,10 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import {register} from 'node:module'
 
-// T-WORLDS W4, the face side, on the devices: the Sitting on its design (Play rings the bell through the torus's own strike, the transport
+// T-WORLDS W4, the face side, on the devices: the Sitting on its binding (Play rings the bell through the torus's own strike, the transport
 // times it, Stop keeps the time sat, the record is a page), Clip view's Answer this and Entry, Speak as in a Circle, and the Sky drawing
-// your birth sky. Fixture owners stand in for the instrument, Central and the kernel.
+// your birth sky. Fixture owners stand in for the instrument, Central and the kernel. The Sitting's design and face were retired in the 22
+// Oct manual rewrite (#725; §24.3: a sitting is a clip of the practice world's track); its binding of its owners is checked on its own.
 const compiler = new URL('../node_modules/typescript/lib/typescript.js', import.meta.url).href
 register(`data:text/javascript,${encodeURIComponent(`
 import ts from ${JSON.stringify(compiler)};
@@ -41,7 +42,6 @@ const techne = await import('../src/inhabitants/ql/devices/TechneDevices.tsx')
 const manifests = await import('../src/inhabitants/quaternalLogicFamilyManifest.ts')
 const {HostedDevice} = await import('../src/frame/devices/deviceHost.tsx')
 const {designKey} = await import('../src/frame/devices/designs.ts')
-const sittingDesign = (await import('../src/inhabitants/catalogue/panels/quaternal-logic__sitting.tsx')).design
 const skyDesign = (await import('../src/inhabitants/catalogue/panels/quaternal-logic__sky.tsx')).design
 const clip = await import('../src/central/clipBinding.ts')
 const writes = await import('../src/central/devices/centralDeviceWrites.ts')
@@ -131,18 +131,17 @@ test('the Sitting: Stop ends it now and keeps the time actually sat; the transpo
   assert.match(sittingMod.qlSittingState().fault, /not kept: Central refused the page/)
 })
 
-test('Technē\'s chain draws the Sitting\'s design on its binding; the manifest admits it on its owner', () => {
+// DELETED (#725): "Technē's chain draws the Sitting's design on its binding; the manifest admits it on its owner" — the manual removed the
+// Sitting as a device (§24.3: "A sitting is a clip of the practice world's track (§24.1): its length, its bell and its intervals stand in its
+// Clip panel, and Play rings the bell and begins"): Quaternal Logic declares no Sitting face, no rack stands it, and its design is retired.
+// What stays is checked: the face is gone, and the binding that times, rings and keeps a sitting (the two tests above) still reads its length.
+test('the Sitting is no device: Quaternal Logic declares no Sitting face, and no rack stands one; its binding still holds the sitting', () => {
   sittingMod.resetQlSitting({owners: fixtureOwners().owners})
-  const face = manifests.quaternalLogicFamilyManifest().faces.find(f => f.id === 'sitting')
-  assert.ok(face, 'the Sitting is a face of Quaternal Logic')
-  assert.equal(face.admission, undefined, 'cut, not waiting')
-  assert.deepEqual(face.heldBy, ['studio:nara', 'techne:m2'])
-  assert.equal(face.invariant.generates, 'kernel:invoke_action')
-  const entry = techne.qlFaceEntry(face, null, null, undefined, undefined, undefined, undefined, sittingMod.qlSittingState())
-  assert.equal(entry.binding.id, sittingMod.QL_SITTING_DEVICE_ID)
-  assert.equal(designKey('quaternal-logic', 'sitting'), sittingDesign.id)
-  for (const view of VIEWS) assert.ok(renderToStaticMarkup(h(HostedDevice, {designed: sittingDesign, binding: entry.binding, view, nav: {}})).length > 0, view)
-  assert.match(renderToStaticMarkup(h(HostedDevice, {designed: sittingDesign, binding: entry.binding, view: 'folded', nav: {}})), /20 min/)
+  const faces = manifests.quaternalLogicFamilyManifest().faces
+  assert.ok(!faces.some(f => f.id === 'sitting'), 'no Sitting face')
+  const entries = techne.techneEntries([{id: 'quaternal-logic', faces}], {atlas: null, surface: null, torus: null, instrumentReading: null})
+  assert.ok(!entries.some(entry => entry.device.id === sittingMod.QL_SITTING_DEVICE_ID), 'no Sitting on any rack')
+  assert.equal(sittingMod.qlSittingBinding(sittingMod.qlSittingState()).values.length, 20, 'the sitting\'s own length, 20 minutes until you set another (§24.1)')
 })
 
 test('the Sky draws your birth sky as its natal ring once a launch gives it; no chart is computed here', () => {

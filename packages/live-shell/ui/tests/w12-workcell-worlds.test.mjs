@@ -54,7 +54,8 @@ const tasks = await import('../src/agent/devices/taskBindings.ts')
 const routes = await import('../src/agent/devices/ownerRoutes.ts')
 const takes = await import('../src/agent/factoryTakes.ts')
 const {design: rackDesign} = await import('../src/inhabitants/catalogue/panels/workcell__workcell.tsx')
-const {design: runsDesign} = await import('../src/inhabitants/catalogue/panels/software-factory__attempt-review.tsx')
+// Runs' design (software-factory__attempt-review.tsx) was retired in the 22 Oct manual rewrite (#725): a run's attempts are takes (§16.1),
+// its outputs the Results tile's (§19.1); its binding (taskBindings.ts runsBinding) stays and is checked on its own values.
 
 family.resetFamilyManifestsForTest()
 loadAgentShellFamilies()
@@ -205,14 +206,20 @@ test('6 · the carrier\'s Plan stays refused, naming the demand body it waits fo
   assert.equal(binding.standing.replan.disabled, cell.CARRIER_REFUSE.replan)
 })
 
-test('7 · the rack draws the world on every page and view, and Runs its outputs — no NaN, no undefined, never their fixture text', () => {
+test('7 · the rack draws the world on every page and view, and Runs\' binding holds its outputs — no NaN, no undefined, never their fixture text', () => {
   bind.resetHolds()
   host.resetHost()
   const binding = rack.workcellRackBinding(rackInput(), {gateway: null, workcell: recorder().port, rereadWorld: () => {}})
   const runs = tasks.runsBinding('s', bind.chainHolds(), {takes: [], choose: async () => ({ok: true}), receipts: {'attempt:1': LISTED.receipt},
     collected: {'attempt:1': {value: {world_ref: LISTED.world_ref, outputs: [], omissions: []}}}, collect: async () => {}})
-  for (const [design, b, pages, fixture] of [[rackDesign, binding, ['chain', 'world', 'services', 'exposure', 'release'], /Claude Code · local|reads-round-2|omarchy · env-1|factory-attempt|Type-check the three|dlw\/uiux-kit-motion/],
-    [runsDesign, runs, [undefined], /Type-check the roots|run:3|AgentShellContext/]]) {
+  // REPLACED (#725): Runs' design drawn on its outputs — no design draws Runs now (§16.1 "its attempts are takes"; §19.1 Results): its
+  // binding's own values hold the attempt's outputs as Workcell collected them, with no absent key as text and none of the retired design's
+  // sample.
+  const runsValues = JSON.stringify(runs.values)
+  assert.deepEqual(JSON.parse(runs.values.collected), [material.collectedOf('attempt:1', {world_ref: LISTED.world_ref, outputs: [], omissions: []})], 'the attempt\'s outputs as Workcell collected them')
+  assert.doesNotMatch(runsValues, /\bNaN\b|undefined/, 'Runs\' binding: no absent key as text')
+  assert.doesNotMatch(runsValues, /Type-check the roots|run:3|AgentShellContext/, 'Runs\' binding: never the retired design\'s sample')
+  for (const [design, b, pages, fixture] of [[rackDesign, binding, ['chain', 'world', 'services', 'exposure', 'release'], /Claude Code · local|reads-round-2|omarchy · env-1|factory-attempt|Type-check the three|dlw\/uiux-kit-motion/]]) {
     for (const view of host.viewsOf(design)) {
       for (const page of view === 'whole' || view === 'full' ? pages : [undefined]) {
         if (page) host.setHostPage(b.id, page)

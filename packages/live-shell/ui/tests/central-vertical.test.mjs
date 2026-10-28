@@ -1,4 +1,4 @@
-// The Central vertical, scripted (WORLD-SHELL-DESIGN §17.2; DLW-PLAN Phase 3):
+// The Central vertical, scripted (WORLD-SHELL-DESIGN §17.2):
 // one real day recovered through the Timeline and the Base detail row —
 // select a day, then a return, then a conversation, then a wiki subject — with
 // the detail row and the projection showing the same identity at every step.

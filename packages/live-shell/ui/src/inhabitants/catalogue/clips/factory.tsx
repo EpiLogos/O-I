@@ -1,12 +1,17 @@
 // Factory's clip (manual §19.1): a task on an agent session's track. Clip view puts how it launches and what follows it beside its
-// log. The Clip panel holds its name, colour, state, turns and output style; Launch holds Launch (Once, Hold, Loop), Then, Hand off
-// to and Quantize. A task has no tools, so the editor takes panel two's room. The Log lays each tool the agent used along the task's
+// log. The Clip panel holds its name, colour, state, turns, output style and Loop (whether it repeats, §16.5: Off or On, with its stop
+// condition `loop.until` and its cap `loop.cap`); Launch holds Live's launch modes (Trigger, Gate, Toggle, Repeat), Then (the follow
+// action, on the clip's own track: Next task, Again, Stop) and Quantize. To hand the work to another session, the task is dragged onto
+// that session's track: no follow action leaves the track. A task launched with Repeat is an experiment (§19.5): each run a take, and
+// the Launch panel adds what varies between the runs (`repeat.variable`, `repeat.levels`, `repeat.repeats`, `repeat.stop`) and Compare
+// (`compare`, the takes' own setting: None, a second take, or every take of the Repeat), with the takes it has made (`takes`, a
+// reading). A task has no tools, so the editor takes panel two's room. The Log lays each tool the agent used along the task's
 // time, one lane per tool as notes lie on a piano roll's rows, with the steers you sent marked as lines and a stall marked where the
 // output stopped; the events read as a list under the lanes. Envelopes set the Agent's Effort and Autonomy for this task only.
 //
 // The owner's material: `log` (JSON rows {at, kind, tool?, text, dur?, state?, heard?}; at and dur in seconds from the task's start;
-// kind is tool | spawn | steer | say | stall), `elapsed` (seconds to the last output), `sessions` (JSON rows {id, name}: the
-// hand-off's choices), and each envelope's steps on `env.agent.<control>` (JSON [[second, step]…]).
+// kind is tool | spawn | steer | say | stall), `elapsed` (seconds to the last output), and each envelope's steps on
+// `env.agent.<control>` (JSON [[second, step]…]).
 //
 // The Intent panel: what the task is for, bounded, and how you will know it was met. Factory keeps it for the task's Run and never
 // copies its source. The required difference is the Development Field's (factory/src/development_field.rs:250 DevelopmentField
@@ -140,7 +145,7 @@ function IntentPanel(p: ClipProps) {
   </Rows>
 }
 
-const SESSIONS = (v: ClipProps['v']): Option<string>[] => read<{id: string; name: string}[]>(v, 'sessions', []).map(s => ({value: s.id, label: s.name}))
+const LOOP_UNTIL: readonly Option<string>[] = [{value: 'done', label: 'Task done', does: 'The task stops looping when it is done.'}, {value: 'pass', label: 'Test pass', does: 'The task stops looping when its test passes.'}]
 
 function ClipPanel(p: ClipProps) {
   const state = strOf(p.v, 'state')
@@ -157,27 +162,61 @@ function ClipPanel(p: ClipProps) {
       options={[{value: 'plain', label: 'Plain'}, {value: 'warm', label: 'Warm'}, {value: 'terse', label: 'Terse'}]} /></Wide>
     <Wide><Radio label="Output form" does="The shape of what the agent writes for this task: technical, narrative or a list." value={choice(p.v, 'style.form')} onChange={x => p.set('style.form', x)}
       options={[{value: 'technical', label: 'Technical'}, {value: 'narrative', label: 'Narrative'}, {value: 'list', label: 'List'}]} /></Wide>
+    <Rule />
+    <Wide><Radio {...p.standing?.loop} label="Loop" does="Runs the task again after each finish, until its stop condition or the cap." value={p.v.loop === true ? 'on' : p.v.loop === false ? 'off' : ''}
+      onChange={x => p.set('loop', x === 'on')} options={[{value: 'off', label: 'Off'}, {value: 'on', label: 'On'}]} /></Wide>
+    <Row label="Until"><Chooser {...p.standing?.['loop.until']} label="Until" does="The stop condition that ends the loop." value={choice(p.v, 'loop.until')} options={LOOP_UNTIL}
+      onChange={x => p.set('loop.until', x)} disabled={p.standing?.['loop.until']?.disabled ?? (p.v.loop === true ? undefined : 'Loop is Off.')} /></Row>
+    <Row label="Cap"><TextField {...p.standing?.['loop.cap']} label="Cap" does="The most runs the loop makes, whatever its stop condition says." value={numOf(p.v, 'loop.cap') === undefined ? '' : String(numOf(p.v, 'loop.cap'))}
+      placeholder={NONE} onChange={x => { const n = Math.round(Number(x)); p.set('loop.cap', Number.isFinite(n) && n > 0 ? n : undefined) }}
+      disabled={p.standing?.['loop.cap']?.disabled ?? (p.v.loop === true ? undefined : 'Loop is Off.')} /></Row>
   </Rows>
 }
 
+const LAUNCH_MODES: readonly Option<string>[] = [
+  {value: 'trigger', label: 'Trigger', does: 'Starts the task when you press its launch.'},
+  {value: 'gate', label: 'Gate', does: 'Runs the task only while you hold the launch.'},
+  {value: 'toggle', label: 'Toggle', does: 'Starts the task with one press and stops it with the next.'},
+  {value: 'repeat', label: 'Repeat', does: 'Launches the task again at each quantize step while you hold the launch, each run a take of its own.'},
+]
+const THENS: readonly Option<string>[] = [{value: 'next', label: 'Next task', does: 'The next task on this track starts.'}, {value: 'again', label: 'Again', does: 'The task runs again.'},
+  {value: 'stop', label: 'Stop', does: 'The track stops after the task.'}]
+const VARIABLES: readonly Option<string>[] = ['Condition', 'Model', 'Effort', 'Skillset', 'Budget', 'Autonomy'].map(x => ({value: x.toLowerCase(), label: x,
+  does: x === 'Condition' ? 'How the agent\'s loop recurs: classic, or one of Quaternal Logic\'s conditions.' : `The ${x.toLowerCase()} changes from one run to the next.`}))
+const STOPS: readonly Option<string>[] = [{value: 'turns', label: 'Turn cap'}, {value: 'time', label: 'Time cap'}, {value: 'done', label: 'Task done'}, {value: 'pass', label: 'Test pass'}]
+const COMPARES: readonly Option<string>[] = [{value: 'none', label: 'None'}, {value: 'second', label: 'A second take'}, {value: 'every', label: 'Every take'}]
+/** The levels as you wrote them, one to three values. */
+const levelsOf = (v: ClipProps['v']) => (strOf(v, 'repeat.levels') ?? '').split(',').map(x => x.trim()).filter(Boolean).slice(0, 3)
+
 function LaunchPanel(p: ClipProps) {
-  const then = choice(p.v, 'then')
+  const repeat = choice(p.v, 'launch') === 'repeat', off = repeat ? undefined : 'Set Launch mode to Repeat first.'
+  const levels = levelsOf(p.v), takes = numOf(p.v, 'takes'), runs = numOf(p.v, 'repeat.repeats')
+  // Launch mode and Then across the panel; Quantize and what a Repeat varies two to a row, so the panel never scrolls. A task has no
+  // legato and no launch velocity, so the panel holds neither.
   return <>
-    <Fields>
-      <Wide><Radio label="Launch" does="Once runs the task one time. Hold keeps it ready while you hold the launch. Loop runs it again after each finish, until its stop condition or the cap."
-        value={choice(p.v, 'launch')} onChange={x => p.set('launch', x)}
-        options={[{value: 'once', label: 'Once', does: 'Runs the task one time.'}, {value: 'hold', label: 'Hold', does: 'Keeps the task ready while you hold the launch.'}, {value: 'loop', label: 'Loop', does: 'Runs the task again after each finish, until its stop condition or the cap.'}]} /></Wide>
-      <Wide><Chooser label="Then" does="What follows the task: its follow action. Next task and Stop are Live's; Hand off moves the work to another session's track, which a Live follow action never does."
-        value={then} onChange={x => p.set('then', x)} options={[{value: 'next', label: 'Next task'}, {value: 'handoff', label: 'Hand off'}, {value: 'stop', label: 'Stop'}]} /></Wide>
-      <Wide><Chooser label="Hand off to" does="The session that continues when Then is Hand off." value={choice(p.v, 'handoff')} options={SESSIONS(p.v)} onChange={x => p.set('handoff', x)}
-        disabled={then === 'handoff' ? undefined : 'Set Then to Hand off first.'} /></Wide>
+    <Fields cols={1}>
+      <Wide><Radio {...p.standing?.launch} label="Launch mode" does="Live's launch modes: Trigger, Gate, Toggle, Repeat." value={choice(p.v, 'launch')} onChange={x => p.set('launch', x)} options={LAUNCH_MODES} /></Wide>
+      <Wide><Radio {...p.standing?.then} label="Then" does="What follows the task, on the same session's track: its follow action. To hand the work to another session, drag the task onto that session's track."
+        value={choice(p.v, 'then')} onChange={x => p.set('then', x)} options={THENS} /></Wide>
     </Fields>
     <Rule />
+    {/* Repeat: what varies between the runs. Once the first run starts these stay; a change starts a new set of takes. */}
     <Fields>
-      <Wide><Chooser label="Quantize" does="When a launch or a steer lands. Global follows the transport's Quantize." value={choice(p.v, 'quantize')} onChange={x => p.set('quantize', x)}
-        options={[{value: 'global', label: 'Global'}, {value: 'now', label: 'Now'}, {value: 'next tool', label: 'Next tool'}, {value: 'next turn', label: 'Next turn'}]} /></Wide>
+      <Chooser {...p.standing?.quantize} label="Quantize" does="When a launch or a steer lands. Global follows the transport's Quantize." value={choice(p.v, 'quantize')} onChange={x => p.set('quantize', x)}
+        options={[{value: 'global', label: 'Global'}, {value: 'now', label: 'Now'}, {value: 'next tool', label: 'Next tool'}, {value: 'next turn', label: 'Next turn'}]} />
+      <Chooser {...p.standing?.['repeat.variable']} label="Variable" does="With Repeat: the setting that changes from one run to the next." value={choice(p.v, 'repeat.variable')} options={VARIABLES}
+        onChange={x => p.set('repeat.variable', x)} disabled={p.standing?.['repeat.variable']?.disabled ?? off} />
+      <TextField {...p.standing?.['repeat.levels']} label="Levels" does="With Repeat: the values the variable takes, one to three, separated by commas. Each value is one group of takes."
+        value={strOf(p.v, 'repeat.levels') ?? ''} placeholder={NONE} onChange={x => p.set('repeat.levels', x)} disabled={p.standing?.['repeat.levels']?.disabled ?? off} />
+      <Chooser {...p.standing?.['repeat.repeats']} label="Repeats" does="With Repeat: the number of runs for each level." value={runs === undefined ? '' : String(runs)}
+        options={Array.from({length: 32}, (_, i) => ({value: String(i + 1), label: String(i + 1)}))} onChange={x => p.set('repeat.repeats', Number(x))} disabled={p.standing?.['repeat.repeats']?.disabled ?? off} />
+      <Chooser {...p.standing?.['repeat.stop']} label="Stop when" does="With Repeat: the condition that ends each run." value={choice(p.v, 'repeat.stop')} options={STOPS}
+        onChange={x => p.set('repeat.stop', x)} disabled={p.standing?.['repeat.stop']?.disabled ?? off} />
+      <Chooser {...p.standing?.compare} label="Compare" does="With Repeat: draws the takes side by side, a line for each run and the readings as lanes. The takes' own setting, read in Arrangement view."
+        value={choice(p.v, 'compare')} options={COMPARES} onChange={x => p.set('compare', x)} disabled={p.standing?.compare?.disabled ?? off} />
+      <Fact label="Takes" does="The takes this Repeat has made, of the runs it will make: one group for each level." value={takes === undefined ? undefined
+        : `${takes}${runs !== undefined && levels.length ? ` of ${runs * levels.length}` : ''}`} />
     </Fields>
-    <Said>A task has no legato and no launch velocity.</Said>
   </>
 }
 
@@ -214,7 +253,6 @@ const STALLED = [
   {at: 5, kind: 'tool', tool: 'Bash', dur: 4, state: 'waits', text: 'gen-fixtures --widgets handoff · no output'},
   {at: 9, kind: 'stall', text: 'Waits for an answer: overwrite fixtures/handoff.json (y/N)'},
 ]
-const SESS = [{id: 'lead', name: 'lead · O-I widgets'}, {id: 'tests', name: 'tests · widget suite'}, {id: 'docs', name: 'docs · manual'}]
 
 export const clip: DesignedClip = {
   id: 'clip:factory',
@@ -223,8 +261,9 @@ export const clip: DesignedClip = {
   head: {name: 'name', colour: 'colour', active: 'active'},
   defaults: {
     name: 'Write the hand-off fixtures', colour: 'var(--fizz)', active: true, state: 'running', 'turns.used': 5, 'turns.cap': 12,
-    'style.register': 'plain', 'style.form': 'technical', launch: 'once', then: 'handoff', handoff: 'tests', quantize: 'global',
-    log: JSON.stringify(LOG), elapsed: 68, sessions: JSON.stringify(SESS), fold: true, event: 'e29-7',
+    'style.register': 'plain', 'style.form': 'technical', loop: false, 'loop.until': 'done', 'loop.cap': 5, launch: 'trigger', then: 'next', quantize: 'global',
+    'repeat.variable': 'condition', 'repeat.levels': 'classic, 4.0, 5.0', 'repeat.repeats': 3, 'repeat.stop': 'done', compare: 'none',
+    log: JSON.stringify(LOG), elapsed: 68, fold: true, event: 'e29-7',
     intent: 'Hand-off fixtures cover every bridge widget', 'intent.source': 'Plan · widget hand-off', context: '9 sources', constraints: 2,
     criteria: JSON.stringify([
       {id: 'c1', text: 'Every widget has a hand-off fixture'}, {id: 'c2', text: 'Old fixture ids are kept'}, {id: 'c3', text: 'pnpm test bridge passes'}]),
@@ -234,17 +273,19 @@ export const clip: DesignedClip = {
   },
   fixtures: {
     'A running task': {},
-    'A stalled task': {name: 'Generate the fixtures', colour: 'var(--stall)', state: 'stalled', 'turns.used': 2, log: JSON.stringify(STALLED), elapsed: 9, then: 'next', handoff: undefined, event: 'e5-2', 'view.panel': 'clip'},
+    'A stalled task': {name: 'Generate the fixtures', colour: 'var(--stall)', state: 'stalled', 'turns.used': 2, log: JSON.stringify(STALLED), elapsed: 9, then: 'again', loop: true, event: 'e5-2', 'view.panel': 'clip'},
+    'An experiment with Repeat': {launch: 'repeat', 'repeat.variable': 'model', 'repeat.levels': 'opus, sonnet, haiku', 'repeat.repeats': 4, 'repeat.stop': 'pass', compare: 'every', takes: 7},
     'Its intent, returned': {'view.panel': 'intent', state: 'done', criteria: JSON.stringify([
       {id: 'c1', text: 'Every widget has a hand-off fixture', state: 'satisfied', evidence: 2}, {id: 'c2', text: 'Old fixture ids are kept', state: 'satisfied', evidence: 1},
       {id: 'c3', text: 'pnpm test bridge passes', state: 'indeterminate'}])},
     'Its envelopes': {'view.editor': 'envelopes', 'env.mode': 'modulation', 'env.agent.effort': JSON.stringify([[0, 2], [30, 3], [45, 1]])},
-    'No readings': {state: undefined, 'turns.used': undefined, 'turns.cap': undefined, log: undefined, elapsed: undefined, sessions: undefined, launch: undefined, then: undefined, quantize: undefined,
+    'No readings': {state: undefined, 'turns.used': undefined, 'turns.cap': undefined, log: undefined, elapsed: undefined, launch: undefined, then: undefined, quantize: undefined, loop: undefined,
+      'loop.until': undefined, 'loop.cap': undefined, 'repeat.variable': undefined, 'repeat.levels': undefined, 'repeat.repeats': undefined, 'repeat.stop': undefined, compare: undefined, takes: undefined,
       intent: undefined, 'intent.source': undefined, criteria: undefined, context: undefined, constraints: undefined},
   },
   panel: [
-    {id: 'clip', label: 'Clip', does: 'The task\'s name, colour, state, turns and output style.', draw: ClipPanel},
-    {id: 'launch', label: 'Launch', does: 'How the task launches, when the launch lands, and what follows it.', draw: LaunchPanel},
+    {id: 'clip', label: 'Clip', does: 'The task\'s name, colour, state, turns, output style and loop.', draw: ClipPanel},
+    {id: 'launch', label: 'Launch', does: 'How the task launches, when the launch lands, what follows it, and what a Repeat varies.', draw: LaunchPanel},
     {id: 'intent', label: 'Intent', does: 'What the task is for: the difference it must make, and the conditions that show it did.', draw: IntentPanel},
   ],
   tools: [],

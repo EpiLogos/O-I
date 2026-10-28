@@ -1,3 +1,5 @@
+// Retired as a device of its own (22 Oct manual rewrite): not a `<family>__<face>.tsx` panel any more, so the catalogue does not load
+// it; the Agent (actuation:harness-model) and Messages (ai-kit:messages) carries its pages through this module.
 // The Thread (manual §19.4, software-factory:thread): the conversation with one session's agent — turns, tool rows, spawn rows,
 // steer lines, proposals and stalls, in the order they happened. Live's nearest: a device whose well draws a time-ordered stream,
 // as Arrangement draws clips. Its Full view is the same thread the Agent device (actuation:harness-model) draws in its pane.
@@ -35,7 +37,7 @@ import {memo, useLayoutEffect, useMemo, useRef, useState, type ReactNode} from '
 import {Action, Band, Chooser, Display, Folded, Handle, Panel, Radio, Readout, Section, TextField, Tile, Toggle, type LightState, type Option, type Standing} from '../../sdk/panel'
 import {maskStatic} from '../../../agent/maskFace'
 import {NONE, boolOf, clampTo, has, json, numOf, st, strOf, type DesignedDevice, type ViewProps} from './design'
-import './software-factory__thread.css'
+import './thread.css'
 
 type V = ViewProps['v']
 

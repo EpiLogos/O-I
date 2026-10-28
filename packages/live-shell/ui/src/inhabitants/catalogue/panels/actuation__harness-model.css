@@ -24,7 +24,9 @@
 .hm-card[data-kind="stall"] { border-left-color: var(--stall, #ff9b4a); }
 .hm-card[data-kind="stall"] b { color: var(--stall, #ff9b4a); }
 
-/* The widget: the last line of the thread, and the composer. */
+/* The widget: the agent's tile in Messages (§19.24) — its face and state, the last lines of its conversation, and the composer. */
+.hm-tile-face { flex: none; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.hm-last p { margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .hm-tile-side { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; justify-content: space-between; }
 .hm-last { margin: 0; font-size: 10.5px; line-height: 1.35; color: var(--text-dim, #a2a7ad); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 .hm-last b { font-weight: 500; color: var(--text, #d4d7da); }

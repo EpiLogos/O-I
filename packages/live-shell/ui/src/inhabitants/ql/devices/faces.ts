@@ -22,9 +22,7 @@ export const TECHNE_FACE_TITLES: Readonly<Record<string, string>> = Object.freez
   'resonator-bank': 'Resonator bank',
   'deck': 'Deck',
   'chakra': 'Chakra',
-  'sitting': 'Sitting',
   'm-prime-matrices': 'M′ matrices',
-  'binding': 'Binding',
   'ql-instrument': 'QL field / PCM owner',
 })
 
@@ -45,9 +43,7 @@ export const TECHNE_FACE_ICONS: Readonly<Record<string, IconName>> = Object.free
   'resonator-bank': 'metro',
   'deck': 'lib',
   'chakra': 'form',
-  'sitting': 'loop',
   'm-prime-matrices': 'techne',
-  'binding': 'bind',
   'ql-instrument': 'expr',
 })
 

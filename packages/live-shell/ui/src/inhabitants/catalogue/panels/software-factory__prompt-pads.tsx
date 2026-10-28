@@ -1,7 +1,8 @@
 // Prompt pads (manual §19.22, software-factory:prompt-pads): the asks you make of agents again and again, kept as pads, the way a
 // Drum Rack keeps sounds. Live's nearest: the Drum Rack's sixteen pads, pad 1 at the bottom left, with the selected pad's chain beside
-// them. An instrument on Factory's Main track: press a pad and its task starts on the session it names; give it a time and it starts
-// then, with every run on the record.
+// them. An instrument on Factory's Main track: press a pad and its task starts on the session it names, now. No pad keeps a time: a pad
+// that should run by itself is a routine in Settings, Automations (§10.10), and the pad shows when the routine runs it and how each run
+// went. Make routine opens Automations on a new routine for the pad you read.
 //
 // The owner of the bank is Factory (factory/src/prompt_pads.rs; Factory main 09c3354): sixteen slots for each project, each empty or a
 // pad, and the record of every run. Factory keeps them and never runs a pad. The reading is `factory development pads <state>
@@ -13,9 +14,11 @@
 //
 // Keys. The owner reports, and the binding passes in the person's civil time:
 // - `pads`: sixteen rows of {index, pad, next?, running?, last?}: pad null for an empty slot, else {name, prompt, session, agent, scope,
-//   seat, runsAt, at?, days?, every?, choke} as below; next the next run ('Thu 08:00'); running true while a run has begun and not
-//   ended; nextIn the minutes until that run, which orders the tile; last {end, at, reason?, task?}; routine, where the pad runs on a schedule, {state, unattended?}: the AIKit Routine that
-//   carries it unattended, state draft | enabled | disabled | stale-proof (`aikit routine list`, kernel op `routine` list and show).
+//   seat, choke} as below; next the next run ('Thu 08:00'); running true while a run has begun and not
+//   ended; nextIn the minutes until that run, which orders the tile; last {end, at, reason?, task?}; routine, where a routine runs the pad,
+//   {state, unattended?, when?}: the AIKit Routine that carries it, state draft | enabled | disabled | stale-proof, and its schedule `when`
+//   as a reading (`aikit routine list`, kernel op `routine` list and show). Factory's pad still carries runs_at (prompt_pads.rs); the
+//   device reads when a pad runs from its routine and sets no time.
 //   stale-proof is the pressure to prove the Method again before it runs alone (Factory reads the same state as
 //   JourneyRoutineObservation.proof_revalidation_required, factory/src/journey_praxis.rs:99).
 // - `revision`: the bank's revision, which every write must name (pads-write compare-and-swap).
@@ -24,13 +27,12 @@
 // The shell holds `project` (the bank shown) and `pad` (the slot you read, 0–15).
 // The selected pad's settings, each written alone through `pads-write` (a person only, on the bank's revision): `name`, `prompt`,
 // `session` ('new' or a session id), `agent` ('project' or an agent id), `scope` ('session' or a scope id), `seat` ('session' or a
-// seat), `runsAt` ('off' · 'daily' · 'every'), `at` (minutes after midnight), `days` ('all' · 'weekdays' · 'weekends'), `every`
-// (hours), `choke` (0 for Off, or 1–8). Central validates a schedule before Factory keeps it (`central.time.occurrences`), and its
-// refusal comes back in its own words. `press` runs the selected pad now: the launch goes through the gateway as any launch does, and
-// Factory records its begin (`pads-run`, trigger press) and its end (`pads-record`). `clear` empties the slot.
+// seat), `choke` (0 for Off, or 1–8). `press` runs the selected pad now: the launch goes through the gateway as any launch does, and
+// Factory records its begin (`pads-run`, trigger press) and its end (`pads-record`). `clear` empties the slot. `makeRoutine` (the pad's
+// index) opens Settings, Automations on a new routine for the pad: the shell's own act, which writes nothing here.
 // No kernel op reaches `factory development pads*` yet: the binding stands every write disabled with that reason until one does.
-import {Action, Band, Chooser, Display, Folded, Panel, Radio, Readout, Rows, Section, TextField, Tile, ValueBox, type LightState, type Option, type RowItem, type Tone} from '../../sdk/panel'
-import {NONE, clock, grown, has, json, numOf, st, strOf, type DesignedDevice, type ViewProps} from './design'
+import {Action, Band, Chooser, Display, Folded, Panel, Readout, Rows, Section, TextField, Tile, ValueBox, type LightState, type Option, type RowItem, type Tone} from '../../sdk/panel'
+import {NONE, grown, has, json, numOf, st, strOf, type DesignedDevice, type ViewProps} from './design'
 import './software-factory__prompt-pads.css'
 
 type V = ViewProps['v']
@@ -57,10 +59,6 @@ interface Pad {
   readonly prompt?: string
   readonly session?: string
   readonly agent?: string
-  readonly runsAt?: 'off' | 'daily' | 'every'
-  readonly at?: number
-  readonly days?: string
-  readonly every?: number
   readonly choke?: number
 }
 interface Slot {
@@ -72,7 +70,7 @@ interface Slot {
   readonly nextIn?: number
   readonly running: boolean
   readonly last?: {readonly end?: End; readonly at?: string; readonly reason?: string; readonly task?: string}
-  readonly routine?: {readonly state?: string; readonly unattended?: boolean}
+  readonly routine?: {readonly state?: string; readonly unattended?: boolean; readonly when?: string}
 }
 
 /** The sixteen slots, by index; undefined when the owner reports no bank. */
@@ -85,34 +83,21 @@ function slotsOf(v: V): Slot[] | undefined {
     if (!o || index === undefined || index < 0 || index > 15) continue
     const p = object(o.pad), last = object(o.last), routine = object(o.routine)
     slots[index] = {index, running: o.running === true, next: word(o.next), nextIn: count(o.nextIn),
-      pad: p ? {name: word(p.name) ?? 'Untitled pad', prompt: word(p.prompt), session: word(p.session), agent: word(p.agent),
-        runsAt: p.runsAt === 'daily' || p.runsAt === 'every' ? p.runsAt : 'off', at: count(p.at), days: word(p.days), every: count(p.every), choke: count(p.choke)} : undefined,
+      pad: p ? {name: word(p.name) ?? 'Untitled pad', prompt: word(p.prompt), session: word(p.session), agent: word(p.agent), choke: count(p.choke)} : undefined,
       last: last ? {end: ENDS.find(e => e === last.end), at: word(last.at), reason: word(last.reason), task: word(last.task)} : undefined,
-      routine: routine ? {state: word(routine.state), unattended: typeof routine.unattended === 'boolean' ? routine.unattended : undefined} : undefined}
+      routine: routine ? {state: word(routine.state), unattended: typeof routine.unattended === 'boolean' ? routine.unattended : undefined, when: word(routine.when)} : undefined}
   }
   return slots
 }
 
-const DAYS: readonly Option<string>[] = [
-  {value: 'all', label: 'Every day', does: 'Runs on every day of the week.'},
-  {value: 'weekdays', label: 'Weekdays', does: 'Runs Monday to Friday.'},
-  {value: 'weekends', label: 'Weekends', does: 'Runs on Saturday and Sunday.'},
-]
-const RUNS_AT: readonly Option<string>[] = [
-  {value: 'off', label: 'Off', does: 'The pad runs only when you press it.'},
-  {value: 'daily', label: 'Daily', does: 'The pad runs at a time, on the days you choose.'},
-  {value: 'every', label: 'Every', does: 'The pad runs every so many hours.'},
-]
-const schedule = (pad: Pad | undefined): string | undefined => {
-  if (!pad) return undefined
-  if (pad.runsAt === 'daily') return `${pad.at !== undefined ? clock(pad.at) : NONE}${pad.days && pad.days !== 'all' ? ` ${DAYS.find(d => d.value === pad.days)?.label.toLowerCase() ?? pad.days}` : ''}`
-  if (pad.runsAt === 'every') return `every ${pad.every ?? NONE} h`
-  return undefined
-}
+/** When a routine runs the pad, as the routine reads it (a reading: the time is the routine's, set in Settings, Automations). */
+const schedule = (slot: Slot | undefined): string | undefined => slot?.routine?.when
+/** A pad that runs by itself: a routine carries it. */
+const timedSlot = (slot: Slot) => !!slot.pad && slot.routine !== undefined
 
 interface Reading {readonly slots: readonly Slot[] | undefined; readonly me: Slot | undefined}
 const read = (v: V): Reading => { const slots = slotsOf(v), i = numOf(v, 'pad'); return {slots, me: i === undefined ? undefined : slots?.[i]} }
-const scheduled = (r: Reading) => (r.slots ? r.slots.filter(s => s.pad && s.pad.runsAt !== 'off').length : undefined)
+const scheduled = (r: Reading) => (r.slots ? r.slots.filter(timedSlot).length : undefined)
 const running = (r: Reading) => (r.slots ? r.slots.filter(s => s.running).length : undefined)
 const projectName = (v: V) => { const id = strOf(v, 'project'); return id === undefined ? undefined : word(json<{id?: string; name?: string}[]>(v, 'projects', []).find(x => x?.id === id)?.name) ?? id }
 
@@ -131,10 +116,10 @@ function PadGrid({p, r, w, h, live, names}: {p: ViewProps; r: Reading; w: number
     {r.slots === undefined && <text x={6} y={h / 2} className="dp-axis">No reading of the pads</text>}
     {r.slots?.map(slot => {
       const col = slot.index % 4, row = 3 - Math.floor(slot.index / 4), x = 4 + col * (pw + gap), y = top + row * (ph + gap)
-      const pad = slot.pad, me = slot.index === r.me?.index, end = slot.last?.end, sched = pad && pad.runsAt !== 'off'
+      const pad = slot.pad, me = slot.index === r.me?.index, end = slot.last?.end, sched = timedSlot(slot)
       const stale = slot.routine?.state === 'stale-proof'
       const said = pad ? `${slot.index + 1} · ${pad.name}|${[pad.prompt ? cut(pad.prompt, 80) : undefined, slot.running ? 'Its task runs now.' : end ? `Last run ${END_WORD[end]}${slot.last?.at ? ` ${slot.last.at}` : ''}.` : 'It has not run yet.',
-        sched ? `Runs ${schedule(pad)}${slot.next ? `; next ${slot.next}` : ''}.` : undefined, stale ? 'Its routine needs its Method proved again before it runs alone.' : undefined].filter(Boolean).join(' ')}`
+        sched ? `A routine runs it${schedule(slot) ? ` ${schedule(slot)}` : ''}${slot.next ? `; next ${slot.next}` : ''}.` : undefined, stale ? 'Its routine needs its Method proved again before it runs alone.' : undefined].filter(Boolean).join(' ')}`
         : `${slot.index + 1}|An empty pad. Press it, then give it a prompt.`
       return <g key={slot.index} role="button" tabIndex={live ? 0 : -1} aria-label={pad ? `Pad ${slot.index + 1}, ${pad.name}` : `Pad ${slot.index + 1}, empty`} aria-pressed={me}
         data-i={said} style={{cursor: live ? 'pointer' : undefined}} onClick={() => choose(slot.index)}
@@ -147,7 +132,7 @@ function PadGrid({p, r, w, h, live, names}: {p: ViewProps; r: Reading; w: number
         {names !== 'none' && !pad && <text x={x + pw / 2} y={y + ph / 2 + 3} textAnchor="middle" className="dp-axis">{slot.index + 1}</text>}
         {end && !slot.running && <circle cx={x + pw - 5} cy={y + 5} r={2.3} fill={end === 'refused' ? 'none' : END_INK[end]} stroke={END_INK[end]} strokeWidth={1} />}
         {slot.running && <circle cx={x + pw - 5} cy={y + 5} r={2.3} fill="var(--dp-on)" className="pp-run" />}
-        {names !== 'none' && sched && ph >= 22 && <text x={x + 4} y={y + ph - 4} className="dp-axis" style={{fontSize: 7.5, fill: stale ? 'var(--stall)' : undefined}}>{names === 'full' ? `↻ ${slot.next ?? schedule(pad)}` : '↻'}</text>}
+        {names !== 'none' && sched && ph >= 22 && <text x={x + 4} y={y + ph - 4} className="dp-axis" style={{fontSize: 7.5, fill: stale ? 'var(--stall)' : undefined}}>{names === 'full' ? `↻ ${slot.next ?? schedule(slot) ?? ''}` : '↻'}</text>}
         {names === 'none' && sched && <path d={`M${x + 3} ${y + ph - 3}h4`} stroke={stale ? 'var(--stall)' : 'var(--dp-value)'} strokeWidth={1.4} />}
         {names !== 'none' && pad?.choke ? <text x={x + pw - 3} y={y + ph - 4} textAnchor="end" className="dp-axis" style={{fontSize: 7.5}}>{`c${pad.choke}`}</text> : null}
       </g>
@@ -165,10 +150,7 @@ const SAYS = {
   agent: 'Who works the task when the pad opens a session.',
   scope: 'What the task may read and write.',
   seat: 'The workcell seat the task runs in: its machine, its checkout and its landing.',
-  runsAt: 'When the pad starts its task by itself: Off, daily at a time, or every so many hours. Central checks the schedule before Factory keeps it.',
-  at: 'The time a daily pad runs.',
-  days: 'The days a daily pad runs.',
-  every: 'The hours between the runs of a pad that runs every so many hours.',
+  makeRoutine: 'Opens Settings, Automations on a new routine for this pad. A pad runs by itself only through its routine, which is given its time there.',
   choke: 'Pads in one choke group never run at once: a pad waits while another in its group runs. Off, or a group from 1 to 8.',
   press: 'Start the pad\'s task now, through the gateway, under Scope and Arm.',
   clear: 'Empty the pad. Its record of runs stays.',
@@ -184,27 +166,17 @@ const sessionChooser = (p: ViewProps, r: Reading) => chooser(p, r, 'session', 'S
 const agentChooser = (p: ViewProps, r: Reading) => chooser(p, r, 'agent', 'Agent', {value: 'project', label: 'The project\'s', does: 'The project\'s own agent.'}, 'agents')
 const scopeChooser = (p: ViewProps, r: Reading) => chooser(p, r, 'scope', 'Scope', {value: 'session', label: 'The session\'s', does: 'The scope of the session the task starts on.'}, 'scopes')
 const seatChooser = (p: ViewProps, r: Reading) => chooser(p, r, 'seat', 'Works in', {value: 'session', label: 'The session\'s', does: 'The workcell of the session the task starts on.'}, 'seats')
-const runsAtRadio = (p: ViewProps, r: Reading, stack = true) => <Radio {...gate(p, r, 'runsAt')} label="Runs at" does={SAYS.runsAt} value={strOf(p.v, 'runsAt') ?? ''} options={RUNS_AT} stack={stack} onChange={x => p.set('runsAt', x)} />
-const atBox = (p: ViewProps, r: Reading) => {
-  const s = gate(p, r, 'at')
-  return <ValueBox {...s} disabled={s.disabled ?? (strOf(p.v, 'runsAt') !== 'daily' ? 'Set Runs at to Daily first.' : undefined)} label="At" does={SAYS.at}
-    value={numOf(p.v, 'at') ?? NaN} scale={{min: 0, max: 1425, step: 15}} format={clock} onChange={x => p.set('at', x)} />
-}
-const daysChooser = (p: ViewProps, r: Reading) => {
-  const s = gate(p, r, 'days')
-  return <Chooser {...s} disabled={s.disabled ?? (strOf(p.v, 'runsAt') !== 'daily' ? 'Set Runs at to Daily first.' : undefined)} label="Days" does={SAYS.days} wide value={strOf(p.v, 'days') ?? ''} options={DAYS} onChange={x => p.set('days', x)} />
-}
-const everyBox = (p: ViewProps, r: Reading) => {
-  const s = gate(p, r, 'every')
-  return <ValueBox {...s} disabled={s.disabled ?? (strOf(p.v, 'runsAt') !== 'every' ? 'Set Runs at to Every first.' : undefined)} label="Every" does={SAYS.every}
-    value={numOf(p.v, 'every') ?? NaN} scale={{min: 1, max: 168, step: 1}} format={x => `${x} h`} onChange={x => p.set('every', x)} />
-}
 const chokeBox = (p: ViewProps, r: Reading) => <ValueBox {...gate(p, r, 'choke')} label="Choke" does={SAYS.choke} value={numOf(p.v, 'choke') ?? NaN} def={0}
   scale={{min: 0, max: 8, step: 1}} format={x => (x < 1 ? 'Off' : `${x}`)} onChange={x => p.set('choke', x)} />
 const pressAction = (p: ViewProps, r: Reading) => {
   const s = st(p, 'press')
   return <Action {...s} label="Run now" does={SAYS.press}
     disabled={s.disabled ?? (!r.me ? 'Choose a pad.' : !r.me.pad ? 'The pad is empty.' : r.me.running ? 'Its task runs now.' : undefined)} onPress={() => p.set('press', r.me?.index)} />
+}
+const makeRoutineAction = (p: ViewProps, r: Reading) => {
+  const s = st(p, 'makeRoutine')
+  return <Action {...s} label="Make routine" does={SAYS.makeRoutine} disabled={s.disabled ?? (!r.me?.pad ? 'The pad is empty.' : r.me.routine ? 'A routine runs this pad already: change it in Settings, Automations.' : undefined)}
+    onPress={() => p.set('makeRoutine', r.me?.index)} />
 }
 const clearAction = (p: ViewProps, r: Reading) => {
   const s = st(p, 'clear')
@@ -213,7 +185,7 @@ const clearAction = (p: ViewProps, r: Reading) => {
 const projectChooser = (p: ViewProps) => <Chooser {...st(p, 'project')} does={SAYS.project} value={strOf(p.v, 'project') ?? ''} options={withNow(p.v, 'project', lists(p.v, 'projects'))} onChange={x => p.set('project', x)} />
 
 const light = (p: ViewProps): LightState => { const x = strOf(p.owner ?? p.v, 'light'); return x === 'lit' || x === 'dark' ? x : 'unknown' }
-const LIGHT_WHY = 'The pads are not turned on or off: a pad runs when you press it or at its time.'
+const LIGHT_WHY = 'The pads are not turned on or off: a pad runs when you press it, or when its routine runs it.'
 const head = (p: ViewProps) => ({light: light(p), lightWhy: LIGHT_WHY, busy: light(p) === 'lit' && (running(read(p.v)) ?? 0) > 0, onFold: p.nav.fold, onFull: p.nav.full, acts: projectChooser(p)})
 const lastWord = (s?: Slot) => (s?.running ? 'running' : s?.last?.end ? `${END_WORD[s.last.end]}${s.last.at ? ` ${s.last.at}` : ''}` : s?.pad ? 'not yet' : undefined)
 
@@ -224,9 +196,9 @@ function PadsPane({p}: {p: ViewProps}) {
   return <div className="pp-pane">
     <header className="pp-head" aria-label="The bank">
       <b>{projectName(v) ?? NONE}</b><span>{r.slots ? `${r.slots.filter(s => s.pad).length} of 16 pads` : NONE}</span>
-      <span>{scheduled(r) === undefined ? NONE : `${scheduled(r)} on a schedule`}</span><span>{running(r) === undefined ? NONE : `${running(r)} running`}</span>
+      <span>{scheduled(r) === undefined ? NONE : `${scheduled(r)} run by a routine`}</span><span>{running(r) === undefined ? NONE : `${running(r)} running`}</span>
     </header>
-    <div className="pp-cols"><span>Pad</span><span>Prompt</span><span>Starts on</span><span>Runs at</span><span>Next</span><span>Last run</span></div>
+    <div className="pp-cols"><span>Pad</span><span>Prompt</span><span>Starts on</span><span>Routine</span><span>Next</span><span>Last run</span></div>
     <ol className="pp-list" aria-label="Pads">
       {r.slots === undefined && <li className="pp-none">No reading of the pads.</li>}
       {r.slots?.filter(s => s.pad).length === 0 && <li className="pp-none">The bank is empty. Press a pad and give it a prompt.</li>}
@@ -236,8 +208,8 @@ function PadsPane({p}: {p: ViewProps}) {
           <span className="pp-n">{s.index + 1}</span><b>{s.pad!.name}</b>
           <span className="pp-prompt">{s.pad!.prompt ?? NONE}</span>
           <span>{s.pad!.session === 'new' || s.pad!.session === undefined ? 'New session' : s.pad!.session}{s.pad!.choke ? ` · c${s.pad!.choke}` : ''}</span>
-          <span data-stale={s.routine?.state === 'stale-proof' || undefined}>{schedule(s.pad) ?? 'Off'}{s.routine?.state === 'stale-proof' ? ' · proof stale' : ''}</span>
-          <span>{s.next ?? (s.pad!.runsAt === 'off' ? '' : NONE)}</span>
+          <span data-stale={s.routine?.state === 'stale-proof' || undefined}>{s.routine ? schedule(s) ?? NONE : 'none'}{s.routine?.state === 'stale-proof' ? ' · proof stale' : ''}</span>
+          <span>{s.next ?? (s.routine ? NONE : '')}</span>
           <span className="pp-last"><i />{lastWord(s) ?? NONE}</span>
         </button>
       </li>)}
@@ -255,21 +227,21 @@ const SCOPES = JSON.stringify([{id: 'scope:read', name: 'Read the project'}, {id
 const SEATS = JSON.stringify([{id: 'env-1/o-i', name: 'env-1 · O-I'}, {id: 'env-2/o-i', name: 'env-2 · O-I'}, {id: 'env-3/o-i', name: 'env-3 · O-I'}])
 type Row = {index: number; pad: Record<string, unknown> | null; next?: string; running?: boolean; last?: Record<string, unknown>; routine?: Record<string, unknown>}
 const BANK = (over: Partial<Record<number, Partial<Row>>> = {}): string => JSON.stringify(([
-  {index: 0, pad: {name: 'Run the checks', prompt: 'Run the three type-checks and the widget tests; report what fails, with the file.', session: 'tests', agent: 'kite', runsAt: 'daily', at: 480, days: 'weekdays', choke: 1},
-    next: 'Thu 08:00', nextIn: 1080, last: {end: 'done', at: 'Wed 08:00'}, routine: {state: 'enabled', unattended: true}},
-  {index: 1, pad: {name: 'Review the branch', prompt: 'Review the branch against main: what changed, what it risks, what it lacks.', session: 'new', agent: 'cairn', runsAt: 'off', choke: 0},
+  {index: 0, pad: {name: 'Run the checks', prompt: 'Run the three type-checks and the widget tests; report what fails, with the file.', session: 'tests', agent: 'kite', choke: 1},
+    next: 'Thu 08:00', nextIn: 1080, last: {end: 'done', at: 'Wed 08:00'}, routine: {state: 'enabled', unattended: true, when: 'weekdays 08:00'}},
+  {index: 1, pad: {name: 'Review the branch', prompt: 'Review the branch against main: what changed, what it risks, what it lacks.', session: 'new', agent: 'cairn', choke: 0},
     last: {end: 'done', at: 'Tue 16:40'}},
-  {index: 2, pad: {name: 'Write up the week', prompt: 'Write up the week from the Ledger and the Day\'s faces: what landed, what stays open.', session: 'docs', agent: 'cairn', runsAt: 'daily', at: 1020, days: 'all', choke: 0},
-    next: 'Fri 17:00', nextIn: 3060, last: {end: 'stopped', at: 'Fri 17:06'}, routine: {state: 'enabled', unattended: true}},
-  {index: 3, pad: {name: 'Land the docs', prompt: 'Land the manual on main once its sweep is clean.', session: 'docs', agent: 'flint', runsAt: 'off', choke: 1}, last: {end: 'refused', at: 'Mon 11:12', reason: 'Scope does not let the agent write main.'}},
-  {index: 4, pad: {name: 'Refresh fixtures', prompt: 'Regenerate the hand-off fixtures and keep the old ids.', session: 'lead', agent: 'kite', runsAt: 'every', every: 6, choke: 2},
-    next: '14:00', nextIn: 120, running: true, last: {end: 'done', at: '08:00'}, routine: {state: 'enabled', unattended: true}},
-  {index: 5, pad: {name: 'Sweep the manual', prompt: 'Render the manual and sweep every embed for page errors.', session: 'docs', agent: 'flint', runsAt: 'off', choke: 2}, last: {end: 'stalled', at: 'Wed 10:20', reason: 'gen-fixtures waits for an answer: overwrite (y/N)'}},
-  {index: 8, pad: {name: 'Morning NOWs', prompt: 'Read the day\'s NOWs and propose the three that matter.', session: 'new', agent: 'cairn', runsAt: 'daily', at: 450, days: 'weekdays', choke: 0},
-    next: 'Thu 07:30', nextIn: 1050, routine: {state: 'stale-proof', unattended: true}},
+  {index: 2, pad: {name: 'Write up the week', prompt: 'Write up the week from the Ledger and the Day\'s faces: what landed, what stays open.', session: 'docs', agent: 'cairn', choke: 0},
+    next: 'Fri 17:00', nextIn: 3060, last: {end: 'stopped', at: 'Fri 17:06'}, routine: {state: 'enabled', unattended: true, when: 'Fridays 17:00'}},
+  {index: 3, pad: {name: 'Land the docs', prompt: 'Land the manual on main once its sweep is clean.', session: 'docs', agent: 'flint', choke: 1}, last: {end: 'refused', at: 'Mon 11:12', reason: 'Scope does not let the agent write main.'}},
+  {index: 4, pad: {name: 'Refresh fixtures', prompt: 'Regenerate the hand-off fixtures and keep the old ids.', session: 'lead', agent: 'kite', choke: 2},
+    next: '14:00', nextIn: 120, running: true, last: {end: 'done', at: '08:00'}, routine: {state: 'enabled', unattended: true, when: 'every 6 h'}},
+  {index: 5, pad: {name: 'Sweep the manual', prompt: 'Render the manual and sweep every embed for page errors.', session: 'docs', agent: 'flint', choke: 2}, last: {end: 'stalled', at: 'Wed 10:20', reason: 'gen-fixtures waits for an answer: overwrite (y/N)'}},
+  {index: 8, pad: {name: 'Morning NOWs', prompt: 'Read the day\'s NOWs and propose the three that matter.', session: 'new', agent: 'cairn', choke: 0},
+    next: 'Thu 07:30', nextIn: 1050, routine: {state: 'stale-proof', unattended: true, when: 'weekdays 07:30'}},
 ] as Row[]).map(row => ({...row, ...(over[row.index] ?? {})})))
 const SELECTED = {pad: 0, name: 'Run the checks', prompt: 'Run the three type-checks and the widget tests; report what fails, with the file.', session: 'tests', agent: 'kite', scope: 'scope:tests', seat: 'env-2/o-i',
-  runsAt: 'daily', at: 480, days: 'weekdays', every: 6, choke: 1}
+  choke: 1}
 
 export const design: DesignedDevice = {
   id: 'software-factory:prompt-pads',
@@ -281,10 +253,10 @@ export const design: DesignedDevice = {
   },
   fixtures: {
     'A morning bank': {},
-    'A pad stalled': {pad: 5, name: 'Sweep the manual', prompt: 'Render the manual and sweep every embed for page errors.', session: 'docs', agent: 'flint', scope: 'session', seat: 'session', runsAt: 'off', choke: 2},
-    'Proof gone stale': {pad: 8, name: 'Morning NOWs', prompt: 'Read the day\'s NOWs and propose the three that matter.', session: 'new', agent: 'cairn', scope: 'scope:read', seat: 'session', runsAt: 'daily', at: 450, days: 'weekdays', choke: 0},
-    'An empty pad': {pad: 15, name: undefined, prompt: undefined, session: undefined, agent: undefined, scope: undefined, seat: undefined, runsAt: undefined, at: undefined, days: undefined, every: undefined, choke: undefined},
-    'No readings': Object.fromEntries(['light', 'project', 'revision', 'pad', 'name', 'prompt', 'session', 'agent', 'scope', 'seat', 'runsAt', 'at', 'days', 'every', 'choke',
+    'A pad stalled': {pad: 5, name: 'Sweep the manual', prompt: 'Render the manual and sweep every embed for page errors.', session: 'docs', agent: 'flint', scope: 'session', seat: 'session', choke: 2},
+    'Proof gone stale': {pad: 8, name: 'Morning NOWs', prompt: 'Read the day\'s NOWs and propose the three that matter.', session: 'new', agent: 'cairn', scope: 'scope:read', seat: 'session', choke: 0},
+    'An empty pad': {pad: 15, name: undefined, prompt: undefined, session: undefined, agent: undefined, scope: undefined, seat: undefined, choke: undefined},
+    'No readings': Object.fromEntries(['light', 'project', 'revision', 'pad', 'name', 'prompt', 'session', 'agent', 'scope', 'seat', 'choke',
       'pads', 'projects', 'sessions', 'agents', 'scopes', 'seats'].map(k => [k, undefined])),
   },
 
@@ -297,16 +269,16 @@ export const design: DesignedDevice = {
       <Section label="Macros" cols={2} width={124}>
         {pressAction(p, r)}
         {chokeBox(p, r)}
-        <div style={{gridColumn: 'span 2', width: '100%'}}>{runsAtRadio(p, r, false)}</div>
-        <div style={{gridColumn: 'span 2', width: '100%', display: 'flex', justifyContent: 'center'}}>{atBox(p, r)}</div>
+        <div style={{gridColumn: 'span 2', width: '100%'}}>{sessionChooser(p, r)}</div>
+        <div style={{gridColumn: 'span 2', width: '100%'}}>{agentChooser(p, r)}</div>
       </Section>
     </Panel>
   },
 
   whole: p => {
     const r = read(p.v), me = r.me, stale = me?.routine?.state === 'stale-proof'
-    // Expanded, the two bands stand side by side: the pads grow into what the five other sections leave, as a Drum Rack's pads do.
-    const w = grown(p, 220, 180 + 140 + 168 + 96 + 150 + 6 * 12 + 40, 400)
+    // Expanded, the two bands stand side by side: the pads grow into what the four other sections leave, as a Drum Rack's pads do.
+    const w = grown(p, 220, 180 + 140 + 150 + 150 + 5 * 12 + 40, 400)
     return <Panel title="Prompt pads" view="whole" {...head(p)}>
       <Band>
         <Section width={w + 12}><PadGrid p={p} r={r} w={w} h={146} live names="full" /></Section>
@@ -322,15 +294,11 @@ export const design: DesignedDevice = {
         </Section>
       </Band>
       <Band>
-        <Section label="Runs at" cols={2} width={168}>
-          {runsAtRadio(p, r)}
-          <div style={{display: 'grid', rowGap: 3, width: '100%'}}>{atBox(p, r)}{everyBox(p, r)}</div>
-          <div style={{gridColumn: 'span 2', width: '100%'}}>{daysChooser(p, r)}</div>
-        </Section>
-        <Section label="Alone" width={96}>
-          <Readout label="routine" does="The AIKit routine that runs the pad by itself: draft, enabled, disabled, or its proof gone stale." value={me?.pad && me.pad.runsAt !== 'off' ? (me.routine?.state ? ROUTINE_WORD[me.routine.state] ?? me.routine.state : undefined) : me?.pad ? 'none' : undefined} tone={stale ? 'stall' : me?.routine?.state === 'enabled' ? 'green' : undefined} />
+        <Section label="Alone" cols={2} width={150}>
+          <Readout label="routine" does="The AIKit routine that runs the pad by itself: draft, enabled, disabled, or its proof gone stale." value={me?.pad ? (me.routine ? (me.routine.state ? ROUTINE_WORD[me.routine.state] ?? me.routine.state : undefined) : 'none') : undefined} tone={stale ? 'stall' : me?.routine?.state === 'enabled' ? 'green' : undefined} />
           <Readout label="unattended" does="Whether you granted the routine the right to run with nobody there." value={me?.routine?.unattended === undefined ? undefined : me.routine.unattended ? 'granted' : 'not granted'} />
-          <Readout label="next" does="When the pad next runs by itself." value={me?.next ?? (me?.pad?.runsAt === 'off' ? 'off' : undefined)} />
+          <Readout label="next" does="When the pad next runs by itself, as its routine has it." value={me?.next ?? (me?.pad && !me.routine ? 'none' : undefined)} />
+          {makeRoutineAction(p, r)}
         </Section>
         <Section label="Play" cols={2} grow>
           {pressAction(p, r)}
@@ -346,11 +314,11 @@ export const design: DesignedDevice = {
 
   widget: p => {
     const r = read(p.v)
-    const timed = (r.slots ?? []).filter(s => s.pad && s.pad.runsAt !== 'off').sort((a, b) => (a.nextIn ?? Infinity) - (b.nextIn ?? Infinity))
+    const timed = (r.slots ?? []).filter(timedSlot).sort((a, b) => (a.nextIn ?? Infinity) - (b.nextIn ?? Infinity))
     const items: RowItem[] = timed.map(s => ({id: String(s.index), name: `${s.index + 1} ${s.pad!.name}`, light: s.running ? 'lit' : s.last?.end === 'done' ? 'lit' : s.last?.end ? 'dark' : 'unknown',
       tone: s.running ? 'accent' : s.last?.end ? (END_TONE[s.last.end] === 'green' ? 'green' : s.last.end === 'stalled' ? 'stall' : undefined) : undefined, busy: s.running,
-      note: s.next ?? schedule(s.pad), why: s.routine?.state === 'stale-proof' ? 'Its routine needs its Method proved again before it runs alone.' : undefined,
-      does: `Runs ${schedule(s.pad)}. ${s.running ? 'Its task runs now.' : s.last?.end ? `Last run ${END_WORD[s.last.end]}.` : 'It has not run yet.'}`}))
+      note: s.next ?? schedule(s), why: s.routine?.state === 'stale-proof' ? 'Its routine needs its Method proved again before it runs alone.' : undefined,
+      does: `A routine runs it${schedule(s) ? ` ${schedule(s)}` : ''}. ${s.running ? 'Its task runs now.' : s.last?.end ? `Last run ${END_WORD[s.last.end]}.` : 'It has not run yet.'}`}))
     return <Tile title={`Prompt pads · ${projectName(p.v) ?? NONE}`} light={light(p)} lightWhy={LIGHT_WHY} busy={(running(r) ?? 0) > 0} span={2} onFull={p.nav.full}>
       <div className="pp-tile-list">
         {r.slots === undefined ? <p className="pp-none">No reading of the pads.</p>

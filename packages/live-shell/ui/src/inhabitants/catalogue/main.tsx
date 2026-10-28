@@ -97,7 +97,7 @@ function DeviceViews({device, views}: {device: DeviceInstance; views: readonly V
   return <div className="cat-views">{views.map(view => <ViewFrame key={view} view={view}>{one(view)}</ViewFrame>)}</div>
 }
 
-/** The status bar's line: what the control under the pointer (or in focus) does, from its data-i (WIDGET-GUIDE §1, the hover law). */
+/** The status bar's line: what the control under the pointer (or in focus) does, from its data-i (manual §16.9, the hover law). */
 function StatusLine() {
   const [said, setSaid] = useState<string>('')
   useEffect(() => {

@@ -7,13 +7,11 @@ import assert from 'node:assert/strict'
 // reason it stands. A device view that is not in this list says no number twice. A new duplicate fails this test: either remove it, or
 // say here why it is not one.
 const STANDS = {
-  'actuation:frames-monitor · whole': 'The picture marks the held window and the keep line on its own axes; the readout and the dial are the numbers to read and to set.',
   'actuation:gateway · whole': 'The picture marks the check-in age beside its needle; the readout is the number to read.',
   'actuation:harness-model · compact': 'The corner is turns used of the cap (3 / 12); the cap is the Budget box.',
   'actuation:harness-model · whole': 'The corner is turns used of the cap; the Budget box is the cap and the readout the turns used: two parameters, the same number only when the agent spent its whole budget (12 / 12, the Failed fixture).',
   'actuation:harness-model · widget': 'The turns readout is used of the cap, two parameters that read the same only when the agent spent its whole budget (12 / 12, the Failed fixture).',
   'central:search · whole': 'The picture is the vāk neighbourhood with the symbol at its centre; the readout is the symbol to read.',
-  'central:nara-conversation · whole': 'The corner is the turn against the budget (43 KB / 256 KB); the readout is the turn on its own.',
   'expressions:colour · whole': 'Different parameters that stand at the same value by default.',
   'expressions:contacts · compact': 'The corner is the wall bounce and the pair bounce; the dial is the wall bounce.',
   'expressions:field · whole': 'The corner joins the mode and the tone; the readout is the mode.',
@@ -27,15 +25,22 @@ const STANDS = {
   'techne:lens · widget': 'The picture marks each lens on its ring; the readout names the lens in force.',
   'techne:journey · compact': 'The picture writes the journey\'s length on its own axis; the dial is the pace.',
   'techne:journey · whole': 'The picture writes the journey\'s length on its own axis; the dial is the pace.',
-  'workcell:seat · compact': 'The picture shows both seats; the corner names the chosen one.',
-  'workcell:seat · whole': 'The picture shows both seats; the corner and the readouts are the chosen one.',
 }
 
+// (#725: the Frames monitor's, the Nara conversation's and the Seat's entries left with their designs, retired in the 22 Oct manual rewrite.)
+
 const {sweep} = await import('../scripts/design-sweep.mjs')
+const {readdir} = await import('node:fs/promises')
+/** The designs the catalogue holds: each `<family>__<face>.tsx` panel (catalogue/panels/index.ts) and the six reference modules (§16.15). */
+const catalogued = async () => (await readdir(new URL('../src/inhabitants/catalogue/panels/', import.meta.url)))
+  .filter(f => /^[a-z-]+__[a-z0-9-]+\.tsx$/.test(f) || ['day.tsx', 'member.tsx', 'physics.tsx', 'scope.tsx', 'skills.tsx', 'torus.tsx'].includes(f)).length
 
 test('no device view says a number twice, except where its picture and its reading are two things', {timeout: 600_000}, async () => {
   const {findings, skipped, designs} = await sweep()
-  assert.ok(designs >= 80, `the sweep reads the catalogue (${designs} designs)`)
+  // REPLACED (#725): "at least 80 designs" — the 22 Oct manual rewrite retired 28 panel files into the pages of other devices; the sweep reads
+  // every design the catalogue holds.
+  assert.equal(designs, await catalogued(), `the sweep reads the whole catalogue (${designs} designs)`)
+  assert.ok(designs >= 60, 'and the catalogue is the whole one, not a stub')
   assert.deepEqual(skipped, [], 'every design renders on the server')
   assert.deepEqual(findings.filter(f => f.error), [], 'every view renders')
   const unsaid = new Map()

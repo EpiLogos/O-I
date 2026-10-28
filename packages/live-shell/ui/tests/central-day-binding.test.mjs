@@ -348,8 +348,10 @@ test('the Day draws its catalogue design on the chain, in the pool, on the rail 
     assert.match(whole, /data-device-design="central:day-die"/)
     assert.match(whole, /role="tab" aria-selected="true">Fri 16<\/button>/, 'the page: today, by the owner\'s civil date')
     assert.doesNotMatch(whole, /Sat 17<\/button>/, 'no tomorrow page while no reading reports tomorrow\'s Day')
-    assert.match(whole, /aria-label="Day start"[^>]*aria-valuetext="00:00"/, 'the policy\'s boundary')
-    assert.match(whole, /aria-label="Rollover"[^>]*aria-valuetext="00:00"/)
+    // The manual (§18.2): the day's bounds are Central's readings, drawn as readings; no hours are set on the Day.
+    assert.match(whole, /<output class="dp-readout-value">00:00<\/output><span class="dp-label">closes<\/span>/, 'the policy\'s boundary, read')
+    assert.match(whole, /<output class="dp-readout-value">00:00<\/output><span class="dp-label">opens tomorrow<\/span>/, 'automatic rollover, read')
+    assert.doesNotMatch(whole, /aria-label="(Day start|Rollover|Runs at)"/, 'no time control')
     const widget = html(createElement(PlacedDevice, {device: entry.device, view: 'widget', picture: entry.picture, binding}))
     assert.match(widget, /aria-label="Day · Fri 16"/, 'the widget, titled by the owner\'s date')
     assert.match(widget, /<output class="dp-readout-value">—<\/output><span class="dp-label">tasks/, 'a count no owner reports is "—", never zero')
@@ -384,7 +386,8 @@ test('the five views move together: the hand\'s face shows in every view at once
       html(createElement(PlacedDevice, {device: entry.device, view: 'widget', picture: entry.picture, binding})),
     ]
     for (const markup of views()) assert.match(markup, /aria-checked="true" aria-label="2 Operation"/, 'the owner\'s open face, 2, in the net of every view')
-    assert.match(views()[0], /<text[^>]*>2(?:<!-- -->)? · (?:<!-- -->)?Operation<\/text>/, 'compact names it')
+    // The manual (§18.2 Compact): a reading under the net says when tomorrow opens, Central's bound (automatic rollover at 00:00 here).
+    assert.match(views()[0], /<text[^>]*>tomorrow opens (?:<!-- -->)?00:00<\/text>/, 'compact reads when tomorrow opens')
     assert.match(views()[1], /aria-label="Face"[^>]*aria-valuenow="2"/, 'the whole Face dial reads 2')
     assert.match(views()[0], />2</, 'face 0: two capture rows')
     host.setDraft(ID, 'face', 5)
@@ -589,6 +592,8 @@ test('the design: the Close pad presses Close now, the one move an owner takes; 
   const source = await readFile(new URL('../src/inhabitants/catalogue/panels/day.tsx', import.meta.url), 'utf8')
   assert.match(source, /\{id: 'close', name: 'Close', faces: '5 → 0′', face: 0, press: 'closeNow'/)
   for (const move of ['tasks', 'patterns', 'context', 'synthesis']) assert.match(source, new RegExp(`id: '${move}'[^}]*press: 'run_${move}'`))
-  assert.equal(catalogueDay.defaults.at_close, -30, 'Close runs at Day start by default')
-  for (const move of ['tasks', 'patterns', 'context', 'synthesis']) assert.equal(catalogueDay.defaults[`at_${move}`], -45, `${move} runs by itself only when you set it`)
+  // The manual (§18.2, §10.10): no pad keeps a time. A move wanted at a set time is a routine in Settings, Automations; Close runs by
+  // itself when the day closes, at Central's bound, which the Day reads and never sets.
+  assert.deepEqual(Object.keys(catalogueDay.defaults).filter(key => /^at_/.test(key)), [], 'no move keeps a time of its own')
+  assert.doesNotMatch(source, /label="(Runs at|Day start|Rollover)"/, 'the Day draws no time control')
 })

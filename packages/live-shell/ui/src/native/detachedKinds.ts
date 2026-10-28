@@ -40,9 +40,10 @@ export function deviceBindingId(identity: Pick<DeviceDetachIdentity, 'family' | 
   return `device:${identity.family}/${identity.face}`
 }
 
-/** The aperture part a standalone face's window reads: a Day for the die, a flow for the Flow document. Without it the window
- * would be empty. The Nara and ql-instrument faces show their own honest state without one, so they name no part. */
-const APERTURE_PART: ReadonlyMap<string, 'day' | 'flow'> = new Map([['day-die', 'day'], ['flow-document', 'flow']])
+/** The aperture part a standalone face's window reads: a Day for the die. Without it the window would be empty. The ql-instrument face
+ * shows its own honest state without one, so it names no part. (The Flow document and the Nara conversation were retired as faces of their
+ * own in the 22 Oct manual rewrite.) */
+const APERTURE_PART: ReadonlyMap<string, 'day' | 'flow'> = new Map([['day-die', 'day']])
 
 /** The named fault when a face's window would stand without the aperture it reads, or null. */
 export function popOutApertureFault(face: {readonly id: string}, aperture: DeviceAperture): string | null {

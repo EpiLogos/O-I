@@ -9,17 +9,34 @@
 // Everything the page holds is a value: `entries` (a JSON list), `packet` (a JSON list), `journal` (a JSON list of page names),
 // `island` (a JSON map of what the other keys of the island hold). A key the owner does not report is absent; the picture then says
 // which reading is missing in words, and every control and reading draws "—".
-// The actions set their own keys: `save`, `reread`, `copy`, `clear`. The save router's outcome is the reading `outcome`.
+// The actions set their own keys: `save`, `reread`. The save router's outcome is the reading `outcome`.
+// Page (manual §17.8, the Page group): Template, View, Flow view, Paper and Pin. Paper (`ground`: template | paper | ink) is the page's
+// paper tone: the template's own, light or dark. A Being's or a Thing's `layout` is the page's own appearance, a reading drawn here.
+// How an agent's entries arrive is Scope's and Arm's (§16.1), what Answer this reads is the Packet's (§18.3), and whether an answer
+// joins or replaces is the transport's Overdub: the Document keeps none of them, and shows the packet only by its size.
 // Selection (manual §17.8, the Selection group): `selection` is the passage selected in the page, {entry, text} (the shell's
 // selection in the drawn page; absent while nothing is selected). `selectionAct` is what a plain selection does (highlight | note |
-// packet | remember | answer) and `packetScope` what Answer this reads (selection | page | linked); the shell holds both. The five
+// packet | remember | answer); the shell holds it. The five
 // passage acts, each on its own key as Central's Clip view writes them: act.highlight and act.note (the page's own island, through
 // the save router), act.topacket (the packet, ql-doc `packet`), act.remember (`central.remember` for a page of your own world,
 // `projectcentral.remember` for a project's: the passage word for word with its source ref, a proposal that stays unrecognised
 // until you recognise it; the kernel's invoke_action reaches both) and act.answerthis (the packet and the passage to the agent on
 // the world's chain; the answer arrives as a new entry with its sources). All five owners exist.
+// The Thought page (manual §17.8 The Thought page) is Contemplate, for a page that is a Flow: one explicit reading of the Flow by an
+// agent, which never runs by itself. Its owner is AIKit's Flow cognition, reached by the kernel's `action:contemplate-flow`: asked bare,
+// it answers the preflight (what would be read and touched, by which agent, model and harness; it records nothing); asked with that
+// preflight record, it runs once, re-checking the preflight and refusing drift. Changed since is the kernel's flow_changed_since.
+//   preflight  {state: 'ready' | 'unavailable', reason?, invocation, model, harness, agent?, focus, changed: [{title, basis?, observed?}],
+//              affected: [{title, freshness}]}
+//   thought    {state: 'cognition' | 'unavailable' | 'refused', reason?, at, cursor, tensions, candidates, proposals, intents}  the last
+//              thought (aikit.flow-cognition/v1); JSON null when the Flow has not been contemplated
+//   since      {state: 'available' | 'empty' | 'unavailable', reason?, changed, affected, open: [{kind, reference, state?}]}
+//              (aikit.flow-changed-since/v1)
+// Acts: preflightRead (ask again), contemplate (the preflight's invocation ref; held: one explicit run), sinceRead. A thought's
+// tensions, candidates and proposals wait for you: nothing here applies them. (The Thought page and its parts are the Flow's own,
+// central__flow-document.tsx, carried here as the manual now places Contemplate.)
 import {useEffect, useState, type ReactNode} from 'react'
-import {Action, Band, Chooser, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, TextField, Tile, Toggle, type LightState, type RowItem, type Tone} from '../../sdk/panel'
+import {Action, Band, Chooser, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, Tile, Toggle, type LightState, type RowItem, type Tone} from '../../sdk/panel'
 import {NONE, boolOf, cradleDocuments, has, json, numOf, shown, st, strOf, type DesignedDevice, type ViewProps} from './design'
 import './central__document.css'
 
@@ -60,8 +77,6 @@ const SELECTION_ACTS = [
   {value: 'remember', label: 'Remember', does: 'A plain selection keeps the passage in your ground, as a proposal.'},
   {value: 'answer', label: 'Answer this', does: 'A plain selection sends the packet and the passage to the agent.'},
 ] as const
-const PACKET_SCOPES = [{value: 'selection', label: 'Selection', does: 'Answer this reads the passage.'}, {value: 'page', label: 'Page', does: 'Answer this reads the page.'},
-  {value: 'linked', label: 'Page and linked', does: 'Answer this reads the page and the pages it links.'}] as const
 const PASSAGE_ACTS = [
   {key: 'act.highlight', label: 'Highlight', does: 'Marks the passage and leaves it whole.'},
   {key: 'act.note', label: 'Note', does: 'Attaches a note to the passage. A note is not a source.'},
@@ -70,19 +85,17 @@ const PASSAGE_ACTS = [
   {key: 'act.answerthis', label: 'Answer this', does: 'Sends the packet and the passage to the agent. The answer arrives as a new entry, with its sources.'},
 ] as const
 
-const WRITES = [
-  {value: 'off', label: 'Off', does: 'The agent does not write.'},
-  {value: 'propose', label: 'Propose', does: 'Each agent entry waits for you to accept it.'},
-  {value: 'write', label: 'Write', does: 'Agent entries go in directly, each with a receipt.'},
-] as const
 const FLOW_VIEWS = [
   {value: 'dialogue', label: 'Dialogue', does: 'The entries in order, as a conversation.'},
   {value: 'flow', label: 'Flow', does: 'One entry at a time as a full page.'},
   {value: 'journal', label: 'Journal', does: 'One person, one page at a time.'},
 ] as const
 const VIEWS = [{value: 'page', label: 'Page', does: 'The page as its template draws it.'}, {value: 'source', label: 'Source', does: 'The text that the page keeps.'}] as const
-const GROUNDS = [{value: 'paper', label: 'Paper', does: 'Dark ink on light paper.'}, {value: 'ink', label: 'Ink', does: 'Light ink on dark ground.'}] as const
-const LAYOUTS = [{value: 'portrait', label: 'Portrait', does: 'The mark stands at the right.'}, {value: 'editorial', label: 'Editorial', does: 'The mark stands at the left.'}] as const
+/** Paper (manual §17.8): the page's paper tone, the template's own, light or dark. Kept on `ground` (paper | ink, or template). */
+const PAPERS = [{value: 'template', label: 'Template default', does: 'The paper the template draws.'}, {value: 'paper', label: 'Light', does: 'Dark ink on light paper.'},
+  {value: 'ink', label: 'Dark', does: 'Light ink on dark ground.'}] as const
+/** The paper a page is drawn on: Light or Dark where you set it, else the template's own (light), or a Being's or Thing's own tone. */
+const toneOf = (v: V): 'paper' | 'ink' => (strOf(v, 'ground') === 'ink' ? 'ink' : 'paper')
 
 // ---------------------------------------------------------------- what the page holds, from the values
 
@@ -123,7 +136,6 @@ function held(v: V) {
 function packetWords(v: V) {
   const {items, size} = held(v)
   if (!items) return 'No reading of the packet'
-  if (boolOf(v, 'copied') === true && items.length) return 'Packet · copied as JSON'
   return items.length ? `Packet · ${items.length} item${items.length === 1 ? '' : 's'} · ${size} chars` : 'Packet · empty'
 }
 
@@ -150,17 +162,16 @@ function sourceKeys(v: V): readonly (readonly [string, string])[] {
     notes: n.notes === undefined ? undefined : `[${n.notes}]`,
     packet: n.items ? `[${n.items.length}]` : undefined,
     ...(kind === 'flow' ? {meta: flowView ? `{view: ${flowView}}` : undefined, entries: entries ? `[${entries.length}]` : undefined} : {}),
-    ...(kind === 'being' || kind === 'thing' ? {appearance: layout && ground ? `{${layout} · ${ground}}` : undefined} : {}),
+    ...(kind === 'being' || kind === 'thing' ? {appearance: layout ? `{${layout}${ground && ground !== 'template' ? ` · ${ground}` : ''}}` : undefined} : {}),
   }
   const reading = (key: string) => { const x = obj(seen) ? seen[key] : undefined; return typeof x === 'string' ? x : NONE }
   return ISLAND[kind].map(key => [key, key in live ? live[key] ?? NONE : reading(key)] as const)
 }
 
-/** The one choice that the picture shows with a handle: the Flow's view, a page's layout, or a Day's page or source. */
+/** The one choice that the picture shows with a handle: the Flow's view, or any other page's page or source. */
 function stopsOf(kind: KindId) {
   if (kind === 'flow') return {key: 'flowView', def: 'dialogue', items: FLOW_VIEWS, label: 'Flow view', does: 'Drag along the line to choose Dialogue, Flow or Journal.'}
-  if (kind === 'day') return {key: 'view', def: 'page', items: VIEWS, label: 'View', does: 'Drag along the line to show the page or its source.'}
-  return {key: 'layout', def: 'portrait', items: LAYOUTS, label: 'Layout', does: 'Drag along the line to set where the mark stands.'}
+  return {key: 'view', def: 'page', items: VIEWS, label: 'View', does: 'Drag along the line to show the page or its source.'}
 }
 
 /** Break a line of words at a width, to at most `max` lines. */
@@ -178,7 +189,7 @@ function wrap(text: string, n: number, max: number): string[] {
 
 interface Box {readonly x: number; readonly y: number; readonly w: number; readonly h: number}
 
-/** The paper that a Day or a Flow is drawn on: light, in every mode. */
+/** The paper that a Day or a Flow is drawn on: the template's own light paper, or the tone Paper sets. */
 const Sheet = ({x, y, w, h}: Box) => <rect x={x} y={y} width={w} height={h} fill={PAPER.paper.bg} />
 
 /** A missing reading, named in words in the middle of the box it would have filled. */
@@ -260,14 +271,11 @@ function DayNet({v, x, y, w, h}: Box & {v: V}) {
 
 /** A Being or a Thing: the sheet, with its mark where the layout puts it and its ground as the tone sets it. */
 function PageSheet({v, x, y, w, h}: Box & {v: V}) {
-  const ground = strOf(v, 'ground'), layout = strOf(v, 'layout')
-  if ((ground !== 'ink' && ground !== 'paper') || (layout !== 'editorial' && layout !== 'portrait')) {
-    const lacks = ground !== 'ink' && ground !== 'paper' ? (layout !== 'editorial' && layout !== 'portrait' ? 'ground or layout' : 'ground') : 'layout'
-    return <g>
-      <rect x={x} y={y} width={w} height={h} fill="none" className="dp-faint" />
-      <Words x={x} y={y} w={w} h={h} text={`No reading of the ${lacks}`} />
-    </g>
-  }
+  const ground = toneOf(v), layout = strOf(v, 'layout')
+  if (layout !== 'editorial' && layout !== 'portrait') return <g>
+    <rect x={x} y={y} width={w} height={h} fill="none" className="dp-faint" />
+    <Words x={x} y={y} w={w} h={h} text="No reading of the page's layout" />
+  </g>
   const p = PAPER[ground], editorial = layout === 'editorial', pad = 7
   const rail = Math.round(w * .27), left = x + pad + (editorial ? 20 : 0), colW = x + w - pad - rail - 6 - left
   const markX = editorial ? x + pad + 7 : x + w - pad - 7, title = titleOf(v)
@@ -341,12 +349,12 @@ function Preview({v, set, w, h, tile, onOpen}: {v: V; set?: SetFn; w: number; h:
   const name = title || (kind === 'day' ? shown(v, 'date') : title === undefined ? NONE : 'Untitled')
   const headline = `${w > 160 ? `${k.label} ${k.version} · ` : ''}${name}`
   return <g>
-    {!tile && <text x={6} y={12} className="dp-ink-dim">{short(headline, Math.floor((w - 44) / 4.5))}</text>}
+    {!tile && <text x={6} y={12} className="dp-ink-dim" data-i={`${name}|The page's title, as its template heads it.`}>{short(headline, Math.floor((w - 44) / 4.5))}</text>}
     {!tile && <Stops v={v} set={set} w={w} kind={kind} />}
     <g onClick={onOpen} style={{cursor: onOpen ? 'pointer' : undefined}}>
       {source ? <SourceLines v={v} {...box} />
-        : kind === 'day' ? <><Sheet {...box} /><DayNet v={v} {...box} /></>
-        : kind === 'flow' ? <><Sheet {...box} /><FlowPicture v={v} {...box} /></>
+        : kind === 'day' ? <g data-paper={toneOf(v)}><Sheet {...box} /><DayNet v={v} {...box} /></g>
+        : kind === 'flow' ? <g data-paper={toneOf(v)}><Sheet {...box} /><FlowPicture v={v} {...box} /></g>
         : <PageSheet v={v} {...box} />}
     </g>
     {packet}
@@ -405,15 +413,17 @@ const passage = (v: V): {entry?: number; text: string} | undefined => {
     ? {entry: typeof (s as {entry?: unknown}).entry === 'number' ? (s as {entry: number}).entry : undefined, text: (s as {text: string}).text} : undefined
 }
 const flowOnly = (v: V) => { const k = kindOf(v); return k === 'flow' ? undefined : k ? `A ${KINDS[k].label} has no Flow view.` : NO_TEMPLATE }
-const pageOnly = (v: V) => { const k = kindOf(v); return k === 'being' || k === 'thing' ? undefined : k ? `A ${KINDS[k].label} keeps its template's paper.` : NO_TEMPLATE }
 const SOURCE_MOVED = 'The source moved after your draft. Re-read to review it.'
-const noPacket = (v: V) => { const {items} = held(v); return items ? (items.length ? undefined : 'The packet is empty.') : 'No reading of the packet.' }
 
 function FlowViewRadio({p}: {p: ViewProps}) {
   return <Radio label="Flow view" does="How a Flow reads: Dialogue, Flow or Journal." value={strOf(p.v, 'flowView') ?? ''} options={FLOW_VIEWS} stack onChange={x => p.set('flowView', x)} disabled={flowOnly(p.v)} />
 }
-function AgentRadio({p}: {p: ViewProps}) {
-  return <Radio label="Agent" does="How agent entries arrive: Off, Propose or Write." value={strOf(p.v, 'agentWrites') ?? ''} options={WRITES} stack onChange={x => p.set('agentWrites', x)} />
+function ViewRadio({p}: {p: ViewProps}) {
+  return <Radio label="View" does="The drawn page, or the text that it keeps." value={strOf(p.v, 'view') ?? ''} options={VIEWS} stack onChange={x => p.set('view', x)} />
+}
+function SelectionActChooser({p}: {p: ViewProps}) {
+  return <Chooser {...st(p, 'selectionAct')} label="Selection act" wide does="What a plain selection does: Highlight, Note, To packet, Remember or Answer this."
+    value={strOf(p.v, 'selectionAct') ?? ''} options={SELECTION_ACTS} onChange={x => p.set('selectionAct', x)} />
 }
 function PinToggle({p}: {p: ViewProps}) {
   const now = boolOf(p.v, 'pinned')
@@ -424,20 +434,172 @@ function AutosaveToggle({p}: {p: ViewProps}) {
   return <Toggle label="Autosave" does="Save a short time after you stop. A moved source still keeps your draft." on={now === true} unknown={now === undefined} onChange={x => p.set('autosave', x)} />
 }
 
-/** The packet whole: its items as rows, the scope each was added under at the right. */
-function packetRows(v: V): RowItem[] {
-  const {items} = held(v)
-  if (!items) return [{id: 'none', name: 'No reading of the packet', light: 'unknown'}]
-  if (!items.length) return [{id: 'none', name: 'Nothing in the packet', light: 'unknown'}]
-  return items.map((i, at) => ({id: `${at}:${i.entry}`, name: i.text, light: 'lit' as const, tone: 'value' as const, note: i.scope === 'whole entry' ? 'entry' : i.scope, does: `Entry ${i.entry}, added as ${i.scope}.`}))
+// ---------------------------------------------------------------- Thought: Contemplate the Flow, and what changed since
+// Carried from the Flow's design (central__flow-document.tsx), where these parts were drawn first.
+
+const text = (x: unknown) => (typeof x === 'string' ? x : typeof x === 'number' && Number.isFinite(x) ? String(x) : '')
+const count = (x: unknown) => (typeof x === 'number' && Number.isFinite(x) ? x : undefined)
+const record = (x: unknown): Record<string, unknown> => (x && typeof x === 'object' ? (x as Record<string, unknown>) : {})
+
+type Fresh = 'basis-changed' | 'integration-pending' | 'basis-unavailable'
+interface Moved {readonly title: string; readonly basis?: string; readonly observed?: string; readonly kind?: string}
+interface Touched {readonly title: string; readonly freshness: Fresh}
+interface Open {readonly kind: 'tension' | 'candidate' | 'human-source-proposal' | 'flow-mutation-intent'; readonly reference: string; readonly state?: string}
+interface Preflight {readonly state: 'ready' | 'unavailable'; readonly reason?: string; readonly invocation?: string; readonly model?: string; readonly harness?: string
+  readonly agent?: string; readonly focus: number; readonly changed: readonly Moved[]; readonly affected: readonly Touched[]}
+interface Thought {readonly state: 'cognition' | 'unavailable' | 'refused'; readonly reason?: string; readonly at?: string; readonly cursor?: number; readonly tensions: number; readonly candidates: number
+  readonly proposals: number; readonly intents: number}
+interface Since {readonly state: 'available' | 'empty' | 'unavailable'; readonly reason?: string; readonly changed: readonly Moved[]; readonly affected: readonly Touched[]; readonly open: readonly Open[]}
+const FRESH: readonly string[] = ['basis-changed', 'integration-pending', 'basis-unavailable']
+const OPEN_KINDS: readonly string[] = ['tension', 'candidate', 'human-source-proposal', 'flow-mutation-intent']
+const OPEN_WORD: Readonly<Record<Open['kind'], string>> = {tension: 'tension', candidate: 'candidate', 'human-source-proposal': 'proposal to your ground', 'flow-mutation-intent': 'change to the Flow'}
+const FRESH_WORD: Readonly<Record<Fresh, string>> = {'basis-changed': 'source moved', 'integration-pending': 'waits to integrate', 'basis-unavailable': 'source gone'}
+const movedOf = (x: unknown): Moved[] => (Array.isArray(x) ? x : []).flatMap(y => { const r = record(y); return text(r.title) ? [{title: text(r.title), basis: text(r.basis) || undefined, observed: text(r.observed) || undefined, kind: text(r.kind) || undefined}] : [] })
+const touchedOf = (x: unknown): Touched[] => (Array.isArray(x) ? x : []).flatMap(y => { const r = record(y); return text(r.title) && FRESH.includes(text(r.freshness)) ? [{title: text(r.title), freshness: r.freshness as Fresh}] : [] })
+
+/** The preflight `action:contemplate-flow` answers before anything runs: what Contemplate would read and touch. Undefined when not read. */
+function preflightOf(v: V): Preflight | undefined {
+  const raw = json<unknown>(v, 'preflight', undefined)
+  if (!raw || typeof raw !== 'object') return undefined
+  const r = record(raw)
+  return {state: r.state === 'ready' ? 'ready' : 'unavailable', reason: text(r.reason) || undefined, invocation: text(r.invocation) || undefined, model: text(r.model) || undefined,
+    harness: text(r.harness) || undefined, agent: text(r.agent) || undefined, focus: count(r.focus) ?? 0, changed: movedOf(r.changed), affected: touchedOf(r.affected)}
+}
+/** The last thought: one explicit Contemplate and what it returned, or its unavailable or refused reading. */
+function thoughtOf(v: V): Thought | null | undefined {
+  if (!has(v, 'thought')) return undefined
+  const raw = json<unknown>(v, 'thought', undefined)
+  if (raw === null) return null
+  const r = record(raw)
+  if (r.state !== 'cognition' && r.state !== 'unavailable' && r.state !== 'refused') return undefined
+  return {state: r.state, reason: text(r.reason) || undefined, at: text(r.at) || undefined, cursor: count(r.cursor), tensions: count(r.tensions) ?? 0, candidates: count(r.candidates) ?? 0,
+    proposals: count(r.proposals) ?? 0, intents: count(r.intents) ?? 0}
+}
+/** What changed relative to the thought: changed sources, the knowledge they affect, and the thought's returns still open. */
+function sinceOf(v: V): Since | undefined {
+  const raw = json<unknown>(v, 'since', undefined)
+  if (!raw || typeof raw !== 'object') return undefined
+  const r = record(raw)
+  const open = (Array.isArray(r.open) ? r.open : []).flatMap((y): Open[] => { const o = record(y); return OPEN_KINDS.includes(text(o.kind)) && text(o.reference) ? [{kind: o.kind as Open['kind'], reference: text(o.reference), state: text(o.state) || undefined}] : [] })
+  return {state: r.state === 'available' ? 'available' : r.state === 'empty' ? 'empty' : 'unavailable', reason: text(r.reason) || undefined, changed: movedOf(r.changed), affected: touchedOf(r.affected), open}
+}
+/** Contemplate reads a Flow: for any other page the Thought page stands closed and says why. */
+const notFlow = (v: V): string | undefined => { const k = kindOf(v); return k === 'flow' ? undefined : k ? `Contemplate reads a Flow; this page is a ${KINDS[k].label}.` : NO_TEMPLATE }
+
+/** The horizon: the thought as a diamond at the left, now at the right. Between them, on three lanes, what moved since — the sources, the
+ * knowledge they affect, and the thought's returns still open. With no thought yet, the lanes hold what Contemplate's preflight would read. */
+function Horizon({v, w, h}: {v: V; w: number; h: number}) {
+  const pre = preflightOf(v), thought = thoughtOf(v), since = sinceOf(v), closed = notFlow(v)
+  const tx = 62, nx = w - 10, lanes = [38, 74, 110], label = ['sources', 'knowledge', 'open'] as const
+  const showSince = thought?.state === 'cognition' && since !== undefined
+  const changed = showSince ? since!.changed : pre?.changed ?? [], affected = showSince ? since!.affected : pre?.affected ?? []
+  const spread = (n: number, i: number) => tx + 10 + ((i + .5) * (nx - tx - 16)) / Math.max(1, n)
+  const corner = closed ? NONE : showSince ? (thought!.cursor === undefined ? since!.state : `cursor ${thought!.cursor}`) : pre ? `preflight ${pre.state}` : NONE
+  return <Display w={w} h={h} label="Thought" corner={corner}
+    does="The last thought at the left, now at the right. Between them: the sources that moved since, the knowledge they affect, and the thought's returns still open. Before a thought, what the preflight would read.">
+    {label.map((l, i) => <g key={l}><text x={6} y={lanes[i]! + 3} className="dp-axis">{l}</text><path d={`M${tx} ${lanes[i]}H${nx}`} className="dp-grid" /></g>)}
+    <path d={`M${tx} 20V${h - 14}`} stroke={thought?.state === 'cognition' && !closed ? 'var(--dp-on)' : 'var(--text-faint)'} strokeDasharray="2 2" />
+    <path d={`M${nx} 20V${h - 14}`} className="dp-faint" />
+    {thought?.state === 'cognition' && !closed
+      ? <path d={`M${tx} 13l5 5-5 5-5-5z`} fill="var(--dp-on)" />
+      : <path d={`M${tx} 13l5 5-5 5-5-5z`} fill="none" stroke={thought && !closed ? 'var(--stall)' : 'var(--text-faint)'} />}
+    <text x={tx} y={h - 4} className="dp-axis" textAnchor="middle">{closed ? 'no thought' : thought?.state === 'cognition' ? 'thought' : thought ? thought.state : 'no thought'}</text>
+    <text x={nx} y={h - 4} className="dp-axis" textAnchor="end">now</text>
+    {closed ? <text x={(tx + nx) / 2} y={lanes[1]! + 3} className="dp-ink-dim" textAnchor="middle">Contemplate reads a Flow</text> : <>
+      <g opacity={showSince ? 1 : .55}>
+        {changed.map((c, i) => <rect key={`c${i}`} x={spread(changed.length, i) - 3} y={lanes[0]! - 3} width={6} height={6} fill="var(--stall)" data-i={`${c.title}|Moved${c.basis && c.observed ? ` from ${c.basis} to ${c.observed}` : ''}.`} />)}
+        {affected.map((a, i) => <circle key={`a${i}`} cx={spread(affected.length, i)} cy={lanes[1]} r={3.2} data-i={`${a.title}|${FRESH_WORD[a.freshness]}.`}
+          fill={a.freshness === 'basis-changed' ? 'var(--dp-well)' : 'none'} stroke={a.freshness === 'basis-changed' ? 'var(--stall)' : a.freshness === 'integration-pending' ? 'var(--dp-value)' : 'var(--text-faint)'}
+          strokeWidth={1.2} strokeDasharray={a.freshness === 'basis-changed' ? undefined : '1.5 1.5'} />)}
+      </g>
+      {showSince && since!.open.map((o, i) => <rect key={`o${i}`} x={tx + 6 + (i % 12) * 9} y={lanes[2]! - 3.5 + Math.floor(i / 12) * 9} width={7} height={7} fill="none" data-i={`${o.reference}|${OPEN_WORD[o.kind]}, still open.`}
+        stroke={o.kind === 'tension' ? 'var(--stall)' : o.kind === 'human-source-proposal' ? 'var(--dp-on)' : 'var(--dp-value)'} strokeWidth={1.2} />)}
+      {!pre && !thought && <text x={(tx + nx) / 2} y={lanes[1]! + 3} className="dp-ink-dim" textAnchor="middle">No reading of the preflight</text>}
+      {showSince && since!.state !== 'available' && <text x={(tx + nx) / 2} y={lanes[1]! + 3} className="dp-ink-dim" textAnchor="middle">{since!.state === 'empty' ? 'Nothing changed since' : 'Changed since is unavailable'}</text>}
+    </>}
+  </Display>
 }
 
+function thoughtRows(v: V): RowItem[] {
+  const pre = preflightOf(v), thought = thoughtOf(v), since = sinceOf(v), closed = notFlow(v)
+  if (closed) return [{id: 'none', name: closed, light: 'unknown'}]
+  if (thought?.state === 'cognition' && since) {
+    if (since.state === 'unavailable') return [{id: 'u', name: 'Changed since is unavailable', light: 'dark', why: since.reason ?? 'The owner gave no reason.'}]
+    const rows: RowItem[] = [
+      ...since.changed.map((c, i) => ({id: `c${i}`, name: c.title, light: 'lit' as LightState, tone: 'stall' as const, note: c.basis && c.observed ? `${c.basis} → ${c.observed}` : c.kind ?? 'moved'})),
+      ...since.affected.map((a, i) => ({id: `a${i}`, name: a.title, light: (a.freshness === 'basis-unavailable' ? 'dark' : 'lit') as LightState, tone: 'value' as const, note: FRESH_WORD[a.freshness]})),
+      ...since.open.map((o, i) => ({id: `o${i}`, name: o.reference, light: 'lit' as LightState, tone: o.kind === 'tension' ? 'stall' as const : 'accent' as const, note: OPEN_WORD[o.kind], does: `Returned by the thought and still open${o.state ? `: ${o.state}` : ''}.`})),
+    ]
+    return rows.length ? rows : [{id: 'none', name: 'Nothing changed since the thought', light: 'lit', tone: 'green'}]
+  }
+  if (!pre) return [{id: 'none', name: 'No reading of the preflight', light: 'unknown'}]
+  if (pre.state === 'unavailable') return [{id: 'u', name: 'Contemplate is unavailable', light: 'dark', why: pre.reason ?? 'The owner gave no reason.'}]
+  return [
+    {id: 'who', name: `${pre.agent ?? 'An agent'} on ${pre.model ?? NONE} through ${pre.harness ?? NONE}`, light: 'lit', tone: 'value', note: 'runs it'},
+    {id: 'focus', name: `${pre.focus} entr${pre.focus === 1 ? 'y' : 'ies'} of the Flow`, light: 'lit', tone: 'value', note: 'reads'},
+    ...pre.changed.map((c, i) => ({id: `c${i}`, name: c.title, light: 'lit' as LightState, tone: 'stall' as const, note: 'moved'})),
+    ...pre.affected.map((a, i) => ({id: `a${i}`, name: a.title, light: 'lit' as LightState, tone: 'value' as const, note: FRESH_WORD[a.freshness]})),
+  ]
+}
+
+/** The Thought page: the horizon, Contemplate with its preflight, what changed since, and what the preflight or the thought reads. */
+function ThoughtBands({p}: {p: ViewProps}) {
+  const [page, setPage] = useState(0)
+  const pre = preflightOf(p.v), thought = thoughtOf(p.v), since = sinceOf(p.v), closed = notFlow(p.v)
+  const cognition = thought?.state === 'cognition' && !closed
+  // The pool is 400 wide: the horizon and Contemplate stand in band one; what changed since and its rows in band two.
+  return <>
+    <Band>
+      <Section width={206}><Horizon v={p.v} w={194} h={146} /></Section>
+      <Section label="Contemplate" cols={2} grow>
+        <Readout label="preflight" does="What the preflight answers: ready, or unavailable with the owner's reason. It records nothing." value={closed ? undefined : pre?.state} tone={pre?.state === 'ready' ? 'green' : pre ? 'stall' : undefined} />
+        <Readout label="runs on" does="The model Contemplate would run on, named by the preflight." value={closed || pre?.model === undefined ? undefined : (m => (m.length > 14 ? `${m.slice(0, 13)}…` : m))(pre.model.replace('model:', '').replace('claude-', ''))} />
+        {span(2, <Action {...st(p, 'preflightRead')} label="Preflight" does="Shows what Contemplate would read and touch. Nothing runs and nothing is recorded." onPress={() => p.set('preflightRead', true)}
+          disabled={st(p, 'preflightRead').disabled ?? closed} />)}
+        {span(2, <Action {...st(p, 'contemplate')} hold label="Contemplate" does="Runs the reading once, under the preflight you read. It never runs by itself."
+          onPress={pre?.state === 'ready' && pre.invocation ? () => p.set('contemplate', pre.invocation) : undefined}
+          disabled={st(p, 'contemplate').disabled ?? closed ?? (!pre ? 'Read the preflight first.' : pre.state !== 'ready' ? pre.reason ?? 'The preflight is unavailable.' : undefined)} />)}
+      </Section>
+    </Band>
+    <Band>
+      <Section label="Since" cols={2} width={128}>
+        {span(2, <Readout label="thought" does="When the last thought was taken, or why it could not run." value={closed ? undefined : thought === null ? 'none' : thought ? (thought.state === 'cognition' ? thought.at : thought.state) : undefined}
+          tone={thought && thought.state !== 'cognition' ? 'stall' : undefined} />)}
+        <Readout label="open" does="What the thought returned that waits for you: tensions, candidates, proposals to your ground, changes to the Flow." value={cognition ? since?.open.length ?? thought!.tensions + thought!.candidates + thought!.proposals + thought!.intents : undefined} tone="accent" />
+        <Readout label="moved" does="Sources that moved since the thought." value={since && cognition ? since.changed.length : undefined} tone="stall" />
+        <Readout label="affected" does="Knowledge those sources affect." value={since && cognition ? since.affected.length : undefined} />
+        <span />
+        {span(2, <Action {...st(p, 'sinceRead')} label="Changed since" does="Shows what moved after the thought, and what it left open. Nothing runs and nothing is recorded."
+          onPress={cognition ? () => p.set('sinceRead', true) : undefined} disabled={st(p, 'sinceRead').disabled ?? closed ?? (cognition ? undefined : 'There is no thought to read from.')} />)}
+      </Section>
+      <Section grow><Rows label={cognition && since ? `Since the thought · ${since.state}` : 'What the preflight would read'}
+        does="Before a thought: who would run it and what it would read. After one: what moved since, what it affects, and what the thought left open." items={thoughtRows(p.v)} size={7} page={page} onPage={setPage} /></Section>
+    </Band>
+  </>
+}
+
+type PageId = 'page' | 'thought'
+const PAGE_IDS: readonly {id: PageId; label: string}[] = [{id: 'page', label: 'Page'}, {id: 'thought', label: 'Thought'}]
+const pageOf = (p: ViewProps): PageId => (p.page === 'thought' ? 'thought' : 'page')
+
+// The Thought page's sample: the Factory flow's preflight, a thought taken on 15 Oct, and what changed since (the run's ledger and its
+// continuation note moved; the unit list it named is affected; two tensions and a proposal remain open). The Flow's own sample.
+const PREFLIGHT = {state: 'ready', invocation: 'flow-contemplate/b3:5e1c09a2', agent: 'Factory coordinator', model: 'model:claude-sonnet-4.6', harness: 'claude-code', focus: 13,
+  changed: [{title: 'factory/runs/original-development.json', basis: 'r21', observed: 'r24'}],
+  affected: [{title: 'wiki:Factory · original development Run', freshness: 'basis-changed'}, {title: 'Run units (7 required)', freshness: 'integration-pending'}]}
+const THOUGHT = {state: 'cognition', at: '15 Oct 22:40', cursor: 3911, tensions: 2, candidates: 3, proposals: 1, intents: 1}
+const SINCE = {state: 'available',
+  changed: [{title: 'factory/runs/original-development.json', basis: 'r21', observed: 'r24'}, {title: 'Control/user/flows/flow-2026-10-03-1432.html', basis: 'r8', observed: 'r9'}],
+  affected: [{title: 'wiki:Factory · original development Run', freshness: 'basis-changed'}, {title: 'Run units (7 required)', freshness: 'integration-pending'}, {title: 'omarchy startup image', freshness: 'basis-unavailable'}],
+  open: [{kind: 'tension', reference: 'Two-machine Run vs. one-machine image', state: 'unresolved'}, {kind: 'tension', reference: 'Workers not started', state: 'unresolved'},
+    {kind: 'human-source-proposal', reference: 'Control/user/factory-intent.md', state: 'basis-superseded'}, {kind: 'candidate', reference: 'Start the first worker on Omarchy', state: 'unresolved'}]}
+
 const defaults = {
-  light: 'lit', template: 'flow', title: 'Factory original development Run — execution and continuation', view: 'page', flowView: 'dialogue', ground: 'paper', layout: 'portrait', pinned: false,
-  agentWrites: 'propose', autosave: false, selectionAct: 'highlight', packetScope: 'selection',
+  light: 'lit', template: 'flow', title: 'Factory original development Run — execution and continuation', view: 'page', flowView: 'dialogue', ground: 'template', layout: 'portrait', pinned: false,
+  autosave: true, selectionAct: 'highlight',
   selection: JSON.stringify({entry: 8, text: 'The first worker can retain its coordinator'}),
   // Readings and the state of the page: what the owner reports, and the draft.
-  copied: false, dirty: false, outcome: 'saved', face: 1, date: 'Wed 15 Oct', tabTitle: 'Flow · flow-2026-10-03-1432', highlights: 2, notes: 1,
+  dirty: false, outcome: 'saved', face: 1, date: 'Wed 15 Oct', tabTitle: 'Flow · flow-2026-10-03-1432', highlights: 2, notes: 1,
   // The Factory flow's entries (flow-2026-10-03-1432.html): `C` the Factory coordinator, `F` the person. Highlights and a note sit on
   // entries 3, 8 and 4.
   entries: JSON.stringify([
@@ -455,7 +617,8 @@ const defaults = {
     {by: 'F', head: 'I meant the second machine.'},
     {by: 'C', head: 'Both lines end at the first unit.'},
   ]),
-  // The packet: each item is the words the agent would read, with the scope it was added under (ql-flow.html `D.packet`).
+  // The packet: each item is the words the agent would read, with the scope it was added under (ql-flow.html `D.packet`). The Document
+  // shows its size; the packet itself is the Packet's (§18.3).
   packet: JSON.stringify([
     {entry: 3, scope: 'selection', text: 'The original development Run remains incomplete'},
     {entry: 6, scope: 'whole entry', text: 'The original Run remains incomplete'},
@@ -464,41 +627,13 @@ const defaults = {
   journal: JSON.stringify(['Mon 13 Oct', 'Tue 14 Oct', 'Wed 15 Oct']),
   // What the island's other keys hold, by key (the keys that the page's own readings fill are not listed).
   island: JSON.stringify({media: '[0]', journal: '[…]'}),
+  // Thought: the preflight `action:contemplate-flow` answered, the last thought, and what changed since it (the kernel's flow_changed_since).
+  preflight: JSON.stringify(PREFLIGHT), thought: JSON.stringify(THOUGHT), since: JSON.stringify(SINCE),
 } as const
 
-export const design: DesignedDevice = {
-  id: 'central:document',
-  title: 'Document',
-  kind: 'instrument',
-  defaults,
-  fixtures: {
-    Flow: {},
-    Thing: {
-      template: 'thing', title: '', layout: 'editorial', tabTitle: 'Thing', highlights: 0, notes: 0, entries: undefined, journal: undefined, packet: JSON.stringify([]),
-      island: JSON.stringify({profile: '"oi.page/v1"', meta: '{…}', bindings: '{…}', page: '{…}', extensions: '{}'}),
-    },
-    'Stale save': {dirty: true, outcome: 'stale'},
-    'Nothing selected': {selection: 'null', selectionAct: 'remember', packetScope: 'page'},
-    'No readings': Object.fromEntries(Object.keys(defaults).map(key => [key, undefined])),
-  },
-
-  folded: p => <Folded title="Document" light={light(p)} readings={[short(nameOf(p.v), 9), saveWords(p.v) ?? NONE]} onUnfold={p.nav.unfold} />,
-
-  compact: p => <Panel title="Document" view="compact" {...head(p)} onSelect={p.nav.select}>
-    <Section width={152}>
-      <Display w={140} h={146} label="The page" does="The page as its template draws it. Drag handle 1 along the line to choose how it reads." corner={saveWords(p.v) ?? NONE}>
-        <Preview v={p.v} set={p.set} w={140} h={146} />
-      </Display>
-    </Section>
-    <Section label="Macros" cols={2} width={128}>
-      <FlowViewRadio p={p} />
-      <AgentRadio p={p} />
-      <PinToggle p={p} />
-      <AutosaveToggle p={p} />
-    </Section>
-  </Panel>,
-
-  whole: p => <Panel title="Document" view="whole" {...head(p)}>
+/** The Page page: the page and every parameter (Page), the passage and its acts (Selection), and the save (Save). */
+function PageBands({p}: {p: ViewProps}) {
+  return <>
     <Band>
       <Section width={206}>
         <Display w={194} h={146} label="The page" does="The page as its template draws it, or the keys of its source. Drag handle 1 along the line to choose how it reads."
@@ -508,32 +643,19 @@ export const design: DesignedDevice = {
       </Section>
       <Section label="Page" cols={3} grow>
         {span(3, <Chooser label="Template" does="The template that draws the page. A page keeps its version until you change it." value={kindOf(p.v) ?? ''} options={TEMPLATES} onChange={x => p.set('template', x)} />)}
-        {span(3, <TextField wide label="Title" does="The page's title. It heads the page." value={strOf(p.v, 'title') ?? ''} placeholder={has(p.v, 'title') ? 'Untitled' : NONE} onChange={x => {
-          p.set('title', x)
-          p.set('dirty', true)
-        }} />)}
         {span(2, <Radio label="View" does="The drawn page, or the text that it keeps." value={strOf(p.v, 'view') ?? ''} options={VIEWS} onChange={x => p.set('view', x)} />)}
         <PinToggle p={p} />
         {span(3, <Radio label="Flow view" does="How a Flow reads: Dialogue, Flow or Journal." value={strOf(p.v, 'flowView') ?? ''} options={FLOW_VIEWS} onChange={x => p.set('flowView', x)} disabled={flowOnly(p.v)} />)}
+        {span(3, <Radio {...st(p, 'ground')} label="Paper" does="The paper tone of the page: the template's own, light or dark." value={strOf(p.v, 'ground') ?? ''} options={PAPERS} onChange={x => p.set('ground', x)} />)}
       </Section>
     </Band>
     <Band>
-      <Section label="Paper" width={84}>
-        <Radio label="Ground" does="Dark ink on light paper, or light ink on dark ground." value={strOf(p.v, 'ground') ?? ''} options={GROUNDS} stack onChange={x => p.set('ground', x)} disabled={pageOnly(p.v)} />
-        <Radio label="Layout" does="Where the mark stands: at the right, or at the left." value={strOf(p.v, 'layout') ?? ''} options={LAYOUTS} stack onChange={x => p.set('layout', x)} disabled={pageOnly(p.v)} />
-      </Section>
-      <Section label="Packet" width={160} cols={2}>
-        {span(2, <Rows items={packetRows(p.v)} size={3} does="Exactly what the agent receives, with the scope that each item was added under." />)}
-        <Readout label="items" does="Passages in the packet." value={held(p.v).items?.length} tone="value" />
-        <Readout label="chars" does="The size of the packet: the characters the agent would read." value={held(p.v).size} tone="value" />
-        <Readout label="highlights" does="Highlights on the page." value={held(p.v).hl} />
-        <Readout label="notes" does="Notes on the page. A note is not a source." value={held(p.v).notes} />
-        <Action label="Copy" does="Copy the packet as JSON." onPress={() => p.set('copy', true)} disabled={noPacket(p.v)} />
-        <Action label="Clear" does="Take every item out of the packet." onPress={() => p.set('clear', true)} disabled={noPacket(p.v)} />
-      </Section>
-      <Section label="Agent" width={72}>
-        <AgentRadio p={p} />
-        <Readout label="by agent" does="Entries on the page that an agent wrote." value={held(p.v).agent} />
+      <Section label="Selection" cols={3} width={290}>
+        {span(3, <SelectionActChooser p={p} />)}
+        {span(3, <p className="cdoc-passage" data-i="Passage|The passage selected in the page. The acts beside it work on it.">{passage(p.v) ? <><b>{passage(p.v)!.entry === undefined ? '' : `${passage(p.v)!.entry} · `}</b>{passage(p.v)!.text}</>
+          : <i>{has(p.v, 'selection') ? 'Select a passage in the page.' : NONE}</i>}</p>)}
+        {PASSAGE_ACTS.map(a => <Action key={a.key} {...st(p, a.key)} label={a.label} does={a.does} onPress={() => p.set(a.key, Date.now())}
+          disabled={st(p, a.key).disabled ?? (!passage(p.v) ? 'Select a passage first.' : undefined)} />)}
       </Section>
       <Section label="Save" grow>
         <AutosaveToggle p={p} />
@@ -542,20 +664,47 @@ export const design: DesignedDevice = {
         <Action label="Re-read" does="Read the page again from its owner. Your draft goes." onPress={() => p.set('reread', true)} />
       </Section>
     </Band>
-    <Band>
-      <Section label="Selection" width={150}>
-        <Chooser {...st(p, 'selectionAct')} label="Selection act" wide does="What a plain selection does: Highlight, Note, To packet, Remember or Answer this."
-          value={strOf(p.v, 'selectionAct') ?? ''} options={SELECTION_ACTS} onChange={x => p.set('selectionAct', x)} />
-        <Radio {...st(p, 'packetScope')} label="Packet scope" does="What Answer this reads: the passage, the page, or the page and the pages it links." value={strOf(p.v, 'packetScope') ?? ''}
-          options={PACKET_SCOPES} stack onChange={x => p.set('packetScope', x)} />
-      </Section>
-      <Section label="Passage" cols={3} width={250}>
-        {span(3, <p className="cdoc-passage" data-i="Passage|The passage selected in the page. The acts beside it work on it.">{passage(p.v) ? <><b>{passage(p.v)!.entry === undefined ? '' : `${passage(p.v)!.entry} · `}</b>{passage(p.v)!.text}</>
-          : <i>{has(p.v, 'selection') ? 'Select a passage in the page.' : NONE}</i>}</p>)}
-        {PASSAGE_ACTS.map(a => <Action key={a.key} {...st(p, a.key)} label={a.label} does={a.does} onPress={() => p.set(a.key, Date.now())}
-          disabled={st(p, a.key).disabled ?? (!passage(p.v) ? 'Select a passage first.' : a.key === 'act.answerthis' && strOf(p.v, 'agentWrites') === 'off' ? 'Agent writes is Off.' : undefined)} />)}
-      </Section>
-    </Band>
+  </>
+}
+
+export const design: DesignedDevice = {
+  id: 'central:document',
+  title: 'Document',
+  kind: 'instrument',
+  defaults,
+  firstPage: 'page',
+  fixtures: {
+    Flow: {},
+    Thing: {
+      template: 'thing', title: '', layout: 'editorial', tabTitle: 'Thing', highlights: 0, notes: 0, entries: undefined, journal: undefined, packet: JSON.stringify([]),
+      island: JSON.stringify({profile: '"oi.page/v1"', meta: '{…}', bindings: '{…}', page: '{…}', extensions: '{}'}), ground: 'ink',
+      preflight: undefined, thought: undefined, since: undefined,
+    },
+    'Stale save': {dirty: true, outcome: 'stale'},
+    'Nothing selected': {selection: 'null', selectionAct: 'remember'},
+    'Not contemplated yet': {thought: 'null', since: undefined},
+    'Contemplate unavailable': {thought: 'null', since: undefined, preflight: JSON.stringify({state: 'unavailable', reason: 'No host executor: this suite has no model seam for Contemplate yet.', focus: 0, changed: [], affected: []})},
+    'No readings': Object.fromEntries(Object.keys(defaults).map(key => [key, undefined])),
+  },
+
+  folded: p => <Folded title="Document" light={light(p)} readings={[short(nameOf(p.v), 9), saveWords(p.v) ?? NONE]} onUnfold={p.nav.unfold} />,
+
+  compact: p => <Panel title="Document" view="compact" {...head(p)} onSelect={p.nav.select}>
+    <Section width={152}>
+      <Display w={140} h={146} label="The page" does="The page as its template draws it, and the size of its packet. Drag handle 1 along the line to choose how it reads." corner={saveWords(p.v) ?? NONE}>
+        <Preview v={p.v} set={p.set} w={140} h={146} />
+      </Display>
+    </Section>
+    <Section label="Macros" cols={2} width={128}>
+      <ViewRadio p={p} />
+      <FlowViewRadio p={p} />
+      {span(2, <SelectionActChooser p={p} />)}
+      {span(2, <AutosaveToggle p={p} />)}
+    </Section>
+  </Panel>,
+
+  whole: p => <Panel title="Document" view="whole" {...head(p)} pages={PAGE_IDS} page={pageOf(p)} onPage={p.setPage}>
+    {pageOf(p) === 'thought' ? <ThoughtBands p={p} /> : <PageBands p={p} />}
   </Panel>,
 
   full: p => <DocumentPane v={p.v} />,

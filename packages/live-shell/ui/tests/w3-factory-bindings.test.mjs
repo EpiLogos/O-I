@@ -57,13 +57,16 @@ const session = await import('../src/agent/devices/sessionChainBindings.ts')
 const helper = await import('../src/agent/devices/decisionHelperBinding.ts')
 const cell = await import('../src/agent/devices/workcellBindings.ts')
 const {design: messagesDesign} = await import('../src/inhabitants/catalogue/panels/ai-kit__messages.tsx')
-const {design: seatDesign} = await import('../src/inhabitants/catalogue/panels/workcell__seat.tsx')
+// The 22 Oct manual rewrite retired the Seat, the Frames monitor and the Experiment as devices of their own (#725): the Seat is Git /
+// landing's Seat page (§19.17, `seat.` keys), the frames are the Gateway's Frames page and the rail's Frames tile its widget (§19.6), and an
+// experiment is a task launched with Repeat, its takes compared (§19.5). Their bindings stay; the successors' designs draw them.
+const {design: landingDesign} = await import('../src/inhabitants/catalogue/panels/workcell__git-seat.tsx')
 const {design: carrierDesign} = await import('../src/inhabitants/catalogue/panels/workcell__remote-carrier.tsx')
-const {design: framesDesign} = await import('../src/inhabitants/catalogue/panels/actuation__frames-monitor.tsx')
-const {design: experimentDesign} = await import('../src/inhabitants/catalogue/panels/actuation__experiment.tsx')
-const {design: custodyDesign} = await import('../src/inhabitants/catalogue/panels/software-factory__agent-custody.tsx')
+const {design: gatewayDesign} = await import('../src/inhabitants/catalogue/panels/actuation__gateway.tsx')
+const carry = await import('../src/agent/devices/oneAgentBinding.ts')
+const {design: custodyDesign} = await import('../src/inhabitants/catalogue/panels/agent-custody.tsx')
 const {design: ledgerDesign} = await import('../src/inhabitants/catalogue/panels/software-factory__ledger.tsx')
-const {design: helperDesign} = await import('../src/inhabitants/catalogue/panels/ai-kit__decision-helper.tsx')
+const {design: helperDesign} = await import('../src/inhabitants/catalogue/panels/decision-helper.tsx')
 const {design: memberDesign} = await import('../src/inhabitants/catalogue/panels/member.tsx')
 
 family.resetFamilyManifestsForTest()
@@ -318,19 +321,36 @@ test('8 · the Frames monitor reads AIKit\'s own gateway journal: each frame\'s 
   bind.resetHolds()
 })
 
+/** Git / landing carrying the Seat's binding on its Seat page (§19.17; FactoryDeviceChain.tsx gitCarrying), the page in front. */
+const landingWithSeat = seat => {
+  host.setHostPage(cell.GIT_ID, 'seat')
+  return carry.carryPages(cell.gitBinding(model.INITIAL_READING, bind.chainHolds()), [{page: carry.SEAT_PAGE, binding: seat}])
+}
+/** The rail's Frames tile: the Gateway's design on the frames' binding, its Frames page in front (§19.6; AgentRailDevices.tsx FRAMES_ID). */
+const framesTile = binding => { host.setHostPage(main.FRAMES_ID, 'frames'); return binding }
+/** The Seat as its binding reads the real 16 Oct seats. */
+const seatOf = (extra = {}) => cell.seatBinding({status: READ16.seatStatus, project: 'O-I', branch: 'dlw/build', workcell: 'env-1', actor: 'person:frank', holds: bind.chainHolds(), ...extra}, {seat: async () => ({})})
+/** The Gateway's own sample (actuation__gateway.tsx), which a drawing on the frames' binding never shows. */
+const GATEWAY_FIXTURE = /build-lane|3f9a21c4|I will read the agent context|Skip the cradle root/
+
 test('every bound design draws on its binding in all its views — no NaN, no undefined, never its fixture text — each refusal drawn as its reason', () => {
   bind.resetHolds()
   host.resetHost()
   const gateway = {reading: model.INITIAL_READING, harness: {binding: 'hermes', resolved: true}}
   const messages = msg.messagesBinding({population: answered(READ21.population), gateway: ANSWERED, project: 'O-I', holds: bind.chainHolds()}, {gateway: async () => ({})})
+  // REPLACED (#725): the Seat's own design (§19.17: Git / landing's Seat page), the Frames monitor's (§19.6: the Gateway's Frames page and its
+  // widget) — each binding drawn on its successor's design, the page in front. DELETED (#725): the Seat's Floor refusal drawn as why — the
+  // manual's Seat page holds Product, Seat, Lane, Claim, Join, Co-workers, Uncommitted and Release (§19.16 "The Seat page"), and no Floor:
+  // a seat below the floor is a finding of the Checkouts page ("Disk below floor | A seat has less free disk than the floor"); the binding's
+  // Floor is still read and refused on its own (test 6 and (b)). DELETED (#725): the Experiment's design and its refusal drawn — the manual
+  // removed the Experiment as a device (§19.5: "An experiment is a task launched with Repeat, each run a take, and the takes set side by side
+  // with Compare (§19.1)"); its binding's refusals stand on their own (test 4).
   const cases = [
     [messagesDesign, messages, /position:flint|claude-opus|Composing the third scene/, []],
-    [seatDesign, cell.seatBinding({status: READ16.seatStatus, project: 'O-I', branch: 'dlw/build', workcell: 'env-1', actor: 'person:frank', holds: bind.chainHolds()}, {seat: async () => ({})}),
-      /claude-code:dlw-manual|59f94a3|point-cloud-demo/, [cell.SEAT_REFUSE.floor]],
+    [landingDesign, landingWithSeat(seatOf()), /claude-code:dlw-manual|fold\/day-close-20261012|933731e|65202d830/, []],
     [carrierDesign, cell.carrierBinding(answered(READ16.workcellStatus), bind.chainHolds(), new Map([['omarchy', {value: CONNECTIONS.show}]])), /ready-to-carry|private-tailnet|1791417468786/, []],
-    [framesDesign, main.framesBinding(gateway, bind.chainHolds(), {ecology: answered(ECOLOGY), replays: new Map([['actuation-stream/replay', {value: REPLAY}]])}), /build-lane|3f9a21c4|Type-check the three/, []],
-    [framesDesign, main.framesBinding(gateway, bind.chainHolds(), {ecology: answered(ECOLOGY), replays: new Map([['actuation-stream/replay', {error: NO_REPLAY}]])}), /build-lane|3f9a21c4/, []],
-    [experimentDesign, main.experimentBinding(bind.chainHolds()), /deeper loop|S1-CODE-001|build-lane|exp-1014/, [main.EXPERIMENT_REFUSE]],
+    [gatewayDesign, framesTile(main.framesBinding(gateway, bind.chainHolds(), {ecology: answered(ECOLOGY), replays: new Map([['actuation-stream/replay', {value: REPLAY}]])})), GATEWAY_FIXTURE, []],
+    [gatewayDesign, framesTile(main.framesBinding(gateway, bind.chainHolds(), {ecology: answered(ECOLOGY), replays: new Map([['actuation-stream/replay', {error: NO_REPLAY}]])})), GATEWAY_FIXTURE, []],
     [custodyDesign, session.custodyBinding({sessionRef: 's', autonomy: 'review', agent: {light: 'lit'}}, null), /Flint|kite|agent\/anima/, [session.CUSTODY_REFUSE.gate]],
     [ledgerDesign, rec.ledgerBinding({ground: null, groundError: null, holds: bind.chainHolds()}, {openSession: () => null}), /generate fixtures|run:2|128400/, []],
     [helperDesign, helper.decisionHelperBinding({status: null, teamSpace: null, holds: bind.chainHolds()}), /kev-latest|Qwen3\.5|127\.0\.0\.1:8019/, [helper.DECISION_HELPER_REFUSE.when]],
@@ -346,8 +366,10 @@ test('every bound design draws on its binding in all its views — no NaN, no un
     const all = drawn.map(([, markup]) => markup).join('\n')
     for (const why of reasons) assert.ok(all.includes(escaped(why)), `${design.id}: a refused control says why (${why.slice(0, 60)}…)`)
   }
-  const frames = hosted(framesDesign, cases[3][1]).map(([, markup]) => markup).join('\n')
-  assert.ok(frames.includes('Two roots pass.') && frames.includes('human-message'), 'the Frames monitor draws the journal\'s frames')
+  const frames = hosted(gatewayDesign, cases[3][1]).map(([, markup]) => markup).join('\n')
+  assert.ok(frames.includes('Two roots pass.') && frames.includes('human-message'), 'the Gateway\'s Frames page draws the journal\'s frames')
+  const seatPage = hosted(landingDesign, cases[1][1]).map(([, markup]) => markup).join('\n')
+  assert.ok(seatPage.includes('dlw/build'), 'the Seat page draws the real seats')
   const carrier = hosted(carrierDesign, cases[2][1]).map(([, markup]) => markup).join('\n')
   assert.ok(carrier.includes('workcell 0.1.0 (174fa1c3133a)') || carrier.includes('omarchy'), 'the carrier draws the real connection')
   bind.resetHolds()
@@ -359,34 +381,47 @@ test('(b) every key the bound designs read is an owner reading, absent with why 
   // The Gateway answered (its light and terms are the Gateway's own reading, designBindings.ts gatewayValues).
   const gateway = {reading: {...model.INITIAL_READING, gatewayAdmitted: true, gatewayDoc: {state: 'ready', transport: 'ws', connect: true, stall_after_seconds: 90}},
     harness: {binding: 'hermes', resolved: true}}
+  const seatBinding = cell.seatBinding({status: READ16.seatStatus, project: 'O-I', branch: 'dlw/build', workcell: 'env-1', machineRef: 'workcell:mac', actor: 'person:frank', holds: bind.chainHolds()}, {seat: async () => ({})})
   const cases = [
-    [seatDesign, cell.seatBinding({status: READ16.seatStatus, project: 'O-I', branch: 'dlw/build', workcell: 'env-1', machineRef: 'workcell:mac', actor: 'person:frank', holds: bind.chainHolds()}, {seat: async () => ({})})],
-    [carrierDesign, cell.carrierBinding(answered(READ16.workcellStatus), bind.chainHolds(), new Map([['omarchy', {value: CONNECTIONS.show}]]))],
-    [framesDesign, main.framesBinding(gateway, bind.chainHolds(), {ecology: answered(ECOLOGY), replays: new Map([['actuation-stream/replay', {value: REPLAY}]])})],
-    [framesDesign, main.framesBinding(gateway, bind.chainHolds(), {ecology: answered(ECOLOGY), replays: new Map([['actuation-stream/replay', {error: NO_REPLAY}]])})],
-    [experimentDesign, main.experimentBinding(bind.chainHolds())],
+    [seatBinding],
+    [cell.carrierBinding(answered(READ16.workcellStatus), bind.chainHolds(), new Map([['omarchy', {value: CONNECTIONS.show}]]))],
+    [main.framesBinding(gateway, bind.chainHolds(), {ecology: answered(ECOLOGY), replays: new Map([['actuation-stream/replay', {value: REPLAY}]])})],
+    [main.framesBinding(gateway, bind.chainHolds(), {ecology: answered(ECOLOGY), replays: new Map([['actuation-stream/replay', {error: NO_REPLAY}]])})],
   ]
-  for (const [design, binding] of cases) {
-    for (const key of designKeys(design)) {
-      const kind = classify(binding, key)
-      assert.ok(kind, `${design.id} ${key}: a reading, absent with why, or the hand's`)
-    }
+  // A carried page's keys stand under its prefix and are hosted by prefixing that page's own binding (design.ts scoped): the carrier
+  // carries the Machine page under `mc.` (DLW §19.18, "The Machine page").
+  const carried = {'workcell:remote-carrier': ['mc.']}
+  for (const key of designKeys(carrierDesign).filter(key => !carried[carrierDesign.id].some(prefix => key.startsWith(prefix)))) {
+    assert.ok(classify(cases[1][0], key), `${carrierDesign.id} ${key}: a reading, absent with why, or the hand's`)
   }
+  // REPLACED (#725): the Seat's own design's keys — the Seat is Git / landing's Seat page (§19.17): every key of that page (`seat.`, its own
+  // keys under the prefix) is the Seat binding's reading, absent with why, or the hand's.
+  const seatPage = designKeys(landingDesign).filter(key => key.startsWith('seat.')).map(key => key.slice('seat.'.length))
+  assert.ok(seatPage.includes('seats') && seatPage.includes('actor'), 'the Seat page reads the seats and the session\'s actor')
+  for (const key of seatPage) assert.ok(classify(seatBinding, key), `${landingDesign.id} seat.${key}: a reading, absent with why, or the hand's`)
+  // REPLACED (#725): the Frames monitor's own design's keys — the frames are the Gateway's Frames page (§19.6, §19.2 Frames): every key of
+  // that page (actuation__gateway.tsx: the list's settings and the replay's readings) is the frames' binding's reading, absent with why, or
+  // the hand's.
+  const FRAMES_PAGE = ['session', 'direction', 'kinds', 'follow', 'pause', 'keep', 'frames', 'epoch', 'seq', 'peers', 'beatAge', 'inflight', 'running', 'ring', 'ringCap', 'lead']
+  for (const key of FRAMES_PAGE) assert.ok(designKeys(gatewayDesign).includes(key), `${key} is a key of the Gateway's design`)
+  for (const [binding] of cases.slice(2)) for (const key of FRAMES_PAGE) assert.ok(classify(binding, key), `${gatewayDesign.id} ${key}: a reading, absent with why, or the hand's`)
+  // DELETED (#725): the Experiment's design's keys — the manual removed the Experiment as a device (§19.5, quoted above); its binding's
+  // refusals are checked in test 4.
   // The Seat: the instrument's rows and disk and this machine are readings; the choosers and the join's settings the hand's; the session's
   // actor and the Floor absent with what they lack.
-  const seat = cases[0][1]
+  const seat = seatBinding
   assert.deepEqual(['seats', 'disk', 'machineRef', 'floor'].map(key => classify(seat, key)), ['reading', 'reading', 'reading', 'reading'], 'the floor is the register\'s, read')
   assert.equal(classify(seat, 'actor'), 'absent')
   for (const key of ['product', 'seat', 'lane', 'joinAs', 'zone', 'keepDirt']) assert.equal(classify(seat, key), 'local', key)
   // The Frames monitor with the journal answered: the frames read; the Hermes counters, the lead and the cap absent; with the replay refused,
   // the frames absent with AIKit's words.
-  assert.equal(classify(cases[2][1], 'frames'), 'reading')
-  assert.equal(classify(cases[3][1], 'frames'), 'absent')
-  for (const key of ['session', 'direction', 'kinds', 'follow', 'pause', 'keep']) assert.equal(classify(cases[2][1], key), 'local', key)
+  assert.equal(classify(cases[2][0], 'frames'), 'reading')
+  assert.equal(classify(cases[3][0], 'frames'), 'absent')
+  for (const key of ['session', 'direction', 'kinds', 'follow', 'pause', 'keep']) assert.equal(classify(cases[2][0], key), 'local', key)
   bind.resetHolds()
 })
 
-test('(d) the chain and the rail carry the owner routes where the manual puts the devices: the Seat inside Git / landing and the carrier on a workcell\'s chain with their ports; Messages and Frames on the rail', () => {
+test('(d) the chain and the rail carry the owner routes where the manual puts the devices: the Seat as Git / landing\'s Seat page and the carrier on a workcell\'s chain with their ports; Messages and Frames on the rail', () => {
   const chain = read('agent/devices/FactoryDeviceChain.tsx')
   assert.match(chain, /seatBinding\(\{status: seats\.status === 'answered' \? seats\.value : null[\s\S]*?actor: deskActor, holds\}, seatPorts\)/, 'Join and Release on the desk\'s actor')
   assert.match(chain, /seat: request => ownerRouteWrite\(transport, seatWriteOp\(request\)/)
@@ -394,11 +429,17 @@ test('(d) the chain and the rail carry the owner routes where the manual puts th
   // REPLACED (lane W13): the carrier's material spans a line (discover, the probe, the run's plan).
   assert.match(chain, /carrierBinding\(workcellAnswer, holds, shows,\s*\{discover/, 'the carrier with each connection\'s record')
   assert.match(chain, /trust: capability => ownerRouteWrite\(transport, aikitWriteOp\(\{kind: 'trust-record', project: RACK_PROJECT, capability\}\)/)
-  assert.match(chain, /slot\.id === 'git' && placed\(SEAT_ID, cells\.seat, seatDesignBinding/, 'the Seat stands inside Git / landing (§19.17)')
+  // REPLACED (#725): "the Seat stands inside Git / landing" as its own plate — the Seat is Git / landing's Seat page (§19.17): the landing's
+  // binding carries the Seat's under `seat.`.
+  assert.doesNotMatch(chain, /placed\(SEAT_ID/, 'no Seat plate of its own')
+  assert.match(chain, /carryPages\(gitDesignBinding, \[\{page: SEAT_PAGE, binding: seatDesignBinding\}/, 'the Seat page on Git / landing')
   const rail = read('agent/devices/AgentRailDevices.tsx')
   assert.match(rail, /gateway: \(request: GatewayWriteRequest\) => ownerRouteWrite\(transport, gatewayWriteOp\(request\), ROUTE_WORDS\[request\.kind\]\)/, 'Messages\' gateway writes')
-  assert.match(rail, /framesBinding\(\{reading, harness: \{binding, resolved\}\}, holds, \{ecology/, 'the Frames monitor on AIKit\'s journal')
-  assert.match(rail, /RAIL_AGENT_DEVICE_IDS: readonly string\[\] = \[MESSAGES_ID, GATEWAYS_RACK_ID, AGENCY_GATEWAY_ID, FRAMES_ID, LEDGER_ID, WORKCELL_RACK_ID\]/, 'Messages and the monitors stay on the rail')
+  assert.match(rail, /framesBinding\(\{reading, harness: \{binding, resolved\}\}, holds, \{ecology/, 'the frames on AIKit\'s journal')
+  // REPLACED (#725): Gateways and the Agency gateway stood on the rail too — Gateways is listed on the Workcells tile (§19.3: the rack carries
+  // it under `gw.`), and the agency gateway is the Gateway's agency build, its mark in the head of Messages (§19.10).
+  assert.match(rail, /RAIL_AGENT_DEVICE_IDS: readonly string\[\] = \[MESSAGES_ID, FRAMES_ID, LEDGER_ID, WORKCELL_RACK_ID\]/, 'Messages, the Frames tile and the monitors stay on the rail')
+  assert.match(rail, /carryPages\(ownWorkcell, \[\{page: GATEWAYS_PAGE, binding: gateways\}\]\)/, 'the Workcells tile lists the gateways')
   for (const file of ['agent/devices/ownerRoutes.ts', 'agent/devices/workcellReads.ts', 'agent/devices/workcellBindings.ts', 'agent/devices/mainTrackBindings.ts', 'agent/devices/messagesBinding.ts']) {
     assert.doesNotMatch(read(file), /\.defaults\[|\.fixtures|catalogue\/panels\//, `${file}: no design default or fixture`)
     assert.deepEqual(read(file).match(/#[0-9a-fA-F]{3,8}\b/g) ?? [], [], `${file}: shell tokens only`)

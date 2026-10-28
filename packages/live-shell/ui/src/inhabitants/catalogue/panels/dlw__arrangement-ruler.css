@@ -61,3 +61,12 @@
 .arp-key i[data-status="stalled"] { background: repeating-linear-gradient(135deg, var(--text-dim, #a2a7ad) 0 3px, color-mix(in srgb, var(--arp-stall) 60%, transparent) 3px 5px); }
 .arp-says { margin-left: auto; color: var(--text, #d4d7da); }
 .arp-empty { flex: 1 1 auto; display: grid; place-items: center; color: var(--text-faint, #71767c); }
+
+/* Technē's timeline (§17.1): a date known only to a stretch draws as a band; what stood at once is hatched across the lanes; the
+   relations lane carries Read by's arcs, a lit chain's hops with their offsets, and a ring at each return. */
+.arp-clip[data-band="true"] { background: color-mix(in srgb, var(--tc) 30%, transparent); outline: 1px dashed var(--tc); outline-offset: -1px; color: var(--text, #d4d7da); }
+.arp-clip[data-returns] { outline: 1.5px solid var(--accent, #ffbe00); outline-offset: 1px; }
+.arp-once { position: absolute; top: 0; bottom: 0; pointer-events: none; background: repeating-linear-gradient(45deg, color-mix(in srgb, var(--sel, #7aa5d8) 45%, transparent) 0 1.5px, transparent 1.5px 5px); }
+.arp-lane[data-rel="true"] { height: 26px; }
+.arp-hop { position: absolute; top: 1px; transform: translateX(-50%); padding: 0 3px; background: var(--bg-2, #3f4348); color: var(--accent, #ffbe00); font: 9px/12px var(--mono, ui-monospace, monospace); white-space: nowrap; pointer-events: none; }
+.arp-ret { position: absolute; bottom: 2px; width: 9px; height: 9px; transform: translateX(-50%); box-sizing: border-box; border: 1.2px solid var(--accent, #ffbe00); border-radius: 50%; color: var(--accent, #ffbe00); font: 7px/7px var(--mono, ui-monospace, monospace); font-style: normal; text-align: center; pointer-events: none; }

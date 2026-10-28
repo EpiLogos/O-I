@@ -30,12 +30,21 @@
 // <id> --expect-digest <digest>`), procUndo (the id: `aikit procedure undo <id>`), issue (JSON {scope, reason}: `aikit bypass issue`),
 // revoke (the bypass id: `aikit bypass revoke`). No kernel op reaches these AIKit commands yet: the host stands each act disabled with
 // that reason until one does. A key the owner has not reported is absent: the views draw "—" and the well names what is missing.
+//
+// Making a skill (manual §19.7, the Capture page): do the task once by hand with Capture on, and the page writes a Method or a Skill from
+// it and sends it to you as a proposal, which waits in Approvals and here. The page carries the Capture skill's own parts
+// (ai-kit__capture-skill.tsx, whose header names AIKit's capture pipeline: capture, promote, reject, the rescan that releases) under
+// `capture.`: source (minutes · clip), minutes (1–60), name, form (method · skill), scope (project · home: this project, or all your
+// work), steps (each found, with `step:<id>` your request to keep it), proposal (ready · held · accepted · removed), findings (Held
+// for, masked), similar (Resembles), recording (whether Capture records now). Acts: accept (held: a draft member), release, remove.
+// Its tab's light is lit while it records.
 import {useState} from 'react'
 import {WoodMark} from '../../sdk/marks'
 import type {WoodSet} from '../../sdk/icons'
-import {Action, Band, Chooser, Display, Folded, Handle, Ladder, Panel, Radio, Readout, Rows, Section, TextField, Tile, Toggle, type LightState, type RowItem} from '../../sdk/panel'
-import {NONE, boolOf, clampTo, grown, has, json, st, strOf, type DesignedDevice, type ViewProps} from './design'
-import {DOCUMENTATION, FORM_NAME, ORDER, RUNGS, markState, reaching, type Member} from './practice'
+import {Action, Band, Chooser, Display, Folded, Handle, Ladder, Panel, Radio, Readout, Rows, Section, TextField, Tile, Toggle, ValueBox, type LightState, type RowItem} from '../../sdk/panel'
+import {NONE, boolOf, clampTo, grown, has, json, numOf, prefixed, scoped, st, strOf, type DesignedDevice, type ViewProps} from './design'
+import {DOCUMENTATION, FORM_NAME, ORDER, RUNGS, markState, reaching, type Form, type Member} from './practice'
+import {design as captureSkill} from './capture-skill'
 
 type V = ViewProps['v']
 const SCOPES = [{value: 'home', label: 'Home', does: 'Every session on this machine.'}, {value: 'project', label: 'Project', does: 'Every session in this project.'},
@@ -429,15 +438,132 @@ function ProcBands({p}: {p: ViewProps}) {
   </>
 }
 
+// ------------------------------------------------------------------------------------------------ Capture: making a skill
+// Carried from the Capture skill's design (ai-kit__capture-skill.tsx), where these parts were drawn first, under `capture.`.
+
+type Proposal = 'ready' | 'held' | 'accepted' | 'removed'
+interface CapStep {readonly id: string; readonly name: string; readonly at: number}
+const capObj = (x: unknown): x is Record<string, unknown> => !!x && typeof x === 'object' && !Array.isArray(x)
+function capRead<T>(v: V, key: string, pick: (x: Record<string, unknown>) => T | null): T[] | undefined {
+  if (!has(v, key)) return undefined
+  const raw = json<unknown>(v, key, [])
+  return Array.isArray(raw) ? raw.flatMap(x => { const item = capObj(x) ? pick(x) : null; return item ? [item] : [] }) : []
+}
+const capSteps = (v: V) => capRead<CapStep>(v, 'steps', x => (typeof x.id === 'string' && typeof x.name === 'string' && typeof x.at === 'number' ? {id: x.id, name: x.name, at: x.at} : null))?.sort((a, b) => b.at - a.at)
+const capFindings = (v: V) => capRead(v, 'findings', x => (typeof x.rule === 'string' && typeof x.preview === 'string' ? {rule: x.rule, preview: x.preview, step: typeof x.step === 'string' ? x.step : undefined} : null))
+const capSimilar = (v: V) => capRead(v, 'similar', x => (typeof x.other === 'string' && typeof x.percentage === 'number' ? {other: x.other, percentage: x.percentage} : null))
+const capForm = (v: V): Form | undefined => { const f = strOf(v, 'form'); return f === 'method' || f === 'skill' ? f : undefined }
+/** The window of work the example comes from, in minutes ago: the last minutes, or the span of the selected clip. */
+const capWindow = (v: V): {from: number; to: number} | undefined => {
+  if (strOf(v, 'source') === 'clip') { const c = json<unknown>(v, 'clip', null); return capObj(c) && typeof c.from === 'number' && typeof c.to === 'number' ? {from: c.from, to: c.to} : undefined }
+  const m = numOf(v, 'minutes'); return strOf(v, 'source') === 'minutes' && m !== undefined ? {from: m, to: 0} : undefined
+}
+const capKept = (v: V, x: CapStep) => { const w = capWindow(v); return v[`step:${x.id}`] !== false && !!w && x.at <= w.from && x.at >= w.to }
+function capProposal(v: V): Proposal | undefined {
+  if (v.remove === true) return 'removed'
+  if (v.accept === true) return 'accepted'
+  const x = strOf(v, 'proposal'); return x === 'ready' || x === 'held' || x === 'accepted' || x === 'removed' ? x : undefined
+}
+const CAP_STATE: Readonly<Record<Proposal, string>> = {ready: 'Ready', held: 'Held', accepted: 'Accepted', removed: 'Removed'}
+const CAP_SOURCES = [{value: 'minutes', label: 'The last minutes', does: 'The last minutes of your work.'}, {value: 'clip', label: 'A selected clip', does: 'The clip you selected in Clip view.'}]
+const CAP_FORMS = [{value: 'method', label: 'Method', does: 'A Method carries a whole practice.'}, {value: 'skill', label: 'Skill', does: 'A Skill carries one step of it.'}]
+const CAP_SCOPES = [{value: 'project', label: 'This project', does: 'The member may be used in this project.'}, {value: 'home', label: 'All my work', does: 'The member may be used in all your work.'}]
+const REACH = 60
+
+/** The window on your work: an hour back to now on a square-root scale, the window shaded, a tick for each step that stays. */
+function CaptureWell({v, set, w, h}: {v: V; set?: ViewProps['set']; w: number; h: number}) {
+  const x0 = 10, x1 = w - 10, top = 30, bottom = h - 46, X = (m: number) => x1 - Math.sqrt(clampTo(0, REACH, m) / REACH) * (x1 - x0)
+  const win = capWindow(v), steps = capSteps(v), f = capForm(v), state = capProposal(v), recording = boolOf(v, 'recording') === true, minutes = numOf(v, 'minutes')
+  return <Display w={w} h={h} label="The window" corner={state ? CAP_STATE[state] : NONE}
+    does="An hour of your work, the last minutes widest. The shaded part is the example; a line is a step that stays. Drag handle 1 to widen the window.">
+    {recording && <g><circle cx={x0 + 3} cy={12} r={3} fill="var(--rec)" /><text x={x0 + 10} y={15} className="dp-axis">capture on</text></g>}
+    {[60, 30, 15, 5, 0].map(t => <g key={t}><line x1={X(t)} x2={X(t)} y1={top} y2={bottom} className="dp-grid" />
+      <text x={X(t)} y={bottom + 10} className="dp-axis" textAnchor={t === 60 ? 'start' : t === 0 ? 'end' : 'middle'}>{t === 0 ? 'now' : `−${t}`}</text></g>)}
+    <rect x={x0} y={top} width={x1 - x0} height={bottom - top} className="dp-faint" />
+    {win && <rect x={X(win.from)} y={top} width={Math.max(0, X(win.to) - X(win.from))} height={bottom - top} className="dp-fill" />}
+    {win && steps?.map(x => <line key={x.id} x1={X(x.at)} x2={X(x.at)} y1={top + 4} y2={bottom - 4} className={capKept(v, x) ? 'dp-curve-on' : 'dp-faint'} strokeDasharray={capKept(v, x) ? undefined : '2 2'} />)}
+    {(!win || !steps) && <text x={(x0 + x1) / 2} y={(top + bottom) / 2 + 3} className="dp-ink-dim" textAnchor="middle">{!win ? 'No reading of the window' : 'No reading of the steps'}</text>}
+    {set && win && strOf(v, 'source') === 'minutes' && minutes !== undefined && <Handle x={X(win.from)} y={(top + bottom) / 2} n={1} shape="ring" label="Minutes"
+      does="Drag along the strip: how many minutes back the example reaches." onDrag={x => set('minutes', clampTo(1, 60, Math.round(REACH * Math.pow(clampTo(0, 1, (x1 - x) / (x1 - x0)), 2))))} onReset={() => set('minutes', 10)} />}
+    {f && <foreignObject x={x0} y={h - 32} width={26} height={26}><WoodMark kind={f} size={24} state={state === 'ready' ? 'whole' : state === 'held' || state === 'accepted' ? 'warn' : 'outline'} set={marks(v)} title={FORM_NAME[f]} /></foreignObject>}
+    <text x={x0 + 32} y={h - 22} className="dp-ink">{f ? FORM_NAME[f] : NONE}</text>
+    <text x={x0 + 32} y={h - 10} className="dp-ink-dim">{strOf(v, 'name') ?? NONE}</text>
+  </Display>
+}
+
+function CaptureBands({p}: {p: ViewProps}) {
+  const v = p.v, steps = capSteps(v), found = capFindings(v), like = capSimilar(v), state = capProposal(v), [page, setPage] = useState(0)
+  const stuck = !!found?.some(x => !x.step || steps?.some(y => y.id === x.step && capKept(v, y)))
+  const items: RowItem[] = steps === undefined ? [{id: 'none', name: 'No reading of the steps', light: 'unknown'}]
+    : steps.map((x, i) => ({id: x.id, name: `${i + 1} ${x.name}`, request: v[`step:${x.id}`] !== false, light: capKept(v, x) ? 'lit' : 'dark', tone: found?.some(y => y.step === x.id) ? 'stall' as const : 'accent' as const,
+      note: `−${x.at} m`, why: found?.some(y => y.step === x.id) ? 'AIKit found a possible secret here. Turn the step off, then release.' : undefined}))
+  const held: RowItem[] = state === 'held' && found?.length ? found.map((x, i) => ({id: `h${i}`, name: x.rule, light: 'lit', tone: 'stall', note: x.preview})) : []
+  const near: RowItem[] = like === undefined ? [{id: 'none', name: 'No reading of the members', light: 'unknown'}] : like.map(x => ({id: x.other, name: x.other.split('/').pop() ?? x.other, light: 'lit', tone: 'value', note: `${x.percentage} %`,
+    does: `${x.percentage} % of the phrasing is shared. A close match needs a new revision, not a new member.`}))
+  const acceptWhy = state === undefined ? 'No proposal yet.' : state === 'held' ? 'A proposal that holds a secret is never accepted. Release it first.' : state !== 'ready' ? 'The proposal is answered.' : !(strOf(v, 'name') ?? '').trim() ? 'Name it first.' : undefined
+  return <>
+    <Band>
+      <Section width={206}><CaptureWell v={v} set={st(p, 'minutes').disabled ? undefined : p.set} w={194} h={146} /></Section>
+      <Section label="Example" width={100}>
+        <Radio {...st(p, 'source')} label="Source" does="The part of your work that the skill learns from." value={strOf(v, 'source') ?? ''} options={CAP_SOURCES} stack onChange={x => p.set('source', x)} />
+        <ValueBox {...st(p, 'minutes')} wide label="Minutes" does="How far back the window reaches. A clip sets its own span." value={numOf(v, 'minutes') ?? NaN} def={10} scale={{min: 1, max: 60, step: 1}}
+          format={x => `${x} min`} onChange={x => p.set('minutes', x)} disabled={st(p, 'minutes').disabled ?? (strOf(v, 'source') === 'clip' ? 'A clip sets its own span.' : undefined)} />
+      </Section>
+      <Section label="Member" grow>
+        <TextField {...st(p, 'name')} wide label="Name" does="The member's name and the id it is kept under." value={strOf(v, 'name') ?? ''} placeholder={NONE} onChange={x => p.set('name', x)} />
+        <Radio {...st(p, 'form')} label="Form" does="A Method carries a whole practice; a Skill carries one step of it." value={strOf(v, 'form') ?? ''} options={CAP_FORMS} stack onChange={x => p.set('form', x)} />
+        <Radio {...st(p, 'scope')} label="Scope" does="Where the member may be used." value={strOf(v, 'scope') ?? ''} options={CAP_SCOPES} stack onChange={x => p.set('scope', x)} />
+      </Section>
+    </Band>
+    <Band>
+      <Section width={180}><Rows label={steps ? `Steps · ${steps.filter(x => capKept(v, x)).length} of ${steps.length}` : 'Steps'} does="The steps the device found. The square is your request: turn a step off to remove it."
+        items={items} onRequest={st(p, 'steps').disabled ? undefined : (id, x) => p.set(`step:${id}`, x)} size={7} page={page} onPage={setPage} /></Section>
+      <Section label="Proposal" grow>
+        <Readout label="proposal" does="How the proposal stands: ready, held, removed or accepted. A proposal that holds a secret is held." value={state ? CAP_STATE[state] : undefined} tone={state === 'held' ? 'stall' : state === 'accepted' ? 'green' : state === 'ready' ? 'accent' : undefined} />
+        {held.length > 0 ? <Rows label="Held for" does="What holds the proposal: each finding, masked." items={held} size={2} />
+          : <Rows label={like?.length === 0 ? 'Resembles · none' : 'Resembles'} does="The members it is close to, nearest first." items={near} size={2} />}
+        <div className="ref-pair">
+          <Action {...st(p, 'accept')} hold label="Accept" does="Keeps the proposal as a draft member of your practice." onPress={() => p.set('accept', true)} disabled={st(p, 'accept').disabled ?? acceptWhy} />
+          <Action {...st(p, 'release')} label="Release" does="Scans the proposal again, and frees it when no secret remains." onPress={() => p.set('release', true)}
+            disabled={st(p, 'release').disabled ?? (state !== 'held' ? 'Nothing holds the proposal.' : stuck ? 'A step that holds a secret is still on.' : undefined)} />
+          <Action {...st(p, 'remove')} label="Remove" does="Drops the proposal." onPress={() => p.set('remove', true)} disabled={st(p, 'remove').disabled ?? (state === 'ready' || state === 'held' ? undefined : 'No proposal waits.')} />
+        </div>
+      </Section>
+    </Band>
+  </>
+}
+
+function CaptureDoc({v}: {v: V}) {
+  const steps = capSteps(v), found = capFindings(v), like = capSimilar(v), state = capProposal(v), f = capForm(v)
+  return <>
+    <h3>{strOf(v, 'name') ?? NONE} <small>{f ? FORM_NAME[f] : NONE} · {state ? CAP_STATE[state] : NONE}{boolOf(v, 'recording') ? ' · capture on' : ''}</small></h3>
+    {strOf(v, 'says') && <p className="ref-doc-lead">{strOf(v, 'says')}</p>}
+    <section className="ref-doc-kind"><h4>Steps</h4>
+      {!steps ? <p className="ref-doc-lead">No reading of the steps.</p> : <ol className="ref-doc-list">{steps.map((x, i) => <li key={x.id} data-dim={capKept(v, x) ? undefined : 'true'}>
+        <span className="dp-lamp" data-light={capKept(v, x) ? 'lit' : 'dark'} data-tone="accent" /><b>{i + 1} {x.name}</b><span className="ref-doc-rev">−{x.at} m</span></li>)}</ol>}
+    </section>
+    {state === 'held' && !!found?.length && <section className="ref-doc-kind"><h4>Held for</h4><ol className="ref-doc-list">{found.map((x, i) => <li key={i}>
+      <span className="dp-lamp" data-light="lit" data-tone="stall" /><b>{x.rule}</b><span className="ref-doc-rev">{x.preview}</span></li>)}</ol></section>}
+    <section className="ref-doc-kind"><h4>Resembles</h4>
+      {!like ? <p className="ref-doc-lead">No reading of the members.</p> : !like.length ? <p className="ref-doc-lead">No member resembles it.</p>
+        : <ol className="ref-doc-list">{like.map(x => <li key={x.other}><span className="dp-lamp" data-light="lit" data-tone="value" /><b>{x.other.split('/').pop()}</b><span className="ref-doc-rev">{x.percentage} %</span></li>)}</ol>}
+    </section>
+  </>
+}
+
 // ------------------------------------------------------------------------------------------------ the pages
 
-type PageId = 'set' | 'sources' | 'adopt' | 'procedures'
-const PAGES: readonly {id: PageId; label: string}[] = [{id: 'set', label: 'Set'}, {id: 'sources', label: 'Sources'}, {id: 'adopt', label: 'Adopt'}, {id: 'procedures', label: 'Procedures'}]
+type PageId = 'set' | 'sources' | 'adopt' | 'procedures' | 'capture'
+const PAGES: readonly {id: PageId; label: string}[] = [{id: 'set', label: 'Set'}, {id: 'sources', label: 'Sources'}, {id: 'adopt', label: 'Adopt'}, {id: 'procedures', label: 'Procedures'},
+  {id: 'capture', label: 'Capture'}]
+const captureOf = (p: ViewProps) => scoped(p, 'capture.')
 const pageOf = (p: ViewProps): PageId => (PAGES.some(x => x.id === p.page) ? p.page as PageId : 'set')
 /** Sources is dark while a candidate waits or copies of a skill differ; Procedures while one is planned and not run. */
 function pageLight(v: V, id: PageId): LightState | undefined {
   if (id === 'sources') { const all = sourcesOf(v), roots = rootsOf(v); return all === undefined && roots === undefined ? undefined : (all ?? []).some(waits) || (roots ?? []).some(r => (r.decide ?? 0) > 0) ? 'dark' : 'lit' }
   if (id === 'procedures') { const all = proceduresOf(v); return all === undefined ? undefined : all.some(x => x.state === 'planned') ? 'dark' : 'lit' }
+  // Capture's dot shows while it records (the manual draws it red; a page's light here carries no tone of its own).
+  if (id === 'capture') return boolOf(v, 'capture.recording') === true ? 'lit' : undefined
   return undefined
 }
 
@@ -476,7 +602,7 @@ function SkillsWhole({p}: {p: ViewProps}) {
   const page = pageOf(p)
   return <Panel title={strOf(p.v, 'set') ?? 'Skillset rack'} mark={headMark(p.v)} view="whole" light={light(p.v, p.owner)} onFold={p.nav.fold} onFull={p.nav.full}
     pages={PAGES.map(x => ({id: x.id, label: x.label, light: pageLight(p.v, x.id)}))} page={page} onPage={p.setPage}>
-    {page === 'sources' ? <SourcesBands p={p} /> : page === 'adopt' ? <AdoptBands p={p} /> : page === 'procedures' ? <ProcBands p={p} /> : <SetBands p={p} />}
+    {page === 'sources' ? <SourcesBands p={p} /> : page === 'adopt' ? <AdoptBands p={p} /> : page === 'procedures' ? <ProcBands p={p} /> : page === 'capture' ? <CaptureBands p={captureOf(p)} /> : <SetBands p={p} />}
   </Panel>
 }
 
@@ -568,7 +694,7 @@ function SkillsFull({p}: {p: ViewProps}) {
       {PAGES.map(x => <button key={x.id} type="button" role="tab" aria-selected={x.id === page} onClick={() => p.setPage(x.id)}>{x.label}</button>)}
     </div>
     <div className="ref-doc">
-      {page === 'sources' ? <SourcesDoc v={p.v} /> : page === 'adopt' ? <AdoptDoc v={p.v} /> : page === 'procedures' ? <ProceduresDoc v={p.v} /> : <SetDoc v={p.v} />}
+      {page === 'sources' ? <SourcesDoc v={p.v} /> : page === 'adopt' ? <AdoptDoc v={p.v} /> : page === 'procedures' ? <ProceduresDoc v={p.v} /> : page === 'capture' ? <CaptureDoc v={captureOf(p).v} /> : <SetDoc v={p.v} />}
     </div>
   </div>
 }
@@ -635,15 +761,18 @@ export const skills: DesignedDevice = {
     unused: JSON.stringify(['architecture-development', 'evidence-led-repair', 'diagram-authoring', 'projection-authoring', 'ui-mockup-authoring']), unusedOnly: false,
     sources: JSON.stringify(SOURCES), roots: JSON.stringify(ROOTS), source: 'central',
     adoptRoot: '@claude', namespace: 'claude', adoption: JSON.stringify(ADOPTION),
-    procedures: JSON.stringify(PROCEDURES), procedure: 'prc_01M5EER86PB5JC206XZFWZ2C0A', bypasses: JSON.stringify(BYPASSES), bypassScope: 'next-event', bypassReason: ''},
+    procedures: JSON.stringify(PROCEDURES), procedure: 'prc_01M5EER86PB5JC206XZFWZ2C0A', bypasses: JSON.stringify(BYPASSES), bypassScope: 'next-event', bypassReason: '',
+    // The Capture page: the Capture skill's own sample, under `capture.`.
+    ...prefixed('capture.', captureSkill.defaults)},
   fixtures: {'The blade': {marks: 'blade'}, 'The pen': {marks: 'pen'},
     'Unused only': {unusedOnly: true},
     'A candidate waits': {source: 'mattpocock', sources: JSON.stringify(SOURCES.map(x => (x.id === 'mattpocock' ? {...x, candidate: '3be07c55f1a82d64'} : x)))},
     'Before preview': {adoption: undefined, adoptRoot: '@codex', namespace: 'codex'},
+    'Capturing, held for a secret': {'capture.recording': true, ...prefixed('capture.', captureSkill.fixtures?.Held ?? {})},
     'No readings': {light: undefined, set: undefined, scope: undefined, profile: undefined, compose: undefined, target: undefined, revision: undefined,
       author: undefined, members: undefined, sets: undefined, profiles: undefined, unsupported: undefined, unused: undefined, unusedOnly: undefined,
       sources: undefined, roots: undefined, source: undefined, adoptRoot: undefined, namespace: undefined, adoption: undefined, procedures: undefined,
-      procedure: undefined, bypasses: undefined, bypassScope: undefined, bypassReason: undefined}},
+      procedure: undefined, bypasses: undefined, bypassScope: undefined, bypassReason: undefined, ...prefixed('capture.', captureSkill.fixtures?.['No readings'] ?? {})}},
 
   folded: p => <Folded title={short(p.v)} light={light(p.v, p.owner)} readings={[`${reach(p.v, 5) === undefined ? NONE : reach(p.v, 5)} loaded`]} onUnfold={p.nav.unfold} />,
 

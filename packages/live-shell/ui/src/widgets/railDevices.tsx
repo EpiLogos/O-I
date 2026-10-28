@@ -1,5 +1,7 @@
-// Devices born on the rail (DLW §23.1: "A widget with no device elsewhere, such as Files or Calendar, is a small device born on the
-// rail"; §16.1 "A widget is a view of a device"). Each is a device of the runtime drawn by its catalogue design (`widgets:<id>`,
+// Devices born on the rail (DLW §23.1: "A widget with no device elsewhere, such as Files, is a small device born on the rail"; §16.1 "A
+// widget is a view of a device"). The 22 Oct manual rewrite retired three of them: the Diff is Files' Diff page (§23.4), carried here under
+// `diff.`; a calendar is no device of the DLW, only a third party's widget (§23.8); and what Notifications showed waits in Approvals, under
+// Requests (§23.9), whose chains carry it (useOwnerRequests below, railBindings.ts withOwnerRequests). Each is a device of the runtime drawn by its catalogue design (`widgets:<id>`,
 // inhabitants/catalogue/panels/widgets__<id>.tsx) on its owner's readings, and published on the device door, so its six views stand
 // where every device's do: its Widget on the rail (the rail's registration of the same id draws the device — frame/widgets/
 // deviceWidgets.tsx claimRailWidget), Whole in the pool, Full in a pane, Pop-out in its own window. The publisher stands once, with the
@@ -21,7 +23,7 @@ import {COMPANIONS} from '../shell/modeDockTiles'
 import {CONVERSATION_PROJECT, conversationOf} from './agentConversation'
 import {useOptionalContinuity} from '../continuity/workspace'
 import {publishDevice, publishedDevice, subscribeDeviceDoor} from '../frame/devices/deviceDoor'
-import {SEAT_ID} from '../agent/devices/workcellBindings'
+import {GIT_ID} from '../agent/devices/workcellBindings'
 import {useSeatStatusAnswer} from '../agent/devices/workcellReads'
 import {actionAnswerOf, centralActionOp} from '../central/devices/useCentralReadings'
 import type {closeNowClearing} from '../central/devices/nowsClose'
@@ -33,7 +35,8 @@ import type {DeviceInstance} from '../frame/devices/deviceRuntime'
 import type {IconName} from '../inhabitants/sdk/Icon'
 import {useWidgetReading} from './widgetReading'
 import type {OwnerReading} from '../owners/ownerReading'
-import {CALENDAR_ABSENT, NOTIFY_LIST_ACTION, dayStartMs, diffFilesOf, filesOf, notificationsBinding, nowsCloseWrites, nowsValues, pagesOf, put, trailValues, wikiPagesOf} from './railBindings'
+import {NOTIFY_LIST_ACTION, dayStartMs, diffFilesOf, filesOf, nowsCloseWrites, nowsValues, pagesOf, put, trailValues, wikiPagesOf, type NotifyLedgerAnswer} from './railBindings'
+import {DIFF_PAGE, carryPages} from '../agent/devices/oneAgentBinding'
 import {openInstrument} from '../frame/instrumentDoor'
 import {DEVICE_PANE_KIND} from '../frame/devices/devicePane'
 import {loadWhenDrawn} from '../shell/loadWhenDrawn'
@@ -44,13 +47,10 @@ export const RAIL_FAMILY = 'widgets'
 /** The rail-born devices: the rail widget each one draws, its title, its mark, and what it reads. */
 export const RAIL_DEVICES = [
   {id: 'trail', title: 'Trail', icon: 'trav', note: 'The workspace book\'s trail (desktop/cradle/src/workspace/store.ts TrailStop); a press returns to a stop.'},
-  {id: 'files', title: 'Files', icon: 'lib', note: 'The files the followed agent read and changed, from its encounter tape (aikit encounter read, desktop/cradle/src/agent/tape), with the seat\'s diff counts.'},
+  {id: 'files', title: 'Files', icon: 'lib', note: 'The files the followed agent read and changed, from its encounter tape (aikit encounter read, desktop/cradle/src/agent/tape), with the seat\'s diff counts; its Diff page the selected seat\'s working diff (kernel git_diff_read → Central central.git.diff, central.git-diff/v1), with no seat selected the selected world\'s repository, else the workspace\'s project, else the shell\'s (git_repository_read).'},
   {id: 'web', title: 'Web', icon: 'browser', note: 'The pages the followed agent fetched, from its encounter tape: each address and the text it got.'},
   {id: 'wiki', title: 'Wiki', icon: 'orbit', note: 'The root wiki\'s pages (Control/agents/wiki/wiki.json through the files seam), each read as its source through the knowledge owner (kernel knowledge read), its links the relations Central\'s wiki reading gives it (central.wiki.read).'},
-  {id: 'diff', title: 'Diff', icon: 'select', note: 'The selected seat\'s working diff (kernel git_diff_read → Central central.git.diff, central.git-diff/v1), the seat as the seat instrument reads it; with no seat selected, the selected project world\'s repository, else the workspace\'s project, else the shell\'s (git_repository_read).'},
   {id: 'nows', title: 'NOWs', icon: 'die', note: 'The ground\'s civil time, its Day and its open NOW clearings (kernel central inspect → central.civil-time-reading/v1, central.day-reading/v1, central.now-listing/v1).'},
-  {id: 'calendar', title: 'Calendar', icon: 'metro', note: 'A third party\'s calendar, through the provider it comes from. No calendar provider is installed.'},
-  {id: 'notifications', title: 'Notifications', icon: 'arm', note: 'What asks for your attention (§23.9): the agents that wait for you (Messages), what waits in Approvals, and the requests an owner raised through Central\'s personal.notify, as Central keeps them with their deliveries (personal.notifications.list).'},
 ] as const satisfies readonly {id: string; title: string; icon: IconName; note: string}[]
 export type RailDeviceId = typeof RAIL_DEVICES[number]['id']
 
@@ -110,15 +110,15 @@ function useTrailBinding(): DesignBinding {
 /** The shell's project: the repository the Diff reads when no seat and no project world is selected (the rail's old Diff tile read the
  * same, agent/AgentDockTileBody.tsx:114). */
 const DIFF_PROJECT = 'O-I'
-/** The Workspace device on the door (central/devices/pageBindings.ts WORKSPACE_DEVICE_ID): its `folder` is the selected world's project,
- * or the book's workspace's, or `central` for your world. Named here, not imported, so the rail's boot does not load Central's bindings. */
-export const DIFF_WORKSPACE_ID = 'central:workspace'
-/** The Workspace's folder word for your world (pageBindings.ts workspaceValues: `world.project ?? 'central'`): the root, no project. */
+/** The world's Docs on the door (central/devices/CentralDevices.tsx DOCS_DEVICE_ID; pageBindings.ts docsValues): its `subject` is the selected
+ * world's project, or `central` for your world. The Workspace, whose `folder` it read before, was retired into the track's head and Docs in
+ * the 22 Oct manual rewrite (§18.1). Named here, not imported, so the rail's boot does not load Central's bindings. */
+export const DIFF_WORLD_ID = 'central:docs'
+/** Docs' subject word for your world (pageBindings.ts docsValues: `world.project ?? 'central'`): the root, no project. */
 const ROOT_FOLDER = 'central'
 
-/** The repository the Diff reads when no seat is selected: the project world the Workspace stands on (a world's head opened it, or the
- * book's workspace names it), else the book's workspace's project, else the shell's project. Your world (`central`) has no repository of
- * its own, so it reads the shell's. Pure. */
+/** The repository the Diff reads when no seat is selected: the project world Docs stands on (the selected world's track), else the book's
+ * workspace's project, else the shell's project. Your world (`central`) has no repository of its own, so it reads the shell's. Pure. */
 export function diffProjectOf(workspaceFolder: Value | undefined, bookProject: string | undefined): {project: string; from: 'world' | 'workspace' | 'shell'} {
   const named = (word: unknown): word is string => typeof word === 'string' && word.trim() !== '' && word !== ROOT_FOLDER
   if (named(workspaceFolder)) return {project: workspaceFolder, from: 'world'}
@@ -127,7 +127,8 @@ export function diffProjectOf(workspaceFolder: Value | undefined, bookProject: s
 }
 type DiffReading = {status: 'reading'} | {status: 'refused'; words: string} | {status: 'read'; root: string; files: Record<string, Value>[]; head: string | null; branch: string | null; omitted: number}
 
-/** The checkout of the seat selected on the Seat device (workcellBindings.ts SEAT_ID: its `seat`, a workcell, and its `product`), as the
+/** The checkout of the seat selected on Git / landing's Seat page (workcellBindings.ts GIT_ID, its `seat.seat`, a workcell, and its
+ * `seat.product`: the Seat was retired into that page in the 22 Oct manual rewrite, §19.17), as the
  * seat instrument reads it (`seat status --json`): the workcell's path with the product's directory under it — the seat path the census
  * already uses (centralHygieneModel.ts registeredSeatPaths) — and the seat's live branch and head. Null with no seat selected, or one the
  * reading does not hold. Pure. */
@@ -143,18 +144,18 @@ export function selectedSeatOf(seatValues: Readonly<Record<string, Value>> | und
     head: typeof row.live_head === 'string' ? row.live_head : null}
 }
 
-/** One word of the Seat device's published values (its `seat` or `product`), or null. */
-const seatWord = (key: 'seat' | 'product'): string | null => { const value = publishedDevice(SEAT_ID)?.binding?.values[key]; return typeof value === 'string' && value ? value : null }
+/** One word of Git / landing's Seat page as published (its `seat.seat` or `seat.product`), or null. */
+const seatWord = (key: 'seat' | 'product'): string | null => { const value = publishedDevice(GIT_ID)?.binding?.values[`seat.${key}`]; return typeof value === 'string' && value ? value : null }
 
 function useDiffReading(transport: KernelTransportStatus | undefined): DiffReading {
-  // The seat selected on the Seat device, where the chain publishes it (watched as its two words, so no other publish redraws the rail),
+  // The seat selected on Git / landing's Seat page, where the chain publishes it (watched as its two words, so no other publish redraws the rail),
   // and the seat instrument's one shared reading (asked only then).
   const seatName = useSyncExternalStore(subscribeDeviceDoor, () => seatWord('seat'), () => null)
   const seatProduct = useSyncExternalStore(subscribeDeviceDoor, () => seatWord('product'), () => null)
   const seatValues = useMemo(() => (seatName && seatProduct ? {seat: seatName, product: seatProduct} : undefined), [seatName, seatProduct])
   const chosen = !!seatValues
-  // With no seat chosen: the project world the Workspace stands on, else the book's workspace's project, else the shell's.
-  const folder = useSyncExternalStore(subscribeDeviceDoor, () => publishedDevice(DIFF_WORKSPACE_ID)?.binding?.values.folder, () => undefined)
+  // With no seat chosen: the project world Docs stands on, else the book's workspace's project, else the shell's.
+  const folder = useSyncExternalStore(subscribeDeviceDoor, () => publishedDevice(DIFF_WORLD_ID)?.binding?.values.subject, () => undefined)
   const bookProject = useOptionalContinuity()?.current.project
   const project = diffProjectOf(folder, bookProject).project
   const seats = useSeatStatusAnswer(transport ?? {kind: 'unavailable', reason: 'No kernel carrier stands.'}, chosen && !!transport && transport.kind !== 'unavailable').reading
@@ -186,6 +187,8 @@ function useDiffReading(transport: KernelTransportStatus | undefined): DiffReadi
   }, [transport, chosen, seats, seat, seatValues, repo, patch, root, doc])
 }
 
+/** The Diff page's binding (Files' Diff page, §23.4; widgets__files.tsx `diff.` keys): the working diff as read, and the page's own holds.
+ * Files carries it under `diff.` (railDevices.tsx RailDevices). */
 function useDiffBinding(reading: DiffReading): DesignBinding {
   const {holds, local} = useHolds(['show', 'session', 'layout', 'open'])
   return useMemo(() => {
@@ -195,7 +198,7 @@ function useDiffBinding(reading: DiffReading): DesignBinding {
       put(values, 'branch', reading.branch)
       put(values, 'head', reading.head?.slice(0, 9))
     } else if (reading.status === 'refused') put(values, 'reason', reading.words)
-    return {id: railDeviceId('diff'), values: withHolds(values, holds), local}
+    return {id: railDeviceId('files'), values: withHolds(values, holds), local}
   }, [reading, holds, local])
 }
 
@@ -348,24 +351,12 @@ function useNowsBinding(transport: KernelTransportStatus | undefined): DesignBin
   }, [reading, holds, local, transport])
 }
 
-// ---------------------------------------------------------------------------------------------------------------- the Calendar
-
-function useCalendarBinding(): DesignBinding {
-  const {holds, local} = useHolds(['range', 'calendar', 'thisWork'])
-  return useMemo(() => ({id: railDeviceId('calendar'), values: withHolds({reason: CALENDAR_ABSENT}, holds), local}), [holds, local])
-}
-
 // ---------------------------------------------------------------------------------------------------------------- Notifications
 
-/** Messages on the door (agent/devices/messagesBinding.ts MESSAGES_ID), and the Approvals devices — Central's Main track's
- * (central/devices/CentralDevices.tsx CENTRAL_APPROVALS_ID) and Factory's (agent/devices/receiptBindings.ts APPROVALS_ID): named here, not
- * imported, so the rail's boot does not load their chains (scripts/load-census.mjs). */
+/** Messages on the door (agent/devices/messagesBinding.ts MESSAGES_ID): named here, not imported, so the rail's boot does not load its chain
+ * (scripts/load-census.mjs). */
 export const NOTIFY_MESSAGES_ID = 'ai-kit:messages'
-export const NOTIFY_APPROVALS_IDS = ['central:main:approvals', 'factory:main:approvals'] as const
 const doorValue = (id: string, key: string): Value | undefined => publishedDevice(id)?.binding?.values[key]
-/** The Approvals device on the door now: the mode's chain publishes one (Central's or Factory's), each reading the same returned work. */
-const approvalsOnDoor = (): string | undefined => NOTIFY_APPROVALS_IDS.find(id => publishedDevice(id))
-const minutesNow = (): number => { const at = new Date(); return at.getHours() * 60 + at.getMinutes() }
 
 /** Open a request's target where it belongs: a device on the door in its pane (a subject or callback that names one), an https://
  * address through the host's opener (as Expressions opens a reference: panels/expressions.tsx). The shell has no router for an oi://
@@ -380,25 +371,16 @@ export async function openNotificationTarget(target: string): Promise<void> {
   throw new Error(`Open: no route in the shell opens ${target} yet — the shell has no router for oi:// addresses or refs that name no device on the door.`)
 }
 
-function useNotificationsBinding(transport: KernelTransportStatus | undefined): DesignBinding {
-  const {holds, local} = useHolds(['show', 'follow', 'selected', 'opened'])
-  // Each count is its own device's reading (railBindings.ts notificationsValues): read off the door, never derived here.
+/** What Notifications read, for Approvals to carry (§23.9; railBindings.ts withOwnerRequests): Messages' agents off the door, and the requests
+ * Central keeps for personal.notify since the local midnight (personal.notifications.list), a reading asked again on the kernel's notice. */
+export function useOwnerRequests(transport: KernelTransportStatus | undefined): {readonly ledger: NotifyLedgerAnswer; readonly messagesAgents: Value | undefined} {
   const agents = useSyncExternalStore(subscribeDeviceDoor, () => doorValue(NOTIFY_MESSAGES_ID, 'agents'), () => undefined)
-  const approvals = useSyncExternalStore(subscribeDeviceDoor, approvalsOnDoor, () => undefined)
-  const queue = useSyncExternalStore(subscribeDeviceDoor, () => (approvals ? doorValue(approvals, 'queue') : undefined), () => undefined)
-  // Now on the strip: the view's own clock, turned each minute; today's requests are the ones asked since the local midnight.
-  const [now, setNow] = useState(minutesNow)
-  useEffect(() => { const timer = window.setInterval(() => setNow(minutesNow()), 60_000); return () => window.clearInterval(timer) }, [])
-  const since = useMemo(() => dayStartMs(Date.now()), [now === 0]) // eslint-disable-line react-hooks/exhaustive-deps
-  // The requests Central keeps for personal.notify, and its provider (ctrl/src/notification.rs): a reading, asked again on the kernel's notice.
+  // Today's requests: those asked since the local midnight (a number that moves only when the day does).
+  const since = dayStartMs(Date.now())
   const ledgerOp = useMemo(() => centralActionOp(NOTIFY_LIST_ACTION, {since_unix_ms: since}), [since])
   const ledgerReading = useOwnerOp(transport, transport ? ledgerOp : null, 'action_dispatched', `${NOTIFY_LIST_ACTION} did not answer.`).reading
   const ledger = useMemo(() => actionAnswerOf(ledgerReading, NOTIFY_LIST_ACTION), [ledgerReading])
-  return useMemo(() => notificationsBinding(railDeviceId('notifications'), {messagesAgents: agents, approvalsQueue: queue, nowMinutes: now, ledger}, holds, {local,
-    messages: () => openInstrument(DEVICE_PANE_KIND, undefined, {ref: NOTIFY_MESSAGES_ID, title: 'Messages'}),
-    approvals: () => openInstrument(DEVICE_PANE_KIND, undefined, {ref: approvals ?? NOTIFY_APPROVALS_IDS[0], title: 'Approvals'}),
-    open: openNotificationTarget}),
-  [agents, queue, approvals, now, ledger, holds, local])
+  return useMemo(() => ({ledger, messagesAgents: agents}), [ledger, agents])
 }
 
 // ---------------------------------------------------------------------------------------------------------------- the publisher
@@ -413,8 +395,10 @@ export function RailDevices() {
   const reading = useWidgetReading()
   const transport = reading?.transport
   const diffReading = useDiffReading(transport), tape = useFollowedTape()
-  const trail = useTrailBinding(), diff = useDiffBinding(diffReading), nows = useNowsBinding(transport), calendar = useCalendarBinding(), notifications = useNotificationsBinding(transport)
-  const files = useFilesBinding(tape, diffReading), web = useWebBinding(tape), wiki = useWikiBinding(transport)
+  const trail = useTrailBinding(), diff = useDiffBinding(diffReading), nows = useNowsBinding(transport)
+  const ownFiles = useFilesBinding(tape, diffReading), web = useWebBinding(tape), wiki = useWikiBinding(transport)
+  // Files carries its Diff page under `diff.` (§23.2, §23.4): the Diff's own binding, prefixed.
+  const files = useMemo(() => carryPages(ownFiles, [{page: DIFF_PAGE, binding: diff}]), [ownFiles, diff])
   const devices = useMemo(() => Object.fromEntries(RAIL_DEVICES.map(spec => [spec.id, railDevice(spec.id)])) as Record<RailDeviceId, DeviceInstance>, [])
   // The Terminal (§17.9): the newest terminal the Workbench's surfaces hold, while one runs (terminalBinding.ts); its rail tile is
   // widgets/TerminalRailWidget.tsx, its Full a pane. It stands on no chain.
@@ -425,13 +409,10 @@ export function RailDevices() {
   useEffect(() => { publishDevice(TERMINAL_ID, terminal ? {device: terminalInstance, binding: terminal} : null) }, [terminalInstance, terminal])
   // Each device is published again only when its own binding changes (a binding is the same object while its readings stand).
   useEffect(() => { publishDevice(devices.trail.id, {device: devices.trail, binding: trail}) }, [devices, trail])
-  useEffect(() => { publishDevice(devices.diff.id, {device: devices.diff, binding: diff}) }, [devices, diff])
   useEffect(() => { publishDevice(devices.files.id, {device: devices.files, binding: files}) }, [devices, files])
   useEffect(() => { publishDevice(devices.web.id, {device: devices.web, binding: web}) }, [devices, web])
   useEffect(() => { publishDevice(devices.wiki.id, {device: devices.wiki, binding: wiki}) }, [devices, wiki])
   useEffect(() => { publishDevice(devices.nows.id, {device: devices.nows, binding: nows}) }, [devices, nows])
-  useEffect(() => { publishDevice(devices.calendar.id, {device: devices.calendar, binding: calendar}) }, [devices, calendar])
-  useEffect(() => { publishDevice(devices.notifications.id, {device: devices.notifications, binding: notifications}) }, [devices, notifications])
   useEffect(() => () => { for (const spec of RAIL_DEVICES) publishDevice(railDeviceId(spec.id), null); publishDevice(TERMINAL_ID, null) }, [])
   return <AgentRailDevices />
 }

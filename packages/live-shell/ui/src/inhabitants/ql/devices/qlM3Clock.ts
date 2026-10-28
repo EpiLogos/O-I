@@ -82,7 +82,7 @@ export async function m3Through(call: KernelCall, basis: M3Basis, request: M3Ges
 
 // ── the store the views share ───────────────────────────────────────────────
 
-export interface M3View {readonly turn?: Value; readonly open?: Value; readonly readout?: Value; readonly reciprocal?: Value}
+export interface M3View {readonly turn?: Value; readonly open?: Value; readonly readout?: Value; readonly reciprocal?: Value; readonly skin?: Value}
 export interface QlM3State {
   /** The encounter's key; null with the reason when there is none. */
   readonly key: string | null
@@ -173,7 +173,9 @@ export const QL_M3_ABSENT: Readonly<Record<string, string>> = {}
 /** The matrices in QL's own order: the family index set-matrix takes (crates/ql-mef/src/m3_state/form_cell.rs; ql.m3-state/v1 law.matrix.index). */
 export const QL_M3_MATRICES = ['complementary', 'moving-resting', 'same-quality'] as const
 /** The keys the view holds: how the clock is drawn, not what it is. */
-export const QL_M3_LOCAL = ['turn', 'open', 'readout', 'reciprocal'] as const
+/** The view's own choices. Skin (manual §22.3 "The Binding skin": Wheel or Binding, Wheel by default) chooses what the clock draws; the
+ * Binding skin's own keys are Binding's, carried under `binding.` (TechneDevices.tsx qlFaceEntry, qlBinding.ts). */
+export const QL_M3_LOCAL = ['turn', 'open', 'readout', 'reciprocal', 'skin'] as const
 
 const int = (x: unknown): x is number => Number.isSafeInteger(x)
 

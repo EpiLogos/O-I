@@ -50,3 +50,11 @@
 
 /* The queue as a lake, across the head of the pane (the same well as the plate's). */
 .ap-lake { flex: none; padding: 8px 10px 0; }
+
+/* A review in the pane: each condition and claim on a line, with how it stands. The widget's foot: the agents that wait in Messages. */
+.ap-review { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; font-size: 11px; }
+.ap-review li { display: flex; justify-content: space-between; gap: 8px; padding: 2px 0; border-bottom: 1px solid color-mix(in srgb, var(--line, #24262a) 70%, transparent); }
+.ap-review li span { flex: none; color: var(--text-dim, #a2a7ad); font-size: 10px; }
+.ap-review li[data-state="unsatisfied"] span { color: var(--stall, #ff9b4a); }
+.ap-review li[data-state="satisfied"] span { color: var(--dp-value, #5cc6b4); }
+.ap-foot { margin: 0; font-size: 10px; color: var(--text-faint, #71767c); }

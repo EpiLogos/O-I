@@ -1,4 +1,6 @@
-// The Journey (§17.6, techne:journey), the Timeline (§17.5, techne:timeline) and the Canvas (§17.4, techne:canvas) on their owner: the
+// The Journey (§17.6, techne:journey), the Timeline (§17.5; its design techne:timeline was retired in the 22 Oct manual rewrite — the
+// timeline is Technē's Arrangement view — and its binding below is kept on its own readings, drawn by no device) and the Canvas (§17.4,
+// techne:canvas) on their owner: the
 // research frame (expressions-app field-studies-journeys: the Journey document and journeyInstrument.tsx; researchInstruments.tsx's Canvas
 // and Timeline). The frame stands inside the hosted Expressions pane; the shell reaches it only through what it announces and the one
 // runner it answers (projections/expressionsPaneHost.ts useHostedChrome):

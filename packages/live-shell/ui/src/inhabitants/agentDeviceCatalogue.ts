@@ -26,10 +26,14 @@ export interface AgentChainSlot {
 }
 
 /** The chain composition — mockup order gateway → agent → skillset → world →
- * git (AGENTIC-CONVERGENCE Rev 5). The agent slot composes actuation's
+ * git (agent-shell-mockup.html Rev 5; WORLD-SHELL-DESIGN §7.1). The agent slot composes actuation's
  * harness-model, software-factory's agent-custody and central's
- * agent-identity on ONE visible face; the world slot composes central reads,
- * the ai-kit knowledge route and software-factory write mode. */
+ * agent-identity on ONE visible face (DLW §19.4 "One agent, three owners").
+ * The world slot is Scope (DLW §19.12; PROGRAMME R25 item 5 "Context & world
+ * is Scope"): software-factory's face alone. Central's Context & world and
+ * AIKit's Knowledge route were retired as faces of their own in the 22 Oct
+ * manual rewrite (the route is Scope's Knowledge page, §19.9); their §14 rows
+ * stay in the address table, owned as before, on the world instance. */
 const CHAIN_SLOTS: readonly AgentChainSlot[] = [
   {id: 'gateway', title: 'Gateway · hermes', faces: [{family: 'actuation', faceId: 'gateway'}]},
   {
@@ -42,15 +46,7 @@ const CHAIN_SLOTS: readonly AgentChainSlot[] = [
     ],
   },
   {id: 'skillset', title: 'Skillset rack', faces: [{family: 'ai-kit', faceId: 'skillset-rack'}]},
-  {
-    id: 'world',
-    title: 'World · bridge',
-    faces: [
-      {family: 'central', faceId: 'context-world'},
-      {family: 'ai-kit', faceId: 'knowledge-route'},
-      {family: 'software-factory', faceId: 'context-write-mode'},
-    ],
-  },
+  {id: 'world', title: 'World · bridge', faces: [{family: 'software-factory', faceId: 'context-write-mode'}]},
   {id: 'git', title: 'Git', faces: [{family: 'workcell', faceId: 'git-seat'}]},
 ]
 

@@ -29,17 +29,10 @@ import {declareCapabilityHomes} from './capabilityHomes.ts'
 
 export {QUATERNAL_LOGIC_FAMILY_ID}
 
-/** Central's L2 extension: the clip-view craft of the ground itself (§12).
- * Admitted faces (owner op in parentheses):
- * - ground-hygiene — worktree census, branch audit, stray-branch and seat
- *   occupancy as readings (`ground`, `git_repository_read`,
- *   `workcell_status_read`); the tenders wait for their writer.
- * - impact — the Central-web neighbourhood of a selected folder or note
- *   (`wiki_projection_read`, `graph`); the sessions-touching reading waits.
- * Document devices (the §5.2 promotion): the Day die and Flow over the
- * existing iframe/payload-island/save-router path — bodies declared, the
- * face components live beside this module (DocumentDayDieFace,
- * DocumentFlowFace). The conversation device rides the Nara binding. */
+/** Central's L2 extension: the Day die over the existing iframe/payload-island/save-router path (the §5.2 promotion; its face
+ * component, DocumentDayDieFace, lives beside this module). Ground hygiene, Impact, the Flow and the Nara conversation were declared
+ * here; the 22 Oct manual rewrite folded each into another device, so they are retired as faces of their own. Their bindings stay
+ * for the devices that carry them. */
 const CENTRAL_EXTENSION_ID = 'central:world-shell-l2'
 
 function declareCentralExtension(): void {
@@ -47,20 +40,6 @@ function declareCentralExtension(): void {
     id: CENTRAL_EXTENSION_ID,
     by: 'zcode:rack-manifests-l2 (owner commission, WORLD-SHELL-DESIGN §12)',
     faces: [
-      {
-        id: 'ground-hygiene',
-        presentations: ['compact', 'expanded'],
-        liveSemantic: 'device-audio-fx',
-        invariant: {transforms: 'the ground in focus — analysed, passed unchanged'},
-        note: 'The ground as readings: worktree census, branch audit, stray-branch detection, seat occupancy. Reads through the kernel ground and git repository owners (op ground, op git_repository_read) and the workcell status read (op workcell_status_read). The tenders (prune, sweep) have no writer yet — declared, waiting.',
-      },
-      {
-        id: 'impact',
-        presentations: ['compact', 'expanded'],
-        liveSemantic: 'device-audio-fx',
-        invariant: {transforms: 'the selected folder or note — its neighbourhood read, passed unchanged'},
-        note: 'Select a folder or note: its Central-web neighbourhood, references, and the sessions touching it. Reads through the wiki projection and graph owners (op wiki_projection_read, op graph). The sessions-touching read has no owner op yet — that leg waits.',
-      },
       {
         id: 'day-die',
         kind: 'document',
@@ -77,45 +56,15 @@ function declareCentralExtension(): void {
         },
         note: 'The 4+2 Day die over the existing hosting path (sandboxed iframe, payload island, bounded postMessage; DayFormSession + receiving mutate-field). Native Save is explicit; the strip discloses the save router\'s named outcomes.',
       },
-      {
-        // DLW §18.1: the Flow is an instrument, first on a Flow document's chain before the document effects — not a clip. It
-        // generates through the Flow's own revision-checked file write (an entry appended, flow/instance.ts appendEntry, then
-        // central.files.write — kernel op file_operation).
-        id: 'flow-document',
-        kind: 'document',
-        presentations: ['compact', 'expanded'],
-        liveSemantic: 'device-instrument',
-        invariant: {generates: 'kernel:file_operation'},
-        dock: ['dock', 'expand', 'pop-out'],
-        document: {
-          kind: 'ql-flow',
-          file: 'ql-flow.html',
-          hosting: 'oi.document-frame/v1',
-          saveRouter: ['saved', 'unchanged', 'stale', 'conflict', 'refused'],
-          messages: ['oi:document-host-request', 'oi:document-host-response'],
-        },
-        note: 'The 0/1 Flow (Dialogue · Flow · Journal) over the existing hosting path: payload island read through the bounded host bridge, save as the document\'s own revision-checked CAS write (central.files.write). Conflict returns the owner\'s bytes verbatim; the strip discloses the named outcome. On the chain it is the Flow document\'s instrument (DLW §18.1): its entries, people and pages, an entry appended through the same write.',
-      },
-      {
-        id: 'nara-conversation',
-        kind: 'conversation',
-        presentations: ['compact', 'expanded'],
-        liveSemantic: 'device-instrument',
-        invariant: {generates: 'kernel:nara_dialogue'},
-        dock: ['dock', 'expand', 'pop-out'],
-        conversation: {binding: 'oi.nara-dialogue-binding/v1'},
-        note: 'The situated agent conversation: bound over the kernel Nara dialogue binding (op nara_dialogue → oi.nara-dialogue-binding/v1); canonical CAS stays in AIKit. The aperture opens the existing encounter surface — the shell builds no second conversation store.',
-      },
     ],
     detachedKinds: ['flow', 'file', 'encounter', 'device'],
-    note: 'L2 extension: central\'s clip-view craft — ground/hygiene, impact, and the document/conversation devices. Base manifest (context-world, agent-identity) untouched.',
+    note: 'L2 extension: the Day die over the document-hosting path. Ground hygiene, Impact, the Flow and the conversation are retired as faces of their own (22 Oct manual rewrite).',
   })
 }
 
 /** Central's page family (DLW §17.8 Document, §18.2 Workspace, §18.4–§18.8): the faces a Central document's chain and a workspace
- * track hold — the Document instrument (any page, drawn by its template), the Workspace instrument (the track of one project), the
- * page instruments for a Being and a Thing, and the document effects Text, Highlight and Notes, each after the form device (§18.6–
- * §18.8). Each face is the catalogue's design (inhabitants/catalogue/panels/central__<face>.tsx), wired to Central's readings by
+ * track hold — the Document instrument (any page, drawn by its template) and Docs. The Workspace, Beings, Things, Text, Highlight
+ * and Notes faces were retired as faces of their own in the 22 Oct manual rewrite. Each face is the catalogue's design (inhabitants/catalogue/panels/central__<face>.tsx), wired to Central's readings by
  * central/devices/pageBindings.ts and placed by central/devices/CentralDevices.tsx (§16.2: "the document effects, then the agent that
  * answers"). An instrument names what it generates through, or the owner it waits for; an effect names what it transforms. */
 const CENTRAL_PAGE_FAMILY_EXTENSION_ID = 'central:page-family'
@@ -133,49 +82,14 @@ function declareCentralPageFamily(): void {
         note: 'Any Central page as its template draws it (DLW §17.8): the template, the title, the save state and what the page holds (entries, highlights, notes, packet), read from the document the hand reached (central/documents/documentDoor.ts) and the page\'s own file. Save and Re-read are the hosted face\'s own: a Flow\'s revision-checked file write (op file_operation), a Day\'s receiving write.',
       },
       {
-        id: 'workspace',
-        presentations: ['compact', 'expanded'],
-        liveSemantic: 'device-instrument',
-        invariant: {generatesAbsent: 'Launch and the remembered context belong to the workspace book (desktop/cradle/src/workspace/store.ts), the shell\'s own store; no owner operation carries a launch or a Keep setting yet.'},
-        note: 'The track of one project, book or practice (DLW §18.1): the workspace book\'s pane trees, its sets, its open mode and its project, read from the book the shell holds.',
-      },
-      {
-        id: 'beings',
-        presentations: ['compact', 'expanded'],
-        liveSemantic: 'device-instrument',
-        invariant: {generatesAbsent: 'the oi-beings form\'s owner has landed no page read or write (desktop/cradle/src/personal/page.mjs holds the page law; no kernel op carries it)'},
-        note: 'A page about a person or an agent (DLW §18.1): its ties — world, subject, offices, sources, place — read from its oi.page/v1 island when a Beings page is reached.',
-      },
-      {
-        id: 'things',
-        presentations: ['compact', 'expanded'],
-        liveSemantic: 'device-instrument',
-        invariant: {generatesAbsent: 'the oi-things form\'s owner has landed no page read or write (desktop/cradle/src/personal/page.mjs holds the page law; no kernel op carries it)'},
-        note: 'A page about an object in your work (DLW §18.1), on the Beings page\'s keys and shapes.',
-      },
-      {
-        id: 'text',
+        id: 'docs',
         presentations: ['compact', 'expanded'],
         liveSemantic: 'device-audio-fx',
-        invariant: {transforms: 'the open page\'s words — the paragraph style and the emphasis the page keeps as its own tags, read; the words pass whole'},
-        note: 'The style of each paragraph and the emphasis of each word, as the page keeps them in its entries\' html (ql-flow.html clean()). A style or an emphasis is set on the page itself.',
-      },
-      {
-        id: 'highlight',
-        presentations: ['compact', 'expanded'],
-        liveSemantic: 'device-audio-fx',
-        invariant: {transforms: 'the open page\'s passages — marked by the page\'s own <mark> spans, read; the words pass whole'},
-        note: 'The passages the page marks (ql-flow.html act(\'hl\'); central/documentPayload.ts markedPassages). A highlight is made on the page itself.',
-      },
-      {
-        id: 'notes',
-        presentations: ['compact', 'expanded'],
-        liveSemantic: 'device-audio-fx',
-        invariant: {transforms: 'the open page\'s notes — each anchored to its entry and passage, read; the page passes whole'},
-        note: 'The notes the page keeps beside its entries (ql-flow.html D.notes): the entry, the quoted passage, the timing, the words and the replies. A note is written on the page itself.',
+        invariant: {transforms: 'the world\'s account of itself on six tiers — each source\'s binding, recognition, meaning and what moved since, read; the sources pass whole until Relate or Recognise, each a person\'s held act with its receipt'},
+        note: 'A project\'s own account of itself (DLW §18.5): the six tiers, each source bound to them with its kind, whether it is recognised, whether the code holds its meaning and what moved since; the root\'s and the world\'s parts to make; the intended experiences and the returns against them. Read from Central (projectcentral.self.inspect, projectcentral.ground.inspect, central.doctor, central.world.reproject.plan) and AIKit (aikit knowledge frame).',
       },
     ],
-    note: 'The page family: the Document and Workspace instruments, the Beings and Things pages, and the document effects Text, Highlight and Notes (DLW §16.2, §17.8, §18.1–§18.1). Additive: the base manifest and the L2 extension stay as declared.',
+    note: 'The page family: the Document instrument and Docs (DLW §17.8, §18.5); the Workspace, the Beings and Things pages and the document effects Text, Highlight and Notes are retired as faces of their own (22 Oct manual rewrite). Additive: the base manifest and the L2 extension stay as declared.',
   })
 }
 
@@ -209,30 +123,6 @@ function declareCentralAgentChain(): void {
   })
 }
 
-/** Software Factory's L2 extension: the attempt faces where the owner admits
- * (§12 "run devices, attempt review, artifact inspection, Return"). The
- * kernel's factory attempt owner exists today as reads (op
- * factory_attempt_read, factory_attempt_task_list_read,
- * factory_attempt_task_read, factory_build_snapshot); the review/steer
- * writers wait for their owner. */
-const SOFTWARE_FACTORY_EXTENSION_ID = 'software-factory:world-shell-l2'
-
-function declareSoftwareFactoryExtension(): void {
-  declareFamilyExtension('software-factory', {
-    id: SOFTWARE_FACTORY_EXTENSION_ID,
-    by: 'zcode:rack-manifests-l2 (owner commission, WORLD-SHELL-DESIGN §12)',
-    faces: [
-      {
-        id: 'attempt-review',
-        presentations: ['expanded', 'full'],
-        liveSemantic: 'capture',
-        note: 'One run\'s attempts and their task trees as readings (op factory_attempt_read, factory_attempt_task_list_read, factory_attempt_task_read; build snapshot via factory_build_snapshot). Review, steer and interrupt writers wait for the Factory owner (the Buzz contract of record names the behaviours, not the writer).',
-      },
-    ],
-    note: 'L2 extension: the attempt-review reading face over the existing factory attempt owner. Base manifest (agent-custody, context-write-mode, ledger, approvals, run-device) untouched.',
-  })
-}
-
 /** Load the whole world-shell family declaration. Idempotent: the door
  * refuses only differing contents, so a second load composes the same
  * extensions onto the same bases and changes nothing. */
@@ -246,7 +136,6 @@ export function loadWorldShellFamilies(): void {
   declareCentralExtension()
   declareCentralPageFamily()
   declareCentralAgentChain()
-  declareSoftwareFactoryExtension()
   // [L9 musical family] the QL instrument face — additive, idempotent.
   declareQlMusicalExtension()
   // [T-CAPABILITY-HOMES-25] capability homes — after the families are admitted.

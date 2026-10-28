@@ -1,7 +1,8 @@
 // Lane K0 (T-COVERAGE §1.2, W3's last three routes): each control bound through its kernel route, and its refusal the owner's words.
 //   the Run map's Retry (software-factory:run-map, §19.25)       factory_owner attempt-retry (kernel/src/factory_retry.rs)
 //   the Skillset rack's Issue (Bypass, the rack's upkeep pages)   aikit_write bypass-issue (`aikit bypass issue`)
-//   Ground hygiene's Release orphans and sandboxes (§18.5)       workcell_read sandboxes, workcell_write release-orphans
+//   Ground hygiene's Release orphans and sandboxes (§18.5; since #725 the Workcell's Left behind page, §19.23)
+//                                                                workcell_read sandboxes, workcell_write release-orphans
 //                                                                (`workcell sandboxes reconcile --server <url> [--release-orphans]`)
 //
 // Channels, each claim carried by one:
@@ -55,7 +56,13 @@ const groundBind = await import('../src/central/devices/groundBindings.ts')
 const pageHolds = await import('../src/central/devices/pageBindings.ts')
 const hygieneModel = await import('../src/inhabitants/centralHygieneModel.ts')
 const {design: runMapDesign} = await import('../src/inhabitants/catalogue/panels/software-factory__run-map.tsx')
-const {design: hygieneDesign} = await import('../src/inhabitants/catalogue/panels/central__ground-hygiene.tsx')
+// REPLACED (#725): Ground hygiene's design (central__ground-hygiene.tsx) was retired in the 22 Oct manual rewrite; its Material page (the
+// worlds, the sandboxes and Release orphans) is the Workcell's Left behind page (§19.23 "What a run leaves behind"), whose values stand under
+// `left.`: a binding hosts it by prefixing the leftovers' own binding (workcell__workcell.tsx), as carryPages does.
+const {design: workcellDesign} = await import('../src/inhabitants/catalogue/panels/workcell__workcell.tsx')
+const {carryPages} = await import('../src/agent/devices/oneAgentBinding.ts')
+/** The Workcell rack hosting the leftovers' binding on its Left behind page (`left.`). */
+const leftBehind = binding => carryPages({id: 'factory:workcell', values: {}}, [{page: {prefix: 'left.', shared: []}, binding}])
 
 const kernelFixture = name => JSON.parse(readFileSync(new URL(`../../../../desktop/cradle/kernel/tests/fixtures/owner-routes/${name}`, import.meta.url), 'utf8'))
 const SANDBOXES = kernelFixture('workcell-sandboxes-2026-10-22.json')
@@ -241,9 +248,15 @@ test('Ground hygiene · Release orphans writes workcell_write release-orphans on
   // Tend is the hand's setting either way (lane K0): Central's and Workcell's tenders write through their owners.
   assert.equal(unnamed.values.tend, 'propose')
   assert.equal(unnamed.values['allow:orphans'], undefined, 'no server named: Release orphans offers nothing to allow')
-  // (a) the catalogue design draws the Material page on the named server's report.
-  host.setHostPage(binding.id, 'material')
-  const markup = draws(hygieneDesign, binding)
+  // (a) REPLACED (#725): "the catalogue design draws the Material page on the named server's report" — Ground hygiene's Material page is the
+  // Workcell's Left behind page (§19.23): the Workcell design draws it on the same binding, prefixed `left.`, and Release orphans is its
+  // left.orphans, written through the same owner.
+  const rack = leftBehind(binding)
+  host.setHostPage(rack.id, 'left')
+  const markup = draws(workcellDesign, rack)
   assert.match(markup, /sbx-orphan/)
-  host.resetHost(binding.id)
+  host.resetHost(rack.id)
+  assert.equal(rack.writes('left.orphans'), true, 'Release orphans is the page\'s own act')
+  await withKernel(owner, () => rack.write([{key: 'left.orphans', value: 'sbx-orphan'}]))
+  assert.deepEqual(owner.sent.at(-1), {op: 'workcell_write', request: {kind: 'release-orphans', server: SERVER}}, 'through the same owner, on the named server')
 })

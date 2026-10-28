@@ -90,10 +90,15 @@ export const CARRIED_BY_DESIGN: Readonly<Record<StageInstrumentId, {readonly sec
   // command) and the save state; the whole Look group.
   'techne:m1': {sections: ['look'], labels: [/^(Draw|Erase|Lasso|Snap)$/, /^(Hide|Show) overview$/, /^(Zoom (in|out) canvas|Fit all cards|Fit selected cards|Canvas zoom)$/, /^\d+(\.\d+)?\s?%$/,
     /^(Saved|Saving|Held, not saved)$/]},
-  // Timeline: the projection tabs and Refresh; the shared window (the design's Window writes the session's one window): the whole Window group.
-  'techne:m2': {sections: ['window'], labels: [/^(Chronology|Relations|Relative|Refresh timeline)$/]},
+  // Timeline: nothing. Its design (techne:timeline), which carried the projection tabs, Refresh and the Window group, was retired as a device
+  // of its own in the 22 Oct manual rewrite (§17.5 "Technē's timeline is Arrangement view"), so the plate keeps every group and its well.
+  'techne:m2': {sections: [], labels: []},
   // Journey: Play and Stop of the saved scenes (the journey stage command) and the presented beat's Enter (its crossing).
   'techne:m3': {sections: [], labels: [/^(Play|Stop) saved scenes$/, /^Enter in Expression$/]},
 }
+/** Whether a catalogue design heads the instrument's chain (techne/devices/techneDesigns.ts TECHNE_CHAINS): the Canvas heads M1′ and the
+ * Journey M3′, and its display is the picture. No design heads M2′ since the Timeline was retired (§17.5), so its plate draws its own well. */
+export const HEADED_BY_DESIGN: Readonly<Record<StageInstrumentId, boolean>> = {'techne:m1': true, 'techne:m2': false, 'techne:m3': true}
+
 /** Whether the design carries one of the frame's controls. */
 export const carriedByDesign = (id: StageInstrumentId, label: string): boolean => CARRIED_BY_DESIGN[id].labels.some(word => word.test(label.trim()))

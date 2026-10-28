@@ -26,19 +26,43 @@ export interface CarriedPage {
 export const CUSTODY_PAGE: CarriedPage = {prefix: 'custody.', shared: ['light', 'autonomy'], owns: ['autonomy']}
 export const IDENTITY_PAGE: CarriedPage = {prefix: 'id.', shared: ['light']}
 export const THREAD_PAGE: CarriedPage = {prefix: 'thread.', shared: ['light', 'input', 'quantize', 'draft', 'sent', 'age']}
+/** The Voice page (manual §19.4 "The Voice page"; §19.21 "How an agent speaks … is the Agent's Voice page"): Voice's own keys under
+ * `speech.` (actuation__harness-model.tsx VOICE_SHARED), its light the Agent's. */
+export const VOICE_PAGE: CarriedPage = {prefix: 'speech.', shared: ['light']}
+/** Files' Diff page (manual §23.2, §23.4 "Reading what changed before you approve it … is the Diff page of Files"; widgets__files.tsx): the
+ * Diff's own keys under `diff.`. */
+export const DIFF_PAGE: CarriedPage = {prefix: 'diff.', shared: []}
+/** The Workcells tile's gateways (manual §19.3 "Every gateway your machines reach, with its state, is listed on the Workcells tile";
+ * workcell__workcell.tsx `gw.` keys): the gateways' own keys under `gw.`. */
+export const GATEWAYS_PAGE: CarriedPage = {prefix: 'gw.', shared: []}
+/** Git / landing's Seat page (§19.17 "Claiming a seat … is the Seat page of Git / landing"; workcell__git-seat.tsx `seat.` keys): the seat
+ * instrument's binding under `seat.`. */
+export const SEAT_PAGE: CarriedPage = {prefix: 'seat.', shared: []}
+/** Git / landing's Checkouts page (§19.16 "The Checkouts page"; workcell__git-seat.tsx `co.` keys): Ground hygiene's census under `co.`. */
+export const CHECKOUTS_PAGE: CarriedPage = {prefix: 'co.', shared: []}
+/** The Remote carrier's Machine page (§18.7, §19.18 "The Machine page"; workcell__remote-carrier.tsx `mc.` keys): Central's machine readings
+ * under `mc.`. */
+export const MACHINE_PAGE: CarriedPage = {prefix: 'mc.', shared: []}
+/** The Skillset rack's Capture page (§19.11 "the Capture page of the Skillset rack"; skills.tsx `capture.` keys). */
+export const CAPTURE_PAGE: CarriedPage = {prefix: 'capture.', shared: []}
+/** The Agentset rack's Helper page (§19.20 "on the rack's Helper page"; software-factory__agentset-rack.tsx `helper.` keys). */
+export const HELPER_PAGE: CarriedPage = {prefix: 'helper.', shared: []}
 
 export interface CarriedBindings {
   readonly custody?: DesignBinding | null
   readonly identity?: DesignBinding | null
   readonly thread?: DesignBinding | null
+  readonly voice?: DesignBinding | null
 }
 
-interface Carried {readonly page: CarriedPage; readonly binding: DesignBinding}
+/** One page a device carries, on the binding that owns it. */
+export interface Carried {readonly page: CarriedPage; readonly binding: DesignBinding}
 
 const carriedOf = (pages: CarriedBindings): Carried[] => [
   ...(pages.custody ? [{page: CUSTODY_PAGE, binding: pages.custody}] : []),
   ...(pages.identity ? [{page: IDENTITY_PAGE, binding: pages.identity}] : []),
   ...(pages.thread ? [{page: THREAD_PAGE, binding: pages.thread}] : []),
+  ...(pages.voice ? [{page: VOICE_PAGE, binding: pages.voice}] : []),
 ]
 
 /** Where one key of the Agent lives: a carried page's own key (prefixed, or a shared key the page owns), else the Agent's own. */
@@ -66,7 +90,14 @@ function lay<T>(into: Record<string, T>, page: CarriedPage, record: Readonly<Rec
  * change goes to the owner of its key; a refusal is that owner's. A carried page that is absent leaves its keys absent (the design then
  * draws "—" and names the missing reading). */
 export function composeAgentBinding(own: DesignBinding, pages: CarriedBindings): DesignBinding {
-  const carried = carriedOf(pages)
+  return carryPages(own, carriedOf(pages))
+}
+
+/** Any device's binding with the pages it carries laid in, each under its prefix (the 22 Oct catalogue: a device whose design draws a
+ * retired device's parts as a page of its own hosts that page by prefixing the retired device's binding — Git / landing's Seat and
+ * Checkouts, the Remote carrier's Machine, the Agent's Voice). The same rule as the Agent's: a value is its owner's reading, a change goes
+ * to the owner of its key, a refusal is that owner's. Pure. */
+export function carryPages(own: DesignBinding, carried: readonly Carried[]): DesignBinding {
   const values: Record<string, Value> = {...own.values}
   const standing: Record<string, Standing> = {...(own.standing ?? {})}
   const heldBy: Record<string, string> = {...(own.heldBy ?? {})}

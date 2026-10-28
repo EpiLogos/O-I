@@ -1,3 +1,5 @@
+// Retired as a device of its own (22 Oct manual rewrite): not a `<family>__<face>.tsx` panel any more, so the catalogue does not load
+// it; the Agentset rack (software-factory:agentset-rack) carries its pages through this module.
 // Decision helper (manual §19.20, ai-kit:decision-helper): the small model a team's members put typed questions to, when the rules
 // leave a choice open among labels the owner allows. Live's nearest: a MIDI effect such as Scale, which can only ever answer with a
 // note the scale allows. The owners:
@@ -23,7 +25,7 @@
 import {useState} from 'react'
 import {Action, Band, Chooser, Dial, Display, Folded, Panel, Radio, Readout, Rows, Section, Tile, type LightState, type RowItem, type Scale, type Tone} from '../../sdk/panel'
 import {NONE, has, json, numOf, st, strOf, type DesignedDevice, type ViewProps} from './design'
-import './ai-kit__decision-helper.css'
+import './decision-helper.css'
 
 type V = ViewProps['v']
 

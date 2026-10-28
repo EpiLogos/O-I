@@ -57,7 +57,8 @@ familyDoor.resetFamilyManifestsForTest()
 ;(await import('../src/inhabitants/worldShellFamilies.ts')).loadWorldShellFamilies()
 const {foundHarnesses} = await import('../src/agent/useHarnessBinding.ts')
 const {catalogueModels} = await import('../src/agent/devices/useModelCatalogue.ts')
-const {design: threadDesign} = await import('../src/inhabitants/catalogue/panels/software-factory__thread.tsx')
+const {design: threadDesign} = await import('../src/inhabitants/catalogue/panels/thread.tsx')
+const {THREAD_PAGE} = await import('../src/agent/devices/oneAgentBinding.ts')
 const {design: agentDesign} = await import('../src/inhabitants/catalogue/panels/actuation__harness-model.tsx')
 
 const views = ['folded', 'compact', 'whole', 'full', 'widget']
@@ -215,7 +216,14 @@ test('the Thread writes the owners\' way: the composer and Input through the Age
   const live = {...ALETHEIA, connection: {...RESIDENT, state: 'TurnInFlight'}, permissions: [CONSENT],
     actions: ALETHEIA.actions.map(action => (action.ref === 'aikit.encounter.cancel' || action.ref === 'aikit.encounter.permission' ? {...action, enabled: true, reason: null} : action))}
   const binding = thread.threadBinding(input({encounter: {reading: live, status: live.connection}}), agent, ports)
-  assert.equal(designKey(thread.threadDevice().family, thread.threadDevice().face.id), threadDesign.id)
+  // REPLACED (#725): the Thread's own device keyed to its design — the Thread was retired as a face of its own in the 22 Oct manual rewrite
+  // (§19.4: the thread is the Agent's Full; PROGRAMME R25 item 5 "the Agent carries Custody, Identity and the Thread (as its Full)"), so
+  // Software Factory admits no Thread face, and the Agent's design carries the Thread's design under `thread.` (oneAgentBinding.ts
+  // THREAD_PAGE): each of the Thread's own keys is the Agent's under that prefix.
+  assert.equal(thread.threadDevice(), null, 'no Thread device of its own')
+  const ownThread = Object.keys(threadDesign.defaults).filter(key => !THREAD_PAGE.shared.includes(key))
+  assert.ok(ownThread.length > 0)
+  for (const key of ownThread) assert.ok(`${THREAD_PAGE.prefix}${key}` in agentDesign.defaults, `the Agent carries the Thread's ${key} as ${THREAD_PAGE.prefix}${key}`)
   await binding.write([{key: 'sent', value: 'Skip the cradle root'}, {key: 'draft', value: ''}, {key: 'input', value: 'steer'}])
   await binding.write([{key: 'approve', value: true}])
   await binding.write([{key: 'hardStop', value: true}])

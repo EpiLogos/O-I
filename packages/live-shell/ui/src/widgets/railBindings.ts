@@ -240,6 +240,92 @@ export function notificationsValues(input: {readonly messagesAgents: Value | und
   return values
 }
 
+/** Notifications' readings as Approvals carries them (DLW §23.9 "What an owner or an agent raises for you to decide, such as a routine that
+ * failed or a service that stopped answering, waits in Approvals, under Requests"; the Notifications device was retired into Approvals in
+ * the 22 Oct manual rewrite): each request Central keeps for personal.notify as a queue row of kind request (software-factory__approvals.tsx
+ * queue: {id, kind, who, text, where, age (seconds), urgent}), Messages' waiting agents as `messages`, and the selected provider as `desktop`
+ * (shown where it is available, refused where it is not). Null parts where their owner has not answered. Pure. */
+export function ownerRequestsValues(input: {readonly ledger?: NotifyLedgerAnswer; readonly messagesAgents?: Value; readonly nowUnixMs: number}): {
+  readonly rows: Record<string, Value>[] | null; readonly messages?: number; readonly desktop?: 'shown' | 'refused'} {
+  const ledger = input.ledger?.status === 'answered' ? notificationLedgerOf(input.ledger.value) : null
+  const raw = input.ledger?.status === 'answered' ? (input.ledger.value as {requests?: unknown} | null)?.requests : undefined
+  const asked = new Map((Array.isArray(raw) ? raw : []).flatMap(record => {
+    const r = record as {request_ref?: unknown; requested_at_unix_ms?: unknown} | null
+    return r && typeof r.request_ref === 'string' && typeof r.requested_at_unix_ms === 'number' ? [[r.request_ref, r.requested_at_unix_ms] as const] : []
+  }))
+  const rows = ledger ? ledger.requests.map(request => {
+    const id = String(request.id), at = asked.get(id)
+    const text = textOf(request.title) ?? textOf(request.body)
+    const where = textOf(request.subject) ?? textOf(request.open)
+    return {id, kind: 'request', who: request.from as Value, ...(text ? {text} : {}), ...(where ? {where} : {}),
+      ...(at !== undefined ? {age: Math.max(0, Math.round((input.nowUnixMs - at) / 1000))} : {}),
+      ...(request.urgency === 'critical' || request.urgency === 'high' ? {urgent: true} : {}),
+      ...(textOf(request.open) ?? textOf(request.subject) ? {open: (textOf(request.open) ?? textOf(request.subject))!} : {})}
+  }) : null
+  const messages = waitingAgentsOf(input.messagesAgents)
+  const desktop = ledger?.provider ? (ledger.provider.available === true ? 'shown' as const : 'refused' as const) : undefined
+  return {rows, ...(messages !== undefined ? {messages} : {}), ...(desktop ? {desktop} : {})}
+}
+
+/** The ids Approvals' view holds as opened here (a JSON list under its `opened` hold), or none where the hold is absent or unreadable. Pure. */
+export function openedOf(hold: Value | undefined): string[] {
+  if (typeof hold !== 'string') return []
+  try { const ids = JSON.parse(hold) as unknown; return Array.isArray(ids) ? ids.filter((id): id is string => typeof id === 'string') : [] } catch { return [] }
+}
+
+/** The ids opened here, as Approvals' view holds them (the `opened` hold openedOf reads back). Pure. */
+export const openedHold = (ids: readonly string[]): string => JSON.stringify(ids)
+
+/** An Approvals binding with Notifications' readings laid in (ownerRequestsValues): the owner's requests after the queue's own rows, the
+ * waiting count and the desktop's notice. Open (software-factory__approvals.tsx: "Every item takes open, which marks it opened here and tells
+ * its owner nothing") on an owner's request first opens what it names where it belongs (`open`, which refuses in its own words where the shell
+ * has no route for it), and only then is the item held as opened (`kept`); on any other item it marks it opened alone. While Central has not
+ * answered personal.notifications.list the requests and the desktop wait; where it refused, the desktop's notice says Central's words. Every
+ * other key stays the binding's. Pure. */
+export function withOwnerRequests(binding: DesignBinding, input: Parameters<typeof ownerRequestsValues>[0], open?: (target: string) => Promise<void>,
+  kept?: {readonly opened: readonly string[]; readonly hold: (opened: readonly string[]) => void}): DesignBinding {
+  const carried = ownerRequestsValues(input)
+  const values: Record<string, Value> = {...binding.values}
+  let queued: Record<string, Value>[] | null = null
+  if (carried.rows || typeof values.queue === 'string') {
+    let own: unknown
+    try { own = typeof values.queue === 'string' ? JSON.parse(values.queue) : [] } catch { own = [] }
+    const opened = new Set(kept?.opened ?? [])
+    queued = [...(Array.isArray(own) ? own as Record<string, Value>[] : []), ...(carried.rows ?? [])].map(row => (opened.has(String(row.id)) ? {...row, opened: true} : row))
+    values.queue = JSON.stringify(queued)
+    if (carried.rows) values.light = queued.length ? 'lit' : 'dark'
+  }
+  put(values, 'messages', carried.messages)
+  put(values, 'desktop', carried.desktop)
+  const targets = new Map((carried.rows ?? []).flatMap(row => (typeof row.open === 'string' ? [[String(row.id), row.open] as const] : [])))
+  const owners = new Set((carried.rows ?? []).map(row => String(row.id)))
+  const standing = {...(binding.standing ?? {})}
+  if (input.ledger?.status === 'refused') standing.desktop = {disabled: `The owners' requests and the desktop's notice: ${input.ledger.error}`}
+  const waiting = input.ledger?.status === 'reading' ? [...(Array.isArray(binding.waiting) ? binding.waiting : []), 'desktop'] : binding.waiting
+  return {...binding, values, standing, ...(waiting !== undefined ? {waiting} : {}),
+    writes: key => key === 'open' || (binding.writes ? binding.writes(key) : !!binding.write),
+    write: async (changes: readonly ValueChange[]) => {
+      const rest: ValueChange[] = []
+      for (const change of changes) {
+        if (change.key !== 'open') { rest.push(change); continue }
+        const id = String(change.value)
+        if (!queued?.some(row => String(row.id) === id)) throw new Error(`Open: no item ${id} waits in Approvals.`)
+        if (owners.has(id)) {
+          const target = targets.get(id)
+          if (!target) throw new Error('Open: the request names nothing to open (no callback, no subject).')
+          if (!open) throw new Error(`Open: the shell has no hand that opens ${target}.`)
+          await open(target)
+        }
+        const opened = kept?.opened ?? []
+        kept?.hold(opened.includes(id) ? opened : [...opened, id])
+      }
+      if (rest.length) {
+        if (!binding.write) throw new Error(`${rest[0]!.key}: a reading — the owner reports it, and nothing here changes it.`)
+        await binding.write(rest)
+      }
+    }}
+}
+
 /** Why Open cannot act: Central's own words where it refused the reading, or that it has not answered. */
 export function notifyOpenRefusal(ledger: NotifyLedgerAnswer | undefined): string {
   if (ledger?.status === 'refused') return `Open: no reading of the requests — ${ledger.error}`

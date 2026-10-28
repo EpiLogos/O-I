@@ -90,10 +90,15 @@ test('an instrument plate stands on the kit\'s head; its display section is firs
 })
 
 test('every Technē instrument\'s open plate has its well first, drawn from its owner, a missing reading said in the well', () => {
-  const words = {'techne:m0': /the Earth<\/text><text[^>]*>not mounted/, 'techne:m4': /the Earth<\/text><text[^>]*>not mounted/}
-  // W4-Technē: M1′–M3′'s pictures are their designs' displays (techne:canvas, techne:timeline, techne:journey) at the head of their chains on
-  // the frame's research reading; their stage plates draw no second well. The wells still draw each instrument's Compact on the rack.
-  for (const [id, design] of [['techne:m1', 'techne:canvas'], ['techne:m2', 'techne:timeline'], ['techne:m3', 'techne:journey']]) {
+  // REPLACED (#725): M2′'s picture was the Timeline design's display at the head of its chain — the Timeline was retired as a device of its
+  // own in the 22 Oct manual rewrite (§17.5 "Technē's timeline is Arrangement view"; §16.1 "Technē's timeline is Arrangement view, not an
+  // instrument of its own"), so no design heads M2′'s chain, and its open plate draws its own well first, as M0′'s and M4′'s do: the shared
+  // window, read from the session (all time while it holds none).
+  const words = {'techne:m0': /the Earth<\/text><text[^>]*>not mounted/, 'techne:m4': /the Earth<\/text><text[^>]*>not mounted/, 'techne:m2': /all time/}
+  assert.ok(!plate('techne:m2').includes('data-device-id="techne:timeline"'), 'no Timeline device on M2′\'s chain')
+  // W4-Technē: M1′ and M3′'s pictures are their designs' displays (techne:canvas, techne:journey) at the head of their chains on the frame's
+  // research reading; their stage plates draw no second well. The wells still draw each instrument's Compact on the rack.
+  for (const [id, design] of [['techne:m1', 'techne:canvas'], ['techne:m3', 'techne:journey']]) {
     const out = plate(id)
     assert.ok(out.indexOf(`data-device-id="${design}" data-chain-place="head"`) >= 0 && out.indexOf(`data-device-id="${design}"`) < out.indexOf(`data-instrument="${id}" data-expanded="true"`), `${design} heads ${id}`)
     assert.doesNotMatch(out.slice(out.indexOf(`data-instrument="${id}" data-expanded="true"`)), /data-section="display"/, `${id}: no second well`)
@@ -165,7 +170,10 @@ test('a parameter no owner carried is its design\'s now: the stage plates draw n
       publishHostedChrome(null)
     }
   }
-  assert.deepEqual(CARRIED_BY_DESIGN['techne:m2'].sections, ['window'], 'the Timeline design carries the shared window whole')
+  // REPLACED (#725): "the Timeline design carries the shared window whole" — the Timeline was retired as a device of its own (§17.5 "Technē's
+  // timeline is Arrangement view"), so no design carries M2′'s groups: the plate keeps them all, with its own well first (above), and Deep time
+  // and Strata are Arrangement view's ruler settings (§17.1 "Arrangement view: the timeline"), drawn by no plate.
+  assert.deepEqual(CARRIED_BY_DESIGN['techne:m2'], {sections: [], labels: []}, 'nothing of M2′ is carried by a design')
   assert.deepEqual(CARRIED_BY_DESIGN['techne:m1'].sections, ['look'], 'the Canvas design carries Look whole')
 })
 

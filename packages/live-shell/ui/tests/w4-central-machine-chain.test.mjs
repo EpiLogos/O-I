@@ -14,6 +14,10 @@
 //   as a pure function; a kernel behind the bridge's fetch recording each op. No owner state is written: every write goes to a recording
 //   hand or the fake kernel.
 // Not a screen pass: the on-screen legs are the lead's.
+// Since the 22 Oct manual rewrite (#725): Machine is the Remote carrier's Machine page (§18.7 "What a machine holds against what you
+// declared for it, and its recovery, is the Machine page of the Remote carrier (§19.18)"), whose values stand under `mc.`; Ground hygiene and
+// Impact are retired (§19.16, §18.6), Voice is the Agent's Voice page (§19.21), the Workspace the track's head and Docs (§18.1); and a world's
+// chain is the Packet, the Agent, Scope and Docs on every world (§16.2).
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {readFileSync} from 'node:fs'
@@ -59,18 +63,21 @@ const hygiene = await import('../src/inhabitants/centralHygieneModel.ts')
 const {inhabitantManifest} = await import('../src/inhabitants/manifest.ts')
 const {loadWorldShellFamilies} = await import('../src/inhabitants/worldShellFamilies.ts')
 loadWorldShellFamilies()
-const {design: machineDesign} = await import('../src/inhabitants/catalogue/panels/central__machine.tsx')
-const {design: workspaceDesign} = await import('../src/inhabitants/catalogue/panels/central__workspace.tsx')
+// REPLACED (#725): Machine's design (central__machine.tsx) is retired; the Remote carrier draws the Machine page on the machine's own binding,
+// prefixed `mc.` (workcell__remote-carrier.tsx; carryPages). The Workspace's design is retired too (§18.1).
+const {design: carrierDesign} = await import('../src/inhabitants/catalogue/panels/workcell__remote-carrier.tsx')
+const {carryPages} = await import('../src/agent/devices/oneAgentBinding.ts')
+/** The Remote carrier hosting the Machine page: the machine's binding under `mc.`. */
+const carrying = binding => carryPages({id: 'factory:remote-carrier', values: {}}, [{page: {prefix: 'mc.', shared: []}, binding}])
+const carrierKeys = [...new Set([...Object.keys(carrierDesign.defaults), ...Object.values(carrierDesign.fixtures ?? {}).flatMap(fixture => Object.keys(fixture))])]
+const {design: agentDesign} = await import('../src/inhabitants/catalogue/panels/actuation__harness-model.tsx')
 const SLOT_DESIGNS = {
   'central:day-die': (await import('../src/inhabitants/catalogue/panels/day.tsx')).day,
   'central:main:approvals': (await import('../src/inhabitants/catalogue/panels/software-factory__approvals.tsx')).design,
   'central:packet': (await import('../src/inhabitants/catalogue/panels/central__packet.tsx')).design,
-  'central:agent': (await import('../src/inhabitants/catalogue/panels/actuation__harness-model.tsx')).design,
-  'central:voice': (await import('../src/inhabitants/catalogue/panels/actuation__voice.tsx')).design,
+  'central:agent': agentDesign,
   'central:scope': (await import('../src/inhabitants/catalogue/panels/scope.tsx')).scope,
-  'central:ground-hygiene': (await import('../src/inhabitants/catalogue/panels/central__ground-hygiene.tsx')).design,
-  'central:machine': machineDesign,
-  'central:impact': (await import('../src/inhabitants/catalogue/panels/central__impact.tsx')).design,
+  'central:docs': (await import('../src/inhabitants/catalogue/panels/central__docs.tsx')).design,
 }
 
 const REAL = JSON.parse(readFileSync(new URL('./fixtures/machine-2026-10-21.json', import.meta.url), 'utf8'))
@@ -115,15 +122,19 @@ const recorder = () => { const asked = []; return {asked, asks: {replan: () => {
 
 // ── Machine ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 
-test('Machine: the catalogue\'s design; every key of it (defaults ∪ fixtures) and every control is classified — a reading, the view\'s own, absent or refused with its reason', () => {
-  assert.equal(machine.MACHINE_WIRING.design, machineDesign.id)
+test('Machine: the Remote carrier\'s Machine page; every key of it (defaults ∪ fixtures) and every control is classified — a reading, the view\'s own, absent or refused with its reason', () => {
+  // REPLACED (#725): "the catalogue's design" was Machine's own (central:machine) — retired into the Remote carrier's Machine page (§18.7,
+  // §19.18), whose `mc.` keys are the machine's own binding's keys under the prefix. MACHINE_DEVICE_ID stays the hold id of its view.
+  assert.equal(machine.MACHINE_WIRING.design, 'central:machine')
   assert.equal(machine.MACHINE_DEVICE_ID, 'central:machine')
   const w = machine.MACHINE_WIRING
-  for (const key of designKeys(machineDesign)) assert.ok([w.reads, w.local, w.absent].some(table => key in table), `${key}: a reading, the view's own, or absent with its reason`)
+  const machineKeys = carrierKeys.filter(key => key.startsWith('mc.')).map(key => key.slice(3))
+  assert.ok(machineKeys.length >= 10, 'the Machine page\'s keys')
+  for (const key of machineKeys) assert.ok([w.reads, w.local, w.absent].some(table => key in table), `mc.${key}: a reading, the view's own, or absent with its reason`)
   for (const key of ['replan', 'verify', 'recoveryPlan']) assert.ok(key in w.writes, `${key}: a reading asked again`)
   for (const key of ['apply', 'adopt', 'recover']) assert.match(w.refused[key], /PERSON_ACTS/, `${key}: disabled naming the route it lacks`)
   for (const key of w.keys) assert.ok([w.reads, w.writes, w.local, w.refused, w.absent].some(table => key in table), `${key} placed`)
-  for (const key of designKeys(machineDesign)) assert.ok(!(key in w.writes) || ['replan', 'verify', 'recoveryPlan'].includes(key), `${key}: no reading travels as a write`)
+  for (const key of machineKeys) assert.ok(!(key in w.writes) || ['replan', 'verify', 'recoveryPlan'].includes(key), `mc.${key}: no reading travels as a write`)
 })
 
 test('REAL — Machine reads this Mac: the role it is bound to, the host as last observed, its declaration, the plan, the verification and the recovery plan', () => {
@@ -175,29 +186,27 @@ test('Machine\'s presses: Plan, Verify and the Recover page\'s Plan ask the read
   assert.ok(binding.local.role && binding.local.mode && binding.local.refresh && binding.local.ask, 'Role, Change, Refresh and the ask are the view\'s own')
 })
 
-test('REAL — Machine draws the readings in every view and page; a refused declaration is said where Role stands, an unread device waits', () => {
+test('REAL — the Remote carrier\'s Machine page draws the readings; a refused declaration is said where Role stands, an unread device waits', () => {
+  // REPLACED (#725): Machine's own views and its Reconcile and Recover pages — the Remote carrier's Machine page holds all three parts as
+  // bands (Declared, Reconcile, Recover; workcell__remote-carrier.tsx), drawn on the machine's binding prefixed `mc.`.
   pages.resetHolds()
   const binding = machine.machineBinding('central:machine', REAL_ANSWERS, recorder().asks)
-  const all = drawsOn(machineDesign, binding, MACHINE_FIXTURE)
+  const carrier = carrying(binding)
+  host.setHostPage(carrier.id, 'machine')
+  const all = drawsOn(carrierDesign, carrier, MACHINE_FIXTURE, [machine.MACHINE_WIRING.refused.adopt, machine.MACHINE_WIRING.refused.recover])
   assert.match(all, /current/)
-  // Reconcile: Adopt says the route it lacks (Apply, with nothing changeable in this Mac's plan, says the design's own words first); Recover:
-  // Recover says it.
-  host.setHostPage('central:machine', 'reconcile')
-  drawsOn(machineDesign, binding, MACHINE_FIXTURE, [machine.MACHINE_WIRING.refused.adopt])
-  host.setHostPage('central:machine', 'recover')
-  drawsOn(machineDesign, binding, MACHINE_FIXTURE, [machine.MACHINE_WIRING.refused.recover])
-  host.resetHost('central:machine')
   // A role with no declaration: Central's own words, on Role.
   pages.setHeld('central:machine', 'role', 'nope')
   const refused = machine.machineBinding('central:machine', {...REAL_ANSWERS, declaration: {status: 'refused', error: REAL.declarationRefusal}, plan: {status: 'refused', error: REAL.declarationRefusal}}, recorder().asks)
   assert.equal(refused.values.light, 'dark')
   assert.equal(refused.values.declared, undefined)
-  drawsOn(machineDesign, refused, MACHINE_FIXTURE, [`machine.declaration: ${REAL.declarationRefusal}`])
+  drawsOn(carrierDesign, carrying(refused), MACHINE_FIXTURE, [`machine.declaration: ${REAL.declarationRefusal}`])
   pages.resetHolds()
   // Nothing answered yet: the readings wait, never a sample.
   const unread = machine.machineBinding('central:machine', machine.MACHINE_UNREAD, recorder().asks)
   assert.ok(unread.waiting.includes('plan') && unread.waiting.includes('host'))
-  drawsOn(machineDesign, unread, MACHINE_FIXTURE)
+  drawsOn(carrierDesign, carrying(unread), MACHINE_FIXTURE)
+  host.resetHost(carrier.id)
 })
 
 test('Machine reads through the kernel\'s invoke_action: each of its five readings is a Central action with the role it reads', async () => {
@@ -221,10 +230,12 @@ const WORLDS = {state: 'read', worlds: [
   {ref: 'central:wiki:root', name: 'Your world', kind: 'yours', folder: 'Control/user/flows', project: null},
   {ref: 'central:wiki:project:O-I', name: 'O-I', kind: 'project', folder: 'Work/O-I/ProjectCentral/user', project: 'O-I'},
 ]}
-const CODE = ['central:ground-hygiene', 'central:machine', 'central:impact']
-const WORLD_HEAD = ['central:packet', 'central:agent', 'central:voice', 'central:scope']
+// REPLACED (#725): W4's world chain — the Packet, the Agent with Voice after it and Scope, then Ground hygiene, Machine and Impact on a world
+// whose folder holds code — is §16.2's: "The packet, the agent of the world, and its scope; then Docs", the same on every world. Voice is
+// the Agent's Voice page (§19.21); Ground hygiene, Machine and Impact are retired (§19.16, §18.7, §18.6).
+const WORLD_CHAIN = ['central:packet', 'central:agent', 'central:scope', 'central:docs']
 
-test('§16.2 placement: the Main track\'s chain is the Day, then Approvals; a world\'s the packet, its agent (Voice right after it, §19.21) and its scope, then — only on a world whose folder holds code — Ground hygiene, Machine and Impact', () => {
+test('§16.2 placement: the Main track\'s chain is the Day, then Approvals; a world\'s the packet, its agent and its scope, then Docs, whatever its folder holds', () => {
   const kinds = {
     none: {kind: 'none'},
     yours: chain.chainWorldOf(WORLDS.worlds[0], null),
@@ -236,17 +247,22 @@ test('§16.2 placement: the Main track\'s chain is the Day, then Approvals; a wo
   assert.deepEqual(kinds.yours, {kind: 'yours', name: 'Your world'})
   assert.deepEqual(kinds['project, no repository'].code, 'none')
   assert.deepEqual(kinds['project, git refused'].code, {refused: 'No eligible Connector implements GitState.'})
+  assert.equal(chain.worldHoldsCode(kinds['project holding code']), true, 'whether the folder holds code is still read, and said on the chain')
   for (const [name, world] of Object.entries(kinds)) {
-    assert.deepEqual(chain.centralChainSlots('main', world), ['central:day-die', 'central:main:approvals'], `${name}: the Main track's chain`)
-    assert.deepEqual(chain.centralChainSlots('world', world), name === 'project holding code' ? [...WORLD_HEAD, ...CODE] : WORLD_HEAD, `${name}: the world's chain`)
+    assert.equal(chain.worldHoldsCode(world), name === 'project holding code', `${name}: holds code or not`)
+    assert.deepEqual(chain.centralChainSlots('main'), ['central:day-die', 'central:main:approvals'], `${name}: the Main track's chain`)
+    assert.deepEqual(chain.centralChainSlots('world'), WORLD_CHAIN, `${name}: the world's chain`)
   }
   // No monitor and no connection on a Central chain (§16.1: a monitor stands on the rail and in a pane, a connection on a workcell's chain).
-  for (const id of [...chain.centralChainSlots('main', kinds['project holding code']), ...chain.centralChainSlots('world', kinds['project holding code'])]) {
+  for (const id of [...chain.centralChainSlots('main'), ...chain.centralChainSlots('world')]) {
     const design = SLOT_DESIGNS[id]
     assert.ok(design, `${id}: a design of the catalogue`)
     assert.ok(['instrument', 'effect', 'rack', 'modulator'].includes(design.kind), `${id}: ${design.kind} — no monitor or connection`)
   }
-  assert.equal(SLOT_DESIGNS['central:machine'].kind, 'effect', 'Machine: Kind effect (§18.7)')
+  assert.equal(SLOT_DESIGNS['central:docs'].kind, 'effect', 'Docs: Kind effect (§18.5)')
+  // REPLACED (#725): "Machine: Kind effect (§18.7)" — Machine is the Remote carrier's page now, a connection on a workcell's chain (§19.18),
+  // never on a Central chain.
+  assert.equal(carrierDesign.kind, 'connection', 'the Remote carrier: Kind connection')
 })
 
 test('the world a chain stands for is THE selection\'s: a world\'s track, or a page on it; any other selection names none', () => {
@@ -259,13 +275,16 @@ test('the world a chain stands for is THE selection\'s: a world\'s track, or a p
   assert.equal(chain.centralWorldOf(null, WORLDS), null)
 })
 
-test('the family declares Machine: an effect on a world\'s chain after Ground hygiene', () => {
+test('the family declares Docs: an effect on a world\'s chain after Scope; Machine is declared no more', () => {
+  // REPLACED (#725): "the family declares Machine: an effect on a world's chain after Ground hygiene" — the manual folds Machine into the
+  // Remote carrier's Machine page (§18.7), so Central declares no Machine face; Docs is the family's effect on a world's chain (§16.2, §18.5).
   const central = inhabitantManifest('central')
-  const face = central.faces.find(candidate => candidate.id === 'machine')
-  assert.ok(face, 'machine: declared')
+  assert.ok(!central.faces.some(candidate => candidate.id === 'machine'), 'machine: retired')
+  const face = central.faces.find(candidate => candidate.id === 'docs')
+  assert.ok(face, 'docs: declared')
   assert.equal(face.liveSemantic, 'device-audio-fx')
-  assert.deepEqual([...model.CENTRAL_WORKSPACE_FACES], ['packet', 'ground-hygiene', 'machine', 'impact'])
-  assert.deepEqual(chain.placedFaces(central.faces).map(f => f.id), ['day-die', 'packet', 'ground-hygiene', 'machine', 'impact'])
+  assert.deepEqual([...model.CENTRAL_WORKSPACE_FACES], ['packet', 'docs'])
+  assert.deepEqual(chain.placedFaces(central.faces).map(f => f.id), ['day-die', 'packet', 'docs'])
 })
 
 // ── the Workspace's ground presses, and the self as Central gives it ─────────────────────────────────────────────────────────────────
@@ -311,9 +330,9 @@ test('the Workspace\'s Accept, Ensure and a tier\'s Relate write the world\'s gr
   pages.resetHolds()
   const root = pages.workspaceBinding('central:workspace', {...workspace, project: undefined}, Date.now(), null, {project: null})
   for (const key of ['pcAccept', 'selfEnsure', 'selfRelate']) assert.match(root.standing[key].disabled, /no world's ground is read here/)
-  host.setHostPage('central:workspace', 'self')
-  drawsOn(workspaceDesign, binding, /Archetypal-Earth\/wiki|sf1-walk/, [])
-  host.resetHost('central:workspace')
+  // REPLACED (#725): the Workspace's Self page drawn on the binding — the Workspace is retired (§18.1: a world's account of itself is Docs);
+  // until Docs is bound to the six tiers, the self stands as the binding's own reading, as Central gives it.
+  assert.equal(binding.values.self, ground.selfValue(SELF), 'the self, read')
 })
 
 test('the presses carry exactly Central\'s inputs through invoke_action: init/adopt/migrate with the project\'s id, self.ensure, tier.relate human-accepted', async () => {
@@ -343,7 +362,7 @@ test('Ground hygiene\'s person tenders name the route as the kernel stands: invo
 
 const {AnswerVoice, VOICE_OFF, voiceBodyReadings} = await import('../src/central/devices/answerVoice.ts')
 const voiceBind = await import('../src/agent/devices/voiceBinding.ts')
-const {design: voiceDesign} = await import('../src/inhabitants/catalogue/panels/actuation__voice.tsx')
+const one = await import('../src/agent/devices/oneAgentBinding.ts')
 /** CODE-DERIVED: nara_voice open's constitution as kernel/src/nara_voice_constitution.rs composes it (actuation.speech-constitution/v1:
  * `interaction` from the composed modality — the local cascade may claim no full duplex or barge-in —, `interruption` unsupported, and
  * provenance.stage_relations in the order stt, text, tts, the speech stages carrying configuration.declared_voice); speak's receipt as the
@@ -391,7 +410,7 @@ test('CODE-DERIVED — the Answer\'s voice keeps the open voice\'s constitution 
   assert.deepEqual(voiceBodyReadings(voice.snapshot()), {'body.receipt': 'nara-session-request:7'}, 'the last receipt stays')
 })
 
-test('Voice on Central\'s chain: B\'s binding, with the open voice\'s readings over its absences; Voice\'s chooser stays disabled naming its op; drawn in every view', () => {
+test('Voice on Central is the Agent\'s Voice page: B\'s binding, with the open voice\'s readings over its absences; Voice\'s chooser stays disabled naming its op; drawn on the Agent', () => {
   const state = {...VOICE_OFF, speaks: 'on', constitution: CONSTITUTION, receipt: RECEIPT}
   const binding = chain.centralVoiceBinding(state, null, async () => {})
   assert.equal(binding.id, voiceBind.VOICE_ID)
@@ -400,7 +419,15 @@ test('Voice on Central\'s chain: B\'s binding, with the open voice\'s readings o
   for (const key of ['body.duplex', 'body.bargeIn', 'body.interrupt', 'body.receipt']) assert.equal(binding.standing[key], undefined, `${key}: a reading now`)
   assert.equal(binding.standing['voice.voice'].disabled, voiceBind.VOICE_REFUSE['voice.voice'], 'choosing a voice has no owner operation')
   for (const key of ['voice.voices', 'body.latencyMs', 'turn']) assert.equal(binding.standing[key].disabled, voiceBind.VOICE_ABSENT[key], `${key}: still absent with its reason`)
-  drawsOn(voiceDesign, binding, /en_US-norman-medium|en_GB-alba-medium|0f3a…c21/)
+  // REPLACED (#725): Voice's own views — Voice is the Agent's Voice page (§19.21 "How an agent speaks … is the Agent's Voice page"), carried
+  // under `speech.` (oneAgentBinding.ts VOICE_PAGE): the Agent's design draws it on the same binding.
+  const agent = one.composeAgentBinding({id: 'central:agent', values: {}}, {voice: binding})
+  assert.equal(agent.values['speech.voice.voice'], 'af_heart', 'the open voice\'s declared voice, on the Agent')
+  assert.equal(agent.standing['speech.voice.voice'].disabled, voiceBind.VOICE_REFUSE['voice.voice'])
+  host.setHostPage(agent.id, 'voice')
+  const page = drawsOn(agentDesign, agent, /en_US-norman-medium|en_GB-alba-medium|0f3a…c21/)
+  assert.match(page, /af_heart/, 'the Voice page draws the declared voice')
+  host.resetHost(agent.id)
   const closed = chain.centralVoiceBinding(VOICE_OFF, 'The conversation is not bound.', async () => {})
   assert.equal(closed.values['body.duplex'], undefined)
   assert.equal(closed.standing['body.duplex'].disabled, voiceBind.VOICE_ABSENT['body.duplex'])
@@ -411,5 +438,7 @@ test('code-reading — Central\'s Approvals carries Approve to Central (projectc
   const text = await readFile(new URL('../src/central/devices/CentralDevices.tsx', import.meta.url), 'utf8')
   assert.match(text, /approve: row => acceptSourceReturn\(transport, APPROVALS_PROJECT, row, person\)/)
   assert.match(text, /useCentralAction\(transport, PERSONAL_ANCHOR_ACTION, waiting \? NO_INPUT : null\)/)
-  assert.match(text, /publishDevice\(VOICE_ID, \{device: voiceDev, binding: voiceDesign\}\)/, 'Voice is published on the door under its id')
+  // REPLACED (#725): "Voice is published on the door under its id" — Voice is the Agent's Voice page (§19.21): Central's Agent carries it.
+  assert.match(text, /composeAgentBinding\(own, \{custody, identity, thread, voice: voiceDesign\}\)/, 'the Agent carries Voice')
+  assert.doesNotMatch(text, /publishDevice\(VOICE_ID/, 'no Voice device on the door')
 })

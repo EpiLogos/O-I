@@ -31,10 +31,10 @@
 // owner's reading of it now), presence.shared [{subject, name, consent, granted, permitted}] (who has shared their sky with you), natal.of
 // ('self', or the subject whose ring you open; it opens only where their consent permits it). Acts: presence.share (the target's ref:
 // `nara_presence` publish with a new consent). Withdrawing a consent has no owner operation: it stands disabled with that reason.
-// The Rack page carries the rack of M2′ (quaternal-logic__map-rack.tsx), on the keys rack and rack.part.
+// The Rack page carries the rack of M2′ (the rack kit, map-rack.tsx), on the keys rack and rack.part.
 import {Action, Band, Chooser, Dial, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, Tile, Toggle, ValueBox, type LightState, type RowItem} from '../../sdk/panel'
 import {NONE, boolOf, clock, json, numOf, st, strOf, type DesignedDevice, type ViewProps} from './design'
-import {RACK_M2, RackBands} from './quaternal-logic__map-rack'
+import {RACK_M2, RackBands} from './map-rack'
 import './quaternal-logic__sky.css'
 
 type V = ViewProps['v']

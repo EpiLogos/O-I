@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import {readFile, readdir} from 'node:fs/promises'
 
 // Craft assertions for the agent-shell craft lane (zcode:agent-shell-craft,
-// 2026-10-09): computed values the WIDGET-GUIDE and mockup pin, asserted in
+// 2026-10-09): computed values the manual (§16.9-§16.10) and the mockup pin, asserted in
 // the existing suites' style — CSS text and component source as data, no
 // browser needed. Density values come from agent-shell-mockup.html; icon
 // rules from icon-cut.html (the owner's icon standard).

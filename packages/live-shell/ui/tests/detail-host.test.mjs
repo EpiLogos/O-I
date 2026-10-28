@@ -98,7 +98,9 @@ test('the Device side\'s head: the session\'s path in Factory, the focused instr
     {name: 'correlate occurrences', line: 'the agent\'s chain: agent → skills → scope'}, 'the selected task\'s session, as the chain reads it (lane W1-Factory: no gateway, no landing of its own)')
   // No session: the Device side is Factory's Main track, as the chain draws it (lane BF3; FactoryDeviceChain.tsx).
   assert.deepEqual(MODE_DETAILS.factory.head.device({detail: reading('factory'), selected: none, instrument: null}),
-    {name: 'Main', line: 'Factory\'s Main track: the Experiment and Approvals'}, 'no selection, no session — the Main track, as the chain says')
+    // REPLACED (#725): "the Experiment and Approvals" — the Experiment was retired (§19.5: a task launched with Repeat, its takes compared); the
+    // Main track is the Run map, Approvals and the prompt pads (§16.2, §19.1).
+    {name: 'Main', line: 'Factory\'s Main track: the Run map, Approvals and the prompt pads'}, 'no selection, no session — the Main track, as the chain says')
   // A workcell's return track (frame/tracks/returnTracks.ts `workcell:<name>`; lane W1-Factory): its name and its chain.
   assert.deepEqual(MODE_DETAILS.factory.head.device({detail: reading('factory'), selected: {...none, ref: 'workcell:env-2'}, instrument: null}),
     {name: 'env-2', line: 'the workcell\'s chain: Gateway → Remote carrier → Git / landing, with its Seat'}, 'a workcell selected: its chain')

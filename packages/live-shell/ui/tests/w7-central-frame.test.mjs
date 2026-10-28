@@ -46,7 +46,8 @@ const heads = await import('../src/frame/tracks/trackHeads.ts')
 const grid = await import('../src/frame/tracks/SessionGrid.tsx')
 const {ArrangementRulerView} = await import('../src/frame/tracks/ArrangementRuler.tsx')
 const pages = await import('../src/central/devices/pageBindings.ts')
-const {design: workspaceDesign} = await import('../src/inhabitants/catalogue/panels/central__workspace.tsx')
+// The Workspace's design (central__workspace.tsx) was retired in the 22 Oct manual rewrite (#725): a world's settings stand on its track's head
+// and its account is Docs (§18.1, §18.5); the Workspace's binding stays (pageBindings.ts workspaceBinding) and is checked on its own values.
 
 const escaped = text => text.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#x27;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 const viewsOf = design => design.views ?? ['folded', 'compact', 'whole', 'full', 'widget']
@@ -74,29 +75,30 @@ const SET = {columns: [{id: 'r1', name: '1'}], clips: [], tracks: [{id: WORLD_TR
 
 test('a mode names the device its tracks\' heads open; the Session grid and the Arrangement ruler draw one head button for it, and a track no mode names draws none', () => {
   const opened = []
-  heads.nameTrackHeadDevices('central', new Map([[WORLD_TRACK, {title: 'Workspace', does: 'Open O-I\'s Workspace full in a pane', open: () => opened.push('central:workspace')}]]))
+  // REPLACED (#725): the head named the Workspace — retired; a world's head opens its Docs (useCentralTracks.ts, §18.1, §18.5).
+  heads.nameTrackHeadDevices('central', new Map([[WORLD_TRACK, {title: 'Docs', does: 'Open O-I\'s Docs full in a pane', open: () => opened.push('central:docs')}]]))
   try {
     const selected = []
     const selection = {select: target => selected.push(target)}
     const session = renderToStaticMarkup(createElement(grid.SessionGridView, {set: SET, selection, folded: {}, onFold: noop, receipt: null, onPress: noop, onDismiss: noop}))
     assert.match(session, new RegExp(`data-track-device="${WORLD_TRACK}"`))
-    assert.match(session, /aria-label="Open O-I&#x27;s Workspace in a pane"/)
+    assert.match(session, /aria-label="Open O-I&#x27;s Docs in a pane"/)
     assert.doesNotMatch(session, /data-track-device="factory:session:x"/, 'a track no mode names: no button')
     const view = {window: null, onWindow: noop, snap: 'free', onSnap: noop, marker: null, onMarker: noop, width: 0}
     const ruler = renderToStaticMarkup(createElement(ArrangementRulerView, {set: SET, selection, view, receipt: null, onPress: noop, onDismiss: noop}))
     assert.match(ruler, new RegExp(`data-track-device="${WORLD_TRACK}"`), 'the Arrangement\'s head too')
-    // The press selects the track first (so the Workspace reads that world), then opens the device.
+    // The press selects the track first (so Docs reads that world), then opens the device.
     const button = grid.TrackDeviceButton({device: heads.trackHeadDevice(WORLD_TRACK), track: SET.tracks[0], selection})
     let stopped = false
     button.props.onClick({stopPropagation: () => { stopped = true }})
     assert.deepEqual(selected, [{kind: 'track', ref: WORLD_TRACK, title: 'O-I'}])
-    assert.deepEqual(opened, ['central:workspace'])
+    assert.deepEqual(opened, ['central:docs'])
     assert.ok(stopped, 'the press is the button\'s, not the head\'s')
   } finally { heads.nameTrackHeadDevices('central', null) }
   assert.equal(heads.trackHeadDevice(WORLD_TRACK), undefined, 'taken back: no button')
 })
 
-test('the Workspace opened on a world reads the world\'s name and folder, offers the worlds\' projects as Folder choices, and refuses a rename naming the op', async () => {
+test('the Workspace\'s binding on a world reads the world\'s name and folder, offers the worlds\' projects as Folder choices, and refuses a rename naming the op', async () => {
   pages.resetHolds()
   const book = {id: 'w1', name: 'Morning', project: 'Archetypal-Earth', layout: {root: null, mode: 'base'}}
   const world = {name: 'O-I', project: 'O-I'}
@@ -110,18 +112,23 @@ test('the Workspace opened on a world reads the world\'s name and folder, offers
   assert.deepEqual([yours.values.name, yours.values.folder], ['Your world', 'central'], 'your world: Central')
   const bookOnly = pages.workspaceBinding(pages.WORKSPACE_DEVICE_ID, book, Date.now(), {switchMode: noop, rename: noop}, null)
   assert.deepEqual([bookOnly.values.name, bookOnly.values.folder], ['Morning', 'Archetypal-Earth'], 'no world: the book\'s workspace, as before')
-  for (const key of designKeys(workspaceDesign)) assert.ok([pages.WORKSPACE_WIRING.reads, pages.WORKSPACE_WIRING.local, pages.WORKSPACE_WIRING.refused, pages.WORKSPACE_WIRING.absent].some(table => key in table), `${key} classified`)
-  // The design's Name field spreads no standing (catalogue central__workspace.tsx:674, PROPOSE), so the refusal is said on the press (above).
-  drawsOn(workspaceDesign, binding, /Archetypal-Earth\/wiki|sf1-walk|Palace/)
+  // REPLACED (#725): "every key of the Workspace's design classified" and its drawing on the binding — the manual removed the Workspace as a
+  // device (§18.1: "The settings stand on the track's head … The world's account of itself is Docs, on the track's chain"), so no design
+  // draws these keys; every key the binding reports is still one its wiring classifies.
+  for (const key of Object.keys(binding.values)) assert.ok(pages.WORKSPACE_WIRING.keys.includes(key) || key.includes(':'), `${key} classified`)
 })
 
-test('code-reading — Central names each world\'s head device, and publishes the Workspace on the door for the pane it opens', async () => {
+test('code-reading — Central names each world\'s head device, and publishes Docs on the door for the pane it opens', async () => {
   const {readFile} = await import('node:fs/promises')
   const tracks = await readFile(new URL('../src/frame/tracks/useCentralTracks.ts', import.meta.url), 'utf8')
   assert.match(tracks, /nameTrackHeadDevices\('central', devices\)/)
-  assert.match(tracks, /openInstrument\(DEVICE_PANE_KIND, undefined, \{ref: WORKSPACE_DEVICE, title: `\$\{world\.name\} · Workspace`\}\)/)
+  // REPLACED (#725): the head opened the Workspace, which CentralDevices.tsx published on no chain — the Workspace was retired (§18.1); the
+  // head opens the world's Docs, which stands on the world's chain (§16.2) and is published with the chain's own devices.
+  assert.match(tracks, /openInstrument\(DEVICE_PANE_KIND, undefined, \{ref: DOCS_DEVICE, title: `\$\{world\.name\} · Docs`\}\)/)
+  assert.match(tracks, /const DOCS_DEVICE = centralDeviceId\('docs'\)/)
   const chain = await readFile(new URL('../src/central/devices/CentralDevices.tsx', import.meta.url), 'utf8')
-  assert.match(chain, /publishDevice\(WORKSPACE_DEVICE_ID, workspaceBinding \? \{device: workspaceDev, binding: workspaceBinding\} : \{device: workspaceDev\}\)/)
+  assert.match(chain, /return \[centralDeviceId\('packet'\), CENTRAL_AGENT_ID, CENTRAL_SCOPE_ID, DOCS_DEVICE_ID\]/)
+  assert.match(chain, /for \(const entry of entries\) publishDevice\(entry\.id, centralPublication\(entry, bindingOf\(entry\.id\)\)\)/)
   assert.doesNotMatch(await readFile(new URL('../src/frame/tracks/SessionGrid.tsx', import.meta.url), 'utf8'), /central:world|'central'/, 'the grid stays mode-blind')
 })
 
@@ -137,51 +144,52 @@ test('the Day\'s close-out stays absent naming its owner\'s missing route: Centr
   assert.match(day.NO_CLOSEOUT, /missing op: an aikit_read route for `work continuity closeout verify`/)
 })
 
-// ── 3. Notifications (design package D10) ───────────────────────────────────────────────────────────────────────────────────────────
+// ── 3. Notifications (design package D10) — since #725, Approvals' Requests ───────────────────────────────────────────────────────
 
-test('Notifications: a monitor on the rail and in a pane; Messages\' waiting agents and Approvals\' queue read off their own devices; before Central answers, requests and the provider absent naming its reading', async () => {
+test('Notifications\' readings stand in Approvals: Messages\' waiting agents read off their own device, the owners\' requests in its queue; before Central answers, the requests and the desktop absent naming their reading', async () => {
+  // REPLACED (#725): the Notifications monitor on the rail and in a pane (widgets__notifications.tsx) — retired into Approvals (§23.9 "What an
+  // owner or an agent raises for you to decide … waits in Approvals, under Requests"). Approvals is the device that draws them now
+  // (railBindings.ts withOwnerRequests): Messages' waiting count as its `messages`, the owners' requests as queue rows of kind request.
   const rail = await import('../src/widgets/railBindings.ts')
-  const {design} = await import('../src/inhabitants/catalogue/panels/widgets__notifications.tsx')
-  assert.equal(design.kind, 'monitor')
-  assert.deepEqual(viewsOf(design).filter(view => view !== 'popout').sort(), ['full', 'widget'], 'a monitor: its rail tile and its Full')
-  // Messages' own agents (each in its occupant's run state) and Approvals' own queue: counted, never derived again.
+  const receipts = await import('../src/agent/devices/receiptBindings.ts')
+  const chainBind = await import('../src/agent/devices/designBindings.ts')
+  const {design} = await import('../src/inhabitants/catalogue/panels/software-factory__approvals.tsx')
+  // Messages' own agents (each in its occupant's run state): counted, never derived again.
   const agents = JSON.stringify([{id: 'position:flint', name: 'Flint', state: 'stalled'}, {id: 'position:nara', name: 'Nara', state: 'waiting'}, {id: 'position:kite', name: 'Kite', state: 'working'}, {id: 'position:lilt', name: 'Lilt'}])
-  const queue = JSON.stringify([{id: 'r1', kind: 'proposal'}, {id: 'q1', kind: 'request'}])
-  const values = rail.notificationsValues({messagesAgents: agents, approvalsQueue: queue, nowMinutes: 1052})
-  assert.deepEqual([values.waiting, values.proposals, values.now], [2, 2, 1052])
-  const unread = rail.notificationsValues({messagesAgents: undefined, approvalsQueue: undefined, nowMinutes: 0})
-  assert.deepEqual([unread.waiting, unread.proposals], [undefined, undefined], 'no device read: absent, never zero')
-  const held = {}
-  const opened = []
-  const binding = rail.notificationsBinding('widgets:notifications', {messagesAgents: agents, approvalsQueue: queue, nowMinutes: 1052}, held,
-    {local: {show: v => { held.show = v }}, messages: () => opened.push('messages'), approvals: () => opened.push('approvals')})
-  assert.deepEqual([binding.values.show, binding.values.follow], ['all', true], 'Show All and Follow On (§23.9)')
-  for (const key of ['requests', 'provider']) assert.equal(binding.values[key], undefined, `${key}: absent`)
-  for (const key of ['requests', 'provider']) assert.match(rail.NOTIFICATIONS_ABSENT[key], /personal\.notifications\.list/)
-  binding.local.messages(true); binding.local.approvals(true)
-  assert.deepEqual(opened, ['messages', 'approvals'], 'Messages ▸ and Approvals ▸ open the devices; nothing is written')
-  await assert.rejects(binding.write([{key: 'open', value: 'n1'}]), /personal\.notifications\.list/)
+  const carried = rail.ownerRequestsValues({messagesAgents: agents, nowUnixMs: 0})
+  assert.equal(carried.messages, 2, 'the agents that wait for you or have stalled')
+  const unread = rail.ownerRequestsValues({messagesAgents: undefined, nowUnixMs: 0})
+  assert.deepEqual([unread.messages, unread.rows, unread.desktop], [undefined, null, undefined], 'no device read: absent, never zero')
+  const own = receipts.approvalsBinding({gateway: {}, session: null, encounter: null, holds: chainBind.chainHolds()}, null, {}, 'central:main:approvals')
+  const binding = rail.withOwnerRequests(own, {messagesAgents: agents, nowUnixMs: 0, ledger: {status: 'reading'}})
+  assert.equal(binding.values.messages, 2)
+  assert.deepEqual(binding.waiting, ['desktop'], 'the desktop\'s notice waits for personal.notifications.list')
+  assert.equal(binding.values.queue, undefined, 'no request read: absent, never an empty queue')
+  // DELETED (#725): "Messages ▸ and Approvals ▸ open the devices" — the Notifications monitor that stood apart from both is gone (§23.9); its
+  // requests stand in Approvals itself, and its foot says how many wait in Messages.
   const keys = designKeys(design)
-  const local = ['show', 'follow', 'selected', 'opened', 'now'], read = ['waiting', 'proposals'], absent = ['requests', 'provider']
-  assert.deepEqual([...keys].sort(), [...local, ...read, ...absent].sort(), 'every key: the view\'s own, a reading, or absent with its reason')
-  drawsOn(design, binding, /Morning checks failed|Kev decision service down|Flint asks for a decision|macOS Notification Centre/)
-  assert.match(hosted(design, binding).map(([, m]) => m).join(''), /No reading of the requests/)
+  for (const key of ['messages', 'desktop', 'queue']) assert.ok(keys.includes(key), `Approvals reads ${key}`)
+  const all = drawsOn(design, binding, /prop:setModel|setModel/)
+  assert.match(all, /2 wait in Messages/, 'Messages\' waiting agents, in Approvals\' foot')
 })
 
-test('Notifications\' rail tile is registered right after Approvals, and the door ids it reads are the devices\' own', async () => {
+test('Notifications\' rail tile is gone; Approvals\' tile and the door ids it reads are the devices\' own', async () => {
   const {readFile} = await import('node:fs/promises')
+  // REPLACED (#725): "registered right after Approvals" — the Notifications tile is retired with its device (§23.9); Approvals' own tile stands.
   const widgets = await readFile(new URL('../src/shell/widgets.tsx', import.meta.url), 'utf8')
-  const tiles = widgets.indexOf("'ledger', 'approvals']"), notify = widgets.indexOf("{id: 'notifications'"), wiki = widgets.indexOf("{id: 'wiki'")
-  assert.ok(tiles > 0 && notify > tiles && notify < wiki, 'the agent tiles (ending with Approvals), then Notifications, then the other rail-born devices')
+  assert.ok(widgets.includes("'ledger', 'approvals']"), 'the agent tiles end with Approvals')
+  assert.doesNotMatch(widgets, /\{id: 'notifications'/, 'no Notifications tile')
   const railDevices = await readFile(new URL('../src/widgets/railDevices.tsx', import.meta.url), 'utf8')
-  assert.match(railDevices, /\{id: 'notifications', title: 'Notifications'/, 'claimed for its device with the other rail-born devices')
+  assert.doesNotMatch(railDevices, /\{id: 'notifications', title: 'Notifications'/, 'no Notifications device among the rail-born devices')
   const messages = await readFile(new URL('../src/agent/devices/messagesBinding.ts', import.meta.url), 'utf8')
   assert.match(messages, /export const MESSAGES_ID = 'ai-kit:messages'/)
+  assert.match(railDevices, /export const NOTIFY_MESSAGES_ID = 'ai-kit:messages'/, 'the rail reads Messages\' agents off its own device')
   const receipts = await readFile(new URL('../src/agent/devices/receiptBindings.ts', import.meta.url), 'utf8')
   assert.match(receipts, /export const APPROVALS_ID = 'factory:main:approvals'/)
   const central = await readFile(new URL('../src/central/devices/CentralDevices.tsx', import.meta.url), 'utf8')
   assert.match(central, /export const CENTRAL_APPROVALS_ID = 'central:main:approvals'/)
-  assert.match(railDevices, /NOTIFY_APPROVALS_IDS = \['central:main:approvals', 'factory:main:approvals'\]/)
+  // REPLACED (#725): NOTIFY_APPROVALS_IDS (the monitor read Approvals' queue off the door) — Approvals carries the requests itself.
+  assert.match(central, /withOwnerRequests\(commented, /, 'Central\'s Approvals carries the owners\' requests')
 })
 
 // ── 5. the Session grid and the Arrangement ruler against their designs (T-COVERAGE §1.4) ───────────────────────────────────────────

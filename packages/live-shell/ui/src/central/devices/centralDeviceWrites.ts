@@ -329,12 +329,11 @@ export async function editPacket(transport: KernelTransportStatus, context: Prep
 export function centralWriters(input: {
   readonly transport: KernelTransportStatus
   readonly day: DayDieWriteAperture | null
-  readonly conversation: ConversationWriteAperture | null
-  readonly afterWrite?: {readonly day?: () => void; readonly conversation?: () => void; readonly page?: () => void}
-  /** The document the hand reached: its face's own Save, and a Flow's location (documentDoor.ts DocumentInPane). */
+  readonly afterWrite?: {readonly day?: () => void; readonly page?: () => void}
+  /** The document the hand reached: its face's own Save (documentDoor.ts DocumentInPane). */
   readonly page?: {readonly save?: () => void; readonly location?: CentralLocation | null; readonly dirty?: boolean | null} | null
 }): CentralWriters {
-  const {transport, day, conversation, afterWrite, page} = input
+  const {transport, day, afterWrite, page} = input
   return {
     'document': {
       save: async value => {
@@ -344,14 +343,6 @@ export function centralWriters(input: {
         page.save()
       },
     },
-    'flow-document': {
-      entry: async value => {
-        if (!page?.location) throw new Error('No Flow document is reached: open one from the browser, or press in its pane.')
-        if (page.dirty) throw new Error('The page holds edits its owner does not: save or re-read them first, so the entry joins the revision you read.')
-        await appendFlowEntry(transport, page.location, {text: String(value ?? ''), relation: null, ...composerOf(page.location)})
-        afterWrite?.page?.()
-      },
-    },
     'day-die': {
       face: async value => {
         if (!day) throw new Error('No Day is selected. Select one in the browser\'s ground, and the die turns on its document.')
@@ -359,14 +350,6 @@ export function centralWriters(input: {
         if (face === null) throw new Error(`"${String(value)}" is no position of the die.`)
         await turnDieFace(transport, day, face)
         afterWrite?.day?.()
-      },
-    },
-    'nara-conversation': {
-      bound: async value => {
-        if (value !== true) throw new Error('A face cannot unbind a conversation: AIKit holds the session, and the nara_dialogue op declares no release.')
-        if (!conversation) throw new Error('No conversation is selected. The binding resolves for the encounter\'s subject once one is.')
-        await bindConversation(transport, conversation)
-        afterWrite?.conversation?.()
       },
     },
   }

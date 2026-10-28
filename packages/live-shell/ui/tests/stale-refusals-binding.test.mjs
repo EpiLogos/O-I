@@ -71,10 +71,8 @@ const search = await import('../src/central/devices/searchBinding.ts')
 const rail = await import('../src/widgets/railDevices.tsx')
 const adapter = await import('../src/timeline/centralTrackAdapter.ts')
 const {day: dayDesign} = await import('../src/inhabitants/catalogue/panels/day.tsx')
-const {design: hygieneDesign} = await import('../src/inhabitants/catalogue/panels/central__ground-hygiene.tsx')
-const {design: beingsDesign} = await import('../src/inhabitants/catalogue/panels/central__beings.tsx')
-const {design: thingsDesign} = await import('../src/inhabitants/catalogue/panels/central__things.tsx')
-const {design: runsDesign} = await import('../src/inhabitants/catalogue/panels/software-factory__attempt-review.tsx')
+// Ground hygiene's, Beings', Things' and Runs' designs were retired as devices of their own in the 22 Oct manual rewrite; their bindings
+// stay for the devices that carry them, so what is checked of them here is the bindings' own readings, writes and refusals.
 const {scope: scopeDesign} = await import('../src/inhabitants/catalogue/panels/scope.tsx')
 const {design: searchDesign} = await import('../src/inhabitants/catalogue/panels/central__search.tsx')
 const {design: wikiDesign} = await import('../src/inhabitants/catalogue/panels/widgets__wiki.tsx')
@@ -239,14 +237,13 @@ test('the census reads once for both lists through invoke_action, names its boun
   assert.equal(refused.refused, 'No eligible Connector implements GitState', 'the owner\'s words')
 })
 
-test('(e) Ground hygiene draws the census\'s checkouts in every view, the other readings refused in their words', async () => {
+test('(e) Ground hygiene reads the census\'s checkouts, the other readings refused in their words', async () => {
   const owner = kernel({'central.git.census': REAL.gitCensus.data})
   const read = await withKernel(owner, () => readHygieneCensus({transport: bridge, epoch: 'e', machineRead: ground.hygieneMachineRead(bridge, false)}))
   assert.deepEqual(read.census.worktrees.map(tree => tree.path), REAL.gitCensus.data.repos[0].worktrees.map(tree => tree.path))
   assert.ok(read.census.sources.some(source => source.boundaryOp.startsWith('central.git.census worktrees') && !source.refusal))
   const binding = groundBind.hygieneBinding(ground.HYGIENE_DEVICE_ID, {census: read.census, findings: read.findings, at: Date.UTC(2026, 9, 21, 9)}, Date.UTC(2026, 9, 21, 9), async () => {})
-  const all = drawsOn(hygieneDesign, binding, /fold\/day-close-20261012|933731e|2026-10-15T09:12/)
-  assert.ok(all.includes('worktrees/env-2/o-i') || all.includes('dlw/native-build'), 'a census worktree is drawn')
+  assert.ok(binding.values.findings !== undefined, 'the binding carries the census\'s findings')
 })
 
 // ── Ground hygiene's Ground and Material pages (T-COVERAGE §1.3b) ──────────────────────────────────────────────────────────────
@@ -316,14 +313,13 @@ test('the pages read through invoke_action and the shared workcell answer; the s
   assert.equal(pages.findings.length, 1650, 'O-I: no scaffold missing, every listed candidate waiting')
 })
 
-test('(b)(c)(e) Ground hygiene draws the census and the pages in every view: every key classified, each tender writing through its owner or disabled naming why', async () => {
+test('(b)(c) Ground hygiene reads the census and the pages: each tender writing through its owner or disabled naming why', async () => {
   const owner = kernel({'central.git.census': REAL.gitCensus.data, 'central.doctor': PAGES.doctor.data, 'central.world.reproject.plan': PAGES.reprojectPointCloud.data,
     'projectcentral.ground.inspect': PAGES.groundOI.data})
   const transport = {kind: 'bridge', url: 'http://pages-hygiene.fixture'}
   const read = await withKernel(owner, () => readHygieneCensus({transport, epoch: 'e', machineRead: ground.hygieneMachineRead(transport, false)}))
   const pages = await withKernel(owner, () => ground.readHygienePages(transport, 'e', false))
   const binding = groundBind.hygieneBinding(ground.HYGIENE_DEVICE_ID, {census: read.census, findings: read.findings, pages, at: Date.UTC(2026, 9, 21, 9)}, Date.UTC(2026, 9, 21, 9), async () => {})
-  for (const key of designKeys(hygieneDesign)) assert.ok(groundBind.HYGIENE_WIRING.keys.includes(key), `${key} is wired`)
   for (const key of ['root', 'scaffold', 'authored']) assert.notEqual(binding.values[key], undefined, `${key}: Central's reading`)
   assert.equal(binding.values.sandboxes, undefined)
   assert.deepEqual([binding.values['as:provenance'], binding.values['as:standing'], binding.values['look:authored']], ['human-authored', 'design-commitment', true], 'the manual\'s defaults for the holds')
@@ -357,16 +353,6 @@ test('(b)(c)(e) Ground hygiene draws the census and the pages in every view: eve
   assert.match(binding.standing.orphans.disabled, /a sandbox server named to the shell/)
   const findings = JSON.parse(binding.values.findings)
   assert.ok(findings.some(f => f.kind === 'scaffold-missing') && findings.some(f => f.kind === 'source-unrecognised'))
-  const fixture = /fold\/day-close-20261012|933731e|2026-10-15T09:12|sbx-3b17|world:demand:factory-attempt/
-  drawsOn(hygieneDesign, binding, fixture)
-  // The Ground and Material pages, as the host turns to them (deviceHost.setHostPage).
-  host.setHostPage(binding.id, 'ground')
-  const onGround = drawsOn(hygieneDesign, binding, fixture)
-  assert.ok(onGround.includes('ProjectCentral/relations'), 'the missing scaffold part is drawn')
-  host.setHostPage(binding.id, 'material')
-  const onMaterial = drawsOn(hygieneDesign, binding, fixture, [groundBind.NO_SANDBOX_SERVER])
-  assert.doesNotMatch(onMaterial, /sbx-/, 'no sandbox is drawn: none was read')
-  host.resetHost(binding.id)
 })
 
 // ── Beings and Things: the ties through the page op ─────────────────────────────────────────────────────────────────────────────
@@ -395,21 +381,12 @@ test('FIXTURE — a Being\'s ties write through the page op on the revision read
   assert.equal(things.writes('kind'), false, 'a Thing has no kind')
 })
 
-test('a Being with no page read with its revision: every tie stands disabled saying so; (b) every design key classified', () => {
-  for (const [design, wiring, readWiring] of [[beingsDesign, pages.BEINGS_WIRING, pages.BEINGS_READ_WIRING], [thingsDesign, pages.THINGS_WIRING, pages.THINGS_READ_WIRING]]) {
-    for (const w of [wiring, readWiring]) for (const key of designKeys(design)) {
-      assert.ok(w.keys.includes(key), `${design.id}: ${key} is wired`)
-      assert.ok([w.reads, w.writes, w.local, w.refused, w.absent].some(table => key in table), `${design.id}: ${key} is read, written, held, refused or absent`)
-    }
+test('a Being with no page read with its revision: every tie stands disabled saying so; every wired key placed', () => {
+  for (const w of [pages.BEINGS_WIRING, pages.BEINGS_READ_WIRING, pages.THINGS_WIRING, pages.THINGS_READ_WIRING]) for (const key of w.keys) {
+    assert.ok([w.reads, w.writes, w.local, w.refused, w.absent].some(table => key in table), `${key} is read, written, held, refused or absent`)
   }
   const binding = pages.beingsBinding('central:beings', BEING)
   for (const key of ['world', 'subject', 'kind', 'o1', 'layout', 'ground', 'dropSource']) assert.match(binding.standing[key].disabled, /page op mutate_field.*no page is read here/, key)
-})
-
-test('(e) Beings and Things draw their designs on the page\'s ties in every view, never the design\'s sample', () => {
-  const hand = {write: async () => {}}
-  drawsOn(beingsDesign, pages.beingsBinding('central:beings', BEING, hand), /C\. G\. Jung|Zürich|e3273bc0d9af/, [pages.BEINGS_READ_WIRING.refused.addSource])
-  drawsOn(thingsDesign, pages.thingsBinding('central:things', {...BEING, meta: {...BEING.meta, family: 'things'}}), /e3273bc0d9af|field\.json/)
 })
 
 // ── Runs: the take lanes' attempts; Stands through AttemptReceiving ──────────────────────────────────────────────────────────────
@@ -435,21 +412,6 @@ test('FIXTURE — Runs reads the session\'s takes: its Run, the attempts oldest 
   await assert.rejects(binding.write([{key: 'stands', value: 'att:9'}]), /no attempt of the session's takes/)
   assert.deepEqual(chosen, ['att:1', 'att:3'])
   assert.match(tasks.runsBinding('agent-session/s1', chainBind.chainHolds(), {...runs, takes: null}).standing.stands.disabled, /names no Factory attempt/)
-  chainBind.resetHolds()
-})
-
-test('(e) Runs draws its design on the takes in every view, never the design\'s sample; without takes Stands says why', () => {
-  chainBind.resetHolds()
-  host.resetHost()
-  const runs = {takes: TAKES, choose: async () => ({ok: true}), timezone: 'Europe/London'}
-  const all = drawsOn(runsDesign, tasks.runsBinding('agent-session/s1', chainBind.chainHolds(), runs), /01ARZ3NDEKTSV4RRFFQ69G5FAA|3\.4\.2|All three roots type-check/)
-  assert.match(all, /#2/, 'an attempt is drawn')
-  drawsOn(runsDesign, tasks.runsBinding('agent-session/s1', chainBind.chainHolds()), /01ARZ3NDEKTSV4RRFFQ69G5FAA|3\.4\.2/, [tasks.RUNS_REFUSE.stands])
-  for (const key of designKeys(runsDesign)) {
-    const values = tasks.runsValues('agent-session/s1', chainBind.chainHolds(), runs)
-    const classified = key in values || ['light', 'journey', 'collected', 'collect', 'task', 'standsPending', 'stands', 'attempt'].includes(key)
-    assert.ok(classified, `${key}: a reading, a hold, or absent`)
-  }
   chainBind.resetHolds()
 })
 

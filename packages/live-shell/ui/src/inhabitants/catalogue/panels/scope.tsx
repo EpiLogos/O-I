@@ -1,9 +1,16 @@
 // Scope (manual §19.12): how far an agent may reach into your world, and how its writes arrive. Live's nearest: Utility — a small
 // effect of few controls whose meaning is plain at a glance. The rings are the picture: teal is what the agent may read, amber
 // what it may write. Raising the reach asks you first: the new reach waits, dashed, until you confirm it.
+// Its Knowledge page (manual §19.12 Knowledge) decides what the agent may look up, inside the Reach. The owner is AIKit's knowledge route
+// (the kernel's `knowledge` op: status, search, read, use): Sources (`src.wiki`, `src.project`, `src.code`), Search first (`searchFirst`),
+// Link depth (`linkDepth`, 0–4), Read budget (`readBudget`, 1–200 pages), and the reading Route (`route`: ready | composed | refused,
+// with the owner's reason `routeWhy`). `readings` [{id, page, source, hops, rev?, moved?}] are the pages the agent read, each with its
+// source, how many links from a hit it stood, and whether its source moved since (Docs' Moved since, §18.5); `reading` is the one
+// chosen. Read again (`readAgain`) reads it at the new revision of its source and AIKit records the use; Forget (`forget`, held) drops
+// AIKit's record of having used it — no kernel request forgets a use yet.
 import {useState} from 'react'
-import {Action, Band, Chooser, Dial, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, Tile, type LightState, type RowItem} from '../../sdk/panel'
-import {NONE, clampTo, has, json, numOf, shown, st, strOf, type DesignedDevice, type ViewProps} from './design'
+import {Action, Band, Dial, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, Tile, Toggle, ValueBox, type LightState, type RowItem} from '../../sdk/panel'
+import {NONE, boolOf, clampTo, has, json, numOf, shown, st, strOf, type DesignedDevice, type ViewProps} from './design'
 
 type V = ViewProps['v']
 const RINGS = ['Object', 'Scene', 'Expression', 'Central']
@@ -73,6 +80,76 @@ const ringName = (x: number | undefined) => (x === undefined ? undefined : RINGS
 const litCount = (rows: RowItem[], v: V, key: string) => (has(v, key) && reach(v) !== undefined ? rows.filter(r => r.light === 'lit').length : undefined)
 const modeLabel = (v: V) => MODES.find(m => m.value === strOf(v, 'writeMode'))?.label
 
+// ---------------------------------------------------------------- Knowledge: what the agent may look up
+
+const SOURCES = [{key: 'src.wiki', label: 'Wiki', does: 'The wiki.'}, {key: 'src.project', label: 'Project knowledge', does: 'The project\'s sources and its map.'},
+  {key: 'src.code', label: 'Code', does: 'The code index.'}] as const
+const ROUTE_TONE: Readonly<Record<string, 'green' | 'value' | 'stall'>> = {ready: 'green', composed: 'value', refused: 'stall'}
+interface Reading {readonly id: string; readonly page: string; readonly source: string; readonly hops: number; readonly rev?: string; readonly moved?: boolean}
+const readingsOf = (v: V): Reading[] | undefined => {
+  if (!has(v, 'readings')) return undefined
+  const raw = json<unknown>(v, 'readings', [])
+  return Array.isArray(raw) ? raw.flatMap(x => { const r = x as Record<string, unknown>
+    return r && typeof r.id === 'string' && typeof r.page === 'string' ? [{id: r.id, page: r.page, source: typeof r.source === 'string' ? r.source : NONE, hops: typeof r.hops === 'number' ? r.hops : 0,
+      rev: typeof r.rev === 'string' ? r.rev : undefined, moved: r.moved === true}] : [] }) : []
+}
+
+/** The route's reach: a hit at the centre, a ring for each link the agent may follow from it (dashed past Link depth), and each page it
+ * read where it stood, teal, or orange where its source moved since. Under it, the pages read against the Read budget. */
+function RouteWell({v, w, h}: {v: V; w: number; h: number}) {
+  const depth = numOf(v, 'linkDepth'), budget = numOf(v, 'readBudget'), readings = readingsOf(v)
+  const cx = w / 2, cy = (h - 18) / 2 + 4, step = (Math.min(w, h - 18) / 2 - 6) / 4
+  const at = (hop: number, i: number, n: number) => { const a = -Math.PI / 2 + (i + .5) * (2 * Math.PI / Math.max(1, n)) + hop * .35, r = hop * step; return [cx + r * Math.cos(a), cy + r * Math.sin(a)] as const }
+  const byHop = (hop: number) => (readings ?? []).filter(x => x.hops === hop)
+  const read = readings?.length, bx = 8, bw = w - 16, by = h - 10
+  return <Display w={w} h={h} label="What the agent may look up" corner={ringName(reach(v)) ?? NONE}
+    does="A hit at the centre and a ring for each link the agent may follow from it: dashed past Link depth. Each page the agent read stands where it was found, orange where its source moved. Under it, the pages read against the budget.">
+    {[1, 2, 3, 4].map(i => <circle key={i} cx={cx} cy={cy} r={i * step} fill="none" className="dp-faint" strokeDasharray={depth === undefined || i > depth ? '2 3' : undefined} />)}
+    <circle cx={cx} cy={cy} r={3.5} fill="var(--dp-value)" />
+    {readings?.map(x => { const ring = byHop(x.hops), [px, py] = at(x.hops, ring.indexOf(x), ring.length)
+      return <circle key={x.id} cx={px} cy={py} r={3} fill={x.moved ? 'var(--stall)' : 'var(--dp-value)'} opacity={x.hops > (depth ?? 4) ? .4 : 1} data-i={`${x.page}|${x.source}${x.rev ? ` at ${x.rev}` : ''}.${x.moved ? ' Its source moved since.' : ''}`} /> })}
+    {readings === undefined && <text x={cx} y={cy + 16} className="dp-ink-dim" textAnchor="middle">No reading of the pages read</text>}
+    <rect x={bx} y={by - 4} width={bw} height={5} className="dp-faint" fill="none" />
+    {read !== undefined && budget !== undefined && <rect x={bx} y={by - 4} width={bw * clampTo(0, 1, read / budget)} height={5} fill="var(--dp-value)" />}
+    <text x={bx} y={by - 7} className="dp-axis">{read === undefined || budget === undefined ? 'pages read' : `${read} of ${budget} pages`}</text>
+  </Display>
+}
+
+function KnowledgeBands({p}: {p: ViewProps}) {
+  const v = p.v, readings = readingsOf(v), chosen = readings?.find(x => x.id === strOf(v, 'reading')), [page, setPage] = useState(0), route = strOf(v, 'route')
+  const toggle = (key: string, label: string, does: string) => <Toggle {...st(p, key)} key={key} label={label} does={does} on={boolOf(v, key) === true} unknown={boolOf(v, key) === undefined} onChange={x => p.set(key, x)} />
+  const rows: RowItem[] = readings === undefined ? [{id: 'none', name: 'No reading of the pages the agent read', light: 'unknown'}]
+    : readings.length === 0 ? [{id: 'none', name: 'The agent has read nothing yet', light: 'dark'}]
+    : readings.map(x => ({id: x.id, name: x.page, light: x.moved ? 'dark' : 'lit', tone: x.moved ? 'stall' : 'value', note: x.moved ? 'moved' : x.rev ?? x.source,
+      does: `From ${x.source}${x.rev ? ` at ${x.rev}` : ''}, ${x.hops} link${x.hops === 1 ? '' : 's'} from a hit.${x.moved ? ' Its source moved since: Read again reads it at the new revision.' : ''}`}))
+  return <>
+    <Band>
+      <Section width={168}><RouteWell v={v} w={156} h={146} /></Section>
+      <Section label="Sources" width={112}>
+        {SOURCES.map(s => toggle(s.key, s.label, `The agent may search ${s.does.charAt(0).toLowerCase()}${s.does.slice(1)}`))}
+        {toggle('searchFirst', 'Search first', 'The agent searches before it reads a file.')}
+      </Section>
+      <Section label="Bounds" grow>
+        <Dial {...st(p, 'linkDepth')} label="Link depth" does="The number of links the agent follows from a hit." value={numOf(v, 'linkDepth') ?? NaN} def={2} scale={{min: 0, max: 4, step: 1}} format={x => `${x}`} onChange={x => p.set('linkDepth', x)} />
+        <ValueBox {...st(p, 'readBudget')} label="Read budget" does="The most pages the agent reads in one task." value={numOf(v, 'readBudget') ?? NaN} def={40} scale={{min: 1, max: 200, step: 1}} format={x => `${Math.round(x)}`} onChange={x => p.set('readBudget', Math.round(x))} />
+        <Readout label="route" does={`Whether the route answers: ready, composed, or refused with its reason.${strOf(v, 'routeWhy') ? ` ${strOf(v, 'routeWhy')}` : ''}`}
+          value={route} tone={route ? ROUTE_TONE[route] : undefined} />
+      </Section>
+    </Band>
+    <Band>
+      <Section grow><Rows label={readings ? `Pages read · ${readings.length}, ${readings.filter(x => x.moved).length} moved` : 'Pages read'}
+        does="Each page the agent read, with its source. Orange: its source moved since. Choose one to read it again or to forget it." items={rows} size={7} page={page} onPage={setPage}
+        selected={chosen?.id} onSelect={readings?.length ? id => p.set('reading', id) : undefined} /></Section>
+      <Section label="Reading" width={104}>
+        <Action {...st(p, 'readAgain')} label="Read again" does="Reads the chosen page at the new revision of its source. AIKit records the use."
+          onPress={chosen ? () => p.set('readAgain', chosen.id) : undefined} disabled={st(p, 'readAgain').disabled ?? (chosen ? undefined : 'Choose a page first.')} />
+        <Action {...st(p, 'forget')} hold label="Forget" does="Drops AIKit's record of having used the page, so the route no longer ranks it from memory. The source is untouched."
+          onPress={chosen ? () => p.set('forget', chosen.id) : undefined} disabled={st(p, 'forget').disabled ?? (chosen ? undefined : 'Choose a page first.')} />
+      </Section>
+    </Band>
+  </>
+}
+
 const SAMPLE_READS: Place[] = [
   {id: 'lantern', name: 'Lantern (object)', ring: 0}, {id: 'scene', name: 'This scene', ring: 1}, {id: 'registers', name: 'Scene registers', ring: 1},
   {id: 'tidal', name: 'Tidal (Expression)', ring: 2}, {id: 'wiki', name: 'Central wiki', ring: 3},
@@ -85,11 +162,22 @@ export const scope: DesignedDevice = {
   id: 'software-factory:context-write-mode',
   title: 'Scope',
   kind: 'effect',
-  defaults: {light: 'lit', reach: 1, writeMode: 'propose', knowledge: 'scene-sources', basis: 'r15 → r17',
-    reads: JSON.stringify(SAMPLE_READS), writes: JSON.stringify(SAMPLE_WRITES)},
+  defaults: {light: 'lit', reach: 1, writeMode: 'propose', basis: 'r15 → r17',
+    reads: JSON.stringify(SAMPLE_READS), writes: JSON.stringify(SAMPLE_WRITES),
+    // Knowledge: the manual's defaults (Wiki and Project knowledge, Search first, two links, forty pages) and the route's readings.
+    'src.wiki': true, 'src.project': true, 'src.code': false, searchFirst: true, linkDepth: 2, readBudget: 40, route: 'ready', reading: 'k3',
+    readings: JSON.stringify([
+      {id: 'k1', page: 'Lantern', source: 'wiki:node:lantern', hops: 0, rev: 'r9'},
+      {id: 'k2', page: 'Tidal: the scene registers', source: 'Expressions/Tidal/registers.md', hops: 1, rev: 'r4'},
+      {id: 'k3', page: 'Light that answers sound', source: 'wiki:node:light-and-sound', hops: 1, rev: 'r12', moved: true},
+      {id: 'k4', page: 'The scene grammar', source: 'docs/SCENES.md', hops: 2, rev: 'r31'},
+    ])},
+  firstPage: 'reach',
   fixtures: {
     'A scene in reach': {},
-    'No readings': {light: undefined, reach: undefined, writeMode: undefined, knowledge: undefined, basis: undefined, reads: undefined, writes: undefined},
+    'Route refused': {route: 'refused', routeWhy: 'The knowledge capability is not active in this profile.', readings: JSON.stringify([])},
+    'No readings': {light: undefined, reach: undefined, writeMode: undefined, basis: undefined, reads: undefined, writes: undefined,
+      'src.wiki': undefined, 'src.project': undefined, 'src.code': undefined, searchFirst: undefined, linkDepth: undefined, readBudget: undefined, route: undefined, reading: undefined, readings: undefined},
   },
 
   folded: p => <Folded title="Scope" light={light(p)} readings={[ringName(reach(p.v)) ?? NONE]} onUnfold={p.nav.unfold} />,
@@ -103,7 +191,7 @@ export const scope: DesignedDevice = {
     <Section label="Macros" cols={2}>
       <Dial {...st(p, 'reach')} label="Reach" does="The widest part of the world the agent may touch. Raising it asks you first." value={reach(p.v) ?? NaN} def={1}
         scale={{min: 0, max: 3, step: 1}} format={x => RINGS[x]!} onChange={ask(p.v, p.set)} pending={p.v.reachPending !== undefined || st(p, 'reach').pending} />
-      <Radio {...st(p, 'writeMode')} label="Writes" does="How a write arrives." value={strOf(p.v, 'writeMode') ?? ''} options={MODES} stack onChange={x => p.set('writeMode', x)} />
+      <Radio {...st(p, 'writeMode')} label="Write mode" does="How a write arrives." value={strOf(p.v, 'writeMode') ?? ''} options={MODES} stack onChange={x => p.set('writeMode', x)} />
       <Readout label="reads" does="Places the agent may read. Click the plate to choose them." value={litCount(readRows(p.v), p.v, 'reads')} tone="value" onPress={p.nav.select} />
       <Readout label="writes" does="Places the agent may write. Click the plate to choose them." value={litCount(writeRows(p.v), p.v, 'writes')} tone="accent" onPress={p.nav.select} />
     </Section>
@@ -144,7 +232,10 @@ export const scope: DesignedDevice = {
 function ScopeWhole({p}: {p: ViewProps}) {
   const [readPage, setReadPage] = useState(0)
   const at = p.v.reachPending ?? reach(p.v)
-  return <Panel title="Scope" view="whole" light={light(p)} onFold={p.nav.fold} onFull={p.nav.full}>
+  const page = p.page === 'knowledge' ? 'knowledge' : 'reach'
+  return <Panel title="Scope" view="whole" light={light(p)} onFold={p.nav.fold} onFull={p.nav.full} page={page} onPage={p.setPage}
+    pages={[{id: 'reach', label: 'Reach'}, {id: 'knowledge', label: 'Knowledge', light: (strOf(p.v, 'route') === undefined ? undefined : strOf(p.v, 'route') === 'refused' ? 'dark' : 'lit') as LightState | undefined}]}>
+    {page === 'knowledge' ? <KnowledgeBands p={p} /> : <>
     <Band>
       <Section width={168}>
         <Display w={156} h={146} label="Reach" does="Teal: what the agent may read. Amber: what it may write. Drag the handle to set the reach." corner={shown(p.v, 'basis')}>
@@ -169,11 +260,10 @@ function ScopeWhole({p}: {p: ViewProps}) {
         <Rows label={has(p.v, 'writes') ? 'Writes · receipts' : 'Writes · no reading'} does="The places the agent may write. The square is your request; amber marks a place in reach." items={writeRows(p.v)}
           onRequest={(id, x) => p.set(`w:${id}`, x)} size={7} />
       </Section>
-      <Section label="Knowledge" grow>
-        <Chooser {...st(p, 'knowledge')} does="The knowledge sources and bounds, set on the Knowledge route." value={strOf(p.v, 'knowledge') ?? ''}
-          options={[{value: 'scene-sources', label: 'Scene sources'}, {value: 'world', label: 'Whole world'}, {value: 'none', label: 'None'}]} onChange={x => p.set('knowledge', x)} />
+      <Section label="Basis" grow>
         <Readout label="basis" does="The revision the agent started from, and the revision of its edits." value={strOf(p.v, 'basis')} />
       </Section>
     </Band>
+    </>}
   </Panel>
 }

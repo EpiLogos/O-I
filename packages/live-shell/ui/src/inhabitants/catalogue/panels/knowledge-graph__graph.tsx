@@ -18,8 +18,19 @@
 // 'entry-aperture' | 'partial' | 'full-sixfold'), and aperture.refraction (whether a refraction request stands for the note: Formal
 // carries it and refuses without one). The plan is a library contract: no CLI and no kernel op reach it yet, so the binding owes the
 // route and the host stands these writes disabled with that reason until it lands.
+//
+// What a subject reaches (§17.3, which took in Impact's reach of §18.6): select a folder, a note or a Day, and the reader beside the graph
+// lists what a change to it would reach. Links are the notes the selected note connects to in the graph's own reading, each with its
+// relation and where it comes from, direct links first, out to Depth. References and Sessions stand under `reach.` (a binding hosts them
+// by prefixing Impact's): reach.subject {kind, path, ref}; reach.references, the directory entries or the files that mention the subject
+// [{name, kind, byte_len, location:{path}}] (the folder listing, or the file map); reach.sessions, the NOW records whose work names the
+// subject's folder or project [{nowRef, purpose, lifecycle, work:["repo @ branch"]}] (the NOW register); reach.refusal:references and
+// reach.refusal:sessions, a source's refusal in its own words, which leaves its list empty. Sessions (reach.closed: false lists the open
+// ones only, true the open and the closed) is the view's own.
+// View (graph · list · tree · form) shows the same notes in another shape, and Standing floor (all · fact · claim · inference · guess) hides
+// the relations whose standing is below it; both are the view's own.
 import {useState} from 'react'
-import {Action, Band, Dial, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, Tile, Toggle, ValueBox, toUnit, fromUnit, type LightState, type RowItem} from '../../sdk/panel'
+import {Action, Band, Chooser, Dial, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, Tile, Toggle, ValueBox, toUnit, fromUnit, type LightState, type RowItem} from '../../sdk/panel'
 import {NONE, boolOf, clampTo, has, json, numOf, st, strOf, type DesignedDevice, type Value, type ViewProps} from './design'
 import {defaultGraphFilters, filterGraph, type FilteredGraph, type GraphFilters} from '../../../../../../../desktop/cradle/src/knowledge/filters'
 import {graphNodeCaption, isUnresolvedGraphNode, projectUnresolvedGraph, unresolvedGraphAssociations} from '../../../../../../../desktop/cradle/src/knowledge/graphNavigation'
@@ -105,13 +116,18 @@ function modelOf(v: V): Model | undefined {
 
 // ---------------------------------------------------------------- the values, and the filter state they stand for
 
-const SCOPES = [{value: 'field', label: 'Field', does: 'Read every note in the available field.'}, {value: 'local', label: 'Note', does: 'Read only the neighbourhood of the selected note.'}] as const
-const DIRECTIONS = [{value: 'both', label: 'Both', does: 'Follow relations in both directions.'}, {value: 'outgoing', label: 'Out', does: 'Follow only the relations that leave the note.'},
-  {value: 'incoming', label: 'In', does: 'Follow only the relations that arrive at the note: its backlinks.'}] as const
-const MODES = [{value: 'structure', label: 'Context', does: 'Keep the disclosed structure round a match and dim it.'}, {value: 'matches', label: 'Matches', does: 'Hide all but the matches. The graph says it shows part of the whole.'}] as const
-const LABELS = [{value: 'automatic', label: 'Auto', does: 'Show labels as you zoom in.'}, {value: 'all', label: 'All', does: 'Show every label that fits.'}, {value: 'focus', label: 'Focus', does: 'Show only the labels of the selected note.'}] as const
+const SCOPES = [{value: 'local', label: 'Selected note', does: 'Read the neighbourhood of the selected note.'}, {value: 'field', label: 'Whole wiki', does: 'Read the entire wiki.'}] as const
+const MODES = [{value: 'structure', label: 'Context', does: 'Keep the context of a match and dim the rest.'}, {value: 'matches', label: 'Matches only', does: 'Hide the rest. The graph says that it shows part of the whole.'}] as const
+const LABELS = [{value: 'automatic', label: 'Automatic', does: 'Show labels as you zoom in.'}, {value: 'all', label: 'All', does: 'Show every label that fits.'}, {value: 'focus', label: 'Focus', does: 'Show only the labels near the selection.'}] as const
+const VIEWS = [{value: 'list', label: 'List', does: 'The notes as a list.'}, {value: 'tree', label: 'Tree', does: 'The notes as a tree, by hops from the selected note.'},
+  {value: 'graph', label: 'Graph', does: 'The notes as nodes and the links as lines.'}, {value: 'form', label: 'Form', does: 'The form of a whole: its members on their roles.'}] as const
+const FLOORS = [{value: 'all', label: 'All', does: 'Show every relation.'}, {value: 'guess', label: 'Guess', does: 'Hide nothing that stands at least as a guess.'},
+  {value: 'inference', label: 'Inference', does: 'Hide the relations that stand as guesses.'}, {value: 'claim', label: 'Claim', does: 'Hide inferences and guesses.'},
+  {value: 'fact', label: 'Fact', does: 'Show only the relations that stand as facts.'}] as const
+const STANDING_RANK: Readonly<Record<string, number>> = {guess: 1, inference: 2, claim: 3, fact: 4}
+const SESSIONS = [{value: 'open', label: 'Open only', does: 'The Sessions list holds the open sessions.'}, {value: 'all', label: 'Open and closed', does: 'The Sessions list holds the closed sessions too.'}] as const
 /** The keys that say how the graph is filtered. */
-const FILTER_KEYS = ['text', 'scope', 'depth', 'direction', 'kinds', 'relations', 'orphans', 'ghosts', 'mode', 'shared'] as const
+const FILTER_KEYS = ['text', 'scope', 'depth', 'kinds', 'relations', 'ghosts', 'mode', 'floor'] as const
 
 const list = (v: V, key: string): string[] => { const s = strOf(v, key); return s ? s.split('|') : [] }
 const selectedOf = (v: V) => strOf(v, 'selected')
@@ -133,11 +149,13 @@ interface Reading {readonly model: Model; readonly result: FilteredGraph}
 function readingOf(v: V): Reading | undefined {
   const model = modelOf(v)
   if (!model) return undefined
-  const f = filtersOf(v), focus = selectedOf(v) || undefined
-  const key = JSON.stringify([f.text, f.scope, f.depth, f.direction, f.kinds, f.relations, f.isolated, f.unresolved, f.context, focus])
+  const f = filtersOf(v), focus = selectedOf(v) || undefined, floor = STANDING_RANK[strOf(v, 'floor') ?? 'all'] ?? 0
+  const key = JSON.stringify([f.text, f.scope, f.depth, f.direction, f.kinds, f.relations, f.isolated, f.unresolved, f.context, focus, floor])
   let result = model.results.get(key)
   if (!result) {
-    result = filterGraph(model.reading, f, focus)
+    // Standing floor: a relation that carries a standing below the floor is hidden; a relation that carries none stands.
+    const kept = filterGraph(model.reading, f, focus)
+    result = floor ? {...kept, edges: kept.edges.filter(e => e.standing === undefined || (STANDING_RANK[e.standing] ?? 0) >= floor)} : kept
     model.results.set(key, result)
     if (model.results.size > 12) model.results.delete(model.results.keys().next().value!)
   }
@@ -161,8 +179,8 @@ function groupsOf(v: V): EmphasisGroup[] | undefined {
 
 const HOPS = 80, WORLD = {x: 400, y: 260}
 const ZOOM = {min: GRAPH_ZOOM_LIMITS.minZoom, max: GRAPH_ZOOM_LIMITS.maxZoom, log: true}
-const DEPTH = {min: 0, max: 8, step: 1}
-const BUDGET = {min: 1, max: 20000, log: true}
+const DEPTH = {min: 1, max: 3, step: 1}
+const BUDGET = {min: 8, max: 4096, log: true}
 const pctx = (x: number) => `${Math.round(x * 100)} %`
 const hops = (x: number) => `${x} ${x === 1 ? 'hop' : 'hops'}`
 const count = (x: number) => (x >= 10000 ? `${Math.round(x / 1000)}k` : `${Math.round(x)}`)
@@ -221,12 +239,12 @@ function Say({w, h, size, text}: {w: number; h: number; size: Size; text: string
 /** What a control's does-line says when the host stands it disabled. */
 const why = (p: ViewProps, key: string, does: string) => [does, st(p, key).disabled].filter(Boolean).join(' ')
 
-function Well({p, w, h, size, live}: {p: ViewProps; w: number; h: number; size: Size; live: boolean}) {
+function Well({p, w, h, size, live, pick: picks = false}: {p: ViewProps; w: number; h: number; size: Size; live: boolean; pick?: boolean}) {
   const v = p.v, read = readingOf(v)
   if (!read) return <Say w={w} h={h} size={size} text={NO_NOTES} />
   const {model, result} = read
   if (!model.reading.nodes.length) return <Say w={w} h={h} size={size} text="The reading holds no notes." />
-  const filters = filtersOf(v), places = placesOf(model, v), can = (key: string) => live && !st(p, key).disabled
+  const filters = filtersOf(v), places = placesOf(model, v), can = (key: string) => (live || (picks && key === 'selected')) && !st(p, key).disabled
   const zoomNow = finite(numOf(v, 'zoom')), depthNow = finite(numOf(v, 'depth')), zoom = zoomNow ?? 1, local = filters.scope === 'local'
   const cx = w / 2, cy = h / 2, k = h / 2 / WORLD.y * zoom
   const at = (ref: string) => { const q = places.get(ref) ?? {x: WORLD.x, y: WORLD.y, hop: 0}; return {x: cx + (q.x - WORLD.x) * k, y: cy + (q.y - WORLD.y) * k} }
@@ -315,7 +333,7 @@ function Well({p, w, h, size, live}: {p: ViewProps; w: number; h: number; size: 
         {zoomNow !== undefined && <Handle x={zoomX} y={railY} n={depthShown ? 2 : 1} shape="square" label="Zoom" does={zoomDoes} onDrag={zoomDrag} onReset={zoomReset} />}
       </g>}
       {depthShown && <Handle x={handleAt.x} y={handleAt.y} n={1} shape="ring" label="Depth" does={why(p, 'depth', 'Drag out or in: how many hops from the selected note the graph reaches. Double-click for one hop.')}
-        onDrag={can('depth') ? (x, y) => p.set('depth', clampTo(0, 8, Math.round(Math.hypot(x - cx, y - cy) / (HOPS * k)))) : undefined} onReset={can('depth') ? () => p.set('depth', 1) : undefined} />}
+        onDrag={can('depth') ? (x, y) => p.set('depth', clampTo(1, 3, Math.round(Math.hypot(x - cx, y - cy) / (HOPS * k)))) : undefined} onReset={can('depth') ? () => p.set('depth', 1) : undefined} />}
       {size === 'small' && !local && <g>
         <line x1={railFrom} y1={railY} x2={railTo} y2={railY} className="dp-faint" />
         {zoomNow !== undefined && <Handle x={zoomX} y={railY} n={1} shape="square" label="Zoom" does={zoomDoes} onDrag={zoomDrag} onReset={zoomReset} />}
@@ -329,7 +347,7 @@ const shownOf = (v: V) => { const read = readingOf(v); return read ? `${read.res
 
 function GraphDisplay({p, w, h, size}: {p: ViewProps; w: number; h: number; size: Size}) {
   return <Display w={w} h={h} label="The graph" does="Each note is a node and each link a line. A dashed hollow node is a link with no target. Drag the ring to set the depth."
-    corner={shownOf(p.v)}>
+    corner={strOf(p.v, 'view') && strOf(p.v, 'view') !== 'graph' ? `${shownOf(p.v)} · ${strOf(p.v, 'view')}` : shownOf(p.v)}>
     <Well p={p} w={w} h={h} size={size} live />
   </Display>
 }
@@ -343,6 +361,11 @@ const ScopeRadio = ({p}: {p: ViewProps}) => <Radio {...st(p, 'scope')} label="Sc
 const DepthDial = ({p}: {p: ViewProps}) => <Dial {...st(p, 'depth')} label="Depth" does="How many hops from the selected note the graph reaches." value={numOf(p.v, 'depth') ?? NaN} def={1} scale={DEPTH} format={hops}
   disabled={st(p, 'depth').disabled ?? reasonDepth(p.v)} onChange={x => p.set('depth', x)} />
 const LabelRadio = ({p}: {p: ViewProps}) => <Radio {...st(p, 'labels')} label="Labels" does="Choose which labels the graph draws." value={strOf(p.v, 'labels') ?? ''} options={LABELS} stack onChange={x => p.set('labels', x)} />
+const BudgetDial = ({p}: {p: ViewProps}) => <Dial {...st(p, 'budget')} label="Budget" does="The most nodes that show. The graph says when it hides more." value={numOf(p.v, 'budget') ?? NaN} def={64} scale={BUDGET} format={count} onChange={x => p.set('budget', Math.round(x))} />
+const ViewRadio = ({p}: {p: ViewProps}) => <Radio {...st(p, 'view')} label="View" does="Shows the same notes as a list, a tree, a graph, or the form of a whole." value={strOf(p.v, 'view') ?? ''} options={VIEWS} stack onChange={x => p.set('view', x)} />
+const FloorChooser = ({p}: {p: ViewProps}) => <Chooser {...st(p, 'floor')} label="Standing floor" wide does="Hides the relations that stand below the chosen level." value={strOf(p.v, 'floor') ?? ''} options={FLOORS} onChange={x => p.set('floor', x)} />
+const SessionsRadio = ({p}: {p: ViewProps}) => <Radio {...st(p, 'reach.closed')} label="Sessions" does="Which sessions the reader's Sessions list holds." value={has(p.v, 'reach.closed') ? (boolOf(p.v, 'reach.closed') ? 'all' : 'open') : ''}
+  options={SESSIONS} stack onChange={x => p.set('reach.closed', x === 'all')} />
 /** A switch the owner reports: hollow until it does. */
 function Flag({p, k, label, does}: {p: ViewProps; k: string; label: string; does: string}) {
   const now = boolOf(p.v, k)
@@ -377,22 +400,10 @@ const groupRows = (p: ViewProps): RowItem[] => {
   })
 }
 
-/** The note's own relations, as the reader lists them: backlinks and relations out, then the links that have no target. */
-const linkRows = (v: V): RowItem[] => {
-  const model = modelOf(v), ref = selectedOf(v)
-  if (!model) return [NO_ROW]
-  if (!ref) return [{id: 'none', name: ref === undefined ? 'No reading' : 'No note selected', light: ref === undefined ? 'unknown' : 'dark'}]
-  const name = (r: string) => model.byRef.get(r)?.label ?? NONE
-  return [
-    ...model.reading.edges.filter(e => e.to_ref === ref).map((e, i): RowItem => ({id: `in${i}`, name: name(e.from_ref), light: 'lit', tone: 'value', note: `← ${e.relation}`})),
-    ...model.reading.edges.filter(e => e.from_ref === ref).map((e, i): RowItem => ({id: `out${i}`, name: name(e.to_ref), light: 'lit', tone: 'value', note: `→ ${e.relation}`})),
-    ...model.associations.filter(a => a.source === ref).map((a): RowItem => ({id: a.ghost, name: name(a.ghost), light: 'dark', note: 'no target'})),
-  ]
-}
-/** The title of the links list: the selected note's name, "—" when no note is reported. */
-const linksTitle = (v: V) => {
-  const ref = selectedOf(v), model = modelOf(v)
-  return `Links of ${ref === undefined ? NONE : !ref ? 'no note' : model?.byRef.get(ref)?.label ?? NONE}`.slice(0, 26)
+/** The title of the reach list: the subject's name, "—" when nothing is reported. */
+const reachTitle = (v: V) => {
+  const ref = selectedOf(v), model = modelOf(v), subject = reachOf(v).subject
+  return `Reaches from ${subject ? subject.path.split('/').pop() : ref === undefined ? NONE : !ref ? 'no note' : model?.byRef.get(ref)?.label ?? NONE}`.slice(0, 30)
 }
 
 function FindBox({p}: {p: ViewProps}) {
@@ -405,23 +416,110 @@ function FindBox({p}: {p: ViewProps}) {
 }
 
 /** Clear: each filter key goes back to the cradle's starting filter. A key the host stands disabled is left as it is. */
-const CLEAR: Record<string, Value> = {text: '', scope: 'field', depth: 1, direction: 'both', kinds: '', relations: '', orphans: true, ghosts: true, mode: 'structure'}
+const CLEAR: Record<string, Value> = {text: '', kinds: '', relations: '', ghosts: true, mode: 'structure', floor: 'all'}
 const clearFilters = (p: ViewProps) => () => { for (const [key, value] of Object.entries(CLEAR)) if (!st(p, key).disabled) p.set(key, value) }
 const clearBlocked = (p: ViewProps): string | undefined => (Object.keys(CLEAR).every(key => st(p, key).disabled) ? st(p, 'text').disabled : undefined)
 
 /** The applied filters, as chips: only what the reported keys say. Undefined when no filter key is reported. */
 function chipsOf(v: V): string[] | undefined {
   if (!FILTER_KEYS.some(key => has(v, key))) return undefined
-  const f = filtersOf(v), chips: string[] = []
-  if (f.shared) chips.push('Shared Field')
+  const f = filtersOf(v), chips: string[] = [], floor = strOf(v, 'floor')
+  if (floor && floor !== 'all') chips.push(`At least ${floor}`)
   if (!f.unresolved) chips.push('Ghosts hidden')
   if (f.text) chips.push(`“${f.text}”`)
   if (f.scope === 'local') chips.push(`Selected · ${hops(f.depth)}`)
-  if (f.direction !== 'both') chips.push(f.direction === 'outgoing' ? 'Outgoing' : 'Incoming')
   chips.push(...f.kinds, ...f.relations)
-  if (!f.isolated) chips.push('Connected only')
   if (f.context === 'matches') chips.push('Matches only')
   return chips
+}
+
+// ---------------------------------------------------------------- what a subject reaches: links, references and sessions
+
+interface ReachLink {readonly name: string; readonly relation: string; readonly source: string; readonly direct: boolean; readonly ref: string}
+interface ReachFile {readonly name: string; readonly path: string | undefined; readonly directory: boolean}
+interface ReachSession {readonly id: string; readonly purpose: string; readonly lifecycle: string; readonly branch: string | undefined}
+type ListStatus = 'read' | 'unread' | 'refused'
+const isOpenSession = (s: ReachSession) => s.lifecycle === 'active' || s.lifecycle === 'quiescent'
+const recordsOf = (v: V, key: string): Record<string, unknown>[] | undefined => { const raw = json<unknown>(v, key, undefined); return Array.isArray(raw) ? raw.filter(isRecord) : undefined }
+const textOf = (x: unknown) => (isText(x) && x !== '' ? x : undefined)
+/** Where a relation comes from, in words: its provenance's source, else its family. */
+const sourceOf = (e: GraphEdge) => { const pv = e.provenance as unknown; return (isRecord(pv) ? textOf(pv.source) : undefined) ?? textOf(e.family) ?? 'the wiki' }
+
+/** The three lists of what the subject reaches, each with its standing: read, unread, or refused in its owner's words. */
+function reachOf(v: V) {
+  const model = modelOf(v), ref = selectedOf(v), depth = finite(numOf(v, 'depth')) ?? 1
+  const subject = (() => { const o = json<unknown>(v, 'reach.subject', undefined); return isRecord(o) && textOf(o.path) ? {kind: textOf(o.kind), path: o.path as string} : undefined })()
+  // Links: the notes the selected note connects to in the graph's own reading, direct first, then out to Depth.
+  let links: ReachLink[] | undefined
+  if (model && ref && model.byRef.has(ref)) {
+    const hop = new Map<string, number>([[ref, 0]]), queue = [ref]
+    for (let i = 0; i < queue.length; i++) { const at = queue[i]!; if (hop.get(at)! >= depth) continue; for (const b of model.neighbours.get(at) ?? []) if (!hop.has(b)) { hop.set(b, hop.get(at)! + 1); queue.push(b) } }
+    const name = (r: string) => model.byRef.get(r)?.label ?? r
+    links = model.reading.edges.filter(e => hop.has(e.from_ref) && hop.has(e.to_ref) && (e.from_ref === ref || e.to_ref === ref || Math.max(hop.get(e.from_ref)!, hop.get(e.to_ref)!) <= depth))
+      .map((e): ReachLink => { const direct = e.from_ref === ref || e.to_ref === ref, far = e.from_ref === ref ? e.to_ref : e.to_ref === ref ? e.from_ref : e.to_ref
+        return {name: direct ? name(far) : `${name(e.from_ref)} → ${name(e.to_ref)}`, relation: e.relation, source: sourceOf(e), direct, ref: far} })
+      .sort((a, b) => Number(b.direct) - Number(a.direct))
+  }
+  const files = recordsOf(v, 'reach.references')?.flatMap((o): ReachFile[] => { const n = textOf(o.name), at = isRecord(o.location) ? o.location : undefined
+    return n ? [{name: n, path: textOf(at?.path), directory: o.kind === 'directory'}] : [] })
+  const heard = recordsOf(v, 'reach.sessions')?.flatMap((o, i): ReachSession[] => { const purpose = textOf(o.purpose) ?? textOf(o.nowRef)
+    const work = Array.isArray(o.work) ? o.work.find(isText) : undefined
+    return purpose ? [{id: `${i}:${textOf(o.nowRef) ?? purpose}`, purpose, lifecycle: textOf(o.lifecycle) ?? '', branch: work?.match(/ @ (\S+)/)?.[1]}] : [] })
+  const closed = boolOf(v, 'reach.closed') === true
+  const refusal = {references: strOf(v, 'reach.refusal:references'), sessions: strOf(v, 'reach.refusal:sessions')}
+  const status = {links: links ? 'read' : 'unread', references: refusal.references ? 'refused' : files ? 'read' : 'unread', sessions: refusal.sessions ? 'refused' : heard ? 'read' : 'unread'} as Record<'links' | 'references' | 'sessions', ListStatus>
+  const sessions = status.sessions === 'read' ? (closed ? heard! : heard!.filter(isOpenSession)) : []
+  return {subject, links: links ?? [], files: status.references === 'read' ? files! : [], sessions, hidden: status.sessions === 'read' && !closed ? heard!.length - sessions.length : 0, status, refusal,
+    from: {links: 'the knowledge graph', references: subject?.kind === 'folder' ? 'the folder listing' : 'the file map', sessions: 'the NOW register'}}
+}
+type Reach = ReturnType<typeof reachOf>
+
+/** The three lists as rows: links first (direct at the top), then references, then sessions; a list that is unread or refused says so. */
+function reachRows(r: Reach): RowItem[] {
+  const out: RowItem[] = []
+  const say = (list: 'links' | 'references' | 'sessions', word: string) => {
+    if (r.status[list] === 'refused') out.push({id: `refused:${list}`, name: `${word}: ${r.from[list]} refused`, light: 'dark', tone: 'stall', why: r.refusal[list as 'references' | 'sessions']})
+    if (r.status[list] === 'unread') out.push({id: `unread:${list}`, name: `No reading of the ${word.toLowerCase()}`, light: 'unknown', does: `The ${word.toLowerCase()} come from ${r.from[list]}.`})
+  }
+  say('links', 'Links')
+  for (const [i, x] of r.links.entries()) out.push({id: `l${i}`, name: x.name, light: x.direct ? 'lit' : 'dark', tone: 'value', note: x.relation, does: `${x.direct ? 'A direct link' : 'A link further out'}, ${x.relation}, from ${x.source}.`})
+  say('references', 'References')
+  for (const [i, f] of r.files.entries()) out.push({id: `f${i}`, name: f.name, light: 'lit', tone: 'value', note: f.directory ? 'dir' : 'file', does: `${f.path ?? f.name}, from ${r.from.references}.`})
+  say('sessions', 'Sessions')
+  for (const s of r.sessions) out.push({id: s.id, name: s.purpose, light: isOpenSession(s) ? 'lit' : 'dark', tone: 'accent', note: s.branch?.replace(/^agent\//, ''), does: `${s.lifecycle || 'A'} session${s.branch ? ` on ${s.branch}` : ''}, from ${r.from.sessions}.`})
+  if (r.hidden > 0) out.push({id: 'hidden', name: `${r.hidden} closed ${r.hidden === 1 ? 'session' : 'sessions'} hidden`, light: 'dark', does: 'Set Sessions to Open and closed to list them.'})
+  return out
+}
+
+/** The reader's three lists: each names its source; one whose source refused shows the refusal and stays empty. */
+function ReachLists({r}: {r: Reach}) {
+  const Head = ({title, n, from}: {title: string; n: number | undefined; from: string}) => <h4>{title}{n === undefined ? '' : ` · ${n}`}<small> {from}</small></h4>
+  const empty = (list: 'links' | 'references' | 'sessions', none: string) => (r.status[list] === 'refused' ? <p data-refused="true">{r.refusal[list as 'references' | 'sessions']}</p>
+    : r.status[list] === 'unread' ? <p>{NONE}</p> : <p>{none}</p>)
+  return <>
+    <div><Head title="References" n={r.status.references === 'read' ? r.files.length : undefined} from={r.from.references} />
+      {r.files.length ? <ul>{r.files.slice(0, 5).map((f, i) => <li key={i}><span>{f.name}</span><i>{f.directory ? 'dir' : 'file'}</i></li>)}</ul> : empty('references', 'Nothing mentions it.')}</div>
+    <div><Head title="Links" n={r.status.links === 'read' ? r.links.length : undefined} from={r.from.links} />
+      {r.links.length ? <ul>{r.links.slice(0, 5).map((x, i) => <li key={i} data-ghost={x.direct ? undefined : 'true'}><span>{x.name}</span><i>{x.relation}</i></li>)}</ul> : empty('links', 'It links nowhere.')}</div>
+    <div><Head title="Sessions" n={r.status.sessions === 'read' ? r.sessions.length : undefined} from={r.from.sessions} />
+      {r.sessions.length ? <ul>{r.sessions.slice(0, 4).map(s => <li key={s.id}><span>{s.purpose}</span><i>{s.branch ?? s.lifecycle}</i></li>)}</ul> : empty('sessions', r.hidden ? `No open session. ${r.hidden} closed.` : 'No session names it.')}</div>
+  </>
+}
+
+/** The notes in another shape than the graph: a list, a tree by hops from the selected note, or the form of a whole with its roles. */
+function ViewLists({v, view}: {v: V; view: string}) {
+  const read = readingOf(v)
+  if (!read) return <p className="kg-view-none">{NO_NOTES}</p>
+  const {model, result} = read, places = placesOf(model, v), shown = result.nodes.filter(n => !isUnresolvedGraphNode(n))
+  if (view === 'form') {
+    const forms = model.reading.formations ?? []
+    return forms.length ? <div className="kg-view">{forms.map(f => <section key={f.ref}><h4>{model.byRef.get(f.ref)?.label ?? f.ref}{f.partial ? ' · in part' : ''}</h4>
+      <ul>{f.members.map(m => <li key={m.ref}><span>{model.byRef.get(m.ref)?.label ?? m.ref}</span><i>{m.role ?? NONE}</i></li>)}</ul></section>)}</div>
+      : <p className="kg-view-none">The reading holds no form.</p>
+  }
+  const rows = view === 'tree' ? [...shown].sort((a, b) => (places.get(a.ref)?.hop ?? 9) - (places.get(b.ref)?.hop ?? 9) || a.label.localeCompare(b.label)) : [...shown].sort((a, b) => a.label.localeCompare(b.label))
+  return <ul className="kg-view kg-view-list">{rows.slice(0, 40).map(n => <li key={n.ref} style={view === 'tree' ? {paddingLeft: 12 * (places.get(n.ref)?.hop ?? 0)} : undefined}>
+    <span>{graphNodeCaption(n)}</span><i>{n.kind}</i></li>)}{rows.length > 40 && <li className="kg-view-more">+{rows.length - 40} more</li>}</ul>
 }
 
 // The light reads the owner alone (manual §16.9): lit or dark when it reports, hollow when it has not.
@@ -432,8 +530,8 @@ export const design: DesignedDevice = {
   title: 'Knowledge graph',
   kind: 'instrument',
   defaults: {
-    light: 'lit', selected: 'wiki:node:identity', scope: 'local', depth: 2, direction: 'both', shared: false, budget: 4096, text: '', kinds: '', relations: '',
-    ghosts: true, orphans: true, mode: 'structure', labels: 'automatic', arrows: false, minimap: true, zoom: 1,
+    light: 'lit', selected: 'wiki:node:identity', scope: 'local', depth: 1, budget: 64, text: '', kinds: '', relations: '', floor: 'all', view: 'graph',
+    ghosts: true, mode: 'structure', labels: 'automatic', arrows: false, minimap: true, zoom: 1,
     // QL's living-wiki plan for the note (plan_living_wiki_refraction): Explain, position 2 asked for, budget 6 — the entry, then 2.
     'aperture.mode': 'explain', 'aperture.positions': JSON.stringify([2]), 'aperture.context': false, 'aperture.full': false, 'aperture.budget': 6,
     'aperture.admitted': JSON.stringify([5, 0, 1, 2]), 'aperture.omitted': JSON.stringify([]), 'aperture.depth': 'partial', 'aperture.refraction': false,
@@ -444,10 +542,20 @@ export const design: DesignedDevice = {
       {id: 'sources', label: 'Sources', color: 'var(--green)', text: '', kinds: ['file'], tags: []},
       {id: 'proposals', label: 'Proposals', color: 'var(--dp-value)', text: 'propose', kinds: [], tags: []},
     ]),
+    // What a change to the note would reach: the files that mention it (the file map) and the sessions whose work names its project.
+    'reach.subject': JSON.stringify({kind: 'note', path: 'Control/user/identity.md', ref: 'wiki:node:identity'}), 'reach.closed': false,
+    'reach.references': JSON.stringify([{name: 'identity.md', kind: 'file', location: {path: 'Control/user/identity.md'}},
+      {name: 'central-session-strap/SKILL.md', kind: 'file', location: {path: 'Control/user/skills/central-session-strap/SKILL.md'}},
+      {name: 'relational-logos.md', kind: 'file', location: {path: 'Control/agents/governance/being-there/relational-logos.md'}}]),
+    'reach.sessions': JSON.stringify([{nowRef: 'central:now:control:root:01', purpose: 'Reconcile the agent roster with the identities', lifecycle: 'active', work: ['central @ fix/identity-roster']},
+      {nowRef: 'central:now:control:root:02', purpose: 'Close the identity review', lifecycle: 'archived', work: ['central @ main']}]),
   },
   fixtures: {
-    'Two hops from User identity': {},
+    'One hop from User identity': {},
+    'Two hops from User identity': {depth: 2},
     'Find, structure kept': {scope: 'field', text: 'actuation'},
+    'The notes as a tree': {depth: 2, view: 'tree'},
+    'The file map refuses': {'reach.references': undefined, 'reach.refusal:references': 'The file map has no index of Control yet.', 'reach.closed': true},
     'Find, matches only': {scope: 'field', text: 'actuation', mode: 'matches'},
     // The plan's law on four requests.
     'Aperture, the entry alone': {'aperture.positions': JSON.stringify([]), 'aperture.admitted': JSON.stringify([5, 0, 1]), 'aperture.depth': 'entry-aperture'},
@@ -455,15 +563,15 @@ export const design: DesignedDevice = {
       'aperture.omitted': JSON.stringify([3, 4]), 'aperture.depth': 'partial'},
     'Aperture, the whole frame, formal': {'aperture.mode': 'formal', 'aperture.full': true, 'aperture.refraction': true, 'aperture.admitted': JSON.stringify([5, 0, 1, 2, 3, 4]), 'aperture.depth': 'full-sixfold'},
     'Aperture, ordinary': {'aperture.mode': 'ordinary', 'aperture.admitted': JSON.stringify([]), 'aperture.depth': 'none'},
-    'No readings': Object.fromEntries(['light', 'selected', 'scope', 'depth', 'direction', 'shared', 'budget', 'text', 'kinds', 'relations', 'ghosts', 'orphans', 'mode', 'labels',
+    'No readings': Object.fromEntries(['light', 'selected', 'scope', 'depth', 'budget', 'text', 'kinds', 'relations', 'floor', 'view', 'ghosts', 'mode', 'labels',
       'arrows', 'minimap', 'zoom', 'reading', 'groups', 'aperture.mode', 'aperture.positions', 'aperture.context', 'aperture.full', 'aperture.budget', 'aperture.admitted',
-      'aperture.omitted', 'aperture.depth', 'aperture.refraction'].map(k => [k, undefined])),
+      'aperture.omitted', 'aperture.depth', 'aperture.refraction', 'reach.subject', 'reach.closed', 'reach.references', 'reach.sessions'].map(k => [k, undefined])),
   },
   firstPage: 'reach',
 
   folded: p => {
     const read = readingOf(p.v), scope = strOf(p.v, 'scope'), depth = finite(numOf(p.v, 'depth'))
-    return <Folded title="Knowledge graph" light={light(p)} readings={[scope === 'local' ? (depth === undefined ? NONE : hops(depth)) : scope === 'field' ? 'field' : NONE,
+    return <Folded title="Knowledge graph" light={light(p)} readings={[scope === 'local' ? (depth === undefined ? NONE : hops(depth)) : scope === 'field' ? 'whole wiki' : NONE,
       read ? `${read.result.counts.displayed}` : NONE]} onUnfold={p.nav.unfold} />
   },
 
@@ -484,11 +592,11 @@ export const design: DesignedDevice = {
   widget: p => {
     const read = readingOf(p.v), scope = strOf(p.v, 'scope'), depth = finite(numOf(p.v, 'depth'))
     return <Tile title="Graph" light={light(p)} onFull={p.nav.full}>
-      <Display w={64} h={64} label="The graph" does="The neighbourhood of the note you hold."><Well p={p} w={64} h={64} size="small" live={false} /></Display>
+      <Display w={64} h={64} label="The graph" does="The neighbourhood of the selection, the centre marked. Click a node to move the centre."><Well p={p} w={64} h={64} size="small" live={false} pick /></Display>
       <div className="ref-tile-side">
         <Readout label="shown" does="Nodes the graph shows, of all it reads." value={read?.result.counts.displayed} tone="value" />
-        <Readout label={scope === 'local' ? 'depth' : scope === 'field' ? 'field' : 'scope'} does="How far the graph reaches from the selected note."
-          value={scope === 'local' ? (depth === undefined ? undefined : hops(depth)) : scope === 'field' ? 'all' : undefined} />
+        <Readout label={scope === 'local' ? 'depth' : scope === 'field' ? 'scope' : 'scope'} does="How far the graph reaches from the selected note."
+          value={scope === 'local' ? (depth === undefined ? undefined : hops(depth)) : scope === 'field' ? 'whole wiki' : undefined} />
         <Readout label="ghosts" does="Links that have no target." value={read?.result.nodes.filter(isUnresolvedGraphNode).length} tone="accent" />
       </div>
     </Tile>
@@ -581,7 +689,7 @@ const askPosition = (p: ViewProps) => (id: string, on: boolean) => {
 }
 
 function KnowledgeWhole({p}: {p: ViewProps}) {
-  const [group, setGroup] = useState(0)
+  const [group, setGroup] = useState(0), [reachPage, setReachPage] = useState(0)
   const read = readingOf(p.v), c = read?.result.counts, budget = finite(numOf(p.v, 'budget')), bounded = c !== undefined && budget !== undefined && c.admitted > budget
   const fit = read ? fitZoom(p, read) : undefined
   return <Panel title="Knowledge graph" view="whole" light={light(p)} onFold={p.nav.fold} onFull={p.nav.full}
@@ -599,25 +707,23 @@ function KnowledgeWhole({p}: {p: ViewProps}) {
           <Flag p={p} k="aperture.full" label="Whole frame" does="Admit all six positions, 0 to 5, as the budget allows." />
         </Section>
       </> : p.page === 'filters' ? <>
-        <Section label="Find" cols={2} grow>
+        <Section label="Filters" cols={2} grow>
           <FindBox p={p} />
-          <GhostToggle p={p} />
-          <Flag p={p} k="orphans" label="Orphans" does="Keep the notes that have no relations. Off keeps only connected notes." />
-          <Radio {...st(p, 'mode')} label="Filter mode" does="Dim the rest of the graph, or hide it." value={strOf(p.v, 'mode') ?? ''} options={MODES} stack onChange={x => p.set('mode', x)} />
+          <div style={{gridColumn: '1 / -1', width: '100%'}}><FloorChooser p={p} /></div>
+          <Radio {...st(p, 'mode')} label="Filter mode" does="Keep the context of a match and dim the rest, or hide the rest." value={strOf(p.v, 'mode') ?? ''} options={MODES} stack onChange={x => p.set('mode', x)} />
         </Section>
       </> : p.page === 'display' ? <>
-        <Section label="Marks" cols={2} grow>
+        <Section label="Display" cols={3} grow>
+          <ViewRadio p={p} />
           <LabelRadio p={p} />
-          <Dial {...st(p, 'zoom')} label="Zoom" does="The graph's zoom. At 100 % the whole ring set fits." value={numOf(p.v, 'zoom') ?? NaN} def={1} scale={ZOOM} format={pctx} onChange={x => p.set('zoom', x)} />
-          <Flag p={p} k="arrows" label="Arrows" does="Show the direction of each line." />
-          <Flag p={p} k="minimap" label="Minimap" does="Show the overview in the corner." />
+          <div className="kg-stack"><GhostToggle p={p} /><Flag p={p} k="arrows" label="Arrows" does="Show the direction of each line." /><Flag p={p} k="minimap" label="Minimap" does="Show the overview in the corner." /></div>
         </Section>
       </> : <>
-        <Section label="Scope" cols={2} grow>
+        <Section label="Reach" cols={2} grow>
           <ScopeRadio p={p} />
           <DepthDial p={p} />
-          <Radio {...st(p, 'direction')} label="Direction" does="Choose which way the graph follows a relation." value={strOf(p.v, 'direction') ?? ''} options={DIRECTIONS} stack onChange={x => p.set('direction', x)} />
-          <Flag p={p} k="shared" label="Shared" does="Add my available Shared Field to the reading." />
+          <BudgetDial p={p} />
+          <SessionsRadio p={p} />
         </Section>
       </>}
     </Band>
@@ -653,16 +759,14 @@ function KnowledgeWhole({p}: {p: ViewProps}) {
           <Readout label="zoom" does="The graph's zoom." value={finite(numOf(p.v, 'zoom')) === undefined ? undefined : pctx(numOf(p.v, 'zoom')!)} tone="value" />
         </Section>
       </> : <>
-        <Section label="Budget" width={62}>
-          <Dial {...st(p, 'budget')} label="Budget" does="The most nodes the reading holds. The graph says when it hides more." value={numOf(p.v, 'budget') ?? NaN} def={4096} scale={BUDGET} format={count} onChange={x => p.set('budget', x)} />
-        </Section>
         <Section label="Reading" cols={2} width={118}>
           <Readout big label="shown" does="Nodes the graph shows, of all the reading holds." value={c ? `${c.displayed}/${c.admitted}` : undefined} tone="value" />
           <Readout label="hidden" does="Nodes the scope and the filters keep out of view. They are not unrelated." value={c?.hidden} />
           <Readout label="bounded" does="Yes when the reading holds more nodes than the budget." value={c && budget !== undefined ? (bounded ? 'yes' : 'no') : undefined} tone={bounded ? 'accent' : undefined} />
           <Readout label="ghosts" does="Links that have no target." value={read?.result.nodes.filter(isUnresolvedGraphNode).length} tone="accent" />
         </Section>
-        <Section grow><Rows label={linksTitle(p.v)} does="The relations of the selected note: backlinks, relations out, and links with no target." items={linkRows(p.v)} size={6} /></Section>
+        <Section grow><Rows label={reachTitle(p.v)} does="What a change to the subject would reach: links first, direct links at the top, then the references, then the sessions. Each names its source."
+          items={reachRows(reachOf(p.v))} size={6} page={reachPage} onPage={setReachPage} /></Section>
       </>}
     </Band>
   </Panel>
@@ -692,9 +796,9 @@ function KnowledgePane({p}: {p: ViewProps}) {
           : chips.length ? chips.map(chip => <span key={chip} className="kg-chip" data-on="true">{chip}</span>) : <span className="kg-chip">No filter</span>}
         {boolOf(p.v, 'ghosts') === false && <span className="kg-chip">Links with no target are hidden</span>}
       </div>
-      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid meet" role="img" aria-label="The Knowledge graph">
+      {(strOf(p.v, 'view') ?? 'graph') === 'graph' ? <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid meet" role="img" aria-label="The Knowledge graph">
         <Well p={p} w={W} h={H} size="pane" live={false} />
-      </svg>
+      </svg> : <ViewLists v={p.v} view={strOf(p.v, 'view')!} />}
       <div className="kg-summary" role="status">{c && result ? <>{c.matched} matches{c.context > 0 && ` + ${c.context} context`} · {c.displayed} of {c.admitted} notes
         {result.partialFormations.length > 0 && ` · ${result.partialFormations.length} constellation in part`}</> : NO_NOTES}</div>
     </div>
@@ -707,6 +811,7 @@ function KnowledgePane({p}: {p: ViewProps}) {
           {held.map(a => <li key={a.ghost} data-ghost="true"><span>{name(a.ghost)}</span><i>no target</i></li>)}
         </ul> : <p>This note links nowhere.</p>}</div>
       </> : <p>{!read ? NO_NOTES : selected === undefined ? 'No reading of the selected note.' : selected ? 'The selected note is not in this reading.' : 'Select a note. Its text, backlinks and relations open here.'}</p>}
+      <ReachLists r={reachOf(p.v)} />
     </aside>
   </div>
 }

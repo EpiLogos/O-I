@@ -47,7 +47,8 @@ const {createTimeSpine} = await import('../src/timeline/timeSpine.ts')
 const vertical = await import('../src/central/centralVertical.ts')
 const rack = await import('../src/central/centralRack.ts')
 const devices = await import('../src/central/devices/CentralDevices.tsx')
-const {NaraConversationFace} = await import('../src/inhabitants/ConversationNaraFace.tsx')
+const writes = await import('../src/central/devices/centralDeviceWrites.ts')
+const identity = await import('../../../../desktop/cradle/src/nara/identity/current.ts')
 const model = await import('../src/central/devices/centralDeviceModel.ts')
 const {DeviceView} = await import('../src/frame/devices/DeviceView.tsx')
 const {inhabitantManifest} = await import('../src/inhabitants/manifest.ts')
@@ -93,26 +94,27 @@ const deviceMarkup = (markup, faceId) => {
 }
 
 test('no selected occasion: the chain is unchanged by a world with nothing retained', () => {
-  // R4 (DLW §16.2): the family's chain faces are the Day, the Packet, Ground hygiene, Machine (W4, §18.7) and Impact (REPLACED: lane BC3's
-  // seven), each on the door; Ground hygiene, Machine and Impact stand on a world whose folder holds code (w4-central-machine-chain.test.mjs).
-  assert.match(todayMarkup, /data-central-devices="5"/, 'the five chain faces of the Central family stand on the door, reached document or not')
+  // R4 (DLW §16.2): the family's chain faces are the Day, the Packet and Docs (REPLACED: lane BC3's seven), each on the door.
+  // REPLACED (#725): W4's five — Ground hygiene, Machine and Impact were retired as devices of their own in the 22 Oct manual rewrite (§19.16,
+  // §18.7, §18.6), and Docs follows Scope on every world (§16.2, §18.5).
+  assert.match(todayMarkup, /data-central-devices="3"/, 'the three chain faces of the Central family stand on the door, reached document or not')
   const empty = worldWith([nowEvent], null)
   assert.equal(html(createElement(BaseDevicesDetail, {transport, world: empty, standing: null})), todayMarkup, 'a world with no retained occasion: unchanged')
   assert.equal(html(createElement(BaseDevicesDetail, {transport, standing: readyStanding})), todayMarkup, 'a Day standing with no occasion draws no Day: the die has no aperture')
 })
 
-test('a browser subject stands in the Document row: it shadows the occasion, the Day die keeps no Day, the Impact names the subject', () => {
+test('a browser subject stands in the Document row: it shadows the occasion, and the Day die keeps no Day', () => {
   const selected = worldWith([nowEvent], nowEvent)
   const subject = {kind: 'note', path: 'Control/agents/now/day/2026-09-12.md'}
   const markup = html(createElement(BaseDevicesDetail, {transport, world: selected, subject, standing: readyStanding}))
   const die = deviceMarkup(markup, 'day-die')
   assert.match(die, /data-device-light="unknown"/, 'no Day aperture: the die\'s light stays dark')
   assert.doesNotMatch(die, /2026-10-06/, 'the occasion\'s Day is not read while a browser subject stands')
-  // W4 (§16.2): with no world holding code selected, the Impact stands on no chain; its device, on the door, reads the selected subject.
-  assert.ok(!markup.includes('data-device="central:impact"'), 'the Impact: on a world whose folder holds code only')
-  const impact = devices.centralDeviceEntries(chainInput({reads: {impact: subject}, impact: subject})).find(entry => entry.id === 'central:impact')
-  assert.match(html(createElement(DeviceView, {device: impact.device, size: 'compact', picture: impact.picture('compact')})),
-    /data-central-picture="impact"[\s\S]*<small>Control\/agents\/now\/day\/2026-09-12\.md<\/small>/, 'the Impact reads the selected subject')
+  // DELETED (#725): "the Impact reads the selected subject" — the manual removed the Impact (§18.6: "What a change to a folder or a note
+  // reaches, its references, its links and the sessions that touch it, is read in the Knowledge graph (§17.3) and the NOWs (§23.6)"), so no
+  // Central device stands on the browser's subject; its binding's own reading of the subject is kept in central-devices-chain.test.mjs.
+  assert.ok(!markup.includes('data-device="central:impact"'), 'no Impact on any chain')
+  assert.ok(!devices.centralDeviceEntries(chainInput()).some(entry => entry.id === 'central:impact'), 'and none on the door')
 })
 
 test('a selected Day occasion with a ready Day: the Day die stands lit on its Day, its body a pane away (its picture is its design\'s)', () => {
@@ -132,18 +134,24 @@ test('a selected Day occasion with an uninitialised Day: the owner state is name
   assert.match(deviceMarkup(markup, 'day-die'), /data-device-light="off"/, 'the owner says the Day is not ready: off, not dark and not on')
 })
 
-test('a selected conversation occasion: the Nara face reads unbound with no identity; the owner gap shows whole and in its body (REPLACED: on the chain — the one Agent stands there now, r4-one-agent.test.mjs)', () => {
+test('a selected conversation occasion: the one Agent stands; binding it names the owner gap for this conversation (REPLACED: on the chain — the one Agent stands there now, r4-one-agent.test.mjs)', async () => {
   const markup = html(createElement(BaseDevicesDetail, {transport, world: worldWith([conversationEvent], conversationEvent)}))
   assert.ok(!markup.includes('data-device="central:nara-conversation"'), 'the Answer is no chain device: the Agent answers on the workspace chain')
   assert.match(markup, /data-device="central:agent"/, 'the one Agent stands on the workspace chain')
-  const face = central.faces.find(item => item.id === 'nara-conversation')
+  // REPLACED (#725): the Nara face's own rows and hosted body naming the gap — the Answer was retired as a device of its own ("Answer is the
+  // Agent on a page's chain", PROGRAMME R25 item 5). The Agent's light binds the dialogue through centralDeviceWrites.ts bindConversation,
+  // which refuses a conversation with no expression in the gap's own words, naming this conversation.
+  assert.ok(!central.faces.some(item => item.id === 'nara-conversation'), 'no Nara conversation face')
   const gap = vertical.conversationGap(CONVERSATION_SPACE)
-  const device = model.centralDevice(face, {nara: {state: 'no-identity', conversation: CONVERSATION_SPACE, gap, expression: null, session: null}})
-  assert.equal(device.values.conversation, CONVERSATION_SPACE, 'the device names this conversation')
-  assert.match(html(createElement(DeviceView, {device, size: 'whole'})), /session-space/, 'whole: the expression row names the owner that owes the binding')
-  // The face's hosted body names the gap where it is drawn (its Full), on or off a chain.
-  const full = html(createElement(NaraConversationFace, {transport, project: null, expressionRef: null, conversation: CONVERSATION_SPACE}))
-  assert.match(full, new RegExp(`data-conversation-gap="${CONVERSATION_SPACE.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}"`), 'full: the body names this conversation')
+  assert.ok(gap.includes(CONVERSATION_SPACE), 'the gap names this conversation')
+  identity.selectCurrentIdentity({person_ref: 'person:fixture', nara_ref: 'nara:fixture', profile: {person_ref: 'person:fixture', nara_ref: 'nara:fixture'}},
+    {source_ref: 'central:source:identity-fixture', revision: 'rev-identity'})
+  try {
+    await assert.rejects(() => writes.bindConversation(transport, {project: null, expressionRef: null, conversation: CONVERSATION_SPACE}), error => error.message === gap,
+      'binding names the owner that owes it, in the gap\'s words')
+  } finally {
+    identity.clearCurrentIdentity()
+  }
 })
 
 test('the apertures follow the Document row\'s own selection and the Day standing', () => {

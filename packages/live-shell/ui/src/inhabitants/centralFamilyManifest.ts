@@ -14,11 +14,11 @@ export function centralFamilyManifest(): FamilyManifest {
       {id: 'central-ground', label: 'Ground', group: 'Project', mark: 'pane', modes: ['base'], state: 'waiting',
         hint: 'Worktrees, seats and branches as readings — ops ground and git_repository_read, and workcell_status_read for seats. No row source is composed in this browser yet; tenders (prune, sweep) wait for their writer.'},
     ],
+    // Central's half of the one Agent (DLW §19.4 "One agent, three owners": Central owns who it is — the agent comes from your roster).
+    // Not a device of its own: the Agent (actuation:harness-model) joins it on its one face and draws it as the Agent's Identity page
+    // (catalogue/panels/agent-identity.tsx); it stands on no chain.
     faces: [
-      {id: 'context-world', presentations: ['compact', 'expanded'], liveSemantic: 'device-audio-fx', invariant: {transforms: 'the agent\'s context: Central ground reads and context writes'}, note: 'Context-world device face: reads the Central ground (teal), writes context (amber). Shared face — ai-kit owns the knowledge route, software-factory the write mode and receipts.'},
-      {id: 'agent-identity', presentations: ['compact'], liveSemantic: 'info', note: 'Agent identity read from the kernel roster (central.agent-profile-roster/v1); read-only, never a hardcoded crowd.'},
-      {id: 'machine', presentations: ['compact', 'expanded'], liveSemantic: 'device-audio-fx', invariant: {transforms: 'the machine against its declaration: compared, passed unchanged'},
-        note: 'Machine (DLW §18.7): what a role under Control/machines declares beside what this machine holds. Reads Central\'s machine.account, machine.declaration, machine.plan, machine.verify and central.recovery.plan through invoke_action. Apply, Adopt and Recover wait for the person\'s route (action.rs PERSON_ACTS carries none of them).'},
+      {id: 'agent-identity', presentations: ['compact'], liveSemantic: 'info', note: 'Who the agent is, read from the kernel roster (central.agent-profile-roster/v1): Central\'s reading on the one Agent (DLW §19.4), joined on the Agent\'s face; read-only, never a hardcoded crowd.'},
     ],
     params: {grammar: 'central/parameter-address/v1'},
     projections: ['central-roster-track-adapter'],

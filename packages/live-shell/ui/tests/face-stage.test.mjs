@@ -38,7 +38,6 @@ const {createElement: h} = await import('react')
 const {renderToStaticMarkup} = await import('react-dom/server')
 const stage = await import('../src/agent/FaceStage.tsx')
 const {maskStatic} = await import('../src/agent/maskFace.ts')
-const {design: answer, WHOLE_WELL, poseOf} = await import('../src/inhabitants/catalogue/panels/central__nara-conversation.tsx')
 const sync = await import('../scripts/sync-face.mjs')
 const html = el => renderToStaticMarkup(el)
 const FACE = new URL('../public/face/', import.meta.url)
@@ -112,82 +111,8 @@ test('on the server the stage draws the mask in the pose and no frame: the live 
   assert.equal(stage.FACE_PAGE, '/face/face.html', 'served beside the page, under the app\'s base')
 })
 
-// ── where the Answer stands the face ──────────────────────────────────────
-
-const valuesOf = fixture => Object.fromEntries(Object.entries({...answer.defaults, ...(answer.fixtures?.[fixture] ?? {})}).filter(([, v]) => v !== undefined))
-const props = (fixture, extra = {}) => ({v: valuesOf(fixture), set: () => {}, nav: {}, page: '', setPage: () => {}, ...extra})
-const stages = out => (out.match(/class="face-stage[ "]/g) ?? []).length
-
-test('opened, the Answer shows its whole face: Whole beside the well; Full is the face, three marks and, optionally, the conversation', () => {
-  const whole = html(h(() => answer.whole(props('Answered, waiting'))))
-  assert.equal(stages(whole), 1, 'Whole: one face')
-  assert.match(whole, /<div class="an-well"><div class="dp-display" style="width:274px;height:146px"/, 'the well, widened for the face')
-  assert.match(whole, /class="face-stage an-well-face" style="left:3px;top:7px;width:96px;height:134px" data-face="mask" role="img" aria-label="Nara: idle"/,
-    'the face at the well\'s left, over its own pixels, at least 110 px tall')
-  assert.equal(WHOLE_WELL.w + 12 + 112, 398, 'the well and the Agent section fill the pool\'s 400 px plate, borders aside')
-  for (const handle of ['Effort', 'Agent writes', 'Answer as']) assert.match(whole, new RegExp(`role="slider" aria-label="${handle}"`), `handle: ${handle}`)
-  const full = html(h(() => answer.full(props('Answered, waiting', {frame: 'pane'}))))
-  assert.equal(stages(full), 1, 'Full: the face')
-  assert.match(full, /<div class="an-pane" data-chat="on"><div class="an-stage"><div class="face-stage an-stage-face"/, 'the face fills the stage')
-  for (const mark of ['hears', 'speaks', 'chat']) assert.match(full, new RegExp(`class="an-mark" data-kind="${mark}"`), `mark: ${mark}`)
-  assert.doesNotMatch(full, /an-pane-head|an-task/, 'no header: what it would say of itself is in the rack')
-  assert.match(full, /<aside class="an-chat" aria-label="Conversation">/, 'the conversation, at the right')
-  const alone = html(h(() => answer.full({...props('Answered, waiting', {frame: 'pane'}), v: {...valuesOf('Answered, waiting'), chat: 'off'}})))
-  assert.match(alone, /data-chat="off"/)
-  assert.doesNotMatch(alone, /an-chat/, 'closed: the face has the whole pane')
-  const window = html(h(() => answer.whole(props('Answered, waiting', {frame: 'window'}))))
-  assert.equal(stages(window), 1, 'in its own window the rack\'s face is the still one: the pane above stands the live face')
-  const asleep = html(h(() => answer.whole(props('Not bound'))))
-  assert.match(asleep, /class="face-stage an-well-face"[^>]*data-dim="true"[^>]*aria-label="Nara: not bound"/, 'not bound: asleep')
-})
-
-test('your words and the agent\'s stand under the face when the conversation is closed, and in it when it is open', () => {
-  const alone = html(h(() => answer.full({...props('Words written, sending', {frame: 'pane'})})))
-  assert.match(alone, /<p class="an-subtitle" aria-live="polite"><span data-who="you">What does this entry ask of me<\/span><\/p>/, 'heard, under the face once it is written')
-  assert.doesNotMatch(html(h(() => answer.full(props('Hearing you, face alone', {frame: 'pane'})))), /an-subtitle/, 'while you speak nothing is written yet: the owner returns your words when you stop')
-  assert.doesNotMatch(alone, /an-chat/)
-  const speaking = html(h(() => answer.full({...props('Speaking, face alone', {frame: 'pane'})})))
-  assert.match(speaking, /<span data-who="agent">/, 'said, under the face while it speaks')
-  const open = html(h(() => answer.full({...props('Speaking, face alone', {frame: 'pane'}), v: {...valuesOf('Speaking, face alone'), chat: 'on'}})))
-  assert.doesNotMatch(open, /data-who="agent"/, 'with the conversation open, it holds the words and the face does not say them twice')
-  assert.match(html(h(() => answer.full(props('Hearing you, face alone', {frame: 'pane'})))), /aria-pressed="true"[^>]*aria-label="Hears"|aria-label="Hears"[^>]*aria-pressed="true"/, 'the mark shows the microphone open')
-})
-
-test('the face\'s pose follows the voice and the dynamics set on the Face page, over the state it is in', () => {
-  const pose = (fixture, extra = {}) => poseOf({...props(fixture), v: {...valuesOf(fixture), ...extra}})
-  assert.equal(pose('Answered, waiting').state, 'idle')
-  assert.equal(pose('Hearing you, face alone').state, 'listening', 'while you speak the face attends')
-  assert.equal(pose('Speaking, face alone').state, 'answering')
-  assert.equal(pose('Speaking, face alone').speaking, false, 'with Speaks on the mouth waits for the voice')
-  assert.equal(pose('Answering').speaking, undefined, 'without it the face moves its mouth to the words itself')
-  const wry = pose('Wry, looking aside')
-  assert.equal(wry.emotion, 'curious')
-  assert.deepEqual(wry.affect, [0.4, 0.3])
-  assert.deepEqual(wry.gaze, [-0.5, 0.2])
-  assert.equal(pose('Answered, waiting').emotion, undefined, 'neutral and centred hold nothing over the state')
-  assert.equal(pose('Answered, waiting', {do: 3}).gesture.n, 3, 'a gesture is made for each count')
-  assert.equal(pose('Not bound').dim, true)
-})
-
-test('folded, compact, on the rail and in each row the Answer keeps the small mask: an icon, never the live face', () => {
-  for (const fixture of ['Answered, waiting', 'Answering', 'Not bound']) {
-    for (const view of ['folded', 'compact', 'widget']) {
-      const out = html(h(() => answer[view](props(fixture))))
-      assert.equal(stages(out), 0, `${fixture}, ${view}: no live face`)
-    }
-  }
-  assert.match(html(h(() => answer.compact(props('Answered, waiting')))), /<g transform="translate\(7 5\)" opacity="1"><svg class="pface" width="26"/, 'compact: the 26 px mask')
-  assert.match(html(h(() => answer.full(props('Answered, waiting', {frame: 'pane'})))), /<svg class="an-face" width="18" height="18"/, 'each row: the 18 px avatar')
-})
-
-test('while the owner reports the agent reading or answering, the head\'s light carries its ring; idle or unbound, none', () => {
-  const ring = out => /class="dp-activator" data-light="lit" data-busy="true"/.test(out)
-  assert.equal(ring(html(h(() => answer.whole(props('Answering'))))), true, 'answering')
-  assert.equal(ring(html(h(() => answer.compact(props('Answering'))))), true, 'answering, on the chain')
-  assert.equal(ring(html(h(() => answer.whole(props('Answered, waiting', {v: {...valuesOf('Answered, waiting'), state: 'reading'}}))))), true, 'reading')
-  assert.equal(ring(html(h(() => answer.whole(props('Answered, waiting'))))), false, 'idle')
-  assert.doesNotMatch(html(h(() => answer.whole(props('Not bound', {v: {...valuesOf('Not bound'), state: 'answering'}})))), /data-busy/, 'not bound: no ring')
-})
+// The Answer (central:nara-conversation), which stood the face where it is opened, was retired as a device of its own in the 22 Oct
+// manual rewrite; what holds of the face without it is the stage above and the vendored files below.
 
 // ── the vendored face ─────────────────────────────────────────────────────
 

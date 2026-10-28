@@ -2,7 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import {readFile} from 'node:fs/promises'
 
-// Lane F, F4: the status bar's Info line has its room first (manual §10.1: "Read what any control does"; WIDGET-GUIDE §1: the
+// Lane F, F4: the status bar's Info line has its room first (manual §10.1: "Read what any control does"; manual §16.9: the
 // status bar is the single explanation surface; the mockup's `.sb .info`, "Info  Hover anything to read what it does."). Seen
 // natively (the lead, 16 Oct): the leftmost cell showed one letter ("C", "E", "L"…) that changed with the pointer — the line had
 // flex-basis 0 and min-width 0, so the run context's long admission list ("Native host · revision … · 6 of 6 owners admitted ·

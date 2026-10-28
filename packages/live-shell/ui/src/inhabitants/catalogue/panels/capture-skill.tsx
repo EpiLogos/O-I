@@ -1,3 +1,5 @@
+// Retired as a device of its own (22 Oct manual rewrite): not a `<family>__<face>.tsx` panel any more, so the catalogue does not load
+// it; the Skillset rack (skills.tsx) carries its pages through this module.
 // Capture skill (manual §19.11, ai-kit:capture-skill): what you did by hand, turned into a proposal for a new member of a set — most
 // often a Method, otherwise a Skill. Live's nearest: Capture MIDI on a device that then offers what it kept. The owner is AIKit's
 // capture pipeline (ai-kit crates/aikit-store/src/inbox.rs: normalize → scan → redact-or-quarantine → classify → exact dedup →
@@ -23,7 +25,7 @@ import type {WoodSet, WoodState} from '../../sdk/icons'
 import {Action, Band, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, TextField, Tile, ValueBox, type LightState, type RowItem, type Scale, type Tone} from '../../sdk/panel'
 import {NONE, boolOf, clampTo, has, json, numOf, st, strOf, type DesignedDevice, type ViewProps} from './design'
 import {FORM_ASKS, FORM_NAME, type Form} from './practice'
-import './ai-kit__capture-skill.css'
+import './capture-skill.css'
 
 type V = ViewProps['v']
 type SetFn = ViewProps['set']

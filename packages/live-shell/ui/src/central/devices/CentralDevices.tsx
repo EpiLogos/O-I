@@ -4,13 +4,10 @@
 // the device's controls — whole in the pool when chosen, full in a pane when opened; each published to the device door
 // under `central:<face>` so the three sizes read one device, with the one `submit` that writes it.
 //
-// The pictures and bodies are the family's own, ported unchanged: each device opened full carries the body its face already had —
-// the Day die's hosted form (DocumentDayDieFace), the Nara conversation (NaraConversationFace), the ground hygiene and the impact
-// readings (CentralHygieneDevice, CentralImpactDevice) — under the same owners, none reimplemented. The instruments (the die, the
-// conversation) keep their Live semantic at every size: their write rows go through the owner paths their bodies already use
-// (centralDeviceWrites.ts). The Flow is an instrument on its document's chain (DLW §18.1; it was a clip on the Clip side,
-// FlowClip.tsx, which nothing mounted). A device whose aperture is not standing says so in its rows and keeps its light dark; no
-// device is a text card.
+// The pictures and bodies are the family's own, ported unchanged: the Day die opened full carries the body its face already had — its
+// hosted form (DocumentDayDieFace) — under the same owner, not reimplemented. The die keeps its Live semantic at every size: its write rows
+// go through the owner paths its body already uses (centralDeviceWrites.ts). A device whose aperture is not standing says so in its rows
+// and keeps its light dark; no device is a text card.
 //
 // The Day (lane BC; DLW §16.2 "On the Main track: the Day"; §18.1) is the catalogue's designed device (`central:day-die`,
 // inhabitants/catalogue/panels/day.tsx) on Central's own readings and writes (dayBinding.ts): the Day the person selected, else
@@ -20,22 +17,27 @@
 // `full`), which the pane draws over the design's; its chain picture — the net and the face list it drew before — is the design's.
 // A device's pop-out (or redock) is a mark of its place: it stands in the device's head, the generic plate's and the design's alike.
 //
-// The chains are exactly §16.2's (R4; lock §0.3.4; centralChainSlots): a world's chain is the Packet, the agent of the world and its Scope —
-// then, on a world whose folder holds code, Ground hygiene, Machine and Impact; the Main track's chain is the Day, then Approvals. A world
-// holds code when it is a project's and Central's git reading finds the project's repository (kernel git_repository_read); your own world
-// keeps its pages in Control/user/flows and holds none. Which chain Device view shows follows THE selection, as Live's follows the
-// selected track (centralChainOf): the Main track (the grid's Main head, or the Day's stream and its clips) shows the Day's; a world's
-// track or page shows that world's; with no Central selection both stand, the Main track's first, the world's naming no world. The page family — Workspace, Document, Flow, Beings, Things,
-// Text, Highlight and Notes — is no chain's (§16.1: a page's Clip panel, editor tabs and tools in Clip view; the workspace its track
-// head): their designs and bindings stay (pageBindings.ts, pageDevices.ts) for Clip view, and only the document the hand reached is still
-// read here, for the Agent's and Scope's page. Search is no chain device (§18.4: a pane, and the line where you type @: searchPane.tsx).
+// The chains are exactly §16.2's (R4; lock §0.3.4; centralChainSlots): a world's chain is the Packet, the agent of the world and its Scope,
+// then Docs, the world's account on six tiers (§18.5); the Main track's chain is the Day, then Approvals. Ground hygiene, Machine and
+// Impact were retired as devices of their own in the 22 Oct manual rewrite: the seats and checkouts are Git / landing's Checkouts page
+// (§19.16), the machine the Remote carrier's Machine page (§18.7, §19.18), what a change reaches the Knowledge graph's, the NOWs' and Docs'
+// Meaning (§18.6). Whether a world's folder holds code (Central's git reading, kernel git_repository_read) is still read and said on the
+// chain. Which chain Device view shows follows THE selection, as Live's follows the selected track (centralChainOf): the Main track (the
+// grid's Main head, or the Day's stream and its clips) shows the Day's; a world's track or page shows that world's; with no Central
+// selection both stand, the Main track's first, the world's naming no world. The page family — the Document — is no chain's (§16.1: a
+// page's Clip panel, editor tabs and tools in Clip view; the Workspace, the Flow, Beings, Things, Text, Highlight and Notes were retired as
+// faces of their own, the world's settings standing on its track head and its account in Docs, §18.1): their bindings stay
+// (pageBindings.ts, pageDevices.ts), and only the document the hand reached is still read here, for the Agent's and Scope's page. Search is
+// no chain device (§18.4: a pane, and the line where you type @: searchPane.tsx).
 //
 // One Agent, one Scope (R4; §16.1, §19.4, §19.12; lock §0.3.5): the agent that answers is Actuation's Agent (actuation:harness-model) on
-// the Answer's owners (answerBinding.ts centralAgentBinding), carrying its Custody, Identity and Thread pages (oneAgentBinding.ts); what
+// the Answer's owners (answerBinding.ts centralAgentBinding), carrying its Custody, Identity, Thread and Voice pages (oneAgentBinding.ts;
+// the Answer and Voice were retired as devices of their own in the 22 Oct manual rewrite: "Answer is the Agent on a page's chain",
+// PROGRAMME R25 item 5; Voice is the Agent's Voice page, §19.21); what
 // it may read and write is Software Factory's Scope (software-factory:context-write-mode) on Context & world's owners
 // (contextWorldBinding.ts centralScopeBinding). The Packet and the Agent share the encounter observers mounted here: one per session
 // (lane BF2's EncounterObservers.tsx), never a session read twice.
-import {useEffect, useMemo, useRef, type ReactNode} from 'react'
+import {useEffect, useMemo, useRef, useSyncExternalStore, type ReactNode} from 'react'
 import type {CentralLocation, KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
 import {DeviceView} from '../../frame/devices/DeviceView'
 import {publishDevice, selectDevice, type OwnFull, type PublishedDevice} from '../../frame/devices/deviceDoor'
@@ -44,13 +46,9 @@ import {DEVICE_PANE_KIND} from '../../frame/devices/devicePane'
 import type {DesignBinding} from '../../frame/devices/designed'
 import type {DeviceInstance} from '../../frame/devices/deviceRuntime'
 import {openInstrument} from '../../frame/instrumentDoor'
-import {CentralHygieneDevice} from '../../inhabitants/CentralHygieneDevice'
-import {CentralImpactDevice} from '../../inhabitants/CentralImpactDevice'
 import {DocumentDayDieFace} from '../../inhabitants/DocumentDayDieFace'
-import {NaraConversationFace} from '../../inhabitants/ConversationNaraFace'
 import type {DeviceWindowHost} from '../../inhabitants/inhabitantRack'
 import {faceStandsAlone, inhabitantManifest, type InhabitantFaceDeclaration, type InhabitantManifest} from '../../inhabitants/manifest'
-import type {ImpactSubject} from '../../inhabitants/centralImpactModel'
 import {KindMark} from '../../inhabitants/sdk/marks'
 import {popOutApertureFault, type DeviceDetachIdentity} from '../../native/detachedKinds'
 import {ownerReadings} from '../../owners/ownerReading'
@@ -62,19 +60,18 @@ import {CENTRAL_FAMILY, centralDevice, centralDeviceId, centralPicture, chainFac
 import {beginDayMove, centralWrite, centralWriters, closeCarry, openToday, openTomorrow, turnDieFace, writeDaySettings} from './centralDeviceWrites'
 import {turnDay, useDayInPane} from '../documents/documentDoor'
 import {dayDesignBinding, dayFactsOf, dayValuesOf, type DayFacts} from './dayBinding'
-import {useCentralAction, useCentralGroundAnswer, useDayDieReading, useDayOwnReadings, useNaraReading, useRosterReading, useWorkcellReading, type DayDieAperture} from './useCentralReadings'
+import {useCentralAction, useCentralGroundAnswer, useDayDieReading, useDayOwnReadings, useNaraReading, useRosterReading, type DayDieAperture} from './useCentralReadings'
 import {usePageDevices} from './pageDevices'
-import {WORKSPACE_DEVICE_ID} from './pageBindings'
-import {HYGIENE_DEVICE_ID, IMPACT_DEVICE_ID, useHygieneDevice, useImpactDevice} from './groundDevices'
-import {CENTRAL_AGENT_ID, answerBinding, centralAgentBinding, centralAgentRef} from './answerBinding'
+import {docsBinding, holdsVersion, subscribeHolds} from './pageBindings'
+import {CENTRAL_AGENT_ID, centralAgentBinding, centralAgentRef} from './answerBinding'
 import {useAnswerVoice} from './useAnswerVoice'
 import {observedState, useEncounterSessions, type ObservedSession} from '../../agent/devices/EncounterObservers'
 import {composeAgentBinding} from '../../agent/devices/oneAgentBinding'
 import {custodyBinding} from '../../agent/devices/sessionChainBindings'
 import {shownSession, threadBinding} from '../../agent/devices/threadBinding'
-import {holdView, useChainHolds} from '../../agent/devices/designBindings'
+import {holdView, useChainHolds, viewHolds} from '../../agent/devices/designBindings'
 import {familyFaceDevice} from '../../agent/devices/mainTrackBindings'
-import {approvalsBinding} from '../../agent/devices/receiptBindings'
+import {APPROVALS_ID, approvalsBinding} from '../../agent/devices/receiptBindings'
 import {useSourceReturnsAnswer} from '../../agent/devices/workcellReads'
 import {RACK_PROJECT as APPROVALS_PROJECT} from '../../agent/devices/useRackReading'
 import {useAgentSessionsOptional} from '../../agent/AgentSessionsProvider'
@@ -83,12 +80,10 @@ import {CENTRAL_DAY_TRACK_ID} from '../../timeline/centralTrackAdapter'
 import {centralWorldTrackId} from '../../timeline/centralTrackAdapter'
 import {useHeldRead, useOwnerOp} from '../../owners/ownerCall'
 import {readWorlds, type CentralWorld, type CentralWorldsReading} from '../centralWorlds'
-import {MACHINE_DEVICE_ID} from './machineBinding'
-import {VOICE_ID, voiceBinding, voiceDevice} from '../../agent/devices/voiceBinding'
+import {voiceBinding} from '../../agent/devices/voiceBinding'
 import {voiceBodyReadings, type AnswerVoiceState, type VoiceKey} from './answerVoice'
 import {PERSONAL_ANCHOR_ACTION, acceptSourceReturn, personRefOf} from './sourceReturnAccept'
 import {commentSourceReturn, withReturnComments} from './sourceReturnComment'
-import {useMachineDevice} from './machineDevice'
 import {useRosterAgents} from '../../owners/readers'
 import {bindConversation} from './centralDeviceWrites'
 import {useAgencySessions} from '../../agent/useAgencySessions'
@@ -99,6 +94,8 @@ import {conversationOf} from '../../widgets/agentConversation'
 import {CENTRAL_SCOPE_ID, CONTEXT_WORLD_DEVICE_ID, IDENTITY_DEVICE_ID, PACKET_DEVICE_ID, SEARCH_DEVICE_ID, useIdentityDevice, usePacketDevice, useScopeDevice} from './agentChainDevices'
 import {EFFECTIVE_SOURCES_ACTION, ROOT_WORLD_RELATIONS, WORLD_RELATIONS_READ, WORLD_RELATIONS_SAVE, type ChangeHorizon} from './contextWorldBinding'
 import {useAtSearch} from '../searchPane'
+import {openNotificationTarget, useOwnerRequests} from '../../widgets/railDevices'
+import {openedHold, openedOf, withOwnerRequests} from '../../widgets/railBindings'
 import './centralDevices.css'
 
 /** The root register's world, whose effective sources Scope reads (central.world.effective-sources {scope, world_ref}). */
@@ -112,8 +109,8 @@ export interface CentralConversationAperture {
   readonly conversation?: string | null
 }
 
-/** Everything the devices read: the apertures (the Day, the conversation, the flow, the impact subject), the Day's owner
- * standing and the owners' readings the hooks hand in. */
+/** Everything the devices read: the apertures (the Day, the conversation, the flow), the Day's owner standing and the owners' readings
+ * the hooks hand in. */
 export interface CentralDeviceInput {
   readonly transport: KernelTransportStatus
   readonly faces: readonly InhabitantFaceDeclaration[]
@@ -122,7 +119,6 @@ export interface CentralDeviceInput {
   readonly day: DayDieAperture | null
   readonly conversation: CentralConversationAperture | null
   readonly flow: {readonly location: CentralLocation} | null
-  readonly impact: ImpactSubject | null
   readonly projects?: readonly {name?: string; path?: string}[]
   readonly deviceWindows: DeviceWindowHost | null
   /** The owners' write paths the devices hold; absent, they are built over the apertures (centralDeviceWrites.ts). */
@@ -173,8 +169,7 @@ export function centralPublication(entry: CentralDeviceEntry, binding: DesignBin
 }
 
 /** The family's faces that stand on a chain (DLW §16.2; centralDeviceModel.ts CENTRAL_DEVICE_FACES): the Day on the Main track; the
- * Packet on a world's track, and Ground hygiene, Machine and Impact on a world whose folder holds code. Every other face the family
- * declares stands on no chain (R4). */
+ * Packet and Docs on a world's track. Every other face the family declares stands on no chain (R4). */
 export function placedFaces(faces: readonly InhabitantFaceDeclaration[]): InhabitantFaceDeclaration[] {
   return chainFaces(faces)
 }
@@ -218,18 +213,20 @@ export function chainWorldOf(world: CentralWorld | null, git: {readonly status: 
   return {kind: 'project', name: world.name, project: world.project, code}
 }
 
-/** Whether the world's folder holds code (DLW §16.2): a project's world whose repository Central's git reading found. */
+/** Whether the world's folder holds code: a project's world whose repository Central's git reading found. */
 export const worldHoldsCode = (world: ChainWorld): boolean => world.kind === 'project' && world.code === 'holds'
 
-/** The devices of a Central chain, left to right (DLW §16.2): the Main track's — the Day, then Approvals; a world's — the Packet, the agent
- * of the world (with its Voice right after it: §19.21 "after the Agent, on any track an agent speaks on" — the Answer's voice speaks on
- * Central's) and its Scope, then, on a world whose folder holds code, Ground hygiene, Machine and Impact. Every slot is an effect or an
- * instrument of its family; no monitor and no connection stands on a Central chain. Pure. */
-export function centralChainSlots(track: 'main' | 'world', world: ChainWorld): string[] {
+/** The devices of a Central chain, left to right (DLW §16.2 "The packet, the agent of the world, and its scope; then Docs, the world's
+ * account on six tiers. On the Main track: the Day, then Approvals"): the same on every world, whether or not its folder holds code. Every
+ * slot is an effect or an instrument of its family; no monitor and no connection stands on a Central chain. Voice is the Agent's Voice page
+ * (§19.21); Ground hygiene, Machine and Impact were retired (§18.6, §18.7, §19.16). Pure. */
+export function centralChainSlots(track: 'main' | 'world'): string[] {
   if (track === 'main') return [DAY_DEVICE_ID, CENTRAL_APPROVALS_ID]
-  return [centralDeviceId('packet'), CENTRAL_AGENT_ID, VOICE_ID, CENTRAL_SCOPE_ID,
-    ...(worldHoldsCode(world) ? [centralDeviceId('ground-hygiene'), MACHINE_DEVICE_ID, centralDeviceId('impact')] : [])]
+  return [centralDeviceId('packet'), CENTRAL_AGENT_ID, CENTRAL_SCOPE_ID, DOCS_DEVICE_ID]
 }
+
+/** Docs on a world's chain (DLW §18.5; its design `central:docs`, inhabitants/catalogue/panels/central__docs.tsx). */
+export const DOCS_DEVICE_ID = centralDeviceId('docs')
 
 /** The devices of other families on Central's chains: the Agent and Scope on a workspace (§19.4, §19.12), Approvals on the Main track
  * (§18.1 "its chain holds the Day, then Approvals"; §19.14) — each its family's admitted face, drawn by that face's design. */
@@ -251,9 +248,6 @@ export function centralVoiceBinding(state: AnswerVoiceState, why: string | null,
   for (const key of Object.keys(readings)) if (key !== 'voice.voice') delete standing[key]
   return {...binding, values: {...binding.values, ...readings}, standing}
 }
-
-/** The Answer's id on the door (its design is `central:nara-conversation`, catalogue/panels/central__nara-conversation.tsx). */
-export const ANSWER_DEVICE_ID = centralDeviceId('nara-conversation')
 
 /** The thread page Central's Agent carries keeps its view (pin, the shown session, the filters) under its own hold. */
 const CENTRAL_THREAD_HOLD = `${CENTRAL_AGENT_ID}/thread`
@@ -277,16 +271,13 @@ export function popOutOf(face: InhabitantFaceDeclaration, input: Pick<CentralDev
 /** The working body of one device — what its face drew in the rack, under the same owners — or null where the face has none
  * (the readings with no body of their own, and any document whose aperture is not standing). */
 function bodyOf(faceId: string, input: CentralDeviceInput): ReactNode | null {
-  const {transport, day, conversation, impact, projects} = input
+  const {transport, day, projects} = input
   switch (faceId) {
     // The Day's page: its hosted form where a Day document stands, else the owner's own words for why none does (the Day pane's
     // DayView, central/documents/CentralDocumentPane.tsx:80-86) — never a blank and never a stand-in.
     case 'day-die': return day
       ? <DocumentDayDieFace transport={transport} project={day.project} sourceRef={day.sourceRef} documentId={day.documentId} projects={projects} />
       : <DayView transport={transport} standing={input.dayStanding ?? input.reads.day?.standing ?? null} />
-    case 'nara-conversation': return <NaraConversationFace transport={transport} project={conversation?.project ?? null} expressionRef={conversation?.expressionRef ?? null} conversation={conversation?.conversation ?? null} />
-    case 'ground-hygiene': return <CentralHygieneDevice transport={transport} expanded />
-    case 'impact': return impact ? <CentralImpactDevice transport={transport} subject={impact} expanded /> : null
     default: return null
   }
 }
@@ -302,7 +293,7 @@ function SmallPicture({faceId, reads, size}: {faceId: string; reads: CentralRead
 /** The devices of the Central family as the runtime draws them: one entry per device face the family declares (its clips
  * stand on the Clip side). Each carries the write door its declaration names. */
 export function centralDeviceEntries(input: CentralDeviceInput): CentralDeviceEntry[] {
-  const writers = input.writers ?? centralWriters({transport: input.transport, day: input.day, conversation: input.conversation, afterWrite: input.afterWrite, page: input.page})
+  const writers = input.writers ?? centralWriters({transport: input.transport, day: input.day, afterWrite: input.afterWrite, page: input.page})
   return placedFaces(input.faces).map(face => {
     const popOut = popOutOf(face, input)
     const device = centralDevice(face, input.reads, writers)
@@ -338,8 +329,6 @@ export interface CentralDevicesProps {
   readonly day?: DayDieAperture | null
   readonly conversation?: CentralConversationAperture | null
   readonly flow?: {readonly location: CentralLocation} | null
-  /** The browser's selected folder, note or day: the subject the Impact reads. */
-  readonly impact?: ImpactSubject | null
   readonly projects?: readonly {name?: string; path?: string}[]
   readonly deviceWindows?: DeviceWindowHost | null
 }
@@ -396,10 +385,10 @@ export function useDayDevice(transport: KernelTransportStatus, selected: {standi
   return {facts, document, binding}
 }
 
-/** Central's chains (DLW §16.2): the Main track's — the Day, then Approvals — and a world's — the Packet, the Agent, Scope, then, on a world
- * whose folder holds code, Ground hygiene, Machine and Impact —, compact, each published so the pool, a pane and the rail draw the same
- * device on the same binding. Which stands follows THE selection (centralChainOf, centralWorldOf). */
-export function CentralDevicesChain({transport, dayStanding, day = null, conversation = null, flow = null, impact = null, projects, deviceWindows = null}: CentralDevicesProps) {
+/** Central's chains (DLW §16.2): the Main track's — the Day, then Approvals — and a world's — the Packet, the Agent, Scope, then Docs —,
+ * compact, each published so the pool, a pane and the rail draw the same device on the same binding. Which stands follows THE selection
+ * (centralChainOf, centralWorldOf). */
+export function CentralDevicesChain({transport, dayStanding, day = null, conversation = null, flow = null, projects, deviceWindows = null}: CentralDevicesProps) {
   const manifest = inhabitantManifest(CENTRAL_FAMILY)
   const dayDevice = useDayDevice(transport, dayStanding ? {standing: dayStanding, aperture: day} : null)
   const dayBinding = dayDevice.binding
@@ -413,20 +402,15 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
   const selectedWorld = centralWorldOf(selection, worlds)
   const codeProject = selectedWorld?.kind === 'project' ? selectedWorld.project : null
   const git = useOwnerOp(transport, codeProject ? {op: 'git_repository_read', project: codeProject} : null, 'git_repository_reading').reading
-  // The Workspace a world's head opens (§18.1 "the track's Workspace device": frame/tracks/useCentralTracks.ts names it) reads the selected
-  // world — its name, its folder, its Ground and Self — and offers the projects of Work that are worlds as its Folder's choices.
+  // The page readings (pageDevices.ts) read the selected world — its name, its folder — and the projects of Work that are worlds.
   const selectedWorldRef = selectedWorld?.ref ?? null
   const pageWorld = useMemo(() => ({
     world: selectedWorld ? {name: selectedWorld.name, project: selectedWorld.kind === 'project' ? selectedWorld.project : null} : null,
     folders: worlds?.state === 'read' ? worlds.worlds.flatMap(world => (world.kind === 'project' && world.project ? [world.project] : [])) : null,
   }), // eslint-disable-next-line react-hooks/exhaustive-deps -- the world is its ref
   [selectedWorldRef, worlds])
-  // The document the hand reached, for the Agent's and Scope's page (the page family itself stands on no chain: R4), and the Workspace.
+  // The document the hand reached, for the Agent's and Scope's page (the page family itself stands on no chain: R4).
   const pages = usePageDevices(transport, {aperture: dayAperture, face: dayDevice.document.face, payload: dayDevice.document.payload, civilDate: dayDevice.facts.civilDate}, pageWorld)
-  // Ground hygiene and Impact on their designs (groundDevices.ts): the census read when the chain opens, the neighbourhood of the
-  // browser's selection when it changes.
-  const hygiene = useHygieneDevice(transport, true)
-  const impactDesign = useImpactDevice(transport, impact)
   const nara = useNaraReading(transport, conversation?.project ?? null, conversation?.expressionRef ?? null, conversation?.conversation ?? null)
   // The Agent (answerBinding.ts centralAgentBinding): the bound session's exchange through the ONE shared encounter observer (lane BF2's),
   // the roster's agent of the binding's role. The Packet goes with the conversation the Agent widget holds (THE selection's session, else
@@ -434,8 +418,6 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
   const chainWorld = useMemo(() => chainWorldOf(selectedWorld, codeProject ? {status: git.status, error: git.error} : null),
     // eslint-disable-next-line react-hooks/exhaustive-deps -- the world is its ref
     [selectedWorld?.ref, codeProject, git.status, git.error])
-  // Machine (§18.7) reads while it stands: on a world whose folder holds code.
-  const machine = useMachineDevice(transport, worldHoldsCode(chainWorld))
   const packetReading = usePacketReading(transport, selectionRef)
   const agency = useAgencySessions(transport)
   const nowUnixMs = useAgentSessionsOptional()?.nowUnixMs ?? 0
@@ -454,23 +436,20 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
   const answerObserved = observedState(answerHandle)
   const answerRoster = useRosterAgents(transport)
   const roster = useRosterReading(transport)
-  const workcell = useWorkcellReading(transport)
-  const impactKind = impact?.kind, impactPath = impact?.path
   const refreshDay = dayDevice.document.refresh, refreshConversation = nara.refresh, refreshPage = pages.refresh
   const afterWrite = useMemo(() => ({day: refreshDay, conversation: refreshConversation, page: refreshPage}), [refreshDay, refreshConversation, refreshPage])
   const reads = useMemo<CentralReads>(() => ({
     day: {standing: dayDevice.facts.standing, face: dayDevice.document.face, revision: dayDevice.document.revision},
-    nara, roster, workcell,
-    impact: impactPath ? {kind: impactKind!, path: impactPath} : null,
+    nara, roster,
     page: pages.reads.page, workspace: pages.reads.workspace, flow: pages.reads.flow,
-  }), [dayDevice.facts.standing, dayDevice.document.face, dayDevice.document.revision, nara, roster, workcell, impactKind, impactPath, pages.reads])
+  }), [dayDevice.facts.standing, dayDevice.document.face, dayDevice.document.revision, nara, roster, pages.reads])
   const pageWrite = pages.page
   const entries = useMemo(
-    () => centralDeviceEntries({transport, faces: manifest?.faces ?? [], manifest, reads, day: dayAperture, conversation, flow, impact, projects, deviceWindows, afterWrite,
+    () => centralDeviceEntries({transport, faces: manifest?.faces ?? [], manifest, reads, day: dayAperture, conversation, flow, projects, deviceWindows, afterWrite,
       dayStanding: dayDevice.facts.standing, page: pageWrite}),
     // The apertures are identity: a fresh object with the same parts is the same device.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [transport, manifest, reads, afterWrite, dayAperture?.sourceRef, dayAperture?.documentId, dayAperture?.project, conversation?.conversation, conversation?.expressionRef, conversation?.project, flow?.location.ref, impact?.path, impact?.kind, projects, deviceWindows, pageWrite],
+    [transport, manifest, reads, afterWrite, dayAperture?.sourceRef, dayAperture?.documentId, dayAperture?.project, conversation?.conversation, conversation?.expressionRef, conversation?.project, flow?.location.ref, projects, deviceWindows, pageWrite],
   )
   const answerAgents = answerRoster.state === 'ready' ? answerRoster.agents : null
   const refreshNara = nara.refresh
@@ -485,26 +464,13 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
   }),
   // eslint-disable-next-line react-hooks/exhaustive-deps -- the conversation is its parts
   [answerInput, answerSend, transport, refreshNara, conversation?.project, conversation?.expressionRef, conversation?.conversation])
-  // The Answer (answerBinding.ts; DLW §19.4): the same owners, with the voice (useAnswerVoice.ts: Hears and Speaks through the kernel op
-  // nara_voice, the face's mouth following the spoken sound). It stands on no chain (R4): the door holds it, so a pane, its own window
-  // and the rail open it — mostly the face, the conversation small and optional beside it.
+  // The Agent's voice (useAnswerVoice.ts: Hears and Speaks through the kernel op nara_voice, the face's mouth following the spoken sound): the
+  // Answer's voice is the one voice owner. Voice is the Agent's Voice page (§19.21; agent/devices/voiceBinding.ts), carried under `speech.`
+  // (oneAgentBinding.ts VOICE_PAGE): what the open voice's own answers carry — its constitution's declared voice, duplex, barge-in and stop,
+  // and the last speak's receipt (answerVoice.ts voiceBodyReadings) — is read over the binding's absences. The Answer was retired as a device
+  // of its own in the 22 Oct manual rewrite ("Answer is the Agent on a page's chain", PROGRAMME R25 item 5).
   const voice = useAnswerVoice({transport, conversation, bound: nara.state === 'bound', session: nara.session, send: answerSend, reading: answerObserved?.reading})
-  // Voice (actuation:voice, §19.21 "after the Agent, on any track an agent speaks on"): the Answer's voice is the one voice owner, so Voice
-  // stands after Central's Agent (agent/devices/voiceBinding.ts). What the open voice's own answers carry — its constitution's declared
-  // voice, duplex, barge-in and stop, and the last speak's receipt (answerVoice.ts voiceBodyReadings) — is read over the binding's absences.
-  const voiceDev = useMemo(() => voiceDevice(), [])
   const voiceDesign = useMemo(() => centralVoiceBinding(voice.state, voice.why, voice.write), [voice.state, voice.why, voice.write])
-  const answerPage = pages.reads.page?.title ?? null
-  const answerPacket = typeof packet.values.packet === 'string' ? packet.values.packet : null
-  const answer = useMemo(() => answerBinding(ANSWER_DEVICE_ID, {...answerInput, page: answerPage !== null ? {title: answerPage} : null,
-    packet: answerPacket !== null ? {items: answerPacket, session: packetSession} : null, voice: voice.state}, {
-    bind: conversation ? async () => { await bindConversation(transport, conversation); refreshNara() } : null,
-    send: answerSend,
-    voice: {write: voice.write, why: voice.why},
-  }),
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- the conversation is its parts
-  [answerInput, answerPage, answerPacket, packetSession, voice.state, voice.write, voice.why, answerSend, transport, refreshNara, conversation?.project, conversation?.expressionRef, conversation?.conversation])
-  const answerDevice = useMemo(() => familyFaceDevice(ANSWER_DEVICE_ID, CENTRAL_FAMILY, 'nara-conversation', 'Answer', 'form'), [])
   // Scope (one Scope): the Agent's session's scope over Central's ground (the one ground answer the Day reads) and the Packet.
   const ground = useCentralGroundAnswer(transport)
   // The world's effective sources as Central resolves them (T-COVERAGE §1.3): the root register's, the ground's world.
@@ -523,7 +489,8 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
   })
   // The Agent's pages (oneAgentBinding.ts): Identity reads the agent that answers until you choose another (the hold Agent identity kept);
   // Custody the dialogue's session, which reports no custody (each setting disabled with the op it lacks; its write mode Scope's); the
-  // Thread the bound session's conversation, on the same shared observer, its Approve and Hard stop that session's own encounter verbs.
+  // Thread the bound session's conversation, on the same shared observer, its Approve and Hard stop that session's own encounter verbs;
+  // Voice the Answer's voice, above.
   const identity = useIdentityDevice(transport, centralAgentRef(answerInput), IDENTITY_DEVICE_ID)
   const holds = useChainHolds()
   const custody = useMemo(() => custodyBinding({sessionRef: nara.session, autonomy: null, agent: own.values}, scope), [nara.session, own.values, scope])
@@ -539,7 +506,7 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
       select: ref => { holdView(CENTRAL_THREAD_HOLD, 'session', ref); holdView(CENTRAL_THREAD_HOLD, 'pin', true) },
     }, CENTRAL_THREAD_HOLD)
   }, [nara.session, holds, encounters.handles, agency.tracks, nowUnixMs, own])
-  const agent = useMemo(() => composeAgentBinding(own, {custody, identity, thread}), [own, custody, identity, thread])
+  const agent = useMemo(() => composeAgentBinding(own, {custody, identity, thread, voice: voiceDesign}), [own, custody, identity, thread, voiceDesign])
   // The line where you type @ (§18.4): an @ word in the Agent's composer opens Search in a pane on it (searchPane.tsx).
   useAtSearch(typeof agent.values.draft === 'string' ? agent.values.draft : undefined)
   const agentDraft = typeof agent.values.draft === 'string' ? agent.values.draft : null
@@ -556,6 +523,10 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
   const waiting = !!returned?.entries.some(entry => entry.status === 'pending')
   const anchor = useCentralAction(transport, PERSONAL_ANCHOR_ACTION, waiting ? NO_INPUT : null)
   const person = anchor.status === 'answered' ? personRefOf(anchor.value) : null
+  // Notifications' readings, which wait in Approvals under Requests (§23.9; the Notifications device was retired into Approvals in the 22 Oct
+  // manual rewrite): the requests Central keeps for personal.notify, Messages' waiting agents and the desktop's notice (railBindings.ts
+  // withOwnerRequests), read through the rail's own reader (widgets/railDevices.tsx useOwnerRequests).
+  const ownerRequests = useOwnerRequests(transport)
   const approvals = useMemo(() => {
     const actions = answerHandle && 'actions' in answerHandle ? answerHandle.actions : undefined
     const binding = approvalsBinding({gateway: {}, session: naraTrack, encounter: answerObserved?.reading ?? null, holds, returns: returned, tracks: agency.tracks, nowUnixMs: nowUnixMs || Date.now()}, null,
@@ -567,14 +538,21 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
       send: (row, words) => commentSourceReturn(transport, APPROVALS_PROJECT, row, words, person),
       after: () => { void agentWrite?.([{key: 'draft', value: ''}]) },
     })
-    return {...commented, standing: {...commented.standing, approvals: {disabled: CENTRAL_DEFAULT_ANSWER}}}
-  }, [answerHandle, naraTrack, answerObserved, holds, returned, agency.tracks, nowUnixMs, transport, person, agentDraft, agentWrite])
+    // Open marks an item opened here (the one Approvals' view hold), after opening an owner's request where it belongs.
+    const opened = openedOf(viewHolds(holds, APPROVALS_ID).opened)
+    const requested = withOwnerRequests(commented, {...ownerRequests, nowUnixMs: nowUnixMs || Date.now()}, openNotificationTarget,
+      {opened, hold: ids => holdView(APPROVALS_ID, 'opened', openedHold(ids))})
+    return {...requested, standing: {...requested.standing, approvals: {disabled: CENTRAL_DEFAULT_ANSWER}}}
+  }, [answerHandle, naraTrack, answerObserved, holds, returned, agency.tracks, nowUnixMs, transport, person, agentDraft, agentWrite, ownerRequests])
   const others = useMemo(() => centralAgentDevices(), [])
-  const bindingOf = (id: string): DesignBinding | null => (id === DAY_DEVICE_ID ? dayBinding : id === HYGIENE_DEVICE_ID ? hygiene : id === IMPACT_DEVICE_ID ? impactDesign
-    : id === MACHINE_DEVICE_ID ? machine : id === PACKET_DEVICE_ID ? packet : null)
+  // Docs (§18.5) on the selected world (pageBindings.ts docsBinding): its subject is the track's world; its readings of the account and its
+  // acts wait for its binding to the six tiers (the PR #705 handoff's own item), each naming that.
+  const docsWorld = pageWorld.world
+  const holdsNow = useSyncExternalStore(subscribeHolds, holdsVersion, holdsVersion)
+  const docs = useMemo(() => docsBinding(DOCS_DEVICE_ID, docsWorld), [docsWorld, holdsNow]) // eslint-disable-line react-hooks/exhaustive-deps -- the holds' version re-binds the view's own keys
+  const bindingOf = (id: string): DesignBinding | null => (id === DAY_DEVICE_ID ? dayBinding : id === PACKET_DEVICE_ID ? packet : id === DOCS_DEVICE_ID ? docs : null)
   // What stands on the door now; a device that left the chain leaves the door too. The family's faces that stand on no chain (the page
-  // family, Agent identity, Context & world, Search) are cleared once, so nothing stale of them stays on the door; the Answer stands
-  // there on its own binding (above), on no chain.
+  // family, Agent identity, Context & world, Search) are cleared once, so nothing stale of them stays on the door.
   const published = useRef(new Set<string>())
   useEffect(() => {
     const now = new Set(entries.map(entry => entry.id))
@@ -582,23 +560,17 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
     for (const entry of entries) publishDevice(entry.id, centralPublication(entry, bindingOf(entry.id)))
     published.current = now
     // eslint-disable-next-line react-hooks/exhaustive-deps -- bindingOf reads the bindings named here
-  }, [entries, dayBinding, hygiene, impactDesign, machine, packet])
-  useEffect(() => { if (answerDevice) publishDevice(ANSWER_DEVICE_ID, {device: answerDevice, binding: answer}) }, [answerDevice, answer])
+  }, [entries, dayBinding, packet, docs])
   useEffect(() => {
     if (others.agent) publishDevice(CENTRAL_AGENT_ID, {device: others.agent, binding: agent})
     if (others.scope) publishDevice(CENTRAL_SCOPE_ID, {device: others.scope, binding: scope})
     if (others.approvals) publishDevice(CENTRAL_APPROVALS_ID, {device: others.approvals, binding: approvals})
   }, [others, agent, scope, approvals])
-  useEffect(() => { if (voiceDev) publishDevice(VOICE_ID, {device: voiceDev, binding: voiceDesign}) }, [voiceDev, voiceDesign])
-  // The track's Workspace device (§18.1), on no chain: a world's head opens it full in a pane, on the world it selected.
-  const workspaceDev = useMemo(() => familyFaceDevice(WORKSPACE_DEVICE_ID, CENTRAL_FAMILY, 'workspace', 'Workspace', 'session'), [])
-  const workspaceBinding = pages.bindings[WORKSPACE_DEVICE_ID] ?? null
-  useEffect(() => { if (workspaceDev) publishDevice(WORKSPACE_DEVICE_ID, workspaceBinding ? {device: workspaceDev, binding: workspaceBinding} : {device: workspaceDev}) }, [workspaceDev, workspaceBinding])
   useEffect(() => {
     for (const id of [IDENTITY_DEVICE_ID, CONTEXT_WORLD_DEVICE_ID, SEARCH_DEVICE_ID]) publishDevice(id, null)
     return () => {
       for (const face of manifest?.faces ?? []) publishDevice(centralDeviceId(face.id), null)
-      for (const id of [CENTRAL_AGENT_ID, VOICE_ID, CENTRAL_SCOPE_ID, CENTRAL_APPROVALS_ID, WORKSPACE_DEVICE_ID]) publishDevice(id, null)
+      for (const id of [CENTRAL_AGENT_ID, CENTRAL_SCOPE_ID, CENTRAL_APPROVALS_ID]) publishDevice(id, null)
     }
   }, [manifest])
   const place = centralChainOf(selection)
@@ -616,7 +588,6 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
   // Each slot of §16.2's chains, by its device's id: the family's own faces, and the Agent, Scope and Approvals of the families that own them.
   const otherSlots: Readonly<Record<string, ReactNode>> = {
     [CENTRAL_AGENT_ID]: otherSlot(CENTRAL_AGENT_ID, others.agent, agent, 'the Agent', 'Open the Agent full in a pane: its thread'),
-    [VOICE_ID]: otherSlot(VOICE_ID, voiceDev, voiceDesign, 'Voice', 'Open Voice full size in a pane'),
     [CENTRAL_SCOPE_ID]: otherSlot(CENTRAL_SCOPE_ID, others.scope, scope, 'Scope', 'Open Scope full size in a pane'),
     [CENTRAL_APPROVALS_ID]: otherSlot(CENTRAL_APPROVALS_ID, others.approvals, approvals, 'Approvals', 'Open Approvals full size in a pane'),
   }
@@ -636,12 +607,12 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
     {encounters.observers}
     {place !== 'workspace' && <div className="central-track-chain" data-track="main" aria-label="Main track"
       data-i="Main track|The Day's chain: the Day, then Approvals — the proposals the agents wait on, from every world.">
-      {centralChainSlots('main', chainWorld).map(slot)}
+      {centralChainSlots('main').map(slot)}
     </div>}
     {place !== 'main' && <div className="central-track-chain" data-track="workspace" aria-label="World" data-world={chainWorld.kind}
       data-code={code === null ? undefined : typeof code === 'object' ? 'refused' : code}
-      data-i={`World|A world's chain: the Packet, the agent of the world and its Scope; on a world whose folder holds code, Ground hygiene, Machine and Impact. ${codeWords}`}>
-      {centralChainSlots('world', chainWorld).map(slot)}
+      data-i={`World|A world's chain: the Packet, the agent of the world and its Scope, then Docs, the world's account on six tiers. ${codeWords}`}>
+      {centralChainSlots('world').map(slot)}
       {code !== null && typeof code === 'object' && <p className="central-chain-note" role="status">{codeWords}</p>}
     </div>}
   </div>

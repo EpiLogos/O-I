@@ -54,7 +54,9 @@ const material = await import('../src/agent/devices/workcellMaterial.ts')
 const tasks = await import('../src/agent/devices/taskBindings.ts')
 const {design: rackDesign} = await import('../src/inhabitants/catalogue/panels/workcell__workcell.tsx')
 const {design: carrierDesign} = await import('../src/inhabitants/catalogue/panels/workcell__remote-carrier.tsx')
-const {design: runsDesign} = await import('../src/inhabitants/catalogue/panels/software-factory__attempt-review.tsx')
+// Runs' design (software-factory__attempt-review.tsx) was retired in the 22 Oct manual rewrite (#725): a run's attempts are takes on its track
+// in Arrangement view (§16.1), its outputs the Results tile's and Approvals' review (§19.1, §19.14); its binding (taskBindings.ts runsBinding)
+// stays and is checked on its own values.
 
 family.resetFamilyManifestsForTest()
 loadAgentShellFamilies()
@@ -235,10 +237,15 @@ test('7 · the designs draw on these bindings in all their views and pages — n
   const carrierBinding = cell.carrierBinding(answered(REAL.workcellStatus), bind.chainHolds(), undefined, {discover: answered(MATERIAL.discover), probe: answered(PROBE.reachable)})
   const runsBinding = tasks.runsBinding('s', bind.chainHolds(), {takes: [], choose: async () => ({ok: true})})
   const cases = [
-    [rackDesign, rackBinding, ['chain', 'world', 'services', 'exposure', 'release'], /Claude Code · local|reads-round-2|omarchy · env-1|factory-attempt|Type-check the three|dlw\/uiux-kit-motion/, [rack.WORKCELL_REFUSE.releaseWorld]],
+    [rackDesign, rackBinding, ['chain', 'world', 'services', 'exposure', 'release', 'left'], /Claude Code · local|reads-round-2|omarchy · env-1|factory-attempt|Type-check the three|dlw\/uiux-kit-motion/, [rack.WORKCELL_REFUSE.releaseWorld]],
     [carrierDesign, carrierBinding, [undefined], /ready-to-carry|private-tailnet|1791417468786/, []],
-    [runsDesign, runsBinding, [undefined], /Type-check the roots|run:3|AgentShellContext/, []],
   ]
+  // REPLACED (#725): Runs' design drawn on its binding — no design draws Runs now (§16.1 "its attempts are takes"; §19.1 Results): the
+  // binding's own values carry no absent key as text and none of the retired design's sample, and its Outputs stand disabled with why.
+  const runsValues = JSON.stringify(runsBinding.values)
+  assert.doesNotMatch(runsValues, /\bNaN\b|undefined/, 'Runs\' binding: no absent key as text')
+  assert.doesNotMatch(runsValues, /Type-check the roots|run:3|AgentShellContext/, 'Runs\' binding: never the retired design\'s sample')
+  for (const key of ['collected', 'collect']) assert.equal(runsBinding.standing[key].disabled, tasks.RUNS_OUTPUTS[key], `${key}: disabled, saying why`)
   for (const [design, binding, pages, fixture, reasons] of cases) {
     const drawn = []
     for (const view of host.viewsOf(design)) {
@@ -261,11 +268,14 @@ test('7 · the designs draw on these bindings in all their views and pages — n
 
 test('8 · (b) every key these designs read is an owner reading, absent with why, the hand\'s, or written through its owner', () => {
   bind.resetHolds()
+  // A carried page's keys stand under its prefix and are hosted by prefixing that page's own binding, not this one (design.ts scoped):
+  // the carrier carries the Machine page under `mc.` (DLW §19.18, "The Machine page"; central:machine's binding); the workcell its Left
+  // behind page under `left.` and its tile's gateways under `gw.` (§19.23).
   const cases = [
-    [rackDesign, rack.workcellRackBinding(rackInput(), {gateway: null, rereadServices: () => {}})],
-    [carrierDesign, cell.carrierBinding(answered(REAL.workcellStatus), bind.chainHolds(), undefined, {discover: answered(MATERIAL.discover)})],
+    [rackDesign, rack.workcellRackBinding(rackInput(), {gateway: null, rereadServices: () => {}}), ['left.', 'gw.']],
+    [carrierDesign, cell.carrierBinding(answered(REAL.workcellStatus), bind.chainHolds(), undefined, {discover: answered(MATERIAL.discover)}), ['mc.']],
   ]
-  for (const [design, binding] of cases) for (const key of designKeys(design)) assert.ok(classify(binding, key), `${design.id} ${key}`)
+  for (const [design, binding, carried] of cases) for (const key of designKeys(design).filter(key => !carried.some(prefix => key.startsWith(prefix)))) assert.ok(classify(binding, key), `${design.id} ${key}`)
   const runs = tasks.runsBinding('s', bind.chainHolds(), {takes: [], choose: async () => ({ok: true})})
   for (const key of ['collected', 'collect']) assert.equal(classify(runs, key), 'absent', key)
   bind.resetHolds()

@@ -63,7 +63,7 @@ const reading = (
 
 /** THE AGENT-SHELL ADDRESS TABLE — every control the agent devices render,
  * each with exactly one owning family. Chain order: gateway → agent →
- * skillset → world → git (AGENTIC-CONVERGENCE Rev 5). */
+ * skillset → world → git (agent-shell-mockup.html Rev 5; WORLD-SHELL-DESIGN §7.1). */
 export const AGENT_SHELL_ADDRESS_TABLE: readonly AgentParamAddress[] = Object.freeze([
   // — Gateway device (actuation): harness connection, its answers verbatim —
   enumed('actuation', 'gateway', 'transport', ['stdio', 'ws', 'remote'], KERNEL_HARNESS_CONTROL),

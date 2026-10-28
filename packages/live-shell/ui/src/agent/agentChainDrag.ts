@@ -12,7 +12,7 @@
  *
  * The chain's composition (gateway → agent → skillset → world → git) is the
  * declared order at the family door (`agentDeviceCatalogue` CHAIN_SLOTS,
- * AGENTIC-CONVERGENCE Rev 5). There is no order operation, so a slide refuses
+ * agent-shell-mockup.html Rev 5; WORLD-SHELL-DESIGN §7.1). There is no order operation, so a slide refuses
  * honestly rather than keeping a shadow order store. */
 
 /** One application MIME for the whole chain gesture channel; the payload
@@ -131,8 +131,8 @@ export const MISSING_OPS = {
 /** The owner bindings the chain's lights read in the native run (P0-R4):
  * each names the product that owns the reading and the reading's own op.
  * Owners follow the verified per-device family map
- * (`ProjectCentral/docs/3-architecture/world-shell/AGENT-DEVICE-OWNERSHIP.md:20-37`, carried
- * at DLW-PLAN.md:1706-1713). The gateway lamp shows `harness_agent_read`, the
+ * (`ProjectCentral/docs/3-architecture/world-shell/AGENT-DEVICE-OWNERSHIP.md:20-37`).
+ * The gateway lamp shows `harness_agent_read`, the
  * AIKit agency gateway's harness-binding reading (:22) — the Gateway device's
  * transport face is Actuation's (:20), so the missing transport op is owed by
  * Actuation while the refused reading waits on AIKit. The skillset light reads

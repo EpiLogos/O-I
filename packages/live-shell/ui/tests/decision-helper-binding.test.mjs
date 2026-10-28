@@ -38,7 +38,10 @@ const {loadAgentShellFamilies} = await import('../src/inhabitants/loadAgentShell
 const host = await import('../src/frame/devices/deviceHost.tsx')
 const bind = await import('../src/agent/devices/designBindings.ts')
 const helper = await import('../src/agent/devices/decisionHelperBinding.ts')
-const {design} = await import('../src/inhabitants/catalogue/panels/ai-kit__decision-helper.tsx')
+const {design} = await import('../src/inhabitants/catalogue/panels/decision-helper.tsx')
+const {design: agentsetDesign} = await import('../src/inhabitants/catalogue/panels/software-factory__agentset-rack.tsx')
+const carry = await import('../src/agent/devices/oneAgentBinding.ts')
+const session = await import('../src/agent/devices/sessionChainBindings.ts')
 family.resetFamilyManifestsForTest()
 loadAgentShellFamilies()
 
@@ -117,21 +120,36 @@ test('the design draws on the binding in all five views — no NaN, no undefined
   host.resetHost()
 })
 
-test('AIKit admits the helper as a device of its family, so it can stand on a team\'s chain', () => {
-  const device = helper.decisionHelperDevice()
-  assert.ok(device, 'the ai-kit family admits the decision-helper face')
-  assert.equal(device.face.id, 'decision-helper')
-  assert.equal(device.id, helper.DECISION_HELPER_ID)
+test('REPLACED (#725) — AIKit admits no Decision helper of its own: the Agentset rack draws the helper\'s readings on its Helper page', () => {
+  // Was "AIKit admits the helper as a device of its family, so it can stand on a team's chain". The 22 Oct manual rewrite retired the
+  // Decision helper as a device of its own (§19.20: "A decision helper is an agent of type Settle in a team's Agentset rack, on the rack's
+  // Helper page (§19.15)"): the rack carries the helper's binding under `helper.` (oneAgentBinding.ts HELPER_PAGE; FactoryDeviceChain.tsx
+  // agentsetCarrying), and the rack's design draws it on its Helper page.
+  assert.equal(helper.decisionHelperDevice(), null, 'the ai-kit family admits no decision-helper face')
+  const own = helper.decisionHelperBinding({status: STATUS, teamSpace: TEAM, holds: bind.chainHolds()})
+  const rack = carry.carryPages(session.agentsetBinding({group: null, tracks: null, holds: bind.chainHolds()}), [{page: carry.HELPER_PAGE, binding: own}])
+  for (const [key, value] of Object.entries(own.values)) assert.deepEqual(rack.values[`helper.${key}`], value, `the rack carries the helper's ${key}`)
+  host.setHostPage(session.AGENTSET_ID, 'helper')
+  try {
+    const page = renderToStaticMarkup(createElement(host.HostedDevice, {designed: agentsetDesign, binding: rack, view: 'whole', nav: {}}))
+    assert.doesNotMatch(page, /\bNaN\b|undefined/, 'no absent key drawn as text')
+    assert.doesNotMatch(page, /Mercurius|Moirai as Klotho|Zeithoven/, 'the rack\'s helper fixture never stands in')
+    assert.ok(page.includes('kev-latest'), 'the Helper page draws the model AIKit reports')
+    for (const said of ['Vāk block', 'Gate 5 reading', 'Gate 6 reading']) assert.ok(page.includes(said), `the Helper page lists ${said}`)
+    assert.ok(page.includes(escaped(helper.DECISION_HELPER_REFUSE.provider)), 'a refused control says why, on the rack')
+  } finally { host.resetHost() }
 })
 
-test('code-reading: the helper stands on a group\'s chain right after its members, and is read only while it stands there', () => {
+test('code-reading: the helper is the Agentset rack\'s Helper page on a group\'s chain, and is read only while that rack stands there', () => {
   const view = readFileSync(new URL('../src/agent/devices/FactoryDeviceChain.tsx', import.meta.url), 'utf8')
-  // REPLACED (lane W1-Factory): the chain draws its place's plan (agent/devices/factoryPlaces.ts chainSlots), where the helper follows the
-  // Agentset rack and precedes the session's own devices; the plate stands only where the helper does.
-  const rack = view.indexOf("case 'agentset': return placed(AGENTSET_ID"), stands = view.indexOf("case 'decision-helper': return helperStands ? placed(DECISION_HELPER_ID, helperDevice, helperDesignBinding")
-  assert.ok(rack > 0 && stands > rack, 'the helper\'s plate after the Agentset rack\'s (§19.20)')
+  // REPLACED (#725): the helper's own plate after the Agentset rack's (lane W1-Factory) — the Decision helper is the rack's Helper page
+  // (§19.20), so a group's chain leads with the rack alone, which carries the helper while it stands on a group.
   const places = readFileSync(new URL('../src/agent/devices/factoryPlaces.ts', import.meta.url), 'utf8')
-  assert.match(places, /export const GROUP_LEAD: readonly FactorySlot\[\] = \['agentset', 'decision-helper'\]/, 'a group\'s chain leads with its members, then the helper')
-  assert.match(view, /const slots = chainSlots\(place, \{helper: helperStands, capture: captureOn, runMap: !!runMapDev, pads: !!padsDev\}\)/)
+  assert.match(places, /export const GROUP_LEAD: readonly FactorySlot\[\] = \['agentset'\]/, 'a group\'s chain leads with its members\' rack')
+  assert.doesNotMatch(view, /placed\(DECISION_HELPER_ID/, 'no helper plate of its own')
+  assert.match(view, /const helperStands = sessionRef != null && !!groupTrack\n/, 'it stands where a group\'s rack does')
+  assert.match(view, /const agentsetCarrying = useMemo\(\(\) => carryPages\(agentsetDesignBinding, helperStands \? \[\{page: HELPER_PAGE, binding: helperDesignBinding\}\] : \[\]\)/)
+  assert.match(view, /case 'agentset': return placed\(AGENTSET_ID, ownDevices\.agentset, agentsetCarrying/)
+  assert.match(view, /const slots = chainSlots\(place, \{runMap: !!runMapDev, pads: !!padsDev\}\)/)
   assert.match(view, /useDecisionHelperReadings\(transport, helperStands\)/, 'nothing is read unless the helper stands on a chain')
 })

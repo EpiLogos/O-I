@@ -22,31 +22,48 @@
 //   ctx.turn      {blocks: [{event, title, standing, kept, withheld, suppressed?}], withheldLines, withheldBlocks, notice}  the last turn's
 //                 Bounded disclosure. No command reports it: AIKit writes it only into the turn's own hook output.
 // The page only reads. No kernel op reaches `aikit work continuity` yet: the host leaves the keys absent until one does.
-import {memo, useLayoutEffect, useMemo, useState} from 'react'
-import {Band, Chooser, Dial, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, Tile, Toggle, ValueBox, type LightState, type RowItem} from '../../sdk/panel'
+// The Run page holds Power (the head's light key: lit On, dark Benched), the agent and what it runs on, Effort and Budget, Heartbeat
+// with its beat in seconds (`beat`) and On stall (`onStall`: ask | retry | stop), and Input. When a Stop or a Steer lands is the
+// transport's Quantize: the well reads `quantize` and the device sets none.
+// The Voice page (manual §19.4 The Voice page) carries the Voice's own parts (actuation__voice.tsx) under `speech.`: Body, Voice, Speed;
+// Mouth, Affect; Interrupt; Console. Whether what you say may leave this machine is Settings, Permissions' (§10.10): `speech.voice.egress`
+// is read here, and under Local only the cloud bodies stand closed.
+// The Identity page's New opens the card that makes an agent (manual §19.4 Making an agent), on keys `new.*`: new.for (your words),
+// new.world (from new.worlds), new.kept ('you' | 'project'), new.type (a pattern), new.carries (skillsets, from new.skillsets). Make
+// (`new.make`: kernel agent_definition propose) writes a proposal, read back on `new.proposal` {role, purpose, world, sources, ref};
+// Accept (`new.accept`: agent_definition accept) keeps it in your roster, Change returns to the fields, Discard (`new.discard`: no owner
+// operation withdraws a proposal yet) drops it. The card is Central's; the Agent keeps no copy.
+// The widget is the agent's tile in Messages (§19.24): its face in the posture of its state, its state, the last lines of its
+// conversation and a composer.
+import {memo, useLayoutEffect, useMemo, useState, type ReactNode} from 'react'
+import {Action, Band, Chooser, Dial, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, TextField, Tile, Toggle, ValueBox, type LightState, type Option, type RowItem} from '../../sdk/panel'
 import {maskStatic} from '../../../agent/maskFace'
-import {NONE, boolOf, clampTo, has, json, numOf, prefixed, scoped, shown, st, strOf, type DesignedDevice, type Value, type ViewProps} from './design'
-import {CustodyBands, GrantsBands, design as custody} from './software-factory__agent-custody'
-import {IdentityBands, agentType, withType, design as identity} from './central__agent-identity'
+import {NONE, boolOf, clampTo, has, json, numOf, on, prefixed, scoped, shown, st, strOf, type DesignedDevice, type Value, type ViewProps} from './design'
+import {CustodyBands, GrantsBands, design as custody} from './agent-custody'
+import {IdentityBands, agentType, withType, design as identity} from './agent-identity'
 import {CreatureFace} from '../faces/CreatureFace'
 import {EnvironStage} from '../faces/EnvironStage'
 import {TypeBand} from '../faces/TypeBand'
-import {PATTERNS, agentWrites, type RunState} from '../faces/agency'
+import {FAMILIES, PATTERNS, agentWrites, type RunState} from '../faces/agency'
 import {faceOf} from '../faces/figures'
 import {recordingFromThread, stateOfThread} from '../faces/runs'
-import {design as thread} from './software-factory__thread'
+import {design as thread} from './thread'
+import {design as voice} from './voice'
 import './actuation__harness-model.css'
 
 /** The keys the carried pages share with the Agent: its light, the autonomy both read, and the input the thread's composer sends. */
 const CUSTODY_SHARED = ['light', 'autonomy'] as const
 const IDENTITY_SHARED = ['light'] as const
 const THREAD_SHARED = ['light', 'input', 'quantize', 'draft', 'sent', 'age'] as const
-const PAGES = [{id: 'agent', label: 'Run'}, {id: 'custody', label: 'Custody'}, {id: 'grants', label: 'Grants'}, {id: 'identity', label: 'Identity'}, {id: 'type', label: 'Type'}, {id: 'context', label: 'Context'}] as const
+const VOICE_SHARED = ['light'] as const
+const PAGES = [{id: 'agent', label: 'Run'}, {id: 'custody', label: 'Custody'}, {id: 'grants', label: 'Grants'}, {id: 'identity', label: 'Identity'}, {id: 'type', label: 'Type'},
+  {id: 'context', label: 'Context'}, {id: 'voice', label: 'Voice'}] as const
 const custodyOf = (p: ViewProps) => scoped(p, 'custody.', CUSTODY_SHARED)
 const identityOf = (p: ViewProps) => scoped(p, 'id.', IDENTITY_SHARED)
 /** The pattern the agent was given: the identity page's `types` read for the agent it shows. */
 const typeOfAgent = (v: V) => agentType(v, 'id.')
 const threadOf = (p: ViewProps) => scoped(p, 'thread.', THREAD_SHARED)
+const speechOf = (p: ViewProps) => scoped(p, 'speech.', VOICE_SHARED)
 const NO_READINGS = (d: {fixtures?: DesignedDevice['fixtures']}) => d.fixtures?.['No readings'] ?? {}
 
 type V = ViewProps['v']
@@ -113,9 +130,15 @@ const SAYS = {
   effort: 'How hard the agent thinks in each turn. Drag handle 1 across the rungs.',
   budget: 'The turns the agent may use for one task. Drag handle 2 along the ruler.',
   input: 'Steer: what you send reaches the turn that runs. Queue: it waits as the next task.',
-  interrupt: 'Where a Stop or a Steer lands: now, at the next tool, or at the next turn.',
   heartbeat: 'The agent checks in on a beat. Each check-in moves the needle.',
+  autonomy: 'Suggest: the agent proposes only. Review: it works and you check each result. Auto: it works and lands changes with receipts.',
+  power: 'On, or Benched: the agent stays on the chain and gets no work. The light reads whether the harness reports it on.',
+  onStall: 'What the device does when the agent stalls.',
 }
+const AUTONOMY: readonly Option<string>[] = [{value: 'suggest', label: 'Suggest', does: 'The agent proposes only.'}, {value: 'review', label: 'Review', does: 'It works, and you check each result.'},
+  {value: 'auto', label: 'Auto', does: 'It works and lands changes with receipts.'}]
+const ON_STALL: readonly Option<string>[] = [{value: 'ask', label: 'Ask', does: 'The stall card asks you what to do.'}, {value: 'retry', label: 'Retry once', does: 'The device retries the turn once, then asks.'},
+  {value: 'stop', label: 'Stop', does: 'The device stops the turn.'}]
 
 /** A list the owner reports as a JSON array of words, read safely: anything else is no list. */
 const words = (v: V, key: string): string[] => { const raw = json<unknown>(v, key, []); return Array.isArray(raw) ? raw.filter((x): x is string => typeof x === 'string' && x.length > 0) : [] }
@@ -214,7 +237,7 @@ function AgentWell({v, set, standing, lamp, w, h, size}: {v: V; set?: ViewProps[
     : state === 'stalled' ? (mini ? `stalled · ${age} s` : `stalled · last check-in ${age} s`) : `check-in ${age} s ago`
   const turns = turnsLine(v)
   return <Display w={w} h={h} label="The agent"
-    does={mini ? 'The agent, its turns against the budget, and the needle.' : 'The agent, its turns against the budget, its effort and where an interrupt lands. Drag the handles to set them.'}
+    does={mini ? 'The agent, its turns against the budget, and the needle.' : 'The agent, its turns against the budget, its effort, and where the transport\'s Quantize lands a Stop or a Steer. Drag the handles to set effort and budget.'}
     corner={mini ? undefined : turns === undefined ? NONE : whole ? `${turns} turns` : turns}>
     <AgentFace x={7} y={mini ? 4 : 6} size={fs} dim={lamp !== 'lit'} type={type} state={run} />
     <text x={nameX} y={mini ? 17 : 29} className="dp-ink" style={{fontSize: mini ? 10.5 : 11.5, fontWeight: 600}}>{shown(v, 'agent')}</text>
@@ -237,7 +260,7 @@ function AgentWell({v, set, standing, lamp, w, h, size}: {v: V; set?: ViewProps[
       {whole && <text x={rungX(i) + rw / 2} y={baseY + 10} className="dp-axis" textAnchor="middle" style={{fontSize: 7.5}}>{['low', 'med', 'high', 'max'][i]}</text>}
     </g>)}
     {handle('effort') && effort !== undefined && <Handle n={1} shape="ring" x={rungX(effort) + rw / 2} y={baseY - rungH[effort]! - 7} label="Effort" does="Drag across the rungs: how hard the agent thinks in each turn."
-      onDrag={x => set!('effort', EFFORTS[Math.round(clampTo(0, 3, (x - 7 - rw / 2) / (rw + gp)))]!)} onReset={() => set!('effort', 'high')} />}
+      onDrag={x => set!('effort', EFFORTS[Math.round(clampTo(0, 3, (x - 7 - rw / 2) / (rw + gp)))]!)} onReset={() => set!('effort', 'medium')} />}
 
     {/* interrupt: where a Stop or a Steer lands, left to right from now to the next turn */}
     {!mini && <>
@@ -247,9 +270,8 @@ function AgentWell({v, set, standing, lamp, w, h, size}: {v: V; set?: ViewProps[
         <path d={`M${markX(i)} ${IY - 5}V${IY + 5}`} className="dp-faint" />
         <text x={markX(i)} y={baseY + 10} className="dp-axis" textAnchor="middle" style={{fontSize: 7.5}}>{word}</text>
       </g>)}
+      {/* A reading of the transport's Quantize: the device sets no time for a Stop or a Steer. */}
       {q !== undefined && <circle cx={markX(q)} cy={IY} r={3.5} fill="var(--dp-on)" />}
-      {whole && handle('quantize') && q !== undefined && <Handle n={3} x={markX(q)} y={IY} label="Interrupt" does="Drag along the line: where a Stop or a Steer lands."
-        onDrag={x => set!('quantize', QUANTIZE[Math.round(clampTo(0, 2, (x - sx0) / ((sx1 - sx0) / 2)))]!)} onReset={() => set!('quantize', 'next tool')} />}
     </>}
 
     {/* the needle: the last check-in, on a line that ends at the stall horizon */}
@@ -264,25 +286,21 @@ function AgentWell({v, set, standing, lamp, w, h, size}: {v: V; set?: ViewProps[
 
 /** Who holds Effort, when someone does: the control rings and offers the value back. */
 const heldEffort = (p: ViewProps) => { const by = strOf(p.v, 'effortHeld'); return by ? {heldBy: by, onHandBack: () => p.set('effortHeld', '')} : {} }
-const effortDial = (p: ViewProps) => <Dial {...st(p, 'effort')} {...heldEffort(p)} label="Effort" does={SAYS.effort} value={effortAt(p.v) ?? NaN} def={2} scale={{min: 0, max: 3, step: 1}}
+const effortDial = (p: ViewProps) => <Dial {...st(p, 'effort')} {...heldEffort(p)} label="Effort" does={SAYS.effort} value={effortAt(p.v) ?? NaN} def={1} scale={{min: 0, max: 3, step: 1}}
   format={i => EFFORTS[Math.round(i)] ?? NONE} onChange={i => p.set('effort', EFFORTS[Math.round(i)]!)} />
 const budgetBox = (p: ViewProps) => <ValueBox {...st(p, 'cap')} label="Budget" does={SAYS.budget} value={numOf(p.v, 'cap') ?? NaN} def={12} scale={CAP} format={x => `${Math.round(x)}`} onChange={x => p.set('cap', Math.round(x))} />
 const inputRadio = (p: ViewProps, label?: string) => <Radio {...st(p, 'input')} label={label} does={SAYS.input} value={strOf(p.v, 'input') ?? ''} stack onChange={x => p.set('input', x)}
   options={[{value: 'steer', label: 'Steer', does: 'What you send reaches the turn that runs.'}, {value: 'queue', label: 'Queue', does: 'What you send waits as the next task.'}]} />
-const interruptDial = (p: ViewProps) => <Dial {...st(p, 'quantize')} label="Interrupt" does={SAYS.interrupt} value={quantizeAt(p.v) ?? NaN} def={1} scale={{min: 0, max: 2, step: 1}}
-  format={i => QUANTIZE_SHORT[Math.round(i)] ?? NONE} onChange={i => p.set('quantize', QUANTIZE[Math.round(i)]!)} />
+/** Autonomy is Custody's, shared with the Agent: a macro here, its own section on the Custody page. */
+const autonomyRadio = (p: ViewProps) => <Radio {...st(p, 'autonomy')} label="Autonomy" does={SAYS.autonomy} value={strOf(p.v, 'autonomy') ?? ''} stack options={AUTONOMY} onChange={x => p.set('autonomy', x)} />
+/** Power is the head's light key: On asks for lit, Benched for dark. The light itself reads the harness. */
+const powerRadio = (p: ViewProps) => { const x = strOf(p.v, 'light')
+  return <Radio {...st(p, 'light')} label="Power" does={SAYS.power} value={x === 'lit' ? 'on' : x === 'dark' ? 'benched' : ''}
+    options={[{value: 'on', label: 'On'}, {value: 'benched', label: 'Benched'}]} onChange={y => p.set('light', y === 'on' ? 'lit' : 'dark')} /> }
 /** The head: the light reads the owner alone, hollow when it reports none; pressing it asks, unless the host stands it disabled. */
 const atWork = (p: ViewProps) => stateWord(lampOf(p), p.v) === 'working'
 const head = (p: ViewProps) => ({light: lampOf(p), busy: atWork(p), onLight: st(p, 'light').disabled ? undefined : () => p.set('light', lightOf(p) === 'lit' ? 'dark' : 'lit'), lightWhy: st(p, 'light').disabled, onFold: p.nav.fold, onFull: p.nav.full})
 
-/** The widget's last line: the last row of the thread, as one short sentence. */
-function Last({v}: {v: V}) {
-  const rows = lines(v), last = rows[rows.length - 1]
-  if (!last) return <>No reading of the thread.</>
-  const text = last.text || NONE
-  return last.kind === 'tool' || last.kind === 'stall' ? <><b>{last.tool ?? last.who}</b> {text}</>
-    : last.kind === 'proposal' ? <><b>{last.who}</b> Proposal · {text}</> : <><b>{last.who}</b> {text}</>
-}
 
 /** Team cell: where the agent stands in Anima or Aletheia — its row, the question the row asks of it, and its depth. */
 function teamRows(v: V): RowItem[] {
@@ -339,22 +357,25 @@ function AgentBands({p}: {p: ViewProps}) {
       </Section>
       <Section label="Input" grow>
         {inputRadio(p)}
-        <Radio {...st(p, 'quantize')} label="Interrupt" does={SAYS.interrupt} value={strOf(p.v, 'quantize') ?? ''} stack onChange={x => p.set('quantize', x)}
-          options={QUANTIZE.map(q => ({value: q, label: q, does: q === 'now' ? 'A Stop or a Steer lands at once.' : q === 'next tool' ? 'It lands when the running tool ends.' : 'It lands when the turn ends.'}))} />
       </Section>
     </Band>
     <Band>
       <Section label="Runs on" width={198}>
+        {powerRadio(p)}
         <Readout label="agent" does="Who the agent is. Drag another agent from the browser here to replace it." value={strOf(p.v, 'agent')} />
         <Chooser {...st(p, 'model')} label="Model" does="The model for this session." value={strOf(p.v, 'model') ?? ''} options={optionsOf(p.v, 'models', 'model', m => m.replace('model:', ''))} onChange={x => p.set('model', x)} />
         <Chooser {...st(p, 'harness')} label="Harness" does="The program that runs the agent." value={strOf(p.v, 'harness') ?? ''} options={optionsOf(p.v, 'harnesses', 'harness')} onChange={x => p.set('harness', x)} />
       </Section>
-      <Section label="Team cell" width={176}><Rows does="Where the agent stands in Anima or Aletheia: its row, the question the row asks of it, and its depth. Read from the team space." items={teamRows(p.v)} size={3} /></Section>
-      <Section label="Heartbeat" cols={3} grow>
+      <Section label="Heartbeat" cols={2} grow>
         <Toggle {...st(p, 'heartbeat')} label="Beat" does={SAYS.heartbeat} on={boolOf(p.v, 'heartbeat') === true} unknown={boolOf(p.v, 'heartbeat') === undefined} onChange={x => p.set('heartbeat', x)} />
+        <ValueBox {...st(p, 'beat')} label="Every" does="The beat: how often the agent checks in, in seconds." value={numOf(p.v, 'beat') ?? NaN} def={15} scale={{min: 5, max: 120, step: 5}} format={x => `${Math.round(x)} s`} onChange={x => p.set('beat', Math.round(x))} />
         <Readout label="needle" does="Live while the agent checked in within 90 s. Stalled after that." value={needle(p.v) === 'unread' ? undefined : needle(p.v)} tone={needle(p.v) === 'stalled' ? 'stall' : 'value'} />
         <Readout label="check-in" does="The time since the agent's last check-in." value={checkIn(p.v)} />
+        <div style={{gridColumn: 'span 2', width: '100%'}}><Radio {...st(p, 'onStall')} label="On stall" does={SAYS.onStall} value={strOf(p.v, 'onStall') ?? ''} options={ON_STALL} onChange={x => p.set('onStall', x)} /></div>
       </Section>
+    </Band>
+    <Band>
+      <Section label="Team cell" grow><Rows does="Where the agent stands in Anima or Aletheia: its row, the question the row asks of it, and its depth. Read from the team space." items={teamRows(p.v)} size={3} /></Section>
     </Band>
   </>
 }
@@ -461,6 +482,175 @@ function ContextBands({p}: {p: ViewProps}) {
   </>
 }
 
+// ---------------------------------------------------------------- Voice: how the agent speaks (the Voice's own parts, carried)
+// Carried from the Voice's design (actuation__voice.tsx), where these parts were drawn first. Egress is not set here: it is Settings,
+// Permissions', and is only read, to close the cloud bodies under Local only.
+
+type Body = 'local' | 'face' | 'realtime-aligned' | 'realtime-native' | 'off'
+const BODY_LABEL: Record<Body, string> = {local: 'Local', face: 'Face', 'realtime-aligned': 'Realtime, aligned', 'realtime-native': 'Realtime, own voice', off: 'Off'}
+const BODY_DOES: Record<Body, string> = {
+  local: 'A voice on this machine. Nothing leaves it. It measures no timing, so the mouth follows the loudness.',
+  face: 'A voice on this machine that measures every sound to the sample: the mouth moves with each sound.',
+  'realtime-aligned': 'A cloud voice, its words aligned on this machine, so the mouth still moves with each sound.',
+  'realtime-native': 'A cloud voice in the service\'s own voice: the mouth follows the loudness.',
+  off: 'Nothing: the agent writes and does not speak.'}
+const TIMED: readonly Body[] = ['face', 'realtime-aligned']
+const MOUTHS = ['aligned', 'loudness', 'off'] as const
+const INTERRUPTS = [{value: 'off', label: 'Off', does: 'The agent finishes what it is saying.'}, {value: 'stop', label: 'Stop', does: 'Ends its sentence when you talk.'},
+  {value: 'barge-in', label: 'Barge-in', does: 'Ends its sentence and hears what you say.'}] as const
+const SUPPORT: Record<string, string> = {supported: 'yes', degraded: 'degraded', unsupported: 'no', unknown: NONE}
+interface Sentence {readonly text: string; readonly start: number; readonly end: number; readonly emotion?: string; readonly intensity?: number
+  readonly words: readonly {w: string; start: number; end: number}[]; readonly phones: readonly {p: string; start: number; end: number}[]}
+const isRec = (x: unknown): x is Record<string, unknown> => typeof x === 'object' && x !== null
+const isNum = (x: unknown): x is number => typeof x === 'number' && Number.isFinite(x)
+function spokenOf(v: V): Sentence[] | undefined {
+  const raw = json<unknown>(v, 'turn', undefined)
+  if (!isRec(raw) || !Array.isArray(raw.sentences)) return undefined
+  return raw.sentences.flatMap((e): Sentence[] => {
+    if (!isRec(e) || typeof e.text !== 'string' || !isNum(e.start) || !isNum(e.end)) return []
+    const a = isRec(e.affect) ? e.affect : {}
+    const ws = Array.isArray(e.words) ? e.words.flatMap(x => (isRec(x) && typeof x.w === 'string' && isNum(x.start) && isNum(x.end) ? [{w: x.w, start: x.start, end: x.end}] : [])) : []
+    const ps = Array.isArray(e.phones) ? e.phones.flatMap(x => (isRec(x) && typeof x.p === 'string' && isNum(x.start) && isNum(x.end) ? [{p: x.p, start: x.start, end: x.end}] : [])) : []
+    return [{text: e.text, start: e.start, end: e.end, emotion: typeof a.emotion === 'string' ? a.emotion : undefined, intensity: isNum(a.intensity) ? a.intensity : undefined, words: ws, phones: ps}]
+  })
+}
+const bodyOf = (v: V): Body | undefined => { const b = strOf(v, 'voice.body'); return b !== undefined && b in BODY_LABEL ? b as Body : undefined }
+
+/** The last spoken turn on one clock: a band per sentence with the feeling chosen for it, its words across the time they took, and under
+ * them the sounds that moved the mouth. */
+function SpokenTurn({v, w, h}: {v: V; w: number; h: number}) {
+  const turn = spokenOf(v), body = bodyOf(v)
+  if (!turn || !turn.length) return <text x={w / 2} y={h / 2} textAnchor="middle" className="dp-ink-dim">{strOf(v, 'reason') ?? 'Nothing spoken yet'}</text>
+  const t0 = turn[0]!.start, t1 = turn[turn.length - 1]!.end, X = (t: number) => 6 + (t - t0) / Math.max(1, t1 - t0) * (w - 12)
+  const timed = body !== undefined && TIMED.includes(body), rowA = 14, rowW = h * .46, rowP = h * .72
+  let edge = -Infinity
+  const placed = turn.map(s => s.words.filter(x => { const at = X(x.start); if (at < edge + 2) return false; edge = at + x.w.length * 8 * .58; return true }))
+  return <g>
+    {turn.map((s, i) => <g key={i}>
+      <rect x={X(s.start).toFixed(1)} y={4} width={Math.max(1, X(s.end) - X(s.start) - 2).toFixed(1)} height={rowA - 2} className="dp-fill" opacity={.25 + .6 * clampTo(0, 1, s.intensity ?? .5)} />
+      <text x={X(s.start) + 3} y={rowA - 2} className="dp-axis" style={{fontSize: 7.5}}>{s.emotion ? `${s.emotion}${s.intensity !== undefined ? ` ${Math.round(s.intensity * 100)}%` : ''}` : 'no affect'}</text>
+      {placed[i]!.map((x, k) => <text key={k} x={X(x.start)} y={rowW} className="dp-ink" style={{fontSize: 8}}>{x.w}</text>)}
+      {timed && s.phones.map((x, k) => <rect key={k} x={X(x.start).toFixed(1)} y={rowP - 8} width={Math.max(.8, X(x.end) - X(x.start) - .6).toFixed(1)} height={8} fill="var(--dp-value)" opacity={k % 2 ? .55 : .85} />)}
+    </g>)}
+    {!timed && <text x={6} y={rowP} className="dp-ink-dim" style={{fontSize: 8}}>no sound timing: the mouth follows the loudness</text>}
+    <text x={w - 4} y={h - 3} textAnchor="end" className="dp-axis">{`${((t1 - t0) / 1000).toFixed(1)} s`}</text>
+  </g>
+}
+
+/** The Voice page: Body, Voice, Speed; Mouth, Affect; Interrupt; Console, and what the body reports it can do. */
+function VoiceBands({p}: {p: ViewProps}) {
+  const v = p.v, body = bodyOf(v), egress = strOf(v, 'voice.egress')
+  const bodies = (() => { const raw = json<unknown>(v, 'bodies', undefined); return Array.isArray(raw) ? raw.filter(isRec) : undefined })()
+  const closed = (id: Body): string | undefined => {
+    if (id.startsWith('realtime') && egress === 'local') return 'What you say stays on this machine: Settings, Permissions is Local only.'
+    const b = bodies?.find(x => x.id === id)
+    return b && b.available !== true ? (typeof b.why === 'string' ? b.why : 'This body cannot run now.') : undefined
+  }
+  const voices = words(v, 'voice.voices'), support = (k: string) => strOf(v, k)
+  const toggle = (key: string, label: string, does: string) => <Toggle {...st(p, key)} label={label} does={does} on={boolOf(v, key) === true} unknown={boolOf(v, key) === undefined} onChange={x => p.set(key, x)} />
+  return <>
+    <Band>
+      <Section width={206}><Display w={194} h={146} label="The last spoken turn" corner={strOf(v, 'voice.voice')}
+        does="The last spoken turn on one clock: each sentence with the feeling chosen for it, its words, and the sounds that moved the mouth."><SpokenTurn v={v} w={194} h={146} /></Display></Section>
+      <Section label="Body" cols={2} grow>
+        <div style={{gridRow: 'span 2', width: '100%'}}><Radio {...st(p, 'voice.body')} does="What speaks." value={body ?? ''} stack onChange={x => p.set('voice.body', x)}
+          options={(Object.keys(BODY_LABEL) as Body[]).map(id => ({value: id, label: BODY_LABEL[id], does: BODY_DOES[id], why: id === 'off' ? undefined : closed(id)}))} /></div>
+        <Chooser {...st(p, 'voice.voice')} label="Voice" does="The voice that the agent speaks in." value={strOf(v, 'voice.voice') ?? ''} options={voices.map(x => ({value: x, label: x}))}
+          onChange={x => p.set('voice.voice', x)} disabled={st(p, 'voice.voice').disabled ?? (voices.length ? undefined : 'The body offers no voice.')} />
+        <Dial {...st(p, 'voice.speed')} label="Speed" does="How fast the agent speaks." value={numOf(v, 'voice.speed') ?? NaN} def={1} scale={{min: .5, max: 2}} format={x => `${x.toFixed(2)}×`}
+          onChange={x => p.set('voice.speed', Math.round(x * 100) / 100)} />
+      </Section>
+    </Band>
+    <Band>
+      <Section label="Mouth" width={104}>
+        <Radio {...st(p, 'voice.mouth')} does="What moves the face's mouth." value={strOf(v, 'voice.mouth') ?? ''} stack onChange={x => p.set('voice.mouth', x)}
+          options={MOUTHS.map(m => ({value: m, label: m === 'aligned' ? 'Aligned' : m === 'loudness' ? 'Loudness' : 'Off', does: m === 'aligned' ? 'The mouth moves with each measured sound.' : m === 'loudness' ? 'The mouth opens with the loudness.' : 'The mouth stays still.',
+            why: m === 'aligned' && body !== undefined && !TIMED.includes(body) ? 'This body measures no timing.' : undefined}))} />
+        {toggle('voice.affect', 'Affect', 'Before each sentence is spoken, K-E-V chooses the face\'s feeling for it. The words stay as they are.')}
+      </Section>
+      <Section label="Interrupt" width={96}>
+        <Radio {...st(p, 'voice.interrupt')} does="What happens when you talk while the agent speaks." value={strOf(v, 'voice.interrupt') ?? ''} stack onChange={x => p.set('voice.interrupt', x)}
+          options={INTERRUPTS.map(o => ({...o, why: o.value === 'barge-in' && support('body.bargeIn') === 'unsupported' ? 'This body cannot be talked over.'
+            : o.value === 'stop' && support('body.interrupt') === 'unsupported' ? 'This body cannot stop in the middle of a sentence.' : undefined}))} />
+      </Section>
+      <Section label="The body" cols={2} grow>
+        {toggle('voice.console', 'Console', 'Shows Epii\'s console beside the face.')}
+        <Readout label="latency" does="How long a sentence takes to start sounding." value={numOf(v, 'body.latencyMs') === undefined ? undefined : `${numOf(v, 'body.latencyMs')} ms`} tone="value" />
+        <Readout label="hears" does="Whether the body hears while it speaks." value={SUPPORT[support('body.duplex') ?? 'unknown']} />
+        <Readout label="talk over" does="Whether you can talk over it." value={SUPPORT[support('body.bargeIn') ?? 'unknown']} />
+        <Readout label="stops" does="Whether it can stop in the middle of a sentence." value={SUPPORT[support('body.interrupt') ?? 'unknown']} />
+        <Readout label="receipt" does="The last spoken turn's receipt." value={strOf(v, 'body.receipt')} />
+      </Section>
+    </Band>
+  </>
+}
+
+// ---------------------------------------------------------------- New: the card that makes an agent (manual §19.4 Making an agent)
+
+const KEPT: readonly Option<string>[] = [{value: 'you', label: 'You', does: 'The agent is yours alone.'}, {value: 'project', label: 'The project', does: 'The agent belongs to the project.'}]
+interface Proposal {readonly ref?: string; readonly role?: string; readonly purpose?: string; readonly world?: string; readonly sources: readonly string[]}
+function proposalOf(v: V): Proposal | undefined {
+  const o = recOf(json<unknown>(v, 'new.proposal', undefined))
+  if (!o) return undefined
+  const t = (x: unknown) => (typeof x === 'string' && x ? x : undefined)
+  return {ref: t(o.ref), role: t(o.role), purpose: t(o.purpose), world: t(o.world), sources: Array.isArray(o.sources) ? o.sources.filter((x): x is string => typeof x === 'string') : []}
+}
+const span2 = (child: ReactNode) => <div style={{gridColumn: 'span 2', width: '100%'}}>{child}</div>
+
+/** The card: your words for what the agent is for, where it works, whom it is kept for, its type and what it carries; Make writes the
+ * proposal, and the card turns to it: Accept, Change or Discard. */
+function NewCardBands({p}: {p: ViewProps}) {
+  const v = p.v, proposal = proposalOf(v), carries = words(v, 'new.carries'), offered = words(v, 'new.skillsets'), type = strOf(v, 'new.type')
+  const types: Option<string>[] = FAMILIES.flatMap(f => f.patterns.map(x => ({value: x.id, label: `${f.name} · ${x.name}`, does: x.does})))
+  const makeWhy = !(strOf(v, 'new.for') ?? '').trim() ? 'Say what the agent is for first.' : !strOf(v, 'new.world') ? 'Choose the world it works in.' : undefined
+  if (proposal) return <>
+    <Band>
+      <Section width={206}><Display w={194} h={146} label="The proposal" corner="proposed"
+        does="What Central wrote from your words: the agent's role, its purpose, the world it stands in and the sources it may read. It is a proposal until you accept it.">
+        <AgentFace x={8} y={10} size={34} dim={false} type={type} state="waiting" />
+        <text x={70} y={24} className="dp-ink" style={{fontWeight: 600}}>{proposal.role ?? NONE}</text>
+        <text x={70} y={38} className="dp-ink-dim">{proposal.world ?? NONE}</text>
+        {(proposal.purpose ?? NONE).match(/.{1,40}(\s|$)/g)?.slice(0, 3).map((line, i) => <text key={i} x={8} y={74 + i * 12} className="dp-ink-dim">{line.trim()}</text>)}
+        <text x={8} y={128} className="dp-axis">{`${proposal.sources.length} source${proposal.sources.length === 1 ? '' : 's'} it may read`}</text>
+      </Display></Section>
+      <Section label="The proposal" grow>
+        <Readout label="for" does="The role Central read from your words." value={proposal.role} />
+        <Action {...st(p, 'new.accept')} hold label="Accept" does="Keeps the agent in your roster." onPress={() => p.set('new.accept', proposal.ref ?? true)} />
+        <Action label="Change" does="Back to the card's fields, to edit one before you make it again." onPress={() => p.set('new.proposal', undefined)} />
+        <Action {...st(p, 'new.discard')} label="Discard" does="Drops the proposal." onPress={() => p.set('new.discard', proposal.ref ?? true)} />
+      </Section>
+    </Band>
+    <Band><Section grow><Rows label="The sources it may read" does="The sources Central read from your words, which the agent may read." size={7}
+      items={proposal.sources.length ? proposal.sources.map(x => ({id: x, name: x, light: 'lit', tone: 'value'})) : [{id: 'none', name: 'No source', light: 'dark'}]} /></Section></Band>
+  </>
+  return <>
+    <Band>
+      <Section label="For" cols={2} grow>
+        {span2(<TextField {...st(p, 'new.for')} wide label="What the agent is for" does="Say what you want the agent for, as you would say it to a person. Central reads its role, its purpose and what it may read from it."
+          value={strOf(v, 'new.for') ?? ''} placeholder="Keep my reading notes in order, and tell me what repeats." onChange={x => p.set('new.for', x)} />)}
+        <Chooser {...st(p, 'new.world')} label="Works in" wide does="Where the agent belongs. It works in that world's workcell." value={strOf(v, 'new.world') ?? ''}
+          options={words(v, 'new.worlds').map(x => ({value: x, label: x}))} onChange={x => p.set('new.world', x)} />
+        <Radio {...st(p, 'new.kept')} label="Kept for" does="Whether the agent is yours alone or belongs to the project." value={strOf(v, 'new.kept') ?? ''} options={KEPT} onChange={x => p.set('new.kept', x)} />
+        {span2(<Chooser {...st(p, 'new.type')} label="Type" wide does="How the agent works, from the six families. The type sets the agent's face." value={type ?? ''}
+          options={[{value: '', label: 'None yet'}, ...types]} onChange={x => p.set('new.type', x || undefined)} disabled={types.length ? undefined : 'No reading of the types.'} />)}
+      </Section>
+    </Band>
+    <Band>
+      <Section label="Carries" grow><Rows does="The skillsets the agent carries. Drag a skillset from the browser here, or press one to add it." size={6} columns={2}
+        items={offered.length ? offered.map(x => ({id: x, name: x, light: carries.includes(x) ? 'lit' as LightState : 'dark' as LightState, tone: 'value' as const, request: carries.includes(x)}))
+          : [{id: 'none', name: 'No skillset offered', light: 'unknown'}]}
+        onRequest={offered.length ? (id, on) => p.set('new.carries', JSON.stringify(on ? [...carries, id] : carries.filter(x => x !== id))) : undefined} /></Section>
+      <Section label="Make" width={104}>
+        <Readout label="carries" does="The skillsets the agent will carry." value={carries.length} tone="value" />
+        <Action {...st(p, 'new.make')} label="Make" does="Central writes the agent as a proposal from your words. Nothing is kept until you accept it."
+          onPress={makeWhy ? undefined : () => p.set('new.make', JSON.stringify({for: strOf(v, 'new.for'), world: strOf(v, 'new.world'), kept: strOf(v, 'new.kept'), type, carries}))}
+          disabled={st(p, 'new.make').disabled ?? makeWhy} />
+        <Action label="Close" does="Closes the card. Nothing was made." onPress={() => p.set('new.open', false)} />
+      </Section>
+    </Band>
+  </>
+}
+
 // The Context page's sample: a session fourteen prompts in, at moderate pressure, and its last turn.
 const SAMPLE_PRESSURE = JSON.stringify({budget: 60, prompts: 14, consumed: 14 / 60, pressure: 'moderate', brackets: {fresh_max: .2, moderate_max: .45, depleted_max: .7}, blocks: 3, lines: 8})
 const SAMPLE_TURN = JSON.stringify({withheldLines: 20, withheldBlocks: 1, notice: 'Moderate: 20 lines and 1 block withheld',
@@ -479,7 +669,7 @@ export const design: DesignedDevice = {
   title: 'Agent',
   kind: 'instrument',
   defaults: {
-    light: 'lit', effort: 'high', effortHeld: '', cap: 12, input: 'steer', quantize: 'next tool', heartbeat: true,
+    light: 'lit', effort: 'high', effortHeld: '', cap: 12, input: 'steer', quantize: 'next tool', heartbeat: true, beat: 15, onStall: 'ask',
     model: 'model:claude-sonnet-4.6', harness: 'claude-code', draft: '',
     // Readings: what the owners report, never set from here.
     agent: 'Flint', autonomy: 'review', used: 7, age: 6,
@@ -489,7 +679,10 @@ export const design: DesignedDevice = {
     'ctx.pressure': SAMPLE_PRESSURE, 'ctx.turn': SAMPLE_TURN, 'ctx.armed': JSON.stringify(['continuity-closeout']),
     // The carried pages' own values, under their prefixes.
     ...prefixed('custody.', custody.defaults, CUSTODY_SHARED), ...prefixed('id.', identity.defaults, IDENTITY_SHARED),
-    ...prefixed('thread.', thread.defaults, THREAD_SHARED),
+    ...prefixed('thread.', thread.defaults, THREAD_SHARED), ...prefixed('speech.', voice.defaults, VOICE_SHARED),
+    // The New card: closed until you press New on the Identity page. The worlds and the skillsets it offers are the owners' lists.
+    'new.open': false, 'new.for': '', 'new.kept': 'you', 'new.carries': '[]',
+    'new.worlds': JSON.stringify(['O-I', 'Archetypal-Earth', 'Central']), 'new.skillsets': JSON.stringify(['central:documentation', 'central:core-development', 'ai-kit:reading', 'ql:foundations']),
   } as DesignedDevice['defaults'],
   firstPage: 'agent',
   fixtures: {
@@ -508,13 +701,21 @@ export const design: DesignedDevice = {
     'In a team': {agent: 'Eros', ...prefixed('id.', identity.fixtures?.['A team member'] ?? {}, IDENTITY_SHARED), 'team.space': 'Anima', 'team.row': 'CF3', 'team.question': '4.2 What is being done?', 'team.depth': 'M3 Journey', thread: TEAM_THREAD, 'thread.thread': TEAM_THREAD,
       'thread.session': 'journey', 'thread.selected': 'journey', 'thread.sessions': JSON.stringify([{id: 'journey', name: 'Where the October journey stands', short: 'journey', agent: 'Eros', model: 'claude-sonnet-4.6', used: 7, cap: 12, thread: JSON.parse(TEAM_THREAD)}])},
     Benched: {light: 'dark', age: -1, thread: sampleThread({})},
+    'Making an agent': {'new.open': true, 'new.for': 'Keep my reading notes in order, and tell me what repeats.', 'new.world': 'Archetypal-Earth', 'new.type': 'trail',
+      'new.carries': JSON.stringify(['central:documentation', 'ai-kit:reading'])},
+    'A proposal to accept': {'new.open': true, 'new.for': 'Keep my reading notes in order, and tell me what repeats.', 'new.world': 'Archetypal-Earth', 'new.type': 'trail',
+      'new.carries': JSON.stringify(['central:documentation', 'ai-kit:reading']),
+      'new.proposal': JSON.stringify({ref: 'proposal:reading-keeper', role: 'Reading keeper', world: 'Archetypal-Earth', purpose: 'Keeps the reading notes in order and says what repeats across them.',
+        sources: ['Archetypal-Earth/docs/SPEC.md', 'Archetypal-Earth/curation/plates.md', 'books/jung-archetypal-field']})},
+    'Speaking locally': prefixed('speech.', voice.fixtures?.['Local, no timing'] ?? {}, VOICE_SHARED),
     'Context critical': {'ctx.pressure': JSON.stringify({budget: 60, prompts: 47, consumed: 47 / 60, pressure: 'critical', brackets: {fresh_max: .2, moderate_max: .45, depleted_max: .7}, blocks: 0, lines: 0}),
       'ctx.turn': JSON.stringify({withheldLines: 31, withheldBlocks: 3, notice: 'Critical: standing guidance only; 3 blocks withheld',
         blocks: [{event: 'Prompt', title: 'Standing: authorship and the never-do card', standing: 6, kept: 0, withheld: 0}, {event: 'Prompt', title: 'Domain: the DLW manual', standing: 0, kept: 0, withheld: 12, suppressed: true},
           {event: 'PreToolUse', title: 'docs/dlw/DLW.md: its standing guidance', standing: 2, kept: 0, withheld: 9}, {event: 'PostToolUse', title: 'Receipts of the last edits', standing: 0, kept: 0, withheld: 10, suppressed: true}]})},
     'Not read': {light: 'unknown', used: -1, age: -1, thread: sampleThread({})},
-    'No readings': {...Object.fromEntries(['light', 'effort', 'effortHeld', 'cap', 'input', 'quantize', 'heartbeat', 'model', 'harness', 'draft', 'sent', 'agent', 'autonomy',
-      'used', 'age', 'thread', 'models', 'harnesses', 'ctx.pressure', 'ctx.turn', 'ctx.armed'].map(k => [k, undefined])),
+    'No readings': {...Object.fromEntries(['light', 'effort', 'effortHeld', 'cap', 'input', 'quantize', 'heartbeat', 'beat', 'onStall', 'model', 'harness', 'draft', 'sent', 'agent', 'autonomy',
+      'used', 'age', 'thread', 'models', 'harnesses', 'ctx.pressure', 'ctx.turn', 'ctx.armed', 'new.open', 'new.for', 'new.kept', 'new.carries', 'new.worlds', 'new.skillsets'].map(k => [k, undefined])),
+      ...prefixed('speech.', NO_READINGS(voice), VOICE_SHARED),
       ...prefixed('custody.', NO_READINGS(custody), CUSTODY_SHARED), ...prefixed('id.', NO_READINGS(identity), IDENTITY_SHARED),
       ...prefixed('thread.', NO_READINGS(thread), THREAD_SHARED)},
   },
@@ -526,36 +727,42 @@ export const design: DesignedDevice = {
       <AgentWell v={p.v} set={p.set} standing={p.standing} lamp={lightOf(p)} w={140} h={146} size="compact" />
     </Section>
     <Section label="Macros" cols={2}>
+      {autonomyRadio(p)}
       {effortDial(p)}
       {budgetBox(p)}
-      {inputRadio(p)}
-      {interruptDial(p)}
+      {inputRadio(p, 'Input')}
     </Section>
   </Panel>,
 
-  whole: p => <Panel title="Agent" view="whole" {...head(p)} pages={PAGES} page={p.page || 'agent'} onPage={p.setPage}>
+  whole: p => <Panel title="Agent" view="whole" {...head(p)} pages={PAGES} page={p.page || 'agent'} onPage={p.setPage}
+    acts={p.page === 'identity' && !on(p.v, 'new.open') ? <Action label="New" does="Opens a card to make a new agent." onPress={() => p.set('new.open', true)} /> : undefined}>
     {p.page === 'custody' ? <CustodyBands p={custodyOf(p)} writes={false} />
       : p.page === 'grants' ? <GrantsBands p={custodyOf(p)} />
-      : p.page === 'identity' ? <IdentityBands p={identityOf(p)} state={runStateOf(p.v, lightOf(p))} />
+      : p.page === 'identity' ? (on(p.v, 'new.open') ? <NewCardBands p={p} /> : <IdentityBands p={identityOf(p)} state={runStateOf(p.v, lightOf(p))} />)
       : p.page === 'type' ? <TypeBands p={p} />
       : p.page === 'context' ? <ContextBands p={p} />
+      : p.page === 'voice' ? <VoiceBands p={speechOf(p)} />
       : <AgentBands p={p} />}
   </Panel>,
 
   full: p => <FullWithStage p={p} />,
 
+  // The agent's tile in Messages (§19.24): its face in the posture of its state, its state, the last lines of its conversation and a
+  // composer.
   widget: p => {
-    const send = st(p, 'sent'), draft = strOf(p.v, 'draft') ?? '', who = strOf(p.v, 'agent')
+    const send = st(p, 'sent'), draft = strOf(p.v, 'draft') ?? '', who = strOf(p.v, 'agent'), run = runStateOf(p.v, lightOf(p))
     const says = 'Type a message and press Enter. It steers the turn that runs, or waits as the next task, as Input says.'
+    const talk = lines(p.v).filter(r => r.kind !== 'tool').slice(-3)
     return <Tile title={`Agent · ${shown(p.v, 'agent')}`} light={lampOf(p)} busy={atWork(p)} span={2} onFull={p.nav.full}>
-      <AgentWell v={p.v} standing={p.standing} lamp={lightOf(p)} w={104} h={100} size="mini" />
+      <div className="hm-tile-face">
+        <Display w={64} h={64} label="The agent's face" does="The creature of its type, in the posture of its state.">
+          <AgentFace x={4} y={8} size={32} dim={lightOf(p) !== 'lit'} type={typeOfAgent(p.v)} state={run} />
+        </Display>
+        <Readout label="state" does="What the agent does now." value={stateWord(lightOf(p), p.v)} tone={needle(p.v) === 'stalled' ? 'stall' : 'value'} />
+      </div>
       <div className="hm-tile-side">
-        <p className="hm-last" aria-live="polite"><Last v={p.v} /></p>
-        <div className="hm-tile-reads">
-          <Readout label="state" does="What the agent does now." value={stateWord(lightOf(p), p.v)} tone={needle(p.v) === 'stalled' ? 'stall' : 'value'} />
-          <Readout label="turns" does="Turns used of turns allowed." value={turnsLine(p.v)} />
-          <Readout label="effort" does="How hard the agent thinks in each turn." value={strOf(p.v, 'effort')} />
-        </div>
+        <div className="hm-last" aria-live="polite">{talk.length ? talk.map((r, i) => <p key={i}><b>{r.kind === 'you' || r.kind === 'steer' || r.kind === 'queued' ? 'you' : r.who}</b> {r.kind === 'proposal' ? `Proposal · ${r.text}` : r.text || NONE}</p>)
+          : <p>{has(p.v, 'thread') ? 'No messages yet.' : 'No reading of the conversation.'}</p>}</div>
         <input className="hm-composer" aria-label="Message" placeholder={who ? `Message ${who}` : 'Message the agent'} value={draft} disabled={!!send.disabled}
           data-i={`Composer|${[says, send.disabled, send.refused ? `The owner refused: ${send.refused}` : undefined].filter(Boolean).join(' ')}`}
           onChange={e => p.set('draft', e.target.value)}

@@ -105,7 +105,9 @@ test('the chain is the admitted slots in the declared order, each a device over 
 
 test('every device keeps its Live semantic and invariant (lock §1, §5) — the gate finds no fault in any of the five', () => {
   const set = chain({reading: {chains: model.rosterChains(ROSTER)}})
-  assert.deepEqual(set.map(entry => entry.device.face.liveSemantic), ['return', 'device-instrument', 'rack', 'device-audio-fx', 'return'])
+  // REPLACED (#725): the world slot's primary face was Central's Context & world (device-audio-fx) — retired ("Context & world is Scope",
+  // PROGRAMME R25 item 5; §19.12), so the world device is Software Factory's Scope, on its own declared semantic.
+  assert.deepEqual(set.map(entry => entry.device.face.liveSemantic), ['return', 'device-instrument', 'rack', 'return', 'return'])
   for (const {slot, device} of set) assert.deepEqual(validateFaceSemantic(device.face, {family: slot.family}), [], `${slot.id} keeps its semantic`)
   const rack = slotOf(set, 'skillset').device.face
   assert.deepEqual(rack.invariant.chains, ['gazetteer', 'vault-read', 'zeta'], 'the rack declares the chains it holds')

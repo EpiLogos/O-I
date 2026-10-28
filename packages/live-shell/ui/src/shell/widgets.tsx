@@ -47,7 +47,8 @@ const agentTile = (id: AgentTileId) => function AgentTileWidget() {
 // Sessions, Agents and Results are views now, not widgets (DLW §16.1 "The views are not devices"; lock §0.3.1; R4): the sessions are
 // Factory's tracks, the agents at work their needles, a run's results its takes in Arrangement view.
 const MODE_TILES = ['packet', 'trail', 'field', 'nows', 'sky'] as const
-const AGENT_TILES: readonly AgentTileId[] = ['terminal', 'files', 'web', 'graph', 'diff', 'frames', 'ledger', 'approvals']
+// The Diff tile was retired in the 22 Oct manual rewrite: reading what changed is the Diff page of Files (§23.4, §23.2).
+const AGENT_TILES: readonly AgentTileId[] = ['terminal', 'files', 'web', 'graph', 'frames', 'ledger', 'approvals']
 /** The tiles that are their own widget bodies now, by id. */
 const OWN_BODIES: Partial<Record<string, ComponentType<WidgetBodyProps>>> = {packet: PacketWidget, trail: TrailWidget}
 /** What each holds, for its launcher cell (the mockup's WID hints, world-shell-mockup.html 1624–1626). */
@@ -60,15 +61,14 @@ const HINTS: Record<string, string> = {
 }
 
 /** The devices born on the rail that no old tile held (DLW §23): registered so the rail lists them; each draws its device
- * (widgets/railDevices.tsx claims it), so the body here never draws. */
+ * (widgets/railDevices.tsx claims it), so the body here never draws. Notifications and Calendar were retired in the 22 Oct manual
+ * rewrite: what Notifications showed waits in Approvals, under Requests (§23.9), and a calendar is no device of the DLW, only a third
+ * party's widget installed from the browser's Devices (§23.8). */
 const RAIL_BORN: readonly WidgetDeclaration[] = [
-  // Notifications beside Messages and Approvals (§23.9): a monitor, its tile here and its Full in a pane (widgets/railDevices.tsx claims it).
-  {id: 'notifications', name: 'Notifications', mark: 'arm', hint: 'what asks for your attention: agents that wait, proposals, owners\' requests', Body: () => null},
   {id: 'wiki', name: 'Wiki', mark: 'orbit', hint: 'the wiki pages an agent may use, read here', Body: () => null},
-  {id: 'calendar', name: 'Calendar', mark: 'metro', hint: 'what is due around your work, from a calendar provider', Body: () => null},
 ]
 
-/** The devices' own tiles that no old tile held — Messages (DLW §19.24), Gateways (§19.3) and the Workcells tile (§19.23 Widget): registered
+/** The devices' own tiles that no old tile held — Messages (DLW §19.24) and the Workcells tile (§19.23 Widget, which lists the gateways: §19.3): registered
  * so the rail lists them; agent/agentDockTiles.ts claims each for its device, so the body here never draws. */
 const DEVICE_BORN: readonly WidgetDeclaration[] = DEVICE_TILES.map((tile): WidgetDeclaration => ({...tile, Body: () => null}))
 
@@ -81,7 +81,7 @@ export const WIDGETS: readonly WidgetDeclaration[] = [
   ...AGENT_TILES.map((id): WidgetDeclaration => (id === 'terminal' ? {id, name: tileTitle(id), mark: TILE_ICONS[id], hint: HINTS[id], bare: true, Body: TerminalRailWidget}
     : {id, name: tileTitle(id), mark: TILE_ICONS[id], hint: HINTS[id], Body: agentTile(id)})),
   ...RAIL_BORN,
-  // Gateways and the Workcells tile after the old tiles.
+  // The Workcells tile after the old tiles (it lists the gateways: §19.3).
   ...DEVICE_BORN.filter(widget => widget.id !== 'messages'),
 ]
 

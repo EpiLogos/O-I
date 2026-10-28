@@ -1,4 +1,4 @@
-// The Factory vertical, scripted (WORLD-SHELL-DESIGN §17.1; DLW-PLAN Phase 3):
+// The Factory vertical, scripted (WORLD-SHELL-DESIGN §17.1):
 // one selected Factory run recovered through each projection on its own ref —
 // select a run → its subject in the Earth → its moment on the Timeline → its
 // subject in the Constellation → its Expression → its devices and files —

@@ -64,15 +64,22 @@ const quiet = run => {
   try { return run() } finally { console.error = said }
 }
 const MOVED = ['agent-identity', 'nara-conversation', 'context-world', 'search', 'workspace', 'flow-document', 'beings', 'things', 'document', 'text', 'highlight', 'notes']
+/** Of the moved faces, those the 22 Oct manual rewrite retired as faces of their own (#725): the Answer is the Agent (PROGRAMME R25 item 5),
+ * Context & world is Scope, the Workspace is the track's head and Docs (§18.1), the Flow, Beings and Things a page's Clip panel and editor
+ * tabs, and Text, Highlight and Notes its editing tools (R25 item 4, §16.1). The rest stay declared, on no chain. */
+const RETIRED_MOVED = ['nara-conversation', 'context-world', 'workspace', 'flow-document', 'beings', 'things', 'text', 'highlight', 'notes']
 /** The device ids a chain's markup stands, in order (each slot's data-device on DeviceView). */
 const devicesOf = markup => [...markup.matchAll(/data-device="([^"]+)" data-device-size="compact"/g)].map(match => match[1])
 
-test('Central: the family\'s faces on a chain are the Day (the Main track) and the Packet, Ground hygiene, Machine and Impact (a world) — no moved face', () => {
+test('Central: the family\'s faces on a chain are the Day (the Main track) and the Packet and Docs (a world) — no moved face', () => {
   assert.deepEqual([...model.CENTRAL_MAIN_FACES], ['day-die'])
-  assert.deepEqual([...model.CENTRAL_WORKSPACE_FACES], ['packet', 'ground-hygiene', 'machine', 'impact'])
-  assert.deepEqual(chain.placedFaces(central.faces).map(face => face.id), ['day-die', 'packet', 'ground-hygiene', 'machine', 'impact'])
-  assert.deepEqual([...model.CENTRAL_OFF_CHAIN_FACES].sort(), [...MOVED].sort())
-  for (const id of MOVED) assert.ok(central.faces.some(face => face.id === id), `${id}: still declared — its design and binding stand for Clip view and the views`)
+  // REPLACED (#725): W4's Packet, Ground hygiene, Machine and Impact — the three were retired (§19.16, §18.7, §18.6); Docs follows Scope on
+  // every world (§16.2 "then Docs, the world's account on six tiers").
+  assert.deepEqual([...model.CENTRAL_WORKSPACE_FACES], ['packet', 'docs'])
+  assert.deepEqual(chain.placedFaces(central.faces).map(face => face.id), ['day-die', 'packet', 'docs'])
+  // REPLACED (#725): every moved face still declared — the faces the 22 Oct rewrite retired are declared no more; the others stand on no chain.
+  assert.deepEqual([...model.CENTRAL_OFF_CHAIN_FACES].sort(), MOVED.filter(id => !RETIRED_MOVED.includes(id)).sort())
+  for (const id of MOVED) assert.equal(central.faces.some(face => face.id === id), !RETIRED_MOVED.includes(id), `${id}: ${RETIRED_MOVED.includes(id) ? 'retired, declared no more' : 'still declared, on no chain'}`)
 })
 
 test('Central: the selected track chooses the chain — the Main track (its head, the Day, a Day clip) the Day\'s; a workspace\'s track or page its own; none, both', () => {
@@ -85,13 +92,16 @@ test('Central: the selected track chooses the chain — the Main track (its head
   assert.equal(chain.centralChainOf(null), 'both')
 })
 
-test('Central on screen (SSR): the Main track\'s chain is the Day, then Approvals; with no world\'s track selected, a world\'s is the Packet, the Agent, its Voice and Scope (Ground hygiene, Machine and Impact stand on a world whose folder holds code: w4-central-machine-chain.test.mjs)', () => {
+test('Central on screen (SSR): the Main track\'s chain is the Day, then Approvals; with no world\'s track selected, a world\'s is the Packet, the Agent, Scope and Docs', () => {
   const markup = quiet(() => renderToStaticMarkup(createElement(BaseDevicesDetail, {transport})))
   const main = markup.slice(markup.indexOf('data-track="main"'), markup.indexOf('data-track="workspace"'))
   const workspace = markup.slice(markup.indexOf('data-track="workspace"'))
   assert.ok(main.length > 0 && workspace.length > 0, 'with no Central track selected, both chains stand')
   assert.deepEqual(devicesOf(main), ['central:day-die', 'central:main:approvals'])
-  assert.deepEqual(devicesOf(workspace), ['central:packet', 'central:agent', 'central:voice', 'central:scope'])
+  // REPLACED (#725): the Packet, the Agent, its Voice and Scope — Voice is the Agent's Voice page (§19.21, the 22 Oct manual rewrite), and
+  // Docs follows Scope (§16.2).
+  assert.deepEqual(devicesOf(workspace), ['central:packet', 'central:agent', 'central:scope', 'central:docs'])
+  assert.ok(!markup.includes('data-device="central:voice"'), 'no Voice beside the Agent')
   for (const id of MOVED) assert.ok(!markup.includes(`data-device="central:${id}"`), `${id} stands on no chain`)
   // The two devices of other families are their faces' own, drawn by their designs once loaded (actuation:harness-model, software-factory:context-write-mode).
   const others = chain.centralAgentDevices()
@@ -119,7 +129,10 @@ test('Factory: the session\'s chain is Agent, skills rack, scope — no Thread, 
   assert.doesNotMatch(text, /placed\(RUN_ID/, 'no Run after the landing')
   assert.match(text, /composeAgentBinding\(agentDesignBinding, \{custody: custodyDesignBinding, identity: identityDesignBinding, thread: threadDesignBinding\}\)/,
     'the one Agent carries them')
-  assert.match(text, /\{slot\.id === 'git' && placed\(SEAT_ID/, 'the Seat stays inside the landing (§19.17)')
+  // REPLACED (#725): "the Seat stays inside the landing" as a device of its own — the Seat was retired into Git / landing's Seat page (§19.17
+  // "Claiming a seat … is the Seat page of Git / landing"), carried on the landing's binding under `seat.`.
+  assert.doesNotMatch(text, /placed\(SEAT_ID/, 'no Seat device inside the landing')
+  assert.match(text, /carryPages\(gitDesignBinding, \[\{page: SEAT_PAGE, binding: seatDesignBinding\}/, 'the Seat is the landing\'s Seat page (§19.17)')
   assert.match(text, /case 'agentset': return placed\(AGENTSET_ID/, 'the Agentset rack leads a group\'s chain (§19.15)')
   assert.match(text, /seatBinding\(\{status: seats\.status === 'answered' \? seats\.value : null/, 'the Seat on the seat instrument (K1 seat_status_read)')
   assert.doesNotMatch(text, /linkBinding/, 'the Link is the transport\'s (§19.19)')

@@ -8,6 +8,10 @@
 // The fixtures are the owner's own material: Factory's run viewer (desktop/cradle/docs/world-shell/agent-shell-mockup.html, the
 // arrangement block and its LAST/RUNS/LANES tables, on the adapter's palette) and Technē's nine Adam occurrences on the atlas's
 // non-linear scale (projections/atlas/src/data/time.ts createTimeScale), as the Technē adapter lays them.
+// In Technē the ruler is the timeline (manual §17.1, "Arrangement view: the timeline"): Time axis measures the history you study or
+// the time of your sessions, and Read by relates the events — Chronology by date, Cause as chains whose hops light in order with
+// their time offsets, Recurrence with each return marked, Concurrency where dates overlap. The relations are the reading's own
+// (techne__timeline.tsx `edges`, from the same field.json), drawn in the line of their standing; placement draws none.
 import {useRef, type CSSProperties, type KeyboardEvent, type PointerEvent, type ReactNode} from 'react'
 import {Band, Dial, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, Tile, Toggle, ValueBox, type LightState, type Option, type RowItem} from '../../sdk/panel'
 import {clampTo, num, on, str, type DesignedDevice, type Values, type ViewProps} from './design'
@@ -20,7 +24,17 @@ type Standing = 'sourced' | 'authored' | 'derived' | 'disputed' | 'mythic' | 'un
 type Status = 'waiting' | 'running' | 'stopped' | 'stalled'
 
 interface Track {readonly id: string; readonly name: string; readonly short: string; readonly c: string; readonly needle?: number; readonly stalled?: boolean}
-interface Clip {readonly id: string; readonly track: string; readonly label: string; readonly at: number; readonly end?: number; readonly status?: Status; readonly standing?: Standing; readonly takes?: number}
+interface Clip {
+  readonly id: string; readonly track: string; readonly label: string; readonly at: number; readonly end?: number; readonly status?: Status; readonly standing?: Standing; readonly takes?: number
+  /** The time in the axis's own count (a year, a minute of the covered days), and the date in the source's words. */
+  readonly t?: number; readonly when?: string
+  /** The extent the date allows, on the ruler: what Concurrency reads. */
+  readonly lo?: number; readonly hi?: number
+  /** Known only to a stretch (a day): drawn as a band that wide, never given a made-up instant (§17.1, "A low-precision date draws as a band"). */
+  readonly band?: boolean
+}
+/** A relation the reading discloses between two events, at its standing (techne__timeline.tsx `edges`). */
+interface Edge {readonly id: string; readonly from: string; readonly to: string; readonly kind: 'cause' | 'echo'; readonly standing: Standing}
 interface Sect {readonly id: string; readonly name: string; readonly from: number; readonly to: number}
 /** The lanes under one track: the events inside its tasks, and the recorded moves of one parameter. */
 interface Lanes {readonly track: string; readonly events: readonly (readonly [string, number])[]; readonly auto: {readonly name: string; readonly points: readonly (readonly [number, number])[]}}
@@ -30,6 +44,11 @@ interface Data {
   readonly label: (at: number, short?: boolean) => string
   readonly span: (span: number) => string
   readonly tracks: readonly Track[]; readonly clips: readonly Clip[]; readonly sections: readonly Sect[]; readonly lanes?: Lanes
+  /** What the sections along the top are: eras in deep time, the covered days of your sessions. */
+  readonly sectionWord: string
+  readonly edges: readonly Edge[]
+  /** The time between two events, in the axis's words. A hop with no date says so. */
+  readonly gap: (a: Clip, b: Clip) => string
 }
 
 // ---------------------------------------------------------------- Factory: the run viewer
@@ -48,7 +67,7 @@ const PAL = ['#79b6ce', '#779dcc', '#9885bc', '#8baf9c', '#b096b2', '#6caaa9'] a
 
 const FACTORY: Data = {
   mode: 'factory', word: 'Factory', unit: 'seconds', scale: 'even', end: NOW, now: NOW,
-  label: clockAt, span: mmss,
+  label: clockAt, span: mmss, sectionWord: 'Sections', edges: [], gap: (a, b) => mmss(Math.abs(b.at - a.at)),
   tracks: [
     {id: 'lead', name: 'Fizz · lead', short: 'Fizz', c: PAL[1], needle: NOW},
     {id: 'explore', name: 'explore', short: 'Explore', c: PAL[2], needle: sec(32.7)},
@@ -86,18 +105,29 @@ const UNITS = 10_000
 /** The adapter's scale for a reading with deep time only: lowest year -1000, today 2026 (techneTrackAdapter.ts TECHNE_RULER_UNITS). */
 const TS = createTimeScale(-1000, 2026)
 const yearAt = (year: number) => TS.toU(year) * UNITS
-/** The nine occurrences (techne__timeline.tsx, from Archetypal Earth's field.json) at the middle of the span each date allows. */
-const OCCURRENCES: readonly {id: string; name: string; year: number; standing: Standing}[] = [
-  {id: 'naassene', name: 'Naassene psalm', year: 228, standing: 'sourced'},
-  {id: 'talmud', name: 'Talmudic legend', year: 500, standing: 'mythic'},
-  {id: 'cave', name: 'Cave of Treasures', year: 600, standing: 'derived'},
-  {id: 'pirke', name: 'Pirke de-R. Eliezer', year: 750, standing: 'sourced'},
-  {id: 'islamic', name: 'Islamic legend', year: 850, standing: 'derived'},
-  {id: 'rosinus', name: 'Rosinus', year: 1250, standing: 'sourced'},
-  {id: 'valentinus', name: 'Valentinus', year: 1610, standing: 'sourced'},
-  {id: 'kadmon', name: 'Kabbala denudata', year: 1680, standing: 'sourced'},
-  {id: 'maiaurli', name: 'Maiaurli', year: 1932, standing: 'mythic'},
+/** The nine occurrences (techne__timeline.tsx, from Archetypal Earth's field.json), each with the extent its date allows and the date
+ * in the source's words. A clip stands at the middle of its extent. */
+const OCCURRENCES: readonly {id: string; name: string; from: number; to: number; when: string; standing: Standing}[] = [
+  {id: 'naassene', name: 'Naassene psalm', from: 222, to: 235, when: '~222-235', standing: 'sourced'},
+  {id: 'talmud', name: 'Talmudic legend', from: 401, to: 600, when: '~5th-6th c.', standing: 'mythic'},
+  {id: 'cave', name: 'Cave of Treasures', from: 501, to: 700, when: '~6th-7th c. (inferred)', standing: 'derived'},
+  {id: 'pirke', name: 'Pirke de-R. Eliezer', from: 701, to: 800, when: '~8th c.', standing: 'sourced'},
+  {id: 'islamic', name: 'Islamic legend', from: 801, to: 900, when: '~9th c.? (inferred)', standing: 'derived'},
+  {id: 'rosinus', name: 'Rosinus', from: 1201, to: 1300, when: '~13th c.', standing: 'sourced'},
+  {id: 'valentinus', name: 'Valentinus', from: 1595, to: 1625, when: '~1600 (publ. 1595-1625)', standing: 'sourced'},
+  {id: 'kadmon', name: 'Kabbala denudata', from: 1677, to: 1684, when: '1677-84', standing: 'sourced'},
+  {id: 'maiaurli', name: 'Maiaurli', from: 1932, to: 1932, when: 'reported 1932', standing: 'mythic'},
 ]
+/** The reading's relations (techne__timeline.tsx `edges`): echo joins occurrences that share a family or a culture; one cause. */
+const RELATIONS: readonly Edge[] = [
+  {id: 'e1', from: 'cave', to: 'islamic', kind: 'echo', standing: 'derived'},
+  {id: 'e2', from: 'islamic', to: 'kadmon', kind: 'echo', standing: 'derived'},
+  {id: 'e3', from: 'pirke', to: 'kadmon', kind: 'echo', standing: 'sourced'},
+  {id: 'e4', from: 'talmud', to: 'maiaurli', kind: 'echo', standing: 'mythic'},
+  {id: 'e5', from: 'rosinus', to: 'valentinus', kind: 'cause', standing: 'derived'},
+]
+/** A date the source gives as a stretch: its offsets are said "about". */
+const loose = (c: Clip) => c.lo !== undefined && c.hi !== undefined && c.hi > c.lo
 /** The six streams, in the adapter's order and with its mode tokens (techneTrackAdapter.ts STREAMS). A stream no owner read fills stands empty. */
 const STREAMS: readonly Track[] = [
   {id: 'readings', name: 'Readings', short: 'Readings', c: 'var(--mode-narration, var(--sel))'},
@@ -113,11 +143,49 @@ const TECHNE: Data = {
   label: at => formatYear(TS.fromU(at / UNITS)),
   span: span => `${Math.round(span / UNITS * 100)} %`,
   tracks: STREAMS,
-  clips: OCCURRENCES.map(o => ({id: o.id, track: 'occurrences', label: o.name, at: yearAt(o.year), standing: o.standing})),
+  clips: OCCURRENCES.map(o => {
+    const year = Math.floor((o.from + o.to) / 2)
+    return {id: o.id, track: 'occurrences', label: o.name, at: yearAt(year), standing: o.standing, t: year, when: o.when, lo: yearAt(o.from), hi: yearAt(o.to)}
+  }),
   sections: TS.eras.map(e => ({id: e.name, name: e.name, from: yearAt(e.from), to: yearAt(e.to)})),
+  sectionWord: 'Eras', edges: RELATIONS,
+  gap: (a, b) => (a.t === undefined || b.t === undefined ? 'no date' : `${loose(a) || loose(b) ? '~' : ''}${Math.abs(b.t - a.t).toLocaleString('en')} years`),
 }
 
-const dataOf = (v: Values): Data => (str(v, 'mode') === 'techne' ? TECHNE : FACTORY)
+// ---------------------------------------------------------------- Technē: your sessions
+
+/** Your sessions: the run receipts as the run adapter lays them, each covered day an equal stretch, hours in UTC
+ * (timeline/techneTrackAdapter.ts, the ruler's civil days; the receipts are the FIXTURE rows of tests/techne-tracks.test.mjs). A run
+ * dated by its day and no instant stands as a band the day wide. */
+const DAYS = ['10-12', '10-13', '10-14'] as const
+const DAY_W = UNITS / DAYS.length
+const dayAt = (day: number, minute = 0) => (day + minute / 1440) * DAY_W
+const hm = (m: number) => `${pad(Math.floor(m / 60))}:${pad(m % 60)}`
+const sessionAt = (at: number, short?: boolean) => {
+  const i = clampTo(0, DAYS.length - 1, Math.floor(at / DAY_W)), m = clampTo(0, 1439, Math.round((at - i * DAY_W) / DAY_W * 1440))
+  return short ? (m === 0 ? DAYS[i]! : hm(m)) : `${DAYS[i]} ${hm(m)}`
+}
+const receipt = (id: string, label: string, day: number, minute: number): Clip =>
+  ({id, track: 'runs', label, at: dayAt(day, minute), t: day * 1440 + minute, when: `${DAYS[day]} ${hm(minute)}`, lo: dayAt(day, minute), hi: dayAt(day, minute)})
+
+const SESSIONS: Data = {
+  mode: 'techne', word: 'Technē', unit: 'hours', scale: 'even', end: UNITS,
+  label: sessionAt,
+  span: span => { const h = span / DAY_W * 24; return h >= 48 ? `${Math.round(h / 24)} days` : h >= 1 ? `${Math.round(h)} h` : `${Math.round(h * 60)} min` },
+  tracks: STREAMS,
+  clips: [
+    {id: 'run215', track: 'runs', label: 'dated by its day, no instant', at: dayAt(0), end: dayAt(1), band: true, when: `${DAYS[0]}, no instant`, lo: dayAt(0), hi: dayAt(1)},
+    receipt('alpha1', 'attempt 1 failed', 1, 9 * 60 + 5),
+    receipt('alpha2', 'attempt 2 correlating', 2, 8 * 60 + 30),
+    receipt('run214', 'receipt', 2, 13 * 60 + 40),
+  ],
+  sections: DAYS.map((day, i) => ({id: day, name: day, from: i * DAY_W, to: (i + 1) * DAY_W})),
+  sectionWord: 'Days', edges: [],
+  gap: (a, b) => (a.t === undefined || b.t === undefined ? 'no time' : `${Math.round(Math.abs(b.t - a.t) / 60)} h`),
+}
+
+/** Technē's Time axis chooses the ruler: the history you study, or the time of your sessions (§17.1 Settings). */
+const dataOf = (v: Values): Data => (str(v, 'mode') !== 'techne' ? FACTORY : str(v, 'axis') === 'sessions' ? SESSIONS : TECHNE)
 
 // ---------------------------------------------------------------- standing, as trackMarks.ts draws it
 
@@ -165,6 +233,51 @@ const stepPath = (points: readonly (readonly [number, number])[], x: (at: number
   points.map(([at, val], i) => (i ? `L${x(at).toFixed(1)} ${y(points[i - 1]![1]).toFixed(1)}L${x(at).toFixed(1)} ${y(val).toFixed(1)}` : `M${x(at).toFixed(1)} ${y(val).toFixed(1)}`)).join('')
 const laneLevel = (v: Values) => (on(v, 'laneTakes') ? 1 : 0) + (on(v, 'laneAuto') ? 1 : 0) + (on(v, 'laneEvents') ? 1 : 0)
 const light = (v: Values) => str(v, 'light') as LightState
+
+// ---------------------------------------------------------------- Read by: how the events relate (§17.1, "Four ways to read")
+
+type ReadBy = 'chronology' | 'cause' | 'recurrence' | 'concurrency'
+const READ_BYS: readonly Option<ReadBy>[] = [
+  {value: 'chronology', label: 'Chronology', does: 'The events by date, with every relation the reading discloses.'},
+  {value: 'cause', label: 'Cause', does: 'Chains of cause and influence. Select an event and its chain lights, each hop with its time offset.'},
+  {value: 'recurrence', label: 'Recurrence', does: 'What keeps returning, with each return marked.'},
+  {value: 'concurrency', label: 'Concurrency', does: 'What happened at once: where the dates the sources allow overlap.'},
+]
+const AXES: readonly Option<string>[] = [
+  {value: 'history', label: 'History', does: 'The ruler measures the history you study, from deep time to today.'},
+  {value: 'sessions', label: 'Your sessions', does: 'The ruler measures the time of your sessions, the covered days in hours.'},
+]
+const readByOf = (v: Values): ReadBy => (READ_BYS.some(o => o.value === str(v, 'readBy')) ? str(v, 'readBy') as ReadBy : 'chronology')
+/** A relation between two events in view; `n` is its place in the lit chain. */
+interface Hop {readonly e: Edge; readonly a: Clip; readonly b: Clip; readonly n?: number}
+/** Events whose dates overlap, over the stretch they share. */
+interface Once {readonly id: string; readonly a: Clip; readonly b: Clip; readonly lo: number; readonly hi: number}
+interface Rel {readonly by: ReadBy; readonly hops: readonly Hop[]; readonly read: readonly Hop[]; readonly drawn: readonly Hop[]; readonly returns: ReadonlyMap<string, number>; readonly once: readonly Once[]}
+function relOf(v: Values, view: View): Rel {
+  const by = view.d.mode === 'techne' ? readByOf(v) : 'chronology'
+  const byId = new Map(view.clips.map(c => [c.id, c]))
+  const hops: Hop[] = view.d.edges.flatMap(e => { const a = byId.get(e.from), b = byId.get(e.to); return a && b ? [{e, a, b}] : [] })
+  const kind = by === 'cause' ? 'cause' : by === 'recurrence' ? 'echo' : undefined
+  let read: readonly Hop[] = by === 'concurrency' ? [] : kind ? hops.filter(h => h.e.kind === kind) : hops
+  if (by === 'cause') {
+    // The chain the selected event stands in: its hops light in date order.
+    const ids = new Set([str(v, 'sel')])
+    for (let grew = true; grew;) { grew = false; for (const h of read) if (ids.has(h.a.id) !== ids.has(h.b.id)) { ids.add(h.a.id); ids.add(h.b.id); grew = true } }
+    const lit = read.filter(h => ids.has(h.a.id)).sort((x, y) => x.a.at - y.a.at)
+    read = read.map(h => (lit.includes(h) ? {...h, n: lit.indexOf(h) + 1} : h))
+  }
+  const returns = new Map<string, number>()
+  if (by === 'recurrence') for (const h of read) returns.set(h.b.id, (returns.get(h.b.id) ?? 0) + 1)
+  const once: Once[] = []
+  if (by === 'concurrency') {
+    const dated = view.clips.filter(c => c.lo !== undefined && c.hi !== undefined)
+    dated.forEach((a, i) => dated.slice(i + 1).forEach(b => {
+      const lo = Math.max(a.lo!, b.lo!), hi = Math.min(a.hi!, b.hi!)
+      if (lo <= hi) once.push({id: `${a.id}+${b.id}`, a, b, lo, hi})
+    }))
+  }
+  return {by, hops, read, drawn: on(v, 'edges') ? read : [], returns, once}
+}
 
 // ---------------------------------------------------------------- the picture
 
@@ -221,6 +334,7 @@ function Pic({v, set, geo, uid, handles}: {v: Values; set?: SetFn; geo: Geo; uid
   const oy = geo.h - 17, oh = 13, ox = (at: number) => x0 + at / d.end * pw, ot = (x: number) => clampTo(0, d.end, (x - x0) / pw * d.end)
   const chosen = str(v, 'sel')
   const fit = isFit(view)
+  const rel = relOf(v, view)
 
   const clipEl = (c: Clip) => {
     const ry = rowAt.get(c.track)!, y1 = ry + 1.5, track = view.tracks.find(t => t.id === c.track)!
@@ -241,10 +355,11 @@ function Pic({v, set, geo, uid, handles}: {v: Values; set?: SetFn; geo: Geo; uid
     const room = Math.floor((seen - 4) / 3.9)
     const label = !point && seen >= 34 ? (c.label.length > room ? `${c.label.slice(0, Math.max(1, room - 1))}…` : c.label) : ''
     return <g key={c.id} {...hit(press, said)}>
-      <rect x={xa} y={y1} width={wd} height={bar} fill={track.c} opacity={c.status === 'stopped' ? 0.55 : 1} />
+      <rect x={xa} y={y1} width={wd} height={bar} fill={track.c} opacity={c.band ? 0.3 : c.status === 'stopped' ? 0.55 : 1} />
+      {c.band && <rect x={xa + 0.5} y={y1 + 0.5} width={Math.max(0, wd - 1)} height={bar - 1} fill="none" stroke={track.c} strokeDasharray="2 1.5" />}
       {c.status === 'stalled' && <rect x={xa} y={y1} width={wd} height={bar} fill={`url(#${uid}-stripe)`} />}
       {c.standing && <line x1={xa + 1} x2={xa + 1} y1={y1} y2={y1 + bar} stroke={standingOf(c.standing).line} strokeWidth={2} strokeDasharray={standingOf(c.standing).dash} />}
-      {label && <text x={seen0 + 3} y={y1 + bar / 2 + 2.6} style={{fontSize: 7.5, fill: 'var(--bg-0)'}}>{label}</text>}
+      {label && <text x={seen0 + 3} y={y1 + bar / 2 + 2.6} style={{fontSize: 7.5, fill: c.band ? 'var(--text)' : 'var(--bg-0)'}}>{label}</text>}
       {isSel && <rect x={xa} y={y1} width={wd} height={bar} fill="none" stroke="var(--accent)" strokeWidth={1.2} />}
       {c.takes && on(v, 'laneTakes') && Array.from({length: c.takes}, (_, j) => <rect key={j} x={xa + wd - 2 - (c.takes! - j) * 3} y={y1 + bar - 3.5} width={2} height={3} fill={j === c.takes! - 1 ? 'var(--accent)' : 'var(--dp-well)'} />)}
     </g>
@@ -275,6 +390,7 @@ function Pic({v, set, geo, uid, handles}: {v: Values; set?: SetFn; geo: Geo; uid
   return <g>
     <defs>
       <pattern id={`${uid}-stripe`} width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="2" height="4" fill="var(--stall)" opacity=".75" /></pattern>
+      <pattern id={`${uid}-once`} width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(-45)"><rect width="1.2" height="4" fill="var(--sel)" opacity=".7" /></pattern>
       <clipPath id={`${uid}-plot`}><rect x={x0} y={0} width={pw} height={Math.max(0, rowsEnd + 1)} /></clipPath>
     </defs>
     {n === 0 && <text x={geo.w / 2} y={geo.h / 2} className="dp-ink-dim" textAnchor="middle">No tracks shown</text>}
@@ -285,7 +401,7 @@ function Pic({v, set, geo, uid, handles}: {v: Values; set?: SetFn; geo: Geo; uid
       <line x1={x0} x2={x0 + pw} y1={rowAt.get(t.id)! + pitch} y2={rowAt.get(t.id)! + pitch} className="dp-faint" opacity={0.5} />
     </g>)}
     {secH > 0 && <g pointerEvents="none">
-      <text x={5} y={secY + 7.5} className="dp-axis" style={{fontSize: 7}}>Eras</text>
+      <text x={5} y={secY + 7.5} className="dp-axis" style={{fontSize: 7}}>{d.sectionWord}</text>
       {d.sections.map(sc => {
         const a = Math.max(X(sc.from), x0), z = Math.min(X(sc.to), x0 + pw)
         if (z - a < 1) return null
@@ -303,7 +419,25 @@ function Pic({v, set, geo, uid, handles}: {v: Values; set?: SetFn; geo: Geo; uid
       <PanSurface x={x0} y={top} w={pw} h={Math.max(0, rowsEnd - top)} onPan={set && (dx => putWindow(set, clampRange({start: range.start - dx / pw * span, end: range.end - dx / pw * span}, b)))} />
       {loop && <rect x={X(loopIn)} y={top} width={Math.max(0, X(loopOut) - X(loopIn))} height={Math.max(0, rowsEnd - top)} className="dp-fill-on" pointerEvents="none" />}
       {d.now !== undefined && <line x1={X(d.now)} x2={X(d.now)} y1={top} y2={rowsEnd} className="dp-faint" pointerEvents="none" />}
+      {rel.once.map(o => <rect key={o.id} x={X(o.lo)} y={top} width={Math.max(2, X(o.hi) - X(o.lo))} height={Math.max(0, rowsEnd - top)} fill={`url(#${uid}-once)`}
+        pointerEvents="none" />)}
       {view.clips.map(clipEl)}
+      {/* the relations Read by draws, in the line of their standing; a lit chain's hops carry their order */}
+      {rel.drawn.map(h => {
+        const ya = rowAt.get(h.a.track)! + 1.5, yb = rowAt.get(h.b.track)! + 1.5, xa = X(h.a.at) + 1, xb = X(h.b.at) + 1
+        const lift = clampTo(4, 11, Math.abs(xb - xa) / 3), apex = Math.min(ya, yb) - lift, s = standingOf(h.e.standing), lit = h.n !== undefined
+        return <g key={h.e.id} pointerEvents="none" opacity={rel.by === 'cause' && !lit ? 0.45 : 1}>
+          <path d={`M${xa.toFixed(1)} ${ya}Q${((xa + xb) / 2).toFixed(1)} ${apex - lift} ${xb.toFixed(1)} ${yb}`} fill="none" stroke={lit ? 'var(--accent)' : s.line} strokeWidth={lit ? 1.6 : 1.1} strokeDasharray={s.dash} />
+          {lit && <text x={(xa + xb) / 2} y={apex - 1.5} textAnchor="middle" style={{fontSize: 7, fill: 'var(--accent)'}}>{h.n}</text>}
+        </g>
+      })}
+      {[...rel.returns].map(([id, n]) => {
+        const c = view.clips.find(x => x.id === id)!, cy = rowAt.get(c.track)! + 1.5 + bar / 2
+        return <g key={`r${id}`} pointerEvents="none">
+          <circle cx={X(c.at) + 1} cy={cy} r={3.4} fill="none" stroke="var(--accent)" strokeWidth={1.1} />
+          {n > 1 && <text x={X(c.at) + 5.5} y={cy - 2.5} style={{fontSize: 7, fill: 'var(--accent)'}}>{n}</text>}
+        </g>
+      })}
       {view.tracks.map(t => t.needle !== undefined && <line key={`n${t.id}`} x1={X(t.needle)} x2={X(t.needle)} y1={rowAt.get(t.id)! + 1} y2={rowAt.get(t.id)! + pitch - 1}
         stroke={t.stalled ? 'var(--stall)' : 'var(--accent)'} strokeWidth={2} pointerEvents="none" />)}
       {autoRow && <path d={stepPath(lead!.auto.points, X, val => autoY + laneH - 1 - val * (laneH - 2))} fill="none" stroke="var(--rec)" strokeWidth={1.2} pointerEvents="none" />}
@@ -377,6 +511,14 @@ function FullRuler({v}: {v: Values}) {
   const fit = isFit(view)
   const overview = (at: number) => `${at / d.end * 100}%`
   const needleText = (t: Track) => t.stalled ? `${t.name} · stalled ${d.span(Math.max(0, (d.now ?? d.end) - t.needle!))}` : undefined
+  const rel = relOf(v, view), x10 = (at: number) => percentOf(clampTo(0, d.end, at), range) * 10
+  const litHops = rel.read.filter(h => h.n !== undefined)
+  const relSays = (c: Clip) => {
+    if (rel.by === 'cause') return litHops.filter(h => h.a.id === c.id || h.b.id === c.id).map(h => ` · ${h.n}: ${h.a.label} → ${h.b.label}, ${d.gap(h.a, h.b)}`).join('')
+    if (rel.by === 'recurrence') return rel.read.filter(h => h.b.id === c.id).map(h => ` · returns ${h.a.label}, ${d.gap(h.a, h.b)} on`).join('')
+    if (rel.by === 'concurrency') return rel.once.filter(o => o.a.id === c.id || o.b.id === c.id).map(o => ` · at once with ${(o.a.id === c.id ? o.b : o.a).label}, ${d.label(o.lo, true)} to ${d.label(o.hi, true)}`).join('')
+    return ''
+  }
   return <div className="arp-pane" aria-label="Arrangement">
     <div className="arp-ruler" aria-label={`Ruler in ${d.unit}`}>
       <span className="arp-head arp-corner">{d.unit} · {d.scale}</span>
@@ -387,7 +529,7 @@ function FullRuler({v}: {v: Values}) {
       </div>
     </div>
     {d.sections.length > 0 && <div className="arp-lane" data-sections="true">
-      <span className="arp-head"><span>Eras</span><small>sections</small></span>
+      <span className="arp-head"><span>{d.sectionWord}</span><small>sections</small></span>
       <div className="arp-body">
         {d.sections.filter(s => inView(s.from, s.to)).map(s => {
           const from = Math.max(s.from, range.start), to = Math.min(s.to, range.end)
@@ -403,6 +545,7 @@ function FullRuler({v}: {v: Values}) {
           {loop && <i className="arp-brace" style={{left: pc(num(v, 'loopIn')), width: `${(clampTo(0, d.end, num(v, 'loopOut')) - clampTo(0, d.end, num(v, 'loopIn'))) / span * 100}%`, opacity: 0.6}} />}
           {d.now !== undefined && <i className="arp-now" style={{left: pc(d.now)}} />}
           {marker >= 0 && marker >= range.start && marker <= range.end && <i className="arp-marker" style={{left: pc(marker)}} />}
+          {rel.once.filter(o => inView(o.lo, o.hi)).map(o => <i key={o.id} className="arp-once" style={{left: pc(Math.max(o.lo, range.start)), width: `max(2px, ${(Math.min(o.hi, range.end) - Math.max(o.lo, range.start)) / span * 100}%)`}} />)}
           {clips.map(c => {
             const point = c.end === undefined || !(c.end > c.at), flip = percentOf(clampTo(0, d.end, c.at), range) > 85
             const std = c.standing ? standingOf(c.standing) : undefined
@@ -410,12 +553,28 @@ function FullRuler({v}: {v: Values}) {
               ? (flip ? {right: `calc(100% - ${pc(c.at)})`, width: 120} : {left: pc(c.at), width: 120})
               : {left: pc(Math.max(c.at, range.start)), width: `max(6px, ${point ? 0 : (Math.min(clampTo(0, d.end, c.end!), range.end) - Math.max(clampTo(0, d.end, c.at), range.start)) / span * 100}%)`}
             return <span key={c.id} className="arp-clip" data-status={c.status} data-sel={c.id === chosen || undefined} data-point={point && c.status !== 'waiting' || undefined}
+              data-band={c.band || undefined} data-returns={rel.returns.get(c.id)}
               style={{...place, ...(std ? {borderLeft: `2px ${std.css} ${std.line}`} : {})}}>{c.status === 'waiting' ? `▸ ${c.label}` : point ? '' : c.label}</span>
           })}
           {t.needle !== undefined && <>
             <i className="arp-needle" data-stalled={t.stalled || undefined} style={{left: pc(t.needle)}} />
             {t.stalled && <span className="arp-readout" style={percentOf(t.needle, range) > 60 ? undefined : {right: 'auto', left: `calc(${pc(t.needle)} + 6px)`, borderRight: 0, borderLeft: '2px solid var(--arp-stall)'}}>{needleText(t)}</span>}
           </>}
+        </div>
+      </div>,
+      // The relations lane: what Read by draws between this track's events, in the line of each relation's standing.
+      (rel.drawn.some(h => h.a.track === t.id) || clips.some(c => rel.returns.has(c.id))) && <div key={`${t.id}-rel`} className="arp-lane" data-sub="true" data-rel="true" style={{'--tc': t.c} as CSSProperties}>
+        <span className="arp-head"><span>{READ_BYS.find(o => o.value === rel.by)!.label}</span><small>{rel.drawn.filter(h => h.a.track === t.id).length}</small></span>
+        <div className="arp-body">
+          <svg viewBox="0 0 1000 26" preserveAspectRatio="none" aria-hidden="true">
+            {rel.drawn.filter(h => h.a.track === t.id).map(h => {
+              const xa = x10(h.a.at), xb = x10(h.b.at), s = standingOf(h.e.standing), lit = h.n !== undefined
+              return <path key={h.e.id} vectorEffect="non-scaling-stroke" fill="none" d={`M${xa.toFixed(1)} 25Q${((xa + xb) / 2).toFixed(1)} -9 ${xb.toFixed(1)} 25`}
+                stroke={lit ? 'var(--accent)' : s.line} strokeWidth={lit ? 1.6 : 1.1} strokeDasharray={s.dash} opacity={rel.by === 'cause' && !lit ? 0.45 : 1} />
+            })}
+          </svg>
+          {litHops.filter(h => h.a.track === t.id).map(h => <span key={h.e.id} className="arp-hop" style={{left: `${(x10(h.a.at) + x10(h.b.at)) / 20}%`}}>{h.n} · {d.gap(h.a, h.b)}</span>)}
+          {clips.filter(c => rel.returns.has(c.id)).map(c => <i key={c.id} className="arp-ret" style={{left: pc(c.at)}}>{rel.returns.get(c.id)! > 1 ? rel.returns.get(c.id) : ''}</i>)}
         </div>
       </div>,
       lead && lead.track === t.id && on(v, 'laneTakes') && clips.some(c => c.takes) && <div key={`${t.id}-takes`} className="arp-lane" data-sub="true" style={{'--tc': t.c} as CSSProperties}>
@@ -447,7 +606,7 @@ function FullRuler({v}: {v: Values}) {
       {d.mode === 'factory'
         ? (['running', 'waiting', 'stopped', 'stalled'] as const).map(s => <span key={s} className="arp-key"><i data-status={s} />{s[0]!.toUpperCase() + s.slice(1)}</span>)
         : STANDINGS.map(s => <span key={s.id} className="arp-key"><svg width="16" height="8" aria-hidden="true"><line x1="1" x2="15" y1="4" y2="4" stroke={s.line} strokeWidth="2" strokeDasharray={s.dash} /></svg>{s.label}</span>)}
-      <span className="arp-says">{stalled.length ? `${stalled.map(t => needleText(t)).join(' · ')}` : picked ? `${picked.label} · ${d.label(picked.at)}${picked.standing ? ` · ${standingOf(picked.standing).label.toLowerCase()}` : ''}` : `${view.clips.length} clips on ${view.tracks.length} tracks`}</span>
+      <span className="arp-says">{stalled.length ? `${stalled.map(t => needleText(t)).join(' · ')}` : picked ? `${picked.label} · ${picked.when ?? d.label(picked.at)}${picked.standing ? ` · ${standingOf(picked.standing).label.toLowerCase()}` : ''}${relSays(picked)}` : `${view.clips.length} clips on ${view.tracks.length} tracks`}</span>
     </footer>
   </div>
 }
@@ -484,6 +643,57 @@ const snapRadio = (p: ViewProps) => <Radio label="Snap" does="How the marker and
 const moveRadio = (p: ViewProps, short?: boolean) => <Radio label="Move" does="What a moved clip does to its neighbours." value={str(p.v, 'move')} options={short ? MOVES_SHORT : MOVES} stack onChange={x => p.set('move', x)} />
 const markerWord = (d: Data) => (x: number) => (x < 0 ? 'Off' : d.label(x))
 
+const standingMark = (s: Standing) => <svg className="arp-line" viewBox="0 0 16 8" aria-hidden="true"><line x1="1" x2="15" y1="4" y2="4" stroke={standingOf(s).line} strokeWidth="2" strokeDasharray={standingOf(s).dash} /></svg>
+/** The list Read by reads: the events by date, the hops of cause, the returns, or what stood at once. Pressing a row selects its event. */
+function readRows(view: View, rel: Rel, sel: string): {label: string; items: RowItem[]; pick: (id: string) => string} {
+  const d = view.d
+  if (rel.by === 'cause' || rel.by === 'recurrence') {
+    const items = rel.read.map((h): RowItem => ({
+      id: h.e.id, name: rel.by === 'cause' ? `${h.a.label} → ${h.b.label}` : h.b.label, mark: standingMark(h.e.standing), tone: 'value', note: d.gap(h.a, h.b),
+      light: rel.by === 'cause' ? (h.n !== undefined ? 'lit' : 'dark') : 'lit',
+      does: rel.by === 'cause' ? `${h.n !== undefined ? `Hop ${h.n} of the chain` : 'A hop of another chain'}. ${standingOf(h.e.standing).label}.` : `Returns ${h.a.label}, ${d.gap(h.a, h.b)} on. ${standingOf(h.e.standing).label}.`,
+    }))
+    return {label: rel.by === 'cause' ? 'Hops' : 'Returns', items, pick: id => (rel.by === 'cause' ? rel.read.find(h => h.e.id === id)?.a.id : rel.read.find(h => h.e.id === id)?.b.id) ?? sel}
+  }
+  if (rel.by === 'concurrency') {
+    const items = rel.once.map((o): RowItem => ({id: o.id, name: `${o.a.label} · ${o.b.label}`, light: 'lit', tone: 'value', note: `${d.label(o.lo, true)}–${d.label(o.hi, true)}`,
+      does: `At once: the dates the sources allow overlap from ${d.label(o.lo, true)} to ${d.label(o.hi, true)}.`}))
+    return {label: 'At once', items, pick: id => rel.once.find(o => o.id === id)?.a.id ?? sel}
+  }
+  const items = [...view.clips].sort((a, b) => a.at - b.at).map((c): RowItem => ({id: c.id, name: c.label, light: 'lit', tone: 'value', note: c.when ?? d.label(c.at, true),
+    mark: c.standing ? standingMark(c.standing) : undefined, does: `${c.label}: ${c.when ?? d.label(c.at)}.${c.standing ? ` ${standingOf(c.standing).label}.` : ''}`}))
+  return {label: 'Events', items, pick: id => id}
+}
+
+/** The Read page: Technē's timeline settings (§17.1). Factory's ruler measures one run, so they stand dimmed there. */
+function ReadPage({p, picture}: {p: ViewProps; picture: ReactNode}) {
+  const view = viewOf(p.v), rel = relOf(p.v, view), sel = str(p.v, 'sel'), list = readRows(view, rel, sel)
+  const notTechne = view.d.mode === 'techne' ? undefined : 'Factory\'s ruler measures one run; it reads its tasks by time only.'
+  const items = list.items.length ? list.items : [{id: 'none', name: 'None disclosed', light: 'unknown' as const, does: `The reading discloses no ${list.label.toLowerCase()} among the events shown.`}]
+  return <>
+    <Band>
+      {picture}
+      <Section label="Read" cols={2} grow>
+        <Radio label="Time axis" does="Whether the ruler measures the history you study or the time of your sessions." value={str(p.v, 'axis')} options={AXES} stack disabled={notTechne}
+          onChange={x => p.set('axis', x)} />
+        <Radio label="Read by" does="How the events relate on the ruler." value={rel.by} options={READ_BYS} stack disabled={notTechne} onChange={x => p.set('readBy', x)} />
+        <Toggle label="Edges" does="Show the relations between events, in the line of their standing. Placing two events side by side draws none." on={on(p.v, 'edges')} disabled={notTechne}
+          onChange={x => p.set('edges', x)} />
+      </Section>
+    </Band>
+    <Band>
+      <Section label={list.label} grow>
+        <Rows does="Press a row to select its event." items={items} selected={items.find(r => list.pick(r.id) === sel)?.id}
+          onSelect={id => { if (id !== 'none') p.set('sel', list.pick(id)) }} size={5} />
+      </Section>
+      <Section label="Readings" width={92}>
+        <Readout big label="relations" does="Relations drawn, of all the reading discloses among the events shown." value={`${rel.drawn.length}/${rel.hops.length}`} tone="value" />
+        <Readout label="axis" does={`The ruler measures ${view.d.unit}.`} value={view.d.unit} />
+      </Section>
+    </Band>
+  </>
+}
+
 // ---------------------------------------------------------------- the device
 
 export const design: DesignedDevice = {
@@ -498,11 +708,17 @@ export const design: DesignedDevice = {
     laneTakes: true, laneAuto: true, laneEvents: false,
     snap: 'grid', move: 'insert', trim: 'trim',
     marker: -1, loop: true, loopIn: sec(33.0), loopOut: sec(35.5), sel: 'map',
+    // Technē's timeline settings (§17.1): the owner's defaults.
+    axis: 'history', readBy: 'chronology', edges: true,
   },
   fixtures: {
     'Factory run': {},
     'Zoomed on the stall': {start: sec(34.0), span: 240, marker: sec(34.62), snap: 'free', loop: false, laneEvents: true, sel: 'gen'},
     'Technē, stretched': {mode: 'techne', start: 0, span: UNITS, marker: -1, loop: false, laneTakes: false, laneAuto: false, sel: 'cave'},
+    'Technē, by cause': {mode: 'techne', start: 0, span: UNITS, marker: -1, loop: false, laneTakes: false, laneAuto: false, readBy: 'cause', sel: 'rosinus'},
+    'Technē, what returns': {mode: 'techne', start: 0, span: UNITS, marker: -1, loop: false, laneTakes: false, laneAuto: false, readBy: 'recurrence', sel: 'kadmon'},
+    'Technē, at once': {mode: 'techne', start: 0, span: UNITS, marker: -1, loop: false, laneTakes: false, laneAuto: false, readBy: 'concurrency', sel: 'talmud'},
+    'Your sessions': {mode: 'techne', axis: 'sessions', start: 0, span: UNITS, marker: -1, loop: false, laneTakes: false, laneAuto: false, sel: 'run214'},
   },
 
   folded: p => {
@@ -539,8 +755,8 @@ export const design: DesignedDevice = {
       </Display>
     </Section>
     return <Panel title="Arrangement ruler" view="whole" light={light(p.v)} onFold={p.nav.fold} onFull={p.nav.full}
-      pages={[{id: 'ruler', label: 'Ruler'}, {id: 'tracks', label: 'Tracks'}]} page={p.page} onPage={p.setPage}>
-      {p.page === 'tracks' ? <>
+      pages={[{id: 'ruler', label: 'Ruler'}, {id: 'tracks', label: 'Tracks'}, {id: 'read', label: 'Read'}]} page={p.page} onPage={p.setPage}>
+      {p.page === 'read' ? <ReadPage p={p} picture={picture} /> : p.page === 'tracks' ? <>
         <Band>
           {picture}
           <Section label="Tracks" grow>

@@ -5,8 +5,8 @@
  * declared.
  *
  * - Base · Devices: the ground's family chain through the device runtime
- *   (src/central/devices) — the Day die, the Flow, the conversation, the
- *   context-world, agent identity, hygiene and impact readings, each compact on
+ *   (src/central/devices) — the Day and Approvals on the Main track; the
+ *   Packet, the Agent, Scope and Docs on a world's (DLW §16.2), each compact on
  *   the chain, whole in the pool, full in a pane. With no material selected a
  *   device's rows name what would dock and its light stays dark.
  * - The Clip side of every mode is the one clip host's (frame/detail/ClipHost.tsx,
@@ -92,7 +92,7 @@ export function BaseDevicesDetail({transport, world = null, subject = null, stan
     <div className="mode-detail" data-mode-detail="base-devices">
       {apertures.dayNotice && <CentralDayNotice notice={apertures.dayNotice} />}
       <CentralDevicesChain transport={transport} dayStanding={apertures.day || apertures.dayNotice ? dayStanding : null} deviceWindows={deviceWindows}
-        day={apertures.day ?? null} conversation={apertures.conversation ?? null} impact={subject} />
+        day={apertures.day ?? null} conversation={apertures.conversation ?? null} />
     </div>
   )
 }

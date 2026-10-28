@@ -1,8 +1,10 @@
-// Factory's Main track devices and the monitors beside it, on their owners (lane BF2): Gateways (DLW §19.3, actuation:gateways-rack — "Kind:
-// monitor · Rail: the widget rail, and a pane, in every mode"), the Agency gateway (§19.10, ai-kit:agency-gateway — "Stands: in the head of
-// Messages, and as a line of Gateways"), the Experiment (actuation:experiment; it compares sessions, so it stands on the Main track, §16.2)
-// and the Frames monitor (§19.6, actuation:frames-monitor — the Gateway's Full, and the rail's Frames). Since lane W1-Factory only the
-// Experiment stands on a chain; the monitors stand on the rail and in panes (agent/agentDockTiles.ts), and the Agency gateway on none.
+// The bindings of the gateways' readings beside Factory's chains, on their owners (lane BF2). The 22 Oct manual rewrite retired the four
+// devices they drew as devices of their own: every gateway with its state is listed on the Workcells tile (§19.3; the workcell rack carries
+// the Gateways' reading under `gw.`, AgentRailDevices.tsx), the agency gateway is the Gateway's agency build whose mark stands in the head of
+// Messages (§19.10), an experiment is a task launched with Repeat, its takes set side by side with Compare (§19.5), and the frames are the
+// Gateway's Frames page and its Full, its tile on the rail the Gateway's widget (§19.6: FRAMES_ID below is the Gateway's face drawn on the
+// frames' binding). Their bindings stay: the gateways' (rackBinding), the agency build's (agencyBinding), the frames' (framesBinding);
+// experimentBinding stands for the Launch panel's Repeat once a clip binding carries it.
 //
 // What the owners report, read 16 Oct 2026 through the installed owners (scratch lane-bf2/shapes/):
 //   harness_agent_read {binding} — `aikit --json gateway agent --binding <b> sessions`: the AIKit agency gateway's answer about the
@@ -34,16 +36,14 @@ type Obj = Record<string, unknown>
 const isObj = (value: unknown): value is Obj => !!value && typeof value === 'object' && !Array.isArray(value)
 const str = (value: unknown): string | undefined => (typeof value === 'string' && value.trim() ? value : undefined)
 
-export const GATEWAYS_RACK_DESIGN = 'actuation:gateways-rack'
-export const AGENCY_GATEWAY_DESIGN = 'ai-kit:agency-gateway'
-export const EXPERIMENT_DESIGN = 'actuation:experiment'
-export const FRAMES_DESIGN = 'actuation:frames-monitor'
-
+/** The holds the retired devices' bindings keep their views under (the ids they stood under on the door). */
 export const GATEWAYS_RACK_ID = 'factory:main:gateways'
 export const AGENCY_GATEWAY_ID = 'factory:main:agency-gateway'
 export const EXPERIMENT_ID = 'factory:main:experiment'
+/** The rail's Frames tile: the Gateway's widget on the frames' binding (§19.6). */
 export const FRAMES_ID = 'factory:frames'
-export const MAIN_DEVICE_IDS: readonly string[] = [GATEWAYS_RACK_ID, AGENCY_GATEWAY_ID, EXPERIMENT_ID, FRAMES_ID]
+/** The design the Frames tile draws: the Gateway's (actuation__gateway.tsx, its Frames page and its tile of the last eleven frames). */
+export const FRAMES_DESIGN = 'actuation:gateway'
 
 /** A device of an admitted family face (designKey(family, face.id) is its design's id), its values its design's from the binding;
  * null when the family does not admit the face. The family as composed (inhabitants/manifest.ts inhabitantManifest: its base and the
@@ -55,11 +55,9 @@ export function familyFaceDevice(id: string, family: string, faceId: string, tit
     face: {id: face.id, title, icon, liveSemantic: face.liveSemantic, ...(face.invariant ? {invariant: face.invariant} : {}), ...(face.note ? {note: face.note} : {})}}
 }
 
+/** The rail's Frames: Actuation's admitted Gateway face, drawn by the Gateway's design on the frames' binding (§19.6). */
 export const mainDevices = () => ({
-  rack: familyFaceDevice(GATEWAYS_RACK_ID, 'actuation', 'gateways-rack', 'Gateways', 'chain'),
-  agency: familyFaceDevice(AGENCY_GATEWAY_ID, 'ai-kit', 'agency-gateway', 'Agency gateway', 'link'),
-  experiment: familyFaceDevice(EXPERIMENT_ID, 'actuation', 'experiment', 'Experiment', 'metroDots'),
-  frames: familyFaceDevice(FRAMES_ID, 'actuation', 'frames-monitor', 'Frames', 'detail'),
+  frames: familyFaceDevice(FRAMES_ID, 'actuation', 'gateway', 'Gateway', 'link'),
 })
 
 const missing = (what: string, op: string, owner: string) => `${what}: no owner operation carries it yet — missing op: ${op} (${owner}).`
@@ -96,7 +94,8 @@ export function gatewayAnswer(reading: Pick<AgentChainReading, 'gatewayAdmitted'
 
 // ---------------------------------------------------------------------------------------------------------------- the Gateways rack
 
-/** The chains of the rack: the Actuation family's declared gateways (actuationFamilyManifest.ts:15), by the manual's names (§19.3). */
+/** The gateways your machines reach, by the manual's names: the Gateway's builds (§19.2 "Builds": the Hermes gateway, the AIKit agency
+ * gateway, the Actuation gateway) and the Remote carrier, the connected machine that carries remote sessions (§19.2, §19.18). */
 export const GATEWAY_CHAINS: readonly {readonly id: string; readonly name: string}[] = [
   {id: 'hermes', name: 'Hermes gateway'},
   {id: 'aikit-agency-gateway', name: 'AIKit agency gateway'},
@@ -104,11 +103,12 @@ export const GATEWAY_CHAINS: readonly {readonly id: string; readonly name: strin
   {id: 'remote-carrier', name: 'Remote carrier'},
 ]
 
-/** The registered chains: the family's declaration, else none (a rack never invents a chain). */
+/** The registered gateways: the Gateway's builds and the Remote carrier, while Actuation admits the Gateway (its builds are its own) and
+ * Workcell the Remote carrier; none where neither family admits its face (a list never invents a gateway). The Gateways rack, whose face
+ * declared them as its chains, was retired in the 22 Oct manual rewrite (§19.3). */
 export function registeredChains(): readonly string[] {
-  const face = allFamilyManifests().find(manifest => manifest.id === 'actuation')?.faces.find(candidate => candidate.id === 'gateways-rack')
-  const chains = face?.invariant && Array.isArray((face.invariant as {chains?: unknown}).chains) ? (face.invariant as {chains: unknown[]}).chains : []
-  return chains.filter((chain): chain is string => typeof chain === 'string')
+  const admits = (family: string, face: string) => allFamilyManifests().find(manifest => manifest.id === family)?.faces.some(candidate => candidate.id === face) ?? false
+  return GATEWAY_CHAINS.map(chain => chain.id).filter(id => (id === 'remote-carrier' ? admits('workcell', 'remote-carrier') : admits('actuation', 'gateway')))
 }
 
 export interface RackInput {

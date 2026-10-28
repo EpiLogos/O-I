@@ -44,7 +44,11 @@ const host = await import('../src/frame/devices/deviceHost.tsx')
 const bind = await import('../src/agent/devices/designBindings.ts')
 const journeys = await import('../src/agent/devices/runJourney.ts')
 const tasks = await import('../src/agent/devices/taskBindings.ts')
-const {design: runsDesign} = await import('../src/inhabitants/catalogue/panels/software-factory__attempt-review.tsx')
+// Runs' design (software-factory__attempt-review.tsx) was retired in the 22 Oct manual rewrite (#725; §16.1 "The course of a run is its track
+// in Arrangement view; its attempts are takes"); the Journey a Run belongs to is drawn by the Run map (§19.25 "Commission, Journey and
+// Recognition"), whose design reads the same `journey` shape. Runs' binding stays and is checked on its own values.
+const {design: runMapDesign} = await import('../src/inhabitants/catalogue/panels/software-factory__run-map.tsx')
+const runMap = await import('../src/agent/devices/runMapBinding.ts')
 
 family.resetFamilyManifestsForTest()
 loadAgentShellFamilies()
@@ -123,9 +127,15 @@ test('Runs draws the Journey of the Run it shows (the Journey view); unread, ref
   const none = tasks.runsBinding('s', bind.chainHolds(), {takes: [TAKE], choose: async () => ({}), journey: {status: 'answered', value: {run: REAL.run, journey: null, runs: {}}, error: null}})
   assert.equal(none.standing.journey.disabled, tasks.RUNS_JOURNEY_NONE)
   assert.equal(tasks.runsBinding(null, bind.chainHolds()).standing.journey.disabled, tasks.RUNS_JOURNEY_UNREAD)
-  // Drawn: the design's Journey view on the real Commission, never its sample; no NaN, no undefined.
-  binding.local.view('journey')
-  const drawn = hosted(runsDesign, tasks.runsBinding('s', bind.chainHolds(), {takes: [TAKE], choose: async () => ({}), journey: {status: 'answered', value: chain, error: null}}))
+  // REPLACED (#725): drawn on Runs' Journey view — Runs was retired (§16.1); the Run map draws the Journey a Run belongs to (§19.25), so the
+  // same reading (the Commission's purpose, the status, each Run's lifecycle) is drawn there, on the real Commission, never its sample. The
+  // chain does not hand the Run map this reading yet (runMapBinding.ts holds `journey` absent): the drawing is of Runs' own reading, laid on
+  // the Run map's binding.
+  const own = runMap.runMapBinding(bind.chainHolds())
+  const standing = {...own.standing}
+  delete standing.journey
+  const journeyed = {...own, values: {...own.values, journey: tasks.runsBinding('s', bind.chainHolds(), {takes: [TAKE], choose: async () => ({}), journey: {status: 'answered', value: chain, error: null}}).values.journey}, standing}
+  const drawn = hosted(runMapDesign, journeyed)
   for (const [view, markup] of drawn) {
     assert.doesNotMatch(markup, /\bNaN\b|undefined/, `${view}: no absent key drawn as text`)
     assert.doesNotMatch(markup, /data-device-fault/, `${view}: its own view drew`)

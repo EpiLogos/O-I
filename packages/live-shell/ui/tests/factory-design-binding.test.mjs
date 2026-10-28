@@ -77,6 +77,11 @@ const hosted = (designed, binding) => {
   console.error = (first, ...rest) => { if (!String(first).includes('useLayoutEffect does nothing on the server')) said(first, ...rest) }
   try { return views.map(view => html(createElement(host.HostedDevice, {designed, binding, view, nav: {}}))) } finally { console.error = said }
 }
+/** The five views on one page of the design, as the host turns to it (deviceHost.setHostPage), then back. */
+const onPage = (designed, binding, page) => {
+  host.setHostPage(binding.id, page)
+  try { return hosted(designed, binding) } finally { host.setHostPage(binding.id, undefined) }
+}
 
 // ---- the owners' real shapes (16 Oct, trimmed) ---------------------------------------------------------------------------
 const SET_SHOW = {child_refs: [], children: [], complete: false, description: '', members: 5, name: 'suite-foundations', patterns: [],
@@ -123,10 +128,12 @@ test('each published device is keyed to its design exactly: designKey(family, fa
   assert.deepEqual([bind.AGENT_DESIGN, bind.RACK_DESIGN, bind.MEMBER_DESIGN, bind.SCOPE_DESIGN], [agentDesign.id, rackDesign.id, memberDesign.id, scopeDesign.id])
   // A slot whose design waits keeps its primary face (the generic plate draws the owner's rows), and a face the slot does not
   // carry is never borrowed.
+  // REPLACED (#725): the world slot's primary face was Central's Context & world — retired in the 22 Oct manual rewrite ("Context & world is
+  // Scope", PROGRAMME R25 item 5; §19.12 "Scope is the world device"), so the slot's one face, and its primary, is Software Factory's Scope.
   const plain = chain({})
-  assert.equal(designKey(plain.find(entry => entry.slot.id === 'world').device.family, plain.find(entry => entry.slot.id === 'world').device.face.id), 'central:context-world')
+  assert.equal(designKey(plain.find(entry => entry.slot.id === 'world').device.family, plain.find(entry => entry.slot.id === 'world').device.face.id), 'software-factory:context-write-mode')
   const borrowed = chain({world: {family: 'ai-kit', faceId: 'skillset-rack'}})
-  assert.equal(borrowed.find(entry => entry.slot.id === 'world').device.face.id, 'context-world')
+  assert.equal(borrowed.find(entry => entry.slot.id === 'world').device.face.id, 'context-write-mode')
   assert.deepEqual(set.map(entry => entry.device.face.liveSemantic), ['return', 'device-instrument', 'rack', 'return', 'return'], 'each designed face keeps its own Live semantic')
 })
 
@@ -490,7 +497,12 @@ test('Scope: no owner reports a reach, a write mode, places or receipts, so none
   await assert.rejects(() => scope().write([{key: 'writeMode', value: 'direct'}]), /WO-SF2/)
   assert.deepEqual(calls, [['shell.setWriteArm', true]])
   await assert.rejects(() => scope().write([{key: 'writeMode', value: 'draft'}]), /draft awaits its writer/)
-  await assert.rejects(() => scope().write([{key: 'knowledge', value: 'world'}]), /Knowledge route/)
+  // REPLACED (#725): the single `knowledge` key "set on the Knowledge route inside this Scope" — the Knowledge route was retired into Scope's
+  // Knowledge page (§19.9, §19.12), whose settings are refused here in the route's own words (knowledgeRouteBinding.ts KNOWLEDGE_REFUSE).
+  await assert.rejects(() => scope().write([{key: 'linkDepth', value: 3}]), /Link depth: no owner operation carries it yet — missing op: a per-agent depth on `aikit knowledge relations`/)
+  await assert.rejects(() => scope().write([{key: 'readBudget', value: 10}]), /Read budget: no owner operation carries it yet — missing op: a per-agent ceiling/)
+  await assert.rejects(() => scope().write([{key: 'searchFirst', value: false}]), /Search first: no owner operation carries it yet/)
+  for (const key of ['src.wiki', 'src.project', 'src.code']) await assert.rejects(() => scope().write([{key, value: true}]), /a lens-level request on the AgentProfile/, key)
   await assert.rejects(() => scope().write([{key: 'w:lantern', value: false}]), /scope places write/)
   assert.equal(calls.length, 1)
   host.resetHost()
@@ -518,9 +530,10 @@ test('the Agent, the rack, the member and Scope draw their designs on their bind
   const cases = [[agentDesign, agent], [rackDesign, rack], [memberDesign, member], [scopeDesign, scope]]
   for (const [design, binding] of cases) {
     assert.equal(bind.designWaits(design.id, design), null)
-    const drawn = hosted(design, binding)
+    // Scope's Knowledge page (§19.12; it took in the Knowledge route, §19.9) is drawn too: its refused settings say why there (#725).
+    const drawn = design.id === bind.SCOPE_DESIGN ? [...hosted(design, binding), ...onPage(design, binding, 'knowledge')] : hosted(design, binding)
     drawn.forEach((markup, index) => {
-      assert.match(markup, new RegExp(`data-device-view="${views[index]}"`), `${design.id} ${views[index]} draws`)
+      assert.match(markup, new RegExp(`data-device-view="${views[index % views.length]}"`), `${design.id} ${views[index % views.length]} draws`)
       assert.doesNotMatch(markup, /\bNaN\b|undefined/, `${design.id} ${views[index]}: no absent key drawn as text`)
       assert.doesNotMatch(markup, /data-device-fault/, `${design.id} ${views[index]}: its own view drew`)
     })

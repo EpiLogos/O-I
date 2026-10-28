@@ -195,7 +195,7 @@ void main() {
   vec3 hot = mix(tone, vec3(1.0), 0.6);
   vec3 live = hot * core + tone * (halo + unc);
   // a mythic locus looks mythic in every view (manual §17.2 rules): a dotted ring round its core, the mythic dash of the
-  // arrangement ruler and the timeline (dlw__arrangement-ruler.tsx, techne__timeline.tsx), never the look of a factual place
+  // arrangement ruler, which is Technē's timeline (dlw__arrangement-ruler.tsx; DLW §17.5), never the look of a factual place
   if (vMyth > 0.5) {
     float mr = rcL * 2.7;
     float band = exp(-pow((rPx - mr) / 0.75, 2.0));

@@ -1,5 +1,6 @@
-// Binding on its owners (manual §22.8; the catalogue's design inhabitants/catalogue/panels/quaternal-logic__binding.tsx,
-// `quaternal-logic:binding`). Binding is M3′'s view of form as charge, and it runs its own physics over the kernel's symbols: it takes
+// Binding on its owners (manual §22.3 "The Binding skin", which took in §22.8's Binding device in the 22 Oct manual rewrite: Binding is no
+// device of its own, its design quaternal-logic__binding.tsx retired; the M3 clock carries this binding as its Binding skin under `binding.`,
+// TechneDevices.tsx qlFaceEntry). Binding is M3′'s view of form as charge, and it runs its own physics over the kernel's symbols: it takes
 // from the kernel only the codons, their charges, their pairing and their counts (§22.8 Rules). Owners write, faces read (lock §0.4):
 //   cell.hexagram     the form's hexagram: the person's M3 form through the kernel's m3_reception (qlM3Clock.ts; ql.m3-state/v1
 //                     `generation.hexagram_id`, else the form's address read as a hexagram, crates/ql-mef/src/m3_state.rs `form`);
@@ -15,8 +16,9 @@
 //   sites' coin values;
 //   the nonet (m2.index, nonet) — the 9:8 compression (ql_m3_epogdoon) has no kernel op; the event behind the last motion (event.kind,
 //   event.what) — the kernel publishes no inscription, matrix or line event to the shell; Binding's engine readings (coupling.alpha,
-//   string.stretch, string.energy) — the device's string engine over the cell is not built; Skin — neither the Torus nor the M3 clock
-//   takes another device's layer; Stretch → Q — no route carries the stretch to the Resonance's Q through M2.
+//   string.stretch, string.energy) — the device's string engine over the cell is not built; Skin — the M3 clock's own Skin chooses it
+//   there (qlM3Clock.ts QL_M3_LOCAL), and the Torus takes no other device's layer; Stretch → Q — no route carries the stretch to the
+//   Resonance's Q through M2.
 // Pure apart from the view's holds, which the caller hands in (techne/devices/designDevices.ts heldFor/hold).
 import type {InhabitantFaceDeclaration} from '../../manifest'
 import type {DesignBinding, Standing, Value} from '../../../frame/devices/designed'
@@ -40,7 +42,7 @@ const NO_EVENT = missing('The event behind the last motion', 'the kernel\'s even
   'the kernel')
 const NO_ENGINE = missing('Binding\'s engine readings', 'Binding\'s string engine over the cell: the coupling at its scale, the stretch and the energy by '
   + 'V(r) = −(4/3)·α_s·ħc/r + σr (manual §22.8)', 'the shell')
-const NO_SKIN = missing('Drawn on the Torus or the M3 clock', 'a layer the Torus and the M3 clock take from another device', 'the shell')
+const NO_SKIN = missing('Drawn on the Torus', 'a layer the Torus takes from another device (the M3 clock draws the skin by its own Skin)', 'the shell')
 const NO_STRETCH_Q = missing('Stretch → Q', 'a route from Binding\'s stretch to the Resonance\'s Q factor through M2 (cymatics.dampingQFactor)', 'the Expressions engine')
 
 /** Why each key Binding draws and no owner reports here is absent, or why its control is off (manual §16.12: "say which one"). */

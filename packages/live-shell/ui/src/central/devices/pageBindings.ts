@@ -55,19 +55,23 @@ export const WORKSPACE_DEVICE_ID = WORKSPACE_DESIGN
 
 const ON_THE_PAGE = 'the hosted form is the page\'s one writer while it holds the page (DocumentFlowFace.tsx: the bridge reads its island and never pushes into it)'
 const NO_SELECTION = 'The page\'s selection (ql-flow.html currentSel) does not cross the host bridge: the bridge reads the island only (desktop/cradle/src/document/frame.ts useDocumentHostRead).'
+/** Why the Document's Thought page reads and writes nothing yet: the Flow device carries Contemplate (FLOW_WIRING); the Document's
+ * binding is handed neither the Flow's AIKit ref nor the thought hand. */
+const NO_DOCUMENT_THOUGHT = 'the Document is not handed the Flow\'s AIKit ref or the thought hand that the Flow device reads it through —'
 
 export const DOCUMENT_WIRING: DesignWiring = {
   design: DOCUMENT_DESIGN,
   keys: ['light', 'template', 'title', 'view', 'flowView', 'ground', 'layout', 'pinned', 'agentWrites', 'autosave', 'copied', 'dirty', 'outcome', 'face', 'date',
     'tabTitle', 'highlights', 'notes', 'entries', 'packet', 'journal', 'island', 'save', 'reread', 'copy', 'clear',
-    'selection', 'selectionAct', 'packetScope', 'act.highlight', 'act.note', 'act.topacket', 'act.remember', 'act.answerthis'],
+    'selection', 'selectionAct', 'packetScope', 'act.highlight', 'act.note', 'act.topacket', 'act.remember', 'act.answerthis',
+    'preflight', 'thought', 'since', 'preflightRead', 'contemplate', 'sinceRead'],
   reads: {
     light: 'the reached document stands: lit when its owner answered (the Flow file read, the Day document), dark when it refused',
     template: 'the reached document\'s form (documentDoor.ts DocumentInPane.form): Day or Flow',
     title: 'a Flow\'s meta.title (its file, flow/instances.ts readFlowInstance); a Day has none of its own (its heading is its date)',
     flowView: 'a Flow\'s meta.view',
     dirty: 'the hosted form\'s draft fact (DocumentInPane.dirty, the face\'s data-dirty)',
-    outcome: 'the save router\'s last named outcome (DocumentInPane.outcome); before any save, saved where the face holds nothing its owner does not (the Saved state: the owner holds this revision, centralDeviceModel.ts FLOW_STATES)',
+    outcome: 'the save router\'s last named outcome (DocumentInPane.outcome); before any save, saved where the face holds nothing its owner does not (the Saved state: the owner holds this revision)',
     face: 'the Day document\'s meta.face (the Day device\'s reading, when the reached Day is its document)',
     date: 'the Day\'s civil date (the Day device\'s, when the reached Day is its document)',
     tabTitle: 'the pane\'s own tab title (centralDocuments.ts subjectOf)',
@@ -106,6 +110,11 @@ export const DOCUMENT_WIRING: DesignWiring = {
     'act.topacket': `To packet adds the selected passage to the page's packet: ${NO_SELECTION}`,
     'act.remember': `Remember keeps the selected passage through central.remember (projectcentral.remember for a project's page), which the kernel reaches, but it needs the passage: ${NO_SELECTION}`,
     'act.answerthis': `Answer this sends the selected passage to the agent on the world's chain (Clip view's Answer this, nara/answerThis.ts): ${NO_SELECTION}`,
+    // The Thought page (§17.8): its acts are the Flow's own, written by the Flow device's binding (FLOW_WIRING), which holds the Flow's
+    // AIKit ref and the thought hand; the Document's binding is handed neither.
+    preflightRead: `Preflight: ${NO_DOCUMENT_THOUGHT} invoke_action \`action:contemplate-flow\`, asked bare (AIKit).`,
+    contemplate: `Contemplate: ${NO_DOCUMENT_THOUGHT} invoke_action \`action:contemplate-flow\` with the preflight record (AIKit).`,
+    sinceRead: `Changed since: ${NO_DOCUMENT_THOUGHT} op flow_changed_since (AIKit).`,
   },
   absent: {
     selection: NO_SELECTION,
@@ -114,6 +123,10 @@ export const DOCUMENT_WIRING: DesignWiring = {
     pinned: 'No owner reports whether the pane is pinned to its page.',
     agentWrites: 'No owner holds how agent entries arrive on a page.',
     autosave: 'No owner saves a page by itself.',
+    // The Thought page's readings: AIKit's Flow cognition, which the Flow device reads (FLOW_WIRING) and the Document does not yet.
+    preflight: `Contemplate's preflight: ${NO_DOCUMENT_THOUGHT} invoke_action \`action:contemplate-flow\`, asked bare (AIKit).`,
+    thought: `The last thought: ${NO_DOCUMENT_THOUGHT} aikit_read flow-thoughts, or the run this window asked (AIKit).`,
+    since: `What changed since the thought: ${NO_DOCUMENT_THOUGHT} op flow_changed_since (AIKit).`,
   },
 }
 
@@ -335,7 +348,66 @@ export const WORKSPACE_WIRING: DesignWiring = {
   },
 }
 
-export const PAGE_WIRINGS: readonly DesignWiring[] = [DOCUMENT_WIRING, FLOW_WIRING, TEXT_WIRING, HIGHLIGHT_WIRING, NOTES_WIRING, BEINGS_WIRING, THINGS_WIRING, WORKSPACE_WIRING]
+/** Docs (DLW §18.5; catalogue/panels/central__docs.tsx): the world's account on six tiers, on a world's chain after Scope. What it reads of
+ * the world now is its subject — the track's world, which the Workspace's head read before it (the Workspace was retired into the track's
+ * head and Docs in the 22 Oct manual rewrite, §18.1). Its readings of the account and its acts wait for its binding to the six tiers (the PR
+ * #705 handoff's own item): Central's projectcentral.docs.inspect and projectcentral.ground.inspect, central.doctor and
+ * central.world.reproject.plan, AIKit's knowledge frame; each is absent or disabled naming that. */
+export const DOCS_DESIGN = 'central:docs'
+const DOCS_UNBOUND = (what: string) => `${what}: Docs' binding to the six tiers has not landed yet (the PR #705 handoff's item), so this reading is not taken here.`
+const DOCS_ACT_UNBOUND = (what: string, op: string) => `${what}: Docs' binding to the six tiers has not landed yet (the PR #705 handoff's item), so the press does not reach ${op} from here.`
+export const DOCS_WIRING: DesignWiring = {
+  design: DOCS_DESIGN,
+  keys: ['light', 'subject', 'subjects', 'tier', 'show', 'provenance', 'standing', 'refresh', 'source', 'bindAs', 'sources', 'root', 'scaffold', 'account', 'ux', 'ex',
+    'relate', 'recognise', 'readNow', 'openSource', 'ensure', 'reproject', 'initRoot'],
+  reads: {
+    subject: 'the track\'s world: its project as Central discloses it (world browse: central/centralWorlds.ts readWorlds), or Central for your world',
+    subjects: 'the track\'s world (its folders and notes are not listed yet)',
+  },
+  writes: {},
+  local: {
+    tier: 'the tier in front (the first that needs you, by default)', show: 'Everything, or Needs you (the default)',
+    provenance: 'who made a source you would recognise (Human-authored by default): held for Recognise',
+    standing: 'what a source you would recognise stands as (Design commitment by default): held for Recognise',
+    refresh: 'when Docs reads again (On open by default)', source: 'the source chosen', bindAs: 'the tier, experience or return a source is bound as: held for Relate',
+  },
+  refused: {
+    relate: DOCS_ACT_UNBOUND('Relate', 'projectcentral.docs.tier.relate, ux.relate or ex.relate'),
+    recognise: DOCS_ACT_UNBOUND('Recognise', 'projectcentral.ground.apply'),
+    readNow: DOCS_ACT_UNBOUND('Read now', 'the account\'s readings'),
+    openSource: DOCS_ACT_UNBOUND('Open', 'the Document'),
+    ensure: DOCS_ACT_UNBOUND('Ensure', 'projectcentral.docs.ensure'),
+    reproject: DOCS_ACT_UNBOUND('Reproject', 'central.world.reproject.apply'),
+    initRoot: DOCS_ACT_UNBOUND('Initialise root', 'central.init'),
+  },
+  absent: {
+    light: DOCS_UNBOUND('Whether the account stands'),
+    sources: DOCS_UNBOUND('The sources on each tier (projectcentral.docs.inspect, projectcentral.ground.inspect, aikit knowledge frame)'),
+    root: DOCS_UNBOUND('The root\'s parts (central.doctor)'),
+    scaffold: DOCS_UNBOUND('The world\'s scaffold (central.world.reproject.plan)'),
+    account: DOCS_UNBOUND('Whether the world has its account (projectcentral.docs.inspect)'),
+    ux: DOCS_UNBOUND('The intended experiences (projectcentral.docs.inspect)'),
+    ex: DOCS_UNBOUND('The returns (projectcentral.docs.inspect)'),
+  },
+}
+
+/** Docs' readings (DOCS_WIRING): the track's world as its subject, the view's own keys at their defaults (§18.5 Parameters). */
+export function docsValues(id: string, world: TrackWorld | null): Values {
+  const values: Record<string, Value> = {}
+  if (world) {
+    const subject = world.project ?? 'central'
+    values.subject = subject
+    values.subjects = JSON.stringify([subject])
+  }
+  return withHeld(id, DOCS_WIRING, values, {show: 'needs', provenance: 'human-authored', standing: 'design-commitment', refresh: 'open'})
+}
+
+/** Docs' binding: its subject read, every reading of the account absent and every act disabled, each naming the binding it waits for. */
+export function docsBinding(id: string, world: TrackWorld | null): DesignBinding {
+  return pageBinding(id, DOCS_WIRING, docsValues(id, world), {})
+}
+
+export const PAGE_WIRINGS: readonly DesignWiring[] = [DOCUMENT_WIRING, FLOW_WIRING, TEXT_WIRING, HIGHLIGHT_WIRING, NOTES_WIRING, BEINGS_WIRING, THINGS_WIRING, WORKSPACE_WIRING, DOCS_WIRING]
 
 // ---------------------------------------------------------------------------------------------------------------- the binding
 

@@ -48,8 +48,6 @@ const familyDoor = await import('../src/inhabitants/familyManifest.ts')
 familyDoor.resetFamilyManifestsForTest()
 ;(await import('../src/inhabitants/loadAgentShellFamilies.ts')).loadAgentShellFamilies()
 ;(await import('../src/inhabitants/worldShellFamilies.ts')).loadWorldShellFamilies()
-const {design: tasksDesign} = await import('../src/inhabitants/catalogue/panels/software-factory__tasks.tsx')
-const {design: runsDesign} = await import('../src/inhabitants/catalogue/panels/software-factory__attempt-review.tsx')
 
 const views = ['folded', 'compact', 'whole', 'full', 'widget']
 const hosted = (designed, binding) => views.map(view => renderToStaticMarkup(createElement(host.HostedDevice, {designed, binding, view, nav: {}})))
@@ -68,11 +66,8 @@ const SESSION = {sessionRef: 'agent-session/fx-aletheia', purpose: 'Explain run'
 const GROUP = {...SESSION, sessionRef: 'session-space/fx', group: true, tasks: []}
 const input = (over = {}) => ({session: SESSION, tracks: [GROUP, SESSION], nowUnixMs: NOW, selectedTask: 2, agent: {light: 'lit', quantize: 'next turn'}, ...over})
 
-test('Tasks and Runs are keyed to their designs exactly', () => {
-  assert.equal(designKey(tasks.tasksDevice().family, tasks.tasksDevice().face.id), tasksDesign.id)
-  assert.equal(designKey(tasks.runsDevice().family, tasks.runsDevice().face.id), runsDesign.id)
-})
-
+// Tasks' and Runs' designs (software-factory:tasks, software-factory:attempt-review) were retired as devices of their own in the
+// 22 Oct manual rewrite; their bindings stay for the devices that carry them, and are checked here on their own.
 test('Tasks reads the session\'s clips as the run model holds them — a state nobody said is left out — and the task THE selection names', () => {
   const values = tasks.tasksValues(input())
   assert.deepEqual(JSON.parse(values.tasks), [
@@ -89,10 +84,6 @@ test('Tasks reads the session\'s clips as the run model holds them — a state n
   assert.deepEqual(tasks.tasksValues(input({session: null})), {}, 'no session: nothing')
   assert.deepEqual(tasks.tasksValues(input({session: GROUP})), {}, 'a group is not a session')
   assert.equal(tasks.tasksValues(input({selectedTask: 9})).task, undefined, 'a task this session does not hold is not its selection')
-  for (const [key, value] of Object.entries(tasksDesign.defaults)) {
-    if (key === 'light' || key === 'task') continue // the light is the Agent's reading; the task is THE selection's ordinal (2 here, as in the design)
-    assert.notDeepEqual([key, values[key]], [key, value], `${key} carries the design's default`)
-  }
 })
 
 test('Tasks writes the owners\' way: the timing through the Agent, a new task the Agent\'s new-task row; the harness-grained acts refused by name, the per-task settings saying where they are read', async () => {
@@ -129,29 +120,6 @@ test('Runs without the take lanes\' reading handed in reads no attempts and hold
   assert.equal(tasks.runsValues('s', bind.chainHolds()).standsPending, undefined, 'Confirm ends the wait, refused or not')
   assert.match(binding.standing.stands.disabled, /AttemptReceiving is the write/)
   bind.resetHolds()
-})
-
-test('Tasks and Runs draw their designs on their bindings in all five views — no NaN, no undefined, never their fixtures — each refusal drawn as why', () => {
-  bind.resetHolds()
-  host.resetHost()
-  const cases = [
-    [tasksDesign, tasks.tasksBinding(input(), null, {selectTask() {}, queue: async () => {}}), /generate fixtures|pnpm test bridge2|lead session|#5cc6b4/, [tasks.TASKS_REFUSE.retry, 'The session\'s settings are not read here.']],
-    [runsDesign, tasks.runsBinding('agent-session/fx-aletheia', bind.chainHolds()), /01ARZ3NDEKTSV4RRFFQ69G5FAA|3\.4\.2/, []],
-  ]
-  for (const [design, binding, fixture, reasons] of cases) {
-    const drawn = hosted(design, binding)
-    drawn.forEach((markup, index) => {
-      assert.match(markup, new RegExp(`data-device-view="${views[index]}"`), `${design.id} ${views[index]} draws`)
-      assert.doesNotMatch(markup, /\bNaN\b|undefined/, `${design.id} ${views[index]}: no absent key drawn as text`)
-      assert.doesNotMatch(markup, /data-device-fault/, `${design.id} ${views[index]}: its own view drew`)
-      assert.doesNotMatch(markup, fixture, `${design.id} ${views[index]}: its fixture never stands in`)
-    })
-    const all = drawn.join('\n')
-    for (const why of reasons) assert.ok(all.includes(escaped(why)), `${design.id}: a refused control says why (${why})`)
-  }
-  assert.match(hosted(tasksDesign, cases[0][1]).join('\n'), /Return the correction/, 'the session\'s own task is drawn')
-  assert.match(hosted(runsDesign, cases[1][1]).join('\n'), /No reading of the attempts/, 'Runs says what it cannot read')
-  host.resetHost()
 })
 
 test('the chain publishes Tasks and Runs with their bindings, on the selected session and the task THE selection names', () => {
