@@ -3,7 +3,8 @@
  * frame makes up. Two sources are read:
  *
  *  - the torus: the voices the instrument was last struck on (controller.ts `struck`), while the field is running. A played note
- *    strikes the voices it names; a determinant event strikes every voice. Ring-out is not modelled: the owner reports no per-voice
+ *    strikes the voices it names; a determinant event strikes every voice, and so does a touch at a point of the surface (each voice by
+ *    its own shape there). Ring-out is not modelled: the owner reports no per-voice
  *    amplitude, so the latest strike stands until the next one.
  *  - the sky: the nine tuned voices, when the instrument was opened at a dated sky (`acting.sky.kind === 'dated'`).
  *

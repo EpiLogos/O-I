@@ -63,8 +63,9 @@ export class NativeFieldController {
  private refusal:{operation:string;reason:string;at:number}|null=null;
  private played:{at:number;strikes:number;last_ms:number}|null=null;
  /** The voices the instrument was last struck on, for the plate to follow (torusPlay.mjs): a played note names its own voices, a
-  * determinant event that strikes names every voice the owner tunes. The owner reports no per-voice amplitude, so the latest strike stands. */
- private struck:{at:number;source:'note'|'event';refs:string[]}|null=null;
+  * determinant event that strikes names every voice the owner tunes, and a strike at points of the surface names every voice the owner
+  * tunes too, with the points it was struck at. The owner reports no per-voice amplitude, so the latest strike stands. */
+ private struck:{at:number;source:'note'|'event'|'point';refs:string[];points?:{theta:number;phi:number}[]}|null=null;
  private level:GainNode|null=null;private levelValue:number=PRESENTATION_LEVEL.initial;
  /** A unity node the symbols' voices listen to (symbolVoices.ts): the torus's sound after the presentation level and before its effects. */
  private tap:GainNode|null=null;
@@ -432,6 +433,31 @@ export class NativeFieldController {
    try{await session.strike(acts);}
    catch(error){this.refused('played strike',error,session);throw error;}
    this.refusal=null;this.played={at:Date.now(),strikes:(this.played?.strikes??0)+1,last_ms:performance.now()-sent};this.struck={at:Date.now(),source:'note',refs:[...modeRefs]};this.changed();
+  });
+ }
+ /** A played strike at points of the torus surface (DLW §21.2 "What strikes the Torus"; QL-MEF #342 `strike-at`): each point is the
+  * torus's own angles, theta the tube and phi the ring, on the sheet [0, 2π), struck now at the same impulse. A chord is several points
+  * in one act. The owner excites every standing voice by its own shape at each point (QL scene_field.rs ShapeBasis::strike_at), so the
+  * torus plays every voice it tunes. A performance act like playVoices: no hold, no re-read, and the struck body sounds behind sound
+  * already scheduled. A point off the sheet is refused here, before the owner sees it, as InstrumentSession.strikeAt refuses it. */
+ playAt(points:{theta:number;phi:number}[],amplitude=0.35){
+  const session=this.session;
+  if(!session||!this.scene)return Promise.reject(new Error('Open the live instrument first: a played strike belongs to a scene owner'));
+  if(!Array.isArray(points)||points.length<1||points.length>64)return Promise.reject(new Error('a strike at points names 1..64 points of the torus'));
+  if(points.some(p=>![p?.theta,p?.phi].every(angle=>typeof angle==='number'&&Number.isFinite(angle)&&angle>=0&&angle<2*Math.PI)))
+   return Promise.reject(new Error('a struck point names theta and phi on the sheet of the torus, each in [0, 2π)'));
+  if(!Number.isFinite(amplitude)||amplitude<=0||amplitude>1)return Promise.reject(new Error('strike amplitude must be in (0, 1] modal metres'));
+  if(this.status!=='following'||this.suspension)return Promise.reject(new Error('The field is not running: resume it, then play'));
+  const struck=points.map(({theta,phi})=>({theta,phi}));
+  const acts=struck.map(point=>({...point,amplitude:[amplitude,0] as [number,number]}));
+  return this.serial(async()=>{
+   if(!(await this.waitIdle(session,2000)))throw new Error('native owner busy; the strike was not sent');
+   if(this.status!=='following'||this.suspension||!this.current(session))throw new Error('instrument held before the strike was sent');
+   const sent=performance.now();
+   try{await session.strikeAt(acts);}
+   catch(error){this.refused('strike at a point',error,session);throw error;}
+   const refs=(Array.isArray(this.influenceReading?.voices)?this.influenceReading.voices:[]).map((v:any)=>v?.planet_ref).filter((r:unknown):r is string=>typeof r==='string').map(voiceModeRef);
+   this.refusal=null;this.played={at:Date.now(),strikes:(this.played?.strikes??0)+1,last_ms:performance.now()-sent};this.struck={at:Date.now(),source:'point',refs,points:struck};this.changed();
   });
  }
  /** The performance journal of the current native lifetime (acts and aggregate advances). */
