@@ -68,14 +68,16 @@ pub fn install(app: &AppHandle, arrangements: &[Arrangement], active: &str) -> t
     let insert_clip = item("create.clip", "Insert Clip", Some("CmdOrCtrl+Shift+M"))?;
     let insert_row = item("create.row", "Insert Row", Some("CmdOrCtrl+I"))?;
     let create = SubmenuBuilder::new(app, "Create").item(&insert_clip).item(&insert_row).build()?;
-    // Export, in the File menu (manual §20.1 Export): a picture, a film, or the Expression itself.
-    let mut export = SubmenuBuilder::new(app, "Export");
-    for (id, label) in EXPORT_ITEMS {
-        export = export.item(&item(id, label, None)?);
-    }
-    let file = SubmenuBuilder::new(app, "File")
-        .item(&export.build()?)
+    // Export, in the File menu (manual §20.1 Export): a picture (with its choices), a film, or the Expression itself.
+    let export = SubmenuBuilder::new(app, "Export")
+        .item(&item("file.export.picture", "Picture…", None)?)
+        .item(&item("file.export.film", "Film", None)?)
+        .separator()
+        .item(&item("file.export.json", "Expression JSON", None)?)
+        .item(&item("file.export.html", "Living HTML", None)?)
+        .item(&item("file.export.native", "Native Configuration", None)?)
         .build()?;
+    let file = SubmenuBuilder::new(app, "File").item(&export).build()?;
     let view = SubmenuBuilder::new(app, "View")
         .item(&item("view.session", "Session View", None)?)
         .item(&item("view.arrangement", "Arrangement View", None)?)
@@ -94,7 +96,12 @@ pub fn install(app: &AppHandle, arrangements: &[Arrangement], active: &str) -> t
         .item(&item("view.io", "In/Out", Some("Alt+CmdOrCtrl+I"))?)
         .separator()
         // Present gives the field the whole screen; Esc brings the window back (manual §20.1 Pane view).
-        .item(&item(PRESENT, "Present", None)?)
+        .item(&item("view.present", "Present", None)?)
+        // The field's grid, snapping and guides (O-I #747, lead's ruling of 29 Oct: the Stage plate's last view controls).
+        .item(&item("view.grid", "Grid", None)?)
+        .item(&item("view.snap", "Snap", None)?)
+        .item(&item("view.guides", "Guides", None)?)
+        .separator()
         .fullscreen()
         .build()?;
     let browser = MenuItemBuilder::with_id("workspace.browser", "New Browser Pane").accelerator("CmdOrCtrl+Shift+L").build(app)?;
@@ -127,18 +134,6 @@ pub fn install(app: &AppHandle, arrangements: &[Arrangement], active: &str) -> t
     }
     Ok(())
 }
-
-/// View's Present (manual §20.1 "Show the field alone — Present, in the View menu").
-pub const PRESENT: &str = "view.present";
-
-/// File › Export's items, in the manual's order (§20.1 Export: Picture, Film, Expression).
-pub const EXPORT_ITEMS: [(&str, &str); 5] = [
-    ("file.export.picture", "Picture"),
-    ("file.export.film", "Film"),
-    ("file.export.json", "Expression JSON"),
-    ("file.export.html", "Living HTML"),
-    ("file.export.native", "Scene as Native Configuration"),
-];
 
 /// Whether a menu item is one of the shell's commands (File, Edit, Create, View, Settings), routed as `oi:command`.
 pub fn is_command(id: &str) -> bool {
@@ -173,18 +168,21 @@ mod tests {
     use super::*;
 
     #[test]
-    fn present_and_export_reach_the_renderer_as_commands() {
-        assert!(is_command(PRESENT));
-        for (id, _) in EXPORT_ITEMS {
+    fn present_grid_snap_guides_and_export_reach_the_renderer_as_commands() {
+        for id in [
+            "view.present",
+            "view.grid",
+            "view.snap",
+            "view.guides",
+            "file.export.picture",
+            "file.export.film",
+            "file.export.json",
+            "file.export.html",
+            "file.export.native",
+        ] {
             assert!(is_command(id), "{id} is routed as oi:command");
         }
         assert!(!is_command("workspace.browser"));
         assert!(!is_command("world.choose"));
-    }
-
-    #[test]
-    fn export_names_a_picture_a_film_and_the_expression() {
-        let labels: Vec<&str> = EXPORT_ITEMS.iter().map(|(_, label)| *label).collect();
-        assert_eq!(labels, ["Picture", "Film", "Expression JSON", "Living HTML", "Scene as Native Configuration"]);
     }
 }

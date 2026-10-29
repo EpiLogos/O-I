@@ -68,3 +68,26 @@ test('a notice that names no admission reaches the pane\'s record, as before', (
   door.unregisterExpressionsPane('plain')
   assert.equal(door.framePlacement(), null)
 })
+
+// O-I #747 round two (item 7, seen headless 29 Oct): on a fresh load the frame never mounted until a Central → Expressions switch. The
+// projection session tells a module only of concealment at mount ("A pane concealed before its module stood is told so at mount, once",
+// desktop/cradle/src/surface/projectionPaneSession.ts), so a pane shown from the start was never told it was shown — and the pane module
+// registered itself unpresented: no placement, the panel's residence never drawn (App.tsx WhenShown), no frame. The admission now stands
+// presented, as the session's contract assumes; concealment still reaches it.
+test('a pane module the session mounts unconcealed stands presented, so the frame is placed over it at once', async () => {
+  const pane = await import('../src/projections/expressionsPane.tsx')
+  const admission = pane.admitExpressionsPane('fresh')
+  const held = slot('fresh')
+  door.attachExpressionsSlot('fresh', held, admission)
+  assert.deepEqual(door.framePlacement(), {paneId: 'fresh', slot: held}, 'placed with no visibility notice: the session sent none')
+  door.setExpressionsPanePresented('fresh', false, admission)
+  assert.equal(door.framePlacement(), null, 'concealment still reaches it')
+  door.unregisterExpressionsPane('fresh', admission)
+  const {ProjectionPaneSession} = await import('../../../../desktop/cradle/src/surface/projectionPaneSession.ts')
+  const told = []
+  const session = new ProjectionPaneSession({id: 'x', create: () => ({unmount() {}, setVisible: visible => told.push(visible)})}, {element: {}}, () => {})
+  session.setVisible(true)
+  await session.ready
+  assert.deepEqual(told, [], 'the session\'s contract: a module shown before it stood is told nothing')
+  session.dispose()
+})

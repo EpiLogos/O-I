@@ -365,15 +365,20 @@ test('the scene\'s Sequence reads the owner\'s symbols: an empty scene says it h
 test('the scene\'s View stands in its Clip panel: Kept or Not kept, with Keep and Restore through the field\'s own acts (manual §20.1)', async () => {
   const reading = ownerReading()
   assert.equal(SC.expressionsClipValues(reading).view, 'not kept', 'a scene that keeps no view of its own')
-  const kept = {...reading, scene: {...reading.scene, view: {...reading.scene.view, mode: '3d', yaw: 0.4, zoom: 1.6}}}
-  assert.equal(SC.expressionsClipValues(kept).view, 'kept')
+  // O-I #747 round two: the scene's explicit kept state, never "a framing other than the default".
+  const turned = {...reading, scene: {...reading.scene, view: {...reading.scene.view, mode: '3d', yaw: 0.4, zoom: 1.6}}}
+  assert.equal(SC.expressionsClipValues(turned).view, 'not kept', 'a turned camera is not a kept view')
+  const kept = {...reading, scene: {...reading.scene, view: {...reading.scene.view, kept: true}}}
+  assert.equal(SC.expressionsClipValues(kept).view, 'kept', 'Keep at the default framing is a kept view')
   const markup = panel('clip', SC.expressionsClipValues(kept))
-  assert.match(markup, /View/); assert.match(markup, /Kept/); assert.match(markup, /Keep/); assert.match(markup, /Restore/)
+  assert.match(markup, /View/); assert.match(markup, /Kept/); assert.match(markup, /Keep/); assert.match(markup, /Restore/); assert.match(markup, /Fit/)
   const ran = []
   const stage = {state: null, run: async command => { ran.push(command); return {ok: true} }}
   const binding = SC.expressionsClipBinding({reading: kept, request: async () => ({ok: true, reading: kept}), stage})
-  await binding.write([{key: 'view.keep', value: 1}]); await binding.write([{key: 'view.restore', value: 2}])
-  assert.deepEqual(ran, [{command: 'view', action: 'keep-view'}, {command: 'view', action: 'restore-view'}])
+  await binding.write([{key: 'view.keep', value: 1}]); await binding.write([{key: 'view.restore', value: 2}]); await binding.write([{key: 'view.fit', value: 3}])
+  assert.deepEqual(ran, [{command: 'view', action: 'keep-view'}, {command: 'view', action: 'restore-view'}, {command: 'view', action: 'fit-view'}])
+  const frame = await readFile(new URL('desktop/cradle/expressions-app/field-studies-journeys/src/app.ts', root), 'utf8')
+  assert.match(frame, /case 'keep-view':changed\(\(\)=>\{scene\(\)\.view=\{\.\.\.scene\(\)\.view,kept:true,/, 'Keep writes the kept state with the framing')
 })
 
 test('the pointer\'s Select is the field\'s own Select, and ends a placement (the port ledger\'s cancel-placement home)', async () => {

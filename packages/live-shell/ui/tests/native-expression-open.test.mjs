@@ -403,7 +403,10 @@ test('the browser container renders the same rows from the shell workspace and h
     mode: 'expressions', setMode: () => {}, transport: {kind: 'unavailable', reason: 'test'}}
   const markup = renderToStaticMarkup(createElement(Context.Workspace.Provider, {value: workspace}, createElement(COL.NativeExpressionCollections, {query: ''})))
   assert.match(markup, /aria-label="Open O:I — the mark"/)
-  assert.doesNotMatch(markup, /disabled=""/)
+  // O-I #747 round two: Import stands under New, off while no field is mounted (it names why); every other row stays live.
+  const importRow = markup.match(/<li[^>]*data-collection-row="import"[^]*?<\/li>/)?.[0] ?? ''
+  assert.match(importRow, /Open Expressions first: the field imports an Expression once its application is mounted\./)
+  assert.doesNotMatch(markup.replace(importRow, ''), /disabled=""/)
 })
 
 test('code-reading: FORK_REASON is gone from the shell, and the container opens through the panel\'s channel and the one open door', async () => {

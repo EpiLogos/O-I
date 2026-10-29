@@ -337,85 +337,45 @@ test('toggle readings are undefined unless the hosted state carries them, and ev
 // where the hosted state reads one.
 const stageButtons = html => Object.fromEntries([...html.matchAll(/<button([^>]*)>/g)].map(([, attrs]) => attrs).filter(attrs => attrs.includes('data-stage="'))
   .map(attrs => [attrs.match(/data-stage="([^"]+)"/)[1], attrs]));
-/** The Studio's stage sections over one sender, as ExpressionsStudio composes them. */
+/** The Studio's stage section over one sender, as ExpressionsStudio composes it: the Camera alone (O-I #747 moved the rest to its homes). */
 function StudioStageSections({state, run}) {
   const sender = studioStage.useStageSender(state, run);
-  return createElement('div', null, createElement(studioStage.StageViewTools, {sender}), createElement(studioStage.StageCaptureTools, {sender}));
+  return createElement('div', null, createElement(studioStage.StageViewTools, {sender}));
 }
 const studio = props => renderToStaticMarkup(createElement(StudioStageSections, props));
-const captureBody = (state, over = {}) => renderToStaticMarkup(createElement(studioStage.StageCaptureBody, {
-  sender: {reason: shell.stageDisabledReason({mounted: true, state, busy: false}), readings: shell.stageReadings(state), refusal: null, send: () => {}},
-  chosen: 'still', options: shell.STAGE_CAPTURE_DEFAULTS, edition: false, editionId: 'edition', onChoose: () => {}, onOptions: () => {}, onEdition: () => {}, ...over}));
+const CAMERA = ['view-2d', 'view-3d', 'face-plane'];
 
 test('the stage controls name every control, disable it with its reason, and read toggles from the hosted state', () => {
   const unmounted = studio({state: null, run: null});
-  assert.match(unmounted, /role="group" aria-label="Stage view"/);
-  assert.match(unmounted, /role="group" aria-label="Capture"/);
-  assert.match(unmounted, /<p class="inst-section-line studio-stage-reason">No Expressions application is mounted\.<\/p>/, 'the shared reason is said once, in Capture');
+  assert.match(unmounted, /role="group" aria-label="Stage camera"/);
+  assert.match(unmounted, /<p class="inst-section-line studio-stage-reason">No Expressions application is mounted\.<\/p>/, 'the shared reason is said once');
   const off = stageButtons(unmounted);
-  assert.deepEqual(Object.keys(off).sort(), [...PLATE_VIEW, 'capture-png'].sort(), 'the view and the still capture stand; the rest are one choice away (O-I #747 moved Present, Keep and Restore)');
+  assert.deepEqual(Object.keys(off).sort(), [...CAMERA].sort(), 'the camera stands; the rest is at its home (O-I #747: View menu, Clip panel, File › Export, browser)');
   for (const [id, attrs] of Object.entries(off)) {
     assert.match(attrs, /disabled=""/, id);
     assert.doesNotMatch(attrs, /aria-pressed/, id);
     assert.match(attrs, /title="No Expressions application is mounted\."/, `${id} keeps its owner's reason in its hover words`);
   }
-  assert.doesNotMatch(unmounted, /aria-label="Tool"/, 'the tool rail is in the top bar, not here');
   const bare = stageButtons(studio({state: READY_STATE, run: async () => ({ok: true})}));
   assert.doesNotMatch(bare['view-2d'], /aria-pressed/, 'no camera reading, no pressed claim');
-  assert.equal(bare.present, undefined, 'MOVED (O-I #747): View › Present');
-
-  const ready = studio({
-    state: {...READY_STATE, stage: {mode: '3d', grid: true, snap: false, guides: true}, recording: true, presenting: false},
-    run: async () => ({ok: true}),
-  });
-  const on = stageButtons(ready);
-  // A take records, so the capture is video: Stop is the one capture that can run, and Save video waits for it to finish.
-  assert.deepEqual(Object.keys(on).sort(), [...PLATE_VIEW, 'record', 'save-video'].sort());
-  for (const [id, attrs] of Object.entries(on)) if (id !== 'save-video') assert.doesNotMatch(attrs, /disabled/, id);
-  assert.match(on['save-video'], /disabled=""/);
-  assert.match(on['save-video'], /title="Stop the recording first\."/);
+  const on = stageButtons(studio({state: {...READY_STATE, stage: {mode: '3d', grid: true, snap: false, guides: true}}, run: async () => ({ok: true})}));
+  assert.deepEqual(Object.keys(on).sort(), [...CAMERA].sort());
   assert.match(on['view-2d'], /aria-pressed="false"/);
   assert.match(on['view-3d'], /aria-pressed="true"/);
-  assert.match(on.grid, /aria-pressed="true"/);
-  assert.match(on.snap, /aria-pressed="false"/);
-  assert.match(on.guides, /aria-pressed="true"/);
-  assert.match(on.record, /aria-pressed="true"/);
-  assert.match(on.record, /aria-label="Stop recording"/);
   assert.doesNotMatch(on['face-plane'], /aria-pressed/);
-  assert.match(ready, /aria-label="Camera"/);
-  assert.match(ready, /aria-label="Guides and snap"/);
-  assert.match(ready, /aria-pressed="true"[^>]*>video</, 'while a take records the capture choice reads video');
 });
 
-test('Save video waits for a take, and the capture options start at the Image suite defaults', () => {
-  const toolState = (stage = {}, extra = {}) => ({...READY_STATE, stage: {mode: '2d', grid: false, snap: false, guides: false, ...stage}, ...extra});
-  const held = stageButtons(captureBody(toolState({tool: 'pin', videoTake: true}), {chosen: 'video'}));
-  assert.doesNotMatch(held['save-video'], /disabled/, 'a held take can be saved');
-  const select = stageButtons(captureBody(toolState({tool: 'select'}), {chosen: 'video'}));
-  assert.match(select['save-video'], /disabled=""/);
-  assert.match(select['save-video'], /Record a take first\./);
-  assert.match(select.record, /aria-label="Record video"/);
-  assert.equal(select.select, undefined, 'the tool rail is in the top bar, not here');
-  assert.equal(stageButtons(captureBody(toolState()))['save-video'], undefined, 'a still capture holds no take to save');
-
-  const recording = stageButtons(captureBody(toolState({}, {recording: true})));
-  assert.match(recording.record, /aria-pressed="true"/);
-  assert.match(recording['save-video'], /disabled=""/, 'a take is not saved while recording');
-
-  const closed = captureBody(toolState({tool: 'pin'}));
-  assert.match(closed, /aria-expanded="false"[^>]*>Edition…<\/button>/, 'Edition… holds the options and Import (the mockup\'s Edition…; Export is File › Export, O-I #747)');
-  assert.doesNotMatch(closed, /Expression JSON|Include text/);
-  const html = captureBody(toolState({tool: 'pin'}), {edition: true});
-  assert.doesNotMatch(html, /aria-label="Tool"/);
-  assert.match(html, /role="group" aria-label="Capture options"/);
+test('Picture… holds the manual\'s choices at their defaults (§20.1 Export), never the tool rail or Orbit', () => {
+  const html = renderToStaticMarkup(createElement(studioStage.PictureChoicesBody, {
+    sender: {reason: null, readings: shell.stageReadings(READY_STATE), refusal: null, send: () => {}},
+    options: shell.STAGE_CAPTURE_DEFAULTS, onOptions: () => {}, onDone: () => {}}));
+  assert.match(html, /role="group" aria-label="Picture"/);
   assert.match(html, /Width <select[^>]*>/);
-  assert.match(html, /<option value="1440" selected="">1440 px<\/option>/, 'the options start at the Image suite default');
+  assert.match(html, /<option value="1440" selected="">1440 px<\/option>/, 'the choices start at the manual\'s default');
   assert.match(html, /<option value="stage" selected="">Stage frame<\/option>/);
-  assert.match(html, /Include text/);
+  assert.match(html, /Include page text/);
   assert.match(html, /Transparent background/);
-  const edition = stageButtons(html);
-  assert.ok(edition.import, 'import stands in Edition…');
-  for (const id of ['export-json', 'export-native', 'export-html']) assert.equal(edition[id], undefined, `${id}: MOVED to File › Export (O-I #747)`);
+  assert.doesNotMatch(html, /aria-label="Tool"/);
   assert.doesNotMatch(html, /Orbit/, 'orbit is a pointer drag on the stage: the pane\'s hover words say so, not a control');
 });
 

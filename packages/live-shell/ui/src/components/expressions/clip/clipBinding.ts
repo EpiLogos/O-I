@@ -121,10 +121,9 @@ export function expressionsClipValues(reading: NativeEditorReading, colour?: str
     if (display) for (const [key, field] of Object.entries(BP)) values[key] = fieldValue(display, field)
   }
   if (reading.scenes) values.scenes = JSON.stringify(reading.scenes.scenes.map(item => ({id: item.scene_ref, name: item.title})))
-  // The scene's view of the field (manual §20.1 The Clip panel, View): kept when the scene holds a framing other than the default one
-  // (field-studies-journeys model.ts blankScene: 2D, facing, zoom 1, no pan), which Keep writes (app.ts keep-view).
-  const view = scene.view
-  values.view = view && (view.mode !== '2d' || view.yaw !== 0 || view.pitch !== 0 || view.zoom !== 1 || view.panX !== 0 || view.panY !== 0) ? 'kept' : 'not kept'
+  // The scene's view of the field (manual §20.1 The Clip panel, View): the scene's own kept state, which Keep writes with the framing
+  // (field-studies-journeys model.ts Scene.view.kept; app.ts keep-view). Absent is not kept.
+  values.view = scene.view?.kept === true ? 'kept' : 'not kept'
   // Each symbol's steps are the owner's glyph timing (shell/nativeContent.ts readNativeGlyphTiming). When the owner's reading cannot be
   // composed into it, the Sequence says why rather than drawing empty lanes as if the scene had no steps (walk 739, X2).
   let timing: ReturnType<typeof readNativeExpressionsContent>['clip_sources'] = []
@@ -372,7 +371,7 @@ function sceneWiring(reading: NativeEditorReading, request: EditorRequest | null
       follow: 'a "Scene leaves → Jump to a scene" trigger is the follow action Jump', jumpTo: 'that trigger\'s scene',
       symbols: 'the Scene\'s entities and each formation\'s glyph timing', objects: 'each entity\'s Formation, Force and Sound', symbol: 'the owner\'s selection, when it is one entity',
       lanes: 'Scene.automation', layers: 'Scene.text', 'bp.bound': 'the native blueprint', 'bp.*': 'the native blueprint\'s transform',
-      view: 'Scene.view: a framing other than the default one is a kept view', sequenceUnread: 'why the owner\'s glyph timing could not be read',
+      view: 'Scene.view.kept: Keep holds the framing with the scene (absent: not kept)', sequenceUnread: 'why the owner\'s glyph timing could not be read',
       tool: 'the field\'s own tool, when it is Select or Orbit (the hosted state\'s stage.tool)',
     },
     acts: {
@@ -399,6 +398,8 @@ function sceneWiring(reading: NativeEditorReading, request: EditorRequest | null
       // The scene's View (manual §20.1 The Clip panel): Keep and Restore are the field's own acts (app.ts keep-view, restore-view).
       'view.keep': async () => staged(stage, stageView('keep-view')),
       'view.restore': async () => staged(stage, stageView('restore-view')),
+      // Fit (lead's ruling of 29 Oct: the Stage plate's Fit stands in the Clip panel's View): the field's own fit-view.
+      'view.fit': async () => staged(stage, stageView('fit-view')),
       // The pointer tools (manual §20.1 Tools): Select is the field's own Select; the others say why.
       tool: async value => {
         if (value === 'select') return staged(stage, stageTool('select'))

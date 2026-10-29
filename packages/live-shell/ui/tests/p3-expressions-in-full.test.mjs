@@ -152,12 +152,17 @@ test('#747: Present in the View menu and Export in the File menu are the field\'
   // Expression: "Expression JSON; living HTML, with its editor; or the current scene as a native configuration."
   for (const format of ['json', 'html', 'native']) assert.deepEqual(menuStageCommands(`file.export.${format}`, idle), [S.stageExport(format)])
   assert.equal(menuStageCommands('view.session', idle), null, 'an item that is not the field\'s is left to the frame')
+  for (const [id, command] of [['view.grid', 'grid'], ['view.snap', 'snap'], ['view.guides', 'guides']]) assert.deepEqual(menuStageCommands(id, idle), [S.stageView(command)], `${id}: the field's own`)
   const menus = await source('../../../../desktop/cradle/src-tauri/src/menus.rs')
-  assert.match(menus, /PRESENT: &str = "view\.present"/); assert.match(menus, /item\(PRESENT, "Present", None\)/)
-  for (const [id, label] of [['file.export.picture', 'Picture'], ['file.export.film', 'Film'], ['file.export.json', 'Expression JSON'],
-    ['file.export.html', 'Living HTML'], ['file.export.native', 'Scene as Native Configuration']]) assert.match(menus, new RegExp(`"${id.replace(/\./g, '\\.')}", "${label}"`), `${id} stands in the menu bar`)
+  for (const [id, label] of [['view.present', 'Present'], ['view.grid', 'Grid'], ['view.snap', 'Snap'], ['view.guides', 'Guides'], ['file.export.picture', 'Picture…'],
+    ['file.export.film', 'Film'], ['file.export.json', 'Expression JSON'], ['file.export.html', 'Living HTML'], ['file.export.native', 'Native Configuration']])
+    assert.match(menus, new RegExp(`item\\("${id.replace(/\./g, '\\.')}", "${label}", None\\)`), `${id} stands in the menu bar`)
   assert.match(menus, /SubmenuBuilder::new\(app, "File"\)/, 'a File menu')
   assert.match(menus, /\["edit\.", "create\.", "view\.", "file\.", "app\."\]/, 'its items reach the renderer as oi:command')
+  // O-I #747 round two: the search line's > offers them (frame/menu/commandDoor.ts MENU_COMMANDS).
+  const {MENU_COMMANDS} = await import('../src/frame/menu/commandDoor.ts')
+  for (const id of ['view.present', 'view.grid', 'view.snap', 'view.guides', 'file.export.picture', 'file.export.film', 'file.export.json', 'file.export.html', 'file.export.native'])
+    assert.ok(MENU_COMMANDS[id], `${id}: an act of the search line's >`)
 })
 
 test('#747: the menu bar\'s items the frame does not route go to the mode that stands; Expressions answers Present and Export', async () => {
@@ -167,5 +172,8 @@ test('#747: the menu bar\'s items the frame does not route go to the mode that s
   const panel = await source('../src/panels/expressions.tsx')
   assert.match(panel, /window\.addEventListener\(MENU_ACT, menuAct\)/)
   assert.match(panel, /menuStageCommands\(id, mounted\.host\.getState\(\)\)/)
+  // Picture… asks its choices first (§20.1 Export's table), over the window, until Export or Close.
+  assert.match(panel, /if \(id === 'file\.export\.picture'\) \{ event\.preventDefault\(\); setPicture\(true\); return \}/)
+  assert.match(panel, /<PictureChoices sender=\{pictureSender\} onDone=\{\(\) => setPicture\(false\)\} exported=\{exported\} \/>/)
   assert.match(panel, /window\.removeEventListener\(MENU_ACT, menuAct\)/)
 })

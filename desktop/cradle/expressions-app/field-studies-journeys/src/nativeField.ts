@@ -17,6 +17,8 @@ import {torusPlayReading} from './native-field/torusPlay.mjs';
 import {touchStrike,type StageView} from './native-field/surfaceTouch';
 import {WORLD_SCALE} from './nativeParameters';
 /** scene_field.rs `PLANETS`, in scalar-degree order: the map's own names. */
+/** O-I #747: how long the authored scene stays still before the live field opens again on it after a rebind. */
+export const REBIND_SETTLE_MS=700;
 const PLANET_NAMES=['Sun','Venus','Mercury','Moon','Saturn','Jupiter','Mars','Neptune','Pluto'];
 const esc=(v:unknown)=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
 const when=(ms:number|null)=>ms==null?'—':new Date(ms).toISOString().replace('T',' ').replace(/\.\d+Z$/,' UTC');
@@ -512,19 +514,38 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
  };
  const openLive=()=>{liveEntry.enter();requestAnimationFrame(()=>liveEntry.check());};
  const leaveLive=()=>liveEntry.leave();
- /** O-I #747 (walk 739, X1): a new authored scene would replace the one the live field holds, which the retained lease refuses
-  * ("authored scene configuration while leased" needs a rebind: controller.ts presentation_changes_requiring_rebind). The field is the
-  * one body (manual §20.2), so it is bound again on the new scene: the lease is let go now, before the scene is configured, so the scene
-  * stands; then the instrument opens again on it as the Live entry opens it, muted. The act that asked for it is named on the
-  * instrument's status line and returned for the frame to say. While no live field is held nothing happens and null is returned. */
+ /** O-I #747 (walk 739, X1; lead's ruling of 29 Oct): an authored change — another Expression opened, a scene switched, a view kept, a
+  * control changed — would replace the scene the live field holds, which the retained lease refuses ("authored scene configuration
+  * while leased" needs a rebind: controller.ts presentation_changes_requiring_rebind). The field is the one body (manual §20.2), so
+  * it is bound again around the person's act: the lease is let go now, before the change is configured, so the change stands; the
+  * instrument opens again on the scene as the Live entry opens it, muted, once the authored scene has been still for REBIND_SETTLE_MS
+  * (a drag or a playing take moves it every frame: the field waits for it to settle rather than reopening under it). Leaving Live
+  * never releases it (Live may still be playing). The act is named on the instrument's status line and returned, once per settling,
+  * for the frame to say. While no live field is held and none is waiting to reopen, nothing happens and null is returned. */
+ let reopening=0,released:Promise<void>=Promise.resolve(),settledOn:string|null=null;
+ const reopenWhenStill=()=>{
+  clearTimeout(reopening);
+  // An open already answering (busy) is waited out: the reopen is asked again after another settling, never dropped.
+  reopening=window.setTimeout(()=>{if(busy||composing){reopenWhenStill();return;}reopening=0;void released.catch(()=>{}).then(()=>open('now'));},REBIND_SETTLE_MS);
+ };
  const rebind=(act:string):string|null=>{
   const status=(controller.reading as any).status;
-  if(status!=='following'&&status!=='held'&&status!=='opening')return null;
-  const words=`${act}: the live field let go of the last scene so this one can stand, and opens again on it.`;
-  // release's own first steps (the lease let go, renderer.releaseRetainedField) run before its first await, so the new scene can stand.
-  void controller.release(true).then(()=>{controller.reason=words;update();return open('now');}).catch(fail);
-  return words;
+  const held=status==='following'||status==='held'||status==='opening';
+  if(!held&&!reopening)return null;
+  const words=`${act}: the live field let go of the scene so the change could stand, and opens again on it once the change settles.`;
+  // release's own first steps (the lease let go, renderer.releaseRetainedField) run before its first await, so the change can stand.
+  if(held)released=controller.release(true).catch(fail);
+  controller.reason=words;update();
+  const first=!reopening;
+  reopenWhenStill();
+  return first?words:null;
+ };
+ /** The authored scene as the frame configures it this frame (retained-capability.mjs authoredIdentity): while a reopen waits, a scene
+  * still moving (a drag, a playing take) holds it off until it is still. */
+ const authoredMoved=(identity:string|null)=>{
+  if(!reopening||identity===null||identity===settledOn)return;
+  settledOn=identity;reopenWhenStill();
  };
  update();
- return {controller,panel,command,stage,playJanko,touch,openLive,leaveLive,rebind,dispose:()=>{clearInterval(timer);panel.removeEventListener('click',click);panel.removeEventListener('input',range);panel.removeEventListener('pointerdown',pressKey);panel.removeEventListener('focusin',focusKey);document.removeEventListener('visibilitychange',visibility);window.removeEventListener('pagehide',pagehide);panel.remove();domainView.dispose();style.remove();void controller.dispose();}};
+ return {controller,panel,command,stage,playJanko,touch,openLive,leaveLive,rebind,authoredMoved,dispose:()=>{clearInterval(timer);clearTimeout(reopening);panel.removeEventListener('click',click);panel.removeEventListener('input',range);panel.removeEventListener('pointerdown',pressKey);panel.removeEventListener('focusin',focusKey);document.removeEventListener('visibilitychange',visibility);window.removeEventListener('pagehide',pagehide);panel.remove();domainView.dispose();style.remove();void controller.dispose();}};
 }

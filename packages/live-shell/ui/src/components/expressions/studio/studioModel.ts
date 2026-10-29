@@ -107,16 +107,17 @@ export function onRack(reading: NativeEditorReading | null, family: string): boo
  *   • rail/a:pointer-options — the transport's Draw slot pointer group (shell/transports/useExpressionsTransport.tsx `draw`, BarPointerGroup);
  *   • rail/a:objects — Selected's Object chooser (ExpressionsStudio.tsx SelectedGlyph);
  *   • workspace/a:studio — this Studio; workspace/a:blueprint — the Studio's Blueprint device (Scene devices, studioSections);
- *   • save/a:capture-image, save/a:record-video, save/a:capture-options — Capture (StudioStage.tsx StageCaptureTools: ◉ Capture still |
- *     video, Edition… with the Image suite's options);
+ *   • save/a:capture-image, save/a:record-video, save/a:capture-options — File › Export › Picture… with its choices and Film (O-I #747:
+ *     menus.rs; StudioStage.tsx PictureChoices, menuStageCommands);
  *   • scene/a:toggle-play — the transport's Play and Stop (useExpressionsTransport.tsx `play`); scene/a:present — View › Present (O-I #747:
  *     menus.rs, StudioStage.tsx menuStageCommands);
  *   • rail/a:tool-select — Clip view's pointer tools, Select (O-I #747: components/expressions/clip/clipBinding.ts `tool`);
  * (R2 retired the Clip side's SceneControls, which carried workspace/a:quick-guide and scene/a:previous, next, timeline and play-journey:
  * the frame's own controls for them stand on the Stage's Frame tools until the scene's Clip view carries them.)
  *   • side/a:toolbelt — Your controls, the toolbelt's own entries with + Parameter (NativeChosenControls.tsx :225);
- *   • view/a:grid, view/a:snap, view/a:face-plane, view/a:guides — Tools' Guides and snap and Camera (StudioStage.tsx StageViewTools);
- *   • present/a:exit-present — View › Present, again (or Esc); recording/a:stop-record — Capture's Stop. */
+ *   • view/a:grid, view/a:snap, view/a:guides — View › Grid, Snap, Guides (O-I #747: menus.rs); view/a:face-plane — the Stage's Camera
+ *     (StudioStage.tsx StageViewTools);
+ *   • present/a:exit-present — View › Present, again (or Esc); recording/a:stop-record — File › Export › Film, again. */
 export const STUDIO_CARRIED: ReadonlySet<string> = new Set([
   'rail/a:pointer-options', 'rail/a:objects', 'rail/a:tool-select', 'workspace/a:studio', 'workspace/a:blueprint',
   'save/a:capture-image', 'save/a:record-video', 'save/a:capture-options',

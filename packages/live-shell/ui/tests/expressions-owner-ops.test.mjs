@@ -74,3 +74,34 @@ test('the mixer row reads the Expression\'s sound and the Studio arm, and its pr
   const unsounded = projectExpressionsWork({expressions: work.expressions})
   assert.match(unsounded.mixer.activator.disabled, /missing op/, 'no frame link: the row says what it lacks')
 })
+
+// O-I #747 round two (manual §20.1 The track: "Title … Description — A note about the Expression for a reader. An empty note is a real
+// value"; its settings stand on the head): the description is the track head's info text, read and written through the owner.
+test('the Expression\'s description stands on its track head: its info text, read from the owner and written through expression-description', async () => {
+  const acts = await import('../src/frame/menu/objectActions.ts')
+  const sent = []
+  const edit = {op: 'expressions scene-edit', run: async intent => { sent.push(intent); return {ok: true, note: 'The Expression changed.'} }}
+  const work = description => ({expressions: [{id: 'expression:a', name: 'Dawn', ...(description === undefined ? {} : {description}),
+    scenes: [{id: 's1', name: 'One', duration: 4}]}], controls: {sceneEdit: edit}})
+  const set = projectExpressionsWork(work('A note for a reader.'))
+  for (const track of set.tracks) assert.equal(track.info, 'A note for a reader.', `${track.id}: the head's hover words carry it`)
+  assert.equal(await set.actions.trackInfo.read('expression:expression:a:visual'), 'A note for a reader.')
+  await set.actions.trackInfo.run('expression:expression:a:audio', '')
+  assert.deepEqual(sent, [{operation: 'expression-description', description: ''}], 'an empty note is a real value, written as it is')
+  // The track's menu: Edit info text asks where the track stands and writes the answer, its way back recorded.
+  const asked = [], presses = []
+  const context = {view: 'session', binding: null, press: (key, what, run) => { presses.push([key, what]); return run() }, rename: () => {},
+    record: () => {}, ask: (target, field, done) => { asked.push(field); done('Rewritten.') }}
+  const item = acts.objectMenu({kind: 'track', id: 'expression:expression:a:visual', name: 'Dawn: visual'}, set, context).find(entry => entry.id === 'info')
+  assert.ok(item && !item.disabled, 'Edit info text stands on the Expression\'s track')
+  item.onSelect(); await new Promise(resolve => setTimeout(resolve, 0))
+  assert.deepEqual(asked, [{label: 'Info text of Dawn: visual', value: 'A note for a reader.'}])
+  await new Promise(resolve => setTimeout(resolve, 0))
+  assert.deepEqual(sent.at(-1), {operation: 'expression-description', description: 'Rewritten.'})
+  // Unread, it is never offered as empty (which would write the note away): the menu says what it waits for.
+  const unread = projectExpressionsWork(work(undefined))
+  assert.equal(unread.actions.trackInfo, undefined)
+  assert.equal(unread.tracks[0].info, undefined)
+  const waiting = acts.objectMenu({kind: 'track', id: 'expression:expression:a:visual', name: 'Dawn: visual'}, unread, context).find(entry => entry.id === 'info')
+  assert.ok(waiting.disabled); assert.match(waiting.why, /waits for the Expression's description in the tracks' reading/)
+})

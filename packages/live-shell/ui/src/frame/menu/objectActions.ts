@@ -226,6 +226,16 @@ function trackMenu(target: Extract<ObjectTarget, {kind: 'track'}>, set: WorldTra
   items.push(act('move-left', 'Move left', '⌘←', own(a?.moveTrack), 'track.move', a, move(-1)))
   items.push(act('move-right', 'Move right', '⌘→', own(a?.moveTrack), 'track.move', a, move(1)))
   if (a?.retry && !readOnly) items.push(sep('s3'), {id: 'retry', label: 'Retry', onSelect: () => press(`retry:${target.id}`, `Retry ${named}`, () => a.retry!.run(target.id))})
+  // Edit info text on a track (Live's Edit Info Text; Expressions: the Expression's description, manual §20.1 The track): listed only where
+  // the set carries it; the owner's text, asked for where the track stands and written back, its way back recorded.
+  const info = context.ask && !readOnly ? a?.trackInfo : undefined
+  if (info) items.push({id: 'info', label: 'Edit info text', onSelect: () => {
+    const label = `Edit info text of ${named}`
+    void info.read(target.id).then(current => context.ask!(target, {label: `Info text of ${named}`, value: current},
+      text => press(`info:${target.id}`, label, undoable(context, label, () => info.run(target.id, text), () => info.run(target.id, current)))),
+    (cause: unknown) => press(`info:${target.id}`, label, () => ({ok: false, error: cause instanceof Error ? cause.message : String(cause)})))
+  }})
+  else if (a?.waiting?.['track.info']) items.push({id: 'info', label: 'Edit info text', disabled: true, why: `The info text is not read here yet: it waits for ${a.waiting['track.info']}.`})
   // In Central, Open and Reveal the world's folder (§10.9): listed only where the set carries them; neither changes the track.
   if (a?.openFolder || a?.revealFolder) {
     items.push(sep('s-open'))

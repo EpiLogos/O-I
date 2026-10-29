@@ -1667,7 +1667,7 @@ async function action(name:string,el:HTMLElement,event?:Event){const s=scene(),s
  case 'transport-frame-back':transportFrame(-1);break;
  case 'transport-frame-forward':transportFrame(1);break;
  case 'face-plane':facePlane(camera);renderAll();break;
- case 'keep-view':changed(()=>{scene().view={...scene().view,mode:camera.mode,yaw:camera.yaw,pitch:camera.pitch,zoom:camera.zoom,panX:camera.panX/width,panY:camera.panY/height};},true,'Keep camera view');toast('This camera framing is now part of the scene.');break;
+ case 'keep-view':changed(()=>{scene().view={...scene().view,kept:true,mode:camera.mode,yaw:camera.yaw,pitch:camera.pitch,zoom:camera.zoom,panX:camera.panX/width,panY:camera.panY/height};},true,'Keep camera view');toast('This camera framing is now part of the scene.');break;
  case 'restore-view':applySceneView();renderAll();break;
  // ES1A/ES1B (O:I #352): scene-body/trigger authoring. Every write is the
  // Rust-exact kernel Change grammar, sent through the app's existing native
@@ -2057,8 +2057,20 @@ function recordableTracks(){return workspace.entries.flatMap(entry=>{const subje
 function finishPropertyTake(){if(!propertyTake)return;const take=propertyTake;propertyTake=null;if(take.elapsed>0){const end=Math.min(3600,take.start+take.elapsed);for(const t of take.tracks){const value=liveOverrides.valueForBind(t.bind)??readTrackValue(scene(),t);if(value!==undefined&&t.points.at(-1)?.time!==end)t.points.push({time:end,value});}changed(()=>{scene().propertyTakeRange={start:take.start,end};scene().propertyTracks=mergeTake(scene().propertyTracks??[],take.tracks,take.start,end);scene().duration=Math.max(scene().duration,end);},true,'Record property take');takeWindows.set(scene().id,{start:take.start,end});sceneElapsed=take.start;trackPreview=true;scenePlaying=false;toast('Property take recorded · save the scene to keep this version.');}renderAll();announceHostState();}
 function updatePropertyTake(now:number){const t=propertyTake;if(!t)return;if(t.sceneId!==scene().id){finishPropertyTake();return;}const remaining=Math.max(0,Math.ceil((t.armed-now)/1000));$('take-status').hidden=false;$('take-status').textContent=remaining?'Recording in '+remaining+'…':'Recording '+t.elapsed.toFixed(1)+'s · click record to stop';if(remaining)return;const elapsed=Math.min((now-t.armed)/1000,3600-t.start,t.limit??Infinity);t.elapsed=elapsed;sceneElapsed=t.start+elapsed;scenePlaying=true;if(elapsed-t.lastSample>=.05||t.lastSample<0){for(const track of t.tracks){const value=liveOverrides.valueForBind(track.bind)??readTrackValue(scene(),track);if(value===undefined)continue;sampleTrack(track,t.start+elapsed,value,t.start+Math.max(0,t.lastSample));}t.lastSample=elapsed;}if(t.start+elapsed>=3600||t.limit!==undefined&&elapsed>=t.limit)finishPropertyTake();}
 let frames=0,lastFpsTime=performance.now(),fps=0,rafId=0;
+/** O-I #747 (lead's ruling of 29 Oct): a live field held on the scene meets every authored change — a scene switched, a view kept, a control
+ * changed — before the engine does. The lease would refuse the change (retained-capability.mjs retainedRefuses); instead it is let go
+ * around the person's act and opened again once the scene is still (nativeField.ts rebind), and the act is named. */
+function rebindAroundAct(frame:EngineFrame){
+ if(!nativeField)return;
+ const adapter=engine as unknown as {retainedRefuses?:(frame:EngineFrame)=>boolean;retainedAuthored?:()=>string|null;authoredIdentity?:(frame:EngineFrame)=>string};
+ if(!adapter.retainedRefuses){return;}
+ if(!adapter.retainedRefuses(frame)){nativeField.authoredMoved(adapter.authoredIdentity?.(frame)??null);return;}
+ const held=adapter.retainedAuthored?.()??'',heldScene=held.slice(0,held.lastIndexOf(':'));
+ const act=heldScene&&heldScene!==frame.scene.id?`Going to scene “${frame.scene.name}”`:store.undoLabel()??'Your change';
+ const said=nativeField.rebind(act);if(said)toast(said,6500);
+}
 function tick(now:number){if(sceneEditHeld||researchInstruments?.active()&&!researchPreview){nativeField?.controller.frame(0,true);lastTime=now;rafId=requestAnimationFrame(tick);return;}updatePropertyTake(now);const rawDelta=Math.max(0,Math.min((now-lastTime)/1000,.25));lastTime=now;let delta=!fieldPaused&&!document.hidden&&!libraryOpen?Math.min(rawDelta,.05):0;delta=nativeField?.controller.frame(delta,fieldPaused||document.hidden||libraryOpen)??delta;const previousTime=simTime;if(engine.capabilities.kind!=='production'){delta*=liveOverrides.valueForBind('field.params.timeScale')??scene().field.params.timeScale;simTime+=delta;}
- if(recovery.hidden&&!libraryOpen&&(!fieldPaused||needsFrame||engine.needsRender?.()||pointer.active||recorder.active||transitionDuration>0)&&now-lastStudioRender>=(physisFpsCap?1000/physisFpsCap:0)){try{engine.render(frameData(delta));needsFrame=false;lastStudioRender=now;}catch(err){nativeField?.controller.hold('native surface render failed: '+String(err));needsFrame=false;if(String(err).toLowerCase().includes('context'))recovery.hidden=false;else error(err);transportUI();}}
+ if(recovery.hidden&&!libraryOpen&&(!fieldPaused||needsFrame||engine.needsRender?.()||pointer.active||recorder.active||transitionDuration>0)&&now-lastStudioRender>=(physisFpsCap?1000/physisFpsCap:0)){try{const frame=frameData(delta);rebindAroundAct(frame);engine.render(frame);needsFrame=false;lastStudioRender=now;}catch(err){nativeField?.controller.hold('native surface render failed: '+String(err));needsFrame=false;if(String(err).toLowerCase().includes('context'))recovery.hidden=false;else error(err);transportUI();}}
  const native=engine.telemetry?.();if(native){simTime=native.simTime;delta=simTime-previousTime;document.documentElement.style.setProperty('--paper',native.background);document.documentElement.style.setProperty('--ink',native.palette[0]);$('text-layers').style.opacity=String(.25+.75*native.transition);}
  // A finished property preview holds its recorded end values; the field itself
  // keeps breathing. The playhead runs only while the scene plays, and reaching
@@ -3145,11 +3157,16 @@ else if(bootKernelRef&&!qsExpression){
 setInterval(()=>{saveSession();if(propertyTake&&propertyTake.elapsed>0)draftSchedule.request();},1000);}
 /** E22: the Scene's native ref, when the Expression is hosted natively; the address prefers it because the kernel is the owner. */
 function nativeSceneRef(sceneId:string):string|undefined{return nativeWorkspace?.nativeView()?.bindings[sceneId]?.scene_ref;}
+/** O-I #747 (X4): what a reopened work's live motion could not bring back, in the person's words. */
+function reopenedMotionLine(){return 'Reopened where it stood. Its live motion could not be brought back: the particles start again from the scene\'s configuration, because a save keeps the configuration, not where each particle was or how it was moving.';}
 /** E22: once the Expression has settled (local, or the followed native Expression), apply the link's address and name each refusal. */
 function settleDeepLink(applied:boolean){
  const link=deepLinkPending;if(!link)return;deepLinkPending=null;
  const carried=Object.keys(link.address).length>0||link.notes.length>0;
  const notes=applied?[...link.notes,...applyDeepLinkAddress(link.address)]:link.notes;
+ // O-I #747 (walk 739, X4): a work reopened where it stood (the address the shell keeps beside it, after a relaunch) says what of its
+ // live motion could not come back with it: a save keeps the scene's configuration, not each particle's place and speed.
+ if(applied&&carried)notes.push(reopenedMotionLine());
  if(notes.length)toast(notes.join(' '),8000);
  // A plain load keeps its address as it is; a link that was carried is corrected to the place it actually opened.
  if(carried)syncDeepLinkAddress();

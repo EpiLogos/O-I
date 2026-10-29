@@ -91,11 +91,22 @@ export function ExpressionsPaneBody({paneId, admission}: {paneId: string; admiss
   </div>
 }
 
+/** O-I #747 (seen headless, 29 Oct): a module the projection session mounts stands presented unless the session says it is concealed —
+ * the session tells a module only of concealment at mount (desktop/cradle/src/surface/projectionPaneSession.ts: "A pane concealed before
+ * its module stood is told so at mount, once"). Registered alone, a pane shown from a fresh load stood unpresented: the frame was never
+ * placed over it, the panel's residence was never drawn (App.tsx WhenShown), and the Expressions application mounted only when a mode
+ * switch told the pane it was shown again. */
+export function admitExpressionsPane(paneId: string): ExpressionsPaneAdmission {
+  const admission = registerExpressionsPane(paneId, {})
+  setExpressionsPanePresented(paneId, true, admission)
+  return admission
+}
+
 /** Mount the body into a pane element. The module owns the element's content and leaves it clean on unmount. */
 export function mountExpressionsPane(element: HTMLElement, paneId: string): ProjectionModuleHandle {
   // This instance's own admission: a second instance of the same pane (StrictMode, a remount in one commit) takes the record
   // over, and this one's late unmount and notices no longer reach it (expressionsPaneHost.ts registerExpressionsPane).
-  const admission = registerExpressionsPane(paneId, {})
+  const admission = admitExpressionsPane(paneId)
   const root = createRoot(element)
   root.render(<ExpressionsPaneBody paneId={paneId} admission={admission} />)
   return {

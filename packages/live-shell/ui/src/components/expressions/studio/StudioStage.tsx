@@ -1,38 +1,42 @@
-// The stage's own controls as two of the Studio's sections (manual §7: "The studio sits in the device area: the field's tools …
-// and capture"; lock §2.4 Device = Studio; the mockup's Studio TOOLS and CAPTURE at world-shell-mockup.html:1434 and :1440 —
-// `x.tool`, `x.cap` still|video, ◉ Capture, Edition…). Ported, not recreated: these are the controls the Expressions pane carried as
-// a toolbar inside the pane (components/NativeStageTools.tsx before 14 Oct: its Camera, Guides and snap, View, and Capture and
-// present groups, its Capture options, Export and Import menus). The owner law moved the controls out of the pane (PATH §1: controls
-// live in device UI, never as chrome inside a pane). Every control sends the same typed command (native/stageCommands.ts) through
-// the frame's one runner, and keeps the same disabled reason (stageDisabledReason, and Save video's own) in its hover words.
-//   • TOOLS: the camera (2D | 3D, Face plane), the guides (Grid, Snap, Guides) and Fit.
-//   • CAPTURE: still | video (the mockup's x.cap), ◉ Capture (a PNG, or a video take started and stopped), Save video, and Edition… —
-//     the capture options (width, frame, text, background) and Import; under them the last export as the native host received it — the
-//     file and the folder it landed in, or why not (ticket P, G1: studioExports.ts).
-// MOVED (O-I #747, manual §20.1 "Where everything is"): Present → View › Present; Export (Expression JSON, Native configuration, Living
-// HTML) → File › Export, with a picture and a film at the manual's defaults (menuStageCommands below; menus.rs); Keep and Restore → the
-// scene's View in Clip view's Clip panel (components/expressions/clip/clipBinding.ts). What stays here has no other home yet: the
-// camera, the guides and Fit, the capture's own options, and Import.
+// The stage's own controls that no other home holds yet (manual §7: "The studio sits in the device area: the field's tools … and capture";
+// the mockup's Studio TOOLS at world-shell-mockup.html:1434). Ported, not recreated: these are the controls the Expressions pane carried
+// as a toolbar inside the pane (components/NativeStageTools.tsx before 14 Oct). The owner law moved the controls out of the pane (PATH §1:
+// controls live in device UI, never as chrome inside a pane). Every control sends the same typed command (native/stageCommands.ts)
+// through the frame's one runner, and keeps the same disabled reason (stageDisabledReason) in its hover words.
+//   • CAMERA, on the Stage plate: 2D | 3D and Face plane. The manual gives the field's camera no home yet (PROPOSEd by O-I #747).
+// MOVED (O-I #747, manual §20.1 "Where everything is", and the lead's rulings of 29 Oct), each through the same command:
+//   • Present → View › Present; Grid, Snap and Guides → View › Grid, Snap, Guides (menus.rs; menuStageCommands below);
+//   • ◉ Capture and its options → File › Export › Picture…, whose choices are §20.1 Export's (PictureChoices below); the video take,
+//     Record, Stop and Save video → File › Export › Film; Expression JSON, Native configuration and Living HTML → File › Export;
+//   • Keep, Restore and Fit → the scene's View in Clip view's Clip panel (components/expressions/clip/clipBinding.ts);
+//   • Import → the browser's Expressions, under New (components/NativeExpressionCollections.tsx);
+//   • the last export, as the native host received it → said on the status bar, and under Picture…'s choices (studioExports.ts).
 // Orbit stays a pointer drag on the stage: the pane's hover words say so (projections/expressionsPane.tsx), not a control here.
-import {useEffect, useId, useState, type ReactNode} from 'react'
+import {useState, type ReactNode} from 'react'
 import {STAGE_CAPTURE_ASPECTS, STAGE_CAPTURE_WIDTHS, type HostedAppState, type StageCaptureAspect, type StageCaptureSettings, type StageCommand,
   type StageResult, type StageViewAction} from '@epilogos/expressions-boundary'
-import {STAGE_CAPTURE_DEFAULTS, STAGE_IMPORT, STAGE_SAVE_VIDEO, STAGE_VIEW_LABELS, stageCapturePng, stageDisabledReason,
+import {STAGE_CAPTURE_DEFAULTS, STAGE_SAVE_VIDEO, STAGE_VIEW_LABELS, stageCapturePng, stageDisabledReason,
   stageExport, stagePresent, stageReadings, stageRecord, stageView} from '../../../native/stageCommands'
 import {Icon} from '../../../inhabitants/sdk/Icon'
 import type {IconName} from '../../../inhabitants/sdk/icons'
-import {exportWords, useLastExport, type ExportNotice} from './studioExports'
+import {exportWords, type ExportNotice} from './studioExports'
+import './studio.css'
 
 /** O-I #747: the homes the manual gives the Stage plate's Present and Export (§20.1 "Where everything is": "Show the field alone — Present,
  * in the View menu"; "Export a picture or a film of the field — Export, in the File menu"; Export's table). Each menu item (menus.rs) is
  * the field's own act, the same typed command the plate sends, with the manual's defaults: a picture 1440 px wide, the stage frame, page
  * text on, background not transparent; a film from its start until you stop it, then written; the Expression as JSON, living HTML or the
- * current scene as a native configuration. Present again (or Esc in the field) brings the window back. null: not an item of the field's.
+ * current scene as a native configuration. Present again (or Esc in the field) brings the window back. Grid, Snap and Guides (View) each
+ * toggle the field's own. Picture… runs this default only when its choices are not asked (PictureChoices asks them first). null: not an
+ * item of the field's.
  * Pure. */
 export function menuStageCommands(id: string, state: HostedAppState | null): StageCommand[] | null {
   const readings = stageReadings(state)
   switch (id) {
     case 'view.present': return [stagePresent(readings.presenting !== true)]
+    case 'view.grid': return [stageView('grid')]
+    case 'view.snap': return [stageView('snap')]
+    case 'view.guides': return [stageView('guides')]
     case 'file.export.picture': return [stageCapturePng(STAGE_CAPTURE_DEFAULTS)]
     case 'file.export.film': return readings.recording === true ? [stageRecord('stop', STAGE_CAPTURE_DEFAULTS), STAGE_SAVE_VIDEO] : [stageRecord('start', STAGE_CAPTURE_DEFAULTS)]
     case 'file.export.json': return [stageExport('json')]
@@ -104,92 +108,49 @@ const view = (sender: StageSender, action: StageViewAction, pressed?: boolean, s
     {short}
   </StageButton>
 
-/** TOOLS: the stage's camera, guides and view (the pane toolbar's Camera, Guides and snap, and View groups). */
+/** CAMERA: the stage's camera — flat or in depth, and facing its plane — the one stage control the manual gives no home yet. */
 export function StageViewTools({sender}: {sender: StageSender}) {
   const {readings} = sender
-  return <div className="studio-stage" role="group" aria-label="Stage view">
-    <span className="studio-stage-label">View</span>
+  return <div className="studio-stage" role="group" aria-label="Stage camera">
+    <span className="studio-stage-label">Camera</span>
     <div className="studio-seg" role="group" aria-label="Camera" data-i="Camera|The stage's camera: flat or in depth, and facing its plane.">
       {view(sender, 'view-2d', readings.view2d)}{view(sender, 'view-3d', readings.view3d)}{view(sender, 'face-plane')}
     </div>
-    <div className="studio-seg" role="group" aria-label="Guides and snap" data-i="Guides and snap|The stage's grid, snapping and guides.">
-      {view(sender, 'grid', readings.grid)}{view(sender, 'snap', readings.snap)}{view(sender, 'guides', readings.guides)}
-    </div>
-    {/* Keep and Restore are the scene's: its View in Clip view's Clip panel (O-I #747). */}
-    <div className="studio-seg" role="group" aria-label="View" data-i="View|Fit the camera to its default framing. The scene keeps its own view in Clip view's Clip panel.">
-      {view(sender, 'fit-view', undefined, 'Fit')}
-    </div>
+    {sender.reason && <p className="inst-section-line studio-stage-reason">{sender.reason}</p>}
   </div>
 }
 
-export type CaptureKind = 'still' | 'video'
-
-/** CAPTURE: still | video, ◉ Capture, Save video, Present, and Edition… (the pane toolbar's Capture and present group, its Capture
- * options, Export and Import menus). The capture choice and the options live here only: they are sent with each capture, never stored. */
-export function StageCaptureTools({sender}: {sender: StageSender}) {
-  const [chosen, setChosen] = useState<CaptureKind>('still')
+/** File › Export › Picture… (manual §20.1 Export: "Picture — The frame on the stage now, as a PNG named after the scene. Width: 1280, 1440,
+ * 1920 or 3840 pixels, 1440 by default. Frame: Stage frame, 16:9, 1:1 or 9:16, Stage frame by default; another shape is cut from the
+ * centre. Include page text, on by default. Transparent background, off by default."): the choices, each at the manual's default, then
+ * Export as one capture command; under them the last export as the native host received it. The choices live here only: they are sent
+ * with the capture, never stored. */
+export function PictureChoices({sender, onDone, exported = null}: {sender: StageSender; onDone: () => void; exported?: ExportNotice | null}) {
   const [options, setOptions] = useState<CaptureOptions>(STAGE_CAPTURE_DEFAULTS)
-  const [edition, setEdition] = useState(false)
-  const editionId = useId()
-  // Capture is the plate's last column, often scrolled past: an opened Edition is brought into view (presentation only).
-  useEffect(() => {if (edition) document.getElementById(editionId)?.scrollIntoView?.({block: 'nearest', inline: 'nearest'})}, [edition, editionId])
-  // The last export as the native host received it (studioExports.ts): where the file landed, or why it did not.
-  const exported = useLastExport()
-  return <StageCaptureBody sender={sender} chosen={chosen} options={options} edition={edition} editionId={editionId}
-    onChoose={setChosen} onOptions={setOptions} onEdition={() => setEdition(open => !open)} exported={exported} />
+  return <PictureChoicesBody sender={sender} options={options} onOptions={setOptions} onDone={onDone} exported={exported} />
 }
 
-/** The Capture section's body over its choices (held by StageCaptureTools): drawn from them, every press one call back or one command. */
-export function StageCaptureBody({sender, chosen, options, edition, editionId, onChoose, onOptions, onEdition, exported = null}: {sender: StageSender; chosen: CaptureKind
-  options: CaptureOptions; edition: boolean; editionId: string; onChoose: (kind: CaptureKind) => void; onOptions: (options: CaptureOptions) => void; onEdition: () => void
-  /** The last export the native host received (ticket P, G1): its file and folder, or its fault. */
-  exported?: ExportNotice | null}) {
-  const {readings, reason} = sender
-  const recording = readings.recording === true
-  // While a take records, the choice is video: Stop is the one capture that can run.
-  const kind: CaptureKind = recording ? 'video' : chosen
-  const recordBlocked = recording ? 'Stop the recording first.' : readings.videoTake === true ? undefined : 'Record a take first.'
-  const choose = (next: CaptureKind) => {if (!recording) onChoose(next)}
-  const setOptions = onOptions
+/** Picture…'s body over its choices (held by PictureChoices): drawn from them, every press one call back or one command. */
+export function PictureChoicesBody({sender, options, onOptions: setOptions, onDone, exported = null}: {sender: StageSender; options: CaptureOptions
+  onOptions: (options: CaptureOptions) => void; onDone: () => void; exported?: ExportNotice | null}) {
   const sized = `${options.width} px, ${STAGE_ASPECT_LABELS[options.aspect].toLowerCase()}`
-  return <div className="studio-stage studio-capture" role="group" aria-label="Capture">
-    <div className="studio-capture-main">
-      <span className="studio-stage-label">Capture</span>
-      <div className="studio-seg" role="group" aria-label="Capture kind" data-i={`Capture|What ◉ Capture makes: a still of the stage, or a video take.${recording ? ' A take is recording: Stop it first.' : ''}`}>
-        {(['still', 'video'] as const).map(value => <button key={value} type="button" className="studio-stage-button" aria-pressed={kind === value}
-          disabled={recording && value === 'still'} title={recording && value === 'still' ? 'Stop the recording first.' : value === 'still' ? 'Capture a still (PNG)' : 'Record a video take'}
-          onClick={() => choose(value)}>{value}</button>)}
-      </div>
-      <div className="studio-stage-row">
-        {kind === 'still'
-          ? <StageButton sender={sender} id="capture-png" label="Capture PNG" words={`Capture a still of the stage at ${sized}.`} command={stageCapturePng(options)} primary mark="cap">Capture</StageButton>
-          : <StageButton sender={sender} id="record" label={recording ? 'Stop recording' : 'Record video'} words={recording ? 'Stop the take; it is held for Save video.' : `Record a video take of the stage at ${sized}.`}
-              command={stageRecord(recording ? 'stop' : 'start', options)} pressed={readings.recording} primary mark={recording ? 'stop' : 'rec'}>{recording ? 'Stop' : 'Record'}</StageButton>}
-        {/* Present is View › Present (O-I #747). */}
-        <button type="button" className="studio-stage-button" aria-expanded={edition} aria-controls={editionId} data-i="Edition|The capture options and Import. Export is in the File menu."
-          title="Edition: the capture options and Import (Export is in the File menu)" onClick={onEdition}>Edition…</button>
-      </div>
-      {kind === 'video' && <div className="studio-stage-row">
-        <StageButton sender={sender} id="save-video" label="Save video" words="Save the take you recorded." command={STAGE_SAVE_VIDEO} blocked={recordBlocked} />
-      </div>}
-      {reason && <p className="inst-section-line studio-stage-reason">{reason}</p>}
-      {exported && <p className="studio-export-line" role="status" data-export={exported.state}
-        title={exported.folder && exported.file ? `${exported.folder}/${exported.file}` : exported.reason ?? undefined}>{exportWords(exported)}</p>}
+  return <div className="studio-edition picture-choices" role="group" aria-label="Export picture">
+    <div className="studio-edition-col" role="group" aria-label="Picture">
+      <span className="studio-stage-label">Picture</span>
+      <label className="studio-edition-field">Width <select value={options.width} onChange={event => {const width = STAGE_CAPTURE_WIDTHS.find(value => String(value) === event.target.value); if (width !== undefined) setOptions({...options, width})}}>
+        {STAGE_CAPTURE_WIDTHS.map(width => <option key={width} value={width}>{`${width} px`}</option>)}</select></label>
+      <label className="studio-edition-field">Frame <select value={options.aspect} onChange={event => {const aspect = STAGE_CAPTURE_ASPECTS.find(value => value === event.target.value); if (aspect !== undefined) setOptions({...options, aspect})}}>
+        {STAGE_CAPTURE_ASPECTS.map(aspect => <option key={aspect} value={aspect}>{STAGE_ASPECT_LABELS[aspect]}</option>)}</select></label>
+      <label className="studio-edition-check"><input type="checkbox" checked={options.includeText} onChange={event => setOptions({...options, includeText: event.target.checked})} /> Include page text</label>
+      <label className="studio-edition-check"><input type="checkbox" checked={options.transparent} onChange={event => setOptions({...options, transparent: event.target.checked})} /> Transparent background</label>
     </div>
-    {edition && <div className="studio-edition" id={editionId} role="group" aria-label="Edition">
-      <div className="studio-edition-col" role="group" aria-label="Capture options">
-        <span className="studio-stage-label">Options</span>
-        <label className="studio-edition-field">Width <select value={options.width} onChange={event => {const width = STAGE_CAPTURE_WIDTHS.find(value => String(value) === event.target.value); if (width !== undefined) setOptions({...options, width})}}>
-          {STAGE_CAPTURE_WIDTHS.map(width => <option key={width} value={width}>{`${width} px`}</option>)}</select></label>
-        <label className="studio-edition-field">Frame <select value={options.aspect} onChange={event => {const aspect = STAGE_CAPTURE_ASPECTS.find(value => value === event.target.value); if (aspect !== undefined) setOptions({...options, aspect})}}>
-          {STAGE_CAPTURE_ASPECTS.map(aspect => <option key={aspect} value={aspect}>{STAGE_ASPECT_LABELS[aspect]}</option>)}</select></label>
-        <label className="studio-edition-check"><input type="checkbox" checked={options.includeText} onChange={event => setOptions({...options, includeText: event.target.checked})} /> Include text</label>
-        <label className="studio-edition-check"><input type="checkbox" checked={options.transparent} onChange={event => setOptions({...options, transparent: event.target.checked})} /> Transparent background</label>
-      </div>
-      <div className="studio-edition-col" role="group" aria-label="Import">
-        <span className="studio-stage-label">Import</span>
-        <StageButton sender={sender} id="import" label="Import" words="Import a work into the field." command={STAGE_IMPORT} />
-      </div>
-    </div>}
+    <div className="studio-stage-row">
+      <StageButton sender={sender} id="capture-png" label="Export picture" words={`Export the frame on the stage now as a PNG, ${sized}.`} command={stageCapturePng(options)} primary mark="cap">Export</StageButton>
+      <button type="button" className="studio-stage-button" onClick={onDone}>Close</button>
+    </div>
+    {sender.reason && <p className="inst-section-line studio-stage-reason">{sender.reason}</p>}
+    {sender.refusal && <p className="studio-fault" role="alert">{sender.refusal}</p>}
+    {exported && <p className="studio-export-line" role="status" data-export={exported.state}
+      title={exported.folder && exported.file ? `${exported.folder}/${exported.file}` : exported.reason ?? undefined}>{exportWords(exported)}</p>}
   </div>
 }

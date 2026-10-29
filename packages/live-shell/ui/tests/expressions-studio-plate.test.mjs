@@ -109,8 +109,9 @@ test('the Device side is the Studio — its design on the runtime, the ported ma
   // The stage's own controls the manual gives no home stand beside the Studio as the Stage (OPEN), never inside its design.
   assert.match(html, /data-studio-stage="unplaced"/)
   assert.ok(html.indexOf('data-studio-stage') > html.indexOf('data-device="expressions:studio"'), 'the Stage after the Studio')
-  assert.match(html, /data-section="stage:capture"/)
-  assert.match(html, /data-section="stage:view"/)
+  // MOVED (O-I #747 round two): the Stage keeps the camera alone; its view and Capture went to the View menu, the Clip panel and File › Export.
+  assert.match(html, /data-section="stage:camera"/)
+  assert.doesNotMatch(html, /data-section="stage:(capture|view)"/)
   assert.doesNotMatch(html, /aria-label="Chosen native controls"/, 'Your controls are the Studio\'s macros now (its Macros page), not a section')
 })
 
@@ -138,7 +139,7 @@ test('no work open: the Studio stands unlit, no field device and no default valu
   assert.match(closed, /Expressions engine · no work is open/)
   assert.doesNotMatch(closed, /data-device="expressions:(?!studio)/, 'no reading, no field device')
   assert.match(closed, /data-device="expressions:studio"/)
-  assert.match(closed, /data-section="stage:capture"/)
+  assert.match(closed, /data-section="stage:camera"/)
   assert.doesNotMatch(closed, /aria-label="Deep edit: the Studio/, 'no work, no door')
 })
 
@@ -156,7 +157,7 @@ test('the settings are the old configuration: Configure swaps the Studio for you
   const closed = renderToStaticMarkup(createElement(ExpressionsStudio, {...props, configure: false,
     own: [{id: 'chosen', title: 'Your controls', children: 'mine'}, {id: 'macros', title: 'Macros', children: 'racks'}]}))
   assert.doesNotMatch(closed, /data-section="chosen"/, 'your chosen controls are the Studio\'s macros, not drawn twice')
-  assert.match(closed, /data-section="stage:capture"[^]*data-section="macros"/, 'the person\'s macro racks stand after the Stage\'s own')
+  assert.match(closed, /data-section="stage:camera"[^]*data-section="macros"/, 'the person\'s macro racks stand after the Stage\'s own')
   const detail = await readFile(new URL('../src/components/NativeWorldDetail.tsx', import.meta.url), 'utf8')
   for (const id of ['rack', 'controls', 'macros', 'settings']) assert.ok(detail.includes(`{id:'${id}',`), `the ${id} column is composed from the old configuration`)
 })

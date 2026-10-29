@@ -93,87 +93,75 @@ function pressAll(element) {
 }
 const senderFor = state => ({reason: Commands.stageDisabledReason({mounted: true, state, busy: false}), readings: Commands.stageReadings(state), refusal: null, send: noop})
 const OPTIONS = {width: 1920, aspect: '16:9', includeText: false, transparent: true}
-const captureBody = (state, over = {}) => createElement(Stage.StageCaptureBody, {sender: senderFor(state), chosen: 'still', options: OPTIONS, edition: false,
-  editionId: 'edition', onChoose: noop, onOptions: noop, onEdition: noop, ...over})
 
-test('the Stage\'s View holds the stage\'s view: the camera, the guides and the view, read from the hosted state (REPLACED: Tools, beside the Pointer — R4)', () => {
+// O-I #747 round two (lead's rulings of 29 Oct): the Stage keeps only what has no home yet — the camera. Grid, Snap and Guides are the View
+// menu's; Fit, Keep and Restore the Clip panel's View; ◉ Capture with its choices File › Export › Picture…; the video take File › Export ›
+// Film; Import the browser's. REPLACED: the Stage's View (camera, guides and Fit) and Capture sections.
+test('the Stage\'s Camera holds the camera alone, read from the hosted state; the view and Capture sections are gone to their homes', () => {
   Door.publishHostedChrome({state: staged(), run: async () => ({ok: true}), faults: []})
-  const tools = sectionOf(studio(), 'stage:view')
-  for (const group of ['Camera', 'Guides and snap', 'View']) assert.match(tools, new RegExp(`role="group" aria-label="${group}"`), `${group} stands in Tools`)
-  const on = stageButtons(tools)
-  // MOVED (O-I #747): Keep and Restore are the scene's View, in Clip view's Clip panel (manual §20.1).
-  assert.deepEqual(Object.keys(on), ['view-2d', 'view-3d', 'face-plane', 'grid', 'snap', 'guides', 'fit-view'])
-  for (const [id, attrs] of Object.entries(on)) assert.doesNotMatch(attrs, /disabled/, `${id} is live with a native Scene open`)
-  assert.match(on['view-3d'], /aria-pressed="true"/)
-  assert.match(on['view-2d'], /aria-pressed="false"/)
-  assert.match(on.grid, /aria-pressed="true"/)
-  assert.match(on.snap, /aria-pressed="false"/)
-  assert.doesNotMatch(on['fit-view'], /aria-pressed/, 'an action claims no pressed state')
-  assert.match(on['fit-view'], /aria-label="Fit view"[^>]*data-i="Fit view\|Return the camera to its default framing, facing the plane\."/, 'the owner\'s label, what it does in the hover words')
-  // REPLACED: "the Pointer field device keeps its place in Tools" — the Pointer is a row of the Studio's Motion chain (§20.3).
-  assert.doesNotMatch(tools, /Pointer/, 'the Pointer is the Studio\'s, not the Stage\'s')
-  Door.publishHostedChrome(null)
-})
-
-test('the Stage\'s Capture holds still | video, ◉ Capture and Edition…; no line says capture is undisclosed (MOVED: the Studio\'s Capture section → the Stage, R4; Present → View › Present, O-I #747)', () => {
-  Door.publishHostedChrome({state: staged({videoTake: false}, {presenting: false}), run: async () => ({ok: true}), faults: []})
-  const capture = sectionOf(studio(), 'stage:capture')
-  assert.doesNotMatch(capture, /No owner discloses capture/)
-  assert.match(capture, /role="group" aria-label="Capture kind"/)
-  assert.match(capture, /aria-pressed="true"[^>]*>still<\/button>/, 'a still is the first choice (the mockup\'s x.cap)')
-  const on = stageButtons(capture)
-  assert.match(on['capture-png'], /class="studio-stage-button is-primary"/, '◉ Capture is the section\'s primary press')
-  assert.match(on['capture-png'], /aria-label="Capture PNG"/)
-  assert.match(capture, /aria-label="Capture PNG"[^>]*><svg[^]*?<\/svg>Capture<\/button>/, 'the cut\'s capture mark, then its word')
-  assert.equal(on.present, undefined, 'MOVED (O-I #747): Present is View › Present (manual §20.1)')
-  assert.match(capture, /aria-expanded="false"[^>]*>Edition…<\/button>/)
-  Door.publishHostedChrome(null)
-})
-
-test('with no frame, every stage control is off and keeps its owner\'s reason in its hover words', () => {
-  Door.publishHostedChrome(null)
   const html = studio()
-  const off = {...stageButtons(sectionOf(html, 'stage:view')), ...stageButtons(sectionOf(html, 'stage:capture'))}
-  assert.equal(Object.keys(off).length, 8, 'the camera, the guides, Fit and ◉ Capture (O-I #747 moved Keep, Restore and Present to their homes)')
+  const camera = sectionOf(html, 'stage:camera')
+  assert.match(camera, /role="group" aria-label="Camera"/)
+  const on = stageButtons(camera)
+  assert.deepEqual(Object.keys(on), ['view-2d', 'view-3d', 'face-plane'])
+  for (const [id, attrs] of Object.entries(on)) assert.doesNotMatch(attrs, /disabled/, `${id} is live with a native Scene open`)
+  assert.match(on['view-3d'], /aria-pressed="true"/); assert.match(on['view-2d'], /aria-pressed="false"/)
+  assert.doesNotMatch(on['face-plane'], /aria-pressed/, 'an action claims no pressed state')
+  for (const gone of ['stage:view', 'stage:capture']) assert.equal(html.indexOf(`data-section="${gone}"`), -1, `${gone}: moved to its home`)
+  assert.doesNotMatch(html, /data-stage="(grid|snap|guides|fit-view|keep-view|restore-view|capture-png|record|present|save-video|import|export-[a-z]+)"/)
+  Door.publishHostedChrome(null)
+})
+
+test('with no frame, the camera is off and keeps its owner\'s reason in its hover words', () => {
+  Door.publishHostedChrome(null)
+  const off = stageButtons(sectionOf(studio(), 'stage:camera'))
+  assert.equal(Object.keys(off).length, 3)
   for (const [id, attrs] of Object.entries(off)) {
     assert.match(attrs, /disabled=""/, id)
-    assert.match(attrs, /title="No Expressions application is mounted\."/, id)
     assert.match(attrs, /data-i="[^|"]+\|No Expressions application is mounted\."/, `${id}: the Info view reads the reason`)
   }
-  assert.match(sectionOf(html, 'stage:capture'), /class="inst-section-line studio-stage-reason">No Expressions application is mounted\./, 'the reason stands once, in Capture')
   Door.publishHostedChrome({state: {hostMode: 'expressions', sceneCount: 0}, run: async () => ({ok: true}), faults: []})
-  const closed = stageButtons(sectionOf(studio(), 'stage:view'))
-  assert.match(closed['view-2d'], /title="Open a native Expression to use its stage\."/, 'no native Scene: the owner\'s own reason')
+  assert.match(stageButtons(sectionOf(studio(), 'stage:camera'))['view-2d'], /title="Open a native Expression to use its stage\."/, 'no native Scene: the owner\'s own reason')
   Door.publishHostedChrome(null)
 })
 
-test('every control the pane carried still stands and writes through the stage command it used — none is lost', async () => {
+test('File › Export › Picture… asks the manual\'s choices at their defaults, then exports one capture with them; the last export stands under them', () => {
+  const state = staged()
+  const element = createElement(Stage.PictureChoicesBody, {sender: senderFor(state), options: Commands.STAGE_CAPTURE_DEFAULTS, onOptions: noop, onDone: noop})
+  const html = renderToStaticMarkup(element)
+  assert.match(html, /role="group" aria-label="Export picture"/)
+  assert.match(html, /<option value="1440" selected="">1440 px<\/option>/, 'Width: 1440 by default')
+  assert.match(html, /<option value="stage" selected="">Stage frame<\/option>/, 'Frame: Stage frame by default')
+  assert.match(html, /<input type="checkbox" checked=""\/> Include page text/, 'page text on by default')
+  assert.match(html, /<input type="checkbox"\/> Transparent background/, 'transparent off by default')
+  assert.deepEqual(pressAll(element), [['capture-png', Commands.stageCapturePng(Commands.STAGE_CAPTURE_DEFAULTS)]])
+  assert.deepEqual(pressAll(createElement(Stage.PictureChoicesBody, {sender: senderFor(state), options: OPTIONS, onOptions: noop, onDone: noop})),
+    [['capture-png', Commands.stageCapturePng(OPTIONS)]], 'the choices made are the ones sent')
+  const saved = renderToStaticMarkup(createElement(Stage.PictureChoices, {sender: senderFor(state), onDone: noop,
+    exported: {state: 'saved', file: 'field.png', folder: '/Users/person/Downloads', place: '~/Downloads', fault: null, reason: null}}))
+  assert.match(saved, /class="studio-export-line" role="status" data-export="saved"[^>]*>Saved “field\.png” in ~\/Downloads\.<\/p>/)
+})
+
+test('every control the pane carried still writes through the command it used, here or at its home — none is lost', async () => {
   const state = staged({videoTake: true})
-  const view = pressAll(createElement(Stage.StageViewTools, {sender: senderFor(state)}))
-  assert.deepEqual(view, ['view-2d', 'view-3d', 'face-plane', 'grid', 'snap', 'guides', 'fit-view'].map(action => [action, Commands.stageView(action)]))
-  const still = pressAll(captureBody(state, {edition: true}))
-  assert.deepEqual(still, [
-    ['capture-png', Commands.stageCapturePng(OPTIONS)],
-    ['import', Commands.STAGE_IMPORT],
-  ], 'the still capture carries the chosen options; Edition… holds the options and Import')
-  const video = pressAll(captureBody(state, {chosen: 'video'}))
-  assert.deepEqual(video, [['record', Commands.stageRecord('start', OPTIONS)], ['save-video', Commands.STAGE_SAVE_VIDEO]])
-  const recording = pressAll(captureBody(staged({}, {recording: true, presenting: true})))
-  assert.deepEqual(recording, [['record', Commands.stageRecord('stop')]], 'a take records: Stop, and Save video waits')
-  // MOVED (O-I #747, manual §20.1 "Where everything is"), each to the home the manual gives it, through the same command:
-  //   Present → View › Present; Expression JSON, Native configuration and Living HTML → File › Export (menus.rs, menuStageCommands);
-  //   Keep and Restore → the scene's View in Clip view's Clip panel (clipBinding.ts view.keep, view.restore).
+  const camera = pressAll(createElement(Stage.StageViewTools, {sender: senderFor(state)}))
+  assert.deepEqual(camera, ['view-2d', 'view-3d', 'face-plane'].map(action => [action, Commands.stageView(action)]))
+  // MOVED (O-I #747), each to its home through the same command:
+  const menu = id => Stage.menuStageCommands(id, state)
   const moved = [
-    ['present', Stage.menuStageCommands('view.present', state)?.[0], Commands.stagePresent(true)],
-    ['export-json', Stage.menuStageCommands('file.export.json', state)?.[0], Commands.stageExport('json')],
-    ['export-native', Stage.menuStageCommands('file.export.native', state)?.[0], Commands.stageExport('native')],
-    ['export-html', Stage.menuStageCommands('file.export.html', state)?.[0], Commands.stageExport('html')],
+    ['grid', menu('view.grid'), [Commands.stageView('grid')]], ['snap', menu('view.snap'), [Commands.stageView('snap')]],
+    ['guides', menu('view.guides'), [Commands.stageView('guides')]], ['present', menu('view.present'), [Commands.stagePresent(true)]],
+    ['record', menu('file.export.film'), [Commands.stageRecord('start', Commands.STAGE_CAPTURE_DEFAULTS)]],
+    ['save-video', Stage.menuStageCommands('file.export.film', {...state, recording: true}).slice(1), [Commands.STAGE_SAVE_VIDEO]],
+    ['export-json', menu('file.export.json'), [Commands.stageExport('json')]], ['export-native', menu('file.export.native'), [Commands.stageExport('native')]],
+    ['export-html', menu('file.export.html'), [Commands.stageExport('html')]],
+    ['capture-png', pressAll(createElement(Stage.PictureChoicesBody, {sender: senderFor(state), options: Commands.STAGE_CAPTURE_DEFAULTS, onOptions: noop, onDone: noop})).map(([, command]) => command), [Commands.stageCapturePng(Commands.STAGE_CAPTURE_DEFAULTS)]],
   ]
-  for (const [key, sent, expected] of moved) assert.deepEqual(sent, expected, `${key} stands in the menu bar`)
+  for (const [key, sent, expected] of moved) assert.deepEqual(sent, expected, `${key} stands at its home`)
   const clip = await source('components/expressions/clip/clipBinding.ts')
-  assert.match(clip, /'view\.keep': async \(\) => staged\(stage, stageView\('keep-view'\)\)/)
-  assert.match(clip, /'view\.restore': async \(\) => staged\(stage, stageView\('restore-view'\)\)/)
-  const pressed = new Set([...view, ...still, ...video, ...recording, ...moved].map(([key]) => key).concat(['keep-view', 'restore-view']))
+  for (const action of ['keep-view', 'restore-view', 'fit-view']) assert.match(clip, new RegExp(`staged\\(stage, stageView\\('${action}'\\)\\)`), `${action}: the Clip panel's View`)
+  assert.match(await source('components/NativeExpressionCollections.tsx'), /runner\(STAGE_IMPORT\)/, 'import: the browser')
+  const pressed = new Set([...camera.map(([key]) => key), ...moved.map(([key]) => key), 'keep-view', 'restore-view', 'fit-view', 'import'])
   // The old toolbar's seventeen commands (NativeStageTools before 14 Oct): nine view actions, capture, record, save, present, three exports, import.
   assert.equal(pressed.size, 17, 'none is lost: each stands here or at its home')
 })
@@ -202,8 +190,8 @@ test('ported, not recreated: one sender, the same builders, the Studio draws the
   // Redo) are the Studio design's head acts on the editor's own requests (studioBinding.ts) — REPLACED: the frame's Work controls in the
   // old plate's head.
   assert.match(studioSource, /\{id: 'stage:frame', title: 'Frame tools', children: <FrameControls label="Frame tools" controls=\{frameTools\} view=\{frame\} \/>\}/)
-  assert.match(studioSource, /\{id: 'stage:view', title: 'View', children: <StageViewTools sender=\{stage\} \/>\}/)
-  assert.match(studioSource, /\{id: 'stage:capture', title: 'Capture', children: <StageCaptureTools sender=\{stage\} \/>\}/)
+  assert.match(studioSource, /\{id: 'stage:camera', title: 'Camera', children: <StageViewTools sender=\{stage\} \/>\}/)
+  assert.doesNotMatch(studioSource, /StageCaptureTools|stage:capture/, 'Capture is File › Export\'s (O-I #747)')
   assert.match(await source('components/expressions/studio/studioBinding.ts'), /ports\.request\(\{operation: key, basis: reading\.basis\}\)/, 'Save, Undo and Redo: the editor\'s own requests')
   // The centre residence's strip (components/NativeStageTools.tsx) drew the same two bodies; it was drawn by nothing and was deleted on
   // 15 Oct (FOUNDATION §7), so the Studio is the one place the stage's controls stand.
