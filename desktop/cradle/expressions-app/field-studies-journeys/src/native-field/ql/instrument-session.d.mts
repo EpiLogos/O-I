@@ -11,6 +11,9 @@ export class InstrumentSession {
  influence(): Promise<any>;
  /** The Ta-Onta procedural stage's scoped disclosure (ql.stage-state/v1): a read on the one owner. */
  stageState(): Promise<any>;
+ /** The Tarot score reads (`score-resolve` {basis} / `score-state` {}): the held `ql.tarot-score/v1` with its currentness and the
+  * event it was resolved against, or the owner's named refusal as data. A read: the field never advances. */
+ score(command: any): Promise<{refused: true; error: string} | {refused: false; score: any; current: boolean; resolved_event_ref: string}>;
  /** A played excitation: strike named scene voices by native mode reference, amplitude in modal metres; now, or at `at_samples_elapsed`,
   * the exact sample cursor of the owner's continuation it lands at (O-I #809), refused when behind the acknowledged cursor. */
  strike(strikes: Array<{mode_ref: string; amplitude: [number, number]}>, when?: {at_samples_elapsed?: string}): Promise<any>;

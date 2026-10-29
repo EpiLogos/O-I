@@ -35,6 +35,8 @@ export interface Constellation {
   /** A frame constellation's own question, where its author gave one. */
   readonly question?: string
   readonly kind: 'space' | 'frame'
+  /** A space's own ref (its whole is its anchor): the space a new constellation is made in. Absent on a frame. */
+  readonly space?: string
   /** The register that discloses it: "central" (your world) or the project's name. */
   readonly register: string
   /** The project its register's reads are scoped to (the register's own `project`); absent for your world's register. */
@@ -61,7 +63,7 @@ export function constellationsOf(state: {readonly registers: readonly WikiRegist
   const rows: Constellation[] = []
   const reading: string[] = []
   const unread: {register: string; reason: string}[] = []
-  const seen = new Set<string>()
+  const seen = new Map<string, number>()
   for (const register of state.registers) {
     const standing = state.standings[register.key]
     if (standing?.phase === 'unavailable') unread.push({register: register.key, reason: standing.reason})
@@ -71,15 +73,38 @@ export function constellationsOf(state: {readonly registers: readonly WikiRegist
     const frames = wikiReadingOf(standing)?.wiki.constellations ?? []
     for (const constellation of projection.constellations) {
       // A child space is read in its own register; listed there, never twice.
-      if (constellation.disclosedChild || seen.has(constellation.wholeRef)) continue
-      seen.add(constellation.wholeRef)
+      if (constellation.disclosedChild) continue
       const question = constellation.kind === 'frame' ? frames.find(frame => frame.anchor_ref === constellation.wholeRef)?.question : undefined
+      const members = constellation.members.map(member => ({ref: member.subjectRef, title: member.title, position: member.position, face: member.face ?? null}))
+      const at = seen.get(constellation.wholeRef)
+      if (at !== undefined) {
+        // A frame declared round a whole already listed (the Form declares round a space's own whole) is that whole's form: one row,
+        // its members on the positions the frame declares, and what the frame gathers beyond the space joined to it.
+        if (constellation.kind === 'frame') rows[at] = withFrame(rows[at]!, members, question)
+        continue
+      }
+      seen.set(constellation.wholeRef, rows.length)
       rows.push({ref: constellation.wholeRef, title: constellation.title, ...(question ? {question} : {}), kind: constellation.kind,
-        register: register.key, registerTitle: register.title, ...(register.project ? {project: register.project} : {}),
-        members: constellation.members.map(member => ({ref: member.subjectRef, title: member.title, position: member.position, face: member.face ?? null}))})
+        ...(constellation.kind === 'space' && constellation.spaceRef ? {space: constellation.spaceRef} : {}),
+        register: register.key, registerTitle: register.title, ...(register.project ? {project: register.project} : {}), members})
     }
   }
   return {rows, reading, unread, registers: state.registers.length}
+}
+
+/** A listed whole with the frame declared round it: each member the frame places stands on the frame's position and face (the first
+ * listing of it that the frame has not yet placed), a member the frame gathers that the whole does not is added, and the frame's
+ * question is the whole's where it has none. Pure. */
+function withFrame(row: Constellation, framed: readonly ConstellationMember[], question: string | undefined): Constellation {
+  const members = row.members.map(member => ({...member}))
+  const placed = new Set<number>()
+  for (const member of framed) {
+    const i = members.findIndex((candidate, index) => candidate.ref === member.ref && !placed.has(index))
+    if (i < 0) { placed.add(members.length); members.push({...member}); continue }
+    placed.add(i)
+    members[i] = {...members[i]!, position: member.position, face: member.face}
+  }
+  return {...row, ...(question && !row.question ? {question} : {}), members}
 }
 
 /** The constellation a ref names (its whole's ref). Null when no read register discloses it. Pure. */

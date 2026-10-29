@@ -32,11 +32,12 @@ import {writeThroughOwner} from '../../inhabitants/ql/devices/ownerWrite'
 import {setFilters} from '../../inhabitants/knowledgeGraphFaceActions'
 import {CANVAS_DESIGN, GRAPH_DESIGN, JOURNEY_DESIGN, LENS_DESIGN, PALACE_DESIGN, designDevice, handsFor, heldFor, useHolds} from './designDevices'
 import {SESSION_ACTS, palaceBinding, type PalaceWorld} from './palaceBinding'
-import {canvasBinding, journeyBinding, type FrameReadings} from './frameBindings'
+import {canvasBinding, journeyBinding, promotionState, subscribePromotion, type CanvasPromoter, type FrameReadings} from './frameBindings'
+import {relateSceneConstellation} from '../../../../../../desktop/cradle/src/techne/sceneConstellationRelation'
 import {graphBinding, readGraphReach, surfaceRead, GRAPH_READ_NODES, type GraphReach, type GraphWrites} from './graphBinding'
 import {useGraphRead} from './graphRead'
 import {canvasCarryingLight, lensBinding, lightBinding} from './effectBindings'
-import {canvasCarryingForm, formState, subscribeForm, FORM_LOCAL, type FormFocus, type FormOwners} from './formBinding'
+import {canvasCarryingForm, formState, readForm, subscribeForm, FORM_LOCAL, type FormFocus, type FormOwners} from './formBinding'
 import {useConstellationFocus} from '../../frame/browser/constellationFocus'
 import {constellationNamed, useConstellations} from '../../owners/constellations'
 import {getWikiProjectionState, refreshWikiProjectionReading, subscribeWikiProjection, wikiReadingOf}
@@ -138,12 +139,19 @@ async function shapeCommand(transport: KernelTransportStatus, op: KernelOp): Pro
   return (call.outcome as {data?: unknown} | undefined)?.data
 }
 
-/** The Form page's owners for one register: AIKit's `wiki-shape` over the register's wiki file, and the register read again through the
- * projection store (the reading the browser's constellations are). */
+/** The Form page's owners for one register: AIKit's `wiki-shape` over the register's wiki file (validate, the draft's check, declare and
+ * its change of roles, compress, and the Wiki's projection of a constellation for QL), QL-MEF's `shape bind` and its Technē reading, and
+ * the register read again through the projection store (the reading the browser's constellations are). */
 export function kernelFormOwners(transport: KernelTransportStatus, register: WikiRegister): FormOwners {
   return {
     validate: file => shapeCommand(transport, {op: 'aikit_read', request: {kind: 'wiki-shape-validate', file}}),
+    check: (file, frame, expected) => shapeCommand(transport, {op: 'aikit_read', request: {kind: 'wiki-shape-check', file, frame, expected_revision: expected}}),
+    declare: (file, frameRef, frame, expected) => shapeCommand(transport, {op: 'aikit_write', request: {kind: 'wiki-shape-declare', file, frame_ref: frameRef, frame,
+      expected_revision: expected}}),
     compress: (file, anchorRef) => shapeCommand(transport, {op: 'aikit_read', request: {kind: 'wiki-shape-compress', file, anchor_ref: anchorRef}}),
+    bind: request => shapeCommand(transport, {op: 'ql_read', request: {kind: 'shape-bind', request}}),
+    target: (file, anchorRef) => shapeCommand(transport, {op: 'aikit_read', request: {kind: 'wiki-shape-target', file, anchor_ref: anchorRef}}),
+    reading: target => shapeCommand(transport, {op: 'ql_read', request: {kind: 'techne-reading', target}}),
     reread: async () => { await refreshWikiProjectionReading(register, transport) },
   }
 }
@@ -192,11 +200,16 @@ export function useTechneDesignBindings({graph, surface}: {graph: boolean; surfa
   // The Canvas's Form page: the constellation the browser focuses, on the Wiki owner's shape commands (formBinding.ts).
   const formFocus = useFormFocus()
   const form = useSyncExternalStore(subscribeForm, formState, formState)
+  const promotion = useSyncExternalStore(subscribePromotion, promotionState, promotionState)
+  // On focus, what the owner declares round the whole: the Form's roles are then the frame's (the browser lists a frame round a space's
+  // whole as that whole, on the frame's roles: owners/constellations.ts withFrame).
+  const focusedWhole = formFocus?.focus.constellation.ref
+  useEffect(() => { if (formFocus) void readForm(formFocus.focus, kernelFormOwners(detectTransport(), formFocus.register)) }, [focusedWhole, formFocus?.focus.file])
   return useMemo(() => {
     const frame: FrameReadings = {state: hosted?.state ?? null, run: hosted?.run ?? null,
       window: session ? session.time_window ? {from: session.time_window.from, to: session.time_window.to} : null : undefined}
     const formOwners = formFocus ? kernelFormOwners(detectTransport(), formFocus.register) : null
-    const canvas = canvasCarryingLight(canvasBinding(frame, heldFor(CANVAS_DESIGN)), LIGHT)
+    const canvas = canvasCarryingLight(canvasBinding(frame, heldFor(CANVAS_DESIGN), PROMOTER, promotion), LIGHT)
     return {
       [PALACE_DESIGN]: palaceBinding(palace, heldFor(PALACE_DESIGN), SESSION_ACTS, palaceWorld),
       [CANVAS_DESIGN]: formOwners ? canvasCarryingForm(canvas, formFocus!.focus, heldFor(CANVAS_DESIGN), handsFor(CANVAS_DESIGN, FORM_LOCAL), formOwners, form)
@@ -205,10 +218,13 @@ export function useTechneDesignBindings({graph, surface}: {graph: boolean; surfa
       [LENS_DESIGN]: lensBinding(lensLists, heldFor(LENS_DESIGN), lensPane),
       [GRAPH_DESIGN]: graphBinding(surface, read, GRAPH_WRITES, heldFor(GRAPH_DESIGN), plan, reach),
     }
-  }, [palace, palaceWorld, holds, hosted, session, read, surface, plan, lensLists, lensPane, reach, formFocus, form])
+  }, [palace, palaceWorld, holds, hosted, session, read, surface, plan, lensLists, lensPane, reach, formFocus, form, promotion])
 }
 
+/** Promote's owner: the constellation's relate act over the line's two occurrences, through the kernel (frameBindings.ts CanvasPromoter). */
+const PROMOTER: CanvasPromoter = {relate: input => relateSceneConstellation(detectTransport(), input)}
+
 /** With no constellation focused the Form asks no owner (canvasCarryingForm then only says what it waits for). */
-const NO_OWNERS: FormOwners = {
-  validate: async () => { throw Error('No constellation is focused.') }, compress: async () => { throw Error('No constellation is focused.') }, reread: async () => {},
-}
+const unfocused = async (): Promise<never> => { throw Error('No constellation is focused.') }
+const NO_OWNERS: FormOwners = {validate: unfocused, check: unfocused, declare: unfocused, compress: unfocused, bind: unfocused, target: unfocused, reading: unfocused,
+  reread: async () => {}}

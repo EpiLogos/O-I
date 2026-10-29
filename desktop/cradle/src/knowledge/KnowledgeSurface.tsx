@@ -1,4 +1,4 @@
-import {WikiFactsProvider,WikiFactsButton} from './WikiFactsEditor';
+import {WikiFactsProvider,WikiFactsButton,OpenFactsOnRequest} from './WikiFactsEditor';
 import {restoreFactsCheckpoints,retainFactsCheckpoint,type FactsCheckpoint} from './wikiFacts';
 import {emphasizeGraph} from './graphEmphasis';
 import {useCallback,useEffect,useMemo,useRef,useState} from "react";
@@ -21,10 +21,10 @@ import {openSubjectInTechne} from "./techneHandoff";
 import {NodeDetails,ReadingBody,type OpenKnowledge} from "./NodeDetails";
 import {subjects,neighbourhood,releaseGraph} from "./focus";
 import {useFrameSample} from "./useFrameSample";
-import {WikiConstructionPanel,type ConstructionCheckpoint} from "./WikiConstructionPanel";
-import {selectedPassage,type WikiPassage} from "./selection";
-import {restoreConstructionCheckpoint} from './constructionCheckpoint';
-import {withPassage,emptyDraft} from "./constructionDraft";
+import {selectedPassage} from "./selection";
+import {actOn,passageRequest,wholeOfFrame} from "./constellationActs";
+import {constellationInFocus,focusConstellation,rereadRegisterOf} from "./constellationInFocus";
+import {readRegister} from "./construction";
 import {KnowledgeExpression} from "./KnowledgeExpression";
 import {Loading} from "../shared/Loading";
 import "./knowledge.css";
@@ -35,13 +35,13 @@ import {publishKnowledgeGraphHandle, type KnowledgeGraphSurface} from './knowled
 
 type Camera={zoom:number;x:number;y:number};
 type Visit=GraphVisit;
-type Travel={facts?:Record<string,FactsCheckpoint>;factsRecovery?:{message:string;raw:unknown};visits:Visit[];index:number;saved?:SavedGraphView[];construction?:ConstructionCheckpoint;constructionRecovery?:{message:string;raw:unknown}};
+/** `construction`: a constellation draft the retired authoring panel kept on this device, shown as it was kept (nothing restores it now). */
+type Travel={facts?:Record<string,FactsCheckpoint>;factsRecovery?:{message:string;raw:unknown};visits:Visit[];index:number;saved?:SavedGraphView[];construction?:unknown};
 const origin=():Camera=>({zoom:1,x:0,y:0});
 function restore(id:string):Travel {
   try {
     const saved=JSON.parse(localStorage.getItem(`oi-cradle.knowledge-travel.v1:${id}`)??"null");
     if(saved?.facts){try{saved.facts=restoreFactsCheckpoints(saved.facts);}catch(error){saved.factsRecovery={message:String(error),raw:saved.facts};delete saved.facts;}}
-    if(saved?.construction){try{saved.construction=restoreConstructionCheckpoint(saved.construction);}catch(error){saved.constructionRecovery={message:String(error),raw:saved.construction};delete saved.construction;}}
     if(saved&&Array.isArray(saved.visits)&&saved.visits.length>0&&saved.visits.length<=32&&Number.isInteger(saved.index)&&saved.index>=0&&saved.index<saved.visits.length&&saved.visits.every((v:Visit)=>typeof v.query==="string"&&(v.selected===undefined||typeof v.selected==="string")&&v.camera&&[v.camera.zoom,v.camera.x,v.camera.y].every(Number.isFinite)&&v.camera.zoom>=GRAPH_ZOOM_LIMITS.minZoom&&v.camera.zoom<=GRAPH_ZOOM_LIMITS.maxZoom&&(!v.overviewCamera||([v.overviewCamera.zoom,v.overviewCamera.x,v.overviewCamera.y].every(Number.isFinite)&&v.overviewCamera.zoom>=GRAPH_ZOOM_LIMITS.minZoom&&v.overviewCamera.zoom<=GRAPH_ZOOM_LIMITS.maxZoom))))return {...saved,visits:saved.visits.map((visit:Visit)=>({...visit,detail:visit.detail===true&&typeof visit.selected==='string',detailReturn:restoreGraphReturn(visit.detailReturn),pageAddress:visit.pageAddress&&['source','wiki','project-map'].includes(visit.pageAddress.kind)&&typeof visit.pageAddress.value==='string'?visit.pageAddress:undefined,pageTitle:typeof visit.pageTitle==='string'?visit.pageTitle:undefined,scroll:typeof visit.scroll==='number'&&Number.isFinite(visit.scroll)&&visit.scroll>=0?visit.scroll:0,pageAnchor:visit.pageAnchor&&typeof visit.pageAnchor==='object'?visit.pageAnchor:undefined})),saved:restoreSavedGraphViews(saved.saved)};
     const camera=JSON.parse(localStorage.getItem(`oi-cradle.knowledge-view.v1:${id}`)??"null");
     if(camera&&[camera.zoom,camera.x,camera.y].every(Number.isFinite)&&camera.zoom>=GRAPH_ZOOM_LIMITS.minZoom&&camera.zoom<=GRAPH_ZOOM_LIMITS.maxZoom)return {visits:[{query:"",camera}],index:0};
@@ -54,23 +54,20 @@ export function KnowledgeSurface({binding,onOpen,nativeContext}: {binding:Surfac
   const visit=travel.visits[travel.index];
   const {camera}=visit;
   const filters=useMemo(()=>restoreGraphFilters(visit.filters),[visit.filters]);
-  const [constructionOpen,setConstructionOpen]=useState(false);
-  const [constructionFrame,setConstructionFrame]=useState<string>();
-  useEffect(()=>{const request=binding.view?.constructionFrame;if(request){setConstructionFrame(request.ref);setConstructionOpen(true);}},[binding.view?.constructionFrame?.requestId]);
-  const [constructionIncoming,setConstructionIncoming]=useState<WikiPassage>();
-  const receivePassage=(source:KnowledgeReading,anchor:WikiAnchor,text:string)=>{
-    if(travel.construction?.pending)throw new Error("Inspect the previous constellation save before adding another passage.");
+  // A page opened at a span (the browser's Open on a constellation's member) reads there until it is travelled from.
+  const pageAnchor=visit.pageAnchor??(visit.pageAddress?undefined:binding.view?.pageAnchor);
+  // Add to constellation (the reader's selection act): the passage, with its exact span, gathered into the constellation the browser holds
+  // in focus, through its owner at the revision read (constellationActs.ts); the browser and the Canvas read the register again after.
+  const receivePassage=async(source:KnowledgeReading,anchor:WikiAnchor,text:string)=>{
+    const focus=constellationInFocus();
+    if(!focus)throw new Error("Select a constellation in the browser (Material › Constellations): the passage is gathered into the one in focus.");
+    if((focus.project??undefined)!==(binding.project??undefined))throw new Error(`${focus.title} is in ${focus.project??"your world"}'s wiki, and this passage in ${binding.project??"your world"}'s ground: select a constellation of ${binding.project??"your world"}'s wiki.`);
     const passage=selectedPassage(source,anchor,text,visit.pageTitle??binding.title);
-    withPassage(travel.construction?.draft??emptyDraft(),passage);
-    setConstructionIncoming(passage);setConstructionOpen(true);
+    await actOn(transport,focus.project,focus.whole,focus.title,(register,frame)=>({request:passageRequest(register,frame,passage),passages:[passage]}));
+    await rereadRegisterOf(focus,transport).catch(()=>{/* The write stands; the browser reads it on its next read. */});
+    setGeneration(n=>n+1);
+    return `Gathered into ${focus.title}, with its span.`;
   };
-  const saveCheckpoint=useCallback((value:ConstructionCheckpoint)=>{
-    const next={...latestTravel.current,construction:value};
-    // An operation intent is a recovery boundary, not an ordinary debounced
-    // camera preference. Persist it before allowing a native write to begin.
-    if(value.pending||value.artifactSave)localStorage.setItem(`oi-cradle.knowledge-travel.v1:${binding.id}`,JSON.stringify(next));
-    latestTravel.current=next;setTravel(next);
-  },[binding.id]);
   const saveFactsCheckpoint=useCallback((key:string,value:FactsCheckpoint)=>{
     const next={...latestTravel.current,facts:retainFactsCheckpoint(latestTravel.current.facts??{},key,value)};
     restoreFactsCheckpoints(next.facts);
@@ -195,7 +192,11 @@ export function KnowledgeSurface({binding,onOpen,nativeContext}: {binding:Surfac
       return appendGraphVisit(t,selected);
     });
   },[positions,nodes,presentation,extent]);
-  const open=useCallback((node:GraphNode)=>{if(isUnresolvedGraphNode(node))return;if(node.frame_ref){setConstructionFrame(node.frame_ref);setConstructionOpen(true);}else if(model?.formations?.some(form=>form.ref===node.ref)){setConstructionFrame(node.ref);setConstructionOpen(true);}setDetailNode(node);setTravel(t=>appendGraphVisit(t,openGraphVisit(t.visits[t.index],node.ref)));},[model]);
+  const open=useCallback((node:GraphNode)=>{if(isUnresolvedGraphNode(node))return;
+    // A constellation's node opens it in the browser, where what it holds stands and its menu holds its acts (the retired authoring panel's).
+    const frameRef=node.frame_ref??(model?.formations?.some(form=>form.ref===node.ref)?node.ref:undefined);
+    if(frameRef)void readRegister(transport,binding.project).then(register=>focusConstellation(wholeOfFrame(register,frameRef)??frameRef)).catch(cause=>setReadError(String(cause instanceof Error?cause.message:cause)));
+    setDetailNode(node);setTravel(t=>appendGraphVisit(t,openGraphVisit(t.visits[t.index],node.ref)));},[model,transport,binding.project]);
   useEffect(()=>{
     if(!isGraph)return;
     if(!visit.detail){setDetailNode(undefined);return;}
@@ -213,7 +214,7 @@ export function KnowledgeSurface({binding,onOpen,nativeContext}: {binding:Surfac
       setTravel(t=>{const all=t.visits.slice(0,t.index+1);all[t.index]=previous;all.push({...visit,pageAddress:address,pageTitle:title,pageAnchor:anchor,scroll:0});const visits=all.slice(-32);return {...t,visits,index:visits.length-1};});
     }
   };
-  useEffect(()=>{if(!isGraph&&reading&&content.current&&!visit.pageAnchor)content.current.scrollTop=visit.scroll??0;},[reading?.resource,travel.index]);
+  useEffect(()=>{if(!isGraph&&reading&&content.current&&!pageAnchor)content.current.scrollTop=visit.scroll??0;},[reading?.resource,travel.index]);
   const release=()=>{if(!visit.selected&&!detailNode)return;setDetailNode(undefined);push(returnGraphVisit(visit));};
   const related=detailNode?model?.edges.filter(e=>e.from_ref===detailNode.ref||e.to_ref===detailNode.ref)??[]:[];
   const commitCamera=(next:{zoom:number;x:number;y:number})=>{const camera=region?unaccommodate(next,anchor,region,extent):next;const current=latestTravel.current;const updated={...current,visits:current.visits.map((v,i)=>i===current.index?{...v,camera}:v)};latestTravel.current=updated;setTravel(updated);persist();};
@@ -263,7 +264,8 @@ export function KnowledgeSurface({binding,onOpen,nativeContext}: {binding:Surfac
   return <section className="knowledge-surface" aria-label="Knowledge surface" aria-busy={busy}>
     <WikiFactsProvider transport={transport} project={binding.project} checkpoints={travel.facts??{}} onCheckpoint={saveFactsCheckpoint} onSaved={()=>setGeneration(n=>n+1)}>
     {travel.factsRecovery&&<details><summary>Show raw retained time/place recovery</summary><p role="alert">{travel.factsRecovery.message}</p><pre>{JSON.stringify(travel.factsRecovery.raw,null,2)}</pre></details>}
-    {travel.constructionRecovery&&<details className="knowledge-raw"><summary>Recover retained constellation draft</summary><p role="alert">{travel.constructionRecovery.message}</p><pre>{JSON.stringify(travel.constructionRecovery.raw,null,2)}</pre></details>}
+    {travel.construction!==undefined&&<details className="knowledge-raw"><summary>A constellation draft kept on this device</summary><p>The authoring panel that kept it is retired: a constellation's acts now stand in the browser's menu and the reader's Add to constellation, and each writes at once. The draft is shown as it was kept.</p><pre>{JSON.stringify(travel.construction,null,2)}</pre></details>}
+    <OpenFactsOnRequest request={binding.view?.facts} onSaved={()=>setGeneration(n=>n+1)}/>
     {busy&&<Loading label="Reading graph inputs…" scope="inline"/>}{error&&<p role="alert">{error}</p>}{nativeFocusError&&<p role="alert">{nativeFocusError}</p>}{layout.error&&<p role="alert">{layout.error}</p>}
     {isGraph&&<div className="knowledge-graph" ref={graph} data-focused={Boolean(visit.selected)} data-detail-open={Boolean(detailNode)} data-dense={nodes.length>80}>
       <GraphCanvas minimap={minimap} onMinimap={setMinimap} unresolvedAssociations={unresolvedAssociations} emphasis={emphasis} nodes={filtered?.nodes??nodes} positions={displayedPositions} model={displayedModel} camera={presentation} selected={visit.selected} focused={focused} contextual={filtered?.contextual} labels={filters.labels} arrows={filters.arrows} minZoom={GRAPH_ZOOM_LIMITS.minZoom} maxZoom={GRAPH_ZOOM_LIMITS.maxZoom} onCamera={commitCamera} onDragNode={(ref,world)=>{if(ref&&world)layout.dragNode(ref,world.x,world.y);else if(!ref)layout.releaseNode();}} onSelect={select} onOpen={open} onTechne={openTechne} onClear={release}/>
@@ -271,13 +273,11 @@ export function KnowledgeSurface({binding,onOpen,nativeContext}: {binding:Surfac
       {filtered?.nodes.length===0&&<p className="knowledge-graph-empty" role="status">{filtered.localFocusMissing?"Select a subject before using the local view.":"No subjects match these filters."}</p>}
       <div className="knowledge-zoom" role="group" aria-label="Graph view"><button className="oi-tool" aria-label="Zoom out" onClick={()=>setCamera(c=>({...c,zoom:Math.max(GRAPH_ZOOM_LIMITS.minZoom,c.zoom/1.2)}))}><Glyph name="minus" size={13}/></button><span aria-label="Graph zoom">{Math.round(camera.zoom*100)}%</span><button className="oi-tool" aria-label="Zoom in" onClick={()=>setCamera(c=>({...c,zoom:Math.min(GRAPH_ZOOM_LIMITS.maxZoom,c.zoom*1.2)}))}><Glyph name="plus" size={13}/></button><button className="oi-tool" aria-label="Fit graph to view" title="Fit graph to view" onClick={fitView}><Glyph name="expand" size={13}/></button><span className="knowledge-control-hint">Pinch to zoom · two fingers to pan</span></div>
       {model&&visit.selected&&locus&&<div className="knowledge-expression-bar" style={detailNode&&region?{left:region.x+8,top:region.y+8,right:extent.width-region.x-region.width+8,bottom:extent.height-region.y-region.height+8}:undefined}><div className="knowledge-expression-selection oi-action-group"><button className="oi-action" aria-pressed={pins.includes(visit.selected)} onClick={()=>setPins(current=>current.includes(visit.selected!)?current.filter(ref=>ref!==visit.selected):[...current,visit.selected!])}>{pins.includes(visit.selected)?"Unpin subject":"Pin subject"}</button><button className="oi-action" aria-pressed={follow} onClick={()=>setFollow(value=>!value)}>{follow?"Following locus":"Follow locus"}</button></div><KnowledgeExpression surface={binding.id} project={binding.project} address={graphAddress(locus)} locus={locus} pins={pins.flatMap(ref=>nodes.find(node=>node.ref===ref&&!isUnresolvedGraphNode(node))??[])} follow={follow}/></div>}
-      {detailNode&&<NodeDetails readingProps={{transport,project:binding.project,binding,onNavigate:navigate,anchor:visit.pageAnchor,onSelectSource:receivePassage}} node={detailNode} reading={reading?.resource===(graphAddress(detailNode)?.value??detailNode.ref)?reading:undefined} hosted={hosted&&isHostedNode(detailNode)&&(hosted.state==="unavailable"||hosted.ref===detailNode.ref)?hosted:undefined} error={readError} project={binding.project} onClose={release} onPromote={()=>{setDetailNode(undefined);push(returnGraphVisit(visit));}} onOpen={(address,title,project,placement)=>onOpen(address,title,project,placement,binding.id)} onTechne={openTechne} techneFailure={techne?.ref===detailNode.ref?techne.failure:undefined} technePending={techne?.ref===detailNode.ref&&techne.pending} disclosures={grouped.find(s=>s.node.ref===detailNode.ref)?.disclosures??[detailNode]} related={related.map(edge=>({edge,node:nodes.find(n=>n.ref===(edge.from_ref===detailNode.ref?edge.to_ref:edge.from_ref))}))} onRelated={open} native={transport.kind==="tauri"} rect={detailGeometry.rect} extent={extent} onGeometry={detailGeometry.change} storageError={detailGeometry.storageError} transport={transport} onActionDispatched={()=>setGeneration(n=>n+1)}/>}
+      {detailNode&&<NodeDetails readingProps={{transport,project:binding.project,binding,onNavigate:navigate,anchor:pageAnchor,onSelectSource:receivePassage}} node={detailNode} reading={reading?.resource===(graphAddress(detailNode)?.value??detailNode.ref)?reading:undefined} hosted={hosted&&isHostedNode(detailNode)&&(hosted.state==="unavailable"||hosted.ref===detailNode.ref)?hosted:undefined} error={readError} project={binding.project} onClose={release} onPromote={()=>{setDetailNode(undefined);push(returnGraphVisit(visit));}} onOpen={(address,title,project,placement)=>onOpen(address,title,project,placement,binding.id)} onTechne={openTechne} techneFailure={techne?.ref===detailNode.ref?techne.failure:undefined} technePending={techne?.ref===detailNode.ref&&techne.pending} disclosures={grouped.find(s=>s.node.ref===detailNode.ref)?.disclosures??[detailNode]} related={related.map(edge=>({edge,node:nodes.find(n=>n.ref===(edge.from_ref===detailNode.ref?edge.to_ref:edge.from_ref))}))} onRelated={open} native={transport.kind==="tauri"} rect={detailGeometry.rect} extent={extent} onGeometry={detailGeometry.change} storageError={detailGeometry.storageError} transport={transport} onActionDispatched={()=>setGeneration(n=>n+1)}/>}
     </div>}
     {model&&<div className="knowledge-inputs">{Object.values(model.inputs).filter(input=>input.state!=="available").map((input,i)=><details key={i} open={input.state==="unavailable"}><summary>{input.owner_operation==="shared-field.projection"?"Shared Field":input.owner_operation} · {input.state}</summary><p role="status">{input.owner_operation} — {input.detail}</p></details>)}</div>}
-    {!isGraph&&<article className="knowledge-content oi-scroll" ref={content} tabIndex={-1} aria-label="Selected node content"><div className="knowledge-page-heading"><h1>{visit.pageTitle??binding.title}</h1>{selectedAddress&&reading&&<KnowledgeExpression surface={binding.id} project={binding.project} address={selectedAddress} locus={{ref:reading.resource,label:visit.pageTitle??binding.title,kind:"knowledge-subject",native_owner:reading.provider,provenance:{source:reading.authority,revision:reading.revision},actions:[]}} pins={[]} follow={false}/>} {selectedAddress?.kind==="wiki"&&<WikiFactsButton reference={selectedAddress.value}/>} {selectedAddress?.kind==="wiki"&&<button className="oi-action" onClick={()=>void onOpen(selectedAddress!,visit.pageTitle??binding.title,binding.project,"tab").catch(e=>setReadError(String(e)))}>Show in graph ↗</button>}</div>{readError?<p role="alert">{readError}</p>:reading?<ReadingBody reading={reading} transport={transport} project={binding.project} binding={{...binding,title:visit.pageTitle??binding.title}} onNavigate={navigate} anchor={visit.pageAnchor} onSelectSource={receivePassage}/>:<p role="status">Reading content…</p>}</article>}
-    {(constructionOpen||travel.construction||constructionIncoming)&&<WikiConstructionPanel key={binding.project??"central-root"} binding={binding} open={constructionOpen} incoming={constructionIncoming} checkpoint={travel.construction} requestedFrame={constructionFrame} requestedFrameRequest={binding.view?.constructionFrame?.requestId} onCheckpoint={saveCheckpoint} onClose={()=>setConstructionOpen(false)} onNavigate={(address,title,anchor)=>{navigate(address,title,anchor);setConstructionOpen(false);}} onSaved={()=>setGeneration(n=>n+1)}/>}
+    {!isGraph&&<article className="knowledge-content oi-scroll" ref={content} tabIndex={-1} aria-label="Selected node content"><div className="knowledge-page-heading"><h1>{visit.pageTitle??binding.title}</h1>{selectedAddress&&reading&&<KnowledgeExpression surface={binding.id} project={binding.project} address={selectedAddress} locus={{ref:reading.resource,label:visit.pageTitle??binding.title,kind:"knowledge-subject",native_owner:reading.provider,provenance:{source:reading.authority,revision:reading.revision},actions:[]}} pins={[]} follow={false}/>} {selectedAddress?.kind==="wiki"&&<WikiFactsButton reference={selectedAddress.value}/>} {selectedAddress?.kind==="wiki"&&<button className="oi-action" onClick={()=>void onOpen(selectedAddress!,visit.pageTitle??binding.title,binding.project,"tab").catch(e=>setReadError(String(e)))}>Show in graph ↗</button>}</div>{readError?<p role="alert">{readError}</p>:reading?<ReadingBody reading={reading} transport={transport} project={binding.project} binding={{...binding,title:visit.pageTitle??binding.title}} onNavigate={navigate} anchor={pageAnchor} onSelectSource={receivePassage}/>:<p role="status">Reading content…</p>}</article>}
     <footer className="knowledge-surface-footer">
-      <button className="oi-action" aria-expanded={constructionOpen} onClick={()=>setConstructionOpen(value=>!value)}>Constellations</button>
       <nav aria-label={isGraph?"Graph travel":"Wiki reading travel"}><button className="oi-tool" aria-label={isGraph?"Back to prior constellation":"Back to prior page"} disabled={travel.index===0} onClick={()=>back(-1)}><Glyph name="back" size={13}/></button><button className="oi-tool" aria-label={isGraph?"Forward to next constellation":"Forward to next page"} disabled={travel.index===travel.visits.length-1} onClick={()=>back(1)}><Glyph name="arrow" size={13}/></button></nav>
       <span className="knowledge-footer-path" title={`${binding.project??"Personal ground"} / ${visit.pageTitle??binding.title}`}>{binding.project??"Personal ground"} / {visit.pageTitle??binding.title}</span>
       {!isGraph&&binding.view?.graphOrigin&&<button className="oi-tool" aria-label="Release graph focus" title="Release graph focus" onClick={()=>{try{releaseGraph(binding.view!.graphOrigin!);}catch(e){setReadError(String(e));}}}><Glyph name="release" size={13}/></button>}

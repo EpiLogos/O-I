@@ -466,11 +466,11 @@ fn run_prepared(seat: &mut Seat<'_>, op: KernelOp) -> Result<KernelOpOutcome, St
         }
         Prepared::M3(p) => {
             let done = seat.owner(|| p.execute())?;
-            seat.hold(|kernel| kernel.finish_m3_reception(done))?
+            commit_m3_reception(seat, done)
         }
         Prepared::Current(p) => {
             let done = seat.owner(|| p.execute())?;
-            seat.hold(|kernel| kernel.finish_nara_current(done))?
+            commit_nara_current(seat, done)
         }
         Prepared::Voice(p) => seat.owner(|| p.execute()),
         Prepared::Dialogue(p) => seat.owner(|| p.execute()),
@@ -518,6 +518,29 @@ fn run_prepared(seat: &mut Seat<'_>, op: KernelOp) -> Result<KernelOpOutcome, St
         }
         Prepared::Ordered => seat.hold(|kernel| kernel.apply(op))?,
     }
+}
+
+/// A personal current's commit. Its owner half — the saved identity's
+/// re-read and a new pin's custody (which re-qualifies the QL owner through
+/// `oi where` and the image's digest, then writes and syncs the checkpoint)
+/// — runs without the lock; only the in-memory basis check and the
+/// admission hold it. Held across both, the lock kept the live field's
+/// exchange waiting past its acknowledgement ceiling (lane V).
+fn commit_nara_current(
+    seat: &mut Seat<'_>,
+    done: nara_current::Completed,
+) -> Result<KernelOpOutcome, String> {
+    let done = seat.owner(|| done.confirmed())?;
+    seat.hold(|kernel| kernel.finish_nara_current(done))?
+}
+
+/// An M3 reception's commit, split the same way.
+fn commit_m3_reception(
+    seat: &mut Seat<'_>,
+    done: m3_reception::Completed,
+) -> Result<KernelOpOutcome, String> {
+    let done = seat.owner(|| done.confirmed())?;
+    seat.hold(|kernel| kernel.finish_m3_reception(done))?
 }
 
 #[cfg(all(test, unix))]
@@ -650,6 +673,268 @@ mod tests {
         let (state, _) = dispatch(&kernel, KernelOp::State);
         assert_eq!(state.unwrap().read_scopes, None);
         assert_eq!(timing.form, "navigation");
+        assert!(timing.lock_held < timing.owner);
+    }
+
+    /// A Central stand-in whose saved-identity read is held while the gate
+    /// file stands: a slow owner read, by a real child process.
+    const HELD_IDENTITY_OWNER: &str = r#"#!/usr/bin/env python3
+import hashlib, json, os, sys, time
+log, gate = sys.argv[1], sys.argv[2]
+args = sys.argv[3:]
+i = args.index("action")
+action = args[i + 2]
+with open(log, "a") as handle:
+    handle.write(action + "\n")
+def ok(data):
+    print(json.dumps({"ok": True, "action": action, "data": data}))
+if action == "projectcentral.source.read":
+    while os.path.exists(gate):
+        time.sleep(0.02)
+    request = json.loads(args[i + 3])
+    person = "person:lane-v"
+    profile = json.dumps({"schema": "ql.nara-identity-profile/v1", "person_ref": person, "nara_ref": "nara:lane-v"})
+    path = "Control/self/nara/identities/" + hashlib.sha256(person.encode()).hexdigest() + ".json"
+    ok({"schema": "central.project-world-source-reading/v1", "world_ref": "control:root",
+        "source": {"ref": request["source_ref"], "path": path, "exists": True},
+        "revision": {"revision": "rev-identity-1", "byte_len": len(profile)},
+        "content": profile, "content_encoding": "utf-8",
+        "automatic_agent_or_model_invocation": False})
+elif action == "central.world":
+    ok({"schema": "central.world-map/v1", "root": "/tmp", "work": {"projects": []}})
+else:
+    ok({})
+"#;
+
+    /// One kernel over the held-identity owner, holding an Expression with
+    /// one adopted coordinate profile (all in the kernel's own memory).
+    struct HeldIdentity {
+        directory: std::path::PathBuf,
+        log: std::path::PathBuf,
+        gate: std::path::PathBuf,
+        kernel: Mutex<Kernel>,
+    }
+
+    impl HeldIdentity {
+        const EXPRESSION: &'static str = "expression:lane-v";
+
+        fn new(test: &str) -> Self {
+            use std::os::unix::fs::PermissionsExt;
+            let directory = std::env::temp_dir().join(format!(
+                "oi-cradle-{}-held-identity-{test}",
+                std::process::id()
+            ));
+            std::fs::create_dir_all(&directory).unwrap();
+            let script = directory.join("central.py");
+            let executable = directory.join("central.sh");
+            let log = directory.join("calls.log");
+            let gate = directory.join("gate");
+            std::fs::write(&script, HELD_IDENTITY_OWNER).unwrap();
+            std::fs::write(
+                &executable,
+                format!(
+                    "#!/bin/sh\nexec python3 {} {} {} \"$@\"\n",
+                    script.display(),
+                    log.display(),
+                    gate.display()
+                ),
+            )
+            .unwrap();
+            std::fs::set_permissions(&executable, std::fs::Permissions::from_mode(0o755)).unwrap();
+            crate::test_stub::settle_stub(&executable);
+            let mut kernel = Kernel::new(crate::flow::CentralClient::with(
+                executable,
+                None,
+                "test".into(),
+            ));
+            let mut expression = |request: serde_json::Value| {
+                kernel
+                    .apply(KernelOp::Expression {
+                        request: serde_json::from_value(request).unwrap(),
+                    })
+                    .unwrap();
+            };
+            expression(
+                serde_json::json!({"operation": "profile_define", "actor": "agent:lane-v", "profile": {
+                "profile_ref": "profile:epi-coordinate-lane-v", "revision": 1, "title": "Lane V coordinate",
+                "parent_profile_refs": [], "accepted_binding_kinds": ["engine_composition"],
+                "accepted_native_owners": ["ql"], "material_defaults": {}, "formation_vocabulary": [],
+                "target_rules": {}, "provenance": [{"ref": "material:lane-v", "revision": "v1", "availability": "available"}]}}),
+            );
+            expression(
+                serde_json::json!({"operation": "create", "expression_ref": Self::EXPRESSION,
+                "title": "Lane V", "actor": "agent:lane-v"}),
+            );
+            expression(
+                serde_json::json!({"operation": "edit", "expression_ref": Self::EXPRESSION,
+                "expected_revision": 1, "actor": "agent:lane-v", "changes": [{"change": "profile_adopt",
+                "adoption": {"profile_ref": "profile:epi-coordinate-lane-v", "revision": 1, "overridden_parameters": {}}}]}),
+            );
+            Self {
+                directory,
+                log,
+                gate,
+                kernel: Mutex::new(kernel),
+            }
+        }
+
+        fn binding() -> crate::nara_dialogue::Request {
+            serde_json::from_value(serde_json::json!({"operation": "context", "role": "nara",
+                "source_ref": "central:source:lane-v", "expected_revision": "rev-identity-1",
+                "person_ref": "person:lane-v", "nara_ref": "nara:lane-v", "expression_ref": Self::EXPRESSION}))
+            .unwrap()
+        }
+
+        /// The document and adopted profile the reading was prepared on.
+        fn basis(&self) -> (serde_json::Value, crate::nara_dialogue::ProfileBasis) {
+            let mut kernel = self.kernel.lock().unwrap();
+            let document = kernel.nara_current_document(Self::EXPRESSION).unwrap();
+            let profile = kernel.nara_expression_profile(&document).unwrap();
+            (document, profile)
+        }
+
+        fn client(&self) -> crate::flow::CentralClient {
+            self.kernel.lock().unwrap().client.clone()
+        }
+
+        fn identity_reads(&self) -> usize {
+            std::fs::read_to_string(&self.log)
+                .map(|text| {
+                    text.lines()
+                        .filter(|line| *line == "projectcentral.source.read")
+                        .count()
+                })
+                .unwrap_or(0)
+        }
+
+        /// Runs `commit` while the saved identity's read is held, and asks the
+        /// live field's ordered exchange and the state snapshot meanwhile. Both
+        /// must be answered before the held read is released: their answers
+        /// arrive while the owner process still sleeps, whatever the machine's
+        /// speed. The bound only stops a failing run from waiting forever.
+        fn answered_while_held<T: Send>(
+            &self,
+            commit: impl FnOnce(&Mutex<Kernel>) -> T + Send,
+        ) -> T {
+            std::fs::write(&self.gate, "").unwrap();
+            std::thread::scope(|scope| {
+                let committing = scope.spawn(|| commit(&self.kernel));
+                let deadline = Instant::now() + Duration::from_secs(60);
+                while self.identity_reads() == 0 {
+                    assert!(
+                        Instant::now() < deadline,
+                        "the commit never asked for the saved identity"
+                    );
+                    std::thread::sleep(Duration::from_millis(10));
+                }
+                let (answered, received) = std::sync::mpsc::channel();
+                scope.spawn(move || {
+                    let field = dispatch(
+                        &self.kernel,
+                        KernelOp::NativeExpression {
+                            request: crate::native_expression::Request::Exchange {
+                                lease: "lease:lane-v".into(),
+                                request: serde_json::json!({}),
+                            },
+                        },
+                    )
+                    .0;
+                    let state = dispatch(&self.kernel, KernelOp::State).0;
+                    let _ = answered.send((field, state));
+                });
+                let probe = received.recv_timeout(Duration::from_secs(30));
+                let still_held = self.gate.exists() && !committing.is_finished();
+                std::fs::remove_file(&self.gate).unwrap();
+                let (field, state) = probe.unwrap_or_else(|_| {
+                    panic!("the field's exchange and the state snapshot waited behind the held identity read")
+                });
+                assert!(
+                    still_held,
+                    "the probes were answered only after the held read ended"
+                );
+                // No field is open: the exchange is answered with its refusal.
+                assert!(field.unwrap_err().contains("no active owner"));
+                assert!(state.is_ok());
+                committing.join().unwrap()
+            })
+        }
+    }
+
+    impl Drop for HeldIdentity {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_dir_all(&self.directory);
+        }
+    }
+
+    /// Lane V (DLW, O-I #706): lane T measured `nara_current` holding the
+    /// kernel lock 3.6–8.0 s while committing a pinned reading — past the live
+    /// field's 5 s acknowledgement ceiling, so the field stopped answering.
+    /// The commit's owner half (the saved identity, a pin's custody) now runs
+    /// outside the lock; only the in-memory basis check and the admission
+    /// hold it.
+    #[test]
+    fn a_personal_current_commit_answers_the_field_while_its_owner_is_held() {
+        let held = HeldIdentity::new("current");
+        let (document, profile) = held.basis();
+        let completed = nara_current::Completed {
+            client: held.client(),
+            project: "project:lane-v".into(),
+            binding: HeldIdentity::binding(),
+            document,
+            profile,
+            agent_session_ref: "agent-session:lane-v".into(),
+            candidate: None,
+            expected_current: None,
+            data: serde_json::json!({"schema": "oi.nara-personal-current-context/v1", "status": "absent"}),
+        };
+        let (outcome, timing) = held.answered_while_held(|kernel| {
+            let mut seat = Seat {
+                kernel,
+                timing: Timing::default(),
+            };
+            (commit_nara_current(&mut seat, completed), seat.timing)
+        });
+        let outcome = outcome.unwrap();
+        assert!(matches!(
+            outcome.result,
+            KernelOpResult::NaraCurrent { ref data } if data["status"] == "absent"
+        ));
+        assert_eq!(held.identity_reads(), 1);
+        assert!(timing.lock_held < timing.owner);
+    }
+
+    /// The same commit seam for an M3 reception (it confirms the same saved
+    /// identity and writes the recomposed current's custody).
+    #[test]
+    fn an_m3_reception_commit_answers_the_field_while_its_owner_is_held() {
+        let held = HeldIdentity::new("m3");
+        let (document, profile) = held.basis();
+        let completed = m3_reception::Completed {
+            client: held.client(),
+            project: "project:lane-v".into(),
+            binding: HeldIdentity::binding(),
+            document,
+            profile,
+            current_context: serde_json::Value::Null,
+            expected_revision: None,
+            candidate: None,
+            current_candidate: None,
+            agent_session_ref: "agent-session:lane-v".into(),
+            data: serde_json::json!({"schema": "oi.m3-reception-context/v1", "status": "absent"}),
+        };
+        let (outcome, timing) = held.answered_while_held(|kernel| {
+            let mut seat = Seat {
+                kernel,
+                timing: Timing::default(),
+            };
+            (commit_m3_reception(&mut seat, completed), seat.timing)
+        });
+        let outcome = outcome.unwrap();
+        assert!(matches!(
+            outcome.result,
+            KernelOpResult::M3Reception { ref data } if data["status"] == "absent"
+        ));
+        assert_eq!(held.identity_reads(), 1);
         assert!(timing.lock_held < timing.owner);
     }
 

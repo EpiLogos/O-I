@@ -2228,13 +2228,8 @@ impl Kernel {
         {
             return Err("The Expression or profile changed during M3 reception".into());
         }
-        let (source, identity) = nara_identity::read(&self.client, &binding.source_ref)?;
-        if source.revision.revision != binding.expected_revision
-            || identity["person_ref"] != binding.person_ref
-            || identity["nara_ref"] != binding.nara_ref
-        {
-            return Err("The saved identity changed during M3 reception".into());
-        }
+        // The saved identity and a recomposed current's custody were
+        // confirmed outside the lock (`m3_reception::Completed::confirmed`).
         let key = serde_json::to_string(&(&completed.agent_session_ref, &binding.expression_ref))
             .map_err(|e| e.to_string())?;
         let entry = self.nara_contexts.get(&key);
@@ -2256,7 +2251,6 @@ impl Kernel {
                 return Err("This native host has reached its Nara context bound".into());
             }
             if let Some(current) = completed.current_candidate {
-                current.retain(&completed.project)?;
                 self.nara_voice
                     .invalidate_expression(&binding.expression_ref);
                 self.nara_contexts
@@ -2322,13 +2316,9 @@ impl Kernel {
                     .into(),
             );
         }
-        let (source, identity) = nara_identity::read(&self.client, &binding.source_ref)?;
-        if source.revision.revision != binding.expected_revision
-            || identity["person_ref"] != binding.person_ref
-            || identity["nara_ref"] != binding.nara_ref
-        {
-            return Err("The saved identity changed during the personal current reading".into());
-        }
+        // The saved identity and a pin's custody were confirmed outside the
+        // lock (`nara_current::Completed::confirmed`); what remains is the
+        // kernel's own memory, read and admitted in one take of the lock.
         let key = serde_json::to_string(&(&completed.agent_session_ref, &binding.expression_ref))
             .map_err(|e| e.to_string())?;
         let current = self
@@ -2342,7 +2332,6 @@ impl Kernel {
             if self.nara_contexts.len() >= 64 && !self.nara_contexts.contains_key(&key) {
                 return Err("This native host has reached its Nara context bound".into());
             }
-            pin.retain(&completed.project)?;
             let entry = self.nara_contexts.entry(key).or_default();
             if entry.personal_current.as_ref().map(|old| old.context()) != Some(pin.context()) {
                 self.nara_voice
@@ -3227,14 +3216,16 @@ impl Kernel {
                 let completed = self
                     .prepare_m3_reception(&op)?
                     .ok_or("Native M3 preparation unavailable")?
-                    .execute()?;
+                    .execute()?
+                    .confirmed()?;
                 self.finish_m3_reception(completed)
             }
             op @ KernelOp::NaraCurrent { .. } => {
                 let completed = self
                     .prepare_nara_current(&op)?
                     .ok_or("Native personal current preparation unavailable")?
-                    .execute()?;
+                    .execute()?
+                    .confirmed()?;
                 self.finish_nara_current(completed)
             }
             KernelOp::NaraIdentity { request } => {

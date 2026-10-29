@@ -23,6 +23,8 @@ export type ClipSource =
 
 export const NONE = 'None'
 const NOTHING_TO_SHOW = 'The clip was made of no constellation, so there is nothing to show in the browser.'
+const NOTHING_TO_RETURN = 'The clip was made of no constellation, so there is none to return it to.'
+export const NOT_AN_EXPRESSION = 'Only an Expression returns to the constellation it was made of: this mode keeps its own work, which the constellation reads where it is.'
 
 /** The source's values on the design's keys: the constellation's name as the wiki reads it (its ref while the wiki does not name it),
  * and its ref; "None" for a clip made of none; nothing for one no owner reports. Pure. */
@@ -33,22 +35,26 @@ export function madeOfValues(source: ClipSource, rows: readonly Constellation[] 
 }
 
 /** A wiring with the source's keys named: read from the owner `by` names, or absent with why; Show in Browser an act where the clip was
- * made of a constellation, else refused in words. Pure. */
-export function withMadeOf(wiring: ClipWiring, source: ClipSource): ClipWiring {
+ * made of a constellation, else refused in words; Return to constellation the mode's `returner` where it has one (Expressions). Pure. */
+export function withMadeOf(wiring: ClipWiring, source: ClipSource, returner?: (ref: string) => Promise<void>): ClipWiring {
   const refused: Record<string, string> = {...wiring.refused}
   const acts: Record<string, (value: Value) => Promise<void>> = {...wiring.acts}
   const reads: Record<string, string> = {...wiring.reads}
   const absent: Record<string, string> = {...wiring.absent ?? {}}
   for (const key of [MADE_OF.name, MADE_OF.ref]) { delete reads[key]; delete absent[key] }
-  delete refused[MADE_OF.show]; delete acts[MADE_OF.show]
+  delete refused[MADE_OF.show]; delete acts[MADE_OF.show]; delete refused[MADE_OF.ret]; delete acts[MADE_OF.ret]
   if (source.made === 'unread') {
     absent[MADE_OF.name] = source.why; absent[MADE_OF.ref] = source.why
     refused[MADE_OF.show] = source.why
+    refused[MADE_OF.ret] = returner ? source.why : NOT_AN_EXPRESSION
   } else {
     reads[MADE_OF.name] = `the constellation's name in the wiki's reading (owners/constellations.ts), from ${source.by}`
     reads[MADE_OF.ref] = source.by
     if (source.made === 'of') { const ref = source.ref; acts[MADE_OF.show] = async () => showConstellationInBrowser(ref) }
     else refused[MADE_OF.show] = NOTHING_TO_SHOW
+    if (!returner) refused[MADE_OF.ret] = NOT_AN_EXPRESSION
+    else if (source.made === 'of') { const ref = source.ref; acts[MADE_OF.ret] = async () => returner(ref) }
+    else refused[MADE_OF.ret] = NOTHING_TO_RETURN
   }
   return {...wiring, reads, acts, refused, absent}
 }

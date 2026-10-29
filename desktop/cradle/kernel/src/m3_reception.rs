@@ -1,6 +1,6 @@
 //! Subject-bound reception of QL's existing transactional M3 producer.
 //! Optional activity uses an explicitly selected source policy; no closure or rendering law is inferred.
-use crate::{flow::CentralClient, nara_current, nara_dialogue};
+use crate::{flow::CentralClient, nara_current, nara_dialogue, nara_identity};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
@@ -160,6 +160,7 @@ pub struct Prepared {
     existing: Option<Resident>,
 }
 pub struct Completed {
+    pub client: CentralClient,
     pub project: String,
     pub binding: nara_dialogue::Request,
     pub document: Value,
@@ -170,6 +171,26 @@ pub struct Completed {
     pub current_candidate: Option<nara_current::Pinned>,
     pub agent_session_ref: String,
     pub data: Value,
+}
+impl Completed {
+    /// The commit's owner half, asked outside the kernel lock (dispatch.rs
+    /// `commit_m3_reception`): the saved identity still stands at the bound
+    /// revision, and a recomposed current's custody is durable before the
+    /// kernel admits it. `finish_m3_reception` keeps the in-memory half.
+    pub fn confirmed(self) -> Result<Self, String> {
+        let binding = &self.binding;
+        let (source, identity) = nara_identity::read(&self.client, &binding.source_ref)?;
+        if source.revision.revision != binding.expected_revision
+            || identity["person_ref"] != binding.person_ref
+            || identity["nara_ref"] != binding.nara_ref
+        {
+            return Err("The saved identity changed during M3 reception".into());
+        }
+        if let Some(current) = &self.current_candidate {
+            current.retain(&self.project)?;
+        }
+        Ok(self)
+    }
 }
 fn now() -> Result<u64, String> {
     let n = std::time::SystemTime::now()
@@ -395,6 +416,7 @@ impl Prepared {
             data["generation_at"] = cells;
         }
         Ok(Completed {
+            client: self.client,
             project: self.project,
             binding,
             document: self.document,

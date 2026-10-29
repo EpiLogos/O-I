@@ -274,6 +274,16 @@ pub enum QlRead {
     TechneReading {
         target: Value,
     },
+    /// The shape binding of a constellation a caller drafts (`ql shape bind
+    /// -`, `ql.shape-bind/v1`; O-I #742, the Canvas's Form page): the
+    /// request (`{subject_ref, whole_ref, members: [{subject_ref, position,
+    /// face}], provenance}`) on stdin; QL answers the canonical shape the
+    /// members disclose, the `ql-mef/shape-binding/v1` view a Wiki keeps and
+    /// each same-position generated relation's identity. It creates no member
+    /// and asserts no relation.
+    ShapeBind {
+        request: Value,
+    },
     /// The planets of the day and of the hour at a place (`ql nara hours -`,
     /// `ql.sky-hours/v1`): the request (`ql.sky-day-request/v1`: an instant,
     /// a place, and whether it is the world's declared place or a private
@@ -639,7 +649,27 @@ pub enum AikitRead {
     WikiShapeValidate {
         file: PathBuf,
     },
+    /// A draft frame checked before it is written (`aikit wiki-shape validate
+    /// --file F --stdin [--expected-revision N]`; O-I #742, the Form page's
+    /// Check): the frame body on stdin, through the floor `declare` enforces
+    /// and the write simulated over the file, nothing written. With
+    /// `expected_revision` the draft is a change of roles on the frame the
+    /// file holds at that revision.
+    WikiShapeCheck {
+        file: PathBuf,
+        frame: Value,
+        #[serde(default)]
+        expected_revision: Option<u64>,
+    },
     WikiShapeCompress {
+        file: PathBuf,
+        anchor_ref: String,
+    },
+    /// The Wiki's projection of one constellation as QL's Technē target
+    /// (`aikit wiki-shape target ANCHOR --file F`, O-I #742): its frame at its
+    /// revision and snapshot, with the QL shape binding it keeps — what `ql
+    /// techne reading` reads.
+    WikiShapeTarget {
         file: PathBuf,
         anchor_ref: String,
     },
@@ -863,10 +893,17 @@ pub enum AikitWrite {
         #[serde(default)]
         with_codex_overlay: bool,
     },
+    /// A frame declared into a Wiki file (`aikit wiki-shape declare FRAME
+    /// --file F`), the frame on stdin. With `expected_revision` (O-I #742) it
+    /// changes the roles of the frame the file holds at exactly that
+    /// revision (`--expected-revision N`): the body's constellations replace
+    /// the held ones with the same whole-anchor, revision-checked.
     WikiShapeDeclare {
         file: PathBuf,
         frame_ref: String,
         frame: Value,
+        #[serde(default)]
+        expected_revision: Option<u64>,
     },
     /// Adopt a foreign skill root through a reversible Procedure (`aikit
     /// adopt <root> [--namespace N] --yes`). Never into Control's ground: no
@@ -961,7 +998,9 @@ impl AikitRead {
             | Self::ReflectionVerify { project, .. }
             | Self::ReflectionLaws { project } => project.as_deref(),
             Self::WikiShapeValidate { .. }
+            | Self::WikiShapeCheck { .. }
             | Self::WikiShapeCompress { .. }
+            | Self::WikiShapeTarget { .. }
             | Self::GatewayEcology { .. }
             | Self::GatewayReplay { .. }
             | Self::SourceShow { .. }
@@ -1932,6 +1971,13 @@ fn ql_answer(request: &QlRead) -> Result<Reading, Error> {
             "ql.m2-body-constants/v1",
             READ_LIMIT,
         ),
+        QlRead::ShapeBind { request } => (
+            "ql shape bind",
+            words(&["shape", "bind", "-", "--json"]),
+            Some(request),
+            "ql.shape-bind/v1",
+            READ_LIMIT,
+        ),
         other => return ql_registry_answer(other),
     };
     let mut call = Call::new(ql(), route, args, limit);
@@ -2339,12 +2385,36 @@ pub(crate) fn aikit_read_args(request: &AikitRead) -> (&'static str, Vec<OsStrin
             args.push("--json".into());
             ("aikit wiki-shape validate", args)
         }
+        AikitRead::WikiShapeCheck {
+            file,
+            expected_revision,
+            ..
+        } => {
+            let mut args = words(&["wiki-shape", "validate", "--file"]);
+            args.push(file.into());
+            args.push("--stdin".into());
+            push_flag(
+                &mut args,
+                "--expected-revision",
+                expected_revision.map(|n| n.to_string()).as_deref(),
+            );
+            args.push("--json".into());
+            ("aikit wiki-shape validate --stdin", args)
+        }
         AikitRead::WikiShapeCompress { file, anchor_ref } => {
             let mut args = words(&["wiki-shape", "compress", "--file"]);
             args.push(file.into());
             args.push(anchor_ref.into());
             args.push("--json".into());
             ("aikit wiki-shape compress", args)
+        }
+        AikitRead::WikiShapeTarget { file, anchor_ref } => {
+            let mut args = words(&["wiki-shape", "target"]);
+            args.push(anchor_ref.into());
+            args.push("--file".into());
+            args.push(file.into());
+            args.push("--json".into());
+            ("aikit wiki-shape target", args)
         }
         AikitRead::ContinuityCommands { .. } => (
             "aikit work continuity commands",
@@ -2522,6 +2592,14 @@ fn aikit_read_answer(request: &AikitRead, cwd: Option<&Path>) -> Result<Reading,
         }
         call.input = Some(object_bytes(law)?);
     }
+    if let AikitRead::WikiShapeCheck { frame, .. } = request {
+        if !frame.is_object() {
+            return Err(incompatible(
+                "aikit wiki-shape validate --stdin takes one frame body".into(),
+            ));
+        }
+        call.input = Some(object_bytes(frame)?);
+    }
     let (data, warnings) = envelope(route, aikit_document(call)?)?;
     const COMMANDS: &[(&str, Kind)] = &[("packs", Kind::List), ("armed", Kind::List)];
     const PRESSURE: &[(&str, Kind)] = &[("brackets", Kind::Record)];
@@ -2603,6 +2681,27 @@ fn aikit_read_answer(request: &AikitRead, cwd: Option<&Path>) -> Result<Reading,
         AikitRead::WikiShapeValidate { .. } => {
             if data.get("command").and_then(Value::as_str) != Some("wiki-shape.validate") {
                 return Err(unexpected(route, "wiki-shape.validate", &data));
+            }
+            data
+        }
+        AikitRead::WikiShapeCheck { .. } => {
+            if data.get("command").and_then(Value::as_str) != Some("wiki-shape.validate")
+                || !data.get("draft").is_some_and(Value::is_object)
+            {
+                return Err(unexpected(route, "wiki-shape.validate of a draft", &data));
+            }
+            data
+        }
+        AikitRead::WikiShapeTarget { anchor_ref, .. } => {
+            if data.get("command").and_then(Value::as_str) != Some("wiki-shape.target")
+                || data.get("anchor").and_then(Value::as_str) != Some(anchor_ref.as_str())
+                || !data.get("target").is_some_and(Value::is_object)
+            {
+                return Err(unexpected(
+                    route,
+                    &format!("wiki-shape.target of {anchor_ref}"),
+                    &data,
+                ));
             }
             data
         }
@@ -3222,10 +3321,16 @@ fn aikit_written(request: &AikitWrite, cwd: Option<&Path>) -> Result<Written, Er
             file,
             frame_ref,
             frame,
+            expected_revision,
         } => {
             let mut args = words(&["wiki-shape", "declare", "--file"]);
             args.push(file.into());
             args.push(frame_ref.into());
+            push_flag(
+                &mut args,
+                "--expected-revision",
+                expected_revision.map(|n| n.to_string()).as_deref(),
+            );
             input = Some(object_bytes(frame)?);
             ("aikit wiki-shape declare", args)
         }
@@ -3375,7 +3480,9 @@ fn aikit_written(request: &AikitWrite, cwd: Option<&Path>) -> Result<Written, Er
             if data.get("command").and_then(Value::as_str) != Some("wiki-shape.declare") {
                 return Err(unexpected(route, "wiki-shape.declare", &data));
             }
-            let unchanged = data.get("changed") == Some(&Value::Bool(false));
+            // AIKit names an unchanged write in its outcome (a change of roles
+            // that changes nothing writes nothing).
+            let unchanged = data.pointer("/outcome/changed") == Some(&Value::Bool(false));
             (data, (!unchanged).then(|| frame_ref.clone()))
         }
         AikitWrite::KnowledgeForget { resource, .. } => {
@@ -3503,6 +3610,40 @@ mod tests {
                 "--file",
                 "/w/wiki.json",
                 "wiki:node:a",
+                "--json"
+            ]
+        );
+        let (route, args) = aikit_read_args(&AikitRead::WikiShapeCheck {
+            file: "/w/wiki.json".into(),
+            frame: serde_json::json!({}),
+            expected_revision: Some(2),
+        });
+        assert_eq!(route, "aikit wiki-shape validate --stdin");
+        assert_eq!(
+            spelled(&args),
+            [
+                "wiki-shape",
+                "validate",
+                "--file",
+                "/w/wiki.json",
+                "--stdin",
+                "--expected-revision",
+                "2",
+                "--json"
+            ]
+        );
+        let (_, args) = aikit_read_args(&AikitRead::WikiShapeTarget {
+            file: "/w/wiki.json".into(),
+            anchor_ref: "wiki:node:a".into(),
+        });
+        assert_eq!(
+            spelled(&args),
+            [
+                "wiki-shape",
+                "target",
+                "wiki:node:a",
+                "--file",
+                "/w/wiki.json",
                 "--json"
             ]
         );

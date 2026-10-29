@@ -361,6 +361,8 @@ const LAYOUTS = [
 ] as const
 const CHECK: Record<string, {label: string; tone?: 'green' | 'stall'}> = {passed: {label: 'Passed', tone: 'green'}, refused: {label: 'Refused', tone: 'stall'}}
 const DECLARED: Record<string, {label: string; tone?: 'green' | 'stall'}> = {saved: {label: 'In your wiki', tone: 'green'}, held: {label: 'Held'}, refused: {label: 'Refused', tone: 'stall'}}
+const FOLDED: Record<string, {label: string; tone?: 'green' | 'stall'}> = {folded: {label: 'Into one', tone: 'green'}, refused: {label: 'Refused', tone: 'stall'}}
+const READ: Record<string, {label: string; tone?: 'green' | 'stall'}> = {read: {label: 'Read', tone: 'green'}, refused: {label: 'Refused', tone: 'stall'}}
 
 const formOf = (v: V) => FORMS.find(f => f.value === strOf(v, 'form'))
 /** The card on each role, as the owner reports it (absent: no reading). */
@@ -406,28 +408,61 @@ function FormDisplay({p, w, h}: {p: ViewProps; w: number; h: number}) {
   const does = 'The whole at the centre and each role of the form round it. A dashed ring is an open role. A dashed amber name is the helper’s suggestion.'
   const say = !has(v, 'form') ? ['No reading', 'of the form'] : !f ? ['No form', 'Choose one to give the board a shape'] : !boxes ? ['No reading', 'of the items'] : !r ? ['No reading', 'of the roles'] : undefined
   if (say) return <Display w={w} h={h} label="The form" does={does} corner={NONE}><Missing w={w} h={h} say={say} /></Display>
-  const twelve = f!.roles.some(x => x.endsWith('′')), R = Math.min(w, h) * (twelve ? .26 : .34), cx = w / 2, cy = h / 2 + 4
+  const twelve = f!.roles.some(x => x.endsWith('′')), cx = w / 2
+  const {R, outer, cy} = formRing(h, twelve)
   const name = (id: string) => boxes!.find(b => b.id === id)
+  // Each position's words stand outside its outermost circle: to the right of a role on the right, to the left on the left, above or
+  // below at the poles. On the sixfold and its conjugate a position's two cards share one place, the direct's name over the conjugate's.
+  const positions = [...new Set(f!.roles.map(role => role.replace('′', '')))]
+  const said = (role: string): {text: string; card: boolean} | null => {
+    const card = r![role] ? name(r![role]!) : undefined, hint = s?.role === role ? name(s.item) : undefined
+    if (!card && !hint) return null
+    const pct = hint && !card && s?.confidence !== undefined ? ` ${Math.round(s.confidence * 100)} %` : ''
+    return {text: `${clip((card ?? hint)!.name, NAME_CHARS - pct.length)}${pct}`, card: !!card}
+  }
   return <Display w={w} h={h} label="The form" does={does} corner={f!.label}>
     <circle cx={cx} cy={cy} r={R} className="dp-faint" />
-    {twelve && <circle cx={cx} cy={cy} r={R * 1.45} className="dp-faint" strokeDasharray="2 3" />}
+    {twelve && <circle cx={cx} cy={cy} r={outer} className="dp-faint" strokeDasharray="2 3" />}
     {f!.roles.map(role => {
-      const q = placeOf(role), x = cx + q.x * R, y = cy + q.y * R, card = r![role] ? name(r![role]!) : undefined, hint = s?.role === role ? name(s.item) : undefined
-      // The name stands outside the ring: to the right of a role on the right, to the left on the left, above or below at the poles.
-      const side = Math.abs(q.x) < .3 ? 'middle' : q.x > 0 ? 'start' : 'end', tx = x + (side === 'start' ? 10 : side === 'end' ? -10 : 0)
-      const ty = side !== 'middle' ? y + 3 : q.y > 0 ? y + 17 : y - 10
+      const q = placeOf(role.replace('′', '')), d = role.endsWith('′') ? outer : R, x = cx + q.x * d, y = cy + q.y * d, card = r![role] ? name(r![role]!) : undefined, hint = s?.role === role
       return <g key={role}>
         <line x1={cx} y1={cy} x2={x} y2={y} className="dp-grid" />
         {card ? <circle cx={x} cy={y} r={6} style={{fill: card.tint ?? 'var(--dp-value)', stroke: 'var(--dp-well)', strokeWidth: 1}} />
           : <circle cx={x} cy={y} r={6} className={hint ? 'dp-curve-on' : 'dp-faint'} strokeDasharray="2 2" />}
         <text x={x} y={y + 3} textAnchor="middle" className="dp-axis" style={{fill: card ? 'var(--dp-well)' : undefined}}>{role}</text>
-        {(card || hint) && <text x={tx} y={ty} textAnchor={side} className={card ? 'dp-ink' : 'dp-ink-dim'} style={hint && !card ? {fill: 'var(--dp-on)'} : undefined}>{clip((card ?? hint)!.name, twelve ? 9 : 13)}{hint && !card && s?.confidence !== undefined ? ` ${Math.round(s.confidence * 100)} %` : ''}</text>}
       </g>
     })}
+    {positions.map(position => {
+      const lines = [said(position), ...(twelve ? [said(`${position}′`)] : [])]
+      if (!lines.some(Boolean)) return null
+      const q = placeOf(position), d = twelve ? outer : R, x = cx + q.x * d, y = cy + q.y * d
+      const side = Math.abs(q.x) < .3 ? 'middle' : q.x > 0 ? 'start' : 'end', tx = x + (side === 'start' ? 10 : side === 'end' ? -10 : 0)
+      // The first line's baseline: beside the circle, centred on it; below it, under the circle; above it, so the last line clears it.
+      const first = side !== 'middle' ? y + 3 - (lines.length - 1) * LINE / 2 : q.y > 0 ? y + 17 : y - 10 - (lines.length - 1) * LINE
+      return <g key={`said:${position}`}>{lines.map((line, i) => line && <text key={i} x={tx} y={first + i * LINE} textAnchor={side}
+        className={line.card && i === 0 ? 'dp-ink' : 'dp-ink-dim'} style={line.card ? undefined : {fill: 'var(--dp-on)'}}>{line.text}</text>)}</g>
+    })}
     <circle cx={cx} cy={cy} r={9} style={{fill: whole?.tint ?? 'var(--dp-on)', opacity: whole ? 1 : .35}} />
-    <text x={6} y={12} className="dp-ink">{whole ? clip(whole.name, 22) : 'No whole'}</text>
+    <text x={6} y={12} className="dp-ink">{whole ? clip(whole.name, headRoom(w, f!.label)) : 'No whole'}</text>
     <text x={6} y={h - 6} className="dp-axis">{`${placedOf(v) ?? NONE} of ${f!.roles.length} placed`}</text>
   </Display>
+}
+
+/** The widest a character of the display's type draws, per px of type (sdk/panel.css: .dp-ink 9.5 px; the corner 9.5 px, padded 3 px a
+ * side and 5 px from the edge). */
+const CHAR = 9.5 * .58, CORNER_PAD = 6 + 5
+/** A card's name round the form, in characters, and the step between the two names a position of the twelvefold holds. */
+const NAME_CHARS = 13, LINE = 10
+/** The display's own line, the whole's name, stands to the left of the corner that names the form: the characters it has room for. */
+const headRoom = (w: number, corner: string) => Math.max(4, Math.floor((w - 6 - 8 - corner.length * CHAR - CORNER_PAD) / CHAR))
+/** The ring in a display `h` high: under the display's own line (20 px), the topmost words above the top circle and the lowest under the
+ * bottom one inside the well. The twelvefold's conjugates stand further out (1.45 R, and at least a circle's width beyond the direct). */
+function formRing(h: number, twelve: boolean): {R: number; outer: number; cy: number} {
+  const HEAD = 20, above = 10 + 7.4 + (twelve ? LINE : 0), below = 17 + 2.1 + (twelve ? LINE : 0)
+  const reach = (h - 1 - HEAD - above - below) / 2
+  const R = twelve ? Math.min(h * .26, reach / 1.45, reach - 13) : Math.min(h * .34, reach)
+  const outer = twelve ? Math.max(R * 1.45, R + 13) : R
+  return {R, outer, cy: HEAD + above + outer}
 }
 
 const formChooser = (p: ViewProps) => <Chooser {...st(p, 'form')} label="Form" does="The shape of the whole: its roles round one centre. Choosing a form moves no card until Layout is Form."
@@ -611,7 +646,7 @@ const sideTo = (p: ViewProps) => <Chooser {...st(p, 'toSide')} label="To" does="
 const promote = (p: ViewProps) => {
   const state = strOf(p.v, 'promote'), s = st(p, 'promote'), n = linesOf(p.v)?.length
   return <Action {...s} label="Promote" does="Sends the selected line to the owner of its relation. The owner may accept, change or refuse it."
-    disabled={s.disabled ?? (state === 'recorded' ? 'The owner has recorded this relation.' : n === undefined ? 'No reading of the lines.' : n > 0 ? undefined : 'There is no line to promote.')}
+    disabled={s.disabled ?? (state === 'recorded' ? strOf(p.v, 'promoteWhy') ?? 'The owner has recorded this relation.' : n === undefined ? 'No reading of the lines.' : n > 0 ? undefined : 'There is no line to promote.')}
     refused={s.refused ?? (state === 'refused' ? strOf(p.v, 'refusal') ?? 'The owner gave no reason.' : undefined)}
     onPress={() => p.set('promote', true)} />
 }
@@ -793,7 +828,7 @@ const defaults = {
   // The engine's readings at the two sensors, by the law above (trace() gives the same numbers).
   'sensor.power': JSON.stringify([{at: 'Brow', power: .103}, {at: 'Crown', power: .102}]),
   // Readings: what the device reports, never set from here.
-  save: 'saved', waiting: 4, check: '', checkWhy: '', declared: '',
+  save: 'saved', waiting: 4, check: '', checkWhy: '', declared: '', declaredWhy: '', folded: '', foldWhy: '', reading: '', readingWhy: '',
 }
 
 // A board given a form: the six M domains round Quaternal Logic, set out as a person left them; Layout Form stands each on its role.
@@ -859,7 +894,9 @@ export const design: DesignedDevice = {
           <Section label="Owner" cols={2} grow>
             {check(p)}<Readout label="check" does={strOf(p.v, 'checkWhy') || 'What the form’s rules said, the last time you checked.'} value={CHECK[strOf(p.v, 'check') ?? '']?.label ?? (has(p.v, 'check') ? 'Not run' : undefined)} tone={CHECK[strOf(p.v, 'check') ?? '']?.tone} />
             {fold(p)}<Readout label="fields" does="Pairs whose two roles and their conjugates are all filled. Each is a four-by-four field of the whole." value={formOf(p.v)?.value === 'twelvefold' ? `${fieldsOf(p.v).length} of 9` : 'none'} />
-            {declare(p)}<Readout label="wiki" does="Whether the constellation stands in your wiki." value={DECLARED[strOf(p.v, 'declared') ?? '']?.label ?? (has(p.v, 'declared') ? 'Not yet' : undefined)} tone={DECLARED[strOf(p.v, 'declared') ?? '']?.tone} />
+            {declare(p)}<Readout label="wiki" does={strOf(p.v, 'declaredWhy') || 'Whether the constellation stands in your wiki.'} value={DECLARED[strOf(p.v, 'declared') ?? '']?.label ?? (has(p.v, 'declared') ? 'Not yet' : undefined)} tone={DECLARED[strOf(p.v, 'declared') ?? '']?.tone} />
+            <Readout label="folded" does={strOf(p.v, 'foldWhy') || 'Whether the twelve fold into one, the last time you pressed Fold.'} value={FOLDED[strOf(p.v, 'folded') ?? '']?.label ?? (has(p.v, 'folded') ? 'Not folded' : undefined)} tone={FOLDED[strOf(p.v, 'folded') ?? '']?.tone} />
+            <Readout label="QL reads" does={strOf(p.v, 'readingWhy') || 'What QL reads of the constellation your wiki declares: its shape, its members and the instruments it stands on.'} value={READ[strOf(p.v, 'reading') ?? '']?.label ?? (has(p.v, 'reading') ? 'Not yet' : undefined)} tone={READ[strOf(p.v, 'reading') ?? '']?.tone} />
           </Section>
         </Band>
       </> : page === 'lines' ? <>

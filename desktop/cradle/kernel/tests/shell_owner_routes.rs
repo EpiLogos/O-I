@@ -1507,6 +1507,177 @@ fn ql_reads_its_compiled_m_ledger_and_its_coverage() {
     let _ = fs::remove_dir_all(&dir);
 }
 
+/// The Canvas's Form page's construction chain on its owners (O-I #742): QL's shape binding of a draft, AIKit's dry run of the frame
+/// it makes, its declaration and the change of its roles on the revision read, the Wiki's projection of it for QL, and QL's Technē
+/// reading of that — each through the kernel's routes, with the real owners' answers (built ql and aikit, 29 Oct) as fixtures.
+#[test]
+fn the_form_pages_construction_chain_carries_its_owners_answers() {
+    let _held = hold();
+    let dir = scratch("form-chain");
+    let ql = Fake::new(&dir, "ql");
+    let aikit = Fake::new(&dir, "aikit");
+    let _ql = Bound::set("OI_QL_BIN", &ql.bin);
+    let _aikit = Bound::set("OI_AIKIT_BIN", &aikit.bin);
+    let real = fixture("form-chain-reads-2026-10-29.json");
+    let file = "Work/Scratch/ProjectCentral/wiki/wiki.json";
+
+    // QL binds the draft's shape: the request on stdin, its answer verbatim.
+    ql.answer(&real["shape_bind"]["answer"]);
+    let (outcome, form) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "ql_read", "request": {"kind": "shape-bind", "request": real["shape_bind"]["input"]}}),
+        ),
+    );
+    let outcome = outcome.unwrap();
+    assert_eq!(form, "owner-read");
+    assert_eq!(reading(&outcome).1, real["shape_bind"]["answer"]);
+    assert_eq!(ql.asked(), ["shape bind - --json"]);
+    assert_eq!(
+        serde_json::from_str::<Value>(&ql.stdin()).unwrap(),
+        real["shape_bind"]["input"]
+    );
+    // Another document is not QL's binding.
+    ql.answer(&json!({"schema": "ql.m1.engine/v1"}));
+    let (outcome, _) = dispatched(
+        no_central(&dir),
+        op(json!({"op": "ql_read", "request": {"kind": "shape-bind", "request": {}}})),
+    );
+    assert_eq!(kind(&outcome.unwrap_err()), "incompatible");
+
+    // AIKit checks the draft frame: the body on stdin, nothing written, its draft named.
+    aikit.forget();
+    aikit.answer(&real["wiki_shape_check"]["answer"]);
+    let (outcome, form) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "aikit_read", "request": {"kind": "wiki-shape-check", "file": file,
+            "frame": real["wiki_shape_check"]["input"]}}),
+        ),
+    );
+    let outcome = outcome.unwrap();
+    assert_eq!(form, "owner-read");
+    assert_eq!(
+        reading(&outcome).1,
+        real["wiki_shape_check"]["answer"]["data"]
+    );
+    assert_eq!(
+        aikit.asked(),
+        [format!("wiki-shape validate --file {file} --stdin --json")]
+    );
+    assert_eq!(
+        serde_json::from_str::<Value>(&aikit.stdin()).unwrap(),
+        real["wiki_shape_check"]["input"]
+    );
+    // A whole-file validation is not a draft's check.
+    aikit.forget();
+    aikit.answer(&envelope(json!({"command": "wiki-shape.validate", "errors": [], "file": file, "frames": [], "valid": true})));
+    let (outcome, _) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "aikit_read", "request": {"kind": "wiki-shape-check", "file": file,
+            "frame": {}, "expected_revision": 1}}),
+        ),
+    );
+    assert_eq!(kind(&outcome.unwrap_err()), "incompatible");
+    assert_eq!(
+        aikit.asked(),
+        [format!(
+            "wiki-shape validate --file {file} --stdin --expected-revision 1 --json"
+        )]
+    );
+
+    // Declare writes the frame, and then changes its roles on the revision it read.
+    aikit.forget();
+    aikit.answer(&real["wiki_shape_declare"]["answer"]);
+    let frame_ref = "wiki:frame:form:wiki:space:inquiry";
+    let (outcome, form) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "aikit_write", "request": {"kind": "wiki-shape-declare", "file": file,
+            "frame_ref": frame_ref, "frame": real["wiki_shape_declare"]["input"]}}),
+        ),
+    );
+    let outcome = outcome.unwrap();
+    assert_eq!(form, "owner-write");
+    assert_eq!(receipts(&outcome)[0]["ref"], frame_ref);
+    aikit.answer(&real["wiki_shape_declare_roles"]["answer"]);
+    let (outcome, _) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "aikit_write", "request": {"kind": "wiki-shape-declare", "file": file,
+            "frame_ref": frame_ref, "frame": real["wiki_shape_declare_roles"]["input"], "expected_revision": 1}}),
+        ),
+    );
+    let outcome = outcome.unwrap();
+    assert_eq!(reading(&outcome).1["revision"], 2);
+    assert_eq!(
+        aikit.asked(),
+        [
+            format!("wiki-shape declare --file {file} {frame_ref} --json"),
+            format!("wiki-shape declare --file {file} {frame_ref} --expected-revision 1 --json"),
+        ]
+    );
+    // A stale revision is AIKit's refusal, in its words.
+    aikit.refuse(Some(&real["wiki_shape_declare_stale"]["answer"]), "", 1);
+    let (outcome, _) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "aikit_write", "request": {"kind": "wiki-shape-declare", "file": file,
+            "frame_ref": frame_ref, "frame": real["wiki_shape_declare_roles"]["input"], "expected_revision": 1}}),
+        ),
+    );
+    assert!(
+        outcome.unwrap_err().contains("stands at revision 2, not 1"),
+        "AIKit's words"
+    );
+
+    // The Wiki projects the constellation as QL's target, and QL reads it.
+    aikit.forget();
+    aikit.answer(&real["wiki_shape_target"]["answer"]);
+    let (outcome, _) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "aikit_read", "request": {"kind": "wiki-shape-target", "file": file,
+            "anchor_ref": "wiki:space:inquiry"}}),
+        ),
+    );
+    let target = reading(&outcome.unwrap()).1["target"].clone();
+    assert_eq!(target, real["techne_reading"]["input"]);
+    assert_eq!(
+        aikit.asked(),
+        [format!(
+            "wiki-shape target wiki:space:inquiry --file {file} --json"
+        )]
+    );
+    // A projection of another whole is named, not taken.
+    let (outcome, _) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "aikit_read", "request": {"kind": "wiki-shape-target", "file": file,
+            "anchor_ref": "wiki:space:other"}}),
+        ),
+    );
+    assert_eq!(kind(&outcome.unwrap_err()), "incompatible");
+    ql.forget();
+    ql.answer(&real["techne_reading"]["answer"]);
+    let (outcome, _) = dispatched(
+        no_central(&dir),
+        op(json!({"op": "ql_read", "request": {"kind": "techne-reading", "target": target}})),
+    );
+    let read = reading(&outcome.unwrap()).1;
+    assert_eq!(read["reading"]["whole"]["whole_ref"], "wiki:space:inquiry");
+    assert_eq!(
+        read["reading"]["whole"]["member_refs"]
+            .as_array()
+            .unwrap()
+            .len(),
+        12
+    );
+    assert_eq!(ql.asked(), ["techne reading /dev/stdin --json"]);
+    let _ = fs::remove_dir_all(&dir);
+}
+
 #[test]
 fn ql_registry_vak_techne_and_operator_reads_carry_qls_answers() {
     let _held = hold();

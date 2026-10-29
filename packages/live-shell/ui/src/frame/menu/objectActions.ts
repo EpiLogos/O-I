@@ -8,6 +8,7 @@ import type {ClipBinding} from '../detail/clipBinding'
 import type {WorldTrackActions, WorldTrackSet} from '../../timeline/worldTrackAdapter'
 import {LIVE_CLIP_PALETTE} from '../../live/livePalette'
 import {MADE_OF} from '../../inhabitants/catalogue/clips/design'
+import {NOT_AN_EXPRESSION} from '../detail/clipSource'
 import type {ObjectMenuItem} from './useObjectMenu'
 import type {UndoStep} from './undo'
 import {heldClip, holdClip} from './clipboard'
@@ -175,6 +176,11 @@ function clipMenu(target: Extract<ObjectTarget, {kind: 'clip'}>, set: WorldTrack
   items.push(sep('s-source'))
   items.push({id: 'show-in-browser', label: 'Show in Browser', ...clipFact(binding, target.id, MADE_OF.show),
     onSelect: () => press(`show:${target.id}`, `Show ${named}'s constellation in the browser`, () => context.writeClip(target.id, MADE_OF.show, Date.now()))})
+  // Return to constellation, for an Expressions clip made of one (O-I #742): its Expression saved and attached, so the constellation links
+  // to it; dimmed, saying why, in every other mode and for a clip made of none.
+  if (holdsClip(binding, target.id) && binding.writes?.(MADE_OF.ret) && binding.standing?.[MADE_OF.ret]?.disabled !== NOT_AN_EXPRESSION)
+    items.push({id: 'return-to-constellation', label: 'Return to constellation', ...clipFact(binding, target.id, MADE_OF.ret),
+      onSelect: () => press(`return:${target.id}`, `Return ${named} to its constellation`, () => context.writeClip(target.id, MADE_OF.ret, Date.now()))})
   const colour = fact('colour')
   items.push(sep('s4'))
   items.push({id: 'colour', type: 'swatches', label: 'Colour', colours: LIVE_CLIP_PALETTE, current: typeof held?.colour === 'string' ? held.colour : null, ...colour,

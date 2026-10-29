@@ -1137,7 +1137,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
       // This request has already inspected the exact native Scene and its
       // current source. Open the existing editor without an unrelated graph read.
       const existing=Object.values(stateRef.current.surfaces).find(b=>b.kind==="knowledge"&&b.ref===target.frame_ref&&b.project===target.project);
-      const binding:SurfaceBinding={...(existing??{id:crypto.randomUUID(),kind:"knowledge" as const,ref:target.frame_ref,title:target.title,project:target.project,address:{kind:"wiki" as const,value:target.frame_ref}}),view:{...existing?.view,constructionFrame:{ref:target.frame_ref,requestId:crypto.randomUUID()}}};
+      const binding:SurfaceBinding={...(existing??{id:crypto.randomUUID(),kind:"knowledge" as const,ref:target.frame_ref,title:target.title,project:target.project,address:{kind:"wiki" as const,value:target.frame_ref}}),view:{...existing?.view,facts:{subject:target.frame_ref,requestId:crypto.randomUUID()}}};
       void kernel.apply({op:"surface_open",surface_id:binding.id,kind:"knowledge",source_ref:binding.ref,title:binding.title}).then(opened=>{
         if(opened?.result!=="surface_opened")throw new Error("The constellation editor could not be opened");
         if(workspaceRef.current.current.id!==destinationWorkspaceId||(stateRef.current.mode??"base")!=="base")throw new Error("The workspace changed while the constellation editor was opening; open it again from the selected Canvas.");
