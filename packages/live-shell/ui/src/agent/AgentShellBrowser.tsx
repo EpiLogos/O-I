@@ -15,7 +15,7 @@ import {FactoryChatsRows} from './FactoryChatsRows'
 import {setHostPage} from '../frame/devices/deviceHost'
 import {DEVICE_PANE_KIND} from '../frame/devices/devicePane'
 import {openInstrument, reportInstrumentFault} from '../frame/instrumentDoor'
-import {railDeviceId} from '../widgets/railDevices'
+import {railDeviceId} from '../widgets/railDeviceIds'
 import './agentShell.css'
 
 const CATEGORIES = [

@@ -16,8 +16,9 @@ import {AgentWidgetName} from '../widgets/AgentWidgetName'
 import {loadWhenDrawn} from './loadWhenDrawn'
 import {getPanels} from './panels'
 import {panelWidgets} from '../frame/widgets/panelWidgets'
-// The devices born on the rail claim the rail's widget of their id when their module loads (widgets/railDevices.tsx).
-import '../widgets/railDevices'
+// The devices born on the rail claim the rail's widget of their id when their ids' module loads (widgets/railDeviceIds.ts); their
+// publisher (widgets/railDevices.tsx) loads when the rail first draws.
+import '../widgets/railDeviceIds'
 
 export {WidgetReadingProvider, type WidgetReading} from '../widgets/widgetReading'
 

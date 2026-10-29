@@ -65,8 +65,10 @@ test('Factory routes the Main track: its Device side is the Main track\'s chain 
 })
 
 test('the Clip side hosts the selected task\'s clip (R2): clip:factory on its binding — Launch beside the log — never the Tasks device', async () => {
-  const details = read('shell/modeDetails.tsx')
+  // Factory's clip body is its own module, loaded with Factory (shell/details/factory.tsx; O-I #740), registered by the detail table.
+  const details = read('shell/details/factory.tsx')
   assert.match(details, /function FactoryClip\(\{place\}: \{place: ClipPlace\}\) \{ return <Hosted binding=\{useFactoryClip\(\)\}/)
+  assert.match(read('shell/modeDetails.tsx'), /const FactoryClip: ClipBody = loadWhenDrawn\('Factory\\'s clip', \(\) => import\('\.\/details\/factory'\)/)
   const {existsSync} = await import('node:fs')
   assert.equal(existsSync(new URL('../src/agent/devices/TaskClipDevice.tsx', import.meta.url)), false, 'TaskClipDevice became the task\'s Clip, Launch and Envelopes panels')
   assert.match(read('agent/clipBinding.ts'), /TASK_SEAMS\[setting\]/, 'the per-task settings write through their named seams')

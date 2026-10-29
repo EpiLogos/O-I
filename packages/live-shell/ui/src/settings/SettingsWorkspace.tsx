@@ -130,7 +130,7 @@ export function SettingsWorkspace({ adapter = unavailable, request, onReturn, ac
 
   useEffect(() => {
     if (!request) return
-    if(request.page==='setup'){setHostPage(SETTINGS_WINDOW_ID,'setup');setPageTick(n=>n+1);setSelected(null);setQuery('');return}
+    if(request.page==='setup'){setHostPage(SETTINGS_WINDOW_ID,'setup');if(request.folder){hold('setupStep','projects');hold('folder',request.folder);hold('make',undefined);hold('wiki',undefined);hold('where',undefined)}setPageTick(n=>n+1);setSelected(null);setQuery('');return}
     if(request.page){setCategory(request.page==='machines'?'execution':'automations');setOperationScope(request.scope);setSelected(null);setQuery('');return}
     if(!entries.length)return
     const entry = entries.find(e => e.spec.setting_ref === request.setting_ref)
@@ -285,7 +285,8 @@ export function SettingsWorkspace({ adapter = unavailable, request, onReturn, ac
   const automations = useAutomationsPage(adapter, wanted && visited.has('automations'), held, context, typeof holds.show === 'string' ? holds.show : 'routines',
     typeof holds.routine === 'string' ? holds.routine : null, done)
   const products = useProductsPage(adapter, wanted && (visited.has('products') || visited.has('inspection')))
-  const setup = useSetupPage(adapter, wanted && setupOpened, held, done, [holds.folder, holds.make, holds.wiki, holds.where, holds.credential, holds.reference])
+  const setup = useSetupPage(adapter, wanted && setupOpened, held, done, [holds.folder, holds.make, holds.wiki, holds.where, holds.credential, holds.reference,
+    holds.groundFolder, holds.groundName, holds.birthName, holds.birthDate])
   const parts: readonly PagePart[] = [harness, credentials, appearance, profiles, machines, automations, products, setup]
 
   // ── the window's own presses ────────────────────────────────────────────────────────────────────────────────────────────────────

@@ -173,7 +173,8 @@ function scriptedKernel(start, comparison = request => ({ok: true, outcome: {res
   return kernel
 }
 const transport = {kind: 'bridge', url: 'http://owner.test'}
-const project = factory.SETTINGS_PROJECT
+// The register the session was read under (agent/worldScope.ts). REPLACED (O-I #740 lane B): factory.SETTINGS_PROJECT, one literal project.
+const project = 'O-I'
 async function readSettings() {
   const entry = settingsReadingEntry(transport, project, 'ses-795')
   await entry.retry(`epoch-${Math.random()}`)
@@ -283,7 +284,8 @@ test('Repeat\'s press runs the takes over the run AIKit hands with the session\'
   const kernel = scriptedKernel(start)
   await readSettings()
   // The grid's press, as useFactoryTracks wires it: the settings the tracks read hand the run.
-  const press = repeatPress(transport, ref => ref === 'ses-795' ? start : undefined)
+  // Each session's own register (agent/worldScope.ts), as useFactoryTracks hands it.
+  const press = repeatPress(transport, ref => ref === 'ses-795' ? start : undefined, () => project)
   const made = await press('ses-795')
   assert.equal(made.ok, true, made.error)
   const writes = kernel.sent.filter(op => op.request)
@@ -294,14 +296,14 @@ test('Repeat\'s press runs the takes over the run AIKit hands with the session\'
   const passing = reading({repeat_variable: 'effort', repeat_levels: ['low'], repeat_stop: 'pass', take_run: handed})
   const untested = scriptedKernel(passing)
   await readSettings()
-  const pass = await repeatPress(transport, () => passing)('ses-795')
+  const pass = await repeatPress(transport, () => passing, () => project)('ses-795')
   assert.equal(pass.ok, false); assert.match(pass.error, /Test pass[\s\S]*test/)
   assert.deepEqual(untested.sent.filter(op => op.request), [])
   // Settings that hand AIKit's refusal: the press says it, before any write.
   const refusing = reading({take_run: {refused: 'The session\'s agent has never opened.'}})
   const quiet = scriptedKernel(refusing)
   await readSettings()
-  const said = await repeatPress(transport, () => refusing)('ses-795')
+  const said = await repeatPress(transport, () => refusing, () => project)('ses-795')
   assert.equal(said.ok, false); assert.match(said.error, /never opened/)
   assert.deepEqual(quiet.sent.filter(op => op.request), [])
 })

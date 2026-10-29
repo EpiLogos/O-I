@@ -430,7 +430,8 @@ test('(d) the chain and the rail carry the owner routes where the manual puts th
   // REPLACED (lane W10): the carrier takes discover's offers and the probe too.
   // REPLACED (lane W13): the carrier's material spans a line (discover, the probe, the run's plan).
   assert.match(chain, /carrierBinding\(workcellAnswer, holds, shows,\s*\{discover/, 'the carrier with each connection\'s record')
-  assert.match(chain, /trust: capability => ownerRouteWrite\(transport, aikitWriteOp\(\{kind: 'trust-record', project: RACK_PROJECT, capability\}\)/)
+  // REPLACED (O-I #740 lane B): RACK_PROJECT ('O-I'); the chain's register — the session's own, the root's null (agent/worldScope.ts).
+  assert.match(chain, /trust: capability => ownerRouteWrite\(transport, aikitWriteOp\(\{kind: 'trust-record', project: register, capability\}\)/)
   // REPLACED (#725): "the Seat stands inside Git / landing" as its own plate — the Seat is Git / landing's Seat page (§19.17): the landing's
   // binding carries the Seat's under `seat.`.
   assert.doesNotMatch(chain, /placed\(SEAT_ID/, 'no Seat plate of its own')

@@ -121,7 +121,7 @@ const UNMADE = {...groundOf({state: 'ready', action: 'central.day.read', data: {
 
 /** The owner behind a stubbed kernel bridge (FIXTURE): it answers `central` inspect from a sequence of grounds, records each
  * ensure-day it is asked, and holds one Day document behind `receiving` (Document, MutateField, CAS-checked). */
-function fakeOwner({grounds = [STALE, READY], refuseEnsure = null, now = {}} = {}) {
+function fakeOwner({grounds = [STALE, READY], refuseEnsure = null, now = {}, groundForms = false} = {}) {
   const sent = [], ensures = [], initialised = [], closes = []
   let inspected = 0
   const state = {revision: 1, payload: structuredClone(PAYLOAD)}
@@ -146,6 +146,13 @@ function fakeOwner({grounds = [STALE, READY], refuseEnsure = null, now = {}} = {
     const formAt = {schema: 'central.path-ref/v1', ref: 'central:path:/ground:Work/O-I/desktop/cradle/documents/ql-daily-die.html', root: '/ground', path: 'Work/O-I/desktop/cradle/documents/ql-daily-die.html'}
     if (body.op === 'world_browse') return {json: async () => ({ok: true, outcome: {result: 'world_read', snapshot: {navigator: {root: {control: {agent_wiki: {wiki: {space_ref: 'central:wiki:root'}}},
       work: {projects: [{name: 'O-I', path: 'Work/O-I', projectcentral: {user: {exists: true, path: 'Work/O-I/ProjectCentral/user'}, agent_wiki: {wiki: {space_ref: 'central:wiki:project:O-I'}}}}]}}}}}})}
+    // A ground no O-I project carries forms for (a new world): Central keeps the Day's form in the ground's own Control/forms.
+    if (body.op === 'files_list' && groundForms) {
+      if (body.path !== 'Control/forms') return refused('Central owner Action refused: No such file or directory (os error 2)')
+      const kept = {schema: 'central.path-ref/v1', ref: 'central:path:/ground:Control/forms/ql-daily-die.html', root: '/ground', path: 'Control/forms/ql-daily-die.html'}
+      return {json: async () => ({ok: true, outcome: {result: 'directory_read', directory: {schema: 'central.directory-reading/v1', location: {...kept, path: 'Control/forms'},
+        entries: [{name: 'ql-daily-die.html', kind: 'file', byte_len: 1, retrieval_allowed: true, location: kept}]}}})}
+    }
     if (body.op === 'files_list') return {json: async () => ({ok: true, outcome: {result: 'directory_read', directory: {schema: 'central.directory-reading/v1', location: {...formAt, path: body.path},
       entries: [{name: 'ql-daily-die.html', kind: 'file', byte_len: 1, retrieval_allowed: true, location: formAt}]}}})}
     if (body.op === 'file_read') return {json: async () => ({ok: true, outcome: {result: 'file_read', reading: {schema: 'central.file-reading/v1', location: formAt, revision: 'form-rev', content: '<html></html>', byte_len: 13, content_encoding: 'utf-8'}}})}
@@ -596,4 +603,51 @@ test('the design: the Close pad presses Close now, the one move an owner takes; 
   // itself when the day closes, at Central's bound, which the Day reads and never sets.
   assert.deepEqual(Object.keys(catalogueDay.defaults).filter(key => /^at_/.test(key)), [], 'no move keeps a time of its own')
   assert.doesNotMatch(source, /label="(Runs at|Day start|Rollover)"/, 'the Day draws no time control')
+})
+
+// ── a ground that keeps no civil-time policy (O-I #740) ───────────────────────────────────────────────────────────────────────────
+// Central's words for it, exactly as the built ctrl answers (central.time.policy on a scratch ground Setup made, 29 Oct), and its Day read.
+const NO_POLICY_TIME = {state: 'denied', action: 'central.time.policy', error: {code: 'policy_or_source_denied',
+  message: 'requires one explicitly recognised civil-time-policy source; the person adopts one with central.time.policy.adopt (preview: central.time.policy.preview)'}}
+const NO_POLICY = groundOf({state: 'unavailable', action: 'central.day.read', error: {code: 'source_or_scope_unavailable', message: 'no DayRef or current today pointer'}}, NO_POLICY_TIME)
+
+test('a ground with no civil-time policy: the Day die, the bring-in and Open today name the way on, Settings › Setup › Ground, never the raw denial', async () => {
+  const die = bind.currentDayOf(NO_POLICY).standing
+  assert.equal(die.state, 'refused')
+  assert.match(die.message, /Settings › Setup › Ground/, 'the die names the way on')
+  assert.doesNotMatch(die.message, /DayRef|central\.time\.policy/, 'not the raw denial')
+  const brought = daySet.bringInRefusal('field-notes', NO_POLICY, null)
+  assert.match(brought, /^field-notes cannot come into today: .*Settings › Setup › Ground.*then bring field-notes in again\.$/)
+  assert.doesNotMatch(brought, /DayRef|today pointer/)
+  const owner = fakeOwner({grounds: [NO_POLICY]})
+  await withOwner(owner, async () => {
+    await assert.rejects(() => writes.openToday(bridge), error => /Settings › Setup › Ground/.test(error.message) && !/civil-time-policy source/.test(error.message))
+  })
+  assert.deepEqual(owner.sent.map(body => body.request.kind), ['inspect'], 'nothing is ensured')
+  // Another refusal of civil time stays in the owner's words.
+  assert.match(bind.currentDayOf(groundOf(NO_POLICY.day, {state: 'failed', action: 'central.time.policy', error: {message: 'policy unreadable'}})).standing.message, /no DayRef/)
+})
+
+test('the transport\'s die names the same way on, Settings › Setup › Ground, where the ground keeps no civil-time policy (O-I #740)', async () => {
+  const {dayDieOf} = await import('../src/shell/transports/transportReadings.ts')
+  const die = dayDieOf(NO_POLICY, null)
+  assert.equal(die.state, 'waiting')
+  assert.match(die.reason, /Settings › Setup › Ground/)
+  assert.doesNotMatch(die.reason, /DayRef|today pointer/)
+  assert.match(dayDieOf(groundOf(NO_POLICY.day, {state: 'failed', action: 'central.time.policy', error: {message: 'policy unreadable'}}), null).reason, /no DayRef/, 'another refusal stays in Central\'s words')
+})
+
+test('in a new world, Open today makes today\'s document from the Day form its ground keeps (Control/forms), where no O-I project carries one (O-I #740)', async () => {
+  const owner = fakeOwner({grounds: [UNMADE], groundForms: true})
+  await withOwner(owner, () => writes.openToday(bridge).then(result => assert.deepEqual(result, {ensured: false, initialised: true, carried: null})))
+  assert.equal(owner.initialised.length, 1)
+  assert.equal(owner.initialised[0].form.path, 'Control/forms/ql-daily-die.html', 'the form the ground keeps, read through Central\'s file route')
+  // Neither the project's nor the ground's: named, with the way on.
+  const none = fakeOwner({grounds: [UNMADE], groundForms: true})
+  const real = none.fetch
+  none.fetch = async (url, init) => (JSON.parse(init.body).op === 'files_list' ? {json: async () => ({ok: false, error: 'No such file or directory'})} : real(url, init))
+  await withOwner(none, async () => {
+    await assert.rejects(() => writes.openToday(bridge), error => /Settings › Setup › Ground/.test(error.message) && /Work\/O-I\/desktop\/cradle\/documents/.test(error.message))
+  })
+  assert.equal(none.initialised.length, 0, 'nothing is made without a form')
 })

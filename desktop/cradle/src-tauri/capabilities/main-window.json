@@ -6,6 +6,7 @@
     "core:default",
     "core:window:allow-start-dragging",
     "allow-choose-central-folder",
+    "allow-choose-folder",
     "allow-arrangement-menu",
     "allow-kernel-op",
     "allow-kernel-event-log",

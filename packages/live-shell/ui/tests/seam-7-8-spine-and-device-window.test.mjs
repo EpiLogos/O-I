@@ -279,6 +279,9 @@ test('the App hands the one spine the temporal hook holds to the transport, and 
 globalThis.__CRADLE_WALK__ = false
 const {DeviceWindowBody, deviceAdmissionFault} = await import('../src/native/Detached.tsx')
 const {deviceIdentityOf, placeDeviceDetached, dropDeviceDetached, nativeDetachedBodySupported} = await import('../src/native/detachedKinds.ts')
+// The frame's lazy parts (a mode's bodies, its transport and tracks, a device's face) load when first drawn (shell/loadWhenDrawn.ts;
+// O-I #740); a server render cannot wait for a module, so they are fetched first and every body renders itself.
+await (await import('../src/shell/loadWhenDrawn.ts')).loadEveryPart()
 const boundDevice = (identity) => ({id: deviceBindingId(identity), kind: 'device', title: 'Probe', ref: deviceBindingId(identity), device: identity})
 
 test('a device is a native detached kind, and its identity alone carries the device', () => {

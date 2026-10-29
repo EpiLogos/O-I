@@ -580,7 +580,8 @@ function factoryKernel({refuse = null} = {}) {
 }
 
 test('Factory: a constellation dropped on a session that holds no task makes a new task of it through AIKit\'s task creation, which takes the rest from the session, its source read back from AIKit', async () => {
-  const idle = {...track, sessionRef: 'ses-215', agentRef: null, agentName: 'Buzz', tasks: []}
+  // The session's own register rides its track (agent/worldScope.ts): the task is made where its agency read listed it.
+  const idle = {...track, sessionRef: 'ses-215', agentRef: null, agentName: 'Buzz', tasks: [], project: 'O-I'}
   const maker = factory.taskMaker(BRIDGE, [track, idle], ref => owners.constellationNamed(ROWS, ref))
   assert.match(maker.op, /encounter-task-configure/, 'the maker names AIKit\'s task creation beside the settings write')
   const aikit = factoryKernel()

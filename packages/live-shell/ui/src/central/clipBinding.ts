@@ -52,7 +52,7 @@ import {useCentralGroundAnswer} from './devices/useCentralReadings'
 import {currentDayOf} from './devices/dayBinding'
 import {MAIN_TRACK_REF} from '../frame/tracks/SessionGrid'
 import {CENTRAL_DAY_TRACK_ID} from '../timeline/centralTrackAdapter'
-import {subjectWords} from './daySurface'
+import {centralSubjectName} from './subjectName'
 
 const READ_PREVIEW_CHARS = 4000
 const basename = (path: string) => path.split('/').filter(Boolean).pop() ?? path
@@ -473,9 +473,8 @@ type Answer = {phase: 'reading'} | {phase: 'read'; values: Values; location?: Ce
 
 const FORM: Record<CentralSubjectSelection['kind'], string> = {folder: 'folder', note: 'note', day: 'day'}
 
-/** A browser subject by its form and its file's name ("Day · 2026-10-08.md"), as the detail head names it (ported from
- * CentralClipDetail.tsx centralSubjectName). */
-export const centralSubjectName = (subject: CentralSubjectSelection): string => `${FORM[subject.kind][0]!.toUpperCase()}${FORM[subject.kind].slice(1)} · ${subjectWords(subject.path)}`
+// A browser subject's name, as the detail head names it, lives in its own module so the head reads it without this binding (O-I #740).
+export {centralSubjectName}
 
 /** A browser subject's file or folder through the owner's file route (ported from CentralClipDetail.tsx useSubjectReading). */
 function readSubject(transport: KernelTransportStatus, subject: CentralSubjectSelection): Promise<Answer> {

@@ -507,8 +507,9 @@ test('the clip the selection names is the clip Play reads: a Live clip or slot o
 })
 
 test('Live\'s transport binds Play and Stop through the clip player, over THE selection and the set\'s tempo', () => {
-  const source = readFileSync(new URL('../src/shell/modeTransports.tsx', import.meta.url), 'utf8')
-  const live = source.slice(source.indexOf('const useLiveTransport'), source.indexOf('const useTechneTransport'))
+  // Live's bindings are their own module, loaded with Live's transport (shell/transports/useLiveTransport.tsx; O-I #740).
+  const source = readFileSync(new URL('../src/shell/transports/useLiveTransport.tsx', import.meta.url), 'utf8')
+  const live = source.slice(source.indexOf('export const useLiveTransport'))
   assert.match(live, /const clip = useLiveClipPlay\(useOptionalContinuity\(\)\?\.current\.context\?\.selection, tempoBpm\)/)
   assert.match(live, /return \{\n\s+\.\.\.clip,/, 'Play and Stop are the clip player\'s')
 })

@@ -161,7 +161,8 @@ test('a change of Aperture is the clock\'s set-aperture with the clock\'s index;
   assert.equal(binding.writes('aperture.index'), true)
   assert.deepEqual(bank.qlBankCutOperations(m3.qlM3State(), 3), [{operation: 'set-aperture', aperture: 3}])
   await binding.write([{key: 'aperture.index', value: 3}])
-  assert.deepEqual(calls[1], {op: 'm3_reception', project: 'O-I', request: {operation: 'apply', expected_generation: 7, binding: m3.m3Binding(basis),
+  // REPLACED (O-I #740 lane B): project 'O-I'; the clock asks in the world's root register, as the frame's Nara channel does.
+  assert.deepEqual(calls[1], {op: 'm3_reception', project: '', request: {operation: 'apply', expected_generation: 7, binding: m3.m3Binding(basis),
     operations: [{operation: 'set-aperture', aperture: 3}]}}, 'the same operation, on the same encounter, the clock\'s binding sends')
   // Swap: the design asks for the matching cut, the cut the owner names as the reciprocal; the owner is asked for its own op.
   await readClock()

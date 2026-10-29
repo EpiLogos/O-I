@@ -197,6 +197,34 @@ export function nativeSetup(transport: KernelTransportStatus, groundChanged?: ()
       if (answer.outcome?.result !== 'workcell_status_reading') throw new Error('Workcell\'s status did not answer.')
       return answer.outcome.data
     },
+    // The person's identity, as the Studio's Nara chain keeps it (kernel nara_identity.rs: QL checks it, Central keeps it in the ground).
+    async identity(request) {
+      const answer = await call({op: 'nara_identity', request})
+      if (answer.error) throw new Error(answer.error)
+      if (answer.outcome?.result !== 'nara_identity') throw new Error('The identity owner did not answer.')
+      return answer.outcome.data
+    },
+    // What AIKit reads of each agent tool's layers (`aikit harness disclose --json`, kernel owner_routes.rs AikitRead::HarnessDisclose).
+    async harnessDisclosure() {
+      const answer = await call({op: 'aikit_read', request: {kind: 'harness-disclose'}})
+      if (answer.error) throw new Error(answer.error)
+      if (answer.outcome?.result !== 'owner_route_reading') throw new Error('AIKit did not answer aikit harness disclose.')
+      return answer.outcome.data
+    },
+    // The Day's form in a new world (kernel ground_form.rs): the application's own form kept in the ground through Central.
+    async groundForm(request) {
+      const answer = await call({op: 'ground_form', request})
+      if (answer.error) throw new Error(answer.error)
+      if (answer.outcome?.result !== 'ground_form_reading') throw new Error('The host did not answer for the Day\'s form.')
+      return answer.outcome.data
+    },
+    // The person's key (kernel ground_authority.rs): its answers never carry the key nor its digest.
+    async groundAuthority(request) {
+      const answer = await call({op: 'ground_authority', request})
+      if (answer.error) throw new Error(answer.error)
+      if (answer.outcome?.result !== 'ground_authority_reading') throw new Error('The host did not answer for your key.')
+      return answer.outcome.data
+    },
     ...(groundChanged ? {groundChanged} : {}),
   }
 }

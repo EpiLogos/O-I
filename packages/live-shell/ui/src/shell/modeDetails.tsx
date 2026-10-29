@@ -5,25 +5,15 @@
 // nothing is selected.
 import type {ComponentType} from 'react'
 import type {SurfMode} from './modeGrammar'
-import {useDetailReading, type DetailReading} from '../frame/detail/detailReading'
-import {useSelectedClip, type SelectedClip} from '../frame/detail/ClipBox'
-import {ClipWaiting} from '../frame/detail/ClipView'
-import {HostedClip, type ClipPlace} from '../frame/detail/ClipHost'
-import type {ClipBinding} from '../frame/detail/clipBinding'
-import {DeviceChainPanel, LIVE_CLIP_WAITS} from '../components/DeviceChainPanel'
-import {liveClipOf} from '../live/LiveClip'
-import {useLiveClip} from '../live/clipBinding'
+import type {DetailReading} from '../frame/detail/detailReading'
+import type {SelectedClip} from '../frame/detail/ClipBox'
+import type {ClipPlace} from '../frame/detail/ClipHost'
+import {LIVE_CLIP_WAITS, liveClipOf} from '../live/LiveClip'
 import {trackDeviceFaceTitle} from '../live/liveChain'
 import {addNoteDevice} from '../live/noteDevices/noteDeviceHold'
 import {NOTE_DEVICE_MIME, parseNoteDeviceDrag} from '../live/noteDevices/noteDeviceDrag'
 import {displayDeviceName} from './document'
-import {centralSubjectName, useCentralClip} from '../central/clipBinding'
-import {BaseDevicesDetail, TechneInstrumentsDetail} from './ModeDetail'
-import {useFactoryClip} from '../agent/clipBinding'
-import {useTechneClip} from '../techne/clipBinding'
-import {useExpressionsClip} from '../components/expressions/clip/clipBinding'
-import {sceneOfClipRef} from '../components/expressions/clip/sceneClip'
-import {useWorkspace} from './workspaceContext'
+import {centralSubjectName} from '../central/subjectName'
 import {trackKey, type AgentSessionTrack} from '../agent/agentRunModel'
 import {parseFactoryTaskRef} from '../timeline/factoryTrackAdapter'
 import {workcellOfTrack} from '../frame/tracks/returnTracks'
@@ -31,9 +21,20 @@ import {STANDALONE_INSTRUMENTS, TECHNE_INSTRUMENTS} from '../inhabitants/sdk/sem
 import type {PaneInstrumentId} from './paneInstrument'
 import {loadWhenDrawn} from './loadWhenDrawn'
 
-// A mode's own chain loads when that mode's Device side first draws, not with the shell (shell/loadWhenDrawn.ts).
-const NativeWorldDetail = loadWhenDrawn('Expressions\' chain', () => import('../components/NativeWorldDetail').then(module => module.NativeWorldDetail))
-const AgentShellDeviceDetail = loadWhenDrawn('Factory\'s chain', () => import('../agent/AgentShellDeviceDetail').then(module => module.AgentShellDeviceDetail))
+// Each mode's Clip view and chain are its own module (shell/details/<mode>.tsx), loaded when that mode's detail first draws — never
+// with the shell's first frame, so a world that opens in one mode fetches no other mode's bodies (shell/loadWhenDrawn.ts; O-I #740;
+// tests/first-load-budget.test.mjs). Until a body arrives its place shows the shell's waiting line for it, in words.
+type ClipBody = ComponentType<{place: ClipPlace}>
+const LiveClip: ClipBody = loadWhenDrawn('Live\'s clip', () => import('./details/live').then(module => module.LiveClip))
+const LiveChain = loadWhenDrawn('Live\'s chain', () => import('./details/live').then(module => module.LiveChain))
+const CentralClip: ClipBody = loadWhenDrawn('Central\'s clip', () => import('./details/central').then(module => module.CentralClip))
+const CentralChain = loadWhenDrawn('Central\'s chain', () => import('./details/central').then(module => module.CentralChain))
+const FactoryClip: ClipBody = loadWhenDrawn('Factory\'s clip', () => import('./details/factory').then(module => module.FactoryClip))
+const FactoryChain = loadWhenDrawn('Factory\'s chain', () => import('./details/factory').then(module => module.FactoryChain))
+const ExpressionsClip: ClipBody = loadWhenDrawn('Expressions\' clip', () => import('./details/expressions').then(module => module.ExpressionsClip))
+const ExpressionsChain = loadWhenDrawn('Expressions\' chain', () => import('./details/expressions').then(module => module.ExpressionsChain))
+const TechneClip: ClipBody = loadWhenDrawn('Technē\'s clip', () => import('./details/techne').then(module => module.TechneClip))
+const TechneChain = loadWhenDrawn('Technē\'s instruments', () => import('./details/techne').then(module => module.TechneChain))
 
 /** What a head is drawn from: the frame's detail reading, the selected clip as the shown tracks give it, and the focused
  * pane's instrument when it takes the Device side. Nothing more is read for a head. */
@@ -100,37 +101,10 @@ function factorySessionName(track: AgentSessionTrack, taskTitle: string | null |
 const centralDocument = ({detail, selected}: DetailHeadReading): string | null =>
   detail.centralSubject ? centralSubjectName(detail.centralSubject) : selected.clip?.label ?? null
 
-/** A mode's clip, hosted: its binding's designed clip at the place, or the mode's one line while the binding names no clip. */
-function Hosted({binding, place, waits}: {binding: ClipBinding | null; place: ClipPlace; waits: string}) {
-  return binding ? <HostedClip binding={binding} place={place} /> : <ClipWaiting line={waits} />
-}
-
 // Each mode's clip (T-REALIGN R2; manual §16.5): one clip host draws the mode's designed clip on the mode's clip binding, which ports
 // the readings of the bodies it replaces (live/LiveClip.tsx; central/CentralClipChooser.tsx and CentralClipDetail.tsx;
 // agent/devices/TaskClipDevice.tsx and ModeDetail.tsx FactoryTaskLogDetail; the Expressions clip column of NativeWorldDetail.tsx;
-// ModeDetail.tsx TechneClipDetail and techne/subject/WorldSubjectClip.tsx).
-function LiveClip({place}: {place: ClipPlace}) { return <Hosted binding={useLiveClip()} place={place} waits={LIVE_CLIP_WAITS} /> }
-function LiveChain() { const {live} = useDetailReading(); return <DeviceChainPanel ctx={live.ctx} document={live.document} selection={live.selection} mode="device" /> }
-function CentralClip({place}: {place: ClipPlace}) { return <Hosted binding={useCentralClip()} place={place} waits={MODE_DETAILS.base.clipWaits} /> }
-function CentralChain() { const {transport, centralSubject, world} = useDetailReading(); return <BaseDevicesDetail transport={transport} world={world} subject={centralSubject} /> }
-/** The selected task (THE selection names it, `<session track>#task/<n>`, or a session track whose first task it opens): its Clip
- * view after Live — Clip and Launch beside the log, the Agent's effort and autonomy for this task as its envelopes (§19.1). */
-function FactoryClip({place}: {place: ClipPlace}) { return <Hosted binding={useFactoryClip()} place={place} waits={MODE_DETAILS.factory.clipWaits} /> }
-function FactoryChain() { const {factory} = useDetailReading(); return <AgentShellDeviceDetail tracks={factory.tracks} /> }
-// An Expressions clip is a scene (lock §9.1): the open Expression's presented scene.
-function ExpressionsClip({place}: {place: ClipPlace}) { return <Hosted binding={useExpressionsClip()} place={place} waits={MODE_DETAILS.expressions.clipWaits} /> }
-function ExpressionsChain() { const {native} = useDetailReading(); return <NativeWorldDetail mode="device" {...native} /> }
-// Technē's clips are a World subject in hand, a walk's stop, or the World cut's event; a scene clip of the open Expression selected in
-// Technē is an Expressions clip (the selected clip's mode).
-function TechneClip({place}: {place: ClipPlace}) {
-  const techne = useTechneClip()
-  const expressions = useExpressionsClip()
-  const selected = useSelectedClip()
-  const reading = useWorkspace().editorReading
-  const scene = !techne && expressions && reading && sceneOfClipRef({basis: reading.basis, scenes: reading.scenes ?? null}, selected.ref) ? expressions : null
-  return <Hosted binding={techne ?? scene} place={place} waits={MODE_DETAILS.techne.clipWaits} />
-}
-function TechneChain() { const {transport} = useDetailReading(); return <TechneInstrumentsDetail transport={transport} /> }
+// ModeDetail.tsx TechneClipDetail and techne/subject/WorldSubjectClip.tsx). The bodies are shell/details/<mode>.tsx, registered above.
 
 export const MODE_DETAILS: Readonly<Record<SurfMode, ModeDetail>> = {
   // Live: the one instrument's chain and the open set's clips (lock §0.2). The heads are the mockup's liveDetail() :1760 —

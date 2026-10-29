@@ -225,7 +225,7 @@ test('Factory opens with the agent tab focused, and every agent-shell chrome pie
   assert.match(await readFile(new URL('../src/shell/widgets.tsx', import.meta.url), 'utf8'), /AgentDockTileBody id=\{id\}/)
   // Factory's transport is the one bar (F7): its controls are bindings (shell/transports/useFactoryTransport.tsx).
   assert.ok(!app.includes('<AgentShellTransportBridge'), 'no Factory bar of its own')
-  assert.match(await readFile(new URL('../src/shell/modeTransports.tsx', import.meta.url), 'utf8'), /factory: useFactoryTransport/)
+  assert.match(await readFile(new URL('../src/shell/modeTransports.tsx', import.meta.url), 'utf8'), /factory: \(\) => import\('\.\/transports\/useFactoryTransport'\)\.then\(module => module\.useFactoryTransport\)/)
   for (const piece of ['<AgentStatusBarBridge']) {
     assert.ok(app.includes(piece), `${piece} is still rendered by App`)
   }
@@ -233,7 +233,10 @@ test('Factory opens with the agent tab focused, and every agent-shell chrome pie
   const modeBrowsers = await readFile(new URL('../src/shell/modeBrowsers.tsx', import.meta.url), 'utf8')
   assert.match(modeBrowsers, /factory: \(\) => \[AGENTS\]/); assert.match(modeBrowsers, /<AgentShellBrowser rows=/)
   assert.ok(app.includes('<Browser key={frameMode} sources={browserSources}'), 'App mounts the one browser')
-  for (const piece of ['useFactoryClip()', '<AgentShellDeviceDetail']) assert.ok(modeDetails.includes(piece), `${piece} is Factory's registered detail (its clip hosted, R2)`)
+  // Factory's detail bodies are their own module, registered by the table and loaded with Factory (shell/details/factory.tsx; O-I #740).
+  assert.match(modeDetails, /import\('\.\/details\/factory'\)\.then\(module => module\.FactoryClip\)/)
+  const factoryDetail = await readFile(new URL('../src/shell/details/factory.tsx', import.meta.url), 'utf8')
+  for (const piece of ['useFactoryClip()', '<AgentShellDeviceDetail']) assert.ok(factoryDetail.includes(piece), `${piece} is Factory's registered detail (its clip hosted, R2)`)
   const bridge = appLines.find(l => l.includes('{agentShell ? <AgentStatusBarBridge'))
   assert.ok(bridge, 'the status bar switches on the agent shell, not on the retired centre panel')
   assert.match(app, /const agentShell = isFactoryMode\(frameMode\) && !settingsPresented/)

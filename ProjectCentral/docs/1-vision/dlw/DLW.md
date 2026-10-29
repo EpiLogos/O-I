@@ -1446,7 +1446,7 @@ then nothing you have moves or changes.
 
 | Step | What setup finds | What Accept does | Where you come back to it |
 |---|---|---|---|
-| Ground | Where your own ground lies, or that you have none yet. | Adopts the ground where it is, or makes a new one in the folder you choose, under the name you give it. Nothing in an adopted ground moves. | Settings, Setup |
+| Ground | Where your own ground lies, or that you have none yet. | Adopts the ground where it is, or makes a new one in the folder you choose, under the name you give it. Your days follow this computer's time zone and turn at midnight, and the ground keeps a key so that only you act as you in it. Nothing in an adopted ground moves. | Settings, Setup |
 | Harnesses and skills | Each agent tool you use, with its settings, its instructions and its skills. A tool or a setting setup cannot read is named and left alone. | Connects each tool through its adapter, so its skills keep their function in the DLW and in the tool itself. The tool's own settings and plugins stay as they are. | Settings, Harnesses & models and Skills & methods |
 | Credentials | Where each provider's key lies: the place, never the value. | Binds each key by reference. The value stays in your computer's secure store; the DLW never shows it and never keeps it. | Settings, Credentials |
 | Machines | This computer, and the other machines you reach. | Makes this computer a workcell, and prepares another machine as a place to work, keeping its own settings. | Settings, Machines & services; the browser's Machines |
@@ -1456,11 +1456,11 @@ Your world is one folder, which you choose and name in the Ground step. Every
 product keeps your world's state in that folder, and the DLW opens the world
 you chose. My World stands on it in the browser's You place.
 
-Once your ground is made, Setup asks for your date of birth. It is the first
+Once your ground is made, Setup asks for your name and date of birth. They are the first
 layer of Nara's identity, so that you are represented in your world beside
-your projects. It is kept in your ground, and your Being page holds it by
-reference (§24.6). Leave it, and it stays absent until you give it; nothing
-fills it in your place.
+your projects. They are kept in your ground, and your Being page holds them by
+reference (§24.6). Leave them, and they stay absent until you give them;
+nothing fills them in your place.
 
 A project you have brought in is a world in the browser's Work place. To work
 in it today, drag it onto an empty track in Central: as in Live, a drop on a
@@ -1500,6 +1500,7 @@ Setup reads a folder and says what it found. It draws the folder with its own ma
 - Nothing you have moves, changes or is deleted before you accept.
 - A key's value is never shown and never kept.
 - What setup cannot read is named and kept as it was.
+- A step with nothing to bring in is done, and says so.
 - Accept and Remove are held.
 
 **Stories:** AD01–AD04, AD06, AD08, MC02, UI07, SU02–SU05, WI01–WI13, FL01, CW02, LF05, TY01
@@ -12279,7 +12280,7 @@ In a container, an entry also says what kind of entry it is:
 
 You are a Being in your own world. Your Being page holds your identity by reference, never as a copy: your birth, your natal chart, your Jungian functions, your Gene Keys, your Human Design and what they make together. Each layer shows with its source, or as absent with the reason. Nothing fills a missing layer.
 
-Your birth is the first layer, and Setup asks for your date of birth as soon as your ground is made (§10.11). To give the rest of it, or to correct it, open the identity of the Studio's Nara chain (§24.7): Birth date; Time precision, Time unknown, Exact time or Approximate time; Local birth time, with its uncertainty in minutes; Birthplace, with its latitude, longitude and time zone. Calculate and review shows the chart before anything is kept, and Save and use identity keeps it as a new revision of the same identity.
+Your birth is the first layer, and Setup asks for your name and date of birth as soon as your ground is made (§10.11). To give the rest of it, or to correct it, open the identity of the Studio's Nara chain (§24.7): Birth date; Time precision, Time unknown, Exact time or Approximate time; Local birth time, with its uncertainty in minutes; Birthplace, with its latitude, longitude and time zone. Calculate and review shows the chart before anything is kept, and Save and use identity keeps it as a new revision of the same identity.
 
 Launch your page as Sky and your natal sky opens beside today's: the planets where they stood when you were born, and where they stand now. A Being page of another person opens their sky only while they share it with you. You share yours, and open theirs, on the Sky's Share page (§22.1).
 

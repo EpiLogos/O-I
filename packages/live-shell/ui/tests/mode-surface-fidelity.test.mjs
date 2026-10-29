@@ -37,6 +37,9 @@ const {ModeContextDock} = await import('../src/shell/ModeContextDock.tsx')
 const {factoryClipBinding} = await import('../src/agent/clipBinding.ts')
 const {StubWorkspaceProvider} = await import('../src/shell/workspaceContext.tsx')
 const {ModeBrowser} = await import('../src/shell/ModeBrowser.tsx')
+// The frame's lazy parts (a mode's bodies, its transport and tracks, a device's face) load when first drawn (shell/loadWhenDrawn.ts;
+// O-I #740); a server render cannot wait for a module, so they are fetched first and every body renders itself.
+await (await import('../src/shell/loadWhenDrawn.ts')).loadEveryPart()
 
 const html = element => renderToStaticMarkup(element)
 const UNAVAILABLE = {kind: 'unavailable', reason: 'the test carrier is down'}

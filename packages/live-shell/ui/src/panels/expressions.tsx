@@ -7,7 +7,6 @@ import {createNativeTechneNavigator} from '@epilogos/expressions-boundary/techne
 import {createLiveStageAnswers} from '../techne/subject/openSubject'
 import {createNativeEditorClient} from '@epilogos/expressions-boundary/editor-host'
 import type {NativeEditorController} from '@epilogos/expressions-boundary/editor'
-import {registerPanel} from '../shell/panels'
 import {useWorkspace} from '../shell/workspace'
 import {readShellConfig, shellTransport} from '../native/application'
 import {qualifiedExpressionOwners} from '../native/expressionOwners'
@@ -35,6 +34,7 @@ import {registerExpressionsPaneHost} from '../projections/expressionsPane'
 import {liveTorusFromHost, publishLiveTorusState, setLiveInstrumentCommander} from '../live/torusInstrument'
 import {setLivePerformanceChannel} from '../live/LivePresets'
 import {expressionsBindingOf, holdExpressionsBinding, unplaceExpressionsBinding} from '../native/expressionsBinding'
+import {NARA_CHANNEL_REGISTER} from '../agent/worldScope'
 
 const expressionDescriptor = registeredHostedSurfaces.find(row => row.descriptor.kind === 'expressions')?.descriptor
 
@@ -197,7 +197,7 @@ export function ExpressionsPanel() {
           const registrationFailure = contributionRegistrationFailure(expressionDescriptor, current.contributions)
           if (registrationFailure) throw Error(registrationFailure)
           if (JSON.stringify([current.world_scope, current.backing_id, current.profile_scope]) !== JSON.stringify([config.world_scope, config.backing_id, config.profile_scope])) throw Error('This retained Expression belongs to another native ground or installation profile')
-          if (facade) stopFacade = createCradleOwners(access.transport, {project: 'O-I', retainSelectionOnDispose: true, isCurrent}).attach?.(facade.frame, facade.state) ?? null
+          if (facade) stopFacade = createCradleOwners(access.transport, {project: NARA_CHANNEL_REGISTER, retainSelectionOnDispose: true, isCurrent}).attach?.(facade.frame, facade.state) ?? null
           navigator.current = createNativeTechneNavigator({transport: access.transport, host: mounted.host,
             isPresented: () => isCurrent() && modeRef.current === 'techne' && presented(), onError: cause => {if (isCurrent()) fail(cause)},
             onSettled: settlement => {if (live) stageAnswers.settle(settlement)}})
@@ -470,7 +470,7 @@ export function ExpressionsPanel() {
   </div>
 }
 
-registerPanel({id: 'world.expressions', title: 'Expressions', slot: 'center', component: ExpressionsPanel,
-  order: 10, note: 'The native Expressions application and its deep instruments over one retained document'})
+// The panel is registered by panels/expressionsPanel.ts, which loads this module when the centre first shows the Expressions
+// application (O-I #740): the registration stays with the shell's first frame, the application's code does not.
 // The Factory pane body presents this one frame (T-EXPRESSIONS-PANE-LEASE); it never opens a second frame or lease.
 registerExpressionsPaneHost()

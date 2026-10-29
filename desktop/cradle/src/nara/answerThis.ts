@@ -28,9 +28,11 @@ import {answerFromPages, lookupNativeDialogue, type NativeDialogue} from "./nati
 import {readNativeAnswer, retainAnswerInFlow} from "./nativeReturn";
 import {practiceOfFlow} from "./practice";
 
-/** The project the Expressions frame's Nara channel binds its conversation under (expressions-boundary cradle.ts, panels/expressions.tsx
- * `project: 'O-I'`; the shell's M3 clock asks under the same, inhabitants/ql/devices/qlM3Clock.ts QL_M3_PROJECT). */
-export const NARA_CHANNEL_PROJECT = "O-I";
+/** The register the Expressions frame's Nara channel binds its conversation under: the world's own root register, the empty label every
+ * agent op reads as the root (kernel/src/agent_prepared.rs `location`) — Nara answers for the world, never for one named project. The
+ * shell's channel and M3 clock ask under the same (packages/live-shell/ui/src/agent/worldScope.ts NARA_CHANNEL_REGISTER; panels/expressions.tsx,
+ * inhabitants/ql/devices/qlM3Clock.ts QL_M3_PROJECT). */
+export const NARA_CHANNEL_PROJECT = "";
 
 export const ANSWER_NO_IDENTITY = "Nara answers the person a saved identity names, and none is chosen: choose your identity in the Nara instrument, then Answer this again.";
 export const ANSWER_NO_EXPRESSION = "Nara's conversation is bound to an open Expression, and none is open: open an Expression and bind Nara in its Nara instrument, then Answer this again.";

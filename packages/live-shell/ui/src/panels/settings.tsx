@@ -1,9 +1,10 @@
 import { registerPanel } from '../shell/panels'
 import { loadWhenDrawn } from '../shell/loadWhenDrawn'
 import { useSettingsHost } from '../settings/host'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { createDevelopmentSettingsAdapter, developmentDrafts, scenarioNames, type DevelopmentScenario } from '../settings/development'
+import { scenarioNames, type DevelopmentScenario } from '../settings/developmentScenarios'
+import type { SettingsAdapter } from '../settings/adapter'
 
 // Settings' pages load when the panel first draws, not with the shell (shell/loadWhenDrawn.ts).
 const SettingsWorkspace = loadWhenDrawn('Settings', () => import('../settings/SettingsWorkspace').then(module => module.SettingsWorkspace))
@@ -18,7 +19,15 @@ function SettingsPanel() {
   const restoreFrame=useRef<(()=>void)|null>(null)
   const [visible, setVisible] = useState(false)
   const [scenario,setScenario] = useState<DevelopmentScenario|null>(()=>{if(!import.meta.env.DEV)return null;const requested=new URLSearchParams(location.search).get('settings-scenario');return scenarioNames.includes(requested as DevelopmentScenario)?requested as DevelopmentScenario:null})
-  const development = useMemo(()=>import.meta.env.DEV&&scenario?createDevelopmentSettingsAdapter(scenario):null,[scenario])
+  // A development scenario's specimens (settings/development.ts) load only when one is asked for, never with the shell (O-I #740).
+  const [development,setDevelopment] = useState<{scenario:DevelopmentScenario;adapter:SettingsAdapter;drafts:ReturnType<typeof import('../settings/development').developmentDrafts>}|null>(null)
+  useEffect(()=>{
+    if(!import.meta.env.DEV||!scenario)return
+    let live=true
+    void import('../settings/development').then(module=>{if(live)setDevelopment({scenario,adapter:module.createDevelopmentSettingsAdapter(scenario),drafts:module.developmentDrafts(scenario)})})
+    return()=>{live=false}
+  },[scenario])
+  const specimen = development&&development.scenario===scenario?development:null
   useEffect(() => {
     const inhabitant = anchor.current?.closest<HTMLElement>('.inhabitant')
     if (!inhabitant) return
@@ -47,7 +56,7 @@ function SettingsPanel() {
         else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus() }
       }
       if (event.key === 'Escape' && !event.defaultPrevented) { event.preventDefault(); returnToWork() }
-    }}>{scenario&&import.meta.env.DEV&&<div className="settings-development-tools"><label>Development scenario <select aria-label="Development scenario" value={scenario} onChange={e=>setScenario(e.target.value as DevelopmentScenario)}>{scenarioNames.map(name=><option key={name}>{name}</option>)}</select></label><span>Explicit preview · no native writes</span></div>}<SettingsWorkspace key={scenario??'native'} {...host} onReturn={returnToWork} adapter={development??host.adapter} initialDrafts={import.meta.env.DEV&&scenario?developmentDrafts(scenario):undefined} active={visible}/></div>
+    }}>{scenario&&import.meta.env.DEV&&<div className="settings-development-tools"><label>Development scenario <select aria-label="Development scenario" value={scenario} onChange={e=>setScenario(e.target.value as DevelopmentScenario)}>{scenarioNames.map(name=><option key={name}>{name}</option>)}</select></label><span>Explicit preview · no native writes</span></div>}<SettingsWorkspace key={scenario?`${scenario}${specimen?'':':loading'}`:'native'} {...host} onReturn={returnToWork} adapter={specimen?.adapter??(import.meta.env.DEV&&scenario?undefined:host.adapter)} initialDrafts={import.meta.env.DEV&&specimen?specimen.drafts:undefined} active={visible}/></div>
   </div>, document.body)}</>
 }
 registerPanel({ id: 'world.settings', title: 'Settings', icon: 'settings', slot: 'center', component: SettingsPanel, order: 90, note: 'Native configuration, scope and working defaults' })

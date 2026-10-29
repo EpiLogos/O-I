@@ -53,6 +53,9 @@ const devices = await import('../src/frame/devices/deviceDoor.ts')
 // templates.ts). Their tests: tests/pool-frames-lenses.test.mjs. The book's workspace acts below still stand: templates are built on them.
 const encounterBridge = await import('../src/projections/encounterBridge.ts')
 const trailWidget = await import('../src/shell/TrailWidget.tsx')
+// The frame's lazy parts (a mode's bodies, its transport and tracks, a device's face) load when first drawn (shell/loadWhenDrawn.ts;
+// O-I #740); a server render cannot wait for a module, so they are fetched first and every body renders itself.
+await (await import('../src/shell/loadWhenDrawn.ts')).loadEveryPart()
 const source = path => readFile(new URL(`../src/${path}`, import.meta.url), 'utf8')
 const h = React.createElement
 const value = (list, key) => list.find(row => row.key === key)

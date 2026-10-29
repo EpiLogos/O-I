@@ -178,7 +178,8 @@ test('5 · the Agent\'s Context page on AIKit\'s kept turn: nothing kept says so
   assert.deepEqual(JSON.parse(kept['ctx.turn']), pages.contextTurnOf(TURN).turn)
   const refusedTurn = bind.agentBinding(bind.AGENT_DESIGN, input({status: 'refused', value: null, error: KEPT.turn_installed_refusal.trim()}), {}, async () => ({kind: 'refused', reason: 'x'}), () => false)
   assert.match(refusedTurn.standing['ctx.turn'].disabled, /unrecognized subcommand 'turn'/, 'the installed AIKit\'s own refusal')
-  assert.match(read('agent/devices/FactoryDeviceChain.tsx'), /useAikitRead\(transport, contextOn \? \{kind: 'continuity-turn', project: RACK_PROJECT, session: sessionRef\} : null\)/)
+  // REPLACED (O-I #740 lane B): RACK_PROJECT ('O-I'); the chain's register — the session's own, the root's null (agent/worldScope.ts).
+  assert.match(read('agent/devices/FactoryDeviceChain.tsx'), /useAikitRead\(transport, contextOn \? \{kind: 'continuity-turn', project: register, session: sessionRef\} : null\)/)
 })
 
 // ------------------------------------------------------------------------------------------------------------------ 4. the Flow's Thought

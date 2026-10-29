@@ -30,13 +30,15 @@ import type {DesignBinding, Standing, Value, ValueChange} from '../../../frame/d
 import type {DeviceInstance, ParamValue} from '../../../frame/devices/deviceRuntime'
 import {techneDeviceId, techneFaceDeclaration} from './faces'
 import {qlRackState, rackPage, type QlRackState} from './qlRack'
+import {NARA_CHANNEL_REGISTER} from '../../../agent/worldScope'
 
 export const QL_M3_FAMILY = 'quaternal-logic'
 export const QL_M3_FACE = 'm3-clock'
 /** The device's id on the door and its design's key: designKey('quaternal-logic', 'm3-clock'). */
 export const QL_M3_DEVICE_ID = techneDeviceId(QL_M3_FAMILY, QL_M3_FACE)
-/** The project the frame's Nara channel asks under (expressions-boundary cradle.ts, panels/expressions.tsx `project: 'O-I'`). */
-export const QL_M3_PROJECT = 'O-I'
+/** The register the frame's Nara channel asks under (agent/worldScope.ts NARA_CHANNEL_REGISTER: the world's root register; expressions-boundary
+ * cradle.ts, panels/expressions.tsx). */
+export const QL_M3_PROJECT = NARA_CHANNEL_REGISTER
 
 /** The encounter the M3 owner is bound to: the chosen identity and the open native Expression. */
 export interface M3Basis {

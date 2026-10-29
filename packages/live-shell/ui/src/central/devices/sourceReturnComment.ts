@@ -41,10 +41,13 @@ export async function commentSourceReturn(transport: KernelTransportStatus, proj
  * a press of `changes` set to a return's ref comments on that return with the words written in the thread, read at the press; every other
  * key is the binding's own. Where the returns have not answered, or nothing is written yet, Changes stands disabled saying so. After Central
  * keeps the comment, `hands.after` clears what was written. Pure. */
-export function withReturnComments(binding: DesignBinding, input: {readonly returns: {readonly entries: readonly SourceReturnRow[]} | null; readonly comment: string | null},
+/** `absent`: why no returns stand, in words, when none was asked or none answered (agent/worldScope.ts WorldReturns): said instead of
+ * "have not answered". */
+export function withReturnComments(binding: DesignBinding, input: {readonly returns: {readonly entries: readonly SourceReturnRow[]} | null; readonly comment: string | null
+  readonly absent?: string | null},
   hands: {readonly send: (row: SourceReturnRow, comment: string) => Promise<unknown>; readonly after?: () => void}): DesignBinding {
   const words = (input.comment ?? '').trim()
-  const why = !input.returns ? 'Changes: Central\'s source returns have not answered, so no proposal stands to comment on.'
+  const why = !input.returns ? (input.absent ? `Changes: ${input.absent}` : 'Changes: Central\'s source returns have not answered, so no proposal stands to comment on.')
     : !words ? 'Changes: say what to change in the thread first; the comment is what you write there.' : null
   const standing: Record<string, Standing> = {...(binding.standing ?? {})}
   if (why) standing.changes = {disabled: why}

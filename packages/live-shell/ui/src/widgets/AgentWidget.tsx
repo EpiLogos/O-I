@@ -21,7 +21,8 @@ import {COMPANIONS} from '../shell/modeDockTiles'
 import type {WidgetBodyProps} from '../frame/widgets/widgets'
 import {useGlance} from '../frame/widgets/useGlance'
 import {useWidgetReading} from './widgetReading'
-import {CONVERSATION_PROJECT, conversationAbsence, conversationGlance, conversationOf} from './agentConversation'
+import {conversationAbsence, conversationGlance, conversationOf} from './agentConversation'
+import {ROOT_REGISTER} from '../agent/worldScope'
 
 export {AgentWidgetName} from './AgentWidgetName'
 
@@ -35,17 +36,20 @@ export function AgentWidget({subject, glance}: WidgetBodyProps) {
   // the surface's onAccompanying hands it (the Factory thread and the Workbench conversation pane hold theirs in the book).
   const [opened, setOpened] = useState<AgentAccompanying | null>(null)
   const track = found.track
-  const accompanying = track ? {ref: track.sessionRef, project: CONVERSATION_PROJECT, space: track.spaceRef} : opened ?? undefined
+  // The conversation's register (agent/worldScope.ts): its session's own; with no session yet, your world's root register, where the
+  // agent of the world's first Send provisions it.
+  const project = track?.project ?? opened?.project ?? ROOT_REGISTER
+  const accompanying = track ? {ref: track.sessionRef, project, space: track.spaceRef} : opened ?? undefined
   // The companion's body, from the window's shared roster answer (owners/readers.ts) — read only while no conversation stands.
-  const roster = useRosterAgents(workspace.transport, CONVERSATION_PROJECT, !accompanying)
+  const roster = useRosterAgents(workspace.transport, project || undefined, !accompanying)
   const body = roster.agents.find(agent => agent.name.trim().toLocaleLowerCase() === companion.toLocaleLowerCase())
   const session = useEncounterSession(accompanying)
   useGlance(glance, conversationGlance(session?.state.reading, companion))
   const ref = accompanying?.ref, space = accompanying?.space
   const scope = useMemo(() => ({
-    workspaceId: workspace.workspaceId, accessEpoch: workspace.accessEpoch, project: CONVERSATION_PROJECT,
-    ...(ref && space ? {accompanying: {ref, project: CONVERSATION_PROJECT, space}} : {}),
-  }), [workspace.workspaceId, workspace.accessEpoch, ref, space])
+    workspaceId: workspace.workspaceId, accessEpoch: workspace.accessEpoch, project,
+    ...(ref && space ? {accompanying: {ref, project, space}} : {}),
+  }), [workspace.workspaceId, workspace.accessEpoch, ref, space, project])
   const by = found.by ?? (opened ? 'provisioned' : 'none')
   return <div className="widget-agent" data-conversation={accompanying ? 'bound' : 'unbound'} data-by={by} data-agent-session={ref}>
     {!accompanying && <p className="widget-agent-absence" role="status">{conversationAbsence(companion, {transport: workspace.transport, error: agency.error, loading: agency.loading})}</p>}

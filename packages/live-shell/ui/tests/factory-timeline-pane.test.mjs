@@ -40,6 +40,9 @@ const host = await import('../src/projections/timelinePaneHost.ts')
 const pane = await import('../src/projections/timelinePane.tsx')
 const {projectionModule} = await import('../../../../desktop/cradle/src/surface/projectionModules.ts')
 const {factoryFocusedPane, deviceInstrumentFor} = await import('../src/shell/paneInstrument.ts')
+// The frame's lazy parts (a mode's bodies, its transport and tracks, a device's face) load when first drawn (shell/loadWhenDrawn.ts;
+// O-I #740); a server render cannot wait for a module, so they are fetched first and every body renders itself.
+await (await import('../src/shell/loadWhenDrawn.ts')).loadEveryPart()
 
 const app = await readFile(new URL('../src/App.tsx', import.meta.url), 'utf8')
 const html = element => renderToStaticMarkup(element)

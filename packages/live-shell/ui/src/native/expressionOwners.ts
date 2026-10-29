@@ -5,6 +5,7 @@ import {readShellConfig, type ShellConfig} from './application'
 import {createNativeTimeWindowOwner,type NativeTimeWindowBasis} from '@epilogos/expressions-boundary/time-window'
 import {disclosureSession} from '../../../../../desktop/cradle/src/techne/session'
 import {object,type TechneReading} from '@epilogos/expressions-boundary'
+import {NARA_CHANNEL_REGISTER} from '../agent/worldScope'
 
 const identity = (config: ShellConfig) => JSON.stringify([config.world_scope, config.backing_id, config.profile_scope ?? null])
 
@@ -12,7 +13,7 @@ const identity = (config: ShellConfig) => JSON.stringify([config.world_scope, co
  * independently; reconnect changes access without changing document identity. */
 export function qualifiedExpressionOwners(initial: ShellConfig, current: () => WorkspaceReading, live: () => boolean): ExpressionsOwners {
   const boundIdentity = identity(initial)
-  const base = createCradleOwners(current().transport, {project: 'O-I', personal: false})
+  const base = createCradleOwners(current().transport, {project: NARA_CHANNEL_REGISTER, personal: false})
   // This canonical host session survives fresh per-request native facades.
   // The retained iframe receives readings only, never another session store.
   const time = createNativeTimeWindowOwner({store:disclosureSession})
@@ -24,7 +25,7 @@ export function qualifiedExpressionOwners(initial: ShellConfig, current: () => W
     const isCurrent = () => live() && context.current() && current().accessReady && current().nativeAccessCurrent(epoch)
     if (!isCurrent()) throw Error('This request belongs to a retired native access')
     if (identity(config) !== boundIdentity) throw Error('This open work belongs to another native ground or installation profile')
-    const owners = createCradleOwners(origin.transport, {project: 'O-I', personal: false, isCurrent,
+    const owners = createCradleOwners(origin.transport, {project: NARA_CHANNEL_REGISTER, personal: false, isCurrent,
       onReceipts: rows => {if (isCurrent()) current().publishReceipts(rows)},
     })
     return {owners, context: {...context, current: isCurrent}, isCurrent}

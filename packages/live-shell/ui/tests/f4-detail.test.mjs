@@ -34,6 +34,9 @@ const {publishTimelineReading} = await import('../src/projections/timelinePaneHo
 const {selectedClipOf} = await import('../src/frame/detail/ClipBox.tsx')
 const {publishShownTracks} = await import('../src/frame/tracks/tracksDoor.ts')
 const {MODE_TRACKS} = await import('../src/frame/tracks/modeTracks.ts')
+// The frame's lazy parts (a mode's bodies, its transport and tracks, a device's face) load when first drawn (shell/loadWhenDrawn.ts;
+// O-I #740); a server render cannot wait for a module, so they are fetched first and every body renders itself.
+await (await import('../src/shell/loadWhenDrawn.ts')).loadEveryPart()
 const {readFile} = await import('node:fs/promises')
 
 const set = {path: '/sets/demo.als', tempo_bpm: 120, scene_count: 1, arrangement_clips: 1, tracks: [{kind: 'midi', name: 'Pad', devices: []}]}

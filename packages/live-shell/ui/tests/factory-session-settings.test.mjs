@@ -79,7 +79,9 @@ function scriptedOwner(start = defaults()) {
   return owner
 }
 const transport = {kind: 'bridge', url: 'http://owner.test'}
-const project = factory.SETTINGS_PROJECT
+// The register the session was read under (its world-wide agency row's `project`, agent/worldScope.ts). REPLACED (O-I #740 lane B):
+// factory.SETTINGS_PROJECT, the shell's one literal project.
+const project = 'O-I'
 async function readSettings() {
   const entry = settingsReadingEntry(transport, project, 'ses-214')
   await entry.retry('epoch-1')

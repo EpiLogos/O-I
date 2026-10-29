@@ -42,6 +42,9 @@ const {AgentShellCentre} = await import('../src/agent/AgentShellRoot.tsx')
 const {AgentShellProvider} = await import('../src/agent/AgentShellContext.tsx')
 const {StubWorkspaceProvider} = await import('../src/shell/workspaceContext.tsx')
 const {buildTracks, trackKey} = await import('../src/agent/agentRunModel.ts')
+// The frame's lazy parts (a mode's bodies, its transport and tracks, a device's face) load when first drawn (shell/loadWhenDrawn.ts;
+// O-I #740); a server render cannot wait for a module, so they are fetched first and every body renders itself.
+await (await import('../src/shell/loadWhenDrawn.ts')).loadEveryPart()
 
 const src = new URL('../src/', import.meta.url)
 const read = path => readFile(new URL(path, src), 'utf8')

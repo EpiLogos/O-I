@@ -48,6 +48,9 @@ const {DetailHost} = await import('../src/frame/detail/DetailHost.tsx')
 const {DetailContext} = await import('../src/frame/detail/detailReading.ts')
 const {publishTimelineReading} = await import('../src/projections/timelinePaneHost.ts')
 const {publishShownTracks} = await import('../src/frame/tracks/tracksDoor.ts')
+// The frame's lazy parts (a mode's bodies, its transport and tracks, a device's face) load when first drawn (shell/loadWhenDrawn.ts;
+// O-I #740); a server render cannot wait for a module, so they are fetched first and every body renders itself.
+await (await import('../src/shell/loadWhenDrawn.ts')).loadEveryPart()
 
 const kept = (front, hidden = {}) => ({front, hidden: {clip: false, device: false, ...hidden}})
 const both = sides.CLIP_MIN_H + sides.CHAIN_MIN_H

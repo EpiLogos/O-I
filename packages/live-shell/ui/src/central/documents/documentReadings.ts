@@ -6,7 +6,7 @@
 //  - a Flow: the owner's file route over Control/user/flows (flow/instances.ts `listFlowInstances`).
 // A read that fails is a state with the owner's words in it; nothing here fills a document in.
 import {central} from '../../../../../../desktop/cradle/src/central/client'
-import {listFlowInstances, type FlowInstanceRow} from '../../../../../../desktop/cradle/src/flow/instances'
+import {listFlowInstances, type FlowInstanceRow} from '../../../../../../desktop/cradle/src/flow/flowsDir'
 import type {KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
 import {dayOpenRequest, interpretDayOpen, type DayDocumentStanding} from '../centralVertical'
 

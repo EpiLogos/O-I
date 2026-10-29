@@ -36,6 +36,9 @@ const paneInstrument = await import('../src/shell/paneInstrument.ts')
 const {instrumentOfPane, deviceInstrumentFor, HOSTED_INSTRUMENT} = paneInstrument
 const {TECHNE_INSTRUMENTS} = await import('../src/inhabitants/sdk/semantics.ts')
 const {TechneInstrumentsDetail, InstrumentDeviceDetail, BaseDevicesDetail} = await import('../src/shell/ModeDetail.tsx')
+// The frame's lazy parts (a mode's bodies, its transport and tracks, a device's face) load when first drawn (shell/loadWhenDrawn.ts;
+// O-I #740); a server render cannot wait for a module, so they are fetched first and every body renders itself.
+await (await import('../src/shell/loadWhenDrawn.ts')).loadEveryPart()
 
 const html = element => renderToStaticMarkup(element)
 const transport = {kind: 'unavailable', reason: 'the test carrier is down'}

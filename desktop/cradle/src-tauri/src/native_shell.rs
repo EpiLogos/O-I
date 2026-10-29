@@ -189,6 +189,17 @@ mod candidate {
                 None => std::env::remove_var(name),
             }
         }
+        // A world's owner processes start in its folder (O-I #740). The kernel starts them from
+        // dozens of places, each inheriting this process's directory, and none is told where the
+        // world is before Central's ground is made; so the directory is entered once, here.
+        if let Some(folder) = world_folder::working_directory(&world) {
+            std::env::set_current_dir(folder).map_err(|e| {
+                format!(
+                    "The world's folder {} could not be entered: {e}",
+                    folder.display()
+                )
+            })?;
+        }
         NATIVE_HOME
             .set(native_home)
             .map_err(|_| "The world was already entered")?;
@@ -754,10 +765,12 @@ mod candidate {
                     .iter()
                     .map(|k| ((*k).to_owned(), serde_json::json!(std::env::var(k).ok())))
                     .collect();
+                // The directory every owner process this one starts inherits (O-I #740).
+                let cwd = std::env::current_dir().ok();
                 println!(
                     "WORLD-ENTRY {}",
                     serde_json::json!({"folder": world.folder, "name": world.name, "native": world.native,
-                        "store": super::world_store().is_some(), "env": env})
+                        "store": super::world_store().is_some(), "env": env, "cwd": cwd})
                 );
                 return;
             }
@@ -771,6 +784,10 @@ mod candidate {
             ));
             let native = scratch.join("home");
             let bare = scratch.join("worlds/Bare");
+            // Where the launch stands: a folder of neither world (a terminal's, a script's).
+            let launched = scratch.join("launched-from");
+            std::fs::create_dir_all(&launched).unwrap();
+            let launched = launched.canonicalize().unwrap();
             std::fs::create_dir_all(native.join("Central/Work")).unwrap();
             std::fs::create_dir_all(native.join(".config/oi")).unwrap();
             std::fs::create_dir_all(&bare).unwrap();
@@ -789,6 +806,7 @@ mod candidate {
                         "--nocapture",
                         "--test-threads=1",
                     ])
+                    .current_dir(&launched)
                     .env_clear()
                     .env("PATH", std::env::var_os("PATH").unwrap_or_default())
                     .env(CHILD, "1")
@@ -823,6 +841,12 @@ mod candidate {
             assert_eq!(entered["store"], true);
             assert_eq!(entered["env"]["HOME"], path(&bare));
             assert_eq!(entered["env"]["OI_NATIVE_HOME"], path(&native));
+            // Its owner processes start in the world's folder, never where the launch stood (O-I #740).
+            assert_eq!(
+                entered["cwd"],
+                path(&bare),
+                "a world's processes start in its folder"
+            );
             for cleared in [
                 "AIKIT_HOME",
                 "OI_HOME",
@@ -843,6 +867,11 @@ mod candidate {
             assert_eq!(yours["store"], false);
             assert_eq!(yours["env"]["HOME"], path(&native));
             assert_eq!(yours["env"]["AIKIT_HOME"], path(&native.join(".aikit")));
+            assert_eq!(
+                yours["cwd"],
+                path(&launched),
+                "Yours keeps the launch's directory"
+            );
             std::fs::create_dir_all(native.join(".config/oi-shell-candidate")).unwrap();
             std::fs::write(
                 crate::world_folder::register_path(&native),
@@ -854,6 +883,7 @@ mod candidate {
             let registered = run(None);
             assert_eq!(registered["name"], "Bare world");
             assert_eq!(registered["env"]["HOME"], path(&bare));
+            assert_eq!(registered["cwd"], path(&bare));
 
             // A world in or over Yours never opens.
             let refused = std::process::Command::new(std::env::current_exe().unwrap())

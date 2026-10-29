@@ -3876,6 +3876,51 @@ fn workcell_reads_a_worlds_leases_and_checkpoints_and_takes_one() {
     let _ = fs::remove_dir_all(&dir);
 }
 
+/// Setup's Harnesses and skills step shows what AIKit reads of each agent
+/// tool besides its skills (`aikit harness disclose --json`, O-I #740): its
+/// layers, the guidance (instructions) and settings among them; a read,
+/// carried as AIKit answered it.
+#[test]
+fn aikit_discloses_each_tool_s_layers_for_setup() {
+    let _held = hold();
+    let dir = scratch("aikit-harness-disclose");
+    let aikit = Fake::new(&dir, "aikit");
+    let _bin = Bound::set("OI_AIKIT_BIN", &aikit.bin);
+    // AIKit's own answer on a scratch Arriving world (REAL, its folder written /w/Arriving).
+    let real = fixture("aikit-harness-disclose-2026-10-29.json");
+    aikit.answer(&real["disclose"]);
+    let (outcome, form) = dispatched(
+        no_central(&dir),
+        op(json!({"op": "aikit_read", "request": {"kind": "harness-disclose"}})),
+    );
+    let outcome = outcome.unwrap();
+    assert_eq!(form, "owner-read");
+    assert!(outcome.receipts.is_empty(), "a read records nothing");
+    assert_eq!(
+        reading(&outcome).1,
+        real["disclose"]["data"],
+        "AIKit's reading, verbatim"
+    );
+    assert_eq!(aikit.asked(), ["harness disclose --json"]);
+    let claude = &real["disclose"]["data"]["profiles"][0]["disclosure"];
+    assert_eq!(claude["slug"], "claude-code");
+    let layers: Vec<_> = claude["layers"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|l| l["layer"].as_str().unwrap())
+        .collect();
+    assert!(layers.contains(&"guidance") && layers.contains(&"settings"));
+    // A document without the reading's list is not that reading.
+    aikit.answer(&envelope(json!({"schema": "aikit.harness-disclosure/v1"})));
+    let (outcome, _) = dispatched(
+        no_central(&dir),
+        op(json!({"op": "aikit_read", "request": {"kind": "harness-disclose"}})),
+    );
+    assert!(outcome.unwrap_err().contains("profiles"));
+    let _ = fs::remove_dir_all(&dir);
+}
+
 /// Setup's Harnesses and skills step (manual §10.11, O-I #738): AIKit's
 /// discovery of the skill roots on this computer and who owns each (`aikit
 /// init`: foreign, adopted with its procedure, or generated with its

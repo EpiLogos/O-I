@@ -199,6 +199,12 @@
       "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
     },
     {
+      "command": "ground_dialog::choose_folder",
+      "classification": "dialog",
+      "rationale": "Human folder picker titled by its purpose (where a new ground goes; a folder of work to bring in); selection alone does not authorize source mutation.",
+      "spec_ref": "manual §10.11 Ground and Projects (O-I #740)"
+    },
+    {
       "command": "menus::arrangement_menu",
       "classification": "menu",
       "rationale": "Native menu presentation.",

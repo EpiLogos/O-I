@@ -34,6 +34,7 @@ import {ownerRouteWrite, refusalWords, workcellReadOp, workcellWriteOp} from '..
 import {ownerReadings} from '../../owners/ownerReading'
 import {readWorkcellOf, workcellReadingKey} from '../../owners/readers'
 import {heldOf, holdsVersion, subscribeHolds} from './pageBindings'
+import {useWorldProjects} from '../../agent/worldScope'
 import {actionAnswerOf, centralActionOp, useReceiptsMove} from './useCentralReadings'
 
 const REFUSAL = (error: unknown): string => (typeof error === 'string' ? error : String((error as {message?: string})?.message ?? error))
@@ -104,11 +105,13 @@ export async function readNowLeg(transport: KernelTransportStatus): Promise<NowL
 export const HYGIENE_DEVICE_ID = centralDeviceId('ground-hygiene')
 export const IMPACT_DEVICE_ID = centralDeviceId('impact')
 
-/** The project whose checkouts the census reads: the shell's, as the census's git reading is (CentralHygieneDevice.tsx git_repository_read). */
-export const CENSUS_PROJECT = 'O-I'
 export const GIT_CENSUS_ACTION = 'central.git.census'
-/** The census's boundary operation for each list it gives (the design cites a finding's ring by its op: worktrees, branches). */
-const CENSUS_OP = (list: 'worktrees' | 'branches') => `${GIT_CENSUS_ACTION} ${list} (invoke_action, project ${CENSUS_PROJECT})`
+/** The census's boundary operation for each list it gives, over the projects it read (the design cites a finding's ring by its op:
+ * worktrees, branches). The census is world-wide: every project Central discloses in the world (agent/worldScope.ts), never one named. */
+const CENSUS_OP = (list: 'worktrees' | 'branches', projects: readonly string[]) =>
+  `${GIT_CENSUS_ACTION} ${list} (invoke_action, ${projects.length === 1 ? `project ${projects[0]}` : `projects ${projects.join(', ')}`})`
+/** What the census says in a world with no project: Central's git census reads a project's repository, and the root register has none. */
+export const NO_PROJECT_CENSUS = 'Your world has no project yet, so there is no checkout to census: Central\'s git census (central.git.census) reads a project\'s repository, and your world\'s root register keeps none.'
 
 /** Central's git census of one project (central.git-census/v1) as the census parsers read a checkout list and a branch list
  * (centralHygieneModel.ts parseWorktreeList, parseBranchRefs): each worktree in the census's own order (the repository's main worktree
@@ -136,19 +139,40 @@ export function censusLines(census: unknown): {worktrees: string; branches: stri
 /** Ground hygiene's census, read when the device opens and on Read now; its binding. */
 /** The census's machine reads through the kernel: the seat instrument (seat_status_read; `again`: Read now asks it afresh, else the shared
  * answer stands), and Central's git census for the worktrees and branches — one read for both. */
-export function hygieneMachineRead(transport: KernelTransportStatus, again: boolean): HygieneMachineRead {
-  let census: Promise<{lines: {worktrees: string; branches: string}} | {refused: string}> | null = null
-  const readCensus = () => census ??= kernelRead(transport, centralActionOp(GIT_CENSUS_ACTION, {project: CENSUS_PROJECT}), {fresh: again}).then(call => {
+export function hygieneMachineRead(transport: KernelTransportStatus, again: boolean, projects: readonly string[]): HygieneMachineRead {
+  type Census = {lines: {worktrees: string; branches: string}; answered: string[]; refused: {project: string; refusal: string}[]} | {refused: string}
+  let census: Promise<Census> | null = null
+  const readOne = (project: string) => kernelRead(transport, centralActionOp(GIT_CENSUS_ACTION, {project}), {fresh: again}).then((call): {lines: {worktrees: string; branches: string}} | {refused: string} => {
     const answer = actionAnswerOf({status: call.error ? 'refused' : 'answered', value: call.outcome?.result === 'action_dispatched' ? call.outcome : null, error: call.error ?? null}, GIT_CENSUS_ACTION)
     if (answer.status === 'refused') return {refused: answer.error}
     const lines = answer.status === 'answered' ? censusLines(answer.value) : null
     return lines ? {lines} : {refused: 'Central answered the git census in a form it is not (central.git-census/v1 expected).'}
   }, (cause: unknown) => ({refused: REFUSAL(cause)}))
+  // Each project's census, one after another; the lists are the answered ones joined, each project that refused kept by name with its
+  // words, and a census every project refused is the refusal.
+  const readCensus = () => census ??= (async (): Promise<Census> => {
+    if (!projects.length) return {refused: NO_PROJECT_CENSUS}
+    const worktrees: string[] = [], branches: string[] = [], answered: string[] = [], refused: {project: string; refusal: string}[] = []
+    for (const project of projects) {
+      const read = await readOne(project)
+      if ('refused' in read) { refused.push({project, refusal: read.refused}); continue }
+      answered.push(project)
+      if (read.lines.worktrees) worktrees.push(read.lines.worktrees)
+      if (read.lines.branches) branches.push(read.lines.branches)
+    }
+    if (!answered.length) return {refused: projects.length === 1 ? refused[0].refusal : refused.map(item => `${item.project}: ${item.refusal}`).join('; ')}
+    return {lines: {worktrees: worktrees.join('\n'), branches: branches.join('\n')}, answered, refused}
+  })()
   return async kind => {
     if (kind !== 'seat-status') {
-      const read = await readCensus(), boundaryOp = CENSUS_OP(kind === 'worktree-list' ? 'worktrees' : 'branches')
-      return 'refused' in read ? {boundaryOp, stdout: '', refused: read.refused}
-        : {boundaryOp, stdout: kind === 'worktree-list' ? read.lines.worktrees : read.lines.branches}
+      const list = kind === 'worktree-list' ? 'worktrees' : 'branches'
+      const read = await readCensus()
+      if ('lines' in read) {
+        // The reading names the projects it is of; each project that refused stands beside it, named, in Central's words.
+        return {boundaryOp: CENSUS_OP(list, read.answered), stdout: list === 'worktrees' ? read.lines.worktrees : read.lines.branches,
+          ...(read.refused.length ? {partial: read.refused.map(item => ({boundaryOp: CENSUS_OP(list, [item.project]), refusal: item.refusal}))} : {})}
+      }
+      return {boundaryOp: CENSUS_OP(list, projects), stdout: '', refused: read.refused}
     }
     const entry = seatStatusEntry(transport)
     await (again ? entry.retry(SEAT_STATUS_EPOCH) : entry.ensure(SEAT_STATUS_EPOCH))
@@ -162,8 +186,8 @@ export function hygieneMachineRead(transport: KernelTransportStatus, again: bool
  * reproject, authored projectcentral.ground, worlds material, sandboxes sandboxes). */
 export const PAGE_OPS = {
   root: 'central.doctor',
-  scaffold: `central.world.reproject.plan (project ${CENSUS_PROJECT})`,
-  authored: `projectcentral.ground.inspect (project ${CENSUS_PROJECT})`,
+  scaffold: 'central.world.reproject.plan',
+  authored: 'projectcentral.ground.inspect',
   worlds: 'material: `workcell worlds` (op workcell_read worlds), each receipt read with op material_read',
   sandboxes: 'workcell sandboxes reconcile --server <the sandbox server>',
 } as const
@@ -191,17 +215,27 @@ async function pageRead(transport: KernelTransportStatus, action: string, input:
   } catch (cause) { return {refused: REFUSAL(cause)} }
 }
 
+/** What the Ground page says of a world with no project: its scaffold and authored ground are a project's. */
+export const NO_PROJECT_PAGES = 'Your world has no project yet: the scaffold (central.world.reproject.plan) and the authored ground (projectcentral.ground.inspect) are read for each project, and there is none.'
+
 /** The Ground and Material pages (DLW §18.5): Central's root (central.doctor), the world's scaffold (central.world.reproject.plan) and its
  * authored ground (projectcentral.ground.inspect), each through invoke_action as a reading; Workcell's prepared worlds from its status
  * (the shared workcell answer: none while it keeps no world receipt; with some, no operation lists them for material_read, refused by
  * name); the sandboxes of the server named (`sandboxServer`, op workcell_read sandboxes), and with none named, refused saying so. The
  * model classifies the findings (centralHygieneModel.ts groundFindings, materialFindings). */
-export async function readHygienePages(transport: KernelTransportStatus, epoch: string, again: boolean, sandboxServer: string | null = null): Promise<HygienePages> {
+/** A page's operation for one project of the world. */
+export const pageOp = (op: string, project: string) => `${op} (project ${project})`
+
+export async function readHygienePages(transport: KernelTransportStatus, epoch: string, again: boolean, sandboxServer: string | null = null,
+  projects: readonly string[] = []): Promise<HygienePages> {
   const at = new Date().toISOString()
-  const [doctor, plan, inspection] = await Promise.all([
+  // Central's root once; each project's scaffold and authored ground (the world's projects, agent/worldScope.ts — never one named).
+  const [doctor, ...perProject] = await Promise.all([
     pageRead(transport, 'central.doctor', {}, again),
-    pageRead(transport, 'central.world.reproject.plan', {project: CENSUS_PROJECT}, again),
-    pageRead(transport, 'projectcentral.ground.inspect', {project: CENSUS_PROJECT}, again),
+    ...projects.flatMap(project => [
+      pageRead(transport, 'central.world.reproject.plan', {project}, again),
+      pageRead(transport, 'projectcentral.ground.inspect', {project}, again),
+    ]),
   ])
   const sources: BoundaryOpSource[] = []
   const reading = <T,>(op: string, read: {data: unknown} | {refused: string}, parse: (data: unknown) => T | null): T | undefined => {
@@ -211,8 +245,13 @@ export async function readHygienePages(transport: KernelTransportStatus, epoch: 
     return parsed ?? undefined
   }
   const root = reading(PAGE_OPS.root, doctor, rootOfDoctor)
-  const scaffold = reading(PAGE_OPS.scaffold, plan, scaffoldOfPlan)
-  const authored = reading(PAGE_OPS.authored, inspection, authoredOfInspection)
+  if (!projects.length) sources.push({boundaryOp: PAGE_OPS.scaffold, channel: 'kernel-op', at, refusal: NO_PROJECT_PAGES})
+  const grounds = projects.map((project, index) => ({project,
+    scaffold: reading(pageOp(PAGE_OPS.scaffold, project), perProject[2 * index], scaffoldOfPlan),
+    authored: reading(pageOp(PAGE_OPS.authored, project), perProject[2 * index + 1], authoredOfInspection)}))
+  // The page's own world fields name one project's ground: the world's when it has one; with several, each one's findings stand instead.
+  const only = grounds.length === 1 ? grounds[0] : undefined
+  const scaffold = only?.scaffold, authored = only?.authored
   // Workcell's prepared worlds of this machine's cell: `workcell worlds` lists their receipts (lane K0: the route stands since lane W12), and
   // each is read with material_read for its bindings' presence. The cell and its state root are Workcell's status (the shared answer).
   const worlds = await readHygieneWorlds(transport, epoch, again, at, sources)
@@ -226,7 +265,9 @@ export async function readHygienePages(transport: KernelTransportStatus, epoch: 
     else sources.push({boundaryOp: sandboxOp, channel: 'kernel-op', at, refusal: read.refused})
   }
   const findings = [
-    ...groundFindings({root, scaffold, authored, ops: {root: PAGE_OPS.root, scaffold: PAGE_OPS.scaffold, authored: PAGE_OPS.authored}}),
+    ...groundFindings({root, ops: {root: PAGE_OPS.root, scaffold: PAGE_OPS.scaffold, authored: PAGE_OPS.authored}}),
+    ...grounds.flatMap(ground => groundFindings({scaffold: ground.scaffold, authored: ground.authored,
+      ops: {root: PAGE_OPS.root, scaffold: pageOp(PAGE_OPS.scaffold, ground.project), authored: pageOp(PAGE_OPS.authored, ground.project)}})),
     ...materialFindings({worlds, sandboxes, ops: {worlds: PAGE_OPS.worlds, sandboxes: sandboxOp}}),
   ]
   return {...(root ? {root} : {}), ...(scaffold ? {scaffold} : {}), ...(authored ? {authored} : {}), ...(worlds ? {worlds} : {}), ...(sandboxes ? {sandboxes} : {}),
@@ -290,20 +331,27 @@ export function useHygieneDevice(transport: KernelTransportStatus, open: boolean
   const [read, setRead] = useState<HygieneRead | null>(null)
   useSyncExternalStore(subscribeHolds, holdsVersion, holdsVersion)
   const version = holdsVersion()
+  // The world's projects (agent/worldScope.ts): the census is world-wide. Read only while the device is open.
+  const world = useWorldProjects(transport, open)
+  const projectsKey = world.status === 'answered' && world.value ? world.value.join('\n') : null
+  const projects = useMemo(() => (projectsKey ? projectsKey.split('\n') : []), [projectsKey])
   const census = useCallback(async (again: boolean) => {
-    const {census, findings} = await readHygieneCensus({transport, epoch, machineRead: hygieneMachineRead(transport, again)})
-    const pages = await readHygienePages(transport, epoch, again, sandboxServer)
+    const {census, findings} = await readHygieneCensus({transport, epoch, machineRead: hygieneMachineRead(transport, again, projects), projects})
+    const pages = await readHygienePages(transport, epoch, again, sandboxServer, projects)
     setRead({census, findings, pages, at: Date.now()})
-  }, [transport, epoch, sandboxServer])
+  }, [transport, epoch, sandboxServer, projects])
   const run = useCallback(() => census(true), [census])
-  useEffect(() => { if (open) void census(false) }, [open, census])
+  useEffect(() => { if (open && world.status !== 'reading') void census(false) }, [open, census, world.status])
   // The tenders' writers (lane K0): Central's acts through invoke_action (the person's press, PERSON_ACTS), Workcell's reconcile on a world's
   // receipt, and a named server's Release orphans.
-  const ports = useMemo((): HygienePorts => (transport.kind === 'unavailable' ? {project: CENSUS_PROJECT} : {
+  // The tenders that act on one world's ground (Recognise) name it only when the world has one project; with several, none is assumed.
+  const only = projects.length === 1 ? {project: projects[0]} : {}
+  const ports = useMemo((): HygienePorts => (transport.kind === 'unavailable' ? {...only} : {
     central: (action, input) => centralWrite(transport, action, input),
     workcell: async request => (await ownerRouteWrite(transport, workcellWriteOp(request), `\`workcell ${request.kind}\``)).data,
-    project: CENSUS_PROJECT, sandboxes: sandboxServer ? sandboxesPort(transport, sandboxServer) : null,
-  }), [transport, sandboxServer])
+    ...only, sandboxes: sandboxServer ? sandboxesPort(transport, sandboxServer) : null,
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- `only` is the projects' one
+  }), [transport, sandboxServer, projects])
   // eslint-disable-next-line react-hooks/exhaustive-deps -- the holds' version re-binds the view's own keys
   return useMemo(() => hygieneBinding(HYGIENE_DEVICE_ID, read, Date.now(), run, ports), [read, run, ports, version])
 }

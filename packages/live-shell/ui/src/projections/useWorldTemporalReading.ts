@@ -34,7 +34,7 @@ import {projectRunTracks, runClipEventIndex, type AdmittedRun} from '../timeline
 import {projectConversationTracks, conversationClipEventIndex} from '../timeline/conversationTrackAdapter';
 import {projectLaneWorldTracks, projectWorldTracks} from '../timeline/registerWorldTrackAdapters';
 import {useTemporalReading} from '../timeline/temporalPoll';
-import {agencyEntry, useAgencyAnswer} from '../owners/agency';
+import {readWorldAgency, useWorldAgencyEntries} from '../agent/worldScope';
 import {useSpineEpoch} from '../owners/spine';
 import type {WorldTrackSet} from '../timeline/worldTrackAdapter';
 import {useAtlasAionReading} from './atlas/AtlasProjectionPanel';
@@ -131,8 +131,9 @@ export function useWorldTemporalReading(transport: KernelTransportStatus): World
   // The frame's one temporal read (timeline/temporalPoll.ts). Each completed execution lands here once, by its revision;
   // an execution the owner refused, or a transport that cannot serve, is named, never silently empty.
   const {reading} = useTemporalReading(transport);
-  // The run lanes' source: the window's one agency answer, held while this cut stands.
-  useAgencyAnswer(transport, 'O-I');
+  // The run lanes' source: the window's agency answers of the world — its root register's and each project's (agent/worldScope.ts),
+  // held while this cut stands.
+  useWorldAgencyEntries(transport);
   const epoch = useSpineEpoch();
   const processed = useRef(-1);
   const mounted = useRef(true);
@@ -158,15 +159,15 @@ export function useWorldTemporalReading(transport: KernelTransportStatus): World
       // temporal read. A refused agency read is named, never silently empty.
       let admittedRuns: AdmittedRun[] | null = null;
       let admittedRunsError: string | null = null;
-      // The window's one agency answer (owners/agency.ts): the standing answer when one stands for this epoch, else the one
-      // shared read — never a read of this cut's own.
-      const agency = agencyEntry(transport, 'O-I');
-      await agency.ensure(epoch);
-      const answer = agency.snapshot();
-      if (answer.status !== 'answered' || !answer.value) {
-        admittedRunsError = (transport.kind === 'unavailable' ? transport.reason : answer.error) ?? 'The agency reading is unavailable; run lanes come only from the temporal read.';
+      // The window's agency answers of the world (owners/agency.ts, agent/worldScope.ts): the standing answers when they stand for this
+      // epoch, else the one shared read of each — never a read of this cut's own. A register that refused is named; the others' sessions
+      // stand.
+      const agency = await readWorldAgency(transport, epoch);
+      if (agency.error && !agency.rows.length) {
+        admittedRunsError = agency.error ?? 'The agency reading is unavailable; run lanes come only from the temporal read.';
       } else {
-        admittedRuns = answer.value.rows.map((row) => ({sessionRef: row.sessionRef}));
+        admittedRuns = agency.rows.map((row) => ({sessionRef: row.sessionRef}));
+        if (agency.error) admittedRunsError = agency.error;
       }
       if (!mounted.current) return;
       // The execution's own instant (never the window bound): the firing

@@ -1,10 +1,13 @@
 /** Explicit non-secret development specimens copied from native schemas, never auto-bound. */
 import type { ChangeRequest, ChangeSetDocument, ConfigResolution, ContributionMount, PlanDocument, ScopeAddress, SettingSpec, SettingsAdapter } from './adapter'
 import { displayValue, settingKey } from './model'
-import { sourceSettings } from './catalogue'
+import capture from './native-inventory.capture.json'
+import { scenarioNames, type DevelopmentScenario } from './developmentScenarios'
 
-export const scenarioNames = ['ready','loading','inherited','overridden','dirty','invalid','immediate','restart','pending','acknowledged','refused','failed','conflict','absent-product','unavailable-connection'] as const
-export type DevelopmentScenario = typeof scenarioNames[number]
+// The specimens read the census themselves: this module loads only in development, when a scenario is asked for (panels/settings.tsx).
+const sourceSettings = capture.settings as SettingSpec[]
+export { scenarioNames, type DevelopmentScenario }
+
 const machine: ScopeAddress = { scope_kind: 'machine', scope_ref: null }
 export const specimenProject: ScopeAddress = { scope_kind: 'project', scope_ref: 'settings-specimen' }
 // Reuse the current native descriptor capture verbatim; specimens supply values only.

@@ -11,7 +11,7 @@ import {useWorkcellAnswer} from '../../owners/readers'
 import {usePopulationAnswer} from '../../agent/devices/usePopulationAnswer'
 import {useGatewayRemotesAnswer} from '../../agent/devices/workcellReads'
 import {useChainHolds} from '../../agent/devices/designBindings'
-import {RACK_PROJECT} from '../../agent/devices/useRackReading'
+import {registerOf, ROOT_REGISTER} from '../../agent/worldScope'
 import {LINK_ID, LINK_REFUSE, linkBinding, workcellDevices} from '../../agent/devices/workcellBindings'
 import type {KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
 import {publishDevice} from '../devices/deviceDoor'
@@ -38,7 +38,8 @@ export function LinkSlot({words}: {words?: SlotWords}) {
   const workspace = useContext(Workspace)
   const transport = workspace?.transport ?? NO_CARRIER
   const workcell = useWorkcellAnswer(transport).reading
-  const population = usePopulationAnswer(transport, RACK_PROJECT)
+  // The Link's population is the world's whole: the root register, named by no project world (agent/worldScope.ts).
+  const population = usePopulationAnswer(transport, registerOf(ROOT_REGISTER))
   const remotes = useGatewayRemotesAnswer(transport).reading
   const holds = useChainHolds()
   const binding = useMemo(() => linkBinding(workcell, holds, population, remotes), [workcell, holds, population, remotes])

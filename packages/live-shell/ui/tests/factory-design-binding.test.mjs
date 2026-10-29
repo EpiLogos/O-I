@@ -586,7 +586,8 @@ test('the chain publishes each designed device with its binding, draws the membe
   assert.match(view, /publishDevice\(memberDevice\.id, \{device: memberDevice, binding: memberDesignBinding\}\)/)
   assert.match(view, /slot\.id === 'skillset' && memberDevice && memberDesignBinding/, 'one chain inside the rack')
   assert.match(view, /data-design-waits=/)
-  assert.match(view, /useRackReading\(transport, profile, holds\.compose\.scope, sessionRef, rackOn, planeEpoch\)/, 'the rack reads its owners only while its design draws them')
+  // REPLACED (O-I #740 lane B): the rack read RACK_PROJECT ('O-I'); it reads in the chain's register (the session's own, agent/worldScope.ts).
+  assert.match(view, /useRackReading\(transport, profile, holds\.compose\.scope, sessionRef, rackOn, planeEpoch, rackProject\)/, 'the rack reads its owners only while its design draws them')
   assert.doesNotMatch(view, /defaults|fixtures/, 'no design default or fixture is read by the chain')
   const bindings = read('devices/designBindings.ts')
   assert.doesNotMatch(bindings, /\.defaults\[|\.fixtures|import[^\n]*\b(DOCUMENTATION|skills|scope|memberDevice|design)\b[^\n]*catalogue\/panels\/(?!practice)/, 'nor by the bindings: they read the owners')

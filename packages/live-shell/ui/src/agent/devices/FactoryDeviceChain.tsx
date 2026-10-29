@@ -51,7 +51,7 @@ import {useDesign} from '../../frame/devices/designs'
 import {openInstrument} from '../../frame/instrumentDoor'
 import {agentAddress} from '../../inhabitants/agentParamAddresses'
 import {useRosterAnswer} from '../../owners/readers'
-import {SETTINGS_PROJECT} from '../clipBinding'
+import {registerOf, returnProjectOf, ROOT_REGISTER, useWorldReturns} from '../worldScope'
 import {useAgentSessionsOptional} from '../AgentSessionsProvider'
 import {useAgentShell, type AgentDeviceId} from '../AgentShellContext'
 import {threadTrackOf} from '../threadTrack'
@@ -74,7 +74,7 @@ import {
 import {useOwnerAccepted} from './ownerAccepted'
 import {useSelectedSkillChain} from './skillRackSelection'
 import {useAgentChainReading} from './useAgentChainReading'
-import {RACK_PROJECT, composePorts, useRackReading} from './useRackReading'
+import {composePorts, useRackReading} from './useRackReading'
 import {observedState, useEncounterSessions} from './EncounterObservers'
 import {FRAMES_ID, mainDevices} from './mainTrackBindings'
 import {shownSession, threadBinding, threadJson} from './threadBinding'
@@ -111,7 +111,7 @@ import {captureSkillBinding, type CaptureSkillPorts} from './captureSkillBinding
 import {RUN_MAP_DESIGN, RUN_MAP_ID, runMapBinding, runMapDevice} from './runMapBinding'
 import {PROMPT_PADS_DESIGN, PROMPT_PADS_ID, padsLocation, promptPadsBinding, promptPadsDevice, type PromptPadsPorts} from './promptPadsBinding'
 import {useDecisionHelperReadings} from './decisionHelperReads'
-import {useActuationRead, useAikitRead, useConnectionShows, useSeatStatusAnswer, useSourceReturnsAnswer, useWorkcellRead} from './workcellReads'
+import {useActuationRead, useAikitRead, useConnectionShows, useSeatStatusAnswer, useWorkcellRead} from './workcellReads'
 import {workcellTrackId} from '../../frame/tracks/returnTracks'
 import '../agentShell.css'
 import './factoryDevices.css'
@@ -142,11 +142,11 @@ type ChainDropTarget = {kind: 'zone'; label: string} | {kind: 'card'; id: string
 const FACTORY_IDENTITY_ID = `${chainDeviceId('agent')}/identity`
 /** Central's personal anchor takes no input: one held object, so the read is asked once. */
 const NO_INPUT: Readonly<Record<string, unknown>> = Object.freeze({})
-/** AIKit's capture inbox (lane W3's aikit_read {inbox}), read while the Skillset rack stands on the armed track's chain, for its Capture page
- * (§19.11). */
-const CAPTURE_INBOX: KernelOp = Object.freeze({op: 'aikit_read' as const, request: {kind: 'inbox' as const, project: RACK_PROJECT}})
-/** Where Factory keeps the shell's project (factory_owner locate), for the Prompt pads' bank. */
-const PADS_LOCATE: KernelOp = Object.freeze({op: 'factory_owner' as const, request: {kind: 'locate', project: RACK_PROJECT}})
+/** AIKit's capture inbox (lane W3's aikit_read {inbox}) in a register (agent/worldScope.ts; null the root), read while the Skillset rack
+ * stands on the armed track's chain, for its Capture page (§19.11). */
+const captureInboxOp = (register: string | null): KernelOp => ({op: 'aikit_read' as const, request: {kind: 'inbox' as const, project: register}})
+/** Where Factory keeps a register's project (factory_owner locate; no project names the root), for the Prompt pads' bank. */
+const padsLocateOp = (register: string | null): KernelOp => ({op: 'factory_owner' as const, request: register === null ? {kind: 'locate'} : {kind: 'locate', project: register}})
 /** Actuation's authority list (lane W3 round 3's actuation_read {authority-list}), read while a session's chain stands (Custody's Grants). */
 const AUTHORITY_LIST: KernelOp = Object.freeze({op: 'actuation_read' as const, request: {kind: 'authority-list' as const}})
 
@@ -163,6 +163,11 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   const accepted = useOwnerAccepted(binding)
   const sessions = useAgentSessionsOptional()
   const track = sessionRef != null ? sessions?.tracks.find(item => item.sessionRef === sessionRef) ?? null : null
+  // The register this chain reads in: the session's own (the one its world-wide agency read listed it in, agent/worldScope.ts); a chain
+  // with no session (a workcell's, the Main track's) reads your world's root register. `register` is null for the root, as the ops that
+  // take `project?: string | null` name it.
+  const rackProject = track?.project ?? ROOT_REGISTER
+  const register = registerOf(rackProject)
   const holds = useChainHolds()
   // The catalogue's designs, and whether each can be hosted on its owner yet (designBindings.ts designWaits).
   const gatewayDesign = useDesign(GATEWAY_DESIGN, true), agentDesign = useDesign(AGENT_DESIGN, true), rackDesign = useDesign(RACK_DESIGN, true)
@@ -222,17 +227,17 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   const shown = shownSession({selected: selectedThread, holds})
   const observed = useMemo(() => [...new Set([shown, sessionRef])].flatMap(ref => {
     const held = ref ? tracks?.find(item => item.sessionRef === ref && !item.group) : undefined
-    return held ? [{ref: held.sessionRef, space: held.spaceRef}] : []
+    return held ? [{ref: held.sessionRef, space: held.spaceRef, project: held.project ?? ROOT_REGISTER}] : []
   }), [shown, sessionRef, tracks])
   const {handles, observers} = useEncounterSessions(observed)
   const models = useModelCatalogue(transport, !waits.agent)
   const agentThread = useMemo(() => (sessionRef ? threadJson(observedState(handles[sessionRef]), track?.agentName ?? null) : undefined), [handles, sessionRef, track?.agentName])
   // The Agent's Context page (lane W8): AIKit's continuity pressure and armed commands, read while a session's chain stands.
   const contextOn = !waits.agent && sessionRef != null
-  const continuityPressure = useAikitRead(transport, contextOn ? {kind: 'continuity-pressure', project: RACK_PROJECT} : null)
-  const continuityCommands = useAikitRead(transport, contextOn ? {kind: 'continuity-commands', project: RACK_PROJECT} : null)
+  const continuityPressure = useAikitRead(transport, contextOn ? {kind: 'continuity-pressure', project: register} : null)
+  const continuityCommands = useAikitRead(transport, contextOn ? {kind: 'continuity-commands', project: register} : null)
   // The last turn's bounded blocks (W11): AIKit's kept turn for the session (`aikit work continuity turn --session S`).
-  const continuityTurn = useAikitRead(transport, contextOn ? {kind: 'continuity-turn', project: RACK_PROJECT, session: sessionRef} : null)
+  const continuityTurn = useAikitRead(transport, contextOn ? {kind: 'continuity-turn', project: register, session: sessionRef} : null)
   const context = useMemo(() => (contextOn ? {pressure: continuityPressure, commands: continuityCommands, turn: continuityTurn} : undefined),
     [contextOn, continuityPressure, continuityCommands, continuityTurn])
   // The model the session last reported using (lane K0): Actuation's usage records of the session.
@@ -266,7 +271,8 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   // Workcell's status, the window's one answer (owners/readers.ts): the Remote carrier's machines.
   const workcellAnswer = useWorkcellAnswer(transport).reading
   // The Prompt pads (§19.22, lane W8): the shell's project located by Factory, its bank read, each setting written through pads-write.
-  const padsLocated = useOwnerOp(transport, PADS_LOCATE, 'factory_development_reading').reading
+  const padsLocate = useMemo(() => padsLocateOp(register), [register])
+  const padsLocated = useOwnerOp(transport, padsLocate, 'factory_development_reading').reading
   const padsWhere = padsLocated.status === 'answered' ? padsLocation(padsLocated.value?.data) : null
   const padsBankOp = useMemo((): KernelOp | null => (padsWhere && 'projectRef' in padsWhere
     ? {op: 'factory_owner', request: {kind: 'pads-read', state_path: padsWhere.statePath, project_ref: padsWhere.projectRef}} : null),
@@ -290,7 +296,7 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   const profile = useMemo(() => seatedProfile(roster.status === 'answered' ? roster.value : null, track?.agentRef ?? null), [roster, track?.agentRef])
   const [planeEpoch, setPlaneEpoch] = useState(0)
   const rackOn = !waits.skillset
-  const rackReading = useRackReading(transport, profile, holds.compose.scope, sessionRef, rackOn, planeEpoch)
+  const rackReading = useRackReading(transport, profile, holds.compose.scope, sessionRef, rackOn, planeEpoch, rackProject)
   const ports = useMemo(() => composePorts(transport, () => setPlaneEpoch(epoch => epoch + 1)), [transport])
   // The rack's upkeep pages (lanes W8, W9): AIKit's unused, source, collate, bypass and procedure lists, the plan for the root chosen, and
   // its writes.
@@ -311,8 +317,8 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
     ...(adoptRoot ? {adoption: upkeepAdoption} : {}), ...(chosenProcedure ? {procedure: upkeepProcedure} : {}),
     ...(transport.kind !== 'unavailable' ? {write: request => ownerRouteWrite(transport, aikitWriteOp(request as AikitWriteRequest), `\`aikit ${request.kind.replace('-', ' ')}\``)} : {})}),
   [upkeepUnused, upkeepSources, upkeepCollate, upkeepBypasses, upkeepProcedures, upkeepAdoption, adoptRoot, upkeepProcedure, chosenProcedure, transport])
-  const rackDesignBinding = useMemo(() => (rackOn ? rackBinding(chainDeviceId('skillset'), {profile, ...rackReading, holds}, ports, {project: RACK_PROJECT, sessionRef}, upkeep) : null),
-    [rackOn, profile, rackReading, holds, ports, sessionRef, upkeep])
+  const rackDesignBinding = useMemo(() => (rackOn ? rackBinding(chainDeviceId('skillset'), {profile, ...rackReading, holds}, ports, {project: rackProject, sessionRef}, upkeep) : null),
+    [rackOn, profile, rackReading, holds, ports, sessionRef, upkeep, rackProject])
   // The member: the rack's chosen chain, one device inside the rack (§19.7).
   const memberOn = rackOn && !waits.member
   const chosen = useSelectedSkillChain(rackDesignBinding ? memberChains(rackDesignBinding.values) : null)
@@ -322,8 +328,8 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   const memberWhy = useAikitRead(transport, memberOn && chosen ? {kind: 'explain', resource: chosen} : null)
   const memberHistory = useAikitRead(transport, memberOn && chosen ? {kind: 'history', resource: chosen} : null)
   const memberPorts = useMemo((): MemberPorts => ({why: memberWhy, history: memberHistory,
-    ...(transport.kind !== 'unavailable' ? {trust: capability => ownerRouteWrite(transport, aikitWriteOp({kind: 'trust-record', project: RACK_PROJECT, capability}), ROUTE_WORDS.trust)} : {})}),
-  [transport, memberWhy, memberHistory])
+    ...(transport.kind !== 'unavailable' ? {trust: capability => ownerRouteWrite(transport, aikitWriteOp({kind: 'trust-record', project: register, capability}), ROUTE_WORDS.trust)} : {})}),
+  [transport, memberWhy, memberHistory, register])
   const memberDesignBinding = useMemo(() => (memberDevice && rackDesignBinding ? memberBinding(MEMBER_DEVICE_ID, rackDesignBinding.values, chosen, holds, memberPorts) : null),
     [memberDevice, rackDesignBinding, chosen, holds, memberPorts])
   // Scope: the world row's write path for the write mode; a raised reach held until Confirm.
@@ -339,9 +345,10 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   // track's chain — the selected session's, never a group's. It reads the proposal that waits in AIKit's inbox and writes Accept through
   // aikit_write promote.
   const captureOn = sessionChain && !groupTrack
-  const captureInbox = useOwnerOp(transport, captureOn ? CAPTURE_INBOX : null, 'owner_route_reading').reading
+  const captureInboxRead = useMemo(() => captureInboxOp(register), [register])
+  const captureInbox = useOwnerOp(transport, captureOn ? captureInboxRead : null, 'owner_route_reading').reading
   const capturePorts = useMemo((): CaptureSkillPorts => (transport.kind !== 'unavailable'
-    ? {promote: (candidate, id) => ownerRouteWrite(transport, aikitWriteOp({kind: 'promote', project: RACK_PROJECT, candidate, ...(id ? {id} : {})}), '`aikit promote`')} : {}), [transport])
+    ? {promote: (candidate, id) => ownerRouteWrite(transport, aikitWriteOp({kind: 'promote', project: register, candidate, ...(id ? {id} : {})}), '`aikit promote`')} : {}), [transport, register])
   const captureDesignBinding = useMemo(() => captureSkillBinding({inbox: {status: captureInbox.status, value: captureInbox.value?.data ?? null, error: captureInbox.error},
     holds}, capturePorts), [captureInbox, holds, capturePorts])
   // The seat instrument (lane K1's seat_status_read: slow, read once while a session's or a workcell's chain stands, and on demand): the
@@ -349,7 +356,7 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   const seats = useSeatStatusAnswer(transport, sessionRef != null || cellName != null).reading
   // Git / landing: on a workcell's chain, that workcell's seat of the project (its branch, the files with no commit); elsewhere — on the
   // door, on no chain — the chain's git reading. Every act stands disabled.
-  const gitReading = useMemo(() => (cellName ? workcellGitReading(seats, cellName, RACK_PROJECT) : reading), [cellName, seats, reading])
+  const gitReading = useMemo(() => (cellName ? workcellGitReading(seats, cellName, rackProject) : reading), [cellName, seats, reading, rackProject])
   const gitDesignBinding = useMemo(() => (waits.git ? null : gitBinding(gitReading, holds)), [waits.git, gitReading, holds])
   // The one Agent (R4): its Custody page on the session's custody (its write mode Scope's), its Identity page on the roster card of the
   // session's own agent (the hold keyed apart from Central's Agent), its Thread page the Thread's binding — each composed under its prefix.
@@ -369,8 +376,8 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   const custodyState = padsWhere && 'projectRef' in padsWhere ? padsWhere.statePath : null
   const custodyListing = useOwnerOp(transport, custodyState && sessionRef != null ? {op: 'factory_owner', request: {kind: 'custody-list', state_path: custodyState}} : null,
     'factory_development_reading').reading
-  const custodyPopulation = usePopulationAnswer(transport, RACK_PROJECT)
-  const sessionTask = useTaskAnswer(transport, sessionRef).reading
+  const custodyPopulation = usePopulationAnswer(transport, register)
+  const sessionTask = useTaskAnswer(transport, sessionRef, rackProject).reading
   const custodyRead = useMemo(() => {
     const positions = custodyPopulation.status === 'answered' && custodyPopulation.value && typeof custodyPopulation.value === 'object'
       && Array.isArray((custodyPopulation.value as {positions?: unknown}).positions) ? (custodyPopulation.value as {positions: {position_ref?: unknown; occupancy?: {agent_ref?: unknown}}[]}).positions : []
@@ -396,8 +403,8 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   const seatPorts = useMemo((): SeatPorts => (transport.kind !== 'unavailable'
     ? {seat: request => ownerRouteWrite(transport, seatWriteOp(request), request.kind === 'join' ? ROUTE_WORDS.join : ROUTE_WORDS.release)} : {}), [transport])
   const seatDesignBinding = useMemo(() => seatBinding({status: seats.status === 'answered' ? seats.value : null, ...(seatsUnread ? {unread: seatsUnread} : {}),
-    project: RACK_PROJECT, branch: reading.gitRepo.branch ?? null, workcell: cellName, ...(machineRef ? {machineRef} : {}), actor: deskActor, holds}, seatPorts),
-  [seats, seatsUnread, reading.gitRepo.branch, cellName, machineRef, deskActor, holds, seatPorts])
+    project: rackProject, branch: reading.gitRepo.branch ?? null, workcell: cellName, ...(machineRef ? {machineRef} : {}), actor: deskActor, holds}, seatPorts),
+  [seats, seatsUnread, reading.gitRepo.branch, cellName, machineRef, deskActor, holds, seatPorts, rackProject])
   // The pages the chain's devices carry (oneAgentBinding.ts carryPages): the Skillset rack's Capture page; Git / landing's Seat page and, on
   // a workcell's chain, its Checkouts page (Ground hygiene's census).
   const rackCarrying = useMemo(() => (rackDesignBinding ? carryPages(rackDesignBinding, captureOn ? [{page: CAPTURE_PAGE, binding: captureDesignBinding}] : []) : null),
@@ -423,16 +430,18 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   const agentsetCarrying = useMemo(() => carryPages(agentsetDesignBinding, helperStands ? [{page: HELPER_PAGE, binding: helperDesignBinding}] : []),
     [agentsetDesignBinding, helperStands, helperDesignBinding])
 
-  // The Main track's reader: Approvals on the shown session's consent requests and the project's source returns (lane K1's
+  // The Main track's reader: Approvals on the shown session's consent requests and the world's source returns (lane K1's
   // source_returns_read); the default answer is the Gateway's, never Approvals' (ticket 788). The Ledger is a monitor on the rail
-  // (AgentRailDevices.tsx).
+  // (AgentRailDevices.tsx). Approvals is "one place to answer what waits for you" (§19.14) on Factory's Main track, which is no session's:
+  // it reads every project's returned work, as Central's does in your world (agent/worldScope.ts useWorldReturns), each row in its own
+  // project, and says why when none stands (a world with no project).
   const receipts = useMemo(() => receiptDevices(), [])
   const designsReceipts = {approvals: useDesign(APPROVALS_DESIGN, true)}
   const shownTrack = shown ? tracks?.find(item => item.sessionRef === shown && !item.group) ?? null : null
-  const returns = useSourceReturnsAnswer(transport, RACK_PROJECT).reading
-  const returned = returns.status === 'answered' ? returns.value : null
+  const approvalsReturns = useWorldReturns(transport, null)
+  const returned = approvalsReturns.returns
   // Factory's unit decisions (W9): the questions the shown session's Runs wait on (unitDecisions.ts), read from the Runs its takes name.
-  const shownTakesAll = useAttemptTakes(transport, shownTrack ? [shownTrack.sessionRef] : [], SETTINGS_PROJECT)
+  const shownTakesAll = useAttemptTakes(transport, shownTrack ? [shownTrack.sessionRef] : [], shownTrack?.project ?? ROOT_REGISTER)
   const unitRuns = useMemo(() => {
     const takes = shownTakesAll && shownTrack ? shownTakesAll.of(shownTrack.sessionRef) ?? [] : []
     return takes.filter((take, at) => takes.findIndex(other => other.runRef === take.runRef && other.statePath === take.statePath) === at)
@@ -455,14 +464,14 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
     const actions = shownHandle && 'actions' in shownHandle ? shownHandle.actions : undefined
     // Approvals is handed no Gateway: the default answer is the Gateway's own, set on the Gateway (§19.14, §19.2; ticket 788).
     const binding = approvalsBinding({session: shownTrack, encounter: state?.reading ?? null, holds,
-      returns: returned, tracks, nowUnixMs: sessions?.nowUnixMs ?? Date.now(), units, person},
+      returns: returned, returnsAbsent: approvalsReturns.absent, returnsRefused: approvalsReturns.refusals, tracks, nowUnixMs: sessions?.nowUnixMs ?? Date.now(), units, person},
       {...(actions ? {permission: (id, decision) => actions.permission(id, decision)} : {}),
-        approve: row => acceptSourceReturn(transport, RACK_PROJECT, row, person),
+        approve: row => acceptSourceReturn(transport, returnProjectOf(row, null), row, person),
         // Deny on a proposal (§19.14): Central's projectcentral.source.return_reject through invoke_action (sourceReturnAccept.ts).
-        reject: row => rejectSourceReturn(transport, RACK_PROJECT, row),
+        reject: row => rejectSourceReturn(transport, returnProjectOf(row, null), row),
         ...(transport.kind !== 'unavailable' ? {answerUnit: (project, review) => receiving(transport, project, review).catch(cause => { throw new Error(refusalWords(cause instanceof Error ? cause.message : String(cause))) })} : {})})
-    const commented = withReturnComments(binding, {returns: returned, comment: agentDraft}, {
-      send: (row, words) => commentSourceReturn(transport, RACK_PROJECT, row, words, person),
+    const commented = withReturnComments(binding, {returns: returned, comment: agentDraft, absent: approvalsReturns.absent}, {
+      send: (row, words) => commentSourceReturn(transport, returnProjectOf(row, null), row, words, person),
       after: () => { void agentWrite?.([{key: 'draft', value: ''}]) },
     })
     // Notifications' readings wait here under Requests (§23.9; the Notifications device was retired into Approvals in the 22 Oct manual
@@ -470,7 +479,7 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
     // withOwnerRequests), as Central's Approvals carries them; Open marks an item opened here, after opening an owner's request.
     return withOwnerRequests(commented, {...ownerRequests, nowUnixMs: sessions?.nowUnixMs || Date.now()}, openNotificationTarget,
       {opened: openedOf(viewHolds(holds, APPROVALS_ID).opened), hold: ids => holdView(APPROVALS_ID, 'opened', openedHold(ids))})
-  }, [shownHandle, shownTrack, holds, returned, tracks, sessions?.nowUnixMs, transport, person, units, agentDraft, agentWrite, ownerRequests])
+  }, [shownHandle, shownTrack, holds, returned, approvalsReturns.absent, approvalsReturns.refusals, tracks, sessions?.nowUnixMs, transport, person, units, agentDraft, agentWrite, ownerRequests])
 
   // A workcell's devices (§19.23): Git / landing's Seat page (the seat instrument), starting at the selected workcell's seat of the project;
   // the Remote carrier (Workcell's status) with its Machine page; and the workcell rack, which stands on the rail too (the Workcells tile), so

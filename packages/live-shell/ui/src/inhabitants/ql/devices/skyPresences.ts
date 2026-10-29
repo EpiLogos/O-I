@@ -19,6 +19,7 @@ import {useEffect, useSyncExternalStore} from 'react'
 import {detectTransport, kernelOp, type KernelOpCall} from '../../../../../../../desktop/cradle/src/kernel/bridge'
 import type {KernelOp} from '../../../../../../../desktop/cradle/src/kernel/types'
 import type {Standing, Value} from '../../../frame/devices/designed'
+import {NARA_CHANNEL_REGISTER} from '../../../agent/worldScope'
 
 /** One row of the design's lists: the other Participant, its name where SharedField gives one, the consent, its grant, and whether it permits now. */
 export interface ConsentRow {readonly ref: string; readonly name?: string; readonly consent: string; readonly granted: string; readonly permitted: boolean
@@ -86,7 +87,7 @@ async function ask(op: KernelOp): Promise<KernelOpCall> {
 export async function readSkyPresences(): Promise<void> {
   const ticket = ++sequence
   if (!state.ok) setState(INITIAL)
-  const listed = readPresenceList(await ask({op: 'nara_presence', project: 'O-I', request: {operation: 'list'}}))
+  const listed = readPresenceList(await ask({op: 'nara_presence', project: NARA_CHANNEL_REGISTER, request: {operation: 'list'}}))
   if (ticket !== sequence) return
   if (!listed.ok) { setState({ok: false, reason: listed.reason}); return }
   if (!listed.presences.length) { setState({ok: true, mine: [], theirs: [], listed: 0}); return }
@@ -104,7 +105,7 @@ export async function withdrawSkyPresence(consentRef: string, now: () => number 
   if (!row) throw new Error('That consent is not one your Participants gave, as SharedField lists them.')
   if (!row.permitted) throw new Error('That consent no longer permits: SharedField lists it withdrawn or unpublished.')
   if (!row.projection) throw new Error('SharedField listed that presence without its projection, which a withdrawal names.')
-  const answer = await ask({op: 'nara_presence', project: 'O-I', request: {operation: 'withdraw', projection_ref: row.projection, consent_ref: row.consent,
+  const answer = await ask({op: 'nara_presence', project: NARA_CHANNEL_REGISTER, request: {operation: 'withdraw', projection_ref: row.projection, consent_ref: row.consent,
     withdrawal_ref: `withdrawal:${row.consent}:${now()}`}})
   if (answer.outcome == null) throw new Error(answer.error ?? 'The kernel did not answer nara_presence `withdraw`.')
   const outcome = answer.outcome as {result?: string; data?: unknown}

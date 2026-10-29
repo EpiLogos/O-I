@@ -362,6 +362,10 @@ export type AikitReadRequest =
    * generation?}], root_count, total_skills, total_problems, npx_skills}` — the skill roots on this computer and who owns each: `ownership`
    * foreign, adopted (with the `procedure` that adopted it) or generated (with its `generation`). Setup's Harnesses and skills step. */
   | {kind:"init"}
+  /** `aikit harness disclose --json` (aikit.harness-disclosure/v1): `{profiles:[{disclosure:{slug, layers:[{layer, posture, native?:[{name}],
+   * auth?}]}, activation, native_tools}], standing}` — what AIKit reads of each agent tool's layers (guidance, settings, models, …): Setup's
+   * Harnesses and skills step (O-I #740). */
+  | {kind:"harness-disclose"}
   /** `aikit adopt ROOT [--namespace N]` without --yes: `{source, namespace, capsules, review_digest, procedure, digest, diff, applied:
    * false}`; `--yes --expect-digest` takes `review_digest`, never the saved Procedure's `digest` (settings/aikitAdoption.ts reads it). */
   | {kind:"adopt-plan";root:string;namespace?:string|null}
@@ -576,6 +580,13 @@ export type KernelOp =
   | {op: "native_expression"; request: NativeExpressionRequest}
   | {op: "world_resolve"; world_id?: string; verify?: boolean}
   | {op: "setup"; request: import("../configuration/adoptionController").AdoptionRequest}
+  /** The person's key in a new world (kernel ground_authority.rs, O-I #740): Central's preview of the grant it would keep for the world's
+   * person, and whether a key can be kept here (HOME the world's own folder); adopt makes the key in the world's folder and has Central
+   * keep its grant on the preview's digest. The key and its digest never cross into the answer. */
+  | {op: "ground_authority"; request: {operation: "preview"} | {operation: "adopt"; acceptance_ref: string; expected_digest: string}}
+  /** The Day's form in a new world (kernel ground_form.rs, O-I #740): the application's own Day form kept in the ground through Central
+   * (Control/forms), where no O-I project carries it; a form that stands is never replaced. */
+  | {op: "ground_form"; request: {operation: "preview"} | {operation: "keep"; acceptance_ref: string; expected_digest: string}}
   | {op:"being_encounter";request:Record<string,unknown>}
   | {op:"hosted_native";source_world_ref:string;request:KernelOp}
   | {op:"expression";request:import("../expression/types").ExpressionRequest}
@@ -844,6 +855,8 @@ export type KernelOpResult =
   | {result:"nara_lived_context";data:import("../nara/livedContext").LivedContextResult}
   | {result:"nara_elemental";data:import("../nara/elemental").NaraElementalResult}
   | {result: "setup_reading"; data: unknown}
+  | {result: "ground_authority_reading"; data: unknown}
+  | {result: "ground_form_reading"; data: unknown}
   | {result:"being_encounter";data:unknown}
   | {result:"expression";data:import("../expression/types").ExpressionResult}
   | {result:"expression_recovery";data:import("../expressions/recoveryTypes").ExpressionRecoveryResult}

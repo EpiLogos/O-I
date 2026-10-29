@@ -400,11 +400,15 @@ function ProjectDrawing({f, make, wiki, where}: {f: Rec; make: string | undefine
   </svg>
 }
 
+/** Why Make is closed for a folder that stands elsewhere: it comes into Work first (work.bring), and what to make of it is chosen there. */
+const BRING_FIRST = 'It comes into Work first; choose what to make of it there.'
 function ProjectsStep({p}: {p: ViewProps}) {
   const v = p.v, folders = list(v, 'folders'), folder = folders?.find(f => f.path === strOf(v, 'folder')) ?? folders?.[0]
-  const wikis = strs(folder?.wikis), wiki = strOf(v, 'wiki'), where = strOf(v, 'where') ?? 'stands'
-  const options = makeOptions(folder, wikis.length > 1 ? wiki : wikis[0]), make = strOf(v, 'make')
-  const open = options.find(o => o.value === make && !o.why)
+  const wikis = strs(folder?.wikis), wiki = strOf(v, 'wiki'), where = strOf(v, 'where') ?? (txt(folder?.place) === 'elsewhere' ? 'work' : 'stands')
+  // A folder elsewhere is brought Into Work as it is: the preview and Accept are the bring's, and Make waits until it stands in Work.
+  const bring = txt(folder?.place) === 'elsewhere' && where === 'work'
+  const options = bring ? makeOptions(folder, undefined).map(o => ({...o, why: BRING_FIRST})) : makeOptions(folder, wikis.length > 1 ? wiki : wikis[0]), make = bring ? undefined : strOf(v, 'make')
+  const open = bring ? {value: 'bring'} : options.find(o => o.value === make && !o.why)
   const plan = has(v, 'setupPlan') ? strs(json<unknown>(v, 'setupPlan', [])) : undefined
   const [shown, pager] = usePaged(folders ?? [], 5)
   return <div className="st-cols st-cols--setup">
@@ -469,14 +473,71 @@ function CredentialsStep({p, reading}: {p: ViewProps; reading: Rec | undefined})
           </tr>
         })}</tbody>
     </table>
+    {txt(reading?.said) && <p className="st-note" data-i={`Credentials|${txt(reading?.said)}`}>{txt(reading?.said)}</p>}
     <div className="st-form">
-      <Readout label="state" does="Found: Accept would bind the key chosen. Accepted: every key found is bound." value={txt(reading?.state)} />
+      <Readout label="state" does="Found: Accept would bind the key chosen. Accepted: every key found is bound, or none waits." value={txt(reading?.state)} />
       <TextField label="Reference" does="Where the key lies in your secure store: op://, keychain://, pass:// or varlock://. Never the key itself." value={reference} placeholder="op://…"
         onChange={open.length ? x => p.set('reference', x) : undefined} />
       <Action {...st(p, 'acceptStep')} hold label="Accept" does="AIKit binds the key chosen by the reference you give. The value stays in your store: the window never shows it and never keeps it." onPress={() => p.set('acceptStep', 'credentials')}
         disabled={!open.length ? (txt(reading?.state) === 'accepted' ? 'Accepted.' : 'Nothing found to bring in.') : !reference ? 'Give where the key lies in your store first.' : undefined} />
     </div>
   </>
+}
+
+/** The Ground step's own controls (manual §10.11): for a ground still to make, the folder it goes in (typed, or the system's chooser) and the
+ * name you give it, read by native oi before Accept; then Accept, held, which makes or adopts the ground and keeps its days as the row
+ * says. A ground that stands with its days kept has nothing to accept. */
+function GroundForm({p, reading, items}: {p: ViewProps; reading: Rec | undefined; items: Rec[]}) {
+  const v = p.v, making = has(v, 'groundFolder') || has(v, 'groundName') || strOf(v, 'groundFolder') !== undefined
+  const ground = items[0], kept = items.slice(1)
+  const standing = txt(ground?.change)?.startsWith('Central keeps it here') === true
+  // A ground that stands has something to accept while a row would be kept (its days, bounds or key); else the first reason why not.
+  const disabled = txt(reading?.state) === 'accepted' ? 'Accepted.' : txt(ground?.why)
+    ?? (standing ? (kept.some(r => r.adopts === true) ? undefined : kept.map(r => txt(r.why)).find(Boolean) ?? 'Accepted.') : undefined)
+  return <div className="st-form st-form--setup">
+    <Readout label="state" does="Found: Accept would make the changes above. Accepted: your ground stands and keeps your days." value={txt(reading?.state)} />
+    {making && <>
+      <TextField {...st(p, 'groundFolder')} label="Folder" does="The folder your ground goes in. Type its full path, or Choose… with the system's chooser." value={strOf(v, 'groundFolder') ?? ''} wide
+        onChange={x => p.set('groundFolder', x)} />
+      <Action {...st(p, 'chooseGroundFolder')} label="Choose…" does="Opens the system's folder chooser. Setup then reads the folder: nothing is made until you accept." onPress={() => p.set('chooseGroundFolder', true)} />
+      <TextField {...st(p, 'groundName')} label="Name" does="The name you give your ground: the folder Central makes in the one chosen." value={strOf(v, 'groundName') ?? ''} onChange={x => p.set('groundName', x)} />
+    </>}
+    <Action {...st(p, 'acceptStep')} hold label="Accept" does="Central makes your ground here, or adopts the one it finds, and keeps your days, its bounds and your key as shown. Until you accept, nothing you have moves or changes." onPress={() => p.set('acceptStep', 'ground')}
+      disabled={disabled} />
+  </div>
+}
+
+/** Once the ground is made, your name and date of birth (manual §10.11, §24.6): the first layer of Nara's identity, kept in your ground by
+ * the identity owner. Left, it stays absent until you give it; nothing is shown as missing. */
+function BirthForm({p}: {p: ViewProps}) {
+  const v = p.v, birth = json<Rec | null>(v, 'birth', null)
+  if (!birth) return null
+  const kept = txt(birth.state) === 'kept', name = strOf(v, 'birthName') ?? '', date = strOf(v, 'birthDate') ?? ''
+  return <div className="st-form st-form--setup" role="group" aria-label="Your date of birth">
+    {kept && <Readout label="kept" does="Your identity as your ground keeps it. Your Being page holds it by reference." value={`${txt(birth.name) ?? NONE} · ${txt(birth.date) ?? NONE}`} />}
+    <TextField {...st(p, 'birthName')} label="Your name" does="Your name, kept with your date of birth: Nara's identity is kept under it." value={name} onChange={x => p.set('birthName', x)} />
+    <TextField {...st(p, 'birthDate')} label="Date of birth" does="Year, month and day. The first layer of Nara's identity, so that you are represented in your world beside your projects." value={date}
+      placeholder="YYYY-MM-DD" onChange={x => p.set('birthDate', x)} />
+    <Action {...st(p, 'keepBirth')} hold label="Keep" does="Keeps your name and date of birth in your ground, as the Studio's Nara chain keeps your identity. A correction is a new revision of the same identity."
+      onPress={() => p.set('keepBirth', true)} disabled={txt(birth.why) ?? (!name || !date ? 'Give your name and date of birth first, or leave them: nothing fills them in your place.' : undefined)} />
+  </div>
+}
+
+/** What AIKit reads of each tool besides its skills (its disclosure): where its instructions and settings lie and the providers its
+ * models reach; what it does not read is named and left alone. */
+function HarnessTools({reading}: {reading: Rec | undefined}) {
+  const tools = Array.isArray(reading?.tools) ? reading!.tools.filter(rec) : []
+  if (!tools.length && !txt(reading?.disclosure)) return null
+  return <table className="st-tbl" aria-label="Each tool's settings and instructions">
+    <Cols w={[150, undefined, 160]} />
+    <thead><tr><th>Tool</th><th>Instructions · settings</th><th>Models reach</th></tr></thead>
+    <tbody>{tools.length === 0 ? <tr><td colSpan={3} className="st-none">{txt(reading?.disclosure) ?? NONE}</td></tr>
+      : tools.map((t, i) => <tr key={i} data-read="true">
+        <td><b>{txt(t.harness) ?? NONE}</b>{txt(t.unread) && <i className="st-why" data-i={`Left alone|${t.unread}`}>!</i>}</td>
+        <td className="st-ref">{[...strs(t.instructions), ...strs(t.settings)].join(' · ') || NONE}</td>
+        <td className="st-dim">{strs(t.models).join(', ') || NONE}</td>
+      </tr>)}</tbody>
+  </table>
 }
 
 function SetupPage({p}: {p: ViewProps}) {
@@ -506,11 +567,14 @@ function SetupPage({p}: {p: ViewProps}) {
             <td className="st-dim">{txt(r.why) ? 'left as it is' : txt(r.change) ?? NONE}</td>
           </tr>)}</tbody>
       </table>
-      <div className="st-form">
-        <Readout label="state" does="Found: Accept would make the changes above. Accepted: they are made." value={txt(reading?.state)} />
+      {txt(reading?.said) && <p className="st-note" data-i={`${step.label}|${txt(reading?.said)}`}>{txt(reading?.said)}</p>}
+      {at === 'harnesses' && <HarnessTools reading={reading} />}
+      {at === 'ground' ? <GroundForm p={p} reading={reading} items={items ?? []} /> : <div className="st-form">
+        <Readout label="state" does="Found: Accept would make the changes above. Accepted: they are made, or there was nothing to bring in." value={txt(reading?.state)} />
         <Action {...st(p, 'acceptStep')} hold label="Accept" does={`${step.owner} makes the changes above. Until you accept, nothing you have moves or changes.`} onPress={() => p.set('acceptStep', at)}
           disabled={txt(reading?.state) === 'accepted' ? 'Accepted.' : items?.some(r => !txt(r.why)) ? undefined : 'Nothing found to bring in.'} />
-      </div>
+      </div>}
+      {at === 'ground' && <BirthForm p={p} />}
     </>}
   </section>
 }

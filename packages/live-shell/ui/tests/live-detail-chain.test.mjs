@@ -42,6 +42,8 @@ const hold = await import('../src/live/noteDevices/noteDeviceHold.ts')
 const {MODE_DETAILS} = await import('../src/shell/modeDetails.tsx')
 const {DetailHost} = await import('../src/frame/detail/DetailHost.tsx')
 const {DetailContext} = await import('../src/frame/detail/detailReading.ts')
+// A mode's bodies load when first drawn (shell/loadWhenDrawn.ts; O-I #740); a server render cannot wait for a module, so they are fetched first.
+await (await import('../src/shell/loadWhenDrawn.ts')).loadEveryPart()
 
 // Fixture readings: a set as the owner's summary and deep document give it.
 export const SET = {path: '/sets/mercurius.als', tempo_bpm: 120, scene_count: 2, arrangement_clips: 1, tracks: [

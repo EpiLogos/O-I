@@ -20,7 +20,7 @@
 import type {AgencyReading, AgencySessionRow} from '../../../../../desktop/cradle/src/agency/agencyTypes'
 import type {EncounterReading} from '../../../../../desktop/cradle/src/encounter/client'
 import type {CentralWorldsReading} from '../central/centralWorlds'
-import {CONVERSATION_PROJECT} from '../widgets/agentConversation'
+import {CONVERSATION_PLACE} from '../widgets/agentConversation'
 
 /** One chat under one project: an attached session of a SessionSpace the project's discovery names. */
 export interface FactoryChat {
@@ -275,14 +275,14 @@ export type ThreadOpening =
   | {readonly kind: 'refused'; readonly words: string}
 
 /** Where a chat's thread can be read. The thread pane follows a session the shell's sessions provider holds, and that provider reads
- * one project's agency (widgets/agentConversation.ts CONVERSATION_PROJECT): a chat of another project, in no space that project
- * shares, has no thread there — said, not faked. `trackKeys` null: no provider is mounted above the browser. */
+ * the world's agency (widgets/agentConversation.ts CONVERSATION_PLACE): a chat in no space of the world's registers has no thread there
+ * — said, not faked. `trackKeys` null: no provider is mounted above the browser. */
 export function threadOpening(chat: FactoryChat, trackKeys: ReadonlySet<string> | null, agentOnChain: boolean): ThreadOpening {
   const label = chat.purpose ?? chat.spaceLabel ?? chat.sessionRef
   if (!trackKeys) return {kind: 'refused', words: `The thread of “${label}” is not read here: the agent sessions are not mounted above this browser.`}
   const key = chatTrackKey(chat)
   if (!trackKeys.has(key)) {
-    return {kind: 'refused', words: `The thread of “${label}” is not read here: the thread pane follows the sessions the shell mounts, which are ${CONVERSATION_PROJECT}'s, and this chat of ${chat.project} is in none of ${CONVERSATION_PROJECT}'s spaces.`}
+    return {kind: 'refused', words: `The thread of “${label}” is not read here: the thread pane follows the sessions the shell mounts, which are those of ${CONVERSATION_PLACE}, and this chat of ${chat.project} is in none of their spaces.`}
   }
   return {kind: 'open', trackKey: key, label, pane: agentOnChain}
 }

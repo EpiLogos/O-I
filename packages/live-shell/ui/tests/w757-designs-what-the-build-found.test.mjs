@@ -258,7 +258,8 @@ test('the Sky\'s Share page withdraws the consent you chose (`presence.withdraw`
   assert.equal(presences.skyPresences().mine[0].projection, 'projection:sf5:nara', 'a row carries the projection its withdrawal names')
   await presences.withdrawSkyPresence('consent:sf5:1', () => 7)
   const withdrawal = ops.find(op => op.request?.operation === 'withdraw')
-  assert.deepEqual(withdrawal, {op: 'nara_presence', project: 'O-I', request: {operation: 'withdraw', projection_ref: 'projection:sf5:nara', consent_ref: 'consent:sf5:1', withdrawal_ref: 'withdrawal:consent:sf5:1:7'}})
+  // REPLACED (O-I #740 lane B): project 'O-I'; the sky's presences are the world's, asked in its root register.
+  assert.deepEqual(withdrawal, {op: 'nara_presence', project: '', request: {operation: 'withdraw', projection_ref: 'projection:sf5:nara', consent_ref: 'consent:sf5:1', withdrawal_ref: 'withdrawal:consent:sf5:1:7'}})
   assert.equal(ops.at(-1).op, 'shared_field', 'the list is read again after it')
   await assert.rejects(() => presences.withdrawSkyPresence('consent:someone-else'), /not one your Participants gave/)
   const asked = []

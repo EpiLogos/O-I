@@ -361,8 +361,13 @@ export const APPROVALS_VIEW: Readonly<Record<string, Value>> = {show: 'all', ord
 const APPROVALS_LOCAL = [...Object.keys(APPROVALS_VIEW), 'pick'] as const
 
 export interface ApprovalsInput {
-  /** Central's source returns of the project (kernel source_returns_read), null while unread; the agency tracks name their agents. */
-  readonly returns?: {readonly entries: readonly SourceReturnEntry[]} | null
+  /** Central's source returns (kernel source_returns_read), null while unread; the agency tracks name their agents. A row read in your
+   * world, which reads every project's (agent/worldScope.ts useWorldReturns), names its `project`. */
+  readonly returns?: {readonly entries: readonly (SourceReturnEntry & {readonly project?: string})[]} | null
+  /** Why no returns stand at all, in words, when none was asked or none answered (a world with no project; every project refused). */
+  readonly returnsAbsent?: string | null
+  /** The projects whose returns refused while others answered, each by name, in Central's words. */
+  readonly returnsRefused?: readonly {readonly project: string; readonly error: string}[]
   readonly tracks?: readonly AgentSessionTrack[] | null
   /** The instant the queue is read at, for a proposal's age (its return was minted at the instant its ref names). */
   readonly nowUnixMs?: number
@@ -407,12 +412,15 @@ export function returnMintedMs(returnRef: string): number | null {
 /** Central's returned work that waits as the queue's proposals (software-factory__approvals.tsx:14-16): each return pending or applying,
  * {id (its ref), kind proposal, who (the session's agent, else its session), text and where (the source it proposes to change), session,
  * age (seconds since it was minted)}. Accepted and rejected returns wait no more. */
-export function proposalRows(entries: readonly SourceReturnEntry[], tracks: readonly AgentSessionTrack[] | null | undefined, nowUnixMs: number | undefined): Record<string, Value>[] {
+export function proposalRows(entries: readonly (SourceReturnEntry & {readonly project?: string})[], tracks: readonly AgentSessionTrack[] | null | undefined, nowUnixMs: number | undefined): Record<string, Value>[] {
   return entries.filter(entry => entry.status === 'pending' || entry.status === 'applying').map(entry => {
     const track = tracks?.find(item => item.sessionRef === entry.agent_session_ref)
     const minted = returnMintedMs(entry.return_ref)
     const path = pathOfSource(entry.source_ref)
-    return {id: entry.return_ref, kind: 'proposal', who: track?.agentName ?? track?.agentRef ?? entry.agent_session_ref, text: path, where: path,
+    // A row read across your world's projects names its project, in `where` beside the source it changes.
+    const where = entry.project ? `${entry.project} · ${path}` : path
+    return {id: entry.return_ref, kind: 'proposal', who: track?.agentName ?? track?.agentRef ?? entry.agent_session_ref, text: path, where,
+      ...(entry.project ? {project: entry.project} : {}),
       session: track?.purpose ?? entry.agent_session_ref, ...(entry.status === 'applying' ? {flag: 'applying'} : {}),
       ...(minted !== null && nowUnixMs ? {age: Math.max(0, Math.round((nowUnixMs - minted) / 1000))} : {})}
   })
@@ -474,6 +482,14 @@ export function approvalsBinding(input: ApprovalsInput, ports: ApprovalsPorts, i
   if (verb && !unitsWait) for (const key of ['allowOnce', 'allowAlways', 'deny']) standing[key] = {disabled: verb}
   if (!ports.approve) standing.approve = {disabled: APPROVE_UNWIRED}
   if (!ports.reject) standing.reject = {disabled: REJECT_UNWIRED}
+  // No returns stand, and the words say why (a world with no project, every project refused) — never "have not answered" when nothing
+  // was asked. A project that refused beside others that answered is named on the queue, in Central's words.
+  const absent = !input.returns && input.returnsAbsent ? input.returnsAbsent : null
+  if (absent && ports.approve) standing.approve = {disabled: `Approve: ${absent}`}
+  if (absent && ports.reject) standing.reject = {disabled: `Deny: ${absent}`}
+  const unread = input.returnsRefused?.length
+    ? input.returnsRefused.map(item => `${item.project}: ${item.error}`).join('; ') : null
+  if (absent || unread) standing.queue = {disabled: absent ?? `Central's returned work of these projects was not read: ${unread}`}
   for (const [key, why] of Object.entries(APPROVALS_ANSWERS_REFUSED)) standing[key] = {disabled: why}
   return {
     // `id` is the chain's own (Factory's Main track, or Central's: CentralDevices.tsx); the view's settings are the one Approvals'.
@@ -504,7 +520,7 @@ export function approvalsBinding(input: ApprovalsInput, ports: ApprovalsPorts, i
         if (key === 'approve') {
           // The proposal as Central lists it, read again at the press: its basis and status are what the acceptance is checked on.
           if (!ports.approve) throw Error(APPROVE_UNWIRED)
-          if (!input.returns) throw Error('Approve: Central\'s source returns have not answered, so no proposal stands to accept.')
+          if (!input.returns) throw Error(absent ? `Approve: ${absent}` : 'Approve: Central\'s source returns have not answered, so no proposal stands to accept.')
           const row = input.returns.entries.find(entry => entry.return_ref === value)
           if (!row) throw Error('Approve: that proposal is not among the returns Central lists now.')
           await ports.approve(row)
@@ -513,7 +529,7 @@ export function approvalsBinding(input: ApprovalsInput, ports: ApprovalsPorts, i
         if (key === 'reject') {
           // Deny on a proposal: the return as Central lists it, still waiting.
           if (!ports.reject) throw Error(REJECT_UNWIRED)
-          if (!input.returns) throw Error('Deny: Central\'s source returns have not answered, so no proposal stands to decline.')
+          if (!input.returns) throw Error(absent ? `Deny: ${absent}` : 'Deny: Central\'s source returns have not answered, so no proposal stands to decline.')
           const row = input.returns.entries.find(entry => entry.return_ref === value)
           if (!row || (row.status !== 'pending' && row.status !== 'applying')) throw Error('Deny: that proposal waits no more among the returns Central lists now.')
           await ports.reject(row)

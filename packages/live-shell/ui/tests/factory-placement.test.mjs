@@ -176,7 +176,8 @@ test('the chain draws the plan and no other plate: no Gateways rack, Agency gate
   assert.match(view, /case 'workcell': return rackEntry\?\.binding \? placed\(WORKCELL_RACK_ID, rackEntry\.device, rackEntry\.binding/, 'the rack as the rail\'s publisher holds it')
   assert.match(view, /case 'remote-carrier': return placed\(CARRIER_ID, cells\.carrier, carrierCarrying/)
   assert.match(view, /seatBinding\(\{status: seats\.status === 'answered' \? seats\.value : null[^\n]*\n[^\n]*workcell: cellName/, 'the Seat starts at the workcell\'s seat')
-  assert.match(view, /cellName \? workcellGitReading\(seats, cellName, RACK_PROJECT\) : reading/, 'Git / landing reads the workcell\'s seat of the project')
+  // REPLACED (O-I #740 lane B): the seat of RACK_PROJECT ('O-I'); the chain's register now — the session's own, else the root (worldScope.ts).
+  assert.match(view, /cellName \? workcellGitReading\(seats, cellName, rackProject\) : reading/, 'Git / landing reads the workcell\'s seat of the chain\'s project')
   // Every monitor, Messages and the workcell rack stays published, for the rail and a pane — by the rail's publisher, in every mode
   // (agent-rail-devices.test.mjs mounts it with no chain).
   const rail = read('agent/devices/AgentRailDevices.tsx')

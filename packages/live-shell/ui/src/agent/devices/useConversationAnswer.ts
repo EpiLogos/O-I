@@ -33,12 +33,14 @@ export function mergeConversations(position: string, readings: readonly unknown[
   return {position_ref: position, communiques: [...byRef.values()].sort((a, b) => (at(a) - at(b)) || (order(a) - order(b)))}
 }
 
-/** The open agent's conversation: null `position` reads nothing (no agent is open). */
-export function useConversationAnswer(transport: KernelTransportStatus, project: string, position: string | null, others: readonly string[]): WorkcellAnswer {
+/** The open agent's conversation: null `position` reads nothing (no agent is open). `project` is a register (agent/worldScope.ts): your
+ * world's root register ('' or null) names no project world. */
+export function useConversationAnswer(transport: KernelTransportStatus, register: string | null, position: string | null, others: readonly string[]): WorkcellAnswer {
+  const project = register || undefined
   const epoch = useSpineEpoch()
   const carried = transport.kind !== 'unavailable'
   const withs = useMemo(() => others.filter(other => other !== position), [others, position])
-  const key = carried && position && withs.length ? JSON.stringify([CONVERSATION_OP, transport, 'conversation', project, position, withs]) : null
+  const key = carried && position && withs.length ? JSON.stringify([CONVERSATION_OP, transport, 'conversation', project ?? null, position, withs]) : null
   const {reading} = useOwnerReading(key, async () => {
     const readings: unknown[] = []
     for (const other of withs) {

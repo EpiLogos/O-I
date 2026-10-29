@@ -50,6 +50,9 @@ const { renderToStaticMarkup } = await import('react-dom/server')
 const React = await import('react')
 await import('../src/panels/devices/index.tsx')
 await import('../src/panels/devices-pro/index.ts')
+// The devices-pro faces load when Live's chain first shows them (shell/loadWhenDrawn.ts; O-I #740): fetched first, so every face
+// renders itself here, not its waiting line.
+await (await import('../src/shell/loadWhenDrawn.ts')).loadEveryPart()
 const { allPanels } = await import('../src/shell/panels.ts')
 
 const htmlOf = (element) => renderToStaticMarkup(element)
@@ -86,6 +89,7 @@ test('every registered device panel renders clean with no set open', () => {
     const html = htmlOf(React.createElement(panel.component, ctx(null)))
     assert.ok(html.length > 0, `${panel.id} renders markup`)
     assert.ok(!html.includes('undefined'), `${panel.id} renders no undefined`)
+    assert.ok(!html.includes('data-part-loading'), `${panel.id} renders its face, not its waiting line`)
   }
 })
 

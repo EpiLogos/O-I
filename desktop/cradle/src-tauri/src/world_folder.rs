@@ -215,21 +215,69 @@ pub fn resolve(
     }
 }
 
-/// The environment a world is opened with: each product home cleared and `HOME` the world's
-/// folder; Yours changes nothing.
-pub fn environment(world: &World, native_home: &Path) -> Vec<(&'static str, Option<OsString>)> {
+/// Whether an inherited variable's name has the shape of a credential: AIKit's own shape for the
+/// keys it discovers in the process environment and offers in Setup's Credentials
+/// (ai-kit `crates/aikit-cli/src/credential.rs` `is_candidate_variable`: a name ending `_API_KEY`,
+/// `_TOKEN` or `_KEY` after a prefix of at least two characters), without AIKit's exclusions: in
+/// another world the launching shell's AIKit, Central and Workcell tokens are Yours's too. Only the
+/// name is read, never a value.
+pub fn credential_shaped(name: &str) -> bool {
+    ["_API_KEY", "_TOKEN", "_KEY"]
+        .iter()
+        .find_map(|suffix| name.strip_suffix(suffix))
+        .is_some_and(|prefix| prefix.len() >= 2)
+}
+
+/// The environment a world is opened with: each product home cleared, every credential-shaped
+/// variable the launch carries cleared, and `HOME` the world's folder; Yours changes nothing.
+pub fn environment(world: &World, native_home: &Path) -> Vec<(OsString, Option<OsString>)> {
+    environment_from(
+        world,
+        native_home,
+        std::env::vars_os().map(|(name, _)| name),
+    )
+}
+
+/// `environment` over the names of the launch's variables (its values are never read): a key the
+/// launching shell holds — a provider's, an owner's token — belongs to the computer's own user and
+/// does not cross into another world, whose own credentials its owners bind there.
+pub fn environment_from(
+    world: &World,
+    native_home: &Path,
+    launch: impl IntoIterator<Item = OsString>,
+) -> Vec<(OsString, Option<OsString>)> {
     if world.native {
         return Vec::new();
     }
-    let mut changes: Vec<(&'static str, Option<OsString>)> =
-        PRODUCT_HOMES.iter().map(|name| (*name, None)).collect();
-    changes.push(("HOME", Some(world.folder.clone().into_os_string())));
+    let mut changes: Vec<(OsString, Option<OsString>)> = PRODUCT_HOMES
+        .iter()
+        .map(|name| (OsString::from(name), None))
+        .collect();
+    let mut keys: Vec<OsString> = launch
+        .into_iter()
+        .filter(|name| name.to_str().is_some_and(credential_shaped))
+        .collect();
+    keys.sort();
+    keys.dedup();
+    changes.extend(keys.into_iter().map(|name| (name, None)));
+    changes.push(("HOME".into(), Some(world.folder.clone().into_os_string())));
     changes.push((
-        NATIVE_HOME_ENV,
+        NATIVE_HOME_ENV.into(),
         Some(native_home.to_path_buf().into_os_string()),
     ));
-    changes.push((FOLDER_ENV, Some(world.folder.clone().into_os_string())));
+    changes.push((
+        FOLDER_ENV.into(),
+        Some(world.folder.clone().into_os_string()),
+    ));
     changes
+}
+
+/// The working directory a world's processes start in: the world's folder, so nothing a product
+/// resolves from its working directory — AIKit's project skills, a CLI's project root, the kernel's
+/// own directory before Central's ground is made — reaches the folder the launch stood in. Yours keeps
+/// the launch's own (none).
+pub fn working_directory(world: &World) -> Option<&Path> {
+    (!world.native).then_some(world.folder.as_path())
 }
 
 /// The environment a switch of worlds relaunches with: the launch's own, with the computer's own
@@ -337,6 +385,10 @@ mod tests {
         let world = resolve(&s.home(), None, None, &s.guarded()).unwrap();
         assert_eq!(world, World::yours(&s.home()));
         assert!(environment(&world, &s.home()).is_empty());
+        assert!(
+            environment_from(&world, &s.home(), [OsString::from("DEEPSEEK_API_KEY")]).is_empty(),
+            "Yours keeps the launch's keys"
+        );
         assert_eq!(store_identifier(&world), None);
     }
 
@@ -349,8 +401,10 @@ mod tests {
         assert_eq!(world.folder, bare);
         assert!(!world.native);
         let changes = environment(&world, &s.home());
-        assert!(changes.contains(&("HOME", Some(bare.clone().into_os_string()))));
-        assert!(changes.contains(&(NATIVE_HOME_ENV, Some(s.home().into_os_string()))));
+        let has =
+            |name: &str, value: Option<OsString>| changes.contains(&(OsString::from(name), value));
+        assert!(has("HOME", Some(bare.clone().into_os_string())));
+        assert!(has(NATIVE_HOME_ENV, Some(s.home().into_os_string())));
         for name in [
             "AIKIT_HOME",
             "OI_HOME",
@@ -359,9 +413,58 @@ mod tests {
             "XDG_CONFIG_HOME",
             "OI_EXPRESSION_HOME",
         ] {
-            assert!(changes.contains(&(name, None)), "{name} is cleared");
+            assert!(has(name, None), "{name} is cleared");
         }
         assert!(store_identifier(&world).is_some());
+    }
+
+    /// O-I #740: a Bare world listed the launching shell's provider keys in Setup's Credentials as
+    /// "process environment" (walk 739 A5, B4). They are the computer's own user's, and stay out.
+    #[test]
+    fn the_launching_shells_keys_do_not_cross_into_another_world() {
+        let s = Scratch::new("keys");
+        let world = resolve(&s.home(), Some(&s.world("Bare")), None, &s.guarded()).unwrap();
+        let launch = [
+            "DEEPSEEK_API_KEY",
+            "GEMINI_API_KEY",
+            "OPENROUTER_API_KEY",
+            "SLACK_BOT_TOKEN",
+            "CENTRAL_NATIVE_TOKEN",
+            "STARSHIP_SESSION_KEY",
+            "PATH",
+            "TERM",
+            "_KEY",
+            "X_TOKEN",
+            "LANG",
+        ]
+        .map(OsString::from);
+        let changes = environment_from(&world, &s.home(), launch);
+        let cleared = |name: &str| changes.contains(&(OsString::from(name), None));
+        for key in [
+            "DEEPSEEK_API_KEY",
+            "GEMINI_API_KEY",
+            "OPENROUTER_API_KEY",
+            "SLACK_BOT_TOKEN",
+            "CENTRAL_NATIVE_TOKEN",
+            "STARSHIP_SESSION_KEY",
+        ] {
+            assert!(cleared(key), "{key} stays with the launching shell");
+        }
+        for kept in ["PATH", "TERM", "LANG", "_KEY", "X_TOKEN"] {
+            assert!(
+                !changes.iter().any(|(name, _)| name == kept),
+                "{kept} is no credential"
+            );
+        }
+        assert!(credential_shaped("ZAI_API_KEY") && !credential_shaped("HOME"));
+    }
+
+    #[test]
+    fn a_worlds_processes_start_in_its_folder_and_yours_keeps_the_launchs() {
+        let s = Scratch::new("cwd");
+        let bare = resolve(&s.home(), Some(&s.world("Bare")), None, &s.guarded()).unwrap();
+        assert_eq!(working_directory(&bare), Some(s.world("Bare").as_path()));
+        assert_eq!(working_directory(&World::yours(&s.home())), None);
     }
 
     #[test]

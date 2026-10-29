@@ -41,6 +41,9 @@ const frame = await import('../src/projections/framePlacement.ts')
 const {projectionModule} = await import('../../../../desktop/cradle/src/surface/projectionModules.ts')
 const {factoryFocusedPane, deviceInstrumentFor, instrumentOfPane} = await import('../src/shell/paneInstrument.ts')
 const {NATIVE_PRESENT_EXPRESSIONS} = await import('../src/native/openStudio.ts')
+// The frame's lazy parts (a mode's bodies, its transport and tracks, a device's face) load when first drawn (shell/loadWhenDrawn.ts;
+// O-I #740); a server render cannot wait for a module, so they are fetched first and every body renders itself.
+await (await import('../src/shell/loadWhenDrawn.ts')).loadEveryPart()
 
 const html = element => renderToStaticMarkup(element)
 const source = async path => readFile(new URL(path, import.meta.url), 'utf8')

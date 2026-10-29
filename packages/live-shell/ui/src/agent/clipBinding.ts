@@ -44,12 +44,15 @@ import {useTimelinePanePresentation} from '../projections/timelinePaneHost'
 import {parseFactoryTaskRef} from '../timeline/factoryTrackAdapter'
 import {readSettingsOf, settingsReadingEntry, taskReadingEntry, useSettingsAnswer} from '../owners/readers'
 import {useAgentSessionsOptional} from './AgentSessionsProvider'
+import {projectOfSession, ROOT_REGISTER} from './worldScope'
 import {eventsForSession, trackKey, type AgentSessionTrack, type TaskClip, type TemporalEventLike} from './agentRunModel'
 import {TASK_SEAMS, type TaskAddress, type TaskSeamContext, type TaskSetting} from './devices/taskBindings'
 import {clipValuesOfSettings, settingsRefusal, SETTINGS_RESULT} from './sessionSettings'
 
-/** The register the sessions provider reads its agency in (AgentSessionsProvider.tsx PROJECT): the session's settings are read there. */
-export const SETTINGS_PROJECT = 'O-I'
+/** The register a session's settings are read in: the one its world-wide agency read listed it in (AgentSessionsProvider.tsx rows,
+ * agent/worldScope.ts) — '' the root register, else its project. */
+export const sessionProjectOf = (rows: readonly {readonly sessionRef: string; readonly project?: string}[] | null | undefined, sessionRef: string | null): string =>
+  projectOfSession(rows ?? [], sessionRef)
 const UNAVAILABLE = {kind: 'unavailable', reason: 'No sessions provider is mounted here.'} as const
 
 /** The log keeps the latest rows of a long thread (FactoryTaskLogDetail's LOG_ROWS). */
@@ -424,13 +427,14 @@ export function useFactoryClip(): ClipBinding | null {
   const colour = selected.set?.tracks.find(item => item.id === trackId)?.color ?? selected.track?.color ?? null
   const sessionRef = factoryTaskOf(selected.ref, factory.tracks)?.track.sessionRef ?? null
   const transport = sessions?.transport ?? UNAVAILABLE
-  const answer = useSettingsAnswer(transport, sessions ? sessionRef : null, SETTINGS_PROJECT)
+  const project = sessionProjectOf(sessions?.rows, sessionRef)
+  const answer = useSettingsAnswer(transport, sessions ? sessionRef : null, project)
   const settings: TaskSeamContext | null = sessions && sessionRef
-    ? {transport, project: SETTINGS_PROJECT, settings: answer.reading.status === 'answered' ? answer.reading.value : null, refused: answer.reading.error} : null
+    ? {transport, project, settings: answer.reading.status === 'answered' ? answer.reading.value : null, refused: answer.reading.error} : null
   const constellations = useConstellations().rows
   // What the task's attempts returned: the session's takes (AIKit says which attempts its bound task serves, Factory what each is),
   // each returned one's Return read through Factory, and a file opened beside you through Central's file route.
-  const takes = useAttemptTakes(transport, sessions && sessionRef ? [sessionRef] : [], SETTINGS_PROJECT)
+  const takes = useAttemptTakes(transport, sessions && sessionRef ? [sessionRef] : [], project)
   const files = useReturnedFiles(transport, sessionRef ? takes?.of(sessionRef) ?? null : null)
   const held = useRef<PaneHold>({workspace: null, book: null})
   held.current = {workspace: useContext(Workspace), book: useOptionalContinuity()}
@@ -451,7 +455,7 @@ export function useFactoryClip(): ClipBinding | null {
  * back. A session that holds no task is given a new one made of the constellation through AIKit's task creation (makeNewTaskOf). Every
  * reader of the session's settings is asked again. */
 export async function makeTaskOf(transport: KernelTransportStatus, session: SessionAddress,
-  constellation: {readonly ref: string; readonly title: string}, project = SETTINGS_PROJECT): Promise<WorldActionReceipt> {
+  constellation: {readonly ref: string; readonly title: string}, project: string): Promise<WorldActionReceipt> {
   const {ref, title} = constellation
   const owner = readSettingsOf(transport, project, session.sessionRef)
   const read = async (): Promise<{reading: EncounterSessionSettingsReading} | {error: string}> => {
@@ -533,6 +537,6 @@ export function taskMaker(transport: KernelTransportStatus, tracks: readonly Age
       const ref = payload.trim()
       const found = named(ref)
       if (!found) return {ok: false, error: `${ref} is no constellation the wiki's reading holds now.`}
-      return makeTaskOf(transport, {sessionRef: track.sessionRef, label: track.agentName ?? track.purpose ?? track.sessionRef}, found)
+      return makeTaskOf(transport, {sessionRef: track.sessionRef, label: track.agentName ?? track.purpose ?? track.sessionRef}, found, track.project ?? ROOT_REGISTER)
     }}
 }

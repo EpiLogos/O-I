@@ -6,6 +6,9 @@ import type {SetDocument} from '../shell/document'
 import type {SetSummary} from '../shell/useSet'
 import type {SetSelection} from '../shell/liveSelection'
 
+/** What Live's Clip side says while no clip is selected (shell/modeDetails.tsx; components/DeviceChainPanel.tsx re-exports it). */
+export const LIVE_CLIP_WAITS = 'Select a clip in the Session or the Arrangement to see it here.'
+
 /** The clip THE selection names in the open set: an arrangement clip (with its own start and end) or a session slot's clip. */
 export interface LiveClipReading {
   name: string
