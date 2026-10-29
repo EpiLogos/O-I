@@ -12,7 +12,7 @@ export const MENU_COMMANDS = {
   'view.rail': 'Widget Rail', 'view.clip': 'Clip View', 'view.device': 'Device View', 'view.detail': 'Hide or Restore Clip and Device Views',
   'view.expand-clip': 'Expand Clip View', 'view.mixer': 'Mixer', 'view.io': 'In/Out', 'app.settings': 'Settings…',
   // The field's (manual §20.1, O-I #747): the frame hands each to the mode that stands (App.tsx MENU_ACT); Expressions answers them.
-  'view.present': 'Present', 'view.grid': 'Grid', 'view.snap': 'Snap', 'view.guides': 'Guides',
+  'view.present': 'Present', 'view.grid': 'Grid', 'view.snap': 'Snap', 'view.guides': 'Guides', 'view.flat': '2D', 'view.depth': '3D', 'view.face-plane': 'Face Plane',
   'file.export.picture': 'Export Picture…', 'file.export.film': 'Export Film', 'file.export.json': 'Export Expression JSON',
   'file.export.html': 'Export Living HTML', 'file.export.native': 'Export Native Configuration',
 } as const

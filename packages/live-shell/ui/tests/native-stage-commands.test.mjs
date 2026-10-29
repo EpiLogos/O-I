@@ -337,32 +337,16 @@ test('toggle readings are undefined unless the hosted state carries them, and ev
 // where the hosted state reads one.
 const stageButtons = html => Object.fromEntries([...html.matchAll(/<button([^>]*)>/g)].map(([, attrs]) => attrs).filter(attrs => attrs.includes('data-stage="'))
   .map(attrs => [attrs.match(/data-stage="([^"]+)"/)[1], attrs]));
-/** The Studio's stage section over one sender, as ExpressionsStudio composes it: the Camera alone (O-I #747 moved the rest to its homes). */
-function StudioStageSections({state, run}) {
-  const sender = studioStage.useStageSender(state, run);
-  return createElement('div', null, createElement(studioStage.StageViewTools, {sender}));
-}
-const studio = props => renderToStaticMarkup(createElement(StudioStageSections, props));
-const CAMERA = ['view-2d', 'view-3d', 'face-plane'];
-
-test('the stage controls name every control, disable it with its reason, and read toggles from the hosted state', () => {
-  const unmounted = studio({state: null, run: null});
-  assert.match(unmounted, /role="group" aria-label="Stage camera"/);
-  assert.match(unmounted, /<p class="inst-section-line studio-stage-reason">No Expressions application is mounted\.<\/p>/, 'the shared reason is said once');
-  const off = stageButtons(unmounted);
-  assert.deepEqual(Object.keys(off).sort(), [...CAMERA].sort(), 'the camera stands; the rest is at its home (O-I #747: View menu, Clip panel, File › Export, browser)');
-  for (const [id, attrs] of Object.entries(off)) {
-    assert.match(attrs, /disabled=""/, id);
-    assert.doesNotMatch(attrs, /aria-pressed/, id);
-    assert.match(attrs, /title="No Expressions application is mounted\."/, `${id} keeps its owner's reason in its hover words`);
-  }
-  const bare = stageButtons(studio({state: READY_STATE, run: async () => ({ok: true})}));
-  assert.doesNotMatch(bare['view-2d'], /aria-pressed/, 'no camera reading, no pressed claim');
-  const on = stageButtons(studio({state: {...READY_STATE, stage: {mode: '3d', grid: true, snap: false, guides: true}}, run: async () => ({ok: true})}));
-  assert.deepEqual(Object.keys(on).sort(), [...CAMERA].sort());
-  assert.match(on['view-2d'], /aria-pressed="false"/);
-  assert.match(on['view-3d'], /aria-pressed="true"/);
-  assert.doesNotMatch(on['face-plane'], /aria-pressed/);
+// O-I #747 round three: the camera is the View menu's (manual §20.1), so no stage control stands on the Studio's Stage; the menu items send
+// the same commands (StudioStage.tsx menuStageCommands). REPLACED: the stage controls drawn under the Studio's Camera, View and Capture.
+test('the camera, the guides and Present are the View menu\'s, each the field\'s own command', () => {
+  const state = {...READY_STATE, stage: {mode: '3d', grid: true, snap: false, guides: true}, presenting: false};
+  for (const [id, command] of [['view.flat', shell.stageView('view-2d')], ['view.depth', shell.stageView('view-3d')], ['view.face-plane', shell.stageView('face-plane')],
+    ['view.grid', shell.stageView('grid')], ['view.snap', shell.stageView('snap')], ['view.guides', shell.stageView('guides')], ['view.present', shell.stagePresent(true)]])
+    assert.deepEqual(studioStage.menuStageCommands(id, state), [command], id);
+  assert.equal(studioStage.StageViewTools, undefined, 'the Stage\'s Camera is gone');
+  const reason = shell.stageDisabledReason({mounted: false, state: null, busy: false});
+  assert.equal(reason, 'No Expressions application is mounted.', 'with no frame the reason is the same, said where the act is asked');
 });
 
 test('Picture… holds the manual\'s choices at their defaults (§20.1 Export), never the tool rail or Orbit', () => {

@@ -394,3 +394,14 @@ test('the pointer\'s Select is the field\'s own Select, and ends a placement (th
   for (const tool of ['orbit', 'form', 'bind']) await assert.rejects(binding.write([{key: 'tool', value: tool}]), /./, `${tool} names why`)
   assert.match(toolMarkup('pointer', {tool: 'select'}), /Select/)
 })
+
+// O-I #747 round three (manual §20.1 Tools: "Library, on the same row, opens the browser's library: your Expressions, your collections, the
+// starters, and the Epi-Logos corpus"): the Stage plate's Library… relay is Clip view's pointer row, the field's own Library, which on the
+// devices opens full in a pane of its own (summonedEditors.tsx).
+test('Clip view\'s Library is the field\'s own Library, pressed through its one runner', async () => {
+  const reading = ownerReading()
+  const ran = []
+  const binding = SC.expressionsClipBinding({reading, request: async () => ({ok: true, reading}), stage: {state: null, run: async command => { ran.push(command); return {ok: true} }}})
+  await binding.write([{key: 'library', value: 1}])
+  assert.deepEqual(ran, [{command: 'chrome', id: 'workspace/a:library'}])
+})

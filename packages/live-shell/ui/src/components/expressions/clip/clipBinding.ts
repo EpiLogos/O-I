@@ -400,6 +400,9 @@ function sceneWiring(reading: NativeEditorReading, request: EditorRequest | null
       'view.restore': async () => staged(stage, stageView('restore-view')),
       // Fit (lead's ruling of 29 Oct: the Stage plate's Fit stands in the Clip panel's View): the field's own fit-view.
       'view.fit': async () => staged(stage, stageView('fit-view')),
+      // Library (manual §20.1 Tools: on the pointer row, "opens the browser's library"): the field's own Library, which on the devices
+      // opens full in a pane of its own (summonedEditors.tsx). O-I #747 moved it here from the Stage plate's relays.
+      library: async () => staged(stage, {command: 'chrome', id: 'workspace/a:library'}),
       // The pointer tools (manual §20.1 Tools): Select is the field's own Select; the others say why.
       tool: async value => {
         if (value === 'select') return staged(stage, stageTool('select'))
@@ -435,7 +438,6 @@ function sceneWiring(reading: NativeEditorReading, request: EditorRequest | null
       'bp.bound': NOT_COMPOSED('Bind and Release', 'a blueprint bind or release intent with the six roles\' subjects (nativeSceneFace.blueprint.ts)'),
       'act.bind': NOT_COMPOSED('Bind', 'a step source change (step-source)'), 'act.follow': missingOp('Follow', 'entity_follow_set {expression, entity, follows}', EXPRESSIONS),
       'act.exact': NOT_COMPOSED('Exact', 'parameter changes on the entity\'s targets'),
-      library: 'The Library opens from the browser\'s Library.',
     },
     absent: {
       signature: 'the scene has no ratio of hold to change of its own until one is chosen',

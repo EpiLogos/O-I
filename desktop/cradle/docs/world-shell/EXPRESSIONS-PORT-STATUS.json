@@ -92,7 +92,7 @@
     },
     {
       "action": "studio",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:1603",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:1614",
       "kind": "router",
       "surface": "device",
       "outward_home": "The Studio device: Device view's rack and the Studio's pane, its Full (§20.3); a scene's or a symbol's settings in Clip view (§20.1 Where everything is)",
@@ -100,7 +100,7 @@
         "packages/live-shell/ui/src/components/expressions/studio/studioHome.ts",
         "packages/live-shell/ui/src/panels/expressions.tsx"
       ],
-      "boundary_op": "host request open-home {section} on the devices (presentedChrome.ts studioHomeRequest; desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:1603) answered by packages/live-shell/ui/src/panels/expressions.tsx:324 → packages/live-shell/ui/src/components/expressions/studio/studioHome.ts:18 openStudioHome",
+      "boundary_op": "host request open-home {section} on the devices (presentedChrome.ts studioHomeRequest; desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:1614) answered by packages/live-shell/ui/src/panels/expressions.tsx:324 → packages/live-shell/ui/src/components/expressions/studio/studioHome.ts:18 openStudioHome",
       "tests": [
         "desktop/cradle/expressions-app/field-studies-journeys/tests/presented-chrome.test.mjs",
         "packages/live-shell/ui/tests/p3-expressions-in-full.test.mjs"
@@ -111,14 +111,14 @@
     },
     {
       "action": "close-studio",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:1604",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:1615",
       "kind": "router",
       "surface": "device",
       "outward_home": "The Studio's pane closes as any pane does; Device view hides with ⌥⌘4 (§20.1 Pane view, Device view; §16.4)",
       "components": [
         "packages/live-shell/ui/src/components/expressions/studio/ExpressionsStudio.tsx"
       ],
-      "boundary_op": "none: on the devices the app's Studio drawer never opens (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:1603 hands the Studio to the shell), so there is no drawer to close; the Studio's pane and Device view close as the shell's own",
+      "boundary_op": "none: on the devices the app's Studio drawer never opens (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:1614 hands the Studio to the shell), so there is no drawer to close; the Studio's pane and Device view close as the shell's own",
       "tests": [
         "desktop/cradle/expressions-app/field-studies-journeys/tests/presented-chrome.test.mjs"
       ],
@@ -128,7 +128,7 @@
     },
     {
       "action": "dock-studio",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:1605",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:1616",
       "kind": "router",
       "surface": "device",
       "outward_home": "Device view holds the Studio under the panes; its Full stands beside the field in Pane view (§20.1 Pane view, Device view; §20.3)",
@@ -856,7 +856,7 @@
     },
     {
       "action": "edit",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:1653",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:1664",
       "kind": "router",
       "surface": "clip",
       "outward_home": "Clip view's Expression tab for the selected symbol; the Studio for the field (§20.1 Where everything is: \"Shape one symbol — Clip view's Expression tab\")",
@@ -864,7 +864,7 @@
         "packages/live-shell/ui/src/components/expressions/studio/studioHome.ts",
         "packages/live-shell/ui/src/panels/expressions.tsx"
       ],
-      "boundary_op": "host request open-home {section: formations | physics} on the devices (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:1653) answered by packages/live-shell/ui/src/panels/expressions.tsx:324 → packages/live-shell/ui/src/components/expressions/studio/studioHome.ts:18",
+      "boundary_op": "host request open-home {section: formations | physics} on the devices (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:1664) answered by packages/live-shell/ui/src/panels/expressions.tsx:324 → packages/live-shell/ui/src/components/expressions/studio/studioHome.ts:18",
       "tests": [
         "desktop/cradle/expressions-app/field-studies-journeys/tests/presented-chrome.test.mjs",
         "packages/live-shell/ui/tests/p3-expressions-in-full.test.mjs"
@@ -888,7 +888,7 @@
     },
     {
       "action": "tab",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:1655",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:1666",
       "kind": "router",
       "surface": "clip",
       "outward_home": "Clip view's editor tabs (Sequence, Envelopes, Expression, Sound) and the Studio's Macros and Chains pages (§20.1 Editor tabs; §20.3 Views)",
@@ -1989,7 +1989,7 @@
     },
     {
       "action": "entry-continue",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:1765",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:1776",
       "kind": "router",
       "surface": "menu",
       "outward_home": "The browser's Expressions list: open an Expression there (§20.1 Where everything is: \"Open an Expression — The browser (§10.3)\"); the kept work reopens where it stood",
@@ -2971,7 +2971,7 @@
     },
     {
       "action": "cancel-placement",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:1824",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:1835",
       "kind": "router",
       "surface": "clip",
       "outward_home": "Clip view's pointer tools: Select ends a placement (§20.1 Tools: \"Select — Selects a symbol\")",
@@ -2979,7 +2979,7 @@
         "packages/live-shell/ui/src/components/expressions/clip/clipBinding.ts",
         "packages/live-shell/ui/src/inhabitants/catalogue/clips/expressions.tsx"
       ],
-      "boundary_op": "frame stage command tool=select (packages/live-shell/ui/src/components/expressions/clip/clipBinding.ts:404, the field's own Select through the hosted runner)",
+      "boundary_op": "frame stage command tool=select (packages/live-shell/ui/src/components/expressions/clip/clipBinding.ts:407, the field's own Select through the hosted runner)",
       "tests": [
         "packages/live-shell/ui/tests/expressions-clip.test.mjs"
       ],
@@ -3197,7 +3197,7 @@
     },
     {
       "action": "delete-group",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:1836",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:1847",
       "kind": "router",
       "surface": "clip",
       "outward_home": "Clip view's Envelopes (§20.1 Envelopes): the manual names adding and ordering lanes, and no removal of a lane or its followers",
@@ -3321,7 +3321,7 @@
     },
     {
       "action": "fire-lane",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:1842",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:1853",
       "kind": "router",
       "surface": "clip",
       "outward_home": "Clip view's Envelopes, a ramp's Loop (§20.1 Envelopes: \"Once · Loop (restart) · Ping-pong\")",
@@ -3391,14 +3391,14 @@
     },
     {
       "action": "take-manual",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:1846",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:1857",
       "kind": "router",
       "surface": "device",
       "outward_home": "Taking hold of a value a lane holds, its hand-back light, and the transport's Re-enable (§20.1 Rules: \"When you take hold of a value a lane holds, the hand-back light comes on\"; §20.3 Transport)",
       "components": [
         "packages/live-shell/ui/src/shell/transports/useExpressionsTransport.tsx"
       ],
-      "boundary_op": "none: the manual replaces Take manual control with taking hold and Re-enable (stage automation-resume, packages/live-shell/ui/src/shell/transports/useExpressionsTransport.tsx:205); removing a lane by takeover writes outside native history and is refused by design (nativeAutomationEdits.ts)",
+      "boundary_op": "none: the manual replaces Take manual control with taking hold and Re-enable (stage automation-resume, packages/live-shell/ui/src/shell/transports/useExpressionsTransport.tsx:211); removing a lane by takeover writes outside native history and is refused by design (nativeAutomationEdits.ts)",
       "tests": [
         "packages/live-shell/ui/tests/transport-bindings.test.mjs"
       ],
@@ -3551,7 +3551,7 @@
     },
     {
       "action": "save-browser",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:1853",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:1864",
       "kind": "router",
       "surface": "menu",
       "outward_home": "Save: the Studio's head and ⌘S, the owner's native save (§20.1 Where everything is: \"Save, undo and redo — The File and Edit menus, and the Studio's head\")",

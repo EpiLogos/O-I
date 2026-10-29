@@ -145,7 +145,14 @@ test('the Studio stands only what no Expressions device carries; each carried co
   const kept = controlsAt(chrome, ['work', 'tools', 'scene', 'side', 'capture'], STUDIO_CARRIED).map(item => item.id)
   // R4: R2 retired the Clip side's SceneControls, so its scene ‹ › is carried by no device: the Stage stands it.
   // MOVED (O-I #747): the rail's Select is Clip view's pointer tools' Select (clipBinding.ts `tool`), so the Stage no longer stands it.
-  assert.deepEqual(kept, ['save/a:native-save', 'scene/a:previous', 'scene/a:open-timeline'])
+  // Round three: scene ‹ › and Saved scenes are Session view's rows; Save scene… is the transport's Capture.
+  assert.deepEqual(kept, ['save/a:native-save'])
+  const relays = {lens: 'expressions', controls: ['rail/a:tool-interact', 'rail/a:tool-pin', 'rail/a:tool-formation', 'rail/a:tool-text', 'workspace/a:library',
+    'workspace/a:modes', 'workspace/a:quick-guide', 'scene/a:previous', 'scene/a:timeline', 'scene/a:next', 'scene/a:play-journey', 'scene/a:open-timeline', 'scene/l:Acts']
+    .map(id => control(id, id.startsWith('scene') ? 'scene' : 'tools', id))}
+  // O-I #747 round three: the Stage's last frame relays take the homes the manual gives them; what has none stays, PROPOSEd.
+  assert.deepEqual(controlsAt(relays, ['tools', 'scene', 'side'], STUDIO_CARRIED).map(item => item.id), ['workspace/a:quick-guide', 'scene/l:Acts'],
+    'only the Guide and Acts, which the manual gives no home, stand on the Stage')
   const model = await source('../src/components/expressions/studio/studioModel.ts')
   for (const id of STUDIO_CARRIED) assert.ok(model.includes(id), `${id} is named with its carrier`)
   const studio2 = await source('../src/components/expressions/studio/ExpressionsStudio.tsx')

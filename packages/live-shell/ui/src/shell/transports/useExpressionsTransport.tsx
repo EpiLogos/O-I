@@ -129,7 +129,7 @@ export const useExpressionsTransport = (reading: ExpressionsTransportReading): T
   if (!source || !content || !scenes || !playback) {
     playRef.current = null
     const refused = unreadReason(source, content)
-    return {...readoutBindings(reading.readouts), play: {refused}, stop: {refused}}
+    return {...readoutBindings(reading.readouts), play: {refused}, stop: {refused}, capture: {refused}}
   }
   const current = scenes.scenes.find(row => row.scene_ref === content.basis.scene_ref)
   const ready = !!source.actions && !content.standing.pending && !busy                                          // :88
@@ -192,6 +192,12 @@ export const useExpressionsTransport = (reading: ExpressionsTransportReading): T
     if (armed && playRoute.blockedReason) setTakeFault({slot: 'play', text: `Playing without a take: ${playRoute.blockedReason}`})
     void settle('play', {action: model.play.action})
   }
+  // Capture (manual §20.1: "Capture in the transport keeps your last gestures as a new scene"; O-I #747 moved the Stage plate's Save
+  // scene… here): the owner's own snapshot of the scene as it stands, then the next scene made from it — the Scene editor's Save & next
+  // (components/NativeSceneEditor.tsx), one request on the captured basis.
+  const captureBlocked = recording ? 'A take is recording. Press Stop to finish it.' : !current ? 'This Scene is not in the native inventory.'
+    : current.membership && !current.membership.complete ? 'The scene\'s objects are not all loaded yet, so it cannot be kept.' : null
+  const pressCapture = () => {if (current && !captureBlocked) void settle('capture', {action: 'save-snapshot', name: current.title, next: true})}
   const pressStop = () => {
     if (recording) {toggleTake('stop'); return}
     if (model.stop.request) void settle('stop', model.stop.request)
@@ -238,6 +244,8 @@ export const useExpressionsTransport = (reading: ExpressionsTransportReading): T
     stop: {press: stopDisabled ? undefined : pressStop,
       ...(!recording && model.stop.disabled ? {refused: model.stop.reason ?? 'Nothing to stop.'} : {}),
       title: noted(recording ? 'Stop the property take and keep its keyframes' : model.stop.reason ?? 'Stop: rewind the working Scene to its start and pause', ...said('stop'))},
+    capture: {press: captureBlocked || !ready ? undefined : pressCapture, ...(captureBlocked ? {refused: captureBlocked} : {}),
+      title: noted('Capture — keep your gestures as a scene: the scene keeps them as they stand, and the next scene starts from them', ...said('capture'))},
     // Record is never an immediate-record button: it enables only while a take records, to stop it (:181-183). Lit by the frame's take reading.
     record: {press: recording && !takeBusy ? () => toggleTake('record') : undefined, ...(link.state ? {lit: recording} : {}),
       title: noted(recording ? 'Stop the property take and keep its keyframes' : 'A take records while armed Play runs. Arm automation, then press Play.', ...said('record'))},

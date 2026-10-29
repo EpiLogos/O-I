@@ -16626,7 +16626,7 @@
           "quote": "builder.on_download(downloads::receiver()).build()?;"
         },
         {
-          "at": "packages/live-shell/ui/src/components/expressions/studio/StudioStage.tsx:153",
+          "at": "packages/live-shell/ui/src/components/expressions/studio/StudioStage.tsx:126",
           "quote": "{exported && <p className=\"studio-export-line\""
         }
       ]

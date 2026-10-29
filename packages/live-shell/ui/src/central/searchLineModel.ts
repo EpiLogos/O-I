@@ -178,7 +178,7 @@ export const MENU_ACCELERATORS: Readonly<Record<MenuCommand, string | null>> = {
   'view.session': null, 'view.arrangement': null, 'view.pane': 'Alt+CmdOrCtrl+9', 'view.browser': 'Alt+CmdOrCtrl+B', 'view.pool': 'Alt+CmdOrCtrl+6',
   'view.rail': 'Alt+CmdOrCtrl+8', 'view.clip': 'Alt+CmdOrCtrl+3', 'view.device': 'Alt+CmdOrCtrl+4', 'view.detail': 'Alt+CmdOrCtrl+L',
   'view.expand-clip': 'Alt+CmdOrCtrl+E', 'view.mixer': 'Alt+CmdOrCtrl+M', 'view.io': 'Alt+CmdOrCtrl+I', 'app.settings': 'CmdOrCtrl+,',
-  'view.present': null, 'view.grid': null, 'view.snap': null, 'view.guides': null,
+  'view.present': null, 'view.grid': null, 'view.snap': null, 'view.guides': null, 'view.flat': null, 'view.depth': null, 'view.face-plane': null,
   'file.export.picture': null, 'file.export.film': null, 'file.export.json': null, 'file.export.html': null, 'file.export.native': null,
 }
 

@@ -43,7 +43,7 @@ import {chosenAddChange, chosenDropReason} from '../../nativeBrowserModel'
 import type {RetainedGlyphInput} from '../../GlyphSequenceEditor'
 import {STUDIO_CARRIED, studioChains, studioFieldFamilies, studioOwner, studioPlace, studioSections} from './studioModel'
 import {STUDIO_DEVICE_ID, studioBinding, type StudioNara} from './studioBinding'
-import {StageViewTools, useStageSender} from './StudioStage'
+import {useStageSender} from './StudioStage'
 import {FrameControls, controlsAt, useFrameChromeOver} from './frameChrome'
 import {useFramePlacement, useHostedChrome} from '../../../projections/expressionsPaneHost'
 import './studio.css'
@@ -205,9 +205,8 @@ export function ExpressionsStudio(props: ExpressionsStudioProps) {
   const frameTools = frameAt(['tools', 'scene', 'side'])
   const stageSections: PlateSection[] = [
     ...(frameTools.length ? [{id: 'stage:frame', title: 'Frame tools', children: <FrameControls label="Frame tools" controls={frameTools} view={frame} />}] : []),
-    // O-I #747: the camera alone stays (no manual home yet); the view's grid, snap and guides are the View menu's, Fit the Clip panel's,
-    // and Capture with its choices File › Export's (StudioStage.tsx).
-    {id: 'stage:camera', title: 'Camera', children: <StageViewTools sender={stage} />},
+    // O-I #747: the camera is the View menu's (manual §20.1, 28f14dfd4), like Grid, Snap and Guides; Fit, Keep and Restore the Clip
+    // panel's; Capture with its choices File › Export's (StudioStage.tsx). Only the frame's relays with no manual home stand here.
     ...own.filter(section => section.id !== 'chosen'),
   ]
   const said = [fault ?? paneFault ?? editor.error, stage.refusal, frame.refusal, ...(placement === null ? chrome?.faults ?? [] : [])].filter((text): text is string => !!text)
@@ -225,14 +224,17 @@ export function ExpressionsStudio(props: ExpressionsStudioProps) {
     onDragOver={event => { const kind = dropKind(event); if (!kind) return; event.preventDefault(); event.dataTransfer.dropEffect = 'copy'; setDropping(kind) }}
     onDragLeave={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDropping(null) }}
     onDrop={onDrop}>
-    <div className="expressions-studio-slot" data-device={STUDIO_DEVICE_ID} data-design="expressions:studio">
+    {/* The Studio's owner line (its work, or that none is open), said on the status bar now that no Stage stands to carry it (O-I #747). */}
+    <div className="expressions-studio-slot" data-device={STUDIO_DEVICE_ID} data-design="expressions:studio" data-i={`Studio|${studioOwner(reading, place)}`}>
       <DeviceView device={STUDIO_DEVICE} size="compact" binding={binding} marks={marks} actions={[
         {icon: 'detail', label: 'Select the Studio: the keys and the status bar speak to it; its expanded view holds its Macros and Chains above the chain', onPress: () => selectDevice(STUDIO_DEVICE_ID)},
         {icon: 'pane', label: 'Open the Studio full in a pane', onPress: () => { try { openInstrument(DEVICE_PANE_KIND, undefined, {ref: STUDIO_DEVICE_ID, title: 'Studio'}) } catch (cause) { setPaneFault(cause instanceof Error ? cause.message : String(cause)) } }},
       ]} />
     </div>
-    <InstrumentPlate presentation={{family: 'expressions', faceId: 'stage', title: 'Stage', icon: 'expr', owner: studioOwner(reading, place)}}
-      sections={stageSections} bodyClassName="native-device-view" dataAttributes={{'data-studio-stage': 'unplaced'}} footer={footer} />
+    {/* O-I #747 round three: the Stage stands only while it holds something — the frame's relays the manual gives no home (Guide, Acts),
+        the person's macro racks, or a fault to say. Every stage control is at its home; with nothing left, no plate stands. */}
+    {(stageSections.length > 0 || footer !== undefined) && <InstrumentPlate presentation={{family: 'expressions', faceId: 'stage', title: 'Stage', icon: 'expr', owner: studioOwner(reading, place)}}
+      sections={stageSections} bodyClassName="native-device-view" dataAttributes={{'data-studio-stage': 'unplaced'}} footer={footer} />}
   </div>
 }
 
