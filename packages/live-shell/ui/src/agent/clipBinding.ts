@@ -222,7 +222,12 @@ export function factoryClipValues(track: AgentSessionTrack, task: TaskClip | nul
   put(values, 'colour', input.colour)
   // The bound task's settings, as the owner states them (its name as set, else its purpose; a colour set, else the track's).
   if (task && task.n === 1) Object.assign(values, clipValuesOfSettings(input.settings?.settings ?? null))
-  if (task && task.state !== 'unknown') values.state = task.state
+  // How the task stands is Factory's reading of the owners' evidence (agent/taskActivity.ts): its word, the evidence that decided it,
+  // and the closure a closed custody carries. Where Factory decided no word, State is left out and `state.why` says why.
+  if (task?.standing?.word) values.state = task.standing.word
+  put(values, 'state.why', task?.standing?.why ?? (task && !task.softStop ? task.disclosure : null))
+  if (task?.standing?.retry) values['state.retry'] = true
+  put(values, 'closure', task?.standing?.closure)
   // The turns are the session's budget reading: the agency reading budgets a session, and a task runs on its session's turns.
   put(values, 'turns.used', track.budget.used)
   put(values, 'turns.cap', track.budget.max)
@@ -352,7 +357,10 @@ function taskWiring(task: TaskAddress | null, context: TaskSeamContext | null): 
       'repeat.repeats': 'the session\'s settings: Repeat\'s Repeats', 'repeat.stop': 'the session\'s settings: Repeat\'s Stop when',
       quantize: 'the session\'s settings: Quantize', 'env.mode': 'the session\'s settings: the envelopes\' mode', 'env.linked': 'the session\'s settings: the envelopes\' link',
       'env.agent.effort': 'the session\'s settings: the Effort envelope', 'env.agent.autonomy': 'the session\'s settings: the Autonomy envelope',
-      state: 'the task\'s state: queued · running · stalled · done (agentRunModel.ts), left out where the owner and the activity do not say',
+      state: 'how the task stands, Factory\'s word — queued · running · stalled · stopped · done (factory development task-activity, agent/taskActivity.ts) — left out where no evidence decides',
+      'state.why': 'the evidence Factory read the state from, in its words: the check-in bound, AIKit\'s session state, a pending permission request, or why nothing decides',
+      'state.retry': 'Factory\'s reading: the task stalled, so its track lights a retry',
+      closure: 'the closure Factory\'s custody of the task\'s work carries once it closed: its state and OpenRig\'s closure reason, with its target',
       'turns.used': 'the session\'s budget: turns used', 'turns.cap': 'the session\'s budget: turns allowed',
       log: 'the session\'s temporal events inside the task\'s span',
       elapsed: 'the task\'s start to its last activity, in seconds',

@@ -57,7 +57,9 @@ const UNAVAILABLE = {kind: 'unavailable', reason: 'the test carrier is down'}
 
 test('factory task: its session\'s readings on the task\'s clip — turns, state, a log row per owner event — nothing filled in', () => {
   const tasks = [
-    {n: 1, title: 'correlate occurrences', state: 'running', startUnixMs: Date.UTC(2026, 9, 10, 14, 2), lastActivityUnixMs: null, softStop: false, disclosure: 'the running clip draws no end of its own'},
+    // How it stands is Factory's reading (O-I #741, agent/taskActivity.ts): the clip's State is Factory's word.
+    {n: 1, title: 'correlate occurrences', state: 'running', startUnixMs: Date.UTC(2026, 9, 10, 14, 2), lastActivityUnixMs: null, softStop: false, disclosure: 'the running clip draws no end of its own',
+      standing: {word: 'running', why: 'Checked in 4 s ago, within the 90 s bound.', retry: false, decidedBy: 'window-sampling', closure: null}},
     {n: 2, title: null, state: 'unknown', startUnixMs: null, lastActivityUnixMs: null, softStop: true, disclosure: null},
   ]
   const track = {sessionRef: 'session:test', purpose: 'correlate occurrences', agentRef: null, agentName: 'Fizz', agentAccepted: null, spaceRef: 'space:test',
@@ -66,7 +68,7 @@ test('factory task: its session\'s readings on the task\'s clip — turns, state
     {stream: 'agency', kind: 'run', subject_ref: 'agency/session:test/turn', instant_unix_ms: Date.UTC(2026, 9, 10, 14, 2), summary: 'attempt 2 started'},
   ]})
   assert.equal(binding.values['turns.used'], 2); assert.equal(binding.values['turns.cap'], 12, 'the budget reading carried')
-  assert.equal(binding.values.state, 'running', 'the task\'s own state')
+  assert.equal(binding.values.state, 'running', 'the task\'s own state, as Factory reads it')
   assert.deepEqual(JSON.parse(binding.values.log).map(row => row.text), ['attempt 2 started'], 'a log row per owner event')
   assert.equal('launch' in binding.values, false, 'undisclosed: absent, never prose')
 })

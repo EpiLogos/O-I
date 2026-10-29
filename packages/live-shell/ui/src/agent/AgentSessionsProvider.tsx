@@ -16,6 +16,7 @@ import {agencyFingerprint, createAgencyDriver, type AgencyDriver} from '../owner
 import {taskReadingEntry, useWorldRosterAgents, useTaskEntries} from '../owners/readers'
 import {tellOwnerChanged} from '../owners/notices'
 import {projectOfSession, useWorldAgencyEntries, type WorldSessionRow} from './worldScope'
+import {useTaskActivity, withTaskActivity} from './taskActivity'
 
 export interface AgentSessionsValue {
   transport: KernelTransportStatus
@@ -146,7 +147,7 @@ function AgentSessionsSource({children}: {children: ReactNode}) {
 
   const axis = useMemo(() => sharedAxis(events, nowUnixMs), [events, nowUnixMs])
 
-  const tracks = useMemo(() => buildTracks(rows, roster, {nowUnixMs}).map(track => {
+  const read = useMemo(() => buildTracks(rows, roster, {nowUnixMs}).map(track => {
     if (track.group) return track
     const taskReading = readings[track.sessionRef] ?? null
     return {
@@ -156,6 +157,10 @@ function AgentSessionsSource({children}: {children: ReactNode}) {
       budget: budgetFromReading(taskReading),
     }
   }), [rows, roster, readings, events, nowUnixMs, axis])
+  // How each task stands is Factory's reading of the owners' evidence (taskActivity.ts): AIKit's status of the session, its check-ins
+  // and Factory's custody of the task. The tasks and needles above carry positions and spans; their state is Factory's alone.
+  const activity = useTaskActivity(transport, read, events, projectOf, nowUnixMs)
+  const tracks = useMemo(() => withTaskActivity(read, activity), [read, activity])
 
   // Auto-select the first real session so the dock and meters have a subject.
   useEffect(() => {

@@ -53,7 +53,9 @@ const T = (h, m) => Date.UTC(2026, 9, 8, h, m)
 const track = {sessionRef: 'ses-214', purpose: 'correlate occurrences', agentRef: 'agent:fizz', agentName: 'Fizz', agentAccepted: true,
   spaceRef: 'space:lead', spaceLabel: null, depth: 0, parentRef: null, group: false, memberRefs: [], needle: null, telemetryOn: false,
   budget: {used: 2, max: 12}, disclosure: null, tasks: [
-    {n: 1, title: 'correlate occurrences', state: 'running', startUnixMs: T(13, 41), lastActivityUnixMs: T(14, 24), softStop: false, disclosure: null},
+    // How it stands is Factory's reading (O-I #741, agent/taskActivity.ts): the State the Clip panel draws is Factory's word.
+    {n: 1, title: 'correlate occurrences', state: 'running', startUnixMs: T(13, 41), lastActivityUnixMs: T(14, 24), softStop: false, disclosure: null,
+      standing: {word: 'running', why: 'Checked in 4 s ago, within the 90 s bound.', retry: false, decidedBy: 'window-sampling', closure: null}},
     {n: 2, title: null, state: 'unknown', startUnixMs: null, lastActivityUnixMs: null, softStop: true, disclosure: null}]}
 const other = {...track, sessionRef: 'ses-300', purpose: 'widget tests', tasks: []}
 const events = [

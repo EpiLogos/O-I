@@ -19,6 +19,17 @@
 
 export type TaskState = 'running' | 'queued' | 'stalled' | 'done' | 'unknown'
 
+/** How a task stands as Factory reads it (agent/taskActivity.ts, factory/src/task_activity.rs): the manual's word — or none where no
+ * evidence decides — with the evidence in words, whether the track lights a retry, the rung that decided, and the closure a closed
+ * custody of the task's work carries. */
+export interface TaskStanding {
+  word: 'queued' | 'running' | 'stalled' | 'stopped' | 'done' | null
+  why: string
+  retry: boolean
+  decidedBy: string | null
+  closure: string | null
+}
+
 export interface TaskClip {
   /** 1-based ordinal over the session's real clips; the soft-stop slot takes the next number. */
   n: number
@@ -34,6 +45,8 @@ export interface TaskClip {
    * read under (AIKit encounter-session-settings `task.task_ref`, encounter_task_attempts_list). Absent on the soft-stop slot and on a
    * record that names only a purpose. */
   taskRef?: string
+  /** Factory's reading of how the task stands, where Factory read it (agent/taskActivity.ts withTaskActivity). */
+  standing?: TaskStanding
 }
 
 export interface NeedleReading {
