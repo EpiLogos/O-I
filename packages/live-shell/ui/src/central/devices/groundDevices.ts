@@ -140,30 +140,39 @@ export function censusLines(census: unknown): {worktrees: string; branches: stri
 /** The census's machine reads through the kernel: the seat instrument (seat_status_read; `again`: Read now asks it afresh, else the shared
  * answer stands), and Central's git census for the worktrees and branches — one read for both. */
 export function hygieneMachineRead(transport: KernelTransportStatus, again: boolean, projects: readonly string[]): HygieneMachineRead {
-  let census: Promise<{lines: {worktrees: string; branches: string}} | {refused: string}> | null = null
+  type Census = {lines: {worktrees: string; branches: string}; answered: string[]; refused: {project: string; refusal: string}[]} | {refused: string}
+  let census: Promise<Census> | null = null
   const readOne = (project: string) => kernelRead(transport, centralActionOp(GIT_CENSUS_ACTION, {project}), {fresh: again}).then((call): {lines: {worktrees: string; branches: string}} | {refused: string} => {
     const answer = actionAnswerOf({status: call.error ? 'refused' : 'answered', value: call.outcome?.result === 'action_dispatched' ? call.outcome : null, error: call.error ?? null}, GIT_CENSUS_ACTION)
     if (answer.status === 'refused') return {refused: answer.error}
     const lines = answer.status === 'answered' ? censusLines(answer.value) : null
     return lines ? {lines} : {refused: 'Central answered the git census in a form it is not (central.git-census/v1 expected).'}
   }, (cause: unknown) => ({refused: REFUSAL(cause)}))
-  // Each project's census, one after another; the lists are the answered ones joined, and a census every project refused is the refusal.
-  const readCensus = () => census ??= (async () => {
+  // Each project's census, one after another; the lists are the answered ones joined, each project that refused kept by name with its
+  // words, and a census every project refused is the refusal.
+  const readCensus = () => census ??= (async (): Promise<Census> => {
     if (!projects.length) return {refused: NO_PROJECT_CENSUS}
-    const worktrees: string[] = [], branches: string[] = [], refused: string[] = []
+    const worktrees: string[] = [], branches: string[] = [], answered: string[] = [], refused: {project: string; refusal: string}[] = []
     for (const project of projects) {
       const read = await readOne(project)
-      if ('refused' in read) { refused.push(projects.length === 1 ? read.refused : `${project}: ${read.refused}`); continue }
+      if ('refused' in read) { refused.push({project, refusal: read.refused}); continue }
+      answered.push(project)
       if (read.lines.worktrees) worktrees.push(read.lines.worktrees)
       if (read.lines.branches) branches.push(read.lines.branches)
     }
-    return refused.length === projects.length ? {refused: refused.join('; ')} : {lines: {worktrees: worktrees.join('\n'), branches: branches.join('\n')}}
+    if (!answered.length) return {refused: projects.length === 1 ? refused[0].refusal : refused.map(item => `${item.project}: ${item.refusal}`).join('; ')}
+    return {lines: {worktrees: worktrees.join('\n'), branches: branches.join('\n')}, answered, refused}
   })()
   return async kind => {
     if (kind !== 'seat-status') {
-      const read = await readCensus(), boundaryOp = CENSUS_OP(kind === 'worktree-list' ? 'worktrees' : 'branches', projects)
-      return 'refused' in read ? {boundaryOp, stdout: '', refused: read.refused}
-        : {boundaryOp, stdout: kind === 'worktree-list' ? read.lines.worktrees : read.lines.branches}
+      const list = kind === 'worktree-list' ? 'worktrees' : 'branches'
+      const read = await readCensus()
+      if ('lines' in read) {
+        // The reading names the projects it is of; each project that refused stands beside it, named, in Central's words.
+        return {boundaryOp: CENSUS_OP(list, read.answered), stdout: list === 'worktrees' ? read.lines.worktrees : read.lines.branches,
+          ...(read.refused.length ? {partial: read.refused.map(item => ({boundaryOp: CENSUS_OP(list, [item.project]), refusal: item.refusal}))} : {})}
+      }
+      return {boundaryOp: CENSUS_OP(list, projects), stdout: '', refused: read.refused}
     }
     const entry = seatStatusEntry(transport)
     await (again ? entry.retry(SEAT_STATUS_EPOCH) : entry.ensure(SEAT_STATUS_EPOCH))

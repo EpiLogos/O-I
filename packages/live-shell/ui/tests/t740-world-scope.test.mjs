@@ -27,6 +27,7 @@ export async function resolve(specifier,context,next){
 }
 export async function load(url,context,next){
   if(url.endsWith('.css'))return {format:'module',shortCircuit:true,source:'export default null'};
+  if(url.includes('?raw')||url.endsWith('.html'))return {format:'module',shortCircuit:true,source:'export default ""'};
   if(url.endsWith('.ts')||url.endsWith('.tsx')){
     const source=await readFile(new URL(url).pathname,'utf8');
     const {outputText}=ts.transpileModule(source,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext,jsx:ts.JsxEmit.ReactJSX},fileName:url});
@@ -178,4 +179,67 @@ test('CODE-READING — the readings the walk named carry no literal project; the
   for (const site of sites) assert.doesNotMatch(read(site), /(project|PROJECT)\b[^\n]{0,24}['"]O-I['"]/, `${site}: no literal project`)
   assert.match(read('agent/AgentSessionsProvider.tsx'), /useWorldAgencyEntries\(transport\)/, 'the provider reads the world\'s agency')
   assert.match(readFileSync(new URL('../../../../desktop/cradle/src/nara/answerThis.ts', import.meta.url), 'utf8'), /export const NARA_CHANNEL_PROJECT = "";/)
+})
+
+// ---- round two: Central's Approvals in the selected world; the census never silent on a partial refusal ----------------------------
+
+test('PURE — a world\'s register: a project\'s world its project, your world the root (null); each observed session in its own register', () => {
+  assert.equal(scope.worldRegisterOf({kind: 'project', project: 'first-project'}), 'first-project')
+  assert.equal(scope.worldRegisterOf({kind: 'yours', project: null}), null, 'your world: the root register')
+  assert.equal(scope.worldRegisterOf(null), null, 'no world selected: your own')
+  // The Nara conversation in the register its dialogue was looked up in; the packet's session in the register its agency read listed it.
+  assert.deepEqual(scope.observedSessionsOf({session: 'ses-nara', space: 'space:n', project: ''}, {ref: 'ses-1', space: 'space:f', project: 'first-project'}),
+    [{ref: 'ses-nara', space: 'space:n', project: ''}, {ref: 'ses-1', space: 'space:f', project: 'first-project'}])
+  assert.deepEqual(scope.observedSessionsOf(null, {ref: 'ses-1', space: 'space:f'}), [{ref: 'ses-1', space: 'space:f', project: ''}], 'a track no world-wide read placed: the root')
+  assert.deepEqual(scope.observedSessionsOf({session: 'ses-1', space: 'space:f', project: ''}, {ref: 'ses-1', space: 'space:f', project: 'first-project'}),
+    [{ref: 'ses-1', space: 'space:f', project: ''}], 'one session observed once')
+  assert.deepEqual(scope.observedSessionsOf(null, null), [])
+})
+
+test('CODE-READING — Central\'s Approvals read and act in the selected world\'s register; its observed sessions carry theirs', () => {
+  const central = read('central/devices/CentralDevices.tsx')
+  assert.doesNotMatch(central, /APPROVALS_PROJECT|RACK_PROJECT/, 'no fixed register')
+  assert.match(central, /const approvalsRegister = worldRegisterOf\(selectedWorld\)/)
+  assert.match(central, /useSourceReturnsAnswer\(transport, approvalsRegister\)/)
+  assert.match(central, /approve: row => acceptSourceReturn\(transport, approvalsRegister, row, person\)/)
+  assert.match(central, /reject: row => rejectSourceReturn\(transport, approvalsRegister, row\)/)
+  assert.match(central, /send: \(row, words\) => commentSourceReturn\(transport, approvalsRegister, row, words, person\)/)
+  assert.match(central, /observedSessionsOf\(/, 'the observed sessions, each in its register')
+})
+
+/** A kernel answering Central's git census for the projects in `answers`, and refusing the others in Central's words. */
+function censusKernel(answers) {
+  const sent = []
+  const fetch = async (_url, init) => {
+    const body = JSON.parse(init.body)
+    sent.push(body)
+    if (body.op === 'invoke_action' && body.invocation.action === 'central.git.census') {
+      const project = body.invocation.input.project
+      const data = answers[project]
+      return {json: async () => ({ok: true, outcome: {result: 'action_dispatched', dispatch: data
+        ? {state: 'invoked', owner_operation: 'central.git.census', data}
+        : {state: 'owner_refused', owner_operation: 'central.git.census', message: `Not a git repository: Work/${project}`}}})}
+    }
+    return {json: async () => ({ok: false, error: `the fixture kernel answers no ${body.op}`})}
+  }
+  return {sent, fetch}
+}
+
+test('SCRIPTED — the census names each project that refused, by name and in its words, beside the lists of those that answered', async () => {
+  const ground = await import('../src/central/devices/groundDevices.ts')
+  const {readHygieneCensus} = await import('../src/inhabitants/CentralHygieneDevice.tsx')
+  const census = {schema: 'central.git-census/v1', repos: [{worktrees: [{path: '/w/Bare/Central/Work/field-notes', branch: 'main'}], branches: [{name: 'main', checked_out_in: ['/w/Bare/Central/Work/field-notes']}]}]}
+  const owner = censusKernel({'field-notes': census})
+  const transport = {kind: 'bridge', url: 'http://t740-partial-census.fixture'}
+  const read = ground.hygieneMachineRead(transport, true, ['field-notes', 'first-project'])
+  const trees = await withKernel(owner, () => read('worktree-list'))
+  assert.match(trees.stdout, /field-notes/, 'the lists of the project that answered')
+  assert.equal(trees.refused, undefined, 'one project answered: the reading stands')
+  assert.deepEqual(trees.partial, [{boundaryOp: 'central.git.census worktrees (invoke_action, project first-project)', refusal: 'Not a git repository: Work/first-project'}])
+  assert.equal(trees.boundaryOp, 'central.git.census worktrees (invoke_action, project field-notes)', 'the reading names the project it is of')
+  const whole = await withKernel(censusKernel({'field-notes': census}), () => readHygieneCensus({transport: {kind: 'bridge', url: 'http://t740-partial-census-2.fixture'}, epoch: 'e',
+    machineRead: ground.hygieneMachineRead({kind: 'bridge', url: 'http://t740-partial-census-2.fixture'}, true, ['field-notes', 'first-project'])}))
+  assert.deepEqual(whole.census.worktrees.map(tree => tree.path), ['/w/Bare/Central/Work/field-notes'])
+  const refusals = whole.census.sources.filter(source => /first-project/.test(source.boundaryOp)).map(source => source.refusal)
+  assert.deepEqual(refusals, ['Not a git repository: Work/first-project', 'Not a git repository: Work/first-project'], 'its worktrees and its branches: each refusal named, never silent')
 })

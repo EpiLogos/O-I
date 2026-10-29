@@ -147,6 +147,23 @@ export function projectOfSession(rows: readonly {readonly sessionRef: string; re
   return rows.find(row => row.sessionRef === sessionRef)?.project ?? ROOT_REGISTER
 }
 
+/** The register a world's own readings ask: a project's world its project; your world — and no world selected, which is your own — the
+ * root register, null as the ops that take `project: string | null` name it. Pure. */
+export function worldRegisterOf(world: {readonly kind: string; readonly project: string | null} | null | undefined): string | null {
+  return world?.kind === 'project' && world.project ? world.project : null
+}
+
+/** The sessions a chain observes, each once and in its own register: the Nara conversation in the register its dialogue was looked up
+ * in, then the packet's session in the register its agency read listed it in (absent: the root). Pure. */
+export function observedSessionsOf(
+  nara: {readonly session: string; readonly space: string; readonly project: string} | null,
+  packet: {readonly ref: string; readonly space: string; readonly project?: string} | null,
+): {ref: string; space: string; project: string}[] {
+  const list: {ref: string; space: string; project: string}[] = nara ? [{ref: nara.session, space: nara.space, project: nara.project}] : []
+  if (packet && !list.some(session => session.ref === packet.ref)) list.push({ref: packet.ref, space: packet.space, project: packet.project ?? ROOT_REGISTER})
+  return list
+}
+
 /** The world's projects, held for the window (read on mount and the spine's epoch). */
 export function useWorldProjects(transport: KernelTransportStatus, enabled = true): OwnerReading<string[]> {
   const epoch = useSpineEpoch()

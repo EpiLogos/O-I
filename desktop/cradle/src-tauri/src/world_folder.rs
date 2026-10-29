@@ -272,6 +272,14 @@ pub fn environment_from(
     changes
 }
 
+/// The working directory a world's processes start in: the world's folder, so nothing a product
+/// resolves from its working directory — AIKit's project skills, a CLI's project root, the kernel's
+/// own directory before Central's ground is made — reaches the folder the launch stood in. Yours keeps
+/// the launch's own (none).
+pub fn working_directory(world: &World) -> Option<&Path> {
+    (!world.native).then_some(world.folder.as_path())
+}
+
 /// The environment a switch of worlds relaunches with: the launch's own, with the computer's own
 /// home back, no product home a world set, and the chosen folder named.
 pub fn relaunch_environment(
@@ -449,6 +457,14 @@ mod tests {
             );
         }
         assert!(credential_shaped("ZAI_API_KEY") && !credential_shaped("HOME"));
+    }
+
+    #[test]
+    fn a_worlds_processes_start_in_its_folder_and_yours_keeps_the_launchs() {
+        let s = Scratch::new("cwd");
+        let bare = resolve(&s.home(), Some(&s.world("Bare")), None, &s.guarded()).unwrap();
+        assert_eq!(working_directory(&bare), Some(s.world("Bare").as_path()));
+        assert_eq!(working_directory(&World::yours(&s.home())), None);
     }
 
     #[test]

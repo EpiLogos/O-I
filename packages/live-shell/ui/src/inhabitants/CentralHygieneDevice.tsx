@@ -63,7 +63,10 @@ interface ReadState {
 }
 
 /** The machine-level declared reads a host can supply (the seat instrument, read-only git); each names the boundary_op it ran. */
-export type HygieneMachineRead = (kind: 'seat-status' | 'worktree-list' | 'branch-refs') => Promise<{boundaryOp: string; stdout: string; refused?: string}>
+/** One machine read: its operation, its output, or its refusal; `partial` names each part of a reading made of several (the census's
+ * projects) that refused while the others answered — by its own operation, in its owner's words. */
+export type HygieneMachineRead = (kind: 'seat-status' | 'worktree-list' | 'branch-refs') => Promise<{boundaryOp: string; stdout: string; refused?: string;
+  partial?: readonly {readonly boundaryOp: string; readonly refusal: string}[]}>
 
 /** Read the ground once: the kernel's workcell and git reads (each refusal carried verbatim), then the host's machine reads where
  * it supplies them; the census and the model's findings. The device's own body and the designed device (central/devices/
@@ -130,7 +133,10 @@ export async function readHygieneCensus({transport, epoch, machineRead, seatPath
     for (const kind of ['seat-status', 'worktree-list', 'branch-refs'] as const) {
       try {
         const result = await machineRead(kind)
-        sources.push({boundaryOp: result.boundaryOp, channel: 'machine-instrument', at: new Date().toISOString(), refusal: result.refused})
+        const at = new Date().toISOString()
+        sources.push({boundaryOp: result.boundaryOp, channel: 'machine-instrument', at, refusal: result.refused})
+        // The parts that refused beside the answered reading, each named by its operation and in its owner's words: never silent.
+        for (const part of result.partial ?? []) sources.push({boundaryOp: part.boundaryOp, channel: 'machine-instrument', at, refusal: part.refusal})
         if (result.refused) continue
         if (kind === 'seat-status') {
           // The instrument's own JSON (`seat status --json`) states every count; its text is read only when the host ran that.

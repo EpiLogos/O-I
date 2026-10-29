@@ -72,7 +72,7 @@ import {holdView, useChainHolds, viewHolds} from '../../agent/devices/designBind
 import {familyFaceDevice} from '../../agent/devices/mainTrackBindings'
 import {APPROVALS_ID, approvalsBinding} from '../../agent/devices/receiptBindings'
 import {useSourceReturnsAnswer} from '../../agent/devices/workcellReads'
-import {RACK_PROJECT as APPROVALS_PROJECT} from '../../agent/devices/useRackReading'
+import {observedSessionsOf, ROOT_REGISTER, worldRegisterOf} from '../../agent/worldScope'
 import {useAgentSessionsOptional} from '../../agent/AgentSessionsProvider'
 import {MAIN_TRACK_REF} from '../../frame/tracks/SessionGrid'
 import {CENTRAL_DAY_TRACK_ID} from '../../timeline/centralTrackAdapter'
@@ -420,12 +420,14 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
   const nowUnixMs = useAgentSessionsOptional()?.nowUnixMs ?? 0
   const companion = COMPANIONS.base.name
   const packetTrack = conversationOf(agency.tracks, companion, selectionRef).track
-  const packetSessionRef = packetTrack?.sessionRef ?? null, packetSpaceRef = packetTrack?.spaceRef ?? null
-  const observedSessions = useMemo(() => {
-    const list: ObservedSession[] = nara.state === 'bound' && nara.session && nara.space ? [{ref: nara.session, space: nara.space}] : []
-    if (packetSessionRef && packetSpaceRef && !list.some(session => session.ref === packetSessionRef)) list.push({ref: packetSessionRef, space: packetSpaceRef})
-    return list
-  }, [nara.state, nara.session, nara.space, packetSessionRef, packetSpaceRef])
+  const packetSessionRef = packetTrack?.sessionRef ?? null, packetSpaceRef = packetTrack?.spaceRef ?? null, packetProject = packetTrack?.project
+  // Each observed session in its own register (agent/worldScope.ts): the Nara conversation where its dialogue was looked up, the packet's
+  // session where its agency read listed it.
+  const naraProject = conversation?.project ?? ROOT_REGISTER
+  const observedSessions = useMemo((): ObservedSession[] => observedSessionsOf(
+    nara.state === 'bound' && nara.session && nara.space ? {session: nara.session, space: nara.space, project: naraProject} : null,
+    packetSessionRef && packetSpaceRef ? {ref: packetSessionRef, space: packetSpaceRef, ...(packetProject !== undefined ? {project: packetProject} : {})} : null,
+  ), [nara.state, nara.session, nara.space, naraProject, packetSessionRef, packetSpaceRef, packetProject])
   const encounters = useEncounterSessions(observedSessions)
   const packet = usePacketDevice(transport, packetReading, {companion, bound: !!packetTrack, handle: packetSessionRef ? encounters.handles[packetSessionRef] : undefined})
   const packetSession = packetReading?.context ? packetReading.context.scope.agent_session : null
@@ -514,9 +516,10 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
   // Approvals on the Main track (§18.1): the proposals the Agent's session waits on — its consent requests — answered through its own
   // encounter; the view's settings the one Approvals' (receiptBindings.ts).
   const naraTrack = nara.session ? agency.tracks.find(track => track.sessionRef === nara.session && !track.group) ?? null : null
-  // The returned work that waits (Central's source returns, lane K1's source_returns_read): the project the window works in — the read
-  // Factory's Approvals shares (Central refuses the root register: "project is required").
-  const returns = useSourceReturnsAnswer(transport, APPROVALS_PROJECT).reading
+  // The returned work that waits (Central's source returns, lane K1's source_returns_read) in the selected world's register: a project's
+  // world its project; your world the root, which Central keeps no returns for ("project is required"), so none is asked there.
+  const approvalsRegister = worldRegisterOf(selectedWorld)
+  const returns = useSourceReturnsAnswer(transport, approvalsRegister).reading
   const returned = returns.status === 'answered' ? returns.value : null
   // Approve (W2, as Factory's Main track): the person who accepts is the principal Central's personal anchor names, asked only while a
   // proposal waits; the press is Central's projectcentral.source.return_accept (sourceReturnAccept.ts, action.rs PERSON_ACTS).
@@ -531,13 +534,13 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
     const actions = answerHandle && 'actions' in answerHandle ? answerHandle.actions : undefined
     // Approvals is handed no Gateway and stands no default answer: that answer is the Gateway's, never Approvals' (§19.14; ticket 788).
     const binding = approvalsBinding({session: naraTrack, encounter: answerObserved?.reading ?? null, holds, returns: returned, tracks: agency.tracks, nowUnixMs: nowUnixMs || Date.now()},
-      {...(actions ? {permission: (id, decision) => actions.permission(id, decision)} : {}), approve: row => acceptSourceReturn(transport, APPROVALS_PROJECT, row, person),
-        reject: row => rejectSourceReturn(transport, APPROVALS_PROJECT, row)},
+      {...(actions ? {permission: (id, decision) => actions.permission(id, decision)} : {}), approve: row => acceptSourceReturn(transport, approvalsRegister, row, person),
+        reject: row => rejectSourceReturn(transport, approvalsRegister, row)},
       CENTRAL_APPROVALS_ID)
     // Changes (W6): a comment on the return, in the words written in the thread — the Agent's composer here — through Central's
     // projectcentral.source.return_comment (sourceReturnComment.ts); once Central keeps it, the composer is cleared.
     const commented = withReturnComments(binding, {returns: returned, comment: agentDraft}, {
-      send: (row, words) => commentSourceReturn(transport, APPROVALS_PROJECT, row, words, person),
+      send: (row, words) => commentSourceReturn(transport, approvalsRegister, row, words, person),
       after: () => { void agentWrite?.([{key: 'draft', value: ''}]) },
     })
     // Open marks an item opened here (the one Approvals' view hold), after opening an owner's request where it belongs.
@@ -545,7 +548,7 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
     const requested = withOwnerRequests(commented, {...ownerRequests, nowUnixMs: nowUnixMs || Date.now()}, openNotificationTarget,
       {opened, hold: ids => holdView(APPROVALS_ID, 'opened', openedHold(ids))})
     return requested
-  }, [answerHandle, naraTrack, answerObserved, holds, returned, agency.tracks, nowUnixMs, transport, person, agentDraft, agentWrite, ownerRequests])
+  }, [answerHandle, naraTrack, answerObserved, holds, returned, agency.tracks, nowUnixMs, transport, person, agentDraft, agentWrite, ownerRequests, approvalsRegister])
   const others = useMemo(() => centralAgentDevices(), [])
   // Docs (§18.5) on the selected world (pageDevices.ts useDocsDevice, pageBindings.ts docsBinding): the world's account on six tiers on
   // Central's own readings, and the person's presses through Central.

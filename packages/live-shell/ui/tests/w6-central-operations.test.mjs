@@ -287,7 +287,8 @@ test('Central\'s Approvals carries Changes over the Approvals binding: disabled 
   const {readFile} = await import('node:fs/promises')
   const chain = await readFile(new URL('../src/central/devices/CentralDevices.tsx', import.meta.url), 'utf8')
   assert.match(chain, /withReturnComments\(binding, \{returns: returned, comment: agentDraft\}/, 'Central\'s chain carries Changes with the Agent\'s composer as the thread')
-  assert.match(chain, /commentSourceReturn\(transport, APPROVALS_PROJECT, row, words, person\)/)
+  // REPLACED (O-I #740 lane B): APPROVALS_PROJECT ('O-I'); the selected world's register (agent/worldScope.ts worldRegisterOf).
+  assert.match(chain, /commentSourceReturn\(transport, approvalsRegister, row, words, person\)/)
 })
 
 // ── 6. The grid's clip second line, the ruler's overview strip and scale label ─────────────────────────────────────────────────────

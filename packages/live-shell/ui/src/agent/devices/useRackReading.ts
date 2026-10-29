@@ -22,11 +22,11 @@ type Obj = Record<string, unknown>
 const isObj = (value: unknown): value is Obj => !!value && typeof value === 'object' && !Array.isArray(value)
 const strings = (value: unknown): string[] => Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string' && item.length > 0) : []
 
-/** The register a reading outside any session asks — Central's Approvals and the Link's population, which name no session: your world's
- * root register, null in the ops whose root is null (agent/worldScope.ts registerOf). A session's chain reads its own register instead. */
+/** The register a reading outside any session asks — the Link's population, which names no session: your world's root register, null
+ * in the ops whose root is null (agent/worldScope.ts registerOf), the whole population. A session's chain reads its own register instead;
+ * Central's Approvals read the selected world's (CentralDevices.tsx worldRegisterOf). */
 export const WORLD_REGISTER: string | null = registerOf(ROOT_REGISTER)
-/** Kept under its old name for central/devices/CentralDevices.tsx's import (APPROVALS_PROJECT), which is not this lane's file: it is the root
- * register now, never a named project. */
+/** Kept under its old name for frame/transport/LinkSlot.tsx's import: the root register, never a named project. */
 export const RACK_PROJECT = WORLD_REGISTER
 
 export interface RackReading {
