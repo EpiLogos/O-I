@@ -196,8 +196,9 @@ const placeNameOf = (facet: TechnePlaceFacet): string => facet.identity?.names?.
 const said = (value: string | null | undefined): value is string => typeof value === 'string' && value.trim() !== '';
 
 /** [T-PLACES-ONTO-ATLAS] The facet's own fields a place row carries, verbatim and only when the owner declares them: its uncertainty
- * words, the evidence it cites (`source_ref`), its validity edges and the places it sits in (`hierarchy`). Nothing is derived. */
-export function facetFieldsOf(facet: TechnePlaceFacet): Pick<SuitePlace, 'uncertainty' | 'evidence' | 'valid_from' | 'valid_to' | 'within' | 'body_ref' | 'on_body'> {
+ * words, the evidence it cites (`source_ref`), its validity edges, the places it sits in (`hierarchy`) and, for a stop of a route, its place in
+ * the order (`sequence`, O-I #746). Nothing is derived. */
+export function facetFieldsOf(facet: TechnePlaceFacet): Pick<SuitePlace, 'uncertainty' | 'evidence' | 'valid_from' | 'valid_to' | 'within' | 'body_ref' | 'on_body' | 'sequence'> {
   const within = (facet.hierarchy ?? []).filter(entry => said(entry.place_ref) && said(entry.relation)).map(entry => ({place_ref: entry.place_ref, relation: entry.relation}));
   const body = locateOnBody(facet);
   return {
@@ -207,6 +208,8 @@ export function facetFieldsOf(facet: TechnePlaceFacet): Pick<SuitePlace, 'uncert
     ...(said(facet.valid_from) ? {valid_from: facet.valid_from} : {}),
     ...(said(facet.valid_to) ? {valid_to: facet.valid_to} : {}),
     ...(within.length ? {within} : {}),
+    // [O-I #746] a stop's place in its route's order
+    ...(typeof facet.sequence === 'number' ? {sequence: facet.sequence} : {}),
   };
 }
 

@@ -168,3 +168,27 @@ test("no fabrication — a declared place with no geometry stays unlocated; coor
   assert.ok(validateReading(payload).valid);
   assert.equal(payload.disclosure.instruments.find(entry => entry.instrument === "place").available, true);
 });
+
+// O-I #746: a stop of a route carries its place in the order (AIKit PlaceFacet.sequence, beside the relation it is a stop of), and the route
+// walks its stops in that order. A stop without one (a route written before stops carried an order) walks first, by its validity as before.
+const {routeModel, validatePlaceFacet} = {...(await import("../src/techne/m0m5/place/world.ts")), ...(await import("../src/techne/contract.ts"))};
+const stop = (ref, lon, extra = {}) => ({place_ref: ref, precision: "approximate", relation: "TRAVELLED_TO", geometry: {type: "point", coordinates: [lon, 10]}, ...extra});
+
+test("a route walks its stops in their order: the place each holds in the order, not the order they were written", () => {
+  const route = routeModel([stop("p:c", 3, {sequence: 3}), stop("p:a", 1, {sequence: 1}), stop("p:b", 2, {sequence: 2})]);
+  assert.deepEqual(route.stops.map(entry => entry.place_ref), ["p:a", "p:b", "p:c"]);
+  assert.deepEqual(route.stops.map(entry => entry.sequence), [1, 2, 3]);
+  assert.match(route.note, /order/, "the note says what the order is");
+  const joined = routeModel([stop("p:later", 9, {sequence: 1}), stop("p:dated", 8, {valid_from: "0400-01-01"}), stop("p:earlier", 7, {valid_from: "0300-01-01"})]);
+  assert.deepEqual(joined.stops.map(entry => entry.place_ref), ["p:earlier", "p:dated", "p:later"],
+    "stops without an order walk first by their dates, as before; the stops joined in order follow");
+  assert.equal(routeModel([stop("p:a", 1, {sequence: 1})]), null, "one stop is no route");
+});
+
+test("the contract carries a stop's order beside its relation, and refuses an order with no relation or no count", () => {
+  const errors = label => { const list = []; validatePlaceFacet(label, "place", list); return list };
+  assert.deepEqual(errors(stop("p:a", 1, {sequence: 2})), []);
+  assert.match(errors({...stop("p:a", 1, {sequence: 2}), relation: undefined}).join(" "), /sequence/, "an order is an order within a relation's route");
+  assert.match(errors(stop("p:a", 1, {sequence: 0})).join(" "), /sequence/, "counted from 1");
+  assert.match(errors(stop("p:a", 1, {sequence: 1.5})).join(" "), /sequence/);
+});

@@ -379,12 +379,16 @@ test('on your body the Place tool\'s draft stands on it and carries the name the
   assert.match(body.suggestName(RECORD, -5, 140), /^[A-Z][a-z]+$/)
 })
 
-test('the place kind is the view\'s own; a portal or a route is not placed by a click, and says why', () => {
+test('the place kind is the view\'s own; a portal is not placed by a click, and says why; a route is, stop by stop (O-I #746)', () => {
   tool.bindPlaceOwner({offer() {}, open() {}, reread() {}})
   assert.equal(tool.placeKindChoice(), 'place')
   tool.choosePlaceKind('portal')
   tool.armPlaceTool({ref: 's', title: 'S'})
   assert.deepEqual(tool.placeToolState(), {phase: 'idle', notice: tool.PLACE_KIND_WAITS.portal, tone: 'refused'})
+  tool.choosePlaceKind('route')
+  tool.armPlaceTool({ref: 's', title: 'S'})
+  assert.equal(tool.placeToolState().phase, 'armed', 'a route\'s stop is placed by a click')
+  tool.disarmPlaceTool()
   tool.choosePlaceKind('palace')
   tool.armPlaceTool({ref: 's', title: 'S'})
   assert.equal(tool.placeToolState().phase, 'armed', 'a palace is placed where its rooms\' subjects are placed')

@@ -19,7 +19,9 @@
 // root register's ground is already held once for the window (central/devices/useCentralReadings.ts:115 useCentralGroundAnswer, which
 // SystemReadings.tsx:101 already uses). A project world's is `readGround(transport, project)`: an existing owner op, no new store.
 // CAVEAT (receiptBindings.ts:9-13, read 16 Oct): the root horizon then held 830 changes and O-I's 204, NONE attributed to an agent, so
-// the outer ring is truly empty until agents write with their session (central.files.write / projectcentral.source.create carry it).
+// the outer ring was truly empty. The cause (O-I #746): central.files.write/create and central.flow.append, the doors an agent's session
+// writes a page through, kept the session in the file's own history and the horizon met the write later, naming no one. Central now
+// carries the write's attribution onto the horizon row of a page of your world's Flows carrier (ctrl/src/file_mutation.rs FlowsHorizon).
 //
 // Channels: scripted. The model is the shell's own pure code in memory; the horizon rows are shaped as Central answers (two REAL rows of
 // the 16 Oct root horizon, tests/factory-receipts-binding.test.mjs) and FIXTURES for the agent's.

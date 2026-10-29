@@ -72,6 +72,9 @@ export interface SuitePlace {
    * place is never located on the Earth. `on_body` is its point on that body, where it declares one. */
   body_ref?: string;
   on_body?: {readonly lat: number; readonly lon: number};
+  /** [O-I #746] a stop's place in the order of its subject's route of its relation, verbatim (the facet's sequence); absent for a place that is no
+   * stop, or a stop the owner gave no place in the order. */
+  sequence?: number;
 }
 
 /** A body of the field (manual §2 "every world is drawn as a body in space"): Central's root, or a hosted world, as the suite composed

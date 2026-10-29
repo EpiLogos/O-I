@@ -173,3 +173,28 @@ test('a routed save answers the map exactly once, whatever the owner or the loca
  ]);
  assert.deepEqual(failures,['Choose and read an evidence source','confirm failed']);
 });
+
+// O-I #746: a route is placed stop by stop. The map's draft of a stop carries the relation it is a stop of and its place in the order, and the
+// editor writes both onto the new place fact, so the owner's PlaceSet holds the stop in its route. The editor reads the subject's own facts at
+// the revision it read: a place in the order those facts already hold goes to the next free one, after the route's last stop.
+test('a route draft is a stop: the editor writes its relation and its place in the order, after the stops the subject holds', ()=>{
+ const held={temporal:[],places:[
+  {place_ref:'wiki:place:a',precision:'approximate',geometry:{type:'point',coordinates:[1,1]},relation:'TRAVELLED_TO',sequence:1,source_ref:BASIS},
+  {place_ref:'wiki:place:b',precision:'approximate',geometry:{type:'point',coordinates:[2,2]},relation:'TRAVELLED_TO',sequence:2,source_ref:BASIS},
+ ]};
+ const seeded=api.applyPlaceDraft(held,{lat:3,lon:4,precision:'approximate',name:'Syracuse',relation:'TRAVELLED_TO',sequence:3});
+ const fact=seeded.values.places[2];
+ assert.deepEqual([fact.relation,fact.sequence],['TRAVELLED_TO',3]);
+ assert.deepEqual(fact.geometry,{type:'point',coordinates:[4,3]});
+ assert.match(seeded.notice,/stop 3 of its TRAVELLED_TO route/);
+ const stale=api.applyPlaceDraft(held,{lat:3,lon:4,precision:'approximate',relation:'TRAVELLED_TO',sequence:2});
+ assert.equal(stale.values.places[2].sequence,3,'a place in the order already held goes after the last stop');
+ const first=api.applyPlaceDraft(emptyValues(),{lat:3,lon:4,precision:'approximate',relation:'TRAVELLED_TO'});
+ assert.equal(first.values.places[0].sequence,1,'the first stop of a route is stop 1');
+ const sourced={...seeded.values,places:seeded.values.places.map(row=>({...row,source_ref:BASIS}))};
+ const [change]=api.factsChanges(held,sourced);
+ assert.equal(change.change,'place_set');
+ assert.deepEqual([change.places[2].relation,change.places[2].sequence],['TRAVELLED_TO',3],'the save carries the stop in its route');
+ const plain=api.applyPlaceDraft(emptyValues(),{lat:3,lon:4,precision:'approximate'});
+ assert.ok(!('relation' in plain.values.places[0])&&!('sequence' in plain.values.places[0]),'a place draft is no stop');
+});
