@@ -164,9 +164,9 @@ function FrameWell({p, w, h, labels, handles}: {p: ViewProps; w: number; h: numb
       return <g key={f.code}>
         <rect x={X(f.position) - col * .3} y={y - 7} width={col * .6} height={14} rx={3} fill={on ? (status === 'ambiguous' ? 'none' : 'var(--dp-on)') : 'var(--dp-well)'}
           stroke={on ? (status === 'ambiguous' ? 'var(--stall)' : 'var(--dp-on)') : 'var(--dp-value-dim)'} strokeWidth={on ? 1.2 : .7} strokeDasharray={ring ? '2 2' : undefined} />
-        <text x={X(f.position)} y={y + 3} textAnchor="middle" style={{fontSize: fs, fill: on && status !== 'ambiguous' ? '#121a20' : 'var(--text-dim)'}} className="dp-ink">{f.code}</text>
+        <text x={X(f.position)} y={y + 3} textAnchor="middle" style={{fontSize: fs, fill: on && status !== 'ambiguous' ? 'var(--on-accent)' : 'var(--text-dim)'}} className="dp-ink">{f.code}</text>
       </g> })}
-    {[0, 1, 2, 3, 4, 5].map(i => <text key={i} x={X(i)} y={axis + 3} textAnchor="middle" className="dp-axis" style={{fontSize: fs, paintOrder: 'stroke', stroke: '#121a20', strokeWidth: 3}}>{i}</text>)}
+    {[0, 1, 2, 3, 4, 5].map(i => <text key={i} x={X(i)} y={axis + 3} textAnchor="middle" className="dp-axis" style={{fontSize: fs, paintOrder: 'stroke', stroke: 'var(--well)', strokeWidth: 3}}>{i}</text>)}
     {labels && map && map.map((m, i) => <text key={i} x={X(i)} y={h - 4} textAnchor="middle" className={at === i ? 'dp-ink' : 'dp-axis'} style={{fontSize: fs - .5}}>{tail(m).slice(0, Math.floor(col / 4.4))}</text>)}
     {labels && !map && <text x={w / 2} y={h - 4} textAnchor="middle" className="dp-axis" style={{fontSize: fs}}>No reading of the material's six positions</text>}
     {handles && at !== undefined && <Handle n={1} x={X(at)} y={axis} label="Position" does={`Drag along the line: the position of the material to read.${posSt.disabled ? ` ${posSt.disabled}` : ''}`}

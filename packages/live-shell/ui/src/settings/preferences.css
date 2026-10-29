@@ -1,10 +1,10 @@
 /* The Settings window's frame (manual §10.10): the layer over the work, the window, and the catalogue design (settings__window.tsx and
    its CSS) filling it. The pages are the design's; what stays here is the window around them, the development scenario's band, and the
    owner-note and owner-actions rules OwnerRefusal and the development preview still use. Shell tokens only. */
-.settings-window-layer{position:fixed;inset:0;z-index:400;display:grid;place-items:center;padding:18px;background:#171a1e80;backdrop-filter:blur(1px)}
+.settings-window-layer{position:fixed;inset:0;z-index:400;display:grid;place-items:center;padding:18px;background:var(--scrim);backdrop-filter:blur(1px)}
 .settings-window-layer[hidden]{display:none}
-.settings-window{display:flex;flex-direction:column;width:min(900px,100%);height:min(690px,100%);min-height:0;border:1px solid var(--line-strong,#656a70);box-shadow:0 16px 60px #0009;overflow:hidden;background:var(--bg-1,#33363b)}
-.settings-window>.settings-workspace{flex:1;height:auto}.settings-development-tools{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;padding:5px 12px;background:#514d39;color:#eee2ac;font:10px system-ui}.settings-development-tools select{font:inherit;background:var(--bg-2);color:var(--text);border:1px solid var(--line-strong);margin-left:5px}
+.settings-window{display:flex;flex-direction:column;width:min(900px,100%);height:min(690px,100%);min-height:0;border:1px solid var(--line-strong,#656a70);box-shadow:var(--shadow-overlay,0 16px 60px color-mix(in srgb,var(--shade) 60%,transparent));overflow:hidden;background:var(--bg-1,#33363b)}
+.settings-window>.settings-workspace{flex:1;height:auto}.settings-development-tools{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;padding:5px 12px;background:color-mix(in srgb,var(--bg-1) 75%,var(--accent-dim));color:color-mix(in srgb,var(--accent) 30%,var(--text));font:10px system-ui}.settings-development-tools select{font:inherit;background:var(--bg-2);color:var(--text);border:1px solid var(--line-strong);margin-left:5px}
 @media(max-width:560px),(max-height:440px){.settings-window-layer{padding:6px}.settings-window{width:100%;height:100%}}
 .settings-workspace{height:100%;min-height:0;display:flex;flex-direction:column;overflow:hidden;background:var(--bg-1,#33363b);color:var(--text,#e0e0dc);text-align:left}
 .settings-workspace *{box-sizing:border-box}

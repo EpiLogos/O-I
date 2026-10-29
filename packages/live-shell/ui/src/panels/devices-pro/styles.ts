@@ -54,7 +54,7 @@ const CSS = `
   position: relative; height: 18px; background: var(--bg-0);
   border: 1px solid var(--line); border-radius: 4px; touch-action: none; cursor: ew-resize; overflow: hidden;
 }
-.prp-slider-fill { position: absolute; top: 0; bottom: 0; left: 0; background: rgba(70, 192, 166, 0.22); border-right: 1px solid var(--accent-dim); }
+.prp-slider-fill { position: absolute; top: 0; bottom: 0; left: 0; background: color-mix(in srgb, var(--fizz) 22%, transparent); border-right: 1px solid var(--accent-dim); }
 .prp-slider-thumb {
   position: absolute; top: 1px; bottom: 1px; width: 5px; border-radius: 2px;
   background: var(--accent); transform: translateX(-2px);
@@ -72,7 +72,7 @@ const CSS = `
   padding: 1px 5px; width: 72px; text-align: right;
 }
 .prp-slider-input:focus { outline: none; }
-.prp-slider.bipolar .prp-slider-fill { background: rgba(164, 142, 201, 0.22); border-right-color: var(--violet); }
+.prp-slider.bipolar .prp-slider-fill { background: color-mix(in srgb, var(--fizz) 22%, transparent); border-right-color: var(--violet); }
 .prp-slider.bipolar .prp-slider-thumb { background: var(--violet); }
 .prp-slider-vert { cursor: ns-resize; }
 .prp-slider-vert .prp-slider-fill { top: auto; left: 0; right: 0; border-right: none; border-top: 1px solid var(--accent-dim); }
@@ -114,7 +114,7 @@ const CSS = `
 }
 .prp-seg-btn:last-child { border-right: none; }
 .prp-seg-btn:hover { background: var(--bg-3); }
-.prp-seg-btn.is-on { color: #0d0f11; background: var(--accent); }
+.prp-seg-btn.is-on { color: var(--on-accent); background: var(--accent); }
 
 /* ---- toggle switch ---- */
 .prp-switch-col { display: flex; flex-direction: column; align-items: center; gap: 2px; }
@@ -126,7 +126,7 @@ const CSS = `
   position: absolute; top: 1px; left: 1px; width: 10px; height: 10px; border-radius: 50%;
   background: var(--text-faint); transition: left 0.12s ease, background 0.12s ease;
 }
-.prp-switch.is-on { border-color: var(--accent-dim); background: rgba(70, 192, 166, 0.14); }
+.prp-switch.is-on { border-color: var(--accent-dim); background: color-mix(in srgb, var(--fizz) 14%, transparent); }
 .prp-switch.is-on .prp-switch-knob { left: 15px; background: var(--accent); }
 .prp-switch-name { font-size: 9.5px; color: var(--text-dim); white-space: nowrap; }
 
@@ -182,7 +182,7 @@ const CSS = `
 .prp-display-grid { stroke: var(--line); stroke-width: 1; }
 .prp-display-curve { stroke: var(--accent); stroke-width: 1.5; fill: none; }
 .prp-display-curve-dim { stroke: var(--text-faint); stroke-width: 1.2; fill: none; }
-.prp-display-fill { fill: rgba(70, 192, 166, 0.07); }
+.prp-display-fill { fill: color-mix(in srgb, var(--fizz) 7%, transparent); }
 .prp-display-tag { font-family: var(--font-mono); font-size: 8px; fill: var(--text-faint); }
 .prp-display-pos { stroke: var(--amber); stroke-width: 1; }
 

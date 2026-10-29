@@ -19,7 +19,7 @@
   position: absolute;
   z-index: 2;
   padding: 4px 7px;
-  color: #f3b4a0;
+  color: var(--fault);
   background: var(--bg-0);
 }
 .center-body.native-editor-residence>.inhabitant {top:30px;height:calc(100% - 30px)}

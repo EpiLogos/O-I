@@ -48,8 +48,8 @@ function Rings({v, set, w, h, labels}: {v: V; set?: ViewProps['set']; w: number;
   const now = reach(v), pending = v.reachPending === undefined ? null : Number(v.reachPending), at = pending ?? now ?? 0, wr = writeRing(v)
   const angle = -Math.PI / 4, hx = cx + r(at) * Math.cos(angle), hy = cy + r(at) * Math.sin(angle)
   return <g>
-    {now !== undefined && <circle cx={cx} cy={cy} r={r(now)} fill="rgba(92,200,189,.10)" />}
-    {wr !== undefined && <circle cx={cx} cy={cy} r={r(wr)} fill="rgba(255,190,0,.13)" />}
+    {now !== undefined && <circle cx={cx} cy={cy} r={r(now)} fill="var(--fizz)" fillOpacity={.1} />}
+    {wr !== undefined && <circle cx={cx} cy={cy} r={r(wr)} fill="var(--accent)" fillOpacity={.13} />}
     {RINGS.map((name, i) => <g key={name}>
       <circle cx={cx} cy={cy} r={r(i)} className="dp-faint" />
       {labels && <text x={cx} y={cy - r(i) + 9} className="dp-axis" textAnchor="middle">{name.toLowerCase()}</text>}
@@ -217,7 +217,7 @@ export const scope: DesignedDevice = {
             const step = (h / 2 - 8) / 4, rr = step * (x.ring + 1) - step / 2, a = -2.4 + i * .9
             return <g key={x.id}>
               <rect x={w / 2 + rr * Math.cos(a) - 7} y={h / 2 + 4 + rr * Math.sin(a) - 7} width={14} height={14} fill="var(--dp-on)" />
-              <text x={w / 2 + rr * Math.cos(a)} y={h / 2 + 4 + rr * Math.sin(a) + 3.5} textAnchor="middle" style={{font: '700 9px var(--font-ui)', fill: '#1c1d1f'}}>{x.receipts}</text>
+              <text x={w / 2 + rr * Math.cos(a)} y={h / 2 + 4 + rr * Math.sin(a) + 3.5} textAnchor="middle" style={{font: '700 9px var(--font-ui)', fill: 'var(--on-accent)'}}>{x.receipts}</text>
               <text x={w / 2 + rr * Math.cos(a) + 11} y={h / 2 + 4 + rr * Math.sin(a) + 3.5} className="dp-ink">{x.name}</text>
             </g>
           })}

@@ -1,7 +1,7 @@
 /* The search line (DLW §18.4; O-I #820): one line over the frame (⌘K), or at the caret where @ was typed. It stands as Quick Open does,
    a narrow plate near the top, in the shell's own ground and type (the browser's search, frame/browser). */
 .search-line { position: fixed; z-index: 70; left: 50%; top: 12vh; transform: translateX(-50%); width: min(560px, calc(100vw - 16px)); max-height: min(440px, calc(100vh - 16px));
-  display: flex; flex-direction: column; background: var(--bg-1); color: var(--text); border: 1px solid var(--line-strong); box-shadow: 0 12px 36px rgba(0, 0, 0, .45); font-size: 12px }
+  display: flex; flex-direction: column; background: var(--bg-1); color: var(--text); border: 1px solid var(--line-strong); box-shadow: var(--shadow-menu, 0 12px 36px color-mix(in srgb,var(--shade) 45%,transparent)); font-size: 12px }
 .search-line-query { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-bottom: 1px solid var(--line) }
 .search-line-door { flex: none; min-width: 22px; color: var(--accent); font-weight: 600; text-align: center }
 .search-line-query input { flex: 1; min-width: 0; padding: 4px 2px; font: inherit; font-size: 14px; color: var(--text); background: transparent; border: 0; outline: none }

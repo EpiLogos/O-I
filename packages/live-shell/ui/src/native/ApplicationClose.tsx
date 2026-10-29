@@ -67,7 +67,7 @@ export function NativeApplicationClose() {
   catch(cause){setError(cause instanceof Error?cause.message:String(cause))}
  }
  if(!pending&&!error)return null
- return createPortal(<aside role={error?'alert':'status'} aria-live="assertive" style={{position:'fixed',zIndex:2147483647,inset:pending?0:undefined,bottom:pending?undefined:16,left:pending?undefined:16,right:pending?undefined:16,display:'grid',placeContent:'center',background:pending?'rgba(12,14,18,.94)':'#181b22',color:'#fff',padding:24,border:'1px solid #57606e',gap:12}}>
+ return createPortal(<aside role={error?'alert':'status'} aria-live="assertive" style={{position:'fixed',zIndex:2147483647,inset:pending?0:undefined,bottom:pending?undefined:16,left:pending?undefined:16,right:pending?undefined:16,display:'grid',placeContent:'center',background:pending?'color-mix(in srgb,var(--gutter) 94%,transparent)':'var(--gutter)',color:'var(--text)',padding:24,border:'1px solid var(--text-faint)',gap:12}}>
   {pending?<p>Securing local work before closing… {error}</p>:<><p>O:I stayed open because local work could not be secured. {error}</p><div><button type="button" onClick={()=>void retry(false)}>Retry Quit</button>{!window.__OI_DETACHED__&&<button type="button" onClick={()=>void retry(true)}>Restart after securing work</button>}<button type="button" onClick={()=>setError(null)}>Keep working</button></div></>}
  </aside>,document.body)
 }

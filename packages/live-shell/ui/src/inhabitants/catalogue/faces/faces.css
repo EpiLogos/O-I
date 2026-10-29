@@ -7,12 +7,12 @@
 .fx-clip .fx-glyph { position: absolute; inset: 0; width: 100%; height: 100%; }
 .fx-figure { position: absolute; pointer-events: none; }
 .fx-figure svg { display: block; overflow: visible; }
-.fx-face[data-state="failed"] .fx-clip { filter: drop-shadow(0 0 5px #C4453699); }
+.fx-face[data-state="failed"] .fx-clip { filter: drop-shadow(0 0 5px color-mix(in srgb, var(--rec) 60%, transparent)); }
 .fx-bar { flex: none; width: 70%; height: 2px; background: var(--fx-element, currentColor); opacity: .25; transition: opacity .4s ease; }
 .fx-bar[data-on="true"] { opacity: .95; }
 .fx-face[data-built="false"] .fx-bar { opacity: 0; }
 .fx-name { font: 600 9px/1.2 var(--mono, ui-monospace, monospace); letter-spacing: .06em; text-transform: uppercase; color: var(--text-dim, #a2a7ad); text-align: center; }
-.fx-err { position: absolute; right: 2px; top: 2px; width: 12px; height: 12px; border-radius: 50%; background: var(--stall, #e8833a); color: #1c1d1f; font: 700 9px/12px var(--mono, monospace); text-align: center; }
+.fx-err { position: absolute; right: 2px; top: 2px; width: 12px; height: 12px; border-radius: 50%; background: var(--stall, #e8833a); color: var(--on-accent); font: 700 9px/12px var(--mono, monospace); text-align: center; }
 .fx-thumb { display: inline-grid; place-items: center; flex: none; overflow: hidden; color: var(--text-faint, #71767c); }
 .fx-thumb img { display: block; }
 .fx-thumb[data-built="false"] .fx-glyph { opacity: .7; }

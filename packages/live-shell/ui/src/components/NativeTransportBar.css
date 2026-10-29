@@ -50,7 +50,7 @@
 @container bar (max-width: 1180px) {
   .native-transport-overflow{order:9;display:block;position:relative;flex:none;margin-left:auto}
   .native-transport-more{display:inline-grid!important}
-  .native-transport-more-panel{display:none;position:absolute;right:0;top:calc(100% + 4px);z-index:40;flex-direction:column;align-items:flex-start;gap:6px;padding:8px;min-width:240px;border:1px solid var(--line);border-radius:4px;background:var(--bg-2);box-shadow:0 6px 18px rgb(0 0 0/.35)}
+  .native-transport-more-panel{display:none;position:absolute;right:0;top:calc(100% + 4px);z-index:40;flex-direction:column;align-items:flex-start;gap:6px;padding:8px;min-width:240px;border:1px solid var(--line);border-radius:4px;background:var(--bg-2);box-shadow:var(--shadow-menu,0 6px 18px color-mix(in srgb,var(--shade) 35%,transparent))}
   .native-transport-overflow[data-open=true] .native-transport-more-panel{display:flex}
   .native-transport-more-panel .native-transport-scrub{max-width:none;width:100%}
 }
@@ -72,14 +72,14 @@
 .native-transport-row{position:relative}
 @container bar (max-width: 760px) {
   /* A tool-options strip under the bar: the pointer group keeps its place in the flow of the work without taking bar width. */
-  .bar-pointer{position:absolute;order:9;left:0;top:calc(100% + 36px);z-index:40;padding:4px 6px;border:1px solid var(--line);border-radius:4px;background:var(--bg-2);box-shadow:0 6px 18px rgb(0 0 0/.35)}
+  .bar-pointer{position:absolute;order:9;left:0;top:calc(100% + 36px);z-index:40;padding:4px 6px;border:1px solid var(--line);border-radius:4px;background:var(--bg-2);box-shadow:var(--shadow-menu,0 6px 18px color-mix(in srgb,var(--shade) 35%,transparent))}
 }
 
 /* Automation recording: A arms, the dot lights while a take records, the orange return button exists only while something is held off its automation. */
 .native-transport-take{display:inline-flex;align-items:center;gap:2px}
 .native-transport .native-transport-arm[aria-pressed=true]{color:var(--accent);border-color:var(--accent)}
-.native-transport .native-transport-record[aria-pressed=true]{color:#e5484d;border-color:#e5484d;background:var(--bg-3)}
-.native-transport .native-transport-resume{color:#f0a030;border-color:#f0a030;background:var(--bg-3)}
+.native-transport .native-transport-record[aria-pressed=true]{color:var(--rec);border-color:var(--rec);background:var(--bg-3)}
+.native-transport .native-transport-resume{color:var(--stall);border-color:var(--stall);background:var(--bg-3)}
 @media (prefers-reduced-motion:no-preference){.native-transport .native-transport-record[aria-pressed=true]{animation:bar-take-pulse 1.2s ease-in-out infinite}}
 @keyframes bar-take-pulse{50%{opacity:.55}}
 
