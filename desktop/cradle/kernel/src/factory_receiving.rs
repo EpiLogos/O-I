@@ -189,11 +189,13 @@ pub(super) fn attempt_receiving(
             "A choice names the exact Run and the exact attempt.".into(),
         );
     }
-    // What Factory expects of the caller and what the grant must carry.
+    // What Factory expects of the caller and what the grant must carry, for
+    // this Run's state: the scope is the project the Run stands in.
     let disclosure = match read(
         &[
             "attempt".into(),
             "admission".into(),
+            path_arg(state_path),
             "--json".into(),
         ],
         None,
@@ -457,6 +459,8 @@ mod tests {
         receive: Result<Value, (String, bool)>,
         calls: Vec<String>,
         sent: Vec<Value>,
+        /// The admission's own words, as asked.
+        admission_asked: Vec<String>,
     }
 
     impl Fake {
@@ -474,6 +478,7 @@ mod tests {
                 })),
                 calls: Vec::new(),
                 sent: Vec::new(),
+                admission_asked: Vec::new(),
             }
         }
 
@@ -484,7 +489,10 @@ mod tests {
                 .collect();
             self.calls.push(format!("{} {}", words[0], words[1]));
             match (words[0].as_str(), words[1].as_str()) {
-                ("attempt", "admission") => self.admission.clone().map_err(incompatible),
+                ("attempt", "admission") => {
+                    self.admission_asked = words.clone();
+                    self.admission.clone().map_err(incompatible)
+                }
                 ("development", "run") => Ok(serde_json::json!({"flowAssociations": self.flows})),
                 ("attempt", "read") => Ok(serde_json::json!({
                     "revision": 40,
@@ -931,5 +939,39 @@ mod tests {
             "authority_token": "x"
         }))
         .is_ok(), "an unknown field is ignored and never read");
+    }
+
+    #[test]
+    fn the_admission_is_asked_for_the_run_s_own_state_and_its_project_must_be_granted() {
+        let at_project = |scopes: &[&str]| {
+            TempContract::new(
+                "at-project",
+                &contract(&["central.receiving.submit"], scopes, NOW + 1000),
+            )
+        };
+        let mut naming_field_notes = disclosure();
+        naming_field_notes["actions"][0]["scopeRef"] = "project:field-notes".into();
+        // The person in a new world: the root and the project they brought in.
+        let contract = at_project(&["control:root", "project:field-notes"]);
+        let mut fake = Fake::new();
+        fake.admission = Ok(naming_field_notes.clone());
+        let result = choose(&mut fake, None, Some(TOKEN), Some(&contract.0), Some(CTRL));
+        assert_eq!(result["status"], "received", "{result}");
+        assert_eq!(
+            fake.admission_asked,
+            ["attempt", "admission", "/state/factory.json", "--json"],
+            "Factory is asked for this Run's state"
+        );
+        // A grant at project:Factory alone no longer reaches a Run that stands in another project.
+        let contract = at_project(&["control:root", "project:Factory"]);
+        let mut fake = Fake::new();
+        fake.admission = Ok(naming_field_notes);
+        let result = choose(&mut fake, None, Some(TOKEN), Some(&contract.0), Some(CTRL));
+        assert_eq!(result["status"], "refused");
+        assert!(result["refusal"]["message"]
+            .as_str()
+            .unwrap()
+            .starts_with("scope not granted: the grant does not cover project:field-notes"));
+        assert_eq!(fake.calls, ["attempt admission"], "nothing else was read");
     }
 }

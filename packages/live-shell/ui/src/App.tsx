@@ -29,6 +29,11 @@ import {centralSubjectOfClip} from './timeline/centralTrackAdapter'
 import {registerDocumentLayoutWriter} from './central/documents/documentDoor'
 import {Browser} from './frame/browser/Browser'
 import {FrameKeys} from './frame/keys/FrameKeys'
+// The search line (§18.4, O-I #820): ⌘K over the frame, @ in a Flow entry or a composer; the line's code loads when it first opens.
+import {SearchLineHost} from './central/SearchLineHost'
+import {publishMenuCommands} from './central/searchLineDoor'
+// The Graph and source receiver's door (O-I #820): every open of a source is heard from the first frame; the receiver loads with the first.
+import {KnowledgeReceiverDoor} from './panels/knowledge'
 import {WidgetRail} from './frame/widgets/WidgetRail'
 import {useChatRailDrop} from './agent/factoryChatsRail'
 import type {WidgetRailBook} from './frame/widgets/widgets'
@@ -501,6 +506,8 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
       'view.device': 'device', 'view.detail': 'detail', 'view.mixer': 'mixer', 'view.io': 'io'}
     if (parts[id]) chord.current(parts[id]!)
   }
+  // The search line's `>` runs the same commands, through this router (central/searchLineDoor.ts publishMenuCommands).
+  useEffect(() => { publishMenuCommands(id => command.current(id)); return () => publishMenuCommands(null) }, [])
   useEffect(() => {
     if (!('__TAURI_INTERNALS__' in window)) return
     let disposed = false, stop: (() => void) | undefined
@@ -690,6 +697,9 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
   const frameBody = (<>
     {/* The frame's keys (F9): Space, Esc, ⌘F, the row and macro keys, Enter and ⌥Enter — through the controls' own doors. */}
     <FrameKeys paused={settingsPresented} focusedGroupId={continuity.current.layout.focusedGroupId} revealBrowser={() => setBrowser(true)} />
+    {/* The search line (§18.4): drawn only while asked for, over the frame or at the caret. */}
+    <SearchLineHost />
+    <KnowledgeReceiverDoor />
     {/* Your system's readings (T-WORLDS §5 W3): read while an Earth stands, whichever pane holds it. They stand here, in the shell's
         own tree, because the Earth's pane is a projection module drawn in a root of its own, without the workspace they read through
         (r18: the system was never read, so no world but yours was drawn and none could land). */}

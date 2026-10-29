@@ -310,11 +310,13 @@ test('Search asks AIKit the line as typed, in your world or one project, and dra
   const searching = search.searchValues(id, {query: 'ground', hits: HITS, rows: [], pending: ['resolve']}, null)
   assert.equal(searching.light, 'lit')
   assert.deepEqual(parse(searching.results).map(hit => hit.ref), ['wiki:node:governance:consult-authored-ground', 'capability:central-orient'])
-  // Both answered: the resolution's rows follow, each resource once, in the owner's order.
+  // Both answered: the resolution's rows follow, each resource once, in the owner's order. A hit carries the address the owner gave to
+  // open it by (the search line opens it there, O-I #820); the fixture's hits carry no ranking, so no use count is drawn.
   const done = parse(search.searchValues(id, {query: 'ground', hits: HITS, rows: ROWS, pending: []}, null).results)
   assert.deepEqual(done, [
-    {ref: 'wiki:node:governance:consult-authored-ground', title: 'Consult authored ground', kind: 'knowledge-node', says: 'Read the authored ground before the code.'},
-    {ref: 'capability:central-orient', title: 'central-orient', kind: 'capability'},
+    {ref: 'wiki:node:governance:consult-authored-ground', title: 'Consult authored ground', kind: 'knowledge-node', says: 'Read the authored ground before the code.',
+      address: JSON.stringify(HITS[0].address)},
+    {ref: 'capability:central-orient', title: 'central-orient', kind: 'capability', address: JSON.stringify(HITS[1].address)},
     {ref: 'project:O-I', title: 'O-I', kind: 'project', owner: 'Central'},
   ])
   // An answer for an older line is not this line's.
@@ -333,7 +335,8 @@ test('Search writes nothing: its line, reach, kinds and pick are the view\'s own
   for (const key of ['query', 'reach', 'pick', 'k:person', 'k:power']) assert.equal(typeof binding.local[key], 'function', `${key} is the view's own`)
   binding.local.query('@1 founding positions')
   assert.equal(holds.heldOf('central:search').query, '@1 founding positions')
-  for (const [key, words] of [['enter', /A tag sends nothing yet/], ['aliases', /No owner keeps an alias/], ['fields', /shared or joined fields/], ['limit', /50 results/]]) {
+  // The pane itself sends nothing: a tag sends from the search line (O-I #820), and the pane's Enter says so.
+  for (const [key, words] of [['enter', /The pane sends nothing: a tag sends from the search line/], ['aliases', /No owner keeps an alias/], ['fields', /shared or joined fields/], ['limit', /50 results/]]) {
     assert.match(binding.standing[key].disabled, words, `${key}: disabled with its reason`)
     await assert.rejects(() => binding.write([{key, value: 'x'}]), words)
   }

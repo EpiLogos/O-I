@@ -1240,6 +1240,23 @@ document.addEventListener('click',ev=>{ const a=ev.target.closest&&ev.target.clo
   if(window.parent===window){ if(editing) window.open(href,'_blank','noopener'); return; }
   ev.preventDefault(); window.parent.postMessage({type:'oi:page-link',href},'*'); });
 
+/* ---------- @: the host's search line (DLW §18.4) ---------- */
+/* An @ typed in a writing field where a word starts asks the host for its search line at the caret; the @ stays as typed. With a passage
+   selected the @ is not typed: the passage stays selected and goes with the ask, for the line to send where it is told. When the host closes
+   the line (oi:at-search-closed) the caret and the selection go back where they were. Standing alone, an @ is only typed. */
+let atRange=null;
+document.addEventListener('keydown',ev=>{ if(ev.key!=='@'||ev.isComposing||ev.metaKey||ev.ctrlKey||window.parent===window) return;
+  const field=ev.target.closest&&ev.target.closest('[contenteditable="true"]'); const sel=window.getSelection(); if(!field||!sel||!sel.rangeCount) return;
+  const range=sel.getRangeAt(0), passage=sel.isCollapsed?'':sel.toString();
+  if(!passage){ const at=range.startContainer, t=at.nodeType===3?at.data.slice(0,range.startOffset):''; if(t&&!/\s$/.test(t)) return; }
+  else ev.preventDefault();
+  setTimeout(()=>{ const now=window.getSelection(); if(!now||!now.rangeCount) return; atRange=now.getRangeAt(0).cloneRange();
+    const r=atRange.getBoundingClientRect(), box=r.width||r.height?r:field.getBoundingClientRect();
+    window.parent.postMessage({type:'oi:at-search',passage,entry:field.getAttribute('data-entry'),at:{x:box.left,y:box.bottom}},'*'); },0); });
+window.addEventListener('message',ev=>{ if(ev.source!==window.parent||!ev.data||ev.data.type!=='oi:at-search-closed'||!atRange) return;
+  const r=atRange; atRange=null; const node=r.startContainer, el=node.nodeType===1?node:node.parentElement, field=el&&el.closest('[contenteditable="true"]');
+  if(field) field.focus({preventScroll:true}); const sel=window.getSelection(); sel.removeAllRanges(); sel.addRange(r); });
+
 /* ---------- selection: highlight, note, packet, answer ---------- */
 const tool=h('div',{class:'seltool',hidden:true},h('button',{text:'Highlight',onclick:()=>act('hl')}),h('button',{text:'Note',onclick:()=>act('note')}),h('button',{text:'To packet',onclick:()=>act('packet')}),h('button',{text:'Answer this',onclick:()=>act('answer')}));
 tool.addEventListener('mousedown',ev=>ev.preventDefault()); document.body.append(tool);

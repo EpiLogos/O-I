@@ -107,6 +107,10 @@ export const LOADS_LATER = [
   /\/src\/widgets\/railDevices\.tsx$/,
   // a catalogue device's design (frame/devices/designs.ts requestDesign)
   /\/src\/inhabitants\/catalogue\/panels\/[^/]+__[^/]+\.tsx$/, /\/src\/frame\/devices\/designsLoad\.ts$/,
+  // the search line (central/SearchLineHost.tsx loads it when ⌘K or an @ first opens it; its door is central/searchLineDoor.ts)
+  /\/src\/central\/searchLine(Model)?\.tsx?$/,
+  // the Graph and source receiver (panels/knowledge.tsx KnowledgeReceiverDoor loads it when a source is first opened)
+  /\/src\/panels\/knowledgeReceiver\.tsx$/,
 ]
 
 test('what loads when first entered, placed, shown or opened is not in the first load', async () => {

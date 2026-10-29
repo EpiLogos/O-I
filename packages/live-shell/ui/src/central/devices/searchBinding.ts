@@ -26,7 +26,7 @@ export const CONTROL_SEARCH_ACTION = 'control.search'
 const DEFINE = /^@([A-Za-z][\w-]*)\s+=\s+(\S.*)$/
 
 const NO_SELECTION = 'The page\'s selection does not cross the host bridge (desktop/cradle/src/document/frame.ts useDocumentHostRead reads the island only): no passage is selected for a tag.'
-const NO_TAG = 'A tag sends nothing yet: no owner takes a passage sent to a person, an agent, a place or a document (DLW §18.4 What a tag sends).'
+const NO_TAG = 'The pane sends nothing: a tag sends from the search line (⌘K, or @ in a Flow entry or the agent\'s composer; central/searchLine.tsx), where a Flow takes the passage as a new entry and an agent\'s session takes it as a turn. No owner takes a passage sent to a person, a place or another document (DLW §18.4 What a tag sends).'
 /** No `vak:` term in the search: no entry is located and no neighbourhood read. */
 const NO_VAK_TERM = 'The search names no `vak:` term (a coordinate of the Vāk registry, `vak:M0-3`), so Quaternal Logic is asked for no entry and no neighbourhood.'
 /** A `vak:` term (central__search.tsx VAK_TERM): the coordinate it names. */
@@ -148,15 +148,27 @@ export function controlResultsOf(data: unknown): Record<string, Value>[] | null 
   })
 }
 
-/** The owner's results as the design's (central__search.tsx hitOf): ref, title, kind, says, owner. A kind the design does not know is
- * kept and drawn by its horizon rule; nothing is invented. */
+/** The owner's own use count for a hit (AIKit's `ranking.destination`: how many opens it observed, and its frecency — how often and how
+ * lately, decayed by the owner's half-life; aikit-core resource/search.rs apply_familiarity). Absent where the owner gives none. */
+function usedOf(hit: KnowledgeHit): {used?: number; frecency?: number} {
+  const destination = (hit as KnowledgeHit & {ranking?: {destination?: {observations?: unknown; frecency?: unknown}}}).ranking?.destination
+  if (!destination) return {}
+  const observations = typeof destination.observations === 'number' && destination.observations > 0 ? destination.observations : undefined
+  const frecency = typeof destination.frecency === 'number' && Number.isFinite(destination.frecency) ? destination.frecency + 0 : undefined
+  return {...(observations ? {used: observations} : {}), ...(frecency !== undefined ? {frecency} : {})}
+}
+
+/** The owner's results as the design's (central__search.tsx hitOf): ref, title, kind, says, owner — and, for the search line, the address
+ * the owner gave to open it by (as JSON) and its own use count (usedOf). A kind the design does not know is kept and drawn by its horizon
+ * rule; nothing is invented. */
 export function searchResultsOf(answer: SearchAnswer): Record<string, Value>[] {
   const seen = new Set<string>()
   const out: Record<string, Value>[] = []
   for (const hit of answer.hits) {
     if (seen.has(hit.resource)) continue
     seen.add(hit.resource)
-    out.push({ref: hit.resource, title: hit.label || hit.resource, kind: hit.kind, ...(hit.snippet ? {says: hit.snippet} : {})})
+    out.push({ref: hit.resource, title: hit.label || hit.resource, kind: hit.kind, ...(hit.snippet ? {says: hit.snippet} : {}),
+      ...(hit.address ? {address: JSON.stringify(hit.address)} : {}), ...usedOf(hit)})
   }
   for (const row of answer.rows) {
     if (seen.has(row.reference)) continue

@@ -1,0 +1,26 @@
+/* The search line (DLW §18.4; O-I #820): one line over the frame (⌘K), or at the caret where @ was typed. It stands as Quick Open does,
+   a narrow plate near the top, in the shell's own ground and type (the browser's search, frame/browser). */
+.search-line { position: fixed; z-index: 70; left: 50%; top: 12vh; transform: translateX(-50%); width: min(560px, calc(100vw - 16px)); max-height: min(440px, calc(100vh - 16px));
+  display: flex; flex-direction: column; background: var(--bg-1); color: var(--text); border: 1px solid var(--line-strong); box-shadow: 0 12px 36px rgba(0, 0, 0, .45); font-size: 12px }
+.search-line-query { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-bottom: 1px solid var(--line) }
+.search-line-door { flex: none; min-width: 22px; color: var(--accent); font-weight: 600; text-align: center }
+.search-line-query input { flex: 1; min-width: 0; padding: 4px 2px; font: inherit; font-size: 14px; color: var(--text); background: transparent; border: 0; outline: none }
+.search-line-chips { display: flex; flex-wrap: wrap; gap: 4px; padding: 4px 8px 0 }
+.search-line-chip { padding: 0 5px; font-size: 10px; line-height: 16px; color: var(--text-dim); background: var(--bg-2); border: 1px solid var(--line) }
+.search-line-send { display: flex; flex-direction: column; gap: 2px; margin: 0; padding: 6px 8px; border-bottom: 1px solid var(--line); background: var(--bg-0) }
+.search-line-send q { color: var(--text-dim); font-style: italic; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.search-line-send[data-plan="dim"] span { color: var(--text-faint) }
+.search-line-results { flex: 1; min-height: 0; overflow-y: auto; margin: 0; padding: 2px 0; list-style: none }
+.search-line-results li[role="option"] { display: flex; align-items: baseline; gap: 8px; padding: 4px 8px; cursor: default }
+.search-line-results li[data-chosen] { background: color-mix(in srgb, var(--sel) 24%, transparent) }
+.search-line-results li[data-dim] .search-line-title, .search-line-results li[data-dim] .search-line-says { color: var(--text-faint) }
+.search-line-group { padding: 6px 8px 2px; font-size: 10px; letter-spacing: .04em; text-transform: uppercase; color: var(--text-faint) }
+.search-line-title { flex: none; max-width: 45%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.search-line-says { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-faint); font-size: 11px }
+.search-line-used { flex: none; color: var(--text-dim); font-size: 10px }
+.search-line-key { flex: none; margin-left: auto; color: var(--text-dim); font: inherit; font-size: 11px }
+.search-line-problem { margin: 0; padding: 4px 8px; color: var(--rec); border-top: 1px solid var(--line) }
+.search-line-status { display: flex; gap: 8px; margin: 0; padding: 4px 8px; border-top: 1px solid var(--line); color: var(--text-dim); font-size: 10px }
+.search-line-keys { margin-left: auto; flex: none; color: var(--text-faint) }
+/* The owner's answer once the line has closed: said where the line stood, clear of the frame's own lines at its foot. */
+.search-line-receipt .frame-keys-receipt { top: 52px; bottom: auto; left: 50%; transform: translateX(-50%); font-size: 11px }

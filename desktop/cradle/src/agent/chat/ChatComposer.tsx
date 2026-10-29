@@ -122,7 +122,9 @@ export function ChatComposer({reading,draft,pending,busy,error,editable,promptAl
       </div>
       :null}
     {selected.length>0&&<div className="chat-attachments" aria-label="Attached context">{selected.map(chip)}</div>}
-    <textarea ref={input} disabled={!editable} aria-label="Message" placeholder={drafting?"Write the first message…":unreachable?"Agents are out of reach for now":!reading?"Reading…":connected?"Message the agent…":"Connect a provider, then write…"} value={message} rows={3}
+    {/* data-at-search: an @ typed where a word starts, or over a selected passage, opens the host's search line at the caret (the live
+        shell's central/SearchLineHost.tsx, DLW §18.4); a host that reads no such mark leaves the @ as typed. */}
+    <textarea ref={input} disabled={!editable} aria-label="Message" data-at-search="composer" placeholder={drafting?"Write the first message…":unreachable?"Agents are out of reach for now":!reading?"Reading…":connected?"Message the agent…":"Connect a provider, then write…"} value={message} rows={3}
       onChange={event=>setMessage(event.target.value)} onPaste={onPaste}
       onKeyDown={event=>{if(event.key==="Enter"&&!event.shiftKey&&!event.nativeEvent.isComposing){event.preventDefault();if(canSend)onSend();}}}/>
     {voice.error&&<p role="alert" className="oi-note">{voice.error}</p>}

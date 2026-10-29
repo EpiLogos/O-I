@@ -139,6 +139,31 @@ function parse(raw: string): Node {
 function hasSyntax(raw: string): boolean {
   try { return lex(raw).some(t => t.k !== 'atom') } catch { return true }
 }
+
+/** A mark the line found in what was typed (manual §18.4 "The line shows what it read. One small chip stands for each horizon, kind,
+ * include, leave-out, relation, alias and gap that it found"). */
+export interface ReadMark {readonly mark: 'address' | 'horizon' | 'question' | 'include' | 'leave-out' | 'relation' | 'frame' | 'scope' | 'kind' | 'gap'; readonly text: string}
+/** The kinds a term can be narrowed by (§18.4 "A kind narrows a term"). */
+const KIND_TERM = /^(source|wiki|reading|world|form|agent|person|place|doc|vak):/
+/** Every mark the grammar reads in a query, in order; plain words carry none (they are a jump). Input the grammar refuses is read as
+ * marked — the owner names the refusal (`aikit knowledge search` answers "operative Resolve frame is not closed"). The search line's
+ * chips and its jump-or-search choice (central/searchLineModel.ts) read the language here, where it stays. Pure. */
+export function marksOf(raw: string): ReadMark[] {
+  let toks: Tok[]
+  try { toks = lex(raw.trim()) } catch (e) { return [{mark: 'frame', text: e instanceof Error ? e.message : String(e)}] }
+  return toks.flatMap((t): ReadMark[] => {
+    if (t.k === 'addr') return [t.h === null ? {mark: 'address', text: '@'} : {mark: 'horizon', text: `@${t.h}`}]
+    if (t.k === 'rel') return [t.op === '@#' ? {mark: 'question', text: '@#'} : t.op === '+' ? {mark: 'include', text: '+'} : t.op === '-' ? {mark: 'leave-out', text: '-'} : {mark: 'relation', text: t.op}]
+    if (t.k === 'lp' || t.k === 'rp') return [{mark: 'frame', text: t.k === 'lp' ? '(' : ')'}]
+    if (t.k === 'scope') return [{mark: 'scope', text: ':'}]
+    if (t.v === '?') return [{mark: 'gap', text: '?'}]
+    const kind = KIND_TERM.exec(t.v)
+    if (kind) return [{mark: 'kind', text: `${kind[1]}:`}]
+    // `@bol`: an address that names its subject in one word (the lexer reads `@` only before a space).
+    if (/^@[^\s@#0-5]/.test(t.v) || /^@[0-5][^\s]/.test(t.v)) return [{mark: 'address', text: '@'}]
+    return []
+  })
+}
 function parseOrSearch(raw: string): Node {
   const t = raw.trim()
   if (!t) return ordinary('')
@@ -206,6 +231,11 @@ const GROUPS: readonly {id: Group; name: string; shape: KindShapeName; verb: str
 const GROUP_OF = new Map<string, Group>([['knowledge-source', 'document'], ['knowledge-node', 'document'], ['knowledge-frame', 'passage'], ['agent', 'agent'], ['project', 'place'], ['place', 'place'], ['capability', 'power'], ['participant', 'person'], ['vak-entry', 'vak']])
 const G = Object.fromEntries(GROUPS.map(g => [g.id, g])) as Record<Group, (typeof GROUPS)[number]>
 const groupOf = (h: Hit): Group => GROUP_OF.get(h.kind) ?? 'document'
+/** The groups a search's results come in, in this design's order, and the group an owner's kind is shown in (a kind this design does not
+ * know is shown with the documents) — the search line groups its results by the same table (central/searchLineModel.ts). */
+export type SearchGroup = Group
+export const SEARCH_GROUPS: readonly {readonly id: Group; readonly name: string; readonly verb: string; readonly effect: string}[] = GROUPS
+export const searchGroupOf = (kind: string): Group => GROUP_OF.get(kind) ?? 'document'
 
 /** The owner's horizon table (horizons_for_kind / horizons_for_resource). The resolver has no kind for a participant or a basemap place:
  * both read as world and context here. */

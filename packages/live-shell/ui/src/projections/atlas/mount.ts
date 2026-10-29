@@ -35,7 +35,8 @@ import { setProviderLabels } from './src/data/labels';
 import { loadRedbook } from './src/redbook/load';
 import type { Family, Occurrence } from './src/types/field';
 import type { SeamChange } from './src/data/occurrenceSeam';
-import { beginLifetime, nextFrame, type AtlasLifetime } from './src/ui/lifetime';
+import { beginLifetime, listen, nextFrame, type AtlasLifetime } from './src/ui/lifetime';
+import { shellKeysFirst } from './hostKeys';
 
 export { registerFixtureProvider, FIXTURE_PROVIDER_ID } from './provider/fixtureProvider';
 export { setSkyProvider } from './provider/skyProvider';
@@ -140,6 +141,8 @@ export async function mountAtlas(options: AtlasMountOptions): Promise<AtlasHandl
       prefersReducedMotion(),
     );
     built = engine;
+    // [host, O-I #820] ⌘K is the shell's search line: this guard listens before the controller does and stands its ⌘K down (hostKeys.ts)
+    shellKeysFirst(listen);
     ctl = new Controller(model, engine, time, app, history, corpus, redbook ?? undefined);
     await engine.ready;
     ctl.boot();

@@ -20,6 +20,13 @@ import {useContext, useCallback, useEffect, useRef, useState} from 'react'
  *   `conflict` and keeps the draft; a basis that moved before the write is
  *   `stale`; the owner's own `unchanged` outcome passes through named.
  *
+ * An @ typed in an entry (or typed over a selected passage, which the form then
+ * keeps selected) reaches the host as `oi:at-search` (ql-flow.html): the host
+ * opens the shell's search line at the caret with the passage and where it
+ * came from — this Flow, the link back (central/searchLineDoor.ts; DLW §18.4,
+ * O-I #820) — and on close asks the form to put the caret and the selection
+ * back (`oi:at-search-closed`).
+ *
  * A link the page follows (⌘-click in an entry, a click elsewhere) reaches the
  * host as `oi:page-link` (ql-flow.html); the host opens it in the shell
  * (`openLink`: a page of a world as its page, an http(s) address in the Web
@@ -49,6 +56,12 @@ import {SaveOutcomeChip} from './inhabitantCard.tsx'
 import {linkTarget, PAGE_LINK_MESSAGE, type PageLinkTarget} from './DocumentPageFace'
 import './inhabitantDevices.css'
 import {DocumentPaneContext, documentStateWords, publishDocument, reachedDocument, revisionShort, withdrawDocument, type DocumentInPane} from '../central/documents/documentDoor'
+import {openSearchLine} from '../central/searchLineDoor'
+
+/** The message the Flow's form sends its host when an @ is typed in an entry (ql-flow.html), and the one the host answers when the line
+ * closes, so the form puts the caret and the selection back. */
+export const AT_SEARCH_MESSAGE = 'oi:at-search'
+export const AT_SEARCH_CLOSED_MESSAGE = 'oi:at-search-closed'
 
 export interface DocumentFlowFaceProps {
   readonly transport: KernelTransportStatus
@@ -236,6 +249,24 @@ export function FlowFace({transport, location, presentation = 'device', openLink
   }, [openLink])
 
   const documentLabel = instance?.doc.meta.title || instance?.doc.meta.documentId || location.path
+
+  // An @ in an entry: the search line opens at the caret, over this pane, with the passage selected (if any) and where it came from.
+  const labelNow = useRef(documentLabel)
+  labelNow.current = documentLabel
+  useEffect(() => {
+    const listener = (event: MessageEvent) => {
+      const host = frame.current
+      if (!host || event.source !== host.contentWindow || (event.data as {type?: unknown})?.type !== AT_SEARCH_MESSAGE) return
+      const data = event.data as {passage?: unknown; at?: {x?: unknown; y?: unknown}}
+      const box = host.getBoundingClientRect()
+      const x = typeof data.at?.x === 'number' ? box.left + data.at.x : box.left, y = typeof data.at?.y === 'number' ? box.top + data.at.y : box.top
+      const text = typeof data.passage === 'string' && data.passage.trim() ? data.passage : null
+      openSearchLine({door: 'flow', at: {x, y}, passage: text ? {text, from: `Flow — ${labelNow.current}`, path: location.path} : null,
+        restore: () => { host.focus(); host.contentWindow?.postMessage({type: AT_SEARCH_CLOSED_MESSAGE}, '*') }})
+    }
+    window.addEventListener('message', listener)
+    return () => window.removeEventListener('message', listener)
+  }, [location.path])
   const inPane = presentation === 'pane'
   const key = useRef(`flow:${Math.random().toString(36).slice(2)}`).current
   const paneId = useContext(DocumentPaneContext) ?? undefined
