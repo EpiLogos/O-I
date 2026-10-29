@@ -82,6 +82,8 @@ async function opened(){
 }
 const connection=(ref,from,to)=>({change:'relation_bind',binding:{binding_ref:ref,native_owner:'oi',relation:{ref:`${ref}:connects`,revision:'1',availability:'available'},from_entity_ref:from,to_entity_ref:to,provenance:[]}});
 const CONNECT=`${E}:relation:connection-1`,CONNECT2=`${E}:relation:connection-2`;
+// The documents one Undo or Redo of a recorded step moves between: from the one the step left (or found), to the other.
+const replay=(store,direction)=>{const {before,after}=store.checkpointAt(direction);return direction==='undo'?{from:after,to:before}:{from:before,to:after};};
 
 // The app's native act, in the order nativeAct runs it: the owner edit is acknowledged first, the sides
 // composition (when given) is saved with it, and ONE step is recorded. An owner refusal throws before
@@ -123,7 +125,7 @@ test('undo of a folded connect restores the document and the owner; redo re-appl
  assert.notEqual(kernelAfter,kernelBefore);
 
  const undo=store.undoPlan();
- await work.replayKernelEdit(undo.kernel.changes,store.checkpointAt('undo').before);
+ await work.replayKernelEdit(undo.kernel.changes,replay(store,'undo'));
  assert.equal(store.undoAccepted(),true);
  assert.equal(digest(kernel.state.doc),kernelBefore,'the owner returns to the pre-act document');
  assert.equal(JSON.stringify(store.document),baseline,'the app document returns to the pre-act document');
@@ -131,9 +133,24 @@ test('undo of a folded connect restores the document and the owner; redo re-appl
 
  const redo=store.redoPlan();
  assert.equal(redo.label,'Connect');
- await work.replayKernelEdit(redo.kernel.changes,store.checkpointAt('redo').after);
+ await work.replayKernelEdit(redo.kernel.changes,replay(store,'redo'));
  assert.equal(store.redo({compensated:true}),true);
  assert.equal(digest(kernel.state.doc),kernelAfter,'redo re-applies the connection once');
+});
+
+test('E15g: a selection after the act is no move of its document: undo reverses the act and the selection stays where it was put', async()=>{
+ // Selecting writes the owner's focus at a new revision; it is where the person stands, not a change Undo covers (manual §10, Undo
+ // and Redo). Before #763 the compensation landed and then its readback was refused, because it expected the act's old focus.
+ const {kernel,work,store}=await opened();
+ await act(store,work,'Connect',[connection(CONNECT,X,Y)]);
+ await work.select({scene_ref:A,entity_ref:Y});
+ assert.deepEqual(kernel.state.doc.selection,{scene_ref:A,entity_ref:Y});
+ const undo=store.undoPlan();
+ await work.replayKernelEdit(undo.kernel.changes,replay(store,'undo'));
+ assert.equal(store.undoAccepted(),true);
+ assert.deepEqual(kernel.state.doc.relations,{},'the owner no longer holds the connection');
+ assert.deepEqual(kernel.state.doc.selection,{scene_ref:A,entity_ref:Y},'the selection is the person\'s, untouched');
+ assert.deepEqual(work.state.view.document.selection,{scene_ref:A,entity_ref:Y});
 });
 
 test('connectMany plus its sides is one entry, and one undo reverses the relations and the sides together', async()=>{
@@ -148,7 +165,7 @@ test('connectMany plus its sides is one entry, and one undo reverses the relatio
  assert.equal(kernel.state.doc.scenes[0].presentation.scene.title,'Alpha with lines','the owner saved the sides');
 
  const undo=store.undoPlan();
- await work.replayKernelEdit(undo.kernel.changes,store.checkpointAt('undo').before);
+ await work.replayKernelEdit(undo.kernel.changes,replay(store,'undo'));
  assert.equal(store.undoAccepted(),true);
  assert.equal(digest(kernel.state.doc),kernelBefore,'one compensating edit returns the owner to its pre-act document');
  assert.equal(store.undoStack.length,0);

@@ -26,7 +26,7 @@ import {NATIVE_ENGINE_COMMAND, parseNativeEngineCommand, setNativeEngineMounted}
 import {stageEngine} from '../native/stageCommands'
 import {answerHostedSummon, sameSummonBasis, SOURCE_PRESENT, summonBasis} from '../native/hostedSummons'
 import type {HostedAppState, StageCommand, StageResult} from '@epilogos/expressions-boundary'
-import {enumerateWorks, needsListing, setExpressionOwner} from '../components/nativeExpressionCommands'
+import {enumerateWorks, needsListing, setExpressionOwner, type NativeWorkRow} from '../components/nativeExpressionCommands'
 import {closedWork, expressionOwner, openListedWork} from '../components/nativeExpressionCommands'
 import {publishFrameTakeLink} from '../native/frameTakes'
 import {publishHostedChrome, publishHostedExpressions, useFramePlacement} from '../projections/expressionsPaneHost'
@@ -48,6 +48,23 @@ const checkpointRef = (binding?: SurfaceBinding) => binding?.engine?.expressionR
 function engineCheckpoint(state: HostedAppState, scene: NonNullable<HostedAppState['nativeScene']>, held?: SurfaceBinding): NonNullable<SurfaceBinding['engine']> {
   const address = addressRefs(state.address) ?? (held?.engine?.expressionRef === scene.expression_ref ? held.engine.address : undefined)
   return {expressionRef: scene.expression_ref, documentId: state.document?.id, revision: String(scene.revision), ...(address ? {address} : {})}
+}
+
+/** The owner's works list, asked until it answers (O-I #763). A refused listing is named with when it is asked again: 1 s, then
+ * twice as long each time, at most 30 s. `after` is a refusal already seen, so the next ask waits first. Asking stops, with
+ * null, once the access that began it is retired. */
+export async function listWorksUntilAnswered(list: () => Promise<NativeWorkRow[]>, ports: {current(): boolean; wait(ms: number): Promise<void>;
+  failed(cause: unknown, retryMs: number): void}, after?: {cause: unknown}): Promise<NativeWorkRow[] | null> {
+  let refused = after, delay = 1000
+  for (;;) {
+    if (refused) {
+      ports.failed(refused.cause, delay)
+      await ports.wait(delay)
+      if (!ports.current()) return null
+      delay = Math.min(delay * 2, 30000)
+    }
+    try {return await list()} catch (cause) {refused = {cause}; if (!ports.current()) return null}
+  }
 }
 
 /** The real application is mounted once. The deep cut changes disclosure;
@@ -211,7 +228,10 @@ export function ExpressionsPanel() {
       // before mounting when no address is held (the list chooses the first work), after mounting when a known work takes its direct boot route.
       // A work made later (New, an opened starter, a frame Save) is listed the first time the frame presents it (onState).
       let listedFor: string | null = null
-      const existing = knownRef || initial ? [] : await enumerate()
+      // A refused first listing does not stop the mount (O-I #763): the frame mounts on no work, and the works are listed again
+      // after mounting (listWorksUntilAnswered below), whose first work then opens as this boot would have opened it.
+      const boot = knownRef || initial ? null : await enumerate().then(works => ({works}), cause => ({cause}))
+      const existing = boot && 'works' in boot ? boot.works : []
       if (!live) return
       let initialRef: string | undefined = knownRef ?? initial?.expression_ref ?? existing[0]?.expression_ref
       // The first listed work may live only as its file in the owner's works home (N1): the owner opens it from that file
@@ -291,6 +311,9 @@ export function ExpressionsPanel() {
           }
           // The frame's source and graph summons (native/hostedSummons.ts); every other kind is named there as not handled.
           if (request.request === 'summon') answerSummon(request)
+          // The frame saved a work into the works home that it does not present (a left draft kept as a work, O-I #763): the works are
+          // listed again, so the browser shows it at once.
+          if (request.request === 'works-changed') void enumerate().catch(fail)
         },
         onStudioResult: result => {if (live && !result.ok) setFault(result.error)},
       })
@@ -300,7 +323,21 @@ export function ExpressionsPanel() {
       workspace.attachEditor(editor)
       refreshEditor()
       rebind()
-      if (knownRef || initial) void enumerate().catch(fail)
+      if (!boot || 'cause' in boot) {
+        // The works list, asked until the owner answers while this mount stands. Its failure is named on the fault line with
+        // when it is asked again, and cleared by the answer. A boot whose own listing failed opens the first listed work then,
+        // unless a work or a draft has been opened meanwhile.
+        const presenting = mounted.host
+        let listingFault: string | null = null
+        void listWorksUntilAnswered(enumerate, {current: () => live && mounted?.host === presenting, wait: ms => new Promise(resolve => setTimeout(resolve, ms)),
+          failed: (cause, ms) => {listingFault = `The works list could not be read (${cause instanceof Error ? cause.message : String(cause)}). It is asked again in ${ms / 1000} s.`; if (live) setFault(listingFault)},
+        }, boot ? {cause: boot.cause} : undefined).then(works => {
+          if (!works || !live || mounted?.host !== presenting) return
+          if (listingFault) {const named = listingFault; setFault(current => current === named ? null : current)}
+          const first = works[0]?.expression_ref
+          if (boot && first && !presenting.getState()?.nativeScene && !pendingOpen.current && !pendingDraft.current) openNative(first)
+        })
+      }
       flushPendingOpen()
       // The boot deep link opens this work after the native channel arrives.
       // Posting it again would retain a second copy during initial recovery.

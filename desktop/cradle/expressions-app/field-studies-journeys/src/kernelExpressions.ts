@@ -428,10 +428,7 @@ export function invertEdit(before:unknown,after:unknown):KernelCompensation{
  * changes (kernelComposition.ts prepareCompositionEdit, "one edit still carries
  * at most 256 changes"). A larger list is refused whole, never split. */
 export const KERNEL_EDIT_BUDGET=256;
-/** Gesture ids already submitted as one kernel edit in this page. A gesture's
- * changes reach the kernel once; a refused or conflicted gesture is re-made. */
-const submittedGestures=new Set<string>();
-export async function saveKernelExpression(doc:unknown,explicit?:{changes:KernelChange[];expectedRevision?:number;gesture?:string}):Promise<{ok:boolean;error?:string;revision?:number}>{
+export async function saveKernelExpression(doc:unknown,explicit?:{changes:KernelChange[];expectedRevision?:number}):Promise<{ok:boolean;error?:string;revision?:number}>{
  if(!isDocument(doc))return{ok:false,error:'saveKernelExpression needs an oi.expression/v1 document'};
  let changes:KernelChange[],expectedRevision:number=doc.revision;
  if(explicit){
@@ -446,12 +443,6 @@ export async function saveKernelExpression(doc:unknown,explicit?:{changes:Kernel
   changes=diff.changes;
  }
  if(changes.length>KERNEL_EDIT_BUDGET)return{ok:false,error:`this edit carries ${changes.length} kernel changes, over the one-edit budget of ${KERNEL_EDIT_BUDGET}; it is refused whole and never split into several edits`};
- const gesture=explicit?.gesture;
- if(gesture!==undefined){
-  if(typeof gesture!=='string'||!gesture)return{ok:false,error:'the gesture id must be a nonempty string'};
-  if(submittedGestures.has(gesture))return{ok:false,error:`gesture ${gesture} was already submitted as one kernel edit; a gesture's changes never split across edits, and a refused or conflicted gesture is re-made on its current basis`};
-  submittedGestures.add(gesture);
- }
  const data=await call<{state?:string;document?:{revision?:number};current_revision?:number}>("kernel-expression",{request:{operation:"edit",expression_ref:doc.expression_ref,expected_revision:expectedRevision,actor:"expressions-app",changes}});
  if(data&&data.state==='revision_conflict')return{ok:false,error:`revision conflict: the kernel holds revision ${data.current_revision}, the edited document expected ${expectedRevision}`};
  if(!data||data.state!=='ready')return{ok:false,error:`the kernel did not accept the edit (state ${String(data?.state)})`};

@@ -4,7 +4,7 @@ import {installNativeField} from "./nativeField";
 import {announceInstrument} from "./native-field/ql/instrumentAnnouncement.mjs";
 import "./native-field/liveCut.css";
 import {SESSION_KEY,SessionState,validateSession,writeDraft,readDraft,readDrafts,removeDraft,applyRecoveryPlan,quarantineView,restoreQuarantinedDraft,listOwnerQuarantine,removeOwnerKeptDraft,restoreOwnerKeptDraft} from './recovery';
-import {ownerQuarantineRows} from './draftStorage';
+import {ownerQuarantineRows,ownerKeptUnreadableText} from './draftStorage';
 import type {OwnerQuarantineSection} from './expressions';
 // lane-3 E17-E19: one draft scheduler, the draft/saved offer and the session mark.
 import {DraftSchedule,draftStatusLine} from './draftSchedule';
@@ -46,7 +46,7 @@ import {COLOR_PALETTES,hexToRgb,isLightHex} from '../../src/engine/colorPalettes
 import {CHAKRA_PROFILE_ID} from '../../src/engine/semantics/chakraProfile';
 import type {SemanticBinding,SemanticColorCoupling,SemanticFieldConfig} from '../../src/engine/semantics/semanticTypes';
 import {Journey,Scene,Entity,EntityLayer,TextLayer,Tool,Shape,Vec3,clone,uid,clamp,fieldStudies,oiMark,rethemeMark,sevenCentres,smallLanguage,blankJourney,blankScene,entity,pin,chakraEntities,validateJourney,AutomationLane,SCENE_TRANSITION_MIN,SCENE_TRANSITION_MAX,type MarkThemeReading} from './model.js';
-import {DocumentStore,readLibrary,readLibraryWithOrigins,saveToLibrary,removeFromLibrary,recordLibraryAdoption,adoptedLocalOrigin,libraryOpenPlan,type LibraryOrigin} from './store.js';
+import {DocumentStore,readLibrary,readLibraryWithOrigins,saveToLibrary,removeFromLibrary,recordLibraryAdoption,adoptedLocalOrigin,linkLibraryCopy,libraryOpenPlan,type LibraryOrigin} from './store.js';
 import {decorateLibraryCard,libraryCardStanding,kernelCopyRefusalMessage,localCopyIdFor} from './libraryCards.js';
 import {bindingEditLabel,connectActLabel,historyTitle,historyToast,historyWaitReason,KERNEL_UPDATE_LABEL,OUTSIDE_UPDATE_REASON,researchMaterialLabel} from './undoLabels.js';
 import {defaultCamera,cameraForSceneView,project,unproject,facePlane,stageScale,stageCentre,basis,Camera} from './camera.js';
@@ -69,7 +69,7 @@ import {defaultCapture,CaptureSettings,CaptureTransition,download,slug,createOut
 const $=<T extends HTMLElement=HTMLElement>(id:string)=>document.getElementById(id) as T;
 import {mountShell,iconButton as ib} from './shell.js';
 import {RailItem,railPressed} from './rail.js';
-import {featuredExpressions,startingPoints,nativeSeven,forkExpression,libraryHTML,modesHTML,compositionCover,collectionBinsOf,collectionsWith,parseCollectionFilter,type CollectionBins,type CollectionFilter,type LibraryStanding} from './expressions.js';
+import {featuredExpressions,startingPoints,nativeSeven,forkExpression,libraryHTML,modesHTML,compositionCover,collectionBinsOf,collectionsWith,parseCollectionFilter,ownerKeptRemovalText,ownerKeptRemovedText,type CollectionBins,type CollectionFilter,type LibraryStanding} from './expressions.js';
 import {setModeCatalogueReader} from './native-field/modeStore.js';
 import {installKernelExpressions,kernelExpressionsAvailable,readMusicModes,readTechneReading,techneConstellationRelate,listKernelExpressions,nativeExpressionRequest,invertEdit} from './kernelExpressions.js';
 import {hostedRecovery} from './nativeRecovery.js';
@@ -1316,7 +1316,7 @@ function refreshOwnerQuarantine(message?:string){
  if(!address){ownerListing=null;if(libraryOpen)renderLibrary();return;}
  ownerListingPending=true;
  void listOwnerQuarantine(address.expressionRef,address.scope)
-  .then(reading=>{ownerListing={address,rows:ownerQuarantineRows(reading.entries),message,...(reading.unreadable!==undefined?{error:`The native owner cannot read the kept drafts of this Expression, so none are listed and none were removed or overwritten. ${reading.unreadable}`}:{})};})
+  .then(reading=>{ownerListing={address,rows:ownerQuarantineRows(reading.entries),message,...(reading.unreadable!==undefined?{error:ownerKeptUnreadableText(reading.unreadable)}:{})};})
   .catch(cause=>{ownerListing={address,rows:[],error:`The native owner could not read the kept drafts of this Expression. ${cause instanceof Error?cause.message:String(cause)}`};})
   .finally(()=>{ownerListingPending=false;if(libraryOpen)renderLibrary();});
 }
@@ -1376,6 +1376,9 @@ const canvasHome=document.createElement('div');canvasHome.className='canvas-home
 // A blank boot frame is not a new chosen work. Retain the host's native
 // reference until recovery succeeds or the user explicitly opens a draft.
 let awaitingNativeBoot=startsWithNativeReference;
+// The store's revision when the local journey standing in the frame was opened (0: the opening canvas). A local draft left with
+// no edits since is not made a work when another work opens (O-I #763); one with edits is.
+let localOpenedRevision=0;
 let researchInstruments:ReturnType<typeof installResearchInstruments>|undefined;
 let journeyInstrument:ReturnType<typeof installJourneyInstrument>|undefined;
 let journeyPositionRestored=false; // T9: the saved journey Scene is reopened once per page, from the first native load that can read it.
@@ -1430,7 +1433,7 @@ function recordAdoptionAfterSave(localId:string,wasBound:boolean){
  const adoption={ref:view.document.expression_ref,title:view.document.title,at:new Date().toISOString()};
  try{if(!recordLibraryAdoption(localId,adoption)&&store.document.id===localId)saveToLibrary(store.document,adoptedLocalOrigin(adoption));}catch{/* The link is recorded again by the next save. */}
 }
-function applyJourney(j:Journey,native=false,adoptionHistory:'record'|'acknowledge'='record',acknowledgement:'preserve'|'retire'='preserve'){journeyNavigation++;if(native)kernelScratchId=null;if(!native){awaitingNativeBoot=false;void nativeWorkspace?.changed(j);}if(propertyTake)finishPropertyTake();trackPreview=false;rememberWork(j.id);studioOpen=false;j.scenes.forEach(checkNativeLimits);sessionExpressions.set(store.document.id,clone(store.document));sessionExpressions.set(j.id,clone(j));try{if(!deletedLibraryIds.has(store.document.id))saveToLibrary(store.document,kernelOriginFor(store.document));}catch{toast('The previous expression is retained in Undo; browser storage is unavailable. Export it before closing this page.',6500);}if(native&&adoptionHistory==='acknowledge'&&store.document.id===j.id)store.acknowledge(initialiseSceneSaves(initialiseBelts(j)),acknowledgement);else store.change('Open expression',()=>{store.document=clone(initialiseSceneSaves(initialiseBelts(j)));});store.document.updatedAt=j.updatedAt;sceneIndex=0;selected=[];camera=defaultCamera();applySceneView();transitionDuration=0;$('transition-canvas').hidden=true;sceneElapsed=0;journeyPlaying=false;editing=false;inspectorOpen=false;timelineOpen=false;cursorTool='interact';tool='interact';railKey='interact';railExpanded=false;shapePickerOpen=false;closeDialogs();libraryOpen=false;modesOpen=false;try{history.replaceState(null,'',location.pathname+location.search);}catch{}markSaved();renderAll();}
+function applyJourney(j:Journey,native=false,adoptionHistory:'record'|'acknowledge'='record',acknowledgement:'preserve'|'retire'='preserve'){journeyNavigation++;if(native)kernelScratchId=null;if(!native){awaitingNativeBoot=false;void nativeWorkspace?.changed(j);}if(propertyTake)finishPropertyTake();trackPreview=false;rememberWork(j.id);studioOpen=false;j.scenes.forEach(checkNativeLimits);sessionExpressions.set(store.document.id,clone(store.document));sessionExpressions.set(j.id,clone(j));try{if(!deletedLibraryIds.has(store.document.id))saveToLibrary(store.document,kernelOriginFor(store.document));}catch{toast('The previous expression is retained in Undo; browser storage is unavailable. Export it before closing this page.',6500);}if(native&&adoptionHistory==='acknowledge'&&store.document.id===j.id)store.acknowledge(initialiseSceneSaves(initialiseBelts(j)),acknowledgement);else store.change('Open expression',()=>{store.document=clone(initialiseSceneSaves(initialiseBelts(j)));});store.document.updatedAt=j.updatedAt;sceneIndex=0;selected=[];camera=defaultCamera();applySceneView();transitionDuration=0;$('transition-canvas').hidden=true;sceneElapsed=0;journeyPlaying=false;editing=false;inspectorOpen=false;timelineOpen=false;cursorTool='interact';tool='interact';railKey='interact';railExpanded=false;shapePickerOpen=false;closeDialogs();libraryOpen=false;modesOpen=false;try{history.replaceState(null,'',location.pathname+location.search);}catch{}if(!native)localOpenedRevision=store.revision;markSaved();renderAll();}
 function openKeep(){captureOpen=!captureOpen;modesOpen=false;pointer.active=false;
  if(captureOpen){inspectorOpen=false;contextKind='';timelineOpen=false;beltPickerOpen=false;shapePickerOpen=false;}renderAll();}
 function renderImageSuite(){sourceEditorEpoch++;readCapture();if(!selectedEntity()){const e=scene().entities.find(e=>e.kind==='formation');if(e)selected=[e.id];} $('capture-panel').innerHTML=`<header><h3>Image suite</h3>${ib('capture-options','close','Close image suite')}</header>${imageSuiteHTML(scene(),selected[0],stepIndex)}<details class="image-output"><summary>Capture output settings</summary><div class="two-col"><label class="control"><span>Output size</span><select id="capture-width"><option value="1280">1280</option><option value="1440">1440</option><option value="1920">1920</option><option value="3840">3840 · PNG</option></select></label><label class="control"><span>Frame</span><select id="capture-aspect"><option value="stage">Current stage</option><option value="16:9">16:9</option><option value="1:1">1:1</option><option value="9:16">9:16</option></select></label></div><label class="toggle-row"><span>Include page text</span><input id="capture-text" type="checkbox" ${captureSettings.includeText?'checked':''}><i></i></label><label class="toggle-row"><span>Transparent PNG</span><input id="capture-transparent" type="checkbox" ${captureSettings.transparent?'checked':''}><i></i></label><p class="control-note">Clean artwork only. Aspect changes centre-crop the current view. Silent live video requests 30 fps; 2-minute / 128 MB limit.</p></details>`;
@@ -1644,7 +1647,7 @@ async function action(name:string,el:HTMLElement,event?:Event){const s=scene(),s
  // E19: the owner's kept draft becomes a Library copy by the same path as the browser quarantine; the kept draft stays where it is.
  case 'restore-owner-kept':{const id=el.dataset.id!,address=ownerListing?.address;if(!address)break;void restoreOwnerKeptDraft(address.expressionRef,address.scope,id).then(copy=>{refreshOwnerQuarantine(`Restored as a Library copy: ${copy.name}`);refreshQuarantine();toast('Restored as a Library copy.');}).catch(cause=>refreshOwnerQuarantine(cause instanceof Error?cause.message:String(cause)));break;}
  // E19: removing a kept draft is an explicit, confirmed request. Nothing else calls the owner's remove.
- case 'remove-owner-kept':{const id=el.dataset.id!,row=ownerListing?.rows.find(r=>r.id===id),address=ownerListing?.address;if(!row||!address)break;confirmChange('Remove this kept draft?',`The kept copy "${row.name}" (${row.reason}) is removed from this Expression's quarantine in the native owner. Nothing else is removed: the saved copy and the open Expression stay as they are.`,()=>{void removeOwnerKeptDraft(address.expressionRef,address.scope,row.id).then(remaining=>refreshOwnerQuarantine(`Removed. ${remaining} kept ${remaining===1?'draft remains':'drafts remain'}.`)).catch(cause=>refreshOwnerQuarantine(cause instanceof Error?cause.message:String(cause)));});break;}
+ case 'remove-owner-kept':{const id=el.dataset.id!,row=ownerListing?.rows.find(r=>r.id===id),address=ownerListing?.address;if(!row||!address)break;confirmChange('Remove this kept draft?',ownerKeptRemovalText(row),()=>{void removeOwnerKeptDraft(address.expressionRef,address.scope,row.id).then(remaining=>refreshOwnerQuarantine(ownerKeptRemovedText(remaining))).catch(cause=>refreshOwnerQuarantine(cause instanceof Error?cause.message:String(cause)));});break;}
  case 'delete-saved':{const id=el.dataset.id!;confirmChange('Remove this saved copy?','Only this understood saved expression is removed. Other saved and unreadable entries are retained. The active expression remains open.',()=>{removeFromLibrary(id);deletedLibraryIds.add(id);void removeDraft(id).catch(error);if(store.document.id===id)draftSchedule.cancel();sessionExpressions.delete(id);covers.delete(id);renderLibrary();});break;}
 
  case 'edit':edit(!inspectorOpen,selectedEntity()?'objects':'field');break;
@@ -2611,13 +2614,17 @@ function ownerWriteRefusal():string|null{const label=store.spanningLabel;if(labe
 function asCanvasImportOwnerCall<T>(call:()=>T):T{canvasImportOwnerCall=true;try{return call();}finally{canvasImportOwnerCall=false;}}
 // An untouched opening canvas is not recovery material (:243), awaited boot or not: a draft is retained for an edit or for an open
 // native work only (lane W, 15 Oct — the door's Scene and New were refused while the frame stood on its own blank canvas).
-nativeWorkspace=installNativeWorkspace({shouldRetainDraft:()=>store.revision!==0||!!nativeWorkspace?.nativeView(),anchor:()=>store.kernelSaveAnchor(),recordSave:(anchor,checkpoint)=>{if(!store.attachKernelCheckpoint(anchor,checkpoint))toast('Saved. Undo cannot reverse this Save on the native owner, because the step it began from has moved.',7000);},snapshot:()=>({journey:clone(store.document),sceneId:scene().id,entityId:selected[0]??null}),version:()=>store.revision,load:applyNativeView,toast,gate:ownerWriteRefusal,refresh:()=>{needsFrame=true;renderAll();},summon:(kind,subject)=>hostRequest({request:'summon',detail:{kind,subject}}),correspondence:(rows,selection)=>{nativeConnectionRows=rows;nativeSelectedRelation=selection;needsFrame=true;},status:showNativeStatus,chooseRecovery:request=>askRecoveryChoice(request.draft,{...request.offer,revision:request.revision}),followed:(_ref,readThrough)=>{const panels=followedPanels(readThrough);if(panels.sequence!==null)sequenceOpen=panels.sequence;if(panels.inspector!==null)inspectorOpen=panels.inspector;renderAll();}});
+// O-I #763: a local draft left for another work and kept as a work in its folder: its Library copy opens that work, never a second copy,
+// and the host lists its works again, so its browser shows the work at once.
+nativeWorkspace=installNativeWorkspace({shouldRetainDraft:()=>store.revision!==0||!!nativeWorkspace?.nativeView(),localDraftEdited:()=>store.revision!==localOpenedRevision,keptAsWork:(journey,kept)=>{try{linkLibraryCopy(journey,{ref:kept.expression_ref,title:kept.title,at:new Date().toISOString()});}catch{/* The work stands in its folder; the browser Library is unavailable, so its copy keeps no link. */}hostRequest({request:'works-changed'});},anchor:()=>store.kernelSaveAnchor(),recordSave:(anchor,checkpoint)=>{if(!store.attachKernelCheckpoint(anchor,checkpoint))toast('Saved. Undo cannot reverse this Save on the native owner, because the step it began from has moved.',7000);},snapshot:()=>({journey:clone(store.document),sceneId:scene().id,entityId:selected[0]??null}),version:()=>store.revision,load:applyNativeView,toast,gate:ownerWriteRefusal,refresh:()=>{needsFrame=true;renderAll();},summon:(kind,subject)=>hostRequest({request:'summon',detail:{kind,subject}}),correspondence:(rows,selection)=>{nativeConnectionRows=rows;nativeSelectedRelation=selection;needsFrame=true;},status:showNativeStatus,chooseRecovery:request=>askRecoveryChoice(request.draft,{...request.offer,revision:request.revision}),followed:(_ref,readThrough)=>{const panels=followedPanels(readThrough);if(panels.sequence!==null)sequenceOpen=panels.sequence;if(panels.inspector!==null)inspectorOpen=panels.inspector;renderAll();}});
 const retainedEditor=createRetainedNativeEditor({
  store,sceneId:()=>scene().id,nativeView:()=>nativeWorkspace?.nativeView(),
  selection:()=>({entity_ids:[...selected],step_id:scene().entities.find(e=>e.id===selected[0])?.sequence.steps[stepIndex]?.id??null}),
  nativeSelect:async(sceneId,entityId)=>await nativeWorkspace!.select(sceneId,entityId),
  commit:async()=>await commitNativeRecorded(),change:(label,mutate)=>changed(mutate,true,label),
- afterHistory:()=>{applySceneView();markSaved();overlayDirty=true;needsFrame=true;renderAll();},
+ // The DLW's own Undo and Redo (the Studio's head, the device editors) take the frame's one step, never a local step followed by
+ // a Save (E15f, O-I #763): a step that crosses a recorded Save is compensated on its owner, and a refusal returns by name.
+ history:async direction=>{const step=await historyStep(direction);if(step)throw Error(step.refused);},
  selectLocal:(entityId,index)=>{selected=entityId===null?[]:[entityId];stepIndex=index;overlayDirty=true;needsFrame=true;renderAll();},
  openEditor:(editor,entityId,index)=>{
   selected=[entityId];stepIndex=index;pointer.active=false;editing=true;
@@ -2764,7 +2771,7 @@ function canvasImportHost(sceneId:string):CanvasImportHost{
    if(!now||before===null||(before as {revision?:number}).revision===now.revision)return;
    const compensation=invertEdit(before,now);
    if(!('changes' in compensation))throw new Error(compensation.reason);
-   await asCanvasImportOwnerCall(()=>nativeWorkspace!.replayCheckpoint(compensation.changes,before));
+   await asCanvasImportOwnerCall(()=>nativeWorkspace!.replayCheckpoint(compensation.changes,{from:now,to:before}));
   },
  };
 }
@@ -2993,35 +3000,46 @@ async function commitNativeRecorded():Promise<boolean|undefined>{
 /** One Undo or Redo step. A step that crosses a recorded Save replays that Save's
  * kernel edit through its native owner first, and the local step follows only when
  * the owner acknowledges it. A refusal is named by the workspace; the history stays
- * as it was. Steps the kernel never held are undone locally, as before. */
+ * as it was. Steps the kernel never held are undone locally, as before. The one step
+ * for every door: the menu, the keys and the frame's buttons (stepHistory), and the DLW's
+ * own Undo and Redo, which arrive through the editor receiver (O-I #763, E15f). It returns
+ * the refusal by name when no step was taken, with how long the frame's own doors toast it
+ * (`toast` null: they say nothing more, because the workspace already named it or, as
+ * before, a second press waits silently on the first), and null when the step was taken
+ * or there was nothing to step. */
 let historyStepping=false;
-async function stepHistory(direction:'undo'|'redo'):Promise<void>{
- if(historyStepping)return;
- // A .canvas import is open: Undo and Redo wait and say why, through the toast; they never throw.
+async function historyStep(direction:'undo'|'redo'):Promise<{refused:string;toast:number|null}|null>{
+ if(historyStepping)return {refused:`The last ${direction==='undo'?'Undo':'Redo'} is still waiting for its native owner. Nothing was changed.`,toast:null};
+ // A .canvas import is open: Undo and Redo wait and say why; they never throw.
  const openImport=store.spanningLabel;
- if(openImport!==null){toast(historyWaitReason(direction,openImport),4200);return;}
+ if(openImport!==null)return {refused:historyWaitReason(direction,openImport),toast:4200};
  if(store.transactionOpen)store.finish();
  const plan=direction==='undo'?store.undoPlan():store.redoPlan();
- if(!plan)return;
+ if(!plan)return null;
  const label=plan.label,kernel=plan.kernel,entry=direction==='undo'?store.undoStack.at(-1):store.redoStack.at(-1);
- if(kernel&&'refused' in kernel){toast(`Cannot ${direction} ${label}: ${kernel.reason} Nothing was changed.`,7000);return;}
+ if(kernel&&'refused' in kernel)return {refused:`Cannot ${direction} ${label}: ${kernel.reason} Nothing was changed.`,toast:7000};
  let stepped:boolean;
  if(kernel&&'changes' in kernel&&kernel.changes.length){
   const expected=store.checkpointAt(direction);
-  if(!expected||!nativeWorkspace){toast(`Cannot ${direction} ${label}: its recorded native state is not held. Nothing was changed.`,7000);return;}
+  if(!expected||!nativeWorkspace)return {refused:`Cannot ${direction} ${label}: its recorded native state is not held. Nothing was changed.`,toast:7000};
   historyStepping=true;
   try{
-   if(!await nativeWorkspace.replayCheckpoint(kernel.changes,direction==='undo'?expected.before:expected.after))return;
-   if((direction==='undo'?store.undoStack.at(-1):store.redoStack.at(-1))!==entry){toast('The history changed while the native owner answered. The saved edit was reversed there; save to reconcile this draft.',7000);return;}
+   if(!await nativeWorkspace.replayCheckpoint(kernel.changes,direction==='undo'?{from:expected.after,to:expected.before}:{from:expected.before,to:expected.after}))return {refused:nativeState?.text||`Cannot ${direction} ${label}: its native owner did not acknowledge it. Nothing was changed.`,toast:null};
+   if((direction==='undo'?store.undoStack.at(-1):store.redoStack.at(-1))!==entry)return {refused:'The history changed while the native owner answered. The saved edit was reversed there; save to reconcile this draft.',toast:7000};
    stepped=direction==='undo'?store.undoAccepted():store.redo({compensated:true});
   }finally{historyStepping=false;}
  }else{
   stepped=direction==='undo'?(kernel?store.undoAccepted():store.undo()):store.redo(kernel?{compensated:true}:undefined);
  }
- if(!stepped)return;
+ if(!stepped)return null;
  markSaved();renderAll();
  if(researchInstruments?.active()){await commitResearch();await researchInstruments.refresh();}
  toast(direction==='undo'?`${historyToast('undo',label)} Simulation time has not been rewound.`:historyToast('redo',label),2200);
+ return null;
+}
+async function stepHistory(direction:'undo'|'redo'):Promise<void>{
+ const step=await historyStep(direction);
+ if(step&&step.toast!==null)toast(step.refused,step.toast);
 }
 let nativeState:import('./nativeWorkspace.js').NativeStatus|null=null;
 function showNativeStatus(state:import('./nativeWorkspace.js').NativeStatus){

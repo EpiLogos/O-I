@@ -374,9 +374,13 @@ test('the app wires the import through one host call, one composite-or-act path,
  assert.match(appSource,/await asCanvasImportOwnerCall\(\(\)=>nativeWorkspace!\.replayCheckpoint/,'the import rollback passes the hold');
  assert.ok((workspaceSource.match(/refusedByHost\(\)/g)??[]).length>=10,'every owner-write entry checks the hold (the behaviour is pinned by the gate tests above)');
  // Undo and Redo while an import is open: they wait and say why, through the toast, before any store call.
- const stepSource=appSource.slice(appSource.indexOf('async function stepHistory'),appSource.indexOf('let nativeState'));
- assert.match(stepSource,/if\(openImport!==null\)\{toast\(historyWaitReason\(direction,openImport\),4200\);return;\}/,'Undo and Redo wait and say why');
+ // One step for every door (O-I #763): it returns the wait by name, and stepHistory toasts it (the behaviour, through the DLW's door
+ // too, is pinned in kernel-undo.test.mjs).
+ const stepSource=appSource.slice(appSource.indexOf('async function historyStep'),appSource.indexOf('async function stepHistory'));
+ assert.match(stepSource,/if\(openImport!==null\)return \{refused:historyWaitReason\(direction,openImport\),toast:4200\};/,'Undo and Redo wait and say why');
  assert.ok(stepSource.indexOf('openImport')<stepSource.indexOf('store.finish()'),'the wait is checked before the store is touched');
+ const toastSource=appSource.slice(appSource.indexOf('async function stepHistory'),appSource.indexOf('let nativeState'));
+ assert.match(toastSource,/const step=await historyStep\(direction\);\n if\(step&&step\.toast!==null\)toast\(step\.refused,step\.toast\);/,'the frame\'s own doors toast the wait');
  assert.match(appSource,/b\.disabled=!store\.undoStack\.length\|\|store\.spanningLabel!==null/,'the undo button is disabled while an import is open');
  assert.match(appSource,/b\.disabled=!store\.redoStack\.length\|\|store\.spanningLabel!==null/,'the redo button is disabled while an import is open');
 });

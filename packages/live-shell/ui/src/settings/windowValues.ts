@@ -431,9 +431,8 @@ export interface SetupMachine {readonly state: 'read'; readonly workcell: {reado
 /** A detected agent tool as the Harnesses and skills step reads it (`aikit client status`): AIKit's client and harness names and its
  * folder. Only the tools AIKit detects on this computer; one that is not installed is not a tool you use. */
 export interface SetupHarness {readonly client: string; readonly harness: string; readonly folder?: string}
-/** A skill root AIKit discovers (`aikit init`: its label, path, valid skills and problems), the skills `aikit collate --all` names in it,
- * and AIKit's standing for it (`aikit tree --expand registries`, the first word of the root's row: foreign, adopted with the procedure
- * that adopted it, or generated with its generation). */
+/** A skill root AIKit discovers (`aikit init`: its label, path, valid skills and problems, and who owns it — foreign, adopted with the
+ * procedure that adopted it, or generated with its generation), and the skills `aikit collate --all` names in it. */
 export interface SetupSkillRoot {readonly label: string; readonly path: string; readonly skills: number; readonly problems: number; readonly names: readonly string[]
   readonly standing: string; readonly procedure?: string; readonly generation?: string}
 /** The Harnesses and skills step: the tools and the skill roots, or AIKit's refusal to read them, in its words. */
@@ -534,22 +533,19 @@ export function setupHarnessClients(status: unknown): SetupHarness[] {
   return shapeHarnessClients(status).filter(row => row.detected).map(row => ({client: row.client, harness: row.harness, ...(folderOf(row.config_dir) ? {folder: folderOf(row.config_dir)} : {})}))
 }
 
-/** The skill roots AIKit discovers (`aikit init`'s roots), each with the skills `aikit collate --all` names under its label, and the
- * standing AIKit's tree gives it (`aikit tree --expand registries`: the row `registries/<label>`, whose summary opens with the standing,
- * then `procedure P` or `generation G`). A root the tree does not name stands `unknown`. Pure. */
-export function setupSkillRoots(init: unknown, collate: unknown, tree: unknown): SetupSkillRoot[] {
+/** The skill roots AIKit discovers (`aikit init`'s roots), each with who owns it as init names it (`ownership`: foreign, adopted with its
+ * `procedure`, or generated with its `generation`) and the skills `aikit collate --all` names under its label. A root init names no
+ * ownership for stands `unknown`. Pure. */
+export function setupSkillRoots(init: unknown, collate: unknown): SetupSkillRoot[] {
   const roots = rec(init) && Array.isArray(init.roots) ? init.roots.filter(rec) : []
   const clusters = rec(collate) && Array.isArray(collate.clusters) ? collate.clusters.filter(rec) : []
-  const rows = rec(tree) && Array.isArray(tree.rows) ? tree.rows.filter(rec) : []
   return roots.flatMap((root): SetupSkillRoot[] => {
     const label = txt(root.label), path = txt(root.path)
     if (!label || !path) return []
     const names = clusters.filter(cluster => Array.isArray(cluster.where) && cluster.where.some(where => rec(where) && where.root === label)).flatMap(cluster => (txt(cluster.name) ? [cluster.name as string] : []))
-    const summary = txt(rows.find(row => row.path === `registries/${label}`)?.summary) ?? ''
-    const parts = summary.split(' · ')
-    const procedure = parts.find(part => part.startsWith('procedure '))?.slice('procedure '.length), generation = parts.find(part => part.startsWith('generation '))?.slice('generation '.length)
+    const ownership = txt(root.ownership), procedure = txt(root.procedure), generation = txt(root.generation)
     return [{label, path, skills: typeof root.skills === 'number' ? root.skills : 0, problems: typeof root.problems === 'number' ? root.problems : 0, names: [...names].sort(),
-      standing: parts[0] && ['foreign', 'adopted', 'generated'].includes(parts[0]) ? parts[0] : 'unknown', ...(procedure ? {procedure} : {}), ...(generation ? {generation} : {})}]
+      standing: ownership && ['foreign', 'adopted', 'generated'].includes(ownership) ? ownership : 'unknown', ...(procedure ? {procedure} : {}), ...(generation ? {generation} : {})}]
   })
 }
 /** The namespace a root's skills are adopted under: AIKit's own label for the root, without its @ (`@claude` → `skill/claude/…`). */
@@ -571,7 +567,7 @@ export function setupHarnessStep(reading: SetupHarnesses | undefined): Record<st
     if (!root.skills) return {name, where: root.path, why: 'It keeps no skills AIKit can read: nothing to adopt.'}
     if (SETUP_HELD.has(root.standing)) return {name, where: root.path,
       change: `AIKit holds its ${skillsWord(root.skills)}${listed} (${root.standing}${root.procedure ? ` · procedure ${root.procedure}` : root.generation ? ` · generation ${root.generation}` : ''}) · ${by} reads them where they were`}
-    if (root.standing !== 'foreign') return {name, where: root.path, why: `AIKit does not say whether it holds these skills (its tree names no standing for ${root.label}): they are left as they are.`}
+    if (root.standing !== 'foreign') return {name, where: root.path, why: `AIKit does not say whether it holds these skills (aikit init names no ownership for ${root.label}): they are left as they are.`}
     return {name, where: root.path, change: `AIKit adopts its ${skillsWord(root.skills)}${listed} as skill/${setupNamespace(root)}/… · ${by} reads them where they were · its settings and instructions stay as they are${root.problems ? ` · AIKit names ${root.problems} entr${root.problems === 1 ? 'y' : 'ies'} it cannot read` : ''}`}
   })
   for (const tool of reading.harnesses) if (!reading.roots.some(root => ownerOf(root) === tool)) items.push({name: tool.harness, where: tool.folder ?? tool.client, why: 'It keeps no skills here: nothing to adopt. Its settings stay as they are.'})
@@ -715,7 +711,7 @@ export const SETTINGS_WINDOW_WIRING = {
     visualLayer: 'the renderer\'s visual layer (SettingsAdapter.visualPreferences)', welcome: 'the renderer\'s welcome scene (SettingsAdapter.visualPreferences)',
     products: 'each product\'s mount and operations (system_composition_read)', ran: 'the last operation\'s answer (product_action_run)',
     system: 'each owner\'s System disclosure on its four axes (system_composition_read)',
-    setup: 'Setup\'s steps (manual §10.11): Ground from native oi\'s adoption (the kernel op `setup`: status and discover; bound and recognised is accepted); Machines from Workcell\'s status (op workcell_status_read) and Central\'s machine.declaration of role current, accepted once that binds the Workcell this computer answers as; Projects from Central\'s Work, accepted once a project stands with its ground. Harnesses and skills from AIKit: the tools its client status detects (op harness_status), the skill roots aikit init discovers (aikit_read init), the skills aikit collate --all names in each, and each root\'s standing in aikit tree --expand registries (foreign, adopted, generated), accepted once AIKit holds every root that keeps skills. Credentials from AIKit: where aikit credential discover finds each key (presence only), the providers aikit harness auth names for each detected tool (op harness_auth_describe) and the bindings aikit credential list keeps (metadata only), accepted once a key is bound and none found waits; items carry the credential a row binds, and bound',
+    setup: 'Setup\'s steps (manual §10.11): Ground from native oi\'s adoption (the kernel op `setup`: status and discover; bound and recognised is accepted); Machines from Workcell\'s status (op workcell_status_read) and Central\'s machine.declaration of role current, accepted once that binds the Workcell this computer answers as; Projects from Central\'s Work, accepted once a project stands with its ground. Harnesses and skills from AIKit: the tools its client status detects (op harness_status), the skill roots aikit init discovers (aikit_read init) with who owns each (its ownership: foreign, adopted, generated), and the skills aikit collate --all names in each, accepted once AIKit holds every root that keeps skills. Credentials from AIKit: where aikit credential discover finds each key (presence only), the providers aikit harness auth names for each detected tool (op harness_auth_describe) and the bindings aikit credential list keeps (metadata only), accepted once a key is bound and none found waits; items carry the credential a row binds, and bound',
     folders: 'the folders of the ground\'s Work (Central work.list), each with Central\'s projectcentral.inspect, its material and its ProjectCentral parts (central.files.list); then the folders of work that stand elsewhere under the world\'s folder (Central work.candidates)',
     setupPlan: 'the preview of the folder and choices shown: Central\'s projectcentral.adopt.preview or projectcentral.migrate.preview operations; for Create, the inspection Central plans projectcentral.init on; for a folder elsewhere, Central\'s work.bring.preview',
   },
@@ -735,7 +731,7 @@ export const SETTINGS_WINDOW_WIRING = {
     checkCreation: 'RoutineAuthoringSource.readResult: a waiting creation read back, never sent again',
     addMachine: 'RemoteMachinesSource.add', connect: 'RemoteMachinesSource.connect', disconnect: 'RemoteMachinesSource.disconnect', removeMachine: 'RemoteMachinesSource.remove',
     openElsewhere: 'the setting\'s own editor beside its instrument (SettingsAdapter.navigate)', 'pick:<ref>': 'the system picker (SettingsAdapter.pickResource)',
-    acceptStep: 'Ground: native oi\'s reviewed plan (the kernel op `setup`: plan, then apply with its review token; Central only — custom, products [central]) read back by discover. Machines: Central\'s machine.adopt-current (role current, the Workcell this computer answers as), read back by machine.declaration; the host then reads its world again. Projects: a folder elsewhere comes into Work by Central\'s work.bring on its preview\'s digest, read back by work.list; a folder of Work becomes a project by Central\'s projectcentral.init, adopt or migrate as previewed, read back by projectcentral.inspect. Harnesses and skills: for each skill root AIKit reads as foreign, AIKit\'s plan (aikit_read adopt-plan: aikit adopt ROOT --namespace LABEL, nothing moves) and, when it adopts the skills read, aikit adopt ROOT --namespace LABEL --yes --expect-digest on its review digest (aikit_write adopt), read back by aikit tree as adopted and aikit init as still keeping its skills; the tool keeps reading them where they were. Credentials: aikit credential setup CREDENTIAL --ref REFERENCE (op credential_setup with the reference you give, never material) for the key chosen, read back by aikit credential list; a reference that names no store (op://, keychain://, pass://, varlock://) is refused before anything is sent',
+    acceptStep: 'Ground: native oi\'s reviewed plan (the kernel op `setup`: plan, then apply with its review token; Central only — custom, products [central]) read back by discover. Machines: Central\'s machine.adopt-current (role current, the Workcell this computer answers as), read back by machine.declaration; the host then reads its world again. Projects: a folder elsewhere comes into Work by Central\'s work.bring on its preview\'s digest, read back by work.list; a folder of Work becomes a project by Central\'s projectcentral.init, adopt or migrate as previewed, read back by projectcentral.inspect. Harnesses and skills: for each skill root AIKit reads as foreign, AIKit\'s plan (aikit_read adopt-plan: aikit adopt ROOT --namespace LABEL, nothing moves) and, when it adopts the skills read, aikit adopt ROOT --namespace LABEL --yes --expect-digest on its review digest (aikit_write adopt), read back by aikit init as adopted and still keeping its skills; the tool keeps reading them where they were. Credentials: aikit credential setup CREDENTIAL --ref REFERENCE (op credential_setup with the reference you give, never material) for the key chosen, read back by aikit credential list; a reference that names no store (op://, keychain://, pass://, varlock://) is refused before anything is sent',
     previewStep: 'Central\'s projectcentral.adopt.preview or migrate.preview for the folder and wiki chosen; Create previews from Central\'s inspection (it has no preview of projectcentral.init); a folder elsewhere previews Central\'s work.bring.preview',
     rereadSetup: 'native oi\'s status and discover, then AIKit\'s tools, skill roots, keys and bindings, Workcell\'s status and Central\'s machine declaration, Central\'s Work and the folders of work elsewhere, read again',
   },

@@ -44,10 +44,10 @@ function applyKernel(document,changes){
 }
 // A simulated owner: one Expression, its edits at expected_revision, every request recorded.
 function owner(){
- const state={doc:kernelDocument(),edits:[]};
+ const state={doc:kernelDocument(),edits:[],checkpoints:[]};
  const ports={
   mint:()=>'expression:unused',
-  checkpoint:async()=>{},
+  checkpoint:async(_id,value)=>{state.checkpoints.push(clone(value));},
   file:async()=>{throw new Error('No file owner in this test');},
   expression:async request=>{
    if(request.operation==='inspect')return {state:'ready',document:clone(state.doc)};
@@ -71,6 +71,8 @@ async function opened(){
  return {kernel,work,store};
 }
 const snapshot=store=>({journey:clone(store.document),sceneId:store.document.scenes[0].id,entityId:null});
+// The documents one Undo or Redo of a recorded Save moves between: from the one the Save left (or found), to the other.
+const replay=(store,direction)=>{const {before,after}=store.checkpointAt(direction);return direction==='undo'?{from:after,to:before}:{from:before,to:after};};
 
 test('acceptance: undo past a recorded Save submits one compensating edit back to the pre-save kernel document; redo replays it once', async()=>{
  const {kernel,work,store}=await opened();
@@ -88,7 +90,7 @@ test('acceptance: undo past a recorded Save submits one compensating edit back t
  const undo=store.undoPlan();
  assert.equal(undo.label,'Rename scene');
  assert.ok(undo.kernel&&'changes' in undo.kernel&&undo.kernel.changes.length>0);
- await work.replayKernelEdit(undo.kernel.changes,store.checkpointAt('undo').before);
+ await work.replayKernelEdit(undo.kernel.changes,replay(store,'undo'));
  assert.equal(store.undoAccepted(),true);
  assert.equal(kernel.state.edits.length,2,'exactly one compensating edit');
  assert.equal(kernel.state.edits[1].expected_revision,after.revision,'it is submitted at the saved revision');
@@ -107,7 +109,7 @@ test('acceptance: undo past a recorded Save submits one compensating edit back t
  const redo=store.redoPlan();
  assert.equal(redo.label,'Rename scene');
  assert.ok(redo.kernel&&'changes' in redo.kernel&&redo.kernel.changes.length>0);
- await work.replayKernelEdit(redo.kernel.changes,store.checkpointAt('redo').after);
+ await work.replayKernelEdit(redo.kernel.changes,replay(store,'redo'));
  assert.equal(store.redo({compensated:true}),true);
  assert.equal(kernel.state.edits.length,3,'redo is one forward edit');
  assert.equal(digest(kernel.state.doc),digest(after),'redo re-applies the Save');
@@ -125,14 +127,51 @@ test('a revision the owner has moved past is refused by name, and nothing is wri
  // Another writer changes the Expression after this work's acknowledged revision.
  kernel.state.doc={...clone(kernel.state.doc),title:'Written elsewhere',revision:kernel.state.doc.revision+1};
  const owned=clone(kernel.state.doc),localBefore=clone(store.document),depth=store.undoStack.length;
+ const edits=kernel.state.edits.length,checkpoints=kernel.state.checkpoints.length;
  const undo=store.undoPlan();
- await assert.rejects(()=>work.replayKernelEdit(undo.kernel.changes,store.checkpointAt('undo').before),/revision_conflict/);
+ // O-I #763 (E15g): the owner's document is read first, so the refusal comes before the compensation is persisted or sent.
+ await assert.rejects(()=>work.replayKernelEdit(undo.kernel.changes,replay(store,'undo')),/document_moved: "Written elsewhere" is native revision 3, not the document this Save left/);
+ assert.equal(kernel.state.edits.length,edits,'no compensation reached the owner');
+ assert.equal(kernel.state.checkpoints.length,checkpoints,'no pending compensation was written');
 
  assert.equal(digest(kernel.state.doc),digest(owned),'the owner keeps its own write');
  assert.equal(kernel.state.doc.revision,owned.revision,'the owner did not advance');
  assert.equal(store.undoStack.length,depth,'the local history is untouched');
  assert.deepEqual(store.document,localBefore,'the local document is untouched');
  assert.equal(work.state.pending,undefined,'the refused intent is cleared, not replayed');
+});
+
+test('E15g: undo or redo past a Save whose document has moved at the revision this work holds is refused by name before anything is written', async()=>{
+ const {kernel,work,store}=await opened();
+ store.change('Rename expression',d=>{d.name='Renamed';});
+ const anchor=store.kernelSaveAnchor();
+ assert.equal(store.attachKernelCheckpoint(anchor,(await work.commitRecorded(snapshot(store))).checkpoint),true);
+ // Another aperture renamed the Scene, and this clean work advanced onto that revision (advanceClean): its view and the owner
+ // agree on the revision, but the document is no longer the one the Save left. Its compensation would rename the work back
+ // over a Scene the Save never touched.
+ kernel.state.doc={...clone(kernel.state.doc),scenes:[{...clone(kernel.state.doc.scenes[0]),title:'Renamed elsewhere'}],revision:kernel.state.doc.revision+1};
+ assert.ok(await work.advanceClean(clone(store.document)));
+ assert.equal(work.state.view.document.revision,kernel.state.doc.revision);
+ const owned=clone(kernel.state.doc),edits=kernel.state.edits.length,checkpoints=kernel.state.checkpoints.length,depth=store.undoStack.length;
+ const undo=store.undoPlan();
+ await assert.rejects(()=>work.replayKernelEdit(undo.kernel.changes,replay(store,'undo')),/document_moved: "Renamed" is native revision 3, not the document this Save left; the recorded Save was not undone or redone and nothing was written/);
+ assert.equal(kernel.state.edits.length,edits,'no compensation reached the owner');
+ assert.equal(kernel.state.checkpoints.length,checkpoints,'no pending compensation was written');
+ assert.deepEqual(kernel.state.doc,owned,'the owner keeps the moved document');
+ assert.equal(work.state.pending,undefined);
+ assert.equal(store.undoStack.length,depth,'the history is untouched');
+ // Redo is held to the same rule: its forward edit stands only on the document the Save found.
+ const {kernel:k2,work:w2,store:s2}=await opened();
+ s2.change('Rename expression',d=>{d.name='Renamed';});
+ const a2=s2.kernelSaveAnchor();
+ assert.equal(s2.attachKernelCheckpoint(a2,(await w2.commitRecorded(snapshot(s2))).checkpoint),true);
+ const back=s2.undoPlan();await w2.replayKernelEdit(back.kernel.changes,replay(s2,'undo'));assert.equal(s2.undoAccepted(),true);
+ k2.state.doc={...clone(k2.state.doc),scenes:[{...clone(k2.state.doc.scenes[0]),title:'Renamed elsewhere'}],revision:k2.state.doc.revision+1};
+ assert.ok(await w2.advanceClean(clone(s2.document)));
+ const edits2=k2.state.edits.length,checkpoints2=k2.state.checkpoints.length;
+ await assert.rejects(()=>w2.replayKernelEdit(s2.redoPlan().kernel.changes,replay(s2,'redo')),/document_moved/);
+ assert.equal(k2.state.edits.length,edits2);
+ assert.equal(k2.state.checkpoints.length,checkpoints2);
 });
 
 test('a Save with nothing to submit records nothing, and undoing past it submits nothing', async()=>{
@@ -202,5 +241,82 @@ test('committing through commitRecorded submits exactly what commit submits', as
   assert.equal(JSON.stringify(s.undoPlan()),plan,'the no-op Save did not overwrite the real compensation');
   const empty=new DocumentStore(blankJourney());empty.acknowledge(empty.document);
   assert.equal(empty.attachKernelCheckpoint(empty.kernelSaveAnchor(),{changes:[],before:kdoc('t1',2),after:kdoc('t1',2)}),true,'a no-op Save on an empty history is not a failure');
+ });
+}
+
+// O-I #763 (E15f): the DLW's own Undo and Redo (the Studio's head, the device editors) reach the frame through its editor
+// receiver. Its history was the retained editor's own — store.undo() then a Save — so it never compensated a recorded Save
+// on its owner, and the Save it made recorded on the step below. The retained editor app.ts creates now takes the frame's one
+// step (historyStep) as its history. app.ts is a DOM entry that cannot load under node: the step and the history it hands the
+// retained editor are read from its source (typescript AST) and run, through the real retained editor (hostEditor.ts), over
+// the real store and NativeWorking, against the simulated owner above.
+{
+ const {createRequire}=await import('node:module');
+ const fs=await import('node:fs');
+ const {historyToast,historyWaitReason}=await import('../build/undoLabels.js');
+ const {createRetainedNativeEditor}=await import('../build/hostEditor.js');
+ const ts=createRequire(import.meta.url)('../../node_modules/typescript');
+ const appFile=new URL('../src/app.ts',import.meta.url).pathname;
+ const app=ts.createSourceFile(appFile,fs.readFileSync(appFile,'utf8'),ts.ScriptTarget.Latest,true);
+ const emit=text=>ts.transpileModule(text,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext}}).outputText;
+ let installed=null;
+ const walk=node=>{
+  if(!installed&&ts.isCallExpression(node)&&node.expression.getText(app)==='createRetainedNativeEditor'){
+   const history=node.arguments[0]?.properties?.find(p=>p.name?.getText(app)==='history');
+   if(history)installed=history.initializer.getText(app);
+  }
+  ts.forEachChild(node,walk);
+ };
+ walk(app);
+ const step=app.statements.find(node=>ts.isFunctionDeclaration(node)&&node.name?.text==='historyStep');
+ /** The frame's step and the receiver's history over one app state: the store, the workspace's replay (its refusal is the
+  * status line it names), and the app's own effects recorded. */
+ function frameHistory({store,work}){
+  const effects=[],state={text:null};
+  const scope={store,historyToast,historyWaitReason,historyStepping:false,researchInstruments:undefined,commitResearch:async()=>{},
+   markSaved:()=>effects.push('markSaved'),renderAll:()=>{},toast:(text)=>effects.push(`toast:${text}`),nativeState:state,
+   nativeWorkspace:{replayCheckpoint:(changes,documents)=>work.replayKernelEdit(changes,documents).then(()=>true,cause=>{state.text=cause.message;effects.push(`toast:${cause.message}`);return false;})},
+   commit:()=>assert.fail('Undo and Redo never Save')};
+  const historyStep=new Function(...Object.keys(scope),`${emit(step.getText(app))}\nreturn historyStep;`)(...Object.values(scope));
+  const retained=createRetainedNativeEditor({store,history:new Function('historyStep',`return ${emit(`(${installed})`)};`)(historyStep),
+   commit:()=>assert.fail('Undo and Redo never Save'),afterHistory:()=>assert.fail('Undo and Redo are the frame\'s step')});
+  return {history:operation=>retained.history(operation),effects};
+ }
+ test('E15f: the DLW\'s Undo through the editor receiver compensates the recorded Save on its owner, and its Redo replays it; neither Saves', async()=>{
+  assert.ok(step,'app.ts has the one history step');
+  assert.ok(installed,'the retained editor app.ts creates carries the frame\'s own history');
+  const {kernel,work,store}=await opened();
+  const before=clone(kernel.state.doc);
+  store.change('Rename expression',d=>{d.name='Renamed';});
+  const anchor=store.kernelSaveAnchor();
+  assert.equal(store.attachKernelCheckpoint(anchor,(await work.commitRecorded(snapshot(store))).checkpoint),true);
+  const after=clone(kernel.state.doc),edits=kernel.state.edits.length;
+  const {history,effects}=frameHistory({store,work});
+  await history('undo');
+  assert.equal(kernel.state.edits.length,edits+1,'one compensating edit, and no Save');
+  assert.equal(digest(kernel.state.doc),digest(before),'the owner holds the document before the Save');
+  assert.equal(store.undoStack.length,0);
+  assert.equal(store.document.name,'Inquiry');
+  await history('redo');
+  assert.equal(kernel.state.edits.length,edits+2,'one forward edit, and no Save');
+  assert.equal(digest(kernel.state.doc),digest(after));
+  assert.equal(store.document.name,'Renamed');
+  assert.deepEqual(effects,['markSaved','toast:Undone: Rename expression. Simulation time has not been rewound.','markSaved','toast:Redone: Rename expression.']);
+ });
+ test('E15f: a refused step returns through the editor receiver by name, and nothing is changed', async()=>{
+  const {kernel,work,store}=await opened();
+  store.change('Rename expression',d=>{d.name='Renamed';});
+  const anchor=store.kernelSaveAnchor();
+  assert.equal(store.attachKernelCheckpoint(anchor,(await work.commitRecorded(snapshot(store))).checkpoint),true);
+  kernel.state.doc={...clone(kernel.state.doc),title:'Written elsewhere',revision:kernel.state.doc.revision+1};
+  const {history}=frameHistory({store,work}),edits=kernel.state.edits.length,depth=store.undoStack.length;
+  await assert.rejects(history('undo'),/document_moved: "Written elsewhere" is native revision 3/);
+  assert.equal(kernel.state.edits.length,edits);
+  assert.equal(store.undoStack.length,depth);
+  // While a .canvas import is open, the step waits and says why before the store is touched.
+  store.openSpanningGesture('Import "a.canvas"');
+  await assert.rejects(history('undo'),new RegExp(historyWaitReason('undo','Import "a.canvas"').replace(/[.*+?^${}()|[\]\\]/g,'\\$&')));
+  store.abandonSpanningGesture();
+  assert.equal(store.undoStack.length,depth);
  });
 }

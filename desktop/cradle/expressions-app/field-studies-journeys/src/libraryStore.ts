@@ -65,6 +65,14 @@ export function recordLibraryAdoption(id:string,adoption:LibraryAdoption):boolea
  writePair(b,base,JSON.stringify({...document,origin:adoptedLocalOrigin(adoption)}),at,'Replaced by a newer save.','Library entry');
  return true;
 }
+/** O-I #763: a local draft kept as a work in its world's folder (nativeWorkspace.ts keepDraftAsWork). Its Library copy records that work, so
+ * reopening the copy opens the work (libraryOpenPlan, kernel-first) and never makes a second copy of it. The copy is saved whole with the
+ * link when the Library does not hold it yet: the frame saves the departing draft there only as the other work opens, after the keep, and
+ * that save names no origin, so it keeps the link. A copy the link does not apply to (one bound to its own kernel ref) is left as it is. */
+export function linkLibraryCopy(journey:Journey,adoption:LibraryAdoption):void{
+ if(recordLibraryAdoption(journey.id,adoption)||readLibraryWithOrigins().origins.has(journey.id))return;
+ saveToLibrary(journey,adoptedLocalOrigin(adoption));
+}
 /** How opening a Library entry resolves: a local entry that its first kernel save adopted offers the kernel copy first (the boot's own
  * follow path), with the browser draft still openable beneath it; everything else opens as it always has. */
 export type LibraryOpenPlan={kind:'kernel-first';ref:string;title:string}|{kind:'local'};

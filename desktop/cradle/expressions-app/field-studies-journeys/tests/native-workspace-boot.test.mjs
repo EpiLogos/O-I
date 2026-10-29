@@ -39,3 +39,28 @@ test('a native open captured before boot settles survives boot\'s own associatio
  changed();
  assert.equal(adoption(),false,'a real journey switch after boot must still refuse a now-stale adoption');
 });
+
+// O-I #763: leaving a local draft for another work keeps it as a work in its folder only when it was edited since it was opened
+// (the workspace side, run unchanged, is packages/expressions-boundary/tests/opened-work-recovery.test.mjs). app.ts is a DOM entry
+// that cannot load under node: its wiring is read from the source (code-reading).
+test('code-reading: the app tells the workspace whether the local draft standing in the frame was edited since it was opened',async()=>{
+ const fs=await import('node:fs');
+ const app=fs.readFileSync(new URL('../src/app.ts',import.meta.url),'utf8');
+ assert.match(app,/localDraftEdited:\(\)=>store\.revision!==localOpenedRevision,/,'the workspace is told by the store\'s revision since the open');
+ const apply=app.slice(app.indexOf('function applyJourney('),app.indexOf('\n',app.indexOf('function applyJourney(')));
+ assert.match(apply,/if\(!native\)localOpenedRevision=store\.revision;markSaved\(\);renderAll\(\);\}$/,'a local open records where its edits begin, after the open itself');
+ assert.match(app,/let localOpenedRevision=0;/,'the opening canvas begins unedited');
+});
+
+// O-I #763: a draft kept as a work is linked from its Library copy, so reopening the copy opens the work (libraryStore.ts linkLibraryCopy, run
+// in library-origin.test.mjs), and the host is asked to list its works again, so the browser shows the kept work at once (the panel's
+// works-changed answer, packages/live-shell/ui/tests/expressions-opened-recovery.test.mjs). The workspace side runs unchanged in
+// packages/expressions-boundary/tests/opened-work-recovery.test.mjs; app.ts's wiring is read from the source (code-reading).
+test('code-reading: a draft kept as a work links its Library copy to the work and asks the host to list its works again',async()=>{
+ const fs=await import('node:fs');
+ const app=fs.readFileSync(new URL('../src/app.ts',import.meta.url),'utf8');
+ const port=app.slice(app.indexOf('keptAsWork:'),app.indexOf('\n',app.indexOf('keptAsWork:')));
+ assert.match(port,/linkLibraryCopy\(journey,\{ref:kept\.expression_ref,title:kept\.title,at:new Date\(\)\.toISOString\(\)\}\)/,'the Library copy records the work');
+ assert.match(port,/hostRequest\(\{request:'works-changed'\}\)/,'the host lists its works again');
+ assert.ok(port.indexOf('linkLibraryCopy(')<port.indexOf("hostRequest({request:'works-changed'})"),'the link is recorded before the host lists');
+});

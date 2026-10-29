@@ -63,7 +63,7 @@
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
-      "reason": "Kernel-direct only: tests/shell_owner_routes.rs against fake owners (AIKit's capture inbox, a Wiki file's shapes (wiki-shape validate|compress), the gateway's ecology and Stream replay, work continuity commands|pressure|turn (turn: ai-kit#543)|closeout verify, flow thoughts (ai-kit#544), bypass list, history and its views, procedure list|diff, collate, unused, explain, source show, knowledge frame, knowledge reflection verify (ai-kit#541), source list (ai-kit#542), init and tree --expand registries (Setup's skill roots and their standing, O-I #738), and adopt as a plan; with real AIKit answers as fixtures); no directly attributable executed native walk is recorded here for aikit_read; retain explicit operation-specific coverage debt until its owner supplies a receipt."
+      "reason": "Kernel-direct only: tests/shell_owner_routes.rs against fake owners (AIKit's capture inbox, a Wiki file's shapes (wiki-shape validate|compress), the gateway's ecology and Stream replay, work continuity commands|pressure|turn (turn: ai-kit#543)|closeout verify, flow thoughts (ai-kit#544), bypass list, history and its views, procedure list|diff, collate, unused, explain, source show, knowledge frame, knowledge reflection verify (ai-kit#541), source list (ai-kit#542), init (Setup's skill roots and who owns each, O-I #738), and adopt as a plan; with real AIKit answers as fixtures); no directly attributable executed native walk is recorded here for aikit_read; retain explicit operation-specific coverage debt until its owner supplies a receipt."
     },
     {
       "op": "aikit_write",

@@ -95,6 +95,33 @@ export class RecoveryAdmission {
       : [...this.bindings.values()].find(binding => binding.scope === scope && binding.checkpoint_id === id);
   }
 
+  /** The kept drafts of a selected work (E19, expression_recovery.rs DraftQuarantine): one owner record per Expression, keyed by
+   * its ref, in the scope its address names. Only an Expression this host already selected has them; no address is selected
+   * here. */
+  private quarantined(scope: unknown, reference: unknown): RecoveryBinding {
+    const binding = typeof reference === 'string' ? this.bindings.get(reference) : undefined;
+    if (!binding || binding.scope !== scope) throw Error('The kept drafts are outside the host-selected address of this Expression');
+    return binding;
+  }
+
+  /** O-I #763: keep a draft in, or clear one from, the owner's quarantine of a selected work. A keep names a draft its address
+   * holds (a checkpoint read there proved it, as for a draft write); a clear names one entry by its identity (the digest of its
+   * text). The owner keeps the bytes, the compare-and-set and every bound. */
+  private admitQuarantine(request: Record<string, unknown>): RecoveryBinding {
+    const binding = this.quarantined(request.scope, request.expression_ref);
+    if (request.operation === 'keep_draft_quarantine') {
+      if (!nativeId(request.draft_id) || !this.sameAddress(this.drafts.get(this.key(binding.scope, request.draft_id)), binding)) {
+        throw Error('The kept draft is not the draft of the selected native work; read its checkpoint first');
+      }
+      if (typeof request.text !== 'string' || !request.text || !boundedText(request.reason, 4096)) throw Error('A kept draft carries its verbatim text and its reason');
+      if (request.expected_revision !== null && !positiveInteger(request.expected_revision)) throw Error('A kept draft names the revision basis of its quarantine');
+    } else {
+      if (typeof request.entry_id !== 'string' || !/^[0-9a-f]{64}$/.test(request.entry_id)) throw Error('Choose a kept draft by its exact identity');
+      if (!positiveInteger(request.expected_revision)) throw Error('A cleared draft names the revision basis of its quarantine');
+    }
+    return binding;
+  }
+
   /** Return the immutable address captured before asynchronous owner work. */
   admit(request: unknown): RecoveryBinding | undefined {
     if (!this.configured || !this.bindings.size) throw Error('No host-selected native recovery address is attached');
@@ -102,6 +129,8 @@ export class RecoveryAdmission {
       throw Error('A native recovery request must name its selected scope');
     }
     if (request.operation === 'find_checkpoint') throw Error('Read the host-selected checkpoint by its exact id');
+    if (request.operation === 'keep_draft_quarantine' || request.operation === 'remove_draft_quarantine') return this.admitQuarantine(request);
+    if (request.operation === 'read' && request.kind === 'draft_quarantine') return this.quarantined(request.scope, request.id);
     if (!['read', 'write', 'remove', 'list'].includes(String(request.operation))
       || (request.kind !== 'draft' && request.kind !== 'checkpoint')) {
       throw Error('Unsupported native recovery operation');
@@ -125,6 +154,35 @@ export class RecoveryAdmission {
       }
     }
     return binding;
+  }
+
+  /** The owner's answer about a selected work's kept drafts, passed on only when it is about that work. Its named refusals (full,
+   * over size, unreadable) keep nothing and remove nothing, and they reach the frame as the owner named them. */
+  private acknowledgeQuarantine(request: Record<string, unknown>, result: Record<string, unknown>, binding: RecoveryBinding): unknown {
+    if (result.state === 'quarantine_unreadable') {
+      if (typeof result.detail !== 'string') throw Error('The native recovery owner named unreadable kept drafts without its reason');
+      return result;
+    }
+    if (request.operation === 'read') {
+      const record = result.record;
+      if (result.state !== 'ready' || (record !== null && (!object(record) || record.scope !== binding.scope || record.kind !== 'draft_quarantine'
+        || record.id !== binding.expression_ref || !positiveInteger(record.revision) || !object(record.value)
+        || record.value.expression_ref !== binding.expression_ref || !Array.isArray(record.value.entries)))) {
+        throw Error('The native kept drafts do not belong to the selected native work');
+      }
+      return result;
+    }
+    if (request.operation === 'keep_draft_quarantine') {
+      if (result.state === 'quarantine_full' || result.state === 'quarantine_over_size') return result;
+      if (result.state === 'quarantine_kept' && typeof result.kept === 'boolean' && typeof result.entry_id === 'string'
+        && /^[0-9a-f]{64}$/.test(result.entry_id)) return result;
+      throw Error('The native recovery owner did not acknowledge the kept draft');
+    }
+    if (result.state !== 'quarantine_entry_removed' || result.entry_id !== request.entry_id
+      || !Number.isSafeInteger(result.remaining) || (result.remaining as number) < 0) {
+      throw Error('The native recovery owner did not acknowledge the cleared draft');
+    }
+    return result;
   }
 
   /** Qualify the owner's acknowledgement before exposing it to the frame or
@@ -152,6 +210,9 @@ export class RecoveryAdmission {
     if (result.state === 'revision_conflict') {
       if (result.current_revision !== null && !positiveInteger(result.current_revision)) throw Error('The native recovery owner returned an invalid conflict basis');
       return result;
+    }
+    if (request.kind === 'draft_quarantine' || request.operation === 'keep_draft_quarantine' || request.operation === 'remove_draft_quarantine') {
+      return this.acknowledgeQuarantine(request, result, binding);
     }
     if (request.operation === 'remove') {
       if (result.state !== 'removed' || result.id !== request.id || !positiveInteger(result.revision)) {

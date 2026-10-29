@@ -13,16 +13,13 @@ type Checkpointed=KernelCompensation&{checkpoint?:{before:unknown;after:unknown;
  * returns to. `changes` and `inverse` are the kernel edit the step produced and
  * its compensation (invertEdit), when the caller recorded them with
  * attachKernelEdit or attachKernelCheckpoint; a step without them is undone locally only. */
-export interface HistoryEntry {label:string;snapshot:Journey;changes?:KernelChange[];inverse?:Checkpointed;gesture?:string;
+export interface HistoryEntry {label:string;snapshot:Journey;changes?:KernelChange[];inverse?:Checkpointed;
  /** False on a redo entry whose step the kernel never held (undone before any Save reached it): its redo is local. */
  kernelHeld?:false}
 /** What the next undo or redo asks of the kernel: nothing (local only), one
  * kernel edit to submit first, or a refusal by name. */
 export interface HistoryPlan {label:string;kernel:null|{changes:KernelChange[]}|{refused:string;reason:string}}
 const UNRECORDED='this edit recorded no kernel changes, so it cannot be undone as a kernel edit';
-let gestureSeq=0;
-/** A gesture id is unique within this page; the kernel guard refuses a second submission of one. */
-function mintGesture():string{gestureSeq+=1;return `gesture:${Date.now().toString(36)}.${gestureSeq}`;}
 /** Restore a document's content in place, so a reference held by the gesture stays valid. */
 function restoreInPlace(target:Journey,source:Journey):void{const slots=target as unknown as Record<string,unknown>;for(const key of Object.keys(slots))delete slots[key];Object.assign(target,clone(source));}
 export class DocumentStore {
@@ -70,7 +67,6 @@ export class DocumentStore {
   if(this.composing)throw new Error(`"${label}" cannot nest inside a composite edit; its steps belong to the enclosing edit`);
   this.refuseWhileSpanning();
   if(this.transactionOpen)throw new Error(`"${label}" cannot start inside an open gesture; finish that gesture first`);
-  const gesture=mintGesture();
   this.composing=true;this.begin(label);
   let value!:T;
   try{
@@ -85,12 +81,8 @@ export class DocumentStore {
    this.baseline=null;this.mutated=false;this.lastCommit=null;this.touch();
    throw error;
   }
-  if(this.lastCommit)this.lastCommit.gesture=gesture;
   return value;
  }
- /** The gesture id of the step the last composite committed, or null when it
-  * committed none. The kernel submission of that step carries it, once. */
- committedGesture():string|null{return this.lastCommit?.gesture??null;}
  /** A nested change inside a composite is one more step of the same edit: it joins
   * without closing the gesture, and a throw restores only its own step. */
  private joinComposite(fn:(doc:Journey)=>void):void{
@@ -247,5 +239,5 @@ export class DocumentStore {
 /** The one way a multi-step gesture writes to the store: see DocumentStore.composite. */
 export function withComposite<T>(store:DocumentStore,label:string,fn:(doc:Journey)=>T):T{return store.composite(label,fn);}
 // lane-3 E18: the Library is one record per document (libraryStore.ts). These names are its public surface.
-export {readLibraryDetailed,readLibraryWithOrigins,readLibrary,saveToLibrary,removeFromLibrary,setLibraryQuarantine,sweepLibraryDamage,setLibraryBackend,LEGACY_LIBRARY_KEY,libraryOriginFrom,recordLibraryAdoption,adoptedLocalOrigin,libraryOpenPlan} from './libraryStore.js';
+export {readLibraryDetailed,readLibraryWithOrigins,readLibrary,saveToLibrary,removeFromLibrary,setLibraryQuarantine,sweepLibraryDamage,setLibraryBackend,LEGACY_LIBRARY_KEY,libraryOriginFrom,recordLibraryAdoption,adoptedLocalOrigin,linkLibraryCopy,libraryOpenPlan} from './libraryStore.js';
 export type {LibraryRead,LibraryReadWithOrigins,LibraryBackend,LibraryQuarantineSink,LibraryOrigin,LibraryAdoption,LibraryOpenPlan} from './libraryStore.js';

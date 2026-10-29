@@ -16,17 +16,23 @@
  *   - origin notes — each saved card states its origin with the in-app
  *     wording (libraryCards.ts), read from readLibraryWithOrigins;
  *   - remove-saved — local (store.removeFromLibrary, the same store);
+ *   - the native owner's kept drafts, every Expression's (O-I #763) —
+ *     Restore as copy is local (a Library copy, the kept draft stays);
+ *     Remove is the owner's remove, sent only after its confirmation;
  *   - close — a host request, so the cradle closes the tab.
  * Appearance rides the existing `oi-shell-cutout` host message; until it
  * lands, the OS preference leads. */
 
-import {compositionCover,featuredExpressions,startingPoints,libraryHTML,collectionBinsOf,parseCollectionFilter,type CollectionBins,type CollectionFilter} from './expressions.js';
+import {compositionCover,featuredExpressions,startingPoints,libraryHTML,collectionBinsOf,parseCollectionFilter,ownerKeptRemovalText,ownerKeptRemovedText,type CollectionBins,type CollectionFilter,type OwnerQuarantineSection} from './expressions.js';
 import {readLibraryWithOrigins,libraryOpenPlan,removeFromLibrary} from './store.js';
 import {decorateLibraryCard,libraryCardStanding,LIBRARY_CARD_DRAFT_ACTION} from './libraryCards.js';
-import {nativeExpressionRequest} from './kernelExpressions.js';
+import {nativeExpressionRequest,installKernelExpressions,kernelExpressionsAvailable} from './kernelExpressions.js';
 import {installNativeLibraryInteractions} from './libraryScopes.js';
 // T-REVIEW-6: the quarantine section reads and restores through the same recovery owner as the instrument.
-import {quarantineView,restoreQuarantinedDraft} from './recovery.js';
+import {quarantineView,restoreQuarantinedDraft,listKeptDrafts,restoreOwnerKeptDraft,removeOwnerKeptDraft} from './recovery.js';
+import {keptDraftSections} from './draftStorage.js';
+import {hostedScope} from './nativeRecovery.js';
+import {esc} from './icons.js';
 
 type StartingPoint = ReturnType<typeof startingPoints>[number];
 type QuarantineState={rows:{id:string;key:string;name:string;reason:string;when:string;raw:string}[];unreadable:string[];message?:string};
@@ -36,8 +42,11 @@ let quarantine:QuarantineState={rows:[],unreadable:[]};
 let bins:CollectionBins|null|undefined=undefined;
 /** E26: the bin choice on this page; a view state only, the data is re-read on every boot. */
 let collectionFilter:CollectionFilter={kind:'all'};
-function refreshBins():void{
-  void nativeExpressionRequest({operation:'index'}).then(index=>{bins=collectionBinsOf(index);renderLibrary();}).catch(()=>{bins=null;});
+function refreshBins(attempt=0):void{
+  // The index is asked through the channel the host announces in answer to this page's hello; until the announce arrives it waits, as the
+  // kernel-held and native sections do (libraryScopes.ts), rather than failing once at boot (O-I #763).
+  if(!kernelExpressionsAvailable()&&attempt<4){setTimeout(()=>refreshBins(attempt+1),600);return;}
+  void nativeExpressionRequest({operation:'index'}).then(index=>{bins=collectionBinsOf(index);renderLibrary();}).catch(()=>{bins=null;renderLibrary();});
 }
 /** The exact stored text of a quarantined draft, offered as a file. */
 function downloadVerbatim(text:string,name:string):void{
@@ -48,6 +57,43 @@ function downloadVerbatim(text:string,name:string):void{
 /** Reads the quarantined drafts; a message names the last restore's outcome. */
 function refreshQuarantine(message?:string):void{
   void quarantineView().then(view=>{quarantine={rows:view.rows,unreadable:view.unreadable,message};renderLibrary();}).catch(()=>undefined);
+}
+
+/** O-I #763: the native owner's kept drafts, every Expression's (recovery.ts listKeptDrafts). The DLW opens the Library on this page, never
+ * the instrument's own Library (the frame stands on the shell's devices, where its Library… hands the summon to the shell), so this is where
+ * a draft the owner kept is restored as a Library copy or removed. Read when the page opens and again after each Restore or Remove, and
+ * only in a host, whose channel reaches the owner: the page opened alone has none. */
+let kept:OwnerQuarantineSection[]=[];
+function refreshKept(message?:{ref:string;text:string}):void{
+ if(window.parent===window)return;
+ void (async()=>{
+  const before=kept;
+  try{
+   const listing=await listKeptDrafts(hostedScope());
+   // Each Expression is titled as the works list names it; without that list, by its newest kept draft's own name.
+   let titles=new Map<string,string>();
+   if(listing.length)try{
+    const works=await nativeExpressionRequest({operation:'list'}) as {expressions?:{expression_ref?:unknown;title?:unknown}[]}|null;
+    titles=new Map((works?.expressions??[]).flatMap(work=>typeof work.expression_ref==='string'&&typeof work.title==='string'?[[work.expression_ref,work.title] as [string,string]]:[]));
+   }catch{/* titled by the kept drafts */}
+   kept=keptDraftSections(listing,titles,message);
+   // The answer to a Remove that left an Expression no kept draft stays in that Expression's section, which now lists none.
+   const gone=message&&!kept.some(section=>section.expressionRef===message.ref)?before.find(section=>section.expressionRef===message.ref):undefined;
+   if(gone&&message)kept=[...kept,{expressionRef:message.ref,heading:gone.heading,rows:[],message:message.text}];
+  }catch(cause){kept=[{rows:[],heading:'Kept drafts',error:`The native owner could not list the kept drafts. ${cause instanceof Error?cause.message:String(cause)}`}];}
+  renderLibrary();
+ })();
+}
+/** A removal is asked once, in the instrument's own wording (ownerKeptRemovalText): Remove sends it; Cancel or Escape sends nothing. */
+function confirmed(title:string,body:string):Promise<boolean>{
+ return new Promise(resolve=>{
+  const dialog=document.createElement('dialog');
+  dialog.className='modal';dialog.setAttribute('aria-label',title);
+  dialog.innerHTML=`<p class="eyebrow">A DELIBERATE CHANGE</p><h2>${esc(title)}</h2><p class="intro">${esc(body)}</p><div class="confirm-row"><button type="button" class="secondary" data-choice="cancel">Cancel</button><button type="button" class="primary" data-choice="confirm">Remove</button></div>`;
+  dialog.addEventListener('click',event=>{const button=(event.target as Element).closest<HTMLButtonElement>('button[data-choice]');if(button)dialog.close(button.dataset.choice);});
+  dialog.addEventListener('close',()=>{const yes=dialog.returnValue==='confirm';dialog.remove();resolve(yes);});
+  document.body.append(dialog);dialog.showModal();
+ });
 }
 
 const page=():HTMLElement=>document.getElementById('library-page')!;
@@ -73,7 +119,7 @@ function renderLibrary():void{
   const paint=(image:HTMLImageElement)=>{const j=documents.get(image.dataset.previewId!);if(j){image.src=compositionCover(j.scenes[0]);image.removeAttribute('data-preview-id');}};
   page().innerHTML=libraryHTML({saved,featured,starters,section,standalone:true,
     errors:library.blocked?['Browser storage is unavailable here. Export an expression from the instrument to keep a portable copy.']:library.errors,
-    legacy:hasLegacyLibrary(),quarantine,bins,collectionFilter,cover:j=>covers.get(j.id)});
+    legacy:hasLegacyLibrary(),quarantine,ownerQuarantine:kept,bins,collectionFilter,cover:j=>covers.get(j.id)});
   page().scrollTop=scroll;
   // T22: each saved card names its origin, with the same note and actions the in-app Library shows (one wording, libraryCards.ts).
   page().querySelectorAll<HTMLButtonElement>('button[data-action="load-saved"][data-id]').forEach(button=>{
@@ -97,6 +143,9 @@ window.addEventListener('message',ev=>{
 });
 try{applyAppearance(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');}catch{}
 
+// The kernel host channel the host relays (LibraryHost.tsx relayKernelChannel), armed before the page reads anything through it: the kept
+// drafts, the kernel-held and native sections and the collections (O-I #763; app.ts arms it at its own boot).
+installKernelExpressions();
 installNativeLibraryInteractions();
 (window as unknown as {__FIELD_STUDIES__:unknown}).__FIELD_STUDIES__={
   /** The standalone page cannot open a composition into a field it does
@@ -129,6 +178,13 @@ document.addEventListener('click',event=>{
     case 'delete-saved':{const id=el.dataset.id!;removeFromLibrary(id);covers.delete(id);renderLibrary();break;}
     case 'export-quarantine':{const row=quarantine.rows.find(r=>r.id===el.dataset.id);if(row)downloadVerbatim(row.raw,row.name.replace(/[^A-Za-z0-9._-]+/g,'-').slice(0,80)+'.quarantined.json');break;}
     case 'restore-quarantine':{const id=el.dataset.id!;void restoreQuarantinedDraft(id).then(copy=>refreshQuarantine(`Restored as a Library copy: ${copy.name}`)).catch(cause=>refreshQuarantine(cause instanceof Error?cause.message:String(cause)));break;}
+    // O-I #763 (E19): an owner's kept draft becomes a Library copy, as in the instrument's Library; the kept draft stays where it is.
+    case 'restore-owner-kept':{const id=el.dataset.id,ref=el.dataset.ref;if(id&&ref)void restoreOwnerKeptDraft(ref,hostedScope(),id).then(copy=>refreshKept({ref,text:`Restored as a Library copy: ${copy.name}`})).catch(cause=>refreshKept({ref,text:cause instanceof Error?cause.message:String(cause)}));break;}
+    // Removing one is an explicit, confirmed request: nothing else here calls the owner's remove.
+    case 'remove-owner-kept':{const id=el.dataset.id,ref=el.dataset.ref,row=kept.find(section=>section.expressionRef===ref)?.rows.find(r=>r.id===id);
+     if(id&&ref&&row)void confirmed('Remove this kept draft?',ownerKeptRemovalText(row)).then(yes=>yes?removeOwnerKeptDraft(ref,hostedScope(),id).then(remaining=>refreshKept({ref,text:ownerKeptRemovedText(remaining)})):undefined)
+      .catch(cause=>refreshKept({ref,text:cause instanceof Error?cause.message:String(cause)}));
+     break;}
   }
 });
 document.addEventListener('input',event=>{
@@ -143,6 +199,7 @@ document.addEventListener('input',event=>{
 
 renderLibrary();
 refreshQuarantine();
+refreshKept();
 refreshBins();
 // The host's ready watch reads the same oi-app-state announcement the
 // instrument makes — one boot handshake grammar.

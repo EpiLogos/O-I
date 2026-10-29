@@ -297,7 +297,8 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   const rackHeld = viewHolds(holds, chainDeviceId('skillset'))
   const upkeepUnused = useAikitRead(transport, rackOn ? {kind: 'unused'} : null)
   const upkeepSources = useAikitRead(transport, rackOn ? {kind: 'source-list'} : null)
-  const upkeepCollate = useAikitRead(transport, rackOn ? {kind: 'collate'} : null)
+  // Every root on this computer, foreign ones included: a fresh world's skills are what the rack adopts.
+  const upkeepCollate = useAikitRead(transport, rackOn ? {kind: 'collate', all: true} : null)
   const upkeepBypasses = useAikitRead(transport, rackOn ? {kind: 'bypass-list'} : null)
   const upkeepProcedures = useAikitRead(transport, rackOn ? {kind: 'procedure-list'} : null)
   const adoptRoot = typeof rackHeld.adoptRoot === 'string' && rackHeld.adoptRoot ? rackHeld.adoptRoot : null

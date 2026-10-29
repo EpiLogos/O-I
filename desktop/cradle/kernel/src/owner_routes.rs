@@ -692,16 +692,11 @@ pub enum AikitRead {
         all: bool,
     },
     /// The foreign skill roots AIKit discovers on this computer, each with
-    /// its label, path, skills and problems (`aikit init`; discovery only,
-    /// it writes nothing): Setup's Harnesses and skills step.
+    /// its label, path, skills, problems and who owns it — foreign, adopted
+    /// (with its procedure) or generated (with its generation) — (`aikit
+    /// init`; discovery only, it writes nothing): Setup's Harnesses and
+    /// skills step.
     Init,
-    /// AIKit's tree with these paths expanded (`aikit tree [--expand P]…`):
-    /// `registries` names each skill root's standing, foreign, adopted
-    /// (with its procedure) or generated (with its generation).
-    Tree {
-        #[serde(default)]
-        expand: Vec<String>,
-    },
     /// Adopting a foreign skill root, as a plan only (`aikit adopt <root>
     /// [--namespace N]`, without `--yes`): its diff.
     AdoptPlan {
@@ -956,7 +951,6 @@ impl AikitRead {
             | Self::FlowThoughts { .. }
             | Self::Collate { .. }
             | Self::Init
-            | Self::Tree { .. }
             | Self::AdoptPlan { .. }
             | Self::ProcedureList
             | Self::ProcedureDiff { .. }
@@ -2375,15 +2369,6 @@ pub(crate) fn aikit_read_args(request: &AikitRead) -> (&'static str, Vec<OsStrin
             ("aikit collate", args)
         }
         AikitRead::Init => ("aikit init", words(&["init", "--json"])),
-        AikitRead::Tree { expand } => {
-            let mut args = words(&["tree"]);
-            for path in expand {
-                args.push("--expand".into());
-                args.push(path.into());
-            }
-            args.push("--json".into());
-            ("aikit tree", args)
-        }
         AikitRead::AdoptPlan { root, namespace } => {
             let mut args = words(&["adopt"]);
             args.push(root.into());
@@ -2509,7 +2494,6 @@ fn aikit_read_answer(request: &AikitRead, cwd: Option<&Path>) -> Result<Reading,
         AikitRead::CloseoutVerify { .. } => fields(route, data, CLOSEOUT)?,
         AikitRead::Collate { .. } => fields(route, data, &[("clusters", Kind::List)])?,
         AikitRead::Init => fields(route, data, &[("roots", Kind::List)])?,
-        AikitRead::Tree { .. } => fields(route, data, &[("rows", Kind::List)])?,
         AikitRead::ProcedureList => fields(route, data, &[("procedures", Kind::List)])?,
         AikitRead::BypassList => fields(route, data, &[("bypasses", Kind::List)])?,
         AikitRead::SourceList => fields(

@@ -192,7 +192,11 @@ interface RetainedEditorOptions {
   commit(): Promise<boolean | undefined>;
   /** Every change names its step: the label is what Undo and Redo report. */
   change(label: string, mutate: () => void): void;
-  afterHistory(): void;
+  /** The host's own Undo and Redo step (O-I #763, E15f): when given, the editor's Undo and Redo are that step, which compensates a
+   * recorded Save on its owner and rejects by name; never a local step followed by a Save. */
+  history?(operation: 'undo' | 'redo'): Promise<void>;
+  /** Without `history`: the effects after a local step, which is then saved. */
+  afterHistory?(): void;
   selectLocal(entityId: string | null, stepIndex: number): void;
   openEditor(editor: 'source' | 'layers' | 'placement', entityId: string, stepIndex: number): void;
   standing(): {busy: boolean; notice: string | null};
@@ -431,7 +435,10 @@ export function createRetainedNativeEditor(options: RetainedEditorOptions): Nati
       const selected=selectedTarget(target,revision,entity.id,request.step_id,isCurrent);
       options.selectLocal(entity.id,selected.index);options.openEditor(request.editor,entity.id,selected.index);
     },
-    async history(operation) {if(operation==='undo'?options.store.undo():options.store.redo()){options.afterHistory();await commit()}},
+    async history(operation) {
+      if(options.history)return options.history(operation);
+      if(operation==='undo'?options.store.undo():options.store.redo()){options.afterHistory?.();await commit()}
+    },
     save:commit,
   };
 }

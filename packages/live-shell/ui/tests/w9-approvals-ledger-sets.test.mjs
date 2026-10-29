@@ -64,6 +64,8 @@ const read = path => readFileSync(new URL(`../src/${path}`, import.meta.url), 'u
 const escaped = text => text.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#x27;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 const hosted = (designed, binding) => host.viewsOf(designed).map(view => [view, renderToStaticMarkup(createElement(host.HostedDevice, {designed, binding, view, nav: {}}))])
 const SETS = json('./fixtures/central-agent-sets-2026-10-21.json')
+/** AIKit's own answers on a scratch Arriving world (REAL; the kernel's owner-route fixture, the world's folder written /w/Arriving). */
+const SETUP_AIKIT = json('../../../../desktop/cradle/kernel/tests/fixtures/owner-routes/aikit-setup-harnesses-credentials-2026-10-28.json')
 
 const PERSON = 'central:source:control:root:Control/user/identity'
 const STATE = '/Users/admin/Central/Work/O-I/.factory/development-state.json'
@@ -332,7 +334,8 @@ test('11 · the rack rebound on the kernel\'s round (cdbde6fe7): Sources from AI
   const place = {project: 'O-I', sessionRef: null}
   const calls = []
   const write = async request => { calls.push(request) }
-  const PLAN = {root: '@claude', namespace: 'claude', digest: 'b3:plan-1', isolation: 'shared', items: [{name: 'brainstorming', act: 'adopt'}]}
+  // REPLACED (#738): the plan is AIKit's own (REAL `aikit adopt ROOT --namespace claude`, test 12), never the design's shape handed in.
+  const PLAN = SETUP_AIKIT.adopt_plan.data
   const binding = bind.rackBinding('factory:skillset', input, null, place, {sources: answered({sources: [...LIST.sources, SHOW], unreadable: []}),
     procedures: answered({count: 1, procedures: [DIFF.procedure]}), procedure: answered(DIFF), adoption: answered(PLAN), write})
   assert.equal(JSON.parse(binding.values.sources).length, LIST.sources.length + 1)
@@ -340,14 +343,14 @@ test('11 · the rack rebound on the kernel\'s round (cdbde6fe7): Sources from AI
   await binding.write([{key: 'sync', value: first.id}])
   await binding.write([{key: 'promote', value: first.id}])
   await binding.write([{key: 'rollback', value: SHOW.id}])
-  await binding.write([{key: 'adoptApply', value: 'b3:plan-1'}])
+  await binding.write([{key: 'adoptApply', value: PLAN.review_digest}])
   await binding.write([{key: 'procRun', value: `${DIFF.procedure}@${DIFF.digest}`}])
   assert.deepEqual(calls, [{kind: 'source-sync', id: first.id}, {kind: 'source-promote', id: first.id}, {kind: 'source-rollback', id: SHOW.id},
-    {kind: 'adopt', root: '@claude', namespace: 'claude', expect_digest: 'b3:plan-1'}, {kind: 'procedure-run', procedure: DIFF.procedure, expect_digest: DIFF.digest}])
+    {kind: 'adopt', root: PLAN.source, namespace: 'claude', expect_digest: PLAN.review_digest}, {kind: 'procedure-run', procedure: DIFF.procedure, expect_digest: DIFF.digest}])
   calls.length = 0
   await assert.rejects(binding.write([{key: 'rollback', value: first.id}]), /names no earlier promoted snapshot/)
   await assert.rejects(binding.write([{key: 'sync', value: 'source:not-listed'}]), /not in AIKit's list/)
-  await assert.rejects(binding.write([{key: 'adoptApply', value: 'b3:plan-0'}]), /plan changed since you reviewed it/)
+  await assert.rejects(binding.write([{key: 'adoptApply', value: PLAN.digest}]), /plan changed since you reviewed it/)
   await assert.rejects(binding.write([{key: 'procRun', value: `${DIFF.procedure}@0000`}]), /not the one AIKit's diff names now/)
   await assert.rejects(binding.write([{key: 'procRun', value: `prc_other@${DIFF.digest}`}]), /not the one AIKit's diff names now/)
   assert.deepEqual(calls, [], 'nothing unlisted or unreviewed reached AIKit')
@@ -357,5 +360,48 @@ test('11 · the rack rebound on the kernel\'s round (cdbde6fe7): Sources from AI
   assert.equal(bare.standing.adoptApply.disabled, bind.RACK_UPKEEP_ABSENT.adoption)
   const view = read('agent/devices/FactoryDeviceChain.tsx')
   assert.match(view, /useAikitRead\(transport, rackOn \? \{kind: 'source-list'\} : null\)/)
+  bind.resetHolds()
+})
+
+test('12 · the rack\'s Adopt page reads AIKit\'s own plan (REAL `aikit adopt ROOT --namespace claude`), the one reading Setup adopts by: the design\'s digest is the review digest `--expect-digest` takes, never the Procedure\'s; its items are the capsules; a root chosen by AIKit\'s label is asked by its path', async () => {
+  const adoption = await import('../src/settings/aikitAdoption.ts')
+  const PLAN = SETUP_AIKIT.adopt_plan.data, COLLATE = SETUP_AIKIT.collate_all.data
+  assert.notEqual(PLAN.review_digest, PLAN.digest, 'AIKit names two digests: the review a confirmation binds, and the saved Procedure\'s own')
+  assert.deepEqual(adoption.aikitAdoptionPlan(PLAN), {source: '/w/Arriving/.claude/skills', namespace: 'claude', capsules: ['skill/claude/field-recording-log', 'skill/claude/weekly-review'],
+    reviewDigest: PLAN.review_digest})
+  assert.equal(adoption.aikitAdoptionPlan(SETUP_AIKIT.adopt_applied.data), null, 'an applied adoption is no plan to confirm')
+  assert.equal(adoption.aikitAdoptionPlan({root: '@claude', namespace: 'claude', digest: 'b3:plan-1', items: [{name: 'x', act: 'adopt'}]}), null, 'the design\'s shape is not AIKit\'s plan')
+  assert.deepEqual(adoption.aikitAdoptRequest(adoption.aikitAdoptionPlan(PLAN)), {kind: 'adopt', root: PLAN.source, namespace: 'claude', expect_digest: PLAN.review_digest})
+  for (const path of ['agent/devices/designBindings.ts', 'settings/windowPages.ts']) {
+    assert.match(read(path), /import \{[^}]*\baikitAdoptionPlan\b[^}]*\} from '(\.\.\/\.\.\/settings|\.)\/aikitAdoption'/, `${path} reads the plan through the one reading`)
+    assert.doesNotMatch(read(path), /review_digest/, `${path} interprets no plan field of its own`)
+  }
+  bind.resetHolds()
+  const id = 'factory:skillset', place = {project: 'O-I', sessionRef: null}
+  const answered = value => ({status: 'answered', value, error: null})
+  const input = () => ({profile: null, sets: {}, setList: null, skills: null, capabilities: null, profiles: null, holds: bind.chainHolds()})
+  const calls = []
+  const write = async request => { calls.push(request) }
+  // The design's Root chooser offers AIKit's labels (collate's where[].root); Preview holds the path `aikit adopt` takes, shown by its label.
+  const chooser = bind.rackBinding(id, input(), null, place, {collate: answered(COLLATE), write})
+  assert.deepEqual(JSON.parse(chooser.values.roots).map(row => [row.root, row.path]), [['@claude', '/w/Arriving/.claude/skills']])
+  await chooser.write([{key: 'adoptPreview', value: '@claude'}])
+  assert.equal(bind.viewHolds(bind.chainHolds(), id).adoptRoot, '/w/Arriving/.claude/skills', 'the chain asks AIKit\'s plan for the path')
+  chooser.local.adoptRoot('@claude')
+  assert.equal(bind.viewHolds(bind.chainHolds(), id).adoptRoot, '/w/Arriving/.claude/skills', 'the chooser holds the path too')
+  const binding = bind.rackBinding(id, input(), null, place, {collate: answered(COLLATE), adoption: answered(PLAN), write})
+  assert.equal(binding.values.adoptRoot, '@claude', 'shown by its label, as the chooser offers it')
+  const shown = JSON.parse(binding.values.adoption)
+  assert.deepEqual(shown, {root: '@claude', namespace: 'claude', digest: PLAN.review_digest,
+    items: [{name: 'field-recording-log', act: 'adopt'}, {name: 'weekly-review', act: 'adopt'}]})
+  assert.equal(shown.root, binding.values.adoptRoot, 'the design\'s plan is for the root chosen (skills.tsx planFor)')
+  assert.equal(binding.standing.adoptApply, undefined, 'Apply stands on the plan read')
+  await assert.rejects(binding.write([{key: 'adoptApply', value: PLAN.digest}]), /plan changed since you reviewed it/, 'the Procedure\'s digest is not the review AIKit binds')
+  assert.deepEqual(calls, [])
+  await binding.write([{key: 'adoptApply', value: shown.digest}])
+  assert.deepEqual(calls, [{kind: 'adopt', root: '/w/Arriving/.claude/skills', namespace: 'claude', expect_digest: PLAN.review_digest}], 'the press the design makes is the confirmation AIKit takes')
+  // A refusal of the plan stands as AIKit said it; Apply waits on a plan.
+  const refused = bind.rackBinding(id, input(), null, place, {collate: answered(COLLATE), adoption: {status: 'refused', value: null, error: SETUP_AIKIT.adopt_plan_again.error.message}, write})
+  assert.equal(refused.standing.adoptApply.disabled, SETUP_AIKIT.adopt_plan_again.error.message)
   bind.resetHolds()
 })

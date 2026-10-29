@@ -22,6 +22,7 @@ import {Journey,clone,uid,validateJourney} from './model.js';
 import {mergeTake,type PropertyTrack} from './propertyTracks.js';
 import {initialiseShared} from './sharedSettings.js';
 import type {ExpressionRecoveryRequest} from '../../../src/expressions/recoveryTypes';
+import type {OwnerQuarantineSection} from './expressions.js';
 export const PAIR_SCHEMA='oi.draft-record/v1';
 export const QUARANTINE_SCHEMA='oi.draft-quarantine/v1';
 /** lane-3 E18: the envelope of one Library document (libraryStore.ts). */
@@ -474,6 +475,23 @@ export async function removeOwnerQuarantineEntry(send:QuarantineTransport,expres
 /** The rows the owner's kept drafts are listed by: the draft's name, the owner's reason, the owner's time of keeping and the draft id. */
 export function ownerQuarantineRows(entries:OwnerQuarantineEntry[],now:Date=new Date()):{id:string;name:string;reason:string;when:string;draftId:string}[]{
  return entries.map(entry=>({id:entry.id,name:quarantinedName(entry.text,entry.draft_id),reason:entry.reason,when:offerClock(new Date(entry.kept_at_unix_ms).toISOString(),now),draftId:entry.draft_id}));
+}
+/** Why the owner lists none of an Expression's kept drafts: it cannot read them (OwnerQuarantineReading.unreadable). */
+export function ownerKeptUnreadableText(detail:string):string{
+ return `The native owner cannot read the kept drafts of this Expression, so none are listed and none were removed or overwritten. ${detail}`;
+}
+/** O-I #763: the Library page's kept drafts, one section for each Expression the owner keeps drafts for (recovery.ts listKeptDrafts), titled
+ * by the works list's title of that Expression (`titles`), else by its newest kept draft's name, else by its ref. `message` is the answer to
+ * the last Restore or Remove, shown in the section of the Expression it acted on. An Expression whose kept drafts the owner cannot read is
+ * named with the owner's reason; nothing of it is listed. */
+export function keptDraftSections(kept:{expressionRef:string;reading:OwnerQuarantineReading}[],titles:ReadonlyMap<string,string>,
+ message?:{ref:string;text:string},now:Date=new Date()):OwnerQuarantineSection[]{
+ return kept.map(({expressionRef,reading})=>{
+  const newest=[...reading.entries].sort((a,b)=>b.kept_at_unix_ms-a.kept_at_unix_ms)[0];
+  const title=titles.get(expressionRef)??(newest?quarantinedName(newest.text,expressionRef):expressionRef);
+  return {expressionRef,heading:`Kept drafts of “${title}”`,rows:ownerQuarantineRows(reading.entries,now),
+   ...(message?.ref===expressionRef?{message:message.text}:{}),...(reading.unreadable!==undefined?{error:ownerKeptUnreadableText(reading.unreadable)}:{})};
+ });
 }
 /** The notice a kept draft shows: the owner's quarantine, or this browser's when the owner did not keep it. A Library copy's failure is named as a note. */
 function keptNotice(kind:'superseded'|'set-aside'|'copied',place:KeptPlace):string|undefined{

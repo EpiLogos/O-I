@@ -322,9 +322,12 @@ test('a work presented after boot is listed once per distinct ref, never in a lo
 
 test('code-reading: the Expressions panel lists the works after boot in every case, registers the owner channel, and lists a work it first presents', async () => {
   const panel = await read('panels/expressions.tsx')
-  assert.match(panel, /import \{enumerateWorks, needsListing, setExpressionOwner\} from '\.\.\/components\/nativeExpressionCommands'/)
-  assert.match(panel, /const existing = knownRef \|\| initial \? \[\] : await enumerate\(\)/, 'no held address: listed before mount, to choose the first work')
-  assert.match(panel, /if \(knownRef \|\| initial\) void enumerate\(\)\.catch\(fail\)/, 'a known open work: listed after mount (the former skip)')
+  assert.match(panel, /import \{enumerateWorks, needsListing, setExpressionOwner, type NativeWorkRow\} from '\.\.\/components\/nativeExpressionCommands'/)
+  assert.match(panel, /const boot = knownRef \|\| initial \? null : await enumerate\(\)\.then\(works => \(\{works\}\), cause => \(\{cause\}\)\)/, 'no held address: listed before mount, to choose the first work')
+  assert.match(panel, /const existing = boot && 'works' in boot \? boot\.works : \[\]/)
+  // O-I #763: a known open work, or a boot whose own listing failed, is listed after mount until the owner answers
+  // (the former `void enumerate().catch(fail)` never asked again; expressions-opened-recovery.test.mjs runs the listing).
+  assert.match(panel, /if \(!boot \|\| 'cause' in boot\) \{[\s\S]*?void listWorksUntilAnswered\(enumerate, \{/, 'a known open work: listed after mount (the former skip)')
   assert.match(panel, /return enumerateWorks\(request => owners\.channels\['kernel-expression'\]\(request, context\(\)\), works => workspaceRef\.current\.publishWorks\(works\)/)
   assert.match(panel, /needsListing\(presentedRef, listedFor, workspaceRef\.current\.nativeWorks\)/)
   assert.match(panel, /setExpressionOwner\(request => owners\.channels\['kernel-expression'\]\(request, context\(\)\)\)/)
@@ -431,4 +434,25 @@ test('with no works home (parent null), New commits and opens the work and saves
   assert.equal(outcome.saved, null)
   assert.deepEqual(opened, ['expression:authored-u-1'])
   assert.ok(!sent.includes('save_as'))
+})
+
+// O-I #763: New's route exists once. The shell's starters and New and the frame's keep of a left draft (nativeWorkspace.ts keepDraftAsWork)
+// each sent their own create, composition edit and save_as into the works home; they now run the frame's one route (nativeWorking.ts
+// makeWork), and differ only in what a refused file does (here the work opens and the row names the refusal; the keep refuses). The
+// sequences above run through it unchanged; this reads that no second copy of it is left (code-reading).
+test('code-reading: New, the starters and the frame\'s keep of a left draft run one route; neither side keeps its own save_as', async () => {
+  const commands = await read('components/nativeExpressionCommands.ts')
+  const frame = new URL('desktop/cradle/expressions-app/field-studies-journeys/src/', root)
+  const workspace = await readFile(new URL('nativeWorkspace.ts', frame), 'utf8'), working = await readFile(new URL('nativeWorking.ts', frame), 'utf8')
+  assert.match(commands, /import \{[^}]*\bmakeWork\b[^}]*\} from '\.\.\/\.\.\/\.\.\/\.\.\/\.\.\/desktop\/cradle\/expressions-app\/field-studies-journeys\/src\/nativeWorking'/)
+  const keep = workspace.slice(workspace.indexOf('export async function keepDraftAsWork('), workspace.indexOf('export function installNativeWorkspace('))
+  assert.ok(keep.length > 0, 'the frame keeps a left draft in keepDraftAsWork')
+  for (const [name, source] of [['nativeExpressionCommands.ts', commands], ['nativeWorkspace.ts keepDraftAsWork', keep]]) {
+    assert.doesNotMatch(source, /operation: ?'save_as'/, `${name} sends no save_as of its own`)
+    assert.doesNotMatch(source, /operation: ?'create'/, `${name} sends no create of its own`)
+    assert.doesNotMatch(source, /new NativeWorking\(/, `${name} makes no work of its own`)
+  }
+  assert.equal((working.match(/operation:'save_as'/g) ?? []).length, 1, 'the one save_as of the route')
+  assert.match(keep, /await makeWork\(owner,\{journey\},\{id,home\}\)/, 'the frame\'s keep is the route')
+  assert.equal((commands.match(/makeWork\(/g) ?? []).length, 1, 'the starters and New share one call of it')
 })

@@ -8,6 +8,11 @@ import {clone,validateJourney,type Journey} from './model.js';
 import {kernelDocumentToJourney,type KernelConversion,type KernelExpressionDocument} from './kernelDocumentBridge.js';
 import {prepareCompositionEdit,acceptCompositionReply,rebaseCompositionView,type CompositionEdit} from './kernelComposition.js';
 import type {KernelChange} from './kernelExpressions.js';
+import {materialFileName} from './reuse.js';
+import {requireExpressionOutcome} from '../../../src/knowledge/expressionOutcome';
+import {requireSavedExpression} from '../../../src/knowledge/expressionSaveReceipt';
+import type {ExpressionResult} from '../../../src/expression/types';
+import type {CentralLocation} from '../../../src/kernel/types';
 export interface WorkingSnapshot {journey:Journey;sceneId:string;entityId:string|null}
 /** E15c: what a Save acknowledged — the kernel edit and the kernel document either side of it. */
 export interface NativeCheckpoint {changes:KernelChange[];before:KernelExpressionDocument;after:KernelExpressionDocument}
@@ -163,6 +168,13 @@ function withoutRevisions(document:unknown):unknown{
  delete value.revision;
  for(const scene of value.scenes??[])delete scene.revision;
  for(const entity of Object.values(value.entities??{}))delete entity.revision;
+ return value;
+}
+/** E15g: the document an Undo or Redo stands on, without where the person stands in it: its revision counters and its
+ * selection are not what a Save changes (manual §10, Undo and Redo), so neither moves it. */
+function withoutStanding(document:unknown):unknown{
+ const value=withoutRevisions(document) as {selection?:unknown};
+ delete value.selection;
  return value;
 }
 function readDocument(value:unknown,reference:string):KernelExpressionDocument {
@@ -488,12 +500,16 @@ export class NativeWorking {
   }finally{this.inFlight=false;}
  }
  /** E15c: replay one recorded Save's kernel edit at the acknowledged basis. `changes`
-  * is the Undo's compensation (`expected` = the document before the Save) or the Redo's
-  * forward edit (`expected` = the document after it). It carries the same pending,
-  * acknowledgement and readback checks as a Save and is never forced: a revision
-  * conflict is refused by name, the pending intent is cleared (the owner refused it),
-  * and nothing is written. */
- async replayKernelEdit(changes:KernelChange[],expected:KernelExpressionDocument):Promise<KernelExpressionDocument>{
+  * is the Undo's compensation (`from` = the document the Save left, `to` = the one before
+  * it) or the Redo's forward edit (`from` = the document the Save found, `to` = the one
+  * after it). E15g (O-I #763): the owner's document is read first, and the edit stands
+  * only on `from`, at the revision this work holds; a document that has moved is refused
+  * by name before anything is written. Where the person stands (the selection) is not part
+  * of that document, so a selection made since moves nothing and is kept unless the Save
+  * itself set it. Otherwise it carries the same pending, acknowledgement and readback
+  * checks as a Save and is never forced: a revision conflict is refused by name, the
+  * pending intent is cleared (the owner refused it), and nothing is written. */
+ async replayKernelEdit(changes:KernelChange[],documents:{from:KernelExpressionDocument;to:KernelExpressionDocument}):Promise<KernelExpressionDocument>{
   const epoch=this.begin();
   try{
    const record=this.record?clone(this.record):undefined;
@@ -503,8 +519,14 @@ export class NativeWorking {
    const view=basis.view;
    if(!view)throw new Error('Open a native Expression before undoing or redoing a saved edit');
    if(!changes.length)throw new Error('This recorded Save has no kernel changes to replay');
-   const request:ConnectionEdit={operation:'edit',expression_ref:view.document.expression_ref,expected_revision:view.document.revision,actor:'human:expressions-app',changes:clone(changes) as unknown as Record<string,unknown>[]};
-   const want=withoutRevisions(expected);
+   const reference=view.document.expression_ref;
+   const current=readDocument(await this.ports.expression({operation:'inspect',expression_ref:reference}),reference);
+   if(current.revision!==view.document.revision||!same(withoutStanding(current),withoutStanding(documents.from))){
+    throw new Error(`document_moved: "${current.title}" is native revision ${current.revision}, not the document this Save left; the recorded Save was not undone or redone and nothing was written. Save or reopen to reconcile this draft first`);
+   }
+   const request:ConnectionEdit={operation:'edit',expression_ref:reference,expected_revision:view.document.revision,actor:'human:expressions-app',changes:clone(changes) as unknown as Record<string,unknown>[]};
+   const focused=changes.some(change=>change.change==='focus'||change.change==='relation_focus');
+   const want=withoutRevisions({...documents.to,selection:focused?documents.to.selection:current.selection});
    await this.persist({...basis,pending:{kind:'compensation',request}},epoch);
    const raw=await this.ports.expression({...request}) as {state?:string;current_revision?:unknown}|null;
    if(raw?.state==='revision_conflict'){
@@ -541,4 +563,62 @@ export class NativeWorking {
    return 'The owner’s current document is now the working basis. Nothing was replayed; your draft edits remain as unsaved work.';
   }finally{this.inFlight=false;}
  }
+}
+
+/** The works home the owner's works listing discloses (its `list` reply's `home`, kernel expression_home.rs WORKS_HOME, FOUNDATION N1): its
+ * location, or the owner's reason it has none. */
+export function worksHomeLocation(home:{path?:string;location?:CentralLocation;error?:string}|null|undefined):CentralLocation{
+ if(home?.location)return home.location;
+ throw new Error(home?.error?`The works home ${home.path??''} is unavailable: ${home.error}`:'The native owner disclosed no works home.');
+}
+/** The frame's own actor on every native write of a new work (as NativeWorking's create and edit). */
+export const WORK_ACTOR='human:expressions-app';
+/** The native access that began a new work changed before it finished: nothing further was written. */
+export const WORK_ACCESS_RETIRED='The native access changed before this finished. Nothing further was written; read the works list before trying again.';
+/** A new work stopped before it stood: the owner's own words, and the work the owner already holds when its create was acknowledged and a
+ * later step was refused (else null). */
+export class WorkNotMade extends Error{
+ constructor(message:string,readonly expression_ref:string|null){super(message);this.name='WorkNotMade';}
+}
+/** A new work as the owner holds it, and its file in the works home: `saved` is the file the owner wrote and read back, `refused` the owner's
+ * own words when it would not save it (the work still stands, committed, unsaved to a file), and both null when no home was asked for. */
+export interface MadeWork{document:{expression_ref:string;title:string;revision:number};saved:{path:string;revision:string}|null;refused:string|null}
+const reasonOf=(cause:unknown)=>cause instanceof Error?cause.message:String(cause);
+/** New's one route (O-I #709, #763): a work made in its world's folder. Every new work takes it — the shell's New and its starters
+ * (packages/live-shell/ui/src/components/nativeExpressionCommands.ts openStarter, newExpression) and the frame's keep of an edited local draft
+ * it leaves for another work (nativeWorkspace.ts keepDraftAsWork):
+ *   1. the work is made under a fresh ref (`expression:authored-<id>`): a Journey by the frame's own create and composition edit
+ *      (NativeWorking.commit), or an empty work of one Scene by one create with its title;
+ *   2. it is saved into the works home with save_as, whose receipt says the file was written and read back (requireSavedExpression), under
+ *      the work's title and the id's first eight characters, so two works never ask for one file.
+ * A refusal of the create or the edit throws the owner's words (WorkNotMade). The works home (`home`) is a location, a read of it, or null
+ * for none; a refusal of its read or of the save does not take the work back: the owner holds it, and `refused` names why it has no file.
+ * Whether that refusal stops the caller is the caller's: New and a starter open the work and name it; the keep refuses. `current` is asked
+ * after the work is made; once false, nothing further is written. */
+export async function makeWork(owner:(request:Record<string,unknown>)=>Promise<unknown>,made:{journey:Journey}|{title:string},
+ ports:{id:string;home:CentralLocation|(()=>Promise<CentralLocation>)|null;current?:()=>boolean}):Promise<MadeWork>{
+ const ref=`expression:authored-${ports.id}`;
+ let document:MadeWork['document'];
+ if('journey' in made){
+  const working=new NativeWorking({expression:owner,file:()=>Promise.reject(new Error('A new work is saved into the works home by the owner\'s save_as.')),checkpoint:async()=>undefined,mint:()=>ref});
+  try{document=await working.commit({journey:made.journey,sceneId:made.journey.scenes[0].id,entityId:null});}
+  catch(cause){throw new WorkNotMade(reasonOf(cause),working.state?.view?.document.expression_ref??null);}
+ }else{
+  const created=await owner({operation:'create',expression_ref:ref,title:made.title,actor:WORK_ACTOR}) as ExpressionResult;
+  try{
+   requireExpressionOutcome(created,'Expression create');
+   if(created?.state!=='ready'||created.document?.expression_ref!==ref)throw new Error(`Expression create: the native owner did not return the new Expression (${created?.state??'no state'}).`);
+  }catch(cause){throw new WorkNotMade(reasonOf(cause),null);}
+  document=created.document as MadeWork['document'];
+ }
+ if(ports.current&&!ports.current())throw new WorkNotMade(WORK_ACCESS_RETIRED,document.expression_ref);
+ if(ports.home===null)return {document,saved:null,refused:null};
+ try{
+  const parent=typeof ports.home==='function'?await ports.home():ports.home;
+  const title='journey' in made?made.journey.name:made.title;
+  const reply=await owner({operation:'save_as',expression_ref:document.expression_ref,expected_revision:document.revision,parent,
+   name:materialFileName(`${title} ${ports.id.slice(0,8)}`),operation_ref:`operation:expression:${ports.id}`,actor:WORK_ACTOR,actor_kind:'human'}) as ExpressionResult;
+  requireSavedExpression(reply);
+  return {document,saved:{path:reply.file.location.path,revision:reply.file.revision},refused:null};
+ }catch(cause){return {document,saved:null,refused:reasonOf(cause)};}
 }

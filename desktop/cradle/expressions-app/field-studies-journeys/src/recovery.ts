@@ -199,6 +199,18 @@ async function quarantineVerbatim(draft:Journey,text:string,reason:string):Promi
 }
 /** The owner's quarantine for one Expression: every kept draft, verbatim, with its reason and the owner's time of keeping. Listing reads only. */
 export function listOwnerQuarantine(expressionRef:string,scope:RecoveryScope):Promise<OwnerQuarantineReading>{return readOwnerQuarantine(ownerQuarantine,expressionRef,scope);}
+/** O-I #763: every Expression's kept drafts in one scope, for the Library's own page (library.ts), where the DLW opens the Library. One owner
+ * listing names each Expression whose quarantine holds entries (expression_recovery.rs List: a draft_quarantine record's `entries` count);
+ * each of those is read whole, as the instrument's Library reads the open one's. An Expression keeping none is not read. Listing reads only. */
+export async function listKeptDrafts(scope:RecoveryScope):Promise<{expressionRef:string;reading:OwnerQuarantineReading}[]>{
+ const listed=await ownerQuarantine({operation:'list',scope,kind:'draft_quarantine'}) as {state?:unknown;records?:unknown}|undefined;
+ if(listed?.state!=='listed'||!Array.isArray(listed.records))throw new Error('The native owner returned an invalid listing of kept drafts.');
+ const refs=(listed.records as {id?:unknown;kind?:unknown;entries?:unknown}[])
+  .filter(record=>record?.kind==='draft_quarantine'&&typeof record.id==='string'&&typeof record.entries==='number'&&record.entries>0).map(record=>record.id as string);
+ const kept:{expressionRef:string;reading:OwnerQuarantineReading}[]=[];
+ for(const expressionRef of refs)kept.push({expressionRef,reading:await readOwnerQuarantine(ownerQuarantine,expressionRef,scope)});
+ return kept;
+}
 /** Remove one kept draft from the owner's quarantine, on an explicit request only. Returns the entries that remain. */
 export function removeOwnerKeptDraft(expressionRef:string,scope:RecoveryScope,entryId:string):Promise<number>{return removeOwnerQuarantineEntry(ownerQuarantine,expressionRef,scope,entryId);}
 

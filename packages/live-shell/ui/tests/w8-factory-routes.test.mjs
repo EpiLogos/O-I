@@ -353,8 +353,11 @@ test('10 · the rack\'s upkeep: Undo and Revoke only on what AIKit listed; an Is
   for (const key of ['procUndo', 'revoke', 'sync', 'adoptApply', 'procRun']) assert.match(carrierless.standing[key].disabled, /carrier is unavailable/)
   const aikitSays = 'aikit: the procedure journal is locked'
   assert.equal(bind.rackBinding('factory:skillset', RACK_INPUT(), null, PLACE, {...upkeep(ports.write), procedures: refused(aikitSays)}).standing.procedures.disabled, aikitSays)
+  // REPLACED (#738): `aikit adopt` takes a path (`aikit adopt @claude` is AIKit's adopt.root_not_found), so Preview on the root the design
+  // names by its label holds the path collate read for it, and the rack shows it by its label (w9-approvals-ledger-sets.test.mjs 12).
   await binding.write([{key: 'adoptPreview', value: '@claude'}])
-  assert.equal(bind.rackBinding('factory:skillset', RACK_INPUT(), null, PLACE).values.adoptRoot, '@claude')
+  assert.equal(bind.rackBinding('factory:skillset', RACK_INPUT(), null, PLACE).values.adoptRoot, '/Users/admin/.claude/skills', 'held as the path')
+  assert.equal(bind.rackBinding('factory:skillset', RACK_INPUT(), null, PLACE, upkeep()).values.adoptRoot, '@claude', 'shown by its label')
   assert.deepEqual(calls.slice(1), [], 'Preview wrote nothing')
   bind.resetHolds()
 })
