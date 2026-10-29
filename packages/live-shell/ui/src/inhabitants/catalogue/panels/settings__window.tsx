@@ -12,7 +12,8 @@
 //   source      {kind: native | development | unavailable, label, simulated?}  the adapter itself (SettingsAdapter kind, label,
 //               simulated). A development adapter answers with simulated responses and writes nothing native.
 //   owners      [{owner, reason}]  the owners whose contribution cannot be read, each with its reason: the head names them.
-//   back        the name of the work Settings returns to (SettingsRequest.returnLabel): the head's way back. Esc does the same.
+//   back        the name of the work Settings returns to: a contextual entry's own (SettingsRequest.returnLabel), else the mode the frame
+//               stands in (settings/host.ts setSettingsReturnLabel). The head's way back; Esc does the same.
 //   settings    [{ref, category, owner, section, title, kind, options?, columns?, rows?, effective?, from, timing, writable, range?, hint?,
 //               help, effect?, at?, words, details, cells?, clears?, fixed?}]
 //               every owner's contributed setting at its scope: config_registry_read (each owner's oi.configuration-contribution/v1:
@@ -1080,6 +1081,16 @@ export function searchResults(v: V): SearchResult[] {
   ]
 }
 
+/** Search (Controls): the results follow what you type, as the window's search did before its design. A field that sends only on Enter
+ * spent the first Enter on sending, so Enter never opened a result (#739 gap 19). ↑/↓ move the mark through the results and Enter opens
+ * the one marked: the window's keys (settings/SettingsWorkspace.tsx searchKey) walk searchResults; Esc clears the search. */
+export function SearchField({p}: {p: ViewProps}) {
+  const does = 'Finds pages, settings, and the settings that stand beside an instrument, as you type. ↑ ↓ move through the results and Enter opens the one marked; Esc clears it. ⌘F.'
+  return <span className="st-search"><div className="dp-cell dp-cell--text" data-i={`Search|${does}`}>
+    <input className="dp-text" type="search" aria-label="Search settings" placeholder="⌕ Search settings" maxLength={256} value={strOf(p.v, 'search') ?? ''}
+      onChange={e => p.set('search', e.target.value)} /></div></span>
+}
+
 /** Search's results: press one to go to it; ↑/↓ move the mark (`hit`) and Enter opens the one marked. */
 function Results({p}: {p: ViewProps}) {
   const found = searchResults(p.v), hit = Math.min(Math.max(numOf(p.v, 'hit') ?? 0, 0), Math.max(found.length - 1, 0))
@@ -1144,8 +1155,7 @@ function Window({p}: {p: ViewProps}) {
   return <div className="ref-pane-body st-window">
     <header className="st-top">
       <b>Settings</b>
-      <span className="st-search"><TextField does="Searches every page, every owner's setting, and the settings that stand beside their instrument. Enter sends it; ↑ ↓ then move through the results and Enter opens one. ⌘F." value={strOf(v, 'search') ?? ''}
-        placeholder="⌕ Search settings" onChange={x => p.set('search', x)} /></span>
+      <SearchField p={p} />
       <span className="st-source" data-i={`Owners|${src ? (txt(src.kind) === 'native' ? 'Read and written through the native owners.' : txt(src.kind) === 'development' ? 'A development adapter: simulated answers, nothing native written.' : 'No native connection: nothing is read or written.') : 'No reading of the connection.'}`}>
         <Lamp state={lamp} tone="green" />{src ? txt(src.label) ?? NONE : NONE}{src?.simulated === true && <em>simulated</em>}</span>
       {unread.length > 0 && <span className="st-unread" data-st="stall" data-i={`Owners unread|${unread.map(o => `${ownerWord(txt(o.owner))}: ${txt(o.reason) ?? 'Contribution unavailable.'}`).join(' ')}`}>
@@ -1274,7 +1284,7 @@ const FOLDERS = [
 
 const DEFAULTS = {
   setup: dump(SETUP_DONE), setupStep: 'projects', folders: dump(FOLDERS), folder: '~/Writing/essays', make: 'copy', where: 'stands',
-  source: dump({kind: 'native', label: 'Native configuration · this Mac'}), owners: dump([]), back: 'Back to work',
+  source: dump({kind: 'native', label: 'Native configuration · this Mac'}), owners: dump([]), back: 'Back to Live',
   scope: dump({kind: 'machine', ref: null, title: 'This machine'}),
   scopes: dump([{kind: 'machine', ref: null, title: 'This machine'}, {kind: 'world', ref: null, title: 'World'}, {kind: 'project', ref: 'O-I', title: 'Project · O-I'}, {kind: 'workcell', ref: 'env-1', title: 'Workcell · env-1'}]),
   settings: dump(SETTINGS), conflicts: dump([]),

@@ -40,10 +40,12 @@ const scopeOf = (value: Value | undefined): {scope: ScopeAddress; category?: str
 const firstPage = (onboarding: boolean | undefined) => (onboarding ? 'setup' : 'harnesses')
 
 const unavailable = unavailableSettingsAdapter()
-interface Props { adapter?: SettingsAdapter; request?: SettingsRequest | null; onReturn?: () => void; active?: boolean; initialDrafts?: { setting_ref: string; scope: ScopeAddress; raw: unknown }[] }
+/** `returnLabel`: the work the frame stands in, which the way back names (settings/host.ts setSettingsReturnLabel); a request's own
+ * returnLabel (a contextual entry's) names its return instead. */
+interface Props { adapter?: SettingsAdapter; request?: SettingsRequest | null; onReturn?: () => void; returnLabel?: string; active?: boolean; initialDrafts?: { setting_ref: string; scope: ScopeAddress; raw: unknown }[] }
 type Review = { bundle: PlanBundle; submitted: Record<string, Draft>; epoch?: string }
 
-export function SettingsWorkspace({ adapter = unavailable, request, onReturn, active = true, initialDrafts }: Props) {
+export function SettingsWorkspace({ adapter = unavailable, request, onReturn, returnLabel, active = true, initialDrafts }: Props) {
   const [mounts, setMounts] = useState<ContributionMount[]>([])
   const [readings, setReadings] = useState<Record<string, ConfigResolution>>({})
   const [scopes, setScopes] = useState<Record<string, ScopeAddress>>({})
@@ -75,7 +77,6 @@ export function SettingsWorkspace({ adapter = unavailable, request, onReturn, ac
   const hold = (key: string, value: Value | undefined) => setHolds(was => { const next = {...was}; if (value === undefined) delete next[key]; else next[key] = value; return next })
   const setSelected = (ref: string | null) => hold('focus', ref ?? undefined)
   const root = useRef<HTMLElement>(null)
-  const refocusSearch = useRef(false)
   const generation = useRef(0)
   const activeAdapter = useRef(adapter)
   activeAdapter.current = adapter
@@ -152,14 +153,6 @@ export function SettingsWorkspace({ adapter = unavailable, request, onReturn, ac
 
   // Opened without a contextual request, the window takes the caret in Search (the window's search field took it on opening).
   useEffect(() => { if (active && !request) root.current?.querySelector<HTMLInputElement>('.st-search input')?.focus() }, [active])
-  // A search sent with Enter redraws its field: the caret goes back to it, so ↑/↓ and Enter carry on through the results.
-  useEffect(() => {
-    if (!refocusSearch.current) return
-    refocusSearch.current = false
-    const field = root.current?.querySelector<HTMLInputElement>('.st-search input')
-    field?.focus()
-    field?.setSelectionRange(field.value.length, field.value.length)
-  }, [query])
 
   function isCurrent(epoch: number, source: SettingsAdapter) { return generation.current === epoch && activeAdapter.current === source }
   function guard(epoch: number, source: SettingsAdapter) { if (!isCurrent(epoch, source)) throw new Error('The native connection changed. This response belongs to the previous connection; your local drafts are retained.') }
@@ -395,7 +388,8 @@ export function SettingsWorkspace({ adapter = unavailable, request, onReturn, ac
     const values: Record<string, Value> = windowCoreValues({adapter, mounts, entries: allEntries, readings: allReadings, scopes: allScopes, drafts, review: review?.bundle ?? null, answered, result, loading, query})
     for (const part of parts) Object.assign(values, part.values)
     for (const [key, value] of Object.entries(holds)) if (key !== 'search' && key !== 'scope') values[key] = value
-    if (onReturn) values.back = request?.returnLabel ?? 'Back to work'
+    // The way back names the work you came from: a contextual entry's own return, else the work the frame stands in (#739 gap 19).
+    if (onReturn) values.back = request?.returnLabel ?? returnLabel ?? 'Back to work'
     const acts: Record<string, Act> = { ...own }
     const why: Record<string, string> = { ...ownWhy }
     const standing: Record<string, Standing> = {}
@@ -453,13 +447,15 @@ export function SettingsWorkspace({ adapter = unavailable, request, onReturn, ac
       },
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- the engine's own functions read the state named here
-  }, [adapter, mounts, allEntries, allReadings, allScopes, owned, drafts, review, answered, result, loading, query, holds, problem, busy, onReturn, request?.returnLabel, ...parts])
+  }, [adapter, mounts, allEntries, allReadings, allScopes, owned, drafts, review, answered, result, loading, query, holds, problem, busy, onReturn, request?.returnLabel, returnLabel, ...parts])
 
-  // ↑/↓ move the mark through the search's results and Enter opens the one marked; Enter on a changed search sends it first.
+  // ↑/↓ move the mark through the search's results and Enter opens the one marked. The search follows what you type (the design's
+  // SearchField), so the results stand before Enter and its first press opens one.
   function searchKey(event: KeyboardEvent<HTMLElement>) {
-    const field = event.target as HTMLInputElement
+    const field = event.target as HTMLElement
     if (!field.closest?.('.st-search') || !['ArrowDown', 'ArrowUp', 'Enter'].includes(event.key)) return false
-    if (event.key === 'Enter' && field.value !== query) { refocusSearch.current = true; return true }
+    // An Enter that ends a composition (an input method's) confirms the text, not a result.
+    if (event.nativeEvent.isComposing) return true
     const results = searchResults(binding.values)
     const step = searchStep(results.length, typeof holds.hit === 'number' ? holds.hit : 0, event.key)
     if (!step) return true

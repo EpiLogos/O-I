@@ -11,6 +11,9 @@ Use the actual scope subject and a new `requestId` on each opening.
 Native admission calls `configureSettingsHost(adapter)` without a second
 argument and preserves the frame's Return callback. Frame teardown may clear
 that callback with an explicit `undefined` second argument.
+The frame names the work Settings returns to with
+`setSettingsReturnLabel(returnToMode(mode))`; a request's own `returnLabel`
+(a contextual entry's) names its return instead.
 
 The window is the catalogue design `settings:window`
 (`../inhabitants/catalogue/panels/settings__window.tsx`, manual §10.10), drawn
@@ -50,7 +53,9 @@ npm run build
 ```
 
 The first two checks cover the settings contribution and imported native
-types; `tests/settings-window.test.mjs` covers the window on its design. The full build also consumes the shell and other owners' source.
+types; `tests/settings-window.test.mjs` covers the window on its design, and
+`tests/settings-window-coverage.test.mjs` lists each control of the window
+before its design with its place now, or the manual line that drops it. The full build also consumes the shell and other owners' source.
 Explicit development scenarios are guarded by `import.meta.env.DEV`, labelled
 in the UI, and make no native writes. The development-only
 `/app/src/settings/window-preview.html?settings-scenario=ready` route mounts

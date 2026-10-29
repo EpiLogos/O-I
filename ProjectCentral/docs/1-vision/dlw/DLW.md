@@ -1321,11 +1321,11 @@ chain, in no pane and on no rail.
 | Profiles | Your named profiles. Use stages a profile's settings as local changes; New from changes keeps your changes under a name; Import reads a profile file. The AIKit profile that composes new work. | O:I, AIKit |
 | Permissions | The permission mode each harness starts in, and the owners' access policies, read only. Whether what you say to an agent may leave this machine: Local only, Ask or Allowed. | AIKit, Central, Actuation |
 | Credentials | Each provider binding with its secret reference, its state and its last verdict, with Verify, Rotate and Revoke; Discover and Add binding. Workcell's secret references with what uses each, and its projections, with Scan and Revoke. | AIKit, Workcell |
-| Machines & services | The remote machines a workcell can carry work to, each with its connection and what it was granted, with Connect, Disconnect and Remove; Add machine. The services the workcell declares and the local services AIKit elects. | Workcell, AIKit |
-| Automations | Routines: verified Methods that run on a schedule or an event, each with its state, its next run and whether it runs unattended, with Enable, Run now, Disable and Reprove; Create routine. The Methods you can make a routine from, the harness timers not yet adopted, and the run history. This is the one place a run is given a time: no device and no pad keeps one. | AIKit |
+| Machines & services | The remote machines a workcell can carry work to, each with its connection and what it was granted, with Connect, Disconnect and Remove; Add machine, with the operations you expect it to offer. The services the workcell declares and the local services AIKit elects. | Workcell, AIKit |
+| Automations | Routines: verified Methods that run on a schedule or an event, each with its state, its next run and whether it runs unattended, with Enable under the authority you choose, Run now, Disable, and Reprove on the verified run you choose; Create routine, on a schedule Central admits or a new one made there, and a creation not yet acknowledged checked, never sent twice. The Methods you can make a routine from, the harness timers not yet adopted, and the run history. This is the one place a run is given a time: no device and no pad keeps one. | AIKit |
 | Search & telemetry | Factory's search limits and its watch interval. | Factory |
 | Sources & libraries | The Central project each register binds to. | Factory |
-| Appearance | Light, Dark or Follow system, or a library theme, with Apply and Revert; the themes you imported, with Import and Remove; the visual layer and the welcome scene. | O:I's presentation |
+| Appearance | The theme: Light, Dark or Follow system, or a library theme, a setting row changed and reviewed as every other is, with Revert; the themes you imported, with Import and Remove; the visual layer and the welcome scene; Open Expressions for the controls that stay in their editors. | O:I's presentation |
 | Products & updates | Each of the six products with its version and its state. The desktop is a full install: every product comes with it, and none is added or removed here. The one you choose shows what is degraded and why, and what it still owes. Under them, the installation's own details. | Each product |
 | System | Each owner's System reading on four axes, declared, effective, active and staged, with the drift between two of them; or the owners' read-only configuration. | Each product |
 
@@ -1339,7 +1339,7 @@ value, where the value comes from, and when a change takes effect.
 
 | Column | What it shows |
 |---|---|
-| Value | The value in effect, as the control you change it with: a chooser, a switch or a field. A list or a table opens its entries under the row. A secret shows its reference, never the key. |
+| Value | The value in effect, as the control you change it with: a chooser, a switch or a field. A list or a table opens its entries under the row; each entry offers the choices its owner gives for it, such as the modes the chosen harness advertises. A secret shows its reference, never the key. |
 | From | This scope, where the value is set here; inherited, where the owner resolves it from a wider scope or its default. |
 | Applies | When a change takes effect: at the next resolution, for new sessions, on reconnect or on restart. Read only, where the owner lets nothing change it. |
 | Reset | Removes this scope's value, and the owner resolves it again. It stands where this scope sets the value. |
@@ -1350,13 +1350,16 @@ Review changes asks each owner to plan your changes. The Review page lists
 each plan with its scope, the change and when it applies, and Apply sends the
 plans the owners made. Each owner answers in the same table: applied, verified
 or refused, with its reason. When an owner's reading moves under a change you
-made, Keep holds your change on the new reading. Discard drops every change.
+made, Keep holds your change on the new reading. Undo drops one change, and
+Discard drops every change. Press a setting's name for its details: where its
+owner keeps it, its four axes, its default, its reconciliation and the reading
+it was read on. Point at it to read what it does and when a change applies.
 
 #### Controls
 
 | Control | Values | Default | What it does |
 |---|---|---|---|
-| Search | Text | Empty | Finds pages, settings, and the settings that stand beside an instrument. Press a result to go to it. |
+| Search | Text | Empty | Finds pages, settings, and the settings that stand beside an instrument, as you type. Press a result to go to it, or move to it with ↑ and ↓ and press Enter. Esc clears it. |
 | Applies to | This machine · World · a project · a workcell | This machine | The scope the owners' settings are read and changed at. |
 | Show | Routines · Methods · Timers · History | Routines | What the Automations page lists. |
 | Work context | This AIKit home · a project | This AIKit home | Where the Automations page reads routines and makes them. |
@@ -1386,7 +1389,7 @@ height: 520
 caption: Three local changes reviewed: two applied, and one refused with its owner's reason.
 ```
 
-A head holds Search and the owners' connection; the pages stand down the left and the page beside them; a foot
+A head holds Search, the owners' connection with any owner it cannot read and why, Read again, and the way back, named for the work you came from; the pages stand down the left and the page beside them; a foot
 holds your local changes, Discard and Review changes. Nothing in the window
 scrolls: a long list turns its pages with ‹ and ›.
 
@@ -1398,11 +1401,13 @@ running session keeps its harness, its model and its composition.
 #### To use Settings
 
 1. Press ⌘, or choose Settings… in the application's menu.
-2. Choose a page down the left, or type in Search and press a result.
+2. Choose a page down the left, or type in Search and press a result, or Enter
+   for the one marked.
 3. Set Applies to, then change a value. Its row takes an amber mark.
 4. Press Review changes… and read each owner's plan.
 5. Press Apply, and read each owner's answer in the table.
-6. Press Esc to go back to the work you came from.
+6. Press Esc, or the way back in the head, to go back to the work you came
+   from.
 
 #### Rules
 
@@ -1414,6 +1419,7 @@ running session keeps its harness, its model and its composition.
 - A change stays yours until its owner applies it.
 - An act its owner cannot take stays in place, dimmed, and the status bar
   says why.
+- An act its owner takes is acknowledged on the status bar, in its words.
 - A setting that belongs beside an instrument, such as a device's parameter,
   opens there. Search finds it.
 - Discover and Scan report where a key lies, never what it holds. Neither
