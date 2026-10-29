@@ -44,6 +44,9 @@ import type {QlMusicModes} from '../../../live/modes'
 import {ARRANGE_LAYOUTS, arrangePlan, blueprintMemberIds, recordedLayout, type ArrangeLayout, type Plane} from '../../nativeSceneFace.arrange'
 import {blueprintRequest, committedDisplay, fieldValue, transformIntent, withField, type FieldKey} from '../../nativeSceneFace.blueprint'
 import {CARRIER_LABELS, OCCASION_LABELS, OPERATION_LABELS, PLACEMENT_LABELS} from '../../nativeSceneFace.body'
+import {returnExpression} from '../../../../../../../desktop/cradle/src/knowledge/constellationActs'
+import {detectTransport} from '../../../../../../../desktop/cradle/src/kernel/bridge'
+import {getWikiProjectionState, refreshWikiProjectionReading} from '../../../../../../../desktop/cradle/src/techne/wikiProjectionStore'
 
 type Obj = Record<string, Record<string, number | string | boolean>>
 const put = (values: Record<string, Value>, key: string, value: Value | null | undefined) => {
@@ -346,8 +349,21 @@ const POINTER_REFUSED: Readonly<Record<string, string>> = {
 
 /** clip:expressions's wiring on one reading and its request door. */
 export function expressionsWiring(reading: NativeEditorReading, request: EditorRequest | null, present?: (editor: 'source' | 'layers' | 'placement', basis: NativeEditorBasis) => void,
-  held: Readonly<Record<string, Value>> = {}, stage?: ClipStage | null): ClipWiring {
-  return withMadeOf(sceneWiring(reading, request, present, held, stage), sceneSourceOf(reading.nativeScene))
+  held: Readonly<Record<string, Value>> = {}, stage?: ClipStage | null, returner: ExpressionReturner = returnToConstellation): ClipWiring {
+  return withMadeOf(sceneWiring(reading, request, present, held, stage), sceneSourceOf(reading.nativeScene), ref => returner(ref, reading.basis.expression_ref))
+}
+
+/** Return to constellation: the scene's Expression saved as a file and attached to the constellation the scene is made of. */
+export type ExpressionReturner = (whole: string, expression_ref: string) => Promise<void>
+/** Through the Wiki owner and the Expression's (desktop/cradle/src/knowledge/constellationActs.ts returnExpression), its register read again
+ * after so the browser lists the returned Expression under the constellation. */
+export const returnToConstellation: ExpressionReturner = async (whole, expression_ref) => {
+  const row = constellationNamed(constellationsNow().rows, whole)
+  if (!row) throw new Error(`${whole} is no constellation the wiki's reading holds now.`)
+  const transport = detectTransport()
+  await returnExpression(transport, row.project, whole, row.title, expression_ref)
+  const register = getWikiProjectionState().registers.find(candidate => candidate.key === row.register)
+  if (register) await refreshWikiProjectionReading(register, transport).catch(() => { /* Returned; the browser reads it on its next read. */ })
 }
 
 function sceneWiring(reading: NativeEditorReading, request: EditorRequest | null, present?: (editor: 'source' | 'layers' | 'placement', basis: NativeEditorBasis) => void,

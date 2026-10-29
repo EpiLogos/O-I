@@ -1,8 +1,8 @@
 import type {CentralLocation} from '../kernel/types';
 import {validateTemporalFacet,validatePlaceFacet,type TechneTemporalFacet,type TechnePlaceFacet} from '../techne/contract';
-import {ACTOR, CONSTRUCTION, PARTICIPATION, RELATION, editable, nativeFrame, newRef,
-  type AuthoringForm, type ConstructionRequest, type NativeConstruction, type NativeFrame, type NativeMember, type NativeRelation} from './construction';
-import {passageKey, passageProvenance, type WikiPassage} from './selection';
+import {ACTOR, CONSTRUCTION, PARTICIPATION, RELATION, editable, newRef,
+  type ConstructionRequest, type NativeConstruction, type NativeFrame, type NativeMember, type NativeRelation} from './construction';
+import type {WikiPassage} from './selection';
 
 export interface DraftMember {
   subject_ref: string;
@@ -26,10 +26,6 @@ export interface ConstructionDraft {
   original_relations: NativeRelation[]; title: string; question: string;
   space_ref: string; form: NativeFrame | null; members: DraftMember[]; relations: DraftRelation[];
 }
-export function emptyDraft(space_ref = ''): ConstructionDraft {
-  return {frame_ref: newRef('wiki:frame'), anchor_ref: newRef('wiki:anchor'), original_relations: [],
-    title: '', question: '', space_ref, form: null, members: [], relations: []};
-}
 export function memberDraft(member: NativeMember): DraftMember {
   const part = member[PARTICIPATION];
   return {subject_ref: member.ref, participation_ref: part.participation_ref, role_ref: part.role_ref ?? null,
@@ -46,17 +42,6 @@ export function fromNative(frame: NativeConstruction, relations: NativeRelation[
     relations: ours.filter(edge => edge[RELATION].standing !== 'retracted').map(edge => ({ref: edge.ref, revision: edge.revision,
       from: edge[RELATION].from_participation_ref, to: edge[RELATION].to_participation_ref, relation: edge.relation,
       direction: edge[RELATION].direction, standing: edge[RELATION].standing, evidence: edge[RELATION].evidence ?? []}))};
-}
-export function withPassage(draft: ConstructionDraft, passage: WikiPassage): ConstructionDraft {
-  if (draft.members.some(member => member.passage && passageKey(member.passage) === passageKey(passage))) return draft;
-  if (draft.members.length >= 96) throw new Error('This authoring view supports 96 members. Split this working selection into reusable constellations. No members have been discarded.');
-  return {...draft, members: [...draft.members, {subject_ref: passage.source_ref, participation_ref: newRef('participation:wiki'),
-    role_ref: null, label: passage.text, sources: [passageProvenance(passage)], passage}]};
-}
-export function withForm(draft: ConstructionDraft, form?: AuthoringForm): ConstructionDraft {
-  const roles = new Set(form?.roles.map(role => role.role_ref));
-  return {...draft, form: form ? nativeFrame(form) : null,
-    members: draft.members.map(member => ({...member, role_ref: member.role_ref && roles.has(member.role_ref) ? member.role_ref : null}))};
 }
 export function withoutMember(draft: ConstructionDraft, reference: string): ConstructionDraft {
   return {...draft, members: draft.members.filter(member => member.participation_ref !== reference),

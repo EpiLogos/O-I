@@ -96,7 +96,10 @@ export interface SurfaceBinding extends SurfacePresentationBinding {
   /** A popped-out device's identity (seam 8): the family, face and aperture its manifest declares. A device has no kernel
    * surface; its binding id is `device:{family}/{face}`. Mirrors the native owner's `device` field (windows.rs). */
   device?: {family:string;face:string;aperture:{day:{project:string|null;sourceRef:string;documentId:string}|null;flow:{location:import("../kernel/types").CentralLocation}|null;conversation:{project:string|null;expressionRef:string|null;conversation?:string|null}|null;instrument:string|null}};
-  view?: {fileHistory?:{open:boolean;revision?:string;expectedRevision?:string};constructionFrame?:{ref:string;requestId:string};graphOrigin?:string;knowledgePlane?: "graph"|"page";nativeKnowledge?:import('../knowledge/nativeFocus').NativeKnowledgeContext;encounterPlane?: "Conversation"|"Activity"|"Context"|"Inspect";
+  view?: {fileHistory?:{open:boolean;revision?:string;expectedRevision?:string};/** A Knowledge page opened at a span of its source (a constellation member's passage), until the page is travelled from. */
+    pageAnchor?:import('../knowledge/wikiDocument').WikiAnchor;
+    /** A Knowledge surface opened to edit one subject's time and place: its editor opens once per request. */
+    facts?:{subject:import('../knowledge/wikiFacts').FactsSubject;requestId:string};graphOrigin?:string;knowledgePlane?: "graph"|"page";nativeKnowledge?:import('../knowledge/nativeFocus').NativeKnowledgeContext;encounterPlane?: "Conversation"|"Activity"|"Context"|"Inspect";
     /** The field's presentation state (field/model.ts `FieldPersisted`, plus the encounters of other worlds): restored with the layout, never a source. */
     field?: import("../field/model").FieldPersisted & {others?: Record<string, import("../field/model").FieldPersisted>}};
   /** The hosted engine's checkpoint (MODE-ENGINE-STATE-PERSISTENCE §7.2):

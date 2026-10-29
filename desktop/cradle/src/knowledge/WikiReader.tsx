@@ -9,7 +9,7 @@ import {WikiSourceTools} from './WikiSourceTools';
 import {isInternalReference,subjectLabel} from '../../../../shared-field/presentation-text.mjs';
 import './wikiReader.css';
 
-type Props = {reading:KnowledgeReading;onNavigate?:WikiNavigate;anchor?:WikiAnchor;transport?:KernelTransportStatus;project?:string;binding?:SurfaceBinding;onSelectSource?:(reading:KnowledgeReading,anchor:WikiAnchor,text:string)=>void|Promise<void>;previewOnly?:boolean};
+type Props = {reading:KnowledgeReading;onNavigate?:WikiNavigate;anchor?:WikiAnchor;transport?:KernelTransportStatus;project?:string;binding?:SurfaceBinding;onSelectSource?:(reading:KnowledgeReading,anchor:WikiAnchor,text:string)=>void|string|Promise<void|string>;previewOnly?:boolean};
 /** A preview names what its actual native document or authored link names.
  * Missing titles stay explicit; source addresses never become display names. */
 export function wikiReadingTitle(reading:KnowledgeReading|undefined,label?:string):string {
@@ -46,7 +46,7 @@ export function WikiReader(props:Props) {
   const selectForConstruction=async()=>{
     if(!selection||!onSelectSource)return;
     setSelectionBusy(true);setNotice(undefined);
-    try{await onSelectSource(reading,{revision:reading.revision,start_byte:selection.start,end_byte:selection.end},selection.text);setSelection(undefined);}
+    try{const said=await onSelectSource(reading,{revision:reading.revision,start_byte:selection.start,end_byte:selection.end},selection.text);setSelection(undefined);if(typeof said==='string')setNotice(said);}
     catch(error){setNotice(error instanceof Error?error.message:String(error));}
     finally{setSelectionBusy(false);}
   };

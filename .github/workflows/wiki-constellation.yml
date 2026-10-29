@@ -99,9 +99,6 @@ jobs:
         env:
           WIKI_WEBKIT: '1'
         run: node tests/wiki-reader-browser.mjs
-      - name: Exercise controlled save and Return recovery controls
-        working-directory: desktop/cradle
-        run: node tests/wiki-recovery-browser.mjs
       - name: Prove passage to constellation to real Expression file and native Return in Chromium
         working-directory: desktop/cradle
         run: node tests/wiki-constructive-browser.mjs

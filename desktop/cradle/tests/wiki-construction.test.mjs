@@ -3,11 +3,18 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {selectedPassage, revalidatePassage, passageProvenance} from '../src/knowledge/selection.ts';
 import {sourceSlice} from '../src/knowledge/wikiDocument.ts';
-import {draftRequest, emptyDraft, withPassage, withForm, withoutMember, fromNative} from '../src/knowledge/constructionDraft.ts';
+import {draftRequest, withoutMember, fromNative} from '../src/knowledge/constructionDraft.ts';
+import {constructionReadingOf} from '../src/knowledge/constellationActs.ts';
+import {newRef, nativeFrame} from '../src/knowledge/construction.ts';
 import {CONSTRUCTION, PARTICIPATION, RELATION, decodeRegister, readAuthoringForms, sourceBases, saveConstruction} from '../src/knowledge/construction.ts';
 import {constructionWhole} from '../src/knowledge/constructionProjection.ts';
 import {projectionChanges, knowledgeEntityRef} from '../src/knowledge/expressionProjection.ts';
 
+// The drafts these tests build, as the retired authoring panel built them before it saved (the panel and its builders retired with O-I
+// #742; the draft law they feed, draftRequest, is the one the browser's acts use): an empty draft in a space, a passage gathered, a form chosen.
+const emptyDraft=(space_ref='')=>({frame_ref:newRef('wiki:frame'),anchor_ref:newRef('wiki:anchor'),original_relations:[],title:'',question:'',space_ref,form:null,members:[],relations:[]});
+const withPassage=(draft,passage)=>({...draft,members:[...draft.members,{subject_ref:passage.source_ref,participation_ref:newRef('participation:wiki'),role_ref:null,label:passage.text,sources:[passageProvenance(passage)],passage}]});
+const withForm=(draft,form)=>({...draft,form:form?nativeFrame(form):null});
 const corpus=JSON.parse(readFileSync(new URL('./fixtures/wiki-native.json',import.meta.url)));
 const reading=corpus['source:a'];
 const bytes=new TextEncoder().encode(reading.content);
@@ -124,19 +131,15 @@ test('fresh projection preserves two source occurrences, native edge identity, r
  }finally{globalThis.fetch=original;}
 });
 
-test('checkpoint recovery rejects malformed roles, duplicate participation and wrong pending target', async()=>{
-  const {restoreConstructionCheckpoint,memberAnchor}=await import('../src/knowledge/constructionCheckpoint.ts');
+test('a member the owner holds opens at the exact span it was gathered from, read from its native selector alone',()=>{
   const draft=withPassage(emptyDraft('wiki:space'),select());
-  const checkpoint={draft,saved:false};
-  assert.equal(restoreConstructionCheckpoint(checkpoint).draft.frame_ref,draft.frame_ref);
-  for(const bad of [
-    {draft:{...draft,form:{shape_ref:'shape',roles:'not a list'}}},
-    {draft:{...draft,members:[draft.members[0],draft.members[0]]}},
-    {draft,pending:{schema:'aikit.constellation-action/v1',frame_ref:'wrong',operation_ref:'op',actor_ref:'human:a',expected_revision:0,changes:[]}},
-  ])assert.throws(()=>restoreConstructionCheckpoint(bad));
+  const {frame,relations}=native({...draft,title:'Whole',question:'Why?'});
+  const [member]=constructionReadingOf({frames:[frame],relations},frame).members;
   const held=draft.members[0];
-  const restored={...held,passage:undefined};
-  assert.deepEqual(memberAnchor(restored),{revision:held.passage.source_revision,...held.passage.selector});
+  assert.deepEqual(member.anchor,{revision:held.passage.source_revision,...held.passage.selector});
+  const loose={...frame,constellations:[{...frame.constellations[0],members:[{...frame.constellations[0].members[0],[PARTICIPATION]:{...frame.constellations[0].members[0][PARTICIPATION],
+    sources:[{source_ref:held.subject_ref,source_revision:'r1','aikit.techne-facet/v1':{selector:{unit:'other',kind:'markdown-utf8-span',value:'not a span'}}}]}}]}]};
+  assert.equal(constructionReadingOf({frames:[loose],relations:[]},loose).members[0].anchor,undefined,'a malformed selector opens the source at its top, never at a guessed span');
 });
 
 test('a retained relation is reconnected before its former member is removed, preserving temporal evidence',()=>{

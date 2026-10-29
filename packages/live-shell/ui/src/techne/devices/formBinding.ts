@@ -4,8 +4,9 @@
 // an owner's, through the kernel's routes (desktop/cradle/kernel/src/owner_routes.rs):
 //
 // - The composition is the owner's reading (owners/constellations.ts: the wiki's whole and its members, each at the position and face the
-//   wiki declares), and where AIKit declares a frame round the whole its roles are the frame's (`wiki-shape validate`, read on focus: the
-//   browser lists a frame round a space's whole as the space). A member at position n is on role n; a member on the prime face is on n′.
+//   wiki declares), and where AIKit declares a frame round the whole its roles are the frame's (`wiki-shape validate`, read on focus; the
+//   browser lists a frame round a space's whole as that whole on the frame's roles). A member at position n is on role n; a member on the
+//   prime face is on n′.
 //   The cards are the whole and its members, by their native refs, laid round the whole at their roles (the manual's "Layout moves no
 //   source").
 // - Form, Centre, Roles, Layout and Role are the view's own (presentation until Declare): held here, never sent to an owner.

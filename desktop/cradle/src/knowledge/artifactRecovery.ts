@@ -60,21 +60,3 @@ export async function performArtifactSave(transport: KernelTransportStatus, inte
   return inspected.artifact;
 }
 
-/** Explicit recovery reuses the native document validator and refuses to replace
- * a different live composition. It does not write or claim an artifact. */
-export async function restorePendingArtifactDocument(transport: KernelTransportStatus, intent: ArtifactSaveIntent, apply?: ApplyKernel): Promise<ExpressionDocument> {
-  const result = await expressionOperation(transport, {operation:'open',document:intent.document,actor:ACTOR}, apply);
-  if(!result.document||!sameComposition(result.document,intent.document))throw new Error('The owner could not restore the exact retained composition. Keep the pending save and inspect the live document.');
-  return result.document;
-}
-
-/** Read the exact file recorded by a completed save after a UI/kernel restart.
- * This is file verification only: it does not mount or overwrite a live draft. */
-export async function readSavedArtifact(transport: KernelTransportStatus, held: {location: CentralLocation; revision: string; expression_ref: string}): Promise<ArtifactReturn> {
-  const file = await readFile(transport, held.location);
-  if (!sameComposition(file.location, held.location)) throw new Error('The saved artifact reading was redirected. Return remains pending at its original location.');
-  if (file.revision !== held.revision) throw new Error('The saved Expression file has changed. Its previous Return will not be replayed against different bytes.');
-  const inspected = await inspectCompositionFile(transport, file);
-  if (inspected.document.expression_ref !== held.expression_ref) throw new Error('The saved file no longer names the recorded Expression.');
-  return inspected;
-}

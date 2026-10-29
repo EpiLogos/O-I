@@ -373,14 +373,53 @@ export const CANVAS_REFUSE = {
   mine: NO_BOARD_EDIT, mineX: NO_BOARD_EDIT, mineY: NO_BOARD_EDIT, mineZ: NO_BOARD_EDIT, sel: NO_BOARD_EDIT,
   add: NO_BOARD_EDIT, addX: NO_BOARD_EDIT, addY: NO_BOARD_EDIT, added: NO_BOARD_EDIT, colourAdded: NO_BOARD_EDIT, shapeFill: NO_BOARD_EDIT, frame2: NO_BOARD_EDIT,
   direction: NO_DIRECTION, standing: NO_STANDING, find: NO_BOARD_EDIT, present: NO_BOARD_EDIT,
-  promote: missing('Promote', 'a stage command for the frame\'s constellation relate act (researchInstruments.tsx RelateKnowledgeAction :162)', 'the research frame'),
   form: NO_FORM, whole: NO_FORM, roles: NO_FORM, layout: NO_FORM, role: NO_FORM, checkAsk: NO_FORM, declare: NO_FORM, fold: NO_FORM,
   suggest: missing('Suggest', 'the Decision helper\'s Suggest for a card\'s open role (ai-kit:decision-helper has no kernel route here)', 'AIKit'),
   suggested: missing('Suggest', 'the Decision helper\'s Suggest for a card\'s open role (ai-kit:decision-helper has no kernel route here)', 'AIKit'),
 } as const
-const CANVAS_ACTS = ['mode', 'grid', 'minimap', 'cx', 'cy', 'zoom', 'lineKind', 'fromSide', 'toSide'] as const
-/** The view's own keys: which fit the View chooser stands on (Everything, the first frame): its camera moves through cx, cy and zoom. */
-export const CANVAS_LOCAL = ['view'] as const
+const CANVAS_ACTS = ['mode', 'grid', 'minimap', 'cx', 'cy', 'zoom', 'lineKind', 'fromSide', 'toSide', 'promote'] as const
+/** The view's own keys: which fit the View chooser stands on (Everything, the first frame): its camera moves through cx, cy and zoom; and
+ * the next line's relation type (manual §17.4 "Relation type — Sets the type of the next line"), which Promote sends as the relation. */
+export const CANVAS_LOCAL = ['view', 'relation'] as const
+
+// ---------------------------------------------------------------------------------------------------------------- Promote
+
+/** The relation's owner (manual §17.4 "Choose Promote on a line to send it to its owner. The owner may accept, change or refuse it"): the
+ * constellation's relate act over the two occurrences the line joins in the Scene the Canvas presents (desktop/cradle/src/techne/
+ * sceneConstellationRelation.ts relateSceneConstellation: the occurrences' own constellation, `aikit.constellation.apply` relation_put at
+ * the register's revision, standing proposed) — the act the frame's own "Record as constellation relationship" runs (researchInstruments.tsx
+ * RelateKnowledgeAction, app.ts relateKnowledge), reached from the shell with the Scene the frame announces (HostedAppState.nativeScene). */
+export interface CanvasPromoter {
+  relate(input: {operation: 'relate'; expression_ref: string; revision: number; scene_ref: string; from_entity_ref: string; to_entity_ref: string; relation: string
+    direction: 'directed' | 'undirected'}): Promise<{relation_ref: string; frame_revision: number}>
+}
+/** What the owner last said of a promoted line, kept for that line. */
+export interface Promotion {readonly line: string; readonly result: 'recorded' | 'refused'; readonly why: string}
+let promotion: Promotion | null = null
+const promotionListeners = new Set<() => void>()
+export const promotionState = (): Promotion | null => promotion
+export function subscribePromotion(listener: () => void): () => void { promotionListeners.add(listener); return () => { promotionListeners.delete(listener) } }
+const promoted = (next: Promotion | null) => { promotion = next; for (const listener of [...promotionListeners]) listener() }
+/** For the tests. */
+export const resetPromotion = (): void => promoted(null)
+/** A relation type the next line takes, and the way it runs: an echo runs both ways, the others one way. */
+const RELATION_TYPES: readonly string[] = ['echo', 'influence', 'cause', 'transform']
+const NO_PROMOTER = 'Promote: the relation\'s owner is not reached from this window.'
+
+async function promote(frame: FrameReadings, held: Readonly<Record<string, Value>>, promoter: CanvasPromoter | null): Promise<void> {
+  const board = frame.state?.research?.canvas, scene = frame.state?.nativeScene
+  const line = board?.lines.find(candidate => candidate.id === board.selectedLine) ?? board?.lines[0]
+  if (!line) throw Error(board ? 'The board holds no line to promote.' : unmounted(frame) ?? NOT_PRESENTED_BOARD)
+  const refuse = (why: string): never => { promoted({line: line.id, result: 'refused', why}); throw Error(why) }
+  if (!scene) refuse('The Canvas presents no native Scene now: open the constellation\'s Expression on the Canvas, then promote a line of it.')
+  if (!promoter) refuse(NO_PROMOTER)
+  const relation = typeof held.relation === 'string' && RELATION_TYPES.includes(held.relation) ? held.relation : 'echo'
+  try {
+    const receipt = await promoter!.relate({operation: 'relate', expression_ref: scene!.expression_ref, revision: scene!.revision, scene_ref: scene!.scene_ref,
+      from_entity_ref: line.from, to_entity_ref: line.to, relation, direction: relation === 'echo' ? 'undirected' : 'directed'})
+    promoted({line: line.id, result: 'recorded', why: `The constellation's owner holds it as a proposed ${relation} (${receipt.relation_ref}), at revision ${receipt.frame_revision}.`})
+  } catch (error) { refuse(error instanceof Error ? error.message : String(error)) }
+}
 const LINE_KINDS: readonly string[] = ['straight', 'curved', 'elbow'], LINE_SIDES: readonly string[] = ['auto', 'top', 'right', 'bottom', 'left']
 /** The frame's own overview toggle (canvasNavigationOverview.tsx :21 `.research-minimap-toggle`, its words "Hide overview" while shown and
  * "Show overview" while hidden; presentedChrome.ts :93 publishes it in canvas:look). */
@@ -423,7 +462,7 @@ export function canvasValues(frame: FrameReadings): Values {
   return values
 }
 
-export async function canvasWrite(frame: FrameReadings, changes: readonly ValueChange[]): Promise<void> {
+export async function canvasWrite(frame: FrameReadings, changes: readonly ValueChange[], held: Readonly<Record<string, Value>> = {}, promoter: CanvasPromoter | null = null): Promise<void> {
   const chrome = frame.state?.lens === 'canvas' ? frame.state.chrome : undefined
   const board = frame.state?.research?.canvas
   let camera: {cx: number; cy: number; zoom: number} | undefined
@@ -441,6 +480,7 @@ export async function canvasWrite(frame: FrameReadings, changes: readonly ValueC
       camera = {...base, [key]: value}
       continue
     }
+    if (key === 'promote') { await promote(frame, held, promoter); continue }
     if (key === 'grid') {
       if (board?.snap === (value === true)) continue
       await press(frame, control(chrome, 'canvas:tools', 'Snap'), 'Grid')
@@ -497,7 +537,8 @@ export function canvasAbsent(frame: FrameReadings, key: string): string {
   return frameAbsent(frame, 'canvas', CANVAS_REFUSE, key, 'The frame has not reported this reading of its board.')
 }
 
-export function canvasBinding(frame: FrameReadings, held: Readonly<Record<string, Value>> = {}): DesignBinding {
+export function canvasBinding(frame: FrameReadings, held: Readonly<Record<string, Value>> = {}, promoter: CanvasPromoter | null = null,
+  said: Promotion | null = promotion): DesignBinding {
   const standing: Record<string, Standing> = disabled(CANVAS_REFUSE)
   for (const [key, why] of Object.entries(UNHELD_BOARD)) standing[key] = {disabled: why}
   for (const key of FORM_READINGS) standing[key] = {disabled: NO_FORM}
@@ -506,6 +547,14 @@ export function canvasBinding(frame: FrameReadings, held: Readonly<Record<string
   if (why) for (const key of CANVAS_ACTS) standing[key] = {disabled: why}
   const values: Record<string, Value> = {...canvasValues(frame)}
   for (const key of CANVAS_LOCAL) if (held[key] !== undefined) values[key] = held[key]!
+  // What the owner said of the selected line, the last time it was promoted.
+  const board = frame.state?.research?.canvas
+  const selected = board?.lines.find(candidate => candidate.id === board.selectedLine) ?? board?.lines[0]
+  if (said && selected && said.line === selected.id) {
+    values.promote = said.result
+    if (said.result === 'refused') { values.refusal = said.why; delete standing.refusal } else values.promoteWhy = said.why
+  } else if (selected) values.promote = 'ready'
+  if (!promoter) standing.promote = {disabled: NO_PROMOTER}
   for (const key of ['light', 'save', 'items', 'lines', 'frames', 'label', 'direction'] as const) if (!(key in values) && !(key in standing)) standing[key] = {disabled: canvasAbsent(frame, key)}
   return {
     id: CANVAS_ID,
@@ -514,6 +563,6 @@ export function canvasBinding(frame: FrameReadings, held: Readonly<Record<string
     local: handsFor(CANVAS_ID, CANVAS_LOCAL),
     ...(frame.run && !frame.state ? {waiting: ['light']} : {}),
     writes: key => key in CANVAS_REFUSE || (CANVAS_ACTS as readonly string[]).includes(key),
-    write: changes => canvasWrite(frame, changes),
+    write: changes => canvasWrite(frame, changes, held, promoter),
   }
 }

@@ -1,10 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {CONSTRUCTION, ACTOR} from '../src/knowledge/construction.ts';
-import {compositionReturnRequest, attachCompositionReturn, compositionAttached, compositionReturnRecorded} from '../src/knowledge/constructionProjection.ts';
-import {readSavedArtifact} from '../src/knowledge/artifactRecovery.ts';
-import {emptyDraft, fromNative} from '../src/knowledge/constructionDraft.ts';
-import {restoreConstructionCheckpoint} from '../src/knowledge/constructionCheckpoint.ts';
+import {CONSTRUCTION} from '../src/knowledge/construction.ts';
+import {compositionReturnRequest, attachCompositionReturn, compositionAttached} from '../src/knowledge/constructionProjection.ts';
+// The retired authoring panel's retained-Return checkpoint and its file and operation inspections retired with it (O-I #742): a Return is
+// one act now (constellationActs.ts returnExpression), and pressing it again lands on its own file and attaches nothing twice.
 const transport={kind:'bridge',url:'http://controlled.invalid'};
 const location={schema:'central.path-ref/v1',root:'/ground',path:'Work/Notes/inquiry.expression.json',ref:'central:path:ground:inquiry.expression.json'};
 const frame={ref:'wiki:frame:one',revision:3,constellations:[{anchor_ref:'wiki:anchor:one',members:[]}],[CONSTRUCTION]:{title:'Inquiry',inquiry:{question:'What follows?'},frame:null,compositions:[]}};
@@ -38,71 +37,12 @@ test('a restored Return cannot redirect the attachment or hide other edits',asyn
  assert.equal(calls,0);
 });
 
-test('the saved file and pending Return survive checkpoint restoration with exact identities',()=>{
- const pending=compositionReturnRequest(frame,artifact);
- const checkpoint={draft:fromNative(frame,[]),pending,saved:true,artifact:{location,revision:artifact.file.revision,expression_ref:document.expression_ref}};
- const restored=restoreConstructionCheckpoint(JSON.parse(JSON.stringify(checkpoint)));
- assert.equal(restored.pending.operation_ref,pending.operation_ref);
- assert.deepEqual(restored.artifact,checkpoint.artifact);
- assert.equal(restored.pending.actor_ref,ACTOR);
-});
-
-test('recovery reads the exact saved artifact without opening, rewriting or replacing a live composition',async()=>{
- const original=globalThis.fetch;const calls=[];
- globalThis.fetch=async(_url,options)=>{
-  const op=JSON.parse(options.body);calls.push(op);
-  if(op.op==='file_read')return {json:async()=>({ok:true,outcome:{result:'file_read',reading:artifact.file}})};
-  return {json:async()=>({ok:true,outcome:{result:'expression',data:{state:'ready',document,file:artifact.file}}})};
- };
- try{
-  const held={location,revision:'file:r4',expression_ref:'expression:one'};
-  assert.deepEqual(await readSavedArtifact(transport,held),artifact);
-  await assert.rejects(readSavedArtifact(transport,{...held,revision:'file:older'}),/file has changed/);
-  await assert.rejects(readSavedArtifact(transport,{...held,expression_ref:'expression:another'}),/recorded Expression/);
-  assert.ok(calls.every(op=>op.op==='file_read'||op.request?.operation==='inspect_file'));
-  assert.equal(calls.some(op=>op.request?.operation==='save'||op.request?.operation==='open'),false);
- }finally{globalThis.fetch=original;}
-});
-
 test('already-returned status requires the artifact revision and native file basis, not merely its name',()=>{
  const request=compositionReturnRequest(frame,artifact),recorded=nativeReply(request).dispatch.data.reading.frame;
  assert.ok(compositionAttached(recorded,artifact));
  assert.equal(compositionAttached(recorded,{...artifact,document:{...document,revision:5}}),false);
  assert.equal(compositionAttached(recorded,{...artifact,file:{...artifact.file,revision:'file:changed'}}),false);
  assert.equal(compositionAttached(recorded,{...artifact,file:{...artifact.file,location:{...location,root:'/other'}}}),false);
-});
-
-
-test('operation inspection requires current attachment and the recorded native actor/basis, not just an id',()=>{
- const request=compositionReturnRequest(frame,artifact);
- const recorded={...nativeReply(request).dispatch.data.reading.frame};
- recorded[CONSTRUCTION]={...recorded[CONSTRUCTION],applied:{[request.operation_ref]:{actor_ref:request.actor_ref,basis_revision:3,result_revision:4,request_digest:'a'.repeat(64)}}};
- assert.equal(compositionReturnRecorded(recorded,request),true);
- assert.equal(compositionReturnRecorded({...recorded,revision:8},request),true,'later unrelated edits do not erase a still-present Return');
- const mutate=patch=>({...recorded,[CONSTRUCTION]:{...recorded[CONSTRUCTION],...patch}});
- assert.equal(compositionReturnRecorded(mutate({compositions:[]}),request),false,'historical receipt is not current attachment');
- for(const patch of [{actor_ref:'agent:other'},{basis_revision:2},{result_revision:5},{request_digest:'unverified'}]){
-  const applied={[request.operation_ref]:{...recorded[CONSTRUCTION].applied[request.operation_ref],...patch}};
-  assert.equal(compositionReturnRecorded(mutate({applied}),request),false);
- }
- assert.equal(compositionReturnRecorded(recorded,{...request,frame_ref:'wiki:other'}),false);
-});
-
-test('a redirected or malformed saved artifact cannot become a retry basis',async()=>{
- const original=globalThis.fetch;let reading=artifact.file;
- globalThis.fetch=async(_url,options)=>{
-  const op=JSON.parse(options.body);
-  if(op.op==='file_read')return {json:async()=>({ok:true,outcome:{result:'file_read',reading}})};
-  const decoded=JSON.parse(reading.content);
-  return {json:async()=>({ok:true,outcome:{result:'expression',data:{state:'ready',document:decoded,file:{location:reading.location,revision:reading.revision}}}})};
- };
- try{
-  const held={location,revision:'file:r4',expression_ref:'expression:one'};
-  reading={...artifact.file,location:{...location,root:'/different'}};
-  await assert.rejects(readSavedArtifact(transport,held),/redirected/);
-  reading={...artifact.file,content:JSON.stringify({...document,expression_ref:'expression:other'})};
-  await assert.rejects(readSavedArtifact(transport,held),/recorded Expression/);
- }finally{globalThis.fetch=original;}
 });
 
 

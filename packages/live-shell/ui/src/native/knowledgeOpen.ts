@@ -1,5 +1,7 @@
 import type {KnowledgeAddress} from '../../../../../desktop/cradle/src/kernel/types';
 import type {SurfaceBinding} from '../../../../../desktop/cradle/src/surface/types';
+import type {WikiAnchor} from '../../../../../desktop/cradle/src/knowledge/wikiDocument';
+import type {FactsSubject} from '../../../../../desktop/cradle/src/knowledge/wikiFacts';
 import {validateNativeKnowledgeContext, type NativeKnowledgeContext} from '../../../../../desktop/cradle/src/knowledge/nativeFocus';
 import type {NativeEditorReading} from '@epilogos/expressions-boundary/editor';
 import type {KernelExpressionDocument} from '../../../../../desktop/cradle/expressions-app/field-studies-journeys/src/kernelDocumentBridge';
@@ -11,14 +13,24 @@ export interface KnowledgeOpenInput extends NativeKnowledgeContext {
   /** Existing explicit Wiki event; never derived from a file location. */
   ref?: string;
   plane?: 'graph' | 'page';
+  /** A source page opened at this span of it (a constellation member's passage). */
+  anchor?: WikiAnchor;
+  /** The subject whose time-and-place editor the surface opens with: a node or frame by its ref, or a member in its constellation. */
+  facts?: FactsSubject;
   complete?: (error?: string) => void;
 }
+const span = (value: unknown): value is WikiAnchor => {
+  const a = value as WikiAnchor | null
+  return !!a && typeof a === 'object' && text(a.revision) && Number.isSafeInteger(a.start_byte) && Number.isSafeInteger(a.end_byte) && a.start_byte! >= 0 && a.end_byte! > a.start_byte!
+}
+const subject = (value: unknown): value is FactsSubject => text(value)
+  || (!!value && typeof value === 'object' && text((value as {frame_ref?: unknown}).frame_ref) && text((value as {participation_ref?: unknown}).participation_ref))
 export type KnowledgeBinding = SurfaceBinding & {view: NonNullable<SurfaceBinding['view']> & {nativeKnowledge?: NativeKnowledgeContext}};
 const text = (value: unknown): value is string => typeof value === 'string' && !!value.trim() && value.length <= 4096;
 export function validateKnowledgeOpen(raw: unknown): KnowledgeOpenInput {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) throw Error('A native Knowledge open is required');
   const input = raw as KnowledgeOpenInput;
-  if (!text(input.title) || input.project !== undefined && !text(input.project) || input.ref !== undefined && !text(input.ref) || input.plane !== undefined && input.plane !== 'graph' && input.plane !== 'page' || input.complete !== undefined && typeof input.complete !== 'function') throw Error('Invalid Knowledge presentation request');
+  if (!text(input.title) || input.project !== undefined && !text(input.project) || input.ref !== undefined && !text(input.ref) || input.plane !== undefined && input.plane !== 'graph' && input.plane !== 'page' || input.complete !== undefined && typeof input.complete !== 'function' || input.anchor !== undefined && !span(input.anchor) || input.facts !== undefined && !subject(input.facts)) throw Error('Invalid Knowledge presentation request');
   const context = Object.fromEntries(['subject_ref','native_owner','register','origin','source_basis','returnTo'].filter(key => (input as unknown as Record<string, unknown>)[key] !== undefined).map(key => [key,(input as unknown as Record<string, unknown>)[key]]));
   const native = validateNativeKnowledgeContext(context);
   if (!native) throw Error('Invalid native subject or retained Canvas Return');
@@ -28,13 +40,16 @@ export function validateKnowledgeOpen(raw: unknown): KnowledgeOpenInput {
   if (!address && !native.subject_ref) throw Error('No disclosed native Knowledge destination was supplied');
   const plane = input.plane ?? (address?.kind === 'source' ? 'page' : 'graph');
   if (plane === 'page' && !address) throw Error('Source reading requires its exact native address');
-  return {title: input.title, ...(input.project ? {project: input.project} : {}), ...(address ? {address} : {}), plane, ...native, ...(input.complete ? {complete: input.complete} : {})};
+  return {title: input.title, ...(input.project ? {project: input.project} : {}), ...(address ? {address} : {}), plane, ...native,
+    ...(input.anchor && plane === 'page' ? {anchor: input.anchor} : {}), ...(input.facts ? {facts: input.facts} : {}), ...(input.complete ? {complete: input.complete} : {})};
 }
 export function createKnowledgeBinding(raw: unknown, id: string): KnowledgeBinding {
   const input = validateKnowledgeOpen(raw);
   if (!text(id)) throw Error('A presentation binding ID is required');
-  const {title, project, address, plane, complete: _complete, ref: _ref, ...nativeKnowledge} = input;
-  return {id, kind: 'knowledge', title, ...(project ? {project} : {}), ...(address ? {address, ref: address.value} : {ref: input.subject_ref}), view: {knowledgePlane: plane, ...(Object.keys(nativeKnowledge).length ? {nativeKnowledge} : {})}};
+  const {title, project, address, plane, complete: _complete, ref: _ref, anchor, facts, ...nativeKnowledge} = input;
+  return {id, kind: 'knowledge', title, ...(project ? {project} : {}), ...(address ? {address, ref: address.value} : {ref: input.subject_ref}), view: {knowledgePlane: plane,
+    ...(Object.keys(nativeKnowledge).length ? {nativeKnowledge} : {}), ...(anchor ? {pageAnchor: anchor} : {}),
+    ...(facts ? {facts: {subject: facts, requestId: id}} : {})}};
 }
 export function sameKnowledgeDestination(binding: SurfaceBinding, target: KnowledgeBinding): boolean {
   return binding.kind === 'knowledge' && binding.ref === target.ref && binding.project === target.project && binding.address?.kind === target.address?.kind && binding.view?.knowledgePlane === target.view.knowledgePlane && JSON.stringify((binding as KnowledgeBinding).view?.nativeKnowledge ?? null) === JSON.stringify(target.view.nativeKnowledge ?? null);

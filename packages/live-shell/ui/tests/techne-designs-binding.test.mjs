@@ -613,7 +613,10 @@ test('the Canvas on the frame\'s research reading: its cards, lines (the selecte
   assert.deepEqual(runs, [{command: 'chrome', id: 't-snap'}, {command: 'chrome', id: 't-draw'}, {command: 'chrome', id: 'l-overview'}], 'the frame\'s own toggles, pressed')
   await binding.write([{key: 'grid', value: true}, {key: 'minimap', value: true}])
   assert.equal(runs.length, 3, 'a toggle already standing is not pressed')
-  for (const key of ['add', 'promote', 'declare', 'suggest', 'direction']) assert.match(binding.standing[key].disabled, /missing op/, key)
+  for (const key of ['add', 'declare', 'suggest', 'direction']) assert.match(binding.standing[key].disabled, /missing op/, key)
+  // REPLACED (#742): Promote reaches the relation's owner (frameBindings.ts CanvasPromoter, techne-construction-homes.test.mjs); with none
+  // reached from the window it says so.
+  assert.match(binding.standing.promote.disabled, /relation's owner is not reached/)
   // The selected line's connector, as the frame's connector controls write it (stageCommands.ts canvas connector).
   runs.length = 0
   await binding.write([{key: 'lineKind', value: 'straight'}, {key: 'toSide', value: 'auto'}])
@@ -806,7 +809,7 @@ test('the designs draw on their bindings in every view and page — no NaN, no u
     // REPLACED (#725): the Timeline's and Light's own drawings — both designs retired (§17.5, §17.4). Light's refusal is drawn on the
     // Canvas's Light page, on the binding that carries it.
     [DESIGNS.canvas, effects.canvasCarryingLight(frameB.canvasBinding(frameOf('canvas', {chrome: CANVAS_CHROME})), effects.lightBinding()), /Which centre speaks first|Sacral|Lower three/,
-      ['A frame of the board', '84'], [frameB.CANVAS_REFUSE.promote, effects.LIGHT_REFUSE['light.bounces']]],
+      ['A frame of the board', '84'], [frameB.CANVAS_REFUSE.find, effects.LIGHT_REFUSE['light.bounces']]], // REPLACED (#742): Promote reaches its owner; Find stays refused
     [DESIGNS.lens, effects.lensBinding(), /l5-techne-instrument-constellation|registry-disclosure|Fourfold-Zero/, [], [effects.LENS_REFUSE['lens.mode']]],
   ]
   for (const [design, binding, fixture, shows, reasons] of cases) {
