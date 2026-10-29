@@ -1,0 +1,78 @@
+{
+  "label": "as-found",
+  "recorded_at": "2026-10-28T23:16:10+00:00",
+  "since": null,
+  "homes": {
+    ".aikit": {
+      "present": true,
+      "dir_mtime": "2026-10-07T16:52:06+00:00",
+      "files": 16058,
+      "bytes": 1971099477,
+      "newest_file_mtime": "2026-10-28T23:16:10+00:00",
+      "files_changed_since": null
+    },
+    ".oi": {
+      "present": true,
+      "dir_mtime": "2026-10-07T20:48:44+00:00",
+      "files": 291,
+      "bytes": 30571446,
+      "newest_file_mtime": "2026-10-28T17:13:36+00:00",
+      "files_changed_since": null
+    },
+    ".config/oi": {
+      "present": true,
+      "dir_mtime": "2026-10-28T23:12:55+00:00",
+      "files": 12,
+      "bytes": 25188,
+      "newest_file_mtime": "2026-10-28T23:12:55+00:00",
+      "files_changed_since": null
+    },
+    ".central": {
+      "present": true,
+      "dir_mtime": "2026-10-21T00:12:22+00:00",
+      "files": 635,
+      "bytes": 357013407,
+      "newest_file_mtime": "2026-10-21T00:12:22+00:00",
+      "files_changed_since": null
+    }
+  },
+  "workspace_books": {
+    "full-suite": {
+      "present": true,
+      "book_json": {
+        "sha256": "5bbb89f924516975f7d4a54abfbbdf84c09955e29c9b97341a70cb8dcb960984",
+        "bytes": 19706,
+        "mtime": "2026-10-22T09:32:45+00:00"
+      },
+      "history_entries": 32,
+      "history_newest_mtime": "2026-10-22T09:32:45+00:00",
+      "history_set_sha256": "e55bef2f31ee4d2652191d4118062478ca12d3342d8c10044e0e1bca0da87d1a"
+    },
+    "0-1-2": {
+      "present": true,
+      "book_json": {
+        "sha256": "88b3745aed65796e7b92df376915c7d617b88738a5787198f0d8c84eee58b457",
+        "bytes": 20134,
+        "mtime": "2026-10-28T08:33:38+00:00"
+      },
+      "history_entries": 10,
+      "history_newest_mtime": "2026-10-28T08:33:38+00:00",
+      "history_set_sha256": "6e49c3d4d93f2d2f49702e8748171d99f4fb0770917481c737a85bb204d0d611"
+    }
+  },
+  "candidate_configuration": {
+    "full-suite": {
+      "composition_sha256": "7208ad33dcf3fa331d4190d1b7f75f33ad3604b8bfbf6e3a98c56723ed27b826",
+      "composition_mtime": "2026-10-22T09:24:26+00:00",
+      "owner_home_is": "acceptance expression-home"
+    },
+    "0-1-2": {
+      "composition_sha256": "62fce3fca35099a7687c16bc507ddcd742062f9a2bb8364e288321ce80ee7b7f",
+      "composition_mtime": "2026-10-28T05:35:25+00:00",
+      "owner_home_is": "acceptance expression-home"
+    },
+    "worlds_register": {
+      "present": false
+    }
+  }
+}

@@ -1,0 +1,71 @@
+{
+  "artifact": {
+    "interpreter": "/bin/sh",
+    "kind": "shell-script",
+    "path": "/private/tmp/claude-501/-Users-admin-Central/c55001ab-1082-4cbc-9e73-930a0b173f72/scratchpad/b739/ql-inputs-20261028/ql-sky",
+    "sha256": "afba0bc8b31c37dbeffc9c7287933d3c387f9ae892e9efd1e1933bcb4c7529bf",
+    "size_bytes": 34157
+  },
+  "installed_uv_fallback": null,
+  "payload_sha256": "a08915bc4041ecd5a3fec6ce2c2c1a20ed6cf2c84dcff6dc3cb3d2a2ef1efab4",
+  "resources": [
+    {
+      "path": "providers/sky/kerykeion_snapshot.py",
+      "sha256": "b1c29e68a11052bd152e03b4f437584534cbbbd8fb489f535413073631bac19e",
+      "size_bytes": 32610
+    },
+    {
+      "path": "providers/sky/requirements.txt",
+      "sha256": "36390dc8e2bfb16b6bb91168bda5b6cfd2676382754cf881b4754ba98257e56a",
+      "size_bytes": 38
+    },
+    {
+      "path": "vendor/epi-kernel/reference/include/m2.h",
+      "sha256": "7dfcd2906afb4415151d059d2259aa2252dfe74fa74a64a6b843ae5b385ab4c8",
+      "size_bytes": 23040
+    },
+    {
+      "path": "fixtures/kernel/m2-retained-c-v1.json",
+      "sha256": "dfc617f1238a14b50fd716cd62f9ac19837d88775dcb5188c03bba0a75ff2069",
+      "size_bytes": 24809
+    }
+  ],
+  "schema": "ql.sky-command-export/v1",
+  "source_dirty": true,
+  "source_git_tree": "7d1c037ac293dd3f3240443488641d9d9277e56a",
+  "source_input_sha256": "22833ba9e16804a34231df8e7e02ee246afc2434dc8e67b1d229096b46ad72c5",
+  "source_inputs": [
+    {
+      "path": "scripts/export-sky.py",
+      "sha256": "ee3ed3407895d36d54b4b6e9403afcfca6c48f6512350c2cba98bff8b1290b27",
+      "size_bytes": 5582
+    },
+    {
+      "path": "scripts/oi-source-install.sh",
+      "sha256": "8175608b6f7e2b80953ac994d66318fd2fb3e8b078b48323c1e2cd7eec025ca8",
+      "size_bytes": 3931
+    },
+    {
+      "path": "providers/sky/kerykeion_snapshot.py",
+      "sha256": "b1c29e68a11052bd152e03b4f437584534cbbbd8fb489f535413073631bac19e",
+      "size_bytes": 32610
+    },
+    {
+      "path": "providers/sky/requirements.txt",
+      "sha256": "36390dc8e2bfb16b6bb91168bda5b6cfd2676382754cf881b4754ba98257e56a",
+      "size_bytes": 38
+    },
+    {
+      "path": "vendor/epi-kernel/reference/include/m2.h",
+      "sha256": "7dfcd2906afb4415151d059d2259aa2252dfe74fa74a64a6b843ae5b385ab4c8",
+      "size_bytes": 23040
+    },
+    {
+      "path": "fixtures/kernel/m2-retained-c-v1.json",
+      "sha256": "dfc617f1238a14b50fd716cd62f9ac19837d88775dcb5188c03bba0a75ff2069",
+      "size_bytes": 24809
+    }
+  ],
+  "source_revision": "b87dfee08a57f69acb486d03a19d277394f72037",
+  "source_root": "/Users/admin/Central/Work/Quaternal-Logic"
+}

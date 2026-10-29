@@ -1,0 +1,13 @@
+seat=/Users/admin/Central/worktrees/env-1/o-i
+branch=dlw/walk-739
+head=a74803a094425e22384b717d1ff330f076827b2d
+stamp=20261028T231512Z
+out=/Users/admin/.cache/oi-build-lane-739-target/p0-r1/20261028T231512Z
+target=/Users/admin/.cache/oi-build-lane-739-target
+backing=full-suite
+world=unnamed
+mode=quit
+runner_sha256=8a19e02df254381954d76301892b2b03589dabd91a956f43c6daf4705ca3a8f2
+status:
+?? ProjectCentral/docs/5-evidence/world-shell/evidence/p0-r1/run-20261028T231512Z/
+?? ProjectCentral/docs/5-evidence/world-shell/walk-739/
