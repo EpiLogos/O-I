@@ -43,7 +43,7 @@ import {currentIdentity} from '../../../../../../desktop/cradle/src/nara/identit
 import type {KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
 import {conversationGap} from '../centralVertical'
 import {DIE_POSITIONS, dieFaceLabel, dieFaceOf} from './dayDie'
-import {canEnsureDay, currentDayOf} from './dayBinding'
+import {canEnsureDay, currentDayOf, NO_CIVIL_TIME, wantsCivilTime} from './dayBinding'
 import {carriedSet, daySetOf, writeDaySet, type DaySet} from '../daySet'
 import {readWorlds} from '../centralWorlds'
 import {nowReading, type NowListing} from '../../../../../../desktop/cradle/src/receiving/now'
@@ -95,6 +95,7 @@ export async function turnDieFace(transport: KernelTransportStatus, day: DayDieW
  * words. */
 export async function openToday(transport: KernelTransportStatus): Promise<{ensured: boolean; initialised: boolean; carried: CarriedInto | null}> {
   let ground = await readGround(transport, null, true)
+  if (wantsCivilTime(ground)) throw new Error(`${NO_CIVIL_TIME}, then press Open today.`)
   if (ground.time.state !== 'ready' || !ground.time.data) {
     throw new Error(`Central's civil time is ${ground.time.state}${ground.time.error?.message ? `: ${ground.time.error.message}` : ''}; the current Day cannot be ensured`)
   }
@@ -211,6 +212,7 @@ export const beginDayMove = (transport: KernelTransportStatus, move: string, day
 /** Open tomorrow's Day beside today's (central.day.rollover) on the civil-time policy's revision, read again first. */
 export async function openTomorrow(transport: KernelTransportStatus): Promise<unknown> {
   const ground = await readGround(transport, null, true)
+  if (wantsCivilTime(ground)) throw new Error(`${NO_CIVIL_TIME}, then open tomorrow's Day.`)
   if (ground.time.state !== 'ready' || !ground.time.data) throw new Error(`Central's civil time is ${ground.time.state}${ground.time.error?.message ? `: ${ground.time.error.message}` : ''}; tomorrow's Day cannot be opened`)
   return centralWrite(transport, 'central.day.rollover', {expected_time_policy_revision: ground.time.data.revision})
 }

@@ -450,8 +450,29 @@ export type SetupCredentials = {readonly state: 'read'; readonly findings: reado
  * and skills and Credentials steps, Central's Work and the folders of work elsewhere for the Projects step (`elsewhere`: Central's
  * refusal to read them, in its words), Workcell and Central for the Machines step, the preview asked last, and the folder brought into
  * Work last (shown next until you choose another). */
+/** Central's reading of the ground's civil-time policy (`central.time.policy.preview`, central.civil-time-adoption-preview/v1): the policy
+ * the ground keeps (`recognised`), the one Accept would adopt — this computer's IANA zone, the Day turning at midnight — with the digest
+ * Accept is pressed on (`absent`, or `no-ground` before the ground is made), or why Central does not recognise what stands
+ * (`unrecognised`). */
+export interface CivilTimePreview {readonly state: string; readonly source_path?: string; readonly policy?: {readonly timezone?: unknown; readonly day_boundary_minutes?: unknown} | null
+  readonly digest?: string | null; readonly reason?: string | null}
+/** The civil-time reading, or Central's refusal to give it, in its words. */
+export type SetupCivilTime = {readonly state: 'read'; readonly preview: CivilTimePreview} | {readonly state: 'refused'; readonly error: string}
+/** The person's first layer of identity (§10.11, §24.6), read through the identity owner (SetupSource.identity): the identity kept in the
+ * ground (its name, date of birth, source and revision, and the profile itself, so a correction is a new revision of the same person),
+ * none yet, the owner's refusal, or why this host reaches no identity owner. */
+export type SetupBirth = {readonly state: 'read'; readonly kept: {readonly name: string; readonly date: string | null; readonly source_ref: string; readonly revision: string; readonly profile: Readonly<Record<string, unknown>>} | null}
+  | {readonly state: 'refused'; readonly error: string} | {readonly state: 'unavailable'; readonly why: string}
+/** AIKit's disclosure of the agent tools (SetupSource.harnessDisclosure, aikit.harness-disclosure/v1), or its refusal. */
+export type SetupDisclosure = {readonly state: 'read'; readonly reading: unknown} | {readonly state: 'refused'; readonly error: string}
 export interface SetupSnapshot {
   readonly adoption: Partial<Pick<AdoptionState, 'discovery' | 'plan' | 'error' | 'busy' | 'unresolved'>>
+  /** How the ground keeps your days (Central's civil-time policy), once read. */
+  readonly civilTime?: SetupCivilTime
+  /** The folder and name chosen for the ground (SetupWalk.groundAt): read by native oi's discover; absent, the world's own. */
+  readonly groundAt?: {readonly folder: string; readonly name: string}
+  readonly birth?: SetupBirth
+  readonly disclosure?: SetupDisclosure
   readonly folders: {readonly state: 'unread'} | {readonly state: 'read'; readonly folders: readonly SetupWorkFolder[]; readonly elsewhere?: string} | {readonly state: 'refused'; readonly error: string}
   readonly plan: SetupPreview | null
   readonly machine?: SetupMachine
@@ -469,17 +490,52 @@ export function groundBound(discovery: AdoptionDiscovery | undefined): boolean {
 /** The Ground step from native oi's discovery (oi.setup/v1): the ground bound and recognised (accepted), a new one Central would make in
  * the folder chosen, an existing one adopted where it is, or one Central cannot read, named with its reason. A refused read or a blocked
  * plan stands on the row in native oi's words. Undefined before any reading. Pure. */
-export function setupGroundStep(adoption: SetupSnapshot['adoption']): Record<string, unknown> | undefined {
+export function setupGroundStep(adoption: SetupSnapshot['adoption'], civil?: SetupCivilTime): Record<string, unknown> | undefined {
   const discovery = adoption.discovery
   if (!discovery) return adoption.error ? {step: 'ground', state: 'found', items: [{name: 'Your ground', why: adoption.error}]} : undefined
   const where = discovery.selected_ground ?? discovery.suggested_ground
-  if (groundBound(discovery)) return {step: 'ground', state: 'accepted', items: [{name: 'Your ground', where, change: 'Central keeps it here · nothing in it moved'}]}
+  const days = setupDaysItem(civil)
+  if (groundBound(discovery)) {
+    // The ground stands; its days stand once Central keeps their policy (a reading not taken yet leaves the ground's own standing).
+    const kept = !civil || (civil.state === 'read' && civil.preview.state === 'recognised')
+    return {step: 'ground', state: kept ? 'accepted' : 'found', items: [{name: 'Your ground', where, change: 'Central keeps it here · nothing in it moved'}, ...(days ? [days] : [])]}
+  }
   const outcome = discovery.ground.outcome
   const item: Record<string, string> = outcome === 'new' ? {name: 'A new ground', where, change: 'Central makes your ground here and checks it · nothing else is made'}
     : outcome === 'recognized' ? {name: 'Your ground', where, change: 'Central adopts it where it is · nothing in it moves'}
       : {name: 'Your ground', where, why: discovery.ground.reason ?? `Central did not recognise ${where} as a ground it can read.`}
   const why = adoption.plan?.blocked.length ? adoption.plan.blocked.join(' ') : adoption.error
-  return {step: 'ground', state: 'found', items: [why ? {...item, why} : item]}
+  return {step: 'ground', state: 'found', items: [why ? {...item, why} : item, ...(days ? [days] : [])]}
+}
+
+/** When the day turns, from a policy's boundary in minutes after local midnight. Pure. */
+const turnsAt = (minutes: unknown): string => {
+  const at = typeof minutes === 'number' && Number.isInteger(minutes) && minutes >= 0 && minutes < 1440 ? minutes : 0
+  return at === 0 ? 'midnight' : `${String(Math.floor(at / 60)).padStart(2, '0')}:${String(at % 60).padStart(2, '0')}`
+}
+/** How the ground keeps your days, as a row of the Ground step (manual §10.11, §18.2): the policy Accept adopts — this computer's time
+ * zone, turning at midnight (`adopts`: Accept writes it) — the one the ground keeps, or why Central does not keep one, in its words.
+ * Undefined before Central is asked. Pure. */
+export function setupDaysItem(civil: SetupCivilTime | undefined): Record<string, unknown> | undefined {
+  if (!civil) return undefined
+  if (civil.state === 'refused') return {name: 'Your days', why: `Central did not say how your days are kept: ${civil.error}`}
+  const preview = civil.preview, zone = txt(preview.policy?.timezone), where = preview.source_path ?? 'Control/user/civil-time-policy.json'
+  if (preview.state === 'recognised' && zone) return {name: 'Your days', where, change: `Your days follow ${zone} and turn at ${turnsAt(preview.policy?.day_boundary_minutes)} · Central keeps this in your ground`}
+  if ((preview.state === 'absent' || preview.state === 'no-ground') && zone && preview.digest)
+    return {name: 'Your days', where, adopts: true, change: `Your days follow this computer's time zone, ${zone}, and turn at ${turnsAt(preview.policy?.day_boundary_minutes)}`}
+  return {name: 'Your days', where, why: preview.reason ?? `Central does not keep a civil-time policy it recognises here (${preview.state}).`}
+}
+/** The folder a ground path stands in, and its name. Pure. */
+export function groundParts(path: string): {folder: string; name: string} {
+  const trimmed = path.replace(/\/+$/, ''), at = trimmed.lastIndexOf('/')
+  return at <= 0 ? {folder: at === 0 ? '/' : '', name: trimmed.slice(at + 1)} : {folder: trimmed.slice(0, at), name: trimmed.slice(at + 1)}
+}
+/** A ground's path, from its folder and name. Pure. */
+export const groundPath = (folder: string, name: string): string => (folder === '/' ? `/${name}` : `${folder.replace(/\/+$/, '')}/${name}`)
+/** Why a name cannot be a ground's (a single visible folder name), or null. Pure. */
+export function groundNameRefusal(name: string): string | null {
+  return !name.trim() || name !== name.trim() || /[\/\\\u0000]/.test(name) || name.startsWith('.')
+    ? 'A ground\'s name is one folder name: not empty, without / and not starting with a dot.' : null
 }
 
 const PC_PARTS = ['user', 'agents', 'wiki', 'now'] as const
@@ -557,7 +613,7 @@ const skillsWord = (n: number) => `${n} skill${n === 1 ? '' : 's'}`
  * root under the tool whose folder holds it (else under AIKit's label for it), the change Accept makes — AIKit adopts its skills, and the
  * tool reads them where they were, its settings and instructions as they are — or, once AIKit holds the root, that it does. A tool with
  * no skills, and a root AIKit cannot place, are named and left alone. Accepted once AIKit holds every root that keeps skills. Pure. */
-export function setupHarnessStep(reading: SetupHarnesses | undefined): Record<string, unknown> | undefined {
+export function setupHarnessStep(reading: SetupHarnesses | undefined, disclosure?: SetupDisclosure): Record<string, unknown> | undefined {
   if (!reading) return undefined
   if (reading.state === 'refused') return {step: 'harnesses', state: 'found', items: [{name: 'Your agent tools', why: reading.error}]}
   const ownerOf = (root: SetupSkillRoot) => reading.harnesses.find(tool => tool.folder && (root.path === tool.folder || root.path.startsWith(`${tool.folder}/`)))
@@ -572,7 +628,27 @@ export function setupHarnessStep(reading: SetupHarnesses | undefined): Record<st
   })
   for (const tool of reading.harnesses) if (!reading.roots.some(root => ownerOf(root) === tool)) items.push({name: tool.harness, where: tool.folder ?? tool.client, why: 'It keeps no skills here: nothing to adopt. Its settings stay as they are.'})
   const keeping = reading.roots.filter(root => root.skills > 0)
-  return {step: 'harnesses', state: keeping.length && keeping.every(root => SETUP_HELD.has(root.standing)) ? 'accepted' : 'found', items}
+  // What AIKit reads of each tool besides its skills (its disclosure): its instructions, settings and models; or why it said nothing.
+  const tools = disclosure?.state === 'read' ? reading.harnesses.flatMap(tool => { const row = setupToolDisclosure(disclosure.reading, tool); return row ? [row] : [] }) : []
+  const said = disclosure?.state === 'refused' ? {disclosure: `AIKit did not say what it reads of each tool's settings and instructions: ${disclosure.error}`} : {}
+  // Nothing to bring in is done (manual §10.11: what you leave out is not shown as missing), and says so.
+  if (!keeping.length) return {step: 'harnesses', state: 'accepted', items, tools, ...said,
+    said: `Nothing to bring in: ${reading.harnesses.length ? 'no agent tool here keeps skills AIKit can adopt' : 'AIKit finds no agent tool on this computer'}. Each tool stays as it is.`}
+  return {step: 'harnesses', state: keeping.every(root => SETUP_HELD.has(root.standing)) ? 'accepted' : 'found', items, tools, ...said}
+}
+/** What AIKit's disclosure says of one detected tool (aikit.harness-disclosure/v1, its profile by the tool's harness name): where its
+ * instructions lie (the guidance layer), where its settings lie, the providers its models reach. AIKit names where these lie, not what they
+ * hold: the model a tool uses is named as not read, and left as it is. Undefined where AIKit discloses no profile for it. Pure. */
+export function setupToolDisclosure(reading: unknown, tool: SetupHarness): Record<string, unknown> | undefined {
+  const profiles = rec(reading) && Array.isArray(reading.profiles) ? reading.profiles.filter(rec) : []
+  const profile = profiles.find(row => rec(row.disclosure) && row.disclosure.slug === tool.harness)
+  const layers = profile && rec(profile.disclosure) && Array.isArray(profile.disclosure.layers) ? profile.disclosure.layers.filter(rec) : null
+  if (!layers) return undefined
+  const native = (name: string) => layers.filter(layer => layer.layer === name).flatMap(layer => (Array.isArray(layer.native) ? layer.native.filter(rec).flatMap(row => (txt(row.name) ? [row.name as string] : [])) : []))
+  const auth = layers.filter(layer => layer.layer === 'models').flatMap(layer => (rec(layer.auth) ? Object.values(layer.auth).flatMap(rows => (Array.isArray(rows) ? rows.filter(rec) : [])) : []))
+  const models = [...new Set(auth.flatMap(row => (txt(row.provider_ref) ? [(row.provider_ref as string).replace(/^provider:/, '')] : [])))]
+  return {harness: tool.harness, ...(tool.folder ? {folder: tool.folder} : {}), instructions: native('guidance'), settings: native('settings'), models,
+    unread: `AIKit reads where ${tool.harness}'s settings lie, not what they hold: the model it uses is not read here, and is left as it is.`}
 }
 
 /** AIKit's discovery findings (`aikit credential discover`): each key's source, place and name, the credential AIKit proposes for it, and
@@ -629,7 +705,9 @@ export function setupCredentialStep(reading: SetupCredentials | undefined, held:
     items.push({name: `${provider.provider} for ${provider.harness}`, where: provider.folder ?? provider.harness,
       why: provider.ownLogin ?? `No key for it lies on this computer${provider.envVar ? ` (${provider.envVar} is not set)` : ''}.`})
   }
-  return {step: 'credentials', state: bound.size && !open.length ? 'accepted' : 'found', items}
+  // Nothing waiting to be bound is done (manual §10.11: what you leave out is not shown as missing), and says so.
+  if (!open.length) return {step: 'credentials', state: 'accepted', items, ...(bound.size ? {} : {said: 'Nothing to bind: AIKit finds no provider\'s key waiting on this computer. Each tool keeps its own login.'})}
+  return {step: 'credentials', state: 'found', items}
 }
 
 /** Setup's values (the design's setup, folders and setupPlan): the Ground step from native oi; Harnesses and skills and Credentials from
@@ -638,9 +716,32 @@ export function setupCredentialStep(reading: SetupCredentials | undefined, held:
 export function setupValues(snapshot: SetupSnapshot, held: (key: string) => Value | undefined): Record<string, Value> {
   const values: Record<string, Value> = {}
   const steps: Record<string, unknown>[] = []
-  const ground = setupGroundStep(snapshot.adoption)
+  const ground = setupGroundStep(snapshot.adoption, snapshot.civilTime)
+  const discovery = snapshot.adoption.discovery
+  if (ground && discovery && !groundBound(discovery)) {
+    // The folder and name of a ground to make (§10.11: "makes a new one in the folder you choose, under the name you give it"): the ones
+    // chosen, else where native oi reads it; a name you typed stands for the row until it is read.
+    const read = groundParts(discovery.selected_ground ?? discovery.suggested_ground), at = snapshot.groundAt ?? read
+    const folder = txt(held('groundFolder')) ?? at.folder, name = txt(held('groundName')) ?? at.name
+    if (!txt(held('groundFolder'))) values.groundFolder = at.folder
+    if (!txt(held('groundName'))) values.groundName = at.name
+    const items = ground.items as Record<string, unknown>[]
+    const where = groundPath(folder, name), refusal = groundNameRefusal(name) ?? (folder.startsWith('/') ? null : 'A ground\'s folder is a full path, from /.')
+    if (items[0] && refusal) items[0] = {name: 'Your ground', where, why: refusal}
+    else if (items[0] && where !== items[0].where) items[0] = {name: 'Your ground', where, why: `Not read yet: Setup reads ${where} before Accept makes anything.`}
+  }
   if (ground) steps.push(ground)
-  const harnesses = setupHarnessStep(snapshot.harnesses)
+  if (discovery && groundBound(discovery) && snapshot.birth) {
+    // Once the ground is made, your date of birth (§10.11): kept, not given yet (never shown as missing), or why it cannot be kept here.
+    const birth = snapshot.birth
+    values.birth = json(birth.state === 'read' ? (birth.kept ? {state: 'kept', name: birth.kept.name, date: birth.kept.date} : {state: 'absent'})
+      : birth.state === 'refused' ? {state: 'refused', why: birth.error} : {state: 'unavailable', why: birth.why})
+    if (birth.state === 'read' && birth.kept) {
+      if (!txt(held('birthName'))) values.birthName = birth.kept.name
+      if (!txt(held('birthDate')) && birth.kept.date) values.birthDate = birth.kept.date
+    }
+  }
+  const harnesses = setupHarnessStep(snapshot.harnesses, snapshot.disclosure)
   if (harnesses) steps.push(harnesses)
   const credentials = setupCredentialStep(snapshot.credentials, held)
   if (credentials) steps.push(credentials)
@@ -711,8 +812,10 @@ export const SETTINGS_WINDOW_WIRING = {
     visualLayer: 'the renderer\'s visual layer (SettingsAdapter.visualPreferences)', welcome: 'the renderer\'s welcome scene (SettingsAdapter.visualPreferences)',
     products: 'each product\'s mount and operations (system_composition_read)', ran: 'the last operation\'s answer (product_action_run)',
     system: 'each owner\'s System disclosure on its four axes (system_composition_read)',
-    setup: 'Setup\'s steps (manual §10.11): Ground from native oi\'s adoption (the kernel op `setup`: status and discover; bound and recognised is accepted); Machines from Workcell\'s status (op workcell_status_read) and Central\'s machine.declaration of role current, accepted once that binds the Workcell this computer answers as; Projects from Central\'s Work, accepted once a project stands with its ground. Harnesses and skills from AIKit: the tools its client status detects (op harness_status), the skill roots aikit init discovers (aikit_read init) with who owns each (its ownership: foreign, adopted, generated), and the skills aikit collate --all names in each, accepted once AIKit holds every root that keeps skills. Credentials from AIKit: where aikit credential discover finds each key (presence only), the providers aikit harness auth names for each detected tool (op harness_auth_describe) and the bindings aikit credential list keeps (metadata only), accepted once a key is bound and none found waits; items carry the credential a row binds, and bound',
+    setup: 'Setup\'s steps (manual §10.11): Ground from native oi\'s adoption (the kernel op `setup`: status and discover) and Central\'s civil-time preview (central.time.policy.preview: how your days are kept), accepted once the ground is bound and recognised and Central keeps its days; Harnesses and skills also show what AIKit discloses of each tool (SetupSource.harnessDisclosure: aikit harness disclose), and a step with nothing to adopt or bind is accepted and says so; Machines from Workcell\'s status (op workcell_status_read) and Central\'s machine.declaration of role current, accepted once that binds the Workcell this computer answers as; Projects from Central\'s Work, accepted once a project stands with its ground. Harnesses and skills from AIKit: the tools its client status detects (op harness_status), the skill roots aikit init discovers (aikit_read init) with who owns each (its ownership: foreign, adopted, generated), and the skills aikit collate --all names in each, accepted once AIKit holds every root that keeps skills. Credentials from AIKit: where aikit credential discover finds each key (presence only), the providers aikit harness auth names for each detected tool (op harness_auth_describe) and the bindings aikit credential list keeps (metadata only), accepted once a key is bound and none found waits; items carry the credential a row binds, and bound',
     folders: 'the folders of the ground\'s Work (Central work.list), each with Central\'s projectcentral.inspect, its material and its ProjectCentral parts (central.files.list); then the folders of work that stand elsewhere under the world\'s folder (Central work.candidates)',
+    groundFolder: 'the folder the Ground step would make your ground in: the one chosen (the system\'s chooser, then native oi\'s discover with it), else the folder native oi reads the world\'s ground in',
+    birth: 'your name and date of birth as the identity owner keeps them (SetupSource.identity: the kernel\'s nara_identity list and open), once the ground is made; absent until you give them, never shown as missing',
     setupPlan: 'the preview of the folder and choices shown: Central\'s projectcentral.adopt.preview or projectcentral.migrate.preview operations; for Create, the inspection Central plans projectcentral.init on; for a folder elsewhere, Central\'s work.bring.preview',
   },
   writes: {
@@ -731,8 +834,10 @@ export const SETTINGS_WINDOW_WIRING = {
     checkCreation: 'RoutineAuthoringSource.readResult: a waiting creation read back, never sent again',
     addMachine: 'RemoteMachinesSource.add', connect: 'RemoteMachinesSource.connect', disconnect: 'RemoteMachinesSource.disconnect', removeMachine: 'RemoteMachinesSource.remove',
     openElsewhere: 'the setting\'s own editor beside its instrument (SettingsAdapter.navigate)', 'pick:<ref>': 'the system picker (SettingsAdapter.pickResource)',
-    acceptStep: 'Ground: native oi\'s reviewed plan (the kernel op `setup`: plan, then apply with its review token; Central only — custom, products [central]) read back by discover. Machines: Central\'s machine.adopt-current (role current, the Workcell this computer answers as), read back by machine.declaration; the host then reads its world again. Projects: a folder elsewhere comes into Work by Central\'s work.bring on its preview\'s digest, read back by work.list; a folder of Work becomes a project by Central\'s projectcentral.init, adopt or migrate as previewed, read back by projectcentral.inspect. Harnesses and skills: for each skill root AIKit reads as foreign, AIKit\'s plan (aikit_read adopt-plan: aikit adopt ROOT --namespace LABEL, nothing moves) and, when it adopts the skills read, aikit adopt ROOT --namespace LABEL --yes --expect-digest on its review digest (aikit_write adopt), read back by aikit init as adopted and still keeping its skills; the tool keeps reading them where they were. Credentials: aikit credential setup CREDENTIAL --ref REFERENCE (op credential_setup with the reference you give, never material) for the key chosen, read back by aikit credential list; a reference that names no store (op://, keychain://, pass://, varlock://) is refused before anything is sent',
+    acceptStep: 'Ground: native oi\'s reviewed plan (the kernel op `setup`: plan, then apply with its review token; Central only — custom, products [central]) for the folder and name shown, read back by discover; then Central\'s central.time.policy.adopt on the preview\'s digest, recognised by that acceptance, read back by central.time.policy.preview (an older ground gets only the policy). Machines: Central\'s machine.adopt-current (role current, the Workcell this computer answers as), read back by machine.declaration; the host then reads its world again. Projects: a folder elsewhere comes into Work by Central\'s work.bring on its preview\'s digest, read back by work.list; a folder of Work becomes a project by Central\'s projectcentral.init, adopt or migrate as previewed, read back by projectcentral.inspect. Harnesses and skills: for each skill root AIKit reads as foreign, AIKit\'s plan (aikit_read adopt-plan: aikit adopt ROOT --namespace LABEL, nothing moves) and, when it adopts the skills read, aikit adopt ROOT --namespace LABEL --yes --expect-digest on its review digest (aikit_write adopt), read back by aikit init as adopted and still keeping its skills; the tool keeps reading them where they were. Credentials: aikit credential setup CREDENTIAL --ref REFERENCE (op credential_setup with the reference you give, never material) for the key chosen, read back by aikit credential list; a reference that names no store (op://, keychain://, pass://, varlock://) is refused before anything is sent',
     previewStep: 'Central\'s projectcentral.adopt.preview or migrate.preview for the folder and wiki chosen; Create previews from Central\'s inspection (it has no preview of projectcentral.init); a folder elsewhere previews Central\'s work.bring.preview',
+    chooseGroundFolder: 'the system\'s folder chooser (the native host\'s choose_central_folder), then native oi\'s discover of the ground there under the name shown',
+    keepBirth: 'the identity owner\'s save (SetupSource.identity: the kernel\'s nara_identity save — QL checks it, Central keeps it in the ground) of your name and date of birth, read back by its list and open; a correction is a new revision of the same identity',
     rereadSetup: 'native oi\'s status and discover, then AIKit\'s tools, skill roots, keys and bindings, Workcell\'s status and Central\'s machine declaration, Central\'s Work and the folders of work elsewhere, read again',
   },
   local: {
@@ -741,6 +846,8 @@ export const SETTINGS_WINDOW_WIRING = {
     context: 'Automations\' work context', routine: 'the routine chosen', product: 'the product chosen', owner: 'whose System reading shows', axes: 'four axes or the configuration',
     adding: 'the open form', rotating: 'the credential whose reference you replace', chatDefault: 'a provider chosen, not yet applied', themeDraft: 'an appearance chosen, not yet applied',
     setupStep: 'the Setup step shown', folder: 'the folder the Projects step shows', make: 'what to make of it', wiki: 'its wiki to keep or copy', where: 'where it is adopted',
+    groundFolder: 'the folder you type for a new ground (else the one chosen or read)', groundName: 'the name you give a new ground (else the one native oi reads)',
+    birthName: 'your name, kept with your date of birth', birthDate: 'your date of birth, until Keep keeps it',
     credential: 'the key the Credentials step binds (a found key\'s credential)', reference: 'where that key lies in your secure store, which Accept binds it to: a reference, never the key',
     'new.<field>': 'the open form\'s fields', 'draft:<ref>': 'your local change of a setting, until Review and Apply',
   },
@@ -754,6 +861,6 @@ export const SETTINGS_WINDOW_WIRING = {
 
 /** The design keys the window holds as its own (SETTINGS_WINDOW_WIRING.local), exact. */
 export const SETTINGS_LOCAL_KEYS = ['search', 'hit', 'scope', 'focus', 'details', 'show', 'context', 'routine', 'product', 'owner', 'axes', 'adding', 'rotating', 'chatDefault', 'themeDraft',
-  'setupStep', 'folder', 'make', 'wiki', 'where', 'credential', 'reference',
+  'setupStep', 'folder', 'make', 'wiki', 'where', 'credential', 'reference', 'groundFolder', 'groundName', 'birthName', 'birthDate',
   'new.name', 'new.description', 'new.method', 'new.proof', 'new.trigger', 'new.repeat', 'new.schedule', 'new.authority', 'new.profile', 'new.scopes', 'new.grant', 'new.reproof',
   'new.label', 'new.endpoint', 'new.credential', 'new.reference', 'new.note', 'new.expects'] as const

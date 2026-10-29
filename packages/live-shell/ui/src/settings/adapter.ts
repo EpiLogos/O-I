@@ -8,6 +8,7 @@ import type { HarnessSource } from '../../../../../desktop/cradle/src/configurat
 import type { RemoteMachinesSource } from './machines'
 import type { RoutineAuthoringSource } from './routines'
 import type { AdoptionNative } from '../../../../../desktop/cradle/src/configuration/adoptionController'
+import type { NaraIdentityRequest } from '../../../../../desktop/cradle/src/nara/identity/types'
 
 export type { ChangeRequest, PlanBundle, ContributionMount } from '../../../../../desktop/cradle/src/configuration/source'
 export type { SettingSpec, ScopeAddress, ConfigResolution, PlanDocument, ChangeSetDocument } from '../../../../../desktop/cradle/src/configuration/contracts'
@@ -38,7 +39,9 @@ export type SettingsRequest = {
   requestId: string
   scope: ScopeAddress
   returnLabel: string
-} & ({ setting_ref: string; page?: never } | { page: 'machines' | 'automations' | 'setup'; setting_ref?: never })
+} & ({ setting_ref: string; page?: never } | { page: 'machines' | 'automations' | 'setup'; setting_ref?: never
+  /** Setup's Projects step opened for this folder (the browser's Work place: Add folder…, manual §10.11). */
+  folder?: string })
 /** The AIKit ops Setup asks (manual §10.11, Harnesses and skills and Credentials): the tools AIKit detects and the providers each reaches
  * (harness_status, harness_auth_describe), the skill roots it discovers, names, holds and would adopt (aikit_read init, collate, tree,
  * adopt-plan), the person's adoption (aikit_write adopt), and the keys it finds, the bindings it keeps and a binding by reference
@@ -61,6 +64,13 @@ export interface SetupSource {
   aikit?(op: SetupAikitOp): Promise<unknown>
   /** Workcell's status for this computer (`workcell status --json`, the kernel's workcell_status_read): the Workcell it answers as. */
   workcell?(): Promise<unknown>
+  /** The person's identity, through the kernel's `nara_identity` op (list, open, save: QL inspects the profile, Central keeps it in the
+   * ground's Control/self/nara/identities; desktop/cradle/kernel/src/nara_identity.rs), as the Studio's Nara chain keeps it (§24.7): the
+   * date of birth Setup asks once the ground is made (§10.11). Its answer, the kernel's `nara_identity` data. */
+  identity?(request: NaraIdentityRequest): Promise<unknown>
+  /** AIKit's own disclosure of each agent tool (`aikit harness disclose --json`, aikit.harness-disclosure/v1): its instructions (the
+   * guidance layer), settings and models, as AIKit reads them; the Harnesses and skills step shows what it found. */
+  harnessDisclosure?(): Promise<unknown>
   /** The host reads its world again once a ground is made or bound (native/Foundation.tsx). */
   groundChanged?(): void
 }

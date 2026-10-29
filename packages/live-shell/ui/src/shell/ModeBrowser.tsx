@@ -56,6 +56,9 @@
 import {InstrumentsSection} from '../frame/InstrumentsSection'
 import {trackRows, type TrackRows} from '../frame/keys/keyDoors'
 import {useContext, useEffect, useMemo, useState, useSyncExternalStore} from 'react'
+import {openSettings, setupRequest} from '../settings/host'
+import type {SettingsRequest} from '../settings/adapter'
+import {chooseFolder} from '../settings/folderChooser'
 import {subscribeSuiteStanding, suiteStanding} from '../projections/atlas/provider/suiteStanding'
 import {useTimelineReading} from '../projections/timelinePaneHost'
 import {worldReadingOf} from '../timeline/techneTrackAdapter'
@@ -461,13 +464,27 @@ function WorldsRows({needle}: {needle: string}) {
     setSaid(null)
     void seatWorldFromBrowser(world).then(answer => setSaid(answer.ok ? {ok: true, words: answer.note ?? `${world.name} is in today's set.`}
       : {ok: false, words: answer.error ?? `${world.name} did not come into today.`}))
+  }} onAddFolder={() => {
+    setSaid(null)
+    void addFolderFromBrowser(chooseFolder, openSettings).then(fault => { if (fault) setSaid({ok: false, words: fault}) })
   }} />
+}
+
+/** The Work place's Add folder… (manual §10.11, Projects: "The browser's Work place: Add folder… opens this step for that folder"): the
+ * system's folder chooser, then Settings on Setup's Projects step for the folder chosen; nothing is brought in or made until its Accept.
+ * Resolves to why nothing opened (the chooser refused, in its words), or null; a cancel opens nothing. */
+export async function addFolderFromBrowser(choose: () => Promise<string | null>, open: (request: SettingsRequest) => void): Promise<string | null> {
+  try {
+    const folder = await choose()
+    if (folder) open(setupRequest('Back to work', folder))
+    return null
+  } catch (cause) { return cause instanceof Error ? cause.message : String(cause) }
 }
 
 /** The Worlds rows as drawn: each world's mark, name and kind; dragged, double-clicked or Entered to bring it into today; the set's
  * last answer under them — a world brought in as a status, a refusal as an alert in the owner's words. */
-export function WorldRowList({worlds, onSeat, said, fault = null}: {readonly worlds: readonly CentralWorld[]; onSeat(world: CentralWorld): void; readonly said: string | null
-  readonly fault?: string | null}) {
+export function WorldRowList({worlds, onSeat, said, fault = null, onAddFolder}: {readonly worlds: readonly CentralWorld[]; onSeat(world: CentralWorld): void; readonly said: string | null
+  readonly fault?: string | null; onAddFolder?(): void}) {
   return <section className="mode-browser-rows" aria-label="Worlds"><ul>
     {worlds.map(world => {
       const hover = `${world.name} — ${world.kind === 'yours' ? 'your own world' : `${world.project}'s world`}; its pages are kept in ${world.folder}. Drag it onto the empty track, or double-click it or press Enter, to bring it into today.`
@@ -481,7 +498,11 @@ export function WorldRowList({worlds, onSeat, said, fault = null}: {readonly wor
         </div>
       </li>
     })}
-  </ul>{said && <p className="native-empty" role="status">{said}</p>}{fault && <p className="native-error" role="alert" data-seat-fault>{fault}</p>}</section>
+  </ul>{onAddFolder && <button type="button" className="mode-browser-row" data-add-folder
+    data-i="Add folder…|Choose a folder of your work: Setup's Projects step opens for it, to bring it into your ground's Work. Nothing moves until you accept."
+    title="Choose a folder of your work: Setup's Projects step opens for it, to bring it into your ground's Work. Nothing moves until you accept."
+    onClick={onAddFolder}>Add folder…</button>}
+  {said && <p className="native-empty" role="status">{said}</p>}{fault && <p className="native-error" role="alert" data-seat-fault>{fault}</p>}</section>
 }
 
 /** Bring a world into today's set from its browser row (Live: double-click or Enter loads a browser item): through the set the Session

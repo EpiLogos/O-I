@@ -291,3 +291,19 @@ test('a world comes into today from its row: dragged onto the empty track, or do
   assert.equal((await seatWorldFromBrowser(worlds[1], session({op: 'x', accepts: 'application/x-other', run() { throw Error('never') }}))).ok, false, 'a set that seats something else is not asked')
   assert.deepEqual(await seatWorldFromBrowser(worlds[1], session({op: 'x', accepts: CENTRAL_WORLD_DRAG, run() { throw Error('the Day changed') }})), {ok: false, error: 'the Day changed'})
 })
+
+test('the Work place\'s Add folder… chooses a folder and opens Setup\'s Projects step for it (manual §10.11); without the system\'s chooser it says so (O-I #740)', async () => {
+  const {addFolderFromBrowser} = await import('../src/shell/ModeBrowser.tsx')
+  const worlds = [{ref: 'central:wiki:root', name: 'Central', kind: 'yours', folder: 'Control/user', project: null}]
+  const markup = html(createElement(WorldRowList, {worlds, onSeat() {}, said: null, onAddFolder() {}}))
+  assert.match(markup, /<button[^>]*>Add folder…<\/button>/, 'the entry, after the worlds')
+  assert.match(markup, /Setup&#x27;s Projects step/, 'it says where it leads')
+  assert.doesNotMatch(html(createElement(WorldRowList, {worlds, onSeat() {}, said: null})), /Add folder/, 'no entry where none is offered')
+  const opened = []
+  assert.equal(await addFolderFromBrowser(async () => '/w/Arriving/tide-sketches', request => opened.push(request)), null)
+  assert.equal(opened[0].page, 'setup')
+  assert.equal(opened[0].folder, '/w/Arriving/tide-sketches')
+  assert.equal(await addFolderFromBrowser(async () => null, request => opened.push(request)), null, 'cancelled: nothing opens')
+  assert.equal(opened.length, 1)
+  assert.match(await addFolderFromBrowser(async () => { throw new Error('The system\'s folder chooser is the native app\'s') }, () => {}), /native app/)
+})

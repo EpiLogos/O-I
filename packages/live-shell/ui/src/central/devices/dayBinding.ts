@@ -260,7 +260,8 @@ export function currentDayOf(ground: CentralGroundReading): {standing: DayDocume
   const civilDate = ground.time.state === 'ready' ? ground.time.data?.civil_date ?? pointer : pointer
   const dayRef = day.data?.day_ref ?? `today`
   if (day.state !== 'ready' || !day.data) {
-    const words = day.error?.message ?? `Central's Day reading is ${day.state}.`
+    // A ground that keeps no time zone for its days has no Day: the way on is Setup's Ground step, not Central's raw denial.
+    const words = wantsCivilTime(ground) ? NO_CIVIL_TIME : day.error?.message ?? `Central's Day reading is ${day.state}.`
     return {standing: {state: 'refused', dayRef, civilDate: civilDate ?? 'today', message: words}, aperture: null, pointer}
   }
   const reading = day.data
@@ -277,6 +278,14 @@ export function currentDayOf(ground: CentralGroundReading): {standing: DayDocume
     return {standing: {state: 'refused', dayRef, civilDate: reading.temporal.civil_date, message: cause instanceof Error ? cause.message : String(cause)}, aperture: null, pointer}
   }
 }
+
+/** Whether Central refuses its civil time for want of a policy (ctrl temporal.rs: "requires one explicitly recognised civil-time-policy
+ * source"): a ground made before Setup kept its days, or one never given them (O-I #740). Any other refusal stays in Central's words. */
+export function wantsCivilTime(ground: CentralGroundReading | null): boolean {
+  return !!ground && ground.time.state !== 'ready' && /requires one explicitly recognised civil-time-policy source/.test(ground.time.error?.message ?? '')
+}
+/** The way on where a ground keeps no civil-time policy (manual §10.11 Ground): Setup's Ground step keeps your days, on its held Accept. */
+export const NO_CIVIL_TIME = 'Central keeps no Day in this ground yet: it has no time zone for your days. Give it one in Settings › Setup › Ground'
 
 /** Whether the owner's ensure is the act that stands: the civil-time policy answered and today's Day reading is stale, or its source is
  * unavailable. Ported from desktop/cradle/src/central/CentralGround.tsx:49 (`canEnsure`), the ground panel's own rule for its

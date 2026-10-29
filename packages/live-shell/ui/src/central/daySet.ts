@@ -8,7 +8,7 @@ import {DayFormSession, isObject, unmappedChanges, validateDocumentBasis} from '
 import {receiving} from '../../../../../desktop/cradle/src/receiving/client'
 import type {KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
 import type {CentralGroundReading} from '../../../../../desktop/cradle/src/central/client'
-import {canCloseDay, civilDayName, currentDayOf, type DayAperture} from './devices/dayBinding'
+import {canCloseDay, civilDayName, currentDayOf, NO_CIVIL_TIME, wantsCivilTime, type DayAperture} from './devices/dayBinding'
 
 export const DAY_SET_SCHEMA = 'oi.day-set/v1'
 
@@ -101,6 +101,8 @@ export function bringInRefusal(world: string, ground: CentralGroundReading | nul
   const {standing, pointer} = currentDayOf(ground)
   if (!standing) return `${world} cannot come into today yet: Central's Day is still being read.`
   if (standing.state === 'ready') return null
+  // No time zone for the ground's days, so no Day to keep today's set: the way on is Setup's Ground step (O-I #740).
+  if (wantsCivilTime(ground)) return `${world} cannot come into today: ${NO_CIVIL_TIME}; then bring ${world} in again.`
   const kept = `${world} cannot come into today: today's set is kept in today's Day`
   const again = `then bring ${world} in again.`
   const today = ground.time.state === 'ready' ? ground.time.data?.civil_date ?? null : null

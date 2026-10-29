@@ -597,3 +597,26 @@ test('the design: the Close pad presses Close now, the one move an owner takes; 
   assert.deepEqual(Object.keys(catalogueDay.defaults).filter(key => /^at_/.test(key)), [], 'no move keeps a time of its own')
   assert.doesNotMatch(source, /label="(Runs at|Day start|Rollover)"/, 'the Day draws no time control')
 })
+
+// ── a ground that keeps no civil-time policy (O-I #740) ───────────────────────────────────────────────────────────────────────────
+// Central's words for it, exactly as the built ctrl answers (central.time.policy on a scratch ground Setup made, 29 Oct), and its Day read.
+const NO_POLICY_TIME = {state: 'denied', action: 'central.time.policy', error: {code: 'policy_or_source_denied',
+  message: 'requires one explicitly recognised civil-time-policy source; the person adopts one with central.time.policy.adopt (preview: central.time.policy.preview)'}}
+const NO_POLICY = groundOf({state: 'unavailable', action: 'central.day.read', error: {code: 'source_or_scope_unavailable', message: 'no DayRef or current today pointer'}}, NO_POLICY_TIME)
+
+test('a ground with no civil-time policy: the Day die, the bring-in and Open today name the way on, Settings › Setup › Ground, never the raw denial', async () => {
+  const die = bind.currentDayOf(NO_POLICY).standing
+  assert.equal(die.state, 'refused')
+  assert.match(die.message, /Settings › Setup › Ground/, 'the die names the way on')
+  assert.doesNotMatch(die.message, /DayRef|central\.time\.policy/, 'not the raw denial')
+  const brought = daySet.bringInRefusal('field-notes', NO_POLICY, null)
+  assert.match(brought, /^field-notes cannot come into today: .*Settings › Setup › Ground.*then bring field-notes in again\.$/)
+  assert.doesNotMatch(brought, /DayRef|today pointer/)
+  const owner = fakeOwner({grounds: [NO_POLICY]})
+  await withOwner(owner, async () => {
+    await assert.rejects(() => writes.openToday(bridge), error => /Settings › Setup › Ground/.test(error.message) && !/civil-time-policy source/.test(error.message))
+  })
+  assert.deepEqual(owner.sent.map(body => body.request.kind), ['inspect'], 'nothing is ensured')
+  // Another refusal of civil time stays in the owner's words.
+  assert.match(bind.currentDayOf(groundOf(NO_POLICY.day, {state: 'failed', action: 'central.time.policy', error: {message: 'policy unreadable'}})).standing.message, /no DayRef/)
+})

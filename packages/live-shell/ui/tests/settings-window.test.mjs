@@ -404,34 +404,55 @@ function scriptedSetup() {
   // `keys`: where AIKit's discovery finds a key (name and location, never a value); `bindings`: credential → the reference it is bound to.
   const world = {bound: null, outcome: 'new', journal: null, work: new Map(), elsewhere: new Map(), machine: null,
     workcell: {ok: true, workcell_ref: 'workcell:local', workcell_ref_source: 'default', health: 'healthy', state_root: '/w/Bare/.workcell'},
-    tools: new Map(), keys: [], bindings: new Map()}
+    tools: new Map(), keys: [], bindings: new Map(),
+    // `zone`: this computer's IANA zone as Central reads it; `civil`: the civil-time policy the ground keeps (null: none), `civilRefused`:
+    // a Central that does not answer it; `identity`: the person's saved identity profile (null until saved), `disclosure`: AIKit's.
+    zone: 'Europe/London', civil: null, civilRefused: null, identity: null, identityRevision: 0, disclosure: null}
   const HOME = '/w/Bare'
   const digestOf = relative => `digest:${relative}:${world.elsewhere.get(relative).revision}`
-  const discovery = () => ({schema: 'oi.setup/v1', basis: 'basis-1', data_root: '/w/Bare/data', composition_path: '/w/Bare/.config/oi-shell-candidate/full-suite/composition.json',
-    target: 'macos/aarch64', bound_ground: world.bound, suggested_ground: GROUND, selected_ground: GROUND,
-    ground: world.outcome === 'new' ? {outcome: 'new', canonical_path: GROUND, note: 'Native Central initialization requires explicit review.'}
-      : {outcome: 'recognized', canonical_path: GROUND, identity: {device: '1', inode: '2'}, access: {readable: true, searchable: true}},
+  // A ground the person chose (discover's `ground`) is read where it is: new until it is the bound one.
+  const discovery = (chosen = GROUND) => ({schema: 'oi.setup/v1', basis: 'basis-1', data_root: '/w/Bare/data', composition_path: '/w/Bare/.config/oi-shell-candidate/full-suite/composition.json',
+    target: 'macos/aarch64', bound_ground: world.bound, suggested_ground: GROUND, selected_ground: chosen,
+    ground: (chosen === GROUND ? world.outcome === 'new' : chosen !== world.bound) ? {outcome: 'new', canonical_path: chosen, note: 'Native Central initialization requires explicit review.'}
+      : {outcome: 'recognized', canonical_path: chosen, identity: {device: '1', inode: '2'}, access: {readable: true, searchable: true}},
     choices: [{id: 'custom', title: 'Choose individual products', description: '', products: [], hosted: false}], products: [], warnings: [], desktop: {state: 'not-installed'}, recognition: {}})
   const adoption = {async request(request) {
     calls.push(['setup', request.action, structuredClone(request)])
     if (request.action === 'status') return {schema: 'oi.setup/v1', disposition: world.journal ? 'verified' : 'not_started', journal: world.journal}
-    if (request.action === 'discover') return {schema: 'oi.setup/v1', discovery: discovery()}
+    if (request.action === 'discover') return {schema: 'oi.setup/v1', discovery: discovery(request.ground ?? GROUND)}
     if (request.action === 'plan') {
       const now = Date.now()
-      return {schema: 'oi.setup/v1', plan: {schema: 'oi.adoption-plan/v1', engagement_contract: 'oi.engagement/2026-09-18', selection: request.selection, discovery: discovery(),
+      return {schema: 'oi.setup/v1', plan: {schema: 'oi.adoption-plan/v1', engagement_contract: 'oi.engagement/2026-09-18', selection: request.selection, discovery: discovery(request.selection.ground ?? GROUND),
         steps: [{title: 'Establish Central', effects: [`Ask Central to initialise ${request.selection.ground} and verify it with its native doctor.`], operation: {kind: 'establish_ground', path: request.selection.ground}},
           {title: 'Record the chosen composition', effects: [], operation: {kind: 'record_composition'}}],
         blocked: [], notices: [], review_token: 'review-1', created_at_unix_ms: now - 1, expires_at_unix_ms: now + 15 * 60 * 1000}}
     }
     if (request.action === 'apply') {
-      world.bound = GROUND; world.outcome = 'recognized'
+      world.bound = request.plan.selection.ground; world.outcome = 'recognized'
       world.journal = {schema: 'oi.adoption-journal/v1', plan: request.plan, records: request.plan.steps.map(() => ({state: 'verified'}))}
       return {schema: 'oi.setup/v1', disposition: 'verified', journal: world.journal}
     }
     throw new Error(`unexpected ${request.action}`)
   }}
+  // Central's civil-time adoption (ctrl civil_time_adoption.rs; shapes as the built ctrl answered on a scratch world, 29 Oct).
+  const civilPolicy = zone => ({automatic_day_rollover: true, day_boundary_minutes: 0, schema: 'central.civil-time-policy/v1', scope_ref: 'control:root', timezone: zone})
+  const civilDigest = zone => `civil-digest:${zone}`
   const central = async (action, input) => {
     calls.push(['central', action, structuredClone(input)])
+    if (action === 'central.time.policy.preview') {
+      if (world.civilRefused) throw new Error(world.civilRefused)
+      const state = !world.bound ? 'no-ground' : world.civil ? 'recognised' : 'absent'
+      return {schema: 'central.civil-time-adoption-preview/v1', state, source_path: 'Control/user/civil-time-policy.json', policy: world.civil ?? civilPolicy(world.zone),
+        timezone_source: state === 'recognised' ? null : '/etc/localtime', digest: state === 'recognised' ? null : civilDigest(world.zone), reason: null, day_boundary: 'midnight'}
+    }
+    if (action === 'central.time.policy.adopt') {
+      if (!world.bound) throw new Error('there is no ground here yet: make the ground first, then adopt its civil-time policy')
+      if (input.actor_kind !== 'human' || input.acceptance !== 'human-accepted' || !input.acceptance_ref) throw new Error('a human-adopted civil-time policy requires a declared human caller, no agent_session_ref, and acceptance human-accepted')
+      if (world.civil) return {adopted: false, state: 'recognised', source_ref: 'central:source:control:root:Control/user/civil-time-policy.json', reading: {policy: world.civil}}
+      if (input.expected_digest !== civilDigest(world.zone)) throw new Error('the civil-time policy Central would adopt changed since its preview (or no preview was named): preview it again. Nothing was written.')
+      world.civil = civilPolicy(world.zone); world.civilAcceptance = input.acceptance_ref
+      return {adopted: true, state: 'recognised', source_ref: 'central:source:control:root:Control/user/civil-time-policy.json', reading: {policy: world.civil}}
+    }
     if (!world.bound) throw new Error(`Central root does not exist as a directory: ${GROUND}`)
     const project = name => { const row = world.work.get(name); if (!row) throw new Error(`Project root does not exist as a directory: ${GROUND}/Work/${name}`); return row }
     if (action === 'work.list') return {items: [...world.work.keys()].map(name => ({name, path: `${GROUND}/Work/${name}`})), root: GROUND}
@@ -520,7 +541,27 @@ function scriptedSetup() {
     }
     throw new Error(`unexpected ${op.op}`)
   }
-  return {source: {adoption, central, workcell, aikit, groundChanged: () => calls.push(['groundChanged'])}, calls, world, GROUND, HOME}
+  // The person's identity through the kernel's nara_identity op (desktop/cradle/kernel/src/nara_identity.rs: QL inspects, Central keeps it
+  // under Control/self/nara/identities). QL refuses an empty name ("ql: invalid name", run 29 Oct) and checks the date.
+  const IDENTITY_REF = 'central:source:control:root:Control/self/nara/identities/abc.json'
+  const identity = async request => {
+    calls.push(['identity', request.operation, structuredClone(request)])
+    const reading = profile => ({schema: 'ql.nara-identity-reading/v1', person_ref: profile.person_ref, nara_ref: profile.nara_ref, profile, input_revision: 'sha256:x'})
+    const source = () => ({source_ref: IDENTITY_REF, revision: `rev-${world.identityRevision}`})
+    if (request.operation === 'list') return {schema: 'oi.nara-identity/v1', profiles: world.identity ? [{...source(), name: world.identity.name, person_ref: world.identity.person_ref}] : [], errors: []}
+    if (request.operation === 'open') return {schema: 'oi.nara-identity/v1', reading: reading(world.identity), source: source()}
+    if (request.operation === 'save') {
+      const profile = request.profile
+      if (profile.schema !== 'ql.nara-identity-profile/v1' || !profile.name?.trim()) throw new Error('ql: invalid name')
+      if (!/^\d{4}(-\d{2}(-\d{2})?)?$/.test(profile.birth?.date ?? '')) throw new Error('ql: invalid calendar birth date')
+      if (world.identity && request.expected_revision !== `rev-${world.identityRevision}`) throw new Error('identity revision conflict; reopen the saved profile before replacing it')
+      world.identity = profile; world.identityRevision += 1
+      return {schema: 'oi.nara-identity/v1', reading: reading(profile), source: source()}
+    }
+    throw new Error(`unexpected identity ${request.operation}`)
+  }
+  const harnessDisclosure = async () => { calls.push(['disclosure']); if (!world.disclosure) throw new Error('aikit harness disclose did not answer'); return world.disclosure }
+  return {source: {adoption, central, workcell, aikit, identity, harnessDisclosure, groundChanged: () => calls.push(['groundChanged'])}, calls, world, GROUND, HOME}
 }
 /** AIKit's answers on a scratch Arriving world (REAL; the kernel's owner-route fixture, the world's folder written /w/Arriving). */
 const REAL = JSON.parse(readFileSync(new URL('../../../../desktop/cradle/kernel/tests/fixtures/owner-routes/aikit-setup-harnesses-credentials-2026-10-28.json', import.meta.url), 'utf8'))
@@ -765,9 +806,11 @@ test('CODE-DERIVED — Setup\'s Harnesses and skills step is AIKit\'s reading of
   const accepted = stepOf(win.setupValues({...base, harnesses: {state: 'read', harnesses, roots: adopted}}, held({})), 'harnesses')
   assert.equal(accepted.state, 'accepted', 'read back from AIKit: the root is adopted')
   assert.match(accepted.items[0].change, /AIKit holds its 2 skills .*adopted · procedure prc_/)
-  // A detected tool with no skills is named and left alone; AIKit's refusal stands in its words; not read yet is absent.
+  // A detected tool with no skills is named and left alone, and with nothing to adopt the step is done (#740 D); AIKit's refusal stands in
+  // its words; not read yet is absent.
   const bare = stepOf(win.setupValues({...base, harnesses: {state: 'read', harnesses, roots: []}}, held({})), 'harnesses')
-  assert.equal(bare.state, 'found')
+  assert.equal(bare.state, 'accepted')
+  assert.match(bare.said, /^Nothing to bring in/)
   assert.match(bare.items[0].why, /keeps no skills/)
   const refused = stepOf(win.setupValues({...base, harnesses: {state: 'refused', error: 'AIKit\'s client status did not finish'}}, held({})), 'harnesses')
   assert.match(refused.items[0].why, /did not finish/)
@@ -779,9 +822,10 @@ test('CODE-DERIVED — Setup\'s Credentials step is where AIKit finds each provi
   const providers = win.setupHarnessProviders({client: 'claude', harness: 'claude-code', folder: '/w/Arriving/.claude'}, REAL.harness_auth_claude.data)
   assert.deepEqual(providers.map(row => [row.harness, row.provider, row.envVar]), [['claude-code', 'anthropic', 'ANTHROPIC_API_KEY']])
   assert.match(providers[0].ownLogin, /claude login keeps OAuth material in its own credential store/)
-  // Arriving keeps no key: Claude Code reaches Anthropic through its own login, named and left alone; nothing to bind.
+  // Arriving keeps no key: Claude Code reaches Anthropic through its own login, named and left alone; nothing to bind, so done (#740 D).
   const none = stepOf(win.setupValues({...base, credentials: {state: 'read', findings: win.setupKeyFindings(REAL.discover_none.data), providers, bindings: []}}, held({})), 'credentials')
-  assert.equal(none.state, 'found')
+  assert.equal(none.state, 'accepted')
+  assert.match(none.said, /^Nothing to bind/)
   assert.deepEqual(none.items.map(row => [row.name, !!row.why, row.credential]), [['anthropic for claude-code', true, undefined]])
   assert.match(none.items[0].why, /own credential store/)
   // A key found in the world's .env (a dummy value AIKit never reads): its place and name, the credential it would bind.
@@ -907,4 +951,217 @@ test('SCRIPTED — the first time the DLW opens (no ground yet), Settings opens 
   assert.equal(request.returnLabel, 'Back to work')
   const foundation = readFileSync(new URL('../src/native/Foundation.tsx', import.meta.url), 'utf8')
   assert.match(foundation, /onboarding[^\n]*openSettings\(setupRequest\(/, 'the foundation opens Settings on Setup when the world has no ground yet')
+})
+
+// ── a new world's Day, its folder and name, its first layer of identity (O-I #740) ─────────────────────────────────────────────────
+
+const civilRead = (state, zone = 'Europe/London', more = {}) => ({state: 'read', preview: {schema: 'central.civil-time-adoption-preview/v1', state, policy: {timezone: zone, day_boundary_minutes: 0},
+  digest: ['absent', 'no-ground'].includes(state) ? `civil-digest:${zone}` : null, reason: null, ...more}})
+
+test('CODE-DERIVED — the Ground step says how your days are kept before Accept: this computer\'s time zone, turning at midnight; accepted only once Central keeps it', () => {
+  const base = {bound_ground: null, suggested_ground: '/w/Bare/Central', selected_ground: '/w/Bare/Central', ground: {outcome: 'new', canonical_path: '/w/Bare/Central'}}
+  const bound = {...base, bound_ground: '/w/Bare/Central', ground: {outcome: 'recognized', canonical_path: '/w/Bare/Central', access: {readable: true, searchable: true}}}
+  const days = values => stepOf(values, 'ground').items.find(item => item.name === 'Your days')
+  const fresh = win.setupValues({adoption: {discovery: base}, civilTime: civilRead('no-ground'), folders: {state: 'unread'}, plan: null}, held({}))
+  assert.equal(stepOf(fresh, 'ground').state, 'found')
+  assert.equal(days(fresh).change, 'Your days follow this computer\'s time zone, Europe/London, and turn at midnight')
+  // An older ground Central keeps already, with no policy: the same line, and the step waits for Accept.
+  const older = win.setupValues({adoption: {discovery: bound}, civilTime: civilRead('absent'), folders: {state: 'read', folders: []}, plan: null}, held({}))
+  assert.equal(stepOf(older, 'ground').state, 'found', 'a ground without its days is not accepted')
+  assert.equal(days(older).change, 'Your days follow this computer\'s time zone, Europe/London, and turn at midnight')
+  const kept = win.setupValues({adoption: {discovery: bound}, civilTime: civilRead('recognised', 'Pacific/Auckland', {policy: {timezone: 'Pacific/Auckland', day_boundary_minutes: 240}}), folders: {state: 'read', folders: []}, plan: null}, held({}))
+  assert.equal(stepOf(kept, 'ground').state, 'accepted')
+  assert.match(days(kept).change, /^Your days follow Pacific\/Auckland and turn at 04:00/)
+  const unrecognised = win.setupValues({adoption: {discovery: bound}, civilTime: civilRead('unrecognised', 'x', {reason: 'Control/user/civil-time-policy.json stands in this ground, but no source relation names it.'}), folders: {state: 'read', folders: []}, plan: null}, held({}))
+  assert.match(days(unrecognised).why, /no source relation names it/)
+  const refused = win.setupValues({adoption: {discovery: base}, civilTime: {state: 'refused', error: 'Unknown Action: central.time.policy.preview'}, folders: {state: 'unread'}, plan: null}, held({}))
+  assert.match(days(refused).why, /Central did not say how your days are kept: Unknown Action: central\.time\.policy\.preview/)
+})
+
+test('SCRIPTED — a new world: Accept makes the ground and adopts the civil-time policy it previewed, recognised by that acceptance; an older ground gets only the policy', async () => {
+  const {source, calls, world} = scriptedSetup()
+  const walk = new settingsPages.SetupWalk(source)
+  await walk.read()
+  const before = win.setupValues(walk.snapshot(), held({}))
+  assert.equal(stepOf(before, 'ground').items.find(item => item.name === 'Your days').change, 'Your days follow this computer\'s time zone, Europe/London, and turn at midnight')
+  const said = await walk.accept('ground', held({}))
+  assert.match(said, /Central made your ground at \/w\/Bare\/Central/)
+  assert.match(said, /Your days follow Europe\/London and turn at midnight/)
+  const adopt = calls.find(call => call[1] === 'central.time.policy.adopt')
+  assert.ok(adopt, 'the policy is adopted through Central')
+  assert.deepEqual(adopt[2], {actor_kind: 'human', acceptance: 'human-accepted', acceptance_ref: 'oi-setup-adoption:review-1', expected_digest: 'civil-digest:Europe/London'})
+  assert.ok(calls.findIndex(call => call[1] === 'apply') < calls.indexOf(adopt), 'after the ground is made')
+  assert.equal(stepOf(win.setupValues(walk.snapshot(), held({})), 'ground').state, 'accepted')
+  await assert.rejects(walk.accept('ground', held({})), /Nothing is made twice/)
+
+  // An older ground: no plan of native oi's, only the policy, on the digest shown.
+  const older = scriptedSetup()
+  older.world.bound = '/w/Bare/Central'; older.world.outcome = 'recognized'
+  const second = new settingsPages.SetupWalk(older.source)
+  await second.read()
+  assert.equal(stepOf(win.setupValues(second.snapshot(), held({})), 'ground').state, 'found')
+  const kept = await second.accept('ground', held({}))
+  assert.match(kept, /Central keeps your ground at \/w\/Bare\/Central, where it was/)
+  assert.ok(!older.calls.some(call => call[1] === 'plan' || call[1] === 'apply'), 'native oi is not asked to make a ground that stands')
+  const adopted = older.calls.find(call => call[1] === 'central.time.policy.adopt')
+  assert.match(adopted[2].acceptance_ref, /^dlw-setup-ground-accept:/)
+  assert.equal(older.world.civil.timezone, 'Europe/London')
+  // Central's zone moved since the preview: refused in Central's words, nothing written.
+  const moved = scriptedSetup()
+  moved.world.bound = '/w/Bare/Central'; moved.world.outcome = 'recognized'
+  const third = new settingsPages.SetupWalk(moved.source)
+  await third.read()
+  moved.world.zone = 'Asia/Tokyo'
+  await assert.rejects(third.accept('ground', held({})), /changed since its preview/)
+  assert.equal(moved.world.civil, null)
+  assert.ok(world.civil, 'the first world kept its policy')
+})
+
+test('SCRIPTED — the Ground step makes a new ground in the folder you choose, under the name you give; the default stays the world\'s Central', async () => {
+  const {source, calls, world} = scriptedSetup()
+  const walk = new settingsPages.SetupWalk(source)
+  await walk.read()
+  const shown = win.setupValues(walk.snapshot(), held({}))
+  assert.equal(shown.groundFolder, '/w/Bare')
+  assert.equal(shown.groundName, 'Central', 'the default name, until you give one')
+  await walk.groundAt('/w/Elsewhere', 'Studio')
+  const chosen = win.setupValues(walk.snapshot(), held({groundName: 'Studio'}))
+  assert.equal(chosen.groundFolder, '/w/Elsewhere')
+  assert.equal(stepOf(chosen, 'ground').items[0].where, '/w/Elsewhere/Studio')
+  assert.deepEqual(calls.filter(call => call[1] === 'discover').at(-1)[2], {action: 'discover', ground: '/w/Elsewhere/Studio'})
+  await walk.accept('ground', held({groundName: 'Studio'}))
+  assert.equal(calls.find(call => call[1] === 'plan')[2].selection.ground, '/w/Elsewhere/Studio', 'native oi plans the ground you chose')
+  assert.equal(world.bound, '/w/Elsewhere/Studio')
+  // A name typed since the folder was read is read before anything is made: Accept refuses until it is.
+  const other = scriptedSetup()
+  const next = new settingsPages.SetupWalk(other.source)
+  await next.read()
+  await assert.rejects(next.accept('ground', held({groundName: 'Elsewhere'})), /Read .*\/w\/Bare\/Elsewhere.* first/)
+  for (const name of ['', 'a/b', '..', '.hidden']) await assert.rejects(next.groundAt('/w/Bare', name), /A ground's name/)
+})
+
+test('SCRIPTED — once the ground is made, Setup asks for your name and date of birth, kept through the identity owner; left, nothing stands missing', async () => {
+  const {source, calls, world} = scriptedSetup()
+  const walk = new settingsPages.SetupWalk(source)
+  await walk.read()
+  assert.equal(win.setupValues(walk.snapshot(), held({})).birth, undefined, 'not asked before the ground is made')
+  await walk.accept('ground', held({}))
+  const asked = JSON.parse(win.setupValues(walk.snapshot(), held({})).birth)
+  assert.equal(asked.state, 'absent')
+  assert.ok(!JSON.stringify(asked).match(/missing/i), 'left out is not shown as missing')
+  await assert.rejects(walk.keepBirth(held({birthDate: '1990-04-12'})), /Give your name/)
+  const said = await walk.keepBirth(held({birthName: 'Ada', birthDate: '1990-04-12'}))
+  assert.match(said, /Kept in your ground: Ada, born 1990-04-12/)
+  const save = calls.find(call => call[0] === 'identity' && call[1] === 'save')[2]
+  assert.equal(save.profile.schema, 'ql.nara-identity-profile/v1')
+  assert.deepEqual(save.profile.birth, {date: '1990-04-12', time: null, precision: 'unknown', uncertainty_minutes: null, fold: null, place: null})
+  assert.equal(save.source_ref, null)
+  assert.match(save.profile.person_ref, /^person:/)
+  const kept = JSON.parse(win.setupValues(walk.snapshot(), held({})).birth)
+  assert.deepEqual([kept.state, kept.name, kept.date], ['kept', 'Ada', '1990-04-12'])
+  // A correction is a new revision of the same identity, never a new person (§24.6).
+  await walk.keepBirth(held({birthName: 'Ada', birthDate: '1990-04-13'}))
+  const again = calls.filter(call => call[0] === 'identity' && call[1] === 'save').at(-1)[2]
+  assert.equal(again.profile.person_ref, save.profile.person_ref)
+  assert.equal(again.source_ref, 'central:source:control:root:Control/self/nara/identities/abc.json')
+  assert.equal(world.identity.birth.date, '1990-04-13')
+  // A host that reaches no identity owner says so, and Setup goes on.
+  const bare = scriptedSetup()
+  const without = new settingsPages.SetupWalk({...bare.source, identity: undefined})
+  await without.read(); await without.accept('ground', held({}))
+  assert.match(JSON.parse(win.setupValues(without.snapshot(), held({})).birth).why, /SetupSource\.identity/)
+})
+
+test('CODE-DERIVED — Harnesses and skills and Credentials with nothing to adopt or bind are done, and say so in words', () => {
+  const tools = [{client: 'claude', harness: 'claude-code', folder: '/w/Bare/.claude'}, {client: 'gemini', harness: 'gemini', folder: '/w/Bare/.gemini'}]
+  const none = win.setupHarnessStep({state: 'read', harnesses: tools, roots: []})
+  assert.equal(none.state, 'accepted')
+  assert.match(none.said, /Nothing to bring in/)
+  const empty = win.setupCredentialStep({state: 'read', findings: [], providers: [], bindings: []}, held({}))
+  assert.equal(empty.state, 'accepted')
+  assert.match(empty.said, /Nothing to bind/)
+  const waiting = win.setupCredentialStep({state: 'read', findings: [{source: 'project-env', location: '/w/.env', name: 'ANTHROPIC_API_KEY', credential: 'credential:anthropic', bound: false}], providers: [], bindings: []}, held({}))
+  assert.equal(waiting.state, 'found', 'a key that waits to be bound keeps the step found')
+  const foreign = win.setupHarnessStep({state: 'read', harnesses: tools, roots: [{label: '@claude', path: '/w/Bare/.claude/skills', skills: 2, problems: 0, names: ['a', 'b'], standing: 'foreign'}]})
+  assert.equal(foreign.state, 'found')
+  const drawnNone = drawn({setup: json([{step: 'harnesses', state: 'accepted', said: none.said, items: none.items}]), setupStep: 'harnesses'}, 'setup')
+  assert.ok(drawnNone.includes(escaped(none.said)), 'the step says it in words')
+})
+
+/** AIKit's own disclosure of a tool (REAL shape: `aikit harness disclose claude-code --json`, data, 29 Oct; trimmed to its layers). */
+const DISCLOSURE = {schema: 'aikit.harness-disclosure/v1', standing: 'Native profile declarations and source observations; not installed-harness detection or session activation proof',
+  profiles: [{activation: {state: 'unobserved'}, disclosure: {edition: 'cli', slug: 'claude-code', layers: [
+    {layer: 'skills', native: [{name: '~/.claude/skills'}], posture: 'managed'},
+    {layer: 'guidance', native: [{name: '~/.claude/CLAUDE.md'}], posture: 'observed'},
+    {layer: 'models', posture: 'observed', auth: {env_var: [{env_var: 'ANTHROPIC_API_KEY', provider_ref: 'provider:anthropic'}], own_login: [{kind: 'note-only', note: 'claude login keeps OAuth material in its own credential store', provider_ref: 'provider:anthropic'}]}},
+    {layer: 'settings', native: [{name: '~/.claude/settings.json'}], posture: 'observed'}]}, native_tools: {state: 'observed'}}]}
+
+test('SCRIPTED — Harnesses and skills shows what AIKit reads of each tool: its instructions, its settings and its models; a value AIKit does not read is named', async () => {
+  const {source, world, HOME} = scriptedSetup()
+  world.tools.set('claude', {client: 'claude', harness: 'claude-code', folder: `${HOME}/.claude`, names: ['weekly-review'], standing: 'foreign', revision: 1})
+  world.disclosure = DISCLOSURE
+  const walk = new settingsPages.SetupWalk(source)
+  await walk.read(); await walk.accept('ground', held({}))
+  const step = stepOf(win.setupValues(walk.snapshot(), held({})), 'harnesses')
+  const tool = step.tools.find(row => row.harness === 'claude-code')
+  assert.deepEqual(tool.instructions, ['~/.claude/CLAUDE.md'])
+  assert.deepEqual(tool.settings, ['~/.claude/settings.json'])
+  assert.deepEqual(tool.models, ['anthropic'])
+  assert.match(tool.unread, /model/, 'the model a tool uses is a value AIKit does not read: named, left alone')
+  const page = drawn({...win.setupValues(walk.snapshot(), held({})), setupStep: 'harnesses'}, 'setup')
+  for (const text of ['~/.claude/CLAUDE.md', '~/.claude/settings.json']) assert.ok(page.includes(text), `${text} is drawn`)
+  // AIKit's disclosure refused: the step still reads its tools, and says why their settings are not shown.
+  world.disclosure = null
+  await walk.read()
+  assert.match(stepOf(win.setupValues(walk.snapshot(), held({})), 'harnesses').disclosure, /did not answer/)
+})
+
+test('SCRIPTED — Projects: a folder elsewhere is previewed and accepted Into Work without a Make; Make applies only once it stands in Work', () => {
+  const folders = [{path: '/w/Arriving/field-notes', title: 'field-notes', place: 'elsewhere', finds: 'none', wikis: [], material: ['README.md'], central: []}]
+  const elsewhere = drawn({setup: json([{step: 'projects', state: 'found', items: []}]), setupStep: 'projects', folders: json(folders), folder: '/w/Arriving/field-notes', where: 'work'}, 'setup')
+  assert.ok(!elsewhere.includes(escaped('Choose what to make first.')), 'Preview and Accept do not wait on a Make for a bring')
+  assert.ok(elsewhere.includes(escaped('It comes into Work first; choose what to make of it there.')), 'Make is closed and says why')
+  const work = [{path: '/w/Arriving/Central/Work/field-notes', title: 'field-notes', place: 'work', finds: 'none', wikis: [], material: ['README.md'], central: []}]
+  const inWork = drawn({setup: json([{step: 'projects', state: 'found', items: []}]), setupStep: 'projects', folders: json(work), folder: '/w/Arriving/Central/Work/field-notes'}, 'setup')
+  assert.ok(inWork.includes(escaped('Choose what to make first.')), 'a folder of Work still waits on its Make')
+})
+
+test('SCRIPTED — Add folder… opens the Projects step for the folder chosen: Setup reads it beside the folders it found, and previews bringing it into Work', async () => {
+  const {setupRequest} = await import('../src/settings/host.ts')
+  const request = setupRequest('Back to work', '/w/Bare/Music/tide-sketches')
+  assert.equal(request.page, 'setup')
+  assert.equal(request.folder, '/w/Bare/Music/tide-sketches')
+  const {source, calls, world, HOME} = scriptedSetup()
+  world.elsewhere.set('Music/tide-sketches', {signals: [], material: ['tide.als'], revision: 1})
+  const walk = new settingsPages.SetupWalk(source)
+  await walk.read(); await walk.accept('ground', held({}))
+  walk.addFolder(`${HOME}/Music/tide-sketches`)
+  walk.addFolder(`${HOME}/Music/tide-sketches`)
+  const values = win.setupValues(walk.snapshot(), held({folder: `${HOME}/Music/tide-sketches`}))
+  const rows = JSON.parse(values.folders).filter(row => row.path === `${HOME}/Music/tide-sketches`)
+  assert.equal(rows.length, 1, 'read once, beside what Central found')
+  assert.equal(rows[0].place, 'elsewhere')
+  await walk.preview(held({folder: `${HOME}/Music/tide-sketches`}))
+  assert.equal(calls.find(call => call[1] === 'work.bring.preview')[2].source_path, `${HOME}/Music/tide-sketches`)
+  await walk.read()
+  assert.ok(JSON.parse(win.setupValues(walk.snapshot(), held({})).folders).some(row => row.path === `${HOME}/Music/tide-sketches`), 'kept when Setup reads again')
+  assert.throws(() => walk.addFolder('Music/tide-sketches'), /full path/)
+})
+
+test('SCRIPTED — a Central that cannot preview the days before the ground stands: the ground is made, nothing unpreviewed is adopted, and a second Accept keeps them as then shown', async () => {
+  const {source, calls, world} = scriptedSetup()
+  world.civilRefused = 'Central root does not exist as a directory: /w/Bare/Central'
+  const walk = new settingsPages.SetupWalk(source)
+  await walk.read()
+  assert.match(stepOf(win.setupValues(walk.snapshot(), held({})), 'ground').items.find(item => item.name === 'Your days').why, /Central did not say how your days are kept/)
+  world.civilRefused = null
+  const said = await walk.accept('ground', held({}))
+  assert.match(said, /Central made your ground/)
+  assert.match(said, /Accept again to keep them/)
+  assert.ok(!calls.some(call => call[1] === 'central.time.policy.adopt'), 'nothing is adopted that the step did not show')
+  const step = stepOf(win.setupValues(walk.snapshot(), held({})), 'ground')
+  assert.equal(step.state, 'found')
+  assert.match(step.items.find(item => item.name === 'Your days').change, /Europe\/London, and turn at midnight/)
+  assert.match(await walk.accept('ground', held({})), /Your days follow Europe\/London/)
+  assert.equal(stepOf(win.setupValues(walk.snapshot(), held({})), 'ground').state, 'accepted')
 })
