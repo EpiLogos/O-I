@@ -200,10 +200,10 @@ test('CODE-READING — Central\'s Approvals read and act in the selected world\'
   const central = read('central/devices/CentralDevices.tsx')
   assert.doesNotMatch(central, /APPROVALS_PROJECT|RACK_PROJECT/, 'no fixed register')
   assert.match(central, /const approvalsRegister = worldRegisterOf\(selectedWorld\)/)
-  assert.match(central, /useSourceReturnsAnswer\(transport, approvalsRegister\)/)
-  assert.match(central, /approve: row => acceptSourceReturn\(transport, approvalsRegister, row, person\)/)
-  assert.match(central, /reject: row => rejectSourceReturn\(transport, approvalsRegister, row\)/)
-  assert.match(central, /send: \(row, words\) => commentSourceReturn\(transport, approvalsRegister, row, words, person\)/)
+  // REPLACED (round three): the returns of the one register asked, and the acts in it; your world now reads every project's, and each
+  // act goes to its row's own project (the round-three tests below).
+  assert.match(central, /useWorldReturns\(transport, approvalsRegister\)/)
+  assert.match(central, /acceptSourceReturn\(transport, returnProjectOf\(row, approvalsRegister\), row, person\)/)
   assert.match(central, /observedSessionsOf\(/, 'the observed sessions, each in its register')
 })
 
@@ -242,4 +242,84 @@ test('SCRIPTED — the census names each project that refused, by name and in it
   assert.deepEqual(whole.census.worktrees.map(tree => tree.path), ['/w/Bare/Central/Work/field-notes'])
   const refusals = whole.census.sources.filter(source => /first-project/.test(source.boundaryOp)).map(source => source.refusal)
   assert.deepEqual(refusals, ['Not a git repository: Work/first-project', 'Not a git repository: Work/first-project'], 'its worktrees and its branches: each refusal named, never silent')
+})
+
+// ---- round three: Approvals in your own world read every project's returns -------------------------------------------------------
+
+const receipts = await import('../src/agent/devices/receiptBindings.ts')
+const {withReturnComments} = await import('../src/central/devices/sourceReturnComment.ts')
+
+/** Yours with two projects (alpha, beta): world_browse discloses both; each answers its own source returns, or refuses in Central's words. */
+function yoursKernel(projects, returns) {
+  const sent = []
+  const fetch = async (_url, init) => {
+    const body = JSON.parse(init.body)
+    sent.push(body)
+    if (body.op === 'world_browse') return {json: async () => ({ok: true, outcome: {result: 'world_read', snapshot: {navigator: {root: {work: {projects: projects.map(name => ({name, path: `Work/${name}`}))}}, error: null}}}})}
+    if (body.op === 'source_returns_read') {
+      const entries = returns[body.project]
+      if (!entries) return {json: async () => ({ok: false, error: `Central owner Action refused: Not a project ground: Work/${body.project}`})}
+      return {json: async () => ({ok: true, outcome: {result: 'source_returns_reading', data: {schema: 'central.source-returns/v1', entries, more: false, next_before: null, authored_source_mutated: false}}})}
+    }
+    return {json: async () => ({ok: false, error: `the fixture kernel answers no ${body.op}`})}
+  }
+  return {sent, fetch}
+}
+const entry = (ref, path, status = 'pending') => ({return_ref: ref, source_ref: `central:source:project:x:${path}`, basis_revision: 'b1', status, agent_session_ref: 'ses-1', current_revision: 'c1'})
+
+test('SCRIPTED — Yours\' Approvals read every project\'s returns, each row naming its project; an act goes to its own project', async () => {
+  const owner = yoursKernel(['alpha', 'beta'], {alpha: [entry('ret:a', 'docs/a.md')], beta: [entry('ret:b', 'docs/b.md')]})
+  const read = await withKernel(owner, () => scope.readWorldReturns({kind: 'bridge', url: 'http://t740-yours-returns.fixture'}, null, '1|w', createOwnerReadings()))
+  assert.deepEqual(owner.sent.filter(body => body.op === 'source_returns_read').map(body => body.project), ['alpha', 'beta'])
+  assert.deepEqual(read.returns.entries.map(row => [row.return_ref, row.project]), [['ret:a', 'alpha'], ['ret:b', 'beta']])
+  assert.deepEqual([read.absent, read.refusals], [null, []])
+  // The queue names each row's project.
+  const rows = receipts.proposalRows(read.returns.entries, [], undefined)
+  assert.deepEqual(rows.map(row => [row.id, row.project, row.where]), [['ret:a', 'alpha', 'alpha · docs/a.md'], ['ret:b', 'beta', 'beta · docs/b.md']])
+  // Approve and Deny act in the row's own project (the CentralDevices wiring: returnProjectOf(row, the selected world's register)).
+  const acted = []
+  const binding = receipts.approvalsBinding({returns: read.returns, session: null, encounter: null, holds: bind.chainHolds(), tracks: []},
+    {approve: async row => { acted.push(['approve', scope.returnProjectOf(row, null)]) }, reject: async row => { acted.push(['reject', scope.returnProjectOf(row, null)]) }})
+  await binding.write([{key: 'approve', value: 'ret:b'}])
+  await binding.write([{key: 'reject', value: 'ret:a'}])
+  assert.deepEqual(acted, [['approve', 'beta'], ['reject', 'alpha']])
+  assert.equal(scope.returnProjectOf({return_ref: 'r'}, 'first-project'), 'first-project', 'a project\'s world: its own register')
+  // A project's world reads that project alone.
+  const one = yoursKernel(['alpha', 'beta'], {alpha: [entry('ret:a', 'docs/a.md')], beta: [entry('ret:b', 'docs/b.md')]})
+  const only = await withKernel(one, () => scope.readWorldReturns({kind: 'bridge', url: 'http://t740-alpha-returns.fixture'}, 'alpha', '1|w', createOwnerReadings()))
+  assert.deepEqual(one.sent.filter(body => body.op === 'source_returns_read').map(body => body.project), ['alpha'])
+  assert.deepEqual(only.returns.entries.map(row => row.project), ['alpha'])
+})
+
+test('SCRIPTED — a project that refused is named in Central\'s words beside the others\' rows; a world with no project says so, never "have not answered"', async () => {
+  const owner = yoursKernel(['alpha', 'beta'], {alpha: [entry('ret:a', 'docs/a.md')]})
+  const read = await withKernel(owner, () => scope.readWorldReturns({kind: 'bridge', url: 'http://t740-partial-returns.fixture'}, null, '1|w', createOwnerReadings()))
+  assert.deepEqual(read.returns.entries.map(row => row.project), ['alpha'])
+  assert.deepEqual(read.refusals, [{project: 'beta', error: 'Central owner Action refused: Not a project ground: Work/beta'}])
+  const partly = receipts.approvalsBinding({returns: read.returns, returnsRefused: read.refusals, session: null, encounter: null, holds: bind.chainHolds(), tracks: []}, {approve: async () => {}})
+  assert.match(partly.standing.queue?.disabled ?? '', /beta: Central owner Action refused: Not a project ground: Work\/beta/, 'the refused project, by name, in Central\'s words')
+  assert.equal(partly.standing.approve, undefined, 'the answered rows stay answerable')
+  // No project disclosed: nothing is asked, and the words say why.
+  const bare = yoursKernel([], {})
+  const none = await withKernel(bare, () => scope.readWorldReturns({kind: 'bridge', url: 'http://t740-no-project-returns.fixture'}, null, '1|w', createOwnerReadings()))
+  assert.deepEqual(bare.sent.filter(body => body.op === 'source_returns_read'), [])
+  assert.deepEqual([none.returns, none.absent], [null, scope.NO_PROJECT_RETURNS])
+  const empty = receipts.approvalsBinding({returns: none.returns, returnsAbsent: none.absent, session: null, encounter: null, holds: bind.chainHolds(), tracks: []},
+    {approve: async () => {}, reject: async () => {}})
+  for (const key of ['approve', 'reject']) assert.match(empty.standing[key]?.disabled ?? '', /no project yet/, key)
+  await assert.rejects(empty.write([{key: 'approve', value: 'ret:x'}]), error => /no project yet/.test(error.message) && !/have not answered/.test(error.message))
+  const comments = withReturnComments(empty, {returns: none.returns, comment: 'change it', absent: none.absent}, {send: async () => {}})
+  assert.match(comments.standing.changes?.disabled ?? '', /no project yet/)
+  assert.doesNotMatch(comments.standing.changes?.disabled ?? '', /have not answered/)
+})
+
+test('CODE-READING — Central\'s Approvals read the world\'s returns and act in each row\'s project', () => {
+  const central = read('central/devices/CentralDevices.tsx')
+  assert.match(central, /const worldReturns = useWorldReturns\(transport, approvalsRegister\)/)
+  assert.match(central, /approve: row => acceptSourceReturn\(transport, returnProjectOf\(row, approvalsRegister\), row, person\)/)
+  assert.match(central, /reject: row => rejectSourceReturn\(transport, returnProjectOf\(row, approvalsRegister\), row\)/)
+  assert.match(central, /send: \(row, words\) => commentSourceReturn\(transport, returnProjectOf\(row, approvalsRegister\), row, words, person\)/)
+  assert.match(central, /returnsAbsent: worldReturns\.absent, returnsRefused: worldReturns\.refusals/)
+  assert.doesNotMatch(read('agent/devices/useRackReading.ts'), /RACK_PROJECT/, 'the old export is gone')
+  assert.match(read('frame/transport/LinkSlot.tsx'), /usePopulationAnswer\(transport, registerOf\(ROOT_REGISTER\)\)/)
 })

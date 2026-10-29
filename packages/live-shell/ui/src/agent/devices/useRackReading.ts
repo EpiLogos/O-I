@@ -16,18 +16,12 @@ import {useEffect, useMemo, useState} from 'react'
 import {kernelOp, kernelRead} from '../../../../../../desktop/cradle/src/kernel/bridge'
 import type {ChangeSetDocumentWire, ConfigRequestWire, KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
 import {planeScope, type ComposePlan, type ComposePorts, type ComposeScope} from './designBindings'
-import {registerOf, ROOT_REGISTER} from '../worldScope'
+import {registerOf} from '../worldScope'
 
 type Obj = Record<string, unknown>
 const isObj = (value: unknown): value is Obj => !!value && typeof value === 'object' && !Array.isArray(value)
 const strings = (value: unknown): string[] => Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string' && item.length > 0) : []
 
-/** The register a reading outside any session asks — the Link's population, which names no session: your world's root register, null
- * in the ops whose root is null (agent/worldScope.ts registerOf), the whole population. A session's chain reads its own register instead;
- * Central's Approvals read the selected world's (CentralDevices.tsx worldRegisterOf). */
-export const WORLD_REGISTER: string | null = registerOf(ROOT_REGISTER)
-/** Kept under its old name for frame/transport/LinkSlot.tsx's import: the root register, never a named project. */
-export const RACK_PROJECT = WORLD_REGISTER
 
 export interface RackReading {
   readonly sets: Readonly<Record<string, unknown>>

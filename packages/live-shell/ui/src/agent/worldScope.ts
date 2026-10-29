@@ -15,11 +15,12 @@
 //     asked again a few times while its first browse settles, as central/centralWorlds.ts `readWorlds` does (ROOT_SETTLE).
 import {useEffect, useMemo, useReducer} from 'react'
 import {kernelRead} from '../../../../../desktop/cradle/src/kernel/bridge'
-import type {KernelTransportStatus, RootWorld} from '../../../../../desktop/cradle/src/kernel/types'
+import type {KernelTransportStatus, RootWorld, SourceReturnEntry, SourceReturnsReading} from '../../../../../desktop/cradle/src/kernel/types'
 import type {AgencyReading, AgencySessionRow} from '../../../../../desktop/cradle/src/agency/agencyTypes'
 import {ROOT_SETTLE} from '../central/centralWorlds'
 import {agencyEntry} from '../owners/agency'
-import {ownerReadings, sameWorld, useOwnerReading, type OwnerRead, type OwnerReading, type OwnerReadingEntry, type OwnerReadings} from '../owners/ownerReading'
+import {ensureInOrder, ownerReadings, sameWorld, useOwnerReading, type OwnerRead, type OwnerReading, type OwnerReadingEntry, type OwnerReadings} from '../owners/ownerReading'
+import {readSourceReturnsOf, sourceReturnsKey} from './devices/workcellReads'
 import {useSpineEpoch} from '../owners/spine'
 
 /** The root register in an agent op's `project` (kernel/src/agent_prepared.rs `location`): your world's own register. */
@@ -210,4 +211,98 @@ export async function readWorldAgency(transport: KernelTransportStatus, epoch: s
   const entries = scopes.map(scope => [scope, agencyEntry(transport, scope, registry)] as const)
   for (const [, entry] of entries) await entry.ensure(epoch)
   return mergeAgency(entries.map(([project, entry]) => ({project, reading: entry.snapshot()})), epoch)
+}
+
+// ---- Approvals: the returned work of the world, or of one project's world ------------------------------------------------------------
+
+/** What Approvals say in a world with no project: Central keeps returned work per project (`projectcentral.source.returns`; asked for the
+ * root register on 29 Oct it refused), so there is nothing to ask. */
+export const NO_PROJECT_RETURNS = 'Your world has no project yet, so no returned work waits: Central keeps returned work for each project (projectcentral.source.returns), and your world\'s root register keeps none.'
+
+/** One return with the project it was read in: Approve, Deny and a comment act there. */
+export type WorldReturnEntry = SourceReturnEntry & {readonly project: string}
+
+export interface WorldReturns {
+  /** Every answered project's returns, each naming its project; null when none answered (or none was asked). */
+  returns: {entries: WorldReturnEntry[]} | null
+  /** Each project that refused, by name, in Central's words. */
+  refusals: {project: string; error: string}[]
+  /** Why no returns stand at all, in words (no project; or every project refused); null when some stand or they are still read. */
+  absent: string | null
+  loading: boolean
+}
+
+/** The project an act on a return goes to: the one it was read in, else the register asked (a project's world). Pure. */
+export function returnProjectOf(row: object, register: string | null): string | null {
+  const project = (row as {readonly project?: unknown}).project
+  return typeof project === 'string' && project ? project : register
+}
+
+/** The returns of the projects asked, each answer under `epoch` (an answer of another world is not drawn), merged in order. Pure. */
+export function mergeReturns(readings: readonly {project: string; reading: OwnerReading<SourceReturnsReading>}[], epoch: string | null): WorldReturns {
+  if (!readings.length) return {returns: null, refusals: [], absent: NO_PROJECT_RETURNS, loading: false}
+  const entries: WorldReturnEntry[] = []
+  const refusals: {project: string; error: string}[] = []
+  let answered = false, loading = false
+  for (const {project, reading} of readings) {
+    const foreign = epoch !== null && reading.epoch !== null && !sameWorld(reading.epoch, epoch)
+    if (foreign || reading.status === 'reading') { loading = true; continue }
+    if (reading.status === 'refused') { refusals.push({project, error: reading.error ?? 'Central did not return its source returns.'}); continue }
+    answered = true
+    for (const row of reading.value?.entries ?? []) entries.push({...row, project})
+  }
+  const absent = !answered && !loading && refusals.length ? refusals.map(item => `${item.project}: ${item.error}`).join('; ') : null
+  return {returns: answered ? {entries} : null, refusals, absent, loading}
+}
+
+/** The projects Approvals read: a project's world its own; your world (`register` null) every project Central discloses; null while the
+ * world is read, or the refusal of its disclosure. Pure. */
+function returnProjects(register: string | null, world: Pick<OwnerReading<readonly string[]>, 'status' | 'value' | 'error'>): {projects: string[] | null; refused: string | null} {
+  if (register !== null) return {projects: [register], refused: null}
+  if (world.status === 'reading') return {projects: null, refused: null}
+  if (world.status === 'refused') return {projects: null, refused: `Central did not disclose your world's projects, so no returned work is read: ${world.error ?? 'no reason given'}`}
+  return {projects: [...(world.value ?? [])], refused: null}
+}
+
+const asked = (projects: string[] | null, refused: string | null, merged: () => WorldReturns): WorldReturns =>
+  refused ? {returns: null, refusals: [], absent: refused, loading: false} : projects === null ? {returns: null, refusals: [], absent: null, loading: true} : merged()
+
+/** Approvals' returned work, held for the window: one project's world reads that project; your world reads every project and merges them,
+ * each row naming its project (Central's Approvals, CentralDevices.tsx). */
+export function useWorldReturns(transport: KernelTransportStatus, register: string | null): WorldReturns {
+  const epoch = useSpineEpoch()
+  const live = transport.kind !== 'unavailable'
+  const world = useWorldProjects(transport, live && register === null)
+  const {projects, refused} = returnProjects(register, world)
+  const key = live && projects ? JSON.stringify([transport, projects]) : null
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- the key names the transport and the projects
+  const entries = useMemo(() => key && projects ? projects.map(project => [project, ownerReadings.entry(sourceReturnsKey(transport, project), readSourceReturnsOf(transport, project))] as const) : [], [key])
+  const [revision, moved] = useReducer((count: number) => count + 1, 0)
+  useEffect(() => {
+    const offs = entries.map(([, entry]) => entry.subscribe(moved))
+    let live = true
+    void ensureInOrder(entries.map(([, entry]) => entry as OwnerReadingEntry<unknown>), epoch, () => live)
+    return () => { live = false; for (const off of offs) off() }
+  }, [entries, epoch])
+  return useMemo(() => (!live ? {returns: null, refusals: [], absent: transport.kind === 'unavailable' ? transport.reason ?? 'Native transport unavailable' : null, loading: false}
+    : asked(projects, refused, () => mergeReturns(entries.map(([project, entry]) => ({project, reading: entry.snapshot()})), epoch))),
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- revision is each entry's change; the key names the projects
+  [entries, revision, epoch, refused, key, live])
+}
+
+/** The same reading for a reader outside React (and the tests): each project's answer made to stand for `epoch`, then merged. */
+export async function readWorldReturns(transport: KernelTransportStatus, register: string | null, epoch: string, registry: OwnerReadings = ownerReadings): Promise<WorldReturns> {
+  if (transport.kind === 'unavailable') return {returns: null, refusals: [], absent: transport.reason ?? 'Native transport unavailable', loading: false}
+  let world: Pick<OwnerReading<readonly string[]>, 'status' | 'value' | 'error'> = {status: 'answered', value: [], error: null}
+  if (register === null) {
+    const entry = worldProjectsEntry(transport, registry)
+    await entry.ensure(epoch)
+    world = entry.snapshot()
+  }
+  const {projects, refused} = returnProjects(register, world)
+  if (refused) return {returns: null, refusals: [], absent: refused, loading: false}
+  if (!projects) return {returns: null, refusals: [], absent: null, loading: true}
+  const entries = projects.map(project => [project, registry.entry(sourceReturnsKey(transport, project), readSourceReturnsOf(transport, project))] as const)
+  for (const [, entry] of entries) await entry.ensure(epoch)
+  return mergeReturns(entries.map(([project, entry]) => ({project, reading: entry.snapshot()})), epoch)
 }

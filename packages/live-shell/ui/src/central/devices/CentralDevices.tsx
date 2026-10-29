@@ -71,8 +71,7 @@ import {shownSession, threadBinding} from '../../agent/devices/threadBinding'
 import {holdView, useChainHolds, viewHolds} from '../../agent/devices/designBindings'
 import {familyFaceDevice} from '../../agent/devices/mainTrackBindings'
 import {APPROVALS_ID, approvalsBinding} from '../../agent/devices/receiptBindings'
-import {useSourceReturnsAnswer} from '../../agent/devices/workcellReads'
-import {observedSessionsOf, ROOT_REGISTER, worldRegisterOf} from '../../agent/worldScope'
+import {observedSessionsOf, returnProjectOf, ROOT_REGISTER, useWorldReturns, worldRegisterOf} from '../../agent/worldScope'
 import {useAgentSessionsOptional} from '../../agent/AgentSessionsProvider'
 import {MAIN_TRACK_REF} from '../../frame/tracks/SessionGrid'
 import {CENTRAL_DAY_TRACK_ID} from '../../timeline/centralTrackAdapter'
@@ -516,11 +515,12 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
   // Approvals on the Main track (§18.1): the proposals the Agent's session waits on — its consent requests — answered through its own
   // encounter; the view's settings the one Approvals' (receiptBindings.ts).
   const naraTrack = nara.session ? agency.tracks.find(track => track.sessionRef === nara.session && !track.group) ?? null : null
-  // The returned work that waits (Central's source returns, lane K1's source_returns_read) in the selected world's register: a project's
-  // world its project; your world the root, which Central keeps no returns for ("project is required"), so none is asked there.
+  // The returned work that waits (Central's source returns, lane K1's source_returns_read): a project's world reads its project; your world
+  // is the whole world, so it reads every project Central discloses and merges them, each row naming its project (agent/worldScope.ts
+  // useWorldReturns). Central keeps no returns for the root register itself. Approve, Deny and a comment act in the row's own project.
   const approvalsRegister = worldRegisterOf(selectedWorld)
-  const returns = useSourceReturnsAnswer(transport, approvalsRegister).reading
-  const returned = returns.status === 'answered' ? returns.value : null
+  const worldReturns = useWorldReturns(transport, approvalsRegister)
+  const returned = worldReturns.returns
   // Approve (W2, as Factory's Main track): the person who accepts is the principal Central's personal anchor names, asked only while a
   // proposal waits; the press is Central's projectcentral.source.return_accept (sourceReturnAccept.ts, action.rs PERSON_ACTS).
   const waiting = !!returned?.entries.some(entry => entry.status === 'pending')
@@ -533,14 +533,15 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
   const approvals = useMemo(() => {
     const actions = answerHandle && 'actions' in answerHandle ? answerHandle.actions : undefined
     // Approvals is handed no Gateway and stands no default answer: that answer is the Gateway's, never Approvals' (§19.14; ticket 788).
-    const binding = approvalsBinding({session: naraTrack, encounter: answerObserved?.reading ?? null, holds, returns: returned, tracks: agency.tracks, nowUnixMs: nowUnixMs || Date.now()},
-      {...(actions ? {permission: (id, decision) => actions.permission(id, decision)} : {}), approve: row => acceptSourceReturn(transport, approvalsRegister, row, person),
-        reject: row => rejectSourceReturn(transport, approvalsRegister, row)},
+    const binding = approvalsBinding({session: naraTrack, encounter: answerObserved?.reading ?? null, holds, returns: returned,
+      returnsAbsent: worldReturns.absent, returnsRefused: worldReturns.refusals, tracks: agency.tracks, nowUnixMs: nowUnixMs || Date.now()},
+      {...(actions ? {permission: (id, decision) => actions.permission(id, decision)} : {}), approve: row => acceptSourceReturn(transport, returnProjectOf(row, approvalsRegister), row, person),
+        reject: row => rejectSourceReturn(transport, returnProjectOf(row, approvalsRegister), row)},
       CENTRAL_APPROVALS_ID)
     // Changes (W6): a comment on the return, in the words written in the thread — the Agent's composer here — through Central's
     // projectcentral.source.return_comment (sourceReturnComment.ts); once Central keeps it, the composer is cleared.
-    const commented = withReturnComments(binding, {returns: returned, comment: agentDraft}, {
-      send: (row, words) => commentSourceReturn(transport, approvalsRegister, row, words, person),
+    const commented = withReturnComments(binding, {returns: returned, comment: agentDraft, absent: worldReturns.absent}, {
+      send: (row, words) => commentSourceReturn(transport, returnProjectOf(row, approvalsRegister), row, words, person),
       after: () => { void agentWrite?.([{key: 'draft', value: ''}]) },
     })
     // Open marks an item opened here (the one Approvals' view hold), after opening an owner's request where it belongs.
@@ -548,7 +549,7 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
     const requested = withOwnerRequests(commented, {...ownerRequests, nowUnixMs: nowUnixMs || Date.now()}, openNotificationTarget,
       {opened, hold: ids => holdView(APPROVALS_ID, 'opened', openedHold(ids))})
     return requested
-  }, [answerHandle, naraTrack, answerObserved, holds, returned, agency.tracks, nowUnixMs, transport, person, agentDraft, agentWrite, ownerRequests, approvalsRegister])
+  }, [answerHandle, naraTrack, answerObserved, holds, returned, worldReturns.absent, worldReturns.refusals, agency.tracks, nowUnixMs, transport, person, agentDraft, agentWrite, ownerRequests, approvalsRegister])
   const others = useMemo(() => centralAgentDevices(), [])
   // Docs (§18.5) on the selected world (pageDevices.ts useDocsDevice, pageBindings.ts docsBinding): the world's account on six tiers on
   // Central's own readings, and the person's presses through Central.

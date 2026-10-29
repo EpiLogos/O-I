@@ -436,8 +436,9 @@ test('Voice on Central is the Agent\'s Voice page: B\'s binding, with the open v
 test('code-reading — Central\'s Approvals carries Approve to Central (projectcentral.source.return_accept by the anchor\'s principal), asked only while a proposal waits', async () => {
   const {readFile} = await import('node:fs/promises')
   const text = await readFile(new URL('../src/central/devices/CentralDevices.tsx', import.meta.url), 'utf8')
-  // REPLACED (O-I #740 lane B): APPROVALS_PROJECT ('O-I'); the selected world's register (agent/worldScope.ts worldRegisterOf).
-  assert.match(text, /approve: row => acceptSourceReturn\(transport, approvalsRegister, row, person\)/)
+  // REPLACED (O-I #740 lane B): APPROVALS_PROJECT ('O-I'); the row's own project (your world reads every project's returns), else the
+  // selected world's register (agent/worldScope.ts returnProjectOf, worldRegisterOf).
+  assert.match(text, /approve: row => acceptSourceReturn\(transport, returnProjectOf\(row, approvalsRegister\), row, person\)/)
   assert.match(text, /useCentralAction\(transport, PERSONAL_ANCHOR_ACTION, waiting \? NO_INPUT : null\)/)
   // REPLACED (#725): "Voice is published on the door under its id" — Voice is the Agent's Voice page (§19.21): Central's Agent carries it.
   assert.match(text, /composeAgentBinding\(own, \{custody, identity, thread, voice: voiceDesign\}\)/, 'the Agent carries Voice')
