@@ -407,7 +407,7 @@ function VakRings({p, w, h, labels}: {p: ViewProps; w: number; h: number; labels
       return <g key={ref}>
         <circle cx={x} cy={y} r={hop === 0 ? 5 : hop === 1 ? 3.2 : 1.8} fill={hop === 0 ? 'var(--dp-on)' : 'var(--dp-value)'} opacity={hop === 2 ? .7 : 1} />
         {(hop === 0 || (labels && hop === 1)) && e && <text x={x} y={y - (hop === 0 ? 8 : 5)} textAnchor="middle" className={hop === 0 ? 'dp-ink' : 'dp-axis'}
-          style={{fontSize: hop === 0 ? fs + 1 : fs, paintOrder: 'stroke', stroke: '#121a20', strokeWidth: 3}}>{(e.symbol || e.ref.replace(/^M0-?/, '') || e.ref).slice(0, 7)}</text>}
+          style={{fontSize: hop === 0 ? fs + 1 : fs, paintOrder: 'stroke', stroke: 'var(--well)', strokeWidth: 3}}>{(e.symbol || e.ref.replace(/^M0-?/, '') || e.ref).slice(0, 7)}</text>}
       </g> })}
     {handle}
   </g>
@@ -449,7 +449,7 @@ function Lanes({r, p, w, h, compact}: {r: Reading; p: ViewProps; w: number; h: n
   const off = st(p, 'query').disabled
   const message = said(r)
   return <g>
-    {Array.from(r.aimed).map(hz => <rect key={hz} x={x(hz + 1) - 9} y={top - 4} width={18} height={base - top + 8} fill="rgba(92,200,189,.10)" />)}
+    {Array.from(r.aimed).map(hz => <rect key={hz} x={x(hz + 1) - 9} y={top - 4} width={18} height={base - top + 8} fill="var(--fizz)" fillOpacity={.1} />)}
     <text x={4} y={11} style={{font: '8.5px var(--font-ui)', fill: 'var(--text-dim)'}}>{r.raw === undefined ? NONE : r.error ? 'does not parse' : trunc(render(r.expr), compact ? 17 : 22)}</text>
     {[0, 1, 2, 3, 4, 5, 6].map(s => <line key={s} x1={x(s)} y1={top} x2={x(s)} y2={axis} className="dp-faint" />)}
     <line x1={x(0)} y1={axis} x2={x(6)} y2={axis} stroke="var(--dp-value)" strokeOpacity={0.5} />

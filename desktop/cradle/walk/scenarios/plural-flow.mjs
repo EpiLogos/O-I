@@ -11,9 +11,10 @@
 // resident owner are disposable and created here.
 import {execFileSync, spawnSync} from "node:child_process";
 import {createHash, randomBytes} from "node:crypto";
-import {mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync} from "node:fs";
+import {existsSync, lstatSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync} from "node:fs";
 import {homedir} from "node:os";
-import {join} from "node:path";
+import {basename, join} from "node:path";
+import {fileURLToPath} from "node:url";
 import {bindDefaultCentral} from "../editor-doc.mjs";
 
 const need = name => { const value = process.env[name]; if (!value) throw new Error(`${name} is required`); return value; };
@@ -25,6 +26,103 @@ const PASSAGE = `# On crossing a distance
 3. A task made of endlessly many steps, each requiring some time, can never be completed.
 4. Therefore the traveller never arrives: motion across a distance is impossible.
 `;
+
+// Retain the native owner's actual receipt before disposing this test's ground.
+// No provider is opened by encounter-start or by these lifecycle operations.
+export function nativeOwnerCleanup({aikit, projectRoot, ownerEnv, directories, evidenceRoot}) {
+  const owned = directories.map(path => {
+    const stat = lstatSync(path);
+    if (!stat.isDirectory() || stat.isSymbolicLink()) throw new Error(`Not an owned temporary directory: ${path}`);
+    return {path, device: stat.dev, inode: stat.ino};
+  });
+  const evidenceStem = `plural-flow-owner-cleanup-${basename(directories[0])}-${randomBytes(6).toString("hex")}`;
+  const report = {schema: "oi.cradle.walk.native-owner-cleanup/v1", projectRoot, aikit, directories: owned, operations: [], primaryError: null, phase: "not-started", ownerPid: null, deleted: []};
+  let attempted = false, ownerPid = null, completion, sequence = 0, lastEvidence;
+  const persist = () => {
+    mkdirSync(evidenceRoot, {recursive: true});
+    lastEvidence = join(evidenceRoot, `${evidenceStem}-${++sequence}.json`);
+    writeFileSync(lastEvidence, `${JSON.stringify({...report, recordedAt: new Date().toISOString()}, null, 2)}\n`, {flag: "wx", mode: 0o600});
+  };
+  const healthPid = reply => {
+    if (reply?.ok !== true || reply.data?.protocol !== "aikit-encounter-v1" || !Number.isSafeInteger(reply.data.pid) || reply.data.pid <= 0) throw new Error("Native encounter Health did not confirm an owner PID");
+    return reply.data.pid;
+  };
+  const command = (request, timeout) => {
+    const argv = ["--json", "-C", projectRoot, "session-space", "encounter", "--request-json", JSON.stringify(request)];
+    const result = spawnSync(aikit, argv, {encoding: "utf8", env: ownerEnv, timeout, maxBuffer: 4 * 1024 * 1024});
+    const operation = {argv, exitCode: result.status, signal: result.signal, error: result.error?.message ?? null, stdout: result.stdout ?? "", stderr: result.stderr ?? ""};
+    report.operations.push(operation);
+    if (result.error || result.status !== 0) throw new Error(`Native ${request.action} failed: ${result.error?.message ?? result.stderr ?? result.status}`);
+    return JSON.parse(result.stdout);
+  };
+  const cleanup = primaryError => {
+    if (completion) return completion;
+    completion = (async () => {
+      report.primaryError = primaryError ? String(primaryError.stack ?? primaryError) : null;
+      try {
+        if (attempted) {
+          if (ownerPid === null) throw new Error("Owner startup was attempted without a retained successful Health; preserve its ground for native recovery");
+          if (healthPid(command({action: "health"}, 5000)) !== ownerPid) throw new Error("Native owner changed since startup; no shutdown or deletion admitted");
+          const reply = command({action: "shutdown", expected_pid: ownerPid}, 45000);
+          const receipt = reply?.data;
+          if (reply?.ok !== true || receipt?.protocol !== "aikit-encounter-v1" || receipt.pid !== ownerPid || receipt.shutdown !== true || receipt.canonical_sessions_retained !== true || !Array.isArray(receipt.stopped) || receipt.stopped.some(row => row.process_stopped !== true)) throw new Error("Native shutdown did not acknowledge exact owner and body quiescence");
+          report.shutdown = reply;
+          const deadline = Date.now() + 5000;
+          while (true) {
+            const result = spawnSync("ps", ["-p", String(ownerPid), "-o", "pid=,ppid=,stat="], {encoding: "utf8", timeout: 2000, maxBuffer: 4096});
+            report.operations.push({argv: ["ps", "-p", String(ownerPid), "-o", "pid=,ppid=,stat="], exitCode: result.status, stdout: result.stdout ?? "", stderr: result.stderr ?? "", error: result.error?.message ?? null});
+            if (result.error || ![0, 1].includes(result.status) || (result.stderr ?? "").trim()) throw new Error("Owner process disappearance could not be observed");
+            if (result.status === 1 && !(result.stdout ?? "").trim()) break;
+            if (Date.now() >= deadline) throw new Error("Native shutdown ACK received, but owner process disappearance remains unconfirmed");
+            // Another actual process observation follows each bounded interval.
+            await new Promise(resolve => setTimeout(resolve, 100));
+          }
+        }
+        // Check every retained directory object before deleting any of them.
+        for (const {path, device, inode} of owned) {
+          const stat = lstatSync(path);
+          if (!stat.isDirectory() || stat.isSymbolicLink() || stat.dev !== device || stat.ino !== inode) throw new Error(`Temporary directory object changed; retain ${path}`);
+        }
+        // These are the controlled walk's actual Flow/Return documents, not
+        // the authority file, credentials or a copy of the entire AIKit home.
+        const flowDirectory = join(directories[0], "Control/user/flows");
+        report.controlledFlowDocuments = [];
+        let retainedBytes = 0;
+        if (existsSync(flowDirectory)) for (const name of readdirSync(flowDirectory).filter(name => name.endsWith(".html")).sort()) {
+          const path = join(flowDirectory, name);
+          const stat = lstatSync(path);
+          if (!stat.isFile() || stat.isSymbolicLink() || stat.size > 4 * 1024 * 1024) throw new Error(`Controlled Flow snapshot is unavailable: ${path}`);
+          const bytes = readFileSync(path);
+          retainedBytes += bytes.length;
+          if (retainedBytes > 8 * 1024 * 1024) throw new Error("Controlled Flow snapshot exceeds its retention bound; preserve the ground");
+          report.controlledFlowDocuments.push({path, bytes: bytes.length, sha256: createHash("sha256").update(bytes).digest("hex"), encoding: "base64", content: bytes.toString("base64")});
+        }
+        report.phase = attempted ? "native-quiescence-confirmed" : "owner-start-never-attempted";
+        persist();
+        for (const {path} of owned) {
+          rmSync(path, {recursive: true});
+          report.deleted.push(path);
+        }
+        report.phase = "disposed";
+        persist();
+        return {evidence: lastEvidence, nativeReceipt: report.shutdown ?? null};
+      } catch (error) {
+        report.phase = "recovery-required";
+        report.cleanupError = String(error.stack ?? error);
+        try { persist(); } catch (persistenceError) {
+          throw new AggregateError([error, persistenceError], `Native cleanup and evidence persistence failed; retain temporary ground (${directories.join(", ")})`, {cause: error});
+        }
+        throw new Error(`Native cleanup is incomplete; retained evidence ${lastEvidence}; ${error.message}`, {cause: error});
+      }
+    })();
+    return completion;
+  };
+  return {
+    starting() { attempted = true; report.phase = "startup-attempted"; },
+    started(reply) { ownerPid = healthPid(reply); report.ownerPid = ownerPid; report.startup = reply; report.phase = "native-owner-confirmed"; },
+    cleanup,
+  };
+}
 
 export async function setup() {
   process.env.TMPDIR = "/private/tmp";
@@ -43,10 +141,8 @@ export async function setup() {
     if (!r.ok) throw new Error(`${action}: ${JSON.stringify(r.error ?? r)}`);
     return r.data;
   };
-  const cleanup = () => {
-    spawnSync("pkill", ["-f", aikitHome], {stdio: "ignore"});
-    for (const dir of [root, aikitHome, home]) rmSync(dir, {recursive: true, force: true});
-  };
+  const owner = nativeOwnerCleanup({aikit, projectRoot, ownerEnv, directories: [root, aikitHome, home], evidenceRoot: fileURLToPath(new URL("../artifacts/", import.meta.url))});
+  const cleanup = () => owner.cleanup();
   try {
     call("central.init");
     mkdirSync(projectRoot, {recursive: true});
@@ -69,7 +165,8 @@ export async function setup() {
     const bind = JSON.parse(aikitBin("--json", "-C", projectRoot, "project", "bind", "flowlab-walk", "--directory", projectRoot, "--no-default-skill-sets"));
     if (!bind.ok) throw new Error(JSON.stringify(bind));
     aikitBin("session-space", "-C", projectRoot, "encounter-configure", "--provider-json", JSON.stringify({protocol: "pi-rpc", id: "pi", label: "Pi (plural flow walk)", argv: [pi, "--mode", "rpc"]}));
-    aikitBin("session-space", "-C", projectRoot, "encounter-start");
+    owner.starting();
+    owner.started(JSON.parse(execFileSync(aikit, ["session-space", "-C", projectRoot, "encounter-start"], {encoding: "utf8", env: ownerEnv, timeout: 20000})));
     const passageRef = "docs/passage.md";
     return {
       root, projectRoot, call, aikitHome, passageRef,
@@ -78,7 +175,11 @@ export async function setup() {
       flowFiles: () => { const dir = join(root, "Control/user/flows"); try { return readdirSync(dir).filter(f => f.endsWith(".html")); } catch { return []; } },
       readFlow: name => { const raw = readFileSync(join(root, "Control/user/flows", name), "utf8"); return JSON.parse(raw.match(island)[1].replace(/<\\\/script/gi, "</script").replace(/<\\!--/g, "<!--")); },
     };
-  } catch (error) { cleanup(); throw error; }
+  } catch (error) {
+    try { await owner.cleanup(error); }
+    catch (cleanupError) { throw new AggregateError([error, cleanupError], `Plural-flow setup failed: ${error.message}; native cleanup also requires recovery: ${cleanupError.message}`, {cause: error}); }
+    throw error;
+  }
 }
 
 export default async function run({page, baseUrl, check, shot, channel, provision: p}) {
@@ -171,4 +272,8 @@ export default async function run({page, baseUrl, check, shot, channel, provisio
   const after = p.readFlow(flowName);
   check("reopening asked no one again: the flow is unchanged by the view", after.entries.length === closedDoc.entries.length && after.meta.revision === closedDoc.meta.revision);
   await shot("plural-flow-reopened");
+  // Cleanup failures must fail the scenario before a passing receipt is made.
+  // The registered disposer retries only the same retained cleanup result.
+  await page.goto("about:blank");
+  await p.cleanup();
 }

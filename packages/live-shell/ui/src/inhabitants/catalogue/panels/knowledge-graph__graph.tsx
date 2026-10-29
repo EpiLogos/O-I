@@ -671,7 +671,7 @@ function ApertureWell({v, w, h, labels}: {v: V; w: number; h: number; labels: bo
       return <g key={i}>
         <circle cx={x} cy={y} r={labels ? 9 : 7} fill={n ? 'var(--dp-value)' : 'var(--dp-well)'} stroke={out ? 'var(--stall)' : n ? 'var(--dp-value)' : 'var(--dp-value-dim)'}
           strokeDasharray={out ? '2 2' : undefined} opacity={n || out || asked.has(i) ? 1 : .55} />
-        <text x={x} y={y + 3} textAnchor="middle" style={{fontSize: labels ? 9 : 7.5, fill: n ? '#121a20' : 'var(--text-dim)'}} className="dp-ink">{i}</text>
+        <text x={x} y={y + 3} textAnchor="middle" style={{fontSize: labels ? 9 : 7.5, fill: n ? 'var(--on-accent)' : 'var(--text-dim)'}} className="dp-ink">{i}</text>
         {n && labels && <text x={x + (x >= cx ? 12 : -12)} y={y - 7} textAnchor={x >= cx ? 'start' : 'end'} className="dp-axis" style={{fontSize: 7.5}}>{`#${n}`}</text>}
       </g> })}
   </g>

@@ -137,7 +137,7 @@ function Janko({w, y, sounding}: {w: number; y: number; sounding: readonly numbe
       const family = row % 2, x = 20 + i * kw + (family ? kw / 2 : 0), note = family * 6 + (i % 6), hot = sounding.includes(i * 2 + family)
       return <g key={`${row}-${i}`}>
         <rect x={x + 1} y={y + row * (kh + 2)} width={kw - 2} height={kh} rx={3}
-          fill={hot ? 'var(--dp-on)' : family ? '#2a3036' : '#59606a'} stroke="rgba(0,0,0,.4)" />
+          fill={hot ? 'var(--dp-on)' : family ? '#2a3036' : '#59606a'} stroke="var(--shade)" strokeOpacity={.4} />
         {row === 3 - family && i % 6 === 0 && <text x={x + kw / 2} y={y + row * (kh + 2) + 15} textAnchor="middle" className="dp-axis">{names[note]}</text>}
       </g>
     }))}

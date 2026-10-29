@@ -29,7 +29,7 @@
 .native-scene-editor button{cursor:pointer}.native-scene-editor button:disabled{opacity:.4;cursor:default}
 .native-scene-editor [hidden]{display:none}.native-scene-editor small{color:var(--text-dim);font-size:10px}
 .native-scene-members>button{display:flex;justify-content:space-between;width:100%;margin-bottom:3px;text-align:left}
-.native-scene-editor [role=alert]{color:#f3b4a0;max-width:32ch;font-size:10px;line-height:1.4}
+.native-scene-editor [role=alert]{color:var(--fault);max-width:32ch;font-size:10px;line-height:1.4}
 .native-world-detail:fullscreen .native-scene-editor{height:100%;align-items:start;flex-wrap:wrap}
 @media(max-width:760px){.native-scene-editor{flex-wrap:wrap;align-content:flex-start;overflow:auto}.native-scene-editor>section{max-width:100%;width:min(100%,240px)}}
 @media(max-width:720px){.native-scene-editor{overflow:auto}.native-scene-members{width:200px}}

@@ -1,6 +1,6 @@
 /* Continuous resonance device. Shell tokens only; amber (--accent) marks the live drive and the focused handle. */
-.native-resonance-track{fill:none;stroke:#ffffff30;stroke-width:1.2;stroke-linecap:round}
-.native-resonance-tick{stroke:#ffffff45;stroke-width:.8}
+.native-resonance-track{fill:none;stroke:color-mix(in srgb,var(--lift) 18.82%,transparent);stroke-width:1.2;stroke-linecap:round}
+.native-resonance-tick{stroke:color-mix(in srgb,var(--lift) 27.06%,transparent);stroke-width:.8}
 .native-resonance-tick.is-nearest{stroke:var(--accent,#bdc060);stroke-width:1.8}
 .native-resonance-band{fill:var(--accent,#bdc060);opacity:.16}
 .native-resonance-cell.is-positive{fill:var(--accent,#bdc060)}

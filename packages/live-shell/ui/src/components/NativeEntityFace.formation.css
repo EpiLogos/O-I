@@ -21,6 +21,6 @@
 .native-formation-shares li em{grid-column:2 / span 2;font-style:normal;opacity:.65}
 .native-formation-shares meter{width:100%;min-width:0}
 .native-formation-tint{display:flex;align-items:center;gap:6px;font-size:10px;margin:0 0 4px}
-.native-formation-swatch{display:inline-block;width:14px;height:14px;border-radius:2px;box-shadow:inset 0 0 0 1px #0005}
+.native-formation-swatch{display:inline-block;width:14px;height:14px;border-radius:2px;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--shade) 33.33%,transparent)}
 .native-formation-actions{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:4px 0}
 .native-formation-confirm{display:inline-flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:11px}

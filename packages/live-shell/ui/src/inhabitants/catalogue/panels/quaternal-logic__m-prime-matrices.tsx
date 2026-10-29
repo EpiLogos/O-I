@@ -144,7 +144,7 @@ function SixfoldWell({p, w, h, handles, labels}: {p: ViewProps; w: number; h: nu
     {[0, 1, 2, 3, 4, 5].map(i => (['direct', 'conjugate'] as const).map(f => { const [x, y] = P(i, f), here = pos === i && face === f
       return <g key={`${i}${f}`}>
         <circle cx={x} cy={y} r={f === 'direct' ? 6.5 : 5} fill={here ? 'var(--dp-value)' : 'var(--dp-well)'} stroke="var(--dp-value-dim)" strokeWidth={.8} />
-        {(labels || f === 'direct') && <text x={x} y={y + 2.8} textAnchor="middle" style={{fontSize: f === 'direct' ? 7.5 : 6.5, fill: here ? '#121a20' : 'var(--text-dim)'}} className="dp-ink">{i}</text>}
+        {(labels || f === 'direct') && <text x={x} y={y + 2.8} textAnchor="middle" style={{fontSize: f === 'direct' ? 7.5 : 6.5, fill: here ? 'var(--on-accent)' : 'var(--text-dim)'}} className="dp-ink">{i}</text>}
       </g> }))}
     {conj && arrow(P(conj.position, conj.face), false, 'conj')}
     {comp && arrow(P(comp.position, comp.face), true, 'comp')}

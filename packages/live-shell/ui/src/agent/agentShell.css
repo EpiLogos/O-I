@@ -58,6 +58,15 @@
   --green:inherit; --stall:inherit; --fizz:inherit;
   /* The ink on the accent (the oracle's proposed --accent-ink) is the shell's --on-accent, which the bridge reads from the theme. */
   --accent-ink:var(--on-accent);
+  /* The oracle's other proposed tokens (O-I ticket 751), each derived from the bridged tokens as the palette's value derives from the
+     palette: the record lamp at rest (the text warmed by the amber), the selection ring and a light's ring (a lift, a shade), the
+     group band and a lane's sub-row (between the grounds), the mixer and meter rails and their edge (the edge and the ground
+     darkened: exact on the palette), the warning edge (the held orange on the ground), the ink on the record red. The track's
+     default colour, the inks on a track's colour and the mask stay: they pair with an identity hue, or paint nothing. */
+  --rec-ink:color-mix(in srgb,var(--text) 74%,var(--accent-dim)); --sel-ring:color-mix(in srgb,var(--lift) 69%,transparent);
+  --light-ring:color-mix(in srgb,var(--shade) 46.67%,transparent); --group-band:color-mix(in srgb,var(--bg-0) 50%,var(--bg-1));
+  --lane-sub:color-mix(in srgb,var(--bg-1) 40%,var(--bg-2)); --rail-bg:color-mix(in srgb,var(--edge) 67%,black);
+  --rail-border:color-mix(in srgb,var(--bg-0) 60%,black); --warn-border:color-mix(in srgb,var(--stall) 30%,var(--bg-0)); --ink-on-rec:var(--on-accent);
 }
 
 /* The old Factory bar's rules (.agent-shell-transport) left with it (ticket 804): the one transport draws Factory's slots (frame/transport). */

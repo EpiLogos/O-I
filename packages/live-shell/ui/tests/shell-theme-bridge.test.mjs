@@ -35,6 +35,12 @@ const inhabitant = declarations(/^:root \{([\s\S]*?)\}/m.exec(strip(read(new URL
 const CHROME = ['--bg-0', '--bg-1', '--bg-2', '--bg-3', '--surface', '--line', '--line-strong', '--text', '--text-dim', '--text-faint',
   '--accent', '--accent-dim', '--accent-soft', '--sel', '--rec', '--green', '--stall',
   '--edge', '--on-accent', '--accent-wash', '--fault', '--disputed', '--gutter', '--fizz']
+/** The CSS system's role tokens (O-I #751): the grounds, edges and overlays the shell drew as literals, each now a palette token
+ * (its default the literal it replaced, so the shell with no theme paints as before) with a themed derivation from the bridged
+ * chrome tokens — never a role of its own, so every theme reaches them. DLW sets the chrome tokens to the palette, so under DLW each
+ * derives to its palette value within the drift named here (a derivation exact at every channel exists for none of these but
+ * --well's and --fault-ground's near misses); --lift is drawn at 27 % at the most, so its drift where drawn is under 12/255. */
+const ROLE = {'--well': 1, '--well-edge': 1, '--shade': 6, '--scrim': 4, '--lift': 43, '--fault-ground': 2, '--fault-edge': 6}
 const INHABITANT = ['--inh-bg-0', '--inh-bg-1', '--inh-bg-2', '--inh-bg-3', '--inh-line', '--inh-line-strong', '--inh-text', '--inh-dim',
   '--inh-faint', '--inh-accent', '--inh-accent-soft', '--inh-sel', '--inh-rec', '--inh-green', '--inh-stall']
 
@@ -65,8 +71,8 @@ function entry(token) {
 /** The presentation → root mapping, pure: the owner's theme choice (and imported library) to the shell's token values, as
  * the cascade computes them — no block and no bridge without an id; with one, the theme's roles, the palette for any role
  * the theme leaves unset. */
-function rootTokens(choice, custom = []) {
-  if (!choice?.id) return Object.fromEntries([...CHROME].map((token) => [token, palette[token]]))
+function rootTokens(choice, custom = [], tokens = CHROME) {
+  if (!choice?.id) return Object.fromEntries([...tokens].map((token) => [token, palette[token]]))
   const theme = docs[choice.id] ? themeVariables(docs[choice.id]) : custom.find((t) => t.id === choice.id)?.variables ?? {}
   const out = {}
   const resolve = (token) => {
@@ -80,7 +86,7 @@ function rootTokens(choice, custom = []) {
     } else throw new Error(`${token}: no themed derivation (${e.expression})`)
     return out[token]
   }
-  for (const token of CHROME) resolve(token)
+  for (const token of tokens) resolve(token)
   return out
 }
 
@@ -102,6 +108,30 @@ test('every chrome token has a themed derivation, the palette value as its fallb
   }
   const used = CHROME.map(entry).filter((e) => e.kind === 'role').map((e) => e.role)
   assert.equal(new Set(used).size, used.length, 'no two chrome tokens read one role, so a palette can round-trip')
+})
+
+test('the CSS system\'s role tokens are palette tokens a theme derives from the bridged chrome tokens', () => {
+  const tokens = [...CHROME, ...Object.keys(ROLE)]
+  for (const [token, drift] of Object.entries(ROLE)) {
+    assert.ok(palette[token], `${token} is a palette token at :root`)
+    const e = entry(token)
+    assert.ok((e.kind === 'mix' || e.kind === 'alias') && CHROME.includes(e.of), `${token} derives from a bridged chrome token (${e.expression ?? e.of})`)
+    const dlw = rgba(rootTokens({appearance: 'dark', id: 'dlw'}, [], tokens)[token]), own = rgba(palette[token])
+    const off = Math.max(...[0, 1, 2].map((i) => Math.abs(dlw[i] - own[i])))
+    assert.ok(off <= drift && Math.abs(dlw[3] - own[3]) < 0.01, `${token}: under DLW ${dlw} against the palette's ${own} (drift ${off} ≤ ${drift})`)
+  }
+  const mocha = rootTokens({appearance: 'dark', id: 'catppuccin-mocha'}, [], tokens), solar = rootTokens({appearance: 'light', id: 'solarized-light'}, [], tokens)
+  for (const token of Object.keys(ROLE)) {
+    assert.notDeepEqual(rgba(mocha[token]), rgba(palette[token]), `${token} moves under Catppuccin Mocha`)
+    assert.notDeepEqual(rgba(solar[token]), rgba(palette[token]), `${token} moves under Solarized Light`)
+  }
+})
+
+test('a theme that names its shadows sets them whole on a menu and a window; with none named each keeps its own', () => {
+  assert.equal(bridge['--shadow-menu'], 'var(--oi-shadow-menu)', 'a menu takes the theme\'s menu shadow')
+  assert.equal(bridge['--shadow-overlay'], 'var(--oi-shadow-overlay)', 'a window takes the theme\'s overlay shadow')
+  assert.ok(!('--shadow-menu' in palette) && !('--shadow-overlay' in palette), 'no default: unset, a var() reading them takes its own fallback')
+  assert.ok(themeImportRules().roles.includes('--oi-shadow-menu') && themeImportRules().roles.includes('--oi-shadow-overlay'))
 })
 
 test('the inhabitant devices\' copy of the palette follows the tokens it copies', () => {

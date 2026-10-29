@@ -1,66 +1,113 @@
-/** The frame chrome gains no raw colour (lane T1). A raw colour is a colour no theme reaches: the chrome — transport,
- * browser, panes and their tabs, the detail area, the widget rail, the status bar — paints with the shell's tokens, which the
- * theme bridge in styles.css derives from the chosen theme. This is the form of the cradle's raw-colour policy
- * (packages/oi-design-system/checks/verify.mjs: the same colour pattern, comments stripped), held as a ratchet: the literals
- * still standing are named here with the reason each stays, and any colour beyond them fails. Converting one is welcome —
- * strike it from the list. styles.css's palette (:root) and its bridge are the tokens' own definitions, not chrome use. */
+/** The shell paints with one token system, and gains no raw colour (O-I #751, the CSS system; lane T1 began it). A raw colour
+ * is a colour no theme reaches. The shell's tokens are declared once, in styles.css: the palette at :root (the default look) and
+ * the theme bridge on the root above a body that carries a chosen theme (each token the theme's --oi-* role, or a mix of the
+ * bridged tokens). Every stylesheet and script the candidate loads under packages/live-shell/ui/src and desktop/cradle/src is read
+ * here (tests/support/rawColours.mjs), and every colour literal a stylesheet holds, or a script paints with (a style object's paint
+ * key, an SVG paint attribute), is one of:
+ *   - a token's own default: the literal a var() falls back to when it names a declared token (the token paints, not the literal);
+ *   - a definition in a token block a theme reaches (TOKEN_BLOCKS, each with how the theme reaches it);
+ *   - a mask's alpha (a mask paints nothing: only its alpha is read);
+ *   - data (tests/support/themeData.mjs DATA: identity hues, the ink drawn on them, a picture's own colours, the cut's drawings, each
+ *     with its reason);
+ *   - or raw, which fails here.
+ * The ratchet counts down to the data list: converting a literal is welcome — strike it from DATA. The colour pattern is the
+ * cradle's raw-colour policy's (packages/oi-design-system/checks/verify.mjs), comments stripped. */
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {readFileSync} from 'node:fs'
+import {relative, resolve} from 'node:path'
+import {DATA} from './support/themeData.mjs'
 
-const src = new URL('../src/', import.meta.url)
-const colour = /#[0-9a-fA-F]{3,8}\b|\brgba?\([^)]*\)|\bhsla?\([^)]*\)/g
-const stripComments = (text) => text.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:"'`])\/\/[^\n]*/g, '$1')
-const definitions = (text) => text.replace(/^:root \{[\s\S]*?\}\n/m, '').replace(/^:root:has\(> body\[data-oi-theme\]\) \{[\s\S]*?\}\n/m, '')
+const {COLOUR, stripComments, TOKEN_BLOCKS, raw, scriptPaints} = await import('./support/rawColours.mjs')
+const {reachable, repo} = await import('../scripts/candidate-reachable.mjs')
+const {themeImportRules} = await import(new URL('../../../oi-design-system/scripts/convert.mjs', import.meta.url).href)
 
-/** File → the literals still standing (literal → count), each line with its reason. */
-const STANDING = {
-  'styles.css': {
-    // Session and arrangement slots: ink and grounds on the tracks' own identity colours (the track colour stays across themes).
-    '#97b1be': 1, '#21282e': 1, '#637267': 1, '#292c31': 1, '#252a2d': 1, '#657b7e': 1, '#4a5056': 1, '#272d32': 1, '#20252a': 1,
-    '#33383dcc': 2, '#a5aeb018': 1,
-    // Mixer rails, transport record lamp, the collection square, fault inks: the layout rules' own literals (lane S1's rules). The
-    // scrollbar thumb, the native control's edge and the inhabitant fault ink paint with --scrollbar, --edge and --fault (O-I 744).
-    '#202327': 2, '#17191b': 2, '#c9c8ad': 1, '#f46b64': 1, '#e4b09f': 1,
-    '#251e1c': 1, '#edc9bc': 1, '#705344': 1,
-  },
-  'shell/modeSurface.css': {
-    // The modes' kind hues (--mode-day … ) are identities, defined once as tokens there.
-    '#a8b0b8': 1, '#e8e4d8': 1, '#5cc6b4': 1, '#d8c89a': 2, '#9fb4c8': 1, '#e2a35e': 1, '#c79ae0': 1, '#b095d6': 1, '#9db8cc': 1, '#6fb3c9': 1,
-    // Ink on a track's identity colour (track heads, named cells, the cell's triangle).
-    '#21282e': 1, '#252a2d': 1, '#252a2dbb': 1,
-    // Shadow black and white lift: neutral overlays (the theme vocabulary carries shadows as whole --oi-shadow-* values).
-    '#0006': 2, '#0008': 1, '#ffffff08': 2, '#ffffff06': 1,
-  },
-  // The tracks' identity colours (data, not chrome paint).
-  'App.tsx': {'#79b6ce': 1, '#779dcc': 1, '#9885bc': 1, '#8baf9c': 1, '#b096b2': 1, '#6caaa9': 1, '#a2b6c2': 1, '#76c0b7': 1},
-  // A colour input's empty value, not a paint.
-  'components/expressions/studio/frameChrome.tsx': {'#808080': 1},
-  'shell/ownerReadback.css': {}, 'frame/paneGrammar.css': {}, 'frame/transport/transport.css': {}, 'frame/browser/browser.css': {},
-  'frame/browser/pool.css': {}, 'frame/tracks/tracks.css': {}, 'frame/detail/detail.css': {}, 'frame/widgets/deviceWidgets.css': {},
-  'components/expressions/studio/frameChrome.css': {},
-  'components/TransportBar.tsx': {}, 'components/StatusBar.tsx': {}, 'frame/transport/Transport.tsx': {}, 'frame/widgets/WidgetRail.tsx': {},
-  'shell/ModeBrowser.tsx': {}, 'shell/ModeDetail.tsx': {}, 'shell/ModeContextDock.tsx': {}, 'shell/ModeTransportBar.tsx': {},
-  'shell/ModeModeRail.tsx': {}, 'shell/modeBrowsers.tsx': {}, 'shell/modeTransports.tsx': {}, 'shell/widgets.tsx': {},
+const isProduct = (path) => /^(packages\/live-shell\/ui\/src|desktop\/cradle\/src)\//.test(path)
+const SCRIPT = /\.[cm]?[jt]sx?$/
+const set = reachable()
+const product = [...set].map((path) => relative(repo, path)).filter(isProduct).sort()
+const sheets = product.filter((path) => path.endsWith('.css'))
+const scripts = product.filter((path) => SCRIPT.test(path) && !/\.d\.[cm]?ts$/.test(path))
+
+/** Every custom property the product declares (in its stylesheets, or set inline by its scripts), and the theme's roles. */
+const declared = new Set(themeImportRules().roles)
+for (const path of set) {
+  const text = readFileSync(path, 'utf8')
+  if (path.endsWith('.css')) for (const m of stripComments(text).matchAll(/(--[\w-]+)\s*:/g)) declared.add(m[1])
+  else if (SCRIPT.test(path)) for (const m of text.matchAll(/['"`](--[\w-]+)['"`]/g)) declared.add(m[1])
 }
 
-const found = (rel) => {
-  let text = stripComments(readFileSync(new URL(rel, src), 'utf8'))
-  if (rel === 'styles.css') text = definitions(text)
-  const counts = {}
-  for (const [literal] of text.matchAll(colour)) counts[literal] = (counts[literal] ?? 0) + 1
-  return counts
-}
+const keyOf = (path) => path.replace(/^packages\/live-shell\/ui\/src\//, '')
+const pathOf = (key) => key.startsWith('desktop/') ? key : `packages/live-shell/ui/src/${key}`
+const count = (items) => items.reduce((counts, {literal}) => ({...counts, [literal]: (counts[literal] ?? 0) + 1}), {})
+const gained = (counts, standing = {}) => Object.entries(counts).filter(([literal, n]) => n > (standing[literal] ?? 0)).map(([literal, n]) => `${literal} ×${n - (standing[literal] ?? 0)}`)
+const sheetRaw = (path, text = readFileSync(resolve(repo, path), 'utf8')) => raw(text, {declared, blocks: TOKEN_BLOCKS[path] ?? []})
+const scriptRaw = (path, text = readFileSync(resolve(repo, path), 'utf8')) => scriptPaints(text).filter(({kind, name}) => kind === 'paint' || !declared.has(name))
 
-for (const [rel, standing] of Object.entries(STANDING)) {
-  test(`the frame chrome's ${rel} gains no raw colour`, () => {
-    const gained = Object.entries(found(rel)).filter(([literal, n]) => n > (standing[literal] ?? 0)).map(([literal, n]) => `${literal} ×${n - (standing[literal] ?? 0)}`)
-    assert.deepEqual(gained, [], `${rel} paints with a colour no theme reaches — use the shell's tokens (styles.css) or name the reason here`)
+test('the ratchet reads every stylesheet and script the candidate loads', () => {
+  assert.ok(sheets.length > 150, `the product's stylesheets (${sheets.length})`)
+  assert.ok(scripts.length > 600, `the product's scripts (${scripts.length})`)
+  for (const path of ['styles.css', 'settings/preferences.css', 'inhabitants/sdk/panel.css', 'projections/atlas/src/style/main.css',
+    'inhabitants/catalogue/panels/panels.css']) assert.ok(sheets.includes(pathOf(path)), path)
+  for (const path of ['native/ApplicationClose.tsx', 'inhabitants/catalogue/panels/scope.tsx']) assert.ok(scripts.includes(pathOf(path)), path)
+})
+
+let standing = 0
+for (const path of sheets) {
+  test(`${keyOf(path)} paints only with tokens, or data`, () => {
+    const found = sheetRaw(path)
+    standing += found.length
+    const extra = gained(count(found), DATA[keyOf(path)])
+    const where = found.filter(({literal}) => extra.some((e) => e.startsWith(`${literal} `))).map(({literal, line}) => `${literal} :${line}`)
+    assert.deepEqual(extra, [], `${keyOf(path)} paints with a colour no theme reaches (${where.join(', ')}) — use the shell's tokens (styles.css) or name it as data in tests/support/themeData.mjs`)
   })
 }
 
-test('the colours lane T1 converted stay tokens', () => {
-  const mode = readFileSync(new URL('shell/modeSurface.css', src), 'utf8')
-  for (const token of ['--edge', '--disputed', '--fault', '--accent-wash', '--on-accent']) assert.match(mode, new RegExp(`var\\(${token}\\)`), `modeSurface.css paints with ${token}`)
-  assert.match(readFileSync(new URL('inhabitants/inhabitantDevices.css', src), 'utf8'), /body \{[^}]*background: var\(--gutter, #1b1d20\)/, 'the gutter between the panes is a token')
+test('the product\'s scripts set no raw colour inline (a style object\'s paint, an SVG paint attribute)', () => {
+  const faults = []
+  for (const path of scripts) {
+    const found = scriptRaw(path)
+    standing += found.length
+    const extra = gained(count(found), DATA[keyOf(path)])
+    if (extra.length) faults.push(`${keyOf(path)}: ${found.filter(({literal}) => extra.some((e) => e.startsWith(`${literal} `))).map(({literal, line}) => `${literal} :${line}`).join(', ')}`)
+  }
+  assert.deepEqual(faults, [], 'a script paints with a colour no theme reaches — use a token (\'var(--text)\') or name it as data')
 })
+
+test('the data list names nothing the files no longer hold (strike a converted literal)', () => {
+  for (const [key, kept] of Object.entries(DATA)) {
+    const path = pathOf(key)
+    assert.ok(product.includes(path), `${key} is a file the candidate loads`)
+    const held = count(path.endsWith('.css') ? sheetRaw(path) : scriptRaw(path))
+    for (const [literal, n] of Object.entries(kept)) assert.equal(held[literal] ?? 0, n, `${key}: ${literal} ×${n} is listed, ${held[literal] ?? 0} stand`)
+  }
+})
+
+test('the ratchet has teeth: a raw colour fails, a token and its own default do not', () => {
+  const blocks = [':root']
+  assert.equal(raw('.x { color: #123456 }', {declared, blocks}).length, 1, 'a literal paint')
+  assert.equal(raw('.x { box-shadow: 0 1px 2px rgba(0,0,0,.4) }', {declared, blocks}).length, 1, 'a literal shadow')
+  assert.equal(raw('.x { --local: #123456 }', {declared, blocks}).length, 1, 'a token defined outside a reached block')
+  assert.equal(raw('.x { color: var(--no-such-token, #123456) }', {declared, blocks}).length, 1, 'the default of a token nothing declares paints')
+  assert.equal(raw('.x { color: var(--text, #d4d7da) }', {declared, blocks}).length, 0, 'a declared token\'s own default')
+  assert.equal(raw('.x { --dp-x: var(--bg-2, #3f4348) }', {declared, blocks}).length, 0, 'a token\'s default inside a definition')
+  assert.equal(raw('.x { background: color-mix(in srgb, var(--shade) 40%, transparent) }', {declared, blocks}).length, 0, 'a mix of tokens')
+  assert.equal(raw(':root { --x: #123456 }', {declared, blocks}).length, 0, 'a definition in a reached block')
+  assert.equal(raw('.x { mask-image: linear-gradient(#000, transparent) }', {declared, blocks}).length, 0, 'a mask\'s alpha')
+  assert.equal(raw('.x { color: rgb(var(--core-rgb) / .5) }', {declared, blocks}).length, 0, 'channels read from a token')
+  assert.equal(scriptPaints(`<rect fill="#123456" />`).length, 1, 'an SVG paint attribute')
+  assert.equal(scriptPaints(`style={{color: pending ? 'rgba(1,2,3,.4)' : '#123456'}}`).length, 2, 'a style object\'s paint, both arms')
+  assert.equal(scriptPaints(`const PALETTE = ['#123456']; <a title="#123 and #456">`).length, 0, 'data and words are not paints')
+  const styles = readFileSync(resolve(repo, pathOf('styles.css')), 'utf8') + '\n.teeth { color: #abcdef }\n'
+  assert.deepEqual(gained(count(sheetRaw(pathOf('styles.css'), styles)), DATA['styles.css']), ['#abcdef ×1'], 'one raw colour added to styles.css fails it')
+  const settings = readFileSync(resolve(repo, pathOf('settings/preferences.css')), 'utf8').replace('background:var(--scrim)', 'background:#171a1e80')
+  assert.deepEqual(gained(count(sheetRaw(pathOf('settings/preferences.css'), settings)), DATA['settings/preferences.css']), ['#171a1e80 ×1'], 'the Settings scrim put back as a literal fails')
+})
+
+test('the colours lane T1 converted stay tokens', () => {
+  const mode = readFileSync(resolve(repo, pathOf('shell/modeSurface.css')), 'utf8')
+  for (const token of ['--edge', '--disputed', '--fault', '--accent-wash', '--on-accent']) assert.match(mode, new RegExp(`var\\(${token}\\)`), `modeSurface.css paints with ${token}`)
+  assert.match(readFileSync(resolve(repo, pathOf('inhabitants/inhabitantDevices.css')), 'utf8'), /body \{[^}]*background: var\(--gutter, #1b1d20\)/, 'the gutter between the panes is a token')
+})
+
+test.after(() => console.log(`colours standing outside the tokens in the shell's stylesheets and scripts: ${standing} (each listed as data)`))

@@ -120,5 +120,5 @@
 .expressions-studio > .inst-plate[data-studio-stage] { flex: 1 1 auto; min-width: 0 }
 /* O-I #747: File › Export › Picture…'s choices (StudioStage.tsx PictureChoices), standing over the window until Export or Close. */
 .picture-choices-dialog { position: fixed; z-index: 60; top: 72px; left: 50%; transform: translateX(-50%); padding: 10px 12px; background: var(--bg-2, #2b3034);
-  border: 1px solid var(--line-strong, #4a5157); box-shadow: 0 8px 24px rgba(0, 0, 0, .35); font-size: 11px; color: var(--text, #dfe4e7) }
+  border: 1px solid var(--line-strong, #4a5157); box-shadow: var(--shadow-overlay, 0 8px 24px color-mix(in srgb,var(--shade) 35%,transparent)); font-size: 11px; color: var(--text, #dfe4e7) }
 .picture-choices-dialog .studio-edition { border-left: 0; padding-left: 0; flex-direction: column; gap: 8px }

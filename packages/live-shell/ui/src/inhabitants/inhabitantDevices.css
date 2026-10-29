@@ -313,7 +313,7 @@ button.inhabitant-device-title:hover { color: var(--inh-accent); }
 .inhabitant-outcome-chip[data-outcome='saved'] {
   background: var(--inh-green);
   border-color: var(--inh-green);
-  color: #1d1f22;
+  color: var(--on-accent, #1d1f22);
 }
 
 .inhabitant-outcome-chip[data-outcome='unchanged'] {
@@ -328,9 +328,9 @@ button.inhabitant-device-title:hover { color: var(--inh-accent); }
 }
 
 .inhabitant-outcome-chip[data-outcome='conflict'] {
-  color: #1d1f22;
+  color: var(--on-accent, #1d1f22);
   border-color: var(--inh-stall);
-  background: repeating-linear-gradient(135deg, transparent 0, transparent 4px, rgba(255, 155, 74, 0.4) 4px, rgba(255, 155, 74, 0.4) 7px);
+  background: repeating-linear-gradient(135deg, transparent 0, transparent 4px, color-mix(in srgb, var(--inh-stall) 40%, transparent) 4px, color-mix(in srgb, var(--inh-stall) 40%, transparent) 7px);
 }
 
 .inhabitant-outcome-chip[data-outcome='refused'] {
@@ -483,7 +483,7 @@ button.inhabitant-device-title:hover { color: var(--inh-accent); }
 }
 
 .inhabitant-reading:last-child { border-bottom: none; }
-.inhabitant-reading:hover { background: rgba(255, 190, 0, 0.06); }
+.inhabitant-reading:hover { background: color-mix(in srgb, var(--inh-accent) 6%, transparent); }
 
 .inhabitant-reading-op {
   font-family: var(--inh-mono);
@@ -522,7 +522,7 @@ li[data-impact-session] .inhabitant-reading-standing { white-space: normal; }
   white-space: nowrap;
 }
 
-li[data-refused='true'] .inhabitant-reading-op { border-color: rgba(255, 155, 74, 0.4); }
+li[data-refused='true'] .inhabitant-reading-op { border-color: color-mix(in srgb, var(--inh-stall) 40%, transparent); }
 
 /* the honoured-how column: the tender a finding names, the receipt shape a
    declared control would produce — right-aligned, mono, quiet */
@@ -606,7 +606,7 @@ li[data-refused='true'] .inhabitant-reading-op { border-color: rgba(255, 155, 74
 [data-save-router-states] [data-outcome][data-reached='true'] {
   background: var(--inh-accent);
   border-color: var(--inh-accent);
-  color: #1d1f22;
+  color: var(--on-accent, #1d1f22);
 }
 
 [data-detail-entries] .inhabitant-reading-standing { font-family: var(--inh-mono); }
@@ -624,7 +624,7 @@ body { margin: 0; background: var(--gutter, #1b1d20); font: 12px/1.4 -apple-syst
   background: var(--inh-bg-0); border: 1px solid var(--inh-line-strong);
   border-radius: 2px; padding: 3px 8px; cursor: pointer;
 }
-.l7-subjects button.on { background: var(--inh-accent); color: #1d1f22; border-color: var(--inh-accent); }
+.l7-subjects button.on { background: var(--inh-accent); color: var(--on-accent, #1d1f22); border-color: var(--inh-accent); }
 .l7-subjects button:hover:not(.on) { color: var(--inh-accent); }
 [data-detail-mount], .l7-devices { padding: 4px 10px 12px; display: flex; flex-direction: column; gap: 6px; }
 

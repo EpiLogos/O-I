@@ -25,10 +25,24 @@ test('Factory\'s frame takes the chosen theme: every bridged token it re-declare
   assert.ok(themed, 'a rule for the frame under a chosen theme')
   for (const token of shadowed) assert.equal(themed[token], 'inherit', `${token}: the root's themed value reaches Factory`)
   for (const [token, value] of Object.entries(themed)) {
-    const of = /^var\((--[a-z0-9-]+)\)$/.exec(value)?.[1]
-    assert.ok(value === 'inherit' || (of && of in bridge), `${token}: inherited, or a bridged token — never a second value`)
+    const reads = [...value.matchAll(/var\((--[a-z0-9-]+)\)/g)].map((m) => m[1])
+    assert.ok(value === 'inherit' || (reads.length && reads.every((of) => of in bridge) && !/#[0-9a-f]{3,8}\b|rgba?\(/i.test(value)),
+      `${token}: inherited, or derived from bridged tokens — never a second value (${value})`)
   }
   assert.equal(themed['--accent-ink'], 'var(--on-accent)', 'the ink on the accent follows the theme\'s')
+})
+
+test('every colour the frame declares follows the theme, or pairs with an identity hue (O-I #751)', () => {
+  const colour = /#[0-9a-f]{3,8}\b|rgba?\(/i
+  const themed = block(agent, `${BRIDGE} .frame.agent-shell-frame`)
+  // the cut's agent hues, the track's default colour, the inks on a track's colour (heads, named cells, the cell's triangle), the mask's ink
+  const data = ['--honey', '--bumble', '--drone', '--track-default', '--track-ink', '--slot-ink', '--slot-ink-tri', '--mask-ink']
+  const colours = Object.entries(frame).filter(([, value]) => colour.test(value)).map(([token]) => token)
+  assert.ok(colours.length >= 30, `the frame's colour tokens (${colours.length})`)
+  for (const token of colours) assert.ok(token in themed || data.includes(token), `${token}: the theme reaches it, or it is named as data`)
+  for (const [token, value] of [['--rail-bg', 'color-mix(in srgb,var(--edge) 67%,black)'], ['--rail-border', 'color-mix(in srgb,var(--bg-0) 60%,black)']]) {
+    assert.equal(themed[token], value, `${token}: the rail's derivation (exact on the palette)`)
+  }
 })
 
 test('the scrollbar, a native control\'s edge and an inhabitant\'s fault ink paint with the shell\'s tokens, which the theme reaches', () => {
@@ -37,4 +51,22 @@ test('the scrollbar, a native control\'s edge and an inhabitant\'s fault ink pai
   assert.equal(palette['--scrollbar'], '#777e80', 'unthemed, the palette paints it as before')
   assert.match(styles, /\.native-control \{[^}]*border:1px solid var\(--edge\)/)
   assert.match(styles, /\.inhabitant-fault \{[^}]*color:var\(--fault\)/)
+})
+
+test('the Native Workbench\'s own foundation colours are the shell\'s tokens, themed or not (O-I #751)', () => {
+  const workbench = read('../src/native/workbench.css'), grammar = read('../src/frame/paneGrammar.css'), knowledge = read('../src/panels/knowledge.css')
+  const themed = block(grammar, ':root .candidate-workbench')
+  assert.ok(themed, 'frame/paneGrammar.css maps the Workbench onto the shell\'s tokens, above workbench.css\'s own declarations')
+  const colour = /#[0-9a-f]{3,8}\b|rgba?\(|light-dark\(/i
+  const literal = new Set()
+  for (const m of workbench.matchAll(/(--oi-[a-z0-9-]+)\s*:\s*([^;]+);/g)) if (colour.test(m[2])) literal.add(m[1])
+  for (const m of workbench.matchAll(/var\((--oi-[a-z0-9-]+),\s*(#[0-9a-f]{3,8})\)/gi)) literal.add(m[1])
+  assert.ok(literal.size >= 15, `the Workbench's literal colour tokens (${[...literal].join(' ')})`)
+  for (const token of literal) {
+    assert.ok(token in themed, `${token}: the theme reaches it`)
+    assert.match(themed[token], /^var\(--[a-z0-9-]+\)$/, `${token}: one of the shell's tokens`)
+    assert.ok(themed[token].slice(4, -1) in bridge, `${token} → ${themed[token]}, a bridged token`)
+  }
+  const panel = block(knowledge, `${BRIDGE} .candidate-knowledge`)
+  for (const token of ['--oi-text', '--oi-border']) assert.ok(panel?.[token], `the knowledge panel's ${token} follows the theme`)
 })

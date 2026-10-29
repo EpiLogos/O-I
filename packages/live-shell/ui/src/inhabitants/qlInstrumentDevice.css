@@ -104,7 +104,7 @@
   background: repeating-linear-gradient(90deg, var(--inh-green, #8fd0a8) 0, var(--inh-green, #8fd0a8) 5px, transparent 5px, transparent 6px);
 }
 .ql-instrument-bar.is-discarded i { background: repeating-linear-gradient(90deg, var(--inh-stall, #ff9b4a) 0, var(--inh-stall, #ff9b4a) 5px, transparent 5px, transparent 6px); }
-.ql-instrument-bar.is-queued i { background: repeating-linear-gradient(90deg, #97b1be 0, #97b1be 5px, transparent 5px, transparent 6px); }
+.ql-instrument-bar.is-queued i { background: repeating-linear-gradient(90deg, var(--text-dim) 0, var(--text-dim) 5px, transparent 5px, transparent 6px); }
 .ql-instrument-meter b { font-weight: 600; font-variant-numeric: tabular-nums; }
 
 .ql-instrument-meter-law {
@@ -150,7 +150,7 @@
 .ql-instrument-btn.is-primary:not(:disabled) {
   background: var(--inh-accent, #ffbe00);
   border-color: var(--inh-accent, #ffbe00);
-  color: #1d1f22;
+  color: var(--on-accent);
 }
 
 .ql-instrument-draft { color: var(--inh-accent, #ffbe00); display: inline-flex; gap: 6px; align-items: center; }
