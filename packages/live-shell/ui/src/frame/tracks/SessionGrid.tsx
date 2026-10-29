@@ -328,7 +328,7 @@ export function SessionGridView({set, selection, folded, onFold, receipt, onPres
           {rails.length > 0 && <span className="rails" aria-hidden="true">{rails.map((colour, i) => <i key={i} style={{background: colour}} />)}</span>}
           {foldable && <button type="button" className="gf" aria-expanded={open} aria-label={`${open ? 'Fold' : 'Unfold'} ${track.name}`}
             title={`${open ? 'Fold' : 'Unfold'} the ${members.length} under ${track.name}`} onClick={() => onFold(track.id)}>{open ? '▼' : '▶'}</button>}
-          <button type="button" className={`thd${selectedTrack ? ' sel' : ''}`} title={`${track.name} · ${track.kind}${removeTrack && owned ? ' · select it and press Delete to take it out of the set' : ''}`} aria-pressed={selectedTrack}
+          <button type="button" className={`thd${selectedTrack ? ' sel' : ''}`} title={`${track.name} · ${track.kind}${track.info ? ` — ${track.info}` : ''}${removeTrack && owned ? ' · select it and press Delete to take it out of the set' : ''}`} aria-pressed={selectedTrack}
             // the head takes focus as it is selected, so its keys reach it: WebKit (the native candidate) focuses no button on a click,
             // and its Backspace then stepped the shell back a page instead of taking the track out (r20)
             onClick={event => { event.currentTarget.focus(); selection.select({kind: 'track', ref: track.id, title: track.name}) }}

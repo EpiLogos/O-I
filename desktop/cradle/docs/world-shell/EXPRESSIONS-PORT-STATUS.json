@@ -100,7 +100,7 @@
         "packages/live-shell/ui/src/components/expressions/studio/studioHome.ts",
         "packages/live-shell/ui/src/panels/expressions.tsx"
       ],
-      "boundary_op": "host request open-home {section} on the devices (presentedChrome.ts studioHomeRequest; desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:1603) answered by packages/live-shell/ui/src/panels/expressions.tsx:320 → packages/live-shell/ui/src/components/expressions/studio/studioHome.ts:18 openStudioHome",
+      "boundary_op": "host request open-home {section} on the devices (presentedChrome.ts studioHomeRequest; desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:1603) answered by packages/live-shell/ui/src/panels/expressions.tsx:324 → packages/live-shell/ui/src/components/expressions/studio/studioHome.ts:18 openStudioHome",
       "tests": [
         "desktop/cradle/expressions-app/field-studies-journeys/tests/presented-chrome.test.mjs",
         "packages/live-shell/ui/tests/p3-expressions-in-full.test.mjs"
@@ -864,7 +864,7 @@
         "packages/live-shell/ui/src/components/expressions/studio/studioHome.ts",
         "packages/live-shell/ui/src/panels/expressions.tsx"
       ],
-      "boundary_op": "host request open-home {section: formations | physics} on the devices (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:1653) answered by packages/live-shell/ui/src/panels/expressions.tsx:320 → packages/live-shell/ui/src/components/expressions/studio/studioHome.ts:18",
+      "boundary_op": "host request open-home {section: formations | physics} on the devices (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:1653) answered by packages/live-shell/ui/src/panels/expressions.tsx:324 → packages/live-shell/ui/src/components/expressions/studio/studioHome.ts:18",
       "tests": [
         "desktop/cradle/expressions-app/field-studies-journeys/tests/presented-chrome.test.mjs",
         "packages/live-shell/ui/tests/p3-expressions-in-full.test.mjs"
@@ -1996,7 +1996,7 @@
       "components": [
         "packages/live-shell/ui/src/panels/expressions.tsx"
       ],
-      "boundary_op": "none: the entry gate stands down on the devices; the panel's boot reopens the kept work (packages/live-shell/ui/src/panels/expressions.tsx:238, the ref and address kept beside it), and the browser opens any other",
+      "boundary_op": "none: the entry gate stands down on the devices; the panel's boot reopens the kept work (packages/live-shell/ui/src/panels/expressions.tsx:242, the ref and address kept beside it), and the browser opens any other",
       "tests": [
         "packages/live-shell/ui/tests/p3-expressions-in-full.test.mjs"
       ],
@@ -2979,7 +2979,7 @@
         "packages/live-shell/ui/src/components/expressions/clip/clipBinding.ts",
         "packages/live-shell/ui/src/inhabitants/catalogue/clips/expressions.tsx"
       ],
-      "boundary_op": "frame stage command tool=select (packages/live-shell/ui/src/components/expressions/clip/clipBinding.ts:403, the field's own Select through the hosted runner)",
+      "boundary_op": "frame stage command tool=select (packages/live-shell/ui/src/components/expressions/clip/clipBinding.ts:404, the field's own Select through the hosted runner)",
       "tests": [
         "packages/live-shell/ui/tests/expressions-clip.test.mjs"
       ],

@@ -46,6 +46,9 @@ export interface ExpressionsWorkReading {
   expressions: {
     id: string;
     name: string;
+    /** The Expression's description (manual §20.1 The track: "Description — A note about the Expression for a reader. An empty note is a
+     * real value"), as its owner reads it (the scenes inventory's `description`). Absent: not read. */
+    description?: string;
     scenes: {id: string; name: string; duration: number; takes?: {id: string; name: string}[];
       /** How the scene stands, from the owner's playback reading (R3). */
       status?: ClipStatus; note?: string;
@@ -76,7 +79,8 @@ export interface ExpressionsControls {
   arm?: {op: string; on: boolean; set(on: boolean): unknown};
   playScene?: {op: string; run(expressionId: string, sceneId: string): unknown};
   /** The presented composition's scene edits (the object menu's acts): rename, duplicate, remove, add, the Expression's title. */
-  sceneEdit?: {op: string; run(intent: {operation: 'duplicate' | 'remove'; scene_ref: string} | {operation: 'add'} | {operation: 'expression-title'; title: string}): unknown};
+  sceneEdit?: {op: string; run(intent: {operation: 'duplicate' | 'remove'; scene_ref: string} | {operation: 'add'} | {operation: 'expression-title'; title: string}
+    | {operation: 'expression-description'; description: string}): unknown};
   stopAll?: {op: string; run(): unknown};
   playSaved?: {op: string; run(): unknown};
   reenable?: {op: string; run(): unknown};
@@ -169,9 +173,11 @@ export function projectExpressionsWork(reading: ExpressionsWorkReading): WorldTr
 
   for (const expression of reading.expressions) {
     const groupId = expressionGroupId(expression.id);
+    // The track head carries the Expression's description as its info text (manual §20.1 The track; Live's Edit Info Text on a track).
+    const info = expression.description ? {info: expression.description} : {};
     tracks.push(
-      {id: visualLaneId(expression.id), name: `${expression.name}: visual`, kind: 'expression-visual', groupId, lane: 'visual'},
-      {id: audioLaneId(expression.id), name: `${expression.name}: audio`, kind: 'expression-audio', groupId, lane: 'audio'},
+      {id: visualLaneId(expression.id), name: `${expression.name}: visual`, kind: 'expression-visual', groupId, lane: 'visual', ...info},
+      {id: audioLaneId(expression.id), name: `${expression.name}: audio`, kind: 'expression-audio', groupId, lane: 'audio', ...info},
     );
 
     // column-local cursors: one per column this Expression's scenes occupy
@@ -256,6 +262,15 @@ function expressionsActions(reading: ExpressionsWorkReading, clips: readonly Wor
     actions.insertClip = {op: `${edit.op} · add (a blank scene after the presented one)`, run: () => edit.run({operation: 'add'})}
     actions.insertRow = {op: `${edit.op} · add (a blank scene after the presented one)`, run: () => edit.run({operation: 'add'})}
     actions.renameTrack = {op: `${edit.op} · expression-title`, run: (_trackId, name) => edit.run({operation: 'expression-title', title: name})}
+    // The Expression's description on its track head (manual §20.1 The track: Title and Description stand on the head): the head's
+    // Edit info text reads it as the owner reads it and writes it through the owner's expression-description (sceneEdits.ts:24). Only
+    // where the reading carries the description: an unread one is never offered as empty, which would write it away.
+    const described = new Map(reading.expressions.flatMap(expression => typeof expression.description === 'string'
+      ? [[visualLaneId(expression.id), expression.description], [audioLaneId(expression.id), expression.description]] as const : []));
+    if (described.size) actions.trackInfo = {op: `${edit.op} · expression-description`,
+      read: async trackId => { const text = described.get(trackId); if (text === undefined) throw new Error('This track is no Expression of this set.'); return text },
+      run: (trackId, text) => described.has(trackId) ? edit.run({operation: 'expression-description', description: text}) : {ok: false, error: 'This track is no Expression of this set.'}}
+    else actions.waiting = {...actions.waiting, 'track.info': 'the Expression\'s description in the tracks\' reading (frame/tracks/modeTracks.ts nativeTracks: content.scenes.description)'}
   }
   actions.owner = 'Expressions · the native composition (packages/expressions-boundary sceneEdits)'
   return actions;

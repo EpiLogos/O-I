@@ -61,7 +61,7 @@ export interface Scene {research?:ResearchMaterial;pointerScope?:'local'|'global
  /** DLW §20.1 the scene as a clip: its colour on the grid and the ruler (a palette token or #rrggbb), whether it plays (absent = on),
   * its ratio of hold to change, whether it refuses edits, and when its launch lands. Absent fields are the scene's defaults. */
  clip?:SceneClip;
- view:{nativeScaffold?:'off'|'axis'|'grid';nativeCamera?:CameraOrbState;mode:'2d'|'3d';yaw:number;pitch:number;zoom:number;panX:number;panY:number};
+ view:{nativeScaffold?:'off'|'axis'|'grid';nativeCamera?:CameraOrbState;mode:'2d'|'3d';yaw:number;pitch:number;zoom:number;panX:number;panY:number;/** O-I #747 (manual §20.1 The Clip panel, View: Kept · Not kept): true once Keep holds this framing with the scene. Absent: not kept. */kept?:boolean};
  field:{background:string;palette:string[];material:Material;params:Record<string,number>};
  entities:Entity[];text:TextLayer[];
  composition:{blueprint?:SceneBlueprint;layout:string;plane:Plane;focus:'parallel'|'travelling';focusDuration:number;focusDwell?:number;carryTint:boolean;carryStation:boolean;frequencyDriver:'torus'|'manual'|'focus'|'automation';keySource?:'torus'|'sky'|'manual';
@@ -219,6 +219,7 @@ export function validateJourney(value:unknown):Journey {
   {const refused=sceneClipRefusal(s.clip);if(refused)throw new Error(refused);}
   if(!s.view)s.view={mode:'2d',yaw:0,pitch:0,zoom:1,panX:0,panY:0};
   if(s.view.nativeScaffold!==undefined&&!['off','axis','grid'].includes(s.view.nativeScaffold))throw new Error('Invalid native scaffold.');
+  if(s.view.kept!==undefined&&typeof s.view.kept!=='boolean')throw new Error('Invalid kept view: it is kept or not.');
   if(!['2d','3d'].includes(s.view.mode)||!finite(s.view.yaw,-1000,1000)||!finite(s.view.pitch,-1000,1000)||!finite(s.view.zoom,.01,100)||!finite(s.view.panX,-10,10)||!finite(s.view.panY,-10,10))throw new Error('Invalid scene framing.');
   if(!s.field||!color(s.field.background)||!['ink','print','round'].includes(s.field.material)||!Array.isArray(s.field.palette)||s.field.palette.length<2||s.field.palette.length>8||!s.field.palette.every(color)||!s.field.params)throw new Error('Scene material or palette is invalid.');
   for(const [key,defaultValue] of Object.entries(DEFAULT_PARAMS)){if(!(key in s.field.params))s.field.params[key]=defaultValue;if(!finite(s.field.params[key],-1e8,1e8))throw new Error('Invalid numeric field parameter: '+key);}

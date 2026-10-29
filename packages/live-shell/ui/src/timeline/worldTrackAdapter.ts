@@ -226,6 +226,9 @@ export interface WorldTrackActions {
   moveTrack?: {op: string; run(trackId: string, by: -1 | 1): unknown};
   /** Duplicate a track: a copy with what it holds, right after it. */
   duplicateTrack?: {op: string; run(trackId: string): unknown};
+  /** Edit info text on a track (Live's Edit Info Text on a track; a family may carry a note about the work a track holds): the track's
+   * info text read from its owner, and written there. */
+  trackInfo?: {op: string; read(trackId: string): Promise<string>; run(trackId: string, text: string): unknown};
   /** Edit info text (Live's Edit Info Text on a clip): the clip's info text read from its owner, and written there. */
   clipInfo?: {op: string; read(clipId: string): Promise<string>; run(clipId: string, text: string): unknown};
   /** Group Tracks (⌘G): the tracks put in a new group. */
@@ -249,6 +252,8 @@ export interface WorldTrack {
   name: string;
   /** The track's colour (a hex), when the family's owner gives one. */
   color?: string;
+  /** The track's info text, as its owner reads it (Live's Info View): its head's hover words. */
+  info?: string;
   /** Where the track's needle stands on the ruler (Arrangement: "a needle showing where it has got to"), in the ruler's units. */
   needle?: number;
   /** The lane has stalled, as its owner says (manual §6: "a needle that stops moving is a stall"). The Session lights the

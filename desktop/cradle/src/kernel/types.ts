@@ -133,7 +133,13 @@ export type PageRequest =
   /** The page plays: its NOW clearing allocated, or rejoined and made active. */
   | { operation: "launch"; location: CentralLocation }
   /** The playing page stops: its NOW clearing closed on the revision read. */
-  | { operation: "stop"; now_ref: string; project?: string | null };
+  | { operation: "stop"; now_ref: string; project?: string | null }
+  /** A page's copy (O-I #743, manual §10.9 Duplicate and Paste): made again with an identity of its own through its world's door, in its
+   * own world's folder or `into` another world's (tied to that world). Answers oi.page-copy/v1. */
+  | { operation: "duplicate"; location: CentralLocation; into?: { folder: string; world: string } }
+  /** A page leaves its world (O-I #743, manual §10.9 Delete): to Central's trash on the revision read, the person's act. Answers
+   * oi.page-trash/v1 with Central's way back (`recover`: central.files.restore of the revision trashed). */
+  | { operation: "trash"; location: CentralLocation; expected_revision: string };
 export interface NativeFileEntry { name: string; location: CentralLocation; kind: "file" | "directory" | "symlink" | "other"; byte_len: number; retrieval_allowed: boolean }
 export interface NativeDirectory { schema: "central.directory-reading/v1"; location: CentralLocation; entries: NativeFileEntry[]; automatic_agent_or_model_invocation: false }
 export interface NativeFileReading { schema: "central.file-reading/v1"; location: CentralLocation; revision: string; byte_len: number; content_encoding: "utf-8"; content: string; project: {name:string;path:string;project_ref:string|null} | null; source: ListedSource | null; operations?:Record<"write"|"history"|"restore",{available:boolean;reason:string|null}>; automatic_agent_or_model_invocation: false }
@@ -702,6 +708,15 @@ export type KernelOp =
    * no task). AIKit allocates the task's NOW with Central and has Workcell inspect its boundary; its record (result
    * `encounter_task_reading`) or its refusal passes through verbatim. */
   | {op:"encounter_task_configure";project:string;agent_session:string;request:EncounterTaskRequest;expected_revision?:string}
+  /** A session's task taken off it (AIKit `encounter-task-remove`, aikit.encounter-task-removal/v1; O-I #743, a Factory clip's Delete):
+   * the task named and the revision read. Result `encounter_owner_act`. */
+  | {op:"encounter_task_remove";project:string;agent_session:string;task_ref:string;expected_revision:string}
+  /** A session's task copied onto another that holds none (AIKit `encounter-task-copy`, aikit.encounter-task-copy/v1; O-I #743, a
+   * Factory clip's Paste): AIKit makes it from the receiving session's standing. Result `encounter_owner_act`. */
+  | {op:"encounter_task_copy";project:string;agent_session:string;from_session:string;task_ref?:string}
+  /** A session taken off the set (O-I #743, a Factory track's Delete): detached from the Project's SessionSpaces that hold it through
+   * AIKit's own `detach-agent-session` mutation. Result `encounter_owner_act` (oi.encounter-session-detach/v1). */
+  | {op:"encounter_session_detach";project:string;agent_session:string}
   /** Several sessions' settings read at once (aikit.encounter-session-settings-list/v1), so a view of many tracks asks once. */
   | {op:"encounter_session_settings_list";project:string;agent_sessions:string[]}
   /** Several sessions' served attempts read at once (aikit.encounter-task-attempts-list/v1): for each session, the Factory attempts
@@ -914,6 +929,8 @@ export type KernelOpResult =
   | { result:"encounter_session_settings_reading";data:EncounterSessionSettingsReading }
   | { result:"encounter_session_settings_list_reading";data:EncounterSessionSettingsList }
   | { result:"encounter_task_attempts_list_reading";data:EncounterTaskAttemptsList }
+  /** An encounter act's receipt (O-I #743): a task removed or copied, a session taken off the set; its schema names which. */
+  | { result:"encounter_owner_act";data:unknown }
   | { result:"encounter_joined";reading:unknown }
   | { result:"native_owner_reading";owner:string;data:unknown;failure:unknown }
   | { result:"a2a_exchange_difference";data:unknown }
@@ -1023,6 +1040,9 @@ export interface GroundReading {
 }
 export interface WorldProject {
   name: string; path: string; source_files: number;
+  /** The world's own name, kept in its ProjectCentral manifest (Central's `central.world.name`, O-I #743), absent while it names none;
+   * `manifest_revision` is the revision a rename is made against. */
+  world_name?: string; manifest_revision?: string;
   projectcentral: GroundReading & { state: string; reason?: string; error?: string; missing?: string[] };
 }
 export interface RootWorld {
@@ -1161,7 +1181,8 @@ export interface FactoryAttemptArtifacts {
 }
 /** A change to one session's settings: `null` returns a field to its default. Task fields bind to the session's bound task. */
 export interface EncounterSessionSettingsRequest {
-  track?: {telemetry?: boolean | null; solo?: boolean | null}
+  /** `name` is the session's own name (O-I #743, its track's Rename); null takes it away. */
+  track?: {telemetry?: boolean | null; solo?: boolean | null; name?: string | null}
   task?: {task_ref: string; set: Partial<Record<EncounterTaskSettingKey, unknown>>}
   /** A Repeat's takes starting (only on a task launched with Repeat, one set at a time) or ending, by whoever runs them (O-I 795). */
   takes?: {start: {task_ref: string; trace_ref: string}}
@@ -1192,7 +1213,8 @@ export interface EncounterSessionSettingsReading {
   schema: 'aikit.encounter-session-settings/v1'
   agent_session: string
   revision: string | null
-  track: {telemetry: boolean; solo: boolean; set: string[]}
+  /** `name`: the session's own name, null when it has none (an AIKit before O-I #743 gives none). */
+  track: {telemetry: boolean; solo: boolean; name?: string | null; set: string[]}
   task: null | {
     task_ref: string; name: string; colour: string | null; active: boolean; register: 'plain' | 'warm' | 'terse'
     form: 'technical' | 'narrative' | 'list'; loop: boolean; loop_until: 'done' | 'pass'; loop_cap: number | null

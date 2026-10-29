@@ -29,6 +29,8 @@ import {liveSetWrites} from '../../live/liveWrites'
 import {frameSoundReading, readStudioArm, setExpressionMuted, setExpressionSolo} from '../../native/frameSound'
 import {expressionsTrackAdapter} from '../../timeline/expressionsTrackAdapter'
 import {FACTORY_WAITING} from '../../timeline/factoryTrackAdapter'
+import {CENTRAL_WAITING} from '../../timeline/centralTrackAdapter'
+import {withTaskActs} from '../../agent/factoryTaskActs'
 import {TECHNE_WAITING} from '../../timeline/techneTrackAdapter'
 import {useFactoryTracks} from './useFactoryTracks'
 import {useCentralTracks} from './useCentralTracks'
@@ -191,7 +193,8 @@ export const MODE_TRACKS: Readonly<Record<SurfMode, UseModeTracks>> = {
   // A constellation dropped on a part makes Live's clip of it (live/constellationClip.ts liveClipMaker, O-I #768).
   live: reading => reading.set ? liveTracks(reading.set, reading.document, reading.colors) : null,
   base: worldCut(useCentralTracks),
-  factory: worldCut(useFactoryTracks),
+  // A session's and its task's own acts on AIKit (O-I #743: Delete, Paste, Insert, a session's Rename and Delete), over the carrier.
+  factory: worldCut(withTaskActs(useFactoryTracks)),
   techne: worldCut(useTechneTracks),
   expressions: expressionsTracks,
 }
@@ -211,6 +214,7 @@ export function liveTracks(set: SetSummary, document: SetDocument | null, colors
 /** What each mode's acts no owner op carries wait for (O-I #743, round three), by the op the menu names: a registration, never a branch.
  * A mode's set may say more of its own (its `actions.waiting`, which stands over these). */
 export const MODE_WAITING: Readonly<Partial<Record<SurfMode, Readonly<Record<string, string>>>>> = {
+  base: CENTRAL_WAITING,
   factory: FACTORY_WAITING,
   techne: TECHNE_WAITING,
 }

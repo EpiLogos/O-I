@@ -69,11 +69,13 @@ pub fn central_action(action: &str) -> bool {
 /// and a page's Launch. Every other invocation goes without it, and Central refuses an act it does not grant in its own words.
 /// Setup's Projects step brings a folder of work that stands elsewhere into the ground's Work (`work.bring`, O-I #738): the copy is the
 /// person's Accept, as the workspace's init, adopt and migrate are.
+/// A world named from its track (`central.world.name`, O-I #743: a world's Rename reaches the world itself, in the browser too) is the
+/// person's press, and Central admits it only on that authority.
 /// Approvals' Deny on a returned source (`projectcentral.source.return_reject`) is the person's alone (manual §19.14, "Deny is always
 /// yours"), and Central admits it only on that authority (ctrl source_return.rs, O-I #805). Approvals' Changes
 /// (`projectcentral.source.return_comment`) is not among these: Central keeps a comment's declared `commented_by_ref` and reads no
 /// token for it, so the token is not handed to it (O-I #788).
-pub const PERSON_ACTS: [&str; 30] = [
+pub const PERSON_ACTS: [&str; 31] = [
     "central.now.lifecycle",
     "central.day.settings.write",
     "central.day.move.record",
@@ -104,6 +106,7 @@ pub const PERSON_ACTS: [&str; 30] = [
     "central.init",
     "central.world.reproject.apply",
     "projectcentral.ground.apply",
+    "central.world.name",
 ];
 
 /// Whether an invoked Action is one of the person's own presses (`PERSON_ACTS`).
@@ -524,6 +527,11 @@ mod tests {
         }
         // Setup's Projects step brings a folder that stands elsewhere into Work (O-I #738): the copy is the person's Accept.
         assert!(person_act("work.bring"), "work.bring is the person's press");
+        // A world named from its track (O-I #743): Central admits the name on the person's authority only.
+        assert!(
+            person_act("central.world.name"),
+            "central.world.name is the person's press"
+        );
         // Their previews, plans and readings carry nothing.
         for id in [
             "work.candidates",

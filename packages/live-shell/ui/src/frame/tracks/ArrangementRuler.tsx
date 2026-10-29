@@ -436,11 +436,11 @@ export function ArrangementRulerView({set, selection, empty, view, lanes: lanesV
       return [<div key={track.id} className={`tl-lane${track.lane ? ` lane-${track.lane}` : ''}`} style={{...style, ...(rails.length ? {'--rails': rails.length} : {})} as CSSProperties} data-track={track.id} data-main={track.main ? 'true' : undefined} data-return={track.returns ? 'true' : undefined}>
         {cells.length || device
           ? <div className={`tl-head tl-track-head${selection.ref === track.id ? ' sel' : ''}`}>
-            <button type="button" className="tl-name" title={`${track.name} · ${track.kind}`} onClick={selectTrack}>{headName}</button>
+            <button type="button" className="tl-name" title={`${track.name} · ${track.kind}${track.info ? ` — ${track.info}` : ''}`} onClick={selectTrack}>{headName}</button>
             <TrackDeviceButton device={device} track={track} selection={selection} />
             {cells.length > 0 && <MixerRow cells={cells} shown routes={false} trackId={track.id} receipt={receipt} onPress={onPress} />}
           </div>
-          : <button type="button" className={`tl-head${selection.ref === track.id ? ' sel' : ''}`} title={`${track.name} · ${track.kind}`} onClick={selectTrack}>{headName}</button>}
+          : <button type="button" className={`tl-head${selection.ref === track.id ? ' sel' : ''}`} title={`${track.name} · ${track.kind}${track.info ? ` — ${track.info}` : ''}`} onClick={selectTrack}>{headName}</button>}
         <div className="tl-body">
           {loopBand && <LoopBrace band={loopBand} words={loopWords} lane />}
           {now !== undefined && <span className="tl-now" style={{left: pct(now)}} aria-hidden="true" />}

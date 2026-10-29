@@ -1,4 +1,5 @@
 import {useEffect, useRef, useState} from 'react'
+import {createPortal} from 'react-dom'
 import {externalHttpsUrl} from '../../../../../desktop/cradle/src/shared/externalLink'
 import {mountExpressionsApplication, reopenConfiguredWorks, addressRefs, entryAtAddress,
   type ExpressionsHost, type HostedAppMode, type ChannelContext} from '@epilogos/expressions-boundary'
@@ -21,7 +22,8 @@ import {contributionRegistrationFailure} from '../native/contributions'
 import {connectTechneInstrumentRequests} from '../native/techneInstrumentOpen'
 import {MENU_ACT, NATIVE_OPEN_STUDIO, parseNativeOpenStudio} from '../native/openStudio'
 import {openStudioHome} from '../components/expressions/studio/studioHome'
-import {menuStageCommands} from '../components/expressions/studio/StudioStage'
+import {menuStageCommands, PictureChoices, useStageSender} from '../components/expressions/studio/StudioStage'
+import {exportWords, useLastExport} from '../components/expressions/studio/studioExports'
 import {sayOnInfoLine} from '../frame/devices/deviceHost'
 import {NATIVE_ENGINE_COMMAND, parseNativeEngineCommand, setNativeEngineMounted} from '../native/engineCommand'
 import {stageEngine} from '../native/stageCommands'
@@ -105,6 +107,8 @@ export function ExpressionsPanel() {
   const [hostFault, setHostFault] = useState<string | null>(null)
   const [surfaceFault, setSurfaceFault] = useState<string | null>(null)
   const [stage, setStage] = useState<HostedAppState | null>(null)
+  // File › Export › Picture…'s choices, while they stand (O-I #747).
+  const [picture, setPicture] = useState(false)
   // Stage controls go through the mounted host only; the answer settles the toolbar's own refusal line.
   const stageRun = (command: StageCommand): Promise<StageResult> => {
     if (!host.current) throw Error('No Expressions application is mounted')
@@ -369,6 +373,8 @@ export function ExpressionsPanel() {
     const menuAct = (event: Event) => {
       const id = (event as CustomEvent<{id?: unknown}>).detail?.id
       if (!live || typeof id !== 'string' || !mounted || !presented()) return
+      // Picture… asks its choices first (manual §20.1 Export's table): they stand over the window until Export or Close.
+      if (id === 'file.export.picture') { event.preventDefault(); setPicture(true); return }
       const commands = menuStageCommands(id, mounted.host.getState())
       if (!commands) return
       event.preventDefault()
@@ -482,6 +488,11 @@ export function ExpressionsPanel() {
   useEffect(() => {publishHostedChrome({state: stage, run: host.current ? stageRun : null, faults: [hostFault, surfaceFault, fault].filter((text): text is string => !!text),
     reopen: !host.current && !starting.current ? () => retry(value => value + 1) : null})}, [stage, hostFault, surfaceFault, fault, attempt])
   useEffect(() => () => publishHostedChrome(null), [])
+  // The last export as the native host received it (studioExports.ts), said on the status bar where the export was asked from: the
+  // Stage plate's Capture line it stood on moved with Export to the File menu (O-I #747).
+  const exported = useLastExport()
+  useEffect(() => {if (exported) sayOnInfoLine(container.current, 'Export', exportWords(exported))}, [exported])
+  const pictureSender = useStageSender(stage, host.current ? stageRun : null)
   // While a Factory pane holds the frame, the container follows that pane's slot (its own place and state return on release).
   useEffect(() => {
     const frame = container.current
@@ -496,6 +507,9 @@ export function ExpressionsPanel() {
         keeps its instrument session open in every cut, so an announced instrument is not a drawn one (seen again at 2f5c1bcf6). */}
     <div ref={container} className="expressions-application" data-empty={stage && !stage.nativeScene && !stage.presentsInstrument ? 'true' : undefined}
       data-i="Expressions|The field. Orbit is a pointer drag on the stage itself; its tools are the Studio's, in the detail row." />
+    {picture && createPortal(<div className="picture-choices-dialog" role="dialog" aria-label="Export picture"
+      onKeyDown={event => {if (event.key === 'Escape') {event.preventDefault(); setPicture(false)}}}>
+      <PictureChoices sender={pictureSender} onDone={() => setPicture(false)} exported={exported} /></div>, document.body)}
   </div>
 }
 

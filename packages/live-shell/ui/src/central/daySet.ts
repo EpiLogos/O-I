@@ -78,6 +78,12 @@ export function withTrackName(set: DaySet, world: string, name: string): DaySet 
   return {...set, tracks: set.tracks.map(track => track.world === world ? {...track, name} : track)}
 }
 
+/** The set with a world's track carrying no name of its own, so it shows the world's own name (Central's, central.world.name: O-I #743,
+ * a world's Rename reaches the world itself); a world the set does not hold is left as it is. Pure. */
+export function withoutTrackName(set: DaySet, world: string): DaySet {
+  return {...set, tracks: set.tracks.map(track => track.world === world ? {world: track.world} : track)}
+}
+
 /** The set with a world's track moved one place left (-1) or right (1) among the set's tracks; at the edge it stays. Pure. */
 export function withTrackMoved(set: DaySet, world: string, by: -1 | 1): DaySet {
   const at = set.tracks.findIndex(track => track.world === world), to = at + by

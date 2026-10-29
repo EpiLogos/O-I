@@ -258,6 +258,21 @@ test('Expressions collections: one line each — mark, name, its act where the s
   assert.match(markup, /data-collection-row="new"[^>]*><span class="world-collection-mark" aria-hidden="true"><svg/)
 })
 
+// O-I #747 round two (manual §10.3: the browser holds "the recordings, renders and imports the sets use … An import keeps where it came
+// from"): Import, moved from the Stage plate's Edition, stands under New and runs the field's own import; with no frame it says why.
+test('Expressions collections: Import stands under New, one line like the rest; with no field mounted it says why and is off', () => {
+  let imported = 0
+  const sections = collectionSections(appCollectionItems(), '')
+  const live = html(createElement(CollectionList, {sections, query: '', busy: null, report: null, onOpen: () => {}, onNew: () => {}, onImport: () => { imported++ }}))
+  const newSection = live.slice(live.indexOf('aria-label="New"'), live.indexOf('</section>', live.indexOf('aria-label="New"')))
+  assert.match(newSection, /data-collection-row="new"[^]*data-collection-row="import"/, 'Import stands after New, in New')
+  assert.match(newSection, /data-collection-row="import"[^>]*><span class="world-collection-mark"[^]*Import Expression…<\/span><button type="button" data-browser-row="[^"]*" aria-label="Import an Expression">Import<\/button>/)
+  const off = html(createElement(CollectionList, {sections, query: '', busy: null, report: null, onOpen: () => {}, onNew: () => {},
+    onImport: 'Open Expressions first: the field imports an Expression once its application is mounted.'}))
+  assert.match(off, /data-collection-row="import" data-i="Import Expression…\|Open Expressions first[^"]*"[^]*<button type="button" data-browser-row="[^"]*" disabled=""/)
+  assert.doesNotMatch(html(createElement(CollectionList, {sections, query: '', busy: null, report: null, onOpen: () => {}, onNew: () => {}})), /data-collection-row="import"/)
+})
+
 // ── Live · the sets ─────────────────────────────────────────────────────────────────────────────────
 
 test('Live sets: each set by its name without the extension, standing open, default or recent', () => {

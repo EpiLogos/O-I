@@ -67,12 +67,33 @@ return class RetainedProductionAdapter extends ProductionAdapter {
     for (const listener of this.recoveryListeners) listener("restored");
   };
 
-  configuration(frame) {
+  /** The authored identity a frame configures: the scene and its authoring
+   * revision, never the live revision (live parameter edits stay admitted
+   * while a lease stands). The guard below compares it with the lease's. */
+  authoredIdentity(frame) {
+    if (frame.authoringRevision !== undefined) return frame.scene.id + ":" + frame.authoringRevision;
     const { toolbelt, propertyTracks, ...renderScene } = frame.scene;
+    return JSON.stringify(renderScene);
+  }
+
+  /** O-I #747: whether configuring this frame would replace the authored
+   * scene a retained lease holds — what configuration() refuses. The host
+   * asks before it renders, so it can let the lease go and open it again
+   * around the person's act (a rebind) instead of meeting the refusal. */
+  retainedRefuses(frame) {
+    return !!this.retained?.lockedAuthored && this.authoredIdentity(frame) !== this.retained.lockedAuthored;
+  }
+
+  /** The authored identity the standing lease holds, or null with no lease. */
+  retainedAuthored() {
+    return this.retained?.lockedAuthored ?? null;
+  }
+
+  configuration(frame) {
     // The guard compares the authored identity only. The adapter's own
     // `signature` also carries the live revision, which advances with live
     // parameter edits that a retained lease must keep accepting.
-    const authored = frame.authoringRevision === undefined ? JSON.stringify(renderScene) : frame.scene.id + ":" + frame.authoringRevision;
+    const authored = this.authoredIdentity(frame);
     if (this.retained?.lockedAuthored && authored !== this.retained.lockedAuthored) {
       throw new Error("A retained native field is attached; release it before replacing the authored expression scene.");
     }

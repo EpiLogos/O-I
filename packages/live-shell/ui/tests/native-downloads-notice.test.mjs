@@ -97,15 +97,19 @@ test('one listener on the host\'s topic keeps the last notice; a notice the shel
   assert.match(Exports.exportWords(shown), /a download notice this shell does not read/)
 })
 
-test('Capture shows the last export under its controls: the file and folder, the whole path in its hover words; a failure says so', () => {
+// MOVED (O-I #747): Capture is File › Export › Picture…, so the last export stands under Picture…'s choices, and the panel says it on the
+// status bar wherever the export was asked from (panels/expressions.tsx). REPLACED: "Capture shows the last export under its controls".
+test('Picture… shows the last export under its choices, and the status bar says it: the file and folder; a failure says so', async () => {
   const sender = {reason: null, readings: Commands.stageReadings(null), refusal: null, send: noop}
-  const body = exported => renderToStaticMarkup(createElement(Stage.StageCaptureBody, {sender, chosen: 'still', options: Commands.STAGE_CAPTURE_DEFAULTS,
-    edition: false, editionId: 'edition', onChoose: noop, onOptions: noop, onEdition: noop, exported}))
+  const body = exported => renderToStaticMarkup(createElement(Stage.PictureChoicesBody, {sender, options: Commands.STAGE_CAPTURE_DEFAULTS,
+    onOptions: noop, onDone: noop, exported}))
   assert.doesNotMatch(body(null), /studio-export-line/, 'nothing is said before an export')
   const saved = body(SAVED)
   assert.match(saved, /<p class="studio-export-line" role="status" data-export="saved" title="\/Users\/person\/Downloads\/field-study \(1\)\.png">Saved “field-study \(1\)\.png” in ~\/Downloads\.<\/p>/)
-  assert.ok(saved.indexOf('data-stage="capture-png"') < saved.indexOf('studio-export-line'), 'the line stands under ◉ Capture, in the Capture column')
+  assert.ok(saved.indexOf('data-stage="capture-png"') < saved.indexOf('studio-export-line'), 'the line stands under Export, in Picture…\'s choices')
   assert.match(body(FAILED), /data-export="failed"[^>]*>“take\.webm” was not saved: The download failed or was cancelled/)
+  const panel = await readFile(new URL('../src/panels/expressions.tsx', import.meta.url), 'utf8')
+  assert.match(panel, /useEffect\(\(\) => \{if \(exported\) sayOnInfoLine\(container\.current, 'Export', exportWords\(exported\)\)\}, \[exported\]\)/)
 })
 
 test('the main window is built from its config with the download receiver; nothing about it but the receiver changes', async () => {

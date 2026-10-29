@@ -106,8 +106,62 @@ test('#747 X1: opening another Expression binds the live field again on its scen
  assert.match(body,/if\(j\.id!==store\.document\.id\)\{const said=nativeField\?\.rebind\(/,'only when another Expression opens');
  assert.match(body,/rebind\(`Opening “\$\{j\.name\}”`\);if\(said\)toast\(said/,'the act is named, and said');
  const field=await source('../src/nativeField.ts');
- const own=field.slice(field.indexOf('const rebind='),field.indexOf('const rebind=')+900);
- assert.match(own,/status!=='following'&&status!=='held'&&status!=='opening'\)return null/,'no live field held, nothing happens');
- assert.match(own,/controller\.release\(true\)\.then\(\(\)=>\{controller\.reason=words;update\(\);return open\('now'\);\}\)/,'released, then opened again on the new scene');
- assert.match(field,/return \{controller,panel,command,stage,playJanko,touch,openLive,leaveLive,rebind,/);
+ const own=field.slice(field.indexOf('const rebind='),field.indexOf('const authoredMoved='));
+ assert.match(own,/const held=status==='following'\|\|status==='held'\|\|status==='opening';\s*if\(!held&&!reopening\)return null;/,'no live field held and none waiting: nothing happens');
+ assert.match(own,/if\(held\)released=controller\.release\(true\)\.catch\(fail\);/,'released; it opens again on the new scene once still (round two)');
+ assert.match(field,/return \{controller,panel,command,stage,playJanko,touch,openLive,leaveLive,rebind,authoredMoved,/);
+});
+
+// O-I #747 round two (lead's ruling of 29 Oct): a live field held on the scene is let go and opened again around each of the person's
+// authored acts — a scene switched, a view kept, a control changed — never released on leaving Live (Live may still be playing).
+test('#747: the lease says, before the engine is configured, whether a frame would replace the authored scene it holds', async () => {
+ const {withRetainedField}=await import('../../../../../packages/oi-design-system/expressions-engine/oi/retained-capability.mjs');
+ class Base{constructor(){this.capabilities={notes:[]};this.configured=0;}configuration(){this.configured++;return 'configured';}}
+ const Adapter=withRetainedField(Base,400);
+ const adapter=new Adapter({addEventListener(){}});
+ const frame=(scene,revision)=>({scene:{id:scene,name:scene},authoringRevision:revision});
+ assert.equal(adapter.authoredIdentity(frame('s1',10)),'s1:10');
+ assert.equal(adapter.retainedRefuses(frame('s1',10)),false,'no lease: nothing is refused');
+ assert.equal(adapter.retainedAuthored(),null);
+ adapter.retained={lockedAuthored:'s1:10'};
+ assert.equal(adapter.retainedRefuses(frame('s1',10)),false,'the scene the lease holds');
+ assert.equal(adapter.retainedRefuses(frame('s1',20)),true,'an authored change: a view kept, a control changed');
+ assert.equal(adapter.retainedRefuses(frame('s2',10)),true,'a scene switched');
+ assert.throws(()=>adapter.configuration(frame('s2',10)),/A retained native field is attached/,'the guard itself still refuses, as before');
+ assert.equal(adapter.configuration(frame('s1',10)),'configured');
+});
+
+test('#747: each authored change meets the live field before the engine does, is named, and the field opens again once the scene is still', async () => {
+ const app=await source('../src/app.ts');
+ assert.match(app,/try\{const frame=frameData\(delta\);rebindAroundAct\(frame\);engine\.render\(frame\);/,'every frame the engine renders is asked first');
+ const helper=app.slice(app.indexOf('function rebindAroundAct('),app.indexOf('function tick('));
+ assert.match(helper,/if\(!adapter\.retainedRefuses\(frame\)\)\{nativeField\.authoredMoved\(adapter\.authoredIdentity\?\.\(frame\)\?\?null\);return;\}/,'a still scene lets a waiting reopen run');
+ assert.match(helper,/heldScene!==frame\.scene\.id\?`Going to scene “\$\{frame\.scene\.name\}”`:store\.undoLabel\(\)\?\?'Your change'/,'the act is named: the scene gone to, or the edit\'s own label');
+ assert.match(helper,/const said=nativeField\.rebind\(act\);if\(said\)toast\(said,6500\);/);
+ const field=await source('../src/nativeField.ts');
+ const own=field.slice(field.indexOf('const rebind='),field.indexOf('const authoredMoved='));
+ assert.match(own,/if\(held\)released=controller\.release\(true\)\.catch\(fail\);/,'let go now, before the change is configured');
+ assert.match(own,/const first=!reopening;\s*reopenWhenStill\(\);\s*return first\?words:null;/,'said once per settling');
+ assert.match(field,/reopening=window\.setTimeout\(\(\)=>\{if\(busy\|\|composing\)\{reopenWhenStill\(\);return;\}reopening=0;void released\.catch\(\(\)=>\{\}\)\.then\(\(\)=>open\('now'\)\);\},REBIND_SETTLE_MS\);/,'opened again once still; a busy open is waited out, never dropped');
+ assert.match(field,/const leaveLive=\(\)=>liveEntry\.leave\(\);/,'leaving Live never releases the field');
+ assert.match(app,/function applyJourney\([^)]*\)\{journeyNavigation\+\+;[^]*?if\(j\.id!==store\.document\.id\)\{const said=nativeField\?\.rebind\(`Opening “\$\{j\.name\}”`\)/,'opening another Expression, named as before');
+});
+
+// O-I #747 round two, walk 739 X4: after a relaunch, a line says what live motion could not be brought back.
+test('#747 X4: a work reopened where it stood says what of its live motion could not come back', async () => {
+ const app=await source('../src/app.ts');
+ const settle=app.slice(app.indexOf('function settleDeepLink('),app.indexOf('function applyDeepLinkAddress('));
+ assert.match(settle,/if\(applied&&carried\)notes\.push\(reopenedMotionLine\(\)\);\s*if\(notes\.length\)toast\(notes\.join\(' '\),8000\);/);
+ assert.match(app,/function reopenedMotionLine\(\)\{return 'Reopened where it stood\. Its live motion could not be brought back: the particles start again from the scene\\'s configuration/);
+});
+
+// O-I #747 round two: View's Kept is the scene's own kept state (manual §20.1 The Clip panel), which Keep writes with the framing.
+test('#747: Keep writes the scene\'s kept state with its framing, and the model refuses a kept state that is neither', async () => {
+ const app=await source('../src/app.ts');
+ assert.match(app,/case 'keep-view':changed\(\(\)=>\{scene\(\)\.view=\{\.\.\.scene\(\)\.view,kept:true,mode:camera\.mode,/);
+ const {validateJourney,blankJourney}=await import('../build/model.js');
+ const journey=blankJourney();journey.scenes[0].view={...journey.scenes[0].view,kept:true};
+ assert.equal(validateJourney(journey).scenes[0].view.kept,true);
+ const wrong=blankJourney();wrong.scenes[0].view={...wrong.scenes[0].view,kept:'yes'};
+ assert.throws(()=>validateJourney(wrong),/Invalid kept view/);
 });

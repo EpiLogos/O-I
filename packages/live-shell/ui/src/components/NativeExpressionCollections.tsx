@@ -6,6 +6,8 @@ import {Icon} from '../inhabitants/sdk/Icon'
 import {KindMark} from '../inhabitants/sdk/marks.tsx'
 import {collectionSections, enumerateWorks, expressionOwner, freshTitle, newExpression, openStarter, worksHome,
   type CollectionItem, type CollectionRow, type CollectionSection, type OpenOutcome, type OpenPorts} from './nativeExpressionCommands'
+import {useHostedChrome} from '../projections/expressionsPaneHost'
+import {STAGE_IMPORT} from '../native/stageCommands'
 import './NativeExpressionCollections.css'
 
 let collectionItems: readonly CollectionItem[] | null = null
@@ -33,6 +35,9 @@ export function appCollectionJourney(id: string): Expression | undefined {
 }
 
 export const NEW_ROW: CollectionRow = {id: 'new', name: 'New Expression', description: 'An empty work: one Scene, nothing placed.'}
+/** Import (manual §10.3: the browser holds "the recordings, renders and imports the sets use … An import keeps where it came from"; O-I #747
+ * moved it here from the Stage plate's Edition): an Expression from its JSON file, through the field's own import. */
+export const IMPORT_ROW: CollectionRow = {id: 'import', name: 'Import Expression…', description: 'An Expression from its JSON file, opened in the field; it keeps where it came from.'}
 /** What a row says about its last run: the owner's refusal verbatim, or the status that follows a success. */
 export interface RowReport {id: string; kind: 'error' | 'status'; text: string}
 
@@ -45,9 +50,11 @@ export function reportOf(id: string, outcome: OpenOutcome): RowReport | null {
 }
 
 /** The rows and their state, with no owner access: New, then Featured, Starters and Built-in presets. */
-export function CollectionList({sections, query, busy, report, onOpen, onNew}: {
+export function CollectionList({sections, query, busy, report, onOpen, onNew, onImport}: {
   sections: readonly CollectionSection[]; query: string; busy: string | null; report: RowReport | null
   onOpen: (id: string) => void; onNew: () => void
+  /** The field's import, or the reason it cannot run (no Expressions application mounted). Absent: no Import row. */
+  onImport?: (() => void) | string
 }) {
   // Manual 10.3: a row opens by double-click; the button is the same act, for the keyboard and the pointer. The row is drawn at
   // the browser's floor (world-shell-mockup.html bi() :1478): its mark, its name, and its act where the standing stands; the
@@ -62,7 +69,13 @@ export function CollectionList({sections, query, busy, report, onOpen, onNew}: {
       : <p className="native-empty" role="status">{report.text}</p>)}
   </li>
   return <div className="native-expression-collections">
-    <section className="world-collection" aria-label="New"><h3>New</h3><ul>{row(NEW_ROW, 'New', NEW_ROW.name, onNew)}</ul></section>
+    <section className="world-collection" aria-label="New"><h3>New</h3><ul>{row(NEW_ROW, 'New', NEW_ROW.name, onNew)}
+      {onImport !== undefined && (typeof onImport === 'string'
+        ? <li className="world-collection-row" data-collection-row={IMPORT_ROW.id} data-i={`${IMPORT_ROW.name}|${onImport}`} title={onImport}>
+          <span className="world-collection-mark" aria-hidden="true"><Icon name="plus" size={12} /></span>
+          <span className="world-collection-name">{IMPORT_ROW.name}</span>
+          <button type="button" data-browser-row disabled aria-label="Import an Expression">Import</button></li>
+        : row(IMPORT_ROW, 'Import', 'Import an Expression', onImport))}</ul></section>
     {sections.map(section => <section key={section.id} className="world-collection" aria-label={section.title}>
       <h3>{section.title}</h3>
       {section.rows.length
@@ -116,5 +129,14 @@ export function NativeExpressionCollections({query}: {query: string}) {
     else void run(id, ports => openStarter(ports, journey))
   }
   const create = () => void run(NEW_ROW.id, ports => newExpression(ports, freshTitle(blankJourney().name, origin.current.nativeWorks.map(work => work.title))))
-  return <CollectionList sections={sections} query={query} busy={busy} report={report} onOpen={open} onNew={create} />
+  // Import runs the field's own import (the frame's file chooser), one command through the mounted frame's runner; its refusal stands on the row.
+  const hosted = useHostedChrome()
+  const runner = hosted?.run ?? null
+  const importing = runner ? () => {
+    if (running.current) return
+    setReport(null)
+    void runner(STAGE_IMPORT).then(result => setReport(result.ok ? null : {id: IMPORT_ROW.id, kind: 'error', text: result.error}),
+      (cause: unknown) => setReport({id: IMPORT_ROW.id, kind: 'error', text: cause instanceof Error ? cause.message : String(cause)}))
+  } : 'Open Expressions first: the field imports an Expression once its application is mounted.'
+  return <CollectionList sections={sections} query={query} busy={busy} report={report} onOpen={open} onNew={create} onImport={importing} />
 }

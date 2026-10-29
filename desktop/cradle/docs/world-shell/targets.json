@@ -1561,7 +1561,7 @@
       },
       "gap": null,
       "owner_op": {
-        "op": "kernel `expression` op · edit (KernelOp::Expression), the Scene's research material + the host's download receiver (desktop/cradle/src-tauri/src/downloads.rs), attached to every window the config builds: the file lands where the platform puts downloads and the Studio's Capture section says where, or names the fault — a native host seam, not a kernel op",
+        "op": "kernel `expression` op · edit (KernelOp::Expression), the Scene's research material + the host's download receiver (desktop/cradle/src-tauri/src/downloads.rs), attached to every window the config builds: the file lands where the platform puts downloads and File › Export › Picture…'s choices and the status bar say where, or names the fault — a native host seam, not a kernel op",
         "call": {
           "at": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:2657",
           "quote": "material:async(id,action:ResearchMaterialAction)"
@@ -1680,7 +1680,7 @@
       },
       "gap": null,
       "owner_op": {
-        "op": "kernel `expression` op · inspect (KernelOp::Expression) — presentation over the open Scene; writes nothing + the host's download receiver (desktop/cradle/src-tauri/src/downloads.rs), attached to every window the config builds: the file lands where the platform puts downloads and the Studio's Capture section says where, or names the fault — a native host seam, not a kernel op",
+        "op": "kernel `expression` op · inspect (KernelOp::Expression) — presentation over the open Scene; writes nothing + the host's download receiver (desktop/cradle/src-tauri/src/downloads.rs), attached to every window the config builds: the file lands where the platform puts downloads and File › Export › Picture…'s choices and the status bar say where, or names the fault — a native host seam, not a kernel op",
         "call": {
           "at": "desktop/cradle/expressions-app/field-studies-journeys/src/nativeWorking.ts:261",
           "quote": "this.ports.expression({operation:'inspect',expression_ref:record.view.document.expression_ref})"
@@ -16615,7 +16615,7 @@
       ]
     },
     "download-receiver": {
-      "op": "the host's download receiver (desktop/cradle/src-tauri/src/downloads.rs), attached to every window the config builds: the file lands where the platform puts downloads and the Studio's Capture section says where, or names the fault — a native host seam, not a kernel op",
+      "op": "the host's download receiver (desktop/cradle/src-tauri/src/downloads.rs), attached to every window the config builds: the file lands where the platform puts downloads and File › Export › Picture…'s choices and the status bar say where, or names the fault — a native host seam, not a kernel op",
       "calls": [
         {
           "at": "desktop/cradle/src-tauri/src/downloads.rs:164",
@@ -16626,7 +16626,7 @@
           "quote": "builder.on_download(downloads::receiver()).build()?;"
         },
         {
-          "at": "packages/live-shell/ui/src/components/expressions/studio/StudioStage.tsx:176",
+          "at": "packages/live-shell/ui/src/components/expressions/studio/StudioStage.tsx:153",
           "quote": "{exported && <p className=\"studio-export-line\""
         }
       ]
@@ -16647,7 +16647,7 @@
           "quote": "export function readHostedAddress"
         },
         {
-          "at": "packages/live-shell/ui/src/panels/expressions.tsx:50",
+          "at": "packages/live-shell/ui/src/panels/expressions.tsx:52",
           "quote": "function engineCheckpoint("
         },
         {

@@ -43,7 +43,7 @@ import {chosenAddChange, chosenDropReason} from '../../nativeBrowserModel'
 import type {RetainedGlyphInput} from '../../GlyphSequenceEditor'
 import {STUDIO_CARRIED, studioChains, studioFieldFamilies, studioOwner, studioPlace, studioSections} from './studioModel'
 import {STUDIO_DEVICE_ID, studioBinding, type StudioNara} from './studioBinding'
-import {StageCaptureTools, StageViewTools, useStageSender} from './StudioStage'
+import {StageViewTools, useStageSender} from './StudioStage'
 import {FrameControls, controlsAt, useFrameChromeOver} from './frameChrome'
 import {useFramePlacement, useHostedChrome} from '../../../projections/expressionsPaneHost'
 import './studio.css'
@@ -205,8 +205,9 @@ export function ExpressionsStudio(props: ExpressionsStudioProps) {
   const frameTools = frameAt(['tools', 'scene', 'side'])
   const stageSections: PlateSection[] = [
     ...(frameTools.length ? [{id: 'stage:frame', title: 'Frame tools', children: <FrameControls label="Frame tools" controls={frameTools} view={frame} />}] : []),
-    {id: 'stage:view', title: 'View', children: <StageViewTools sender={stage} />},
-    {id: 'stage:capture', title: 'Capture', children: <StageCaptureTools sender={stage} />},
+    // O-I #747: the camera alone stays (no manual home yet); the view's grid, snap and guides are the View menu's, Fit the Clip panel's,
+    // and Capture with its choices File › Export's (StudioStage.tsx).
+    {id: 'stage:camera', title: 'Camera', children: <StageViewTools sender={stage} />},
     ...own.filter(section => section.id !== 'chosen'),
   ]
   const said = [fault ?? paneFault ?? editor.error, stage.refusal, frame.refusal, ...(placement === null ? chrome?.faults ?? [] : [])].filter((text): text is string => !!text)

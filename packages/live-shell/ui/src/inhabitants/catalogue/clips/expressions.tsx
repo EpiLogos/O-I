@@ -90,6 +90,8 @@ function ViewOf({p, why}: {p: ClipProps; why?: string}) {
       disabled={why ?? (view === undefined ? 'No reading of the scene\'s view yet.' : undefined)} />
     <Action label="Restore" does="Returns to the view the scene keeps, after you orbit away." onPress={() => p.set('view.restore', Date.now())}
       disabled={view === 'kept' ? undefined : 'The scene keeps no view yet: Keep one first.'} />
+    <Action label="Fit" does="Returns the camera to its default framing, facing the plane. The scene's kept view stays as it is." onPress={() => p.set('view.fit', Date.now())}
+      disabled={view === undefined ? 'No reading of the scene\'s view yet.' : undefined} />
   </>
 }
 

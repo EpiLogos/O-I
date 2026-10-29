@@ -75,6 +75,10 @@ function centralSet() {
   const calls = []
   const controls = {writeSet: async change => { held = change(held); calls.push(['set', held]); return {revision: 'r2', wrote: true} },
     makePage: async world => { calls.push(['made', world.ref]); return {path: `${world.folder}/flow-new.html`, ref: `central:path:/ground:${world.folder}/flow-new.html`} },
+    // O-I #743, round four: a world's Rename is Central's own name for it; a page's copy and its Delete are the page owner's.
+    nameWorld: async (world, name) => { calls.push(['named', world.ref, name]); return {schema: 'central.world-name/v1', outcome: 'named'} },
+    copyPage: async (page, into) => { calls.push(['copied', page.location.ref, into?.ref ?? null]); return {path: `${page.location.path}.copy`, ref: `${page.location.ref}.copy`} },
+    trashPage: async page => { calls.push(['trashed', page.location.ref, page.revision]); return {schema: 'oi.page-trash/v1'} },
     stop: async item => { calls.push(['stop', item.nowRef]) }, launch: async () => ({}), removeWorld: async () => ({})}
   const tracks = adapter.projectCentralTracks({...reading, set: todaySet, playing, controls})
   return {tracks, calls, held: () => held}
@@ -86,8 +90,11 @@ test('Central\'s set acts write today\'s set in the Day: a track named and moved
   const {tracks, calls, held} = centralSet()
   const a = tracks.actions
   for (const name of ['renameTrack', 'moveTrack', 'insertRow', 'renameRow', 'deleteRow', 'insertClip', 'stopAll']) assert.ok(a[name], `${name} is carried`)
-  assert.deepEqual(await a.renameTrack.run(oi, 'The Instrument'), {ok: true, note: 'O-I is named The Instrument today.'})
-  assert.equal(held().tracks[0].name, 'The Instrument')
+  // REPLACED (O-I #743, round four): Rename named today's track in today's set (daySet.ts withTrackName); it now names the world itself
+  // (Central's central.world.name, so the browser shows it too), and the name the set kept for the track is taken away.
+  assert.deepEqual(await a.renameTrack.run(oi, 'The Instrument'), {ok: true, note: 'O-I is named The Instrument: the browser and today\'s track show it.'})
+  assert.deepEqual(calls.find(call => call[0] === 'named'), ['named', 'central:wiki:project:O-I', 'The Instrument'])
+  assert.equal(held().tracks[0].name, undefined, 'the set keeps no name of its own for the track')
   assert.match((await a.renameTrack.run(yours, 'Mine')).error, /Your world is named by your ground/)
   assert.match((await a.moveTrack.run(oi, -1)).error, /right after your world/)
   await a.insertRow.run('central:row:r1')
@@ -120,14 +127,14 @@ test('in Central the acts still dimmed say what they wait for; the carried ones 
   const context = menuContext([])
   const clip = tracks.clips.find(c => c.trackId === oi)
   const clipItems = acts.objectMenu({kind: 'clip', id: clip.id, trackId: oi, name: clip.label}, tracks, context)
-  assert.match(clipItems.find(item => item.id === 'delete').why, /missing op: clip\.delete .* It waits for Central taking a page out of its world/)
-  assert.match(clipItems.find(item => item.id === 'duplicate').why, /It waits for a page's copy in its world/)
+  // REPLACED (O-I #743, round four): Delete and Duplicate waited for the page owner's copy and Central's trash; both are carried now.
+  for (const id of ['delete', 'duplicate', 'cut', 'copy']) assert.ok(!clipItems.find(item => item.id === id).disabled, `${id} is enabled`)
+  assert.match(clipItems.find(item => item.id === 'info').why, /missing op: clip\.info .* It waits for a page's info text/)
   const trackItems = acts.objectMenu({kind: 'track', id: oi, name: 'O-I'}, tracks, context)
   for (const id of ['rename', 'move-left', 'move-right', 'delete']) assert.ok(!trackItems.find(item => item.id === id).disabled, `${id} is enabled`)
   assert.match(trackItems.find(item => item.id === 'group').why, /It waits for a group of worlds/)
   const row = acts.objectMenu({kind: 'row', id: 'central:row:r1', name: 'Morning'}, tracks, context)
-  for (const id of ['launch', 'insert', 'rename', 'delete', 'stop-all']) assert.ok(!row.find(item => item.id === id).disabled, `${id} is enabled`)
-  assert.match(row.find(item => item.id === 'duplicate').why, /It waits for a page's copy/)
+  for (const id of ['launch', 'insert', 'rename', 'delete', 'stop-all', 'duplicate']) assert.ok(!row.find(item => item.id === id).disabled, `${id} is enabled`)
   assert.ok(!acts.objectMenu({kind: 'slot', trackId: oi, rowId: 'central:row:r1', name: 'O-I'}, tracks, context).find(item => item.id === 'insert').disabled)
 })
 
@@ -136,6 +143,7 @@ test('today\'s set\'s own changes are pure: a track named and moved, a row place
   assert.deepEqual(daySet.withTrackMoved(held, 'a', 1).tracks.map(t => t.world), ['b', 'a'])
   assert.equal(daySet.withTrackMoved(held, 'a', -1), held, 'at the edge it stays')
   assert.equal(daySet.withTrackName(held, 'b', 'Bee').tracks[1].name, 'Bee')
+  assert.deepEqual(daySet.withoutTrackName(daySet.withTrackName(held, 'b', 'Bee'), 'b').tracks[1], {world: 'b'})
   assert.deepEqual(daySet.withRowAt(held, {id: 'y', name: 'Y', pages: []}, 0).rows.map(r => r.id), ['y', 'x'])
   assert.deepEqual(daySet.withoutRow(held, 'x').rows, [])
 })
@@ -160,7 +168,9 @@ test('Factory and Technē name what each dimmed act waits for, at their owners',
   assert.equal(MODE_WAITING.factory, FACTORY_WAITING)
   assert.equal(MODE_WAITING.techne, TECHNE_WAITING)
   const items = acts.objectMenu({kind: 'track', id: 's1', name: 'Builder'}, factory, menuContext([]))
-  assert.match(items.find(item => item.id === 'rename').why, /missing op: track\.rename .* It waits for AIKit naming a session/)
+  // REPLACED (O-I #743, round four): a session's Rename waited for AIKit to name a session; AIKit's settings name it now, and with no
+  // kernel carrier the act waits for one.
+  assert.match(items.find(item => item.id === 'rename').why, /missing op: track\.rename .* It waits for a kernel carrier reaching AIKit's encounter-session-settings/)
 })
 
 test('CODE-READING — a Live track wears the set\'s own colour, and choosing one writes the set, not the display\'s storage', async () => {

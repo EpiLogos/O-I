@@ -8550,6 +8550,8 @@ Everything Expressions does has one place.
 | Start an Expression, from nothing or from a composition | The browser (§10.3): the library and its starters |
 | Open an Expression | The browser (§10.3) |
 | Show the field alone | Present, in the View menu |
+| Show the grid, snap to it, or show guides | Grid, Snap and Guides, in the View menu |
+| Turn the field to 2D or 3D, or face its plane | The View menu, beside Grid, Snap and Guides |
 | Save, undo and redo | The File and Edit menus, and the Studio's head |
 | Act on a symbol, a scene or an Expression | Its menu (§10.9) |
 | Find a control by its name | The line (§18.4). It opens the control in its device. |
