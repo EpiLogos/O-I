@@ -5,6 +5,7 @@
  * the Agent saves as `expressive_character_ref` (via agent-profile.express);
  * the material itself stays in its own document.
  */
+import {Refusal} from "../../shared/Refusal";
 import {useEffect, useMemo, useState} from "react";
 import {useKernel} from "../../kernel/KernelProvider";
 import {characterPreview, characterRepertoire, type CharacterChoice} from "./characterModel";
@@ -56,7 +57,7 @@ export function CharacterSection({value, onChange, disabled}: {value?: string; o
           </select>
         </label>
         {catalogue.state === "reading" && <p className="oi-note" aria-busy="true">Reading reusable characters…</p>}
-        {catalogue.state === "error" && <p className="oi-note" role="status">Reusable characters could not be listed: {catalogue.error} <button type="button" className="oi-action" onClick={catalogue.retry}>Read again</button></p>}
+        {catalogue.state === "error" && <Refusal className="oi-note" role="status" said="Couldn't list the reusable characters." error={catalogue.error}><button type="button" className="oi-action" onClick={catalogue.retry}>Read again</button></Refusal>}
         {catalogue.state === "ready" && catalogue.characters.length === 0 && <p className="oi-note">No reusable characters are saved yet. Create one in Expressions and save it as a character.</p>}
         {reading.document && (repertoire.states.length > 0 || repertoire.gestures.length > 0) && <label className="oi-field">Preview
           <select className="oi-input" aria-label="Character state or gesture" value={encodeChoice(choice)} onChange={event => pick(event.target.value)}>
@@ -65,9 +66,9 @@ export function CharacterSection({value, onChange, disabled}: {value?: string; o
             {repertoire.gestures.length > 0 && <optgroup label="Gestures">{repertoire.gestures.map(name => <option key={name} value={encodeChoice({gesture: name})}>{name}</option>)}</optgroup>}
           </select>
         </label>}
-        {reading.state === "error" && <p className="oi-refusal" role="status">{reading.error}</p>}
+        {reading.state === "error" && <Refusal role="status" said="Couldn't read the character." error={reading.error}/>}
         {value && <button type="button" className="oi-action" disabled={opening} onClick={() => void edit()}>{opening ? "Opening…" : "Edit in Expressions"}</button>}
-        {openError && <p className="oi-refusal" role="alert">{openError}</p>}
+        {openError && <Refusal said="Couldn't open the character in Expressions." error={openError}/>}
         {value && <p className="oi-note">Saved on the Agent as <code className="oi-ref">{value}</code>.</p>}
       </div>
     </div>

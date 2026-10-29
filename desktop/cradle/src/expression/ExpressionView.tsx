@@ -1,3 +1,4 @@
+import {Refusal} from "../shared/Refusal";
 import {useEffect,useRef,useState} from "react";
 import {useExpressionStage,type StagePresentation} from "../stage/ExpressionStage";
 import {expressionConfig} from "./engineProjection";
@@ -53,7 +54,7 @@ export function ExpressionView({initialExpressionRef}:{initialExpressionRef?:str
     <button className="oi-action expression-share" aria-pressed={sharing} onClick={()=>setSharing(!sharing)} title="Project this Expression for an audience: exact outward preview, omissions, audience, Projection, Open in Explore">{sharing?"Close share":"Share / Project"}</button>
    </div>}
   </header>
-  {error&&<p role="alert">{error}</p>}
+  {error&&<Refusal said="Couldn't show the Expression." error={error}/>}
   {/* Identity row: open an existing Expression or begin a new one. */}
   <div className="expression-tools expression-identity">
    <label className="oi-field">Open Expression<select className="oi-input" aria-label="Open Expression" value={document?.expression_ref??""} onChange={e=>{setFile(undefined);void inspect(e.target.value).catch(error=>setError(String(error)));}}><option value="" disabled>Choose</option>{list.map(d=><option key={d.expression_ref} value={d.expression_ref}>{d.title} · r{d.revision}</option>)}</select></label>

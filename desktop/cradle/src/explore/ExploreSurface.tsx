@@ -1,3 +1,4 @@
+import {Refusal} from "../shared/Refusal";
 import {CanvasHUD} from "../workspace/primitives/CanvasHost";
 /**
  * Explore — the stable global desktop entrance to the open/shared field
@@ -245,7 +246,7 @@ function FieldBody({field_ref,view,snapshot,onOpenRef}:{field_ref:string;view:Fi
   return <article className="world-presentation world-presentation--field" data-field-ref={field_ref} data-field-visibility={field.visibility} data-membership={mine.length?mine.map(a=>a.role).join(","):"none"}>
     <header className="world-presentation__masthead"><div><div className="world-component__eyebrow">SharedField · {field.kind} · {field.visibility}</div><h1>{subjectLabel(field,"Unnamed shared undertaking")}</h1></div><div className="world-presentation__revision">{mine.length?`you: ${mine.map(a=>a.role).join(", ")}`:"you: no membership"}</div></header>
     {participant&&<p><button type="button" disabled={presenceBusy} aria-pressed={present} onClick={()=>void enterOrLeave()}>{present?"Leave shared NOW":"Enter shared NOW"}</button> {present?"You are present in this undertaking.":"Enter deliberately to participate."}</p>}
-    {presenceError&&<p role="alert">{presenceError}</p>}
+    {presenceError&&<Refusal said="Couldn't change your presence." error={presenceError}/>}
     <SharedStagePanel field_ref={field_ref} entries={entries} authority={mine} liveReading={{schema:"oi.shared-field.stage-reading/v1",field_ref,stage:snapshot.stages?.find(stage=>stage.field_ref===field_ref)??null,my_follow:(()=>{const follow=snapshot.my_stage_follows?.find(follow=>follow.field_ref===field_ref);return follow?{...follow,following:true}:null;})(),presence:snapshot.presence?.filter(body=>body.field_ref===field_ref)??[]}}/>
     <FieldNowRegion reading={fieldNowReading(snapshot,field_ref) as FieldNow|null} subjects={snapshot.entries}/>
     <section className="world-region" data-region-role="members"><div className="world-region__label">Participants · {members.length}</div><div className="world-region__components"><div className="world-component__collection">{members.map(p=><button type="button" key={p.participant_ref} onClick={()=>onOpenRef(p.participant_ref)}><strong>{subjectLabel(p.presentation,`Unnamed participant ${members.indexOf(p)+1}`)}</strong><span>{p.identity.kind}</span></button>)}</div></div></section>

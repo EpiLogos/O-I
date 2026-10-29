@@ -1,3 +1,4 @@
+import {Refusal} from "../shared/Refusal";
 import {useId, useEffect, useRef, useState, useSyncExternalStore} from "react";
 import {AdoptionController, type DesktopChoice} from "./adoptionController";
 export function AdoptionFlow({controller, chooseGround, onClose, onConfigure, onApplied}: {
@@ -38,7 +39,7 @@ export function AdoptionFlow({controller, chooseGround, onClose, onConfigure, on
     <header><h3 ref={heading} tabIndex={-1}>Install and set up this World</h3><button type="button" disabled={!controller.canClose()} onClick={close}>Close</button></header>
     <p>Keep existing tools and Central. Choose what to add, review its effects, verify installation, then configure capabilities. Maintenance uses the same native owners; it does not restart your work.</p>
     {state.busy && <p role="status">{state.busy === "applying" ? "Applying the reviewed native plan. Closing or losing a reply does not roll it back." : state.busy === "preparing" ? "Preparing and checking the native Desktop offer; not installing it." : "Reading native state…"}</p>}
-    {(state.error || pickerError) && <p role="alert">{state.error ?? pickerError}</p>}
+    {(state.error || pickerError) && <Refusal said="Couldn't finish this setup step." error={state.error ?? pickerError}/>}
     {state.step === "selection" && <form onSubmit={event => {event.preventDefault(); void controller.plan();}}>
       <h4>Recognised World</h4>
       <p>{state.discovery?.bound_ground ?? "No default Central is bound yet."}</p>
@@ -74,7 +75,7 @@ export function AdoptionFlow({controller, chooseGround, onClose, onConfigure, on
       <ol>{state.plan.steps.map((step, index) => <li key={index}><strong>{step.title}</strong>{step.effects.map(effect => <p key={effect}>{effect}</p>)}
         {step.native_plan && <details className="config-advanced settings-raw" data-show-raw><summary>Show raw</summary><pre>{JSON.stringify(step.native_plan, null, 2)}</pre></details>}
       </li>)}</ol>
-      {state.plan.blocked.map(error => <p role="alert" key={error}>{error}</p>)}
+      {state.plan.blocked.map(error => <Refusal key={error} said="This plan is blocked." error={error}/>)}
       {!controller.canApply() && !state.busy && !state.plan.blocked.length && <p>The review expired. Go back and make a fresh plan; nothing is silently reapplied.</p>}
       <button type="button" disabled={locked} onClick={() => controller.back()}>Back</button>{" "}
       <button type="button" disabled={!controller.canApply()} onClick={() => void controller.apply()}>{choice?.hosted ? "Confirm no local installation" : "Apply this reviewed plan"}</button>{" "}

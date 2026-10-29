@@ -1,3 +1,4 @@
+import {Refusal} from "../shared/Refusal";
 import {useEffect,useState} from "react";
 import {useKernel} from "../kernel/KernelProvider";
 import {nowReading,type NowReading} from "./now";
@@ -23,7 +24,7 @@ export function NowRelations({nowRef,project,refresh=0,onOpenSource,onReturn}:{n
  const record=current?.record;
  return <div className="now-relations" data-now-reading={current?.schema} data-now-ref={nowRef} aria-busy={pending}>
   <strong>NOW</strong><button type="button" onClick={()=>setVersion(n=>n+1)} disabled={pending}>Refresh NOW</button>
-  {error&&<p className="now-relations-refused" data-owner-refusal={error} role="alert">NOW read failed: {error}{current?" — retained reading is not current success.":""}</p>}
+  {error&&<Refusal className="now-relations-refused" data-owner-refusal={error} said={current?"Couldn't read the NOW. What shows is the last reading, not a current one.":"Couldn't read the NOW."} error={error}/>}
   {!record&&!error&&<p role="status">Reading the exact NOW…</p>}
   {record&&<>
    <dl>

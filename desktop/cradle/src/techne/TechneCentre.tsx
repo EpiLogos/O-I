@@ -1,5 +1,6 @@
 /** Technè operates inside the hosted Expressions application. The cradle
  * supplies owner readings; it never replaces the field with another lens UI. */
+import {Refusal} from "../shared/Refusal";
 import {useCallback, useEffect, useRef, useState} from "react";
 import {PointCloudHost} from "../expressions/PointCloudHost";
 import {useKernel} from "../kernel/KernelProvider";
@@ -85,7 +86,7 @@ export function TechneCentre({binding, deepLink, onHostedState}: {
   }, [kernel.transport]);
   const readTechne = useCallback((request: unknown) => readWikiSceneTechne(kernel.transport, request), [kernel.transport]);
   return <div ref={centre} className="techne-centre">
-    {failure && <p className="techne-owner-error" role="alert">{failure}</p>}
+    {failure && <Refusal className="techne-owner-error" said="Couldn't open the Technē field." error={failure}/>}
     <div className="techne-centre-field">
       <PointCloudHost mode="techne" bindingId={binding.id} deepLink={deepLink} onHostedState={onHostedState} readTechne={readTechne} techneWorld={techneWorld}/>
     </div>

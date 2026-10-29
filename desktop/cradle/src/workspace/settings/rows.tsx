@@ -5,9 +5,10 @@
  * Open file — never a disabled control), the one-sentence missing
  * operation, the section states (Reading / Couldn't load + Retry), and cards.
  */
+import {Refusal, refusalWords} from "../../shared/Refusal";
 import type {ReactNode} from "react";
 import {createPortal} from "react-dom";
-import {expect, plain} from "./settingsData";
+import {expect} from "./settingsData";
 import {useEffect, useRef, useState} from "react";
 
 /**
@@ -75,7 +76,7 @@ export function ReadOnly({value, place, path}: {value?: ReactNode; place: string
     {path && <button type="button" className="settings-link" data-settings-open-file={path} title={path}
       onClick={() => {
         setNote(null);
-        void expect({op: "settings_reveal", path}, "settings_revealed").catch((cause) => setNote(plain(cause)));
+        void expect({op: "settings_reveal", path}, "settings_revealed").catch((cause) => setNote(refusalWords("Couldn't open the file.", cause)));
       }}>Open file</button>}
     {note && <span className="settings-inline-error" role="alert">{note}</span>}
   </span>;
@@ -94,10 +95,9 @@ export function Reading({label = "Reading settings…"}: {label?: string}) {
 }
 
 export function Unreadable({error, onRetry}: {error: string; onRetry: () => void}) {
-  return <div className="settings-unreadable" role="alert" data-settings-unreadable>
-    <p><strong>Couldn't load these settings.</strong> <span className="settings-unreadable-reason">{error}</span></p>
+  return <Refusal className="settings-unreadable" data-settings-unreadable said="Couldn't load these settings." error={error}>
     <button type="button" className="settings-button" onClick={onRetry}>Retry</button>
-  </div>;
+  </Refusal>;
 }
 
 export function Card({title, children, id, className}: {title: ReactNode; children?: ReactNode; id?: string; className?: string}) {

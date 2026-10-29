@@ -1,3 +1,4 @@
+import {Refusal} from "../shared/Refusal";
 import {useCallback,useEffect,useMemo,useRef,useState} from "react";
 import {createPortal} from "react-dom";
 import {activeBindingId} from "../surface/engine";
@@ -71,7 +72,7 @@ function BimbaNavigator({binding}:{binding:SurfaceBinding}){
   return <div className="k9-side" data-epi-nara-region="bimba">
     <div className="k9-bimba">
       <header><p className="k9-kicker">Epi / Nara · Bimba</p><h2 className="k9-title">Knowledge in the field</h2></header>
-      {error?<p role="alert" className="k9-alert">{error}</p>:null}
+      {error?<Refusal className="k9-alert" said="Couldn't read the source." error={error}/>:null}
       {bimba?<>
         <p className="k9-quiet">{bimba.standing}</p>
         <nav aria-label="Bimba selections">{bimba.items.map((item,index)=>{
@@ -89,7 +90,7 @@ function BimbaNavigator({binding}:{binding:SurfaceBinding}){
       {snapshot?.selection?<section aria-label="Selected Bimba source" className="k9-status">
         <p className="k9-quiet"><strong className="k9-mono">{snapshot.selection.coordinate_ref}</strong><br/>{snapshot.selection.source_ref}<br/>{snapshot.selection.source_revision}<br/>standing: {snapshot.selection_standing??"current"}</p>
       </section>:null}
-      {result?.standing!=="applied"?<p role="status" className="k9-quiet">{result?.standing}{result?.error?`: ${result.error}`:""}</p>:null}
+      {result?.standing!=="applied"?(result?.error?<Refusal role="status" className="k9-quiet" said={`${result.standing}.`} error={result.error}/>:<p role="status" className="k9-quiet">{result?.standing}</p>):null}
     </div>
   </div>;
 }
@@ -216,9 +217,9 @@ function FocusedInstrumentSurface({binding,sourcesOpen,onToggleSources}:{binding
           </>:<p className="k9-quiet">{nara.reason}</p>}
         </section>
         {snapshot?.selection?<p className="k9-quiet k9-mono">Bimba ↔ field: {snapshot.selection.coordinate_ref} · {snapshot.selection_standing}{snapshot.selected_target?` · target ${snapshot.selected_target.identity}`:""}</p>:null}
-        {result?<p role="status" className="k9-quiet">{result.operation}: {result.standing}{result.error?` · ${result.error}`:""}</p>:null}
-        {error?<p role="alert" className="k9-alert">{error}</p>:null}
-        {stageError?<p role="alert" className="k9-alert">expression: {stageError}</p>:null}
+        {result?(result.error?<Refusal role="status" className="k9-quiet" said={`${result.operation}: ${result.standing}.`} error={result.error}/>:<p role="status" className="k9-quiet">{result.operation}: {result.standing}</p>):null}
+        {error?<Refusal className="k9-alert" said="Couldn't read the source." error={error}/>:null}
+        {stageError?<Refusal className="k9-alert" said="The Expression couldn't show this." error={stageError}/>:null}
       </div>
     </div>
   </div>;

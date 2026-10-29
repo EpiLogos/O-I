@@ -5,6 +5,7 @@
  * continuation route, so they lead. Selecting a row hands off to
  * AgentDetail (owned by AgencySurface, which holds selection).
  */
+import {Refusal} from "../shared/Refusal";
 import { Glyph } from "../workspace/Glyph";
 import { Loading } from "../shared/Loading";
 import type { AgencyReading, AgencySessionRow } from "./agencyTypes";
@@ -22,7 +23,7 @@ export function AgencyRoster({
   selected: AgencySessionRow | null;
   onSelect: (row: AgencySessionRow) => void;
 }) {
-  if (error) return <p className="oi-refusal" role="alert">{error}</p>;
+  if (error) return <Refusal said="Couldn't read the agency." error={error}/>;
   if (!reading) return <Loading label="Reading the project's SessionSpace agency…" scope="surface"/>;
 
   const bySpace = new Map<string, AgencySessionRow[]>();

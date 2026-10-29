@@ -97,7 +97,7 @@ test('a band whose label is empty or blank is listed as absent, never drawn as a
 });
 
 test('the participation form writes a period name verbatim, and an empty input removes the label key', async()=>{
- const compiled=await build({stdin:{contents:"export {periodNamed} from './ParticipationFacts.tsx';",resolveDir:fileURLToPath(new URL('../src/knowledge/',import.meta.url)),loader:'ts'},bundle:true,platform:'node',format:'cjs',jsx:'automatic',write:false,logLevel:'silent'});
+ const compiled=await build({stdin:{contents:"export {periodNamed} from './ParticipationFacts.tsx';",resolveDir:fileURLToPath(new URL('../src/knowledge/',import.meta.url)),loader:'ts'},bundle:true,platform:'node',format:'cjs',jsx:'automatic',loader:{'.css':'empty'},write:false,logLevel:'silent'});
  const scratch=await mkdtemp(join(tmpdir(),'period-named-'));
  try{
   const file=join(scratch,'period-named.cjs');await writeFile(file,compiled.outputFiles[0].text);

@@ -1,3 +1,4 @@
+import {Refusal} from "../shared/Refusal";
 import {useState} from "react";
 import type {QlDoc} from "./instance";
 import {addParticipant,isCurrentFormat,leaveParticipant,upgradeDocument,type PluralParticipant} from "./plural";
@@ -38,7 +39,7 @@ export function FlowParticipants({doc,project,disabled,onChange}:{doc:QlDoc;proj
    </ul>
    <div className="flow-bring-in">
     <h4>Bring someone in</h4>
-    {roster.state==="error"&&<p role="alert" className="flow-error">{roster.error}</p>}
+    {roster.state==="error"&&<Refusal className="flow-error" said="Couldn't read who can take part." error={roster.error}/>}
     {available.length>0&&<ul aria-label="Agents you can bring in">{available.map((agent:RosterAgent)=><li key={agent.ref}><span>{agent.name}</span>{agent.purpose&&<small className="oi-note"> {agent.purpose}</small>} <button type="button" disabled={disabled||busy} onClick={()=>void bringIn(agent)}>Bring in</button></li>)}</ul>}
     {roster.state!=="error"&&available.length===0&&<p className="oi-note">Every accepted agent is already here.</p>}
     <div className="flow-add-by-name"><label>Name <input aria-label="Participant name" value={name} onChange={event=>setName(event.target.value)}/></label> <select aria-label="Participant kind" value={kind} onChange={event=>setKind(event.target.value as "agent"|"person")}><option value="agent">an agent</option><option value="person">a person</option></select> <button type="button" disabled={disabled||busy||!name.trim()} onClick={addByName}>Add</button></div>

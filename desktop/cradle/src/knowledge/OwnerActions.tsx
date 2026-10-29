@@ -1,3 +1,4 @@
+import {Refusal} from "../shared/Refusal";
 import {useState} from "react";
 import {kernelOp} from "../kernel/bridge";
 import type {ActionDispatch,KernelTransportStatus} from "../kernel/types";
@@ -46,7 +47,7 @@ export function OwnerActions({node,transport,project,onDispatched}:{node:Pick<Gr
           onClick={()=>void dispatch(action)}>{action}</button>
         {record?.phase==="dispatching"&&<p role="status">Dispatching through the kernel…</p>}
         {record?.phase==="settled"&&<DispatchOutcome outcome={record.outcome}/>}
-        {record?.phase==="transport_error"&&<p role="alert">The kernel transport could not serve this dispatch: {record.detail}</p>}
+        {record?.phase==="transport_error"&&<Refusal said="Couldn't send that to its owner." error={record.detail}/>}
       </li>;})}
     </ul>
   </details>;
@@ -71,14 +72,14 @@ function DispatchOutcome({outcome}:{outcome:ActionDispatch}) {
     case "invoked":
       return <div data-dispatch-state="invoked"><p role="status">Invoked · {outcome.owner_operation}</p><DispatchData data={outcome.data}/></div>;
     case "unsupported_action":
-      return <p data-dispatch-state="unsupported_action" role="status">{outcome.owner} — {outcome.detail}</p>;
+      return <Refusal data-dispatch-state="unsupported_action" role="status" said={`${outcome.owner} has no operation for this.`} error={outcome.detail}/>;
     case "malformed_ref":
-      return <p data-dispatch-state="malformed_ref" role="alert">{outcome.detail}</p>;
+      return <Refusal data-dispatch-state="malformed_ref" said="That reference is malformed." error={outcome.detail}/>;
     case "unknown_owner":
       return <p data-dispatch-state="unknown_owner" role="status">No disclosed owner answers the spelling <code>{outcome.action}</code>.</p>;
     case "owner_refused":
-      return <p data-dispatch-state="owner_refused" role="alert">{outcome.owner_operation}: {outcome.message}</p>;
+      return <Refusal data-dispatch-state="owner_refused" data-owner-operation={outcome.owner_operation} said="The owner refused." error={outcome.message}/>;
     case "owner_unavailable":
-      return <p data-dispatch-state="owner_unavailable" role="status">{outcome.owner_operation} is unavailable — {outcome.detail}</p>;
+      return <Refusal data-dispatch-state="owner_unavailable" data-owner-operation={outcome.owner_operation} role="status" said="The owner can't do this right now." error={outcome.detail}/>;
   }
 }

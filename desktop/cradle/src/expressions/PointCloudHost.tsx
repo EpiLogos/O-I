@@ -21,6 +21,7 @@
  * addendum 2026-09-19): the host posts the live cutout geometry to the
  * frame while it stands (hostedApp.trackShellCutout).
  */
+import {Refusal, refusalWords} from "../shared/Refusal";
 import {useEffect, useRef, useState} from "react";
 import {externalHttpsUrl} from "../shared/externalLink";
 import {invoke} from "@tauri-apps/api/core";
@@ -316,7 +317,7 @@ export function PointCloudHost({mode = "expressions", deepLink, bindingId, onHos
         // capability admits https URLs only. Anything else is dropped here and refused again by the opener's scope.
         const url = externalHttpsUrl((data as {url?: unknown}).url);
         if (url) {
-          void invoke("plugin:opener|open_url", {url}).catch(error => window.dispatchEvent(new CustomEvent("oi:workspace-message", {detail: {message: error instanceof Error ? error.message : String(error)}})));
+          void invoke("plugin:opener|open_url", {url}).catch(error => { console.error("The link could not be opened", error); window.dispatchEvent(new CustomEvent("oi:workspace-message", {detail: {message: refusalWords("The link could not be opened.", error)}})); });
         }
         return;
       }
@@ -359,7 +360,7 @@ export function PointCloudHost({mode = "expressions", deepLink, bindingId, onHos
         void resolveHostedSource(kernel.transport,data.detail).then(target=>{
           if(!isCurrent())return;
           window.dispatchEvent(new CustomEvent("oi:open-scene-source",{detail:{target}}));
-        }).catch(error=>{if(isCurrent())window.dispatchEvent(new CustomEvent("oi:workspace-message",{detail:{message:error instanceof Error?error.message:String(error)}}));});
+        }).catch(error=>{if(isCurrent()){console.error("The Expression's source could not be opened", error); window.dispatchEvent(new CustomEvent("oi:workspace-message",{detail:{message:refusalWords("The Expression's source could not be opened.", error, "Reopen it to try again.")}}));}});
         return;
       }
       if (data.request === "summon" && data.detail?.kind) {
@@ -375,11 +376,9 @@ export function PointCloudHost({mode = "expressions", deepLink, bindingId, onHos
 
   return <div className="pcd-host" aria-label="O:I Expressions application" data-state={state}>
     {state === "reading" && <p className="oi-note" role="status">Opening the Expressions application…</p>}
-    {state === "refused" && <div className="pcd-host-refusal" role="alert">
-      <strong>The Expressions application is unavailable here</strong>
-      <p>{reason}</p>
-      {src === undefined && <p className="oi-note">This view serves through the owner's material seam in the desktop build; a plain browser window cannot host it.</p>}
-    </div>}
+    {state === "refused" && <Refusal className="pcd-host-refusal" said={<strong>The Expressions application is unavailable here.</strong>} error={reason}>
+      {src === undefined && <p className="oi-note">This view opens in the installed desktop; a browser window cannot host it.</p>}
+    </Refusal>}
     {src && <iframe
       ref={frame}
       src={src}

@@ -7,6 +7,7 @@
  * scope); the effect is "Next session only". A scope the owner will not
  * address from here says so in one sentence, in the owner's words.
  */
+import {Refusal, refusalWords} from "../../../shared/Refusal";
 import {useEffect, useRef, useState, useSyncExternalStore} from "react";
 import type {ScopeAddress} from "../../../configuration/contracts";
 import {useScope, scopeProject, scopeLabel as scopeWord} from "../../scope";
@@ -117,10 +118,10 @@ export function SkillsSection({data}: {data: SettingsSnapshot}) {
   return <div className="settings-skills" data-skills-panel data-skill-scope-current={scope}>
     <p className="settings-muted" data-skills-summary>{active} of {items.length} active{project ? ` for ${scopeWord(worldScope)}` : ""}. Changes apply to the next session.</p>
     {scope === "session" && <Missing>AIKit changes a session's skills only from inside that session, so This session can't be changed from the app yet.</Missing>}
-    {scope !== "session" && refused && <Missing>{scope === "project" ? "This project's skills can't be changed here yet" : "These skills can't be changed here"}: {refused}</Missing>}
+    {scope !== "session" && refused && <Missing>{refusalWords(scope === "project" ? "This project's skills can't be changed here yet." : "These skills can't be changed here.", refused)}</Missing>}
     {scope !== "session" && !writable && data.registry.state === "ok" && <Missing>AIKit doesn't offer skill switches through its settings on this machine.</Missing>}
-    {data.resolutionsState.state === "failed" && <p className="settings-inline-error" role="alert">{data.resolutionsState.error}</p>}
-    {error && <p className="settings-inline-error" role="alert">{error}</p>}
+    {data.resolutionsState.state === "failed" && <Refusal className="settings-inline-error" said="Couldn't read the skill changes." error={data.resolutionsState.error}/>}
+    {error && <Refusal className="settings-inline-error" said="This change wasn't staged." error={error}/>}
     {groups.map(([source, list], index) => {
       const isOpen = open[source] ?? index < 2;
       return <section key={source} className="settings-group-block" data-skill-source={source}>

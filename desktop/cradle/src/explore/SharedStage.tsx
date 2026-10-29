@@ -10,6 +10,7 @@
  * Agent context, renderer buffers) is ever placed on the stage, because the
  * owner contract has no field that could carry it.
  */
+import {Refusal} from "../shared/Refusal";
 import {useCallback,useEffect,useState} from "react";
 import {useKernel} from "../kernel/KernelProvider";
 import {isUnavailable,sharedField,slug,type HostedAuthority,type HostedEntry,type SharedFieldStageFollowResult,type SharedFieldStageReading,type SharedFieldStageResult,type SharedFieldUnavailable} from "../knowledge/shared-field";
@@ -63,7 +64,7 @@ export function SharedStagePanel({field_ref,entries,authority,liveReading}:{fiel
   return <section className="world-region" data-region-role="shared-stage" data-stage-state={stage?"open":"none"} data-following={following||undefined}>
     <div className="world-region__label">Shared Stage {stage?`· revision ${stage.revision}`:"· none"}</div>
     <div className="world-region__components">
-      {error&&<p role="alert">{error}</p>}
+      {error&&<Refusal said="The Shared Stage didn't change." error={error}/>}
       {stage?<>
         <p className="explore-muted">Presented by <strong>{stage.presenter_ref??"—"}</strong> · subject <code>{stage.subject_ref}</code>{focusRef?<> · focus <code>{focusRef}</code></>:null} · {presence.length} present{presence.length?`: ${presence.map(p=>p.participant_ref).join(", ")}`:""}</p>
         <div className="world-component__collection">

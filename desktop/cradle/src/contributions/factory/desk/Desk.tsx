@@ -19,6 +19,7 @@
  * card `?` and puts it in Needs you. When that reading cannot be had, one
  * line above the board says so — cards never guess an owner.
  */
+import {Refusal} from "../../../shared/Refusal";
 import {useEffect, useLayoutEffect, useMemo, useRef, useState} from "react";
 import {useKernel} from "../../../kernel/KernelProvider";
 import {Glyph} from "../../../workspace/Glyph";
@@ -126,15 +127,18 @@ export function Desk({onNewRun, onAddObject}: DeskProps) {
     </header>
 
     {current?.status === "error"
-      ? <div className="fdesk-state" role="alert" data-desk-empty="error"><p>Couldn't read the Desk.</p><p className="fdesk-state-why">{current.error}</p><button type="button" className="fdesk-link" onClick={refresh}>Retry</button></div>
+      ? <Refusal className="fdesk-state" data-desk-empty="error" said="Couldn't read the Desk." error={current.error}><button type="button" className="fdesk-link" onClick={refresh}>Retry</button></Refusal>
       : <>
-        {!firstRead && unreadable.length > 0 && <p className="fdesk-partial" role="status" data-desk-partial>
-          {unreadable.length} source{unreadable.length === 1 ? "" : "s"} couldn't be read — {unreadable.map(entry => `${entry.label} (${entry.error})`).join("; ")}.{" "}
-          <button type="button" className="fdesk-link" onClick={refresh}>Retry</button>
-        </p>}
-        {!firstRead && ownersUnread.length > 0 && <p className="fdesk-partial" role="status" data-desk-owners="unavailable">
-          Owner Positions couldn't be read — {ownersUnread.join("; ")} (factory development inhabitation).
-        </p>}
+        {/* What couldn't be read is named in the open; each source's own cause sits behind Why (shared/Refusal.tsx). */}
+        {!firstRead && unreadable.length > 0 && <div className="fdesk-partial" role="status" data-desk-partial>
+          <p className="oi-refusal-line">Couldn't read {unreadable.length === 1 ? unreadable[0]!.label : `${unreadable.length} sources: ${unreadable.map(entry => entry.label).join(", ")}`}.{" "}
+            <button type="button" className="fdesk-link" onClick={refresh}>Retry</button></p>
+          <details className="oi-refusal-detail"><summary>Why</summary>{unreadable.map((entry, index) => <p key={index}>{entry.label}: {entry.error}</p>)}</details>
+        </div>}
+        {!firstRead && ownersUnread.length > 0 && <div className="fdesk-partial" role="status" data-desk-owners="unavailable">
+          <p className="oi-refusal-line">Couldn't read the Positions.</p>
+          <details className="oi-refusal-detail"><summary>Why</summary>{ownersUnread.map((reason, index) => <p key={index}>{reason}</p>)}</details>
+        </div>}
         {current?.status === "read" && <SignalsPanel desk={current}/>}
         {firstRead
           ? <div className="fdesk-columns" aria-busy="true">

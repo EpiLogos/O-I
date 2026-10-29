@@ -1,3 +1,4 @@
+import {Refusal} from "../shared/Refusal";
 import {EditorIcon} from "../editor/EditorIcon";
 import {useEffect,useRef,useState} from "react";
 import {invoke} from "@tauri-apps/api/core";
@@ -153,7 +154,7 @@ export function BrowserSurface({binding}:{binding:SurfaceBinding}) {
         <select aria-label="Browser zoom" value={zoom} onChange={e=>{const value=Number(e.target.value);void control("zoom",{zoom:value}).catch(reason=>setError(String(reason)));}}>{[.5,.75,1,1.25,1.5,2].map(v=><option key={v} value={v}>{v*100}%</option>)}</select>
       </span>
     </form>
-    {error&&<div role="alert" className="browser-notice">{error} <button onClick={()=>{setError(undefined);setRetry(v=>v+1);}}>Retry</button></div>}
+    {error&&<Refusal className="browser-notice" said="The browser couldn't do that." error={error}><button onClick={()=>{setError(undefined);setRetry(v=>v+1);}}>Retry</button></Refusal>}
     {reading?.notice&&<div role="status" className="browser-notice">{reading.notice}{reading.requested_window&&<><span className="browser-requested-url">{reading.requested_window}</span><button onClick={()=>void control("navigate",{address:reading.requested_window}).catch(reason=>setError(String(reason)))}>Open link in this pane</button></>}</div>}
     <div ref={viewport} className="browser-viewport">{!native?<p>Web browsing is available in the desktop app.</p>:!target?<p>Open a web page in this pane.</p>:!reading?<p>Opening browser…</p>:null}</div>
     <footer className="browser-status" tabIndex={0} aria-label="Browser status">

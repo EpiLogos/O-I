@@ -1,3 +1,4 @@
+import {Refusal, refusalWords} from "../../shared/Refusal";
 import {kernelRead,detectTransport} from "../../kernel/bridge";
 import {readModelRoster,modelRosterReason,type ModelRosterReading} from "./modelRoster";
 import {modelDisplayName} from "./modelPresentation";
@@ -74,7 +75,7 @@ export function ModeChip({mode,agentName,onSelect,disabled,turnRunning}:{mode:Na
       <p className="oi-note chat-chip-note">{turnRunning?"The mode can change when this turn ends.":"Applies to the next action."}</p>
      </>}
   </Chip>
-  {mode.error&&mode.phase!=="unavailable"&&<span className="sr-only" role="alert">{mode.error}</span>}
+  {mode.error&&mode.phase!=="unavailable"&&<span className="sr-only" role="alert">{refusalWords("The mode didn't change.",mode.error)}</span>}
  </div>;
 }
 
@@ -115,7 +116,7 @@ export function ModelChip({model,actions,disabled,project,route,onSetup}:{model:
    </button>)}
    {!options.length&&<p className="oi-note chat-chip-note">The harness lists no other models.</p>}
    {reason&&<p className="oi-note chat-chip-note">{reason}</p>}
-   {model.error&&<p className="oi-refusal chat-chip-note" role="alert">{model.error}</p>}
+   {model.error&&<Refusal className="oi-refusal chat-chip-note" said="The model didn't change." error={model.error}/>}
    {(model.phase==="unknown"||model.phase==="unavailable")&&<button type="button" role="menuitem" className="oi-menu-item" onClick={()=>void actions.refresh()}>Read the session again</button>}
    {model.confirmed&&!model.error&&<p className="oi-note chat-chip-note" role="status">Set for this session. No model turn has run on it yet.</p>}
    {(route||onSetup)&&<div className="menu-rule" role="separator"/>}
@@ -182,7 +183,7 @@ export function FreshModelChip({intent,onChoose,onSetup,disabled,project}:{inten
    </button>)}
    {candidates&&!matches.length&&<p className="oi-note chat-chip-note">No roster model matches.</p>}
    {!candidates&&!error&&<p className="oi-note chat-chip-note">Reading the model roster…</p>}
-   {error&&<p className="oi-refusal chat-chip-note" role="alert">{error}</p>}
+   {error&&<Refusal className="oi-refusal chat-chip-note" said="Couldn't read the model roster." error={error}/>}
    {!candidates?.some(row=>row.eligible)&&candidates?.length?<p className="oi-note chat-chip-note">No model is eligible in this project's roster yet.</p>:null}
    <div className="menu-rule" role="separator"/>
    {onSetup&&<button type="button" role="menuitem" className="oi-menu-item" onClick={onSetup}>Harness, model or credential setup…</button>}

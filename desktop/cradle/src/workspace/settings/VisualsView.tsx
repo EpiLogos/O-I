@@ -1,6 +1,7 @@
 /** Settings → Visuals: preferences only. The actual Expressions application
  * is entered through the workspace mode route; there is no second workbench,
  * preview stage, scene store, or renderer under Settings. */
+import {Refusal} from "../../shared/Refusal";
 import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import {IconChoiceStrip} from "../primitives/IconTabStrip";
 import { useVisuals } from "../../visuals/ParticleExpression";
@@ -36,7 +37,7 @@ export function VisualsView() {
   const [importFailure, setImportFailure] = useState<string | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const library: LibraryEntry[] = [
-    ...THEMES.map((theme) => ({id: theme.id, name: theme.name, appearance: theme.appearance, preview: theme.preview, origin: theme.source.name, license: theme.source.license, custom: false})),
+    ...THEMES.map((theme) => ({id: theme.id, name: theme.name, appearance: theme.appearance, preview: theme.preview, origin: theme.source.repo, license: theme.source.license, custom: false})),
     ...customs.map((theme) => ({id: theme.id, name: theme.name, appearance: theme.appearance, preview: theme.preview, origin: "Imported", license: "not recorded", custom: true})),
   ];
   const activeImport = customs.find((theme) => theme.id === snapshot.themeId) ?? null;
@@ -56,13 +57,13 @@ export function VisualsView() {
     void themes.remove(activeImport.id);
   };
   return <div className="settings-view visuals-preferences" aria-label="Appearance preferences">
-    <section aria-labelledby="appearance-heading">
-      <h3 id="appearance-heading">Appearance</h3>
+    {/* The page header already says "Appearance"; this section adds only its content, no second heading under it. */}
+    <section aria-label="Appearance">
       <p className="settings-note">The same appearance follows your workspace, tools and document controls.</p>
       {presentation.loading && <p className="settings-note" role="status">Reading saved appearance…</p>}
       {presentation.pending && <p className="settings-note" role="status">Saving appearance…</p>}
-      {presentation.error && <div role="alert" className="oi-refusal"><p>{presentation.error}</p><button type="button" className="settings-mini" disabled={presentation.pending || presentation.loading} onClick={()=>void themes.read()}>Read saved appearance again</button></div>}
-      {presentation.observationError && <div role="alert" className="oi-refusal"><p>The current layout could not be disclosed: {presentation.observationError}</p><button type="button" className="settings-mini" onClick={retryObservation}>Retry layout disclosure</button></div>}
+      {presentation.error && <Refusal said="Couldn't load your saved appearance." error={presentation.error}><button type="button" className="settings-mini" disabled={presentation.pending || presentation.loading} onClick={()=>void themes.read()}>Read saved appearance again</button></Refusal>}
+      {presentation.observationError && <Refusal said="Couldn't read the current layout." error={presentation.observationError}><button type="button" className="settings-mini" onClick={retryObservation}>Retry layout disclosure</button></Refusal>}
       <IconChoiceStrip aria-label="Appearance" current={snapshot.themeId===null?snapshot.theme:undefined} onSelect={value=>void (value === "system" ? themes.revert() : themes.select({appearance:value as ThemeChoice,id:null}))}
         items={THEME_CHOICES.map(option=>({id:option.value,label:option.label,description:option.hint,icon:"settings",disabled:themeDisabled}))}/>
 
@@ -80,7 +81,8 @@ export function VisualsView() {
               </span>
             </span>
             <span className="visuals-theme-name">{theme.name}</span>
-            <span className="visuals-theme-origin">{theme.origin}</span>
+            {/* Where the theme comes from, or nothing: never the card's own name said twice. */}
+            {theme.origin !== theme.name && <span className="visuals-theme-origin">{theme.origin}</span>}
           </button>;
         })}
       </div>
@@ -89,7 +91,7 @@ export function VisualsView() {
         <button type="button" className="oi-action" disabled={themeDisabled} onClick={()=>fileInput.current?.click()}>Import a theme file…</button>
         <p className="settings-note">Any VS Code color theme (.json) — converted into the app's roles and kept on this device.</p>
       </div>
-      {importFailure && <p className="oi-refusal" role="alert">{importFailure}</p>}
+      {importFailure && <Refusal said="Couldn't import that theme." error={importFailure}/>}
       {activeImport && <button type="button" className="settings-mini" disabled={themeDisabled} onClick={removeActiveImport}>Remove “{activeImport.name}”</button>}
     </section>
     <section aria-labelledby="opening-heading">
@@ -288,7 +290,7 @@ export function ExpressionControls({ host, editableValues = false }: { host: Exp
               Capture image
             </button>
           </div>
-          {captureNotice && <p className="oi-refusal" role="alert">{captureNotice}</p>}
+          {captureNotice && <Refusal said="Couldn't capture the image." error={captureNotice}/>}
 
           <SavedStates states={snapshot.savedStates} />
 
@@ -498,7 +500,7 @@ function ImportExport() {
         placeholder='{"glyph":["O","I"], …} — validated against the shared schema'
         onChange={(event) => setText(event.target.value)}
       />
-      {failure && <p className="oi-refusal" role="alert">{failure}</p>}
+      {failure && <Refusal said="Couldn't import those settings." error={failure}/>}
       <div className="oi-action-group visuals-actions">
         <button
           type="button"

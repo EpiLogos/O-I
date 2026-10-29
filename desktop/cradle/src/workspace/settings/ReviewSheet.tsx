@@ -9,6 +9,7 @@
  * Applied ✓ only when the readback matches (S6) — otherwise the owner's
  * reason (S7). A review with nothing staged says "No capability changes." (S9).
  */
+import {Refusal, refusalWords} from "../../shared/Refusal";
 import {useEffect, useRef, useState} from "react";
 import {applyReviewed, discardAll, review, type ApplyOutcome, type ReviewedPlan, type StagedChange} from "./changeModel";
 import {plain} from "./settingsData";
@@ -66,7 +67,7 @@ export function ReviewSheet({changes, onClose}: {changes: StagedChange[]; onClos
     <div ref={sheet} tabIndex={-1} className="settings-sheet settings-review oi-scroll-quiet" role="dialog" aria-modal="true" aria-labelledby="settings-review-title" data-settings-review-sheet data-phase={phase}>
       <header className="settings-sheet-head"><h2 id="settings-review-title">{nothing ? "Review changes" : `Review ${rows.length} ${rows.length === 1 ? "change" : "changes"}`}</h2></header>
       {nothing && <p data-review-empty>No capability changes.</p>}
-      {error && <p className="settings-inline-error" role="alert" data-review-error>Couldn't load these settings. {error}</p>}
+      {error && <Refusal className="settings-inline-error" data-review-error said="Couldn't load these settings." error={error}/>}
       <ul className="settings-review-list">
         {rows.map((change) => {
           const refusal = reviewed?.refusals[change.requestKey];
@@ -78,14 +79,14 @@ export function ReviewSheet({changes, onClose}: {changes: StagedChange[]; onClos
               {result?.state === "applied" && <span className="settings-review-result is-applied" data-review-result="applied">Applied ✓</span>}
               {result?.state === "partial" && <span className="settings-review-result is-partial" data-review-result="partial">Partly applied — {result.reason}</span>}
               {result?.state === "refused" && <span className="settings-review-result is-refused" data-review-result="refused">This change wasn't applied. {result.reason}</span>}
-              {!result && refusal && <span className="settings-review-result is-refused" data-review-refusal>The owner refuses this change: {refusal}</span>}
+              {!result && refusal && <span className="settings-review-result is-refused" data-review-refusal>{refusalWords("The owner refuses this change.", refusal)}</span>}
             </div>
             <span className="settings-review-effect" data-review-effect={change.effectKind}>{change.effect}</span>
           </li>;
         })}
       </ul>
       {outcome?.kind === "stale" && <p className="settings-inline-error" role="alert" data-review-stale>These settings changed. Review the plan again.</p>}
-      {outcome?.kind === "failed" && <p className="settings-inline-error" role="alert" data-review-failed>This change wasn't applied. {outcome.error}</p>}
+      {outcome?.kind === "failed" && <Refusal className="settings-inline-error" data-review-failed said="This change wasn't applied." error={outcome.error}/>}
       {outcome?.kind === "applied" && <p className="settings-review-receipt" role="status" data-review-receipt>
         {outcome.appliedCount === outcome.total ? `Applied ${outcome.total} ${outcome.total === 1 ? "change" : "changes"}` : `Applied ${outcome.appliedCount} of ${outcome.total} changes`} · read back {clock(outcome.readAt)}
       </p>}

@@ -1,3 +1,4 @@
+import {Refusal, refusalWords} from "../shared/Refusal";
 import {NativeAgentLauncher} from "./NativeAgentLauncher";
 /**
  * MintAgent — intent-led formation (COMMON-BRIEF §handoff 3). Begins with
@@ -158,7 +159,7 @@ function FormationDraft({ project, onMessage }: { project?: string; onMessage?: 
             Manual search above stays fully usable without it.
           </p>
         )}
-        {inferError && <p role="alert" className="oi-refusal">{inferError}</p>}
+        {inferError && <Refusal said="Couldn't propose a setup." error={inferError}/>}
         {proposal && (
           <SetupProposal
             proposal={proposal}
@@ -229,7 +230,7 @@ function TeamActions({ draft, project, onMessage }: {
     try {
       const call: KernelOpCall = await kernelOp(kernel.transport, { op: "invoke_action", project, invocation: { action: build.action, target_ref: build.target_ref, input: build.input } });
       const dispatch: ActionDispatch | undefined = call.outcome && call.outcome.result === "action_dispatched" ? call.outcome.dispatch : undefined;
-      if (!dispatch) { onMessage?.(call.error ?? "The kernel returned no Action dispatch."); return; }
+      if (!dispatch) { onMessage?.(call.error ? refusalWords("Couldn't form the team.", call.error) : "The kernel returned no Action dispatch."); return; }
       setRows(teamOutcomeRows(dispatch));
     } finally {
       setPending(false);
@@ -252,7 +253,7 @@ function TeamActions({ draft, project, onMessage }: {
     </div>
     <fieldset className="oi-section"><legend>Members — from the native Central roster</legend>
       {roster.state === "reading" && <p className="oi-note" aria-busy="true">Reading the native roster…</p>}
-      {roster.state === "error" && <p className="oi-refusal" role="alert">The native roster is unavailable: {roster.error}</p>}
+      {roster.state === "error" && <Refusal said="Couldn't read the native roster." error={roster.error}/>}
       {roster.state === "ready" && roster.agents.length === 0 && <p className="oi-note">No native Agents are rostered in this scope yet.</p>}
       {roster.agents.map((agent) => (
         <label key={agent.ref} className="oi-field">

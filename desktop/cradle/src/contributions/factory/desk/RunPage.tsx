@@ -1,3 +1,4 @@
+import {Refusal} from "../../../shared/Refusal";
 import {IconTabStrip} from "../../../workspace/primitives/IconTabStrip";
 /**
  * The Run page (11-FACTORY §3): understand the current developmental question
@@ -192,7 +193,7 @@ export function RunPage({runKey, onBack, host}: {runKey: string; onBack: () => v
         {actionDraft.reading?.subjects.map(subject => <option key={subject.ref} value={subject.ref}>{subject.label} — {subject.ref}</option>)}
       </select></label>
       {acting === actionDraft.target.actionRef && <p role="status">Reading Factory's applicable subjects…</p>}
-      {actionDraft.error && <p role="alert">Factory refused the action reading: {actionDraft.error}</p>}
+      {actionDraft.error && <Refusal said="Couldn't read what this action applies to." error={actionDraft.error}/>}
       {actionDraft.reading && <>
         <p className="frun-note">Factory revision {actionDraft.reading.factoryStateRevision} · Run revision {actionDraft.reading.runRevision}</p>
         {actionSubjectRefusal(actionDraft.reading, actionDraft.selected) && <p role="status">{actionSubjectRefusal(actionDraft.reading, actionDraft.selected)}</p>}
@@ -205,7 +206,7 @@ export function RunPage({runKey, onBack, host}: {runKey: string; onBack: () => v
     <RunSignalLink runKey={runKey} entry={entry} onBack={onBack}/>
     <IconTabStrip aria-label="Run views" items={TABS.map(entry=>({id:entry.key,label:entry.label,icon:entry.key==="map"?"graph":entry.key==="trajectory"?"history":entry.key==="live"?"factory":"file"}))} current={tab} onSelect={id=>setTab(id as typeof tab)}/>
     {reading === "reading" && !entry.inspection && !entry.inspectionError && <p className="frun-note" role="status">Reading this run…</p>}
-    {reading === "refused" && <p className="frun-note" role="alert">Couldn't read this run: {error}</p>}
+    {reading === "refused" && <Refusal className="frun-note" said="Couldn't read this run." error={error}/>}
     {entry.inspectionPartial && <p className="frun-note" role="status" data-inspection-partial>{entry.inspectionPartial}</p>}
     <section className="frun-body" role="tabpanel" aria-label={TABS.find(entryTab => entryTab.key === tab)!.label}>
       {tab === "map" && <RunMap entry={entry} runKey={runKey} host={host}/>}

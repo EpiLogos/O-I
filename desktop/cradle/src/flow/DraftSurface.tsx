@@ -1,3 +1,4 @@
+import {Refusal} from "../shared/Refusal";
 import {useEffect,useRef,useState} from "react";
 import {TextEditor,EditorCommands,type EditorHandle} from "../editor/lazy";
 import {EditorFrame} from "../editor/EditorChrome";
@@ -67,7 +68,7 @@ export function DraftSurface({binding}:{binding:SurfaceBinding}) {
     </>}>
     {recovered&&<p className="flow-error">Recovered device copy — unverified. This separate draft has no source identity or permission to overwrite the original.</p>}
     {!retained&&<p role="alert" className="flow-error">This device would not keep the writing. Copy it somewhere you trust before closing this tab.</p>}
-    {error&&<p role="alert" className="flow-error">{error}</p>}
+    {error&&<Refusal className="flow-error" ownWords said="Couldn't place the writing." error={error}/>}
     <TextEditor ref={editor} binding={binding} filename="Draft.md" aria-label="Writing not yet saved" value={text} onChange={change} onSave={save} onAttach={attach}/>
   </EditorFrame>;
 }

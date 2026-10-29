@@ -1,3 +1,4 @@
+import {refusalWords} from "../../shared/Refusal";
 import {openAgentSetup} from "../../agency/agentSetup";
 import {useEffect,useRef,useState,type DragEvent} from "react";
 import {Glyph} from "../../workspace/Glyph";
@@ -200,7 +201,7 @@ export function AgentChat({session,accompanying,project,agentName="World",situat
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   },[session,state,actions]);
-  const chooseRow=async(row:EncounterRow)=>{try{await onChoose?.(row);}catch(error){onMessage?.(String(error));}};
+  const chooseRow=async(row:EncounterRow)=>{try{await onChoose?.(row);}catch(error){onMessage?.(refusalWords("Couldn't open that conversation.",error));}};
   /** The project a fresh chat provisions into: the face's project, else
    * Central (firstSend.ts carries the placement law). */
   const provisionProject=chatProvisionTarget(project);
@@ -210,7 +211,7 @@ export function AgentChat({session,accompanying,project,agentName="World",situat
     pendingSend.current=true;heldModel.current={stage:"draft",intent:modelIntent};
     setProvisioning(true);
     onProvision(provisionProject)
-      .catch(error=>{pendingSend.current=false;onMessage?.(String(error));})
+      .catch(error=>{pendingSend.current=false;onMessage?.(refusalWords("Couldn't open a new conversation.",error));})
       .finally(()=>setProvisioning(false));
   };
   /** Edit a sent message: its text (with its attachments) returns to the
@@ -224,7 +225,7 @@ export function AgentChat({session,accompanying,project,agentName="World",situat
     if(!allowed("draft")){onMessage?.(action("draft")?.reason??"The owner does not allow editing this draft.");return;}
     setAttaching(label);
     try{const item=await make();actions.change(appendBlock(session!.state.draft,item));}
-    catch(error){onMessage?.(String(error));}
+    catch(error){onMessage?.(refusalWords(`Couldn't attach ${label}.`,error));}
     finally{setAttaching(undefined);}
   };
   const attachLocation=(location:CentralLocation)=>attach(location.path,()=>contextBlockForLocation(kernel.transport,location));
@@ -237,7 +238,7 @@ export function AgentChat({session,accompanying,project,agentName="World",situat
     if(!accepts(event))return;
     event.preventDefault();dragDepth.current=0;setDropping(false);
     const carried=event.dataTransfer.getData(LOCATION_DRAG_TYPE);
-    if(carried){try{const location=JSON.parse(carried) as CentralLocation;if(location?.path!==undefined)void attachLocation(location);}catch(error){onMessage?.(String(error));}return;}
+    if(carried){try{const location=JSON.parse(carried) as CentralLocation;if(location?.path!==undefined)void attachLocation(location);}catch(error){onMessage?.(refusalWords("Couldn't read what was dropped.",error));}return;}
     const surfaceId=event.dataTransfer.getData(SURFACE_DRAG_TYPE);
     if(surfaceId){const binding=resolveSurface?.(surfaceId);if(binding)void attach(binding.title,()=>contextBlockForSurface(kernel.transport,binding));else onMessage?.("That tab names no surface this window can quote.");return;}
     if(event.dataTransfer.files.length)void attachFiles(event.dataTransfer.files);
@@ -325,7 +326,7 @@ export function AgentChat({session,accompanying,project,agentName="World",situat
         <div className="chat-welcome">
           <p className="chat-welcome-title">{choosing?"Opening the conversation…":provisioning?"Opening a new conversation…":"New conversation"}</p>
           <p className="chat-welcome-line oi-note">{choosing?"The conversation binds through the owner's own start and read."
-            :`Write below — your first message opens a new conversation in ${provisionProject}, ready to send.`}</p>
+            :`Write below — your first message opens a new conversation${provisionProject ? ` in ${provisionProject}` : ""}, ready to send.`}</p>
         </div>
         {/* The plane's own chooser over the project's real attached
           * conversations (the same start/read pair the centre head uses):
