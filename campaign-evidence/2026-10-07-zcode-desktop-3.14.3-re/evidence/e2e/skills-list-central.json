@@ -1,0 +1,992 @@
+{
+  "cwd": "/Users/admin/Central",
+  "diagnostics": [],
+  "skills": [
+    {
+      "description": "Shared-track development is the default for agent work — join the assigned existing checkout, coordinate writes under a small protocol, and let one integrator own Git and shared build operations. Create a new worktree only for a concrete isolation reason under a storage budget, and retire it deliberately. Use when starting agent work, considering a worktree, sharing a checkout with other agents, finishing a branch, or reclaiming disk.",
+      "directory": "/Users/admin/.agents/skills/agent-worktree-lifecycle",
+      "name": "agent-worktree-lifecycle",
+      "path": "/Users/admin/.agents/skills/agent-worktree-lifecycle/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "[Square B · L4↔L1 Diagonal] — USE PROACTIVELY — invoke when a field, system, situation, or practice shows gaps between what it claims to be doing (L4 — disclosure, self-presentation) and what it actually depends on (L1 — causal structure beneath). When the explicit story and implicit structure diverge — diagnose here. Natural companion to engage-encounter-axis (full Square B mapping); works the disclosure/causation diagonal specifically.",
+      "directory": "/Users/admin/.agents/skills/apply-cmea",
+      "name": "apply-cmea",
+      "path": "/Users/admin/.agents/skills/apply-cmea/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "[Square C · L2] — USE PROACTIVELY — invoke whenever contradiction, paradox, or binary opposition is alive. Do not work through paradox narratively from another skill. Works all five moves — IS, IS-NOT, BOTH, NEITHER, SILENCE — as the actual thinking. Square C basin context: L3 (what is becoming through the contradiction), L3' (what historical moment this is), L2' (what transformation is underway — what dissolves, what crystallises) are always co-present.",
+      "directory": "/Users/admin/.agents/skills/apply-tetralemma",
+      "name": "apply-tetralemma",
+      "path": "/Users/admin/.agents/skills/apply-tetralemma/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "METHODOLOGY: Authorship — whose intent originates a change and what returns for human judgement: stated intent is authority to act in scope, inferred positions are proposed first, file labour is never handed back, and substantial work returns a working face for Recognition while reversible work inside a determinate request asks for no stamp. Use when deciding whether to act or propose, writing into durable ground, or returning substantial work to the human. A reversible step inside an already-determinate request selects none of this and loads no proposal.",
+      "directory": "/Users/admin/.agents/skills/authorship-methodology",
+      "name": "authorship-methodology",
+      "path": "/Users/admin/.agents/skills/authorship-methodology/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "Premium brand-kit image generation skill for creating high-end brand-guidelines boards, logo systems, identity decks, and visual-world presentations. Trained for minimalist, cinematic, editorial, dark-tech, luxury, cultural, security, gaming, developer-tool, and consumer-app brand systems. Optimized for intentional logo concepting, refined composition, sparse typography, strong symbolic meaning, premium mockups, art-directed imagery, and flexible grid layouts.",
+      "directory": "/Users/admin/.agents/skills/brandkit",
+      "name": "brandkit",
+      "path": "/Users/admin/.agents/skills/brandkit/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "Author, reconcile and validate capability matrices alongside QL product accounts, including arbitrary named-axis views and the suite product seed-by-field profile. Use for capability CSV/Markdown changes and their governing HTML links.",
+      "directory": "/Users/admin/.agents/skills/capability-matrices",
+      "name": "capability-matrices",
+      "path": "/Users/admin/.agents/skills/capability-matrices/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "METHOD: Reconcile and update the inter-S0–S5 capability matrix — recover claims, verify against the actual trees with cited static evidence, stamp conservative standing, apply the corpus's receipt laws, and regenerate the matrix artifacts.",
+      "directory": "/Users/admin/.agents/skills/capability-matrix",
+      "name": "capability-matrix",
+      "path": "/Users/admin/.agents/skills/capability-matrix/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "METHOD: Recover a day that never closed, or finish a close that was interrupted — reconstructing from surviving sources with gaps labelled, never fabricating an original close. Also covers looking things up in and re-entering a closed day's archive.",
+      "directory": "/Users/admin/.agents/skills/central-archive-recovery",
+      "name": "central-archive-recovery",
+      "path": "/Users/admin/.agents/skills/central-archive-recovery/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "METHOD: Carry one authorised task from claim to a verified outcome — the end-to-end practice for bounded commissioned work, whether it lands in a repository or in Central's own ground. Routes intake, implementation, verification and the closing record.",
+      "directory": "/Users/admin/.agents/skills/central-authorised-task",
+      "name": "central-authorised-task",
+      "path": "/Users/admin/.agents/skills/central-authorised-task/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "Use when checking what is operative in the current Central context (\"what can ctrl do\", \"which actions exist here\", \"is aikit available\", \"what sets does aikit have\"), when a command fails with an unknown-action or unknown-command error, or when an invocation fails and its inputs need diagnosing. Installing new community skills is find-skills' job, not this.",
+      "directory": "/Users/admin/.agents/skills/central-capability-discovery",
+      "name": "central-capability-discovery",
+      "path": "/Users/admin/.agents/skills/central-capability-discovery/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "Use when drafting or editing a document for the owner's own ground (Central human source, Day writing, flows) for review, when asked to change or extend that human-authored material, when accepted writing must move from the working field into human ground, or when a flow write reports a revision conflict. Not for documents inside a project repository — those are that project's ground; work them in the repo. For the agent's own returns and wiki knowledge, route to central-ledger and central-wiki-return.",
+      "directory": "/Users/admin/.agents/skills/central-contribution",
+      "name": "central-contribution",
+      "path": "/Users/admin/.agents/skills/central-contribution/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "METHOD: Take a reviewed contribution through inclusion — from a draft returned for review, through the owner's acceptance, to verified inclusion in human ground with the acceptance recorded. For drafting and revising the contribution itself, route to central-contribution.",
+      "directory": "/Users/admin/.agents/skills/central-contribution-inclusion",
+      "name": "central-contribution-inclusion",
+      "path": "/Users/admin/.agents/skills/central-contribution-inclusion/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "METHOD: Close or recover a completed day in a root or Project working field. Use when the working day boundary is reached, when orienting onto a field whose last close is stale, or when a close failed midway and must be finished or retried safely. For reconstructing a day that never closed, route to central-archive-recovery.",
+      "directory": "/Users/admin/.agents/skills/central-day-close",
+      "name": "central-day-close",
+      "path": "/Users/admin/.agents/skills/central-day-close/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "Use when deciding whether a piece of work justifies subagents or parallel agents at all, when composing the assignment brief for a spawned task, when judging what delegated agents return, when integrating branches that parallel agents produced, or when a task cannot be closed because its worktree is unclean. For the spawning, review-request and worktree mechanics themselves, route to dispatching-parallel-agents, subagent-driven-development, requesting-code-review and receiving-code-review.",
+      "directory": "/Users/admin/.agents/skills/central-delegation",
+      "name": "central-delegation",
+      "path": "/Users/admin/.agents/skills/central-delegation/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "Use when auditing a field or register for misplaced material, stale references, archive gaps, projection drift or capability mismatch, when a repair or cleanup of Central's ground is proposed, or when recurring future checks are requested — any phrasing implying a schedule ('run this daily', 'set up a weekly audit') lands here. For executing the day-boundary close itself, route to central-day-close.",
+      "directory": "/Users/admin/.agents/skills/central-field-health",
+      "name": "central-field-health",
+      "path": "/Users/admin/.agents/skills/central-field-health/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "METHOD: Converge local and remote repository state before, during and after development — inspecting before working, continuing existing work instead of competing with it, landing continuously through gates instead of batching, and reconciling after merge without ever calling destruction cleanup.",
+      "directory": "/Users/admin/.agents/skills/central-git-convergence",
+      "name": "central-git-convergence",
+      "path": "/Users/admin/.agents/skills/central-git-convergence/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "The ground laws of Central's source model — the canonical source-ref grammar, the world refs (control:root / project:{id}), how ground relations relate tree fallbacks, and the standing operations on authored ground. Use when reading, citing, or mutating Control or ProjectCentral source, or when retiring/restoring skills.",
+      "directory": "/Users/admin/.agents/skills/central-ground-keeping",
+      "name": "central-ground-keeping",
+      "path": "/Users/admin/.agents/skills/central-ground-keeping/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "METHOD: Move a durable learning out of the working field into the wiki — or invoke explicit Contemplate when owner-side synthesis is what is actually wanted. Routes the deserves-knowledge test, the return path, and the observe-versus-Contemplate distinction.",
+      "directory": "/Users/admin/.agents/skills/central-knowledge-promotion",
+      "name": "central-knowledge-promotion",
+      "path": "/Users/admin/.agents/skills/central-knowledge-promotion/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "Use when writing a NOW return, handoff, note or learning to a root or Project working field, when deciding whether a record is needed at all, when resolving or superseding an existing record, or when receiving and resuming from another agent's handoff. Covers the record contract, canonical references, and prose budgets.",
+      "directory": "/Users/admin/.agents/skills/central-ledger",
+      "name": "central-ledger",
+      "path": "/Users/admin/.agents/skills/central-ledger/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "Use when deciding where live session work belongs (root Control/agents/now vs Work/<Name>/ProjectCentral/now), when checking what is currently live in a field before or instead of writing, when resuming work an earlier session opened, when marking work waiting, blocked or resolved, or when a project's state must be visible at the root. Near-misses it answers anyway - \"where does this work go\", \"what's still open\", \"pick up where the last session left off\", \"mark it done\", \"clear out the stale stuff\". Writing the record itself is central-ledger; closing the day is central-day-close.",
+      "directory": "/Users/admin/.agents/skills/central-now-field",
+      "name": "central-now-field",
+      "path": "/Users/admin/.agents/skills/central-now-field/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "METHOD: Orient a session and resume canonical work — entering the World fresh, picking an assignment back up, or rebuilding context after interruption or compaction. Routes orientation, intake, retrieval and field state into one pass with a named next action.",
+      "directory": "/Users/admin/.agents/skills/central-orient",
+      "name": "central-orient",
+      "path": "/Users/admin/.agents/skills/central-orient/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "METHOD: Run genuinely independent work in parallel and converge it — deciding that parallelism pays, bounding assignments, collecting evidence, and integrating branches as one integrator. For the spawning and review mechanics themselves it routes to the existing delegation skills.",
+      "directory": "/Users/admin/.agents/skills/central-parallel-execution",
+      "name": "central-parallel-execution",
+      "path": "/Users/admin/.agents/skills/central-parallel-execution/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "Use when creating any new file, record or artifact in Central (\"where should I put this\", \"save this note\", \"name this return\", \"is this scratch or durable\"), when promoting material to human ground or a wiki, when a loose dated folder or draft turns up at the Work root, or when references break after a file moves. The register decision itself is central-now-field's; the record contract is central-ledger's.",
+      "directory": "/Users/admin/.agents/skills/central-placement",
+      "name": "central-placement",
+      "path": "/Users/admin/.agents/skills/central-placement/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "Use when locating material in Central or its projects (\"where is X documented\", \"find the ticket that decided Y\", \"what does the wiki say about Z\"), when judging whether a document, projection or flow is current, or when resuming after an interruption or context compaction. Checking what capabilities are installed is central-capability-discovery; installing new community skills is find-skills.",
+      "directory": "/Users/admin/.agents/skills/central-retrieval",
+      "name": "central-retrieval",
+      "path": "/Users/admin/.agents/skills/central-retrieval/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "METHOD: Complete a session and leave a resumable state — the end-of-session practice that returns open threads, promotes durable material, closes the day boundary, and verifies the next session can continue from canon and field without inheriting a pile of second-hand narrative.",
+      "directory": "/Users/admin/.agents/skills/central-session-handoff",
+      "name": "central-session-handoff",
+      "path": "/Users/admin/.agents/skills/central-session-handoff/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "Strap a harness session standing anywhere in the Central personal world — orient to the register (root Control vs Work/<project>), read the current field, and route every lifecycle interaction to its owning atomic skill. Use at session start in Central, before creating any working folder or file at the Work root.",
+      "directory": "/Users/admin/.agents/skills/central-session-strap",
+      "name": "central-session-strap",
+      "path": "/Users/admin/.agents/skills/central-session-strap/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "Use at session start, resume, compaction recovery or a root/Project scope change in Central, especially before allocating task scratch. Resolve the current World, governing intent, native NOW and applicable practices; a normal authorised repository edit is not an inbox contribution or a reason to move all work into NOW.",
+      "directory": "/Users/admin/Central/.agents/skills/central-session-strap",
+      "name": "central-session-strap",
+      "path": "/Users/admin/Central/.agents/skills/central-session-strap/SKILL.md",
+      "rootPath": "/Users/admin/Central/.agents/skills",
+      "scope": "project",
+      "source": "agents"
+    },
+    {
+      "description": "METHOD: Author or revise an atomic skill or Method in the Central house style — the reusable writing discipline for this repertoire: trigger-first descriptions, lean bodies, live-schema examples, budgets in one authoritative place, manifests, and the borrowed principles behind them. Use when creating a new capability, revising an existing one, or reviewing the repertoire for overlap.",
+      "directory": "/Users/admin/.agents/skills/central-skill-authoring",
+      "name": "central-skill-authoring",
+      "path": "/Users/admin/.agents/skills/central-skill-authoring/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "METHOD: Author, test, project and verify a skill or Method update — the repeatable release practice for the repertoire, from revision through AIKit source promotion to installation verification and rollback. For authoring craft and conventions, route to central-skill-authoring.",
+      "directory": "/Users/admin/.agents/skills/central-skill-release",
+      "name": "central-skill-release",
+      "path": "/Users/admin/.agents/skills/central-skill-release/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "Use when deciding whether something a session learned deserves durable knowledge, when returning knowledge toward the root or project wiki, when reading either wiki before acting, when a node looks like a near-duplicate, when wiki material appears stale, or when a learning must leave the NOW field. For routine records of what was done, route to central-ledger; for human-facing documents, central-contribution.",
+      "directory": "/Users/admin/.agents/skills/central-wiki-return",
+      "name": "central-wiki-return",
+      "path": "/Users/admin/.agents/skills/central-wiki-return/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "Use when starting or resuming assigned work (\"continue the gateway plan\", \"work ticket #42\", \"what's the next decision on the map\"), when hunting for the ticket, wayfinder map, plan or spec that governs an assignment, when claiming work on an issue tracker, when untracked work needs a canonical home, when a decision has landed and the plan must reflect it, or when the implementation disagrees with the ticket. Charting a new map is wayfinder's job; writing the session's return is central-ledger's.",
+      "directory": "/Users/admin/.agents/skills/central-work-intake",
+      "name": "central-work-intake",
+      "path": "/Users/admin/.agents/skills/central-work-intake/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "[Bootstrap / Available Throughout] — Determines whether the work is diagnostic, applicative, explorative, or explanatory. Each mode pulls the field differently. Useful at the start of a run when orientation is unclear, but equally available mid-run when the mode of engagement shifts. Not a pre-run lock — an orientation that can be revisited as the inquiry demands.",
+      "directory": "/Users/admin/.agents/skills/choose-modality",
+      "name": "choose-modality",
+      "path": "/Users/admin/.agents/skills/choose-modality/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "[Bootstrap / Available Throughout] — Do not assume torus. The topology determines what movement is available, what contradictions can be held, and what synthesis is reachable. Available at the start of a run or at the beginning of any other skill — topology can be engaged whenever the nature of the movement becomes clearer. Not a pre-run lock but a mode of understanding applicable throughout.",
+      "directory": "/Users/admin/.agents/skills/choose-topological-mode",
+      "name": "choose-topological-mode",
+      "path": "/Users/admin/.agents/skills/choose-topological-mode/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "Create, list, connect to, stop, or delete GitHub Codespaces. Use when the user explicitly wants to manage a remote Codespaces development environment, not for cloning a repository locally.",
+      "directory": "/Users/admin/.zcode/cli/plugins/cache/zcode-plugins-official/github/0.1.2/skills/codespace",
+      "name": "codespace",
+      "path": "/Users/admin/.zcode/cli/plugins/cache/zcode-plugins-official/github/0.1.2/skills/codespace/SKILL.md",
+      "pluginName": "github",
+      "qualifiedName": "github:codespace",
+      "rootPath": "/Users/admin/.zcode/cli/plugins/cache/zcode-plugins-official/github/0.1.2/skills",
+      "scope": "user",
+      "source": "plugin"
+    },
+    {
+      "description": "METHODOLOGY: Collaboration — the field of standing in relation while working with the human: plain technical speech, smallest-sufficient retrieval, claims read with their scope attached, every object held as known through a relation, and authored ground consulted when product meaning is touched. Use when writing returns, proposals, errors, status or a session close, deciding what source to load, repeating or carrying a claim, or working on what something is for. A mechanical edit with no meaning at stake selects none of this and loads no ground.",
+      "directory": "/Users/admin/.agents/skills/collaboration-methodology",
+      "name": "collaboration-methodology",
+      "path": "/Users/admin/.agents/skills/collaboration-methodology/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "Create a local Git commit from staged changes using a conventional commit message. Use when the user wants to record already prepared changes locally, not when they want to create, review, or merge a pull request.",
+      "directory": "/Users/admin/.zcode/cli/plugins/cache/zcode-plugins-official/github/0.1.2/skills/commit",
+      "name": "commit",
+      "path": "/Users/admin/.zcode/cli/plugins/cache/zcode-plugins-official/github/0.1.2/skills/commit/SKILL.md",
+      "pluginName": "github",
+      "qualifiedName": "github:commit",
+      "rootPath": "/Users/admin/.zcode/cli/plugins/cache/zcode-plugins-official/github/0.1.2/skills",
+      "scope": "user",
+      "source": "plugin"
+    },
+    {
+      "description": "[Cross-Cutting] — Turns active Thought artifacts into durable carry-forward near compaction, handoff, or session completion. Compression is reflective, not editorial — it should tell the truth about what cohered, what remains paradoxical, and what is still unresolved.",
+      "directory": "/Users/admin/.agents/skills/compress-thought-artifacts",
+      "name": "compress-thought-artifacts",
+      "path": "/Users/admin/.agents/skills/compress-thought-artifacts/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "Use when opening, navigating, inspecting, testing, clicking, typing, filling, screenshotting, or verifying web pages and local HTTP targets (localhost, 127.0.0.1, ::1) inside ZCode, including browser/web-UI automation, rendered-page scraping, frontend checks, and visible page-state reading. Prefer this over Computer Use for anything that stays inside a web page, unless the user explicitly asks for Computer Use. Main agent only.",
+      "directory": "/Users/admin/.zcode/cli/plugins/cache/zcode-plugins-official/browser-use/0.5.1/skills/control-browser",
+      "name": "control-browser",
+      "path": "/Users/admin/.zcode/cli/plugins/cache/zcode-plugins-official/browser-use/0.5.1/skills/control-browser/SKILL.md",
+      "pluginName": "browser-use",
+      "qualifiedName": "browser-use:control-browser",
+      "rootPath": "/Users/admin/.zcode/cli/plugins/cache/zcode-plugins-official/browser-use/0.5.1/skills",
+      "scope": "system",
+      "source": "plugin"
+    },
+    {
+      "description": "[Bootstrap · Pedagogical] — MUST invoke when user asks to learn, understand, or be taught Epi-Logos, QL, MEF, or any component of the system. USE PROACTIVELY — if the user wants to understand something, this runs. Teaches through conversation from the live question, using the actual pedagogy source material, not canon summaries. The same field, more exposed.",
+      "directory": "/Users/admin/.agents/skills/converse-pedagogically",
+      "name": "converse-pedagogically",
+      "path": "/Users/admin/.agents/skills/converse-pedagogically/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "Use when executing any unit of the O:I desktop cradle rebuild (OI-CRADLE-REBUILD-WF, issue #190) — the enforced loop: brief, build, walk, review, receipt; verification by app functionality; design-set precedence; capability-matrix grammar.",
+      "directory": "/Users/admin/.agents/skills/cradle-execution",
+      "name": "cradle-execution",
+      "path": "/Users/admin/.agents/skills/cradle-execution/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "Anti-slop frontend skill for landing pages, portfolios, marketing sites, and redesigns. Use when building or redesigning web pages or components where design quality matters and generic AI aesthetics must be avoided. Reads the brief, picks a real design system or an honest aesthetic, and ships interfaces that do not look templated.",
+      "directory": "/Users/admin/.agents/skills/design-taste-frontend",
+      "name": "design-taste-frontend",
+      "path": "/Users/admin/.agents/skills/design-taste-frontend/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "The original v1 taste-skill, preserved for projects depending on its exact behavior. The current default is `design-taste-frontend` (v3, a Fable-5-aligned rewrite); `design-taste-frontend-v2` preserves the prior exhaustive-checklist version. Use this v1 install name only if you need exact backward compatibility.",
+      "directory": "/Users/admin/.agents/skills/design-taste-frontend-v1",
+      "name": "design-taste-frontend-v1",
+      "path": "/Users/admin/.agents/skills/design-taste-frontend-v1/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "The v2 (prior-model, exhaustive-checklist) taste-skill, preserved for backward compatibility. The current default is `design-taste-frontend` (v3), a Fable-5-aligned rewrite of this same skill. Use this v2 install name only if you need v2's exact mechanical pre-flight behavior.",
+      "directory": "/Users/admin/.agents/skills/design-taste-frontend-v2",
+      "name": "design-taste-frontend-v2",
+      "path": "/Users/admin/.agents/skills/design-taste-frontend-v2/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "Use to diagnose and fix ZCode custom slash-command (/command) configuration problems in the ZCode client. Applies when a command is missing, is overridden by a higher-precedence command of the same name, has a frontmatter parse error, is dropped for having an empty body, has an invalid name, does not substitute $ARGUMENTS/$1, uses a colon rather than a slash for nested names, has a misspelled frontmatter key, or disappears because the plugin providing it is disabled. Provides the discovery order, how to inspect commands in the client, common pitfalls, and a step-by-step localization and repair workflow.",
+      "directory": "/Users/admin/.zcode/cli/plugins/cache/zcode-plugins-official/zcode-guide/0.3.0/skills/diagnosing-commands",
+      "name": "diagnosing-commands",
+      "path": "/Users/admin/.zcode/cli/plugins/cache/zcode-plugins-official/zcode-guide/0.3.0/skills/diagnosing-commands/SKILL.md",
+      "pluginName": "zcode-guide",
+      "qualifiedName": "zcode-guide:diagnosing-commands",
+      "rootPath": "/Users/admin/.zcode/cli/plugins/cache/zcode-plugins-official/zcode-guide/0.3.0/skills",
+      "scope": "system",
+      "source": "plugin"
+    },
+    {
+      "description": "Use to diagnose and fix ZCode hook configuration problems in the ZCode client. Applies when a hook does not trigger, an event name is wrong, a matcher does not match a tool name, a script is not executable, template variables are not expanded, a timeout unit is mistaken (seconds versus milliseconds), the command and process field styles are mixed, a hook's JSON output fails validation, a hook blocks the session unexpectedly, or configuration-file hooks are not enabled. Provides configuration sources, the hooks.json schema, how to inspect hooks in the client, and a step-by-step localization and repair workflow.",
+      "directory": "/Users/admin/.zcode/cli/plugins/cache/zcode-plugins-official/zcode-guide/0.3.0/skills/diagnosing-hooks",
+      "name": "diagnosing-hooks",
+      "path": "/Users/admin/.zcode/cli/plugins/cache/zcode-plugins-official/zcode-guide/0.3.0/skills/diagnosing-hooks/SKILL.md",
+      "pluginName": "zcode-guide",
+      "qualifiedName": "zcode-guide:diagnosing-hooks",
+      "rootPath": "/Users/admin/.zcode/cli/plugins/cache/zcode-plugins-official/zcode-guide/0.3.0/skills",
+      "scope": "system",
+      "source": "plugin"
+    },
+    {
+      "description": "Use to diagnose and fix ZCode MCP (Model Context Protocol) server configuration problems in the ZCode client. Applies when an MCP server will not connect, its tools (mcp__server__tool) do not appear, it shows as disabled or failed, connections time out, a command cannot be found, template variables are not expanded, or a server defined in a configuration file has no effect. Provides configuration locations, how to inspect status in Settings, common pitfalls, and a step-by-step localization and repair workflow.",
+      "directory": "/Users/admin/.zcode/cli/plugins/cache/zcode-plugins-official/zcode-guide/0.3.0/skills/diagnosing-mcp",
+      "name": "diagnosing-mcp",
+      "path": "/Users/admin/.zcode/cli/plugins/cache/zcode-plugins-official/zcode-guide/0.3.0/skills/diagnosing-mcp/SKILL.md",
+      "pluginName": "zcode-guide",
+      "qualifiedName": "zcode-guide:diagnosing-mcp",
+      "rootPath": "/Users/admin/.zcode/cli/plugins/cache/zcode-plugins-official/zcode-guide/0.3.0/skills",
+      "scope": "system",
+      "source": "plugin"
+    },
+    {
+      "description": "Use to diagnose and fix ZCode plugin and marketplace problems in the ZCode client. Applies when a plugin is not listed, adding a marketplace or installing a plugin fails, a plugin is enabled but its skills or commands are missing, a built-in plugin still appears after being disabled, a plugin is not enabled as expected, a plugin.json manifest has a parse error, a plugin name is invalid, a dependency is unresolved or blocked across marketplaces, or a sensitive configuration value cannot be entered in the interface. Provides the plugin lifecycle, manifest schema, how to manage plugins in the client, and a step-by-step localization and repair workflow.",
+      "directory": "/Users/admin/.zcode/cli/plugins/cache/zcode-plugins-official/zcode-guide/0.3.0/skills/diagnosing-plugins",
+      "name": "diagnosing-plugins",
+      "path": "/Users/admin/.zcode/cli/plugins/cache/zcode-plugins-official/zcode-guide/0.3.0/skills/diagnosing-plugins/SKILL.md",
+      "pluginName": "zcode-guide",
+      "qualifiedName": "zcode-guide:diagnosing-plugins",
+      "rootPath": "/Users/admin/.zcode/cli/plugins/cache/zcode-plugins-official/zcode-guide/0.3.0/skills",
+      "scope": "system",
+      "source": "plugin"
+    },
+    {
+      "description": "Use to diagnose and fix ZCode skill configuration problems in the ZCode client. Applies when a skill is not discovered, is installed but does not trigger automatically, is shadowed by a higher-precedence skill of the same name, is disabled by configuration, has a SKILL.md frontmatter error, fails to load because its description is too long, or disappears because the plugin providing it is disabled. Provides the discovery order, how to inspect skills in the client, common pitfalls, and a step-by-step localization and repair workflow.",
+      "directory": "/Users/admin/.zcode/cli/plugins/cache/zcode-plugins-official/zcode-guide/0.3.0/skills/diagnosing-skills",
+      "name": "diagnosing-skills",
+      "path": "/Users/admin/.zcode/cli/plugins/cache/zcode-plugins-official/zcode-guide/0.3.0/skills/diagnosing-skills/SKILL.md",
+      "pluginName": "zcode-guide",
+      "qualifiedName": "zcode-guide:diagnosing-skills",
+      "rootPath": "/Users/admin/.zcode/cli/plugins/cache/zcode-plugins-official/zcode-guide/0.3.0/skills",
+      "scope": "system",
+      "source": "plugin"
+    },
+    {
+      "description": "METHODOLOGY: Orient in a project's documentation field — which kinds of document exist (Vision, Design, Mockup, Architecture, diagrams, capability matrix), what standing each claim carries, which documentation Method fits the act, how attention narrows before retrieval, and where Return goes. Use when work touches what a product is for, how it should feel or how it is structured. A small local repair selects none of this and loads no Vision.",
+      "directory": "/Users/admin/.agents/skills/docs-methodology",
+      "name": "docs-methodology",
+      "path": "/Users/admin/.agents/skills/docs-methodology/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "Recover, compare, audit and manage Project documentation through the canonical authored-position → design-commitment → architecture-contract → implementation-fact → observed-evidence → Agent-inference standing ladder without collapsing it into the P0–P5 Project-act cycle.",
+      "directory": "/Users/admin/.agents/skills/documentation-standing",
+      "name": "documentation-standing",
+      "path": "/Users/admin/.agents/skills/documentation-standing/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "Complete DOCX document creation, editing, and analysis capabilities with support for revisions, comments, formatting preservation, and text extraction. Also handles Word format conversion: legacy .doc → .docx, DOCX → PDF, DOCX → images (PNG/JPG) for visual review or previews, and DOCX → Markdown/plain text extraction. Use for creating new documents, modifying content, handling revisions, adding comments, other professional Word document tasks, or when the user asks to convert, export, or render a Word document to another format (e.g. 'Word转PDF', 'doc转docx', 'export this docx as PDF/images').",
+      "directory": "/Users/admin/.zcode/cli/plugins/cache/zcode-plugins-official/documents/0.1.7/skills/docx",
+      "name": "docx",
+      "path": "/Users/admin/.zcode/cli/plugins/cache/zcode-plugins-official/documents/0.1.7/skills/docx/SKILL.md",
+      "pluginName": "documents",
+      "qualifiedName": "documents:docx",
+      "rootPath": "/Users/admin/.zcode/cli/plugins/cache/zcode-plugins-official/documents/0.1.7/skills",
+      "scope": "system",
+      "source": "plugin"
+    },
+    {
+      "description": "Use when writing, debugging, or resubmitting a dynamic-workflow script for the CreateWorkflow tool: choosing subagent topology, typing subagent results, fanning out over files or git, gating loops on world.run commands, testing pieces with EvalWorkflowSnippet, planner-reviewer loops, confirming findings before reporting them, report() salvage, the report shape a run returns, publishing artifacts the user opens, and handling a backgrounded run.",
+      "directory": "/Applications/ZCode.app/Contents/Resources/glm/packages/bundled-skills/skills/dynamic-workflows",
+      "name": "dynamic-workflows",
+      "path": "/Applications/ZCode.app/Contents/Resources/glm/packages/bundled-skills/skills/dynamic-workflows/SKILL.md",
+      "rootPath": "/Applications/ZCode.app/Contents/Resources/glm/packages/bundled-skills/skills",
+      "scope": "system",
+      "source": "bundled",
+      "whenToUse": "Only for CreateWorkflow scripts. A single delegation or a few independent lookups belong to the Agent tool instead."
+    },
+    {
+      "description": "[Square B · Full Basin L1·L4·L4'·L1'] — USE PROACTIVELY — invoke whenever a situation has both a lived disclosed dimension and an operative structure beneath it. This is the full Cause-Experience basin entry: L1 (what is causally operative), L4 (how it is lived and disclosed), L4' (how it is verified), L1' (how it is felt and evaluated). Maps the gap between disclosure and causation; companion to apply-cmea (L4↔L1 diagonal) and run-l4-prime-loop (L4' verification).",
+      "directory": "/Users/admin/.agents/skills/engage-encounter-axis",
+      "name": "engage-encounter-axis",
+      "path": "/Users/admin/.agents/skills/engage-encounter-axis/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "METHODOLOGY: Engineering — how code work is done end to end: recover before asking, the smallest change that can work, owning every gap found, completion proven by executed evidence, a landing trail anyone can walk, CI that gates completeness and answers fast, derived surfaces, skills as the agents' CI, feature completion as demonstrated use, loop closure, and clean ground and machine. Use when implementing, repairing, verifying, landing or closing any change in a repository. A read-only question answered from code as it runs selects none of this and loads no gate.",
+      "directory": "/Users/admin/.agents/skills/engineering-methodology",
+      "name": "engineering-methodology",
+      "path": "/Users/admin/.agents/skills/engineering-methodology/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "Map Epi-Logos essays and sources into sourced argument networks with claims, warrants, counterclaims, coordinates, traversals, and writing paths.",
+      "directory": "/Users/admin/.agents/skills/epi-logos-argument-cartography",
+      "name": "epi-logos-argument-cartography",
+      "path": "/Users/admin/.agents/skills/epi-logos-argument-cartography/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "Use SwarmVault as the primary Epi-Logos vault compiler, Pi-agent install surface, compiled wiki, graph, context-pack, and task-ledger workflow.",
+      "directory": "/Users/admin/.agents/skills/epi-logos-vault-compiler",
+      "name": "epi-logos-vault-compiler",
+      "path": "/Users/admin/.agents/skills/epi-logos-vault-compiler/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "Voice and structural-rigour skill for QL-register proof prose. Use when drafting or revising Epi-Logos, Self Proving Self, Binary Explication, QL, MEF, matheme, awareness/phenomenon, non-dual logic, or proof-style philosophical prose where the writing must avoid AI-like choppiness, unearned notation, shared-backstage context, name-dropping, or concept drift while keeping 0/1 = 4+2 = 5→0 = 0/1 as the holographic backbone.",
+      "directory": "/Users/admin/.agents/skills/epi-logos-voice",
+      "name": "epi-logos-voice",
+      "path": "/Users/admin/.agents/skills/epi-logos-voice/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "[Square A · L5/L5' · Persistent Thread] — USE PROACTIVELY — invoke whenever a term is doing structural work its surface meaning doesn't account for, when an inquiry keeps circling without resolving, when two traditions seem to use 'the same concept' differently, or when a word feels curiously apt. Favoured methodology. The word's journey through positions is the inquiry's journey — excavate at #1, find the operative force at #2, work through sedimented pattern at #3, fold through historical horizon at #4, reach synthesis at #5, receive new ground at #0. Language as Vāk/Logos permeates every position — this thread never closes.",
+      "directory": "/Users/admin/.agents/skills/etymological-archaeology",
+      "name": "etymological-archaeology",
+      "path": "/Users/admin/.agents/skills/etymological-archaeology/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "Helps users discover and install agent skills when they ask questions like \"how do I do X\", \"find a skill for X\", \"is there a skill that can...\", or express interest in extending capabilities. This skill should be used when the user is looking for functionality that might exist as an installable skill.",
+      "directory": "/Users/admin/.agents/skills/find-skills",
+      "name": "find-skills",
+      "path": "/Users/admin/.agents/skills/find-skills/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "Overrides default LLM truncation behavior. Enforces complete code generation, bans placeholder patterns, and handles token-limit splits cleanly. Apply to any task requiring exhaustive, unabridged output.",
+      "directory": "/Users/admin/.agents/skills/full-output-enforcement",
+      "name": "full-output-enforcement",
+      "path": "/Users/admin/.agents/skills/full-output-enforcement/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "Create, view, edit, or delete GitHub gists for code and text sharing. Use when the user specifically asks to work with a gist, including public or secret gist visibility, not for files stored in a repository.",
+      "directory": "/Users/admin/.zcode/cli/plugins/cache/zcode-plugins-official/github/0.1.2/skills/gist",
+      "name": "gist",
+      "path": "/Users/admin/.zcode/cli/plugins/cache/zcode-plugins-official/github/0.1.2/skills/gist/SKILL.md",
+      "pluginName": "github",
+      "qualifiedName": "github:gist",
+      "rootPath": "/Users/admin/.zcode/cli/plugins/cache/zcode-plugins-official/github/0.1.2/skills",
+      "scope": "user",
+      "source": "plugin"
+    },
+    {
+      "description": "Awwwards-level frontend design engineering with a motion-rich, GSAP-heavy bias. Use when the brief wants a cinematic, scroll-driven marketing site or portfolio with AIDA structure, wide editorial typography, gapless bento grids, and real scroll choreography (pinning, stacking, scrubbing). The motion-forward sibling of design-taste-frontend.",
+      "directory": "/Users/admin/.agents/skills/gpt-taste",
+      "name": "gpt-taste",
+      "path": "/Users/admin/.agents/skills/gpt-taste/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "Make a web interface feel physically expensive — haptic depth, nested \"machined hardware\" surfaces, fluid spring motion, obsessive micro-interactions. Use when the brief wants an Apple-/Linear-tier premium feel. The materiality-and-depth sibling of design-taste-frontend.",
+      "directory": "/Users/admin/.agents/skills/high-end-visual-design",
+      "name": "high-end-visual-design",
+      "path": "/Users/admin/.agents/skills/high-end-visual-design/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "Elite website image-to-code skill for Codex. For visually important web tasks, it must first generate the design image(s) itself, deeply analyze them, then implement the website to match them as closely as possible. In Codex, it must prefer large, readable, section-specific images instead of tiny compressed boards, generate fresh standalone images for sections or detail views instead of cropping old ones, avoid lazy under-generation, avoid cards-inside-cards-inside-cards UI, and keep the hero clean, spacious, readable, and visible on a small laptop.",
+      "directory": "/Users/admin/.agents/skills/image-to-code",
+      "name": "image-to-code",
+      "path": "/Users/admin/.agents/skills/image-to-code/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "Elite mobile app image-generation skill for creating premium, app-native screen concepts and flows. Designed for iOS, Android, and cross-platform mobile products. Prioritizes clean hierarchy, comfortably readable text, strong multi-screen consistency, controlled color palettes, non-generic creative direction, textured surfaces, image-led composition, tasteful custom iconography, and clean phone mockup framing. By default, screens should be shown inside a subtle premium iPhone or similar phone mockup with a visible frame, while the main focus stays on the app content itself. This skill generates images only. It does not write code.",
+      "directory": "/Users/admin/.agents/skills/imagegen-frontend-mobile",
+      "name": "imagegen-frontend-mobile",
+      "path": "/Users/admin/.agents/skills/imagegen-frontend-mobile/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "Elite frontend image-direction skill for generating premium, conversion-aware website design references. CRITICAL OUTPUT RULE — generate ONE separate horizontal image FOR EVERY section. A landing page with 8 sections produces 8 images. Never compress multiple sections into one image. Enforces composition variety (not always left-text / right-image), background-image freedom, varied CTAs, varied hero scales (giant / mid / mini minimalist), narrative concept spine, second-read moments, and a single consistent palette across all images. Optimized for landing pages, marketing sites, and product comps that developers or coding models can accurately recreate.",
+      "directory": "/Users/admin/.agents/skills/imagegen-frontend-web",
+      "name": "imagegen-frontend-web",
+      "path": "/Users/admin/.agents/skills/imagegen-frontend-web/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "Raw mechanical interfaces fusing Swiss typographic print with military terminal aesthetics. Rigid grids, extreme type scale contrast, utilitarian color, analog degradation effects. For data-heavy dashboards, portfolios, or editorial sites that need to feel like declassified blueprints.",
+      "directory": "/Users/admin/.agents/skills/industrial-brutalist-ui",
+      "name": "industrial-brutalist-ui",
+      "path": "/Users/admin/.agents/skills/industrial-brutalist-ui/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "Create, view, list, or close GitHub issues and manage the labels and milestones that organize issues and pull requests. Use when the user wants to track or organize repository work, not when they are referring to a pull request itself.",
+      "directory": "/Users/admin/.zcode/cli/plugins/cache/zcode-plugins-official/github/0.1.2/skills/issue",
+      "name": "issue",
+      "path": "/Users/admin/.zcode/cli/plugins/cache/zcode-plugins-official/github/0.1.2/skills/issue/SKILL.md",
+      "pluginName": "github",
+      "qualifiedName": "github:issue",
+      "rootPath": "/Users/admin/.zcode/cli/plugins/cache/zcode-plugins-official/github/0.1.2/skills",
+      "scope": "user",
+      "source": "plugin"
+    },
+    {
+      "description": "[Cross-Cutting · L4' Structure] — Activates and maintains the Thought artifact field when filesystem persistence is available. Creates or updates the artifact families that actually moved during the run. Not passive filing — live working memory for subagent execution, handoff, and cross-session continuity.",
+      "directory": "/Users/admin/.agents/skills/manage-thought-artifacts",
+      "name": "manage-thought-artifacts",
+      "path": "/Users/admin/.agents/skills/manage-thought-artifacts/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "Clean editorial-style interfaces. Warm monochrome palette, typographic contrast, flat bento grids, muted pastels. No gradients, no heavy shadows.",
+      "directory": "/Users/admin/.agents/skills/minimalist-ui",
+      "name": "minimalist-ui",
+      "path": "/Users/admin/.agents/skills/minimalist-ui/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "Operate the installed O:I suite through the oi CLI — route work to the right product, navigate and augment the personal world through the AIKit branch, and keep Central as the durable authored ground.",
+      "directory": "/Users/admin/Central/.agents/skills/oi",
+      "name": "oi",
+      "path": "/Users/admin/Central/.agents/skills/oi/SKILL.md",
+      "rootPath": "/Users/admin/Central/.agents/skills",
+      "scope": "project",
+      "source": "agents"
+    },
+    {
+      "description": "Use when operating a composed O:I World, adopting it from an existing harness conversation, reconciling cross-product work, upgrading a developer suite, or recovering from installation, provider or session failure. Carry one coherent operation and Return through native owners; ordinary single-product work need not trigger a whole-suite audit.",
+      "directory": "/Users/admin/Central/.agents/skills/oi-suite-operator",
+      "name": "oi-suite-operator",
+      "path": "/Users/admin/Central/.agents/skills/oi-suite-operator/SKILL.md",
+      "rootPath": "/Users/admin/Central/.agents/skills",
+      "scope": "project",
+      "source": "agents"
+    },
+    {
+      "description": "Professional PDF toolkit covering four production workflows: reports, creative visuals, academic LaTeX, and existing PDF processing. Routes automatically by document type and supports reports, posters, papers, resumes, extraction, merging, splitting, and form filling. Use this skill for any conversion whose output is a PDF: Office → PDF (.docx/.doc/.pptx/.ppt/.xlsx/.xls/.odt/.odp/.ods/.rtf/.csv/.txt → PDF), HTML → PDF, and LaTeX/.tex → PDF; also PDF → images, PDF → text, and PDF → tables when reading a PDF apart. Trigger when the user asks to convert, export, render, print, or turn a file into a PDF, or to merge/split/extract from one — including phrasings like 'Word转PDF', 'PPT转PDF', 'Excel转PDF', 'html转pdf', '导出为PDF', 'save/export as PDF', or 'PDF转图片/文字'.",
+      "directory": "/Users/admin/.zcode/cli/plugins/cache/zcode-plugins-official/pdf/0.1.7/skills/pdf",
+      "name": "pdf",
+      "path": "/Users/admin/.zcode/cli/plugins/cache/zcode-plugins-official/pdf/0.1.7/skills/pdf/SKILL.md",
+      "pluginName": "pdf",
+      "qualifiedName": "pdf:pdf",
+      "rootPath": "/Users/admin/.zcode/cli/plugins/cache/zcode-plugins-official/pdf/0.1.7/skills",
+      "scope": "system",
+      "source": "plugin"
+    },
+    {
+      "description": "Create or update ZCode plugin source and a local test marketplace, then guide the user to add, install, update and try it in the app. Use for new plugins or changes to an existing plugin's capabilities, manifest or local distribution.",
+      "directory": "/Users/admin/.zcode/cli/plugins/cache/zcode-plugins-official/plugin-creator/0.1.1/skills/plugin-creator",
+      "name": "plugin-creator",
+      "path": "/Users/admin/.zcode/cli/plugins/cache/zcode-plugins-official/plugin-creator/0.1.1/skills/plugin-creator/SKILL.md",
+      "pluginName": "plugin-creator",
+      "qualifiedName": "plugin-creator:plugin-creator",
+      "rootPath": "/Users/admin/.zcode/cli/plugins/cache/zcode-plugins-official/plugin-creator/0.1.1/skills",
+      "scope": "system",
+      "source": "plugin"
+    },
+    {
+      "description": "Use this skill any time a presentation file is the primary input or output. Covers: creating new .pptx decks from scratch or from an outline/document (pptxgenjs / python-pptx); editing and restyling an existing .pptx; reading and extracting text/structure from a deck (markitdown); and rendering a deck to PDF (LibreOffice) or to per-slide PNG images (pdftoppm) for previews, thumbnails, or visual review. Trigger when the user references a .pptx file by name or path, says 'make/build a deck, slides, presentation, PPT, 幻灯片, 演示文稿, 汇报/路演材料', or asks to convert, export, render, or preview slides as PDF or images (e.g. 'PPT转PDF', 'ppt导出图片', 'turn these slides into a PDF').",
+      "directory": "/Users/admin/.zcode/cli/plugins/cache/zcode-plugins-official/presentations/0.1.7/skills/pptx",
+      "name": "pptx",
+      "path": "/Users/admin/.zcode/cli/plugins/cache/zcode-plugins-official/presentations/0.1.7/skills/pptx/SKILL.md",
+      "pluginName": "presentations",
+      "qualifiedName": "presentations:pptx",
+      "rootPath": "/Users/admin/.zcode/cli/plugins/cache/zcode-plugins-official/presentations/0.1.7/skills",
+      "scope": "system",
+      "source": "plugin"
+    },
+    {
+      "description": "Create, list, check out, review, or merge GitHub pull requests using GitHub CLI. Use when the user wants any pull-request workflow, not when they want to manage issues, releases, or local-only commits.",
+      "directory": "/Users/admin/.zcode/cli/plugins/cache/zcode-plugins-official/github/0.1.2/skills/pr",
+      "name": "pr",
+      "path": "/Users/admin/.zcode/cli/plugins/cache/zcode-plugins-official/github/0.1.2/skills/pr/SKILL.md",
+      "pluginName": "github",
+      "qualifiedName": "github:pr",
+      "rootPath": "/Users/admin/.zcode/cli/plugins/cache/zcode-plugins-official/github/0.1.2/skills",
+      "scope": "user",
+      "source": "plugin"
+    },
+    {
+      "description": "The ProjectCentral fractal — the one shape Central repeats at the root and at every project. Teaches the canonical directories, their sources, and the ctrl commands that instantiate and navigate real filesystem trees. Use when reading, initialising, inspecting, or reprojecting any ProjectCentral, or when indexing the world.",
+      "directory": "/Users/admin/.agents/skills/projectcentral-ontology",
+      "name": "projectcentral-ontology",
+      "path": "/Users/admin/.agents/skills/projectcentral-ontology/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "The minimal QL shape and its foundational meanings — the L0/L1 systems — for coherently organising knowledge by the Quaternal coordinate system. Use when structuring, reading, or generating anything ql-shaped (wikis, notes, rules, templates); when you need the raw P/P′ positions, the six questions, or the causal and phenomenal lenses; and when deciding whether a structure is QL-shaped at all.",
+      "directory": "/Users/admin/.agents/skills/ql-foundations",
+      "name": "ql-foundations",
+      "path": "/Users/admin/.agents/skills/ql-foundations/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "METHOD: Read a Quaternal I Ching hexagram for a person's continuing concern — six-fold QL reading, line states as tetralemma, moving lines as the Klein twist, the nuclear hexagram and the two compasses — and record the cast, its form and later readings as acts on their one continuing journey through Nara's native faculty. Use when a concern calls for a change reading or an earlier cast needs a retrospective reading.",
+      "directory": "/Users/admin/.agents/skills/quaternal-i-ching",
+      "name": "quaternal-i-ching",
+      "path": "/Users/admin/.agents/skills/quaternal-i-ching/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "METHOD: Read a Quaternal Tarot spread for a person's continuing concern — Sphere, Torus Day or Klein Day+Night positions, complementary pairs, the P4 lemniscate and the Square C lenses — and record it as acts on their one continuing journey through Nara's native faculty. Use when a concern calls for a Tarot reading or when a journey already open needs its next bearing, a relation to the person's writing, or their correction.",
+      "directory": "/Users/admin/.agents/skills/quaternal-tarot",
+      "name": "quaternal-tarot",
+      "path": "/Users/admin/.agents/skills/quaternal-tarot/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "Convert PRDs to beads for ralph-tui execution. Creates an epic with child beads for each user story. Use when you have a PRD and want to use ralph-tui with beads as the task source. Triggers on: create beads, convert prd to beads, beads for ralph, ralph beads.",
+      "directory": "/Users/admin/.agents/skills/ralph-tui-create-beads",
+      "name": "ralph-tui-create-beads",
+      "path": "/Users/admin/.agents/skills/ralph-tui-create-beads/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "Convert PRDs to beads for ralph-tui execution using beads-rust (br CLI). Creates an epic with child beads for each user story. Use when you have a PRD and want to use ralph-tui with beads-rust as the task source. Triggers on: create beads, convert prd to beads, beads for ralph, ralph beads, br beads.",
+      "directory": "/Users/admin/.agents/skills/ralph-tui-create-beads-rust",
+      "name": "ralph-tui-create-beads-rust",
+      "path": "/Users/admin/.agents/skills/ralph-tui-create-beads-rust/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "Convert PRDs to prd.json format for ralph-tui execution. Creates JSON task files with user stories, acceptance criteria, and dependencies. Triggers on: create prd.json, convert to json, ralph json, create json tasks.",
+      "directory": "/Users/admin/.agents/skills/ralph-tui-create-json",
+      "name": "ralph-tui-create-json",
+      "path": "/Users/admin/.agents/skills/ralph-tui-create-json/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "Generate a Product Requirements Document (PRD) for ralph-tui task orchestration. Creates PRDs with user stories that can be converted to beads issues or prd.json for automated execution. Triggers on: create a prd, write prd for, plan this feature, requirements for, spec out.",
+      "directory": "/Users/admin/.agents/skills/ralph-tui-prd",
+      "name": "ralph-tui-prd",
+      "path": "/Users/admin/.agents/skills/ralph-tui-prd/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "Upgrades existing websites and apps to premium quality. Audits current design, identifies generic AI patterns, and applies high-end design standards without breaking functionality. Works with any CSS framework or vanilla CSS.",
+      "directory": "/Users/admin/.agents/skills/redesign-existing-projects",
+      "name": "redesign-existing-projects",
+      "path": "/Users/admin/.agents/skills/redesign-existing-projects/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "Create a GitHub release and prepare changelog notes for a version tag. Use when the user wants to publish or draft a repository release, not merely create a Git commit, tag, or pull request.",
+      "directory": "/Users/admin/.zcode/cli/plugins/cache/zcode-plugins-official/github/0.1.2/skills/release",
+      "name": "release",
+      "path": "/Users/admin/.zcode/cli/plugins/cache/zcode-plugins-official/github/0.1.2/skills/release/SKILL.md",
+      "pluginName": "github",
+      "qualifiedName": "github:release",
+      "rootPath": "/Users/admin/.zcode/cli/plugins/cache/zcode-plugins-official/github/0.1.2/skills",
+      "scope": "user",
+      "source": "plugin"
+    },
+    {
+      "description": "Clone or fork a GitHub repository with optional local setup, or open repository resources such as files, branches, issues, and settings in the browser. Use when the user wants a new local checkout or the web UI, not a Codespace or an existing pull-request checkout.",
+      "directory": "/Users/admin/.zcode/cli/plugins/cache/zcode-plugins-official/github/0.1.2/skills/repo",
+      "name": "repo",
+      "path": "/Users/admin/.zcode/cli/plugins/cache/zcode-plugins-official/github/0.1.2/skills/repo/SKILL.md",
+      "pluginName": "github",
+      "qualifiedName": "github:repo",
+      "rootPath": "/Users/admin/.zcode/cli/plugins/cache/zcode-plugins-official/github/0.1.2/skills",
+      "scope": "user",
+      "source": "plugin"
+    },
+    {
+      "description": "Reverse engineer native, managed, Electron/JavaScript, packaged, firmware, and browser targets with REA. Use shipped-artifact or requested runtime evidence to explain features, compare versions, decompile code, or guide a reconstruction. Skip REA for ordinary source-repository architecture analysis.",
+      "directory": "/Users/admin/.agents/skills/reverse-engineer-anything",
+      "name": "reverse-engineer-anything",
+      "path": "/Users/admin/.agents/skills/reverse-engineer-anything/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "Apply reverse engineering to a desktop app, instrument or protocol the owner legitimately possesses — explain a feature from shipped evidence, then rebuild it clean-room. Use when asked to reverse engineer Ableton/instrument dynamics, extract cradle or chat UI/UX from apps like ChatGPT/Grok/Buzz/ZCode desktop, study the hermes gateway or TUI, or recreate a feature from a binary with no source. Skip for ordinary analysis of repositories whose source is already in hand.",
+      "directory": "/Users/admin/.agents/skills/reverse-engineering-playbook",
+      "name": "reverse-engineering-playbook",
+      "path": "/Users/admin/.agents/skills/reverse-engineering-playbook/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "METHOD: Choose a reverse-engineering practice target and push it to a verified result with parallel subagents — exploratory pushes to see what the pipeline can do, skill-building on bounded material, or warming the REA pipeline before a real target. Use when asked for RE projects to practice on, to push reverse engineering work with plenty of subagents, or to stress-test a decompilation/DSP/UI-extraction pipeline.",
+      "directory": "/Users/admin/.agents/skills/reverse-engineering-practice",
+      "name": "reverse-engineering-practice",
+      "path": "/Users/admin/.agents/skills/reverse-engineering-practice/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "[Square B · L4'] — The scientific verification loop within the Cause-Experience basin. Use for any applicative run needing explicit current-state to ideal-state movement — observe, think, plan, build, execute, verify, learn. Build the evaluative apparatus before executing. Square B companions: L1 (what causal structure is being tested), L4 (lived experience of the verification), L1' (which phenomenal functions orient the evaluation).",
+      "directory": "/Users/admin/.agents/skills/run-l4-prime-loop",
+      "name": "run-l4-prime-loop",
+      "path": "/Users/admin/.agents/skills/run-l4-prime-loop/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "[All Squares · Sequential P-Pathway] — USE PROACTIVELY — invoke for sequential positional traversal P0→P5 in any topological mode (torus, klein, or lemniscatic). Distinct from square-basin traversal. At each position, the linked square's lenses are available (P0/P5→Square A, P1/P4→Square B, P2/P3→Square C). Do not narrate movement from the bootstrap — walk explicitly. P5 does not open until P1–P4 actually cohere.",
+      "directory": "/Users/admin/.agents/skills/run-positional-coherence",
+      "name": "run-positional-coherence",
+      "path": "/Users/admin/.agents/skills/run-positional-coherence/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "List, set, delete, or synchronize GitHub Actions repository secrets without exposing secret values. Use when the user explicitly wants to manage GitHub secret storage, not ordinary environment files or repository variables.",
+      "directory": "/Users/admin/.zcode/cli/plugins/cache/zcode-plugins-official/github/0.1.2/skills/secret",
+      "name": "secret",
+      "path": "/Users/admin/.zcode/cli/plugins/cache/zcode-plugins-official/github/0.1.2/skills/secret/SKILL.md",
+      "pluginName": "github",
+      "qualifiedName": "github:secret",
+      "rootPath": "/Users/admin/.zcode/cli/plugins/cache/zcode-plugins-official/github/0.1.2/skills",
+      "scope": "user",
+      "source": "plugin"
+    },
+    {
+      "description": "Verify GitHub CLI installation and guide authentication for the intended GitHub host and account. Use when gh is missing, authentication is invalid, the user wants to switch accounts or hosts, or another GitHub skill cannot pass preflight.",
+      "directory": "/Users/admin/.zcode/cli/plugins/cache/zcode-plugins-official/github/0.1.2/skills/setup",
+      "name": "setup",
+      "path": "/Users/admin/.zcode/cli/plugins/cache/zcode-plugins-official/github/0.1.2/skills/setup/SKILL.md",
+      "pluginName": "github",
+      "qualifiedName": "github:setup",
+      "rootPath": "/Users/admin/.zcode/cli/plugins/cache/zcode-plugins-official/github/0.1.2/skills",
+      "scope": "user",
+      "source": "plugin"
+    },
+    {
+      "description": "Create new skills, edit existing skills, and iterate wording. Use when writing SKILL.md from scratch, improving existing skills, turning repeated workflows into reusable skills, or refining skill descriptions to improve trigger reliability.",
+      "directory": "/Users/admin/.zcode/cli/plugins/cache/zcode-plugins-official/skill-creator/0.1.0/skills/skill-creator",
+      "name": "skill-creator",
+      "path": "/Users/admin/.zcode/cli/plugins/cache/zcode-plugins-official/skill-creator/0.1.0/skills/skill-creator/SKILL.md",
+      "pluginName": "skill-creator",
+      "qualifiedName": "skill-creator:skill-creator",
+      "rootPath": "/Users/admin/.zcode/cli/plugins/cache/zcode-plugins-official/skill-creator/0.1.0/skills",
+      "scope": "system",
+      "source": "plugin"
+    },
+    {
+      "description": "Semantic Design System Skill for Google Stitch. Generates agent-friendly DESIGN.md files that enforce premium, anti-generic UI standards — strict typography, calibrated color, asymmetric layouts, perpetual micro-motion, and hardware-accelerated performance.",
+      "directory": "/Users/admin/.agents/skills/stitch-design-taste",
+      "name": "stitch-design-taste",
+      "path": "/Users/admin/.agents/skills/stitch-design-taste/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "Use when turning one concrete reusable capability into a small Codex skill with explicit trigger boundaries, authorised actions, outputs, and validation cases.",
+      "directory": "/Users/admin/.agents/skills/unix-atomic-skill-maker",
+      "name": "unix-atomic-skill-maker",
+      "path": "/Users/admin/.agents/skills/unix-atomic-skill-maker/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "[Bootstrap Gate] — The entry point for every Epi-Logos run. Invoke before responding, acting, or routing to any other skill. Routes to square basins, determines whether the Thought field should be live, and establishes the QL/MEF braid. If there is even a 1% chance this work touches paradox, question-shaping, topology, lens analysis, or artifact persistence — this runs first.",
+      "directory": "/Users/admin/.agents/skills/using-epi-logos",
+      "name": "using-epi-logos",
+      "path": "/Users/admin/.agents/skills/using-epi-logos/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "METHODOLOGY: Plan a huge chunk of work — more than one agent session can hold — as a shared map of decision tickets on your issue tracker, and resolve them one at a time until the way to the destination is clear.",
+      "directory": "/Users/admin/.agents/skills/wayfinder",
+      "name": "wayfinder",
+      "path": "/Users/admin/.agents/skills/wayfinder/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "Use the browser automation tooling available in the session to test web frontends interactively in a purely GUI-based, black-box manner: simulate real user clicks, text input, scrolling, and other actions; use screenshots for visual verification and read-only DOM inspection for cross-validation; and produce a final test report. Suitable for verifying whether web functionality works correctly, reproducing frontend bugs, checking interaction feedback and layout styling, or conducting exploratory testing of a page. Use this skill when the user asks to test a webpage/frontend feature, verify UI behavior, reproduce a page bug, or provides only a URL and asks you to “test it.”",
+      "directory": "/Users/admin/.zcode/cli/plugins/cache/zcode-plugins-official/browser-use/0.5.1/skills/web-gui-tester",
+      "name": "web-gui-tester",
+      "path": "/Users/admin/.zcode/cli/plugins/cache/zcode-plugins-official/browser-use/0.5.1/skills/web-gui-tester/SKILL.md",
+      "pluginName": "browser-use",
+      "qualifiedName": "browser-use:web-gui-tester",
+      "rootPath": "/Users/admin/.zcode/cli/plugins/cache/zcode-plugins-official/browser-use/0.5.1/skills",
+      "scope": "system",
+      "source": "plugin"
+    },
+    {
+      "description": "List, inspect, trigger, watch, or rerun GitHub Actions workflows and runs. Use when the user wants to operate or inspect CI workflows, not when they only want to merge a PR or browse the Actions page.",
+      "directory": "/Users/admin/.zcode/cli/plugins/cache/zcode-plugins-official/github/0.1.2/skills/workflow-run",
+      "name": "workflow-run",
+      "path": "/Users/admin/.zcode/cli/plugins/cache/zcode-plugins-official/github/0.1.2/skills/workflow-run/SKILL.md",
+      "pluginName": "github",
+      "qualifiedName": "github:workflow-run",
+      "rootPath": "/Users/admin/.zcode/cli/plugins/cache/zcode-plugins-official/github/0.1.2/skills",
+      "scope": "user",
+      "source": "plugin"
+    },
+    {
+      "description": "METHODOLOGY: World-keeping — where session work lands and how a field stays clean: one register per session with its NOW field, returns bounded and attributed pointing at canonical plans, durable knowledge travelling to wikis through the promotion door, and the day closing in order so tomorrow opens clean. Use when starting or ending a session, placing work or records, promoting a learning, or closing a day. A task-local session whose threads all closed in place selects none of this and loads no register.",
+      "directory": "/Users/admin/.agents/skills/world-keeping-methodology",
+      "name": "world-keeping-methodology",
+      "path": "/Users/admin/.agents/skills/world-keeping-methodology/SKILL.md",
+      "rootPath": "/Users/admin/.agents/skills",
+      "scope": "user",
+      "source": "agents"
+    },
+    {
+      "description": "Use this skill any time a spreadsheet file is the primary input or output. This means any task where the user wants to: open, read, edit, or fix an existing .xlsx, .xlsm, .csv, or .tsv file; create a new spreadsheet from scratch or from other data sources; analyze data and output results as an Excel file with charts; convert between tabular file formats (CSV/TSV/JSON/PDF-table → XLSX, or XLSX → CSV/JSON); clean, merge, pivot, or transform tabular data. Trigger especially when the user references a spreadsheet file by name or path, says 'make a table/report/model', mentions Excel/CSV/数据分析/报表/汇总, asks to convert or export a spreadsheet (e.g. 'csv转excel', 'json转表格', 'export as CSV'), or wants data visualization inside a spreadsheet.",
+      "directory": "/Users/admin/.zcode/cli/plugins/cache/zcode-plugins-official/spreadsheets/0.1.7/skills/xlsx",
+      "name": "xlsx",
+      "path": "/Users/admin/.zcode/cli/plugins/cache/zcode-plugins-official/spreadsheets/0.1.7/skills/xlsx/SKILL.md",
+      "pluginName": "spreadsheets",
+      "qualifiedName": "spreadsheets:xlsx",
+      "rootPath": "/Users/admin/.zcode/cli/plugins/cache/zcode-plugins-official/spreadsheets/0.1.7/skills",
+      "scope": "system",
+      "source": "plugin"
+    },
+    {
+      "description": "Use when configuring ZCode's extension resources (MCP servers, slash commands, skills, hooks, and plugins) or instruction files such as AGENTS.md in the ZCode client. Explains where each resource is configured at the user and workspace scope, the discovery order, precedence, and merge rules, plus guidance on which location to choose. Use when someone asks how to add an MCP server, command, skill, hook, plugin, or AGENTS.md instructions, where a configuration file lives, why a configuration is not taking effect, or needs routing to a specific diagnostic skill.",
+      "directory": "/Users/admin/.zcode/cli/plugins/cache/zcode-plugins-official/zcode-guide/0.3.0/skills/zcode-configuration-guide",
+      "name": "zcode-configuration-guide",
+      "path": "/Users/admin/.zcode/cli/plugins/cache/zcode-plugins-official/zcode-guide/0.3.0/skills/zcode-configuration-guide/SKILL.md",
+      "pluginName": "zcode-guide",
+      "qualifiedName": "zcode-guide:zcode-configuration-guide",
+      "rootPath": "/Users/admin/.zcode/cli/plugins/cache/zcode-plugins-official/zcode-guide/0.3.0/skills",
+      "scope": "system",
+      "source": "plugin"
+    }
+  ],
+  "totalDiscovered": 104
+}
