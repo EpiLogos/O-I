@@ -1,3 +1,4 @@
+import {Refusal} from "../shared/Refusal";
 import {IconTabStrip} from "../workspace/primitives/IconTabStrip";
 import {planeIcon} from "../workspace/planeRegistry";
 import {PermissionCard} from "../agent/chat/PermissionCard";
@@ -146,7 +147,7 @@ export function EncounterView({title,plane,onPlane,reading,status,draft,pending,
         * InterruptRequested means a stop was asked for but not settled. */}
       {plane==="Activity"&&status?.state==="TurnInFlight"&&<p className="encounter-wait" role="status">Provider turn in flight — waiting for the provider.</p>}
       {plane==="Activity"&&status?.state==="InterruptRequested"&&<p className="encounter-wait" role="status">Stop requested — waiting for the provider to settle.</p>}
-      {plane==="Activity"&&status?.error&&<p className="encounter-fault" role="alert">The owner reports a connection fault: {status.error}</p>}
+      {plane==="Activity"&&status?.error&&<Refusal className="encounter-fault" said="The owner reports a connection fault." error={status.error}/>}
       {blocks?.map(block=>(block.kind==="thinking"||block.kind==="provider-notice"||block.kind==="tool"||block.kind==="permission")?<details className="encounter-thinking" data-kind={block.kind} key={block.id}><summary>{block.kind==="thinking"?"Thinking":block.kind==="tool"?"Tool activity":block.kind==="permission"?"Provider consent":"Provider notice"}</summary><div>{block.text}</div></details>
         :block.kind==="error"?<div key={block.id} className="encounter-turn encounter-error" data-kind="error"><span className="encounter-avatar" aria-hidden="true"><Glyph name="chat" size={12}/></span><div><strong>Provider turn failed</strong><p>{block.text}</p></div></div>
         :block.kind==="completed"&&plane==="Conversation"?null
@@ -154,7 +155,7 @@ export function EncounterView({title,plane,onPlane,reading,status,draft,pending,
       {/* Named states, static: reading, refused before any reading, and an
         * empty conversation with the next action that actually exists. */}
       {!reading&&!error&&<p className="encounter-reading oi-note" role="status">Reading encounter…</p>}
-      {!reading&&error&&<div className="encounter-refused"><p className="oi-refusal" role="alert">{error}</p><p className="oi-note">The owner has not served this conversation. The read is retried while this view stays open.</p></div>}
+      {!reading&&error&&<div className="encounter-refused"><Refusal said="Couldn't read the conversation." error={error}/><p className="oi-note">The owner has not served this conversation. The read is retried while this view stays open.</p></div>}
       {plane==="Conversation"&&reading&&!reading.more&&!paged&&!reading.blocks.some(block=>["user","assistant"].includes(block.kind))&&<div className="encounter-empty oi-empty" data-state="empty-transcript"><p>No messages in this conversation yet.</p><p>{connected?"Write below and send to begin a provider turn.":"Connect a native provider below, then write and send."}</p></div>}
       {plane==="Activity"&&blocks?.length===0&&!status?.error&&<p>No provider activity in this transcript page.</p>}
       {plane==="Activity"&&readJournal&&<ActivityJournal read={readJournal}/>}
@@ -170,7 +171,7 @@ export function EncounterView({title,plane,onPlane,reading,status,draft,pending,
       * in Conversation now; every other plane still reaches it by switching
       * planes, same as switching any other tab. */}
     {plane==="Conversation" && <div className="encounter-composer">
-      {(error||status?.error)&&reading&&<p role="alert">{error||status?.error}</p>}
+      {(error||status?.error)&&reading&&<Refusal said="The conversation reported a fault." error={error||status?.error}/>}
       {/* A faulted resident still holds its seat, so the connect section never
         * re-renders — and on the bound owner cut, reconnect returns that same
         * resident idempotently without starting a new transport. The honest
@@ -244,7 +245,7 @@ function AgencyA2a({seed,a2a,onSend}:{seed:string;a2a:{busy:boolean;difference?:
           <p>The difference is the peer&apos;s untrusted return: it lands pending admission under the receiving installation&apos;s own law. Nothing here applies it.</p>
         </div>
       : <>
-        {a2a.error&&<p role="alert">{a2a.error}</p>}
+        {a2a.error&&<Refusal said="The exchange with the peer agent didn't go through." error={a2a.error}/>}
         <div className="encounter-a2a-fields">
           <label>Peer agent ref<input aria-label="Peer agent ref" value={peerAgent} onChange={event=>setPeerAgent(event.target.value)} placeholder="agent ref of the peer" autoComplete="off" spellCheck={false}/></label>
           <label>Peer A2A endpoint URL<input aria-label="Peer A2A endpoint URL" value={peerEndpoint} onChange={event=>setPeerEndpoint(event.target.value)} placeholder="https://peer.example/a2a" autoComplete="off" spellCheck={false}/></label>

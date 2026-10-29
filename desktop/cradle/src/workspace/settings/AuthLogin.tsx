@@ -12,6 +12,7 @@
  * person). A note-only entry renders its note as visible instruction and
  * NEVER a button; a command that cannot run is never offered silently.
  */
+import {Refusal} from "../../shared/Refusal";
 import {useEffect, useState} from "react";
 import {ensureAuthFaces, useSettings, type AuthLoginOption} from "./settingsData";
 import {harnessName, providerId, readyHarnesses} from "./sectionModel";
@@ -64,7 +65,7 @@ export function HarnessAuth({harness}: {harness: string}) {
     // sign-in to offer — the refusal is that fact, not a page error. The
     // card keeps its own install and detection facts.
     if (/harness_auth\.unknown_harness|not a harness AIKit carries a profile/.test(face.error)) return null;
-    return <p className="settings-inline-error" role="alert" data-auth-failed={harness}>Couldn’t read the sign-in options: {face.error}</p>;
+    return <Refusal className="settings-inline-error" data-auth-failed={harness} said={`Couldn’t read ${harnessName(harness)}’s sign-in options.`} error={face.error}/>;
   }
   if (face.value.own_login.length === 0) return null;
   return <div className="settings-auth" data-harness-auth={harness}>

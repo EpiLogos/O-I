@@ -3,6 +3,7 @@
  * continues it here: what the act is, and where it can go next — the other
  * working mode, or back to its Factory Run with the result it reached.
  */
+import {Refusal} from "../shared/Refusal";
 import {useState} from "react";
 import type {KernelTransportStatus} from "../kernel/types";
 import type {HostedAppMode} from "../expressions/hostedApp";
@@ -29,7 +30,7 @@ export function ActStrip({mode, transport, currentRevision}: {mode: HostedAppMod
           Return to the Run
         </button>
       )}
-      {error && <span className="act-strip-error" role="alert">{error}</span>}
+      {error && <Refusal className="act-strip-error" said="That didn't go through." error={error}/>}
     </div>
   );
 }

@@ -12,6 +12,7 @@
  * actions; the goal's brief and progress; an artifact's details; an
  * exchange's message — every action on an existing route.
  */
+import {Refusal, refusalWords} from "../../../shared/Refusal";
 import {useCallback, useEffect, useMemo, useRef, useState, type ReactNode} from "react";
 import {useKernel} from "../../../kernel/KernelProvider";
 import {PointCloudHost} from "../../../expressions/PointCloudHost";
@@ -118,18 +119,18 @@ export function RunLiveExpression({entry, runKey, host, children}: {entry: RunEn
       if (outcome?.act) setSought(outcome.act);
       setSeeks(n => n + 1);
     }
-    catch (error) { host.onMessage?.(`That passage could not be re-performed: ${error instanceof Error ? error.message : String(error)}`); }
+    catch (error) { host.onMessage?.(refusalWords("That passage could not be performed again.", error)); }
   };
 
   return <div className="flx" data-live-expression={expressionRef} data-live-status={live?.status ?? ready}>
     <div className="flx-stage" ref={stage}>
       {ready === "ready" && staged && <PointCloudHost mode="expressions" deepLink={expressionRef} followsOwnRef onHostedState={onHostedState} refreshToken={performedCount || undefined}/>}
       {(ready === "opening" || (ready === "ready" && !staged)) && <p className="frun-note" role="status">Opening the Run's Expression…</p>}
-      {ready === "refused" && <p className="frun-note" role="alert">The Run's Expression could not open: {reason}</p>}
+      {ready === "refused" && <Refusal className="frun-note" said="The Run's Expression didn't open." error={reason}/>}
       {object && <ObjectPanel object={object} entry={entry} runKey={runKey} host={host} performed={live?.performed ?? []} currentAct={live?.act?.act_ref} onClose={() => setSelection(undefined)}/>}
       <LiveStrip entry={entry} live={live} onFollow={() => void startRunLive(kernel.transport, liveSource()).catch(() => undefined)} onStop={() => void stopRunLive(runKey)}/>
     </div>
-    <ExpressionChoice live={live} onChoose={fileRef => void selectRunExpression(runKey, fileRef).catch(error => host.onMessage?.(`That Expression could not be selected: ${error instanceof Error ? error.message : String(error)}`))}/>
+    <ExpressionChoice live={live} onChoose={fileRef => void selectRunExpression(runKey, fileRef).catch(error => host.onMessage?.(refusalWords("That Expression could not be chosen.", error)))}/>
     <Timeline passages={live?.performed ?? []} act={live?.act} chain={live?.chain ?? []} onSeek={(actRef, position) => void seek(actRef, position)}/>
     {children}
   </div>;
@@ -155,15 +156,16 @@ function ExpressionChoice({live, onChoose}: {live: ReturnType<typeof useRunLive>
 function LiveStrip({entry, live, onFollow, onStop}: {entry: RunEntry; live: ReturnType<typeof useRunLive>; onFollow: () => void; onStop: () => void}) {
   const unavailable = Object.entries(live?.sources ?? {}).filter(([, state]) => state === "unavailable").map(([name]) => name.replace(/^journal:.*$/, "a journal").replace(/^card:.*$/, "an Agent card"));
   const words = live?.repertoire?.basis === "none" ? "no repertoire material is available yet" : live?.repertoire?.expression ? `${live.repertoire.expression.title} (${live.repertoire.basis})` : "reading the repertoire";
-  return <p className="flx-strip" data-live-repertoire={live?.repertoire?.basis ?? "reading"}>
+  return <><p className="flx-strip" data-live-repertoire={live?.repertoire?.basis ?? "reading"}>
     <span>{live?.status === "following" ? "● following" : live?.status ?? "opening"}</span>
     {live?.status === "following" && <button type="button" className="flx-follow" onClick={onStop} title="Stop the Run's live production; its work stays recoverable">Stop following</button>}
     {live?.status === "stopped" && <button type="button" className="flx-follow" onClick={onFollow}>Follow</button>}
     <span> · {entry.card.title}</span>
     <span> · {words}</span>
-    {live?.error && <span role="alert"> · {live.error}</span>}
+    {live?.error && <span> · the live reading stopped</span>}
     {[...new Set(unavailable)].length > 0 && <span className="flx-strip-absent"> · unavailable: {[...new Set(unavailable)].join(", ")}</span>}
-  </p>;
+  </p>
+  {live?.error && <Refusal className="frun-note" said="The live reading stopped." error={live.error}/>}</>;
 }
 
 /** The act's passages: the kernel's sequence when read, else what this view
@@ -206,7 +208,7 @@ function ObjectPanel({object, entry, runKey, host, performed, currentAct, onClos
   const carry = (to: "techne" | "expressions", expressionRef: string, instrumentRef?: string) => {
     void continueActInMode(kernel.transport, {act_ref: actRef, to, expression_ref: expressionRef, instrument_ref: instrumentRef ?? run.runRef, runKey,
       summary: `${to === "techne" ? "Develop in Technè" : "Shape in Expressions"}: ${object.label}`})
-      .catch(error => setNote(`The act could not continue: ${error instanceof Error ? error.message : String(error)}`));
+      .catch(error => { console.error("The act could not continue", error); setNote(refusalWords("The act could not continue.", error)); });
   };
   const crossMode = (unitRef?: string, instrumentRef?: string) => <>
     <button type="button" className="fdesk-link" onClick={() => carry("techne", constellationOf(unitRef), instrumentRef)}>Develop in Technè</button>

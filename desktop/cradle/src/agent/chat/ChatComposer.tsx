@@ -1,3 +1,4 @@
+import {Refusal} from "../../shared/Refusal";
 import type {NativeModelActions} from "../../encounter/NativeModelControls";
 import type {NativeModelState} from "../../encounter/nativeModel";
 import type {NativeModeState} from "../../encounter/nativeMode";
@@ -109,7 +110,7 @@ export function ChatComposer({reading,draft,pending,busy,error,editable,promptAl
   const stopping=status?.state==="InterruptRequested"||stopAsked;
   const currentFacts:ConnectionFacts|undefined=current?{...connection.providers.find(provider=>provider.id===current.id),...connection.currentFacts,...(current as Partial<ConnectionFacts>),id:current.id,label:current.label}:undefined;
   return <div className="chat-composer" data-connection={drafting?"drafting":connected?running?"running":"connected":"disconnected"}>
-    {(error||status?.error)&&reading&&<p className="chat-composer-error oi-refusal" role="alert">{error||status?.error}</p>}
+    {(error||status?.error)&&reading&&<Refusal className="chat-composer-error oi-refusal" said="The conversation reported a fault." error={error||status?.error}/>}
     {status?.error&&status.native_session_id&&<p className="oi-note" role="status">The owner still holds this conversation; restart the connection service to recover it.</p>}
     {draftFailed&&<button className="oi-action" onClick={onRecover}>Apply my typing to the current shared draft</button>}
     {sendState?.phase==="checking"&&<p className="chat-send-state oi-note" role="status">Checking whether your message was sent…</p>}
@@ -134,7 +135,7 @@ export function ChatComposer({reading,draft,pending,busy,error,editable,promptAl
     <textarea ref={input} disabled={!editable} aria-label="Message" data-at-search="composer" placeholder={drafting?"Write the first message…":unreachable?"Agents are out of reach for now":!reading?"Reading…":connected?"Message the agent…":"Connect a provider, then write…"} value={message} rows={3}
       onChange={event=>setMessage(event.target.value)} onPaste={onPaste}
       onKeyDown={event=>{if(event.key==="Enter"&&!event.shiftKey&&!event.nativeEvent.isComposing){event.preventDefault();if(canSend)onSend();}}}/>
-    {voice.error&&<p role="alert" className="oi-note">{voice.error}</p>}
+    {voice.error&&<Refusal className="oi-note" said="Couldn't take dictation." error={voice.error}/>}
     <div className="chat-composer-row">
       {/* Plain tools, no menus: files from this computer, the centre subject.
           Everything else attaches by drop — a sidebar file, a tab. The

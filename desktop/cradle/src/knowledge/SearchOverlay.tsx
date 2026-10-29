@@ -1,3 +1,4 @@
+import {Refusal} from "../shared/Refusal";
 import {IconTabStrip,IconTab} from "../workspace/primitives/IconTabStrip";
 import { useEffect, useRef, useState } from "react";
 import { useKernel } from "../kernel/KernelProvider";
@@ -350,8 +351,8 @@ export function SearchOverlay({ project, onClose, onOpen, leader, onLeaderChange
         placeholder={`Search ${project ?? "Central"}`} />
       <button type="button" className="search-dismiss" aria-label="Close search" onClick={onClose}><kbd>esc</kbd></button>
     </form>
-    <IconTabStrip aria-label="Result kinds">
-      {tabs.map(entry => <IconTab key={entry.id} label={entry.label} icon="search" selected={tab === entry.id} data-palette-tab={entry.id} onClick={() => setTab(entry.id)}/>)}
+    <IconTabStrip aria-label="Result kinds" showLabels>
+      {tabs.map(entry => <IconTab key={entry.id} label={entry.label} icon="search" selected={tab === entry.id} data-palette-tab={entry.id} onClick={() => setTab(entry.id)}>{entry.label}</IconTab>)}
     </IconTabStrip>
     {tab !== "all" && <div className="search-scroll search-typed" role="tabpanel" aria-label={tabs.find(entry => entry.id === tab)?.label}>
       {error && <SearchReadingFailure error={error}/>}
@@ -372,7 +373,7 @@ export function SearchOverlay({ project, onClose, onOpen, leader, onLeaderChange
     </div>}
     <div className="search-scroll" hidden={tab !== "all" || undefined}>
       <header className="search-context"><span title={project ?? "Central"}>{project ?? "Central"}</span><span role="status" aria-live="polite">{isOpening ? "Opening…" : composing ? "Composing…" : busy ? `${count ? `${count} results · ` : ""}${pendingProviders.length} ${pendingProviders.length === 1 ? "source" : "sources"} loading…` : `${count} ${count === 1 ? "result" : "results"}`}</span></header>
-      {shortcutError && <p role="alert">{shortcutError}</p>}
+      {shortcutError && <Refusal said="Couldn't change the shortcut." error={shortcutError}/>}
       {error && <SearchReadingFailure error={error}/>}
       <fieldset className="search-results-frame" disabled={isOpening || composing}>
         <div id="knowledge-search-results">

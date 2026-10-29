@@ -6,6 +6,7 @@
  * hands the Desk the owner's own ref — the material reading that follows is
  * the owner's record, or the labelled scenario view in the dev fixture.
  */
+import {Refusal} from "../../shared/Refusal";
 import {useRef, useState} from "react";
 import type {ClaimView, EvidenceView, FactoryBuildView, FactoryMaterialSelection} from "./types";
 
@@ -43,7 +44,7 @@ export function CandidateReading({view, onOpenMaterial, openError}: {
     if (reading) void open({subjectRef: ref, label: reading.label});
   };
   return <section className="desk-material-browser" aria-label="Candidates and evidence">
-    {openError && <p className="desk-material-note" role="alert">{openError}</p>}
+    {openError && <Refusal className="desk-material-note" said="Couldn't open that candidate." error={openError}/>}
     <div className="desk-material-section-head"><h3>Candidates</h3><span>{view.candidates.length} retained</span></div>
     {view.candidates.length > 0 ? <div className="desk-material-candidate-list" aria-label="Select candidate">
       <button type="button" aria-pressed={!selected} onClick={() => choose()}>All claims and evidence</button>

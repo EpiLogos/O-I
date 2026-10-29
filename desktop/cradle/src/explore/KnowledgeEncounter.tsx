@@ -1,3 +1,4 @@
+import {Refusal} from "../shared/Refusal";
 import {useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode} from "react";
 import {useKernel} from "../kernel/KernelProvider";
 import {useExpressionStage} from "../stage/ExpressionStage";
@@ -151,7 +152,7 @@ export function KnowledgeEncounter({opened,page,onOpenRef,view,onView}:{opened:u
     <div ref={expressionHost} className="knowledge-encounter__expression" data-active={selectedMode==="expression"&&expressionOutcome?.state==="ready"}/>
     {selectedMode==="expression"&&expressionOutcome?.state==="ready"&&<div role="status"><p>{expressionOutcome.whole.members.length} subjects · {expressionOutcome.whole.edges.length} typed relations · Expression r{expressionOutcome.document.revision}</p>{expressionOutcome.whole.truncated&&<p>Expression shows at most {KNOWLEDGE_EXPRESSION_LIMIT} subjects, including your pins.</p>}{expressionOutcome.whole.relationBindingsUnavailable>0&&<p>{expressionOutcome.whole.relationBindingsUnavailable} relations have no disclosed identity and revision; their evidence remains in the source view.</p>}</div>}
     {selectedMode==="expression"&&expressionOutcome?.state==="ready"&&<nav className="knowledge-encounter__subjects" aria-label="Subjects in this Expression">{expressionOutcome.whole.members.map(member=><button type="button" key={member.node.ref} aria-current={member.node.ref===encounter.focus?"true":undefined} onClick={()=>open(member.node.ref)} data-subject-ref={member.node.ref} title={subjectLabel(member.node)}>{subjectLabel(member.node)}</button>)}</nav>}
-    {expressionError&&<p role="alert">{expressionError}</p>}
+    {expressionError&&<Refusal said="Couldn't show this as an Expression." error={expressionError}/>}
     <footer><span>{encounter.nodes.length} subjects · {encounter.edges.length} typed relations{encounter.truncated?" · bounded at owner budget":""}</span><details><summary>Source details</summary><pre>{JSON.stringify({focus:encounter.focus,nodes:display.nodes,edges:encounter.edges,actions:encounter.actions},null,2)}</pre></details></footer>
   </section>;
 }

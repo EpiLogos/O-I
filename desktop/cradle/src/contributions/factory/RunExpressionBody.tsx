@@ -1,3 +1,4 @@
+import {Refusal} from "../../shared/Refusal";
 import {useEffect, useState} from "react";
 import type {PresentationBinding} from "../../explore/presentation";
 import type {ExpressionDocument} from "../../expression/types";
@@ -44,7 +45,7 @@ export function RunExpressionBody({binding}:RendererProps){
       <div className="factory-run-expression__stage" data-state={state}>
         {state==="ready"&&<PointCloudHost followsOwnRef mode="expressions" deepLink={document.expression_ref}/>}
         {state==="opening"&&<p className="oi-note" role="status">Opening the Run's Expression…</p>}
-        {state==="refused"&&<p className="oi-note" role="alert">The Run's Expression could not open: {reason}</p>}
+        {state==="refused"&&<Refusal className="oi-note" said="The Run's Expression didn't open." error={reason}/>}
       </div>
       {(run.actions??[]).length>0&&<p className="factory-run-expression__actions-note">Actions: {(run.actions??[]).map(action=>`${action.label} (authority ${action.authorityOwner})`).join(" · ")} — requests only; authority stays with its native owner.</p>}
     </article>

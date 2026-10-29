@@ -1,3 +1,4 @@
+import {Refusal} from "../shared/Refusal";
 import {useEffect,useState} from "react";
 import {createProjection,withdrawProjection} from "../../../../shared-field/index.mjs";
 import {createA2aBinding,createA2aPresence} from "../../../../shared-field/a2a.mjs";
@@ -236,6 +237,6 @@ export function SharedFieldMaterial({sourceRef}:{sourceRef:string}) {
     <p role="status">Exchange <code>{a2aDifference.exchange_ref}</code> returned a {a2aDifference.transport_result.kind} <code>{a2aDifference.transport_result.ref}</code>{a2aDifference.transport_provenance?.agent_card?.name?<> from {a2aDifference.transport_provenance.agent_card.name}</>:null}. The difference is pending admission — quarantine and the receiving-side decision happen under the field's own law, and only an admitted contribution can be returned to this document.</p>
    </div>}
   </div>}
-  {error&&<p role="alert">{error}</p>}
+  {error&&<Refusal ownWords said="The shared field didn't take that." error={error}/>}
  </section>;
 }

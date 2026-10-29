@@ -144,7 +144,6 @@
 .settings-skeleton span:nth-child(3) { width: 45%; }
 .settings-unreadable { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; max-width: 760px; }
 .settings-unreadable p { margin: 0; }
-.settings-unreadable-reason { color: var(--oi-muted); }
 
 /* ---- search ---- */
 .settings-search { position: relative; }

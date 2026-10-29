@@ -5,6 +5,7 @@
  * A saved change advances the profile revision, so an accepted Agent needs
  * the person's acceptance again — the editor says so before and after.
  */
+import {Refusal} from "../../shared/Refusal";
 import {useEffect, useState} from "react";
 import type {CharacterChange} from "../nativeAgent";
 import {CharacterSection} from "./CharacterSection";
@@ -39,6 +40,6 @@ export function CharacterEditor({current, accepted, onSave, disabled}: {
       {changed && accepted && <span className="oi-state">Saving changes the Agent's source; it will need your acceptance again.</span>}
     </div>
     {outcome && <p className="oi-note" role="status">{outcome}</p>}
-    {error && <p className="oi-refusal" role="alert">{error}</p>}
+    {error && <Refusal said="Couldn't save the character." error={error}/>}
   </div>;
 }

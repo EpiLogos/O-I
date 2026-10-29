@@ -1,3 +1,4 @@
+import {Refusal} from "../shared/Refusal";
 import {useEffect,useState} from "react";
 import {useKernel} from "../kernel/KernelProvider";
 import type {SurfaceBinding} from "../surface/types";
@@ -28,6 +29,6 @@ export function FreshSurface({binding}:{binding:SurfaceBinding}){
    <label>Project <select aria-label="New tab project" value={project} onChange={e=>setProject(e.target.value)}><option value="">Central workspace</option>{kernel.snapshot.navigator?.root?.work.projects.map(p=><option key={p.path} value={p.name}>{p.name}</option>)}</select></label>
    <nav className="fresh-docforms" aria-label="Open a document form">{DOCUMENT_FORMS.filter(form=>(form.kind!=="document-vision"&&form.kind!=="document-mockup")||!!project).map(form=><button key={form.kind} disabled={busy} title={form.hint} onClick={()=>choose(form.kind)}><b>{form.label}</b><span>{form.hint}</span></button>)}</nav>
   </details>
-  {busy&&<p role="status">Opening…</p>}{error&&<p role="alert">{error}</p>}
+  {busy&&<p role="status">Opening…</p>}{error&&<Refusal said="Couldn't open that form." error={error}/>}
  </div></section>;
 }

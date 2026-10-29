@@ -1,3 +1,4 @@
+import {Refusal} from "../shared/Refusal";
 import {useState} from "react";
 import {kernelOp} from "../kernel/bridge";
 import {useKernel} from "../kernel/KernelProvider";
@@ -51,7 +52,7 @@ export function FlowCognition({project,flowRef}:{project:string|null;flowRef:str
   <details>
    <summary>Contemplate · what changed</summary>
    <p className="flow-cognition-law">Contemplate is never auto-invoked: the owner&apos;s preflight comes first, execution needs a second explicit act, and nothing reads or sends on save, open or attach.</p>
-   {error&&<p role="alert" className="flow-error">{error}</p>}
+   {error&&<Refusal className="flow-error" said="Contemplate didn't run." error={error}/>}
    {!disclosure&&<button type="button" data-action="contemplate.preflight" disabled={busy!==""} title="Ask the owner for the deterministic Contemplate preflight — exactly what would be read and touched. Inert: it records nothing and executes nothing." onClick={()=>void preflight()}>{busy==="preflight"?"Asking the owner…":"Contemplate this Flow"}</button>}
    {disclosure&&<PreflightAnswer answer={disclosure}/>}
    {disclosure?.state==="invoked"&&<div className="flow-cognition-execute">

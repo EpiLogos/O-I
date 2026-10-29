@@ -3,6 +3,7 @@
  * New profile saves what you have set here; Use profile STAGES its changes
  * into the ordinary review (nothing applies on its own); Import only stores.
  */
+import {Refusal} from "../../../shared/Refusal";
 import {useRef, useState} from "react";
 import type {ProfileDocument} from "../../../configuration/contracts";
 import {briefValue} from "../sectionModel";
@@ -83,6 +84,8 @@ export function ProfilesSection({data}: {data: SettingsSnapshot}) {
           <button type="button" className="settings-button" onClick={() => file.current?.click()}>Import…</button>
           <input ref={file} type="file" accept="application/json,.json" hidden onChange={(event) => { const picked = event.target.files?.[0]; event.target.value = ""; if (picked) void importFile(picked); }}/>
         </div>}
-    {note && <p className={note.ok ? "settings-card-note" : "settings-inline-error"} role={note.ok ? "status" : "alert"}>{note.text}</p>}
+    {note && (note.ok
+      ? <p className="settings-card-note" role="status">{note.text}</p>
+      : <Refusal className="settings-inline-error" said="This profile change wasn't applied." error={note.text}/>)}
   </div>;
 }

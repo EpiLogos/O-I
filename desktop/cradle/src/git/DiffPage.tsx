@@ -1,3 +1,4 @@
+import {Refusal, refusalWords} from "../shared/Refusal";
 import {useCallback,useEffect,useMemo,useRef,useState} from "react";
 import {useKernel} from "../kernel/KernelProvider";
 import {kernelOp} from "../kernel/bridge";
@@ -40,7 +41,7 @@ export function DiffPage({identity}:{identity:DiffIdentity}){
  useEffect(()=>{if(viewport.current)viewport.current.scrollTop=0;setScroll(0);},[selected,split]);
  const start=Math.max(0,Math.floor(scroll/22)-6),end=Math.min(rows.length,Math.ceil((scroll+height)/22)+6),shown=rows.slice(start,end),hunks=rows.flatMap((row,index)=>row.header?.kind==="hunk"?[index]:[]);
  const jump=(direction:number)=>{const current=Math.floor((viewport.current?.scrollTop??0)/22);const index=direction>0?hunks.find(i=>i>current+1):[...hunks].reverse().find(i=>i<current-1);if(index!==undefined&&viewport.current)viewport.current.scrollTop=index*22;};
- const copy=async(text:string,label:string)=>{try{await navigator.clipboard.writeText(text);setNotice(`${label} copied`);}catch(e){setNotice(`Could not copy: ${String(e)}`);}};
+ const copy=async(text:string,label:string)=>{try{await navigator.clipboard.writeText(text);setNotice(`${label} copied`);}catch(e){setNotice(refusalWords("Could not copy.",e));}};
  const selectedSource=():string|undefined=>{
   const selection=window.getSelection(),view=viewport.current;
   if(!selection?.rangeCount||selection.isCollapsed||!view?.contains(selection.anchorNode)||!view.contains(selection.focusNode)){setNotice("Select code in this diff first");return;}
@@ -63,7 +64,7 @@ export function DiffPage({identity}:{identity:DiffIdentity}){
  const cell=(line:DiffLine|undefined,side:"left"|"right")=><div className={`diff-cell ${line?.kind??"empty"}`}><span className="diff-number">{side==="left"?line?.old:line?.next}</span><span className="diff-sign">{line?.kind==="delete"?"−":line?.kind==="add"?"+":" "}</span><code data-diff-side={line?side:undefined}>{line&&<Code text={line.text} path={path}/>}</code>{lineCopy(line)}</div>;
  return <div ref={root} className="git-diff-page">
   <div className="diff-toolbar"><span>{entries.length?`${entries.length} file changes`:"Repository changes"} · {identity.to==="working-tree"?(identity.from==="HEAD"?"Uncommitted":`${identity.from} → HEAD and uncommitted`):`${identity.from} → ${identity.to}`}</span><button className="oi-action" disabled={busy} onClick={()=>void read()}>Refresh</button><label>View <select aria-label="Diff layout" value={layout} onChange={e=>{const value=e.target.value as DiffLayout;chooseDiffLayout(value);setLayout(value);}}><option value="auto">Automatic</option><option value="unified">Unified</option><option value="split">Split</option></select></label><label><input type="checkbox" checked={ignore} onChange={e=>setIgnore(e.target.checked)}/>Ignore whitespace</label></div>
-  {error&&<p role="alert">Couldn’t read git changes: {error} <button className="oi-action" onClick={()=>void read()}>Retry</button></p>}
+  {error&&<Refusal said="Couldn’t read the git changes." error={error}><button className="oi-action" onClick={()=>void read()}>Retry</button></Refusal>}
   {busy&&<p role="status">Reading repository changes…</p>}
   {comparisons.map(group=>group.reading.omitted_files?<p role="status" key={group.kind}>{group.kind==="working"?"Uncommitted":"Committed"}: {group.reading.omitted_files} more files are not shown (200-file bound).</p>:null)}
   {comparisons.length>0&&!entries.length&&!error&&<p>No changes in this comparison.</p>}

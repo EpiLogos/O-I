@@ -1,4 +1,5 @@
 /** Harness capability first; installation and detection are secondary facts. */
+import {Refusal, refusalWords} from "../../../shared/Refusal";
 import {useEffect,useState} from "react";
 import type {HarnessRow,ProviderRow} from "../../../configuration/harnessSource";
 import {ModelChip} from "../../../agent/chat/ComposerChips";
@@ -35,7 +36,7 @@ function DetectionCard({row}:{row:HarnessRow}) {
  const install=async()=>{
   setBusy(true);setNote(null);
   try{await expect({op:"client_install",client:row.client},"client_installed");await loadSuite();setNote("Installed. "+(harnessEffect(row)??""));}
-  catch(cause){setNote(`Not installed: ${plain(cause)}`);}finally{setBusy(false);}
+  catch(cause){setNote(refusalWords("Not installed.",cause));}finally{setBusy(false);}
  };
  return <section className="settings-card settings-harness" data-settings-row={`harness-install:${row.client}`} data-harness-card={row.client} data-installed={row.installed?"true":"false"}>
   <h3>{harnessName(row.harness)}</h3>
@@ -44,7 +45,7 @@ function DetectionCard({row}:{row:HarnessRow}) {
   {harnessEffect(row)&&<p className="settings-card-strong" data-harness-effect>{harnessEffect(row)}</p>}
   <div className="settings-card-actions">
    {!row.installed&&<button type="button" className="settings-button" disabled={busy} data-harness-install onClick={()=>void install()}>{busy?"Installing…":"Install"}</button>}
-   {folder&&<button type="button" className="settings-button" onClick={()=>void expect({op:"settings_reveal",path:folder},"settings_revealed").catch(cause=>setNote(plain(cause)))}>Open folder</button>}
+   {folder&&<button type="button" className="settings-button" onClick={()=>void expect({op:"settings_reveal",path:folder},"settings_revealed").catch(cause=>setNote(refusalWords("Couldn't open the folder.",cause)))}>Open folder</button>}
   </div>
   {note&&<p className="settings-card-note" role="status">{note}</p>}
   <HarnessAuth harness={row.client}/>
@@ -53,7 +54,7 @@ function DetectionCard({row}:{row:HarnessRow}) {
 
 function CurrentChat({session}:{session:EncounterSessionHandle|undefined}) {
  const kernel=useKernel();
- const [checking,setChecking]=useState(false),[verification,setVerification]=useState<{summary:string;connected:boolean;at:number}>();
+ const [checking,setChecking]=useState(false),[verification,setVerification]=useState<{summary:string;cause?:unknown;connected:boolean;at:number}>();
  const state=session?.state,status=state?.status;
  useEffect(()=>{setVerification(undefined);},[state?.key,status?.native_session_id,status?.provider?.id]);
  const facts=status?.provider?{...state?.providers.find(provider=>provider.id===status.provider?.id),...status.provider}:undefined;
@@ -63,7 +64,7 @@ function CurrentChat({session}:{session:EncounterSessionHandle|undefined}) {
   try{
    const read=await encounter<EncounterStatus>(kernel.transport,state.project,{action:"status",agent_session:state.agentSession});
    setVerification({...connectionVerification(read),at:Date.now()});
-  }catch(cause){setVerification({connected:false,summary:`Connection could not be verified: ${plain(cause)}`,at:Date.now()});}
+  }catch(cause){setVerification({connected:false,summary:"The connection could not be verified.",cause,at:Date.now()});}
   finally{setChecking(false);}
  };
  return <section className="settings-card settings-harness-current" aria-label="Current chat" data-current-chat-harness>
@@ -74,11 +75,13 @@ function CurrentChat({session}:{session:EncounterSessionHandle|undefined}) {
     <button type="button" className="settings-button" disabled={checking} data-harness-verify onClick={()=>void verify()}>{checking?"Verifying…":"Verify connection"}</button>
     {state?.resume&&<button type="button" className="settings-button" disabled={state.pending} onClick={()=>void session.actions.reconnect(state.resume!.provider)}>Resume this chat</button>}
    </div>
-   {verification&&<p className="settings-card-note" role="status" data-connection-verified={verification.connected}>{verification.summary} Checked {new Date(verification.at).toLocaleTimeString()}. No model turn was sent.</p>}
+   {verification&&(verification.cause===undefined
+    ?<p className="settings-card-note" role="status" data-connection-verified={verification.connected}>{verification.summary} Checked {new Date(verification.at).toLocaleTimeString()}. No model turn was sent.</p>
+    :<Refusal className="settings-card-note" role="status" data-connection-verified={verification.connected} said={verification.summary} error={verification.cause}><p>Checked {new Date(verification.at).toLocaleTimeString()}. No model turn was sent.</p></Refusal>)}
    <Row id="model:current" title="Model for this chat" description="Changes this session only; the harness confirms the selection.">
     <ModelChip project={session.state.project||undefined} model={session.state.model} actions={{refresh:session.actions.readModel,select:session.actions.selectModel}} disabled={session.state.pending||status?.state==="TurnInFlight"||status?.state==="InterruptRequested"}/>
    </Row>
-   {state?.error&&<p className="settings-inline-error" role="alert">{state.error}</p>}
+   {state?.error&&<Refusal className="settings-inline-error" said="The chat connection reported a problem." error={state.error}/>}
   </>:<p className="settings-muted">No chat is selected. The default below decides which harness a new chat starts with.</p>}
  </section>;
 }
@@ -124,9 +127,9 @@ function DefaultModels({data,session,providers}:{data:SettingsSnapshot;session?:
   void stageSetting({setting_ref:MODEL_DEFAULT_SETTING,scope,value:next,secret_reference:null}).catch(cause=>setError(plain(cause)));
  };
  if(data.registry.state==="reading"||entry&&!resolution)return <Reading/>;
- if(!entry)return <Missing>The installed AIKit does not expose launch-model defaults. Update AIKit to configure the model for future chats here.</Missing>;
+ if(!entry)return <Missing>The installed AIKit does not expose launch-model defaults. Update AIKit to configure the model for future chats.</Missing>;
  return <div role="group" aria-label="Default models for new chats" data-default-models data-settings-row={settingRowId(MODEL_DEFAULT_SETTING)}>
-  <p className="settings-muted">New chats open on the saved model. Choices come from what a live chat on that harness advertises.</p>
+  {providers.length>0&&<p className="settings-muted">New chats open on the saved model. Choices come from what a live chat on that harness advertises.</p>}
   {providers.map(provider=>{
    const saved=table[provider.id],options=selected===provider.id?modelChoices(observation?.available_models??[]):[];
    const rpc=provider.protocol==="pi-rpc"||provider.protocol==="prime-rpc";
@@ -140,7 +143,7 @@ function DefaultModels({data,session,providers}:{data:SettingsSnapshot;session?:
    </Row>;
   })}
   {change&&<p role="status" className="settings-card-note">Model default change ready to review and apply.</p>}
-  {error&&<p role="alert">{error}</p>}
+  {error&&<Refusal className="settings-inline-error" said="This change wasn't staged." error={error}/>}
  </div>;
 }
 export function HarnessesSection({data}:{data:SettingsSnapshot}) {
@@ -170,14 +173,15 @@ export function HarnessesSection({data}:{data:SettingsSnapshot}) {
  return <div className="settings-harnesses" data-harness-panel>
   <CurrentChat key={`${session?.state.key??"none"}:${session?.state.status?.native_session_id??"none"}`} session={session}/>
   <Group title="New chats" id="new-chats">
-   <Row id={DEFAULT_CONNECTION_ROW} title="Default harness for new chats" description="Existing chats keep their own harness. Review and apply a change below." changed={!!defaultChange} onUndo={defaultChange?()=>void undoChange(defaultChange):undefined}>
+   <Row id={DEFAULT_CONNECTION_ROW} title="Default harness for new chats" description={providers.state==="ok"&&providers.rows.length?"Existing chats keep their own harness. Review and apply a change below.":"Existing chats keep their own harness."} changed={!!defaultChange} onUndo={defaultChange?()=>void undoChange(defaultChange):undefined}>
     <span>{data.stagedDefault?`${names.get(data.stagedDefault)??"Configured harness"} · ready to review`:providers.state==="ok"?defaultProvider?names.get(defaultProvider.id):"No harness is configured for new chats":"Reads when the harness list answers"}</span>
    </Row>
    {providers.state==="failed"?<Unreadable error={providers.error} onRetry={()=>void loadSuite()}/>:providers.rows.length?<div className="settings-cards">{providers.rows.map(provider=><CapabilityCard key={provider.id} name={names.get(provider.id)!} provider={provider} data={data} session={session}/>)}</div>:<p className="settings-muted">No encounter harness is configured.</p>}
    <DefaultModels data={data} session={session} providers={providers.state==="ok"?providers.rows:[]}/>
    <button type="button" className="settings-button" disabled={starting||!!data.stagedDefault||stagedChanges(data).some(row=>row.requestKey.startsWith(MODEL_DEFAULT_SETTING))} onClick={()=>void start()}>{starting?"Starting chat…":session?"Start a new chat to verify defaults":"Start a chat to read models"}</button>
-   <p className="settings-muted">Opens the default harness without sending a message.</p>
-   {startError&&<p role="alert">{startError}</p>}
+   {/* The helper speaks for the control above it; when the harness list didn't answer, it stays silent with it. */}
+   {providers.state==="ok"&&providers.rows.length>0&&<p className="settings-muted">Opens the default harness without sending a message.</p>}
+   {startError&&<Refusal className="settings-inline-error" said="Couldn't start a chat." error={startError}/>}
   </Group>
   <ModelCatalogue data={data}/>
   <Group title="Sign-in, installation and detection" count={ready.length+needing.length+missing.length} collapsible defaultOpen={false} reveal={nav.focusRow?.startsWith("harness-install:")?nav.focusSeq:undefined} id="detection">

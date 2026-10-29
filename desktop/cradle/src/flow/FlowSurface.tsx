@@ -1,3 +1,4 @@
+import {Refusal} from "../shared/Refusal";
 import {TextEditor,EditorCommands,type EditorHandle} from "../editor/lazy";
 import {useEffect,useRef,useState} from "react";
 import {EditorFrame} from "../editor/EditorChrome";
@@ -42,7 +43,7 @@ const answerKey=(surfaceId:string)=>`oi-flow-answer:${surfaceId}`;
 const initialOf=(name:string):string=>{const m=name.toUpperCase().match(/[A-Z]/);return m?m[0]:"A";};
 export function FlowSurface({binding}:{binding:SurfaceBinding}){
  const kernel=useKernel();const scope=useScope();const input=useRef<EditorHandle>(null);const [text,setText]=useState("");
- const [instance,setInstance]=useState<FlowInstance>();const [error,setError]=useState<string>();const [busy,setBusy]=useState(false);const [loaded,setLoaded]=useState(false);
+ const [instance,setInstance]=useState<FlowInstance>();const [error,setError]=useState<string|{said:string;cause:unknown}>();const [busy,setBusy]=useState(false);const [loaded,setLoaded]=useState(false);
  const [conflict,setConflict]=useState<{current:FlowInstance}>();
  const liveSelection=useRef({text,instance});liveSelection.current={text,instance};
  const documentId=useRef(crypto.randomUUID());const observationKeys=useRef(new Set<string>());
@@ -86,7 +87,7 @@ export function FlowSurface({binding}:{binding:SurfaceBinding}){
    if(!live)return;
    setInstance(next);setText(composer);
    if(recoveryNotice)setError(recoveryNotice);
-  })().catch(reason=>{if(live)setError(String(reason));}).finally(()=>{if(live)setLoaded(true);});
+  })().catch(reason=>{if(live)setError({said:"Couldn't read this Flow.",cause:reason});}).finally(()=>{if(live)setLoaded(true);});
   return()=>{live=false;};
  },[binding.id]);
  const change=(value:string)=>{setText(value);try{localStorage.setItem(key,JSON.stringify({text:value}));}catch{setError("Draft recovery storage is unavailable; save your writing to Central.");}};
@@ -109,7 +110,7 @@ export function FlowSurface({binding}:{binding:SurfaceBinding}){
    const result=await writeEntries(instance,embedDocument(instance.html,next));
    if(result.outcome==="conflict"){setConflict({current:await readFlowInstance(kernel.transport,instance.location)});return;}
    setInstance(await readFlowInstance(kernel.transport,instance.location));
-  }catch(reason){setError(String(reason));}finally{setBusy(false);}
+  }catch(reason){setError({said:"Couldn't save the change to this Flow.",cause:reason});}finally{setBusy(false);}
  };
  const openEntry=(entryId:string)=>{
   setFocusId(entryId);
@@ -165,7 +166,7 @@ export function FlowSurface({binding}:{binding:SurfaceBinding}){
    const next=await readFlowInstance(kernel.transport,instance.location);
    setInstance(next);setText("");setReplyTarget("");setRelationType("reply");setAddressees([]);
    try{localStorage.removeItem(key);}catch{setError("Saved. Local draft recovery storage could not be cleared.");}
-  }catch(reason){setError(String(reason));}finally{setBusy(false);}
+  }catch(reason){setError({said:"Couldn't save the entry. Your writing is still here.",cause:reason});}finally{setBusy(false);}
  };
  /** Send the entry to the bound live session: the person's words land in
   * the file as their entry, then drive the session through its own
@@ -190,7 +191,7 @@ export function FlowSurface({binding}:{binding:SurfaceBinding}){
    awaitingAnswer.current=true;
    handle.actions.change(asked);
    await handle.actions.send();
-  }catch(reason){awaitingAnswer.current=false;setError(String(reason));}finally{setAnswerBusy(false);}
+  }catch(reason){awaitingAnswer.current=false;setError({said:"Couldn't send the entry to the session.",cause:reason});}finally{setAnswerBusy(false);}
  };
  /** Put the composed entry to the addressed agents. The owner records the
   * request, commits the entry, asks each agent as its own delivery and — with
@@ -233,12 +234,12 @@ export function FlowSurface({binding}:{binding:SurfaceBinding}){
    setText("");setReplyTarget("");setRelationType("reply");setAddressees([]);
    try{localStorage.removeItem(key);}catch{/* the owner holds the entry now */}
    void conversations.refresh();
-  }catch(reason){setError(String(reason));}finally{setAsking(false);}
+  }catch(reason){setError({said:"Couldn't ask the agents.",cause:reason});}finally{setAsking(false);}
  };
  const rebase=async()=>{
   if(!instance)return;
   setBusy(true);setError(undefined);
-  try{const current=await readFlowInstance(kernel.transport,instance.location);setInstance(current);setConflict(undefined);}catch(reason){setError(String(reason));}finally{setBusy(false);}
+  try{const current=await readFlowInstance(kernel.transport,instance.location);setInstance(current);setConflict(undefined);}catch(reason){setError({said:"Couldn't read the current Flow.",cause:reason});}finally{setBusy(false);}
  };
  const keepDraft=()=>setConflict(undefined);
  const attach=()=>{
@@ -270,9 +271,12 @@ export function FlowSurface({binding}:{binding:SurfaceBinding}){
    {!(loaded&&doc&&isCurrentFormat(doc))&&<button title={text.trim()&&answerWith?"Send this entry to the bound live session; its answer returns into this file":!answerWith?"Bind a live session below, then send":text.trim()?"Send this entry to the live session":"Write an entry first"} disabled={!loaded||busy||answerBusy||!text.trim()||!answerWith} onClick={()=>void sendToAgent()}>Send to agent</button>}
    <button title={text.trim()?"Append this entry to the document":"Write an entry first"} disabled={!loaded||busy||!text.trim()} onClick={()=>void save()}>Save · ⌘S</button></>}
  >
-  {error&&<p role="alert" className="flow-error">{error}</p>}
+  {/* The surface's own sentences (a conflict, the answer kept, what to choose first) stand as written; a caught fault says what
+    * didn't happen, with its cause behind Why (shared/Refusal.tsx). */}
+  {typeof error==="string"&&<p role="alert" className="flow-error">{error}</p>}
+  {error&&typeof error!=="string"&&<Refusal className="flow-error" said={error.said} error={error.cause}/>}
   {loaded&&doc&&<FlowParticipants doc={doc} project={project} disabled={!!conflict||busy||asking} onChange={commitDocument}/>}
-  {loaded&&doc&&isCurrentFormat(doc)&&<FlowConversations doc={doc} requests={conversations.requests} onOpenEntry={openEntry} onReconcile={async requestRef=>{try{await conversationReconcile(kernel.transport,project,requestRef);await conversations.refresh();}catch(reason){setError(String(reason));}}}/>}
+  {loaded&&doc&&isCurrentFormat(doc)&&<FlowConversations doc={doc} requests={conversations.requests} onOpenEntry={openEntry} onReconcile={async requestRef=>{try{await conversationReconcile(kernel.transport,project,requestRef);await conversations.refresh();}catch(reason){setError({said:"Couldn't reconcile that conversation.",cause:reason});}}}/>}
   {loaded&&doc&&(view==="threads"&&isCurrentFormat(doc)
    ?<FlowThreads doc={doc} focusId={focusId} onOpenEntry={openEntry}/>
    :<ol className="flow-thread" aria-label="Document thread">

@@ -12,6 +12,7 @@
  *  - hover and focus never change a row's height (R7): the trailing actions
  *    live in space the row reserves at rest.
  */
+import {Refusal, refusalWords} from "../../shared/Refusal";
 import {createContext, useContext, useState, type ReactNode} from "react";
 import {Glyph, type GlyphName} from "../Glyph";
 import type {CentralLocation} from "../../kernel/types";
@@ -68,7 +69,7 @@ export function Section({id, label, state, count, tools, children}: {id: string;
     </header>
     <div id={bodyId} className="left-section-body" hidden={collapsed || undefined}>
       {state.kind === "loading" ? <p className="left-reading" role="status">{state.what}</p>
-        : state.kind === "error" ? <div className="left-error" role="alert" title={state.reason}><p>{state.message}</p>{state.detail && <p className="left-error-detail">{state.detail}</p>}<button type="button" className="oi-action" onClick={state.onRetry}>Retry</button></div>
+        : state.kind === "error" ? <Refusal className="left-error" said={state.message} error={state.reason}>{state.detail && <p className="left-error-detail">{state.detail}</p>}<button type="button" className="oi-action" onClick={state.onRetry}>Retry</button></Refusal>
         : children}
     </div>
   </section>;
@@ -90,7 +91,7 @@ export function OpenWhere({location, label}: {location: CentralLocation; label: 
   const run = (action?: (location: CentralLocation) => Promise<void> | void) => (event: React.MouseEvent) => {
     event.stopPropagation();
     if (!action) return;
-    void Promise.resolve(action(location)).catch(error => host.onMessage?.(String(error)));
+    void Promise.resolve(action(location)).catch(error => host.onMessage?.(refusalWords(`Couldn't open ${label}.`, error)));
   };
   return <span className="left-open-where">
     {host.onOpenBeside && <button type="button" className="left-icon" aria-label={`Open ${label} beside`} title="Open beside" onClick={run(host.onOpenBeside)}><Glyph name="columns" size={12}/></button>}
@@ -102,7 +103,7 @@ export function OpenWhere({location, label}: {location: CentralLocation; label: 
  * click opens it in the centre; draggable into the composer (R12). */
 export function MaterialRow({location, label, glyph = "file", current, badge, onOpen, title}: {location: CentralLocation; label: string; glyph?: GlyphName; current?: boolean; badge?: ReactNode; onOpen?: () => void; title?: string}) {
   const host = useLeftHost();
-  const open = onOpen ?? (() => { void Promise.resolve(host.onOpenFile?.(location)).catch(error => host.onMessage?.(String(error))); });
+  const open = onOpen ?? (() => { void Promise.resolve(host.onOpenFile?.(location)).catch(error => host.onMessage?.(refusalWords("Couldn't open that file.", error))); });
   return <div className="left-row left-material" data-file-path={location.path} aria-current={current ? "true" : undefined}>
     <button type="button" className="left-row-main" title={title ?? location.path} aria-label={label} aria-current={current ? "true" : undefined}
       draggable onDragStart={event => { event.dataTransfer.setData(LOCATION_DRAG_TYPE, JSON.stringify(location)); event.dataTransfer.setData("text/plain", location.path); event.dataTransfer.effectAllowed = "copyLink"; }}
@@ -146,7 +147,7 @@ export function ConversationRow({row, kind = "Chat", current, onOpen}: {row: Enc
   const mark: SessionMark | undefined = refusal && (!observed || observed.mark === "idle" || observed.mark === "unread") ? {...(observed ?? {permissions: 0, observedAt: Date.now()}), mark: "failed", reason: refusal} : observed;
   const state = mark?.mark ?? "idle";
   const [menu, setMenu] = useState(false);
-  const open = onOpen ?? ((value: EncounterRow) => { void Promise.resolve(host.onOpenChat?.(value)).catch(error => host.onMessage?.(String(error))); });
+  const open = onOpen ?? ((value: EncounterRow) => { void Promise.resolve(host.onOpenChat?.(value)).catch(error => host.onMessage?.(refusalWords("Couldn't open that conversation.", error))); });
   const stateWords = MARK_LABEL[state];
   const accessible = `${row.title}${stateWords ? ` — ${stateWords}` : ""}${state === "failed" && mark?.reason ? `: ${mark.reason}` : ""}`;
   const when = mark?.changedAt ? formatRelativeTime(mark.changedAt).replace(/ ago$/, "") : undefined;
@@ -161,7 +162,7 @@ export function ConversationRow({row, kind = "Chat", current, onOpen}: {row: Enc
     {host.onOpenChatInCentre && <span className="left-row-more">
       <button type="button" className="left-icon" aria-label={`Actions for ${row.title}`} aria-haspopup="menu" aria-expanded={menu} onClick={event => { event.stopPropagation(); setMenu(value => !value); }} onBlur={event => { if (!event.currentTarget.parentElement?.contains(event.relatedTarget as Node)) setMenu(false); }}><Glyph name="more" size={12}/></button>
       {menu && <span className="left-row-menu oi-menu" role="menu">
-        <button type="button" role="menuitem" className="oi-menu-item" onClick={() => { setMenu(false); void Promise.resolve(host.onOpenChatInCentre?.(row)).catch(error => host.onMessage?.(String(error))); }}>Open in centre</button>
+        <button type="button" role="menuitem" className="oi-menu-item" onClick={() => { setMenu(false); void Promise.resolve(host.onOpenChatInCentre?.(row)).catch(error => host.onMessage?.(refusalWords("Couldn't open that conversation in the centre.", error))); }}>Open in centre</button>
       </span>}
     </span>}
   </div>;

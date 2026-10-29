@@ -1,3 +1,4 @@
+import {Refusal, refusalWords} from '../shared/Refusal';
 import {WikiFactsButton} from './WikiFactsEditor';
 import {useEffect, useRef, useState} from 'react';
 import {ParticipationFacts} from './ParticipationFacts';
@@ -20,7 +21,6 @@ import './wikiConstruction.css';
 import {memberAnchor, type ConstructionCheckpoint} from './constructionCheckpoint';
 export type {ConstructionCheckpoint} from './constructionCheckpoint';
 type Props = {binding: SurfaceBinding; open: boolean; incoming?: WikiPassage; checkpoint?: ConstructionCheckpoint; onCheckpoint: (value: ConstructionCheckpoint) => void; onClose: () => void; onNavigate: WikiNavigate; onSaved: () => void; requestedFrame?: string; requestedFrameRequest?: string};
-const message = (error: unknown) => error instanceof Error ? error.message : String(error);
 
 /** A source-backed authoring drawer in the existing Wiki surface. Committed
  * work belongs to the native register. Only unsaved input/checkpoints are held
@@ -30,7 +30,7 @@ export function WikiConstructionPanel({binding, open, incoming, checkpoint, onCh
   const [register, setRegister] = useState<WikiRegister>(), [forms, setForms] = useState<AuthoringForm[]>([]);
   const [draft, setDraft] = useState<ConstructionDraft>(() => checkpoint?.draft ?? emptyDraft());
   const [pending, setPending] = useState<ConstructionRequest | undefined>(checkpoint?.pending);
-  const [busy, setBusy] = useState(''), [error, setError] = useState(''), [notice, setNotice] = useState('');
+  const [busy, setBusy] = useState(''), [error, setError] = useState<string | {said: string; cause: unknown}>(''), [notice, setNotice] = useState('');
   const [saved, setSaved] = useState<SavedConstruction>(), [dirty, setDirty] = useState(checkpoint ? !checkpoint.saved : false);
   const [document, setDocument] = useState<ExpressionDocument>(), [artifact, setArtifact] = useState<ArtifactReturn>();
   const [artifactLocation,setArtifactLocation]=useState(checkpoint?.artifact);
@@ -53,7 +53,7 @@ export function WikiConstructionPanel({binding, open, incoming, checkpoint, onCh
   useEffect(() => {
     try {checkpointRef.current({draft, pending, saved: !dirty, artifactSave,
       artifact: artifact ? {location: artifact.file.location, revision: artifact.file.revision, expression_ref: artifact.document.expression_ref} : artifactLocation});}
-    catch(error){setError(`Recovery could not be saved on this device: ${message(error)}`);}
+    catch(error){setError({said: "Couldn't keep a recovery copy on this device.", cause: error});}
   }, [draft, pending, dirty, artifact, artifactLocation, artifactSave]);
   const read = async () => {
     const ticket=++registerRead.current;
@@ -72,17 +72,17 @@ export function WikiConstructionPanel({binding, open, incoming, checkpoint, onCh
   useEffect(() => {
     if (!open || (initialized.current && !requestedFrameRequest)) return;
     initialized.current = true; setBusy('Reading native constellations…');
-    void read().catch(error => {if (alive.current) setError(message(error));}).finally(() => {if (alive.current) setBusy('');});
+    void read().catch(error => {if (alive.current) setError({said: "Couldn't read the constellation.", cause: error});}).finally(() => {if (alive.current) setBusy('');});
     // authoringForms already retries the native resolution itself (a bounded
     // number of attempts, forcing a fresh basis) before ever reaching here —
     // this branch is the genuine, exhausted-retry case, named honestly.
-    void authoringForms(kernel.transport, binding.project).then(value => {if (alive.current) setForms(value);}, error => {if (alive.current) setNotice(`QL authoring forms could not be read from this owner after retrying: ${message(error)}. Ordinary constellation work remains available.`);});
+    void authoringForms(kernel.transport, binding.project).then(value => {if (alive.current) setForms(value);}, error => {if (alive.current) setNotice(refusalWords("QL authoring forms could not be read from this owner after retrying.", error, "Ordinary constellation work remains available."));});
   }, [open, requestedFrameRequest]);
   useEffect(() => {
     if (!incoming || incomingKey.current === incoming) return;
     if (pending) {setError('Inspect the previous save before adding another passage. Your current source selection is still in the reader.'); return;}
     incomingKey.current = incoming;
-    try {update(withPassage(current.current, incoming));} catch (error) {setError(message(error));}
+    try {update(withPassage(current.current, incoming));} catch (error) {setError({said: "Couldn't add that passage.", cause: error});}
   }, [incoming, pending]);
 
   const acceptSaved = (value: SavedConstruction) => {
@@ -94,7 +94,7 @@ export function WikiConstructionPanel({binding, open, incoming, checkpoint, onCh
     if (!register) return;
     setError(''); setBusy('Saving constellation…');
     let request: ConstructionRequest;
-    try {request = pending ?? draftRequest(draft);} catch (error) {setError(message(error)); setBusy(''); return;}
+    try {request = pending ?? draftRequest(draft);} catch (error) {setError({said: "Couldn't prepare the save.", cause: error}); setBusy(''); return;}
     try {
       checkpointRef.current({draft,pending:request,saved:!dirty,artifactSave,artifact:artifactPointer});
       setPending(request);
@@ -102,8 +102,8 @@ export function WikiConstructionPanel({binding, open, incoming, checkpoint, onCh
       if (!alive.current) return;
       acceptSaved(value);
       // Readback failure never converts an acknowledged save into a retry.
-      await read().catch(error => setNotice(`Saved; the register refresh is unavailable: ${message(error)}`));
-    } catch (error) {if (alive.current) setError(`${message(error)} Inspect the native result before changing or retrying this proposal.`);}
+      await read().catch(error => setNotice(refusalWords("Saved. The register could not be read again yet.", error)));
+    } catch (error) {if (alive.current) setError({said: "Couldn't save the constellation. Inspect the native result before changing or retrying this proposal.", cause: error});}
     finally {if (alive.current) setBusy('');}
   };
   const inspect = async () => {
@@ -123,7 +123,7 @@ export function WikiConstructionPanel({binding, open, incoming, checkpoint, onCh
           else {setPending(undefined); setNotice('The previous operation is not recorded. Your proposal is retained and may be revised or saved.');}
         } else setError('Another edit advanced this constellation. Your draft is retained. Open the saved revision separately before reconciling it.');
       } else setNotice('The native register has been refreshed. Your unsaved input is unchanged.');
-    } catch (error) {setError(message(error));}
+    } catch (error) {setError({said: "Couldn't inspect the previous save.", cause: error});}
     finally {setBusy('');}
   };
   const openFrame = (reference: string) => {
@@ -131,7 +131,7 @@ export function WikiConstructionPanel({binding, open, incoming, checkpoint, onCh
     if (!found) {setError('This constellation is no longer available in the current source register.');return false;}
     if (draft.frame_ref === reference && draft.basis && (dirty || pending || artifactSave || draft.basis.revision === found.revision)) return true;
     if (dirty || pending || artifactSave) {setError('Resolve or explicitly discard the pending work before opening another constellation.'); return false;}
-    try {closePresentation(); setDocument(undefined); setArtifact(undefined); setArtifactLocation(undefined); setSaved(undefined); setDraft(fromNative(found, register!.relations)); setDirty(false); setError('');return true;} catch (error) {setError(message(error));return false;}
+    try {closePresentation(); setDocument(undefined); setArtifact(undefined); setArtifactLocation(undefined); setSaved(undefined); setDraft(fromNative(found, register!.relations)); setDirty(false); setError('');return true;} catch (error) {setError({said: "Couldn't open that constellation.", cause: error});return false;}
   };
   useEffect(() => {const key = `${requestedFrame}:${requestedFrameRequest ?? ""}:${register?.file.revision ?? ""}`;if (requestedFrame && register && wantedFrame.current !== key) {if(openFrame(requestedFrame))wantedFrame.current = key;}}, [requestedFrame, requestedFrameRequest, register]);
   const createNew = () => {if(artifactSave){setError('Inspect the pending artifact save before starting another inquiry.');return;}closePresentation(); setDraft(emptyDraft(register?.spaces[0]?.ref)); setPending(undefined); setSaved(undefined); setDocument(undefined); setArtifact(undefined); setArtifactLocation(undefined); setDirty(false); setShowDiscard(false); setNotice(''); setError('');};
@@ -150,7 +150,7 @@ export function WikiConstructionPanel({binding, open, incoming, checkpoint, onCh
       active.updateConfig(config, projected.document.selection.scene_ref, projected.document.selection.entity_ref ? [projected.document.selection.entity_ref] : []);
       await active.ready();
       if (alive.current && presentation.current === active) {host.current?.scrollIntoView({block:'nearest'}); setNotice('The live constellation is rendered. Select a body or relation to inspect its native identity.');}
-    } catch (error) {if (alive.current) setError(message(error));}
+    } catch (error) {if (alive.current) setError({said: "Couldn't show the constellation live.", cause: error});}
     finally {if (alive.current) setBusy('');}
   };
   const saveArtifact = async () => {
@@ -170,7 +170,7 @@ export function WikiConstructionPanel({binding, open, incoming, checkpoint, onCh
       const value = await performArtifactSave(kernel.transport, intent, kernel.apply);
       setArtifact(value); setDocument(value.document); setArtifactSave(undefined);
       setNotice('The Expression file is saved. Return it to this constellation with the separate action below.');
-    } catch (error) {setError(message(error));}
+    } catch (error) {setError({said: "Couldn't save the artifact.", cause: error});}
     finally {setBusy('');}
   };
   const inspectFileSave = async () => {
@@ -182,13 +182,13 @@ export function WikiConstructionPanel({binding, open, incoming, checkpoint, onCh
         setArtifact(result.artifact);setDocument(result.artifact.document);setArtifactSave(undefined);
         setNotice('The exact composition file was recovered. No save was replayed; it is ready for Return.');
       } else setNotice(result.detail);
-    } catch (error) {setError(message(error));}
+    } catch (error) {setError({said: "Couldn't inspect the artifact save.", cause: error});}
     finally {setBusy('');}
   };
   const restoreFileComposition = async () => {
     if(!artifactSave)return;setBusy('Restoring retained composition…');setError('');
     try{const current=await restorePendingArtifactDocument(kernel.transport,artifactSave,kernel.apply);setDocument(current);setNotice('The exact retained composition is open. The file-save operation has not been replayed.');}
-    catch(error){setError(message(error));}finally{setBusy('');}
+    catch(error){setError({said: "Couldn't restore the file composition.", cause: error});}finally{setBusy('');}
   };
   const returnArtifact = async () => {
     if (!artifact || !draft.basis || !register || dirty || pending) return;
@@ -203,8 +203,8 @@ export function WikiConstructionPanel({binding, open, incoming, checkpoint, onCh
       setPending(request);
       const value = await attachCompositionReturn(kernel.transport, binding.project, fresh, draft.basis, artifact, kernel.apply, request);
       acceptSaved(value); setArtifact({...artifact, returned: value});
-      await read().catch(error => setNotice(`Returned; refresh remains unavailable: ${message(error)}`));
-    } catch (error) {setError(`The artifact remains saved. ${message(error)}`);}
+      await read().catch(error => setNotice(refusalWords("Returned. The register could not be read again yet.", error)));
+    } catch (error) {setError({said: "The artifact remains saved, but the Return did not go through.", cause: error});}
     finally {setBusy('');}
   };
   const retryReturn = async () => {
@@ -216,15 +216,16 @@ export function WikiConstructionPanel({binding, open, incoming, checkpoint, onCh
       const fresh = await read();
       const value = await attachCompositionReturn(kernel.transport, binding.project, fresh, draft.basis, held, kernel.apply, pending);
       acceptSaved(value); setArtifact({...held, returned: value});
-      await read().catch(error => setNotice(`Returned; refresh remains unavailable: ${message(error)}`));
-    } catch (error) {setError(`The artifact remains saved. ${message(error)}`);}
+      await read().catch(error => setNotice(refusalWords("Returned. The register could not be read again yet.", error)));
+    } catch (error) {setError({said: "The artifact remains saved, but the Return did not go through.", cause: error});}
     finally {setBusy('');}
   };
   const relationChanged = (index: number, patch: Partial<ConstructionDraft['relations'][number]>) => update({...draft, relations: draft.relations.map((edge, i) => i === index ? {...edge, ...patch} : edge)});
   return <aside className="wiki-construction" hidden={!open} aria-label="Constellation authoring">
     <header><h2>{draft.basis ? 'Work on constellation' : 'New constellation'}</h2><button className="oi-tool" aria-label="Close constellation authoring" onClick={onClose}>×</button></header>
     <p className="wiki-construction-intro">Gather passages, give them roles, and make connections. The original writing stays where it is.</p>
-    {busy && <p role="status">{busy}</p>}{error && <p role="alert">{error}</p>}{notice && <p role="status">{notice}</p>}
+    {busy && <p role="status">{busy}</p>}{/* The panel's own sentences stand as written; a caught fault says what didn't happen, its cause behind Why (shared/Refusal.tsx). */}
+    {typeof error === "string" ? error && <p role="alert">{error}</p> : <Refusal said={error.said} error={error.cause}/>}{notice && <p role="status">{notice}</p>}
     <div className="wiki-construction-toolbar"><button className="oi-action" disabled={!!busy} onClick={()=>void inspect()}>Inspect saved state</button><button className="oi-action" disabled={!!busy || !!pending || !!artifactSave} onClick={()=>dirty ? setShowDiscard(true) : createNew()}>New inquiry</button></div>
     {showDiscard && <div role="group" aria-label="Discard construction draft"><p>Discard this unsaved proposal? Its source documents are not changed.</p><button className="oi-action" onClick={createNew}>Discard draft and start new</button><button className="oi-action" onClick={()=>setShowDiscard(false)}>Keep working</button></div>}
     {!!register?.frames.length && <label>Saved constellation<select aria-label="Open saved constellation" value={draft.basis?.ref ?? ''} disabled={!!busy || !!pending} onChange={event=>openFrame(event.target.value)}><option value="">Choose a saved inquiry…</option>{register.frames.map(frame=><option key={frame.ref} value={frame.ref}>{frame[CONSTRUCTION].title} · r{frame.revision}</option>)}</select></label>}
@@ -257,6 +258,6 @@ export function WikiConstructionPanel({binding, open, incoming, checkpoint, onCh
     }}/>
 
     {document&&<section aria-label="Constellation Expression"><p>Expression r{document.revision} · {Object.keys(document.entities).length} bodies</p><button className="oi-action" onClick={()=>{closePresentation();summonExpression(document.expression_ref);}}>Edit glyphs, text, media and motion</button><details><summary>Save and Return composition</summary><label>Existing destination directory<input aria-label="Expression destination folder" value={folder} onChange={event=>setFolder(event.target.value)}/></label><label>Filename<input aria-label="Expression filename" value={filename} onChange={event=>setFilename(event.target.value)} placeholder="constellation.expression.json"/></label><button className="oi-action" disabled={!!busy||dirty||!!pending} onClick={()=>void saveArtifact()}>Save Expression file</button>{artifact&&<><p>Saved at {artifact.file.location.path}.</p><button className="oi-action" disabled={!!busy||dirty||!!pending||!!artifact.returned||compositionAttached(draft.basis,artifact)} onClick={()=>void returnArtifact()}>{artifact.returned||compositionAttached(draft.basis,artifact)?'Returned to constellation':'Return saved Expression to constellation'}</button></>}</details></section>}
-    {draft.basis?.[CONSTRUCTION].compositions?.length ? <section aria-label="Returned compositions"><h3>Returned work</h3>{draft.basis[CONSTRUCTION].compositions!.map(item=><p key={item.reference}><button className="oi-action" onClick={()=>{setBusy('Reopening returned composition…');setError('');void reopenComposition(kernel.transport,item,kernel.apply).then(value=>{setDocument(value);summonExpression(value.expression_ref);},error=>setError(message(error))).finally(()=>setBusy(''));}}>{item.kind} · r{item.revision}</button></p>)}</section> : null}
+    {draft.basis?.[CONSTRUCTION].compositions?.length ? <section aria-label="Returned compositions"><h3>Returned work</h3>{draft.basis[CONSTRUCTION].compositions!.map(item=><p key={item.reference}><button className="oi-action" onClick={()=>{setBusy('Reopening returned composition…');setError('');void reopenComposition(kernel.transport,item,kernel.apply).then(value=>{setDocument(value);summonExpression(value.expression_ref);},error=>setError({said: "Couldn't open that returned work.", cause: error})).finally(()=>setBusy(''));}}>{item.kind} · r{item.revision}</button></p>)}</section> : null}
   </aside>;
 }

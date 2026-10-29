@@ -1,3 +1,4 @@
+import {Refusal} from "../../shared/Refusal";
 import {useEffect,useMemo,useRef,useState} from "react";
 import {Terminal} from "@xterm/xterm";
 import {FitAddon} from "@xterm/addon-fit";
@@ -102,7 +103,7 @@ export function ComputerView({entry}:{entry:RunEntry}) {
       <span role="status">{driving?"You are driving this terminal":"Read-only"}</span>
     </div>
     {!sessions.length&&<p>No current attempt has a bound agent session.</p>}
-    {reason&&<p>{reason}</p>}{attachment?.outcome==="not-exposed"&&<p>{attachment.reason}</p>}{error&&<p role="alert">{error}</p>}
+    {reason&&<p>{reason}</p>}{attachment?.outcome==="not-exposed"&&<p>{attachment.reason}</p>}{error&&<Refusal said="Couldn't reach the computer session." error={error}/>}
     <div ref={host} className="factory-computer-terminal" aria-label="Run terminal"/>
     {reading?.capture?.capture.truncated&&<p>Showing the most recent terminal output.</p>}
     {recording&&<p>{recording}</p>}

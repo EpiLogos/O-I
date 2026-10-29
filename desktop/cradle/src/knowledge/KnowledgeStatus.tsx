@@ -1,3 +1,4 @@
+import {Refusal} from "../shared/Refusal";
 import {useEffect, useState} from "react";
 import type {KernelTransportStatus} from "../kernel/types";
 import {knowledge} from "./client";
@@ -54,6 +55,6 @@ export function KnowledgeStatus({transport, project}: {transport: KernelTranspor
     return () => {live = false;};
   }, [transport, project, generation]);
   return <section aria-label="Knowledge source status"><header><strong>Sources</strong> <button onClick={() => setGeneration(value => value + 1)}>Refresh sources</button></header>
-    {error ? <p role="alert">{error}</p> : reading ? <KnowledgeStatusContent reading={reading}/> : <p role="status">Reading source coverage…</p>}
+    {error ? <Refusal said="Couldn't read the source coverage." error={error}/> : reading ? <KnowledgeStatusContent reading={reading}/> : <p role="status">Reading source coverage…</p>}
   </section>;
 }
