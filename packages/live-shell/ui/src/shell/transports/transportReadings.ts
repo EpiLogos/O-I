@@ -158,9 +158,21 @@ export function centralPosition(ground: CentralGroundReading | null, die: DayDie
   }
 }
 
-/** The packet's size and scope (the key and scale slots) from AIKit's prepared context — the read the packet widget makes
- * (widgets/PacketWidget.tsx). The owner discloses no token count: the size is the selections' own characters, named so. */
-export function packetReadouts(packet: {context?: PreparedContext; error?: string} | null): {key?: Readout; scale?: Readout; refused?: string} {
+/** The packet's size and scope (the key and scale slots): the reached document's own packet while a document holds one (walk 739 gap
+ * 14: the packet is the document's — what To packet put there inside the Flow, as its face reads the island), else AIKit's prepared
+ * context — the read the packet widget makes (widgets/PacketWidget.tsx). No owner discloses a token count: the size is the items' own
+ * characters, named so. */
+export function packetReadouts(packet: {context?: PreparedContext; error?: string} | null,
+  document?: {readonly form: string; readonly title: string; readonly packet?: readonly {readonly chars: number}[]} | null): {key?: Readout; scale?: Readout; refused?: string} {
+  if (document?.packet) {
+    const items = document.packet.length
+    const characters = document.packet.reduce((sum, item) => sum + item.chars, 0)
+    const named = document.title ? `the ${document.form} ${document.title}` : `the ${document.form} reached`
+    return {
+      key: {value: `Σ ${compactCount(characters)}`, title: `Packet — exactly what the agent will read: ${items} item${items === 1 ? '' : 's'}, ${characters} characters, in the packet of ${named}. The page discloses no token count, so the size is characters (its packet, as its form holds it now).`},
+      scale: {value: document.form.toLowerCase(), title: `Scope — the packet is gathered in ${named}, the document the hand reached.`},
+    }
+  }
   if (!packet) return {}
   if (!packet.context) return packet.error ? {refused: `The prepared-context owner refused: ${packet.error}`} : {}
   const items = packet.context.items
@@ -201,8 +213,9 @@ export function centralBindings(input: {
   readouts?: Partial<Record<string, Readout>>
   turn?: (direction: 1 | -1) => void
   turned?: string | null
-  /** The document the hand last reached in a pane (central/documents/documentDoor.ts): its save standing is the Load slot. */
-  document?: {form: string; title: string; state: string; revision?: string} | null
+  /** The document the hand last reached in a pane (central/documents/documentDoor.ts): its save standing is the Load slot, its own
+   * packet the Key and Scale slots'. */
+  document?: {form: string; title: string; state: string; revision?: string; packet?: readonly {readonly chars: number}[]} | null
   /** The face the Day shows where a pane holds it open (documentDoor.ts useDayInPane), which the owner holds at its next Save. */
   face?: number
 }): TransportBindings {
@@ -210,7 +223,7 @@ export function centralBindings(input: {
   const die = read.state === 'ready' && input.face !== undefined ? {...read, face: input.face} : read
   const faces = dieReadouts(die)
   const bounds = dayBounds(input.ground)
-  const sized = packetReadouts(input.packet)
+  const sized = packetReadouts(input.packet, input.document)
   const carrier = groundCarrier(input.config, input.transport)
   const position = centralPosition(input.ground, die, input.readouts?.position)
   const waits = die.state === 'waiting' ? die.reason : null

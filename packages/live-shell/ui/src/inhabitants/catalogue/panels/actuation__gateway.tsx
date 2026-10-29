@@ -1025,9 +1025,9 @@ export const design: DesignedDevice = {
   fixtures: {
     Ready: {},
     Stalled: {beatAge: 140, inflight: 0, running: 1},
-    // As the binding reads the gateway today (designBindings.ts GATEWAY_ABSENT): its document names no check-in, turns, frames in flight or
-    // frames, so the river stands still and names them.
-    'As bound today': {seq: undefined, peers: undefined, beatAge: undefined, inflight: undefined, running: undefined, ring: undefined, ringCap: undefined, frames: undefined, epoch: undefined, lead: undefined},
+    // As the binding reads the gateway today (designBindings.ts gatewayLinkValues): AIKit's gateway names the binding's link — the check-in's
+    // age, the turns running, the frames in flight, the frames and the last sequence — and no epoch, peers, ring or lead.
+    'As bound today': {peers: undefined, ring: undefined, ringCap: undefined, epoch: undefined, lead: undefined},
     'Frames held': {pause: true, follow: false, session: 'lead', seq: 401},
     Refused: {...NOTHING, light: 'dark', readiness: 'refused', refused: 'The gateway refused the read: it is not running.'},
     'Agency build': AGENCY,

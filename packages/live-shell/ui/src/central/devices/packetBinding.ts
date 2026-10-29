@@ -9,6 +9,7 @@
 import type {DesignBinding, Value, Values} from '../../frame/devices/designed'
 import type {PreparedContext} from '../../../../../../desktop/cradle/src/context/nativeContext'
 import {heldOf, pageBinding, type DesignWiring, type PageActs} from './pageBindings'
+import type {PagePacketItem} from './pageReadings'
 
 export const PACKET_DESIGN = 'central:packet'
 
@@ -26,8 +27,8 @@ export const PACKET_WIRING: DesignWiring = {
   keys: ['light', 'add', 'limit', 'keep', 'flow', 'packet', 'scope', 'question', 'selection', 'hasPage', 'sent', 'rowsPage', 'capture', 'clear', 'answer', 'takeOut'],
   reads: {
     light: 'AIKit\'s prepared context answered (lit) or refused (dark): the read the Packet widget and the transport\'s Key slot share (useCentralTransport.tsx usePacketReading)',
-    packet: 'the prepared context\'s items, in order: entry is the item\'s place in the packet (the owner holds no Flow entry numbers), scope its anchor (selection for a text anchor, observed element for an observation anchor — the owner\'s anchor.kind), text how it opens, chars its whole size in characters and bytes in UTF-8 (the Answer\'s size), label the selection\'s title',
-    flow: 'the source the items were gathered from: their title, when every item shares one',
+    packet: 'the reached document\'s own packet while one is reached (documentDoor.ts DocumentInPane.packet: the page\'s island, what To packet put there — entry and by its entry\'s number and author, scope and label as the form wrote them), else the prepared context\'s items, in order: entry is the item\'s place in the packet (the owner holds no Flow entry numbers), scope its anchor (selection for a text anchor, observed element for an observation anchor — the owner\'s anchor.kind), text how it opens, chars its whole size in characters and bytes in UTF-8 (the Answer\'s size), label the selection\'s title',
+    flow: 'the source the items were gathered from: the reached document\'s title, else the prepared items\' title when every item shares one',
     scope: 'session when the context is prepared for a conversation (scope.agent_session), project when none stands',
     question: 'written while the Agent conversation\'s composer holds a question (its encounter session\'s draft), none when it is empty',
     limit: `Off (${PACKET_LIMIT_OFF}): AIKit holds no limit, only its cap of 32 items and 1 MiB (nativeContext.ts assertPreparedContext; ai-kit encounter_context.rs)`,
@@ -62,9 +63,24 @@ export interface PacketConversation {
   readonly reading?: {readonly actions?: readonly {readonly ref: string; readonly enabled: boolean; readonly reason?: string | null}[]}
 }
 
+/** The packet of the document the hand reached (central/documents/documentDoor.ts DocumentInPane.packet): the page's own, as its form
+ * holds it now — what To packet put there inside the Flow (ql-flow.html `D.packet`), saved or not. */
+export interface DocumentPacket {
+  readonly form: string
+  readonly title: string
+  readonly packet: readonly PagePacketItem[]
+}
+
+/** The reached document's packet, where its face has read one. */
+export const documentPacketOf = (reached: {readonly form: string; readonly title: string; readonly packet?: readonly PagePacketItem[]} | null): DocumentPacket | null =>
+  reached?.packet ? {form: reached.form, title: reached.title, packet: reached.packet} : null
+
 export interface PacketInput {
   /** usePacketReading's answer: the prepared context or the owner's refusal; null while it reads. */
   readonly reading: {readonly context?: PreparedContext; readonly error?: string} | null
+  /** The reached document's own packet (walk 739 gap 14: the packet is the document's): while a document holds one, it is the packet
+   * this device reads; AIKit's prepared context is the packet otherwise. */
+  readonly document?: DocumentPacket | null
   /** The companion whose conversation the packet goes with (shell/ModeContextDock.tsx COMPANIONS — Fizz in Central). */
   readonly companion: string
   /** Whether the agency reading holds that conversation (widgets/agentConversation.ts conversationOf). */
@@ -94,9 +110,41 @@ export function packetItemOf(item: PreparedContext['items'][number], at: number)
   }
 }
 
+/** One item of a document's packet as the design's packet item: its entry and author where it names an entry of the page (else its place
+ * in the packet), its scope and label as the form wrote them, how it opens, and its whole size. */
+export function documentItemOf(item: PagePacketItem, at: number): Record<string, Value> {
+  const words = collapse(item.text)
+  return {
+    entry: item.entry ?? at + 1,
+    ...(item.by ? {by: item.by} : {}),
+    scope: item.scope,
+    text: words.length > PACKET_TEXT_SHOWN ? words.slice(0, PACKET_TEXT_SHOWN) : words,
+    chars: item.chars,
+    bytes: UTF8.encode(item.text).length,
+    ...(item.label ? {label: item.label} : {}),
+  }
+}
+
+/** Where the document's packet is taken out and emptied: on the page, in the Flow's own Context packet (its ⋮ menu); the host never
+ * writes into the page (DocumentFlowFace.tsx: the bridge is read only). */
+const ON_THE_PAGE = (document: DocumentPacket) => `The packet is the ${document.form} ${document.title || 'reached'}'s own: take an item out, or empty it, in the Flow — its Context packet (the ⋮ menu) — where To packet put it; the host never writes into the page.`
+/** Why Answer this cannot send the document's packet: the conversation's Send carries AIKit's prepared context, which does not hold it. */
+const NOT_PREPARED = (document: DocumentPacket) => `Answer this sends AIKit's prepared context, and the ${document.form}'s packet is not in it — missing op: the page's packet put into the prepared context (op encounter context edit, add) before the Send (O-I).`
+
 /** The Packet's readings (PACKET_WIRING). */
 export function packetValues(id: string, input: PacketInput): Values {
   const values: Record<string, Value> = {}
+  const document = input.document ?? null
+  if (document) {
+    // The packet is the document's: its items as the page holds them, the Flow they are gathered from.
+    values.light = 'lit'
+    values.packet = JSON.stringify(document.packet.map(documentItemOf))
+    if (document.title) values.flow = document.title
+    values.limit = PACKET_LIMIT_OFF
+    if (input.conversation) values.question = input.conversation.draft.trim() ? 'written' : 'none'
+    values.rowsPage = heldOf(id).rowsPage ?? 0
+    return values
+  }
   const context = input.reading?.context
   if (context) values.light = 'lit'
   else if (input.reading?.error) values.light = 'dark'
@@ -150,8 +198,14 @@ export function packetAnswerWhy(input: PacketInput): string | undefined {
   return input.conversation ? undefined : 'The conversation is not observed.'
 }
 
-/** The Packet's binding: its readings, the owner's edit for Take out and Clear now, the conversation's Send for Answer this. */
+/** The Packet's binding: its readings, the owner's edit for Take out and Clear now, the conversation's Send for Answer this. While the
+ * packet is a document's, each act says where it is done instead. */
 export function packetBinding(id: string, input: PacketInput, ports: PacketPorts): DesignBinding {
+  const document = input.document ?? null
+  if (document) {
+    const why = {takeOut: ON_THE_PAGE(document), clear: ON_THE_PAGE(document), answer: NOT_PREPARED(document)}
+    return pageBinding(id, PACKET_WIRING, packetValues(id, input), {}, why)
+  }
   const context = input.reading?.context
   const acts: PageActs = {
     takeOut: async value => {

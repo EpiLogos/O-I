@@ -281,17 +281,18 @@ test('8 · (b) every key these designs read is an owner reading, absent with why
   bind.resetHolds()
 })
 
-test('9 · (b) the Gateway\'s link readings — beatAge, running, inflight, frames — stand absent with why: the gateway\'s document names none of them', async () => {
+test('9 · (b) the Gateway\'s link readings — beatAge, running, inflight, frames — stand absent with why where the gateway\'s answer carries no link', async () => {
   const {design: gatewayDesign} = await import('../src/inhabitants/catalogue/panels/actuation__gateway.tsx')
   const reading = {...model.INITIAL_READING, gatewayAdmitted: true, gateway: {kind: 'reading', title: 'Gateway', line: 'answered', receipt: null},
-    // The gateway's own document in AIKit's shape (`aikit gateway agent --binding B sessions`: aikit-adapters gateway_conversation_engine.rs
-    // sessions; no binding exists on this machine, so its real answer here is a refusal).
-    gatewayDoc: {agent_session_ref: 'agent-session/flint', harness: 'claude-code', sessions: [{agent_session_ref: 'agent-session/flint', state: 'resident'}]}}
+    // The gateway's answer as the kernel hands it on (`aikit --json gateway agent --binding B sessions`: the envelope's data, the engine's
+    // result under `result`), from a gateway that predates the link (O-I #745: tests/t745-readings.test.mjs reads one that carries it).
+    gatewayDoc: {binding_ref: 'gateway-binding/flint', operation: {op: 'sessions'}, type: 'conversation',
+      result: {agent_session_ref: 'agent-session/flint', harness: 'claude-code', sessions: [{agent_session_ref: 'agent-session/flint', state: 'resident'}]}}}
   const binding = bind.gatewayBinding('factory:gateway', {reading, harness: {binding: 'claude-code', resolved: true}}, {}, async () => ({kind: 'fired'}))
   for (const key of ['beatAge', 'running', 'inflight', 'frames']) {
     assert.ok(key in gatewayDesign.defaults || Object.values(gatewayDesign.fixtures ?? {}).some(fixture => key in fixture), `${key} is a key of the Gateway's design`)
     assert.equal(classify(binding, key), 'absent', key)
-    assert.equal(binding.standing[key].disabled, bind.GATEWAY_ABSENT[key])
+    assert.match(binding.standing[key].disabled, /carries no link/, `${key}: says the answer carries no link`)
     assert.match(binding.standing[key].disabled, /aikit gateway agent --binding B sessions/, `${key}: names the document it reads`)
   }
   assert.equal(binding.values.harness, 'claude-code', 'what the reading does give stands as before')

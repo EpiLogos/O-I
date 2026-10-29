@@ -18,7 +18,7 @@ import {editPacket} from './centralDeviceWrites'
 import {CENTRAL_SCOPE_ID, centralScopeBinding, type ContextWorldInput} from './contextWorldBinding'
 import {identityAgentOf, identityBinding, identityWorldOf, profileExtrasOf, type IdentityInput, type ProfileExtras} from './identityBinding'
 import {heldOf, holdsVersion, subscribeHolds} from './pageBindings'
-import {packetBinding, type PacketConversation} from './packetBinding'
+import {packetBinding, type DocumentPacket, type PacketConversation} from './packetBinding'
 import {CONTROL_SEARCH_ACTION, searchBinding, searchProjectOf, searchQueryOf, vakDepthOf, vakTermOf, type SearchAnswer, type VakAnswer} from './searchBinding'
 import {useOwnerOp} from '../../owners/ownerCall'
 import type {ActionAnswer} from './centralActions'
@@ -41,18 +41,19 @@ export function packetConversationOf(handle: ObservedHandle | undefined): Packet
 }
 
 /** The Packet: the shell's one packet reading (useCentralTransport.tsx usePacketReading), the owner's edit, the conversation's Send. */
-export function usePacketDevice(transport: KernelTransportStatus, reading: {context?: PreparedContext; error?: string} | null, conversation: {readonly companion: string; readonly bound: boolean; readonly handle?: ObservedHandle}): DesignBinding {
+export function usePacketDevice(transport: KernelTransportStatus, reading: {context?: PreparedContext; error?: string} | null, conversation: {readonly companion: string; readonly bound: boolean; readonly handle?: ObservedHandle},
+  document: DocumentPacket | null = null): DesignBinding {
   useSyncExternalStore(subscribeHolds, holdsVersion, holdsVersion)
   const version = holdsVersion()
   const {companion, bound, handle} = conversation
   return useMemo(() => {
     const context = reading?.context
-    return packetBinding(PACKET_DEVICE_ID, {reading, companion, bound, conversation: packetConversationOf(handle)}, {
+    return packetBinding(PACKET_DEVICE_ID, {reading, companion, bound, conversation: packetConversationOf(handle), document}, {
       edit: context ? async mutation => { await editPacket(transport, context, mutation) } : null,
       send: handle && 'actions' in handle ? () => handle.actions.send() : null,
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps -- the holds' version re-binds the view's own keys
-  }, [transport, reading, companion, bound, handle, version])
+  }, [transport, reading, companion, bound, handle, version, document])
 }
 
 /** Search: the held query asked of AIKit's knowledge search (search and resolve, progressively, as the cradle's overlay asks them), in

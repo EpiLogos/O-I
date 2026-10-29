@@ -285,8 +285,12 @@ test('Central\'s Agent shows the packet it reads — the Packet\'s items, when t
   const full = draw(centralAgent({...own, thread: JSON.stringify([{who: 'you', kind: 'you', text: 'Which unit starts first?'}])}), 'full')
   assert.match(full, /aria-label="Packet"><li[^>]*><b>selection<\/b>Closing the day/, 'the packet the turn carries, under your words')
   const chainSource = read('central/devices/CentralDevices.tsx')
-  assert.match(chainSource, /packet: typeof packet\.values\.packet === 'string' \? \{items: packet\.values\.packet, session: packetSession\} : null/,
-    'CentralDevices hands the Packet\'s items and their session to the Agent\'s input')
+  // The items the Send carries: AIKit's prepared context, in the Packet's item shape — the Packet itself shows the reached document's own
+  // packet while one is reached (O-I ticket 745, walk 739 gap 14), which the Send does not carry.
+  assert.match(chainSource, /packetReading\?\.context \? JSON\.stringify\(packetReading\.context\.items\.map\(packetItemOf\)\) : null/,
+    'CentralDevices reads the prepared items the Send carries')
+  assert.match(chainSource, /packet: preparedItems \? \{items: preparedItems, session: packetSession\} : null/,
+    'CentralDevices hands those items and their session to the Agent\'s input')
   bind.resetHolds()
 })
 

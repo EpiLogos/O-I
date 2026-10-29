@@ -1407,14 +1407,25 @@ pub(crate) fn seat_executable() -> PathBuf {
 
 /// The seat instrument's own reading, read only (`seat status --json`):
 /// bounded, its refusal in its own words, another schema refused by name.
+/// The instrument is handed the world's Central root — the one this
+/// process's owners read and its watch watches (`watch::Roots`:
+/// `OI_CENTRAL_ROOT`, else `~/Central`) — so it reads that world's own
+/// register. Left to itself it falls back to the Central its own file
+/// stands in, the computer's own user's, and another world would list the
+/// owner's seats as its own (O-I ticket 745, walk 739 gap 5).
 fn seat_status() -> Result<Value, crate::material::Error> {
     let source = "seat status";
-    let data = crate::inhabitation::run_bounded(
+    let environment: Vec<(std::ffi::OsString, std::ffi::OsString)> =
+        crate::watch::Roots::resolve(None)
+            .map(|roots| vec![("CENTRAL_ROOT".into(), roots.central.into_os_string())])
+            .unwrap_or_default();
+    let data = crate::inhabitation::run_bounded_with_env(
         &seat_executable(),
         &["status".into(), "--json".into()],
         None,
         SEAT_STATUS_LIMIT,
         source,
+        &environment,
     )?;
     schema_is(data, SEAT_STATUS_SCHEMA, source)
 }

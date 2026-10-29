@@ -30,7 +30,8 @@ fn scratch(test: &str) -> PathBuf {
     dir
 }
 
-/// A fake owner: records each argv (one line, space-joined) to `argv.txt`,
+/// A fake owner: records each argv (one line, space-joined) to `argv.txt`
+/// and the Central root it was handed (`CENTRAL_ROOT`) to `central-root.txt`,
 /// waits while `gate` exists, then answers per `mode` (a file beside it, so
 /// parallel tests never share an environment variable): `ok` cats
 /// `answer.json`; `refuse` cats `refuse.json` to stdout and `refuse.txt` to
@@ -44,6 +45,7 @@ fn fake_owner(dir: &Path, name: &str) -> PathBuf {
         format!(
             "#!/bin/sh\n\
              printf '%s\\n' \"$*\" >> \"{d}/argv.txt\"\n\
+             printf '%s' \"$CENTRAL_ROOT\" > \"{d}/central-root.txt\"\n\
              while [ -e \"{d}/gate\" ]; do sleep 0.02; done\n\
              case \"$(cat \"{d}/mode\")\" in\n\
              refuse) cat \"{d}/refuse.json\" 2>/dev/null; cat \"{d}/refuse.txt\" >&2 2>/dev/null; exit 2 ;;\n\
@@ -172,6 +174,16 @@ fn seat_status_read_carries_the_seat_instruments_reading_read_only() {
         asked(&dir),
         ["status --json"],
         "read only: never join, release, tend or curate"
+    );
+    // The world's own register: the instrument is handed the Central root this process's owners read (and its watch watches,
+    // `watch::Roots`), so in another world it reads that world's seats, never the computer's own user's (O-I #745, walk 739 gap 5).
+    let world_root = oi_cradle_kernel::watch::Roots::resolve(None)
+        .expect("a home")
+        .central;
+    assert_eq!(
+        fs::read_to_string(dir.join("central-root.txt")).unwrap(),
+        world_root.display().to_string(),
+        "the seat instrument reads the world's own register"
     );
     // The wire shape the shell receives.
     let wire = serde_json::to_value(KernelOpResult::SeatStatusReading { data }).unwrap();

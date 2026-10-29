@@ -84,11 +84,12 @@ test('the river: still while any of the Gateway\'s four link readings is missing
   assert.equal(F.riverOf({light: 'lit', beatAge: -1, running: 0, inflight: 0, frames: '[]'}).flow, 'still', 'beatAge -1: no check-in yet')
 })
 
-test('the river at its home: across the head of the Gateway\'s Full, live on all four readings, still on today\'s binding with the four named in the picture', () => {
+test('the river at its home: across the head of the Gateway\'s Full, live on all four readings, still on a gateway that predates the link with the four named in the picture', () => {
   const live = only(draw(gateway.full(props(gateway.defaults))), 'river')
   assert.equal(live.state, 'live', 'the catalogue\'s sample carries all four')
   assert.equal((live.body.match(/<ellipse /g) ?? []).length, gateway.defaults.inflight, 'one leaf on the current for each frame in flight')
-  // The real binding, on the harness's answer as its own test reads it (factory-design-binding.test.mjs): none of the four is carried.
+  // The real binding, on the harness's answer as its own test reads it (factory-design-binding.test.mjs): an answer with no link carries
+  // none of the four (a gateway that carries it: tests/t745-readings.test.mjs).
   const answered = {...model.INITIAL_READING, gatewayAdmitted: true, gatewayDoc: {state: 'ready', transport: 'ws', connect: true, stall_after_seconds: 300}}
   const binding = bind.gatewayBinding('factory:gateway', {reading: answered, harness: {binding: 'harness:hermes', resolved: true}}, {}, async () => ({kind: 'refused', reason: 'x'}))
   const values = {...gateway.defaults, beatAge: undefined, running: undefined, inflight: undefined, frames: undefined, ...binding.values}
@@ -96,9 +97,9 @@ test('the river at its home: across the head of the Gateway\'s Full, live on all
   assert.equal(still.state, 'still')
   assert.equal(still.words, FOUR, 'the still picture says which readings it waits on')
   assert.doesNotMatch(still.body, /<ellipse /, 'nothing floats on a river that has no reading of its frames')
-  assert.match(still.body, /data-i="The river\|[^"]*missing op: a check-in instant/, 'the info line carries the binding\'s own missing op')
+  assert.match(still.body, /data-i="The river\|[^"]*carries no link/, 'the info line carries the binding\'s own reason')
   const fixture = only(draw(gateway.full(props({...gateway.defaults, ...gateway.fixtures['As bound today']}))), 'river')
-  assert.equal(fixture.state, 'still', 'the catalogue carries today\'s binding as a fixture')
+  assert.equal(fixture.state, 'live', 'the catalogue carries today\'s binding as a fixture: the four link readings stand')
   assert.equal(only(draw(gateway.full(props({...gateway.defaults, ...gateway.fixtures.Stalled}))), 'river').state, 'still', 'a stall does not breathe')
   assert.equal(only(draw(gateway.full(props({...gateway.defaults, ...gateway.fixtures.Refused}))), 'river').state, 'dry')
 })
