@@ -46,7 +46,7 @@ import {useAgentChainReading} from './useAgentChainReading'
 import {useConversationAnswer} from './useConversationAnswer'
 import {ROUTE_WORDS, gatewayWriteOp, ownerRouteWrite, refusalWords, workcellWriteOp} from './ownerRoutes'
 import {usePopulationAnswer} from './usePopulationAnswer'
-import {RACK_PROJECT} from './useRackReading'
+import {projectOfSession, registerOf, ROOT_REGISTER} from '../worldScope'
 import {CARRIER_ID, carrierChainState, carrierValues, gitValues} from './workcellBindings'
 import {WORKCELL_RACK_ID, chosenWorld, workcellGitReading, workcellRackBinding, workcellRackDevice} from './workcellRackBinding'
 import {useActuationRead, useGatewayEcology, useGatewayReplays, useInstanceUsages, useSeatStatusAnswer, useSourceReturnsAnswer, useWorkcellRead} from './workcellReads'
@@ -70,7 +70,6 @@ export async function centralAct(transport: KernelTransportStatus, action: strin
 /** Central's agent-set listing (ctrl agent_set_actions.rs): a reading, scope root or project. */
 export const AGENT_SET_LIST = 'central.agent-set.list'
 const ROOT_SETS = {scope: 'root'} as const
-const PROJECT_SETS = {scope: 'project', project: RACK_PROJECT} as const
 
 /** The rail's agent devices and their bindings, published on the door. */
 export function AgentRailDevices() {
@@ -79,6 +78,10 @@ export function AgentRailDevices() {
   const continuity = useOptionalContinuity()
   const {reading, transport, binding, resolved} = useAgentChainReading(null)
   const holds = useChainHolds()
+  // The rail's register (agent/worldScope.ts): the selected session's own, else your world's root register. Messages read the world's
+  // whole population (no project world names it); the Ledger, your groups and the workcell's seat follow the selected session.
+  const railProject = projectOfSession(sessions?.rows ?? [], sessions?.selectedSessionRef ?? null)
+  const railRegister = registerOf(railProject)
 
   // The gateways (carried by the Workcells tile) and the Frames: the gateway's own answer; the Remote carrier's line from Workcell's status.
   const main = useMemo(() => mainDevices(), [])
@@ -103,7 +106,7 @@ export function AgentRailDevices() {
   // The Ledger: Central's change horizon and the project's source returns (W9: Waiting, Commented, Approved, Refused); Open log selects the
   // receipt's session's track.
   const ground = useCentralGroundAnswer(transport)
-  const returnsRead = useSourceReturnsAnswer(transport, RACK_PROJECT).reading
+  const returnsRead = useSourceReturnsAnswer(transport, railRegister).reading
   const returned = returnsRead.status === 'answered' ? returnsRead.value : null
   const receipts = useMemo(() => receiptDevices(), [])
   const tracks = sessions?.tracks ?? null
@@ -122,10 +125,10 @@ export function AgentRailDevices() {
 
   // Messages: AIKit's population, the Agency gateway's answer, and the open agent's conversation (read while an agent of the population is
   // open).
-  const population = usePopulationAnswer(transport, RACK_PROJECT)
+  const population = usePopulationAnswer(transport, registerOf(ROOT_REGISTER))
   const positions = useMemo(() => positionRefs(population.status === 'answered' ? population.value : null), [population])
   const opened = viewHolds(holds, MESSAGES_ID).open
-  const conversation = useConversationAnswer(transport, RACK_PROJECT, typeof opened === 'string' && positions.includes(opened) ? opened : null, positions)
+  const conversation = useConversationAnswer(transport, registerOf(ROOT_REGISTER), typeof opened === 'string' && positions.includes(opened) ? opened : null, positions)
   // Making an agent (§19.24, lane W2): the proposal Make wrote, read back through Central's review; the person's acts through invoke_action,
   // which carries the person's authority for them (desktop/cradle/kernel/src/action.rs PERSON_ACTS). Every answer is Central's own.
   const made = madeOf(viewHolds(holds, MESSAGES_ID).made)
@@ -146,11 +149,14 @@ export function AgentRailDevices() {
     return run ? [[track.agentRef!, run] as const] : []
   })), [tracks, nowUnixMs])
   // Your groups (lane W7): Central's agent sets of the root and of the project, read through invoke_action as readings.
+  const projectSetsInput = useMemo(() => (railRegister === null ? null : {scope: 'project', project: railRegister}), [railRegister])
   const rootSets = useCentralAction(transport, AGENT_SET_LIST, ROOT_SETS)
-  const projectSets = useCentralAction(transport, AGENT_SET_LIST, PROJECT_SETS)
-  const agentSets = useMemo(() => [{scope: 'root' as const, answer: rootSets}, {scope: 'project' as const, answer: projectSets}], [rootSets, projectSets])
-  const messages = useMemo(() => messagesBinding({population, gateway: reading, conversation, review, runs, project: RACK_PROJECT, agentSets, holds}, ports),
-    [population, reading, conversation, review, runs, agentSets, holds, ports])
+  const projectSets = useCentralAction(transport, AGENT_SET_LIST, projectSetsInput)
+  // A session of your world's root register has no project groups: only the root's are read.
+  const agentSets = useMemo(() => [{scope: 'root' as const, answer: rootSets}, ...(railRegister === null ? [] : [{scope: 'project' as const, answer: projectSets}])],
+    [rootSets, projectSets, railRegister])
+  const messages = useMemo(() => messagesBinding({population, gateway: reading, conversation, review, runs, ...(railRegister === null ? {} : {project: railRegister}), agentSets, holds}, ports),
+    [population, reading, conversation, review, runs, agentSets, holds, ports, railRegister])
 
   // The workcell rack: the workcell whose return track is selected, its seats, the chain devices' own values, and the Gateway's rows for the
   // macros — the same rows and the same write path the chain's Gateway writes through.
@@ -214,9 +220,9 @@ export function AgentRailDevices() {
       return answer
     } : undefined), [transport])
   const ownWorkcell = useMemo(() => {
-    const git = gitValues(cellName ? workcellGitReading(seats, cellName, RACK_PROJECT) : reading, holds)
+    const git = gitValues(cellName ? workcellGitReading(seats, cellName, railProject) : reading, holds)
     const seatsUnread = !asked ? SEATS_NOT_ASKED : seats.status === 'refused' && seats.error ? seats.error : undefined
-    return workcellRackBinding({name: cellName, project: RACK_PROJECT, seats: seats.status === 'answered' ? seats.value : null, ...(seatsUnread ? {seatsUnread} : {}),
+    return workcellRackBinding({name: cellName, project: railProject, seats: seats.status === 'answered' ? seats.value : null, ...(seatsUnread ? {seatsUnread} : {}),
       chain: {gateway: gatewayPort.values, carrier: carrierValues(workcellAnswer, holds), git}, holds,
       ...(asked ? {doctor: doctor.answer, instances: {list: instanceList.answer, usages}, worlds: worlds.answer, ...(materialOp ? {material} : {}),
         ...(picked.chosen ? {lease: leaseRead.answer, checkpoints: checkpointsRead.answer} : {}),
@@ -224,7 +230,7 @@ export function AgentRailDevices() {
     {gateway: gatewayPort, ...(asked && transport.kind !== 'unavailable' ? {rereadServices: doctor.refresh, ...(materialOp ? {rereadWorld: materialRead.refresh} : {})} : {}),
       ...(workcellWrite ? {workcell: workcellWrite} : {})})
   }, [cellName, seats, asked, reading, holds, gatewayPort, workcellAnswer, doctor, instanceList, usages, transport, workcellWrite, worlds.answer, materialOp, material, materialRead.refresh, lastReconcile, picked.chosen?.receipt,
-    leaseRead.answer, checkpointsRead.answer])
+    leaseRead.answer, checkpointsRead.answer, railProject])
   // The Workcells tile lists every gateway your machines reach, with its state (§19.3, §19.23 Widget): the gateways' own binding under `gw.`.
   // What runs left behind (§19.23, the rack's Left behind page): Ground hygiene's census of this machine's worlds and sandboxes under `left.`,
   // read while the rack stands (groundDevices.ts useHygieneDevice, the census Git / landing's Checkouts page carries too).

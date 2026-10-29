@@ -7,7 +7,8 @@
 import {Component, Suspense, lazy, useCallback, useState, type ReactNode} from 'react'
 import type {EncounterSessionHandle} from '../../../../../../desktop/cradle/src/encounter/session'
 
-export interface ObservedSession {readonly ref: string; readonly space: string}
+/** `project`: the register the session was read under (agent/worldScope.ts), its conversation's own; absent is your world's root register. */
+export interface ObservedSession {readonly ref: string; readonly space: string; readonly project?: string}
 export type ObservedHandle = EncounterSessionHandle | {readonly error: string}
 type Report = (ref: string, handle: ObservedHandle | null) => void
 
@@ -30,7 +31,7 @@ export function useEncounterSessions(sessions: readonly ObservedSession[]): {han
     return was[ref] === handle ? was : {...was, [ref]: handle}
   }), [])
   const observers = sessions.map(session => (
-    <Boundary key={`${session.ref}@${session.space}`} session={session.ref} report={report}><Suspense fallback={null}><Observer session={session} report={report} /></Suspense></Boundary>))
+    <Boundary key={`${session.ref}@${session.space}@${session.project ?? ''}`} session={session.ref} report={report}><Suspense fallback={null}><Observer session={session} report={report} /></Suspense></Boundary>))
   return {handles, observers}
 }
 

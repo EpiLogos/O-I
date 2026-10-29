@@ -146,7 +146,7 @@ test('Central\'s bar draws the mockup\'s readings from the owners, steps the die
 
 test('the Central hook reads through the owners\' own readers and writes only through the die\'s route', async () => {
   const code = await source('shell/transports/useCentralTransport.tsx')
-  for (const call of ['useCentralGroundAnswer(transport)', 'nativeContext(transport, CONVERSATION_PROJECT, session, {operation: \'read\'})', 'turnDieFace(transport, die.aperture, face)', 'conversationOf(agency.tracks, COMPANIONS.base.name, selectionRef)']) {
+  for (const call of ['useCentralGroundAnswer(transport)', 'nativeContext(transport, project, session, {operation: \'read\'})', 'turnDieFace(transport, die.aperture, face)', 'conversationOf(agency.tracks, COMPANIONS.base.name, selectionRef)']) {
     assert.ok(code.includes(call), `the hook makes ${call}`)
   }
   // The ground is read once for the window: the transport and the Day device share Central's one answer (useCentralReadings.ts).

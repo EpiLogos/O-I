@@ -134,7 +134,9 @@ test('one publisher: the rail\'s own publisher draws it in every mode; Factory\'
   }
   // The reads are the window's shared ones: the chain's gateway read goes through the kernel's held-read holder, the rest are held answers.
   const publisher = read('agent/devices/AgentRailDevices.tsx')
-  for (const shared of ['useAgentChainReading(null)', 'useWorkcellAnswer(transport)', 'useCentralGroundAnswer(transport)', 'usePopulationAnswer(transport, RACK_PROJECT)',
+  for (const shared of ['useAgentChainReading(null)', 'useWorkcellAnswer(transport)', 'useCentralGroundAnswer(transport)', // REPLACED (O-I #740 lane B): Messages read the population of RACK_PROJECT ('O-I'); they read the world's whole population now,
+    // the root register named by no project world (agent/worldScope.ts).
+    'usePopulationAnswer(transport, registerOf(ROOT_REGISTER))',
     'useSeatStatusAnswer(transport, asked)']) assert.ok(publisher.includes(shared), shared)
   assert.match(read('owners/ownerCall.ts'), /installKernelReadHolder\(/, 'a kernelRead from an effect is the same held answer')
   assert.match(read('agent/devices/useAgentChainReading.ts'), /kernelRead\(transport, \{op: 'harness_agent_read', binding\}\)/)

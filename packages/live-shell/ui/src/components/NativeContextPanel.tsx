@@ -19,7 +19,9 @@ function Receipt({ receipt }: { receipt: KernelReceipt }) {
 
 /** Read surfaces over the existing native owners. Agency and Day reads never
  * commission work; reading an Agent card requires selecting its disclosed ref. */
-export function NativeContextPanel({ project = 'O-I', preparedContext, agency, initialTab }: { project?: string; preparedContext?: NativePreparedContextProps; agency?: NativeAgencyParticipationProps; initialTab?: ContextTab }) {
+/** `project` is a register (agent/worldScope.ts): a project's name, or '' for your world's root register — never assumed. */
+export function NativeContextPanel({ project, preparedContext, agency, initialTab }: { project: string; preparedContext?: NativePreparedContextProps; agency?: NativeAgencyParticipationProps; initialTab?: ContextTab }) {
+  const place = project ? project : 'Your world'
   const id = useId()
   const hasAgency = !!agency
   const { transport, reading, selectedSource, receipts, selectSource, workspaceId, accessEpoch, sourceError, sourceReadingCurrent } = useWorkspace()
@@ -76,7 +78,7 @@ export function NativeContextPanel({ project = 'O-I', preparedContext, agency, i
     setProfiles([]); setRosterScopeRef(null); setRosterError(null)
     ++cardEpoch.current; setCard(null); setCardError(null); setSelectedAgent(null); setCardLoading(false)
     if (transport.kind === 'unavailable') { setRosterLoading(false); return }
-    const controller = agentController(transport, rosterScope === 'project' ? project : undefined)
+    const controller = agentController(transport, rosterScope === 'project' && project ? project : undefined)
     setRosterLoading(true)
     void controller.refresh().then(() => {
       if (!belongs()) return
@@ -123,7 +125,7 @@ export function NativeContextPanel({ project = 'O-I', preparedContext, agency, i
       {transport.kind === 'unavailable' && <p className="native-error" role="status">{transport.reason}</p>}
       {tab === 'agents' && agency && <NativeAgencyParticipation {...agency}/>}
       {tab === 'agents' && !agency && <div className="native-agency">
-        <label className="native-agent-scope">Agent profiles<select aria-label="Agent profile scope" value={rosterScope} onChange={event => setRosterScope(event.target.value as 'project' | 'central')}><option value="project">{project}</option><option value="central">Central</option></select></label>
+        <label className="native-agent-scope">Agent profiles<select aria-label="Agent profile scope" value={rosterScope} onChange={event => setRosterScope(event.target.value as 'project' | 'central')}><option value="project">{place}</option><option value="central">Central</option></select></label>
         {rosterLoading && <p className="native-empty" role="status">Reading native Agent profiles…</p>}
         {rosterError && <p className="native-error" role="alert">{rosterError}</p>}
         {!rosterLoading && !rosterError && transport.kind !== 'unavailable' && !profiles.length && <p className="native-empty">No Agent profiles are disclosed in this scope.</p>}
@@ -131,7 +133,7 @@ export function NativeContextPanel({ project = 'O-I', preparedContext, agency, i
         <h3>Participating sessions</h3>
         {agencyLoading && <p className="native-empty" role="status">Reading agent participation…</p>}
         {agencyError && <p className="native-error" role="alert">{agencyError}</p>}
-        {agencyReading && <><p className="native-context-meta" title={agencyReading.projectRef}>{project} · {agencyReading.rows.length} participating sessions{agencyReading.observedAtUnixMs !== undefined && <span> · read {new Date(agencyReading.observedAtUnixMs).toLocaleTimeString()}</span>}</p><ul className="native-agent-list">{agencyReading.rows.map(row => <li key={`${row.spaceRef}:${row.sessionRef}`}><button type="button" disabled={!row.agentRef} className={selectedAgent === row.agentRef ? 'selected' : undefined} title={row.agentRef ?? 'This session has no disclosed Agent card reference'} onClick={() => row.agentRef && void selectAgent(row.agentRef)}><strong>{row.spaceLabel ?? row.spaceRef}</strong><span>{row.purpose ?? row.sessionRef}</span></button></li>)}</ul>{!agencyReading.rows.length && <p className="native-empty">No participating sessions are disclosed by this owner.</p>}</>}
+        {agencyReading && <><p className="native-context-meta" title={agencyReading.projectRef}>{place} · {agencyReading.rows.length} participating sessions{agencyReading.observedAtUnixMs !== undefined && <span> · read {new Date(agencyReading.observedAtUnixMs).toLocaleTimeString()}</span>}</p><ul className="native-agent-list">{agencyReading.rows.map(row => <li key={`${row.spaceRef}:${row.sessionRef}`}><button type="button" disabled={!row.agentRef} className={selectedAgent === row.agentRef ? 'selected' : undefined} title={row.agentRef ?? 'This session has no disclosed Agent card reference'} onClick={() => row.agentRef && void selectAgent(row.agentRef)}><strong>{row.spaceLabel ?? row.spaceRef}</strong><span>{row.purpose ?? row.sessionRef}</span></button></li>)}</ul>{!agencyReading.rows.length && <p className="native-empty">No participating sessions are disclosed by this owner.</p>}</>}
         {cardLoading && <p className="native-empty" role="status">Reading Agent card…</p>}
         {cardError && <p className="native-error" role="alert">{cardError}</p>}
         {card && <article className="native-agent-card"><h3 title={`${card.identity.agent_ref} · ${card.identity.revision}`}>{card.identity.name}</h3>{card.why_im_here.role && <p className="native-context-meta">{card.why_im_here.role}</p>}<Field label="Purpose" field={card.why_im_here} /><Field label="Capabilities" field={card.what_i_can_do} /><Field label="Current work" field={card.currently} /><details><summary>Participation and repertoire</summary><Field label="Participation" field={card.where_i_participate} /><Field label="Working practice" field={card.how_i_work} /><Field label="Repertoire" field={card.what_i_carry} />{card.citizenship.summary && <p>{card.citizenship.summary}</p>}</details></article>}

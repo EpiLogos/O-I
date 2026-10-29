@@ -226,8 +226,10 @@ const checkRows = (v: V): RowItem[] => {
 
 // ================================================================================================ the Seat page (`seat.` keys)
 
-/** The names of the seats, drawn dashed when the owner reports none. */
-const SEAT_NAMES: readonly string[] = ['env-1', 'env-2', 'env-3']
+/** What the Seat page says when the workcell's own reading names no seat: the seats are Workcell's (its seat instrument's rows), never
+ * names this panel keeps. */
+export const NO_SEATS = 'This workcell reports no seat: Workcell\'s seat reading names none on this machine.'
+const NO_SEAT_READING = 'No reading of the seats.'
 const STATE_WORD: Record<string, string> = {free: 'free', claimed: 'held', 'occupied-foreign-lane': 'foreign'}
 const JOIN: readonly Option<string>[] = [{value: 'attach', label: 'Attach', does: 'Work beside the agents on the standing lane.'},
   {value: 'new-lane', label: 'New lane', does: 'Start a new lane. It replaces the standing lane; the old branch stays in Git. It never replaces uncommitted work.'}]
@@ -310,7 +312,9 @@ const gate = (p: ViewProps, key: string, why?: string): Standing => { const s = 
  * free); under it the uncommitted files, how the lane stands against main, and the tail of its branch. Handle 1 chooses the seat. */
 function SeatBlocks({p, w}: {p: ViewProps; w: number}) {
   const g = seats(p.v)
-  const names = g.envs.length ? g.envs : SEAT_NAMES
+  // The workcell's own seats, as Workcell reads them; with none, the page says so in words (no names are drawn that it did not report).
+  const names = g.envs
+  if (!names.length) return <g><text x={w / 2} y={52} className="dp-axis" textAnchor="middle">{g.rows ? NO_SEATS : NO_SEAT_READING}</text></g>
   const n = names.length, pad = 4, colW = (w - pad * 2) / n, colX = (i: number) => pad + i * colW + colW / 2
   const top = 27, bh = 40
   const seatHand = g.envs.length > 0 && !st(p, 'seat').disabled
@@ -358,11 +362,11 @@ function ProductChooser({p}: {p: ViewProps}) {
 }
 function SeatRadio({p}: {p: ViewProps}) {
   const g = seats(p.v)
-  const options = (g.envs.length ? g.envs : SEAT_NAMES).map(name => {
+  const options = g.envs.map(name => {
     const row = g.rows?.find(r => r.workcell === name && r.product === g.product)
     return {value: name, label: name, does: row ? `${name}: ${row.state === 'free' ? 'free' : `${STATE_WORD[row.state] ?? row.state} by ${short(row.claimedBy)}${row.branch ? ` on ${row.branch}` : ''}`}.` : `${name} has no ${g.product ?? 'such'} seat.`}
   })
-  return <Radio {...gate(p, 'seat', g.rows ? undefined : 'No reading of the seats.')} label="Seat" stack does="The seat the session joins: one checkout of the product on this machine."
+  return <Radio {...gate(p, 'seat', !g.rows ? NO_SEAT_READING : g.envs.length ? undefined : NO_SEATS)} label="Seat" stack does="The seat the session joins: one checkout of the product on this machine."
     value={g.seat ?? ''} options={options} onChange={x => p.set('seat', x)} />
 }
 function JoinRadio({p}: {p: ViewProps}) {

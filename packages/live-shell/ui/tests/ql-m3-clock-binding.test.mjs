@@ -60,10 +60,11 @@ const reading = (over = {}) => ({schema: 'oi.m3-reception-context/v1', status: '
 const answer = data => ({outcome: {result: 'm3_reception', data}})
 const VIEWS = ['folded', 'compact', 'whole', 'full', 'widget']
 
-test('the encounter is the frame\'s: the chosen identity and the open Expression, project O-I; a foreign answer is refused', () => {
+test('the encounter is the frame\'s: the chosen identity and the open Expression, in the world\'s root register; a foreign answer is refused', () => {
   assert.deepEqual(m3.m3Binding(basis), {operation: 'context', source_ref: 'central:nara/identity/p1', expected_revision: 'r9',
     person_ref: 'person:p1', nara_ref: 'nara:p1', expression_ref: 'expression:kept', role: 'nara'})
-  assert.equal(m3.QL_M3_PROJECT, 'O-I')
+  // REPLACED (O-I #740 lane B): project 'O-I'; the frame's Nara channel and the clock ask in the world's root register ('', agent/worldScope.ts).
+  assert.equal(m3.QL_M3_PROJECT, '')
   assert.equal(m3.readM3Answer(answer(reading()), basis).ok, true)
   assert.match(m3.readM3Answer(answer(reading({expression_revision: 4})), basis).reason, /another person, Expression or revision/)
   assert.match(m3.readM3Answer({error: 'kernel down'}, basis).reason, /kernel down/)
@@ -77,7 +78,7 @@ test('the form is read once per encounter; a new degree advances forward on the 
   await m3.syncQlM3(basis)
   await m3.syncQlM3(basis)
   assert.equal(calls.length, 1, 'one read for one encounter')
-  assert.deepEqual(calls[0], {op: 'm3_reception', project: 'O-I', request: {operation: 'read', binding: m3.m3Binding(basis)}})
+  assert.deepEqual(calls[0], {op: 'm3_reception', project: '', request: {operation: 'read', binding: m3.m3Binding(basis)}})
   const values = m3.qlM3Values(m3.qlM3State())
   assert.deepEqual(values, {'clock.degree720': 419, 'clock.tick12': 1, 'clock.backbone': '#3-5-1-3', 'aperture.index': 2, 'form.address': 17, 'form.codon': 'TAT',
     'law.matrix': 'moving-resting', 'law.seed': 'sum-difference-mod', 'law.poseMap': 'raw-bin',

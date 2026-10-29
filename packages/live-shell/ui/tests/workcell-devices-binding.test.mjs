@@ -285,7 +285,8 @@ test('the chain places them where the manual does: a workcell\'s chain — the R
   // REPLACED (R4, lane K1): the Seat reads the seat instrument through the kernel (seat_status_read); on a workcell's chain it starts at
   // that workcell's seat.
   assert.match(view, /seatBinding\(\{status: seats\.status === 'answered' \? seats\.value : null/, 'the seat instrument through the kernel')
-  assert.match(read('agent/devices/usePopulationAnswer.ts'), /readPopulation\(transport, project\)/, 'through the cradle\'s own population read (inhabitation_read)')
+  // REPLACED (O-I #740 lane B): readPopulation(transport, project); the root register (''/null) names no project world.
+  assert.match(read('agent/devices/usePopulationAnswer.ts'), /readPopulation\(transport, world\)/, 'through the cradle\'s own population read (inhabitation_read)')
   for (const file of ['agent/devices/workcellBindings.ts', 'agent/devices/usePopulationAnswer.ts']) {
     assert.doesNotMatch(read(file), /\.defaults\[|\.fixtures|catalogue\/panels\//, `${file}: no design default or fixture`)
     assert.deepEqual(read(file).match(/#[0-9a-fA-F]{3,8}\b/g) ?? [], [], `${file}: shell tokens only`)

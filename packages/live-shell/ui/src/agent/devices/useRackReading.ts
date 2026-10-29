@@ -16,13 +16,18 @@ import {useEffect, useMemo, useState} from 'react'
 import {kernelOp, kernelRead} from '../../../../../../desktop/cradle/src/kernel/bridge'
 import type {ChangeSetDocumentWire, ConfigRequestWire, KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
 import {planeScope, type ComposePlan, type ComposePorts, type ComposeScope} from './designBindings'
+import {registerOf, ROOT_REGISTER} from '../worldScope'
 
 type Obj = Record<string, unknown>
 const isObj = (value: unknown): value is Obj => !!value && typeof value === 'object' && !Array.isArray(value)
 const strings = (value: unknown): string[] => Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string' && item.length > 0) : []
 
-/** The project the Factory sessions are read in (AgentSessionsProvider.tsx:21 PROJECT). */
-export const RACK_PROJECT = 'O-I'
+/** The register a reading outside any session asks — Central's Approvals and the Link's population, which name no session: your world's
+ * root register, null in the ops whose root is null (agent/worldScope.ts registerOf). A session's chain reads its own register instead. */
+export const WORLD_REGISTER: string | null = registerOf(ROOT_REGISTER)
+/** Kept under its old name for central/devices/CentralDevices.tsx's import (APPROVALS_PROJECT), which is not this lane's file: it is the root
+ * register now, never a named project. */
+export const RACK_PROJECT = WORLD_REGISTER
 
 export interface RackReading {
   readonly sets: Readonly<Record<string, unknown>>
@@ -36,19 +41,21 @@ export interface RackReading {
 
 const NONE: RackReading = {sets: {}, setList: null, skills: null, capabilities: null, profiles: null, refused: {}}
 
-async function definition(transport: KernelTransportStatus, request: {action: 'skillsets' | 'skills'} | {action: 'skillset'; name: string}): Promise<{value?: unknown; error?: string}> {
-  const result = await kernelRead(transport, {op: 'agent_definition', project: RACK_PROJECT, request})
+async function definition(transport: KernelTransportStatus, project: string, request: {action: 'skillsets' | 'skills'} | {action: 'skillset'; name: string}): Promise<{value?: unknown; error?: string}> {
+  const result = await kernelRead(transport, {op: 'agent_definition', project: registerOf(project), request})
   if (result.error || result.outcome?.result !== 'agent_definition_reading') return {error: result.error ?? 'AIKit did not answer the reading'}
   return {value: result.outcome.data}
 }
 
-/** The rack's readings for the seated agent's profile, at the composition's scope (Project when none is chosen yet: the
- * capability horizon AIKit resolves is the same at every scope; only the held intent differs). */
+/** The rack's readings for the seated agent's profile, in the session's register `project` ('' your world's root register,
+ * agent/worldScope.ts), at the composition's scope (Project when none is chosen yet: the capability horizon AIKit resolves is the same at
+ * every scope; only the held intent differs; the root register, which has no Project scope, resolves at Home). */
 export function useRackReading(transport: KernelTransportStatus, profile: {readonly skill_set_refs?: unknown} | null, scope: ComposeScope | undefined,
-  sessionRef: string | null, enabled: boolean, epoch: number): RackReading {
+  sessionRef: string | null, enabled: boolean, epoch: number, project: string): RackReading {
   const [reading, setReading] = useState<RackReading>(NONE)
   const sets = useMemo(() => strings(profile?.skill_set_refs).map(ref => ref.replace(/^sets\//, '')).join('\n'), [profile])
-  const pairScope = useMemo(() => planeScope(scope ?? 'project', RACK_PROJECT, sessionRef) ?? planeScope('project', RACK_PROJECT, null)!, [scope, sessionRef])
+  const pairScope = useMemo(() => planeScope(scope ?? 'project', project, sessionRef) ?? planeScope('project', project, null) ?? planeScope('home', project, null)!,
+    [scope, sessionRef, project])
   useEffect(() => {
     if (!enabled || transport.kind === 'unavailable') { setReading(NONE); return }
     let live = true
@@ -56,11 +63,11 @@ export function useRackReading(transport: KernelTransportStatus, profile: {reado
       const refused: Record<string, string> = {}
       const shown: Record<string, unknown> = {}
       for (const name of sets ? sets.split('\n') : []) {
-        const answer = await definition(transport, {action: 'skillset', name})
+        const answer = await definition(transport, project, {action: 'skillset', name})
         if (answer.error) refused[`set:${name}`] = answer.error; else shown[name] = answer.value
       }
-      const list = await definition(transport, {action: 'skillsets'})
-      const skills = await definition(transport, {action: 'skills'})
+      const list = await definition(transport, project, {action: 'skillsets'})
+      const skills = await definition(transport, project, {action: 'skills'})
       if (list.error) refused.setList = list.error
       if (skills.error) refused.skills = skills.error
       const resolved = await kernelRead(transport, {op: 'config_resolutions_read', pairs: [
@@ -73,7 +80,7 @@ export function useRackReading(transport: KernelTransportStatus, profile: {reado
       if (live) setReading({sets: shown, setList: list.value ?? null, skills: skills.value ?? null, capabilities: row(0), profiles: row(1), refused})
     })()
     return () => { live = false }
-  }, [transport, sets, pairScope, enabled, epoch])
+  }, [transport, sets, pairScope, enabled, epoch, project])
   return reading
 }
 

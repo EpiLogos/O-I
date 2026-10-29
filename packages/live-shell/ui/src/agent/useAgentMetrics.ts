@@ -1,6 +1,8 @@
 import {useMemo} from 'react'
 import type {KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
 import {useTaskAnswer} from '../owners/readers'
+import {useAgentSessionsOptional} from './AgentSessionsProvider'
+import {projectOfSession} from './worldScope'
 
 // The task record's one read is the shared answer's (owners/readers.ts `readTaskOf`, moved from here): every reader of a
 // session's task record subscribes to it instead of asking the owner itself.
@@ -47,6 +49,8 @@ export function metricsFromReading(reading: unknown): {tokensIn: string; tokensO
 /** The selected session's metrics, from the shared task record (owners/readers.ts `useTaskAnswer`): the same answer the
  * sessions provider, the Factory chain and the dock read — one owner read between them, re-read when a notice reaches it. */
 export function useAgentMetrics(transport: KernelTransportStatus, sessionRef: string | null) {
-  const {reading} = useTaskAnswer(transport, transport.kind === 'unavailable' ? null : sessionRef)
+  // The session's own register (agent/worldScope.ts), as the provider reads its task record.
+  const project = projectOfSession(useAgentSessionsOptional()?.rows ?? [], sessionRef)
+  const {reading} = useTaskAnswer(transport, transport.kind === 'unavailable' ? null : sessionRef, project)
   return useMemo(() => reading.status === 'answered' ? metricsFromReading(reading.value) : NO_METRICS, [reading])
 }

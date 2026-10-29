@@ -20,7 +20,7 @@ import {encounter, type EncounterReading, type JournalPage} from '../../../../..
 import type {KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
 import {tellOwnerChanged} from '../owners/notices'
 import type {WorldTrackSet} from '../timeline/worldTrackAdapter'
-import {CONVERSATION_PROJECT} from '../widgets/agentConversation'
+import {CONVERSATION_PLACE} from '../widgets/agentConversation'
 import {AGENT_CHAIN_MIME} from './agentChainDrag'
 import {chatTrackKey, decodeChatDrag, glanceOfView, type ChatGlance, type FactoryChat} from './factoryChatsModel'
 
@@ -100,7 +100,7 @@ export interface ChatDropPorts {
 /** What the Session pane draws for the chat, said after the owner reopened it. */
 function standing(chat: FactoryChat, trackIds: readonly string[] | undefined): string {
   if (trackIds?.includes(chatTrackKey(chat))) return ' It stands on its track in the Session pane, its tasks the clips the pane reads for it.'
-  return ` The Session pane draws the sessions of ${CONVERSATION_PROJECT}'s agency, and this chat is in none of its spaces, so no track appears for it.`
+  return ` The Session pane draws the sessions of ${CONVERSATION_PLACE}, and this chat is in none of their spaces, so no track appears for it.`
 }
 
 const notAChat = 'Only a chat reopens here: the drop carried no chat from the Projects category of Factory\'s browser.'
@@ -134,7 +134,7 @@ export async function dropChatOnRail(payload: string, ports: ChatRailPorts): Pro
   if (!receipt.ok) return receipt
   if (!ports.rail.isOpen(RAIL_AGENT_WIDGET)) ports.rail.toggle(RAIL_AGENT_WIDGET)
   ports.rail.pin(RAIL_AGENT_WIDGET, chatTrackKey(chat))
-  return {ok: true, note: `${receipt.note} The agent's tile holds it, ready to talk.${ports.trackIds?.includes(chatTrackKey(chat)) ? '' : ` The tile follows the sessions of ${CONVERSATION_PROJECT}'s agency, and this chat is in none of its spaces, so it may show nothing of it.`}`}
+  return {ok: true, note: `${receipt.note} The agent's tile holds it, ready to talk.${ports.trackIds?.includes(chatTrackKey(chat)) ? '' : ` The tile follows the sessions of ${CONVERSATION_PLACE}, and this chat is in none of their spaces, so it may show nothing of it.`}`}
 }
 
 /** The Session pane's seat action with a chat's drop added (frame/tracks/SessionGrid.tsx draws the empty track from `actions.seat`,

@@ -224,7 +224,9 @@ test('REAL — the git census as the census reads a checkout list and a branch l
 
 test('the census reads once for both lists through invoke_action, names its boundary per list, and carries Central\'s refusal in its words', async () => {
   const owner = kernel({'central.git.census': REAL.gitCensus.data})
-  const read = ground.hygieneMachineRead(bridge, true)
+  // The census is the world's: each project Central discloses in it (agent/worldScope.ts). REPLACED (O-I #740 lane B): the shell's one
+  // literal project; the REAL census is O-I's, so the world here is one whose project is O-I.
+  const read = ground.hygieneMachineRead(bridge, true, ['O-I'])
   const [trees, branches] = await withKernel(owner, async () => [await read('worktree-list'), await read('branch-refs')])
   assert.equal(owner.sent.length, 1, 'one census for both lists')
   assert.deepEqual(owner.sent[0], {op: 'invoke_action', invocation: {action: 'central.git.census', target_ref: 'central:action:central.git.census', input: {project: 'O-I'}}})
@@ -233,13 +235,22 @@ test('the census reads once for both lists through invoke_action, names its boun
   assert.equal(trees.refused, undefined)
   const refusing = kernel({'central.git.census': {refuse: 'No eligible Connector implements GitState'}})
   // Another carrier, so the window's held census (one answer per op and carrier) is not this refusal.
-  const refused = await withKernel(refusing, () => ground.hygieneMachineRead({kind: 'bridge', url: 'http://refusing.fixture'}, true)('worktree-list'))
+  const refused = await withKernel(refusing, () => ground.hygieneMachineRead({kind: 'bridge', url: 'http://refusing.fixture'}, true, ['O-I'])('worktree-list'))
   assert.equal(refused.refused, 'No eligible Connector implements GitState', 'the owner\'s words')
+  // A world with no project has no checkout to census: said so, and nothing is asked.
+  const none = kernel({})
+  const empty = await withKernel(none, () => ground.hygieneMachineRead({kind: 'bridge', url: 'http://no-project.fixture'}, true, [])('worktree-list'))
+  assert.deepEqual([empty.refused, none.sent.length], [ground.NO_PROJECT_CENSUS, 0])
+  // Several projects: one census each, the lists joined, the op naming them.
+  const both = kernel({'central.git.census': REAL.gitCensus.data})
+  const twice = await withKernel(both, () => ground.hygieneMachineRead({kind: 'bridge', url: 'http://two-projects.fixture'}, true, ['O-I', 'first-project'])('worktree-list'))
+  assert.deepEqual(both.sent.map(body => body.invocation.input), [{project: 'O-I'}, {project: 'first-project'}])
+  assert.equal(twice.boundaryOp, 'central.git.census worktrees (invoke_action, projects O-I, first-project)')
 })
 
 test('(e) Ground hygiene reads the census\'s checkouts, the other readings refused in their words', async () => {
   const owner = kernel({'central.git.census': REAL.gitCensus.data})
-  const read = await withKernel(owner, () => readHygieneCensus({transport: bridge, epoch: 'e', machineRead: ground.hygieneMachineRead(bridge, false)}))
+  const read = await withKernel(owner, () => readHygieneCensus({transport: bridge, epoch: 'e', machineRead: ground.hygieneMachineRead(bridge, false, ['O-I']), projects: ['O-I']}))
   assert.deepEqual(read.census.worktrees.map(tree => tree.path), REAL.gitCensus.data.repos[0].worktrees.map(tree => tree.path))
   assert.ok(read.census.sources.some(source => source.boundaryOp.startsWith('central.git.census worktrees') && !source.refusal))
   const binding = groundBind.hygieneBinding(ground.HYGIENE_DEVICE_ID, {census: read.census, findings: read.findings, at: Date.UTC(2026, 9, 21, 9)}, Date.UTC(2026, 9, 21, 9), async () => {})
@@ -301,13 +312,14 @@ test('the pages read through invoke_action and the shared workcell answer; the s
     if (body.op === 'workcell_read' && body.request.kind === 'worlds') return {json: async () => ({ok: true, outcome: {result: 'owner_route_reading', route: 'workcell worlds', data: WORLDS, warnings: []}})}
     return owner.fetch(url, init)
   }
-  const pages = await withKernel({fetch: fetchWithStatus}, () => ground.readHygienePages({kind: 'bridge', url: 'http://pages.fixture'}, 'e', true))
+  const pages = await withKernel({fetch: fetchWithStatus}, () => ground.readHygienePages({kind: 'bridge', url: 'http://pages.fixture'}, 'e', true, null, ['O-I']))
   assert.deepEqual(owner.sent.map(body => [body.invocation.action, body.invocation.input]),
     [['central.doctor', {}], ['central.world.reproject.plan', {project: 'O-I'}], ['projectcentral.ground.inspect', {project: 'O-I'}]])
   assert.equal(pages.root.valid, true)
   assert.deepEqual(pages.worlds, [], 'Workcell keeps no world receipt: no world, a reading')
   assert.equal(pages.sandboxes, undefined)
-  assert.deepEqual(pages.sources.map(source => [source.boundaryOp, !!source.refusal]), [[OPS.root, false], [OPS.scaffold, false], [OPS.authored, false], [OPS.worlds, false], [OPS.sandboxes, true]])
+  // REPLACED (O-I #740 lane B): one op named for the shell's literal project; each project of the world is named by its own (pageOp).
+  assert.deepEqual(pages.sources.map(source => [source.boundaryOp, !!source.refusal]), [[OPS.root, false], [ground.pageOp(OPS.scaffold, 'O-I'), false], [ground.pageOp(OPS.authored, 'O-I'), false], [OPS.worlds, false], [OPS.sandboxes, true]])
   // REPLACED (lane K0): the kernel reads a named server's sandboxes (workcell_read sandboxes); none is named, and the refusal says so.
   assert.equal(pages.sources.at(-1).refusal, groundBind.NO_SANDBOX_SERVER)
   assert.equal(pages.findings.length, 1650, 'O-I: no scaffold missing, every listed candidate waiting')
@@ -317,8 +329,8 @@ test('(b)(c) Ground hygiene reads the census and the pages: each tender writing 
   const owner = kernel({'central.git.census': REAL.gitCensus.data, 'central.doctor': PAGES.doctor.data, 'central.world.reproject.plan': PAGES.reprojectPointCloud.data,
     'projectcentral.ground.inspect': PAGES.groundOI.data})
   const transport = {kind: 'bridge', url: 'http://pages-hygiene.fixture'}
-  const read = await withKernel(owner, () => readHygieneCensus({transport, epoch: 'e', machineRead: ground.hygieneMachineRead(transport, false)}))
-  const pages = await withKernel(owner, () => ground.readHygienePages(transport, 'e', false))
+  const read = await withKernel(owner, () => readHygieneCensus({transport, epoch: 'e', machineRead: ground.hygieneMachineRead(transport, false, ['O-I']), projects: ['O-I']}))
+  const pages = await withKernel(owner, () => ground.readHygienePages(transport, 'e', false, null, ['O-I']))
   const binding = groundBind.hygieneBinding(ground.HYGIENE_DEVICE_ID, {census: read.census, findings: read.findings, pages, at: Date.UTC(2026, 9, 21, 9)}, Date.UTC(2026, 9, 21, 9), async () => {})
   for (const key of ['root', 'scaffold', 'authored']) assert.notEqual(binding.values[key], undefined, `${key}: Central's reading`)
   assert.equal(binding.values.sandboxes, undefined)

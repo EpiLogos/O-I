@@ -62,6 +62,9 @@ export interface AgentSessionTrack {
   budget: {used: number | null; max: number | null}
   /** Track-level disclosed absence (grouping derivation, undecidable state). */
   disclosure: string | null
+  /** The register the session was read under (agent/worldScope.ts): '' your world's root register, else the project's name. Its own
+   * readings (settings, task, thread) are asked there. Absent on a track no world-wide reading placed. */
+  project?: string
 }
 
 /** One row of an `agency_read` reading (desktop/cradle agencyTypes.ts:117). */
@@ -73,6 +76,8 @@ export interface AgencyRowLike {
   agentRef?: string | null
   /** The unparsed space payload, inspected for parent/supervisor linkage. */
   raw?: unknown
+  /** The register the row was read under (agent/worldScope.ts WorldSessionRow). */
+  project?: string
 }
 
 export interface RosterEntry {
@@ -344,6 +349,7 @@ export function buildTracks(
       telemetryOn: true,
       budget: {used: null, max: null},
       disclosure: GROUP_DISCLOSURE,
+      ...(typeof space.rows[0]?.project === 'string' ? {project: space.rows[0].project} : {}),
     })
     for (const row of space.rows) {
       const agentRef = typeof row.agentRef === 'string' && row.agentRef ? row.agentRef : null
@@ -365,6 +371,7 @@ export function buildTracks(
         telemetryOn: true,
         budget: {used: null, max: null},
         disclosure: null,
+        ...(typeof row.project === 'string' ? {project: row.project} : {}),
       })
     }
   }

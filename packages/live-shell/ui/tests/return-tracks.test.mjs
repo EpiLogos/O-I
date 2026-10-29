@@ -115,7 +115,10 @@ test('the Arrangement lays the return tracks after the tracks and before the Mai
 test('every session names its workcell in its In/Out section; choosing another stands disabled with the op it lacks', () => {
   const one = structuredClone(REAL.seatStatus)
   one.workcells[1].seats.find(seat => seat.product === 'o-i').state = 'free'
-  const set = factory.withWorkcells({...crew(), mixer: {activator: {meaning: 'm'}, input: {meaning: 'in'}}}, one)
+  // Each session works in its own project's workcell (§19.1 "The project's workcell by default"): the project its agency read listed it in.
+  // REPLACED (O-I #740 lane B): every session worked in the shell's one literal project; these sessions are O-I's.
+  const ofOI = () => 'O-I'
+  const set = factory.withWorkcells({...crew(), mixer: {activator: {meaning: 'm'}, input: {meaning: 'in'}}}, one, null, ofOI)
   const solo = set.tracks.find(track => track.id === 'solo')
   assert.equal(solo.mix.works, 'env-1')
   const cells = lanes.mixerCells(set, solo, 0)
@@ -125,11 +128,21 @@ test('every session names its workcell in its In/Out section; choosing another s
   assert.equal(works.press, undefined)
   assert.match(html(set), /<small>works in<\/small>env-1/)
   // Two workcells hold o-i: unread, and the reason on the control.
-  const both = factory.withWorkcells({...crew(), mixer: {activator: {meaning: 'm'}}}, REAL.seatStatus)
+  const both = factory.withWorkcells({...crew(), mixer: {activator: {meaning: 'm'}}}, REAL.seatStatus, null, ofOI)
   const unread = lanes.mixerCells(both, both.tracks.find(track => track.id === 'solo'), 0).find(cell => cell.id === 'works')
   assert.equal(unread.state, 'unread')
   assert.match(unread.title, /2 workcells hold O-I's seat/)
   for (const track of both.tracks.filter(track => track.returns)) assert.deepEqual(lanes.mixerCells(both, track, 0), [], 'a return track has no mixer row of a session')
+})
+
+test('a session of your world\'s root register names no workcell; a project\'s session its project\'s (O-I #740)', () => {
+  const one = structuredClone(REAL.seatStatus)
+  one.workcells[1].seats.find(seat => seat.product === 'o-i').state = 'free'
+  const projectOf = factory.trackProjects([{sessionRef: 'a', spaceRef: 's', group: false, project: 'O-I'}, {sessionRef: 'b', spaceRef: 's', group: false, project: ''}])
+  assert.deepEqual([projectOf({id: 's:a'}), projectOf({id: 's:b'}), projectOf({id: 'unseated'})], ['O-I', null, null], 'a track\'s project is its session\'s register; the root names none')
+  const set = factory.withWorkcells({...crew(), mixer: {activator: {meaning: 'm'}}}, one, null, track => projectOf({id: track.id === 'solo' ? 's:a' : track.id === 'lead' ? 's:b' : track.id}))
+  assert.equal(set.tracks.find(track => track.id === 'solo').mix?.works, 'env-1', 'O-I\'s session works where O-I\'s seat is held')
+  assert.equal(set.tracks.find(track => track.id === 'lead').mix?.works, undefined, 'the root register keeps no seat: no workcell is named')
 })
 
 test('Central\'s worlds: a project\'s world works where its project\'s seat is held; your own world names no workcell', () => {

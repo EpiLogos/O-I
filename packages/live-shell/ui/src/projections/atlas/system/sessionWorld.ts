@@ -10,8 +10,8 @@
 //
 // A space can belong to more than one project; its session rides the first listed that is a world of today's set (a project before the root,
 // the narrower world first). Where no listed project is a world of the set (the root's agents, a project the Day did not bring in, a row with
-// no space payload), the session rides your world, as every session rode before. (The provider reads the O-I project's agency alone, so it
-// holds no root register's session: reading the root's is the provider's to add.)
+// no space payload), the session rides your world, as every session rode before. The provider reads the world's whole agency — the root
+// register's and each project's Central discloses (agent/worldScope.ts) — so the root's sessions are among its rows, and ride your world.
 import type {CentralWorld} from '../../../central/centralWorlds'
 import type {SessionLike} from './systemModel'
 

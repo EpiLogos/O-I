@@ -17,7 +17,7 @@
 // and every session's Arm is the shell's one write arm — the transport's own press (shell/transports/useFactoryTransport.tsx:92
 // `dispatch('arm', 'shell.setWriteArm', …)`), through the same registered setter (inhabitants/sdk/shellSetters.ts), its light the
 // agent shell's flag, which the setter bridge moves only when the owner accepts (agent/shellSetterBridge.ts).
-import {useMemo} from 'react'
+import {useCallback, useMemo} from 'react'
 import type {EncounterSessionSettingsReading, KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
 import {useAgencySessions} from '../../agent/useAgencySessions'
 import {useAgentSessionsOptional} from '../../agent/AgentSessionsProvider'
@@ -30,15 +30,16 @@ import {factoryTrackAdapter, type FactoryControls, type FactorySettingsPort, typ
 import {useSettingsAnswers} from '../../owners/readers'
 import {useAttemptTakes} from '../../owners/attemptTakes'
 import {makeTakes, takeRunOf, trackSettingChange, writeSessionSettings} from '../../agent/sessionSettings'
-import {SETTINGS_PROJECT, taskMaker} from '../../agent/clipBinding'
+import {taskMaker} from '../../agent/clipBinding'
+import {projectOfSession, ROOT_REGISTER} from '../../agent/worldScope'
 import {withClipMaker} from './clipMakers'
 import {encounter} from '../../../../../../desktop/cradle/src/encounter/client'
 import {tellOwnerChanged} from '../../owners/notices'
 import type {UseModeTracks} from './modeTracks'
 import {useSeatStatusAnswer} from '../../agent/devices/workcellReads'
 import {withReturns, withWorksIn, workcellReturns} from './returnTracks'
-import type {WorldTrackSet} from '../../timeline/worldTrackAdapter'
-import type {AgentSessionTrack} from '../../agent/agentRunModel'
+import type {WorldTrack, WorldTrackSet} from '../../timeline/worldTrackAdapter'
+import {trackKey, type AgentSessionTrack} from '../../agent/agentRunModel'
 
 const WRITE_ARM = 'shell.setWriteArm'
 
@@ -78,31 +79,34 @@ export const useFactoryTracks: UseModeTracks = reading => {
   )
   // Every session's Telemetry and Solo, and its task's launch, follow and quantize: its own settings, all read in one owner call;
   // Telemetry and Solo are each written on its own.
+  // Each session's own readings and writes are asked in the register its world-wide agency read listed it in (agent/worldScope.ts).
   const sessionRefs = useMemo(() => agency.tracks.filter(track => !track.group).map(track => track.sessionRef), [agency.tracks])
-  const own = useSettingsAnswers(transport, sessionRefs, SETTINGS_PROJECT)
+  const rows = agency.rows
+  const projectOf = useCallback((session: string) => projectOfSession(rows, session), [rows])
+  const own = useSettingsAnswers(transport, sessionRefs, projectOf)
   const settings = useMemo<FactorySettingsPort | undefined>(() => transport.kind === 'unavailable' ? undefined : {
     of: session => { const reading = own.get(session); return reading ? {telemetry: reading.track.telemetry, solo: reading.track.solo, task: reading.task} : null },
     set: async (session, setting, on) => {
       try {
-        await writeSessionSettings(transport, SETTINGS_PROJECT, session, trackSettingChange(setting, on))
+        await writeSessionSettings(transport, projectOf(session), session, trackSettingChange(setting, on))
         return {ok: true, note: `${setting === 'telemetry' ? 'Telemetry' : 'Solo'} ${on ? 'on' : 'off'} for this session (its own settings, on AIKit).`}
       } catch (cause) { return {ok: false, error: cause instanceof Error ? cause.message : String(cause)} }
     },
-  }, [transport, own])
+  }, [transport, own, projectOf])
   // Every session's attempts as takes: AIKit's served attempts and the Runs Factory holds them in, and the choice of one.
-  const takes = useAttemptTakes(transport, sessionRefs, SETTINGS_PROJECT)
+  const takes = useAttemptTakes(transport, sessionRefs, projectOf)
   // A track's Stop: that session's running turn cancelled on its own encounter owner, as the Thread's Hard stop does
   // (desktop/cradle/src/encounter/session.ts cancel); the harness's other sessions run on.
   const sessionStop = useMemo(() => transport.kind === 'unavailable' ? undefined : async (session: string) => {
     try {
-      await encounter(transport, SETTINGS_PROJECT, {action: 'cancel', agent_session: session, reason: 'Stopped on its track'})
+      await encounter(transport, projectOf(session), {action: 'cancel', agent_session: session, reason: 'Stopped on its track'})
       tellOwnerChanged({topic: 'agency', cause: 'a session was stopped on its track', agentSession: session})
       return {ok: true as const, note: 'Stopped this session\'s running turn; the session stays, and the harness\'s other sessions run on.'}
     } catch (cause) { return {ok: false as const, error: cause instanceof Error ? cause.message : String(cause)} }
-  }, [transport])
+  }, [transport, projectOf])
   // A Repeat's press (§19.1 The Launch panel): its takes over the run AIKit hands with the session's settings (repeatPress).
   const repeat = useMemo(() => transport.kind === 'unavailable' ? undefined
-    : repeatPress(transport, session => own.get(session)), [transport, own])
+    : repeatPress(transport, session => own.get(session), projectOf), [transport, own, projectOf])
   // The workcells of the machine's register as return tracks, and each session's Works in (§19.23): the seat register, read once.
   const seats = useSeatStatusAnswer(transport, transport.kind !== 'unavailable').reading
   const register = seats.status === 'answered' ? seats.value : null
@@ -117,8 +121,9 @@ export const useFactoryTracks: UseModeTracks = reading => {
  * ended on AIKit (agent/sessionSettings.ts makeTakes), over the run AIKit hands with the session's settings — the session's own task
  * and its agent as an agent-jsonl body (`task.take_run`, takeRunOf). Where AIKit hands its refusal, or an AIKit before the take body
  * hands nothing, the press says so in words and writes nothing. Pure. */
-export function repeatPress(transport: KernelTransportStatus, settingsOf: (session: string) => EncounterSessionSettingsReading | null | undefined) {
-  return (session: string) => makeTakes(transport, SETTINGS_PROJECT, session, takeRunOf(settingsOf(session)?.task))
+export function repeatPress(transport: KernelTransportStatus, settingsOf: (session: string) => EncounterSessionSettingsReading | null | undefined,
+  projectOf: (session: string) => string) {
+  return (session: string) => makeTakes(transport, projectOf(session), session, takeRunOf(settingsOf(session)?.task))
 }
 
 /** Factory's set as the pane draws it: the register's workcells as return tracks and each session's Works in (withWorkcells), and its
@@ -126,11 +131,23 @@ export function repeatPress(transport: KernelTransportStatus, settingsOf: (sessi
  * taskMaker). Pure. */
 export function factoryTrackSet(set: WorldTrackSet, register: unknown, refused: string | null, transport: KernelTransportStatus,
   tracks: readonly AgentSessionTrack[]): WorldTrackSet {
-  return withClipMaker(withWorkcells(set, register, refused), taskMaker(transport, tracks))
+  return withClipMaker(withWorkcells(set, register, refused, trackProjects(tracks)), taskMaker(transport, tracks))
 }
 
-/** Factory's set with the register's workcells as its return tracks and each session's Works in (§19.23): every session works in the
- * shell's project (SETTINGS_PROJECT), in the one workcell holding its seat, else unread with the reason. Pure. */
-export function withWorkcells(set: WorldTrackSet, register: unknown, refused: string | null = null): WorldTrackSet {
-  return withReturns(withWorksIn(set, register, () => SETTINGS_PROJECT, refused), workcellReturns(register))
+/** Each drawn track's project: the register its session was read under (agent/worldScope.ts); your world's root register, and a track
+ * no session stands behind, name none. Pure. */
+export function trackProjects(tracks: readonly AgentSessionTrack[]): (track: WorldTrack) => string | null {
+  return track => {
+    const session = tracks.find(item => trackKey(item) === track.id)
+    const project = session?.project ?? ROOT_REGISTER
+    return project === ROOT_REGISTER ? null : project
+  }
+}
+
+/** Factory's set with the register's workcells as its return tracks and each session's Works in (§19.23): a session works in its own
+ * project's workcell ("The project's workcell by default"), the one holding that project's seat, else unread with the reason; a
+ * session of your world's root register names none. Pure. */
+export function withWorkcells(set: WorldTrackSet, register: unknown, refused: string | null = null,
+  projectOf: (track: WorldTrack) => string | null = () => null): WorldTrackSet {
+  return withReturns(withWorksIn(set, register, projectOf, refused), workcellReturns(register))
 }

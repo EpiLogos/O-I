@@ -10,6 +10,7 @@ import {attemptReceivingWords, receiveAttempt} from '../../../../../desktop/crad
 import {runKey, runsOf, servedBySession, takesBySession, type FactoryTake} from '../agent/factoryTakes'
 import {onOwnerChanged, tellOwnerChanged} from './notices'
 import {useSpineEpoch} from './spine'
+import {projectFor, type SessionProjects} from './readers'
 
 /** The kernel op as the reads call it: its outcome, or its refusal in words. */
 export type TakesCall = (op: Record<string, unknown>) => Promise<{error?: string; outcome?: {result: string; data?: unknown}}>
@@ -18,12 +19,22 @@ const carried = (transport: KernelTransportStatus): TakesCall => op =>
   kernelOp(transport, op as Parameters<typeof kernelOp>[1]) as unknown as ReturnType<TakesCall>
 
 /** Every session's takes, as the owners state them. A session AIKit refused, or whose bound task serves none, has no entry; a Run
- * Factory did not read leaves its attempts out (a take is only drawn from what its owner says). Null when AIKit did not answer. */
-export async function readAttemptTakes(call: TakesCall, project: string, sessionRefs: readonly string[]): Promise<Map<string, FactoryTake[]> | null> {
+ * Factory did not read leaves its attempts out (a take is only drawn from what its owner says). Each session is asked in its own
+ * register (`projects`: one for all, or each session's, owners/readers.ts SessionProjects), one list per register. Null when AIKit
+ * answered no register. */
+export async function readAttemptTakes(call: TakesCall, projects: SessionProjects, sessionRefs: readonly string[]): Promise<Map<string, FactoryTake[]> | null> {
   if (!sessionRefs.length) return new Map()
-  const listed = await call({op: 'encounter_task_attempts_list', project, agent_sessions: [...sessionRefs]})
-  if (listed.error || listed.outcome?.result !== 'encounter_task_attempts_list_reading') return null
-  const served = servedBySession(listed.outcome.data as Parameters<typeof servedBySession>[0])
+  const byProject = new Map<string, string[]>()
+  for (const ref of sessionRefs) { const project = projectFor(projects, ref); byProject.set(project, [...(byProject.get(project) ?? []), ref]) }
+  const served: ReturnType<typeof servedBySession> = new Map()
+  let answered = false
+  for (const [project, refs] of byProject) {
+    const listed = await call({op: 'encounter_task_attempts_list', project, agent_sessions: refs})
+    if (listed.error || listed.outcome?.result !== 'encounter_task_attempts_list_reading') continue
+    answered = true
+    for (const [session, attempts] of servedBySession(listed.outcome.data as Parameters<typeof servedBySession>[0])) served.set(session, attempts)
+  }
+  if (!answered) return null
   const runs = new Map<string, unknown>()
   for (const run of runsOf(served)) {
     const read = await call({op: 'factory_attempt_read', state_path: run.statePath, run_ref: run.runRef})
@@ -46,23 +57,26 @@ export async function chooseAttempt(transport: KernelTransportStatus, take: Fact
 }
 
 /** The takes of the given sessions, read again as above, with the person's choice (which reads again once the owner answered). */
-export function useAttemptTakes(transport: KernelTransportStatus, sessionRefs: readonly string[], project: string): {
+export function useAttemptTakes(transport: KernelTransportStatus, sessionRefs: readonly string[], projects: SessionProjects): {
   of(sessionRef: string): readonly FactoryTake[] | null
   choose(take: FactoryTake): Promise<unknown>
 } | undefined {
   const epoch = useSpineEpoch()
   const [again, readAgain] = useReducer((n: number) => n + 1, 0)
   const [takes, setTakes] = useState<ReadonlyMap<string, readonly FactoryTake[]> | null>(null)
-  const wanted = sessionRefs.join('\n')
+  // Each session with its register: a session placed in another register is read again there.
+  const wanted = sessionRefs.map(ref => `${projectFor(projects, ref)}\u0000${ref}`).join('\n')
   const transportKey = JSON.stringify(transport)
   useEffect(() => onOwnerChanged('temporal', () => readAgain()), [])
   useEffect(() => {
     if (transport.kind === 'unavailable') { setTakes(null); return }
     let live = true
-    void readAttemptTakes(carried(transport), project, wanted ? wanted.split('\n') : []).then(next => { if (live && next) setTakes(next) })
+    const pairs = wanted ? wanted.split('\n').map(pair => pair.split('\u0000') as [string, string]) : []
+    const placed = new Map(pairs.map(([project, ref]) => [ref, project]))
+    void readAttemptTakes(carried(transport), ref => placed.get(ref) ?? '', pairs.map(([, ref]) => ref)).then(next => { if (live && next) setTakes(next) })
     return () => { live = false }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [transportKey, project, wanted, epoch, again])
+  }, [transportKey, wanted, epoch, again])
   const of = useCallback((sessionRef: string) => takes?.get(sessionRef) ?? null, [takes])
   const choose = useCallback(async (take: FactoryTake) => {
     const answer = await chooseAttempt(transport, take)

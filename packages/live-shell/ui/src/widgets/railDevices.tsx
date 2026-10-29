@@ -20,7 +20,9 @@ import {parseWiki, type WikiNode} from '../../../../../desktop/cradle/src/techne
 import type {TapeRow} from '../../../../../desktop/cradle/src/agent/tape/model'
 import {useAgencySessions} from '../agent/useAgencySessions'
 import {COMPANIONS} from '../shell/modeDockTiles'
-import {CONVERSATION_PROJECT, conversationOf} from './agentConversation'
+import {conversationOf} from './agentConversation'
+import {useAgentSessionsOptional} from '../agent/AgentSessionsProvider'
+import {gitRepositoryAbsence, projectOfSession, ROOT_REGISTER} from '../agent/worldScope'
 import {useOptionalContinuity} from '../continuity/workspace'
 import {publishDevice, publishedDevice, subscribeDeviceDoor} from '../frame/devices/deviceDoor'
 import {GIT_ID} from '../agent/devices/workcellBindings'
@@ -103,9 +105,6 @@ function useTrailBinding(): DesignBinding {
 
 // ---------------------------------------------------------------------------------------------------------------- the Diff
 
-/** The shell's project: the repository the Diff reads when no seat and no project world is selected (the rail's old Diff tile read the
- * same, agent/AgentDockTileBody.tsx:114). */
-const DIFF_PROJECT = 'O-I'
 /** The world's Docs on the door (central/devices/CentralDevices.tsx DOCS_DEVICE_ID; pageBindings.ts docsValues): its `subject` is the selected
  * world's project, or `central` for your world. The Workspace, whose `folder` it read before, was retired into the track's head and Docs in
  * the 22 Oct manual rewrite (§18.1). Named here, not imported, so the rail's boot does not load Central's bindings. */
@@ -114,12 +113,15 @@ export const DIFF_WORLD_ID = 'central:docs'
 const ROOT_FOLDER = 'central'
 
 /** The repository the Diff reads when no seat is selected: the project world Docs stands on (the selected world's track), else the book's
- * workspace's project, else the shell's project. Your world (`central`) has no repository of its own, so it reads the shell's. Pure. */
-export function diffProjectOf(workspaceFolder: Value | undefined, bookProject: string | undefined): {project: string; from: 'world' | 'workspace' | 'shell'} {
+ * workspace's project, else the selected session's project (agent/worldScope.ts: the register its agency read listed it in). Your world
+ * (`central`, the root register '') has no repository of its own; with none of these, `project` is null and `words` say why. Pure. */
+export function diffProjectOf(workspaceFolder: Value | undefined, bookProject: string | undefined, session: {ref: string | null; project: string} = {ref: null, project: ROOT_REGISTER}):
+  {project: string; from: 'world' | 'workspace' | 'session'} | {project: null; from: 'none'; words: string} {
   const named = (word: unknown): word is string => typeof word === 'string' && word.trim() !== '' && word !== ROOT_FOLDER
   if (named(workspaceFolder)) return {project: workspaceFolder, from: 'world'}
   if (named(bookProject)) return {project: bookProject, from: 'workspace'}
-  return {project: DIFF_PROJECT, from: 'shell'}
+  const absent = gitRepositoryAbsence(session.ref, session.project)
+  return absent ? {project: null, from: 'none', words: absent} : {project: session.project, from: 'session'}
 }
 type DiffReading = {status: 'reading'} | {status: 'refused'; words: string} | {status: 'read'; root: string; files: Record<string, Value>[]; head: string | null; branch: string | null; omitted: number}
 
@@ -153,12 +155,15 @@ function useDiffReading(transport: KernelTransportStatus | undefined): DiffReadi
   // With no seat chosen: the project world Docs stands on, else the book's workspace's project, else the shell's.
   const folder = useSyncExternalStore(subscribeDeviceDoor, () => publishedDevice(DIFF_WORLD_ID)?.binding?.values.subject, () => undefined)
   const bookProject = useOptionalContinuity()?.current.project
-  const project = diffProjectOf(folder, bookProject).project
+  const sessions = useAgentSessionsOptional()
+  const sessionRef = sessions?.selectedSessionRef ?? null
+  const where = diffProjectOf(folder, bookProject, {ref: sessionRef, project: projectOfSession(sessions?.rows ?? [], sessionRef)})
+  const project = where.project
   const seats = useSeatStatusAnswer(transport ?? {kind: 'unavailable', reason: 'No kernel carrier stands.'}, chosen && !!transport && transport.kind !== 'unavailable').reading
   const seat = chosen && seats.status === 'answered' ? selectedSeatOf(seatValues, seats.value) : null
   // Two held reads, each shared with every other view that asks the same (the agent dock's Diff, the chain's Git): the repository —
   // only with no seat selected — then the working diff of the seat's checkout, or of the repository once it has named its root.
-  const repo = useOwnerOp(transport, chosen ? null : {op: 'git_repository_read', project}, 'git_repository_reading', 'The repository owner did not answer.').reading
+  const repo = useOwnerOp(transport, chosen || project === null ? null : {op: 'git_repository_read', project}, 'git_repository_reading', 'The repository owner did not answer.').reading
   const doc = !chosen && repo.status === 'answered' ? repo.value?.document as {repo_root?: unknown; branch?: unknown; head?: unknown} | undefined : undefined
   const root = seat ? seat.root : typeof doc?.repo_root === 'string' ? doc.repo_root : null
   const patch = useOwnerOp(transport, root ? {op: 'git_diff_read', request: {repo_root: root, from: 'HEAD', to: 'working-tree', max_bytes: 65536, max_files: 200}} : null,
@@ -170,6 +175,7 @@ function useDiffReading(transport: KernelTransportStatus | undefined): DiffReadi
       if (seats.status !== 'answered') return {status: 'reading'}
       if (!seat) return {status: 'refused', words: `The seat instrument holds no ${String(seatValues?.product)} seat in ${String(seatValues?.seat)}.`}
     } else {
+      if (where.project === null) return {status: 'refused', words: where.words}
       if (repo.status === 'refused') return {status: 'refused', words: repo.error ?? 'The repository owner did not answer.'}
       if (repo.status !== 'answered') return {status: 'reading'}
       if (!root) return {status: 'refused', words: 'Central did not disclose the repository root.'}
@@ -180,7 +186,8 @@ function useDiffReading(transport: KernelTransportStatus | undefined): DiffReadi
     if (!read) return {status: 'refused', words: 'Central returned an unsupported Git diff.'}
     const branch = seat ? seat.branch : typeof doc?.branch === 'string' ? doc.branch : null
     return {status: 'read', root: root!, files: read.files, head: read.head ?? seat?.head ?? null, branch, omitted: read.omitted}
-  }, [transport, chosen, seats, seat, seatValues, repo, patch, root, doc])
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- `where` is named by its project and words
+  }, [transport, chosen, seats, seat, seatValues, repo, patch, root, doc, where.project, where.from === 'none' ? where.words : null])
 }
 
 /** The Diff page's binding (Files' Diff page, §23.4; widgets__files.tsx `diff.` keys): the working diff as read, and the page's own holds.
@@ -209,7 +216,8 @@ function useFollowedTape(): {rows: readonly TapeRow[]; agent: string | null; wor
   const agency = useAgencySessions(reading?.transport ?? {kind: 'unavailable', reason: 'No kernel carrier stands.'})
   const companion = reading ? COMPANIONS[reading.mode].name : 'Agent'
   const {track} = conversationOf(agency.tracks, companion, continuity?.current.context?.selection?.ref ?? null)
-  const {tape, reading: journal} = useTape(track ? {project: CONVERSATION_PROJECT, ref: track.sessionRef} : undefined, agency.tracks)
+  // The tape is read in the followed session's own register (agent/worldScope.ts).
+  const {tape, reading: journal} = useTape(track ? {project: track.project ?? ROOT_REGISTER, ref: track.sessionRef} : undefined, agency.tracks)
   const agent = track ? `${track.agentName ?? companion}${track.purpose ? ` · ${track.purpose}` : ''}` : null
   const words = track ? journal?.error ?? null : `No ${companion} session stands to follow.`
   // The same object while the rows, the agent and the words stand, so the two bindings change only when the tape does.

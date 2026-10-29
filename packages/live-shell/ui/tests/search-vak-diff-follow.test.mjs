@@ -110,12 +110,16 @@ test('the Search device asks QL through the kernel\'s ql_read routes, a locate a
   assert.match(routes, /QlCheck::Contract\("ql\.vak-context\/v1"\)/)
 })
 
-test('the Diff follows the selected seat, else the selected project world\'s repository, else the workspace\'s project, else the shell\'s', async () => {
+test('the Diff follows the selected seat, else the selected project world\'s repository, else the workspace\'s project, else the selected session\'s, else says why', async () => {
   const rail = await import('../src/widgets/railDevices.tsx')
+  const scope = await import('../src/agent/worldScope.ts')
   assert.deepEqual(rail.diffProjectOf('Archetypal-Earth', 'O-I'), {project: 'Archetypal-Earth', from: 'world'}, 'the world a head opened the Workspace on')
   assert.deepEqual(rail.diffProjectOf('central', 'Factory'), {project: 'Factory', from: 'workspace'}, 'your world has no repository of its own: the book\'s project')
-  assert.deepEqual(rail.diffProjectOf(undefined, undefined), {project: 'O-I', from: 'shell'})
-  assert.deepEqual(rail.diffProjectOf('central', 'central'), {project: 'O-I', from: 'shell'})
+  // REPLACED (O-I #740 lane B): with neither, the shell's literal project 'O-I'; now the selected session's project (the register its agency
+  // read listed it in), and with no session, or a root-register session, the words why — never a named project.
+  assert.deepEqual(rail.diffProjectOf(undefined, undefined, {ref: 'ses-1', project: 'first-project'}), {project: 'first-project', from: 'session'})
+  assert.deepEqual(rail.diffProjectOf(undefined, undefined), {project: null, from: 'none', words: scope.NO_SESSION})
+  assert.deepEqual(rail.diffProjectOf('central', 'central', {ref: 'ses-1', project: ''}), {project: null, from: 'none', words: scope.ROOT_KEEPS_NO_REPOSITORY})
   // REPLACED (#725): the selected world's project was the Workspace's `folder` — the Workspace was retired into the track's head and Docs
   // (§18.1, §18.5), so the Diff reads the world Docs stands on: Docs' `subject` (pageBindings.ts docsValues, `world.project ?? 'central'`).
   const {centralDeviceId} = await import('../src/central/devices/centralDeviceModel.ts')

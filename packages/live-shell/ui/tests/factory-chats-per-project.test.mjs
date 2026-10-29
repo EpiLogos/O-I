@@ -485,7 +485,8 @@ test('a double-click opens the chat\'s thread where the shell has the session; e
   const refused = model.threadOpening(acp, tracks, true)
   assert.equal(refused.kind, 'refused')
   assert.match(refused.words, /Factory/)
-  assert.match(refused.words, /O-I/, 'the thread reads the agency of the one project the shell mounts')
+  // REPLACED (O-I #740 lane B): the words named the one project the shell mounted (O-I); the shell mounts the world's sessions now, every register's.
+  assert.match(refused.words, /your world \(its root register and each project Central discloses\)/, 'the thread reads the world\'s agency')
   assert.equal(model.threadOpening(oi, null, true).kind, 'refused', 'no sessions provider, no thread')
 })
 

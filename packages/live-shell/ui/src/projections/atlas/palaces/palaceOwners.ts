@@ -38,6 +38,7 @@ import {timelineReading} from '../../timelinePaneHost'
 import {openWorldSubject, presentStage} from '../../../techne/subject/openSubject'
 import type {PresenceStorage} from '../../../../../../../desktop/cradle/src/techne/m0m5/journey/presence'
 import type {PalaceListedExpression, PalaceOwners} from './palaceSession'
+import {NARA_CHANNEL_REGISTER} from '../../../agent/worldScope'
 
 /** The pane payload each deep instrument opens through (frame/instruments.ts): the stage's lenses, the Graph for the Project's ground, the
  * Earth for a place. A lens the shell has no pane for is refused by name. */
@@ -64,7 +65,7 @@ export function livePalaceOwners({transport, storage, said, live}: {transport: K
   // The owner adapter is loaded with its first call, as the Place tool loads the owner's editor (places/placesHost.ts): it carries the
   // hosted frame's whole owner family (the Nara facade, the Flow documents), which the atlas needs only once a palace is entered.
   let adapter: Promise<ExpressionsOwners> | null = null
-  const owners = () => adapter ??= import('@epilogos/expressions-boundary/cradle').then(module => module.createCradleOwners(transport, {project: 'O-I', personal: false, isCurrent: live}))
+  const owners = () => adapter ??= import('@epilogos/expressions-boundary/cradle').then(module => module.createCradleOwners(transport, {project: NARA_CHANNEL_REGISTER, personal: false, isCurrent: live}))
   const channel = async (name: string) => {
     const loaded = await owners()
     const owner = loaded.channels[name]

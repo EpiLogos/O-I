@@ -1,5 +1,4 @@
 import {createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState, type ReactNode} from 'react'
-import type {AgencySessionRow} from '../../../../../desktop/cradle/src/agency/agencyTypes'
 import type {KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
 import {useWorkspace} from '../shell/workspaceContext'
 import {
@@ -13,17 +12,16 @@ import {
 } from './agentRunModel'
 import {budgetFromReading} from './useAgentMetrics'
 import {useTemporalEvents} from './useTemporalEvents'
-import {agencyEntry, agencyFingerprint, createAgencyDriver, useAgencyAnswer} from '../owners/agency'
-import {taskReadingEntry, useRosterAgents, useTaskEntries} from '../owners/readers'
+import {agencyFingerprint, createAgencyDriver, type AgencyDriver} from '../owners/agency'
+import {taskReadingEntry, useWorldRosterAgents, useTaskEntries} from '../owners/readers'
 import {tellOwnerChanged} from '../owners/notices'
-import {useSpineEpoch} from '../owners/spine'
-
-const PROJECT = 'O-I'
+import {projectOfSession, useWorldAgencyEntries, type WorldSessionRow} from './worldScope'
 
 export interface AgentSessionsValue {
   transport: KernelTransportStatus
   tracks: AgentSessionTrack[]
-  rows: AgencySessionRow[]
+  /** Every session of the world: the root register's and each project's, each with the register it was read under (`project`). */
+  rows: WorldSessionRow[]
   roster: Map<string, RosterEntry>
   /** Additive beyond the fixed contract: the arrangement readout renders the
    * latest event per thread, and this is the one reading it may use. */
@@ -41,6 +39,9 @@ export interface AgentSessionsValue {
   selectSession: (ref: string) => void
   /** Additive: the reading instant the tracks were built at — when the agency answer was read, never a later clock. */
   nowUnixMs: number
+  /** Additive: the registers read (the root register '' first, then each project Central discloses) and each one's refusal. */
+  scopes: readonly string[]
+  refusals: readonly {project: string; error: string}[]
 }
 
 const Ctx = createContext<AgentSessionsValue | null>(null)
@@ -75,68 +76,73 @@ export function AgentSessionsProvider({children}: {children: ReactNode}) {
 
 function AgentSessionsSource({children}: {children: ReactNode}) {
   const {transport, receipts} = useWorkspace()
-  const epoch = useSpineEpoch()
-  const agency = useAgencyAnswer(transport, PROJECT)
+  // The world's agency: the root register and every project Central discloses (worldScope.ts), never one named project.
+  const {scopes, entries, agency, epoch} = useWorldAgencyEntries(transport)
   const [selectedSessionRef, setSelectedSessionRef] = useState<string | null>(null)
   const selected = useRef(selectedSessionRef)
   selected.current = selectedSessionRef
+  const placed = useRef<readonly WorldSessionRow[]>([])
+  placed.current = agency.rows
   const {events, error: temporalError, refresh: refreshTemporal} = useTemporalEvents(transport)
 
-  // The one agency driver for the window, under this epoch: a new epoch or transport is a new driver.
-  const driver = useRef<ReturnType<typeof createAgencyDriver> | null>(null)
+  // One agency driver per register for the window, under this epoch: a new epoch, transport or register set is a new set of drivers.
+  const drivers = useRef<AgencyDriver[]>([])
   useEffect(() => {
-    if (transport.kind === 'unavailable') return
-    const entry = agencyEntry(transport, PROJECT)
-    let fingerprint: string | null = null
-    const created = createAgencyDriver(entry, {
-      epoch,
-      onRead: (reading, cause) => {
-        if (reading.status !== 'answered') return
-        // The selected session's task record is re-read with every agency read, as the agency cadence always carried it.
-        const wanted = selected.current ? taskReadingEntry(transport, PROJECT, selected.current) : null
-        if (wanted && wanted.readers > 0) void wanted.refresh(epoch)
-        // The sessions moved (one started, one ended): the run streams the temporal field reads moved with them.
-        const next = agencyFingerprint(reading.value)
-        if (fingerprint !== null && next !== fingerprint) tellOwnerChanged({topic: 'temporal', cause: `the agency reading moved (${cause})`})
-        fingerprint = next
-      },
+    if (transport.kind === 'unavailable' || !entries.length) return
+    const created = entries.map(([project, entry]) => {
+      let fingerprint: string | null = null
+      return createAgencyDriver(entry, {
+        epoch,
+        onRead: (reading, cause) => {
+          if (reading.status !== 'answered') return
+          // The selected session's task record is re-read with its register's agency read, as the agency cadence always carried it.
+          const session = selected.current
+          const wanted = session && projectOfSession(placed.current, session) === project ? taskReadingEntry(transport, project, session) : null
+          if (wanted && wanted.readers > 0) void wanted.refresh(epoch)
+          // The sessions moved (one started, one ended): the run streams the temporal field reads moved with them.
+          const next = agencyFingerprint(reading.value)
+          if (fingerprint !== null && next !== fingerprint) tellOwnerChanged({topic: 'temporal', cause: `the agency reading moved (${cause})`})
+          fingerprint = next
+        },
+      })
     })
-    driver.current = created
-    return () => { created.stop(); if (driver.current === created) driver.current = null }
-  }, [transport, epoch])
-  useEffect(() => { driver.current?.observe(receipts) }, [receipts])
+    drivers.current = created
+    return () => { for (const driver of created) driver.stop(); if (drivers.current === created) drivers.current = [] }
+  }, [transport, entries, epoch])
+  useEffect(() => { for (const driver of drivers.current) driver.observe(receipts) }, [receipts])
 
   const selectSession = useCallback((ref: string) => setSelectedSessionRef(ref), [])
 
-  const reading = agency.reading
-  const rows = useMemo<AgencySessionRow[]>(() => reading.status === 'answered' && reading.value ? reading.value.rows : [], [reading])
-  const error = transport.kind === 'unavailable' ? transport.reason ?? 'Native transport unavailable' : reading.status === 'refused' ? reading.error : null
-  const loading = transport.kind !== 'unavailable' && reading.status === 'reading'
+  const rows = agency.rows
+  const error = transport.kind === 'unavailable' ? transport.reason ?? 'Native transport unavailable' : agency.error
+  const loading = transport.kind !== 'unavailable' && agency.loading
   // The instant the tracks are built at is the instant the agency answer was read: a needle never runs past its reading.
   const [mountedAt] = useState(() => Date.now())
-  const nowUnixMs = reading.readAtUnixMs ?? mountedAt
+  const nowUnixMs = agency.readAtUnixMs ?? mountedAt
 
-  // The roster: the root register and O-I's own, shared with every other roster reader.
-  const rosterReading = useRosterAgents(transport, PROJECT)
+  // The roster: the root register's and each of the world's projects', shared with every other roster reader.
+  const projects = useMemo(() => (scopes ?? []).filter(scope => scope !== ''), [scopes])
+  const rosterReading = useWorldRosterAgents(transport, projects, scopes !== null)
   const roster = useMemo(() => new Map<string, RosterEntry>(rosterReading.agents.map(agent => [agent.ref, {name: agent.name, accepted: agent.accepted}])), [rosterReading.agents])
   const rosterError = transport.kind === 'unavailable' ? null : rosterReading.state === 'error' ? rosterReading.error ?? 'The agent roster did not answer' : null
 
-  // Every session's task record, each the shared answer: read once when its session appears (sequentially, so the bridge
-  // never sees a pile), then again when a notice reaches it. Without these the grid's clip slots would read empty for every
-  // track but the selected one.
+  // Every session's task record, each the shared answer read in the session's own register: read once when its session appears
+  // (sequentially, so the bridge never sees a pile), then again when a notice reaches it. Without these the grid's clip slots would
+  // read empty for every track but the selected one.
   const sessionRefs = useMemo(() => rows.map(row => row.sessionRef), [rows])
+  const projectOf = useCallback((ref: string) => projectOfSession(placed.current, ref), [])
   const [taskRevision, bumpTasks] = useReducer((value: number) => value + 1, 0)
-  useTaskEntries(transport, PROJECT, sessionRefs, epoch, bumpTasks)
+  useTaskEntries(transport, projectOf, sessionRefs, epoch, bumpTasks)
   const readings = useMemo(() => {
     const held: Record<string, unknown> = {}
     if (transport.kind === 'unavailable') return held
-    for (const ref of sessionRefs) {
-      const standing = taskReadingEntry(transport, PROJECT, ref).snapshot()
-      if (standing.status === 'answered' && standing.epoch === epoch) held[ref] = standing.value
+    for (const row of rows) {
+      const standing = taskReadingEntry(transport, row.project, row.sessionRef).snapshot()
+      if (standing.status === 'answered' && standing.epoch === epoch) held[row.sessionRef] = standing.value
     }
     return held
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [transport, sessionRefs, epoch, taskRevision])
+  }, [transport, rows, epoch, taskRevision])
 
   const axis = useMemo(() => sharedAxis(events, nowUnixMs), [events, nowUnixMs])
 
@@ -158,14 +164,14 @@ function AgentSessionsSource({children}: {children: ReactNode}) {
     if (first) setSelectedSessionRef(first.sessionRef)
   }, [tracks, selectedSessionRef])
 
-  // The person's Retry: ask again whatever stands, a remembered refusal included.
-  const retryAgency = agency.retry, retryRoster = rosterReading.retry
+  // The person's Retry: ask again whatever stands, a remembered refusal included — every register's agency.
+  const retryRoster = rosterReading.retry
   const refresh = useCallback(() => {
-    retryAgency()
+    for (const [, entry] of entries) void entry.retry(epoch)
     retryRoster()
-    if (selected.current && transport.kind !== 'unavailable') void taskReadingEntry(transport, PROJECT, selected.current).retry(epoch)
+    if (selected.current && transport.kind !== 'unavailable') void taskReadingEntry(transport, projectOfSession(placed.current, selected.current), selected.current).retry(epoch)
     void refreshTemporal()
-  }, [retryAgency, retryRoster, transport, epoch, refreshTemporal])
+  }, [entries, retryRoster, transport, epoch, refreshTemporal])
 
   const value = useMemo<AgentSessionsValue>(() => ({
     transport,
@@ -183,7 +189,9 @@ function AgentSessionsSource({children}: {children: ReactNode}) {
     selectedSessionRef,
     selectSession,
     nowUnixMs,
-  }), [transport, tracks, rows, roster, events, error, rosterError, temporalError, loading, refresh, selectedSessionRef, selectSession, nowUnixMs])
+    scopes: scopes ?? [],
+    refusals: agency.refusals,
+  }), [transport, tracks, rows, roster, events, error, rosterError, temporalError, loading, refresh, selectedSessionRef, selectSession, nowUnixMs, scopes, agency.refusals])
 
   // A named owner refusal is disclosed where its reading is used — Factory's centre and browser, the agent widget — each as
   // the named disclosure card. This provider stands above the whole window (main.tsx), so a card drawn here pushed the

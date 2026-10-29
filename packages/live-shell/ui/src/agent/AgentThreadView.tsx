@@ -4,6 +4,7 @@ import {useWorkspace} from '../shell/workspaceContext'
 import type {AgentSessionTrack} from './agentRunModel'
 import {threadTrackOf} from './threadTrack'
 import {useAgentShell} from './AgentShellContext'
+import {ROOT_REGISTER} from './worldScope'
 import './agentShell.css'
 
 export {threadTrackOf}
@@ -14,13 +15,15 @@ export function AgentThreadView({tracks}: {tracks: AgentSessionTrack[]}) {
   const shell = useAgentShell()
   const workspace = useWorkspace()
   const track = threadTrackOf(tracks, shell.selectedTrackId, shell.threadTrackId)
+  // The thread is read in the session's own register (agent/worldScope.ts): the one its world-wide agency read listed it in.
   const scope = useMemo(() => {
     if (!track) return null
+    const project = track.project ?? ROOT_REGISTER
     return {
       workspaceId: workspace.workspaceId,
       accessEpoch: workspace.accessEpoch,
-      project: 'O-I',
-      accompanying: {ref: track.sessionRef, project: 'O-I', space: track.spaceRef},
+      project,
+      accompanying: {ref: track.sessionRef, project, space: track.spaceRef},
     }
   }, [track, workspace.workspaceId, workspace.accessEpoch])
 

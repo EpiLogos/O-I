@@ -13,12 +13,14 @@ import type {WorkcellAnswer} from './workcellBindings'
 
 export const POPULATION_OP = 'inhabitation_read'
 
-/** The project's population as the Link reads it: the owner's document, or its refusal in its own words with the command named. */
-export function usePopulationAnswer(transport: KernelTransportStatus, project: string): WorkcellAnswer {
+/** A register's population as the Link reads it: the owner's document, or its refusal in its own words with the command named. `project`
+ * is a register (agent/worldScope.ts): your world's root register ('' or null) reads the whole population, named by no project world. */
+export function usePopulationAnswer(transport: KernelTransportStatus, project: string | null): WorkcellAnswer {
   const epoch = useSpineEpoch()
   const carried = transport.kind !== 'unavailable'
-  const {reading} = useOwnerReading(carried ? JSON.stringify([POPULATION_OP, transport, 'population', project]) : null, async () => {
-    const read = await readPopulation(transport, project)
+  const world = project || undefined
+  const {reading} = useOwnerReading(carried ? JSON.stringify([POPULATION_OP, transport, 'population', world ?? null]) : null, async () => {
+    const read = await readPopulation(transport, world)
     return read.state === 'read' ? {value: read.data as unknown} : {error: `${read.source}: ${read.reason}`}
   }, epoch)
   const reason = transport.kind === 'unavailable' ? transport.reason : null

@@ -275,7 +275,9 @@ test('7 · Prompt pads: pads-write carries the slot, the bank revision read and 
   assert.deepEqual(kernel.ops, [{op: 'factory_owner', request: {kind: 'pads-write', state_path: where.statePath, project_ref: where.projectRef, index: 3, expected_revision: 'absent', pad: null}}])
   const view = read('agent/devices/FactoryDeviceChain.tsx')
   assert.match(view, /\{write: request => factoryOwnerWrite\(transport, \{kind: 'pads-write', \.\.\.request\}, '`factory development pads-write`'\)\}/)
-  assert.match(view, /const PADS_LOCATE: KernelOp = Object\.freeze\(\{op: 'factory_owner' as const, request: \{kind: 'locate', project: RACK_PROJECT\}\}\)/)
+  // REPLACED (O-I #740 lane B): PADS_LOCATE of RACK_PROJECT ('O-I'); the chain's register located, no project naming the root (factory.rs locate).
+  assert.match(view, /const padsLocateOp = \(register: string \| null\): KernelOp => \(\{op: 'factory_owner' as const, request: register === null \? \{kind: 'locate'\} : \{kind: 'locate', project: register\}\}\)/)
+  assert.match(view, /const padsLocate = useMemo\(\(\) => padsLocateOp\(register\), \[register\]\)/)
   assert.doesNotMatch(view, /pads-run|pads-record/, 'no begin or end is recorded for a run that never started')
   bind.resetHolds()
 })

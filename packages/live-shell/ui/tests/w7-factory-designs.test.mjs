@@ -115,7 +115,8 @@ test('1 · Messages\' groups are Central\'s agent sets (REAL), each member at th
   assert.equal(refused.standing.groups.disabled, 'central.agent-set.list requires scope.', 'the refusal in Central\'s words')
   const rail = read('agent/devices/AgentRailDevices.tsx')
   assert.match(rail, /useCentralAction\(transport, AGENT_SET_LIST, ROOT_SETS\)/)
-  assert.match(rail, /const PROJECT_SETS = \{scope: 'project', project: RACK_PROJECT\} as const/)
+  // REPLACED (O-I #740 lane B): the project sets of RACK_PROJECT ('O-I'); the selected session's register's, and none for the root's.
+  assert.match(rail, /const projectSetsInput = useMemo\(\(\) => \(railRegister === null \? null : \{scope: 'project', project: railRegister\}\), \[railRegister\]\)/)
   const drawn = hosted(messagesDesign, binding).map(([, markup]) => markup).join('\n')
   assert.ok(drawn.includes('epi-logos-domain-team'), 'the real groups are drawn')
   assert.doesNotMatch(drawn, /Writes, audits and judges the manual/, 'never the design\'s sample group')
@@ -172,7 +173,8 @@ test('2 · Capture skill is the Skillset rack\'s Capture page on the armed track
   assert.match(view, /const captureOn = sessionChain && !groupTrack\n/)
   assert.match(view, /const rackCarrying = useMemo\(\(\) => \(rackDesignBinding \? carryPages\(rackDesignBinding, captureOn \? \[\{page: CAPTURE_PAGE, binding: captureDesignBinding\}\] : \[\]\) : null\)/)
   assert.doesNotMatch(view, /placed\(CAPTURE_SKILL_ID/, 'no Capture plate on any chain')
-  assert.match(view, /promote: \(candidate, id\) => ownerRouteWrite\(transport, aikitWriteOp\(\{kind: 'promote', project: RACK_PROJECT, candidate/)
+  // REPLACED (O-I #740 lane B): RACK_PROJECT ('O-I'); the chain's register — the session's own, the root's null (agent/worldScope.ts).
+  assert.match(view, /promote: \(candidate, id\) => ownerRouteWrite\(transport, aikitWriteOp\(\{kind: 'promote', project: register, candidate/)
 })
 
 // REPLACED (lane W8): the Prompt pads read Factory's bank through factory_owner locate and pads-read and write through pads-write

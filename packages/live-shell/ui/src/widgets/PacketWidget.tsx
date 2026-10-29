@@ -19,7 +19,8 @@ import {COMPANIONS} from '../shell/modeDockTiles'
 import type {WidgetBodyProps, WidgetGlance} from '../frame/widgets/widgets'
 import {useGlance} from '../frame/widgets/useGlance'
 import {useWidgetReading} from './widgetReading'
-import {CONVERSATION_PROJECT, conversationOf} from './agentConversation'
+import {conversationOf} from './agentConversation'
+import {placeWord, ROOT_REGISTER} from '../agent/worldScope'
 
 type Held = {key: string; context?: PreparedContext; error?: string}
 
@@ -55,12 +56,14 @@ export function PacketWidget({subject, glance}: WidgetBodyProps) {
   const agency = useAgencySessions(transport)
   const {track} = conversationOf(agency.tracks, companion, subject)
   const session = track?.sessionRef
-  const key = JSON.stringify([transport.kind, CONVERSATION_PROJECT, session ?? null])
+  // The packet's register (agent/worldScope.ts): the conversation's session's own, else your world's root register.
+  const project = track?.project ?? ROOT_REGISTER
+  const key = JSON.stringify([transport.kind, project, session ?? null])
   const [held, setHeld] = useState<Held | null>(null)
   const [reread, setReread] = useState(0)
   useEffect(() => {
     let alive = true
-    nativeContext(transport, CONVERSATION_PROJECT, session, {operation: 'read'})
+    nativeContext(transport, project, session, {operation: 'read'})
       .then(context => { if (alive) setHeld({key, context}) })
       .catch(error => { if (alive) setHeld({key, error: error instanceof Error ? error.message : String(error)}) })
     return () => { alive = false }
@@ -70,7 +73,7 @@ export function PacketWidget({subject, glance}: WidgetBodyProps) {
     // The owner's own announcement of a changed packet (context/nativeContext.ts announceContext), and the window's return.
     const changed = (event: Event) => {
       const detail = (event as CustomEvent<{project?: string; value?: PreparedContext; sourceWorldRef?: string}>).detail
-      if (!detail?.value || detail.sourceWorldRef || detail.project !== CONVERSATION_PROJECT || detail.value.scope.agent_session !== (session ?? null)) return
+      if (!detail?.value || detail.sourceWorldRef || detail.project !== project || detail.value.scope.agent_session !== (session ?? null)) return
       setHeld({key, context: detail.value})
     }
     const again = () => setReread(count => count + 1)
@@ -80,7 +83,7 @@ export function PacketWidget({subject, glance}: WidgetBodyProps) {
   }, [key, session])
   const current = held?.key === key ? held : null
   const rows = packetRows(current?.context)
-  const encounter = useEncounterSession(track ? {project: CONVERSATION_PROJECT, ref: track.sessionRef, space: track.spaceRef} : undefined)
+  const encounter = useEncounterSession(track ? {project, ref: track.sessionRef, space: track.spaceRef} : undefined)
   const state = encounter?.state
   const refusal = answerRefusal({companion, bound: !!track, reading: state?.reading, draft: state?.draft ?? '', busy: !!state?.busy, items: rows.length})
   useGlance(glance, packetGlance(current?.context))
@@ -124,7 +127,7 @@ export function PacketView({companion, scope, context, error, reading, refusal, 
       {rows.length > 0 && <span className="mode-dock-acts-note" title="AIKit's prepared context discloses no token count; the sizes above are characters.">tokens not disclosed</span>}
     </div>}
     {context && refusal && rows.length > 0 && <p className="mode-dock-note" data-answer-refusal>{refusal}</p>}
-    {scope === null && context && <p className="mode-dock-note">Prepared for {CONVERSATION_PROJECT}; no conversation receives it until {companion} has one.</p>}
+    {scope === null && context && <p className="mode-dock-note">Prepared for {placeWord(ROOT_REGISTER)}; no conversation receives it until {companion} has one.</p>}
     {send?.phase === 'failed' && <p className="mode-dock-note" role="alert">Not sent: {send.error}</p>}
     {send?.phase === 'checking' && <p className="mode-dock-note" role="status">Checking with the owner whether the Send landed…</p>}
   </div>

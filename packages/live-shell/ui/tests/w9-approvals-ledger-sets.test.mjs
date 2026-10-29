@@ -172,7 +172,8 @@ test('3 · the chain reads the Runs the shown session\'s takes name, Factory\'s 
   const view = read('agent/devices/FactoryDeviceChain.tsx')
   assert.match(view, /answerUnit: \(project, review\) => receiving\(transport, project, review\)/)
   assert.match(view, /const unitsRead = useUnitDecisions\(transport, unitRuns\)/)
-  assert.match(view, /useAttemptTakes\(transport, shownTrack \? \[shownTrack\.sessionRef\] : \[\], SETTINGS_PROJECT\)/)
+  // REPLACED (O-I #740 lane B): SETTINGS_PROJECT ('O-I'); the shown session's own register (agent/worldScope.ts).
+  assert.match(view, /useAttemptTakes\(transport, shownTrack \? \[shownTrack\.sessionRef\] : \[\], shownTrack\?\.project \?\? ROOT_REGISTER\)/)
   assert.doesNotMatch(read('agent/devices/unitDecisions.ts'), /attempt-decision-submit/, 'the desk never submits a question: the retained Action is the agent\'s')
 })
 
@@ -195,7 +196,7 @@ test('4 · Changes: a comment on the waiting return in the words written in the 
   const view = read('agent/devices/FactoryDeviceChain.tsx')
   // REPLACED (#725): the comment hand was the binding returned — it is laid under Notifications' readings now (§23.9: what an owner raises
   // waits in Approvals, under Requests; railBindings.ts withOwnerRequests), so the comment-wrapped binding is what that carry receives.
-  assert.match(view, /const commented = withReturnComments\(binding, \{returns: returned, comment: agentDraft\}, \{\n\s*send: \(row, words\) => commentSourceReturn\(transport, RACK_PROJECT, row, words, person\),\n\s*after: \(\) => \{ void agentWrite\?\.\(\[\{key: 'draft', value: ''\}\]\) \},/)
+  assert.match(view, /const commented = withReturnComments\(binding, \{returns: returned, comment: agentDraft\}, \{\n\s*send: \(row, words\) => commentSourceReturn\(transport, register, row, words, person\),\n\s*after: \(\) => \{ void agentWrite\?\.\(\[\{key: 'draft', value: ''\}\]\) \},/)
   assert.match(view, /return withOwnerRequests\(commented, /)
   assert.match(view, /const agentDraft = typeof oneAgent\?\.values\.draft === 'string' \? oneAgent\.values\.draft : null/)
 })

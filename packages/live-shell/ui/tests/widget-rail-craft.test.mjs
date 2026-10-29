@@ -43,7 +43,7 @@ const source = path => readFile(new URL(`../src/${path}`, import.meta.url), 'utf
 const html = element => renderToStaticMarkup(element)
 const {WidgetRail} = await import('../src/frame/widgets/WidgetRail.tsx')
 const {sameGlance} = await import('../src/frame/widgets/widgets.ts')
-const {conversationOf, conversationAbsence, conversationGlance, CONVERSATION_PROJECT} = await import('../src/widgets/agentConversation.ts')
+const {conversationOf, conversationAbsence, conversationGlance, CONVERSATION_PLACE} = await import('../src/widgets/agentConversation.ts')
 const {TrailStops, trailGlance, stopTime} = await import('../src/shell/TrailWidget.tsx')
 const {PacketView, packetRows, packetGlance, answerRefusal} = await import('../src/widgets/PacketWidget.tsx')
 
@@ -97,7 +97,8 @@ test('the agent widget holds the session THE selection names, else the companion
   assert.deepEqual(conversationOf([honey], 'Epii', null), {track: null, by: null})
   assert.equal(conversationAbsence('Epii', {transport: {kind: 'tauri'}, error: null, loading: false}), 'No Epii conversation stands in the agency reading.')
   assert.match(conversationAbsence('Fizz', {transport: {kind: 'unavailable', reason: 'no kernel'}, error: null, loading: false}), /carrier is unavailable.*no kernel/)
-  assert.equal(CONVERSATION_PROJECT, 'O-I')
+  // REPLACED (O-I #740 lane B): CONVERSATION_PROJECT 'O-I'; each conversation stands in its session's own register, the world's.
+  assert.match(CONVERSATION_PLACE, /your world/)
 })
 
 test('the agent widget mounts the one conversation surface, never a second chat (code-reading)', async () => {
@@ -132,7 +133,8 @@ test('the packet shows each prepared selection as its owner holds it, sized in c
   const refused = html(React.createElement(PacketView, {companion: 'Fizz', scope: null, context: context([]), reading: false, refusal: 'No Fizz conversation stands, so nothing receives the packet yet.', onAnswer: noop}))
   assert.match(refused, /data-action="answer-this" disabled=""/)
   assert.match(refused, /The packet is empty/)
-  assert.match(refused, /Prepared for O-I; no conversation receives it until Fizz has one/)
+  // REPLACED (O-I #740 lane B): "Prepared for O-I"; with no conversation the packet stands in your world's root register.
+  assert.match(refused, /Prepared for your world; no conversation receives it until Fizz has one/)
   assert.deepEqual(packetGlance(held)?.count, 2)
 })
 
@@ -147,7 +149,8 @@ test('Answer this is the conversation\'s own Send, and says which owner conditio
   assert.match(answerRefusal({...base, items: 0}), /packet is empty/)
   const widget = await source('widgets/PacketWidget.tsx')
   assert.match(widget, /onAnswer=\{\(\) => void encounter\?\.actions\.send\(\)\}/, 'the press is the shared encounter session\'s Send')
-  assert.match(widget, /nativeContext\(transport, CONVERSATION_PROJECT, session, \{operation: 'read'\}\)/, 'the packet is read from its owner')
+  assert.match(widget, /nativeContext\(transport, project, session, \{operation: 'read'\}\)/, 'the packet is read from its owner')
+  assert.match(widget, /const project = track\?\.project \?\? ROOT_REGISTER/, 'in the conversation\'s session\'s register, else the root (agent/worldScope.ts)')
 })
 
 test('the trail draws the book\'s stops newest first as lines, the stop you stand on marked; a stop with no recorded time draws none (headless SSR)', () => {

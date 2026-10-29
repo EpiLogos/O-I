@@ -23,6 +23,7 @@ import {kernelRead} from '../../../../../desktop/cradle/src/kernel/bridge'
 import {ownerReadings} from '../owners/ownerReading'
 import {readWorkcellOf, workcellReadingKey} from '../owners/readers'
 import {useSpineEpoch} from '../owners/spine'
+import {useWorldProjects} from '../agent/worldScope'
 import type {KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
 import {
   assembleCensus,
@@ -67,10 +68,15 @@ export type HygieneMachineRead = (kind: 'seat-status' | 'worktree-list' | 'branc
 /** Read the ground once: the kernel's workcell and git reads (each refusal carried verbatim), then the host's machine reads where
  * it supplies them; the census and the model's findings. The device's own body and the designed device (central/devices/
  * groundDevices.ts) read through this one reader. */
-export async function readHygieneCensus({transport, epoch, machineRead, seatPaths = [], primaries}: {
+/** What the census's git read says in a world with no project. */
+export const NO_PROJECT_REPOSITORY = 'Your world has no project yet: git_repository_read reads a project\'s repository, and your world\'s root register keeps none.'
+
+export async function readHygieneCensus({transport, epoch, machineRead, seatPaths = [], primaries, projects = []}: {
   readonly transport: KernelTransportStatus
   readonly epoch: string
   readonly machineRead?: HygieneMachineRead
+  /** The world's projects (agent/worldScope.ts): each one's repository is read; a world with none says so. */
+  readonly projects?: readonly string[]
   readonly seatPaths?: readonly string[]
   readonly primaries?: Readonly<Record<string, string>>
 }): Promise<{census: HygieneCensus; findings: readonly HygieneFinding[]}> {
@@ -100,18 +106,22 @@ export async function readHygieneCensus({transport, epoch, machineRead, seatPath
     machineRef = workcellRefOf(workcell.value)
   }
 
-  // The kernel's git read — refused verbatim when the owner refuses.
-  const gitAt = new Date().toISOString()
-  const git = await kernelRead(transport, {op: 'git_repository_read', project: 'O-I'}, {fresh: true})
-  if (git.error || git.outcome?.result !== 'git_repository_reading') {
-    sources.push({
-      boundaryOp: 'op git_repository_read (project O-I)',
-      channel: 'kernel-op',
-      at: gitAt,
-      refusal: git.error ?? 'the git repository reading did not answer',
-    })
-  } else {
-    sources.push({boundaryOp: 'op git_repository_read (project O-I)', channel: 'kernel-op', at: gitAt})
+  // The kernel's git read of each of the world's projects — refused verbatim when the owner refuses; a world with no project has no
+  // repository to read (git_repository_read reads a project's), said so.
+  if (!projects.length) sources.push({boundaryOp: 'op git_repository_read', channel: 'kernel-op', at: new Date().toISOString(), refusal: NO_PROJECT_REPOSITORY})
+  for (const project of projects) {
+    const gitAt = new Date().toISOString()
+    const git = await kernelRead(transport, {op: 'git_repository_read', project}, {fresh: true})
+    if (git.error || git.outcome?.result !== 'git_repository_reading') {
+      sources.push({
+        boundaryOp: `op git_repository_read (project ${project})`,
+        channel: 'kernel-op',
+        at: gitAt,
+        refusal: git.error ?? 'the git repository reading did not answer',
+      })
+    } else {
+      sources.push({boundaryOp: `op git_repository_read (project ${project})`, channel: 'kernel-op', at: gitAt})
+    }
   }
 
   // The machine-level declared reads — the seat instrument and read-only
@@ -149,12 +159,15 @@ export async function readHygieneCensus({transport, epoch, machineRead, seatPath
 export function CentralHygieneDevice({transport, machineRead, seatPaths = [], primaries, expanded = false}: CentralHygieneDeviceProps) {
   const [state, setState] = useState<ReadState>({census: null, findings: [], pending: false, fault: null})
   const epoch = useSpineEpoch()
+  // The world's projects (agent/worldScope.ts), each one's repository read.
+  const world = useWorldProjects(transport)
+  const projectsKey = world.status === 'answered' && world.value ? world.value.join('\n') : ''
 
   const read = useCallback(async () => {
     setState(prev => ({...prev, pending: true, fault: null}))
-    const {census, findings} = await readHygieneCensus({transport, epoch, machineRead, seatPaths, primaries})
+    const {census, findings} = await readHygieneCensus({transport, epoch, machineRead, seatPaths, primaries, projects: projectsKey ? projectsKey.split('\n') : []})
     setState({census, findings, pending: false, fault: null})
-  }, [machineRead, seatPaths, primaries, transport, epoch])
+  }, [machineRead, seatPaths, primaries, transport, epoch, projectsKey])
 
   const strip = state.census
     ? `${state.census.worktrees.length} worktrees · ${state.census.branches.length} branches · ${state.census.seats.length} seats`

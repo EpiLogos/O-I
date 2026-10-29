@@ -12,8 +12,9 @@ import {parseFactoryTaskRef} from '../timeline/factoryTrackAdapter'
 import type {EncounterReading} from '../../../../../desktop/cradle/src/encounter/client'
 import type {WidgetGlance} from '../frame/widgets/widgets'
 
-/** The project the agency reading and the conversations stand in (agent/useAgencySessions.ts, AgentThreadView.tsx). */
-export const CONVERSATION_PROJECT = 'O-I'
+/** Where the agency reading and the conversations stand, in words: the world's own registers (agent/worldScope.ts) — its root register
+ * and each project Central discloses — each conversation in its session's own register (AgentThreadView.tsx). */
+export const CONVERSATION_PLACE = 'your world (its root register and each project Central discloses)'
 
 export interface AgentConversation {
   readonly track: AgentSessionTrack | null

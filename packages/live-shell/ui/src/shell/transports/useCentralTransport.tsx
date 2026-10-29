@@ -19,7 +19,8 @@ import {dieFaceLabel} from '../../central/devices/dayDie'
 import {useCentralGroundAnswer} from '../../central/devices/useCentralReadings'
 import {useOptionalContinuity} from '../../continuity/workspace'
 import {useAgencySessions} from '../../agent/useAgencySessions'
-import {CONVERSATION_PROJECT, conversationOf} from '../../widgets/agentConversation'
+import {conversationOf} from '../../widgets/agentConversation'
+import {ROOT_REGISTER} from '../../agent/worldScope'
 import {COMPANIONS} from '../ModeContextDock'
 import {ShellConfigContext} from '../useSet'
 import {Workspace} from '../workspaceContext'
@@ -48,13 +49,15 @@ export function usePacketReading(transport: KernelTransportStatus, selectionRef:
   const agency = useAgencySessions(transport)
   const {track} = conversationOf(agency.tracks, COMPANIONS.base.name, selectionRef)
   const session = track?.sessionRef
-  const key = JSON.stringify([transport, CONVERSATION_PROJECT, session ?? null])
+  // The packet's register (agent/worldScope.ts): the conversation's session's own, else your world's root register.
+  const project = track?.project ?? ROOT_REGISTER
+  const key = JSON.stringify([transport, project, session ?? null])
   const [held, setHeld] = useState<{key: string; context?: PreparedContext; error?: string} | null>(null)
   const returns = useWindowReturns()
   useEffect(() => {
     if (transport.kind === 'unavailable') return
     let alive = true
-    nativeContext(transport, CONVERSATION_PROJECT, session, {operation: 'read'})
+    nativeContext(transport, project, session, {operation: 'read'})
       .then(context => { if (alive) setHeld({key, context}) }, cause => { if (alive) setHeld({key, error: message(cause)}) })
     return () => { alive = false }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- the key names the scope
@@ -64,7 +67,7 @@ export function usePacketReading(transport: KernelTransportStatus, selectionRef:
     // The owner's own announcement of a changed packet (context/nativeContext.ts announceContext), as the widget listens for it.
     const changed = (event: Event) => {
       const detail = (event as CustomEvent<{project?: string; value?: PreparedContext; sourceWorldRef?: string}>).detail
-      if (!detail?.value || detail.sourceWorldRef || detail.project !== CONVERSATION_PROJECT || detail.value.scope.agent_session !== (session ?? null)) return
+      if (!detail?.value || detail.sourceWorldRef || detail.project !== project || detail.value.scope.agent_session !== (session ?? null)) return
       setHeld({key, context: detail.value})
     }
     window.addEventListener(PREPARED_CONTEXT_CHANGED, changed)

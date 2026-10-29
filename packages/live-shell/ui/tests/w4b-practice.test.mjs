@@ -332,7 +332,8 @@ test('Answer this finds the bound conversation, asks from the page, waits for Na
     {blocks: [{id: 5, kind: 'user', text: 'q'}, {id: 6, kind: 'assistant', text: 'Wide, because '}, {id: 7, kind: 'assistant', text: 'you wrote…'}, {id: 8, kind: 'completed', text: ''}]}]
   const asked = [], kept = []
   const done = await answer.answerThis(base, {
-    lookup: async (_t, project, who, expression, role) => { assert.deepEqual([project, who.reading.person_ref, expression, role], ['O-I', 'person:frank', 'expression:room', 'nara']); return dialogue },
+    // REPLACED (O-I #740 lane B): the channel's project 'O-I'; Nara's conversation is the world's, asked in its root register ('').
+    lookup: async (_t, project, who, expression, role) => { assert.deepEqual([project, who.reading.person_ref, expression, role], ['', 'person:frank', 'expression:room', 'nara']); return dialogue },
     view: async () => views.shift() ?? views.at(-1),
     ask: async (_t, ask) => { asked.push(ask); return {lived: {context: {passages: [{key: 'p1'}, {key: 'p2'}]}}, basis: {}} },
     read: async (_t, dialogue, block) => ({dialogue, blockId: block}),

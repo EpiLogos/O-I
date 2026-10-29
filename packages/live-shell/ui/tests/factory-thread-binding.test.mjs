@@ -318,12 +318,15 @@ test('the Thread is the one Agent\'s Full on the session\'s conversation (REPLAC
   assert.match(view, /\{observers\}/)
   assert.match(view, /thread: agentThread, models, harnesses/, 'the Agent\'s thread, models and harnesses filled from the same readings')
   const observer = read('devices/EncounterObserver.tsx')
-  assert.match(observer, /useEncounterSession\(\{project: PROJECT, ref: session\.ref, space: session\.space\}\)/, 'the store entry the pane shares: O-I, the session, its space')
+  // REPLACED (O-I #740 lane B): PROJECT ('O-I'); each session is observed in its own register, the root's when none is named.
+  assert.match(observer, /useEncounterSession\(\{project: session\.project \?\? ROOT_REGISTER, ref: session\.ref, space: session\.space\}\)/, 'the store entry the pane shares: the session\'s register, the session, its space')
   assert.match(read('devices/EncounterObservers.tsx'), /lazy\(\(\) => import\('\.\/EncounterObserver'\)\)/, 'the cradle\'s session module loads only when a session is observed')
   assert.doesNotMatch(read('devices/EncounterObservers.tsx') + view + read('devices/threadBinding.ts'), /^import \{[^}]*\} from '[^']*encounter\/session'/m,
     'no module scope import of the walk-instrumented session module (it needs the build\'s __CRADLE_WALK__)')
   assert.match(view, /import \{threadTrackOf\} from '\.\.\/threadTrack'/, 'the pane\'s session rule, without the pane')
-  assert.match(read('AgentThreadView.tsx'), /project: 'O-I',\n\s+accompanying: \{ref: track\.sessionRef, project: 'O-I', space: track\.spaceRef\}/, 'the pane observes the same key')
+  // REPLACED (O-I #740 lane B): 'O-I' twice; the pane and the chain both observe the session's own register (its track's `project`).
+  assert.match(read('AgentThreadView.tsx'), /const project = track\.project \?\? ROOT_REGISTER[\s\S]*?project,\n\s+accompanying: \{ref: track\.sessionRef, project, space: track\.spaceRef\}/, 'the pane observes the same key')
+  assert.match(view, /\[\{ref: held\.sessionRef, space: held\.spaceRef, project: held\.project \?\? ROOT_REGISTER\}\]/, 'the chain observes it in the same register')
   assert.match(read('AgentThreadView.tsx'), /import \{threadTrackOf\} from '\.\/threadTrack'/, 'and resolves the same session')
   for (const file of ['devices/threadBinding.ts', 'devices/EncounterObservers.tsx', 'devices/EncounterObserver.tsx', 'devices/useModelCatalogue.ts', 'threadTrack.ts']) {
     assert.deepEqual(read(file).match(/#[0-9a-fA-F]{3,8}\b/g) ?? [], [], `${file}: shell tokens only`)

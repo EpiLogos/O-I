@@ -626,10 +626,11 @@ export function rackValues(input: RackInput): Values {
   return values
 }
 
-/** The configuration plane's scope for each of the rack's (§19.6 Scope: Home · Project · Session). */
+/** The configuration plane's scope for each of the rack's (§19.6 Scope: Home · Project · Session). `project` is the session's register
+ * (agent/worldScope.ts): your world's root register ('') has no Project scope, so none stands for it. */
 export function planeScope(scope: ComposeScope, project: string, sessionRef: string | null): ConfigRequestWire['scope'] | null {
   if (scope === 'home') return {scope_kind: 'machine', scope_ref: null}
-  if (scope === 'project') return {scope_kind: 'project', scope_ref: project}
+  if (scope === 'project') return project ? {scope_kind: 'project', scope_ref: project} : null
   return sessionRef ? {scope_kind: 'agent-session', scope_ref: sessionRef} : null
 }
 

@@ -9,6 +9,8 @@ import {deviceWidget} from '../frame/widgets/deviceWidgets'
 import {FRAMES_ID} from './devices/mainTrackBindings'
 import {APPROVALS_ID, LEDGER_ID} from './devices/receiptBindings'
 import {tileTitle} from './agentDockTiles'
+import {useAgentSessionsOptional} from './AgentSessionsProvider'
+import {gitRepositoryAbsence, placeWord, projectOfSession} from './worldScope'
 
 // The tiles' marks, titles and the rail widgets the Main track's devices claim stand in agentDockTiles.ts, so the rail has them
 // before this body's code loads.
@@ -63,6 +65,9 @@ function ReadingRows({label, text, loading}: {label: string; text: string | null
 export function AgentDockTileBody({id, sessionRef}: {id: AgentTileId; sessionRef: string | null}) {
   const {transport} = useWorkspace()
   const [gitNote, setGitNote] = useState<string | null>(null)
+  // The tile's register: the selected session's own (agent/worldScope.ts), else your world's root register.
+  const sessions = useAgentSessionsOptional()
+  const project = projectOfSession(sessions?.rows ?? [], sessionRef)
 
   useEffect(() => {
     if (id !== 'files') return
@@ -72,18 +77,20 @@ export function AgentDockTileBody({id, sessionRef}: {id: AgentTileId; sessionRef
         if (live) setGitNote(transport.reason ?? 'Unavailable')
         return
       }
-      const git = await kernelRead(transport, {op: 'git_repository_read', project: 'O-I'})
+      const words = gitRepositoryAbsence(sessionRef, project)
+      if (words) { if (live) setGitNote(words); return }
+      const git = await kernelRead(transport, {op: 'git_repository_read', project})
       if (!live) return
       setGitNote(git.error ?? safeJson(git.outcome?.result === 'git_repository_reading' ? git.outcome.document : git.outcome))
     })()
     return () => { live = false }
-  }, [id, transport])
+  }, [id, transport, sessionRef, project])
 
-  if (id === 'sessions') return <NativeContextPanel project="O-I" />
-  if (id === 'agents') return <NativeContextPanel project="O-I" initialTab="agents" />
+  if (id === 'sessions') return <NativeContextPanel project={project} />
+  if (id === 'agents') return <NativeContextPanel project={project} initialTab="agents" />
   if (id === 'ledger' || id === 'approvals') { const Device = deviceWidget(`${DEVICE_WIDGET_PREFIX}${id === 'ledger' ? LEDGER_ID : APPROVALS_ID}`).Body; return <Device subject={sessionRef} pinned={false} /> }
   if (id === 'frames') { const Frames = deviceWidget(`${DEVICE_WIDGET_PREFIX}${FRAMES_ID}`).Body; return <Frames subject={sessionRef} pinned={false} /> }
-  if (id === 'files') return <ReadingRows label="git_repository_read · O-I" text={gitNote} />
+  if (id === 'files') return <ReadingRows label={`git_repository_read · ${placeWord(project)}`} text={gitNote} />
   if (id === 'graph') return <ReadingRows label="Graph" text="Open Bimba / knowledge graph from the world browser; no kernel graph_read in this shell yet." />
   if (id === 'web') return <ReadingRows label="Web" text="Browser surfaces live in the workbench; agent shell exposes git and harness readings here." />
   if (id === 'terminal') return <ReadingRows label="Terminal" text="Terminal tiles reconcile through workbench terminal_reconcile; use Workbench Terminal for live PTY." />

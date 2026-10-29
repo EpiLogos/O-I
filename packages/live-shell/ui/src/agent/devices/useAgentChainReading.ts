@@ -13,6 +13,8 @@ import {OWNER_BINDINGS, missingOpRemedy, ownerRefusalLine} from '../agentChainDr
 import {refusalLine, safeJson} from '../RefusalCard'
 import {useHarnessBinding} from '../useHarnessBinding'
 import {useRosterAnswer, useTaskAnswer, useWorkcellAnswer} from '../../owners/readers'
+import {useAgentSessionsOptional} from '../AgentSessionsProvider'
+import {gitRepositoryAbsence, projectOfSession} from '../worldScope'
 import {
   INITIAL_READING, gatewayLine, gitRepoReading, rosterAdmits, rosterChains, rosterIdentity, taskReading,
   type AgentChainReading,
@@ -30,7 +32,9 @@ export function useAgentChainReading(sessionRef: string | null): {reading: Agent
   // `resolved`: the owner named the binding (until it has, 'cursor' is only the shell's default — useHarnessBinding.ts:8).
   const {binding, resolved, harnesses} = useHarnessBinding(transport)
   const roster = useRosterAnswer(transport, null).reading
-  const task = useTaskAnswer(transport, transport.kind === 'unavailable' ? null : sessionRef).reading
+  // The chain's register: the session's own (agent/worldScope.ts), else your world's root register.
+  const project = projectOfSession(useAgentSessionsOptional()?.rows ?? [], sessionRef)
+  const task = useTaskAnswer(transport, transport.kind === 'unavailable' ? null : sessionRef, project).reading
   const seat = useWorkcellAnswer(transport).reading
   const [own, setOwn] = useState<OwnRead | null>(null)
 
@@ -53,12 +57,15 @@ export function useAgentChainReading(sessionRef: string | null): {reading: Agent
             : {kind: 'reading', title: 'Gateway · hermes', line: `binding ${gatewayReading.binding} · ${gatewayLine(gatewayReading.document)}`, receipt: safeJson(gatewayReading.document)},
       }
       if (live) setOwn(previous => ({gateway, gatewayWaiting: gatewayAnswered ? null : OWNER_BINDINGS.gateway.owner, git: previous?.git ?? null}))
-      const gitOp = await kernelRead(transport, {op: 'git_repository_read', project: 'O-I'})
+      // The session's project's repository; no session, or one of the root register, is said in words (worldScope.ts).
+      const absent = gitRepositoryAbsence(sessionRef, project)
+      if (absent) { if (live) setOwn(previous => ({gateway, gatewayWaiting: previous?.gatewayWaiting ?? null, git: {doc: null, error: absent}})); return }
+      const gitOp = await kernelRead(transport, {op: 'git_repository_read', project})
       const doc = gitOp.outcome?.result === 'git_repository_reading' ? gitOp.outcome.document : null
       if (live) setOwn(previous => ({gateway, gatewayWaiting: previous?.gatewayWaiting ?? null, git: {doc, error: gitOp.error ?? null}}))
     })()
     return () => { live = false }
-  }, [transport, binding])
+  }, [transport, binding, sessionRef, project])
 
   const reading = useMemo((): AgentChainReading => {
     if (transport.kind === 'unavailable') {
