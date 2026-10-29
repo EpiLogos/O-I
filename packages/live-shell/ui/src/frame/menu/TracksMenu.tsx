@@ -57,7 +57,9 @@ function elementOf(root: HTMLElement | null, target: ObjectTarget): HTMLElement 
   return column?.querySelector<HTMLElement>('.thd, .tl-head') ?? column
 }
 
-interface Renaming {readonly target: ObjectTarget; readonly box: DOMRect; readonly value: string}
+/** The in-place field: Rename's, or a text an act asks for (Edit info text), which `save` keeps when it changed from `initial`. */
+interface Renaming {readonly target: ObjectTarget; readonly box: DOMRect; readonly value: string
+  readonly label?: string; readonly initial?: string; readonly save?: (text: string) => void}
 
 /** The menu and the keys over one view of the set. `press` is the view's own (its receipt line says the owner's answer). */
 export function useTracksMenu({set, selection, view, press, folded, fold}: {set: WorldTrackSet; selection: TracksSelection; view: 'session' | 'arrangement'
@@ -74,8 +76,14 @@ export function useTracksMenu({set, selection, view, press, folded, fold}: {set:
     setRenaming({target, box: element.getBoundingClientRect(), value: target.name})
   }, [])
 
+  const ask = useCallback((target: ObjectTarget, field: {readonly label: string; readonly value: string}, done: (text: string) => void) => {
+    const element = elementOf(rootRef.current, target)
+    if (!element) return
+    setRenaming({target, box: element.getBoundingClientRect(), value: field.value, label: field.label, initial: field.value, save: done})
+  }, [])
+
   const context = useCallback((): ObjectContext => ({view: latest.current.view, binding: hostedClip(), press: latest.current.press, rename,
-    writeClip, folded: latest.current.folded, fold: latest.current.fold, record: recordStep}), [rename])
+    writeClip, folded: latest.current.folded, fold: latest.current.fold, record: recordStep, ask}), [rename, ask])
 
   const select = (target: ObjectTarget) => {
     if (target.kind === 'clip') latest.current.selection.select({kind: 'clip', ref: target.id, title: target.name, track: target.trackId})
@@ -151,6 +159,8 @@ export function useTracksMenu({set, selection, view, press, folded, fold}: {set:
     const held = renaming
     if (!held) return
     setRenaming(null)
+    // A text an act asked for: kept where it changed, and nothing moves on.
+    if (held.save) { if (held.value !== held.initial) held.save(held.value); return }
     const name = held.value.trim()
     const {set: shown, press: run} = latest.current
     if (name && name !== held.target.name) {
@@ -178,14 +188,14 @@ export function useTracksMenu({set, selection, view, press, folded, fold}: {set:
     if (next) { select(next); setTimeout(() => rename(next), 40) }
   }
 
-  const field = renaming && typeof document !== 'undefined' ? createPortal(<input className="object-rename" aria-label={`Rename ${renaming.target.name}`} autoFocus
+  const field = renaming && typeof document !== 'undefined' ? createPortal(<input className="object-rename" aria-label={renaming.label ?? `Rename ${renaming.target.name}`} autoFocus
     style={{left: renaming.box.left, top: renaming.box.top + Math.max(0, (renaming.box.height - 22) / 2), width: Math.max(120, renaming.box.width)}}
     value={renaming.value} onChange={event => setRenaming({...renaming, value: event.target.value})}
     onBlur={() => commit(false)}
     onKeyDown={event => {
       if (event.key === 'Enter') { event.preventDefault(); commit(false) }
       else if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); setRenaming(null) }
-      else if (event.key === 'Tab') { event.preventDefault(); commit(true) }
+      else if (event.key === 'Tab') { event.preventDefault(); commit(!renaming.save) }
     }} />, document.body) : null
 
   return {rootRef, onContextMenu, onKeyDown, layer: <><ObjectMenu menu={menu} />{field}</>}

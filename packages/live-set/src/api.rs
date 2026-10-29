@@ -29,6 +29,13 @@ pub fn set_json(path: &str) -> Result<serde_json::Value, String> {
             }
         }
     }
+    // Each row's own name (Live's scene `Name`; empty where it has none), in the rows' order.
+    if let Some(fields) = document.as_object_mut() {
+        fields.insert(
+            "sceneNames".into(),
+            serde_json::json!(crate::edit::scene_names(&root)),
+        );
+    }
     Ok(serde_json::json!({
         "summary": summary_json(path, &root).ok_or("No LiveSet in native document")?,
         "document": document,

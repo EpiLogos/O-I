@@ -1245,6 +1245,17 @@ pub enum KernelOp {
         field: String,
         value: serde_json::Value,
     },
+    /// One act on the set's objects (DLW §10.9, after Live's: paste, duplicate
+    /// and delete a clip, an empty slot's stop button, rename, move and
+    /// duplicate a track, insert, rename, duplicate and delete a row), typed
+    /// by its `kind` (`live_set::acts::SetAct`), against the set's revision.
+    /// Writes the user's files, not kernel state; answers
+    /// `{act, done, at, revision}`. See `live_set_owner.rs`.
+    LiveSetAct {
+        path: String,
+        expected_revision: String,
+        act: live_set::acts::SetAct,
+    },
     /// `fresh` bypasses the cached listing for this one read — the explicit
     /// tree refresh, not an ordinary expansion.
     FileResolve {
@@ -1845,6 +1856,10 @@ pub enum KernelOpResult {
     },
     /// `{grooves, amount, amountRange, revision}`: the set's Groove Pool, read or as a write left it.
     LiveGroovePoolReading {
+        reading: serde_json::Value,
+    },
+    /// `{act, done, at, revision}`: what one act on the set's objects did, in words, and where it left what it made.
+    LiveSetActed {
         reading: serde_json::Value,
     },
     SystemCompositionReading {
@@ -3043,7 +3058,8 @@ impl Kernel {
             | KernelOp::LiveTrackMixerWrite { .. }
             | KernelOp::LiveTakeComp { .. }
             | KernelOp::LiveGroovePoolRead { .. }
-            | KernelOp::LiveGroovePoolWrite { .. }) => self
+            | KernelOp::LiveGroovePoolWrite { .. }
+            | KernelOp::LiveSetAct { .. }) => self
                 .prepare_owner_read(&op)
                 .ok_or("Cannot prepare the Live document owner operation")?
                 .execute(),

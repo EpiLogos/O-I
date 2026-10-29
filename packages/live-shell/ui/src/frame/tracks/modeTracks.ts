@@ -23,7 +23,7 @@ import type {SetSummary} from '../../shell/useSet'
 import type {NativeExpressionsContent} from '../../shell/nativeContent'
 import type {WorldTimelineView} from '../../projections/useWorldTemporalReading'
 import type {WorldTrackSet} from '../../timeline/worldTrackAdapter'
-import type {KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
+import type {KernelTransportStatus, LiveClipAt} from '../../../../../../desktop/cradle/src/kernel/types'
 import {liveSetTrackAdapter} from '../../timeline/liveSetTrackAdapter'
 import {liveSetWrites} from '../../live/liveWrites'
 import {frameSoundReading, readStudioArm, setExpressionMuted, setExpressionSolo} from '../../native/frameSound'
@@ -194,9 +194,15 @@ export const MODE_TRACKS: Readonly<Record<SurfMode, UseModeTracks>> = {
   expressions: expressionsTracks,
 }
 
-/** Live's tracks: the open set's parts, its writes, and Live's clip of a constellation dropped on a part. Pure. */
+/** Live's tracks: the open set's parts, its writes and its acts (O-I #743), Launch and Stop on the torus, and Live's clip of a
+ * constellation dropped on a part. Pure. */
 export function liveTracks(set: SetSummary, document: SetDocument | null, colors?: readonly string[], maker = liveClipMaker(set.path)): WorldTrackSet {
-  const tracks = liveSetTrackAdapter.project({set, document, colors, ...liveSetWrites(set.path)})
+  // The clip player loads with Live's transport (O-I #740: a mode's code is not the first load), so its acts reach it when pressed.
+  const player = () => import('../../live/clipPlayer').then(module => module.liveClipActs)
+  const play = {launch: (track: number, at: LiveClipAt) => player().then(acts => acts.launch({path: set.path, track, at}, set.tempo_bpm)),
+    stop: (track: number) => player().then(acts => acts.stop(set.path, track, set.tracks[track]?.name ?? 'the track')),
+    stopAll: () => player().then(acts => acts.stopAll())}
+  const tracks = liveSetTrackAdapter.project({set, document, colors, ...liveSetWrites(set.path), play})
   return maker ? withClipMaker(tracks, maker) : tracks
 }
 

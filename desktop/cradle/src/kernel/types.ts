@@ -636,6 +636,9 @@ export type KernelOp =
   | {op:"live_groove_pool_read";path:string}
   // One groove's setting, or with no groove the set's Global Amount ("amount"), against the set's revision.
   | {op:"live_groove_pool_write";path:string;expected_revision:string;groove?:number;field:LiveGrooveField|"amount";value:number|string}
+  // One act on the set's objects (DLW §10.9, O-I #743), typed by its kind, against the set's revision (kernel live_set_owner.rs,
+  // packages/live-set/src/acts.rs). Answers what it did in words and where it left what it made.
+  | {op:"live_set_act";path:string;expected_revision:string;act:LiveSetAct}
   // The configuration-plane binding (#299 C6 live leg): every operation
   // routes through the installed `oi` executable — the same engine
   // `oi config` / `oi profile` drive — so the Desktop keeps no parallel
@@ -877,6 +880,7 @@ export type KernelOpResult =
   | {result:"live_track_mixer_reading";reading:{mixer:LiveTrackMixer;revision:string}}
   | {result:"live_take_comp_reading";reading:LiveCompReading & {revision:string}}
   | {result:"live_groove_pool_reading";reading:LiveGroovePool & {revision:string}}
+  | {result:"live_set_acted";reading:LiveSetActed}
   | {result:"live_device_descriptors_reading";descriptors:Record<string,unknown[]>}
   | {result:"live_device_params_reading";reading:{params:unknown[]}}
   | {result:"live_device_param_written";reading:{param:unknown}}
@@ -1216,6 +1220,8 @@ export interface LiveNote {id?: number; p: number; at: number; len: number; vel?
 /** A clip whole, in the design's words (packages/live-set/src/edit.rs clip_reading). A value the document lacks is null. */
 export interface LiveClipReading {
   kind: 'midi' | 'audio'; name: string; colourIndex: number | null; active: boolean | null
+  /** Its info text (Live's Edit Info Text: the clip's Annotation); absent from an owner that reads none. */
+  info?: string
   loop?: boolean; start?: number; end?: number; position?: number; length?: number
   sig: {num: number | null; den: number | null} | null; groove: string | null
   scale: boolean | null; root: number | null; mode: string | null; scaleName: string | null
@@ -1238,6 +1244,24 @@ export interface LiveTakeLane {name: string; clips: {name: string; start: number
 export interface LiveCompReading {clips: {name: string; start: number; end: number; takeId: number | null}[]; takeLanes: LiveTakeLane[]}
 /** A groove's settings, as the Groove Pool shows them. */
 export type LiveGrooveField = 'base' | 'quantize' | 'timing' | 'random' | 'velocity'
+/** One act on a Live set's objects (packages/live-set/src/acts.rs SetAct): tracks by their place in the set, a clip by its slot or
+ * arrangement index, a row by its scene index. */
+export type LiveSetAct =
+  | {kind: 'clip_paste'; from_track: number; from: LiveClipAt; track: number; scene: number; cut?: boolean}
+  | {kind: 'clip_duplicate'; track: number; clip: LiveClipAt}
+  | {kind: 'clip_delete'; track: number; clip: LiveClipAt}
+  | {kind: 'slot_stop_button'; track: number; scene: number; on: boolean}
+  | {kind: 'track_rename'; track: number; name: string}
+  | {kind: 'track_move'; track: number; by: -1 | 1}
+  | {kind: 'track_duplicate'; track: number}
+  | {kind: 'scene_insert'; after?: number | null}
+  | {kind: 'scene_rename'; scene: number; name: string}
+  | {kind: 'scene_duplicate'; scene: number}
+  | {kind: 'scene_delete'; scene: number}
+/** What an act did: its kind, its words, where it left what it made, the set's new revision; and why the clips' sources beside the set
+ * did not follow, when they did not. */
+export interface LiveSetActed {act: LiveSetAct['kind']; done: string; at: {track?: number; slot?: number; arrangement?: number; scene?: number} | null
+  revision: string; sourceRefused?: string}
 /** One groove of the set's pool: Base is Live's Grid ("1/4" … "1/32", triplets "1/8t", "1/16t"); the amounts are 0–100. */
 export interface LiveGroove {id: number | null; name: string; base: string | null; quantize: number | null; timing: number | null; random: number | null; velocity: number | null}
 /** The set's Groove Pool and its Global Amount (with the range Live keeps beside it). */

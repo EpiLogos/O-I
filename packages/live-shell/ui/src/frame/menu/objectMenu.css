@@ -9,11 +9,11 @@
   text-align: left; color: var(--text); font: inherit; cursor: default }
 .object-menu-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
 .object-menu-item kbd { flex: none; font: 10px var(--mono); color: var(--text-dim); background: none; border: 0; padding: 0 }
-.object-menu-item[data-active], .object-menu-item:not([disabled]):focus-visible { background: var(--sel); color: var(--bg-0); outline: none }
+.object-menu-item[data-active], .object-menu-item:not([aria-disabled=true]):focus-visible { background: var(--sel); color: var(--bg-0); outline: none }
 .object-menu-item[data-active] kbd { color: var(--bg-0) }
-/* Unavailable: faint, no pointer (its row's reason reaches the Info line through the parent's hover). Destructive: the record colour. */
-.object-menu-item[disabled] { color: var(--text-faint); pointer-events: none }
-.object-menu-item[data-tone=destructive]:not([disabled]) { color: var(--rec) }
+/* Unavailable: faint, and still under the pointer, so the Info line reads its reason (its data-i). Destructive: the record colour. */
+.object-menu-item[aria-disabled=true] { color: var(--text-faint); cursor: default }
+.object-menu-item[data-tone=destructive]:not([aria-disabled=true]) { color: var(--rec) }
 .object-menu-item[data-tone=destructive][data-active] { background: var(--rec); color: var(--bg-0) }
 /* One of a set of ways (Open in's): a radio's ring before its name, filled for the way standing (a drawn mark, no glyph). */
 .object-menu-item[role=menuitemradio] .object-menu-label::before { content: ''; display: inline-block; width: 5px; height: 5px; margin: 0 6px 1px 0;

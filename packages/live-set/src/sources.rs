@@ -126,6 +126,57 @@ pub fn set_source(
     write_atomically(&record_path(set), text.as_bytes())
 }
 
+/// Move each clip's row with its clip after an act moved clips (`acts.rs`):
+/// `place` answers where the clip at `at` on the track whose `Id` is the
+/// first argument now stands — nowhere (it is gone), one place (it moved, or
+/// stayed), or more (it was copied, and the copy keeps its source). A set
+/// with no record has nothing to move; the record is replaced whole and
+/// atomically, and only when a row moved.
+pub fn remap(
+    set: &Path,
+    mut place: impl FnMut(&str, ClipAt) -> Vec<(String, ClipAt)>,
+) -> Result<(), String> {
+    if !record_path(set).exists() {
+        return Ok(());
+    }
+    let before = rows(set)?;
+    let mut after: Vec<Value> = Vec::with_capacity(before.len());
+    for row in &before {
+        let found = row
+            .get("track")
+            .and_then(Value::as_str)
+            .zip(row.get("at").and_then(|at| ClipAt::of(at).ok()));
+        let Some((track, at)) = found else {
+            after.push(row.clone());
+            continue;
+        };
+        for (track, at) in place(track, at) {
+            let mut moved = row.clone();
+            moved["track"] = json!(track);
+            moved["at"] = at_json(at);
+            after.retain(|kept: &Value| {
+                !(kept.get("track") == moved.get("track") && kept.get("at") == moved.get("at"))
+            });
+            after.push(moved);
+        }
+    }
+    if after == before {
+        return Ok(());
+    }
+    if after.len() > ROWS_MAX {
+        return Err(format!(
+            "The set's DLW record names at most {ROWS_MAX} clips"
+        ));
+    }
+    let name = set
+        .file_name()
+        .map(|n| n.to_string_lossy().into_owned())
+        .unwrap_or_default();
+    let record = json!({"schema": SCHEMA, "set": name, "clips": after});
+    let text = serde_json::to_string_pretty(&record).map_err(|e| e.to_string())?;
+    write_atomically(&record_path(set), text.as_bytes())
+}
+
 /// Write beside the record and rename over it, so a crash never leaves half a record.
 fn write_atomically(path: &Path, bytes: &[u8]) -> Result<(), String> {
     use std::io::Write;

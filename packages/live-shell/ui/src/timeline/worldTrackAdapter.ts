@@ -216,6 +216,18 @@ export interface WorldTrackActions {
   renameRow?: {op: string; run(rowId: string, name: string): unknown};
   duplicateRow?: {op: string; run(rowId: string): unknown};
   deleteRow?: {op: string; run(rowId: string): unknown};
+  /** Paste (⌘V on an empty slot): the clip the menu's Copy or Cut holds (frame/menu/objectActions.ts), copied into the empty slot — or,
+   * held by Cut, moved there. Copy and Cut stand where the set carries this. */
+  pasteClip?: {op: string; run(fromClipId: string, trackId: string, rowId: string, cut: boolean): unknown};
+  /** An empty slot's stop button removed, or given back (`on`) (Live: Remove Stop Button, Add Stop Button). The slots without one are
+   * each track's `stopless`. */
+  stopButton?: {op: string; run(trackId: string, rowId: string, on: boolean): unknown};
+  /** Move a track one place left (-1) or right (1) (manual §10.9 ⌘← ⌘→). */
+  moveTrack?: {op: string; run(trackId: string, by: -1 | 1): unknown};
+  /** Duplicate a track: a copy with what it holds, right after it. */
+  duplicateTrack?: {op: string; run(trackId: string): unknown};
+  /** Edit info text (Live's Edit Info Text on a clip): the clip's info text read from its owner, and written there. */
+  clipInfo?: {op: string; read(clipId: string): Promise<string>; run(clipId: string, text: string): unknown};
   /** Whose ops these are, in the words a missing act names (the mode's registration gives it, frame/tracks/modeTracks.ts). */
   owner?: string;
 }
@@ -254,6 +266,9 @@ export interface WorldTrack {
   /** A return track (Live's; manual §16.2): a chain every track that works in it shares (a workcell). The views draw it after the tracks
    * and before Main, and ⌥⌘R shows and hides it. It holds no clips. */
   returns?: true;
+  /** The rows whose empty slot on this track has had its stop button removed, as its owner reports (Live's Remove Stop Button: launching
+   * the row leaves the track playing). Absent: every slot keeps its button. */
+  stopless?: readonly string[];
 }
 
 export interface WorldTrackClip {

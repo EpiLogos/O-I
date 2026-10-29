@@ -11,8 +11,12 @@ export interface SetTrack {
   mixer?: import('../../../../../desktop/cradle/src/kernel/types').LiveTrackMixer
   takeLanes?: {name: string; clips: {name: string; start: number; end: number}[]}[]
   automation?: import('../../../../../desktop/cradle/src/kernel/types').LiveEnvelope[]
+  /** The rows whose slot has had its stop button removed (packages/live-set/src/edit.rs stopless_slots); absent from an owner that reads none. */
+  stoplessSlots?: number[]
 }
-export interface SetDocument { path: string; tempo: number; scenes: number; tracks: SetTrack[] }
+export interface SetDocument { path: string; tempo: number; scenes: number; tracks: SetTrack[]
+  /** Each row's own name, empty where it has none (packages/live-set/src/edit.rs scene_names); absent from an owner that reads none. */
+  sceneNames?: string[] }
 const object = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value)
 const finite = (value: unknown) => typeof value === 'number' && Number.isFinite(value)
 export function readSetDocument(value: unknown): SetDocument {
