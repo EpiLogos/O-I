@@ -515,7 +515,10 @@ test('World › Bodies lists your planet from its owner\'s record and the worlds
 
 test('the scales follow the manual: Field · System · Body · Region · Place; a palace entered is a place you are in', () => {
   assert.deepEqual([...placesModel.ATLAS_SCALES], ['field', 'system', 'body', 'region', 'place'])
-  assert.equal(placesModel.atlasScaleOf({sky: false, graph: false, dist: 2.25, placeHeld: true}), 'place')
+  // REPLACED (O-I #742, walk 739 T1): a place held at 2.25 radii (the atlas's own continental framing) read Place; a single place is now
+  // held at its own framing, a street or a city (placesHost.ts framingDistance), and 2.25 reads Region (PLACE_DISTANCE 1.2).
+  assert.equal(placesModel.atlasScaleOf({sky: false, graph: false, dist: 1.07, placeHeld: true}), 'place')
+  assert.equal(placesModel.atlasScaleOf({sky: false, graph: false, dist: 2.25, placeHeld: true}), 'region', 'a continent in view holds no single place')
   assert.equal(placesModel.atlasScaleOf({sky: false, graph: false, dist: 2.25}), 'region', 'no place held: a region')
   assert.equal(placesModel.atlasScaleOf({sky: false, graph: false, dist: 5, palace: true}), 'place')
   assert.equal(placesModel.atlasScaleOf({sky: true, graph: false, dist: 3000}), 'system')

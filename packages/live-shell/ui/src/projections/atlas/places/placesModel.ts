@@ -180,8 +180,10 @@ export const ATLAS_SCALES = ['field', 'system', 'body', 'region', 'place'] as co
  * disabled on that reason), so the atlas never stands at it. The Graph is not a scale of the Earth and says so: 'graph'. */
 export type AtlasScale = (typeof ATLAS_SCALES)[number] | 'graph';
 export const REGION_DISTANCE = 2.6;
-/** The atlas frames one place at 2.25 globe radii (app/controller.ts); held there, or nearer, the scale is the Place. */
-export const PLACE_DISTANCE = 2.3;
+/** One place held at its own framing — a street for an exact place, a city for an approximate one (placesHost.ts framingDistance) — or
+ * nearer is the Place (manual §17.2: "One place with its exact position"). The atlas's own framing of an opened subject (app/controller.ts,
+ * 2.25 globe radii: a continent in view) is no single place, so it reads Region (O-I #742, walk 739 T1). */
+export const PLACE_DISTANCE = 1.2;
 
 export function atlasScaleOf(view: {readonly sky: boolean; readonly graph: boolean; readonly dist: number; readonly palace?: boolean; readonly placeHeld?: boolean}): AtlasScale {
   if (view.palace) return 'place';

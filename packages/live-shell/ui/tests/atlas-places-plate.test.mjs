@@ -196,13 +196,15 @@ test('the shared spatial focus turns the Earth: the subject where the Earth draw
   const occ = [{id: 'o-stone', subject_ref: 'wiki:node:stone', lat: 47.22, lon: 8.84, geoPrecision: 'place'}, {id: 'o-liber', subject_ref: 'wiki:node:liber', lat: 50, lon: 9, geoPrecision: 'region'}]
   assert.deepEqual(host.turnToPlace(PLACES[0], occ), {kind: 'select', occId: 'o-stone'})
   // [T-PROCEDURAL-BODY §6 item 4, manual §17.2: "An exact place gets a street, an approximate place gets a city, and a region gets the whole region"]
-  // PLACES[1] is approximate: its framing is a city's, between a street's (2.25) and the whole region's (2.6)
+  // PLACES[1] is approximate: its framing is a city's, between a street's and the whole region's.
+  // REPLACED (O-I #742, walk 739 T1: the flight stayed at a continental framing): street 2.25, city 2.4, region 2.6 → a street as near as the
+  // atlas's camera flies (MIN_DIST + 0.02), a city 1.15, the whole region 1.4 (tests/atlas-place-come-in.test.mjs holds the law).
   assert.deepEqual(host.turnToPlace(PLACES[1], occ), {kind: 'fly', lat: 47.3, lon: 8.6, dist: host.framingDistance('approximate')}, 'not drawn at that point: a flight, framed for its precision')
-  assert.equal(host.framingDistance('approximate'), 2.4)
-  assert.equal(host.framingDistance('region'), 2.6)
+  assert.equal(host.framingDistance('approximate'), 1.15)
+  assert.equal(host.framingDistance('region'), 1.4)
   assert.equal(host.turnToPlace(PLACES[2], occ), null, 'an unlocated place turns nothing')
   assert.equal(host.turnToPlace(undefined, occ), null, 'a ref the world does not hold turns nothing, and is no error')
-  assert.equal(host.framingDistance('exact'), 2.25)
+  assert.ok(Math.abs(host.framingDistance('exact') - 1.07) < 1e-9)
 })
 
 test('a click on your planet is read in the sky lens while no sky layer stands: the globe drawn there is the one the camera orbits (r20)', () => {

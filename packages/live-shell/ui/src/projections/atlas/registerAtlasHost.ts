@@ -12,6 +12,8 @@ import {detectTransport} from '../../../../../../desktop/cradle/src/kernel/bridg
 import {registerProjectionModule, type PaneSubject, type ProjectionModuleContext, type ProjectionModuleHandle} from '../../../../../../desktop/cradle/src/surface/projectionModules'
 import {AtlasEarthPane, atlasHandle, attachAtlas, type AtlasAttachment, type AtlasView} from './AtlasProjectionPanel'
 import {focusGraphOnOpen} from '../../techne/subject/graphFocus'
+import {turnAtlasTo} from './places/placesHost'
+import {suitePlaces} from './provider/suiteStanding'
 import type {Model} from './src/data/model'
 import type {AppState} from './src/state/store'
 import type {Occurrence} from './src/types/field'
@@ -118,6 +120,10 @@ export function turnWithSubject(subject: PaneSubject | undefined, attachment: Pi
     const handle = atlasHandle()
     if (!handle) return
     turnedTo = ref
+    // A place of the world (a place row, a facet's own place like Chartres, whose ref no occurrence carries) turns through the one door every
+    // flight to a place goes through: it comes in to the place and is a stop while Record runs (places/placesHost.ts turnAtlasTo; O-I #742).
+    const place = handle.ctl.state.sky ? undefined : suitePlaces().find(row => row.ref === ref)
+    if (place && turnAtlasTo(handle, place)) return
     const next = stateForSubject(handle.model, ref, handle.ctl.state)
     if (next) handle.ctl.navigate(next)
   }
