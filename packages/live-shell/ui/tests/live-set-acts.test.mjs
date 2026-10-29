@@ -179,8 +179,8 @@ test('Edit info text asks for the owner\'s text where the clip stands, writes wh
 test('in Live a track\'s and a row\'s acts stand enabled where its owner takes them; what waits names its op', () => {
   const {set} = liveSet()
   const items = acts.objectMenu({kind: 'track', id: ref(1), name: 'Market hall'}, set, context())
-  for (const id of ['rename', 'duplicate', 'move-left', 'move-right', 'switch-off', 'solo', 'arm']) assert.ok(!byId(items, id)?.disabled, `${id} is enabled`)
-  assert.match(byId(items, 'group').why, /missing op: tracks\.group/)
+  for (const id of ['rename', 'duplicate', 'move-left', 'move-right', 'switch-off', 'solo', 'arm', 'group']) assert.ok(!byId(items, id)?.disabled, `${id} is enabled`)
+  assert.match(byId(items, 'delete').why, /missing op: track\.remove/)
   const row = acts.objectMenu({kind: 'row', id: 'scene:1', name: '2'}, set, context())
   for (const id of ['insert', 'rename', 'duplicate', 'delete', 'stop-all']) assert.ok(!byId(row, id).disabled, `${id} is enabled`)
   assert.match(byId(row, 'launch').why, /missing op: row\.launch/)
@@ -197,4 +197,101 @@ test('a dimmed act says why on the status bar: its entry takes the pointer, carr
   const css = await readFile(new URL('../src/frame/menu/objectMenu.css', import.meta.url), 'utf8')
   const rule = css.split('\n').find(line => line.startsWith('.object-menu-item[aria-disabled=true]'))
   assert.ok(rule && !/pointer-events:\s*none/.test(rule), 'a dimmed entry still takes the pointer, so the status bar reads it')
+})
+
+test('a slot whose stop button the set has removed is drawn blank, and still opens its menu', async () => {
+  const React = await import('react')
+  const {renderToStaticMarkup} = await import('react-dom/server')
+  const {SessionGridView} = await import('../src/frame/tracks/SessionGrid.tsx')
+  const {set} = liveSet()
+  const html = renderToStaticMarkup(React.createElement(SessionGridView, {set, selection: {select: () => {}}, folded: {}, onFold: () => {},
+    receipt: null, onPress: () => {}, onDismiss: () => {}}))
+  const cell = (track, row) => {
+    const at = html.indexOf(`data-slot-track="${ref(track)}" data-slot-row="scene:${row}"`)
+    assert.ok(at > 0, `slot ${track}/${row} is drawn with its data-slot-*`)
+    const start = html.lastIndexOf('<div', at), end = html.indexOf('</div>', at)
+    return html.slice(start, end)
+  }
+  assert.doesNotMatch(cell(0, 1), /class="sg2"/, 'Live cap 37: a slot whose stop button was removed shows no square')
+  assert.match(cell(0, 2), /class="sg2"/, 'every other empty slot keeps its stop square')
+})
+
+// Round two (O-I #743): a track's colour and its group read from the set; Group Tracks, Split, Consolidate and the colour as acts; what
+// still waits names what it waits for.
+const grouped = () => {
+  const summary2 = {...summary, tracks: [{kind: 'midi', name: 'Keys', devices: []}, {kind: 'group', name: '2-Group', devices: []},
+    {kind: 'midi', name: 'Bass', devices: []}, {kind: 'audio', name: 'Drums', devices: []}, {kind: 'master', name: 'Master', devices: []}]}
+  const document2 = {...document, tracks: [track('midi', 'Keys', {trackId: '12', groupId: -1, colourIndex: 9}),
+    track('group', '2-Group', {trackId: '17', groupId: -1}), track('midi', 'Bass', {trackId: '13', groupId: 17, arrangementClips: [{name: 'Line', kind: 'midi', start: 0, end: 8}]}),
+    track('audio', 'Drums', {trackId: '8', groupId: -1, arrangementClips: [{name: 'Break', kind: 'audio', start: 0, end: 4}]}), track('master', 'Master')]}
+  const calls = []
+  const set = liveSetTrackAdapter.project({set: summary2, document: document2, colors: ['#111111', '#222222', '#333333', '#444444', '#555555'],
+    mixerWrite: async () => ({}), act: act => { calls.push(act); return Promise.resolve({act: act.kind, done: `The owner did ${act.kind}.`, at: null, revision: 'sha256:3'}) }})
+  return {set: {...set, actions: {...set.actions, owner: 'kernel · live-set, the open set\'s owner'}}, calls}
+}
+
+test('a track wears the set\'s own colour and stands under its group, read from the owner', () => {
+  const {set} = grouped()
+  assert.equal(set.tracks[0].color, '#5480E4', 'Keys keeps Live\'s colour 9')
+  assert.equal(set.tracks[3].color, '#444444', 'a track the set gives no colour wears the shell\'s')
+  assert.equal(set.tracks[1].kind, 'group')
+  assert.deepEqual([set.tracks[2].parentId, set.tracks[2].depth], [ref(1), 1], 'Bass stands under 2-Group')
+  assert.equal(set.tracks[3].parentId, undefined)
+})
+
+test('Group, Split, Consolidate and the colour run as typed acts; an audio part\'s consolidate waits for a render', async () => {
+  const {set, calls} = grouped()
+  const a = set.actions
+  await a.colourTrack.run(ref(3), '#FF94A6')
+  assert.match((await a.colourTrack.run(ref(3), '#123456')).error, /not one of Live's 70/)
+  await a.groupTracks.run([ref(3)])
+  await a.splitClip.run(`${ref(2)}/clip/0`, 2)
+  await a.consolidateClips.run(ref(2), {start: 1, end: 5})
+  assert.equal(a.consolidateClips.refuses(ref(2)), undefined)
+  assert.match(a.consolidateClips.refuses(ref(3)), /render/)
+  assert.match((await a.consolidateClips.run(ref(3), {start: 0, end: 4})).error, /render/)
+  assert.deepEqual(calls, [{kind: 'track_colour', track: 3, colour: 0}, {kind: 'tracks_group', tracks: [3]},
+    {kind: 'clip_split', track: 2, clip: {arrangement: 0}, at: 2}, {kind: 'clips_consolidate', track: 2, from: 1, to: 5}])
+})
+
+test('Split stands where the insert marker is inside the clip, Consolidate where a time selection stands; each else says where to set it', () => {
+  const {set, calls} = grouped()
+  const clip = {kind: 'clip', id: `${ref(2)}/clip/0`, trackId: ref(2), name: 'Line'}
+  const arrangement = (extra = {}) => context({view: 'arrangement', ...extra})
+  set.clips.find(c => c.id === clip.id).at = {start: 0, end: 8}
+  let items = acts.objectMenu(clip, set, arrangement())
+  assert.match(byId(items, 'split').why, /Set the insert marker inside Line/)
+  assert.match(byId(items, 'consolidate').why, /Select a stretch of the ruler/)
+  assert.match(byId(items, 'crop').why, /missing op: clip\.crop .* It waits for the decode of what Live's Crop Clip keeps/)
+  items = acts.objectMenu(clip, set, arrangement({marker: 8}))
+  assert.equal(byId(items, 'split').disabled, true, 'a marker at the clip\'s end is not inside it')
+  items = acts.objectMenu(clip, set, arrangement({marker: 3, span: {start: 1, end: 5}}))
+  byId(items, 'split').onSelect('split')
+  byId(items, 'consolidate').onSelect('consolidate')
+  assert.deepEqual(calls.slice(-2), [{kind: 'clip_split', track: 2, clip: {arrangement: 0}, at: 3}, {kind: 'clips_consolidate', track: 2, from: 1, to: 5}])
+  const drums = {kind: 'clip', id: `${ref(3)}/clip/0`, trackId: ref(3), name: 'Break'}
+  assert.match(byId(acts.objectMenu(drums, set, arrangement({span: {start: 0, end: 4}})), 'consolidate').why, /render/)
+  const track = acts.objectMenu({kind: 'track', id: ref(3), name: 'Drums'}, set, context())
+  byId(track, 'group').onSelect('group')
+  assert.deepEqual(calls.at(-1), {kind: 'tracks_group', tracks: [3]})
+})
+
+test('row launch, record here and track delete stay dimmed in Live, each naming what it waits for', () => {
+  const {set} = grouped()
+  const armed = {...set, tracks: set.tracks.map((t, i) => i === 2 ? {...t, mix: {...t.mix, arm: true}} : t)}
+  assert.match(byId(acts.objectMenu({kind: 'row', id: 'scene:0', name: '1'}, set, context()), 'launch').why, /row\.launch .* It waits for a player of every clip of a row at once/)
+  assert.match(byId(acts.objectMenu(slot(2, 0, 'Bass'), armed, context()), 'record').why, /slot\.record .* It waits for a recording path/)
+  assert.match(byId(acts.objectMenu({kind: 'track', id: ref(3), name: 'Drums'}, set, context()), 'delete').why, /track\.remove .* It waits for the decode of how Live re-routes/)
+})
+
+test('the Arrangement draws its time selection over the marks and through the lanes', async () => {
+  const React = await import('react')
+  const {renderToStaticMarkup} = await import('react-dom/server')
+  const {ArrangementRulerView} = await import('../src/frame/tracks/ArrangementRuler.tsx')
+  const {set} = grouped()
+  const noop = () => {}
+  const html = renderToStaticMarkup(React.createElement(ArrangementRulerView, {set, selection: {select: noop}, receipt: null, onPress: noop, onDismiss: noop,
+    view: {window: null, onWindow: noop, snap: 'free', onSnap: noop, marker: 1, onMarker: noop, span: {start: 1, end: 5}, onSpan: noop, width: 0}}))
+  assert.match(html, /class="tl-span" role="img" aria-label="Selected · /)
+  assert.ok((html.match(/class="tl-span"/g) ?? []).length > 1, 'the band runs through the lanes too')
 })

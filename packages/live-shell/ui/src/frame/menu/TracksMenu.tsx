@@ -62,13 +62,15 @@ interface Renaming {readonly target: ObjectTarget; readonly box: DOMRect; readon
   readonly label?: string; readonly initial?: string; readonly save?: (text: string) => void}
 
 /** The menu and the keys over one view of the set. `press` is the view's own (its receipt line says the owner's answer). */
-export function useTracksMenu({set, selection, view, press, folded, fold}: {set: WorldTrackSet; selection: TracksSelection; view: 'session' | 'arrangement'
-  press: ObjectRun; folded?: (trackId: string) => boolean | undefined; fold?: (trackId: string) => void}) {
+export function useTracksMenu({set, selection, view, press, folded, fold, marker, span}: {set: WorldTrackSet; selection: TracksSelection
+  view: 'session' | 'arrangement'; press: ObjectRun; folded?: (trackId: string) => boolean | undefined; fold?: (trackId: string) => void
+  /** Arrangement view's insert marker and time selection, the pane's own (Split and Consolidate act on them). */
+  marker?: number | null; span?: {start: number; end: number} | null}) {
   const menu = useObjectMenu()
   const rootRef = useRef<HTMLDivElement | null>(null)
   const [renaming, setRenaming] = useState<Renaming | null>(null)
-  const latest = useRef({set, selection, view, press, folded, fold})
-  latest.current = {set, selection, view, press, folded, fold}
+  const latest = useRef({set, selection, view, press, folded, fold, marker, span})
+  latest.current = {set, selection, view, press, folded, fold, marker, span}
 
   const rename = useCallback((target: ObjectTarget) => {
     const element = elementOf(rootRef.current, target)
@@ -83,7 +85,8 @@ export function useTracksMenu({set, selection, view, press, folded, fold}: {set:
   }, [])
 
   const context = useCallback((): ObjectContext => ({view: latest.current.view, binding: hostedClip(), press: latest.current.press, rename,
-    writeClip, folded: latest.current.folded, fold: latest.current.fold, record: recordStep, ask}), [rename, ask])
+    writeClip, folded: latest.current.folded, fold: latest.current.fold, record: recordStep, ask, marker: latest.current.marker ?? null,
+    span: latest.current.span ?? null}), [rename, ask])
 
   const select = (target: ObjectTarget) => {
     if (target.kind === 'clip') latest.current.selection.select({kind: 'clip', ref: target.id, title: target.name, track: target.trackId})

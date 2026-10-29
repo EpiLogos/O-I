@@ -60,6 +60,9 @@ test('writes, write verbs of mixed ops and ground receipts retire held answers',
     {op: 'receiving', project: null, request: {Submit: {producer_key: 'p'}}},
     {op: 'routine', request: {action: 'run_now', routine_ref: 'r'}},
     {op: 'setup', request: {action: 'apply'}},
+    // An act on a Live set's objects (O-I #743) writes the set as the clip, mixer and comp writes do.
+    {op: 'live_set_act', path: '/s.als', expected_revision: 'sha256:1', act: {kind: 'scene_insert', after: 0}},
+    {op: 'live_clip_create', path: '/s.als', expected_revision: 'sha256:1', track: 0, length: 4, notes: []},
   ]
   for (const op of writes) assert.equal(writesOwner(op, {result: 'x', receipts: []}), true, JSON.stringify(op))
   // Any op whose outcome carries a ground receipt told the window something moved; a presentation receipt did not.

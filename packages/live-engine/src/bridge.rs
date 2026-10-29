@@ -120,6 +120,11 @@ pub fn bridge(summary: &SetSummary, sample_rate: u32) -> BridgeResult {
                 device: String::new(),
                 message: "return track: not rendered in M1 (no send bus yet)".into(),
             }),
+            TrackKind::Group => warnings.push(BridgeWarning {
+                track: info.name.clone(),
+                device: String::new(),
+                message: "group track: not rendered in M1 (its members render on their own; no group bus yet)".into(),
+            }),
         }
     }
     BridgeResult { graph, warnings }

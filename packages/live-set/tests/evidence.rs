@@ -42,6 +42,14 @@ fn reads_the_real_template_set() {
             .count(),
         2
     );
+    // O-I #743: the two group tracks ("2-Group", "15-Group") are listed in the set's order too
+    assert_eq!(
+        s.tracks
+            .iter()
+            .filter(|t| t.kind == TrackKind::Group)
+            .count(),
+        2
+    );
     // the master carries the mastering chain that contaminated v1 renders
     let master = s
         .tracks

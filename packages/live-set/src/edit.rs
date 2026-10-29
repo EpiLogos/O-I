@@ -95,7 +95,7 @@ pub(crate) fn value_of<'a>(element: &'a Element, child: &str) -> Option<&'a str>
 pub(crate) fn num(element: &Element, child: &str) -> Option<f64> {
     value_of(element, child).and_then(|v| v.parse().ok())
 }
-fn flag(element: &Element, child: &str) -> Option<bool> {
+pub(crate) fn flag(element: &Element, child: &str) -> Option<bool> {
     value_of(element, child).map(|v| v == "true")
 }
 pub(crate) fn set_value(element: &mut Element, child: &str, value: &str) -> Result<(), String> {
@@ -128,7 +128,7 @@ pub(crate) fn tracks(root: &Element) -> Vec<&Element> {
                 .filter(|track| {
                     matches!(
                         track.name.as_str(),
-                        "AudioTrack" | "MidiTrack" | "ReturnTrack"
+                        "AudioTrack" | "MidiTrack" | "ReturnTrack" | "GroupTrack"
                     )
                 })
                 .collect()
@@ -159,7 +159,7 @@ pub(crate) fn track_at_mut(root: &mut Element, index: usize) -> Result<&mut Elem
                 .filter(|track| {
                     matches!(
                         track.name.as_str(),
-                        "AudioTrack" | "MidiTrack" | "ReturnTrack"
+                        "AudioTrack" | "MidiTrack" | "ReturnTrack" | "GroupTrack"
                     )
                 })
                 .count()
@@ -178,7 +178,7 @@ pub(crate) fn track_at_mut(root: &mut Element, index: usize) -> Result<&mut Elem
                 .filter(|track| {
                     matches!(
                         track.name.as_str(),
-                        "AudioTrack" | "MidiTrack" | "ReturnTrack"
+                        "AudioTrack" | "MidiTrack" | "ReturnTrack" | "GroupTrack"
                     )
                 })
                 .nth(index)
@@ -372,7 +372,7 @@ fn envelope_json(
 // ---------------------------------------------------------------------------- the clip
 
 /// The clip's markers in the design's words: start, end, loop, position, length.
-fn markers(clip: &Element) -> Value {
+pub(crate) fn markers(clip: &Element) -> Value {
     let Some(lp) = clip.child("Loop") else {
         return json!({});
     };
@@ -388,7 +388,7 @@ fn markers(clip: &Element) -> Value {
 
 /// The clip's notes: `{id, p, at, len, vel, chance, on}`, at and len in beats,
 /// chance 0–1, sorted by time then pitch.
-fn notes_json(clip: &Element) -> Vec<Value> {
+pub(crate) fn notes_json(clip: &Element) -> Vec<Value> {
     let mut notes = Vec::new();
     let Some(key_tracks) = clip.child("Notes").and_then(|n| n.child("KeyTracks")) else {
         return notes;
@@ -821,7 +821,7 @@ fn apply_settings(
 
 /// Replace a MIDI clip's notes. A note keeps its id when it names one the
 /// clip holds; a new note takes the clip's next id.
-fn apply_notes(clip: &mut Element, notes: &[Value]) -> Result<(), String> {
+pub(crate) fn apply_notes(clip: &mut Element, notes: &[Value]) -> Result<(), String> {
     if clip.name != "MidiClip" {
         return Err("An audio clip holds no notes".into());
     }
@@ -1312,7 +1312,9 @@ pub fn tracks_extra_json(root: &Element) -> Vec<Value> {
     tracks(root)
         .into_iter()
         .map(|track| json!({"mixer": mixer_json(track, &returns), "takeLanes": take_lanes_json(track), "automation": automation_json(root, track),
-            "stoplessSlots": stopless_slots(track)}))
+            "stoplessSlots": stopless_slots(track),
+            // Its own `Id`, the group it stands in (`TrackGroupId`, -1: none) and its colour (`Color`, Live's palette index).
+            "trackId": track.attr("Id"), "groupId": num(track, "TrackGroupId").map(|g| g as i64), "colourIndex": num(track, "Color")}))
         .collect()
 }
 
@@ -1794,7 +1796,7 @@ pub(crate) fn with_source(path: &str, track: &Element, at: ClipAt, mut reading: 
 }
 
 /// The longest clip made here, in beats.
-const MADE_LENGTH_MAX: f64 = 4096.0;
+pub(crate) const MADE_LENGTH_MAX: f64 = 4096.0;
 
 /// A blank MIDI clip in the shape of `donor`, a MIDI clip the set already
 /// holds: the document's own element names and nesting, as Live wrote them,
@@ -1804,7 +1806,7 @@ const MADE_LENGTH_MAX: f64 = 4096.0;
 /// launch, groove and own mode set to a new clip's (Live's: trigger, global
 /// quantize, no legato, no groove, no mode of its own, no follow action). It
 /// wears its part's colour, as a new clip does in Live.
-fn blank_clip(
+pub(crate) fn blank_clip(
     root: &Element,
     donor: &Element,
     track_colour: Option<&str>,

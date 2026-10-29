@@ -83,6 +83,17 @@ pub enum SetAct {
     SceneDuplicate { scene: usize },
     /// Delete (⌫) a row and every clip in it.
     SceneDelete { scene: usize },
+    /// A track's colour, one of Live's 70 (its `Color`, the index the clip
+    /// palette counts: packages/live-shell/ui/src/live/livePalette.ts).
+    TrackColour { track: usize, colour: u8 },
+    /// Group Tracks (⌘G): the tracks — adjacent, in one group or none — put
+    /// in a new group standing right before the first of them.
+    TracksGroup { tracks: Vec<usize> },
+    /// Split (⌘E): an arrangement clip cut in two at the ruler's beat `at`.
+    ClipSplit { track: usize, clip: ClipAt, at: f64 },
+    /// Consolidate (⌘J): what a MIDI part's arrangement clips play between
+    /// the beats `from` and `to` of the ruler, made one clip there.
+    ClipsConsolidate { track: usize, from: f64, to: f64 },
 }
 
 // ---------------------------------------------------------------------------- the document's lists
@@ -244,7 +255,12 @@ fn member_at(root: &Element, track: usize) -> Result<usize, String> {
         .children
         .iter()
         .enumerate()
-        .filter(|(_, t)| matches!(t.name.as_str(), "AudioTrack" | "MidiTrack" | "ReturnTrack"))
+        .filter(|(_, t)| {
+            matches!(
+                t.name.as_str(),
+                "AudioTrack" | "MidiTrack" | "ReturnTrack" | "GroupTrack"
+            )
+        })
         .map(|(at, _)| at)
         .collect();
     match listed.get(track) {
@@ -478,7 +494,8 @@ enum Places {
         before: Vec<String>,
         after: Vec<String>,
         dropped: Option<String>,
-        copied: Option<(String, String)>,
+        /// Each clip that stands for another (`(was, now)`): a copy, or a piece the other was cut into.
+        copied: Vec<(String, String)>,
     },
     /// A track copied whole: its clips' rows copied to the new track's `Id`.
     Track {
@@ -693,7 +710,7 @@ fn clip_duplicate(root: &mut Element, track: usize, clip: ClipAt) -> Result<Done
                     before,
                     after,
                     dropped: None,
-                    copied: Some((original_id, made)),
+                    copied: vec![(original_id, made)],
                 },
             })
         }
@@ -770,7 +787,7 @@ fn clip_delete(root: &mut Element, track: usize, clip: ClipAt) -> Result<Done, S
                     before,
                     after,
                     dropped: Some(original_id),
-                    copied: None,
+                    copied: Vec::new(),
                 },
             })
         }
@@ -856,6 +873,9 @@ fn track_move(root: &mut Element, track: usize, by: i64) -> Result<Done, String>
         .and_then(|set| set.child("Tracks"))
         .ok_or("the document holds no tracks")?;
     let (one, two) = (&members.children[at], &members.children[other]);
+    if one.name == "GroupTrack" || two.name == "GroupTrack" {
+        return Err("A group moves with its members, and a track goes into or out of a group by Group Tracks: moving past a group's head is not carried yet".into());
+    }
     if one.name == "ReturnTrack" || two.name == "ReturnTrack" {
         return Err("A return track's place orders every part's sends: moving one past another, or a part among them, is not carried yet".into());
     }
@@ -944,6 +964,9 @@ fn track_duplicate(root: &mut Element, track: usize) -> Result<Done, String> {
         return Err(
             "Duplicating a return track gives every part another send: not carried yet".into(),
         );
+    }
+    if original.name == "GroupTrack" {
+        return Err("Duplicating a group copies its members with it: not carried yet".into());
     }
     let mut copy = original.clone();
     let from = track_id(original)?;
@@ -1088,6 +1111,455 @@ fn scene_delete(root: &mut Element, scene: usize) -> Result<Done, String> {
     })
 }
 
+fn track_colour(root: &mut Element, track: usize, colour: u8) -> Result<Done, String> {
+    if usize::from(colour) >= LIVE_COLOURS {
+        return Err("A track's colour is one of Live's 70 (0 to 69)".into());
+    }
+    let part = listed_mut(root, track)?;
+    let named = track_name(part);
+    match part.child_mut("Color") {
+        Some(c) => c.set_attr("Value", &colour.to_string()),
+        None => {
+            let mut c = Element::new("Color");
+            c.set_attr("Value", &colour.to_string());
+            let at = part
+                .children
+                .iter()
+                .position(|c| c.name == "Name")
+                .map_or(part.children.len(), |at| at + 1);
+            part.children.insert(at, c);
+        }
+    }
+    Ok(Done {
+        words: format!("Coloured {named}."),
+        at: Some(json!({"track": track})),
+        places: Places::None,
+    })
+}
+
+/// Live's 70 colours (the clip and track palette, livePalette.ts).
+const LIVE_COLOURS: usize = 70;
+
+/// The children a group track keeps, in Live's order (the template's
+/// `GroupTrack Id="17"`, template-piano-voices-mastering.xml:913-1038): a
+/// part's own children that a group has none of (its sequencer, its playing
+/// slot, its MIDI settings) are not among them.
+const GROUP_CHILDREN: &[&str] = &[
+    "LomId",
+    "LomIdView",
+    "IsContentSelectedInDocument",
+    "PreferredContentViewMode",
+    "TrackDelay",
+    "Name",
+    "Color",
+    "AutomationEnvelopes",
+    "TrackGroupId",
+    "TrackUnfolded",
+    "DevicesListWrapper",
+    "ClipSlotsListWrapper",
+    "ViewData",
+    "TakeLanes",
+    "LinkedTrackGroupId",
+    "Slots",
+    "Freeze",
+    "NeedArrangerRefreeze",
+    "DeviceChain",
+];
+
+fn value_element(name: &str, value: &str) -> Element {
+    let mut e = Element::new(name);
+    e.set_attr("Value", value);
+    e
+}
+
+/// A new group track in Live's shape, made from the first of its members as
+/// the template's group stands beside its members: the member's own mixer and
+/// routings (so the group goes where the members went, with as many sends as
+/// the set has returns), with what a group has none of taken away, its device
+/// chain emptied, its envelopes and take lanes cleared, one `GroupTrackSlot`
+/// per row in `Slots`, an empty freeze grid, unfolded, and named as Live
+/// names a new group ("N-Group", the template's `EffectiveName`
+/// `2-Group` with an empty `UserName`).
+fn group_of(member: &Element, id: &str, name: &str, scenes: usize) -> Element {
+    let mut group = member.clone();
+    group.name = "GroupTrack".into();
+    group.set_attr("Id", id);
+    group
+        .children
+        .retain(|c| GROUP_CHILDREN.contains(&c.name.as_str()));
+    let set = |group: &mut Element, name: &str, value: &str| match group.child_mut(name) {
+        Some(e) => e.set_attr("Value", value),
+        None => group.children.push(value_element(name, value)),
+    };
+    set(&mut group, "TrackUnfolded", "true");
+    if let Some(holder) = group.child_mut("Name") {
+        for (field, value) in [("EffectiveName", name), ("UserName", "")] {
+            match holder.child_mut(field) {
+                Some(e) => e.set_attr("Value", value),
+                None => holder.children.push(value_element(field, value)),
+            }
+        }
+    } else {
+        let mut holder = Element::new("Name");
+        holder.children.push(value_element("EffectiveName", name));
+        holder.children.push(value_element("UserName", ""));
+        group.children.insert(0, holder);
+    }
+    if let Some(list) = group
+        .child_mut("AutomationEnvelopes")
+        .and_then(|a| a.child_mut("Envelopes"))
+    {
+        list.children.clear();
+    }
+    if let Some(lanes) = group
+        .child_mut("TakeLanes")
+        .and_then(|t| t.child_mut("TakeLanes"))
+    {
+        lanes.children.clear();
+    }
+    let mut slots = Element::new("Slots");
+    slots.children = (0..scenes).map(fresh_group_slot).collect();
+    let at = group
+        .children
+        .iter()
+        .position(|c| c.name == "LinkedTrackGroupId")
+        .map(|at| at + 1)
+        .or_else(|| group.children.iter().position(|c| c.name == "DeviceChain"))
+        .unwrap_or(group.children.len());
+    group.children.insert(at, slots);
+    if let Some(chain) = group.child_mut("DeviceChain") {
+        chain.children.retain(|c| c.name != "MainSequencer");
+        if let Some(devices) = chain
+            .child_mut("DeviceChain")
+            .and_then(|dc| dc.child_mut("Devices"))
+        {
+            devices.children.clear();
+        }
+        if let Some(list) = chain
+            .child_mut("FreezeSequencer")
+            .and_then(|f| f.child_mut("ClipSlotList"))
+        {
+            list.children.clear();
+        }
+    }
+    group
+}
+
+fn tracks_group(root: &mut Element, tracks: &[usize]) -> Result<Done, String> {
+    let mut chosen: Vec<usize> = tracks.to_vec();
+    chosen.sort_unstable();
+    chosen.dedup();
+    if chosen.is_empty() {
+        return Err("Group Tracks takes one track or more".into());
+    }
+    let mut members = Vec::with_capacity(chosen.len());
+    for &track in &chosen {
+        members.push(member_at(root, track)?);
+    }
+    let scenes = scene_count(root);
+    let list = root
+        .find("LiveSet")
+        .and_then(|set| set.child("Tracks"))
+        .ok_or("the document holds no tracks")?;
+    let parent = value_of(&list.children[members[0]], "TrackGroupId")
+        .unwrap_or("-1")
+        .to_string();
+    for (k, &at) in members.iter().enumerate() {
+        let member = &list.children[at];
+        match member.name.as_str() {
+            "ReturnTrack" => return Err("A return track stands in no group".into()),
+            "GroupTrack" => {
+                return Err(
+                    "Putting a group in a new group is not carried yet: group its tracks".into(),
+                )
+            }
+            _ => {}
+        }
+        if k > 0 && at != members[k - 1] + 1 {
+            return Err("Group Tracks takes tracks that stand side by side".into());
+        }
+        if value_of(member, "TrackGroupId").unwrap_or("-1") != parent {
+            return Err("The tracks stand in different groups: group them within one".into());
+        }
+    }
+    let id = list
+        .children
+        .iter()
+        .filter_map(|t| t.attr("Id")?.parse::<u64>().ok())
+        .max()
+        .map_or(0, |id| id + 1)
+        .to_string();
+    let name = format!("{}-Group", chosen[0] + 1);
+    let mut group = group_of(&list.children[members[0]], &id, &name, scenes);
+    let set = root
+        .find("LiveSet")
+        .ok_or("the document holds no LiveSet")?;
+    let declared = set
+        .child("NextPointeeId")
+        .and_then(|n| n.attr("Value"))
+        .and_then(|v| v.parse::<u64>().ok());
+    let mut next = declared.unwrap_or(0).max(highest_pointee(set) + 1);
+    let mut map = std::collections::HashMap::new();
+    reallocate(&mut group, &mut next, &mut map);
+    let names: Vec<String> = members
+        .iter()
+        .map(|&at| track_name(&list.children[at]))
+        .collect();
+    let all = members_mut(root)?;
+    for &at in &members {
+        let member = &mut all[at];
+        match member.child_mut("TrackGroupId") {
+            Some(e) => e.set_attr("Value", &id),
+            None => {
+                let at = member
+                    .children
+                    .iter()
+                    .position(|c| {
+                        c.name == "AutomationEnvelopes" || c.name == "Color" || c.name == "Name"
+                    })
+                    .map_or(member.children.len(), |at| at + 1);
+                member
+                    .children
+                    .insert(at, value_element("TrackGroupId", &id));
+            }
+        }
+        // A member's sound goes to its group (the template's members: template-piano-voices-mastering.xml:7371-7374).
+        if let Some(routing) = member
+            .child_mut("DeviceChain")
+            .and_then(|dc| dc.child_mut("AudioOutputRouting"))
+        {
+            for (field, value) in [
+                ("Target", "AudioOut/GroupTrack"),
+                ("UpperDisplayString", "Group"),
+                ("LowerDisplayString", ""),
+            ] {
+                if let Some(e) = routing.child_mut(field) {
+                    e.set_attr("Value", value);
+                }
+            }
+        }
+    }
+    let first = members[0];
+    all.insert(
+        first,
+        std::mem::replace(&mut group, Element::new("GroupTrack")),
+    );
+    if declared.is_some() {
+        if let Some(counter) = root
+            .find_mut("LiveSet")
+            .and_then(|set| set.child_mut("NextPointeeId"))
+        {
+            counter.set_attr("Value", &next.to_string());
+        }
+    }
+    Ok(Done {
+        words: format!("Grouped {} in {name}.", names.join(", ")),
+        at: Some(json!({"track": chosen[0]})),
+        places: Places::None,
+    })
+}
+
+fn clip_split(root: &mut Element, track: usize, clip: ClipAt, at: f64) -> Result<Done, String> {
+    if matches!(clip, ClipAt::Slot(_)) {
+        return Err("A clip is split in Arrangement view, where it lies on the ruler".into());
+    }
+    let part = track_at(root, track)?;
+    let original = clip_at(part, clip)?.clone();
+    let id = track_id(part)?;
+    let (start, end) = (
+        edit::num(&original, "CurrentStart").ok_or("the clip carries no place in the document")?,
+        edit::num(&original, "CurrentEnd").ok_or("the clip carries no place in the document")?,
+    );
+    if !(at.is_finite() && at > start && at < end) {
+        return Err(format!(
+            "Split cuts a clip inside it: put the insert marker between beat {} and beat {}",
+            number_text(start),
+            number_text(end)
+        ));
+    }
+    let named = value_of(&original, "Name")
+        .filter(|n| !n.is_empty())
+        .unwrap_or("the clip")
+        .to_string();
+    let tempo = edit::steady_tempo(root);
+    let scale = edit::marker_scale(&original, tempo)?;
+    let (mut before, mut after) = (original.clone(), original.clone());
+    edit::crop(&mut before, start, at, scale)?;
+    edit::crop(&mut after, at, end, scale)?;
+    let holder = if original.name == "MidiClip" {
+        "ClipTimeable"
+    } else {
+        "Sample"
+    };
+    let was = lane_ids(part);
+    let original_id = original.attr("Id").unwrap_or("").to_string();
+    let target = listed_mut(root, track)?;
+    edit::lay_over(target, holder, start, end, tempo, vec![before, after])?;
+    let now = lane_ids(target);
+    let made: Vec<String> = now.iter().filter(|i| !was.contains(i)).cloned().collect();
+    let first = made.first().and_then(|m| now.iter().position(|a| a == m));
+    Ok(Done {
+        words: format!("Split {named} at beat {}.", number_text(at)),
+        at: first.map(|j| json!({"track": track, "arrangement": j})),
+        places: Places::Lane {
+            track: id,
+            before: was,
+            after: now,
+            dropped: Some(original_id.clone()),
+            copied: made.into_iter().map(|m| (original_id.clone(), m)).collect(),
+        },
+    })
+}
+
+/// The notes a MIDI clip on the ruler plays between the beats `from` and `to`,
+/// in Live's order as the clip player ports it (packages/live-shell/ui/src/
+/// live/clipPlayer.ts, "the order"): loop off, from its start marker to its
+/// end, once; loop on, from its start marker to the loop's end, then the loop
+/// again and again — until the clip's own end on the ruler. Each note keeps
+/// its pitch, velocity, chance and switch, placed at its beat on the ruler
+/// less `from`, and is cut where the clip ends or the stretch does.
+fn played_notes(clip: &Element, from: f64, to: f64) -> Vec<Value> {
+    let (Some(start), Some(end)) = (
+        edit::num(clip, "CurrentStart"),
+        edit::num(clip, "CurrentEnd"),
+    ) else {
+        return Vec::new();
+    };
+    let marks = edit::markers(clip);
+    let get = |k: &str| marks.get(k).and_then(Value::as_f64).unwrap_or(0.0);
+    let (first_from, first_to, looped) = if marks.get("loop") == Some(&json!(true)) {
+        (
+            get("start"),
+            get("position") + get("length"),
+            Some((get("position"), get("position") + get("length"))),
+        )
+    } else {
+        (get("start"), get("end"), None)
+    };
+    let notes = edit::notes_json(clip);
+    let (window_from, window_to) = (from.max(start), to.min(end));
+    let mut out = Vec::new();
+    let mut lay = |pass_from: f64, pass_to: f64, ruler: f64| {
+        for note in &notes {
+            let t = note["at"].as_f64().unwrap_or(0.0);
+            if t < pass_from || t >= pass_to {
+                continue;
+            }
+            let beat = ruler + (t - pass_from);
+            if beat < window_from || beat >= window_to {
+                continue;
+            }
+            let len = note["len"].as_f64().unwrap_or(0.0).min(window_to - beat);
+            let mut placed = note.clone();
+            placed["at"] = json!(beat - from);
+            placed["len"] = json!(len);
+            if let Value::Object(fields) = &mut placed {
+                fields.remove("id");
+            }
+            out.push(placed);
+        }
+    };
+    let mut ruler = start;
+    if first_to > first_from {
+        lay(first_from, first_to, ruler);
+        ruler += first_to - first_from;
+    }
+    if let Some((loop_from, loop_to)) = looped {
+        let span = loop_to - loop_from;
+        while span > 0.0 && ruler < window_to {
+            lay(loop_from, loop_to, ruler);
+            ruler += span;
+        }
+    }
+    out
+}
+
+fn clips_consolidate(root: &mut Element, track: usize, from: f64, to: f64) -> Result<Done, String> {
+    if !(from.is_finite() && to.is_finite() && to > from) {
+        return Err("Consolidate takes a stretch of the ruler: its end after its start".into());
+    }
+    if to - from > edit::MADE_LENGTH_MAX {
+        return Err(format!(
+            "A consolidated clip is at most {} beats long",
+            number_text(edit::MADE_LENGTH_MAX)
+        ));
+    }
+    let part = track_at(root, track)?;
+    match part.name.as_str() {
+        "MidiTrack" => {}
+        "AudioTrack" => {
+            return Err("Consolidating audio clips writes a new sample of what plays: a render of the part, which nothing here carries".into())
+        }
+        _ => return Err("Consolidate joins the clips of an audio or MIDI part".into()),
+    }
+    let lane: Vec<Element> = edit::main_lane(part)
+        .into_iter()
+        .filter(|clip| clip.name == "MidiClip")
+        .filter(|clip| {
+            let (s, e) = (
+                edit::num(clip, "CurrentStart").unwrap_or(0.0),
+                edit::num(clip, "CurrentEnd").unwrap_or(0.0),
+            );
+            e > from && s < to
+        })
+        .cloned()
+        .collect();
+    let Some(first) = lane.first() else {
+        return Err(format!(
+            "No clip lies between beat {} and beat {} on this part",
+            number_text(from),
+            number_text(to)
+        ));
+    };
+    let mut notes = Vec::new();
+    for clip in &lane {
+        // A switched-off clip plays nothing (its `Disabled`), so it gives nothing.
+        if edit::flag(clip, "Disabled") == Some(true) {
+            continue;
+        }
+        notes.extend(played_notes(clip, from, to));
+    }
+    let id = track_id(part)?;
+    let colour = value_of(part, "Color").map(str::to_string);
+    let reference = root.clone();
+    // The first clip's own shape, as a new clip takes it (edit.rs blank_clip); a clip that carries none of a new clip's settings
+    // (one made by hand) gives the shape Live's loader took for such a clip (crafted_clip).
+    let mut made = edit::blank_clip(&reference, first, colour.as_deref(), to - from)
+        .unwrap_or_else(|_| crafted_clip(colour.as_deref(), to - from));
+    if let Some(name) = value_of(first, "Name") {
+        set_value(&mut made, "Name", name)?;
+    }
+    edit::apply_notes(&mut made, &notes)?;
+    set_value(&mut made, "CurrentStart", &number_text(from))?;
+    set_value(&mut made, "CurrentEnd", &number_text(to))?;
+    made.set_attr("Time", &number_text(from));
+    let tempo = edit::steady_tempo(root);
+    let was = lane_ids(part);
+    let target = listed_mut(root, track)?;
+    edit::lay_over(target, "ClipTimeable", from, to, tempo, vec![made])?;
+    let now = lane_ids(target);
+    let new = now.iter().position(|i| !was.contains(i));
+    Ok(Done {
+        words: format!(
+            "Consolidated {} clip{} between beat {} and beat {} into one, {} note{}.",
+            lane.len(),
+            if lane.len() == 1 { "" } else { "s" },
+            number_text(from),
+            number_text(to),
+            notes.len(),
+            if notes.len() == 1 { "" } else { "s" }
+        ),
+        at: new.map(|j| json!({"track": track, "arrangement": j})),
+        places: Places::Lane {
+            track: id,
+            before: was,
+            after: now,
+            dropped: None,
+            copied: Vec::new(),
+        },
+    })
+}
+
 /// Where each kept clip's record row goes after the act: none (gone), one
 /// (moved or kept) or two (copied).
 fn new_places(places: &Places, track: &str, at: ClipAt) -> Vec<(String, ClipAt)> {
@@ -1146,16 +1618,17 @@ fn new_places(places: &Places, track: &str, at: ClipAt) -> Vec<(String, ClipAt)>
             let Some(id) = before.get(j) else {
                 return same;
             };
-            if Some(id) == dropped.as_ref() {
-                return Vec::new();
-            }
-            let mut out: Vec<(String, ClipAt)> = after
-                .iter()
-                .position(|a| a == id)
-                .map(|k| (track.to_string(), ClipAt::Arrangement(k)))
-                .into_iter()
-                .collect();
-            if let Some((source, made)) = copied {
+            let mut out: Vec<(String, ClipAt)> = if Some(id) == dropped.as_ref() {
+                Vec::new()
+            } else {
+                after
+                    .iter()
+                    .position(|a| a == id)
+                    .map(|k| (track.to_string(), ClipAt::Arrangement(k)))
+                    .into_iter()
+                    .collect()
+            };
+            for (source, made) in copied {
                 if source == id {
                     if let Some(k) = after.iter().position(|a| a == made) {
                         out.push((track.to_string(), ClipAt::Arrangement(k)));
@@ -1200,6 +1673,12 @@ pub fn act(path: &str, expected_revision: &str, act: &SetAct) -> Result<Value, S
             SetAct::SceneRename { scene, name } => scene_rename(root, *scene, name)?,
             SetAct::SceneDuplicate { scene } => scene_duplicate(root, *scene)?,
             SetAct::SceneDelete { scene } => scene_delete(root, *scene)?,
+            SetAct::TrackColour { track, colour } => track_colour(root, *track, *colour)?,
+            SetAct::TracksGroup { tracks } => tracks_group(root, tracks)?,
+            SetAct::ClipSplit { track, clip, at } => clip_split(root, *track, *clip, *at)?,
+            SetAct::ClipsConsolidate { track, from, to } => {
+                clips_consolidate(root, *track, *from, *to)?
+            }
         });
         Ok(())
     })?;
@@ -1291,6 +1770,8 @@ mod tests {
 <Name><EffectiveName Value="Drums"/><UserName Value="Drums"/></Name>
 <TrackGroupId Value="-1"/>
 <DeviceChain>
+<AudioOutputRouting><Target Value="AudioOut/Main"/><UpperDisplayString Value="Main"/><LowerDisplayString Value=""/></AudioOutputRouting>
+<Mixer><Volume><Manual Value="1"/><AutomationTarget Id="1700"/></Volume></Mixer>
 <MainSequencer><ClipSlotList>
 <ClipSlot Id="0"><LomId Value="0"/><ClipSlot><Value/></ClipSlot><HasStop Value="true"/><NeedRefreeze Value="true"/></ClipSlot>
 <ClipSlot Id="1"><LomId Value="0"/><ClipSlot><Value><AudioClip Id="0"><CurrentStart Value="0"/><CurrentEnd Value="4"/><Name Value="Break"/></AudioClip></Value></ClipSlot><HasStop Value="true"/><NeedRefreeze Value="true"/></ClipSlot>
@@ -1420,14 +1901,14 @@ mod tests {
             SetAct::ClipPaste {
                 from_track: 0,
                 from: ClipAt::Slot(0),
-                track: 1,
+                track: 2,
                 scene: 1,
                 cut: false,
             },
         )
         .unwrap();
         assert_eq!(pasted["act"], "clip_paste");
-        assert_eq!(pasted["at"], json!({"track": 1, "slot": 1}));
+        assert_eq!(pasted["at"], json!({"track": 2, "slot": 1}));
         assert!(
             pasted["done"]
                 .as_str()
@@ -1445,8 +1926,8 @@ mod tests {
             Some("Riff"),
             "a copy leaves the original"
         );
-        assert_eq!(slots(&document, 1)[1].as_deref(), Some("Riff"));
-        let copy = crate::edit::clip_at(crate::edit::track_at(&root, 1).unwrap(), ClipAt::Slot(1))
+        assert_eq!(slots(&document, 2)[1].as_deref(), Some("Riff"));
+        let copy = crate::edit::clip_at(crate::edit::track_at(&root, 2).unwrap(), ClipAt::Slot(1))
             .unwrap();
         assert!(
             copy.attr("Time").is_none(),
@@ -1494,7 +1975,7 @@ mod tests {
                 SetAct::ClipPaste {
                     from_track: 0,
                     from: ClipAt::Slot(1),
-                    track: 2,
+                    track: 3,
                     scene: 0,
                     cut: false,
                 },
@@ -1504,7 +1985,7 @@ mod tests {
                 SetAct::ClipPaste {
                     from_track: 0,
                     from: ClipAt::Slot(1),
-                    track: 1,
+                    track: 2,
                     scene: 1,
                     cut: false,
                 },
@@ -1514,7 +1995,7 @@ mod tests {
                 SetAct::ClipPaste {
                     from_track: 0,
                     from: ClipAt::Slot(0),
-                    track: 1,
+                    track: 2,
                     scene: 0,
                     cut: false,
                 },
@@ -1524,7 +2005,7 @@ mod tests {
                 SetAct::ClipPaste {
                     from_track: 0,
                     from: ClipAt::Arrangement(0),
-                    track: 1,
+                    track: 2,
                     scene: 0,
                     cut: false,
                 },
@@ -1534,7 +2015,7 @@ mod tests {
                 SetAct::ClipPaste {
                     from_track: 0,
                     from: ClipAt::Slot(1),
-                    track: 3,
+                    track: 4,
                     scene: 0,
                     cut: false,
                 },
@@ -1683,7 +2164,7 @@ mod tests {
             ]
         );
         assert_eq!(
-            slots(&document, 2),
+            slots(&document, 3),
             vec![None, None, Some("Break".into())],
             "Drums' clip moved down with its row"
         );
@@ -1733,14 +2214,14 @@ mod tests {
         let gone = run(
             &path,
             SetAct::ClipDelete {
-                track: 2,
+                track: 3,
                 clip: ClipAt::Slot(1),
             },
         )
         .unwrap();
         assert_eq!(gone["done"], "Deleted Break from row 2.");
         let (_, document) = reread(&path);
-        assert_eq!(slots(&document, 2), vec![None, None]);
+        assert_eq!(slots(&document, 3), vec![None, None]);
         run(
             &path,
             SetAct::ClipDelete {
@@ -1755,7 +2236,7 @@ mod tests {
         let refused = run(
             &path,
             SetAct::ClipDelete {
-                track: 2,
+                track: 3,
                 clip: ClipAt::Slot(1),
             },
         )
@@ -1792,7 +2273,7 @@ mod tests {
             ),
             (
                 SetAct::TrackRename {
-                    track: 4,
+                    track: 5,
                     name: "Main".into(),
                 },
                 "Main track",
@@ -1802,22 +2283,21 @@ mod tests {
                 "already the first track",
             ),
             (
-                SetAct::TrackMove { track: 1, by: 1 },
+                SetAct::TrackMove { track: 2, by: 1 },
                 "into or out of a group",
             ),
-            (
-                SetAct::TrackMove { track: 0, by: 1 },
-                "into or out of a group",
-            ),
-            (SetAct::TrackMove { track: 2, by: 1 }, "return track"),
+            (SetAct::TrackMove { track: 0, by: 1 }, "group"),
+            (SetAct::TrackMove { track: 1, by: -1 }, "group"),
+            (SetAct::TrackMove { track: 3, by: 1 }, "return track"),
             (SetAct::TrackMove { track: 0, by: 2 }, "one place"),
-            (SetAct::TrackDuplicate { track: 3 }, "return track"),
+            (SetAct::TrackDuplicate { track: 4 }, "return track"),
+            (SetAct::TrackDuplicate { track: 1 }, "group"),
         ] {
             let refused = run(&path, act).unwrap_err();
             assert!(refused.contains(words), "{refused}");
         }
         // Drums moves left past nothing of a group? Bass sits in the group, Drums does not: refused; the group's own order holds.
-        assert!(run(&path, SetAct::TrackMove { track: 2, by: -1 })
+        assert!(run(&path, SetAct::TrackMove { track: 3, by: -1 })
             .unwrap_err()
             .contains("group"));
         // Duplicate Keys: a copy right after it, a new track Id, every pointee fresh and its envelopes following them.
@@ -1827,7 +2307,7 @@ mod tests {
         let names: Vec<&str> = document.tracks.iter().map(|t| t.name.as_str()).collect();
         assert_eq!(
             names,
-            vec!["Rhodes", "Rhodes", "Bass", "Drums", "A-Reverb", "Master"]
+            vec!["Rhodes", "Rhodes", "Group", "Bass", "Drums", "A-Reverb", "Master"]
         );
         assert_eq!(
             slots(&document, 1)[0].as_deref(),
@@ -1895,7 +2375,7 @@ mod tests {
         assert_eq!(inserted["done"], "Inserted an empty row 2.");
         let (root, document) = reread(&path);
         assert_eq!(document.scene_count, 3);
-        assert_eq!(slots(&document, 2), vec![None, None, Some("Break".into())]);
+        assert_eq!(slots(&document, 3), vec![None, None, Some("Break".into())]);
         let fresh = &root.find("Scenes").unwrap().children[1];
         assert_eq!(fresh.attr("Id"), Some("1"));
         for (name, value) in [
@@ -1950,7 +2430,7 @@ mod tests {
         let (root, document) = reread(&path);
         assert_eq!(document.scene_count, 4);
         assert_eq!(
-            slots(&document, 2),
+            slots(&document, 3),
             vec![None, None, Some("Break".into()), Some("Break".into())]
         );
         let freeze = lists(&root)
@@ -2022,7 +2502,7 @@ mod tests {
             SetAct::ClipPaste {
                 from_track: 0,
                 from: ClipAt::Slot(1),
-                track: 1,
+                track: 2,
                 scene: 0,
                 cut: false,
             },
@@ -2065,6 +2545,297 @@ mod tests {
         assert_eq!(
             crate::sources::source_of(set, "12", ClipAt::Slot(0)).unwrap(),
             None
+        );
+    }
+
+    /// A MIDI part whose arrangement holds a looped clip (0–4, its loop 0–2) and an unlooped one (4–8, its markers 1–5), each with notes.
+    const LANE: &str = r#"<?xml version="1.0" encoding="UTF-8"?>
+<Ableton MajorVersion="5" MinorVersion="12.0_12049"><LiveSet><Tracks>
+<MidiTrack Id="12"><Name><EffectiveName Value="Keys"/><UserName Value=""/></Name><Color Value="26"/><TrackGroupId Value="-1"/>
+<DeviceChain><MainSequencer><ClipSlotList/><ClipTimeable><ArrangerAutomation><Events>
+<MidiClip Id="0" Time="0"><CurrentStart Value="0"/><CurrentEnd Value="4"/><Loop><LoopStart Value="0"/><LoopEnd Value="2"/><StartRelative Value="0"/><LoopOn Value="true"/><OutMarker Value="2"/><HiddenLoopStart Value="0"/><HiddenLoopEnd Value="2"/></Loop><Name Value="Pulse"/><Annotation Value=""/><Color Value="3"/><Disabled Value="false"/><Envelopes><Envelopes/></Envelopes>
+<Notes><KeyTracks><KeyTrack Id="0"><Notes><MidiNoteEvent Time="0" Duration="0.5" Velocity="100" OffVelocity="64" IsEnabled="true" NoteId="1"/></Notes><MidiKey Value="60"/></KeyTrack></KeyTracks><NoteIdGenerator><NextId Value="2"/></NoteIdGenerator></Notes></MidiClip>
+<MidiClip Id="1" Time="4"><CurrentStart Value="4"/><CurrentEnd Value="8"/><Loop><LoopStart Value="1"/><LoopEnd Value="5"/><StartRelative Value="0"/><LoopOn Value="false"/><OutMarker Value="5"/><HiddenLoopStart Value="1"/><HiddenLoopEnd Value="5"/></Loop><Name Value="Answer"/><Annotation Value=""/><Color Value="4"/><Disabled Value="false"/><Envelopes><Envelopes/></Envelopes>
+<Notes><KeyTracks><KeyTrack Id="0"><Notes><MidiNoteEvent Time="1" Duration="1" Velocity="90" OffVelocity="64" IsEnabled="true" NoteId="1"/><MidiNoteEvent Time="4.5" Duration="1" Velocity="80" OffVelocity="64" IsEnabled="true" NoteId="2"/></Notes><MidiKey Value="64"/></KeyTrack></KeyTracks><NoteIdGenerator><NextId Value="3"/></NoteIdGenerator></Notes></MidiClip>
+</Events></ArrangerAutomation></ClipTimeable></MainSequencer><DeviceChain><Devices/></DeviceChain></DeviceChain></MidiTrack>
+</Tracks><MainTrack><DeviceChain><Mixer><Tempo><Manual Value="120"/></Tempo></Mixer></DeviceChain></MainTrack><Scenes><Scene Id="0"><Name Value=""/></Scene></Scenes></LiveSet></Ableton>"#;
+
+    fn lane_of(path: &str) -> Vec<(String, f64, f64)> {
+        let (_, document) = reread(path);
+        document.tracks[0]
+            .arrangement_clips
+            .iter()
+            .map(|c| (c.name.clone(), c.start, c.end))
+            .collect()
+    }
+
+    #[test]
+    fn groups_are_listed_in_the_sets_order_with_their_members_ids() {
+        let (_dir, path) = set_file(SET);
+        let (root, document) = reread(&path);
+        let kinds: Vec<(&str, crate::model::TrackKind)> = document
+            .tracks
+            .iter()
+            .map(|t| (t.name.as_str(), t.kind))
+            .collect();
+        use crate::model::TrackKind::*;
+        assert_eq!(
+            kinds,
+            vec![
+                ("Keys", Midi),
+                ("Group", Group),
+                ("Bass", Midi),
+                ("Drums", Audio),
+                ("A-Reverb", Return),
+                ("Master", Master)
+            ]
+        );
+        let extra = crate::edit::tracks_extra_json(&root);
+        assert_eq!(
+            (extra[1]["trackId"].clone(), extra[1]["groupId"].clone()),
+            (json!("17"), json!(-1))
+        );
+        assert_eq!(
+            (extra[2]["trackId"].clone(), extra[2]["groupId"].clone()),
+            (json!("13"), json!(17))
+        );
+        assert_eq!(extra[0]["colourIndex"], json!(26.0));
+        assert_eq!(
+            crate::api::set_json(&path).unwrap()["summary"]["tracks"][1]["kind"],
+            "group"
+        );
+    }
+
+    #[test]
+    fn a_track_takes_one_of_lives_seventy_colours() {
+        let (_dir, path) = set_file(TIDE);
+        let coloured = run(
+            &path,
+            SetAct::TrackColour {
+                track: 0,
+                colour: 9,
+            },
+        )
+        .unwrap();
+        assert_eq!(coloured["done"], "Coloured Estuary.");
+        let (root, _) = reread(&path);
+        assert_eq!(
+            crate::edit::tracks_extra_json(&root)[0]["colourIndex"],
+            json!(9.0),
+            "made where the track carried none"
+        );
+        assert!(run(
+            &path,
+            SetAct::TrackColour {
+                track: 0,
+                colour: 70
+            }
+        )
+        .unwrap_err()
+        .contains("Live's 70"));
+    }
+
+    #[test]
+    fn group_tracks_puts_side_by_side_tracks_in_a_new_group_in_lives_shape() {
+        let (_dir, path) = set_file(SET);
+        for (tracks, words) in [
+            (vec![4], "return track"),
+            (vec![1], "group in a new group"),
+            (vec![0, 3], "side by side"),
+            (vec![2, 3], "different groups"),
+            (vec![], "one track or more"),
+        ] {
+            let refused = run(&path, SetAct::TracksGroup { tracks }).unwrap_err();
+            assert!(refused.contains(words), "{refused}");
+        }
+        let grouped = run(&path, SetAct::TracksGroup { tracks: vec![3] }).unwrap();
+        assert_eq!(grouped["done"], "Grouped Drums in 4-Group.");
+        let (root, document) = reread(&path);
+        let names: Vec<&str> = document.tracks.iter().map(|t| t.name.as_str()).collect();
+        assert_eq!(
+            names,
+            vec!["Keys", "Group", "Bass", "4-Group", "Drums", "A-Reverb", "Master"]
+        );
+        let group = crate::edit::track_at(&root, 3).unwrap();
+        assert_eq!(
+            (group.name.as_str(), group.attr("Id")),
+            ("GroupTrack", Some("18"))
+        );
+        let order: Vec<&str> = group.children.iter().map(|c| c.name.as_str()).collect();
+        assert!(
+            order.iter().all(|c| GROUP_CHILDREN.contains(c)),
+            "only a group's own children: {order:?}"
+        );
+        assert_eq!(value_of(group, "TrackUnfolded"), Some("true"));
+        assert_eq!(
+            group.child("Slots").unwrap().children.len(),
+            2,
+            "one GroupTrackSlot per row"
+        );
+        assert!(group
+            .child("DeviceChain")
+            .unwrap()
+            .child("MainSequencer")
+            .is_none());
+        assert_eq!(
+            group.find("AutomationTarget").unwrap().attr("Id"),
+            Some("2000"),
+            "its own pointees, allocated from NextPointeeId"
+        );
+        let drums = crate::edit::track_at(&root, 4).unwrap();
+        assert_eq!(value_of(drums, "TrackGroupId"), Some("18"));
+        let out = drums
+            .child("DeviceChain")
+            .unwrap()
+            .child("AudioOutputRouting")
+            .unwrap();
+        assert_eq!(
+            (value_of(out, "Target"), value_of(out, "UpperDisplayString")),
+            (Some("AudioOut/GroupTrack"), Some("Group"))
+        );
+        assert_eq!(
+            crate::edit::tracks_extra_json(&root)[4]["groupId"],
+            json!(18)
+        );
+    }
+
+    #[test]
+    fn split_cuts_an_arrangement_clip_at_the_marker() {
+        let (_dir, path) = set_file(SET);
+        for (act, words) in [
+            (
+                SetAct::ClipSplit {
+                    track: 0,
+                    clip: ClipAt::Slot(0),
+                    at: 1.0,
+                },
+                "Arrangement view",
+            ),
+            (
+                SetAct::ClipSplit {
+                    track: 0,
+                    clip: ClipAt::Arrangement(0),
+                    at: 4.0,
+                },
+                "inside it",
+            ),
+        ] {
+            let refused = run(&path, act).unwrap_err();
+            assert!(refused.contains(words), "{refused}");
+        }
+        let split = run(
+            &path,
+            SetAct::ClipSplit {
+                track: 0,
+                clip: ClipAt::Arrangement(0),
+                at: 1.0,
+            },
+        )
+        .unwrap();
+        assert_eq!(split["done"], "Split Verse at beat 1.");
+        let (root, document) = reread(&path);
+        let lane: Vec<(String, f64, f64)> = document.tracks[0]
+            .arrangement_clips
+            .iter()
+            .map(|c| (c.name.clone(), c.start, c.end))
+            .collect();
+        assert_eq!(
+            lane,
+            vec![
+                ("Verse".into(), 0.0, 1.0),
+                ("Verse".into(), 1.0, 4.0),
+                ("Chorus".into(), 6.0, 10.0)
+            ]
+        );
+        let second = crate::edit::clip_at(
+            crate::edit::track_at(&root, 0).unwrap(),
+            ClipAt::Arrangement(1),
+        )
+        .unwrap();
+        let lp = second.child("Loop").unwrap();
+        assert_eq!(
+            (value_of(lp, "LoopStart"), value_of(lp, "LoopEnd")),
+            (Some("1"), Some("4")),
+            "its material stays where it stood"
+        );
+        assert_eq!(second.attr("Time"), Some("1"));
+    }
+
+    #[test]
+    fn consolidate_makes_one_clip_of_what_a_midi_part_plays_in_the_stretch() {
+        let (_dir, path) = set_file(LANE);
+        let made = run(
+            &path,
+            SetAct::ClipsConsolidate {
+                track: 0,
+                from: 1.0,
+                to: 7.0,
+            },
+        )
+        .unwrap();
+        assert_eq!(
+            made["done"],
+            "Consolidated 2 clips between beat 1 and beat 7 into one, 2 notes."
+        );
+        assert_eq!(made["at"], json!({"track": 0, "arrangement": 1}));
+        assert_eq!(
+            lane_of(&path),
+            vec![
+                ("Pulse".into(), 0.0, 1.0),
+                ("Pulse".into(), 1.0, 7.0),
+                ("Answer".into(), 7.0, 8.0)
+            ],
+            "the clips under the stretch give way to it, as the comp lays a take"
+        );
+        // Pulse loops 0–2 from beat 0: its note sounds at 0 and 2; Answer plays its markers 1–5 from beat 4: its notes at 4 and 7.5.
+        let reading = crate::edit::clip_json(&path, 0, ClipAt::Arrangement(1)).unwrap();
+        let notes: Vec<(i64, f64, f64)> = reading["clip"]["notes"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|n| {
+                (
+                    n["p"].as_i64().unwrap(),
+                    n["at"].as_f64().unwrap(),
+                    n["len"].as_f64().unwrap(),
+                )
+            })
+            .collect();
+        assert_eq!(notes, vec![(60, 1.0, 0.5), (64, 3.0, 1.0)]);
+        for (act, words) in [
+            (
+                SetAct::ClipsConsolidate {
+                    track: 0,
+                    from: 20.0,
+                    to: 24.0,
+                },
+                "No clip lies",
+            ),
+            (
+                SetAct::ClipsConsolidate {
+                    track: 0,
+                    from: 4.0,
+                    to: 4.0,
+                },
+                "end after its start",
+            ),
+        ] {
+            let refused = run(&path, act).unwrap_err();
+            assert!(refused.contains(words), "{refused}");
+        }
+        let (_audio_dir, audio) = set_file(SET);
+        let refused = run(
+            &audio,
+            SetAct::ClipsConsolidate {
+                track: 3,
+                from: 0.0,
+                to: 4.0,
+            },
+        )
+        .unwrap_err();
+        assert!(
+            refused.contains("render"),
+            "an audio part's consolidate waits for a render: {refused}"
         );
     }
 }

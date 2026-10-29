@@ -30,6 +30,10 @@ export interface ObjectContext {
   readonly press: ObjectRun
   readonly rename: (target: ObjectTarget) => void
   readonly writeClip: (clipId: string, key: string, value: unknown) => Promise<unknown>
+  /** Arrangement view's insert marker, where the pane stands one (a point of the ruler, in its units): Split cuts there. */
+  readonly marker?: number | null
+  /** Arrangement view's time selection, where the pane holds one: Consolidate joins what plays there. */
+  readonly span?: {readonly start: number; readonly end: number} | null
   readonly folded?: (trackId: string) => boolean | undefined
   readonly fold?: (trackId: string) => void
   /** The undo list's door (frame/menu/undo.ts): a change the owner took, with its way back. */
@@ -50,7 +54,8 @@ export function undoable(context: Pick<ObjectContext, 'record'>, label: string, 
 
 /** The words of an act no owner carries: the operation it waits for, and whose. Pure. */
 export function missingAct(op: string, actions: WorldTrackActions | undefined): string {
-  return `No owner operation carries it yet — missing op: ${op} (${actions?.owner ?? 'this work\'s owner'}).`
+  const waits = actions?.waiting?.[op]
+  return `No owner operation carries it yet — missing op: ${op} (${actions?.owner ?? 'this work\'s owner'}).${waits ? ` It waits for ${waits}.` : ''}`
 }
 
 const sep = (id: string): ObjectMenuItem => ({id, type: 'separator'})
@@ -127,9 +132,23 @@ function clipMenu(target: Extract<ObjectTarget, {kind: 'clip'}>, set: WorldTrack
   }, undefined, readOnly))
   if (context.view === 'arrangement') {
     items.push(sep('s3'))
-    items.push(act('split', 'Split', '⌘E', undefined, 'clip.split', a, () => {}))
-    items.push(act('consolidate', 'Consolidate', '⌘J', undefined, 'clip.consolidate', a, () => {}))
-    items.push(act('crop', 'Crop', '⇧⌘J', undefined, 'clip.crop', a, () => {}))
+    // Split cuts the clip at the insert marker; Consolidate joins what the clip's track plays over the time selection (each the pane's
+    // own, handed to the owner); one with no place to act says where to set it, rather than naming an op to build.
+    const placed = set.clips.find(clip => clip.id === target.id)?.at
+    const marker = context.marker ?? null, span = context.span ?? null
+    const split = readOnly ? undefined : a?.splitClip, joins = readOnly ? undefined : a?.consolidateClips
+    const inside = marker !== null && placed?.end !== undefined && marker > placed.start && marker < placed.end
+    items.push(split && !inside ? {id: 'split', label: 'Split', shortcut: '⌘E', disabled: true,
+      why: `Set the insert marker inside ${named} on the ruler: Split cuts it there.`}
+      : act('split', 'Split', '⌘E', split, 'clip.split', a, () => press(`split:${target.id}`, `Split ${named}`, () => split!.run(target.id, marker!)), undefined, readOnly))
+    const joinRefused = joins?.refuses?.(target.trackId)
+    items.push(joins && joinRefused ? {id: 'consolidate', label: 'Consolidate', shortcut: '⌘J', disabled: true, why: joinRefused}
+      : joins && !span ? {id: 'consolidate', label: 'Consolidate', shortcut: '⌘J', disabled: true,
+        why: 'Select a stretch of the ruler (press to set the insert marker, then Shift-press its other end): Consolidate joins what plays there.'}
+      : act('consolidate', 'Consolidate', '⌘J', joins, 'clip.consolidate', a,
+        () => press(`consolidate:${target.trackId}`, `Consolidate ${set.tracks.find(t => t.id === target.trackId)?.name ?? 'the track'}`,
+          () => joins!.run(target.trackId, span!)), undefined, readOnly))
+    items.push(act('crop', 'Crop', '⇧⌘J', undefined, 'clip.crop', a, () => {}, undefined, readOnly))
   }
   // In Central, Open and Reveal the page's file (§10.9): listed only where the set carries them; neither changes the clip.
   if (a?.openFile || a?.revealFile) {
@@ -189,7 +208,8 @@ function trackMenu(target: Extract<ObjectTarget, {kind: 'track'}>, set: WorldTra
       () => press(`mix:arm:${target.id}`, `Arm ${named}`, undoable(context, `Arm ${named}`, () => mixer!.arm!.run(target.id, !track?.mix?.arm),
         () => mixer!.arm!.run(target.id, !!track?.mix?.arm)))),
     sep('s2'),
-    act('group', 'Group', '⌘G', undefined, 'tracks.group', a, () => {}),
+    act('group', 'Group', '⌘G', own(a?.groupTracks), 'tracks.group', a,
+      () => press(`group:${target.id}`, `Group ${named}`, () => a!.groupTracks!.run([target.id]))),
   ]
   if (context.fold && set.tracks.some(t => t.parentId === target.id)) {
     const folded = context.folded?.(target.id) === true

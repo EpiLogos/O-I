@@ -157,6 +157,8 @@
 /* The insert marker: the pane's own, a thin line through the lanes and its point read out on the ruler. */
 .tl-marks .tl-marker-mark { top: 3px; transform: translateX(-50%); height: 14px; padding: 0 3px; border-left: 0; background: var(--text-dim); color: var(--bg-0); font: 9px/14px var(--mono); pointer-events: none; z-index: 2 }
 .tl-marker { position: absolute; top: 0; bottom: 0; width: 1px; z-index: 2; pointer-events: none; background: var(--text-dim) }
+/* The time selection (Shift-press from the insert marker): a band over the marks and through the lanes; it takes no pointer. */
+.tl-span { position: absolute; top: 0; bottom: 0; z-index: 1; pointer-events: none; background: color-mix(in srgb, var(--sel) 22%, transparent) }
 
 /* The occasion stood in (mockup .cursor.occ: the accent, 2px), its readout on the ruler and its admission light — lit only when an
    admission is reported (admitted green, no longer in the reading red); unqualified, dark. */

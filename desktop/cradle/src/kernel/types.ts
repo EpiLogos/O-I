@@ -1258,6 +1258,10 @@ export type LiveSetAct =
   | {kind: 'scene_rename'; scene: number; name: string}
   | {kind: 'scene_duplicate'; scene: number}
   | {kind: 'scene_delete'; scene: number}
+  | {kind: 'track_colour'; track: number; colour: number}
+  | {kind: 'tracks_group'; tracks: number[]}
+  | {kind: 'clip_split'; track: number; clip: LiveClipAt; at: number}
+  | {kind: 'clips_consolidate'; track: number; from: number; to: number}
 /** What an act did: its kind, its words, where it left what it made, the set's new revision; and why the clips' sources beside the set
  * did not follow, when they did not. */
 export interface LiveSetActed {act: LiveSetAct['kind']; done: string; at: {track?: number; slot?: number; arrangement?: number; scene?: number} | null

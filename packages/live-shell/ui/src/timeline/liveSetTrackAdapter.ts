@@ -31,6 +31,7 @@
 // and answer in the owner's words. Launch, Stop and Stop all play the clip on the torus through the clip player (live/clipPlayer.ts
 // clipLaunchActs). The slots whose stop button the set has removed are each track's `stopless`, read from the owner (`stoplessSlots`).
 import type {SetDocument} from '../shell/document'
+import {liveColour, liveColourIndex} from '../live/livePalette'
 import type {SetSummary} from '../shell/useSet'
 import type {WorldActionReceipt, WorldAutomationLane, WorldCompStretch, WorldMixer, WorldTakeLane, WorldTrackActions, WorldTrackAdapter, WorldTrackClip, WorldTrackMix, WorldTrackSet} from './worldTrackAdapter'
 import type {LiveClipAt, LiveEnvelope, LiveSend, LiveSetAct, LiveSetActed, LiveTakeLane, LiveTrackMixer} from '../../../../../desktop/cradle/src/kernel/types'
@@ -81,6 +82,16 @@ export interface LiveSetReading {
 /** The op an act of the set's names, in the words a menu shows. */
 export const LIVE_ACT_OP = (kind: LiveSetAct['kind']) => `live_set_act · ${kind} — the set's own ${kind.replace('_', ' ')}, against its revision (packages/live-set/src/acts.rs)`
 export const LIVE_INSERT_CLIP_OP = 'live_clip_create {path, track, scene, length: 4, notes: []} — an empty one-bar MIDI clip in the empty slot, as Live inserts one'
+/** What an act no op of the set's owner carries waits for (O-I #743, round two), as the status bar says after the missing op. */
+export const LIVE_RENDER_WAIT = 'Consolidating audio clips writes a new sample of what plays: a render of the part, which nothing here carries.'
+/** Why a track of a kind cannot be consolidated here, by the kind its owner reads (a MIDI part's the owner takes). */
+const CONSOLIDATE_REFUSED: Readonly<Partial<Record<SetSummary['tracks'][number]['kind'], string>>> = {audio: LIVE_RENDER_WAIT}
+export const LIVE_WAITING: Readonly<Record<string, string>> = {
+  'row.launch': 'a player of every clip of a row at once on the torus: the clip player (live/clipPlayer.ts) plays one clip at a time',
+  'slot.record': 'a recording path: what is played written into a new clip in the slot; nothing records into a clip yet',
+  'track.remove': 'the decode of how Live re-routes the parts and sends that went to a deleted track: session-model.md has no rule for it',
+  'clip.crop': 'the decode of what Live\'s Crop Clip keeps of a clip — its notes and markers outside the loop, or outside its start and end: the Live Object Model lists Clip.crop (LOM-INVENTORY.md), and nothing decoded says what it does; an audio clip\'s crop also writes a new sample, a render',
+}
 export const LIVE_INFO_OP = 'live_clip_write {path, track, clip, set: {info}} — the clip\'s info text (its Annotation), against the set\'s revision'
 export const LIVE_PLAY_OP = 'the clip player (live/clipPlayer.ts): the clip read from the set\'s owner, its notes struck on the torus at the set\'s tempo'
 
@@ -142,12 +153,28 @@ export const liveSetTrackAdapter: WorldTrackAdapter<LiveSetReading> = {
     if (!set) return {columns: [], tracks: [], clips: []}
     const trackRef = (index: number) => `als:${set.path}#track/${index}`
     // The set's master track is Live's Main track: its material stands at the end, and its chain is the devices the set lists on it.
+    // A group's members stand under it (Live's TrackGroupId names the group's own Id), a rail for every level.
+    const byId = new Map<string, number>()
+    document?.tracks.forEach((track, index) => { if (track.trackId) byId.set(track.trackId, index) })
+    const parentOf = (index: number): number | undefined => {
+      const group = document?.tracks[index]?.groupId
+      return group !== undefined && group !== null && group >= 0 ? byId.get(String(group)) : undefined
+    }
+    const depthOf = (index: number): number => {
+      let depth = 0
+      for (let at = parentOf(index); at !== undefined && depth < set.tracks.length; at = parentOf(at)) depth += 1
+      return depth
+    }
     const tracks = set.tracks.map((track, index) => {
       const mixer = document?.tracks[index]?.mixer
       const {sends, ...row}: LiveTrackMixer = mixer ?? {}
       const mix: LiveTrackMix = {...row, ...(sends?.length ? {sends: liveMixSends(sends)} : {})}
       const stopless = document?.tracks[index]?.stoplessSlots ?? []
-      return {id: trackRef(index), name: track.name, kind: track.kind, ...(colors?.[index] ? {color: colors[index]} : {}),
+      // The set's own colour where it keeps one (the track's Color, Live's palette index), else the shell's.
+      const color = liveColour(document?.tracks[index]?.colourIndex) ?? colors?.[index]
+      const parent = parentOf(index)
+      return {id: trackRef(index), name: track.name, kind: track.kind, ...(color ? {color} : {}),
+        ...(parent !== undefined ? {parentId: trackRef(parent), depth: depthOf(index)} : {}),
         ...(track.kind === 'master' ? {main: true as const} : {}), ...(Object.keys(mix).length ? {mix} : {}),
         ...(stopless.length ? {stopless: stopless.map(scene => `scene:${scene}`)} : {})}
     })
@@ -313,7 +340,39 @@ function liveObjectActs(set: SetSummary, act: LiveSetReading['act'], insertClip:
       const scene = rowOf(rowId)
       return typeof scene === 'string' ? refused(scene) : run({kind: 'scene_delete', scene})
     }}
+    actions.colourTrack = {op: op('track_colour'), run: (trackId, colour) => {
+      const track = trackOf(trackId, 'keeps Live\'s own colour'), index = liveColourIndex(colour)
+      if (typeof track === 'string') return refused(track)
+      return index === null ? refused(`${colour} is not one of Live's 70 colours.`) : run({kind: 'track_colour', track, colour: index})
+    }}
+    actions.groupTracks = {op: op('tracks_group'), run: trackIds => {
+      const chosen: number[] = []
+      for (const trackId of trackIds) {
+        const track = trackOf(trackId, 'stands in no group')
+        if (typeof track === 'string') return refused(track)
+        chosen.push(track)
+      }
+      return run({kind: 'tracks_group', tracks: chosen})
+    }}
+    actions.splitClip = {op: op('clip_split'), run: (clipId, at) => {
+      const place = clipOf(clipId)
+      return typeof place === 'string' ? refused(place) : run({kind: 'clip_split', track: place.track, clip: place.at, at})
+    }}
+    actions.consolidateClips = {op: op('clips_consolidate'), run: (trackId, span) => {
+      const track = trackOf(trackId, 'holds no clips'), why = typeof track === 'number' ? consolidateRefusal(track) : undefined
+      if (typeof track === 'string') return refused(track)
+      return why ? refused(why) : run({kind: 'clips_consolidate', track, from: span.start, to: span.end})
+    }, refuses: trackId => {
+      const track = trackOf(trackId, 'holds no clips')
+      return typeof track === 'string' ? track : consolidateRefusal(track)
+    }}
   }
+  // An audio part's consolidate writes a new sample of what it plays: a render (the owner refuses it in the same words).
+  const consolidateRefusal = (track: number): string | undefined => {
+    const kind = set.tracks[track]?.kind
+    return kind === 'midi' ? undefined : (kind && CONSOLIDATE_REFUSED[kind]) ?? `${named(track)} is no audio or MIDI part: it holds no clips to join.`
+  }
+  actions.waiting = LIVE_WAITING
   if (insertClip) actions.insertClip = {op: LIVE_INSERT_CLIP_OP, run: (trackId, rowId) => {
     const track = trackOf(trackId, 'holds no clips'), scene = rowOf(rowId)
     if (typeof track === 'string') return refused(track)

@@ -14,6 +14,10 @@ pub enum TrackKind {
     Audio,
     Midi,
     Return,
+    /// A group track (Live's `GroupTrack`): it folds its members under one head
+    /// and holds no clips of its own (O-I #743: listed in the set's order, so
+    /// every reader counts the tracks as the owner's acts do).
+    Group,
     Master,
 }
 
@@ -49,6 +53,7 @@ impl SetSummary {
                     "AudioTrack" => TrackKind::Audio,
                     "MidiTrack" => TrackKind::Midi,
                     "ReturnTrack" => TrackKind::Return,
+                    "GroupTrack" => TrackKind::Group,
                     _ => continue,
                 };
                 let name = tr
@@ -173,6 +178,7 @@ impl SetDocument {
                     "AudioTrack" => TrackKind::Audio,
                     "MidiTrack" => TrackKind::Midi,
                     "ReturnTrack" => TrackKind::Return,
+                    "GroupTrack" => TrackKind::Group,
                     _ => continue,
                 };
                 let name = tr

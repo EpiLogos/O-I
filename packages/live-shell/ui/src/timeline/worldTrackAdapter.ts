@@ -228,6 +228,16 @@ export interface WorldTrackActions {
   duplicateTrack?: {op: string; run(trackId: string): unknown};
   /** Edit info text (Live's Edit Info Text on a clip): the clip's info text read from its owner, and written there. */
   clipInfo?: {op: string; read(clipId: string): Promise<string>; run(clipId: string, text: string): unknown};
+  /** Group Tracks (⌘G): the tracks put in a new group. */
+  groupTracks?: {op: string; run(trackIds: readonly string[]): unknown};
+  /** Split (⌘E, Arrangement view): a clip cut in two at a point of the ruler (the pane's insert marker). */
+  splitClip?: {op: string; run(clipId: string, at: number): unknown};
+  /** Consolidate (⌘J, Arrangement view): what a track's clips play over a stretch of the ruler (the pane's time selection), made one
+   * clip. `refuses` says, for a track, why its owner cannot take it (an audio part's consolidate is a render). */
+  consolidateClips?: {op: string; run(trackId: string, span: {start: number; end: number}): unknown; refuses?(trackId: string): string | undefined};
+  /** What an act no owner op carries waits for, by the op its menu names ('row.launch', 'clip.crop' …), in the owner's words: said
+   * after the missing op on the status bar. */
+  waiting?: Readonly<Record<string, string>>;
   /** Whose ops these are, in the words a missing act names (the mode's registration gives it, frame/tracks/modeTracks.ts). */
   owner?: string;
 }

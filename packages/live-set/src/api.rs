@@ -189,6 +189,7 @@ fn kind_str(kind: crate::model::TrackKind) -> String {
         crate::model::TrackKind::Audio => "audio".into(),
         crate::model::TrackKind::Midi => "midi".into(),
         crate::model::TrackKind::Return => "return".into(),
+        crate::model::TrackKind::Group => "group".into(),
         crate::model::TrackKind::Master => "master".into(),
     }
 }
@@ -263,7 +264,7 @@ fn find_track<'a>(root: &'a crate::xml::Element, name: &str) -> Option<&'a crate
     tracks.children.iter().find(|track| {
         matches!(
             track.name.as_str(),
-            "AudioTrack" | "MidiTrack" | "ReturnTrack"
+            "AudioTrack" | "MidiTrack" | "ReturnTrack" | "GroupTrack"
         ) && track.find("EffectiveName").and_then(|n| n.attr("Value")) == Some(name)
     })
 }
@@ -281,7 +282,7 @@ fn find_track_mut<'a>(
     tracks.children.iter_mut().find(|track| {
         matches!(
             track.name.as_str(),
-            "AudioTrack" | "MidiTrack" | "ReturnTrack"
+            "AudioTrack" | "MidiTrack" | "ReturnTrack" | "GroupTrack"
         ) && track.find("EffectiveName").and_then(|n| n.attr("Value")) == Some(name)
     })
 }

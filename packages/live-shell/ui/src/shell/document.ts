@@ -13,6 +13,10 @@ export interface SetTrack {
   automation?: import('../../../../../desktop/cradle/src/kernel/types').LiveEnvelope[]
   /** The rows whose slot has had its stop button removed (packages/live-set/src/edit.rs stopless_slots); absent from an owner that reads none. */
   stoplessSlots?: number[]
+  /** Its own Id, the group it stands in (-1: none) and its colour, Live's palette index (packages/live-set/src/edit.rs tracks_extra_json). */
+  trackId?: string | null
+  groupId?: number | null
+  colourIndex?: number | null
 }
 export interface SetDocument { path: string; tempo: number; scenes: number; tracks: SetTrack[]
   /** Each row's own name, empty where it has none (packages/live-set/src/edit.rs scene_names); absent from an owner that reads none. */
@@ -21,7 +25,7 @@ const object = (value: unknown): value is Record<string, unknown> => !!value && 
 const finite = (value: unknown) => typeof value === 'number' && Number.isFinite(value)
 export function readSetDocument(value: unknown): SetDocument {
   if (!object(value) || typeof value.path !== 'string' || !value.path || !finite(value.tempo) || !Number.isSafeInteger(value.scenes) || Number(value.scenes) < 0 || !Array.isArray(value.tracks) || value.tracks.some(track => {
-    if (!object(track) || !['audio', 'midi', 'return', 'master'].includes(String(track.kind)) || typeof track.name !== 'string' || !Array.isArray(track.devices) || !Array.isArray(track.arrangementClips) || !object(track.sessionSlots)) return true
+    if (!object(track) || !['audio', 'midi', 'return', 'group', 'master'].includes(String(track.kind)) || typeof track.name !== 'string' || !Array.isArray(track.devices) || !Array.isArray(track.arrangementClips) || !object(track.sessionSlots)) return true
     if (Object.values(track.sessionSlots).some(slot => slot !== null && typeof slot !== 'string')) return true
     if (track.arrangementClips.some(clip => !object(clip) || typeof clip.name !== 'string' || !['audio', 'midi'].includes(String(clip.kind)) || !finite(clip.start) || !finite(clip.end) || Number(clip.end) < Number(clip.start))) return true
     return track.devices.some(device => !object(device) || typeof device.name !== 'string' || !Array.isArray(device.params) || device.params.some(parameter => !object(parameter) || typeof parameter.id !== 'string' || typeof parameter.value !== 'string' || (parameter.min !== undefined && typeof parameter.min !== 'string') || (parameter.max !== undefined && typeof parameter.max !== 'string')))
