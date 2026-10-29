@@ -23,7 +23,7 @@ import {eventDayKey, type TemporalEventRow, type TemporalStreamAbsence} from './
 import type {WorldMixer, WorldTakeLane, WorldTrack, WorldTrackActions, WorldTrackAdapter, WorldTrackClip, WorldTrackColumn, WorldTrackSet, WorldWalk} from './worldTrackAdapter'
 import type {WorldTimelineSource} from '../projections/useWorldTemporalReading'
 import {CENTRAL_DAYS_PATH, dateOfDayPath, dayEntriesOf} from '../central/daySurface'
-import type {DaySet} from '../central/daySet'
+import {withRowAt, withRowChanged, withoutRow, withTrackMoved, withTrackName, type DaySet} from '../central/daySet'
 import type {CentralWorld, CentralWorldsReading, WorldPagesReading} from '../central/centralWorlds'
 import type {CentralLocation, NativeFileEntry} from '../../../../../desktop/cradle/src/kernel/types'
 import type {NowListing} from '../../../../../desktop/cradle/src/receiving/now'
@@ -127,6 +127,10 @@ export interface CentralControls {
   writeArm?: {on: boolean | null; set(on: boolean): Promise<unknown>}
   /** Open or reveal a page's file or a world's folder by its Central-relative path (Central's work.open / work.reveal). */
   openOrReveal?: (act: 'open' | 'reveal', path: string) => Promise<unknown>
+  /** Write today's set (the Day's write, central/daySet.ts writeDaySet): its tracks' names and order, and its named rows. */
+  writeSet?: (change: (set: DaySet) => DaySet) => Promise<unknown>
+  /** Make a blank page in a world (central/madeOfConstellation.ts makeBlankPage): answers its path and its file ref. */
+  makePage?: (world: CentralWorld) => Promise<{path: string; ref: string}>
 }
 
 export interface CentralReading {
@@ -494,7 +498,98 @@ function centralActions(reading: CentralReading, worlds: readonly CentralWorld[]
   }
   const arm = controls.writeArm
   if (arm) actions.mixer = {arm: {op: 'shell.setWriteArm — the shell\'s one write arm (agent/shellSetterBridge.ts): its receipt names the owner that enforces it', run: (_trackId, on) => arm.set(on)}}
+  // Stop all clips (the Main track's Stop All): every page that plays stopped through the page owner.
+  if (stopPage) actions.stopAll = {op: 'the page owner\'s stop (kernel/src/page.rs) for every page that plays: each NOW clearing closed', run: async () => {
+    const plays = [...playing.values()]
+    if (!plays.length) return {ok: true, note: 'No page plays.'}
+    for (const item of plays) await stopPage(item)
+    return {ok: true, note: `${plural(plays.length, 'page', 'pages')} stopped.`}
+  }}
+  centralSetActs(actions, reading, worlds, rowPages)
+  actions.waiting = CENTRAL_WAITING
   return Object.keys(actions).length ? actions : undefined
+}
+
+/** What Central's acts no owner op carries wait for (O-I #743, round three), as the status bar says after the missing op. */
+export const CENTRAL_WAITING: Readonly<Record<string, string>> = {
+  'clip.duplicate': 'a page\'s copy in its world: the page owner (kernel/src/page.rs) reading the page and making it again with an identity of its own through its world\'s door',
+  'clip.delete': 'Central taking a page out of its world: no Central action removes or moves a file to the trash (central.files has create, write and restore)',
+  'clip.paste': 'a page\'s copy in another world, as Duplicate waits for',
+  'clip.info': 'a page\'s info text: the page owner keeps no note on the page as a whole apart from its notes',
+  'clip.split': 'no owner splits a page',
+  'clip.consolidate': 'no owner joins pages',
+  'clip.crop': 'no owner crops a page',
+  'slot.stop-button': 'a slot\'s own stop in today\'s set: the Day keeps rows of pages, not slots',
+  'slot.record': 'a recording path into a world: what the armed agent writes is a page\'s own write, not a slot\'s',
+  'track.duplicate': 'a world\'s copy: Central makes a world through setup, not by copying one',
+  'track.colour': 'a world\'s own colour: a world wears its body\'s (projections/atlas/system/systemModel.ts worldColourOf), which no act writes yet',
+  'tracks.group': 'a group of worlds: today\'s set keeps worlds side by side, none under another',
+  'row.duplicate': 'a page\'s copy in its world, which a row\'s copy is made of',
+}
+
+/** Today's set's own acts (the Day's write): a world's track named and moved, a page made in a world, and the named rows inserted, named and
+ * taken out (their pages stay in their worlds). Your world is every set's first track: it is neither named nor moved here. */
+function centralSetActs(actions: WorldTrackActions, reading: CentralReading, worlds: readonly CentralWorld[], rowPages: ReadonlyMap<string, readonly Page[]>): void {
+  const controls = reading.controls
+  const writeSet = controls?.writeSet
+  const set = reading.set?.state === 'read' ? reading.set.set : null
+  const worldOf = (trackId: string) => worlds.find(candidate => centralWorldTrackId(candidate.ref) === trackId)
+  const named = (rowId: string) => set?.rows.find(row => `central:row:${row.id}` === rowId) ?? null
+  const makePage = controls?.makePage
+  if (makePage) actions.insertClip = {op: 'a blank Flow made in the world through Central\'s door (flow/createInPlace.ts), tied to the world; in a named row, today\'s set holds it there', run: async (trackId, rowId) => {
+    const world = worldOf(trackId)
+    if (!world) return {ok: false, error: `"${trackId}" is no world of today's set.`}
+    const made = await makePage(world)
+    const row = named(rowId)
+    if (row && writeSet) await writeSet(held => withRowChanged(held, row.id, kept => ({...kept, pages: [...kept.pages.filter(page => page !== made.ref), made.ref]})))
+    return {ok: true, note: `${world.name} has a new Flow (${made.path})${row ? `, in the row ${row.name}` : ''}.`}
+  }}
+  if (!writeSet || !set) return
+  const op = (what: string) => `today's set written into the Day (central/daySet.ts): ${what}`
+  actions.renameTrack = {op: op('the name today\'s track shows'), run: async (trackId, name) => {
+    const world = worldOf(trackId)
+    if (!world) return {ok: false, error: `"${trackId}" is no world of today's set.`}
+    if (world.kind === 'yours') return {ok: false, error: 'Your world is named by your ground: today\'s set does not rename it.'}
+    if (!name.trim()) return {ok: false, error: 'A track\'s name is text.'}
+    await writeSet(held => withTrackName(held, world.ref, name.trim()))
+    return {ok: true, note: `${world.name} is named ${name.trim()} today.`}
+  }}
+  actions.moveTrack = {op: op('the worlds in a new order'), run: async (trackId, by) => {
+    const world = worldOf(trackId)
+    if (!world) return {ok: false, error: `"${trackId}" is no world of today's set.`}
+    if (world.kind === 'yours') return {ok: false, error: 'Your world is every set\'s first track: it does not move.'}
+    const at = set.tracks.findIndex(track => track.world === world.ref)
+    if (at + by < 0) return {ok: false, error: `${world.name} stands right after your world, which is always first.`}
+    if (at + by >= set.tracks.length) return {ok: false, error: `${world.name} is already the last track.`}
+    await writeSet(held => withTrackMoved(held, world.ref, by))
+    return {ok: true, note: `Moved ${world.name} ${by < 0 ? 'left' : 'right'}.`}
+  }}
+  actions.insertRow = {op: op('an empty named row'), run: async afterRowId => {
+    const after = afterRowId ? set.rows.findIndex(row => `central:row:${row.id}` === afterRowId) : -1
+    const index = after >= 0 ? after + 1 : set.rows.length
+    const row = {id: `row-${Date.now().toString(36)}`, name: `Row ${set.rows.length + 1}`, pages: []}
+    await writeSet(held => withRowAt(held, row, index))
+    return {ok: true, note: `Today's set has a new row, ${row.name}.`}
+  }}
+  actions.renameRow = {op: op('a row named; a row of loose pages becomes a named row holding them'), run: async (rowId, name) => {
+    if (!name.trim()) return {ok: false, error: 'A row\'s name is text.'}
+    const row = named(rowId)
+    if (row) {
+      await writeSet(held => withRowChanged(held, row.id, kept => ({...kept, name: name.trim()})))
+      return {ok: true, note: `The row is named ${name.trim()}.`}
+    }
+    const pages = rowPages.get(rowId)
+    if (!pages) return {ok: false, error: `"${rowId}" is no row of today's set.`}
+    const kept = {id: `row-${Date.now().toString(36)}`, name: name.trim(), pages: pages.map(page => page.location.ref)}
+    await writeSet(held => withRowAt(held, kept, held.rows.length))
+    return {ok: true, note: `Today's set keeps the row ${kept.name}, holding ${plural(kept.pages.length, 'page', 'pages')}.`}
+  }}
+  actions.deleteRow = {op: op('a named row taken out; its pages stay in their worlds'), run: async rowId => {
+    const row = named(rowId)
+    if (!row) return {ok: false, error: 'This row holds the pages no named row holds: the Day keeps no row to take out.'}
+    await writeSet(held => withoutRow(held, row.id))
+    return {ok: true, note: `The row ${row.name} is out of today's set; its pages stay in their worlds.`}
+  }}
 }
 
 export const centralTrackAdapter: WorldTrackAdapter<CentralReading> = {

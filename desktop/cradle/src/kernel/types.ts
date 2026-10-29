@@ -122,7 +122,7 @@ export type NativeExpressionRequest = {operation: "open"; path: string; expected
 export interface NativeComposedSource { schema: "oi.native-expression-composed-source/v1"; ql_executable: string; ql_selection: "installed" | "operator-override"; ql_revision: string | null; ql_executable_sha256: string; sky: {mode: "current" | "historical"; epoch: string; snapshot_ref: string; receipt_unix_ms: number} | null; request_sha256: string; composed_at_unix_ms: number }
 /** The page owner's fields (kernel/src/page.rs `apply_field`): a Being's or Thing's ties, a Flow's World, View and Container, and
  * a note or a highlight added or taken away. */
-export type PageField = "title" | "colour" | "world" | "subject" | "kind" | "office" | "sources" | "place" | "anchor" | "expression"
+export type PageField = "title" | "colour" | "active" | "world" | "subject" | "kind" | "office" | "sources" | "place" | "anchor" | "expression"
   | "layout" | "tone" | "view" | "container" | "launch" | "note.add" | "note.remove" | "highlight.add" | "highlight.remove"
   /** A Flow's journey, as QL returned it (nara_journey.rs saves it; page.rs keeps it whole). */
   | "journey";

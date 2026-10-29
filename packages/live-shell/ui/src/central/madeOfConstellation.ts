@@ -46,3 +46,16 @@ export async function makePageOf(transport: KernelTransportStatus, world: Pick<C
     return {ok: false, error: `Central made the page at ${copy.location.path}, but the page owner did not read it back: ${text(cause)}`}
   }
 }
+
+/** The page Insert clip makes in a world (manual §10.9 Insert clip; §18.1 "A clip is a page … Every page starts from a template"): a blank
+ * Flow, the one page every world keeps and the ordinary door makes (flow/createInPlace.ts: a project's world through its source door, your
+ * world through Central's first-save door), tied to its world from its first write. Answers where Central made it. */
+export const INSERTED_PAGE_FORM = 'document-01'
+export async function makeBlankPage(transport: KernelTransportStatus, world: Pick<CentralWorld, 'ref' | 'name' | 'project'>): Promise<{path: string; ref: string}> {
+  const [{createFormInPlace}, {DOCUMENT_FORMS}] = await Promise.all([import('../../../../../desktop/cradle/src/flow/createInPlace'),
+    import('../../../../../desktop/cradle/src/flow/documentForms')])
+  const form = DOCUMENT_FORMS.find(item => item.kind === INSERTED_PAGE_FORM)
+  if (!form) throw new Error(`Central's document forms name no Flow (${INSERTED_PAGE_FORM}), so no page can be made here.`)
+  const copy = await createFormInPlace(transport, form, {...(world.project ? {project: world.project} : {}), worldRef: world.ref})
+  return {path: copy.location.path, ref: copy.location.ref}
+}

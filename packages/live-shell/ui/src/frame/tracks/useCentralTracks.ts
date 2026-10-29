@@ -20,7 +20,7 @@ import {launchPage, stopPage} from '../../../../../../desktop/cradle/src/persona
 import {validateDocumentBasis} from '../../../../../../desktop/cradle/src/central/dayForm'
 import type {KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
 import {readWorlds, readWorldPages, type CentralWorld, type CentralWorldsReading } from '../../central/centralWorlds'
-import {bringInRefusal, daySetOf, withWorld, withoutWorld, writeDaySet} from '../../central/daySet'
+import {bringInRefusal, daySetOf, withWorld, withoutWorld, writeDaySet, type DaySet} from '../../central/daySet'
 import {currentDayOf} from '../../central/devices/dayBinding'
 import {openLaunched} from '../../central/launchOpening'
 import {documentLayoutWriter} from '../../central/documents/documentDoor'
@@ -55,7 +55,7 @@ import type {TracksReading} from './modeTracks'
 import {refusingMaker, withClipMaker} from './clipMakers'
 import {CONSTELLATION_DRAG} from '../browser/constellationFocus'
 import {constellationNamed, constellationsNow} from '../../owners/constellations'
-import {makePageOf} from '../../central/madeOfConstellation'
+import {makeBlankPage, makePageOf} from '../../central/madeOfConstellation'
 
 /** The day records through the owner's listing route (the browser's Days rows read the same). A refusal is the reading, named. */
 export async function readDayRecords(transport: KernelTransportStatus | undefined): Promise<CentralDayRecordsReading> {
@@ -184,7 +184,11 @@ export function useCentralTracks(reading: TracksReading): WorldTrackSet {
       ...(aperture ? {
         addWorld: (world: CentralWorld) => after(() => writeDaySet(transport, aperture, held => withWorld(held, world.ref, world.name)).finally(refreshGround)),
         removeWorld: (world: CentralWorld) => after(() => writeDaySet(transport, aperture, held => withoutWorld(held, world.ref)).finally(refreshGround)),
+        // Today's set's own acts (O-I #743): its tracks named and moved, its rows inserted, named and taken out.
+        writeSet: (change: (set: DaySet) => DaySet) => after(() => writeDaySet(transport, aperture, change).finally(refreshGround)),
       } : {}),
+      // Insert clip: a blank Flow made in the world, and its pages read again (O-I #743).
+      makePage: (world: CentralWorld) => after(() => makeBlankPage(transport, world).finally(refreshGround)),
       writeArm: shellWriteArm(armOn),
       openOrReveal: (act: 'open' | 'reveal', path: string) => openOrRevealInCentral(transport, act, path),
     }

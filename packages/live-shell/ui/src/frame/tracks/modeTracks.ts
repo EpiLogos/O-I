@@ -28,6 +28,8 @@ import {liveSetTrackAdapter} from '../../timeline/liveSetTrackAdapter'
 import {liveSetWrites} from '../../live/liveWrites'
 import {frameSoundReading, readStudioArm, setExpressionMuted, setExpressionSolo} from '../../native/frameSound'
 import {expressionsTrackAdapter} from '../../timeline/expressionsTrackAdapter'
+import {FACTORY_WAITING} from '../../timeline/factoryTrackAdapter'
+import {TECHNE_WAITING} from '../../timeline/techneTrackAdapter'
 import {useFactoryTracks} from './useFactoryTracks'
 import {useCentralTracks} from './useCentralTracks'
 import {useTechneTracks} from './useTechneTracks'
@@ -204,6 +206,13 @@ export function liveTracks(set: SetSummary, document: SetDocument | null, colors
     stopAll: () => player().then(acts => acts.stopAll())}
   const tracks = liveSetTrackAdapter.project({set, document, colors, ...liveSetWrites(set.path), play})
   return maker ? withClipMaker(tracks, maker) : tracks
+}
+
+/** What each mode's acts no owner op carries wait for (O-I #743, round three), by the op the menu names: a registration, never a branch.
+ * A mode's set may say more of its own (its `actions.waiting`, which stands over these). */
+export const MODE_WAITING: Readonly<Partial<Record<SurfMode, Readonly<Record<string, string>>>>> = {
+  factory: FACTORY_WAITING,
+  techne: TECHNE_WAITING,
 }
 
 /** Whose operations each mode's object acts are, in the words a missing act names (manual §10.9; each mode's action table,

@@ -62,7 +62,8 @@ import {DetailHost} from './frame/detail/DetailHost'
 import {expandsClip, hiddenSideOf, restoredSides, shownSidesNow, toggleSide, type DetailSide} from './frame/detail/detailSides'
 import {DetailContext, type DetailReading} from './frame/detail/detailReading'
 import type {CentralSubjectSelection} from './inhabitants/CentralSubjectDetail'
-import {NATIVE_PRESENT_EXPRESSIONS} from './native/openStudio'
+import {MENU_ACT, NATIVE_PRESENT_EXPRESSIONS} from './native/openStudio'
+import {sayOnInfoLine} from './frame/devices/deviceHost'
 import {SOURCE_PRESENT} from './native/hostedSummons'
 import {PLACED_RESIDENCE_STYLE, useFramePlacement} from './projections/expressionsPaneHost'
 import {sameEditorBasis,type NativeEditorBasis,type NativeEditorController} from '@epilogos/expressions-boundary/editor'
@@ -86,6 +87,7 @@ import {worldSubjectOf} from './techne/subject/worldRows'
 import {clampBrowserWidth, clampDetailHeight, clampRailWidth, collapseDetail, drawnSizes, draggedSize, enteredDetailHeight, expandDetail,
   expandedDetailHeight, focusKeyOf, frameToggleOf, keptDetailHeight, RESIZE_STEP, switchesDetailSide, type AreaDrag, type DetailExpansions, type FocusTarget, type FrameToggle} from './shell/workspaceAreas'
 import {DeviceFlipHost} from './frame/devices/DeviceFlip'
+import {liveColour, liveColourIndex} from './live/livePalette'
 registerAtlasHost()
 // The world-shell families (Quaternal Logic, the atlas, the knowledge graph, Central's extensions) are admitted with the frame, as
 // shell/ModeDetail.tsx admitted them when the frame imported it; ModeDetail now loads when a chain first draws (O-I #740).
@@ -504,7 +506,10 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
     if (id === 'view.expand-clip') { setClipExpanded(expanded => !expanded); setDetail(true); return }
     const parts: Record<string, FrameToggle> = {'view.pane': 'pane', 'view.browser': 'browser', 'view.pool': 'pool', 'view.rail': 'rail', 'view.clip': 'clip',
       'view.device': 'device', 'view.detail': 'detail', 'view.mixer': 'mixer', 'view.io': 'io'}
-    if (parts[id]) chord.current(parts[id]!)
+    if (parts[id]) { chord.current(parts[id]!); return }
+    // An item this router does not route itself (File › Export, View › Present: manual §20.1, O-I #747) is the mode's that stands: one
+    // mode-blind door any mode may answer (native/openStudio.ts MENU_ACT); unanswered, the status bar says so.
+    if (window.dispatchEvent(new CustomEvent(MENU_ACT, {detail: {id}, cancelable: true}))) sayOnInfoLine(document.body, id, 'Nothing in this window answers it here.')
   }
   // The search line's `>` runs the same commands, through this router (central/searchLineDoor.ts publishMenuCommands).
   useEffect(() => { publishMenuCommands(id => command.current(id)); return () => publishMenuCommands(null) }, [])
@@ -567,13 +572,23 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [frameMode, centerPanel, tab, settingsPresented])
-  const setColor = (track: number, value: string) => {
+  // A Live track's colour is the set's own (its Color, Live's palette index; O-I #743): choosing one of Live's 70 writes it through the
+  // set's owner (live_set_act track_colour), which reads the set again, and answers in its words. A colour outside Live's 70 has no place
+  // in the set, so it stays this display's own.
+  const setColor = (track: number, value: string): Promise<{ok: true; note: string} | {ok: false; error: string}> | void => {
+    const index = liveColourIndex(value)
+    if (state.set && index !== null) {
+      const path = state.set.path
+      return import('./live/liveWrites').then(({writeLiveSetAct}) => writeLiveSetAct(path, {kind: 'track_colour', track, colour: index})).then(
+        answer => ({ok: true as const, note: answer.done}), (cause: unknown) => ({ok: false as const, error: cause instanceof Error ? cause.message : String(cause)}))
+    }
     const next = { ...overrides, [track]: value }
     setOverrides(next)
     try { localStorage.setItem(colorKey, JSON.stringify(next)) } catch { /* the display still works without storage */ }
   }
   const ctx = { set: state.set, loading: state.loading, error: state.error, openSet: state.open } satisfies PanelContext
-  const colors = (state.set?.tracks ?? []).map((track, i) => overrides[i] ?? (track.kind === 'master' ? '#a2b6c2' : track.kind === 'return' ? '#76c0b7' : PALETTE[i % PALETTE.length]))
+  const colors = (state.set?.tracks ?? []).map((track, i) => liveColour(deep.document?.tracks[i]?.colourIndex) ?? overrides[i]
+    ?? (track.kind === 'master' ? '#a2b6c2' : track.kind === 'return' ? '#76c0b7' : PALETTE[i % PALETTE.length]))
   const panels = getPanels('center')
   const choose = (value: SetSelection) => { select(value); changeDetailMode(value.scene !== null || value.clip !== undefined ? 'clip' : 'device') }
   const agency = useAgencySessions(workspace.transport)

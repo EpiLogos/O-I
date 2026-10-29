@@ -66,6 +66,11 @@ impl Request {
     }
 }
 
+/// Whether a page is switched off (its meta's `active: false`, `apply_field` "active").
+pub fn switched_off(island: &Value) -> bool {
+    island["meta"]["active"] == json!(false)
+}
+
 /// The page's form, by its island: a reference page by its family, a Flow by its entries.
 pub fn form_of(island: &Value) -> &'static str {
     if island["profile"] == "oi.page/v1" {
@@ -675,6 +680,20 @@ pub fn apply_field(
             }
         }
         "launch" => launch_field(island, page, value)?,
+        // A page's switch (manual §10.9 "Switch off or on (0)", Live's clip activator): off, it does not open to play; kept in the meta of
+        // a page or a Flow as `active: false`, and taken away when it is switched on again.
+        "active" => {
+            let on = value
+                .as_bool()
+                .ok_or("A page is switched on (true) or off (false)")?;
+            let meta = object(island, "meta")?;
+            if on {
+                meta.remove("active");
+            } else {
+                meta.insert("active".into(), json!(false));
+            }
+            json!(on)
+        }
         "view" if !page => {
             let chosen = value
                 .as_str()
@@ -902,6 +921,11 @@ pub fn launch(
     if form == "unknown" {
         return Err("This file is no page: only a Being, a Thing or a Flow plays".into());
     }
+    if switched_off(&island) {
+        return Err(
+            "This page is switched off, so it does not open to play: switch it on first".into(),
+        );
+    }
     let project = reading.project.as_ref().map(|project| project.name.clone());
     let policy = policy_revision(client, project.as_deref())?;
     let allocated = client
@@ -1116,6 +1140,32 @@ mod tests {
         Stamp {
             at: "2026-10-18T12:00:00Z".into(),
             id: "n1".into(),
+        }
+    }
+
+    /// O-I #743: a page's switch — off, it is kept in its meta and it does not open to play; on, the mark is taken away.
+    #[test]
+    fn a_page_is_switched_off_and_on_in_its_meta() {
+        let s = stamp();
+        for mut island in [being(), flow()] {
+            assert!(!switched_off(&island));
+            assert_eq!(
+                apply_field(&mut island, "active", &json!(false), &s).unwrap(),
+                json!(false)
+            );
+            assert_eq!(island["meta"]["active"], json!(false));
+            assert!(switched_off(&island));
+            assert_eq!(
+                apply_field(&mut island, "active", &json!(true), &s).unwrap(),
+                json!(true)
+            );
+            assert!(
+                island["meta"].get("active").is_none(),
+                "switched on, the page keeps no mark"
+            );
+            assert!(apply_field(&mut island, "active", &json!("off"), &s)
+                .unwrap_err()
+                .contains("switched on (true) or off (false)"));
         }
     }
 
