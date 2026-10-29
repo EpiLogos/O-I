@@ -776,7 +776,10 @@ pub enum Request {
     SaveAs {
         expression_ref: String,
         expected_revision: u64,
-        parent: files::Location,
+        /// The folder to save into; absent, the owner's works home, which Central gives on first need
+        /// (`expression_home::ensure`, O-I #742).
+        #[serde(default)]
+        parent: Option<files::Location>,
         name: String,
         operation_ref: String,
         actor: String,
@@ -2341,6 +2344,19 @@ impl Application {
                 }
                 let document = self.document(&expression_ref)?.clone();
                 let content = crate::expression_file::encode(&document)?;
+                // No parent named: the works home, which Central makes on first need (a ground made before it founded the home).
+                let parent = match parent {
+                    Some(parent) => parent,
+                    None => match crate::expression_home::ensure(client) {
+                        Ok(home) => home,
+                        Err(failure) => {
+                            return Ok((
+                                json!({"state":"save_refused","owner_operation":"central.flows.ensure","failure":failure}),
+                                None,
+                            ))
+                        }
+                    },
+                };
                 // The explicit directory already supplies root identity. Suppress the
                 // generic project fallback before the strict file-owner call.
                 match client.run("central.files.create", json!({"project":null,"parent":parent,"name":name,"content":content,

@@ -23,7 +23,7 @@ import type {WorldSelection} from '../../../../../../../desktop/cradle/src/works
 import {useAtlasHandle} from '../AtlasProjectionPanel'
 import {windowEdgeYear} from '../sharedClock'
 import {walkStopOfClip} from '../../../timeline/techneTrackAdapter'
-import {takeWalkId} from '../walks/walkRecord'
+import {KEPT_VIEWS_WALK_ID, takeWalkId} from '../walks/walkRecord'
 import {WALK_NOT_ARMED, WALK_NOT_OPEN, walkSession, type WalkState} from '../walks/walkSession'
 import {stepTempo, subscribeWalkPace, walkPace} from '../palaces/palaceSession'
 
@@ -148,15 +148,21 @@ export function walkBindings(state: WalkState, acts: WalkActs, selected: Selecte
   }
   if (selected) {
     bindings.play = {press: () => { acts.play(selected.walkId, selected.index) }, lit: false,
-      title: `Walk — walk ${selected.name} from stop ${selected.index + 1}: each stop stands on the World at its moment, ${pace} s each.`}
+      title: selected.walkId === KEPT_VIEWS_WALK_ID
+        ? `Reopen — ${selected.name}: the World returns to the view it keeps, with its window and its filter.`
+        : `Walk — walk ${selected.name} from stop ${selected.index + 1}: each stop stands on the World at its moment, ${pace} s each.`}
   }
   return bindings
 }
 
-/** The recorded take a selection stands on: a stop's clip of a take the walk keeps. */
+/** The recorded take a selection stands on: a stop's clip of a take the walk keeps, or of a view it keeps (O-I #742, walk 739 T4). */
 export function selectedWalkStop(state: WalkState, selection: Pick<WorldSelection, 'kind' | 'ref'> | null | undefined): SelectedWalkStop | null {
   if (!selection || selection.kind !== 'clip' || state.reading.phase !== 'read') return null
   const stop = walkStopOfClip(selection.ref)
+  if (stop?.walkId === KEPT_VIEWS_WALK_ID) {
+    const view = state.reading.walk.views[stop.index]
+    return view ? {walkId: stop.walkId, index: stop.index, name: view.title} : null
+  }
   const take = stop ? state.reading.walk.takes.find(row => takeWalkId(row.name) === stop.walkId) : undefined
   return stop && take && stop.index < take.stops.length ? {walkId: stop.walkId, index: stop.index, name: take.name} : null
 }

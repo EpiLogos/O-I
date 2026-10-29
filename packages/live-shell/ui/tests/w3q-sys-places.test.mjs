@@ -324,8 +324,8 @@ test('4b · the mark of a location drawn on a shore says so, in its words and it
 
 // ── 5 · An exact place gets a street, an approximate place a city, a region the whole region ───────────────────────────────────
 
-// NOT MET (placesHost.ts:66-68 framingDistance: exact 2.25, every other precision 2.6, so an approximate place and a region end at the
-// same distance). The manual has three: a street, a city, the whole region.
+// MET (O-I #742: placesHost.ts framingDistance, a street as near as the camera flies, a city 1.15, the whole region 1.4). The manual has
+// three: a street, a city, the whole region.
 test('5 · the flight to a place ends nearer for a more exact one: exact (a street) < approximate (a city) < region (the whole region)', () => {
   const exact = host.framingDistance('exact'), approximate = host.framingDistance('approximate'), region = host.framingDistance('region')
   assert.ok(exact < approximate && approximate < region, `three precisions, three framings, nearest for the most exact (got ${exact}, ${approximate}, ${region})`)

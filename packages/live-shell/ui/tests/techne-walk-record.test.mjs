@@ -53,8 +53,10 @@ const copy = value => structuredClone(value)
 
 /** A kernel Expression owner over a shared disk (the works home's files). A second owner over the same disk is a relaunch: nothing is open in
  * it, and the works it lists are the files. Replies are the shapes the real kernel answered (see the header). */
-function kernel(disk = new Map()) {
-  const documents = new Map(), dirty = new Map(), bound = new Map(), calls = []
+function kernel(disk = new Map(), {home = true, ensureRefusal = null} = {}) {
+  // `home: false`: a ground made before Central founded its Flows home lists none (the real list's words); the owner's save_as with no
+  // parent asks Central for it (kernel expression_home.rs ensure), which makes it, or refuses in Central's words (`ensureRefusal`).
+  const documents = new Map(), dirty = new Map(), bound = new Map(), calls = [], asked = []
   let revisions = disk.size
   const fileOf = path => ({location: {...HOME, ref: `${HOME.ref}/${path.split('/').pop()}`, path}})
   const inspect = ref => ({state: 'ready', document: copy(documents.get(ref)), dirty: dirty.get(ref) ?? true, file: bound.get(ref) ?? null, dynamic_state: 'not_restored'})
@@ -89,7 +91,7 @@ function kernel(disk = new Map()) {
     } else throw Error(`the fixture keeps no ${change.change}`)
   }
   return {
-    calls, disk, documents,
+    calls, disk, documents, asked,
     async expression(request) {
       calls.push(request.operation)
       switch (request.operation) {
@@ -97,7 +99,9 @@ function kernel(disk = new Map()) {
           const open = [...documents.values()].map(doc => ({expression_ref: doc.expression_ref, revision: doc.revision, title: doc.title, dirty: dirty.get(doc.expression_ref) ?? true, open: true}))
           const closed = [...disk.entries()].filter(([, file]) => !documents.has(file.document.expression_ref))
             .map(([path, file]) => ({expression_ref: file.document.expression_ref, revision: file.document.revision, title: file.document.title, open: false, ...fileOf(path), file_revision: file.revision}))
-          return {schema: 'oi.expression-list/v1', expressions: [...open, ...closed], unreadable: [], home: {location: HOME, path: HOME.path, state: 'listed', truncated: false}}
+          return {schema: 'oi.expression-list/v1', expressions: [...open, ...closed], unreadable: [], home: home
+            ? {location: HOME, path: HOME.path, state: 'listed', truncated: false}
+            : {path: HOME.path, state: 'unavailable', error: {refused: {message: 'No such file or directory (os error 2)'}}}}
         }
         case 'inspect': {
           if (!documents.has(request.expression_ref)) throw Error('Expression is not open')
@@ -122,7 +126,10 @@ function kernel(disk = new Map()) {
         case 'save_as': {
           const doc = documents.get(request.expression_ref)
           if (doc.revision !== request.expected_revision) return {state: 'revision_conflict'}
-          const path = `${request.parent.path}/${request.name}`
+          asked.push(request.parent ? 'parent' : 'no parent')
+          if (!request.parent && ensureRefusal) return {state: 'save_refused', owner_operation: 'central.flows.ensure', failure: {refused: {message: ensureRefusal}}}
+          if (!request.parent) home = true
+          const path = `${(request.parent ?? HOME).path}/${request.name}`
           if (disk.has(path)) return {state: 'save_refused', data: {outcome: 'exists'}}
           return write(request.expression_ref, path)
         }
@@ -255,6 +262,38 @@ test('(a) the take plays: launching its first stop walks every stop in order on 
   assert.deepEqual(here.log.went.map(went => went.placeRef), [BOLLINGEN.ref, KUSNACHT.ref, DELPHI.ref], 'then the next, and the next')
   assert.equal(session.get().playing, null, 'and the walk ends at its last stop')
   assert.ok(Math.abs(here.log.went[2].camera.lat - DELPHI.lat) < 1e-9 && Math.abs(here.log.went[2].camera.dist - 2.25) < 1e-9, 'each stop at the camera it was recorded at')
+})
+
+// ── a ground with no works home yet (O-I #742, T5) ───────────────────────
+
+test('a ground with no works home: the first save asks the owner for its home, which Central makes, and the take survives a relaunch', async () => {
+  const disk = new Map()
+  const owner = kernel(disk, {home: false}), here = world(), session = createWalkSession({later: clock().later})
+  session.bind(owner, here.port)
+  await session.read()
+  await recordTake(session, [BOLLINGEN, KUSNACHT, DELPHI])
+  assert.equal(session.get().reading.saved, true, session.get().line)
+  assert.doesNotMatch(session.get().line, /could not be saved/, session.get().line)
+  assert.deepEqual(owner.asked, ['no parent'], 'no home was listed, so the save names no parent and the owner gets the home from Central')
+  const relaunched = createWalkSession({later: clock().later})
+  relaunched.bind(kernel(disk), world().port)
+  await relaunched.read()
+  assert.equal(relaunched.get().reading.phase, 'read', relaunched.get().line)
+  assert.deepEqual(relaunched.get().reading.walk.takes.map(take => take.stops.length), [3], 'the take is in the works home after the relaunch')
+})
+
+test('a ground Central cannot give a works home: the take stands for the session and the line says why and the way on', async () => {
+  const owner = kernel(new Map(), {home: false, ensureRefusal: 'This folder is no ground Central keeps (it has no Control/user): accept your ground in Setup first'})
+  const here = world(), session = createWalkSession({later: clock().later})
+  session.bind(owner, here.port)
+  await session.read()
+  await recordTake(session, [BOLLINGEN, KUSNACHT])
+  assert.equal(session.get().reading.phase, 'read', 'the owner holds the take for the session')
+  assert.equal(session.get().reading.saved, false)
+  assert.match(session.get().line, /no works home \(Control\/user\/flows\)/, session.get().line)
+  assert.match(session.get().line, /accept your ground in Setup first/, 'Central\'s own words')
+  assert.match(session.get().line, /Settings › Setup › Ground/, 'and the way on')
+  assert.doesNotMatch(session.get().line, /undefined|\[object Object\]/, session.get().line)
 })
 
 // ── (b) the take survives a relaunch ───────────────────────────────────────
@@ -720,8 +759,9 @@ test('the real owner keeps the take and the view, and a relaunched owner reads t
   const scratch = await mkdtemp(join(tmpdir(), 'oi-walk-760-'))
   const env = {...process.env, HOME: join(scratch, 'home'), OI_HOME: join(scratch, 'oi'), AIKIT_HOME: join(scratch, 'aikit'), OI_CENTRAL_ROOT: join(scratch, 'root')}
   for (const dir of ['home', 'oi', 'aikit', 'root']) await mkdir(join(scratch, dir))
+  // A ground as `central.init` makes it, with no works home yet (Setup founds it with the ground's bounds): the first save gets it from
+  // Central's own central.flows.ensure through the owner (O-I #742); nothing is made here.
   execFileSync(ctrlBin, ['--json', '--root', env.OI_CENTRAL_ROOT, 'action', 'run', 'central.init', '{}'], {env})
-  await mkdir(join(env.OI_CENTRAL_ROOT, 'Control/user/flows'), {recursive: true})
   const port = 4700 + Math.floor(Math.random() * 50)
   let child = null
   const start = async () => {

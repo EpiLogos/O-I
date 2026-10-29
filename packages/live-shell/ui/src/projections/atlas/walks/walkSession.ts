@@ -134,9 +134,23 @@ const BUSY = 'The walk\'s owner is still answering the last act.'
 const INITIAL: WalkState = {bound: false, armed: false, recording: null, reading: {phase: 'unread'}, busy: false, playing: null, line: null}
 
 const said = (cause: unknown): string => cause instanceof Error ? cause.message : String(cause)
+
+/** The owner's works home, where a walk's Expression is saved (desktop/cradle/kernel/src/expression_home.rs WORKS_HOME). */
+export const WORKS_HOME = 'Control/user/flows'
+/** The way on when Central cannot give the ground its works home (it makes it on the first save of a ground made before it founded it). */
+export const NO_WORKS_HOME_WAY_ON = 'Open Settings › Setup › Ground and accept your ground there, then press Record again; the take stands until then.'
+/** An owner's words, whatever shape they arrive in: a string, or the kernel's refusal objects ({refused: {message}}, {unavailable: {detail}}). */
+function ownerWords(value: unknown): string {
+  if (typeof value === 'string') return value
+  if (!value || typeof value !== 'object') return ''
+  const row = value as Record<string, unknown>
+  for (const key of ['message', 'detail', 'error']) if (typeof row[key] === 'string' && row[key]) return row[key] as string
+  for (const nested of Object.values(row)) { const words = ownerWords(nested); if (words) return words }
+  return ''
+}
 const plural = (count: number, one: string, many: string): string => `${count} ${count === 1 ? one : many}`
 
-interface Listed {expressions?: {expression_ref: string; open?: boolean; location?: CentralLocation; file_revision?: string}[]; home?: {location?: CentralLocation; path?: string; error?: string}}
+interface Listed {expressions?: {expression_ref: string; open?: boolean; location?: CentralLocation; file_revision?: string}[]; home?: {location?: CentralLocation; path?: string; error?: unknown}}
 interface Held {document: ExpressionDocument; file: {location: CentralLocation; revision: string} | null}
 
 /** The owner's answer as a ready document, or its refusal in its words. */
@@ -197,13 +211,18 @@ export function createWalkSession({later = timer}: {later?: Later} = {}): WalkSe
     let saveRefusal: string | null = null
     try {
       const file = edited.file ?? held.file
+      // The works home the owner listed; none listed (a ground made before Central founded it), the save names no parent and the owner
+      // asks Central for the home (kernel expression_home.rs ensure: Central makes it on this first need). Never a folder made here.
       const parent = listed.home?.location
-      if (!file && !parent) throw Error(listed.home?.error ?? 'the owner disclosed no works home')
       const saved = file
         ? await call({operation: 'save', expression_ref: ref, expected_revision: edited.document.revision, location: file.location, expected_file_revision: file.revision, actor: WALK_ACTOR, actor_kind: 'human'})
-        : await call({operation: 'save_as', expression_ref: ref, expected_revision: edited.document.revision, parent: parent!, name: materialFileName(title),
+        : await call({operation: 'save_as', expression_ref: ref, expected_revision: edited.document.revision, ...(parent ? {parent} : {}), name: materialFileName(title),
           operation_ref: `operation:techne-walk:${globalThis.crypto.randomUUID()}`, actor: WALK_ACTOR, actor_kind: 'human'})
-      requireSavedExpression(saved as ExpressionResult)
+      const answer = saved as ExpressionResult & {owner_operation?: string; failure?: unknown}
+      if (!file && !parent && answer?.state === 'save_refused' && answer.owner_operation === 'central.flows.ensure') {
+        throw Error(`your ground has no works home (${WORKS_HOME}) and Central could not make it: ${ownerWords(answer.failure) || ownerWords(listed.home?.error) || 'it gave no reason'}. ${NO_WORKS_HOME_WAY_ON}`)
+      }
+      requireSavedExpression(answer)
     } catch (cause) {
       saveRefusal = said(cause)
     }

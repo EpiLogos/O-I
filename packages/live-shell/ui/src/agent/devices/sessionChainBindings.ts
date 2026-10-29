@@ -444,8 +444,8 @@ export interface AgentsetInput {
   readonly holds: ChainHolds
 }
 
-/** A member's state (lane W5): the run state of its session (runFaces.ts runStateOfSession: its task's state, its needle against the 90 s
- * horizon) as the rack names it — Working, Idle (queued), Stalled, Done or Failed (runFaces.ts rackStateOf). A member's thread is not read
+/** A member's state (lane W5): the run state of its session (runFaces.ts runStateOfSession: its task's state, its needle against Factory's
+ * check-in bound) as the rack names it — Working, Idle (queued), Stalled, Done or Failed (runFaces.ts rackStateOf). A member's thread is not read
  * here, so a running member is Working and no failure is read; a state nobody said is left out. */
 function memberState(track: AgentSessionTrack, nowUnixMs: number): ReturnType<typeof rackStateOf> {
   return rackStateOf(runStateOfSession(track, null, nowUnixMs))

@@ -90,7 +90,10 @@ export function Transport({bindings, words}: {bindings: TransportBindings; words
 
 function Slot({id, binding, words, fold}: {id: TransportSlotId; binding: SlotBinding | undefined; words: SlotWords; fold?: {open: boolean; toggle: () => void}}) {
   const title = binding?.refused ? `${words.label} — ${words.fn}. ${binding.refused}` : binding?.title ?? binding?.readout?.title ?? words.waiting
-  const common = {'data-slot': id, 'data-i': words.dataI, title, 'aria-label': words.label}
+  // A refused slot stays drawn, dimmed, and the status bar says why (manual §16.10 "Disabled … The status bar says why"): its reason
+  // follows what it does in the line the status bar reads.
+  const dataI = binding?.refused ? `${words.dataI}. ${binding.refused}` : words.dataI
+  const common = {'data-slot': id, 'data-i': dataI, title, 'aria-label': words.label}
   const light = binding?.lit === undefined ? undefined : binding.lit ? 'on' : 'off'
   const mark = MARKS[id]
   if (binding?.control && mark) {
@@ -98,7 +101,7 @@ function Slot({id, binding, words, fold}: {id: TransportSlotId; binding: SlotBin
     // beneath it. The structure is the same open or folded (the mark drawn only while folded, the body laid in the row while
     // open: transport.css), so folding never remounts the owner's control — its state and pending writes are kept.
     return <span className="transport-slot" {...common} data-light={light} data-fold={fold ? fold.open ? 'open' : 'folded' : undefined}>
-      <button type="button" className="native-control transport-fold-mark" data-i={words.dataI} title={title} aria-label={words.label}
+      <button type="button" className="native-control transport-fold-mark" data-i={dataI} title={title} aria-label={words.label}
         aria-haspopup="true" aria-expanded={fold?.open ?? false} data-light={light} onClick={fold?.toggle}>
         <CutIcon name={mark} size={13} /></button>
       <span className="transport-fold-body">{binding.control}</span>
@@ -135,8 +138,8 @@ function Slot({id, binding, words, fold}: {id: TransportSlotId; binding: SlotBin
       data-unread={binding?.readout ? undefined : ''}>{readout}</output>
     if (!binding?.step && id !== 'tempo') return face
     return <>{face}
-      <button type="button" className="native-control" data-slot={id} data-i={words.dataI} title={title} aria-label={`${words.label} down`} disabled={!stepper} onClick={() => binding?.step?.(-1)}>‹</button>
-      <button type="button" className="native-control" data-slot={id} data-i={words.dataI} title={title} aria-label={`${words.label} up`} disabled={!stepper} onClick={() => binding?.step?.(1)}>›</button>
+      <button type="button" className="native-control" data-slot={id} data-i={dataI} title={title} aria-label={`${words.label} down`} disabled={!stepper} onClick={() => binding?.step?.(-1)}>‹</button>
+      <button type="button" className="native-control" data-slot={id} data-i={dataI} title={title} aria-label={`${words.label} up`} disabled={!stepper} onClick={() => binding?.step?.(1)}>›</button>
     </>
   }
   const step = binding?.step && !binding.refused

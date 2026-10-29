@@ -98,11 +98,18 @@ const CASES = [
   ['failed', track(undefined, []), view([...SAID, ['error', FAILED]])],
 ]
 
-test('every run state from the owners\' readings: the task\'s state, the needle against the 90 s horizon, the thread\'s last row', () => {
+test('every run state from the owners\' readings: the task\'s state, the needle against Factory\'s check-in bound, the thread\'s last row', () => {
   for (const [state, t, rows] of CASES) assert.equal(runs.runStateOfSession(t, rows, NOW), state, `${state}: ${t.tasks[0]?.state ?? 'no task'} · ${rows?.at(-1)?.kind ?? 'no thread'}`)
   // A running task with no thread read stands acting (spec 25.1, as the rack maps Working); past the horizon it is stalled.
   assert.equal(runs.runStateOfSession(track('running', activity(10)), null, NOW), 'acting')
-  assert.equal(runs.runStateOfSession(track('running', activity(120)), view(SAID), NOW), 'stalled', 'an owner-declared running task whose needle stopped is stalled')
+  // Past the check-in bound Factory read the task against (O-I #741: `bound_ms`, TaskStanding.boundMs) it is stalled; the faces keep no
+  // bound of their own, so with none of Factory's no stall is read from the clock.
+  const bounded = track('running', activity(120))
+  bounded.tasks[0] = {...bounded.tasks[0], standing: {word: 'running', why: 'Checked in 0 s ago.', retry: false, decidedBy: 'window-sampling', closure: null, boundMs: 90_000}}
+  assert.equal(runs.runStateOfSession(bounded, view(SAID), NOW), 'stalled', 'a running task whose needle stopped past Factory\'s bound is stalled')
+  assert.equal(runs.boundOf(bounded.tasks), 90)
+  assert.equal(runs.runStateOfSession(track('running', activity(120)), view(SAID), NOW), 'thinking', 'no bound of Factory\'s: the faces decide no stall by their own clock')
+  assert.equal(runs.boundOf(track('running', activity(120)).tasks), undefined)
   // Nothing read: no state, never a default.
   assert.equal(runs.runStateOfSession({tasks: [], needle: null}, null, NOW), null)
   const produced = CASES.map(([, t, rows]) => runs.runStateOfSession(t, rows, NOW))

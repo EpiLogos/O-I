@@ -532,6 +532,27 @@ pub enum OwnerRequest {
         to_position: Option<String>,
         #[serde(default)]
         expected_revision: Option<u64>,
+        /// Why the custody closes (`--closure-reason`), one of OpenRig's words
+        /// as Factory keeps them; carried as spelled, and Factory refuses a
+        /// close without one by name (`factory.custody.missing_closure_reason`).
+        #[serde(default)]
+        closure_reason: Option<String>,
+        /// Where the work went or what replaced it (`--closure-target`).
+        #[serde(default)]
+        closure_target: Option<String>,
+    },
+    /// How each task stands, read from its owners' evidence: `factory
+    /// development task-activity [<state>] --request -` with the caller's own
+    /// `factory.task-activity-request/v1` document carried verbatim (AIKit's
+    /// encounter status, the session's check-ins, the task binding) →
+    /// `factory.task-activity/v1`. Factory decides the word, the stall and its
+    /// evidence; with `state_path` it reads its own custody of each task's
+    /// work, and the closure a closed one carries. A read: its kind ends in
+    /// `read`, so the desk's bridge hears it as one and never as a write.
+    TaskActivityRead {
+        #[serde(default)]
+        state_path: Option<PathBuf>,
+        request: Value,
     },
 }
 
@@ -599,6 +620,7 @@ impl OwnerRequest {
                 | OwnerRequest::PadsRead { .. }
                 | OwnerRequest::PadsDue { .. }
                 | OwnerRequest::CustodyList { .. }
+                | OwnerRequest::TaskActivityRead { .. }
         )
     }
 }
@@ -1930,38 +1952,22 @@ pub fn owner(request: OwnerRequest, world: Option<&Value>) -> Result<Value, Erro
             args.push("--json".into());
             expect_contract(owner_call(&args, None)?, &[CUSTODY_LISTING])
         }
-        OwnerRequest::CustodyUpdate {
+        OwnerRequest::CustodyUpdate { .. } => expect_contract(
+            owner_call(
+                &custody_update_args(&request).expect("a custody update builds its grammar"),
+                None,
+            )?,
+            &[CUSTODY_RECEIPT],
+        ),
+        OwnerRequest::TaskActivityRead {
             state_path,
-            custody_ref,
-            state,
-            reason,
-            reopen,
-            to_position,
-            expected_revision,
+            request,
         } => {
-            let mut args: Vec<std::ffi::OsString> = vec![
-                "development".into(),
-                "custody".into(),
-                "update".into(),
-                path_arg(&state_path),
-                "--custody".into(),
-                custody_ref.into(),
-                "--state".into(),
-                state.into(),
-                "--reason".into(),
-                reason.into(),
-            ];
-            if reopen {
-                args.push("--reopen".into());
-            }
-            if let Some(position) = to_position {
-                args.extend(["--to-position".into(), position.into()]);
-            }
-            if let Some(revision) = expected_revision {
-                args.extend(["--expected-revision".into(), revision.to_string().into()]);
-            }
-            args.push("--json".into());
-            expect_contract(owner_call(&args, None)?, &[CUSTODY_RECEIPT])
+            let body = serde_json::to_vec(&request).map_err(|e| incompatible(e.to_string()))?;
+            expect_contract(
+                owner_call(&task_activity_args(state_path.as_deref()), Some(&body))?,
+                &[TASK_ACTIVITY_READING],
+            )
         }
         OwnerRequest::RunClose {
             state_path,
@@ -2057,6 +2063,71 @@ fn pads_write_call(
 pub const DECISION_READING: &str = "factory.attempt-unit-decision-reading/v1";
 /// Factory's custody receipt, for an assignment and an update alike.
 pub const CUSTODY_RECEIPT: &str = "factory.work-custody-receipt/v1";
+/// `factory development custody update <state> --custody C --state S --reason
+/// R [--reopen] [--to-position P] [--expected-revision N] [--closure-reason W
+/// [--closure-target T]] --json`, each value carried as spelled.
+pub fn custody_update_args(request: &OwnerRequest) -> Option<Vec<std::ffi::OsString>> {
+    let OwnerRequest::CustodyUpdate {
+        state_path,
+        custody_ref,
+        state,
+        reason,
+        reopen,
+        to_position,
+        expected_revision,
+        closure_reason,
+        closure_target,
+    } = request
+    else {
+        return None;
+    };
+    let mut args: Vec<std::ffi::OsString> = vec![
+        "development".into(),
+        "custody".into(),
+        "update".into(),
+        path_arg(state_path),
+        "--custody".into(),
+        custody_ref.into(),
+        "--state".into(),
+        state.into(),
+        "--reason".into(),
+        reason.into(),
+    ];
+    if *reopen {
+        args.push("--reopen".into());
+    }
+    if let Some(position) = to_position {
+        args.extend(["--to-position".into(), position.into()]);
+    }
+    if let Some(revision) = expected_revision {
+        args.extend(["--expected-revision".into(), revision.to_string().into()]);
+    }
+    for (flag, value) in [
+        ("--closure-reason", closure_reason),
+        ("--closure-target", closure_target),
+    ] {
+        if let Some(value) = value {
+            args.extend([flag.into(), value.into()]);
+        }
+    }
+    args.push("--json".into());
+    Some(args)
+}
+
+/// Factory's task-state reading (Factory `task_activity.rs`).
+pub const TASK_ACTIVITY_READING: &str = "factory.task-activity/v1";
+
+/// `factory development task-activity [<state>] --request - --json`: the
+/// request rides stdin; the state is named only when the caller names one, so
+/// Factory never locates a state from the kernel's own directory.
+pub fn task_activity_args(state_path: Option<&Path>) -> Vec<std::ffi::OsString> {
+    let mut args: Vec<std::ffi::OsString> = vec!["development".into(), "task-activity".into()];
+    if let Some(path) = state_path {
+        args.push(path_arg(path));
+    }
+    args.extend(["--request".into(), "-".into(), "--json".into()]);
+    args
+}
 /// Factory's custody listing.
 pub const CUSTODY_LISTING: &str = "factory.work-custody-listing/v1";
 
@@ -2857,6 +2928,89 @@ pub fn run_close(
 #[cfg(test)]
 mod owner_tests {
     use super::*;
+
+    fn strings(args: Vec<std::ffi::OsString>) -> Vec<String> {
+        args.into_iter()
+            .map(|arg| arg.to_string_lossy().into_owned())
+            .collect()
+    }
+
+    #[test]
+    fn a_task_activity_read_carries_the_request_and_names_a_state_only_when_given() {
+        assert_eq!(
+            strings(task_activity_args(None)),
+            ["development", "task-activity", "--request", "-", "--json"]
+        );
+        assert_eq!(
+            strings(task_activity_args(Some(Path::new("/s.json")))),
+            [
+                "development",
+                "task-activity",
+                "/s.json",
+                "--request",
+                "-",
+                "--json"
+            ]
+        );
+        let wire: OwnerRequest =
+            serde_json::from_value(serde_json::json!({"kind": "task-activity-read",
+            "request": {"schema": "factory.task-activity-request/v1", "tasks": []}}))
+            .unwrap();
+        assert!(matches!(
+            wire,
+            OwnerRequest::TaskActivityRead {
+                state_path: None,
+                ..
+            }
+        ));
+        assert!(
+            wire.is_read() && !wire.needs_world(),
+            "a reading, outside the lock"
+        );
+        assert_eq!(
+            reading_contract(&serde_json::json!({"schema": TASK_ACTIVITY_READING})),
+            "factory.task-activity/v1"
+        );
+    }
+
+    #[test]
+    fn a_custody_close_carries_its_closure_reason_as_spelled() {
+        let wire: OwnerRequest =
+            serde_json::from_value(serde_json::json!({"kind": "custody-update",
+            "state_path": "/s.json", "custody_ref": "factory:custody:1", "state": "completed",
+            "reason": "written", "closure_reason": "superseded", "closure_target": "task:2"}))
+            .unwrap();
+        assert_eq!(
+            strings(custody_update_args(&wire).unwrap()),
+            [
+                "development",
+                "custody",
+                "update",
+                "/s.json",
+                "--custody",
+                "factory:custody:1",
+                "--state",
+                "completed",
+                "--reason",
+                "written",
+                "--closure-reason",
+                "superseded",
+                "--closure-target",
+                "task:2",
+                "--json"
+            ]
+        );
+        // Absent, nothing is supplied for it: Factory refuses the close by name.
+        let bare: OwnerRequest =
+            serde_json::from_value(serde_json::json!({"kind": "custody-update",
+            "state_path": "/s.json", "custody_ref": "factory:custody:1", "state": "completed",
+            "reason": "written"}))
+            .unwrap();
+        assert!(!strings(custody_update_args(&bare).unwrap())
+            .iter()
+            .any(|arg| arg.starts_with("--closure")));
+        assert!(custody_update_args(&OwnerRequest::AttemptAdmission {}).is_none());
+    }
 
     fn telemetry_day_args() -> Vec<std::ffi::OsString> {
         vec![

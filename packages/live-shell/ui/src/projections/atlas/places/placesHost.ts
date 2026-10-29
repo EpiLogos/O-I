@@ -22,7 +22,7 @@
 import type {KernelTransportStatus} from '../../../../../../../desktop/cradle/src/kernel/types';
 import type {DisclosureSessionStore} from '../../../../../../../desktop/cradle/src/techne/session';
 import type {AtlasHandle} from '../mount';
-import {surfacePointAt} from '../src/globe/zoom';
+import {MIN_DIST, surfacePointAt} from '../src/globe/zoom';
 import {latLonFromDir} from '../src/data/geo';
 import {later as lifetimeLater, listen, type Cancel} from '../src/ui/lifetime';
 import {WORLD} from '../src/state/store';
@@ -67,11 +67,12 @@ function publishScale(next: AtlasScale | null): void {
 
 // ── the shared spatial focus ──────────────────────────────────────────────
 
-/** The atlas's own framing distances, in globe radii, one for each precision a flight ends at (manual §17.2: "An exact place gets a street, an
- * approximate place gets a city, and a region gets the whole region"). The street and the whole region are the atlas's own (app/controller.ts
- * frames a place at 2.25 and a region at 2.6); a city stands between them. All three are within the Region scale (placesModel.ts REGION_DISTANCE),
- * and the street is within the Place scale (PLACE_DISTANCE). */
-const FRAMING = {exact: 2.25, approximate: 2.4, region: 2.6} as const;
+/** The framing distances, in globe radii, one for each precision a flight to a place ends at (manual §17.2: "An exact place gets a street, an
+ * approximate place gets a city, and a region gets the whole region"; O-I #742, walk 739 T1: coming in to a single place fills the pane with
+ * it). A street is as near as the atlas's camera flies (globe/controls.ts flyTo: MIN_DIST + 0.02); a city a little higher; the whole region
+ * higher still, inside the Region scale (placesModel.ts REGION_DISTANCE). The street and the city are the Place scale (PLACE_DISTANCE). The
+ * atlas's own framing of an opened subject (app/controller.ts, 2.25) is left as it was: this door comes in after it. */
+const FRAMING = {exact: MIN_DIST + 0.02, approximate: 1.15, region: 1.4} as const;
 
 /** The distance a flight to a place ends at, for its precision (a place with no coordinate does not fly: the widest). */
 export function framingDistance(precision: SuitePlace['precision']): number {
@@ -133,6 +134,8 @@ export function turnAtlasTo(handle: AtlasHandle, place: SuitePlace | undefined, 
     if (index === undefined) return false;
     handle.ctl.navigate({view: {kind: 'manifest', occId: turn.occId, context: {type: 'family', id: handle.model.occ[index].familyId}}, deep: false,
       ...(handle.ctl.state.graph ? {graph: true as const} : {})});
+    // The atlas frames the subject it opened from afar (app/controller.ts enterManifest, 2.25 radii); the place comes in to its own framing.
+    flyAtlasTo(handle, camera.lat, camera.lon, camera.dist, later);
     // The subject selected there is the thing visited, as the atlas's own notice of the opened occurrence names it (walks/walksHost.ts
     // visitOfManifest): the two notices are one stop.
     noteWalkVisit({placeRef: visited.ref, name: visited.name, camera, thingRef: handle.model.occ[index].subject_ref ?? null});

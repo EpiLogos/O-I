@@ -73,7 +73,7 @@ export function ChatComposer({reading,draft,pending,busy,error,editable,promptAl
   /** Who the message goes to (the chips and the Bypass line name it). */
   agentName?:string;
   /** The last Send's outcome (P8 not sent · P9 checking). */
-  sendState?:{phase:"checking"|"unknown"|"failed";error?:string};
+  sendState?:{phase:"checking"|"unknown"|"failed";error?:string;refusal?:{code:string;fact:string;consequence:string;action:string;retry:boolean}};
   onRetry?:()=>void;
   /** The encounter owner is out of reach (P11): the panel says so once; the
    *  composer neither offers connections nor claims none are configured. */
@@ -114,7 +114,14 @@ export function ChatComposer({reading,draft,pending,busy,error,editable,promptAl
     {draftFailed&&<button className="oi-action" onClick={onRecover}>Apply my typing to the current shared draft</button>}
     {sendState?.phase==="checking"&&<p className="chat-send-state oi-note" role="status">Checking whether your message was sent…</p>}
     {sendState?.phase==="unknown"&&<p className="chat-send-state oi-note" role="status">Outcome unknown. Rechecking the native owner’s record.</p>}
-    {sendState?.phase==="failed"&&<p className="chat-send-state" role="alert"><span>Message not sent.</span>{onRetry&&<button type="button" className="oi-action" onClick={onRetry}>Retry</button>}</p>}
+    {sendState?.phase==="failed"&&(sendState.refusal
+      // The owner's refusal in its own three parts: what stands, what did not happen, and the next lawful step. Retry only where a
+      // resend can land: a session that waits on you refuses again until its request is answered.
+      ?<div className="chat-send-state chat-send-refusal oi-refusal" role="alert" data-code={sendState.refusal.code}>
+        <p>{sendState.refusal.fact}</p><p>{sendState.refusal.consequence}</p><p><strong>Next:</strong> {sendState.refusal.action}</p>
+        {sendState.refusal.retry&&onRetry&&<button type="button" className="oi-action" onClick={onRetry}>Retry</button>}
+      </div>
+      :<p className="chat-send-state" role="alert"><span>Message not sent.</span>{onRetry&&<button type="button" className="oi-action" onClick={onRetry}>Retry</button>}</p>)}
     {drafting
       ?<div className="chat-connect" data-fact="new-chat">
         <span className="chat-connect-label"><Glyph name="link" size={11}/> New conversation</span>

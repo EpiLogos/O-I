@@ -9,8 +9,8 @@
 // - clips: every real task of a session, id `<track id>#task/<n>` (the task log opens by the session; `parseFactoryTaskRef` gives
 //   it back). The trailing soft-stop slot is not a task: it is the empty cell whose square stops the track. A group carries no
 //   clips of its own — its header folds its helpers; what it would show is a roll-up the view derives from `parentId`.
-// - status: queued → waiting, running → running, done → stopped, stalled → stalled; a task whose owner and temporal stream say
-//   nothing carries no status (the grid says "State not disclosed" rather than guess).
+// - status: queued → waiting, running → running, done → done, stalled → stalled, stopped → stopped (Factory's words); a task Factory says
+//   no word of carries no status (the grid says "State not disclosed" rather than guess).
 // - columns: the batch rows, `batch:<n>` for the n-th task of every session, with one trailing row so each session has its empty
 //   soft-stop slot, never fewer than the shipped four (the grid's Main column).
 // - ruler: seconds from the start of the one shared axis (an hour ending now, `sharedAxis`), labelled with the clock. A task
@@ -208,7 +208,8 @@ export function parseFactoryTaskRef(ref: string): {trackId: string; n: number} |
   return Number.isSafeInteger(n) && n >= 1 ? {trackId: ref.slice(0, at), n} : null
 }
 
-const STATUS: Record<TaskState, ClipStatus | undefined> = {queued: 'waiting', running: 'running', done: 'done', stalled: 'stalled', unknown: undefined}
+// Stopped: "Ready, in full colour" (DLW §19.1) — Factory's word for a task whose session AIKit reports closed (agent/taskActivity.ts).
+const STATUS: Record<TaskState, ClipStatus | undefined> = {queued: 'waiting', running: 'running', done: 'done', stalled: 'stalled', stopped: 'stopped', unknown: undefined}
 
 /** The header the grid draws (agent/AgentSessionGrid.tsx:67-70). */
 const trackName = (track: AgentSessionTrack): string =>

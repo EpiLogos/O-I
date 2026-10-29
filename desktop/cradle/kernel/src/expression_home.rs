@@ -5,8 +5,9 @@
 //! (`expression_material::list`: `central.files.list`, then `read` and
 //! `expression_file::decode` per file, unreadable files disclosed, never
 //! dropped). Writing into the home is the owner's `save_as` alone
-//! (`central.files.create` with the home's disclosed location as `parent`);
-//! opening a listed file is the owner's `open_file`. Nothing here writes.
+//! (`central.files.create` with the home's disclosed location as `parent`,
+//! or, with no parent named, the home Central gives through `ensure`);
+//! opening a listed file is the owner's `open_file`. Listing never writes.
 use crate::files;
 use crate::flow::CentralClient;
 use serde_json::{json, Value};
@@ -99,6 +100,20 @@ pub fn list(client: &CentralClient, open: &BTreeSet<&str>) -> Listing {
     }
 }
 
+/// The works home's location from Central, made by Central when the ground has none yet (`central.flows.ensure`, Central's own
+/// operation: a ground `ctrl init` makes carries the home; one made before gets it here). Used by `save_as` when no parent is named;
+/// reading never makes it. The refusal is Central's, in its words.
+pub fn ensure(client: &CentralClient) -> Result<files::Location, Value> {
+    let data = client
+        .run("central.flows.ensure", json!({}))
+        .map_err(|error| json!(error))?;
+    if data["schema"] != "central.flows-home/v1" || data["path"] != WORKS_HOME {
+        return Err(json!({"malformed": "Central answered no Flows home", "data": data}));
+    }
+    serde_json::from_value::<files::Location>(data["location"].clone())
+        .map_err(|error| json!({"malformed": error.to_string(), "data": data}))
+}
+
 /// Read each file through the owner, in order, in as few owner calls as it allows.
 fn read_all(
     client: &CentralClient,
@@ -122,13 +137,17 @@ mod tests {
     struct Ground(PathBuf);
     impl Ground {
         fn new(home: bool) -> Self {
+            // A count beside the clock: the clock reads in microseconds here, and grounds made at once in parallel tests (or two in
+            // one test) must never share a folder one of them removes.
+            static NEXT: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
             let base = std::env::temp_dir().join(format!(
-                "works-home-{}-{}",
+                "works-home-{}-{}-{}",
                 std::process::id(),
                 std::time::SystemTime::now()
                     .duration_since(std::time::UNIX_EPOCH)
                     .unwrap()
-                    .as_nanos()
+                    .as_nanos(),
+                NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed)
             ));
             fs::create_dir_all(base.join("ground/Control/user")).unwrap();
             if home {
@@ -155,6 +174,12 @@ elif name == 'central.files.read':
     if not (root / path).is_file(): refuse('No such native file')
     answer({'schema': 'central.file-reading/v1', 'location': request['location'], 'revision': revision(path), 'byte_len': (root / path).stat().st_size,
             'content_encoding': 'utf-8', 'content': (root / path).read_text(), 'project': None, 'source': None, 'automatic_agent_or_model_invocation': False})
+elif name == 'central.flows.ensure':
+    if not (root / 'Control/user').is_dir(): refuse('This folder is no ground Central keeps (it has no Control/user): accept your ground in Setup first')
+    made = not (root / 'Control/user/flows').exists()
+    (root / 'Control/user/flows').mkdir(exist_ok=True)
+    pathlib.Path(str(root) + '.ensured').write_text('ensured')
+    answer({'schema': 'central.flows-home/v1', 'outcome': 'made' if made else 'present', 'path': 'Control/user/flows', 'location': location('Control/user/flows')})
 elif name == 'central.files.create':
     path = request['parent']['path'] + '/' + request['name']
     if (root / path).exists(): refuse('The native filename already exists; creation never overwrites')
@@ -372,6 +397,55 @@ else:
         assert_eq!(opened["state"], "ready", "{opened}");
     }
 
+    /// O-I #742 (T5): a ground made before Central founded its Flows home lists no home, and a walk's first save names no parent. The
+    /// owner then asks Central for its home (`central.flows.ensure`, Central's own operation: never a mkdir here) and saves into it;
+    /// the work lists after a restart. A folder Central keeps no ground in is refused in Central's words, and nothing is made.
+    #[test]
+    fn expression_save_with_no_home_gets_the_home_from_central_on_first_need() {
+        let ground = Ground::new(false);
+        let client = ground.client();
+        let mut before = Application::default();
+        create(&mut before, &client, "expression:walk", "Walks");
+        let listed = apply(&mut before, &client, json!({"operation":"list"}));
+        assert_eq!(listed["home"]["state"], "unavailable", "{listed}");
+        let saved = apply(
+            &mut before,
+            &client,
+            json!({"operation":"save_as","expression_ref":"expression:walk","expected_revision":1,"name":"walks.expression.json","operation_ref":"operation:walk","actor":"human:test","actor_kind":"human"}),
+        );
+        assert_eq!(saved["state"], "saved", "{saved}");
+        assert!(
+            ground.0.join("ground.ensured").exists(),
+            "the home came from Central's own operation"
+        );
+        let mut after = Application::default();
+        let list = apply(&mut after, &client, json!({"operation":"list"}));
+        assert_eq!(list["home"]["state"], "listed", "{list}");
+        let row = rows(&list, "expression:walk");
+        assert_eq!(
+            row[0]["location"]["path"],
+            "Control/user/flows/walks.expression.json"
+        );
+
+        let bare = Ground::new(false);
+        fs::remove_dir_all(bare.0.join("ground/Control/user")).unwrap();
+        let client = bare.client();
+        let mut app = Application::default();
+        create(&mut app, &client, "expression:walk", "Walks");
+        let refused = apply(
+            &mut app,
+            &client,
+            json!({"operation":"save_as","expression_ref":"expression:walk","expected_revision":1,"name":"walks.expression.json","operation_ref":"operation:walk","actor":"human:test","actor_kind":"human"}),
+        );
+        assert_eq!(refused["state"], "save_refused", "{refused}");
+        assert_eq!(refused["owner_operation"], "central.flows.ensure");
+        assert!(
+            refused.to_string().contains("accept your ground in Setup"),
+            "{refused}"
+        );
+        assert!(!bare.0.join("ground/Control/user").exists());
+    }
+
     #[test]
     fn expression_home_the_owner_cannot_list_is_disclosed_and_the_open_works_still_list() {
         let ground = Ground::new(false);
@@ -390,8 +464,9 @@ else:
     }
 
     /// The same New → restart → list → open over the real Central owner, on a
-    /// scratch ground (`central.init`, plus the Flows folder the owner's own
-    /// ground already holds). Never the owner's ground.
+    /// scratch ground (`central.init`, then the Flows home through Central's
+    /// own `central.flows.ensure`, as a ground founded before Setup founds it
+    /// gets it on first need). Never the owner's ground.
     #[test]
     #[ignore = "requires OI_CENTRAL_CTRL_BIN naming a real Central executable"]
     fn expression_real_central_home_survives_a_restart() {
@@ -401,7 +476,11 @@ else:
         fs::create_dir(&root).unwrap();
         let client = CentralClient::with(PathBuf::from(ctrl), Some(root.clone()), "".into());
         client.run("central.init", json!({})).unwrap();
-        fs::create_dir(root.join(WORKS_HOME)).unwrap();
+        assert!(
+            !root.join(WORKS_HOME).exists(),
+            "init imposes nothing below Control/user"
+        );
+        ensure(&client).unwrap();
         let mut before = Application::default();
         create(&mut before, &client, "expression:real", "Real work");
         let home = apply(&mut before, &client, json!({"operation":"list"}))["home"].clone();

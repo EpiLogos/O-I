@@ -1,5 +1,6 @@
 // Factory's clip (manual §19.1): a task on an agent session's track. Clip view puts how it launches and what follows it beside its
-// log. The Clip panel holds its name, colour, state, turns, output style and Loop (whether it repeats, §16.5: Off or On, with its stop
+// log. The Clip panel holds its name, colour, state (Factory's reading, with the evidence it was read from and, once closed, the closure
+// its custody carries: `state`, `state.why`, `state.retry`, `closure`), turns, output style and Loop (whether it repeats, §16.5: Off or On, with its stop
 // condition `loop.until` and its cap `loop.cap`); Launch holds Live's launch modes (Trigger, Gate, Toggle, Repeat), Then (the follow
 // action, on the clip's own track: Next task, Again, Stop) and Quantize. To hand the work to another session, the task is dragged onto
 // that session's track: no follow action leaves the track. A task launched with Repeat is an experiment (§19.5): each run a take, and
@@ -183,8 +184,11 @@ function ClipPanel(p: ClipProps) {
     <Row label="Constellation"><MadeOf p={p} what="the task" /></Row>
     <Row label="Groove"><GrooveOf p={p} /><GrooveSwap p={p} /></Row>
     {grooved(p.v) && <Row label="Reading"><GrooveReading p={p} /></Row>}
-    <Row label="State"><Fact label="State" does="How the task stands, as the session reports it." value={state ? STATE_WORD[state] ?? state : undefined}
+    <Row label="State"><Fact label="State" does="How the task stands, as Factory reads it from the session's evidence. A stalled task lights its track's retry."
+      value={state ? `${STATE_WORD[state] ?? state}${p.v['state.retry'] === true ? ' · retry lit' : ''}` : undefined}
       tone={state ? STATE_TONE[state as keyof typeof STATE_TONE] : undefined} /></Row>
+    <Row label="Why"><Fact label="Why" does="The evidence the state was read from: the check-in bound, the session's own state, a request that waits for you, or why nothing decides." value={strOf(p.v, 'state.why')} /></Row>
+    {strOf(p.v, 'closure') !== undefined && <Row label="Closed"><Fact label="Closed" does="Why the task's work closed, as Factory keeps it: how it closed and the reason it names." value={strOf(p.v, 'closure')} /></Row>}
     <Row label="Turns"><Fact label="Turns" does="The turns the task has used of the turns the agent's budget allows. The transport's time signature shows the same reading."
       value={used !== undefined && cap !== undefined ? `${used} of ${cap}` : undefined} /></Row>
     <Rule />
@@ -290,7 +294,7 @@ export const clip: DesignedClip = {
   title: 'A Factory task',
   head: {name: 'name', colour: 'colour', active: 'active'},
   defaults: {
-    name: 'Write the hand-off fixtures', colour: 'var(--fizz)', active: true, state: 'running', 'turns.used': 5, 'turns.cap': 12,
+    name: 'Write the hand-off fixtures', colour: 'var(--fizz)', active: true, state: 'running', 'state.why': 'Checked in 4 s ago, within the 90 s bound.', 'turns.used': 5, 'turns.cap': 12,
     madeOf: 'The hand-off', 'madeOf.ref': 'wiki:anchor:hand-off',
     'style.register': 'plain', 'style.form': 'technical', loop: false, 'loop.until': 'done', 'loop.cap': 5, launch: 'trigger', then: 'next', quantize: 'global',
     'repeat.variable': 'condition', 'repeat.levels': 'classic, 4.0, 5.0', 'repeat.repeats': 3, 'repeat.stop': 'done', compare: 'none',
@@ -304,7 +308,9 @@ export const clip: DesignedClip = {
   },
   fixtures: {
     'A running task': {},
-    'A stalled task': {name: 'Generate the fixtures', colour: 'var(--stall)', state: 'stalled', 'turns.used': 2, log: JSON.stringify(STALLED), elapsed: 9, then: 'again', loop: true, event: 'e5-2', 'view.panel': 'clip'},
+    'A stalled task': {name: 'Generate the fixtures', colour: 'var(--stall)', state: 'stalled', 'state.retry': true, 'state.why': 'No check-in within the 90 s bound: the last was 412 s ago, with its task open.',
+      'turns.used': 2, log: JSON.stringify(STALLED), elapsed: 9, then: 'again', loop: true, event: 'e5-2', 'view.panel': 'clip'},
+    'A closed task': {state: 'done', 'state.why': 'Closed: released superseded → task:fixtures-2.', closure: 'released superseded → task:fixtures-2', 'view.panel': 'clip'},
     'An experiment with Repeat': {launch: 'repeat', 'repeat.variable': 'model', 'repeat.levels': 'opus, sonnet, haiku', 'repeat.repeats': 4, 'repeat.stop': 'pass', compare: 'every', takes: 7},
     'Its intent, returned': {'view.panel': 'intent', state: 'done', criteria: JSON.stringify([
       {id: 'c1', text: 'Every widget has a hand-off fixture', state: 'satisfied', evidence: 2}, {id: 'c2', text: 'Old fixture ids are kept', state: 'satisfied', evidence: 1},
@@ -313,7 +319,7 @@ export const clip: DesignedClip = {
         {id: 'evidence:bridge-tests', name: 'evidence:bridge-tests', role: 'evidence', opens: false,
           why: 'the Return names evidence:bridge-tests, and no Factory record binds it to a file'}])},
     'Its envelopes': {'view.editor': 'envelopes', 'env.mode': 'modulation', 'env.agent.effort': JSON.stringify([[0, 2], [30, 3], [45, 1]])},
-    'No readings': {state: undefined, 'turns.used': undefined, 'turns.cap': undefined, log: undefined, elapsed: undefined, launch: undefined, then: undefined, quantize: undefined, loop: undefined,
+    'No readings': {state: undefined, 'state.why': undefined, 'state.retry': undefined, closure: undefined, 'turns.used': undefined, 'turns.cap': undefined, log: undefined, elapsed: undefined, launch: undefined, then: undefined, quantize: undefined, loop: undefined,
       'loop.until': undefined, 'loop.cap': undefined, 'repeat.variable': undefined, 'repeat.levels': undefined, 'repeat.repeats': undefined, 'repeat.stop': undefined, compare: undefined, takes: undefined,
       intent: undefined, 'intent.source': undefined, criteria: undefined, context: undefined, constraints: undefined, returned: undefined},
   },

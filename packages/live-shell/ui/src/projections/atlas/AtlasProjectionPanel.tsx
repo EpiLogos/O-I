@@ -41,6 +41,7 @@ import {enterWorld} from './system/enteredWorld'
 import type {SystemOverlayBinding} from './system/systemOverlay'
 import {bindSystemClock} from './system/systemClock'
 import {watchPaneChrome} from './paneChrome'
+import {spineWorkspace, subscribeSpineWorkspace} from '../encounterBridge'
 import './atlasHost.css'
 
 /** The year the Earth shows, from the shared window: null while no window is in force (all time). */
@@ -156,6 +157,16 @@ export function bindAtlasScope(next: AtlasHostScope): void {
   scope = next
 }
 
+/** The scope the memories are kept under, read at each use: the one a pane bound (the centre pane, AtlasEarthPane), else the workspace
+ * the spine stands in (projections/encounterBridge.ts spineWorkspace). A pane of the `projection.earth` kind mounts through the module
+ * door (registerAtlasHost.ts), where no centre pane stands to bind it (O-I #742, walk 739 T1); the spine's workspace is the live book's,
+ * held by the native Workbench before any pane's module mounts, so a workspace switch moves the memories with it. */
+function currentScope(): AtlasHostScope | null {
+  if (scope) return scope
+  const standing = spineWorkspace()
+  return standing ? {namespace: standing.namespace, workspaceId: standing.workspaceId} : null
+}
+
 function localArea(): Storage | null {
   try {
     return globalThis.localStorage ?? null
@@ -168,7 +179,10 @@ function localArea(): Storage | null {
  * atlas never names a key or an area itself. With no workspace bound, nothing is read and a write is refused, so the
  * atlas's own probe finds no storage and says so, rather than keeping something nowhere. */
 function workspaceStorage(): Storage {
-  const prefix = (): string | null => (scope ? `${scope.namespace}.atlas.${scope.workspaceId}::` : null)
+  const prefix = (): string | null => {
+    const bound = currentScope()
+    return bound ? `${bound.namespace}.atlas.${bound.workspaceId}::` : null
+  }
   const owned = (): string[] => {
     const p = prefix()
     const area = localArea()
@@ -362,7 +376,7 @@ function heldBy(options: AtlasAttachOptions, visible = false): AtlasAttachment {
  * for the claim. Throws with the atlas's own honest message when it cannot mount. */
 export async function attachAtlas(options: AtlasAttachOptions): Promise<AtlasAttachment> {
   if (claimed) return heldBy(options)
-  if (!scope) throw Error('No workspace is bound for the Earth projection, so its settings have nowhere to live.')
+  if (!currentScope()) throw Error('No workspace is bound for the Earth projection, so its settings have nowhere to live.')
   claimed = true
   const progress: {teardown: (() => void) | null} = {teardown: null}
   try {
@@ -461,6 +475,7 @@ async function attachClaimed(options: AtlasAttachOptions, progress: {teardown: (
   let places: PlacesBinding | null = null
   let palaces: PalacesBinding | null = null
   let walks: WalksBinding | null = null
+  let unsubscribeWorld: () => void = () => {}
   let body: {dispose(): void} | null = null
   let bodyDraw: {dispose(): void} | null = null
   let system: SystemOverlayBinding | null = null
@@ -489,6 +504,7 @@ async function attachClaimed(options: AtlasAttachOptions, progress: {teardown: (
     places?.dispose()
     palaces?.dispose()
     walks?.dispose()
+    unsubscribeWorld()
     body?.dispose()
     bodyDraw?.dispose()
     system?.dispose()
@@ -531,6 +547,11 @@ async function attachClaimed(options: AtlasAttachOptions, progress: {teardown: (
   // The World's walk (O-I #760): Record keeps a take of the places you visit and Capture keeps the view as a Scene, both in the walk's
   // Expression through its owner over this transport; the read of the walk lays its takes on Technē's ruler (walks/walksHost.ts).
   walks = bindWalks({handle: mounted, transport})
+  // The walk is the book's world's: the world the spine stands in, as the centre pane sets it from its own book (a pane of the module door
+  // has no book of its own). Without a spine (a standalone harness) the world is left as it was set.
+  const followWorld = () => { const standing = spineWorkspace(); if (standing) setWalkWorld(standing.world) }
+  followWorld()
+  unsubscribeWorld = subscribeSpineWorkspace(followWorld)
   // Your world's body (T-WORLDS §5 W3): read from its owner (the root register's space, AIKit's `aikit.world-body/v1`), and the view's choice of
   // which body to look at (body/worldBody.ts); the Earth stays given. It reads and draws nothing: one drawer draws the globe's body, with the look
   // its world's readings give it and the weather of the shared occasion (system/bodyDraw.ts; T-PROCEDURAL-BODY §6 item 3).
