@@ -53,10 +53,10 @@ test('the scrollbar, a native control\'s edge and an inhabitant\'s fault ink pai
   assert.match(styles, /\.inhabitant-fault \{[^}]*color:var\(--fault\)/)
 })
 
-test('the Native Workbench\'s own foundation colours are the shell\'s tokens under a theme (O-I #751)', () => {
+test('the Native Workbench\'s own foundation colours are the shell\'s tokens, themed or not (O-I #751)', () => {
   const workbench = read('../src/native/workbench.css'), grammar = read('../src/frame/paneGrammar.css'), knowledge = read('../src/panels/knowledge.css')
-  const themed = block(grammar, `${BRIDGE} .candidate-workbench`)
-  assert.ok(themed, 'frame/paneGrammar.css maps the Workbench under a chosen theme')
+  const themed = block(grammar, ':root .candidate-workbench')
+  assert.ok(themed, 'frame/paneGrammar.css maps the Workbench onto the shell\'s tokens, above workbench.css\'s own declarations')
   const colour = /#[0-9a-f]{3,8}\b|rgba?\(|light-dark\(/i
   const literal = new Set()
   for (const m of workbench.matchAll(/(--oi-[a-z0-9-]+)\s*:\s*([^;]+);/g)) if (colour.test(m[2])) literal.add(m[1])

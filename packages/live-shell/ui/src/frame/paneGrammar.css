@@ -4,11 +4,12 @@
    a hairline between them, each pane a 1px rule on the panel ground, the focused one in the accent; its body fills it. */
 .candidate-workbench { --oi-shell-gutter: 3px; --oi-shell-ground: var(--bg-0) }
 .candidate-workbench .surface-host { background: var(--bg-0) }
-/* Under a chosen theme the Workbench's own foundation tokens (native/workbench.css: a light paper, its ink, rules and status hues,
-   and the frame's --oi-text / --oi-bg / --oi-border) are the shell's, so the theme reaches what they paint (O-I ticket 751); the
-   tokens derived from them there (--oi-surface, --oi-foreground, --oi-focus, the syntax hues …) follow. With no theme chosen
-   nothing here matches and the Workbench paints as before. */
-:root:has(> body[data-oi-theme]) .candidate-workbench {
+/* The Workbench's own foundation tokens (native/workbench.css: a light paper, its ink, rules and status hues, and the frame's
+   --oi-text / --oi-bg / --oi-border) are the shell's, so the default look and any chosen theme reach what they paint (O-I ticket
+   751); the tokens derived from them there (--oi-surface, --oi-foreground, --oi-focus, the syntax hues …) follow. Without this the
+   Workbench's tab marks and source note kept their paper ink, dark on the dark shell. :root lifts this over workbench.css, which
+   loads after it and declares the same tokens on .candidate-workbench. */
+:root .candidate-workbench {
   --oi-text: var(--text); --oi-bg: var(--gutter); --oi-border: var(--line-strong);
   --oi-black: var(--gutter); --oi-white: var(--text); --oi-paper: var(--bg-2); --oi-ink: var(--text); --oi-gold: var(--accent-dim);
   --oi-muted: var(--text-dim); --oi-rule: var(--edge); --oi-projection: var(--text-dim); --oi-relation: var(--text-faint);

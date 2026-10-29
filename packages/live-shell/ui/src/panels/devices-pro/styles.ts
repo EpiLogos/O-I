@@ -21,14 +21,14 @@ const CSS = `
 }
 .prp-sub { font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-faint); }
 .prp-head-spring { flex: 1; }
-.prp-element-tag { font-family: var(--font-mono); font-size: 9px; color: var(--text-faint); }
+.prp-element-tag { font-family: var(--mono); font-size: 9px; color: var(--text-faint); }
 .prp-badge {
-  font-family: var(--font-mono); font-size: 8.5px; color: var(--amber);
+  font-family: var(--mono); font-size: 8.5px; color: var(--accent);
   border: 1px solid var(--line-strong); border-radius: 3px; padding: 1px 5px; white-space: nowrap;
 }
 .prp-track-select {
   background: var(--bg-2); border: 1px solid var(--line); border-radius: 4px;
-  color: var(--text); font-family: var(--font-mono); font-size: 10px; padding: 2px 4px;
+  color: var(--text); font-family: var(--mono); font-size: 10px; padding: 2px 4px;
   max-width: 130px;
 }
 .prp-track-label { display: inline-flex; align-items: center; gap: 4px; }
@@ -62,18 +62,18 @@ const CSS = `
 .prp-slider-ticks { position: absolute; inset: 0; pointer-events: none; }
 .prp-slider-tick { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--line); opacity: 0.6; }
 .prp-slider-value {
-  font-family: var(--font-mono); font-size: 10px; color: var(--accent);
+  font-family: var(--mono); font-size: 10px; color: var(--accent);
   background: var(--bg-2); border: 1px solid var(--line); border-radius: 3px;
   padding: 1px 5px; white-space: nowrap; cursor: text; text-align: right; min-width: 52px;
 }
 .prp-slider-input {
-  font-family: var(--font-mono); font-size: 10px; color: var(--text);
+  font-family: var(--mono); font-size: 10px; color: var(--text);
   background: var(--bg-0); border: 1px solid var(--accent-dim); border-radius: 3px;
   padding: 1px 5px; width: 72px; text-align: right;
 }
 .prp-slider-input:focus { outline: none; }
-.prp-slider.bipolar .prp-slider-fill { background: color-mix(in srgb, var(--fizz) 22%, transparent); border-right-color: var(--violet); }
-.prp-slider.bipolar .prp-slider-thumb { background: var(--violet); }
+.prp-slider.bipolar .prp-slider-fill { background: color-mix(in srgb, var(--fizz) 22%, transparent); border-right-color: var(--fizz); }
+.prp-slider.bipolar .prp-slider-thumb { background: var(--fizz); }
 .prp-slider-vert { cursor: ns-resize; }
 .prp-slider-vert .prp-slider-fill { top: auto; left: 0; right: 0; border-right: none; border-top: 1px solid var(--accent-dim); }
 .prp-slider-vert .prp-slider-thumb { top: auto; width: auto; left: 1px; right: 1px; height: 5px; transform: translateY(2px); }
@@ -86,10 +86,10 @@ const CSS = `
 .prp-knob-body { fill: var(--bg-2); stroke: var(--line-strong); stroke-width: 1; }
 .prp-knob-pointer { stroke: var(--text); stroke-width: 1.6; stroke-linecap: round; }
 .prp-knob-value {
-  font-family: var(--font-mono); font-size: 9.5px; color: var(--accent); white-space: nowrap; cursor: text;
+  font-family: var(--mono); font-size: 9.5px; color: var(--accent); white-space: nowrap; cursor: text;
 }
 .prp-knob-input {
-  font-family: var(--font-mono); font-size: 9.5px; color: var(--text);
+  font-family: var(--mono); font-size: 9.5px; color: var(--text);
   background: var(--bg-0); border: 1px solid var(--accent-dim); border-radius: 3px;
   padding: 0 3px; width: 56px; text-align: center;
 }
@@ -99,7 +99,7 @@ const CSS = `
 .prp-menu-col { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .prp-menu {
   background: var(--bg-2); border: 1px solid var(--line); border-radius: 4px;
-  color: var(--accent); font-family: var(--font-mono); font-size: 10px;
+  color: var(--accent); font-family: var(--mono); font-size: 10px;
   padding: 2px 4px; max-width: 110px; width: 100%;
 }
 .prp-menu:focus { outline: none; border-color: var(--accent-dim); }
@@ -108,7 +108,7 @@ const CSS = `
 /* ---- segmented (small discrete sets) ---- */
 .prp-seg { display: inline-flex; gap: 0; border: 1px solid var(--line); border-radius: 4px; overflow: hidden; background: var(--bg-0); }
 .prp-seg-btn {
-  font-family: var(--font-mono); font-size: 9.5px; color: var(--text-dim);
+  font-family: var(--mono); font-size: 9.5px; color: var(--text-dim);
   background: var(--bg-2); border: none; border-right: 1px solid var(--line);
   padding: 2px 7px;
 }
@@ -134,7 +134,7 @@ const CSS = `
 .prp-field-col { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .prp-field-name { font-size: 9.5px; color: var(--text-dim); white-space: nowrap; }
 .prp-field {
-  font-family: var(--font-mono); font-size: 10.5px; color: var(--text);
+  font-family: var(--mono); font-size: 10.5px; color: var(--text);
   background: var(--bg-2); border: 1px solid var(--line); border-radius: 3px;
   padding: 2px 5px; width: 74px; text-align: right;
 }
@@ -146,7 +146,7 @@ const CSS = `
 .prp-status-saved { color: var(--accent); }
 .prp-status-error { color: var(--rec); cursor: help; }
 .prp-error-text {
-  font-family: var(--font-mono); font-size: 9px; color: var(--rec);
+  font-family: var(--mono); font-size: 9px; color: var(--rec);
   margin-top: 3px; max-width: 340px; overflow-wrap: break-word;
 }
 .prp-missing { font-size: 9px; color: var(--text-faint); font-style: italic; margin-top: 2px; }
@@ -159,10 +159,10 @@ const CSS = `
 .prp-meter-cell { flex: 1; border-radius: 1px; background: var(--bg-2); min-width: 3px; }
 .prp-meter-cell.lit-low { background: var(--accent-dim); }
 .prp-meter-cell.lit-mid { background: var(--accent); }
-.prp-meter-cell.lit-top { background: var(--amber); }
+.prp-meter-cell.lit-top { background: var(--accent); }
 .prp-meter-scale {
   display: flex; flex-direction: column; justify-content: space-between; align-items: flex-end;
-  font-family: var(--font-mono); font-size: 8px; color: var(--text-faint); padding-left: 3px;
+  font-family: var(--mono); font-size: 8px; color: var(--text-faint); padding-left: 3px;
 }
 
 /* ---- tabs (Wavetable) ---- */
@@ -183,8 +183,8 @@ const CSS = `
 .prp-display-curve { stroke: var(--accent); stroke-width: 1.5; fill: none; }
 .prp-display-curve-dim { stroke: var(--text-faint); stroke-width: 1.2; fill: none; }
 .prp-display-fill { fill: color-mix(in srgb, var(--fizz) 7%, transparent); }
-.prp-display-tag { font-family: var(--font-mono); font-size: 8px; fill: var(--text-faint); }
-.prp-display-pos { stroke: var(--amber); stroke-width: 1; }
+.prp-display-tag { font-family: var(--mono); font-size: 8px; fill: var(--text-faint); }
+.prp-display-pos { stroke: var(--accent); stroke-width: 1; }
 
 /* ---- delay grid (Echo L/R columns) ---- */
 .prp-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; min-width: 0; }
