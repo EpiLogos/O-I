@@ -246,6 +246,12 @@ export type QlReadRequest = {kind:"kernel-m1"|"scene-compose"|"scene-world";requ
   | {kind:"kernel-apply";operator:string;address:string}
   /** `ql techne reading <target.json>` (`ql.techne/v1`): the target on the kernel's stdin. */
   | {kind:"techne-reading";target:unknown}
+  /** `ql nara hours -` (`ql.sky-hours/v1`): the planets of the day and of the hour at a place, for a `ql.sky-day-request/v1`
+   * ({schema, epoch, place:{reference, label, latitude_degrees, longitude_degrees, altitude_metres, timezone},
+   * scope:"world-declared"|"observer-private", backend_policy}) on stdin. */
+  | {kind:"sky-hours";request:unknown}
+  /** `ql kernel body-constants` (`ql.m2-body-constants/v1`): M2's proposed body constants by element fibre. */
+  | {kind:"body-constants"}
   /** `ql mef lenses` ({registryVersion, registryRevision, lenses}), `ql context-frame list` ({grammarVersion, frames}),
    * `ql service capabilities` ({providerState, detail, operations}). */
   | {kind:"mef-lenses"|"context-frame-list"|"service-capabilities"}

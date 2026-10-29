@@ -1,0 +1,152 @@
+{
+ "source": "ql nara hours - --json, QL-MEF dlw/745-readings (built from b87dfee plus this lane), 29 Oct 2026",
+ "input": {
+  "schema": "ql.sky-day-request/v1",
+  "epoch": "2026-09-28T12:00:00Z",
+  "scope": "world-declared",
+  "backend_policy": "allow-moshier",
+  "place": {
+   "reference": "controlled:place:greenwich",
+   "label": "Greenwich",
+   "latitude_degrees": 51.4769,
+   "longitude_degrees": -0.0005,
+   "altitude_metres": 46.0,
+   "timezone": "Europe/London"
+  }
+ },
+ "answer": {
+  "bound_source": {
+   "registry_revision": "c8dc7a61731b879ec68915af45217e96488283045d74f779dcf6123569aa98c0",
+   "rules": "TONIC_PLANETARY_RESONANCE and DOMINANT_PLANETARY_RESONANCE whose planet is the hour's",
+   "schema": "ql.m2-correspondences/v1"
+  },
+  "day": {
+   "day_ref": "sha256:70e486ca70a5b712348546e44cf7c48250f471e88f081f5dbbf9fe6089046539",
+   "epoch_unix_ms": 1790596800000,
+   "epoch_utc": "2026-09-28T12:00:00Z",
+   "method": "swiss-ephemeris rise_trans: Sun upper limb on the horizon, standard refraction",
+   "next_sunrise_unix_ms": 1790661420325,
+   "next_sunrise_utc": "2026-09-29T05:57:00Z",
+   "place": {
+    "altitude_metres": 46.0,
+    "label": "Greenwich",
+    "latitude_degrees": 51.4769,
+    "longitude_degrees": -0.0005,
+    "reference": "controlled:place:greenwich",
+    "timezone": "Europe/London"
+   },
+   "provider": {
+    "adapter_sha256": "37d222d776acb8e5800504d54760df7c2c6c697f0d903188f9df71e9a4fd7c85",
+    "backend": "moshier",
+    "engine_version": "2.10.03",
+    "kerykeion_version": "5.7.1",
+    "name": "Swiss Ephemeris",
+    "network": "disabled",
+    "wrapper": "pyswisseph",
+    "wrapper_version": "2.10.3.2"
+   },
+   "request": {
+    "backend_policy": "allow-moshier",
+    "epoch": "2026-09-28T12:00:00Z",
+    "place": {
+     "altitude_metres": 46.0,
+     "label": "Greenwich",
+     "latitude_degrees": 51.4769,
+     "longitude_degrees": -0.0005,
+     "reference": "controlled:place:greenwich",
+     "timezone": "Europe/London"
+    },
+    "schema": "ql.sky-day-request/v1",
+    "scope": "world-declared"
+   },
+   "schema": "ql.sky-day/v1",
+   "scope": "world-declared",
+   "standing": "calculated-ephemeris-not-observed-sky",
+   "sunrise_iso_weekday": 1,
+   "sunrise_local_date": "2026-09-28",
+   "sunrise_unix_ms": 1790574923091,
+   "sunrise_utc": "2026-09-28T05:55:23Z",
+   "sunset_unix_ms": 1790617497234,
+   "sunset_utc": "2026-09-28T17:44:57Z",
+   "time_scale_policy": "UTC-as-UT argument; UT1 correction not supplied"
+  },
+  "day_ruler": {
+   "body": "Moon",
+   "coordinate": "#2-5-4"
+  },
+  "hour": {
+   "bound": [
+    {
+     "maqam_coordinate": "#2-4.3-0-3",
+     "maqam_index": 2,
+     "maqam_name": "Bastanikar",
+     "role": "dominant"
+    },
+    {
+     "maqam_coordinate": "#2-4.3-0-6",
+     "maqam_index": 5,
+     "maqam_name": "Buselik",
+     "role": "dominant"
+    },
+    {
+     "maqam_coordinate": "#2-4.3-9-4",
+     "maqam_index": 70,
+     "maqam_name": "Puselik",
+     "role": "dominant"
+    }
+   ],
+   "ends_unix_ms": 1790599758007,
+   "half": "day",
+   "of": 7,
+   "ruler": {
+    "body": "Mercury",
+    "coordinate": "#2-5-3"
+   },
+   "starts_unix_ms": 1790596210162
+  },
+  "order": {
+   "literal": "Sun→Venus→Mercury→Moon→Saturn→Jupiter→Mars",
+   "rulers": [
+    {
+     "body": "Sun",
+     "coordinate": "#2-5-0/1"
+    },
+    {
+     "body": "Venus",
+     "coordinate": "#2-5-2"
+    },
+    {
+     "body": "Mercury",
+     "coordinate": "#2-5-3"
+    },
+    {
+     "body": "Moon",
+     "coordinate": "#2-5-4"
+    },
+    {
+     "body": "Saturn",
+     "coordinate": "#2-5-5"
+    },
+    {
+     "body": "Jupiter",
+     "coordinate": "#2-5-6"
+    },
+    {
+     "body": "Mars",
+     "coordinate": "#2-5-7"
+    }
+   ],
+   "source": {
+    "coordinate": "#2-5",
+    "property": "c_2_chaldean_order_verified",
+    "registry_revision": "c8dc7a61731b879ec68915af45217e96488283045d74f779dcf6123569aa98c0"
+   },
+   "sun_day_iso_weekday": 7,
+   "week_anchor": "PLANETARY_RESONANCE timingOptimal: the Sun's hour and day is Sunday"
+  },
+  "private": false,
+  "schema": "ql.sky-hours/v1",
+  "standing": "the day's times are calculated, not observed; the planets are counted by the map's order"
+ },
+ "refusal_stderr": "ql: the day at the place: Natal provider refused: the Sun does not rise at Longyearbyen near this day (circumpolar): no hours are counted there"
+}

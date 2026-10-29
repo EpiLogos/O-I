@@ -663,8 +663,8 @@ test('(d) the Binding skin and the M′ matrices are admitted where §22 and §1
 test('the Torus on Live\'s chain reads the stage the frame announces as a dependency of its binding, so a disclosure redraws the Stage page when it comes', () => {
   const source = read('live/TorusOnChain.tsx')
   assert.match(source, /const stage = chrome\?\.state\?\.instrumentStage \?\? null\n\s*const run = chrome\?\.run \?\? null\n\s*const rack = useQlRack\(1\)/)
-  assert.match(source, /return useMemo\(\(\) => torusDesignBinding\(state, device, skyHeldTorusKeys\(plan\), stage, rack, run, held \?\? \{\}, condition, tattvaName\),\n\s*\[state, device, plan, stage, rack, run, held, condition, tattvaName\]\)/,
-    'the stage, the frame\'s runner, M1′\'s rack, the Stage page\'s holds and the announced condition with its map name are dependencies of the binding')
+  assert.match(source, /return useMemo\(\(\) => torusDesignBinding\(state, device, skyHeldTorusKeys\(plan\), stage, rack, run, held \?\? \{\}, condition, tattvaName, table\),\n\s*\[state, device, plan, stage, rack, run, held, condition, tattvaName, table\]\)/,
+    'the stage, the frame\'s runner, M1′\'s rack, the Stage page\'s holds, the announced condition with its map name and M2\'s body constants are dependencies of the binding')
   assert.match(source, /const binding = useTorusChainBinding\(state, device\)/)
   const stage = slots => readFrameStage({subject: 'ql:subject:live', generation: 7, stale: false, slots, bindings: []})
   const device = torusDevice.torusDevice(null)

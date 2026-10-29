@@ -4,7 +4,9 @@
 //   mode.root      the Live transport's root, and mode.key its scale (native/liveModeCatalogue.ts LiveModeHold, setLiveModeHold),
 //                  as the mode in force resolves them (setModeInForce): the same mode the transport, the clip and the keyboard read;
 //   mode.lens      the owner's lens rows, mode.sources its source scales with their cents, mode.absent the sources it names absent
-//                  (ql.music-modes/v1 through the kernel's music_modes_read, live/modes.ts QlMusicModes).
+//                  (ql.music-modes/v1 through the kernel's music_modes_read, live/modes.ts QlMusicModes);
+//   sky.hourRuler  the planet of the hour, and sky.bound the maqāmāt the map binds to it, as QL counts them at the Sky's place for the sky
+//                  of now (`ql nara hours`, the Sky's store, inhabitants/ql/devices/qlSky.ts): readings; with no place, which op is missing.
 // The device holds no pitch set of its own (noteDevices.ts), so nothing else is the design's to set. A refused or unread catalogue
 // leaves the mode's values absent and says why; the mode is held for this session, as the transport says (the set has no owner
 // write for a mode yet).
@@ -14,6 +16,19 @@ import {scalesOnRoot, type KernelScale, type QlMusicModes} from '../modes'
 import {setModeInForce, setLiveModeHold, type LiveModeCatalogueState, type LiveModeHold} from '../../native/liveModeCatalogue'
 import {setNoteDevicePower, setScaleTie} from '../noteDevices/noteDeviceHold'
 import {TIE_RULES, TIE_RULE_LABEL, type NoteDevice, type TieRule} from '../noteDevices/noteDevices'
+import {NO_PLACE, qlSkyState, type QlSkyState} from '../../inhabitants/ql/devices/qlSky'
+
+/** What Scale mapping reads of the Sky: the ask, the place and QL's hours. */
+export type ScaleMappingSky = Pick<QlSkyState, 'ask' | 'place' | 'hours' | 'hoursBusy' | 'placeWhy'>
+/** The hour of now as the Sky counts it, or why there is none. */
+function hourOfNow(sky: ScaleMappingSky): {ok: true; ruler: string; bound: {key: string; role: 'tonic' | 'dominant'}[]} | {ok: false; why: string} {
+  if (!sky.place) return {ok: false, why: `No hour ruler: ${sky.placeWhy ?? NO_PLACE}`}
+  if (!sky.ask.now) return {ok: false, why: 'The Sky shows another date: Scale mapping follows the hour of now. Return the Sky to now.'}
+  if (!sky.hours) return {ok: false, why: sky.hoursBusy ? `Counting the hours at ${sky.place.label}…` : 'The hours of now are not counted yet.'}
+  if (!sky.hours.ok) return {ok: false, why: sky.hours.reason}
+  return {ok: true, ruler: sky.hours.hours.hourRuler,
+    bound: sky.hours.hours.bound.map(b => ({key: `maqam/${String(b.index).padStart(2, '0')}`, role: b.role}))}
+}
 
 /** The design's family and face: designKey('live', 'scale-mapping') is the design's id. */
 export const SCALE_MAPPING_FAMILY = 'live'
@@ -45,8 +60,10 @@ const catalogueWhy = (reading: LiveModeCatalogueState): string | null =>
 const NO_DEVICE = 'No Scale device stands on the note-device chain.'
 
 /** The design's values: the Scale device's power and tie, and the mode in force with the owner's catalogue. Only what the owners report. */
-export function scaleMappingValues(device: NoteDevice | null, reading: LiveModeCatalogueState, hold: LiveModeHold): Record<string, Value> {
+export function scaleMappingValues(device: NoteDevice | null, reading: LiveModeCatalogueState, hold: LiveModeHold, sky: ScaleMappingSky = qlSkyState()): Record<string, Value> {
   const values: Record<string, Value> = {}
+  const hour = hourOfNow(sky)
+  if (hour.ok) { values['sky.hourRuler'] = hour.ruler; values['sky.bound'] = JSON.stringify(hour.bound) }
   if (device) {
     values.enabled = device.enabled
     if (device.kind === 'scale') values.tie = TIE_RULE_LABEL[device.params.tie]
@@ -63,13 +80,16 @@ export function scaleMappingValues(device: NoteDevice | null, reading: LiveModeC
 }
 
 /** Why the owners do not take a change of this key now, or null when they do. */
-function writeStanding(device: NoteDevice | null, reading: LiveModeCatalogueState, key: string): string | null {
+function writeStanding(device: NoteDevice | null, reading: LiveModeCatalogueState, key: string, sky: ScaleMappingSky = qlSkyState()): string | null {
   if (key === 'enabled' || key === 'tie') return device ? (key === 'tie' && device.kind !== 'scale' ? 'Only a Scale device has a tie.' : null) : NO_DEVICE
   if (key === 'mode.root' || key === 'mode.key') return catalogueWhy(reading)
   if (key === 'mode.lens' || key === 'mode.sources' || key === 'mode.absent') return 'A reading: the owner\'s catalogue, as the kernel serves it.'
-  if (key === 'mode.source') return 'Only your hand sets the mode here: Sky would follow the planet of the hour, and no owner computes it (QL-MEF holds no planetary hour).'
-  if (key === 'sky.hourRuler') return 'No hour ruler: no owner computes the planet of the hour. QL\'s sky gives each body\'s place at an instant, not the hours of a day at a place.'
-  if (key === 'sky.bound') return 'No hour ruler, so no maqām is bound to it: the map binds a maqām to a planet, and there is no hour\'s planet to bind.'
+  if (key === 'mode.source') return 'Only your hand sets the mode here: under Sky the owner chooses among the maqāmāt the map binds to the hour\'s planet by your intent, the lens breaking a tie — missing op: that choice of a bound maqām (Quaternal Logic).'
+  if (key === 'sky.hourRuler' || key === 'sky.bound') {
+    const hour = hourOfNow(sky)
+    if (!hour.ok) return key === 'sky.bound' ? `No hour's planet, so no maqām is bound to it. ${hour.why}` : hour.why
+    return key === 'sky.bound' ? 'A reading: the maqāmāt the map binds to the hour\'s planet (its tonic and dominant rules).' : 'A reading: the planet of the hour, as QL counts it at the Sky\'s place.'
+  }
   return `${key}: no setting of the Scale device or the mode it folds onto.`
 }
 
@@ -105,16 +125,16 @@ export function applyScaleMappingChanges(device: NoteDevice | null, reading: Liv
 /** The binding the runtime hosts the Scale mapping design on: the owners' readings and hands, every key they do not take disabled
  * with the reason. */
 export function scaleMappingBinding(id: string, device: NoteDevice | null, reading: LiveModeCatalogueState, hold: LiveModeHold,
-  writers: ScaleMappingWriters = OWNERS): DesignBinding {
+  writers: ScaleMappingWriters = OWNERS, sky: ScaleMappingSky = qlSkyState()): DesignBinding {
   const standing: Record<string, Standing> = {}
   for (const key of ['enabled', 'tie', 'mode.root', 'mode.key', 'mode.lens', 'mode.sources', 'mode.absent', 'mode.source', 'sky.hourRuler', 'sky.bound']) {
-    const why = writeStanding(device, reading, key)
+    const why = writeStanding(device, reading, key, sky)
     if (why) standing[key] = {disabled: why}
   }
   return {
     id,
-    values: scaleMappingValues(device, reading, hold),
-    writes: key => writeStanding(device, reading, key) === null,
+    values: scaleMappingValues(device, reading, hold, sky),
+    writes: key => writeStanding(device, reading, key, sky) === null,
     standing,
     write: async changes => applyScaleMappingChanges(device, reading, hold, changes, writers),
     ...(device ? {enabledKey: 'enabled'} : {}),

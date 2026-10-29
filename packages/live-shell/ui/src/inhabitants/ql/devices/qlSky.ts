@@ -10,7 +10,12 @@
 // by (inhabitants/qlSkyEarthAdapter.ts admitDatedSubsolar). A read, never a write: the sky takes no change. The date the view asks
 // for is the view's own: changing it asks the owner again, once the hand has settled, and the newest answer alone stands.
 //
-// Pure apart from the one kernel read, which takes the call it is given, and the small store the views share.
+// The hours. The planets of the day and of the hour are QL's (`ql nara hours`, `ql.sky-hours/v1`, crates/ql-mef/src/m2_hours.rs), read through
+// the kernel's ql_read {kind: 'sky-hours'} (desktop/cradle/kernel/src/owner_routes.rs QlRead::SkyHours) for the instant the sky is asked for
+// and a place: the world's declared place when Observer is Shared, the person's when it is Private (manual §22.1; #254 D12). A place is
+// given to the Sky (setQlSkyPlace) by its owner; with none, the rulers stand absent and say which owner op is missing.
+//
+// Pure apart from the kernel reads, which take the call they are given, and the small store the views share.
 import {useEffect, useSyncExternalStore} from 'react'
 import {detectTransport, kernelOp, type KernelOpCall} from '../../../../../../../desktop/cradle/src/kernel/bridge'
 import type {KernelOp} from '../../../../../../../desktop/cradle/src/kernel/types'
@@ -129,6 +134,69 @@ export async function readSkyThroughKernel(call: KernelCall, request: SkyRequest
   }
 }
 
+// ── the hours at a place ──────────────────────────────────────────────────
+
+/** A place the hours are counted at, as its owner gives it: the world's declared place (Shared) or the person's saved place (Private). */
+export interface SkyPlace {
+  readonly reference: string
+  readonly label: string
+  readonly latitude_degrees: number
+  readonly longitude_degrees: number
+  readonly altitude_metres: number
+  readonly timezone: string
+  readonly scope: 'world-declared' | 'observer-private'
+}
+
+/** The planets of the day and the hour as QL counts them, in the shell's words. */
+export interface SkyHours {
+  readonly epochUtc: string
+  readonly dayRuler: SkyBody
+  readonly hourRuler: SkyBody
+  readonly hourOf: number
+  readonly hourHalf: 'day' | 'night'
+  readonly sunriseUtc: string
+  readonly sunsetUtc: string
+  readonly place: string
+  readonly private: boolean
+  /** The maqāmāt the map binds to the hour's planet (m2-correspondences tonic and dominant rules). */
+  readonly bound: readonly {readonly index: number; readonly name: string; readonly role: 'tonic' | 'dominant'}[]
+}
+export type SkyHoursReading = {readonly ok: true; readonly hours: SkyHours} | {readonly ok: false; readonly reason: string}
+
+/** The `ql.sky-day-request/v1` for an instant (the epoch the sky is asked for) at a place. */
+export function skyHoursRequest(place: SkyPlace, epoch: string): Record<string, unknown> {
+  const {scope, ...where} = place
+  return {schema: 'ql.sky-day-request/v1', epoch, place: where, scope, backend_policy: 'allow-moshier'}
+}
+
+/** QL's hours, admitted only when they answer this place and instant. */
+export function readSkyHoursAnswer(answer: KernelOpCall, place: SkyPlace, epoch: string): SkyHoursReading {
+  if (answer.outcome == null) return {ok: false, reason: `The hours were not counted: ${answer.error ?? 'Quaternal Logic did not answer `ql nara hours`'}.`}
+  const outcome = answer.outcome as {result?: string; data?: unknown}
+  const data = isRecord(outcome.data) ? outcome.data : {}
+  if (outcome.result !== 'owner_route_reading' || data.schema !== 'ql.sky-hours/v1') return {ok: false, reason: `The kernel answered ${outcome.result ?? 'nothing'}, not QL's hours.`}
+  const day = isRecord(data.day) ? data.day : {}, hour = isRecord(data.hour) ? data.hour : {}
+  const dayRuler = isRecord(data.day_ruler) ? data.day_ruler.body : undefined, hourRuler = isRecord(hour.ruler) ? hour.ruler.body : undefined
+  const request = isRecord(day.request) ? day.request : {}
+  if (request.epoch !== epoch || !isRecord(day.place) || day.place.reference !== place.reference || day.scope !== place.scope)
+    return {ok: false, reason: 'QL counted the hours for another place or instant.'}
+  if (!isBody(dayRuler) || !isBody(hourRuler) || !Number.isInteger(hour.of) || (hour.half !== 'day' && hour.half !== 'night')
+    || typeof day.sunrise_utc !== 'string' || typeof day.sunset_utc !== 'string') return {ok: false, reason: 'QL\'s hours came back incomplete.'}
+  const bound = (Array.isArray(hour.bound) ? hour.bound : []).flatMap(entry => isRecord(entry) && Number.isInteger(entry.maqam_index) && typeof entry.maqam_name === 'string'
+    && (entry.role === 'tonic' || entry.role === 'dominant') ? [{index: entry.maqam_index as number, name: entry.maqam_name, role: entry.role as 'tonic' | 'dominant'}] : [])
+  return {ok: true, hours: {epochUtc: epoch, dayRuler, hourRuler, hourOf: hour.of as number, hourHalf: hour.half, sunriseUtc: day.sunrise_utc,
+    sunsetUtc: day.sunset_utc, place: place.label, private: data.private === true, bound}}
+}
+
+/** One count of the hours through the kernel. Every refusal is named; nothing is retried or filled in. */
+export async function readSkyHoursThroughKernel(call: KernelCall, place: SkyPlace, epoch: string): Promise<SkyHoursReading> {
+  try {
+    return readSkyHoursAnswer(await call({op: 'ql_read', request: {kind: 'sky-hours', request: skyHoursRequest(place, epoch)}}), place, epoch)
+  } catch (cause) {
+    return {ok: false, reason: `The kernel could not be asked for the hours: ${cause instanceof Error ? cause.message : String(cause)}.`}
+  }
+}
+
 // ── the store the views share ───────────────────────────────────────────────
 
 /** The view's own choices: which bodies it shows, whether it draws the aspects and the natal ring. No owner keeps them. */
@@ -149,6 +217,12 @@ export interface QlSkyState {
    * the ring stays closed, with `natalWhy` saying why when a launch found none. */
   readonly natal?: SkyNatal | null
   readonly natalWhy?: string | null
+  /** The place the hours are counted at, as its owner gave it; absent, `placeWhy` says why (QL_SKY_ABSENT.havePlace by default). */
+  readonly place?: SkyPlace | null
+  readonly placeWhy?: string | null
+  /** QL's hours for the instant asked at the place; null while none is asked or one is being counted (`hoursBusy`). */
+  readonly hours?: SkyHoursReading | null
+  readonly hoursBusy?: boolean
 }
 
 /** A birth sky as the person's saved identity carries it (`ql.nara-natal/v1` `sky.bodies`, read through nara_identity open): whose,
@@ -186,9 +260,29 @@ export const SKY_SETTLE_MS = 250
 export async function readQlSkyNow(at: Date = new Date()): Promise<void> {
   const mine = ++sequence, ask = state.ask
   const request = skyRequestFor(ask, at)
+  if (request.ok) void readQlSkyHours(request.request.epoch)
   const reading = request.ok ? await readSkyThroughKernel(call, request.request) : {ok: false as const, reason: request.reason}
   if (mine !== sequence) return
   setState({...state, reading, answered: ask})
+}
+
+let hoursSequence = 0
+let hoursEpoch: string | null = null
+/** Count the hours for an instant at the place the Sky holds; the newest count alone stands. With no place nothing is asked. */
+export async function readQlSkyHours(epoch: string | null = hoursEpoch): Promise<void> {
+  hoursEpoch = epoch
+  const mine = ++hoursSequence, place = state.place
+  if (!place || !epoch) { if (state.hours || state.hoursBusy) setState({...state, hours: null, hoursBusy: false}); return }
+  setState({...state, hoursBusy: true})
+  const hours = await readSkyHoursThroughKernel(call, place, epoch)
+  if (mine !== hoursSequence) return
+  setState({...state, hours, hoursBusy: false})
+}
+
+/** Give the Sky the place its hours are counted at, or take it away with the reason: the hours are counted again for the instant asked. */
+export function setQlSkyPlace(place: SkyPlace | null, why: string | null = null): void {
+  setState({...state, place, placeWhy: place ? null : why, hours: null, hoursBusy: false})
+  void readQlSkyHours()
 }
 
 /** Ask for a sky: the view's choice of date. The owner is asked once the hand settles. */
@@ -213,13 +307,18 @@ export function setQlSkyView(view: Partial<SkyView>): void {
 /** Tests: a fixture call, and a fresh store. */
 export function resetQlSky(next: {call?: KernelCall} = {}): void {
   if (timer !== null) clearTimeout(timer)
-  timer = null; asked = false; sequence++
+  timer = null; asked = false; sequence++; hoursSequence++; hoursEpoch = null
   call = next.call ?? (op => kernelOp(detectTransport(), op))
   state = INITIAL
   notify()
 }
 
 const subscribe = (listener: () => void) => { listeners.add(listener); return () => { listeners.delete(listener) } }
+
+/** The Sky's store as a reader that asks nothing (Scale mapping reads the hour the Sky counts; the Sky's own views ask for the sky). */
+export function useQlSkyState(): QlSkyState {
+  return useSyncExternalStore(subscribe, qlSkyState, qlSkyState)
+}
 
 /** The sky as the views read it; the first view to mount asks for the sky of this moment. */
 export function useQlSky(): QlSkyState {
@@ -236,22 +335,28 @@ const partsOf = (ms: number) => {
 }
 const fromParts = (year: number, day: number, time: number) => Date.UTC(year, 0, 1) + (day - 1) * MS_DAY + time * 6e4
 
+/** Why the Sky has no place for its hours: no owner gives it one yet. */
+export const NO_PLACE = 'No place reaches the Sky: no owner operation carries it here — missing op: the world\'s declared place (Central\'s world record, for Shared) or your saved place (Nara\'s identity, for Private).'
+/** The keys the hours fill. */
+export const SKY_HOURS_KEYS = ['dayRuler', 'hourRuler', 'hourOf', 'hourHalf', 'sunrise', 'sunset'] as const
+const hhmm = (iso: string) => iso.slice(11, 16)
+
 /** Why each design key the binding leaves absent, or does not take, has no owner (manual §16.12: "say which one"). */
 export const QL_SKY_ABSENT: Readonly<Record<string, string>> = {
   run: 'No clock runs the sky here: each date is one read of the owner, asked when you change it. A running sky would ask the owner again and again.',
   speed: 'No clock runs the sky here, so it has no speed.',
   observer: 'The shell asks for the shared geocentric sky: no observer place reaches it, so the private sky cannot be asked.',
-  havePlace: 'No observer place reaches the shell.',
+  havePlace: NO_PLACE,
   natalBodies: 'The birth sky is the person\'s saved Nara identity (ql.nara-natal/v1): launch your Being page as Sky, and the Sky reads it from your identity.',
   aspectList: 'The transit lists no aspects; the view finds them from the bodies by the owner\'s rule.',
   moves: 'No compiled modulation plan runs in the shell: nothing the sky moves is evaluated, so no move is reported.',
-  dayRuler: 'The rulers are counted from sunrise at a place, and no observer place reaches the shell.',
-  hourRuler: 'The rulers are counted from sunrise at a place, and no observer place reaches the shell.',
-  hourOf: 'The hours are counted from sunrise and sunset at a place, and no observer place reaches the shell.',
-  hourHalf: 'The hours are counted from sunrise and sunset at a place, and no observer place reaches the shell.',
-  sunrise: 'No observer place reaches the shell, so no sunrise is read.',
-  sunset: 'No observer place reaches the shell, so no sunset is read.',
-  place: 'No observer place reaches the shell.',
+  dayRuler: `The rulers are QL's, counted from sunrise at a place (ql nara hours): ${NO_PLACE}`,
+  hourRuler: `The rulers are QL's, counted from sunrise at a place (ql nara hours): ${NO_PLACE}`,
+  hourOf: `The hours are QL's, counted from sunrise and sunset at a place (ql nara hours): ${NO_PLACE}`,
+  hourHalf: `The hours are QL's, counted from sunrise and sunset at a place (ql nara hours): ${NO_PLACE}`,
+  sunrise: `QL states the sunrise at a place (ql nara hours): ${NO_PLACE}`,
+  sunset: `QL states the sunset at a place (ql nara hours): ${NO_PLACE}`,
+  place: NO_PLACE,
   // The Share page (manual §22.1): consent is Nara's presence. The kernel's nara_presence prepares and publishes one presence publication
   // (desktop/cradle/src/nara/nativePresence.ts: field, world, projection and participant refs the Sky does not hold); nothing reads the
   // world's participants to the shell. The consents both ways are SharedField's list (skyPresences.ts), drawn over these words once read.
@@ -293,6 +398,13 @@ export function qlSkyValues(sky: QlSkyState): Record<string, Value> {
   values.aspects = sky.view.aspects
   values.natal = sky.view.natal
   if (sky.natal) values.natalBodies = JSON.stringify(sky.natal.bodies.map(body => ({body: body.body, longitude_degrees: body.longitude_degrees, retrograde: body.retrograde})))
+  // The hours at the place the Sky holds, as QL counted them for the instant asked.
+  if (sky.place) { values.havePlace = true; values.place = sky.place.label }
+  if (sky.place && sky.hours?.ok) {
+    const hours = sky.hours.hours
+    Object.assign(values, {dayRuler: hours.dayRuler, hourRuler: hours.hourRuler, hourOf: hours.hourOf, hourHalf: hours.hourHalf,
+      sunrise: hhmm(hours.sunriseUtc), sunset: hhmm(hours.sunsetUtc)})
+  }
   for (const body of SKY_BODIES) values[`b:${body}`] = !sky.view.hidden.includes(body)
   return values
 }
@@ -335,6 +447,14 @@ export function qlSkyBinding(sky: QlSkyState, rack: QlRackState = qlRackState(2)
   // Withdraw: a consent of yours, while SharedField's list stands; else why not.
   if (!presences.ok) standing['presence.withdraw'] = {disabled: `The consents are not read, so none can be withdrawn: ${presences.reason}`}
   else if (!presences.mine.some(row => row.permitted)) standing['presence.withdraw'] = {disabled: 'You share your sky with no one now: there is no consent to withdraw.'}
+  // The hours: readings of QL's count at the place; with a place but no count, QL's words or that it is counting; with none, which op is missing.
+  if (sky.place) {
+    standing.havePlace = {disabled: `A reading: the hours are counted at ${sky.place.label}, ${sky.place.scope === 'observer-private' ? 'your own place' : 'the world\'s declared place'}.`}
+    standing.place = {disabled: 'A reading: where the hours are counted, as its owner gives it.'}
+    const why = sky.hours?.ok ? 'A reading: QL\'s count of the day and the hour at the place (ql nara hours).'
+      : sky.hours ? sky.hours.reason : sky.hoursBusy ? `Counting the hours at ${sky.place.label}…` : sky.placeWhy ?? 'The hours are counted for the instant the sky is asked for.'
+    for (const key of SKY_HOURS_KEYS) standing[key] = {disabled: why}
+  } else if (sky.placeWhy) for (const key of ['havePlace', 'place', ...SKY_HOURS_KEYS]) standing[key] = {disabled: sky.placeWhy}
   // The birth sky is a reading of the person's saved identity, never written here; absent, why it is not drawn.
   standing.natalBodies = {disabled: sky.natal ? 'Your birth sky, read from your saved identity: correct the identity, never the sky.' : sky.natalWhy ?? QL_SKY_ABSENT.natalBodies!}
   const local: Record<string, (value: Value | undefined) => void> = {}
@@ -342,7 +462,8 @@ export function qlSkyBinding(sky: QlSkyState, rack: QlRackState = qlRackState(2)
   // The Rack page: M2′'s rack from the map's ledger, and the part you choose (qlRack.ts).
   const page = rackPage(2, rack)
   Object.assign(standing, page.standing); Object.assign(local, page.local)
-  const waiting = [...(page.waiting ? ['rack'] : []), ...(!presences.ok && presences.busy ? ['presence.consents', 'presence.shared'] : [])]
+  const waiting = [...(page.waiting ? ['rack'] : []), ...(!presences.ok && presences.busy ? ['presence.consents', 'presence.shared'] : []),
+    ...(sky.place && sky.hoursBusy && !sky.hours ? SKY_HOURS_KEYS : [])]
   return {id: QL_SKY_DEVICE_ID, values: {...qlSkyValues(sky), ...page.values, ...consents.values}, standing, local, ...(waiting.length ? {waiting} : {}),
     writes: key => key === 'presence.withdraw',
     write: async changes => {

@@ -75,3 +75,78 @@ export function tattvaKeys(condition: FrameInstrumentCondition | null | undefine
   else standing['tattva.name'] = {disabled: name?.reason ?? `Reading the map's name for ${condition.tattva_ref}…`}
   return {values, standing}
 }
+
+// ── M2's body constants by element fibre: what the tattva sets under Body source Tattva (manual §21.2, §20.14) ──
+// The owner is QL's M2 (`ql kernel body-constants`, `ql.m2-body-constants/v1`, crates/ql-mef/src/m2_body.rs), read through the kernel's
+// ql_read {kind: 'body-constants'} (desktop/cradle/kernel/src/owner_routes.rs QlRead::BodyConstants): each fibre's Strike (a share),
+// Q factor, Agitation and Boundary strength with the tattvas the map gives it, and the table's standing ('proposed': a starting point,
+// tunable). Read once per session, like a coordinate's name: the table does not move under a running shell.
+
+export interface BodyRow {
+  readonly fibre: string
+  readonly tattvas: readonly string[]
+  readonly strike_share: number
+  readonly q_factor: number
+  readonly agitation: number
+  readonly boundary_strength: number
+}
+export type BodyTable = {readonly ok: true; readonly standing: string; readonly rows: readonly BodyRow[]} | {readonly ok: false; readonly reason: string; readonly busy?: boolean}
+
+const finiteIn = (x: unknown, lo: number, hi: number): x is number => typeof x === 'number' && Number.isFinite(x) && x >= lo && x <= hi
+
+/** QL's table as the shell reads it, or the reason in words. */
+export function readBodyTable(answer: KernelOpCall): BodyTable {
+  if (answer.outcome == null) return {ok: false, reason: answer.error ?? 'Quaternal Logic did not answer `ql kernel body-constants`.'}
+  const outcome = answer.outcome as {result?: string; data?: {schema?: unknown; standing?: unknown; rows?: unknown}}
+  if (outcome.result !== 'owner_route_reading' || outcome.data?.schema !== 'ql.m2-body-constants/v1') return {ok: false, reason: `The kernel answered \`${outcome.result ?? 'unknown'}\`, not M2's body constants.`}
+  const rows = (Array.isArray(outcome.data.rows) ? outcome.data.rows : []).flatMap((raw): BodyRow[] => {
+    const row = raw as Record<string, unknown>
+    return typeof row?.fibre === 'string' && Array.isArray(row.tattvas) && row.tattvas.every(t => typeof t === 'string') && finiteIn(row.strike_share, 0, 1)
+      && finiteIn(row.q_factor, 0.1, 40) && finiteIn(row.agitation, 0, 5) && finiteIn(row.boundary_strength, 0, 30)
+      ? [{fibre: row.fibre, tattvas: row.tattvas as string[], strike_share: row.strike_share, q_factor: row.q_factor, agitation: row.agitation, boundary_strength: row.boundary_strength}] : []
+  })
+  if (!rows.length || typeof outcome.data.standing !== 'string') return {ok: false, reason: 'M2\'s body constants came back without a row or a standing.'}
+  return {ok: true, standing: outcome.data.standing, rows}
+}
+
+let body: BodyTable | null = null
+const READING_TABLE = 'Reading M2\'s body constants…'
+const NO_TABLE: BodyTable = {ok: false, reason: READING_TABLE, busy: true}
+export function bodyTable(): BodyTable { return body ?? NO_TABLE }
+
+/** Read M2's body constants once. */
+export async function ensureBodyTable(): Promise<void> {
+  if (body) return
+  body = NO_TABLE
+  let table: BodyTable
+  try {
+    table = readBodyTable(await call({op: 'ql_read', request: {kind: 'body-constants'}}))
+  } catch (error) {
+    table = {ok: false, reason: `The kernel could not be asked for M2's body constants: ${error instanceof Error ? error.message : String(error)}`}
+  }
+  body = table
+  for (const listener of [...listeners]) listener()
+}
+
+/** Tests: forget the table (resetCoordinateNames gives the call). */
+export function resetBodyTable(): void { body = null; for (const listener of [...listeners]) listener() }
+
+/** M2's body constants, read once. */
+export function useBodyTable(): BodyTable {
+  useEffect(() => { void ensureBodyTable() }, [])
+  return useSyncExternalStore(subscribe, bodyTable, bodyTable)
+}
+
+export const BODY_SOURCES = ['declared', 'tattva'] as const
+export type BodySource = typeof BODY_SOURCES[number]
+
+/** The constants the tattva sets under Tattva: the table's row for the condition's fibre; none (with why) where there is no fibre or table. */
+export function tattvaBody(condition: FrameInstrumentCondition | null | undefined, table: BodyTable | null): {row: BodyRow} | {row: null; why: string} {
+  if (!condition) return {row: null, why: NO_CONDITION}
+  if (!condition.material_fibre) return {row: null, why: 'The live scene\'s tattva carries no element fibre: under Tattva the body keeps the values you set.'}
+  if (!table) return {row: null, why: READING_TABLE}
+  if (!table.ok) return {row: null, why: table.reason}
+  const row = table.rows.find(item => item.fibre === condition.material_fibre)
+  return row ? {row} : {row: null, why: `M2's body constants hold no row for the ${condition.material_fibre} fibre.`}
+}
+

@@ -17,9 +17,9 @@ import {validateNativeFieldPanelChange} from '../../../../../expressions-boundar
 import type {DesignBinding, Standing, Value, ValueChange} from '../../frame/devices/designed'
 import type {DeviceInstance, ParamValue} from '../../frame/devices/deviceRuntime'
 import {ENABLED_KEY, SETTING_PREFIX, expressionsFieldEntry, expressionsSettingChoices, type FieldDeviceSend} from './expressionsDevice'
-import {handsFor, heldFor} from '../../techne/devices/designDevices'
+import {handsFor, heldFor, hold as holdDesign} from '../../techne/devices/designDevices'
 import type {FrameInstrumentCondition} from '@epilogos/expressions-boundary'
-import {NO_CONDITION, tattvaKeys, type CoordinateName} from '../../inhabitants/ql/devices/qlCoordinateName'
+import {NO_CONDITION, tattvaBody, tattvaKeys, type BodyRow, type BodySource, type BodyTable, type CoordinateName} from '../../inhabitants/ql/devices/qlCoordinateName'
 
 /** The field families whose catalogue design this binding hosts (Physics has its own, physicsBinding.ts). */
 export const FIELD_DESIGN_FAMILIES = ['pointer', 'relational', 'medium', 'contacts', 'morph', 'focus', 'colour', 'ink', 'depth', 'resonance'] as const
@@ -56,10 +56,11 @@ export const FIELD_ABSENT: Readonly<Record<FieldDesignFamily, Readonly<Record<st
     // What drives the plate now (expressions__resonance.tsx `drive`): the engine resolves it (its telemetry cymatic.driver, PointCloudField.ts
     // lastResonanceDrive; resonanceDrive.ts ResolvedResonanceDrive), and the editor reading's observation does not carry it.
     drive: 'What drives the plate now: no reading reaches it yet — missing op: the engine\'s resolved drive in the editor reading\'s observation (its telemetry cymatic.driver; packages/expressions-boundary/src/editor.ts observation carries no drive) (Expressions).',
-    'body.source': 'No body source: the plate takes its Q factor, agitation and edge as rows of its own, and no owner holds body constants by tattva (QL\'s scene material is a declared policy too).',
+    // body.source and tattva.standing: M2's body constants by fibre (qlCoordinateName.ts BodyTable), absent with their reason until read.
+    'body.source': 'Reading M2\'s body constants…',
     'tattva.name': NO_CONDITION,
     'tattva.fibre': NO_CONDITION,
-    'tattva.standing': 'No table of body constants by tattva stands: the plate\'s constants are its own rows.',
+    'tattva.standing': 'Reading M2\'s body constants…',
   },
 }
 
@@ -188,11 +189,43 @@ export function fieldDesignWrites(family: FieldDesignFamily, device: DeviceInsta
   return key => keys.has(key) || keys.has(SETTING_PREFIX + key) || (!!toggle && key === toggle && keys.has(ENABLED_KEY)) || scene.has(key)
 }
 
+// ── Resonance's Body source (manual §20.14): Declared keeps the plate's own Q, Agitation and Edge; Tattva takes them from the tattva of
+// the M2 condition through its element fibre, by M2's body constants (QL's table, qlCoordinateName.ts). The choice is the view's own (the
+// hand's hold); the constants go to the plate as its own rows, through the device's one submit, and stand held while Tattva sets them.
+
+/** The plate's rows a fibre sets, by the engine path, from QL's row. */
+export const RESONANCE_BODY: Readonly<Record<string, (row: BodyRow) => number>> = {
+  'cymatics.dampingQFactor': row => row.q_factor,
+  'cymatics.agitation': row => row.agitation,
+  'cymatics.boundaryStrength': row => row.boundary_strength,
+}
+export const BODY_SOURCE_KEY = 'body.source'
+
+/** The body source the hand holds for the device: Declared until Tattva is chosen (manual §20.14 default). */
+export const bodySourceOf = (held: Readonly<Record<string, Value>>): BodySource => (held[BODY_SOURCE_KEY] === 'tattva' ? 'tattva' : 'declared')
+
+/** The plate's rows that differ from what the tattva sets, in the device's own units: what a write under Tattva sends (none under
+ * Declared, with no fibre, or with the rows already the tattva's). */
+export function resonanceBodyRows(device: DeviceInstance, condition: FrameInstrumentCondition | null | undefined, table: BodyTable | null,
+  source: BodySource): {key: string; value: ParamValue}[] {
+  if (source !== 'tattva') return []
+  const body = tattvaBody(condition, table)
+  if (!body.row) return []
+  const rows: {key: string; value: ParamValue}[] = []
+  for (const [key, of] of Object.entries(RESONANCE_BODY)) {
+    if (!device.rows.some(row => row.key === key)) continue
+    const target = of(body.row), now = device.values[key]
+    if (!finite(now) || Math.abs(now * factorOf(key) - target) > 1e-9) rows.push({key, value: target / factorOf(key)})
+  }
+  return rows
+}
+
 /** The binding the runtime hosts a field family's design on: the engine's readings, the device's one submit for its rows, the family's
  * send for what the scene's editor admits. While the work is busy or waits on the owner the device has no submit, and every value is a
  * reading. Keys with no owner stand disabled with their reason. */
 export function fieldDesignBinding(family: FieldDesignFamily, device: DeviceInstance, reading: NativeEditorReading | null, send: FieldDeviceSend | null,
-  tattva: {condition?: FrameInstrumentCondition | null; name?: CoordinateName | null} = {}): DesignBinding {
+  tattva: {condition?: FrameInstrumentCondition | null; name?: CoordinateName | null; table?: BodyTable | null; held?: Readonly<Record<string, Value>>;
+    keep?: (source: BodySource) => void} = {}): DesignBinding {
   const modulatedBy: Record<string, string> = {}
   for (const row of device.rows) if (row.modulatedBy && !row.key.startsWith(SETTING_PREFIX)) modulatedBy[row.key] = row.modulatedBy
   const standing: Record<string, Standing> = {}
@@ -203,6 +236,9 @@ export function fieldDesignBinding(family: FieldDesignFamily, device: DeviceInst
   const submit = device.submit, toggle = toggleKeyOf(family)
   const local = FIELD_LOCAL[family]
   const values = {...fieldDesignValues(family, device, reading), ...(condition?.values ?? {}), ...(local ? Object.fromEntries(Object.entries(heldFor(device.id)).filter(([key]) => local.includes(key))) : {})}
+  // Resonance's Body source: the hand's choice, M2's table's standing, and under Tattva the three rows the fibre sets, held.
+  const body = family === 'resonance' ? resonanceBody(device, tattva) : null
+  if (body) { Object.assign(values, body.values); Object.assign(standing, body.standing); if (body.chooses) delete standing[BODY_SOURCE_KEY] }
   // A reading the observation carries is drawn as one, never written.
   for (const key of ['stations', 'phase.theta', 'phase.phi']) if (key in values && key in FIELD_ABSENT[family]) standing[key] = {disabled: key === 'stations'
     ? 'A reading: the plate\'s stations as the engine computes them; tune to one on the plate.' : 'A reading: the engine\'s own morph accumulator, in radians.'}
@@ -211,8 +247,12 @@ export function fieldDesignBinding(family: FieldDesignFamily, device: DeviceInst
     id: device.id,
     values,
     ...(local ? {local: handsFor(device.id, local)} : {}),
-    writes: fieldDesignWrites(family, device),
+    writes: body ? key => (key === BODY_SOURCE_KEY ? body.chooses : !body.held.has(key) && fieldDesignWrites(family, device)(key)) : fieldDesignWrites(family, device),
     ...(submit ? {write: async (changes: readonly ValueChange[]) => {
+      const chosen = body ? changes.filter(change => change.key === BODY_SOURCE_KEY) : []
+      for (const change of chosen) await body!.choose(change.value)
+      changes = changes.filter(change => !chosen.includes(change))
+      if (body) for (const change of changes) if (body.held.has(change.key)) throw new Error(body.standing[change.key]?.disabled ?? `${change.key} is held by the tattva.`)
       const {rows, edits} = fieldDesignChanges(family, device, changes)
       if (rows.length) await submit(rows)
       if (edits.length) {
@@ -226,3 +266,28 @@ export function fieldDesignBinding(family: FieldDesignFamily, device: DeviceInst
     ...(Object.keys(standing).length ? {standing} : {}),
   }
 }
+
+/** Resonance's Body source on the binding: its value and standing, the keys the tattva holds, and the choice (which writes the fibre's rows). */
+function resonanceBody(device: DeviceInstance, tattva: {condition?: FrameInstrumentCondition | null; table?: BodyTable | null; held?: Readonly<Record<string, Value>>;
+  keep?: (source: BodySource) => void}): {values: Record<string, Value>; standing: Record<string, Standing>; held: ReadonlySet<string>; chooses: boolean; choose: (value: Value) => Promise<void>} {
+  const table = tattva.table ?? null, source = bodySourceOf(tattva.held ?? heldFor(device.id))
+  const values: Record<string, Value> = {}, standing: Record<string, Standing> = {}
+  const rows = Object.keys(RESONANCE_BODY).filter(key => device.rows.some(row => row.key === key))
+  const chooses = !!device.submit && !!table?.ok && rows.length > 0
+  if (table?.ok) { values[BODY_SOURCE_KEY] = source; values['tattva.standing'] = table.standing; standing['tattva.standing'] = {disabled: 'A reading: the standing of M2\'s body constants (QL\'s table: a starting point, to be tuned by ear).'} }
+  else { standing[BODY_SOURCE_KEY] = {disabled: table?.reason ?? 'Reading M2\'s body constants…'}; standing['tattva.standing'] = {disabled: table?.reason ?? 'Reading M2\'s body constants…'} }
+  if (table?.ok && !chooses) standing[BODY_SOURCE_KEY] = {disabled: device.submit ? 'The plate takes no Q, Agitation or Edge rows here.' : 'The work is busy or waits on the owner: the plate takes no change now.'}
+  const set = tattvaBody(tattva.condition, table)
+  const held = new Set<string>(source === 'tattva' && set.row ? rows : [])
+  for (const key of held) standing[key] = {disabled: `Body source is Tattva: the ${set.row!.fibre} fibre sets it (M2's body constants, ${table?.ok ? table.standing : 'unread'}).`}
+  const choose = async (value: Value) => {
+    if (value !== 'declared' && value !== 'tattva') throw new Error('The body source is Declared or Tattva.')
+    if (!chooses) throw new Error(standing[BODY_SOURCE_KEY]?.disabled ?? 'The body source cannot be chosen now.')
+    const keep = tattva.keep ?? ((next: BodySource) => holdDesign(device.id, BODY_SOURCE_KEY, next))
+    keep(value)
+    const write = resonanceBodyRows(device, tattva.condition, table, value)
+    if (write.length) await device.submit!(write)
+  }
+  return {values, standing, held, chooses, choose}
+}
+

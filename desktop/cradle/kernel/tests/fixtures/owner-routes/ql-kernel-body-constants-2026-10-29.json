@@ -1,0 +1,67 @@
+{
+ "source": "ql kernel body-constants --json, QL-MEF dlw/745-readings, 29 Oct 2026",
+ "answer": {
+  "rows": [
+   {
+    "agitation": 0.1,
+    "boundary_strength": 20.0,
+    "fibre": "earth",
+    "q_factor": 12.0,
+    "strike_share": 0.45,
+    "tattvas": [
+     "#2-2-2-5-5"
+    ]
+   },
+   {
+    "agitation": 0.6,
+    "boundary_strength": 10.0,
+    "fibre": "water",
+    "q_factor": 6.0,
+    "strike_share": 0.55,
+    "tattvas": [
+     "#2-2-2-5-4"
+    ]
+   },
+   {
+    "agitation": 2.0,
+    "boundary_strength": 4.0,
+    "fibre": "fire",
+    "q_factor": 3.0,
+    "strike_share": 0.85,
+    "tattvas": [
+     "#2-2-2-5-3"
+    ]
+   },
+   {
+    "agitation": 3.5,
+    "boundary_strength": 2.0,
+    "fibre": "air",
+    "q_factor": 1.5,
+    "strike_share": 0.65,
+    "tattvas": [
+     "#2-2-2-5-2"
+    ]
+   }
+  ],
+  "schema": "ql.m2-body-constants/v1",
+  "source": {
+   "fibres": {
+    "registry_revision": "c8dc7a61731b879ec68915af45217e96488283045d74f779dcf6123569aa98c0",
+    "schema": "ql.m2-correspondences/v1"
+   },
+   "no_source_table": "QL-MEF #135: no source table fixes presentation damping or strike",
+   "table": "DLW manual §21.2 (Torus) and §20.14 (Resonance): a starting point, tuned by ear",
+   "tunable": "#254 D30: every magnitude is a live, tunable parameter"
+  },
+  "standing": "proposed",
+  "unbodied": [
+   "#2-2-2-5-0/1"
+  ],
+  "units": {
+   "agitation": "0..5",
+   "boundary_strength": "0..30",
+   "q_factor": "quality factor, 0.1..40",
+   "strike_share": "share of velocity, 0..1"
+  }
+ }
+}

@@ -147,8 +147,9 @@ test('Morph reads the engine\'s own phases and Resonance its stations from the o
   assert.deepEqual(JSON.parse(resonance.values.stations), fixture.stations, 'the engine\'s stations, verbatim')
   assert.deepEqual([resonance.values['tattva.name'], resonance.values['tattva.fibre']], ['Prithvi Tattva', 'earth'])
   assert.equal(resonance.standing['tattva.name'].disabled, names.TATTVA_READ)
-  assert.match(resonance.standing['body.source'].disabled, /no owner holds body constants by tattva/, 'the body source keeps its reason')
-  assert.match(resonance.standing['tattva.standing'].disabled, /No table of body constants/)
+  // M2's body constants are read from QL (ql-745-readings.test.mjs); unread here, the body source and its standing wait on them.
+  assert.match(resonance.standing['body.source'].disabled, /Reading M2's body constants/, 'the body source keeps its reason')
+  assert.match(resonance.standing['tattva.standing'].disabled, /Reading M2's body constants/)
   const design = await designOf('resonance')
   for (const view of ['compact', 'whole', 'full']) {
     const markup = renderToStaticMarkup(h(HostedDevice, {designed: design, binding: resonance, view, nav: {}}))

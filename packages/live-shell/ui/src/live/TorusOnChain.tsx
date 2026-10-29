@@ -29,7 +29,7 @@ import {useHostedChrome} from '../projections/expressionsPaneHost'
 import type {DeviceInstance} from '../frame/devices/deviceRuntime'
 import {useQlRack} from '../inhabitants/ql/devices/qlRack'
 import {useHolds} from '../techne/devices/designDevices'
-import {useCoordinateName} from '../inhabitants/ql/devices/qlCoordinateName'
+import {useBodyTable, useCoordinateName} from '../inhabitants/ql/devices/qlCoordinateName'
 
 // Colour is the tokens' alone: the near side takes the instrument's accent when it is at work, the far side is fainter.
 const STROKE = {lit: 'var(--accent)', rising: 'var(--text-dim)', unlit: 'var(--text-faint)'} as const
@@ -89,8 +89,10 @@ export function useTorusChainBinding(state: LiveTorusState | null, device: Devic
   // The live scene's M2 condition the frame announces, and the map's name for its tattva (qlCoordinateName.ts).
   const condition = chrome?.state?.instrumentCondition ?? null
   const tattvaName = useCoordinateName(condition?.tattva_ref ?? null)
-  return useMemo(() => torusDesignBinding(state, device, skyHeldTorusKeys(plan), stage, rack, run, held ?? {}, condition, tattvaName),
-    [state, device, plan, stage, rack, run, held, condition, tattvaName])
+  // M2's body constants (QL's table): the Body group reads their standing and what the fibre would set.
+  const table = useBodyTable()
+  return useMemo(() => torusDesignBinding(state, device, skyHeldTorusKeys(plan), stage, rack, run, held ?? {}, condition, tattvaName, table),
+    [state, device, plan, stage, rack, run, held, condition, tattvaName, table])
 }
 
 export function TorusOnChain({state}: {state: LiveTorusState}) {

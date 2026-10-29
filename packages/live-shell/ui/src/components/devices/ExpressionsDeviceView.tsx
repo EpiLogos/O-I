@@ -20,12 +20,13 @@ import {fieldDeviceSend} from './fieldDeviceSend'
 import {ExpressionsPicture, hasPicture} from './ExpressionsPicture'
 import {ModulationLine} from './ModulationLine'
 import {physicsDesignBinding, type PhysicsPress} from './physicsBinding'
-import {fieldDesignBinding as familyDesignBinding, isFieldDesignFamily} from './fieldDesignBinding'
-import type {DesignBinding} from '../../frame/devices/designed'
+import {bodySourceOf, fieldDesignBinding as familyDesignBinding, isFieldDesignFamily, resonanceBodyRows} from './fieldDesignBinding'
+import type {DesignBinding, Value} from '../../frame/devices/designed'
 import {dispatchNativeEngineCommand, engineCommandReason, readNativeEngineMounted} from '../../native/engineCommand'
 import './expressionsDevices.css'
 import type {FrameInstrumentCondition} from '@epilogos/expressions-boundary'
-import {useCoordinateName, type CoordinateName} from '../../inhabitants/ql/devices/qlCoordinateName'
+import {useBodyTable, useCoordinateName, type BodyTable, type CoordinateName} from '../../inhabitants/ql/devices/qlCoordinateName'
+import {useHolds} from '../../techne/devices/designDevices'
 import {useHostedChrome} from '../../projections/expressionsPaneHost'
 
 /** What a place that holds a field device gives it: the reading, the editor's one apply, and whether the work is taking edits now. */
@@ -101,11 +102,27 @@ export function useFieldDevices(families: readonly string[], host: Omit<FieldHos
   // Resonance's tattva: the live scene's M2 condition the frame announces, and the map's name for its coordinate (qlCoordinateName.ts).
   const condition = useHostedChrome()?.state?.instrumentCondition ?? null
   const tattvaName = useCoordinateName(condition?.tattva_ref ?? null)
+  // Resonance's Body source: M2's body constants (QL's table) and the hand's choice of source (fieldDesignBinding.ts resonanceBody).
+  const bodyTable = useBodyTable()
+  const holds = useHolds()
   const devices = useMemo(() => families.map(family => {
     const device = host.reading ? hostedFieldDevice(family, {reading: host.reading, locked: host.locked}, sends.get(family)!) : null
-    const binding = device ? fieldDesignBinding(family, device, host.reading, sends.get(family) ?? null, {condition, name: tattvaName}) : undefined
+    const binding = device ? fieldDesignBinding(family, device, host.reading, sends.get(family) ?? null,
+      {condition, name: tattvaName, table: bodyTable, held: holds[expressionsDeviceId(family)] ?? {}}) : undefined
     return {family, id: expressionsDeviceId(family), device, picture: pictures.get(family)!, ...(binding ? {binding} : {})}
-  }), [host.reading, host.locked, sends, pictures, condition, tattvaName])
+  }), [host.reading, host.locked, sends, pictures, condition, tattvaName, bodyTable, holds])
+  // Under Tattva the plate follows the tattva: when the condition's fibre moves, its rows are written again (once per target).
+  const followed = useRef('')
+  useEffect(() => {
+    const entry = devices.find(item => item.family === 'resonance')
+    if (!entry?.device?.submit) return
+    const rows = resonanceBodyRows(entry.device, condition, bodyTable, bodySourceOf(holds[entry.id] ?? {}))
+    const target = JSON.stringify(rows)
+    if (!rows.length) { followed.current = ''; return }
+    if (target === followed.current) return
+    followed.current = target
+    void entry.device.submit(rows).catch(() => { followed.current = '' })
+  }, [devices, condition, bodyTable, holds])
   const claims = useRef(new Map<string, DeviceClaim>())
   useEffect(() => {
     const held = new Map(families.map(family => [family, claimDevice(expressionsDeviceId(family))]))
@@ -128,7 +145,7 @@ const enginePress: PhysicsPress = action => {
  * other field family on its engine paths (fieldDesignBinding.ts, R5). The Field (`expressions:field`) is no family of the rack: it is the front
  * of these devices and the frame's object sound, published at the Studio's head by useFieldInstrument.ts (fieldInstrument.ts). */
 export function fieldDesignBinding(family: string, device: DeviceInstance, reading: NativeEditorReading | null, send: FieldDeviceSend | null = null,
-  tattva: {condition?: FrameInstrumentCondition | null; name?: CoordinateName | null} = {}): DesignBinding | undefined {
+  tattva: {condition?: FrameInstrumentCondition | null; name?: CoordinateName | null; table?: BodyTable | null; held?: Readonly<Record<string, Value>>} = {}): DesignBinding | undefined {
   if (family === 'physics') return physicsDesignBinding(device, reading, enginePress)
   return isFieldDesignFamily(family) ? familyDesignBinding(family, device, reading, send, tattva) : undefined
 }
