@@ -55,13 +55,38 @@ pub enum Request {
         #[serde(default, skip_serializing_if = "Option::is_none")]
         project: Option<String>,
     },
+    /// A page's copy (manual §10.9 Duplicate, and Paste of a copied page): the page read and made again with an identity of its
+    /// own, through its world's door — in its own world's folder, or `into` another world's, tied to that world.
+    Duplicate {
+        location: Location,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        into: Option<WorldTarget>,
+    },
+    /// A page leaves its world (manual §10.9 Delete): to Central's trash on the revision read, the person's act; Central's
+    /// `central.files.restore` brings it back.
+    Trash {
+        location: Location,
+        expected_revision: String,
+    },
+}
+
+/// The world a copy is made in: its folder (Central-relative, as the world browse names it) and its ref (its register's wiki space),
+/// which the copy's island is tied to.
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+pub struct WorldTarget {
+    pub folder: String,
+    pub world: String,
 }
 
 impl Request {
     pub fn is_write(&self) -> bool {
         matches!(
             self,
-            Request::MutateField { .. } | Request::Launch { .. } | Request::Stop { .. }
+            Request::MutateField { .. }
+                | Request::Launch { .. }
+                | Request::Stop { .. }
+                | Request::Duplicate { .. }
+                | Request::Trash { .. }
         )
     }
 }
@@ -1006,6 +1031,290 @@ pub fn stop(
     )
 }
 
+/// What a copy's identity is minted with (desktop/cradle/src/flow/placement.ts `stampCopy`): a fresh id, the instant it was made, and
+/// that instant in this machine's local civil time (`YYYY-MM-DD-HHMM`, placement.ts `localStamp`), which names its file.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CopyMint {
+    pub id: String,
+    pub created: String,
+    pub local: String,
+}
+
+impl CopyMint {
+    pub fn now() -> Result<Self, String> {
+        let stamp = Stamp::now()?;
+        let secs = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|elapsed| elapsed.as_secs() as libc::time_t)
+            .unwrap_or(0);
+        // SAFETY: localtime_r writes only into the `tm` it is handed, read once it returns.
+        let mut tm: libc::tm = unsafe { std::mem::zeroed() };
+        if unsafe { libc::localtime_r(&secs, &mut tm) }.is_null() {
+            return Err("This machine's local time could not be read, so no copy is named".into());
+        }
+        Ok(CopyMint {
+            id: stamp.id,
+            created: stamp.at,
+            local: format!(
+                "{:04}-{:02}-{:02}-{:02}{:02}",
+                tm.tm_year + 1900,
+                tm.tm_mon + 1,
+                tm.tm_mday,
+                tm.tm_hour,
+                tm.tm_min
+            ),
+        })
+    }
+}
+
+/// A copy's identity, by placement.ts `stampCopy`'s rules: only the values of `documentId`, `uuid`, `created` and a daily's `date`
+/// move, where the island has them (a Flow is re-minted: its `documentId` and `created`); every other value stays the page's own.
+/// `world`, when given, ties the copy to another world: a Being's or Thing's `bindings.worldRef`, a Flow's `meta.world`
+/// (createInPlace.ts `tieWorld`).
+pub fn copy_identity(
+    island: &mut Value,
+    mint: &CopyMint,
+    world: Option<&str>,
+) -> Result<(), String> {
+    let reference = island["profile"] == "oi.page/v1";
+    let meta = island
+        .get_mut("meta")
+        .and_then(Value::as_object_mut)
+        .ok_or("The page keeps no meta, so no copy of it can be made")?;
+    for key in ["documentId", "uuid"] {
+        if meta.contains_key(key) {
+            meta.insert(key.into(), json!(mint.id));
+        }
+    }
+    if meta.contains_key("created") {
+        meta.insert("created".into(), json!(mint.created));
+    }
+    if meta.get("type") == Some(&json!("daily")) && meta.contains_key("date") {
+        meta.insert("date".into(), json!(&mint.local[..10]));
+    }
+    match world {
+        Some(world) if reference => {
+            object(island, "bindings")?.insert("worldRef".into(), json!(world));
+        }
+        Some(world) => {
+            meta.insert("world".into(), json!(world));
+        }
+        None => {}
+    }
+    Ok(())
+}
+
+/// The name a page minted at a moment carries before its stamp (`flow-2026-10-29-1015.html`, `-2` on a same-minute collision:
+/// createInPlace.ts), or None for a page named by hand.
+fn minted_prefix(stem: &str) -> Option<&str> {
+    let unsuffixed = match stem.rsplit_once('-') {
+        Some((head, tail))
+            if !tail.is_empty() && tail.len() <= 3 && tail.bytes().all(|b| b.is_ascii_digit()) =>
+        {
+            head
+        }
+        _ => stem,
+    };
+    for candidate in [unsuffixed, stem] {
+        let bytes = candidate.as_bytes();
+        if bytes.len() < 17 {
+            continue;
+        }
+        let (head, stamp) = candidate.split_at(candidate.len() - 15);
+        let shape = stamp.bytes().enumerate().all(|(i, b)| match i {
+            4 | 7 | 10 => b == b'-',
+            _ => b.is_ascii_digit(),
+        });
+        if shape && head.ends_with('-') && head.len() > 1 {
+            return Some(&head[..head.len() - 1]);
+        }
+    }
+    None
+}
+
+/// The copy's file name, the `attempt`-th tried: a minted page is minted again now (`<form>-<local stamp>`), a page named by hand
+/// takes `-copy`; a collision takes `-2`, `-3` … as createInPlace.ts names a same-minute mint.
+pub fn copy_name(name: &str, local: &str, attempt: usize) -> String {
+    let stem = name
+        .strip_suffix(".html")
+        .or_else(|| name.strip_suffix(".HTML"))
+        .unwrap_or(name);
+    let suffix = if attempt == 0 {
+        String::new()
+    } else {
+        format!("-{}", attempt + 1)
+    };
+    match minted_prefix(stem) {
+        Some(prefix) => format!("{prefix}-{local}{suffix}.html"),
+        None => format!("{stem}-copy{suffix}.html"),
+    }
+}
+
+/// The project whose human ground holds `folder` (`Work/<project>/…`), or None for your world's folder.
+fn project_of_folder(folder: &str) -> Option<&str> {
+    folder
+        .strip_prefix("Work/")
+        .and_then(|rest| rest.split('/').next())
+        .filter(|name| !name.is_empty())
+}
+
+/// How many names a copy tries before it is refused (createInPlace.ts tries as many).
+const COPY_ATTEMPTS: usize = 8;
+
+/// Duplicate (and Paste of a copied page): the page read, given an identity of its own (`copy_identity`), and created through its
+/// world's door, never overwriting — a project's human ground through `projectcentral.source.create`, your world's folder through
+/// `central.files.write` with an empty expected revision (createInPlace.ts names the same two doors). `into` names another world to
+/// make it in; without it the copy stands in the page's own folder, tied to the page's world. Answers the copy's location, read back
+/// through the page owner.
+pub fn duplicate(
+    client: &CentralClient,
+    location: &Location,
+    into: Option<&WorldTarget>,
+) -> Result<Value, String> {
+    duplicate_with(client, location, into, &CopyMint::now()?)
+}
+
+pub fn duplicate_with(
+    client: &CentralClient,
+    location: &Location,
+    into: Option<&WorldTarget>,
+    mint: &CopyMint,
+) -> Result<Value, String> {
+    let reading = files::read(client, location)?;
+    let mut island = read_island(&reading.content)?;
+    let form = form_of(&island);
+    if form == "unknown" {
+        return Err(
+            "This file is no page: only a Being, a Thing or a Flow is copied as a page".into(),
+        );
+    }
+    copy_identity(&mut island, mint, into.map(|target| target.world.as_str()))?;
+    let content = embed_island(&reading.content, &island)?;
+    let folder = into
+        .map(|target| target.folder.trim_end_matches('/').to_owned())
+        .unwrap_or_else(|| files::parent_path(&location.path));
+    let name = location.path.rsplit('/').next().unwrap_or(&location.path);
+    let directory = files::list(client, &folder)?;
+    let taken: std::collections::BTreeSet<&str> = directory
+        .entries
+        .iter()
+        .map(|entry| entry.name.as_str())
+        .collect();
+    let project = project_of_folder(&directory.location.path);
+    let mut last = String::new();
+    for attempt in 0..COPY_ATTEMPTS {
+        let copy = copy_name(name, &mint.local, attempt);
+        if taken.contains(copy.as_str()) {
+            continue;
+        }
+        let at = Location {
+            schema: "central.path-ref/v1".into(),
+            ref_id: format!("{}/{copy}", directory.location.ref_id),
+            root: directory.location.root.clone(),
+            path: format!("{}/{copy}", directory.location.path),
+        };
+        let made = match project {
+            // A project's human ground: the source owner's own creation door, which never overwrites.
+            Some(project) => client
+                .run(
+                    "projectcentral.source.create",
+                    json!({"project": project, "path": at.path.strip_prefix(&format!("Work/{project}/")).unwrap_or(&at.path),
+                        "content": content, "actor": "oi-desktop-user", "actor_kind": "human"}),
+                )
+                .map_err(|error| error.to_string()),
+            // Your world's folder: Central's first-save door, an empty expected revision, which creates and never overwrites.
+            None => files::operate(
+                client,
+                &at,
+                &files::Request::Write {
+                    expected_revision: String::new(),
+                    content: content.clone(),
+                },
+            )
+            .and_then(|receipt| match receipt["outcome"].as_str() {
+                Some("created") => Ok(receipt),
+                other => Err(format!(
+                    "Central did not create the copy ({})",
+                    other.unwrap_or("no outcome")
+                )),
+            }),
+        };
+        match made {
+            Ok(receipt) => {
+                // The copy's location as the owner lists it, never a hand-built identity.
+                let listed = files::list(client, &directory.location.path)?;
+                let entry = listed
+                    .entries
+                    .into_iter()
+                    .find(|entry| entry.name == copy)
+                    .ok_or_else(|| {
+                        format!("Central made the copy, but {} does not list {copy}; nothing was assumed", directory.location.path)
+                    })?;
+                let copied = read(client, &entry.location)?;
+                return Ok(
+                    json!({"schema": "oi.page-copy/v1", "from": location, "location": entry.location,
+                    "form": copied["form"], "title": copied["title"], "revision": copied["revision"],
+                    "world": into.map(|target| json!(target.world)).unwrap_or(Value::Null), "receipt": receipt}),
+                );
+            }
+            Err(error)
+                if error.contains("already exists")
+                    || error.contains("conflict")
+                    || error.contains("never overwrites") =>
+            {
+                last = error;
+            }
+            Err(error) => {
+                return Err(format!(
+                    "Central refused the page's copy: {error} Nothing was made."
+                ))
+            }
+        }
+    }
+    Err(format!(
+        "Central would not take a copy of the page in {folder} this minute: {last}"
+    ))
+}
+
+/// Delete: the page leaves its world for Central's trash, on the revision read, by the person's act (`person` carries the host's
+/// native authority; Central's `central.files.trash` admits it on nothing else). The receipt is Central's, with the way back
+/// (`recover`: `central.files.restore` of the revision trashed). A file that is no page, or a page that moved since it was read, is
+/// refused and stays where it is.
+pub fn trash(
+    client: &CentralClient,
+    person: &CentralClient,
+    location: &Location,
+    expected_revision: &str,
+) -> Result<Value, String> {
+    let reading = files::read(client, location)?;
+    if reading.revision != expected_revision {
+        return Err(format!("The page moved since it was read (the owner holds {}): it stays in its world. Read it again.", reading.revision));
+    }
+    let island = read_island(&reading.content)?;
+    let form = form_of(&island);
+    if form == "unknown" {
+        return Err(
+            "This file is no page: only a Being, a Thing or a Flow leaves a world as a page".into(),
+        );
+    }
+    // The page's project scopes the act (Central authenticates it there); your world's page names the root register by an
+    // explicit null, which the client carries as absence and never back-fills (flow.rs `with_project`).
+    let project = reading.project.as_ref().map(|project| project.name.clone());
+    let receipt = person
+        .run(
+            "central.files.trash",
+            json!({"location": location, "expected_revision": expected_revision, "project": project}),
+        )
+        .map_err(|error| error.to_string())?;
+    match receipt["outcome"].as_str() {
+        Some("trashed") => Ok(json!({"schema": "oi.page-trash/v1", "location": location, "form": form,
+            "title": island["meta"]["title"], "revision": expected_revision, "recover": receipt["recover"], "receipt": receipt})),
+        Some("conflict") => Err(format!("The page moved while it was trashed (Central holds {}): it stays in its world. Read it again.",
+            receipt["current_revision"].as_str().unwrap_or("another revision"))),
+        _ => Err("Central answered something other than the page's trash".into()),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1582,6 +1891,26 @@ elif action == "central.files.list":
     names = sorted(n.split("_")[-1] for n in os.listdir(home) if n.startswith(path.replace("/", "_") + "_"))
     ok({"schema": "central.directory-reading/v1", "automatic_agent_or_model_invocation": False, "location": loc(path),
         "entries": [{"name": n, "kind": "file", "byte_len": 1, "retrieval_allowed": True, "location": loc(path + "/" + n)} for n in names]})
+elif action == "central.files.write" and payload["expected_revision"] == "" and not os.path.exists(os.path.join(home, payload["location"]["path"].replace("/", "_"))):
+    path = payload["location"]["path"]
+    if not path.startswith("Control/user/flows/"): refuse("An absent ordinary file is created only as a flow instance under Control/user/flows/")
+    open(os.path.join(home, path.replace("/", "_")), "w").write(payload["content"])
+    ok({"schema": "central.file-mutation/v1", "outcome": "created", "revision": rev(payload["content"]), "location": payload["location"]})
+elif action == "projectcentral.source.create":
+    assert payload["project"] == "P" and payload["actor_kind"] == "human"
+    path = "Work/P/" + payload["path"]; file = os.path.join(home, path.replace("/", "_"))
+    if os.path.exists(file): refuse("the document already exists; creation never overwrites - open it instead")
+    open(file, "w").write(payload["content"])
+    ok({"receipt": {"schema": "central.project-world-source-write-receipt/v1", "source": source(path), "previous_revision": "", "changed": True}})
+elif action == "central.files.trash":
+    if os.environ.get("CENTRAL_NATIVE_TOKEN") != "person-token": refuse("missing bounded CENTRAL_NATIVE_TOKEN; declared H/human attribution is not authentication")
+    path = payload["location"]["path"]; file = os.path.join(home, path.replace("/", "_")); text = open(file).read()
+    if ("project" in payload) != bool(source(path)) or (source(path) and payload["project"] != "P"): refuse("the project must name the page's world")
+    if payload["expected_revision"] != rev(text):
+        ok({"schema": "central.file-trash/v1", "outcome": "conflict", "location": payload["location"], "current_revision": rev(text), "changed": False}); sys.exit(0)
+    os.rename(file, os.path.join(home, "trashed-" + rev(text)))
+    ok({"schema": "central.file-trash/v1", "outcome": "trashed", "location": payload["location"], "previous_revision": rev(text), "revision": "",
+        "changed": True, "recover": {"action": "central.files.restore", "expected_revision": "", "revision": rev(text)}})
 elif action == "central.files.write":
     path = payload["location"]["path"]; file = os.path.join(home, path.replace("/", "_")); text = open(file).read()
     if source(path) or payload["expected_revision"] != rev(text):
@@ -2113,5 +2442,221 @@ else:
         let at = stub.put("Control/user/flows/plain.html", "<html>no island</html>");
         let refused = launch(&stub.client, &stub.client, &at).unwrap_err();
         assert!(refused.contains("no ql-doc island"), "{refused}");
+    }
+
+    #[test]
+    fn a_copy_is_named_as_its_page_was_made() {
+        let local = "2026-10-29-1015";
+        assert_eq!(
+            copy_name("flow-2026-10-01-0900.html", local, 0),
+            "flow-2026-10-29-1015.html"
+        );
+        assert_eq!(
+            copy_name("flow-2026-10-01-0900-3.html", local, 1),
+            "flow-2026-10-29-1015-2.html"
+        );
+        assert_eq!(
+            copy_name("things-2026-10-01-0900.html", local, 0),
+            "things-2026-10-29-1015.html"
+        );
+        assert_eq!(copy_name("ql.html", local, 0), "ql-copy.html");
+        assert_eq!(copy_name("things-1.html", local, 2), "things-1-copy-3.html");
+    }
+
+    fn mint(local: &str) -> CopyMint {
+        CopyMint {
+            id: "d-copy".into(),
+            created: "2026-10-29T10:15:00Z".into(),
+            local: local.into(),
+        }
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_page_is_copied_with_an_identity_of_its_own_through_its_world_s_door() {
+        let stub = Stub::new("copy");
+        let mut island = flow();
+        island["meta"]["documentId"] = json!("d-1");
+        island["meta"]["created"] = json!("2026-10-01T09:00:00Z");
+        island["entries"] = json!([{"id": "e-1", "author": "F", "html": "<p>kept</p>"}]);
+        let at = stub.put(
+            "Control/user/flows/flow-2026-10-01-0900.html",
+            &page(island),
+        );
+        let copied = duplicate_with(&stub.client, &at, None, &mint("2026-10-29-1015")).unwrap();
+        assert_eq!(copied["schema"], "oi.page-copy/v1");
+        assert_eq!(
+            copied["location"]["path"],
+            "Control/user/flows/flow-2026-10-29-1015.html"
+        );
+        assert_eq!(copied["form"], "flow");
+        let copy = stub.held("Control/user/flows/flow-2026-10-29-1015.html");
+        assert_eq!(copy["meta"]["documentId"], "d-copy", "a Flow is re-minted");
+        assert_eq!(copy["meta"]["created"], "2026-10-29T10:15:00Z");
+        assert_eq!(copy["meta"]["title"], "Untitled exchange");
+        assert_eq!(
+            copy["entries"][0]["html"], "<p>kept</p>",
+            "every other value is the page's own"
+        );
+        assert_eq!(
+            stub.held("Control/user/flows/flow-2026-10-01-0900.html")["meta"]["documentId"],
+            "d-1",
+            "the page stays as it was"
+        );
+        // The same minute again: the next name, never an overwrite.
+        let again = duplicate_with(&stub.client, &at, None, &mint("2026-10-29-1015")).unwrap();
+        assert_eq!(
+            again["location"]["path"],
+            "Control/user/flows/flow-2026-10-29-1015-2.html"
+        );
+
+        // A project's page is made through its source owner's creation door.
+        let thing = stub.put("Work/P/ProjectCentral/user/things-1.html", &page(being()));
+        let copied = duplicate_with(&stub.client, &thing, None, &mint("2026-10-29-1016")).unwrap();
+        assert_eq!(
+            copied["location"]["path"],
+            "Work/P/ProjectCentral/user/things-1-copy.html"
+        );
+        let log = std::fs::read_to_string(stub.home.join("log")).unwrap();
+        assert!(log.contains("projectcentral.source.create\n"), "{log}");
+        assert!(
+            !log.contains(" person"),
+            "a copy carries no person's authority: {log}"
+        );
+
+        // Pasted into another world: made in that world's folder, tied to it.
+        let copied = duplicate_with(
+            &stub.client,
+            &at,
+            Some(&WorldTarget {
+                folder: "Work/P/ProjectCentral/user".into(),
+                world: "central:wiki:project:P".into(),
+            }),
+            &mint("2026-10-29-1017"),
+        )
+        .unwrap();
+        assert_eq!(
+            copied["location"]["path"],
+            "Work/P/ProjectCentral/user/flow-2026-10-29-1017.html"
+        );
+        assert_eq!(copied["world"], "central:wiki:project:P");
+        assert_eq!(
+            stub.held("Work/P/ProjectCentral/user/flow-2026-10-29-1017.html")["meta"]["world"],
+            "central:wiki:project:P"
+        );
+        let being_at = stub.put("Control/user/flows/beings-1.html", &page(being()));
+        duplicate_with(
+            &stub.client,
+            &being_at,
+            Some(&WorldTarget {
+                folder: "Work/P/ProjectCentral/user".into(),
+                world: "central:wiki:project:P".into(),
+            }),
+            &mint("2026-10-29-1018"),
+        )
+        .unwrap();
+        assert_eq!(
+            stub.held("Work/P/ProjectCentral/user/beings-1-copy.html")["bindings"]["worldRef"],
+            "central:wiki:project:P"
+        );
+
+        let plain = stub.put("Control/user/flows/plain.html", "<html>no island</html>");
+        assert!(
+            duplicate_with(&stub.client, &plain, None, &mint("2026-10-29-1019"))
+                .unwrap_err()
+                .contains("no ql-doc island")
+        );
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_page_is_copied_through_the_kernel_and_its_world_s_listing_retires() {
+        let stub = Stub::new("copy-kernel");
+        let at = stub.put("Control/user/flows/beings-1.html", &page(being()));
+        let mut kernel = crate::Kernel::new(stub.client.clone());
+        let copied = kernel
+            .apply(crate::KernelOp::Page {
+                request: Request::Duplicate {
+                    location: at,
+                    into: None,
+                },
+            })
+            .unwrap();
+        let crate::KernelOpResult::PageReading { data } = copied.result else {
+            panic!("a page's copy")
+        };
+        assert_eq!(
+            data["location"]["path"],
+            "Control/user/flows/beings-1-copy.html"
+        );
+        assert!(
+            copied
+                .receipts
+                .iter()
+                .any(|receipt| format!("{receipt:?}").contains("FileChanged")),
+            "{:?}",
+            copied.receipts
+        );
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_page_leaves_its_world_for_central_s_trash_by_the_person_s_act_only() {
+        let stub = Stub::new("trash");
+        let person = stub.client.with_person_token("person-token");
+        let at = stub.put("Control/user/flows/flow-1.html", &page(flow()));
+        let revision = read(&stub.client, &at).unwrap()["revision"]
+            .as_str()
+            .unwrap()
+            .to_string();
+        let refused = trash(&stub.client, &stub.client, &at, &revision).unwrap_err();
+        assert!(
+            refused.contains("CENTRAL_NATIVE_TOKEN"),
+            "the kernel's own client carries no authority: {refused}"
+        );
+        assert!(
+            stub.home.join("Control_user_flows_flow-1.html").exists(),
+            "a refusal moves nothing"
+        );
+        let stale = trash(&stub.client, &person, &at, "r-stale").unwrap_err();
+        assert!(stale.contains("moved since it was read"), "{stale}");
+        let trashed = trash(&stub.client, &person, &at, &revision).unwrap();
+        assert_eq!(trashed["schema"], "oi.page-trash/v1");
+        assert_eq!(trashed["form"], "flow");
+        assert_eq!(
+            trashed["recover"]["revision"],
+            json!(revision),
+            "the way back is Central's restore of the revision trashed"
+        );
+        assert!(
+            !stub.home.join("Control_user_flows_flow-1.html").exists(),
+            "the page left its world"
+        );
+        // A project's page names its project, so Central authenticates the act there.
+        let thing = stub.put("Work/P/ProjectCentral/user/things-1.html", &page(being()));
+        let revision = read(&stub.client, &thing).unwrap()["revision"]
+            .as_str()
+            .unwrap()
+            .to_string();
+        assert_eq!(
+            trash(&stub.client, &person, &thing, &revision).unwrap()["receipt"]["outcome"],
+            "trashed"
+        );
+        let plain = stub.put("Control/user/flows/plain.html", "<html>no island</html>");
+        let revision = read_file_revision(&stub, &plain);
+        assert!(trash(&stub.client, &person, &plain, &revision)
+            .unwrap_err()
+            .contains("no ql-doc island"));
+        let log = std::fs::read_to_string(stub.home.join("log")).unwrap();
+        assert!(
+            log.contains("central.files.trash person")
+                && !log.contains("central.files.read person"),
+            "only the trash carries the token: {log}"
+        );
+    }
+
+    #[cfg(unix)]
+    fn read_file_revision(stub: &Stub, at: &Location) -> String {
+        files::read(&stub.client, at).unwrap().revision
     }
 }

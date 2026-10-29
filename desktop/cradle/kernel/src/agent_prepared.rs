@@ -212,6 +212,24 @@ enum AgentRead {
         request: Value,
         expected_revision: Option<String>,
     },
+    /// The owner's task removal (`encounter-task-remove`): a write.
+    TaskRemove {
+        agent_session: String,
+        task_ref: String,
+        expected_revision: String,
+    },
+    /// The owner's task copy onto a session holding none
+    /// (`encounter-task-copy`): a write.
+    TaskCopy {
+        agent_session: String,
+        from_session: String,
+        task_ref: Option<String>,
+    },
+    /// A session taken off the set (SessionSpace `detach-agent-session`):
+    /// a write.
+    SessionDetach {
+        agent_session: String,
+    },
     SettingsList {
         agent_sessions: Vec<String>,
     },
@@ -457,6 +475,49 @@ impl PreparedAgent {
                     )?,
                 }
             }
+            AgentRead::TaskRemove {
+                agent_session,
+                task_ref,
+                expected_revision,
+            } => {
+                let project_ref =
+                    project_ref(&self.client, &self.aikit, &self.reads, project, &cwd)?;
+                KernelOpResult::EncounterOwnerAct {
+                    data: self.aikit.task_remove(
+                        &cwd,
+                        &project_ref,
+                        agent_session,
+                        task_ref,
+                        expected_revision,
+                    )?,
+                }
+            }
+            AgentRead::TaskCopy {
+                agent_session,
+                from_session,
+                task_ref,
+            } => {
+                let project_ref =
+                    project_ref(&self.client, &self.aikit, &self.reads, project, &cwd)?;
+                KernelOpResult::EncounterOwnerAct {
+                    data: self.aikit.task_copy(
+                        &cwd,
+                        &project_ref,
+                        agent_session,
+                        from_session,
+                        task_ref.as_deref(),
+                    )?,
+                }
+            }
+            AgentRead::SessionDetach { agent_session } => {
+                let project_ref =
+                    project_ref(&self.client, &self.aikit, &self.reads, project, &cwd)?;
+                KernelOpResult::EncounterOwnerAct {
+                    data: self
+                        .aikit
+                        .session_detach(&cwd, &project_ref, agent_session)?,
+                }
+            }
             AgentRead::SettingsList { agent_sessions } => {
                 let project_ref =
                     project_ref(&self.client, &self.aikit, &self.reads, project, &cwd)?;
@@ -527,7 +588,8 @@ impl PreparedAgent {
 
 impl Kernel {
     /// `AgencyRead`, `Encounter`, `EncounterTaskRead`, `EncounterSessionSettings`,
-    /// `EncounterTaskConfigure`, `AgentDefinition`,
+    /// `EncounterTaskConfigure`, `EncounterTaskRemove`, `EncounterTaskCopy`,
+    /// `EncounterSessionDetach`, `AgentDefinition`,
     /// `ModelRoster`, `HarnessAgentRead`, `HarnessStatus` and
     /// `ModelCatalogue`, prepared under the kernel lock; every other op is
     /// not an agent read.
@@ -570,6 +632,41 @@ impl Kernel {
                     agent_session: agent_session.clone(),
                     request: request.clone(),
                     expected_revision: expected_revision.clone(),
+                },
+            ),
+            KernelOp::EncounterTaskRemove {
+                project,
+                agent_session,
+                task_ref,
+                expected_revision,
+            } => (
+                Some(project.clone()),
+                AgentRead::TaskRemove {
+                    agent_session: agent_session.clone(),
+                    task_ref: task_ref.clone(),
+                    expected_revision: expected_revision.clone(),
+                },
+            ),
+            KernelOp::EncounterTaskCopy {
+                project,
+                agent_session,
+                from_session,
+                task_ref,
+            } => (
+                Some(project.clone()),
+                AgentRead::TaskCopy {
+                    agent_session: agent_session.clone(),
+                    from_session: from_session.clone(),
+                    task_ref: task_ref.clone(),
+                },
+            ),
+            KernelOp::EncounterSessionDetach {
+                project,
+                agent_session,
+            } => (
+                Some(project.clone()),
+                AgentRead::SessionDetach {
+                    agent_session: agent_session.clone(),
                 },
             ),
             KernelOp::EncounterSessionSettingsList {
@@ -729,6 +826,24 @@ elif verb == "encounter-session-settings":
     else:
         print(json.dumps({"schema": "aikit.encounter-session-settings-list/v1",
                           "readings": [reading(session) for session in sessions]}))
+elif verb in ("encounter-task-remove", "encounter-task-copy"):
+    flag = lambda name: args[args.index(name) + 1] if name in args else None
+    kept = log + "." + verb + ".json"
+    if os.path.exists(kept):
+        sys.stderr.write(open(kept).read())
+        sys.exit(2)
+    schema = "aikit.encounter-task-removal/v1" if verb == "encounter-task-remove" else "aikit.encounter-task-copy/v1"
+    print(json.dumps({"schema": schema, "agent_session": flag("--agent-session"), "task_ref": flag("--task-ref"),
+                      "expected": flag("--expected-revision"), "from_session": flag("--from-session")}))
+elif verb == "stage":
+    flag = lambda name: args[args.index(name) + 1] if name in args else None
+    intent = json.loads(open(flag("--intent-json")[1:]).read())
+    print(json.dumps({"space": flag("--space"), "intent": intent}))
+elif verb == "apply":
+    preview = open(args[args.index("--preview-json") + 1][1:]).read()
+    with open(log + ".applied", "a") as handle:
+        handle.write(preview.strip() + "\n")
+    print(json.dumps({"applied": True}))
 elif verb == "encounter-task-attempts":
     sessions = [args[i + 1] for i, arg in enumerate(args) if arg == "--agent-session"]
     reading = lambda session: {"schema": "aikit.encounter-task-attempts/v1", "agent_session": session,
@@ -1138,6 +1253,93 @@ else:
             "Current Agency does not authorise this task, authority or participant"
         );
         let _ = std::fs::remove_file(&kept);
+    }
+
+    /// A task's Delete and Paste and a session's Remove from the set (O-I #743) reach AIKit for a session attached to the Project
+    /// only: the task named and the revision read travel verbatim, the receipt comes back as AIKit wrote it, AIKit's refusal in its
+    /// own words; a session leaves the set through the SessionSpace's own `detach-agent-session`, staged and applied on the space
+    /// that holds it.
+    #[test]
+    fn a_task_s_removal_and_copy_and_a_session_s_detach_reach_the_owner_for_an_attached_session_only(
+    ) {
+        let owner = crate::tests::FakeOwner::spawn_counter("task-acts");
+        let aikit = FakeAikit::new("task-acts");
+        let _ = std::fs::remove_file(format!("{}.applied", aikit.log.display()));
+        let mut kernel = owner.kernel_with_agency(aikit.client());
+        let remove = |agent_session: &str| KernelOp::EncounterTaskRemove {
+            project: String::new(),
+            agent_session: agent_session.into(),
+            task_ref: "task:fixtures".into(),
+            expected_revision: "task-binding/1".into(),
+        };
+        let removed = kernel.apply(remove("agent-session/x")).unwrap();
+        let KernelOpResult::EncounterOwnerAct { data } = removed.result else {
+            panic!("AIKit's receipt is the outcome");
+        };
+        assert_eq!(data["schema"], "aikit.encounter-task-removal/v1");
+        assert_eq!(data["task_ref"], "task:fixtures");
+        assert_eq!(data["expected"], "task-binding/1");
+        assert!(kernel.apply(remove("agent-session/elsewhere")).is_err());
+        assert_eq!(
+            aikit.calls("encounter-task-remove"),
+            1,
+            "another Project's session never reaches the owner"
+        );
+        let kept = PathBuf::from(format!(
+            "{}.encounter-task-remove.json",
+            aikit.log.display()
+        ));
+        std::fs::write(
+            &kept,
+            "Task revision conflict; read current task before removing it",
+        )
+        .unwrap();
+        assert_eq!(
+            kernel.apply(remove("agent-session/x")).unwrap_err(),
+            "Task revision conflict; read current task before removing it"
+        );
+        let _ = std::fs::remove_file(&kept);
+
+        let copy = |to: &str, from: &str| KernelOp::EncounterTaskCopy {
+            project: String::new(),
+            agent_session: to.into(),
+            from_session: from.into(),
+            task_ref: Some("task:fixtures-copy".into()),
+        };
+        let copied = kernel
+            .apply(copy("agent-session/x", "agent-session/x"))
+            .unwrap();
+        assert!(
+            matches!(copied.result, KernelOpResult::EncounterOwnerAct { ref data }
+            if data["schema"] == "aikit.encounter-task-copy/v1" && data["from_session"] == "agent-session/x"
+                && data["task_ref"] == "task:fixtures-copy")
+        );
+        assert!(kernel
+            .apply(copy("agent-session/x", "agent-session/elsewhere"))
+            .is_err());
+        assert!(kernel
+            .apply(copy("agent-session/elsewhere", "agent-session/x"))
+            .is_err());
+        assert_eq!(aikit.calls("encounter-task-copy"), 1);
+
+        let detach = |agent_session: &str| KernelOp::EncounterSessionDetach {
+            project: String::new(),
+            agent_session: agent_session.into(),
+        };
+        assert!(kernel.apply(detach("agent-session/elsewhere")).is_err());
+        let detached = kernel.apply(detach("agent-session/x")).unwrap();
+        let KernelOpResult::EncounterOwnerAct { data } = detached.result else {
+            panic!("the detach's receipt is the outcome");
+        };
+        assert_eq!(data["outcome"], "detached");
+        assert_eq!(data["spaces"], serde_json::json!(["session-space/s"]));
+        let applied = std::fs::read_to_string(format!("{}.applied", aikit.log.display())).unwrap();
+        let preview: Value = serde_json::from_str(applied.trim()).unwrap();
+        assert_eq!(
+            preview,
+            serde_json::json!({"space": "session-space/s",
+                "intent": {"operation": "detach-agent-session", "agent_session": "agent-session/x"}})
+        );
     }
 
     /// The real exchange (tests/fixtures/owner-routes/aikit-task-configure-2026-10-28.json): the request the shell's Factory maker sent

@@ -7,7 +7,8 @@
 // - what plays: the NOW clearings of your world and of each project world in the set whose task is a page's
 //   (kernel/src/page.rs `page_task`), active;
 // - the day's entries: the World cut's one temporal read, which the frame already publishes as `reading.world`.
-// The acts: Launch and Stop are the page owner's (pageOwner.ts launchPage, stopPage); a world dropped on the empty track is written
+// The acts: Launch and Stop are the page owner's (pageOwner.ts launchPage, stopPage), as are a page's Duplicate, Paste and Delete (to
+// Central's trash; central/pageActs.ts); a world's Rename is Central's own (central.world.name); a world dropped on the empty track is written
 // into the Day's set (writeDaySet), and while today's Day does not stand the drop is still taken and refused in the Day's words
 // (withWorldSeat, daySet.ts bringInRefusal); every world's Arm is the shell's one write arm. After an act the readings it moved are read
 // again. Registered as `base: worldCut(useCentralTracks)` in modeTracks.ts.
@@ -18,7 +19,7 @@ import {listFiles} from '../../../../../../desktop/cradle/src/files/client'
 import {nowReading, type NowListing} from '../../../../../../desktop/cradle/src/receiving/now'
 import {launchPage, stopPage} from '../../../../../../desktop/cradle/src/personal/pageOwner'
 import {validateDocumentBasis} from '../../../../../../desktop/cradle/src/central/dayForm'
-import type {KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
+import type {CentralLocation, KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
 import {readWorlds, readWorldPages, type CentralWorld, type CentralWorldsReading } from '../../central/centralWorlds'
 import {bringInRefusal, daySetOf, withWorld, withoutWorld, writeDaySet, type DaySet} from '../../central/daySet'
 import {currentDayOf} from '../../central/devices/dayBinding'
@@ -56,6 +57,7 @@ import {refusingMaker, withClipMaker} from './clipMakers'
 import {CONSTELLATION_DRAG} from '../browser/constellationFocus'
 import {constellationNamed, constellationsNow} from '../../owners/constellations'
 import {makeBlankPage, makePageOf} from '../../central/madeOfConstellation'
+import {duplicatePage, nameWorld, trashPage as trashPageOwned} from '../../central/pageActs'
 
 /** The day records through the owner's listing route (the browser's Days rows read the same). A refusal is the reading, named. */
 export async function readDayRecords(transport: KernelTransportStatus | undefined): Promise<CentralDayRecordsReading> {
@@ -189,6 +191,13 @@ export function useCentralTracks(reading: TracksReading): WorldTrackSet {
       } : {}),
       // Insert clip: a blank Flow made in the world, and its pages read again (O-I #743).
       makePage: (world: CentralWorld) => after(() => makeBlankPage(transport, world).finally(refreshGround)),
+      // A page's Duplicate and Paste, and its Delete (to Central's trash), through the page owner; a world's Rename, Central's own (O-I #743).
+      copyPage: (page: {location: CentralLocation}, into?: CentralWorld) => after(async () => {
+        const made = await duplicatePage(transport, page.location, into)
+        return {path: made.location.path, ref: made.location.ref}
+      }),
+      trashPage: (page: {location: CentralLocation; revision: string}) => after(() => trashPageOwned(transport, page.location, page.revision)),
+      nameWorld: (world: CentralWorld, name: string) => after(() => nameWorld(transport, world, name)),
       writeArm: shellWriteArm(armOn),
       openOrReveal: (act: 'open' | 'reveal', path: string) => openOrRevealInCentral(transport, act, path),
     }

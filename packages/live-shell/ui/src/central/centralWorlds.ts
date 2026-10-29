@@ -21,6 +21,9 @@ export interface CentralWorld {
   readonly folder: string
   /** The project it is, for a project's world. */
   readonly project: string | null
+  /** The revision of its ProjectCentral manifest, which keeps its name (Central's world browse `manifest_revision`): a rename is written
+   * against it. Absent for your world, and where Central names none. */
+  readonly revision?: string
 }
 
 export type CentralWorldsReading =
@@ -36,7 +39,9 @@ export function worldsOf(root: RootWorld): CentralWorld[] {
     const ground = project.projectcentral
     const ref = ground?.agent_wiki?.wiki?.space_ref
     if (!ref || !ground.user?.exists || !ground.user.path) return []
-    return [{ref, name: project.name, kind: 'project', folder: ground.user.path, project: project.name}]
+    // Its name is its own where Central keeps one (central.world.name, O-I #743), else its project's folder name.
+    return [{ref, name: project.world_name?.trim() || project.name, kind: 'project', folder: ground.user.path, project: project.name,
+      ...(project.manifest_revision ? {revision: project.manifest_revision} : {})}]
   })
   return [yours, ...projects]
 }

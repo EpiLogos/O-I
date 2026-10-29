@@ -501,6 +501,49 @@ impl PreparedWrite {
                 }
                 KernelOpResult::PageReading { data }
             }
+            // A page's copy (page.rs `duplicate`): made through its world's door, so
+            // the world's listing retires and the copy is disclosed as a new file.
+            KernelOp::Page {
+                request: crate::page::Request::Duplicate { location, into },
+            } => {
+                let data = crate::page::duplicate(&self.client, location, into.as_ref())?;
+                let made = data["location"]["path"]
+                    .as_str()
+                    .unwrap_or_default()
+                    .to_owned();
+                records.push(Record::RetireListing(files::parent_path(&made)));
+                records.push(Record::RetireDerived);
+                records.push(Record::RetireTemporal);
+                records.push(Record::Event(Box::new(KernelEvent::FileChanged {
+                    path: made,
+                    summary: "A page was copied through the page owner.".into(),
+                })));
+                KernelOpResult::PageReading { data }
+            }
+            // A page leaving its world (page.rs `trash`): Central's trash on the
+            // revision read, the person's act (the person pressed Delete).
+            KernelOp::Page {
+                request:
+                    crate::page::Request::Trash {
+                        location,
+                        expected_revision,
+                    },
+            } => {
+                let data = crate::page::trash(
+                    &self.client,
+                    &self.client.for_person(),
+                    location,
+                    expected_revision,
+                )?;
+                records.push(Record::RetireListing(files::parent_path(&location.path)));
+                records.push(Record::RetireDerived);
+                records.push(Record::RetireTemporal);
+                records.push(Record::Event(Box::new(KernelEvent::FileChanged {
+                    path: location.path.clone(),
+                    summary: "A page left its world for Central's trash.".into(),
+                })));
+                KernelOpResult::PageReading { data }
+            }
             // A journey opened or acted on (nara_journey.rs): QL's state saved into its Flow page through the page owner's
             // CAS, retiring and disclosing as a page write does; a replay QL reconciled writes nothing and emits nothing.
             KernelOp::NaraJourney { request } => {

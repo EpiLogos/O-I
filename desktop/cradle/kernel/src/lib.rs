@@ -696,6 +696,38 @@ pub enum KernelOp {
         #[serde(default)]
         expected_revision: Option<String>,
     },
+    /// Take a session's task off it through the owner's
+    /// `encounter-task-remove` (`aikit.encounter-task-removal/v1`; manual
+    /// §10.9, a clip's Delete in Factory): the task named and the revision
+    /// read. AIKit keeps the record in the task's history; its receipt or
+    /// its refusal passes through verbatim. The session must be attached to
+    /// one of the Project's spaces.
+    EncounterTaskRemove {
+        project: String,
+        agent_session: String,
+        task_ref: String,
+        expected_revision: String,
+    },
+    /// Copy one session's task onto another that holds none, through the
+    /// owner's `encounter-task-copy` (`aikit.encounter-task-copy/v1`; manual
+    /// §10.9, a clip's Paste in Factory): AIKit makes the copy from the
+    /// receiving session's standing and carries the task's own settings.
+    /// Both sessions must be attached to one of the Project's spaces.
+    EncounterTaskCopy {
+        project: String,
+        agent_session: String,
+        from_session: String,
+        #[serde(default)]
+        task_ref: Option<String>,
+    },
+    /// Take a session off the set (manual §19.1, a session's track
+    /// Delete): detached from each of the Project's SessionSpaces that holds
+    /// it through the owner's own `detach-agent-session` mutation, staged and
+    /// applied as its attachment was. The session stays AIKit's.
+    EncounterSessionDetach {
+        project: String,
+        agent_session: String,
+    },
     /// Several sessions' settings read at once (the owner's
     /// `aikit.encounter-session-settings-list/v1`), so a view of many tracks
     /// asks once. Every session must be attached to one of the Project's
@@ -1607,6 +1639,12 @@ pub enum KernelOpResult {
         data: serde_json::Value,
     },
     EncounterTaskAttemptsListReading {
+        data: serde_json::Value,
+    },
+    /// An encounter act's receipt: a task removed or copied, a session
+    /// taken off the set (`EncounterTaskRemove`, `EncounterTaskCopy`,
+    /// `EncounterSessionDetach`), its schema naming which.
+    EncounterOwnerAct {
         data: serde_json::Value,
     },
     FactoryDevelopmentReading {
@@ -3575,6 +3613,9 @@ impl Kernel {
             | KernelOp::EncounterTaskRead { .. }
             | KernelOp::EncounterSessionSettings { .. }
             | KernelOp::EncounterTaskConfigure { .. }
+            | KernelOp::EncounterTaskRemove { .. }
+            | KernelOp::EncounterTaskCopy { .. }
+            | KernelOp::EncounterSessionDetach { .. }
             | KernelOp::EncounterSessionSettingsList { .. }
             | KernelOp::EncounterTaskAttemptsList { .. }
             | KernelOp::ModelRoster { .. }

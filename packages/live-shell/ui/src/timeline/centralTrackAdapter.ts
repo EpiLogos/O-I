@@ -23,7 +23,7 @@ import {eventDayKey, type TemporalEventRow, type TemporalStreamAbsence} from './
 import type {WorldMixer, WorldTakeLane, WorldTrack, WorldTrackActions, WorldTrackAdapter, WorldTrackClip, WorldTrackColumn, WorldTrackSet, WorldWalk} from './worldTrackAdapter'
 import type {WorldTimelineSource} from '../projections/useWorldTemporalReading'
 import {CENTRAL_DAYS_PATH, dateOfDayPath, dayEntriesOf} from '../central/daySurface'
-import {withRowAt, withRowChanged, withoutRow, withTrackMoved, withTrackName, type DaySet} from '../central/daySet'
+import {withRowAt, withRowChanged, withoutRow, withoutTrackName, withTrackMoved, type DaySet} from '../central/daySet'
 import type {CentralWorld, CentralWorldsReading, WorldPagesReading} from '../central/centralWorlds'
 import type {CentralLocation, NativeFileEntry} from '../../../../../desktop/cradle/src/kernel/types'
 import type {NowListing} from '../../../../../desktop/cradle/src/receiving/now'
@@ -131,6 +131,14 @@ export interface CentralControls {
   writeSet?: (change: (set: DaySet) => DaySet) => Promise<unknown>
   /** Make a blank page in a world (central/madeOfConstellation.ts makeBlankPage): answers its path and its file ref. */
   makePage?: (world: CentralWorld) => Promise<{path: string; ref: string}>
+  /** A page's copy (the page owner's duplicate, kernel/src/page.rs, central/pageActs.ts): in its own world, or in `into`, tied to it.
+   * Answers the copy's path and file ref. */
+  copyPage?: (page: {location: CentralLocation}, into?: CentralWorld) => Promise<{path: string; ref: string}>
+  /** A page leaving its world for Central's trash on the revision read (the page owner's trash; the person's act). Answers Central's
+   * receipt, with its way back. */
+  trashPage?: (page: {location: CentralLocation; revision: string}) => Promise<unknown>
+  /** A world named by Central itself (`central.world.name`, the person's act): the browser's row and today's track both show it. */
+  nameWorld?: (world: CentralWorld, name: string) => Promise<unknown>
 }
 
 export interface CentralReading {
@@ -248,6 +256,8 @@ interface Page {
   title: string
   form: string
   location: CentralLocation
+  /** The revision the page owner listed it at: Delete takes it out of its world on it. */
+  revision: string
   madeAt: number | null
 }
 
@@ -319,7 +329,7 @@ export function projectCentralTracks(reading: CentralReading): WorldTrackSet {
     const read = reading.pages?.get(world.ref)
     if (read?.state !== 'read') return []
     return read.listing.pages.map(page => ({world: world.ref, path: page.location.path, name: page.name, title: page.title || page.name.replace(/\.html$/i, ''),
-      form: page.form, location: page.location, madeAt: mintedAt(page.name)}))
+      form: page.form, location: page.location, revision: page.revision, madeAt: mintedAt(page.name)}))
       .sort((a, b) => (a.madeAt ?? Infinity) - (b.madeAt ?? Infinity) || a.name.localeCompare(b.name))
   }
   const pages = new Map(worlds.map(({world}) => [world.ref, pagesOf(world)]))
@@ -506,15 +516,13 @@ function centralActions(reading: CentralReading, worlds: readonly CentralWorld[]
     return {ok: true, note: `${plural(plays.length, 'page', 'pages')} stopped.`}
   }}
   centralSetActs(actions, reading, worlds, rowPages)
-  actions.waiting = CENTRAL_WAITING
+  centralPageActs(actions, reading, worlds, byPath, rowPages, playing)
+  actions.waiting = centralWaiting(actions, reading)
   return Object.keys(actions).length ? actions : undefined
 }
 
-/** What Central's acts no owner op carries wait for (O-I #743, round three), as the status bar says after the missing op. */
+/** What Central's acts no owner op carries wait for (O-I #743), as the status bar says after the missing op. */
 export const CENTRAL_WAITING: Readonly<Record<string, string>> = {
-  'clip.duplicate': 'a page\'s copy in its world: the page owner (kernel/src/page.rs) reading the page and making it again with an identity of its own through its world\'s door',
-  'clip.delete': 'Central taking a page out of its world: no Central action removes or moves a file to the trash (central.files has create, write and restore)',
-  'clip.paste': 'a page\'s copy in another world, as Duplicate waits for',
   'clip.info': 'a page\'s info text: the page owner keeps no note on the page as a whole apart from its notes',
   'clip.split': 'no owner splits a page',
   'clip.consolidate': 'no owner joins pages',
@@ -524,7 +532,38 @@ export const CENTRAL_WAITING: Readonly<Record<string, string>> = {
   'track.duplicate': 'a world\'s copy: Central makes a world through setup, not by copying one',
   'track.colour': 'a world\'s own colour: a world wears its body\'s (projections/atlas/system/systemModel.ts worldColourOf), which no act writes yet',
   'tracks.group': 'a group of worlds: today\'s set keeps worlds side by side, none under another',
-  'row.duplicate': 'a page\'s copy in its world, which a row\'s copy is made of',
+  'track.activator': 'Send to Day: a set track field `sendToDay: boolean` in the Day\'s set (central/daySet.ts) that the Day\'s faces and its close read',
+  'track.solo': 'the Day\'s faces and the world instrument reading a soloed world from today\'s set',
+  'track.arm': 'the shell\'s one write arm (shell.setWriteArm, agent/shellSetterBridge.ts), which no shell holds for this pane',
+}
+
+/** The owners' acts the set carries where a kernel carrier hands the pane their controls: each op, the action that carries it, and whose. */
+const CARRIED_BY_THE_CARRIER: readonly (readonly [op: string, action: keyof WorldTrackActions, owner: string])[] = [
+  ['clip.launch', 'launch', 'the page owner\'s launch (kernel/src/page.rs)'], ['row.launch', 'launchStop', 'the page owner\'s launch of every page in the row'],
+  ['track.stop', 'stopTrack', 'the page owner\'s stop'], ['set.stop-all', 'stopAll', 'the page owner\'s stop of every page that plays'],
+  ['clip.insert', 'insertClip', 'a blank Flow made through Central\'s door'], ['clip.duplicate', 'duplicateClip', 'the page owner\'s duplicate (kernel/src/page.rs)'],
+  ['clip.paste', 'pasteClip', 'the page owner\'s duplicate into the world it is pasted in'], ['clip.delete', 'deleteClip', 'the page owner\'s trash, Central\'s central.files.trash'],
+  ['row.duplicate', 'duplicateRow', 'the page owner\'s duplicate of each page in the row'], ['track.rename', 'renameTrack', 'Central\'s central.world.name'],
+  ['work.open', 'openFile', 'Central\'s work.open'], ['work.reveal', 'revealFile', 'Central\'s work.reveal'],
+]
+/** The acts that write today's set, kept in today's Day, and the actions that carry them. */
+const KEPT_IN_THE_DAY: readonly (readonly [op: string, action: keyof WorldTrackActions])[] = [
+  ['track.remove', 'removeTrack'], ['track.move', 'moveTrack'], ['row.insert', 'insertRow'], ['row.rename', 'renameRow'], ['row.delete', 'deleteRow'],
+]
+
+/** What each act no owner op carries now waits for: what no owner carries at all (CENTRAL_WAITING), an owner's act whose control no kernel
+ * carrier hands this pane, and today's set's acts while today's Day cannot be written. An act the set carries is never named. Pure. */
+function centralWaiting(actions: WorldTrackActions, reading: CentralReading): Readonly<Record<string, string>> {
+  const waiting: Record<string, string> = {...CENTRAL_WAITING}
+  for (const [op, action, owner] of CARRIED_BY_THE_CARRIER) {
+    if (!actions[action]) waiting[op] = `${owner}, which no kernel carrier hands this pane`
+  }
+  const day = reading.set?.state === 'none' ? reading.set.reason : reading.set?.state === 'reading' ? 'today\'s Day is still being read'
+    : !reading.controls?.writeSet ? 'no kernel carrier reaches today\'s Day' : null
+  for (const [op, action] of KEPT_IN_THE_DAY) {
+    if (!actions[action]) waiting[op] = `today's set, kept in today's Day, which cannot be written now${day ? ` (${day})` : ''}`
+  }
+  return waiting
 }
 
 /** Today's set's own acts (the Day's write): a world's track named and moved, a page made in a world, and the named rows inserted, named and
@@ -544,16 +583,23 @@ function centralSetActs(actions: WorldTrackActions, reading: CentralReading, wor
     if (row && writeSet) await writeSet(held => withRowChanged(held, row.id, kept => ({...kept, pages: [...kept.pages.filter(page => page !== made.ref), made.ref]})))
     return {ok: true, note: `${world.name} has a new Flow (${made.path})${row ? `, in the row ${row.name}` : ''}.`}
   }}
-  if (!writeSet || !set) return
-  const op = (what: string) => `today's set written into the Day (central/daySet.ts): ${what}`
-  actions.renameTrack = {op: op('the name today\'s track shows'), run: async (trackId, name) => {
+  // Rename reaches the world itself (O-I #743): Central keeps its name in the world's ProjectCentral manifest (central.world.name), so the
+  // browser's row and today's track both show it. It replaces the name today's set kept for the track (daySet.ts withTrackName), which
+  // would stand over the world's own name; the set's name is taken away once Central has named the world.
+  const nameWorld = controls?.nameWorld
+  if (nameWorld) actions.renameTrack = {op: 'Central\'s central.world.name: the world itself named, in the browser and on today\'s track', run: async (trackId, name) => {
     const world = worldOf(trackId)
     if (!world) return {ok: false, error: `"${trackId}" is no world of today's set.`}
-    if (world.kind === 'yours') return {ok: false, error: 'Your world is named by your ground: today\'s set does not rename it.'}
-    if (!name.trim()) return {ok: false, error: 'A track\'s name is text.'}
-    await writeSet(held => withTrackName(held, world.ref, name.trim()))
-    return {ok: true, note: `${world.name} is named ${name.trim()} today.`}
+    if (world.kind === 'yours') return {ok: false, error: 'Your world is named by your ground: Central names a project\'s world, not yours.'}
+    if (!world.project) return {ok: false, error: `${world.name} is a world Central no longer discloses: there is no world to name.`}
+    if (!name.trim()) return {ok: false, error: 'A world\'s name is text.'}
+    await nameWorld(world, name.trim())
+    const kept = set?.tracks.find(track => track.world === world.ref)?.name
+    if (kept && writeSet) await writeSet(held => withoutTrackName(held, world.ref))
+    return {ok: true, note: `${world.name} is named ${name.trim()}: the browser and today's track show it.`}
   }}
+  if (!writeSet || !set) return
+  const op = (what: string) => `today's set written into the Day (central/daySet.ts): ${what}`
   actions.moveTrack = {op: op('the worlds in a new order'), run: async (trackId, by) => {
     const world = worldOf(trackId)
     if (!world) return {ok: false, error: `"${trackId}" is no world of today's set.`}
@@ -589,6 +635,74 @@ function centralSetActs(actions: WorldTrackActions, reading: CentralReading, wor
     if (!row) return {ok: false, error: 'This row holds the pages no named row holds: the Day keeps no row to take out.'}
     await writeSet(held => withoutRow(held, row.id))
     return {ok: true, note: `The row ${row.name} is out of today's set; its pages stay in their worlds.`}
+  }}
+}
+
+/** A page's own acts over its file (O-I #743, manual §10.9): Duplicate and Paste make the page again through the page owner (in its world, or
+ * in the world it is pasted in), Cut moves it (the copy made, then the page taken out of its world), Delete takes it out of its world into
+ * Central's trash, and a row's Duplicate copies each of its pages. A copy in a named row stands in that row too; a page taken out of its
+ * world leaves today's named rows. Pure, apart from the acts it hands back. */
+function centralPageActs(actions: WorldTrackActions, reading: CentralReading, worlds: readonly CentralWorld[], byPath: ReadonlyMap<string, Page>,
+  rowPages: ReadonlyMap<string, readonly Page[]>, playing: ReadonlyMap<string, CentralPlaying>): void {
+  const controls = reading.controls
+  const set = reading.set?.state === 'read' ? reading.set.set : null
+  const writeSet = set ? controls?.writeSet : undefined
+  const rowOf = (columnId: string) => set?.rows.find(row => `central:row:${row.id}` === columnId) ?? null
+  const worldOf = (ref: string) => worlds.find(world => world.ref === ref)
+  const copyPage = controls?.copyPage, trashPage = controls?.trashPage
+  /** The named row a clip stands in, by the column it is drawn in. */
+  const columnOf = (page: Page) => [...rowPages].find(([, list]) => list.includes(page))?.[0] ?? null
+  if (copyPage) {
+    actions.duplicateClip = {op: 'the page owner\'s duplicate (kernel/src/page.rs): the page made again in its world with an identity of its own, through its world\'s door; in a named row, the row holds the copy beside it', run: async clipId => {
+      const page = byPath.get(clipId)
+      if (!page) return {ok: false, error: `"${clipId}" is no page of today's worlds.`}
+      const made = await copyPage({location: page.location})
+      const row = rowOf(columnOf(page) ?? '')
+      if (row && writeSet) await writeSet(held => withRowChanged(held, row.id, kept => {
+        const at = kept.pages.indexOf(page.location.ref)
+        const pages = kept.pages.filter(ref => ref !== made.ref)
+        pages.splice(at < 0 ? pages.length : at + 1, 0, made.ref)
+        return {...kept, pages}
+      }))
+      return {ok: true, note: `${page.title} is copied in its world (${made.path})${row ? `, beside it in the row ${row.name}` : ''}.`}
+    }}
+    actions.pasteClip = {op: 'the page owner\'s duplicate into the world it is pasted in (kernel/src/page.rs), tied to that world; Cut then takes the page out of its own world into Central\'s trash', run: async (fromClipId, trackId, rowId, cut) => {
+      const page = byPath.get(fromClipId)
+      if (!page) return {ok: false, error: 'The page held is no page of today\'s worlds now: copy it again.'}
+      const world = worlds.find(candidate => centralWorldTrackId(candidate.ref) === trackId)
+      if (!world || !world.folder) return {ok: false, error: `"${trackId}" is no world of today's set that keeps pages.`}
+      if (cut && !trashPage) return {ok: false, error: 'Cut moves the page, and nothing takes it out of its world here: Copy it instead.'}
+      const made = await copyPage({location: page.location}, world.ref === page.world ? undefined : world)
+      const row = rowOf(rowId)
+      if (row && writeSet) await writeSet(held => withRowChanged(held, row.id, kept => ({...kept, pages: [...kept.pages.filter(ref => ref !== made.ref), made.ref]})))
+      if (cut) await trashPage!({location: page.location, revision: page.revision})
+      return {ok: true, note: `${page.title} ${cut ? 'is moved' : 'is copied'} into ${world.name} (${made.path})${row ? `, in the row ${row.name}` : ''}${cut ? '; the page it was is in Central\'s trash' : ''}.`}
+    }}
+    actions.duplicateRow = {op: 'the page owner\'s duplicate of each page in the row; a named row is copied as a new row beside it, holding the copies', run: async columnId => {
+      const pages = rowPages.get(columnId) ?? []
+      if (!pages.length) return {ok: false, error: 'The row holds no page to copy.'}
+      const made: {path: string; ref: string}[] = []
+      for (const page of pages) made.push(await copyPage({location: page.location}))
+      const row = rowOf(columnId)
+      if (row && writeSet && set) {
+        const copy = {id: `row-${Date.now().toString(36)}`, name: row.name, pages: made.map(item => item.ref)}
+        await writeSet(held => withRowAt(held, copy, held.rows.findIndex(kept => kept.id === row.id) + 1))
+      }
+      return {ok: true, note: `${plural(made.length, 'page is', 'pages are')} copied in ${made.length === 1 ? 'its world' : 'their worlds'}${row ? `, in a new row ${row.name} beside the row` : ''}.`}
+    }}
+  }
+  if (trashPage) actions.deleteClip = {op: 'Central\'s trash (central.files.trash, through the page owner): the page leaves its world on the revision read, and Central\'s file history brings it back (central.files.restore)', run: async clipId => {
+    const page = byPath.get(clipId)
+    if (!page) return {ok: false, error: `"${clipId}" is no page of today's worlds.`}
+    const plays = playing.get(page.location.ref)
+    if (plays) {
+      if (!controls?.stop) return {ok: false, error: `${page.title} plays now: stop it first, then Delete takes it out of its world.`}
+      await controls.stop(plays)
+    }
+    await trashPage({location: page.location, revision: page.revision})
+    const held = set?.rows.filter(row => row.pages.includes(page.location.ref)) ?? []
+    if (held.length && writeSet) await writeSet(kept => held.reduce((next, row) => withRowChanged(next, row.id, r => ({...r, pages: r.pages.filter(ref => ref !== page.location.ref)})), kept))
+    return {ok: true, note: `${page.title} left ${worldOf(page.world)?.name ?? 'its world'}${plays ? ' (stopped first)' : ''}: it is in Central's trash, and Central's file history brings it back.`}
   }}
 }
 

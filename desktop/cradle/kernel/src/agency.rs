@@ -649,6 +649,163 @@ impl Client {
 }
 
 impl Client {
+    /// Run one of the encounter's task acts (`encounter-task-remove`,
+    /// `encounter-task-copy`) on the owner and read its receipt, which must
+    /// carry `schema` and name `agent_session`. Central's root travels as
+    /// task creation carries it, since a copy is made through it.
+    fn task_act(
+        &self,
+        cwd: &Path,
+        operation: &'static str,
+        args: &[&str],
+        schema: &str,
+        agent_session: &str,
+    ) -> Result<Value, String> {
+        let mut command = Command::new(&self.executable);
+        if self.suite_route {
+            command.arg("aikit");
+        }
+        command.arg("session-space");
+        if let Some(home) = &self.home {
+            command.env("AIKIT_HOME", home);
+        }
+        if let Some(root) = std::env::var_os("OI_CENTRAL_ROOT") {
+            command.env("CENTRAL_ROOT", root);
+        }
+        command.arg("-C").arg(cwd);
+        command.arg(operation).args(args);
+        let bound = crate::owner_process::Bound {
+            owner: "AIKit",
+            operation,
+            limit: ENCOUNTER_WRITE_LIMIT,
+            effect: crate::owner_process::Effect::Write,
+        };
+        let output = crate::owner_process::output(&mut command, None, bound)
+            .map_err(|error| format!("AIKit SessionSpace is unavailable: {error}"))?;
+        if !output.status.success() {
+            return Err(owner_process_failure(operation, &output));
+        }
+        let mut data: Value = serde_json::from_slice(&output.stdout).map_err(|e| {
+            format!("AIKit SessionSpace returned an unreadable {operation} receipt: {e}")
+        })?;
+        if data.get("ok").and_then(Value::as_bool) == Some(true) {
+            data = data.get("data").cloned().unwrap_or(Value::Null);
+        }
+        if data["schema"].as_str() != Some(schema)
+            || data["agent_session"].as_str() != Some(agent_session)
+        {
+            return Err(format!(
+                "AIKit answered {operation} with something other than its receipt for this session"
+            ));
+        }
+        Ok(data)
+    }
+
+    /// Take a session's task off it through the owner's
+    /// `encounter-task-remove` (`aikit.encounter-task-removal/v1`): the task
+    /// named and the revision read, AIKit keeping the record in the task's
+    /// history. The session must be attached to one of the Project's spaces.
+    pub fn task_remove(
+        &self,
+        cwd: &Path,
+        project_ref: &str,
+        agent_session: &str,
+        task_ref: &str,
+        expected_revision: &str,
+    ) -> Result<Value, String> {
+        self.require_attached(cwd, project_ref, agent_session)?;
+        self.task_act(
+            cwd,
+            "encounter-task-remove",
+            &[
+                "--agent-session",
+                agent_session,
+                "--task-ref",
+                task_ref,
+                "--expected-revision",
+                expected_revision,
+            ],
+            "aikit.encounter-task-removal/v1",
+            agent_session,
+        )
+    }
+
+    /// Copy one session's task onto another that holds none, through the
+    /// owner's `encounter-task-copy` (`aikit.encounter-task-copy/v1`): AIKit
+    /// makes the copy as it makes any task, deriving the rest from the
+    /// receiving session's standing, and carries the task's own settings.
+    /// Both sessions must be attached to one of the Project's spaces.
+    pub fn task_copy(
+        &self,
+        cwd: &Path,
+        project_ref: &str,
+        agent_session: &str,
+        from_session: &str,
+        task_ref: Option<&str>,
+    ) -> Result<Value, String> {
+        self.require_attached(cwd, project_ref, agent_session)?;
+        self.require_attached(cwd, project_ref, from_session)?;
+        let mut args = vec![
+            "--agent-session",
+            agent_session,
+            "--from-session",
+            from_session,
+        ];
+        if let Some(task_ref) = task_ref {
+            args.extend(["--task-ref", task_ref]);
+        }
+        self.task_act(
+            cwd,
+            "encounter-task-copy",
+            &args,
+            "aikit.encounter-task-copy/v1",
+            agent_session,
+        )
+    }
+
+    /// Take a session off the set (manual §19.1, a session's track Delete):
+    /// it is detached from every one of the Project's SessionSpaces that holds
+    /// it, through the owner's own SessionSpace mutation
+    /// (`detach-agent-session`, staged and applied as the attachment was).
+    /// The session itself, its journal, task and settings stay AIKit's.
+    pub fn session_detach(
+        &self,
+        cwd: &Path,
+        project_ref: &str,
+        agent_session: &str,
+    ) -> Result<Value, String> {
+        let spaces = self.read_project(cwd, project_ref)?;
+        let holding: Vec<String> = spaces
+            .as_array()
+            .map(|rows| {
+                rows.iter()
+                    .filter(|space| {
+                        space["agent_sessions"]
+                            .as_object()
+                            .is_some_and(|sessions| sessions.contains_key(agent_session))
+                    })
+                    .filter_map(|space| space["definition"]["id"].as_str().map(str::to_owned))
+                    .collect()
+            })
+            .unwrap_or_default();
+        if holding.is_empty() {
+            return Err(
+                "The session is not attached to this native Project's SessionSpaces".into(),
+            );
+        }
+        let intent = serde_json::json!({"operation": "detach-agent-session", "agent_session": agent_session});
+        for space in &holding {
+            let staged = self.stage_intent(cwd, space, &intent)?;
+            self.apply_preview(cwd, &staged)?;
+        }
+        Ok(
+            serde_json::json!({"schema": "oi.encounter-session-detach/v1", "agent_session": agent_session,
+            "outcome": "detached", "spaces": holding}),
+        )
+    }
+}
+
+impl Client {
     /// Several sessions' settings in one owner call (several
     /// `--agent-session`, `aikit.encounter-session-settings-list/v1`). Every
     /// session must be attached to one of the Project's SessionSpaces.

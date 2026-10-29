@@ -446,6 +446,33 @@
       "reason": "Built 28 Oct (O-I #768) with a kernel test (agent_prepared task_configure_carries_the_request_to_the_owner_for_an_attached_session_only: the request and revision verbatim, the attachment gate, the record check, the owner's refusal in its words) and a shell test of the Factory drop. No executed native walk through the candidate shell is recorded here for encounter_task_configure; retain explicit operation-specific coverage debt until a walk names it."
     },
     {
+      "op": "encounter_task_remove",
+      "native_owner": "kernel/src/agency.rs",
+      "spec_ref": "ProjectCentral/docs/1-vision/dlw/DLW.md \u00a710.9 (the acts on every object: a clip's Delete) and \u00a719.1 (a session is a track, a task is a clip); AIKit encounter_task.rs (encounter-task-remove)",
+      "status": "unverified",
+      "scenarios": [],
+      "owner_lane": "A/native verification",
+      "reason": "Built 29 Oct (O-I #743) with a kernel test (agent_prepared a_task_s_removal_and_copy_and_a_session_s_detach_reach_the_owner_for_an_attached_session_only: the task and revision verbatim, the attachment gate, the receipt check, the owner's refusal in its words), AIKit's own tests of encounter-task-remove, and a shell test of Factory's Delete. No executed native walk through the candidate shell is recorded here for encounter_task_remove; retain explicit operation-specific coverage debt until a walk names it."
+    },
+    {
+      "op": "encounter_task_copy",
+      "native_owner": "kernel/src/agency.rs",
+      "spec_ref": "ProjectCentral/docs/1-vision/dlw/DLW.md \u00a710.9 (a clip's Copy and Paste) and \u00a719.1; AIKit encounter_task.rs (encounter-task-copy, made through encounter-task-configure)",
+      "status": "unverified",
+      "scenarios": [],
+      "owner_lane": "A/native verification",
+      "reason": "Built 29 Oct (O-I #743) with a kernel test (agent_prepared a_task_s_removal_and_copy_and_a_session_s_detach_reach_the_owner_for_an_attached_session_only: both sessions' attachment gate, the receipt check) and AIKit's own tests of encounter-task-copy against a stand-in admission. No executed native walk through the candidate shell, and no copy onto a session with a real Agency, Central and Workcell, is recorded here for encounter_task_copy; retain explicit operation-specific coverage debt until a walk names it."
+    },
+    {
+      "op": "encounter_session_detach",
+      "native_owner": "kernel/src/agency.rs",
+      "spec_ref": "ProjectCentral/docs/1-vision/dlw/DLW.md \u00a710.9 (a track's Delete) and \u00a719.1 (a session is a track); AIKit aikit-core session_space_application.rs (SessionSpaceMutation::DetachAgentSession, staged and applied)",
+      "status": "unverified",
+      "scenarios": [],
+      "owner_lane": "A/native verification",
+      "reason": "Built 29 Oct (O-I #743) with a kernel test (agent_prepared a_task_s_removal_and_copy_and_a_session_s_detach_reach_the_owner_for_an_attached_session_only: the space holding the session found, detach-agent-session staged and applied on it, a session of another Project refused) and AIKit's own stage/apply of detach-agent-session run end to end on a scratch home. No executed native walk through the candidate shell is recorded here for encounter_session_detach; retain explicit operation-specific coverage debt until a walk names it."
+    },
+    {
       "op": "encounter_task_attempts_list",
       "native_owner": "kernel/src/agency.rs",
       "spec_ref": "docs/world-shell/wayfinder/tickets/T-TRACKS-FACTORY-sessions-and-tasks.md State of record (the FT row, moved from PATH \u00a77); AIKit docs/implementation/CAW-TASK-DISPATCH.md (encounter-task-attempts)",

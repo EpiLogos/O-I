@@ -502,21 +502,111 @@ export const factoryTrackAdapter: WorldTrackAdapter<FactorySessionsReading> = {
   },
 }
 
-/** What Factory's acts no owner op carries wait for (O-I #743, round three: AIKit's encounter and Factory), as the status bar says. */
+/** A session's and its task's own acts on AIKit (O-I #743; manual §10.9, §19.1 "a session is a track, a task is a clip"), each one owner
+ * call answering its receipt or refusal in words: a task taken off its session (encounter-task-remove), copied onto a session holding none
+ * (encounter-task-copy), a blank task made on a session holding none (encounter-task-configure naming its purpose only), the session's own
+ * name (encounter-session-settings `track.name`) and the session taken off the set (the SessionSpace's detach-agent-session). */
+export interface FactoryTaskActs {
+  remove(sessionRef: string): Promise<FactoryControlReceipt>
+  copy(fromSession: string, toSession: string): Promise<FactoryControlReceipt>
+  blank(sessionRef: string): Promise<FactoryControlReceipt>
+  rename(sessionRef: string, name: string): Promise<FactoryControlReceipt>
+  detach(sessionRef: string): Promise<FactoryControlReceipt>
+  /** The session's own name as AIKit's settings read it, or null while it has none (or is unread). */
+  nameOf(sessionRef: string): string | null
+  /** The register a session was read in (agent/worldScope.ts): a task is copied within one. */
+  projectOf(sessionRef: string): string
+}
+
+/** The ops these acts name. */
+export const FACTORY_TASK_REMOVE_OP = 'AIKit encounter-task-remove — the session\'s task taken off it on the revision read; AIKit keeps its record in the task\'s history'
+export const FACTORY_TASK_COPY_OP = 'AIKit encounter-task-copy — the task made again on the session it is pasted on (which must hold none), from that session\'s own standing, its settings carried; Cut then takes the task off its own session'
+export const FACTORY_TASK_BLANK_OP = 'AIKit encounter-task-configure — a blank task (its purpose only) on a session that holds none, the rest from the session\'s standing'
+export const FACTORY_SESSION_NAME_OP = 'AIKit encounter-session-settings {track: {name}} — the session\'s own name, against the revision that stands'
+export const FACTORY_SESSION_DETACH_OP = 'AIKit SessionSpace detach-agent-session — the session taken off the set: detached from the Project\'s spaces that hold it; the session, its task and settings stay AIKit\'s'
+
+/** The words for a blank task's purpose: AIKit makes a task of a purpose, and a blank one says only that it is new. */
+export const FACTORY_BLANK_PURPOSE = 'A new task'
+
+/** Factory's set with its sessions' and tasks' own acts (FactoryTaskActs) and each session's own name on its track. A group is a
+ * SessionSpace, not a session: its acts are refused in words. An id the set does not hold is refused before any owner call. Pure, apart
+ * from the acts it hands back. */
+export function withFactoryTaskActs(set: WorldTrackSet, sessions: readonly AgentSessionTrack[], acts: FactoryTaskActs): WorldTrackSet {
+  const sessionOf = new Map(sessions.map(track => [trackKey(track), track]))
+  const tasks = new Map(set.clips.map(clip => [clip.trackId, clip]))
+  const named = (trackId: string) => set.tracks.find(track => track.id === trackId)?.name ?? trackId
+  const label = (track: AgentSessionTrack) => acts.nameOf(track.sessionRef) ?? named(trackKey(track))
+  const session = (trackId: string): AgentSessionTrack | string => {
+    const track = sessionOf.get(trackId)
+    if (!track) return `"${trackId}" is not a session of this work.`
+    if (track.group) return `${named(trackId)} is a group of sessions (a SessionSpace), not a session: its sessions are its own tracks.`
+    return track
+  }
+  const holds = (trackId: string) => tasks.get(trackId)
+  const tracks = set.tracks.map(track => {
+    const own = sessionOf.get(track.id)
+    const name = own && !own.group ? acts.nameOf(own.sessionRef) : null
+    return name ? {...track, name} : track
+  })
+  const actions: WorldTrackActions = {...set.actions,
+    deleteClip: {op: FACTORY_TASK_REMOVE_OP, run: clipId => {
+      const parsed = parseFactoryTaskRef(clipId)
+      const clip = set.clips.find(item => item.id === clipId)
+      if (!parsed || !clip) return refused(`"${clipId}" is not a task of this work.`)
+      const track = session(parsed.trackId)
+      if (typeof track === 'string') return refused(track)
+      if (clip.status === 'running') return refused(`${clip.label} is running on ${label(track)}: stop it first, then Delete takes it off the session.`)
+      return acts.remove(track.sessionRef)
+    }},
+    pasteClip: {op: FACTORY_TASK_COPY_OP, run: async (fromClipId, trackId, _rowId, cut) => {
+      const parsed = parseFactoryTaskRef(fromClipId)
+      const from = parsed ? session(parsed.trackId) : `"${fromClipId}" is not a task of this work.`
+      if (typeof from === 'string') return refused(from)
+      const to = session(trackId)
+      if (typeof to === 'string') return refused(to)
+      const held = holds(trackId)
+      if (held) return refused(`A session holds one task: ${label(to)} holds ${held.label}. Paste the task on a session that holds none.`)
+      if (acts.projectOf(from.sessionRef) !== acts.projectOf(to.sessionRef)) return refused(`${label(from)} and ${label(to)} work in different registers: a task is copied within one.`)
+      const copied = await acts.copy(from.sessionRef, to.sessionRef)
+      if (!copied.ok || !cut) return copied
+      const removed = await acts.remove(from.sessionRef)
+      return removed.ok ? {...copied, note: `${copied.note} The task is off ${label(from)} now (${removed.note})`}
+        : {ok: false, error: `${copied.note} But the task stays on ${label(from)}: ${removed.error}`}
+    }},
+    insertClip: {op: FACTORY_TASK_BLANK_OP, run: trackId => {
+      const track = session(trackId)
+      if (typeof track === 'string') return refused(track)
+      const held = holds(trackId)
+      if (held) return refused(`A session holds one task: ${label(track)} holds ${held.label}. Insert a task on a session that holds none.`)
+      return acts.blank(track.sessionRef)
+    }},
+    renameTrack: {op: FACTORY_SESSION_NAME_OP, run: (trackId, name) => {
+      const track = session(trackId)
+      if (typeof track === 'string') return refused(track)
+      if (!name.trim()) return refused('A session\'s name is text.')
+      return acts.rename(track.sessionRef, name.trim())
+    }},
+    removeTrack: {op: FACTORY_SESSION_DETACH_OP, run: trackId => {
+      const track = session(trackId)
+      if (typeof track === 'string') return refused(track)
+      return acts.detach(track.sessionRef)
+    }},
+  }
+  return {...set, tracks, actions}
+}
+
+/** What Factory's acts no owner op carries wait for (O-I #743), as the status bar says after the missing op. The acts a carrier carries
+ * name what they wait for while none reaches them (no kernel carrier, or a harness the owner has not bound). */
 export const FACTORY_WAITING: Readonly<Record<string, string>> = {
-  'clip.insert': 'AIKit making a blank task in a session: encounter-task-configure makes a session\'s task of a purpose and a source (a constellation dropped on it), and only on a session that holds none',
-  'clip.duplicate': 'AIKit copying a task in its session: no encounter op copies a task, and a session holds one',
-  'clip.delete': 'AIKit taking a task out of its session: no encounter op removes a task',
-  'clip.paste': 'AIKit copying a task to another session: no encounter op copies a task',
+  'clip.duplicate': 'a second task on one session: AIKit keeps one task per session, so a copy goes onto another session — Copy the task, then Paste it on a session that holds none',
   'clip.info': 'a task\'s info text at AIKit: a task keeps its purpose, which its settings name',
   'clip.split': 'Factory splitting a task: no op does',
   'clip.consolidate': 'Factory joining tasks: no op does',
   'clip.crop': 'Factory cropping a task: no op does',
   'slot.stop-button': 'a batch row\'s own stop: Factory\'s stops are a session\'s or the harness\'s',
   'slot.record': 'a recording path into a session: a task is made by AIKit, not recorded',
-  'track.rename': 'AIKit naming a session: a session is named by its purpose and agent when it opens, and no encounter op renames it',
-  'track.remove': 'AIKit taking a session off the set: detaching it from the Project\'s space, which no encounter op does (a session must stay attached to be read)',
   'track.duplicate': 'AIKit opening a session like another: no encounter op copies a session',
+  'track.arm': 'the shell\'s one write arm (shell.setWriteArm, agent/shellSetterBridge.ts), which no shell holds for this pane',
   'track.move': 'an order of sessions: Factory lays them as AIKit lists them',
   'tracks.group': 'a SessionSpace made of sessions: a group stands by what its head spawned',
   'track.colour': 'a session\'s own colour: the grid wears its palette by place',
@@ -524,4 +614,16 @@ export const FACTORY_WAITING: Readonly<Record<string, string>> = {
   'row.rename': 'a batch row\'s name: Factory numbers its batches',
   'row.duplicate': 'a batch copied: no op copies the n-th task of every session',
   'row.delete': 'a batch taken out: no op removes the n-th task of every session',
+  // Carried where a kernel carrier reaches AIKit (frame/tracks/modeTracks.ts withFactoryTaskActs) or the owner binds the harness.
+  'clip.delete': 'a kernel carrier reaching AIKit\'s encounter-task-remove: the shell publishes none to this pane',
+  'clip.paste': 'a kernel carrier reaching AIKit\'s encounter-task-copy: the shell publishes none to this pane',
+  'clip.insert': 'a kernel carrier reaching AIKit\'s encounter-task-configure: the shell publishes none to this pane',
+  'track.rename': 'a kernel carrier reaching AIKit\'s encounter-session-settings: the shell publishes none to this pane',
+  'track.remove': 'a kernel carrier reaching AIKit\'s SessionSpace detach-agent-session: the shell publishes none to this pane',
+  'track.activator': 'a kernel carrier reaching AIKit\'s encounter-session-settings (Telemetry): the shell publishes none to this pane',
+  'track.solo': 'a kernel carrier reaching AIKit\'s encounter-session-settings (Solo): the shell publishes none to this pane',
+  'clip.launch': 'the bound harness: harness_agent_control reaches it once the owner names the harness binding (agent/useHarnessBinding.ts)',
+  'row.launch': 'the bound harness: harness_agent_control reaches it once the owner names the harness binding (agent/useHarnessBinding.ts)',
+  'track.stop': 'the bound harness, or a kernel carrier reaching the session\'s own encounter (cancel)',
+  'set.stop-all': 'the bound harness: harness_agent_control reaches it once the owner names the harness binding (agent/useHarnessBinding.ts)',
 }
