@@ -32,10 +32,11 @@ const NO_ENGINE = missing('Light', 'a light trace over the Canvas board — Ligh
 export const LIGHT_REFUSE: Readonly<Record<string, string>> = Object.fromEntries(['light.on', 'light.source', 'light.card', 'light.elements', 'light.bounces', 'light.segments',
   'light.spectrum', 'light.rays', 'tx.fact', 'tx.claim', 'tx.inference', 'tx.guess'].map(key => [key, NO_ENGINE]))
 
-/** The reading on the chain: QL reads a target its caller supplies, and no owner here supplies one. */
-const NO_TARGET = 'No reading through the lens: QL reads the target its caller supplies (`ql techne reading <target.json>`, routed as ql_read techne-reading), '
-  + 'and nothing in the shell supplies one for the reading on this chain. The cradle composes its wiki readings without QL (desktop/cradle/src/techne/wikiReadingProvider.ts), '
-  + 'and no owner implements QL\'s WikiSubjectSource (QL-MEF crates/ql-adapters/src/techne_wiki.rs).'
+/** The reading on the chain: QL reads a target its caller supplies. The Wiki owner projects a declared constellation as one (`aikit wiki-shape
+ * target`) and the Canvas's Form page sends it (formBinding.ts); the Lens on a reading's chain is not given that target. */
+const NO_TARGET = 'No reading through the lens: QL reads the target its caller supplies (`ql techne reading <target.json>`, routed as ql_read techne-reading). '
+  + 'The Wiki owner stands as QL\'s WikiSubjectSource for a declared constellation (`aikit wiki-shape target`, aikit_read wiki-shape-target) and the Canvas\'s Form page reads it, '
+  + 'but the reading on this chain is not given one: its lens and sublens are not sent with a target here.'
 /** The frame reading: QL reads a sixfold mapping its caller names, and no owner here names one. */
 const NO_MAPPING = 'No frame reading: QL reads the frame of a sixfold mapping its caller names (`ql context-frame read -`, QL-MEF pull 344, routed as ql_read context-frame-read: '
   + 'six external position refs, their source, and the probe), and nothing in the shell names the material\'s six positions.'

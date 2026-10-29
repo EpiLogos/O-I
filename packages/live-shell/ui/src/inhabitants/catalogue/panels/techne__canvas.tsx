@@ -361,6 +361,8 @@ const LAYOUTS = [
 ] as const
 const CHECK: Record<string, {label: string; tone?: 'green' | 'stall'}> = {passed: {label: 'Passed', tone: 'green'}, refused: {label: 'Refused', tone: 'stall'}}
 const DECLARED: Record<string, {label: string; tone?: 'green' | 'stall'}> = {saved: {label: 'In your wiki', tone: 'green'}, held: {label: 'Held'}, refused: {label: 'Refused', tone: 'stall'}}
+const FOLDED: Record<string, {label: string; tone?: 'green' | 'stall'}> = {folded: {label: 'Into one', tone: 'green'}, refused: {label: 'Refused', tone: 'stall'}}
+const READ: Record<string, {label: string; tone?: 'green' | 'stall'}> = {read: {label: 'Read', tone: 'green'}, refused: {label: 'Refused', tone: 'stall'}}
 
 const formOf = (v: V) => FORMS.find(f => f.value === strOf(v, 'form'))
 /** The card on each role, as the owner reports it (absent: no reading). */
@@ -793,7 +795,7 @@ const defaults = {
   // The engine's readings at the two sensors, by the law above (trace() gives the same numbers).
   'sensor.power': JSON.stringify([{at: 'Brow', power: .103}, {at: 'Crown', power: .102}]),
   // Readings: what the device reports, never set from here.
-  save: 'saved', waiting: 4, check: '', checkWhy: '', declared: '',
+  save: 'saved', waiting: 4, check: '', checkWhy: '', declared: '', declaredWhy: '', folded: '', foldWhy: '', reading: '', readingWhy: '',
 }
 
 // A board given a form: the six M domains round Quaternal Logic, set out as a person left them; Layout Form stands each on its role.
@@ -859,7 +861,9 @@ export const design: DesignedDevice = {
           <Section label="Owner" cols={2} grow>
             {check(p)}<Readout label="check" does={strOf(p.v, 'checkWhy') || 'What the form’s rules said, the last time you checked.'} value={CHECK[strOf(p.v, 'check') ?? '']?.label ?? (has(p.v, 'check') ? 'Not run' : undefined)} tone={CHECK[strOf(p.v, 'check') ?? '']?.tone} />
             {fold(p)}<Readout label="fields" does="Pairs whose two roles and their conjugates are all filled. Each is a four-by-four field of the whole." value={formOf(p.v)?.value === 'twelvefold' ? `${fieldsOf(p.v).length} of 9` : 'none'} />
-            {declare(p)}<Readout label="wiki" does="Whether the constellation stands in your wiki." value={DECLARED[strOf(p.v, 'declared') ?? '']?.label ?? (has(p.v, 'declared') ? 'Not yet' : undefined)} tone={DECLARED[strOf(p.v, 'declared') ?? '']?.tone} />
+            {declare(p)}<Readout label="wiki" does={strOf(p.v, 'declaredWhy') || 'Whether the constellation stands in your wiki.'} value={DECLARED[strOf(p.v, 'declared') ?? '']?.label ?? (has(p.v, 'declared') ? 'Not yet' : undefined)} tone={DECLARED[strOf(p.v, 'declared') ?? '']?.tone} />
+            <Readout label="folded" does={strOf(p.v, 'foldWhy') || 'Whether the twelve fold into one, the last time you pressed Fold.'} value={FOLDED[strOf(p.v, 'folded') ?? '']?.label ?? (has(p.v, 'folded') ? 'Not folded' : undefined)} tone={FOLDED[strOf(p.v, 'folded') ?? '']?.tone} />
+            <Readout label="QL reads" does={strOf(p.v, 'readingWhy') || 'What QL reads of the constellation your wiki declares: its shape, its members and the instruments it stands on.'} value={READ[strOf(p.v, 'reading') ?? '']?.label ?? (has(p.v, 'reading') ? 'Not yet' : undefined)} tone={READ[strOf(p.v, 'reading') ?? '']?.tone} />
           </Section>
         </Band>
       </> : page === 'lines' ? <>
