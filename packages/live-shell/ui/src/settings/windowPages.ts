@@ -21,7 +21,7 @@ import {authorityAllowsTrigger, eligibleProofs, routineBasis, scheduleFromInput,
 import {appearanceValues, automationValues, credentialValues, folderOf, harnessValues, machineValues, NO_AUTHORING, NO_HARNESS, NO_INVOKE, NO_MACHINES, NO_NAVIGATE, NO_PRODUCTS,
   NO_PROFILES, NO_SETUP_AIKIT, NO_SETUP_SOURCE, NO_VISUALS, groundBound, productValues, profileValues, SECRET_REFERENCE, setupFolder, setupHarnessClients, setupHarnessProviders,
   setupKeyFindings, setupNamespace, setupSkillRoots, setupValues, systemValues, type CredentialRow, type SetupCredentials, type SetupHarnesses, type SetupMachine, type SetupPreview,
-  setupExtensionLine, type SetupExtension, type SetupSnapshot, type SetupWorkFolder, type SetupFounding, type SetupKey, type SetupForm, type CivilTimePreview, type SetupBirth, type SetupCivilTime, type SetupDisclosure, groundNameRefusal, groundParts, groundPath} from './windowValues'
+  setupExtensionLine, setupPlacementLine, possessive, type SetupExtension, type SetupLeft, type SetupPlacement, type SetupSnapshot, type SetupWorkFolder, type SetupFounding, type SetupKey, type SetupForm, type CivilTimePreview, type SetupBirth, type SetupCivilTime, type SetupDisclosure, groundNameRefusal, groundParts, groundPath} from './windowValues'
 import type {IdentityProfile} from '../../../../../desktop/cradle/src/nara/identity/types'
 import {chooseFolder, nativeFolderChooser, NO_NATIVE_FOLDER_CHOOSER} from './folderChooser'
 import {AdoptionController} from '../../../../../desktop/cradle/src/configuration/adoptionController'
@@ -877,7 +877,11 @@ export class SetupWalk {
         ])
         const names = entryNames(listed)
         const parts = names.includes('ProjectCentral') ? entryNames(await this.source.central('central.files.list', {path: `Work/${name}/ProjectCentral`}).catch(() => null)) : []
-        return {name, path, place: 'work', inspection, material: names.filter(entry => entry !== 'ProjectCentral' && !entry.startsWith('.')), parts}
+        const row: SetupWorkFolder = {name, path, place: 'work', inspection, material: names.filter(entry => entry !== 'ProjectCentral' && !entry.startsWith('.')), parts}
+        // A made project in a world Setup founded may have something left to finish: the person's grant, Factory's placement.
+        if (setupFolder(row).finds !== 'ground') return row
+        const left = (await this.readLeft(name, projectIdOf(inspection) ?? name)).left
+        return left.length ? {...row, left} : row
       }))
       // The folders of work elsewhere under the world's folder; a refusal to read them leaves Work's own standing, and is said.
       let elsewhere: string | undefined
@@ -1131,7 +1135,7 @@ export class SetupWalk {
 
   /** The Projects step's choice on the held keys, checked as the design closes its choices; the folder's own row with it. A folder
    * elsewhere has one choice: Into Work (`bring`), Central's copy; what to make of it is chosen once it stands in Work. */
-  private chosen(held: Held): {row: SetupWorkFolder; make: keyof typeof SETUP_MAKES | 'bring'; where: string; wiki?: string} {
+  private chosen(held: Held): {row: SetupWorkFolder; make: keyof typeof SETUP_MAKES | 'bring' | 'finish'; where: string; wiki?: string} {
     if (this.folders.state === 'refused') throw new Error(this.folders.error)
     if (this.folders.state !== 'read') throw new Error('Make your ground first: Central reads its Work once there is a ground.')
     const rows = this.folders.folders, brought = rows.find(folder => folder.path === this.brought)?.path
@@ -1145,6 +1149,8 @@ export class SetupWalk {
     }
     const folder = setupFolder(row), finds = folder.finds, wikis = folder.wikis as string[]
     if (finds === 'unreadable') throw new Error(`${row.name}: its ProjectCentral cannot be read. Mend its manifest by hand.`)
+    // A made project with something left to finish (the person's grant, Factory's placement): Accept finishes it.
+    if (finds === 'ground' && row.left?.length) return {row, make: 'finish', where: 'stands'}
     if (finds === 'ground') throw new Error(`${row.name}: its ground is in place. Nothing to make.`)
     const where = text(held('where')) || 'stands'
     if (where === 'work') throw new Error(`${row.name} stands in Work already.`)
@@ -1167,7 +1173,19 @@ export class SetupWalk {
       // The copy's name in Work, and the project it is made: the person's grant reaches it once it stands there as a project.
       const name = word(plan.name) || row.name
       const extension = await this.readExtension(name, name)
-      this.plan = {folder: row.path, make, where, lines: [...plan.operations.map(String), setupExtensionLine(name, extension, true)], digest: plan.digest, extension}
+      const placement = this.placementToMake(name, extension)
+      this.plan = {folder: row.path, make, where, lines: [...plan.operations.map(String), setupExtensionLine(name, extension, true), ...(placement ? [setupPlacementLine(name, placement, true)] : [])],
+        digest: plan.digest, extension, ...(placement ? {placement} : {})}
+      this.publish()
+      return
+    }
+    if (make === 'finish') {
+      // What its making left, read again now: only what is still left is listed, and Accept finishes only that.
+      const id = projectIdOf(row.inspection) ?? row.name
+      const {extension, placement, left} = await this.readLeft(row.name, id)
+      if (!left.length) throw new Error(`${row.name}: its ground is in place and nothing is left to finish. Nothing to make.`)
+      this.plan = {folder: row.path, make, where, lines: [...(left.includes('extension') ? [setupExtensionLine(row.name, extension)] : []),
+        ...(placement && left.includes('placement') ? [setupPlacementLine(row.name, placement)] : [])], extension, ...(placement ? {placement} : {})}
       this.publish()
       return
     }
@@ -1180,10 +1198,54 @@ export class SetupWalk {
       if (!operations) throw new Error(`Central answered its ${SETUP_MAKES[make]} preview in a form Setup does not read (projectcentral-mutation-plan expected).`)
       lines = operations
     }
-    // The project is made with the folder's name as its id (pageGround acceptInput): the person's grant reaches it on the same Accept.
+    // The project is made with the folder's name as its id (pageGround acceptInput): the person's grant reaches it on the same Accept,
+    // and in a world Setup founded, Factory keeps its runs and pads.
     const extension = await this.readExtension(row.name, row.name)
-    this.plan = {folder: row.path, make, where, ...(wiki ? {wiki} : {}), lines: [...lines, setupExtensionLine(row.name, extension)], extension}
+    const placement = this.placementToMake(row.name, extension)
+    this.plan = {folder: row.path, make, where, ...(wiki ? {wiki} : {}), lines: [...lines, setupExtensionLine(row.name, extension), ...(placement ? [setupPlacementLine(row.name, placement)] : [])],
+      extension, ...(placement ? {placement} : {})}
     this.publish()
+  }
+  /** Whether the project's Accept makes its Factory placement: only in a world Setup founded (Central extends, or has extended, the
+   * person's grant to it), and only where Setup reaches Factory. A project not yet made is placed once it is (Factory's setup answers
+   * `already-present` for a placement that stands). */
+  private placementToMake(project: string, extension: SetupExtension): SetupPlacement | undefined {
+    if (extension.state !== 'absent' && extension.state !== 'present') return undefined
+    return this.source.factory ? {state: 'absent', project} : {state: 'unreached', project, error: NO_SETUP_FACTORY}
+  }
+  /** Whether Factory keeps a made project's runs and pads (the kernel's `factory_owner` locate). A refusal stands in Factory's words. */
+  private async locateFactory(project: string): Promise<SetupPlacement> {
+    const factory = this.source.factory
+    if (!factory) return {state: 'unreached', project, error: NO_SETUP_FACTORY}
+    try {
+      const data = await factory({kind: 'locate', project}) as {contract?: unknown; locations?: unknown} | null
+      if (data?.contract !== 'oi.factory-source-discovery/v1' || !Array.isArray(data.locations)) throw new Error('Factory answered its locate in a form Setup does not read (oi.factory-source-discovery/v1 expected).')
+      const row = data.locations[0] as {state?: unknown; error?: unknown} | undefined
+      if (row?.state === 'located') return {state: 'located', project}
+      if (row?.state === 'absent') return {state: 'absent', project}
+      return {state: 'refused', project, error: typeof row?.error === 'string' ? row.error : 'Factory located no such project.'}
+    } catch (cause) { return {state: 'refused', project, error: words(cause)} }
+  }
+  /** What a made project's Accept has still to finish, in a world Setup founded: the person's grant reaching it (Central's preview says
+   * `absent`), and Factory's placement (Factory locates none). A ground the person keeps by hand has nothing left here. */
+  private async readLeft(project: string, projectId: string): Promise<{extension: SetupExtension; placement?: SetupPlacement; left: SetupLeft[]}> {
+    const extension = await this.readExtension(project, projectId)
+    const founded = extension.state === 'absent' || extension.state === 'present'
+    const placement = founded && this.source.factory ? await this.locateFactory(project) : undefined
+    const left: SetupLeft[] = [...(extension.state === 'absent' ? ['extension' as const] : []), ...(placement?.state === 'absent' ? ['placement' as const] : [])]
+    return {extension, ...(placement ? {placement} : {}), left}
+  }
+  /** Makes the project's Factory placement as previewed (`factory_owner` project-setup: Factory's own `project setup-central`), read back
+   * by Factory's locate. What Accept says of it; null where the preview offered none. */
+  private async place(project: string, placement: SetupPlacement | undefined): Promise<string | null> {
+    if (placement?.state !== 'absent' || !this.source.factory) return null
+    try {
+      const data = await this.source.factory({kind: 'project-setup', project}) as {contract?: unknown} | null
+      if (data?.contract !== 'factory.project-location/v1') throw new Error('Factory answered its project setup in a form Setup does not read (factory.project-location/v1 expected).')
+      const after = await this.locateFactory(project)
+      if (after.state !== 'located') throw new Error(`Factory answered project setup-central, but it does not locate ${project} kept.`)
+      return `Factory keeps ${possessive(project)} runs and pads.`
+    } catch (cause) { return `Factory does not keep ${possessive(project)} runs and pads yet: ${words(cause)}` }
   }
   /** Central's preview of extending the person's grant and the ground's bounds to a project (`central.ground.project.preview`): what Accept
    * keeps, on its digest. A refusal stands in Central's words and extends nothing. */
@@ -1212,15 +1274,27 @@ export class SetupWalk {
     const plan = this.plan
     if (!plan || plan.folder !== row.path || plan.make !== make || plan.where !== where || plan.wiki !== wiki) throw new Error('Preview first: Accept makes what the preview listed.')
     if (make === 'bring') return this.acceptBring(row, plan)
+    if (make === 'finish') {
+      // A made project: only what its making left, as previewed, then read back.
+      const acceptance = `dlw-setup-projects-accept:${Date.now()}`
+      const said = [await this.extend(row.name, plan.extension, acceptance), await this.place(row.name, plan.placement)].filter((line): line is string => !!line)
+      this.plan = null
+      await this.readWork()
+      if (!said.length) throw new Error(`${row.name}: nothing was left to finish. Nothing was made.`)
+      return said.join(' ')
+    }
     const treatment = SETUP_MAKES[make]
     await this.source.central(PC_ACCEPT_ACTION[treatment], acceptInput(row.name, treatment, wiki ?? null))
     this.plan = null
     await this.readWork()
     const after = this.folders.state === 'read' ? this.folders.folders.find(folder => folder.name === row.name) : undefined
     if (!after || setupFolder(after).finds !== 'ground') throw new Error(`Central answered ${PC_ACCEPT_ACTION[treatment]}, but ${row.name} does not read back with its ground in place. Read again.`)
-    // The same Accept extends the person's grant and the ground's bounds to the project it made, as previewed.
+    // The same Accept extends the person's grant and the ground's bounds to the project it made, and Factory keeps its runs and pads,
+    // as previewed; what is left (a refusal) stays on the folder for Accept to finish.
     const extended = await this.extend(row.name, plan.extension, `dlw-setup-projects-accept:${Date.now()}`)
-    return [`Central made ${row.name}'s ProjectCentral beside its material${wiki ? `, its wiki ${make === 'keep' ? 'kept in place' : 'copied in'}` : ''}. It reads back in place.`, extended].filter(Boolean).join(' ')
+    const placed = await this.place(row.name, plan.placement)
+    if (extended || placed) await this.readWork()
+    return [`Central made ${row.name}'s ProjectCentral beside its material${wiki ? `, its wiki ${make === 'keep' ? 'kept in place' : 'copied in'}` : ''}. It reads back in place.`, extended, placed].filter(Boolean).join(' ')
   }
   /** A folder elsewhere comes into Work as previewed: Central's work.bring on the preview's digest (a folder changed since is refused in
    * Central's words, and nothing is copied), read back from Work. The copy is the folder shown next. */
@@ -1238,7 +1312,9 @@ export class SetupWalk {
     // A folder that keeps its own ProjectCentral stands as a project once it is in Work: the same Accept makes it yours to act in.
     if (setupFolder(copy).finds === 'ground') {
       const extended = await this.extend(name, plan.extension?.project === name ? plan.extension : undefined, `dlw-setup-projects-accept:${Date.now()}`)
-      return [said, extended].filter(Boolean).join(' ')
+      const placed = await this.place(name, plan.placement?.project === name ? plan.placement : undefined)
+      if (extended || placed) await this.readWork()
+      return [said, extended, placed].filter(Boolean).join(' ')
     }
     return `${said} Choose what to make of it there${plan.extension?.state === 'absent' ? `: once it is a project, you act as you in ${name}` : ''}.`
   }
@@ -1252,6 +1328,13 @@ const CIVIL_PREVIEW = 'central.time.policy.preview', CIVIL_ADOPT = 'central.time
 const PLACEMENT_PREVIEW = 'central.ground.placement.preview', PLACEMENT_ADOPT = 'central.ground.placement.adopt'
 /** Central's extension of the person's grant and the ground's bounds to a project (ctrl ground_projects.rs, O-I #740, lane D). */
 const PROJECT_PREVIEW = 'central.ground.project.preview', PROJECT_ADOPT = 'central.ground.project.adopt'
+/** Why Setup makes no Factory placement where the host hands it no Factory route. */
+const NO_SETUP_FACTORY = 'Setup reaches no Factory here (SetupSource.factory, the kernel\'s factory_owner).'
+/** A made project's id, as its inspection's manifest names it. */
+const projectIdOf = (inspection: unknown): string | undefined => {
+  const id = (inspection as {manifest?: {project_id?: unknown}} | null | undefined)?.manifest?.project_id
+  return typeof id === 'string' && id.trim() ? id : undefined
+}
 /** Why Setup keeps no Day form where the host hands it no form route. */
 const NO_SETUP_FORM = 'Setup reaches no form route here (SetupSource.groundForm, the kernel\'s ground_form).'
 /** Why Setup keeps no key where the host hands it no key route. */

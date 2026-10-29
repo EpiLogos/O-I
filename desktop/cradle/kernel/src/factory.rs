@@ -510,6 +510,15 @@ pub enum OwnerRequest {
     /// A run's end recorded (`factory development pads-record <state> -` →
     /// `factory.prompt-pads-record/v1`): done, stalled, stopped or refused.
     PadsRecord { state_path: PathBuf, request: Value },
+    /// A project's Factory placement, made where none stands, so Factory keeps
+    /// its runs and pads (`factory project setup-central <root> <project-id>
+    /// <root>/ProjectCentral/project.json` → `factory.project-location/v1`):
+    /// Factory's own operation, which links the placement to the Central
+    /// project the manifest names and answers `already-present` for one that
+    /// stands. The root comes from Central's world reading and the id from the
+    /// project's own manifest, never from the caller; a Work member that is no
+    /// project yet is refused before Factory is asked.
+    ProjectSetup { project: String },
     /// `factory development custody update <state> --custody C --state S
     /// --reason R [...]` → `factory.work-custody-receipt/v1`.
     CustodyUpdate {
@@ -558,6 +567,7 @@ impl OwnerRequest {
                 | OwnerRequest::AttemptArtifacts { .. }
                 | OwnerRequest::AttemptDecisionSubmit { .. }
                 | OwnerRequest::AttemptDecisionRead { .. }
+                | OwnerRequest::ProjectSetup { .. }
         )
     }
     /// A reading of the owner's state, which may run outside the kernel lock
@@ -1312,6 +1322,41 @@ fn locate_row(project: Option<String>, root: &Path) -> Value {
     row
 }
 
+/// The owner's own words for placing a project (`OwnerRequest::ProjectSetup`):
+/// its root from Central's world reading, its id from its ProjectCentral
+/// manifest. A member that keeps no manifest is no project yet, and Factory is
+/// not asked.
+pub(crate) fn project_setup_args(
+    world: &Value,
+    project: &str,
+) -> Result<Vec<std::ffi::OsString>, Error> {
+    let (_, root) = locate_roots(world, Some(project), false)?
+        .into_iter()
+        .next()
+        .ok_or_else(|| incompatible("Project is outside Central's disclosed ground"))?;
+    let manifest = root.join("ProjectCentral/project.json");
+    let id = std::fs::read(&manifest)
+        .ok()
+        .and_then(|bytes| serde_json::from_slice::<Value>(&bytes).ok())
+        .and_then(|source| source["project_id"].as_str().map(str::to_owned))
+        .filter(|id| !id.trim().is_empty())
+        .ok_or_else(|| Error {
+            kind: "owner-refused-or-failed".into(),
+            message: format!(
+                "{project} keeps no ProjectCentral manifest, so it is no project Factory can keep yet. Nothing was asked of Factory."
+            ),
+            operation_may_have_run: false,
+        })?;
+    Ok(vec![
+        "project".into(),
+        "setup-central".into(),
+        path_arg(&root),
+        id.into(),
+        path_arg(&manifest),
+        "--json".into(),
+    ])
+}
+
 /// Serve one owner request. `world` is Central's world reading when the
 /// request needs roots (see [`OwnerRequest::needs_world`]).
 pub fn owner(request: OwnerRequest, world: Option<&Value>) -> Result<Value, Error> {
@@ -1807,6 +1852,15 @@ pub fn owner(request: OwnerRequest, world: Option<&Value>) -> Result<Value, Erro
             state_path,
             request,
         } => pads_write_call("pads-record", &state_path, &request, PADS_RUN_RECORD),
+        OwnerRequest::ProjectSetup { project } => {
+            let world = world.ok_or_else(|| {
+                incompatible("Central's world reading is required to place a Factory project")
+            })?;
+            expect_contract(
+                owner_call(&project_setup_args(world, &project)?, None)?,
+                &["factory.project-location/v1"],
+            )
+        }
         OwnerRequest::CustodyAssign {
             state_path,
             position_ref,
@@ -2868,6 +2922,52 @@ mod owner_tests {
         assert_eq!(stamp.len(), 20, "{stamp}");
         assert!(stamp.ends_with('Z') && stamp.as_bytes()[10] == b'T');
         assert!(stamp.starts_with("20"));
+    }
+
+    #[test]
+    fn a_project_is_placed_by_factory_s_own_setup_at_central_s_root_with_its_manifest_s_id() {
+        let ground = std::env::temp_dir().join(format!(
+            "factory-project-setup-{}-{:?}",
+            std::process::id(),
+            std::thread::current().id()
+        ));
+        let manifest = ground.join("Work/field-notes/ProjectCentral/project.json");
+        std::fs::create_dir_all(manifest.parent().unwrap()).unwrap();
+        std::fs::write(
+            &manifest,
+            r#"{"schema":"central.project/v1","project_id":"field-notes-id"}"#,
+        )
+        .unwrap();
+        std::fs::create_dir_all(ground.join("Work/loose")).unwrap();
+        let world = serde_json::json!({"root": ground, "work": {"projects": [
+            {"name": "field-notes", "path": "Work/field-notes"}, {"name": "loose", "path": "Work/loose"}]}});
+        let args: Vec<String> = project_setup_args(&world, "field-notes")
+            .unwrap()
+            .iter()
+            .map(|a| a.to_string_lossy().into_owned())
+            .collect();
+        assert_eq!(
+            args,
+            [
+                "project".to_owned(),
+                "setup-central".into(),
+                ground.join("Work/field-notes").display().to_string(),
+                "field-notes-id".into(),
+                manifest.display().to_string(),
+                "--json".into()
+            ]
+        );
+        let unmade = project_setup_args(&world, "loose").unwrap_err();
+        assert!(unmade.message.contains("no project Factory can keep yet"));
+        assert!(!unmade.operation_may_have_run);
+        assert!(project_setup_args(&world, "elsewhere").is_err());
+        let wire: OwnerRequest = serde_json::from_value(
+            serde_json::json!({"kind": "project-setup", "project": "field-notes"}),
+        )
+        .unwrap();
+        assert!(wire.needs_world(), "the root comes from Central's world");
+        assert!(!wire.is_read(), "a placement is a write");
+        let _ = std::fs::remove_dir_all(&ground);
     }
 
     #[test]

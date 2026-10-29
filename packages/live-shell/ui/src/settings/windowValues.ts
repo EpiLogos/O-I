@@ -420,12 +420,35 @@ export function systemValues(reading: SystemCompositionReading | null): Record<s
  * `elsewhere`): work.candidates's member, with the signals Central found it by (git, agents, claude, wiki, obsidian); Central inspects
  * no ProjectCentral outside its Work, so it has none. */
 export interface SetupWorkFolder {readonly name: string; readonly path: string; readonly place?: 'work' | 'elsewhere'; readonly relative?: string; readonly signals?: readonly string[]
-  readonly inspection: unknown; readonly material: readonly string[]; readonly parts: readonly string[]}
+  readonly inspection: unknown; readonly material: readonly string[]; readonly parts: readonly string[]
+  /** For a project made in a world Setup founded: what its Accept has still to finish — the person's grant and its bounds reaching it
+   * (`extension`), Factory's placement (`placement`). Absent or empty: nothing is left. */
+  readonly left?: readonly SetupLeft[]}
+/** What a project's Accept finishes once it is made (SetupWorkFolder.left). */
+export type SetupLeft = 'extension' | 'placement'
 /** A preview Setup asked for: the folder and the choices it was asked on, the steps Central would take, in order, and for a folder brought
  * into Work, the digest Central's work.bring is pressed on. */
 export interface SetupPreview {readonly folder: string; readonly make: string; readonly where: string; readonly wiki?: string; readonly lines: readonly string[]; readonly digest?: string
   /** Central's preview of extending the person's grant and the ground's bounds to the project (`central.ground.project.preview`). */
-  readonly extension?: SetupExtension}
+  readonly extension?: SetupExtension
+  /** Whether Factory keeps the project's runs and pads (`factory_owner` locate), in a world Setup founded. */
+  readonly placement?: SetupPlacement}
+/** Factory's placement of a project as the Projects step reads it (the kernel's `factory_owner` locate): `absent` (Accept makes it through
+ * Factory's own `project setup-central`), `located` (Factory keeps it already), `refused` (Factory said why), `unreached` (Setup reaches no
+ * Factory here). */
+export interface SetupPlacement {readonly state: 'absent' | 'located' | 'refused' | 'unreached'; readonly project: string; readonly error?: string}
+/** What the Projects step says, before Accept, of Factory keeping the project's runs and pads, in plain words. Pure. */
+export function setupPlacementLine(name: string, placement: SetupPlacement, bring = false): string {
+  const its = possessive(name)
+  switch (placement.state) {
+    case 'absent': return bring ? `Once it stands in Work as a project, Factory keeps ${its} runs and pads.` : `Factory keeps ${its} runs and pads.`
+    case 'located': return `Factory keeps ${its} runs and pads already.`
+    case 'refused': return `Factory does not say whether it keeps ${its} runs and pads: ${placement.error ?? 'no reason given'}`
+    case 'unreached': return `Setup reaches no Factory here, so ${its} runs and pads are not kept: ${placement.error ?? 'no Factory route'}`
+  }
+}
+/** A name's possessive in plain English: field-notes', atlas', tide's. Pure. */
+export const possessive = (name: string): string => (/s$/i.test(name) ? `${name}'` : `${name}'s`)
 /** Central's `central.ground.project.preview` as the Projects step reads it (ctrl ground_projects.rs, O-I #740): `absent` (Accept extends
  * the person's grant to the project and makes its Work member writable, on `digest`), `present` (it is theirs already), `hand-authored`
  * or `unfounded` (Central extends nothing: `reason`), or `refused` (Central did not answer: `error`). */
@@ -637,7 +660,8 @@ export function setupFolder(row: SetupWorkFolder): Record<string, unknown> {
   const finds = !txt(inspection.outcome) || errors.length || (manifest && inspection.outcome !== 'already_conformant') ? 'unreadable'
     : inspection.outcome === 'already_conformant' ? 'ground' : !candidates.length ? 'none' : candidates.length === 1 ? 'one' : 'many'
   const central = PC_PARTS.filter(part => (part === 'wiki' ? !!manifest && rec(manifest.wiki) : row.parts.includes(part)))
-  return {path: row.path, title: row.name, place: 'work', finds, wikis: finds === 'ground' || finds === 'unreadable' ? [] : candidates, material: [...row.material], central}
+  return {path: row.path, title: row.name, place: 'work', finds, wikis: finds === 'ground' || finds === 'unreadable' ? [] : candidates, material: [...row.material], central,
+    ...(finds === 'ground' && row.left?.length ? {left: [...row.left]} : {})}
 }
 
 /** The choices the Projects step stands on, as the design reads them: the folder shown (the one you chose, else the one brought into
@@ -834,7 +858,8 @@ export function setupValues(snapshot: SetupSnapshot, held: (key: string) => Valu
     const folders = snapshot.folders.folders.map(setupFolder)
     values.folders = json(folders)
     const elsewhere = snapshot.folders.elsewhere
-    steps.push({step: 'projects', state: folders.some(folder => folder.finds === 'ground') ? 'accepted' : 'found', items: elsewhere ? [{name: 'Folders of work elsewhere', why: elsewhere}] : []})
+    // Accepted once a project stands with its ground and nothing is left to finish on it.
+    steps.push({step: 'projects', state: folders.some(folder => folder.finds === 'ground' && !folder.left) ? 'accepted' : 'found', items: elsewhere ? [{name: 'Folders of work elsewhere', why: elsewhere}] : []})
     const plan = snapshot.plan, choice = setupChoice(folders, held, snapshot.brought)
     // Defaults the design reads where you chose nothing: the folder brought in last, and a folder elsewhere comes Into Work.
     if (!txt(held('folder')) && choice.folder && choice.folder === txt(snapshot.brought)) values.folder = choice.folder

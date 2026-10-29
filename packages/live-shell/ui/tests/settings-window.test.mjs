@@ -415,7 +415,9 @@ function scriptedSetup() {
     form: false, formByProject: false,
     // `extended`: the projects the person's grant and the ground's bounds reach (central.ground.project.adopt); `byHand`: a ground
     // whose key and bounds the person keeps by hand (their recognition is not Setup's), which Central never extends.
-    extended: new Set(), byHand: false}
+    extended: new Set(), byHand: false, adoptRefusal: null,
+    // `placed`: the projects Factory keeps (their .factory placement); `factoryRefusal`: a Factory that refuses project setup.
+    placed: new Set(), factoryRefusal: null}
   const HOME = '/w/Bare'
   const digestOf = relative => `digest:${relative}:${world.elsewhere.get(relative).revision}`
   // A ground the person chose (discover's `ground`) is read where it is: new until it is the bound one.
@@ -489,6 +491,7 @@ function scriptedSetup() {
       if (world.byHand) throw new Error('this ground\'s native-action-authority source is recognised by owner-commissioned, not by Setup\'s acceptance: it is changed only by its owner, and Central extends nothing in it. Nothing was written.')
       if (!world.work.get(input.project)?.made) throw new Error(`Work/${input.project} is no project yet: Central extends nothing to it until it is made. Nothing was written.`)
       if (input.expected_digest !== `extend:${input.project_id}`) throw new Error('what Central would extend changed since its preview (or no preview was named): preview it again. Nothing was written.')
+      if (world.adoptRefusal) { const refusal = world.adoptRefusal; world.adoptRefusal = null; throw new Error(refusal) }
       world.extended.add(input.project_id); world.extendAcceptance = input.acceptance_ref
       return {adopted: true, project: input.project, scope_ref: `project:${input.project_id}`, member: `Work/${input.project}`, writable: [`Work/${input.project}`]}
     }
@@ -625,7 +628,27 @@ function scriptedSetup() {
     return {schema: 'oi.ground-form/v1', name: 'ql-daily-die.html', kept: true, state: 'present', source_path: 'Control/forms/ql-daily-die.html'}
   }
   const harnessDisclosure = async () => { calls.push(['disclosure']); if (!world.disclosure) throw new Error('aikit harness disclose did not answer'); return world.disclosure }
-  return {source: {adoption, central, workcell, aikit, identity, harnessDisclosure, groundAuthority, groundForm, groundChanged: () => calls.push(['groundChanged'])}, calls, world, GROUND, HOME}
+  // The kernel's factory_owner for a project (desktop/cradle/kernel/src/factory.rs; shapes as the walk-bridge answered on a scratch world,
+  // 29 Oct): locate (oi.factory-source-discovery/v1) and project-setup (Factory's factory.project-location/v1). A Work member that is no
+  // project is outside Central's disclosed ground.
+  const factory = async request => {
+    calls.push(['factory', request.kind, structuredClone(request)])
+    const row = world.work.get(request.project)
+    if (!row?.made) throw new Error('Project is outside Central\'s disclosed ground')
+    const root = `${GROUND}/Work/${request.project}`
+    if (request.kind === 'locate') return {contract: 'oi.factory-source-discovery/v1', locations: [world.placed.has(request.project)
+      ? {project: request.project, root, state: 'located', location: {contract: 'factory.project-location/v1', statePath: `${root}/.factory/development-state.json`, projectRef: 'project:0000000000FIELDNOTES'}}
+      : {project: request.project, root, state: 'absent', error: `no .factory under ${root}`}]}
+    if (request.kind === 'project-setup') {
+      if (world.factoryRefusal) { const refusal = world.factoryRefusal; world.factoryRefusal = null; throw new Error(refusal) }
+      const status = world.placed.has(request.project) ? 'already-present' : 'created'
+      world.placed.add(request.project)
+      return {contract: 'factory.project-location/v1', status, projectRoot: root, projectKey: `central-project:${request.project}`, centralProjectRef: request.project,
+        statePath: `${root}/.factory/development-state.json`, runCount: 0, execution: 'not-requested'}
+    }
+    throw new Error(`unexpected factory ${request.kind}`)
+  }
+  return {source: {adoption, central, workcell, aikit, identity, harnessDisclosure, groundAuthority, groundForm, factory, groundChanged: () => calls.push(['groundChanged'])}, calls, world, GROUND, HOME}
 }
 /** AIKit's answers on a scratch Arriving world (REAL; the kernel's owner-route fixture, the world's folder written /w/Arriving). */
 const REAL = JSON.parse(readFileSync(new URL('../../../../desktop/cradle/kernel/tests/fixtures/owner-routes/aikit-setup-harnesses-credentials-2026-10-28.json', import.meta.url), 'utf8'))
@@ -833,12 +856,15 @@ test('SCRIPTED — a project the person makes or brings in is theirs to act in: 
   const folder = `${GROUND}/Work/field-notes`, choice = {folder, make: 'create'}
   await walk.preview(held(choice))
   const lines = JSON.parse(win.setupValues(walk.snapshot(), held(choice)).setupPlan)
-  assert.equal(lines.at(-1), 'You act as you in field-notes, and its agents may write inside it.', 'said in plain words before Accept')
+  assert.deepEqual(lines.slice(-2), ['You act as you in field-notes, and its agents may write inside it.', 'Factory keeps field-notes\' runs and pads.'], 'said in plain words before Accept')
   assert.deepEqual(calls.findLast(([, action]) => action === 'central.ground.project.preview')[2], {project: 'field-notes', project_id: 'field-notes'})
-  assert.ok(!calls.some(([, action]) => action === 'central.ground.project.adopt'), 'Preview changes nothing')
+  assert.ok(!calls.some(([, action]) => action === 'central.ground.project.adopt' || action === 'project-setup'), 'Preview changes nothing')
   const said = await walk.accept('projects', held(choice))
   assert.match(said, /Central made field-notes's ProjectCentral/)
   assert.match(said, /You act as you in field-notes, and its agents may write inside it\./)
+  assert.match(said, /Factory keeps field-notes' runs and pads\./)
+  assert.deepEqual(calls.find(([kind, action]) => kind === 'factory' && action === 'project-setup')[2], {kind: 'project-setup', project: 'field-notes'})
+  assert.ok(world.placed.has('field-notes'), 'Factory keeps it: Prompt pads read its state')
   const [, , adopt] = calls.find(([, action]) => action === 'central.ground.project.adopt')
   assert.deepEqual({...adopt, acceptance_ref: undefined}, {actor_kind: 'human', acceptance: 'human-accepted', acceptance_ref: undefined, project: 'field-notes', project_id: 'field-notes', expected_digest: 'extend:field-notes'},
     'on the previewed digest, as the person\'s acceptance')
@@ -852,9 +878,12 @@ test('SCRIPTED — a project the person makes or brings in is theirs to act in: 
   await walk.read()
   const atlas = `${HOME}/code/atlas`
   await walk.preview(held({folder: atlas}))
-  assert.equal(JSON.parse(win.setupValues(walk.snapshot(), held({folder: atlas})).setupPlan).at(-1), 'Once it stands in Work as a project, you act as you in atlas, and its agents may write inside it.')
-  assert.match(await walk.accept('projects', held({folder: atlas})), /You act as you in atlas/)
-  assert.ok(world.extended.has('atlas'))
+  assert.deepEqual(JSON.parse(win.setupValues(walk.snapshot(), held({folder: atlas})).setupPlan).slice(-2), ['Once it stands in Work as a project, you act as you in atlas, and its agents may write inside it.',
+    'Once it stands in Work as a project, Factory keeps atlas\' runs and pads.'])
+  const atlasSaid = await walk.accept('projects', held({folder: atlas}))
+  assert.match(atlasSaid, /You act as you in atlas/)
+  assert.match(atlasSaid, /Factory keeps atlas' runs and pads/)
+  assert.ok(world.extended.has('atlas') && world.placed.has('atlas'))
   // Brought in as a plain folder: nothing is extended until it is made a project there.
   world.elsewhere.set('Vault', {signals: ['obsidian'], material: ['Home.md'], revision: 1})
   await walk.read()
@@ -863,6 +892,58 @@ test('SCRIPTED — a project the person makes or brings in is theirs to act in: 
   const before = calls.filter(([, action]) => action === 'central.ground.project.adopt').length
   assert.match(await walk.accept('projects', held({folder: vault})), /once it is a project, you act as you in Vault/)
   assert.equal(calls.filter(([, action]) => action === 'central.ground.project.adopt').length, before, 'a folder that is no project is extended nothing')
+  assert.ok(!world.placed.has('Vault'), 'and Factory keeps nothing of it')
+})
+
+test('SCRIPTED — a project its making left unfinished (made before, or its grant or placement refused) shows Finish: Accept finishes only what is left, and then nothing is', async () => {
+  const {source, calls, world, GROUND} = scriptedSetup()
+  const walk = new settingsPages.SetupWalk(source)
+  await walk.read()
+  await walk.accept('ground', held({}))
+  // A project made before this Accept existed: not extended to, and Factory keeps nothing of it.
+  world.work.set('old-notes', {material: ['README.md'], wikis: [], made: true})
+  await walk.read()
+  let values = win.setupValues(walk.snapshot(), held({}))
+  let folder = JSON.parse(values.folders).find(f => f.title === 'old-notes')
+  assert.deepEqual([folder.finds, folder.left], ['ground', ['extension', 'placement']])
+  assert.equal(stepOf(values, 'projects').state, 'found', 'not accepted while something is left')
+  const finish = {folder: `${GROUND}/Work/old-notes`, make: 'finish'}
+  await walk.preview(held(finish))
+  assert.deepEqual(JSON.parse(win.setupValues(walk.snapshot(), held(finish)).setupPlan), ['You act as you in old-notes, and its agents may write inside it.', 'Factory keeps old-notes\' runs and pads.'])
+  const said = await walk.accept('projects', held(finish))
+  assert.equal(said, 'You act as you in old-notes, and its agents may write inside it. Factory keeps old-notes\' runs and pads.')
+  assert.ok(!calls.some(([, action]) => action === 'projectcentral.init'), 'Finish makes no ProjectCentral')
+  values = win.setupValues(walk.snapshot(), held({}))
+  folder = JSON.parse(values.folders).find(f => f.title === 'old-notes')
+  assert.equal(folder.left, undefined, 'nothing is left')
+  assert.equal(stepOf(values, 'projects').state, 'accepted')
+  await assert.rejects(walk.preview(held(finish)), /its ground is in place\. Nothing to make/, 'Nothing to make only once nothing is left')
+
+  // A making whose extension Central refused: the project stands, and Finish does only the extension.
+  world.work.set('tide', {material: ['log.md'], wikis: [], made: false})
+  await walk.read()
+  const create = {folder: `${GROUND}/Work/tide`, make: 'create'}
+  await walk.preview(held(create))
+  world.adoptRefusal = 'what Central would extend changed since its preview (or no preview was named): preview it again. Nothing was written.'
+  assert.match(await walk.accept('projects', held(create)), /tide is not yours to act in yet: what Central would extend changed/)
+  folder = JSON.parse(win.setupValues(walk.snapshot(), held({})).folders).find(f => f.title === 'tide')
+  assert.deepEqual(folder.left, ['extension'], 'Factory keeps it; only the grant is left')
+  const finishTide = {folder: `${GROUND}/Work/tide`, make: 'finish'}
+  await walk.preview(held(finishTide))
+  assert.deepEqual(JSON.parse(win.setupValues(walk.snapshot(), held(finishTide)).setupPlan), ['You act as you in tide, and its agents may write inside it.'])
+  const setups = calls.filter(([, action]) => action === 'project-setup').length
+  assert.equal(await walk.accept('projects', held(finishTide)), 'You act as you in tide, and its agents may write inside it.')
+  assert.equal(calls.filter(([, action]) => action === 'project-setup').length, setups, 'what was not left is not made again')
+  // A Factory that refused the placement leaves just that.
+  world.work.set('reef', {material: ['a.md'], wikis: [], made: false})
+  await walk.read()
+  await walk.preview(held({folder: `${GROUND}/Work/reef`, make: 'create'}))
+  world.factoryRefusal = 'factory: Factory placement refuses symlink'
+  assert.match(await walk.accept('projects', held({folder: `${GROUND}/Work/reef`, make: 'create'})), /Factory does not keep reef's runs and pads yet: factory: Factory placement refuses symlink/)
+  assert.deepEqual(JSON.parse(win.setupValues(walk.snapshot(), held({})).folders).find(f => f.title === 'reef').left, ['placement'])
+  // The design offers Finish for it, open, and keeps the makes closed.
+  const page = drawn({...win.setupValues(walk.snapshot(), held({folder: `${GROUND}/Work/reef`})), setupStep: 'projects', folder: `${GROUND}/Work/reef`}, 'setup')
+  assert.ok(page.includes('Finish') && page.includes(escaped('ground in place, to finish')), 'Finish is offered and the folder says why')
 })
 
 test('SCRIPTED — a ground whose key and bounds the person keeps by hand is never extended: Preview says so, and Accept makes the project and changes nothing else', async () => {

@@ -115,7 +115,9 @@
 //   acceptStep <step> (held): Ground is native oi's reviewed plan for Central's ground (setup plan, then apply with its review token),
 //   read back by setup discover. For Projects, previewStep 'projects' (Preview: Central's projectcentral.adopt.preview or
 //   migrate.preview, read into `setupPlan`; Create's plan is Central's inspection) and acceptStep 'projects' with folder, make and
-//   wiki: Central's projectcentral.init, adopt or migrate, read back by projectcentral.inspect. A folder that stands elsewhere under
+//   wiki: Central's projectcentral.init, adopt or migrate, read back by projectcentral.inspect; in a world Setup founded the same Accept
+//   extends the person's grant to it (central.ground.project.adopt) and makes Factory's placement (factory_owner project-setup), and a
+//   made project either is left without offers Finish (make 'finish'), whose Accept does only that. A folder that stands elsewhere under
 //   the world's folder (Central's work.candidates, place elsewhere) comes Into Work first: Preview is Central's work.bring.preview,
 //   Accept its work.bring on that preview's digest, read back by work.list, the original kept; Central keeps a project in its Work, so
 //   Where it stands refuses for it. Machines: acceptStep 'machines' is Central's machine.adopt-current binding its current machine
@@ -356,7 +358,10 @@ const FINDS: Readonly<Record<string, string>> = {none: 'no wiki', one: 'one wiki
 function makeOptions(f: Rec | undefined, wiki: string | undefined): Option<string>[] {
   const finds = txt(f?.finds), many = finds === 'many' && !wiki
   const closed = finds === 'unreadable' ? 'Its ProjectCentral cannot be read. Mend its manifest by hand.' : finds === 'ground' ? 'Its ground is in place: nothing to make.' : undefined
-  return [
+  // A made project its making left unfinished (your key and bounds not reaching it, or Factory not keeping its runs and pads): Finish.
+  const finish = finds === 'ground' && strs(f?.left).length
+    ? [{value: 'finish', label: 'Finish', does: 'Accept finishes what making it left: you act as you in it and its agents may write inside it, and Factory keeps its runs and pads.'}] : []
+  return [...finish,
     {value: 'create', label: 'Create', does: 'ProjectCentral is made round the folder. Nothing in the folder moves.',
       why: closed ?? (finds === 'none' ? undefined : 'The folder keeps a wiki: keep it in place or copy it in.')},
     {value: 'keep', label: 'Keep in place', does: 'The wiki stays where it is and joins the world\'s wiki as one of its sources.',
@@ -424,7 +429,8 @@ function ProjectsStep({p}: {p: ViewProps}) {
               onClick={() => { p.set('folder', path); p.set('make', undefined); p.set('wiki', undefined); p.set('setupPlan', undefined) }}>
               <td data-i={`${txt(f.title) ?? path}|${path}`}><b>{txt(f.title) ?? path}</b></td>
               <td>{txt(f.place) === 'work' ? 'Work' : txt(f.place) ? 'elsewhere' : NONE}</td>
-              <td><span data-st={finds === 'unreadable' ? 'stall' : finds === 'ground' ? 'green' : undefined}>{finds === 'many' ? `${strs(f.wikis).length} wikis` : FINDS[finds ?? ''] ?? NONE}</span></td>
+              <td><span data-st={finds === 'unreadable' ? 'stall' : finds === 'ground' ? (strs(f.left).length ? undefined : 'green') : undefined}>{finds === 'many' ? `${strs(f.wikis).length} wikis`
+                : finds === 'ground' && strs(f.left).length ? 'ground in place, to finish' : FINDS[finds ?? ''] ?? NONE}</span></td>
             </tr>
           })}</tbody>
       </table>

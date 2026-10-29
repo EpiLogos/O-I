@@ -78,6 +78,10 @@ export interface SetupSource {
   /** The Day's form (the kernel's `ground_form` op, desktop/cradle/kernel/src/ground_form.rs): preview — carried by the ground's O-I
    * project, or Central's preview of keeping the application's own Day form in the ground — and keep, on Setup's held Ground Accept. */
   groundForm?(request: {operation: 'preview'} | {operation: 'keep'; acceptance_ref: string; expected_digest: string}): Promise<unknown>
+  /** Factory, for a project's placement (the kernel's `factory_owner` op, desktop/cradle/kernel/src/factory.rs): `locate` reads whether
+   * Factory keeps the project's runs and pads (`oi.factory-source-discovery/v1`), `project-setup` makes its placement through Factory's own
+   * `factory project setup-central` (`factory.project-location/v1`), on the Projects step's Accept. Its answer, Factory's document. */
+  factory?(request: {kind: 'locate'; project: string} | {kind: 'project-setup'; project: string}): Promise<unknown>
   /** The host reads its world again once a ground is made or bound (native/Foundation.tsx). */
   groundChanged?(): void
 }

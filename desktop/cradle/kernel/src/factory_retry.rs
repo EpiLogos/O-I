@@ -195,9 +195,15 @@ pub(super) fn attempt_retry(
             "A retry names the exact Run and the exact unit.".into(),
         );
     }
-    // Whether Factory admits a desktop's retry, and what the grant must carry.
+    // Whether Factory admits a desktop's retry, and what the grant must carry,
+    // for this Run's state: the scope is the project the Run stands in.
     let disclosure = match call(
-        &["attempt".into(), "admission".into(), "--json".into()],
+        &[
+            "attempt".into(),
+            "admission".into(),
+            path_arg(state_path),
+            "--json".into(),
+        ],
         None,
     ) {
         Ok(reading) if reading["contract"] == receiving::ADMISSION_CONTRACT => reading,
@@ -621,5 +627,71 @@ mod tests {
             "the current attempt is the leg's execution"
         );
         assert_eq!(leg["delegation"]["parentJourneyRef"], "journey:one");
+    }
+
+    /// Factory's admission read for one Run's state (`factory attempt admission <state>`): each action names the project
+    /// the Run stands in.
+    fn admission_at(scope: &str) -> Value {
+        let mut reading = admission(true);
+        for action in reading["actions"].as_array_mut().unwrap() {
+            action["scopeRef"] = scope.into();
+        }
+        reading
+    }
+
+    #[test]
+    fn a_retry_is_admitted_for_the_run_s_own_state_and_granted_at_the_project_it_stands_in() {
+        let at = |scopes: &[&str]| {
+            serde_json::json!({"schema": "central.native-action-authority/v1", "grants": [
+                {"principal_ref": "human:Fresh", "actor_kind": "human", "token_sha256": token_sha256(TOKEN),
+                 "scope_refs": scopes, "actions": [RETRY_ACTION], "expires_at_unix_seconds": NOW + 1000}]})
+        };
+        let receipt = serde_json::json!({"contract": "factory.attempt-action/v1", "previousRevision": 7,
+            "nextRevision": 8, "operation": "retry", "attemptRefs": ["attempt:new"], "standing": "admitted"});
+        let state = Path::new("/w/Central/Work/field-notes/.factory/development-state.json");
+        let run = |document: &Value| {
+            let contract = TempContract::new("at-project", document);
+            let calls = std::cell::RefCell::new(Vec::new());
+            let mut call = |args: &[std::ffi::OsString], input: Option<&[u8]>| {
+                let words: Vec<String> = args
+                    .iter()
+                    .map(|a| a.to_string_lossy().into_owned())
+                    .collect();
+                calls.borrow_mut().push(words.clone());
+                let _ = input;
+                match (words[0].as_str(), words[1].as_str()) {
+                    ("attempt", "admission") => Ok(admission_at("project:field-notes")),
+                    ("attempt", "read") => Ok(attempts()),
+                    ("attempt", "action") => Ok(receipt.clone()),
+                    other => panic!("unexpected owner call {other:?}"),
+                }
+            };
+            let answer = attempt_retry(&mut call, state, "run:one", UNIT, authority(&contract));
+            (answer, calls.into_inner())
+        };
+        // The person in a new world: their grant covers the root and the project they brought in.
+        let (answer, calls) = run(&at(&["control:root", "project:field-notes"]));
+        assert_eq!(answer["status"], "retried", "{answer}");
+        assert_eq!(
+            calls[0],
+            [
+                "attempt",
+                "admission",
+                &state.display().to_string(),
+                "--json"
+            ],
+            "the admission is asked for this Run's state"
+        );
+        // A grant at the root and project:Factory alone no longer reaches a Run that stands in another project.
+        let (answer, calls) = run(&at(&["control:root", "project:Factory"]));
+        assert_eq!(answer["status"], "refused");
+        assert!(
+            answer["refusal"]["message"]
+                .as_str()
+                .unwrap()
+                .starts_with("scope not granted: the grant does not cover project:field-notes"),
+            "{answer}"
+        );
+        assert_eq!(calls.len(), 1, "nothing but the admission was read");
     }
 }

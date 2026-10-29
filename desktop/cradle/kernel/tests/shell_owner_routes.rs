@@ -3680,8 +3680,9 @@ fn a_units_retry_is_a_factory_write_refused_while_factory_admits_no_desktop_retr
     let dir = scratch("factory-retry");
     let factory = Fake::new(&dir, "factory");
     let _bin = Bound::set("OI_FACTORY_BIN", &factory.bin);
-    // The installed Factory's admission reading (REAL, `factory attempt
-    // admission --json`, 22 Oct 2026): it admits attempt-receiving only.
+    // An older Factory's admission reading (REAL, `factory attempt admission
+    // --json`, 22 Oct 2026): it admits attempt-receiving only. It is asked for
+    // the Run's own state, as Factory now names the Run's project there.
     factory.answer(&json!({
         "contract": "factory.attempt-admission/v1", "nativeOwner": "factory",
         "capabilityRef": "capability/factory/operate-attempt",
@@ -3717,8 +3718,11 @@ fn a_units_retry_is_a_factory_write_refused_while_factory_admits_no_desktop_retr
     );
     assert_eq!(
         factory.asked(),
-        ["attempt admission --json"],
-        "nothing is read or acted on past the admission"
+        [format!(
+            "attempt admission {} --json",
+            dir.join("state").display()
+        )],
+        "the admission is asked for the Run's state, and nothing is read or acted on past it"
     );
     assert!(outcome.receipts.is_empty(), "a refusal moves nothing");
     let _ = fs::remove_dir_all(&dir);

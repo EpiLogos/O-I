@@ -218,6 +218,13 @@ export function nativeSetup(transport: KernelTransportStatus, groundChanged?: ()
       if (answer.outcome?.result !== 'ground_form_reading') throw new Error('The host did not answer for the Day\'s form.')
       return answer.outcome.data
     },
+    // A project's Factory placement (kernel factory.rs: locate, and project-setup through Factory's own `project setup-central`).
+    async factory(request) {
+      const answer = await call({op: 'factory_owner', request})
+      if (answer.error) throw new Error(answer.error)
+      if (answer.outcome?.result !== 'factory_development_reading') throw new Error(`Factory did not answer ${request.kind}.`)
+      return answer.outcome.data
+    },
     // The person's key (kernel ground_authority.rs): its answers never carry the key nor its digest.
     async groundAuthority(request) {
       const answer = await call({op: 'ground_authority', request})
