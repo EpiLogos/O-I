@@ -16,7 +16,9 @@ import { HostedDevice, hostState, sayOnInfoLine, setHostPage } from '../frame/de
 import { design as windowDesign, searchResults } from '../inhabitants/catalogue/panels/settings__window'
 import { SETTINGS_LOCAL_KEYS, SETTINGS_WINDOW_ID, SETTINGS_WINDOW_WIRING, searchStep, windowCoreValues } from './windowValues'
 import { useAppearancePage, useAutomationsPage, useCredentialsPage, useHarnessPage, useMachinesPage, useProductsPage, useProfilesPage, useSetupPage, type Act, type PagePart } from './windowPages'
-import { THEME_SCOPE, THEME_SETTING_REF, applyTheme, configPlans, isThemeSetting, readTheme, themeEntry, themePlanOn, themeResolution, withThemeAnswer, withThemePlan } from './presentationSetting'
+import { themeOwned } from './presentationSetting'
+import { chatDefaultOwned } from './chatDefaultSetting'
+import { configPlansOf, ownedRef, withOwnerAnswers, withOwnerPlans, type OwnedSetting } from './ownedSettings'
 import { ShellConfigContext } from '../shell/useSet'
 import '../inhabitants/catalogue/panels/panels.css'
 import './preferences.css'
@@ -207,9 +209,9 @@ export function SettingsWorkspace({ adapter = unavailable, request, onReturn, ac
     try {
       const submitted = { ...drafts }
       if(Object.values(submitted).some(draft=>draftOwnerChanged(draft,source.ownerEpoch)))throw new Error('These drafts belong to the previous native owner or access context. Inspect and explicitly rebase them before review.')
-      // The configuration plane plans its owners' changes; the presentation owner plans a change of the theme (presentationSetting.ts).
-      const themeKey = settingKey(THEME_SETTING_REF, THEME_SCOPE)
-      const requests = Object.entries(submitted).filter(([key]) => key !== themeKey).map(([key, draft]) => { const [setting_ref, scope_kind, scope_ref] = JSON.parse(key); return { setting_ref, scope: { scope_kind, scope_ref } as ScopeAddress, value: draft.value } })
+      // The configuration plane plans its owners' changes; each owned setting's own owner plans its change (ownedSettings.ts).
+      const ownedKeys = new Map(owned.map(o => [settingKey(ownedRef(o), o.scope), o]))
+      const requests = Object.entries(submitted).filter(([key]) => !ownedKeys.has(key)).map(([key, draft]) => { const [setting_ref, scope_kind, scope_ref] = JSON.parse(key); return { setting_ref, scope: { scope_kind, scope_ref } as ScopeAddress, value: draft.value } })
       let configBundle: PlanBundle | null = null
       if (requests.length) {
         const latest = await refresh(requests, epoch, source)
@@ -220,19 +222,18 @@ export function SettingsWorkspace({ adapter = unavailable, request, onReturn, ac
         configBundle = await source.plan(requests, basis)
         guard(epoch, source)
       }
-      let themePlan = null
-      if (submitted[themeKey]) {
-        const now = await readTheme(source)
+      const ownedPlans = []
+      for (const [key, o] of ownedKeys) {
+        if (!submitted[key]) continue
+        ownedPlans.push(await o.plan(submitted[key]))
         guard(epoch, source)
-        appearance.set(now)
-        themePlan = themePlanOn(now, submitted[themeKey], appearance.library)
       }
-      setReview({ bundle: withThemePlan(configBundle, themePlan), submitted, epoch: source.ownerEpoch }); setAnswered(null); setResult(null)
+      setReview({ bundle: withOwnerPlans(configBundle, ownedPlans), submitted, epoch: source.ownerEpoch }); setAnswered(null); setResult(null)
     } catch (error) { if (isCurrent(epoch, source)) setProblem(error instanceof Error ? error.message : String(error)); throw error }
     finally { if (isCurrent(epoch, source)) setBusy(false) }
   }
   async function apply(): Promise<string> {
-    const cfg = review ? configPlans(review.bundle.plans) : []
+    const ownedRefs = new Set(owned.map(ownedRef)), cfg = review ? configPlansOf(review.bundle.plans, ownedRefs) : []
     if (!review || (cfg.length && !adapter.canApply)) throw new Error('Nothing is planned: press Review changes first.')
     const epoch = generation.current; const source = adapter
     setBusy(true); setProblem(null)
@@ -247,16 +248,15 @@ export function SettingsWorkspace({ adapter = unavailable, request, onReturn, ac
         response = await source.apply(cfg)
         guard(epoch, source)
       }
-      // The presentation owner's plan: theme_apply, read again first; its answer stands in the same table (presentationSetting.ts).
-      const themed = review.bundle.plans.find(p => isThemeSetting(p.setting_ref))
-      let themeOperation = null
-      if (themed) {
-        const answer = await applyTheme(source, themed, appearance.library)
+      // Each owned setting's owner applies its plan, read again first; its answer stands in the same table (ownedSettings.ts).
+      const answers = []
+      for (const plan of review.bundle.plans) {
+        const o = owned.find(candidate => ownedRef(candidate) === plan.setting_ref)
+        if (!o) continue
+        answers.push(await o.apply(plan))
         guard(epoch, source)
-        if (answer.reading) appearance.set(answer.reading)
-        themeOperation = answer.operation
       }
-      const answered = themed || !response ? withThemeAnswer(response, themeOperation) : response
+      const answered = answers.length || !response ? withOwnerAnswers(response, answers) : response
       setResult(answered); setAnswered(review.bundle)
       const acknowledged = answered.operations.filter(o => o.status === 'applied' || o.status === 'verified').map(o => settingKey(o.setting_ref, o.scope))
       setDrafts(current => acknowledgeDrafts(current, review.submitted, acknowledged))
@@ -300,21 +300,29 @@ export function SettingsWorkspace({ adapter = unavailable, request, onReturn, ac
   const validDrafts = useMemo((): ChangeRequest[] => draftEntries.flatMap(([key, draft]) => {
     if (draft.error || draftOwnerChanged(draft, adapter.ownerEpoch)) return []
     const [setting_ref, scope_kind, scope_ref] = JSON.parse(key)
-    // A profile keeps the configuration owners' settings; the theme is the presentation owner's, never profiled.
-    if (isThemeSetting(setting_ref)) return []
+    // A profile keeps the configuration owners' settings; an owned setting (the theme, the chat default: ownedSettings.ts) is never profiled.
+    if (!entries.some(entry => entry.spec.setting_ref === setting_ref)) return []
     return [{ setting_ref, scope: { scope_kind, scope_ref } as ScopeAddress, value: draft.value }]
-  }), [draftEntries, adapter.ownerEpoch])
+  }), [draftEntries, adapter.ownerEpoch, entries])
   const requestProject = operationScope?.scope_kind === 'project' ? operationScope.scope_ref ?? null : null
   const context = typeof holds.context === 'string' ? holds.context || null : requestProject
-  const harness = useHarnessPage(adapter, wanted && visited.has('agents'), done)
+  const harness = useHarnessPage(adapter, wanted && visited.has('agents'))
   const credentials = useCredentialsPage(adapter, wanted && visited.has('connections'), held, done)
   const appearance = useAppearancePage(adapter, wanted && visited.has('appearance'))
-  // The presentation owner's theme among the owners' settings, once its reading stands (presentationSetting.ts): its entry at this machine and
-  // its reading as a resolution, beside the configuration plane's. Its change is a draft like theirs; plan() and apply() take it to its owner.
-  const theme = useMemo(() => appearance.reading ? { entry: themeEntry(appearance.library), reading: themeResolution(appearance.reading) } : null, [appearance.reading, appearance.library])
-  const allEntries = useMemo(() => theme ? [...entries, theme.entry] : entries, [entries, theme])
-  const allScopes = useMemo(() => theme ? { ...scopes, [THEME_SETTING_REF]: THEME_SCOPE } : scopes, [scopes, theme])
-  const allReadings = useMemo(() => theme ? { ...readings, [settingKey(THEME_SETTING_REF, THEME_SCOPE)]: theme.reading } : readings, [readings, theme])
+  // The owned settings: the owners outside the configuration plane, once each one's reading stands (ownedSettings.ts) — the presentation
+  // owner's theme and O:I's chat default. Their entries stand first among the owners' settings, their readings as resolutions; their
+  // changes are drafts like every other, and plan() and apply() take each to its own owner. An owner's new reading reaches its page only
+  // while the adapter that read it is the window's.
+  const owned = useMemo((): OwnedSetting[] => {
+    const current = <T,>(set: (value: T) => void) => (value: T) => { if (activeAdapter.current === adapter) set(value) }
+    return [
+      ...(appearance.reading ? [themeOwned(adapter, appearance.reading, appearance.library, current(appearance.set))] : []),
+      ...(harness.reading && adapter.harnesses ? chatDefaultOwned(adapter.harnesses, harness.reading, current(harness.set)) : []),
+    ]
+  }, [adapter, appearance.reading, appearance.library, appearance.set, harness.reading, harness.set])
+  const allEntries = useMemo(() => [...owned.map(o => o.entry), ...entries], [entries, owned])
+  const allScopes = useMemo(() => ({ ...scopes, ...Object.fromEntries(owned.map(o => [ownedRef(o), o.scope])) }), [scopes, owned])
+  const allReadings = useMemo(() => ({ ...readings, ...Object.fromEntries(owned.map(o => [settingKey(ownedRef(o), o.scope), o.reading])) }), [readings, owned])
   const profiles = useProfilesPage(adapter, wanted && visited.has('profiles'), held, validDrafts, stageProfile, sensitive, done)
   const machines = useMachinesPage(adapter, wanted && visited.has('execution'), held, request?.page === 'machines' ? request.scope : null, done)
   const automations = useAutomationsPage(adapter, wanted && visited.has('automations'), held, context, typeof holds.show === 'string' ? holds.show : 'routines',
@@ -330,7 +338,13 @@ export function SettingsWorkspace({ adapter = unavailable, request, onReturn, ac
     plan: async () => { await plan() },
     apply: async () => apply(),
     reset: async ref => {
-      if (isThemeSetting(String(ref))) throw new Error('The presentation owner keeps no wider value to return to: Revert returns to the appearance saved before the last one.')
+      const mine = owned.find(o => ownedRef(o) === String(ref))
+      if (mine) {
+        if (!mine.reset) throw new Error(mine.noReset ?? 'Its owner keeps no wider value to return to.')
+        const said = await mine.reset()
+        setDrafts(old => { const next = { ...old }; delete next[settingKey(ownedRef(mine), mine.scope)]; return next })
+        return said
+      }
       const entry = entryOf(String(ref)), scope = entry ? scopes[entry.spec.setting_ref] : undefined
       if (!entry || !scope) throw new Error(`${String(ref)} has no scope to reset at.`)
       if (!adapter.reset) throw new Error('The native reset operation is not connected.')
@@ -387,8 +401,8 @@ export function SettingsWorkspace({ adapter = unavailable, request, onReturn, ac
     const standing: Record<string, Standing> = {}
     for (const part of parts) { Object.assign(acts, part.acts); Object.assign(why, part.why); for (const [key, words] of Object.entries(part.refused)) standing[key] = { refused: words } }
     for (const [key, words] of Object.entries(SETTINGS_WINDOW_WIRING.refused)) why[key] = words
-    // A Review that holds only the presentation owner's plan needs no protected configuration Apply: its owner applies it.
-    const themeOnly = !!review && review.bundle.plans.length > 0 && !configPlans(review.bundle.plans).length
+    // A Review that holds only owned settings' plans needs no protected configuration Apply: their owners apply them.
+    const themeOnly = !!review && review.bundle.plans.length > 0 && !configPlansOf(review.bundle.plans, new Set(owned.map(ownedRef))).length
     if (!adapter.canApply && !themeOnly) why.apply = adapter.applyUnavailableReason ?? 'Protected native Apply is not connected.'
     else if (!review) why.apply = answered ? 'Applied: each owner\'s answer stands in the table.' : 'Nothing is planned: press Review changes… first.'
     else if (review.bundle.errors.length) why.apply = review.bundle.errors.map(error => `${error.error_code}: ${error.message}`).join(' ')
@@ -399,11 +413,13 @@ export function SettingsWorkspace({ adapter = unavailable, request, onReturn, ac
       const scope = allScopes[entry.spec.setting_ref], draft = scope ? drafts[settingKey(entry.spec.setting_ref, scope)] : undefined
       if (draft?.error) standing[`draft:${entry.spec.setting_ref}`] = { refused: draft.error }
     }
+    // A Reset its owner has none of stands in place, dimmed, with the owner's reason, on its own row (§10.10 "An act its owner cannot take
+    // stays in place, dimmed"): the same standing map, keyed by the row as its draft is.
+    for (const o of owned) if (o.noReset) standing[`reset:${ownedRef(o)}`] = { disabled: o.noReset }
     // The window's own keys go to its hands at once, never to an owner: the search, the scope, the open forms, and your local changes.
     const local: Record<string, (value: Value | undefined) => void> = {}
     for (const key of SETTINGS_LOCAL_KEYS) local[key] = value => { hold(key, value); setPageTick(n => n + 1) }
     local.search = value => { setQuery(typeof value === 'string' ? value : ''); hold('hit', undefined); setPageTick(n => n + 1) }
-    local.chatDefault = value => { harness.chose(value); hold('chatDefault', value) }
     local.scope = value => {
       const chosen = scopeOf(value)
       if (!chosen) return
@@ -437,7 +453,7 @@ export function SettingsWorkspace({ adapter = unavailable, request, onReturn, ac
       },
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- the engine's own functions read the state named here
-  }, [adapter, mounts, allEntries, allReadings, allScopes, drafts, review, answered, result, loading, query, holds, problem, busy, onReturn, request?.returnLabel, ...parts])
+  }, [adapter, mounts, allEntries, allReadings, allScopes, owned, drafts, review, answered, result, loading, query, holds, problem, busy, onReturn, request?.returnLabel, ...parts])
 
   // ↑/↓ move the mark through the search's results and Enter opens the one marked; Enter on a changed search sends it first.
   function searchKey(event: KeyboardEvent<HTMLElement>) {

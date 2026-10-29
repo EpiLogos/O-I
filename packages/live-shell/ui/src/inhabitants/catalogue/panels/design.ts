@@ -11,6 +11,7 @@
 //   an absent key into SVG text, a corner or a folded reading; use the helpers below, which keep absence absent.
 import type {ReactNode} from 'react'
 import type {Standing} from '../../sdk/panel'
+import {RAIL_AND_PANE_VIEWS} from '../../sdk/views'
 
 export type Value = number | string | boolean
 export type Values = Readonly<Record<string, Value>>
@@ -70,7 +71,7 @@ export type DeviceKind = 'instrument' | 'effect' | 'rack' | 'modulator' | 'monit
 
 /** The views of a device that stands on the rail and in a pane only: a monitor, or an instrument born there (manual §16.3).
  * Its window holds its Full. */
-export const RAIL_AND_PANE: readonly ViewName[] = ['widget', 'full']
+export const RAIL_AND_PANE: readonly ViewName[] = RAIL_AND_PANE_VIEWS
 
 export interface DesignedDevice {
   /** `<family>:<face>`, as the manual's catalogue embeds it. */

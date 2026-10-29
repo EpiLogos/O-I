@@ -486,15 +486,18 @@ test('actual queued large native editor Return cannot focus behind newly opened 
 test('actual checkpoint view keeps origin only during active large residence and preserves nullable pre-Deep height',async()=>{
  // The height a frame keeps in the book while expanded is the height it returns to (R1, shell/workspaceAreas.ts keptDetailHeight).
  const areas=await import('../src/shell/workspaceAreas.ts');
+ // The side of the detail area you hid rides the same checkpoint (O-I #744; frame/detail/detailSides.ts hiddenSideOf).
+ const sides=await import('../src/frame/detail/detailSides.ts');
  const app=await parse('packages/live-shell/ui/src/App.tsx');
  const effect=find(app,n=>ts.isCallExpression(n)&&n.expression.getText(app)==='useEffect'&&n.arguments[0]?.getText(app).includes('continuity.checkpointApplicationView')).arguments[0].getText(app);
  for(const active of [true,false])for(const height of [null,319.997]){
-  const writes=[],bindings={browserCategory:undefined,restoredKey:'retained-native-workspace|techne|',restoreKey:'retained-native-workspace|techne|',workspace:{workspaceId:'retained-native-workspace',mode:'techne'},continuity:{checkpointApplicationView:value=>writes.push(value)},state:{path:null},restored:null,tab:'arrangement',timelinePane:'arrangement',mainView:'pane',mixer:true,liveHeld:{track:0,scene:null},browser:true,detail:false,dock:true,browserWidth:null,detailHeight:421,detailExpansions:{current:{'techne|retained':{height,workspaceId:'retained-native-workspace',accessEpoch:7}}},frameKey:'techne|retained',keptDetailHeight:areas.keptDetailHeight,centerPanel:active?'world.expressions':'native.workbench',detailMode:'device',nativeEditorPresented:active,nativeEditorReturn:{centerPanel:'native.arrangement',detail:true,detailMode:'clip'},settingsPresented:false,
+  const writes=[],bindings={browserCategory:undefined,restoredKey:'retained-native-workspace|techne|',restoreKey:'retained-native-workspace|techne|',workspace:{workspaceId:'retained-native-workspace',mode:'techne'},continuity:{checkpointApplicationView:value=>writes.push(value)},state:{path:null},restored:null,tab:'arrangement',timelinePane:'arrangement',mainView:'pane',mixer:true,liveHeld:{track:0,scene:null},browser:true,detail:false,dock:true,browserWidth:null,detailHeight:421,detailExpansions:{current:{'techne|retained':{height,workspaceId:'retained-native-workspace',accessEpoch:7}}},frameKey:'techne|retained',keptDetailHeight:areas.keptDetailHeight,centerPanel:active?'world.expressions':'native.workbench',detailMode:'device',nativeEditorPresented:active,nativeEditorReturn:{centerPanel:'native.arrangement',detail:true,detailMode:'clip'},settingsPresented:false,hiddenSides:{clip:true,device:false},hiddenSideOf:sides.hiddenSideOf,
    // The open world's own remembered set (O-I #738): the host has named the world, and the set stands in it.
    worldPending:false,ofWorld:path=>path};
   execute(effect,bindings)();assert.equal(writes.length,1);assert.equal(writes[0].detailHeight,height);assert.equal(writes[0].centerPanel,active?'native.arrangement':'native.workbench');assert.equal(writes[0].detail,active);assert.equal(writes[0].detailMode,active?'clip':'device');
   // Session view and Arrangement view stand for the set (manual §10.2): the frame keeps them as the centre `world.set`, with the
   // presentation in `tab` and the mixer's switch beside it.
+  assert.equal(writes[0].hiddenSide,'clip','the side hidden under the front Device view is kept');
   execute(effect,{...bindings,mainView:'arrangement'})();assert.equal(writes[1].centerPanel,'world.set');assert.equal(writes[1].tab,'arrangement');assert.equal(writes[1].mixer,true);
  }
 });

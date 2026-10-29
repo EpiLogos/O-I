@@ -152,8 +152,10 @@ test('SCRIPTED — the saved theme moved under the change: Review refuses to pla
 
 test('CODE-DERIVED — one draft path: the engine plans and applies the theme through the presentation owner beside the configuration plane; the page and its hook hold no choice of their own', () => {
   const workspace = read('../src/settings/SettingsWorkspace.tsx'), pages = read('../src/settings/windowPages.ts'), page = read('../src/inhabitants/catalogue/panels/settings__window.tsx')
-  assert.match(workspace, /themePlanOn\(/, 'Review changes… plans the theme through its owner')
-  assert.match(workspace, /applyTheme\(/, 'Apply sends the owner\'s plan')
+  const owned = read('../src/settings/presentationSetting.ts')
+  assert.match(workspace, /themeOwned\(/, 'the theme stands on the window\'s one path for owned settings (settings/ownedSettings.ts)')
+  assert.match(owned, /plan: async draft => \{ const now = await readTheme\(adapter\); take\(now\); return themePlanOn\(/, 'Review changes… plans the theme through its owner')
+  assert.match(owned, /apply: async plan => \{ const answer = await applyTheme\(/, 'Apply sends the owner\'s plan')
   assert.doesNotMatch(page, /themeDraft|p\.set\('applyTheme'/, 'the page keeps no second choice and presses no Apply of its own')
   assert.doesNotMatch(pages, /themeDraft|applyTheme:/, 'the Appearance hook holds no choice and sends no theme_apply')
   assert.ok(!('themeDraft' in win.SETTINGS_WINDOW_WIRING.local) && !win.SETTINGS_LOCAL_KEYS.includes('themeDraft'), 'no window key holds an appearance outside the drafts')

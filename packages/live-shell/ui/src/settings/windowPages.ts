@@ -106,36 +106,16 @@ export function pickFile(accept: string): Promise<File | null> {
 
 // ---------------------------------------------------------------------------------------------------------------- Harnesses & models
 
-const DEFAULT_SAVED = 'Native owner acknowledged the preference. New chats use the resolved provider; the current conversation keeps its provider.'
-
 /** Harnesses & models (HarnessPreferences.tsx): the providers and the chat default through the adapter's HarnessSource, each harness client's
- * install and folder through the kernel channel, Sign in at the conversation's connection control. */
-export function useHarnessPage(adapter: SettingsAdapter, enabled: boolean, done: (keys: readonly string[]) => void): PagePart & {chose(provider: Value | undefined): void} {
+ * install and folder through the kernel channel, Sign in at the conversation's connection control. The provider a new chat starts with is
+ * a local change of O:I's chat-default setting (chatDefaultSetting.ts), which Review changes… plans and applies through its owner, and Reset
+ * on its row withdraws (O-I #744): this page reads the owner for the engine (`reading`) and takes its new reading after (`set`). */
+export function useHarnessPage(adapter: SettingsAdapter, enabled: boolean): PagePart & {reading: HarnessReading | null; set(reading: HarnessReading): void} {
   const read = useRead<HarnessReading>(enabled, adapter, !!adapter.harnesses, async source => {
     const answer = await source.harnesses!.read()
     if (answer.kind === 'fixture' && !import.meta.env?.DEV) throw new Error('Fixture harness readings cannot qualify production settings.')
     return answer
   })
-  // The basis a chosen provider stands on: the owner epoch and the saved default when you chose it.
-  const basis = useRef<{epoch?: string; held: string | null} | null>(null)
-  const held = read.value?.defaultState.state === 'ok' ? read.value.heldDefault?.value ?? null : null
-  const chose = useCallback((provider: Value | undefined) => { basis.current = provider === undefined ? null : {epoch: adapter.ownerEpoch, held} }, [adapter, held])
-  const save = useCallback(async (draft: string | null) => {
-    const harnesses = adapter.harnesses
-    if (!harnesses) throw new Error(NO_HARNESS)
-    const reset = draft === null || draft === '', source = adapter
-    if (draft !== null && basis.current?.epoch !== source.ownerEpoch) throw new Error('The native owner changed. Undo this draft and choose again.')
-    const before = await harnesses.read()
-    if (!read.current(source)) return
-    if (before.defaultState.state !== 'ok' || before.providers.state !== 'ok') throw new Error('Read the native provider rows and saved default before changing it.')
-    if (draft !== null && (before.heldDefault?.value ?? null) !== basis.current?.held) throw new Error('The saved provider default changed. Undo this draft, read again and review your choice.')
-    if (!reset && !before.providers.rows.some(row => row.id === draft)) throw new Error('This provider is no longer configured.')
-    if (reset) await harnesses.discardDefault(); else await harnesses.holdDefault(draft!)
-    basis.current = null
-    done(['chatDefault'])
-    if (read.current(source)) read.set(await harnesses.read())
-    return DEFAULT_SAVED
-  }, [adapter, read, done])
   const rows = read.value?.harnesses.state === 'ok' ? read.value.harnesses.rows : []
   const run = useCallback(async (client: Value, install: boolean): Promise<string> => {
     const row = rows.find(item => item.client === client)
@@ -149,17 +129,15 @@ export function useHarnessPage(adapter: SettingsAdapter, enabled: boolean, done:
   }, [adapter, rows, read])
   return useMemo(() => {
     const why: Record<string, string> = {}
-    if (!adapter.harnesses) { why.applyDefault = NO_HARNESS; why.restoreDefault = NO_HARNESS }
     if (!adapter.invoke) { why.install = NO_INVOKE('Install and Folder'); why.reveal = NO_INVOKE('Install and Folder') }
     if (!adapter.navigate) why.signIn = NO_NAVIGATE('Sign in: the conversation\'s connection control (harness_auth_describe)')
     const refused: Record<string, string> = {}
-    if (read.error) refused.chatDefault = read.error
+    if (!adapter.harnesses) refused.effectiveDefault = NO_HARNESS
+    if (read.error) refused.effectiveDefault = read.error
     else if (read.value) for (const [section, state] of [['providers', read.value.providers], ['harnesses', read.value.harnesses], ['catalogue', read.value.catalogue], ['saved default', read.value.defaultState]] as const)
-      if (state.state === 'failed') refused.chatDefault = `${section}: ${state.error}`
-    return {values: harnessValues(read.value), why, refused, chose, reread: read.refresh,
+      if (state.state === 'failed') refused.effectiveDefault = `${section}: ${state.error}`
+    return {values: harnessValues(read.value), why, refused, reading: read.value, set: read.set, reread: read.refresh,
       acts: {
-        applyDefault: async value => save(typeof value === 'string' ? value : null),
-        restoreDefault: async () => save(null),
         install: async client => run(client, true),
         reveal: async client => run(client, false),
         signIn: async client => {
@@ -167,7 +145,7 @@ export function useHarnessPage(adapter: SettingsAdapter, enabled: boolean, done:
           adapter.navigate({kind: 'connection', native_ref: String(client)})
         },
       }}
-  }, [adapter, read.value, read.error, read.refresh, save, run, chose])
+  }, [adapter, read.value, read.error, read.refresh, read.set, run])
 }
 
 // ---------------------------------------------------------------------------------------------------------------- Credentials

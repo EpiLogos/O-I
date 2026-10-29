@@ -91,12 +91,12 @@
 //   (the setting whose Details are open), show (Automations: routines | methods | timers | history), context (Automations' work context),
 //   routine, product, owner (System's owner), axes ('disclosure' | 'configuration'), adding (the open form: machine | credential |
 //   routine | profile), rotating (the credential whose reference you replace), new.* (the open form's fields; new.expects and new.scopes
-//   are JSON lists), chatDefault (a provider chosen, not yet applied), Setup's choices, and a local change for each setting
+//   are JSON lists), Setup's choices, and a local change for each setting
 //   as draft:<ref> (a JSON string for a list or a table); setting draft:<ref> to nothing is its Undo.
 // Acts, each on its own key, with their owners:
 //   plan (config_plan_reviewed) · apply (config_apply_reviewed) · reset <ref> (config_reset) · keep <ref> (re-bases a draft on the
 //   current reading) · discard (drops every local change) · returnToWork (the work Settings was opened from) · reread (every owner read
-//   again) · applyDefault, restoreDefault (HarnessSource) · install <client> (client_install) · reveal <client> (settings_reveal) ·
+//   again) · install <client> (client_install) · reveal <client> (settings_reveal) ·
 //   signIn <client> (the conversation's connection control, harness_auth_describe) · discover (credential_discover) · verify
 //   <credential> (credential_verify) · rotate <credential> with new.reference (credential_rotate) · revoke <credential>
 //   (credential_revoke) · bind with new.credential, new.reference (credential_setup) · useProfile <ref> (profile_use_plan: stages its
@@ -321,7 +321,7 @@ function OwnerRows({p, category, size, title, children}: {p: ViewProps; category
           <td className="st-acts">
             {conflict && <Action {...st(p, 'keep')} label="Keep" does="The owner's reading changed since your change. Keep your change on the current reading." onPress={() => p.set('keep', s.ref)} />}
             {draft && <Action label="Undo" does="Drops your change of this setting. Nothing was written." onPress={() => p.set(draftKey(s.ref), undefined)} />}
-            {s.from === 'here' && s.writable && <Action {...st(p, 'reset')} hold label="Reset" does="The owner removes this scope's override and resolves the value again." onPress={() => p.set('reset', s.ref)} />}
+            {s.from === 'here' && s.writable && <Action {...st(p, 'reset')} {...st(p, `reset:${s.ref}`)} hold label="Reset" does="The owner removes this scope's override and resolves the value again." onPress={() => p.set('reset', s.ref)} />}
           </td>
         </tr>, open === s.ref ? <Details key={`${s.ref}:details`} s={s} /> : null,
         focus === s.ref && (s.kind === 'table' || s.kind === 'list') ? <Entries key={`${s.ref}:rows`} p={p} s={s} /> : null]
@@ -591,21 +591,15 @@ function SetupPage({p}: {p: ViewProps}) {
 const RULE: Readonly<Record<string, string>> = {'owner-choice': 'your saved choice', 'pi-row': 'the pi provider row', 'first-configured': 'the first configured provider'}
 function HarnessesPage({p}: {p: ViewProps}) {
   const v = p.v, providers = list(v, 'providers'), harnesses = list(v, 'harnesses'), routes = list(v, 'routes')
-  const eff = json<Rec | null>(v, 'effectiveDefault', null), held = strOf(v, 'heldDefault'), chosen = strOf(v, 'chatDefault')
+  const eff = json<Rec | null>(v, 'effectiveDefault', null)
   const label = (id: string | undefined) => (id ? txt(providers?.find(r => r.id === id)?.label) ?? id : undefined)
   const [shownRoutes, pager] = usePaged(routes ?? [], 2), routesOpen = strOf(v, 'focus') === 'routes'
   return <>
-    <OwnerRows p={p} category="agents" size={2} title="New conversations">
+    {/* The provider a new chat starts with is O:I's chat-default setting, one row like every owner's: change it there, and Review
+      changes… applies it; Reset on the row withdraws your saved choice (settings/chatDefaultSetting.ts; O-I #744). */}
+    <OwnerRows p={p} category="agents" size={3} title="New conversations">
       <div className="st-line">
-        <Chooser {...st(p, 'chatDefault')} label="Default provider" does="The provider a new chat starts with. A conversation keeps its own once it starts."
-          value={chosen ?? held ?? ''} options={[{value: '', label: 'Configured order'}, ...(providers ?? []).flatMap(r => (txt(r.id) ? [{value: r.id as string, label: txt(r.label) ?? r.id as string}] : []))]}
-          onChange={x => p.set('chatDefault', x)} />
-        <Readout label="in effect" does="The provider new chats use now, and the rule that chose it." value={eff ? `${label(txt(eff.provider)) ?? NONE} · ${RULE[txt(eff.rule) ?? ''] ?? NONE}` : undefined} />
-        {chosen !== undefined && <>
-          <Action {...st(p, 'applyDefault')} label="Apply" does="Saves the provider you chose as the default for new chats." onPress={() => p.set('applyDefault', chosen)} />
-          <Action label="Undo" does="Drops the provider you chose; nothing was saved." onPress={() => p.set('chatDefault', undefined)} />
-        </>}
-        {held !== undefined && chosen === undefined && <Action {...st(p, 'restoreDefault')} label="Configured order" does="Removes your saved choice: new chats follow the configured order again." onPress={() => p.set('restoreDefault', true)} />}
+        <Readout {...st(p, 'effectiveDefault')} label="in effect" does="The provider new chats use now, and the rule that chose it." value={eff ? `${label(txt(eff.provider)) ?? NONE} · ${RULE[txt(eff.rule) ?? ''] ?? NONE}` : undefined} />
       </div>
     </OwnerRows>
     <section className="st-sec">
@@ -1213,6 +1207,10 @@ const SETTINGS = [
   {ref: 'central:policy:civil-time.day-boundary-minutes', category: 'inspection', owner: 'central', section: 'policy', title: 'Day boundary offset', kind: 'number', writable: false, from: 'inherited', timing: 'none', effective: 240},
   {ref: 'quaternal-logic:kernel:kernel.version', category: 'inspection', owner: 'quaternal-logic', section: 'kernel', title: 'Kernel version', kind: 'text', writable: false, from: 'inherited', timing: 'none', effective: '0.9.4'},
   {ref: 'actuation:return:return.modes', category: 'inspection', owner: 'actuation', section: 'return', title: 'Return policy modes', kind: 'list', writable: false, from: 'inherited', timing: 'none', rows: [{item: 'propose'}, {item: 'draft'}, {item: 'write'}]},
+  // O:I's chat default (settings/chatDefaultSetting.ts): one row, changed through Review changes…; Reset withdraws the saved choice.
+  {ref: 'oi:harness:chat.default', category: 'agents', owner: 'oi', section: 'harness', title: 'Default provider', kind: 'choice', writable: true, from: 'here', timing: 'session-restart-required',
+    effective: 'claude', at: 'This machine', effect: 'New chats start with this provider; a conversation keeps its own once it starts.',
+    options: [{value: 'claude', title: 'Claude'}, {value: 'pi', title: 'Pi'}, {value: 'codex', title: 'Codex'}]},
   // The presentation owner's theme (settings/presentationSetting.ts): one row, changed as every owner's setting is, through Review changes….
   {ref: 'oi:presentation:theme', category: 'appearance', owner: 'oi', section: 'presentation', title: 'Theme', kind: 'choice', writable: true, from: 'here', timing: 'value-change', effective: 'system', at: 'This machine',
     effect: 'The presentation owner saves the appearance, and the window redraws in it.',
@@ -1363,7 +1361,7 @@ export const design: DesignedDevice = {
     'Changes to review': {
       'draft:software-factory:telemetry:watch-interval-seconds': 10, 'draft:ai-kit:resolution:resolution.profiles': 'documentation',
       'draft:ai-kit:models:models.default': dump([{harness: 'claude-code', model: 'claude-opus-5-5'}, {harness: 'pi', model: 'claude-sonnet-5'}, {harness: 'codex', model: 'gpt-5.5-codex'}]),
-      conflicts: dump(['ai-kit:resolution:resolution.profiles']), focus: 'ai-kit:models:models.default', chatDefault: 'pi',
+      conflicts: dump(['ai-kit:resolution:resolution.profiles']), focus: 'ai-kit:models:models.default', 'draft:oi:harness:chat.default': 'pi',
       plans: dump([
         {ref: 'ai-kit:models:models.default', title: 'Default model per harness', scope: 'This machine', changes: ['codex → gpt-5.5-codex'], effect: 'session-restart-required'},
         {ref: 'ai-kit:resolution:resolution.profiles', title: 'Native profile selection', scope: 'This machine', changes: ['core-development → documentation'], effect: 'session-restart-required'},

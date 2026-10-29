@@ -927,10 +927,10 @@ export const SETTINGS_WINDOW_WIRING = {
     setupPlan: 'the preview of the folder and choices shown: Central\'s projectcentral.adopt.preview or projectcentral.migrate.preview operations; for Create, the inspection Central plans projectcentral.init on; for a folder elsewhere, Central\'s work.bring.preview',
   },
   writes: {
-    plan: 'config_plan_reviewed, and the presentation owner\'s plan of a theme change (presentation_read on the basis it was made on; settings/presentationSetting.ts)', apply: 'config_apply_reviewed, and theme_apply for the presentation owner\'s plan', reset: 'config_reset on the reading digest', keep: 'the draft re-based on the current reading (the window\'s own)',
+    plan: 'config_plan_reviewed, and each owned setting\'s owner\'s plan of its change on the basis it was made on (settings/ownedSettings.ts: the theme through presentation_read, the chat default through HarnessSource.read)', apply: 'config_apply_reviewed, and each owned setting\'s owner applies its plan (theme_apply; chat_default_hold through HarnessSource.holdDefault)', reset: 'config_reset on the reading digest; an owned setting\'s owner\'s reset (the chat default: chat_default_discard through HarnessSource.discardDefault)', keep: 'the draft re-based on the current reading (the window\'s own)',
     discard: 'every local change dropped (the window\'s own)', returnToWork: 'the work Settings was opened from (the host\'s return)',
     reread: 'the owners read again: config_registry_read, config_resolutions_read and every opened page\'s reading',
-    applyDefault: 'HarnessSource.holdDefault', restoreDefault: 'HarnessSource.discardDefault', install: 'client_install',
+    install: 'client_install',
     reveal: 'settings_reveal', signIn: 'the conversation\'s connection control (SettingsAdapter.navigate)', discover: 'credential_discover', verify: 'credential_verify',
     rotate: 'credential_rotate with new.reference', revoke: 'credential_revoke', bind: 'credential_setup with new.credential and new.reference',
     useProfile: 'profile_use_plan, staged as local changes', saveProfile: 'createProfile and saveProfile with your valid local changes', importProfile: 'the system file picker, then createProfile and saveProfile',
@@ -952,7 +952,7 @@ export const SETTINGS_WINDOW_WIRING = {
     search: 'what you search for', hit: 'the search result ↑/↓ marked', scope: 'the scope a page\'s settings are read and changed at', focus: 'the setting a press or a request opened',
     details: 'the setting whose Details are open', show: 'what Automations lists',
     context: 'Automations\' work context', routine: 'the routine chosen', product: 'the product chosen', owner: 'whose System reading shows', axes: 'four axes or the configuration',
-    adding: 'the open form', rotating: 'the credential whose reference you replace', chatDefault: 'a provider chosen, not yet applied',
+    adding: 'the open form', rotating: 'the credential whose reference you replace',
     setupStep: 'the Setup step shown', folder: 'the folder the Projects step shows', make: 'what to make of it', wiki: 'its wiki to keep or copy', where: 'where it is adopted',
     groundFolder: 'the folder you type for a new ground (else the one chosen or read)', groundName: 'the name you give a new ground (else the one native oi reads)',
     birthName: 'your name, kept with your date of birth', birthDate: 'your date of birth, until Keep keeps it',
@@ -968,7 +968,7 @@ export const SETTINGS_WINDOW_WIRING = {
 } as const
 
 /** The design keys the window holds as its own (SETTINGS_WINDOW_WIRING.local), exact. */
-export const SETTINGS_LOCAL_KEYS = ['search', 'hit', 'scope', 'focus', 'details', 'show', 'context', 'routine', 'product', 'owner', 'axes', 'adding', 'rotating', 'chatDefault',
+export const SETTINGS_LOCAL_KEYS = ['search', 'hit', 'scope', 'focus', 'details', 'show', 'context', 'routine', 'product', 'owner', 'axes', 'adding', 'rotating',
   'setupStep', 'folder', 'make', 'wiki', 'where', 'credential', 'reference', 'groundFolder', 'groundName', 'birthName', 'birthDate',
   'new.name', 'new.description', 'new.method', 'new.proof', 'new.trigger', 'new.repeat', 'new.schedule', 'new.authority', 'new.profile', 'new.scopes', 'new.grant', 'new.reproof',
   'new.label', 'new.endpoint', 'new.credential', 'new.reference', 'new.note', 'new.expects'] as const

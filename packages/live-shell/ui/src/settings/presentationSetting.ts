@@ -10,6 +10,7 @@
 import type {ChangeSetDocument, ConfigResolution, PlanBundle, PlanDocument, ScopeAddress, SettingsAdapter} from './adapter'
 import type {ChangeSetOperation} from '../../../../../desktop/cradle/src/configuration/contracts'
 import type {Draft, SettingEntry} from './model'
+import {ownedEntry, ownedOperation, ownedPlan, ownedResolution, planBasis, planValue, withOwnerAnswers, withOwnerPlans, type OwnedSetting} from './ownedSettings'
 import type {KernelOp, PresentationDocument, PresentationTheme} from '../../../../../desktop/cradle/src/kernel/types'
 
 /** The theme's identity among the owners' settings: O:I's presentation owner, its theme. */
@@ -52,21 +53,20 @@ export function themeOf(value: unknown, library: ThemeLibrary): PresentationThem
 /** The reading basis a change of the theme is made on: the owner's revision and the theme it saved. */
 export const themeDigest = (reading: PresentationDocument): string => `presentation:r${reading.revision}:${themeValue(reading.theme)}`
 
+/** Why the Theme row's Reset stands dimmed: the presentation owner keeps one saved theme and no wider value to return to. */
+export const THEME_NO_RESET = 'The presentation owner keeps no wider value to return to: Revert returns to the appearance saved before the last one.'
+
 /** The theme as the engine reads an owner's setting: its descriptor, every appearance and library theme its choices. */
 export function themeEntry(library: ThemeLibrary): SettingEntry {
-  return {owner: THEME_OWNER, available: true, reason: null, spec: {
-    setting_ref: THEME_SETTING_REF, section_ref: 'presentation', native_ref: 'presentation.theme', title: 'Theme',
+  return ownedEntry({ref: THEME_SETTING_REF, owner: THEME_OWNER, section: 'presentation', native: 'presentation.theme', title: 'Theme',
     description: 'Light, Dark, the system\'s, or a theme from the library or one you imported. Scene, glyph, material and musical controls stay in their editors.',
-    value_schema: {type: 'enum', options: [...APPEARANCES.map(a => ({value: a.value, title: a.title})), ...library.map(t => ({value: t.id, title: t.name}))]},
-    allowed_scopes: [{scope_kind: 'machine', scope_ref: null}], writable: true, profileable: false, sensitive: false, default_semantics: 'none',
-    effect: THEME_EFFECT, operations: {validate: true, plan: true, apply: true, reset: false}}}
+    options: [...APPEARANCES.map(a => ({value: a.value, title: a.title})), ...library.map(t => ({value: t.id, title: t.name}))], scope: THEME_SCOPE, effect: THEME_EFFECT, resets: false})
 }
 
 /** The owner's reading of the theme as a resolution at this machine: saved here, its basis the owner's revision. */
 export function themeResolution(reading: PresentationDocument): ConfigResolution {
-  const value = themeValue(reading.theme), axis = {value, provenance: {owner_ref: THEME_OWNER, path: 'presentation_read'}}
-  return {schema: 'oi.config-resolution/v1', setting_ref: THEME_SETTING_REF, scope: THEME_SCOPE, desired: null, native: {declared: axis, effective: axis},
-    native_reading: {reading_digest: themeDigest(reading), observed_at_unix_ms: null}, reconciliation: {status: 'satisfied', reason: null}}
+  const value = themeValue(reading.theme)
+  return ownedResolution(THEME_SETTING_REF, THEME_SCOPE, THEME_OWNER, 'presentation_read', {declared: value, effective: value}, themeDigest(reading))
 }
 
 /** The owner's reading now (presentation_read through the adapter's kernel channel). */
@@ -87,41 +87,35 @@ export async function planTheme(adapter: Pick<SettingsAdapter, 'invoke'>, draft:
 /** The plan on a reading just read: refused where it is not the basis the change was made on. */
 export function themePlanOn(reading: PresentationDocument, draft: Draft, library: ThemeLibrary): PlanDocument {
   if (themeDigest(reading) !== draft.basis) throw new Error('The saved appearance changed. Your change is kept; Keep it on the current reading, or Undo it, before reviewing again.')
-  const theme = themeOf(draft.value, library), now = themeValue(reading.theme), next = themeValue(theme)
-  return {schema: 'oi.config-plan/v1', plan_id: `presentation-theme-${reading.revision}`, plan_digest: `${themeDigest(reading)}→${next}`,
-    setting_ref: THEME_SETTING_REF, scope: THEME_SCOPE, changes: [{summary: `${themeName(now, library)} → ${themeName(next, library)}`, native_ref: 'presentation.theme', before_ref: now, after_ref: next}],
-    expected_effect: THEME_EFFECT}
+  const now = themeValue(reading.theme), next = themeValue(themeOf(draft.value, library))
+  return ownedPlan({ref: THEME_SETTING_REF, scope: THEME_SCOPE, id: `presentation-theme-${reading.revision}`, basis: themeDigest(reading), before: now, after: next,
+    summary: `${themeName(now, library)} → ${themeName(next, library)}`, native: 'presentation.theme', effect: THEME_EFFECT})
 }
 
 /** Apply the presentation owner's plan: read again, refused where the saved theme moved since the plan, else theme_apply. The answer is an
  * operation of the same table as every owner's, and the owner's new reading where it answered. */
 export async function applyTheme(adapter: Pick<SettingsAdapter, 'invoke'>, plan: PlanDocument, library: ThemeLibrary): Promise<{operation: ChangeSetOperation; reading: PresentationDocument | null}> {
-  const operation = (status: ChangeSetOperation['status'], message?: string): ChangeSetOperation => ({op_id: plan.plan_id, depends_on: [], owner_ref: THEME_OWNER,
-    setting_ref: THEME_SETTING_REF, scope: THEME_SCOPE, kind: 'apply', plan_digest: plan.plan_digest, status, receipt_ref: null, error: message ? {code: 'refused', message} : null})
+  const operation = (status: ChangeSetOperation['status'], message?: string) => ownedOperation(plan, THEME_OWNER, status, message)
   try {
     const before = await readTheme(adapter)
-    if (!plan.plan_digest.startsWith(`${themeDigest(before)}→`)) return {operation: operation('failed', 'The saved appearance changed after review. Nothing was applied; review your change again.'), reading: before}
-    const after = plan.changes[0]?.after_ref
+    if (planBasis(plan) !== themeDigest(before)) return {operation: operation('failed', 'The saved appearance changed after review. Nothing was applied; review your change again.'), reading: before}
     if (!adapter.invoke) throw new Error('The appearance owner is not connected.')
-    const answer = await adapter.invoke({op: 'theme_apply', ...themeOf(after, library)} as KernelOp)
+    const answer = await adapter.invoke({op: 'theme_apply', ...themeOf(planValue(plan), library)} as KernelOp)
     if (answer.error || answer.outcome?.result !== 'presentation_reading') return {operation: operation('failed', answer.error ?? 'The appearance owner did not acknowledge theme_apply.'), reading: null}
     return {operation: operation('applied'), reading: answer.outcome.document}
   } catch (cause) { return {operation: operation('failed', cause instanceof Error ? cause.message : String(cause)), reading: null} }
 }
 
-/** The plans of the configuration plane and the presentation owner, as one Review. */
-export const withThemePlan = (bundle: PlanBundle | null, plan: PlanDocument | null): PlanBundle =>
-  ({plans: [...(bundle?.plans ?? []), ...(plan ? [plan] : [])], errors: [...(bundle?.errors ?? [])]})
-
-/** The configuration plane's plans alone (the theme's is the presentation owner's). */
-export const configPlans = (plans: readonly PlanDocument[]): PlanDocument[] => plans.filter(plan => !isThemeSetting(plan.setting_ref))
-
-/** The owners' answers as one table: the configuration plane's changeset, with the presentation owner's operation beside it. */
-export function withThemeAnswer(result: ChangeSetDocument | null, operation: ChangeSetOperation | null): ChangeSetDocument {
-  const operations = [...(result?.operations ?? []), ...(operation ? [operation] : [])]
-  const done = operations.filter(o => o.status === 'applied' || o.status === 'verified').length
-  const status: ChangeSetDocument['status'] = !operation && result ? result.status : done === operations.length ? 'applied' : done === 0 ? 'failed' : 'partially_applied'
-  return {schema: 'oi.config-changeset/v1', changeset_id: result?.changeset_id ?? operation?.op_id ?? 'presentation', created_at_unix_ms: result?.created_at_unix_ms ?? 0,
-    requested: [...(result?.requested ?? []), ...(operation ? [{setting_ref: operation.setting_ref, scope: operation.scope}] : [])], operations,
-    verification: result?.verification ?? null, status}
+/** The theme on the window's one path for owned settings (ownedSettings.ts): planned and applied through the presentation owner, whose new
+ * reading `take` hands to the Appearance page; its Reset dimmed (THEME_NO_RESET). */
+export function themeOwned(adapter: Pick<SettingsAdapter, 'invoke'>, reading: PresentationDocument, library: ThemeLibrary, take: (reading: PresentationDocument) => void): OwnedSetting {
+  return {entry: themeEntry(library), scope: THEME_SCOPE, reading: themeResolution(reading), noReset: THEME_NO_RESET,
+    plan: async draft => { const now = await readTheme(adapter); take(now); return themePlanOn(now, draft, library) },
+    apply: async plan => { const answer = await applyTheme(adapter, plan, library); if (answer.reading) take(answer.reading); return answer.operation }}
 }
+
+/** The plans of the configuration plane and the presentation owner, as one Review (ownedSettings.ts withOwnerPlans). */
+export const withThemePlan = (bundle: PlanBundle | null, plan: PlanDocument | null): PlanBundle => withOwnerPlans(bundle, plan ? [plan] : [])
+
+/** The owners' answers as one table (ownedSettings.ts withOwnerAnswers). */
+export const withThemeAnswer = (result: ChangeSetDocument | null, operation: ChangeSetOperation | null): ChangeSetDocument => withOwnerAnswers(result, operation ? [operation] : [])

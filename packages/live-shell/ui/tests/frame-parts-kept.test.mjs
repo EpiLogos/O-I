@@ -60,3 +60,14 @@ test('code-reading: the rail and the rack are toggled apart, and each part\'s fo
   assert.doesNotMatch(chord.split("if (part === 'rail')")[1].split('\n')[0], /setDetail|setHiddenSides/, 'it never folds the rack')
   assert.match(app, /checkpointApplicationView\(\{[^}]*\bdetail:[^}]*\bdock,/s, 'the detail area and the rail are kept apart in the frame\'s view')
 })
+
+test('the frame\'s one kept view carries the side you hid: the validator takes clip or device and nothing else; App restores and keeps it', async () => {
+  const {validateCandidateApplicationView} = await import('../src/continuity/applicationView.ts')
+  assert.deepEqual(validateCandidateApplicationView({detailMode: 'clip', hiddenSide: 'device'}), {detailMode: 'clip', hiddenSide: 'device'})
+  assert.equal(validateCandidateApplicationView({hiddenSide: 'mixer'}), null, 'a side the detail area has not is refused')
+  assert.deepEqual(validateCandidateApplicationView({detailMode: 'device'}), {detailMode: 'device'}, 'an older view still decodes')
+  const app = await readFile(new URL('../src/App.tsx', import.meta.url), 'utf8')
+  assert.match(app, /useState<[^>]*>>>\(\(\) => restoredSides\(restored\?\.detailMode \?\? opening\.detailMode, restored\?\.hiddenSide\)\)/, 'a relaunch restores the side you hid')
+  assert.match(app, /setHiddenSides\(restoredSides\(view\?\.detailMode \?\? opening\.detailMode, view\?\.hiddenSide\)\)/, 'each mode\'s frame restores its own')
+  assert.match(app, /hiddenSide: hiddenSideOf\(\{front: detailMode, hidden: hiddenSides\}\)\}\)/, 'the checkpoint keeps it')
+})
