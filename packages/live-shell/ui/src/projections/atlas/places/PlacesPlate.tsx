@@ -41,7 +41,7 @@ import type {LocusType} from '../src/types/field'
 import {disclosureSession} from '../../../../../../../desktop/cradle/src/techne/session'
 import {windowEdgeYear, writeSharedWindow} from '../sharedClock'
 import {atlasScale, subscribeAtlasScale, turnAtlasTo} from './placesHost'
-import {findPlaceRows, placeRows, precisionCounts, relationRows, routeRows, withinRows, type PlaceRow, type RelationRow} from './placesModel'
+import {findPlaceRows, placeRows, precisionCounts, relationRows, routeNext, routeRows, withinRows, type PlaceRow, type RelationRow} from './placesModel'
 import {
   PLACE_KINDS, PLACE_KIND_WAITS, armLanding, armPlaceTool, choosePlaceKind, disarmPlaceTool, draftLine, notePlaceTool, openOfferedEditor, placeKindChoice,
   placeToolState, subscribePlaceTool, unlandArmed, type PlaceKind, type PlaceToolSubject,
@@ -383,7 +383,7 @@ function LocationsSection({handle}: {handle: AtlasHandle | null}) {
     const moving = chosenRow && subject && chosenRow.subject_ref === subject.ref && chosenRow.located && chosenRow.lat !== undefined && chosenRow.lon !== undefined
       ? {place_ref: chosenRow.ref, name: chosenRow.name, lat: chosenRow.lat, lon: chosenRow.lon, precision: chosenRow.precision, ...(chosenRow.evidence ? {evidence: chosenRow.evidence} : {})}
       : undefined
-    const armed: PlaceToolSubject | null = subject ? {...subject, ...(moving ? {moving} : {})} : null
+    const armed: PlaceToolSubject | null = subject ? {...subject, ...(moving ? {moving} : {}), ...(kind === 'route' ? {routeNext: routeNext(standing.places, subject.ref)} : {})} : null
     armPlaceTool(handle ? armed : null)
   }
   const turn = (ref: string) => {
@@ -392,14 +392,15 @@ function LocationsSection({handle}: {handle: AtlasHandle | null}) {
     if (handle) turnAtlasTo(handle, standing.places.find(place => place.ref === ref))
   }
   const line = tool.phase === 'armed'
-    ? `Click the body to place ${tool.subject.moving ? `${tool.subject.moving.name} anew` : 'a point'} for ${tool.subject.title}. Esc stops.`
+    ? `Click the body to place ${tool.subject.moving ? `${tool.subject.moving.name} anew` : kind === 'route' ? `stop ${tool.subject.routeNext ?? 1} of the route` : 'a point'} for ${tool.subject.title}. Esc stops.`
     : tool.phase === 'landing' ? `Click your planet where ${tool.target.name} lands. Esc stops.`
       : tool.phase === 'saving' ? `${tool.target.name}’s landing is with its owner.`
         : tool.phase === 'offered' ? `${draftLine(tool.draft)}. ${tool.notice}` : tool.notice
   // The tool's state in one word, its whole line the status bar's (manual §16.9).
   const toolWord = tool.phase === 'armed' || tool.phase === 'landing' ? 'armed' : tool.phase === 'saving' ? 'saving' : tool.phase === 'offered' ? 'offered' : tool.tone === 'refused' ? 'refused' : 'placed'
   const placeDoes = (kind === 'palace' ? 'A palace stands where its rooms\' subjects are placed: placing a subject a room holds places that room. ' : '')
-    + (subject ? `Place a point for ${subject.title}: the next click on the Earth is offered to its time-and-place editor, never written here.` : 'Choose a subject on the Earth first: a place is declared by a subject.')
+    + (kind === 'route' && subject ? `Place the next stop of ${subject.title}’s route, stop ${routeNext(standing.places, subject.ref)}: the next click is offered to its time-and-place editor as that stop, never written here.`
+      : subject ? `Place a point for ${subject.title}: the next click on the Earth is offered to its time-and-place editor, never written here.` : 'Choose a subject on the Earth first: a place is declared by a subject.')
   const placeRowsShown: PlateRow[] = [
     ...shown.map(row => ({id: row.ref, name: row.name, mark: <PrecisionMark marker={row.marker} title={row.markerNote} />, tag: <StandingTag standing={row.standing} />,
       note: row.located ? row.relation ?? row.kind : 'not on the Earth', dim: !row.located,
@@ -407,9 +408,9 @@ function LocationsSection({handle}: {handle: AtlasHandle | null}) {
     ...field.map(result => ({id: `field:${result.key}`, name: result.label, mark: <Icon name="search" size={10} />, note: 'in the field', does: `${result.label} · ${result.sub}. Press to choose it on the Earth.`})),
   ]
   return <>
-    <PlateRadio inline label="Kind" does="What the locations list: places, declared by their subjects; or palaces, each standing where its rooms' subjects are placed."
+    <PlateRadio inline label="Kind" does="What the next click places and the locations list: places, declared by their subjects; palaces, each standing where its rooms' subjects are placed; or the stops of a subject's route, in order."
       value={kind} options={KINDS.map(entry => ({value: entry.id, label: entry.id, why: entry.why}))}
-      onChange={id => { if (id === 'place' || id === 'palace') choosePlaceKind(id) }} />
+      onChange={id => { if (id === 'place' || id === 'palace' || id === 'route') choosePlaceKind(id) }} />
     <div className="plate-span plate-tool-row">
       <Toggle label="✎ Place" does={subject || tool.phase === 'armed' ? placeDoes : 'Place a point for the subject the Earth has selected.'} on={tool.phase === 'armed'} onChange={press}
         disabled={subject || tool.phase === 'armed' ? undefined : 'Choose a subject on the Earth first: a place is declared by a subject.'} />
@@ -456,7 +457,7 @@ function RelationsSection({handle}: {handle: AtlasHandle | null}) {
     ...within.map(row => ({id: `within:${row.child}>${row.parent}`, name: `${row.childName} in ${row.parentName}`, mark: <Icon name="trav" size={10} />, note: row.relation, disabled: true,
       does: `${row.child} ${row.relation} ${row.parent}: listed, not drawn`})),
     ...routes.map(row => ({id: `route:${row.subject_ref}`, name: row.subject_ref, mark: <Icon name="journey" size={10} />, note: row.walkable ? `walk · ${row.stops} stops` : 'one stop: no walk', disabled: true,
-      does: row.walkable ? `${row.subject_ref} travelled through ${row.stops} places: the Earth walks them in date order when its thread is followed` : `${row.subject_ref} has one located TRAVELLED_TO place: a walk needs two, so none is drawn`})),
+      does: row.walkable ? `${row.subject_ref} travelled through ${row.stops} places: its route is drawn through them in its order, each stop at its place in the order, those with none first by their dates` : `${row.subject_ref} has one located TRAVELLED_TO place: a walk needs two, so none is drawn`})),
   ]
   return <>
     <PlateRadio inline label="Relations" does="Which places the Earth draws: every relation, or the one pressed below. The same filter as the atlas's own."

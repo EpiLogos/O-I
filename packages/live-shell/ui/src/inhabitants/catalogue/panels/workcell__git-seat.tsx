@@ -40,7 +40,7 @@
 // Acts: co.reread (Read now), and the tenders, whose value is the finding's subject: co.release (`seat release`), co.prune (`git worktree
 //   remove`), co.sweep (`git branch -d`). Each is held to run: the page tends only what you approve.
 // A key the owner does not report is absent. The picture then says which reading is missing, and every control and reading draws "—".
-import {Action, Band, Chooser, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, TextField, Tile, Toggle, type LightState, type Option, type RowItem, type Standing, type Tone} from '../../sdk/panel'
+import {Action, Band, Chooser, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, TextField, Tile, Toggle, type LightState, type Option, type RowItem, type Standing, type Tone, unreadRows} from '../../sdk/panel'
 import {assembleCensus, hygieneFindings, registeredSeatPaths, type BoundaryOpSource, type SeatReading, type WorktreeRow} from '../../centralHygieneModel'
 import {NONE, boolOf, clampTo, json, numOf, prefixed, scoped, st, strOf, type DesignedDevice, type Values, type ViewProps} from './design'
 import './workcell__git-seat.css'
@@ -218,7 +218,7 @@ function Reading({label, does, value, tone}: {label: string; does: string; value
 
 const checkRows = (v: V): RowItem[] => {
   const checks = checksOf(v)
-  if (!checks) return [{id: 'none', name: 'No reading', light: 'unknown'}]
+  if (!checks) return unreadRows('No reading of the checks.')
   if (!checks.length) return [{id: 'none', name: 'The remote runs no checks', light: 'dark'}]
   return checks.map((c): RowItem => ({id: c.name, name: c.name, light: c.state === 'running' ? 'unknown' : 'lit', tone: c.state === 'failed' ? 'stall' : 'green',
     does: `${c.name}: ${c.state}. The remote reports it.`}))
@@ -385,7 +385,7 @@ function LaneField({p}: {p: ViewProps}) {
 }
 /** The agents that share the lane: those the claim lists, else those that declared an edit zone in it. */
 const coworkerRows = (g: Seats): RowItem[] => {
-  if (!g.row) return [{id: 'none', name: g.rows ? 'No seat chosen' : 'No reading', light: 'unknown'}]
+  if (!g.row) return g.rows ? [{id: 'none', name: 'No seat chosen', light: 'dark'}] : unreadRows('No reading of the seats.')
   if (g.row.state === 'free') return [{id: 'free', name: 'No lane holds this seat', light: 'dark'}]
   const named = g.row.workers?.length ? g.row.workers : [...new Set([...(g.row.claimedBy ? [g.row.claimedBy] : []), ...[...g.row.zones].sort((a, b) => (b.since ?? 0) - (a.since ?? 0)).map(z => z.actor)])]
   if (!named.length) return [{id: 'none', name: 'No co-worker named', light: 'dark'}]
@@ -592,9 +592,10 @@ function CheckoutRings({p}: {p: ViewProps}) {
 }
 
 const findingRows = (g: Checkouts): RowItem[] => {
-  const refused = RINGS.flatMap((ring): RowItem[] => (g.refusal[ring] ? [{id: `refused:${ring}`, name: `${RING_TITLE[ring]} not read`, light: 'dark', tone: 'stall', why: g.refusal[ring]}] : []))
-  if (!g.anyRead) return refused.length ? refused : [{id: 'none', name: g.elsewhere ? 'No reading from that machine' : 'No reading', light: 'unknown'}]
-  if (!g.found) return [...refused, {id: 'none', name: 'No reading of the findings', light: 'unknown'}]
+  // A ring whose owner refused stands dark in the stall colour under its own name; the refusal goes to the Info line (`why`).
+  const refused = RINGS.flatMap((ring): RowItem[] => (g.refusal[ring] ? [{id: `refused:${ring}`, name: RING_TITLE[ring], light: 'dark', tone: 'stall', why: `Not read: ${g.refusal[ring]}`}] : []))
+  if (!g.anyRead) return refused.length ? refused : unreadRows(g.elsewhere ? 'No reading from that machine.' : 'No reading of the checkouts.')
+  if (!g.found) return unreadRows('No reading of the findings.', undefined, refused)
   if (g.shown.length === 0) return [...refused, {id: 'clear', name: g.faultsOnly ? 'No faults' : 'No findings', light: 'lit', tone: 'green'}]
   return [...refused, ...g.shown.map((f): RowItem => ({id: f.id, name: lastName(f), light: 'lit', tone: f.fault ? 'stall' : 'value', note: KIND_SHORT[f.kind] ?? f.kind,
     does: `${KIND_NAME[f.kind] ?? f.kind}: ${KIND_SAYS[f.kind] ?? f.standing}`}))]
@@ -895,7 +896,7 @@ export const design: DesignedDevice = {
             <Reading label="files" does="Files changed against main." value={files === undefined ? undefined : `${files}`} />
           </Section>
           <Section label="Checks" grow>
-            <Rows label={checks ? `Checks · ${checkText(checks)}` : 'Checks · no reading'} does="The checks the remote runs on the branch. Green passed; hollow still runs; orange failed. The device does not make them up." items={checkRows(v)} size={7} />
+            <Rows label={checks ? `Checks · ${checkText(checks)}` : 'Checks'} does="The checks the remote runs on the branch. Green passed; hollow still runs; orange failed. The device does not make them up." items={checkRows(v)} size={7} />
           </Section>
         </Band>
       </>}

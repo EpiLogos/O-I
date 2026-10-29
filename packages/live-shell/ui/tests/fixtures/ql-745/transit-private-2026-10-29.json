@@ -1,0 +1,386 @@
+{
+ "source": "ql nara transit - --json, QL-MEF dlw/745-readings (lane N: the saved place), built from 14391b6 plus this lane, 29 Oct 2026",
+ "input": {
+  "schema": "ql.sky-request/v1",
+  "epoch": "2026-09-28T12:00:00Z",
+  "timezone": "UTC",
+  "mode": "historical",
+  "perspective": "Topocentric",
+  "zodiac": "Tropical",
+  "ayanamsha": null,
+  "observer": {
+   "reference": "controlled:place:hastings",
+   "longitude_degrees": 0.5735,
+   "latitude_degrees": 50.8543,
+   "altitude_metres": 10.0
+  },
+  "max_age_seconds": 300,
+  "backend_policy": "allow-moshier"
+ },
+ "answer": {
+  "absence_reason": null,
+  "basis": [
+   "earth",
+   "fire",
+   "water",
+   "air"
+  ],
+  "effect_authority_granted": false,
+  "elemental_counts": [
+   0,
+   5,
+   1,
+   4
+  ],
+  "normalization": "equal valid-planet EFWA counts divided by valid count, then L2; native Hamilton component order",
+  "planetary_contributions": [
+   {
+    "body": "Sun",
+    "efwa_component": 3,
+    "longitude_degrees": 185.3848208680688,
+    "native_planet_id": 0,
+    "sign_index": 6,
+    "snapshot_ref": "sha256:f59ac8e8637ea65b6c62a996c6776c11f07bf70de293a344791ed984254d7fe9",
+    "weight": 1
+   },
+   {
+    "body": "Moon",
+    "efwa_component": 1,
+    "longitude_degrees": 27.955776228180635,
+    "native_planet_id": 1,
+    "sign_index": 0,
+    "snapshot_ref": "sha256:f59ac8e8637ea65b6c62a996c6776c11f07bf70de293a344791ed984254d7fe9",
+    "weight": 1
+   },
+   {
+    "body": "Mercury",
+    "efwa_component": 3,
+    "longitude_degrees": 207.3058561697264,
+    "native_planet_id": 2,
+    "sign_index": 6,
+    "snapshot_ref": "sha256:f59ac8e8637ea65b6c62a996c6776c11f07bf70de293a344791ed984254d7fe9",
+    "weight": 1
+   },
+   {
+    "body": "Venus",
+    "efwa_component": 2,
+    "longitude_degrees": 218.06045130019086,
+    "native_planet_id": 3,
+    "sign_index": 7,
+    "snapshot_ref": "sha256:f59ac8e8637ea65b6c62a996c6776c11f07bf70de293a344791ed984254d7fe9",
+    "weight": 1
+   },
+   {
+    "body": "Mars",
+    "efwa_component": 1,
+    "longitude_degrees": 120.22446049733146,
+    "native_planet_id": 4,
+    "sign_index": 4,
+    "snapshot_ref": "sha256:f59ac8e8637ea65b6c62a996c6776c11f07bf70de293a344791ed984254d7fe9",
+    "weight": 1
+   },
+   {
+    "body": "Jupiter",
+    "efwa_component": 1,
+    "longitude_degrees": 139.1392994645437,
+    "native_planet_id": 5,
+    "sign_index": 4,
+    "snapshot_ref": "sha256:f59ac8e8637ea65b6c62a996c6776c11f07bf70de293a344791ed984254d7fe9",
+    "weight": 1
+   },
+   {
+    "body": "Saturn",
+    "efwa_component": 1,
+    "longitude_degrees": 11.773542805317124,
+    "native_planet_id": 6,
+    "sign_index": 0,
+    "snapshot_ref": "sha256:f59ac8e8637ea65b6c62a996c6776c11f07bf70de293a344791ed984254d7fe9",
+    "weight": 1
+   },
+   {
+    "body": "Uranus",
+    "efwa_component": 3,
+    "longitude_degrees": 65.56497743535395,
+    "native_planet_id": 7,
+    "sign_index": 2,
+    "snapshot_ref": "sha256:f59ac8e8637ea65b6c62a996c6776c11f07bf70de293a344791ed984254d7fe9",
+    "weight": 1
+   },
+   {
+    "body": "Neptune",
+    "efwa_component": 1,
+    "longitude_degrees": 2.9310090934912747,
+    "native_planet_id": 8,
+    "sign_index": 0,
+    "snapshot_ref": "sha256:f59ac8e8637ea65b6c62a996c6776c11f07bf70de293a344791ed984254d7fe9",
+    "weight": 1
+   },
+   {
+    "body": "Pluto",
+    "efwa_component": 3,
+    "longitude_degrees": 303.14113831894235,
+    "native_planet_id": 9,
+    "sign_index": 10,
+    "snapshot_ref": "sha256:f59ac8e8637ea65b6c62a996c6776c11f07bf70de293a344791ed984254d7fe9",
+    "weight": 1
+   }
+  ],
+  "q_transit": {
+   "w": 0.0,
+   "x": 0.7715167498104595,
+   "y": 0.1543033499620919,
+   "z": 0.6172133998483676
+  },
+  "schema": "ql.nara-transit/v1",
+  "sky": {
+   "ayanamsha_degrees": null,
+   "bodies": [
+    {
+     "backend": "moshier",
+     "body": "Sun",
+     "data_files": [],
+     "distance_au": 1.0020000755662235,
+     "latitude_degrees": -0.0016228410296759222,
+     "latitude_speed_degrees_per_day": -0.003828276685742451,
+     "longitude_degrees": 185.3848208680688,
+     "longitude_speed_degrees_per_day": 0.9721887813896046,
+     "native_planet_id": 0,
+     "radial_speed_au_per_day": -0.0002717960811970954,
+     "retrograde": false,
+     "returned_flags": 33028,
+     "swiss_body_id": 0
+    },
+    {
+     "backend": "moshier",
+     "body": "Moon",
+     "data_files": [],
+     "distance_au": 0.002513307472998461,
+     "latitude_degrees": 3.6870172046868177,
+     "latitude_speed_degrees_per_day": -0.9529111983530569,
+     "longitude_degrees": 27.955776228180635,
+     "longitude_speed_degrees_per_day": 17.266936278907963,
+     "native_planet_id": 1,
+     "radial_speed_au_per_day": 2.4451128274871614e-05,
+     "retrograde": false,
+     "returned_flags": 33028,
+     "swiss_body_id": 1
+    },
+    {
+     "backend": "moshier",
+     "body": "Mercury",
+     "data_files": [],
+     "distance_au": 1.207052379889933,
+     "latitude_degrees": -1.4456853407092851,
+     "latitude_speed_degrees_per_day": -0.12655141560458105,
+     "longitude_degrees": 207.3058561697264,
+     "longitude_speed_degrees_per_day": 1.3673700031802127,
+     "native_planet_id": 2,
+     "radial_speed_au_per_day": -0.012062983393290594,
+     "retrograde": false,
+     "returned_flags": 33028,
+     "swiss_body_id": 2
+    },
+    {
+     "backend": "moshier",
+     "body": "Venus",
+     "data_files": [],
+     "distance_au": 0.3619346180444412,
+     "latitude_degrees": -6.828728243881513,
+     "latitude_speed_degrees_per_day": -0.11279498157712453,
+     "longitude_degrees": 218.06045130019086,
+     "longitude_speed_degrees_per_day": 0.15667983063849533,
+     "native_planet_id": 3,
+     "radial_speed_au_per_day": -0.005946777452692231,
+     "retrograde": false,
+     "returned_flags": 33028,
+     "swiss_body_id": 3
+    },
+    {
+     "backend": "moshier",
+     "body": "Mars",
+     "data_files": [],
+     "distance_au": 1.6823858918066013,
+     "latitude_degrees": 0.9716502150032029,
+     "latitude_speed_degrees_per_day": 0.014584785087423668,
+     "longitude_degrees": 120.22446049733146,
+     "longitude_speed_degrees_per_day": 0.5853929954469095,
+     "native_planet_id": 4,
+     "radial_speed_au_per_day": -0.006586191412250031,
+     "retrograde": false,
+     "returned_flags": 33028,
+     "swiss_body_id": 4
+    },
+    {
+     "backend": "moshier",
+     "body": "Jupiter",
+     "data_files": [],
+     "distance_au": 5.949425346215994,
+     "latitude_degrees": 0.5904450970121682,
+     "latitude_speed_degrees_per_day": 0.00187615283586684,
+     "longitude_degrees": 139.1392994645437,
+     "longitude_speed_degrees_per_day": 0.18122068851766926,
+     "native_planet_id": 5,
+     "radial_speed_au_per_day": -0.011139023987638552,
+     "retrograde": false,
+     "returned_flags": 33028,
+     "swiss_body_id": 5
+    },
+    {
+     "backend": "moshier",
+     "body": "Saturn",
+     "data_files": [],
+     "distance_au": 8.439973510975443,
+     "latitude_degrees": -2.7103134208806376,
+     "latitude_speed_degrees_per_day": -0.0013357095274280084,
+     "longitude_degrees": 11.773542805317124,
+     "longitude_speed_degrees_per_day": -0.07680659190434369,
+     "native_planet_id": 6,
+     "radial_speed_au_per_day": -0.0018514651145551397,
+     "retrograde": true,
+     "returned_flags": 33028,
+     "swiss_body_id": 6
+    },
+    {
+     "backend": "moshier",
+     "body": "Uranus",
+     "data_files": [],
+     "distance_au": 18.923914285805377,
+     "latitude_degrees": -0.15354816969672658,
+     "latitude_speed_degrees_per_day": -0.0001818916890716782,
+     "longitude_degrees": 65.56497743535395,
+     "longitude_speed_degrees_per_day": -0.014763122280214702,
+     "native_planet_id": 7,
+     "radial_speed_au_per_day": -0.014621346267063018,
+     "retrograde": true,
+     "returned_flags": 33028,
+     "swiss_body_id": 7
+    },
+    {
+     "backend": "moshier",
+     "body": "Neptune",
+     "data_files": [],
+     "distance_au": 28.877356801942355,
+     "latitude_degrees": -1.4199714102829595,
+     "latitude_speed_degrees_per_day": -0.00021799153260282367,
+     "longitude_degrees": 2.9310090934912747,
+     "longitude_speed_degrees_per_day": -0.027387221321895083,
+     "native_planet_id": 8,
+     "radial_speed_au_per_day": 0.0009756121421844455,
+     "retrograde": true,
+     "returned_flags": 33028,
+     "swiss_body_id": 8
+    },
+    {
+     "backend": "moshier",
+     "body": "Pluto",
+     "data_files": [],
+     "distance_au": 35.132071020431546,
+     "latitude_degrees": -4.294468921116441,
+     "latitude_speed_degrees_per_day": 0.0003552876881585121,
+     "longitude_degrees": 303.14113831894235,
+     "longitude_speed_degrees_per_day": -0.007720460075688607,
+     "native_planet_id": 9,
+     "radial_speed_au_per_day": 0.015761328846508604,
+     "retrograde": true,
+     "returned_flags": 33028,
+     "swiss_body_id": 9
+    }
+   ],
+   "epoch_unix_ms": 1790596800000,
+   "epoch_utc": "2026-09-28T12:00:00Z",
+   "house_policy": "not-emitted; factory auxiliary Whole-Sign houses discarded",
+   "julian_day_ut_argument": 2461312.0,
+   "provider": {
+    "adapter_epoch_range_utc": [
+     "1800-01-01T00:00:00Z",
+     "2400-01-01T00:00:00Z"
+    ],
+    "adapter_sha256": "b1c29e68a11052bd152e03b4f437584534cbbbd8fb489f535413073631bac19e",
+    "engine_sha256": "7cf7b3e90ffad5cd1b12965ef088c81b5740794086d7f739cbdba8b50549d01b",
+    "engine_version": "2.10.03",
+    "factory_sha256": "0adda8e06e43d3be42926c70d91e4f9d94da5b2273423d83dfe8abcc673ee380",
+    "name": "Kerykeion",
+    "network": "disabled",
+    "python_version": "3.13.11",
+    "pytz_version": "2026.6",
+    "requested_flags": 33026,
+    "used_data_files": [],
+    "version": "5.7.1",
+    "wrapper": "pyswisseph",
+    "wrapper_version": "2.10.3.2"
+   },
+   "receipt_clock": "host-utc-clock",
+   "receipt_unix_ms": 1793271151952,
+   "receipt_utc": "2026-10-29T10:52:31.952763Z",
+   "reference_frame": "ecliptic-of-date",
+   "request": {
+    "ayanamsha": null,
+    "backend_policy": "allow-moshier",
+    "epoch": "2026-09-28T12:00:00Z",
+    "max_age_seconds": 300,
+    "mode": "historical",
+    "observer": {
+     "altitude_metres": 10.0,
+     "latitude_degrees": 50.8543,
+     "longitude_degrees": 0.5735,
+     "reference": "controlled:place:hastings"
+    },
+    "perspective": "Topocentric",
+    "schema": "ql.sky-request/v1",
+    "timezone": "UTC",
+    "zodiac": "Tropical"
+   },
+   "schema": "ql.sky-snapshot/v1",
+   "scope": "observer-private",
+   "snapshot_ref": "sha256:f59ac8e8637ea65b6c62a996c6776c11f07bf70de293a344791ed984254d7fe9",
+   "source_binding": {
+    "earth_body": {
+     "is_eighth_chakra": false,
+     "outside_planet_array": true,
+     "role": "grounding-anchor",
+     "source_ref": "#2-5-0/1-0"
+    },
+    "epogdoon": [
+     9,
+     8
+    ],
+    "header": "vendor/epi-kernel/reference/include/m2.h",
+    "header_sha256": "7dfcd2906afb4415151d059d2259aa2252dfe74fa74a64a6b843ae5b385ab4c8",
+    "native_table": "M2_PLANET_LUT",
+    "non_sun_operators": 9,
+    "receiving_chakras": 7,
+    "registry_revision": "c8dc7a61731b879ec68915af45217e96488283045d74f779dcf6123569aa98c0",
+    "scope": "#2-5",
+    "standing": "retained-symbolic-model-not-astronomical-measurement",
+    "sun_role": "solar-parent",
+    "transpersonal_meaning": "source-preempted-not-invented",
+    "transpersonal_native_ids": [
+     7,
+     8,
+     9
+    ]
+   },
+   "standing": "calculated-ephemeris-not-observed-sky",
+   "subsolar": {
+    "latitude_degrees": -2.138755249650219,
+    "longitude_degrees": -2.3383674899630478
+   },
+   "time_scale_policy": "UTC-as-UT argument; UT1 correction not supplied"
+  },
+  "snapshot_ref": "sha256:f59ac8e8637ea65b6c62a996c6776c11f07bf70de293a344791ed984254d7fe9",
+  "source": {
+   "blob": "94f491db2b4fa96a436c3ea6c306a3beea3d1d69",
+   "lines": [
+    118,
+    153
+   ],
+   "path": "Body/S/S0/portal-core/src/state.rs",
+   "repository": "EpiLogos/Epi-Logos-C-Experiments",
+   "revision": "daa660cbc1b8c5da83828698665a753852cb0287",
+   "symbol": "update_kairos_full"
+  },
+  "standing": "source-defined dated sky lift; not a chakra receiver weighting policy",
+  "status": "available",
+  "valid_planet_count": 10
+ }
+}

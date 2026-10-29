@@ -127,7 +127,8 @@ test('the dial reports its range and current value to assistive technology', () 
   assert.match(dial, new RegExp(`aria-valuemin="${second.min}"`), 'the kit dial sweeps the parameter\'s own range')
   assert.match(dial, new RegExp(`aria-valuemax="${second.max}"`))
   assert.match(dial, /aria-valuenow="1"/)
-  assert.match(markup, new RegExp(`data-i="${escape(label).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\|Follow · ${object.name}`), 'its scope and the object it acts on, on the status line')
+  // #750: the Info line gives the dial's value after its name, then what it does (its scope and its object).
+  assert.match(markup, new RegExp(`data-i="${escape(label).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\|[^"|]* — Follow · ${object.name}`), 'its scope and the object it acts on, on the status line')
 })
 
 test('your controls page in their section, never scroll, and stand as kit dials, never cards (lane BE)', async () => {

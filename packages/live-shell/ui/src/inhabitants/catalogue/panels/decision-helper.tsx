@@ -179,7 +179,7 @@ function Instruments({p, size, onSelect, selected}: {p: ViewProps; size: number;
     why: i.person ? 'Gate 6 is yours. No helper answers it, not even to abstain.' : i.built === false ? 'Not built yet.' : wanted(p.v, i) && !i.admitted ? 'Asked for. The team has not measured it yet.' : undefined,
     does: `${i.labels.length} labels${i.cf ? ` · ${i.cf}` : ''}`}))
   const request = st(p, 'instruments').disabled ? undefined : (id: string, on: boolean) => p.set(`allow:${id}`, on)
-  return <Rows label={all ? 'Instruments' : 'Instruments · no reading'} items={items} onRequest={request} onSelect={onSelect} selected={selected}
+  return <Rows label="Instruments" items={all ? items : undefined} why="No reading of the instruments." onRequest={request} onSelect={onSelect} selected={selected}
     does="The questions this team may put to the helper. The square is your request; the light is the team's measured admission." size={size} page={page} onPage={setPage} />
 }
 

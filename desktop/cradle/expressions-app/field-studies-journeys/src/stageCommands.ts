@@ -177,7 +177,8 @@ export function stageLiveRefusal(target: unknown, value: unknown): string | null
   if (value < binding.hardMin || value > binding.hardMax) return `${binding.label} must be between ${binding.hardMin} and ${binding.hardMax}.`;
   return null;
 }
-/** The Live instrument's edits: the owner's determinant edits (the scene's lens, context frame, harmonic basis and transcription) and its
+/** The Live instrument's edits: the owner's determinant edits (the scene's lens, context frame, harmonic basis and transcription), the
+ * body's Damping (a Q factor, manual §21.2, which the frame lowers to the scene's decay rate: nativeField.ts lowerQDamping) and its
  * presentation writes (sound, tick cadence, level, scale, the torus's effects chain and one parameter of one of its four effects, manual
  * §21.5). Each runs
  * the same controller operation the Studio's native controls run. The cadence presets and the level and scale ranges are the Studio's
@@ -186,6 +187,8 @@ export function stageLiveRefusal(target: unknown, value: unknown): string | null
 export const STAGE_INSTRUMENT_CADENCES = ['hold', 1, 12] as const;
 export const STAGE_INSTRUMENT_LEVEL = {min: 0, max: 4} as const;
 export const STAGE_INSTRUMENT_SCALE_MAX = 1000000;
+/** The Torus's Damping, a Q factor (DLW manual §21.2: "Damping | Q factor 0.1 to 40"; QL's body constants, `ql.m2-body-constants/v1`). */
+export const STAGE_INSTRUMENT_Q = {min: 0.1, max: 40} as const;
 export type InstrumentEdit =
   | {kind: 'lens'; lens12: number}
   | {kind: 'context-frame'; context_frame: number}
@@ -195,6 +198,7 @@ export type InstrumentEdit =
   | {kind: 'cadence'; rate: (typeof STAGE_INSTRUMENT_CADENCES)[number]}
   | {kind: 'level'; value: number}
   | {kind: 'scale'; units_per_metre: number}
+  | {kind: 'damping'; q_factor: number}
   | {kind: 'follow-scale'}
   | {kind: 'effect'; effect: PresentationEffect; key: string; value: EffectValue}
   | {kind: 'effect-chain'; chain: PresentationEffect[]};
@@ -217,6 +221,7 @@ export function readInstrumentEdit(raw: unknown): InstrumentEdit | null {
     case 'cadence': return closed(raw, ['kind', 'rate']) && (raw.rate === 'hold' || raw.rate === 1 || raw.rate === 12) ? {kind: 'cadence', rate: raw.rate} : null;
     case 'level': return closed(raw, ['kind', 'value']) && typeof raw.value === 'number' && Number.isFinite(raw.value) && raw.value >= STAGE_INSTRUMENT_LEVEL.min && raw.value <= STAGE_INSTRUMENT_LEVEL.max ? {kind: 'level', value: raw.value} : null;
     case 'scale': return closed(raw, ['kind', 'units_per_metre']) && typeof raw.units_per_metre === 'number' && Number.isFinite(raw.units_per_metre) && raw.units_per_metre > 0 && raw.units_per_metre <= STAGE_INSTRUMENT_SCALE_MAX ? {kind: 'scale', units_per_metre: raw.units_per_metre} : null;
+    case 'damping': return closed(raw, ['kind', 'q_factor']) && typeof raw.q_factor === 'number' && Number.isFinite(raw.q_factor) && raw.q_factor >= STAGE_INSTRUMENT_Q.min && raw.q_factor <= STAGE_INSTRUMENT_Q.max ? {kind: 'damping', q_factor: raw.q_factor} : null;
     case 'follow-scale': return closed(raw, ['kind']) ? {kind: 'follow-scale'} : null;
     case 'effect-chain': return closed(raw, ['kind', 'chain']) && effectChainRefusal(raw.chain) === null ? {kind: 'effect-chain', chain: [...(raw.chain as PresentationEffect[])]} : null;
     case 'effect': { const operands = closed(raw, ['kind', 'effect', 'key', 'value']) ? readEffectOperands(raw) : null; return operands ? {kind: 'effect', ...operands} : null; }

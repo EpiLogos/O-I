@@ -21,7 +21,7 @@
 // in the defaults below. A reading that the owner does not report is never drawn: the well names it ("No reading of the places"). The
 // filters that only narrow the globe (scope, whole field, relation) narrow when they are reported and leave it whole when they are not.
 import {useMemo} from 'react'
-import {Action, Band, Chooser, Dial, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, Tile, Toggle, type LightState, type RowItem, type Standing} from '../../sdk/panel'
+import {Action, Band, Chooser, Dial, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, Tile, Toggle, type LightState, type RowItem, type Standing, unreadRows} from '../../sdk/panel'
 import {NONE, boolOf, clampTo, json, numOf, shown, st, strOf, type DesignedDevice, type ViewProps} from './design'
 import {WORLD_BODY_GENERATOR, WORLD_BODY_GENERATOR_VERSION, bodyDisc, isWorldBody, parseWorldBody, shoreOf, type BodyLook, type WorldBodyRecord} from '../../../projections/atlas/src/globe/body'
 import {discPngUrl} from '../../../projections/atlas/body/discPng'
@@ -481,7 +481,7 @@ const dayNight = (v: V) => { const sun = sunRead(v); return sun === undefined ? 
 /** One row for each place, its light the window's reading of it (hollow while the window is not reported). */
 const placeRows = (v: V): RowItem[] => {
   const places = placesOf(v), occasion = occasionOf(v)
-  if (!places) return [{id: 'none', name: 'No reading of the places', light: 'unknown'}]
+  if (!places) return unreadRows('No reading of the places.')
   return places.map(pl => { const a = presenceOf(v, occasion, pl); return {id: pl.id, name: pl.name, light: a === undefined ? 'unknown' : a > .03 ? 'lit' : 'dark', tone: 'value', note: yearText(pl.year)} })
 }
 
@@ -582,7 +582,7 @@ const bodyDial = (p: ViewProps, key: string, label: string, does: string, def: n
   <Dial {...stand(p, key, bodyWhy(p.v))} key={key} label={label} does={does} value={numOf(p.v, key) ?? NaN} def={def} scale={scale} format={format} onChange={x => p.set(key, Math.round(x * 100) / 100)} />
 const locationRows = (v: V): RowItem[] => {
   const all = locationsOf(v), body = bodyOf(v)
-  if (!all) return [{id: 'none', name: 'No reading of the locations', light: 'unknown'}]
+  if (!all) return unreadRows('No reading of the locations.')
   return all.map(at => { const d = body ? shoreOf(body.record, at.lat, at.lon) : undefined; return {id: at.id, name: at.name, light: d ? (d.shore ? 'dark' : 'lit') : 'unknown', tone: 'value', note: d?.shore ? 'shore' : at.kind ?? 'place'} })
 }
 

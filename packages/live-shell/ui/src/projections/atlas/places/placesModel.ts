@@ -168,6 +168,13 @@ export function routeRows(places: readonly SuitePlace[], bodyRef?: string): Rout
   return [...bySubject].map(([subject_ref, stops]) => ({subject_ref, stops, walkable: stops >= 2}));
 }
 
+/** [O-I #746] The place the next stop of a subject's route takes in its order: after the subject's last stop of that relation, wherever its stops
+ * stand (the owner keeps one order per subject and relation, AIKit PlaceFacet.sequence); 1 for a subject with none. What the World reads; the
+ * editor writes it again from the subject's own facts (knowledge/WikiFactsEditor.tsx stopPlace). Pure. */
+export function routeNext(places: readonly SuitePlace[], subjectRef: string, relation: string = MOVEMENT_RELATION): number {
+  return Math.max(0, ...places.flatMap(place => place.subject_ref === subjectRef && place.relation === relation && typeof place.sequence === 'number' ? [place.sequence] : [])) + 1;
+}
+
 /** The five scales, as the manual names them (§17.2 "The five scales": Field · System · Body · Region · Place; T-WORLDS §5 W3 "Scales
  * follow the manual"), in their order from the farthest. */
 export const ATLAS_SCALES = ['field', 'system', 'body', 'region', 'place'] as const;

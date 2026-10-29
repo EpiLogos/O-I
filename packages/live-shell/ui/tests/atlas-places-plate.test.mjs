@@ -167,7 +167,8 @@ test('the atlas header stands down in the pane, and what it held stands on the p
   assert.match(out, /<p class="plate-line" role="status" data-i="Theory" title="Theory">Theory<\/p>/, 'the lens\'s line')
   assert.match(out, /title="12 in the Red Book">12 in the Red Book<button type="button">Show the whole field<\/button>/, 'the scope and its toggle')
   assert.match(out, /aria-pressed="false"[^>]*>Open Theory<\/button>/, 'a row the lens reads off stands dark')
-  assert.match(out, /data-i="Jung(’|&#x27;)s theory\|The theory sheet"><button type="button" class="dp-toggle" data-tone="accent" aria-pressed="true">Jung(’|&#x27;)s theory<\/button>/, 'a pressed row is lit, its description its status words')
+  // #750: a control's Info line carries its value after its name (On), then its words.
+  assert.match(out, /data-i="Jung(’|&#x27;)s theory\|On — The theory sheet"><button type="button" class="dp-toggle" data-tone="accent" aria-pressed="true">Jung(’|&#x27;)s theory<\/button>/, 'a pressed row is lit, its description its status words')
   assert.match(out, /class="dp-action" disabled="">Dynamics<\/button>/, 'a disabled row stays disabled')
   assert.equal(html(createElement(LensReadings, {handle: null})), '', 'no Earth mounted: nothing to stand')
 })

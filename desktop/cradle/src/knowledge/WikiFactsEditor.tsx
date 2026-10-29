@@ -17,8 +17,10 @@ const message=(error:unknown)=>error instanceof Error?error.message:String(error
  * failed read keeps it for the retry. Never saved. A later open of the same subject replaces it. */
 export const CONSTELLATION_ROUTE_TTL_MS=10*60*1000;
 /** A draft from the map, and, for a place on a body other than the Earth (T-WORLDS §5 W3: a location on your own body), the body it
- * stands on and the name the World suggests from the body's seed (projections/atlas/places/placeTool.ts). Absent: an Earth place. */
-export type MapPlaceDraft=PlaceDraft&{body_ref?:string;name?:string};
+ * stands on and the name the World suggests from the body's seed (projections/atlas/places/placeTool.ts). Absent: an Earth place.
+ * A stop of a route (O-I #746) carries the relation it is a stop of and its place in the order the map read (AIKit PlaceFacet.relation and
+ * .sequence); absent, the draft is a place and no stop. */
+export type MapPlaceDraft=PlaceDraft&{body_ref?:string;name?:string;relation?:string;sequence?:number};
 export interface ConstellationRoute {subject:string;draft?:MapPlaceDraft;offered_at:number}
 const constellationRoutes=new Map<string,ConstellationRoute>();
 /** The constellation a time/place editor opened through, so its save answer can return to whoever opened it. */
@@ -47,11 +49,19 @@ export function consumeConstellationRoute(subject:string):void{constellationRout
 /** The subject's editor left: its unconsumed route is released and can never apply later. */
 export function dropConstellationRoute(subject:string):void{constellationRoutes.delete(subject);}
 const coordinateLabel=(lat:number,lon:number)=>`${lat.toFixed(5)}, ${lon.toFixed(5)}`;
+/** A new stop's place in its relation's route, from the facts this editor read: the place the map asked for while no stop of that route holds
+ * it, else the place after the route's last stop. Each stop of one route holds its own place (the owner refuses two at one). Pure. */
+export function stopPlace(places:readonly TechnePlaceFacet[],relation:string,asked?:number):number{
+ const held=places.filter(fact=>fact.relation===relation&&typeof fact.sequence==='number').map(fact=>fact.sequence as number);
+ return asked!==undefined&&Number.isSafeInteger(asked)&&asked>=1&&!held.includes(asked)?asked:Math.max(0,...held)+1;
+}
 /** The place facet's geometry and precision start from the map's draft. The source basis is left empty: it stays required. Pure. */
 export function applyPlaceDraft(values:TimePlaceValues,draft:MapPlaceDraft):{values:TimePlaceValues;notice:string}{
  const places=values.places??[],at=[draft.lon,draft.lat];
  const moved=draft.from?` moved from ${coordinateLabel(draft.from.lat,draft.from.lon)}`:'';
- const notice=`Draft from the map: ${draft.precision} point at ${coordinateLabel(draft.lat,draft.lon)}${draft.body_ref?` on ${draft.body_ref}`:''}${moved}. Not saved. Choose and read an evidence source for this place, then Save time and place.`;
+ // a stop of a route is written in its route: the relation it is a stop of and its place in the order, after what the subject's facts hold
+ const stop=draft.relation&&!draft.place_ref?{relation:draft.relation,sequence:stopPlace(places,draft.relation,draft.sequence)}:undefined;
+ const notice=`Draft from the map: ${draft.precision} point at ${coordinateLabel(draft.lat,draft.lon)}${draft.body_ref?` on ${draft.body_ref}`:''}${moved}${stop?`, stop ${stop.sequence} of its ${stop.relation} route`:''}. Not saved. Choose and read an evidence source for this place, then Save time and place.`;
  const index=draft.place_ref?places.findIndex(fact=>fact.place_ref===draft.place_ref):-1;
  if(index>=0){
   const fact=places[index];
@@ -64,8 +74,23 @@ export function applyPlaceDraft(values:TimePlaceValues,draft:MapPlaceDraft):{val
  }
  // A move names a marker this constellation does not hold: there is nothing to move, so nothing is drafted.
  if(draft.from&&draft.place_ref)return {values,notice:'The moved place is not in this constellation, so the map draft was not applied.'};
- const fact={place_ref:draft.place_ref??newRef('wiki:place'),precision:draft.precision,identity:{names:[{name:draft.name??''}]},geometry:{type:'point',coordinates:at},...(draft.body_ref?{body_ref:draft.body_ref}:{})} as TechnePlaceFacet;
+ const fact={place_ref:draft.place_ref??newRef('wiki:place'),precision:draft.precision,identity:{names:[{name:draft.name??''}]},geometry:{type:'point',coordinates:at},...(draft.body_ref?{body_ref:draft.body_ref}:{}),...(stop??{})} as TechnePlaceFacet;
  return {values:{...values,places:[...places,fact]},notice};
+}
+/** O-I #746: what each place fact is to its subject, as the place form lists it: the relation verbatim and, for a stop of a route, its place in
+ * the order, under the number the form gives the fact (TimePlaceFields' "Place fact N"). A fact with no relation says nothing. Pure. */
+export function placeStandings(places:readonly TechnePlaceFacet[]):{fact:number;text:string}[]{
+ return places.flatMap((fact,index)=>{
+  if(!fact.relation)return [];
+  const name=fact.identity?.names?.find(entry=>entry.name)?.name;
+  const stop=typeof fact.sequence==='number'?`, stop ${fact.sequence} of its route`:'';
+  return [{fact:index+1,text:`Place fact ${index+1}${name?`, ${name}`:''}: ${fact.relation}${stop}`}];
+ });
+}
+/** The place facts' relations and places in the order, beside the form (the form edits the point; the relation and the order are the map's). */
+export function PlaceStandings({places}:{places:readonly TechnePlaceFacet[]}){
+ const lines=placeStandings(places);
+ return lines.length?<ul className="wiki-construction-stops" aria-label="What each place is to this subject">{lines.map(line=><li key={line.fact}>{line.text}</li>)}</ul>:null;
 }
 const reportRoute=(route:PlaceRoute|undefined,outcome:{kind:'saved'}|{kind:'refused';reason:string})=>{if(route&&typeof window!=='undefined')window.dispatchEvent(new CustomEvent('oi:constellation-result',{detail:{target:route,...outcome}}));};
 /** A routed save answers the map exactly once: a refusal when the save did not complete, a saved answer when it did.
@@ -148,6 +173,7 @@ export function WikiFactsProvider({transport,project,checkpoints,onCheckpoint,on
   <header><h2>Time and place{held?held.basis.target.kind==='node'?' · this node':' · this whole constellation':''}</h2><button type="button" className="oi-tool" data-facts-close aria-label="Close time and place editor" onClick={close}>×</button></header>
   <p>Closing keeps these inputs and any pending save. Only Save changes the native Wiki.</p>
   {held&&<><p>{held.basis.title} · saved revision {held.basis.revision}</p><fieldset disabled={!!busy||!!held.pending}><TimePlaceFields identity={factsKey(held.basis.target)} value={held.draft} basis={held.basis.values} transport={transport} summary="Time and place values" description={held.basis.target.kind==='node'?'These facts belong to this native node wherever it is read. Participation facts remain separate.':'These facts belong to the whole native frame. They do not change its members or their participation facts.'} onChange={draft=>{if(store({...held,draft})){setError('');setNotice('');}}}/></fieldset>
+   <PlaceStandings places={held.draft.places??[]}/>
    <div className="wiki-construction-toolbar"><button className="oi-action" disabled={!!busy} onClick={()=>void save()}>{held.pending?'Retry exact save':'Save time and place'}</button><button className="oi-action" disabled={!!busy} onClick={()=>void inspect()}>Inspect saved state</button></div>
    {held.pending&&<p>The exact pending operation is retained. Inspect before changing or retrying it.</p>}
    {observed&&(!held.pending||!observed.operations[held.pending.operation_ref])&&<button className="oi-action" disabled={!!busy} onClick={rebase}>Use current revision, keep my inputs</button>}

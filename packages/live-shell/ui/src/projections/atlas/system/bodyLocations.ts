@@ -10,7 +10,8 @@
 //   - a world of today's set: at the landing its own body record writes, or, until it is landed, at the spot its ref names, said so
 //     (system/systemModel.ts landingLocations), written by that world's BodySet when its person lands it.
 import {parseTimestamp} from '../../../../../../../desktop/cradle/src/techne/m0m5/timeline/scale'
-import type {TechnePlacePrecision} from '../../../../../../../desktop/cradle/src/techne/contract'
+import type {TechnePlaceFacet, TechnePlacePrecision} from '../../../../../../../desktop/cradle/src/techne/contract'
+import {MOVEMENT_RELATION, routeModel} from '../../../../../../../desktop/cradle/src/techne/m0m5/place/world'
 import {firstBody, type WorldBodyState} from '../body/worldBody'
 import {locusOfRelation} from '../provider/suiteReading'
 import type {SuitePlace} from '../provider/suiteStanding'
@@ -84,6 +85,56 @@ export function yourLocations(state: WorldBodyState, places: readonly SuitePlace
     ? [{id: place.ref, name: place.name, lat: place.on_body.lat, lon: place.on_body.lon, kind: 'place', locus: locusOfRelation(place.relation), precision: place.precision}] : [])
   const landed = system ? landingLocations(system) : []
   return {rows: [...own.filter((row, index) => own.findIndex(other => other.id === row.id) === index), ...landed]}
+}
+
+/** [O-I #746] A route as the globe draws it on one body: a subject's stops there, in the route's order, each at its point on that body. */
+export interface DrawnRoute {
+  readonly subject_ref: string
+  readonly stops: readonly {readonly ref: string; readonly name: string; readonly lat: number; readonly lon: number}[]
+}
+
+/** The routes on the body the globe draws (manual §17.2: a route's stops "joined in order"): each subject's TRAVELLED_TO places valid in the window
+ * that stand on that body (`bodyRef`, its point on it) or, with none named, on the Earth (a located place naming no body), walked in the order the
+ * route model gives them (techne/m0m5/place/world.ts routeModel: the place each stop holds in the order, a stop with none first by its dates). A
+ * subject with fewer than two stops there has no route to draw. Nothing is stored; every point is the owner's. Pure. */
+export function routesOn(places: readonly SuitePlace[], bodyRef: string | null, window: PlaceWindow | null = null): DrawnRoute[] {
+  const bySubject = new Map<string, {readonly place: SuitePlace; readonly lat: number; readonly lon: number}[]>()
+  for (const place of places) {
+    if (place.relation !== MOVEMENT_RELATION || !place.subject_ref || !validIn(place, window)) continue
+    const at = bodyRef === null
+      ? (!place.body_ref && place.located && place.lat !== undefined && place.lon !== undefined ? {lat: place.lat, lon: place.lon} : null)
+      : (place.body_ref === bodyRef ? place.on_body ?? null : null)
+    if (!at) continue
+    const list = bySubject.get(place.subject_ref) ?? []
+    if (!list.some(entry => entry.place.ref === place.ref)) list.push({place, lat: at.lat, lon: at.lon})
+    bySubject.set(place.subject_ref, list)
+  }
+  return [...bySubject].flatMap(([subject_ref, stops]): DrawnRoute[] => {
+    const facets = stops.map(({place, lat, lon}): TechnePlaceFacet => ({place_ref: place.ref, relation: place.relation, precision: place.precision,
+      geometry: {type: 'point', coordinates: [lon, lat]}, ...(place.valid_from ? {valid_from: place.valid_from} : {}), ...(place.sequence !== undefined ? {sequence: place.sequence} : {})}))
+    const route = routeModel(facets, null)
+    if (!route) return []
+    return [{subject_ref, stops: route.stops.map(stop => {
+      const {place, lat, lon} = stops.find(entry => entry.place.ref === stop.place_ref)!
+      return {ref: place.ref, name: place.name, lat, lon}
+    })}]
+  })
+}
+
+/** [O-I #746] A followed route draws once: as its route, through its stops in their order (the overlay's line, routesOn), and not also as the
+ * ported chronology through the same stops in date order (src/globe/chronology.ts, which the controller builds for the focused thread). Given the
+ * chronology the controller asks the globe to draw (its steps' directions and slider positions, in its order), the routes on the Earth, and the
+ * subject the thread follows (null when the thread spans several subjects, or none), the steps kept are those that are no stop of that subject's
+ * route; the rest of the chronology stands as the port drew it. A chronology left with fewer than two steps is none. Pure. */
+export function chronologyBesideRoutes(dirs: readonly (readonly number[])[], nodeU: readonly number[], routes: readonly DrawnRoute[], subject: string | null): {dirs: number[][]; nodeU: number[]} {
+  const route = subject ? routes.find(entry => entry.subject_ref === subject) : undefined
+  const stops = (route?.stops ?? []).map(stop => {
+    const la = (stop.lat * Math.PI) / 180, lo = (stop.lon * Math.PI) / 180
+    return [Math.cos(la) * Math.cos(lo), Math.sin(la), -Math.cos(la) * Math.sin(lo)]
+  })
+  const isStop = (dir: readonly number[]) => stops.some(stop => stop[0] * dir[0] + stop[1] * dir[1] + stop[2] * dir[2] > 1 - 1e-9)
+  const kept = dirs.map((dir, index) => ({dir: [...dir], u: nodeU[index]})).filter(step => !isStop(step.dir))
+  return kept.length >= 2 ? {dirs: kept.map(step => step.dir), nodeU: kept.map(step => step.u)} : {dirs: [], nodeU: []}
 }
 
 /** A location on your body anchored to a real place on Earth (manual §17.2: "Anchor lines run to real places on Earth"). Read, never written. */

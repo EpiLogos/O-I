@@ -4,7 +4,7 @@
 // Scene.transition) and the engine's transition law (src/engine/transitionMath.ts). The fixture is the frame's own "Field studies"
 // journey (model.ts fieldStudies): eight scenes of 14 s, joined by 1.5 s crossfades, looping.
 import {useState, type CSSProperties} from 'react'
-import {Action, Band, Chooser, Dial, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, TextField, Tile, Toggle, type LightState, type RowItem, type Standing} from '../../sdk/panel'
+import {Action, Band, Chooser, Dial, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, TextField, Tile, Toggle, type LightState, type RowItem, type Standing, unreadRows} from '../../sdk/panel'
 import {NONE, boolOf, clampTo, has, json, numOf, shown, st, strOf, type DesignedDevice, type Value, type ViewProps} from './design'
 import './techne__journey.css'
 
@@ -480,7 +480,7 @@ function JourneyWhole({p}: {p: ViewProps}) {
   const limit = limitOf(cur), tr = cur?.tr
   const takesRead = quantity(p.v, 'takes'), take = strOf(p.v, 'take')
   const takes = takesRead !== undefined ? Math.max(1, Math.round(takesRead)) : Math.max(0, Math.round(Number(take)) || 0)
-  const rows: RowItem[] = n === 0 ? [{id: 'none', name: 'No reading of the stops', light: 'unknown'}] : m.S.map(s => ({
+  const rows: RowItem[] = n === 0 ? unreadRows('No reading of the stops.') : m.S.map(s => ({
     id: String(s.i), name: `${s.i + 1} · ${s.name}`, light: at === undefined ? 'unknown' : s.i === at ? 'lit' : 'dark', tone: 'accent', note: s.hold === undefined ? NONE : secs(s.hold),
     meter: <span className="jn-row-arrival">{s.i === 0 ? (wraps(p.v) === true ? 'wrap' : NONE) : arrivalShort(s)}</span>}))
   return <Panel title="Journey" view="whole" {...head(p)} pages={[{id: 'walk', label: 'Walk'}, {id: 'seams', label: 'Transitions'}]} page={p.page} onPage={p.setPage}>

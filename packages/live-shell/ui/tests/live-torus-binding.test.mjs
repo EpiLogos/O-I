@@ -96,8 +96,9 @@ test('every key of the design is the owner\'s reading or is absent with its reas
 
 test('a key the owner does not take is disabled with its reason; while the instrument is not following, every key is', () => {
   const live = model.torusDesignBinding(state())
-  for (const key of ['level', 'sound', 'cadence', 'scale', 'lens', 'context-frame', 'harmonic-basis', 'm3-transcription']) assert.equal(live.writes(key), true, `${key} is the owner's to change`)
-  for (const key of ['pulseMix', 'drive', 'damping', 'release', 'notes', 'meter', 'view', 'receiver']) {
+  // Damping is the body's Q, taken through the stage channel's damping edit (O-I #745 lane N; ql-745-torus-body.test.mjs).
+  for (const key of ['level', 'sound', 'cadence', 'scale', 'lens', 'context-frame', 'harmonic-basis', 'm3-transcription', 'damping']) assert.equal(live.writes(key), true, `${key} is the owner's to change`)
+  for (const key of ['pulseMix', 'drive', 'release', 'notes', 'meter', 'view', 'receiver']) {
     assert.equal(live.writes(key), false, `${key} has no owner`)
     assert.equal(live.standing[key].disabled, model.TORUS_ABSENT[key])
   }
@@ -347,7 +348,7 @@ test('the Torus\'s tattva is the live scene\'s M2 condition, by the map\'s name 
   assert.deepEqual([binding.values['tattva.name'], binding.values['tattva.fibre']], ['Prithvi Tattva', 'earth'])
   assert.equal(binding.writes('tattva.name'), false, 'a reading')
   assert.equal(binding.standing['tattva.fibre'].disabled, names.FIBRE_READ)
-  assert.match(binding.standing['body.source'].disabled, /native field takes no Strike, Damping or Agitation through the stage channel/)
+  assert.match(binding.standing['body.source'].disabled, /M2's body constants/, 'the body source waits on M2\'s table, here unread')
   const none = model.torusDesignBinding(state(), undefined, {}, null, undefined, null, {}, null, null)
   assert.equal(none.values['tattva.name'], undefined)
   assert.equal(none.standing['tattva.name'].disabled, names.NO_CONDITION)

@@ -87,7 +87,7 @@ test('the plan takes the design\'s changes and refuses in words; Note is refused
   assert.throws(() => sm.skyModulationChanges(plan, targets, [{key: 'scope:r1', value: 'note'}]), /nothing moves per note/)
   assert.throws(() => sm.skyModulationChanges(plan, targets, [{key: 'amount:r1', value: 140}]), /−100 to 100/)
   assert.throws(() => sm.skyModulationChanges(plan, targets, [{key: 'routes', value: JSON.stringify([{id: 'r2', planet: 'Mars', target: 'live:reverb/mix'}])}]), /no parameter on the part's chain/)
-  assert.throws(() => sm.skyModulationChanges(plan, targets, [{key: 'havePlace', value: true}]), /No place reaches the Sky: .*missing op: the world's declared place/)
+  assert.throws(() => sm.skyModulationChanges(plan, targets, [{key: 'havePlace', value: true}]), /No place has reached the Sky yet: it reads your world's declared place/)
   assert.equal(sm.skyModulationChanges(plan, targets, [{key: 'light', value: 'dark'}]).on, false)
 })
 

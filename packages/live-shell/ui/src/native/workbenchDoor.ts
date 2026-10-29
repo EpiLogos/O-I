@@ -9,7 +9,9 @@ export interface WorkbenchOpener {
   id: string
   title: string
   hint: string
-  open(): void
+  /** Open it. An opener that makes something (the New… grid's forms, your practice's pages) answers with what it made, in words, or
+   * refuses in the owner's words; one that only opens a surface answers nothing. */
+  open(): void | Promise<string>
 }
 
 let openers: readonly WorkbenchOpener[] = []

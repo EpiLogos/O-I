@@ -6,7 +6,12 @@
 // "sources") — the root register's ground the window already holds once (central/devices/useCentralReadings.ts
 // useCentralGroundAnswer). A receipt is a change an agent made: the change names its actor kind `agent` or its agent session.
 // Read 16 Oct 2026 (scratch lane-bf3/shapes/horizon-*.json): the root horizon holds 830 changes (human, native-operation,
-// native-service, unattributed) and O-I's 204 — none attributed to an agent, so the Ledger reads an empty list, truly. A horizon
+// native-service, unattributed) and O-I's 204 — none attributed to an agent, so the Ledger reads an empty list, truly. Why none (O-I #746):
+// an agent writes a page through Central's ordinary doors (central.files.write and create, which the kernel's instance_commission calls with
+// the session, desktop/cradle/kernel/src/commission.rs; and central.flow.append, which AIKit's encounter owner calls for the session), and
+// those kept the session in the file's own history while the horizon met the write later and named no one. Central now carries a write's
+// declared attribution, its agent_session_ref among it, onto the horizon row of a page of your world's Flows carrier (ctrl/src/
+// file_mutation.rs FlowsHorizon). A file an agent's own tools write outside those doors is still met later, unattributed. A horizon
 // change is a write that landed (the proposals that wait, are accepted or rejected are Central's source returns,
 // projectcentral.source.returns, which no kernel op runs: the kernel's client has it, flow.rs:780 source_returns, and nothing calls it).
 // The task, the run, turns, tokens and spend are no part of a change.

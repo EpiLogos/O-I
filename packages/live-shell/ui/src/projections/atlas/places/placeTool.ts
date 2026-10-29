@@ -26,6 +26,7 @@ import {
   prefillFromClick, validatePlaceDraft,
 } from '../../../../../../../desktop/cradle/src/techne/m0m5/place/authoring';
 import type {MapPlaceDraft} from '../../../../../../../desktop/cradle/src/knowledge/WikiFactsEditor';
+import {MOVEMENT_RELATION} from '../../../../../../../desktop/cradle/src/techne/m0m5/place/world';
 import {suggestName} from '../src/globe/body';
 
 /** [T-WORLDS §5 W3] The draft a click offers: the vendor's own (validated as it always was), and, on a body other than the Earth, the
@@ -60,6 +61,8 @@ export interface PlaceToolSubject {
   readonly ref: string;
   readonly title: string;
   readonly moving?: PlaceToolMove;
+  /** [O-I #746] the place the subject's next route stop takes in its order, as the World reads its stops (placesModel.ts routeNext); 1 when absent */
+  readonly routeNext?: number;
 }
 
 export type PlaceToolTone = 'said' | 'refused' | 'saved'
@@ -116,8 +119,10 @@ export function bindPlaceOwner(next: PlaceOwner | null): void {
 //
 // The view's own choice, as the body choice is (body/worldBody.ts chooseBody): it moves no owner state, and the M4 plate's Kind and the
 // World device's Locations read and set the same one. A place and a palace are placed by the tool (a palace stands where its rooms'
-// subjects are placed); a portal and a route have no owner that makes them from a click (a portal waits for the owner of visiting another
-// world; a route's relation and order are not in the place facet), and the tool says so, and what it waits for, when it is armed for one.
+// subjects are placed). A route is placed stop by stop (O-I #746): the place facet carries the relation a stop is a stop of and its place
+// in the order (AIKit PlaceFacet.relation and .sequence), so a click's draft is the subject's next TRAVELLED_TO stop, which the editor
+// writes on the subject's PlaceSet. A portal has no owner that makes it from a click: it waits for the owner of visiting another world
+// (WORLD-INHABITATION-V1, contracted and not built), and the tool says so when it is armed for one.
 
 export const PLACE_KINDS = ['place', 'palace', 'portal', 'route'] as const;
 export type PlaceKind = (typeof PLACE_KINDS)[number];
@@ -125,8 +130,8 @@ export type PlaceKind = (typeof PLACE_KINDS)[number];
 export const PLACE_KIND_WAITS: Readonly<Record<PlaceKind, string | null>> = {
   place: null,
   palace: null,
-  portal: 'A portal leads through to another world, and it waits for the owner of visiting another world (the shared field’s federation), which no owner opens yet: a click places none.',
-  route: 'A route is the walk of a subject’s TRAVELLED_TO places, ordered by their dates. A place carries no relation and no order in the owner’s record (AIKit’s place facet), so a click cannot make a stop of one: place each stop as a place, and relate it with TRAVELLED_TO in the subject’s relations in the Wiki, which is where the Earth reads the walk from.',
+  portal: 'A portal leads through to another world, and it waits for the owner of visiting another world in the shared field’s federation (the visiting owner WORLD-INHABITATION-V1 contracts, not built yet): a click places none.',
+  route: null,
 };
 let kind: PlaceKind = 'place';
 export const placeKindChoice = (): PlaceKind => kind;
@@ -167,9 +172,18 @@ export function armLanding(target: LandingTarget | null): void {
 /** The draft a click at (lat, lon) offers for the armed subject, or the reason it offers none: on the body the globe draws, the body it
  * stands on and the name the World suggests from its seed ride with it. Pure. */
 export function draftAt(subject: PlaceToolSubject, lat: number, lon: number, on: DrawnBody | null = null): {ok: true; draft: PlaceDraft; notice: string} | {ok: false; reason: string} {
-  const made = earthDraftAt(subject, lat, lon, on);
+  const made = stopDraftAt(subject, lat, lon, on);
   if (!made.ok || !on) return made;
   return {ok: true, draft: {...made.draft, body_ref: on.body_ref, name: suggestName(on, lat, lon)}, notice: made.notice};
+}
+
+/** [O-I #746] With Route chosen, a new point is a stop: the subject's next TRAVELLED_TO stop, at the place in the order the World reads. A move
+ * keeps the stop it moves, its relation and its place in the order (the editor moves only its point). */
+function stopDraftAt(subject: PlaceToolSubject, lat: number, lon: number, on: DrawnBody | null): {ok: true; draft: PlaceDraft; notice: string} | {ok: false; reason: string} {
+  const made = earthDraftAt(subject, lat, lon, on);
+  if (!made.ok || kind !== 'route' || subject.moving) return made;
+  const sequence = subject.routeNext ?? 1;
+  return {ok: true, draft: {...made.draft, relation: MOVEMENT_RELATION, sequence}, notice: `${made.notice} It is stop ${sequence} of ${subject.title}’s route (${MOVEMENT_RELATION}).`};
 }
 
 function earthDraftAt(subject: PlaceToolSubject, lat: number, lon: number, on: DrawnBody | null): {ok: true; draft: PlaceDraft; notice: string} | {ok: false; reason: string} {
@@ -200,6 +214,8 @@ export function placeAt(point: {lat: number; lon: number} | null, on: DrawnBody 
   if (state.phase === 'landing') { void landAt(state.target, point, on); return }
   if (state.phase !== 'armed') return;
   const subject = state.subject;
+  const waits = PLACE_KIND_WAITS[kind];
+  if (waits) { set({phase: 'idle', notice: waits, tone: 'refused'}); return }
   if (!point) { set({phase: 'idle', notice: 'The click was off the globe, so nothing was drafted. Press Place again and click the Earth.', tone: 'refused'}); return }
   const made = draftAt(subject, point.lat, point.lon, on);
   if (!made.ok) { set({phase: 'idle', notice: made.reason, tone: 'refused'}); return }
@@ -267,7 +283,8 @@ export function notePlaceTool(text: string): void {
 export function draftLine(draft: PlaceDraft): string {
   const named = draft.name ? `${draft.name}, ` : '';
   const body = draft.body_ref ? ` on your body (${draft.body_ref})` : '';
-  return `${named}${draft.precision} point at ${formatCoordinate({latitude: draft.lat, longitude: draft.lon})}${body}${draft.from ? ` (moved from ${formatCoordinate({latitude: draft.from.lat, longitude: draft.from.lon})})` : ''}`;
+  const stop = draft.sequence ? `stop ${draft.sequence} of the route, ` : '';
+  return `${named}${stop}${draft.precision} point at ${formatCoordinate({latitude: draft.lat, longitude: draft.lon})}${body}${draft.from ? ` (moved from ${formatCoordinate({latitude: draft.from.lat, longitude: draft.from.lon})})` : ''}`;
 }
 
 /** For the tests: forget the tool's state and its owner. */

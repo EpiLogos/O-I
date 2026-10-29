@@ -1053,6 +1053,9 @@ export interface WorldProject {
   /** The world's own name, kept in its ProjectCentral manifest (Central's `central.world.name`, O-I #743), absent while it names none;
    * `manifest_revision` is the revision a rename is made against. */
   world_name?: string; manifest_revision?: string;
+  /** The world's declared place (Central's `central.world.place`, O-I #745, kept in the same manifest), where the Sky counts the world's
+   * hours when its Observer is Shared; absent while it declares none. Your world keeps its own on its root world record instead. */
+  world_place?: {reference: string; label: string; latitude_degrees: number; longitude_degrees: number; altitude_metres: number; timezone: string};
   projectcentral: GroundReading & { state: string; reason?: string; error?: string; missing?: string[] };
 }
 export interface RootWorld {
@@ -1301,9 +1304,9 @@ export interface LiveSetActed {act: LiveSetAct['kind']; done: string; at: {track
 /** One groove of the set's pool: Base is Live's Grid ("1/4" … "1/32", triplets "1/8t", "1/16t"); the amounts are 0–100. */
 export interface LiveGroove {id: number | null; name: string; base: string | null; quantize: number | null; timing: number | null; random: number | null; velocity: number | null}
 /** The set's Groove Pool and its Global Amount (with the range Live keeps beside it). */
-export interface LiveGroovePool {grooves: LiveGroove[]; amount: number | null; amountRange: {min: number; max: number} | null}
 /** One of the person's Live sets (kernel live_set_owner.rs sets_reading): its file, its name, the place it stands in, whether it is a
  * template (under the User Library's Templates), when it last changed. */
 export interface LiveSetEntry {path: string; name: string; place: string; template: boolean; modified_unix_ms: number | null}
 /** `oi.live-sets/v1`: the places read (each with whether it stands), the sets newest first, and whether the walk stopped at its bound. */
 export interface LiveSetsReading {schema: 'oi.live-sets/v1'; places: {label: string; path: string; present: boolean}[]; sets: LiveSetEntry[]; truncated: boolean}
+export interface LiveGroovePool {grooves: LiveGroove[]; amount: number | null; amountRange: {min: number; max: number} | null}

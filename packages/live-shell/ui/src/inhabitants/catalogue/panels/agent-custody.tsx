@@ -26,7 +26,7 @@
 // it cannot be undone). Actuation has no command that lists grants (AuthorityStore::read reads one source ref) and the kernel has no
 // route to `authority`: the host stands Issue and Revoke disabled with that reason, and reports no `grants` until the list exists.
 import {useState} from 'react'
-import {Action, Band, Chooser, Dial, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, TextField, Tile, Toggle, type LightState, type Option, type RowItem} from '../../sdk/panel'
+import {Action, Band, Chooser, Dial, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, TextField, Tile, Toggle, type LightState, type Option, type RowItem, unreadRows} from '../../sdk/panel'
 import {NONE, boolOf, clampTo, has, json, numOf, shown, st, strOf, type DesignedDevice, type ViewProps} from './design'
 import './agent-custody.css'
 
@@ -309,7 +309,7 @@ export function GrantsBands({p}: {p: ViewProps}) {
   const sel = gs?.find(g => g.ref === chosen) ?? gs?.find(g => grantState(g, now) === 'live')
   const draftOps = OPS.filter(o => boolOf(v, `grant:${o.value}`) === true).map(o => o.value), world = strOf(v, 'grant:world')
   const worlds = strs(json<unknown>(v, 'worlds', []))
-  const items: RowItem[] = !gs ? [{id: 'none', name: 'No reading of the grants', light: 'unknown'}]
+  const items: RowItem[] = !gs ? unreadRows('No reading of the grants.')
     : gs.length === 0 ? [{id: 'none', name: 'No grant', light: 'dark'}]
     : gs.map(g => { const state = grantState(g, now)
       return {id: g.ref, name: g.worlds.map(worldWord).join(', ') || NONE, light: state === 'live' ? 'lit' : 'dark', tone: 'value',
@@ -407,7 +407,7 @@ export function CustodyBands({p, writes = true}: {p: ViewProps; writes?: boolean
     </Band>
     <Band>
       <Section width={176}>
-        <Rows label={known ? 'Held' : 'Held · no reading'} does="The things the agent holds now. An orange dot: the agent works on it. A red ring: you edited it." items={rows} size={7} />
+        <Rows label="Held" does="The things the agent holds now. An orange dot: the agent works on it. A red ring: you edited it." items={known ? rows : undefined} why="No reading of what the agent holds." size={7} />
       </Section>
       <Section label="Review gate" width={78}>
         {radio(p, 'gate', undefined, `${SAYS.gate} Diffs, approvals or both.`, GATES)}

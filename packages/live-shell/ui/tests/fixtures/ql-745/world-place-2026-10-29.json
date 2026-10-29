@@ -1,0 +1,79 @@
+{
+ "source": "ctrl action run (Central dlw/745-world-place: central.world.place, central.world-relations.save and .read) on a scratch ground, 29 Oct 2026",
+ "no_record": {
+  "ok": false,
+  "status": "unavailable_capability",
+  "action": "central.world.place",
+  "error": {
+   "code": "unavailable_capability",
+   "message": "Your world declares no world record (Control/relations/worlds, control:root): Central keeps your world's place on it, and does not declare the world for a place. Declare it first (central.world-relations.save)."
+  }
+ },
+ "unplaced": {
+  "ok": true,
+  "status": "success",
+  "action": "central.world-relations.read",
+  "data": {
+   "kind": "world",
+   "record": {
+    "parent": null,
+    "ref": "control:root",
+    "revision": "w1",
+    "schema": "central.world-relations/v1"
+   },
+   "ref": "control:root",
+   "revision": "w1",
+   "source_path": "Control/relations/worlds/world-b88f0166a29f523c.json"
+  }
+ },
+ "placed_act": {
+  "ok": true,
+  "status": "success",
+  "action": "central.world.place",
+  "data": {
+   "automatic_agent_or_model_invocation": false,
+   "outcome": "placed",
+   "place": {
+    "altitude_metres": 46.0,
+    "label": "Greenwich",
+    "latitude_degrees": 51.4769,
+    "longitude_degrees": -0.0005,
+    "reference": "controlled:place:greenwich",
+    "timezone": "Europe/London"
+   },
+   "previous_place": null,
+   "previous_revision": "w1",
+   "principal_ref": "human:scratch-world",
+   "project": null,
+   "revision": "w2",
+   "schema": "central.world-place/v1",
+   "source": "Control/relations/worlds/world-b88f0166a29f523c.json",
+   "world_ref": "control:root"
+  }
+ },
+ "placed": {
+  "ok": true,
+  "status": "success",
+  "action": "central.world-relations.read",
+  "data": {
+   "kind": "world",
+   "record": {
+    "parent": null,
+    "place": {
+     "altitude_metres": 46.0,
+     "label": "Greenwich",
+     "latitude_degrees": 51.4769,
+     "longitude_degrees": -0.0005,
+     "reference": "controlled:place:greenwich",
+     "timezone": "Europe/London"
+    },
+    "ref": "control:root",
+    "revision": "w2",
+    "schema": "central.world-relations/v1"
+   },
+   "ref": "control:root",
+   "revision": "w2",
+   "source_path": "Control/relations/worlds/world-b88f0166a29f523c.json"
+  }
+ }
+}

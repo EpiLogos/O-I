@@ -3,10 +3,11 @@
 // Each test says, in the comment above it, what the code did when the audit was made (file:line) and carries one of two marks:
 //   MET     the code did what the sentence says; the test goes red if the code stops
 //   NOT MET the code did not; the test describes what the manual says and was red until the lane landed it
-// Two sentences no owner can take (a portal, a route) are carried out of the ticket: their tests hold the refusal in words that names the owner.
+// One sentence no owner can take (a portal) is carried out of the ticket: its test holds the refusal in words that names the owner. The route
+// it carried with it landed with O-I #746 (1c, 18c).
 //
 // The sentences, and where the code stands (the audit; the lead's return carries the same table):
-//    1 "Click the body to place a place, a palace, a portal or a route."        place, palace MET · portal and route: no owner can take them (1b, 1c): refused in words, carried
+//    1 "Click the body to place a place, a palace, a portal or a route."        place, palace MET · route MET since O-I #746 (1c) · portal: no owner takes it (1b): refused in words, carried
 //    2 "The World suggests a name from the seed. Keep it or type your own."      MET (placeTool.ts:170, body.ts:278 suggestName)
 //    3 "Reroll … every location keeps its name and the position you gave it."    MET (worldBody.ts:155 changedBody; bodyLocations.ts rows come from the owners' places)
 //    4 "Where that spot is now sea, the World draws the location on the nearest  MET (systemOverlay.ts:42-47 drawnLocations; :158-160 the mark's words)
@@ -29,7 +30,8 @@
 //       exact."
 //   16 "Only the places that were valid in that window show on the body."         NOT MET on your body (bodyLocations.ts ignores the window); the Earth's follow the window
 //   17 "Every world you start lands as a place on your planet."                   NOT MET: a world lands only when the person presses Land (SystemReadings.tsx:61 landWorld; systemModel.ts:195)
-//   18 "Every walk you take wears a path between places."                         MET on the Earth (placesModel.ts:151-166 routeRows; globe/arcs.ts); NOT MET on your body (routeRows counts Earth places only)
+//   18 "Every walk you take wears a path between places."                         MET on the Earth (placesModel.ts:151-166 routeRows; globe/arcs.ts); NOT MET on your body (routeRows counts Earth places only);
+//      a route's line through its stops in order, on your body and the Earth: MET since O-I #746 (18c)
 //
 // Channels: scripted. The tools, models and stores are the shell's own code in memory; the owners are recording stubs; the overlay runs in a
 // minimal DOM of this file's own with the orbits stubbed and bodyDisc spied by a module shim (as w3q-sys-wiring.test.mjs). Not covered here:
@@ -197,35 +199,44 @@ test('1b · a portal is not placed by a click: choosing Portal refuses it, says 
   assert.match(state.notice, /another world/i, 'and what a portal is')
   assert.match(state.notice, /visit/i, 'and the owner it waits for: the owner of visiting another world…')
   assert.match(state.notice, /federation|shared field/i, '…the shared field\'s federation')
+  assert.match(state.notice, /WORLD-INHABITATION-V1/, '…named by the contract that carries it, which is contracted and not built')
   tool.placeAt({lat: 22, lon: 10}, ON_YOURS)
   assert.deepEqual(calls, [], 'a click offers nothing to anyone: no draft, no write')
 })
 
-// A route: the owner's place facet cannot express it. AIKit's PlaceFacet (ai-kit crates/aikit-core/src/knowledge_facets.rs:214-243) has place_ref,
-// identity, geometry, precision, hierarchy, valid_from, valid_to, observer_frame, uncertainty, source_ref and body_ref: no relation and no
-// sequence. TechnePlaceFacet.relation (techne/contract.ts:256) is the suite's reading of the subject's TRAVELLED_TO relation to the place, and
-// routeModel (techne/m0m5/place/world.ts:106-150) orders a route by the stops' own validity dates, "since the contract carries no sequence
-// field"; the editor's draft (knowledge/WikiFactsEditor.tsx:21 MapPlaceDraft) has no relation either. So a click can place a stop as a place and
-// cannot make it one of a route: the relation is the Wiki's to record. Choosing Route refuses the click, says why and names that owner. CARRIED
-// out of T-PROCEDURAL-BODY: a route needs a place facet or a route owner that carries order.
-test('1c · a route is not placed by a click: choosing Route refuses it, says the owner\'s place carries no relation or order, and names where the relation is made', () => {
+// A route (O-I #746): the owner's place facet carries the relation a stop is a stop of and its place in the order (AIKit PlaceFacet.relation and
+// .sequence; techne/contract.ts TechnePlaceFacet), so a click places a stop. Choosing Route arms the tool for the subject; the click's draft is a
+// TRAVELLED_TO stop at the next place in the subject's route as the World reads it (placesModel.ts routeNext), offered to the owner's editor and
+// never written; the editor's MapPlaceDraft writes both on the subject's PlaceSet (knowledge/WikiFactsEditor.tsx applyPlaceDraft), after the stops
+// the subject's own facts hold. Replaces the refusal T-PROCEDURAL-BODY carried ("a click cannot make a stop of one").
+test('1c · a route is placed stop by stop: choosing Route arms the tool, and a click offers the subject\'s next stop to its editor, which writes it in order', () => {
+  const held = [onYourBody('wiki:place:a', 1, 1, {relation: 'TRAVELLED_TO', subject_ref: SUBJECT.ref, sequence: 1}),
+    onYourBody('wiki:place:b', 2, 2, {relation: 'TRAVELLED_TO', subject_ref: SUBJECT.ref, sequence: 2}),
+    place('wiki:place:c', {relation: 'TRAVELLED_TO', subject_ref: 'wiki:node:solon', sequence: 7})]
+  assert.equal(placesModel.routeNext(held, SUBJECT.ref), 3, 'the next stop follows the subject\'s own last stop, wherever it stands')
+  assert.equal(placesModel.routeNext(held, 'wiki:node:new'), 1, 'a subject with no route begins at stop 1')
   tool.bindPlaceOwner(owner)
   tool.choosePlaceKind('route')
-  tool.armPlaceTool(SUBJECT)
-  const state = tool.placeToolState()
-  assert.equal(state.phase, 'idle', 'the tool does not arm')
-  assert.equal(state.tone, 'refused')
-  assert.match(state.notice, /route/i)
-  assert.match(state.notice, /TRAVELLED_TO/, 'it names the relation a route is made of')
-  assert.match(state.notice, /no relation|carries no/i, 'and why a click cannot make it: the place carries none')
-  assert.match(state.notice, /Wiki/, 'and the owner that records the relation')
+  tool.armPlaceTool({...SUBJECT, routeNext: placesModel.routeNext(held, SUBJECT.ref)})
+  assert.equal(tool.placeToolState().phase, 'armed', 'the tool arms for a route')
   tool.placeAt({lat: 22, lon: 10}, ON_YOURS)
-  assert.deepEqual(calls, [], 'a click offers nothing to anyone')
-  // the evidence, from what the shell holds: a click's draft has no field to carry the relation or an order
-  tool.choosePlaceKind('place')
-  const made = tool.draftAt(SUBJECT, 22, 10, ON_YOURS)
-  assert.equal(made.ok, true)
-  assert.ok(!('relation' in made.draft) && !('sequence' in made.draft) && !('order' in made.draft), `the draft carries no relation or order: ${Object.keys(made.draft)}`)
+  const state = tool.placeToolState()
+  assert.equal(state.phase, 'offered', 'the click is offered')
+  assert.deepEqual(calls.map(call => call[0]), ['offer'], 'to the editor, and nothing is written')
+  const draft = calls[0][2]
+  assert.deepEqual([draft.relation, draft.sequence, draft.lat, draft.lon, draft.body_ref], ['TRAVELLED_TO', 3, 22, 10, RECORD.body_ref], 'a stop of the subject\'s route, at the click, on your body')
+  assert.match(state.notice, /stop 3 of The study\u2019s route/, 'the plate says which stop it is')
+  assert.match(tool.draftLine(draft), /stop 3/)
+  const facts = {temporal: [], places: [{place_ref: 'wiki:place:a', precision: 'approximate', relation: 'TRAVELLED_TO', sequence: 1}, {place_ref: 'wiki:place:b', precision: 'approximate', relation: 'TRAVELLED_TO', sequence: 2}]}
+  const seeded = applyPlaceDraft(facts, draft).values.places[2]
+  assert.deepEqual([seeded.relation, seeded.sequence, seeded.body_ref], ['TRAVELLED_TO', 3, RECORD.body_ref], 'the editor writes the stop in its route, on your body')
+  // a place is still no stop: the draft of the Place kind carries neither
+  calls = []
+  tool.resetPlaceTool()
+  tool.bindPlaceOwner(owner)
+  tool.armPlaceTool(SUBJECT)
+  tool.placeAt({lat: 22, lon: 10}, ON_YOURS)
+  assert.ok(!('relation' in calls[0][2]) && !('sequence' in calls[0][2]), `a place is no stop: ${Object.keys(calls[0][2])}`)
 })
 
 // ── 2 · The World suggests a name from the seed. Keep it or type your own. ──────────────────────────────────────────────────────
@@ -286,12 +297,12 @@ test('4a · where a location\'s spot is now sea it is drawn at the nearest shore
   assert.deepEqual([dry.shore, dry.lat, dry.lon], [false, lat, lon], 'on the body it was placed on, at its own point')
 })
 
-function overlayHarness({record, sky = false, press, follow} = {}) {
+function overlayHarness({record, sky = false, press, follow, project} = {}) {
   const parent = new FakeEl('div')
   const frames = []
   const handle = {
     engine: {renderer: {domElement: {parentElement: parent}}, onFrame: fn => frames.push(fn), body: record, sky: null, reduced: true,
-      project(_dir, screen) { screen.x = 100; screen.y = 100; screen.facing = 1 }, globeDisc(disc) { disc.x = 400; disc.y = 300; disc.r = 120 }},
+      project: project ?? ((_dir, screen) => { screen.x = 100; screen.y = 100; screen.facing = 1 }), globeDisc(disc) { disc.x = 400; disc.y = 300; disc.r = 120 }},
     ctl: {state: {sky, graph: false}},
   }
   const binding = overlay.bindSystemOverlay({handle, said() {}, ...(press ? {press} : {}), ...(follow ? {follow} : {})})
@@ -746,4 +757,99 @@ test('18b · on your body a subject\'s walk is its TRAVELLED_TO places on that b
   assert.deepEqual(placesModel.routeRows(stops, RECORD.body_ref), [{subject_ref: 'wiki:node:plato', stops: 2, walkable: true}, {subject_ref: 'wiki:node:solon', stops: 1, walkable: false}],
     'the walk on your body: its stops there, not the Earth\'s')
   assert.deepEqual(placesModel.routeRows(stops), [{subject_ref: 'wiki:node:plato', stops: 1, walkable: false}], 'with no body named, the Earth\'s walks as before')
+})
+
+// MET since O-I #746 (bodyLocations.ts routesOn; systemOverlay.ts the route layer): a subject's route on the body the globe draws runs through its
+// stops in their order (techne/m0m5/place/world.ts routeModel: the place each stop holds in the order), drawn as one line; on the Earth, through
+// its stops on the Earth. The suite reading carries each stop's place in the order from its facet (provider/suiteReading.ts facetFieldsOf).
+test('18c · a route draws through its stops in their order, on your body and on the Earth', async () => {
+  const {facetFieldsOf} = await import('../src/projections/atlas/provider/suiteReading.ts')
+  assert.equal(facetFieldsOf({place_ref: 'p', precision: 'approximate', relation: 'TRAVELLED_TO', sequence: 2}).sequence, 2, 'the reading carries a stop\'s place in the order')
+  const plato = 'wiki:node:plato'
+  const stops = [
+    onYourBody('wiki:place:c', 30, 30, {relation: 'TRAVELLED_TO', subject_ref: plato, sequence: 3}),
+    onYourBody('wiki:place:a', 10, -20, {relation: 'TRAVELLED_TO', subject_ref: plato, sequence: 1}),
+    onYourBody('wiki:place:b', -15, 5, {relation: 'TRAVELLED_TO', subject_ref: plato, sequence: 2}),
+    onYourBody('wiki:place:x', 5, 5, {relation: 'TRAVELLED_TO', subject_ref: 'wiki:node:solon', sequence: 1}),
+    place('wiki:place:e1', {relation: 'TRAVELLED_TO', subject_ref: plato, sequence: 5, lat: 40, lon: 20}),
+    place('wiki:place:e2', {relation: 'TRAVELLED_TO', subject_ref: plato, sequence: 4, lat: 38, lon: 24}),
+  ]
+  const order = routes => routes.map(route => [route.subject_ref, route.stops.map(entry => entry.ref)])
+  assert.deepEqual(order(locations.routesOn(stops, RECORD.body_ref)), [[plato, ['wiki:place:a', 'wiki:place:b', 'wiki:place:c']]],
+    'on your body: the subject\'s stops there, in their order; a subject with one stop there has no route to draw')
+  assert.deepEqual(order(locations.routesOn(stops, null)), [[plato, ['wiki:place:e2', 'wiki:place:e1']]], 'on the Earth: its stops on the Earth, in their order')
+  // the overlay draws each as one line through its stops' points, in that order
+  const {dirFromLatLon} = await import('../src/projections/atlas/src/data/geo.ts')
+  const project = (dir, screen) => { screen.x = 400 + dir[0] * 100; screen.y = 300 - dir[1] * 100; screen.facing = 1 }
+  const pointOf = ([lat, lon]) => { const at = {}; project(dirFromLatLon(lat, lon), at); return `${at.x.toFixed(1)} ${at.y.toFixed(1)}` }
+  // the line's points, in order, and where in them each stop's own point stands (the line runs the great circle between stops: more points)
+  const through = (d, points) => { const steps = d.split(' L').map(step => step.replace(/^M/, '')); return points.map(point => steps.indexOf(pointOf(point))) }
+  const lines = parent => parent.all().filter(node => node.tagName === 'path' && /\bsys-route\b/.test(node.className))
+  const yours = await bodyWithPlaces(RECORD, stops, {project})
+  yours.frame()
+  const [drawn] = lines(yours.parent)
+  assert.ok(drawn, 'your body draws the route')
+  const shore = ([lat, lon]) => { const at = body.shoreOf(RECORD, lat, lon); return [at.lat, at.lon] }
+  const atStops = through(drawn.getAttribute('d'), [[10, -20], [-15, 5], [30, 30]].map(shore))
+  assert.ok(atStops.every(index => index >= 0) && atStops.every((index, i) => i === 0 || index > atStops[i - 1]),
+    `through stop 1, stop 2 and stop 3, in that order, each where its mark is drawn: ${atStops}`)
+  assert.equal(atStops[0], 0, 'it begins at stop 1')
+  assert.equal(atStops[2], drawn.getAttribute('d').split(' L').length - 1, 'and ends at the last stop')
+  assert.equal(lines(yours.parent).length, 1, 'one line for the one route there')
+  const earth = overlayHarness({record: null, project})
+  earth.frame()
+  const earthLine = lines(earth.parent)[0]?.getAttribute('d') ?? ''
+  assert.deepEqual(through(earthLine, [[38, 24], [40, 20]]), [0, earthLine.split(' L').length - 1], 'the Earth draws its own stops\' route, from stop 4 to stop 5')
+  // a part of the line on the far side is not drawn: the line breaks there and begins again where it faces you
+  const far = overlayHarness({record: null, project: (dir, screen) => { project(dir, screen); screen.facing = dir[1] > Math.sin(38.5 * Math.PI / 180) && dir[1] < Math.sin(39.5 * Math.PI / 180) ? 0 : 1 }})
+  far.frame()
+  const broken = lines(far.parent)[0]?.getAttribute('d') ?? ''
+  assert.ok(broken.split('M').length - 1 >= 2, `the line is broken where it faces away: ${broken.slice(0, 80)}`)
+  // the line lies on the body: every point it passes is on the sphere, a few degrees apart at most
+  const dirs = overlay.routeDirs([{lat: 0, lon: 0}, {lat: 0, lon: 90}])
+  assert.ok(dirs.length >= 30 && dirs.every(dir => Math.abs(Math.hypot(...dir) - 1) < 1e-9), 'a quarter turn is drawn in steps along the great circle')
+})
+
+// MET since O-I #746 round two (bodyLocations.ts chronologyBesideRoutes; systemOverlay.ts adapts the engine's arcs at the host): a followed route
+// on the Earth draws once, as its route through its stops in their order. The chronology the controller builds for the focused thread (src/app/
+// controller.ts syncChronology over src/globe/chronology.ts, both kept as ported) reaches the globe without that route's stops; the subject's other
+// places keep their chronology, and a thread of several subjects keeps its chronology whole.
+test('18d · a followed route on the Earth draws once: the route\'s line, not also the chronology through the same stops', async () => {
+  const {dirFromLatLon} = await import('../src/projections/atlas/src/data/geo.ts')
+  const plato = 'wiki:node:plato'
+  const at = [[38, 24], [40, 20], [30, 10], [20, 5], [10, 0]]
+  const stops = [
+    place('wiki:place:e2', {relation: 'TRAVELLED_TO', subject_ref: plato, sequence: 1, lat: 38, lon: 24}),
+    place('wiki:place:e1', {relation: 'TRAVELLED_TO', subject_ref: plato, sequence: 2, lat: 40, lon: 20}),
+    place('wiki:place:e3', {relation: 'OCCURRED_AT', subject_ref: plato, lat: 30, lon: 10}),
+    place('wiki:place:e4', {relation: 'OCCURRED_AT', subject_ref: plato, lat: 20, lon: 5}),
+  ]
+  standing.publishSuiteStanding({...standing.IDLE_STANDING, phase: 'ready', places: stops})
+  const built = [], cleared = []
+  const arcs = {buildChronology(dirs, nodeU) { built.push(dirs.map(dir => dir.map(x => Math.round(x * 1e6) / 1e6))) }, clearChronology() { cleared.push(true) }}
+  const model = {famMem: new Map([['f-plato', [0, 1, 2, 3]], ['f-many', [0, 1, 4]]]), located: [true, true, true, true, true],
+    occ: [{subject_ref: plato}, {subject_ref: plato}, {subject_ref: plato}, {subject_ref: plato}, {subject_ref: 'wiki:node:solon'}]}
+  const parent = new FakeEl('div')
+  const handle = {engine: {renderer: {domElement: {parentElement: parent}}, onFrame() {}, body: null, sky: null, reduced: true, arcs, project() {}, globeDisc() {}},
+    ctl: {state: {sky: false, graph: false, view: {kind: 'focus', subject: {type: 'family', id: 'f-plato'}}}}, model}
+  const binding = overlay.bindSystemOverlay({handle, said() {}})
+  const dirs = at.slice(0, 4).map(([lat, lon]) => dirFromLatLon(lat, lon)), round = list => list.map(dir => dir.map(x => Math.round(x * 1e6) / 1e6))
+  // the controller asks for Plato's thread in date order: his two stops and his two other places
+  handle.engine.arcs.buildChronology(dirs, [0.1, 0.2, 0.3, 0.4], [1, 1, 1])
+  assert.deepEqual(built.at(-1), round(dirs.slice(2)), 'the chronology the globe draws keeps Plato\'s other places and leaves out his route\'s stops, which the route\'s line draws')
+  // a thread of several subjects is not one subject's route: its chronology stands whole
+  handle.ctl.state.view = {kind: 'focus', subject: {type: 'family', id: 'f-many'}}
+  const many = [0, 1, 4].map(index => dirFromLatLon(...at[index]))
+  handle.engine.arcs.buildChronology(many, [0.1, 0.2, 0.5], [1, 1, 1])
+  assert.deepEqual(built.at(-1), round(many), 'a thread of several subjects keeps every step')
+  // a followed thread that is its route alone draws as the route only: no chronology
+  standing.publishSuiteStanding({...standing.IDLE_STANDING, phase: 'ready', places: stops.slice(0, 2)})
+  handle.ctl.state.view = {kind: 'focus', subject: {type: 'family', id: 'f-plato'}}
+  const before = built.length
+  handle.engine.arcs.buildChronology(dirs.slice(0, 2), [0.1, 0.2], [1, 1, 1])
+  assert.equal(built.length, before, 'nothing is built')
+  assert.ok(cleared.length > 0, 'the chronology is cleared')
+  binding.dispose()
+  handle.engine.arcs.buildChronology(dirs, [0.1, 0.2, 0.3, 0.4], [1, 1, 1])
+  assert.deepEqual(built.at(-1), round(dirs), 'released with the overlay, the arcs build their chronology as the port does')
 })

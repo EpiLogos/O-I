@@ -17,6 +17,8 @@
 // give it (the atlas's own presence style, globe/presences.ts and shaders.ts PRESENCE_FRAG: a core, a ring of uncertainty for an approximate
 // place, a dotted ring for a mythic one), pressed to select it or, for a landed world, to enter it; and, where a location is anchored to a real
 // place on Earth, its anchor line, pressed to follow it there.
+// And on the ground, on whichever body the globe draws (your body, or the Earth): each route there (system/bodyLocations.ts routesOn: a subject's
+// TRAVELLED_TO stops on that body), one line through its stops in the route's order, along the great circle from each to the next (O-I #746).
 // Screen-space and DOM, as PlanetOrbits is: it reads the sky layer's drawn disc each frame, so it follows the planet exactly.
 import {PlanetOrbits, type OrbitAt, type OrbitDisc, type OrbitKey, type Satellite} from '../src/sky/orbits'
 import {bodyDisc, shoreOf, type BodyLook, type WorldBodyRecord} from '../src/globe/body'
@@ -30,7 +32,8 @@ import {subscribeSuiteStanding, suiteStanding} from '../provider/suiteStanding'
 import {systemActs, systemReading, subscribeSystem} from './systemStore'
 import {occasionMs, occasionStep, shownWindow, subscribeWindow} from './bodyDraw'
 import type {SystemBody} from './systemModel'
-import {anchorsOf, yourBodyRef, yourLocations, type Anchor, type BodyLocation} from './bodyLocations'
+import {anchorsOf, chronologyBesideRoutes, routesOn, yourBodyRef, yourLocations, type Anchor, type BodyLocation, type DrawnRoute} from './bodyLocations'
+import {subjectOccurrences} from '../src/data/model'
 import {precisionMarker} from '../../../../../../../desktop/cradle/src/techne/m0m5/place/project'
 import './systemOverlay.css'
 
@@ -61,6 +64,27 @@ export function drawnLocations(record: WorldBodyRecord, locations: readonly Body
     const at = shoreOf(record, location.lat, location.lon)
     return {location, lat: at.lat, lon: at.lon, shore: at.shore}
   })
+}
+
+/** [O-I #746] A route's line on the globe: from each stop to the next along the great circle between them, so it lies on the body as the body
+ * turns (one sample at most every ROUTE_STEP radians); each stop's own point is one of the samples. `at` are the stops' drawn points, in order. Pure. */
+export const ROUTE_STEP = (3 * Math.PI) / 180
+export function routeDirs(at: readonly {readonly lat: number; readonly lon: number}[]): [number, number, number][] {
+  const dirs: [number, number, number][] = []
+  at.forEach((point, index) => {
+    const b = dirFromLatLon(point.lat, point.lon) as [number, number, number]
+    const a = dirs[dirs.length - 1]
+    if (index > 0 && a) {
+      const angle = Math.acos(Math.min(1, Math.max(-1, a[0] * b[0] + a[1] * b[1] + a[2] * b[2])))
+      const steps = Math.ceil(angle / ROUTE_STEP)
+      for (let k = 1; k < steps && Math.sin(angle) > 1e-9; k++) {
+        const t = k / steps, wa = Math.sin((1 - t) * angle) / Math.sin(angle), wb = Math.sin(t * angle) / Math.sin(angle)
+        dirs.push([wa * a[0] + wb * b[0], wa * a[1] + wb * b[1], wa * a[2] + wb * b[2]])
+      }
+    }
+    dirs.push(b)
+  })
+  return dirs
 }
 
 const SVG = 'http://www.w3.org/2000/svg'
@@ -226,6 +250,58 @@ export function bindSystemOverlay({handle, said, press, follow}: {handle: AtlasH
   }
   const offBody = subscribeWorldBody(syncPlaces)
   const offStanding = subscribeSuiteStanding(syncPlaces)
+  // [O-I #746] the routes on the body the globe draws: read again when the places, the window or the drawn body move, drawn each frame
+  let routeLines: {readonly path: SVGPathElement; readonly dirs: readonly [number, number, number][]}[] = []
+  let routesSvg: SVGSVGElement | null = null
+  let routesBody: string | null | undefined
+  let routesKey = ''
+  const syncRoutes = () => {
+    routesBody = handle.engine.body ? handle.engine.body.body_ref : null
+    const standing = suiteStanding()
+    const routes: DrawnRoute[] = standing.phase === 'ready' ? routesOn(standing.places, routesBody, shownWindow()) : []
+    const key = routes.length ? JSON.stringify([routesBody, routes]) : ''
+    if (key === routesKey) return
+    routesKey = key
+    for (const line of routeLines) line.path.remove()
+    routeLines = []
+    if (!routes.length) return
+    if (!routesSvg) {
+      routesSvg = document.createElementNS(SVG, 'svg')
+      routesSvg.setAttribute('class', 'sys-routes')
+      routesSvg.setAttribute('aria-hidden', 'true')
+      parent.append(routesSvg)
+    }
+    const svg = routesSvg
+    // on a body you build, a stop whose spot is sea is drawn on its nearest shore, as its mark is (shoreOf: drawing only), so the line meets the mark
+    const record = handle.engine.body
+    routeLines = routes.map(route => {
+      const path = document.createElementNS(SVG, 'path')
+      path.setAttribute('class', 'sys-route')
+      path.setAttribute('data-subject', route.subject_ref)
+      svg.append(path)
+      return {path, dirs: routeDirs(route.stops.map(stop => (record ? shoreOf(record, stop.lat, stop.lon) : stop)))}
+    })
+  }
+  const offRouteStanding = subscribeSuiteStanding(syncRoutes)
+  const offRouteWindow = subscribeWindow(syncRoutes)
+  // A followed route on the Earth draws once (bodyLocations.ts chronologyBesideRoutes): the chronology the controller asks the globe's arcs
+  // for (src/app/controller.ts syncChronology, ported, kept as it is) is handed on without the stops of the followed subject's route, which this
+  // overlay draws in their order. Adapted here, at the host, on the engine's own arcs; released with the overlay.
+  const arcs = handle.engine.arcs as (typeof handle.engine.arcs & {buildChronology: (dirs: number[][], nodeU: number[], colour: [number, number, number]) => void}) | undefined
+  const ownBuild = !!arcs && Object.prototype.hasOwnProperty.call(arcs, 'buildChronology')
+  const heldBuild = arcs?.buildChronology
+  if (arcs?.buildChronology) {
+    const portBuild = arcs.buildChronology.bind(arcs)
+    arcs.buildChronology = (dirs, nodeU, colour) => {
+      const view = handle.ctl?.state?.view
+      const refs = view?.kind === 'focus' ? new Set(subjectOccurrences(handle.model, view.subject).map(index => handle.model.occ[index]?.subject_ref ?? '')) : new Set<string>()
+      const subject = refs.size === 1 ? [...refs][0] || null : null
+      const standing = suiteStanding()
+      const kept = subject && standing.phase === 'ready' ? chronologyBesideRoutes(dirs, nodeU, routesOn(standing.places, null, shownWindow()), subject) : {dirs, nodeU}
+      if (kept.dirs.length < 2) { arcs.clearChronology(); return }
+      portBuild(kept.dirs as typeof dirs, kept.nodeU, colour)
+    }
+  }
   const screen: ScreenPoint = {x: 0, y: 0, facing: 0}
   let marks: WorldMark[] = []
   let bodies: readonly SystemBody[] = []
@@ -289,11 +365,31 @@ export function bindSystemOverlay({handle, said, press, follow}: {handle: AtlasH
   const offWindow = subscribeWindow(() => { sync(); syncPlaces() })
   sync()
   syncPlaces()
+  syncRoutes()
 
   handle.engine.onFrame(dt => {
     if (!live) return
     // the locations on your body stand at the Body and Region scales, on the body the globe draws (the Earth draws its own places)
     syncPlaces()
+    // the routes on the ground of the body drawn, each through its stops' points in order; a stop on the far side breaks the line there
+    if ((handle.engine.body ? handle.engine.body.body_ref : null) !== routesBody) syncRoutes()
+    if (routesSvg) {
+      const ground = !handle.ctl.state.sky && !handle.ctl.state.graph
+      routesSvg.setAttribute('visibility', ground ? 'visible' : 'hidden')
+      if (ground) {
+        for (const line of routeLines) {
+          let joined = false
+          const steps: string[] = []
+          for (const dir of line.dirs) {
+            handle.engine.project(dir, screen, 1.002)
+            if (screen.facing <= 0.02) { joined = false; continue }
+            steps.push(`${joined ? 'L' : 'M'}${screen.x.toFixed(1)} ${screen.y.toFixed(1)}`)
+            joined = true
+          }
+          line.path.setAttribute('d', steps.join(' '))
+        }
+      }
+    }
     if (!dom) return
     const {root, ring, yourAxis, yours, places} = dom
     const onBody = !handle.ctl.state.sky && !handle.ctl.state.graph && !!handle.engine.body && placeMarks.length > 0
@@ -352,6 +448,11 @@ export function bindSystemOverlay({handle, said, press, follow}: {handle: AtlasH
       offWindow()
       offBody()
       offStanding()
+      offRouteStanding()
+      offRouteWindow()
+      // the engine's arcs build their chronology as the port does again
+      if (arcs && heldBuild) { if (ownBuild) arcs.buildChronology = heldBuild; else delete (arcs as {buildChronology?: unknown}).buildChronology }
+      routesSvg?.remove()
       for (const mark of marks) mark.orbits.destroy()
       if (dom) {
         dom.places.remove()

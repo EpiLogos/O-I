@@ -65,7 +65,10 @@ import {useDocsDevice, usePageDevices} from './pageDevices'
 import {CENTRAL_AGENT_ID, centralAgentBinding, centralAgentRef} from './answerBinding'
 import {useAnswerVoice} from './useAnswerVoice'
 import {observedState, useEncounterSessions, type ObservedSession} from '../../agent/devices/EncounterObservers'
-import {composeAgentBinding} from '../../agent/devices/oneAgentBinding'
+import {composeAgentBinding, withAgentGit} from '../../agent/devices/oneAgentBinding'
+import {ChainSlot, chainLaw, chainSlotOf} from '../../frame/devices/ChainOrder'
+import {useSessionGit} from '../../agent/devices/useAgentChainReading'
+import {openSeatDiff} from '../../agent/AgentShellBrowser'
 import {custodyBinding} from '../../agent/devices/sessionChainBindings'
 import {shownSession, threadBinding} from '../../agent/devices/threadBinding'
 import {holdView, useChainHolds, viewHolds} from '../../agent/devices/designBindings'
@@ -213,6 +216,9 @@ export function chainWorldOf(world: CentralWorld | null, git: {readonly status: 
 
 /** Whether the world's folder holds code: a project's world whose repository Central's git reading found. */
 export const worldHoldsCode = (world: ChainWorld): boolean => world.kind === 'project' && world.code === 'holds'
+
+/** The names the chain's grips say, by the law's slot. */
+const CHAIN_TITLES: Readonly<Record<string, string>> = {packet: 'the Packet', agent: 'the Agent', scope: 'Scope', docs: 'Docs', day: 'the Day', approvals: 'Approvals'}
 
 /** The devices of a Central chain, left to right (DLW §16.2 "The packet, the agent of the world, and its scope; then Docs, the world's
  * account on six tiers. On the Main track: the Day, then Approvals"): the same on every world, whether or not its folder holds code. Every
@@ -507,7 +513,11 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
       select: ref => { holdView(CENTRAL_THREAD_HOLD, 'session', ref); holdView(CENTRAL_THREAD_HOLD, 'pin', true) },
     }, CENTRAL_THREAD_HOLD)
   }, [nara.session, holds, encounters.handles, agency.tracks, nowUnixMs, own])
-  const agent = useMemo(() => composeAgentBinding(own, {custody, identity, thread, voice: voiceDesign}), [own, custody, identity, thread, voiceDesign])
+  // The Context page's Git row (§19.4 Context; §23.2): the session's own repository, read in its register — your world's root register keeps
+  // none, and the row says so in the world scope's words — and Diff to Files' Diff page.
+  const sessionGit = useSessionGit(transport, nara.session, naraProject)
+  const agent = useMemo(() => withAgentGit(composeAgentBinding(own, {custody, identity, thread, voice: voiceDesign}), {...sessionGit, openDiff: openSeatDiff}),
+    [own, custody, identity, thread, voiceDesign, sessionGit])
   // The line where you type @ (§18.4): an @ word in the Agent's composer opens Search in a pane on it (searchPane.tsx).
   useAtSearch(typeof agent.values.draft === 'string' ? agent.values.draft : undefined)
   const agentDraft = typeof agent.values.draft === 'string' ? agent.values.draft : null
@@ -600,6 +610,15 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
     const entry = entries.find(candidate => candidate.id === id)
     return entry ? familySlot(entry) : null
   }
+  // Each plate in its place on its chain (frame/devices/ChainOrder.tsx): the chain's law (inhabitants/sdk/chains.ts) says what its grip
+  // and ⌥← ⌥→ do. Central's order is §16.2's; what stands after the Agent waits on the chain owner's order operation, which no owner has.
+  const placeOn = (chain: 'central-world' | 'central-main', ids: readonly string[]): ReactNode[] => {
+    const law = chainLaw(chain), order = ids.map(id => chainSlotOf(chain, id))
+    return ids.map((id, i) => {
+      const drawn = slot(id)
+      return drawn && <ChainSlot key={id} law={law} slot={order[i]!} order={order} title={CHAIN_TITLES[order[i]!] ?? order[i]!}>{drawn}</ChainSlot>
+    })
+  }
   const code = chainWorld.kind === 'project' ? chainWorld.code : null
   const codeWords = chainWorld.kind === 'none' ? 'No world\'s track is selected.'
     : chainWorld.kind === 'yours' ? 'Your world keeps its pages in Control/user/flows; its folder holds no code.'
@@ -611,12 +630,12 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
     {encounters.observers}
     {place !== 'workspace' && <div className="central-track-chain" data-track="main" aria-label="Main track"
       data-i="Main track|The Day's chain: the Day, then Approvals — the proposals the agents wait on, from every world.">
-      {centralChainSlots('main').map(slot)}
+      {placeOn('central-main', centralChainSlots('main'))}
     </div>}
     {place !== 'main' && <div className="central-track-chain" data-track="workspace" aria-label="World" data-world={chainWorld.kind}
       data-code={code === null ? undefined : typeof code === 'object' ? 'refused' : code}
       data-i={`World|A world's chain: the Packet, the agent of the world and its Scope, then Docs, the world's account on six tiers. ${codeWords}`}>
-      {centralChainSlots('world').map(slot)}
+      {placeOn('central-world', centralChainSlots('world'))}
       {code !== null && typeof code === 'object' && <p className="central-chain-note" role="status">{codeWords}</p>}
     </div>}
   </div>

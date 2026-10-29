@@ -31,10 +31,10 @@
 // type}; Accept (`new.accept`) keeps it, Change returns to the fields, Discard (`new.discard`) drops it. No kernel route proposes or
 // accepts an agent set yet (Central's sets are read with central.agent-set.resolve).
 // A key the owner has not reported is absent, and the view draws "—" for it and names it in words.
-import {memo, useLayoutEffect, useMemo, useState, type CSSProperties, type ReactNode} from 'react'
+import {memo, useMemo, useState, type CSSProperties, type ReactNode} from 'react'
 import {KindMark} from '../../sdk/marks'
 import {maskStatic} from '../../../agent/maskFace'
-import {Action, Band, Chooser, Dial, Display, Folded, Lamp, Panel, Radio, Readout, Rows, Section, TextField, Tile, ValueBox, type LightState, type Option, type RowItem, type Scale, type Tone} from '../../sdk/panel'
+import {Action, Band, Chooser, Dial, Display, Folded, Lamp, Panel, Radio, Readout, Rows, Section, TextField, Tile, ValueBox, type LightState, type Option, type RowItem, type Scale, type Tone, unreadRows, NoReading, useLayoutIso} from '../../sdk/panel'
 import {NONE, has, json, numOf, on, prefixed, scoped, st, strOf, type DesignedDevice, type ViewProps} from './design'
 import {design as decisionHelper} from './decision-helper'
 import {CreatureFace, FigureThumb} from '../faces/CreatureFace'
@@ -197,7 +197,8 @@ function MemberList({p, size, chip = true, note = true, label = true}: {p: ViewP
   const list = membersOf(p.v), chosen = chosenOf(p.v, list)
   const known = has(p.v, 'members')
   return <>
-    <Rows label={label ? (known ? `Members · ${list.length}` : 'Members · no reading') : undefined} does={SAYS.list} items={rowItems(list, chip, note, patternOf(p.v))} size={size} page={page} onPage={setPage}
+    <Rows label={label ? (known ? `Members · ${list.length}` : 'Members') : undefined} does={SAYS.list} items={known ? rowItems(list, chip, note, patternOf(p.v)) : undefined}
+      waiting={st(p, 'members').waiting} why="No reading of the members." size={size} page={page} onPage={setPage}
       selected={chosen?.id} onSelect={st(p, 'member').disabled ? undefined : id => p.set('member', id)} />
     {list.length === 0 && <p className="as-none">{known ? 'The set holds no members.' : 'No reading of the members.'}</p>}
   </>
@@ -246,7 +247,7 @@ const openAction = (p: ViewProps, chosen: Node | undefined) => {
 /** The face colours resolved from the shell's tokens: the mask mixes hex values, so it needs the token's value, not its name. */
 function useFace(size: number) {
   const [colours, setColours] = useState({ink: 'var(--fizz)', ground: 'var(--bg-0)'})
-  useLayoutEffect(() => {
+  useLayoutIso(() => {
     const style = getComputedStyle(document.documentElement)
     const hex = (name: string, fallback: string) => { const x = style.getPropertyValue(name).trim(); return /^#[0-9a-f]{6}$/i.test(x) ? x : fallback }
     setColours({ink: hex('--fizz', 'var(--fizz)'), ground: hex('--bg-0', 'var(--bg-0)')})
@@ -304,7 +305,7 @@ function CrewPane({p}: {p: ViewProps}) {
         <span>{list.length} members</span>
         {(['working', 'stalled', 'done', 'idle', 'failed'] as const).filter(s => countOf(list, s) > 0).map(s =>
           <span key={s}><Lamp state={tone(s).light} tone={tone(s).tone} label={STATE_WORD[s]} />{countOf(list, s)} {STATE_WORD[s].toLowerCase()}</span>)}
-      </> : <span>No reading of the members</span>}
+      </> : <span><NoReading name="Members" why="No reading of the members." waiting={st(p, 'members').waiting} /></span>}
     </div>
     <div className="as-body" data-none={list.length === 0 ? 'true' : undefined}>
       {list.length === 0
@@ -446,7 +447,7 @@ function HelperBands({p}: {p: ViewProps}) {
         <Readout label="abstained" does="Answers that picked nothing." value={numOf(v, 'abstained')} />
         <Readout label="refused" does="Picks the engine refused." value={numOf(v, 'refused')} tone="stall" />
       </Section>
-      <Section grow><Rows label={all ? 'The team\'s questions' : 'The team\'s questions · no reading'} items={items} size={8} page={page} onPage={setPage}
+      <Section grow><Rows label="The team's questions" items={all ? items : undefined} why="No reading of the team's questions." size={8} page={page} onPage={setPage}
         onRequest={st(p, 'instruments').disabled ? undefined : (id, x) => p.set(`allow:${id}`, x)}
         does="The questions the helper may answer for this team. The square is your request; the light is the team's measured admission." /></Section>
     </Band>
@@ -514,7 +515,7 @@ function NewGroupBands({p}: {p: ViewProps}) {
     <Band>
       <Section label="Members" grow><Rows does="Your agents. Drag a face into the card, or press a square to add or take out a member." size={6} columns={2}
         items={roster ? roster.map(r => ({id: r.id, name: r.name, light: members.includes(r.id) ? 'lit' as LightState : 'dark' as LightState, tone: 'value' as const, request: members.includes(r.id)}))
-          : [{id: 'none', name: 'No reading of your agents', light: 'unknown'}]}
+          : unreadRows('No reading of your agents.')}
         onRequest={roster ? (id, x) => p.set('new.members', JSON.stringify(x ? [...members, id] : members.filter(m => m !== id))) : undefined} /></Section>
       <Section label="Make" width={104}>
         <Readout label="members" does="The members the group will hold." value={members.length} tone="value" />
@@ -602,17 +603,17 @@ export const design: DesignedDevice = {
     return <Folded title={crewOf(p.v) ?? 'Agentset'} light={lightOf(p)} readings={[known ? `${countOf(list, 'working')}/${list.length} working` : NONE]} onUnfold={p.nav.unfold} />
   },
 
-  compact: p => <Panel title={titleOf(p.v)} mark={headMark} view="compact" {...head(p)} onSelect={p.nav.select}>
-    <Section width={240}>
+  compact: p => <Panel title={titleOf(p.v)} mark={headMark} view="compact" rack {...head(p)} onSelect={p.nav.select}>
+    <Section width={240} part="chains">
       <MemberList p={p} size={8} />
     </Section>
-    <Section label="Limits" cols={2}>
+    <Section label="Limits" cols={2} part="macros">
       {fanBox(p)}
       {depthBox(p)}
       <Readout label="working" does="Members at work, of the most that may run at once." value={workingLine(p)} tone="value" />
       <Readout label="stalled" does="Members that stopped producing output." value={countLine(p.v, 'stalled')} tone={countOf(membersOf(p.v), 'stalled') > 0 ? 'stall' : undefined} />
     </Section>
-    <Section label="Helpers" width={112}>
+    <Section label="Helpers" width={112} part="macros">
       {handBack(p)}
       {modelChooser(p)}
     </Section>
@@ -620,14 +621,14 @@ export const design: DesignedDevice = {
 
   whole: p => {
     const list = membersOf(p.v), chosen = chosenOf(p.v, list), making = on(p.v, 'new.open'), page = p.page === 'helper' ? 'helper' : 'members'
-    return <Panel title={titleOf(p.v)} mark={headMark} view="whole" {...head(p)} pages={PAGES} page={page} onPage={p.setPage}
+    return <Panel title={titleOf(p.v)} mark={headMark} view="whole" rack {...head(p)} pages={PAGES} page={page} onPage={p.setPage}
       acts={making ? undefined : <Action label="New" does="Opens a card to make a new group." onPress={() => p.set('new.open', true)} />}>
       {making ? <NewGroupBands p={p} /> : page === 'helper' ? <HelperBands p={helperOf(p)} /> : <>
       <Band>
-        <Section label="Members" width={220}>
+        <Section label="Members" width={220} part="chains">
           <MemberList p={p} size={8} note={false} label={false} />
         </Section>
-        <Section label="Limits" cols={2}>
+        <Section label="Limits" cols={2} part="macros">
           {fanBox(p)}
           {depthBox(p)}
           <Readout label="working" does="Members at work, of the most that may run at once." value={workingLine(p)} tone="value" />
@@ -641,14 +642,14 @@ export const design: DesignedDevice = {
         </Section>
       </Band>
       <Band>
-        <Section label="Member" cols={4} grow>
+        <Section label="Member" cols={4} grow part="devices">
           <Who chosen={chosen} known={has(p.v, 'members')} pattern={patternOf(p.v)} />
           <Readout label="tool calls" does="Tool calls the chosen member has made." value={chosen?.tools} />
           <Readout label="files" does="Files the chosen member touched." value={chosen?.files?.length} />
           {retryAction(p, chosen)}
           {openAction(p, chosen)}
         </Section>
-        <Section label="Return" cols={2} width={196}>
+        <Section label="Return" cols={2} width={196} part="macros">
           {handBack(p)}
           {joinChooser(p)}
           <div className="as-span">{modelChooser(p)}</div>

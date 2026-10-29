@@ -13,14 +13,14 @@
 // removed for an adjacent one): the chain's wrap reaches a design's kit controls by their value keys (DeviceView.tsx useHosting →
 // deviceHost.tsx → sdk/panel.tsx ControlWrapContext) as it reaches the generic plate's rows (torusMapWrap); a place that wraps the
 // whole frames its See and hear by the ids the instrument section uses (midiMap/midiMapTargets.ts).
-import {useEffect, useMemo, type ReactNode} from 'react'
+import {useEffect, useMemo, useRef, type ReactNode} from 'react'
 import type {SdkParamRow} from '../inhabitants/sdk/define'
 import {DeviceView} from '../frame/devices/DeviceView'
 import {publishDevice, selectDevice} from '../frame/devices/deviceDoor'
 import {DEVICE_PANE_KIND} from '../frame/devices/devicePane'
 import {openInstrument} from '../frame/instrumentDoor'
-import {TORUS_DESIGN_ID, TORUS_DEVICE, TORUS_DEVICE_ID, torusDesignBinding, torusDevice, torusFigure, torusTone, type TorusFigureSize} from './torusDevice'
-import {LIVE_TORUS_ABSENT_REASON, useLiveTorusReading, type LiveTorusState} from './torusInstrument'
+import {TORUS_DESIGN_ID, TORUS_DEVICE, TORUS_DEVICE_ID, torusBodyEdit, torusBodySourceOf, torusDesignBinding, torusDevice, torusFigure, torusTone, type TorusFigureSize} from './torusDevice'
+import {commitLiveInstrumentEdit, LIVE_TORUS_ABSENT_REASON, liveInstrumentWritable, useLiveTorusReading, type LiveTorusState} from './torusInstrument'
 import {JankoDevice} from './janko/JankoDevice'
 import {useKeyboardLayout} from './keyboardLayout'
 import {MidiMapTarget} from './midiMap/midiMapControls'
@@ -91,6 +91,17 @@ export function useTorusChainBinding(state: LiveTorusState | null, device: Devic
   const tattvaName = useCoordinateName(condition?.tattva_ref ?? null)
   // M2's body constants (QL's table): the Body group reads their standing and what the fibre would set.
   const table = useBodyTable()
+  // Under Tattva the body follows the tattva (manual §21.2): when the condition's fibre moves, or a determinant moves the voices the Q is
+  // lowered on, its Damping is written again through the stage channel, once per target.
+  const followed = useRef('')
+  useEffect(() => {
+    const edit = liveInstrumentWritable(state) ? torusBodyEdit(condition, table, torusBodySourceOf(held ?? {})) : null
+    if (!edit) { followed.current = ''; return }
+    const target = JSON.stringify([edit, state?.ok ? state.determinants : null])
+    if (target === followed.current) return
+    followed.current = target
+    void commitLiveInstrumentEdit(edit).then(result => { if (!result.ok) followed.current = '' }, () => { followed.current = '' })
+  }, [state, condition, table, held])
   return useMemo(() => torusDesignBinding(state, device, skyHeldTorusKeys(plan), stage, rack, run, held ?? {}, condition, tattvaName, table),
     [state, device, plan, stage, rack, run, held, condition, tattvaName, table])
 }

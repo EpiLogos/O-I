@@ -39,7 +39,7 @@
 // projections/atlas/paneChrome.ts) and the hand `pane.press`, which presses the instrument's own control (catalogue/panels/paneControls.tsx).
 // Absent while no instrument draws a lens of its own.
 import {PaneControls, paneControlsOf, paneTitle} from './paneControls'
-import {Band, Chooser, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, Tile, type LightState, type Option, type RowItem} from '../../sdk/panel'
+import {Band, Chooser, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, Tile, type LightState, type Option, type RowItem, unreadRows} from '../../sdk/panel'
 import {NONE, clampTo, has, json, numOf, st, strOf, type DesignedDevice, type ViewProps} from './design'
 
 type V = ViewProps['v']
@@ -210,7 +210,7 @@ function controls(p: ViewProps) {
 }
 
 const carryRows = (v: V): RowItem[] => { const degraded = degradedOf(v), carries = carriesOf(v)
-  if (carries === undefined) return [{id: 'none', name: 'No reading of the instruments', light: 'unknown'}]
+  if (carries === undefined) return unreadRows('No reading of the instruments.')
   return carries.map(c => ({id: c.instrument, name: INSTRUMENT_WORD[c.instrument] ?? c.instrument, light: c.available ? 'lit' : 'dark', tone: 'value',
     note: c.available ? (degraded.has(c.instrument) ? 'thin' : 'carried') : 'refused', why: c.available ? degraded.get(c.instrument) : c.reason})) }
 const carried = (v: V) => { const c = carriesOf(v); return c === undefined ? undefined : `${c.filter(x => x.available).length}/${c.length}` }

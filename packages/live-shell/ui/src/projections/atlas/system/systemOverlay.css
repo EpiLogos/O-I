@@ -17,6 +17,9 @@
 /* the locations on your body (Body and Region scales), in the atlas's own presence style (globe/shaders.ts PRESENCE_FRAG): a core at the point, a faint
  * ring of uncertainty round an approximate place (and a wider one round a region), a dotted ring round a mythic place, hollow on a shore, the name
  * beside it; pressed to select the place or enter the world. A mark is a wrapper at the point holding two buttons side by side: the place, and its anchor line. */
+/* [O-I #746] the routes on the ground of the body drawn: one line through each route's stops, in order, under the marks */
+.sys-routes { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 3; pointer-events: none; overflow: visible; }
+.sys-route { fill: none; stroke: var(--accent); stroke-width: 1.5; stroke-dasharray: 5 4; stroke-linejoin: round; stroke-linecap: round; opacity: 0.85; }
 .sys-places { position: fixed; inset: 0; z-index: 3; pointer-events: none; }
 .sys-places[hidden] { display: none; }
 .sys-mark { position: absolute; left: 0; top: 0; display: flex; align-items: center; gap: 8px; margin: -4px 0 0 -4px; }

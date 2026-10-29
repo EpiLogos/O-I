@@ -32,8 +32,8 @@
 // A key the owner does not report is drawn "—", and the well names the reading that is missing. The sample is the roster of this ground,
 // read with `agent-profile.roster`: its 39 profiles, their names, roles, revisions, authored skill, method and SkillSet refs and ratified
 // Worlds; Cairn, Flint, Kite and Lilt carry the authored selves of Control/self/agents. It sits in the defaults and the fixtures.
-import {memo, useLayoutEffect, useMemo, useState} from 'react'
-import {Band, Chooser, Display, Folded, Handle, Panel, Readout, Rows, Section, Tile, Toggle, type LightState, type RowItem, type Standing} from '../../sdk/panel'
+import {memo, useMemo, useState} from 'react'
+import {Band, Chooser, Display, Folded, Handle, Panel, Readout, Rows, Section, Tile, Toggle, type LightState, type RowItem, type Standing, unreadRows, useLayoutIso} from '../../sdk/panel'
 import {WoodMark} from '../../sdk/marks'
 import type {WoodSet} from '../../sdk/icons'
 import {maskStatic} from '../../../agent/maskFace'
@@ -267,7 +267,7 @@ function missing(m: Model, v: V): {title: string; body: string} {
 /** The face colours resolved from the shell's tokens: the mask mixes hex values, so it needs the token's value, not its name. */
 function useFaceColours() {
   const [colours, setColours] = useState({ink: 'var(--fizz)', ground: 'var(--bg-0)'})
-  useLayoutEffect(() => {
+  useLayoutIso(() => {
     const style = getComputedStyle(document.documentElement)
     const hex = (name: string, fallback: string) => { const x = style.getPropertyValue(name).trim(); return /^#[0-9a-f]{6}$/i.test(x) ? x : fallback }
     setColours({ink: hex('--fizz', 'var(--fizz)'), ground: hex('--bg-0', 'var(--bg-0)')})
@@ -482,10 +482,10 @@ function ChangedSince({v}: {v: V}) {
   const c = continuityOf(v)
   const row = (id: 'body' | 'identity', name: string, says: string): RowItem => {
     const cs = c?.[id]
-    return {id, name, light: !c ? 'dark' : cs!.length ? 'lit' : 'dark', tone: id === 'identity' ? 'accent' : 'value', note: c ? changeWords(cs!) : NONE,
+    return {id, name, light: !c ? 'unknown' : cs!.length ? 'lit' : 'dark', tone: id === 'identity' ? 'accent' : 'value', note: c ? changeWords(cs!) : NONE,
       does: !c ? CONTINUITY_DARK : cs!.length ? `${says} ${cs!.map(x => `${x.field}: ${x.from ?? NONE} → ${x.to ?? NONE}`).join('; ')}.` : `${says} Nothing changed.`}
   }
-  return <Rows label={c ? `Changed since ${c.since ?? NONE}` : 'Changed since · no reading'} does={c ? 'What changed between the earlier receipt and the latest: the body apart from who the agent is.' : CONTINUITY_DARK}
+  return <Rows label={c ? `Changed since ${c.since ?? NONE}` : 'Changed since'} does={c ? 'What changed between the earlier receipt and the latest: the body apart from who the agent is.' : CONTINUITY_DARK}
     items={[row('body', 'Body', 'How it runs:'), row('identity', 'Identity', 'Who it is:')]} size={2} />
 }
 
@@ -495,7 +495,8 @@ export function IdentityBands({p, state = 'queued'}: {p: ViewProps; state?: RunS
   const m = model(p.v), c = m.card
   const accepted = m.roster?.filter(x => x.ok === true).length
   const rows: RowItem[] = !m.list
-    ? [{id: 'unread', name: m.status === 'refused' ? 'Roster refused' : 'No reading of the roster', light: 'unknown', does: m.status === 'refused' ? SAYS.refused : SAYS.unread}]
+    // Refused: the roster stands dark in the stall colour, the refusal on the Info line; unread: the list stands empty under a hollow light.
+    ? (m.status === 'refused' ? [{id: 'unread', name: 'Roster', light: 'dark', tone: 'stall', why: SAYS.refused}] : unreadRows(SAYS.unread))
     : m.list.length === 0
       ? [{id: 'none', name: 'No agent on the roster', light: 'unknown', does: 'Central reports no accepted agent. Turn on Proposed to show the others.'}]
       : m.list.map(x => ({id: x.ref, name: x.label, light: x.ok === undefined ? 'unknown' : x.ok ? 'lit' : 'dark', tone: 'green', note: x.rev ?? NONE, does: `${roleOf(x)} · ${standingText(x)}`}))

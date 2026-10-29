@@ -25,7 +25,10 @@ const EASE = 'cubic-bezier(0.2, 0.7, 0.2, 1)'
 export const reducedMotion = (): boolean => typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches
 
 /** A layout effect where a DOM stands; server rendering runs no effects either way. */
-const useLayoutIso = typeof window !== 'undefined' ? useLayoutEffect : useEffect
+/** A layout effect where a page lays out, and a plain effect in a server render (react-dom/server: a static render, as the shell's Node suites
+ * draw the designs, warns "useLayoutEffect does nothing on the server" for every layout effect). Decided by whether a real DOM stands —
+ * `HTMLElement` — not by `window`, which the suites stand in for with plain objects. Every part and design measures through this one. */
+export const useLayoutIso: typeof useLayoutEffect = typeof HTMLElement === 'undefined' ? useEffect : useLayoutEffect
 
 /** The detent: a drag that passes within this fraction of the range of the default lands on it. Shift drags past. */
 export const DETENT = 0.022
@@ -238,9 +241,92 @@ export interface Standing {
   /** Who moved the value just now, when something other than the hand did (an agent, the sky): the name stands on the control with
    * the ring for a moment (manual §16.10: the value shows what moved it). */
   readonly movedBy?: string
+  /** The owner reports the thing working (a run, a write in progress): a ring spreads from its light for as long as it says so. */
+  readonly working?: boolean
   /** The value key this standing is for, named by the host only where the place wraps its controls (deviceHost.tsx): the control
    * that spreads it is drawn inside the place's wrap by it (ControlWrapContext). Not a reading: nothing draws it. */
   readonly valueKey?: string
+}
+
+// ---------------------------------------------------------------- one standing per control (manual §16.11)
+
+/** The standings of manual §16.11, one per control: who moves the value now. The kit draws a control from this one value
+ * (`data-standing`), apart from what the hand is doing to it (`data-hand`: pressing, dragging, focused) and from how the place
+ * presents it (its view and size). `waiting` is the manual's Waiting (sent, not yet confirmed); `awaiting` is Waiting for a reading
+ * (the owner is asked and has not answered); `unread` is No reading; `refused` is §16.10's refusal, shown until the next move. */
+export type StandingName = 'plain' | 'automated' | 'overridden' | 'modulated' | 'held' | 'moved' | 'waiting' | 'refused' | 'disabled'
+  | 'working' | 'awaiting' | 'unread'
+
+/** A control's one standing, from what the host reports for its key and whether the owner has a reading of the value. With no
+ * reading there is nothing for anyone to move: the owner is being asked (awaiting) or has not said (unread). Otherwise the first that
+ * holds, in this order: nobody can move it now (disabled), you sent it and the owner has not answered (waiting), the owner refused
+ * it (refused), something other than the hand moved it a moment ago (moved: the ring, and the mover's name where the host names
+ * one), someone else holds it (held), you took it off its lane (overridden),
+ * its lane plays it (automated), a modulator moves it (modulated), the owner reports it working (working). */
+export function standingOf(st: Standing, known = true, moved = false): StandingName {
+  if (!known) return st.waiting ? 'awaiting' : 'unread'
+  if (st.disabled) return 'disabled'
+  if (st.pending) return 'waiting'
+  if (st.refused) return 'refused'
+  if (moved) return 'moved'
+  if (st.heldBy) return 'held'
+  if (st.automated === 'overridden') return 'overridden'
+  if (st.automated) return 'automated'
+  if (st.modulatedBy) return 'modulated'
+  if (st.working) return 'working'
+  return 'plain'
+}
+
+/** The standing's words for the status bar's Info line: the reason, the holder, the modulator — every one the host reports, the
+ * drawn standing's first. */
+export function standingWords(st: Standing, known = true): string {
+  const words = [
+    !known ? (st.waiting ? WAITING_SAID : NO_READING_SAID) : undefined,
+    st.disabled,
+    known && st.pending ? 'Sent: waiting for the owner to confirm it.' : undefined,
+    st.refused ? `The owner refused: ${st.refused}` : undefined,
+    st.heldBy ? `${st.heldBy} holds this value. Press the name to give it back.` : undefined,
+    st.automated === 'overridden' ? 'You moved it off its automation lane. Re-enable gives it back to the lane.' : st.automated ? 'Its automation lane plays it. Move it to override the lane.' : undefined,
+    st.modulatedBy ? `${st.modulatedBy} moves this value.` : undefined,
+    st.working ? 'The owner reports it working.' : undefined,
+  ]
+  return words.filter(Boolean).join(' ')
+}
+
+/** What a control puts on the status bar's Info line when you point at it (Live's Info View; the shell's one `data-i` channel,
+ * agent/statusInfo.ts): its name, then its value, what it does and its standing's words. */
+export function infoLine(name: string | undefined, value: string | undefined, does: string | undefined, words: string | undefined): string | undefined {
+  const rest = [does, words].filter(Boolean).join(' ')
+  const fn = value && rest ? `${value} — ${rest}` : value || rest
+  return said(name, fn || undefined)
+}
+
+/** Something other than the hand moved the value a moment ago: the Moved standing lasts as long as the mover's name stands (2 s). */
+function useMoved(flash: number): boolean {
+  const [moved, setMoved] = useState(false)
+  useEffect(() => {
+    if (!flash) return
+    setMoved(true)
+    const t = window.setTimeout(() => setMoved(false), MOTION.flash * 2)
+    return () => window.clearTimeout(t)
+  }, [flash])
+  return moved
+}
+
+/** What the hand is doing to a control — pressing it, dragging it, or standing on it from the keyboard — kept apart from its
+ * standing and drawn as `data-hand`. Nothing the owner reports changes it, and it changes nothing the owner reports. */
+export type Hand = 'press' | 'drag' | 'focus'
+function useHand() {
+  const [hand, setHand] = useState<Hand | undefined>(undefined)
+  const settle = (el: Element) => setHand(typeof document !== 'undefined' && el.contains(document.activeElement) ? 'focus' : undefined)
+  return {
+    hand,
+    onPointerDownCapture: (e: PointerEvent<HTMLElement>) => { if (e.button === 0) setHand((e.target as Element).closest('[role="slider"]') ? 'drag' : 'press') },
+    onPointerUpCapture: (e: PointerEvent<HTMLElement>) => settle(e.currentTarget),
+    onPointerCancelCapture: (e: PointerEvent<HTMLElement>) => settle(e.currentTarget),
+    onFocusCapture: () => setHand(h => h ?? 'focus'),
+    onBlurCapture: (e: FocusEvent<HTMLElement>) => { if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setHand(undefined) },
+  }
 }
 
 /** The place's own wrap of a control, by the value key the control draws (Live maps a control to a MIDI control or a key through
@@ -250,18 +336,19 @@ export interface Standing {
 export type ControlWrap = (key: string, control: ReactNode) => ReactNode
 export const ControlWrapContext = createContext<ControlWrap | null>(null)
 
-/** The status bar's words for a control in its standing: what it does, then why it cannot act, who holds it, what moves it, or
- * the owner's refusal. */
-const doesIn = (does: string | undefined, st: Standing): string | undefined => {
-  const parts = [does, st.disabled, st.waiting ? WAITING_SAID : undefined, st.heldBy ? `${st.heldBy} holds this value.` : undefined,
-    st.modulatedBy ? `${st.modulatedBy} moves this value.` : undefined, st.refused ? `The owner refused: ${st.refused}` : undefined].filter(Boolean)
-  return parts.length ? parts.join(' ') : undefined
-}
-
-function Cell({kind, label, does, standing, className, style, unknown, flash = 0, children}: {kind: string; label?: string; does?: string; standing?: Standing; className?: string; style?: CSSProperties; unknown?: boolean; /** How many times something other than the hand has moved the value (useFlash). */ flash?: number; children: ReactNode}) {
+/** A control's cell: three inputs kept apart. Domain — the owner's value (`value`, the words for it; `unknown` when there is none)
+ * and its standing (`standing`, resolved to one StandingName, `data-standing`). Interaction — what the hand is doing (`data-hand`,
+ * the cell's own). Presentation — how the place sets it (`kind`, `className`: wide, big). The Info line reads all of it as one line:
+ * the name, the value, what it does, the standing's words. The `data-` flags after `data-i` are the host's report as it stands, kept
+ * for readers of the markup; the drawing reads `data-standing`. */
+function Cell({kind, label, does, value, standing, className, style, unknown, flash = 0, children}: {kind: string; label?: string; does?: string; /** The value in words, for the Info line. */ value?: string; standing?: Standing; className?: string; style?: CSSProperties; unknown?: boolean; /** How many times something other than the hand has moved the value (useFlash). */ flash?: number; children: ReactNode}) {
   const st = standing ?? {}
+  const moved = useMoved(flash)
+  const name = standingOf(st, !unknown, moved)
+  const {hand, ...handHandlers} = useHand()
   const cell = <div className={`dp-cell dp-cell--${kind}${className ? ` ${className}` : ''}`} style={style}
-    data-i={said(label, unknown ? [does, st.waiting ? WAITING_SAID : NO_READING_SAID, st.disabled].filter(Boolean).join(' ') : doesIn(does, st))} data-unread={unknown ? 'true' : undefined}
+    data-standing={name === 'plain' ? undefined : name} data-hand={hand} {...handHandlers}
+    data-i={infoLine(label, unknown ? undefined : value, does, standingWords(st, !unknown) || undefined)} data-unread={unknown ? 'true' : undefined}
     data-automated={st.automated === true ? 'on' : st.automated === 'overridden' ? 'overridden' : undefined}
     data-held={st.heldBy ? 'true' : undefined} data-pending={st.pending ? 'true' : undefined} data-disabled={st.disabled ? 'true' : undefined}
     data-refused={st.refused ? 'true' : undefined} data-modulated={st.modulatedBy ? 'true' : undefined}
@@ -311,7 +398,7 @@ export function Dial({label, does, value, def, scale, format, onChange, bipolar,
   const u = useGlide(known ? toUnit(scale, value) : 0, !handIs(hand.current ?? 0)), zero = bipolar ? toUnit(scale, 0) : 0
   const a = (135 + u * 270) * Math.PI / 180
   const d0 = def !== undefined && !scale.step && known ? (135 + toUnit(scale, def) * 270) * Math.PI / 180 : null
-  return <Cell kind="dial" label={label} does={does} standing={standing} unknown={!known} flash={flash}>
+  return <Cell kind="dial" label={label} does={does} value={known ? format(value) : undefined} standing={standing} unknown={!known} flash={flash}>
     {label && <span className="dp-label">{label}</span>}
     <svg className="dp-dial" viewBox="0 0 28 28" role="slider" aria-label={label} aria-valuemin={scale.min} aria-valuemax={scale.max}
       aria-valuenow={known ? value : undefined} aria-valuetext={known ? format(value) : 'no reading'} aria-disabled={!live || undefined} {...handlers}>
@@ -326,7 +413,7 @@ export function Dial({label, does, value, def, scale, format, onChange, bipolar,
 }
 
 /** A value box (Live's slider-number): the value in a field that fills to its place in the range. */
-export function ValueBox({label, does, value, def, scale, format, onChange, bipolar, wide, ...standing}: ScalarProps & {readonly wide?: boolean}) {
+export function ValueBox({label, does, value, def, scale, format, onChange, bipolar, mod, wide, ...standing}: ScalarProps & {readonly wide?: boolean}) {
   // No reading: an empty field and "—", nothing to move from (manual §16.11).
   const known = !unread(value)
   const live = known && onChange && !standing.disabled ? onChange : undefined
@@ -334,11 +421,13 @@ export function ValueBox({label, does, value, def, scale, format, onChange, bipo
   const flash = useFlash(known ? value : undefined, hand)
   const u = useGlide(known ? toUnit(scale, value) : 0, !handIs(hand.current ?? 0)), zero = known && bipolar ? toUnit(scale, 0) : 0
   const d0 = def !== undefined && !scale.step && known ? toUnit(scale, def) : null
-  return <Cell kind="box" label={label} does={does} standing={standing} className={wide ? 'dp-cell--wide' : undefined} unknown={!known} flash={flash}>
+  return <Cell kind="box" label={label} does={does} value={known ? format(value) : undefined} standing={standing} className={wide ? 'dp-cell--wide' : undefined} unknown={!known} flash={flash}>
     {label && <span className="dp-label">{label}</span>}
     <div className="dp-box" role="slider" aria-label={label} aria-valuemin={scale.min} aria-valuemax={scale.max} aria-valuenow={known ? value : undefined}
       aria-valuetext={known ? format(value) : 'no reading'} aria-disabled={!live || undefined} data-def={d0 !== null ? 'true' : undefined} {...handlers}
-      style={{'--f0': Math.min(zero, u), '--f1': Math.max(zero, u), ...(d0 !== null ? {'--d': d0} : {})} as CSSProperties}><span>{known ? format(value) : NO_READING}</span></div>
+      style={{'--f0': Math.min(zero, u), '--f1': Math.max(zero, u), ...(d0 !== null ? {'--d': d0} : {})} as CSSProperties}><span>{known ? format(value) : NO_READING}</span>
+      {/* Modulated: the range the modulator moves it through, a thin line under the field (the dial's outer arc, laid flat). */}
+      {known && mod && <i className="dp-box-mod" aria-hidden="true" style={{'--m0': toUnit(scale, Math.min(...mod)), '--m1': toUnit(scale, Math.max(...mod))} as CSSProperties} />}</div>
   </Cell>
 }
 
@@ -346,7 +435,7 @@ export function ValueBox({label, does, value, def, scale, format, onChange, bipo
  * for on. */
 export function Toggle({label, does, on, onChange, tone = 'accent', unknown, ...standing}: Standing & {readonly label: string; readonly does?: string; readonly on: boolean; readonly onChange?: (on: boolean) => void; readonly tone?: Tone; readonly unknown?: boolean}) {
   const hand = useRef(0), flash = useFlash(unknown ? undefined : on, hand)
-  return <Cell kind="toggle" label={label} does={does} standing={standing} unknown={unknown} flash={flash}>
+  return <Cell kind="toggle" label={label} does={does} value={unknown ? undefined : on ? 'On' : 'Off'} standing={standing} unknown={unknown} flash={flash}>
     <button type="button" className="dp-toggle" data-tone={tone} aria-pressed={unknown ? undefined : on} data-unknown={unknown ? 'true' : undefined}
       disabled={!onChange || !!standing.disabled} onClick={() => { handUp(hand); onChange?.(unknown ? true : !on) }}>{label}</button>
   </Cell>
@@ -364,9 +453,10 @@ export interface Option<T extends string> {
 /** One of a few, side by side or stacked (Live's radio buttons: filter types, quantize). The chosen one's amber is a thumb that slides
  * to the choice in MOTION.choice; without a layout (server render) the chosen button draws it. */
 export function Radio<T extends string>({label, does, value, options, onChange, stack, ...standing}: Standing & {readonly label?: string; readonly does?: string; readonly value: T; readonly options: readonly Option<T>[]; readonly onChange?: (v: T) => void; readonly stack?: boolean}) {
-  const hand = useRef(0), flash = useFlash(value, hand)
+  const hand = useRef(0), chosen = options.find(option => option.value === value), flash = useFlash(chosen ? value : undefined, hand)
   const slide = useSlide<HTMLDivElement>('[aria-checked="true"]', `${value}|${options.map(o => o.value).join(',')}`, !!stack)
-  return <Cell kind="radio" label={label} does={does} standing={standing} flash={flash}>
+  // No option is the owner's value: No reading — none is lit (manual §16.11), and the Info line says so.
+  return <Cell kind="radio" label={label} does={does} value={chosen?.label} standing={standing} unknown={!chosen} flash={flash}>
     {label && <span className="dp-label">{label}</span>}
     <div ref={slide} className="dp-radio" role="radiogroup" aria-label={label} data-stack={stack ? 'true' : undefined}>
       <span className="dp-thumb" aria-hidden="true" />
@@ -380,8 +470,8 @@ export function Radio<T extends string>({label, does, value, options, onChange, 
 
 /** One of many, from a menu (Live's chooser). The menu is the system's own: it opens and closes as the system draws it. */
 export function Chooser<T extends string>({label, does, value, options, onChange, wide, ...standing}: Standing & {readonly label?: string; readonly does?: string; readonly value: T; readonly options: readonly Option<T>[]; readonly onChange?: (v: T) => void; readonly wide?: boolean}) {
-  const hand = useRef(0), flash = useFlash(value, hand)
-  return <Cell kind="chooser" label={label} does={does} standing={standing} className={wide ? 'dp-cell--wide' : undefined} flash={flash}>
+  const hand = useRef(0), chosen = options.find(option => option.value === value), flash = useFlash(chosen ? value : undefined, hand)
+  return <Cell kind="chooser" label={label} does={does} value={chosen?.label} standing={standing} className={wide ? 'dp-cell--wide' : undefined} unknown={!chosen} flash={flash}>
     {label && <span className="dp-label">{label}</span>}
     <select className="dp-chooser" aria-label={label} value={options.some(option => option.value === value) ? value : ''} disabled={!onChange || !!standing.disabled}
       onChange={event => { handUp(hand); onChange?.(event.target.value as T) }}>
@@ -395,7 +485,7 @@ export function Chooser<T extends string>({label, does, value, options, onChange
  * picker. Absent, it shows "—" and no colour. */
 export function Swatch({label, does, value, onChange, ...standing}: Standing & {readonly label?: string; readonly does?: string; readonly value: string | undefined; readonly onChange?: (hex: string) => void}) {
   const unknown = value === undefined || value === ''
-  return <Cell kind="swatch" label={label} does={does} standing={standing} unknown={unknown}>
+  return <Cell kind="swatch" label={label} does={does} value={unknown ? undefined : value.toUpperCase()} standing={standing} unknown={unknown}>
     {label && <span className="dp-label">{label}</span>}
     <label className="dp-swatch" style={{'--swatch': unknown ? 'transparent' : value} as CSSProperties}>
       <input type="color" value={unknown ? '#000000' : value} aria-label={label ?? 'Colour'} disabled={!onChange || !!standing.disabled}
@@ -407,7 +497,7 @@ export function Swatch({label, does, value, onChange, ...standing}: Standing & {
 
 /** A short line of text you type (a label, a name, a message): it sends on Enter or when you leave it; Escape restores it. */
 export function TextField({label, does, value, onChange, placeholder, wide, ...standing}: Standing & {readonly label?: string; readonly does?: string; readonly value: string; readonly onChange?: (v: string) => void; readonly placeholder?: string; readonly wide?: boolean}) {
-  return <Cell kind="text" label={label} does={does} standing={standing} className={wide ? 'dp-cell--wide' : undefined}>
+  return <Cell kind="text" label={label} does={does} value={value || undefined} standing={standing} className={wide ? 'dp-cell--wide' : undefined}>
     {label && <span className="dp-label">{label}</span>}
     <input className="dp-text" type="text" aria-label={label ?? placeholder} defaultValue={value} key={value} placeholder={placeholder}
       disabled={!onChange || !!standing.disabled}
@@ -420,8 +510,10 @@ export function TextField({label, does, value, onChange, placeholder, wide, ...s
 }
 
 /** A reading: a name and a short value. `big` for a count that is the point of the view. `copy`: pressing it copies this text (a
- * coordinate, a path); the mark appears when you point at it, and turns to a tick for a moment once it has copied. */
-export function Readout({label, does, value, big, tone, onPress, copy}: {readonly label: string; readonly does?: string; readonly value: ReactNode; readonly big?: boolean; readonly tone?: Tone; readonly onPress?: () => void; readonly copy?: string}) {
+ * coordinate, a path); the mark appears when you point at it, and turns to a tick for a moment once it has copied. Its standing is a
+ * control's (manual §16.11): absent, it is No reading ("—", faint) or, while the owner is asked, Waiting for a reading (the field
+ * breathes); a fault is the owner's words on the Info line (`refused`, `disabled`), never the value written as a sentence. */
+export function Readout({label, does, value, big, tone, onPress, copy, ...standing}: Standing & {readonly label: string; readonly does?: string; readonly value: ReactNode; readonly big?: boolean; readonly tone?: Tone; readonly onPress?: () => void; readonly copy?: string}) {
   // A reading the owner has not reported shows "—", never NaN, "undefined" or zero (manual §16.12).
   const known = !(typeof value === 'number' || typeof value === 'string' || value === undefined || value === null) || !unread(value)
   const [copied, setCopied] = useState(false), timer = useRef<number | undefined>(undefined)
@@ -434,10 +526,11 @@ export function Readout({label, does, value, big, tone, onPress, copy}: {readonl
   const mark = copy !== undefined && known && <span className="dp-copy" aria-hidden="true" data-done={copied ? 'true' : undefined}>
     <svg viewBox="0 0 16 16"><g className="dp-copy-c"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5" /><path d="M10.5 5.5v-1A1.5 1.5 0 0 0 9 3H4.5A1.5 1.5 0 0 0 3 4.5V9a1.5 1.5 0 0 0 1.5 1.5h1" /></g><path className="dp-copy-ok" d="M3.5 8.5l3 3 6-7" /></svg></span>
   const body = <><output className="dp-readout-value" data-tone={known ? tone : undefined}>{known ? value : NO_READING}{mark}</output><span className="dp-label">{label}</span></>
-  const said_ = known ? [does, copy !== undefined ? 'Press to copy.' : undefined].filter(Boolean).join(' ') || undefined : [does, NO_READING_SAID].filter(Boolean).join(' ')
-  return <div className={`dp-cell dp-cell--readout${big ? ' dp-cell--big' : ''}`} data-i={said(label, said_)} data-unread={known ? undefined : 'true'}>
-    {press ? <button type="button" className="dp-readout-press" onClick={press}>{body}</button> : body}
-  </div>
+  const words = typeof value === 'string' || typeof value === 'number' ? String(value) : undefined
+  return <Cell kind="readout" label={label} does={[does, known && copy !== undefined ? 'Press to copy.' : undefined].filter(Boolean).join(' ') || undefined}
+    value={words} standing={standing} className={big ? 'dp-cell--big' : undefined} unknown={!known}>
+    {press ? <button type="button" className="dp-readout-press" onClick={press} disabled={!!standing.disabled || undefined}>{body}</button> : body}
+  </Cell>
 }
 
 /** A momentary action (Close now, Disperse). `hold`: an act that cannot be undone is held, not clicked — press and hold (or hold Space
@@ -476,8 +569,17 @@ export function Action({label, does, onPress, hold, ...standing}: Standing & {re
 
 /** A light: lit or dark when the owner reports it, hollow when nobody has said. `busy`: the owner reports it working — a ring spreads
  * from it and fades, for as long as the owner says so, and never otherwise. */
-export function Lamp({state, tone = 'accent', label, busy}: {readonly state: LightState; readonly tone?: Tone; readonly label?: string; readonly busy?: boolean}) {
-  return <span className="dp-lamp" data-light={lightIn(state)} data-tone={tone} data-busy={busy ? 'true' : undefined} role={label ? 'img' : undefined} aria-label={label} />
+export function Lamp({state, tone = 'accent', label, busy, does, waiting, why}: {readonly state: LightState; readonly tone?: Tone; readonly label?: string; readonly busy?: boolean;
+  /** What the light reports, for the Info line. */ readonly does?: string;
+  /** The owner is asked and has not answered: the hollow light breathes (Waiting for a reading). */ readonly waiting?: boolean;
+  /** The owner's reason, where it gives one (why it is dark, why it has not said). */ readonly why?: string}) {
+  const light = lightIn(state)
+  const standing = standingOf({waiting, working: busy}, light !== 'unknown')
+  // A named light speaks on the Info line: its name, what it reads (on, off) and its standing's words.
+  const info = label || does ? infoLine(label, light === 'lit' ? 'On' : light === 'dark' ? 'Off' : undefined, does,
+    [standingWords({waiting, working: busy}, light !== 'unknown'), why].filter(Boolean).join(' ') || undefined) : undefined
+  return <span className="dp-lamp" data-light={light} data-tone={tone} data-busy={busy ? 'true' : undefined} data-standing={standing === 'plain' ? undefined : standing}
+    role={label ? 'img' : undefined} aria-label={label} data-i={info} />
 }
 
 export interface RowItem {
@@ -500,13 +602,50 @@ export interface RowItem {
   readonly meter?: ReactNode
   /** What the row is, for the status bar, when its name does not say it. */
   readonly does?: string
+  /** The owner is asked for this row's reading and has not answered: its hollow light breathes (Waiting for a reading). */
+  readonly waiting?: boolean
 }
+
+/** A value the owner has not reported, where a design writes a reading in a line of its own (a count beside a heading, a field of a
+ * card): "—" in the faint ink with the No-reading standing (breathing while `waiting`), and `why` — which reading is missing — on the
+ * Info line. Never the words "no reading" in the value's place. */
+export function NoReading({name, why, waiting}: {readonly name?: string; readonly why: string; readonly waiting?: boolean}) {
+  return <span className="dp-no-reading" data-standing={waiting ? 'awaiting' : 'unread'} data-i={said(name ?? 'No reading', [waiting ? WAITING_SAID : NO_READING_SAID, why].join(' '))}>{NO_READING}</span>
+}
+
+/** The lists whose reading the owner has not given, with which reading is missing (unreadRows). */
+const UNREAD_ROWS = new WeakMap<readonly RowItem[], {readonly why: string; readonly waiting?: boolean}>()
+/** A list the owner has not reported, for a design that builds its rows apart from its Rows: the Rows that draws it stands empty under a
+ * hollow light (No reading; breathing while `waiting`), and `why` — which reading is missing — goes to the Info line, never into a row.
+ * `rows` are any rows the design can still show (a refusal beside the missing reading). */
+export function unreadRows(why: string, waiting?: boolean, rows: readonly RowItem[] = []): RowItem[] {
+  const out = [...rows]
+  UNREAD_ROWS.set(out, {why, ...(waiting ? {waiting} : {})})
+  return out
+}
+
+/** A row's one standing (manual §16.11), drawn on its light: the owner reports it working, is asked for it, or has not said. */
+const rowStanding = (item: RowItem): StandingName => item.light === 'unknown' ? (item.waiting ? 'awaiting' : 'unread') : item.busy ? 'working' : 'plain'
+/** A row's words for the Info line: its name, its note (its value), what it is, why the owner holds it back, its standing. */
+const rowInfo = (item: RowItem): string | undefined => infoLine(item.name, item.note, item.does,
+  [item.why, item.light === 'unknown' ? (item.waiting ? WAITING_SAID : NO_READING_SAID) : item.busy ? 'The owner reports it working.' : undefined].filter(Boolean).join(' ') || undefined)
 
 /** Rows with lights (a rack's chains, a scope's places). A long list pages; it never scrolls. `onSelect`: pressing a row's name
  * chooses it (a rack's chain: Live's chain list selection); the chosen row is `selected`. `onMove`: the order is yours to change, as
  * Live's chain list is — the chosen row carries ▲ ▼ and a grip, and ⌥↑ ⌥↓ on a row's name move it one place; drag the grip and the
  * others make room. Rows that come, go or move slide to their places (manual §16.10, "How a control moves"). */
-export function Rows({label, does, items, onRequest, onSelect, selected, onMove, size = 6, page = 0, onPage, columns = 1}: {readonly label?: string; readonly does?: string; readonly items: readonly RowItem[]; readonly onRequest?: (id: string, on: boolean) => void; readonly onSelect?: (id: string) => void; readonly selected?: string; readonly onMove?: (id: string, by: -1 | 1) => void; readonly size?: number; readonly page?: number; readonly onPage?: (page: number) => void; readonly columns?: number}) {
+export function Rows({label, does, items: read, onRequest, onSelect, selected, onMove, size = 6, page = 0, onPage, columns = 1, waiting, why}: {readonly label?: string; readonly does?: string;
+  /** The owner's rows; undefined when the owner has not reported the list: No reading — the list stands empty under a hollow light, and
+   * `why` (which reading is missing) goes to the Info line, never into a row. */
+  readonly items: readonly RowItem[] | undefined; readonly onRequest?: (id: string, on: boolean) => void; readonly onSelect?: (id: string) => void; readonly selected?: string; readonly onMove?: (id: string, by: -1 | 1) => void; readonly size?: number; readonly page?: number; readonly onPage?: (page: number) => void; readonly columns?: number;
+  /** The owner is asked for the list and has not answered: the empty list breathes (Waiting for a reading). */
+  readonly waiting?: boolean;
+  /** Which reading is missing, or the owner's reason, for the Info line. */
+  readonly why?: string}) {
+  const tagged = read ? UNREAD_ROWS.get(read) : undefined
+  const items = read ?? [], known = read !== undefined && !tagged
+  if (tagged) { why = why ?? tagged.why; waiting = waiting ?? tagged.waiting }
+  const standing = known ? 'plain' : waiting ? 'awaiting' : 'unread'
   const pages = Math.max(1, Math.ceil(items.length / size)), at = Math.min(page, pages - 1)
   const shown = items.slice(at * size, at * size + size)
   const list = useRef<HTMLUListElement>(null), grip = useRef<string | null>(null), [dragging, setDragging] = useState<string | null>(null)
@@ -522,8 +661,10 @@ export function Rows({label, does, items, onRequest, onSelect, selected, onMove,
     else if (here >= 0 && to < here) onMove(id, -1)
   }
   const let_go = () => { grip.current = null; setDragging(null) }
-  return <div className="dp-cell dp-cell--rows" data-i={said(label, does)}>
-    {(label || pages > 1) && <div className="dp-rows-head">
+  return <div className="dp-cell dp-cell--rows" data-standing={standing === 'plain' ? undefined : standing}
+    data-i={infoLine(label, undefined, does, [known ? undefined : waiting ? WAITING_SAID : NO_READING_SAID, why].filter(Boolean).join(' ') || undefined)}>
+    {(label || pages > 1 || !known) && <div className="dp-rows-head">
+      {!known && <Lamp state="unknown" waiting={waiting} />}
       {label && <span className="dp-label">{label}</span>}
       {pages > 1 && <span className="dp-pager">
         <button type="button" aria-label="Previous page" disabled={at === 0 || !onPage} onClick={() => onPage?.(at - 1)}>‹</button>
@@ -533,10 +674,10 @@ export function Rows({label, does, items, onRequest, onSelect, selected, onMove,
     </div>}
     <ul ref={list} className="dp-rows" data-columns={columns} style={{'--rows': Math.ceil(size / columns), ...(columns > 2 ? {gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`} : {})} as CSSProperties}>
       {shown.map(item => <li key={item.id} className="dp-row" data-dim={item.light !== 'lit' ? 'true' : undefined} data-selected={item.id === selected ? 'true' : undefined}
-        data-i={said(item.name, item.why ?? item.does ?? (item.light === 'unknown' ? 'No reading yet.' : undefined))} data-id={item.id} data-dragging={dragging === item.id ? 'true' : undefined}>
+        data-standing={rowStanding(item) === 'plain' ? undefined : rowStanding(item)} data-i={rowInfo(item)} data-id={item.id} data-dragging={dragging === item.id ? 'true' : undefined}>
         {onRequest && item.request !== undefined && <button type="button" className="dp-row-request" aria-pressed={item.request}
           aria-label={`${item.request ? 'Withhold' : 'Request'} ${item.name}`} onClick={() => onRequest(item.id, !item.request)} />}
-        {item.mark ?? <Lamp state={item.light} tone={item.tone} busy={item.busy} />}
+        {item.mark ?? <Lamp state={item.light} tone={item.tone} busy={item.busy} waiting={item.waiting} />}
         {onSelect
           ? <button type="button" className="dp-row-name dp-row-select" aria-pressed={item.id === selected} onClick={() => onSelect(item.id)}
             onKeyDown={onMove ? event => { if (event.altKey && (event.key === 'ArrowUp' || event.key === 'ArrowDown')) { event.preventDefault(); onMove(item.id, event.key === 'ArrowUp' ? -1 : 1) } } : undefined}>{item.name}</button>
@@ -674,7 +815,7 @@ export function Pad({w, h, label, does, x, y}: {readonly w: number; readonly h: 
     if (canX && ax) x.onChange!(fromUnit(x.scale, rx))
     if (canY && ay) y.onChange!(fromUnit(y.scale, ry))
   }
-  return <Cell kind="pad" label={label} does={said_} standing={standing} unknown={!known} flash={flash}>
+  return <Cell kind="pad" label={label} does={said_} value={known ? `${x.label} ${x.format(x.value!)} · ${y.label} ${y.format(y.value!)}` : undefined} standing={standing} unknown={!known} flash={flash}>
     <div className="dp-display dp-pad" style={{width: w, height: h}}>
       <svg viewBox={`0 0 ${w} ${h}`} width={w} height={h} role="slider" aria-label={label ?? `${x.label} and ${y.label}`} tabIndex={live ? 0 : -1} aria-disabled={!live || undefined}
         aria-valuetext={known ? `${x.label} ${x.format(x.value!)}, ${y.label} ${y.format(y.value!)}` : 'no reading'}
@@ -766,6 +907,8 @@ export interface PanelProps {
   readonly lightWhy?: string
   /** The device's own acts in the head, after the pages and before the place's marks (the Studio's Save, Undo, Redo). */
   readonly acts?: ReactNode
+  /** A rack (manual §16.1): its head carries Live's three marks, and its sections named by `part` stand only while their mark shows them. */
+  readonly rack?: boolean
   readonly children: ReactNode
 }
 
@@ -782,15 +925,67 @@ export interface Place {
   readonly expanded?: boolean
   /** ↗: pop the device out into its own window, its material with every control (Live's plug-in window). */
   readonly onPopout?: () => void
+  /** A rack's parts the place shows (its head's three marks; the host keeps them per device). Absent, the rack keeps its own. */
+  readonly rackShown?: Partial<RackShown>
+  readonly onRackShow?: (part: RackPart, shown: boolean) => void
 }
 export const PlaceContext = createContext<Place>({})
+
+// ---------------------------------------------------------------- a rack's three parts (Live's rack head)
+
+/** The parts of a rack its head shows or hides, in the order of Live's rack head (manual §16.4 "A rack's head has three more marks, as
+ * Live's do: show or hide the macros, the chain list, and the devices of the selected chain"; Ableton Live 12.0.25 group devices:
+ * AreMacroControlsVisible, IsBranchesListVisible, AreDevicesVisible — devices/racks-session-model.md §1.2). */
+export const RACK_PARTS = ['macros', 'chains', 'devices'] as const
+export type RackPart = typeof RACK_PARTS[number]
+export type RackShown = Readonly<Record<RackPart, boolean>>
+const RACK_ALL: RackShown = {macros: true, chains: true, devices: true}
+/** Each mark's cut (icon-cut.html): a dial for the macros, the list for the chain list, the chain of devices for the devices. */
+const RACK_MARK = {macros: 'form', chains: 'arrangement', devices: 'chain'} as const
+const RACK_WORDS: Readonly<Record<RackPart, readonly [string, string]>> = {
+  macros: ['Macros', 'the rack\'s macros'], chains: ['Chain list', 'the chain list'], devices: ['Devices', 'the devices of the chosen chain'],
+}
+/** What a rack shows, for its sections (Section `part`). Outside a rack every part stands. */
+const RackContext = createContext<RackShown>(RACK_ALL)
+
+/** The body of a rack drawn with PanelHead (a plate the Panel does not draw whole): its sections named by `part` stand while shown. */
+export function RackBody({shown, children}: {readonly shown: RackShown; readonly children: ReactNode}) {
+  return <RackContext.Provider value={shown}>{children}</RackContext.Provider>
+}
+
+/** A rack's shown parts and their hand, for a plate drawn with PanelHead and RackBody: the place's, else the plate's own. */
+export function useRack(): {readonly shown: RackShown; readonly onShow: (part: RackPart, shown: boolean) => void} {
+  const [shown, onShow] = useRackParts(true, useContext(PlaceContext))
+  return {shown, onShow}
+}
+
+/** A rack's shown parts and their hand: the place's, where the host keeps them, else the plate's own. */
+function useRackParts(rack: boolean | undefined, place: Place): [RackShown, (part: RackPart, shown: boolean) => void] {
+  const [own, setOwn] = useState<RackShown>(RACK_ALL)
+  const shown: RackShown = place.rackShown ? {...RACK_ALL, ...place.rackShown} : own
+  const show = place.onRackShow ?? ((part: RackPart, on: boolean) => setOwn(was => ({...was, [part]: on})))
+  return [rack ? shown : RACK_ALL, show]
+}
+
+/** The rack's three marks, after the expanded view's toggle, as Live's rack head carries them. */
+function RackMarks({title, shown, onShow}: {title: string; shown: RackShown; onShow: (part: RackPart, shown: boolean) => void}) {
+  return <span className="dp-rack-marks" role="group" aria-label={`${title}: what the rack shows`}>
+    {RACK_PARTS.map(part => <button key={part} type="button" className="dp-fold dp-rack-mark" data-rack-mark={part} aria-pressed={shown[part] ? 'true' : 'false'}
+      aria-label={`${shown[part] ? 'Hide' : 'Show'} ${RACK_WORDS[part][1]}`}
+      data-i={said(RACK_WORDS[part][0], `${shown[part] ? 'Hides' : 'Shows'} ${RACK_WORDS[part][1]}, as Live's rack head does. The others take the room.`)}
+      onClick={() => onShow(part, !shown[part])}><Icon name={RACK_MARK[part]} size={10} /></button>)}
+  </span>
+}
 
 /** The activator, the same in Panel and PanelHead: a reading of the owner's on/off, pressable only where the owner can turn it. `busy`:
  * the owner reports the device working, so a ring spreads from the light while it does. */
 function Activator({title, light, onLight, why, busy}: {title: string; light: LightState; onLight?: () => void; why?: string; busy?: boolean}) {
-  return <button type="button" className="dp-activator" data-light={light} data-busy={busy ? 'true' : undefined} aria-pressed={light === 'lit'} disabled={!onLight || !!why}
+  const standing = standingOf({working: busy}, light !== 'unknown')
+  return <button type="button" className="dp-activator" data-light={light} data-busy={busy ? 'true' : undefined} data-standing={standing === 'plain' ? undefined : standing}
+    aria-pressed={light === 'lit'} disabled={!onLight || !!why}
     aria-label={`${title}: ${light === 'unknown' ? 'no reading' : light === 'lit' ? 'on' : 'off'}${busy ? ', working' : ''}`}
-    data-i={said('Device on/off', why ?? (light === 'unknown' ? 'No reading from the owner yet.' : 'Asks the owner to turn the device on or off. The light shows what the owner reports.'))}
+    data-i={infoLine('Device on/off', light === 'lit' ? 'On' : light === 'dark' ? 'Off' : undefined,
+      why ?? (light === 'unknown' ? NO_READING_SAID : 'Asks the owner to turn the device on or off. The light shows what the owner reports.'), busy ? 'The owner reports it working.' : undefined)}
     onClick={why ? undefined : onLight} />
 }
 
@@ -799,7 +994,7 @@ function PagesNav({title, pages, page, onPage}: {title: string; pages: readonly 
   const slide = useSlide<HTMLElement>('[aria-selected="true"]', `${page ?? ''}|${pages.map(p => p.id).join(',')}`)
   return <nav ref={slide} className="dp-pages" role="tablist" aria-label={`${title} pages`}>
     <span className="dp-thumb" aria-hidden="true" />
-    {pages.map(p => <button key={p.id} type="button" role="tab" aria-selected={p.id === page} onClick={() => onPage?.(p.id)}>
+    {pages.map(p => <button key={p.id} type="button" data-page={p.id} role="tab" aria-selected={p.id === page} onClick={() => onPage?.(p.id)}>
       {p.light && <Lamp state={p.light} />}{p.label}
     </button>)}
   </nav>
@@ -834,14 +1029,16 @@ function HeadMarks({title, marks, onRail, onFull, fullLabel, place}: {title: str
 }
 
 /** One device panel: the head, then the body — one band on a chain, up to two bands in the pool. */
-export function Panel({title, view, light: reported, onLight, pages, page, onPage, onFold, onFull, onSelect, selected, heldBy, busy, mark, onRail: ownRail, marks: ownMarks, fullLabel, hint, lightWhy, acts, children}: PanelProps) {
+export function Panel({title, view, light: reported, onLight, pages, page, onPage, onFold, onFull, onSelect, selected, heldBy, busy, mark, onRail: ownRail, marks: ownMarks, fullLabel, hint, lightWhy, acts, rack, children}: PanelProps) {
   const light = lightIn(reported), place = useContext(PlaceContext)
   const marks = ownMarks ?? place.marks, onRail = ownRail ?? place.onRail
-  return <section className="dp" data-view={view} data-selected={selected ? 'true' : undefined} aria-label={title}
+  const [shown, show] = useRackParts(rack, place)
+  return <section className="dp" data-view={view} data-selected={selected ? 'true' : undefined} data-rack={rack ? 'true' : undefined} aria-label={title}
     onPointerDownCapture={onSelect}>
     <header className="dp-head" data-i={hint ? said(title, hint) : undefined} onDoubleClick={foldOnDoubleClick(onFold)}>
       <Activator title={title} light={light} onLight={onLight} why={lightWhy} busy={busy} />
       <ExpandToggle title={title} place={place} />
+      {rack && <RackMarks title={title} shown={shown} onShow={show} />}
       {mark}
       <span className="dp-title">{title}</span>
       {heldBy && <span className="dp-head-held" data-i={said('Held', `${heldBy} holds values on this device.`)}>{heldBy}</span>}
@@ -849,7 +1046,7 @@ export function Panel({title, view, light: reported, onLight, pages, page, onPag
       {acts !== undefined && acts !== null && acts !== false && <span className="dp-head-acts">{acts}</span>}
       <HeadMarks title={title} marks={marks} onRail={onRail} onFull={onFull} fullLabel={fullLabel} place={place} />
     </header>
-    <div className="dp-body">{children}</div>
+    <div className="dp-body"><RackContext.Provider value={shown}>{children}</RackContext.Provider></div>
   </section>
 }
 
@@ -886,17 +1083,20 @@ export interface PanelHeadProps {
   readonly selected?: boolean
   /** Why the activator only reads: it stands disabled and says this. */
   readonly lightWhy?: string
+  /** A rack's three marks (useRack), whose body stands in RackBody. */
+  readonly rack?: {readonly shown: RackShown; readonly onShow: (part: RackPart, shown: boolean) => void}
 }
 
 /** The head of a device panel, for a plate the kit's Panel does not draw whole (an instrument's sections, a compact): the activator, ▾,
  * the name, the held mark, the pages, the device's own acts, the place's marks and ⤢ (manual §16.9). The Panel's own head, as one
  * part. */
-export function PanelHead({title, light: reported, onLight, onFold, mark, onName, nameDoes, heldBy, busy, pages, page, onPage, acts, marks: ownMarks, onRail: ownRail, onFull, fullLabel, hint, selected, lightWhy}: PanelHeadProps) {
+export function PanelHead({title, light: reported, onLight, onFold, mark, onName, nameDoes, heldBy, busy, pages, page, onPage, acts, marks: ownMarks, onRail: ownRail, onFull, fullLabel, hint, selected, lightWhy, rack}: PanelHeadProps) {
   const light = lightIn(reported), place = useContext(PlaceContext)
   const marks = ownMarks ?? place.marks, onRail = ownRail ?? place.onRail
   return <header className="dp-head dp-head--plate" data-selected={selected ? 'true' : undefined} data-i={hint ? said(title, hint) : undefined} onDoubleClick={foldOnDoubleClick(onFold)}>
     <Activator title={title} light={light} onLight={onLight} why={lightWhy} busy={busy} />
     <ExpandToggle title={title} place={place} />
+    {rack && <RackMarks title={title} shown={rack.shown} onShow={rack.onShow} />}
     {mark}
     {onName
       ? <button type="button" className="dp-title dp-title--press" onClick={onName} data-i={said(title, nameDoes ?? hint)}>{title}</button>
@@ -913,9 +1113,13 @@ export function Band({children}: {readonly children: ReactNode}) {
   return <div className="dp-band">{children}</div>
 }
 
-/** A section of a band, ruled off from the next, named in small capitals. `cols` sets its width in control columns. */
-export function Section({label, cols, width, grow, children}: {readonly label?: string; readonly cols?: number; readonly width?: number; readonly grow?: boolean; readonly children: ReactNode}) {
-  return <div className="dp-sec" data-grow={grow ? 'true' : undefined} style={{width: width ?? (cols ? cols * COL : undefined)} as CSSProperties}>
+/** A section of a band, ruled off from the next, named in small capitals. `cols` sets its width in control columns. `part`: in a rack,
+ * the part of Live's rack the section holds — its macros, its chain list, or the devices of the chosen chain — which stands only while
+ * the rack's head shows it; the sections beside it take the room. */
+export function Section({label, cols, width, grow, part, children}: {readonly label?: string; readonly cols?: number; readonly width?: number; readonly grow?: boolean; readonly part?: RackPart; readonly children: ReactNode}) {
+  const shown = useContext(RackContext)
+  if (part && !shown[part]) return null
+  return <div className="dp-sec" data-grow={grow ? 'true' : undefined} data-rack-part={part} style={{width: width ?? (cols ? cols * COL : undefined)} as CSSProperties}>
     {label && <div className="dp-sec-label">{label}</div>}
     <div className="dp-sec-body" style={cols ? {gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`} as CSSProperties : undefined}>{children}</div>
   </div>
@@ -951,11 +1155,14 @@ export function Tile({title, light, busy, span = 1, onFull, onClose: ownClose, o
 /** A ladder of evidence: one step for each rung, lit when it is established, dark when it is not, hollow when nobody has
  * observed it. Nothing is inferred upward. `row` draws it as ticks after a name; `tall` as a labelled column. `running`: the rung
  * the owner reports being worked on pulses, for as long as it says so. */
-export function Ladder({rungs, labels, size = 'row', label, running}: {readonly rungs: readonly (boolean | null)[]; readonly labels: readonly string[]; readonly size?: 'row' | 'tall'; readonly label?: string; readonly running?: number}) {
+export function Ladder({rungs, labels, size = 'row', label, running, waiting}: {readonly rungs: readonly (boolean | null)[]; readonly labels: readonly string[]; readonly size?: 'row' | 'tall'; readonly label?: string; readonly running?: number;
+  /** The owner is asked for the evidence and has not answered: the unobserved rungs breathe (Waiting for a reading). */ readonly waiting?: boolean}) {
   const top = rungs.reduce<number>((at, rung, i) => (rung === true ? i : at), -1)
-  return <span className="dp-ladder" data-size={size} role="img"
+  const seen = rungs.some(rung => rung !== null)
+  const standing: StandingName = !seen ? (waiting ? 'awaiting' : 'unread') : running !== undefined ? 'working' : 'plain'
+  return <span className="dp-ladder" data-size={size} role="img" data-standing={standing === 'plain' ? undefined : standing}
     aria-label={`${label ?? 'Evidence'}: ${top < 0 ? 'none established' : `up to ${labels[top]}`}${running !== undefined && labels[running] ? `; working on ${labels[running]}` : ''}`}
-    data-i={`${label ?? 'Evidence'}|${rungs.map((rung, i) => `${labels[i]} ${rung === true ? 'yes' : rung === false ? 'no' : '—'}`).join(' · ')}`}>
+    data-i={`${label ?? 'Evidence'}|${rungs.map((rung, i) => `${labels[i]} ${rung === true ? 'yes' : rung === false ? 'no' : '—'}`).join(' · ')}${!seen ? ` ${waiting ? WAITING_SAID : NO_READING_SAID}` : running !== undefined && labels[running] ? ` Working on ${labels[running]}.` : ''}`}>
     {rungs.map((rung, i) => <span key={labels[i]} className="dp-ladder-rung" data-rung={rung === true ? 'yes' : rung === false ? 'no' : 'unseen'} data-running={running === i ? 'true' : undefined}>
       {size === 'tall' && <span className="dp-ladder-label">{labels[i]}</span>}
     </span>)}

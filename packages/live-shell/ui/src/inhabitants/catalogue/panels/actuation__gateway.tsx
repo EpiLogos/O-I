@@ -468,8 +468,10 @@ function FrameRows({p}: {p: ViewProps}) {
     return {id: String(f.id), name: f.note ? `${f.kind} · ${f.note}` : f.kind, light: 'lit', tone: kind === 'errors' ? 'stall' : f.dir === 'out' ? 'accent' : 'value', note: f.at,
       does: `${f.dir === 'out' ? 'Sent' : 'Received'} at ${f.at}, ${f.session}. Press to open it.`}
   })
-  const label = !has(p.v, 'frames') ? 'Frames · no reading' : sc.scoped.length === 0 ? (sc.note ?? 'No frames for this session') : items.length === 0 ? 'No frame passes the filters' : 'Frames'
-  return <Rows label={label} does="The frames of the chosen session that pass Direction and Kinds, newest last. Amber was sent, teal received." items={items} size={size}
+  // No reading of the frames: the list stands empty under a hollow light, which reading is missing on the Info line.
+  const label = !has(p.v, 'frames') ? 'Frames' : sc.scoped.length === 0 ? (sc.note ?? 'No frames for this session') : items.length === 0 ? 'No frame passes the filters' : 'Frames'
+  return <Rows label={label} does="The frames of the chosen session that pass Direction and Kinds, newest last. Amber was sent, teal received." items={has(p.v, 'frames') ? items : undefined}
+    waiting={st(p, 'frames').waiting} why="No reading of the frames." size={size}
     page={page ?? last} onPage={setPage} selected={pick === undefined ? undefined : String(pick)}
     onSelect={id => { p.set('frame', Number(id)); p.nav.full?.() }} />
 }
@@ -565,9 +567,10 @@ function FramesPane({p}: {p: ViewProps}) {
         {picked === undefined ? <p>{NONE}</p> : <>
           <p>task <b>{picked.task ?? NONE}</b></p>
           <p>step <b>{picked.step ?? NONE}</b> · {picked.session} · {picked.at}</p></>}</section>
-      <section className="fm-read"><h4>Readiness</h4>
+      {/* A refusal is drawn (the reading in the stall colour), and its words go to the Info line: never written where the harness stands. */}
+      <section className="fm-read" data-i={refused !== undefined ? `Readiness|${readiness ?? 'Refused'} — ${refused}` : undefined}><h4>Readiness</h4>
         <strong data-state={strOf(v, 'readiness') === undefined ? (refused !== undefined ? 'refused' : 'none') : strOf(v, 'readiness') === 'refused' ? 'refused' : undefined}>{readiness ?? NONE}</strong>
-        <p>{refused !== undefined ? refused : <>harness <b>{shown(v, 'harness')}</b></>}</p></section>
+        <p>harness <b>{shown(v, 'harness')}</b></p></section>
       <section className="fm-read"><h4>Liveness</h4>
         <strong data-state={state === 'stalled' ? 'stalled' : state === undefined ? 'none' : undefined}>{state ?? NONE}</strong>
         <p>last check-in <b>{age === undefined ? NONE : age < 0 ? 'none' : `${span(age)} ago`}</b></p>
@@ -827,7 +830,10 @@ function SurfaceList({p, size = 6}: {p: ViewProps; size?: number}) {
       does: `${s.health ? HEALTH_WORD[s.health] : 'No reading of its health'}${s.ingress ? `. ${INGRESS_SAYS[s.ingress]}` : ''}`}
   })
   const off = st(p, 'surfaces').disabled
-  return <Rows label={has(p.v, 'surfaces') ? 'Surfaces' : 'Surfaces · no reading'} does={ASAYS.surfaces} items={items} size={size} page={page} onPage={setPage}
+  // No reading of the surfaces: the list stands empty under a hollow light (breathing while the owner is asked); which reading is missing
+  // goes to the Info line.
+  return <Rows label="Surfaces" does={ASAYS.surfaces} items={has(p.v, 'surfaces') ? items : undefined} waiting={st(p, 'surfaces').waiting} why="No reading of the surfaces."
+    size={size} page={page} onPage={setPage}
     onRequest={off ? undefined : (id, x) => p.set(`on:${id}`, x)} />
 }
 

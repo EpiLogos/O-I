@@ -18,7 +18,10 @@
 // releases the frame from this pane. Unmount unregisters the pane at once and unmounts only its own root, after the commit that
 // asked for it (the pane session tears down inside React's commit, and its container is the session's own). The pane holds no lease.
 
-import {useLayoutEffect, useRef, type CSSProperties} from 'react'
+import {useEffect, useLayoutEffect, useRef, type CSSProperties} from 'react'
+
+// A layout effect only where there is a DOM to attach to: a server render takes the plain effect and stays quiet.
+const useLayoutIso: typeof useLayoutEffect = typeof HTMLElement === 'undefined' ? useEffect : useLayoutEffect
 import {createRoot} from 'react-dom/client'
 import type {ProjectionModuleHandle} from '../../../../../desktop/cradle/src/surface/projectionModules'
 import {
@@ -67,7 +70,7 @@ export function ExpressionsPaneBody({paneId, admission}: {paneId: string; admiss
   const elsewhere = placement !== null && !here
   const slot = useRef<HTMLDivElement | null>(null)
   // The slot is this pane's rectangle for the frame. It is attached while the body is mounted and released when it leaves.
-  useLayoutEffect(() => {
+  useLayoutIso(() => {
     attachExpressionsSlot(paneId, slot.current, admission)
     return () => attachExpressionsSlot(paneId, null, admission)
   }, [paneId, admission])

@@ -50,7 +50,7 @@
 //   change the machine or its declaration: under Propose each waits for Confirm, and each is held.
 // On the Machine page the pane is the Machine at full size (the four kinds side by side) and the tile its small ledger.
 // A key the owner has not reported is absent, and the view draws "—" for it and names it in words.
-import {Action, Band, Chooser, Display, Folded, Handle, Lamp, Panel, Radio, Readout, Rows, Section, Tile, type LightState, type Option, type RowItem, type Tone} from '../../sdk/panel'
+import {Action, Band, Chooser, Display, Folded, Handle, Lamp, Panel, Radio, Readout, Rows, Section, Tile, type LightState, type Option, type RowItem, type Tone, unreadRows, NoReading} from '../../sdk/panel'
 import {clampTo, has, json, NONE, prefixed, scoped, st, strOf, type DesignedDevice, type ViewProps} from './design'
 import './workcell__remote-carrier.css'
 
@@ -312,7 +312,7 @@ function GrantRows({m}: {m: Machine | undefined}) {
     return {id: op, name: op, light: granted === undefined ? 'unknown' : granted ? 'lit' : 'dark', tone: 'value',
       does: granted === undefined ? 'No reading of the grant.' : granted ? 'The connection may do this.' : 'The connection may not do this.'}
   })
-  return <Rows label={m === undefined ? 'Grant · no machine chosen' : count === undefined ? 'Grant · no reading' : `Grant · ${count} of ${OPS.length}`}
+  return <Rows label={m === undefined ? 'Grant · no machine chosen' : count === undefined ? 'Grant' : `Grant · ${count} of ${OPS.length}`} why={count === undefined && m !== undefined ? 'No reading of the grant.' : undefined}
     does="The operations the machine allows this connection. Advertising is not a grant." items={items} size={OPS.length} columns={2} />
 }
 
@@ -415,7 +415,7 @@ function OffersDisplay({v, w, h}: {v: V; w: number; h: number}) {
 
 function StandingBands({p}: {p: ViewProps}) {
   const v = p.v, offers = offersOf(v), plan = planOf(v), runs = runsOf(v)
-  const items: RowItem[] = !plan ? [{id: 'none', name: 'No reading of the plan', light: 'unknown'}] : [
+  const items: RowItem[] = !plan ? unreadRows('No reading of the plan.') : [
     ...plan.omissions.map((o): RowItem => ({id: `o:${o.requirement}`, name: needName(o.requirement), light: 'dark', note: `${o.necessity ?? NONE} · not met`, why: o.reason ?? 'Workcell gave no reason.'})),
     ...plan.degradations.map((d): RowItem => ({id: `d:${d.requirement}`, name: needName(d.requirement), light: 'lit', tone: 'accent', note: `${d.necessity ?? NONE} · degraded`, why: d.reason ?? 'Workcell gave no reason.'})),
     ...plan.bindings.filter(b => !plan.degradations.some(d => d.requirement === b.ref)).map((b): RowItem => ({id: `b:${b.ref}`, name: needName(b.ref), light: 'lit', tone: 'green', note: `${b.necessity ?? NONE} · ${b.offer.split(':').slice(1).join(':') || b.offer}`, does: `${b.ref} is met by ${b.offer}.`})),
@@ -463,7 +463,7 @@ function Pane({v}: {v: V}) {
             : <ol className="rc-list" aria-label="Sessions">
               {sessions.map(s => <li key={s.id} className="rc-session"><span className="rc-sname">{s.name}</span><span className="rc-skind">{s.kind ?? NONE}</span><span className="rc-sseat">{s.seat ?? NONE}</span></li>)}
             </ol>}
-          <h4>Grant · {count === undefined ? 'no reading' : `${count} of ${OPS.length} operations`}</h4>
+          <h4>Grant · {count === undefined ? <NoReading name="Grant" why="No reading of the grant." /> : `${count} of ${OPS.length} operations`}</h4>
           <ul className="rc-ops" aria-label="Operations">
             {OPS.map(op => <li key={op} data-granted={grant === undefined ? 'unknown' : grant.includes(op) ? 'true' : 'false'}>{op}</li>)}
           </ul>
@@ -623,7 +623,7 @@ function Ledger({p, w, h, small}: {p: ViewProps; w: number; h: number; small?: b
 
 /** The stages of a road, left to right: a node for each, filled where it ran well, amber where it ran in part, crossed where it failed,
  * hollow where it has not run, dashed where nothing is configured. Under each, its result. */
-type Stage = {name: string; state: 'ok' | 'part' | 'failed' | 'idle' | 'none'; result: string}
+type Stage = {name: string; state: 'ok' | 'part' | 'failed' | 'idle' | 'none'; result: string; unread?: boolean}
 function Stages({p, w, h, stages, lever}: {p: ViewProps; w: number; h: number; stages: readonly Stage[]; lever?: boolean}) {
   const n = stages.length, x0 = 30, x1 = w - 30, y = 52
   const at = (i: number) => (n === 1 ? w / 2 : x0 + i * (x1 - x0) / (n - 1))
@@ -648,7 +648,7 @@ function reconcileStages(v: V): Stage[] {
   const plan = mplanOf(v), applied = objOf(v, 'applied'), verified = objOf(v, 'verified'), n = toChange(plan)
   const outcome = text(applied?.outcome), ops = Array.isArray(applied?.operations) ? applied!.operations.length : undefined
   return [
-    {name: 'plan', state: plan ? (n ? 'part' : 'ok') : 'idle', result: plan ? (n ? `${n} differ` : 'satisfied') : 'not read'},
+    {name: 'plan', state: plan ? (n ? 'part' : 'ok') : 'idle', result: plan ? (n ? `${n} differ` : 'satisfied') : 'not read', ...(plan ? {} : {unread: true})},
     {name: 'apply', state: outcome === 'complete' ? 'ok' : outcome === 'partial' ? 'part' : outcome ? 'failed' : 'idle', result: outcome ? `${outcome}\n${ops ?? NONE} change${ops === 1 ? '' : 's'}` : 'not run'},
     {name: 'verify', state: verified?.satisfied === true ? 'ok' : verified?.satisfied === false ? 'failed' : 'idle', result: verified ? (verified.satisfied === true ? 'satisfied' : 'differs') : 'not run'},
   ]
@@ -660,7 +660,7 @@ function recoverStages(v: V): Stage[] {
   const ranPast = (stage: string) => done !== undefined && !stopped(stage) && (failedAt === undefined || ORDER_OF_STAGES.indexOf(failedAt) > ORDER_OF_STAGES.indexOf(stage))
   const applied = text(done?.applied), ops = numIn(done, 'operations'), changes = numIn(plan, 'changes')
   return [
-    {name: 'plan', state: plan ? 'ok' : 'idle', result: plan ? `${changes ?? NONE} to change` : 'not read'},
+    {name: 'plan', state: plan ? 'ok' : 'idle', result: plan ? `${changes ?? NONE} to change` : 'not read', ...(plan ? {} : {unread: true})},
     {name: 'sync', state: sync === 'not_configured' ? 'none' : stopped('synchronization') ? 'failed' : ranPast('synchronization') ? 'ok' : sync === 'unavailable' ? 'failed' : 'idle',
       result: stopped('synchronization') ? 'failed' : ranPast('synchronization') && sync !== 'not_configured' ? (done?.synchronized === true ? 'changed' : 'unchanged') : sync ? sync.replace('_', ' ') : NONE},
     {name: 'apply', state: stopped('machine_apply') ? 'failed' : applied === 'complete' ? 'ok' : applied === 'partial' ? 'part' : 'idle', result: stopped('machine_apply') ? `${applied ?? 'failed'}` : applied ? `${applied}\n${ops ?? NONE} change${ops === 1 ? '' : 's'}` : 'not run'},
@@ -686,7 +686,7 @@ function ActButton({p, act}: {p: ViewProps; act: Act}) {
 
 function entryRows(v: V, all: boolean): RowItem[] {
   const plan = mplanOf(v)
-  if (!plan) return [{id: 'none', name: 'No reading of the plan', light: 'unknown'}]
+  if (!plan) return unreadRows('No reading of the plan.')
   const shownRows = plan.entries.filter(e => all || e.status !== 'satisfied')
   if (!shownRows.length) return [{id: 'none', name: plan.entries.length ? 'Every requirement is satisfied' : 'The declaration asks for nothing', light: 'lit', tone: 'green'}]
   return shownRows.map((e): RowItem => ({id: `${e.kind}:${e.id}`, name: e.id, light: e.status === 'unsupported' ? 'dark' : 'lit', tone: STATUS_TONE[e.status] ?? 'value',
@@ -745,9 +745,10 @@ function MachineBands({p}: {p: ViewProps}) {
         <ActButton p={p} act="recover" />
       </Section>
       <Section label="Stages" grow>
-        <Rows does="Each stage of the last recovery, and where it stopped." items={recoverStages(v).map((s): RowItem => ({id: s.name, name: s.name, light: s.state === 'ok' || s.state === 'part' || s.state === 'failed' ? 'lit' : 'dark',
-          tone: s.state === 'ok' ? 'green' : s.state === 'part' ? 'accent' : 'stall', note: s.result.replace('\n', ' · '),
-          why: s.state === 'failed' ? text(done?.message) ?? 'Central gave no reason.' : undefined}))} size={6} />
+        {/* A stage with no reading (the plan not read) stands hollow, its words on the Info line; the well names it as the stage's result. */}
+        <Rows does="Each stage of the last recovery, and where it stopped." items={recoverStages(v).map((s): RowItem => ({id: s.name, name: s.name, light: s.unread ? 'unknown' : s.state === 'ok' || s.state === 'part' || s.state === 'failed' ? 'lit' : 'dark',
+          tone: s.state === 'ok' ? 'green' : s.state === 'part' ? 'accent' : 'stall', note: s.unread ? undefined : s.result.replace('\n', ' · '),
+          why: s.unread ? 'No reading of the plan.' : s.state === 'failed' ? text(done?.message) ?? 'Central gave no reason.' : undefined}))} size={6} />
       </Section>
     </Band>
   </>

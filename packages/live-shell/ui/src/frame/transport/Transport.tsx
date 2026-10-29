@@ -6,6 +6,9 @@
 // (Link, Ground, Stamp, Tap, Map — `SlotWords.face`), and a marked slot whose owner gives it a reading shows the reading
 // where the mockup draws a field (the day's opening and close on the punch slots).
 import {useEffect, useLayoutEffect, useRef, useState, type ReactNode} from 'react'
+
+// A layout effect only where there is a DOM to measure: a server render takes the plain effect and stays quiet (as the kit's useLayoutIso).
+const useLayoutIso: typeof useLayoutEffect = typeof HTMLElement === 'undefined' ? useEffect : useLayoutEffect
 import {Icon as CutIcon, type IconName} from '../../inhabitants/sdk/Icon'
 import type {SlotBinding, SlotWords, TransportBindings, TransportSlotId} from './slots'
 import {nextFold, type FoldState} from './fold'
@@ -43,7 +46,7 @@ export function Transport({bindings, words}: {bindings: TransportBindings; words
   const folded = fold.folded && fold.key === foldable
   // The bar measures its own room: its box (the window, the toggles beside it) and its groups' widths (an owner's control
   // that appears, a reading that grows). Short of room, the foldable slots fold to their marks; the room back, they open.
-  useLayoutEffect(() => {
+  useLayoutIso(() => {
     const el = bar.current
     if (!el || typeof ResizeObserver === 'undefined') return
     const measure = () => {
@@ -88,11 +91,20 @@ export function Transport({bindings, words}: {bindings: TransportBindings; words
   </div>
 }
 
+/** Why a slot no owner binds here stands dimmed: its waiting line after what it does (shell/modeTransports.tsx slotWords writes
+ * "<label> — <fn>. <why>"). */
+export function unboundWhy(words: SlotWords): string {
+  const head = `${words.label} — ${words.fn}. `
+  return words.waiting.startsWith(head) ? words.waiting.slice(head.length) : words.waiting
+}
+
 function Slot({id, binding, words, fold}: {id: TransportSlotId; binding: SlotBinding | undefined; words: SlotWords; fold?: {open: boolean; toggle: () => void}}) {
   const title = binding?.refused ? `${words.label} — ${words.fn}. ${binding.refused}` : binding?.title ?? binding?.readout?.title ?? words.waiting
   // A refused slot stays drawn, dimmed, and the status bar says why (manual §16.10 "Disabled … The status bar says why"): its reason
-  // follows what it does in the line the status bar reads.
-  const dataI = binding?.refused ? `${words.dataI}. ${binding.refused}` : words.dataI
+  // follows what it does in the line the status bar reads. So does a slot no owner binds here (Central's Selection → packet, walked
+  // dimmed with no reason on 29 Oct, O-I #750): its waiting line says why, after what it does.
+  const unbound = !binding?.press && !binding?.step && !binding?.control && !binding?.readout && !!words.waiting
+  const dataI = binding?.refused ? `${words.dataI}. ${binding.refused}` : unbound ? `${words.dataI}. ${unboundWhy(words)}` : words.dataI
   const common = {'data-slot': id, 'data-i': dataI, title, 'aria-label': words.label}
   const light = binding?.lit === undefined ? undefined : binding.lit ? 'on' : 'off'
   const mark = MARKS[id]

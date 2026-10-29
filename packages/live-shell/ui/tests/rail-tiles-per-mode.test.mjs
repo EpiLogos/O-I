@@ -41,7 +41,8 @@ const read = path => readFileSync(new URL(path, import.meta.url), 'utf8')
 test('each mode\'s rail opens on the manual\'s tiles', () => {
   const ids = Object.fromEntries(['base', 'factory', 'expressions', 'techne', 'live'].map(mode => [mode, [...defaults.defaultWidgets(mode)]]))
   assert.deepEqual(ids, {
-    base: ['agent', 'packet', 'trail'],
+    // REPLACED (#748): Central's agent tile is the Agent device's widget, so the rail shows the face (manual §19.4), not the conversation.
+    base: [deviceWidgetId('central:agent'), 'packet', 'trail'],
     factory: ['results', 'agents', 'terminal'],
     expressions: ['agent', 'sky', 'trail'],
     techne: [deviceWidgetId(JOURNEY_DESIGN), 'trail'],

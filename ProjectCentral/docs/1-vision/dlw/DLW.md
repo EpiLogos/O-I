@@ -4653,6 +4653,7 @@ The track head shows the world's name and colour. Its settings stand on the head
 | Kind | Project · Book · Practice · Other | Project | Chooses the pages a new world starts with. A Practice starts with a journal and keeps itself to you. |
 | Folder | A folder of your ground, or none | None | The folder where the world's pages are kept. |
 | Place | A place on your planet, or none | Its own place | Where the world lands on your planet's surface. Its body turns in your sky. |
+| Sky place | A real place on Earth, or none | None | Where the world's hours are counted when the Sky's Observer is Shared (§22.1). Everyone under the world's sky counts them there. |
 
 The settings stand on the track's head, as a Live track's name and colour do. The world's account of itself is Docs, on the track's chain (§18.5).
 
@@ -10957,6 +10958,7 @@ The widget shows each body with its degree. The Sky widget is on the rail in eve
 - A shared view does not show a private observer's place.
 - The Sky gives sources. It does not decide what a reading means.
 - The rulers of the day and the hour are counted at a place. Without a place, the Sky shows none.
+- Private waits for your saved place; without one it shows no sky and no rulers, and says so.
 - Sharing your sky gives consent to see it. It never copies or changes your identity.
 - Another person's ring opens only while their consent permits it.
 
@@ -12282,7 +12284,7 @@ In a container, an entry also says what kind of entry it is:
 
 You are a Being in your own world. Your Being page holds your identity by reference, never as a copy: your birth, your natal chart, your Jungian functions, your Gene Keys, your Human Design and what they make together. Each layer shows with its source, or as absent with the reason. Nothing fills a missing layer.
 
-Your birth is the first layer, and Setup asks for your name and date of birth as soon as your ground is made (§10.11). To give the rest of it, or to correct it, open the identity of the Studio's Nara chain (§24.7): Birth date; Time precision, Time unknown, Exact time or Approximate time; Local birth time, with its uncertainty in minutes; Birthplace, with its latitude, longitude and time zone. Calculate and review shows the chart before anything is kept, and Save and use identity keeps it as a new revision of the same identity.
+Your birth is the first layer, and Setup asks for your name and date of birth as soon as your ground is made (§10.11). To give the rest of it, or to correct it, open the identity of the Studio's Nara chain (§24.7): Birth date; Time precision, Time unknown, Exact time or Approximate time; Local birth time, with its uncertainty in minutes; Birthplace, with its latitude, longitude and time zone; Your place, where you are now, with its latitude, longitude, height and time zone: the Sky counts your hours there, and shows the sky as seen from there, when its Observer is Private (§22.1), and only you see it. Calculate and review shows the chart before anything is kept, and Save and use identity keeps it as a new revision of the same identity.
 
 Launch your page as Sky and your natal sky opens beside today's: the planets where they stood when you were born, and where they stand now. A Being page of another person opens their sky only while they share it with you. You share yours, and open theirs, on the Sky's Share page (§22.1).
 

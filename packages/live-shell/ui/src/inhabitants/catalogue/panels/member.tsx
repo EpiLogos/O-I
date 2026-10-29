@@ -24,7 +24,7 @@
 import {WoodMark} from '../../sdk/marks'
 import type {WoodSet} from '../../sdk/icons'
 import {useState} from 'react'
-import {Action, Band, Display, Folded, Ladder, Panel, Readout, Rows, Section, TextField, Tile, Toggle, type LightState, type RowItem} from '../../sdk/panel'
+import {Action, Band, Display, Folded, Ladder, Panel, Readout, Rows, Section, TextField, Tile, Toggle, type LightState, type RowItem, unreadRows, NoReading} from '../../sdk/panel'
 import {NONE, has, json, st, strOf, type DesignedDevice, type ViewProps} from './design'
 import {DOCUMENTATION, FORM_ASKS, FORM_NAME, RUNGS, markState, type Member} from './practice'
 
@@ -238,7 +238,7 @@ function WhyWell({v, w, h}: {v: V; w: number; h: number}) {
 
 function whyRows(v: V): RowItem[] {
   const why = whyOf(v), g = groundOf(v)
-  if (!why) return [{id: 'none', name: 'No reading of why', light: 'unknown'}]
+  if (!why) return unreadRows('No reading of why.')
   const line = (id: string, name: string, list: readonly string[], none: string): RowItem[] => (list.length ? list.map((x, i) => ({id: `${id}:${i}`, name: x, light: 'lit' as LightState, tone: 'value' as const, note: name}))
     : [{id, name: none, light: 'dark', note: name}])
   return [
@@ -325,7 +325,7 @@ function HistoryWell({v, w, h, chosen}: {v: V; w: number; h: number; chosen?: nu
 function HistoryBands({p}: {p: ViewProps}) {
   const all = historyOf(p.v), [chosen, setChosen] = useState<number | undefined>(undefined), [page, setPage] = useState(0)
   const at = chosen ?? (all?.length ? all.length - 1 : undefined), e = at === undefined ? undefined : all?.[at]
-  const items: RowItem[] = !all ? [{id: 'none', name: 'No reading of the history', light: 'unknown'}] : !all.length ? [{id: 'none', name: 'Nothing recorded yet', light: 'dark'}]
+  const items: RowItem[] = !all ? unreadRows('No reading of the history.') : !all.length ? [{id: 'none', name: 'Nothing recorded yet', light: 'dark'}]
     : [...all].map((x, i) => ({id: String(i), name: x.summary, light: 'lit' as LightState, tone: x.kind === 'failure' ? 'stall' as const : 'value' as const, note: `${x.kind} · ${x.at ?? NONE}`})).reverse()
   return <>
     <Band>
@@ -361,7 +361,7 @@ function MemberFull({p}: {p: ViewProps}) {
     </div>
     <div className="ref-doc">
       {page === 'why' ? <>
-        <h3>Why {m.name} stands so <small>{why ? `${why.state ?? NONE} · ${why.trust ?? NONE} · ${why.maturity ?? NONE}` : 'no reading'}</small></h3>
+        <h3>Why {m.name} stands so <small>{why ? `${why.state ?? NONE} · ${why.trust ?? NONE} · ${why.maturity ?? NONE}` : <NoReading name="Why" why="No reading of why." />}</small></h3>
         {!why ? <p className="ref-doc-lead">No reading of why.</p> : <ol className="ref-doc-list">
           {([['Selected by', why.selectedBy, 'Nothing selects it.'], ['Projected into', why.projection, 'It is projected nowhere.'], ['Needed by', why.requiredBy, 'Nothing needs it.'],
             ['Needs', why.dependencies, 'It needs nothing.']] as const).map(([title, list, none]) => <li key={title}>
@@ -376,7 +376,7 @@ function MemberFull({p}: {p: ViewProps}) {
             : `Active in ${SCOPE_WORD[g.scope] ?? g.scope}, ${g.path ?? NONE}, ${g.provenance ?? NONE}.`}</p>
         </section>
       </> : page === 'history' ? <>
-        <h3>History of {m.name} <small>{events ? `${events.length} changes` : 'no reading'}</small></h3>
+        <h3>History of {m.name} <small>{events ? `${events.length} changes` : <NoReading name="History" why="No reading of the history." />}</small></h3>
         {!events ? <p className="ref-doc-lead">No reading of the history.</p> : !events.length ? <p className="ref-doc-lead">Nothing recorded yet.</p>
           : <ol className="ref-doc-list">{[...events].reverse().map((e, i) => <li key={i}>
             <span className="dp-lamp" data-light="lit" data-tone={e.kind === 'failure' ? 'stall' : 'value'} /><b>{e.kind}</b><span className="ref-doc-rev">{e.at ?? NONE}</span>

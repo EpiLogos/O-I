@@ -38,9 +38,13 @@ const head = () => git(['rev-parse', 'HEAD']).out;
 function runGate(gate) {
   const cwd = join(ROOT, gate.cwd || '.');
   const t0 = Date.now();
-  const r = spawnSync(bash, ['-c', gate.command], { cwd, encoding: 'utf8', timeout: 15 * 60_000 });
+  // spawnSync's default maxBuffer is 1 MB: a suite that writes more is killed and reads as exit null with no reason
+  // (candidate-suite on O-I #828, 1,049,304 bytes of output, every test passing). Hold the whole output, and name why a
+  // gate stopped when it did not exit on its own.
+  const r = spawnSync(bash, ['-c', gate.command], { cwd, encoding: 'utf8', timeout: 15 * 60_000, maxBuffer: 256 * 1024 * 1024 });
   const duration_ms = Date.now() - t0;
-  return { exit: r.status, duration_ms, stdout: r.stdout || '', stderr: r.stderr || '' };
+  const stopped = r.status === null ? `\n[gate runner] the command did not exit on its own: ${r.error ? r.error.message : `signal ${r.signal}`}\n` : '';
+  return { exit: r.status, duration_ms, stdout: r.stdout || '', stderr: (r.stderr || '') + stopped };
 }
 
 function bootstrap(area) {

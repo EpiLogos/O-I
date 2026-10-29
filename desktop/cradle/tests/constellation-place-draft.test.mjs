@@ -173,3 +173,50 @@ test('a routed save answers the map exactly once, whatever the owner or the loca
  ]);
  assert.deepEqual(failures,['Choose and read an evidence source','confirm failed']);
 });
+
+// O-I #746: a route is placed stop by stop. The map's draft of a stop carries the relation it is a stop of and its place in the order, and the
+// editor writes both onto the new place fact, so the owner's PlaceSet holds the stop in its route. The editor reads the subject's own facts at
+// the revision it read: a place in the order those facts already hold goes to the next free one, after the route's last stop.
+test('a route draft is a stop: the editor writes its relation and its place in the order, after the stops the subject holds', ()=>{
+ const held={temporal:[],places:[
+  {place_ref:'wiki:place:a',precision:'approximate',geometry:{type:'point',coordinates:[1,1]},relation:'TRAVELLED_TO',sequence:1,source_ref:BASIS},
+  {place_ref:'wiki:place:b',precision:'approximate',geometry:{type:'point',coordinates:[2,2]},relation:'TRAVELLED_TO',sequence:2,source_ref:BASIS},
+ ]};
+ const seeded=api.applyPlaceDraft(held,{lat:3,lon:4,precision:'approximate',name:'Syracuse',relation:'TRAVELLED_TO',sequence:3});
+ const fact=seeded.values.places[2];
+ assert.deepEqual([fact.relation,fact.sequence],['TRAVELLED_TO',3]);
+ assert.deepEqual(fact.geometry,{type:'point',coordinates:[4,3]});
+ assert.match(seeded.notice,/stop 3 of its TRAVELLED_TO route/);
+ const stale=api.applyPlaceDraft(held,{lat:3,lon:4,precision:'approximate',relation:'TRAVELLED_TO',sequence:2});
+ assert.equal(stale.values.places[2].sequence,3,'a place in the order already held goes after the last stop');
+ const first=api.applyPlaceDraft(emptyValues(),{lat:3,lon:4,precision:'approximate',relation:'TRAVELLED_TO'});
+ assert.equal(first.values.places[0].sequence,1,'the first stop of a route is stop 1');
+ const sourced={...seeded.values,places:seeded.values.places.map(row=>({...row,source_ref:BASIS}))};
+ const [change]=api.factsChanges(held,sourced);
+ assert.equal(change.change,'place_set');
+ assert.deepEqual([change.places[2].relation,change.places[2].sequence],['TRAVELLED_TO',3],'the save carries the stop in its route');
+ const plain=api.applyPlaceDraft(emptyValues(),{lat:3,lon:4,precision:'approximate'});
+ assert.ok(!('relation' in plain.values.places[0])&&!('sequence' in plain.values.places[0]),'a place draft is no stop');
+});
+
+// O-I #746 (round two): the editor's place form says what each place fact is to its subject: the relation, verbatim, and for a stop of a route
+// its place in the order, by the same number the form gives the fact ("Place fact N"), so the person sees the stop they are saving.
+test('the place form names each fact\'s relation and, for a stop, its place in the route\'s order', ()=>{
+ const places=[
+  {place_ref:'wiki:place:a',precision:'approximate',identity:{names:[{name:'Syracuse'}]},relation:'TRAVELLED_TO',sequence:1},
+  {place_ref:'wiki:place:h',precision:'exact',identity:{names:[{name:'Home'}]}},
+  {place_ref:'wiki:place:b',precision:'approximate',identity:{names:[{name:''}]},relation:'TRAVELLED_TO',sequence:2},
+  {place_ref:'wiki:place:c',precision:'region',identity:{names:[{name:'Atlantis'}]},relation:'MYTH_LOCATED_AT'},
+ ];
+ assert.deepEqual(api.placeStandings(places),[
+  {fact:1,text:'Place fact 1, Syracuse: TRAVELLED_TO, stop 1 of its route'},
+  {fact:3,text:'Place fact 3: TRAVELLED_TO, stop 2 of its route'},
+  {fact:4,text:'Place fact 4, Atlantis: MYTH_LOCATED_AT'},
+ ],'a fact with no relation says nothing; a stop says its place in the order');
+ const {renderToStaticMarkup}=require('react-dom/server'),{createElement}=require('react');
+ const html=renderToStaticMarkup(createElement(api.PlaceStandings,{places}));
+ assert.match(html,/Place fact 1, Syracuse: TRAVELLED_TO, stop 1 of its route/);
+ assert.match(html,/Place fact 3: TRAVELLED_TO, stop 2 of its route/);
+ assert.doesNotMatch(html,/Home/,'a place with no relation is not listed');
+ assert.equal(renderToStaticMarkup(createElement(api.PlaceStandings,{places:[places[1]]})),'','nothing is drawn when no fact carries a relation');
+});

@@ -113,6 +113,8 @@ export interface RouteStop {
   relation: string;
   /** The validity bound the ordering used, verbatim; null when open. */
   ordering_bound: string | null;
+  /** The stop's own place in the route's order (the facet's `sequence`); null for a stop the owner gave no place, ordered by its validity. */
+  sequence: number | null;
   precision: TechnePlaceFacet["precision"];
 }
 
@@ -123,11 +125,10 @@ export interface RouteModel {
 }
 
 /**
- * Order the georeferenced movement facets (relation TRAVELLED_TO) by their
- * own validity from-bounds — a PRESENTATION ordering of the reading's own
- * facets, since the contract carries no sequence field. Fewer than two
- * georeferenced stops is no route at all: null, never a forced path. A real
- * route/movement identity must come from a producer (recorded join).
+ * Order the georeferenced movement facets (relation TRAVELLED_TO) as their route: each stop at the place it holds in the order (the facet's own
+ * `sequence`, AIKit PlaceFacet.sequence, O-I #746, written as a stop is placed). A stop the owner gave no place (a route written before stops
+ * carried one) walks first, by its own validity from-bound, as every route did; the stops placed in order follow it. Fewer than two
+ * georeferenced stops is no route at all: null, never a forced path. The route's identity stays the subject's: no route is minted here.
  */
 export function routeModel(facets: readonly TechnePlaceFacet[], window?: TimeWindow | null): RouteModel | null {
   const stops: Array<RouteStop & { bound: string | null }> = [];
@@ -142,13 +143,19 @@ export function routeModel(facets: readonly TechnePlaceFacet[], window?: TimeWin
       label: nameInWindow(facet, window)?.name ?? null,
       relation: facet.relation,
       ordering_bound: facet.valid_from ?? null,
+      sequence: typeof facet.sequence === "number" ? facet.sequence : null,
       precision: facet.precision,
       bound: facet.valid_from ?? null,
     });
   }
   if (stops.length < 2) return null;
-  // Open bounds order last, stably — never an invented date.
+  // A stop with no place in the order walks first; among them, open bounds order last, stably — never an invented date.
   stops.sort((a, b) => {
+    if (a.sequence !== null || b.sequence !== null) {
+      if (a.sequence === null) return -1;
+      if (b.sequence === null) return 1;
+      return a.sequence - b.sequence;
+    }
     if (a.bound === null && b.bound === null) return 0;
     if (a.bound === null) return 1;
     if (b.bound === null) return -1;
@@ -156,7 +163,7 @@ export function routeModel(facets: readonly TechnePlaceFacet[], window?: TimeWin
   });
   return {
     stops: stops.map(({ bound: _bound, ...stop }) => stop),
-    note: "stops ordered by their own validity from-bounds — a presentation ordering of the reading's "
+    note: `stops in the route's order: each at its own place in the order, those with none first by their own validity from-bounds — the reading's `
       + `${MOVEMENT_RELATION} facets; no route identity is minted here`,
   };
 }

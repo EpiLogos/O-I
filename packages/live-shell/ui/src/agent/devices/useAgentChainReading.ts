@@ -19,13 +19,41 @@ import {
   INITIAL_READING, gatewayLine, gitRepoReading, rosterAdmits, rosterChains, rosterIdentity, taskReading,
   type AgentChainReading,
 } from './agentChainDevices'
+import type {AgentGit} from './oneAgentBinding'
 
 const isObj = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value)
 
 /** What the gateway and the repository answered (read here); null while they are read. */
 interface OwnRead {gateway: Pick<AgentChainReading, 'gateway' | 'gatewayAdmitted' | 'gatewayDoc'>; gatewayWaiting: string | null; git: {doc: unknown; error: string | null} | null}
 
+/** The session's own repository, as the Agent's Context page reads it (oneAgentBinding.ts AgentGit): asked through the kernel's held read
+ * for the session's register; no session, or the root register, is said in the world scope's words and not asked (worldScope.ts). */
+export function useSessionGit(transport: KernelTransportStatus, sessionRef: string | null, project: string): AgentGit {
+  const [read, setRead] = useState<{key: string; doc: unknown; error: string | null} | null>(null)
+  const key = `${sessionRef ?? ''}\n${project}`
+  const absent = gitRepositoryAbsence(sessionRef, project)
+  useEffect(() => {
+    let live = true
+    if (absent || transport.kind === 'unavailable') return
+    void kernelRead(transport, {op: 'git_repository_read', project}).then(gitOp => {
+      const doc = gitOp.outcome?.result === 'git_repository_reading' ? gitOp.outcome.document : null
+      if (live) setRead({key, doc, error: gitOp.error ? refusalLine(gitOp.error, 'git_repository_read unavailable') : doc ? null : 'git_repository_read answered no repository reading.'})
+    })
+    return () => { live = false }
+  }, [transport, key, absent, project])
+  return useMemo(() => gitOf(sessionRef, project, read && read.key === key ? read : null, transport), [sessionRef, project, read, key, transport])
+}
+
+/** The Git row's input from one repository answer: the world scope's absence first, then the owner's refusal, then the reading. Pure. */
+function gitOf(sessionRef: string | null, project: string, read: {doc: unknown; error: string | null} | null, transport: KernelTransportStatus): AgentGit {
+  const repoRoot = isObj(read?.doc) && typeof read.doc.repo_root === 'string' ? read.doc.repo_root : null
+  const repo = read && !read.error ? gitRepoReading(read.doc) : null
+  return {sessionRef, project, repo, repoRoot, error: transport.kind === 'unavailable' ? transport.reason ?? 'The kernel carrier is unavailable.' : read?.error ?? null}
+}
+
 export function useAgentChainReading(sessionRef: string | null): {reading: AgentChainReading; transport: KernelTransportStatus; binding: string; resolved: boolean
+  /** The session's own repository, for the Agent's Context page (the same answer the chain's Git reads). */
+  git: AgentGit
   /** The harnesses found on this machine, from the same harness_status answer the binding is read from (null: not read). */
   harnesses: string[] | null} {
   const {transport} = useWorkspace()
@@ -136,5 +164,6 @@ export function useAgentChainReading(sessionRef: string | null): {reading: Agent
     return next
   }, [transport, own, roster, task, seat, sessionRef])
 
-  return {reading, transport, binding, resolved, harnesses}
+  const git = useMemo(() => gitOf(sessionRef, project, own?.git && !gitRepositoryAbsence(sessionRef, project) ? own.git : null, transport), [sessionRef, project, own, transport])
+  return {reading, transport, binding, resolved, harnesses, git}
 }
