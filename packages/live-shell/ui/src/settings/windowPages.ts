@@ -21,7 +21,7 @@ import {authorityAllowsTrigger, eligibleProofs, routineBasis, scheduleFromInput,
 import {appearanceValues, automationValues, credentialValues, folderOf, harnessValues, machineValues, NO_AUTHORING, NO_HARNESS, NO_INVOKE, NO_MACHINES, NO_NAVIGATE, NO_PRODUCTS,
   NO_PROFILES, NO_SETUP_AIKIT, NO_SETUP_SOURCE, NO_VISUALS, groundBound, productValues, profileValues, SECRET_REFERENCE, setupFolder, setupHarnessClients, setupHarnessProviders,
   setupKeyFindings, setupNamespace, setupSkillRoots, setupValues, systemValues, type CredentialRow, type SetupCredentials, type SetupHarnesses, type SetupMachine, type SetupPreview,
-  type SetupSnapshot, type SetupWorkFolder, type SetupFounding, type SetupKey, type SetupForm, type CivilTimePreview, type SetupBirth, type SetupCivilTime, type SetupDisclosure, groundNameRefusal, groundParts, groundPath} from './windowValues'
+  setupExtensionLine, type SetupExtension, type SetupSnapshot, type SetupWorkFolder, type SetupFounding, type SetupKey, type SetupForm, type CivilTimePreview, type SetupBirth, type SetupCivilTime, type SetupDisclosure, groundNameRefusal, groundParts, groundPath} from './windowValues'
 import type {IdentityProfile} from '../../../../../desktop/cradle/src/nara/identity/types'
 import {chooseFolder, nativeFolderChooser, NO_NATIVE_FOLDER_CHOOSER} from './folderChooser'
 import {AdoptionController} from '../../../../../desktop/cradle/src/configuration/adoptionController'
@@ -682,8 +682,11 @@ const entryNames = (reading: unknown): string[] => {
  * elsewhere under the world's folder (work.candidates). A folder elsewhere comes into Work first — Central keeps a project in its Work, never
  * by reference elsewhere: Preview asks work.bring.preview, Accept presses work.bring on its digest and reads Work back, the original kept.
  * A folder of Work becomes a project: Preview asks Central's adopt or migrate preview (Create's plan is the inspection: Central has no
- * preview of projectcentral.init); Accept presses projectcentral.init, adopt or migrate as previewed, and reads the folder back. Each Accept
- * answers only once its owner reads the change back. Plain, so the window's hook and a headless walk drive the same presses. */
+ * preview of projectcentral.init); Accept presses projectcentral.init, adopt or migrate as previewed, and reads the folder back. Preview also
+ * asks Central's central.ground.project.preview, and says in plain words that the person acts as themselves in the project and its agents
+ * may write inside it; the same Accept, once the folder stands as a project, presses central.ground.project.adopt on that preview's digest
+ * and reads it back (a ground whose key and bounds the person keeps by hand is never changed). Each Accept answers only once its owner
+ * reads the change back. Plain, so the window's hook and a headless walk drive the same presses. */
 export class SetupWalk {
   readonly controller: AdoptionController
   private folders: SetupSnapshot['folders'] = {state: 'unread'}
@@ -1159,9 +1162,12 @@ export class SetupWalk {
     let lines: string[]
     if (make === 'bring') {
       const data = await this.source.central('work.bring.preview', {source_path: row.path})
-      const plan = data && typeof data === 'object' ? data as {operations?: unknown; digest?: unknown} : {}
+      const plan = data && typeof data === 'object' ? data as {operations?: unknown; digest?: unknown; name?: unknown} : {}
       if (!Array.isArray(plan.operations) || typeof plan.digest !== 'string') throw new Error('Central answered its bring preview in a form Setup does not read (work-bring-plan expected).')
-      this.plan = {folder: row.path, make, where, lines: plan.operations.map(String), digest: plan.digest}
+      // The copy's name in Work, and the project it is made: the person's grant reaches it once it stands there as a project.
+      const name = word(plan.name) || row.name
+      const extension = await this.readExtension(name, name)
+      this.plan = {folder: row.path, make, where, lines: [...plan.operations.map(String), setupExtensionLine(name, extension, true)], digest: plan.digest, extension}
       this.publish()
       return
     }
@@ -1174,8 +1180,32 @@ export class SetupWalk {
       if (!operations) throw new Error(`Central answered its ${SETUP_MAKES[make]} preview in a form Setup does not read (projectcentral-mutation-plan expected).`)
       lines = operations
     }
-    this.plan = {folder: row.path, make, where, ...(wiki ? {wiki} : {}), lines}
+    // The project is made with the folder's name as its id (pageGround acceptInput): the person's grant reaches it on the same Accept.
+    const extension = await this.readExtension(row.name, row.name)
+    this.plan = {folder: row.path, make, where, ...(wiki ? {wiki} : {}), lines: [...lines, setupExtensionLine(row.name, extension)], extension}
     this.publish()
+  }
+  /** Central's preview of extending the person's grant and the ground's bounds to a project (`central.ground.project.preview`): what Accept
+   * keeps, on its digest. A refusal stands in Central's words and extends nothing. */
+  private async readExtension(project: string, projectId: string): Promise<SetupExtension> {
+    try {
+      const data = await this.source.central(PROJECT_PREVIEW, {project, project_id: projectId}) as {schema?: unknown; state?: unknown; digest?: unknown; reason?: unknown} | null
+      const state = data?.schema === 'central.ground-project-preview/v1' ? data.state : undefined
+      if (state !== 'absent' && state !== 'present' && state !== 'hand-authored' && state !== 'unfounded' && state !== 'no-ground')
+        throw new Error(`Central answered ${PROJECT_PREVIEW} in a form Setup does not read (central.ground-project-preview/v1 expected).`)
+      return {state, project, project_id: projectId, digest: typeof data?.digest === 'string' ? data.digest : null, reason: typeof data?.reason === 'string' ? data.reason : null}
+    } catch (cause) { return {state: 'refused', project, project_id: projectId, error: words(cause)} }
+  }
+  /** Extends the person's grant and the ground's bounds to a project as previewed (Central's `central.ground.project.adopt` on the preview's
+   * digest), read back by its preview as theirs. What Accept says of it; null where the preview offered nothing to extend (it said why). */
+  private async extend(project: string, extension: SetupExtension | undefined, acceptance: string): Promise<string | null> {
+    if (extension?.state !== 'absent' || !extension.digest) return null
+    try {
+      await this.source.central(PROJECT_ADOPT, {actor_kind: 'human', acceptance: 'human-accepted', acceptance_ref: acceptance, project, project_id: extension.project_id, expected_digest: extension.digest})
+      const after = await this.readExtension(project, extension.project_id)
+      if (after.state !== 'present') throw new Error(`Central answered ${PROJECT_ADOPT}, but ${project} does not read back as yours to act in.`)
+      return `You act as you in ${project}, and its agents may write inside it.`
+    } catch (cause) { return `${project} is not yours to act in yet: ${words(cause)}` }
   }
   private async acceptProject(held: Held): Promise<string> {
     const {row, make, where, wiki} = this.chosen(held)
@@ -1188,7 +1218,9 @@ export class SetupWalk {
     await this.readWork()
     const after = this.folders.state === 'read' ? this.folders.folders.find(folder => folder.name === row.name) : undefined
     if (!after || setupFolder(after).finds !== 'ground') throw new Error(`Central answered ${PC_ACCEPT_ACTION[treatment]}, but ${row.name} does not read back with its ground in place. Read again.`)
-    return `Central made ${row.name}'s ProjectCentral beside its material${wiki ? `, its wiki ${make === 'keep' ? 'kept in place' : 'copied in'}` : ''}. It reads back in place.`
+    // The same Accept extends the person's grant and the ground's bounds to the project it made, as previewed.
+    const extended = await this.extend(row.name, plan.extension, `dlw-setup-projects-accept:${Date.now()}`)
+    return [`Central made ${row.name}'s ProjectCentral beside its material${wiki ? `, its wiki ${make === 'keep' ? 'kept in place' : 'copied in'}` : ''}. It reads back in place.`, extended].filter(Boolean).join(' ')
   }
   /** A folder elsewhere comes into Work as previewed: Central's work.bring on the preview's digest (a folder changed since is refused in
    * Central's words, and nothing is copied), read back from Work. The copy is the folder shown next. */
@@ -1202,7 +1234,13 @@ export class SetupWalk {
     if (!name || !copy) throw new Error(`Central answered work.bring, but ${target || row.name} does not read back in your ground's Work. Read again.`)
     this.brought = copy.path
     this.publish()
-    return `Central brought ${row.name} into your ground's Work as ${target || `Work/${name}`}, read back equal to it; the original stays at ${row.path}. Choose what to make of it there.`
+    const said = `Central brought ${row.name} into your ground's Work as ${target || `Work/${name}`}, read back equal to it; the original stays at ${row.path}.`
+    // A folder that keeps its own ProjectCentral stands as a project once it is in Work: the same Accept makes it yours to act in.
+    if (setupFolder(copy).finds === 'ground') {
+      const extended = await this.extend(name, plan.extension?.project === name ? plan.extension : undefined, `dlw-setup-projects-accept:${Date.now()}`)
+      return [said, extended].filter(Boolean).join(' ')
+    }
+    return `${said} Choose what to make of it there${plan.extension?.state === 'absent' ? `: once it is a project, you act as you in ${name}` : ''}.`
   }
 }
 
@@ -1212,6 +1250,8 @@ const SETUP_GROUND_FIRST = 'Make your ground first: AIKit\'s routes run from you
 const CIVIL_PREVIEW = 'central.time.policy.preview', CIVIL_ADOPT = 'central.time.policy.adopt'
 /** Central's adoption of the ground's bounds (ctrl ground_founding.rs, O-I #740). */
 const PLACEMENT_PREVIEW = 'central.ground.placement.preview', PLACEMENT_ADOPT = 'central.ground.placement.adopt'
+/** Central's extension of the person's grant and the ground's bounds to a project (ctrl ground_projects.rs, O-I #740, lane D). */
+const PROJECT_PREVIEW = 'central.ground.project.preview', PROJECT_ADOPT = 'central.ground.project.adopt'
 /** Why Setup keeps no Day form where the host hands it no form route. */
 const NO_SETUP_FORM = 'Setup reaches no form route here (SetupSource.groundForm, the kernel\'s ground_form).'
 /** Why Setup keeps no key where the host hands it no key route. */

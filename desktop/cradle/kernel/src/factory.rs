@@ -1952,16 +1952,29 @@ const DESK_PADS_CALLER: &str = "oi:desk-prompt-pads";
 /// `OI_CENTRAL_ROOT`): the authority a pad's write presents. The desk never
 /// names it; with no such grant the write is refused before Factory is asked.
 fn pads_grant(state_path: &Path) -> Result<String, Error> {
+    pads_grant_from(
+        state_path,
+        host_native_token(),
+        std::env::var_os("OI_CENTRAL_ROOT").map(PathBuf::from),
+    )
+}
+
+/// `pads_grant` over the host's token and its Central root, as read.
+fn pads_grant_from(
+    state_path: &Path,
+    token: Option<AuthorityToken>,
+    central_root: Option<PathBuf>,
+) -> Result<String, Error> {
     let refused = |message: String| Error {
         kind: "owner-refused-or-failed".into(),
         message,
         operation_may_have_run: false,
     };
-    let token = host_native_token().ok_or_else(|| {
+    let token = token.ok_or_else(|| {
         refused("A pad is written by the person: the host holds no native action token (CENTRAL_NATIVE_TOKEN or ~/.central/native-token), so nothing was written.".into())
     })?;
-    let contract =
-        read_authority_contract(authority_contract_for(state_path).as_deref()).map_err(refused)?;
+    let contract = read_authority_contract(authority_under(state_path, central_root).as_deref())
+        .map_err(refused)?;
     grant_held_by(&contract, &token, "human").ok_or_else(|| {
         refused("A pad is written by the person: no one human grant in the native action authority contract holds the host's token, so nothing was written.".into())
     })
@@ -2204,9 +2217,9 @@ const AUTHORITY_CONTRACT_REL: &str = "Control/user/native-action-authority.json"
 const AUTHORITY_CONTRACT_SCHEMA: &str = "central.native-action-authority/v1";
 /// The grant ref the host passes: `central:native-action-authority#<principal_ref>`.
 const AUTHORITY_GRANT_PREFIX: &str = "central:native-action-authority#";
-/// What a grant must list for this close, and the scope it must cover.
+/// What a grant must list for this close (Central lists it among the host-checked Actions a person's grant holds at a project,
+/// `authority::HOST_AUTHENTICATED_ACTIONS`); the scope it must cover is the Run's own (`run_scope`).
 const RUN_CLOSE_ACTION: &str = "factory.run.close";
-const RUN_CLOSE_SCOPE: &str = "project:Factory";
 
 /// What a grant must carry for one native action: the action it lists, the
 /// scope it covers and, when the act is a particular kind of actor's, that
@@ -2217,11 +2230,67 @@ pub(crate) struct Wanted<'a> {
     pub actor_kind: Option<&'a str>,
 }
 
-const RUN_CLOSE: Wanted<'static> = Wanted {
-    action: RUN_CLOSE_ACTION,
-    scope: RUN_CLOSE_SCOPE,
-    actor_kind: None,
-};
+/// The world a Run's close is authenticated in. Central's grant model authenticates an act where it happens (`control:root`, or
+/// `project:<id>` for an act in a project), and a session works in its project (manual §19.1, "Works in … The project's workcell by
+/// default"): a Run's Factory state stands in its project, `Work/<member>/.factory/…`, under the Central whose contract is read, and
+/// that member's ProjectCentral manifest names the project. A state at the ground's own root is the root's. A state outside that
+/// Central, or in a Work member that is no project, names no scope, and the close is refused.
+pub(crate) fn run_scope(state_path: &Path, contract: &Path) -> Result<String, String> {
+    let canonical = |path: &Path| {
+        let mut rest = Vec::new();
+        let mut at = path;
+        loop {
+            if let Ok(found) = std::fs::canonicalize(at) {
+                return rest
+                    .iter()
+                    .rev()
+                    .fold(found, |path: PathBuf, part| path.join(part));
+            }
+            match (at.file_name(), at.parent()) {
+                (Some(name), Some(parent)) => {
+                    rest.push(name.to_owned());
+                    at = parent;
+                }
+                _ => return path.to_path_buf(),
+            }
+        }
+    };
+    let root = contract.ancestors().nth(3).map(canonical).ok_or(
+        "The native action authority contract stands in no Central, so the close names no scope.",
+    )?;
+    let state = canonical(state_path);
+    let relative = state.strip_prefix(&root).map_err(|_| {
+        format!(
+            "The Run's Factory state ({}) stands outside the Central whose authority grants the close ({}), so the close names no scope.",
+            state_path.display(),
+            root.display()
+        )
+    })?;
+    let mut parts = relative.iter();
+    if parts.next().is_none_or(|first| first != "Work") {
+        return Ok("control:root".into());
+    }
+    let member = parts
+        .next()
+        .filter(|_| parts.next().is_some())
+        .ok_or("The Run's Factory state stands in no Work member, so the close names no scope.")?;
+    let manifest = root
+        .join("Work")
+        .join(member)
+        .join("ProjectCentral/project.json");
+    std::fs::read(&manifest)
+        .ok()
+        .and_then(|bytes| serde_json::from_slice::<Value>(&bytes).ok())
+        .and_then(|manifest| manifest["project_id"].as_str().map(str::to_owned))
+        .filter(|id| !id.trim().is_empty())
+        .map(|id| format!("project:{id}"))
+        .ok_or_else(|| {
+            format!(
+                "Work/{} keeps no ProjectCentral manifest, so it is no project the close is authenticated in.",
+                member.to_string_lossy()
+            )
+        })
+}
 
 #[path = "factory_receiving.rs"]
 mod receiving;
@@ -2294,9 +2363,9 @@ pub(crate) fn token_sha256(token: &str) -> String {
         .collect()
 }
 
-/// Whether the host's grant authorises this close, resolved against the
+/// Whether the host's grant authorises this act, resolved against the
 /// contract document. Returns the refusal reason, or `None` when the grant
-/// exists, its token matches, it lists the close, covers the Factory scope and
+/// exists, its token matches, it lists the act, covers the scope wanted and
 /// has not expired. The token is compared, never echoed.
 pub(crate) fn grant_refusal(
     contract: &Value,
@@ -2367,19 +2436,37 @@ pub(crate) fn grant_refusal(
     }
 }
 
-/// The grant gate for a close: the contract is read and the grant resolved
-/// against it. A contract that cannot be read refuses the same way.
-fn close_grant_refusal(authority: &CloseAuthority<'_>, grant: &str) -> Option<String> {
-    match read_authority_contract(authority.contract) {
-        Ok(contract) => grant_refusal(
-            &contract,
-            grant,
-            authority.token.as_ref(),
-            authority.now_unix_seconds,
-            &RUN_CLOSE,
-        ),
-        Err(reason) => Some(reason),
-    }
+/// The grant gate for a close: the contract is read, the Run's scope named
+/// (`run_scope`) and the grant resolved against both. A contract that cannot
+/// be read, or a state that names no scope, refuses the same way.
+fn close_grant_refusal(
+    authority: &CloseAuthority<'_>,
+    grant: &str,
+    state_path: &Path,
+) -> Option<String> {
+    let contract = match read_authority_contract(authority.contract) {
+        Ok(contract) => contract,
+        Err(reason) => return Some(reason),
+    };
+    let scope = match authority
+        .contract
+        .ok_or_else(|| "The native action authority contract is not found.".to_owned())
+        .and_then(|path| run_scope(state_path, path))
+    {
+        Ok(scope) => scope,
+        Err(reason) => return Some(reason),
+    };
+    grant_refusal(
+        &contract,
+        grant,
+        authority.token.as_ref(),
+        authority.now_unix_seconds,
+        &Wanted {
+            action: RUN_CLOSE_ACTION,
+            scope: &scope,
+            actor_kind: None,
+        },
+    )
 }
 
 /// The native action authority contract, read from where the host's lookup
@@ -2477,7 +2564,7 @@ pub fn run_close(
             )
         }
     };
-    if let Some(reason) = close_grant_refusal(&authority, &grant) {
+    if let Some(reason) = close_grant_refusal(&authority, &grant, state_path) {
         return envelope(
             "refused",
             Value::Null,
@@ -3177,8 +3264,11 @@ mod run_close_tests {
     const TOKEN: &str = "test-factory-close-token";
     /// A fixed clock: the fixture grant expires after it, never before.
     const NOW: u64 = 1_800_000_000;
+    /// The project the fixture Runs stand in (`Work/Factory`, its manifest naming it).
+    const RUN_CLOSE_SCOPE: &str = "project:Factory";
 
-    /// A temporary Central contract, removed when the test ends.
+    /// A temporary Central: its contract, and each Work member named a project (its ProjectCentral manifest), removed when the test
+    /// ends.
     struct TempContract {
         dir: PathBuf,
         path: PathBuf,
@@ -3186,6 +3276,9 @@ mod run_close_tests {
 
     impl TempContract {
         fn new(document: &Value) -> Self {
+            Self::with_projects(document, &["Factory"])
+        }
+        fn with_projects(document: &Value, projects: &[&str]) -> Self {
             static NEXT: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
             let index = NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
             let dir = std::env::temp_dir()
@@ -3193,7 +3286,26 @@ mod run_close_tests {
             let path = dir.join(AUTHORITY_CONTRACT_REL);
             std::fs::create_dir_all(path.parent().unwrap()).unwrap();
             std::fs::write(&path, serde_json::to_vec(document).unwrap()).unwrap();
+            for project in projects {
+                let manifest = dir
+                    .join("Work")
+                    .join(project)
+                    .join("ProjectCentral/project.json");
+                std::fs::create_dir_all(manifest.parent().unwrap()).unwrap();
+                std::fs::write(
+                    manifest,
+                    serde_json::json!({"project_id": project}).to_string(),
+                )
+                .unwrap();
+            }
             Self { dir, path }
+        }
+        /// Where a Run of a Work member keeps its Factory state.
+        fn state(&self, member: &str) -> PathBuf {
+            self.dir
+                .join("Work")
+                .join(member)
+                .join(".factory/development-state.json")
         }
     }
 
@@ -3234,9 +3346,25 @@ mod run_close_tests {
         token: Option<&str>,
         contract: Option<&Path>,
     ) -> Value {
+        // A Run of the fixture's Factory project, in the Central the contract stands in.
+        let state = contract
+            .and_then(|path| path.ancestors().nth(3))
+            .map(|root| root.join("Work/Factory/.factory/development-state.json"))
+            .unwrap_or_else(|| PathBuf::from("/s.json"));
+        close_in(fake, next, grant, token, contract, &state)
+    }
+
+    fn close_in(
+        fake: &mut Fake,
+        next: Option<Value>,
+        grant: Option<String>,
+        token: Option<&str>,
+        contract: Option<&Path>,
+        state: &Path,
+    ) -> Value {
         run_close(
             &mut |args: &[std::ffi::OsString], input: Option<&[u8]>| fake.call(args, input),
-            Path::new("/s.json"),
+            state,
             "run:A",
             "recognition:R1",
             next,
@@ -3694,6 +3822,207 @@ mod run_close_tests {
         assert_eq!(result["status"], "refused", "{result}");
         assert_eq!(result["refusal"]["source"], "driver");
         assert_eq!(result["lifecycle"], Value::Null);
+    }
+
+    /// The Actions Central authenticates that the owner's human grant lists (a fixture of its shape, never the real file).
+    const OWNER_ACTIONS: [&str; 22] = [
+        "agent-profile.accept",
+        "central.day.close-carry",
+        "central.day.ensure",
+        "central.day.lifecycle",
+        "central.day.move.record",
+        "central.day.rollover",
+        "central.day.settings.write",
+        "central.document.create",
+        "central.document.mutate",
+        "central.migration.apply",
+        "central.migration.plan",
+        "central.migration.recover",
+        "central.migration.rollback",
+        "central.now.lifecycle",
+        "central.now.obligations",
+        "central.receiving.include",
+        "central.receiving.recover",
+        "central.receiving.review",
+        "central.receiving.submit",
+        "projectcentral.source.return_accept",
+        "projectcentral.source.return_reject",
+        "control.apply-proposal",
+    ];
+    const OWNER_SCOPES: [&str; 8] = [
+        "control:root",
+        "project:Actuation",
+        "project:Central",
+        "project:Factory",
+        "project:O-I",
+        "project:Workcell",
+        "project:ai-kit",
+        "project:quaternal-logic",
+    ];
+    /// The owner's shape: one human grant at the root and seven projects, and native services' grants holding other tokens.
+    fn owner_document(actions: &[&str]) -> Value {
+        let service = |name: &str, actions: &[&str]| {
+            serde_json::json!({"principal_ref": format!("native-service:{name}"), "actor_kind": "native-service",
+                "token_sha256": token_sha256(name), "scope_refs": OWNER_SCOPES, "actions": actions,
+                "expires_at_unix_seconds": NOW + 1000})
+        };
+        serde_json::json!({"schema": AUTHORITY_CONTRACT_SCHEMA, "scope_ref": "control:root", "grants": [
+            {"principal_ref": PRINCIPAL, "actor_kind": "human", "token_sha256": token_sha256(TOKEN),
+             "scope_refs": OWNER_SCOPES, "actions": actions, "expires_at_unix_seconds": NOW + 1000},
+            service("aikit/routine-dispatcher/day-rollover", &["central.day.ensure"]),
+            service("aikit/day-agent", &["central.day.close-carry", "central.day.move.record", "central.receiving.submit"]),
+        ]})
+    }
+    /// What Setup's Ground Accept and its Projects Accept leave in a new world: one human grant, at the root and the project
+    /// brought in, of the Actions Central authenticates and the host-checked close (ctrl ground_projects.rs).
+    fn new_world_document(scopes: &[&str], close: bool) -> Value {
+        let mut actions = OWNER_ACTIONS.to_vec();
+        if close {
+            actions.push(RUN_CLOSE_ACTION);
+        }
+        serde_json::json!({"schema": AUTHORITY_CONTRACT_SCHEMA, "scope_ref": "control:root", "grants": [
+            {"principal_ref": "human:Fresh", "actor_kind": "human", "token_sha256": token_sha256(TOKEN),
+             "scope_refs": scopes, "actions": actions, "expires_at_unix_seconds": NOW + 1000}]})
+    }
+    fn close_of(contract: &TempContract, member: &str, grant: &str) -> (Value, Fake) {
+        let mut fake = Fake::new("active");
+        let result = close_in(
+            &mut fake,
+            None,
+            Some(grant.into()),
+            Some(TOKEN),
+            Some(&contract.path),
+            &contract.state(member),
+        );
+        (result, fake)
+    }
+
+    #[test]
+    fn a_close_is_authenticated_in_the_project_its_run_stands_in() {
+        let ground = TempContract::with_projects(&valid_document(), &["field-notes"]);
+        assert_eq!(
+            run_scope(&ground.state("field-notes"), &ground.path).as_deref(),
+            Ok("project:field-notes")
+        );
+        assert_eq!(
+            run_scope(
+                &ground.dir.join(".factory/development-state.json"),
+                &ground.path
+            )
+            .as_deref(),
+            Ok("control:root"),
+            "a state at the ground's own root is the root's"
+        );
+        assert!(run_scope(&ground.state("unmade"), &ground.path)
+            .unwrap_err()
+            .contains("Work/unmade keeps no ProjectCentral manifest"));
+        assert!(
+            run_scope(Path::new("/elsewhere/.factory/s.json"), &ground.path)
+                .unwrap_err()
+                .contains("stands outside the Central")
+        );
+    }
+
+    #[test]
+    fn the_person_in_a_new_world_closes_a_run_of_the_project_they_brought_in() {
+        let grant = "central:native-action-authority#human:Fresh";
+        // No project named Factory: the person's grant covers the root and the project brought in.
+        let extended = TempContract::with_projects(
+            &new_world_document(&["control:root", "project:field-notes"], true),
+            &["field-notes", "elsewhere"],
+        );
+        let (result, fake) = close_of(&extended, "field-notes", grant);
+        assert_eq!(result["status"], "finished", "{result}");
+        assert_eq!(fake.actions.len(), 2);
+        // A project their grant does not reach is named, and nothing moves.
+        let (result, fake) = close_of(&extended, "elsewhere", grant);
+        assert_eq!(result["status"], "refused");
+        assert!(result["refusal"]["message"]
+            .as_str()
+            .unwrap()
+            .starts_with("scope not granted: the grant does not cover project:elsewhere"));
+        assert_eq!(fake.calls, 0);
+        // Before the Projects Accept: the root alone, without the close.
+        let founded = TempContract::with_projects(
+            &new_world_document(&["control:root"], false),
+            &["field-notes"],
+        );
+        let (result, fake) = close_of(&founded, "field-notes", grant);
+        assert!(result["refusal"]["message"]
+            .as_str()
+            .unwrap()
+            .starts_with("action not granted:"));
+        assert_eq!(fake.calls, 0);
+    }
+
+    #[test]
+    fn the_owner_s_grant_shape_authorises_the_close_where_it_did() {
+        // As it stands: its human grant lists no factory.run.close, so no close is granted, in any project — before and after.
+        let owner = TempContract::with_projects(
+            &owner_document(&OWNER_ACTIONS),
+            &["Factory", "O-I", "personal"],
+        );
+        for member in ["Factory", "O-I", "personal"] {
+            let (result, fake) = close_of(&owner, member, GRANT);
+            assert!(
+                result["refusal"]["message"]
+                    .as_str()
+                    .unwrap()
+                    .starts_with("action not granted: the grant does not list factory.run.close"),
+                "{member}: {result}"
+            );
+            assert_eq!(fake.calls, 0);
+        }
+        // Were it to list the close: every project its grant covers closes, as under project:Factory; a project it does not
+        // cover (its Factory states at Work/personal, projects, Point-Cloud-Demo) is named, where project:Factory closed it.
+        let listed = [OWNER_ACTIONS.as_slice(), &[RUN_CLOSE_ACTION]].concat();
+        let owner =
+            TempContract::with_projects(&owner_document(&listed), &["Factory", "O-I", "personal"]);
+        for member in ["Factory", "O-I"] {
+            let (result, _) = close_of(&owner, member, GRANT);
+            assert_eq!(result["status"], "finished", "{member}: {result}");
+        }
+        let (result, _) = close_of(&owner, "personal", GRANT);
+        assert!(result["refusal"]["message"]
+            .as_str()
+            .unwrap()
+            .starts_with("scope not granted: the grant does not cover project:personal"));
+    }
+
+    #[test]
+    fn a_pad_is_written_by_the_person_s_own_grant_in_a_new_world_and_in_the_owner_s() {
+        let token = || Some(AuthorityToken(TOKEN.into()));
+        let fresh = TempContract::with_projects(
+            &new_world_document(&["control:root", "project:field-notes"], true),
+            &["field-notes"],
+        );
+        assert_eq!(
+            pads_grant_from(&fresh.state("field-notes"), token(), None).map_err(|e| e.message),
+            Ok("central:native-action-authority#human:Fresh".into())
+        );
+        // A pad asks no scope of the grant: the person's own grant as Setup founded it writes it too.
+        let founded = TempContract::with_projects(
+            &new_world_document(&["control:root"], false),
+            &["field-notes"],
+        );
+        assert!(pads_grant_from(&founded.state("field-notes"), token(), None).is_ok());
+        let owner = TempContract::with_projects(&owner_document(&OWNER_ACTIONS), &["personal"]);
+        assert_eq!(
+            pads_grant_from(&owner.state("personal"), token(), None).map_err(|e| e.message),
+            Ok(GRANT.into())
+        );
+        assert!(pads_grant_from(&fresh.state("field-notes"), None, None)
+            .unwrap_err()
+            .message
+            .contains("holds no native action token"));
+        assert!(pads_grant_from(
+            &fresh.state("field-notes"),
+            Some(AuthorityToken("another".into())),
+            None
+        )
+        .unwrap_err()
+        .message
+        .contains("no one human grant"));
     }
 
     #[test]

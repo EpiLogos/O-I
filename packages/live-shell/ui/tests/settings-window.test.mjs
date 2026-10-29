@@ -412,7 +412,10 @@ function scriptedSetup() {
     // whether the host can keep a key here (HOME the world's folder); `keyAcceptance`, `placementAcceptance`: what each was recognised by.
     placement: null, key: false, keeps: true,
     // `form`: whether the ground keeps the Day's form (Control/forms); `formByProject`: whether its O-I project carries it instead.
-    form: false, formByProject: false}
+    form: false, formByProject: false,
+    // `extended`: the projects the person's grant and the ground's bounds reach (central.ground.project.adopt); `byHand`: a ground
+    // whose key and bounds the person keeps by hand (their recognition is not Setup's), which Central never extends.
+    extended: new Set(), byHand: false}
   const HOME = '/w/Bare'
   const digestOf = relative => `digest:${relative}:${world.elsewhere.get(relative).revision}`
   // A ground the person chose (discover's `ground`) is read where it is: new until it is the bound one.
@@ -473,6 +476,22 @@ function scriptedSetup() {
       world.placement = {writable: []}; world.placementAcceptance = input.acceptance_ref
       return {adopted: true, source_ref: 'central:source:control:root:Control/user/placement.json', policy_revision: 'p-1', policy: world.placement}
     }
+    // Central's extension to a project (ctrl ground_projects.rs; shapes as the built ctrl answered on a scratch world, 29 Oct).
+    if (action === 'central.ground.project.preview') {
+      const state = !world.bound ? 'no-ground' : world.byHand ? 'hand-authored' : !world.key || !world.placement ? 'unfounded' : world.extended.has(input.project_id) ? 'present' : 'absent'
+      return {schema: 'central.ground-project-preview/v1', state, project: input.project, project_id: input.project_id, project_made: !!world.work.get(input.project)?.made,
+        scope_ref: `project:${input.project_id}`, member: `Work/${input.project}`, writable: {path: `Work/${input.project}`, class: 'repository'}, digest: state === 'absent' ? `extend:${input.project_id}` : null,
+        reason: state === 'hand-authored' ? 'this ground\'s native-action-authority source (Control/user/native-action-authority.json) is recognised by owner-commissioned, not by Setup\'s acceptance: it is changed only by its owner, and Central extends nothing in it. Nothing was written.'
+          : state === 'present' ? `you act as you in ${input.project} already, and its agents may write inside it: nothing is extended twice` : null}
+    }
+    if (action === 'central.ground.project.adopt') {
+      if (input.actor_kind !== 'human' || input.acceptance !== 'human-accepted' || !input.acceptance_ref) throw new Error('a human-adopted civil-time policy requires a declared human caller, no agent_session_ref, and acceptance human-accepted')
+      if (world.byHand) throw new Error('this ground\'s native-action-authority source is recognised by owner-commissioned, not by Setup\'s acceptance: it is changed only by its owner, and Central extends nothing in it. Nothing was written.')
+      if (!world.work.get(input.project)?.made) throw new Error(`Work/${input.project} is no project yet: Central extends nothing to it until it is made. Nothing was written.`)
+      if (input.expected_digest !== `extend:${input.project_id}`) throw new Error('what Central would extend changed since its preview (or no preview was named): preview it again. Nothing was written.')
+      world.extended.add(input.project_id); world.extendAcceptance = input.acceptance_ref
+      return {adopted: true, project: input.project, scope_ref: `project:${input.project_id}`, member: `Work/${input.project}`, writable: [`Work/${input.project}`]}
+    }
     if (!world.bound) throw new Error(`Central root does not exist as a directory: ${GROUND}`)
     const project = name => { const row = world.work.get(name); if (!row) throw new Error(`Project root does not exist as a directory: ${GROUND}/Work/${name}`); return row }
     if (action === 'work.list') return {items: [...world.work.keys()].map(name => ({name, path: `${GROUND}/Work/${name}`})), root: GROUND}
@@ -502,7 +521,7 @@ function scriptedSetup() {
           ...(row.signals.includes('git') ? ['Its git repository (.git) comes with it: the history, the branches and the working tree as they stand.'] : []),
           `The original stays at ${input.source_path}; nothing in it moves or changes.`]}
       if (input.expected_digest !== digestOf(relative)) throw new Error(`${input.source_path} changed since its preview (or no preview was named): preview it again. Nothing was copied.`)
-      world.work.set(name, {material: row.material, wikis: [], made: false})
+      world.work.set(name, {material: row.material, wikis: [], made: !!row.made})
       return {source_path: input.source_path, name, target: `${GROUND}/Work/${name}`, target_ref: `Work/${name}`, digest: input.expected_digest, verified: true, original: 'kept'}
     }
     if (action === 'machine.declaration') {
@@ -800,6 +819,81 @@ test('SCRIPTED — Arriving: a folder of work that stands outside the ground is 
   assert.deepEqual(calls.find(([, action]) => action === 'projectcentral.init')[2], {project: 'field-notes', project_id: 'field-notes'})
   assert.equal(stepOf(win.setupValues(walk.snapshot(), held({})), 'projects').state, 'accepted')
   await walk.preview(held({folder: notes})).then(() => assert.fail('a second copy under the same name'), cause => assert.match(String(cause), /Work\/field-notes is there already/))
+})
+
+test('SCRIPTED — a project the person makes or brings in is theirs to act in: Preview says so in plain words, and the same Accept extends their grant and its bounds through Central, read back', async () => {
+  const {source, calls, world, GROUND, HOME} = scriptedSetup()
+  const walk = new settingsPages.SetupWalk(source)
+  await walk.read()
+  await walk.accept('ground', held({}))
+  assert.ok(world.key && world.placement, 'Setup\'s Ground Accept kept the person\'s key and the ground\'s bounds')
+  // Made in Work: Create.
+  world.work.set('field-notes', {material: ['README.md'], wikis: [], made: false})
+  await walk.read()
+  const folder = `${GROUND}/Work/field-notes`, choice = {folder, make: 'create'}
+  await walk.preview(held(choice))
+  const lines = JSON.parse(win.setupValues(walk.snapshot(), held(choice)).setupPlan)
+  assert.equal(lines.at(-1), 'You act as you in field-notes, and its agents may write inside it.', 'said in plain words before Accept')
+  assert.deepEqual(calls.findLast(([, action]) => action === 'central.ground.project.preview')[2], {project: 'field-notes', project_id: 'field-notes'})
+  assert.ok(!calls.some(([, action]) => action === 'central.ground.project.adopt'), 'Preview changes nothing')
+  const said = await walk.accept('projects', held(choice))
+  assert.match(said, /Central made field-notes's ProjectCentral/)
+  assert.match(said, /You act as you in field-notes, and its agents may write inside it\./)
+  const [, , adopt] = calls.find(([, action]) => action === 'central.ground.project.adopt')
+  assert.deepEqual({...adopt, acceptance_ref: undefined}, {actor_kind: 'human', acceptance: 'human-accepted', acceptance_ref: undefined, project: 'field-notes', project_id: 'field-notes', expected_digest: 'extend:field-notes'},
+    'on the previewed digest, as the person\'s acceptance')
+  assert.match(adopt.acceptance_ref, /^dlw-setup-projects-accept:/)
+  const made = calls.findIndex(([, action]) => action === 'projectcentral.init'), extended = calls.findIndex(([, action]) => action === 'central.ground.project.adopt')
+  assert.ok(made >= 0 && made < extended, 'the project is made first, then extended to')
+  assert.ok(world.extended.has('field-notes'))
+
+  // Brought in keeping its own ProjectCentral: the bring's Accept makes it theirs to act in.
+  world.elsewhere.set('code/atlas', {signals: ['git'], material: ['AGENTS.md'], revision: 1, made: true})
+  await walk.read()
+  const atlas = `${HOME}/code/atlas`
+  await walk.preview(held({folder: atlas}))
+  assert.equal(JSON.parse(win.setupValues(walk.snapshot(), held({folder: atlas})).setupPlan).at(-1), 'Once it stands in Work as a project, you act as you in atlas, and its agents may write inside it.')
+  assert.match(await walk.accept('projects', held({folder: atlas})), /You act as you in atlas/)
+  assert.ok(world.extended.has('atlas'))
+  // Brought in as a plain folder: nothing is extended until it is made a project there.
+  world.elsewhere.set('Vault', {signals: ['obsidian'], material: ['Home.md'], revision: 1})
+  await walk.read()
+  const vault = `${HOME}/Vault`
+  await walk.preview(held({folder: vault}))
+  const before = calls.filter(([, action]) => action === 'central.ground.project.adopt').length
+  assert.match(await walk.accept('projects', held({folder: vault})), /once it is a project, you act as you in Vault/)
+  assert.equal(calls.filter(([, action]) => action === 'central.ground.project.adopt').length, before, 'a folder that is no project is extended nothing')
+})
+
+test('SCRIPTED — a ground whose key and bounds the person keeps by hand is never extended: Preview says so, and Accept makes the project and changes nothing else', async () => {
+  const {source, calls, world, GROUND} = scriptedSetup()
+  const walk = new settingsPages.SetupWalk(source)
+  await walk.read()
+  await walk.accept('ground', held({}))
+  world.byHand = true
+  world.work.set('sketches', {material: ['src'], wikis: [], made: false})
+  await walk.read()
+  const choice = {folder: `${GROUND}/Work/sketches`, make: 'create'}
+  await walk.preview(held(choice))
+  assert.match(JSON.parse(win.setupValues(walk.snapshot(), held(choice)).setupPlan).at(-1), /You keep your key and your ground's bounds by hand: Central extends neither to sketches/)
+  const said = await walk.accept('projects', held(choice))
+  assert.match(said, /Central made sketches's ProjectCentral/)
+  assert.doesNotMatch(said, /You act as you/)
+  assert.ok(!calls.some(([, action]) => action === 'central.ground.project.adopt'), 'Central is never asked to change what the person keeps by hand')
+  // A Central that does not answer the preview: said in its words, and nothing is extended.
+  const {source: older, calls: olderCalls, world: olderWorld, GROUND: olderGround} = scriptedSetup()
+  const central = older.central
+  older.central = async (action, input) => { if (action === 'central.ground.project.preview') throw new Error('Unknown action: central.ground.project.preview'); return central(action, input) }
+  const old = new settingsPages.SetupWalk(older)
+  await old.read()
+  await old.accept('ground', held({}))
+  olderWorld.work.set('sketches', {material: ['src'], wikis: [], made: false})
+  await old.read()
+  const pick = {folder: `${olderGround}/Work/sketches`, make: 'create'}
+  await old.preview(held(pick))
+  assert.match(JSON.parse(win.setupValues(old.snapshot(), held(pick)).setupPlan).at(-1), /Central does not say whether you act as you in sketches: Unknown action/)
+  await old.accept('projects', held(pick))
+  assert.ok(!olderCalls.some(([, action]) => action === 'central.ground.project.adopt'))
 })
 
 test('SCRIPTED — Machines: Accept binds Central\'s current machine to the Workcell this computer answers as, reads it back, and the host reads its world again', async () => {
