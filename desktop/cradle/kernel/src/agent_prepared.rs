@@ -90,6 +90,64 @@ impl Kernel {
     }
 }
 
+/// Where a Nara op runs: the working directory its Project label names and
+/// the canonical ProjectRef bound there (lane Z). Both are owners' answers —
+/// Central's World, Central's project inspection or AIKit's root binding —
+/// which the kernel lock never guarded; dispatch resolves them outside it
+/// before the op's prepare captures the kernel's own state.
+#[derive(Clone, Debug)]
+pub(crate) struct Place {
+    pub(crate) cwd: PathBuf,
+    pub(crate) project_ref: String,
+}
+
+/// A Nara op's place, prepared under the kernel lock (the World reading it
+/// is scoped by, as an agent read captures it) and resolved outside it.
+pub(crate) struct PreparedPlace {
+    client: CentralClient,
+    aikit: agency::Client,
+    reads: Arc<Mutex<read_cache::OwnerReadCache>>,
+    world: PreparedWorld,
+    project: String,
+}
+
+impl PreparedPlace {
+    /// The owners' answers, outside the kernel lock.
+    pub(crate) fn resolve(self) -> Result<Place, String> {
+        let world = self.world.read()?;
+        let cwd = location(&world, (!self.project.is_empty()).then_some(&*self.project))?;
+        let project_ref = project_ref(&self.client, &self.aikit, &self.reads, &self.project, &cwd)?;
+        Ok(Place { cwd, project_ref })
+    }
+}
+
+impl Kernel {
+    pub(crate) fn prepare_place(&mut self, project: &str) -> PreparedPlace {
+        PreparedPlace {
+            client: self.client.clone(),
+            aikit: self.agency.clone(),
+            reads: Arc::clone(&self.agent_reads),
+            world: self.prepare_world_reading(),
+            project: project.to_owned(),
+        }
+    }
+
+    /// The place a Nara prepare runs at: the one dispatch resolved outside
+    /// the lock, else (an op applied in order) resolved here, under it.
+    pub(crate) fn nara_place(
+        &mut self,
+        project: &str,
+        resolved: Option<Place>,
+    ) -> Result<Place, String> {
+        if let Some(place) = resolved {
+            return Ok(place);
+        }
+        let cwd = self.agent_location((!project.is_empty()).then_some(project))?;
+        let project_ref = self.agent_project_ref(project, &cwd)?;
+        Ok(Place { cwd, project_ref })
+    }
+}
+
 /// The working directory an agent op runs in: the World's root for the root
 /// register (`None`), else the disclosed Project's location. The empty
 /// conversation Project label is the renderer's explicit ROOT selection.

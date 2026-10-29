@@ -76,6 +76,84 @@ pub struct Manager {
     composed: u64,
 }
 
+/// The live field's own seat: the one manager behind a lock of its own,
+/// beside the kernel's (lane Z). Every field acknowledgement is a round trip
+/// to `ql-field-host` (100–250 ms, up to the 20 s timeout) and a compose's
+/// open starts the host (0.8–2.8 s); held under the kernel lock, each starved
+/// every other op. The manager reads no other kernel state: an Open's source
+/// is read through the Central client the field was given.
+///
+/// The lock guards the open owner — its process group, pipes, lease and
+/// identity, its request cursor and last acknowledgement — and the lease
+/// and compose sequences. Field ops take it one at a time in arrival order,
+/// as they took the kernel lock: an exchange's cursor check, send,
+/// acknowledgement and cursor advance stay one hold, so no two writes
+/// interleave and none is replayed. A compose's QL work runs outside it;
+/// only its admission (the busy check, the sequence) and its open hold it,
+/// and the open checks busy again. No kernel op reads the manager and no
+/// field op reads the kernel, so nothing orders the two locks' ops against
+/// each other. The kernel lock may be held while this one is taken
+/// (`Kernel::apply`'s arm, for a direct caller); this one is never held
+/// while the kernel's is taken.
+///
+/// A host holds a clone (`Kernel::native_field`) and passes it to
+/// `dispatch::dispatch_with`, so a field op never waits on the kernel lock.
+#[derive(Clone, Debug)]
+pub struct Field {
+    manager: Arc<Mutex<Manager>>,
+    client: CentralClient,
+}
+
+impl Field {
+    pub(crate) fn new(client: CentralClient) -> Self {
+        Self {
+            manager: Arc::new(Mutex::new(Manager::default())),
+            client,
+        }
+    }
+
+    /// The manager under the field's lock, for one step taken directly.
+    pub(crate) fn lock(&self) -> Result<std::sync::MutexGuard<'_, Manager>, String> {
+        self.manager
+            .lock()
+            .map_err(|_| "native field lock unavailable".to_owned())
+    }
+
+    /// One field op on the field's own lock.
+    pub fn apply(&self, request: Request) -> Result<Value, String> {
+        self.apply_timed(request, &mut crate::dispatch::Timing::default())
+    }
+
+    /// One field op, its waits for and holds of the field's lock added to
+    /// `timing`, and a compose's QL work to its owner time.
+    pub(crate) fn apply_timed(
+        &self,
+        request: Request,
+        timing: &mut crate::dispatch::Timing,
+    ) -> Result<Value, String> {
+        const UNAVAILABLE: &str = "native field lock unavailable";
+        let lock = &self.manager;
+        let prepared = match request {
+            Request::Compose { request } => {
+                crate::dispatch::timed(timing, lock, UNAVAILABLE, |m| m.prepare_compose(&request))??
+            }
+            Request::PrepareWorld { request } => {
+                crate::dispatch::timed(timing, lock, UNAVAILABLE, |m| m.prepare_world(&request))??
+            }
+            other => {
+                return crate::dispatch::timed(timing, lock, UNAVAILABLE, |m| {
+                    m.apply(&self.client, other)
+                })?
+            }
+        };
+        let started = std::time::Instant::now();
+        let composed = prepared.execute();
+        timing.owner += started.elapsed();
+        let composed = composed?;
+        crate::dispatch::timed(timing, lock, UNAVAILABLE, |m| m.finish_compose(composed))?
+    }
+}
+
 #[derive(Debug)]
 struct Owner {
     lease: String,
@@ -333,6 +411,159 @@ impl InstalledQl {
             ))
         }
     }
+}
+
+/// One executable image as the file system identifies it: device, inode,
+/// size, and modification and change times — the standing `oi`'s own suite
+/// verification keeps (cli product_command_route.rs `ExecutableStanding`).
+/// A write, a replacement or a reset modification time moves at least one
+/// of them: the change time moves with every write and nothing sets it back.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+struct Standing {
+    device: u64,
+    inode: u64,
+    len: u64,
+    modified: (i64, i64),
+    changed: (i64, i64),
+}
+
+impl Standing {
+    /// None where the platform names no inode or change time: such an image
+    /// is hashed every time.
+    fn of(metadata: &fs::Metadata) -> Option<Self> {
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::MetadataExt;
+            Some(Self {
+                device: metadata.dev(),
+                inode: metadata.ino(),
+                len: metadata.len(),
+                modified: (metadata.mtime(), metadata.mtime_nsec()),
+                changed: (metadata.ctime(), metadata.ctime_nsec()),
+            })
+        }
+        #[cfg(not(unix))]
+        {
+            let _ = metadata;
+            None
+        }
+    }
+}
+
+/// An executable image's byte length and SHA-256 (lowercase hex).
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) struct ImageDigest {
+    pub(crate) bytes: u64,
+    pub(crate) sha256: String,
+}
+
+#[derive(Debug)]
+pub(crate) enum DigestError {
+    /// The file grew, shrank or moved its standing while it was read.
+    Changed,
+    Io(String),
+}
+
+impl std::fmt::Display for DigestError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Changed => f.write_str("the executable changed while it was hashed"),
+            Self::Io(error) => f.write_str(error),
+        }
+    }
+}
+
+/// Bound on the images kept; past it the record starts again.
+const KEPT_DIGESTS: usize = 64;
+
+/// Each executable image hashed once per standing (lane Z). A personal
+/// current's pin qualified the 85 MB `ql` five times and hashed it six, and a
+/// compose hashed it twice: most of a Nara reading's 25–53 s. The digest
+/// still pins provenance — every qualification reads the open image's
+/// standing, and a digest is served only while that standing is the one it
+/// was hashed at; a replaced or rewritten image is hashed again.
+#[derive(Debug, Default)]
+pub(crate) struct Digests(Mutex<BTreeMap<PathBuf, (Standing, ImageDigest)>>);
+
+impl Digests {
+    pub(crate) fn global() -> &'static Self {
+        static DIGESTS: std::sync::OnceLock<Digests> = std::sync::OnceLock::new();
+        DIGESTS.get_or_init(Self::default)
+    }
+
+    /// The digest of the regular file opened as `file` from `path`, whose
+    /// metadata `before` was read from that open file. Kept while its
+    /// standing is the one it was hashed at; else hashed from the open file
+    /// and kept only if the file stood still while it was read. The second
+    /// value says whether it was hashed.
+    pub(crate) fn digest(
+        &self,
+        path: &std::path::Path,
+        mut file: fs::File,
+        before: &fs::Metadata,
+    ) -> Result<(ImageDigest, bool), DigestError> {
+        let standing = Standing::of(before);
+        let kept = standing.and_then(|standing| {
+            let kept = self.0.lock().unwrap_or_else(|e| e.into_inner());
+            kept.get(path)
+                .filter(|(at, _)| *at == standing)
+                .map(|(_, digest)| digest.clone())
+        });
+        if let Some(digest) = kept {
+            crate::dispatch::trace_digest(path, "kept", digest.bytes, Duration::ZERO);
+            return Ok((digest, false));
+        }
+        let started = std::time::Instant::now();
+        let io = |error: std::io::Error| DigestError::Io(error.to_string());
+        let mut hash = Sha256::new();
+        let mut bytes = 0u64;
+        let mut block = vec![0u8; 1 << 20];
+        loop {
+            let n = file.read(&mut block).map_err(io)?;
+            if n == 0 {
+                break;
+            }
+            bytes = bytes.checked_add(n as u64).ok_or(DigestError::Changed)?;
+            if bytes > before.len() {
+                return Err(DigestError::Changed);
+            }
+            hash.update(&block[..n]);
+        }
+        let after = file.metadata().map_err(io)?;
+        if bytes != before.len()
+            || after.len() != before.len()
+            || after.modified().ok() != before.modified().ok()
+            || Standing::of(&after) != standing
+        {
+            return Err(DigestError::Changed);
+        }
+        let digest = ImageDigest {
+            bytes,
+            sha256: format!("{:x}", hash.finalize()),
+        };
+        if let Some(standing) = standing {
+            let mut kept = self.0.lock().unwrap_or_else(|e| e.into_inner());
+            if kept.len() >= KEPT_DIGESTS && !kept.contains_key(path) {
+                kept.clear();
+            }
+            kept.insert(path.to_path_buf(), (standing, digest.clone()));
+        }
+        crate::dispatch::trace_digest(path, "hashed", bytes, started.elapsed());
+        Ok((digest, true))
+    }
+}
+
+/// The SHA-256 of the regular file at `path`, hashed once per standing.
+fn executable_sha256(path: &std::path::Path) -> Result<String, String> {
+    let file = fs::File::open(path).map_err(|e| e.to_string())?;
+    let before = file.metadata().map_err(|e| e.to_string())?;
+    if !before.is_file() {
+        return Err(format!("{} is not a regular file", path.display()));
+    }
+    Digests::global()
+        .digest(path, file, &before)
+        .map(|(digest, _)| digest.sha256)
+        .map_err(|error| error.to_string())
 }
 
 const WHERE_TIMEOUT: Duration = Duration::from_secs(10);
@@ -1437,9 +1668,9 @@ impl PreparedCompose {
     pub fn execute(self) -> Result<ComposedBinding, String> {
         let executables =
             compose_executables(matches!(self.request.sky, Sky::Now | Sky::Epoch(_)))?;
-        let executable_sha256 = sha256_hex(&fs::read(&executables.ql).map_err(|error| {
+        let executable_sha256 = executable_sha256(&executables.ql).map_err(|error| {
             format!("native-expression.unavailable: qualify QL executable: {error}")
-        })?);
+        })?;
         let now_ms = unix_ms()?;
         let mut sky_provenance = Value::Null;
         let mut snapshot = match &self.request.sky {
@@ -1559,9 +1790,9 @@ impl PreparedCompose {
             )
         })?;
         drop(file);
-        if sha256_hex(&fs::read(&executables.ql).map_err(|error| {
+        if self::executable_sha256(&executables.ql).map_err(|error| {
             format!("native-expression.unavailable: recheck QL executable: {error}")
-        })?) != executable_sha256
+        })? != executable_sha256
         {
             return Err(refused("QL executable changed during composition".into()));
         }
@@ -2164,28 +2395,44 @@ impl Manager {
 }
 
 impl crate::Kernel {
-    /// Composing may provision the dated sky for tens of seconds on a first
-    /// run; hosts run `execute` outside the kernel lock and finish under it.
+    /// The live field's own handle (`Field`): a host keeps one beside the
+    /// kernel and passes it to `dispatch::dispatch_with`.
+    pub fn native_field(&self) -> Field {
+        self.native_expression.clone()
+    }
+
+    /// A compose's admission and its open, each one step on the field's own
+    /// lock; `execute` runs between them under neither lock. Dispatch serves
+    /// a compose through `Field::apply_timed`; these are the same steps for a
+    /// caller that drives them itself.
     pub fn prepare_native_compose(
-        &mut self,
+        &self,
         op: &crate::KernelOp,
     ) -> Result<Option<PreparedCompose>, String> {
         match op {
             crate::KernelOp::NativeExpression {
                 request: Request::Compose { request },
-            } => self.native_expression.prepare_compose(request).map(Some),
+            } => self
+                .native_expression
+                .lock()?
+                .prepare_compose(request)
+                .map(Some),
             crate::KernelOp::NativeExpression {
                 request: Request::PrepareWorld { request },
-            } => self.native_expression.prepare_world(request).map(Some),
+            } => self
+                .native_expression
+                .lock()?
+                .prepare_world(request)
+                .map(Some),
             _ => Ok(None),
         }
     }
 
     pub fn finish_native_compose(
-        &mut self,
+        &self,
         composed: ComposedBinding,
     ) -> Result<crate::KernelOpOutcome, String> {
-        let data = self.native_expression.finish_compose(composed)?;
+        let data = self.native_expression.lock()?.finish_compose(composed)?;
         Ok(crate::KernelOpOutcome {
             read_scopes: None,
             receipts: Vec::new(),
@@ -3119,6 +3366,334 @@ for line in sys.stdin:
         assert_eq!(resolve_oi(None, Some(launchd), h), PathBuf::from("oi"));
         fs::remove_dir_all(root).unwrap();
     }
+    /// A `ql-field-host` stand-in, a real child process: it says it started,
+    /// holds its ready receipt while `<dir>/ready-gate` stands, then answers
+    /// each request — after logging it — once `<dir>/reply-gate` is gone.
+    const HELD_FIELD_HOST: &str = r#"
+import json, os, sys, time
+directory, worker, config = sys.argv[1], sys.argv[2], sys.argv[3]
+instance = json.load(open(config))["instance_ref"]
+def note(what):
+    with open(os.path.join(directory, "host.log"), "a") as handle:
+        handle.write(what + "\n")
+def wait(gate):
+    while os.path.exists(os.path.join(directory, gate)):
+        time.sleep(0.02)
+field = {"event_ref": "test:event", "subject_ref": "test:subject", "generation": "0", "samples_elapsed": "0"}
+note("started")
+wait("ready-gate")
+print(json.dumps({"schema": "ql.field-host-receipt/v1", "status": "ready", "available": True,
+    "instance_ref": instance, "last_request_id": "0", "field": field}), flush=True)
+for line in sys.stdin:
+    rid = json.loads(line)["request_id"]
+    note("request " + rid)
+    wait("reply-gate")
+    print(json.dumps({"schema": "ql.field-host-receipt/v1", "status": "ok", "available": True,
+        "instance_ref": instance, "request_id": rid, "last_request_id": rid, "field": field}), flush=True)
+"#;
+
+    /// A Central stand-in serving one binding document through the files
+    /// contract (`central.files.list`, `central.files.read`).
+    const BINDING_OWNER: &str = r#"
+import json, sys
+args = sys.argv[2:]
+i = args.index("action")
+action, request = args[i + 2], json.loads(args[i + 3])
+binding = json.dumps({"schema": "oi.native-expression-binding/v1", "host": {"instance_ref": "test:instance"},
+    "presentation": {"units_per_metre": 1, "slots_a": [0], "slots_b": [0]}})
+def location(path):
+    return {"schema": "central.path-ref/v1", "ref": "ref:" + path, "root": "R", "path": path}
+if action == "central.files.list":
+    data = {"schema": "central.directory-reading/v1", "location": location("fields"),
+        "entries": [{"name": "binding.json", "location": location("fields/binding.json"), "kind": "file",
+            "byte_len": len(binding), "retrieval_allowed": True}],
+        "automatic_agent_or_model_invocation": False}
+elif action == "central.files.read":
+    data = {"schema": "central.file-reading/v1", "location": request["location"], "revision": "rev-1",
+        "byte_len": len(binding), "content_encoding": "utf-8", "content": binding, "project": None,
+        "source": None, "automatic_agent_or_model_invocation": False}
+else:
+    data = {}
+print(json.dumps({"ok": True, "action": action, "data": data}))
+"#;
+
+    /// One kernel over the binding owner, with the held host as its field.
+    #[cfg(unix)]
+    struct HeldField {
+        dir: PathBuf,
+        host: PathBuf,
+        kernel: Mutex<crate::Kernel>,
+    }
+
+    #[cfg(unix)]
+    impl HeldField {
+        fn new(test: &str) -> Self {
+            use std::os::unix::fs::PermissionsExt;
+            let dir = std::env::temp_dir().join(format!(
+                "oi-cradle-{}-held-field-{test}",
+                std::process::id()
+            ));
+            let _ = fs::remove_dir_all(&dir);
+            fs::create_dir_all(&dir).unwrap();
+            let script = |name: &str, python: &str| {
+                fs::write(dir.join(format!("{name}.py")), python).unwrap();
+                let path = dir.join(format!("{name}.sh"));
+                fs::write(
+                    &path,
+                    format!(
+                        "#!/bin/sh\nexec python3 {} {} \"$@\"\n",
+                        dir.join(format!("{name}.py")).display(),
+                        dir.display()
+                    ),
+                )
+                .unwrap();
+                fs::set_permissions(&path, fs::Permissions::from_mode(0o755)).unwrap();
+                crate::test_stub::settle_stub(&path);
+                path
+            };
+            let host = script("host", HELD_FIELD_HOST);
+            let central = script("central", BINDING_OWNER);
+            let kernel = crate::Kernel::new(CentralClient::with(central, None, "test".into()));
+            Self {
+                dir,
+                host,
+                kernel: Mutex::new(kernel),
+            }
+        }
+        fn gate(&self, name: &str) -> PathBuf {
+            self.dir.join(name)
+        }
+        fn noted(&self, line: &str) -> bool {
+            fs::read_to_string(self.dir.join("host.log"))
+                .is_ok_and(|log| log.lines().any(|noted| noted == line))
+        }
+        fn open() -> crate::KernelOp {
+            crate::KernelOp::NativeExpression {
+                request: Request::Open {
+                    path: "fields/binding.json".into(),
+                    expected_revision: "rev-1".into(),
+                },
+            }
+        }
+        fn exchange(lease: &str) -> crate::KernelOp {
+            crate::KernelOp::NativeExpression {
+                request: Request::Exchange {
+                    lease: lease.into(),
+                    request: json!({"schema": "ql.field-host-request/v1",
+                        "instance_ref": "test:instance", "event_ref": "test:event",
+                        "subject_ref": "test:subject", "request_id": "1",
+                        "command": {"operation": "read"}}),
+                },
+            }
+        }
+        fn lease(opened: crate::KernelOpOutcome) -> String {
+            match opened.result {
+                crate::KernelOpResult::NativeExpression { data } => {
+                    data["lease"].as_str().unwrap().to_owned()
+                }
+                other => panic!("not a field opening: {other:?}"),
+            }
+        }
+        /// While `step` waits on its held host, the state snapshot must be
+        /// answered: the answer arrives while the host still holds, whatever
+        /// the machine's speed (the bound only stops a failing run).
+        fn state_answered_while<T: Send>(
+            &self,
+            gate: &str,
+            begun: &str,
+            step: impl FnOnce(&Mutex<crate::Kernel>) -> T + Send,
+        ) -> T {
+            fs::write(self.gate(gate), "").unwrap();
+            std::thread::scope(|scope| {
+                let stepping = scope.spawn(|| step(&self.kernel));
+                let deadline = std::time::Instant::now() + Duration::from_secs(60);
+                while !self.noted(begun) {
+                    assert!(
+                        std::time::Instant::now() < deadline,
+                        "the field op never reached its host"
+                    );
+                    std::thread::sleep(Duration::from_millis(10));
+                }
+                let (answered, received) = mpsc::channel();
+                scope.spawn(move || {
+                    let _ = answered
+                        .send(crate::dispatch::dispatch(&self.kernel, crate::KernelOp::State).0);
+                });
+                let state = received.recv_timeout(Duration::from_secs(30));
+                let still_held = self.gate(gate).exists() && !stepping.is_finished();
+                fs::remove_file(self.gate(gate)).unwrap();
+                assert!(state
+                    .unwrap_or_else(|_| panic!("the state snapshot waited behind the field's host"))
+                    .is_ok());
+                assert!(
+                    still_held,
+                    "the state was answered only after the host answered"
+                );
+                stepping.join().unwrap()
+            })
+        }
+    }
+
+    #[cfg(unix)]
+    impl Drop for HeldField {
+        fn drop(&mut self) {
+            let _ = fs::remove_dir_all(&self.dir);
+        }
+    }
+
+    /// Lane Z (DLW, O-I #706): every field acknowledgement round-tripped to
+    /// `ql-field-host` under the kernel lock, 100–250 ms each in lane T's
+    /// walk. The field's own lock serves it now; the kernel's stays free.
+    #[cfg(unix)]
+    #[test]
+    fn a_field_exchange_leaves_the_kernel_lock_to_other_ops() {
+        let held = HeldField::new("exchange");
+        let _env = EnvGuard::set(&[
+            ("OI_QL_FIELD_HOST_BIN", Some(held.host.as_os_str())),
+            ("OI_QL_FIELD_WORKER_BIN", Some(held.host.as_os_str())),
+        ]);
+        let (opened, _) = crate::dispatch::dispatch(&held.kernel, HeldField::open());
+        let lease = HeldField::lease(opened.unwrap());
+        let (exchanged, timing) = held.state_answered_while("reply-gate", "request 1", |kernel| {
+            crate::dispatch::dispatch(kernel, HeldField::exchange(&lease))
+        });
+        match exchanged.unwrap().result {
+            crate::KernelOpResult::NativeExpression { data } => assert_eq!(data["status"], "ok"),
+            other => panic!("not a field acknowledgement: {other:?}"),
+        }
+        assert_eq!(timing.form, "native-field");
+    }
+
+    /// Opening a field (as a compose's finish does) starts the host and waits
+    /// for its ready receipt — 0.8–2.8 s in lane T's walk, under the kernel
+    /// lock. It waits on the field's own lock now.
+    #[cfg(unix)]
+    #[test]
+    fn opening_a_field_leaves_the_kernel_lock_to_other_ops() {
+        let held = HeldField::new("open");
+        let _env = EnvGuard::set(&[
+            ("OI_QL_FIELD_HOST_BIN", Some(held.host.as_os_str())),
+            ("OI_QL_FIELD_WORKER_BIN", Some(held.host.as_os_str())),
+        ]);
+        let (opened, _) = held.state_answered_while("ready-gate", "started", |kernel| {
+            crate::dispatch::dispatch(kernel, HeldField::open())
+        });
+        assert!(HeldField::lease(opened.unwrap()).starts_with("native-expression-"));
+    }
+
+    /// A host holding the field's handle (`dispatch_with`) is answered by the
+    /// field while the kernel lock is held by a slow owner — a real child
+    /// process, as an op applied in order under the lock would run one.
+    #[cfg(unix)]
+    #[test]
+    fn a_host_holding_the_field_exchanges_while_the_kernel_lock_is_held() {
+        let held = HeldField::new("host-handle");
+        let _env = EnvGuard::set(&[
+            ("OI_QL_FIELD_HOST_BIN", Some(held.host.as_os_str())),
+            ("OI_QL_FIELD_WORKER_BIN", Some(held.host.as_os_str())),
+        ]);
+        let field = held.kernel.lock().unwrap().native_field();
+        let (opened, _) = crate::dispatch::dispatch_with(&held.kernel, &field, HeldField::open());
+        let lease = HeldField::lease(opened.unwrap());
+        let gate = held.gate("owner-gate");
+        let begun = held.gate("owner-begun");
+        fs::write(&gate, "").unwrap();
+        std::thread::scope(|scope| {
+            let owner = scope.spawn(|| {
+                let _kernel = held.kernel.lock().unwrap();
+                Command::new("python3")
+                    .arg("-c")
+                    .arg("import os,sys,time\nopen(sys.argv[1],'w').close()\nwhile os.path.exists(sys.argv[2]): time.sleep(0.02)")
+                    .arg(&begun)
+                    .arg(&gate)
+                    .status()
+                    .unwrap()
+            });
+            let deadline = std::time::Instant::now() + Duration::from_secs(60);
+            while !begun.exists() {
+                assert!(
+                    std::time::Instant::now() < deadline,
+                    "the owner never began"
+                );
+                std::thread::sleep(Duration::from_millis(10));
+            }
+            let (answered, received) = mpsc::channel();
+            let (kernel, field, exchange) = (&held.kernel, &field, HeldField::exchange(&lease));
+            scope.spawn(move || {
+                let _ = answered.send(crate::dispatch::dispatch_with(kernel, field, exchange).0);
+            });
+            let exchanged = received.recv_timeout(Duration::from_secs(30));
+            let still_held = gate.exists() && !owner.is_finished();
+            fs::remove_file(&gate).unwrap();
+            let exchanged =
+                exchanged.unwrap_or_else(|_| panic!("the field waited behind the kernel lock"));
+            assert!(
+                still_held,
+                "the field answered only after the kernel lock was released"
+            );
+            match exchanged.unwrap().result {
+                crate::KernelOpResult::NativeExpression { data } => {
+                    assert_eq!(data["status"], "ok")
+                }
+                other => panic!("not a field acknowledgement: {other:?}"),
+            }
+            assert!(owner.join().unwrap().success());
+        });
+    }
+
+    /// An image is hashed once per standing: unchanged, its digest is kept;
+    /// replaced (a new inode, same size and modification time) or rewritten
+    /// in place with its modification time set back, it is hashed again.
+    #[cfg(unix)]
+    #[test]
+    fn an_image_is_hashed_once_per_standing_and_again_when_replaced() {
+        let dir = std::env::temp_dir().join(format!("oi-cradle-{}-digests", std::process::id()));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).unwrap();
+        let image = dir.join("ql");
+        let digests = Digests::default();
+        let digest = |path: &std::path::Path| {
+            let file = fs::File::open(path).unwrap();
+            let before = file.metadata().unwrap();
+            digests.digest(path, file, &before).unwrap()
+        };
+        let sha = |bytes: &[u8]| format!("{:x}", Sha256::digest(bytes));
+        fs::write(&image, b"image one").unwrap();
+        let modified = fs::metadata(&image).unwrap().modified().unwrap();
+        let (first, hashed) = digest(&image);
+        assert!(hashed);
+        assert_eq!(first.sha256, sha(b"image one"));
+        assert_eq!(first.bytes, 9);
+        let (kept, hashed) = digest(&image);
+        assert!(!hashed, "an unchanged image was hashed again");
+        assert_eq!(kept, first);
+        // Replaced: another file renamed over it, the same size and time.
+        let replacement = dir.join("ql.next");
+        fs::write(&replacement, b"image two").unwrap();
+        fs::File::options()
+            .write(true)
+            .open(&replacement)
+            .unwrap()
+            .set_modified(modified)
+            .unwrap();
+        fs::rename(&replacement, &image).unwrap();
+        let (replaced, hashed) = digest(&image);
+        assert!(hashed, "a replaced image kept its old digest");
+        assert_eq!(replaced.sha256, sha(b"image two"));
+        // Rewritten in place, the same size, its modification time set back:
+        // the change time still moved.
+        std::thread::sleep(Duration::from_millis(20));
+        let mut file = fs::File::options().write(true).open(&image).unwrap();
+        file.write_all(b"image 333").unwrap();
+        file.set_modified(modified).unwrap();
+        drop(file);
+        let (rewritten, hashed) = digest(&image);
+        assert!(hashed, "a rewritten image kept its old digest");
+        assert_eq!(rewritten.sha256, sha(b"image 333"));
+        assert!(!digest(&image).1);
+        fs::remove_dir_all(dir).unwrap();
+    }
+
     #[test]
     fn requests_cannot_choose_programs() {
         assert!(serde_json::from_value::<Request>(json!({"operation":"open","path":"binding.json","expected_revision":"r1","executable":"/bin/sh"})).is_err());
@@ -3326,7 +3901,7 @@ for line in sys.stdin:
                 mutants.push(changed);
             }
             for mutant in mutants {
-                let sequence = kernel.native_expression.sequence;
+                let sequence = kernel.native_expression.lock().unwrap().sequence;
                 let error = kernel
                     .finish_native_compose(ComposedBinding {
                         content: mutant.to_string(),
@@ -3335,8 +3910,8 @@ for line in sys.stdin:
                     })
                     .unwrap_err();
                 assert!(error.contains("compose_refused"), "{error}");
-                assert!(kernel.native_expression.active.is_none());
-                assert_eq!(kernel.native_expression.sequence, sequence);
+                assert!(kernel.native_expression.lock().unwrap().active.is_none());
+                assert_eq!(kernel.native_expression.lock().unwrap().sequence, sequence);
             }
             if sky == "now" {
                 let mut missing = legacy_full.clone();
@@ -3404,7 +3979,7 @@ for line in sys.stdin:
                     request: Request::Close { lease },
                 })
                 .unwrap();
-            assert!(kernel.native_expression.active.is_none());
+            assert!(kernel.native_expression.lock().unwrap().active.is_none());
             legacy_openings.push(json!({"request":op,"projected":projected,
                 "opened":legacy_opened,"inspected":inspected,"closed":closed}));
         }

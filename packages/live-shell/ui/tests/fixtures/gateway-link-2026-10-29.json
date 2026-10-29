@@ -1,0 +1,60 @@
+{
+ "argv": "aikit --json gateway agent --binding gateway-binding/lane-aa sessions",
+ "envelope": {
+  "context": {
+   "context_id": null,
+   "project_root": null,
+   "session_id": null
+  },
+  "data": {
+   "binding_ref": "gateway-binding/lane-aa",
+   "operation": {
+    "op": "sessions"
+   },
+   "result": {
+    "agent_session_ref": "agent-session/lane-aa",
+    "harness": null,
+    "link": {
+     "check_in_age_seconds": 1.685,
+     "frame_count": 3,
+     "frames": [
+      {
+       "direction": "to-agent",
+       "kind": "human-message",
+       "note": "What did the walk find?",
+       "recorded_at_unix_ms": 1793295894239,
+       "sequence": 1
+      },
+      {
+       "direction": "to-agent",
+       "kind": "human-message",
+       "note": "Read gap 14 first.",
+       "recorded_at_unix_ms": 1793295894659,
+       "sequence": 2
+      },
+      {
+       "direction": "to-agent",
+       "kind": "human-message",
+       "note": "Then the Seat page.",
+       "recorded_at_unix_ms": 1793295895089,
+       "sequence": 3
+      }
+     ],
+     "frames_in_flight": 1,
+     "frames_limit": 100,
+     "last_check_in_unix_ms": 1793295895089,
+     "last_sequence": 3,
+     "observed_at_unix_ms": 1793295896774,
+     "pending_deliveries": 1,
+     "queued_prompts": 0,
+     "turns_running": 0
+    },
+    "sessions": []
+   },
+   "type": "conversation"
+  },
+  "ok": true,
+  "schema": 1,
+  "warnings": []
+ }
+}

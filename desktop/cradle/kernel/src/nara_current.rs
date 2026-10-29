@@ -454,8 +454,8 @@ impl Prepared {
                         )?,
                     )?;
                 }
-                let owner = retention::Owner::capture()?;
-                let value = owner.execute(|path| {
+                // One qualification before and one after (`acquire`).
+                let (owner, value) = retention::Owner::acquire(|path| {
                     nara_identity::apply_selected_personal_current(
                         &self.client,
                         nara_identity::Request::PersonalCurrent {
@@ -468,11 +468,6 @@ impl Prepared {
                         path,
                     )
                 })?;
-                if !owner.same_source(&retention::Owner::capture()?) {
-                    return Err(
-                        "The selected QL owner changed during personal current acquisition".into(),
-                    );
-                }
                 let reading = &value["personal_current"];
                 let event = reading["snapshot_ref"]
                     .as_str()

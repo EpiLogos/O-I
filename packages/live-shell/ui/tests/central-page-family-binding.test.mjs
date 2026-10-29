@@ -145,7 +145,8 @@ test('a Flow page reads to the word: entries, styles, emphasis, marks, relations
     [3, 'remains incomplete', 'during', 'Seven units, none started.', ['Omarchy first.']],
     [null, null, 'after', 'Read the whole flow again.', []],
   ], 'a note the page keeps no timing for is drawn during (ql-flow.html:938)')
-  assert.deepEqual(PAGE.packet, [{entry: 4, scope: 'selection', text: 'Which unit starts first?'}])
+  // Each item by its entry's number and author, with its label and whole size (the Packet device reads the same items: O-I ticket 745).
+  assert.deepEqual(PAGE.packet, [{entry: 4, by: 'F', scope: 'selection', label: 'entry 4 (F)', text: 'Which unit starts first?', chars: 24}])
   assert.deepEqual(PAGE.people.map(person => [person.initial, person.kind, person.basis]), [['C', 'agent', 'declared'], ['F', 'person', 'unknown']])
   assert.equal(PAGE.current, 3, 'the open entry is meta.current, by number')
   assert.equal(PAGE.plural, true)

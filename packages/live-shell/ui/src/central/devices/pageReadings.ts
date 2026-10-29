@@ -162,9 +162,34 @@ export interface PageNote {
 export interface PagePacketItem {
   /** The entry's number (a Day's face number for a Day field), or null when the item names none. */
   readonly entry: number | null
+  /** Who wrote the entry (its author's initial), when the item names an entry of the page. */
+  readonly by: string | null
   /** The scope it was added under (`selection`, `whole entry`, `journal page`), or its label. */
   readonly scope: string
+  /** Where it came from, as the form labelled it (`2 (C)`, `journal, 29 Oct`). */
+  readonly label: string | null
+  /** Exactly the words the agent would read, on one line. */
   readonly text: string
+  /** The size of those words, in characters. */
+  readonly chars: number
+}
+
+/** One packet item's words, as the page keeps them: its text, or its html reduced to text. */
+const packetWords = (item: Record<string, unknown>): string =>
+  typeof item.text === 'string' ? plainLine(item.text) : typeof item.html === 'string' ? payloadText(item.html) : ''
+
+/** A Flow's packet, from its island (ql-flow.html `D.packet`: {id, entryId, scope, label, text, at}, in the order added): what To packet
+ * put there, each item by its entry's number and author where it names an entry of the page. The Document device and the Packet read the
+ * same items. Pure. */
+export function flowPacketOf(doc: Pick<QlDoc, 'entries' | 'packet'>): PagePacketItem[] {
+  const entries = (doc.entries ?? []) as PluralEntry[]
+  const at = new Map(entries.map((entry, index) => [entry.id, {n: index + 1, by: entry.author ?? null}]))
+  return list(doc.packet).map(record).filter((item): item is Record<string, unknown> => item !== null).map(item => {
+    const entry = typeof item.entryId === 'string' ? at.get(item.entryId) : undefined
+    const text = packetWords(item)
+    return {entry: entry?.n ?? null, by: entry?.by || null, scope: said(item.scope) ?? said(item.kind) ?? said(item.label) ?? 'item',
+      label: said(item.label), text, chars: [...text].length}
+  })
 }
 
 export interface FlowPage {
@@ -244,11 +269,7 @@ export function readFlowPage(doc: QlDoc): FlowPage {
     at: said(note.at),
     replies: list(note.replies).map(reply => { const r = record(reply); return r && typeof r.text === 'string' ? payloadText(r.text) : typeof reply === 'string' ? payloadText(reply) : '' }),
   }))
-  const packet: PagePacketItem[] = list(doc.packet).map(record).filter((item): item is Record<string, unknown> => item !== null).map(item => ({
-    entry: typeof item.entryId === 'string' ? numberOf.get(item.entryId) ?? null : null,
-    scope: said(item.scope) ?? said(item.kind) ?? said(item.label) ?? 'item',
-    text: typeof item.text === 'string' ? plainLine(item.text) : typeof item.html === 'string' ? payloadText(item.html) : '',
-  }))
+  const packet = flowPacketOf(doc)
   const meta = doc.meta ?? ({} as QlDoc['meta'])
   const view = meta.view === 'dialogue' || meta.view === 'flow' || meta.view === 'journal' ? meta.view : null
   return {
@@ -306,8 +327,8 @@ export function readDayPage(payload: unknown): DayPage | null {
       id: said(note.id) ?? `note-${index + 1}`, entry: faceOfField(note.field), anchor: said(note.anchor) ? plainLine(String(note.anchor)) : null,
       text: typeof note.text === 'string' ? payloadText(note.text) : '', timing: note.timing === 'after' ? 'after' : 'during', at: said(note.at), replies: [],
     })),
-    packet: items(doc.packet).map(item => ({entry: faceOfField(item.field), scope: said(item.label) ?? said(item.scope) ?? 'item',
-      text: typeof item.text === 'string' ? plainLine(item.text) : typeof item.html === 'string' ? payloadText(item.html) : ''})),
+    packet: items(doc.packet).map(item => { const text = packetWords(item)
+      return {entry: faceOfField(item.field), by: null, scope: said(item.label) ?? said(item.scope) ?? 'item', label: said(item.label), text, chars: [...text].length} }),
     island: islandSummary(doc, new Set(['notes', 'packet'])),
   }
 }

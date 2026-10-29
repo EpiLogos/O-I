@@ -26,7 +26,13 @@ use oi_cradle_kernel::{Kernel, KernelOp, KernelOpOutcome};
 use tauri::{AppHandle, Emitter, Manager};
 use tauri_plugin_dialog::{DialogExt, MessageDialogButtons};
 
-pub(crate) struct KernelHost(pub(crate) Mutex<Kernel>);
+/// The kernel behind its lock, and the live field's own handle beside it
+/// (kernel dispatch.rs `dispatch_with`): a field op never waits on the
+/// kernel lock.
+pub(crate) struct KernelHost(
+    pub(crate) Mutex<Kernel>,
+    pub(crate) oi_cradle_kernel::native_expression::Field,
+);
 #[cfg(unix)]
 struct NativeOwnerServer {
     _server: Mutex<oi_cradle_kernel::expression_transport::Server>,
@@ -48,7 +54,7 @@ async fn kernel_op(app: AppHandle, op: KernelOp) -> Result<KernelOpOutcome, Stri
         // OI_KERNEL_TRACE_FILE names (a Finder launch has no stderr).
         let name = oi_cradle_kernel::dispatch::op_name(&op);
         let started = std::time::Instant::now();
-        let (result, timing) = oi_cradle_kernel::dispatch::dispatch(&host.0, op);
+        let (result, timing) = oi_cradle_kernel::dispatch::dispatch_with(&host.0, &host.1, op);
         oi_cradle_kernel::dispatch::trace_op("native", &name, result.is_ok(), started.elapsed(), &timing);
         let outcome = result?;
         for receipt in &outcome.receipts {
@@ -202,7 +208,8 @@ fn main() {
                 },
                 Err(error) => eprintln!("Desktop appearance could not be restored: {error}"),
             }
-            app.manage(KernelHost(Mutex::new(kernel)));
+            let field = kernel.native_field();
+            app.manage(KernelHost(Mutex::new(kernel), field));
             // The shell's configuration keeps the World it read while the
             // watch sees no change.
             #[cfg(feature = "native_shell")]

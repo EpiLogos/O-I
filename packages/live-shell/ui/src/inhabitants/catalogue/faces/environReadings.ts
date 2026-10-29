@@ -25,8 +25,8 @@ export const series = (words: readonly string[]): string => (words.length < 2 ? 
 // ---------------------------------------------------------------- the river: the Gateway (§19.2)
 
 /** The four link readings the river flows on (catalogue/panels/actuation__gateway.tsx: `beatAge`, `running`, `inflight`, `frames`). The
- * Gateway's binding carries none of them yet (agent/devices/designBindings.ts GATEWAY_ABSENT): its document names no check-in instant,
- * no turn count, no frames in flight and no frames. Until all four stand, the river is still and says which it waits on. */
+ * Gateway's binding carries them from AIKit's gateway, which names the binding's link (agent/devices/designBindings.ts gatewayLinkValues);
+ * until all four stand, the river is still and says which it waits on. */
 export const RIVER_READINGS = ['beatAge', 'running', 'inflight', 'frames'] as const
 export type RiverKey = (typeof RIVER_READINGS)[number]
 export const RIVER_WORDS: Readonly<Record<RiverKey, string>> = {beatAge: 'the time since the last check-in', running: 'the turns running', inflight: 'the frames in flight', frames: 'the frames'}

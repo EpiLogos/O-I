@@ -57,6 +57,7 @@ import {linkTarget, PAGE_LINK_MESSAGE, type PageLinkTarget} from './DocumentPage
 import './inhabitantDevices.css'
 import {DocumentPaneContext, documentStateWords, publishDocument, reachedDocument, revisionShort, withdrawDocument, type DocumentInPane} from '../central/documents/documentDoor'
 import {openSearchLine} from '../central/searchLineDoor'
+import {flowPacketOf, type PagePacketItem} from '../central/devices/pageReadings'
 
 /** The message the Flow's form sends its host when an @ is typed in an entry (ql-flow.html), and the one the host answers when the line
  * closes, so the form puts the caret and the selection back. */
@@ -103,6 +104,12 @@ export function FlowFace({transport, location, presentation = 'device', openLink
   const [save, setSave] = useState<SaveRouterReading>()
   const [revision, setRevision] = useState<string>('')
   const [baselined, setBaselined] = useState(false)
+  /** The page's own packet as the form holds it now: the owner's read, then each bounded read of the island (To packet lands there first). */
+  const [packet, setPacket] = useState<readonly PagePacketItem[]>()
+  const holdPacket = useCallback((doc: QlDoc) => {
+    const next = flowPacketOf(doc)
+    setPacket(was => (was && JSON.stringify(was) === JSON.stringify(next) ? was : next))
+  }, [])
   const frame = useRef<HTMLIFrameElement>(null)
   const frameProps = useDocumentFrame(frame, face, transport)
   const readIsland = useDocumentHostRead(frame, true)
@@ -118,19 +125,22 @@ export function FlowFace({transport, location, presentation = 'device', openLink
       const read = await readFlowInstance(transport, location)
       setInstance(read)
       setRevision(read.revision)
+      holdPacket(read.doc)
       setFace(projectFlowDocument(currentFlow(read.html)))
     } catch (error) {
       setFailure(String(error))
     }
-  }, [location, transport])
+  }, [location, transport, holdPacket])
 
   useEffect(() => {void load()}, [load])
 
   const captureIsland = useCallback(async (): Promise<QlDoc> => {
     const island: FrameIsland | null = await readIsland()
     if (!island || typeof island.text !== 'string') throw new Error('The document island did not answer the bounded read; no writes sent')
-    return JSON.parse(island.text) as QlDoc
-  }, [readIsland])
+    const doc = JSON.parse(island.text) as QlDoc
+    holdPacket(doc)
+    return doc
+  }, [readIsland, holdPacket])
 
   const saveToOwner = useCallback(async () => {
     if (!instance) return
@@ -275,7 +285,7 @@ export function FlowFace({transport, location, presentation = 'device', openLink
   const standing: DocumentInPane = {key, paneId, form: 'Flow', title: documentLabel, revision: revision || undefined,
     state: face && !baselined && !save ? 'form not answered yet' : documentStateWords({pending, dirty, save}), save: face && !pending ? () => void saveToOwner() : undefined,
     reread: pending ? undefined : reread, rereadLabel: 'Re-read', location: instance?.location ?? location, dirty,
-    ...(save ? {outcome: save.outcome} : {})}
+    ...(save ? {outcome: save.outcome} : {}), ...(packet ? {packet} : {})}
   // The aperture follows the document the hand reached (the first one standing until then); a change of standing reaches it.
   useEffect(() => { if (inPane) publishDocument(standing, !reachedDocument()) })
   useEffect(() => () => withdrawDocument(key), [key])

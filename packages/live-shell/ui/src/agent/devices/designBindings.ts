@@ -224,10 +224,9 @@ export interface GatewayInput {
 
 /** The Gateway's values (§19.1; catalogue/panels/actuation__gateway.tsx:6-13 names its keys): what the harness_agent_read answer
  * discloses under the carrier's own field names (agentChainDevices.ts gatewayDisclosed — readiness, transport, approvals, connect;
- * stall_after_seconds), the light from whether the gateway answered, and its refusal in the owner's words. The session counters
- * (epoch, seq, peers, beatAge, inflight, running, ring, ringCap, frames, viaLead) and autoContinue and fanOut are not in any
- * document the shell has read — the gateway was unreachable on this machine (16 Oct: cli.gateway_unreachable) — so they stay
- * absent until its document is read and their fields named. */
+ * stall_after_seconds), the light from whether the gateway answered, its refusal in the owner's words, and the binding's link as AIKit's
+ * gateway knows it (gatewayLinkValues: beatAge, running, inflight, frames, seq). The other session counters (epoch, peers, ring, ringCap,
+ * viaLead, lead) and autoContinue and fanOut are in no document the shell reads, so they stay absent. */
 export function gatewayValues(input: GatewayInput): Values {
   const {reading, harness} = input
   const values: Record<string, Value> = {}
@@ -237,7 +236,90 @@ export function gatewayValues(input: GatewayInput): Values {
   for (const [key, value] of Object.entries(gatewayDisclosed(reading.gatewayDoc))) put(values, key, value)
   const doc = isObj(reading.gatewayDoc) && !('refused' in reading.gatewayDoc) ? reading.gatewayDoc : null
   if (doc && typeof doc.stall_after_seconds === 'number') put(values, 'stallAfter', doc.stall_after_seconds)
+  Object.assign(values, gatewayLinkValues(reading.gatewayDoc))
   return values
+}
+
+// The Gateway's link readings (ticket 745, lane AA; actuation__gateway.tsx `beatAge`, `running`, `inflight`, `frames`, `seq`): the kernel's
+// harness_agent_read runs `aikit --json gateway agent --binding B sessions` and hands on the envelope's `data` — {binding_ref, operation,
+// type: conversation, result} — whose `result.link` is the binding's link as the gateway knows it (ai-kit aikit-adapters
+// gateway_conversation_engine.rs `link`): the newest frames of its Stream, each stamped when the gateway journaled it, and how many the
+// journal holds; the check-in (the newest frame's instant) and its age by the gateway's own clock; the turns running on the binding's turn
+// plane; and the frames in flight (the prompts waiting for the harness and the sends waiting for the connector's receipt).
+
+/** The engine's result in the gateway's answer (`data.result`), or null where the answer is no conversation reading. */
+const conversationResult = (doc: unknown): Obj | null => {
+  if (!isObj(doc) || 'refused' in doc) return null
+  return isObj(doc.result) ? doc.result : null
+}
+/** The binding's link in the gateway's answer, or null where it carries none. */
+export const gatewayLinkOf = (doc: unknown): Obj | null => {
+  const link = conversationResult(doc)?.link
+  return isObj(link) ? link : null
+}
+/** A session the answer does not name (the design draws "—"). */
+const NONE_WORD = '—'
+const count = (x: unknown): number | undefined => (typeof x === 'number' && Number.isFinite(x) && x >= 0 ? x : undefined)
+/** An instant on this machine's clock, as the Frames page reads one (`HH:MM:SS`, actuation__gateway.tsx clockSecs). */
+const clockOf = (unixMs: number): string => {
+  const at = new Date(unixMs)
+  return [at.getHours(), at.getMinutes(), at.getSeconds()].map(n => String(n).padStart(2, '0')).join(':')
+}
+/** Which way a frame went, by the door the gateway journaled it through: toward the agent from the surface is a frame the shell sent;
+ * from the agent, one it received. */
+const LINK_DIRECTION: Readonly<Record<string, 'in' | 'out'>> = {'to-agent': 'out', 'from-agent': 'in'}
+
+/** The link's frames as the Frames page's rows ({seq, dir, kind, session, at, note}): the gateway's own kind (a custom frame by its custom
+ * kind), the direction its door names, the instant it was journaled where the gateway stamped it, and how its words open. Pure. */
+export function linkFrames(link: Obj, session: string): Record<string, Value>[] {
+  return (Array.isArray(link.frames) ? link.frames : []).flatMap((row): Record<string, Value>[] => {
+    if (!isObj(row)) return []
+    const kind = typeof row.custom_kind === 'string' && row.custom_kind ? row.custom_kind : typeof row.kind === 'string' && row.kind ? row.kind : null
+    if (!kind) return []
+    const frame: Record<string, Value> = {kind, session}
+    put(frame, 'seq', count(row.sequence))
+    put(frame, 'dir', typeof row.direction === 'string' ? LINK_DIRECTION[row.direction] : undefined)
+    const at = count(row.recorded_at_unix_ms)
+    put(frame, 'at', at === undefined ? undefined : clockOf(at))
+    put(frame, 'note', typeof row.note === 'string' && row.note ? row.note : undefined)
+    return [frame]
+  })
+}
+
+/** The four link readings and the last sequence, from the gateway's answer; none where it carries no link. A gateway with no frame yet has
+ * had no check-in (the design's -1); frames journaled before the gateway stamped them name no check-in, and beatAge stays absent. Pure. */
+export function gatewayLinkValues(doc: unknown): Record<string, Value> {
+  const link = gatewayLinkOf(doc)
+  if (!link) return {}
+  const values: Record<string, Value> = {}
+  const frames = count(link.frame_count)
+  put(values, 'beatAge', count(link.check_in_age_seconds) ?? (frames === 0 ? -1 : undefined))
+  put(values, 'running', count(link.turns_running))
+  put(values, 'inflight', count(link.frames_in_flight))
+  put(values, 'seq', count(link.last_sequence))
+  const session = conversationResult(doc)?.agent_session_ref
+  values.frames = JSON.stringify(linkFrames(link, typeof session === 'string' && session ? session : NONE_WORD))
+  return values
+}
+
+/** What each link reading is, for its standing. */
+const LINK_WORDS: Readonly<Record<string, string>> = {
+  beatAge: 'The time since the last check-in', running: 'The turns running', inflight: 'The frames in flight', frames: 'The gateway\'s frames',
+}
+const LINK_DOCUMENT = '`aikit gateway agent --binding B sessions`, the kernel\'s harness_agent_read'
+
+/** Why a link reading the binding does not carry is absent: the gateway refused or has not answered, its answer carries no link (a gateway
+ * that predates it), or — beatAge only — its frames were journaled before it stamped them. */
+export function gatewayLinkStanding(reading: GatewayInput['reading'], values: Values): Record<string, Standing> {
+  const doc = reading.gatewayDoc
+  const why = (key: string): string => {
+    const what = LINK_WORDS[key]!
+    if (reading.gateway.kind === 'refused') return `${what}: the gateway refused its reading — ${reading.gateway.line}`
+    if (!isObj(doc)) return `${what}: the gateway has not answered ${LINK_DOCUMENT} yet.`
+    if (!gatewayLinkOf(doc)) return `${what}: the gateway's answer (${LINK_DOCUMENT}) carries no link — the gateway running predates it; update AIKit and restart its gateway (AIKit).`
+    return `${what}: the gateway journaled its frames before it stamped them, so it names no check-in; the next frame names one (AIKit).`
+  }
+  return Object.fromEntries(Object.keys(LINK_WORDS).filter(key => !(key in values)).map(key => [key, {disabled: why(key)}]))
 }
 
 /** The Gateway's rows with a write: the address table's (agentParamAddresses.ts:70-73), each to kernel:harness_agent_control. */
@@ -250,27 +332,14 @@ export interface GatewayRows {
 
 const GATEWAY_KEYS: Readonly<Record<string, keyof GatewayRows>> = {transport: 'transport', approvals: 'approvals', connect: 'connect', stallAfter: 'stallAfter'}
 
-// The Gateway's link readings (lane W10, from builder A's environ work; actuation__gateway.tsx `beatAge`, `running`, `inflight`, `frames`):
-// the reading gatewayValues takes is the kernel's harness_agent_read, which runs `aikit --json gateway agent --binding B sessions`, and
-// AIKit answers {agent_session_ref, harness, sessions [{agent_session_ref, state}]} (aikit-adapters gateway_conversation_engine.rs
-// sessions). It names no check-in instant, no turn count, no frames in flight and no frames, so none of the four is carried: each stands
-// absent with that reason, and stands as a reading the day the document names it.
-const GATEWAY_DOCUMENT = 'the gateway\'s document (the kernel\'s harness_agent_read: `aikit gateway agent --binding B sessions`, which answers the binding\'s agent session, its harness and its native sessions with their state)'
-export const GATEWAY_ABSENT: Readonly<Record<string, string>> = {
-  beatAge: `The time since the last check-in: no reading reaches it yet — missing op: a check-in instant in ${GATEWAY_DOCUMENT} (AIKit).`,
-  running: `The turns running: no reading reaches them yet — missing op: a count of running turns in ${GATEWAY_DOCUMENT}; a native session's state is not a turn (AIKit).`,
-  inflight: `The frames in flight: no reading reaches them yet — missing op: a count of frames in flight in ${GATEWAY_DOCUMENT} (AIKit).`,
-  frames: `The gateway's frames: no reading reaches them yet — missing op: the binding's latest frames in ${GATEWAY_DOCUMENT}; the Agency gateway's own journal (\`aikit gateway replay\`) is the Frames monitor's reading (AIKit).`,
-}
-
 /** The Gateway's binding: each setting through its row's own write path (the harness control's value carrier); the two the carrier
- * does not carry are refused by name; the link readings its document does not name stand absent with why. */
+ * does not carry are refused by name; a link reading the gateway's answer does not carry stands absent with why. */
 export function gatewayBinding(id: string, input: GatewayInput, rows: GatewayRows, write: RowWrite): DesignBinding {
   const values = gatewayValues(input)
   return {
     id,
     values,
-    standing: Object.fromEntries(Object.entries(GATEWAY_ABSENT).filter(([key]) => !(key in values)).map(([key, why]) => [key, {disabled: why}])),
+    standing: gatewayLinkStanding(input.reading, values),
     writes: key => key in GATEWAY_KEYS || key === 'autoContinue' || key === 'fanOut',
     write: async changes => {
       for (const {key, value} of changes) {

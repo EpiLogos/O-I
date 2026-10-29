@@ -6,6 +6,7 @@
 import {createContext, useSyncExternalStore} from 'react'
 import type {CentralLocation} from '../../../../../../desktop/cradle/src/kernel/types'
 import {outcomeLabel, type SaveRouterReading} from '../../inhabitants/documentDeviceModel'
+import type {PagePacketItem} from '../devices/pageReadings'
 
 /** The pane binding a document face is hosted in (CentralDocumentPane provides it): the aperture matches the focused pane
  * by it, not by the form alone. */
@@ -38,6 +39,9 @@ export interface DocumentInPane {
   day?: {readonly project: string | null; readonly sourceRef: string; readonly documentId: string}
   /** A Day's open face as its form shows it now (0–5): the die turns in its pane before the owner holds the turn, at its next Save. */
   face?: number
+  /** The page's own packet as its form holds it now (a Flow's island, `D.packet`, read by the face's bounded read): what To packet put
+   * there, saved or not. The Packet device and the transport's count read it (walk 739 gap 14: the packet is the document's). */
+  packet?: readonly PagePacketItem[]
 }
 
 /** A Day held open in a pane: the face its form shows and the turn that reaches it (the form's own turn, through the face's bridge). */

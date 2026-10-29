@@ -2,7 +2,7 @@
 //! The transcript is evidence, never an executable command language. The host
 //! applies the prepared change only after comparing the complete captured
 //! document and profile lineage under its existing Expression mutex.
-use crate::{agency, expression, flow::CentralClient, nara_dialogue};
+use crate::{agency, expression, flow::CentralClient, nara_dialogue, nara_identity};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
@@ -54,7 +54,30 @@ pub enum PreparedOutcome {
     Focus(Box<PreparedFocus>),
     Restore(Box<PreparedRestore>),
 }
+impl PreparedOutcome {
+    /// The commit's owner half, asked outside the kernel lock (dispatch.rs
+    /// `commit_nara_expressive_act`): the saved identity still stands at the
+    /// bound revision and names this Nara and person. No identity write takes
+    /// the kernel lock, so `finish_nara_expressive_act` keeps only the
+    /// in-memory checks and the act.
+    pub fn confirmed(self) -> Result<Self, String> {
+        let (client, binding) = match &self {
+            Self::Read(_) => return Ok(self),
+            Self::Focus(focus) => (&focus.client, &focus.binding),
+            Self::Restore(restore) => (&restore.client, &restore.binding),
+        };
+        let (source, identity) = nara_identity::read(client, &binding.source_ref)?;
+        if source.revision.revision != binding.expected_revision
+            || identity["nara_ref"] != binding.nara_ref
+            || identity["person_ref"] != binding.person_ref
+        {
+            return Err("The saved identity changed during the expressive act".into());
+        }
+        Ok(self)
+    }
+}
 pub struct PreparedRestore {
+    pub(crate) client: CentralClient,
     pub binding: nara_dialogue::Request,
     pub captured_document: Value,
     pub captured_profile: nara_dialogue::ProfileBasis,
@@ -63,6 +86,7 @@ pub struct PreparedRestore {
     pub expected_revision: u64,
 }
 pub struct PreparedFocus {
+    pub(crate) client: CentralClient,
     pub(crate) context_state: nara_dialogue::ContextState,
     pub binding: nara_dialogue::Request,
     pub captured_document: Value,
@@ -138,6 +162,7 @@ impl Prepared {
         } = &self.request
         {
             return Ok(PreparedOutcome::Restore(Box::new(PreparedRestore {
+                client: self.client.clone(),
                 binding: binding.clone(),
                 captured_document: self.document,
                 captured_profile: self.profile,
@@ -204,6 +229,7 @@ impl Prepared {
                     ));
                 }
                 Ok(PreparedOutcome::Focus(Box::new(PreparedFocus {
+                    client: self.client.clone(),
                     context_state: self.context_state.clone(),
                     binding: binding.clone(),
                     captured_document: self.document,

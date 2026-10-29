@@ -1,7 +1,7 @@
 //! Source-bearing Epii inquiry and review. AIKit owns the retained request and
 //! completed return; QL owns semantic admission; Expression owns accepted focus.
 //! Preparing or inspecting an inquiry never changes the Expression.
-use crate::{agency, expression, flow::CentralClient, nara_dialogue};
+use crate::{agency, expression, flow::CentralClient, nara_dialogue, nara_identity};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
@@ -52,9 +52,25 @@ pub enum PreparedOutcome {
     Read(Value),
     Accept(Box<ReviewedEnrichment>),
 }
+impl PreparedOutcome {
+    /// The commit's owner half, asked outside the kernel lock (dispatch.rs
+    /// `commit_nara_epii`): the saved identity still stands at the revision
+    /// the review was bound to. No identity write takes the kernel lock, so
+    /// `finish_nara_epii` keeps only the in-memory checks and the focus.
+    pub fn confirmed(self) -> Result<Self, String> {
+        if let Self::Accept(reviewed) = &self {
+            let (source, _) = nara_identity::read(&reviewed.client, &reviewed.identity_source_ref)?;
+            if source.revision.revision != reviewed.identity_revision {
+                return Err("The saved identity changed during Epii review".into());
+            }
+        }
+        Ok(self)
+    }
+}
 /// The host must compare the complete captured document and profile lineage
 /// under its mutex, then propose and accept on one cloned Application.
 pub struct ReviewedEnrichment {
+    pub(crate) client: CentralClient,
     pub(crate) context_state: nara_dialogue::ContextState,
     pub(crate) origin_binding: nara_dialogue::Request,
     pub(crate) origin_session_ref: String,
@@ -300,6 +316,7 @@ impl Prepared {
                         },
                     ];
                     Ok(PreparedOutcome::Accept(Box::new(ReviewedEnrichment {
+                        client: self.client.clone(),
                         context_state: self.context_state.clone(),
                         origin_binding: origin_binding.clone(),
                         origin_session_ref: origin_session.clone(),

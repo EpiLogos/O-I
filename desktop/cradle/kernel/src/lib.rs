@@ -252,7 +252,8 @@ pub struct Kernel {
     nara_contexts: BTreeMap<String, NaraContextEntry>,
     retained_files: retained_files::Store,
     expressions: expression::Application,
-    native_expression: native_expression::Manager,
+    // The live field on its own lock (native_expression.rs `Field`).
+    native_expression: native_expression::Field,
     agency: agency::Client,
     client: CentralClient,
     focus: GlobalFocus,
@@ -1980,6 +1981,7 @@ impl Kernel {
     }
 
     pub fn with_agency(client: CentralClient, agency: agency::Client) -> Self {
+        let native_expression = native_expression::Field::new(client.clone());
         Self {
             client,
             agency,
@@ -1990,7 +1992,7 @@ impl Kernel {
             nara_contexts: BTreeMap::new(),
             retained_files: retained_files::Store::default(),
             expressions: expression::Application::default(),
-            native_expression: native_expression::Manager::default(),
+            native_expression,
             focus: GlobalFocus::unfocused(),
             world: expression_world::WorldState::default(),
             log: KernelEventLog::new(),
@@ -2097,9 +2099,10 @@ impl Kernel {
         state
     }
 
-    pub fn prepare_nara_presence(
+    pub(crate) fn prepare_nara_presence(
         &mut self,
         op: &KernelOp,
+        place: Option<agent_prepared::Place>,
     ) -> Result<Option<nara_presence::Prepared>, String> {
         let KernelOp::NaraPresence { project, request } = op else {
             return Ok(None);
@@ -2120,8 +2123,7 @@ impl Kernel {
             .0["document"]
             .clone();
         let profile = self.nara_expression_profile(&document)?;
-        let cwd = self.agent_location((!project.is_empty()).then_some(project.as_str()))?;
-        let project_ref = self.agent_project_ref(project, &cwd)?;
+        let agent_prepared::Place { cwd, project_ref } = self.nara_place(project, place)?;
         Ok(Some(nara_presence::Prepared::new(
             self.client.clone(),
             self.agency.clone(),
@@ -2133,10 +2135,14 @@ impl Kernel {
             profile,
         )))
     }
+    /// A presence's admission, in the kernel's own memory: the Expression
+    /// and adopted profile are the ones the publication was prepared from.
+    /// The saved identity was confirmed and the publication runs outside the
+    /// lock (dispatch.rs `commit_nara_presence`).
     pub fn finish_nara_presence(
         &mut self,
         completed: nara_presence::Completed,
-    ) -> Result<KernelOpOutcome, String> {
+    ) -> Result<nara_presence::Completed, String> {
         let binding = &completed.request.binding;
         let document = self
             .expressions
@@ -2155,28 +2161,15 @@ impl Kernel {
                 "The Expression or adopted profile changed during presence admission".into(),
             );
         }
-        let (source, identity) = nara_identity::read(&self.client, &binding.source_ref)?;
-        if source.revision.revision != binding.expected_revision
-            || identity["person_ref"] != binding.person_ref
-            || identity["nara_ref"] != binding.nara_ref
-        {
-            return Err("The saved identity changed during presence admission".into());
-        }
-        // Serialize publication with native Expression changes. No renderer
-        // bundle or captured personal reading is accepted at this commit seam.
-        let mut data =
-            shared_field::call(&completed.transport_request()).map_err(|e| e.detail())?;
-        data["consent_reading"] = completed.consent_reading;
-        Ok(KernelOpOutcome {
-            read_scopes: None,
-            receipts: vec![],
-            result: KernelOpResult::NaraPresence { data },
-        })
+        // No renderer bundle or captured personal reading is accepted at this
+        // commit seam: what is published is fixed at preparation.
+        Ok(completed)
     }
 
-    pub fn prepare_m3_reception(
+    pub(crate) fn prepare_m3_reception(
         &mut self,
         op: &KernelOp,
+        place: Option<agent_prepared::Place>,
     ) -> Result<Option<m3_reception::Prepared>, String> {
         let KernelOp::M3Reception { project, request } = op else {
             return Ok(None);
@@ -2193,8 +2186,7 @@ impl Kernel {
             .0["document"]
             .clone();
         let profile = self.nara_expression_profile(&document)?;
-        let cwd = self.agent_location((!project.is_empty()).then_some(project.as_str()))?;
-        let project_ref = self.agent_project_ref(project, &cwd)?;
+        let project_ref = self.nara_place(project, place)?.project_ref;
         let entry = self
             .nara_contexts
             .get(&Self::nara_context_key(&project_ref, binding)?);
@@ -2276,9 +2268,10 @@ impl Kernel {
             .map_err(|error| error.to_string())
     }
 
-    pub fn prepare_nara_current(
+    pub(crate) fn prepare_nara_current(
         &mut self,
         op: &KernelOp,
+        place: Option<agent_prepared::Place>,
     ) -> Result<Option<nara_current::Prepared>, String> {
         let KernelOp::NaraCurrent { project, request } = op else {
             return Ok(None);
@@ -2286,8 +2279,7 @@ impl Kernel {
         let binding = request.binding();
         let document = self.nara_current_document(&binding.expression_ref)?;
         let profile = self.nara_expression_profile(&document)?;
-        let cwd = self.agent_location((!project.is_empty()).then_some(project.as_str()))?;
-        let project_ref = self.agent_project_ref(project, &cwd)?;
+        let project_ref = self.nara_place(project, place)?.project_ref;
         let existing = self
             .nara_contexts
             .get(&Self::nara_context_key(&project_ref, binding)?)
@@ -2351,9 +2343,10 @@ impl Kernel {
         })
     }
 
-    pub fn prepare_nara_voice(
+    pub(crate) fn prepare_nara_voice(
         &mut self,
         op: &KernelOp,
+        place: Option<agent_prepared::Place>,
     ) -> Result<Option<nara_voice::Prepared>, String> {
         let KernelOp::NaraVoice { project, request } = op else {
             return Ok(None);
@@ -2382,8 +2375,7 @@ impl Kernel {
         } else {
             None
         };
-        let cwd = self.agent_location((!project.is_empty()).then_some(project.as_str()))?;
-        let project_ref = self.agent_project_ref(project, &cwd)?;
+        let agent_prepared::Place { cwd, project_ref } = self.nara_place(project, place)?;
         let context_state = match (self.nara_voice.binding(request)?, profile.as_ref()) {
             (Some(binding), Some(profile)) => {
                 self.nara_context_state(&project_ref, &binding, &document, profile)?
@@ -2449,9 +2441,10 @@ impl Kernel {
         })
     }
 
-    pub fn prepare_nara_dialogue(
+    pub(crate) fn prepare_nara_dialogue(
         &mut self,
         op: &KernelOp,
+        place: Option<agent_prepared::Place>,
     ) -> Result<Option<nara_dialogue::Prepared>, String> {
         let KernelOp::NaraDialogue { project, request } = op else {
             return Ok(None);
@@ -2474,8 +2467,7 @@ impl Kernel {
         } else {
             None
         };
-        let cwd = self.agent_location((!project.is_empty()).then_some(project.as_str()))?;
-        let project_ref = self.agent_project_ref(project, &cwd)?;
+        let agent_prepared::Place { cwd, project_ref } = self.nara_place(project, place)?;
         let context_state = profile
             .as_ref()
             .map(|profile| self.nara_context_state(&project_ref, request, &document, profile))
@@ -2495,9 +2487,10 @@ impl Kernel {
         ))
     }
 
-    pub fn prepare_nara_epii(
+    pub(crate) fn prepare_nara_epii(
         &mut self,
         op: &KernelOp,
+        place: Option<agent_prepared::Place>,
     ) -> Result<Option<nara_epii::Prepared>, String> {
         let KernelOp::NaraEpii { project, request } = op else {
             return Ok(None);
@@ -2513,8 +2506,7 @@ impl Kernel {
             .0["document"]
             .clone();
         let profile = self.nara_expression_profile(&document);
-        let cwd = self.agent_location((!project.is_empty()).then_some(project.as_str()))?;
-        let project_ref = self.agent_project_ref(project, &cwd)?;
+        let agent_prepared::Place { cwd, project_ref } = self.nara_place(project, place)?;
         let context_state = profile
             .as_ref()
             .ok()
@@ -2580,10 +2572,8 @@ impl Kernel {
                 "The personal occasion or expressive state changed during Epii review".into(),
             );
         }
-        let (source, _) = nara_identity::read(&self.client, &reviewed.identity_source_ref)?;
-        if source.revision.revision != reviewed.identity_revision {
-            return Err("The saved identity changed during Epii review".into());
-        }
+        // The saved identity was confirmed outside the lock
+        // (`nara_epii::PreparedOutcome::confirmed`).
         let (data, changes) = self.expressions.apply_reviewed_focus(
             &self.client,
             expression::Request::Propose {
@@ -2638,9 +2628,10 @@ impl Kernel {
         })
     }
 
-    pub fn prepare_nara_expressive_act(
+    pub(crate) fn prepare_nara_expressive_act(
         &mut self,
         op: &KernelOp,
+        place: Option<agent_prepared::Place>,
     ) -> Result<Option<nara_expressive_act::Prepared>, String> {
         let KernelOp::NaraExpressiveAct { project, request } = op else {
             return Ok(None);
@@ -2656,8 +2647,7 @@ impl Kernel {
             .0["document"]
             .clone();
         let profile = self.nara_expression_profile(&document)?;
-        let cwd = self.agent_location((!project.is_empty()).then_some(project.as_str()))?;
-        let project_ref = self.agent_project_ref(project, &cwd)?;
+        let agent_prepared::Place { cwd, project_ref } = self.nara_place(project, place)?;
         let context_state =
             self.nara_context_state(&project_ref, request.binding(), &document, &profile)?;
         Ok(Some(
@@ -2719,13 +2709,9 @@ impl Kernel {
         {
             return Err("The adopted profile changed during the expressive act".into());
         }
-        let (source, identity) = nara_identity::read(&self.client, &binding.source_ref)?;
-        if source.revision.revision != binding.expected_revision
-            || identity["nara_ref"] != binding.nara_ref
-            || identity["person_ref"] != binding.person_ref
-        {
-            return Err("The saved identity changed during the expressive act".into());
-        }
+        // The saved identity was confirmed outside the lock
+        // (`nara_expressive_act::PreparedOutcome::confirmed`).
+        let nara_ref = binding.nara_ref.clone();
         // One ephemeral checkpoint for this exact native AgentSession and
         // Expression, never another profile, document store or saved identity.
         let key = serde_json::to_string(&(session, &reference)).map_err(|e| e.to_string())?;
@@ -2821,7 +2807,7 @@ impl Kernel {
             result: KernelOpResult::NaraExpressiveAct {
                 data: serde_json::json!({
                     "schema":"oi.nara-expressive-act-effect/v1","operation":operation,"act_ref":act_ref,
-                    "checkpoint_ref":checkpoint_ref,"nara_ref":identity["nara_ref"],"expression_ref":reference,
+                    "checkpoint_ref":checkpoint_ref,"nara_ref":nara_ref,"expression_ref":reference,
                     "expression_revision":data["document"]["revision"],"document":data["document"],
                     "effect_applied":applied,"dynamic_checkpoint":false,
                 }),
@@ -3165,8 +3151,11 @@ impl Kernel {
                     result: KernelOpResult::NaraDecisionRecorded { decision },
                 })
             }
+            // A direct caller's field op (dispatch serves one on the field's
+            // own lock and never reaches this arm): the field's lock is taken
+            // under this one, never the reverse.
             KernelOp::NativeExpression { request } => {
-                let data = self.native_expression.apply(&self.client, request)?;
+                let data = self.native_expression.apply(request)?;
                 Ok(KernelOpOutcome {
                     read_scopes: None,
                     receipts: Vec::new(),
@@ -3174,26 +3163,28 @@ impl Kernel {
                 })
             }
             op @ KernelOp::NaraVoice { .. } => self
-                .prepare_nara_voice(&op)?
+                .prepare_nara_voice(&op, None)?
                 .ok_or("Native voice preparation unavailable")?
                 .execute(),
             op @ KernelOp::NaraDialogue { .. } => self
-                .prepare_nara_dialogue(&op)?
+                .prepare_nara_dialogue(&op, None)?
                 .ok_or("Native dialogue preparation unavailable")?
                 .execute(),
             KernelOp::NaraCoordinate { request } => nara_coordinate::execute(request),
             op @ KernelOp::NaraEpii { .. } => {
                 let result = self
-                    .prepare_nara_epii(&op)?
+                    .prepare_nara_epii(&op, None)?
                     .ok_or("Native Epii preparation unavailable")?
-                    .execute()?;
+                    .execute()?
+                    .confirmed()?;
                 self.finish_nara_epii(result)
             }
             op @ KernelOp::NaraExpressiveAct { .. } => {
                 let result = self
-                    .prepare_nara_expressive_act(&op)?
+                    .prepare_nara_expressive_act(&op, None)?
                     .ok_or("Native act preparation unavailable")?
-                    .execute()?;
+                    .execute()?
+                    .confirmed()?;
                 self.finish_nara_expressive_act(result)
             }
             KernelOp::NaraPresence { request, .. } if request.admission().is_none() => {
@@ -3207,14 +3198,16 @@ impl Kernel {
             }
             op @ KernelOp::NaraPresence { .. } => {
                 let completed = self
-                    .prepare_nara_presence(&op)?
+                    .prepare_nara_presence(&op, None)?
                     .ok_or("Native presence preparation unavailable")?
-                    .execute()?;
-                self.finish_nara_presence(completed)
+                    .execute()?
+                    .confirmed()?;
+                self.finish_nara_presence(completed)?
+                    .publish(|request| shared_field::call(request).map_err(|e| e.detail()))
             }
             op @ KernelOp::M3Reception { .. } => {
                 let completed = self
-                    .prepare_m3_reception(&op)?
+                    .prepare_m3_reception(&op, None)?
                     .ok_or("Native M3 preparation unavailable")?
                     .execute()?
                     .confirmed()?;
@@ -3222,7 +3215,7 @@ impl Kernel {
             }
             op @ KernelOp::NaraCurrent { .. } => {
                 let completed = self
-                    .prepare_nara_current(&op)?
+                    .prepare_nara_current(&op, None)?
                     .ok_or("Native personal current preparation unavailable")?
                     .execute()?
                     .confirmed()?;

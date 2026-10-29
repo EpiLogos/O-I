@@ -96,6 +96,7 @@ pub struct Prepared {
     profile: nara_dialogue::ProfileBasis,
 }
 pub struct Completed {
+    pub(crate) client: CentralClient,
     pub operation: Operation,
     pub request: Admission,
     pub document: Value,
@@ -196,6 +197,7 @@ impl Prepared {
         }
         let safe_document = safe_document(&self.document)?;
         Ok(Completed {
+            client: self.client,
             operation: self.operation,
             request: self.request,
             document: self.document,
@@ -270,6 +272,35 @@ fn safe_document(document: &Value) -> Result<Value, String> {
 }
 
 impl Completed {
+    /// The commit's owner half before admission, asked outside the kernel
+    /// lock (dispatch.rs `commit_nara_presence`): the saved identity still
+    /// stands at the bound revision and names this person and Nara.
+    pub fn confirmed(self) -> Result<Self, String> {
+        let binding = &self.request.binding;
+        let (source, identity) = nara_identity::read(&self.client, &binding.source_ref)?;
+        if source.revision.revision != binding.expected_revision
+            || identity["person_ref"] != binding.person_ref
+            || identity["nara_ref"] != binding.nara_ref
+        {
+            return Err("The saved identity changed during presence admission".into());
+        }
+        Ok(self)
+    }
+    /// SharedField's publication of the admitted presence, outside the
+    /// kernel lock: `call` is SharedField's own transport
+    /// (`shared_field::call`). It carries only what was prepared.
+    pub fn publish(
+        self,
+        call: impl FnOnce(&Value) -> Result<Value, String>,
+    ) -> Result<crate::KernelOpOutcome, String> {
+        let mut data = call(&self.transport_request())?;
+        data["consent_reading"] = self.consent_reading;
+        Ok(crate::KernelOpOutcome {
+            read_scopes: None,
+            receipts: vec![],
+            result: crate::KernelOpResult::NaraPresence { data },
+        })
+    }
     pub fn transport_request(&self) -> Value {
         let p = &self.request.publication;
         json!({"kind":if self.operation==Operation::Publish{"publish_nara"}else{"preview_nara"},

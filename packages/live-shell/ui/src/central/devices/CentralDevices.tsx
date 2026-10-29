@@ -58,7 +58,8 @@ import type {DayDocumentStanding} from '../centralVertical'
 import {DayView} from '../documents/CentralDocumentPane'
 import {CENTRAL_FAMILY, centralDevice, centralDeviceId, centralPicture, chainFaces, type CentralReads, type CentralWriters} from './centralDeviceModel'
 import {beginDayMove, centralWrite, centralWriters, closeCarry, openToday, openTomorrow, turnDieFace, writeDaySettings} from './centralDeviceWrites'
-import {turnDay, useDayInPane} from '../documents/documentDoor'
+import {turnDay, useDayInPane, useReachedDocument} from '../documents/documentDoor'
+import {documentPacketOf, packetItemOf} from './packetBinding'
 import {dayDesignBinding, dayFactsOf, dayValuesOf, type DayFacts} from './dayBinding'
 import {useCentralAction, useCentralGroundAnswer, useDayDieReading, useDayOwnReadings, useNaraReading, useRosterReading, type DayDieAperture} from './useCentralReadings'
 import {useDocsDevice, usePageDevices} from './pageDevices'
@@ -434,8 +435,15 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
     packetSessionRef && packetSpaceRef ? {ref: packetSessionRef, space: packetSpaceRef, ...(packetProject !== undefined ? {project: packetProject} : {})} : null,
   ), [nara.state, nara.session, nara.space, naraProject, packetSessionRef, packetSpaceRef, packetProject])
   const encounters = useEncounterSessions(observedSessions)
-  const packet = usePacketDevice(transport, packetReading, {companion, bound: !!packetTrack, handle: packetSessionRef ? encounters.handles[packetSessionRef] : undefined})
+  // The packet is the document's (walk 739 gap 14): while the hand has reached a document whose face reads its packet, the Packet reads it.
+  const reached = useReachedDocument()
+  const reachedPacket = reached?.packet, reachedForm = reached?.form, reachedTitle = reached?.title
+  const documentPacket = useMemo(() => documentPacketOf(reachedPacket && reachedForm ? {form: reachedForm, title: reachedTitle ?? '', packet: reachedPacket} : null),
+    [reachedPacket, reachedForm, reachedTitle])
+  const packet = usePacketDevice(transport, packetReading, {companion, bound: !!packetTrack, handle: packetSessionRef ? encounters.handles[packetSessionRef] : undefined}, documentPacket)
   const packetSession = packetReading?.context ? packetReading.context.scope.agent_session : null
+  // What the Agent's conversation receives with a Send: AIKit's prepared context (the Packet shows the document's packet while one is reached).
+  const preparedItems = useMemo(() => (packetReading?.context ? JSON.stringify(packetReading.context.items.map(packetItemOf)) : null), [packetReading])
   const answerHandle = nara.session ? encounters.handles[nara.session] : undefined
   const answerObserved = observedState(answerHandle)
   const answerRoster = useRosterAgents(transport)
@@ -457,11 +465,11 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
   )
   const answerAgents = answerRoster.state === 'ready' ? answerRoster.agents : null
   const refreshNara = nara.refresh
-  // The packet the Agent reads (§19.4 "intent on the packet while it reads"): the Packet's items, with the session they are prepared for
-  // (answerBinding.ts centralAgentValues shows them only for the bound session's own turn).
+  // The packet the Agent reads (§19.4 "intent on the packet while it reads"): the prepared items its Send carries, with the session they are
+  // prepared for (answerBinding.ts centralAgentValues shows them only for the bound session's own turn).
   const answerInput = useMemo(() => ({nara: {state: nara.state, session: nara.session, resume: nara.resume}, observed: answerObserved, roster: answerAgents,
-    packet: typeof packet.values.packet === 'string' ? {items: packet.values.packet, session: packetSession} : null}),
-  [nara.state, nara.session, nara.resume, answerObserved, answerAgents, packet.values.packet, packetSession])
+    packet: preparedItems ? {items: preparedItems, session: packetSession} : null}),
+  [nara.state, nara.session, nara.resume, answerObserved, answerAgents, preparedItems, packetSession])
   // The session's next turn: its encounter's own draft, then its Send (the thread pane's). A typed question and a spoken one go this way.
   const answerSend = useMemo(() => (answerHandle && 'actions' in answerHandle
     ? async (text: string) => { answerHandle.actions.change(text); await answerHandle.actions.send() } : null), [answerHandle])

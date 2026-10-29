@@ -201,6 +201,11 @@ impl RecoveryDiagnostic {
     }
 }
 
+/// The bridge's one kernel's live field (`Kernel::native_field`), set once in
+/// `main`. A test's kernel sets none and is dispatched without it.
+static NATIVE_FIELD: std::sync::OnceLock<oi_cradle_kernel::native_expression::Field> =
+    std::sync::OnceLock::new();
+
 fn main() {
     let bind = std::env::args()
         .nth(1)
@@ -215,6 +220,9 @@ fn main() {
     native_kernel
         .attach_default_act_store()
         .expect("attach the native Act store");
+    // The live field's own handle, held beside the kernel (dispatch.rs
+    // `dispatch_with`): a field op never waits on the kernel lock.
+    let _ = NATIVE_FIELD.set(native_kernel.native_field());
     let kernel = Arc::new(Mutex::new(native_kernel));
     // The change watch records "files changed" in the event log, so the app's
     // /event-replay channel carries it like any other receipt.
@@ -532,7 +540,10 @@ fn handle_with_diagnostic(
                     };
                     (result, timing)
                 }
-                op => oi_cradle_kernel::dispatch::dispatch(kernel, op),
+                op => match NATIVE_FIELD.get() {
+                    Some(field) => oi_cradle_kernel::dispatch::dispatch_with(kernel, field, op),
+                    None => oi_cradle_kernel::dispatch::dispatch(kernel, op),
+                },
             };
             // One line per op: when it was answered, how long it waited for
             // the kernel lock, held it, and spent in owner work outside it —
