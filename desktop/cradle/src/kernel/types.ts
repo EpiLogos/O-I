@@ -257,6 +257,10 @@ export type QlReadRequest = {kind:"kernel-m1"|"scene-compose"|"scene-world";requ
   | {kind:"sky-hours";request:unknown}
   /** `ql kernel body-constants` (`ql.m2-body-constants/v1`): M2's proposed body constants by element fibre. */
   | {kind:"body-constants"}
+  /** `ql kernel m3-binding -` (`ql.m3-binding/v1`, O-I #684): Binding's engine over the cell a matrix makes of a hexagram — `{hexagram,
+   * matrix:"complementary"|"moving-resting"|"same-quality", register:"pp"|"mm"|"mp"|"pm", tension_gev_per_fm, coupling_scale_gev,
+   * receipt?}` on stdin, the receipt the last applied `ql.m3-receipt/v1`; QL answers the cell, the coupling, the string and the event. */
+  | {kind:"m3-binding";request:unknown}
   /** `ql mef lenses` ({registryVersion, registryRevision, lenses}), `ql context-frame list` ({grammarVersion, frames}),
    * `ql service capabilities` ({providerState, detail, operations}). */
   | {kind:"mef-lenses"|"context-frame-list"|"service-capabilities"}

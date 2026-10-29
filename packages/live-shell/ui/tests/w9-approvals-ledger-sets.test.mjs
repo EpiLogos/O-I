@@ -257,13 +257,15 @@ test('7 · Messages\' groups carry the join Central\'s set names, and none where
   for (const group of real) assert.ok(!('join' in group), `${group.name}: the installed ctrl predates join; none is invented`)
 })
 
-test('8 · the Agentset rack\'s Join: its group is an AIKit session space with no join, and no reading ties it to a Central set; Custody\'s settings name what an assignment from here lacks and the owner\'s ruling', async () => {
+// REPLACED (O-I ticket 684): "its group is an AIKit session space with no join, and no reading ties it to a Central set" — AIKit's space now
+// names the set it runs (`agent_set`), and the rack reads and saves that set's join (tests/agentset-join.test.mjs). A group whose space names
+// no set still says so, and names the act that ties one.
+test('8 · the Agentset rack\'s Join: a group whose space names no Central set says so and names the act that ties one; Custody\'s settings name what an assignment from here lacks and the owner\'s ruling', async () => {
   bind.resetHolds()
   const rack = session.agentsetBinding({group: null, tracks: null, holds: bind.chainHolds()})
-  assert.match(rack.standing.join.disabled, /AIKit's team carries no join/)
-  assert.match(rack.standing.join.disabled, /central\.agent-set\.save/)
-  assert.match(rack.standing.join.disabled, /no reading says which set this group runs/)
-  await assert.rejects(rack.write([{key: 'join', value: 'quorum'}]), {message: session.AGENTSET_REFUSE.join})
+  assert.equal(rack.standing.join.disabled, session.JOIN_UNTIED)
+  assert.match(rack.standing.join.disabled, /bind-agent-set/)
+  await assert.rejects(rack.write([{key: 'join', value: 'quorum'}]), /no carrier|names no Central agent set/)
   const custody = session.custodyBinding({sessionRef: 's', autonomy: 'review', agent: {light: 'lit'}, holds: bind.chainHolds()}, null)
   for (const [key, flag] of [['autonomy', '--autonomy suggest|review|auto'], ['gate', '--review-gate diffs|approvals|both'], ['escalate', '--escalate-to']]) {
     // REPLACED (lane W11): with no custody read handed in, the setting says so; the ruling stands on an assigned work
@@ -287,7 +289,7 @@ test('9 · the designs draw on these bindings in all their views — no NaN, no 
     [approvalsDesign, approvals(), /setModel|Kite|recursive delete/, []],
     [ledgerDesign, rec.ledgerBinding({ground: GROUND, groundError: null, holds: bind.chainHolds(), returns: {entries}, tracks: []}, {openSession: () => null}),
       /re-plan port|Cairn|review #482|fixtures\/handoff|drop old captures/, []],
-    [agentsetDesign, session.agentsetBinding({group: null, tracks: null, holds: bind.chainHolds()}), /oi-guardians/, [session.AGENTSET_REFUSE.join]],
+    [agentsetDesign, session.agentsetBinding({group: null, tracks: null, holds: bind.chainHolds()}), /oi-guardians/, [session.JOIN_UNTIED]], // REPLACED (O-I ticket 684): the untied group's words
   ]
   for (const [design, binding, fixture, reasons] of cases) {
     const drawn = hosted(design, binding)

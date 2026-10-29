@@ -1,0 +1,90 @@
+{
+  "source": "QL-MEF dlw/684-binding-engine, 2026-10-29: `ql kernel m3 -` replaying a set-matrix to moving and resting on the parent-consumer fixture form 17, then `ql kernel m3-binding -` over its cell with that receipt (O-I #684); the receipt sent is carried here by its schema, status, generations and operations (its before and after snapshots, ~90 KB each, are left out)",
+  "input": {
+    "hexagram": 17,
+    "matrix": "moving-resting",
+    "register": "pp",
+    "tension_gev_per_fm": 0.9,
+    "coupling_scale_gev": 1.0
+  },
+  "receipt": {
+    "schema": "ql.m3-receipt/v1",
+    "status": "applied",
+    "before_generation": 7,
+    "after_generation": 8,
+    "command": {
+      "operations": [
+        {
+          "family": 1,
+          "operation": "set-matrix"
+        }
+      ]
+    }
+  },
+  "answer": {
+    "cell": {
+      "lower": "CT",
+      "negative": {
+        "address": 38,
+        "charge": 25,
+        "charges_pp_mm_mp_pm": [
+          25,
+          -9,
+          7,
+          9
+        ],
+        "coin_values": [
+          8,
+          9,
+          8
+        ],
+        "sequence": "CTC"
+      },
+      "non_dual": false,
+      "positive": {
+        "address": 42,
+        "charge": 24,
+        "charges_pp_mm_mp_pm": [
+          24,
+          -8,
+          8,
+          8
+        ],
+        "coin_values": [
+          8,
+          8,
+          8
+        ],
+        "sequence": "CCC"
+      },
+      "upper": "CC"
+    },
+    "coupling": {
+      "alpha_s": 0.4473345773086884,
+      "flavours": 3,
+      "lambda_gev": 0.21,
+      "law": "one-loop",
+      "scale_gev": 1.0
+    },
+    "event": {
+      "generation": 8,
+      "kind": "matrix",
+      "operation": "set-matrix",
+      "what": "Complementary to moving and resting"
+    },
+    "hexagram_id": 17,
+    "matrix": {
+      "family": "moving-resting"
+    },
+    "register": "pp",
+    "schema": "ql.m3-binding/v1",
+    "standing": "Binding's own physics over the kernel's symbols (manual §22.3): LightBox's one-loop coupling (Λ 210 MeV, three flavours, held between 0.1 and 1.5) and Cornell energy; the stretch is the charge between the cell's two codons in the asked register, one unit to LightBox's meson rest length of 0.8 fm. No measured constant is claimed. The cell is ql_core::generate's; the event is the last applied ql.m3-receipt/v1.",
+    "string": {
+      "charge_between": 1,
+      "energy_gev": 0.5728813646835,
+      "rest_length_fm": 0.8,
+      "stretch_fm": 0.8,
+      "tension_gev_per_fm": 0.9
+    }
+  }
+}

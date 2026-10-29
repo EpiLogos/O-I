@@ -64,6 +64,7 @@ import {useQlM1, type QlM1State} from './qlM1'
 import {useQlCentres, type QlCentresState} from './qlCentres'
 import {useQlRack, type QlRackState} from './qlRack'
 import {useKernelApply, type KernelApplyState} from './qlKernelApply'
+import {useBindingEngine, type BindingEngineState} from './qlBindingEngine'
 import {heldFor, useHolds} from '../../../techne/devices/designDevices'
 import {useLiveModeCatalogue, useLiveModeHold, type LiveModeCatalogueState, type LiveModeHold} from '../../../native/liveModeCatalogue'
 import type {Value} from '../../../frame/devices/designed'
@@ -99,6 +100,8 @@ export interface TechneReadings {
   readonly m1?: QlM1State
   /** The kernel's operators' answers for the address the matrices hold (qlKernelApply.ts). */
   readonly kernel?: KernelApplyState
+  /** Binding's engine over the cell the M3 clock's Binding skin draws (qlBindingEngine.ts). */
+  readonly bindingEngine?: BindingEngineState
   /** Today's centres, QL's scene of the sky the Sky shows (qlCentres.ts): the Chakra's. */
   readonly centres?: QlCentresState
   /** The Deck's cast hexagram's cell, QL's generation law asked of the person's M3 state (qlDeck.ts). */
@@ -167,7 +170,7 @@ export function techneEntries(manifests: readonly InhabitantManifest[], readings
     .filter(face => !(manifest.id === KNOWLEDGE_FAMILY && KNOWLEDGE_FACES_CARRIED.includes(face.id))).map((face): TechneEntry => {
     const waiting = face.admission === 'waiting'
     if (manifest.id === QL_FAMILY) return qlFaceEntry(face, readings.torus, readings.instrumentReading, readings.sky, readings.m3, readings.deck, readings.chakra,
-      {modes: readings.modes, held: readings.held, m1: readings.m1, centres: readings.centres, cast: readings.cast, racks: readings.racks, kernel: readings.kernel, presences: readings.presences})
+      {modes: readings.modes, held: readings.held, m1: readings.m1, centres: readings.centres, cast: readings.cast, racks: readings.racks, kernel: readings.kernel, presences: readings.presences, bindingEngine: readings.bindingEngine})
     if (!waiting && manifest.id === ATLAS_FAMILY && isAtlasFaceId(face.id)) {
       const faceId = face.id
       return {family: manifest.id, face, device: atlasDevice(face, readings.atlas), picture: size => <Picture size={size} face={faceId}><AtlasFaceBody faceId={faceId} /></Picture>,
@@ -205,7 +208,7 @@ const BINDING_SKIN: CarriedPage = {prefix: 'binding.', shared: []}
 /** One Quaternal Logic face as a device: the field/PCM owner over its reading, any other face as the waiting device it is declared.
  * The Expressions Studio's Body · 3:3 holds two of them (sdk/semantics.ts STUDIO_SECTIONS) and draws them from here. */
 export function qlFaceEntry(face: InhabitantFaceDeclaration, torus: LiveTorusState | null, instrumentReading: unknown, sky?: QlSkyState, m3?: QlM3State,
-  deck?: QlDeckState, chakra?: QlChakraState, more: {modes?: QlModes; held?: TechneReadings['held']; m1?: QlM1State; centres?: QlCentresState; cast?: DeckCastState; racks?: TechneReadings['racks']; kernel?: KernelApplyState; presences?: SkyPresences} = {}): TechneEntry {
+  deck?: QlDeckState, chakra?: QlChakraState, more: {modes?: QlModes; held?: TechneReadings['held']; m1?: QlM1State; centres?: QlCentresState; cast?: DeckCastState; racks?: TechneReadings['racks']; kernel?: KernelApplyState; presences?: SkyPresences; bindingEngine?: BindingEngineState} = {}): TechneEntry {
   // The Sky draws its catalogue design on the dated sky the kernel reads (qlSky.ts); its picture is the design's own ring.
   if (face.id === QL_SKY_FACE && sky) return {family: QL_FAMILY, face, device: qlSkyDevice(face, sky), binding: qlSkyBinding(sky, more.racks?.[2], more.presences), picture: () => null}
   const held = (id: string) => more.held?.[id] ?? heldFor(id)
@@ -213,7 +216,7 @@ export function qlFaceEntry(face: InhabitantFaceDeclaration, torus: LiveTorusSta
   // "The Binding skin", which took in §22.8's Binding device in the 22 Oct manual rewrite): Binding's own binding over the same form, with its
   // own physics and choices held as before (qlBinding.ts).
   if (face.id === QL_M3_FACE && m3) {
-    const binding = carryPages(qlM3Binding(m3, more.racks?.[3]), [{page: BINDING_SKIN, binding: qlBindingBinding({m3, held: held(QL_BINDING_DEVICE_ID)})}])
+    const binding = carryPages(qlM3Binding(m3, more.racks?.[3]), [{page: BINDING_SKIN, binding: qlBindingBinding({m3, held: held(QL_BINDING_DEVICE_ID), ...(more.bindingEngine ? {engine: more.bindingEngine} : {})})}])
     return {family: QL_FAMILY, face, device: qlM3Device(face, m3), binding, picture: () => null}
   }
   // The Deck draws its catalogue design on the open journey (qlDeck.ts); the Chakra on your elements (qlChakra.ts).
@@ -510,6 +513,8 @@ export function TechneDevices({manifests, focusInstrument = null, instrumentRead
   const m1 = useQlM1(held[QL_MATRICES_DEVICE_ID]?.['m1.family'])
   // The Kernel page: the kernel's operators on the address the matrices hold (qlKernelApply.ts).
   const kernel = useKernelApply(held[QL_MATRICES_DEVICE_ID])
+  // The Binding skin's engine: QL's physics over the cell the skin draws, asked again when a kernel event moves it (qlBindingEngine.ts).
+  const bindingEngine = useBindingEngine(m3, held[QL_BINDING_DEVICE_ID])
   const presences = useSkyPresences()
   // Today's centres: QL's scene of the sky the Sky shows, composed once per sky (qlCentres.ts).
   const centres = useQlCentres(sky)
@@ -527,8 +532,8 @@ export function TechneDevices({manifests, focusInstrument = null, instrumentRead
   // The manifests are the door's, named by their ids; the QL reading the caller hands in is the one reader's own, derived from the same
   // `torus` state in the same render, so it changes exactly when `torus` does (its absent form is a new object each call, and would
   // otherwise re-publish every device on every render).
-  const entries = useMemo(() => techneEntries(manifests, {atlas, surface, torus, instrumentReading, sky, m3, deck, chakra, modes, held, m1, centres, cast, racks, kernel, presences}),
-    [manifestKey, atlas, surface, torus, sky, m3, deck, chakra, modes, held, m1, centres, cast, racks, kernel, presences])
+  const entries = useMemo(() => techneEntries(manifests, {atlas, surface, torus, instrumentReading, sky, m3, deck, chakra, modes, held, m1, centres, cast, racks, kernel, presences, bindingEngine}),
+    [manifestKey, atlas, surface, torus, sky, m3, deck, chakra, modes, held, m1, centres, cast, racks, kernel, presences, bindingEngine])
   const published = useMemo(() => [...entries, ...designs], [entries, designs])
   usePublished(published)
   // The instrument opened here (a fold pressed) holds until the focus changes; a new focus stands its own instrument open. While a palace

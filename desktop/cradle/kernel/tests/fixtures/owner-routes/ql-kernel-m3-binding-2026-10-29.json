@@ -1,0 +1,72 @@
+{
+  "source": "QL-MEF dlw/684-binding-engine `ql kernel m3-binding - --json`, run 2026-10-29 (O-I #684 Binding's engine)",
+  "input": {
+    "hexagram": 17,
+    "matrix": "moving-resting",
+    "register": "pp",
+    "tension_gev_per_fm": 0.9,
+    "coupling_scale_gev": 1.0
+  },
+  "answer": {
+    "cell": {
+      "lower": "CT",
+      "negative": {
+        "address": 38,
+        "charge": 25,
+        "charges_pp_mm_mp_pm": [
+          25,
+          -9,
+          7,
+          9
+        ],
+        "coin_values": [
+          8,
+          9,
+          8
+        ],
+        "sequence": "CTC"
+      },
+      "non_dual": false,
+      "positive": {
+        "address": 42,
+        "charge": 24,
+        "charges_pp_mm_mp_pm": [
+          24,
+          -8,
+          8,
+          8
+        ],
+        "coin_values": [
+          8,
+          8,
+          8
+        ],
+        "sequence": "CCC"
+      },
+      "upper": "CC"
+    },
+    "coupling": {
+      "alpha_s": 0.4473345773086884,
+      "flavours": 3,
+      "lambda_gev": 0.21,
+      "law": "one-loop",
+      "scale_gev": 1.0
+    },
+    "event": null,
+    "hexagram_id": 17,
+    "matrix": {
+      "family": "moving-resting"
+    },
+    "register": "pp",
+    "schema": "ql.m3-binding/v1",
+    "standing": "Binding's own physics over the kernel's symbols (manual §22.3): LightBox's one-loop coupling (Λ 210 MeV, three flavours, held between 0.1 and 1.5) and Cornell energy; the stretch is the charge between the cell's two codons in the asked register, one unit to LightBox's meson rest length of 0.8 fm. No measured constant is claimed. The cell is ql_core::generate's; the event is the last applied ql.m3-receipt/v1.",
+    "string": {
+      "charge_between": 1,
+      "energy_gev": 0.5728813646835,
+      "rest_length_fm": 0.8,
+      "stretch_fm": 0.8,
+      "tension_gev_per_fm": 0.9
+    }
+  },
+  "refusal_stderr": "ql: Tension is 0.1 to 2 GeV/fm, got 9"
+}

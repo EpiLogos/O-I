@@ -1,0 +1,56 @@
+{
+ "source": "ctrl --json action run central.agent-set.read {scope: root, ref: anima} from the installed Central (main 6e564b2) on workcell:mac, 29 Oct 2026: the data as Central gave it (its proposal reason shortened)",
+ "answer": {
+  "kind": "agent-set",
+  "record": {
+   "members": [
+    {
+     "agent_ref": "agent/anima",
+     "kind": "agent"
+    },
+    {
+     "agent_ref": "agent/anima-nous",
+     "kind": "agent"
+    },
+    {
+     "agent_ref": "agent/anima-logos",
+     "kind": "agent"
+    },
+    {
+     "agent_ref": "agent/anima-eros",
+     "kind": "agent"
+    },
+    {
+     "agent_ref": "agent/anima-mythos",
+     "kind": "agent"
+    },
+    {
+     "agent_ref": "agent/anima-psyche",
+     "kind": "agent"
+    },
+    {
+     "agent_ref": "agent/anima-sophia",
+     "kind": "agent"
+    },
+    {
+     "agent_ref": "agent/anima-techne-helper",
+     "kind": "agent"
+    }
+   ],
+   "orchestrator_agent_ref": "agent/anima",
+   "proposal": {
+    "authorship": "generated-proposal",
+    "origin_action": "central.agent-set.propose",
+    "reason": "Owner instruction 2026-09-24: Anima made properly as an agent set (team) with all of its source-defined subagents. Roste",
+    "recognition": "unrecognised",
+    "schema": "central.agent-set-proposal/v1"
+   },
+   "ref": "anima",
+   "revision": "r1",
+   "schema": "central.agent-set/v1"
+  },
+  "ref": "anima",
+  "revision": "r1",
+  "source_path": "Control/agents/agent-sets/agent-set-babd02cd4bee09c3.json"
+ }
+}

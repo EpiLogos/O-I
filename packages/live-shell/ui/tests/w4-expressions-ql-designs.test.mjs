@@ -343,8 +343,10 @@ test('the M3 clock reads the generation law and the cell of the form\'s hexagram
   assert.equal(carried.writes('skin'), false, 'Skin writes to no owner')
   assert.deepEqual(all.absent.sort(), ['binding.coupling.alpha', 'binding.event.kind', 'binding.event.what', 'binding.m2.index', 'binding.nonet', 'binding.sound.stretchQ',
     'binding.string.energy', 'binding.string.stretch', 'binding.values.negative', 'binding.values.positive', 'rack'], 'the rack, and what Binding names absent with its route')
-  assert.deepEqual(all.local.sort(), ['binding.charge.register', 'binding.coupling.scale', 'binding.nonets.show', 'binding.string.tension', 'open', 'rack.part', 'readout',
-    'reciprocal', 'skin', 'turn'], 'the clock\'s view and Binding\'s own physics')
+  // REPLACED (#684): Charge, Tension and Coupling classed local — Binding's engine reads with them, so until held they stand at the manual's
+  // starting values (qlBindingEngine.ts BINDING_STARTS) and are classed as the values drawn; they stay the view's to hold.
+  assert.deepEqual(all.local.sort(), ['binding.nonets.show', 'open', 'rack.part', 'readout', 'reciprocal', 'skin', 'turn'], 'the clock\'s view and Binding\'s own choices')
+  for (const key of ['binding.charge.register', 'binding.coupling.scale', 'binding.string.tension']) assert.equal(typeof carried.local[key], 'function', `${key} stays the view's`)
   for (const key of ['binding.nonet', 'binding.string.energy']) assert.equal(carried.standing[key].disabled, qlB.qlBindingBinding({m3: m3Of(), held: {}}).standing[key.slice('binding.'.length)].disabled, `${key}: Binding's own words`)
   assert.match(m3c.qlM3Binding(NO_M3).standing['law.matrix'].disabled, /No Nara identity is chosen/)
 })
@@ -355,7 +357,8 @@ test('Binding draws the generation cell of the form\'s hexagram under its pairin
   // REPLACED (#725): "keyed to its design" — Binding's design was retired; its binding keeps its holds under its own id.
   assert.equal(binding.id, qlB.QL_BINDING_DEVICE_ID)
   assert.deepEqual(binding.values, {'cell.hexagram': 17, 'pairing.matrix': 'moving-resting', 'cell.lower': 'CT', 'cell.upper': 'CC', 'cell.positive': 'CCC', 'cell.negative': 'CTC',
-    'cell.nonDual': false, 'charges.positive': '[24,-8,8,8]', 'charges.negative': '[25,-9,7,9]'}, 'until a pairing is held, the matrix the form\'s law is read under')
+    'cell.nonDual': false, 'charges.positive': '[24,-8,8,8]', 'charges.negative': '[25,-9,7,9]', 'charge.register': 'pp', 'string.tension': 0.9, 'coupling.scale': 1},
+    'until a pairing is held, the matrix the form\'s law is read under; until Binding\'s physics is held, the manual\'s starting values its engine reads with (#684)')
   // Another pairing reads that matrix's cell, one of the three the state carries; Binding writes nothing to the form.
   binding.local['pairing.matrix']('complementary')
   const singlet = qlB.qlBindingBinding({m3: m3Of(), held: holds.heldFor(qlB.QL_BINDING_DEVICE_ID)})
@@ -365,11 +368,12 @@ test('Binding draws the generation cell of the form\'s hexagram under its pairin
   // `binding.` (§22.3). Binding's on and off is the clock's Skin now (§22.3 "The clock's Skin chooses Wheel or Binding"), so the skin has no
   // `on` of its own.
   const keys = classify(skinOf(DESIGNS.m3clock), binding)
-  assert.deepEqual(keys.local.sort(), [...qlB.QL_BINDING_LOCAL].filter(key => key !== 'pairing.matrix' && key !== 'binding.on').sort(), 'its own physics and choices are the view\'s (the pairing reads as the law\'s until held)')
-  for (const key of ['values.positive', 'values.negative']) assert.match(binding.standing[key].disabled, /names each codon's sequence and charges, not its sites' coin values/, key)
+  assert.deepEqual(keys.local.sort(), ['nonets.show'], 'its own choices are the view\'s (the pairing reads as the law\'s, and its physics at the manual\'s starting values, until held)')
+  // REPLACED (#684): the coin values, the event and the engine named absent — Binding's engine (`ql kernel m3-binding`) reads them; with no
+  // engine answer handed in they wait for it (tests/ql-binding-engine.test.mjs draws them from QL's real answer).
+  for (const key of ['values.positive', 'values.negative', 'event.kind', 'string.energy']) assert.match(binding.standing[key].disabled, /Asking Binding's engine/, key)
+  assert.ok(binding.waiting.includes('string.energy'), 'the engine\'s readings wait for its answer')
   assert.match(binding.standing.nonet.disabled, /ql_m3_epogdoon/)
-  assert.match(binding.standing['event.kind'].disabled, /an inscription, a matrix change, a line change/)
-  assert.match(binding.standing['string.energy'].disabled, /Binding's string engine/)
   // REPLACED (#725): Binding's own controls, Skin among them disabled — the skin's controls on the M3 clock (§22.3); Skin is the clock's own.
   const controls = controlStanding(binding, skinSetKeys())
   assert.deepEqual(controls.disabled.sort(), ['sound.stretchQ'])

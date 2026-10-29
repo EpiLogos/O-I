@@ -93,6 +93,7 @@ import {commentSourceReturn, withReturnComments} from '../../central/devices/sou
 import {receiving} from '../../../../../../desktop/cradle/src/receiving/client'
 import {useUnitDecisions, waitingDecisions} from './unitDecisions'
 import {useCentralAction} from '../../central/devices/useCentralReadings'
+import {actionAnswerOf, centralActionOp} from '../../central/devices/centralActions'
 import {useAtSearch} from '../../central/searchPane'
 import {useModelCatalogue} from './useModelCatalogue'
 import {useAttemptTakes} from '../../owners/attemptTakes'
@@ -110,11 +111,13 @@ import {WORKCELL_RACK_DESIGN, WORKCELL_RACK_ID, chosenWorld, workcellGitReading}
 import {AGENT_SLOTS, chainSlots, factoryPlace, type FactorySlot} from './factoryPlaces'
 import {useOwnerOp} from '../../owners/ownerCall'
 import type {AikitWriteRequest, KernelOp} from '../../../../../../desktop/cradle/src/kernel/types'
+import {kernelOp} from '../../../../../../desktop/cradle/src/kernel/bridge'
 import {decisionHelperBinding} from './decisionHelperBinding'
 import {captureSkillBinding, type CaptureSkillPorts} from './captureSkillBinding'
 import {RUN_MAP_DESIGN, RUN_MAP_ID, runMapBinding, runMapDevice} from './runMapBinding'
 import {PROMPT_PADS_DESIGN, PROMPT_PADS_ID, padsLocation, promptPadsBinding, promptPadsDevice, type PromptPadsPorts} from './promptPadsBinding'
 import {useDecisionHelperReadings} from './decisionHelperReads'
+import {useTeamSpace, withTeamCell} from './teamCell'
 import {useActuationRead, useAikitRead, useConnectionShows, useSeatStatusAnswer, useWorkcellRead} from './workcellReads'
 import {workcellTrackId} from '../../frame/tracks/returnTracks'
 import '../agentShell.css'
@@ -246,11 +249,15 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
     [contextOn, continuityPressure, continuityCommands, continuityTurn])
   // The model the session last reported using (lane K0): Actuation's usage records of the session.
   const sessionUsage = useActuationRead(transport, contextOn ? {kind: 'usage-list', session: sessionRef} : null)
-  const agentDesignBinding = useMemo(() => (waits.agent ? null : agentBinding(chainDeviceId('agent'), {
+  // The Run page's Team cell (§19.4; O-I ticket 684): where the session's agent stands in Anima or Aletheia, from QL's team space (teamCell.ts).
+  const teamSpace = useTeamSpace(transport, !waits.agent && sessionRef != null)
+  const agentOwnBinding = useMemo(() => (waits.agent ? null : agentBinding(chainDeviceId('agent'), {
     sessionRef, track, nowUnixMs: sessions?.nowUnixMs ?? 0, reading, accepted, harness: {binding, resolved}, holds, thread: agentThread, models, harnesses, events: sessions?.events ?? null,
     ...(context ? {context} : {}), ...(contextOn ? {usage: sessionUsage} : {}),
   }, agentRows, write, () => steering.current)), [waits.agent, sessionRef, track, sessions?.nowUnixMs, reading, accepted, binding, resolved, holds, agentRows, write, agentThread, models, harnesses,
     sessions?.events, context, contextOn, sessionUsage])
+  const agentDesignBinding = useMemo(() => withTeamCell(agentOwnBinding, teamSpace, sessionRef != null ? track?.agentRef ?? null : null),
+    [agentOwnBinding, teamSpace, sessionRef, track?.agentRef])
 
   // The Agent's Thread page (its Full): the shown session's conversation; its composer, Input and timing the Agent's; Approve and Hard
   // stop that session's own encounter verbs; choosing a session moves THE selection.
@@ -430,7 +437,19 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   // a session's course is its track in Arrangement view, §16.1.)
   const ownDevices = useMemo(() => sessionDevices(), [])
   const designsOwn = {agentset: useDesign(AGENTSET_DESIGN, true)}
-  const agentsetDesignBinding = useMemo(() => agentsetBinding({group: groupTrack, tracks, models, holds, nowUnixMs: sessions?.nowUnixMs ?? 0}), [groupTrack, tracks, models, holds, sessions?.nowUnixMs])
+  // The rack's Join (O-I ticket 684): Central's agent set the group's space names, read, and saved through the person's own central.agent-set.save.
+  const setRef = groupTrack?.agentSet?.ref ?? null
+  const setInput = useMemo(() => (setRef ? {scope: 'root', ref: setRef} : null), [setRef])
+  const groupSet = useCentralAction(transport, 'central.agent-set.read', setInput)
+  const agentsetPorts = useMemo(() => ({saveSet: async (input: Record<string, unknown>) => {
+    const call = await kernelOp(transport, centralActionOp('central.agent-set.save', input))
+    const answer = actionAnswerOf({status: call.error ? 'refused' : 'answered', value: call.outcome?.result === 'action_dispatched' ? call.outcome : null, error: call.error ?? null}, 'central.agent-set.save')
+    if (answer.status === 'refused') throw Error(answer.error)
+    if (answer.status !== 'answered') throw Error('central.agent-set.save did not answer.')
+    return answer.value
+  }}), [transport])
+  const agentsetDesignBinding = useMemo(() => agentsetBinding({group: groupTrack, tracks, models, holds, nowUnixMs: sessions?.nowUnixMs ?? 0, ...(setRef ? {set: groupSet} : {})}, agentsetPorts),
+    [groupTrack, tracks, models, holds, sessions?.nowUnixMs, setRef, groupSet, agentsetPorts])
   // The Agentset rack's Helper page (§19.20, T-AGENCY K5; the Decision helper was retired into it in the 22 Oct manual rewrite): on a
   // group's chain, on AIKit's decision provider and QL's team space — read only while the rack stands there.
   const helperStands = sessionRef != null && !!groupTrack

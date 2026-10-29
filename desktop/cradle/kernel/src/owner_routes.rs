@@ -302,6 +302,15 @@ pub enum QlRead {
     /// body-constants`, `ql.m2-body-constants/v1`): Strike, Q factor,
     /// Agitation and Boundary strength, each fibre with the map's tattvas.
     BodyConstants,
+    /// Binding's engine over the cell a matrix makes of a hexagram (`ql
+    /// kernel m3-binding -`, `ql.m3-binding/v1`; O-I #684): the request
+    /// (`{hexagram, matrix, register, tension_gev_per_fm, coupling_scale_gev,
+    /// receipt?}`) on stdin. QL answers the cell's two codons with their coin
+    /// values and charges, the coupling at its scale, the string's stretch
+    /// and energy, and the M3 event behind the last motion. A read.
+    M3Binding {
+        request: Value,
+    },
     /// The MEF lens registry (`ql mef lenses`).
     MefLenses,
     /// The Context-Frame grammar's frames (`ql context-frame list`).
@@ -1974,6 +1983,13 @@ fn ql_answer(request: &QlRead) -> Result<Reading, Error> {
             words(&["kernel", "body-constants", "--json"]),
             None,
             "ql.m2-body-constants/v1",
+            READ_LIMIT,
+        ),
+        QlRead::M3Binding { request } => (
+            "ql kernel m3-binding",
+            words(&["kernel", "m3-binding", "-", "--json"]),
+            Some(request),
+            "ql.m3-binding/v1",
             READ_LIMIT,
         ),
         QlRead::ShapeBind { request } => (
