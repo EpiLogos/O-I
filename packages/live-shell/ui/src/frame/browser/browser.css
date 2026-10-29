@@ -129,7 +129,6 @@
    content, then the selected device; a body's pool head is the 22px .sloth on bg-1 ——— */
 .one-browser .one-browser-pool { flex: 0 0 46%; min-height: 120px; max-height: none; display: flex; flex-direction: column; overflow: auto; border-top: 5px solid var(--line); background: var(--bg-2) }
 .one-browser .one-browser-pool > .device-pool { height: auto; flex: 1 0 auto }
-.one-browser-pool-host:empty { display: none }
 .one-browser .one-browser-pool-host > .world-context-pool { flex: none; min-height: 0; max-height: none; border-top: 0; background: transparent }
 .one-browser .one-browser-pool-host > .world-context-pool > header { flex: none; height: 22px; padding: 0 6px; background: var(--bg-1); border-bottom: 1px solid var(--line) }
 .one-browser .one-browser-pool-host > .world-context-pool > header > button { display: flex; align-items: center; gap: 6px; height: 21px; min-height: 0; padding: 0; font-size: 11px; color: var(--text) }

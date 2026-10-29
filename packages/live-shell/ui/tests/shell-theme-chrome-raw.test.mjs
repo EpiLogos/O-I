@@ -104,9 +104,40 @@ test('the ratchet has teeth: a raw colour fails, a token and its own default do 
   assert.deepEqual(gained(count(sheetRaw(pathOf('settings/preferences.css'), settings)), DATA['settings/preferences.css']), ['#171a1e80 ×1'], 'the Settings scrim put back as a literal fails')
 })
 
+/** The CSS system colours: the operating system's palette, which no theme reaches. They belong only in forced colours, where the
+ * platform asks for them (manual §10.1; desktop/cradle/src/knowledge/search.css's forced-colors block is the one place they stand). */
+const SYSTEM = /\b(?:Canvas|CanvasText|GrayText|Field|FieldText|ButtonFace|ButtonText|ButtonBorder|Highlight|HighlightText|LinkText|VisitedText|ActiveText|Mark|MarkText|SelectedItem|SelectedItemText|AccentColor|AccentColorText)\b/
+const SCRIPT_PAINT = /\b(?:background[A-Za-z-]*|color|border[A-Za-z-]*|fill|stroke|outline[A-Za-z-]*|boxShadow|textShadow|caretColor|accentColor)\s*:\s*['"`]([^'"`]*)['"`]/g
+/** A stylesheet with its forced-colors blocks blanked out (the block and everything in it). */
+function outsideForcedColours(css) {
+  let out = stripComments(css), at
+  while ((at = out.search(/@media[^{]*forced-colors\s*:\s*active[^{]*\{/)) >= 0) {
+    let depth = 0, i = out.indexOf('{', at)
+    for (; i < out.length; i++) { if (out[i] === '{') depth++; else if (out[i] === '}' && --depth === 0) break }
+    out = out.slice(0, at) + out.slice(at, i + 1).replace(/[^\n]/g, ' ') + out.slice(i + 1)
+  }
+  return out
+}
+/** A declared token's own default is not a paint (the token paints): `var(--oi-foreground, CanvasText)` names the token. */
+const tokensOnly = (text) => text.replace(/var\(\s*(--[\w-]+)\s*,[^()]*(?:\([^()]*\)[^()]*)*\)/g, (m, name) => (declared.has(name) ? `var(${name})` : m))
+export function systemPaints(path, text) {
+  const clean = tokensOnly(path.endsWith('.css') ? outsideForcedColours(text) : stripComments(text))
+  return clean.split('\n').flatMap((line, i) => [...line.matchAll(path.endsWith('.css') ? /(?:^|[;{\s])(-?[a-z][-a-z]*)\s*:\s*([^;{}]*)/g : SCRIPT_PAINT)]
+    .filter(m => SYSTEM.test(path.endsWith('.css') ? m[2] : m[1])).map(m => `${keyOf(path)}:${i + 1} ${m[0].trim().slice(0, 60)}`))
+}
+
+test('the shell paints with no system colour outside forced colours: Canvas, CanvasText and GrayText follow the OS, not the theme', () => {
+  const found = [...sheets, ...scripts].flatMap(path => systemPaints(path, readFileSync(resolve(repo, path), 'utf8')))
+  assert.deepEqual(found, [], 'a system colour paints chrome — use the shell\'s tokens (--bg-1, --text, --line-strong …)')
+  assert.equal(systemPaints('x.tsx', `style={{background: 'Canvas', color: 'CanvasText'}}`).length, 2, 'teeth: a style object\'s system colours')
+  assert.equal(systemPaints('x.css', '.a { color: CanvasText }\n@media (forced-colors: active) { .b { color: CanvasText } }').length, 1, 'teeth: forced colours may name them')
+  assert.equal(systemPaints('x.css', '.a { color: var(--text, CanvasText) } .b { color: var(--no-such-token, CanvasText) }').length, 1, 'teeth: a declared token\'s default, not an undeclared one\'s')
+})
+
 test('the colours lane T1 converted stay tokens', () => {
   const mode = readFileSync(resolve(repo, pathOf('shell/modeSurface.css')), 'utf8')
-  for (const token of ['--edge', '--disputed', '--fault', '--accent-wash', '--on-accent']) assert.match(mode, new RegExp(`var\\(${token}\\)`), `modeSurface.css paints with ${token}`)
+  // --edge painted only the Technē lens bar's buttons, a rule no element drew (the old lens bar), deleted with the dead rules (lane Y).
+  for (const token of ['--disputed', '--fault', '--accent-wash', '--on-accent']) assert.match(mode, new RegExp(`var\\(${token}\\)`), `modeSurface.css paints with ${token}`)
   assert.match(readFileSync(resolve(repo, pathOf('inhabitants/inhabitantDevices.css')), 'utf8'), /body \{[^}]*background: var\(--gutter, #1b1d20\)/, 'the gutter between the panes is a token')
 })
 

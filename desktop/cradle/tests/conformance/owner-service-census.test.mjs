@@ -15,6 +15,7 @@
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {execFileSync} from 'node:child_process';
 import {existsSync, readFileSync, readdirSync} from 'node:fs';
 import {join} from 'node:path';
 import {repo, registry, rustVariants, read} from './source.mjs';
@@ -162,6 +163,15 @@ test('census: the register summary and the test-bucket callers match the scan', 
   const byStatus = Object.fromEntries(STATUSES.map(s => [s, register.callers.filter(c => c.status === s).reduce((n, c) => n + c.count, 0)]));
   assert.deepEqual(register.summary, {callers: counted, ...byStatus}, 'summary must be derived from the callers list');
   assert.deepEqual(register.test_callers, bucketCounts(hits, 'test'), 'test-bucket matches are listed separately and must match');
+});
+
+test('census: no build output is tracked in a scanned tree (derived output is rebuilt, never kept)', () => {
+  // A tracked copy of a build is a stale caller nobody runs: packages/live-shell/live-shell/ui/ui-dist (a doubled-path build of 11 Oct,
+  // kept by the #637 convergence) carried /api routes the census could only set aside. Git, not the disk, says what is kept.
+  const tracked = execFileSync('git', ['-C', repo, 'ls-files', '-z', '--', ...SCAN_ROOTS], {encoding: 'utf8', maxBuffer: 1 << 28}).split('\0').filter(Boolean);
+  // A tracked file the work tree has already deleted is on its way out of git: only what stands on disk counts.
+  const kept = tracked.filter(file => bucketOf(file) === 'derived' && existsSync(join(repo, file)));
+  assert.deepEqual(kept, [], `tracked build output in a scanned tree: ${kept.join(', ')} — remove it from git and ignore the path that wrote it`);
 });
 
 test('census: the dev transports that forward /api are named', () => {

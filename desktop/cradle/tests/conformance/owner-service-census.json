@@ -153,6 +153,6 @@
         "desktop/cradle/expressions-app/src/physis/hardware.ts"
       ]
     },
-    "tracked_derived_copy": "packages/live-shell/live-shell/ui/ui-dist/assets/index-DjgM1GtR.js contains /api/config and /api/summary. It is a tracked build copy at a nested path and is not counted. It is derived from ui/src."
+    "derived_output": "Build output (dist/, build/, ui-dist/) in a scanned tree is rebuilt, never tracked: the census fails on a tracked one and lists untracked output only under CENSUS_PRINT, uncounted."
   }
 }

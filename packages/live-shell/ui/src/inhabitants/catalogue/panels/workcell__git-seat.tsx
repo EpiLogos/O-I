@@ -39,10 +39,15 @@
 // Settings: co.machine, co.faults (show faults only). Held by the hand: co.sel (the finding chosen), co.page:findings.
 // Acts: co.reread (Read now), and the tenders, whose value is the finding's subject: co.release (`seat release`), co.prune (`git worktree
 //   remove`), co.sweep (`git branch -d`). Each is held to run: the page tends only what you approve.
+// Each page with a process of its own draws its environ first in its second band (manual §25.6 "Process types, read in time"): the Seat
+// page a succession, one lane after another on the same ground; the Checkouts page an erosion, the wear of many runs on the checkouts
+// (faces/EnvironFaces.tsx). Each reads the page's own values and, while a reading is missing, says which it waits on.
 // A key the owner does not report is absent. The picture then says which reading is missing, and every control and reading draws "—".
 import {Action, Band, Chooser, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, TextField, Tile, Toggle, type LightState, type Option, type RowItem, type Standing, type Tone, unreadRows} from '../../sdk/panel'
 import {assembleCensus, hygieneFindings, registeredSeatPaths, type BoundaryOpSource, type SeatReading, type WorktreeRow} from '../../centralHygieneModel'
 import {NONE, boolOf, clampTo, json, numOf, prefixed, scoped, st, strOf, type DesignedDevice, type Values, type ViewProps} from './design'
+import {ErosionEnviron, SuccessionEnviron} from '../faces/EnvironFaces'
+import {checkoutErosionOf, successionOf} from '../faces/environReadings'
 import './workcell__git-seat.css'
 
 type V = ViewProps['v']
@@ -416,6 +421,7 @@ function SeatBands({p}: {p: ViewProps}) {
       </Section>
     </Band>
     <Band>
+      <Section width={206}><SuccessionEnviron reading={successionOf(p.v)} w={194} h={146} /></Section>
       <Section label="Join" width={120}>
         <JoinRadio p={p} />
         <div className="gs-acts">
@@ -628,6 +634,7 @@ function CheckoutBands({p}: {p: ViewProps}) {
       </Section>
     </Band>
     <Band>
+      <Section width={206}><ErosionEnviron reading={checkoutErosionOf(p.v)} w={194} h={146} /></Section>
       <Section label="Findings" grow>
         <Rows does="What the page found, with its kind. Orange is a fault; teal a reading that is not one. A finding is a reading, not a verdict. Press one to choose it."
           items={findingRows(g)} size={8} selected={sel?.id} onSelect={id => { if (!id.startsWith('refused:') && id !== 'none' && id !== 'clear') p.set('sel', id) }}

@@ -164,11 +164,18 @@ node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/wi
 node tests/knowledge-expression.mjs
 ```
 
-The supplementary `tests/wiki-recovery-browser.mjs` exercises the production drawer in an in-memory browser document with explicitly controlled host responses and checkpoint storage. It covers owner refusal, a lost response, exact retries, checkpoint failure, restart input, current-attachment verification and stale artifact refusal. It is component evidence, not native storage or Stage proof.
+The detached authoring drawer retired on 29 October (O-I #742, `3876a2b45`), and the walks that drove it went with it: `wiki-recovery-browser.mjs` then, and `wiki-constructive-browser.mjs`, `techne-construction-join.mjs`, `techne-same-node-gate.mjs` and `techne-joined-verification.mjs` after it. Each of the drawer's acts has a home in the candidate shell, through one set of owner acts (`src/knowledge/constellationActs.ts`, each via `aikit.constellation.apply` at the revision read): New constellation, Rename and Edit question on the browser's rows; a passage gathered with its span from the reader; Remove from constellation, its connections retracted first; time and place in the reader's facts editor; Canvas Promote through the relate act; Return to constellation on an Expressions clip. Their proofs now stand as:
+
+- the acts against a scripted owner that keeps the register as AIKit does: `tests/constellation-acts.test.mjs`;
+- each act at its home: `packages/live-shell/ui/tests/techne-construction-homes.test.mjs`; a frame's roles checked, declared and changed through QL and AIKit: `packages/live-shell/ui/tests/techne-canvas-form-chain.test.mjs`;
+- the native owner's construction, source Return and first save: the pinned AIKit and Central tests in the `Wiki constellation integration` workflow;
+- one summon opened once by the presented Technē host and left by a concealed one: `tests/field-open.test.mjs`; a Canvas gesture committed once: `expressions-app/field-studies-journeys/tests/canvas-gesture.test.mjs`.
+
+No committed walk yet drives the whole journey through the new homes against the built owners; until one does, that journey is unwalked.
 
 The shared successor includes the kernel first-save regression at `kernel/tests/wiki_expression_save.rs`. Run the existing complete kernel suite against the integrated patch; the local component results below do not replace native execution. The configured Project must not appear in the creation input.
 
-The complete browser test is `tests/wiki-constructive-browser.mjs`. It requires the real `OI_BIN`, `OI_AIKIT_BIN`, `OI_CENTRAL_CTRL_BIN` and `WIKI_KERNEL_BIN` executables. It does not mock the kernel transport. The intended walk is selected Markdown passages → native constellation and relation → real Stage/composer → native artifact → Return → separate kernel restart and reopen, followed by frame-first construction and stale-source refusal.
+The complete walk is selected Markdown passages → native constellation and relation → real Stage/composer → native artifact → Return → separate kernel restart and reopen, followed by frame-first construction and stale-source refusal, against the real `OI_BIN`, `OI_AIKIT_BIN`, `OI_CENTRAL_CTRL_BIN` and `WIKI_KERNEL_BIN` executables and with no mocked kernel transport. Its successor walk, through the candidate's homes above, is not yet committed.
 
 Keep the performed test result, source revision and native revisions with every claim. A committed test is not a passed test. Controlled native/browser evidence does not assert installation on the owner's machine, live agent-provider performance, hosted privacy acceptance or human-use completion.
 

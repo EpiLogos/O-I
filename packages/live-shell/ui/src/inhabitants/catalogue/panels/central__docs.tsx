@@ -32,10 +32,14 @@
 //   readNow (every reading again, Meaning and Moved since with them), openSource (the source in the Document),
 //   ensure (`projectcentral.docs.ensure`), reproject (`central.world.reproject.apply`), initRoot (`central.init`). Next is the hand's: it
 //   points the tier and Relate at the next tier that has no source. Each act returns a receipt.
+// Full opens with Docs' environ (manual §25.6: Docs is erosion, the effect of many runs on the ground): each tier a stretch of ground, worn
+// by every change made to its sources since their law last read them, grooved where a meaning no longer holds (faces/EnvironFaces.tsx).
 // A key the owner does not report is absent: its control draws "—", and the picture names the missing reading.
 import {useState, type ReactNode} from 'react'
 import {Action, Band, Chooser, Dial, Display, Folded, Ladder, Panel, Radio, Readout, Rows, Section, Tile, type LightState, type RowItem, unreadRows, NoReading} from '../../sdk/panel'
 import {NONE, json, numOf, st, strOf, type DesignedDevice, type ViewProps} from './design'
+import {ErosionEnviron} from '../faces/EnvironFaces'
+import {docsErosionOf} from '../faces/environReadings'
 
 type V = ViewProps['v']
 type Tick = boolean | null
@@ -395,6 +399,7 @@ function DocsPane({p}: {p: ViewProps}) {
   return <div className="ref-pane-body">
     <div className="ref-pane-tabs" role="tablist" aria-label="Docs"><button type="button" role="tab" aria-selected="true">Docs · {strOf(p.v, 'subject') ?? NONE}</button></div>
     <div className="ref-doc">
+      <div className="ref-environ"><ErosionEnviron reading={docsErosionOf(p.v)} w={Math.max(420, (p.room?.w ?? 760) - 44)} h={104} label="The erosion of the account" /></div>
       <h3>The account <small>{sources ? `${TIERS.filter(t => sources.some(s => s.tier === t)).length} of 6 tiers bound · ${waitingOf(sources)} need you` : <NoReading name="The account" why="No reading of the account." />}</small></h3>
       {!sources ? <p className="ref-doc-lead">No reading of the account.</p> : <>
         {TIERS.map(t => { const here = sources.filter(s => s.tier === t); return <section key={t} className="ref-doc-kind"><h4>Tier {t} · {TIER_NAME[t]}</h4>

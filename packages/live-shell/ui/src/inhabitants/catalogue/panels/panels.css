@@ -3,7 +3,6 @@
 .ref-pair > * { flex: 1 1 0; }
 .ref-tile-counts { flex: 1 1 auto; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: center; }
 .ref-tile-grid { flex: 1 1 auto; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px; align-content: start; justify-items: center; }
-.ref-tile-grid--read { gap: 8px 4px; align-content: center; }
 .ref-tile-side { flex: 1 1 auto; display: flex; flex-direction: column; justify-content: space-around; align-items: center; }
 .ref-meter { position: relative; flex: none; width: 8px; align-self: stretch; background: var(--well); border: 1px solid var(--well-edge); }
 .ref-meter > span { position: absolute; left: 0; right: 0; bottom: 0; height: calc(var(--level) * 100%); background: linear-gradient(to top, var(--dp-value, #5cc8bd) 70%, var(--accent, #ffbe00)); }
@@ -24,6 +23,8 @@
 /* A set read as a document. */
 .ref-doc { padding: 18px 22px; overflow: auto; color: var(--text, #d4d7da); font: 12px/1.5 var(--font-ui, sans-serif); }
 .ref-doc h3 { margin: 0 0 12px; font-size: 15px; font-weight: 600; }
+/* Docs' environ across the head of its account (central__docs.tsx DocsPane; manual §25.6). */
+.ref-environ { margin: 0 0 14px; }
 .ref-doc h3 small { margin-left: 8px; font-weight: 400; font-size: 11px; color: var(--text-faint, #71767c); }
 .ref-doc-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 28px; }
 .ref-doc-list li { display: grid; grid-template-columns: 12px auto 1fr; align-items: baseline; gap: 2px 8px; padding-bottom: 8px; border-bottom: 1px solid var(--line, #24262a); }
@@ -112,11 +113,12 @@
 .mon-body { position: relative; flex: 1 1 0; min-height: 0; overflow: hidden; }
 .mon-body[data-dark="true"] { background: var(--well); }
 .mon-svg { position: absolute; left: 0; top: 0; display: block; }
+/* A monitor whose environ stands across the head of its body (manual §25.6): the environ's well, then the picture in the room under it. */
+.mon-environ { position: relative; padding: 6px 8px 0; }
+.mon-under { position: absolute; left: 0; right: 0; bottom: 0; }
 .mon-svg [role="button"] { cursor: pointer; outline: none; }
 .mon-svg [role="button"]:focus-visible { outline: 1px solid var(--accent, #ffbe00); }
 /* The one small row of controls a tile carries where its display has no handle: under the display, the kit's controls at their size. */
-.mon-tile { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
-.mon-tile-row { flex: none; display: flex; align-items: center; gap: 6px; height: 18px; }
 .mon-tile-row .dp-cell { flex-direction: row; align-items: center; gap: 4px; }
 .mon-tile-row .dp-cell--radio, .mon-tile-row .dp-cell--chooser { align-self: center; align-items: center; }
 .mon-tile-row .dp-chooser { width: auto; min-width: 80px; }

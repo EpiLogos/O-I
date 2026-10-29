@@ -13,6 +13,8 @@
 //                         name) and seat (the workcell it was opened in, env-1 and so on, where it belongs to one). This machine's are
 //                         read directly; another machine's by asking it, through its Remote carrier. An archived clearing is closed and
 //                         does not show.
+//   seasons               {active, quiescent, closed, archived}: how many clearings stand in each season over the whole listing, the
+//                         archived ones too (widgets/railBindings.ts nowsValues): the field's year, which the NOWs' environ draws.
 //   asked                 [{machine, at (unix s), answered}]: when each other machine last answered; one that did not answer keeps its
 //                         last answer, and its moments stand dimmed.
 //   close                 a now_ref to close: the ground's `central.now.lifecycle` action (kernel op invoke_action), asked from Full.
@@ -24,9 +26,14 @@
 // with Machines as handle 1 across its top; a moment pressed there opens in Full. Full's head carries the day, the time, its zone, the
 // day's state and the count of open moments, with Machines, Where and Close; its body is the day's hours, one lane for each machine, its
 // moments grouped by your ground, each project and each workcell, and the moment opened.
+//
+// Full's body opens with the NOWs' environ (manual §25.6: the NOWs are the seasons, a field's cycle): the clearings in growth, dormant,
+// harvested and in the record, from the same listing (faces/EnvironFaces.tsx SeasonsEnviron), across the head of the day's hours.
 import {Action, Chooser, Display, Handle, Radio, Tile} from '../../sdk/panel'
 import {NONE, clampTo, json, railAndPane, st, strOf, type ViewProps} from './design'
 import {MonitorHead, MonitorPane, MonitorPicture} from './monitor'
+import {SeasonsEnviron} from '../faces/EnvironFaces'
+import {seasonsOf} from '../faces/environReadings'
 
 type V = ViewProps['v']
 
@@ -165,6 +172,9 @@ function Day({p, w, h}: {p: ViewProps; w: number; h: number}) {
   </g>
 }
 
+/** The seasons' height across the head of Full. */
+const SEASONS_H = 96
+
 /** The open moments of your ground, of O-I and of a workcell, on this Mac and on omarchy. */
 const NOWS = [
   {now_ref: 'central:now:control:root:01', purpose: 'Device run: Live, Quaternal Logic and the rail', lifecycle: 'active', workcell_ref: 'workcell:mac', register: 'root', participant_refs: ['agent:fizz', 'agent:builder'], created_at_unix_seconds: 1792136400},
@@ -181,6 +191,8 @@ export const design = railAndPane({
   defaults: {
     day: '2026-10-16', time: '2026-10-16T14:22:08+01:00', timezone: 'Europe/London', dayState: 'open', machine: 'all', where: 'all', open: 'central:now:control:root:01',
     nows: JSON.stringify(NOWS),
+    seasons: JSON.stringify({active: NOWS.filter(n => n.lifecycle === 'active').length, quiescent: NOWS.filter(n => n.lifecycle === 'quiescent').length,
+      closed: NOWS.filter(n => n.lifecycle === 'closed').length, archived: NOWS.filter(n => n.lifecycle === 'archived').length}),
     asked: JSON.stringify([{machine: 'workcell:omarchy', at: 1792156800, answered: true}]),
   },
   fixtures: {
@@ -188,10 +200,14 @@ export const design = railAndPane({
     'One machine': {machine: 'omarchy'},
     'One project': {where: 'project:O-I'},
     'The other machine is silent': {asked: JSON.stringify([{machine: 'workcell:omarchy', at: 1792149900, answered: false}])},
-    'The ground reports nothing': {day: undefined, time: undefined, timezone: undefined, dayState: undefined, nows: undefined, asked: undefined, open: undefined, reason: 'The ground did not answer'},
+    'The ground reports nothing': {day: undefined, time: undefined, timezone: undefined, dayState: undefined, nows: undefined, seasons: undefined, asked: undefined, open: undefined, reason: 'The ground did not answer'},
   },
 
-  full: p => <MonitorPane dark label="NOWs" head={<Head p={p} />}>{room => <MonitorPicture room={room} label="The moments of the day"><Day p={p} w={room.w} h={room.h} /></MonitorPicture>}</MonitorPane>,
+  full: p => <MonitorPane dark label="NOWs" head={<Head p={p} />}>{room => { const day = {w: room.w, h: Math.max(120, room.h - SEASONS_H - 12)}
+    return <>
+      <div className="mon-environ"><SeasonsEnviron reading={seasonsOf(p.v)} w={Math.max(240, room.w - 16)} h={SEASONS_H} /></div>
+      <div className="mon-under" style={{top: room.h - day.h}}><MonitorPicture room={day} label="The moments of the day"><Day p={p} w={day.w} h={day.h} /></MonitorPicture></div>
+    </> }}</MonitorPane>,
 
   widget: p => <Tile title="NOWs" light="unknown" lightWhy={LIGHT_WHY} span={2} onFull={p.nav.full}>
     <Display w={266} h={104} label="Now" does={`${DISPLAY_DOES} Drag handle 1 for one machine. Click a moment to open it in Full.`}><Moments p={p} w={266} h={104} handle press={openMoment(p)} size={8.5} /></Display>

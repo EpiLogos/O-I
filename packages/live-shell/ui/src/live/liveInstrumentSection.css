@@ -23,6 +23,4 @@
 .live-presets-list { display: flex; flex-direction: column; gap: 4px; margin: 0; padding: 0; list-style: none; }
 .live-presets-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; }
 .live-presets-row span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-dim); }
-.live-presets-save { display: flex; align-items: flex-end; gap: 6px; }
-.live-presets-save label { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; color: var(--text-faint); font-size: 10px; }
 .live-presets-note.is-refused { color: var(--rec); }
