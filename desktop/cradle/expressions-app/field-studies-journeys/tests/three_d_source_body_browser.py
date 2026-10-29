@@ -91,6 +91,11 @@ with browser_session({'width': 1280, 'height': 900}) as (_, ctx, page):
     page.wait_for_function('() => !!window.__FIELD_STUDIES__', timeout=45000)
 
     # --- 1. Open the twelve-mask study through the library ---------------------
+    # The test hook is set before start-up finishes; the library opens from #library only after it, so wait for the card.
+    try:
+        page.wait_for_selector('[data-action="start-mode"][data-id="source-twelve-faces"]', state='attached', timeout=45000)
+    except Exception:
+        pass
     opened = page.evaluate("""() => {
       const b = document.querySelector('[data-action="start-mode"][data-id="source-twelve-faces"]');
       if (!b) return false;

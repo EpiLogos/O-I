@@ -8,7 +8,8 @@ const errors = [];
 page.on('pageerror', (e) => errors.push('pageerror: ' + e));
 await page.goto((process.env.OI_TEST_URL || 'http://localhost:3001/') + '#library', { waitUntil: 'load' });
 await page.waitForFunction('() => !!window.__FIELD_STUDIES__', null, { timeout: 45000 });
-await page.waitForTimeout(2500);
+// The test hook is set before start-up finishes; the library opens from #library only after it, so wait for the card.
+await page.waitForSelector('[data-action="start-mode"][data-id="source-laminate-head"]', { state: 'attached', timeout: 45000 }).catch(() => {});
 const found = await page.evaluate(`(() => { const b = document.querySelector('[data-action="start-mode"][data-id="source-laminate-head"]'); if (b) b.click(); return !!b; })()`);
 console.log('showcase present:', found);
 await page.waitForFunction(`() => window.__FIELD_STUDIES__.getState().engine === 'Native particle field'`, null, { timeout: 45000 });
