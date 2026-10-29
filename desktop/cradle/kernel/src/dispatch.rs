@@ -12,6 +12,14 @@
 //! `dispatch` also reports where an op's time went — waiting for the lock,
 //! holding it, and in owner work outside it — so a host's trace separates
 //! queueing from kernel time from owner time.
+//!
+//! The live field is not served under the kernel lock at all (lane Z): its
+//! manager has a lock of its own (native_expression.rs `Field`), which a
+//! host holds beside the kernel and passes to `dispatch_with`. A Nara op's
+//! place — the directory its Project names and the ProjectRef bound there —
+//! is resolved by its owners before the lock is taken to prepare it, and its
+//! commit's owner half (the saved identity's re-read, a pin's custody, a
+//! presence's publication) runs outside the lock too.
 use crate::{
     agent_prepared, decision, dictation, ground, knowledge_prepared, m3_reception, nara_current,
     nara_dialogue, nara_epii, nara_expressive_act, nara_identity, nara_presence, nara_voice,
@@ -24,14 +32,16 @@ use std::time::{Duration, Instant};
 /// Where one op's time went.
 #[derive(Clone, Copy, Debug, Default)]
 pub struct Timing {
-    /// Waiting to take the kernel lock, summed over every take.
+    /// Waiting to take the lock that serves the op, summed over every take:
+    /// the kernel's, or for a `native-field` op the field's own.
     pub lock_wait: Duration,
-    /// Holding the kernel lock, summed over every take.
+    /// Holding that lock, summed over every take.
     pub lock_held: Duration,
     /// Executing prepared owner work, without the lock.
     pub owner: Duration,
     /// Which form served the op: `free` (no kernel state), a prepared
-    /// form's name, or `ordered` (applied under the lock).
+    /// form's name, `native-field` (on the field's own lock), or `ordered`
+    /// (applied under the kernel lock).
     pub form: &'static str,
 }
 
@@ -126,6 +136,19 @@ pub fn trace_kept(what: &str) {
     trace_line(|| format!("[kept] {} {what}\n", unix_ms()));
 }
 
+/// An executable image's digest (native_expression.rs `Digests`): `hashed`
+/// (read whole, how long it took) or `kept` (its standing had not moved).
+pub fn trace_digest(path: &std::path::Path, how: &str, bytes: u64, took: Duration) {
+    trace_line(|| {
+        format!(
+            "[digest] {} {how} bytes={bytes} ms={:.1} {}\n",
+            unix_ms(),
+            millis(took),
+            path.display()
+        )
+    });
+}
+
 /// Where one host's trace goes: the file `OI_KERNEL_TRACE_FILE` named when
 /// the first line was written, opened once for appending.
 fn trace_line(line: impl FnOnce() -> String) {
@@ -158,6 +181,24 @@ fn millis(duration: Duration) -> f64 {
     duration.as_secs_f64() * 1000.0
 }
 
+/// Take `lock`, run `act` under it, and add the wait and the hold to
+/// `timing`.
+pub(crate) fn timed<M, T>(
+    timing: &mut Timing,
+    lock: &Mutex<M>,
+    unavailable: &str,
+    act: impl FnOnce(&mut M) -> T,
+) -> Result<T, String> {
+    let asked = Instant::now();
+    let mut guard = lock.lock().map_err(|_| unavailable.to_owned())?;
+    let taken = Instant::now();
+    timing.lock_wait += taken - asked;
+    let value = act(&mut guard);
+    drop(guard);
+    timing.lock_held += taken.elapsed();
+    Ok(value)
+}
+
 /// The kernel lock, taken and timed.
 struct Seat<'a> {
     kernel: &'a Mutex<Kernel>,
@@ -166,17 +207,12 @@ struct Seat<'a> {
 
 impl Seat<'_> {
     fn hold<T>(&mut self, act: impl FnOnce(&mut Kernel) -> T) -> Result<T, String> {
-        let asked = Instant::now();
-        let mut kernel = self
-            .kernel
-            .lock()
-            .map_err(|_| "kernel lock unavailable".to_owned())?;
-        let taken = Instant::now();
-        self.timing.lock_wait += taken - asked;
-        let value = act(&mut kernel);
-        drop(kernel);
-        self.timing.lock_held += taken.elapsed();
-        Ok(value)
+        timed(
+            &mut self.timing,
+            self.kernel,
+            "kernel lock unavailable",
+            act,
+        )
     }
     fn owner<T>(&mut self, work: impl FnOnce() -> T) -> T {
         let started = Instant::now();
@@ -196,7 +232,6 @@ enum Prepared {
     Voice(nara_voice::Prepared),
     Dialogue(nara_dialogue::Prepared),
     Identity(nara_identity::Prepared),
-    Compose(native_expression::PreparedCompose),
     Read(owner_read::PreparedRead),
     Files(owner_read::PreparedFiles),
     Agent(agent_prepared::PreparedAgent),
@@ -222,7 +257,6 @@ impl Prepared {
             Self::Voice(_) => "nara-voice",
             Self::Dialogue(_) => "nara-dialogue",
             Self::Identity(_) => "nara-identity",
-            Self::Compose(_) => "native-compose",
             Self::Read(_) => "owner-read",
             Self::Files(_) => "files",
             Self::Agent(_) => "agent",
@@ -240,36 +274,37 @@ impl Prepared {
 
 impl Kernel {
     /// The prepared-op table: the first form that claims `op` prepares it,
-    /// under the kernel lock. Each form claims only its own ops.
-    fn prepare_op(&mut self, op: &KernelOp) -> Result<Prepared, String> {
-        if let Some(p) = self.prepare_nara_epii(op)? {
+    /// under the kernel lock. Each form claims only its own ops. A Nara op
+    /// is prepared at the `place` its owners resolved outside the lock
+    /// (`nara_project`); without one it is resolved here, under it.
+    fn prepare_op(
+        &mut self,
+        op: &KernelOp,
+        place: Option<agent_prepared::Place>,
+    ) -> Result<Prepared, String> {
+        if let Some(p) = self.prepare_nara_epii(op, place.clone())? {
             return Ok(Prepared::Epii(p));
         }
-        if let Some(p) = self.prepare_nara_expressive_act(op)? {
+        if let Some(p) = self.prepare_nara_expressive_act(op, place.clone())? {
             return Ok(Prepared::Act(p));
         }
-        if let Some(p) = self.prepare_nara_presence(op)? {
+        if let Some(p) = self.prepare_nara_presence(op, place.clone())? {
             return Ok(Prepared::Presence(p));
         }
-        if let Some(p) = self.prepare_m3_reception(op)? {
+        if let Some(p) = self.prepare_m3_reception(op, place.clone())? {
             return Ok(Prepared::M3(p));
         }
-        if let Some(p) = self.prepare_nara_current(op)? {
+        if let Some(p) = self.prepare_nara_current(op, place.clone())? {
             return Ok(Prepared::Current(p));
         }
-        if let Some(p) = self.prepare_nara_voice(op)? {
+        if let Some(p) = self.prepare_nara_voice(op, place.clone())? {
             return Ok(Prepared::Voice(p));
         }
-        if let Some(p) = self.prepare_nara_dialogue(op)? {
+        if let Some(p) = self.prepare_nara_dialogue(op, place)? {
             return Ok(Prepared::Dialogue(p));
         }
         if let Some(p) = self.prepare_nara_identity(op) {
             return Ok(Prepared::Identity(p));
-        }
-        // Composing may provision QL's dated sky for tens of seconds: run it
-        // outside the lock; only the single-owner open is serialised.
-        if let Some(p) = self.prepare_native_compose(op)? {
-            return Ok(Prepared::Compose(p));
         }
         if let Some(p) = self.prepare_owner_read(op) {
             return Ok(Prepared::Read(p));
@@ -341,16 +376,37 @@ impl Kernel {
 }
 
 /// Dispatch one op against the host's kernel: free ops run without the lock,
-/// prepared ops run their owner work outside it, every other op is applied in
-/// order under it. Returns the outcome and where its time went; the host
-/// forwards the outcome's receipts.
+/// prepared ops run their owner work outside it, a field op runs on the
+/// field's own lock, every other op is applied in order under the kernel
+/// lock. Returns the outcome and where its time went; the host forwards the
+/// outcome's receipts. A field op takes the kernel lock only for an instant,
+/// to find the field; a host that holds the field calls `dispatch_with`.
 pub fn dispatch(kernel: &Mutex<Kernel>, op: KernelOp) -> (Result<KernelOpOutcome, String>, Timing) {
+    dispatch_in(kernel, None, op)
+}
+
+/// `dispatch` for a host that holds the live field's handle
+/// (`Kernel::native_field`) beside its kernel: a field op never takes the
+/// kernel lock, so it answers whatever the kernel lock is doing.
+pub fn dispatch_with(
+    kernel: &Mutex<Kernel>,
+    field: &native_expression::Field,
+    op: KernelOp,
+) -> (Result<KernelOpOutcome, String>, Timing) {
+    dispatch_in(kernel, Some(field), op)
+}
+
+fn dispatch_in(
+    kernel: &Mutex<Kernel>,
+    field: Option<&native_expression::Field>,
+    op: KernelOp,
+) -> (Result<KernelOpOutcome, String>, Timing) {
     let mut seat = Seat {
         kernel,
         timing: Timing::default(),
     };
     let memory_only = reads_kernel_memory_only(&op);
-    let (result, scopes) = crate::read_cache::attributed(|| run(&mut seat, op));
+    let (result, scopes) = crate::read_cache::attributed(|| run(&mut seat, field, op));
     let result = result.map(|mut outcome| {
         // An op that read nothing through the model is attributed only when
         // it is known to read the kernel's own memory; any other stays
@@ -390,12 +446,62 @@ pub(crate) fn is_free(op: &KernelOp) -> bool {
     }
 }
 
-fn run(seat: &mut Seat<'_>, op: KernelOp) -> Result<KernelOpOutcome, String> {
+fn run(
+    seat: &mut Seat<'_>,
+    field: Option<&native_expression::Field>,
+    op: KernelOp,
+) -> Result<KernelOpOutcome, String> {
+    if let KernelOp::NativeExpression { request } = op {
+        return run_field(seat, field, request);
+    }
     if !is_free(&op) {
         return run_prepared(seat, op);
     }
     seat.timing.form = "free";
     seat.owner(|| free(op))
+}
+
+/// A field op on the field's own lock (`native_expression::Field`): an
+/// exchange's round trip to `ql-field-host`, a compose's open of it, never
+/// under the kernel lock. Without the host's handle, the kernel lock is
+/// taken for the instant it takes to find the field.
+fn run_field(
+    seat: &mut Seat<'_>,
+    field: Option<&native_expression::Field>,
+    request: native_expression::Request,
+) -> Result<KernelOpOutcome, String> {
+    seat.timing.form = "native-field";
+    let found;
+    let field = match field {
+        Some(field) => field,
+        None => {
+            found = seat.hold(|kernel| kernel.native_field())?;
+            &found
+        }
+    };
+    let data = field.apply_timed(request, &mut seat.timing)?;
+    Ok(KernelOpOutcome {
+        read_scopes: None,
+        receipts: Vec::new(),
+        result: KernelOpResult::NativeExpression { data },
+    })
+}
+
+/// The Project label of a Nara op whose prepare needs its place (the
+/// directory and the ProjectRef bound there); read from the op alone.
+fn nara_project(op: &KernelOp) -> Option<&str> {
+    match op {
+        KernelOp::NaraEpii { project, .. }
+        | KernelOp::NaraExpressiveAct { project, .. }
+        | KernelOp::M3Reception { project, .. }
+        | KernelOp::NaraCurrent { project, .. }
+        | KernelOp::NaraVoice { project, .. }
+        | KernelOp::NaraDialogue { project, .. } => Some(project),
+        KernelOp::NaraPresence { project, request } if request.admission().is_some() => {
+            Some(project)
+        }
+        _ => None,
+    }
 }
 
 /// The owners with no kernel state at all (`is_free`), run without the lock.
@@ -449,20 +555,33 @@ fn free(op: KernelOp) -> Result<KernelOpOutcome, String> {
 }
 
 fn run_prepared(seat: &mut Seat<'_>, op: KernelOp) -> Result<KernelOpOutcome, String> {
-    let prepared = seat.hold(|kernel| kernel.prepare_op(&op))??;
+    // A Nara op's place is resolved by its owners (Central's World, its
+    // project inspection, AIKit's root binding) outside the lock; the lock
+    // never guarded those owners' answers, and the prepare that follows
+    // captures the kernel's own state in one take, as before.
+    let place = match nara_project(&op) {
+        Some(project) => {
+            let place = seat.hold(|kernel| kernel.prepare_place(project))?;
+            Some(seat.owner(|| place.resolve())?)
+        }
+        None => None,
+    };
+    let prepared = seat.hold(|kernel| kernel.prepare_op(&op, place))??;
     seat.timing.form = prepared.form();
     match prepared {
         Prepared::Epii(p) => {
             let done = seat.owner(|| p.execute())?;
-            seat.hold(|kernel| kernel.finish_nara_epii(done))?
+            commit_nara_epii(seat, done)
         }
         Prepared::Act(p) => {
             let done = seat.owner(|| p.execute())?;
-            seat.hold(|kernel| kernel.finish_nara_expressive_act(done))?
+            commit_nara_expressive_act(seat, done)
         }
         Prepared::Presence(p) => {
             let done = seat.owner(|| p.execute())?;
-            seat.hold(|kernel| kernel.finish_nara_presence(done))?
+            commit_nara_presence(seat, done, |request| {
+                crate::shared_field::call(request).map_err(|error| error.detail())
+            })
         }
         Prepared::M3(p) => {
             let done = seat.owner(|| p.execute())?;
@@ -475,10 +594,6 @@ fn run_prepared(seat: &mut Seat<'_>, op: KernelOp) -> Result<KernelOpOutcome, St
         Prepared::Voice(p) => seat.owner(|| p.execute()),
         Prepared::Dialogue(p) => seat.owner(|| p.execute()),
         Prepared::Identity(p) => seat.owner(|| p.execute()),
-        Prepared::Compose(p) => {
-            let done = seat.owner(|| p.execute())?;
-            seat.hold(|kernel| kernel.finish_native_compose(done))?
-        }
         Prepared::Read(p) => seat.owner(|| p.execute()),
         Prepared::Files(p) => {
             let done = seat.owner(|| p.execute());
@@ -543,6 +658,49 @@ fn commit_m3_reception(
     seat.hold(|kernel| kernel.finish_m3_reception(done))?
 }
 
+/// An accepted Epii return's commit (lane Z): the saved identity's re-read
+/// runs outside the lock; the document, profile and occasion checks and the
+/// reviewed focus's application hold it in one take. Identity writes never
+/// take the kernel lock (a NaraIdentity save runs wholly outside it), so
+/// reading the identity under it bought no atomicity.
+fn commit_nara_epii(
+    seat: &mut Seat<'_>,
+    done: nara_epii::PreparedOutcome,
+) -> Result<KernelOpOutcome, String> {
+    let done = seat.owner(|| done.confirmed())?;
+    seat.hold(|kernel| kernel.finish_nara_epii(done))?
+}
+
+/// An expressive act's commit, split the same way.
+fn commit_nara_expressive_act(
+    seat: &mut Seat<'_>,
+    done: nara_expressive_act::PreparedOutcome,
+) -> Result<KernelOpOutcome, String> {
+    let done = seat.owner(|| done.confirmed())?;
+    seat.hold(|kernel| kernel.finish_nara_expressive_act(done))?
+}
+
+/// A presence's commit (lane Z): the saved identity's re-read, then the
+/// unchanged-Expression and profile check under the lock, then SharedField's
+/// publication outside it. The publication had been held under the lock "to
+/// serialize it with native Expression changes"; that bought nothing: what
+/// is published is fixed at preparation (the safe cues of the captured
+/// document, naming its revision), the check shows that document is still
+/// the kernel's, and the publication records nothing in the kernel. An
+/// Expression change landing during the network call leaves the same
+/// outcome either way — the named revision published, the newer one local —
+/// and SharedField's other writes, a presence's withdrawal among them,
+/// never ran under this lock. `publish` is SharedField's own call.
+fn commit_nara_presence(
+    seat: &mut Seat<'_>,
+    done: nara_presence::Completed,
+    publish: impl FnOnce(&serde_json::Value) -> Result<serde_json::Value, String>,
+) -> Result<KernelOpOutcome, String> {
+    let done = seat.owner(|| done.confirmed())?;
+    let admitted = seat.hold(|kernel| kernel.finish_nara_presence(done))??;
+    seat.owner(|| admitted.publish(publish))
+}
+
 #[cfg(all(test, unix))]
 mod tests {
     use super::*;
@@ -553,7 +711,7 @@ mod tests {
     fn the_named_owner_reads_are_prepared_and_the_rest_are_ordered() {
         let owner = crate::tests::FakeOwner::spawn_counter("dispatch-forms");
         let mut kernel = owner.kernel();
-        let mut form = |op: KernelOp| kernel.prepare_op(&op).unwrap().form();
+        let mut form = |op: KernelOp| kernel.prepare_op(&op, None).unwrap().form();
         assert_eq!(
             form(KernelOp::Central {
                 project: None,
@@ -677,7 +835,8 @@ mod tests {
     }
 
     /// A Central stand-in whose saved-identity read is held while the gate
-    /// file stands: a slow owner read, by a real child process.
+    /// file stands, and its project inspection while `<gate>.inspect` does:
+    /// slow owner reads, by a real child process.
     const HELD_IDENTITY_OWNER: &str = r#"#!/usr/bin/env python3
 import hashlib, json, os, sys, time
 log, gate = sys.argv[1], sys.argv[2]
@@ -688,7 +847,11 @@ with open(log, "a") as handle:
     handle.write(action + "\n")
 def ok(data):
     print(json.dumps({"ok": True, "action": action, "data": data}))
-if action == "projectcentral.source.read":
+if action == "projectcentral.inspect":
+    while os.path.exists(gate + ".inspect"):
+        time.sleep(0.02)
+    ok({"manifest": {"project_id": "project:lane-z"}})
+elif action == "projectcentral.source.read":
     while os.path.exists(gate):
         time.sleep(0.02)
     request = json.loads(args[i + 3])
@@ -701,7 +864,8 @@ if action == "projectcentral.source.read":
         "content": profile, "content_encoding": "utf-8",
         "automatic_agent_or_model_invocation": False})
 elif action == "central.world":
-    ok({"schema": "central.world-map/v1", "root": "/tmp", "work": {"projects": []}})
+    ok({"schema": "central.world-map/v1", "root": "/tmp",
+        "work": {"projects": [{"name": "lane-z", "path": "Work/lane-z"}]}})
 else:
     ok({})
 "#;
@@ -797,33 +961,44 @@ else:
             self.kernel.lock().unwrap().client.clone()
         }
 
-        fn identity_reads(&self) -> usize {
+        fn calls(&self, action: &str) -> usize {
             std::fs::read_to_string(&self.log)
-                .map(|text| {
-                    text.lines()
-                        .filter(|line| *line == "projectcentral.source.read")
-                        .count()
-                })
+                .map(|text| text.lines().filter(|line| *line == action).count())
                 .unwrap_or(0)
         }
 
+        fn identity_reads(&self) -> usize {
+            self.calls("projectcentral.source.read")
+        }
+
         /// Runs `commit` while the saved identity's read is held, and asks the
-        /// live field's ordered exchange and the state snapshot meanwhile. Both
-        /// must be answered before the held read is released: their answers
-        /// arrive while the owner process still sleeps, whatever the machine's
-        /// speed. The bound only stops a failing run from waiting forever.
+        /// live field's exchange and the state snapshot meanwhile. Both must
+        /// be answered before the held read is released: their answers arrive
+        /// while the owner process still sleeps, whatever the machine's speed.
+        /// The bound only stops a failing run from waiting forever.
         fn answered_while_held<T: Send>(
             &self,
             commit: impl FnOnce(&Mutex<Kernel>) -> T + Send,
         ) -> T {
-            std::fs::write(&self.gate, "").unwrap();
+            self.answered_while(&self.gate, || self.identity_reads() > 0, commit)
+        }
+
+        /// `answered_while_held` for any slow step: `gate` holds it, `asked`
+        /// says it has begun.
+        fn answered_while<T: Send>(
+            &self,
+            gate: &std::path::Path,
+            asked: impl Fn() -> bool,
+            commit: impl FnOnce(&Mutex<Kernel>) -> T + Send,
+        ) -> T {
+            std::fs::write(gate, "").unwrap();
             std::thread::scope(|scope| {
                 let committing = scope.spawn(|| commit(&self.kernel));
                 let deadline = Instant::now() + Duration::from_secs(60);
-                while self.identity_reads() == 0 {
+                while !asked() {
                     assert!(
                         Instant::now() < deadline,
-                        "the commit never asked for the saved identity"
+                        "the commit never reached its held step"
                     );
                     std::thread::sleep(Duration::from_millis(10));
                 }
@@ -843,10 +1018,10 @@ else:
                     let _ = answered.send((field, state));
                 });
                 let probe = received.recv_timeout(Duration::from_secs(30));
-                let still_held = self.gate.exists() && !committing.is_finished();
-                std::fs::remove_file(&self.gate).unwrap();
+                let still_held = gate.exists() && !committing.is_finished();
+                std::fs::remove_file(gate).unwrap();
                 let (field, state) = probe.unwrap_or_else(|_| {
-                    panic!("the field's exchange and the state snapshot waited behind the held identity read")
+                    panic!("the field's exchange and the state snapshot waited behind the held owner step")
                 });
                 assert!(
                     still_held,
@@ -938,6 +1113,199 @@ else:
         assert!(timing.lock_held < timing.owner);
     }
 
+    /// Lane Z (DLW, O-I #706): an accepted Epii return re-read the saved
+    /// identity under the kernel lock. It is read outside it now; the
+    /// in-memory checks and the focus hold the lock.
+    #[test]
+    fn an_epii_acceptance_answers_the_field_while_its_identity_is_held() {
+        let held = HeldIdentity::new("epii");
+        let (document, profile) = held.basis();
+        let binding = HeldIdentity::binding();
+        let accepted =
+            nara_epii::PreparedOutcome::Accept(Box::new(nara_epii::ReviewedEnrichment {
+                client: held.client(),
+                context_state: Default::default(),
+                origin_binding: binding.clone(),
+                origin_session_ref: "agent-session:lane-z".into(),
+                identity_source_ref: binding.source_ref.clone(),
+                identity_revision: binding.expected_revision.clone(),
+                expected_revision: document["revision"].as_u64().unwrap(),
+                captured_document: document,
+                captured_profile: profile,
+                expression_ref: HeldIdentity::EXPRESSION.into(),
+                proposal_ref: "proposal:lane-z".into(),
+                proposed_by: "agent-session:lane-z".into(),
+                activity_ref: "agent-session:lane-z#block-1".into(),
+                summary: "Lane Z".into(),
+                change: crate::expression::Change::Rename {
+                    title: "Lane Z".into(),
+                },
+                method_refs: vec![],
+                evidence_refs: vec![],
+                provenance: serde_json::json!({}),
+            }));
+        let (outcome, timing) = held.answered_while_held(|kernel| {
+            let mut seat = Seat {
+                kernel,
+                timing: Timing::default(),
+            };
+            (commit_nara_epii(&mut seat, accepted), seat.timing)
+        });
+        // The reviewed change is a rename, which a focus review refuses — after
+        // the identity was confirmed, under the lock.
+        assert!(outcome.unwrap_err().contains("focus proposal"));
+        assert_eq!(held.identity_reads(), 1);
+        assert!(timing.lock_held < timing.owner);
+    }
+
+    /// The same commit seam for an expressive act's restore.
+    #[test]
+    fn an_expressive_act_answers_the_field_while_its_identity_is_held() {
+        let held = HeldIdentity::new("act");
+        let (document, profile) = held.basis();
+        let restore = nara_expressive_act::PreparedOutcome::Restore(Box::new(
+            nara_expressive_act::PreparedRestore {
+                client: held.client(),
+                binding: HeldIdentity::binding(),
+                expected_revision: document["revision"].as_u64().unwrap(),
+                captured_document: document,
+                captured_profile: profile,
+                agent_session_ref: "agent-session:lane-z".into(),
+                act_ref: "oi:nara-act:lane-z".into(),
+            },
+        ));
+        let (outcome, timing) = held.answered_while_held(|kernel| {
+            let mut seat = Seat {
+                kernel,
+                timing: Timing::default(),
+            };
+            (commit_nara_expressive_act(&mut seat, restore), seat.timing)
+        });
+        // No checkpoint was ever retained: the restore is refused under the
+        // lock, after the identity was confirmed outside it.
+        assert!(outcome.unwrap_err().contains("no retained checkpoint"));
+        assert_eq!(held.identity_reads(), 1);
+        assert!(timing.lock_held < timing.owner);
+    }
+
+    /// A presence admission prepared on the held-identity kernel's basis.
+    fn presence(held: &HeldIdentity) -> nara_presence::Completed {
+        let (document, profile) = held.basis();
+        nara_presence::Completed {
+            client: held.client(),
+            operation: nara_presence::Operation::Publish,
+            request: nara_presence::Admission {
+                binding: HeldIdentity::binding(),
+                expected_expression_revision: document["revision"].as_u64().unwrap(),
+                publication: serde_json::from_value(serde_json::json!({
+                    "field_ref": "field:lane-z", "world_ref": "world:lane-z",
+                    "projection_ref": "projection:lane-z", "presentation_ref": "presentation:lane-z",
+                    "projection_revision": 1, "publisher_identity_ref": "human:lane-z",
+                    "publisher_participant_ref": "participant:one", "target_ref": "participant:two",
+                    "target_identity_ref": "human:two", "consent_ref": "consent:lane-z",
+                    "granted_at": "2026-10-29T12:00:00Z", "granted_at_unix_ms": 1}))
+                .unwrap(),
+            },
+            document,
+            profile,
+            safe_document: serde_json::json!({"schema": "oi.expression/v1"}),
+            consent_reading: serde_json::json!({"permitted": true}),
+        }
+    }
+
+    /// Lane Z: a presence re-read the saved identity under the kernel lock.
+    #[test]
+    fn a_presence_answers_the_field_while_its_identity_is_held() {
+        let held = HeldIdentity::new("presence");
+        let completed = presence(&held);
+        let (outcome, timing) = held.answered_while_held(|kernel| {
+            let mut seat = Seat {
+                kernel,
+                timing: Timing::default(),
+            };
+            let published = commit_nara_presence(&mut seat, completed, |request| {
+                Ok(serde_json::json!({"published": request["kind"]}))
+            });
+            (published, seat.timing)
+        });
+        let outcome = outcome.unwrap();
+        assert!(matches!(
+            outcome.result,
+            KernelOpResult::NaraPresence { ref data }
+                if data["published"] == "publish_nara" && data["consent_reading"]["permitted"] == true
+        ));
+        assert_eq!(held.identity_reads(), 1);
+        assert!(timing.lock_held < timing.owner);
+    }
+
+    /// SharedField's publication, by a real child process held on a gate:
+    /// it had run under the kernel lock "to serialize it with native
+    /// Expression changes"; it runs after the admission, outside it.
+    #[test]
+    fn a_presence_publication_answers_the_field_while_it_is_sent() {
+        let held = HeldIdentity::new("publication");
+        let completed = presence(&held);
+        let gate = held.directory.join("publication-gate");
+        let started = held.directory.join("publication-started");
+        let publish = |request: &serde_json::Value| -> Result<serde_json::Value, String> {
+            let sent = std::process::Command::new("python3")
+                .arg("-c")
+                .arg(
+                    "import json,os,sys,time\n\
+                     open(sys.argv[1],'w').close()\n\
+                     while os.path.exists(sys.argv[2]): time.sleep(0.02)\n\
+                     print(json.dumps({'published': json.loads(sys.argv[3])['kind']}))",
+                )
+                .arg(&started)
+                .arg(&gate)
+                .arg(request.to_string())
+                .output()
+                .map_err(|e| e.to_string())?;
+            serde_json::from_slice(&sent.stdout).map_err(|e| e.to_string())
+        };
+        let outcome = held.answered_while(
+            &gate,
+            || started.exists(),
+            |kernel| {
+                let mut seat = Seat {
+                    kernel,
+                    timing: Timing::default(),
+                };
+                commit_nara_presence(&mut seat, completed, publish)
+            },
+        );
+        assert!(matches!(
+            outcome.unwrap().result,
+            KernelOpResult::NaraPresence { ref data } if data["published"] == "publish_nara"
+        ));
+    }
+
+    /// Lane Z: a Nara op's prepare resolved its place — Central's World, the
+    /// named project's inspection — under the kernel lock. Its owners answer
+    /// outside it now, before the prepare captures the kernel's state.
+    #[test]
+    fn a_nara_prepare_answers_the_field_while_its_project_is_inspected() {
+        let held = HeldIdentity::new("place");
+        let gate = held.gate.with_extension("inspect");
+        let op = KernelOp::NaraCurrent {
+            project: "lane-z".into(),
+            request: nara_current::Request::Read {
+                binding: HeldIdentity::binding(),
+            },
+        };
+        let (outcome, timing) = held.answered_while(
+            &gate,
+            || held.calls("projectcentral.inspect") > 0,
+            |kernel| dispatch(kernel, op),
+        );
+        // The stand-in Expression selects no coordinate: the reading itself
+        // is refused, by its owner work, after the prepare.
+        assert!(outcome.unwrap_err().contains("coordinate"));
+        assert_eq!(held.calls("projectcentral.inspect"), 1);
+        assert_eq!(timing.form, "nara-current");
+        assert!(timing.lock_held < timing.owner);
+    }
+
     /// The scopes ride the wire beside the result when the kernel could
     /// attribute the op, and are absent when it could not.
     #[test]
@@ -993,7 +1361,7 @@ else:
             let form = if is_free(&op) {
                 "free"
             } else {
-                kernel.prepare_op(&op).unwrap().form()
+                kernel.prepare_op(&op, None).unwrap().form()
             };
             (name, form)
         };

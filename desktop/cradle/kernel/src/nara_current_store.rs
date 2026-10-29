@@ -36,7 +36,7 @@ impl Owner {
     }
     fn image(path: &Path, reported_revision: Option<String>) -> Result<Self, String> {
         let path = fs::canonicalize(path).map_err(|e| e.to_string())?;
-        let mut file = fs::File::open(&path).map_err(|e| e.to_string())?;
+        let file = fs::File::open(&path).map_err(|e| e.to_string())?;
         let before = file.metadata().map_err(|e| e.to_string())?;
         if !before.is_file() {
             return Err("The selected QL owner is not a regular executable".into());
@@ -48,40 +48,39 @@ impl Owner {
                 return Err("The selected QL owner is not executable".into());
             }
         }
-        let mut hash = Sha256::new();
-        let mut bytes = 0u64;
-        let mut block = [0u8; 65536];
-        loop {
-            let n = file.read(&mut block).map_err(|e| e.to_string())?;
-            if n == 0 {
-                break;
-            }
-            bytes = bytes
-                .checked_add(n as u64)
-                .ok_or("QL owner byte count overflow")?;
-            if bytes > before.len() {
-                return Err("The selected QL owner changed while qualified".into());
-            }
-            hash.update(&block[..n]);
-        }
-        let after = file.metadata().map_err(|e| e.to_string())?;
-        if bytes != before.len()
-            || before.len() != after.len()
-            || before.modified().ok() != after.modified().ok()
-        {
-            return Err("The selected QL owner changed while qualified".into());
-        }
+        // Hashed once per standing of the open image (native_expression.rs
+        // `Digests`): a replaced or rewritten image is hashed again.
+        let (digest, _) = crate::native_expression::Digests::global()
+            .digest(&path, file, &before)
+            .map_err(|error| match error {
+                crate::native_expression::DigestError::Changed => {
+                    "The selected QL owner changed while qualified".to_owned()
+                }
+                crate::native_expression::DigestError::Io(error) => error,
+            })?;
         Ok(Self {
             path,
-            bytes,
-            sha256: format!("{:x}", hash.finalize()),
+            bytes: digest.bytes,
+            sha256: digest.sha256,
             reported_revision,
         })
     }
-    /// Native code alone supplies this closure. Resolve and qualify the exact
-    /// selected image, execute that same absolute image with inherited owner
-    /// environment, then qualify both actual path and selected authority again.
-    /// This is source custody, not a claimed /proc loaded-image observation.
+    /// Native code alone supplies this closure. Resolve and qualify the
+    /// selected image once, execute that same absolute image with inherited
+    /// owner environment, then qualify both actual path and selected
+    /// authority again once: the qualified owner and the answer. A pin had
+    /// captured before and after this around `execute`, which captured again
+    /// on both sides — two back-to-back qualifications each way (lane Z).
+    pub(super) fn acquire<F>(operation: F) -> Result<(Self, Value), String>
+    where
+        F: FnOnce(&Path) -> Result<Value, String>,
+    {
+        let actual = Self::capture()?;
+        let value = actual.run_qualified(operation)?;
+        Ok((actual, value))
+    }
+    /// `acquire` on the owner a reading was admitted with: refused unless
+    /// the selected image is still that one.
     pub(super) fn execute<F>(&self, operation: F) -> Result<Value, String>
     where
         F: FnOnce(&Path) -> Result<Value, String>,
@@ -90,9 +89,16 @@ impl Owner {
         if !self.same_source(&actual) {
             return Err("The QL owner changed; explicitly admit a new personal current".into());
         }
-        let result = operation(&actual.path);
-        let after = Self::image(&actual.path, actual.reported_revision.clone())?;
-        if !actual.same_source(&after) || !actual.same_source(&Self::capture()?) {
+        actual.run_qualified(operation)
+    }
+    /// This is source custody, not a claimed /proc loaded-image observation.
+    fn run_qualified<F>(&self, operation: F) -> Result<Value, String>
+    where
+        F: FnOnce(&Path) -> Result<Value, String>,
+    {
+        let result = operation(&self.path);
+        let after = Self::image(&self.path, self.reported_revision.clone())?;
+        if !self.same_source(&after) || !self.same_source(&Self::capture()?) {
             return Err("The selected QL owner changed during native personal computation".into());
         }
         result
