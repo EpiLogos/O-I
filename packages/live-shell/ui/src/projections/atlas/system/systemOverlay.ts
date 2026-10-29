@@ -32,7 +32,8 @@ import {subscribeSuiteStanding, suiteStanding} from '../provider/suiteStanding'
 import {systemActs, systemReading, subscribeSystem} from './systemStore'
 import {occasionMs, occasionStep, shownWindow, subscribeWindow} from './bodyDraw'
 import type {SystemBody} from './systemModel'
-import {anchorsOf, routesOn, yourBodyRef, yourLocations, type Anchor, type BodyLocation, type DrawnRoute} from './bodyLocations'
+import {anchorsOf, chronologyBesideRoutes, routesOn, yourBodyRef, yourLocations, type Anchor, type BodyLocation, type DrawnRoute} from './bodyLocations'
+import {subjectOccurrences} from '../src/data/model'
 import {precisionMarker} from '../../../../../../../desktop/cradle/src/techne/m0m5/place/project'
 import './systemOverlay.css'
 
@@ -283,6 +284,24 @@ export function bindSystemOverlay({handle, said, press, follow}: {handle: AtlasH
   }
   const offRouteStanding = subscribeSuiteStanding(syncRoutes)
   const offRouteWindow = subscribeWindow(syncRoutes)
+  // A followed route on the Earth draws once (bodyLocations.ts chronologyBesideRoutes): the chronology the controller asks the globe's arcs
+  // for (src/app/controller.ts syncChronology, ported, kept as it is) is handed on without the stops of the followed subject's route, which this
+  // overlay draws in their order. Adapted here, at the host, on the engine's own arcs; released with the overlay.
+  const arcs = handle.engine.arcs as (typeof handle.engine.arcs & {buildChronology: (dirs: number[][], nodeU: number[], colour: [number, number, number]) => void}) | undefined
+  const ownBuild = !!arcs && Object.prototype.hasOwnProperty.call(arcs, 'buildChronology')
+  const heldBuild = arcs?.buildChronology
+  if (arcs?.buildChronology) {
+    const portBuild = arcs.buildChronology.bind(arcs)
+    arcs.buildChronology = (dirs, nodeU, colour) => {
+      const view = handle.ctl?.state?.view
+      const refs = view?.kind === 'focus' ? new Set(subjectOccurrences(handle.model, view.subject).map(index => handle.model.occ[index]?.subject_ref ?? '')) : new Set<string>()
+      const subject = refs.size === 1 ? [...refs][0] || null : null
+      const standing = suiteStanding()
+      const kept = subject && standing.phase === 'ready' ? chronologyBesideRoutes(dirs, nodeU, routesOn(standing.places, null, shownWindow()), subject) : {dirs, nodeU}
+      if (kept.dirs.length < 2) { arcs.clearChronology(); return }
+      portBuild(kept.dirs as typeof dirs, kept.nodeU, colour)
+    }
+  }
   const screen: ScreenPoint = {x: 0, y: 0, facing: 0}
   let marks: WorldMark[] = []
   let bodies: readonly SystemBody[] = []
@@ -431,6 +450,8 @@ export function bindSystemOverlay({handle, said, press, follow}: {handle: AtlasH
       offStanding()
       offRouteStanding()
       offRouteWindow()
+      // the engine's arcs build their chronology as the port does again
+      if (arcs && heldBuild) { if (ownBuild) arcs.buildChronology = heldBuild; else delete (arcs as {buildChronology?: unknown}).buildChronology }
       routesSvg?.remove()
       for (const mark of marks) mark.orbits.destroy()
       if (dom) {

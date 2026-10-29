@@ -77,6 +77,21 @@ export function applyPlaceDraft(values:TimePlaceValues,draft:MapPlaceDraft):{val
  const fact={place_ref:draft.place_ref??newRef('wiki:place'),precision:draft.precision,identity:{names:[{name:draft.name??''}]},geometry:{type:'point',coordinates:at},...(draft.body_ref?{body_ref:draft.body_ref}:{}),...(stop??{})} as TechnePlaceFacet;
  return {values:{...values,places:[...places,fact]},notice};
 }
+/** O-I #746: what each place fact is to its subject, as the place form lists it: the relation verbatim and, for a stop of a route, its place in
+ * the order, under the number the form gives the fact (TimePlaceFields' "Place fact N"). A fact with no relation says nothing. Pure. */
+export function placeStandings(places:readonly TechnePlaceFacet[]):{fact:number;text:string}[]{
+ return places.flatMap((fact,index)=>{
+  if(!fact.relation)return [];
+  const name=fact.identity?.names?.find(entry=>entry.name)?.name;
+  const stop=typeof fact.sequence==='number'?`, stop ${fact.sequence} of its route`:'';
+  return [{fact:index+1,text:`Place fact ${index+1}${name?`, ${name}`:''}: ${fact.relation}${stop}`}];
+ });
+}
+/** The place facts' relations and places in the order, beside the form (the form edits the point; the relation and the order are the map's). */
+export function PlaceStandings({places}:{places:readonly TechnePlaceFacet[]}){
+ const lines=placeStandings(places);
+ return lines.length?<ul className="wiki-construction-stops" aria-label="What each place is to this subject">{lines.map(line=><li key={line.fact}>{line.text}</li>)}</ul>:null;
+}
 const reportRoute=(route:PlaceRoute|undefined,outcome:{kind:'saved'}|{kind:'refused';reason:string})=>{if(route&&typeof window!=='undefined')window.dispatchEvent(new CustomEvent('oi:constellation-result',{detail:{target:route,...outcome}}));};
 /** A routed save answers the map exactly once: a refusal when the save did not complete, a saved answer when it did.
  * A failure after the owner has saved (the local confirm) reports to the editor only, never a second answer. */
@@ -158,6 +173,7 @@ export function WikiFactsProvider({transport,project,checkpoints,onCheckpoint,on
   <header><h2>Time and place{held?held.basis.target.kind==='node'?' · this node':' · this whole constellation':''}</h2><button type="button" className="oi-tool" data-facts-close aria-label="Close time and place editor" onClick={close}>×</button></header>
   <p>Closing keeps these inputs and any pending save. Only Save changes the native Wiki.</p>
   {held&&<><p>{held.basis.title} · saved revision {held.basis.revision}</p><fieldset disabled={!!busy||!!held.pending}><TimePlaceFields identity={factsKey(held.basis.target)} value={held.draft} basis={held.basis.values} transport={transport} summary="Time and place values" description={held.basis.target.kind==='node'?'These facts belong to this native node wherever it is read. Participation facts remain separate.':'These facts belong to the whole native frame. They do not change its members or their participation facts.'} onChange={draft=>{if(store({...held,draft})){setError('');setNotice('');}}}/></fieldset>
+   <PlaceStandings places={held.draft.places??[]}/>
    <div className="wiki-construction-toolbar"><button className="oi-action" disabled={!!busy} onClick={()=>void save()}>{held.pending?'Retry exact save':'Save time and place'}</button><button className="oi-action" disabled={!!busy} onClick={()=>void inspect()}>Inspect saved state</button></div>
    {held.pending&&<p>The exact pending operation is retained. Inspect before changing or retrying it.</p>}
    {observed&&(!held.pending||!observed.operations[held.pending.operation_ref])&&<button className="oi-action" disabled={!!busy} onClick={rebase}>Use current revision, keep my inputs</button>}

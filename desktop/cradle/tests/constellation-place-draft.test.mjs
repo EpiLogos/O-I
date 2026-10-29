@@ -198,3 +198,25 @@ test('a route draft is a stop: the editor writes its relation and its place in t
  const plain=api.applyPlaceDraft(emptyValues(),{lat:3,lon:4,precision:'approximate'});
  assert.ok(!('relation' in plain.values.places[0])&&!('sequence' in plain.values.places[0]),'a place draft is no stop');
 });
+
+// O-I #746 (round two): the editor's place form says what each place fact is to its subject: the relation, verbatim, and for a stop of a route
+// its place in the order, by the same number the form gives the fact ("Place fact N"), so the person sees the stop they are saving.
+test('the place form names each fact\'s relation and, for a stop, its place in the route\'s order', ()=>{
+ const places=[
+  {place_ref:'wiki:place:a',precision:'approximate',identity:{names:[{name:'Syracuse'}]},relation:'TRAVELLED_TO',sequence:1},
+  {place_ref:'wiki:place:h',precision:'exact',identity:{names:[{name:'Home'}]}},
+  {place_ref:'wiki:place:b',precision:'approximate',identity:{names:[{name:''}]},relation:'TRAVELLED_TO',sequence:2},
+  {place_ref:'wiki:place:c',precision:'region',identity:{names:[{name:'Atlantis'}]},relation:'MYTH_LOCATED_AT'},
+ ];
+ assert.deepEqual(api.placeStandings(places),[
+  {fact:1,text:'Place fact 1, Syracuse: TRAVELLED_TO, stop 1 of its route'},
+  {fact:3,text:'Place fact 3: TRAVELLED_TO, stop 2 of its route'},
+  {fact:4,text:'Place fact 4, Atlantis: MYTH_LOCATED_AT'},
+ ],'a fact with no relation says nothing; a stop says its place in the order');
+ const {renderToStaticMarkup}=require('react-dom/server'),{createElement}=require('react');
+ const html=renderToStaticMarkup(createElement(api.PlaceStandings,{places}));
+ assert.match(html,/Place fact 1, Syracuse: TRAVELLED_TO, stop 1 of its route/);
+ assert.match(html,/Place fact 3: TRAVELLED_TO, stop 2 of its route/);
+ assert.doesNotMatch(html,/Home/,'a place with no relation is not listed');
+ assert.equal(renderToStaticMarkup(createElement(api.PlaceStandings,{places:[places[1]]})),'','nothing is drawn when no fact carries a relation');
+});

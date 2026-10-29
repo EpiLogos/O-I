@@ -809,3 +809,47 @@ test('18c · a route draws through its stops in their order, on your body and on
   const dirs = overlay.routeDirs([{lat: 0, lon: 0}, {lat: 0, lon: 90}])
   assert.ok(dirs.length >= 30 && dirs.every(dir => Math.abs(Math.hypot(...dir) - 1) < 1e-9), 'a quarter turn is drawn in steps along the great circle')
 })
+
+// MET since O-I #746 round two (bodyLocations.ts chronologyBesideRoutes; systemOverlay.ts adapts the engine's arcs at the host): a followed route
+// on the Earth draws once, as its route through its stops in their order. The chronology the controller builds for the focused thread (src/app/
+// controller.ts syncChronology over src/globe/chronology.ts, both kept as ported) reaches the globe without that route's stops; the subject's other
+// places keep their chronology, and a thread of several subjects keeps its chronology whole.
+test('18d · a followed route on the Earth draws once: the route\'s line, not also the chronology through the same stops', async () => {
+  const {dirFromLatLon} = await import('../src/projections/atlas/src/data/geo.ts')
+  const plato = 'wiki:node:plato'
+  const at = [[38, 24], [40, 20], [30, 10], [20, 5], [10, 0]]
+  const stops = [
+    place('wiki:place:e2', {relation: 'TRAVELLED_TO', subject_ref: plato, sequence: 1, lat: 38, lon: 24}),
+    place('wiki:place:e1', {relation: 'TRAVELLED_TO', subject_ref: plato, sequence: 2, lat: 40, lon: 20}),
+    place('wiki:place:e3', {relation: 'OCCURRED_AT', subject_ref: plato, lat: 30, lon: 10}),
+    place('wiki:place:e4', {relation: 'OCCURRED_AT', subject_ref: plato, lat: 20, lon: 5}),
+  ]
+  standing.publishSuiteStanding({...standing.IDLE_STANDING, phase: 'ready', places: stops})
+  const built = [], cleared = []
+  const arcs = {buildChronology(dirs, nodeU) { built.push(dirs.map(dir => dir.map(x => Math.round(x * 1e6) / 1e6))) }, clearChronology() { cleared.push(true) }}
+  const model = {famMem: new Map([['f-plato', [0, 1, 2, 3]], ['f-many', [0, 1, 4]]]), located: [true, true, true, true, true],
+    occ: [{subject_ref: plato}, {subject_ref: plato}, {subject_ref: plato}, {subject_ref: plato}, {subject_ref: 'wiki:node:solon'}]}
+  const parent = new FakeEl('div')
+  const handle = {engine: {renderer: {domElement: {parentElement: parent}}, onFrame() {}, body: null, sky: null, reduced: true, arcs, project() {}, globeDisc() {}},
+    ctl: {state: {sky: false, graph: false, view: {kind: 'focus', subject: {type: 'family', id: 'f-plato'}}}}, model}
+  const binding = overlay.bindSystemOverlay({handle, said() {}})
+  const dirs = at.slice(0, 4).map(([lat, lon]) => dirFromLatLon(lat, lon)), round = list => list.map(dir => dir.map(x => Math.round(x * 1e6) / 1e6))
+  // the controller asks for Plato's thread in date order: his two stops and his two other places
+  handle.engine.arcs.buildChronology(dirs, [0.1, 0.2, 0.3, 0.4], [1, 1, 1])
+  assert.deepEqual(built.at(-1), round(dirs.slice(2)), 'the chronology the globe draws keeps Plato\'s other places and leaves out his route\'s stops, which the route\'s line draws')
+  // a thread of several subjects is not one subject's route: its chronology stands whole
+  handle.ctl.state.view = {kind: 'focus', subject: {type: 'family', id: 'f-many'}}
+  const many = [0, 1, 4].map(index => dirFromLatLon(...at[index]))
+  handle.engine.arcs.buildChronology(many, [0.1, 0.2, 0.5], [1, 1, 1])
+  assert.deepEqual(built.at(-1), round(many), 'a thread of several subjects keeps every step')
+  // a followed thread that is its route alone draws as the route only: no chronology
+  standing.publishSuiteStanding({...standing.IDLE_STANDING, phase: 'ready', places: stops.slice(0, 2)})
+  handle.ctl.state.view = {kind: 'focus', subject: {type: 'family', id: 'f-plato'}}
+  const before = built.length
+  handle.engine.arcs.buildChronology(dirs.slice(0, 2), [0.1, 0.2], [1, 1, 1])
+  assert.equal(built.length, before, 'nothing is built')
+  assert.ok(cleared.length > 0, 'the chronology is cleared')
+  binding.dispose()
+  handle.engine.arcs.buildChronology(dirs, [0.1, 0.2, 0.3, 0.4], [1, 1, 1])
+  assert.deepEqual(built.at(-1), round(dirs), 'released with the overlay, the arcs build their chronology as the port does')
+})

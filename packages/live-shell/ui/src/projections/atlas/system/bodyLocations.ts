@@ -121,6 +121,22 @@ export function routesOn(places: readonly SuitePlace[], bodyRef: string | null, 
   })
 }
 
+/** [O-I #746] A followed route draws once: as its route, through its stops in their order (the overlay's line, routesOn), and not also as the
+ * ported chronology through the same stops in date order (src/globe/chronology.ts, which the controller builds for the focused thread). Given the
+ * chronology the controller asks the globe to draw (its steps' directions and slider positions, in its order), the routes on the Earth, and the
+ * subject the thread follows (null when the thread spans several subjects, or none), the steps kept are those that are no stop of that subject's
+ * route; the rest of the chronology stands as the port drew it. A chronology left with fewer than two steps is none. Pure. */
+export function chronologyBesideRoutes(dirs: readonly (readonly number[])[], nodeU: readonly number[], routes: readonly DrawnRoute[], subject: string | null): {dirs: number[][]; nodeU: number[]} {
+  const route = subject ? routes.find(entry => entry.subject_ref === subject) : undefined
+  const stops = (route?.stops ?? []).map(stop => {
+    const la = (stop.lat * Math.PI) / 180, lo = (stop.lon * Math.PI) / 180
+    return [Math.cos(la) * Math.cos(lo), Math.sin(la), -Math.cos(la) * Math.sin(lo)]
+  })
+  const isStop = (dir: readonly number[]) => stops.some(stop => stop[0] * dir[0] + stop[1] * dir[1] + stop[2] * dir[2] > 1 - 1e-9)
+  const kept = dirs.map((dir, index) => ({dir: [...dir], u: nodeU[index]})).filter(step => !isStop(step.dir))
+  return kept.length >= 2 ? {dirs: kept.map(step => step.dir), nodeU: kept.map(step => step.u)} : {dirs: [], nodeU: []}
+}
+
 /** A location on your body anchored to a real place on Earth (manual §17.2: "Anchor lines run to real places on Earth"). Read, never written. */
 export interface Anchor {
   /** the location's ref (its place facet's place_ref) */
