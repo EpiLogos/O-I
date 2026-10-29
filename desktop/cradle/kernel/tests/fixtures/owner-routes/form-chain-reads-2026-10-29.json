@@ -1,0 +1,1419 @@
+{
+ "_provenance": "Real answers, 29 Oct 2026, O-I #742: ql (QL-MEF dlw/742-shape-binding) and aikit (ai-kit dlw/742-form-chain) built from their seats, over a scratch wiki (one space, twelve notes). AIKit's are its whole --json envelopes; QL's its --json documents. File paths are relative to the scratch world.",
+ "shape_bind": {
+  "input": {
+   "subject_ref": "wiki:frame:form:wiki:space:inquiry",
+   "whole_ref": "wiki:space:inquiry",
+   "members": [
+    {
+     "subject_ref": "wiki:node:m0",
+     "position": 0,
+     "face": "direct"
+    },
+    {
+     "subject_ref": "wiki:node:m1",
+     "position": 1,
+     "face": "direct"
+    },
+    {
+     "subject_ref": "wiki:node:m2",
+     "position": 2,
+     "face": "direct"
+    },
+    {
+     "subject_ref": "wiki:node:m3",
+     "position": 3,
+     "face": "direct"
+    },
+    {
+     "subject_ref": "wiki:node:m4",
+     "position": 4,
+     "face": "direct"
+    },
+    {
+     "subject_ref": "wiki:node:m5",
+     "position": 5,
+     "face": "direct"
+    },
+    {
+     "subject_ref": "wiki:node:m6",
+     "position": 0,
+     "face": "conjugate"
+    },
+    {
+     "subject_ref": "wiki:node:m7",
+     "position": 1,
+     "face": "conjugate"
+    },
+    {
+     "subject_ref": "wiki:node:m8",
+     "position": 2,
+     "face": "conjugate"
+    },
+    {
+     "subject_ref": "wiki:node:m9",
+     "position": 3,
+     "face": "conjugate"
+    },
+    {
+     "subject_ref": "wiki:node:m10",
+     "position": 4,
+     "face": "conjugate"
+    },
+    {
+     "subject_ref": "wiki:node:m11",
+     "position": 5,
+     "face": "conjugate"
+    }
+   ],
+   "provenance": {
+    "caller_ref": "oi:techne:canvas:form",
+    "source_ref": "wiki:space:inquiry",
+    "standing_ref": "proposed"
+   }
+  },
+  "answer": {
+   "schema": "ql.shape-bind/v1",
+   "owner": "ql-core",
+   "grain": "twelvefold",
+   "shape_ref": "ql:shape:1.0.0:constellation:twelvefold",
+   "fold_count": 12,
+   "binding_extension": "ql-mef/shape-binding/v1",
+   "binding": {
+    "subject_ref": "wiki:frame:form:wiki:space:inquiry",
+    "shape_ref": "ql:shape:1.0.0:constellation:twelvefold",
+    "whole_ref": "wiki:space:inquiry",
+    "basis_refs": [
+     "wiki:node:m0",
+     "wiki:node:m1",
+     "wiki:node:m2",
+     "wiki:node:m3",
+     "wiki:node:m4",
+     "wiki:node:m5",
+     "wiki:node:m6",
+     "wiki:node:m7",
+     "wiki:node:m8",
+     "wiki:node:m9",
+     "wiki:node:m10",
+     "wiki:node:m11"
+    ],
+    "members": [
+     {
+      "subject_ref": "wiki:node:m0",
+      "position": 0,
+      "face": "direct"
+     },
+     {
+      "subject_ref": "wiki:node:m1",
+      "position": 1,
+      "face": "direct"
+     },
+     {
+      "subject_ref": "wiki:node:m2",
+      "position": 2,
+      "face": "direct"
+     },
+     {
+      "subject_ref": "wiki:node:m3",
+      "position": 3,
+      "face": "direct"
+     },
+     {
+      "subject_ref": "wiki:node:m4",
+      "position": 4,
+      "face": "direct"
+     },
+     {
+      "subject_ref": "wiki:node:m5",
+      "position": 5,
+      "face": "direct"
+     },
+     {
+      "subject_ref": "wiki:node:m6",
+      "position": 0,
+      "face": "conjugate"
+     },
+     {
+      "subject_ref": "wiki:node:m7",
+      "position": 1,
+      "face": "conjugate"
+     },
+     {
+      "subject_ref": "wiki:node:m8",
+      "position": 2,
+      "face": "conjugate"
+     },
+     {
+      "subject_ref": "wiki:node:m9",
+      "position": 3,
+      "face": "conjugate"
+     },
+     {
+      "subject_ref": "wiki:node:m10",
+      "position": 4,
+      "face": "conjugate"
+     },
+     {
+      "subject_ref": "wiki:node:m11",
+      "position": 5,
+      "face": "conjugate"
+     }
+    ],
+    "return_refs": [],
+    "provenance": {
+     "caller_ref": "oi:techne:canvas:form",
+     "source_ref": "wiki:space:inquiry",
+     "standing_ref": "proposed"
+    }
+   },
+   "generation_operator_ref": "ql:shape:1.0.0:generation:same-position-direct-conjugate",
+   "generation_sites": [
+    {
+     "position": 0,
+     "direct_ref": "wiki:node:m0",
+     "conjugate_ref": "wiki:node:m6",
+     "operator_ref": "ql:shape:1.0.0:generation:same-position-direct-conjugate:position-0",
+     "generated_ref": "ql:shape:1.0.0:generation:same-position-direct-conjugate:position-0:of:wiki:space:inquiry"
+    },
+    {
+     "position": 1,
+     "direct_ref": "wiki:node:m1",
+     "conjugate_ref": "wiki:node:m7",
+     "operator_ref": "ql:shape:1.0.0:generation:same-position-direct-conjugate:position-1",
+     "generated_ref": "ql:shape:1.0.0:generation:same-position-direct-conjugate:position-1:of:wiki:space:inquiry"
+    },
+    {
+     "position": 2,
+     "direct_ref": "wiki:node:m2",
+     "conjugate_ref": "wiki:node:m8",
+     "operator_ref": "ql:shape:1.0.0:generation:same-position-direct-conjugate:position-2",
+     "generated_ref": "ql:shape:1.0.0:generation:same-position-direct-conjugate:position-2:of:wiki:space:inquiry"
+    },
+    {
+     "position": 3,
+     "direct_ref": "wiki:node:m3",
+     "conjugate_ref": "wiki:node:m9",
+     "operator_ref": "ql:shape:1.0.0:generation:same-position-direct-conjugate:position-3",
+     "generated_ref": "ql:shape:1.0.0:generation:same-position-direct-conjugate:position-3:of:wiki:space:inquiry"
+    },
+    {
+     "position": 4,
+     "direct_ref": "wiki:node:m4",
+     "conjugate_ref": "wiki:node:m10",
+     "operator_ref": "ql:shape:1.0.0:generation:same-position-direct-conjugate:position-4",
+     "generated_ref": "ql:shape:1.0.0:generation:same-position-direct-conjugate:position-4:of:wiki:space:inquiry"
+    },
+    {
+     "position": 5,
+     "direct_ref": "wiki:node:m5",
+     "conjugate_ref": "wiki:node:m11",
+     "operator_ref": "ql:shape:1.0.0:generation:same-position-direct-conjugate:position-5",
+     "generated_ref": "ql:shape:1.0.0:generation:same-position-direct-conjugate:position-5:of:wiki:space:inquiry"
+    }
+   ],
+   "generated": {
+    "0": "ql:shape:1.0.0:generation:same-position-direct-conjugate:position-0:of:wiki:space:inquiry",
+    "1": "ql:shape:1.0.0:generation:same-position-direct-conjugate:position-1:of:wiki:space:inquiry",
+    "2": "ql:shape:1.0.0:generation:same-position-direct-conjugate:position-2:of:wiki:space:inquiry",
+    "3": "ql:shape:1.0.0:generation:same-position-direct-conjugate:position-3:of:wiki:space:inquiry",
+    "4": "ql:shape:1.0.0:generation:same-position-direct-conjugate:position-4:of:wiki:space:inquiry",
+    "5": "ql:shape:1.0.0:generation:same-position-direct-conjugate:position-5:of:wiki:space:inquiry"
+   },
+   "constraints": {
+    "creates_members": false,
+    "asserts_relations": false,
+    "semantic_generation_requires_attributable_return": true
+   }
+  }
+ },
+ "wiki_shape_check": {
+  "input": {
+   "profile": "okf-wiki/v1",
+   "object": "frame",
+   "ref": "wiki:frame:form:wiki:space:inquiry",
+   "revision": 1,
+   "provenance": [],
+   "title": "The inquiry",
+   "space_refs": [],
+   "member_refs": [
+    "wiki:space:inquiry",
+    "wiki:node:m0",
+    "wiki:node:m1",
+    "wiki:node:m2",
+    "wiki:node:m3",
+    "wiki:node:m4",
+    "wiki:node:m5",
+    "wiki:node:m6",
+    "wiki:node:m7",
+    "wiki:node:m8",
+    "wiki:node:m9",
+    "wiki:node:m10",
+    "wiki:node:m11"
+   ],
+   "external_refs": [],
+   "constellations": [
+    {
+     "anchor_ref": "wiki:space:inquiry",
+     "members": [
+      {
+       "ref": "wiki:node:m0",
+       "position": 0,
+       "conjugate": false
+      },
+      {
+       "ref": "wiki:node:m1",
+       "position": 1,
+       "conjugate": false
+      },
+      {
+       "ref": "wiki:node:m2",
+       "position": 2,
+       "conjugate": false
+      },
+      {
+       "ref": "wiki:node:m3",
+       "position": 3,
+       "conjugate": false
+      },
+      {
+       "ref": "wiki:node:m4",
+       "position": 4,
+       "conjugate": false
+      },
+      {
+       "ref": "wiki:node:m5",
+       "position": 5,
+       "conjugate": false
+      },
+      {
+       "ref": "wiki:node:m6",
+       "position": 0,
+       "conjugate": true
+      },
+      {
+       "ref": "wiki:node:m7",
+       "position": 1,
+       "conjugate": true
+      },
+      {
+       "ref": "wiki:node:m8",
+       "position": 2,
+       "conjugate": true
+      },
+      {
+       "ref": "wiki:node:m9",
+       "position": 3,
+       "conjugate": true
+      },
+      {
+       "ref": "wiki:node:m10",
+       "position": 4,
+       "conjugate": true
+      },
+      {
+       "ref": "wiki:node:m11",
+       "position": 5,
+       "conjugate": true
+      }
+     ],
+     "returns": [],
+     "aikit.ql-shape/v1": {
+      "shape_ref": "ql:shape:1.0.0:constellation:twelvefold",
+      "grain": "twelvefold",
+      "generated": {
+       "0": "ql:shape:1.0.0:generation:same-position-direct-conjugate:position-0:of:wiki:space:inquiry",
+       "1": "ql:shape:1.0.0:generation:same-position-direct-conjugate:position-1:of:wiki:space:inquiry",
+       "2": "ql:shape:1.0.0:generation:same-position-direct-conjugate:position-2:of:wiki:space:inquiry",
+       "3": "ql:shape:1.0.0:generation:same-position-direct-conjugate:position-3:of:wiki:space:inquiry",
+       "4": "ql:shape:1.0.0:generation:same-position-direct-conjugate:position-4:of:wiki:space:inquiry",
+       "5": "ql:shape:1.0.0:generation:same-position-direct-conjugate:position-5:of:wiki:space:inquiry"
+      }
+     },
+     "ql-mef/shape-binding/v1": {
+      "subject_ref": "wiki:frame:form:wiki:space:inquiry",
+      "shape_ref": "ql:shape:1.0.0:constellation:twelvefold",
+      "whole_ref": "wiki:space:inquiry",
+      "basis_refs": [
+       "wiki:node:m0",
+       "wiki:node:m1",
+       "wiki:node:m2",
+       "wiki:node:m3",
+       "wiki:node:m4",
+       "wiki:node:m5",
+       "wiki:node:m6",
+       "wiki:node:m7",
+       "wiki:node:m8",
+       "wiki:node:m9",
+       "wiki:node:m10",
+       "wiki:node:m11"
+      ],
+      "members": [
+       {
+        "subject_ref": "wiki:node:m0",
+        "position": 0,
+        "face": "direct"
+       },
+       {
+        "subject_ref": "wiki:node:m1",
+        "position": 1,
+        "face": "direct"
+       },
+       {
+        "subject_ref": "wiki:node:m2",
+        "position": 2,
+        "face": "direct"
+       },
+       {
+        "subject_ref": "wiki:node:m3",
+        "position": 3,
+        "face": "direct"
+       },
+       {
+        "subject_ref": "wiki:node:m4",
+        "position": 4,
+        "face": "direct"
+       },
+       {
+        "subject_ref": "wiki:node:m5",
+        "position": 5,
+        "face": "direct"
+       },
+       {
+        "subject_ref": "wiki:node:m6",
+        "position": 0,
+        "face": "conjugate"
+       },
+       {
+        "subject_ref": "wiki:node:m7",
+        "position": 1,
+        "face": "conjugate"
+       },
+       {
+        "subject_ref": "wiki:node:m8",
+        "position": 2,
+        "face": "conjugate"
+       },
+       {
+        "subject_ref": "wiki:node:m9",
+        "position": 3,
+        "face": "conjugate"
+       },
+       {
+        "subject_ref": "wiki:node:m10",
+        "position": 4,
+        "face": "conjugate"
+       },
+       {
+        "subject_ref": "wiki:node:m11",
+        "position": 5,
+        "face": "conjugate"
+       }
+      ],
+      "return_refs": [],
+      "provenance": {
+       "caller_ref": "oi:techne:canvas:form",
+       "source_ref": "wiki:space:inquiry",
+       "standing_ref": "proposed"
+      }
+     }
+    }
+   ]
+  },
+  "answer": {
+   "context": {
+    "context_id": null,
+    "project_root": ".",
+    "session_id": null
+   },
+   "data": {
+    "command": "wiki-shape.validate",
+    "draft": {
+     "basis_revision": null,
+     "ref": "wiki:frame:form:wiki:space:inquiry",
+     "revision": 1,
+     "would": "create"
+    },
+    "errors": [],
+    "file": "wiki.json",
+    "frames": [
+     {
+      "constellations": [
+       {
+        "anchor": "wiki:space:inquiry",
+        "anchor_stance": null,
+        "grain": "twelvefold",
+        "members": [
+         {
+          "conjugate": false,
+          "position": 0,
+          "ref": "wiki:node:m0",
+          "stance": null
+         },
+         {
+          "conjugate": false,
+          "position": 1,
+          "ref": "wiki:node:m1",
+          "stance": null
+         },
+         {
+          "conjugate": false,
+          "position": 2,
+          "ref": "wiki:node:m2",
+          "stance": null
+         },
+         {
+          "conjugate": false,
+          "position": 3,
+          "ref": "wiki:node:m3",
+          "stance": null
+         },
+         {
+          "conjugate": false,
+          "position": 4,
+          "ref": "wiki:node:m4",
+          "stance": null
+         },
+         {
+          "conjugate": false,
+          "position": 5,
+          "ref": "wiki:node:m5",
+          "stance": null
+         },
+         {
+          "conjugate": true,
+          "position": 0,
+          "ref": "wiki:node:m6",
+          "stance": null
+         },
+         {
+          "conjugate": true,
+          "position": 1,
+          "ref": "wiki:node:m7",
+          "stance": null
+         },
+         {
+          "conjugate": true,
+          "position": 2,
+          "ref": "wiki:node:m8",
+          "stance": null
+         },
+         {
+          "conjugate": true,
+          "position": 3,
+          "ref": "wiki:node:m9",
+          "stance": null
+         },
+         {
+          "conjugate": true,
+          "position": 4,
+          "ref": "wiki:node:m10",
+          "stance": null
+         },
+         {
+          "conjugate": true,
+          "position": 5,
+          "ref": "wiki:node:m11",
+          "stance": null
+         }
+        ],
+        "returns": [],
+        "shape_field_refs": [],
+        "validated_shape_fields": 0
+       }
+      ],
+      "frame": "wiki:frame:form:wiki:space:inquiry",
+      "revision": 1
+     }
+    ],
+    "valid": true
+   },
+   "ok": true,
+   "schema": 1,
+   "warnings": []
+  }
+ },
+ "wiki_shape_declare": {
+  "input": {
+   "profile": "okf-wiki/v1",
+   "object": "frame",
+   "ref": "wiki:frame:form:wiki:space:inquiry",
+   "revision": 1,
+   "provenance": [],
+   "title": "The inquiry",
+   "space_refs": [],
+   "member_refs": [
+    "wiki:space:inquiry",
+    "wiki:node:m0",
+    "wiki:node:m1",
+    "wiki:node:m2",
+    "wiki:node:m3",
+    "wiki:node:m4",
+    "wiki:node:m5",
+    "wiki:node:m6",
+    "wiki:node:m7",
+    "wiki:node:m8",
+    "wiki:node:m9",
+    "wiki:node:m10",
+    "wiki:node:m11"
+   ],
+   "external_refs": [],
+   "constellations": [
+    {
+     "anchor_ref": "wiki:space:inquiry",
+     "members": [
+      {
+       "ref": "wiki:node:m0",
+       "position": 0,
+       "conjugate": false
+      },
+      {
+       "ref": "wiki:node:m1",
+       "position": 1,
+       "conjugate": false
+      },
+      {
+       "ref": "wiki:node:m2",
+       "position": 2,
+       "conjugate": false
+      },
+      {
+       "ref": "wiki:node:m3",
+       "position": 3,
+       "conjugate": false
+      },
+      {
+       "ref": "wiki:node:m4",
+       "position": 4,
+       "conjugate": false
+      },
+      {
+       "ref": "wiki:node:m5",
+       "position": 5,
+       "conjugate": false
+      },
+      {
+       "ref": "wiki:node:m6",
+       "position": 0,
+       "conjugate": true
+      },
+      {
+       "ref": "wiki:node:m7",
+       "position": 1,
+       "conjugate": true
+      },
+      {
+       "ref": "wiki:node:m8",
+       "position": 2,
+       "conjugate": true
+      },
+      {
+       "ref": "wiki:node:m9",
+       "position": 3,
+       "conjugate": true
+      },
+      {
+       "ref": "wiki:node:m10",
+       "position": 4,
+       "conjugate": true
+      },
+      {
+       "ref": "wiki:node:m11",
+       "position": 5,
+       "conjugate": true
+      }
+     ],
+     "returns": [],
+     "aikit.ql-shape/v1": {
+      "shape_ref": "ql:shape:1.0.0:constellation:twelvefold",
+      "grain": "twelvefold",
+      "generated": {
+       "0": "ql:shape:1.0.0:generation:same-position-direct-conjugate:position-0:of:wiki:space:inquiry",
+       "1": "ql:shape:1.0.0:generation:same-position-direct-conjugate:position-1:of:wiki:space:inquiry",
+       "2": "ql:shape:1.0.0:generation:same-position-direct-conjugate:position-2:of:wiki:space:inquiry",
+       "3": "ql:shape:1.0.0:generation:same-position-direct-conjugate:position-3:of:wiki:space:inquiry",
+       "4": "ql:shape:1.0.0:generation:same-position-direct-conjugate:position-4:of:wiki:space:inquiry",
+       "5": "ql:shape:1.0.0:generation:same-position-direct-conjugate:position-5:of:wiki:space:inquiry"
+      }
+     },
+     "ql-mef/shape-binding/v1": {
+      "subject_ref": "wiki:frame:form:wiki:space:inquiry",
+      "shape_ref": "ql:shape:1.0.0:constellation:twelvefold",
+      "whole_ref": "wiki:space:inquiry",
+      "basis_refs": [
+       "wiki:node:m0",
+       "wiki:node:m1",
+       "wiki:node:m2",
+       "wiki:node:m3",
+       "wiki:node:m4",
+       "wiki:node:m5",
+       "wiki:node:m6",
+       "wiki:node:m7",
+       "wiki:node:m8",
+       "wiki:node:m9",
+       "wiki:node:m10",
+       "wiki:node:m11"
+      ],
+      "members": [
+       {
+        "subject_ref": "wiki:node:m0",
+        "position": 0,
+        "face": "direct"
+       },
+       {
+        "subject_ref": "wiki:node:m1",
+        "position": 1,
+        "face": "direct"
+       },
+       {
+        "subject_ref": "wiki:node:m2",
+        "position": 2,
+        "face": "direct"
+       },
+       {
+        "subject_ref": "wiki:node:m3",
+        "position": 3,
+        "face": "direct"
+       },
+       {
+        "subject_ref": "wiki:node:m4",
+        "position": 4,
+        "face": "direct"
+       },
+       {
+        "subject_ref": "wiki:node:m5",
+        "position": 5,
+        "face": "direct"
+       },
+       {
+        "subject_ref": "wiki:node:m6",
+        "position": 0,
+        "face": "conjugate"
+       },
+       {
+        "subject_ref": "wiki:node:m7",
+        "position": 1,
+        "face": "conjugate"
+       },
+       {
+        "subject_ref": "wiki:node:m8",
+        "position": 2,
+        "face": "conjugate"
+       },
+       {
+        "subject_ref": "wiki:node:m9",
+        "position": 3,
+        "face": "conjugate"
+       },
+       {
+        "subject_ref": "wiki:node:m10",
+        "position": 4,
+        "face": "conjugate"
+       },
+       {
+        "subject_ref": "wiki:node:m11",
+        "position": 5,
+        "face": "conjugate"
+       }
+      ],
+      "return_refs": [],
+      "provenance": {
+       "caller_ref": "oi:techne:canvas:form",
+       "source_ref": "wiki:space:inquiry",
+       "standing_ref": "proposed"
+      }
+     }
+    }
+   ]
+  },
+  "answer": {
+   "context": {
+    "context_id": null,
+    "project_root": ".",
+    "session_id": null
+   },
+   "data": {
+    "change": "create",
+    "command": "wiki-shape.declare",
+    "constellations": 1,
+    "file": "wiki.json",
+    "grains": [
+     {
+      "anchor": "wiki:space:inquiry",
+      "grain": "twelvefold"
+     }
+    ],
+    "outcome": {
+     "changed": true,
+     "proposals": [
+      {
+       "object": {
+        "object_kind": "frame",
+        "resource": "wiki:frame:form:wiki:space:inquiry",
+        "revision": 1
+       },
+       "operation": "upsert"
+      }
+     ],
+     "touched": [
+      {
+       "kind": "frame",
+       "resource": "wiki:frame:form:wiki:space:inquiry",
+       "revision_after": 1,
+       "revision_before": 1
+      }
+     ]
+    },
+    "ref": "wiki:frame:form:wiki:space:inquiry",
+    "revision": 1,
+    "unknown_or_unversioned_shape_refs_preserved": [
+     "ql:shape:1.0.0:constellation:twelvefold"
+    ],
+    "validated_shape_fields": 0
+   },
+   "ok": true,
+   "schema": 1,
+   "warnings": []
+  }
+ },
+ "wiki_shape_declare_roles": {
+  "input": {
+   "profile": "okf-wiki/v1",
+   "object": "frame",
+   "ref": "wiki:frame:form:wiki:space:inquiry",
+   "revision": 1,
+   "provenance": [],
+   "title": "The inquiry",
+   "space_refs": [],
+   "member_refs": [
+    "wiki:space:inquiry",
+    "wiki:node:m0",
+    "wiki:node:m1",
+    "wiki:node:m2",
+    "wiki:node:m3",
+    "wiki:node:m4",
+    "wiki:node:m5",
+    "wiki:node:m6",
+    "wiki:node:m7",
+    "wiki:node:m8",
+    "wiki:node:m9",
+    "wiki:node:m10",
+    "wiki:node:m11"
+   ],
+   "external_refs": [],
+   "constellations": [
+    {
+     "anchor_ref": "wiki:space:inquiry",
+     "members": [
+      {
+       "ref": "wiki:node:m0",
+       "position": 0,
+       "conjugate": false
+      },
+      {
+       "ref": "wiki:node:m1",
+       "position": 2,
+       "conjugate": false
+      },
+      {
+       "ref": "wiki:node:m2",
+       "position": 1,
+       "conjugate": false
+      },
+      {
+       "ref": "wiki:node:m3",
+       "position": 3,
+       "conjugate": false
+      },
+      {
+       "ref": "wiki:node:m4",
+       "position": 4,
+       "conjugate": false
+      },
+      {
+       "ref": "wiki:node:m5",
+       "position": 5,
+       "conjugate": false
+      },
+      {
+       "ref": "wiki:node:m6",
+       "position": 0,
+       "conjugate": true
+      },
+      {
+       "ref": "wiki:node:m7",
+       "position": 1,
+       "conjugate": true
+      },
+      {
+       "ref": "wiki:node:m8",
+       "position": 2,
+       "conjugate": true
+      },
+      {
+       "ref": "wiki:node:m9",
+       "position": 3,
+       "conjugate": true
+      },
+      {
+       "ref": "wiki:node:m10",
+       "position": 4,
+       "conjugate": true
+      },
+      {
+       "ref": "wiki:node:m11",
+       "position": 5,
+       "conjugate": true
+      }
+     ],
+     "returns": [],
+     "aikit.ql-shape/v1": {
+      "shape_ref": "ql:shape:1.0.0:constellation:twelvefold",
+      "grain": "twelvefold",
+      "generated": {
+       "0": "ql:shape:1.0.0:generation:same-position-direct-conjugate:position-0:of:wiki:space:inquiry",
+       "1": "ql:shape:1.0.0:generation:same-position-direct-conjugate:position-1:of:wiki:space:inquiry",
+       "2": "ql:shape:1.0.0:generation:same-position-direct-conjugate:position-2:of:wiki:space:inquiry",
+       "3": "ql:shape:1.0.0:generation:same-position-direct-conjugate:position-3:of:wiki:space:inquiry",
+       "4": "ql:shape:1.0.0:generation:same-position-direct-conjugate:position-4:of:wiki:space:inquiry",
+       "5": "ql:shape:1.0.0:generation:same-position-direct-conjugate:position-5:of:wiki:space:inquiry"
+      }
+     },
+     "ql-mef/shape-binding/v1": {
+      "subject_ref": "wiki:frame:form:wiki:space:inquiry",
+      "shape_ref": "ql:shape:1.0.0:constellation:twelvefold",
+      "whole_ref": "wiki:space:inquiry",
+      "basis_refs": [
+       "wiki:node:m0",
+       "wiki:node:m1",
+       "wiki:node:m2",
+       "wiki:node:m3",
+       "wiki:node:m4",
+       "wiki:node:m5",
+       "wiki:node:m6",
+       "wiki:node:m7",
+       "wiki:node:m8",
+       "wiki:node:m9",
+       "wiki:node:m10",
+       "wiki:node:m11"
+      ],
+      "members": [
+       {
+        "subject_ref": "wiki:node:m0",
+        "position": 0,
+        "face": "direct"
+       },
+       {
+        "subject_ref": "wiki:node:m1",
+        "position": 2,
+        "face": "direct"
+       },
+       {
+        "subject_ref": "wiki:node:m2",
+        "position": 1,
+        "face": "direct"
+       },
+       {
+        "subject_ref": "wiki:node:m3",
+        "position": 3,
+        "face": "direct"
+       },
+       {
+        "subject_ref": "wiki:node:m4",
+        "position": 4,
+        "face": "direct"
+       },
+       {
+        "subject_ref": "wiki:node:m5",
+        "position": 5,
+        "face": "direct"
+       },
+       {
+        "subject_ref": "wiki:node:m6",
+        "position": 0,
+        "face": "conjugate"
+       },
+       {
+        "subject_ref": "wiki:node:m7",
+        "position": 1,
+        "face": "conjugate"
+       },
+       {
+        "subject_ref": "wiki:node:m8",
+        "position": 2,
+        "face": "conjugate"
+       },
+       {
+        "subject_ref": "wiki:node:m9",
+        "position": 3,
+        "face": "conjugate"
+       },
+       {
+        "subject_ref": "wiki:node:m10",
+        "position": 4,
+        "face": "conjugate"
+       },
+       {
+        "subject_ref": "wiki:node:m11",
+        "position": 5,
+        "face": "conjugate"
+       }
+      ],
+      "return_refs": [],
+      "provenance": {
+       "caller_ref": "oi:techne:canvas:form",
+       "source_ref": "wiki:space:inquiry",
+       "standing_ref": "proposed"
+      }
+     }
+    }
+   ]
+  },
+  "answer": {
+   "context": {
+    "context_id": null,
+    "project_root": ".",
+    "session_id": null
+   },
+   "data": {
+    "change": "update",
+    "command": "wiki-shape.declare",
+    "constellations": 1,
+    "file": "wiki.json",
+    "grains": [
+     {
+      "anchor": "wiki:space:inquiry",
+      "grain": "twelvefold"
+     }
+    ],
+    "outcome": {
+     "changed": true,
+     "proposals": [
+      {
+       "object": {
+        "object_kind": "frame",
+        "resource": "wiki:frame:form:wiki:space:inquiry",
+        "revision": 2
+       },
+       "operation": "upsert"
+      }
+     ],
+     "touched": [
+      {
+       "kind": "frame",
+       "resource": "wiki:frame:form:wiki:space:inquiry",
+       "revision_after": 2,
+       "revision_before": 1
+      }
+     ]
+    },
+    "ref": "wiki:frame:form:wiki:space:inquiry",
+    "revision": 2,
+    "unknown_or_unversioned_shape_refs_preserved": [
+     "ql:shape:1.0.0:constellation:twelvefold"
+    ],
+    "validated_shape_fields": 0
+   },
+   "ok": true,
+   "schema": 1,
+   "warnings": []
+  }
+ },
+ "wiki_shape_declare_stale": {
+  "answer": {
+   "error": {
+    "code": "knowledge.wiki_revision_conflict",
+    "details": {
+     "ref": "wiki:frame:form:wiki:space:inquiry",
+     "revision": "2"
+    },
+    "message": "wiki:frame:form:wiki:space:inquiry stands at revision 2, not 1: read it again before changing its roles"
+   },
+   "ok": false,
+   "schema": 1
+  }
+ },
+ "wiki_shape_target": {
+  "answer": {
+   "context": {
+    "context_id": null,
+    "project_root": ".",
+    "session_id": null
+   },
+   "data": {
+    "anchor": "wiki:space:inquiry",
+    "command": "wiki-shape.target",
+    "file": "wiki.json",
+    "frame": "wiki:frame:form:wiki:space:inquiry",
+    "revision": 1,
+    "shape_binding": true,
+    "target": {
+     "extensions": {
+      "ql-mef/shape-binding/v1": {
+       "basis_refs": [
+        "wiki:node:m0",
+        "wiki:node:m1",
+        "wiki:node:m2",
+        "wiki:node:m3",
+        "wiki:node:m4",
+        "wiki:node:m5",
+        "wiki:node:m6",
+        "wiki:node:m7",
+        "wiki:node:m8",
+        "wiki:node:m9",
+        "wiki:node:m10",
+        "wiki:node:m11"
+       ],
+       "members": [
+        {
+         "face": "direct",
+         "position": 0,
+         "subject_ref": "wiki:node:m0"
+        },
+        {
+         "face": "direct",
+         "position": 1,
+         "subject_ref": "wiki:node:m1"
+        },
+        {
+         "face": "direct",
+         "position": 2,
+         "subject_ref": "wiki:node:m2"
+        },
+        {
+         "face": "direct",
+         "position": 3,
+         "subject_ref": "wiki:node:m3"
+        },
+        {
+         "face": "direct",
+         "position": 4,
+         "subject_ref": "wiki:node:m4"
+        },
+        {
+         "face": "direct",
+         "position": 5,
+         "subject_ref": "wiki:node:m5"
+        },
+        {
+         "face": "conjugate",
+         "position": 0,
+         "subject_ref": "wiki:node:m6"
+        },
+        {
+         "face": "conjugate",
+         "position": 1,
+         "subject_ref": "wiki:node:m7"
+        },
+        {
+         "face": "conjugate",
+         "position": 2,
+         "subject_ref": "wiki:node:m8"
+        },
+        {
+         "face": "conjugate",
+         "position": 3,
+         "subject_ref": "wiki:node:m9"
+        },
+        {
+         "face": "conjugate",
+         "position": 4,
+         "subject_ref": "wiki:node:m10"
+        },
+        {
+         "face": "conjugate",
+         "position": 5,
+         "subject_ref": "wiki:node:m11"
+        }
+       ],
+       "provenance": {
+        "caller_ref": "oi:techne:canvas:form",
+        "source_ref": "wiki:space:inquiry",
+        "standing_ref": "proposed"
+       },
+       "return_refs": [],
+       "shape_ref": "ql:shape:1.0.0:constellation:twelvefold",
+       "subject_ref": "wiki:frame:form:wiki:space:inquiry",
+       "whole_ref": "wiki:space:inquiry"
+      }
+     },
+     "kind": "frame",
+     "material": {},
+     "provenance": [],
+     "relations": [],
+     "subjects": [],
+     "target_ref": "wiki:frame:form:wiki:space:inquiry",
+     "target_revision": 1,
+     "target_snapshot_hash": "sha256:16de477494f2649255f638dd60de0e1fd723ea5a367f8c5ed21d7c5ab980c9a9"
+    }
+   },
+   "ok": true,
+   "schema": 1,
+   "warnings": []
+  }
+ },
+ "techne_reading": {
+  "input": {
+   "extensions": {
+    "ql-mef/shape-binding/v1": {
+     "basis_refs": [
+      "wiki:node:m0",
+      "wiki:node:m1",
+      "wiki:node:m2",
+      "wiki:node:m3",
+      "wiki:node:m4",
+      "wiki:node:m5",
+      "wiki:node:m6",
+      "wiki:node:m7",
+      "wiki:node:m8",
+      "wiki:node:m9",
+      "wiki:node:m10",
+      "wiki:node:m11"
+     ],
+     "members": [
+      {
+       "face": "direct",
+       "position": 0,
+       "subject_ref": "wiki:node:m0"
+      },
+      {
+       "face": "direct",
+       "position": 1,
+       "subject_ref": "wiki:node:m1"
+      },
+      {
+       "face": "direct",
+       "position": 2,
+       "subject_ref": "wiki:node:m2"
+      },
+      {
+       "face": "direct",
+       "position": 3,
+       "subject_ref": "wiki:node:m3"
+      },
+      {
+       "face": "direct",
+       "position": 4,
+       "subject_ref": "wiki:node:m4"
+      },
+      {
+       "face": "direct",
+       "position": 5,
+       "subject_ref": "wiki:node:m5"
+      },
+      {
+       "face": "conjugate",
+       "position": 0,
+       "subject_ref": "wiki:node:m6"
+      },
+      {
+       "face": "conjugate",
+       "position": 1,
+       "subject_ref": "wiki:node:m7"
+      },
+      {
+       "face": "conjugate",
+       "position": 2,
+       "subject_ref": "wiki:node:m8"
+      },
+      {
+       "face": "conjugate",
+       "position": 3,
+       "subject_ref": "wiki:node:m9"
+      },
+      {
+       "face": "conjugate",
+       "position": 4,
+       "subject_ref": "wiki:node:m10"
+      },
+      {
+       "face": "conjugate",
+       "position": 5,
+       "subject_ref": "wiki:node:m11"
+      }
+     ],
+     "provenance": {
+      "caller_ref": "oi:techne:canvas:form",
+      "source_ref": "wiki:space:inquiry",
+      "standing_ref": "proposed"
+     },
+     "return_refs": [],
+     "shape_ref": "ql:shape:1.0.0:constellation:twelvefold",
+     "subject_ref": "wiki:frame:form:wiki:space:inquiry",
+     "whole_ref": "wiki:space:inquiry"
+    }
+   },
+   "kind": "frame",
+   "material": {},
+   "provenance": [],
+   "relations": [],
+   "subjects": [],
+   "target_ref": "wiki:frame:form:wiki:space:inquiry",
+   "target_revision": 1,
+   "target_snapshot_hash": "sha256:16de477494f2649255f638dd60de0e1fd723ea5a367f8c5ed21d7c5ab980c9a9"
+  },
+  "answer": {
+   "contract": "ql.techne/v1",
+   "reading": {
+    "actions": [],
+    "agency": [],
+    "contract": "ql.techne/v1",
+    "disclosure": {
+     "application_cuts": [],
+     "degraded": [],
+     "instruments": [
+      {
+       "available": true,
+       "instrument": "project",
+       "reading": "4:2-deep",
+       "reason": null
+      },
+      {
+       "available": true,
+       "instrument": "canvas",
+       "reading": "4:2-deep",
+       "reason": null
+      },
+      {
+       "available": false,
+       "instrument": "timeline",
+       "reading": "4:2-deep",
+       "reason": "no live temporal producer is attached to this subject (native owner: Factory/AIKit T1)"
+      },
+      {
+       "available": false,
+       "instrument": "journey",
+       "reading": "4:2-deep",
+       "reason": "no source-backed Expression Scenes are composed for this subject"
+      },
+      {
+       "available": false,
+       "instrument": "place",
+       "reading": "4:2-deep",
+       "reason": "no place facets are disclosed for this subject"
+      },
+      {
+       "available": false,
+       "instrument": "palace",
+       "reading": "4:2-deep",
+       "reason": "Palace producer is not landed (native owner: O-I #218)"
+      },
+      {
+       "available": false,
+       "instrument": "expressions",
+       "reading": "3:3-conjugate",
+       "reason": "no Expression binding is disclosed for this subject"
+      }
+     ],
+     "suggestions": []
+    },
+    "expressions": [],
+    "provenance": [],
+    "ql": {
+     "address": "wiki:frame:form:wiki:space:inquiry",
+     "constellation_ref": null,
+     "context_frame_ref": null,
+     "derivation_refs": [],
+     "geometric_reading": null,
+     "harmonic_reading": null,
+     "lens_ref": "mef:lens:L1@1",
+     "m_coordinate_ref": null,
+     "refraction_summary": "Causal refractive reading of wiki:frame:form:wiki:space:inquiry:complete",
+     "return_ref": null,
+     "shape_ref": "ql:shape:1.0.0:constellation:twelvefold",
+     "sublens_ref": null,
+     "vak_source_ref": null,
+     "warrant": {
+      "evidence_refs": [
+       "ql-mef:reading:registry:wiki-frame-form-wiki-space-inquiry:L1",
+       "wiki:space:inquiry"
+      ],
+      "provenance_ref": "ql-mef:provider:registry-disclosure:1.0.0",
+      "result_class": "deterministic"
+     }
+    },
+    "reading_ref": "ql.techne/v1:ql-mef:reading:registry:wiki-frame-form-wiki-space-inquiry:L1",
+    "snapshot": {
+     "basis_ref": "sha256:16de477494f2649255f638dd60de0e1fd723ea5a367f8c5ed21d7c5ab980c9a9",
+     "revision": "1"
+    },
+    "spatial": [],
+    "subject": {
+     "kind": "MEF-derived",
+     "native_owner": "ql-mef/wiki",
+     "native_revision": "1",
+     "readings": [
+      {
+       "ref": "ql-mef:reading:registry:wiki-frame-form-wiki-space-inquiry:L1",
+       "revision": "1"
+      }
+     ],
+     "standing": null,
+     "subject_ref": "wiki:frame:form:wiki:space:inquiry"
+    },
+    "temporal": [],
+    "whole": {
+     "focus_refs": [],
+     "member_refs": [
+      "wiki:node:m0",
+      "wiki:node:m1",
+      "wiki:node:m2",
+      "wiki:node:m3",
+      "wiki:node:m4",
+      "wiki:node:m5",
+      "wiki:node:m6",
+      "wiki:node:m7",
+      "wiki:node:m8",
+      "wiki:node:m9",
+      "wiki:node:m10",
+      "wiki:node:m11"
+     ],
+     "relations": [],
+     "whole_ref": "wiki:space:inquiry"
+    }
+   },
+   "selections": [
+    {
+     "agent_session_ref": null,
+     "coordinate_ref": "wiki:frame:form:wiki:space:inquiry",
+     "disclosure_ref": "ql.techne/v1:ql-mef:reading:registry:wiki-frame-form-wiki-space-inquiry:L1",
+     "focus_refs": [],
+     "instrument": "project",
+     "reading_ref": "mef:lens:L1@1",
+     "selection_ref": "ql.techne/v1:ql-mef:reading:registry:wiki-frame-form-wiki-space-inquiry:L1:ground",
+     "selection_standing": null,
+     "snapshot_revision": "1",
+     "source_ref": null,
+     "source_revision": "1",
+     "subject_ref": "wiki:frame:form:wiki:space:inquiry"
+    },
+    {
+     "agent_session_ref": null,
+     "coordinate_ref": "wiki:frame:form:wiki:space:inquiry",
+     "disclosure_ref": "ql.techne/v1:ql-mef:reading:registry:wiki-frame-form-wiki-space-inquiry:L1",
+     "focus_refs": [
+      "wiki:node:m0",
+      "wiki:node:m1",
+      "wiki:node:m2",
+      "wiki:node:m3",
+      "wiki:node:m4",
+      "wiki:node:m5",
+      "wiki:node:m6",
+      "wiki:node:m7",
+      "wiki:node:m8",
+      "wiki:node:m9",
+      "wiki:node:m10",
+      "wiki:node:m11"
+     ],
+     "instrument": "canvas",
+     "reading_ref": "mef:lens:L1@1",
+     "selection_ref": "ql.techne/v1:ql-mef:reading:registry:wiki-frame-form-wiki-space-inquiry:L1:canvas:wiki:space:inquiry",
+     "selection_standing": null,
+     "snapshot_revision": "1",
+     "source_ref": null,
+     "source_revision": "1",
+     "subject_ref": "wiki:frame:form:wiki:space:inquiry"
+    }
+   ]
+  }
+ }
+}

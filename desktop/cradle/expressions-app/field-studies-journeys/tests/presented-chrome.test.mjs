@@ -142,7 +142,7 @@ test('#747: each authored change meets the live field before the engine does, is
  const own=field.slice(field.indexOf('const rebind='),field.indexOf('const authoredMoved='));
  assert.match(own,/if\(held\)released=controller\.release\(true\)\.catch\(fail\);/,'let go now, before the change is configured');
  assert.match(own,/const first=!reopening;\s*reopenWhenStill\(\);\s*return first\?words:null;/,'said once per settling');
- assert.match(field,/reopening=window\.setTimeout\(\(\)=>\{if\(busy\|\|composing\)\{reopenWhenStill\(\);return;\}reopening=0;void released\.catch\(\(\)=>\{\}\)\.then\(\(\)=>open\('now'\)\);\},REBIND_SETTLE_MS\);/,'opened again once still; a busy open is waited out, never dropped');
+ assert.match(field,/reopening=window\.setTimeout\(\(\)=>\{if\(busy\|\|composing\)\{reopenWhenStill\(\);return;\}reopening=0;void released\.catch\(\(\)=>\{\}\)\.then\(\(\)=>primaryOpen\(\)\);\},REBIND_SETTLE_MS\);/,'opened again once still, on the composition\'s saved sky when it has one; a busy open is waited out, never dropped');
  assert.match(field,/const leaveLive=\(\)=>liveEntry\.leave\(\);/,'leaving Live never releases the field');
  assert.match(app,/function applyJourney\([^)]*\)\{journeyNavigation\+\+;[^]*?if\(j\.id!==store\.document\.id\)\{const said=nativeField\?\.rebind\(`Opening “\$\{j\.name\}”`\)/,'opening another Expression, named as before');
 });

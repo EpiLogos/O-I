@@ -246,6 +246,10 @@ export type QlReadRequest = {kind:"kernel-m1"|"scene-compose"|"scene-world";requ
   | {kind:"kernel-apply";operator:string;address:string}
   /** `ql techne reading <target.json>` (`ql.techne/v1`): the target on the kernel's stdin. */
   | {kind:"techne-reading";target:unknown}
+  /** `ql shape bind -` (`ql.shape-bind/v1`, O-I #742): the shape binding of a drafted constellation — `{subject_ref, whole_ref,
+   * members:[{subject_ref, position, face:"direct"|"conjugate"}], provenance:{caller_ref, source_ref, standing_ref}}` on stdin; QL
+   * answers its grain, shape_ref, the `ql-mef/shape-binding/v1` binding and the generated relation's identity by position. */
+  | {kind:"shape-bind";request:unknown}
   /** `ql nara hours -` (`ql.sky-hours/v1`): the planets of the day and of the hour at a place, for a `ql.sky-day-request/v1`
    * ({schema, epoch, place:{reference, label, latitude_degrees, longitude_degrees, altitude_metres, timezone},
    * scope:"world-declared"|"observer-private", backend_policy}) on stdin. */
@@ -345,7 +349,13 @@ export type SeatWriteRequest =
 export type AikitReadRequest =
   | {kind:"inbox";project?:string|null;all?:boolean}
   | {kind:"wiki-shape-validate";file:string}
+  /** `aikit wiki-shape validate --file F --stdin [--expected-revision N]` (O-I #742): a draft frame body checked with no write; the
+   * answer is the validate reading with `draft:{ref, would:"create"|"update", basis_revision, revision}`. */
+  | {kind:"wiki-shape-check";file:string;frame:unknown;expected_revision?:number|null}
   | {kind:"wiki-shape-compress";file:string;anchor_ref:string}
+  /** `aikit wiki-shape target ANCHOR --file F` (O-I #742): the Wiki's projection of one constellation as QL's Technē target
+   * (`{command:"wiki-shape.target", anchor, frame, revision, shape_binding, target}`) — what `techne-reading` reads. */
+  | {kind:"wiki-shape-target";file:string;anchor_ref:string}
   /** One Stream's frames from the running gateway's journal (`aikit gateway replay --stream S [--after N] [--limit 1..4096] [--at W]`):
    * the answer is `{type:"replay", replay:{stream_ref, after_sequence, returned_through, stream_last_sequence, has_more, events:[{sequence,
    * event}]}}`. The Frames monitor's reading. */
@@ -405,7 +415,8 @@ export type AikitWriteRequest =
   | {kind:"method-prove";project?:string|null;method:string;proof:unknown}
   /** `out` is an absolute directory the desk names. */
   | {kind:"set-package-export";project?:string|null;set:string;target:"openai"|"codex"|"claude"|"pi";out:string;native?:boolean;allow_partial?:boolean;with_codex_overlay?:boolean}
-  | {kind:"wiki-shape-declare";file:string;frame_ref:string;frame:unknown}
+  /** With `expected_revision` (O-I #742): the change of roles on the frame the file holds at that revision. */
+  | {kind:"wiki-shape-declare";file:string;frame_ref:string;frame:unknown;expected_revision?:number|null}
   /** `aikit adopt ROOT [--namespace N] [--expect-digest D] --yes`: the person's adoption of a harness skill root; never into Control. */
   | {kind:"adopt";root:string;namespace?:string|null;expect_digest?:string|null}
   /** `aikit procedure run PROCEDURE --expect-digest D`: one exact persisted Procedure, applied only at the reviewed digest. */

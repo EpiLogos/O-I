@@ -2,8 +2,8 @@
 // on the Form page as its whole and the cards round it on their roles; Check, Declare and Fold are AIKit's `wiki-shape` commands over
 // the register's wiki file, and Declare reads back what it wrote (techne/devices/formBinding.ts, wired in techneDesigns.ts). The owners
 // here are stand-ins that answer in the shapes the real owner gave through the kernel route (`aikit wiki-shape validate` over the walk's
-// Own fixture world, 29 Oct: recorded below as VALIDATED). The owner's `declare` creates a frame and refuses one that exists ("Wiki object
-// wiki:frame:b742-threefold already exists", the same run), so Declare reads back what the wiki holds and names what new roles wait on.
+// Own fixture world, 29 Oct: recorded below as VALIDATED). A draft's check, a new frame's shape binding and a change of roles on a
+// declared frame are the chain's own test (techne-canvas-form-chain.test.mjs); here, the reading of what the wiki already declares.
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {register} from 'node:module'
@@ -58,6 +58,8 @@ function owners(answers = {}) {
     validate: async file => { asked.push(['validate', file]); return answers.validate?.() ?? VALIDATED },
     compress: async (file, anchor) => { asked.push(['compress', file, anchor]); throw Error('the shape declaration carries no `generated` map of position -> generated-relation ref') },
     reread: async () => { asked.push(['reread']) },
+    check: async () => { throw Error('unasked') }, declare: async () => { throw Error('unasked') }, bind: async () => { throw Error('unasked') },
+    target: async () => { throw Error('unasked') }, reading: async () => { throw Error('unasked') },
   }}
 }
 const hands = held => Object.fromEntries(form.FORM_LOCAL.map(key => [key, value => { if (value === undefined) delete held[key]; else held[key] = value }]))
@@ -107,10 +109,6 @@ test('Check is the owner\'s: it passes on the roles AIKit reads round the whole,
   assert.match(v.checkWhy, /threefold-123 round User identity in wiki:frame:b742-threefold/)
   held.roles = JSON.stringify({...form.compositionOf(THREEFOLD).roles, 4: 'wiki:node:delivered-lane-loses-install'})
   assert.equal(form.canvasCarryingForm(binding, focusOf(THREEFOLD), held, hands(held), o).values.check, undefined, 'a check holds only for the roles it was asked of')
-  await form.canvasCarryingForm(binding, focusOf(THREEFOLD), held, hands(held), o).write([{key: 'checkAsk', value: true}])
-  v = form.canvasCarryingForm(binding, focusOf(THREEFOLD), held, hands(held), o).values
-  assert.equal(v.check, 'refused')
-  assert.match(v.checkWhy, /differ from what your wiki declares.*missing op: a dry run of aikit wiki-shape validate/)
   delete held.roles
   const failing = owners({validate: () => ({...VALIDATED, valid: false, errors: ['conjugate 4′ has no direct 4']})})
   await form.canvasCarryingForm(binding, focusOf(THREEFOLD), held, hands(held), failing.owners).write([{key: 'checkAsk', value: true}])
@@ -118,7 +116,7 @@ test('Check is the owner\'s: it passes on the roles AIKit reads round the whole,
   assert.deepEqual([v.check, v.checkWhy], ['refused', 'The Wiki owner refuses the frame: conjugate 4′ has no direct 4.'])
 })
 
-test('Declare reads back what your wiki holds round the whole; new roles name the owner act they wait on, and a whole with no frame its shape binding; Fold\'s refusal is the owner\'s', async () => {
+test('Declare reads back what your wiki holds round the whole; new roles, and a whole with no frame, wait on a passed check; Fold\'s refusal is the owner\'s', async () => {
   form.resetFormState()
   const held = {}
   const {binding, own} = canvas()
@@ -127,22 +125,24 @@ test('Declare reads back what your wiki holds round the whole; new roles name th
   assert.deepEqual(asked.map(row => row[0]), ['reread', 'validate'], 'the register read again, then the owner\'s reading of it')
   assert.equal(form.canvasCarryingForm(binding, focusOf(THREEFOLD), held, hands(held), o).values.declared, 'saved')
   assert.deepEqual(own, [], 'nothing of the Form went to the frame\'s own write')
-  // New roles on the frame the wiki holds: held, naming AIKit's constellation apply (the owner's declare refuses a frame that exists).
+  // New roles on the frame the wiki holds: held until the owner checked them (the change itself is the chain test's).
   form.resetFormState()
   held.roles = JSON.stringify({...form.compositionOf(THREEFOLD).roles, 4: 'wiki:node:delivered-lane-loses-install'})
   await form.canvasCarryingForm(binding, focusOf(THREEFOLD), held, hands(held), o).write([{key: 'declare', value: true}])
   const moved = form.canvasCarryingForm(binding, focusOf(THREEFOLD), held, hands(held), o)
   assert.equal(moved.values.declared, 'held')
-  assert.match(moved.standing.declared.disabled, /missing op: aikit\.constellation\.apply role_set/)
+  assert.match(moved.standing.declared.disabled, /Check the form first/)
   delete held.roles
-  // A space of the wiki is a whole with no frame: Declare names the shape binding that is QL's.
+  // A space of the wiki is a whole with no frame: Declare waits on a checked form too (QL binds its shape then).
   form.resetFormState()
   const space = {...THREEFOLD, ref: 'central:wiki:root', title: 'Central', kind: 'space'}
   await form.canvasCarryingForm(binding, focusOf(space), held, hands(held), o).write([{key: 'declare', value: true}])
-  const refused = form.canvasCarryingForm(binding, focusOf(space), held, hands(held), o)
-  assert.equal(refused.values.declared, 'refused')
-  assert.match(refused.standing.declared.disabled, /QL-MEF StructuralConstellation · ShapeBinding/)
-  await assert.rejects(() => form.canvasCarryingForm(binding, focusOf(THREEFOLD), held, hands(held), o).write([{key: 'fold', value: true}]), /no `generated` map/)
+  const waiting = form.canvasCarryingForm(binding, focusOf(space), held, hands(held), o)
+  assert.equal(waiting.values.declared, 'held')
+  assert.match(waiting.standing.declared.disabled, /Check the form first/)
+  await form.canvasCarryingForm(binding, focusOf(THREEFOLD), held, hands(held), o).write([{key: 'fold', value: true}])
+  const folded = form.canvasCarryingForm(binding, focusOf(THREEFOLD), held, hands(held), o).values
+  assert.deepEqual([folded.folded, folded.foldWhy], ['refused', 'the shape declaration carries no `generated` map of position -> generated-relation ref'], 'the owner\'s refusal, held')
 })
 
 test('with no constellation focused, the Form says what it waits for', () => {

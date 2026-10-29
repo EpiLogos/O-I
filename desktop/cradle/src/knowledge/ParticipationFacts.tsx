@@ -2,7 +2,7 @@ import {Refusal} from '../shared/Refusal';
 import {useEffect,useRef,useState} from 'react';
 import type {KernelTransportStatus} from '../kernel/types';
 import type {TechneTemporalFacet,TechneTemporalKind,TechneTemporalPrecision,TechnePlaceFacet} from '../techne/contract';
-import {newRef,type NativeMember} from './construction';
+import {newRef} from './construction';
 import type {DraftMember} from './constructionDraft';
 import {readParticipationEvidence} from './participationEvidence';
 const kinds:TechneTemporalKind[]=['occurrence','receipt','valid','source-created','source-modified','day','now','session','run','generation','presentation'];
@@ -47,7 +47,3 @@ export function TimePlaceFields({value,basis,identity,summary,description,transp
  </details>;
 }
 
-/** Participation keeps its original enclosing constellation checkpoint/CAS. */
-export function ParticipationFacts({member,basis,transport,onChange}:{member:DraftMember;basis?:NativeMember;transport:KernelTransportStatus;onChange:(member:DraftMember)=>void}){
- return <TimePlaceFields value={member} basis={{temporal:basis?.['aikit.techne-facet/v1']?.temporal,places:basis?.['aikit.techne-facet/v1']?.spatial}} identity={member.participation_ref} summary="Time and place · this participation" description="These facts describe this member in this constellation. They do not date the whole constellation or change other uses of its source. Save with “Save constellation”." transport={transport} onChange={facts=>onChange({...member,...facts})}/>;
-}

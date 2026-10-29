@@ -245,7 +245,6 @@ if (process.env.PLAIN_REFUSALS_LIST) for (const [file, found] of findings) for (
 /** Sites the name rule catches that stand, each reviewed: the owner's designed words, not a raw error. */
 const ALLOWED = {
   'desktop/cradle/src/flow/FlowSurface.tsx': [{text: '{error}', why: 'the string branch holds only the surface\'s own sentences (a conflict, the agent\'s answer kept unlost, what to choose first); every caught fault is {said, cause} and goes through Refusal'}],
-  'desktop/cradle/src/knowledge/WikiConstructionPanel.tsx': [{text: '{error}', why: 'the string branch holds only the panel\'s own sentences (inspect the pending save first, the draft is retained); every caught fault is {said, cause} and goes through Refusal'}],
 };
 
 /** The surfaces the plain-refusal sweep carried (the ui-coherence lane, 5–6 Oct, ported onto main 29 Oct; S1-67): none may carry
@@ -308,7 +307,6 @@ const SWEPT = [
   'desktop/cradle/src/knowledge/OwnerActions.tsx',
   'desktop/cradle/src/knowledge/ParticipationFacts.tsx',
   'desktop/cradle/src/knowledge/SearchOverlay.tsx',
-  'desktop/cradle/src/knowledge/WikiConstructionPanel.tsx',
   'desktop/cradle/src/knowledge/WikiFactsEditor.tsx',
   'desktop/cradle/src/knowledge/WikiSourceTools.tsx',
   'desktop/cradle/src/material/MaterialSurface.tsx',

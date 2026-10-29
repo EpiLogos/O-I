@@ -70,6 +70,8 @@ const BRIDGE_URL = `http://127.0.0.1:${BRIDGE_PORT}`;
 
 const SCENARIOS = {
   "expression-controls": {module:"scenarios/expression-controls.mjs",kernel:true,aliases:[]},
+  "tarot-score": {module:"scenarios/tarot-score.mjs",kernel:true,aliases:["tarot"]},
+  "tarot-score-relay": {module:"scenarios/tarot-score-relay.mjs",kernel:true,aliases:["tarot-relay"]},
   "expression-page": {module:"scenarios/expression-page.mjs",kernel:true,aliases:["ex5"]},
   "expression-world-join": {module:"scenarios/expression-world-join.mjs",kernel:true,aliases:["join"]},
   "corpus-return-of-zero": {module:"scenarios/corpus-return-of-zero.mjs",kernel:true,aliases:["roz","corpus"]},

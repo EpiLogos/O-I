@@ -699,3 +699,45 @@ fn native_racks_survive_presentation_hide_and_reveal_without_rebinding_membershi
         original["scenes"][0]["presentation"]
     );
 }
+#[test]
+fn a_scene_carries_the_sky_its_live_field_was_opened_on_and_refuses_any_other_shape() {
+    // QL-MEF #312 TS4: the Save carries the field's occasion sky (oi.scene-occasion-sky/v1 holding the admitted
+    // ql.sky-snapshot/v1) beside the Scene's material, so a reopened composition opens its field on that sky.
+    let mut app = setup();
+    let before = inspect(&mut app);
+    let mut body = material();
+    body["scene"]["name"] = before["scenes"][0]["title"].clone();
+    let occasion = json!({"schema":"oi.scene-occasion-sky/v1","event_ref":"ql:k2/default-event","retained_at_unix_ms":1793285000000u64,
+        "sky":{"schema":"ql.sky-snapshot/v1","snapshot_ref":"sha256:occasion","epoch_utc":"2026-10-29T14:43:29Z","bodies":[]}});
+    for bad in [
+        json!("sky"),
+        json!({"schema":"oi.other/v1","event_ref":"e","retained_at_unix_ms":1,"sky":occasion["sky"].clone()}),
+        json!({"schema":"oi.scene-occasion-sky/v1","event_ref":"e","retained_at_unix_ms":1,"sky":{"schema":"ql.other/v1","snapshot_ref":"x"}}),
+        json!({"schema":"oi.scene-occasion-sky/v1","event_ref":"e","retained_at_unix_ms":1,"sky":{"schema":"ql.sky-snapshot/v1","snapshot_ref":""}}),
+        json!({"schema":"oi.scene-occasion-sky/v1","event_ref":"","retained_at_unix_ms":1,"sky":occasion["sky"].clone()}),
+        json!({"schema":"oi.scene-occasion-sky/v1","event_ref":"e","retained_at_unix_ms":-1,"sky":occasion["sky"].clone()}),
+        json!({"schema":"oi.scene-occasion-sky/v1","event_ref":"e","retained_at_unix_ms":1,"sky":occasion["sky"].clone(),"extra":true}),
+    ] {
+        let mut wrong = body.clone();
+        wrong["scene"]["occasionSky"] = bad.clone();
+        assert!(edit(&mut app,2,json!([{"change":"scene_material_set","scene_ref":"expression:craft:scene:main","presentation":wrong}])).is_err(), "{bad}");
+        assert_eq!(inspect(&mut app), before, "a refused sky changes nothing");
+    }
+    body["scene"]["occasionSky"] = occasion.clone();
+    edit(&mut app,2,json!([{"change":"scene_material_set","scene_ref":"expression:craft:scene:main","presentation":body}])).unwrap();
+    let saved = inspect(&mut app);
+    assert_eq!(
+        saved["scenes"][0]["presentation"]["scene"]["occasionSky"],
+        occasion
+    );
+    let mut restart = Application::default();
+    let reopened = apply(
+        &mut restart,
+        json!({"operation":"open","document":saved,"actor":"human:reopen"}),
+    )
+    .unwrap();
+    assert_eq!(
+        reopened["document"]["scenes"][0]["presentation"]["scene"]["occasionSky"], occasion,
+        "the sky survives reopen"
+    );
+}

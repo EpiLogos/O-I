@@ -361,7 +361,7 @@
           -1
         ]
       ],
-      "registry_revision": "c211a781094dae3138c691a1f10dd9637399b5c7243ec0646c71a82428e24c86",
+      "registry_revision": "c8dc7a61731b879ec68915af45217e96488283045d74f779dcf6123569aa98c0",
       "resonator": {
         "geometry_ref": "controlled:signed-square-basis",
         "material_model_ref": "ql.continuous-linear-mode/v1",
@@ -713,7 +713,7 @@
       "occurrence_unix_ms": 1789479981163,
       "pose": 6,
       "receipt_unix_ms": 1789479981163,
-      "registry_revision": "c211a781094dae3138c691a1f10dd9637399b5c7243ec0646c71a82428e24c86",
+      "registry_revision": "c8dc7a61731b879ec68915af45217e96488283045d74f779dcf6123569aa98c0",
       "rna": false,
       "schema": "ql.m3-state-request/v1",
       "stamp": {
@@ -941,7 +941,7 @@
           "native_table": "M2_PLANET_LUT",
           "non_sun_operators": 9,
           "receiving_chakras": 7,
-          "registry_revision": "c211a781094dae3138c691a1f10dd9637399b5c7243ec0646c71a82428e24c86",
+          "registry_revision": "c8dc7a61731b879ec68915af45217e96488283045d74f779dcf6123569aa98c0",
           "scope": "#2-5",
           "standing": "retained-symbolic-model-not-astronomical-measurement",
           "sun_role": "parent-not-chakra-mapped",

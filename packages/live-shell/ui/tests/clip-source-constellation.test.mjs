@@ -752,3 +752,19 @@ test('the clip\'s menu carries Show in Browser (manual §10.9): it runs through 
   const dark = acts.objectMenu({kind: 'clip', id: 'page:lived', trackId: 't1', name: 'x'}, set, context(plain)).find(entry => entry.id === 'show-in-browser')
   assert.equal(dark.disabled, true); assert.match(dark.why, /made of no constellation/)
 })
+
+test('a frame the Form declares round a space\'s own whole stands in the browser as that whole on its declared roles, not as the bare space', () => {
+  // The Form declares `wiki:frame:form:<whole>` round the whole it stands on (techne/devices/formBinding.ts frameRefOf); when that whole is
+  // a space's anchor, the space and the frame share the whole's ref. The browser lists the whole once, with what the Form declared.
+  const objects = {objects: [
+    {object: 'space', ref: 'central:wiki:s', title: 'The inquiry', anchor_ref: 'wiki:node:s', node_refs: ['wiki:node:s', 'wiki:node:a', 'wiki:node:b'], child_space_refs: [], revision: 2},
+    {object: 'node', ref: 'wiki:node:s', title: 'The inquiry', revision: 1}, {object: 'node', ref: 'wiki:node:a', title: 'A', revision: 1},
+    {object: 'node', ref: 'wiki:node:b', title: 'B', revision: 1}, {object: 'node', ref: 'wiki:node:c', title: 'C', revision: 1},
+    {object: 'frame', ref: 'wiki:frame:form:wiki:node:s', revision: 1, title: 'The inquiry', constellations: [{anchor_ref: 'wiki:node:s',
+      members: [{ref: 'wiki:node:a', position: 1, conjugate: false}, {ref: 'wiki:node:b', position: 1, conjugate: true}, {ref: 'wiki:node:c', position: 3, conjugate: false}]}]},
+  ]}
+  const rows = owners.constellationsOf({registers: [registerOf('central')], standings: {central: projected(registerOf('central'), objects)}}).rows
+  assert.deepEqual(rows.map(row => [row.ref, row.title]), [['wiki:node:s', 'The inquiry']], 'one row for the whole')
+  assert.deepEqual(owners.constellationNamed(rows, 'wiki:node:s').members.map(m => [m.title, m.position, m.face]),
+    [['A', 1, 'direct'], ['B', 1, 'prime'], ['C', 3, 'direct']], 'each member on the role the Form declared; what the frame gathers beyond the space joins it')
+})

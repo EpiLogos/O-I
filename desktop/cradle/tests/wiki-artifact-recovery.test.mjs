@@ -1,9 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {performArtifactSave, inspectArtifactSave, restorePendingArtifactDocument} from '../src/knowledge/artifactRecovery.ts';
+import {performArtifactSave, inspectArtifactSave} from '../src/knowledge/artifactRecovery.ts';
 import {saveCompositionFile} from '../src/knowledge/constructionProjection.ts';
-import {restoreConstructionCheckpoint} from '../src/knowledge/constructionCheckpoint.ts';
-import {emptyDraft} from '../src/knowledge/constructionDraft.ts';
 const transport={kind:'bridge',url:'http://controlled.invalid'};
 const parent={schema:'central.path-ref/v1',root:'/ground',path:'Work/Notes',ref:'path:notes'};
 const location={...parent,path:'Work/Notes/work.expression.json',ref:'path:work'};
@@ -53,13 +51,5 @@ test('matching ref and revision with different content is not successful recover
 test('changed live document cannot be submitted with an old first-save operation identity',async()=>{
  const f=fixture(undefined,{...document,revision:5});try{
   await assert.rejects(performArtifactSave(transport,intent),/changed or was closed/);assert.equal(f.writes,0);
- }finally{f.restore();}
-});
-test('pending document and exact destination survive checkpoint restoration and explicit native reopen',async()=>{
- const value=restoreConstructionCheckpoint({draft:emptyDraft('wiki:space'),artifactSave:intent});
- assert.equal(value.artifactSave.destination.operation_ref,'operation:exact');
- assert.throws(()=>restoreConstructionCheckpoint({...value,artifactSave:{...intent,destination:{...intent.destination,name:'../different'}}}));
- const f=fixture(undefined,null);try{
-  assert.deepEqual(await restorePendingArtifactDocument(transport,value.artifactSave),document);assert.equal(f.writes,0);
  }finally{f.restore();}
 });

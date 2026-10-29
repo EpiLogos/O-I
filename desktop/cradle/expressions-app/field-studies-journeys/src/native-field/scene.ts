@@ -70,8 +70,11 @@ export function readScene(sources:any,influence:any,composed:any):SceneActing{
  const material=influence?.material,geometry=influence?.geometry;
  return{
   event_ref:String(input.m1.event_ref),subject_ref:String(input.m3.subject_ref),
+  // A saved occasion re-opens on its full ql.sky-snapshot/v1, which names its epoch as epoch_utc; a fresh compose discloses its request.
   sky:sky&&typeof sky==='object'
-   ?{kind:'dated',mode:String(sky.mode),epoch:String(sky.epoch),snapshot_ref:String(sky.snapshot_ref),label:`${sky.mode==='current'?'Dated sky now':'Dated sky'} · ${String(sky.epoch)}`}
+   ?sky.schema==='ql.sky-snapshot/v1'
+    ?{kind:'dated',mode:'saved',epoch:String(sky.epoch_utc??sky.request?.epoch),snapshot_ref:String(sky.snapshot_ref),label:`Saved occasion sky · ${String(sky.epoch_utc??sky.request?.epoch)}`}
+    :{kind:'dated',mode:String(sky.mode),epoch:String(sky.epoch),snapshot_ref:String(sky.snapshot_ref),label:`${sky.mode==='current'?'Dated sky now':'Dated sky'} · ${String(sky.epoch)}`}
    :{kind:'none',label:'No dated sky requested'},
   observations_unix_ms:Number.isSafeInteger(at)?at:null,
   m1:{revision:config.revision,cycle:config.cycle,tick12:config.tick12,lens12:config.lens12,lens:lensLabel(config.lens12),context_frame:config.context_frame,

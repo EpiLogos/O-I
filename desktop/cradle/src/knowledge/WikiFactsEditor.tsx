@@ -2,13 +2,13 @@ import {Refusal} from '../shared/Refusal';
 import {createContext,useContext,useEffect,useRef,useState,type ReactNode} from 'react';
 import type {KernelTransportStatus} from '../kernel/types';
 import {TimePlaceFields} from './ParticipationFacts';
-import {factsKey,factsRecorded,inspectFacts,prepareFacts,saveFacts,type FactsBasis,type FactsCheckpoint} from './wikiFacts';
+import {factsKey,factsRecorded,inspectFacts,prepareFacts,saveFacts,type FactsBasis,type FactsCheckpoint,type FactsSubject} from './wikiFacts';
 import {newRef} from './construction';
 import type {TimePlaceValues} from './ParticipationFacts';
 import type {TechnePlaceFacet} from '../techne/contract';
 import type {PlaceDraft} from '../techne/m0m5/place/authoring';
 import './wikiConstruction.css';
-const OpenFacts=createContext<((reference:string,onSaved?:()=>void)=>void)|undefined>(undefined);
+const OpenFacts=createContext<((reference:FactsSubject,onSaved?:()=>void)=>void)|undefined>(undefined);
 const message=(error:unknown)=>error instanceof Error?error.message:String(error);
 
 /** Lane-4 T17b/T17c: the route a constellation open hands the time/place editor: the map's draft when the map offered one.
@@ -115,6 +115,13 @@ export function WikiFactsButton({reference,disabled=false,onSaved,routed}:{refer
  },[routed,disabled,open,reference]);
  return open?<button type="button" className="oi-action" disabled={disabled} onClick={()=>open(reference,onSaved)}>Edit time and place</button>:null;
 }
+/** Opens the time-and-place editor once for each request a surface was opened with (the browser's Time and place…, O-I #742). */
+export function OpenFactsOnRequest({request,onSaved}:{request?:{subject:FactsSubject;requestId:string};onSaved?:()=>void}){
+ const open=useContext(OpenFacts);
+ const done=useRef<string>();
+ useEffect(()=>{if(!request||!open||done.current===request.requestId)return;done.current=request.requestId;open(request.subject,onSaved);},[request?.requestId,open]);
+ return null;
+}
 /** The existing knowledge surface retains drafts. Closing this panel only
  * releases its presentation, never the captured native operation or inputs. */
 export function WikiFactsProvider({transport,project,checkpoints,onCheckpoint,onSaved,children}:{transport:KernelTransportStatus;project?:string;checkpoints:Record<string,FactsCheckpoint>;onCheckpoint:(key:string,value:FactsCheckpoint)=>void;onSaved:()=>void;children:ReactNode}){
@@ -127,10 +134,13 @@ export function WikiFactsProvider({transport,project,checkpoints,onCheckpoint,on
  // The frame leaving releases its unconsumed map route: it is never applied after the editor is gone.
  useEffect(()=>()=>{ticket.current++;if(target.current)dropConstellationRoute(target.current);},[]);
  const close=()=>{ticket.current++;if(target.current)dropConstellationRoute(target.current);target.current=undefined;route.current=undefined;setSelected(undefined);setBusy('');setObserved(undefined);returnFocus.current?.isConnected&&returnFocus.current.focus();};
- const open=async(reference:string,callback?:()=>void)=>{
+ const open=async(subject:FactsSubject,callback?:()=>void)=>{
+  // A map's route is offered for a node or a whole frame by its ref; a member's facts in its constellation take none.
+  const reference=typeof subject==='string'?subject:`participation:${subject.participation_ref}`;
   const id=++ticket.current;target.current=reference;returnFocus.current=document.activeElement as HTMLElement|null;notify.current=callback;setError(undefined);setNotice('');setObserved(undefined);
   route.current=undefined;
-  const retained=Object.entries(current.current).find(([,item])=>item.basis.target.ref===reference);
+  const retained=Object.entries(current.current).find(([,item])=>typeof subject==='string'?item.basis.target.kind!=='participation'&&item.basis.target.ref===subject
+   :item.basis.target.kind==='participation'&&item.basis.target.ref===subject.participation_ref&&item.basis.target.frame_ref===subject.frame_ref);
   if(retained){
    // Nothing is read here, so this subject's route is answered now; a withheld draft keeps its route for a later open.
    const live=routeReadFor(reference,reference),offered=live?.draft;
@@ -141,7 +151,7 @@ export function WikiFactsProvider({transport,project,checkpoints,onCheckpoint,on
    }
    setBusy('');setSelected(retained[0]);return;}
   setBusy('Reading native facts…');setSelected('loading');
-  try{const basis=await inspectFacts(transport,project,reference);if(id!==ticket.current)return;const key=factsKey(basis.target);
+  try{const basis=await inspectFacts(transport,project,subject);if(id!==ticket.current)return;const key=factsKey(basis.target);
    // A failed read never reaches this line, so its route and draft stay for the retry. A read of another subject takes nothing.
    const live=routeReadFor(reference,basis.target.ref),offered=live?.draft;const seeded=offered?applyPlaceDraft(basis.values,offered):undefined;
    onCheckpoint(key,{basis,draft:structuredClone(seeded?seeded.values:basis.values)});
@@ -164,16 +174,16 @@ export function WikiFactsProvider({transport,project,checkpoints,onCheckpoint,on
  };
  const inspect=async()=>{
   if(!held)return;const id=++ticket.current;setBusy('Reading saved state…');setError(undefined);
-  try{const fresh=await inspectFacts(transport,project,held.basis.target.ref);if(id!==ticket.current)return;if(fresh.source_ref!==held.basis.source_ref)throw Error('The native register identity changed; the retained inputs have not been rebased.');
+  try{const target=held.basis.target,fresh=await inspectFacts(transport,project,target.kind==='participation'?{frame_ref:target.frame_ref,participation_ref:target.ref}:target.ref);if(id!==ticket.current)return;if(fresh.source_ref!==held.basis.source_ref)throw Error('The native register identity changed; the retained inputs have not been rebased.');
    setObserved(fresh);
    setNotice(`Native revision ${fresh.revision}: ${fresh.values.temporal?.length??0} time facts and ${fresh.values.places?.length??0} place facts. ${held.pending?(factsRecorded(fresh,held.pending)?'A matching recorded result is visible. Retry the exact save so the owner can verify its operation identity and source continuity.':'The retained proposal is not confirmed.'):'Your inputs are retained.'}`);
   }catch(cause){if(id===ticket.current)setError({said:"Couldn't read the saved state.",cause});}finally{if(id===ticket.current)setBusy('');}
  };
  const rebase=()=>{if(!held||!observed)return;if(!store({basis:observed,draft:held.draft}))return;setObserved(undefined);setNotice('Current native revision adopted explicitly. Your inputs are kept; saving creates a new operation.');};
  return <OpenFacts.Provider value={(reference,callback)=>void open(reference,callback)}>{children}{selected&&<section ref={panel} className="wiki-construction oi-sidecar" role="dialog" aria-modal="false" aria-label="Edit native time and place" onKeyDown={event=>{if(event.key==='Escape'){event.preventDefault();event.stopPropagation();close();}}}>
-  <header><h2>Time and place{held?held.basis.target.kind==='node'?' · this node':' · this whole constellation':''}</h2><button type="button" className="oi-tool" data-facts-close aria-label="Close time and place editor" onClick={close}>×</button></header>
+  <header><h2>Time and place{held?held.basis.target.kind==='node'?' · this node':held.basis.target.kind==='participation'?' · this member, in its constellation':' · this whole constellation':''}</h2><button type="button" className="oi-tool" data-facts-close aria-label="Close time and place editor" onClick={close}>×</button></header>
   <p>Closing keeps these inputs and any pending save. Only Save changes the native Wiki.</p>
-  {held&&<><p>{held.basis.title} · saved revision {held.basis.revision}</p><fieldset disabled={!!busy||!!held.pending}><TimePlaceFields identity={factsKey(held.basis.target)} value={held.draft} basis={held.basis.values} transport={transport} summary="Time and place values" description={held.basis.target.kind==='node'?'These facts belong to this native node wherever it is read. Participation facts remain separate.':'These facts belong to the whole native frame. They do not change its members or their participation facts.'} onChange={draft=>{if(store({...held,draft})){setError(undefined);setNotice('');}}}/></fieldset>
+  {held&&<><p>{held.basis.title} · saved revision {held.basis.revision}</p><fieldset disabled={!!busy||!!held.pending}><TimePlaceFields identity={factsKey(held.basis.target)} value={held.draft} basis={held.basis.values} transport={transport} summary="Time and place values" description={held.basis.target.kind==='node'?'These facts belong to this native node wherever it is read. Participation facts remain separate.':held.basis.target.kind==='participation'?'These facts describe this member in this constellation. They do not date the whole constellation or change other uses of its source.':'These facts belong to the whole native frame. They do not change its members or their participation facts.'} onChange={draft=>{if(store({...held,draft})){setError(undefined);setNotice('');}}}/></fieldset>
    <PlaceStandings places={held.draft.places??[]}/>
    <div className="wiki-construction-toolbar"><button className="oi-action" disabled={!!busy} onClick={()=>void save()}>{held.pending?'Retry exact save':'Save time and place'}</button><button className="oi-action" disabled={!!busy} onClick={()=>void inspect()}>Inspect saved state</button></div>
    {held.pending&&<p>The exact pending operation is retained. Inspect before changing or retrying it.</p>}

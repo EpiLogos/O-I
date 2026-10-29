@@ -2,9 +2,13 @@ import type {KernelTransportStatus} from '../kernel/types';
 import {readFile} from '../files/client';
 import {validatePlaceFacet,validateTemporalFacet} from '../techne/contract';
 import type {TimePlaceValues} from './ParticipationFacts';
-import {ACTOR,invoke,newRef,object,readRegister,sourceBases,validReference,validRevision,type WikiRegister,type ApplyKernel} from './construction';
+import {ACTOR,CONSTRUCTION,PARTICIPATION,editable,invoke,newRef,object,readRegister,saveConstruction,sourceBases,validReference,validRevision,type WikiRegister,type ApplyKernel} from './construction';
 
-export interface FactsTarget {kind:'node'|'whole';ref:string}
+/** A node or a whole frame (AIKit's `aikit.wiki.facts.apply`), or one member of a constellation you made: the participation `ref` in the
+ * frame `frame_ref`, whose facts describe it in that constellation alone (AIKit's `aikit.constellation.apply` temporal_set · place_set). */
+export type FactsTarget={kind:'node'|'whole';ref:string}|{kind:'participation';ref:string;frame_ref:string};
+/** What a time-and-place editor is opened on: a node or a frame by its ref, or a participation in its frame. */
+export type FactsSubject=string|{frame_ref:string;participation_ref:string};
 export interface FactsBasis {target:FactsTarget;title:string;revision:number;source_ref:string;values:TimePlaceValues;operations:Record<string,unknown>}
 export interface FactsRequest {schema:'aikit.wiki-facts-action/v1';target:FactsTarget;expected_revision:number;actor_ref:string;operation_ref:string;changes:Record<string,unknown>[]}
 export interface FactsCheckpoint {basis:FactsBasis;draft:TimePlaceValues;pending?:FactsRequest}
@@ -31,6 +35,20 @@ export function readFactsBasis(register:WikiRegister,reference:string):FactsBasi
  const operations=row['aikit.wiki-facts-operations/v1'];
  return {target:{kind:row.object==='node'?'node':'whole',ref:reference},title:typeof row.title==='string'?row.title:object(row['aikit.constellation/v1'])&&typeof row['aikit.constellation/v1'].title==='string'?row['aikit.constellation/v1'].title:row.object==='node'?'Selected node':'Selected whole',revision:row.revision,source_ref:register.source_ref,values,operations:object(operations)?operations:{}};
 }
+/** A member's facts in its constellation: the participation's own facet, at the frame's revision, its operations the frame's applied record. */
+export function readParticipationBasis(register:WikiRegister,frame_ref:string,participation_ref:string):FactsBasis {
+ const frame=register.frames.find(row=>row.ref===frame_ref);
+ if(!frame)throw Error('That constellation is not in the register now: read the browser again.');
+ editable(frame);
+ const member=frame.constellations[0]?.members.find(row=>row[PARTICIPATION].participation_ref===participation_ref);
+ if(!member)throw Error(`That member is no longer in ${frame[CONSTRUCTION].title}.`);
+ const facet=member['aikit.techne-facet/v1'];
+ return {target:{kind:'participation',ref:participation_ref,frame_ref},title:`${member[PARTICIPATION].note||member.ref} · in ${frame[CONSTRUCTION].title}`,revision:frame.revision,
+  source_ref:register.source_ref,values:{temporal:structuredClone(facet?.temporal??[]),places:structuredClone(facet?.spatial??[])},
+  operations:object(frame[CONSTRUCTION].applied)?frame[CONSTRUCTION].applied as Record<string,unknown>:{}};
+}
+const basisOf=(register:WikiRegister,subject:FactsSubject)=>typeof subject==='string'?readFactsBasis(register,subject):readParticipationBasis(register,subject.frame_ref,subject.participation_ref);
+const subjectOf=(target:FactsTarget):FactsSubject=>target.kind==='participation'?{frame_ref:target.frame_ref,participation_ref:target.ref}:target.ref;
 export function factsChanges(basis:TimePlaceValues,draft:TimePlaceValues):Record<string,unknown>[] {
  const changes:Record<string,unknown>[]=[];
  for(const [field,change,validator]of [['temporal','temporal_set',validateTemporalFacet],['places','place_set',validatePlaceFacet]] as const){
@@ -62,24 +80,34 @@ function factsReceiptCandidate(basis:FactsBasis,request:FactsRequest):boolean {
 export function factsRecorded(basis:FactsBasis,request:FactsRequest):boolean {
  return factsReceiptCandidate(basis,request)&&factsMatch(basis,request);
 }
-export async function inspectFacts(transport:KernelTransportStatus,project:string|undefined,reference:string):Promise<FactsBasis>{
- return readFactsBasis(await readRegister(transport,project),reference);
+export async function inspectFacts(transport:KernelTransportStatus,project:string|undefined,subject:FactsSubject):Promise<FactsBasis>{
+ return basisOf(await readRegister(transport,project),subject);
 }
 export async function saveFacts(transport:KernelTransportStatus,project:string|undefined,checkpoint:FactsCheckpoint,apply?:ApplyKernel):Promise<FactsBasis>{
  const request=checkpoint.pending;
  if(!request)throw Error('Retain the exact operation before saving.');
- const register=await readRegister(transport,project),current=readFactsBasis(register,request.target.ref);
+ const register=await readRegister(transport,project),current=basisOf(register,subjectOf(request.target));
  if(register.source_ref!==checkpoint.basis.source_ref||!same(current.target,request.target))throw Error('The selected native register or target changed. Inputs are retained.');
  // A matching receipt is only a candidate for idempotent replay. The owner
  // must compare the immutable request digest before any confirmation.
  if(current.revision!==request.expected_revision&&!factsReceiptCandidate(current,request))throw Error('The native object changed since these inputs were read. Inspect the current revision; your inputs are retained.');
  const files=checkpoint.draft.facet_sources??[],sources=sourceBases(request,files);
  for(const source of sources){const file=files.find(row=>row.source_ref===source.source_ref&&row.revision===source.revision);if(!file)throw Error('Read each fact’s evidence file before saving.');const fresh=await readFile(transport,file.location);if(fresh.revision!==source.revision||(fresh.source?.ref??fresh.location.ref)!==source.source_ref)throw Error('An evidence file changed. Read it again; these inputs are retained.');}
+ if(request.target.kind==='participation'){
+  // The member's facts are its constellation's: one change of that frame, at its revision, under the same operation identity.
+  const target=request.target;
+  await saveConstruction(transport,project,register,{schema:'aikit.constellation-action/v1',frame_ref:target.frame_ref,expected_revision:request.expected_revision,
+   actor_ref:request.actor_ref,operation_ref:request.operation_ref,changes:request.changes.map(change=>({...change,participation_ref:target.ref}))},[],apply,
+   sources.map(source=>({...source,location:files.find(file=>file.source_ref===source.source_ref)!.location})));
+  const confirmed=await inspectFacts(transport,project,subjectOf(target));
+  if(!factsRecorded(confirmed,request))throw Error('The saved facts did not independently read back at their recorded operation. Inspect before retrying.');
+  return confirmed;
+ }
  const result=await invoke<Record<string,unknown>>(transport,project,'aikit.wiki.facts.apply',request.target.ref,{location:register.file.location,expected_file_revision:register.file.revision,request,sources:sources.map(source=>({...source,location:files.find(file=>file.source_ref===source.source_ref)!.location}))},apply);
  if(result.persisted!==true||!same(result.target,request.target)||result.operation_ref!==request.operation_ref||!['saved','unchanged'].includes(String(result.state)))throw Error('The owner did not confirm this exact save. Inspect before retrying.');
  const warnings=Array.isArray(result.continuity_warnings)?result.continuity_warnings.filter((value):value is string=>typeof value==='string'):[];
  if(result.continuity==='reconciliation_required'||warnings.length)throw Error(`The owner acknowledged that the facts were saved, but source continuity needs reconciliation. The exact pending operation is retained. ${warnings.join(' ')}`.trim());
- const confirmed=await inspectFacts(transport,project,request.target.ref);
+ const confirmed=await inspectFacts(transport,project,subjectOf(request.target));
  if(!factsRecorded(confirmed,request))throw Error('The saved facts did not independently read back at their recorded operation. Inspect before retrying.');
  return confirmed;
 }
@@ -90,7 +118,7 @@ export function restoreFactsCheckpoints(value:unknown):Record<string,FactsCheckp
  for(const [key,checkpoint]of Object.entries(value)){
   if(!object(checkpoint)||!object(checkpoint.basis)||!object(checkpoint.draft))throw Error('A retained time/place draft is malformed.');
   const basis=checkpoint.basis,target=basis.target;
-  if(!object(target)||!['node','whole'].includes(String(target.kind))||!validReference(target.ref)||key!==factsKey(target as unknown as FactsTarget)||!validRevision(basis.revision)||!validReference(basis.source_ref)||typeof basis.title!=='string'||basis.title.length>12000||!object(basis.values)||!object(basis.operations))throw Error('A retained time/place target is malformed.');
+  if(!object(target)||!['node','whole','participation'].includes(String(target.kind))||!validReference(target.ref)||(target.kind==='participation'&&!validReference(target.frame_ref))||key!==factsKey(target as unknown as FactsTarget)||!validRevision(basis.revision)||!validReference(basis.source_ref)||typeof basis.title!=='string'||basis.title.length>12000||!object(basis.values)||!object(basis.operations))throw Error('A retained time/place target is malformed.');
   for(const values of [basis.values,checkpoint.draft])for(const field of ['temporal','places','facet_sources'])if(values[field]!==undefined&&(!Array.isArray(values[field])||values[field].length>256||!values[field].every(object)))throw Error('A retained time/place input is malformed.');
   if(checkpoint.pending!==undefined){const pending=checkpoint.pending;if(!object(pending)||pending.schema!=='aikit.wiki-facts-action/v1'||!same(pending.target,target)||pending.expected_revision!==basis.revision||!validReference(pending.actor_ref)||!validReference(pending.operation_ref)||!Array.isArray(pending.changes)||pending.changes.length<1||pending.changes.length>2||pending.changes.some(change=>!object(change)||!['temporal_set','place_set'].includes(String(change.change))))throw Error('A retained time/place operation is malformed.');if(pending.actor_ref!==ACTOR||!same(pending.changes,factsChanges(basis.values as TimePlaceValues,checkpoint.draft as TimePlaceValues)))throw Error('The retained operation differs from its captured inputs.');}
  }

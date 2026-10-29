@@ -138,20 +138,6 @@ export function compositionAttached(frame: NativeConstruction | undefined, artif
     && sameComposition(item.source['oi.expression-file/v1'], {location: artifact.file.location})));
 }
 
-/** Recovery requires the native operation record AND the intended attachment
- * still being present. A later replacement/retraction is not recovered as an
- * unchanged Return merely because its historical operation id still exists. */
-export function compositionReturnRecorded(frame: NativeConstruction, request: ConstructionRequest): boolean {
-  if (request.frame_ref !== frame.ref || request.changes.length !== 1 || request.changes[0].change !== 'composition_attach') return false;
-  const recorded = frame[CONSTRUCTION].applied?.[request.operation_ref];
-  return Boolean(recorded && recorded.actor_ref === request.actor_ref
-    && recorded.basis_revision === request.expected_revision
-    && recorded.result_revision === request.expected_revision + 1
-    && frame.revision >= recorded.result_revision
-    && typeof recorded.request_digest === 'string' && /^[a-f0-9]{64}$/.test(recorded.request_digest)
-    && frame[CONSTRUCTION].compositions?.some(item => sameComposition(item, request.changes[0].composition)));
-}
-
 export async function attachCompositionReturn(transport: KernelTransportStatus, project: string | undefined, register: WikiRegister, frame: NativeConstruction, artifact: ArtifactReturn, apply?: ApplyKernel, retained?: ConstructionRequest): Promise<SavedConstruction> {
   const request = retained ?? compositionReturnRequest(frame, artifact);
   // A restored checkpoint can name an operation only for this exact attachment;

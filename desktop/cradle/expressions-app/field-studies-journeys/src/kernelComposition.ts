@@ -2,7 +2,7 @@
  * operation builder, not storage. Its captured document revision is the CAS
  * basis; callers must not replace it with a freshly inspected revision.
  */
-import {clone, validateJourney, type Journey, type Scene} from './model.js';
+import {clone, validateJourney, type Journey, type Scene, type SceneOccasionSky} from './model.js';
 import {kernelDocumentToJourney,nativeSceneMaterial, type KernelConversion, type KernelExpressionDocument} from './kernelDocumentBridge.js';
 import {mapSceneOccurrences, mergeScenePage, validateSceneData, sameSceneData} from './sceneCorrespondence.js';
 import {validateEntitySound} from './native-field/entitySound.js';
@@ -31,6 +31,49 @@ export interface CompositionEdit {
   changes:CompositionChange[];
 }
 const same = sameSceneData;
+
+/** The field's occasion sky as a save may carry it: the exact admitted
+ * `ql.sky-snapshot/v1` the scene event carried when the field opened, labelled
+ * `oi.scene-occasion-sky/v1` with the event it was read for and when it was
+ * kept: the shape the kernel's Scene grammar admits (expression_scene.rs
+ * occasion_sky). Anything else is refused and never saved. */
+export function validOccasion(value:unknown):SceneOccasionSky|null{
+  if(!value||typeof value!=='object'||Array.isArray(value))return null;
+  const candidate=value as Partial<SceneOccasionSky>,sky=candidate.sky;
+  const ref=(text:unknown)=>typeof text==='string'&&text.length>0&&text.length<=2048;
+  if(Object.keys(candidate).some(key=>!['schema','sky','event_ref','retained_at_unix_ms'].includes(key))
+   ||candidate.schema!=='oi.scene-occasion-sky/v1'||!ref(candidate.event_ref)
+   ||!Number.isSafeInteger(candidate.retained_at_unix_ms)||candidate.retained_at_unix_ms!<0
+   ||!sky||typeof sky!=='object'||Array.isArray(sky)||sky.schema!=='ql.sky-snapshot/v1'||!ref(sky.snapshot_ref))return null;
+  return clone(candidate) as SceneOccasionSky;
+}
+
+/** The save's occasion join: the field's occasion sky enters the submitted
+ * journey on the named Scene's material, so the ordinary `scene_material_set`
+ * carries it into the kernel document. An absent or malformed occasion leaves
+ * the journey unchanged; the join never touches another Scene. */
+export function joinOccasion(journey:Journey,sceneId:string|null|undefined,occasion:unknown):Journey{
+  const valid=validOccasion(occasion);
+  if(!valid||!sceneId)return journey;
+  const target=journey.scenes.find(scene=>scene.id===sceneId);
+  if(target)target.occasionSky=valid;
+  return journey;
+}
+
+/** The saved sky, carried into what the app submits: a reply never edits the
+ * working draft, so a Scene whose saved document holds an occasion sky the
+ * draft lacks takes it from the acknowledged view. The draft then reads clean
+ * against the owner's document, and no later flush or act writes the sky away.
+ * A sky the draft carries is its own and stands. */
+export function carrySavedOccasion(journey:Journey,view:KernelConversion|null|undefined):Journey{
+  if(!view)return journey;
+  for(const scene of journey.scenes){
+    if(scene.occasionSky)continue;
+    const saved=validOccasion(view.journey.scenes.find(candidate=>candidate.id===scene.id)?.occasionSky);
+    if(saved)scene.occasionSky=saved;
+  }
+  return journey;
+}
 
 export function compositionProperties(journey:Journey):CompositionProperties {
   return {schema:'oi.journey-properties/v1',description:journey.description,loop:journey.loop,
