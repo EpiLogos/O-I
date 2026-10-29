@@ -36,7 +36,10 @@ import { loadRedbook } from './src/redbook/load';
 import type { Family, Occurrence } from './src/types/field';
 import type { SeamChange } from './src/data/occurrenceSeam';
 import { beginLifetime, listen, nextFrame, type AtlasLifetime } from './src/ui/lifetime';
-import { shellKeysFirst } from './hostKeys';
+import { earthLettersOnFocus, shellKeysFirst, type PaneElementLike } from './hostKeys';
+
+/** The pane the globe stands in: the `.atlas-host` the shell made (the module door's pane element, or the centre panel's wrapper). */
+const paneOf = (globe: HTMLElement): PaneElementLike | null => globe.closest<HTMLElement>('.atlas-host');
 
 export { registerFixtureProvider, FIXTURE_PROVIDER_ID } from './provider/fixtureProvider';
 export { setSkyProvider } from './provider/skyProvider';
@@ -143,6 +146,8 @@ export async function mountAtlas(options: AtlasMountOptions): Promise<AtlasHandl
     built = engine;
     // [host, O-I #820] ⌘K is the shell's search line: this guard listens before the controller does and stands its ⌘K down (hostKeys.ts)
     shellKeysFirst(listen);
+    // [host, O-I #742] the Earth's single letters act only while its pane has the keys (hostKeys.ts earthLettersOnFocus)
+    earthLettersOnFocus(listen, paneOf(globe));
     ctl = new Controller(model, engine, time, app, history, corpus, redbook ?? undefined);
     await engine.ready;
     ctl.boot();

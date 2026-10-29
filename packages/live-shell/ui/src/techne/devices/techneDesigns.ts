@@ -30,12 +30,20 @@ import {useAtlasHandle, useSuiteStanding} from '../../projections/atlas/AtlasPro
 import {turnAtlasTo} from '../../projections/atlas/places/placesHost'
 import {writeThroughOwner} from '../../inhabitants/ql/devices/ownerWrite'
 import {setFilters} from '../../inhabitants/knowledgeGraphFaceActions'
-import {CANVAS_DESIGN, GRAPH_DESIGN, JOURNEY_DESIGN, LENS_DESIGN, PALACE_DESIGN, designDevice, heldFor, useHolds} from './designDevices'
+import {CANVAS_DESIGN, GRAPH_DESIGN, JOURNEY_DESIGN, LENS_DESIGN, PALACE_DESIGN, designDevice, handsFor, heldFor, useHolds} from './designDevices'
 import {SESSION_ACTS, palaceBinding, type PalaceWorld} from './palaceBinding'
 import {canvasBinding, journeyBinding, type FrameReadings} from './frameBindings'
 import {graphBinding, readGraphReach, surfaceRead, GRAPH_READ_NODES, type GraphReach, type GraphWrites} from './graphBinding'
 import {useGraphRead} from './graphRead'
 import {canvasCarryingLight, lensBinding, lightBinding} from './effectBindings'
+import {canvasCarryingForm, formState, subscribeForm, FORM_LOCAL, type FormFocus, type FormOwners} from './formBinding'
+import {useConstellationFocus} from '../../frame/browser/constellationFocus'
+import {constellationNamed, useConstellations} from '../../owners/constellations'
+import {getWikiProjectionState, refreshWikiProjectionReading, subscribeWikiProjection, wikiReadingOf}
+  from '../../../../../../desktop/cradle/src/techne/wikiProjectionStore'
+import {kernelOp} from '../../../../../../desktop/cradle/src/kernel/bridge'
+import type {KernelOp, KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
+import type {WikiRegister} from '../../../../../../desktop/cradle/src/techne/wikiExpression'
 import {useLivingPlan} from './livingPlan'
 import {useLensRegistry} from './lensRegistry'
 import {usePaneChrome} from '../../projections/atlas/paneChrome'
@@ -123,6 +131,37 @@ function useGraphReach(active: boolean): GraphReach | null {
   return reach
 }
 
+/** One of the Wiki owner's shape commands through the kernel's aikit routes (owner_routes.rs): its reading, or its refusal in its words. */
+async function shapeCommand(transport: KernelTransportStatus, op: KernelOp): Promise<unknown> {
+  const call = await kernelOp(transport, op)
+  if (call.error) throw Error(call.error)
+  return (call.outcome as {data?: unknown} | undefined)?.data
+}
+
+/** The Form page's owners for one register: AIKit's `wiki-shape` over the register's wiki file, and the register read again through the
+ * projection store (the reading the browser's constellations are). */
+export function kernelFormOwners(transport: KernelTransportStatus, register: WikiRegister): FormOwners {
+  return {
+    validate: file => shapeCommand(transport, {op: 'aikit_read', request: {kind: 'wiki-shape-validate', file}}),
+    compress: (file, anchorRef) => shapeCommand(transport, {op: 'aikit_read', request: {kind: 'wiki-shape-compress', file, anchor_ref: anchorRef}}),
+    reread: async () => { await refreshWikiProjectionReading(register, transport) },
+  }
+}
+
+/** The constellation the browser focuses (constellationFocus.ts), with its register's wiki file as the projection store read it. Null
+ * with none focused, or while its register is not read. */
+function useFormFocus(): {focus: FormFocus; register: WikiRegister} | null {
+  const focus = useConstellationFocus()
+  const reading = useConstellations()
+  const projection = useSyncExternalStore(subscribeWikiProjection, getWikiProjectionState, getWikiProjectionState)
+  return useMemo(() => {
+    const constellation = constellationNamed(reading.rows, focus.ref)
+    const register = constellation ? projection.registers.find(row => row.key === constellation.register) : undefined
+    const basis = register ? wikiReadingOf(projection.standings[register.key])?.wikiBasis : undefined
+    return constellation && register && basis ? {focus: {constellation, file: basis.path}, register} : null
+  }, [focus.ref, reading.rows, projection])
+}
+
 /** The bindings of the designs, each on its owner, read where they stand. The kernel's graph is read only while the Knowledge graph
  * stands on the rack (`graph`), and so is what the browser's selection reaches. */
 export function useTechneDesignBindings({graph, surface}: {graph: boolean; surface: KnowledgeGraphSurface | null}): Readonly<Record<string, DesignBinding>> {
@@ -150,15 +189,26 @@ export function useTechneDesignBindings({graph, surface}: {graph: boolean; surfa
   const lensPane = usePaneChrome('lens')
   // The graph's reach: what the browser's selected folder, note or Day reaches, through Impact's legs.
   const reach = useGraphReach(graph)
+  // The Canvas's Form page: the constellation the browser focuses, on the Wiki owner's shape commands (formBinding.ts).
+  const formFocus = useFormFocus()
+  const form = useSyncExternalStore(subscribeForm, formState, formState)
   return useMemo(() => {
     const frame: FrameReadings = {state: hosted?.state ?? null, run: hosted?.run ?? null,
       window: session ? session.time_window ? {from: session.time_window.from, to: session.time_window.to} : null : undefined}
+    const formOwners = formFocus ? kernelFormOwners(detectTransport(), formFocus.register) : null
+    const canvas = canvasCarryingLight(canvasBinding(frame, heldFor(CANVAS_DESIGN)), LIGHT)
     return {
       [PALACE_DESIGN]: palaceBinding(palace, heldFor(PALACE_DESIGN), SESSION_ACTS, palaceWorld),
-      [CANVAS_DESIGN]: canvasCarryingLight(canvasBinding(frame, heldFor(CANVAS_DESIGN)), LIGHT),
+      [CANVAS_DESIGN]: formOwners ? canvasCarryingForm(canvas, formFocus!.focus, heldFor(CANVAS_DESIGN), handsFor(CANVAS_DESIGN, FORM_LOCAL), formOwners, form)
+        : canvasCarryingForm(canvas, null, heldFor(CANVAS_DESIGN), handsFor(CANVAS_DESIGN, FORM_LOCAL), NO_OWNERS, form),
       [JOURNEY_DESIGN]: journeyBinding(frame),
       [LENS_DESIGN]: lensBinding(lensLists, heldFor(LENS_DESIGN), lensPane),
       [GRAPH_DESIGN]: graphBinding(surface, read, GRAPH_WRITES, heldFor(GRAPH_DESIGN), plan, reach),
     }
-  }, [palace, palaceWorld, holds, hosted, session, read, surface, plan, lensLists, lensPane, reach])
+  }, [palace, palaceWorld, holds, hosted, session, read, surface, plan, lensLists, lensPane, reach, formFocus, form])
+}
+
+/** With no constellation focused the Form asks no owner (canvasCarryingForm then only says what it waits for). */
+const NO_OWNERS: FormOwners = {
+  validate: async () => { throw Error('No constellation is focused.') }, compress: async () => { throw Error('No constellation is focused.') }, reread: async () => {},
 }

@@ -43,11 +43,52 @@ export interface SpineEncounterBridge extends EncounterBridge {
   publish(): void;
 }
 
+// ── the workspace the spine stands in ─────────────────────────────────────
+
+/** The workspace of the book the spine stands in: the book's storage namespace (continuity: storageNamespace.key), the active
+ * workspace id and its world. A projection whose memories are kept per workspace reads it here (the Earth atlas,
+ * projections/atlas/AtlasProjectionPanel.tsx). */
+export interface SpineWorkspace {
+  readonly namespace: string
+  readonly workspaceId: string
+  readonly world?: string
+}
+
+/** The spine the last bridge was made over: the host's live reading of the book, never a copy. The native Workbench, which hosts every
+ * projection pane (native/Workbench.tsx), makes its bridge as it first renders, so the workspace stands before any pane's module mounts. */
+let spine: {readonly current: {book: CandidateWorkspace}} | null = null
+let told: SpineWorkspace | null = null
+const workspaceListeners = new Set<() => void>()
+
+/** The workspace the spine stands in now; null while no host has made a bridge (a standalone harness). */
+export function spineWorkspace(): SpineWorkspace | null {
+  const book = spine?.current.book
+  const namespace = book?.storageNamespace?.key
+  const workspaceId = book?.current?.id
+  if (typeof namespace !== 'string' || typeof workspaceId !== 'string') return null
+  return {namespace, workspaceId, world: book?.current.context?.world}
+}
+
+/** Told when the workspace the spine stands in, or its world, changes (each publication compares). Returns the unsubscribe. */
+export function subscribeSpineWorkspace(listener: () => void): () => void {
+  workspaceListeners.add(listener)
+  return () => { workspaceListeners.delete(listener) }
+}
+
+function tellWorkspace(): void {
+  const now = spineWorkspace()
+  if (now?.namespace === told?.namespace && now?.workspaceId === told?.workspaceId && now?.world === told?.world) return
+  told = now
+  for (const listener of [...workspaceListeners]) listener()
+}
+
 export function createSpineEncounterBridge(
   latest: {readonly current: {book: CandidateWorkspace; workspace: WorkspaceReading}},
 ): SpineEncounterBridge {
   interface Registration {listener: EncounterListener; epoch: number}
   const registrations = new Set<Registration>();
+  spine = latest;
+  told = spineWorkspace();
   const snapshot = (): EncounterSnapshot => {
     const origin = latest.current, context = origin.book.current.context;
     return {
@@ -63,6 +104,7 @@ export function createSpineEncounterBridge(
     };
   };
   const publish = () => {
+    tellWorkspace();
     const epoch = latest.current.workspace.accessEpoch;
     const reading = snapshot();
     for (const registration of registrations) {
