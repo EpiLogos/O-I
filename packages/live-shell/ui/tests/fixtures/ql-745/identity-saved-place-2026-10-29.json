@@ -1,0 +1,56 @@
+{
+ "source": "ql nara inspect - --json, QL-MEF dlw/745-readings (lane N: the saved place), built from 14391b6 plus this lane, 29 Oct 2026",
+ "profile": {
+  "schema": "ql.nara-identity-profile/v1",
+  "person_ref": "central:person:sky-place-fixture",
+  "nara_ref": "ql:nara:sky-place-fixture",
+  "name": "Sky place fixture",
+  "birth": {
+   "date": "1990-06-15",
+   "time": null,
+   "precision": "unknown",
+   "uncertainty_minutes": null,
+   "fold": null,
+   "place": null
+  },
+  "observer_place": {
+   "reference": "controlled:place:hastings",
+   "label": "Hastings",
+   "latitude_degrees": 50.8543,
+   "longitude_degrees": 0.5735,
+   "altitude_metres": 10.0,
+   "timezone": "Europe/London"
+  },
+  "jungian": null,
+  "gene_keys": null,
+  "human_design": null,
+  "quintessence": null
+ },
+ "input_revision": "sha256:49fcb563334148733ea615da007a9b839acacb8e3267972dc6f4c1ddfd711fe8",
+ "profile_read_back": {
+  "birth": {
+   "date": "1990-06-15",
+   "fold": null,
+   "place": null,
+   "precision": "unknown",
+   "time": null,
+   "uncertainty_minutes": null
+  },
+  "gene_keys": null,
+  "human_design": null,
+  "jungian": null,
+  "name": "Sky place fixture",
+  "nara_ref": "ql:nara:sky-place-fixture",
+  "observer_place": {
+   "altitude_metres": 10.0,
+   "label": "Hastings",
+   "latitude_degrees": 50.8543,
+   "longitude_degrees": 0.5735,
+   "reference": "controlled:place:hastings",
+   "timezone": "Europe/London"
+  },
+  "person_ref": "central:person:sky-place-fixture",
+  "quintessence": null,
+  "schema": "ql.nara-identity-profile/v1"
+ }
+}

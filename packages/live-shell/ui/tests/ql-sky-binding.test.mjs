@@ -122,7 +122,7 @@ test('the design draws all five views on the owner\'s sky with nothing invented:
   const whole = renderToStaticMarkup(h(HostedDevice, {designed: design, binding, view: 'whole', nav: {}}))
   assert.match(whole, /Moshier/, 'the owner\'s ephemeris')
   assert.match(whole, /data-i="Run\|[^"]*No clock runs the sky here/, 'Run stands disabled with its reason')
-  assert.match(whole, /data-i="Observer\|[^"]*no observer place reaches it/, 'the observer stands disabled with its reason')
+  assert.match(whole, /data-i="Observer\|[^"]*No place is saved/, 'Observer, the view\'s own, waits on a place: none is read here')
   const moves = renderToStaticMarkup(h(HostedDevice, {designed: {...design, firstPage: 'moves'}, binding, view: 'whole', nav: {}}))
   assert.match(moves, /No reading of the moves\./, 'no compiled plan runs in the shell: the moves are not drawn from a fixture')
 })

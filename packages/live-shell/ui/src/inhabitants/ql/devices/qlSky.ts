@@ -15,6 +15,11 @@
 // and a place: the world's declared place when Observer is Shared, the person's when it is Private (manual §22.1; #254 D12). A place is
 // given to the Sky (setQlSkyPlace) by its owner; with none, the rulers stand absent and say which owner op is missing.
 //
+// The places (skyPlace.ts). Observer is the view's own choice (manual §22.1: "Shared is the sky as seen from Earth. Private is the sky for
+// your place"). Shared counts the hours at your world's declared place, Central's (central.world.place, read on your world's record);
+// Private counts them at your saved place, your Nara identity's (observer_place), and asks QL for the sky as seen from it (a topocentric
+// `ql.sky-request/v1`, providers/sky/kerykeion_snapshot.py). A shared view never carries your place.
+//
 // Pure apart from the kernel reads, which take the call they are given, and the small store the views share.
 import {useEffect, useSyncExternalStore} from 'react'
 import {detectTransport, kernelOp, type KernelOpCall} from '../../../../../../../desktop/cradle/src/kernel/bridge'
@@ -27,6 +32,7 @@ import type {DeviceInstance, ParamValue} from '../../../frame/devices/deviceRunt
 import {techneDeviceId, techneFaceDeclaration} from './faces'
 import {qlRackState, rackPage, type QlRackState} from './qlRack'
 import {presenceKeys, skyPresences, withdrawSkyPresence, type SkyPresences} from './skyPresences'
+import {readSavedPlace, readWorldPlace, type KeptPlace, type SkyPlaces} from './skyPlace'
 
 export const QL_SKY_FAMILY = 'quaternal-logic'
 export const QL_SKY_FACE = 'sky'
@@ -46,27 +52,31 @@ const MS_DAY = 864e5
 export type SkyAsk = {readonly now: true} | {readonly now: false; readonly epochMs: number}
 
 /** The `ql.sky-request/v1` for an instant (ported from inhabitants/qlSkyEarthAdapter.ts:132-145 requestAt): UTC, to the second, the
- * shared geocentric view in the tropical zodiac, Moshier allowed — the request the Earth's Sun is read by. */
-export function skyRequestAt(epochMs: number, mode: SkyRequest['mode']): SkyRequest {
-  return {
+ * shared geocentric view in the tropical zodiac, Moshier allowed — the request the Earth's Sun is read by. With your place it is the
+ * private sky, as seen from there: QL's topocentric request, its observer the place's reference, longitude, latitude and altitude
+ * (providers/sky/kerykeion_snapshot.py `request`; the cradle's SkyRequest type names only the shared one). */
+export function skyRequestAt(epochMs: number, mode: SkyRequest['mode'], from: KeptPlace | null = null): SkyRequest {
+  const request = {
     schema: 'ql.sky-request/v1',
     epoch: `${new Date(epochMs).toISOString().slice(0, 19)}Z`,
     timezone: 'UTC',
     mode,
-    perspective: 'Apparent Geocentric',
+    perspective: from ? 'Topocentric' : 'Apparent Geocentric',
     zodiac: 'Tropical',
     ayanamsha: null,
-    observer: null,
+    observer: from ? {reference: from.reference, longitude_degrees: from.longitude_degrees, latitude_degrees: from.latitude_degrees, altitude_metres: from.altitude_metres} : null,
     max_age_seconds: 300,
     backend_policy: 'allow-moshier',
   }
+  return request as SkyRequest
 }
 
-/** The request for what the view asks, or the reason it is not asked: an instant outside the owner's range is refused here. */
-export function skyRequestFor(ask: SkyAsk, at: Date): {ok: true; request: SkyRequest} | {ok: false; reason: string} {
-  if (ask.now) return {ok: true, request: skyRequestAt(at.getTime(), 'current')}
+/** The request for what the view asks, or the reason it is not asked: an instant outside the owner's range is refused here. `from` is
+ * your place for the private sky. */
+export function skyRequestFor(ask: SkyAsk, at: Date, from: KeptPlace | null = null): {ok: true; request: SkyRequest} | {ok: false; reason: string} {
+  if (ask.now) return {ok: true, request: skyRequestAt(at.getTime(), 'current', from)}
   if (!Number.isFinite(ask.epochMs) || ask.epochMs < FIRST_MS || ask.epochMs >= END_MS) return {ok: false, reason: 'The dated sky answers only from 1800 to 2399.'}
-  return {ok: true, request: skyRequestAt(ask.epochMs, 'historical')}
+  return {ok: true, request: skyRequestAt(ask.epochMs, 'historical', from)}
 }
 
 // ── the reading ─────────────────────────────────────────────────────────────
@@ -199,8 +209,13 @@ export async function readSkyHoursThroughKernel(call: KernelCall, place: SkyPlac
 
 // ── the store the views share ───────────────────────────────────────────────
 
-/** The view's own choices: which bodies it shows, whether it draws the aspects and the natal ring. No owner keeps them. */
+/** Whose view the sky shows (manual §22.1 Observer): the world's, as seen from Earth, or yours, for your place. */
+export type SkyObserver = 'shared' | 'private'
+
+/** The view's own choices: which bodies it shows, whether it draws the aspects and the natal ring, and whose view it shows. No owner
+ * keeps them. */
 export interface SkyView {
+  readonly observer: SkyObserver
   readonly aspects: boolean
   readonly natal: boolean
   readonly hidden: readonly SkyBody[]
@@ -220,6 +235,8 @@ export interface QlSkyState {
   /** The place the hours are counted at, as its owner gave it; absent, `placeWhy` says why (QL_SKY_ABSENT.havePlace by default). */
   readonly place?: SkyPlace | null
   readonly placeWhy?: string | null
+  /** The places its owners keep (skyPlace.ts): your world's and yours; the Observer chooses which one the Sky holds. */
+  readonly places?: SkyPlaces | null
   /** QL's hours for the instant asked at the place; null while none is asked or one is being counted (`hoursBusy`). */
   readonly hours?: SkyHoursReading | null
   readonly hoursBusy?: boolean
@@ -239,7 +256,7 @@ export function setQlSkyNatal(natal: SkyNatal | null, why: string | null = null)
   setState({...state, natal, natalWhy: natal ? null : why, view: natal ? {...state.view, natal: true} : state.view})
 }
 
-const INITIAL: QlSkyState = {ask: {now: true}, reading: null, answered: null, view: {aspects: false, natal: false, hidden: []}}
+const INITIAL: QlSkyState = {ask: {now: true}, reading: null, answered: null, view: {observer: 'shared', aspects: false, natal: false, hidden: []}}
 let state: QlSkyState = INITIAL
 let asked = false
 let sequence = 0
@@ -259,7 +276,9 @@ export const SKY_SETTLE_MS = 250
 /** Read the sky for the current ask now; the newest answer alone stands. */
 export async function readQlSkyNow(at: Date = new Date()): Promise<void> {
   const mine = ++sequence, ask = state.ask
-  const request = skyRequestFor(ask, at)
+  // The private sky is asked from your place; without one it is not asked, and says why.
+  const from = state.view.observer === 'private' ? (state.place?.scope === 'observer-private' ? state.place : null) : null
+  const request = state.view.observer === 'private' && !from ? {ok: false as const, reason: state.placeWhy ?? NO_PLACE} : skyRequestFor(ask, at, from)
   if (request.ok) void readQlSkyHours(request.request.epoch)
   const reading = request.ok ? await readSkyThroughKernel(call, request.request) : {ok: false as const, reason: request.reason}
   if (mine !== sequence) return
@@ -285,6 +304,39 @@ export function setQlSkyPlace(place: SkyPlace | null, why: string | null = null)
   void readQlSkyHours()
 }
 
+/** The place the Observer chooses from the places its owners keep, or why there is none: Shared is your world's declared place, Private
+ * your saved place. Pure. */
+export function skyPlaceFor(observer: SkyObserver, places: SkyPlaces | null | undefined): {place: SkyPlace | null; why: string | null} {
+  if (!places) return {place: null, why: NO_PLACE}
+  const kept = observer === 'private' ? places.mine : places.world
+  return kept.ok ? {place: {...kept.place, scope: observer === 'private' ? 'observer-private' : 'world-declared'}, why: null} : {place: null, why: kept.reason}
+}
+
+/** Give the Sky the places its owners keep: it holds the one its Observer chooses, and counts the hours there (the private sky is asked
+ * again from your place). */
+export function setQlSkyPlaces(places: SkyPlaces | null): void {
+  setState({...state, places})
+  const chosen = skyPlaceFor(state.view.observer, places)
+  setQlSkyPlace(chosen.place, chosen.why)
+  if (state.view.observer === 'private' && asked) void readQlSkyNow()
+}
+
+/** Read the places from their owners — your world's from Central, yours from the identity you hold — and give them to the Sky. `held` is
+ * the identity (default: the one you hold now; null, none). */
+export async function readQlSkyPlaces(held?: {readonly reading: {readonly profile: unknown}} | null): Promise<void> {
+  const world = await readWorldPlace(call)
+  setQlSkyPlaces({world, mine: held === undefined ? readSavedPlace() : readSavedPlace(held)})
+}
+
+/** Choose whose view the sky shows: the Sky holds that observer's place, counts its hours there, and asks the sky again. */
+export function setQlSkyObserver(observer: SkyObserver): void {
+  if (observer === state.view.observer) return
+  setState({...state, view: {...state.view, observer}})
+  const chosen = skyPlaceFor(observer, state.places)
+  setState({...state, place: chosen.place, placeWhy: chosen.place ? null : chosen.why, hours: null, hoursBusy: false})
+  void readQlSkyNow()
+}
+
 /** Ask for a sky: the view's choice of date. The owner is asked once the hand settles. */
 export function askQlSky(ask: SkyAsk): void {
   asked = true
@@ -300,6 +352,14 @@ export function ensureQlSkyRead(): void {
   void readQlSkyNow()
 }
 
+let placesAsked = false
+/** The places the hours are counted at, read once from their owners when the first view mounts. */
+export function ensureQlSkyPlaces(): void {
+  if (placesAsked) return
+  placesAsked = true
+  void readQlSkyPlaces()
+}
+
 export function setQlSkyView(view: Partial<SkyView>): void {
   setState({...state, view: {...state.view, ...view}})
 }
@@ -307,7 +367,7 @@ export function setQlSkyView(view: Partial<SkyView>): void {
 /** Tests: a fixture call, and a fresh store. */
 export function resetQlSky(next: {call?: KernelCall} = {}): void {
   if (timer !== null) clearTimeout(timer)
-  timer = null; asked = false; sequence++; hoursSequence++; hoursEpoch = null
+  timer = null; asked = false; placesAsked = false; sequence++; hoursSequence++; hoursEpoch = null
   call = next.call ?? (op => kernelOp(detectTransport(), op))
   state = INITIAL
   notify()
@@ -322,7 +382,7 @@ export function useQlSkyState(): QlSkyState {
 
 /** The sky as the views read it; the first view to mount asks for the sky of this moment. */
 export function useQlSky(): QlSkyState {
-  useEffect(() => { ensureQlSkyRead() }, [])
+  useEffect(() => { ensureQlSkyRead(); ensureQlSkyPlaces() }, [])
   return useSyncExternalStore(subscribe, qlSkyState, qlSkyState)
 }
 
@@ -335,8 +395,8 @@ const partsOf = (ms: number) => {
 }
 const fromParts = (year: number, day: number, time: number) => Date.UTC(year, 0, 1) + (day - 1) * MS_DAY + time * 6e4
 
-/** Why the Sky has no place for its hours: no owner gives it one yet. */
-export const NO_PLACE = 'No place reaches the Sky: no owner operation carries it here — missing op: the world\'s declared place (Central\'s world record, for Shared) or your saved place (Nara\'s identity, for Private).'
+/** Why the Sky has no place for its hours before its owners are read. */
+export const NO_PLACE = 'No place has reached the Sky yet: it reads your world\'s declared place (Central\'s central.world.place, for Shared) and your saved place (your Nara identity\'s, for Private) when it opens.'
 /** The keys the hours fill. */
 export const SKY_HOURS_KEYS = ['dayRuler', 'hourRuler', 'hourOf', 'hourHalf', 'sunrise', 'sunset'] as const
 const hhmm = (iso: string) => iso.slice(11, 16)
@@ -345,7 +405,7 @@ const hhmm = (iso: string) => iso.slice(11, 16)
 export const QL_SKY_ABSENT: Readonly<Record<string, string>> = {
   run: 'No clock runs the sky here: each date is one read of the owner, asked when you change it. A running sky would ask the owner again and again.',
   speed: 'No clock runs the sky here, so it has no speed.',
-  observer: 'The shell asks for the shared geocentric sky: no observer place reaches it, so the private sky cannot be asked.',
+  observer: 'Observer is the Sky\'s own choice: set it on the Sky, and the hours are counted at that observer\'s place.',
   havePlace: NO_PLACE,
   natalBodies: 'The birth sky is the person\'s saved Nara identity (ql.nara-natal/v1): launch your Being page as Sky, and the Sky reads it from your identity.',
   aspectList: 'The transit lists no aspects; the view finds them from the bodies by the owner\'s rule.',
@@ -372,7 +432,7 @@ export const QL_SKY_ABSENT: Readonly<Record<string, string>> = {
 }
 
 /** The keys the view holds (DesignBinding.local): the date it asks for, and its own drawing choices. */
-export const QL_SKY_LOCAL: readonly string[] = ['now', 'year', 'day', 'time', 'aspects', 'natal', ...SKY_BODIES.map(body => `b:${body}`)]
+export const QL_SKY_LOCAL: readonly string[] = ['now', 'year', 'day', 'time', 'observer', 'aspects', 'natal', ...SKY_BODIES.map(body => `b:${body}`)]
 
 /** The design's values from the owner's reading and the view's choices. Only what is reported. */
 export function qlSkyValues(sky: QlSkyState): Record<string, Value> {
@@ -380,18 +440,20 @@ export function qlSkyValues(sky: QlSkyState): Record<string, Value> {
   const reading = sky.reading
   if (reading?.ok) {
     values.light = reading.sky.status === 'available' ? 'lit' : 'dark'
+    if (reading.sky.scope === 'shared-geocentric') values.observer = 'shared'
+    else if (reading.sky.scope === 'observer-private') values.observer = 'private'
     values.epoch = reading.sky.epochUtc
     values.bodies = JSON.stringify(reading.sky.bodies.map(body => ({body: body.body, longitude_degrees: body.longitude_degrees,
       ...(body.longitude_speed_degrees_per_day !== undefined ? {longitude_speed_degrees_per_day: body.longitude_speed_degrees_per_day} : {}), retrograde: body.retrograde})))
     const backends = [...new Set(reading.sky.bodies.map(body => body.backend).filter((backend): backend is string => !!backend))]
     if (backends.length === 1) values.backend = backends[0]!
-    if (reading.sky.scope === 'shared-geocentric') values.observer = 'shared'
-    else if (reading.sky.scope === 'observer-private') values.observer = 'private'
   } else if (reading) {
     values.light = 'dark'
     values.reason = reading.reason
   }
   values.now = sky.ask.now
+  // Whose view: the view's own choice, once it holds one.
+  if (sky.view.observer) values.observer = sky.view.observer
   // The date the boxes start from: the one asked, or, while the sky of this moment stands, the moment the owner answered for.
   const from = !sky.ask.now ? sky.ask.epochMs : reading?.ok ? reading.sky.epochMs : undefined
   if (from !== undefined) Object.assign(values, partsOf(from))
@@ -399,7 +461,9 @@ export function qlSkyValues(sky: QlSkyState): Record<string, Value> {
   values.natal = sky.view.natal
   if (sky.natal) values.natalBodies = JSON.stringify(sky.natal.bodies.map(body => ({body: body.body, longitude_degrees: body.longitude_degrees, retrograde: body.retrograde})))
   // The hours at the place the Sky holds, as QL counted them for the instant asked.
-  if (sky.place) { values.havePlace = true; values.place = sky.place.label }
+  // A place is saved when either owner keeps one; the place drawn is the Observer's alone, so a shared view never carries yours.
+  if (sky.place || sky.places?.world.ok || sky.places?.mine.ok) values.havePlace = true
+  if (sky.place) values.place = sky.place.label
   if (sky.place && sky.hours?.ok) {
     const hours = sky.hours.hours
     Object.assign(values, {dayRuler: hours.dayRuler, hourRuler: hours.hourRuler, hourOf: hours.hourOf, hourHalf: hours.hourHalf,
@@ -428,6 +492,7 @@ export function qlSkyHand(key: string, value: Value | undefined, sky: QlSkyState
     return
   }
   if (key === 'aspects' || key === 'natal') { setQlSkyView({[key]: value === true}); return }
+  if (key === 'observer') { if (value === 'shared' || value === 'private') setQlSkyObserver(value); return }
   const body = key.startsWith('b:') ? key.slice(2) : null
   if (body !== null && (SKY_BODIES as readonly string[]).includes(body)) {
     const hidden = sky.view.hidden.filter(item => item !== body)
@@ -441,6 +506,8 @@ export function qlSkyBinding(sky: QlSkyState, rack: QlRackState = qlRackState(2)
   withdraw: (consent: string) => Promise<void> = withdrawSkyPresence): DesignBinding {
   const standing: Record<string, Standing> = {}
   for (const [key, why] of Object.entries(QL_SKY_ABSENT)) standing[key] = {disabled: why}
+  // Observer is the view's own: whose place the hours are counted at, and whose view the sky shows.
+  delete standing.observer
   // The Share page's consents both ways: SharedField's list, split by the person's Participants (skyPresences.ts).
   const consents = presenceKeys(presences)
   Object.assign(standing, consents.standing)

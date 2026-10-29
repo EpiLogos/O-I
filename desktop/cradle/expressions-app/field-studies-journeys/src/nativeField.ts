@@ -7,7 +7,7 @@ import {NativeChannel} from './native-field/channel';
 import {NativeFieldController,NativeRenderer,EMBEDDED_NATIVE_PLAYBACK,CADENCES,INSTRUMENT_PRESENTATION,PRESENTATION_LEVEL,type NativeSky} from './native-field/controller';
 import {LENSES,CONTEXT_FRAMES,type SceneActing} from './native-field/scene';
 import type {FieldEngineAdapter} from './engine';
-import type {InstrumentEdit,StageCommand} from './stageCommands';
+import {STAGE_INSTRUMENT_Q,type InstrumentEdit,type StageCommand} from './stageCommands';
 import {STUDIO_PROCEDURE} from './stageReading';
 
 type StageProceduralCommand=Extract<StageCommand,{command:'procedural-stage'}>;
@@ -20,6 +20,21 @@ import {WORLD_SCALE} from './nativeParameters';
 /** O-I #747: how long the authored scene stays still before the live field opens again on it after a rebind. */
 export const REBIND_SETTLE_MS=700;
 const PLANET_NAMES=['Sun','Venus','Mercury','Moon','Saturn','Jupiter','Mars','Neptune','Pluto'];
+/** The body's Damping as the Torus gives it, a Q factor (DLW manual §21.2), lowered per material mode to the decay rate the native field
+ * takes: a mode of quality Q at f hertz decays at ω/2Q = π·f/Q per second. The scene's material keeps one rate for all its voices (QL
+ * scene_field.rs SceneMaterial.damping_per_second, which `set-damping` sets), so the scene takes its lowest voice's rate: that voice rings
+ * at the Q, and each higher one at Q·f/f₀. Refused in words for no voices, a voice without a frequency, or a Q outside the manual's range.
+ * Pure. */
+export function lowerQDamping(voices:readonly {planet_ref:string;frequency_hz:number}[],q:number):{modes:{mode:string;frequency_hz:number;per_second:number}[];per_second:number;fundamental_hz:number}{
+ if(!(typeof q==='number'&&Number.isFinite(q)&&q>=STAGE_INSTRUMENT_Q.min&&q<=STAGE_INSTRUMENT_Q.max))throw new Error(`The body's Q factor must be ${STAGE_INSTRUMENT_Q.min} to ${STAGE_INSTRUMENT_Q.max}.`);
+ if(!voices.length)throw new Error('The scene states no voices yet, so no damping is lowered: the body is damped once the field acts.');
+ const modes=voices.map(voice=>{
+  if(!(Number.isFinite(voice.frequency_hz)&&voice.frequency_hz>0))throw new Error(`The voice ${voice.planet_ref} states no frequency, so its damping cannot be lowered.`);
+  return {mode:voice.planet_ref,frequency_hz:voice.frequency_hz,per_second:Math.PI*voice.frequency_hz/q};
+ });
+ const fundamental=modes.reduce((low,mode)=>mode.frequency_hz<low.frequency_hz?mode:low);
+ return {modes,per_second:fundamental.per_second,fundamental_hz:fundamental.frequency_hz};
+}
 const esc=(v:unknown)=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
 const when=(ms:number|null)=>ms==null?'—':new Date(ms).toISOString().replace('T',' ').replace(/\.\d+Z$/,' UTC');
 export function installNativeField(engine:FieldEngineAdapter,onResumeApplication:()=>void){
@@ -472,6 +487,12 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
    if(!reading.instrument)throw new Error('No scene is open. Open the live instrument first; its determinants act on the scene.');
    await controller.edit(edit.kind==='lens'?{kind:'lens',lens12:edit.lens12}:edit.kind==='context-frame'?{kind:'context-frame',context_frame:edit.context_frame}
     :edit.kind==='harmonic'?{kind:'harmonic',source:edit.source}:{kind:'transcription',rna:edit.rna});
+  }
+  else if(edit.kind==='damping'){
+   // The body's Damping (a Q factor) through the owner's own set-damping, lowered per material mode on the scene's voices (lowerQDamping).
+   if(!reading.instrument)throw new Error('No scene is open. Open the live instrument first; the body it damps is the scene\'s.');
+   const lowered=lowerQDamping(reading.instrument.acting?.voices??[],edit.q_factor);
+   await controller.operate({operation:'set-damping',per_second:lowered.per_second});
   }
   else if(edit.kind==='muted')controller.setMuted(edit.muted);
   else if(edit.kind==='cadence'){if(edit.rate==='hold')controller.pause('held by you');else controller.play(edit.rate);}

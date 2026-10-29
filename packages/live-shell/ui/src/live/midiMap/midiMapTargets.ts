@@ -81,8 +81,8 @@ export function mapTargetIdsOfEdit(edit: InstrumentEdit): readonly string[] {
     case 'cadence': return ['cadence']
     case 'level': return ['level']
     case 'scale': case 'follow-scale': return ['scale-units']
-    // The torus's effects are not map targets yet: an accepted effect edit clears no map refusal.
-    case 'effect': case 'effect-chain': return []
+    // The torus's effects and its body's Damping (O-I #745) are not map targets yet: an accepted edit of them clears no map refusal.
+    case 'effect': case 'effect-chain': case 'damping': return []
   }
 }
 

@@ -72,7 +72,7 @@ test('with no place the Sky reads no rulers, and says which owner op is missing'
   const binding = sky.qlSkyBinding(sky.qlSkyState())
   for (const key of ['dayRuler', 'hourRuler', 'hourOf', 'hourHalf', 'sunrise', 'sunset', 'place', 'havePlace']) {
     assert.equal(binding.values[key], undefined, `${key} stands absent`)
-    assert.match(binding.standing[key].disabled, /missing op: the world's declared place .* or your saved place/, key)
+    assert.match(binding.standing[key].disabled, /No place has reached the Sky yet: it reads your world's declared place .* and your saved place/, key)
   }
   sky.resetQlSky()
 })
@@ -126,7 +126,7 @@ test('Scale mapping reads the hour\'s planet and the maqāmāt the map binds to 
   assert.equal(dated.values['sky.hourRuler'], undefined)
   assert.match(dated.standing['sky.hourRuler'].disabled, /follows the hour of now/)
   const placeless = scale.scaleMappingBinding('live:scale', null, loading, hold, undefined, {ask: {now: true}, place: null, hours: null})
-  assert.match(placeless.standing['sky.bound'].disabled, /missing op: the world's declared place/)
+  assert.match(placeless.standing['sky.bound'].disabled, /No place has reached the Sky yet: it reads your world's declared place/)
 })
 
 // ── Body source ─────────────────────────────────────────────────────────────
@@ -214,14 +214,14 @@ test('with M2\'s table unread the body source waits, and says so', () => {
   assert.equal(binding.writes('body.source'), false)
 })
 
-test('the Torus reads the table\'s standing and what the fibre would set; its body source stays closed on the missing stage write', () => {
+test('the Torus reads the table\'s standing and what the fibre would set; with no owner its body source stays closed and says why', () => {
   const table = names.readBodyTable(route('ql kernel body-constants', body.answer))
   const condition = conditionReadingOf({current: {m2: {condition: {source_path: announced.source_path}}}})
   const binding = torus.torusDesignBinding(null, undefined, {}, null, undefined, null, {}, condition, {ok: true, name: 'Prithvi Tattva'}, table)
   assert.equal(binding.values['tattva.standing'], 'proposed')
   assert.match(binding.standing['tattva.standing'].disabled, /A reading/)
   assert.match(binding.standing['body.source'].disabled, /earth fibre Strike 45%, Damping 12 and Agitation 0\.1 \(proposed\)/)
-  assert.match(binding.standing['body.source'].disabled, /missing op: a body edit on the stage channel/)
+  assert.match(binding.standing['body.source'].disabled, /No owner reading stands in this host/)
   assert.equal(binding.writes('body.source'), false)
   const unread = torus.torusDesignBinding(null, undefined, {}, null, undefined, null, {}, condition, null, {ok: false, reason: 'no table', busy: false})
   assert.equal(unread.values['tattva.standing'], undefined)
