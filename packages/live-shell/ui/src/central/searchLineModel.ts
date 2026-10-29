@@ -15,6 +15,7 @@
 //     tests/e820-search-line.test.mjs).
 import type {CentralLocation, KnowledgeAddress} from '../../../../../desktop/cradle/src/kernel/types'
 import type {FlowInstanceRow} from '../../../../../desktop/cradle/src/flow/flowsDir'
+import {textToHtml} from '../../../../../desktop/cradle/src/flow/instance'
 import {MENU_COMMANDS, OBJECT_ACT_OF, type MenuCommand} from '../frame/menu/commandDoor'
 import {marksOf, searchGroupOf, SEARCH_GROUPS, type SearchGroup} from '../inhabitants/catalogue/panels/central__search'
 import {isFlowPath} from './documents/centralDocuments'
@@ -151,6 +152,17 @@ export function flowOf(result: Pick<LineResult, 'ref' | 'owner'>, listing: reado
 /** The entry a Flow takes: the passage, and where it came from (the page's path, the link back). */
 export function flowEntryText(passage: LinePassage): string {
   return `${passage.text}\n\n— from ${passage.from}${passage.path ? ` (${passage.path})` : ''}`
+}
+
+/** HTML's five-character escape, as the Flow's own entry writer escapes words (desktop/cradle/src/flow/instance.ts:77 escapeHtml). */
+const escapeHtml = (s: string) => s.replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'})[c] as string)
+
+/** The entry a Flow takes, as the page draws it: the passage in paragraphs (flow/instance.ts textToHtml, the words an entry is made of
+ * without html), then where it came from — a link to that page when it came from one, which the page follows as a page of a world
+ * (ql-flow.html `oi:page-link`; inhabitants/DocumentPageFace.tsx linkTarget). Pure. */
+export function flowEntryHtml(passage: LinePassage): string {
+  const from = passage.path ? `<a href="${escapeHtml(passage.path)}">${escapeHtml(passage.from)}</a>` : escapeHtml(passage.from)
+  return `${textToHtml(passage.text)}<p>— from ${from}</p>`
 }
 
 /** The turn an agent is started on: the passage, and where it came from. */

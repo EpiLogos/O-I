@@ -13,8 +13,9 @@
 //     a Vāk entry in Search's own pane among its neighbours (searchPane.tsx openSearchPane); each open is then counted by AIKit
 //     (`knowledge` use, `aikit knowledge route`, as the cradle's frame counts one: desktop/cradle/src/CradleFrame.tsx:832-834);
 //   - a Flow takes a passage through Central's Flow append (central/devices/centralDeviceWrites.ts appendFlowEntry, the Flow's own
-//     revision-checked write); an agent is started on it through its session's encounter (encounter/session.ts useEncounterSession:
-//     change, then send — central/devices/CentralDevices.tsx answerSend);
+//     revision-checked write), as html whose last line links back to the page it came from (searchLineModel.ts flowEntryHtml); an
+//     agent is started on it through its session's encounter (encounter/session.ts useEncounterSession: change, then send —
+//     central/devices/CentralDevices.tsx answerSend);
 //   - `>` runs the menu bar's own acts: an Edit or Create act on the selection of the view that stands (frame/menu/commandDoor.ts
 //     runObjectCommand), the rest through the frame's `oi:command` router (App.tsx, published through searchLineDoor.ts).
 import {useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent} from 'react'
@@ -34,7 +35,7 @@ import {searchProjectOf, searchResultsOf} from './devices/searchBinding'
 import {openPageLink} from './documents/CentralDocumentPane'
 import {openSearchPane} from './searchPane'
 import {closeSearchLine, menuCommands, showLineReceipt, type LinePassage, type LineRequest} from './searchLineDoor'
-import {actsOf, agentTurnText, flowEntryText, flowOf, groupsOf, jumpOrder, lineModeOf, lineResultsOf, pathOf, sendPlanOf, type AgentSessionFact, type LineAct,
+import {actsOf, agentTurnText, flowEntryHtml, flowEntryText, flowOf, groupsOf, jumpOrder, lineModeOf, lineResultsOf, pathOf, sendPlanOf, type AgentSessionFact, type LineAct,
   type LineResult, type SendFacts, type SendPlan} from './searchLineModel'
 import './searchLine.css'
 
@@ -193,7 +194,7 @@ export function SearchLine({request}: {request: LineRequest}) {
         if (!location) { setProblem(`${result.title}: the owner no longer lists this Flow.`); return }
         setBusy(`Adding to ${result.title}…`)
         const {appendFlowEntry} = await import('./devices/centralDeviceWrites')
-        const answer = await appendFlowEntry(transport, location, {text: flowEntryText(passage), relation: null})
+        const answer = await appendFlowEntry(transport, location, {text: flowEntryText(passage), html: flowEntryHtml(passage), relation: null})
         closeSearchLine()
         showLineReceipt({ok: true, what: `Sent to ${result.title}`, text: `${size(passage)} from ${passage.from}, added as a new entry${answer.revision ? ` (revision ${answer.revision})` : ''}.`})
       } else {

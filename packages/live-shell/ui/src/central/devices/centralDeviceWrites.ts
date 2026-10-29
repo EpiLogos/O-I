@@ -247,8 +247,10 @@ export async function closeCarry(transport: KernelTransportStatus): Promise<{clo
  * person through the template's contract — connected to an earlier entry by its relation on the current form — and write it with
  * the owner's revision check. Resolves with the owner's new revision; a conflict is refused in words (the entry is not lost: the
  * hand still holds it). The person is the Flow's person participant who has not left (FlowSurface.tsx writerOf); a Flow with none
- * is refused by the template's own words. */
-export async function appendFlowEntry(transport: KernelTransportStatus, location: CentralLocation, entry: {readonly text: string; readonly speaker?: string;
+ * is refused by the template's own words. `html`, when given, is the entry as the page draws it (the template's own `html` option,
+ * flow/instance.ts appendEntry; the page's form cleans it as it draws it, ql-flow.html `clean`) — a passage the search line sends
+ * carries its link back so (central/searchLine.tsx, O-I #820); without it the words become paragraphs, as before. */
+export async function appendFlowEntry(transport: KernelTransportStatus, location: CentralLocation, entry: {readonly text: string; readonly html?: string; readonly speaker?: string;
   readonly relation: {readonly type: 'reply' | 'branch' | 'correct'; readonly entryId: string} | null;
   /** In a container, what the entry is (manual §24.5: observe, interpret, choose), as Clip view's Entry sets it; written with the entry. */
   readonly kind?: EntryKind | null}): Promise<{revision: string | null}> {
@@ -266,7 +268,9 @@ export async function appendFlowEntry(transport: KernelTransportStatus, location
   const relations: Relation[] = plural && entry.relation ? [{type: entry.relation.type, entryId: entry.relation.entryId, revision: instance.doc.meta.revision, anchor: null}] : []
   // The kind is the container's: written only while the Flow is held in one (outside one the form refuses it, plural.ts checkContainer).
   const kind = entry.kind && containerOf(instance.doc) ? entry.kind : undefined
-  const {html} = appendEntry(instance.html, text, plural ? {participant: writer, relations, basisRevision: instance.doc.meta.revision, ...(kind ? {kind} : {})} : undefined)
+  const given = entry.html?.trim() ? {html: entry.html} : {}
+  const {html} = appendEntry(instance.html, text, plural ? {participant: writer, relations, basisRevision: instance.doc.meta.revision, ...(kind ? {kind} : {}), ...given}
+    : entry.html?.trim() ? given : undefined)
   const result = await writeFlowInstance(transport, instance.location, instance.revision, html)
   if (result.outcome === 'conflict') throw new Error(`The Flow moved while the entry was written (the owner holds ${result.current?.revision ?? 'a newer revision'}): nothing was overwritten. Re-read the Flow and write the entry again.`)
   return {revision: result.revision ?? null}

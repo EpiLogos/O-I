@@ -20,6 +20,7 @@ export async function resolve(specifier,context,next){
 }
 export async function load(url,context,next){
   if(url.endsWith('.css'))return {format:'module',shortCircuit:true,source:'export default null'};
+  if(url.endsWith('.json'))return {format:'module',shortCircuit:true,source:'export default '+await readFile(new URL(url),'utf8')};
   if(['.html','.svg','.png','.md'].some(ext=>url.split('?')[0].endsWith(ext))||url.endsWith('?raw'))return {format:'module',shortCircuit:true,source:'export default ""'};
   if(url.endsWith('.ts')||url.endsWith('.tsx')){
     const source=await readFile(new URL(url).pathname,'utf8');
@@ -283,4 +284,106 @@ test('the frame mounts the line\'s host and publishes the menu bar\'s commands t
   const gate = await read('./first-load-budget.test.mjs')
   const later = gate.slice(gate.indexOf('export const LOADS_LATER'), gate.indexOf('\n]\n', gate.indexOf('export const LOADS_LATER')))
   assert.match(later, /searchLine/)
+})
+
+// ---------------------------------------------------------------------------------------------------------------------
+// round two: ⌘K is the line's over the Earth too; the link back is a link; the Graph and source receiver stands with the frame
+
+const keyEvent = props => { const e = new Event('keydown'); for (const [k, v] of Object.entries(props)) Object.defineProperty(e, k, {value: v}); return e }
+
+test('⌘K over a mounted Earth: the host stands the Earth\'s own ⌘K down before its controller hears it; the frame still takes it, every other Earth key reaches the Earth', async () => {
+  const {shellKeysFirst, standsDown} = await import('../src/projections/atlas/hostKeys.ts')
+  const win = new EventTarget()
+  const heard = {frame: [], earth: []}
+  const name = e => `${e.metaKey ? '⌘' : ''}${e.shiftKey ? '⇧' : ''}${e.key}`
+  win.addEventListener('keydown', e => heard.frame.push(name(e)))   // the frame's keys: mounted with the App, before any Earth
+  shellKeysFirst((target, type, listener) => target.addEventListener(type, listener), win)
+  win.addEventListener('keydown', e => heard.earth.push(name(e)))   // the ported controller (controller.ts: listen(window, 'keydown', this.onKey))
+  for (const props of [{key: 'k', metaKey: true}, {key: 'k', ctrlKey: true}, {key: 'k', metaKey: true, shiftKey: true}, {key: '/'}, {key: 'm'}, {key: 'f', metaKey: true}]) win.dispatchEvent(keyEvent(props))
+  assert.deepEqual(heard.frame, ['⌘k', 'k', '⌘⇧k', '/', 'm', '⌘f'], 'the frame hears every press')
+  assert.deepEqual(heard.earth, ['⌘⇧k', '/', 'm', '⌘f'], 'the Earth hears all but the line\'s ⌘K: its search stays on its own button and on /')
+  // Inside something that takes its own keys (the Earth's own search, open), ⌘K stays that thing's: the frame's line does not take it there.
+  const dialog = el('DIV', {role: 'dialog', 'aria-modal': 'true'}, body)
+  assert.equal(standsDown({key: 'k', metaKey: true, target: el('INPUT', {}, dialog)}), false)
+  assert.equal(standsDown({key: 'k', metaKey: true, target: el('TEXTAREA', {}, body)}), true, 'in a text field too, as the frame takes it there')
+})
+
+test('the Earth\'s mount stands its ⌘K down before the ported controller is made; the port itself is unchanged', async () => {
+  const mount = await read('../src/projections/atlas/mount.ts')
+  const guard = mount.indexOf('shellKeysFirst(listen)'), made = mount.indexOf('new Controller(')
+  assert.ok(guard > 0 && guard < made, 'the guard listens first, so it hears ⌘K before the controller')
+  assert.match(await read('../src/projections/atlas/src/app/controller.ts'), /if \(\(e\.metaKey \|\| e\.ctrlKey\) && e\.key\.toLowerCase\(\) === 'k'\) \{/, 'the ported listener keeps its own branch')
+})
+
+const ENTRY_DOC = {meta: {documentId: 'd-820', created: '2026-10-29T09:00:00.000Z', title: 'Where it goes', revision: 3, view: 'dialogue', current: null, journalCurrent: null, exported: null,
+  template: 'ql-dialogue-flow v0.4', format: {version: 4, minReader: 4},
+  participants: [{initial: 'F', key: 'p-f', kind: 'person', name: 'You', role: 'contributor', binding: {owner: 'document', basis: 'unknown', ref: ''}}]},
+  entries: [{id: 'e1', author: 'F', authorKey: 'p-f', at: '2026-10-29T09:01:00Z', html: '<p>First.</p>', replyTo: null, touched: false}], notes: [], packet: [], media: [], journal: []}
+const ENTRY_AT = {schema: 'central.path-ref/v1', ref: 'central:path:/ground:Control/user/flows/flow-b.html', root: '/ground', path: 'Control/user/flows/flow-b.html'}
+function flowOwner() {
+  const state = {html: `<!doctype html><html><head><title>Flow</title></head><body><script type="application/json" id="ql-doc">${JSON.stringify(ENTRY_DOC)}</script></body></html>`, revision: 1}
+  const respond = outcome => ({json: async () => ({ok: true, outcome})})
+  const fetch = async (_url, init) => {
+    const body = JSON.parse(init.body)
+    if (body.op === 'file_read') return respond({result: 'file_read', reading: {location: ENTRY_AT, content: state.html, revision: `rev-${state.revision}`}})
+    if (body.op === 'file_operation' && body.request.action === 'write' && body.request.expected_revision === `rev-${state.revision}`) {
+      state.html = body.request.content; state.revision++
+      return respond({result: 'file_operation', data: {outcome: 'written', revision: `rev-${state.revision}`}})
+    }
+    return {json: async () => ({ok: false, error: `unexpected op ${body.op}`})}
+  }
+  return {fetch, state}
+}
+
+test('the link back is a link: Central\'s Flow append takes the entry\'s html, and the line sends the passage with a link to the page it came from', async () => {
+  const writes = await import('../src/central/devices/centralDeviceWrites.ts')
+  const {parseInstance} = await import('../../../../desktop/cradle/src/flow/instance.ts')
+  const {linkTarget} = await import('../src/inhabitants/DocumentPageFace.tsx')
+  const html = model.flowEntryHtml(passage)
+  assert.equal(html, `<p>${passage.text}</p><p>— from <a href="Control/user/flows/flow-a.html">Flow — Completion</a></p>`)
+  assert.equal(linkTarget('Control/user/flows/flow-a.html').kind, 'page', 'the page follows it as a page of a world (oi:page-link)')
+  assert.equal(model.flowEntryHtml({text: 'a <b> & "c"', from: 'the agent\'s composer'}), '<p>a &lt;b&gt; &amp; &quot;c&quot;</p><p>— from the agent\'s composer</p>', 'no page, no link: the words')
+  const owner = flowOwner()
+  const real = globalThis.fetch
+  globalThis.fetch = owner.fetch
+  try {
+    await writes.appendFlowEntry({kind: 'bridge', url: 'http://owner.fixture'}, ENTRY_AT, {text: model.flowEntryText(passage), html, relation: null})
+    assert.equal(parseInstance(owner.state.html).entries.at(-1).html, html, 'the entry is the html the line gave')
+    await writes.appendFlowEntry({kind: 'bridge', url: 'http://owner.fixture'}, ENTRY_AT, {text: 'Plain words.', relation: null})
+    assert.equal(parseInstance(owner.state.html).entries.at(-1).html, '<p>Plain words.</p>', 'with no html, the words as before')
+  } finally { globalThis.fetch = real }
+  assert.match(await read('../src/central/searchLine.tsx'), /appendFlowEntry\(transport, location, \{text: flowEntryText\(passage\), html: flowEntryHtml\(passage\)/)
+})
+
+test('the Graph and source receiver stands with the frame: a light door hears the first open, loads the receiver once, and hands it every open that came before it', async () => {
+  const door = await import('../src/panels/knowledgeDoor.ts')
+  const target = new EventTarget()
+  let loads = 0, arrive
+  target.addEventListener(door.KNOWLEDGE_OPEN, door.knowledgeDoorReceiver(() => { loads++; return new Promise(resolve => { arrive = resolve }) }))
+  const open = title => target.dispatchEvent(new CustomEvent(door.KNOWLEDGE_OPEN, {detail: {title}}))
+  open('a'); open('b')
+  assert.equal(loads, 1, 'the receiver is asked for once')
+  arrive()
+  door.receiverListening(true)
+  assert.deepEqual(door.heldOpens().map(detail => detail.title), ['a', 'b'], 'the opens that came while it loaded, in order')
+  open('c')
+  assert.deepEqual(door.heldOpens(), [], 'once the receiver listens, the door holds nothing back')
+  door.receiverListening(false)
+  // A receiver that did not load answers every open it held, in words.
+  const failing = new EventTarget(), said = []
+  failing.addEventListener(door.KNOWLEDGE_OPEN, door.knowledgeDoorReceiver(() => Promise.reject(new Error('chunk gone'))))
+  failing.dispatchEvent(new CustomEvent(door.KNOWLEDGE_OPEN, {detail: {title: 'x', complete: reason => said.push(reason)}}))
+  await new Promise(resolve => setImmediate(resolve))
+  assert.equal(said.length, 1); assert.match(said[0], /did not load: chunk gone/)
+})
+
+test('the frame mounts the knowledge door, and the receiver loads when a source is first opened, never with the first frame', async () => {
+  assert.match(await read('../src/App.tsx'), /<KnowledgeReceiverDoor \/>/)
+  const panel = await read('../src/panels/knowledge.tsx')
+  assert.match(panel, /import\('\.\/knowledgeReceiver'\)/); assert.doesNotMatch(panel, /from '\.\/knowledgeReceiver'/)
+  assert.match(panel, /registerPanel\(\{id: 'world\.knowledge'/, 'the pane keeps its id')
+  const receiver = await read('../src/panels/knowledgeReceiver.tsx')
+  assert.match(receiver, /receiverListening\(true\)/); assert.match(receiver, /heldOpens\(\)/)
+  const gate = await read('./first-load-budget.test.mjs')
+  assert.match(gate.slice(gate.indexOf('export const LOADS_LATER')), /knowledgeReceiver/)
 })
