@@ -230,8 +230,209 @@ pub fn execute(op: &KernelOp) -> Option<Result<KernelOpResult, String>> {
                 live_set::acts::act(path, expected_revision, act)
                     .map(|reading| KernelOpResult::LiveSetActed { reading })
             }),
+        KernelOp::LiveSetsList => std::env::var_os("HOME")
+            .filter(|home| !home.is_empty())
+            .ok_or_else(|| {
+                "The person's home is not named (HOME), so their Live sets cannot be found"
+                    .to_owned()
+            })
+            .map(|home| KernelOpResult::LiveSetsReading {
+                reading: sets_reading(std::path::Path::new(&home)),
+            }),
         _ => return None,
     })
+}
+
+/// How deep a place is walked, how many entries are looked at in all, and how
+/// many sets are listed: the person's Music folder can be large.
+const SETS_DEPTH: usize = 8;
+const SETS_ENTRIES: usize = 50_000;
+const SETS_LISTED: usize = 500;
+
+/// Folders a person's own sets never stand in: Live's backups, Live's own
+/// packs and project bookkeeping. A hidden folder, a symbolic link and a
+/// package (an app, a plug-in, a Logic or GarageBand project, a media
+/// library) are never walked either.
+const NOT_SETS: &[&str] = &["Backup", "Factory Packs", "Ableton Project Info"];
+const PACKAGES: &[&str] = &[
+    "app",
+    "bundle",
+    "component",
+    "framework",
+    "vst",
+    "vst3",
+    "logicx",
+    "band",
+    "musiclibrary",
+    "photoslibrary",
+    "tvlibrary",
+    "plugin",
+];
+
+/// One `Value="…"` attribute read back from Library.cfg's XML.
+fn cfg_unescape(raw: &str) -> String {
+    raw.replace("&quot;", "\"")
+        .replace("&apos;", "'")
+        .replace("&lt;", "<")
+        .replace("&gt;", ">")
+        .replace("&amp;", "&")
+}
+
+/// Every `<Tag Value="…"` inside the first `<section>…</section>` of a
+/// Library.cfg, whose tag name ends with `suffix`.
+fn cfg_values(cfg: &str, section: &str, suffix: &str) -> Vec<String> {
+    let (open, close) = (format!("<{section}>"), format!("</{section}>"));
+    let Some(body) = cfg
+        .split_once(&open)
+        .and_then(|(_, rest)| rest.split_once(&close).map(|(body, _)| body))
+    else {
+        return Vec::new();
+    };
+    body.split('<')
+        .filter_map(|tag| {
+            let (name, rest) = tag.split_once(' ')?;
+            let value = rest.split_once("Value=\"")?.1.split_once('"')?.0;
+            (name.ends_with(suffix) && !value.is_empty()).then(|| cfg_unescape(value))
+        })
+        .collect()
+}
+
+/// Live's own places, from each installed Live's Library.cfg under the
+/// person's preferences: the User Library (its ProjectPath joined with its
+/// ProjectName) and every folder added to Places (UserFolderInfoList).
+fn lives_places(home: &std::path::Path) -> Vec<(String, std::path::PathBuf)> {
+    let preferences = home.join("Library/Preferences/Ableton");
+    let mut versions: Vec<std::path::PathBuf> = std::fs::read_dir(&preferences)
+        .map(|rows| {
+            rows.flatten()
+                .map(|row| row.path().join("Library.cfg"))
+                .collect()
+        })
+        .unwrap_or_default();
+    versions.sort();
+    let mut places = Vec::new();
+    for cfg in versions {
+        let Ok(text) = std::fs::read_to_string(&cfg) else {
+            continue;
+        };
+        let root = cfg_values(&text, "UserLibrary", "ProjectPath");
+        let name = cfg_values(&text, "UserLibrary", "ProjectName");
+        if let (Some(root), Some(name)) = (root.first(), name.first()) {
+            places.push((name.clone(), std::path::Path::new(root).join(name)));
+        }
+        for folder in cfg_values(&text, "UserFolderInfoList", "Path") {
+            let path = std::path::PathBuf::from(&folder);
+            let label = path
+                .file_name()
+                .map(|name| name.to_string_lossy().into_owned())
+                .unwrap_or(folder);
+            places.push((label, path));
+        }
+    }
+    places
+}
+
+/// Whether a folder is walked for sets.
+fn walks(name: &str) -> bool {
+    let package = name
+        .rsplit_once('.')
+        .is_some_and(|(_, extension)| PACKAGES.contains(&extension.to_ascii_lowercase().as_str()));
+    !name.starts_with('.') && !package && !NOT_SETS.contains(&name)
+}
+
+/// The person's own Live sets (DLW §10.3, "What leads the browser — Live:
+/// Your sets, and the Torus's saved sounds"; §21: Live reads and writes a
+/// real `.als`): every `.als` in the places a person keeps them — the Music
+/// folder, and Live's own places read from its Library.cfg (the User Library,
+/// whose Templates hold the sets to start from, and each folder the person
+/// added to Live's Places) — newest first. A set's place is the most
+/// particular place it stands in. Live's backups, its Factory Packs, hidden
+/// folders, packages and symbolic links are never walked. Read only: nothing
+/// here opens, copies or writes a set.
+pub fn sets_reading(home: &std::path::Path) -> serde_json::Value {
+    let mut places: Vec<(String, std::path::PathBuf)> = vec![("Music".into(), home.join("Music"))];
+    for place in lives_places(home) {
+        if !places.iter().any(|(_, path)| path == &place.1) {
+            places.push(place);
+        }
+    }
+    let library = places
+        .iter()
+        .skip(1)
+        .find(|(_, path)| path.join("Templates").is_dir())
+        .map(|(_, path)| path.clone());
+    let mut seen = std::collections::BTreeMap::<std::path::PathBuf, serde_json::Value>::new();
+    let (mut looked, mut truncated) = (0usize, false);
+    for (_, root) in &places {
+        let mut stack = vec![(root.clone(), 0usize)];
+        while let Some((dir, depth)) = stack.pop() {
+            let Ok(rows) = std::fs::read_dir(&dir) else {
+                continue;
+            };
+            for row in rows.flatten() {
+                looked += 1;
+                if looked > SETS_ENTRIES || seen.len() >= SETS_LISTED {
+                    truncated = true;
+                    break;
+                }
+                let Ok(kind) = row.file_type() else { continue };
+                let path = row.path();
+                let name = row.file_name().to_string_lossy().into_owned();
+                if kind.is_dir() {
+                    if depth < SETS_DEPTH && walks(&name) {
+                        stack.push((path, depth + 1));
+                    }
+                    continue;
+                }
+                if !kind.is_file()
+                    || name.starts_with('.')
+                    || path.extension().and_then(|e| e.to_str()) != Some("als")
+                    || seen.contains_key(&path)
+                {
+                    continue;
+                }
+                let place = places
+                    .iter()
+                    .filter(|(_, root)| path.starts_with(root))
+                    .max_by_key(|(_, root)| root.components().count())
+                    .map(|(label, _)| label.clone())
+                    .unwrap_or_default();
+                let template = library.as_ref().is_some_and(|library| {
+                    path.strip_prefix(library).is_ok_and(|rest| {
+                        rest.components()
+                            .any(|part| part.as_os_str() == "Templates")
+                    })
+                });
+                let modified = row
+                    .metadata()
+                    .ok()
+                    .and_then(|meta| meta.modified().ok())
+                    .and_then(|at| at.duration_since(std::time::UNIX_EPOCH).ok())
+                    .map(|at| at.as_millis() as u64);
+                let stem = path
+                    .file_stem()
+                    .map(|s| s.to_string_lossy().into_owned())
+                    .unwrap_or(name);
+                seen.insert(
+                    path.clone(),
+                    serde_json::json!({"path": path.to_string_lossy(), "name": stem, "place": place,
+                        "template": template, "modified_unix_ms": modified}),
+                );
+            }
+        }
+    }
+    let mut sets: Vec<serde_json::Value> = seen.into_values().collect();
+    sets.sort_by(|a, b| {
+        b["modified_unix_ms"]
+            .as_u64()
+            .cmp(&a["modified_unix_ms"].as_u64())
+            .then_with(|| a["path"].as_str().cmp(&b["path"].as_str()))
+    });
+    let places: Vec<serde_json::Value> = places
+        .iter()
+        .map(|(label, path)| serde_json::json!({"label": label, "path": path.to_string_lossy(), "present": path.is_dir()}))
+        .collect();
+    serde_json::json!({"schema": "oi.live-sets/v1", "places": places, "sets": sets, "truncated": truncated})
 }
 
 /// Admit one native `.als` document path, as the host's live_shell_read does.
@@ -871,5 +1072,123 @@ mod tests {
     #[test]
     fn other_ops_are_not_served_here() {
         assert!(execute(&KernelOp::ConfigDiff).is_none());
+    }
+
+    /// A home of the person's: sets in the Music folder (one in a project
+    /// folder, with Live's Backup beside it), the User Library's template,
+    /// a folder added to Live's Places outside the Music folder, and what
+    /// is never a set of theirs (a hidden folder, Live's backups, the
+    /// Factory Packs, a set inside an app bundle).
+    fn home_of_sets(name: &str) -> std::path::PathBuf {
+        let home = std::env::temp_dir().join(format!("live-sets-{}-{name}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&home);
+        let put = |relative: &str| {
+            let path = home.join(relative);
+            std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+            std::fs::write(&path, b"set").unwrap();
+        };
+        put("Music/Song.als");
+        put("Music/Album Project/Album.als");
+        put("Music/Live 12.1 Sets/Dotted.als");
+        put("Music/Album Project/Backup/Album [2026-10-01 120000].als");
+        put("Music/Ableton/User Library/Templates/Start Here.als");
+        put("Music/Ableton/Factory Packs/Demo/Demo.als");
+        put("Music/.hidden/Secret.als");
+        put("Music/Tool.app/Contents/Inside.als");
+        put("Music/notes.txt");
+        put("Elsewhere/Sets/Added.als");
+        let cfg = home.join("Library/Preferences/Ableton/Live 12.1/Library.cfg");
+        std::fs::create_dir_all(cfg.parent().unwrap()).unwrap();
+        let music = home.join("Music/Ableton");
+        let added = home.join("Elsewhere");
+        std::fs::write(
+            &cfg,
+            format!(
+                r#"<?xml version="1.0" encoding="UTF-8"?>
+<Ableton><ContentLibrary><UserLibrary><LibraryProject Id="0"><ProjectLocation /><ProjectName Value="User Library" /><ProjectPath Value="{}" /></LibraryProject></UserLibrary>
+<UserFolderInfoList><UserFolderInfo><Path Value="{}" /></UserFolderInfo></UserFolderInfoList></ContentLibrary></Ableton>"#,
+                music.display(),
+                added.display()
+            ),
+        )
+        .unwrap();
+        home
+    }
+
+    #[test]
+    fn sets_list_finds_the_persons_own_sets_in_music_and_lives_places() {
+        let home = home_of_sets("places");
+        let reading = sets_reading(&home);
+        assert_eq!(reading["schema"], "oi.live-sets/v1");
+        let mut found: Vec<(String, String, bool)> = reading["sets"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|set| {
+                (
+                    set["name"].as_str().unwrap().to_owned(),
+                    set["place"].as_str().unwrap().to_owned(),
+                    set["template"].as_bool().unwrap(),
+                )
+            })
+            .collect();
+        found.sort();
+        assert_eq!(
+            found,
+            vec![
+                ("Added".into(), "Elsewhere".into(), false),
+                ("Album".into(), "Music".into(), false),
+                ("Dotted".into(), "Music".into(), false),
+                ("Song".into(), "Music".into(), false),
+                ("Start Here".into(), "User Library".into(), true),
+            ],
+            "the person's sets and template, never a backup, a pack, a hidden or bundled one"
+        );
+        for set in reading["sets"].as_array().unwrap() {
+            let path = std::path::Path::new(set["path"].as_str().unwrap());
+            assert!(path.is_absolute() && path.starts_with(&home), "{path:?}");
+            assert!(set["modified_unix_ms"].as_u64().is_some());
+        }
+        let places: Vec<&str> = reading["places"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|place| place["label"].as_str().unwrap())
+            .collect();
+        assert_eq!(places, vec!["Music", "User Library", "Elsewhere"]);
+        assert_eq!(reading["truncated"], false);
+        let _ = std::fs::remove_dir_all(&home);
+    }
+
+    #[test]
+    fn sets_list_without_lives_preferences_reads_the_music_folder_alone() {
+        let home = home_of_sets("no-preferences");
+        std::fs::remove_dir_all(home.join("Library")).unwrap();
+        let reading = sets_reading(&home);
+        let names: Vec<&str> = reading["sets"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|set| set["name"].as_str().unwrap())
+            .collect();
+        assert!(
+            names.contains(&"Song") && names.contains(&"Start Here"),
+            "{names:?}"
+        );
+        assert!(
+            !names.contains(&"Added"),
+            "a folder only Live's Places name"
+        );
+        let _ = std::fs::remove_dir_all(&home);
+    }
+
+    #[test]
+    fn sets_list_is_served_as_an_op_and_parses_from_its_wire_name() {
+        let op: KernelOp = serde_json::from_value(json!({"op": "live_sets_list"})).unwrap();
+        assert!(matches!(op, KernelOp::LiveSetsList));
+        assert!(matches!(
+            execute(&op),
+            Some(Ok(KernelOpResult::LiveSetsReading { .. })) | Some(Err(_))
+        ));
     }
 }

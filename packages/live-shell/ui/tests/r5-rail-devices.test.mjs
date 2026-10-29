@@ -66,6 +66,30 @@ test('Files keeps each path the agent read or edited once, an edit over a read, 
   assert.deepEqual(files, [{path: 'a.ts', verb: 'edit', adds: 4, dels: 2}, {path: 'b.ts', verb: 'read'}])
 })
 
+// O-I #749 (§23.2: "Press a file to open it in Full … the tree stands beside the file you opened"): the walk found Full's file empty — no
+// owner read the opened file. Its text is Central's file reading of the same file (the files seam: the folder listed, its entry read),
+// placed in Central's ground from the seat's root; a file outside the ground, or one Central does not let be read, says why.
+test('Files opens the file you press: its path in the seat, placed in Central\'s ground, its parent and its name; outside the ground, said', () => {
+  assert.equal(rail.openFileOf('src/a.ts', '/ground/Work/O-I'), '/ground/Work/O-I/src/a.ts', 'a path the tree holds relative to the seat\'s root')
+  assert.equal(rail.openFileOf('/ground/Work/O-I/b.ts', null), '/ground/Work/O-I/b.ts', 'a path the tape named whole')
+  assert.equal(rail.openFileOf('src/a.ts', null), null, 'relative, with no root read yet: nothing to open')
+  assert.equal(rail.openFileOf(undefined, '/ground'), null)
+  assert.deepEqual(rail.groundPlaceOf('/ground/Work/O-I/src/a.ts', '/ground'), {relative: 'Work/O-I/src/a.ts', parent: 'Work/O-I/src', name: 'a.ts'})
+  assert.deepEqual(rail.groundPlaceOf('/ground/top.md', '/ground/'), {relative: 'top.md', parent: '', name: 'top.md'})
+  assert.match(rail.groundPlaceOf('/elsewhere/a.ts', '/ground').words, /^\/elsewhere\/a\.ts stands outside Central's ground \(\/ground\)/)
+  assert.match(rail.groundPlaceOf('/groundless/a.ts', '/ground').words, /outside Central's ground/, 'a sibling whose name starts the same is outside')
+})
+
+// O-I #749 (§23.2, §23.3 Follow: "Keeps the tree on the selected agent"; Off keeps the one it had): Follow was a hold nothing read.
+test('Files and Web follow the selected agent, or keep the one they had when Follow is off; a kept agent that left is said', () => {
+  const tracks = [{sessionRef: 's1', agentName: 'Fizz', purpose: 'lead', project: ''}, {sessionRef: 's2', agentName: 'Flint', purpose: null, project: 'O-I'}]
+  assert.equal(rail.keptTrackOf(tracks, null, tracks[1]).track, tracks[1], 'Follow on: the selected agent')
+  assert.equal(rail.keptTrackOf(tracks, 's1', tracks[1]).track, tracks[0], 'Follow off: the agent it kept')
+  const gone = rail.keptTrackOf(tracks, 's9', tracks[1])
+  assert.equal(gone.track, null)
+  assert.match(gone.words, /The agent Follow kept \(s9\) no longer stands in the agency reading/)
+})
+
 test('Web lists the pages the agent fetched, newest first, with the text it got and no passages it did not report', () => {
   const fetchCall = output => ({name: 'web_fetch', output, error: false, status: 'done', firstCursor: 1, lastCursor: 1})
   const rows = [row('read', 'Old page', {detail: 'https://a.example', calls: [fetchCall('one\ntwo')]}),

@@ -1288,6 +1288,12 @@ pub enum KernelOp {
         expected_revision: String,
         act: live_set::acts::SetAct,
     },
+    /// The person's own Live sets (DLW §10.3, "What leads the browser —
+    /// Live: Your sets"): every `.als` in the Music folder and in Live's own
+    /// places (Library.cfg's User Library and the folders added to Places),
+    /// newest first, templates marked. An owner read of the person's files;
+    /// see `live_set_owner.rs` `sets_reading`.
+    LiveSetsList,
     /// `fresh` bypasses the cached listing for this one read — the explicit
     /// tree refresh, not an ordinary expansion.
     FileResolve {
@@ -1898,6 +1904,10 @@ pub enum KernelOpResult {
     },
     /// `{act, done, at, revision}`: what one act on the set's objects did, in words, and where it left what it made.
     LiveSetActed {
+        reading: serde_json::Value,
+    },
+    /// `{schema: oi.live-sets/v1, places, sets, truncated}`.
+    LiveSetsReading {
         reading: serde_json::Value,
     },
     SystemCompositionReading {
@@ -3097,7 +3107,8 @@ impl Kernel {
             | KernelOp::LiveTakeComp { .. }
             | KernelOp::LiveGroovePoolRead { .. }
             | KernelOp::LiveGroovePoolWrite { .. }
-            | KernelOp::LiveSetAct { .. }) => self
+            | KernelOp::LiveSetAct { .. }
+            | KernelOp::LiveSetsList) => self
                 .prepare_owner_read(&op)
                 .ok_or("Cannot prepare the Live document owner operation")?
                 .execute(),

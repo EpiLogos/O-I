@@ -42,7 +42,8 @@ const {AgentShellProvider} = await import('../src/agent/AgentShellContext.tsx')
 const agentBrowser = await import('../src/agent/AgentShellBrowser.tsx')
 const {CollectionList, appCollectionItems} = await import('../src/components/NativeExpressionCollections.tsx')
 const {collectionSections} = await import('../src/components/nativeExpressionCommands.ts')
-const {BrowserPane} = await import('../src/components/BrowserPane.tsx')
+const browserPane = await import('../src/components/BrowserPane.tsx')
+const {BrowserPane} = browserPane
 const words = await import('../src/frame/browser/rowWords.ts')
 
 const html = element => renderToStaticMarkup(element)
@@ -281,8 +282,33 @@ test('Live sets: each set by its name without the extension, standing open, defa
     .matchAll(/title="([^"]+)"><svg[^>]*>.*?<\/svg><span>([^<]+)<\/span><span class="mode-browser-row-meta">([^<]+)<\/span><\/button>/g)].map(match => match.slice(1))
   assert.deepEqual(sets({set: null, openSet: () => {}}), [['/sets/Default.als — the host&#x27;s default set; select opens it', 'Default', 'default']])
   assert.deepEqual(sets({set: {path: '/sets/Default.als', tracks: []}, openSet: () => {}}), [['/sets/Default.als — the set open now; select opens it', 'Default', 'open']])
-  const source = readFile(new URL('../src/components/BrowserPane.tsx', import.meta.url), 'utf8')
-  return source.then(text => assert.match(text, /const standing = p === ctx\.set\?\.path \? 'open' : p === defaultSet \? 'default' : 'recent'/, 'a recent set stands as recent'))
+  // REPLACED (O-I #749): "a recent set stands as recent" was read from the row's source line; the rows are now liveSetRows', whose
+  // recent standing the test below checks on its own rows (['Recent', 'recent', null]).
+  assert.deepEqual(browserPane.liveSetRows(null, '/sets/Default.als', ['/r/Recent.als'], null, '').map(row => row.standing), ['default', 'recent'], 'a recent set stands as recent')
+})
+
+// O-I #749 (manual §10.3, "What leads the browser — Live: Your sets"): the walk of 29 Oct found Live sets empty but for the host's
+// default; only "Open set" found the person's set. The sets are the person's own, as the Live document owner lists them (kernel
+// live_set_owner.rs sets_reading: the Music folder and Live's places, newest first, templates marked), then the default and the recents.
+test('Live sets: the person\'s own sets from the owner\'s listing, newest first, each at its place; a template stands with them and is not opened as a set', () => {
+  const {liveSetRows, LiveSetList} = browserPane
+  const listing = {schema: 'oi.live-sets/v1', truncated: false, places: [{label: 'Music', path: '/home/Music', present: true}],
+    sets: [{path: '/home/Music/Song.als', name: 'Song', place: 'Music', template: false, modified_unix_ms: 3},
+      {path: '/home/Music/Ableton/User Library/Templates/Start.als', name: 'Start', place: 'User Library', template: true, modified_unix_ms: 2},
+      {path: '/sets/Default.als', name: 'Default', place: 'Music', template: false, modified_unix_ms: 1}]}
+  const rows = liveSetRows(listing, '/sets/Default.als', ['/elsewhere/Recent.als', '/home/Music/Song.als'], '/home/Music/Song.als', '')
+  assert.deepEqual(rows.map(row => [row.name, row.standing, row.place ?? null]),
+    [['Song', 'open', 'Music'], ['Start', 'template', 'User Library'], ['Default', 'default', 'Music'], ['Recent', 'recent', null]],
+    'the owner\'s sets first (newest first), then a recent set it did not list; each set once')
+  assert.deepEqual(liveSetRows(listing, '', [], null, 'sta').map(row => row.name), ['Start'], 'the search finds a set by its name')
+  assert.deepEqual(liveSetRows(null, '/sets/Default.als', [], null, '').map(row => row.standing), ['default'], 'before the owner answers, the default stands')
+  let opened = null
+  const markup = html(createElement(LiveSetList, {rows, words: null, openSet: path => { opened = path }}))
+  assert.match(markup, /data-live-set="\/home\/Music\/Song.als"[^>]*>.*?<span>Song<\/span><span class="mode-browser-row-meta">open · Music<\/span>/)
+  assert.match(markup, /data-live-set="\/home\/Music\/Ableton\/User Library\/Templates\/Start.als" aria-disabled="true" data-i="Start\|A template of Live&#x27;s[^"]*"/, 'a template is dimmed, its reason in its hover words')
+  assert.equal(opened, null)
+  const empty = html(createElement(LiveSetList, {rows: [], words: 'No set stands in Music or User Library.', openSet: () => {}}))
+  assert.match(empty, /class="browser-empty"[^>]*>No set stands in Music or User Library\.</, 'none: the owner\'s places, said')
 })
 
 // ── Central · Worlds ──────────────────────────────────────────────────────────────────────────────────
