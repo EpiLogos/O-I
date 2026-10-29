@@ -21,7 +21,7 @@ import {authorityAllowsTrigger, eligibleProofs, routineBasis, scheduleFromInput,
 import {appearanceValues, automationValues, credentialValues, folderOf, harnessValues, machineValues, NO_AUTHORING, NO_HARNESS, NO_INVOKE, NO_MACHINES, NO_NAVIGATE, NO_PRODUCTS,
   NO_PROFILES, NO_SETUP_AIKIT, NO_SETUP_SOURCE, NO_VISUALS, groundBound, productValues, profileValues, SECRET_REFERENCE, setupFolder, setupHarnessClients, setupHarnessProviders,
   setupKeyFindings, setupNamespace, setupSkillRoots, setupValues, systemValues, type CredentialRow, type SetupCredentials, type SetupHarnesses, type SetupMachine, type SetupPreview,
-  type SetupSnapshot, type SetupWorkFolder, type CivilTimePreview, type SetupBirth, type SetupCivilTime, type SetupDisclosure, groundNameRefusal, groundParts, groundPath} from './windowValues'
+  type SetupSnapshot, type SetupWorkFolder, type SetupFounding, type SetupKey, type SetupForm, type CivilTimePreview, type SetupBirth, type SetupCivilTime, type SetupDisclosure, groundNameRefusal, groundParts, groundPath} from './windowValues'
 import type {IdentityProfile} from '../../../../../desktop/cradle/src/nara/identity/types'
 import {chooseFolder, nativeFolderChooser, NO_NATIVE_FOLDER_CHOOSER} from './folderChooser'
 import {AdoptionController} from '../../../../../desktop/cradle/src/configuration/adoptionController'
@@ -695,6 +695,9 @@ export class SetupWalk {
   private groundChoice: {folder: string; name: string} | undefined = undefined
   private birth: SetupBirth | undefined = undefined
   private disclosure: SetupDisclosure | undefined = undefined
+  private placement: SetupFounding | undefined = undefined
+  private key: SetupKey | undefined = undefined
+  private form: SetupForm | undefined = undefined
   private brought: string | null = null
   /** Folders you chose to bring in (the browser's Work place: Add folder…), read beside the ones work.candidates finds. */
   private added: string[] = []
@@ -712,7 +715,7 @@ export class SetupWalk {
   private compose(): SetupSnapshot {
     return {adoption: this.controller.getSnapshot(), folders: this.folders, plan: this.plan, machine: this.machine, brought: this.brought, harnesses: this.harnesses, credentials: this.credentials,
       ...(this.civilTime ? {civilTime: this.civilTime} : {}), ...(this.groundChoice ? {groundAt: this.groundChoice} : {}), ...(this.birth ? {birth: this.birth} : {}),
-      ...(this.disclosure ? {disclosure: this.disclosure} : {})}
+      ...(this.disclosure ? {disclosure: this.disclosure} : {}), ...(this.placement ? {placement: this.placement} : {}), ...(this.key ? {key: this.key} : {}), ...(this.form ? {form: this.form} : {})}
   }
   private publish(): void { this.current = this.compose(); for (const listener of [...this.listeners]) listener() }
 
@@ -722,6 +725,9 @@ export class SetupWalk {
   async read(): Promise<void> {
     await this.controller.refresh()
     await this.readCivilTime()
+    await this.readPlacement()
+    await this.readKey()
+    await this.readForm()
     await this.readHarnesses()
     await this.readCredentials()
     await this.readMachine()
@@ -738,6 +744,41 @@ export class SetupWalk {
         throw new Error(`Central answered ${CIVIL_PREVIEW} in a form Setup does not read (central.civil-time-adoption-preview/v1 expected).`)
       this.civilTime = {state: 'read', preview: data as CivilTimePreview}
     } catch (cause) { this.civilTime = {state: 'refused', error: words(cause)} }
+    this.publish()
+  }
+  /** The ground's bounds: Central's `central.ground.placement.preview` (the root placement policy it keeps, or the one Accept adopts, on
+   * its digest). A refusal stands in Central's words. */
+  private async readPlacement(): Promise<void> {
+    try {
+      const data = await this.source.central(PLACEMENT_PREVIEW, {})
+      if (!data || typeof data !== 'object' || (data as {schema?: unknown}).schema !== 'central.ground-placement-preview/v1' || typeof (data as {state?: unknown}).state !== 'string')
+        throw new Error(`Central answered ${PLACEMENT_PREVIEW} in a form Setup does not read (central.ground-placement-preview/v1 expected).`)
+      this.placement = {state: 'read', preview: data as {state: string; digest?: string | null; reason?: string | null}}
+    } catch (cause) { this.placement = {state: 'refused', error: words(cause)} }
+    this.publish()
+  }
+  /** The person's key: the host's ground_authority preview (SetupSource.groundAuthority) — whether it can keep a key here, and Central's
+   * preview of the grant. It never answers the key. */
+  private async readKey(): Promise<void> {
+    const route = this.source.groundAuthority
+    if (!route) { this.key = {state: 'refused', error: NO_SETUP_KEY}; this.publish(); return }
+    try {
+      const data = await route({operation: 'preview'})
+      if (!data || typeof data !== 'object' || (data as {schema?: unknown}).schema !== 'oi.ground-authority/v1') throw new Error('The host answered its key in a form Setup does not read (oi.ground-authority/v1 expected).')
+      this.key = {state: 'read', reading: data as SetupKey extends {reading: infer R} ? R : never}
+    } catch (cause) { this.key = {state: 'refused', error: words(cause)} }
+    this.publish()
+  }
+  /** The Day's form: the host's ground_form preview (SetupSource.groundForm) — carried by the ground's O-I project, or Central's preview of
+   * keeping the application's own form in the ground. */
+  private async readForm(): Promise<void> {
+    const route = this.source.groundForm
+    if (!route) { this.form = {state: 'refused', error: NO_SETUP_FORM}; this.publish(); return }
+    try {
+      const data = await route({operation: 'preview'})
+      if (!data || typeof data !== 'object' || (data as {schema?: unknown}).schema !== 'oi.ground-form/v1') throw new Error('The host answered for the Day\'s form in a form Setup does not read (oi.ground-form/v1 expected).')
+      this.form = {state: 'read', reading: data as SetupForm extends {reading: infer R} ? R : never}
+    } catch (cause) { this.form = {state: 'refused', error: words(cause)} }
     this.publish()
   }
   /** The person's identity kept in the ground (SetupSource.identity: the kernel's nara_identity list, then open of the one it lists):
@@ -954,14 +995,17 @@ export class SetupWalk {
     const before = this.controller.getSnapshot()
     if (!before.discovery) throw new Error(before.error ?? 'Native oi did not read your ground.')
     if (before.unresolved) throw new Error('An earlier adoption is unresolved in native oi\'s journal: read it again before another write. Nothing was sent.')
-    // The days the step showed are the ones Accept keeps: the preview the person saw, on its digest (Central refuses one that moved).
-    const shown = this.civilTime
+    // The days, bounds and key the step showed are the ones Accept keeps: the previews the person saw, on their digests (Central refuses
+    // one that moved).
+    const shown = this.civilTime, shownPlacement = this.placement, shownKey = this.key, shownForm = this.form
     if (groundBound(before.discovery)) {
       // A ground Central keeps already: only its days are made, where it keeps none (an older ground).
       const where = before.discovery.bound_ground ?? before.discovery.selected_ground ?? before.discovery.suggested_ground
-      const days = await this.keepDays(shown, `dlw-setup-ground-accept:${Date.now()}`)
-      if (!days) throw new Error('Accepted: Central keeps your ground here already. Nothing is made twice.')
-      return `Central keeps your ground at ${where}, where it was. Nothing in it moved. ${days}`
+      const acceptance = `dlw-setup-ground-accept:${Date.now()}`
+      const days = await this.keepDays(shown, acceptance)
+      const kept = [days, ...(await this.keepFounding(shownPlacement, shownKey, acceptance, shownForm))].filter((line): line is string => !!line)
+      if (!kept.length) throw new Error('Accepted: Central keeps your ground here already. Nothing is made twice.')
+      return `Central keeps your ground at ${where}, where it was. Nothing in it moved. ${kept.join(' ')}`
     }
     const read = before.discovery.selected_ground ?? before.discovery.suggested_ground
     const at = this.groundChoice ?? groundParts(read)
@@ -994,13 +1038,55 @@ export class SetupWalk {
       const now = this.civilTime
       if (now?.state === 'read' && now.preview.state === 'absent') days = 'Your days are not kept yet: Central reads them now that your ground stands. Accept again to keep them as the step shows.'
     }
+    // Its bounds and the person's key, on the same acceptance: the ground stands whatever they answer, and each says what it kept.
+    const founded = await this.keepFounding(shownPlacement, shownKey, `oi-setup-adoption:${token}`, shownForm)
     await this.readHarnesses()
     await this.readCredentials()
     await this.readMachine()
     await this.readWork()
     await this.readBirth()
     this.source.groundChanged?.()
-    return days ? `${said} ${days}` : said
+    return [said, days, ...founded].filter(Boolean).join(' ')
+  }
+  /** Keeps the ground's bounds and the person's key as previewed (manual §10.11 Ground): Central's `central.ground.placement.adopt` on the
+   * preview's digest, then the host's ground_authority adopt — the key made in the world's own folder, only its digest sent to Central —
+   * each recognised by the acceptance named and read back. One that cannot be kept says why; neither stops the other. */
+  private async keepFounding(placement: SetupFounding | undefined, key: SetupKey | undefined, acceptance: string, form?: SetupForm): Promise<string[]> {
+    const said: string[] = []
+    if (placement?.state === 'read' && ['absent', 'no-ground'].includes(placement.preview.state) && placement.preview.digest) {
+      try {
+        await this.source.central(PLACEMENT_ADOPT, {actor_kind: 'human', acceptance: 'human-accepted', acceptance_ref: acceptance, expected_digest: placement.preview.digest})
+        await this.readPlacement()
+        if (this.placement?.state !== 'read' || this.placement.preview.state !== 'present') throw new Error(`Central answered ${PLACEMENT_ADOPT}, but your ground's bounds do not read back kept.`)
+        said.push('What is written in your ground stays inside it.')
+      } catch (cause) { said.push(`Your ground's bounds are not kept yet: ${words(cause)} Accept again to keep them.`) }
+    }
+    // The Day's form, where no O-I project carries it: the application's own form kept in the ground (the kernel's ground_form).
+    const formCentral = form?.state === 'read' ? form.reading.central : undefined
+    if (form?.state === 'read' && form.reading.state !== 'project' && ['absent', 'no-ground'].includes(String(formCentral?.state)) && typeof formCentral?.digest === 'string') {
+      try {
+        if (!this.source.groundForm) throw new Error(NO_SETUP_FORM)
+        await this.source.groundForm({operation: 'keep', acceptance_ref: acceptance, expected_digest: formCentral.digest})
+        await this.readForm()
+        if (this.form?.state !== 'read' || this.form.reading.central?.state !== 'present') throw new Error('The host answered, but the Day\'s form does not read back kept.')
+        said.push('Central keeps the Day\'s form in your ground.')
+      } catch (cause) { said.push(`Your Day's form is not kept yet: ${words(cause)} Accept again to keep it.`) }
+    }
+    const central = key?.state === 'read' ? key.reading.central : undefined
+    if (key?.state === 'read' && central?.state !== 'present') {
+      const route = this.source.groundAuthority
+      if (key.reading.keeps !== true || !route) said.push(`Your key is not kept: ${typeof key.reading.why === 'string' ? key.reading.why : NO_SETUP_KEY}`)
+      else if (['absent', 'no-ground'].includes(String(central?.state)) && typeof central?.digest === 'string') {
+        try {
+          const answer = await route({operation: 'adopt', acceptance_ref: acceptance, expected_digest: central.digest}) as {keeps?: unknown; why?: unknown; adopted?: unknown}
+          if (answer?.keeps === false) throw new Error(typeof answer.why === 'string' ? answer.why : 'The host keeps no key here.')
+          await this.readKey()
+          if (this.key?.state !== 'read' || this.key.reading.central?.state !== 'present') throw new Error('The host answered, but your key does not read back kept.')
+          said.push('Central keeps a key in this world so that only you act as you here.')
+        } catch (cause) { said.push(`Your key is not kept yet: ${words(cause)} Accept again to keep it.`) }
+      }
+    }
+    return said
   }
   /** Keeps the ground's days as previewed (manual §10.11 Ground; §18.2): Central's `central.time.policy.adopt` on the preview's digest,
    * the person's acceptance named (`acceptance_ref`), read back by its preview as recognised. Null where the step offered no policy to
@@ -1124,6 +1210,12 @@ export class SetupWalk {
 const SETUP_GROUND_FIRST = 'Make your ground first: AIKit\'s routes run from your ground.'
 /** Central's civil-time adoption (ctrl civil_time_adoption.rs, O-I #740): its preview and the Accept that keeps it. */
 const CIVIL_PREVIEW = 'central.time.policy.preview', CIVIL_ADOPT = 'central.time.policy.adopt'
+/** Central's adoption of the ground's bounds (ctrl ground_founding.rs, O-I #740). */
+const PLACEMENT_PREVIEW = 'central.ground.placement.preview', PLACEMENT_ADOPT = 'central.ground.placement.adopt'
+/** Why Setup keeps no Day form where the host hands it no form route. */
+const NO_SETUP_FORM = 'Setup reaches no form route here (SetupSource.groundForm, the kernel\'s ground_form).'
+/** Why Setup keeps no key where the host hands it no key route. */
+const NO_SETUP_KEY = 'Setup reaches no key route here (SetupSource.groundAuthority, the kernel\'s ground_authority).'
 /** Why Setup keeps no date of birth where the host hands it no identity owner. */
 export const NO_SETUP_IDENTITY = 'Setup reaches no identity owner here (SetupSource.identity, the kernel\'s nara_identity): your date of birth is kept from the identity of the Studio\'s Nara chain (§24.7) until it does.'
 /** Why the Harnesses and skills step shows no tool's settings where the host hands Setup no disclosure. */
@@ -1181,7 +1273,7 @@ export function useSetupPage(adapter: SettingsAdapter, enabled: boolean, held: H
         rereadSetup: async () => { await walk.read() },
         // The system's folder chooser (folderChooser.ts), then native oi reads the ground there under the name shown.
         chooseGroundFolder: async () => {
-          const folder = await chooseFolder()
+          const folder = await chooseFolder('ground')
           if (!folder) return 'Nothing chosen: the folder stays as it was.'
           const discovery = walk.snapshot().adoption.discovery
           const name = text(held('groundName')) || (walk.snapshot().groundAt ?? groundParts(discovery?.selected_ground ?? discovery?.suggested_ground ?? `${folder}/Central`)).name

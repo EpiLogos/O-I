@@ -71,6 +71,13 @@ export interface SetupSource {
   /** AIKit's own disclosure of each agent tool (`aikit harness disclose --json`, aikit.harness-disclosure/v1): its instructions (the
    * guidance layer), settings and models, as AIKit reads them; the Harnesses and skills step shows what it found. */
   harnessDisclosure?(): Promise<unknown>
+  /** The person's key (the kernel's `ground_authority` op, desktop/cradle/kernel/src/ground_authority.rs): preview — whether this host can
+   * keep a key here and Central's preview of the grant — and adopt, on Setup's held Ground Accept: the key made in the world's own folder,
+   * only its digest sent to Central. Its answers never carry the key nor its digest. */
+  groundAuthority?(request: {operation: 'preview'} | {operation: 'adopt'; acceptance_ref: string; expected_digest: string}): Promise<unknown>
+  /** The Day's form (the kernel's `ground_form` op, desktop/cradle/kernel/src/ground_form.rs): preview — carried by the ground's O-I
+   * project, or Central's preview of keeping the application's own Day form in the ground — and keep, on Setup's held Ground Accept. */
+  groundForm?(request: {operation: 'preview'} | {operation: 'keep'; acceptance_ref: string; expected_digest: string}): Promise<unknown>
   /** The host reads its world again once a ground is made or bound (native/Foundation.tsx). */
   groundChanged?(): void
 }

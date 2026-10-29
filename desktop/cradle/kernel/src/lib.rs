@@ -81,6 +81,8 @@ pub mod focus;
 pub mod git;
 pub mod graph;
 pub mod ground;
+pub mod ground_authority;
+pub mod ground_form;
 pub mod history;
 pub mod inhabitation;
 pub mod journal;
@@ -395,6 +397,16 @@ pub enum KernelOp {
 
     Setup {
         request: serde_json::Value,
+    },
+    /// The person's key in a new world (ground_authority.rs): what Central would keep, and, on Setup's held Ground Accept, the key
+    /// made in the world's own folder and its grant kept by Central. Only the key's digest crosses.
+    GroundAuthority {
+        request: ground_authority::Request,
+    },
+    /// The Day's form in a new world (ground_form.rs): the application's own Day form kept in the ground through Central, on Setup's
+    /// held Ground Accept, where no O-I project carries it.
+    GroundForm {
+        request: ground_form::Request,
     },
     BeingEncounter {
         request: being::Request,
@@ -1424,6 +1436,12 @@ pub enum KernelOpResult {
     },
 
     SetupReading {
+        data: serde_json::Value,
+    },
+    GroundAuthorityReading {
+        data: serde_json::Value,
+    },
+    GroundFormReading {
         data: serde_json::Value,
     },
     BeingEncounter {
@@ -3477,6 +3495,20 @@ impl Kernel {
                 let answered = prepared.execute();
                 self.finish_ground(answered)
             }
+            KernelOp::GroundForm { request } => Ok(KernelOpOutcome {
+                read_scopes: None,
+                receipts: Vec::new(),
+                result: KernelOpResult::GroundFormReading {
+                    data: ground_form::operate(&self.client, &request)?,
+                },
+            }),
+            KernelOp::GroundAuthority { request } => Ok(KernelOpOutcome {
+                read_scopes: None,
+                receipts: Vec::new(),
+                result: KernelOpResult::GroundAuthorityReading {
+                    data: ground_authority::operate(&self.client, &request)?,
+                },
+            }),
             KernelOp::Setup { request } => {
                 // First installation must work before Central/root discovery.
                 let cwd = std::env::current_dir().map_err(|e| e.to_string())?;

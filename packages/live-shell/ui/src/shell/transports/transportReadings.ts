@@ -7,6 +7,7 @@
 // Pure TypeScript. No React, no transport, no timers.
 import type {CentralGroundReading} from '../../../../../../desktop/cradle/src/central/client'
 import {validateDocumentBasis} from '../../../../../../desktop/cradle/src/central/dayForm'
+import {NO_CIVIL_TIME, wantsCivilTime} from '../../central/devices/dayBinding'
 import type {PreparedContext} from '../../../../../../desktop/cradle/src/context/nativeContext'
 import type {KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
 import type {ShellConfig} from '../../native/application'
@@ -97,6 +98,8 @@ export type DayDie =
 export function dayDieOf(ground: CentralGroundReading | null, error: string | null): DayDie {
   if (!ground) return {state: 'waiting', reason: error ? `Central's ground read refused: ${error}` : 'Reading Central\'s ground — the owner\'s Day and civil-time readings.'}
   const day = ground.day
+  // A ground with no time zone for its days has no Day: the way on is Setup's Ground step, not Central's raw denial (O-I #740).
+  if ((day.state !== 'ready' || !day.data) && wantsCivilTime(ground)) return {state: 'waiting', reason: NO_CIVIL_TIME}
   if (day.state !== 'ready' || !day.data) return {state: 'waiting', reason: `Central's Day reading is ${day.state}${day.error?.message ? `: ${day.error.message}` : '.'}`}
   const reading = day.data
   if (reading.document_state !== 'ready' || !reading.document) {

@@ -28,7 +28,7 @@ import {central, readGround} from '../../../../../../desktop/cradle/src/central/
 import {kernelOp} from '../../../../../../desktop/cradle/src/kernel/bridge'
 import type {DaySettingsPatch} from './dayBinding'
 import {actionAnswerOf, centralActionOp} from './centralActions'
-import {readFile} from '../../../../../../desktop/cradle/src/files/client'
+import {listFiles, readFile} from '../../../../../../desktop/cradle/src/files/client'
 import {DayFormSession, isObject, unmappedChanges, validateDocumentBasis} from '../../../../../../desktop/cradle/src/central/dayForm'
 import {receiving} from '../../../../../../desktop/cradle/src/receiving/client'
 import {appendEntry, embedDocument} from '../../../../../../desktop/cradle/src/flow/instance'
@@ -121,13 +121,27 @@ export async function openToday(transport: KernelTransportStatus): Promise<{ensu
   if (ground.placement.state !== 'ready' || !ground.placement.data) throw new Error('Central\'s native placement authority is unavailable; the Day document cannot be made')
   const world = await kernelOp(transport, {op: 'world_browse'})
   const projects = world.outcome?.result === 'world_read' ? world.outcome.snapshot.navigator?.root?.work.projects : undefined
-  const formLocation = await resolveDocumentForm(transport, form, projects)
+  const formLocation = await dayFormLocation(transport, () => resolveDocumentForm(transport, form, projects), form.file)
   const original = await readFile(transport, formLocation, true)
   await central(transport, null, {kind: 'initialise-day', day_ref: day.day_ref, document_id: `document:${crypto.randomUUID()}`, expected_revision: day.revision.revision,
     expected_policy_revision: ground.placement.data.revision, form: formLocation, expected_form_revision: original.revision})
   const carried = closed ? await carryInto(transport, closed) : null
   return {ensured, initialised: true, carried}
 }
+
+/** Where today's Day is made from: the Day form the ground's O-I project carries (documentForms.ts, as before), else the one the ground
+ * keeps itself (Control/forms, kept by Setup's Ground Accept in a world no O-I project carries it for: O-I #740). Neither: both named,
+ * with the way on. */
+async function dayFormLocation(transport: KernelTransportStatus, project: () => Promise<Awaited<ReturnType<typeof readFile>>['location']>, file: string) {
+  let carried: string
+  try { return await project() } catch (cause) { carried = cause instanceof Error ? cause.message : String(cause) }
+  const kept = await listFiles(transport, GROUND_FORMS, true).catch(() => null)
+  const entry = kept?.entries.find(e => e.kind === 'file' && e.name === file && e.retrieval_allowed !== false)
+  if (entry) return entry.location
+  throw new Error(`${carried}; nor does your ground keep the Day's form (${GROUND_FORMS}/${file}). Keep it in Settings › Setup › Ground, then press Open today.`)
+}
+/** Where a ground keeps the document forms Setup gives it (ctrl ground_founding.rs FORMS_DIR). */
+const GROUND_FORMS = 'Control/forms'
 
 /** What the close carried into the Day made now: the closed Day it came from, and what tomorrow's grid holds of it. */
 export interface CarriedInto {

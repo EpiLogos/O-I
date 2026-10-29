@@ -466,7 +466,7 @@ function WorldsRows({needle}: {needle: string}) {
       : {ok: false, words: answer.error ?? `${world.name} did not come into today.`}))
   }} onAddFolder={() => {
     setSaid(null)
-    void addFolderFromBrowser(chooseFolder, openSettings).then(fault => { if (fault) setSaid({ok: false, words: fault}) })
+    void addFolderFromBrowser(() => chooseFolder('work'), openSettings).then(fault => { if (fault) setSaid({ok: false, words: fault}) })
   }} />
 }
 

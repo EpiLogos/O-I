@@ -407,7 +407,12 @@ function scriptedSetup() {
     tools: new Map(), keys: [], bindings: new Map(),
     // `zone`: this computer's IANA zone as Central reads it; `civil`: the civil-time policy the ground keeps (null: none), `civilRefused`:
     // a Central that does not answer it; `identity`: the person's saved identity profile (null until saved), `disclosure`: AIKit's.
-    zone: 'Europe/London', civil: null, civilRefused: null, identity: null, identityRevision: 0, disclosure: null}
+    zone: 'Europe/London', civil: null, civilRefused: null, identity: null, identityRevision: 0, disclosure: null,
+    // `placement`: the root placement policy the ground keeps (null: none); `key`: whether Central keeps the person's grant; `keeps`:
+    // whether the host can keep a key here (HOME the world's folder); `keyAcceptance`, `placementAcceptance`: what each was recognised by.
+    placement: null, key: false, keeps: true,
+    // `form`: whether the ground keeps the Day's form (Control/forms); `formByProject`: whether its O-I project carries it instead.
+    form: false, formByProject: false}
   const HOME = '/w/Bare'
   const digestOf = relative => `digest:${relative}:${world.elsewhere.get(relative).revision}`
   // A ground the person chose (discover's `ground`) is read where it is: new until it is the bound one.
@@ -452,6 +457,21 @@ function scriptedSetup() {
       if (input.expected_digest !== civilDigest(world.zone)) throw new Error('the civil-time policy Central would adopt changed since its preview (or no preview was named): preview it again. Nothing was written.')
       world.civil = civilPolicy(world.zone); world.civilAcceptance = input.acceptance_ref
       return {adopted: true, state: 'recognised', source_ref: 'central:source:control:root:Control/user/civil-time-policy.json', reading: {policy: world.civil}}
+    }
+    // Central's placement adoption (ctrl ground_founding.rs; shapes as the built ctrl answered on a scratch world, 29 Oct).
+    if (action === 'central.ground.placement.preview') {
+      const state = !world.bound ? 'no-ground' : world.placement ? 'present' : 'absent'
+      return {schema: 'central.ground-placement-preview/v1', state, source_path: 'Control/user/placement.json', role: 'work-placement-policy',
+        policy: {schema: 'central.work-placement-policy/v1', scope_ref: 'control:root', writable: [], enforcement: 'native-actions'}, digest: state === 'present' ? null : 'placement-digest',
+        reason: state === 'present' ? 'this ground keeps a work-placement-policy source already (Control/user/placement.json): Central adopts none over it, and nothing was written' : null}
+    }
+    if (action === 'central.ground.placement.adopt') {
+      if (!world.bound) throw new Error('there is no ground here yet: make the ground first')
+      if (input.actor_kind !== 'human' || input.acceptance !== 'human-accepted' || !input.acceptance_ref) throw new Error('a human-adopted civil-time policy requires a declared human caller, no agent_session_ref, and acceptance human-accepted')
+      if (world.placement) throw new Error('this ground keeps a work-placement-policy source already (Control/user/placement.json): Central adopts none over it, and nothing was written')
+      if (input.expected_digest !== 'placement-digest') throw new Error('the work-placement-policy Central would adopt changed since its preview (or no preview was named): preview it again. Nothing was written.')
+      world.placement = {writable: []}; world.placementAcceptance = input.acceptance_ref
+      return {adopted: true, source_ref: 'central:source:control:root:Control/user/placement.json', policy_revision: 'p-1', policy: world.placement}
     }
     if (!world.bound) throw new Error(`Central root does not exist as a directory: ${GROUND}`)
     const project = name => { const row = world.work.get(name); if (!row) throw new Error(`Project root does not exist as a directory: ${GROUND}/Work/${name}`); return row }
@@ -560,8 +580,33 @@ function scriptedSetup() {
     }
     throw new Error(`unexpected identity ${request.operation}`)
   }
+  // The kernel's ground_authority route (desktop/cradle/kernel/src/ground_authority.rs): Central's preview of the person's grant, and on
+  // adopt the key made in the world's folder with only its digest sent to Central. Its answers carry neither key nor digest.
+  const groundAuthority = async request => {
+    calls.push(['key', request.operation, structuredClone(request)])
+    const central = {schema: 'central.ground-authority-preview/v1', state: !world.bound ? 'no-ground' : world.key ? 'present' : 'absent', digest: world.key ? null : 'key-digest'}
+    if (!world.keeps) return {schema: 'oi.ground-authority/v1', keeps: false, why: 'This window is not a world\'s own (OI_WORLD_FOLDER is not set): Central keeps your key only in a world\'s folder, never in your own home.', central}
+    if (request.operation === 'preview') return {schema: 'oi.ground-authority/v1', keeps: true, principal_ref: 'human:Bare', key_stands: world.key, central}
+    if (!world.bound) throw new Error('there is no ground here yet: make the ground first')
+    if (world.key) return {schema: 'oi.ground-authority/v1', keeps: true, adopted: false, state: 'present', principal_ref: 'human:Bare'}
+    if (request.expected_digest !== 'key-digest') throw new Error('the native-action-authority Central would adopt changed since its preview (or no preview was named): preview it again. Nothing was written.')
+    world.key = true; world.keyAcceptance = request.acceptance_ref
+    return {schema: 'oi.ground-authority/v1', keeps: true, adopted: true, state: 'recognised', principal_ref: 'human:Bare', source_ref: 'central:source:control:root:Control/user/native-action-authority.json', actions: 23}
+  }
+  // The kernel's ground_form route (desktop/cradle/kernel/src/ground_form.rs): the application's own Day form, kept through Central.
+  const groundForm = async request => {
+    calls.push(['form', request.operation, structuredClone(request)])
+    if (world.formByProject) return {schema: 'oi.ground-form/v1', name: 'ql-daily-die.html', carried_by: 'Work/O-I/desktop/cradle/documents', kept: false, state: 'project'}
+    const central = {schema: 'central.ground-form-preview/v1', state: !world.bound ? 'no-ground' : world.form ? 'present' : 'absent', source_path: 'Control/forms/ql-daily-die.html', digest: world.form ? null : 'form-digest'}
+    if (request.operation === 'preview') return {schema: 'oi.ground-form/v1', name: 'ql-daily-die.html', central}
+    if (!world.bound) throw new Error('there is no ground here yet: make the ground first')
+    if (world.form) return {schema: 'oi.ground-form/v1', name: 'ql-daily-die.html', kept: false, state: 'present'}
+    if (request.expected_digest !== 'form-digest') throw new Error('the form Central would keep changed since its preview (or no preview was named): preview it again. Nothing was written.')
+    world.form = true; world.formAcceptance = request.acceptance_ref
+    return {schema: 'oi.ground-form/v1', name: 'ql-daily-die.html', kept: true, state: 'present', source_path: 'Control/forms/ql-daily-die.html'}
+  }
   const harnessDisclosure = async () => { calls.push(['disclosure']); if (!world.disclosure) throw new Error('aikit harness disclose did not answer'); return world.disclosure }
-  return {source: {adoption, central, workcell, aikit, identity, harnessDisclosure, groundChanged: () => calls.push(['groundChanged'])}, calls, world, GROUND, HOME}
+  return {source: {adoption, central, workcell, aikit, identity, harnessDisclosure, groundAuthority, groundForm, groundChanged: () => calls.push(['groundChanged'])}, calls, world, GROUND, HOME}
 }
 /** AIKit's answers on a scratch Arriving world (REAL; the kernel's owner-route fixture, the world's folder written /w/Arriving). */
 const REAL = JSON.parse(readFileSync(new URL('../../../../desktop/cradle/kernel/tests/fixtures/owner-routes/aikit-setup-harnesses-credentials-2026-10-28.json', import.meta.url), 'utf8'))
@@ -1164,4 +1209,81 @@ test('SCRIPTED — a Central that cannot preview the days before the ground stan
   assert.match(step.items.find(item => item.name === 'Your days').change, /Europe\/London, and turn at midnight/)
   assert.match(await walk.accept('ground', held({})), /Your days follow Europe\/London/)
   assert.equal(stepOf(win.setupValues(walk.snapshot(), held({})), 'ground').state, 'accepted')
+})
+
+// ── the person's key and the ground's bounds (O-I #740, round two) ──────────────────────────────────────────────────────────────
+
+test('CODE-DERIVED — the Ground step says, before Accept, that Central keeps your ground\'s bounds and a key so only you act as you; accepted once all are kept', () => {
+  const bound = {bound_ground: '/w/Bare/Central', suggested_ground: '/w/Bare/Central', selected_ground: '/w/Bare/Central', ground: {outcome: 'recognized', canonical_path: '/w/Bare/Central', access: {readable: true, searchable: true}}}
+  const fresh = {...bound, bound_ground: null, ground: {outcome: 'new', canonical_path: '/w/Bare/Central'}}
+  const placement = state => ({state: 'read', preview: {state, digest: state === 'present' ? null : 'placement-digest', reason: null}})
+  const key = (state, keeps = true) => ({state: 'read', reading: {keeps, ...(keeps ? {} : {why: 'This window is not a world\'s own (OI_WORLD_FOLDER is not set)'}), central: {state, digest: state === 'present' ? null : 'key-digest'}}})
+  const row = (values, name) => stepOf(values, 'ground').items.find(item => item.name === name)
+  const before = win.setupValues({adoption: {discovery: fresh}, civilTime: civilRead('no-ground'), placement: placement('no-ground'), key: key('no-ground'), folders: {state: 'unread'}, plan: null}, held({}))
+  assert.equal(row(before, 'Your key').change, 'Central keeps a key in this world so that only you act as you here')
+  assert.equal(row(before, 'Your key').adopts, true)
+  assert.match(row(before, 'Your ground\'s bounds').change, /^What is written in your ground stays inside it/)
+  const all = state => win.setupValues({adoption: {discovery: bound}, civilTime: civilRead('recognised'), placement: placement(state), key: key(state), folders: {state: 'read', folders: []}, plan: null}, held({}))
+  assert.equal(stepOf(all('present'), 'ground').state, 'accepted')
+  assert.equal(stepOf(all('absent'), 'ground').state, 'found', 'a ground without its key and bounds is not accepted')
+  assert.match(row(all('present'), 'Your key').change, /^Central keeps your key in this world/)
+  // Where the host cannot keep a key (not a world's own folder) and none is kept, said; a key kept already stands as kept.
+  const outside = win.setupValues({adoption: {discovery: bound}, civilTime: civilRead('recognised'), placement: placement('present'), key: key('absent', false), folders: {state: 'read', folders: []}, plan: null}, held({}))
+  assert.match(row(outside, 'Your key').why, /OI_WORLD_FOLDER/)
+  const yours = win.setupValues({adoption: {discovery: bound}, civilTime: civilRead('recognised'), placement: placement('present'), key: key('present', false), folders: {state: 'read', folders: []}, plan: null}, held({}))
+  assert.equal(stepOf(yours, 'ground').state, 'accepted', 'a ground that keeps an authority changes nothing')
+  const refused = win.setupValues({adoption: {discovery: bound}, civilTime: civilRead('recognised'), placement: {state: 'refused', error: 'Unknown Action: central.ground.placement.preview'}, key: {state: 'refused', error: 'no host route'}, folders: {state: 'read', folders: []}, plan: null}, held({}))
+  assert.match(row(refused, 'Your ground\'s bounds').why, /Unknown Action/)
+  assert.match(row(refused, 'Your key').why, /no host route/)
+})
+
+test('SCRIPTED — one held Accept makes the ground, its days, its bounds and the person\'s key, each on its preview, recognised by that acceptance; the window never holds the key', async () => {
+  const {source, calls, world} = scriptedSetup()
+  const walk = new settingsPages.SetupWalk(source)
+  await walk.read()
+  const said = await walk.accept('ground', held({}))
+  assert.match(said, /Central keeps a key in this world so that only you act as you here/)
+  const order = calls.filter(call => ['apply', 'central.time.policy.adopt', 'central.ground.placement.adopt'].includes(call[1]) || (call[0] === 'key' && call[1] === 'adopt') || (call[0] === 'form' && call[1] === 'keep')).map(call => call[1])
+  assert.deepEqual(order, ['apply', 'central.time.policy.adopt', 'central.ground.placement.adopt', 'keep', 'adopt'], 'the ground, then its days, its bounds, its Day\'s form and the key')
+  assert.equal(world.formAcceptance, 'oi-setup-adoption:review-1')
+  assert.equal(world.placementAcceptance, 'oi-setup-adoption:review-1')
+  assert.equal(world.keyAcceptance, 'oi-setup-adoption:review-1')
+  assert.deepEqual(calls.find(call => call[0] === 'key' && call[1] === 'adopt')[2], {operation: 'adopt', acceptance_ref: 'oi-setup-adoption:review-1', expected_digest: 'key-digest'})
+  assert.equal(stepOf(win.setupValues(walk.snapshot(), held({})), 'ground').state, 'accepted')
+  assert.doesNotMatch(JSON.stringify(walk.snapshot()), /native-token|token_sha256/i, 'no key, its digest, nor where it lies, enters the window')
+  await assert.rejects(walk.accept('ground', held({})), /Nothing is made twice/)
+  // An older ground that keeps an authority and a placement policy: only its days are made; the key route is not asked to adopt.
+  const older = scriptedSetup()
+  Object.assign(older.world, {bound: '/w/Bare/Central', outcome: 'recognized', key: true, placement: {writable: [{path: 'Work/x'}]}})
+  const second = new settingsPages.SetupWalk(older.source)
+  await second.read()
+  await second.accept('ground', held({}))
+  assert.ok(!older.calls.some(call => call[0] === 'key' && call[1] === 'adopt'), 'a ground that keeps an authority changes nothing')
+  assert.ok(!older.calls.some(call => call[1] === 'central.ground.placement.adopt'))
+  assert.deepEqual(older.world.placement, {writable: [{path: 'Work/x'}]})
+  // A host that cannot keep a key here: the ground, days and bounds are made; the key row says why, and the step waits.
+  const outside = scriptedSetup()
+  outside.world.keeps = false
+  const third = new settingsPages.SetupWalk(outside.source)
+  await third.read()
+  const answer = await third.accept('ground', held({}))
+  assert.match(answer, /OI_WORLD_FOLDER/)
+  assert.equal(outside.world.key, false)
+  assert.equal(stepOf(win.setupValues(third.snapshot(), held({})), 'ground').state, 'found')
+})
+
+test('CODE-DERIVED — the Ground step keeps the Day\'s form in a ground no O-I project carries it for; a ground whose project carries it changes nothing', () => {
+  const bound = {bound_ground: '/w/Bare/Central', suggested_ground: '/w/Bare/Central', selected_ground: '/w/Bare/Central', ground: {outcome: 'recognized', canonical_path: '/w/Bare/Central', access: {readable: true, searchable: true}}}
+  const form = reading => ({state: 'read', reading})
+  const row = values => stepOf(values, 'ground').items.find(item => item.name === 'Your Day\'s form')
+  const of = f => win.setupValues({adoption: {discovery: bound}, civilTime: civilRead('recognised'), form: f, folders: {state: 'read', folders: []}, plan: null}, held({}))
+  const absent = of(form({central: {state: 'absent', digest: 'form-digest'}}))
+  assert.equal(row(absent).change, 'Central keeps the Day\'s form in your ground, so today\'s Day can be made')
+  assert.equal(row(absent).adopts, true)
+  assert.equal(stepOf(absent, 'ground').state, 'found')
+  assert.equal(stepOf(of(form({central: {state: 'present'}})), 'ground').state, 'accepted')
+  const project = of(form({state: 'project', carried_by: 'Work/O-I/desktop/cradle/documents'}))
+  assert.match(row(project).change, /Work\/O-I\/desktop\/cradle\/documents/)
+  assert.equal(stepOf(project, 'ground').state, 'accepted', 'the owner\'s ground changes nothing')
+  assert.match(row(of({state: 'refused', error: 'no route'})).why, /no route/)
 })

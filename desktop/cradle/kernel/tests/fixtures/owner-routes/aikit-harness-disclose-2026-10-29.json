@@ -1,0 +1,289 @@
+{
+ "_source": "aikit 0.1.0 (8c3571876046), 29 Oct 2026, on a scratch copy of the Arriving world (HOME the world, a clean environment), the world folder written /w/Arriving: `aikit harness disclose --json`, profiles cut to claude-code and codex. A read: nothing was launched or applied (O-I #740).",
+ "disclose": {
+  "context": {
+   "context_id": "ctx_fixture",
+   "project_root": null,
+   "session_id": null
+  },
+  "data": {
+   "profiles": [
+    {
+     "activation": {
+      "reason": "Projection written does not mean the target session loaded it",
+      "state": "unobserved"
+     },
+     "composed_tools": {
+      "count": 0,
+      "state": "resolved"
+     },
+     "disclosure": {
+      "edition": "cli",
+      "layers": [
+       {
+        "layer": "skills",
+        "native": [
+         {
+          "name": "~/.claude/skills"
+         }
+        ],
+        "posture": "managed"
+       },
+       {
+        "layer": "guidance",
+        "native": [
+         {
+          "name": "~/.claude/CLAUDE.md"
+         }
+        ],
+        "posture": "observed"
+       },
+       {
+        "layer": "hooks",
+        "native": [
+         {
+          "name": "session-start"
+         },
+         {
+          "name": "user-prompt-submit"
+         },
+         {
+          "name": "pre-tool-use"
+         },
+         {
+          "name": "post-tool-use"
+         },
+         {
+          "name": "stop"
+         },
+         {
+          "name": "session-end"
+         },
+         {
+          "name": "notification"
+         },
+         {
+          "name": "pre-compact"
+         }
+        ],
+        "posture": "managed"
+       },
+       {
+        "activation": "next-session-only",
+        "layer": "tools",
+        "posture": "managed"
+       },
+       {
+        "auth": {
+         "env_var": [
+          {
+           "env_var": "ANTHROPIC_API_KEY",
+           "provider_ref": "provider:anthropic"
+          }
+         ],
+         "own_login": [
+          {
+           "kind": "note-only",
+           "note": "claude login keeps OAuth material in its own credential store (~/.claude/.credentials.json); the API key delivers only when credential:anthropic is bound",
+           "provider_ref": "provider:anthropic"
+          }
+         ]
+        },
+        "layer": "models",
+        "posture": "observed"
+       },
+       {
+        "connection": {
+         "capabilities": {
+          "additional-directories": false,
+          "cancellation": true,
+          "mcp-servers": false,
+          "ordered-streaming": true,
+          "permission-requests": true,
+          "reconnect": false
+         },
+         "connect": {
+          "binary": "npx",
+          "cwd": null,
+          "env": false,
+          "fallback_variants": 0,
+          "kind": "declared"
+         },
+         "protocol": "acp"
+        },
+        "layer": "sessions",
+        "posture": "observed"
+       },
+       {
+        "layer": "settings",
+        "native": [
+         {
+          "name": "~/.claude/settings.json"
+         }
+        ],
+        "posture": "observed"
+       }
+      ],
+      "slug": "claude-code"
+     },
+     "native_hooks": {
+      "reason": "A declared hook seam does not prove that this session loaded it",
+      "state": "unobserved"
+     },
+     "native_tools": {
+      "sources": [
+       {
+        "path": "/w/Arriving/.claude.json",
+        "state": "absent"
+       }
+      ],
+      "state": "observed"
+     }
+    },
+    {
+     "activation": {
+      "reason": "Projection written does not mean the target session loaded it",
+      "state": "unobserved"
+     },
+     "composed_tools": {
+      "count": 0,
+      "state": "resolved"
+     },
+     "disclosure": {
+      "edition": "cli",
+      "layers": [
+       {
+        "layer": "skills",
+        "native": [
+         {
+          "name": "~/.codex/skills"
+         }
+        ],
+        "posture": "managed"
+       },
+       {
+        "layer": "guidance",
+        "native": [
+         {
+          "name": "~/.codex/AGENTS.md"
+         }
+        ],
+        "posture": "observed"
+       },
+       {
+        "layer": "hooks",
+        "native": [
+         {
+          "name": "session-start"
+         },
+         {
+          "name": "user-prompt-submit"
+         },
+         {
+          "name": "pre-tool-use"
+         },
+         {
+          "name": "post-tool-use"
+         },
+         {
+          "name": "stop"
+         },
+         {
+          "name": "session-end"
+         },
+         {
+          "name": "notification"
+         },
+         {
+          "name": "pre-compact"
+         }
+        ],
+        "posture": "managed"
+       },
+       {
+        "layer": "tools",
+        "posture": "observed"
+       },
+       {
+        "auth": {
+         "env_var": [
+          {
+           "env_var": "OPENAI_API_KEY",
+           "provider_ref": "provider:openai"
+          }
+         ],
+         "own_login": [
+          {
+           "arg_count": 1,
+           "binary": "codex",
+           "kind": "runnable",
+           "note": "codex login runs the ChatGPT OAuth browser flow and writes its own auth store (~/.codex/auth.json); the API key delivers only when credential:openai is bound",
+           "provider_ref": "provider:openai"
+          }
+         ]
+        },
+        "layer": "models",
+        "posture": "observed"
+       },
+       {
+        "connection": {
+         "capabilities": {
+          "additional-directories": false,
+          "cancellation": true,
+          "mcp-servers": false,
+          "ordered-streaming": true,
+          "permission-requests": false,
+          "reconnect": false
+         },
+         "connect": {
+          "binary": "npx",
+          "cwd": null,
+          "env": false,
+          "fallback_variants": 0,
+          "kind": "declared"
+         },
+         "open_modes": [
+          "create",
+          "load",
+          "resume"
+         ],
+         "protocol": "acp"
+        },
+        "layer": "sessions",
+        "posture": "observed"
+       },
+       {
+        "layer": "settings",
+        "native": [
+         {
+          "name": "~/.codex/config.toml"
+         }
+        ],
+        "posture": "observed"
+       }
+      ],
+      "slug": "codex"
+     },
+     "native_hooks": {
+      "reason": "A declared hook seam does not prove that this session loaded it",
+      "state": "unobserved"
+     },
+     "native_tools": {
+      "sources": [
+       {
+        "path": "/w/Arriving/.codex/config.toml",
+        "state": "absent"
+       }
+      ],
+      "state": "observed"
+     }
+    }
+   ],
+   "schema": "aikit.harness-disclosure/v1",
+   "standing": "Native profile declarations and source observations; not installed-harness detection or session activation proof"
+  },
+  "ok": true,
+  "schema": 1,
+  "warnings": []
+ }
+}

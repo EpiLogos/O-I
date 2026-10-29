@@ -46,6 +46,8 @@ export const KERNEL_OPS = [
   'native_expression',
   'world_resolve',
   'setup',
+  'ground_authority',
+  'ground_form',
   'being_encounter',
   'hosted_native',
   'expression',

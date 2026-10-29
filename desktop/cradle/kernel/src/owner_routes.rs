@@ -697,6 +697,11 @@ pub enum AikitRead {
     /// init`; discovery only, it writes nothing): Setup's Harnesses and
     /// skills step.
     Init,
+    /// What AIKit reads of each agent tool's layers — its guidance
+    /// (instructions), settings, models, skills, hooks and tools — as
+    /// declarations and observations (`aikit harness disclose --json`; never
+    /// launches or applies): Setup's Harnesses and skills step (O-I #740).
+    HarnessDisclose,
     /// Adopting a foreign skill root, as a plan only (`aikit adopt <root>
     /// [--namespace N]`, without `--yes`): its diff.
     AdoptPlan {
@@ -951,6 +956,7 @@ impl AikitRead {
             | Self::FlowThoughts { .. }
             | Self::Collate { .. }
             | Self::Init
+            | Self::HarnessDisclose
             | Self::AdoptPlan { .. }
             | Self::ProcedureList
             | Self::ProcedureDiff { .. }
@@ -2369,6 +2375,10 @@ pub(crate) fn aikit_read_args(request: &AikitRead) -> (&'static str, Vec<OsStrin
             ("aikit collate", args)
         }
         AikitRead::Init => ("aikit init", words(&["init", "--json"])),
+        AikitRead::HarnessDisclose => (
+            "aikit harness disclose",
+            words(&["harness", "disclose", "--json"]),
+        ),
         AikitRead::AdoptPlan { root, namespace } => {
             let mut args = words(&["adopt"]);
             args.push(root.into());
@@ -2494,6 +2504,7 @@ fn aikit_read_answer(request: &AikitRead, cwd: Option<&Path>) -> Result<Reading,
         AikitRead::CloseoutVerify { .. } => fields(route, data, CLOSEOUT)?,
         AikitRead::Collate { .. } => fields(route, data, &[("clusters", Kind::List)])?,
         AikitRead::Init => fields(route, data, &[("roots", Kind::List)])?,
+        AikitRead::HarnessDisclose => fields(route, data, &[("profiles", Kind::List)])?,
         AikitRead::ProcedureList => fields(route, data, &[("procedures", Kind::List)])?,
         AikitRead::BypassList => fields(route, data, &[("bypasses", Kind::List)])?,
         AikitRead::SourceList => fields(
