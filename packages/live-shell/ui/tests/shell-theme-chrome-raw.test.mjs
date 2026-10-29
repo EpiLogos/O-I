@@ -19,9 +19,9 @@ const STANDING = {
     // Session and arrangement slots: ink and grounds on the tracks' own identity colours (the track colour stays across themes).
     '#97b1be': 1, '#21282e': 1, '#637267': 1, '#292c31': 1, '#252a2d': 1, '#657b7e': 1, '#4a5056': 1, '#272d32': 1, '#20252a': 1,
     '#33383dcc': 2, '#a5aeb018': 1,
-    // Mixer rails, transport record lamp, scrollbar thumb, the native control's edge, the collection square, fault inks: the layout
-    // rules' own literals (lane S1's rules; --edge and --fault already carry #30343a and #f3b4a0 as tokens).
-    '#202327': 2, '#17191b': 2, '#c9c8ad': 1, '#777e80': 1, '#30343a': 1, '#f46b64': 1, '#f3b4a0': 1, '#e4b09f': 1,
+    // Mixer rails, transport record lamp, the collection square, fault inks: the layout rules' own literals (lane S1's rules). The
+    // scrollbar thumb, the native control's edge and the inhabitant fault ink paint with --scrollbar, --edge and --fault (O-I 744).
+    '#202327': 2, '#17191b': 2, '#c9c8ad': 1, '#f46b64': 1, '#e4b09f': 1,
     '#251e1c': 1, '#edc9bc': 1, '#705344': 1,
   },
   'shell/modeSurface.css': {

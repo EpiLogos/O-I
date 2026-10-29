@@ -287,7 +287,10 @@ test('Automations: a new schedule is prepared in the form, a creation that waits
   assert.ok(markup.includes('2026-10-30 07:30 UTC'), 'the next runs')
   assert.ok(markup.includes('Run the checks.'), 'the Method\'s text')
   assert.ok(markup.includes(escaped('Finish or cancel the routine you are making: it stays in its work context.')), 'a routine being made keeps its work context')
-  assert.match(drawn({theme: json({saved: 'dark'}), themeDraft: 'light'}, 'appearance'), />Undo</, 'an appearance chosen, not saved, can be dropped')
+  // An appearance chosen, not saved, is a local change of the presentation owner's Theme row, dropped by its Undo (O-I #744; replaces the
+  // page's own themeDraft and Apply: tests/settings-appearance-review.test.mjs).
+  assert.match(drawn({theme: json({saved: 'dark'}), settings: json([{ref: 'oi:presentation:theme', category: 'appearance', owner: 'oi', title: 'Theme', kind: 'choice', writable: true,
+    effective: 'dark', options: [{value: 'light', title: 'Light'}, {value: 'dark', title: 'Dark'}]}]), 'draft:oi:presentation:theme': 'light'}, 'appearance'), />Undo</, 'an appearance chosen, not saved, can be dropped')
 })
 
 test('Search: pages, settings and the settings beside their instruments are found by their words; ↑/↓ move the mark and Enter opens the one marked', () => {

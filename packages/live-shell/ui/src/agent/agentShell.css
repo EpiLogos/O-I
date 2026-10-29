@@ -49,6 +49,17 @@
   grid-template-areas:"tp tp tp" "br ct dk" "ch ch dk" "sb sb sb";
 }
 
+/* Under a theme chosen in Settings › Appearance (styles.css's bridge on the root), the frame takes the chrome tokens the bridge derives
+   from the root instead of the oracle's values above, so the theme reaches Factory's chrome as it reaches every other mode's (O-I ticket 744;
+   tests/shell-theme-reach.test.mjs). With no theme chosen the oracle's block stands; its values are the palette's. */
+:root:has(> body[data-oi-theme]) .frame.agent-shell-frame {
+  --bg-0:inherit; --bg-1:inherit; --bg-2:inherit; --bg-3:inherit; --surface:inherit; --line:inherit; --line-strong:inherit;
+  --text:inherit; --text-dim:inherit; --text-faint:inherit; --accent:inherit; --accent-soft:inherit; --sel:inherit; --rec:inherit;
+  --green:inherit; --stall:inherit; --fizz:inherit;
+  /* The ink on the accent (the oracle's proposed --accent-ink) is the shell's --on-accent, which the bridge reads from the theme. */
+  --accent-ink:var(--on-accent);
+}
+
 /* The old Factory bar's rules (.agent-shell-transport) left with it (ticket 804): the one transport draws Factory's slots (frame/transport). */
 
 /* ============ browser + pool (mockup .br) ============ */

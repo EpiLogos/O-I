@@ -9,12 +9,13 @@
 import {useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore} from 'react'
 import type {Value} from '../frame/devices/designed'
 import type {ChangeRequest, ScopeAddress, SettingsAdapter, SetupSource} from './adapter'
-import type {KernelOp, PresentationDocument, PresentationTheme} from '../../../../../desktop/cradle/src/kernel/types'
+import type {KernelOp, PresentationDocument} from '../../../../../desktop/cradle/src/kernel/types'
 import type {HarnessReading} from '../../../../../desktop/cradle/src/configuration/harnessSource'
 import type {ProfileDocument} from '../../../../../desktop/cradle/src/configuration/contracts'
 import type {DisclosedAction, SystemCompositionReading} from '../../../../../desktop/cradle/src/workspace/settings/types'
 import {actionMessage, object, routineList, type Invocation, type MethodRow, type RoutineDetail, type RoutineList, type RoutineRequest} from '../../../../../desktop/cradle/src/contributions/automations/client'
 import {THEMES} from '../../../../oi-design-system/themes/index.mjs'
+import {readTheme, themeLibrary, type ThemeLibrary} from './presentationSetting'
 import {refusalLine, scalarEntries} from '../agent/RefusalCard'
 import {connectionBasis, machineBasis, validateMachine, type MachineConnection, type RemoteMachineDeclaration} from './machines'
 import {authorityAllowsTrigger, eligibleProofs, routineBasis, scheduleFromInput, type RoutineAuthoringOptions, type RoutineAuthoringResult, type ScheduleShape} from './routines'
@@ -248,53 +249,34 @@ const noSubscription = () => () => {}
 const noSnapshot = () => absentVisuals
 const APPEARANCE_SAID = 'Acknowledged by the appearance owner. This window\'s renderer observation remains a separate reading.'
 
-/** Appearance (OwnerPreferences.tsx AppearancePreferences, OpeningPreferences): the presentation owner's saved theme, Apply on the basis you
- * chose on, Revert, imported themes, the renderer's Opening preferences, and Open Expressions for the controls that stay in their editors. */
-export function useAppearancePage(adapter: SettingsAdapter, enabled: boolean, done: (keys: readonly string[]) => void): PagePart & {chose(theme: Value | undefined): void} {
-  const read = useRead<PresentationDocument>(enabled, adapter, !!adapter.invoke, async source => {
-    const answer = await operation(source, {op: 'presentation_read'}, 'presentation_reading')
-    if (answer.result !== 'presentation_reading') throw new Error('The appearance owner did not return its reading.')
-    return answer.document
-  })
-  // The library the window offers (the adapter's, else the design system's themes), and with it the themes you imported, for Apply.
-  const base = (adapter.themeLibrary ?? THEMES) as readonly {id: string; name: string; appearance: PresentationTheme['appearance']}[]
-  const library = useMemo(() => [...base, ...(read.value?.custom_themes ?? [])] as {id: string; name: string; appearance: PresentationTheme['appearance']}[], [base, read.value])
-  const basis = useRef<{epoch?: string; theme: string} | null>(null)
-  const chose = useCallback((theme: Value | undefined) => { basis.current = theme === undefined ? null : {epoch: adapter.ownerEpoch, theme: JSON.stringify(read.value?.theme)} }, [adapter, read.value])
+/** Appearance (OwnerPreferences.tsx AppearancePreferences, OpeningPreferences): the presentation owner's saved theme, Revert, imported themes,
+ * the renderer's Opening preferences, and Open Expressions for the controls that stay in their editors. The theme you choose is a local
+ * change of the owner's Theme setting (presentationSetting.ts): the window's engine holds it as every owner's, and Review changes… plans and
+ * applies it through the owner (O-I #744). This page reads the owner's theme for the engine (`reading`, `library`) and takes the owner's new
+ * reading after an Apply (`set`). */
+export function useAppearancePage(adapter: SettingsAdapter, enabled: boolean): PagePart & {reading: PresentationDocument | null; library: ThemeLibrary; set(document: PresentationDocument): void} {
+  const read = useRead<PresentationDocument>(enabled, adapter, !!adapter.invoke, source => readTheme(source))
+  // The library the window offers (the adapter's, else the design system's themes), and with it the themes you imported.
+  const base = (adapter.themeLibrary ?? THEMES) as ThemeLibrary
+  const library = useMemo(() => themeLibrary(base, read.value), [base, read.value])
   const store = adapter.visualPreferences
   const visuals = useSyncExternalStore(store?.subscribe ?? noSubscription, store?.getSnapshot ?? noSnapshot, store?.getSnapshot ?? noSnapshot)
   const send = useCallback(async (op: KernelOp) => {
     const source = adapter
-    if (op.op === 'theme_apply') {
-      if (!basis.current || basis.current.epoch !== source.ownerEpoch) throw new Error('The appearance owner changed. Choose the appearance again on the current reading before applying.')
-      const now = await operation(source, {op: 'presentation_read'}, 'presentation_reading')
-      if (!read.current(source)) return
-      if (now.result === 'presentation_reading' && JSON.stringify(now.document.theme) !== basis.current.theme) {
-        read.set(now.document)
-        throw new Error('The saved appearance changed. Your choice is retained; choose it again on the current reading before applying.')
-      }
-    }
     const answer = await operation(source, op, 'presentation_reading')
-    if (read.current(source) && answer.result === 'presentation_reading') { read.set(answer.document); basis.current = null }
-    if (op.op === 'theme_apply' || op.op === 'theme_revert') done(['themeDraft'])
+    if (read.current(source) && answer.result === 'presentation_reading') read.set(answer.document)
     return APPEARANCE_SAID
-  }, [adapter, read, done])
+  }, [adapter, read])
   return useMemo(() => {
     const why: Record<string, string> = {}
-    if (!adapter.invoke) for (const key of ['applyTheme', 'revertTheme', 'removeTheme']) why[key] = NO_INVOKE('Appearance')
+    if (!adapter.invoke) for (const key of ['revertTheme', 'removeTheme']) why[key] = NO_INVOKE('Appearance')
     if (!adapter.importTheme) why.importTheme = 'Import: the settings adapter carries no theme importer (SettingsAdapter.importTheme: Cradle\'s converter and validator before theme_import).'
     if (!store) { why.visualLayer = NO_VISUALS; why.welcome = NO_VISUALS }
     if (!adapter.navigate) why.openExpressions = NO_NAVIGATE('The Expressions editor')
     const values = appearanceValues(read.value, base)
     if (store) { values.visualLayer = visuals.enabled; values.welcome = visuals.welcomeEnabled }
-    return {values, why, refused: refusedOn('themeDraft', read.error), chose, reread: read.refresh,
+    return {values, why, refused: refusedOn('theme', read.error), reading: read.value, library, set: read.set, reread: read.refresh,
       acts: {
-        applyTheme: async value => {
-          const id = String(value)
-          const theme: PresentationTheme = id === 'light' || id === 'dark' || id === 'system' ? {appearance: id, id: null} as PresentationTheme
-            : (() => { const found = library.find(item => item.id === id); if (!found) throw new Error(`${id} is no theme of the library.`); return {id: found.id, appearance: found.appearance} as PresentationTheme })()
-          return send({op: 'theme_apply', ...theme} as KernelOp)
-        },
         revertTheme: async () => send({op: 'theme_revert'}),
         removeTheme: async id => send({op: 'theme_remove', id: String(id)} as KernelOp),
         importTheme: async () => {
@@ -313,7 +295,7 @@ export function useAppearancePage(adapter: SettingsAdapter, enabled: boolean, do
           adapter.navigate({kind: 'editor', native_ref: 'expressions'})
         },
       }}
-  }, [adapter, read.value, read.error, read.refresh, base, library, store, visuals, chose, send, read])
+  }, [adapter, read.value, read.error, read.refresh, read.set, base, library, store, visuals, send])
 }
 
 // ---------------------------------------------------------------------------------------------------------------- Profiles

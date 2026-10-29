@@ -79,7 +79,8 @@
 //               names what opened the form (a pad's Make routine, §19.22): this page is the one place a run is given a time.
 // Appearance:   theme {saved, revision?, observations?} (presentation_read: light | dark | system, or a library theme's id; its revision and
 //               the renderers' advisory observations); themes [{id, name}] the library; imported [{id, name}]; visualLayer, welcome (the
-//               renderer's retained store).
+//               renderer's retained store). The theme you choose is the row `oi:presentation:theme` among `settings`, a local change
+//               draft:oi:presentation:theme, planned and applied through the presentation owner by Review changes… (O-I #744).
 // Products:     products [{id, version?, state, reason?, about?, actions: [{ref, title, runnable, why?}], observed?, digest?,
 //               degraded: [{subject, state, reason}], obligations: [text]}] (system_composition_read); ran {product, title, ok, at?, rows?}.
 // System:       system [{id, version?, digest?, observed?, contract?, settings: [{section, key, title, mutable, path?, drift: {state,
@@ -90,7 +91,7 @@
 //   (the setting whose Details are open), show (Automations: routines | methods | timers | history), context (Automations' work context),
 //   routine, product, owner (System's owner), axes ('disclosure' | 'configuration'), adding (the open form: machine | credential |
 //   routine | profile), rotating (the credential whose reference you replace), new.* (the open form's fields; new.expects and new.scopes
-//   are JSON lists), chatDefault (a provider chosen, not yet applied), themeDraft, Setup's choices, and a local change for each setting
+//   are JSON lists), chatDefault (a provider chosen, not yet applied), Setup's choices, and a local change for each setting
 //   as draft:<ref> (a JSON string for a list or a table); setting draft:<ref> to nothing is its Undo.
 // Acts, each on its own key, with their owners:
 //   plan (config_plan_reviewed) · apply (config_apply_reviewed) · reset <ref> (config_reset) · keep <ref> (re-bases a draft on the
@@ -100,7 +101,7 @@
 //   <credential> (credential_verify) · rotate <credential> with new.reference (credential_rotate) · revoke <credential>
 //   (credential_revoke) · bind with new.credential, new.reference (credential_setup) · useProfile <ref> (profile_use_plan: stages its
 //   settings as local changes) · saveProfile with new.name (profile_create, profile_edit) · importProfile (the shell's file picker,
-//   then the same) · runNow <ref>, disableRoutine <ref> (kernel `routine`) · applyTheme (theme_apply) · revertTheme (theme_revert) ·
+//   then the same) · runNow <ref>, disableRoutine <ref> (kernel `routine`) · revertTheme (theme_revert) ·
 //   removeTheme <id> (theme_remove) · importTheme (file picker, then theme_import) · openExpressions (the Expressions editor, where
 //   scene, glyph, material and musical controls stay) · run <product>:<action> (product_action_run): all exist.
 //   enterKey <credential>: a write-only key goes to the native host's own secure field, never through these values; it stands
@@ -931,25 +932,22 @@ function AutomationsPage({p}: {p: ViewProps}) {
 // ---------------------------------------------------------------- Appearance
 
 const THEMES: readonly Option<string>[] = [{value: 'light', label: 'Light'}, {value: 'dark', label: 'Dark'}, {value: 'system', label: 'Follow system'}]
+/** Appearance (§10.10): the presentation owner's Theme as one row, like every owner's setting — choose a value and it is a local change,
+ * amber, counted, with Details and Undo, applied by Review changes… (O-I #744; settings/presentationSetting.ts); the saved reading with
+ * its revision, and Revert, the owner's own act, as Reset is on a row; the themes you imported; the renderer's opening preferences. */
 function AppearancePage({p}: {p: ViewProps}) {
-  const v = p.v, theme = json<Rec | null>(v, 'theme', null), draft = strOf(v, 'themeDraft'), library = list(v, 'themes'), imported = list(v, 'imported')
-  const saved = txt(theme?.saved), now = draft ?? saved ?? ''
+  const v = p.v, theme = json<Rec | null>(v, 'theme', null), library = list(v, 'themes'), imported = list(v, 'imported')
+  const saved = txt(theme?.saved)
   const name = (id: string | undefined) => (id ? THEMES.find(t => t.value === id)?.label ?? txt(library?.find(t => t.id === id)?.name) ?? txt(imported?.find(t => t.id === id)?.name) ?? id : undefined)
   const toggle = (key: string, label: string, does: string) => { const on = boolOf(v, key); return <Toggle {...st(p, key)} label={label} does={does} on={on === true} unknown={on === undefined} onChange={x => p.set(key, x)} /> }
   return <>
-    <section className="st-sec">
-      <h4>Theme<small>O:I presentation · scene, glyph, material and musical controls stay in their editors</small>
-        <span className="st-head-acts"><Action {...st(p, 'openExpressions')} label="Open Expressions" does="Opens the Expressions editor, where the scene, glyph, material, physics and musical controls stand." onPress={() => p.set('openExpressions', true)} /></span></h4>
+    <OwnerRows p={p} category="appearance" size={4} title="Theme">
       <div className="st-line">
-        <Radio {...st(p, 'themeDraft')} label="Appearance" does="Light, Dark, or the system's." value={THEMES.some(t => t.value === now) ? now : ''} options={THEMES} onChange={x => p.set('themeDraft', x)} />
-        <Chooser {...st(p, 'themeDraft')} label="Library theme" does="A theme from the library, or one you imported." value={THEMES.some(t => t.value === now) ? '' : now}
-          options={[...(library ?? []), ...(imported ?? [])].flatMap(t => (txt(t.id) ? [{value: t.id as string, label: txt(t.name) ?? t.id as string}] : []))} onChange={x => p.set('themeDraft', x)} />
-        <Readout label="saved" does={`The appearance the presentation owner keeps${theme && theme.revision !== undefined ? `: revision ${String(theme.revision)} · ${typeof theme.observations === 'number' ? theme.observations : 0} renderer observations` : ''}. A renderer's observation is advisory, a separate reading.`} value={name(saved)} />
-        <Action {...st(p, 'applyTheme')} label="Apply" does="The presentation owner saves the appearance; the window redraws in it." onPress={() => p.set('applyTheme', draft ?? true)} disabled={draft === undefined || draft === saved ? 'Choose a different appearance first.' : undefined} />
-        {draft !== undefined && draft !== saved && <Action label="Undo" does="Drops the appearance you chose; nothing was saved." onPress={() => p.set('themeDraft', undefined)} />}
+        <Readout {...st(p, 'theme')} label="saved" does={`The appearance the presentation owner keeps${theme && theme.revision !== undefined ? `: revision ${String(theme.revision)} · ${typeof theme.observations === 'number' ? theme.observations : 0} renderer observations` : ''}. A renderer's observation is advisory, a separate reading. Change it on its row, then Review changes….`} value={name(saved)} />
         <Action {...st(p, 'revertTheme')} label="Revert" does="Returns to the appearance saved before the last one." onPress={() => p.set('revertTheme', true)} />
+        <Action {...st(p, 'openExpressions')} label="Open Expressions" does="Opens the Expressions editor, where the scene, glyph, material, physics and musical controls stand." onPress={() => p.set('openExpressions', true)} />
       </div>
-    </section>
+    </OwnerRows>
     <section className="st-sec">
       <h4>Imported themes<small>VS Code themes, converted and checked on import</small>
         <span className="st-head-acts"><Action {...st(p, 'importTheme')} label="Import…" does="Imports a VS Code theme file. It is converted and checked before the owner keeps it." onPress={() => p.set('importTheme', true)} /></span></h4>
@@ -964,7 +962,6 @@ function AppearancePage({p}: {p: ViewProps}) {
         {toggle('welcome', 'Welcome scene', 'Shows the welcome scene when the application opens.')}
       </div>
     </section>
-    <OwnerRows p={p} category="appearance" size={3} />
   </>
 }
 
@@ -1216,6 +1213,10 @@ const SETTINGS = [
   {ref: 'central:policy:civil-time.day-boundary-minutes', category: 'inspection', owner: 'central', section: 'policy', title: 'Day boundary offset', kind: 'number', writable: false, from: 'inherited', timing: 'none', effective: 240},
   {ref: 'quaternal-logic:kernel:kernel.version', category: 'inspection', owner: 'quaternal-logic', section: 'kernel', title: 'Kernel version', kind: 'text', writable: false, from: 'inherited', timing: 'none', effective: '0.9.4'},
   {ref: 'actuation:return:return.modes', category: 'inspection', owner: 'actuation', section: 'return', title: 'Return policy modes', kind: 'list', writable: false, from: 'inherited', timing: 'none', rows: [{item: 'propose'}, {item: 'draft'}, {item: 'write'}]},
+  // The presentation owner's theme (settings/presentationSetting.ts): one row, changed as every owner's setting is, through Review changes….
+  {ref: 'oi:presentation:theme', category: 'appearance', owner: 'oi', section: 'presentation', title: 'Theme', kind: 'choice', writable: true, from: 'here', timing: 'value-change', effective: 'system', at: 'This machine',
+    effect: 'The presentation owner saves the appearance, and the window redraws in it.',
+    options: [{value: 'light', title: 'Light'}, {value: 'dark', title: 'Dark'}, {value: 'system', title: 'Follow system'}, {value: 'ableton-dark', title: 'Ableton dark'}, {value: 'paper', title: 'Paper'}, {value: 'solarized', title: 'Solarized Dark'}]},
 ]
 // Workcell's and Central's System disclosures on this Mac (`workcell system --json`, `ctrl system --json`, 21 Oct).
 const SYSTEM = [

@@ -16,6 +16,7 @@ import { HostedDevice, hostState, sayOnInfoLine, setHostPage } from '../frame/de
 import { design as windowDesign, searchResults } from '../inhabitants/catalogue/panels/settings__window'
 import { SETTINGS_LOCAL_KEYS, SETTINGS_WINDOW_ID, SETTINGS_WINDOW_WIRING, searchStep, windowCoreValues } from './windowValues'
 import { useAppearancePage, useAutomationsPage, useCredentialsPage, useHarnessPage, useMachinesPage, useProductsPage, useProfilesPage, useSetupPage, type Act, type PagePart } from './windowPages'
+import { THEME_SCOPE, THEME_SETTING_REF, applyTheme, configPlans, isThemeSetting, readTheme, themeEntry, themePlanOn, themeResolution, withThemeAnswer, withThemePlan } from './presentationSetting'
 import { ShellConfigContext } from '../shell/useSet'
 import '../inhabitants/catalogue/panels/panels.css'
 import './preferences.css'
@@ -191,7 +192,7 @@ export function SettingsWorkspace({ adapter = unavailable, request, onReturn, ac
 
   function edit(entry: SettingEntry, scope: ScopeAddress, raw: unknown) {
     const key = settingKey(entry.spec.setting_ref, scope)
-    setDrafts(previous => ({ ...previous, [key]: {...createDraft(entry.spec, raw, readings[key], previous[key]),ownerEpoch:previous[key] ? previous[key].ownerEpoch : adapter.ownerEpoch} }))
+    setDrafts(previous => ({ ...previous, [key]: {...createDraft(entry.spec, raw, allReadings[key], previous[key]),ownerEpoch:previous[key] ? previous[key].ownerEpoch : adapter.ownerEpoch} }))
     setReview(null); setAnswered(null); setResult(null)
   }
   async function refresh(pairs: { setting_ref: string; scope: ScopeAddress }[], epoch = generation.current, source = adapter) {
@@ -206,37 +207,63 @@ export function SettingsWorkspace({ adapter = unavailable, request, onReturn, ac
     try {
       const submitted = { ...drafts }
       if(Object.values(submitted).some(draft=>draftOwnerChanged(draft,source.ownerEpoch)))throw new Error('These drafts belong to the previous native owner or access context. Inspect and explicitly rebase them before review.')
-      const requests = Object.entries(submitted).map(([key, draft]) => { const [setting_ref, scope_kind, scope_ref] = JSON.parse(key); return { setting_ref, scope: { scope_kind, scope_ref } as ScopeAddress, value: draft.value } })
-      const latest = await refresh(requests, epoch, source)
-      if (requests.some(r => !latest.find(l => settingKey(l.setting_ref, l.scope) === settingKey(r.setting_ref, r.scope)))) throw new Error('The owner did not return a resolution for every draft. The drafts are retained.')
-      if (latest.some(r => basisChanged(submitted[settingKey(r.setting_ref, r.scope)], r))) throw new Error('The native basis changed. Inspect the current values, then explicitly rebase your draft before reviewing again.')
-      const basis = requests.map(r => ({ setting_ref: r.setting_ref, scope: r.scope, reading_digest: submitted[settingKey(r.setting_ref, r.scope)].basis }))
-      guard(epoch, source)
-      const bundle = await source.plan(requests, basis)
-      guard(epoch, source)
-      setReview({ bundle, submitted, epoch: source.ownerEpoch }); setAnswered(null); setResult(null)
+      // The configuration plane plans its owners' changes; the presentation owner plans a change of the theme (presentationSetting.ts).
+      const themeKey = settingKey(THEME_SETTING_REF, THEME_SCOPE)
+      const requests = Object.entries(submitted).filter(([key]) => key !== themeKey).map(([key, draft]) => { const [setting_ref, scope_kind, scope_ref] = JSON.parse(key); return { setting_ref, scope: { scope_kind, scope_ref } as ScopeAddress, value: draft.value } })
+      let configBundle: PlanBundle | null = null
+      if (requests.length) {
+        const latest = await refresh(requests, epoch, source)
+        if (requests.some(r => !latest.find(l => settingKey(l.setting_ref, l.scope) === settingKey(r.setting_ref, r.scope)))) throw new Error('The owner did not return a resolution for every draft. The drafts are retained.')
+        if (latest.some(r => basisChanged(submitted[settingKey(r.setting_ref, r.scope)], r))) throw new Error('The native basis changed. Inspect the current values, then explicitly rebase your draft before reviewing again.')
+        const basis = requests.map(r => ({ setting_ref: r.setting_ref, scope: r.scope, reading_digest: submitted[settingKey(r.setting_ref, r.scope)].basis }))
+        guard(epoch, source)
+        configBundle = await source.plan(requests, basis)
+        guard(epoch, source)
+      }
+      let themePlan = null
+      if (submitted[themeKey]) {
+        const now = await readTheme(source)
+        guard(epoch, source)
+        appearance.set(now)
+        themePlan = themePlanOn(now, submitted[themeKey], appearance.library)
+      }
+      setReview({ bundle: withThemePlan(configBundle, themePlan), submitted, epoch: source.ownerEpoch }); setAnswered(null); setResult(null)
     } catch (error) { if (isCurrent(epoch, source)) setProblem(error instanceof Error ? error.message : String(error)); throw error }
     finally { if (isCurrent(epoch, source)) setBusy(false) }
   }
   async function apply(): Promise<string> {
-    if (!review || !adapter.canApply) throw new Error('Nothing is planned: press Review changes first.')
+    const cfg = review ? configPlans(review.bundle.plans) : []
+    if (!review || (cfg.length && !adapter.canApply)) throw new Error('Nothing is planned: press Review changes first.')
     const epoch = generation.current; const source = adapter
     setBusy(true); setProblem(null)
     try {
       if (review.epoch !== adapter.ownerEpoch) throw new Error('The native owner connection changed. Review the retained drafts again.')
-      const pairs = review.bundle.plans.map(p => ({ setting_ref: p.setting_ref, scope: p.scope }))
-      const latest = await refresh(pairs, epoch, source)
-      if (latest.length !== pairs.length || latest.some(r => basisChanged(review.submitted[settingKey(r.setting_ref, r.scope)], r))) throw new Error('The native basis changed after review. No apply was sent. Your drafts are retained.')
-      guard(epoch, source)
-      const response = await source.apply(review.bundle.plans)
-      guard(epoch, source)
-      setResult(response); setAnswered(review.bundle)
-      const acknowledged = response.operations.filter(o => o.status === 'applied' || o.status === 'verified').map(o => settingKey(o.setting_ref, o.scope))
+      const pairs = cfg.map(p => ({ setting_ref: p.setting_ref, scope: p.scope }))
+      let response: ChangeSetDocument | null = null
+      if (pairs.length) {
+        const latest = await refresh(pairs, epoch, source)
+        if (latest.length !== pairs.length || latest.some(r => basisChanged(review.submitted[settingKey(r.setting_ref, r.scope)], r))) throw new Error('The native basis changed after review. No apply was sent. Your drafts are retained.')
+        guard(epoch, source)
+        response = await source.apply(cfg)
+        guard(epoch, source)
+      }
+      // The presentation owner's plan: theme_apply, read again first; its answer stands in the same table (presentationSetting.ts).
+      const themed = review.bundle.plans.find(p => isThemeSetting(p.setting_ref))
+      let themeOperation = null
+      if (themed) {
+        const answer = await applyTheme(source, themed, appearance.library)
+        guard(epoch, source)
+        if (answer.reading) appearance.set(answer.reading)
+        themeOperation = answer.operation
+      }
+      const answered = themed || !response ? withThemeAnswer(response, themeOperation) : response
+      setResult(answered); setAnswered(review.bundle)
+      const acknowledged = answered.operations.filter(o => o.status === 'applied' || o.status === 'verified').map(o => settingKey(o.setting_ref, o.scope))
       setDrafts(current => acknowledgeDrafts(current, review.submitted, acknowledged))
       setReview(null)
-      await refresh(pairs, epoch, source)
-      return adapter.simulated ? 'Development response only. No native configuration was persisted.'
-        : response.status === 'applied' ? 'Native response received. Effective and observed values come from the new reading.'
+      if (pairs.length) await refresh(pairs, epoch, source)
+      return adapter.simulated && pairs.length ? 'Development response only. No native configuration was persisted.'
+        : answered.status === 'applied' ? 'Native response received. Effective and observed values come from the new reading.'
           : 'Application has not been acknowledged for every change. Unapplied drafts remain available for review.'
     } catch (error) { if (isCurrent(epoch, source)) setProblem(error instanceof Error ? error.message : String(error)); throw error }
     finally { if (isCurrent(epoch, source)) setBusy(false) }
@@ -273,13 +300,21 @@ export function SettingsWorkspace({ adapter = unavailable, request, onReturn, ac
   const validDrafts = useMemo((): ChangeRequest[] => draftEntries.flatMap(([key, draft]) => {
     if (draft.error || draftOwnerChanged(draft, adapter.ownerEpoch)) return []
     const [setting_ref, scope_kind, scope_ref] = JSON.parse(key)
+    // A profile keeps the configuration owners' settings; the theme is the presentation owner's, never profiled.
+    if (isThemeSetting(setting_ref)) return []
     return [{ setting_ref, scope: { scope_kind, scope_ref } as ScopeAddress, value: draft.value }]
   }), [draftEntries, adapter.ownerEpoch])
   const requestProject = operationScope?.scope_kind === 'project' ? operationScope.scope_ref ?? null : null
   const context = typeof holds.context === 'string' ? holds.context || null : requestProject
   const harness = useHarnessPage(adapter, wanted && visited.has('agents'), done)
   const credentials = useCredentialsPage(adapter, wanted && visited.has('connections'), held, done)
-  const appearance = useAppearancePage(adapter, wanted && visited.has('appearance'), done)
+  const appearance = useAppearancePage(adapter, wanted && visited.has('appearance'))
+  // The presentation owner's theme among the owners' settings, once its reading stands (presentationSetting.ts): its entry at this machine and
+  // its reading as a resolution, beside the configuration plane's. Its change is a draft like theirs; plan() and apply() take it to its owner.
+  const theme = useMemo(() => appearance.reading ? { entry: themeEntry(appearance.library), reading: themeResolution(appearance.reading) } : null, [appearance.reading, appearance.library])
+  const allEntries = useMemo(() => theme ? [...entries, theme.entry] : entries, [entries, theme])
+  const allScopes = useMemo(() => theme ? { ...scopes, [THEME_SETTING_REF]: THEME_SCOPE } : scopes, [scopes, theme])
+  const allReadings = useMemo(() => theme ? { ...readings, [settingKey(THEME_SETTING_REF, THEME_SCOPE)]: theme.reading } : readings, [readings, theme])
   const profiles = useProfilesPage(adapter, wanted && visited.has('profiles'), held, validDrafts, stageProfile, sensitive, done)
   const machines = useMachinesPage(adapter, wanted && visited.has('execution'), held, request?.page === 'machines' ? request.scope : null, done)
   const automations = useAutomationsPage(adapter, wanted && visited.has('automations'), held, context, typeof holds.show === 'string' ? holds.show : 'routines',
@@ -290,11 +325,12 @@ export function SettingsWorkspace({ adapter = unavailable, request, onReturn, ac
   const parts: readonly PagePart[] = [harness, credentials, appearance, profiles, machines, automations, products, setup]
 
   // ── the window's own presses ────────────────────────────────────────────────────────────────────────────────────────────────────
-  const entryOf = (ref: string) => entries.find(entry => entry.spec.setting_ref === ref)
+  const entryOf = (ref: string) => allEntries.find(entry => entry.spec.setting_ref === ref)
   const own: Record<string, Act> = {
     plan: async () => { await plan() },
     apply: async () => apply(),
     reset: async ref => {
+      if (isThemeSetting(String(ref))) throw new Error('The presentation owner keeps no wider value to return to: Revert returns to the appearance saved before the last one.')
       const entry = entryOf(String(ref)), scope = entry ? scopes[entry.spec.setting_ref] : undefined
       if (!entry || !scope) throw new Error(`${String(ref)} has no scope to reset at.`)
       if (!adapter.reset) throw new Error('The native reset operation is not connected.')
@@ -303,8 +339,8 @@ export function SettingsWorkspace({ adapter = unavailable, request, onReturn, ac
       return reset({ entry, scope, digest: reading.native_reading?.reading_digest ?? null })
     },
     keep: async ref => {
-      const entry = entryOf(String(ref)), scope = entry ? scopes[entry.spec.setting_ref] : undefined, key = entry && scope ? settingKey(entry.spec.setting_ref, scope) : null
-      const reading = key ? readings[key] : undefined
+      const entry = entryOf(String(ref)), scope = entry ? allScopes[entry.spec.setting_ref] : undefined, key = entry && scope ? settingKey(entry.spec.setting_ref, scope) : null
+      const reading = key ? allReadings[key] : undefined
       if (!key || !drafts[key] || !reading) throw new Error('Keep: there is no local change on a current reading to keep.')
       setDrafts(old => ({ ...old, [key]: { ...old[key], basis: reading.native_reading?.reading_digest ?? null, ownerEpoch: adapter.ownerEpoch, version: old[key].version + 1 } }))
       setReview(null); setProblem(null)
@@ -342,7 +378,7 @@ export function SettingsWorkspace({ adapter = unavailable, request, onReturn, ac
 
   // ── the binding ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────
   const binding = useMemo((): DesignBinding => {
-    const values: Record<string, Value> = windowCoreValues({adapter, mounts, entries, readings, scopes, drafts, review: review?.bundle ?? null, answered, result, loading, query})
+    const values: Record<string, Value> = windowCoreValues({adapter, mounts, entries: allEntries, readings: allReadings, scopes: allScopes, drafts, review: review?.bundle ?? null, answered, result, loading, query})
     for (const part of parts) Object.assign(values, part.values)
     for (const [key, value] of Object.entries(holds)) if (key !== 'search' && key !== 'scope') values[key] = value
     if (onReturn) values.back = request?.returnLabel ?? 'Back to work'
@@ -351,14 +387,16 @@ export function SettingsWorkspace({ adapter = unavailable, request, onReturn, ac
     const standing: Record<string, Standing> = {}
     for (const part of parts) { Object.assign(acts, part.acts); Object.assign(why, part.why); for (const [key, words] of Object.entries(part.refused)) standing[key] = { refused: words } }
     for (const [key, words] of Object.entries(SETTINGS_WINDOW_WIRING.refused)) why[key] = words
-    if (!adapter.canApply) why.apply = adapter.applyUnavailableReason ?? 'Protected native Apply is not connected.'
+    // A Review that holds only the presentation owner's plan needs no protected configuration Apply: its owner applies it.
+    const themeOnly = !!review && review.bundle.plans.length > 0 && !configPlans(review.bundle.plans).length
+    if (!adapter.canApply && !themeOnly) why.apply = adapter.applyUnavailableReason ?? 'Protected native Apply is not connected.'
     else if (!review) why.apply = answered ? 'Applied: each owner\'s answer stands in the table.' : 'Nothing is planned: press Review changes… first.'
     else if (review.bundle.errors.length) why.apply = review.bundle.errors.map(error => `${error.error_code}: ${error.message}`).join(' ')
     for (const [key, words] of Object.entries(why)) standing[key] = { ...standing[key], disabled: words }
     // What the owners did not answer while reading stands on Read again, in their words.
     if (problem) standing.reread = { refused: problem }
-    for (const entry of entries) {
-      const scope = scopes[entry.spec.setting_ref], draft = scope ? drafts[settingKey(entry.spec.setting_ref, scope)] : undefined
+    for (const entry of allEntries) {
+      const scope = allScopes[entry.spec.setting_ref], draft = scope ? drafts[settingKey(entry.spec.setting_ref, scope)] : undefined
       if (draft?.error) standing[`draft:${entry.spec.setting_ref}`] = { refused: draft.error }
     }
     // The window's own keys go to its hands at once, never to an owner: the search, the scope, the open forms, and your local changes.
@@ -366,7 +404,6 @@ export function SettingsWorkspace({ adapter = unavailable, request, onReturn, ac
     for (const key of SETTINGS_LOCAL_KEYS) local[key] = value => { hold(key, value); setPageTick(n => n + 1) }
     local.search = value => { setQuery(typeof value === 'string' ? value : ''); hold('hit', undefined); setPageTick(n => n + 1) }
     local.chatDefault = value => { harness.chose(value); hold('chatDefault', value) }
-    local.themeDraft = value => { appearance.chose(value); hold('themeDraft', value) }
     local.scope = value => {
       const chosen = scopeOf(value)
       if (!chosen) return
@@ -374,8 +411,8 @@ export function SettingsWorkspace({ adapter = unavailable, request, onReturn, ac
       setScopes(old => { const updated = { ...old }; for (const entry of entries) if ((!chosen.category || categoryOf(entry) === chosen.category) && allowedScope(entry.spec, chosen.scope)) updated[entry.spec.setting_ref] = chosen.scope; return updated })
       setReview(null)
     }
-    for (const entry of entries) local[`draft:${entry.spec.setting_ref}`] = value => {
-      const scope = scopes[entry.spec.setting_ref]
+    for (const entry of allEntries) local[`draft:${entry.spec.setting_ref}`] = value => {
+      const scope = allScopes[entry.spec.setting_ref]
       if (!scope) return
       if (value === undefined) { const key = settingKey(entry.spec.setting_ref, scope); setDrafts(old => { const next = { ...old }; delete next[key]; return next }); setReview(null); setAnswered(null); return }
       const schema = entry.spec.value_schema
@@ -400,7 +437,7 @@ export function SettingsWorkspace({ adapter = unavailable, request, onReturn, ac
       },
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- the engine's own functions read the state named here
-  }, [adapter, mounts, entries, readings, scopes, drafts, review, answered, result, loading, query, holds, problem, busy, onReturn, request?.returnLabel, ...parts])
+  }, [adapter, mounts, allEntries, allReadings, allScopes, drafts, review, answered, result, loading, query, holds, problem, busy, onReturn, request?.returnLabel, ...parts])
 
   // ↑/↓ move the mark through the search's results and Enter opens the one marked; Enter on a changed search sends it first.
   function searchKey(event: KeyboardEvent<HTMLElement>) {
