@@ -134,7 +134,7 @@ export interface SettingsAdapter {
 export function unavailableSettingsAdapter(reason = 'The native configuration contribution has not been connected to this shell.'): SettingsAdapter {
   const unavailable = async (): Promise<never> => { throw new Error(reason) }
   return { kind: 'unavailable', label: reason, canApply: false, applyUnavailableReason: reason,
-    readRegistry: async () => ({ mounts: import.meta.env?.DEV ? disconnectedCatalogue(reason) : [], observed_at_unix_ms: 0, composition: null }),
+    readRegistry: async () => ({ mounts: import.meta.env?.DEV ? await disconnectedCatalogue(reason) : [], observed_at_unix_ms: 0, composition: null }),
     readResolutions: async () => [], plan: unavailable, apply: unavailable }
 }
 

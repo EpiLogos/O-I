@@ -98,6 +98,13 @@ export const LOADS_LATER = [
   // the Expressions application and its pane body; the Day's and the Flow's forms; Live's device faces
   /\/src\/panels\/expressions\.tsx$/, /\/src\/projections\/expressionsPane\.tsx$/, /\/src\/inhabitants\/Document(DayDie|Flow)Face\.tsx$/,
   /\/src\/panels\/devices-pro\/(glue|echo|reverb|wavetable|operator)\.tsx$/,
+  // a Flow's parser and its form page (desktop/cradle/src/flow/instances.ts readFlowInstance; the folder and its listing are
+  // flow/flowsDir.ts, which the first frame may read)
+  /\/desktop\/cradle\/src\/flow\/instances?\.ts$/, /\/desktop\/cradle\/documents\/ql-flow\.html$/,
+  // Settings' source census and its development specimens (settings/catalogue.ts loadSourceSettings; panels/settings.tsx)
+  /\/src\/settings\/native-inventory\.capture\.json$/, /\/src\/settings\/development\.ts$/,
+  // the rail-born devices' publisher (App.tsx draws it when the rail first shows; their ids and claims are widgets/railDeviceIds.ts)
+  /\/src\/widgets\/railDevices\.tsx$/,
   // a catalogue device's design (frame/devices/designs.ts requestDesign)
   /\/src\/inhabitants\/catalogue\/panels\/[^/]+__[^/]+\.tsx$/, /\/src\/frame\/devices\/designsLoad\.ts$/,
 ]

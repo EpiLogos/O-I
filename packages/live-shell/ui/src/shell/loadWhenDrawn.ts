@@ -2,7 +2,7 @@
 // loading item: "the shell loads as one 6.2 MB script before it draws anything — split it by mode and device"; O-I #740:
 // a mode loads when first entered, a device when first placed or shown; tests/first-load-budget.test.mjs holds the window's
 // first load to its limit). Until its module arrives the place shows the shell's waiting line for it, in words — never a
-// blank; a module that did not arrive says so, with the reason, and offers to try again. Once it has arrived every later
+// blank; a module that did not arrive says so, with the reason, and offers to reload the window. Once it has arrived every later
 // mount draws it at once, with no wait and no waiting line. `load()` fetches it ahead — a server render (the suites'
 // renderToStaticMarkup) calls `loadEveryPart()` first, since it cannot wait for a module.
 import {Fragment, createElement, useEffect, useState, type ComponentType, type CSSProperties, type FunctionComponent} from 'react'
@@ -18,12 +18,13 @@ const parts = new Set<() => Promise<unknown>>()
 const LINE: CSSProperties = {display: 'block', padding: '6px 10px', font: 'inherit', fontSize: '12px', lineHeight: 1.4, opacity: 0.72}
 
 /** The shell's waiting state for a place whose part has not arrived: what it waits for, or — when its module did not load —
- * that it did not, why, and a way to try again. */
-export function PartWaiting({name, failure = null, retry}: {name: string; failure?: string | null; retry?: () => void}) {
+ * that it did not, why, and Reload the window. A browser keeps a module whose fetch failed failed for the document's life (its
+ * module map), so asking again in the same window cannot recover a missing chunk; a reload is the way back. */
+export function PartWaiting({name, failure = null}: {name: string; failure?: string | null}) {
   if (failure === null) return createElement('span', {className: 'part-waiting', role: 'status', 'data-part-loading': name, style: LINE}, `${name} — loading…`)
   return createElement('span', {className: 'part-waiting', role: 'alert', 'data-part-failed': name, style: LINE},
     `${name} did not load: ${failure}. `,
-    retry ? createElement('button', {type: 'button', className: 'native-control', onClick: retry}, 'Try again') : null)
+    createElement('button', {type: 'button', className: 'native-control', onClick: () => globalThis.location?.reload()}, 'Reload the window'))
 }
 
 const reasonOf = (error: unknown): string => (error instanceof Error ? error.message : String(error)).replace(/\.$/, '') || 'no reason was given'
@@ -34,8 +35,8 @@ export function loadWhenDrawn<P extends object>(name: string, load: () => Promis
   let loaded: ComponentType<P> | null = null
   let pending: Promise<ComponentType<P>> | null = null
   const start = (): Promise<ComponentType<P>> => pending ??= load().then(component => (loaded = component), (error: unknown) => {
-    // A load that failed is asked again by the next draw (or Try again) rather than remembered as failed here. A browser keeps a
-    // module whose fetch failed failed for the document's life (its module map), so a missing chunk answers the same until a reload.
+    // A load that failed is asked again by the next draw rather than remembered as failed here. A browser keeps a module whose fetch
+    // failed failed for the document's life (its module map), so a missing chunk answers the same until the window reloads.
     pending = null
     console.error(`[live-shell] ${name} could not be loaded`, error)
     throw error
@@ -43,15 +44,14 @@ export function loadWhenDrawn<P extends object>(name: string, load: () => Promis
   const Part = (props: P) => {
     const [, arrived] = useState(0)
     const [failure, setFailure] = useState<string | null>(null)
-    const [attempt, setAttempt] = useState(0)
     useEffect(() => {
       if (loaded) return
       let live = true
       start().then(() => { if (live) arrived(count => count + 1) }, (error: unknown) => { if (live) setFailure(reasonOf(error)) })
       return () => { live = false }
-    }, [attempt])
+    }, [])
     if (loaded) return createElement(loaded, props)
-    const line = failure !== null || !waiting ? createElement(PartWaiting, {name, failure, retry: () => { setFailure(null); setAttempt(count => count + 1) }}) : null
+    const line = failure !== null || !waiting ? createElement(PartWaiting, {name, failure}) : null
     return waiting ? createElement(Fragment, null, createElement(waiting, props), line) : line
   }
   Part.displayName = name

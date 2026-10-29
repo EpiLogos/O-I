@@ -179,7 +179,10 @@ test('Notifications\' rail tile is gone; Approvals\' tile and the door ids it re
   assert.ok(widgets.includes("'ledger', 'approvals']"), 'the agent tiles end with Approvals')
   assert.doesNotMatch(widgets, /\{id: 'notifications'/, 'no Notifications tile')
   const railDevices = await readFile(new URL('../src/widgets/railDevices.tsx', import.meta.url), 'utf8')
-  assert.doesNotMatch(railDevices, /\{id: 'notifications', title: 'Notifications'/, 'no Notifications device among the rail-born devices')
+  // The rail-born devices are named in their own light module (widgets/railDeviceIds.ts; O-I #740), which railDevices.tsx re-exports.
+  const railDeviceIds = await readFile(new URL('../src/widgets/railDeviceIds.ts', import.meta.url), 'utf8')
+  assert.match(railDeviceIds, /export const RAIL_DEVICES = \[/)
+  assert.doesNotMatch(railDeviceIds, /\{id: 'notifications', title: 'Notifications'/, 'no Notifications device among the rail-born devices')
   const messages = await readFile(new URL('../src/agent/devices/messagesBinding.ts', import.meta.url), 'utf8')
   assert.match(messages, /export const MESSAGES_ID = 'ai-kit:messages'/)
   assert.match(railDevices, /export const NOTIFY_MESSAGES_ID = 'ai-kit:messages'/, 'the rail reads Messages\' agents off its own device')

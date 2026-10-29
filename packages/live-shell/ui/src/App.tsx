@@ -33,7 +33,11 @@ import {WidgetRail} from './frame/widgets/WidgetRail'
 import {useChatRailDrop} from './agent/factoryChatsRail'
 import type {WidgetRailBook} from './frame/widgets/widgets'
 import {worldWidgets, WidgetReadingProvider} from './shell/widgets'
-import {RailDevices} from './widgets/railDevices'
+import {loadWhenDrawn} from './shell/loadWhenDrawn'
+// The rail-born devices' publisher (widgets/railDevices.tsx) loads when the rail first draws; their ids and rail claims stand with the
+// frame (widgets/railDeviceIds.ts, through shell/widgets.tsx). A publisher has no place to wait in: until it arrives the rail's widgets
+// draw their devices' own waiting states (O-I #740).
+const RailDevices = loadWhenDrawn('The rail\'s devices', () => import('./widgets/railDevices').then(module => module.RailDevices), () => null)
 import {WhenShown} from './frame/WhenShown'
 import {DEFAULT_WIDGETS} from './shell/widgetDefaults'
 import {BrowserReadingProvider, MODE_POOL_FACES, browserSourcesOf, type BrowserReading} from './shell/modeBrowsers'

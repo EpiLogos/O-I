@@ -73,7 +73,11 @@ import {chooseHeldScene, openHeldSubject, useSubjectOpenings, type SubjectOpenin
 import type {NativeDirectory, NativeFileEntry, KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
 import {listFiles} from '../../../../../desktop/cradle/src/files/client'
 import {dayRead} from '../../../../../desktop/cradle/src/day/client'
-import {readFlowInstance, USER_FLOWS_DIR} from '../../../../../desktop/cradle/src/flow/instances'
+import {USER_FLOWS_DIR} from '../../../../../desktop/cradle/src/flow/flowsDir'
+// A Flow's own parser (flow/instances.ts readFlowInstance, which carries the Flow's form page) loads when a row first reads a Flow on
+// its own, never with the shell's first frame (O-I #740).
+const readFlowInstance = async (...args: Parameters<typeof import('../../../../../desktop/cradle/src/flow/instances').readFlowInstance>) =>
+  (await import('../../../../../desktop/cradle/src/flow/instances')).readFlowInstance(...args)
 import {listWorldPages, type PageForm, type PageListing} from '../../../../../desktop/cradle/src/personal/pageOwner'
 import {readWorlds, type CentralWorld, type CentralWorldsReading} from '../central/centralWorlds'
 import {CENTRAL_WORLD_DRAG} from '../timeline/centralTrackAdapter'

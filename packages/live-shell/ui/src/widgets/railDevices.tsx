@@ -31,10 +31,9 @@ import {actionAnswerOf, centralActionOp} from '../central/devices/useCentralRead
 import type {closeNowClearing} from '../central/devices/nowsClose'
 import {subscribeTerminals, terminalsNow} from '../../../../../desktop/cradle/src/terminal/terminalReadings'
 import {TERMINAL_ID, terminalBinding, terminalDevice} from './terminalBinding'
-import {claimRailWidget} from '../frame/widgets/deviceWidgets'
+import {RAIL_DEVICES, railDeviceId, railDevice, type RailDeviceId} from './railDeviceIds'
 import type {DesignBinding, Value} from '../frame/devices/designed'
 import type {DeviceInstance} from '../frame/devices/deviceRuntime'
-import type {IconName} from '../inhabitants/sdk/Icon'
 import {useWidgetReading} from './widgetReading'
 import type {OwnerReading} from '../owners/ownerReading'
 import {NOTIFY_LIST_ACTION, dayStartMs, diffFilesOf, filesOf, nowsCloseWrites, nowsValues, pagesOf, put, trailIndexOf, trailValues, wikiPagesOf, type NotifyLedgerAnswer} from './railBindings'
@@ -45,32 +44,9 @@ import {openInstrument} from '../frame/instrumentDoor'
 import {DEVICE_PANE_KIND} from '../frame/devices/devicePane'
 import {loadWhenDrawn} from '../shell/loadWhenDrawn'
 
-/** The family the rail-born devices stand in: their designs are `widgets:<id>` in the catalogue. */
-export const RAIL_FAMILY = 'widgets'
-
-/** The rail-born devices: the rail widget each one draws, its title, its mark, and what it reads. */
-export const RAIL_DEVICES = [
-  {id: 'trail', title: 'Trail', icon: 'trav', note: 'The workspace book\'s trail (desktop/cradle/src/workspace/store.ts TrailStop); a press returns to a stop.'},
-  {id: 'files', title: 'Files', icon: 'lib', note: 'The files the followed agent read and changed, from its encounter tape (aikit encounter read, desktop/cradle/src/agent/tape), with the seat\'s diff counts; its Diff page the selected seat\'s working diff (kernel git_diff_read → Central central.git.diff, central.git-diff/v1), with no seat selected the selected world\'s repository, else the workspace\'s project, else the shell\'s (git_repository_read).'},
-  {id: 'web', title: 'Web', icon: 'browser', note: 'The pages the followed agent fetched, from its encounter tape: each address and the text it got.'},
-  {id: 'wiki', title: 'Wiki', icon: 'orbit', note: 'The root wiki\'s pages (Control/agents/wiki/wiki.json through the files seam), each read as its source through the knowledge owner (kernel knowledge read), its links the relations Central\'s wiki reading gives it (central.wiki.read).'},
-  {id: 'nows', title: 'NOWs', icon: 'die', note: 'The ground\'s civil time, its Day and its open NOW clearings (kernel central inspect → central.civil-time-reading/v1, central.day-reading/v1, central.now-listing/v1).'},
-] as const satisfies readonly {id: string; title: string; icon: IconName; note: string}[]
-export type RailDeviceId = typeof RAIL_DEVICES[number]['id']
-
-/** The device id on the door, which is also its design's key (frame/devices/designs.ts designKey). */
-export const railDeviceId = (id: RailDeviceId): string => `${RAIL_FAMILY}:${id}`
-
-// The rail's widget of each id draws its device (claimed when this module loads, before the rail first draws).
-for (const spec of RAIL_DEVICES) claimRailWidget(spec.id, railDeviceId(spec.id))
-
-/** A rail-born device as the runtime holds it: no rows of its own (its design draws on the binding's keys). */
-export function railDevice(id: RailDeviceId): DeviceInstance {
-  const spec = RAIL_DEVICES.find(item => item.id === id)!
-  return {id: railDeviceId(id), family: RAIL_FAMILY, rows: [], values: {},
-    face: {id, title: spec.title, icon: spec.icon, liveSemantic: 'device-instrument', note: spec.note,
-      invariant: {generatesAbsent: 'Born on the rail: it reads its owner and draws what the owner reports; nothing it shows is filled in.'}}}
-}
+// The rail-born devices' names, ids and rail claims are their own light module (widgets/railDeviceIds.ts), loaded with the shell's first
+// frame; this publisher loads when the rail first draws (App.tsx; O-I #740).
+export {RAIL_FAMILY, RAIL_DEVICES, railDeviceId, railDevice, type RailDeviceId} from './railDeviceIds'
 
 type Holds = Readonly<Record<string, Value | undefined>>
 /** The view's own holds for a design's tile keys: each set goes straight here, never to an owner. */
@@ -389,9 +365,13 @@ export function useOwnerRequests(transport: KernelTransportStatus | undefined): 
 
 // ---------------------------------------------------------------------------------------------------------------- the publisher
 
+/** A publisher has no place of its own to wait in: until it arrives the rail's widgets draw their devices' own waiting states (a failed
+ * load still says so in words, shell/loadWhenDrawn.ts). */
+function PublishesNothingYet() { return null }
+
 /** The rail's agent devices — Messages, Gateways, the Agency gateway, Frames, the Ledger and the workcell rack (agent/devices/
  * AgentRailDevices.tsx) — published beside the rail-born devices, in every mode; their code loads when the rail first draws. */
-const AgentRailDevices = loadWhenDrawn('The rail\'s agent devices', () => import('../agent/devices/AgentRailDevices').then(module => module.AgentRailDevices))
+const AgentRailDevices = loadWhenDrawn('The rail\'s agent devices', () => import('../agent/devices/AgentRailDevices').then(module => module.AgentRailDevices), PublishesNothingYet)
 
 /** Publish each rail-born device on the door while the rail stands, and claim the rail's widget of the same id for it; and the rail's
  * agent devices with it. */

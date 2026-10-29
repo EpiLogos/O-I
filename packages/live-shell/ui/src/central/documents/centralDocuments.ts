@@ -20,7 +20,7 @@
 import {activateSurface, dropOnEdge, focusGroup, groupOf, moveTab, openBinding} from '../../../../../../desktop/cradle/src/surface/engine'
 import type {LayoutState, PaneEdge, SurfaceBinding} from '../../../../../../desktop/cradle/src/surface/types'
 import type {CentralLocation, NativeFileEntry} from '../../../../../../desktop/cradle/src/kernel/types'
-import {USER_FLOWS_DIR} from '../../../../../../desktop/cradle/src/flow/instances'
+import {USER_FLOWS_DIR} from '../../../../../../desktop/cradle/src/flow/flowsDir'
 import {openInstrumentAt} from '../../frame/openInstrument'
 import {parseCentralPathRef} from '../centralVertical'
 import {dateOfDayPath} from '../daySurface'

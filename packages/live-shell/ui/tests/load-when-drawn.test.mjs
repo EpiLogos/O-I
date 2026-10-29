@@ -5,8 +5,8 @@ import {renderToStaticMarkup} from 'react-dom/server'
 
 // A part whose code loads when it first draws (shell/loadWhenDrawn.ts; MAP, the build lane's loading item; O-I #740): until its
 // module arrives the place shows the shell's waiting line for it, in words, never a blank; the part itself at once after; fetched
-// ahead by load() or loadEveryPart() so a server render draws it; a module that did not arrive says so in words and is fetched
-// again, not remembered as failed. Channel: scripted (renderToStaticMarkup over fake modules).
+// ahead by load() or loadEveryPart() so a server render draws it; a module that did not arrive says so in words and offers to reload
+// the window; a later draw asks again, not remembered as failed. Channel: scripted (renderToStaticMarkup over fake modules).
 
 const {loadWhenDrawn, loadEveryPart, PartWaiting} = await import('../src/shell/loadWhenDrawn.ts')
 
@@ -26,12 +26,22 @@ test('a part shows its waiting line until its module arrives, then the part itse
   assert.equal(asked, 1, 'the module is fetched once')
 })
 
-test('a load that failed says so in words, with the reason and a way to try again', () => {
-  const failed = renderToStaticMarkup(createElement(PartWaiting, {name: 'Central\'s chain', failure: 'chunk missing', retry: () => {}}))
+test('a load that failed says so in words, with the reason, and offers to reload the window, which reloads it', t => {
+  // A browser keeps a module whose fetch failed failed for the document's life, so asking again in the same window cannot recover a
+  // missing chunk (seen headless, O-I #740 round one): the one way back is a reload.
+  const failed = renderToStaticMarkup(createElement(PartWaiting, {name: 'Central\'s chain', failure: 'chunk missing'}))
   assert.match(failed, /role="alert"/)
   assert.match(failed, /data-part-failed="Central&#x27;s chain"/)
   assert.match(failed, /Central&#x27;s chain did not load: chunk missing\./)
-  assert.match(failed, /<button type="button"[^>]*>Try again<\/button>/)
+  assert.match(failed, /<button type="button"[^>]*>Reload the window<\/button>/)
+  assert.doesNotMatch(failed, /Try again/, 'no retry that cannot recover')
+  let reloads = 0
+  globalThis.location = {reload: () => { reloads += 1 }}
+  t.after(() => { delete globalThis.location })
+  const line = PartWaiting({name: 'Central\'s chain', failure: 'chunk missing'})
+  const button = [line.props.children].flat().find(child => child?.type === 'button')
+  button.props.onClick()
+  assert.equal(reloads, 1, 'the press reloads the window')
 })
 
 test('loadEveryPart fetches each part made so far', async () => {
