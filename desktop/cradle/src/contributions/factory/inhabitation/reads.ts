@@ -18,9 +18,11 @@ export type InhabitationWireRequest =
   | {kind: "population"; project?: string}
   | {kind: "whoami"; project?: string; position?: string}
   | {kind: "refocus"; project?: string; position?: string}
-  | {kind: "conversation"; project?: string; position: string; with: string};
+  | {kind: "conversation"; project?: string; position: string; with: string}
+  /** Whether one Communique was heard (`aikit gateway heard C`): its delivery standing by its ref, never its words. */
+  | {kind: "communique"; project?: string; communique: string};
 
-const SOURCE: Record<InhabitationWireRequest["kind"], string> = {population: "aikit gateway who", whoami: "aikit whoami", refocus: "aikit refocus", conversation: "aikit gateway conversation"};
+const SOURCE: Record<InhabitationWireRequest["kind"], string> = {population: "aikit gateway who", whoami: "aikit whoami", refocus: "aikit refocus", conversation: "aikit gateway conversation", communique: "aikit gateway heard"};
 
 async function inhabitationRead<T>(transport: KernelTransportStatus, request: InhabitationWireRequest): Promise<OwnerRead<T>> {
   const source = SOURCE[request.kind];
@@ -43,6 +45,12 @@ export interface CommuniqueRecord {schema: "aikit.communique/v1"; communique_ref
 export interface ConversationReading {position_ref: string; with_position_ref: string; communiques: CommuniqueRecord[]}
 export const readConversation = (transport: KernelTransportStatus, position: string, withPosition: string, project?: string) =>
   inhabitationRead<ConversationReading>(transport, {kind: "conversation", position, with: withPosition, ...(project ? {project} : {})});
+
+/** Whether one Communique was heard (`aikit.communique-heard/v1`, AIKit's desk read `aikit gateway heard C`): its delivery standing —
+ * held, pending, delivered or escalated, when, to which occupant generation, where it landed — and never its words. */
+export interface CommuniqueHeardReading {schema: "aikit.communique-heard/v1"; communique_ref: string; to_position_ref: string; handling?: string; state: string | null; heard: boolean; delivered_at_unix_ms?: number | null; delivered_to_generation_ref?: string | null; relayed?: boolean; remote_delivery?: unknown}
+export const readCommuniqueHeard = (transport: KernelTransportStatus, communique: string, project?: string) =>
+  inhabitationRead<CommuniqueHeardReading>(transport, {kind: "communique", communique, ...(project ? {project} : {})});
 
 // ---------------------------------------------------------------------------
 // The population store — one reading per scope, shared

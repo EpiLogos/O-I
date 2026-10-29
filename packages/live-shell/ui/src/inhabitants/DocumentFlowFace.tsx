@@ -51,13 +51,14 @@ import flowForm from '../../../../../desktop/cradle/documents/ql-flow.html?raw'
 import {readFlowInstance, writeFlowInstance, type FlowInstance} from '../../../../../desktop/cradle/src/flow/instances'
 import {documentPayloadSource, documentScripts, useDocumentFrame, useDocumentHostRead, type FrameIsland} from '../../../../../desktop/cradle/src/document/frame'
 import type {KernelTransportStatus, CentralLocation} from '../../../../../desktop/cradle/src/kernel/types'
-import {classifySaveFailure, savedOutcome, unchangedOutcome, type SaveRouterReading} from './documentDeviceModel'
+import {classifySaveFailure, FLOW_DRAFT_POLL_MS, FLOW_FIRST_READ_MS, flowSaveBaseline, savedOutcome, unchangedOutcome, type SaveRouterReading} from './documentDeviceModel'
 import {SaveOutcomeChip} from './inhabitantCard.tsx'
 import {linkTarget, PAGE_LINK_MESSAGE, type PageLinkTarget} from './DocumentPageFace'
 import './inhabitantDevices.css'
 import {DocumentPaneContext, documentStateWords, publishDocument, reachedDocument, revisionShort, withdrawDocument, type DocumentInPane} from '../central/documents/documentDoor'
 import {openSearchLine} from '../central/searchLineDoor'
 import {flowPacketOf, type PagePacketItem} from '../central/devices/pageReadings'
+import {followDocumentPacket} from '../central/devices/documentPacketContext'
 
 /** The message the Flow's form sends its host when an @ is typed in an entry (ql-flow.html), and the one the host answers when the line
  * closes, so the form puts the caret and the selection back. */
@@ -119,10 +120,11 @@ export function FlowFace({transport, location, presentation = 'device', openLink
    * against. The page's own boot writes belong to the document, not a draft. */
   const baselineText = useRef<string>()
 
-  const load = useCallback(async () => {
+  /** Read the Flow from its owner; `fresh` (the person's Re-read) asks the owner again whatever the window holds. */
+  const load = useCallback(async (fresh = false) => {
     setFailure(undefined)
     try {
-      const read = await readFlowInstance(transport, location)
+      const read = await readFlowInstance(transport, location, fresh)
       setInstance(read)
       setRevision(read.revision)
       holdPacket(read.doc)
@@ -151,10 +153,10 @@ export function FlowFace({transport, location, presentation = 'device', openLink
       // The router names the outcome from the captured fact: the bounded
       // read is what the save would embed, and "changed" means changed
       // since the face docked (the baseline is the first bounded read —
-      // the page's own boot writes are the document's, not a draft).
-      const baseline = baselineText.current ?? JSON.stringify(doc)
-      baselineText.current = baseline
-      const changed = JSON.stringify(doc) !== baseline
+      // the page's own boot writes are the document's, not a draft). Before
+      // that first read the owner's page is the basis, never the form's own
+      // text, which would read every edit as unchanged.
+      const changed = JSON.stringify(doc) !== flowSaveBaseline(baselineText.current, instance.doc)
       if (!changed) {
         // Nothing staged: the host sends nothing. The unchanged outcome is
         // still named, because the router's law is to disclose every save
@@ -204,7 +206,7 @@ export function FlowFace({transport, location, presentation = 'device', openLink
     draftBasis.current = undefined
     setBaselined(false)
     setDirty(false)
-    void load()
+    void load(true)
   }, [load])
 
   const markDraft = useCallback(() => {
@@ -231,18 +233,22 @@ export function FlowFace({transport, location, presentation = 'device', openLink
       // mean its own scripts never started in this window: say so, rather than show blank paper (the native pass at
       // 14cb8a1bb showed the Flow pane blank while the same document draws its entries standalone).
       unanswered.current += 1
-      if (unanswered.current === 3 && baselineText.current === undefined) setNotice('The Flow\'s form has not started in this window: its own scripts did not answer the host\'s read, so nothing is drawn and nothing can be saved.')
+      if (unanswered.current === SILENT_POLLS && baselineText.current === undefined) setNotice('The Flow\'s form has not started in this window: its own scripts did not answer the host\'s read, so nothing is drawn and nothing can be saved.')
     }
   }, [captureIsland, face, instance, markDraft, pending])
   const unanswered = useRef(0)
+  /** Silent first reads before the face says the form never started: 7.5 s, as when it was asked every 2.5 s. */
+  const SILENT_POLLS = 7500 / FLOW_FIRST_READ_MS
 
   // A new form starts its count afresh; the poll below re-arms whenever its callback changes, which must not reset it.
   useEffect(() => { unanswered.current = 0 }, [face])
+  // Until the form first answers, ask it often: that answer is the baseline, and an edit made before it would become the
+  // baseline and never be saved. Once it stands, the slower poll keeps the draft standing.
   useEffect(() => {
     if (!face) return
-    const timer = window.setInterval(() => void refreshDraftStanding(), 2500)
+    const timer = window.setInterval(() => void refreshDraftStanding(), baselined ? FLOW_DRAFT_POLL_MS : FLOW_FIRST_READ_MS)
     return () => window.clearInterval(timer)
-  }, [face, refreshDraftStanding])
+  }, [face, refreshDraftStanding, baselined])
 
   // A link the page follows reaches its host as a message from this frame only; the host opens it in the shell, or says why not.
   useEffect(() => {
@@ -288,6 +294,9 @@ export function FlowFace({transport, location, presentation = 'device', openLink
     ...(save ? {outcome: save.outcome} : {}), ...(packet ? {packet} : {})}
   // The aperture follows the document the hand reached (the first one standing until then); a change of standing reaches it.
   useEffect(() => { if (inPane) publishDocument(standing, !reachedDocument()) })
+  // While a Flow stands in a pane, a Send brings AIKit's prepared context to the reached document's packet first (lane AA's proposal,
+  // O-I #745): the Send carries what the Packet shows (central/devices/documentPacketContext.ts).
+  useEffect(() => (inPane ? followDocumentPacket() : undefined), [inPane])
   useEffect(() => () => withdrawDocument(key), [key])
 
   return (
@@ -312,7 +321,7 @@ export function FlowFace({transport, location, presentation = 'device', openLink
         </span>
       </div> : <div className="inhabitant-body-actions">
         <button type="button" className="inhabitant-act" data-action="save" disabled={!face || pending} onClick={() => void saveToOwner()}>Save to native source</button>
-        <button type="button" className="inhabitant-act" data-action="reread" disabled={pending} onClick={() => void load()}>Re-read current document</button>
+        <button type="button" className="inhabitant-act" data-action="reread" disabled={pending} onClick={() => void load(true)}>Re-read current document</button>
         <span className="inhabitant-device-save" role="status" aria-live="polite" data-save-outcome-label={save?.outcome ?? ''}>
           {save
             ? <SaveOutcomeChip outcome={save.outcome} detail={save.detail}/>

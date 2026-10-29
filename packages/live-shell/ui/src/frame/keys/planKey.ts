@@ -11,6 +11,7 @@ import {answerOf} from '../tracks/SessionGrid'
 import type {KeyIntent} from './keyMap'
 import {macroTurn} from './keyMap'
 import type {Openable, TrackRows} from './keyDoors'
+import type {PaneFinder} from '../paneFind'
 
 /** What the owner said to a key, shown until it is dismissed or the next key answers. */
 export interface KeyReceipt {
@@ -30,6 +31,8 @@ export interface KeyDoors {
   openable(): Openable | null
   searchAvailable(): boolean
   search(reveal?: () => void): boolean
+  /** The find of the pane in front (paneFind.ts paneFinderInFront): ⌘F there finds in its instrument; null leaves ⌘F to the browser. */
+  paneFind?(): PaneFinder | null
   /** The search line's host is mounted (central/searchLineDoor.ts); ⌘K opens the line over the frame. */
   lineAvailable?(): boolean
   line?(): void
@@ -71,8 +74,13 @@ export function planKey(intent: KeyIntent, doors: KeyDoors, options: KeyOptions 
       const stop = pressable(doors.transport()?.stop)
       return stop ? {run: () => guarded('Stop', stop)} : null
     }
-    case 'search':
+    case 'search': {
+      // ⌘F finds where you are (§18.4): in a pane, in the instrument in front, as VS Code's ⌘F finds in the file in front; in the
+      // browser, or where the pane in front finds nothing, the browser narrows its list.
+      const finder = doors.paneFind?.()
+      if (finder) return {run: () => { finder.open() }}
       return doors.searchAvailable() ? {run: () => { doors.search(options.revealBrowser) }} : null
+    }
     case 'line':
       return doors.lineAvailable?.() && doors.line ? {run: () => { doors.line!() }} : null
     case 'row': {

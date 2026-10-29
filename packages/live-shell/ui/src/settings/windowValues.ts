@@ -903,7 +903,7 @@ export const SETTINGS_WINDOW_WIRING = {
     plans: 'the owners\' plans for your local changes (config_plan_reviewed), kept beside their answer after Apply',
     planErrors: 'what the owners refused instead of planning (config_plan_reviewed errors)',
     result: 'the owners\' answer to Apply or Reset (config_apply_reviewed, config_reset)',
-    back: 'the name of the work Settings returns to (SettingsRequest.returnLabel)',
+    back: 'the name of the work Settings returns to: a contextual entry\'s own (SettingsRequest.returnLabel), else the mode the frame stands in (settings/host.ts setSettingsReturnLabel)',
     providers: 'the configured providers (HarnessSource.read: the encounter providers)', heldDefault: 'the saved chat default (HarnessSource.read)',
     effectiveDefault: 'the provider new chats use, and its rule (harnessSource.ts effectiveChatDefault)', harnesses: 'each harness client (harness_status: aikit client status)',
     routes: 'the catalogue\'s declared routes (model_catalogue)', credentials: 'AIKit\'s credential binding metadata (credential_list), each Verify\'s verdict (credential_verify)',

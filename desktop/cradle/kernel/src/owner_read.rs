@@ -675,7 +675,8 @@ impl PreparedRead {
                 | crate::page::Request::Launch { .. }
                 | crate::page::Request::Stop { .. }
                 | crate::page::Request::Duplicate { .. }
-                | crate::page::Request::Trash { .. } => {
+                | crate::page::Request::Trash { .. }
+                | crate::page::Request::AppendQuote { .. } => {
                     return Err("A page's write is the owner write's, not a read".into())
                 }
             };

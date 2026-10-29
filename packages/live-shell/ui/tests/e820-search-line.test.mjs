@@ -205,13 +205,13 @@ test('what a tag does to each kind (§18.4 What a tag sends): a Flow takes a new
   assert.equal(model.sendPlanOf(of('knowledge-source'), null, {}).verb, 'open', 'with no selection, Enter opens the result')
 })
 
-test('a send no owner takes stays in the list, dimmed, and names the operation it waits for', () => {
+test('a person, a place and another document each take the passage through their own owner (lane AE); a send no owner takes stays dimmed with its reason', () => {
   const person = model.sendPlanOf(of('participant'), passage, {})
-  assert.equal(person.verb, 'dim'); assert.match(person.why, /missing op/i); assert.match(person.why, /person/i)
+  assert.equal(person.verb, 'send'); assert.equal(person.target, 'person'); assert.match(person.words, /a request they accept/)
   const place = model.sendPlanOf(of('project'), passage, {})
-  assert.equal(place.verb, 'dim'); assert.match(place.why, /missing op/i)
+  assert.equal(place.verb, 'send'); assert.equal(place.target, 'place'); assert.match(place.words, /with a link back to the page/)
   const page = model.sendPlanOf(of('knowledge-source', {ref: 'central:source:project:O-I:README.md'}), passage, {})
-  assert.equal(page.verb, 'dim'); assert.match(page.why, /quote at the end/); assert.match(page.why, /missing op/i)
+  assert.equal(page.verb, 'send'); assert.equal(page.target, 'quote'); assert.match(page.words, /at the end of/)
   const agentAbsent = model.sendPlanOf(of('agent'), passage, {agent: null})
   assert.equal(agentAbsent.verb, 'dim'); assert.match(agentAbsent.why, /no session/i)
   const agent = model.sendPlanOf(of('agent'), passage, {agent: {sessionRef: 'agent-session/flint', project: '', name: 'Flint'}})

@@ -1,0 +1,12 @@
+/* The find line of a document in a pane (DocumentFind.tsx): one narrow plate at the pane's top right, where VS Code's find widget stands
+   over the editor, in the shell's own ground and type (the search line's, central/searchLine.css). It stands only while open. */
+.document-find { position: absolute; z-index: 30; top: 6px; right: 12px; display: flex; align-items: center; gap: 2px; padding: 3px 3px 3px 6px;
+  background: var(--bg-1); color: var(--text); border: 1px solid var(--line-strong);
+  box-shadow: var(--shadow-menu, 0 6px 18px color-mix(in srgb, var(--shade) 35%, transparent)); font-size: 12px }
+.document-find input { width: min(200px, 40vw); min-width: 0; padding: 3px 4px; font: inherit; color: var(--text); background: var(--bg-0);
+  border: 1px solid var(--line); outline: none }
+.document-find input:focus { border-color: var(--accent) }
+.document-find-count { min-width: 72px; padding: 0 6px; color: var(--text-dim); font-size: 11px; white-space: nowrap }
+.document-find button { width: 22px; height: 22px; padding: 0; font: inherit; line-height: 1; color: var(--text-dim); background: transparent; border: 0; cursor: default }
+.document-find button:not(:disabled):hover { color: var(--text); background: var(--bg-2) }
+.document-find button:disabled { opacity: .4 }

@@ -68,10 +68,10 @@
 @keyframes th-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
 @media (prefers-reduced-motion: reduce) { .th-work i { animation: none; } }
 
-.th-composer { flex: none; display: flex; align-items: center; gap: 8px; margin: 0 20px 14px; padding: 0 8px; height: 26px; background: var(--dp-field, #26292d); border: 1px solid var(--line, #24262a); }
-.th-composer input { flex: 1 1 auto; min-width: 0; height: 100%; padding: 0; background: none; border: 0; color: var(--text, #d4d7da); font: inherit; outline: none; }
-.th-composer input::placeholder { color: var(--text-faint, #71767c); }
-.th-composer input:disabled { opacity: .55; }
+.th-composer { flex: none; display: flex; align-items: center; gap: 8px; margin: 0 20px 14px; padding: 0 8px; min-height: 26px; background: var(--dp-field, #26292d); border: 1px solid var(--line, #24262a); }
+.th-composer textarea { flex: 1 1 auto; min-width: 0; padding: 5px 0; background: none; border: 0; color: var(--text, #d4d7da); font: inherit; line-height: 14px; resize: none; outline: none; }
+.th-composer textarea::placeholder { color: var(--text-faint, #71767c); }
+.th-composer textarea:disabled { opacity: .55; }
 .th-composer:focus-within { outline: 1px solid var(--accent, #ffbe00); outline-offset: 1px; }
 .th-composer small { flex: none; font-size: 9px; letter-spacing: .07em; text-transform: uppercase; color: var(--dp-on, #ffbe00); }
 .th-wave { flex: 1 1 auto; display: flex; align-items: center; gap: 2px; min-width: 0; }

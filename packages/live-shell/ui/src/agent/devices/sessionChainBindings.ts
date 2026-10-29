@@ -12,12 +12,12 @@
 // What no kernel op reaches: a session's Factory run (factory_attempt_read needs a run ref the agency reading never names, so the
 //   Run's takes are absent), the event lanes (the temporal stream names the session, not Messages · Files · Terminal · Web · Graph),
 //   Hermes' subagent tree and delegation block (subagent.list over tui_gateway; no config.set key), the Run and workflow unit a member's
-//   task is (Factory's retry, factory_owner attempt-retry, takes them), Central's agent-set records for a SessionSpace (agency_read names no
-//   set for it). Each is absent here and each write
+//   task is (Factory's retry, factory_owner attempt-retry, takes them). Each is absent here and each write
 //   that needs one stands disabled with the operation it lacks. Pure, apart from the view holds (designBindings.ts holdView).
 import type {DesignBinding, Standing, Value, ValueChange, Values} from '../../frame/devices/designed'
 import type {DeviceInstance} from '../../frame/devices/deviceRuntime'
 import type {AgentSessionTrack, TaskClip} from '../agentRunModel'
+import type {ActionAnswer} from '../../central/devices/centralActions'
 import {chainHolds, holdView, viewHolds, type ChainHolds} from './designBindings'
 import {rackStateOf, runStateOfSession} from './runFaces'
 import {familyFaceDevice} from './mainTrackBindings'
@@ -427,15 +427,41 @@ export const AGENTSET_REFUSE = {
   handBack: DELEGATION('Hand-back', 'the helper\'s return form'),
   returnCap: DELEGATION('Summary cap', 'delegation.max_summary_chars'),
   model: DELEGATION('Subagent model', 'delegation.model'),
-  join: missing('Join', 'a tie from this group to one of Central\'s agent sets: the group is an AIKit session space, and AIKit\'s team carries no join; Central keeps join on its agent sets (central.agent-set/v1 `join`, written by central.agent-set.save, read by list, read and resolve), and agency_read names only the space\'s ref and label, so no reading says which set this group runs', 'Central'),
   // Factory retries a unit of a Run under the unit's retry grant (factory_owner attempt-retry, lane K0; the Run map's Retry). The rack
   // holds a member, which is an agent session, and no reading names the Run or the workflow unit the member's task is.
   retry: 'Retry: Factory retries a unit of a Run under its retry grant (factory_owner attempt-retry, the Run map\'s Retry); the rack holds the chosen member, an agent session, and no reading here names the Run or the workflow unit its task is (Software Factory).',
 } as const
 
+// Join (O-I ticket 684): how the members' returns combine is Central's agent set's (central.agent-set/v1 `join`). The group is an AIKit SessionSpace,
+// whose record names the set it runs (AIKit `agent_set`: tied when Central's team is prepared into the space, inhabit_team_native.rs
+// tie_team_set, or staged as `aikit session-space stage` bind-agent-set); the rack reads the set (central.agent-set.read {scope root, ref}) and
+// writes a new join through central.agent-set.save at the set's next revision (`rN` to `rN+1`, compare-and-swap on the one it read).
+// Where the returns combine: Software Factory's barrier waits for every leg it names before an independent reviewer synthesises
+// (orchestration.rs barrier_reading, synthesize), and AIKit's team hands each member's Return to its parent one by one (`aikit gateway team
+// read`). Neither reads the set's join yet; All is what the barrier does, and None is one Return read alone.
+export const JOINS = ['none', 'all', 'first', 'quorum', 'weighted'] as const
+export const JOIN_UNTIED = 'Join: this group names no Central agent set, so no record says how its returns combine. AIKit ties a space to its set when '
+  + 'the set\'s team is prepared into it; tie one by hand with `aikit session-space stage` and the bind-agent-set intent (AIKit).'
+const JOIN_READING = (ref: string) => `Join: Central has not answered its agent set ${ref} yet (\`central.agent-set.read\`).`
+const JOIN_UNSAVED = (ref: string) => `Central's set ${ref} names no join: none was saved with it. Choose one to save it.`
+
+/** The rack's carrier to Central: the person's own central.agent-set.save, through the kernel's invoke_action. */
+export interface AgentsetPorts {
+  readonly saveSet: (input: {scope: 'root'; record: Record<string, unknown>; expected_revision: string}) => Promise<unknown>
+}
+
+/** The set's next revision by Central's own convention (`r1`, `r2`, … : central.agent-set.save refuses a revision that does not move). */
+export function nextSetRevision(revision: string): string {
+  const n = /^r(\d+)$/.exec(revision)
+  if (!n) throw Error(`Central's set is at revision ${revision}, which names no next revision in the rN form the rack writes.`)
+  return `r${Number(n[1]) + 1}`
+}
+
 export interface AgentsetInput {
   /** The selected group track (a SessionSpace), null when the selection is no group. */
   readonly group: AgentSessionTrack | null
+  /** Central's answer to central.agent-set.read for the set the group's space names (group.agentSet); absent while not asked. */
+  readonly set?: ActionAnswer | null
   readonly tracks: readonly AgentSessionTrack[] | null
   /** The models AIKit's catalogue names (kernel model_catalogue), for the Subagent model chooser. */
   readonly models?: readonly string[] | null
@@ -468,7 +494,8 @@ export function agentsetValues(input: AgentsetInput): Values {
   const values: Record<string, Value> = {}
   const group = input.group
   if (!group || !group.group) return values
-  put(values, 'crew', group.spaceLabel ?? group.purpose)
+  // The crew is the agent set's ref in Central (the design's `crew`) where the space names the set it runs; else the space's own label.
+  put(values, 'crew', group.agentSet?.ref ?? group.spaceLabel ?? group.purpose)
   if (input.tracks) {
     const members = agentsetMembers(group, input.tracks, input.nowUnixMs ?? 0)
     values.members = JSON.stringify(members)
@@ -476,19 +503,56 @@ export function agentsetValues(input: AgentsetInput): Values {
   }
   put(values, 'member', viewHolds(input.holds, AGENTSET_ID).member)
   if (input.models?.length) values.models = JSON.stringify(input.models.map(id => ({id})))
+  const join = setRecordOf(input)?.join
+  if (typeof join === 'string' && (JOINS as readonly string[]).includes(join)) values.join = join
   return values
 }
 
-/** The rack's binding: the chosen member is the view's own; every delegation setting and Retry stands disabled with what it lacks. */
-export function agentsetBinding(input: AgentsetInput): DesignBinding {
+/** Central's record of the group's set, when Central answered it for the set the space names. */
+function setRecordOf(input: AgentsetInput): Record<string, any> | null {
+  const tie = input.group?.agentSet, answer = input.set
+  if (!tie || answer?.status !== 'answered') return null
+  const value = answer.value as {ref?: unknown; revision?: unknown; record?: unknown} | null
+  const record = value && typeof value.record === 'object' && value.record !== null ? value.record as Record<string, any> : null
+  return record && record.ref === tie.ref ? record : null
+}
+
+/** Why the rack's Join is not drawn or not pressable, or null where it reads and writes. */
+function joinStanding(input: AgentsetInput, ports: AgentsetPorts | undefined): Standing | null {
+  const tie = input.group?.agentSet
+  if (!tie) return {disabled: JOIN_UNTIED}
+  const answer = input.set
+  if (!answer || answer.status === 'reading') return {disabled: JOIN_READING(tie.ref)}
+  if (answer.status === 'refused') return {disabled: `Join: ${answer.error}`}
+  const record = setRecordOf(input)
+  if (!record) return {disabled: `Join: Central answered another set than ${tie.ref}.`}
+  if (!ports) return {disabled: 'Join: no carrier to Central\'s central.agent-set.save stands on this chain.'}
+  return typeof record.join === 'string' ? null : {refused: JOIN_UNSAVED(tie.ref)}
+}
+
+/** The rack's binding: the chosen member is the view's own; Join reads and writes Central's agent set the group runs; every delegation
+ * setting and Retry stands disabled with what it lacks. */
+export function agentsetBinding(input: AgentsetInput, ports?: AgentsetPorts): DesignBinding {
+  const standing: Record<string, Standing> = disabled(AGENTSET_REFUSE)
+  const join = joinStanding(input, ports)
+  if (join) standing.join = join
+  const writable = join === null || join.refused !== undefined
   return {
     id: AGENTSET_ID,
     values: agentsetValues(input),
-    standing: disabled(AGENTSET_REFUSE),
+    standing,
     local: {member: value => holdView(AGENTSET_ID, 'member', typeof value === 'string' ? value : undefined)},
-    writes: key => key in AGENTSET_REFUSE,
+    writes: key => key in AGENTSET_REFUSE || (key === 'join' && writable),
     write: async changes => {
-      for (const {key} of changes) throw Error(AGENTSET_REFUSE[key as keyof typeof AGENTSET_REFUSE] ?? reading(key))
+      for (const {key, value} of changes) {
+        if (key !== 'join') throw Error(AGENTSET_REFUSE[key as keyof typeof AGENTSET_REFUSE] ?? reading(key))
+        if (typeof value !== 'string' || !(JOINS as readonly string[]).includes(value)) throw Error(`Join is none, all, first, quorum or weighted, not ${String(value)}.`)
+        if (!ports) throw Error('Join: no carrier to Central\'s central.agent-set.save stands on this chain.')
+        const record = setRecordOf(input)
+        if (!record) throw Error(join?.disabled ?? JOIN_UNTIED)
+        const revision = String(record.revision)
+        await ports.saveSet({scope: 'root', record: {...record, join: value, revision: nextSetRevision(revision)}, expected_revision: revision})
+      }
     },
   }
 }

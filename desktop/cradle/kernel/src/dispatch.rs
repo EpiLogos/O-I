@@ -1379,6 +1379,8 @@ else:
             // SharedField writes, an observation's stop, an A2A exchange.
             json!({"op": "shared_field", "request": {"kind": "publish"}}),
             json!({"op": "shared_field", "request": {"kind": "observe-stop", "observer_ref": "o"}}),
+            // A passage sent to a person (O-I #820): a Contact request the recipient accepts.
+            json!({"op": "shared_field", "request": {"kind": "message", "to_participant_ref": "p", "passage": {"text": "t", "from": "f"}}}),
             json!({"op": "a2a_exchange", "request": {}}),
             // Factory acts.
             json!({"op": "factory_owner", "request": {"kind": "action-invoke", "state_path": "/s.json", "project_ref": "p", "run_ref": "run:1", "request": {}}}),

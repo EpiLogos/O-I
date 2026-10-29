@@ -7,6 +7,7 @@ import {createContext, useSyncExternalStore} from 'react'
 import type {CentralLocation} from '../../../../../../desktop/cradle/src/kernel/types'
 import {outcomeLabel, type SaveRouterReading} from '../../inhabitants/documentDeviceModel'
 import type {PagePacketItem} from '../devices/pageReadings'
+import {notePaneDraft, releasePaneDraft} from './paneDrafts'
 
 /** The pane binding a document face is hosted in (CentralDocumentPane provides it): the aperture matches the focused pane
  * by it, not by the form alone. */
@@ -103,6 +104,8 @@ const emit = () => { for (const listener of listeners) listener() }
 
 /** A document face in a pane: it was reached, or its standing changed while it is the one reached. */
 export function publishDocument(document: DocumentInPane, reachedNow = false): void {
+  // Every pane's draft shows on its own tab, reached or not (paneDrafts.ts).
+  notePaneDraft(document)
   if (!reachedNow && reached?.key !== document.key) return
   reached = document
   emit()
@@ -110,6 +113,7 @@ export function publishDocument(document: DocumentInPane, reachedNow = false): v
 
 /** The face unmounts: if it was the one reached, nothing is. */
 export function withdrawDocument(key: string): void {
+  releasePaneDraft(key)
   if (reached?.key !== key) return
   reached = null
   emit()

@@ -1,0 +1,348 @@
+{
+ "source": "`ql context-frame team-space --json` from the installed quaternal-logic (ql 0.1.0, e08d9c6a1154, QL-MEF main) on workcell:mac, 29 Oct 2026; the answer's contract, organs, rows and depth as it gave them (its gates, path, instruments, thread forms, rules and sources, which the Team cell does not read, are left out)",
+ "answer": {
+  "contract": "ql.vak-team-space/v1",
+  "organs": [
+   {
+    "organ": "S4′ Anima",
+    "lead": "agent/anima",
+    "office": "composes the situated act through the C′ Vāk grammar",
+    "proving_position": "central:position:project:O-I:anima-4"
+   },
+   {
+    "organ": "S5′ Aletheia",
+    "lead": "agent/aletheia",
+    "office": "discloses what happened and returns it",
+    "proving_position": "central:position:project:O-I:aletheia-5"
+   }
+  ],
+  "rows": [
+   {
+    "frame": "CF1",
+    "expression": "(00/00)",
+    "name": "Fourfold-Zero / undifferentiated-ground",
+    "anima": {
+     "voice": "Nous",
+     "agent_ref": "agent/anima-nous"
+    },
+    "aletheia": [
+     {
+      "specialist": "Anansi",
+      "agent_ref": "agent/aletheia-anansi",
+      "mode": null,
+      "office": "Investigate gaps and the authored/implemented relation; coordinate and blueprint work.",
+      "joins_into": null
+     }
+    ],
+    "day": null,
+    "night": [
+     {
+      "position": "4.0",
+      "prime": "P0′",
+      "question": "What don't we know?",
+      "reading": "T0",
+      "answered_by": "Nous"
+     }
+    ],
+    "gate": 1,
+    "instruments": [
+     "gate-1",
+     "thought-reading",
+     "gnosis-retrieval",
+     "stack-traverse"
+    ]
+   },
+   {
+    "frame": "CF2",
+    "expression": "(0/1)",
+    "name": "Non-Dual Anchor / standing-identity",
+    "anima": {
+     "voice": "Logos",
+     "agent_ref": "agent/anima-logos"
+    },
+    "aletheia": [
+     {
+      "specialist": "Janus",
+      "agent_ref": "agent/aletheia-janus",
+      "mode": null,
+      "office": "Relate temporal occasions; temporal and threshold work.",
+      "joins_into": null
+     }
+    ],
+    "day": {
+     "position": "4.1",
+     "question": "What must be true?"
+    },
+    "night": [],
+    "gate": null,
+    "instruments": [
+     "stack-traverse",
+     "spread-aliveness"
+    ]
+   },
+   {
+    "frame": "CF3",
+    "expression": "(0/1/2)",
+    "name": "Dual-Non-Dual / triadic-circulation",
+    "anima": {
+     "voice": "Eros",
+     "agent_ref": "agent/anima-eros"
+    },
+    "aletheia": [
+     {
+      "specialist": "Moirai",
+      "agent_ref": "agent/aletheia-moirai",
+      "mode": "Klotho",
+      "office": "Supply Klotho/Lachesis/Atropos evidence, query and reflection modes; GraphRAG distillation.",
+      "joins_into": null
+     }
+    ],
+    "day": {
+     "position": "4.2",
+     "question": "What is being done?"
+    },
+    "night": [
+     {
+      "position": "4.1",
+      "prime": "P1′",
+      "question": "What evidence exists?",
+      "reading": "T1",
+      "answered_by": "Moirai as Klotho"
+     },
+     {
+      "position": "4.2",
+      "prime": "P2′",
+      "question": "What blocks us?",
+      "reading": "T2",
+      "answered_by": "Eros"
+     }
+    ],
+    "gate": 3,
+    "instruments": [
+     "gate-3",
+     "thought-reading",
+     "gnosis-retrieval"
+    ]
+   },
+   {
+    "frame": "CF4",
+    "expression": "(0/1/2/3)",
+    "name": "Trinitarian / tetradic-prehensive-closure",
+    "anima": {
+     "voice": "Mythos",
+     "agent_ref": "agent/anima-mythos"
+    },
+    "aletheia": [
+     {
+      "specialist": "Mercurius",
+      "agent_ref": "agent/aletheia-mercurius",
+      "mode": null,
+      "office": "Carry cross-domain translation; Kairos and qualitative temporal patterns.",
+      "joins_into": null
+     }
+    ],
+    "day": {
+     "position": "4.3",
+     "question": "What shape does it take?"
+    },
+    "night": [
+     {
+      "position": "4.3",
+      "prime": "P3′",
+      "question": "What repeats?",
+      "reading": "T3",
+      "answered_by": "Mythos"
+     }
+    ],
+    "gate": 5,
+    "instruments": [
+     "gate-5",
+     "thought-reading",
+     "gnosis-retrieval",
+     "improvement-proposal"
+    ]
+   },
+   {
+    "frame": "CF5",
+    "expression": "(4.0/1-4.4/5)",
+    "name": "Fractal-Doubling Executive",
+    "anima": {
+     "voice": "Anima",
+     "agent_ref": "agent/anima"
+    },
+    "aletheia": [
+     {
+      "specialist": "Moirai",
+      "agent_ref": "agent/aletheia-moirai",
+      "mode": "Lachesis",
+      "office": "Supply Klotho/Lachesis/Atropos evidence, query and reflection modes; GraphRAG distillation.",
+      "joins_into": null
+     }
+    ],
+    "day": null,
+    "night": [
+     {
+      "position": "4.4",
+      "prime": "P4′",
+      "question": "What sources inform?",
+      "reading": "T4",
+      "answered_by": "Moirai as Lachesis"
+     }
+    ],
+    "gate": null,
+    "instruments": [
+     "vak-block",
+     "thought-reading",
+     "gnosis-retrieval"
+    ]
+   },
+   {
+    "frame": "CF6",
+    "expression": "(4.5/0)",
+    "name": ".5 Bridge",
+    "anima": {
+     "voice": "Psyche",
+     "agent_ref": "agent/anima-psyche"
+    },
+    "aletheia": [
+     {
+      "specialist": "Agora",
+      "agent_ref": "agent/aletheia-agora",
+      "mode": null,
+      "office": "Bring plural contributions into evaluation; aggregation and skill/plugin absorption.",
+      "joins_into": "CF5"
+     }
+    ],
+    "day": {
+     "position": "4.4",
+     "question": "Where and when in the larger frame?"
+    },
+    "night": [],
+    "gate": 4,
+    "instruments": [
+     "gate-4",
+     "gnosis-retrieval",
+     "plugin-integration"
+    ]
+   },
+   {
+    "frame": "CF7",
+    "expression": "(5/0)",
+    "name": "Total Synthesis / Mobius cyclic-closure-and-reopening",
+    "anima": {
+     "voice": "Sophia",
+     "agent_ref": "agent/anima-sophia"
+    },
+    "aletheia": [
+     {
+      "specialist": "Moirai",
+      "agent_ref": "agent/aletheia-moirai",
+      "mode": "Atropos",
+      "office": "Supply Klotho/Lachesis/Atropos evidence, query and reflection modes; GraphRAG distillation.",
+      "joins_into": null
+     },
+     {
+      "specialist": "Zeithoven",
+      "agent_ref": "agent/aletheia-zeithoven",
+      "mode": null,
+      "office": "Develop the next score; creative advance and skill/agent creation.",
+      "joins_into": null
+     }
+    ],
+    "day": {
+     "position": "4.5",
+     "question": "What was produced?"
+    },
+    "night": [
+     {
+      "position": "4.5",
+      "prime": "P5′",
+      "question": "What crystallises?",
+      "reading": "T5",
+      "answered_by": "Moirai as Atropos"
+     }
+    ],
+    "gate": 2,
+    "instruments": [
+     "gate-2",
+     "thought-reading",
+     "gnosis-retrieval",
+     "improvement-proposal",
+     "klein-telemetry"
+    ]
+   }
+  ],
+  "depth": [
+   {
+    "m": 0,
+    "faculty": "Anuttara",
+    "anima": "Anima_0 = M0 × S4′",
+    "aletheia": "Aletheia_0 = M0 × S5′",
+    "native_operations": [
+     "anuttara.read",
+     "ananda.m1-2"
+    ],
+    "proving_position": null
+   },
+   {
+    "m": 1,
+    "faculty": "Paramaśiva",
+    "anima": "Anima_1 = M1 × S4′",
+    "aletheia": "Aletheia_1 = M1 × S5′",
+    "native_operations": [
+     "tda.vietoris-rips"
+    ],
+    "proving_position": null
+   },
+   {
+    "m": 2,
+    "faculty": "Paraśakti",
+    "anima": "Anima_2 = M2 × S4′",
+    "aletheia": "Aletheia_2 = M2 × S5′",
+    "native_operations": [
+     "bimba.neighborhood"
+    ],
+    "proving_position": null
+   },
+   {
+    "m": 3,
+    "faculty": "Mahāmāyā",
+    "anima": "Anima_3 = M3 × S4′",
+    "aletheia": "Aletheia_3 = M3 × S5′",
+    "native_operations": [
+     "representation.bind",
+     "ql-techne-reading",
+     "mahamaya.tarot-score.resolve",
+     "mahamaya.phase-bridge.read"
+    ],
+    "proving_position": null
+   },
+   {
+    "m": 4,
+    "faculty": "Nara",
+    "anima": "Anima_4 = M4 × S4′",
+    "aletheia": "Aletheia_4 = M4 × S5′",
+    "native_operations": [
+     "nara.activity.validate",
+     "nara.elemental-map",
+     "nara.personal-receive",
+     "nara.journey.open",
+     "nara.journey.apply",
+     "nara.journey.read",
+     "nara.lived-context.compose"
+    ],
+    "proving_position": "central:position:project:O-I:anima-4"
+   },
+   {
+    "m": 5,
+    "faculty": "Epii",
+    "anima": "Anima_5 = M5 × S4′",
+    "aletheia": "Aletheia_5 = M5 × S5′",
+    "native_operations": [
+     "logos.return"
+    ],
+    "proving_position": "central:position:project:O-I:aletheia-5"
+   }
+  ]
+ }
+}

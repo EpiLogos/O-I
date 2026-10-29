@@ -897,6 +897,53 @@ fn ql_reads_the_hours_at_a_place_and_m2s_body_constants_verbatim() {
 }
 
 #[test]
+fn ql_reads_bindings_engine_over_a_cell_verbatim() {
+    let _held = hold();
+    let dir = scratch("ql-binding");
+    let ql = Fake::new(&dir, "ql");
+    let _bin = Bound::set("OI_QL_BIN", &ql.bin);
+    // Binding's engine over the cell of hexagram 17 under moving and resting (QL's REAL answer).
+    let binding = fixture("ql-kernel-m3-binding-2026-10-29.json");
+    ql.answer(&binding["answer"]);
+    let (outcome, form) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "ql_read", "request": {"kind": "m3-binding", "request": binding["input"]}}),
+        ),
+    );
+    assert_eq!(form, "owner-read");
+    let (route, data, _) = reading(&outcome.unwrap());
+    assert_eq!(route, "ql kernel m3-binding");
+    assert_eq!(data, binding["answer"]);
+    assert_eq!(data["string"]["stretch_fm"], 0.8);
+    assert_eq!(ql.asked(), ["kernel m3-binding - --json"]);
+    assert_eq!(
+        serde_json::from_str::<Value>(&ql.stdin()).unwrap(),
+        binding["input"],
+        "the request travels on stdin as it was given"
+    );
+    // Physics outside the manual's ranges: QL's words come back.
+    ql.refuse(None, binding["refusal_stderr"].as_str().unwrap(), 2);
+    let (outcome, _) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "ql_read", "request": {"kind": "m3-binding", "request": binding["input"]}}),
+        ),
+    );
+    assert!(outcome.unwrap_err().contains("Tension"));
+    // Another schema is named, never carried as Binding's.
+    ql.answer(&json!({"schema": "ql.m2-body-constants/v1"}));
+    let (outcome, _) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "ql_read", "request": {"kind": "m3-binding", "request": binding["input"]}}),
+        ),
+    );
+    assert!(outcome.unwrap_err().contains("ql.m3-binding/v1"));
+    let _ = fs::remove_dir_all(&dir);
+}
+
+#[test]
 fn workcell_reads_and_writes_on_its_connections_and_machines() {
     let _held = hold();
     let dir = scratch("workcell");
@@ -1438,6 +1485,45 @@ fn the_gateways_ecology_names_the_streams_a_replay_reads() {
     let (outcome, _) = dispatched(
         no_central(&dir),
         op(json!({"op": "aikit_read", "request": {"kind": "gateway-ecology"}})),
+    );
+    assert_eq!(kind(&outcome.unwrap_err()), "incompatible");
+    let _ = fs::remove_dir_all(&dir);
+}
+
+/// O-I #741: Messages' Input starts on Steer only where the gateway keeps one. The kernel reads the running gateway's protocol
+/// answer (`aikit gateway protocol --json`, gateway_runtime.rs GatewayResponse::Protocol) and carries it verbatim; an answer that
+/// is no protocol reading is incompatible.
+#[test]
+fn the_gateways_protocol_names_the_features_it_keeps() {
+    let _held = hold();
+    let dir = scratch("protocol");
+    let aikit = Fake::new(&dir, "aikit");
+    let _bin = Bound::set("OI_AIKIT_BIN", &aikit.bin);
+    let protocol = json!({"type": "protocol", "gateway_version": "0.71.0", "connector_sdk_version": "1",
+        "connector_wire_version": "1", "actuation_stream_schema": "actuation.stream/v1",
+        "features": ["communique-exact-instance", "communique-handling", "native-owner/v1"]});
+    aikit.answer(&envelope(protocol.clone()));
+    let (outcome, form) = dispatched(
+        no_central(&dir),
+        op(json!({"op": "aikit_read", "request": {"kind": "gateway-protocol"}})),
+    );
+    let outcome = outcome.unwrap();
+    assert_eq!(form, "owner-read");
+    assert_eq!(reading(&outcome).1, protocol);
+    assert_eq!(aikit.asked(), ["gateway protocol --json"]);
+    // A gateway that predates advertisement names no features: read as it answered.
+    let older = json!({"type": "protocol", "gateway_version": "0.60.0", "connector_sdk_version": "1",
+        "connector_wire_version": "1", "actuation_stream_schema": "actuation.stream/v1"});
+    aikit.answer(&envelope(older.clone()));
+    let (outcome, _) = dispatched(
+        no_central(&dir),
+        op(json!({"op": "aikit_read", "request": {"kind": "gateway-protocol"}})),
+    );
+    assert_eq!(reading(&outcome.unwrap()).1, older);
+    aikit.answer(&envelope(json!({"type": "ecology", "ecology": {}})));
+    let (outcome, _) = dispatched(
+        no_central(&dir),
+        op(json!({"op": "aikit_read", "request": {"kind": "gateway-protocol"}})),
     );
     assert_eq!(kind(&outcome.unwrap_err()), "incompatible");
     let _ = fs::remove_dir_all(&dir);

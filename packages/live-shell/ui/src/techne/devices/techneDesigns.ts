@@ -30,7 +30,7 @@ import {useAtlasHandle, useSuiteStanding} from '../../projections/atlas/AtlasPro
 import {turnAtlasTo} from '../../projections/atlas/places/placesHost'
 import {writeThroughOwner} from '../../inhabitants/ql/devices/ownerWrite'
 import {setFilters} from '../../inhabitants/knowledgeGraphFaceActions'
-import {CANVAS_DESIGN, GRAPH_DESIGN, JOURNEY_DESIGN, LENS_DESIGN, PALACE_DESIGN, designDevice, handsFor, heldFor, useHolds} from './designDevices'
+import {CANVAS_DESIGN, GRAPH_DESIGN, JOURNEY_DESIGN, LENS_DESIGN, LIGHT_DESIGN, PALACE_DESIGN, designDevice, handsFor, heldFor, useHolds} from './designDevices'
 import {SESSION_ACTS, palaceBinding, type PalaceWorld} from './palaceBinding'
 import {canvasBinding, journeyBinding, promotionState, subscribePromotion, type CanvasPromoter, type FrameReadings} from './frameBindings'
 import {relateSceneConstellation} from '../../../../../../desktop/cradle/src/techne/sceneConstellationRelation'
@@ -102,9 +102,6 @@ export function designsOn(holders: readonly string[]): string[] {
 
 /** The knowledge graph's writes: its armed setters, and the panel's own filter change for a coloured group. */
 const GRAPH_WRITES: GraphWrites = {setter: writeThroughOwner, patch: setFilters}
-
-/** Light's binding, carried as the Canvas's Light page (§17.4). */
-const LIGHT = lightBinding()
 
 /** The selections the graph's reach reads (§17.3 "Select a folder, a note or a Day"): the book's one selection, as the browser's Days and
  * Files rows set it (App.tsx centralSubject: its ref is the subject's Central-relative path). */
@@ -209,7 +206,9 @@ export function useTechneDesignBindings({graph, surface}: {graph: boolean; surfa
     const frame: FrameReadings = {state: hosted?.state ?? null, run: hosted?.run ?? null,
       window: session ? session.time_window ? {from: session.time_window.from, to: session.time_window.to} : null : undefined}
     const formOwners = formFocus ? kernelFormOwners(detectTransport(), formFocus.register) : null
-    const canvas = canvasCarryingLight(canvasBinding(frame, heldFor(CANVAS_DESIGN), PROMOTER, promotion), LIGHT)
+    // Light, carried as the Canvas's Light page: Technē's light trace over the board the Canvas reads, the bench's settings the view's.
+    const own = canvasBinding(frame, heldFor(CANVAS_DESIGN), PROMOTER, promotion)
+    const canvas = canvasCarryingLight(own, lightBinding(own.values, heldFor(LIGHT_DESIGN)))
     return {
       [PALACE_DESIGN]: palaceBinding(palace, heldFor(PALACE_DESIGN), SESSION_ACTS, palaceWorld),
       [CANVAS_DESIGN]: formOwners ? canvasCarryingForm(canvas, formFocus!.focus, heldFor(CANVAS_DESIGN), handsFor(CANVAS_DESIGN, FORM_LOCAL), formOwners, form)

@@ -67,6 +67,11 @@ pub enum GatewayWrite {
         require_workcell: Option<String>,
         #[serde(default)]
         at: Option<String>,
+        /// Where the words land while the recipient works (`--handling`):
+        /// `queue` waits for its next turn, `steer` reaches the turn that
+        /// runs. Absent, AIKit queues.
+        #[serde(default)]
+        handling: Option<String>,
     },
     /// Cross a Communique into obligation-bearing work (`aikit gateway
     /// delegate --communique C --work W --reason R`): Factory assigns custody
@@ -297,6 +302,15 @@ pub enum QlRead {
     /// body-constants`, `ql.m2-body-constants/v1`): Strike, Q factor,
     /// Agitation and Boundary strength, each fibre with the map's tattvas.
     BodyConstants,
+    /// Binding's engine over the cell a matrix makes of a hexagram (`ql
+    /// kernel m3-binding -`, `ql.m3-binding/v1`; O-I #684): the request
+    /// (`{hexagram, matrix, register, tension_gev_per_fm, coupling_scale_gev,
+    /// receipt?}`) on stdin. QL answers the cell's two codons with their coin
+    /// values and charges, the coupling at its scale, the string's stretch
+    /// and energy, and the M3 event behind the last motion. A read.
+    M3Binding {
+        request: Value,
+    },
     /// The MEF lens registry (`ql mef lenses`).
     MefLenses,
     /// The Context-Frame grammar's frames (`ql context-frame list`).
@@ -677,6 +691,14 @@ pub enum AikitRead {
         #[serde(default)]
         at: Option<String>,
     },
+    /// What the running gateway can keep (`aikit gateway protocol`): its
+    /// version and the protocol features it advertises — whether it keeps a
+    /// steer (`communique-handling`, ai-kit#566), so Messages' Input starts
+    /// where the gateway can land the words.
+    GatewayProtocol {
+        #[serde(default)]
+        at: Option<String>,
+    },
     /// The star prompt-commands the active composition arms (`aikit work
     /// continuity commands`).
     ContinuityCommands {
@@ -1002,6 +1024,7 @@ impl AikitRead {
             | Self::WikiShapeCompress { .. }
             | Self::WikiShapeTarget { .. }
             | Self::GatewayEcology { .. }
+            | Self::GatewayProtocol { .. }
             | Self::GatewayReplay { .. }
             | Self::SourceShow { .. }
             | Self::SourceList
@@ -1971,6 +1994,13 @@ fn ql_answer(request: &QlRead) -> Result<Reading, Error> {
             "ql.m2-body-constants/v1",
             READ_LIMIT,
         ),
+        QlRead::M3Binding { request } => (
+            "ql kernel m3-binding",
+            words(&["kernel", "m3-binding", "-", "--json"]),
+            Some(request),
+            "ql.m3-binding/v1",
+            READ_LIMIT,
+        ),
         QlRead::ShapeBind { request } => (
             "ql shape bind",
             words(&["shape", "bind", "-", "--json"]),
@@ -2544,6 +2574,12 @@ pub(crate) fn aikit_read_args(request: &AikitRead) -> (&'static str, Vec<OsStrin
             args.push("--json".into());
             ("aikit gateway ecology", args)
         }
+        AikitRead::GatewayProtocol { at } => {
+            let mut args = words(&["gateway", "protocol"]);
+            push_flag(&mut args, "--at", at.as_deref());
+            args.push("--json".into());
+            ("aikit gateway protocol", args)
+        }
         AikitRead::GatewayReplay {
             stream,
             after,
@@ -2717,6 +2753,19 @@ fn aikit_read_answer(request: &AikitRead, cwd: Option<&Path>) -> Result<Reading,
             }
             data
         }
+        // The gateway's protocol answer (gateway_runtime.rs GatewayResponse::Protocol): a gateway
+        // that predates advertisement names no features, and is read as advertising none.
+        AikitRead::GatewayProtocol { .. } => {
+            if data.get("type").and_then(Value::as_str) != Some("protocol")
+                || !data.get("gateway_version").is_some_and(Value::is_string)
+                || data
+                    .get("features")
+                    .is_some_and(|features| !features.is_array())
+            {
+                return Err(unexpected(route, "the gateway's protocol", &data));
+            }
+            data
+        }
         // The gateway's replay of the Stream asked for (`GatewayReplay`).
         AikitRead::GatewayReplay { stream, .. } => {
             if data.get("type").and_then(Value::as_str) != Some("replay")
@@ -2818,8 +2867,13 @@ pub fn gateway_write(request: &GatewayWrite, ground: Ground<'_>) -> Result<Writt
     gateway_written(request, ground).map_err(wire)
 }
 
-fn gateway_written(request: &GatewayWrite, ground: Ground<'_>) -> Result<Written, Error> {
-    let (route, mut args, input) = match request {
+/// The AIKit command a gateway write runs: its route words, its arguments
+/// and what goes on its stdin.
+fn gateway_call(
+    request: &GatewayWrite,
+    ground: &Ground<'_>,
+) -> (&'static str, Vec<OsString>, Option<Vec<u8>>) {
+    match request {
         GatewayWrite::Send {
             to,
             body,
@@ -2828,6 +2882,7 @@ fn gateway_written(request: &GatewayWrite, ground: Ground<'_>) -> Result<Written
             instance,
             require_workcell,
             at,
+            handling,
             ..
         } => {
             let mut args = words(&["gateway", "send", "--to"]);
@@ -2839,6 +2894,7 @@ fn gateway_written(request: &GatewayWrite, ground: Ground<'_>) -> Result<Written
             push_flag(&mut args, "--instance", instance.as_deref());
             push_flag(&mut args, "--require-workcell", require_workcell.as_deref());
             push_flag(&mut args, "--at", at.as_deref());
+            push_flag(&mut args, "--handling", handling.as_deref());
             ("aikit gateway send", args, Some(body.as_bytes().to_vec()))
         }
         GatewayWrite::Delegate {
@@ -2863,7 +2919,11 @@ fn gateway_written(request: &GatewayWrite, ground: Ground<'_>) -> Result<Written
             push_flag(&mut args, "--at", at.as_deref());
             ("aikit gateway delegate", args, None)
         }
-    };
+    }
+}
+
+fn gateway_written(request: &GatewayWrite, ground: Ground<'_>) -> Result<Written, Error> {
+    let (route, mut args, input) = gateway_call(request, &ground);
     args.push("--json".into());
     let mut call = Call::new(aikit(), route, args, GATEWAY_WRITE_LIMIT);
     call.input = input;
@@ -3537,6 +3597,43 @@ mod tests {
         args.iter()
             .map(|arg| arg.to_string_lossy().into_owned())
             .collect()
+    }
+
+    /// Where the words land rides the send as AIKit's own flag; a send that
+    /// names none leaves AIKit's default (queue) standing.
+    #[test]
+    fn a_send_carries_where_the_words_land_as_aikits_handling_flag() {
+        let ground = Ground {
+            cwd: None,
+            project_world: Some("project:O-I"),
+        };
+        let steer: GatewayWrite = serde_json::from_value(serde_json::json!({
+            "kind": "send", "project": "O-I", "to": "@anima", "body": "Skip the root.",
+            "handling": "steer"}))
+        .unwrap();
+        let (route, args, input) = gateway_call(&steer, &ground);
+        assert_eq!(route, "aikit gateway send");
+        assert_eq!(
+            spelled(&args),
+            [
+                "gateway",
+                "send",
+                "--to",
+                "@anima",
+                "--body-file",
+                "-",
+                "--project-world",
+                "project:O-I",
+                "--handling",
+                "steer"
+            ]
+        );
+        assert_eq!(input.as_deref(), Some(b"Skip the root.".as_slice()));
+        let plain: GatewayWrite = serde_json::from_value(serde_json::json!({
+            "kind": "send", "to": "@anima", "body": "hello"}))
+        .unwrap();
+        let (_, args, _) = gateway_call(&plain, &ground);
+        assert!(!spelled(&args).contains(&"--handling".to_owned()));
     }
 
     #[test]

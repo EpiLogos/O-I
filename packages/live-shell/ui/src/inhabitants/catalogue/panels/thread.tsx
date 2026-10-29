@@ -270,7 +270,8 @@ function read(p: ViewProps): Reading {
  * hold it yet, and the line that says the agent works. */
 function streamOf(p: ViewProps, r: Omit<Reading, 'items'>, rows: readonly Row[]): Item[] {
   const v = p.v, agent = r.me?.agent, quantize = strOf(v, 'quantize')
-  const sub = boolOf(v, 'heard') === true ? 'heard' : quantize !== undefined ? `heard at ${quantize}` : NONE
+  const heard = boolOf(v, 'heard')
+  const sub = heard === true ? 'heard' : quantize !== undefined ? `heard at ${quantize}` : heard === false ? 'not heard yet' : NONE
   const inline = (link: string | undefined) => {
     const lines = link ? r.sessions.find(s => s.id === link)?.thread : undefined
     // the parent's own instruction to the sub-agent is already said by the spawn row
@@ -286,7 +287,7 @@ function streamOf(p: ViewProps, r: Omit<Reading, 'items'>, rows: readonly Row[])
     const waits = items.some(it => it.k === 'proposal' && !it.answer)
     items.push({id: 'work', k: 'work', who: agent, text: what ? `${by} is running ${what}` : waits ? `${by} waits for your answer` : `${by} is working`})
   }
-  if (sent && unheld && queue) items.push({id: 'queued', k: 'queued', text: sent, sub: 'queued · runs as the next task'})
+  if (sent && unheld && queue) items.push({id: 'queued', k: 'queued', text: sent, sub: heard === true ? 'queued · heard' : 'queued · runs as the next task'})
   for (const t of keptThoughts(v, thoughtsOf(v) ?? [])) items.push({id: `th:${t.id}`, k: 'thought', who: t.producer, tool: t.anchor, text: t.text ?? t.passage ?? '', out: t.passage, life: t.life, subjects: t.subjects})
   return items
 }
@@ -354,7 +355,7 @@ const SAYS = {
   voice: 'On: speech turns into words. They land in the composer when you turn Voice off.',
   message: 'Type your words and press Enter. Input says where they land.',
   retry: 'Restart a stalled task from its last good step. It lights only when the session has stalled.',
-  composer: 'Type and press Enter. Input says where Enter sends.',
+  composer: 'Type and press Enter to send; Shift+Enter starts a new line, and inside a ``` block Enter does too. Input says where it lands.',
 }
 
 /** The head: the light reads the owner alone, hollow when it reports none; pressing it asks, unless the host stands it disabled. */
@@ -378,6 +379,17 @@ const send = (p: ViewProps, text: string) => {
   p.set('draft', '')
 }
 const placeholder = (agent: string | undefined) => (agent ? `Message ${agent}` : 'Message the agent')
+
+/** What Return does in the composer, as Buzz's composer has it (block/buzz desktop/src/features/messages/lib/useRichTextEditor.ts:251,
+ * 446-449, and its code-fence Enter, :39): Enter sends; Shift+Enter breaks the line; inside a code fence still open before the caret (an
+ * odd count of lines opening with ```) Enter breaks the line too, so a block of code is written whole before it is sent. */
+export function returnKey(draft: string, caret: number, shift: boolean): 'send' | 'break' {
+  if (shift) return 'break'
+  const fences = draft.slice(0, Math.max(0, caret)).split('\n').filter(line => line.trimStart().startsWith('```')).length
+  return fences % 2 === 1 ? 'break' : 'send'
+}
+/** The composer's height in lines: the draft's own, up to six. */
+const composerRows = (draft: string) => Math.min(6, Math.max(1, draft.split('\n').length))
 
 // ---------------------------------------------------------------- the well
 
@@ -544,7 +556,7 @@ const cardButton = (p: ViewProps, key: string, label: string, does: string) => {
 }
 
 function ThreadPane({p}: {p: ViewProps}) {
-  const v = p.v, r = read(p), composer = useRef<HTMLInputElement>(null)
+  const v = p.v, r = read(p), composer = useRef<HTMLTextAreaElement>(null)
   const items = r.items && visible(v, r.items), rows = strOf(v, 'toolRows'), inline = strOf(v, 'subagents') === 'inline'
   const parent = r.me?.parent ? r.sessions.find(s => s.id === r.me?.parent)?.name : undefined
   const chain = [parent, r.me?.name ?? NONE].filter(Boolean) as string[]
@@ -583,7 +595,7 @@ function ThreadPane({p}: {p: ViewProps}) {
           </div></div>
       }
       case 'steer': return bubble(it, <div className="th-steer" data-heard={it.sub === 'heard' || undefined}><span>{it.text || NONE}</span><small>steer · {it.sub}</small></div>)
-      case 'queued': return bubble(it, <div className="th-queued"><span>{it.text || NONE}</span><small>{it.sub}</small></div>)
+      case 'queued': return bubble(it, <div className="th-queued" data-heard={it.sub === 'queued · heard' || undefined}><span>{it.text || NONE}</span><small>{it.sub}</small></div>)
       case 'proposal': {
         const answer = it.answer as keyof typeof PROPOSAL_ANSWERS | undefined, writes = strOf(v, 'writes')
         return bubble(it, answer
@@ -631,10 +643,13 @@ function ThreadPane({p}: {p: ViewProps}) {
         : thought && kept?.length === 0 ? <div className="th-row th-row--tool"><span className="th-av th-av--tool" aria-hidden="true" /><p className="th-text">No thought in this filter.</p></div>
           : items.map(item)}</div>
     <div className="th-composer" data-listening={boolOf(v, 'voice') === true || undefined}>
-      {boolOf(v, 'voice') === true ? <Wave /> : <input ref={composer} aria-label="Message" placeholder={placeholder(r.me?.agent)} value={draft} disabled={!!sentStanding.disabled}
-        data-i={`Composer|${saysOf(SAYS.composer, sentStanding)}`}
+      {boolOf(v, 'voice') === true ? <Wave /> : <textarea ref={composer} aria-label="Message" placeholder={placeholder(r.me?.agent)} value={draft} disabled={!!sentStanding.disabled}
+        rows={composerRows(draft)} data-i={`Composer|${saysOf(SAYS.composer, sentStanding)}`}
         onChange={e => p.set('draft', e.target.value)}
-        onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); send(p, draft) } }} />}
+        onKeyDown={e => {
+          if (e.key !== 'Enter' || e.nativeEvent.isComposing) return
+          if (returnKey(draft, e.currentTarget.selectionStart ?? draft.length, e.shiftKey) === 'send') { e.preventDefault(); send(p, draft) }
+        }} />}
       <small>{input ?? NONE}</small>
     </div>
   </div>

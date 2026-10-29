@@ -37,7 +37,7 @@ export const PACKET_WIRING: DesignWiring = {
   writes: {
     takeOut: 'the item taken out (op encounter context edit, mutation remove; centralDeviceWrites.ts editPacket, ported from PreparedContextView.tsx:39)',
     clear: 'the packet emptied (op encounter context edit, mutation clear; PreparedContextView.tsx:40)',
-    answer: 'the Agent conversation\'s Send with exactly this packet (encounter/session.ts send, prompt-context with the reviewed context; PacketWidget.tsx Answer this)',
+    answer: 'the Agent conversation\'s Send with exactly this packet (encounter/session.ts send, prompt-context with the reviewed context; PacketWidget.tsx Answer this); while a document holds the packet, the Send first brings AIKit\'s prepared context to it (documentPacketContext.ts: op encounter context edit, remove and add), so it carries what this device shows',
   },
   local: {rowsPage: 'the page of the list this device shows'},
   refused: {
@@ -128,8 +128,9 @@ export function documentItemOf(item: PagePacketItem, at: number): Record<string,
 /** Where the document's packet is taken out and emptied: on the page, in the Flow's own Context packet (its ⋮ menu); the host never
  * writes into the page (DocumentFlowFace.tsx: the bridge is read only). */
 const ON_THE_PAGE = (document: DocumentPacket) => `The packet is the ${document.form} ${document.title || 'reached'}'s own: take an item out, or empty it, in the Flow — its Context packet (the ⋮ menu) — where To packet put it; the host never writes into the page.`
-/** Why Answer this cannot send the document's packet: the conversation's Send carries AIKit's prepared context, which does not hold it. */
-const NOT_PREPARED = (document: DocumentPacket) => `Answer this sends AIKit's prepared context, and the ${document.form}'s packet is not in it — missing op: the page's packet put into the prepared context (op encounter context edit, add) before the Send (O-I).`
+/** Why Answer this cannot send the document's packet now: the conversation's own refusal, said with how the packet goes — the Send first
+ * brings AIKit's prepared context to the document's packet (documentPacketContext.ts), so the agent reads what this device shows. */
+const NOT_NOW = (document: DocumentPacket, why: string) => `${why} Answer this puts the ${document.form}'s packet into AIKit's prepared context, then sends it with your question.`
 
 /** The Packet's readings (PACKET_WIRING). */
 export function packetValues(id: string, input: PacketInput): Values {
@@ -203,8 +204,21 @@ export function packetAnswerWhy(input: PacketInput): string | undefined {
 export function packetBinding(id: string, input: PacketInput, ports: PacketPorts): DesignBinding {
   const document = input.document ?? null
   if (document) {
-    const why = {takeOut: ON_THE_PAGE(document), clear: ON_THE_PAGE(document), answer: NOT_PREPARED(document)}
-    return pageBinding(id, PACKET_WIRING, packetValues(id, input), {}, why)
+    // The packet is the document's: taken out and emptied on the page; Answer this is the conversation's Send, which brings AIKit's
+    // prepared context to this packet before it reads it (documentPacketContext.ts documentPacketProvider).
+    const refusal = answerRefusal({companion: input.companion, bound: input.bound, reading: input.conversation?.reading,
+      draft: input.conversation?.draft ?? '', busy: !!input.conversation?.busy, items: document.packet.length})
+      ?? (input.conversation && ports.send ? null : 'The conversation is not observed.')
+    const why: Record<string, string> = {takeOut: ON_THE_PAGE(document), clear: ON_THE_PAGE(document)}
+    if (refusal) why.answer = NOT_NOW(document, refusal)
+    const acts: PageActs = {
+      answer: async value => {
+        if (value === false) return
+        if (refusal || !ports.send) throw new Error(NOT_NOW(document, refusal ?? 'The conversation is not observed.'))
+        await ports.send()
+      },
+    }
+    return pageBinding(id, PACKET_WIRING, packetValues(id, input), acts, why)
   }
   const context = input.reading?.context
   const acts: PageActs = {

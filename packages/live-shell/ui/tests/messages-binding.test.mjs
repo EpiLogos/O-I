@@ -49,6 +49,7 @@ const bind = await import('../src/agent/devices/designBindings.ts')
 const msg = await import('../src/agent/devices/messagesBinding.ts')
 const conv = await import('../src/agent/devices/useConversationAnswer.ts')
 const {design} = await import('../src/inhabitants/catalogue/panels/ai-kit__messages.tsx')
+const threadPanel = await import('../src/inhabitants/catalogue/panels/thread.tsx')
 
 family.resetFamilyManifestsForTest()
 loadAgentShellFamilies()
@@ -142,22 +143,26 @@ test('(b) every key the design reads is an owner reading, absent with its missin
   for (const [key, kind] of Object.entries(classes)) assert.ok(kind, `${key}: classified`)
   assert.deepEqual(Object.entries(classes).filter(([, kind]) => kind === 'reading').map(([key]) => key).sort(), ['agents', 'gateway', 'groups', 'worlds'])
   for (const [key, kind] of Object.entries(classes)) if (kind === 'absent') assert.match(binding.standing[key].disabled, /missing op:/, `${key}: names what it waits for`)
-  // Absent: the readings no owner reports, and the conversation's Input and Voice — controls with no value, disabled with the send route.
+  // Absent: the readings no owner reports, and the conversation's Voice — a control with no value, disabled with the send route.
+  // REPLACED (lane AC, Buzz): Input is the hand's — where Send lands, carried with the words as AIKit's handling.
   assert.deepEqual(Object.entries(classes).filter(([, kind]) => kind === 'absent').map(([key]) => key).sort(),
-    ['conv.age', 'conv.input', 'conv.light', 'conv.voice', 'conv.writes', 'skillsets', 'types'])
+    ['conv.age', 'conv.light', 'conv.voice', 'conv.writes', 'skillsets', 'types'])
   // The proposal is Central's reading once Make wrote one; Change is the hand's (it takes the card back to its fields).
-  for (const key of ['open', 'show', 'order', 'search', 'conv.draft', 'conv.toolRows', 'conv.subagents', 'conv.messages', 'new.for', 'new.type', 'new.world', 'proposal']) assert.equal(classes[key], 'local', key)
+  for (const key of ['open', 'show', 'order', 'search', 'conv.draft', 'conv.toolRows', 'conv.subagents', 'conv.messages', 'conv.input', 'new.for', 'new.type', 'new.world', 'proposal']) assert.equal(classes[key], 'local', key)
   assert.deepEqual(JSON.parse(binding.values.worlds), ['project:O-I', 'control:root'], 'the World refs AIKit\'s population names')
   assert.equal(binding.values['new.world'], 'project:O-I', 'Works in starts on the project\'s world')
   assert.match(msg.messagesBinding({population: answered(REAL.population), gateway: ANSWERED, holds: bind.chainHolds()}).standing.groups.disabled, /central\.agent-set\.list/,
     'unread, the groups say which listing they wait for')
 })
 
-test('(c) the conversation\'s Input, Voice and session acts refused with what they lack; with no carrier Send, a drop, Make, Accept and Discard say so', async () => {
+test('(c) the conversation\'s Voice and session acts refused with what they lack; with no carrier Send, a drop, Make, Accept and Discard say so', async () => {
   bind.resetHolds()
   const binding = msg.messagesBinding({population: answered(REAL.population), gateway: ANSWERED, conversation, holds: bind.chainHolds()})
   // REPLACED (lane W3): Send and a drop onto a track write through AIKit's gateway (w3-factory-bindings.test.mjs); with no carrier they say so.
-  for (const [key, op] of [['conv.input', /steer or queue/], ['conv.voice', /dictation into Messages' composer/],
+  // REPLACED (lane AC, Buzz): Input stands, starting on Queue — where AIKit lands words that name no handling.
+  assert.equal(binding.standing['conv.input'], undefined)
+  assert.equal(binding.values['conv.input'], 'queue')
+  for (const [key, op] of [['conv.voice', /dictation into Messages' composer/],
     ['conv.approve', /a session for the Position's conversation/], ['conv.retry', /a session for the Position's conversation/], ['conv.hardStop', /a session/]]) {
     assert.match(binding.standing[key].disabled, op, key)
     assert.equal(binding.writes(key), true)
@@ -316,6 +321,58 @@ test('the design draws on its binding in its tile and its Full — no NaN, no un
   assert.match(draw(stalled, 'full'), /class="ms-face" data-state="stalled"/, 'the stalled agent\'s face')
   host.resetHost()
   bind.resetHolds()
+})
+
+// ---- Buzz into Messages (lane AC; O-I campaign-evidence/2026-10-07-buzz-grok-agent-messaging-re/CONTRACT.md Behaviours 2, 3 and 5) ------
+test('Input says where your words land, Send carries it as AIKit\'s handling, and the line you sent stands in the conversation as it landed', async () => {
+  bind.resetHolds()
+  const sent = []
+  const gateway = async request => { sent.push(request); return {communique: {schema: 'aikit.communique/v1', communique_ref: 'communique:9', handling: request.handling}} }
+  const input = {population: answered(REAL.population), gateway: ANSWERED, conversation, project: 'O-I', holds: bind.chainHolds()}
+  msg.messagesBinding(input, {gateway}).local.open(GUARDIAN)
+  let binding = msg.messagesBinding({...input, holds: bind.chainHolds()}, {gateway})
+  await binding.write([{key: 'conv.sent', value: 'Run the tests next.'}])
+  assert.deepEqual(sent[0], {kind: 'send', project: 'O-I', to: GUARDIAN, body: 'Run the tests next.'}, 'Queue: AIKit\'s default, so no handling is named')
+  binding = msg.messagesBinding({...input, holds: bind.chainHolds()}, {gateway})
+  assert.equal(binding.values['conv.sent'], 'Run the tests next.', 'the line you sent stands under the open agent')
+  const full = draw(binding, 'full')
+  assert.ok(full.includes('Run the tests next.') && full.includes('queued · runs as the next task'), 'drawn as queued for the next task')
+  binding.local['conv.input']('steer')
+  binding = msg.messagesBinding({...input, holds: bind.chainHolds()}, {gateway})
+  assert.equal(binding.values['conv.input'], 'steer')
+  await binding.write([{key: 'conv.sent', value: 'Skip the cradle root.'}])
+  assert.deepEqual(sent[1], {kind: 'send', project: 'O-I', to: GUARDIAN, body: 'Skip the cradle root.', handling: 'steer'}, 'Steer rides the send')
+  binding = msg.messagesBinding({...input, holds: bind.chainHolds()}, {gateway})
+  assert.match(draw(binding, 'full'), /Skip the cradle root\.[\s\S]*steer · /, 'drawn as a steer line into the turn that runs')
+  // The line belongs to the agent it went to: another agent's conversation does not carry it.
+  binding.local.open('central:position:project:O-I:oi-root-agency')
+  assert.equal(msg.messagesValues({...input, holds: bind.chainHolds()})['conv.sent'], undefined)
+  // A refused send holds no line.
+  bind.resetHolds()
+  msg.messagesBinding(input, {gateway}).local.open(GUARDIAN)
+  const refusing = async () => { throw Error('aikit gateway send: The gateway on this Workcell does not advertise `communique-handling`') }
+  await assert.rejects(() => msg.messagesBinding({...input, holds: bind.chainHolds()}, {gateway: refusing}).write([{key: 'conv.sent', value: 'x'}]), /communique-handling/)
+  assert.equal(msg.messagesValues({...input, holds: bind.chainHolds()})['conv.sent'], undefined)
+  assert.equal(msg.handlingOf('queue'), undefined)
+  assert.equal(msg.handlingOf('steer'), 'steer')
+  bind.resetHolds()
+  host.resetHost()
+})
+
+test('Return in the conversation\'s composer: Enter sends, Shift+Enter breaks the line, and inside an open ``` block Enter breaks it too', () => {
+  assert.equal(threadPanel.returnKey('Run the tests', 13, false), 'send')
+  assert.equal(threadPanel.returnKey('Run the tests', 13, true), 'break')
+  const fenced = 'Use this:\n```ts\nconst x = 1'
+  assert.equal(threadPanel.returnKey(fenced, fenced.length, false), 'break', 'an open fence keeps the block whole')
+  const closed = `${fenced}\n\`\`\``
+  assert.equal(threadPanel.returnKey(closed, closed.length, false), 'send', 'a closed fence sends')
+  assert.equal(threadPanel.returnKey(closed, 'Use this:'.length, false), 'send', 'the caret before the fence sends')
+  bind.resetHolds()
+  msg.messagesBinding({population: answered(REAL.population), gateway: ANSWERED, conversation, holds: bind.chainHolds()}, {gateway: async () => ({})}).local.open(GUARDIAN)
+  const pane = draw(msg.messagesBinding({population: answered(REAL.population), gateway: ANSWERED, conversation, holds: bind.chainHolds()}, {gateway: async () => ({})}), 'full')
+  assert.match(pane, /<textarea[^>]*aria-label="Message"[^>]*rows="1"/, 'the Full\'s composer takes lines')
+  bind.resetHolds()
+  host.resetHost()
 })
 
 test('the bindings read no design default or fixture, and write no raw colour', () => {

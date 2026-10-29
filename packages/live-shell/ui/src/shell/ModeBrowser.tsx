@@ -480,7 +480,7 @@ function WorldsRows({needle}: {needle: string}) {
 export async function addFolderFromBrowser(choose: () => Promise<string | null>, open: (request: SettingsRequest) => void): Promise<string | null> {
   try {
     const folder = await choose()
-    if (folder) open(setupRequest('Back to work', folder))
+    if (folder) open(setupRequest(undefined, folder))
     return null
   } catch (cause) { return cause instanceof Error ? cause.message : String(cause) }
 }

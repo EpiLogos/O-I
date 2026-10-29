@@ -631,24 +631,21 @@ test('the Canvas on the frame\'s research reading: its cards, lines (the selecte
   assert.match(elsewhere.standing.mode.disabled, /timeline lens/, 'another lens: its controls say why')
 })
 
-test('Light: no reachable owner, so no reading and every control refused naming the operation — on the Canvas that carries its page', async () => {
-  const binding = effects.lightBinding()
-  assert.deepEqual(binding.values, {})
-  for (const key of Object.keys(effects.LIGHT_REFUSE)) {
-    assert.match(binding.standing[key].disabled, /LightBox \(optics\/raytracer\.ts traceRays\)/, key)
-    await assert.rejects(() => binding.write([{key, value: 1}]), /missing op/)
-  }
-  // REPLACED (#725): Light stood as a device of its own after the Canvas; it is the Canvas's Light page now (§17.4 "The Light page", which
-  // took in §17.10's device), so the same refusals stand on the Canvas's binding, which carries Light's (effectBindings.ts canvasCarryingLight),
-  // and the Canvas's own keys stay the Canvas's.
+// REPLACED (#684): "Light: no reachable owner, so no reading and every control refused naming the operation" — Light's engine is Technē's
+// light trace over the board the Canvas reads (lightTrace.ts; tests/techne-light-trace.test.mjs gives the design's numbers), its settings the
+// view's own. The Canvas still carries Light's page, and its own keys stay the Canvas's.
+test('Light: Technē\'s trace over the board the Canvas reads, its settings in the view\'s hands — on the Canvas that carries its page', async () => {
   const own = frameB.canvasBinding(frameOf('canvas', {chrome: CANVAS_CHROME}))
+  const binding = effects.lightBinding(own.values)
+  assert.deepEqual(binding.values, effects.LIGHT_STARTS, 'the starting values, the light off')
+  for (const key of effects.LIGHT_LOCAL) assert.equal(typeof binding.local[key], 'function', key)
+  assert.match(binding.standing['sensor.power'].disabled, /Turn the light on/)
   const canvas = effects.canvasCarryingLight(own, binding)
-  for (const key of Object.keys(effects.LIGHT_REFUSE)) {
-    assert.match(canvas.standing[key].disabled, /LightBox \(optics\/raytracer\.ts traceRays\)/, `canvas ${key}`)
-    assert.equal(canvas.writes(key), true, `canvas ${key}: the press reaches Light's refusal`)
-    await assert.rejects(() => canvas.write([{key, value: 1}]), /missing op/)
+  for (const key of effects.LIGHT_LOCAL) {
+    assert.equal(typeof canvas.local[key], 'function', `canvas ${key}: the press is held by the view`)
+    assert.equal(canvas.writes(key), false, `canvas ${key}: nothing is sent to an owner`)
   }
-  assert.match(canvas.standing['sensor.power'].disabled, /LightBox/, 'the sensors\' reading is Light\'s, absent with its reason')
+  assert.match(canvas.standing['sensor.power'].disabled, /Turn the light on/, 'the sensors\' reading is Light\'s, absent with its reason')
   for (const key of ['items', 'lines', 'mode']) assert.deepEqual([canvas.values[key], canvas.standing[key]], [own.values[key], own.standing?.[key]], `${key} stays the Canvas's own`)
   assert.equal(canvas.writes('mode'), own.writes('mode'), 'a Canvas control still writes the Canvas\'s way')
 })
@@ -753,7 +750,7 @@ test('(b) every key each design reads is an owner reading, absent with a reason,
     ['journey', 'techne__journey.tsx', frameB.journeyBinding(frame('journey')), key => frameB.journeyAbsent(frame('journey'), key)],
     // REPLACED (#725): the Timeline's and Light's designs were retired (§17.5, §17.4); the Canvas is classified on the binding that carries
     // its Light page (canvasCarryingLight), so Light's keys are checked where Light's design checked them.
-    ['canvas', 'techne__canvas.tsx', effects.canvasCarryingLight(frameB.canvasBinding(frame('canvas')), effects.lightBinding()), key => frameB.canvasAbsent(frame('canvas'), key)],
+    ['canvas', 'techne__canvas.tsx', effects.canvasCarryingLight(frameB.canvasBinding(frame('canvas')), effects.lightBinding(frameB.canvasBinding(frame('canvas')).values)), key => frameB.canvasAbsent(frame('canvas'), key)],
     ['lens', 'techne__lens.tsx', effects.lensBinding(), effects.lensAbsent],
   ]
   const summary = {}
@@ -773,7 +770,8 @@ test('(b) every key each design reads is an owner reading, absent with a reason,
       if (name === 'canvas' && CANVAS_WAITING.includes(key)) continue
       if (name.startsWith('graph') && GRAPH_WAITING.includes(key)) continue
       const carried = name === 'canvas' && /^(light|tx)\./.test(key)
-      if (carried) assert.ok(binding.standing?.[key]?.disabled && binding.writes?.(key), `canvas: the Light page's ${key} stands refused on the Canvas, Light's refusal`)
+      // REPLACED (#684): "the Light page's key stands refused on the Canvas, Light's refusal" — the bench's settings are the view's own.
+      if (carried) assert.ok(binding.local && key in binding.local && !binding.writes?.(key), `canvas: the Light page's ${key} is held by the view on the Canvas`)
       if (carried) continue
       const local = binding.local && key in binding.local
       const goes = binding.writes?.(key) === true
@@ -789,8 +787,10 @@ test('(b) every key each design reads is an owner reading, absent with a reason,
   // reads them (its own test above), and Light, carried by the Canvas, reads none of its own still: none of the Light page's keys is a reading.
   assert.ok(summary.palace.reading >= 20 && summary.graph.reading >= 16 && summary.canvas.reading >= 14 && summary.journey.reading >= 30, JSON.stringify(summary))
   assert.equal(summary.lens.reading, 0)
-  const lightPage = effects.canvasCarryingLight(frameB.canvasBinding(frame('canvas')), effects.lightBinding())
-  assert.deepEqual(effects.LIGHT_PAGE_KEYS.filter(key => key in lightPage.values), [], 'the Light page reads nothing: its engine is not in this candidate')
+  // REPLACED (#684): "the Light page reads nothing: its engine is not in this candidate" — the Light page's settings stand at their
+  // starting values in the view's hands, and its sensors read once the light is on over a source (tests/techne-light-trace.test.mjs).
+  const lightPage = effects.canvasCarryingLight(frameB.canvasBinding(frame('canvas')), effects.lightBinding(frameB.canvasBinding(frame('canvas')).values))
+  assert.deepEqual(effects.LIGHT_PAGE_KEYS.filter(key => key in lightPage.values), effects.LIGHT_LOCAL.filter(key => key in effects.LIGHT_STARTS), 'the settings, never a sensor reading while the light is off')
   console.log('key classification', JSON.stringify(summary))
   session.resetPalaceSession()
 })
@@ -808,8 +808,9 @@ test('the designs draw on their bindings in every view and page — no NaN, no u
     [DESIGNS.journey, frameB.journeyBinding(frameOf('journey', {research: null})), /Nocturne|Fine, irregular stippling|Language/, [], []],
     // REPLACED (#725): the Timeline's and Light's own drawings — both designs retired (§17.5, §17.4). Light's refusal is drawn on the
     // Canvas's Light page, on the binding that carries it.
-    [DESIGNS.canvas, effects.canvasCarryingLight(frameB.canvasBinding(frameOf('canvas', {chrome: CANVAS_CHROME})), effects.lightBinding()), /Which centre speaks first|Sacral|Lower three/,
-      ['A frame of the board', '84'], [frameB.CANVAS_REFUSE.find, effects.LIGHT_REFUSE['light.bounces']]], // REPLACED (#742): Promote reaches its owner; Find stays refused
+    // REPLACED (#684): Light's refusal drawn on the Light page — Light reads with Technē's trace; its reason while off is drawn instead.
+    [DESIGNS.canvas, effects.canvasCarryingLight(frameB.canvasBinding(frameOf('canvas', {chrome: CANVAS_CHROME})), effects.lightBinding(frameB.canvasBinding(frameOf('canvas', {chrome: CANVAS_CHROME})).values)), /Which centre speaks first|Sacral|Lower three/,
+      ['A frame of the board', '84'], [frameB.CANVAS_REFUSE.find]], // REPLACED (#742): Promote reaches its owner; Find stays refused
     [DESIGNS.lens, effects.lensBinding(), /l5-techne-instrument-constellation|registry-disclosure|Fourfold-Zero/, [], [effects.LENS_REFUSE['lens.mode']]],
   ]
   for (const [design, binding, fixture, shows, reasons] of cases) {

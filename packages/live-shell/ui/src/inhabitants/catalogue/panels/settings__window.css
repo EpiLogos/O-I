@@ -6,6 +6,9 @@
 .st-top > b { font-size: 12px; font-weight: 600; }
 .st-search { width: 260px; }
 .st-search .dp-cell { align-items: stretch; }
+/* Search follows what you type; Esc clears it, so the field keeps the kit's text field's face, not the system's search well. */
+.st-search input[type="search"] { -webkit-appearance: none; appearance: none; border-radius: 0; }
+.st-search input[type="search"]::-webkit-search-cancel-button, .st-search input[type="search"]::-webkit-search-decoration { -webkit-appearance: none; display: none; }
 .st-source { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; color: var(--text-dim, #a2a7ad); font-size: 10.5px; white-space: nowrap; }
 .st-source em { font-style: normal; color: var(--dp-on); }
 .st-unread { font-size: 10.5px; white-space: nowrap; }

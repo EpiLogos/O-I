@@ -82,6 +82,9 @@ export interface AgentSessionTrack {
   /** The register the session was read under (agent/worldScope.ts): '' your world's root register, else the project's name. Its own
    * readings (settings, task, thread) are asked there. Absent on a track no world-wide reading placed. */
   project?: string
+  /** On a group track: the Central agent set its SessionSpace names as the set it runs (AIKit's `agent_set` tie on the space's record,
+   * aikit.session-space-application/v1; O-I ticket 684). Absent where the space names none. */
+  agentSet?: {ref: string; revision: string | null}
 }
 
 /** One row of an `agency_read` reading (desktop/cradle agencyTypes.ts:117). */
@@ -323,6 +326,15 @@ export function trackKey(track: Pick<AgentSessionTrack, 'spaceRef' | 'sessionRef
 const GROUP_DISCLOSURE =
   'agency_read discloses no parent linkage: this SessionSpace is the group and every session in it sits at depth 1 beneath it. Deeper subagent nesting awaits parent linkage in the native reading.'
 
+/** The Central agent set a space's record names as the set it runs (AIKit's `agent_set` tie), from the first row that carries one. */
+function agentSetOf(rows: readonly AgencyRowLike[]): {ref: string; revision: string | null} | undefined {
+  for (const row of rows) {
+    const tie = row.raw && typeof row.raw === 'object' ? (row.raw as {agent_set?: {agent_set_ref?: unknown; revision?: unknown}}).agent_set : undefined
+    if (tie && typeof tie.agent_set_ref === 'string' && tie.agent_set_ref) return {ref: tie.agent_set_ref, revision: typeof tie.revision === 'string' ? tie.revision : null}
+  }
+  return undefined
+}
+
 /** Build the session tracks from an `agency_read` row set. Each space becomes
  * one group track (the closest disclosed thing to a lead); its sessions are
  * members at depth 1. Roster entries name the agent and carry acceptance.
@@ -349,6 +361,7 @@ export function buildTracks(
   const tracks: AgentSessionTrack[] = []
   for (const [spaceRef, space] of bySpace) {
     const memberRefs = space.rows.map(row => row.sessionRef)
+    const agentSet = agentSetOf(space.rows)
     tracks.push({
       sessionRef: spaceRef,
       purpose: space.label,
@@ -367,6 +380,7 @@ export function buildTracks(
       budget: {used: null, max: null},
       disclosure: GROUP_DISCLOSURE,
       ...(typeof space.rows[0]?.project === 'string' ? {project: space.rows[0].project} : {}),
+      ...(agentSet ? {agentSet} : {}),
     })
     for (const row of space.rows) {
       const agentRef = typeof row.agentRef === 'string' && row.agentRef ? row.agentRef : null

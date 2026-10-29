@@ -17,8 +17,10 @@ export interface FlowInstance {
   location: CentralLocation;
   doc: QlDoc;
 }
-export async function readFlowInstance(transport: KernelTransportStatus, location: CentralLocation): Promise<FlowInstance> {
-  const reading = await readFile(transport, location);
+/** A Flow read through Central's file owner. `fresh` asks the owner again whatever the window holds (readFile's own flag): the read an
+ * explicit Re-read makes, never an ordinary open (O-I #820). */
+export async function readFlowInstance(transport: KernelTransportStatus, location: CentralLocation, fresh = false): Promise<FlowInstance> {
+  const reading = await readFile(transport, location, fresh);
   return { html: reading.content, revision: reading.revision, location, doc: parseInstance(reading.content) };
 }
 export type InstanceWrite = FileMutation;

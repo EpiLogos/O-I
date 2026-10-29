@@ -82,3 +82,14 @@ export function outcomeLabel(reading: SaveRouterReading | undefined): string | n
 export function documentStrip(reading: DocumentStripReading): DocumentStripReading {
   return reading
 }
+
+/** How often a Flow face asks its form until the form first answers (that answer is the baseline), and after. */
+export const FLOW_FIRST_READ_MS = 250
+export const FLOW_DRAFT_POLL_MS = 2500
+
+/** What a Flow's save compares the form against: the baseline taken when the form first answered (its own boot writes are
+ * the document's), or, before it has answered, the owner's page as read. Never the form's current text: that would make
+ * every edit read as unchanged and leave it unsaved. */
+export function flowSaveBaseline(baseline: string | undefined, ownerDoc: unknown): string {
+  return baseline ?? JSON.stringify(ownerDoc)
+}

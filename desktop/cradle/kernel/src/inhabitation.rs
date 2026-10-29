@@ -53,6 +53,16 @@ pub enum Request {
         position: String,
         with: String,
     },
+    /// Whether one Communique was heard (`aikit gateway heard C`): its
+    /// delivery standing read by its ref — held, pending, delivered or
+    /// escalated, when and to which generation — never its words. The
+    /// desk sent it and occupies no Position, so it reads the standing a
+    /// sender may know, not the record only its recipient retrieves.
+    Communique {
+        #[serde(default)]
+        project: Option<String>,
+        communique: String,
+    },
     /// The nested prepared-context basis for one Position.
     Refocus {
         #[serde(default)]
@@ -68,7 +78,8 @@ impl Request {
             Request::Population { project }
             | Request::Whoami { project, .. }
             | Request::Refocus { project, .. }
-            | Request::Conversation { project, .. } => project.as_deref(),
+            | Request::Conversation { project, .. }
+            | Request::Communique { project, .. } => project.as_deref(),
         }
     }
     /// The schema the owner must answer with.
@@ -80,6 +91,7 @@ impl Request {
             // The conversation reading carries no schema of its own: its
             // records are `aikit.communique/v1` (checked record by record).
             Request::Conversation { .. } => "aikit.communique/v1",
+            Request::Communique { .. } => "aikit.communique-heard/v1",
         }
     }
     /// The owner command in plain words — the `source` an absence names.
@@ -89,6 +101,7 @@ impl Request {
             Request::Whoami { .. } => "aikit whoami",
             Request::Refocus { .. } => "aikit refocus",
             Request::Conversation { .. } => "aikit gateway conversation",
+            Request::Communique { .. } => "aikit gateway heard",
         }
     }
 }
@@ -151,6 +164,9 @@ pub fn aikit_args(
             if let Some(world) = project_world_ref {
                 args.extend(["--project-world".into(), world.into()]);
             }
+        }
+        Request::Communique { communique, .. } => {
+            args.extend(["gateway".into(), "heard".into(), communique.into()]);
         }
     }
     args.push("--json".into());
@@ -470,6 +486,26 @@ mod tests {
         )
         .is_err());
         assert!(conversation_reading(serde_json::json!({"positions": []}), "s").is_err());
+    }
+
+    /// O-I #741/#820: whether the agent heard the line you sent is the desk read of one Communique by its ref (`aikit gateway
+    /// heard C`), its standing never its words, and the answer must be AIKit's heard reading.
+    #[test]
+    fn the_heard_read_names_one_communique_by_its_ref() {
+        let request: Request = serde_json::from_value(serde_json::json!({"kind": "communique", "project": "O-I", "communique": "aikit:communique:7f3a"})).unwrap();
+        assert_eq!(
+            words(aikit_args(&request, Some("project:O-I"), true)),
+            [
+                "aikit",
+                "gateway",
+                "heard",
+                "aikit:communique:7f3a",
+                "--json"
+            ]
+        );
+        assert_eq!(request.source(), "aikit gateway heard");
+        assert_eq!(request.schema(), "aikit.communique-heard/v1");
+        assert_eq!(request.project(), Some("O-I"));
     }
 
     #[test]

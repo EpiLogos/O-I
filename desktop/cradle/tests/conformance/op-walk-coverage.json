@@ -1014,7 +1014,7 @@
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
-      "reason": "Kernel-direct only: tests/shell_owner_routes.rs against fake owners (Quaternal Logic's kernel m1, scene compose|world, kernel ledger|coverage|apply, techne reading, shape bind (O-I #742: a drafted constellation's shape binding), mef lenses, context-frame list|read (read: QL-MEF#344), wiki living-plan (QL-MEF#346), wiki refract (QL-MEF#350), service capabilities, vak locate|context, nara hours and kernel body-constants (O-I #745: the Sky's rulers at a place, M2's body constants by fibre); with real QL answers as fixtures); no directly attributable executed native walk is recorded here for ql_read; retain explicit operation-specific coverage debt until its owner supplies a receipt."
+      "reason": "Kernel-direct only: tests/shell_owner_routes.rs against fake owners (Quaternal Logic's kernel m1, scene compose|world, kernel ledger|coverage|apply, techne reading, shape bind (O-I #742: a drafted constellation's shape binding), mef lenses, context-frame list|read (read: QL-MEF#344), wiki living-plan (QL-MEF#346), wiki refract (QL-MEF#350), service capabilities, vak locate|context, nara hours and kernel body-constants (O-I #745: the Sky's rulers at a place, M2's body constants by fibre), kernel m3-binding (O-I #684: Binding's engine over a cell); with real QL answers as fixtures); no directly attributable executed native walk is recorded here for ql_read; retain explicit operation-specific coverage debt until its owner supplies a receipt."
     },
     {
       "op": "seat_write",

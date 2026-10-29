@@ -38,7 +38,9 @@ export type SettingsRequest = {
   /** Changes on every contextual opening, even when the identity is unchanged. */
   requestId: string
   scope: ScopeAddress
-  returnLabel: string
+  /** The return this opening names (a contextual entry's, e.g. "Agent setup"); absent, the way back names the work the frame stands in
+   * (host.ts setSettingsReturnLabel). */
+  returnLabel?: string
 } & ({ setting_ref: string; page?: never } | { page: 'machines' | 'automations' | 'setup'; setting_ref?: never
   /** Setup's Projects step opened for this folder (the browser's Work place: Add folder…, manual §10.11). */
   folder?: string })

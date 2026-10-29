@@ -113,6 +113,8 @@ All 50 entries below have an explicit frontend disposition. This census covers c
 
 ## Retained actions and working controls
 
+**29 Oct 2026 (#758, #739 gap 19).** The components this table names (HarnessPreferences, CredentialPreferences, CredentialConnection, HarnessInstallation, AppearancePreferences, OpeningPreferences, ProfilePreferences, ProductPreferences) retired at `9dae5668d` into the catalogue design `settings:window` (`catalogue/panels/settings__window.tsx`), drawn on the window's engine (`settings/SettingsWorkspace.tsx`, `windowValues.ts`, `windowPages.ts`). Each control of the window before its design, its place now, or the manual line that drops it and why: `packages/live-shell/ui/tests/settings-window-coverage.test.mjs`. The theme and the chat default are rows changed through Review changes… (#744); Search follows what you type and Enter opens the result marked; the way back names the mode the frame stands in.
+
 | Native identity / operation | Purpose / candidate placement | Current Cradle / read-write-action interface | Timing, failure and wiring |
 |---|---|---|---|
 | oi:cradle:chat.default-provider | Default for new conversations → HarnessPreferences | HarnessesSection; existing HarnessSource read/holdDefault/discardDefault and effectiveChatDefault | New chats only; configured choice/effective fallback/current chat are distinct; native ack + readback; binding pending |

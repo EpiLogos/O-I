@@ -173,7 +173,12 @@ export function fieldSnapshot(client: Client) {
     my_contribution_receipts: rows(db.myContributionReceipt).map((row: any) => ({ contribution_ref: row.contributionRef, ingress_ref: row.ingressRef, field_ref: row.fieldRef, state: row.state })),
     owner_pending_contributions: rows(db.ownerPendingContribution).map((row: any) => ({ ingress_ref: row.ingressRef, field_ref: row.fieldRef, contribution_ref: row.claimedContributionRef, contributor_participant_ref: row.contributorParticipantRef, received_at_micros: String(row.receivedAtMicros), payload_fingerprint: row.payloadFingerprint, contract: parse(row.contractJson) })),
     my_watches: rows(db.myWatch).map((row: any) => ({ watch_ref: row.watchRef, field_ref: row.fieldRef, target_kind: row.targetKind, target_ref: row.targetRef, state: row.state })),
-    my_contacts: rows(db.myContact).map((row: any) => ({ contact_ref: row.contactRef, field_ref: row.fieldRef, initiator_participant_ref: row.initiatorParticipantRef, recipient_participant_ref: row.recipientParticipantRef, state: row.state ?? row.decision ?? null })),
+    my_contacts: rows(db.myContact).map((row: any) => {
+      // A message (field.ts `message`) is a Contact request whose requested scope carries the passage: the caller's own, initiator or recipient.
+      const scope = parse(row.requestedScopeJson);
+      return { contact_ref: row.contactRef, field_ref: row.fieldRef, initiator_participant_ref: row.initiatorParticipantRef, recipient_participant_ref: row.recipientParticipantRef, state: row.state ?? row.decision ?? null,
+        ...(typeof row.purpose === 'string' ? { purpose: row.purpose } : {}), ...(scope?.kind === 'message' && scope.message ? { message: scope.message } : {}) };
+    }),
     stages: rows(db.sharedStage).map(stageReading),
     my_stage_follows: rows(db.myStageFollow).map((row: any) => ({ stage_ref: row.stageRef, field_ref: row.fieldRef, follower_participant_ref: row.followerParticipantRef, followed_at_revision: Number(row.followedAtRevision) })),
     presence: rows(db.fieldPresence).map((row: any) => ({ field_ref: row.fieldRef, participant_ref: row.participantRef, state: row.state, updated_at_micros: String(row.updatedAtMicros) })),

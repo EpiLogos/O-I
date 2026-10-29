@@ -19,7 +19,7 @@ import './shell/modeSurface.css'
 import { useSetSummary, useShellConfig } from './shell/useSet'
 import { useSetDocument } from './shell/document'
 import { getPanels, type PanelContext } from './shell/panels'
-import { configureSettingsHost, openSettings, useSettingsHost } from './settings/host'
+import { configureSettingsHost, openSettings, returnToMode, setSettingsReturnLabel, useSettingsHost } from './settings/host'
 import {createNativeContentActions, readNativeExpressionsContent} from './shell/nativeContent'
 import type {NativeCompositionViewSource} from './shell/compositionViews'
 import {useWorldTemporalReading, type WorldTimelineView} from './projections/useWorldTemporalReading'
@@ -282,6 +282,8 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
     requestAnimationFrame(() => settingsOrigin.current?.focus())
   }, [])
   useEffect(() => { configureSettingsHost(settingsHost.adapter, returnFromSettings) }, [settingsHost.adapter, returnFromSettings])
+  // Settings' way back names the work it returns to: the mode the frame stands in (manual §10.10; #739 gap 19).
+  useEffect(() => { setSettingsReturnLabel(returnToMode(frameMode)) }, [frameMode])
   useEffect(() => {
     if (!settingsHost.request) return
     if (!settingsPresented) settingsOrigin.current = document.activeElement instanceof HTMLElement ? document.activeElement : null

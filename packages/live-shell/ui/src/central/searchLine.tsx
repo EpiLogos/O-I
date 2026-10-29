@@ -15,7 +15,8 @@
 //   - a Flow takes a passage through Central's Flow append (central/devices/centralDeviceWrites.ts appendFlowEntry, the Flow's own
 //     revision-checked write), as html whose last line links back to the page it came from (searchLineModel.ts flowEntryHtml); an
 //     agent is started on it through its session's encounter (encounter/session.ts useEncounterSession: change, then send —
-//     central/devices/CentralDevices.tsx answerSend);
+//     central/devices/CentralDevices.tsx answerSend); a person, a place and another document through their own owners
+//     (central/searchLineSends.ts: the Shared Field's message, Central's file-passage, the page owner's append_quote);
 //   - `>` runs the menu bar's own acts: an Edit or Create act on the selection of the view that stands (frame/menu/commandDoor.ts
 //     runObjectCommand), the rest through the frame's `oi:command` router (App.tsx, published through searchLineDoor.ts).
 import {useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent} from 'react'
@@ -35,8 +36,8 @@ import {searchProjectOf, searchResultsOf} from './devices/searchBinding'
 import {openPageLink} from './documents/CentralDocumentPane'
 import {openSearchPane} from './searchPane'
 import {closeSearchLine, menuCommands, showLineReceipt, type LinePassage, type LineRequest} from './searchLineDoor'
-import {actsOf, agentTurnText, flowEntryHtml, flowEntryText, flowOf, groupsOf, jumpOrder, lineModeOf, lineResultsOf, pathOf, sendPlanOf, type AgentSessionFact, type LineAct,
-  type LineResult, type SendFacts, type SendPlan} from './searchLineModel'
+import {actsOf, agentTurnText, documentPathOf, flowEntryHtml, flowEntryText, flowOf, groupsOf, jumpOrder, lineModeOf, lineResultsOf, pathOf, placeWorldOf, sendPlanOf,
+  type AgentSessionFact, type LineAct, type LineResult, type SendFacts, type SendPlan} from './searchLineModel'
 import './searchLine.css'
 
 /** Results shown: the manual's default (§18.4 Parameters, "Results shown 5 to 30, 12"); no owner holds the setting yet. */
@@ -197,6 +198,28 @@ export function SearchLine({request}: {request: LineRequest}) {
         const answer = await appendFlowEntry(transport, location, {text: flowEntryText(passage), html: flowEntryHtml(passage), relation: null})
         closeSearchLine()
         showLineReceipt({ok: true, what: `Sent to ${result.title}`, text: `${size(passage)} from ${passage.from}, added as a new entry${answer.revision ? ` (revision ${answer.revision})` : ''}.`})
+      } else if (sending.target === 'person') {
+        setBusy(`Sending to ${result.title}…`)
+        const {messagePerson} = await import('./searchLineSends')
+        const answer = await messagePerson(transport, result.ref, passage)
+        closeSearchLine()
+        showLineReceipt({ok: true, what: `Sent to ${result.title}`, text: `${size(passage)} from ${passage.from}, as a request ${result.title} accepts before reading it (${answer.state}).`})
+      } else if (sending.target === 'place') {
+        const world = placeWorldOf(result)
+        if (!world) { setProblem(`${result.title}: the owner names no world for this place.`); return }
+        setBusy(`Filing on ${result.title}…`)
+        const {filePassage} = await import('./searchLineSends')
+        const answer = await filePassage(transport, world, passage)
+        closeSearchLine()
+        showLineReceipt({ok: true, what: `Filed on ${result.title}`, text: `${size(passage)} from ${passage.from}${answer.outcome === 'unchanged' ? ' stood there already' : ', with a link back'}${answer.path ? ` (${answer.path})` : ''}. It stays unrecognised until you recognise it.`})
+      } else if (sending.target === 'quote') {
+        const path = documentPathOf(result)
+        if (!path) { setProblem(`${result.title}: the owner names no path for this document.`); return }
+        setBusy(`Quoting in ${result.title}…`)
+        const {quoteAtEnd} = await import('./searchLineSends')
+        const answer = await quoteAtEnd(transport, path, passage)
+        closeSearchLine()
+        showLineReceipt({ok: true, what: `Quoted in ${result.title}`, text: `${size(passage)} from ${passage.from}, at the end with a link back${answer.revision ? ` (revision ${answer.revision})` : ''}.`})
       } else {
         if (!encounter) { setProblem(`Reading ${agentTrack?.agentName ?? result.title}'s conversation…`); return }
         setBusy(`Starting ${agentTrack?.agentName ?? result.title}…`)

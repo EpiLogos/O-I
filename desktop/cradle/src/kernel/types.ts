@@ -139,7 +139,11 @@ export type PageRequest =
   | { operation: "duplicate"; location: CentralLocation; into?: { folder: string; world: string } }
   /** A page leaves its world (O-I #743, manual §10.9 Delete): to Central's trash on the revision read, the person's act. Answers
    * oi.page-trash/v1 with Central's way back (`recover`: central.files.restore of the revision trashed). */
-  | { operation: "trash"; location: CentralLocation; expected_revision: string };
+  | { operation: "trash"; location: CentralLocation; expected_revision: string }
+  /** A passage sent to another document (O-I #820, manual §18.4: "Another document takes it as a quote at the end"): the document read now
+   * and the quote added at its end with the link back — a reference page's last section, a Markdown or text file's quoted block — written
+   * on that revision. Answers oi.page-quote/v1 {form, section, before_revision, revision, outcome, receipt}. */
+  | { operation: "append_quote"; location: CentralLocation; quote: { text: string; from: string; path?: string } };
 export interface NativeFileEntry { name: string; location: CentralLocation; kind: "file" | "directory" | "symlink" | "other"; byte_len: number; retrieval_allowed: boolean }
 export interface NativeDirectory { schema: "central.directory-reading/v1"; location: CentralLocation; entries: NativeFileEntry[]; automatic_agent_or_model_invocation: false }
 export interface NativeFileReading { schema: "central.file-reading/v1"; location: CentralLocation; revision: string; byte_len: number; content_encoding: "utf-8"; content: string; project: {name:string;path:string;project_ref:string|null} | null; source: ListedSource | null; operations?:Record<"write"|"history"|"restore",{available:boolean;reason:string|null}>; automatic_agent_or_model_invocation: false }
@@ -164,8 +168,9 @@ export interface GatewayRemote { workcell_ref: string; websocket_bind: string; w
  * own command, carries its answer verbatim after a check, and names a refusal in the owner's words. `project` is a Central project NAME:
  * Central discloses its working directory and canonical Project World, never the caller. */
 export type GatewayWriteRequest =
-  /** `aikit gateway send --to P --body-file -` (the words on stdin). */
-  | {kind:"send";project?:string|null;to:string;body:string;reply_to?:string|null;from_position?:string|null;instance?:string|null;require_workcell?:string|null;at?:string|null}
+  /** `aikit gateway send --to P --body-file -` (the words on stdin); `handling` is where they land while the recipient works (`--handling`:
+   * queue waits for its next turn, steer reaches the turn that runs). */
+  | {kind:"send";project?:string|null;to:string;body:string;reply_to?:string|null;from_position?:string|null;instance?:string|null;require_workcell?:string|null;at?:string|null;handling?:"queue"|"steer"|null}
   /** `aikit gateway delegate --communique C --work W --reason R`: Factory assigns custody to the Communique's recipient. */
   | {kind:"delegate";project?:string|null;communique:string;work:string;reason:string;run?:string|null;journey?:string|null;workflow_unit?:string|null;at?:string|null};
 /** `actuation <kind> - --json` over a supplied record, and `actuation-research` comparison.held|assess|mask|review over supplied fields. */
@@ -256,6 +261,10 @@ export type QlReadRequest = {kind:"kernel-m1"|"scene-compose"|"scene-world";requ
   | {kind:"sky-hours";request:unknown}
   /** `ql kernel body-constants` (`ql.m2-body-constants/v1`): M2's proposed body constants by element fibre. */
   | {kind:"body-constants"}
+  /** `ql kernel m3-binding -` (`ql.m3-binding/v1`, O-I #684): Binding's engine over the cell a matrix makes of a hexagram — `{hexagram,
+   * matrix:"complementary"|"moving-resting"|"same-quality", register:"pp"|"mm"|"mp"|"pm", tension_gev_per_fm, coupling_scale_gev,
+   * receipt?}` on stdin, the receipt the last applied `ql.m3-receipt/v1`; QL answers the cell, the coupling, the string and the event. */
+  | {kind:"m3-binding";request:unknown}
   /** `ql mef lenses` ({registryVersion, registryRevision, lenses}), `ql context-frame list` ({grammarVersion, frames}),
    * `ql service capabilities` ({providerState, detail, operations}). */
   | {kind:"mef-lenses"|"context-frame-list"|"service-capabilities"}
@@ -363,6 +372,9 @@ export type AikitReadRequest =
   /** `aikit gateway ecology`: `{type:"ecology", ecology:{agencies:[{sessions:[{harness_ref?, streams:[{stream_ref, last_sequence,
    * event_count}], surfaces}]}]}}` — which sessions and Streams a replay can ask for. */
   | {kind:"gateway-ecology";at?:string|null}
+  /** `aikit gateway protocol`: `{type:"protocol", gateway_version, connector_sdk_version, connector_wire_version, actuation_stream_schema,
+   * features?:string[]}` — what the running gateway keeps; `communique-handling` (ai-kit#566) is a steer kept as a steer. */
+  | {kind:"gateway-protocol";at?:string|null}
   /** `aikit work continuity commands|pressure`: the session's armed packs, and the continuity pressure brackets. A named project runs
    * in that project's ground, from Central's disclosure. */
   | {kind:"continuity-commands"|"continuity-pressure";project?:string|null}
