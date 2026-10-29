@@ -8,7 +8,6 @@ import {healLiveTree} from '../live/liveTreeHeal'
 import {seedFactoryCentre} from '../agent/factoryCentre'
 import {seedCentralDocuments} from '../central/documents/centralDocuments'
 import {seedWithoutTracksPane} from './tracksOutOfPanes'
-import {studioBesideField} from './studioBesideField'
 
 export interface ModeFrame {
   centerPanel: string
@@ -28,9 +27,11 @@ const FRAME = {tab: 'session', view: 'pane', detailMode: 'clip', browser: true, 
 // device, techne device); Live's chain is the instrument. The widget rail stands in every mode (manual §10.6: "it stays with
 // you when you move"; the mockup's S.tiles.live = ['agents', 'trail'], world-shell-mockup.html:1700).
 export const MODE_FRAMES: Readonly<Record<SurfMode, ModeFrame>> = {
-  live: {...FRAME, centerPanel: 'native.workbench', detailMode: 'device', dock: true},
+  // Live and Factory open in Session view (manual §21 "Live opens in Session view, with the part's chain in Device view"; §19 "Factory
+  // opens in Session view, its sessions as tracks, with the selected task's log in Clip view"); Central, Expressions and Technē in Pane view.
+  live: {...FRAME, view: 'session', centerPanel: 'native.workbench', detailMode: 'device', dock: true},
   base: {...FRAME, centerPanel: 'native.workbench', detailMode: 'device', dock: true},
-  factory: {...FRAME, centerPanel: 'native.workbench', detailMode: 'clip', dock: true},
+  factory: {...FRAME, view: 'session', centerPanel: 'native.workbench', detailMode: 'clip', dock: true},
   expressions: {...FRAME, centerPanel: 'native.workbench', detailMode: 'device', dock: true},
   techne: {...FRAME, centerPanel: 'native.workbench', detailMode: 'device', dock: true},
 }
@@ -57,9 +58,9 @@ export const MODE_TREE_SEEDS: Readonly<Record<string, (layout: LayoutState) => L
   base: seedWithoutTracksPane(layout => seedCentralDocuments(layout)),
   // Factory: the agent tab, pinned (agent/factoryCentre.ts), instruments open beside it.
   factory: seedWithoutTracksPane(seedFactoryCentre),
-  // Expressions: the field, and the Studio's Full beside it (manual §20.1, shell/studioBesideField.ts: laid once, also in a tree saved
-  // before); its scenes are its tracks, a Tab away.
-  expressions: seedWithoutTracksPane(layout => studioBesideField(seedInstruments(['projection.expressions'])(layout))),
+  // Expressions: the field fills one pane, and the Studio stands in Device view (manual §20.1 "the field fills one pane, the Studio stands in
+  // Device view"; O-I #744). Its Full opens in a pane from its head (▦); a tree that already holds it keeps it as it was left.
+  expressions: seedWithoutTracksPane(seedInstruments(['projection.expressions'])),
   // Technē: the world — the Earth and its system (the mockup's modes.techne: the M4 lens at system scale).
   techne: seedWithoutTracksPane(seedInstruments(['projection.earth'])),
 }

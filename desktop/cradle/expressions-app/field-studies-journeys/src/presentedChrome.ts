@@ -276,6 +276,20 @@ export interface PresentedChrome {
   dispose(): void
 }
 
+/** O-I #747 (manual §20.1 Pane view: "No panel, list or tool opens inside it. A control you reach from the field opens where it lives: in
+ * the Studio, in Clip view or in the browser"). Presented on the devices, the app's own Studio never opens over the field: the Studio's
+ * key and the editor's (E) ask the shell to open the section where it lives — a field device's in the Studio, a scene's or a symbol's in
+ * Clip view (the shell's studioHome.ts). In the frame's own presentation the frame opens its Studio as it always has: null. Pure. */
+export function studioHomeRequest(presentation: FramePresentation, section: string): {request: 'open-home'; section: string} | null {
+  return presentation === 'devices' ? {request: 'open-home', section} : null
+}
+
+/** O-I #747: presented on the devices, a word the frame would show over its field (its toast) is said on the shell's status bar instead,
+ * and the toast stands down (workspace.css). In the frame's own presentation: null. Pure. */
+export function sayRequest(presentation: FramePresentation, text: string): {request: 'say'; text: string} | null {
+  return presentation === 'devices' && text.trim() ? {request: 'say', text: text.slice(0, 2000)} : null
+}
+
 /** Install the door. `lens` is the instrument the research regions draw for; `changed` asks the frame to announce its state again when
  * the chrome changes under the shell's eyes (a tool pressed in the frame, a card selected, a menu opened). */
 export function installPresentedChrome({lens, changed, regions = () => frameChromeRegions()}: {lens: () => string; changed: () => void; regions?: () => ChromeRegion[]}): PresentedChrome {

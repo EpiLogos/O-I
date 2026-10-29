@@ -19,8 +19,10 @@ test('actual Git hunks preserve line numbers and aligned replacement rows at sca
  const split=splitLines(lines);assert.ok(split.some(row=>row.left?.text==='b'&&row.right?.text==='replacement'));
  assert.ok(split.some(row=>!row.left&&row.right?.text==='new'));
  writeFileSync(join(root,'code.txt'),Array.from({length:5000},(_,i)=>`actual line ${i}`).join('\n')+'\n');
- const patch=git('diff','--no-color'),start=performance.now();const large=splitLines(patchLines(patch));
+ // CPU time, not the wall clock: a loaded runner stretches wall time many times over for the same work.
+ const patch=git('diff','--no-color'),start=process.cpuUsage();const large=splitLines(patchLines(patch));
+ const used=process.cpuUsage(start),cpuMs=(used.user+used.system)/1000;
  assert.equal(large.filter(row=>row.right?.kind==='add').length,5000);
- assert.ok(performance.now()-start<50,'bounded projection of 5000 lines must not occupy a long UI frame');
+ assert.ok(cpuMs<50,`bounded projection of 5000 lines must not occupy a long UI frame (${cpuMs.toFixed(1)} ms CPU)`);
  }finally{rmSync(root,{recursive:true,force:true});}
 });

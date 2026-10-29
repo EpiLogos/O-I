@@ -22,8 +22,11 @@ export interface CandidateApplicationView {
   rail?: boolean
   /** Whether each track's mixer row shows (manual §16.6: ⌥⌘M, or Mixer at the bottom right). */
   mixer?: boolean
+  /** The side of the detail area you hid (manual §16.4: Device view ⌥⌘4, Clip view ⌥⌘3, or ▲ beside its switch), kept as each part's
+   * fold is (frame/detail/detailSides.ts hiddenSideOf): the front side, `detailMode`, always shows. O-I #744. */
+  hiddenSide?: 'clip' | 'device'
 }
-const fieldNames = ['alsPath','tab','selection','browser','detail','dock','browserWidth','detailHeight','centerPanel','detailMode','settingsPresented','settingsReturn','browserCategory','rail','mixer'] as const
+const fieldNames = ['alsPath','tab','selection','browser','detail','dock','browserWidth','detailHeight','centerPanel','detailMode','settingsPresented','settingsReturn','browserCategory','rail','mixer','hiddenSide'] as const
 const fields = new Set<string>(fieldNames)
 const index = (value: unknown) => Number.isSafeInteger(value) && (value as number) >= 0 && (value as number) <= 1_000_000
 /** The native core carries an envelope; only this application decides which
@@ -38,7 +41,7 @@ export function validateCandidateApplicationView(raw: unknown): CandidateApplica
     else if (key === 'alsPath') {if (field !== null && (typeof field !== 'string' || !field.trim() || field.length > 4096 || !field.toLowerCase().endsWith('.als'))) return null}
     else if (key === 'tab') {if (field !== 'session' && field !== 'arrangement') return null}
     else if (key === 'browserCategory') {if (typeof field !== 'string' || !field || field.length > 256) return null}
-    else if (key === 'detailMode') {if (field !== 'clip' && field !== 'device') return null}
+    else if (key === 'detailMode' || key === 'hiddenSide') {if (field !== 'clip' && field !== 'device') return null}
     else if (key === 'settingsReturn') {if (!['audio','expressions','techne'].includes(field as string)) return null}
     else if (key === 'centerPanel') {if (typeof field !== 'string' || (field !== 'native.workbench' && field !== 'native.agent' && field !== 'native.session' && field !== 'native.arrangement' && !/^world\.[a-z0-9.-]{1,128}$/.test(field))) return null}
     else if (key === 'browserWidth' || key === 'detailHeight') {if (field !== null && (typeof field !== 'number' || !Number.isFinite(field) || field < 120 || field > 16384)) return null}

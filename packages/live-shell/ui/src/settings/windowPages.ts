@@ -9,12 +9,13 @@
 import {useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore} from 'react'
 import type {Value} from '../frame/devices/designed'
 import type {ChangeRequest, ScopeAddress, SettingsAdapter, SetupSource} from './adapter'
-import type {KernelOp, PresentationDocument, PresentationTheme} from '../../../../../desktop/cradle/src/kernel/types'
+import type {KernelOp, PresentationDocument} from '../../../../../desktop/cradle/src/kernel/types'
 import type {HarnessReading} from '../../../../../desktop/cradle/src/configuration/harnessSource'
 import type {ProfileDocument} from '../../../../../desktop/cradle/src/configuration/contracts'
 import type {DisclosedAction, SystemCompositionReading} from '../../../../../desktop/cradle/src/workspace/settings/types'
 import {actionMessage, object, routineList, type Invocation, type MethodRow, type RoutineDetail, type RoutineList, type RoutineRequest} from '../../../../../desktop/cradle/src/contributions/automations/client'
 import {THEMES} from '../../../../oi-design-system/themes/index.mjs'
+import {readTheme, themeLibrary, type ThemeLibrary} from './presentationSetting'
 import {refusalLine, scalarEntries} from '../agent/RefusalCard'
 import {connectionBasis, machineBasis, validateMachine, type MachineConnection, type RemoteMachineDeclaration} from './machines'
 import {authorityAllowsTrigger, eligibleProofs, routineBasis, scheduleFromInput, type RoutineAuthoringOptions, type RoutineAuthoringResult, type ScheduleShape} from './routines'
@@ -105,36 +106,16 @@ export function pickFile(accept: string): Promise<File | null> {
 
 // ---------------------------------------------------------------------------------------------------------------- Harnesses & models
 
-const DEFAULT_SAVED = 'Native owner acknowledged the preference. New chats use the resolved provider; the current conversation keeps its provider.'
-
 /** Harnesses & models (HarnessPreferences.tsx): the providers and the chat default through the adapter's HarnessSource, each harness client's
- * install and folder through the kernel channel, Sign in at the conversation's connection control. */
-export function useHarnessPage(adapter: SettingsAdapter, enabled: boolean, done: (keys: readonly string[]) => void): PagePart & {chose(provider: Value | undefined): void} {
+ * install and folder through the kernel channel, Sign in at the conversation's connection control. The provider a new chat starts with is
+ * a local change of O:I's chat-default setting (chatDefaultSetting.ts), which Review changes… plans and applies through its owner, and Reset
+ * on its row withdraws (O-I #744): this page reads the owner for the engine (`reading`) and takes its new reading after (`set`). */
+export function useHarnessPage(adapter: SettingsAdapter, enabled: boolean): PagePart & {reading: HarnessReading | null; set(reading: HarnessReading): void} {
   const read = useRead<HarnessReading>(enabled, adapter, !!adapter.harnesses, async source => {
     const answer = await source.harnesses!.read()
     if (answer.kind === 'fixture' && !import.meta.env?.DEV) throw new Error('Fixture harness readings cannot qualify production settings.')
     return answer
   })
-  // The basis a chosen provider stands on: the owner epoch and the saved default when you chose it.
-  const basis = useRef<{epoch?: string; held: string | null} | null>(null)
-  const held = read.value?.defaultState.state === 'ok' ? read.value.heldDefault?.value ?? null : null
-  const chose = useCallback((provider: Value | undefined) => { basis.current = provider === undefined ? null : {epoch: adapter.ownerEpoch, held} }, [adapter, held])
-  const save = useCallback(async (draft: string | null) => {
-    const harnesses = adapter.harnesses
-    if (!harnesses) throw new Error(NO_HARNESS)
-    const reset = draft === null || draft === '', source = adapter
-    if (draft !== null && basis.current?.epoch !== source.ownerEpoch) throw new Error('The native owner changed. Undo this draft and choose again.')
-    const before = await harnesses.read()
-    if (!read.current(source)) return
-    if (before.defaultState.state !== 'ok' || before.providers.state !== 'ok') throw new Error('Read the native provider rows and saved default before changing it.')
-    if (draft !== null && (before.heldDefault?.value ?? null) !== basis.current?.held) throw new Error('The saved provider default changed. Undo this draft, read again and review your choice.')
-    if (!reset && !before.providers.rows.some(row => row.id === draft)) throw new Error('This provider is no longer configured.')
-    if (reset) await harnesses.discardDefault(); else await harnesses.holdDefault(draft!)
-    basis.current = null
-    done(['chatDefault'])
-    if (read.current(source)) read.set(await harnesses.read())
-    return DEFAULT_SAVED
-  }, [adapter, read, done])
   const rows = read.value?.harnesses.state === 'ok' ? read.value.harnesses.rows : []
   const run = useCallback(async (client: Value, install: boolean): Promise<string> => {
     const row = rows.find(item => item.client === client)
@@ -148,17 +129,15 @@ export function useHarnessPage(adapter: SettingsAdapter, enabled: boolean, done:
   }, [adapter, rows, read])
   return useMemo(() => {
     const why: Record<string, string> = {}
-    if (!adapter.harnesses) { why.applyDefault = NO_HARNESS; why.restoreDefault = NO_HARNESS }
     if (!adapter.invoke) { why.install = NO_INVOKE('Install and Folder'); why.reveal = NO_INVOKE('Install and Folder') }
     if (!adapter.navigate) why.signIn = NO_NAVIGATE('Sign in: the conversation\'s connection control (harness_auth_describe)')
     const refused: Record<string, string> = {}
-    if (read.error) refused.chatDefault = read.error
+    if (!adapter.harnesses) refused.effectiveDefault = NO_HARNESS
+    if (read.error) refused.effectiveDefault = read.error
     else if (read.value) for (const [section, state] of [['providers', read.value.providers], ['harnesses', read.value.harnesses], ['catalogue', read.value.catalogue], ['saved default', read.value.defaultState]] as const)
-      if (state.state === 'failed') refused.chatDefault = `${section}: ${state.error}`
-    return {values: harnessValues(read.value), why, refused, chose, reread: read.refresh,
+      if (state.state === 'failed') refused.effectiveDefault = `${section}: ${state.error}`
+    return {values: harnessValues(read.value), why, refused, reading: read.value, set: read.set, reread: read.refresh,
       acts: {
-        applyDefault: async value => save(typeof value === 'string' ? value : null),
-        restoreDefault: async () => save(null),
         install: async client => run(client, true),
         reveal: async client => run(client, false),
         signIn: async client => {
@@ -166,7 +145,7 @@ export function useHarnessPage(adapter: SettingsAdapter, enabled: boolean, done:
           adapter.navigate({kind: 'connection', native_ref: String(client)})
         },
       }}
-  }, [adapter, read.value, read.error, read.refresh, save, run, chose])
+  }, [adapter, read.value, read.error, read.refresh, read.set, run])
 }
 
 // ---------------------------------------------------------------------------------------------------------------- Credentials
@@ -248,53 +227,34 @@ const noSubscription = () => () => {}
 const noSnapshot = () => absentVisuals
 const APPEARANCE_SAID = 'Acknowledged by the appearance owner. This window\'s renderer observation remains a separate reading.'
 
-/** Appearance (OwnerPreferences.tsx AppearancePreferences, OpeningPreferences): the presentation owner's saved theme, Apply on the basis you
- * chose on, Revert, imported themes, the renderer's Opening preferences, and Open Expressions for the controls that stay in their editors. */
-export function useAppearancePage(adapter: SettingsAdapter, enabled: boolean, done: (keys: readonly string[]) => void): PagePart & {chose(theme: Value | undefined): void} {
-  const read = useRead<PresentationDocument>(enabled, adapter, !!adapter.invoke, async source => {
-    const answer = await operation(source, {op: 'presentation_read'}, 'presentation_reading')
-    if (answer.result !== 'presentation_reading') throw new Error('The appearance owner did not return its reading.')
-    return answer.document
-  })
-  // The library the window offers (the adapter's, else the design system's themes), and with it the themes you imported, for Apply.
-  const base = (adapter.themeLibrary ?? THEMES) as readonly {id: string; name: string; appearance: PresentationTheme['appearance']}[]
-  const library = useMemo(() => [...base, ...(read.value?.custom_themes ?? [])] as {id: string; name: string; appearance: PresentationTheme['appearance']}[], [base, read.value])
-  const basis = useRef<{epoch?: string; theme: string} | null>(null)
-  const chose = useCallback((theme: Value | undefined) => { basis.current = theme === undefined ? null : {epoch: adapter.ownerEpoch, theme: JSON.stringify(read.value?.theme)} }, [adapter, read.value])
+/** Appearance (OwnerPreferences.tsx AppearancePreferences, OpeningPreferences): the presentation owner's saved theme, Revert, imported themes,
+ * the renderer's Opening preferences, and Open Expressions for the controls that stay in their editors. The theme you choose is a local
+ * change of the owner's Theme setting (presentationSetting.ts): the window's engine holds it as every owner's, and Review changes… plans and
+ * applies it through the owner (O-I #744). This page reads the owner's theme for the engine (`reading`, `library`) and takes the owner's new
+ * reading after an Apply (`set`). */
+export function useAppearancePage(adapter: SettingsAdapter, enabled: boolean): PagePart & {reading: PresentationDocument | null; library: ThemeLibrary; set(document: PresentationDocument): void} {
+  const read = useRead<PresentationDocument>(enabled, adapter, !!adapter.invoke, source => readTheme(source))
+  // The library the window offers (the adapter's, else the design system's themes), and with it the themes you imported.
+  const base = (adapter.themeLibrary ?? THEMES) as ThemeLibrary
+  const library = useMemo(() => themeLibrary(base, read.value), [base, read.value])
   const store = adapter.visualPreferences
   const visuals = useSyncExternalStore(store?.subscribe ?? noSubscription, store?.getSnapshot ?? noSnapshot, store?.getSnapshot ?? noSnapshot)
   const send = useCallback(async (op: KernelOp) => {
     const source = adapter
-    if (op.op === 'theme_apply') {
-      if (!basis.current || basis.current.epoch !== source.ownerEpoch) throw new Error('The appearance owner changed. Choose the appearance again on the current reading before applying.')
-      const now = await operation(source, {op: 'presentation_read'}, 'presentation_reading')
-      if (!read.current(source)) return
-      if (now.result === 'presentation_reading' && JSON.stringify(now.document.theme) !== basis.current.theme) {
-        read.set(now.document)
-        throw new Error('The saved appearance changed. Your choice is retained; choose it again on the current reading before applying.')
-      }
-    }
     const answer = await operation(source, op, 'presentation_reading')
-    if (read.current(source) && answer.result === 'presentation_reading') { read.set(answer.document); basis.current = null }
-    if (op.op === 'theme_apply' || op.op === 'theme_revert') done(['themeDraft'])
+    if (read.current(source) && answer.result === 'presentation_reading') read.set(answer.document)
     return APPEARANCE_SAID
-  }, [adapter, read, done])
+  }, [adapter, read])
   return useMemo(() => {
     const why: Record<string, string> = {}
-    if (!adapter.invoke) for (const key of ['applyTheme', 'revertTheme', 'removeTheme']) why[key] = NO_INVOKE('Appearance')
+    if (!adapter.invoke) for (const key of ['revertTheme', 'removeTheme']) why[key] = NO_INVOKE('Appearance')
     if (!adapter.importTheme) why.importTheme = 'Import: the settings adapter carries no theme importer (SettingsAdapter.importTheme: Cradle\'s converter and validator before theme_import).'
     if (!store) { why.visualLayer = NO_VISUALS; why.welcome = NO_VISUALS }
     if (!adapter.navigate) why.openExpressions = NO_NAVIGATE('The Expressions editor')
     const values = appearanceValues(read.value, base)
     if (store) { values.visualLayer = visuals.enabled; values.welcome = visuals.welcomeEnabled }
-    return {values, why, refused: refusedOn('themeDraft', read.error), chose, reread: read.refresh,
+    return {values, why, refused: refusedOn('theme', read.error), reading: read.value, library, set: read.set, reread: read.refresh,
       acts: {
-        applyTheme: async value => {
-          const id = String(value)
-          const theme: PresentationTheme = id === 'light' || id === 'dark' || id === 'system' ? {appearance: id, id: null} as PresentationTheme
-            : (() => { const found = library.find(item => item.id === id); if (!found) throw new Error(`${id} is no theme of the library.`); return {id: found.id, appearance: found.appearance} as PresentationTheme })()
-          return send({op: 'theme_apply', ...theme} as KernelOp)
-        },
         revertTheme: async () => send({op: 'theme_revert'}),
         removeTheme: async id => send({op: 'theme_remove', id: String(id)} as KernelOp),
         importTheme: async () => {
@@ -313,7 +273,7 @@ export function useAppearancePage(adapter: SettingsAdapter, enabled: boolean, do
           adapter.navigate({kind: 'editor', native_ref: 'expressions'})
         },
       }}
-  }, [adapter, read.value, read.error, read.refresh, base, library, store, visuals, chose, send, read])
+  }, [adapter, read.value, read.error, read.refresh, read.set, base, library, store, visuals, send])
 }
 
 // ---------------------------------------------------------------------------------------------------------------- Profiles

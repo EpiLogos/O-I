@@ -25,6 +25,7 @@
 // The hand holds:  sel (the machine open in the pane), session (the session whose thread the pane reads).
 // A key the owner has not reported is absent, and the view draws "—" for it and names it in words.
 import {Band, Display, Folded, Handle, Ladder, Lamp, Panel, Radio, Readout, Rows, Section, Tile, Toggle, type LightState, type Option, type RowItem, type Tone} from '../../sdk/panel'
+import {deviceStates} from '../../sdk/views'
 import {boolOf, clampTo, has, json, NONE, st, strOf, type DesignedDevice, type ViewProps} from './design'
 import './workcell__link.css'
 
@@ -462,7 +463,8 @@ export const design: DesignedDevice = {
   title: 'Link',
   kind: 'connection',
   // Link stands in the transport (manual §19.19): its Whole expands from ▾ beside the button; Full in a pane; its tile on the rail.
-  views: ['whole', 'full', 'widget'],
+  // Its states are the kit's (sdk/views.ts): Whole beside the transport's button, Full in a pane, its tile on the rail (§16.3, §19.23).
+  views: deviceStates('workcell:link'),
   defaults: {
     light: 'lit', here: 'workcell:mac', link: true, share: SHARE_DEFAULT, sel: 'workcell:omarchy', session: 'cradle-steward',
     machines: JSON.stringify([MAC, OMARCHY]), threads: JSON.stringify(THREADS),

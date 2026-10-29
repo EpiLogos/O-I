@@ -99,6 +99,10 @@ export interface RulerWindowProps {
   onSnap(next: SnapMode): void
   marker: number | null
   onMarker(next: number | null): void
+  /** The time selection (Live's: Shift-press extends one from the insert marker), the pane's own; Consolidate joins what plays in it.
+   * Absent: the pane holds none. */
+  span?: TimeRange | null
+  onSpan?(next: TimeRange | null): void
   /** The measured width of the ruler's marks, in px (0 before it is measured). */
   width: number
   /** The marks row, for the gestures' geometry; the Arrangement's root, for the wheel and the pinch. */
@@ -188,6 +192,9 @@ export function ArrangementRulerView({set, selection, empty, view, lanes: lanesV
   const occasionAt = occasion?.at !== undefined && inWindow(occasion.at) ? occasion.at : undefined
   const light = occasion ? occasionLight(occasion) : undefined
   const marker = view.marker !== null && inWindow(view.marker) ? view.marker : undefined
+  // The time selection, cut to the window: a band over the marks and through the lanes.
+  const spanBand = view.span ? bandIn(view.span, range, bounds) : null
+  const spanWords = view.span ? `Selected · ${label(view.span.start)} – ${label(view.span.end)} · the pane's own; Consolidate joins what plays here` : ''
   // The loop its owner carries, held to the ruler and cut to the window (rulerWindow.ts bandIn); with none, no brace stands.
   const loop = loopOf(set, bounds.end)
   const loopBand = loop ? bandIn(loop, range, bounds) : null
@@ -220,10 +227,19 @@ export function ArrangementRulerView({set, selection, empty, view, lanes: lanesV
     gesture.current = null
     if (active.moved) return
     const at = pointAt(event.clientX)
-    if (at !== null) view.onMarker(snapAt(at, snapOfPress(view.snap, event), markStep(range, bounds, view.width), bounds))
+    if (at === null) return
+    const point = snapAt(at, snapOfPress(view.snap, event), markStep(range, bounds, view.width), bounds)
+    // Shift-press with the insert marker standing selects the stretch between them (Live's Shift-click extends a selection; the press's
+    // own point is freed from the snap, as Shift frees a press); a plain press sets the marker and lets the selection go.
+    if (event.shiftKey && view.marker !== null && view.onSpan && point !== view.marker) {
+      view.onSpan({start: Math.min(view.marker, point), end: Math.max(view.marker, point)})
+      return
+    }
+    view.onSpan?.(null)
+    view.onMarker(point)
   }
   const onKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
-    if (event.key === 'Escape' && view.marker !== null) { event.preventDefault(); view.onMarker(null); return }
+    if (event.key === 'Escape' && (view.marker !== null || view.span)) { event.preventDefault(); view.onMarker(null); view.onSpan?.(null); return }
     const next = windowOfKey(event.key, range, bounds, anchor)
     if (!next) return
     event.preventDefault()
@@ -235,7 +251,7 @@ export function ArrangementRulerView({set, selection, empty, view, lanes: lanesV
     'aria-label': `Visible window of the ruler${set.ruler ? `, in ${set.ruler.unit}` : ''}`,
     'aria-valuemin': bounds.start, 'aria-valuemax': Math.max(bounds.start, bounds.end - span), 'aria-valuenow': range.start,
     'aria-valuetext': `${label(range.start)} to ${label(range.end)}`,
-    title: 'Drag to pan · press to set the insert marker · ⌘/Ctrl-wheel or pinch to zoom · ←→ pan · ↑↓ zoom · Home or End to the ends',
+    title: 'Drag to pan · press to set the insert marker, Shift-press to select from it · ⌘/Ctrl-wheel or pinch to zoom · ←→ pan · ↑↓ zoom · Home or End to the ends',
   }
   // A line at the window's very end is held just inside it, and a readout past the middle reads back from its point, as a dash does.
   const lineAt = (at: number) => { const p = percentOf(held(at), range); return p >= 99.5 ? 'calc(100% - 2px)' : `${p}%` }
@@ -377,6 +393,7 @@ export function ArrangementRulerView({set, selection, empty, view, lanes: lanesV
         {loopBand && <LoopBrace band={loopBand} words={loopWords} />}
         {marks.map(mark => <span key={mark.at} className={mark.end ? 'end' : undefined} style={{left: `${percentOf(mark.at, range)}%`}}>{label(mark.at)}</span>)}
         {occasionReadout}
+        {spanBand && <i className="tl-span" role="img" aria-label={spanWords} title={spanWords} style={{left: `${spanBand.left}%`, width: `${spanBand.width}%`}} />}
         {markerMark}
       </div>
     </div>
@@ -429,6 +446,7 @@ export function ArrangementRulerView({set, selection, empty, view, lanes: lanesV
           {now !== undefined && <span className="tl-now" style={{left: pct(now)}} aria-hidden="true" />}
           {occasionAt !== undefined && <span className="tl-occ" style={{left: lineAt(occasionAt)}} aria-hidden="true" />}
           {marker !== undefined && <span className="tl-marker" style={{left: lineAt(marker)}} aria-hidden="true" />}
+          {spanBand && <i className="tl-span" aria-hidden="true" style={{left: `${spanBand.left}%`, width: `${spanBand.width}%`}} />}
           {clips.map(({clip, start, end: stop}) => {
             const lengthless = !(stop > start)
             // A waiting clip with no length is a dash: nobody knows how long it will take. A point near the window's end (a dash,
@@ -525,6 +543,7 @@ export function ArrangementRuler({set, selection, empty}: {set: WorldTrackSet; s
   const [shown, setShown] = useState<TimeRange | null>(null)
   const [snap, setSnap] = useState<SnapMode>('grid')
   const [marker, setMarker] = useState<number | null>(null)
+  const [span, setSpan] = useState<TimeRange | null>(null)
   const [width, setWidth] = useState(0)
   const [receipt, setReceipt] = useState<PressedReceipt | null>(null)
   const [shownLanes, setShownLanes] = useState<LanesShown>(DEFAULT_LANES)
@@ -604,12 +623,12 @@ export function ArrangementRuler({set, selection, empty}: {set: WorldTrackSet; s
   }
   // Every object's acts, after Live's: its menu, Live's keys on the selection, rename in place (frame/menu/TracksMenu.tsx). The host
   // takes no room of its own: it holds the ruler's events, and the ruler keeps its own root.
-  const menu = useTracksMenu({set, selection, view: 'arrangement', press})
+  const menu = useTracksMenu({set, selection, view: 'arrangement', press, marker, span})
   return <div className="tracks-menu-host" ref={menu.rootRef} onContextMenu={menu.onContextMenu} onKeyDown={menu.onKeyDown}>
     <ArrangementRulerView set={set} selection={selection} empty={empty} receipt={receipt} onPress={press}
       lanes={{shown: shownLanes, onShown: setShownLanes, take, onTake: setTake, opened, onOpened: setOpened}}
       onDismiss={() => { latest.current += 1; setReceipt(null) }}
-      view={{window: shown, onWindow: setShown, snap, onSnap: setSnap, marker, onMarker: setMarker, width, marksRef, rootRef, gesture}} />
+      view={{window: shown, onWindow: setShown, snap, onSnap: setSnap, marker, onMarker: setMarker, span, onSpan: setSpan, width, marksRef, rootRef, gesture}} />
     {menu.layer}
   </div>
 }

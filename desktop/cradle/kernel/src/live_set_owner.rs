@@ -26,6 +26,12 @@
 //! set's Groove Pool read and written (`live_groove_pool_read`,
 //! `live_groove_pool_write`) — each write admitted, gated and refused as the
 //! others are.
+//!
+//! The acts on the set's objects (DLW §10.9, O-I #743: paste, duplicate and
+//! delete a clip, an empty slot's stop button, rename, move and duplicate a
+//! track, insert, rename, duplicate and delete a row) are one op typed by its
+//! act (`live_set_act`, `live_set::acts`), admitted, gated and refused as
+//! every other write.
 
 use crate::{KernelOp, KernelOpResult};
 use std::collections::HashSet;
@@ -210,6 +216,19 @@ pub fn execute(op: &KernelOp) -> Option<Result<KernelOpResult, String>> {
                     .unwrap_or_else(|poisoned| poisoned.into_inner());
                 live_set::edit::groove_pool_write(path, expected_revision, *groove, field, value)
                     .map(|reading| KernelOpResult::LiveGroovePoolReading { reading })
+            }),
+        KernelOp::LiveSetAct {
+            path,
+            expected_revision,
+            act,
+        } => native_document(path)
+            .and_then(|()| admitted_for_write(path))
+            .and_then(|()| {
+                let _gate = WRITE_GATE
+                    .lock()
+                    .unwrap_or_else(|poisoned| poisoned.into_inner());
+                live_set::acts::act(path, expected_revision, act)
+                    .map(|reading| KernelOpResult::LiveSetActed { reading })
             }),
         _ => return None,
     })
@@ -760,6 +779,93 @@ mod tests {
             serde_json::from_value(json!({"op": "live_groove_pool_read", "path": "/a.als"}))
                 .unwrap();
         assert!(matches!(read, KernelOp::LiveGroovePoolRead { .. }));
+    }
+
+    /// O-I #743: the acts on the set's objects come through one op typed by its act — only on a set this process has read, on its
+    /// revision, through the kernel's own dispatch as the native host runs it — and answer what they did in words.
+    #[test]
+    fn the_kernel_serves_the_acts_on_the_sets_objects() {
+        let dir = std::env::temp_dir().join(format!("live-set-owner-{}-acts", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let file = dir.join("acts.als");
+        std::fs::write(
+            &file,
+            live_set::write_gz(&live_set::xml::parse(MAKE_FIXTURE).unwrap()).unwrap(),
+        )
+        .unwrap();
+        let path = file.to_string_lossy().into_owned();
+        let op: KernelOp = serde_json::from_value(json!({"op": "live_set_act", "path": path, "expected_revision": "sha256:none",
+            "act": {"kind": "clip_paste", "from_track": 0, "from": {"slot": 0}, "track": 0, "scene": 1}}))
+        .unwrap();
+        assert!(matches!(
+            &op,
+            KernelOp::LiveSetAct {
+                act: live_set::acts::SetAct::ClipPaste {
+                    scene: 1,
+                    cut: false,
+                    ..
+                },
+                ..
+            }
+        ));
+        let unread = match execute(&op) {
+            Some(Err(error)) => error,
+            other => panic!("refusal expected, got {other:?}"),
+        };
+        assert!(
+            unread.contains("Read this Live set before writing"),
+            "{unread}"
+        );
+        let mut kernel = crate::Kernel::new(crate::CentralClient::discover());
+        let read = kernel
+            .apply(KernelOp::LiveSetRead { path: path.clone() })
+            .unwrap();
+        let KernelOpResult::LiveSetReading { reading } = read.result else {
+            panic!("set reading expected");
+        };
+        let mut request = serde_json::to_value(&op).unwrap();
+        request["expected_revision"] = reading["revision"].clone();
+        let pasted = kernel
+            .apply(serde_json::from_value(request).unwrap())
+            .unwrap();
+        assert!(
+            pasted.receipts.is_empty(),
+            "a Live op records nothing in the kernel"
+        );
+        let KernelOpResult::LiveSetActed { reading } = pasted.result else {
+            panic!("an act's answer expected");
+        };
+        assert_eq!(reading["act"], "clip_paste");
+        assert_eq!(reading["done"], "Pasted Riff into row 2 of Keys.");
+        assert_eq!(reading["at"], json!({"track": 0, "slot": 1}));
+        let renamed = kernel.apply(KernelOp::LiveSetAct {
+            path: path.clone(),
+            expected_revision: reading["revision"].as_str().unwrap().into(),
+            act: live_set::acts::SetAct::SceneRename {
+                scene: 1,
+                name: "Chorus".into(),
+            },
+        });
+        assert!(matches!(
+            renamed,
+            Ok(crate::KernelOpOutcome { result: KernelOpResult::LiveSetActed { ref reading }, .. }) if reading["done"] == "Renamed row 2 to Chorus."
+        ));
+        let stale = kernel.apply(KernelOp::LiveSetAct {
+            path: path.clone(),
+            expected_revision: reading["revision"].as_str().unwrap().into(),
+            act: live_set::acts::SetAct::SceneDelete { scene: 0 },
+        });
+        assert!(stale.unwrap_err().contains("changed since it was read"));
+        let after = match execute(&KernelOp::LiveSetRead { path: path.clone() }) {
+            Some(Ok(KernelOpResult::LiveSetReading { reading })) => reading,
+            other => panic!("set reading expected, got {other:?}"),
+        };
+        assert_eq!(
+            after["document"]["tracks"][0]["sessionSlots"],
+            json!({"0": "Riff", "1": "Riff"})
+        );
+        assert_eq!(after["document"]["tracks"][0]["stoplessSlots"], json!([]));
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]

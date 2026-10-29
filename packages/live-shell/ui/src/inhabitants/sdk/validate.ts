@@ -25,6 +25,7 @@ import {allSdkParamRows, allTransportBindings, facePresentation, familyProduct, 
 import {LIVE_EXEMPLARS, isWritePath, semanticModesFor, validateFaceSemantic} from './semantics.ts'
 import type {LiveSemantic, SemanticInvariant} from './semantics.ts'
 import {isIconName} from './icons.ts'
+import {deviceStates, presentationsOf} from './views.ts'
 import {DEVICE_FORMATS, SDK_MODES, TRANSPORT_ROWS, TRANSPORT_SLOT_IDS, isSdkMode, isTransportTarget, transportTargetSlots} from './modes.ts'
 import {PRODUCT_IDS, isKnownProduct} from './products.ts'
 import {KNOWN_TOOLS, isKernelOp, isKnownTool} from './kernelOps.ts'
@@ -500,6 +501,9 @@ export function validateAdmittedWorld(): WorldGateResult {
     }
   }
 
+  // One declaration of a device's states (views.ts): a catalogue device's face says what the kit's table says.
+  cross.push(...deviceStateFaults(allInhabitantManifests()))
+
   return {byFamily, cross}
 }
 
@@ -552,4 +556,15 @@ export function semanticRegistry(): SemanticRegistryEntry[] {
     }
   }
   return entries.sort((a, b) => a.family.localeCompare(b.family) || a.face.localeCompare(b.face))
+}
+
+/** The faces whose presentations drift from their device's states in the kit's one table (views.ts DEVICE_STATES; manual §16.3): a
+ * catalogue device's face declares exactly the presentations its states come to. A face the table does not name is not checked. */
+export function deviceStateFaults(manifests: readonly Pick<InhabitantManifest, 'id' | 'faces'>[]): string[] {
+  return manifests.flatMap(manifest => manifest.faces.flatMap(face => {
+    const states = deviceStates(`${manifest.id}:${face.id}`)
+    if (!states) return []
+    const want = presentationsOf(states)
+    return want.join() === [...face.presentations].join() ? [] : [`${manifest.id}/${face.id}: presentations ${face.presentations.join(' · ')}; its states (sdk/views.ts) come to ${want.join(' · ')} — derive them with statePresentations('${manifest.id}:${face.id}')`]
+  }))
 }

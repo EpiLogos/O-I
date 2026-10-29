@@ -16,6 +16,7 @@
  * declared waiting, honestly. */
 
 import {loadAgentShellFamilies} from './loadAgentShellFamilies.ts'
+import {statePresentations} from './sdk/views.ts'
 import {admitKnowledgeGraphFamily} from './knowledgeGraphFamilyManifest.ts'
 import {admitAtlasFamily} from '../projections/atlas/atlasFamilyManifest.ts'
 import {allInhabitantManifests, declareFamilyExtension, type InhabitantManifest} from './manifest.ts'
@@ -43,7 +44,7 @@ function declareCentralExtension(): void {
       {
         id: 'day-die',
         kind: 'document',
-        presentations: ['compact', 'expanded'],
+        presentations: statePresentations('central:day-die'),
         liveSemantic: 'device-instrument',
         invariant: {generates: 'kernel:receiving'},
         dock: ['dock', 'expand', 'pop-out'],
@@ -76,14 +77,14 @@ function declareCentralPageFamily(): void {
     faces: [
       {
         id: 'document',
-        presentations: ['compact', 'expanded'],
+        presentations: statePresentations('central:document'),
         liveSemantic: 'device-instrument',
         invariant: {generates: 'kernel:file_operation'},
         note: 'Any Central page as its template draws it (DLW §17.8): the template, the title, the save state and what the page holds (entries, highlights, notes, packet), read from the document the hand reached (central/documents/documentDoor.ts) and the page\'s own file. Save and Re-read are the hosted face\'s own: a Flow\'s revision-checked file write (op file_operation), a Day\'s receiving write.',
       },
       {
         id: 'docs',
-        presentations: ['compact', 'expanded'],
+        presentations: statePresentations('central:docs'),
         liveSemantic: 'device-audio-fx',
         invariant: {transforms: 'the world\'s account of itself on six tiers — each source\'s binding, recognition, meaning and what moved since, read; the sources pass whole until Relate or Recognise, each a person\'s held act with its receipt'},
         note: 'A project\'s own account of itself (DLW §18.5): the six tiers, each source bound to them with its kind, whether it is recognised, whether the code holds its meaning and what moved since; the root\'s and the world\'s parts to make; the intended experiences and the returns against them. Read from Central (projectcentral.self.inspect, projectcentral.ground.inspect, central.doctor, central.world.reproject.plan) and AIKit (aikit knowledge frame).',
@@ -106,14 +107,14 @@ function declareCentralAgentChain(): void {
     faces: [
       {
         id: 'packet',
-        presentations: ['compact', 'expanded'],
+        presentations: statePresentations('central:packet'),
         liveSemantic: 'device-audio-fx',
         invariant: {transforms: 'what the agent reads from you — AIKit\'s prepared context, shown whole with its size; an item taken out or the packet cleared through the owner\'s own edit (op encounter context), the material passed on unchanged'},
         note: 'The packet the agent reads (DLW §18.3): AIKit\'s prepared context (aikit.prepared-context/v1, op encounter context), the read the Packet widget and the transport share. Take out and Clear now edit it; Answer this is the Agent conversation\'s own Send with exactly this packet. Capture waits: the page\'s selection does not cross the host bridge.',
       },
       {
         id: 'search',
-        presentations: ['compact', 'expanded'],
+        presentations: statePresentations('central:search'),
         liveSemantic: 'device-instrument',
         invariant: {generatesAbsent: 'Search writes nothing: it reads AIKit\'s knowledge search (op knowledge search and resolve). A tag\'s send, the aliases and the shared fields have no owner yet (DLW §18.4).'},
         note: 'Central\'s "@" language (DLW §18.4): the search line answered by AIKit\'s knowledge search (op knowledge search and resolve, as the cradle\'s search overlay asks them), in your world or one project.',

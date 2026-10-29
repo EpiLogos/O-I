@@ -1,11 +1,12 @@
 // The Live set's own writes and the clip's whole reading (kernel live_clip_read, live_clip_write, live_track_mixer_write — a send
-// by its index too — and live_take_comp; the owner is packages/live-set/src/edit.rs; the Groove Pool's are live/liveGrooves.ts). A write is made on the revision the set's standing reading holds (native/application.ts
+// by its index too — live_take_comp, and the acts on the set's objects, live_set_act (packages/live-set/src/acts.rs, O-I #743); the
+// owner is packages/live-set/src/edit.rs; the Groove Pool's are live/liveGrooves.ts). A write is made on the revision the set's standing reading holds (native/application.ts
 // readSet) and refused in the owner's words when the file moved since (Live may have saved it); after any write, or a refusal,
 // the set is read again (invalidateSet), so every reader — the tracks, Clip view, the chain — draws what the file now holds.
 // The kernel admits a write only for a set it has read, which the shell's own reading always is.
 import {useEffect, useState} from 'react'
 import {detectTransport, kernelOp} from '../../../../../desktop/cradle/src/kernel/bridge'
-import type {KernelTransportStatus, LiveClipAt, LiveClipReading, LiveCompReading, LiveNote, LiveTrackMixer} from '../../../../../desktop/cradle/src/kernel/types'
+import type {KernelTransportStatus, LiveClipAt, LiveClipReading, LiveCompReading, LiveNote, LiveSetAct, LiveSetActed, LiveTrackMixer} from '../../../../../desktop/cradle/src/kernel/types'
 import {invalidateSet, readSet, subscribeSet} from '../native/application'
 import type {SetSelection} from '../shell/liveSelection'
 
@@ -37,6 +38,16 @@ export function writeLiveClip(path: string, track: number, clip: LiveClipAt,
   })
 }
 
+/** One clip read whole from the set's owner (live_clip_read), once. */
+export async function readLiveClip(path: string, track: number, clip: LiveClipAt): Promise<LiveClipReading> {
+  const transport = detectTransport()
+  const unreachable = live(transport)
+  if (unreachable) throw new Error(unreachable)
+  const answer = await kernelOp(transport, {op: 'live_clip_read', path, track, clip})
+  if (answer.error || answer.outcome?.result !== 'live_clip_reading') throw new Error(answer.error ?? 'The set\'s owner did not answer the clip')
+  return answer.outcome.reading.clip
+}
+
 /** Change one control of a track's mixer row; answers the row as it now stands. */
 export function writeLiveMixer(path: string, track: number, control: 'activator' | 'solo' | 'arm' | 'monitor', value: boolean | 'in' | 'auto' | 'off'): Promise<LiveTrackMixer> {
   return onRevision(path, async (expected_revision, transport) => {
@@ -64,12 +75,37 @@ export function writeLiveComp(path: string, track: number, take: number, range: 
   })
 }
 
+/** One act on the set's objects (manual §10.9; kernel live_set_act, packages/live-set/src/acts.rs): answers what it did, in the owner's
+ * words, and where it left what it made. */
+export function writeLiveSetAct(path: string, act: LiveSetAct): Promise<LiveSetActed> {
+  return onRevision(path, async (expected_revision, transport) => {
+    const answer = await kernelOp(transport, {op: 'live_set_act', path, expected_revision, act})
+    if (answer.error || answer.outcome?.result !== 'live_set_acted') throw new Error(answer.error ?? 'The set\'s owner did not answer the act')
+    return answer.outcome.reading
+  })
+}
+
+/** Insert clip (⇧⌘M, Live's Insert MIDI Clip): an empty MIDI clip one bar long, looped, in the empty slot `scene` of a MIDI part — the
+ * clip Live makes (live_clip_create with no notes and no source). Answers the clip as it now stands. */
+export const INSERTED_CLIP_BEATS = 4
+export function writeLiveInsertClip(path: string, track: number, scene: number): Promise<LiveClipReading> {
+  return onRevision(path, async (expected_revision, transport) => {
+    const answer = await kernelOp(transport, {op: 'live_clip_create', path, expected_revision, track, scene, length: INSERTED_CLIP_BEATS, notes: []})
+    if (answer.error || answer.outcome?.result !== 'live_clip_reading') throw new Error(answer.error ?? 'The set\'s owner did not answer the clip')
+    return answer.outcome.reading.clip
+  })
+}
+
 /** The set's writers the tracks adapter takes (timeline/liveSetTrackAdapter.ts LiveSetReading), each on the set at `path`. */
 export function liveSetWrites(path: string) {
   return {
     mixerWrite: (track: number, control: 'activator' | 'solo' | 'arm' | 'monitor', value: boolean | 'in' | 'auto' | 'off') => writeLiveMixer(path, track, control, value),
     sendWrite: (track: number, index: number, value: number) => writeLiveSend(path, track, index, value),
     compWrite: (track: number, take: number, range: {start: number; end: number}) => writeLiveComp(path, track, take, range),
+    act: (act: LiveSetAct) => writeLiveSetAct(path, act),
+    insertClip: (track: number, scene: number) => writeLiveInsertClip(path, track, scene),
+    clipInfo: {read: (track: number, clip: LiveClipAt) => readLiveClip(path, track, clip).then(reading => reading.info ?? ''),
+      write: (track: number, clip: LiveClipAt, text: string) => writeLiveClip(path, track, clip, {set: {info: text}})},
   }
 }
 

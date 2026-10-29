@@ -1,0 +1,462 @@
+{
+ "actuation:gateway": [
+  "folded",
+  "compact",
+  "whole",
+  "full",
+  "popout",
+  "widget"
+ ],
+ "actuation:harness-model": [
+  "folded",
+  "compact",
+  "whole",
+  "full",
+  "popout",
+  "widget"
+ ],
+ "ai-kit:messages": [
+  "widget",
+  "full"
+ ],
+ "ai-kit:skill-device": [
+  "folded",
+  "compact",
+  "whole",
+  "full",
+  "popout",
+  "widget"
+ ],
+ "ai-kit:skillset-rack": [
+  "folded",
+  "compact",
+  "whole",
+  "full",
+  "popout",
+  "widget"
+ ],
+ "atlas-earth:globe-engine": [
+  "folded",
+  "compact",
+  "whole",
+  "full",
+  "popout",
+  "widget"
+ ],
+ "central:day-die": [
+  "folded",
+  "compact",
+  "whole",
+  "full",
+  "popout",
+  "widget"
+ ],
+ "central:docs": [
+  "folded",
+  "compact",
+  "whole",
+  "full",
+  "popout",
+  "widget"
+ ],
+ "central:document": [
+  "folded",
+  "compact",
+  "whole",
+  "full",
+  "popout",
+  "widget"
+ ],
+ "central:packet": [
+  "folded",
+  "compact",
+  "whole",
+  "full",
+  "popout",
+  "widget"
+ ],
+ "central:search": [
+  "folded",
+  "compact",
+  "whole",
+  "full",
+  "popout",
+  "widget"
+ ],
+ "dlw:arrangement-ruler": [
+  "folded",
+  "compact",
+  "whole",
+  "full",
+  "popout",
+  "widget"
+ ],
+ "dlw:session-grid": [
+  "folded",
+  "compact",
+  "whole",
+  "full",
+  "popout",
+  "widget"
+ ],
+ "expressions:colour": [
+  "folded",
+  "compact",
+  "whole",
+  "full",
+  "popout",
+  "widget"
+ ],
+ "expressions:contacts": [
+  "folded",
+  "compact",
+  "whole",
+  "full",
+  "popout",
+  "widget"
+ ],
+ "expressions:depth": [
+  "folded",
+  "compact",
+  "whole",
+  "full",
+  "popout",
+  "widget"
+ ],
+ "expressions:field": [
+  "folded",
+  "compact",
+  "whole",
+  "full",
+  "popout",
+  "widget"
+ ],
+ "expressions:focus": [
+  "folded",
+  "compact",
+  "whole",
+  "full",
+  "popout",
+  "widget"
+ ],
+ "expressions:ink": [
+  "folded",
+  "compact",
+  "whole",
+  "full",
+  "popout",
+  "widget"
+ ],
+ "expressions:medium": [
+  "folded",
+  "compact",
+  "whole",
+  "full",
+  "popout",
+  "widget"
+ ],
+ "expressions:morph": [
+  "folded",
+  "compact",
+  "whole",
+  "full",
+  "popout",
+  "widget"
+ ],
+ "expressions:physics": [
+  "folded",
+  "compact",
+  "whole",
+  "full",
+  "popout",
+  "widget"
+ ],
+ "expressions:pointer": [
+  "folded",
+  "compact",
+  "whole",
+  "full",
+  "popout",
+  "widget"
+ ],
+ "expressions:relational": [
+  "folded",
+  "compact",
+  "whole",
+  "full",
+  "popout",
+  "widget"
+ ],
+ "expressions:resonance": [
+  "folded",
+  "compact",
+  "whole",
+  "full",
+  "popout",
+  "widget"
+ ],
+ "expressions:studio": [
+  "folded",
+  "compact",
+  "whole",
+  "full",
+  "popout",
+  "widget"
+ ],
+ "knowledge-graph:graph": [
+  "folded",
+  "compact",
+  "whole",
+  "full",
+  "popout",
+  "widget"
+ ],
+ "live:delay": [
+  "folded",
+  "compact",
+  "whole",
+  "full",
+  "popout",
+  "widget"
+ ],
+ "live:dynamics": [
+  "folded",
+  "compact",
+  "whole",
+  "full",
+  "popout",
+  "widget"
+ ],
+ "live:exact-ratio": [
+  "folded",
+  "compact",
+  "whole",
+  "full",
+  "popout",
+  "widget"
+ ],
+ "live:filter": [
+  "folded",
+  "compact",
+  "whole",
+  "full",
+  "popout",
+  "widget"
+ ],
+ "live:reverb": [
+  "folded",
+  "compact",
+  "whole",
+  "full",
+  "popout",
+  "widget"
+ ],
+ "live:scale-mapping": [
+  "folded",
+  "compact",
+  "whole",
+  "full",
+  "popout",
+  "widget"
+ ],
+ "quaternal-logic:chakra": [
+  "folded",
+  "compact",
+  "whole",
+  "full",
+  "popout",
+  "widget"
+ ],
+ "quaternal-logic:deck": [
+  "folded",
+  "compact",
+  "whole",
+  "full",
+  "popout",
+  "widget"
+ ],
+ "quaternal-logic:m-prime-matrices": [
+  "folded",
+  "compact",
+  "whole",
+  "full",
+  "popout",
+  "widget"
+ ],
+ "quaternal-logic:m3-clock": [
+  "folded",
+  "compact",
+  "whole",
+  "full",
+  "popout",
+  "widget"
+ ],
+ "quaternal-logic:resonator-bank": [
+  "folded",
+  "compact",
+  "whole",
+  "full",
+  "popout",
+  "widget"
+ ],
+ "quaternal-logic:sky": [
+  "folded",
+  "compact",
+  "whole",
+  "full",
+  "popout",
+  "widget"
+ ],
+ "quaternal-logic:sky-modulation": [
+  "folded",
+  "compact",
+  "whole",
+  "full",
+  "popout",
+  "widget"
+ ],
+ "quaternal-logic:torus": [
+  "folded",
+  "compact",
+  "whole",
+  "full",
+  "popout",
+  "widget"
+ ],
+ "settings:window": [
+  "full"
+ ],
+ "software-factory:agentset-rack": [
+  "folded",
+  "compact",
+  "whole",
+  "full",
+  "popout",
+  "widget"
+ ],
+ "software-factory:approvals": [
+  "folded",
+  "compact",
+  "whole",
+  "full",
+  "popout",
+  "widget"
+ ],
+ "software-factory:context-write-mode": [
+  "folded",
+  "compact",
+  "whole",
+  "full",
+  "popout",
+  "widget"
+ ],
+ "software-factory:ledger": [
+  "widget",
+  "full"
+ ],
+ "software-factory:prompt-pads": [
+  "folded",
+  "compact",
+  "whole",
+  "full",
+  "popout",
+  "widget"
+ ],
+ "software-factory:run-map": [
+  "folded",
+  "compact",
+  "whole",
+  "full",
+  "popout",
+  "widget"
+ ],
+ "techne:canvas": [
+  "folded",
+  "compact",
+  "whole",
+  "full",
+  "popout",
+  "widget"
+ ],
+ "techne:journey": [
+  "folded",
+  "compact",
+  "whole",
+  "full",
+  "popout",
+  "widget"
+ ],
+ "techne:lens": [
+  "folded",
+  "compact",
+  "whole",
+  "full",
+  "popout",
+  "widget"
+ ],
+ "techne:palace": [
+  "folded",
+  "compact",
+  "whole",
+  "full",
+  "popout",
+  "widget"
+ ],
+ "widgets:files": [
+  "widget",
+  "full"
+ ],
+ "widgets:nows": [
+  "widget",
+  "full"
+ ],
+ "widgets:terminal": [
+  "folded",
+  "compact",
+  "whole",
+  "full",
+  "popout",
+  "widget"
+ ],
+ "widgets:trail": [
+  "widget",
+  "full"
+ ],
+ "widgets:web": [
+  "widget",
+  "full"
+ ],
+ "widgets:wiki": [
+  "widget",
+  "full"
+ ],
+ "workcell:git-seat": [
+  "folded",
+  "compact",
+  "whole",
+  "full",
+  "popout",
+  "widget"
+ ],
+ "workcell:link": [
+  "whole",
+  "full",
+  "widget"
+ ],
+ "workcell:remote-carrier": [
+  "folded",
+  "compact",
+  "whole",
+  "full",
+  "popout",
+  "widget"
+ ],
+ "workcell:workcell": [
+  "folded",
+  "compact",
+  "whole",
+  "full",
+  "popout",
+  "widget"
+ ]
+}

@@ -19,7 +19,8 @@ const FILE_LINE = /[\w./-]+\.(?:ts|tsx|mjs|rs|json|md):\d+/;
 
 // Pre-existing rows whose recorded boundary operation sits on an owner, out-of-scope, internal or studio status. Reported
 // to the lead as ledger inconsistencies (2026-10-14); the ceiling may shrink as statuses are reconciled, never grow.
-const KNOWN_REAL_OP_ON_OPEN_STATUS = new Set(["library","keep","native-library","lens","deep-lived","chakra-add","cancel-placement","fire-lane"]);
+// O-I #747 shrank it by two: cancel-placement is ported (Clip view's Select) and fire-lane names what it waits for.
+const KNOWN_REAL_OP_ON_OPEN_STATUS = new Set(["library","keep","native-library","lens","deep-lived","chakra-add"]);
 
 test('every ledger row names its outward home and a boundary operation or explicit marker', () => {
   assert.equal(ledger.schema, 'oi.expressions-port-status/v1');
@@ -42,6 +43,23 @@ test('every ledger row names its outward home and a boundary operation or explic
   }
   // The rows this lane filled cite their evidence: a real operation recorded here must name a file:line.
   assert.match(ledger.rows.find(row => row.action === 'native-retry-open').boundary_op, FILE_LINE);
+});
+
+// O-I #747 (manual §20.1 "Where everything is": everything Expressions does has one place). The app's own Studio stands down in the
+// field pane, so nothing is retained in it: each of the eleven rows that stayed "studio-only-by-design" takes the home the manual gives it,
+// or is marked by the ledger's own vocabulary as what it is (`pending:` naming what it waits for). The ledger keeps no retained row.
+const STUDIO_ROWS = ['studio', 'close-studio', 'dock-studio', 'edit', 'tab', 'entry-continue', 'cancel-placement', 'delete-group', 'fire-lane', 'take-manual', 'save-browser'];
+
+test('no row is retained in the app\'s Studio: each takes its manual home or names what it waits for', () => {
+  assert.equal(ledger.counts['studio-only-by-design'], undefined, 'no studio-only-by-design count');
+  for (const action of STUDIO_ROWS) {
+    const row = ledger.rows.find(item => item.action === action);
+    assert.ok(row, `${action}: still a row`);
+    assert.notEqual(row.status, 'studio-only-by-design', `${action}: retained in the app's Studio`);
+    assert.doesNotMatch(row.outward_home, /legacy|retained during port|Studio inspector|Studio placement|Studio Automation|Studio browser/i, `${action}: its home is the manual's, not the app's Studio`);
+    assert.match(row.outward_home, /§\d+(\.\d+)*/, `${action}: the home cites the manual section that gives it`);
+  }
+  for (const row of ledger.rows) assert.notEqual(row.status, 'studio-only-by-design', `${row.action}: retained in the app's Studio`);
 });
 
 test('the ledger accounting matches its row statuses', () => {

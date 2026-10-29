@@ -501,3 +501,27 @@ export const factoryTrackAdapter: WorldTrackAdapter<FactorySessionsReading> = {
     return set
   },
 }
+
+/** What Factory's acts no owner op carries wait for (O-I #743, round three: AIKit's encounter and Factory), as the status bar says. */
+export const FACTORY_WAITING: Readonly<Record<string, string>> = {
+  'clip.insert': 'AIKit making a blank task in a session: encounter-task-configure makes a session\'s task of a purpose and a source (a constellation dropped on it), and only on a session that holds none',
+  'clip.duplicate': 'AIKit copying a task in its session: no encounter op copies a task, and a session holds one',
+  'clip.delete': 'AIKit taking a task out of its session: no encounter op removes a task',
+  'clip.paste': 'AIKit copying a task to another session: no encounter op copies a task',
+  'clip.info': 'a task\'s info text at AIKit: a task keeps its purpose, which its settings name',
+  'clip.split': 'Factory splitting a task: no op does',
+  'clip.consolidate': 'Factory joining tasks: no op does',
+  'clip.crop': 'Factory cropping a task: no op does',
+  'slot.stop-button': 'a batch row\'s own stop: Factory\'s stops are a session\'s or the harness\'s',
+  'slot.record': 'a recording path into a session: a task is made by AIKit, not recorded',
+  'track.rename': 'AIKit naming a session: a session is named by its purpose and agent when it opens, and no encounter op renames it',
+  'track.remove': 'AIKit taking a session off the set: detaching it from the Project\'s space, which no encounter op does (a session must stay attached to be read)',
+  'track.duplicate': 'AIKit opening a session like another: no encounter op copies a session',
+  'track.move': 'an order of sessions: Factory lays them as AIKit lists them',
+  'tracks.group': 'a SessionSpace made of sessions: a group stands by what its head spawned',
+  'track.colour': 'a session\'s own colour: the grid wears its palette by place',
+  'row.insert': 'a batch row: the rows are the n-th task of every session, which Factory numbers and keeps no named row of',
+  'row.rename': 'a batch row\'s name: Factory numbers its batches',
+  'row.duplicate': 'a batch copied: no op copies the n-th task of every session',
+  'row.delete': 'a batch taken out: no op removes the n-th task of every session',
+}

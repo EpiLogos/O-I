@@ -183,7 +183,8 @@ test('the Factory tree and its agent tab persist through modeLayouts when the mo
 test('Factory centre is the Workbench tree: the centre is native.workbench, and the agent-shell chrome stands on Factory', () => {
   assert.match(app, /const agentShell = isFactoryMode\(frameMode\) && !settingsPresented/, 'the agent-shell chrome stands over every Factory tree')
   // Every mode's centre is the Workbench tree (FOUNDATION F2); Factory first opens with its dock (shell/modeFrames.ts).
-  assert.match(modeFrames, /factory: \{\.\.\.FRAME, centerPanel: 'native\.workbench', detailMode: 'clip', dock: true\}/, 'entering Factory presents the Workbench tree, its detail row on the mockup\'s Clip')
+  // O-I #744: Factory opens in Session view (DLW §19 "Factory opens in Session view, its sessions as tracks"); the centre stays the tree.
+  assert.match(modeFrames, /factory: \{\.\.\.FRAME, view: 'session', centerPanel: 'native\.workbench', detailMode: 'clip', dock: true\}/, 'entering Factory presents the Workbench tree, its detail row on the mockup\'s Clip')
   assert.doesNotMatch(app, /setCenterPanel\('native\.agent'\)/, 'the agent centre panel is no longer the Factory centre')
 })
 

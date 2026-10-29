@@ -51,6 +51,19 @@ export function toggleSide(sides: DetailSides, side: DetailSide, shown: Readonly
   return {front: other, hidden: {...sides.hidden, [side]: true}}
 }
 
+/** The side the person hid, as the frame keeps it across a relaunch (the application view's `hiddenSide`, beside `detail` and the rail's
+ * `dock`: each part's fold its own; manual §10.1 "Show it again and it comes back … as you left it"). The front side always shows, so at
+ * most the other one is hidden. Pure. */
+export function hiddenSideOf(sides: DetailSides): DetailSide | undefined {
+  const other: DetailSide = sides.front === 'clip' ? 'device' : 'clip'
+  return sides.hidden[other] ? other : undefined
+}
+
+/** The sides a kept view restores: the side it hid, never its front (a view without the field hides nothing). Pure. */
+export function restoredSides(front: DetailSide, hiddenSide: DetailSide | undefined): DetailSides['hidden'] {
+  return {clip: hiddenSide === 'clip' && front !== 'clip', device: hiddenSide === 'device' && front !== 'device'}
+}
+
 /** The room Clip view takes in the detail area when both stand: the area less the chain at its size, never under its least. Pure. */
 export function clipHeightIn(height: number, both: boolean): number {
   return both ? Math.max(CLIP_MIN_H, height - CHAIN_H) : height

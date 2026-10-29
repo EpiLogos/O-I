@@ -19,12 +19,14 @@ import type {SurfaceBinding} from '../../../../../desktop/cradle/src/surface/typ
 import {registeredHostedSurfaces} from '../../../../../desktop/cradle/src/contributions/generated'
 import {contributionRegistrationFailure} from '../native/contributions'
 import {connectTechneInstrumentRequests} from '../native/techneInstrumentOpen'
-import {NATIVE_OPEN_STUDIO, parseNativeOpenStudio} from '../native/openStudio'
+import {MENU_ACT, NATIVE_OPEN_STUDIO, parseNativeOpenStudio} from '../native/openStudio'
 import {openStudioHome} from '../components/expressions/studio/studioHome'
+import {menuStageCommands} from '../components/expressions/studio/StudioStage'
+import {sayOnInfoLine} from '../frame/devices/deviceHost'
 import {NATIVE_ENGINE_COMMAND, parseNativeEngineCommand, setNativeEngineMounted} from '../native/engineCommand'
 import {stageEngine} from '../native/stageCommands'
 import {answerHostedSummon, sameSummonBasis, SOURCE_PRESENT, summonBasis} from '../native/hostedSummons'
-import type {HostedAppState, StageCommand, StageResult} from '@epilogos/expressions-boundary'
+import {isStudioSection, type HostedAppState, type StageCommand, type StageResult} from '@epilogos/expressions-boundary'
 import {enumerateWorks, needsListing, setExpressionOwner, type NativeWorkRow} from '../components/nativeExpressionCommands'
 import {closedWork, expressionOwner, openListedWork} from '../components/nativeExpressionCommands'
 import {publishFrameTakeLink} from '../native/frameTakes'
@@ -314,6 +316,16 @@ export function ExpressionsPanel() {
           // The frame saved a work into the works home that it does not present (a left draft kept as a work, O-I #763): the works are
           // listed again, so the browser shows it at once.
           if (request.request === 'works-changed') void enumerate().catch(fail)
+          // O-I #747: the field's Studio key and E open the setting where it lives (studioHome.ts), never the app's Studio over the field.
+          if (request.request === 'open-home') {
+            const section = (request as {section?: unknown}).section
+            if (isStudioSection(section)) { const refusal = openStudioHome(section); if (refusal) setFault(refusal) }
+          }
+          // O-I #747: what the field would say over itself (its toast) is said on the status bar's Info line instead.
+          if (request.request === 'say') {
+            const text = (request as {text?: unknown}).text
+            if (typeof text === 'string' && text.trim()) sayOnInfoLine(target, 'Expressions', text.slice(0, 2000))
+          }
         },
         onStudioResult: result => {if (live && !result.ok) setFault(result.error)},
       })
@@ -352,6 +364,23 @@ export function ExpressionsPanel() {
       if (refusal) setFault(refusal)
     }
     window.addEventListener(NATIVE_OPEN_STUDIO, openStudio)
+    // View › Present and File › Export (menus.rs; App.tsx hands them to the mode that stands as MENU_ACT): the field's own acts, run in
+    // order through the presented frame's one runner (StudioStage.tsx menuStageCommands); a refusal shows on this panel's fault line.
+    const menuAct = (event: Event) => {
+      const id = (event as CustomEvent<{id?: unknown}>).detail?.id
+      if (!live || typeof id !== 'string' || !mounted || !presented()) return
+      const commands = menuStageCommands(id, mounted.host.getState())
+      if (!commands) return
+      event.preventDefault()
+      const host = mounted.host
+      void (async () => {
+        for (const command of commands) {
+          const result = await host.stageCommand(command)
+          if (!result.ok) { if (live) setFault(result.error); return }
+        }
+      })().catch(fail)
+    }
+    window.addEventListener(MENU_ACT, menuAct)
     // A physics device's runtime action, run by the mounted host as one engine stage command. Refusals show in this panel.
     const engineCommand = (event: Event) => {
       const request = parseNativeEngineCommand((event as CustomEvent<unknown>).detail)
@@ -373,7 +402,7 @@ export function ExpressionsPanel() {
     window.addEventListener('oi:epi-examine', examine)
     const observer = new MutationObserver(visible)
     for (let parent: HTMLElement | null = target; parent; parent = parent.parentElement) observer.observe(parent, {attributes: true, attributeFilter: ['hidden', 'inert', 'style', 'class']})
-    return () => {live = false; setExpressionOwner(null); stageAnswers.dispose(); publishLiveTorusState(null); publishHostedExpressions(null); ++facadeGeneration; openRequest.current = null; openDraftRequest.current = null; requalify.current = null; abort.abort(); observer.disconnect(); window.removeEventListener('oi:epi-examine', examine); window.removeEventListener(NATIVE_OPEN_STUDIO, openStudio); window.removeEventListener(NATIVE_ENGINE_COMMAND, engineCommand);
+    return () => {live = false; setExpressionOwner(null); stageAnswers.dispose(); publishLiveTorusState(null); publishHostedExpressions(null); ++facadeGeneration; openRequest.current = null; openDraftRequest.current = null; requalify.current = null; abort.abort(); observer.disconnect(); window.removeEventListener('oi:epi-examine', examine); window.removeEventListener(NATIVE_OPEN_STUDIO, openStudio); window.removeEventListener(MENU_ACT, menuAct); window.removeEventListener(NATIVE_ENGINE_COMMAND, engineCommand);
       stopSelection.current?.(); stopSelection.current = null; navigator.current?.dispose(); navigator.current = null;
       stopInstruments?.(); stopInstruments = null;
       stopEditor?.(); editor?.dispose(); workspace.attachEditor(null); workspace.publishEditorReading(null);

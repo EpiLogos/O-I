@@ -109,14 +109,16 @@ export function onRack(reading: NativeEditorReading | null, family: string): boo
  *   • workspace/a:studio — this Studio; workspace/a:blueprint — the Studio's Blueprint device (Scene devices, studioSections);
  *   • save/a:capture-image, save/a:record-video, save/a:capture-options — Capture (StudioStage.tsx StageCaptureTools: ◉ Capture still |
  *     video, Edition… with the Image suite's options);
- *   • scene/a:toggle-play — the transport's Play and Stop (useExpressionsTransport.tsx `play`); scene/a:present — Capture's Present;
+ *   • scene/a:toggle-play — the transport's Play and Stop (useExpressionsTransport.tsx `play`); scene/a:present — View › Present (O-I #747:
+ *     menus.rs, StudioStage.tsx menuStageCommands);
+ *   • rail/a:tool-select — Clip view's pointer tools, Select (O-I #747: components/expressions/clip/clipBinding.ts `tool`);
  * (R2 retired the Clip side's SceneControls, which carried workspace/a:quick-guide and scene/a:previous, next, timeline and play-journey:
  * the frame's own controls for them stand on the Stage's Frame tools until the scene's Clip view carries them.)
  *   • side/a:toolbelt — Your controls, the toolbelt's own entries with + Parameter (NativeChosenControls.tsx :225);
  *   • view/a:grid, view/a:snap, view/a:face-plane, view/a:guides — Tools' Guides and snap and Camera (StudioStage.tsx StageViewTools);
- *   • present/a:exit-present, recording/a:stop-record — Capture's Present and its Stop. */
+ *   • present/a:exit-present — View › Present, again (or Esc); recording/a:stop-record — Capture's Stop. */
 export const STUDIO_CARRIED: ReadonlySet<string> = new Set([
-  'rail/a:pointer-options', 'rail/a:objects', 'workspace/a:studio', 'workspace/a:blueprint',
+  'rail/a:pointer-options', 'rail/a:objects', 'rail/a:tool-select', 'workspace/a:studio', 'workspace/a:blueprint',
   'save/a:capture-image', 'save/a:record-video', 'save/a:capture-options',
   'scene/a:toggle-play', 'scene/a:present',
   'side/a:toolbelt', 'view/a:grid', 'view/a:snap', 'view/a:face-plane', 'view/a:guides', 'present/a:exit-present', 'recording/a:stop-record',

@@ -42,6 +42,8 @@ const READY_STATE = {hostMode: 'expressions', sceneCount: 1,
   document: {id: 'expression:kept', name: 'Kept work'}, nativeScene: {expression_ref: 'expression:kept', revision: 3, scene_ref: 'scene:one'}};
 const READY = {v: CHANNEL_VERSION, kind: 'oi-app-state', state: READY_STATE};
 const ALL_VIEW = ['view-2d', 'view-3d', 'guides', 'grid', 'snap', 'face-plane', 'fit-view', 'keep-view', 'restore-view'];
+// MOVED (O-I #747, manual §20.1): Keep and Restore are the scene's View in Clip view; Present is View › Present; Export is File › Export.
+const PLATE_VIEW = ALL_VIEW.filter(action => action !== 'keep-view' && action !== 'restore-view');
 
 /** The real ExpressionsHost over a stubbed frame: every posted message is recorded. */
 function aperture(t, options = {}) {
@@ -351,7 +353,7 @@ test('the stage controls name every control, disable it with its reason, and rea
   assert.match(unmounted, /role="group" aria-label="Capture"/);
   assert.match(unmounted, /<p class="inst-section-line studio-stage-reason">No Expressions application is mounted\.<\/p>/, 'the shared reason is said once, in Capture');
   const off = stageButtons(unmounted);
-  assert.deepEqual(Object.keys(off).sort(), [...ALL_VIEW, 'capture-png', 'present'].sort(), 'the view, the still capture and Present stand; the rest are one choice away');
+  assert.deepEqual(Object.keys(off).sort(), [...PLATE_VIEW, 'capture-png'].sort(), 'the view and the still capture stand; the rest are one choice away (O-I #747 moved Present, Keep and Restore)');
   for (const [id, attrs] of Object.entries(off)) {
     assert.match(attrs, /disabled=""/, id);
     assert.doesNotMatch(attrs, /aria-pressed/, id);
@@ -360,7 +362,7 @@ test('the stage controls name every control, disable it with its reason, and rea
   assert.doesNotMatch(unmounted, /aria-label="Tool"/, 'the tool rail is in the top bar, not here');
   const bare = stageButtons(studio({state: READY_STATE, run: async () => ({ok: true})}));
   assert.doesNotMatch(bare['view-2d'], /aria-pressed/, 'no camera reading, no pressed claim');
-  assert.doesNotMatch(bare.present, /disabled/);
+  assert.equal(bare.present, undefined, 'MOVED (O-I #747): View › Present');
 
   const ready = studio({
     state: {...READY_STATE, stage: {mode: '3d', grid: true, snap: false, guides: true}, recording: true, presenting: false},
@@ -368,7 +370,7 @@ test('the stage controls name every control, disable it with its reason, and rea
   });
   const on = stageButtons(ready);
   // A take records, so the capture is video: Stop is the one capture that can run, and Save video waits for it to finish.
-  assert.deepEqual(Object.keys(on).sort(), [...ALL_VIEW, 'record', 'present', 'save-video'].sort());
+  assert.deepEqual(Object.keys(on).sort(), [...PLATE_VIEW, 'record', 'save-video'].sort());
   for (const [id, attrs] of Object.entries(on)) if (id !== 'save-video') assert.doesNotMatch(attrs, /disabled/, id);
   assert.match(on['save-video'], /disabled=""/);
   assert.match(on['save-video'], /title="Stop the recording first\."/);
@@ -379,7 +381,6 @@ test('the stage controls name every control, disable it with its reason, and rea
   assert.match(on.guides, /aria-pressed="true"/);
   assert.match(on.record, /aria-pressed="true"/);
   assert.match(on.record, /aria-label="Stop recording"/);
-  assert.match(on.present, /aria-pressed="false"/);
   assert.doesNotMatch(on['face-plane'], /aria-pressed/);
   assert.match(ready, /aria-label="Camera"/);
   assert.match(ready, /aria-label="Guides and snap"/);
@@ -402,7 +403,7 @@ test('Save video waits for a take, and the capture options start at the Image su
   assert.match(recording['save-video'], /disabled=""/, 'a take is not saved while recording');
 
   const closed = captureBody(toolState({tool: 'pin'}));
-  assert.match(closed, /aria-expanded="false"[^>]*>Edition…<\/button>/, 'Edition… holds the options, Export and Import (the mockup\'s Edition…)');
+  assert.match(closed, /aria-expanded="false"[^>]*>Edition…<\/button>/, 'Edition… holds the options and Import (the mockup\'s Edition…; Export is File › Export, O-I #747)');
   assert.doesNotMatch(closed, /Expression JSON|Include text/);
   const html = captureBody(toolState({tool: 'pin'}), {edition: true});
   assert.doesNotMatch(html, /aria-label="Tool"/);
@@ -413,7 +414,8 @@ test('Save video waits for a take, and the capture options start at the Image su
   assert.match(html, /Include text/);
   assert.match(html, /Transparent background/);
   const edition = stageButtons(html);
-  for (const id of ['export-json', 'export-native', 'export-html', 'import']) assert.ok(edition[id], `${id} stands in Edition…`);
+  assert.ok(edition.import, 'import stands in Edition…');
+  for (const id of ['export-json', 'export-native', 'export-html']) assert.equal(edition[id], undefined, `${id}: MOVED to File › Export (O-I #747)`);
   assert.doesNotMatch(html, /Orbit/, 'orbit is a pointer drag on the stage: the pane\'s hover words say so, not a control');
 });
 

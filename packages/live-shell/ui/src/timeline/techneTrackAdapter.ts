@@ -629,6 +629,31 @@ export function projectTechneTracks(reading: TechneReading): WorldTrackSet {
   return set
 }
 
+/** What Technē's acts no owner op carries wait for (O-I #743, round three: the reading's owner), as the status bar says. */
+export const TECHNE_WAITING: Readonly<Record<string, string>> = {
+  'clip.insert': 'the reading\'s owner writing an event: a reading\'s events are read from its sources, and only a walk\'s Expression keeps what is made in Technē (a constellation dropped on it)',
+  'clip.duplicate': 'the reading\'s owner copying an event: no op does',
+  'clip.delete': 'the reading\'s owner taking an event out: an event is its source\'s, and no op removes it',
+  'clip.paste': 'the reading\'s owner copying an event to another stream: no op does',
+  'clip.info': 'an event\'s info text at the reading\'s owner: no op writes one',
+  'clip.split': 'no owner splits an event',
+  'clip.consolidate': 'no owner joins events',
+  'clip.crop': 'no owner crops an event',
+  'slot.stop-button': 'a walk stop\'s own stop: no op keeps one',
+  'slot.record': 'a recording path into a stream: Record keeps a take in a recorded walk\'s Expression only',
+  'track.rename': 'a reading\'s name at its owner: the streams are the lock\'s six, named by what they read',
+  'track.remove': 'a stream taken off the World cut: the six streams always stand',
+  'track.duplicate': 'a stream copied: no op does',
+  'track.move': 'the streams in another order: they stand in the lock\'s order',
+  'tracks.group': 'a group of streams: no op does',
+  'track.colour': 'a stream\'s own colour: no op writes one',
+  'row.insert': 'a walk\'s stop made: a stop stands a reading\'s event, and no op inserts one',
+  'row.rename': 'a walk stop\'s name: a stop is named by the event it stands',
+  'row.duplicate': 'a walk\'s stop copied: no op does',
+  'row.delete': 'a walk\'s stop taken out: no op does',
+  'set.stop-all': 'a stop of every stream: Technē\'s readings do not play',
+}
+
 /** The op a recorded walk's Arm runs: the World's write arm. */
 export const WALK_ARM_OP = 'the World\'s write arm (projections/atlas/walks/walkSession.ts): Record keeps a take in the walk\'s Expression only while armed'
 

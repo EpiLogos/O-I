@@ -45,9 +45,10 @@ const agentTile = (id: AgentTileId) => function AgentTileWidget() {
   return <AgentDockTileBody id={id} sessionRef={track?.sessionRef ?? null} />
 }
 
-// Sessions, Agents and Results are views now, not widgets (DLW §16.1 "The views are not devices"; lock §0.3.1; R4): the sessions are
-// Factory's tracks, the agents at work their needles, a run's results its takes in Arrangement view.
-const MODE_TILES = ['packet', 'trail', 'field', 'nows', 'sky'] as const
+// Sessions is a view, not a widget (DLW §16.1 "The views are not devices"; lock §0.3.1; R4): the sessions are Factory's tracks. Agents and
+// Results stand on Factory's rail again (manual §19 "On the rail", and Factory "opens … with the Results, Agents and Terminal tiles on
+// the rail"; O-I #744): Agents draws the agency's sessions as lights, Results waits for the Factory owner's receiving and says so.
+const MODE_TILES = ['packet', 'trail', 'field', 'nows', 'sky', 'agents', 'results'] as const
 // The Diff tile was retired in the 22 Oct manual rewrite: reading what changed is the Diff page of Files (§23.4, §23.2).
 const AGENT_TILES: readonly AgentTileId[] = ['terminal', 'files', 'web', 'graph', 'frames', 'ledger', 'approvals']
 /** The tiles that are their own widget bodies now, by id. */
@@ -92,7 +93,7 @@ export function worldWidgets(): readonly WidgetDeclaration[] {
   return [...WIDGETS, ...panelWidgets(getPanels('right-dock'), new Set(WIDGETS.map(widget => widget.id)))]
 }
 
-export {DEFAULT_WIDGETS} from './widgetDefaults'
+export {defaultWidgets, MODE_WIDGETS} from './widgetDefaults'
 
 /** The companion's name in a mode, for the agent widget's title where a caller needs it. */
 export const companionOf = (mode: SurfMode): string => COMPANIONS[mode].name

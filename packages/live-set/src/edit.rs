@@ -33,7 +33,8 @@ use crate::xml::Element;
 use serde_json::{json, Map, Value};
 
 /// Where a clip stands on its track.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum ClipAt {
     Arrangement(usize),
     Slot(usize),
@@ -88,16 +89,16 @@ const GROOVE_AMOUNTS: &[(&str, &str)] = &[
 
 // ---------------------------------------------------------------------------- the document's values
 
-fn value_of<'a>(element: &'a Element, child: &str) -> Option<&'a str> {
+pub(crate) fn value_of<'a>(element: &'a Element, child: &str) -> Option<&'a str> {
     element.child(child).and_then(|c| c.attr("Value"))
 }
-fn num(element: &Element, child: &str) -> Option<f64> {
+pub(crate) fn num(element: &Element, child: &str) -> Option<f64> {
     value_of(element, child).and_then(|v| v.parse().ok())
 }
-fn flag(element: &Element, child: &str) -> Option<bool> {
+pub(crate) fn flag(element: &Element, child: &str) -> Option<bool> {
     value_of(element, child).map(|v| v == "true")
 }
-fn set_value(element: &mut Element, child: &str, value: &str) -> Result<(), String> {
+pub(crate) fn set_value(element: &mut Element, child: &str, value: &str) -> Result<(), String> {
     element
         .child_mut(child)
         .ok_or_else(|| format!("the clip carries no {child} in the document"))?
@@ -105,7 +106,7 @@ fn set_value(element: &mut Element, child: &str, value: &str) -> Result<(), Stri
     Ok(())
 }
 /// A number as the document writes one: integers plain, the rest in full.
-fn number_text(value: f64) -> String {
+pub(crate) fn number_text(value: f64) -> String {
     if value.fract() == 0.0 && value.abs() < 1e15 {
         format!("{}", value as i64)
     } else {
@@ -115,7 +116,7 @@ fn number_text(value: f64) -> String {
 
 // ---------------------------------------------------------------------------- finding tracks and clips
 
-fn tracks(root: &Element) -> Vec<&Element> {
+pub(crate) fn tracks(root: &Element) -> Vec<&Element> {
     let Some(live_set) = root.find("LiveSet") else {
         return Vec::new();
     };
@@ -127,7 +128,7 @@ fn tracks(root: &Element) -> Vec<&Element> {
                 .filter(|track| {
                     matches!(
                         track.name.as_str(),
-                        "AudioTrack" | "MidiTrack" | "ReturnTrack"
+                        "AudioTrack" | "MidiTrack" | "ReturnTrack" | "GroupTrack"
                     )
                 })
                 .collect()
@@ -139,14 +140,14 @@ fn tracks(root: &Element) -> Vec<&Element> {
     out
 }
 
-fn track_at(root: &Element, index: usize) -> Result<&Element, String> {
+pub(crate) fn track_at(root: &Element, index: usize) -> Result<&Element, String> {
     tracks(root)
         .into_iter()
         .nth(index)
         .ok_or_else(|| format!("the set has no track {index}"))
 }
 
-fn track_at_mut(root: &mut Element, index: usize) -> Result<&mut Element, String> {
+pub(crate) fn track_at_mut(root: &mut Element, index: usize) -> Result<&mut Element, String> {
     let live_set = root
         .find_mut("LiveSet")
         .ok_or("the document holds no LiveSet")?;
@@ -158,7 +159,7 @@ fn track_at_mut(root: &mut Element, index: usize) -> Result<&mut Element, String
                 .filter(|track| {
                     matches!(
                         track.name.as_str(),
-                        "AudioTrack" | "MidiTrack" | "ReturnTrack"
+                        "AudioTrack" | "MidiTrack" | "ReturnTrack" | "GroupTrack"
                     )
                 })
                 .count()
@@ -177,7 +178,7 @@ fn track_at_mut(root: &mut Element, index: usize) -> Result<&mut Element, String
                 .filter(|track| {
                     matches!(
                         track.name.as_str(),
-                        "AudioTrack" | "MidiTrack" | "ReturnTrack"
+                        "AudioTrack" | "MidiTrack" | "ReturnTrack" | "GroupTrack"
                     )
                 })
                 .nth(index)
@@ -185,9 +186,9 @@ fn track_at_mut(root: &mut Element, index: usize) -> Result<&mut Element, String
         .ok_or_else(|| format!("the set has no track {index}"))
 }
 
-const CLIPS: [&str; 2] = ["AudioClip", "MidiClip"];
+pub(crate) const CLIPS: [&str; 2] = ["AudioClip", "MidiClip"];
 
-fn clip_at(track: &Element, at: ClipAt) -> Result<&Element, String> {
+pub(crate) fn clip_at(track: &Element, at: ClipAt) -> Result<&Element, String> {
     let sequencer = track
         .child("DeviceChain")
         .and_then(|dc| dc.child("MainSequencer"))
@@ -289,7 +290,9 @@ fn send_holders(mixer: &Element) -> impl Iterator<Item = &Element> {
 /// Every `AutomationTarget` id in the document, with the parameter (its
 /// holder) and the device (the holder's holder) it moves. A mixer's sends
 /// are named as Live names them: device "Mixer", parameter "Send A" onward.
-fn automation_targets(root: &Element) -> std::collections::HashMap<String, (String, String)> {
+pub(crate) fn automation_targets(
+    root: &Element,
+) -> std::collections::HashMap<String, (String, String)> {
     fn walk(
         element: &Element,
         parent: Option<&Element>,
@@ -369,7 +372,7 @@ fn envelope_json(
 // ---------------------------------------------------------------------------- the clip
 
 /// The clip's markers in the design's words: start, end, loop, position, length.
-fn markers(clip: &Element) -> Value {
+pub(crate) fn markers(clip: &Element) -> Value {
     let Some(lp) = clip.child("Loop") else {
         return json!({});
     };
@@ -385,7 +388,7 @@ fn markers(clip: &Element) -> Value {
 
 /// The clip's notes: `{id, p, at, len, vel, chance, on}`, at and len in beats,
 /// chance 0–1, sorted by time then pitch.
-fn notes_json(clip: &Element) -> Vec<Value> {
+pub(crate) fn notes_json(clip: &Element) -> Vec<Value> {
     let mut notes = Vec::new();
     let Some(key_tracks) = clip.child("Notes").and_then(|n| n.child("KeyTracks")) else {
         return notes;
@@ -443,7 +446,7 @@ fn groove_names(root: &Element) -> std::collections::HashMap<String, String> {
 }
 
 /// One clip, whole, in the design's words.
-fn clip_reading(root: &Element, clip: &Element) -> Value {
+pub(crate) fn clip_reading(root: &Element, clip: &Element) -> Value {
     let word = |list: &[&str], index: Option<f64>| {
         index
             .and_then(|i| list.get(i as usize))
@@ -482,6 +485,7 @@ fn clip_reading(root: &Element, clip: &Element) -> Value {
     let mut reading = json!({
         "kind": if clip.name == "MidiClip" { "midi" } else { "audio" },
         "name": value_of(clip, "Name").unwrap_or(""),
+        "info": value_of(clip, "Annotation").unwrap_or(""),
         "colourIndex": num(clip, "Color"),
         "active": flag(clip, "Disabled").map(|d| !d),
         "sig": signature.map(|s| json!({"num": num(s, "Numerator"), "den": num(s, "Denominator")})),
@@ -628,6 +632,30 @@ fn apply_settings(
                     .filter(|n| n.chars().count() <= 256 && !n.chars().any(char::is_control))
                     .ok_or("A clip's name is text of at most 256 characters")?;
                 set_value(clip, "Name", name)?;
+            }
+            // Edit Info Text (manual §10.9; Live's clip menu, CLIP-VIEW-EVIDENCE.md cap 22): the clip's `Annotation`, which
+            // every clip carries (session-model.md §5); line breaks are kept, as Live's Info View keeps them.
+            "info" => {
+                let info = value
+                    .as_str()
+                    .filter(|t| {
+                        t.chars().count() <= 4096
+                            && !t.chars().any(|c| c.is_control() && c != '\n' && c != '\t')
+                    })
+                    .ok_or("A clip's info text is text of at most 4096 characters")?;
+                match clip.child_mut("Annotation") {
+                    Some(annotation) => annotation.set_attr("Value", info),
+                    None => {
+                        let mut annotation = Element::new("Annotation");
+                        annotation.set_attr("Value", info);
+                        let at = clip
+                            .children
+                            .iter()
+                            .position(|c| c.name == "Name")
+                            .map_or(clip.children.len(), |at| at + 1);
+                        clip.children.insert(at, annotation);
+                    }
+                }
             }
             "colourIndex" => set_value(
                 clip,
@@ -793,7 +821,7 @@ fn apply_settings(
 
 /// Replace a MIDI clip's notes. A note keeps its id when it names one the
 /// clip holds; a new note takes the clip's next id.
-fn apply_notes(clip: &mut Element, notes: &[Value]) -> Result<(), String> {
+pub(crate) fn apply_notes(clip: &mut Element, notes: &[Value]) -> Result<(), String> {
     if clip.name != "MidiClip" {
         return Err("An audio clip holds no notes".into());
     }
@@ -1191,7 +1219,7 @@ fn apply_mixer(
 
 /// The main lane's clips of a track (the `Sample` lane, then the
 /// `ClipTimeable` lane, as `clip_at` walks them).
-fn main_lane(track: &Element) -> Vec<&Element> {
+pub(crate) fn main_lane(track: &Element) -> Vec<&Element> {
     let sequencer = track
         .child("DeviceChain")
         .and_then(|dc| dc.child("MainSequencer"));
@@ -1283,15 +1311,52 @@ pub fn tracks_extra_json(root: &Element) -> Vec<Value> {
     let returns = return_names(root);
     tracks(root)
         .into_iter()
-        .map(|track| json!({"mixer": mixer_json(track, &returns), "takeLanes": take_lanes_json(track), "automation": automation_json(root, track)}))
+        .map(|track| json!({"mixer": mixer_json(track, &returns), "takeLanes": take_lanes_json(track), "automation": automation_json(root, track),
+            "stoplessSlots": stopless_slots(track),
+            // Its own `Id`, the group it stands in (`TrackGroupId`, -1: none) and its colour (`Color`, Live's palette index).
+            "trackId": track.attr("Id"), "groupId": num(track, "TrackGroupId").map(|g| g as i64), "colourIndex": num(track, "Color")}))
         .collect()
+}
+
+/// Each row's own name, as Live keeps it in its scene's `Name` (empty where the
+/// row has none), in the rows' order.
+pub fn scene_names(root: &Element) -> Vec<String> {
+    root.find("LiveSet")
+        .and_then(|set| set.child("Scenes"))
+        .map(|scenes| {
+            scenes
+                .children
+                .iter()
+                .map(|scene| value_of(scene, "Name").unwrap_or("").to_string())
+                .collect()
+        })
+        .unwrap_or_default()
+}
+
+/// The rows whose slot on this track has had its stop button removed (Live's
+/// `HasStop` false: launching the row leaves the track playing). A slot with
+/// no `HasStop`, or a track with no grid, keeps Live's: the button stands.
+pub fn stopless_slots(track: &Element) -> Vec<usize> {
+    track
+        .child("DeviceChain")
+        .and_then(|dc| dc.child("MainSequencer"))
+        .and_then(|ms| ms.child("ClipSlotList"))
+        .map(|list| {
+            list.children
+                .iter()
+                .enumerate()
+                .filter(|(_, slot)| value_of(slot, "HasStop") == Some("false"))
+                .map(|(scene, _)| scene)
+                .collect()
+        })
+        .unwrap_or_default()
 }
 
 // ---------------------------------------------------------------------------- the comp
 
 /// The set's tempo when it stands still over the whole set: the Main track's
 /// `Tempo`, unless an automation envelope moves it to more than one value.
-fn steady_tempo(root: &Element) -> Option<f64> {
+pub(crate) fn steady_tempo(root: &Element) -> Option<f64> {
     let main = root.find("LiveSet")?.child("MainTrack")?;
     let tempo = main.child("DeviceChain")?.child("Mixer")?.child("Tempo")?;
     let manual = num(tempo, "Manual")?;
@@ -1325,7 +1390,7 @@ fn steady_tempo(root: &Element) -> Option<f64> {
 /// MIDI clip or a warped audio clip; for an unwarped audio clip, whose markers
 /// Live keeps in seconds (real sets: an unwarped clip's markers span its
 /// length in beats × 60 / tempo), the seconds of one beat at the set's tempo.
-fn marker_scale(clip: &Element, tempo: Option<f64>) -> Result<f64, String> {
+pub(crate) fn marker_scale(clip: &Element, tempo: Option<f64>) -> Result<f64, String> {
     if clip.name == "AudioClip" && flag(clip, "IsWarped") == Some(false) {
         tempo
             .filter(|bpm| *bpm > 0.0)
@@ -1343,7 +1408,7 @@ fn marker_scale(clip: &Element, tempo: Option<f64>) -> Result<f64, String> {
 /// the cut's offset and `LoopEnd` follows the length; looped, the play
 /// position (`StartRelative`) moves within the loop. `OutMarker` and the
 /// hidden loop stay, as Live's comped clips keep them.
-fn crop(clip: &mut Element, from: f64, to: f64, scale: f64) -> Result<(), String> {
+pub(crate) fn crop(clip: &mut Element, from: f64, to: f64, scale: f64) -> Result<(), String> {
     let start = num(clip, "CurrentStart").ok_or("the clip carries no place in the document")?;
     let lp = clip
         .child_mut("Loop")
@@ -1429,6 +1494,23 @@ fn comp(
             "A take of this track is no {kind}: it cannot stand in its main lane"
         ));
     }
+    lay_over(track, holder, from, to, tempo, pieces)
+}
+
+/// Lay `pieces` (clips within `[from, to]`) in a main lane, replacing what the
+/// lane held there, as Live lays a clip over others on the ruler: a clip under
+/// the stretch is removed, one across its edge is cut at it, one across the
+/// whole stretch is split around it (its later piece takes a new `Id`). Each
+/// piece takes a new `Id`; the lane stays in time order. The comp's own step
+/// (`comp`), shared with a duplicate laid after its clip (`acts.rs`).
+pub(crate) fn lay_over(
+    track: &mut Element,
+    holder: &str,
+    from: f64,
+    to: f64,
+    tempo: Option<f64>,
+    pieces: Vec<Element>,
+) -> Result<(), String> {
     let mut next_id = main_lane(track)
         .iter()
         .filter_map(|clip| clip.attr("Id")?.parse::<u64>().ok())
@@ -1610,19 +1692,19 @@ fn apply_groove(
 
 // ---------------------------------------------------------------------------- the operations
 
-fn revision(bytes: &[u8]) -> String {
+pub(crate) fn revision(bytes: &[u8]) -> String {
     use sha2::{Digest, Sha256};
     format!("sha256:{:x}", Sha256::digest(bytes))
 }
 
-fn open(path: &str) -> Result<(Vec<u8>, Element), String> {
+pub(crate) fn open(path: &str) -> Result<(Vec<u8>, Element), String> {
     let bytes = std::fs::read(path).map_err(|e| e.to_string())?;
     let root = crate::open_gz(&bytes).map_err(|e| e.to_string())?;
     Ok((bytes, root))
 }
 
 /// Read, check the revision, change, write back atomically.
-fn edit(
+pub(crate) fn edit(
     path: &str,
     expected_revision: &str,
     change: impl FnOnce(&mut Element) -> Result<(), String>,
@@ -1688,7 +1770,7 @@ pub fn clip_write(
 /// reading as `source` (its constellation's ref, or null when it was made of
 /// none); a record that cannot be read leaves `source` null and says why in
 /// `sourceRefused`, so the clip still reads.
-fn with_source(path: &str, track: &Element, at: ClipAt, mut reading: Value) -> Value {
+pub(crate) fn with_source(path: &str, track: &Element, at: ClipAt, mut reading: Value) -> Value {
     let found = track
         .attr("Id")
         .ok_or_else(|| {
@@ -1714,7 +1796,7 @@ fn with_source(path: &str, track: &Element, at: ClipAt, mut reading: Value) -> V
 }
 
 /// The longest clip made here, in beats.
-const MADE_LENGTH_MAX: f64 = 4096.0;
+pub(crate) const MADE_LENGTH_MAX: f64 = 4096.0;
 
 /// A blank MIDI clip in the shape of `donor`, a MIDI clip the set already
 /// holds: the document's own element names and nesting, as Live wrote them,
@@ -1724,7 +1806,7 @@ const MADE_LENGTH_MAX: f64 = 4096.0;
 /// launch, groove and own mode set to a new clip's (Live's: trigger, global
 /// quantize, no legato, no groove, no mode of its own, no follow action). It
 /// wears its part's colour, as a new clip does in Live.
-fn blank_clip(
+pub(crate) fn blank_clip(
     root: &Element,
     donor: &Element,
     track_colour: Option<&str>,
@@ -1870,25 +1952,22 @@ pub fn clip_create(
         let reference = root.clone();
         let part = track_at(&reference, track)?;
         if part.name != "MidiTrack" {
-            return Err(
-                "Live makes a clip of a constellation on a MIDI part, and this track is not one"
-                    .into(),
-            );
+            return Err("Live makes a MIDI clip on a MIDI part, and this track is not one".into());
         }
         let colour = value_of(part, "Color").map(str::to_string);
-        let donor = shape_donor(&reference, track).ok_or(
-            "The set holds no MIDI clip whose shape a new one can take: make one clip in Live, save the set, then drop the constellation again",
-        )?;
-        let mut clip = blank_clip(&reference, &donor, colour.as_deref(), length)?;
+        // The set's own shape where it holds a MIDI clip; else the shape Live's loader took for a clip made by hand
+        // (session-model.md §7; acts.rs crafted_clip), which replaces the refusal a set with no MIDI clip met.
+        let mut clip = match shape_donor(&reference, track) {
+            Some(donor) => blank_clip(&reference, &donor, colour.as_deref(), length)?,
+            None => crate::acts::crafted_clip(colour.as_deref(), length),
+        };
         if let Some(set) = set {
             apply_settings(&reference, &mut clip, set)?;
         }
         apply_notes(&mut clip, notes)?;
-        let slots = track_at_mut(root, track)?
-            .child_mut("DeviceChain")
-            .and_then(|dc| dc.child_mut("MainSequencer"))
-            .and_then(|s| s.child_mut("ClipSlotList"))
-            .ok_or("the part has no clip slots in the document")?;
+        // A part whose grid the document does not keep reads as empty slots: its grid is made in Live's shape to hold the clip.
+        let scenes = crate::acts::scene_count(&reference);
+        let slots = crate::acts::main_slots(track_at_mut(root, track)?, scenes)?;
         let held = |slot: &Element| {
             slot.child("ClipSlot")
                 .and_then(|inner| inner.child("Value"))
@@ -2882,6 +2961,50 @@ mod tests {
         );
     }
 
+    /// Edit Info Text (O-I #743): the clip's `Annotation`, written against the revision and read back; a crafted clip carries one too.
+    #[test]
+    fn a_clips_info_text_is_its_annotation() {
+        let (_dir, path) = set_file();
+        let rev = clip_json(&path, 0, SLOT).unwrap()["revision"]
+            .as_str()
+            .unwrap()
+            .to_string();
+        assert_eq!(clip_json(&path, 0, SLOT).unwrap()["clip"]["info"], "");
+        let mut set = Map::new();
+        set.insert(
+            "info".into(),
+            json!("Played on the ferry.\nKeep the swell."),
+        );
+        let wrote = clip_write(&path, &rev, 0, SLOT, Some(&set), None, None).unwrap();
+        assert_eq!(
+            wrote["clip"]["info"],
+            "Played on the ferry.\nKeep the swell."
+        );
+        let (root, _) = {
+            let bytes = std::fs::read(&path).unwrap();
+            (crate::open_gz(&bytes).unwrap(), ())
+        };
+        let clip = clip_at(track_at(&root, 0).unwrap(), SLOT).unwrap();
+        assert_eq!(
+            value_of(clip, "Annotation"),
+            Some("Played on the ferry.\nKeep the swell."),
+            "made where the clip carried none, beside its name"
+        );
+        let mut bad = Map::new();
+        bad.insert("info".into(), json!("a\u{7}"));
+        let refused = clip_write(
+            &path,
+            wrote["revision"].as_str().unwrap(),
+            0,
+            SLOT,
+            Some(&bad),
+            None,
+            None,
+        )
+        .unwrap_err();
+        assert!(refused.contains("info text"), "{refused}");
+    }
+
     #[test]
     fn a_clip_is_made_only_where_the_part_can_take_it_and_the_set_gives_its_shape() {
         let (_dir, path) = set_file();
@@ -2954,7 +3077,8 @@ mod tests {
         )
         .unwrap_err();
         assert!(full.contains("no empty slot"), "{full}");
-        // A set that holds no MIDI clip gives no shape to make one in.
+        // A set that holds no MIDI clip: the clip takes the shape Live's loader took for a clip made by hand (acts.rs
+        // crafted_clip, session-model.md §7), which replaced the refusal "holds no MIDI clip" (O-I #743: Insert clip).
         let bare = SET
             .replace(
                 &SET[SET.find("<ClipSlot Id=\"0\">").unwrap()
@@ -2971,7 +3095,7 @@ mod tests {
             let bytes = std::fs::read(&bare_path).unwrap();
             revision(&bytes)
         };
-        let shapeless = clip_create(
+        let crafted = clip_create(
             &bare_path,
             &bare_revision,
             0,
@@ -2981,7 +3105,16 @@ mod tests {
             &notes,
             None,
         )
-        .unwrap_err();
-        assert!(shapeless.contains("holds no MIDI clip"), "{shapeless}");
+        .unwrap();
+        assert_eq!(crafted["at"], json!({"slot": 0}));
+        assert_eq!(crafted["clip"]["notes"][0]["p"], 62);
+        assert_eq!(
+            crafted["clip"]["notes"][0]["id"], 1,
+            "note ids start at 1, as apply_notes counts them"
+        );
+        assert_eq!(
+            crafted["clip"]["colourIndex"], 26.0,
+            "it wears its part's colour"
+        );
     }
 }

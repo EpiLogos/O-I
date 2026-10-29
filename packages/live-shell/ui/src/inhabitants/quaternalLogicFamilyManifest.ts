@@ -1,4 +1,5 @@
 import {admitFamilyManifest} from './familyManifest.ts'
+import {statePresentations} from './sdk/views.ts'
 import type {InhabitantManifest} from './manifest.ts'
 
 /** Quaternal Logic — the cosmic (WORLD-SHELL-DESIGN §12): torus, sky,
@@ -52,7 +53,7 @@ const QUATERNAL_LOGIC_MANIFEST: InhabitantManifest = {
     faces: [
       {
         id: 'sky',
-        presentations: ['compact', 'expanded'],
+        presentations: statePresentations('quaternal-logic:sky'),
         liveSemantic: 'device-instrument',
         invariant: {generatesAbsent: 'The sky is read, never written: the kernel\'s nara_identity transit (ql.nara-transit/v1) answers a date the view asks for, and no owner operation takes a sky value back (lock §7).'},
         heldBy: ['techne:m4', 'techne:m2'],
@@ -60,7 +61,7 @@ const QUATERNAL_LOGIC_MANIFEST: InhabitantManifest = {
       },
       {
         id: 'torus',
-        presentations: ['compact', 'expanded', 'full'],
+        presentations: statePresentations('quaternal-logic:torus'),
         liveSemantic: 'device-instrument',
         admission: 'waiting',
         heldBy: ['studio:body'],
@@ -68,7 +69,7 @@ const QUATERNAL_LOGIC_MANIFEST: InhabitantManifest = {
       },
       {
         id: 'm3-clock',
-        presentations: ['compact', 'expanded'],
+        presentations: statePresentations('quaternal-logic:m3-clock'),
         liveSemantic: 'device-instrument',
         invariant: {generates: 'kernel:m3_reception'},
         heldBy: ['techne:m2', 'techne:m3'],
@@ -76,7 +77,7 @@ const QUATERNAL_LOGIC_MANIFEST: InhabitantManifest = {
       },
       {
         id: 'deck',
-        presentations: ['compact'],
+        presentations: statePresentations('quaternal-logic:deck'),
         liveSemantic: 'device-instrument',
         // Your personal layer over the field (the Studio's Nara chain, manual §24.7) and Technē's Journey, beside the M3 clock whose
         // codon names the card now.
@@ -86,7 +87,7 @@ const QUATERNAL_LOGIC_MANIFEST: InhabitantManifest = {
       },
       {
         id: 'chakra',
-        presentations: ['compact'],
+        presentations: statePresentations('quaternal-logic:chakra'),
         liveSemantic: 'device-instrument',
         // Your personal layer over the field (the Studio's Nara chain, manual §24.7) and Technē's Timeline, beside the Sky whose date it
         // follows.
@@ -96,7 +97,7 @@ const QUATERNAL_LOGIC_MANIFEST: InhabitantManifest = {
       },
       {
         id: 'resonator-bank',
-        presentations: ['compact', 'expanded', 'full'],
+        presentations: statePresentations('quaternal-logic:resonator-bank'),
         // An effect lives in Live (lock §5.2: a Technē chain device is an instrument, never an effect): the QL home mode is Technē, so the face
         // declares the mode it presents in.
         modes: ['live'],
@@ -110,7 +111,7 @@ const QUATERNAL_LOGIC_MANIFEST: InhabitantManifest = {
       },
       {
         id: 'm-prime-matrices',
-        presentations: ['expanded', 'full'],
+        presentations: statePresentations('quaternal-logic:m-prime-matrices'),
         liveSemantic: 'device-instrument',
         // The four layers are the insides of the racks of the instruments of the map (manual §22.6, §16.16): the Oscillator is M1′'s Ananda,
         // the Reading M1′'s modes with M2′'s lenses, the Form M3′, the Situation M4′'s seven centres. The app layers' racks hold them — the

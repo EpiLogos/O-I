@@ -4,6 +4,7 @@
 // device's UI follows (ProjectCentral/docs/1-vision/dlw/DLW.md §16.15). Every other device is its own module, `<family>__<face>.tsx`, exporting
 // `design`, loaded only when the gallery asks for it, so one device that does not build never stops another from drawing.
 import type {DesignedDevice} from './design'
+import {deviceStates} from '../../sdk/views'
 import './panels.css'
 import {day} from './day'
 import {memberDevice} from './member'
@@ -12,7 +13,11 @@ import {scope} from './scope'
 import {skills} from './skills'
 import {torus} from './torus'
 
-export const DESIGNED: Readonly<Record<string, DesignedDevice>> = Object.fromEntries([day, torus, physics, skills, memberDevice, scope].map(d => [d.id, d]))
+/** A design with its states from the kit (sdk/views.ts DEVICE_STATES, the one declaration the manifests derive from as well): every design
+ * the registry hands out, the reference devices and each module alike, carries the views its device has (manual §16.3). */
+const stated = (design: DesignedDevice): DesignedDevice => ({...design, views: deviceStates(design.id) ?? design.views})
+
+export const DESIGNED: Readonly<Record<string, DesignedDevice>> = Object.fromEntries([day, torus, physics, skills, memberDevice, scope].map(d => [d.id, stated(d)]))
 
 const MODULES = import.meta.glob<{design: DesignedDevice}>('./*__*.tsx')
 const file = (id: string) => `./${id.replace(':', '__')}.tsx`
@@ -24,6 +29,6 @@ export const DESIGNED_IDS: readonly string[] = Object.keys(MODULES).map(path => 
 export async function loadDesign(id: string): Promise<DesignedDevice | undefined> {
   if (DESIGNED[id]) return DESIGNED[id]
   const load = MODULES[file(id)]
-  return load ? (await load()).design : undefined
+  return load ? stated((await load()).design) : undefined
 }
 export type {DesignedDevice} from './design'

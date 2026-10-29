@@ -41,6 +41,7 @@ import {deriveAgentDeviceRows} from '../agentDeviceCatalogue.ts'
 import type {IconName} from './icons.ts'
 import type {DeviceFormat, SdkModeName, TransportSlotId} from './modes.ts'
 import {MODE_DEFAULT_FORMAT, transportTargetSlots} from './modes.ts'
+import {statePresentations} from './views.ts'
 import type {LiveSemantic, SemanticInvariant} from './semantics.ts'
 import {validateFaceSemantic} from './semantics.ts'
 import {isKnownProduct} from './products.ts'
@@ -520,10 +521,12 @@ function devicePopOutKinds(devices: readonly DeviceDeclaration[]): DetachedKind[
   return devices.some(device => deviceDock(device)?.includes('pop-out')) ? ['device'] : []
 }
 
-function buildFaces(devices: readonly DeviceDeclaration[]): InhabitantFaceDeclaration[] {
+/** The faces a declaration builds. A face's presentations are its own where it declares them, else its states in the kit's one table
+ * (views.ts statePresentations: a catalogue device's), else the kit's default, all three. */
+function buildFaces(family: FamilyManifestId, devices: readonly DeviceDeclaration[]): InhabitantFaceDeclaration[] {
   return devices.map(device => ({
     id: device.id,
-    presentations: device.presentations ?? ['compact', 'expanded', 'full'],
+    presentations: device.presentations ?? statePresentations(`${family}:${device.id}`),
     liveSemantic: device.liveSemantic,
     ...(device.invariant ? {invariant: device.invariant} : {}),
     ...(device.heldBy ? {heldBy: device.heldBy} : {}),
@@ -572,7 +575,7 @@ export function buildFamilyDeclaration(declaration: FamilyDeclaration): {
     id: declaration.id,
     ...(popOutKinds.length ? {detachedKinds: popOutKinds} : {}),
     browser: declaration.browser,
-    faces: buildFaces(declaration.devices),
+    faces: buildFaces(declaration.id, declaration.devices),
     params: {grammar: declaration.paramsGrammar},
     projections: declaration.projections ?? [],
     inspectors: declaration.inspectors ?? [],
@@ -625,7 +628,7 @@ export function declareDeviceExtension(declaration: DeviceExtensionDeclaration):
   const extension: FamilyExtension = {
     id: declaration.id,
     by: declaration.by,
-    ...(declaration.devices.length ? {faces: buildFaces(declaration.devices)} : {}),
+    ...(declaration.devices.length ? {faces: buildFaces(declaration.family, declaration.devices)} : {}),
     ...(extensionKinds.length ? {detachedKinds: extensionKinds} : {}),
     ...(declaration.note ? {note: declaration.note} : {}),
   }

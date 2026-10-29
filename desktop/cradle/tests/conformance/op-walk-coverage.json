@@ -891,6 +891,15 @@
       "reason": "Built 18 Oct with live-set unit tests (Base, the four amounts, Global Amount, the revision guard) and kernel tests; no executed native walk is recorded here for live_groove_pool_write; retain explicit operation-specific coverage debt until a walk names it."
     },
     {
+      "op": "live_set_act",
+      "native_owner": "kernel/src/live_set_owner.rs",
+      "spec_ref": "ProjectCentral/docs/1-vision/dlw/DLW.md \u00a710.9 Acts and menus and \u00a721.1 Live: tracks and clips; packages/live-set/src/acts.rs, packages/live-set/src/sources.rs remap",
+      "status": "unverified",
+      "scenarios": [],
+      "owner_lane": "A/native verification",
+      "reason": "Built 29 Oct (O-I #743) with live-set unit tests on a set in Live 12's own shape and on the starting world's Tide Sketch, and kernel tests; a headless walk through a private walk-bridge stack drove it on a scratch copy of Tide Sketch, but no executed native walk is recorded here for live_set_act; retain explicit operation-specific coverage debt until a walk names it."
+    },
+    {
       "op": "live_set_read",
       "native_owner": "kernel/src/live_set_owner.rs",
       "spec_ref": "ProjectCentral/docs/4-development/world-shell/LEGACY-CRADLE-RETIREMENT.md §3 gate 4; tests/conformance/owner-service-census.json (8787 seam)",

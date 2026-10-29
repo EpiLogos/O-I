@@ -155,7 +155,8 @@ export function pageIslandValues(doc: unknown): Values | null {
 
 /** A page's own colour and how it opens, from its meta (kernel/src/page.rs writes `colour`, `launch`, a Flow's `container`). Pure. */
 function ownValues(meta: Record<string, unknown>): Record<string, Value> {
-  const values: Record<string, Value> = {}
+  // Its switch (kernel/src/page.rs apply_field "active"): on unless its meta keeps `active: false`.
+  const values: Record<string, Value> = {active: meta.active !== false}
   if (typeof meta.colour === 'string' && meta.colour) values.colour = meta.colour
   if (typeof meta.container === 'string' && meta.container) values.container = meta.container
   // A Flow keeps the constellation it was made of in its meta (flow/createInPlace.ts tieMadeOf).
@@ -339,8 +340,8 @@ function pageWiring(write: PageWrite, kind: Value | undefined, island: unknown, 
   const flow = kind === 'flow'
   const page = kind === 'being' || kind === 'thing'
   // The keys the page owner takes for this kind of page (the design's keys; kernel/src/page.rs `apply_field` holds each rule).
-  const writes = new Set<string>(flow ? ['name', 'colour', 'container', 'opensAs', 'opensIn', 'seats', 'act.highlight', 'act.note']
-    : ['name', 'colour', ...(kind === 'being' ? ['being'] : []), ...(page ? ['world', 'subject', 'expression'] : []), 'office', 'layout', 'tone', 'opensAs', 'opensIn', 'act.highlight', 'act.note'])
+  const writes = new Set<string>(flow ? ['name', 'colour', 'active', 'container', 'opensAs', 'opensIn', 'seats', 'act.highlight', 'act.note']
+    : ['name', 'colour', 'active', ...(kind === 'being' ? ['being'] : []), ...(page ? ['world', 'subject', 'expression'] : []), 'office', 'layout', 'tone', 'opensAs', 'opensIn', 'act.highlight', 'act.note'])
   const send = (field: PageField, value: unknown) => {
     if (held?.dirty) throw new Error(DIRTY)
     return write(field, value)
@@ -348,6 +349,8 @@ function pageWiring(write: PageWrite, kind: Value | undefined, island: unknown, 
   const all: Record<string, (value: Value) => Promise<void>> = {
     name: async value => send('title', String(value ?? '')),
     colour: async value => send('colour', value ?? null),
+    // Switch off or on (manual §10.9): off, the page does not open to play (kernel/src/page.rs launch refuses it).
+    active: async value => send('active', value === true),
     being: async value => send('kind', value),
     // A Being's or Thing's ties (kernel/src/page.rs apply_field takes world, subject and expression as refs; empty unties it).
     world: async value => send('world', value || null),

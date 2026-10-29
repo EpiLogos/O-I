@@ -23,11 +23,13 @@ import type {SetSummary} from '../../shell/useSet'
 import type {NativeExpressionsContent} from '../../shell/nativeContent'
 import type {WorldTimelineView} from '../../projections/useWorldTemporalReading'
 import type {WorldTrackSet} from '../../timeline/worldTrackAdapter'
-import type {KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
+import type {KernelTransportStatus, LiveClipAt} from '../../../../../../desktop/cradle/src/kernel/types'
 import {liveSetTrackAdapter} from '../../timeline/liveSetTrackAdapter'
 import {liveSetWrites} from '../../live/liveWrites'
 import {frameSoundReading, readStudioArm, setExpressionMuted, setExpressionSolo} from '../../native/frameSound'
 import {expressionsTrackAdapter} from '../../timeline/expressionsTrackAdapter'
+import {FACTORY_WAITING} from '../../timeline/factoryTrackAdapter'
+import {TECHNE_WAITING} from '../../timeline/techneTrackAdapter'
 import {useFactoryTracks} from './useFactoryTracks'
 import {useCentralTracks} from './useCentralTracks'
 import {useTechneTracks} from './useTechneTracks'
@@ -194,10 +196,23 @@ export const MODE_TRACKS: Readonly<Record<SurfMode, UseModeTracks>> = {
   expressions: expressionsTracks,
 }
 
-/** Live's tracks: the open set's parts, its writes, and Live's clip of a constellation dropped on a part. Pure. */
+/** Live's tracks: the open set's parts, its writes and its acts (O-I #743), Launch and Stop on the torus, and Live's clip of a
+ * constellation dropped on a part. Pure. */
 export function liveTracks(set: SetSummary, document: SetDocument | null, colors?: readonly string[], maker = liveClipMaker(set.path)): WorldTrackSet {
-  const tracks = liveSetTrackAdapter.project({set, document, colors, ...liveSetWrites(set.path)})
+  // The clip player loads with Live's transport (O-I #740: a mode's code is not the first load), so its acts reach it when pressed.
+  const player = () => import('../../live/clipPlayer').then(module => module.liveClipActs)
+  const play = {launch: (track: number, at: LiveClipAt) => player().then(acts => acts.launch({path: set.path, track, at}, set.tempo_bpm)),
+    stop: (track: number) => player().then(acts => acts.stop(set.path, track, set.tracks[track]?.name ?? 'the track')),
+    stopAll: () => player().then(acts => acts.stopAll())}
+  const tracks = liveSetTrackAdapter.project({set, document, colors, ...liveSetWrites(set.path), play})
   return maker ? withClipMaker(tracks, maker) : tracks
+}
+
+/** What each mode's acts no owner op carries wait for (O-I #743, round three), by the op the menu names: a registration, never a branch.
+ * A mode's set may say more of its own (its `actions.waiting`, which stands over these). */
+export const MODE_WAITING: Readonly<Partial<Record<SurfMode, Readonly<Record<string, string>>>>> = {
+  factory: FACTORY_WAITING,
+  techne: TECHNE_WAITING,
 }
 
 /** Whose operations each mode's object acts are, in the words a missing act names (manual §10.9; each mode's action table,

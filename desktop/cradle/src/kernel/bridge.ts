@@ -105,7 +105,7 @@ export async function kernelReadSend(
 
 /** Ops that only ever change what an owner holds. */
 const WRITING_OPS: ReadonlySet<string> = new Set(["invoke_action", "file_operation", "decide", "decision_episode_revoke", "decision_preflight", "theme_import", "theme_apply", "theme_revert", "theme_remove",
-  "nara_decision_record", "live_device_param_write", "live_clip_write", "live_clip_create", "live_track_mixer_write", "live_take_comp", "live_groove_pool_write", "harness_agent_control", "chat_default_hold",
+  "nara_decision_record", "live_device_param_write", "live_clip_write", "live_clip_create", "live_track_mixer_write", "live_take_comp", "live_groove_pool_write", "live_set_act", "harness_agent_control", "chat_default_hold",
   "chat_default_discard", "credential_setup", "credential_rotate", "credential_revoke", "client_install", "product_action_run", "dictation_configure", "working_surface_attachment",
   "encounter_provision", "flow_participant_provision", "config_apply_reviewed",
   // AIKit's task creation: a session's new task, made of a constellation (O-I #768).

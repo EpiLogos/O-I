@@ -44,7 +44,7 @@ import {loadWhenDrawn} from './shell/loadWhenDrawn'
 // draw their devices' own waiting states (O-I #740).
 const RailDevices = loadWhenDrawn('The rail\'s devices', () => import('./widgets/railDevices').then(module => module.RailDevices), () => null)
 import {WhenShown} from './frame/WhenShown'
-import {DEFAULT_WIDGETS} from './shell/widgetDefaults'
+import {defaultWidgets} from './shell/widgetDefaults'
 import {BrowserReadingProvider, MODE_POOL_FACES, browserSourcesOf, type BrowserReading} from './shell/modeBrowsers'
 import {TracksPane} from './frame/tracks/TracksPane'
 import {showMainView, tabMainView, togglePaneView, useMainView, type MainView} from './shell/mainView'
@@ -59,10 +59,11 @@ import type {WorldSelection} from '../../../../desktop/cradle/src/workspace/stor
 import type {ModeTransportReadouts} from './shell/ModeTransportBar'
 import {worldNowReadout} from './shell/worldNowReadout'
 import {DetailHost} from './frame/detail/DetailHost'
-import {expandsClip, shownSidesNow, toggleSide, type DetailSide} from './frame/detail/detailSides'
+import {expandsClip, hiddenSideOf, restoredSides, shownSidesNow, toggleSide, type DetailSide} from './frame/detail/detailSides'
 import {DetailContext, type DetailReading} from './frame/detail/detailReading'
 import type {CentralSubjectSelection} from './inhabitants/CentralSubjectDetail'
-import {NATIVE_PRESENT_EXPRESSIONS} from './native/openStudio'
+import {MENU_ACT, NATIVE_PRESENT_EXPRESSIONS} from './native/openStudio'
+import {sayOnInfoLine} from './frame/devices/deviceHost'
 import {SOURCE_PRESENT} from './native/hostedSummons'
 import {PLACED_RESIDENCE_STYLE, useFramePlacement} from './projections/expressionsPaneHost'
 import {sameEditorBasis,type NativeEditorBasis,type NativeEditorController} from '@epilogos/expressions-boundary/editor'
@@ -86,6 +87,7 @@ import {worldSubjectOf} from './techne/subject/worldRows'
 import {clampBrowserWidth, clampDetailHeight, clampRailWidth, collapseDetail, drawnSizes, draggedSize, enteredDetailHeight, expandDetail,
   expandedDetailHeight, focusKeyOf, frameToggleOf, keptDetailHeight, RESIZE_STEP, switchesDetailSide, type AreaDrag, type DetailExpansions, type FocusTarget, type FrameToggle} from './shell/workspaceAreas'
 import {DeviceFlipHost} from './frame/devices/DeviceFlip'
+import {liveColour, liveColourIndex} from './live/livePalette'
 registerAtlasHost()
 // The world-shell families (Quaternal Logic, the atlas, the knowledge graph, Central's extensions) are admitted with the frame, as
 // shell/ModeDetail.tsx admitted them when the frame imported it; ModeDetail now loads when a chain first draws (O-I #740).
@@ -169,7 +171,7 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
   const [detailMode, changeDetailMode] = useState<DetailMode>(restored?.detailMode ?? opening.detailMode)
   // The detail area's sides (manual §16.4; frame/detail/detailSides.ts): `detailMode` is the front side (⇧Tab, a selection), these
   // are the sides hidden from the status bar's switches, and ⌥⌘E gives Clip view the main area. The front side always shows.
-  const [hiddenSides, setHiddenSides] = useState<Readonly<Record<DetailSide, boolean>>>({clip: false, device: false})
+  const [hiddenSides, setHiddenSides] = useState<Readonly<Record<DetailSide, boolean>>>(() => restoredSides(restored?.detailMode ?? opening.detailMode, restored?.hiddenSide))
   const [clipExpanded, setClipExpanded] = useState(false)
   useEffect(() => { setHiddenSides(hidden => hidden[detailMode] ? {...hidden, [detailMode]: false} : hidden) }, [detailMode])
   const toggleDetailSide = (side: DetailSide) => {
@@ -447,7 +449,7 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
     const standing: MainView = intent ? intent.tab ?? 'pane' : view ? (view.centerPanel === 'world.set' ? presentation : 'pane') : opening.view
     setTab(presentation); setTimelinePanePresentation(presentation); showMainView(standing); setCenterPanel(intent?.panel ?? workbenchCentre(view?.centerPanel) ?? opening.centerPanel)
     setMixer(view?.mixer ?? true)
-    changeDetailMode(view?.detailMode ?? opening.detailMode); resizeBrowser(view?.browserWidth ?? null); resizeDetail(enteredDetailHeight(detailExpansions.current, frameKey, view?.detailHeight ?? null, viewport[1]))
+    changeDetailMode(view?.detailMode ?? opening.detailMode); setHiddenSides(restoredSides(view?.detailMode ?? opening.detailMode, view?.hiddenSide)); resizeBrowser(view?.browserWidth ?? null); resizeDetail(enteredDetailHeight(detailExpansions.current, frameKey, view?.detailHeight ?? null, viewport[1]))
     chooseBrowserCategory(view?.browserCategory)
     setBrowser(view?.browser ?? opening.browser); setDetail(view?.detail ?? opening.detail); setDock(view?.rail ? view.dock ?? opening.dock : opening.dock)
     holdLive(view?.selection ?? {track: 0, scene: null}); presentSettings(view?.settingsPresented ?? false)
@@ -457,8 +459,8 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
   useEffect(() => {
     if (restoredKey !== restoreKey) return
     continuity.checkpointApplicationView({alsPath: state.path ?? (worldPending ? restored?.alsPath : ofWorld(restored?.alsPath)) ?? undefined, rail: true, tab: timelinePane, selection: liveHeld, browserCategory,
-      browser, detail:nativeEditorPresented?nativeEditorReturn!.detail:detail, dock, browserWidth, detailHeight:keptDetailHeight(detailExpansions.current,frameKey,detailHeight), centerPanel:mainView !== 'pane' ? 'world.set' : nativeEditorPresented?nativeEditorReturn!.centerPanel:centerPanel, detailMode:nativeEditorPresented?nativeEditorReturn!.detailMode:detailMode, settingsPresented, settingsReturn: workspace.mode === 'expressions' || workspace.mode === 'techne' ? workspace.mode : undefined, mixer})
-  }, [restoredKey, restoreKey, state.path, timelinePane, mainView, mixer, liveHeld, browserCategory, browser, detail, dock, browserWidth, detailHeight, centerPanel, detailMode, nativeEditorReturn, nativeEditorPresented, settingsPresented, workspace.mode, continuity.checkpointApplicationView, worldPending, setsGround])
+      browser, detail:nativeEditorPresented?nativeEditorReturn!.detail:detail, dock, browserWidth, detailHeight:keptDetailHeight(detailExpansions.current,frameKey,detailHeight), centerPanel:mainView !== 'pane' ? 'world.set' : nativeEditorPresented?nativeEditorReturn!.centerPanel:centerPanel, detailMode:nativeEditorPresented?nativeEditorReturn!.detailMode:detailMode, settingsPresented, settingsReturn: workspace.mode === 'expressions' || workspace.mode === 'techne' ? workspace.mode : undefined, mixer, hiddenSide: hiddenSideOf({front: detailMode, hidden: hiddenSides})})
+  }, [restoredKey, restoreKey, state.path, timelinePane, mainView, mixer, liveHeld, browserCategory, browser, detail, dock, hiddenSides, browserWidth, detailHeight, centerPanel, detailMode, nativeEditorReturn, nativeEditorPresented, settingsPresented, workspace.mode, continuity.checkpointApplicationView, worldPending, setsGround])
   // The view keys (manual §10.1, §10.8; shell/workspaceAreas.ts frameToggleOf, read by the key as well as its character — macOS
   // gives ⌥L as "¬"). They are the window's: taken before any pane's own keys (the Workbench's keymap binds ⌥⌘R to its layout
   // restore, desktop/cradle/src/surface/keys.ts:94; ⌥⌘R is Live's return tracks here), wherever the focus stands.
@@ -504,7 +506,10 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
     if (id === 'view.expand-clip') { setClipExpanded(expanded => !expanded); setDetail(true); return }
     const parts: Record<string, FrameToggle> = {'view.pane': 'pane', 'view.browser': 'browser', 'view.pool': 'pool', 'view.rail': 'rail', 'view.clip': 'clip',
       'view.device': 'device', 'view.detail': 'detail', 'view.mixer': 'mixer', 'view.io': 'io'}
-    if (parts[id]) chord.current(parts[id]!)
+    if (parts[id]) { chord.current(parts[id]!); return }
+    // An item this router does not route itself (File › Export, View › Present: manual §20.1, O-I #747) is the mode's that stands: one
+    // mode-blind door any mode may answer (native/openStudio.ts MENU_ACT); unanswered, the status bar says so.
+    if (window.dispatchEvent(new CustomEvent(MENU_ACT, {detail: {id}, cancelable: true}))) sayOnInfoLine(document.body, id, 'Nothing in this window answers it here.')
   }
   // The search line's `>` runs the same commands, through this router (central/searchLineDoor.ts publishMenuCommands).
   useEffect(() => { publishMenuCommands(id => command.current(id)); return () => publishMenuCommands(null) }, [])
@@ -567,13 +572,23 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [frameMode, centerPanel, tab, settingsPresented])
-  const setColor = (track: number, value: string) => {
+  // A Live track's colour is the set's own (its Color, Live's palette index; O-I #743): choosing one of Live's 70 writes it through the
+  // set's owner (live_set_act track_colour), which reads the set again, and answers in its words. A colour outside Live's 70 has no place
+  // in the set, so it stays this display's own.
+  const setColor = (track: number, value: string): Promise<{ok: true; note: string} | {ok: false; error: string}> | void => {
+    const index = liveColourIndex(value)
+    if (state.set && index !== null) {
+      const path = state.set.path
+      return import('./live/liveWrites').then(({writeLiveSetAct}) => writeLiveSetAct(path, {kind: 'track_colour', track, colour: index})).then(
+        answer => ({ok: true as const, note: answer.done}), (cause: unknown) => ({ok: false as const, error: cause instanceof Error ? cause.message : String(cause)}))
+    }
     const next = { ...overrides, [track]: value }
     setOverrides(next)
     try { localStorage.setItem(colorKey, JSON.stringify(next)) } catch { /* the display still works without storage */ }
   }
   const ctx = { set: state.set, loading: state.loading, error: state.error, openSet: state.open } satisfies PanelContext
-  const colors = (state.set?.tracks ?? []).map((track, i) => overrides[i] ?? (track.kind === 'master' ? '#a2b6c2' : track.kind === 'return' ? '#76c0b7' : PALETTE[i % PALETTE.length]))
+  const colors = (state.set?.tracks ?? []).map((track, i) => liveColour(deep.document?.tracks[i]?.colourIndex) ?? overrides[i]
+    ?? (track.kind === 'master' ? '#a2b6c2' : track.kind === 'return' ? '#76c0b7' : PALETTE[i % PALETTE.length]))
   const panels = getPanels('center')
   const choose = (value: SetSelection) => { select(value); changeDetailMode(value.scene !== null || value.clip !== undefined ? 'clip' : 'device') }
   const agency = useAgencySessions(workspace.transport)
@@ -649,8 +664,10 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
   const shownRailWidth = () => shownBox('.dock-residence:not([hidden]) .widget-rail')?.width ?? 0
   const shownDetailHeight = () => shownBox('.detail-residence:not([hidden]) > .detail-host')?.height ?? detailHeight ?? 330
   // The rail widens and narrows by its edge within its bounds and what the browser and the panes leave (shell/workspaceAreas.ts).
-  const widgetBook: WidgetRailBook = {rail: continuity.current.widgets ?? {open: DEFAULT_WIDGETS}, toggle: id => continuity.toggleWidgetOpen(id, DEFAULT_WIDGETS),
-    pin: continuity.pinWidgetAt, savePreset: name => continuity.saveWidgets(name, DEFAULT_WIDGETS), applyPreset: continuity.applyWidgets, widen: width => continuity.widenWidgets(clampRailWidth(width, viewport[0], browser ? shownBrowserWidth() : 0))}
+  // The mode's own tiles stand until the person changes the rail; a rail they changed is the book's, and stays (shell/widgetDefaults.ts).
+  const modeWidgets = defaultWidgets(frameMode)
+  const widgetBook: WidgetRailBook = {rail: continuity.current.widgets ?? {open: modeWidgets}, toggle: id => continuity.toggleWidgetOpen(id, modeWidgets),
+    pin: continuity.pinWidgetAt, savePreset: name => continuity.saveWidgets(name, modeWidgets), applyPreset: continuity.applyWidgets, widen: width => continuity.widenWidgets(clampRailWidth(width, viewport[0], browser ? shownBrowserWidth() : 0))}
   // A chat dragged onto the rail reopens, and its agent's tile opens holding it (DLW §19.1; agent/factoryChatsRail.tsx).
   const chatRailDrop = useChatRailDrop(widgetBook)
   // The one browser's row sources (shell/modeBrowsers.tsx) and what their bodies read.

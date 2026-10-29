@@ -10,6 +10,7 @@ import {LIVE_CLIP_PALETTE} from '../../live/livePalette'
 import {MADE_OF} from '../../inhabitants/catalogue/clips/design'
 import type {ObjectMenuItem} from './useObjectMenu'
 import type {UndoStep} from './undo'
+import {heldClip, holdClip} from './clipboard'
 
 /** What the menu stands on: an object of the set the views draw. */
 export type ObjectTarget =
@@ -29,10 +30,17 @@ export interface ObjectContext {
   readonly press: ObjectRun
   readonly rename: (target: ObjectTarget) => void
   readonly writeClip: (clipId: string, key: string, value: unknown) => Promise<unknown>
+  /** Arrangement view's insert marker, where the pane stands one (a point of the ruler, in its units): Split cuts there. */
+  readonly marker?: number | null
+  /** Arrangement view's time selection, where the pane holds one: Consolidate joins what plays there. */
+  readonly span?: {readonly start: number; readonly end: number} | null
   readonly folded?: (trackId: string) => boolean | undefined
   readonly fold?: (trackId: string) => void
   /** The undo list's door (frame/menu/undo.ts): a change the owner took, with its way back. */
   readonly record?: (step: UndoStep) => void
+  /** Ask for a text where the object stands (its in-place field, as Rename's): the words naming it and the text it starts from; `done`
+   * takes the text kept (Enter, or leaving the field), never one let go (Esc). Edit info text asks through it. */
+  readonly ask?: (target: ObjectTarget, field: {readonly label: string; readonly value: string}, done: (text: string) => void) => void
 }
 
 /** A change the owner may refuse, recorded for Undo only once it is taken (an answer `{ok: false}` or a throw is a refusal). */
@@ -46,7 +54,8 @@ export function undoable(context: Pick<ObjectContext, 'record'>, label: string, 
 
 /** The words of an act no owner carries: the operation it waits for, and whose. Pure. */
 export function missingAct(op: string, actions: WorldTrackActions | undefined): string {
-  return `No owner operation carries it yet — missing op: ${op} (${actions?.owner ?? 'this work\'s owner'}).`
+  const waits = actions?.waiting?.[op]
+  return `No owner operation carries it yet — missing op: ${op} (${actions?.owner ?? 'this work\'s owner'}).${waits ? ` It waits for ${waits}.` : ''}`
 }
 
 const sep = (id: string): ObjectMenuItem => ({id, type: 'separator'})
@@ -86,7 +95,8 @@ function clipMenu(target: Extract<ObjectTarget, {kind: 'clip'}>, set: WorldTrack
   // Its own facts as its Clip view reads them, where Clip view holds this clip.
   const holding = holdsClip(binding, target.id) ? binding : null
   const held = holding ? holding.values : null
-  const named = target.name
+  // A clip with no name of its own (Live's Insert MIDI Clip names none) is "the clip" in the words its acts say.
+  const named = target.name || 'the clip'
   const fact = (key: string) => readOnly ? {disabled: true, why: READ_ONLY} : clipFact(binding, target.id, key)
   const write = (key: string, value: unknown, was: unknown, what: string) => () => press(`${key}:${target.id}`, what,
     undoable(context, what, () => context.writeClip(target.id, key, value), () => context.writeClip(target.id, key, was)))
@@ -97,8 +107,13 @@ function clipMenu(target: Extract<ObjectTarget, {kind: 'clip'}>, set: WorldTrack
     items.push(act('stop', 'Stop', undefined, a?.stopTrack, 'track.stop', a, () => press(`stop:${target.trackId}`, `Stop ${named}`, () => a!.stopTrack!.run(target.trackId)), undefined, readOnly))
     items.push(sep('s1'))
   }
-  items.push(act('cut', 'Cut', '⌘X', undefined, 'clip.move-to (paste)', a, () => {}, undefined, readOnly))
-  items.push(act('copy', 'Copy', '⌘C', undefined, 'clip.copy-to (paste)', a, () => {}, undefined, readOnly))
+  // Cut and Copy hold the clip for Paste (frame/menu/clipboard.ts), where the set's owner takes a paste.
+  const hold = (cut: boolean) => () => press(`${cut ? 'cut' : 'copy'}:${target.id}`, `${cut ? 'Cut' : 'Copy'} ${named}`, () => {
+    holdClip({clipId: target.id, name: named, cut})
+    return {ok: true, note: `${named} is held: Paste ${cut ? 'moves it to' : 'puts a copy in'} an empty slot.`}
+  })
+  items.push(act('cut', 'Cut', '⌘X', a?.pasteClip, 'clip.paste', a, hold(true), undefined, readOnly))
+  items.push(act('copy', 'Copy', '⌘C', a?.pasteClip, 'clip.paste', a, hold(false), undefined, readOnly))
   items.push(act('duplicate', 'Duplicate', '⌘D', a?.duplicateClip, 'clip.duplicate', a,
     () => press(`duplicate:${target.id}`, `Duplicate ${named}`, () => a!.duplicateClip!.run(target.id)), undefined, readOnly))
   items.push(act('delete', 'Delete', '⌫', a?.deleteClip, 'clip.delete', a,
@@ -107,12 +122,33 @@ function clipMenu(target: Extract<ObjectTarget, {kind: 'clip'}>, set: WorldTrack
   items.push({id: 'rename', label: 'Rename', shortcut: '⌘R', ...fact('name'), onSelect: () => context.rename(target)})
   items.push({id: 'switch-off', label: off ? 'Switch on' : 'Switch off', shortcut: '0', ...fact('active'),
     onSelect: write('active', off, !off, `${off ? 'Switch on' : 'Switch off'} ${named}`)})
-  items.push(act('info', 'Edit info text', undefined, undefined, 'clip.info', a, () => {}, undefined, readOnly))
+  // Edit info text (Live's Edit Info Text): the owner's text, asked for where the clip stands and written back, its way back recorded.
+  const info = context.ask ? a?.clipInfo : undefined
+  items.push(act('info', 'Edit info text', undefined, info, 'clip.info', a, () => {
+    const label = `Edit info text of ${named}`
+    void info!.read(target.id).then(current => context.ask!(target, {label: `Info text of ${named}`, value: current},
+      text => press(`info:${target.id}`, label, undoable(context, label, () => info!.run(target.id, text), () => info!.run(target.id, current)))),
+    (cause: unknown) => press(`info:${target.id}`, label, () => ({ok: false, error: cause instanceof Error ? cause.message : String(cause)})))
+  }, undefined, readOnly))
   if (context.view === 'arrangement') {
     items.push(sep('s3'))
-    items.push(act('split', 'Split', '⌘E', undefined, 'clip.split', a, () => {}))
-    items.push(act('consolidate', 'Consolidate', '⌘J', undefined, 'clip.consolidate', a, () => {}))
-    items.push(act('crop', 'Crop', '⇧⌘J', undefined, 'clip.crop', a, () => {}))
+    // Split cuts the clip at the insert marker; Consolidate joins what the clip's track plays over the time selection (each the pane's
+    // own, handed to the owner); one with no place to act says where to set it, rather than naming an op to build.
+    const placed = set.clips.find(clip => clip.id === target.id)?.at
+    const marker = context.marker ?? null, span = context.span ?? null
+    const split = readOnly ? undefined : a?.splitClip, joins = readOnly ? undefined : a?.consolidateClips
+    const inside = marker !== null && placed?.end !== undefined && marker > placed.start && marker < placed.end
+    items.push(split && !inside ? {id: 'split', label: 'Split', shortcut: '⌘E', disabled: true,
+      why: `Set the insert marker inside ${named} on the ruler: Split cuts it there.`}
+      : act('split', 'Split', '⌘E', split, 'clip.split', a, () => press(`split:${target.id}`, `Split ${named}`, () => split!.run(target.id, marker!)), undefined, readOnly))
+    const joinRefused = joins?.refuses?.(target.trackId)
+    items.push(joins && joinRefused ? {id: 'consolidate', label: 'Consolidate', shortcut: '⌘J', disabled: true, why: joinRefused}
+      : joins && !span ? {id: 'consolidate', label: 'Consolidate', shortcut: '⌘J', disabled: true,
+        why: 'Select a stretch of the ruler (press to set the insert marker, then Shift-press its other end): Consolidate joins what plays there.'}
+      : act('consolidate', 'Consolidate', '⌘J', joins, 'clip.consolidate', a,
+        () => press(`consolidate:${target.trackId}`, `Consolidate ${set.tracks.find(t => t.id === target.trackId)?.name ?? 'the track'}`,
+          () => joins!.run(target.trackId, span!)), undefined, readOnly))
+    items.push(act('crop', 'Crop', '⇧⌘J', undefined, 'clip.crop', a, () => {}, undefined, readOnly))
   }
   // In Central, Open and Reveal the page's file (§10.9): listed only where the set carries them; neither changes the clip.
   if (a?.openFile || a?.revealFile) {
@@ -157,7 +193,8 @@ function trackMenu(target: Extract<ObjectTarget, {kind: 'track'}>, set: WorldTra
   const mixer = a?.mixer
   const items: ObjectMenuItem[] = [
     act('rename', 'Rename', '⌘R', own(a?.renameTrack), 'track.rename', a, () => context.rename(target)),
-    act('duplicate', 'Duplicate', '⌘D', undefined, 'track.duplicate', a, () => {}),
+    act('duplicate', 'Duplicate', '⌘D', own(a?.duplicateTrack), 'track.duplicate', a,
+      () => press(`duplicate-track:${target.id}`, `Duplicate ${named}`, () => a!.duplicateTrack!.run(target.id))),
     act('delete', 'Delete', '⌫', own(a?.removeTrack), 'track.remove', a,
       () => press(`remove:${target.id}`, `Remove ${named}`, () => a!.removeTrack!.run(target.id)), 'destructive'),
     sep('s1'),
@@ -171,14 +208,23 @@ function trackMenu(target: Extract<ObjectTarget, {kind: 'track'}>, set: WorldTra
       () => press(`mix:arm:${target.id}`, `Arm ${named}`, undoable(context, `Arm ${named}`, () => mixer!.arm!.run(target.id, !track?.mix?.arm),
         () => mixer!.arm!.run(target.id, !!track?.mix?.arm)))),
     sep('s2'),
-    act('group', 'Group', '⌘G', undefined, 'tracks.group', a, () => {}),
+    act('group', 'Group', '⌘G', own(a?.groupTracks), 'tracks.group', a,
+      () => press(`group:${target.id}`, `Group ${named}`, () => a!.groupTracks!.run([target.id]))),
   ]
   if (context.fold && set.tracks.some(t => t.parentId === target.id)) {
     const folded = context.folded?.(target.id) === true
     items.push({id: 'fold', label: folded ? 'Unfold' : 'Fold', shortcut: 'U', onSelect: () => context.fold!(target.id)})
   }
-  items.push(act('move-left', 'Move left', '⌘←', undefined, 'track.move', a, () => {}))
-  items.push(act('move-right', 'Move right', '⌘→', undefined, 'track.move', a, () => {}))
+  const move = (by: -1 | 1) => () => press(`move:${target.id}`, `Move ${named} ${by < 0 ? 'left' : 'right'}`,
+    undoable(context, `Move ${named} ${by < 0 ? 'left' : 'right'}`, () => a!.moveTrack!.run(target.id, by), () => a!.moveTrack!.run(neighbour(by), (-by) as -1 | 1)))
+  /** Where the track stands once moved, for a set whose track ids are places (Live's: als:…#track/<i>): its neighbour's on that side,
+   * from which Undo moves it back. */
+  const neighbour = (by: -1 | 1) => {
+    const order = set.tracks.filter(t => !t.main && !t.returns)
+    return order[order.findIndex(t => t.id === target.id) + by]?.id ?? target.id
+  }
+  items.push(act('move-left', 'Move left', '⌘←', own(a?.moveTrack), 'track.move', a, move(-1)))
+  items.push(act('move-right', 'Move right', '⌘→', own(a?.moveTrack), 'track.move', a, move(1)))
   if (a?.retry && !readOnly) items.push(sep('s3'), {id: 'retry', label: 'Retry', onSelect: () => press(`retry:${target.id}`, `Retry ${named}`, () => a.retry!.run(target.id))})
   // In Central, Open and Reveal the world's folder (§10.9): listed only where the set carries them; neither changes the track.
   if (a?.openFolder || a?.revealFolder) {
@@ -200,15 +246,30 @@ function slotMenu(target: Extract<ObjectTarget, {kind: 'slot'}>, set: WorldTrack
   const readOnly = track?.readOnly === true
   const {press} = context
   const own = <T,>(carried: T | undefined) => readOnly ? undefined : carried
+  // Paste takes the clip Copy or Cut held (frame/menu/clipboard.ts); with nothing held it says so, rather than naming an op to build.
+  const held = heldClip()
+  const pasting = own(a?.pasteClip)
+  const paste: ObjectMenuItem = pasting && !held
+    ? {id: 'paste', label: 'Paste', shortcut: '⌘V', disabled: true, why: 'Nothing is held: Copy or Cut a clip first, and Paste puts it here.'}
+    : act('paste', 'Paste', '⌘V', pasting, 'clip.paste', a, () => press(`paste:${target.trackId}:${target.rowId}`, `Paste ${held!.name} on ${target.name}`, () => {
+      if (held!.cut) holdClip(null)
+      return a!.pasteClip!.run(held!.clipId, target.trackId, target.rowId, held!.cut)
+    }))
+  // The slot's stop button (Live: Remove Stop Button, and Add Stop Button where it was removed), its way back recorded for Undo.
+  const stopless = track?.stopless?.includes(target.rowId) === true
+  const button = stopless ? 'Add stop button' : 'Remove stop button'
   return [
     act('insert', 'Insert clip', '⇧⌘M', own(a?.insertClip), 'clip.insert', a,
       () => press(`insert:${target.trackId}:${target.rowId}`, `Insert a clip on ${target.name}`, () => a!.insertClip!.run(target.trackId, target.rowId))),
-    act('paste', 'Paste', '⌘V', undefined, 'clip.paste', a, () => {}),
+    paste,
     ...(track?.mix?.arm === true ? [act('record', 'Record here', undefined, own(a?.recordSlot), 'slot.record', a,
       () => press(`rec:${target.trackId}:${target.rowId}`, `Record on ${target.name}`, () => a!.recordSlot!.run(target.trackId, target.rowId)))] : []),
     act('stop', 'Stop the track', undefined, own(a?.stopTrack), 'track.stop', a,
       () => press(`stop:${target.trackId}:${target.rowId}`, `Stop ${target.name}`, () => a!.stopTrack!.run(target.trackId))),
-    act('stop-button', 'Remove stop button', '⌘E', undefined, 'slot.stop-button', a, () => {}),
+    act('stop-button', button, '⌘E', own(a?.stopButton), 'slot.stop-button', a,
+      () => press(`stop-button:${target.trackId}:${target.rowId}`, `${button} on ${target.name}`,
+        undoable(context, `${button} on ${target.name}`, () => a!.stopButton!.run(target.trackId, target.rowId, stopless),
+          () => a!.stopButton!.run(target.trackId, target.rowId, !stopless)))),
   ]
 }
 

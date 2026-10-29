@@ -2,7 +2,7 @@ import {createContext, useContext, useMemo, useRef, useState, type ReactNode, ty
 import {useDataIStatusInfo, type DataIStatusInfo} from './statusInfo'
 import {useOptionalContinuity} from '../continuity/workspace'
 import {parseFactoryTaskRef} from '../timeline/factoryTrackAdapter'
-import {DEFAULT_WIDGETS} from '../shell/widgetDefaults'
+import {defaultWidgets} from '../shell/widgetDefaults'
 import type {WorldSelection} from '../../../../../desktop/cradle/src/workspace/store'
 
 export type AgentCentreView = 'session' | 'arrangement' | 'thread'
@@ -110,7 +110,7 @@ export function AgentShellProvider({children, frameRef}: {children: ReactNode; f
   // The tiles are widgets of the one rail (F8): open in the book's one open set for the whole world, so a terminal opened
   // here is still open in Central. With no book mounted the choice is held here only.
   const [unbookedTiles, setOpenTiles] = useState<AgentTileId[]>([])
-  const bookTiles = continuity?.current.widgets?.open ?? DEFAULT_WIDGETS
+  const bookTiles = continuity?.current.widgets?.open ?? defaultWidgets('factory')
   const openTiles = continuity ? bookTiles.filter((id): id is AgentTileId => AGENT_TILE_IDS.includes(id as AgentTileId)) : unbookedTiles
   const [effort, setEffort] = useState<AgentEffort>('high')
   const [heartbeat, setHeartbeat] = useState(true)
@@ -138,7 +138,7 @@ export function AgentShellProvider({children, frameRef}: {children: ReactNode; f
     threadTrackId,
     openThread: id => { setThreadTrackId(id); if (id) setCentreView('thread') },
     openTiles,
-    toggleTile: id => continuity ? continuity.toggleWidgetOpen(id, DEFAULT_WIDGETS) : setOpenTiles(current => current.includes(id) ? current.filter(x => x !== id) : [...current, id]),
+    toggleTile: id => continuity ? continuity.toggleWidgetOpen(id, defaultWidgets('factory')) : setOpenTiles(current => current.includes(id) ? current.filter(x => x !== id) : [...current, id]),
     effort, setEffort,
     heartbeat, setHeartbeat,
     follow, setFollow,

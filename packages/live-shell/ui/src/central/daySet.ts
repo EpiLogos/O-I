@@ -72,6 +72,38 @@ export function withRow(set: DaySet, row: DaySetRow): DaySet {
   return {...set, rows: [...set.rows.filter(held => held.id !== row.id), row]}
 }
 
+/** The set with a world's track named (the name today's track shows, manual §18.1 "Name: the name on the track"); a world the set does
+ * not hold is left as it is. Pure. */
+export function withTrackName(set: DaySet, world: string, name: string): DaySet {
+  return {...set, tracks: set.tracks.map(track => track.world === world ? {...track, name} : track)}
+}
+
+/** The set with a world's track moved one place left (-1) or right (1) among the set's tracks; at the edge it stays. Pure. */
+export function withTrackMoved(set: DaySet, world: string, by: -1 | 1): DaySet {
+  const at = set.tracks.findIndex(track => track.world === world), to = at + by
+  if (at < 0 || to < 0 || to >= set.tracks.length) return set
+  const tracks = [...set.tracks]
+  ;[tracks[at], tracks[to]] = [tracks[to]!, tracks[at]!]
+  return {...set, tracks}
+}
+
+/** The set with a named row standing at `index` among its named rows (a row of that id is moved there). Pure. */
+export function withRowAt(set: DaySet, row: DaySetRow, index: number): DaySet {
+  const rows = set.rows.filter(held => held.id !== row.id)
+  rows.splice(Math.max(0, Math.min(index, rows.length)), 0, row)
+  return {...set, rows}
+}
+
+/** The set with one named row changed where it stands (its name, its pages); a set without it is left as it is. Pure. */
+export function withRowChanged(set: DaySet, id: string, change: (row: DaySetRow) => DaySetRow): DaySet {
+  return {...set, rows: set.rows.map(row => row.id === id ? change(row) : row)}
+}
+
+/** The set without a named row: its pages stay in their worlds, standing in no named row. Pure. */
+export function withoutRow(set: DaySet, id: string): DaySet {
+  return {...set, rows: set.rows.filter(row => row.id !== id)}
+}
+
 /** Tomorrow's set from a closed Day's (manual §18.1 "What carries to tomorrow": "When the day closes, what still plays carries into
  * tomorrow's set, playing, with today added to its history … What you stopped leaves tomorrow's grid"): the worlds of the set that
  * hold a page still playing, in their order, then the world of any other playing page; each row with only its playing pages, a row

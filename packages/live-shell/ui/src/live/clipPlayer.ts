@@ -36,7 +36,7 @@ import type {SlotBinding, TransportBindings} from '../frame/transport/slots'
 import {subscribeSet} from '../native/application'
 import {setSelectionOf} from '../shell/liveSelection'
 import {clipAtOf} from './liveWrites'
-import {commitLiveStage, useLiveTorusReading, type LiveTorusState} from './torusInstrument'
+import {commitLiveStage, liveTorusState, useLiveTorusReading, type LiveTorusState} from './torusInstrument'
 
 /** A timer may wake a hair before its moment; a strike due within this many seconds is sent at that wake. */
 const DUE_EARLY_SECONDS = 0.002
@@ -398,6 +398,64 @@ export function clipPlayBindings(input: ClipPlayInput): {play: SlotBinding; stop
     title: tell(lit ? `Play — ${state.playing!.name} plays on the torus; press again to start it from its start marker.`
       : `Play — the torus plays the notes of ${what} from its start marker, at ${bpm.toFixed(2)} BPM.`)}, stop}
 }
+
+/** An act's answer, as the set's views show it (timeline/worldTrackAdapter.ts WorldActionReceipt). */
+export type ClipActAnswer = {ok: true; note: string} | {ok: false; error: string}
+
+/** Launch, Stop and Stop all as the set's acts (manual §10.9: a clip's Launch and Stop, an empty slot's Stop the track, the Main track's
+ * Stop all clips; §21.2 "Play | Plays the clips of the part on the torus"). Launch runs the player's Play on the clip it names and answers
+ * as the transport's Play would: refused before it plays where the torus cannot take it or the set has no tempo, else once the owner has
+ * read the clip, in the player's words. Stop the track stops the clip that plays where it stands on that track; Stop all stops whatever
+ * plays. The player plays one clip at a time, so a row's launch (every clip of a row at once) is not one of these. */
+export interface ClipLaunchActs {
+  launch(address: ClipAddress, bpm: number): Promise<ClipActAnswer>
+  stop(path: string, track: number, named: string): ClipActAnswer
+  stopAll(): ClipActAnswer
+}
+
+/** How long Launch waits for the set's owner to read the clip before it answers that it is reading it. */
+const LAUNCH_ANSWER_MS = 4000
+
+export function clipLaunchActs(player: ClipPlayer, torus: () => LiveTorusState | null): ClipLaunchActs {
+  const same = (a: ClipAddress, b: ClipAddress) => a.path === b.path && a.track === b.track && JSON.stringify(a.at) === JSON.stringify(b.at)
+  return {
+    launch(address, bpm) {
+      const why = !(bpm > 0) ? NO_TEMPO : torusRefusal(torus())
+      if (why) return Promise.resolve({ok: false, error: why})
+      return new Promise(resolve => {
+        let settled = false
+        const finish = (answer: ClipActAnswer) => { if (settled) return; settled = true; off(); clearTimeout(timer); resolve(answer) }
+        const settle = () => {
+          const state = player.state()
+          if (state.starting) return
+          if (state.playing && same(state.playing.address, address)) finish({ok: true, note: `${state.playing.name || 'The clip'} plays on the torus.`})
+          else finish({ok: false, error: state.fault ?? 'The clip did not play.'})
+        }
+        const off = player.subscribe(settle)
+        const timer = setTimeout(() => finish({ok: true, note: 'Reading the clip from the set…'}), LAUNCH_ANSWER_MS)
+        player.play(address, bpm)
+        settle()
+      })
+    },
+    stop(path, track, named) {
+      const state = player.state()
+      const here = state.playing ? state.playing.address.path === path && state.playing.address.track === track : state.starting
+      if (!here) return {ok: true, note: `Nothing plays on ${named}.`}
+      const name = state.playing?.name || 'The clip'
+      player.stop()
+      return {ok: true, note: `${name} stops; what it struck rings out on the torus.`}
+    },
+    stopAll() {
+      const state = player.state()
+      if (!state.playing && !state.starting) return {ok: true, note: 'Nothing plays.'}
+      player.stop()
+      return {ok: true, note: 'Every clip stops; what was struck rings out on the torus.'}
+    },
+  }
+}
+
+/** The candidate's Launch and Stop: its one clip player and the torus's owner reading. */
+export const liveClipActs: ClipLaunchActs = clipLaunchActs(liveClipPlayer, liveTorusState)
 
 /** Live's Play and Stop: the clip THE selection names, played on the torus at the set's tempo. Leaving Live's transport stops it. */
 export function useLiveClipPlay(selection: WorldSelection | undefined, tempoBpm: number | null): TransportBindings {

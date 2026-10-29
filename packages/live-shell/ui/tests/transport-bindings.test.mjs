@@ -216,10 +216,22 @@ function native({playback = {}, saved = false, loop = false} = {}) {
 }
 const expressions = (nativeTransport, readouts) => run(useExpressionsTransport, {tempoBpm: null, readouts, nativeTransport}).bindings
 
-test('Expressions with no native reading shows only the frame\'s readouts and presses nothing', () => {
+test('Expressions with no native reading presses nothing, and Play and Stop say why on the status bar (O-I #747, X2)', () => {
   const readouts = {position: {value: '0.00 / 8.00 s', title: 'the frame\'s'}}
-  assert.deepEqual(expressions(undefined, readouts), {position: {readout: readouts.position}})
-  assert.deepEqual(expressions({owner: 'expressions', content: null, actions: null, isPresented: () => true, revealDetail: () => {}}), {})
+  const none = expressions(undefined, readouts)
+  assert.deepEqual(none.position, {readout: readouts.position}, 'the frame\'s readouts stand')
+  // Manual §16.10: a disabled control stays drawn and the status bar says why. Before #747 Play was dimmed with no reason.
+  const why = bindings => [bindings.play?.refused, bindings.stop?.refused]
+  for (const [bindings, reason] of [
+    [none, /No Expression is open here/],
+    [expressions({owner: 'expressions', content: null, actions: null, isPresented: () => true, revealDetail: () => {}}), /has not been read yet/],
+    [expressions({...native().source, content: {...native().source.content, scenes: null}}), /scenes/],
+    [expressions({...native().source, content: {...native().source.content, playback: null}}), /playback/],
+  ]) {
+    for (const said of why(bindings)) assert.match(said ?? '', reason)
+    assert.equal(bindings.play.press, undefined, 'nothing is pressed'); assert.equal(bindings.stop.press, undefined)
+    assert.match(draw(bindings), new RegExp(`data-slot="play" data-i="[^"]*${reason.source}`), 'the reason rides in the line the status bar reads')
+  }
 })
 
 test('Expressions binds the old bar\'s working controls to the slots §10.5 and the old bar name, and no others', () => {

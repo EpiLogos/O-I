@@ -396,6 +396,10 @@ export function SessionGridView({set, selection, folded, onFold, receipt, onPres
                   onClick={() => { if (recordSlot) onPress(recordKey, `Record on ${track.name}`, () => recordSlot.run(track.id, row.id)) }}><CutIcon name="rec" size={9} /></button>
               </div>
             }
+            // A slot whose stop button its owner has removed is blank, as Live draws it (cap 37): launching its row leaves the track playing.
+            // It keeps its place, so its menu gives the button back.
+            if (track.stopless?.includes(row.id)) return <div key={row.id} className="cs" role="gridcell" data-stopless=""
+              title="Empty slot · its stop button is removed: launching the row leaves this track playing" data-slot-track={track.id} data-slot-row={row.id} />
             const key = `stop:${track.id}:${row.id}`
             return <div key={row.id} className="cs" role="gridcell" data-receipt={receiptMark(receipt, key)} title={trackStop ? 'Empty slot · its square stops the track' : 'Empty slot'}
               data-slot-track={track.id} data-slot-row={row.id}>

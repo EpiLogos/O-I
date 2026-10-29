@@ -40,7 +40,7 @@ const {renderToStaticMarkup} = await import('react-dom/server')
 const {readFile} = await import('node:fs/promises')
 const source = path => readFile(new URL(`../src/${path}`, import.meta.url), 'utf8')
 const {WidgetRail} = await import('../src/frame/widgets/WidgetRail.tsx')
-const {DEFAULT_WIDGETS} = await import('../src/shell/widgetDefaults.ts')
+const {MODE_WIDGETS} = await import('../src/shell/widgetDefaults.ts')
 
 const probe = id => ({id, name: id.toUpperCase(), mark: 'trav', Body: ({subject, pinned}) => React.createElement('p', null, `${id} shows ${subject ?? 'nothing'}${pinned ? ' (pinned)' : ''}`)})
 const bookOf = rail => ({rail, calls: [], toggle(id) { this.calls.push(['toggle', id]) }, pin(id, ref) { this.calls.push(['pin', id, ref]) }, savePreset() {}, applyPreset() {}, widen() {}})
@@ -54,9 +54,11 @@ test('the registry holds every tile of both old docks, once each (code-reading: 
   // the Files tile holds it and no Diff tile is registered.
   for (const id of ['agent', 'packet', 'trail', 'field', 'nows', 'sky', 'terminal', 'files', 'web', 'graph', 'frames', 'ledger', 'approvals']) assert.ok(ids.includes(id), id)
   assert.ok(!ids.includes('diff'), 'no Diff tile: Files carries the Diff page')
-  // Sessions, Agents and Results left the rail: they are views now (DLW §16.1 "The views are not devices"; lock §0.3.1; R4).
-  for (const id of ['sessions', 'agents', 'results']) assert.ok(!ids.includes(id), `${id} is a view, not a widget`)
-  for (const id of DEFAULT_WIDGETS) assert.ok(ids.includes(id), `default ${id} is registered`)
+  // Sessions left the rail: it is a view now (DLW §16.1 "The views are not devices"; lock §0.3.1; R4). REPLACED (O-I #744): Agents and
+  // Results stand on Factory's rail again, as the manual's §19 "On the rail" and Factory's opening name them (tests/rail-tiles-per-mode).
+  assert.ok(!ids.includes('sessions'), 'sessions is a view, not a widget')
+  for (const id of ['agents', 'results']) assert.ok(ids.includes(id), `${id} is Factory's tile`)
+  for (const id of Object.values(MODE_WIDGETS).flat()) assert.ok(ids.includes(id) || id.startsWith('device:'), `default ${id} is registered`)
 })
 
 test('the rail draws the open set in its order; a pinned widget shows its pin, the rest follow the selection', () => {

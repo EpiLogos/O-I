@@ -64,6 +64,7 @@ function ClipPanel(p: ClipProps) {
       options={['5:3', '4:2', '3:3', '2:1'].map(r => ({value: r, label: r}))} disabled={why} /></Row>
     <Row label="Start"><ValueBox label="Start" does="Where the scene starts inside its own evolution. Slip on the ruler sets it." value={numOf(p.v, 'start') ?? NaN} def={0} scale={{min: 0, max: 60, step: 0.5}} format={secs} onChange={x => p.set('start', x)} disabled={why} /></Row>
     <Row label="Locked"><Toggle label="Locked" does="A locked scene refuses edits." on={locked} onChange={x => p.set('locked', x)} /></Row>
+    <Row label="View"><ViewOf p={p} why={why} /></Row>
     <Rule />
     <Row label="Carrier"><Chooser label="Carrier" does="What the scene carries as its body." value={choice(p.v, 'carrier')} onChange={x => p.set('carrier', x)}
       options={['Engine composition', 'Text source', 'Glyph form', 'Image', 'File', 'Knowledge whole', 'HTML surface', 'Agent surface', 'Another Expression'].map(c => ({value: c.toLowerCase(), label: c}))} /></Row>
@@ -75,6 +76,21 @@ function ClipPanel(p: ClipProps) {
       <ValueBox label="Span end" does="Where the part of the file to use ends." value={numOf(p.v, 'span.to') ?? NaN} def={0} scale={{min: 0, max: 8000000, step: 1}} format={x => String(x)} onChange={x => p.set('span.to', x)} />
     </Row>
   </Rows>
+}
+
+/** The scene's view of the field (manual §20.1 The Clip panel: "View — Kept · Not kept — Not kept — Keep holds the view of the field you
+ * have now with the scene, and the scene opens on it. Restore returns to it after you orbit away"). Keep is an edit, so a locked scene
+ * refuses it; Restore waits for a kept view. */
+function ViewOf({p, why}: {p: ClipProps; why?: string}) {
+  const view = strOf(p.v, 'view')
+  return <>
+    <span className="clv-tag" data-i={`View|${view === undefined ? 'No reading of the scene\'s view yet.' : view === 'kept' ? 'The scene keeps a view of the field, and opens on it.' : 'The scene keeps no view of its own.'}`}>
+      {view === undefined ? '—' : view === 'kept' ? 'Kept' : 'Not kept'}</span>
+    <Action label="Keep" does="Holds the view of the field you have now with the scene, and the scene opens on it." onPress={() => p.set('view.keep', Date.now())}
+      disabled={why ?? (view === undefined ? 'No reading of the scene\'s view yet.' : undefined)} />
+    <Action label="Restore" does="Returns to the view the scene keeps, after you orbit away." onPress={() => p.set('view.restore', Date.now())}
+      disabled={view === 'kept' ? undefined : 'The scene keeps no view yet: Keep one first.'} />
+  </>
 }
 
 interface Trigger {readonly name: string; readonly occasion: string; readonly target: string; readonly placement: string; readonly operation: string}
@@ -192,8 +208,12 @@ function ArrangeTool(p: ClipProps) {
 // ---------------------------------------------------------------- the editor
 
 function Sequence(p: ClipProps) {
+  // Only an absent reading is "no reading": a scene the owner reads with nothing placed says so (walk 739, X2).
+  if (p.v.symbols === undefined) return <Said>No reading of the scene's sequence yet.</Said>
   const syms = symbolsOf(p.v)
-  if (!syms.length) return <Said>No reading of the scene's sequence yet.</Said>
+  if (!syms.length) return <Said>The scene has no symbols yet. A symbol you place in the field stands here in its own lane, its states as steps.</Said>
+  const unread = strOf(p.v, 'sequenceUnread')
+  if (unread && syms.every(s => !s.steps.length)) return <Said>The scene's steps could not be read: {unread}</Said>
   const objects = objectsOf(p.v)
   const voiced = (id: string) => objects[id]?.sound?.voice === true
   const shown = p.v.fold === true ? syms.filter(s => s.steps.length) : syms
@@ -488,7 +508,7 @@ export const clip: DesignedClip = {
   title: 'An Expressions scene',
   head: {name: 'name', colour: 'colour', active: 'active'},
   defaults: {
-    name: 'Dawn swell', colour: 'var(--honey)', active: true, duration: 8, transition: 2, signature: '5:3', start: 0, locked: false,
+    name: 'Dawn swell', colour: 'var(--honey)', active: true, duration: 8, transition: 2, signature: '5:3', start: 0, locked: false, view: 'kept',
     madeOf: 'The day\'s turning', 'madeOf.ref': 'wiki:anchor:days-turning',
     carrier: 'text source', presentation: 'inline', reference: 'Control/user/day/2026-10-16/day.md', 'span.from': 0, 'span.to': 0,
     quantize: 'global', follow: 'jump', jumpTo: 'night', scenes: JSON.stringify(SCENES), triggers: JSON.stringify(TRIGGERS), trigger: 'to-night',
@@ -503,7 +523,7 @@ export const clip: DesignedClip = {
     'Its automation': {'view.editor': 'envelopes', 'view.panel': 'launch', 'view.tools': 'text', 'env.device': 'Physics'},
     'The Sun\'s voice': {'view.editor': 'expression', objPage: 'sound', 'view.tools': 'blueprint'},
     'Arranging': {'view.tools': 'arrange', fold: true, 'view.editor': 'sound', locked: true},
-    'No readings': {symbols: undefined, objects: undefined, lanes: undefined, plate: undefined, layers: undefined, triggers: undefined, scenes: undefined, duration: undefined, transition: undefined, start: undefined},
+    'No readings': {view: undefined, symbols: undefined, objects: undefined, lanes: undefined, plate: undefined, layers: undefined, triggers: undefined, scenes: undefined, duration: undefined, transition: undefined, start: undefined},
   },
   panel: [
     {id: 'clip', label: 'Clip', does: 'The scene\'s name, colour, length, transition, signature, start and lock, and what it carries as its body.', draw: ClipPanel},

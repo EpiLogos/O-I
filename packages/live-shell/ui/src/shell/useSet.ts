@@ -9,7 +9,8 @@ export const ShellConfigContext = createContext<ShellConfig | null | undefined>(
 // (packages/live-shell/src/api.rs). The server answers { error } on failure;
 // that surfaces as a thrown Error here.
 
-export type TrackKind = 'audio' | 'midi' | 'return' | 'master'
+/** A track's kind as the set's owner lists it; a group track (Live's GroupTrack) folds its members under one head. */
+export type TrackKind = 'audio' | 'midi' | 'return' | 'group' | 'master'
 
 export interface TrackSummary {
   kind: TrackKind
@@ -28,7 +29,7 @@ export interface SetSummary {
 const object = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value)
 const count = (value: unknown) => typeof value === 'number' && Number.isSafeInteger(value) && value >= 0
 export function readSetSummary(value: unknown): SetSummary {
-  if (!object(value) || typeof value.path !== 'string' || !value.path || typeof value.tempo_bpm !== 'number' || !Number.isFinite(value.tempo_bpm) || value.tempo_bpm <= 0 || !count(value.scene_count) || !count(value.arrangement_clips) || !Array.isArray(value.tracks) || value.tracks.some(track => !object(track) || !['audio', 'midi', 'return', 'master'].includes(String(track.kind)) || typeof track.name !== 'string' || !Array.isArray(track.devices) || track.devices.some(device => typeof device !== 'string'))) throw Error('Invalid summary reading from the document owner')
+  if (!object(value) || typeof value.path !== 'string' || !value.path || typeof value.tempo_bpm !== 'number' || !Number.isFinite(value.tempo_bpm) || value.tempo_bpm <= 0 || !count(value.scene_count) || !count(value.arrangement_clips) || !Array.isArray(value.tracks) || value.tracks.some(track => !object(track) || !['audio', 'midi', 'return', 'group', 'master'].includes(String(track.kind)) || typeof track.name !== 'string' || !Array.isArray(track.devices) || track.devices.some(device => typeof device !== 'string'))) throw Error('Invalid summary reading from the document owner')
   return value as unknown as SetSummary
 }
 export async function fetchSetSummary(path: string, signal?: AbortSignal): Promise<SetSummary> {
