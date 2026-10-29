@@ -68,6 +68,23 @@ pub enum Request {
         location: Location,
         expected_revision: String,
     },
+    /// A passage sent to another document (manual §18.4 What a tag sends: "Another document takes it as a quote at the end"; O-I
+    /// #820): the document read now and the quote, with a link back to where it came from, added at its end — a Being's or a
+    /// Thing's page as its last section, a Markdown or text file as a quoted block — written on the revision read.
+    AppendQuote {
+        location: Location,
+        quote: Quote,
+    },
+}
+
+/// A passage quoted at the end of a document: its words, where it came from in words, and the page it came from (the link back),
+/// when it came from one.
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+pub struct Quote {
+    pub text: String,
+    pub from: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub path: Option<String>,
 }
 
 /// The world a copy is made in: its folder (Central-relative, as the world browse names it) and its ref (its register's wiki space),
@@ -87,6 +104,7 @@ impl Request {
                 | Request::Stop { .. }
                 | Request::Duplicate { .. }
                 | Request::Trash { .. }
+                | Request::AppendQuote { .. }
         )
     }
 }
@@ -764,6 +782,12 @@ pub fn apply_field(
         }
         other => return Err(format!("A Flow has no field {other} the page owner writes")),
     };
+    move_counter(island)?;
+    Ok(set)
+}
+
+/// The page's own counter moved by one (meta.revision), as every write of the page owner moves it.
+fn move_counter(island: &mut Value) -> Result<(), String> {
     let meta = object(island, "meta")?;
     // A count in any spelling JSON reads as one: a hand-written `3.0` is 3, as the page and host read it (#797). The kernel
     // keeps numbers as spelt (`arbitrary_precision`), so `as_u64` alone reads `3.0` as no count and starts the count again.
@@ -779,7 +803,7 @@ pub fn apply_field(
         _ => 0,
     } + 1;
     meta.insert("revision".into(), json!(counter));
-    Ok(set)
+    Ok(())
 }
 
 /// One page, read: its form, title and island, on the revision its owner reports.
@@ -861,6 +885,30 @@ pub fn mutate_field(
     let mut island = read_island(&reading.content)?;
     let set = apply_field(&mut island, field, value, &Stamp::now()?)?;
     let content = embed_island(&reading.content, &island)?;
+    let written = write_on_revision(client, location, &reading, content)?;
+    Ok(
+        json!({"schema": "oi.page-mutation/v1", "location": location, "field": field, "value": set,
+        "before_revision": expected_revision, "revision": written.revision, "outcome": written.outcome,
+        "receipt": written.receipt}),
+    )
+}
+
+/// What a write on the revision read answered: the revision the file now stands on, the owner's outcome and its receipt.
+struct Written {
+    revision: Value,
+    outcome: Value,
+    receipt: Value,
+}
+
+/// Write `content` over the file `reading` read, on the revision it was read at: through the source owner's CAS for a file in a
+/// project's human ground, else through the file owner (`central.files.write`). The owner refuses, overwriting nothing, when the
+/// file moved since.
+fn write_on_revision(
+    client: &CentralClient,
+    location: &Location,
+    reading: &files::Reading,
+    content: String,
+) -> Result<Written, String> {
     if let Some(source) = &reading.source {
         let project = reading
             .project
@@ -888,26 +936,182 @@ pub fn mutate_field(
         } else {
             "unchanged"
         };
-        return Ok(
-            json!({"schema": "oi.page-mutation/v1", "location": location, "field": field, "value": set,
-            "before_revision": expected_revision, "revision": now.revision, "outcome": outcome, "receipt": receipt}),
-        );
+        return Ok(Written {
+            revision: json!(now.revision),
+            outcome: json!(outcome),
+            receipt: json!(receipt),
+        });
     }
     let written = files::operate(
         client,
         location,
         &files::Request::Write {
-            expected_revision: expected_revision.to_string(),
+            expected_revision: reading.revision.clone(),
             content,
         },
     )?;
     if written["outcome"] == "conflict" {
         return Err("The page moved while it was written (the owner refused the revision): nothing was overwritten. Read it again.".into());
     }
+    Ok(Written {
+        revision: written["revision"].clone(),
+        outcome: written["outcome"].clone(),
+        receipt: written,
+    })
+}
+
+/// The most a quoted passage holds, in characters: a passage, not a document.
+pub const QUOTE_MAX_CHARS: usize = 8_000;
+
+/// A quote's words as the document keeps them: the passage (line breaks kept, no other control character), where it came from in
+/// one line of words, and the link back when the page it came from is a path in a world (never an address with a scheme).
+fn quote_parts(quote: &Quote) -> Result<(String, String, Option<String>), String> {
+    let words = quote.text.trim().replace("\r\n", "\n");
+    if words.is_empty() || words.chars().count() > QUOTE_MAX_CHARS {
+        return Err(format!(
+            "A quote is a passage of 1 to {QUOTE_MAX_CHARS} characters: nothing was written."
+        ));
+    }
+    if words
+        .chars()
+        .any(|c| c.is_control() && c != '\n' && c != '\t')
+    {
+        return Err("A quote's words carry a control character: nothing was written.".into());
+    }
+    let from = text(&json!(quote.from), "Where a quote came from", 240)?;
+    let path = match quote.path.as_deref().map(str::trim) {
+        None | Some("") => None,
+        Some(path)
+            if path.len() <= 1024
+                && !path.starts_with('/')
+                && !path.contains("..")
+                && !path.contains(':')
+                && !path.chars().any(|c| c.is_control() || c.is_whitespace() || c == '\\') =>
+        {
+            Some(path.to_string())
+        }
+        Some(_) => {
+            return Err(
+                "A quote links back to a page of a world by its path (Control/… or Work/…): nothing was written."
+                    .into(),
+            )
+        }
+    };
+    Ok((words, from, path))
+}
+
+/// A Being's or a Thing's page takes the quote as its last section, headed by where it came from, and the link back among its
+/// relations (personal/page.mjs: `page.sections` {id, heading, text}, `page.links` {id, label, href, relation}); its counter moves
+/// by one. Answers the section as written.
+pub fn quote_page(island: &mut Value, quote: &Quote, stamp: &Stamp) -> Result<Value, String> {
+    if island["profile"] != "oi.page/v1" {
+        return Err(match form_of(island) {
+            "flow" => "A Flow takes a passage as a new entry (Central's Flow append), not as a quote: nothing was written.".into(),
+            _ => "This file is no page the shell writes: a quote has no place at its end. Nothing was written.".into(),
+        });
+    }
+    let (words, from, path) = quote_parts(quote)?;
+    let id = format!("quote-{}", stamp.id.chars().take(8).collect::<String>());
+    let section = json!({"id": id, "heading": format!("From {from}"), "text": words,
+        "quote": {"from": from, "path": path, "at": stamp.at}});
+    let page = object(island, "page")?;
+    if !page.get("sections").is_some_and(Value::is_array) {
+        page.insert("sections".into(), json!([]));
+    }
+    page.get_mut("sections")
+        .and_then(Value::as_array_mut)
+        .ok_or("The page's sections are not a list")?
+        .push(section.clone());
+    if let Some(path) = &path {
+        if !page.get("links").is_some_and(Value::is_array) {
+            page.insert("links".into(), json!([]));
+        }
+        page.get_mut("links")
+            .and_then(Value::as_array_mut)
+            .ok_or("The page's links are not a list")?
+            .push(json!({"id": format!("{id}-from"), "label": from, "href": path, "relation": "quoted from"}));
+    }
+    move_counter(island)?;
+    Ok(section)
+}
+
+/// A Markdown or text file takes the quote as a quoted block at its end, then where it came from — a Markdown link back to the page
+/// in a Markdown file, its path in words in a text file. Every byte before it stays as written. Pure.
+pub fn quote_text(content: &str, quote: &Quote, markdown: bool) -> Result<String, String> {
+    let (words, from, path) = quote_parts(quote)?;
+    let mut out = content
+        .trim_end_matches(['\n', '\r', ' ', '\t'])
+        .to_string();
+    if !out.is_empty() {
+        out.push_str("\n\n");
+    }
+    for line in words.lines() {
+        out.push('>');
+        if !line.is_empty() {
+            out.push(' ');
+            out.push_str(line);
+        }
+        out.push('\n');
+    }
+    out.push_str(">\n> — from ");
+    match (&path, markdown) {
+        (Some(path), true) => {
+            let label = from
+                .replace('\\', "\\\\")
+                .replace('[', "\\[")
+                .replace(']', "\\]");
+            let href = path.replace('(', "%28").replace(')', "%29");
+            out.push_str(&format!("[{label}]({href})"));
+        }
+        (Some(path), false) => out.push_str(&format!("{from} ({path})")),
+        (None, _) => out.push_str(&from),
+    }
+    out.push('\n');
+    Ok(out)
+}
+
+/// A passage sent to another document as a quote at its end (manual §18.4): the document read now, the quote added — a reference
+/// page's last section, a Markdown or text file's quoted block — and written on the revision read, through the source owner's CAS
+/// for a document in a project's human ground, else the file owner's. A Flow takes a passage as an entry, and any other file has no
+/// end a quote can stand at: each is refused in words, nothing written.
+pub fn append_quote(
+    client: &CentralClient,
+    location: &Location,
+    quote: &Quote,
+) -> Result<Value, String> {
+    let reading = files::read(client, location)?;
+    let lower = location.path.to_ascii_lowercase();
+    let (content, form, section) = if island_span(&reading.content).is_some() {
+        let mut island = read_island(&reading.content)?;
+        let section = quote_page(&mut island, quote, &Stamp::now()?)?;
+        (
+            embed_island(&reading.content, &island)?,
+            form_of(&island),
+            section,
+        )
+    } else if lower.ends_with(".md") || lower.ends_with(".markdown") {
+        (
+            quote_text(&reading.content, quote, true)?,
+            "markdown",
+            Value::Null,
+        )
+    } else if lower.ends_with(".txt") {
+        (
+            quote_text(&reading.content, quote, false)?,
+            "text",
+            Value::Null,
+        )
+    } else {
+        return Err(format!(
+            "{} is neither a page nor a Markdown or text file: a quote has no place at its end. Nothing was written.",
+            location.path
+        ));
+    };
+    let written = write_on_revision(client, location, &reading, content)?;
     Ok(
-        json!({"schema": "oi.page-mutation/v1", "location": location, "field": field, "value": set,
-        "before_revision": expected_revision, "revision": written["revision"], "outcome": written["outcome"],
-        "receipt": written}),
+        json!({"schema": "oi.page-quote/v1", "location": location, "form": form, "section": section,
+        "before_revision": reading.revision, "revision": written.revision, "outcome": written.outcome,
+        "receipt": written.receipt}),
     )
 }
 
@@ -2061,6 +2265,138 @@ else:
             "Hildegard",
             "nothing overwritten"
         );
+    }
+
+    fn quote() -> Quote {
+        Quote {
+            text: "A completion claim without executed evidence\nis only tone.".into(),
+            from: "Flow — Completion".into(),
+            path: Some("Control/user/flows/flow-a.html".into()),
+        }
+    }
+
+    /// O-I #820, §18.4 "Another document takes it as a quote at the end": a reference page's last section, headed by where it came
+    /// from, with the link back among its relations; its counter moves by one. A Flow and a file that is no page refuse.
+    #[test]
+    fn a_page_takes_a_quote_as_its_last_section_with_the_link_back() {
+        let mut island = being();
+        island["page"] = json!({"sections": [{"id": "section-1", "heading": "", "text": "Before."}], "links": []});
+        let section = quote_page(&mut island, &quote(), &stamp()).unwrap();
+        let sections = island["page"]["sections"].as_array().unwrap();
+        assert_eq!(sections.len(), 2, "the quote is added after what was there");
+        assert_eq!(sections[0]["text"], "Before.");
+        assert_eq!(sections[1], section);
+        assert_eq!(section["heading"], "From Flow — Completion");
+        assert_eq!(
+            section["text"],
+            "A completion claim without executed evidence\nis only tone."
+        );
+        assert_eq!(section["quote"]["path"], "Control/user/flows/flow-a.html");
+        assert_eq!(
+            island["page"]["links"][0]["href"],
+            "Control/user/flows/flow-a.html"
+        );
+        assert_eq!(island["page"]["links"][0]["relation"], "quoted from");
+        assert_eq!(
+            island["meta"]["revision"], 1,
+            "the page's counter moves by one"
+        );
+        let mut exchange = flow();
+        assert!(quote_page(&mut exchange, &quote(), &stamp())
+            .unwrap_err()
+            .contains("new entry"));
+        assert_eq!(exchange, flow(), "a refusal changes nothing");
+        let mut empty = being();
+        let blank = Quote {
+            text: "  ".into(),
+            ..quote()
+        };
+        assert!(quote_page(&mut empty, &blank, &stamp())
+            .unwrap_err()
+            .contains("1 to 8000"));
+        let away = Quote {
+            path: Some("https://example.com/x".into()),
+            ..quote()
+        };
+        assert!(quote_page(&mut empty, &away, &stamp())
+            .unwrap_err()
+            .contains("by its path"));
+    }
+
+    #[test]
+    fn a_markdown_file_takes_a_quote_as_a_quoted_block_at_its_end() {
+        let written = quote_text("# Notes\n\nA line.\n\n", &quote(), true).unwrap();
+        assert_eq!(
+            written,
+            "# Notes\n\nA line.\n\n> A completion claim without executed evidence\n> is only tone.\n>\n> — from [Flow — Completion](Control/user/flows/flow-a.html)\n"
+        );
+        let plain = quote_text(
+            "",
+            &Quote {
+                path: None,
+                ..quote()
+            },
+            false,
+        )
+        .unwrap();
+        assert!(
+            plain.starts_with("> A completion") && plain.ends_with("> — from Flow — Completion\n")
+        );
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_quote_is_written_at_the_end_of_another_document_through_the_kernel() {
+        let stub = Stub::new("quote");
+        let mut island = being();
+        island["page"] = json!({"sections": [], "links": []});
+        let at = stub.put("Control/user/beings/beings-1.html", &page(island));
+        let mut kernel = crate::Kernel::new(stub.client.clone());
+        let written = kernel
+            .apply(crate::KernelOp::Page {
+                request: Request::AppendQuote {
+                    location: at.clone(),
+                    quote: quote(),
+                },
+            })
+            .unwrap();
+        let crate::KernelOpResult::PageReading { data } = written.result else {
+            panic!("a page reading")
+        };
+        assert_eq!(data["schema"], "oi.page-quote/v1");
+        assert_eq!(data["outcome"], "written");
+        assert_eq!(data["form"], "being");
+        assert_ne!(data["revision"], data["before_revision"]);
+        let held = stub.held("Control/user/beings/beings-1.html");
+        assert_eq!(
+            held["page"]["sections"][0]["heading"],
+            "From Flow — Completion"
+        );
+        assert!(written
+            .receipts
+            .iter()
+            .any(|receipt| format!("{receipt:?}").contains("FileChanged")));
+        let notes = stub.put("Control/user/notes.md", "# Notes\n");
+        let data = append_quote(&stub.client, &notes, &quote()).unwrap();
+        assert_eq!(data["form"], "markdown");
+        let text = std::fs::read_to_string(stub.home.join("Control_user_notes.md")).unwrap();
+        assert!(
+            text.ends_with("> — from [Flow — Completion](Control/user/flows/flow-a.html)\n"),
+            "{text}"
+        );
+        let other = stub.put("Control/user/data.json", "{}");
+        assert!(append_quote(&stub.client, &other, &quote())
+            .unwrap_err()
+            .contains("no place at its end"));
+        assert_eq!(
+            std::fs::read_to_string(stub.home.join("Control_user_data.json")).unwrap(),
+            "{}",
+            "nothing written"
+        );
+        let exchange = stub.put("Control/user/flows/flow-b.html", &page(flow()));
+        assert!(append_quote(&stub.client, &exchange, &quote())
+            .unwrap_err()
+            .contains("new entry"));
     }
 
     #[cfg(unix)]

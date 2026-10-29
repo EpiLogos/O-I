@@ -270,7 +270,8 @@ function read(p: ViewProps): Reading {
  * hold it yet, and the line that says the agent works. */
 function streamOf(p: ViewProps, r: Omit<Reading, 'items'>, rows: readonly Row[]): Item[] {
   const v = p.v, agent = r.me?.agent, quantize = strOf(v, 'quantize')
-  const sub = boolOf(v, 'heard') === true ? 'heard' : quantize !== undefined ? `heard at ${quantize}` : NONE
+  const heard = boolOf(v, 'heard')
+  const sub = heard === true ? 'heard' : quantize !== undefined ? `heard at ${quantize}` : heard === false ? 'not heard yet' : NONE
   const inline = (link: string | undefined) => {
     const lines = link ? r.sessions.find(s => s.id === link)?.thread : undefined
     // the parent's own instruction to the sub-agent is already said by the spawn row
@@ -286,7 +287,7 @@ function streamOf(p: ViewProps, r: Omit<Reading, 'items'>, rows: readonly Row[])
     const waits = items.some(it => it.k === 'proposal' && !it.answer)
     items.push({id: 'work', k: 'work', who: agent, text: what ? `${by} is running ${what}` : waits ? `${by} waits for your answer` : `${by} is working`})
   }
-  if (sent && unheld && queue) items.push({id: 'queued', k: 'queued', text: sent, sub: 'queued · runs as the next task'})
+  if (sent && unheld && queue) items.push({id: 'queued', k: 'queued', text: sent, sub: heard === true ? 'queued · heard' : 'queued · runs as the next task'})
   for (const t of keptThoughts(v, thoughtsOf(v) ?? [])) items.push({id: `th:${t.id}`, k: 'thought', who: t.producer, tool: t.anchor, text: t.text ?? t.passage ?? '', out: t.passage, life: t.life, subjects: t.subjects})
   return items
 }
@@ -594,7 +595,7 @@ function ThreadPane({p}: {p: ViewProps}) {
           </div></div>
       }
       case 'steer': return bubble(it, <div className="th-steer" data-heard={it.sub === 'heard' || undefined}><span>{it.text || NONE}</span><small>steer · {it.sub}</small></div>)
-      case 'queued': return bubble(it, <div className="th-queued"><span>{it.text || NONE}</span><small>{it.sub}</small></div>)
+      case 'queued': return bubble(it, <div className="th-queued" data-heard={it.sub === 'queued · heard' || undefined}><span>{it.text || NONE}</span><small>{it.sub}</small></div>)
       case 'proposal': {
         const answer = it.answer as keyof typeof PROPOSAL_ANSWERS | undefined, writes = strOf(v, 'writes')
         return bubble(it, answer

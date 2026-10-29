@@ -1490,6 +1490,45 @@ fn the_gateways_ecology_names_the_streams_a_replay_reads() {
     let _ = fs::remove_dir_all(&dir);
 }
 
+/// O-I #741: Messages' Input starts on Steer only where the gateway keeps one. The kernel reads the running gateway's protocol
+/// answer (`aikit gateway protocol --json`, gateway_runtime.rs GatewayResponse::Protocol) and carries it verbatim; an answer that
+/// is no protocol reading is incompatible.
+#[test]
+fn the_gateways_protocol_names_the_features_it_keeps() {
+    let _held = hold();
+    let dir = scratch("protocol");
+    let aikit = Fake::new(&dir, "aikit");
+    let _bin = Bound::set("OI_AIKIT_BIN", &aikit.bin);
+    let protocol = json!({"type": "protocol", "gateway_version": "0.71.0", "connector_sdk_version": "1",
+        "connector_wire_version": "1", "actuation_stream_schema": "actuation.stream/v1",
+        "features": ["communique-exact-instance", "communique-handling", "native-owner/v1"]});
+    aikit.answer(&envelope(protocol.clone()));
+    let (outcome, form) = dispatched(
+        no_central(&dir),
+        op(json!({"op": "aikit_read", "request": {"kind": "gateway-protocol"}})),
+    );
+    let outcome = outcome.unwrap();
+    assert_eq!(form, "owner-read");
+    assert_eq!(reading(&outcome).1, protocol);
+    assert_eq!(aikit.asked(), ["gateway protocol --json"]);
+    // A gateway that predates advertisement names no features: read as it answered.
+    let older = json!({"type": "protocol", "gateway_version": "0.60.0", "connector_sdk_version": "1",
+        "connector_wire_version": "1", "actuation_stream_schema": "actuation.stream/v1"});
+    aikit.answer(&envelope(older.clone()));
+    let (outcome, _) = dispatched(
+        no_central(&dir),
+        op(json!({"op": "aikit_read", "request": {"kind": "gateway-protocol"}})),
+    );
+    assert_eq!(reading(&outcome.unwrap()).1, older);
+    aikit.answer(&envelope(json!({"type": "ecology", "ecology": {}})));
+    let (outcome, _) = dispatched(
+        no_central(&dir),
+        op(json!({"op": "aikit_read", "request": {"kind": "gateway-protocol"}})),
+    );
+    assert_eq!(kind(&outcome.unwrap_err()), "incompatible");
+    let _ = fs::remove_dir_all(&dir);
+}
+
 #[test]
 fn ql_reads_its_compiled_m_ledger_and_its_coverage() {
     let _held = hold();

@@ -36,7 +36,7 @@ import {chainDeviceId, slotRows} from './agentChainDevices'
 import {gatewayBinding, useChainHolds, viewHolds} from './designBindings'
 import {AGENCY_GATEWAY_ID, FRAMES_ID, FRAMES_VIEW, framesBinding, journalAsks, journalSessions, mainDevices, rackBinding} from './mainTrackBindings'
 import {GATEWAYS_PAGE, LEFT_BEHIND_PAGE, carryPages} from './oneAgentBinding'
-import {MESSAGES_ID, PERSON_ACTS, madeOf, messagesBinding, messagesDevice, positionRefs, type MessagesPorts} from './messagesBinding'
+import {MESSAGES_ID, PERSON_ACTS, handlingAdvertisedOf, madeOf, messagesBinding, messagesDevice, positionRefs, sentOf, type MessagesPorts} from './messagesBinding'
 import {runStateOfSession} from './runFaces'
 import {hostState} from '../../frame/devices/deviceHost'
 import {kernelOp} from '../../../../../../desktop/cradle/src/kernel/bridge'
@@ -49,7 +49,8 @@ import {usePopulationAnswer} from './usePopulationAnswer'
 import {projectOfSession, registerOf, ROOT_REGISTER} from '../worldScope'
 import {CARRIER_ID, carrierChainState, carrierValues, gitValues} from './workcellBindings'
 import {WORKCELL_RACK_ID, chosenWorld, workcellGitReading, workcellRackBinding, workcellRackDevice} from './workcellRackBinding'
-import {useActuationRead, useGatewayEcology, useGatewayReplays, useInstanceUsages, useSeatStatusAnswer, useSourceReturnsAnswer, useWorkcellRead} from './workcellReads'
+import {useActuationRead, useAikitRead, useGatewayEcology, useGatewayReplays, useInstanceUsages, useSeatStatusAnswer, useSourceReturnsAnswer, useWorkcellRead} from './workcellReads'
+import {useHeardAnswer} from './useHeardAnswer'
 
 /** The rail's agent devices this publisher holds, by id: withdrawn with it. Approvals is not among them — it is Factory's Main track
  * effect (§19.14), published by its chain. */
@@ -70,6 +71,8 @@ export async function centralAct(transport: KernelTransportStatus, action: strin
 /** Central's agent-set listing (ctrl agent_set_actions.rs): a reading, scope root or project. */
 export const AGENT_SET_LIST = 'central.agent-set.list'
 const ROOT_SETS = {scope: 'root'} as const
+/** The running gateway's protocol answer (aikit_read {gateway-protocol}): the features it keeps. */
+const GATEWAY_PROTOCOL = {kind: 'gateway-protocol'} as const
 
 /** The rail's agent devices and their bindings, published on the door. */
 export function AgentRailDevices() {
@@ -129,6 +132,11 @@ export function AgentRailDevices() {
   const positions = useMemo(() => positionRefs(population.status === 'answered' ? population.value : null), [population])
   const opened = viewHolds(holds, MESSAGES_ID).open
   const conversation = useConversationAnswer(transport, registerOf(ROOT_REGISTER), typeof opened === 'string' && positions.includes(opened) ? opened : null, positions)
+  // Heard (O-I #741): AIKit's desk read of the line you last sent, by the Communique ref its send answered; and where Input starts — Steer
+  // where the running gateway advertises it keeps one (`aikit gateway protocol`, `communique-handling`), Queue otherwise.
+  const heard = useHeardAnswer(transport, registerOf(ROOT_REGISTER), sentOf(viewHolds(holds, MESSAGES_ID).sent)?.ref ?? null)
+  const protocol = useAikitRead(transport, GATEWAY_PROTOCOL)
+  const handlingAdvertised = protocol.status === 'answered' ? handlingAdvertisedOf(protocol.value) : undefined
   // Making an agent (§19.24, lane W2): the proposal Make wrote, read back through Central's review; the person's acts through invoke_action,
   // which carries the person's authority for them (desktop/cradle/kernel/src/action.rs PERSON_ACTS). Every answer is Central's own.
   const made = madeOf(viewHolds(holds, MESSAGES_ID).made)
@@ -155,8 +163,9 @@ export function AgentRailDevices() {
   // A session of your world's root register has no project groups: only the root's are read.
   const agentSets = useMemo(() => [{scope: 'root' as const, answer: rootSets}, ...(railRegister === null ? [] : [{scope: 'project' as const, answer: projectSets}])],
     [rootSets, projectSets, railRegister])
-  const messages = useMemo(() => messagesBinding({population, gateway: reading, conversation, review, runs, ...(railRegister === null ? {} : {project: railRegister}), agentSets, holds}, ports),
-    [population, reading, conversation, review, runs, agentSets, holds, ports, railRegister])
+  const messages = useMemo(() => messagesBinding({population, gateway: reading, conversation, review, runs, ...(railRegister === null ? {} : {project: railRegister}), agentSets, holds,
+    ...(handlingAdvertised === undefined ? {} : {handlingAdvertised}), ...(heard ? {heard} : {})}, ports),
+    [population, reading, conversation, review, runs, agentSets, holds, ports, railRegister, handlingAdvertised, heard])
 
   // The workcell rack: the workcell whose return track is selected, its seats, the chain devices' own values, and the Gateway's rows for the
   // macros — the same rows and the same write path the chain's Gateway writes through.

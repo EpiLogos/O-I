@@ -93,10 +93,17 @@ export function groupsOf(results: readonly LineResult[], kindOn: (group: SearchG
 // Enter: open, or send the passage through the target's owner
 
 /** What Enter does with the result chosen: send the passage (and through which owner), open the result, or nothing — dimmed, with the
- * operation the send waits for. `words` is the line that shows what is sent, to whom, and its size (§18.4 Rules: "A tag always shows
- * what it sends, and its size, before it goes"). */
+ * reason the owner gives. `words` is the line that shows what is sent, to whom, and its size (§18.4 Rules: "A tag always shows
+ * what it sends, and its size, before it goes"). The owners (§18.4 What a tag sends; O-I #820):
+ *   flow    a Flow takes the passage as a new entry (Central's Flow append, centralDeviceWrites.ts appendFlowEntry);
+ *   agent   an agent's session takes it as a turn (its encounter's change, then send);
+ *   person  a person is sent a message carrying the passage and where it came from: the Shared Field's Contact request, which waits
+ *           until they accept it (shared-field/spacetimedb/field.ts `message`, through the kernel's shared_field op);
+ *   place   a place of your world files it, with the link back (Central's `central.place.file-passage`, a proposal kept unrecognised);
+ *   quote   another document takes it as a quote at its end, with the link back (the kernel's page op, `append_quote`). */
+export type SendTarget = 'flow' | 'agent' | 'person' | 'place' | 'quote'
 export type SendPlan =
-  | {readonly verb: 'send'; readonly target: 'flow' | 'agent'; readonly words: string}
+  | {readonly verb: 'send'; readonly target: SendTarget; readonly words: string}
   | {readonly verb: 'open'; readonly words: string}
   | {readonly verb: 'dim'; readonly why: string}
 
@@ -110,7 +117,25 @@ export interface SendFacts {
 }
 
 const size = (passage: LinePassage) => `${passage.text.length} character${passage.text.length === 1 ? '' : 's'}`
-const missing = (op: string, owner: string) => `No owner operation carries it yet — missing op: ${op} (${owner}).`
+
+/** The world a place names, as Central files a passage on it: AIKit's project resource (`project:<Name>`) is that project's world. Null
+ * when the result names none (a place inside a world, whose world the owner did not give). Pure. */
+export function placeWorldOf(result: Pick<LineResult, 'ref'>): string | null {
+  const project = /^project:([^/\\:]+)$/.exec(result.ref)
+  return project ? `project:${project[1]}` : null
+}
+
+/** The Central path of the document a result names: a source of your world or of a project's (AIKit's `central:source:project:<Name>:
+ * <path>`, a path in that project, Work/<Name>/<path>), or Central's match in Control. Pure. */
+export function documentPathOf(result: Pick<LineResult, 'ref' | 'owner'>): string | null {
+  const own = pathOf(result)
+  if (own) return own
+  const project = /^central:source:project:([^:/]+):(.+)$/.exec(result.ref)
+  return project ? `Work/${project[1]}/${project[2]}` : null
+}
+
+/** Whether a document takes a quote at its end (the kernel's page `append_quote`): a page of a world, a Markdown or a text file. */
+export const quotable = (path: string): boolean => /\.(?:html|md|markdown|txt)$/i.test(path)
 
 /** §18.4 What a tag sends, kind by kind. Pure. */
 export function sendPlanOf(result: LineResult, passage: LinePassage | null | undefined, facts: SendFacts): SendPlan {
@@ -119,17 +144,27 @@ export function sendPlanOf(result: LineResult, passage: LinePassage | null | und
     case 'passage': case 'power': case 'vak':
       return {verb: 'open', words: `Enter opens ${result.title}: a tag does not send to it.`}
     case 'person':
-      return {verb: 'dim', why: `${result.title} is a person: a message carrying the passage and where it came from has no owner here. ${missing('a message to a person, with the passage and its source', 'Shared field')}`}
-    case 'place':
-      return {verb: 'dim', why: `${result.title} is a place: filing the passage on it, with a link back to the page, has no owner here. ${missing('a passage filed on a place of your world', 'Central')}`}
+      return {verb: 'send', target: 'person', words: `Sends ${result.title} a message with ${size(passage)} from ${passage.from} and where it came from: a request they accept before they read it.`}
+    case 'place': {
+      const world = placeWorldOf(result)
+      if (!world) return {verb: 'dim', why: `${result.title} is a place the owner names no world for: Central files a passage on a world of yours (your own, or a project's), and this result names neither.`}
+      return {verb: 'send', target: 'place', words: `Files ${size(passage)} from ${passage.from} on ${result.title}, with a link back to the page. It stays unrecognised there until you recognise it.`}
+    }
     case 'agent':
       if (facts.agent === undefined) return {verb: 'dim', why: `Reading whether ${result.title} has a session in the agency reading…`}
       if (!facts.agent) return {verb: 'dim', why: `${result.title} has no session in the agency reading to start on the passage; a conversation is opened from the Agent widget (encounter_provision).`}
       return {verb: 'send', target: 'agent', words: `Starts ${facts.agent.name} on ${size(passage)} from ${passage.from}.`}
-    default:
-      if (facts.flow === undefined && result.group === 'document' && pathOf(result) && isFlowPath(pathOf(result)!)) return {verb: 'dim', why: `Reading the owner's Flows for ${result.title}…`}
+    default: {
+      const path = documentPathOf(result)
+      const flowPath = !!path && isFlowPath(path)
+      if (facts.flow === undefined && result.group === 'document' && flowPath) return {verb: 'dim', why: `Reading the owner's Flows for ${result.title}…`}
       if (facts.flow) return {verb: 'send', target: 'flow', words: `Adds ${size(passage)} from ${passage.from} to ${result.title} as a new entry, with the page it came from.`}
-      return {verb: 'dim', why: `${result.title} is not a Flow the owner lists: another document takes the passage as a quote at the end, and that has no owner here. ${missing('a quote appended to a document, with a link back', 'Central')}`}
+      if (flowPath) return {verb: 'dim', why: `${result.title} is a Flow the owner does not list, so it takes no entry from here.`}
+      if (path && quotable(path)) return {verb: 'send', target: 'quote', words: `Quotes ${size(passage)} from ${passage.from} at the end of ${result.title}, with a link back to the page.`}
+      return {verb: 'dim', why: path
+        ? `${result.title} takes no quote at its end: only a page of a world, a Markdown or a text file does.`
+        : `${result.title} names no document the owner can find by its path, so nothing can be quoted at its end.`}
+    }
   }
 }
 

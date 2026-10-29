@@ -25,6 +25,9 @@
  *   reject    {ingress_ref, reason, evidence} reject a quarantined Contribution under the caller's authority
  *   withdraw  {ingress_ref, reason, evidence} withdraw an admitted Contribution under owner/admission authority
  *   contact   {contact_ref, recipient_participant_ref, decision, response}   respond to a Contact request
+ *   message   {to_participant_ref, passage: {text, from, path?}}   send a person a passage and where it came from (O-I #820,
+ *                                        DLW §18.4): a Contact request the recipient accepts before they read it, from the
+ *                                        caller's own Participant in the recipient's field, the passage in its requested scope
  *   watch     {watch}                   put one oi.watch/v1 contract under the caller's own authority
  *   enter     {field_ref, participant_ref, state?}       announce the caller's live presence in a field
  *   leave     {field_ref, participant_ref}               clear the caller's live presence (and any stage follow)
@@ -244,6 +247,30 @@ try {
       await reducers.respondContact({ contactRef: request.contact_ref, recipientParticipantRef: request.recipient_participant_ref, decision: request.decision, responseJson: JSON.stringify(request.response ?? { decision: request.decision }) });
       const row = await waitUntil(() => rows(db.myContact).find((candidate: any) => candidate.contactRef === request.contact_ref), 'the Contact in the caller-visible view');
       await emit({ ok: true, data: { schema: 'oi.shared-field.contact-result/v1', contact_ref: row.contactRef, decision: request.decision, state: row.state ?? row.decision ?? null } });
+    }
+    case 'message': {
+      // A passage sent to a person (DLW §18.4 What a tag sends: "a message that carries the passage and where it came from. A person in
+      // another world gets a request, which waits until they accept it"): the hosted Contact request, the passage in its requested scope.
+      const passage = request.passage;
+      if (typeof request.to_participant_ref !== 'string' || !request.to_participant_ref || !passage || typeof passage.text !== 'string' || !passage.text.trim() || typeof passage.from !== 'string' || !passage.from.trim()
+        || (passage.path !== undefined && passage.path !== null && typeof passage.path !== 'string')) {
+        await emit({ ok: false, error: { kind: 'malformed', message: 'message requires `to_participant_ref` and a `passage` {text, from, path?}' } });
+      }
+      const to = rows(db.participant).find((row: any) => row.participantRef === request.to_participant_ref);
+      if (!to) await emit({ ok: false, error: { kind: 'refused', message: `${request.to_participant_ref} is no Participant of a field you can see: nothing was sent.` } });
+      const mine = rows(db.myFieldAuthority).find((row: any) => row.fieldRef === to.fieldRef && !row.revoked && ['contact', 'contributor'].includes(row.role) && row.participantRef !== to.participantRef);
+      if (!mine) await emit({ ok: false, error: { kind: 'refused', message: `You stand in ${to.fieldRef} as no Participant that may contact another: nothing was sent.` } });
+      const message = { schema: 'oi.message/v1', passage: passage.text, from: passage.from.trim(), ...(passage.path ? { path: passage.path } : {}) };
+      const requestedScopeJson = JSON.stringify({ kind: 'message', message });
+      if (requestedScopeJson.length > 4_096) await emit({ ok: false, error: { kind: 'refused', message: `A message carries at most 4096 characters with where it came from; this one is ${requestedScopeJson.length}: nothing was sent. Send a shorter passage.` } });
+      const { randomUUID } = await import('node:crypto');
+      const contactRef = `contact:message:${randomUUID()}`;
+      await reducers.requestContact({ contactRef, fieldRef: to.fieldRef, initiatorParticipantRef: mine.participantRef, recipientParticipantRef: to.participantRef,
+        purpose: `A passage from ${message.from}`.slice(0, 500), requestedScopeJson, ttlSeconds: Number.isInteger(request.ttl_seconds) && request.ttl_seconds > 0 ? Math.min(request.ttl_seconds, 604_800) : 604_800,
+        provenanceJson: JSON.stringify({ system: 'oi-desktop', act: 'a passage sent from the search line', ...(passage.path ? { source_path: passage.path } : {}) }) });
+      const row = await waitUntil(() => rows(db.myContact).find((candidate: any) => candidate.contactRef === contactRef), 'the message request in the caller-visible view');
+      await emit({ ok: true, data: { schema: 'oi.shared-field.message-result/v1', contact_ref: row.contactRef, field_ref: row.fieldRef, from_participant_ref: row.initiatorParticipantRef,
+        to_participant_ref: row.recipientParticipantRef, state: row.state, characters: [...passage.text].length, expires_at_micros: String(row.expiresAtMicros) } });
     }
     case 'enter': {
       if (typeof request.field_ref !== 'string' || typeof request.participant_ref !== 'string') await emit({ ok: false, error: { kind: 'malformed', message: 'enter requires `field_ref` and `participant_ref`' } });

@@ -544,6 +544,23 @@ impl PreparedWrite {
                 })));
                 KernelOpResult::PageReading { data }
             }
+            // A passage quoted at the end of another document (page.rs `append_quote`; O-I #820): the
+            // document read now and written on that revision, retiring and disclosing as a page write does.
+            KernelOp::Page {
+                request: crate::page::Request::AppendQuote { location, quote },
+            } => {
+                let data = crate::page::append_quote(&self.client, location, quote)?;
+                records.push(Record::RetireListing(files::parent_path(&location.path)));
+                records.push(Record::RetireDerived);
+                records.push(Record::RetireTemporal);
+                if matches!(data["outcome"].as_str(), Some("created" | "written")) {
+                    records.push(Record::Event(Box::new(KernelEvent::FileChanged {
+                        path: location.path.clone(),
+                        summary: "A passage was quoted at the end of the document.".into(),
+                    })));
+                }
+                KernelOpResult::PageReading { data }
+            }
             // A journey opened or acted on (nara_journey.rs): QL's state saved into its Flow page through the page owner's
             // CAS, retiring and disclosing as a page write does; a replay QL reconciled writes nothing and emits nothing.
             KernelOp::NaraJourney { request } => {

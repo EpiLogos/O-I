@@ -26,7 +26,7 @@ export const CONTROL_SEARCH_ACTION = 'control.search'
 const DEFINE = /^@([A-Za-z][\w-]*)\s+=\s+(\S.*)$/
 
 const NO_SELECTION = 'The page\'s selection does not cross the host bridge (desktop/cradle/src/document/frame.ts useDocumentHostRead reads the island only): no passage is selected for a tag.'
-const NO_TAG = 'The pane sends nothing: a tag sends from the search line (⌘K, or @ in a Flow entry or the agent\'s composer; central/searchLine.tsx), where a Flow takes the passage as a new entry and an agent\'s session takes it as a turn. No owner takes a passage sent to a person, a place or another document (DLW §18.4 What a tag sends).'
+const NO_TAG = 'The pane sends nothing: a tag sends from the search line (⌘K, or @ in a Flow entry or the agent\'s composer; central/searchLine.tsx), where a Flow takes the passage as a new entry, an agent\'s session takes it as a turn, a person is sent it as a request they accept (the Shared Field\'s message), a place of your world files it (Central\'s central.place.file-passage) and another document quotes it at its end (the page owner\'s append_quote), each with a link back (DLW §18.4 What a tag sends).'
 /** No `vak:` term in the search: no entry is located and no neighbourhood read. */
 const NO_VAK_TERM = 'The search names no `vak:` term (a coordinate of the Vāk registry, `vak:M0-3`), so Quaternal Logic is asked for no entry and no neighbourhood.'
 /** A `vak:` term (central__search.tsx VAK_TERM): the coordinate it names. */

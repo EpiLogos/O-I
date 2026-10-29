@@ -141,7 +141,8 @@ test('a Flow\'s re-read takes the owner\'s page as the new baseline: seen on r7,
   const flow = await readFile(new URL('../src/inhabitants/DocumentFlowFace.tsx', import.meta.url), 'utf8')
   const reread = flow.match(/const reread = useCallback\(\(\) => \{([\s\S]*?)\}, \[load\]\)/)
   assert.ok(reread, 'the face keeps one re-read')
-  for (const step of ['baselineText.current = undefined', 'draftBasis.current = undefined', 'setBaselined(false)', 'setDirty(false)', 'void load()'])
+  // The re-read asks the owner fresh, whatever the window holds (O-I #820: readFlowInstance's fresh flag).
+  for (const step of ['baselineText.current = undefined', 'draftBasis.current = undefined', 'setBaselined(false)', 'setDirty(false)', 'void load(true)'])
     assert.ok(reread[1].includes(step), `the re-read does ${step}`)
   assert.match(flow, /reread: pending \? undefined : reread,/, 'the door carries that re-read, never the bare load')
 })

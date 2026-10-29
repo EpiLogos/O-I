@@ -139,7 +139,11 @@ export type PageRequest =
   | { operation: "duplicate"; location: CentralLocation; into?: { folder: string; world: string } }
   /** A page leaves its world (O-I #743, manual §10.9 Delete): to Central's trash on the revision read, the person's act. Answers
    * oi.page-trash/v1 with Central's way back (`recover`: central.files.restore of the revision trashed). */
-  | { operation: "trash"; location: CentralLocation; expected_revision: string };
+  | { operation: "trash"; location: CentralLocation; expected_revision: string }
+  /** A passage sent to another document (O-I #820, manual §18.4: "Another document takes it as a quote at the end"): the document read now
+   * and the quote added at its end with the link back — a reference page's last section, a Markdown or text file's quoted block — written
+   * on that revision. Answers oi.page-quote/v1 {form, section, before_revision, revision, outcome, receipt}. */
+  | { operation: "append_quote"; location: CentralLocation; quote: { text: string; from: string; path?: string } };
 export interface NativeFileEntry { name: string; location: CentralLocation; kind: "file" | "directory" | "symlink" | "other"; byte_len: number; retrieval_allowed: boolean }
 export interface NativeDirectory { schema: "central.directory-reading/v1"; location: CentralLocation; entries: NativeFileEntry[]; automatic_agent_or_model_invocation: false }
 export interface NativeFileReading { schema: "central.file-reading/v1"; location: CentralLocation; revision: string; byte_len: number; content_encoding: "utf-8"; content: string; project: {name:string;path:string;project_ref:string|null} | null; source: ListedSource | null; operations?:Record<"write"|"history"|"restore",{available:boolean;reason:string|null}>; automatic_agent_or_model_invocation: false }
@@ -368,6 +372,9 @@ export type AikitReadRequest =
   /** `aikit gateway ecology`: `{type:"ecology", ecology:{agencies:[{sessions:[{harness_ref?, streams:[{stream_ref, last_sequence,
    * event_count}], surfaces}]}]}}` — which sessions and Streams a replay can ask for. */
   | {kind:"gateway-ecology";at?:string|null}
+  /** `aikit gateway protocol`: `{type:"protocol", gateway_version, connector_sdk_version, connector_wire_version, actuation_stream_schema,
+   * features?:string[]}` — what the running gateway keeps; `communique-handling` (ai-kit#566) is a steer kept as a steer. */
+  | {kind:"gateway-protocol";at?:string|null}
   /** `aikit work continuity commands|pressure`: the session's armed packs, and the continuity pressure brackets. A named project runs
    * in that project's ground, from Central's disclosure. */
   | {kind:"continuity-commands"|"continuity-pressure";project?:string|null}

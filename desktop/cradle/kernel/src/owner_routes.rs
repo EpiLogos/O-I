@@ -691,6 +691,14 @@ pub enum AikitRead {
         #[serde(default)]
         at: Option<String>,
     },
+    /// What the running gateway can keep (`aikit gateway protocol`): its
+    /// version and the protocol features it advertises — whether it keeps a
+    /// steer (`communique-handling`, ai-kit#566), so Messages' Input starts
+    /// where the gateway can land the words.
+    GatewayProtocol {
+        #[serde(default)]
+        at: Option<String>,
+    },
     /// The star prompt-commands the active composition arms (`aikit work
     /// continuity commands`).
     ContinuityCommands {
@@ -1016,6 +1024,7 @@ impl AikitRead {
             | Self::WikiShapeCompress { .. }
             | Self::WikiShapeTarget { .. }
             | Self::GatewayEcology { .. }
+            | Self::GatewayProtocol { .. }
             | Self::GatewayReplay { .. }
             | Self::SourceShow { .. }
             | Self::SourceList
@@ -2565,6 +2574,12 @@ pub(crate) fn aikit_read_args(request: &AikitRead) -> (&'static str, Vec<OsStrin
             args.push("--json".into());
             ("aikit gateway ecology", args)
         }
+        AikitRead::GatewayProtocol { at } => {
+            let mut args = words(&["gateway", "protocol"]);
+            push_flag(&mut args, "--at", at.as_deref());
+            args.push("--json".into());
+            ("aikit gateway protocol", args)
+        }
         AikitRead::GatewayReplay {
             stream,
             after,
@@ -2735,6 +2750,19 @@ fn aikit_read_answer(request: &AikitRead, cwd: Option<&Path>) -> Result<Reading,
                     .is_some_and(Value::is_array)
             {
                 return Err(unexpected(route, "the gateway's ecology", &data));
+            }
+            data
+        }
+        // The gateway's protocol answer (gateway_runtime.rs GatewayResponse::Protocol): a gateway
+        // that predates advertisement names no features, and is read as advertising none.
+        AikitRead::GatewayProtocol { .. } => {
+            if data.get("type").and_then(Value::as_str) != Some("protocol")
+                || !data.get("gateway_version").is_some_and(Value::is_string)
+                || data
+                    .get("features")
+                    .is_some_and(|features| !features.is_array())
+            {
+                return Err(unexpected(route, "the gateway's protocol", &data));
             }
             data
         }
