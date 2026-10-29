@@ -14,6 +14,7 @@ import {openInstrument} from '../instrumentDoor'
 import {DEVICE_PANE_KIND} from '../devices/devicePane'
 import {publishedDevice, selectedDeviceId} from '../devices/deviceDoor'
 import {browserSearchAvailable, openableNow, requestBrowserSearch, trackRows, transportKeys, type Openable} from './keyDoors'
+import {captureFocus, openSearchLine, searchLineAvailable} from '../../central/searchLineDoor'
 import {claimsAtOnce, escapeClaimed, intentOfKey, isTyping, suppressed, type DocumentLike, type ElementLike, type KeyLike} from './keyMap'
 import {planKey, type KeyDoors, type KeyOptions, type KeyReceipt} from './planKey'
 import './keys.css'
@@ -38,6 +39,9 @@ export const frameKeyDoors: KeyDoors = {
   openable: () => openableNow() ?? selectedDeviceOpenable(),
   searchAvailable: browserSearchAvailable,
   search: requestBrowserSearch,
+  // ⌘K: the search line over the frame (§18.4), as Quick Open stands over the window; Esc puts the focus back (captureFocus).
+  lineAvailable: searchLineAvailable,
+  line: () => { openSearchLine({door: 'frame', restore: typeof document === 'undefined' ? null : captureFocus()}) },
 }
 
 export interface FrameKeysOptions extends KeyOptions {

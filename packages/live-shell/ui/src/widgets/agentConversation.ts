@@ -54,3 +54,10 @@ export function conversationGlance(reading: Pick<EncounterReading, 'blocks'> | u
   if (!turns.length) return null
   return {lines: turns.slice(-4).map(block => ({lead: block.kind === 'user' ? 'you' : companion, text: block.text.replace(/\s+/g, ' ').trim().slice(0, 90)}))}
 }
+
+/** The session a search line's tag starts an agent on (DLW §18.4 What a tag sends: "Agent — Starts the agent on the passage"; O-I #820):
+ * the agency reading's own session of that agent, by its ref — a single session, never a group's — or none. The line sends through that
+ * session's encounter, as Central's Agent sends a turn (central/devices/CentralDevices.tsx answerSend: change, then send). Pure. */
+export function sessionOfAgent(tracks: readonly AgentSessionTrack[], agentRef: string): AgentSessionTrack | null {
+  return tracks.find(track => !track.group && track.agentRef === agentRef) ?? null
+}

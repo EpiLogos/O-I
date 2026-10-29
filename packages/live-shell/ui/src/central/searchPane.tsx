@@ -7,10 +7,10 @@
 // registerDevicePane — ported from frame/devices/devicePane.tsx:20-28). While the pane stands, Search is published on the door, so
 // Device view, the pool and the rail draw its controls on the same binding ("The controls stay in Device view, below the pane").
 //
-// The line where you type @: a composer's words (the Agent's, the page's) name a search when the word being typed starts with @
-// (atQueryOf); the one who holds the composer opens this pane on that search and keeps the pane's line on what follows the @ (the hold
-// the binding reads: heldOf(SEARCH_DEVICE_ID).query). The Agent's composer does it on both chains (CentralDevices.tsx,
-// FactoryDeviceChain.tsx: useAtSearch).
+// The line where you type @ (O-I #820): a composer's words (the Agent's) name a search when the word being typed starts with @
+// (atQueryOf, searchLineDoor.ts); the one who holds the composer opens the search line there (useAtSearch: CentralDevices.tsx,
+// FactoryDeviceChain.tsx), the one line ⌘K opens too (central/searchLine.tsx). It replaces this pane opening on the @ word: the line
+// asks the same search on the same holds (heldOf(SEARCH_DEVICE_ID).query), so a pane that stands follows what the line asks.
 import {useEffect, useMemo, useRef} from 'react'
 import {createRoot} from 'react-dom/client'
 import {registerProjectionModule} from '../../../../../desktop/cradle/src/surface/projectionModules'
@@ -22,17 +22,13 @@ import {publishDevice} from '../frame/devices/deviceDoor'
 import {openInstrument} from '../frame/instrumentDoor'
 import {familyFaceDevice} from '../agent/devices/mainTrackBindings'
 import {SEARCH_DEVICE_ID, useSearchDevice} from './devices/agentChainDevices'
-import {heldOf, setHeld} from './devices/pageBindings'
+import {setHeld} from './devices/pageBindings'
+import {atQueryOf, captureFocus, openSearchLine, searchLineNow} from './searchLineDoor'
+
+export {atQueryOf}
 
 /** The Search pane's kind (a projection pane, surface/types.ts isProjectionPaneKind). */
 export const SEARCH_PANE_KIND = 'projection.central-search'
-
-/** The search a composer's words name: from the last word that starts with @ to the end of the line (`@ariadne`, `@1 founding positions`),
- * or null when the word being typed names none — an @ inside a word (an address) is no search. Pure. */
-export function atQueryOf(text: string): string | null {
-  const match = /(?:^|\s)(@[^@\n]*)$/.exec(text)
-  return match ? match[1]! : null
-}
 
 /** Search as a device of the runtime: Central's admitted `search` face (worldShellFamilies.ts declareCentralAgentChain), its values the
  * binding's. Null when the family does not admit it. */
@@ -72,19 +68,20 @@ export function registerSearchPane(): void {
 
 registerSearchPane()
 
-/** The line where you type @ in a composer: when the word being typed starts with @, open Search in a pane on it (once per @), and keep
- * the pane's search line on what follows while you type. `draft` is the composer's words (the Agent's `draft` reading). */
+/** The line where you type @ in a composer: when the word being typed starts with @, open the search line at the field that has the focus
+ * (once per @ word; the line's own input takes the typing from there). The composer that declares its @ itself (ChatComposer's
+ * `data-at-search`) has opened the line already: the line is one, and a second ask while it stands is refused. Esc puts the focus and
+ * the caret back. `draft` is the composer's words (the Agent's `draft` reading). */
 export function useAtSearch(draft: string | undefined): void {
   const open = useRef<string | null>(null)
   const query = typeof draft === 'string' ? atQueryOf(draft) : null
   useEffect(() => {
     if (query === null) { open.current = null; return }
-    if (open.current === null) {
-      open.current = query
-      try { openSearchPane(query) } catch { /* no pane tree is mounted: the held search waits for the pane */ setHeld(SEARCH_DEVICE_ID, 'query', query) }
-      return
-    }
-    if (heldOf(SEARCH_DEVICE_ID).query !== query) setHeld(SEARCH_DEVICE_ID, 'query', query)
+    if (open.current !== null) return
     open.current = query
+    if (searchLineNow()) return
+    const field = typeof document === 'undefined' ? null : document.activeElement
+    const box = field instanceof HTMLElement ? field.getBoundingClientRect() : null
+    openSearchLine({door: 'composer', at: box ? {x: box.left, y: box.bottom} : null, passage: null, restore: typeof document === 'undefined' ? null : captureFocus()})
   }, [query])
 }

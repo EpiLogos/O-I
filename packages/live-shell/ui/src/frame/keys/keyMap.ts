@@ -4,7 +4,7 @@
 //
 // What is here is what §10.8 gives to the window as a whole: Space (play or stop), Esc (stop), ⌘F (search), a row's
 // number key (launch the row), a macro's letter key (turn the macro), Enter and ⌥Enter (open the selected thing in a pane,
-// or beside it). What §10.8 gives to the shell already stays there: Tab (Session ⇄ Arrangement) and ⌘⌥B / ⌘⌥L (the
+// or beside it) — and §18.4's ⌘K, the search line over anything (O-I #820). What §10.8 gives to the shell already stays there: Tab (Session ⇄ Arrangement) and ⌘⌥B / ⌘⌥L (the
 // browser and the detail area) are App.tsx's, and "Send what you typed" / "Steer the running turn" belong to the field being
 // typed in, which this layer never touches — the map returns nothing for any of them.
 import type {SdkParamRow} from '../../inhabitants/sdk/define'
@@ -15,6 +15,7 @@ export type KeyIntent =
   | {id: 'play-stop'}
   | {id: 'stop'}
   | {id: 'search'}
+  | {id: 'line'}
   | {id: 'row'; row: number}
   | {id: 'macro'; macro: number; direction: 1 | -1}
   | {id: 'open'; beside: boolean}
@@ -53,7 +54,11 @@ const digitOf = (e: KeyLike): number | null => {
 export function intentOfKey(e: KeyLike): KeyIntent | null {
   if (e.repeat || e.isComposing) return null
   const chord = !!(e.metaKey || e.ctrlKey)
-  if (chord) return !e.altKey && !e.shiftKey && e.key.toLowerCase() === 'f' ? {id: 'search'} : null
+  if (chord) {
+    if (e.altKey || e.shiftKey) return null
+    const key = e.key.toLowerCase()
+    return key === 'f' ? {id: 'search'} : key === 'k' ? {id: 'line'} : null
+  }
   if (e.key === 'Enter') return e.shiftKey ? null : {id: 'open', beside: !!e.altKey}
   if (e.altKey) return null
   if (e.key === 'Escape') return e.shiftKey ? null : {id: 'stop'}
@@ -67,7 +72,8 @@ export function intentOfKey(e: KeyLike): KeyIntent | null {
 
 /** ⌘F has a browser default of its own (find in page), so it is claimed at once and the default is stopped. Every other key waits
  * one task for the established handlers to have their say (see FrameKeys): Space included — the page does not scroll (the body
- * is overflow: hidden), and the Expressions bar's own Space handler may be the one that already played. */
+ * is overflow: hidden), and the Expressions bar's own Space handler may be the one that already played. ⌘K waits too: the Earth
+ * keeps its own ⌘K field search (projections/atlas/src/app/controller.ts onKey) while it stands, as an established handler keeps its key. */
 export const claimsAtOnce = (intent: KeyIntent): boolean => intent.id === 'search'
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -108,7 +114,7 @@ export function isTyping(target: ElementLike | null): boolean {
 }
 
 /** The words a `data-takes-keys` value uses for each intent. Empty or `all` declares every key. */
-const TOKEN: Record<KeyIntent['id'], string> = {'play-stop': 'space', stop: 'escape', search: 'find', row: 'digits', macro: 'letters', open: 'enter'}
+const TOKEN: Record<KeyIntent['id'], string> = {'play-stop': 'space', stop: 'escape', search: 'find', line: 'line', row: 'digits', macro: 'letters', open: 'enter'}
 
 /** An element declares that it takes keys: `data-takes-keys` (every key, or the listed ones: space escape find digits letters
  * enter), a role that handles its own keys, or a modal. */
@@ -134,9 +140,12 @@ export function pressedByKey(target: ElementLike | null): boolean {
 }
 
 /** Keys never act while you are typing, never act inside something that takes its own keys, and Space and Enter never press a
- * second thing on a control they already press (manual §10.8: "Keys never play notes while you are typing in a document"). */
+ * second thing on a control they already press (manual §10.8: "Keys never play notes while you are typing in a document"). ⌘K is
+ * the one chord that acts in a text field too: "⌘K opens the search line over anything" (§18.4), as Quick Open opens over the editor —
+ * a field that takes ⌘K itself has already taken it when the frame's turn comes (FrameKeys waits one task). */
 export function suppressed(intent: KeyIntent, target: ElementLike | null): boolean {
-  if (isTyping(target) || declaresKeys(intent, target)) return true
+  if (declaresKeys(intent, target)) return true
+  if (intent.id !== 'line' && isTyping(target)) return true
   return (intent.id === 'play-stop' || intent.id === 'open') && pressedByKey(target)
 }
 

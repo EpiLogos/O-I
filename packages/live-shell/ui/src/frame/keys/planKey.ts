@@ -30,6 +30,9 @@ export interface KeyDoors {
   openable(): Openable | null
   searchAvailable(): boolean
   search(reveal?: () => void): boolean
+  /** The search line's host is mounted (central/searchLineDoor.ts); ⌘K opens the line over the frame. */
+  lineAvailable?(): boolean
+  line?(): void
 }
 
 /** What only the App holds, handed in when the keys are mounted. */
@@ -70,6 +73,8 @@ export function planKey(intent: KeyIntent, doors: KeyDoors, options: KeyOptions 
     }
     case 'search':
       return doors.searchAvailable() ? {run: () => { doors.search(options.revealBrowser) }} : null
+    case 'line':
+      return doors.lineAvailable?.() && doors.line ? {run: () => { doors.line!() }} : null
     case 'row': {
       // A row is the Session grid's: its stop launches the whole row through the set's own launchStop.
       const grid = doors.rows()
