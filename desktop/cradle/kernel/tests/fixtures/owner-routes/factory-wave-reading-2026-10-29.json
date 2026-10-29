@@ -1,0 +1,541 @@
+{
+  "_source": "Factory dlw/741-openrig-planning (wave_sdlc.rs) built from Factory main d9c544a, walked headless 29 Oct 2026 against an isolated home: the conformance developmental state's Run, a git integration repository, planner/critic/builder/reviewer Positions stamped into the process (Actuation stubbed to call each generation current). The walk's scratch directory is written as /walk; everything else is Factory's reading verbatim. fix_round: wave w1 merged, its structure leg clear and its claims leg with one judgment-gap finding; sealed: w1 sealed after a forward fix and both legs re-earned, w2 building. refused: the lock of a P2 plan before its research round returned, in Factory's words.",
+  "fix_round": {
+    "schema": "factory.wave-reading/v1",
+    "run_ref": "run:01ARZ3NDEKTSV4RRFFQ69G5FAA",
+    "plan_revision": 14,
+    "integration": {
+      "repo": "/walk/repo",
+      "onto": "main",
+      "tip": "549634bb749d2bc38e2836155659baed6ad25b75",
+      "basis": "main at 549634bb7"
+    },
+    "units": [
+      {
+        "workflow_unit_ref": "workflow-unit:3C73CMWMP7956ZN0XFWD5FMFYW",
+        "key": "inspect-source",
+        "wave": "w1",
+        "dial": {
+          "rung": "P2",
+          "asks": "The spec, plus a research round that returns before the spec freezes.",
+          "reason": "the parser's input format is an unresolved external unknown",
+          "territory": [
+            "app/"
+          ],
+          "set_by": {
+            "kind": "position",
+            "actor_ref": "central:position:project:O-I:planner",
+            "generation_ref": "generation:walk"
+          },
+          "needs": [],
+          "rounds": [
+            {
+              "round": "research",
+              "evidence_ref": "evidence:research:formats",
+              "by": {
+                "kind": "position",
+                "actor_ref": "central:position:project:O-I:planner",
+                "generation_ref": "generation:walk"
+              },
+              "at_unix_ms": 1793309187161
+            }
+          ],
+          "lock": {
+            "rung": "P2",
+            "by": {
+              "kind": "position",
+              "actor_ref": "central:position:project:O-I:planner",
+              "generation_ref": "generation:walk"
+            },
+            "at_unix_ms": 1793309187197
+          }
+        },
+        "ladder": {
+          "locked": {
+            "value": "yes",
+            "basis": "locked at P2 by central:position:project:O-I:planner"
+          },
+          "built": {
+            "value": "yes",
+            "basis": "candidate 20a428e05 frozen by central:position:project:O-I:builder-a",
+            "revision": "20a428e05d17d80e69b0df27131732ac19d0ae7d"
+          },
+          "merged": {
+            "value": "yes",
+            "basis": "20a428e05 is contained in main at 549634bb7"
+          },
+          "reviewed": {
+            "value": "no",
+            "basis": "wave w1 stands fix-round: the claims leg found 1 finding at 549634bb7"
+          }
+        }
+      },
+      {
+        "workflow_unit_ref": "workflow-unit:1AHR7012Z930Y5QJW42P2KCW2E",
+        "key": "implement-compiler",
+        "wave": "w1",
+        "dial": {
+          "rung": "P3",
+          "asks": "The spec and its research, plus an adversarial pass by someone who did not write the plan.",
+          "reason": "load-bearing: a wrong plan ships the failure it exists to stop",
+          "territory": [
+            "kernel/"
+          ],
+          "set_by": {
+            "kind": "position",
+            "actor_ref": "central:position:project:O-I:planner",
+            "generation_ref": "generation:walk"
+          },
+          "needs": [],
+          "rounds": [
+            {
+              "round": "research",
+              "evidence_ref": "evidence:research:compiler",
+              "by": {
+                "kind": "position",
+                "actor_ref": "central:position:project:O-I:planner",
+                "generation_ref": "generation:walk"
+              },
+              "at_unix_ms": 1793309187267
+            },
+            {
+              "round": "adversarial",
+              "evidence_ref": "evidence:adversarial:compiler",
+              "by": {
+                "kind": "position",
+                "actor_ref": "central:position:project:O-I:critic",
+                "generation_ref": "generation:walk"
+              },
+              "at_unix_ms": 1793309187329,
+              "amendments": [
+                "a failing test pins the empty-input refusal"
+              ]
+            }
+          ],
+          "lock": {
+            "rung": "P3",
+            "by": {
+              "kind": "position",
+              "actor_ref": "central:position:project:O-I:planner",
+              "generation_ref": "generation:walk"
+            },
+            "at_unix_ms": 1793309187367
+          }
+        },
+        "ladder": {
+          "locked": {
+            "value": "yes",
+            "basis": "locked at P3 by central:position:project:O-I:planner"
+          },
+          "built": {
+            "value": "yes",
+            "basis": "candidate 3269eeb4a frozen by central:position:project:O-I:builder-b",
+            "revision": "3269eeb4aed4b239a8a52b851c3e235cdf4f6fb1"
+          },
+          "merged": {
+            "value": "yes",
+            "basis": "3269eeb4a is contained in main at 549634bb7"
+          },
+          "reviewed": {
+            "value": "no",
+            "basis": "wave w1 stands fix-round: the claims leg found 1 finding at 549634bb7"
+          }
+        }
+      },
+      {
+        "workflow_unit_ref": "workflow-unit:7NYK8DYWHBMC6F573XDZN6H17X",
+        "key": "review-adversarially",
+        "wave": "w2",
+        "dial": {
+          "rung": "P0",
+          "asks": "Mini-requirements and pointers: the builder works out the how.",
+          "reason": "simple, reversible, well-trodden",
+          "territory": [
+            "docs/"
+          ],
+          "set_by": {
+            "kind": "position",
+            "actor_ref": "central:position:project:O-I:planner",
+            "generation_ref": "generation:walk"
+          },
+          "needs": [],
+          "rounds": [],
+          "lock": null
+        },
+        "ladder": {
+          "locked": {
+            "value": "no",
+            "basis": "not locked; P0 has the rounds it calls for"
+          },
+          "built": {
+            "value": "no",
+            "basis": "no candidate frozen"
+          },
+          "merged": {
+            "value": "no",
+            "basis": "no candidate to merge"
+          },
+          "reviewed": {
+            "value": "no",
+            "basis": "wave w2 stands waiting: wave w1 has not sealed"
+          }
+        }
+      }
+    ],
+    "waves": [
+      {
+        "wave": "w1",
+        "ordinal": 0,
+        "units": [
+          "workflow-unit:3C73CMWMP7956ZN0XFWD5FMFYW",
+          "workflow-unit:1AHR7012Z930Y5QJW42P2KCW2E"
+        ],
+        "serialized": [],
+        "review_model": "independent",
+        "state": "fix-round",
+        "gate": "the claims leg found 1 finding at 549634bb7",
+        "next": "merge the forward fixes, then both legs review again at the round's final revision (main at 549634bb7)",
+        "writers": [
+          "central:position:project:O-I:builder-a",
+          "central:position:project:O-I:builder-b"
+        ],
+        "legs": [
+          {
+            "wave": "w1",
+            "leg": "structure",
+            "revision": "549634bb749d2bc38e2836155659baed6ad25b75",
+            "verdict": "clear",
+            "by": {
+              "kind": "position",
+              "actor_ref": "central:position:project:O-I:reviewer-1",
+              "generation_ref": "generation:walk"
+            },
+            "at_unix_ms": 1793309187897
+          },
+          {
+            "wave": "w1",
+            "leg": "claims",
+            "revision": "549634bb749d2bc38e2836155659baed6ad25b75",
+            "verdict": "findings",
+            "findings": [
+              {
+                "cause": "judgment-gap",
+                "text": "the compiler swallows an error on empty input"
+              }
+            ],
+            "by": {
+              "kind": "position",
+              "actor_ref": "central:position:project:O-I:reviewer-2",
+              "generation_ref": "generation:walk"
+            },
+            "at_unix_ms": 1793309187971
+          }
+        ],
+        "rounds": 1,
+        "findings": {
+          "context_gap": 0,
+          "judgment_gap": 1,
+          "drift": 0
+        },
+        "sealed_at": null
+      },
+      {
+        "wave": "w2",
+        "ordinal": 1,
+        "units": [
+          "workflow-unit:7NYK8DYWHBMC6F573XDZN6H17X"
+        ],
+        "serialized": [],
+        "review_model": null,
+        "state": "waiting",
+        "gate": "wave w1 has not sealed",
+        "next": "seal wave w1: merge the forward fixes, then both legs review again at the round's final revision (main at 549634bb7)",
+        "writers": [],
+        "legs": [],
+        "rounds": 0,
+        "findings": {
+          "context_gap": 0,
+          "judgment_gap": 0,
+          "drift": 0
+        },
+        "sealed_at": null
+      }
+    ]
+  },
+  "sealed": {
+    "schema": "factory.wave-reading/v1",
+    "run_ref": "run:01ARZ3NDEKTSV4RRFFQ69G5FAA",
+    "plan_revision": 19,
+    "integration": {
+      "repo": "/walk/repo",
+      "onto": "main",
+      "tip": "5fe2b69d48415d4ba87027f1e9ae9e50a82f7007",
+      "basis": "main at 5fe2b69d4"
+    },
+    "units": [
+      {
+        "workflow_unit_ref": "workflow-unit:3C73CMWMP7956ZN0XFWD5FMFYW",
+        "key": "inspect-source",
+        "wave": "w1",
+        "dial": {
+          "rung": "P2",
+          "asks": "The spec, plus a research round that returns before the spec freezes.",
+          "reason": "the parser's input format is an unresolved external unknown",
+          "territory": [
+            "app/"
+          ],
+          "set_by": {
+            "kind": "position",
+            "actor_ref": "central:position:project:O-I:planner",
+            "generation_ref": "generation:walk"
+          },
+          "needs": [],
+          "rounds": [
+            {
+              "round": "research",
+              "evidence_ref": "evidence:research:formats",
+              "by": {
+                "kind": "position",
+                "actor_ref": "central:position:project:O-I:planner",
+                "generation_ref": "generation:walk"
+              },
+              "at_unix_ms": 1793309187161
+            }
+          ],
+          "lock": {
+            "rung": "P2",
+            "by": {
+              "kind": "position",
+              "actor_ref": "central:position:project:O-I:planner",
+              "generation_ref": "generation:walk"
+            },
+            "at_unix_ms": 1793309187197
+          }
+        },
+        "ladder": {
+          "locked": {
+            "value": "yes",
+            "basis": "locked at P2 by central:position:project:O-I:planner"
+          },
+          "built": {
+            "value": "yes",
+            "basis": "candidate 20a428e05 frozen by central:position:project:O-I:builder-a",
+            "revision": "20a428e05d17d80e69b0df27131732ac19d0ae7d"
+          },
+          "merged": {
+            "value": "yes",
+            "basis": "20a428e05 is contained in main at 5fe2b69d4"
+          },
+          "reviewed": {
+            "value": "yes",
+            "basis": "wave w1 sealed: both legs clear at 5fe2b69d4",
+            "revision": "5fe2b69d48415d4ba87027f1e9ae9e50a82f7007"
+          }
+        }
+      },
+      {
+        "workflow_unit_ref": "workflow-unit:1AHR7012Z930Y5QJW42P2KCW2E",
+        "key": "implement-compiler",
+        "wave": "w1",
+        "dial": {
+          "rung": "P3",
+          "asks": "The spec and its research, plus an adversarial pass by someone who did not write the plan.",
+          "reason": "load-bearing: a wrong plan ships the failure it exists to stop",
+          "territory": [
+            "kernel/"
+          ],
+          "set_by": {
+            "kind": "position",
+            "actor_ref": "central:position:project:O-I:planner",
+            "generation_ref": "generation:walk"
+          },
+          "needs": [],
+          "rounds": [
+            {
+              "round": "research",
+              "evidence_ref": "evidence:research:compiler",
+              "by": {
+                "kind": "position",
+                "actor_ref": "central:position:project:O-I:planner",
+                "generation_ref": "generation:walk"
+              },
+              "at_unix_ms": 1793309187267
+            },
+            {
+              "round": "adversarial",
+              "evidence_ref": "evidence:adversarial:compiler",
+              "by": {
+                "kind": "position",
+                "actor_ref": "central:position:project:O-I:critic",
+                "generation_ref": "generation:walk"
+              },
+              "at_unix_ms": 1793309187329,
+              "amendments": [
+                "a failing test pins the empty-input refusal"
+              ]
+            }
+          ],
+          "lock": {
+            "rung": "P3",
+            "by": {
+              "kind": "position",
+              "actor_ref": "central:position:project:O-I:planner",
+              "generation_ref": "generation:walk"
+            },
+            "at_unix_ms": 1793309187367
+          }
+        },
+        "ladder": {
+          "locked": {
+            "value": "yes",
+            "basis": "locked at P3 by central:position:project:O-I:planner"
+          },
+          "built": {
+            "value": "yes",
+            "basis": "candidate 026062227 frozen by central:position:project:O-I:builder-b",
+            "revision": "026062227c3373c7656982f6bad20209d8ab8fa5"
+          },
+          "merged": {
+            "value": "yes",
+            "basis": "026062227 is contained in main at 5fe2b69d4"
+          },
+          "reviewed": {
+            "value": "yes",
+            "basis": "wave w1 sealed: both legs clear at 5fe2b69d4",
+            "revision": "5fe2b69d48415d4ba87027f1e9ae9e50a82f7007"
+          }
+        }
+      },
+      {
+        "workflow_unit_ref": "workflow-unit:7NYK8DYWHBMC6F573XDZN6H17X",
+        "key": "review-adversarially",
+        "wave": "w2",
+        "dial": {
+          "rung": "P0",
+          "asks": "Mini-requirements and pointers: the builder works out the how.",
+          "reason": "simple, reversible, well-trodden",
+          "territory": [
+            "docs/"
+          ],
+          "set_by": {
+            "kind": "position",
+            "actor_ref": "central:position:project:O-I:planner",
+            "generation_ref": "generation:walk"
+          },
+          "needs": [],
+          "rounds": [],
+          "lock": {
+            "rung": "P0",
+            "by": {
+              "kind": "position",
+              "actor_ref": "central:position:project:O-I:planner",
+              "generation_ref": "generation:walk"
+            },
+            "at_unix_ms": 1793309188448
+          }
+        },
+        "ladder": {
+          "locked": {
+            "value": "yes",
+            "basis": "locked at P0 by central:position:project:O-I:planner"
+          },
+          "built": {
+            "value": "yes",
+            "basis": "candidate ee2b3009d frozen by central:position:project:O-I:builder-a",
+            "revision": "ee2b3009ddc4e7fc10bf30338c4b76943a14e6d5"
+          },
+          "merged": {
+            "value": "no",
+            "basis": "ee2b3009d is not in main at 5fe2b69d4"
+          },
+          "reviewed": {
+            "value": "no",
+            "basis": "wave w2 stands building: review-adversarially's candidate ee2b3009d is not merged into main"
+          }
+        }
+      }
+    ],
+    "waves": [
+      {
+        "wave": "w1",
+        "ordinal": 0,
+        "units": [
+          "workflow-unit:3C73CMWMP7956ZN0XFWD5FMFYW",
+          "workflow-unit:1AHR7012Z930Y5QJW42P2KCW2E"
+        ],
+        "serialized": [],
+        "review_model": "independent",
+        "state": "sealed",
+        "gate": "both legs clear at 5fe2b69d4",
+        "next": "the next wave opens",
+        "writers": [
+          "central:position:project:O-I:builder-a",
+          "central:position:project:O-I:builder-b"
+        ],
+        "legs": [
+          {
+            "wave": "w1",
+            "leg": "structure",
+            "revision": "5fe2b69d48415d4ba87027f1e9ae9e50a82f7007",
+            "verdict": "clear",
+            "by": {
+              "kind": "position",
+              "actor_ref": "central:position:project:O-I:reviewer-1",
+              "generation_ref": "generation:walk"
+            },
+            "at_unix_ms": 1793309188339
+          },
+          {
+            "wave": "w1",
+            "leg": "claims",
+            "revision": "5fe2b69d48415d4ba87027f1e9ae9e50a82f7007",
+            "verdict": "clear",
+            "by": {
+              "kind": "position",
+              "actor_ref": "central:position:project:O-I:reviewer-2",
+              "generation_ref": "generation:walk"
+            },
+            "at_unix_ms": 1793309188265
+          }
+        ],
+        "rounds": 2,
+        "findings": {
+          "context_gap": 0,
+          "judgment_gap": 1,
+          "drift": 0
+        },
+        "sealed_at": "5fe2b69d48415d4ba87027f1e9ae9e50a82f7007"
+      },
+      {
+        "wave": "w2",
+        "ordinal": 1,
+        "units": [
+          "workflow-unit:7NYK8DYWHBMC6F573XDZN6H17X"
+        ],
+        "serialized": [],
+        "review_model": null,
+        "state": "building",
+        "gate": "review-adversarially's candidate ee2b3009d is not merged into main",
+        "next": "merge review-adversarially's candidate ee2b3009d into main",
+        "writers": [
+          "central:position:project:O-I:builder-a"
+        ],
+        "legs": [],
+        "rounds": 0,
+        "findings": {
+          "context_gap": 0,
+          "judgment_gap": 0,
+          "drift": 0
+        },
+        "sealed_at": null
+      }
+    ]
+  },
+  "refused": {
+    "schema": "factory.refusal/v1",
+    "code": "factory.plan.rounds_missing",
+    "fact": "the plan of inspect-source stands at P2 and still needs: research",
+    "consequence": "Nothing was persisted; the developmental state is unchanged.",
+    "action": "run the research round before the spec freezes, record it, then lock"
+  }
+}

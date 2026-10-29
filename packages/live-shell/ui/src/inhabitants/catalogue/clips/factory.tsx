@@ -27,10 +27,17 @@
 // carries its evidence (ConclusiveCriterionWithoutEvidence refuses one without).
 // Writes: `intent` goes to `factory development field set`, which has no kernel op yet, so the binding stands it disabled with that
 // reason. `criterion` (a new success condition) has no owner operation at all: it stands disabled here with that reason.
+// The Plan panel (O-I #741, OpenRig's planning dial and wave SDLC, as Factory keeps them in its Run's plan of record: factory/src/
+// wave_sdlc.rs, `factory development wave read`): `plan` (the unit's rung, P0–P4, the planner's: a reading here), `plan.asks` (what the rung
+// asks), `plan.why` (the reason it was set with), `plan.territory` (the files the unit declares), `plan.needs` (the rounds the rung still
+// needs before the plan locks) or `plan.locked` (its rung and who locked it), `plan.rounds` (JSON rows {id, name, note, does}: each round
+// that returned), `wave` (the wave and its state), `wave.gate` and `wave.next` (what holds it and the next lawful step, Factory's words),
+// `ladder` (JSON rows {id, name, value: yes | no | unknown, why}: plan locked, built, merged, reviewed). Lock (`plan.lock`) is the
+// person's press; Factory refuses it while the rung's rounds have not returned.
 // Under Return, what the run returned (O-I #759): `returned`, JSON rows {id, name, role, opens, why?} — each artifact and piece of
 // evidence the task's returned attempts name, as Factory resolves it (`factory attempt artifacts`); `open` (a row's id) opens it beside
 // you through Central's file route; a row that does not open carries Factory's reason. `returned.page` is the view's page of them.
-import {Chooser, Radio, Rows as List, TextField, type Option, type RowItem} from '../../sdk/panel'
+import {Action, Chooser, Radio, Rows as List, TextField, type Option, type RowItem} from '../../sdk/panel'
 import {NONE, json, numOf, strOf} from '../panels/design'
 import {COLOURS, EnvelopeEditor, Fact, Fields, LaneGrid, GrooveOf, GrooveReading, GrooveSwap, MadeOf, grooved, Rows, Row, Rule, Said, Wide, choice, fit, read, write, type Block, type Lane, type Mark, type Point} from './clipKit'
 import type {ClipProps, DesignedClip} from './design'
@@ -173,6 +180,49 @@ function IntentPanel(p: ClipProps) {
   </Rows>
 }
 
+// ---------------------------------------------------------------- the Plan panel
+
+const RUNGS: readonly Option<string>[] = [
+  {value: 'P0', label: 'P0', does: 'Pointers: a few outcomes and where to look. The builder works out the how. For simple, reversible work.'},
+  {value: 'P1', label: 'P1', does: 'Spec: intent, mini-requirements, a failing-test-first proof contract and the files it may change.'},
+  {value: 'P2', label: 'P2', does: 'Research: the spec, plus a research round that returns before the spec freezes.'},
+  {value: 'P3', label: 'P3', does: 'Adversarial: plus an attack on the plan by someone who did not write it.'},
+  {value: 'P4', label: 'P4', does: 'Blind design: plus a design made before reading the priors, then compared with them.'},
+]
+const WAVE_TONE = (wave: string | undefined) => wave?.endsWith('Sealed') ? 'green' : wave?.endsWith('Fix round') || wave?.endsWith('Unread') ? 'stall' : undefined
+interface LadderRung {readonly id: string; readonly name: string; readonly value: string; readonly why: string}
+interface PlanRound {readonly id: string; readonly name: string; readonly note?: string; readonly does?: string}
+
+function PlanPanel(p: ClipProps) {
+  const rounds = read<PlanRound[] | undefined>(p.v, 'plan.rounds', undefined)
+  const ladder = read<LadderRung[] | undefined>(p.v, 'ladder', undefined)
+  const locked = strOf(p.v, 'plan.locked'), wave = strOf(p.v, 'wave')
+  return <Rows>
+    <Wide><Radio {...p.standing?.plan} label="Planning" does="How much planning the task's unit gets, chosen for the piece: the planner sets the rung with its reason, and you lock the plan."
+      value={choice(p.v, 'plan')} options={RUNGS} onChange={x => p.set('plan', x)} /></Wide>
+    <Row label="Asks"><Fact label="Asks" does="What the rung asks of the plan." value={strOf(p.v, 'plan.asks')} /></Row>
+    <Row label="Why"><Fact label="Why" does="Why the piece earns this rung: an unknown only research can close, or a failure its author cannot see." value={strOf(p.v, 'plan.why')} /></Row>
+    <Row label="Files"><Fact label="Files" does="The files the unit may change. Units in one wave build side by side in files of their own." value={strOf(p.v, 'plan.territory')} /></Row>
+    {locked !== undefined
+      ? <Row label="Locked"><Fact label="Locked" does="The plan is locked: it takes no new rung and no further round." value={locked} tone="green" /></Row>
+      : <Row label="Needs"><Fact label="Needs" does="The rounds the rung still needs before the plan locks." value={strOf(p.v, 'plan.needs')} /></Row>}
+    <Row label="Lock"><Action {...p.standing?.['plan.lock']} label="Lock" does="Locks the plan as it stands. Factory refuses while the rung's rounds have not returned. A lock is never undone."
+      onPress={() => p.set('plan.lock', Date.now())} /></Row>
+    {rounds === undefined ? <Said>No reading of the plan's rounds.</Said> : rounds.length === 0 ? <Said>No round has returned.</Said>
+      : <List label="Rounds" does="The planning rounds that returned, each with who ran it and what it returned."
+        items={rounds.map(round => ({id: round.id, name: round.name, light: 'lit', note: round.note || undefined, does: round.does || undefined}))}
+        size={2} page={numOf(p.v, 'plan.rounds.page') ?? 0} onPage={n => p.set('plan.rounds.page', n)} />}
+    <Rule />
+    <Row label="Wave"><Fact label="Wave" does="The wave the unit builds in, and how it stands. A wave seals when two reviewers who wrote none of it clear one revision." value={wave} tone={WAVE_TONE(wave)} /></Row>
+    <Row label="Gate"><Fact label="Gate" does="What holds the wave where it stands." value={strOf(p.v, 'wave.gate')} /></Row>
+    <Row label="Next"><Fact label="Next" does="The next step the wave can take." value={strOf(p.v, 'wave.next')} /></Row>
+    {ladder === undefined ? <Said>No reading of the unit's ladder.</Said>
+      : <List label="Ladder" does="How far the unit has come: its plan locked, a candidate built, merged, and its wave reviewed. Hollow: Factory cannot tell."
+        items={ladder.map(rung => ({id: rung.id, name: rung.name, light: rung.value === 'yes' ? 'lit' : rung.value === 'no' ? 'dark' : 'unknown',
+          tone: rung.value === 'yes' ? 'green' : undefined, does: rung.why || undefined}))} size={4} />}
+  </Rows>
+}
+
 const LOOP_UNTIL: readonly Option<string>[] = [{value: 'done', label: 'Task done', does: 'The task stops looping when it is done.'}, {value: 'pass', label: 'Test pass', does: 'The task stops looping when its test passes.'}]
 
 function ClipPanel(p: ClipProps) {
@@ -304,6 +354,11 @@ export const clip: DesignedClip = {
       {id: 'c1', text: 'Every widget has a hand-off fixture'}, {id: 'c2', text: 'Old fixture ids are kept'}, {id: 'c3', text: 'pnpm test bridge passes'}]),
     'env.control': 'effort', 'env.mode': 'automation', 'env.linked': true,
     'env.agent.effort': JSON.stringify([[0, 2], [28, 3], [40, 1], [60, 3]]), 'env.agent.autonomy': JSON.stringify([[0, 2], [50, 3]]),
+    plan: 'P2', 'plan.asks': 'The spec, plus a research round that returns before the spec freezes.', 'plan.why': 'The fixture format is an unknown only research can close.',
+    'plan.territory': 'fixtures/', 'plan.needs': 'Research', 'plan.rounds': JSON.stringify([]), wave: 'w1 · Planning',
+    'wave.gate': 'write-fixtures\'s plan at P2 is not locked', 'wave.next': 'record write-fixtures\'s research round, then lock its plan',
+    ladder: JSON.stringify([{id: 'locked', name: 'Plan locked', value: 'no', why: 'not locked; P2 still needs research'}, {id: 'built', name: 'Built', value: 'no', why: 'no candidate frozen'},
+      {id: 'merged', name: 'Merged', value: 'no', why: 'no candidate to merge'}, {id: 'reviewed', name: 'Reviewed', value: 'no', why: 'wave w1 stands planning'}]),
     'view.panel': 'launch', 'view.editor': 'log',
   },
   fixtures: {
@@ -318,15 +373,29 @@ export const clip: DesignedClip = {
       returned: JSON.stringify([{id: 'central:source:control:root:fixtures/handoff.json', name: 'fixtures/handoff.json', role: 'artifact', opens: true},
         {id: 'evidence:bridge-tests', name: 'evidence:bridge-tests', role: 'evidence', opens: false,
           why: 'the Return names evidence:bridge-tests, and no Factory record binds it to a file'}])},
+    'Its plan, in a fix round': {'view.panel': 'plan', plan: 'P3', 'plan.asks': 'The spec and its research, plus an adversarial pass by someone who did not write the plan.',
+      'plan.why': 'load-bearing: a wrong plan ships the failure it exists to stop', 'plan.territory': 'kernel/', 'plan.needs': undefined,
+      'plan.locked': 'P3 · by central:position:project:O-I:planner',
+      'plan.rounds': JSON.stringify([{id: 'r0', name: 'Research', note: 'central:position:project:O-I:planner', does: 'evidence:research:compiler'},
+        {id: 'r1', name: 'Adversarial pass', note: 'central:position:project:O-I:critic', does: 'evidence:adversarial:compiler; amends: a failing test pins the empty-input refusal'}]),
+      wave: 'w1 · Fix round', 'wave.gate': 'the claims leg found 1 finding at c2f40bdca',
+      'wave.next': 'merge the forward fixes, then both legs review again at the round\'s final revision (main at c2f40bdca)',
+      ladder: JSON.stringify([{id: 'locked', name: 'Plan locked', value: 'yes', why: 'locked at P3 by central:position:project:O-I:planner'},
+        {id: 'built', name: 'Built', value: 'yes', why: 'candidate 595536f13 frozen by central:position:project:O-I:builder-b'},
+        {id: 'merged', name: 'Merged', value: 'yes', why: '595536f13 is contained in main at c2f40bdca'},
+        {id: 'reviewed', name: 'Reviewed', value: 'no', why: 'wave w1 stands fix-round: the claims leg found 1 finding at c2f40bdca'}])},
     'Its envelopes': {'view.editor': 'envelopes', 'env.mode': 'modulation', 'env.agent.effort': JSON.stringify([[0, 2], [30, 3], [45, 1]])},
     'No readings': {state: undefined, 'state.why': undefined, 'state.retry': undefined, closure: undefined, 'turns.used': undefined, 'turns.cap': undefined, log: undefined, elapsed: undefined, launch: undefined, then: undefined, quantize: undefined, loop: undefined,
       'loop.until': undefined, 'loop.cap': undefined, 'repeat.variable': undefined, 'repeat.levels': undefined, 'repeat.repeats': undefined, 'repeat.stop': undefined, compare: undefined, takes: undefined,
-      intent: undefined, 'intent.source': undefined, criteria: undefined, context: undefined, constraints: undefined, returned: undefined},
+      intent: undefined, 'intent.source': undefined, criteria: undefined, context: undefined, constraints: undefined, returned: undefined,
+      plan: undefined, 'plan.asks': undefined, 'plan.why': undefined, 'plan.territory': undefined, 'plan.needs': undefined, 'plan.rounds': undefined,
+      wave: undefined, 'wave.gate': undefined, 'wave.next': undefined, ladder: undefined},
   },
   panel: [
     {id: 'clip', label: 'Clip', does: 'The task\'s name, colour, state, turns, output style and loop.', draw: ClipPanel},
     {id: 'launch', label: 'Launch', does: 'How the task launches, when the launch lands, what follows it, and what a Repeat varies.', draw: LaunchPanel},
     {id: 'intent', label: 'Intent', does: 'What the task is for: the difference it must make, and the conditions that show it did.', draw: IntentPanel},
+    {id: 'plan', label: 'Plan', does: 'How much planning the task gets, its rounds and its lock, and the wave it builds in.', draw: PlanPanel},
   ],
   tools: [],
   editor: [

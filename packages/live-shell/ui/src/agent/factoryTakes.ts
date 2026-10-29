@@ -26,6 +26,8 @@ export interface FactoryTake {
   taskRef: string
   /** The workflow unit the attempt works, in short readable words; null when the owner's ref is an opaque identity. */
   unit: string | null
+  /** The owner's own ref of that unit (`workflow-unit:…`), by which Factory keeps its plan (agent/wavePlan.ts); null where none is named. */
+  unitRef?: string | null
   state: TakeState
   /** Admission time, when the owner disclosed one (older states carry none). */
   startUnixMs: number | null
@@ -58,6 +60,13 @@ export function unitWords(unit: unknown): string | null {
   return named ? unitWords(named) : null
 }
 
+/** The unit's own ref as Factory names it (`workflow-unit:…`), from a ref or a row that carries one; null where none is named. */
+export function unitRefOf(unit: unknown): string | null {
+  if (typeof unit === 'string') return /^workflow-unit:\S+$/.test(unit) ? unit : null
+  const row = object(unit)
+  return row ? unitRefOf(row.workflowUnitRef ?? row.workflow_unit_ref ?? row.reference ?? row.ref) : null
+}
+
 /** Each session's served attempts, in the order the owner gave them. A session the owner refused, or whose bound task serves
  * none, is absent from the map: it is not a session with no takes, it is one with nothing read. */
 export function servedBySession(list: EncounterTaskAttemptsList): Map<string, ServedAttempt[]> {
@@ -85,7 +94,7 @@ export function takeOf(sessionRef: string, served: ServedAttempt, record: unknow
   const state: TakeState = returned ? 'returned' : failed ? 'failed' : row.executionRef || row.dispatch ? 'running' : 'prepared'
   return {
     sessionRef, attemptRef: served.attempt_ref, runRef: served.run_ref, statePath: served.state_path, taskRef: served.task_ref,
-    unit: unitWords(row.workflowUnitRef ?? served.workflow_unit), state,
+    unit: unitWords(row.workflowUnitRef ?? served.workflow_unit), unitRef: unitRefOf(row.workflowUnitRef ?? served.workflow_unit), state,
     startUnixMs: time(row.attemptRecordedAt),
     endUnixMs: returned ? time(row.returnRecordedAt) : failed ? time(row.failureRecordedAt) : null,
     summary: returned ? text(returned.summary) : null,

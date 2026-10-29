@@ -554,6 +554,25 @@ pub enum OwnerRequest {
         state_path: Option<PathBuf>,
         request: Value,
     },
+    /// A Run's plan of record, OpenRig's planning dial and wave SDLC as
+    /// Factory keeps them (`factory development wave read <state> --run R` →
+    /// `factory.wave-reading/v1`): each unit's rung, its reason, the rounds it
+    /// still needs and its lock; each wave's state, what gates it and the next
+    /// lawful step, every one derived by Factory at read time from its record
+    /// and the integration repository. A read: its kind ends in `read`.
+    WaveRead {
+        state_path: PathBuf,
+        run_ref: String,
+    },
+    /// The person's act on a Run's plan (`factory development wave act
+    /// <state> -`, `factory.wave-request/v1` → `factory.wave-receipt/v1`):
+    /// the act carried verbatim; its caller is the desk and its authority the
+    /// human grant the host's own token holds in Central's native action
+    /// authority contract, never a grant the desk names. A document that
+    /// already names a caller or an authority is refused before Factory is
+    /// asked. Factory decides the act: it refuses a locked plan, a rung whose
+    /// rounds have not returned, a writer reviewing, each in its words.
+    WaveAct { state_path: PathBuf, request: Value },
 }
 
 /// The host's native action token. It never crosses the webview: the native
@@ -621,6 +640,7 @@ impl OwnerRequest {
                 | OwnerRequest::PadsDue { .. }
                 | OwnerRequest::CustodyList { .. }
                 | OwnerRequest::TaskActivityRead { .. }
+                | OwnerRequest::WaveRead { .. }
         )
     }
 }
@@ -1969,6 +1989,24 @@ pub fn owner(request: OwnerRequest, world: Option<&Value>) -> Result<Value, Erro
                 &[TASK_ACTIVITY_READING],
             )
         }
+        OwnerRequest::WaveRead {
+            state_path,
+            run_ref,
+        } => expect_contract(
+            owner_call(&wave_read_args(&state_path, &run_ref), None)?,
+            &[WAVE_READING],
+        ),
+        OwnerRequest::WaveAct {
+            state_path,
+            request,
+        } => {
+            let grant = person_grant(&state_path, PLAN_BY_PERSON)?;
+            let body = wave_act_body(request, &grant)?;
+            expect_contract(
+                owner_call(&wave_act_args(&state_path), Some(&body))?,
+                &[WAVE_RECEIPT],
+            )
+        }
         OwnerRequest::RunClose {
             state_path,
             run_ref,
@@ -2012,18 +2050,38 @@ const DESK_PADS_CALLER: &str = "oi:desk-prompt-pads";
 /// `OI_CENTRAL_ROOT`): the authority a pad's write presents. The desk never
 /// names it; with no such grant the write is refused before Factory is asked.
 fn pads_grant(state_path: &Path) -> Result<String, Error> {
-    pads_grant_from(
+    person_grant(state_path, PAD_BY_PERSON)
+}
+
+/// The person's grant for one of their acts, named in `what` ("A pad is
+/// written by the person"), over the host's token and its Central root.
+fn person_grant(state_path: &Path, what: &str) -> Result<String, Error> {
+    person_grant_from(
         state_path,
         host_native_token(),
         std::env::var_os("OI_CENTRAL_ROOT").map(PathBuf::from),
+        what,
     )
 }
 
+const PAD_BY_PERSON: &str = "A pad is written by the person";
+const PLAN_BY_PERSON: &str = "A Run's plan is set by the person";
+
 /// `pads_grant` over the host's token and its Central root, as read.
+#[cfg(test)]
 fn pads_grant_from(
     state_path: &Path,
     token: Option<AuthorityToken>,
     central_root: Option<PathBuf>,
+) -> Result<String, Error> {
+    person_grant_from(state_path, token, central_root, PAD_BY_PERSON)
+}
+
+fn person_grant_from(
+    state_path: &Path,
+    token: Option<AuthorityToken>,
+    central_root: Option<PathBuf>,
+    what: &str,
 ) -> Result<String, Error> {
     let refused = |message: String| Error {
         kind: "owner-refused-or-failed".into(),
@@ -2031,12 +2089,12 @@ fn pads_grant_from(
         operation_may_have_run: false,
     };
     let token = token.ok_or_else(|| {
-        refused("A pad is written by the person: the host holds no native action token (CENTRAL_NATIVE_TOKEN or ~/.central/native-token), so nothing was written.".into())
+        refused(format!("{what}: the host holds no native action token (CENTRAL_NATIVE_TOKEN or ~/.central/native-token), so nothing was written."))
     })?;
     let contract = read_authority_contract(authority_under(state_path, central_root).as_deref())
         .map_err(refused)?;
     grant_held_by(&contract, &token, "human").ok_or_else(|| {
-        refused("A pad is written by the person: no one human grant in the native action authority contract holds the host's token, so nothing was written.".into())
+        refused(format!("{what}: no one human grant in the native action authority contract holds the host's token, so nothing was written."))
     })
 }
 
@@ -2130,6 +2188,78 @@ pub fn task_activity_args(state_path: Option<&Path>) -> Vec<std::ffi::OsString> 
 }
 /// Factory's custody listing.
 pub const CUSTODY_LISTING: &str = "factory.work-custody-listing/v1";
+
+/// Factory's plan of record for a Run (Factory `wave_sdlc.rs`).
+pub const WAVE_READING: &str = "factory.wave-reading/v1";
+/// Factory's receipt for one act on a Run's plan.
+pub const WAVE_RECEIPT: &str = "factory.wave-receipt/v1";
+const WAVE_REQUEST: &str = "factory.wave-request/v1";
+/// The capability the person's caller presents to plan (Factory `PLAN_CAPABILITY_REF`).
+const PLAN_CAPABILITY_REF: &str = "capability/factory/plan-waves";
+const DESK_PLAN_CALLER: &str = "oi:desk-plan";
+
+/// `factory development wave read <state> --run <run-ref> --json`.
+pub fn wave_read_args(state_path: &Path, run_ref: &str) -> Vec<std::ffi::OsString> {
+    vec![
+        "development".into(),
+        "wave".into(),
+        "read".into(),
+        path_arg(state_path),
+        "--run".into(),
+        run_ref.into(),
+        "--json".into(),
+    ]
+}
+
+/// `factory development wave act <state> - --json`: the act rides stdin.
+pub fn wave_act_args(state_path: &Path) -> Vec<std::ffi::OsString> {
+    vec![
+        "development".into(),
+        "wave".into(),
+        "act".into(),
+        path_arg(state_path),
+        "-".into(),
+        "--json".into(),
+    ]
+}
+
+/// The person's act as Factory admits it: the desk's act verbatim, under
+/// Factory's request schema, with the desk as its desktop-human caller and
+/// the grant the host resolved as its authority. The desk never names
+/// either: a document that does is refused, nothing asked.
+pub fn wave_act_body(request: Value, grant: &str) -> Result<Vec<u8>, Error> {
+    let refused = |message: &str| Error {
+        kind: "owner-refused-or-failed".into(),
+        message: message.into(),
+        operation_may_have_run: false,
+    };
+    let Value::Object(mut act) = request else {
+        return Err(refused(
+            "A Run's plan is set by the person: the act is not a document, so nothing was asked of Factory.",
+        ));
+    };
+    if ["caller", "authority", "schema"]
+        .iter()
+        .any(|field| act.contains_key(*field))
+    {
+        return Err(refused(
+            "A Run's plan is set by the person: the desk named a caller, an authority or a schema, which only the host gives, so nothing was asked of Factory.",
+        ));
+    }
+    act.insert("schema".into(), WAVE_REQUEST.into());
+    act.insert(
+        "caller".into(),
+        serde_json::json!({"callerRef": DESK_PLAN_CALLER, "projectionKind": "desktop-human",
+                           "lineage": [DESK_PLAN_CALLER]}),
+    );
+    act.insert(
+        "authority".into(),
+        serde_json::json!({"authorityRef": grant, "nativeOwner": "factory",
+                           "capabilityRef": PLAN_CAPABILITY_REF,
+                           "capabilityGranted": true, "actionAuthorised": true}),
+    );
+    serde_json::to_vec(&Value::Object(act)).map_err(|e| incompatible(e.to_string()))
+}
 
 /// The Central endpoint Factory's native receiving is given by its host
 /// (lane W3): the host's own Central executable (`OI_CENTRAL_CTRL_BIN`, an
@@ -4277,6 +4407,79 @@ mod run_close_tests {
         .unwrap_err()
         .message
         .contains("no one human grant"));
+    }
+
+    #[test]
+    fn a_run_s_plan_is_read_and_set_through_factory_s_wave_verbs() {
+        let read: OwnerRequest = serde_json::from_value(serde_json::json!({
+            "kind": "wave-read", "state_path": "/s.json", "run_ref": "run:A"}))
+        .unwrap();
+        assert!(
+            read.is_read() && !read.needs_world(),
+            "a reading, outside the lock"
+        );
+        let strings = |args: Vec<std::ffi::OsString>| {
+            args.iter()
+                .map(|arg| arg.to_string_lossy().into_owned())
+                .collect::<Vec<_>>()
+        };
+        assert_eq!(
+            strings(wave_read_args(Path::new("/s.json"), "run:A")),
+            [
+                "development",
+                "wave",
+                "read",
+                "/s.json",
+                "--run",
+                "run:A",
+                "--json"
+            ]
+        );
+        let act: OwnerRequest = serde_json::from_value(serde_json::json!({
+            "kind": "wave-act", "state_path": "/s.json",
+            "request": {"act": "lock", "run_ref": "run:A", "workflow_unit_ref": "workflow-unit:U"}}))
+        .unwrap();
+        assert!(!act.is_read(), "the person's act is a prepared write");
+        assert_eq!(
+            strings(wave_act_args(Path::new("/s.json"))),
+            ["development", "wave", "act", "/s.json", "-", "--json"]
+        );
+        let OwnerRequest::WaveAct { request, .. } = act else {
+            unreachable!()
+        };
+        let body: Value =
+            serde_json::from_slice(&wave_act_body(request.clone(), GRANT).unwrap()).unwrap();
+        assert_eq!(body["schema"], "factory.wave-request/v1");
+        assert_eq!(body["act"], "lock");
+        assert_eq!(body["caller"]["projectionKind"], "desktop-human");
+        assert_eq!(body["authority"]["authorityRef"], GRANT);
+        assert_eq!(
+            body["authority"]["capabilityRef"],
+            "capability/factory/plan-waves"
+        );
+        // The desk never names the grant, nor who calls.
+        for field in ["caller", "authority", "schema"] {
+            let mut forged = request.clone();
+            forged[field] =
+                serde_json::json!({"authorityRef": "central:native-action-authority#someone"});
+            assert!(wave_act_body(forged, GRANT)
+                .unwrap_err()
+                .message
+                .contains("only the host gives"));
+        }
+        // The person's grant is resolved as a pad's is, in the plan's words.
+        let fresh = TempContract::with_projects(
+            &new_world_document(&["control:root", "project:field-notes"], true),
+            &["field-notes"],
+        );
+        assert!(
+            person_grant_from(&fresh.state("field-notes"), None, None, PLAN_BY_PERSON)
+                .unwrap_err()
+                .message
+                .starts_with(
+                    "A Run's plan is set by the person: the host holds no native action token"
+                )
+        );
     }
 
     #[test]

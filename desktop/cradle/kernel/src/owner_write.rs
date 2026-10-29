@@ -1013,6 +1013,7 @@ fn factory_action(request: &factory::OwnerRequest) -> &'static str {
         factory::OwnerRequest::PadsWrite { .. } => "development pads-write",
         factory::OwnerRequest::PadsRun { .. } => "development pads-run",
         factory::OwnerRequest::PadsRecord { .. } => "development pads-record",
+        factory::OwnerRequest::WaveAct { .. } => "development wave act",
         _ => "factory",
     }
 }

@@ -36,6 +36,7 @@ import type {LayoutState} from '../../../../../desktop/cradle/src/surface/types'
 import {useOptionalContinuity} from '../continuity/workspace'
 import {parseCentralPathRef} from '../central/centralVertical'
 import type {FactoryTake} from './factoryTakes'
+import {lockPlan, planTargetOf, planValuesOf, planWiring, useWavePlan, type PlanPort} from './wavePlan'
 import type {WorldActionReceipt, WorldTrackActions} from '../timeline/worldTrackAdapter'
 import {useViewHoldsVersion} from '../frame/detail/clipBinding'
 import {useSelectedClip} from '../frame/detail/ClipBox'
@@ -108,6 +109,8 @@ export interface FactoryClipInput {
   readonly constellations?: readonly Constellation[] | null
   /** What the task's returned attempts named, as Factory resolved it, and how one opens; null where nothing reads it here. */
   readonly returned?: ReturnedPort | null
+  /** The task's plan in its Run's plan of record, as Factory reads it, and the person's Lock; null where nothing reads it here. */
+  readonly plan?: PlanPort | null
 }
 
 // ---------------------------------------------------------------------------------------------------------------- what the run returned
@@ -214,7 +217,7 @@ function returnedWhy(task: TaskAddress | null, returned: ReturnedPort | null | u
 }
 
 /** The task's readings on the design's keys. A key no owner reports is left out (the design draws "—"). Pure. */
-export function factoryClipValues(track: AgentSessionTrack, task: TaskClip | null, input: Pick<FactoryClipInput, 'tracks' | 'events' | 'colour' | 'settings' | 'constellations' | 'returned'>): Values {
+export function factoryClipValues(track: AgentSessionTrack, task: TaskClip | null, input: Pick<FactoryClipInput, 'tracks' | 'events' | 'colour' | 'settings' | 'constellations' | 'returned' | 'plan'>): Values {
   const values: Record<string, Value> = {}
   // The task's source, the constellation it was made of, named from the wiki (taskSourceOf).
   Object.assign(values, madeOfValues(taskSourceOf(task ? {sessionRef: track.sessionRef, n: task.n} : null, input.settings ?? null), input.constellations))
@@ -236,6 +239,10 @@ export function factoryClipValues(track: AgentSessionTrack, task: TaskClip | nul
   if (task && !returnedWhy({sessionRef: track.sessionRef, n: task.n}, input.returned) && returned?.state === 'read') {
     values.returned = JSON.stringify(returnedRowsOf(returned.files))
   }
+  // The task's plan: its unit's rung and the wave it builds in, as Factory reads its Run's plan (agent/wavePlan.ts). The session's
+  // attempts are its bound task's, the first on its track.
+  const plan = planPortOf(task ? {sessionRef: track.sessionRef, n: task.n} : null, input.plan ?? null)
+  if (plan) Object.assign(values, planValuesOf(plan.reading))
   if (input.events) {
     const log = taskLogOf(track, task, input.events)
     values.log = JSON.stringify(log)
@@ -309,8 +316,30 @@ const SETTINGS_WHY_NO_TASK = 'No task is bound to this session: its owner keeps 
 export const SOURCE_UNKEPT = 'The task\'s source is not read: the AIKit installed here keeps no source in a task\'s settings (its reading names none); install an AIKit that does.'
 
 /** clip:factory's wiring: every key the design draws or sets. */
-export function factoryWiring(task: TaskAddress | null, context: TaskSeamContext | null = null, returned: ReturnedPort | null = null): ClipWiring {
-  return withReturned(withMadeOf(taskWiring(task, context), taskSourceOf(task, context)), task, returned)
+export function factoryWiring(task: TaskAddress | null, context: TaskSeamContext | null = null, returned: ReturnedPort | null = null,
+  plan: PlanPort | null = null): ClipWiring {
+  return withPlan(withReturned(withMadeOf(taskWiring(task, context), taskSourceOf(task, context)), task, returned), planPortOf(task, plan))
+}
+
+const PLAN_ONE_TASK = 'The session\'s owner holds one bound task: its plan is the first task\'s on the track, whose attempts name its Run and unit.'
+
+/** The plan this task reads: the session's attempts are its bound task's, the first on its track. Pure. */
+function planPortOf(task: TaskAddress | null, plan: PlanPort | null): PlanPort | null {
+  if (!plan) return null
+  if (!task) return {...plan, reading: {state: 'absent', why: RETURNED_NO_TASK}}
+  return task.n === 1 ? plan : {...plan, reading: {state: 'absent', why: PLAN_ONE_TASK}}
+}
+
+/** The plan's keys on the wiring (agent/wavePlan.ts planWiring): read from Factory, Lock the person's act, the rung the planner's. */
+function withPlan(wiring: ClipWiring, plan: PlanPort | null): ClipWiring {
+  const own = planWiring(plan)
+  return {
+    reads: {...wiring.reads, ...own.reads},
+    absent: {...wiring.absent, ...own.absent},
+    acts: {...wiring.acts, ...own.acts},
+    view: {...wiring.view, ...own.view},
+    refused: {...wiring.refused, ...own.refused},
+  }
 }
 
 /** The Return's rows on the wiring: `returned` read from Factory, `open` the act that opens one beside you, `returned.page` the view's.
@@ -384,7 +413,8 @@ export function factoryClipBinding(input: FactoryClipInput): ClipBinding | null 
   const {track, task, trackId} = chosen
   const address: TaskAddress | null = task ? {sessionRef: track.sessionRef, n: task.n} : null
   return clipBinding({mode: 'factory', ref: task ? `${trackId}#task/${task.n}` : trackId, values: factoryClipValues(track, task, input),
-    wiring: factoryWiring(address, input.settings ?? null, input.returned ?? null), placed: input.placed, viewDefaults: {'view.panel': 'launch', 'view.editor': 'log', fold: true}})
+    wiring: factoryWiring(address, input.settings ?? null, input.returned ?? null, input.plan ?? null), placed: input.placed,
+    viewDefaults: {'view.panel': 'launch', 'view.editor': 'log', fold: true}})
 }
 
 /** What a file opens through: the shell's workspace (its file route) and the book whose focused pane it opens in. */
@@ -444,6 +474,16 @@ export function useFactoryClip(): ClipBinding | null {
   // each returned one's Return read through Factory, and a file opened beside you through Central's file route.
   const takes = useAttemptTakes(transport, sessions && sessionRef ? [sessionRef] : [], project)
   const files = useReturnedFiles(transport, sessionRef ? takes?.of(sessionRef) ?? null : null)
+  // The task's plan: its latest attempt names its Run and unit, and Factory reads that Run's plan of record (agent/wavePlan.ts).
+  const target = planTargetOf(sessionRef ? takes?.of(sessionRef) ?? null : null)
+  const wave = useWavePlan(transport, target)
+  const plan = useMemo<PlanPort | null>(() => sessions && sessionRef ? {reading: wave.plan, lock: async () => {
+    if (!target) throw new Error(wave.plan.state === 'absent' ? wave.plan.why : 'No Run and unit are named, so no plan is locked.')
+    await lockPlan(transport, target)
+    wave.reread()
+  }} : null,
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  [wave.plan, sessions, sessionRef, JSON.stringify(target), JSON.stringify(transport)])
   const held = useRef<PaneHold>({workspace: null, book: null})
   held.current = {workspace: useContext(Workspace), book: useOptionalContinuity()}
   const returned = useMemo<ReturnedPort | null>(() => sessions && sessionRef ? {reading: files, open: file => openReturnedFile(file, {
@@ -451,7 +491,7 @@ export function useFactoryClip(): ClipBinding | null {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   [files, sessions, sessionRef, JSON.stringify(transport)])
   return factoryClipBinding({ref: selected.ref, tracks: factory.tracks, events: sessions ? sessions.events : null, colour, placed: presentation === 'arrangement', settings,
-    constellations, returned})
+    constellations, returned, plan})
 }
 
 // ---------------------------------------------------------------------------------------------------------------- the drop
