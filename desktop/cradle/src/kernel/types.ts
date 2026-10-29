@@ -164,8 +164,9 @@ export interface GatewayRemote { workcell_ref: string; websocket_bind: string; w
  * own command, carries its answer verbatim after a check, and names a refusal in the owner's words. `project` is a Central project NAME:
  * Central discloses its working directory and canonical Project World, never the caller. */
 export type GatewayWriteRequest =
-  /** `aikit gateway send --to P --body-file -` (the words on stdin). */
-  | {kind:"send";project?:string|null;to:string;body:string;reply_to?:string|null;from_position?:string|null;instance?:string|null;require_workcell?:string|null;at?:string|null}
+  /** `aikit gateway send --to P --body-file -` (the words on stdin); `handling` is where they land while the recipient works (`--handling`:
+   * queue waits for its next turn, steer reaches the turn that runs). */
+  | {kind:"send";project?:string|null;to:string;body:string;reply_to?:string|null;from_position?:string|null;instance?:string|null;require_workcell?:string|null;at?:string|null;handling?:"queue"|"steer"|null}
   /** `aikit gateway delegate --communique C --work W --reason R`: Factory assigns custody to the Communique's recipient. */
   | {kind:"delegate";project?:string|null;communique:string;work:string;reason:string;run?:string|null;journey?:string|null;workflow_unit?:string|null;at?:string|null};
 /** `actuation <kind> - --json` over a supplied record, and `actuation-research` comparison.held|assess|mask|review over supplied fields. */

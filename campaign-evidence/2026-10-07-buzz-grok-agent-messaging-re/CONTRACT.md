@@ -229,6 +229,19 @@ answer and falls back per Behaviour 2).
   when adopting code-shaped parts. The framing text and state machine are
   the spec; reimplementation in the shell's own idiom is expected.
 
+## Ported (29 Oct, O-I #741 lane AC)
+
+- **Steer and queue (Behaviours 2–3)** into AIKit's Communiques: `aikit gateway send --handling queue|steer` records where the words land
+  (`aikit.communique/v1` `handling`, absent = queue). A queue waits for the occupant's next prompt, as every Communique did; a steer rides the
+  running turn at the occupant's next tool call (`PostToolUse`), framed in Buzz's steer words verbatim, wherever the harness carries context
+  on that event, and falls back to the next prompt elsewhere. Buzz's rule against reading an unknown-request success as a delivered steer is
+  kept: a gateway that does not advertise `communique-handling` is never handed a steer, and one that answers without it is refused.
+  Messages binds the Thread's Input to it.
+- **Return (Behaviour 5)** into the Thread's composer (Messages' Full and the Agent's): Enter sends, Shift+Enter breaks the line, and Enter
+  inside an open ``` block breaks it too.
+- Judged out, with reasons, in the lane's return on #741: interrupt and owner-interrupt, the queue cap that drops, fairness-by-age, the
+  heartbeat self-prompt, the cancel+merge fallback, diff cards, permission auto-approval, typing and presence.
+
 ## Evidence index
 
 ```

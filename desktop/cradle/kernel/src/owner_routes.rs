@@ -67,6 +67,11 @@ pub enum GatewayWrite {
         require_workcell: Option<String>,
         #[serde(default)]
         at: Option<String>,
+        /// Where the words land while the recipient works (`--handling`):
+        /// `queue` waits for its next turn, `steer` reaches the turn that
+        /// runs. Absent, AIKit queues.
+        #[serde(default)]
+        handling: Option<String>,
     },
     /// Cross a Communique into obligation-bearing work (`aikit gateway
     /// delegate --communique C --work W --reason R`): Factory assigns custody
@@ -2818,8 +2823,13 @@ pub fn gateway_write(request: &GatewayWrite, ground: Ground<'_>) -> Result<Writt
     gateway_written(request, ground).map_err(wire)
 }
 
-fn gateway_written(request: &GatewayWrite, ground: Ground<'_>) -> Result<Written, Error> {
-    let (route, mut args, input) = match request {
+/// The AIKit command a gateway write runs: its route words, its arguments
+/// and what goes on its stdin.
+fn gateway_call(
+    request: &GatewayWrite,
+    ground: &Ground<'_>,
+) -> (&'static str, Vec<OsString>, Option<Vec<u8>>) {
+    match request {
         GatewayWrite::Send {
             to,
             body,
@@ -2828,6 +2838,7 @@ fn gateway_written(request: &GatewayWrite, ground: Ground<'_>) -> Result<Written
             instance,
             require_workcell,
             at,
+            handling,
             ..
         } => {
             let mut args = words(&["gateway", "send", "--to"]);
@@ -2839,6 +2850,7 @@ fn gateway_written(request: &GatewayWrite, ground: Ground<'_>) -> Result<Written
             push_flag(&mut args, "--instance", instance.as_deref());
             push_flag(&mut args, "--require-workcell", require_workcell.as_deref());
             push_flag(&mut args, "--at", at.as_deref());
+            push_flag(&mut args, "--handling", handling.as_deref());
             ("aikit gateway send", args, Some(body.as_bytes().to_vec()))
         }
         GatewayWrite::Delegate {
@@ -2863,7 +2875,11 @@ fn gateway_written(request: &GatewayWrite, ground: Ground<'_>) -> Result<Written
             push_flag(&mut args, "--at", at.as_deref());
             ("aikit gateway delegate", args, None)
         }
-    };
+    }
+}
+
+fn gateway_written(request: &GatewayWrite, ground: Ground<'_>) -> Result<Written, Error> {
+    let (route, mut args, input) = gateway_call(request, &ground);
     args.push("--json".into());
     let mut call = Call::new(aikit(), route, args, GATEWAY_WRITE_LIMIT);
     call.input = input;
@@ -3537,6 +3553,43 @@ mod tests {
         args.iter()
             .map(|arg| arg.to_string_lossy().into_owned())
             .collect()
+    }
+
+    /// Where the words land rides the send as AIKit's own flag; a send that
+    /// names none leaves AIKit's default (queue) standing.
+    #[test]
+    fn a_send_carries_where_the_words_land_as_aikits_handling_flag() {
+        let ground = Ground {
+            cwd: None,
+            project_world: Some("project:O-I"),
+        };
+        let steer: GatewayWrite = serde_json::from_value(serde_json::json!({
+            "kind": "send", "project": "O-I", "to": "@anima", "body": "Skip the root.",
+            "handling": "steer"}))
+        .unwrap();
+        let (route, args, input) = gateway_call(&steer, &ground);
+        assert_eq!(route, "aikit gateway send");
+        assert_eq!(
+            spelled(&args),
+            [
+                "gateway",
+                "send",
+                "--to",
+                "@anima",
+                "--body-file",
+                "-",
+                "--project-world",
+                "project:O-I",
+                "--handling",
+                "steer"
+            ]
+        );
+        assert_eq!(input.as_deref(), Some(b"Skip the root.".as_slice()));
+        let plain: GatewayWrite = serde_json::from_value(serde_json::json!({
+            "kind": "send", "to": "@anima", "body": "hello"}))
+        .unwrap();
+        let (_, args, _) = gateway_call(&plain, &ground);
+        assert!(!spelled(&args).contains(&"--handling".to_owned()));
     }
 
     #[test]

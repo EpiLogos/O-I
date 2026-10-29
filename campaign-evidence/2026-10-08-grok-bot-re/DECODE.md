@@ -75,6 +75,42 @@ locally through the exec daemon against local git workspaces.
   and drafts-awaiting-approval UX are the patterns worth study
   (docs-level only — no hosted-protocol adoption).
 
+## Turn runtime: how a turn's failure is classified (29 Oct, O-I #741)
+
+Read from the installed app, 0.70.2 (`app.asar` sha256 `8dd7b6c4a58439d626a9a7b3766982b7c725db2bc1f6ff68a29fc1ec62ca4cf7`),
+by reading the asar header and the bundled main process `dist/electron-main/main-core.cjs` (sha256
+`3f39655cf1284f010567ce58422891ecc6ec26ef313430acc095c17147b7ef3a`). The bundle carries the app's error registry: 108 entries, each
+with a code, a name, a domain, whether a retry helps, a one-line summary and the source predicate that raises it (`seededFrom`). The
+turn runtime itself runs on the hosted box, so its code is not in the desktop bundle; the registry is its specification.
+
+The agent domain, which is the turn client's classification (`turn-runtime.ts` `classifyAgentError`, `transient-stream-error.ts`):
+
+| Code | Name | A retry | What it names (paraphrased) | Decided by |
+|---|---|---|---|---|
+| SAND-E0401 | providerOverloaded | helps | the model provider is at capacity or rate-limited | `isProviderCapacityError` |
+| SAND-E0402 | firstTokenStall | helps | nothing streamed before the first-token deadline | `isFirstTokenStallError` |
+| SAND-E0403 | streamReset | helps | the turn's stream dropped on a transient transport reset | `isTransientStreamError` |
+| SAND-E0404 | contextWindowOverflow | does not | a context-window dead end a retry would repeat | `isContextOverflowDeadEnd` |
+| SAND-E0405 | backendRejected | does not | a terminal structured error from the backend | `isRetryableProviderError` false |
+| SAND-E0406 | turnRetryable | helps | retryable, outside every more specific shape | `isRetryableProviderError` true |
+| SAND-E0407 | agentUnclassified | does not | outside every classified shape | the `classifyAgentError` fallback |
+| SAND-E0408 | backendCapacityDeferred | helps | deferred at capacity with a server-paced retry-after, which the runner sleeps | `serverRetryAfterMsFromError` |
+| SAND-E0414 | conversationTooLarge | does not | over the conversation-size cap until it is shrunk or a new conversation starts | `conversation-size-limits.ts` |
+| SAND-E0415 | streamIdleStall | helps | a stream that had produced output went silent; cancelled so the step settles, re-entered from a checkpoint | `isStreamIdleError` |
+| SAND-E0418 | turnBackendUnreachable | helps | the backend was never reached (a refused connect, an unresolved host) | `isBackendUnreachableError` |
+
+The rule it encodes: a retry is offered only for a named cause a retry can clear, and a failure outside every named shape is terminal.
+**Ported** into Factory's agent client (Factory `factory/src/agent_turn.rs`, read by `task_activity.rs` from AIKit's encounter status
+`last_turn`, which ai-kit's `encounter_service.rs` now carries): a task whose last turn failed for a retryable cause is Stalled and lights
+its retry, with the provider's pace when it named one; one whose turn ended where a retry repeats it is Stopped and says what to do instead.
+
+Read and not ported (each judged in #741's lane AC return): the client send journal (`client/send/send-journal.ts`: SAND-E0703–E0707 —
+an offline-queued send flushed with a nonce whose accepted digest must match, retired explicitly without delivery proof, and expired when
+no authoritative echo arrives before its online ACK deadline), the transcript write-ahead journal (`transcript-mirror.ts`, SAND-E0720–E0725),
+the local-exec bridge's provider liveness (SAND-E0111–E0115), and the coordinator's retry primitive (`dist/node-agent-coordinator/main.cjs`:
+exponential delay `initial × factor^(attempt−1)` capped at `max`, jitter `none | equal | full` taking 0, ½ or all of the delay as its spread,
+a server-named delay replacing the computed one).
+
 ## Evidence index
 
 ```

@@ -146,7 +146,8 @@ test('1 · Messages: Send writes `aikit gateway send` to the open agent\'s Posit
   // Team: no control of the design writes one; the groups say why they are not read.
   // REPLACED (lane W7): the groups are Central's agent sets; unread, they name the listing they wait for (w7-factory-designs.test.mjs).
   assert.match(open.standing.groups.disabled, /central\.agent-set\.list/)
-  assert.match(open.standing['conv.input'].disabled, /steer or queue/)
+  // REPLACED (lane AC, Buzz): Input is the hand's choice of where Send lands (messages-binding.test.mjs), no longer refused.
+  assert.equal(open.standing['conv.input'], undefined)
   assert.ok(!('team' in open.values) && !open.writes('team'), 'no team key: nothing in the design writes a team operation')
   bind.resetHolds()
 })

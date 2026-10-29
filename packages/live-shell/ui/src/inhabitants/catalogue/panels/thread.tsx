@@ -354,7 +354,7 @@ const SAYS = {
   voice: 'On: speech turns into words. They land in the composer when you turn Voice off.',
   message: 'Type your words and press Enter. Input says where they land.',
   retry: 'Restart a stalled task from its last good step. It lights only when the session has stalled.',
-  composer: 'Type and press Enter. Input says where Enter sends.',
+  composer: 'Type and press Enter to send; Shift+Enter starts a new line, and inside a ``` block Enter does too. Input says where it lands.',
 }
 
 /** The head: the light reads the owner alone, hollow when it reports none; pressing it asks, unless the host stands it disabled. */
@@ -378,6 +378,17 @@ const send = (p: ViewProps, text: string) => {
   p.set('draft', '')
 }
 const placeholder = (agent: string | undefined) => (agent ? `Message ${agent}` : 'Message the agent')
+
+/** What Return does in the composer, as Buzz's composer has it (block/buzz desktop/src/features/messages/lib/useRichTextEditor.ts:251,
+ * 446-449, and its code-fence Enter, :39): Enter sends; Shift+Enter breaks the line; inside a code fence still open before the caret (an
+ * odd count of lines opening with ```) Enter breaks the line too, so a block of code is written whole before it is sent. */
+export function returnKey(draft: string, caret: number, shift: boolean): 'send' | 'break' {
+  if (shift) return 'break'
+  const fences = draft.slice(0, Math.max(0, caret)).split('\n').filter(line => line.trimStart().startsWith('```')).length
+  return fences % 2 === 1 ? 'break' : 'send'
+}
+/** The composer's height in lines: the draft's own, up to six. */
+const composerRows = (draft: string) => Math.min(6, Math.max(1, draft.split('\n').length))
 
 // ---------------------------------------------------------------- the well
 
@@ -544,7 +555,7 @@ const cardButton = (p: ViewProps, key: string, label: string, does: string) => {
 }
 
 function ThreadPane({p}: {p: ViewProps}) {
-  const v = p.v, r = read(p), composer = useRef<HTMLInputElement>(null)
+  const v = p.v, r = read(p), composer = useRef<HTMLTextAreaElement>(null)
   const items = r.items && visible(v, r.items), rows = strOf(v, 'toolRows'), inline = strOf(v, 'subagents') === 'inline'
   const parent = r.me?.parent ? r.sessions.find(s => s.id === r.me?.parent)?.name : undefined
   const chain = [parent, r.me?.name ?? NONE].filter(Boolean) as string[]
@@ -631,10 +642,13 @@ function ThreadPane({p}: {p: ViewProps}) {
         : thought && kept?.length === 0 ? <div className="th-row th-row--tool"><span className="th-av th-av--tool" aria-hidden="true" /><p className="th-text">No thought in this filter.</p></div>
           : items.map(item)}</div>
     <div className="th-composer" data-listening={boolOf(v, 'voice') === true || undefined}>
-      {boolOf(v, 'voice') === true ? <Wave /> : <input ref={composer} aria-label="Message" placeholder={placeholder(r.me?.agent)} value={draft} disabled={!!sentStanding.disabled}
-        data-i={`Composer|${saysOf(SAYS.composer, sentStanding)}`}
+      {boolOf(v, 'voice') === true ? <Wave /> : <textarea ref={composer} aria-label="Message" placeholder={placeholder(r.me?.agent)} value={draft} disabled={!!sentStanding.disabled}
+        rows={composerRows(draft)} data-i={`Composer|${saysOf(SAYS.composer, sentStanding)}`}
         onChange={e => p.set('draft', e.target.value)}
-        onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); send(p, draft) } }} />}
+        onKeyDown={e => {
+          if (e.key !== 'Enter' || e.nativeEvent.isComposing) return
+          if (returnKey(draft, e.currentTarget.selectionStart ?? draft.length, e.shiftKey) === 'send') { e.preventDefault(); send(p, draft) }
+        }} />}
       <small>{input ?? NONE}</small>
     </div>
   </div>
