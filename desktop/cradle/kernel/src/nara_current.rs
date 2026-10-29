@@ -46,6 +46,7 @@ pub struct Prepared {
     existing: Option<Pinned>,
 }
 pub struct Completed {
+    pub client: CentralClient,
     pub project: String,
     pub binding: nara_dialogue::Request,
     pub document: Value,
@@ -54,6 +55,29 @@ pub struct Completed {
     pub candidate: Option<Pinned>,
     pub expected_current: Option<Value>,
     pub data: Value,
+}
+
+impl Completed {
+    /// The commit's owner half, asked outside the kernel lock (dispatch.rs
+    /// `commit_nara_current`): the saved identity still stands at the bound
+    /// revision, and a new pin's custody is durable before the kernel admits
+    /// it. Neither needs the kernel lock — no identity write ever takes it (a
+    /// NaraIdentity save runs wholly outside it) and custody keeps its own
+    /// lock — so `finish_nara_current` keeps only the in-memory half.
+    pub fn confirmed(self) -> Result<Self, String> {
+        let binding = &self.binding;
+        let (source, identity) = nara_identity::read(&self.client, &binding.source_ref)?;
+        if source.revision.revision != binding.expected_revision
+            || identity["person_ref"] != binding.person_ref
+            || identity["nara_ref"] != binding.nara_ref
+        {
+            return Err("The saved identity changed during the personal current reading".into());
+        }
+        if let Some(pin) = &self.candidate {
+            pin.retain(&self.project)?;
+        }
+        Ok(self)
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -492,6 +516,7 @@ impl Prepared {
             "context":active.map(Pinned::context),"reading":active.map(Pinned::reading),
             "private":true,"public_export":false});
         Ok(Completed {
+            client: self.client,
             project: self.project,
             binding,
             document: self.document,
