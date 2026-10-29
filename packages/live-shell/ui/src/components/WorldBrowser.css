@@ -15,9 +15,6 @@
 .world-browser-categories .world-works { padding:0; border:0 }
 .world-browser-categories .world-works h3 { margin:0; padding:5px 7px; height:24px; border-bottom:1px solid var(--line) }
 .world-browser-categories .native-empty,.world-browser-categories .native-error { margin:7px; font-size:11px; line-height:1.45; overflow-wrap:anywhere }
-.world-context-pool { flex:0 0 30%; min-height:112px; max-height:270px; display:flex; flex-direction:column; border-top:4px solid var(--line); background:var(--bg-1) }
-.world-context-pool>header { flex:0 0 24px; display:flex; align-items:center; border-bottom:1px solid var(--line) }
-.world-context-pool>header>button { min-height:23px; padding:2px 6px; background:transparent; font-size:11px; text-align:left; width:100% }
 .world-pool-body { overflow:auto; min-height:0; flex:1 }
 .world-browser-categories.pool-collapsed .world-context-pool { flex-basis:24px; min-height:24px }
 .world-property-filters { display:flex; flex-wrap:wrap; gap:4px; padding:4px; border-bottom:1px solid var(--line) }
@@ -51,7 +48,6 @@
   .world-browser-main { grid-template-columns:75px minmax(0,1fr) }
   .world-category-list button { gap:3px; padding:2px 3px; font-size:10px }
   .world-browser-categories .world-file-row { padding:2px 3px; font-size:10px }
-  .world-context-pool { flex-basis:36%; min-height:100px }
 }
 
 /* Browser search, counts and keyboard rows */

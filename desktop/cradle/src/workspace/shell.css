@@ -174,7 +174,6 @@
  * (.oi-tool-row / .oi-plane-nav / .oi-sidecar); only this plane's own
  * ground and spacing remain here. */
 .region-tools { background: transparent; padding-left: 16px; }
-.inspector-planes { gap: 20px; padding: 0 18px; }
 .inspector-body { padding: 25px 20px; font-size: var(--oi-shell-type-prose); }
 .inspector-body details { margin-top: var(--oi-space-4); color: var(--oi-muted-2); }
 .inspector-body .source-history { padding: 0; max-height: none; border: 0; }
@@ -343,7 +342,6 @@
 .system-panel pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: var(--oi-shell-type-ui); }
 .system-panel dl { display: grid; grid-template-columns: 1fr 1fr; font-size: var(--oi-shell-type-ui); }
 .system-panel dd { margin: 0; }
-.system-actions { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0; }
 
 /* Finding 20: `margin-top:auto` alone only pins System to the bottom when
  * the navigator's content is shorter than the plane; once it overflows,
@@ -530,10 +528,6 @@
 .world-context-world { display: flex; align-items: center; gap: 6px; min-height: 22px; padding-left: 6px; }
 .world-context-world > span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--oi-accent-ink); }
 .world-context-world > .oi-tool { width: 18px; height: 18px; min-width: 18px; min-height: 18px; }
-.world-context-return { display: flex; align-items: center; gap: 6px; min-height: 24px; padding: 0 6px; border-radius: 5px; text-align: left; color: var(--oi-accent-ink); transition: background var(--oi-motion-ui) var(--oi-motion-ease-out); }
-.world-context-return > svg { flex: none; transform: scaleX(-1); }
-.world-context-return > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.world-context-return:hover, .world-context-return:focus-visible { background: var(--oi-wash); }
 .mode-strip-host { flex: none; margin: 0 10px; }
 
 /* `.desktop-shell button { padding: 0 }` ties `.oi-segment > button` on

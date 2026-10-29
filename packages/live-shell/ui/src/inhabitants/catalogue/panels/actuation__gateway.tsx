@@ -42,6 +42,8 @@ import {useEffect, useRef, useState, type CSSProperties} from 'react'
 import {Action, Band, Chooser, Dial, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, Tile, Toggle, ValueBox, type LightState, type Option, type RowItem, type Tone} from '../../sdk/panel'
 import {boolOf, clampTo, has, json, NONE, numOf, shown, st, strOf, type DesignedDevice, type ViewProps, type Values} from './design'
 import {MonitorGroup, MonitorHead, MonitorPane} from './monitor'
+import {RiverEnviron} from '../faces/EnvironFaces'
+import {RIVER_READINGS, riverOf} from '../faces/environReadings'
 import './actuation__gateway.css'
 
 type V = ViewProps['v']
@@ -497,6 +499,9 @@ function FramesHead({p}: {p: ViewProps}) {
   </>} />
 }
 
+/** The river's height across the head of the Frames pane. */
+const RIVER_H = 72
+
 function FramesPane({p}: {p: ViewProps}) {
   const v = p.v, sc = scopeOf(v), pick = numOf(v, 'frame')
   // the list holds the rows that fit its height, top down; it never scrolls
@@ -529,8 +534,12 @@ function FramesPane({p}: {p: ViewProps}) {
   const behind = behindOf(v, sc), ringCap = numOf(v, 'ringCap'), ring = numOf(v, 'ring')
   const gap = behind !== undefined && ringCap !== undefined && behind > ringCap
   const state = liveOf(v), readiness = readyWord(v), refused = strOf(v, 'refused'), age = numOf(v, 'beatAge')
+  // The gateway's environ across the head of its Full (manual §25.6: a gateway is a river, a stream with no done): its four link readings,
+  // or the ones it waits on, named in the picture and, on the info line, with the binding's own missing op.
+  const waits = RIVER_READINGS.map(key => st(p, key).disabled).filter((why): why is string => !!why)
   return <div className="fm-body">
     <div className="fm-frames" ref={frames}>
+      <div className="fm-river"><RiverEnviron reading={riverOf(v)} w={Math.max(240, w - 12)} h={RIVER_H} why={waits.length ? waits.join(' ') : undefined} /></div>
       <div className="fm-strip">
         <svg className="fm-tape-svg" viewBox={`0 0 ${w} 92`} width={w} height={92} role="group" aria-label="The tape"
           data-i="The tape|Five kind lanes, a tick for each frame. Amber is sent, teal is received, a dim tick is hidden by a filter. Drag handle 1 to set Keep.">
@@ -1016,6 +1025,9 @@ export const design: DesignedDevice = {
   fixtures: {
     Ready: {},
     Stalled: {beatAge: 140, inflight: 0, running: 1},
+    // As the binding reads the gateway today (designBindings.ts GATEWAY_ABSENT): its document names no check-in, turns, frames in flight or
+    // frames, so the river stands still and names them.
+    'As bound today': {seq: undefined, peers: undefined, beatAge: undefined, inflight: undefined, running: undefined, ring: undefined, ringCap: undefined, frames: undefined, epoch: undefined, lead: undefined},
     'Frames held': {pause: true, follow: false, session: 'lead', seq: 401},
     Refused: {...NOTHING, light: 'dark', readiness: 'refused', refused: 'The gateway refused the read: it is not running.'},
     'Agency build': AGENCY,

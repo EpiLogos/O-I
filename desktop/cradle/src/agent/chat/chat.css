@@ -8,10 +8,8 @@
 /* ===== head: identity · tools — the window row owns open/close, so the =====
  * ===== head carries only the conversation's own commands ============== */
 .chat-head{flex:none;display:flex;align-items:center;gap:8px;min-height:var(--oi-panel-head-height);box-sizing:border-box;padding:var(--oi-shell-gutter) calc(var(--oi-shell-gutter) * 2);border-bottom:var(--oi-shell-edge) solid var(--oi-hairline-soft)}
-.chat-head-titles{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
 .chat-head-tools{flex:none;display:flex;align-items:center;gap:2px}
 .chat-head-tools>.oi-tool{flex:none}
-.chat-inside-out{color:var(--oi-accent-ink)}
 .chat-history{position:relative;flex:none;display:flex}
 /* The plane variant's fresh-card chooser: one quiet action over the
    project's real conversations; the menu opens under the card's action. */
@@ -113,7 +111,6 @@
 .chat-composer textarea::placeholder{color:var(--oi-muted-3)}
 .chat-composer-row{display:flex;align-items:center;gap:2px}
 .chat-composer-row>.oi-tool{width:26px;height:26px}
-.chat-provider-menu{position:relative;display:flex;flex:none}
 /* Harness/model picker chips (dossier §3.4): labeled chips on the composer
    row; each opens the session menu with the owner's native model selector.
    Hit bounds stay at the composer's control height; no local scrollbar. */
@@ -137,10 +134,6 @@
 .chat-provider:hover:not(:disabled),.chat-provider:focus-visible{border-color:var(--oi-accent);color:var(--oi-accent-ink);outline:none}
 .chat-provider:disabled{cursor:default;opacity:.6}
 .chat-provider[data-resume="true"]{gap:5px}
-.chat-consent{display:flex;flex-direction:column;gap:6px;padding:8px 10px;border:var(--oi-shell-edge) solid var(--oi-hairline);border-radius:8px;background:var(--oi-canvas-ground);font-size:var(--oi-shell-type-ui)}
-.chat-consent>strong{display:inline-flex;align-items:center;gap:6px;font-weight:550}
-.chat-consent pre{margin:0;max-height:160px;overflow:auto;font-family:var(--oi-font-mono);font-size:var(--oi-shell-type-eyebrow);white-space:pre-wrap;overflow-wrap:anywhere}
-.chat-consent-choices{display:flex;flex-wrap:wrap;gap:5px}
 
 /* ===== the fresh, new-conversation state: no conversation required =====
  * The full panel shell — identity in the head above, a restrained welcome,

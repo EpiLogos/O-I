@@ -25,9 +25,6 @@
 .ms-face[data-state="rest"] { color: var(--text-dim, #a3a8ad); }
 .ms-faces { flex: none; display: inline-flex; flex-wrap: wrap; width: 26px; gap: 1px; }
 .ms-conv { min-width: 0; display: flex; flex-direction: column; }
-.ms-conv-head { flex: none; display: flex; gap: 10px; align-items: center; padding: 8px 12px; border-bottom: 1px solid var(--line, #3a3d41); }
-.ms-conv-head span { display: flex; flex-direction: column; font-size: 11px; }
-.ms-conv-head small { color: var(--text-dim, #a3a8ad); font-size: 10.5px; }
 .ms-thread { position: relative; flex: 1; min-height: 0; }
 .ms-none { padding: 10px; color: var(--text-faint, #71767c); font-size: 11px; }
 .ms-card { padding: 14px 18px; display: flex; flex-direction: column; gap: 8px; max-width: 460px; }

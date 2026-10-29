@@ -97,7 +97,6 @@ function runAdmissionOnce(): Promise<AdmissionOutcome> {
 }
 
 const holdStyle = {margin: 0, padding: '12px 16px', font: '13px system-ui, sans-serif'} as const
-const noticeStyle = {position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 10000, margin: 0, padding: '8px 16px', font: '13px system-ui, sans-serif', background: 'Canvas', color: 'CanvasText', borderTop: '1px solid GrayText'} as const
 
 /**
  * The startup gate. The owner-admitted continuity is applied before the workspace book is
@@ -141,7 +140,7 @@ export function ContinuityProvider({children}: {children: ReactNode}) {
   const report = dismissed ? null : [admissionReport(outcome), seeded.fault].filter(Boolean).join(' ') || null
   return (
     <>
-      {report && <p role="status" data-region="continuity-admission" style={noticeStyle}>{report} <button type="button" onClick={() => setDismissed(true)}>Dismiss</button></p>}
+      {report && <p role="status" data-region="continuity-admission" className="shell-notice">{report} <button type="button" onClick={() => setDismissed(true)}>Dismiss</button></p>}
       <ContinuityBook keep={gated}>{children}</ContinuityBook>
     </>
   )

@@ -79,3 +79,8 @@
 .fx-well--scene .fx-well-name { position: absolute; left: 4px; bottom: 3px; padding: 1px 5px; background: color-mix(in srgb, var(--dp-well, #121519) 78%, transparent); }
 .fx-take[data-state="archived"] { opacity: .45; }
 .fx-take[data-state="dormant"] figcaption span { color: var(--text-faint, #71767c); }
+
+/* The environs of the process devices (EnvironFaces.tsx): each drawn in the kit's well, which brings its own ground and edge. */
+.fx-env { flex: none; display: block; width: max-content; max-width: 100%; }
+/* The words a still environ says in its picture, lifted off the lines under them by a halo of the well's own ground. */
+.fx-env .fx-env-words { paint-order: stroke; stroke: var(--dp-well); stroke-width: 3px; stroke-linejoin: round; }

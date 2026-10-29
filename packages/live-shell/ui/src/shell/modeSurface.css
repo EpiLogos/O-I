@@ -26,12 +26,7 @@
 /* The Technē lens bar — its own axis above the centre (never the
    transport's, never the surf's). */
 .center-body { position: relative }
-.techne-lens-bar { position: absolute; top: 0; left: 0; right: 0; z-index: 3; display: flex; align-items: center; gap: 3px; height: 25px; padding: 0 6px; background: var(--bg-1); border-bottom: 1px solid var(--line); overflow-x: auto; scrollbar-width: thin }
 .techne-lens-title { font-size: 10px; color: var(--text-faint); margin-right: 5px; flex: none }
-.techne-lens { display: flex; align-items: center; gap: 4px; height: 19px; padding: 1px 6px; font-size: 10px; background: var(--bg-0); border: 1px solid var(--edge); color: var(--text-dim); white-space: nowrap; flex: none }
-.techne-lens[aria-pressed="true"] { color: var(--accent); border-color: var(--accent-dim) }
-.techne-lens[disabled] { color: var(--text-faint); opacity: 0.75; cursor: default }
-.techne-lens[disabled]:hover { background: var(--bg-0) }
 
 /* The lens bar claims the top strip; the composition residence sits below
    it only in the Technē ground cut. */
@@ -348,18 +343,11 @@ button.mode-dock-line { cursor: pointer }
 .widget-agent .chat-send { width: 20px; height: 20px; border-radius: 0; color: var(--on-accent) }
 
 /* Sets (manual §10.2, FOUNDATION F1): the browser's named arrangements, in every browser until F6 makes them one. */
-.browser-sets { flex: none; border-top: 1px solid var(--line); background: var(--bg-1); padding: 4px 0 6px; font-size: 10.5px; color: var(--text-dim) }
 .browser-sets-head { display: flex; align-items: center; gap: 6px; padding: 2px 8px 4px; color: var(--text-faint); text-transform: uppercase; letter-spacing: .06em; font-size: 9.5px }
 .browser-sets-head button { margin-left: auto; background: none; border: 1px solid var(--line); color: var(--text-dim); font-size: 10px; padding: 1px 6px; text-transform: none; letter-spacing: 0 }
 .browser-sets-head button:hover { border-color: var(--line-strong); color: var(--text) }
 .browser-sets-head form { margin-left: auto; flex: 1 }
 .browser-sets-head input { width: 100%; height: 18px; background: var(--bg-0); border: 1px solid var(--accent-dim); padding: 0 6px; font-size: 10.5px; color: var(--text) }
-.browser-sets ul { list-style: none; margin: 0; padding: 0 }
-.browser-sets li button { display: flex; width: 100%; gap: 8px; align-items: baseline; background: none; border: 0; padding: 2px 8px; color: var(--text-dim); text-align: left; font-size: 10.5px }
-.browser-sets li button:hover { background: var(--bg-2); color: var(--text) }
-.browser-sets li b { font-weight: 400; color: var(--text) }
-.browser-sets li span { margin-left: auto; color: var(--text-faint); font-size: 9.5px }
-.browser-sets-empty { margin: 2px 8px; color: var(--text-faint) }
 
 /* The trail (manual §10.7): newest stop first, each a line (the mockup's `.hl2`); the current selection is marked. */
 .trail-stops li { display: block }

@@ -253,5 +253,3 @@
 
 /* The named results remain the complete reading. Dense constellation labels
    appear at the pointed subject instead of overprinting one another. */
-.explore-node--entry text { opacity: 0; pointer-events:none; }
-.explore-node--entry:hover text, .explore-node--entry:focus-visible text { opacity: 1; }

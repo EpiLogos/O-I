@@ -92,22 +92,15 @@
 .agent-shell-browser .poolh, .one-browser-pool-host .poolh { height:22px; display:flex; align-items:center; gap:6px; padding:0 6px; background:var(--bg-1); border-bottom:1px solid var(--line); font-size:11px; flex:none }
 .agent-shell-browser .poolh .r, .one-browser-pool-host .poolh .r { margin-left:auto; display:flex; gap:3px }
 .agent-shell-browser .poolb, .one-browser-pool-host .poolb { flex:1; overflow:auto; padding:4px 0 8px }
-.agent-sec { padding:6px 8px 2px; font-size:10px; color:var(--text-faint); display:flex; justify-content:space-between }
 .agent-row { display:grid; grid-template-columns:78px minmax(0,1fr); align-items:center; gap:6px; padding:2px 8px; font-size:11px; min-height:22px }
 .agent-row .k { color:var(--text-dim) }
 .agent-row output { font-family:var(--mono); font-size:10.5px; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
 .agent-kv { display:grid; grid-template-columns:78px 1fr; padding:1px 8px; font-size:10.5px; color:var(--text-dim) }
 .agent-kv span:last-child { font-family:var(--mono); color:var(--text) }
-.agent-seg { display:flex; border:1px solid var(--line); width:max-content; max-width:100% }
-.agent-seg button { padding:1px 7px; font-size:10px; color:var(--text-dim); background:var(--bg-1); border-right:1px solid var(--line); height:17px }
-.agent-seg button:last-child { border-right:none }
 .agent-seg button.on { background:var(--accent); color:var(--accent-ink) }
-.agent-tgl { display:flex; align-items:center; gap:6px; padding:2px 8px; font-size:11px; min-height:22px }
 .agent-tgl .lt { width:9px; height:9px; border-radius:50%; border:1px solid var(--light-ring); background:var(--bg-0); flex:none }
 .agent-tgl .lt.on { background:var(--accent) }
 .agent-tgl.off { color:var(--text-faint) }
-.agent-slider { height:5px; background:var(--bg-0); position:relative; flex:1 }
-.agent-slider i { position:absolute; left:0; top:0; bottom:0; background:var(--accent) }
 .agent-fold { display:flex; align-items:center; gap:5px; padding:6px 8px; font-size:10.5px; color:var(--text-faint); cursor:pointer; border-top:1px solid var(--line); margin-top:6px }
 
 /* ============ centre: the agent tab's thread (mockup .thread) ============
@@ -122,7 +115,6 @@
 /* The chain column: a drop's receipt/refusal card above, the card row below.
    The row is the horizontal scroller — the 700px law keeps the cards' width. */
 .agent-device-chain { display:flex; flex-direction:column; gap:6px; padding:8px; overflow:hidden; font-size:11px; min-height:0 }
-.agent-device { background:var(--bg-2); border:1px solid var(--line); display:flex; flex-direction:column; flex:none; min-width:0 }
 .agent-device.sel { outline:1px solid var(--accent); outline-offset:-1px }
 .agent-device > .dh { height:22px; display:flex; align-items:center; gap:5px; padding:0 5px; background:var(--bg-0); border-bottom:1px solid var(--line); font-size:11px; cursor:default; white-space:nowrap }
 .agent-device > .dh b { font-weight:500 }
@@ -134,18 +126,14 @@
 .agent-device .vis { background:var(--bg-0); border:1px solid var(--line); position:relative; overflow:hidden; flex:none; display:grid; place-items:center }
 .agent-device.folded { width:24px }
 .agent-device.folded > .dh { writing-mode:vertical-rl; height:auto; flex:1; border:none; padding:6px 0; justify-content:flex-start; gap:7px; align-items:center; width:22px; background:var(--bg-2) }
-.agent-knob { display:flex; flex-direction:column; align-items:center; gap:1px }
 .agent-knob .kl { font-size:9.5px; color:var(--text-dim); white-space:nowrap }
 .agent-knob .kv { font-size:9.5px; font-family:var(--mono); color:var(--text) }
-.agent-knobs { display:grid; grid-template-columns:repeat(2, 62px); gap:6px 2px; align-content:start; justify-items:center }
 .agent-device .db .agent-kv { font-size:9.5px; grid-template-columns:64px minmax(0,1fr) }
 .agent-device .db .agent-kv span:last-child { font-size:9.5px; overflow-wrap:anywhere }
-.agent-tog { display:flex; flex-direction:column; align-items:center; gap:3px }
 .agent-tog .kl { font-size:9.5px; color:var(--text-dim) }
 .agent-tog .tg { display:flex; border:1px solid var(--line) }
 .agent-tog .tg span { font-size:9px; padding:1px 4px; background:var(--bg-0); color:var(--text-faint); white-space:nowrap }
 .agent-tog .tg span.on { background:var(--accent); color:var(--accent-ink) }
-.agent-knobs .agent-tog { grid-column:1 / -1 }
 .agent-refusal-inline { font-size:9.5px; line-height:1.35; color:var(--stall); border:1px solid var(--warn-border); background:color-mix(in srgb, var(--stall) 7%, transparent); padding:3px 5px; border-radius:2px; overflow:hidden; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical }
 .agent-refusal-inline b { font-weight:500; margin-right:4px }
 .agent-reading-inline { font-size:9.5px; line-height:1.35; color:var(--text-dim); border:1px solid var(--line-strong); background:var(--bg-1); padding:3px 5px; border-radius:2px; overflow:hidden; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical }
@@ -155,7 +143,6 @@
 .agent-chainrow.offc { color:var(--text-faint) }
 .agent-chainrow.offc .lt { background:var(--bg-0); border:1px solid var(--text-faint) }
 .agent-chainrow .md { font-size:9px; color:var(--text-faint); margin-left:auto }
-.agent-chains { width:150px; border-right:1px solid var(--line); display:flex; flex-direction:column; gap:2px; padding-right:6px }
 .agent-dropz { width:150px; flex:none; border:1px dashed var(--line-strong); display:flex; align-items:center; justify-content:center; text-align:center; color:var(--text-faint); font-size:11px; padding:10px }
 .agent-dropz.armed { border-color:var(--accent); color:var(--text) }
 /* The slide grip (the parent rack's ⋮⋮ grammar) and the visible drop slot a
@@ -166,12 +153,6 @@
 .agent-chain-gap { flex:0 0 3px; align-self:stretch; background:var(--accent); border-radius:2px; pointer-events:none }
 /* the pool keeps its legacy layout hooks (fixture battery) */
 .native-agent-rack { display:flex; flex-wrap:nowrap; gap:6px; padding:0; width:100%; align-items:stretch; overflow-x:auto; overflow-y:hidden }
-.agent-device-compact { min-width:0; flex:none }
-.agent-device-pool .agent-pool-row { display:grid; grid-template-columns:78px minmax(0,1fr); gap:6px; padding:2px 8px; font-size:11px; min-height:22px; align-items:center }
-.agent-device-pool .agent-pool-row span:first-child { color:var(--text-dim) }
-.agent-device-pool .agent-pool-row output { font-family:var(--mono); font-size:10.5px; color:var(--text) }
-.agent-world-read { color:var(--fizz) }
-.agent-world-write { color:var(--honey) }
 
 /* The agent dock's rules (.agent-context-dock, its tiles and launcher) left with it (ticket 804): the one widget rail draws the tiles. */
 
@@ -185,7 +166,6 @@
 .agent-refusal .dismiss { margin-left:auto; background:none; border:none; color:var(--text-faint); cursor:pointer; font-size:10px }
 .agent-refusal .dismiss:hover { color:var(--text) }
 .agent-refusal-row { display:flex; align-items:flex-start; gap:6px }
-.agent-note { margin:6px 8px; padding:0; font-size:10px; color:var(--text-faint) }
 .agent-disclosed { color:var(--text-faint); font-size:10px }
 .agent-thread { flex:1 1 0; height:100%; min-height:0; display:flex; flex-direction:column }
 /* The thread is the conversation and only the conversation (the mockup's thread pane: the transcript and the steer composer).

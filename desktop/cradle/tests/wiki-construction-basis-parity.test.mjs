@@ -9,7 +9,7 @@
 // pushed the raw row verbatim, so `sameComposition(decoded, reading)` judged
 // an UNCHANGED, just-saved constellation as mismatched purely on the
 // presence of that one storage-only key — refusing "Open live composition"
-// immediately after every successful save (techne-construction-join.mjs).
+// immediately after every successful save (seen by the retired drawer walks, O-I #742).
 import test from "node:test";
 import assert from "node:assert/strict";
 
