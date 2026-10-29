@@ -15,6 +15,8 @@ import {DEVICE_PANE_KIND} from '../devices/devicePane'
 import {publishedDevice, selectedDeviceId} from '../devices/deviceDoor'
 import {browserSearchAvailable, openableNow, requestBrowserSearch, trackRows, transportKeys, type Openable} from './keyDoors'
 import {captureFocus, openSearchLine, searchLineAvailable} from '../../central/searchLineDoor'
+import {lastPress, noteFocusMoved, notePress, paneFinderInFront} from '../paneFind'
+import {focusedPaneReading} from '../../native/workbenchDoor'
 import {claimsAtOnce, escapeClaimed, intentOfKey, isTyping, suppressed, type DocumentLike, type ElementLike, type KeyLike} from './keyMap'
 import {planKey, type KeyDoors, type KeyOptions, type KeyReceipt} from './planKey'
 import './keys.css'
@@ -39,6 +41,8 @@ export const frameKeyDoors: KeyDoors = {
   openable: () => openableNow() ?? selectedDeviceOpenable(),
   searchAvailable: browserSearchAvailable,
   search: requestBrowserSearch,
+  // ⌘F in a pane: the find of the instrument in front (§18.4, as VS Code's ⌘F finds in the file in front); the browser keeps it otherwise.
+  paneFind: () => { const press = lastPress(); return paneFinderInFront(typeof document === 'undefined' ? null : document.activeElement, focusedPaneReading()?.id, press.target, press.since) },
   // ⌘K: the search line over the frame (§18.4), as Quick Open stands over the window; Esc puts the focus back (captureFocus).
   lineAvailable: searchLineAvailable,
   line: () => { openSearchLine({door: 'frame', restore: typeof document === 'undefined' ? null : captureFocus()}) },
@@ -97,8 +101,16 @@ export function useFrameKeys(options: FrameKeysOptions = {}, doors: KeyDoors = f
   const [receipt, setReceipt] = useState<KeyReceipt | null>(null)
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => { handleKey(event, doors, latest.current, setReceipt, document) }
+    // ⌘F finds where you are (paneFind.ts): the last press says where, when the focus is loose on the page.
+    const onPress = (event: PointerEvent) => { notePress(event.target) }
     window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
+    window.addEventListener('pointerdown', onPress, true)
+    window.addEventListener('focusin', noteFocusMoved, true)
+    window.addEventListener('blur', noteFocusMoved)
+    return () => {
+      window.removeEventListener('keydown', onKeyDown); window.removeEventListener('pointerdown', onPress, true)
+      window.removeEventListener('focusin', noteFocusMoved, true); window.removeEventListener('blur', noteFocusMoved)
+    }
   }, [doors])
   return {receipt, dismiss: () => setReceipt(null)}
 }

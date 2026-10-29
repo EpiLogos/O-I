@@ -10,6 +10,21 @@ import {readDocumentIdentity} from './identity';
 import type { KernelTransportStatus } from "../kernel/types";
 import pageContextScript from "../context/page-context.js?raw";
 import documentHostScript from "../context/document-host.js?raw";
+import documentFindRaw from "../context/document-find.js?raw";
+
+/** The find every hosted document frame carries (DLW §18.4: ⌘F in a pane finds in the instrument in front, as VS Code's ⌘F finds in the
+ * file in front; context/document-find.js). It answers its host and marks; it reads and writes no owner. */
+const documentFindScript = `<script>${documentFindRaw}</script>`;
+
+/** Place a page script in a projection: after the page's <head>, else after its <html>, else after its doctype, else first — never
+ * before a doctype, which would drop the page out of standards mode. Pure. */
+export function withFrameScript(html: string, script: string): string {
+  for (const pattern of [/<head(?:\s[^>]*)?>/i, /<html(?:\s[^>]*)?>/i, /<!doctype[^>]*>/i]) {
+    const found = pattern.exec(html);
+    if (found) return html.slice(0, found.index + found[0].length) + script + html.slice(found.index + found[0].length);
+  }
+  return script + html;
+}
 
 /** The observation + document-host scripts every rendered document frame
  * carries. Presentation-only: they observe and answer the host, and grant
@@ -70,8 +85,10 @@ const useCommitEffect = typeof window === "undefined" ? useEffect : useLayoutEff
 
 /** The props of a hosted document's iframe, and under Tauri its write: the listener stands in the commit that mounts the
  * frame (a layout effect), so the frame's question — a later task — is never posted unheard. */
-export function useDocumentFrame(frame: RefObject<HTMLIFrameElement | null>, html: string | undefined, transport: KernelTransportStatus): DocumentFrameProps | undefined {
+export function useDocumentFrame(frame: RefObject<HTMLIFrameElement | null>, projection: string | undefined, transport: KernelTransportStatus): DocumentFrameProps | undefined {
   const kind = transport.kind;
+  // The page carries its pane's find (withFrameScript): the srcdoc and the native frame's write both frame the same projection.
+  const html = useMemo(() => (projection === undefined ? undefined : withFrameScript(projection, documentFindScript)), [projection]);
   const props = useMemo(() => (html === undefined ? undefined : documentFrameProps(kind, html)), [html, kind]);
   const native = props?.src !== undefined;
   useCommitEffect(() => {

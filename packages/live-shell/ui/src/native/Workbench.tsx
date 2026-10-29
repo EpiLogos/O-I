@@ -57,6 +57,7 @@ import type {AgentSubject,AgentAccompanying} from '../../../../../desktop/cradle
 import {isRetainedCentreKind, WARM_WORKSPACES, type WarmTreeRef} from '../../../../../desktop/cradle/src/surface/warmTrees'
 import {RETAINED_VIEW_BUDGET} from '../../../../../desktop/cradle/src/surface/runtime'
 import {CENTRAL_DOCUMENT_PANE_KIND, openCentralDocumentAt, subjectOf, type CentralDocumentTarget} from '../central/documents/centralDocuments'
+import {usePaneDrafts} from '../central/documents/paneDrafts'
 import './workbench.css'
 
 const OMIT_BODY_KINDS = ['expressions'] as const
@@ -125,6 +126,8 @@ export function paneTabsAction(layout: LayoutState, ref: PaneTabsRef, groupId: s
 
 export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}) {
   const book = useContinuity(), workspace = useWorkspace(), kernel = useKernel()
+  // A Central document's draft marks its pane's tab (lane AF, O-I #741; central/documents/paneDrafts.ts).
+  const draftOf = usePaneDrafts()
   const latest = useRef({book, workspace, kernel})
   latest.current = {book, workspace, kernel}
   // The encounter spine for projection panes (seam 3): one subscriber/router
@@ -940,7 +943,7 @@ export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}
         try{return preparedContextScopeKey(factoryScope)===preparedContextScopeKey(workbenchContextScope(latest.current.book.current.layout,tree.workspaceId,receivingEpoch,latest.current.book.current.project,sourceWorldRef))}catch{return false}
       }
       const props: WorkbenchProps = {
-        state: tree.layout, workspaceName: owner.name, presented: tree.presented, centreBodiesInPanes: true, omitBodyKinds: OMIT_BODY_KINDS, sourceWorldRef, bodyUnavailable: unavailable,
+        state: tree.layout, workspaceName: owner.name, presented: tree.presented, centreBodiesInPanes: true, omitBodyKinds: OMIT_BODY_KINDS, sourceWorldRef, bodyUnavailable: unavailable, draftOf,
         onView: (id, view) => {if (receivingCurrent(id)) latest.current.book.surfaceView(tree.workspaceId, id, view)},
         onHostedState: (id, reading) => {
           const scene = reading.nativeScene

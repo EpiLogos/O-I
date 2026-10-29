@@ -17,7 +17,7 @@
 // Lifetime: the module mounts its own React root into the pane element and unmounts that root alone. A concealed pane keeps
 // its root mounted (the hidden-inhabitant law), so an unsaved draft in a hosted form survives a tab switch. A new kernel
 // connection generation remounts the module (surface/projectionPane.tsx), and the owner is read again.
-import {useCallback, useEffect, useRef, useState, type ReactNode} from 'react'
+import {useCallback, useContext, useEffect, useRef, useState, type ReactNode} from 'react'
 import {createRoot} from 'react-dom/client'
 import {registerProjectionModule} from '../../../../../../desktop/cradle/src/surface/projectionModules'
 import {detectTransport} from '../../../../../../desktop/cradle/src/kernel/bridge'
@@ -35,6 +35,7 @@ import {useDayAnswer} from '../../owners/day'
 import './centralDocuments.css'
 import {DocumentPaneContext, documentLayoutWriter} from './documentDoor'
 import {loadWhenDrawn} from '../../shell/loadWhenDrawn'
+import {DocumentFind} from './DocumentFind'
 
 // The Day's and the Flow's hosted forms (each carries its whole form page) load when a Day or a Flow is first opened, never with the
 // shell's first frame (O-I #740); until one arrives the pane shows the shell's waiting line for it.
@@ -199,8 +200,12 @@ export function PageDocument({transport, kind, location}: {transport: KernelTran
 /** The pane's body for its subject ref. A ref that names no document this pane holds is said, never another document drawn. */
 export function CentralDocumentPane({transport, subjectRef}: {transport: KernelTransportStatus; subjectRef: string | undefined}) {
   const subject = parseDocumentSubject(subjectRef)
+  // ⌘F finds in the page this pane holds (§18.4, as VS Code's ⌘F finds in the file in front): DocumentFind.tsx, over this pane's frame.
+  const host = useRef<HTMLElement>(null)
+  const paneId = useContext(DocumentPaneContext) ?? undefined
   return (
-    <section className="central-document-pane" data-central-document={subject?.form ?? 'unknown'} data-subject={subjectRef ?? ''}>
+    <section ref={host} className="central-document-pane" data-central-document={subject?.form ?? 'unknown'} data-subject={subjectRef ?? ''}>
+      <DocumentFind paneId={paneId} host={host} />
       {!subject
         ? <Absence form="Document" state="unknown"><p>This pane’s subject, <span className="mono">{subjectRef}</span>, is no Day or Flow. Documents open from the browser’s Days and Files rows: double-click one, or press Enter on it.</p></Absence>
         : subject.form === 'day'

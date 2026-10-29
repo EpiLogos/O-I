@@ -78,6 +78,9 @@ export interface WorkbenchProps {
   presented?: boolean;
   /** An absent optional owner retains its binding and names the local reason. */
   bodyUnavailable?: (binding: import("./types").SurfaceBinding) => string | undefined;
+  /** Whether the body a tab presents holds a draft its owner does not (a hosted document's own draft fact): the tab is marked as an
+   * edited buffer's is. A kernel source buffer marks its tab without it (kernelDirty). */
+  draftOf?: (surfaceId: SurfaceId) => boolean;
   onHostedState?: (id: string, state: import("../expressions/hostedApp").HostedAppState) => void;
   workspaceName: string;
   onView:(id:string,view:NonNullable<import("./types").SurfaceBinding["view"]>)=>void;
@@ -114,6 +117,11 @@ export interface WorkbenchProps {
   subject?: {ref?: string; kind?: string; title: string; project?: string};
 }
 
+/** The hosted frames whose focus focuses the pane they stand in (DLW manual §10.2 "Focus a pane"; VS Code activates an editor's group
+ * when the editor is clicked): a material frame, and a Central document's page (the Day, a Flow, a Being, a Thing). A press inside a
+ * frame of another origin never reaches this document; the frame takes the focus as the window blurs (below). */
+export const PANE_FOCUS_FRAMES = ".material-frame, .inhabitant-document-frame";
+
 // Keep the presentation boundary aligned with shell.css: compact windows show
 // one focused pane, but do not change or persist the underlying split tree.
 const compactPaneQuery = "(max-width: 639px)";
@@ -142,7 +150,7 @@ export function Workbench(props: WorkbenchProps) {
       window.clearTimeout(timer);
       timer = window.setTimeout(() => {
         const frame = document.activeElement;
-        if (!(frame instanceof HTMLIFrameElement) || !frame.matches(".material-frame")) return;
+        if (!(frame instanceof HTMLIFrameElement) || !frame.matches(PANE_FOCUS_FRAMES)) return;
         const groupId = frame.closest<HTMLElement>(".pane.group")?.dataset.groupId;
         if (groupId && groupId !== state.focusedGroupId) props.execute("surface.focus-group", { groupId });
       });
@@ -365,7 +373,7 @@ export function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "gro
             kind={state.surfaces[id].kind}
             active={active === id}
             pinned={group.pinned.includes(id)}
-            dirty={props.kernelDirty(state.surfaces[id].ref)}
+            dirty={props.kernelDirty(state.surfaces[id].ref) || !!props.draftOf?.(id)}
             groupId={group.id}
             vertical={verticalTabs}
             execute={execute}
@@ -689,7 +697,10 @@ const KIND_GLYPH: Record<string, import("../workspace/Glyph").GlyphName> = {
   "projection.expressions": "field",
 };
 
-function Tab({ id, title, kind, active, pinned, dirty, groupId, execute, openBindingMenu }: TabProps) {
+/** A pane's tab. Double-clicked, its pane fills the main area, and double-clicked again the other panes come back (DLW manual
+ * §10.2) — VS Code's tab double-click, which toggles its editor group (workbench.editor.doubleClickTabToToggleEditorGroupSizes;
+ * O-I campaign-evidence/2026-10-29-vscode-workbench-re/DECODE.md). The tab names its own surface, so the pane it stands in toggles. */
+export function Tab({ id, title, kind, active, pinned, dirty, groupId, execute, openBindingMenu }: TabProps) {
   return (
     <div className="tab-entry" role="presentation">
     <IconTab
@@ -709,6 +720,10 @@ function Tab({ id, title, kind, active, pinned, dirty, groupId, execute, openBin
       data-dirty={dirty}
       title={`${title}${pinned ? " (pinned)" : ""}`}
       onClick={() => execute("surface.activate", { surfaceId: id })}
+      onDoubleClick={(e) => {
+        e.preventDefault();
+        execute("surface.maximize", { surfaceId: id });
+      }}
       onAuxClick={(e) => {
         if (e.button === 1) execute("surface.close", { surfaceId: id });
       }}
@@ -754,7 +769,7 @@ function Tab({ id, title, kind, active, pinned, dirty, groupId, execute, openBin
     >
       <span className="tab-title">{title}</span>
       {dirty ? (
-        <span className="tab-dirty" aria-hidden="true" title="Unsaved buffer">
+        <span className="tab-dirty" aria-hidden="true" title="Edited since save">
           ●
         </span>
       ) : null}
