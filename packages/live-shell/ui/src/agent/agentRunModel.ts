@@ -17,7 +17,9 @@
  * length; a stalled needle freezes at last output.
  */
 
-export type TaskState = 'running' | 'queued' | 'stalled' | 'done' | 'unknown'
+/** How a task is drawn: the manual's five words (DLW §19.1), and unknown where no evidence decides. Stopped comes only from Factory's
+ * reading (agent/taskActivity.ts): the session AIKit reports closed while its task is not. */
+export type TaskState = 'running' | 'queued' | 'stalled' | 'stopped' | 'done' | 'unknown'
 
 /** How a task stands as Factory reads it (agent/taskActivity.ts, factory/src/task_activity.rs): the manual's word — or none where no
  * evidence decides — with the evidence in words, whether the track lights a retry, the rung that decided, and the closure a closed
@@ -28,6 +30,8 @@ export interface TaskStanding {
   retry: boolean
   decidedBy: string | null
   closure: string | null
+  /** The check-in bound Factory read the task against (`bound_ms`), when its reading names one. */
+  boundMs?: number
 }
 
 export interface TaskClip {

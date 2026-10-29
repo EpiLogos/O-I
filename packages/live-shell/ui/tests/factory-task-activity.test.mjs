@@ -37,6 +37,7 @@ export async function load(u, c, n) {
 const activity = await import('../src/agent/taskActivity.ts')
 const model = await import('../src/agent/agentRunModel.ts')
 const clip = await import('../src/agent/clipBinding.ts')
+const tracks = await import('../src/timeline/factoryTrackAdapter.ts')
 
 const NOW = 1_800_000_000_000
 const S = 'agency/session-a'
@@ -95,7 +96,16 @@ test('Factory\'s word draws the task, its stall lights the track\'s retry, and a
   assert.equal(activity.realTask(queued).startUnixMs, null, 'a queued task has no length')
   const [stopped] = activity.withTaskActivity(track(), {bySession: activity.readingsBySession(reading('stopped')), unread: new Map()})
   assert.equal(activity.realTask(stopped).standing.word, 'stopped')
+  assert.equal(activity.realTask(stopped).state, 'stopped', 'Stopped draws as itself on the track (round two)')
   assert.equal(stopped.needle.state, 'idle')
+  // On the track: Stopped is the grid's own status, "ready, in full colour", standing where it ran.
+  const set = tracks.factoryTrackAdapter.project({tracks: [stopped], nowUnixMs: NOW})
+  const drawn = set.clips.find(c => c.trackId === model.trackKey(stopped))
+  assert.equal(drawn.status, 'stopped')
+  assert.ok(drawn.at && typeof drawn.at.start === 'number', 'a stopped task keeps its place on the ruler')
+  // Factory's check-in bound rides each task's standing (bound_ms), for the faces (runFaces.ts boundOf).
+  const [bounded] = activity.withTaskActivity(track(), {bySession: activity.readingsBySession(reading('running')), unread: new Map(), boundMs: new Map([[S, 90_000]])})
+  assert.equal(activity.realTask(bounded).standing.boundMs, 90_000)
   const [done] = activity.withTaskActivity(track(), {bySession: activity.readingsBySession(reading('done')), unread: new Map()})
   assert.equal(activity.realTask(done).standing.closure, 'completed no-follow-on')
   assert.equal(activity.readingsBySession({schema: 'other', tasks: []}), null, 'only Factory\'s reading is drawn')
@@ -133,6 +143,7 @@ test('a register\'s tasks are read against its located Factory state, and a refu
   assert.deepEqual(asked.map(op => op.request.kind), ['locate', 'task-activity-read'], 'its kind ends in read: the bridge hears a read, never a write')
   assert.equal(asked[1].request.state_path, '/w/O-I/.factory/state.json')
   assert.equal(answer.bySession.get(S).word, 'running')
+  assert.equal(answer.boundMs.get(S), 90000, 'the bound Factory read the register against')
   const refusing = async op => (op.request.kind === 'locate' ? {outcome: {result: 'factory_development_reading', data: {locations: [{state: 'absent', project: 'O-I'}]}}}
     : {error: 'factory: unknown command `task-activity`'})
   const refused = await activity.readTaskActivity(refusing, 'O-I', evidence)

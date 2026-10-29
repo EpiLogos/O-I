@@ -96,12 +96,13 @@ export function closureWords(reading: TaskStateReading): string | null {
   return closed.map(row => `${row.state ?? 'closed'} ${row.closure!.reason}${row.closure!.target ? ` → ${row.closure!.target}` : ''}`).join('; ')
 }
 
-/** The track's drawing state for Factory's word. Stopped has no clip state on the track yet: it draws as a clip with no status, and the
- * Clip panel names it (`standing.word`). Pure. */
-const DRAWN: Readonly<Record<NonNullable<TaskStanding['word']>, TaskState>> = {queued: 'queued', running: 'running', stalled: 'stalled', stopped: 'unknown', done: 'done'}
+/** The track's drawing state for Factory's word: each of the manual's five words draws as itself. Pure. */
+const DRAWN: Readonly<Record<NonNullable<TaskStanding['word']>, TaskState>> = {queued: 'queued', running: 'running', stalled: 'stalled', stopped: 'stopped', done: 'done'}
 
-/** What the tasks stand on: Factory's readings, or why there are none (being read, or refused, in Factory's words). */
-export type TaskActivityAnswer = {readonly bySession: ReadonlyMap<string, TaskStateReading>; readonly unread: ReadonlyMap<string, string>}
+/** What the tasks stand on: Factory's readings, or why there are none (being read, or refused, in Factory's words), and the check-in
+ * bound each register's reading was decided against (`bound_ms`, by session). */
+export type TaskActivityAnswer = {readonly bySession: ReadonlyMap<string, TaskStateReading>; readonly unread: ReadonlyMap<string, string>;
+  readonly boundMs?: ReadonlyMap<string, number>}
 
 export const TASK_ACTIVITY_PENDING = 'Factory has not read how this task stands yet: its reading arrives with the next agency read.'
 
@@ -113,8 +114,9 @@ export function withTaskActivity(tracks: readonly AgentSessionTrack[], answer: T
     const task = realTask(track)
     if (!task) return track
     const reading = answer.bySession.get(track.sessionRef)
+    const bound = answer.boundMs?.get(track.sessionRef)
     const standing: TaskStanding | undefined = reading ? {word: reading.word ?? null, why: reading.why, retry: reading.retry === true,
-      decidedBy: reading.decided_by ?? null, closure: closureWords(reading)} : undefined
+      decidedBy: reading.decided_by ?? null, closure: closureWords(reading), ...(bound !== undefined ? {boundMs: bound} : {})} : undefined
     const state: TaskState = standing?.word ? DRAWN[standing.word] : 'unknown'
     const disclosure = standing ? standing.why : answer.unread.get(track.sessionRef) ?? TASK_ACTIVITY_PENDING
     const tasks = track.tasks.map(clip => clip !== task ? clip : {...clip, state, disclosure, ...(state === 'queued' ? {startUnixMs: null} : {}),
@@ -164,9 +166,12 @@ export async function readTaskActivity(call: ActivityCall, project: string, evid
   const statePath = !located.error && located.outcome?.result === 'factory_development_reading' ? locatedState(located.outcome.data) : null
   const read = await call({op: 'factory_owner', request: {kind: 'task-activity-read', ...(statePath ? {state_path: statePath} : {}), request: taskActivityRequest(evidence)}})
   if (read.error) return refusedAll(`Factory did not read how this task stands: ${read.error}`)
-  const bySession = read.outcome?.result === 'factory_development_reading' ? readingsBySession(read.outcome.data) : null
+  const data = read.outcome?.result === 'factory_development_reading' ? read.outcome.data : null
+  const bySession = readingsBySession(data)
   if (!bySession) return refusedAll('Factory answered no task-activity reading (factory.task-activity/v1): the Factory installed here may predate it.')
-  return {bySession, unread: new Map(sessions.filter(session => !bySession.has(session)).map(session => [session, 'Factory\'s reading names no state for this session.']))}
+  const bound = (data as {bound_ms?: unknown}).bound_ms
+  return {bySession, unread: new Map(sessions.filter(session => !bySession.has(session)).map(session => [session, 'Factory\'s reading names no state for this session.'])),
+    ...(typeof bound === 'number' && bound > 0 ? {boundMs: new Map([...bySession.keys()].map(session => [session, bound]))} : {})}
 }
 
 /** How each task stands, read again whenever the tracks are read again (the agency reading's instant), a check-in arrives, or a task
@@ -193,12 +198,14 @@ export function useTaskActivity(transport: KernelTransportStatus, tracks: readon
       }
       const bySession = new Map<string, TaskStateReading>()
       const unread = new Map<string, string>()
+      const boundMs = new Map<string, number>()
       for (const [project, evidence] of byProject) {
         const read = await readTaskActivity(carried(transport), project, evidence)
         for (const [session, reading] of read.bySession) bySession.set(session, reading)
         for (const [session, why] of read.unread) unread.set(session, why)
+        for (const [session, bound] of read.boundMs ?? []) boundMs.set(session, bound)
       }
-      if (live) setAnswer({key, value: {bySession, unread}})
+      if (live) setAnswer({key, value: {bySession, unread, boundMs}})
     })()
     return () => { live = false }
     // eslint-disable-next-line react-hooks/exhaustive-deps

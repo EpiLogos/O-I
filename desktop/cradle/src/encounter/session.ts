@@ -41,6 +41,22 @@ import {ACTIVE_PHASES,type AddressedFields,type DeliveryHistoryEntry,type Dispat
 declare const __CRADLE_WALK__: boolean;
 
 export interface EncounterSessionBinding {project:string;ref:string;space?:string;sourceWorldRef?:string}
+
+/** An owner's three-part refusal of a send (O-I #741; OpenRig's convention, BEHAVIOURS.md §17): what stands, what did not happen, and
+ * the next lawful operation — one line each of AIKit's own message, its code after it ("… [encounter.target_needs_input]"). `retry`
+ * says whether pressing Send again can land: a session that waits on the person refuses the same words until its request is answered. */
+export interface SendRefusal {code:string;fact:string;consequence:string;action:string;retry:boolean}
+/** The codes whose refusal a plain resend meets again unchanged (AIKit encounter_service.rs needs_input_guard). */
+const UNTIL_ANSWERED=new Set(["encounter.target_needs_input","encounter.interact_reason_required"]);
+/** The three-part refusal an owner message carries, or null when it carries none: the owner's words, verbatim, line by line. Pure. */
+export function sendRefusalOf(message:string):SendRefusal|null {
+ const coded=/\s*\[([a-z0-9_.-]+)\]\s*$/i.exec(message);
+ if(!coded)return null;
+ const lines=message.slice(0,coded.index).replace(/^Error:\s*/,"").split("\n").map(line=>line.trim()).filter(Boolean);
+ if(lines.length!==3)return null;
+ const [fact,consequence,action]=lines as [string,string,string];
+ return {code:coded[1]!,fact,consequence,action,retry:!UNTIL_ANSWERED.has(coded[1]!)};
+}
 export const encounterSessionKey=(binding:{project:string;ref:string;sourceWorldRef?:string})=>binding.sourceWorldRef?JSON.stringify([binding.sourceWorldRef,binding.project,binding.ref]):`${binding.project}:${binding.ref}`;
 
 export interface EncounterA2aState {seed?:string;busy:boolean;difference?:A2aDifference;error?:string}
@@ -80,7 +96,7 @@ export interface EncounterSessionState {
  /** The last Send's outcome as the person sees it (10-SIDEBARS P8/P9):
   *  "checking" while an uncertain delivery is reconciled against the owner's
   *  record, "failed" when it was not sent (the draft is kept). */
- send?:{phase:"checking"|"unknown"|"failed";error?:string};
+ send?:{phase:"checking"|"unknown"|"failed";error?:string;refusal?:SendRefusal};
  /** Reads are failing: the owner was last seen at this time (P10). */
  reconnecting?:{lastSeenAt:number};
  /** The encounter owner could not be reached at all (P11). */
@@ -305,7 +321,8 @@ class EncounterSession implements EncounterSessionActions {
    // An owner refusal carries its code ("… [encounter.x]"): the message was
    // not sent. Anything else (the transport broke mid-call) is uncertain:
    // the owner's own record says whether it went — never a second send.
-   if(!attempted||(!message.includes("encounter.submission_uncertain")&&(message.includes("gateway.native_owner.owner_refused")||(!this.state.sourceWorldRef&&/\[[a-z0-9_.-]+\]\s*$/i.test(message)))))this.set({error:message,send:{phase:"failed",error:message}});
+   const refusal=sendRefusalOf(message);
+   if(!attempted||(!message.includes("encounter.submission_uncertain")&&(message.includes("gateway.native_owner.owner_refused")||(!this.state.sourceWorldRef&&/\[[a-z0-9_.-]+\]\s*$/i.test(message)))))this.set({error:message,send:{phase:"failed",error:message,...(refusal?{refusal}:{})}});
    else{this.uncertainSend=evidence;this.set({send:{phase:"checking"}});await this.reconcileSend(evidence,message);}
   }
   finally{this.sending=false;this.end();void this.save();}

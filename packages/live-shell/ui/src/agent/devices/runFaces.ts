@@ -3,9 +3,10 @@
 // take their posture from it; the stage plays the kernel's own run events. Nothing here scripts a run: "No action without an event".
 //
 // The readings, each the shell's own of its owner:
-//   - the task's state (agent/agentRunModel.ts TaskClip: queued · running · stalled · done, the owner's own field where it names one, else
-//     inferred from the session's temporal activity against the heartbeat horizon; unknown otherwise);
-//   - the needle: the session's last check-in (agentRunModel.ts NeedleReading), its age against HEARTBEAT_HORIZON_MS (90 s) — older is a stall;
+//   - the task's state (agent/agentRunModel.ts TaskClip: queued · running · stalled · stopped · done, Factory's reading of the owners'
+//     evidence, agent/taskActivity.ts; unknown where Factory decided no word);
+//   - the needle: the session's last check-in (agentRunModel.ts NeedleReading), its age against the check-in bound Factory read the task
+//     against (`bound_ms`, TaskStanding.boundMs) — older is a stall. With no bound of Factory's, the faces decide no stall by their own clock;
 //   - the thread's last row (agent/devices/threadBinding.ts threadRowsOf over AIKit's encounter view): a proposal waits on you, a tool that
 //     reads is thinking, any other tool acting (inhabitants/catalogue/faces/runs.ts stateOfThread, the faces' own rule), a provider failure
 //     with no turn running has failed;
@@ -14,9 +15,14 @@
 // Pure.
 import type {RunState} from '../../inhabitants/catalogue/faces/agency'
 import {BEAT_MS, STALL_BEATS, stateOfThread, type Recording, type RunEvent, type ThreadRow} from '../../inhabitants/catalogue/faces/runs'
-import {HEARTBEAT_HORIZON_MS, eventsForSession, type TaskClip, type TemporalEventLike} from '../agentRunModel'
+import {eventsForSession, type TaskClip, type TemporalEventLike} from '../agentRunModel'
 
-const HORIZON_S = HEARTBEAT_HORIZON_MS / 1000
+/** The check-in bound, in seconds, Factory read the session's current task against (TaskStanding.boundMs), or undefined where it named
+ * none. The faces keep no bound of their own. Pure. */
+export function boundOf(tasks: readonly TaskClip[]): number | undefined {
+  const bound = tasks.find(clip => !clip.softStop && typeof clip.standing?.boundMs === 'number')?.standing?.boundMs
+  return bound !== undefined && bound > 0 ? bound / 1000 : undefined
+}
 
 /** What a session's run state is read from: its task clips and its needle (agentRunModel.ts AgentSessionTrack). */
 export interface SessionRun {
@@ -73,9 +79,11 @@ export function runStateOfSession(track: SessionRun, thread: readonly ThreadRow[
   if (task.state !== 'running' && failedLast(thread)) return 'failed'
   const live = task.state === 'running' || track.needle?.state === NEEDLE_MOVING
   if (!live) return track.needle?.state === 'stalled' ? 'stalled' : null
-  if (age !== undefined && age >= HORIZON_S) return 'stalled'
-  // A running task with no check-in yet (the needle read none) stands at the start of its horizon.
-  if (thread && thread.length) return stateOfThread(thread, {age: age !== undefined && age >= 0 ? age : 0, lit: true, horizon: HORIZON_S})
+  // Factory's bound, never one of the faces' own: with none named, no stall is read from the clock (the task's own word says it).
+  const bound = boundOf(track.tasks)
+  if (bound !== undefined && age !== undefined && age >= bound) return 'stalled'
+  // A running task with no check-in yet (the needle read none) stands at the start of its bound.
+  if (thread && thread.length) return stateOfThread(thread, {age: age !== undefined && age >= 0 ? age : 0, lit: true, horizon: bound ?? Number.POSITIVE_INFINITY})
   return task.state === 'running' ? 'acting' : null
 }
 
