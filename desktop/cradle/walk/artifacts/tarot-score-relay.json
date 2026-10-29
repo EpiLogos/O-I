@@ -1,0 +1,278 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "tarot-score-relay",
+  "spec_ref": "docs/cradle/05-EXECUTION.md §3",
+  "grade": "B",
+  "binding": null,
+  "generated_at": "2026-10-29T15:18:24.170Z",
+  "environment": {
+    "base_url": "http://localhost:4391",
+    "bridge_url": "http://127.0.0.1:4397",
+    "viewport": "1280x820",
+    "browser_engine": "chromium",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "build_input": {
+      "mode": "reused-dist",
+      "bundle_fingerprint": "5f6dda3a67b5e12d2d599717e9b45f1f3f34d86eaeab8433b4896bd252ac6b99"
+    },
+    "node": "v24.21.0",
+    "platform": "darwin",
+    "source": {
+      "repository_root": "/Users/admin/Central/worktrees/env-2/o-i",
+      "repository_head": "d93cff706473998a4e35f457196acb5c0310fb5c",
+      "tracked_changes": [
+        "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+        "desktop/cradle/expressions-app/field-studies-journeys/src/kernelComposition.ts",
+        "desktop/cradle/expressions-app/field-studies-journeys/src/model.ts",
+        "desktop/cradle/expressions-app/field-studies-journeys/src/naraInstrument.css",
+        "desktop/cradle/expressions-app/field-studies-journeys/src/naraInstrument.tsx",
+        "desktop/cradle/expressions-app/field-studies-journeys/src/native-field/channel.ts",
+        "desktop/cradle/expressions-app/field-studies-journeys/src/native-field/controller.ts",
+        "desktop/cradle/expressions-app/field-studies-journeys/src/native-field/ql/PROVENANCE.json",
+        "desktop/cradle/expressions-app/field-studies-journeys/src/native-field/ql/instrument-session.d.mts",
+        "desktop/cradle/expressions-app/field-studies-journeys/src/native-field/ql/instrument-session.mjs",
+        "desktop/cradle/expressions-app/field-studies-journeys/src/native-field/scene.ts",
+        "desktop/cradle/expressions-app/field-studies-journeys/src/nativeField.ts",
+        "desktop/cradle/expressions-app/field-studies-journeys/src/nativeWorkspace.ts",
+        "desktop/cradle/expressions-app/field-studies-journeys/tests/native-composition.test.mjs",
+        "desktop/cradle/expressions-app/field-studies-journeys/tests/presented-chrome.test.mjs",
+        "desktop/cradle/kernel/src/expression_scene.rs",
+        "desktop/cradle/kernel/src/native_expression.rs",
+        "desktop/cradle/kernel/tests/expression_scene.rs",
+        "desktop/cradle/walk/run.mjs"
+      ],
+      "dirty_digest": "5ed4822753cae5e13d6de2c6b6dad1584885f37a2a590cf8ade2fee1b2d1dbc8",
+      "engine_provenance_path": "/Users/admin/Central/worktrees/env-2/o-i/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "engine_source": "EpiLogos/Point-Cloud-Demo",
+      "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
+    }
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 13612,
+  "checks": [
+    {
+      "ok": true,
+      "label": "The kernel composes a sky-bearing scene on the installed pair and admits its lease",
+      "data": {
+        "schema": "oi.native-expression-open/v1"
+      }
+    },
+    {
+      "ok": true,
+      "label": "The open receipt carries the native field at its device rate",
+      "data": {
+        "sample_rate": 48000,
+        "status": "ready"
+      }
+    },
+    {
+      "ok": true,
+      "label": "The scene event carries an admitted ql.sky-snapshot/v1 in its source receipts",
+      "data": {
+        "snapshot_ref": "sha256:38e37bfff5f8affbd"
+      }
+    },
+    {
+      "ok": true,
+      "label": "The field's own M3 clock discloses its steps for the score basis",
+      "data": {
+        "steps": 359
+      }
+    },
+    {
+      "ok": true,
+      "label": "Before any resolve, score-state is refused in the owner's words",
+      "data": {
+        "error": "no Tarot score has been resolved on this host; score-state follows a score-resolve"
+      }
+    },
+    {
+      "ok": true,
+      "label": "The exchange relay admits score-resolve by name and the field host answers the reading",
+      "data": {
+        "status": "ok",
+        "error": null
+      }
+    },
+    {
+      "ok": true,
+      "label": "The resolved reading answers current for the field's own event",
+      "data": {
+        "current": true,
+        "resolved_event_ref": "ql:k2/default-event"
+      }
+    },
+    {
+      "ok": true,
+      "label": "The score carries its tokens in canonical order",
+      "data": {
+        "tokens": 10
+      }
+    },
+    {
+      "ok": true,
+      "label": "A token's minor-id reference decodes to its named card",
+      "data": {
+        "card_kernel_ref": "ql.pole.tarot-bridge/v1#minor:20",
+        "card": "Seven of Wands"
+      }
+    },
+    {
+      "ok": true,
+      "label": "The token names its score role",
+      "data": {
+        "role": "kairos/Jupiter"
+      }
+    },
+    {
+      "ok": true,
+      "label": "The token's origin is computed",
+      "data": {
+        "origin": "computed"
+      }
+    },
+    {
+      "ok": true,
+      "label": "The token carries its codon membership",
+      "data": {
+        "codons": [
+          26
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "The token's pose discloses its lawful admission and state within the count",
+      "data": {
+        "active_state": 1,
+        "state_count": 7,
+        "lawfully_admitted": true
+      }
+    },
+    {
+      "ok": true,
+      "label": "The token's pose carries the corrected all-axis phase rotation the view reads",
+      "data": {
+        "phase_rotation_degrees": 50
+      }
+    },
+    {
+      "ok": true,
+      "label": "The reading discloses the field's own clock basis",
+      "data": {
+        "steps": 359,
+        "degree720": 359
+      }
+    },
+    {
+      "ok": true,
+      "label": "score-state answers the held reading through the same relay",
+      "data": {
+        "status": "ok"
+      }
+    },
+    {
+      "ok": true,
+      "label": "The held score answers as current for this field event",
+      "data": {
+        "current": true
+      }
+    },
+    {
+      "ok": true,
+      "label": "The held score keeps its basis revision: no re-derivation",
+      "data": {
+        "basis_revision": "sha256:7799075cc8f769064"
+      }
+    },
+    {
+      "ok": true,
+      "label": "The score reads never advance the native field",
+      "data": {
+        "generation": "1",
+        "before": "1"
+      }
+    },
+    {
+      "ok": true,
+      "label": "The score owner refuses the anchorless basis by name",
+      "data": {
+        "refusal": "no anchor basis: neither identity natal placements nor an occasion sky is admitted"
+      }
+    },
+    {
+      "ok": true,
+      "label": "The refusal leaves the field exactly where it was",
+      "data": {
+        "generation": "1"
+      }
+    },
+    {
+      "ok": true,
+      "label": "A scene composed on the saved snapshot stands on that same sky, not a fresh one",
+      "data": {
+        "snapshot_ref": "sha256:38e37bfff5f8affbd"
+      }
+    },
+    {
+      "ok": true,
+      "label": "The reopened scene's event carries the saved sky",
+      "data": {
+        "snapshot_ref": "sha256:38e37bfff5f8affbd"
+      }
+    },
+    {
+      "ok": true,
+      "label": "On the saved sky the same anchors deal the same cards in the same roles",
+      "data": {
+        "before": [
+          "kairos/Jupiter:Seven of Wands",
+          "kairos/Mars:Six of Wands",
+          "kairos/Mercury:Six of Cups",
+          "kairos/Moon:Ten of Swords"
+        ],
+        "after": [
+          "kairos/Jupiter:Seven of Wands",
+          "kairos/Mars:Six of Wands",
+          "kairos/Mercury:Six of Cups",
+          "kairos/Moon:Ten of Swords"
+        ]
+      }
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 29,
+      "data": {
+        "file": "tarot-score-relay-relay-scene-composed.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 33,
+      "data": {
+        "file": "tarot-score-relay-relay-score-resolved.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 28,
+      "data": {
+        "file": "tarot-score-relay-relay-refusal-named.png"
+      }
+    }
+  ],
+  "metrics": {
+    "relay_tokens": 10
+  },
+  "screenshots": [
+    "tarot-score-relay-relay-scene-composed.png",
+    "tarot-score-relay-relay-score-resolved.png",
+    "tarot-score-relay-relay-refusal-named.png"
+  ]
+}

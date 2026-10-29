@@ -1,7 +1,7 @@
 import {projectNativeSources,editNativeBasis,NativeDomainReading,NativeBasisEdit} from './domain';
 import {InstrumentSession} from './ql/instrument-session.mjs';
 import {NativeProjection} from './projection';
-import type {NativePort} from './channel';
+import {COMPOSE_TIMEOUT_MS,type NativePort} from './channel';
 import {applyPhysicalFormPose} from '../physicalFormActuator';
 import {nativeActuatorStanding} from '../nativeActuatorStanding';
 import {isScene,eventFromSources,readScene,editSceneEvent,sceneCausalTrace,type SceneActing,type SceneEdit} from './scene';
@@ -10,6 +10,7 @@ import {PresentationEffects} from './presentationEffects';
 import {voiceModeRef} from './torusPlay.mjs';
 import {conditionReadingOf} from '../instrumentCondition';
 import type {StageAudioClock} from '../stageCommands';
+import type {FieldScoreBasis,FieldScoreReply} from '../tarotScoreClient';
 export interface NativeRenderer {
  retainedTargetPort():any;releaseRetainedField():void;
  retainedTopology?():{tex_width:number;tex_height:number;particle_count:number;slot_count:number}|null;
@@ -163,14 +164,29 @@ export class NativeFieldController {
  } as const;}
  private changed(){this.onChange();}
  /** The instrument's primary opening: QL composes a scene binding (`ql scene binding`) for this stage's
-  * own retained texture; the kernel supplies the dated sky. No path, no file. */
- async compose(options:{sky?:NativeSky;event?:unknown}={}){
+  * own retained texture; the kernel supplies the dated sky. No path, no file.
+  * A saved occasion re-opens on its own sky: `skySnapshot` is the exact
+  * admitted `ql.sky-snapshot/v1` the saved composition carries, passed as the
+  * kernel's `sky_snapshot`, so the kernel runs no ql-sky and the binding
+  * stands on the sky the composition was saved with. */
+ async compose(options:{sky?:NativeSky;skySnapshot?:unknown;event?:unknown}={}){
   const topology=this.renderer.retainedTopology?.();
   if(!topology)throw new Error('The retained GPU field must be live before the instrument opens');
-  const sky=options.sky??'now';
-  if(!(sky==='none'||sky==='now'||(typeof sky==='object'&&typeof sky?.epoch==='string')))throw new Error('sky must be none, now or a dated epoch');
-  const request={texture:[topology.tex_width,topology.tex_height],units_per_metre:INSTRUMENT_PRESENTATION.units_per_metre,sky,...(options.event!==undefined?{event:options.event}:{})};
-  return this.admit(SCENE_SAMPLE_RATE,()=>this.port.request({operation:'compose',request}));
+  const base={texture:[topology.tex_width,topology.tex_height],units_per_metre:INSTRUMENT_PRESENTATION.units_per_metre};
+  const event=options.event!==undefined?{event:options.event}:{};
+  let request:Record<string,unknown>;
+  if('skySnapshot' in options){
+   const snapshot=options.skySnapshot as {schema?:unknown;snapshot_ref?:unknown}|null|undefined;
+   if(!snapshot||typeof snapshot!=='object'||Array.isArray(snapshot)||snapshot.schema!=='ql.sky-snapshot/v1'
+    ||typeof snapshot.snapshot_ref!=='string'||!snapshot.snapshot_ref
+    ||JSON.stringify(snapshot).length>1024*1024)throw new Error('the saved occasion sky is not one bounded ql.sky-snapshot/v1 owner reading');
+   request={...base,sky_snapshot:structuredClone(snapshot),...event};
+  }else{
+   const sky=options.sky??'now';
+   if(!(sky==='none'||sky==='now'||(typeof sky==='object'&&typeof sky?.epoch==='string')))throw new Error('sky must be none, now or a dated epoch');
+   request={...base,sky,...event};
+  }
+  return this.admit(SCENE_SAMPLE_RATE,()=>this.port.request({operation:'compose',request},COMPOSE_TIMEOUT_MS));
  }
  /** Inspect depth: an explicit Central binding document. */
  async connect(path:string,revision:string,sampleRate:number){
@@ -506,6 +522,39 @@ export class NativeFieldController {
   this.hold('stage disclosure reading');const held=await this.idle();
   try{await held.recover('stage disclosure reading');return await this.readStage(held);}
   finally{if(this.current(held))this.hold('stage disclosure complete; resume explicitly');}
+ });}
+ /** The facts the Tarot score stands on, read from this scene: the field's
+  * own subject and event, the M3 clock position of the last complete source
+  * read, and the admitted `ql.sky-snapshot/v1` the event carries (null when it
+  * carries none; `score-resolve` then refuses in the owner's words). Null when
+  * no scene owner is open or the clock is not disclosed. */
+ get scoreBasis():FieldScoreBasis|null{
+  const session=this.session,event=this.event;
+  if(!session||!this.scene||!event)return null;
+  const reading=session.reading,steps=this.sources?.current?.m3?.clock?.steps;
+  const clock=typeof steps==='string'&&/^(0|[1-9][0-9]{0,15})$/.test(steps)?Number(steps):steps;
+  if(typeof clock!=='number'||!Number.isSafeInteger(clock)||clock<0)return null;
+  return {schema:'oi.field-score-basis/v1',subject_ref:reading.subject_ref,event_ref:reading.event_ref,
+   clock_steps:clock,occasion_sky:this.occasionSky};
+ }
+ /** The admitted `ql.sky-snapshot/v1` the open scene's event carries, the sky
+  * this field stands on; null with no scene or no sky receipt. */
+ get occasionSky():{schema:'ql.sky-snapshot/v1';snapshot_ref:string;[key:string]:unknown}|null{
+  const event=this.scene?this.event:null;
+  const sky=(Array.isArray(event?.source_receipts)?event.source_receipts:[]).find((r:any)=>r?.schema==='ql.sky-snapshot/v1'&&typeof r.snapshot_ref==='string'&&r.snapshot_ref)??null;
+  return sky?structuredClone(sky):null;
+ }
+ /** The selected subject's Tarot score through the one serial owner's own
+  * exchange (a read: the field never advances). A refusal comes back as data
+  * in the owner's words; it never holds the owner. */
+ score(command:unknown):Promise<FieldScoreReply>{return this.serial(async()=>{
+  const session=this.session;if(!session||!this.scene)throw new Error('the Tarot score belongs to an open scene owner');
+  // A field whose last reply never came cannot be read again: say so, rather than the recovery's own refusal.
+  if(!session.reading.available)throw new Error('The live field stopped answering, so the score cannot be read. Open the live instrument again.');
+  if(this.status==='following'){if(!(await this.waitIdle(session,5000)))throw new Error('native owner busy; the score reading was not sent');return session.score(command) as Promise<FieldScoreReply>;}
+  this.hold('Tarot score reading');const held=await this.idle();
+  try{await held.recover('Tarot score reading');return await held.score(command) as FieldScoreReply;}
+  finally{if(this.current(held))this.hold('Tarot score reading complete; resume explicitly');}
  });}
  private async readStage(session:InstrumentSession){
   const stage=await session.stageState();

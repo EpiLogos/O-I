@@ -3,7 +3,7 @@ import type {BlueprintIntent} from './nativeBlueprint.js';
 /** The native working document behind the hosted application: open, commit,
  * recover and file-save through the owner. It has no panel of its own; its
  * standing reaches the app's Save control and Studio footer via host.status. */
-import {clone,type Journey} from './model.js';
+import {clone,type Journey,type SceneOccasionSky} from './model.js';
 import {NativeWorking,makeWork,worksHomeLocation,type NativeCheckpoint,type NativeFile,type NativeWorkingRecord,type WorkingSnapshot} from './nativeWorking.js';
 import {kernelExpressionsAvailable,listKernelExpressions,readKernelExpression,nativeExpressionRequest,nativeFileRequest,documentToChanges,type KernelChange} from './kernelExpressions.js';
 import type {KernelSaveAnchor} from './store.js';
@@ -18,7 +18,7 @@ import {nestedDocumentReads} from './nestedReads.js';
 import {type NestedDocumentLike,type NestedGraph} from './nestedOccurrence.js';
 import {nativeConnections} from './nativeCorrespondence.js';
 import type {ConnectionBinding} from '../../../../../packages/oi-design-system/expressions-engine/oi/expressionBindings.mjs';
-import {prepareCompositionEdit} from './kernelComposition.js';
+import {prepareCompositionEdit,joinOccasion,validOccasion} from './kernelComposition.js';
 import {NativeOpenIntent} from './nativeOpenIntent.js';
 import {NativeSelectionQueue} from './nativeSelectionQueue.js';
 import {refreshStep,hasLocalEdits,performedByLiveAct} from './nativeFollow.js';
@@ -73,6 +73,10 @@ export interface NativeWorkspaceHost {
  refresh?:()=>void;
  summon:(kind:'library'|'verso'|'search',subject?:NativeSubject)=>void;
  correspondence:(rows:Record<string,ConnectionBinding[]>,selection:string|null)=>void;
+ /** The sky the live field was opened on for this composition (null when
+  * none). The Save carries it into the submitted Scene material, so a reopened
+  * composition opens its field on the same sky. */
+ retainedOccasion?:()=>SceneOccasionSky|null;
  /** The working document's truthful standing, shown by the app's own Save
   * control and Studio footer — there is no separate native panel. */
  status?:(state:NativeStatus)=>void;
@@ -211,6 +215,14 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
   const generation=restoreGeneration;
   await persistDraft(snapshot.journey);
   if(generation!==restoreGeneration||host.snapshot().journey.id!==snapshot.journey.id)throw new Error('The selected work changed while its draft was being retained. No composition was committed.');
+ };
+ /** The Save's occasion join: the field's occasion sky enters the submitted
+  * snapshot on the Scene the person is standing in, validated by the operation
+  * builder; a malformed occasion is refused and never saved. */
+ const occasioned=(snapshot:WorkingSnapshot):void=>{
+  const occasion=host.retainedOccasion?.()??null;
+  if(occasion&&!validOccasion(occasion)){status('The field’s occasion sky is not a ql.sky-snapshot/v1 reading; it was not saved.');return;}
+  joinOccasion(snapshot.journey,snapshot.sceneId,occasion);
  };
  const requireAdoption=(current:()=>boolean)=>{if(!current())throw new Error('The working draft changed while opening. It and its native basis were retained; choose Open again when ready.');};
 // lane-3 E19b: a hosted draft newer than its checkpoint's acknowledged basis is not adopted silently after an unclean exit. The owner
@@ -433,7 +445,7 @@ const recoveryOffered=new Set<string>();
   * a caller that also reads its undo anchor must do so in the same step. Returns
   * false when the Save was refused or failed (named in the status and toast). */
  const commitRecorded=async():Promise<false|NativeSave>=>{
-  const snapshot=clone(host.snapshot()),version=host.version();
+  const snapshot=clone(host.snapshot()),version=host.version();occasioned(snapshot);
   const outcome:{saved?:NativeSave}={};
   const ok=await mutate(async()=>{
    await retainSubmitted(snapshot);
@@ -468,7 +480,7 @@ const recoveryOffered=new Set<string>();
   /** Page the loaded members of a Scene larger than the render budget. */
   page:(delta:number)=>guarded(()=>changePage(delta)),
   /** Write the working composition to a Central file and read it back. */
-  saveFile:(folder:string,name:string)=>{const snapshot=clone(host.snapshot()),version=host.version();return guarded(async()=>{
+  saveFile:(folder:string,name:string)=>{const snapshot=clone(host.snapshot()),version=host.version();occasioned(snapshot);return guarded(async()=>{
    await retainSubmitted(snapshot);
    const file=await work.saveFile(snapshot,{parent_path:folder,name});
    status(`Saved and read back ${file.location.path}.${host.version()!==version?' Newer local edits are still unsaved.':''}`);

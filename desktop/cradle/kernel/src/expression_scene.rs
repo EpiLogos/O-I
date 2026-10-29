@@ -265,6 +265,51 @@ fn scene_clip(material: &serde_json::Map<String, Value>) -> Result<(), String> {
     Ok(())
 }
 
+/// The sky a Scene's live field was opened on (QL-MEF #312 TS4, field-studies-journeys model.ts SceneOccasionSky): the exact
+/// admitted `ql.sky-snapshot/v1` the field's scene event carried, labelled `oi.scene-occasion-sky/v1` with the event it was read
+/// for and when it was kept. The Save carries it so a reopened composition opens its field on that sky. Its body is QL's own
+/// reading, bounded by the Scene budget; only its identity is checked here, and the kernel's compose checks it again.
+fn occasion_sky(material: &serde_json::Map<String, Value>) -> Result<(), String> {
+    let Some(occasion) = material.get("occasionSky") else {
+        return Ok(());
+    };
+    let refused = || {
+        "A scene's occasion sky is one oi.scene-occasion-sky/v1 holding a ql.sky-snapshot/v1"
+            .to_string()
+    };
+    let occasion = occasion.as_object().ok_or_else(refused)?;
+    if occasion.keys().any(|key| {
+        !matches!(
+            key.as_str(),
+            "schema" | "sky" | "event_ref" | "retained_at_unix_ms"
+        )
+    }) || occasion.get("schema").and_then(Value::as_str) != Some("oi.scene-occasion-sky/v1")
+        || !occasion
+            .get("event_ref")
+            .and_then(Value::as_str)
+            .is_some_and(|value| !value.is_empty() && value.len() <= 2048)
+        || occasion
+            .get("retained_at_unix_ms")
+            .and_then(Value::as_u64)
+            .is_none()
+    {
+        return Err(refused());
+    }
+    let sky = occasion
+        .get("sky")
+        .and_then(Value::as_object)
+        .ok_or_else(refused)?;
+    if sky.get("schema").and_then(Value::as_str) != Some("ql.sky-snapshot/v1")
+        || !sky
+            .get("snapshot_ref")
+            .and_then(Value::as_str)
+            .is_some_and(|value| !value.is_empty() && value.len() <= 2048)
+    {
+        return Err(refused());
+    }
+    Ok(())
+}
+
 /// lane-5 T8: a Scene's loop exit, the one Scene field the edge grammar adds. It is a flag on the Scene whose exit wraps, on or off.
 fn loop_exit(material: &serde_json::Map<String, Value>) -> Result<(), String> {
     match material.get("breakAtEnd") {
@@ -401,6 +446,7 @@ pub fn validate(
         "breakAtEnd",
         "entryOffset",
         "clip",
+        "occasionSky",
     ];
     if material.keys().any(|key| !KEYS.contains(&key.as_str())) {
         return Err("Unsupported authoring Scene field; original input was not rewritten".into());
@@ -435,6 +481,7 @@ pub fn validate(
     }
     loop_exit(material)?;
     scene_clip(material)?;
+    occasion_sky(material)?;
     for key in ["view", "field", "composition", "morph", "engine"] {
         object(&presentation.scene[key], key)?;
     }

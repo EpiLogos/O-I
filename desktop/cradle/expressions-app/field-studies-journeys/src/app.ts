@@ -45,7 +45,8 @@ import {applyPalette,applyBackground,invertPalette,applyChain,applyGlyph,applyKu
 import {COLOR_PALETTES,hexToRgb,isLightHex} from '../../src/engine/colorPalettes';
 import {CHAKRA_PROFILE_ID} from '../../src/engine/semantics/chakraProfile';
 import type {SemanticBinding,SemanticColorCoupling,SemanticFieldConfig} from '../../src/engine/semantics/semanticTypes';
-import {Journey,Scene,Entity,EntityLayer,TextLayer,Tool,Shape,Vec3,clone,uid,clamp,fieldStudies,oiMark,rethemeMark,sevenCentres,smallLanguage,blankJourney,blankScene,entity,pin,chakraEntities,validateJourney,AutomationLane,SCENE_TRANSITION_MIN,SCENE_TRANSITION_MAX,type MarkThemeReading} from './model.js';
+import {Journey,Scene,Entity,EntityLayer,TextLayer,Tool,Shape,Vec3,clone,uid,clamp,fieldStudies,oiMark,rethemeMark,sevenCentres,smallLanguage,blankJourney,blankScene,entity,pin,chakraEntities,validateJourney,AutomationLane,SCENE_TRANSITION_MIN,SCENE_TRANSITION_MAX,type MarkThemeReading,type SceneOccasionSky} from './model.js';
+import {carrySavedOccasion} from './kernelComposition.js';
 import {DocumentStore,readLibrary,readLibraryWithOrigins,saveToLibrary,removeFromLibrary,recordLibraryAdoption,adoptedLocalOrigin,linkLibraryCopy,libraryOpenPlan,type LibraryOrigin} from './store.js';
 import {decorateLibraryCard,libraryCardStanding,kernelCopyRefusalMessage,localCopyIdFor} from './libraryCards.js';
 import {bindingEditLabel,connectActLabel,historyTitle,historyToast,historyWaitReason,KERNEL_UPDATE_LABEL,OUTSIDE_UPDATE_REASON,researchMaterialLabel} from './undoLabels.js';
@@ -2531,7 +2532,28 @@ window.addEventListener('beforeunload',()=>quitDraft(false));
 window.addEventListener('pageshow',ev=>{if(ev.persisted){try{markSessionOpen(localStorage,new Date());}catch{/* unavailable storage: see readUncleanExit */}}});
 // A rail switch is a context switch: the departing draft is written before the rail changes.
 document.addEventListener('click',ev=>{if((ev.target as Element|null)?.closest?.('[data-rail]'))draftSchedule.flushNow('rail');},true);
-const nativeField=installNativeField(engine,()=>{fieldPaused=false;needsFrame=true;renderAll();});
+// The sky the live field was opened on for the open Expression: the admitted `ql.sky-snapshot/v1` its scene event carried. It stands
+// outside the working draft (opening the field never dirties authored work); the Save carries it into the Scene material, so the kernel
+// document holds the sky the score was read on. A reopened composition's own saved occasion (its Scene material) is the fallback.
+let fieldOccasion:{expression_ref:string;occasion:SceneOccasionSky}|null=null;
+const compositionOccasion=():SceneOccasionSky|null=>{
+ const ref=nativeWorkspace?.nativeView()?.document.expression_ref;
+ if(fieldOccasion&&ref&&fieldOccasion.expression_ref===ref)return clone(fieldOccasion.occasion);
+ const saved=(scene() as Scene).occasionSky;
+ return saved&&saved.schema==='oi.scene-occasion-sky/v1'?saved:null;
+};
+const nativeField=installNativeField(engine,()=>{fieldPaused=false;needsFrame=true;renderAll();},{
+ // The field's openings restore the composition's saved sky, never a fresh compose.
+ retainedOccasion:compositionOccasion,
+ // An opening the owner admitted: keep its admitted sky for the Save. The explicit no-sky opening is exploration and keeps nothing.
+ onComposed:mode=>{
+  if(mode==='none')return;
+  const controller=nativeField?.controller,sky=controller?.occasionSky,event=controller?.reading.native?.event_ref,ref=nativeWorkspace?.nativeView()?.document.expression_ref;
+  if(!sky||!ref||typeof event!=='string')return;
+  // Opened again on the saved sky: that occasion stands as it was, so the next Save writes nothing new.
+  const kept=mode==='retained'?compositionOccasion():null;
+  fieldOccasion={expression_ref:ref,occasion:kept?.sky.snapshot_ref===sky.snapshot_ref?kept:{schema:'oi.scene-occasion-sky/v1',sky,event_ref:event,retained_at_unix_ms:Date.now()}};
+ }});
 // Without a retaining engine there is no native producer to present; the
 // Studio nav offers no dead "Live instrument" entry for it.
 if(!nativeField)document.querySelector('[data-action="studio-section"][data-value="native"]')?.remove();
@@ -2639,7 +2661,8 @@ function asCanvasImportOwnerCall<T>(call:()=>T):T{canvasImportOwnerCall=true;try
 // native work only (lane W, 15 Oct — the door's Scene and New were refused while the frame stood on its own blank canvas).
 // O-I #763: a local draft left for another work and kept as a work in its folder: its Library copy opens that work, never a second copy,
 // and the host lists its works again, so its browser shows the work at once.
-nativeWorkspace=installNativeWorkspace({shouldRetainDraft:()=>store.revision!==0||!!nativeWorkspace?.nativeView(),localDraftEdited:()=>store.revision!==localOpenedRevision,keptAsWork:(journey,kept)=>{try{linkLibraryCopy(journey,{ref:kept.expression_ref,title:kept.title,at:new Date().toISOString()});}catch{/* The work stands in its folder; the browser Library is unavailable, so its copy keeps no link. */}hostRequest({request:'works-changed'});},anchor:()=>store.kernelSaveAnchor(),recordSave:(anchor,checkpoint)=>{if(!store.attachKernelCheckpoint(anchor,checkpoint))toast('Saved. Undo cannot reverse this Save on the native owner, because the step it began from has moved.',7000);},snapshot:()=>({journey:clone(store.document),sceneId:scene().id,entityId:selected[0]??null}),version:()=>store.revision,load:applyNativeView,toast,gate:ownerWriteRefusal,refresh:()=>{needsFrame=true;renderAll();},summon:(kind,subject)=>hostRequest({request:'summon',detail:{kind,subject}}),correspondence:(rows,selection)=>{nativeConnectionRows=rows;nativeSelectedRelation=selection;needsFrame=true;},status:showNativeStatus,chooseRecovery:request=>askRecoveryChoice(request.draft,{...request.offer,revision:request.revision}),followed:(_ref,readThrough)=>{const panels=followedPanels(readThrough);if(panels.sequence!==null)sequenceOpen=panels.sequence;if(panels.inspector!==null)inspectorOpen=panels.inspector;renderAll();}});
+nativeWorkspace=installNativeWorkspace({shouldRetainDraft:()=>store.revision!==0||!!nativeWorkspace?.nativeView(),localDraftEdited:()=>store.revision!==localOpenedRevision,keptAsWork:(journey,kept)=>{try{linkLibraryCopy(journey,{ref:kept.expression_ref,title:kept.title,at:new Date().toISOString()});}catch{/* The work stands in its folder; the browser Library is unavailable, so its copy keeps no link. */}hostRequest({request:'works-changed'});},anchor:()=>store.kernelSaveAnchor(),recordSave:(anchor,checkpoint)=>{if(!store.attachKernelCheckpoint(anchor,checkpoint))toast('Saved. Undo cannot reverse this Save on the native owner, because the step it began from has moved.',7000);},snapshot:()=>({journey:carrySavedOccasion(clone(store.document),nativeWorkspace?.nativeView()),sceneId:scene().id,entityId:selected[0]??null}),version:()=>store.revision,load:applyNativeView,toast,gate:ownerWriteRefusal,refresh:()=>{needsFrame=true;renderAll();},summon:(kind,subject)=>hostRequest({request:'summon',detail:{kind,subject}}),correspondence:(rows,selection)=>{nativeConnectionRows=rows;nativeSelectedRelation=selection;needsFrame=true;},retainedOccasion:compositionOccasion,
+ status:showNativeStatus,chooseRecovery:request=>askRecoveryChoice(request.draft,{...request.offer,revision:request.revision}),followed:(_ref,readThrough)=>{const panels=followedPanels(readThrough);if(panels.sequence!==null)sequenceOpen=panels.sequence;if(panels.inspector!==null)inspectorOpen=panels.inspector;renderAll();}});
 const retainedEditor=createRetainedNativeEditor({
  store,sceneId:()=>scene().id,nativeView:()=>nativeWorkspace?.nativeView(),
  selection:()=>({entity_ids:[...selected],step_id:scene().entities.find(e=>e.id===selected[0])?.sequence.steps[stepIndex]?.id??null}),
@@ -2964,11 +2987,13 @@ lensStudio.setMode(hostMode==='techne'?'techne':'expressions');
 // Save is the primary act: it stays in the masthead at every width, outside
 // the history/capture overflow menu.
 (document.querySelector('#app .header-actions') as HTMLElement)?.insertAdjacentHTML('afterbegin',ib('native-save','save','Save (⌘S)','id="native-save"'));
-Object.assign(window.__FIELD_STUDIES__,{nativeWorking:()=>nativeWorkspace?.inspect(),nativeConnections:()=>engine.inspectConnections?.(),openNative:(reference:string)=>nativeWorkspace?.open(reference),openNativeFile:(path:string)=>nativeWorkspace?.openFile(path)});
+Object.assign(window.__FIELD_STUDIES__,{nativeWorking:()=>nativeWorkspace?.inspect(),nativeConnections:()=>engine.inspectConnections?.(),openNative:(reference:string)=>nativeWorkspace?.open(reference),openNativeFile:(path:string)=>nativeWorkspace?.openFile(path),fieldBasis:()=>nativeField?.controller.scoreBasis??null});
 const qs=new URLSearchParams(location.search);
 const naraInstrument=installNaraInstrument({nativeView:()=>nativeWorkspace?.nativeView(),sceneId:()=>scene().id,
  presentForm:reading=>{if(reading)naraFormGeometry(reading,nativeWorkspace?.nativeView(),scene().id);privateFormReading=reading;needsFrame=true;},
  presentEvidence:input=>{privateEvidenceField=input?createEvidenceField(input,nativeWorkspace?.nativeView(),scene().id):null;needsFrame=true;},
+ fieldBasis:()=>nativeField?.controller.scoreBasis??null,
+ fieldScore:async command=>{const controller=nativeField?.controller;if(!controller)throw Error('The live field is not open in this window.');return controller.score(command);},
  acceptNativeDocument:async(document:unknown)=>{
   const native=document as {expression_ref?:unknown;revision?:unknown};
   const showing=nativeWorkspace?.nativeView()?.document;
