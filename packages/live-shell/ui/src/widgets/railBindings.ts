@@ -145,7 +145,7 @@ export function nowsCloseWrites(transport: KernelTransportStatus | undefined, gr
 
 /** The NOWs binding (widgets__nows.tsx) from the ground's one reading (desktop/cradle/src/central/client.ts readGround, Central's
  * `inspect`): the civil date and time and the policy's timezone; the Day's own lifecycle; the clearings as the listing states them —
- * an archived one is closed and does not show. A part the ground refused is absent, its words the reason when nothing stands. */
+ * an archived one is closed and does not show — and the year counted over all of them (`seasons`). A part the ground refused is absent, its words the reason when nothing stands. */
 export function nowsValues(ground: CentralGroundReading): Record<string, Value> {
   const values: Record<string, Value> = {}
   const time = ground.time.state === 'ready' ? ground.time.data : undefined
@@ -159,6 +159,13 @@ export function nowsValues(ground: CentralGroundReading): Record<string, Value> 
   const listing = ground.now.state === 'ready' ? ground.now.data : undefined
   if (listing) put(values, 'nows', JSON.stringify(listing.records.filter(row => row.lifecycle !== 'archived').map(row => ({
     now_ref: row.now_ref, purpose: row.purpose, lifecycle: row.lifecycle, participant_refs: row.participant_refs, created_at_unix_seconds: row.created_at_unix_seconds}))))
+  // The field's year (manual §25.6, the NOWs' environ: a clearing active, quiescent, closed, archived): how many clearings stand in each
+  // season over the whole listing, the archived ones too, which the rows above leave out (faces/environReadings.ts seasonsOf).
+  if (listing) {
+    const seasons: Record<string, number> = {active: 0, quiescent: 0, closed: 0, archived: 0}
+    for (const row of listing.records) if (row.lifecycle in seasons) seasons[row.lifecycle]! += 1
+    put(values, 'seasons', JSON.stringify(seasons))
+  }
   if (!time && !listing) put(values, 'reason', ground.time.error?.message ?? ground.now.error?.message ?? 'The ground did not answer')
   return values
 }

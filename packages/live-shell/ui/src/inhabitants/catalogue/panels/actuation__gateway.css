@@ -23,6 +23,8 @@
 /* The Frames page at pane size (a monitor's Full, monitor.tsx): the tape and the list of frames, and the readings beside them. */
 .fm-body { height: 100%; display: grid; grid-template-columns: minmax(0, 1fr) 232px; }
 /* The tape across the top of the list: its lanes and the Keep scale, on the well's ground, flush with the column. */
+/* The river across the head of the frames column (manual §25.6), in the kit's well. */
+.fm-river { flex: none; padding: 6px 6px 6px; background: var(--bg-1); border-bottom: 1px solid var(--line); }
 .fm-strip { flex: none; height: 92px; background: var(--dp-well); border-bottom: 1px solid var(--line); overflow: hidden; }
 .fm-tape-svg { display: block; }
 .fm-tape-svg .dp-handle { cursor: ew-resize; }

@@ -301,7 +301,7 @@ export async function resolveWikiSceneSource(transport: KernelTransportStatus, i
   // document provenance cannot lend that source a different register scope.
   const all = selectedSubject===undefined?[...document.provenance,...memberReadings]:memberReadings;
   const matches = registers.filter(register => all.some(row => row.availability === "available" && row.ref === `wiki:${wikiPathOf(register)}`));
-  if (matches.length !== 1) throw new Error("Open this constellation in its source editor and choose Open live composition to refresh its source bindings.");
+  if (matches.length !== 1) throw new Error("This constellation's source bindings are out of date. Drag it from the browser onto a track in Expressions to compose it again with them.");
   const register = matches[0];
   const current = await readRegister(transport, register.project);
   const basis = `wiki:${current.file.location.path}`;
@@ -354,7 +354,7 @@ export async function readWikiSceneTechne(transport: KernelTransportStatus, inpu
   const memberBases = members.flatMap(member => member.readings.filter(row => row.availability === "available" && state.registers.some(register => row.ref === `wiki:${wikiPathOf(register)}`)));
   const bases = documentBases.length ? documentBases : memberBases;
   const matching = state.registers.filter(register => bases.some(row => row.ref === `wiki:${wikiPathOf(register)}`));
-  if (matching.length !== 1) throw new Error("This Scene has no exact Wiki register binding. Open its saved constellation in the source editor and choose Open live composition to refresh its source bindings.");
+  if (matching.length !== 1) throw new Error("This Scene has no exact Wiki register binding. Drag its constellation from the browser onto a track in Expressions to compose it again with its source bindings.");
   const register = matching[0];
   const reading = await ensureWikiProjectionReading(register, transport);
   const standing = getWikiProjectionState().standings[register.key];

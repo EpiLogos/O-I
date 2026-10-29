@@ -16,13 +16,9 @@
 @keyframes panel-breathe{0%,100%{opacity:1}50%{opacity:.35}}
 @media (prefers-reduced-motion:reduce){.panel-presence[data-presence="working"]{animation:none}}
 .avatar-menu-list{position:absolute;top:calc(100% + 4px);left:0;z-index:var(--oi-z-popover,30);min-width:230px;max-width:min(320px,calc(100vw - 24px));max-height:min(60vh,440px);overflow:auto;display:flex;flex-direction:column}
-.avatar-menu-section{margin:6px 8px 2px;font-size:var(--oi-shell-type-eyebrow);letter-spacing:var(--oi-shell-tracking);text-transform:uppercase;color:var(--oi-muted-2)}
 .desktop-shell .avatar-menu-row{display:flex;align-items:center;gap:8px;min-height:30px;padding:3px 8px;border:0;border-radius:var(--oi-shell-radius-row,5px);background:transparent;color:var(--oi-accent-ink);font:inherit;font-size:var(--oi-shell-type-nav);text-align:left;cursor:pointer}
 .desktop-shell .avatar-menu-row:hover,.desktop-shell .avatar-menu-row:focus-visible{background:var(--oi-wash);outline:none}
 .avatar-menu-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.avatar-menu-note{font-size:var(--oi-shell-type-meta);color:var(--oi-muted-2)}
-.avatar-menu-note-line{margin:4px 8px;font-size:var(--oi-shell-type-meta);color:var(--oi-muted-2)}
-.avatar-menu-rule{height:var(--oi-shell-edge);margin:4px 2px;background:var(--oi-hairline-soft)}
 
 /* one-line panel states under the top row (P10, P11, Bypass) */
 .panel-line{flex:none;margin:0;padding:6px 12px;border-bottom:var(--oi-shell-edge) solid var(--oi-hairline-soft);font-size:var(--oi-shell-type-meta);color:var(--oi-muted-2);line-height:1.5}
@@ -40,8 +36,6 @@
 .panel-agents{display:flex;flex-direction:column;gap:var(--oi-space-2);overflow:auto;padding:var(--oi-space-2) 0 var(--oi-space-4)}
 .agents-head{display:flex;align-items:center;justify-content:flex-end;gap:4px;padding:0 10px}
 .agents-search{flex:1;min-width:0;height:26px}
-.agents-create{position:relative}
-.agents-create-menu{position:absolute;top:calc(100% + 4px);right:0;z-index:var(--oi-z-popover,30);min-width:160px}
 .agents-section h3{margin:var(--oi-space-3) 14px var(--oi-space-1);font-size:var(--oi-shell-type-eyebrow);font-weight:600;letter-spacing:var(--oi-shell-tracking);text-transform:uppercase;color:var(--oi-muted-2)}
 .agents-section ul{list-style:none;margin:0;padding:0 6px}
 .agents-row{position:relative;display:flex;align-items:center;gap:4px;min-height:44px;border-radius:var(--oi-shell-radius-row,6px)}

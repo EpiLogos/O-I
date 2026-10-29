@@ -24,7 +24,6 @@
 /* Whole, in the pool: the plate is 400 wide (§3), one or two bands, pages in its head. */
 .device--whole > .dp { width: 400px }
 .device-pool { height: 100%; padding: 6px; overflow: hidden }
-.device-pool-empty { margin: 6px; font-size: 10.5px; color: var(--text-faint) }
 
 /* Whole as the expanded view (manual §16.4; DeviceFlip.tsx): a band across the detail area above the chain, the plate as wide as
    the band with its bands side by side (the wide frame, catalogue/panels/panels.css .dp-wide). Nothing in it scrolls. */

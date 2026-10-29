@@ -57,15 +57,12 @@ button.plate-row-press:disabled { color: var(--text-faint) }
 .plate-inline .dp-radio button { min-width: 0; overflow: hidden; text-overflow: ellipsis }
 /* A readout or a toggle laid inline: the value at the right of its name. */
 .plate-inline.dp-cell--readout, .plate-inline > .dp-cell--readout { flex-direction: row-reverse; justify-content: flex-end }
-.plate-row-line { display: flex; align-items: center; gap: 6px; min-width: 0 }
-.plate-lamp-row { display: flex; align-items: center; gap: 6px; height: 16px; min-width: 0 }
 .plate-lamp-row .dp-value { margin-left: auto; color: var(--text) }
 /* Keys in a row (a lens's own options, a walk's steps): they wrap at the section's width. */
 .plate-keys { display: flex; flex-wrap: wrap; gap: 3px; min-width: 0 }
 .plate-keys > .dp-cell { flex-direction: row }
 .plate-tool-row { display: flex; align-items: center; gap: 4px; min-width: 0 }
 .plate-tool-row > .plate-field { flex: 1 1 auto }
-.plate-radio-why { color: var(--text-faint) }
 .dp-cell.plate-reading { flex-direction: row; align-items: center; gap: 6px; height: 16px; justify-self: stretch; align-self: stretch; grid-column: 1 / -1 }
 .dp-cell.plate-reading > .dp-label { flex: none; width: 52px; text-align: left }
 .dp-cell.plate-reading > .dp-value { min-width: 0; overflow: hidden; text-overflow: ellipsis; color: var(--text) }

@@ -113,7 +113,6 @@
 .tl-readout { position: absolute; top: 2px; left: 5px; padding: 0 4px; background: var(--bg-1); border-left: 2px solid var(--stalled); color: var(--stalled); font: 9px ui-monospace, 'SF Mono', Menlo, monospace; white-space: nowrap }
 .tl-needle[data-edge="end"] .tl-readout { left: auto; right: 5px; border-left: 0; border-right: 2px solid var(--stalled) }
 .tl-note { flex: none; margin: 0; padding: 3px 8px; font-size: 10px; color: var(--text-faint); background: var(--bg-1); border-top: 1px solid var(--line) }
-.tracks-empty { position: absolute; inset: 0; display: grid; place-items: center; color: var(--text-faint); font-size: 11px; background: var(--bg-2) }
 /* Where the tracks will stand (Live's "Drop Files and Devices Here"): the empty area of the grid or the lanes, the reason in
    it, quiet. */
 .sg-drop { flex: 1; min-width: 0; display: grid; place-items: center; padding: 16px; text-align: center; color: var(--text-faint); font-size: 11px; border-right: 2px solid var(--line); background: var(--bg-2) }

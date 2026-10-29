@@ -41,13 +41,13 @@ test('authored constellation carries exact register/frame basis into existing na
   await assert.rejects(resolveSceneConstellation(transport,{...editorRequest,entity_ref:'entity:absent'}),/not a source-bound member/);
   const reading=await readWikiSceneTechne(transport,requestReading);assert.equal(reading.snapshot.revision,register.file.revision);assert.deepEqual(reading.whole.member_refs,[subject]);
   assert.equal(reading.expressions[0].expression_ref,doc.expression_ref,'authored identity is not required to equal generated Wiki projection identity');
-  // Explicit Open live composition upgrades an old document's bindings;
+  // Composing the constellation again (drag it onto a track) upgrades an old document's bindings;
   // ordinary reading never manufactures its absent source provenance.
   const entity=Object.values(doc.entities)[0];
   const legacy=await kernelOp(transport,{op:'expression',request:{operation:'edit',expression_ref:doc.expression_ref,expected_revision:doc.revision,actor:'human:native-regression',changes:[{change:'subject_bind',entity_ref:entity.entity_ref,binding:{...entity.subject,readings:entity.subject.readings.filter(row=>row.ref!==basis.ref)}}]}});
   assert.equal(legacy.error,undefined);const legacyDoc=legacy.outcome.data.document;
-  await assert.rejects(resolveSceneConstellation(transport,{...editorRequest,revision:legacyDoc.revision}),/source editor.*Open live composition/);
-  await assert.rejects(readWikiSceneTechne(transport,{...requestReading,revision:legacyDoc.revision}),/source editor.*Open live composition/);
+  await assert.rejects(resolveSceneConstellation(transport,{...editorRequest,revision:legacyDoc.revision}),/Drag (it|its constellation) from the browser onto a track in Expressions/);
+  await assert.rejects(readWikiSceneTechne(transport,{...requestReading,revision:legacyDoc.revision}),/Drag (it|its constellation) from the browser onto a track in Expressions/);
   const reopened=await projectConstruction(transport,undefined,frame,register.relations,register);assert.equal(reopened.state,'ready');
   const upgraded=await readWikiSceneTechne(transport,{...requestReading,revision:reopened.document.revision});assert.equal(upgraded.snapshot.revision,register.file.revision);
   await assert.rejects(projectConstruction(transport,undefined,{...frame,revision:frame.revision+1},register.relations,register),/exact register basis/);

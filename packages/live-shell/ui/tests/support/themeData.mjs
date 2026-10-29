@@ -30,10 +30,8 @@ const CONTROLS = 'the atlas\'s own controls (its header and menus, selects and t
 /** File → literals kept (literal → count). */
 export const DATA = {
   'styles.css': {
-    // Session and arrangement slots: ink on the tracks' own identity colours, and the clip's edge mixed into the track colour.
-    '#21282e': 1, '#292c31': 1, '#252a2d': 1, '#20252a': 1, '#272d32': 1,
-    // A track's identity colour, the fallback where a head has none set (the track colour stays across themes).
-    '#97b1be': 1,
+    // The arrangement clip's edge, mixed into the track's own identity colour.
+    '#20252a': 1, '#272d32': 1,
     // The Favorites collection's own colour.
     '#f46b64': 1,
   },

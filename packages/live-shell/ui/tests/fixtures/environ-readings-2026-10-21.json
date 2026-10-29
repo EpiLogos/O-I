@@ -1,0 +1,2082 @@
+{
+ "_note": "Read only on workcell:mac, 21 Oct 2026: `ctrl --json action run central.now.list '{}'` (records trimmed to now_ref, lifecycle, participant_refs, created_at_unix_seconds; each purpose replaced by `clearing N`, the owner's words kept out of the fixture) and `seat status --json` (verbatim). The environ readers take these fields only.",
+ "nows": {
+  "records": [
+   {
+    "now_ref": "central:now:control:root:015179906b520721df793e96188199bc72906d7b2011048c7be07830f625a4f8",
+    "purpose": "clearing 1",
+    "lifecycle": "active",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1791322833
+   },
+   {
+    "now_ref": "central:now:control:root:06cca2f04e1a408f451f36263de0d3c1dda2aa8547a27d3ed163c222bc711dea",
+    "purpose": "clearing 2",
+    "lifecycle": "active",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1790244759
+   },
+   {
+    "now_ref": "central:now:control:root:08b57a8ea4e6eaaf6a92be5bbd9c8e736849c50de01a42c1b5cb12055e05ca1c",
+    "purpose": "clearing 3",
+    "lifecycle": "archived",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1789605761
+   },
+   {
+    "now_ref": "central:now:control:root:090bdfbc1463507cfeab4fcb0d3e6b5bc8ccec656bdc682177e256499c5d8f76",
+    "purpose": "clearing 4",
+    "lifecycle": "archived",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1790333626
+   },
+   {
+    "now_ref": "central:now:control:root:0a0a2fc9023a2a38203d9f7a27d2f0fc0edcdee60d9dd17f3e43690218fa649d",
+    "purpose": "clearing 5",
+    "lifecycle": "active",
+    "participant_refs": [
+     "codex:01a0e3a9-8962-7f42-b12f-dda494033883"
+    ],
+    "created_at_unix_seconds": 1790526181
+   },
+   {
+    "now_ref": "central:now:control:root:10236c9ce8ffca7b86166ec06bba0089da308c50c056b12506763b789845656e",
+    "purpose": "clearing 6",
+    "lifecycle": "closed",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1792400461
+   },
+   {
+    "now_ref": "central:now:control:root:11edf1a62b3de17e0efa6c203a2039db98e99d1411c840681a6ff7cc06bafc7d",
+    "purpose": "clearing 7",
+    "lifecycle": "active",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1790333984
+   },
+   {
+    "now_ref": "central:now:control:root:14dd61056e8ff68c610c923d6861db5998a68dabfbb1a449aa9abca5e7e88b60",
+    "purpose": "clearing 8",
+    "lifecycle": "closed",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1792380165
+   },
+   {
+    "now_ref": "central:now:control:root:16c497e18484506ac622af36188979be906b4258d67a60d7dfe3091f2ecba79e",
+    "purpose": "clearing 9",
+    "lifecycle": "archived",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1789675357
+   },
+   {
+    "now_ref": "central:now:control:root:17eab19e010bb3c8e2186860dc902ba85e410a372d6aef9fb247758b4fed8f95",
+    "purpose": "clearing 10",
+    "lifecycle": "archived",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1789446530
+   },
+   {
+    "now_ref": "central:now:control:root:1c222d174d8d27885675f59749814544852127ed4484d7730ffd0aece61ffba9",
+    "purpose": "clearing 11",
+    "lifecycle": "archived",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1789957573
+   },
+   {
+    "now_ref": "central:now:control:root:215af6dd94b0463b64cfac1207e4d2b1474451cd82bafad34cc54f128b5ee5fd",
+    "purpose": "clearing 12",
+    "lifecycle": "active",
+    "participant_refs": [
+     "codex:01a0fcab-8114-7f83-a6cd-f29b31d26fba"
+    ],
+    "created_at_unix_seconds": 1790945905
+   },
+   {
+    "now_ref": "central:now:control:root:21a72938ebdc631be371667884de43871e755644a02c1eac8bccd3174f6765ae",
+    "purpose": "clearing 13",
+    "lifecycle": "archived",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1789934338
+   },
+   {
+    "now_ref": "central:now:control:root:23bee7fce9143975b3762fc9ee6a068250fa5cb597b16b589bc8d84fb1b25f4a",
+    "purpose": "clearing 14",
+    "lifecycle": "active",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1790186596
+   },
+   {
+    "now_ref": "central:now:control:root:259c6b4848c6154a77d0f179c0cfb5e5604ecbe5722386184dbf23528f9f0f6a",
+    "purpose": "clearing 15",
+    "lifecycle": "archived",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1789925546
+   },
+   {
+    "now_ref": "central:now:control:root:27a76803a3b9ebc73799ca4947c63c2622dc5e20bf5ee2586fcecc0a3f5cc121",
+    "purpose": "clearing 16",
+    "lifecycle": "active",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1790201755
+   },
+   {
+    "now_ref": "central:now:control:root:28cfce8820cafba9c2407d7b17d91a7d5160ddb99e8f56d8f5278b5592a31760",
+    "purpose": "clearing 17",
+    "lifecycle": "archived",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1789656493
+   },
+   {
+    "now_ref": "central:now:control:root:2a7bec446f6fb743757222fff5006049231ddd5adb2f14aabc83c57c261a83c8",
+    "purpose": "clearing 18",
+    "lifecycle": "active",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1790446866
+   },
+   {
+    "now_ref": "central:now:control:root:2c6624b41ac20805f921e938a52876c06d541e2ff498a252808991d1483877d9",
+    "purpose": "clearing 19",
+    "lifecycle": "active",
+    "participant_refs": [
+     "agent:expressed-802ced6ba4034e5b98bc3f728195c6c2"
+    ],
+    "created_at_unix_seconds": 1791375863
+   },
+   {
+    "now_ref": "central:now:control:root:2ce74be312f7c7230de754f9c96961a7f50dc2644c78dd273c953c9369fe59f3",
+    "purpose": "clearing 20",
+    "lifecycle": "closed",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1792402876
+   },
+   {
+    "now_ref": "central:now:control:root:2f1310f68c7aa2cec0196039160b4dac5e8ba31e36614be32771266b5bb34c7b",
+    "purpose": "clearing 21",
+    "lifecycle": "active",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1791394198
+   },
+   {
+    "now_ref": "central:now:control:root:309d2f7b27a4de3ba13c5f0e1686784175c07a200e20838c7bd337a598dc00ac",
+    "purpose": "clearing 22",
+    "lifecycle": "active",
+    "participant_refs": [
+     "agent:codex:central-guardian"
+    ],
+    "created_at_unix_seconds": 1790885458
+   },
+   {
+    "now_ref": "central:now:control:root:36daa87b8398fc007884ec58d4090cdacad2530a3af35ae9740360b73d2d6f53",
+    "purpose": "clearing 23",
+    "lifecycle": "active",
+    "participant_refs": [
+     "codex:01a0f1ba-b1f3-7b80-b885-de8bb178bba4"
+    ],
+    "created_at_unix_seconds": 1790762208
+   },
+   {
+    "now_ref": "central:now:control:root:39ece031ff8d4361f4af15e92ce45fc235aafded9a83960cbb47cbae9c497bd5",
+    "purpose": "clearing 24",
+    "lifecycle": "active",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1791329999
+   },
+   {
+    "now_ref": "central:now:control:root:3c0c2aebe8e77607d76f598d9a2b90a058b874ec65c0b4e33b1fedf4474345e1",
+    "purpose": "clearing 25",
+    "lifecycle": "archived",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1789576872
+   },
+   {
+    "now_ref": "central:now:control:root:3ec57a6abda82fa0c596d72d40deccae34c96147de5589714389d12d8e9c87d5",
+    "purpose": "clearing 26",
+    "lifecycle": "archived",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1789839520
+   },
+   {
+    "now_ref": "central:now:control:root:3f28759c10c345583a4ef452230dd703f9b5aff45d544098bd3cc4eacf8fae7f",
+    "purpose": "clearing 27",
+    "lifecycle": "archived",
+    "participant_refs": [
+     "central:position:project:O-I:aikit-guardian"
+    ],
+    "created_at_unix_seconds": 1790334022
+   },
+   {
+    "now_ref": "central:now:control:root:3f43a461330fe2e76cb9412ee319475ee47fe5445a0c8675b89d493ba9c2ae33",
+    "purpose": "clearing 28",
+    "lifecycle": "archived",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1789581613
+   },
+   {
+    "now_ref": "central:now:control:root:456a781cf216d94df0883cd20eb9dfd624d012eef734a3c0c468352639059cbe",
+    "purpose": "clearing 29",
+    "lifecycle": "archived",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1789874967
+   },
+   {
+    "now_ref": "central:now:control:root:492a48103e1bbfe951fb5aef56ee5b79d7dba5b6e6b8dbb69f8f56d87e7d6373",
+    "purpose": "clearing 30",
+    "lifecycle": "archived",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1789878048
+   },
+   {
+    "now_ref": "central:now:control:root:4a6a41489869c651536e3d748ea8e651580c0af48a34a1ebf54c14a570d6f697",
+    "purpose": "clearing 31",
+    "lifecycle": "archived",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1789878340
+   },
+   {
+    "now_ref": "central:now:control:root:4a70487356db2c2c3a8cb2d51e2bbbe3948bd1e316bad14f0b97b514b7789de4",
+    "purpose": "clearing 32",
+    "lifecycle": "archived",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1789880451
+   },
+   {
+    "now_ref": "central:now:control:root:4c3216c3fcb5bc21d7cecb9437beb54309ce43af6231734cd85ed0e2daaeeec8",
+    "purpose": "clearing 33",
+    "lifecycle": "archived",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1789695679
+   },
+   {
+    "now_ref": "central:now:control:root:581fd37ca0e6356184696f5390166f56725c37bc67cbd0f6fc7e2f51b30b6b76",
+    "purpose": "clearing 34",
+    "lifecycle": "archived",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1789678874
+   },
+   {
+    "now_ref": "central:now:control:root:5a47c7caf26c5e39405ca0b9103acceb5f4794d6b3c4eb79abf1b69cac398700",
+    "purpose": "clearing 35",
+    "lifecycle": "archived",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1789701255
+   },
+   {
+    "now_ref": "central:now:control:root:5af25803c963e6accc9b18696592c163f514730967490f9ab8d5a22ccce77e77",
+    "purpose": "clearing 36",
+    "lifecycle": "active",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1791305092
+   },
+   {
+    "now_ref": "central:now:control:root:5ef152f4c1ac0bb28f8c99183b23c45cf57e080e1fcc5fe7ca0b71bbaf23459d",
+    "purpose": "clearing 37",
+    "lifecycle": "active",
+    "participant_refs": [
+     "agent:codex:workcell-guardian"
+    ],
+    "created_at_unix_seconds": 1790887748
+   },
+   {
+    "now_ref": "central:now:control:root:6092aa2e412094d9d55966d60ebae6f893a49a3570da591471577657c28eda46",
+    "purpose": "clearing 38",
+    "lifecycle": "active",
+    "participant_refs": [
+     "agent:expressed-66c7aff81fbc4509a5404d93e99c0390"
+    ],
+    "created_at_unix_seconds": 1791375869
+   },
+   {
+    "now_ref": "central:now:control:root:62bbf5d269765d0e9e4087dee1e274e99f4ce0b0bf1a7c27996800c9014d8f44",
+    "purpose": "clearing 39",
+    "lifecycle": "archived",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1790095329
+   },
+   {
+    "now_ref": "central:now:control:root:62eadf87ca2d88927a433e55a4661cfd46386ed1c3148068003454c602a0c707",
+    "purpose": "clearing 40",
+    "lifecycle": "active",
+    "participant_refs": [
+     "agent:expressed-ba635b5ae01b4ca98c591fe342079449"
+    ],
+    "created_at_unix_seconds": 1791375873
+   },
+   {
+    "now_ref": "central:now:control:root:664e4c586f97ea62f3fe955be0a277d5bb6527231108d74ba66a26e9971f4dab",
+    "purpose": "clearing 41",
+    "lifecycle": "closed",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1791281554
+   },
+   {
+    "now_ref": "central:now:control:root:68754e211e7f3afa996eda7fb1475ecca6e6cddc98513d9cc5c3c0f1e1389c3b",
+    "purpose": "clearing 42",
+    "lifecycle": "active",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1790194344
+   },
+   {
+    "now_ref": "central:now:control:root:689375a194158cc46aded3f0d830fb70be9321c861e59c416fdf85c569fb48d4",
+    "purpose": "clearing 43",
+    "lifecycle": "active",
+    "participant_refs": [
+     "agent/oh-i",
+     "agency:aikit-mint-control-root-3d7504f3"
+    ],
+    "created_at_unix_seconds": 1790815102
+   },
+   {
+    "now_ref": "central:now:control:root:6b0d7f61271bda7d3f9572afbba399776760b695a6073b6cbc2972b4c5fa6544",
+    "purpose": "clearing 44",
+    "lifecycle": "archived",
+    "participant_refs": [
+     "agent/oh-i",
+     "agency:oh-i:control-root:run-01M35BZNBNZWDHVTDTT9SCBMTT:implementation-1"
+    ],
+    "created_at_unix_seconds": 1790108889
+   },
+   {
+    "now_ref": "central:now:control:root:6e25031956740de092c2779c8b26ae6925b390b3f9e9709bf6795ac6f2729c0f",
+    "purpose": "clearing 45",
+    "lifecycle": "active",
+    "participant_refs": [
+     "agent:codex:oi-guardian-primitive-integrity"
+    ],
+    "created_at_unix_seconds": 1790885102
+   },
+   {
+    "now_ref": "central:now:control:root:6e27f9de2e2af8f4a6d1dde7ee2cc70c4b54140aa84d48d4af073041bba62bae",
+    "purpose": "clearing 46",
+    "lifecycle": "archived",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1789841261
+   },
+   {
+    "now_ref": "central:now:control:root:707e74043c327599e6a1e44775cd528a77df7624f29e4c1a73d36d0169c75dc8",
+    "purpose": "clearing 47",
+    "lifecycle": "archived",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1789848325
+   },
+   {
+    "now_ref": "central:now:control:root:71cf4b2221bf4a09d60c36577653741cc531a77be7476e32e980c422a95da617",
+    "purpose": "clearing 48",
+    "lifecycle": "active",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1792516796
+   },
+   {
+    "now_ref": "central:now:control:root:746f59350bcbd0a88a231ea909ca89aac9cf950e3cf5d9584aae28535bb7296d",
+    "purpose": "clearing 49",
+    "lifecycle": "quiescent",
+    "participant_refs": [
+     "codex:01a0f43c-41e2-7990-9cf0-1cc9de2b368d"
+    ],
+    "created_at_unix_seconds": 1790804416
+   },
+   {
+    "now_ref": "central:now:control:root:755f36a8b185fbdac9354137976363230c9a984211a65da913cce476db66de2c",
+    "purpose": "clearing 50",
+    "lifecycle": "archived",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1789562145
+   },
+   {
+    "now_ref": "central:now:control:root:770d04e145bad200b4a256d25ee0b0da9cb0ba28c824d17addf9349cb3c4eb2d",
+    "purpose": "clearing 51",
+    "lifecycle": "closed",
+    "participant_refs": [
+     "agent:codex:desktop-presentation"
+    ],
+    "created_at_unix_seconds": 1790849699
+   },
+   {
+    "now_ref": "central:now:control:root:773a62a27412664efce0c69031a89dc43d6efda1f7ea2b0e3345a662f6ca3288",
+    "purpose": "clearing 52",
+    "lifecycle": "archived",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1789651716
+   },
+   {
+    "now_ref": "central:now:control:root:779dbfbc93ff981b53c963c64deea24d7eddefec276d7cdb63e318fd628d01f9",
+    "purpose": "clearing 53",
+    "lifecycle": "archived",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1789667496
+   },
+   {
+    "now_ref": "central:now:control:root:7969ee30f9def954854559b9261ca3d9962fa500f8121f77193389153d51d689",
+    "purpose": "clearing 54",
+    "lifecycle": "active",
+    "participant_refs": [
+     "agent:codex:aikit-guardian-review-20261001"
+    ],
+    "created_at_unix_seconds": 1790885469
+   },
+   {
+    "now_ref": "central:now:control:root:7a91440c218421ebf67512da9e736f7edf35defa632333f0766c07291109f59e",
+    "purpose": "clearing 55",
+    "lifecycle": "archived",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1789878200
+   },
+   {
+    "now_ref": "central:now:control:root:7d5b43ad63772ee73501b2e6c7380d679d256ab6ad49563acc0c151acf58edfb",
+    "purpose": "clearing 56",
+    "lifecycle": "archived",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1789940484
+   },
+   {
+    "now_ref": "central:now:control:root:7ed71e48cf659b2c42005a4904b14e7256c9e89c6d7201512c3db677580249a4",
+    "purpose": "clearing 57",
+    "lifecycle": "active",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1790550566
+   },
+   {
+    "now_ref": "central:now:control:root:7ee9e2c99c9e9929fb3013c7787b2a8f639a1aa014e568697807786b4c15c170",
+    "purpose": "clearing 58",
+    "lifecycle": "archived",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1790333587
+   },
+   {
+    "now_ref": "central:now:control:root:7f64a97557d2590c76285d286801ba3bdfb4d7e7ddc5956703f76567d4086286",
+    "purpose": "clearing 59",
+    "lifecycle": "active",
+    "participant_refs": [
+     "agent/local-decision-models-lane"
+    ],
+    "created_at_unix_seconds": 1790536532
+   },
+   {
+    "now_ref": "central:now:control:root:80419aa9c861aeea7e3330abc0bbf1be44b5d6d43d99dbe002fea1825748340f",
+    "purpose": "clearing 60",
+    "lifecycle": "archived",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1789569061
+   },
+   {
+    "now_ref": "central:now:control:root:804a44f56c98552b971c66ab839f1b38638c774c186269386271f510c7c6bf5f",
+    "purpose": "clearing 61",
+    "lifecycle": "archived",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1789697161
+   },
+   {
+    "now_ref": "central:now:control:root:83e643b2633b70cd6ad9307010f0e86148005761e95aa3e71b72bfbdf398cceb",
+    "purpose": "clearing 62",
+    "lifecycle": "active",
+    "participant_refs": [
+     "codex:01a0f43b-0ba9-75a3-8b80-2e783a9fa473"
+    ],
+    "created_at_unix_seconds": 1790805109
+   },
+   {
+    "now_ref": "central:now:control:root:86bcb8f6240ff71d1ed4699d647ad6cded5a8451a590d9c7b34646156627bf2f",
+    "purpose": "clearing 63",
+    "lifecycle": "archived",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1789569623
+   },
+   {
+    "now_ref": "central:now:control:root:88b16930e461ec5100d47ff9d0d233d6580e97ad31abfc40c1db6670adc7746d",
+    "purpose": "clearing 64",
+    "lifecycle": "active",
+    "participant_refs": [
+     "agent:codex:epi-fidelity-lead"
+    ],
+    "created_at_unix_seconds": 1790768390
+   },
+   {
+    "now_ref": "central:now:control:root:891fbe4d782c745da42263dc065ac589b186a684bbbdb87e272d8d2627191422",
+    "purpose": "clearing 65",
+    "lifecycle": "archived",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1790007760
+   },
+   {
+    "now_ref": "central:now:control:root:8e97a4b6443150c56a6a00908c2a775cf514456389f82d11b4c97ada3b62dc94",
+    "purpose": "clearing 66",
+    "lifecycle": "archived",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1789694130
+   },
+   {
+    "now_ref": "central:now:control:root:90ebc69a5b4def63b3146619179820094947937af10f8f2b42d7d0d9d6fb4eac",
+    "purpose": "clearing 67",
+    "lifecycle": "active",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1791333738
+   },
+   {
+    "now_ref": "central:now:control:root:95cd812d2e9baf58de12b36aebf3da24fabe1c187e6575056966ef16ef466a2f",
+    "purpose": "clearing 68",
+    "lifecycle": "active",
+    "participant_refs": [
+     "agent:codex:ql-guardian-review-20261001"
+    ],
+    "created_at_unix_seconds": 1790888307
+   },
+   {
+    "now_ref": "central:now:control:root:9aabf60e1ba0a561089baba01732e57c2c4250fc13c79f6545d3191a406bc2d6",
+    "purpose": "clearing 69",
+    "lifecycle": "archived",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1789623115
+   },
+   {
+    "now_ref": "central:now:control:root:9b19d7cacf9e649390eef28218b3d2435e2e405de0e59aff4ff8054ebdd43ee5",
+    "purpose": "clearing 70",
+    "lifecycle": "active",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1790542681
+   },
+   {
+    "now_ref": "central:now:control:root:9c24d9730a0c7855754f550ba7cc6d8769920fd6f61857a3b8f9d00892241d05",
+    "purpose": "clearing 71",
+    "lifecycle": "active",
+    "participant_refs": [
+     "agent:codex:shared-expression-lead"
+    ],
+    "created_at_unix_seconds": 1790804214
+   },
+   {
+    "now_ref": "central:now:control:root:9c2d1597d728778b5999dd3cbb81df75907a453a66f6bdef5fff4e5d92fe89a3",
+    "purpose": "clearing 72",
+    "lifecycle": "active",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1790764237
+   },
+   {
+    "now_ref": "central:now:control:root:9db7bff1b8b41ec4011b48682eaf18b300084209679e65461b50621c6e4d0609",
+    "purpose": "clearing 73",
+    "lifecycle": "archived",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1789677697
+   },
+   {
+    "now_ref": "central:now:control:root:9db97ebf39957fb3702a17aee687762a66a91ba6a99b3902b2e487a072a5cc82",
+    "purpose": "clearing 74",
+    "lifecycle": "active",
+    "participant_refs": [
+     "codex:agent:/root/factory_coordination"
+    ],
+    "created_at_unix_seconds": 1790885307
+   },
+   {
+    "now_ref": "central:now:control:root:a086bb540b11144a5d55782c423379ec7ff9574c46770c0842133566b7b5fa50",
+    "purpose": "clearing 75",
+    "lifecycle": "active",
+    "participant_refs": [
+     "agent:expressed-5b7b38f5796349759b5b8e35d736a5e6"
+    ],
+    "created_at_unix_seconds": 1791375866
+   },
+   {
+    "now_ref": "central:now:control:root:a0cc1145953e5160efa11abb7743368d4d22c5719f6983b8f28a22a25186420e",
+    "purpose": "clearing 76",
+    "lifecycle": "active",
+    "participant_refs": [
+     "codex:01a0fc96-8b34-71b2-8129-453aa8a38481"
+    ],
+    "created_at_unix_seconds": 1790944833
+   },
+   {
+    "now_ref": "central:now:control:root:a5cbbe839859c35174f5760ccddb2ec34d54a665f2fb78f0da488d096e05d509",
+    "purpose": "clearing 77",
+    "lifecycle": "active",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1790241911
+   },
+   {
+    "now_ref": "central:now:control:root:a935cac256e9d87f73597985ca798086f55f2a55c8b1b99a00d0dce96a4cebbc",
+    "purpose": "clearing 78",
+    "lifecycle": "archived",
+    "participant_refs": [
+     "agent/oh-i",
+     "agency:oh-i:control-root:run-01M35JXNY4PNDRSTH2CNE99AYZ:implementation-v5-1"
+    ],
+    "created_at_unix_seconds": 1790115606
+   },
+   {
+    "now_ref": "central:now:control:root:ad8ebac7fd993a193c5e89e5ef5bbcc45c47a9b50996d157e44d8a8ee47c51c8",
+    "purpose": "clearing 79",
+    "lifecycle": "quiescent",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1791214064
+   },
+   {
+    "now_ref": "central:now:control:root:ae81ea3921a63dc024ae984dd2102e80b55d76b9e6a0e55b5337a2f76a86559e",
+    "purpose": "clearing 80",
+    "lifecycle": "archived",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1790333626
+   },
+   {
+    "now_ref": "central:now:control:root:ae94407ec604c445b139edf07093e601efb773409451ace5acb70e3b95220e1e",
+    "purpose": "clearing 81",
+    "lifecycle": "active",
+    "participant_refs": [
+     "agent:claude-code:opus-5.5"
+    ],
+    "created_at_unix_seconds": 1790675293
+   },
+   {
+    "now_ref": "central:now:control:root:afe4bc27153b497cea7a6e3fcb27fe45960b43d293dfa88d36dc30c0bfe080ce",
+    "purpose": "clearing 82",
+    "lifecycle": "quiescent",
+    "participant_refs": [
+     "codex:zcode-local-1"
+    ],
+    "created_at_unix_seconds": 1791214180
+   },
+   {
+    "now_ref": "central:now:control:root:b28a950240e54a8888a780a44ed8a299384661624b72dca7dec1b4bf50c63dc6",
+    "purpose": "clearing 83",
+    "lifecycle": "active",
+    "participant_refs": [
+     "central:pasu:agent:zcode-242-lead"
+    ],
+    "created_at_unix_seconds": 1790718831
+   },
+   {
+    "now_ref": "central:now:control:root:b36a68de5d95ba14f4878dab36c8d93a7ca71d0cf465911bfab11274042a0d89",
+    "purpose": "clearing 84",
+    "lifecycle": "quiescent",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1790195568
+   },
+   {
+    "now_ref": "central:now:control:root:b417a7c3d37cd47c2762deee3224687d59db1a9015a322e9a8d7584b3947adf6",
+    "purpose": "clearing 85",
+    "lifecycle": "archived",
+    "participant_refs": [
+     "central:source:control:root:Control/user/identity"
+    ],
+    "created_at_unix_seconds": 1789207077
+   },
+   {
+    "now_ref": "central:now:control:root:b4fa7a778329222793337efad4d381c610cb09ed8da61406eb9a49473a00abc7",
+    "purpose": "clearing 86",
+    "lifecycle": "closed",
+    "participant_refs": [
+     "codex:formation-repair-20261001"
+    ],
+    "created_at_unix_seconds": 1790868950
+   },
+   {
+    "now_ref": "central:now:control:root:b79e60edd9191578abe9424d3172d2f9e853044c60f8285c5dac4ad73e4971f6",
+    "purpose": "clearing 87",
+    "lifecycle": "archived",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1790110826
+   },
+   {
+    "now_ref": "central:now:control:root:bbb0b5c9eb164584d308456c1b81353463cfd83b6ee3e4ec41fd79b2cf60d0b1",
+    "purpose": "clearing 88",
+    "lifecycle": "archived",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1789836992
+   },
+   {
+    "now_ref": "central:now:control:root:bc875293ae2fc31178506fc31347815bbe404f80151f33cb16d7bd61d512420d",
+    "purpose": "clearing 89",
+    "lifecycle": "archived",
+    "participant_refs": [
+     "central:source:control:root:Control/agents/profiles/profile-cf2d2255e74c3265.json"
+    ],
+    "created_at_unix_seconds": 1789848725
+   },
+   {
+    "now_ref": "central:now:control:root:be74e8f3a27d6eaf2fac2fc2037b41364e7ae4a8d1adfb11365cdaa1388019ee",
+    "purpose": "clearing 90",
+    "lifecycle": "archived",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1790153681
+   },
+   {
+    "now_ref": "central:now:control:root:c448d715baa5824869e3e6ed2148286603b4f77d65b8fab73c0dafc320f04e8c",
+    "purpose": "clearing 91",
+    "lifecycle": "active",
+    "participant_refs": [
+     "agent:codex:ql-native-decision-qd0"
+    ],
+    "created_at_unix_seconds": 1790940659
+   },
+   {
+    "now_ref": "central:now:control:root:d0062e26ae2798c92ccfdb0f197e9b65c8be8c3728f38c40d8473e355f261865",
+    "purpose": "clearing 92",
+    "lifecycle": "archived",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1789602816
+   },
+   {
+    "now_ref": "central:now:control:root:d21b90a94f65f1b21cf1c800334b72fde52c9c395caa00ae8745040d3687086d",
+    "purpose": "clearing 93",
+    "lifecycle": "active",
+    "participant_refs": [
+     "codex:01a0fdeb-f658-7dd0-874d-e46c6d6ed92d"
+    ],
+    "created_at_unix_seconds": 1790966762
+   },
+   {
+    "now_ref": "central:now:control:root:d5ee92a1b2ec835b32d43a0e1e0da372ba68d1d2b7f0a43fe43ca193c8314413",
+    "purpose": "clearing 94",
+    "lifecycle": "active",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1791364373
+   },
+   {
+    "now_ref": "central:now:control:root:d607bb07c595ba93222157a957b42d10bae4e6bf82d86e264df773ede1fc5471",
+    "purpose": "clearing 95",
+    "lifecycle": "archived",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1789620555
+   },
+   {
+    "now_ref": "central:now:control:root:d82a2bdcd95c97cef5f41d9bf38a9f788de0f59aea3229265a76762dd8b8b80b",
+    "purpose": "clearing 96",
+    "lifecycle": "archived",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1789672633
+   },
+   {
+    "now_ref": "central:now:control:root:d85d23d9a62525214f47ccf19e8f42d21f5b89d6c9aaf9d87f2a540238e9ed1e",
+    "purpose": "clearing 97",
+    "lifecycle": "archived",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1789697407
+   },
+   {
+    "now_ref": "central:now:control:root:d9a53ed301f9184f7db69c778e0bd2e6790c5491eeb79e46fd7b70c19efa30bf",
+    "purpose": "clearing 98",
+    "lifecycle": "archived",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1790111132
+   },
+   {
+    "now_ref": "central:now:control:root:dc7f9b33d32004645c89503998c493a265c8fcb05c2e93fa1fe5ba7f84a35b0d",
+    "purpose": "clearing 99",
+    "lifecycle": "archived",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1790002137
+   },
+   {
+    "now_ref": "central:now:control:root:dd6554acebcacebecca112ae6827253abe24e13de69bcd38665a7ef97286405f",
+    "purpose": "clearing 100",
+    "lifecycle": "archived",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1790166268
+   },
+   {
+    "now_ref": "central:now:control:root:df14ad7dfa37a45bc76aa577e5ee39b6c704c8a6a26a10628a97be18d7d3199d",
+    "purpose": "clearing 101",
+    "lifecycle": "archived",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1789656348
+   },
+   {
+    "now_ref": "central:now:control:root:e1ca234d6e03e30c273c4b8cdb6b24a52e795bed85917c3a10b0e519d14a0222",
+    "purpose": "clearing 102",
+    "lifecycle": "active",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1790543042
+   },
+   {
+    "now_ref": "central:now:control:root:e1d51c370466b4161962b10ed3b57cfd8a1a69f656508d82aa3203cc8f54184b",
+    "purpose": "clearing 103",
+    "lifecycle": "archived",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1789876632
+   },
+   {
+    "now_ref": "central:now:control:root:e3230e6baba6b9690f599c13906ff709e142a9401596bc2e93824390df38d2c4",
+    "purpose": "clearing 104",
+    "lifecycle": "archived",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1789477760
+   },
+   {
+    "now_ref": "central:now:control:root:e3fdf0204b6cb945ca2f6cd1d63a8ad1f2fb4dc1e15882922a2529fc5c2ccb54",
+    "purpose": "clearing 105",
+    "lifecycle": "active",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1791751347
+   },
+   {
+    "now_ref": "central:now:control:root:e63e3af699d5dc8bd06068cc3a630ca17420bd9a0923a49e9c23562397e628cb",
+    "purpose": "clearing 106",
+    "lifecycle": "archived",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1789849660
+   },
+   {
+    "now_ref": "central:now:control:root:ec6bec04103dc02b90522163b1655c6c16c37128514f0f42927a062f4199a0b2",
+    "purpose": "clearing 107",
+    "lifecycle": "closed",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1791242730
+   },
+   {
+    "now_ref": "central:now:control:root:f035575f0fd0b766e18fc200e173ad35a8fd5c6828b1cc1f56b125fb02c38663",
+    "purpose": "clearing 108",
+    "lifecycle": "active",
+    "participant_refs": [
+     "agent/aletheia",
+     "agent-session/factory-bounded-aletheia-20261001-dbeb9b25b8"
+    ],
+    "created_at_unix_seconds": 1790821172
+   },
+   {
+    "now_ref": "central:now:control:root:f063bf1ba27b7ade17a65120a7fedce63b9a1eb4408e6c207c31cd679d4ee514",
+    "purpose": "clearing 109",
+    "lifecycle": "archived",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1789877156
+   },
+   {
+    "now_ref": "central:now:control:root:f1b6208185a6b0edaa03dd09fdf199196cbdc8e323f24e3e92c3d8a142e46f80",
+    "purpose": "clearing 110",
+    "lifecycle": "active",
+    "participant_refs": [
+     "agent/anima",
+     "agency:anima@project:O-I"
+    ],
+    "created_at_unix_seconds": 1790453946
+   },
+   {
+    "now_ref": "central:now:control:root:f320bec8b6a7aae3a9a32f9d884c3d5a26829f127439b8ff2a9269d2dc90f9d4",
+    "purpose": "clearing 111",
+    "lifecycle": "active",
+    "participant_refs": [
+     "agent/aletheia",
+     "agency:aletheia@project:O-I"
+    ],
+    "created_at_unix_seconds": 1790454078
+   },
+   {
+    "now_ref": "central:now:control:root:f7519f692b568c27791c7c11efebc5eb3fed0b5bbf404843fab09085322dabb5",
+    "purpose": "clearing 112",
+    "lifecycle": "archived",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1789561068
+   },
+   {
+    "now_ref": "central:now:control:root:fa2d942f48d577e78c2170be7b01bf2c04ad48c7f17c9dc352883d12d3d436c4",
+    "purpose": "clearing 113",
+    "lifecycle": "archived",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1789608569
+   },
+   {
+    "now_ref": "central:now:control:root:fc19cccaebf0cb11c9db78be24471f9136980fba203a8ef535af0d5f10e35266",
+    "purpose": "clearing 114",
+    "lifecycle": "archived",
+    "participant_refs": [],
+    "created_at_unix_seconds": 1789315698
+   }
+  ]
+ },
+ "seat": {
+  "schema": "central.workcell-status/v1",
+  "recorded_at_unix_seconds": 1792596695,
+  "workcells": [
+   {
+    "name": "env-1",
+    "path": "/Users/admin/Central/worktrees/env-1",
+    "disk_free_gb": 11.5,
+    "min_free_gb": 20,
+    "hard_free_gb": null,
+    "last_tend": {
+     "at_unix_seconds": 1792588383,
+     "freed_mb": 0,
+     "removed": []
+    },
+    "seats": [
+     {
+      "product": "actuation",
+      "state": "claimed",
+      "registered_branch": "fold/day-close-20261012",
+      "registered_head": "7b4af99",
+      "claimed_by": "claude-code:dlw-conductor",
+      "now_ref": "workcellenv1actuation-seat-claimed-branch-2026-10-13",
+      "zones": [
+       {
+        "actor": "claude-code:dlw-conductor",
+        "regions": [
+         "ProjectCentral",
+         ".gitignore",
+         "experiments",
+         "scripts"
+        ],
+        "since_unix_seconds": 1791846105
+       }
+      ],
+      "admission": null,
+      "live_branch": "fold/day-close-20261012",
+      "live_head": "933731e",
+      "tracked_changes": 0,
+      "untracked": 0,
+      "behind_main": 2,
+      "ahead_main": 3
+     },
+     {
+      "product": "ai-kit",
+      "state": "free",
+      "registered_branch": null,
+      "registered_head": "cc6405e6",
+      "claimed_by": null,
+      "now_ref": null,
+      "zones": [],
+      "admission": {
+       "free_gb": 17.3,
+       "soft_floor_gb": 20,
+       "hard_floor_gb": 5.0,
+       "tended_freed_mb": 0,
+       "standing": "admitted below the soft floor; breach recorded"
+      },
+      "live_branch": null,
+      "live_head": "cc6405e6",
+      "tracked_changes": 0,
+      "untracked": 0,
+      "behind_main": 1,
+      "ahead_main": 0
+     },
+     {
+      "product": "central",
+      "state": "claimed",
+      "registered_branch": "fold/day-close-20261012",
+      "registered_head": "cf58c54",
+      "claimed_by": "claude-code:dlw-conductor",
+      "now_ref": "workcellenv1central-seat-claimed-branch-2026-10-13",
+      "zones": [
+       {
+        "actor": "agent:claude-code:ctrl-t-payload-law",
+        "regions": [
+         "ctrl/tests/continuous_work_admission.rs"
+        ],
+        "since_unix_seconds": 1791412597
+       },
+       {
+        "actor": "zcode:mac-peer-credential-push",
+        "regions": [
+         "ctrl"
+        ],
+        "since_unix_seconds": 1791428601
+       },
+       {
+        "actor": "claude-code:dlw-conductor",
+        "regions": [
+         "ProjectCentral",
+         ".gitignore",
+         "experiments",
+         "scripts"
+        ],
+        "since_unix_seconds": 1791846067
+       }
+      ],
+      "admission": null,
+      "live_branch": "fix/day-close-no-t-payloads",
+      "live_head": "8aa1065",
+      "tracked_changes": 0,
+      "untracked": 0,
+      "behind_main": 25,
+      "ahead_main": 1
+     },
+     {
+      "product": "factory",
+      "state": "free",
+      "registered_branch": null,
+      "registered_head": "4e22ffa",
+      "claimed_by": null,
+      "now_ref": null,
+      "zones": [],
+      "admission": null,
+      "live_branch": null,
+      "live_head": "4e22ffa",
+      "tracked_changes": 0,
+      "untracked": 0,
+      "behind_main": 2,
+      "ahead_main": 0
+     },
+     {
+      "product": "o-i",
+      "state": "claimed",
+      "registered_branch": "dlw/phase1-semantics-20261013",
+      "registered_head": "cc69e19fa",
+      "claimed_by": "claude-code:dlw-lead",
+      "now_ref": "workcellenv1oi-seat-claimed-branch-2026-10-13-2",
+      "zones": [
+       {
+        "actor": "zcode:enrich-arguments-l1",
+        "regions": [
+         "desktop/cradle/expressions-app/collections/return-of-zero/arguments",
+         "desktop/cradle/expressions-app/collections/return-of-zero/conjugates"
+        ],
+        "since_unix_seconds": 1791282969
+       },
+       {
+        "actor": "zcode:enrich-matheme-l1",
+        "regions": [
+         "desktop/cradle/expressions-app/collections/return-of-zero/matheme"
+        ],
+        "since_unix_seconds": 1791282969
+       },
+       {
+        "actor": "zcode:enrich-symbolon-l1",
+        "regions": [
+         "desktop/cradle/expressions-app/collections/return-of-zero/symbolon"
+        ],
+        "since_unix_seconds": 1791282971
+       },
+       {
+        "actor": "zcode:enrich-critic-w1",
+        "regions": [
+         "campaign-evidence/2026-10-06-expression-enrichment"
+        ],
+        "since_unix_seconds": 1791287828
+       },
+       {
+        "actor": "zcode:enrich-critic-w1b",
+        "regions": [
+         "campaign-evidence/2026-10-06-expression-enrichment"
+        ],
+        "since_unix_seconds": 1791288099
+       },
+       {
+        "actor": "zcode:enrich-critic-w1c",
+        "regions": [
+         "campaign-evidence/2026-10-06-expression-enrichment"
+        ],
+        "since_unix_seconds": 1791289615
+       },
+       {
+        "actor": "zcode:enrich-mytheme-l2",
+        "regions": [
+         "desktop/cradle/expressions-app/collections/return-of-zero/mytheme"
+        ],
+        "since_unix_seconds": 1791289656
+       },
+       {
+        "actor": "zcode:enrich-essay-l2",
+        "regions": [
+         "desktop/cradle/expressions-app/collections/return-of-zero/essay",
+         "desktop/cradle/expressions-app/collections/return-of-zero/rooms"
+        ],
+        "since_unix_seconds": 1791289659
+       },
+       {
+        "actor": "zcode:enrich-episteme-l2",
+        "regions": [
+         "desktop/cradle/expressions-app/collections/return-of-zero/episteme"
+        ],
+        "since_unix_seconds": 1791289659
+       },
+       {
+        "actor": "zcode:enrich-critic-w2a",
+        "regions": [
+         "campaign-evidence/2026-10-06-expression-enrichment"
+        ],
+        "since_unix_seconds": 1791294348
+       },
+       {
+        "actor": "zcode:enrich-critic-w2b",
+        "regions": [
+         "campaign-evidence/2026-10-06-expression-enrichment"
+        ],
+        "since_unix_seconds": 1791295059
+       },
+       {
+        "actor": "zcode:enrich-mytheme-l3",
+        "regions": [
+         "desktop/cradle/expressions-app/collections/return-of-zero/mytheme"
+        ],
+        "since_unix_seconds": 1791295314
+       },
+       {
+        "actor": "zcode:enrich-mytheme-l4",
+        "regions": [
+         "desktop/cradle/expressions-app/collections/return-of-zero/mytheme"
+        ],
+        "since_unix_seconds": 1791295317
+       },
+       {
+        "actor": "zcode:enrich-critic-w3",
+        "regions": [
+         "campaign-evidence/2026-10-06-expression-enrichment"
+        ],
+        "since_unix_seconds": 1791298723
+       },
+       {
+        "actor": "zcode:tarot-score-312",
+        "regions": [
+         "desktop/cradle/kernel/src/native_expression.rs"
+        ],
+        "since_unix_seconds": 1791300861
+       },
+       {
+        "actor": "zcode:enrich-critic-m1",
+        "regions": [
+         "campaign-evidence/2026-10-06-expression-enrichment"
+        ],
+        "since_unix_seconds": 1791304999
+       },
+       {
+        "actor": "zcode:enrich-critic-m2",
+        "regions": [
+         "campaign-evidence/2026-10-06-expression-enrichment"
+        ],
+        "since_unix_seconds": 1791304999
+       },
+       {
+        "actor": "zcode:enrich-covers",
+        "regions": [
+         "desktop/cradle/expressions-app/collections/return-of-zero/essay",
+         "desktop/cradle/expressions-app/collections/return-of-zero/rooms",
+         "desktop/cradle/expressions-app/collections/return-of-zero/arguments",
+         "desktop/cradle/expressions-app/collections/return-of-zero/conjugates",
+         "desktop/cradle/expressions-app/collections/return-of-zero/episteme",
+         "desktop/cradle/expressions-app/collections/return-of-zero/matheme",
+         "desktop/cradle/expressions-app/collections/return-of-zero/symbolon"
+        ],
+        "since_unix_seconds": 1791305137
+       },
+       {
+        "actor": "zcode:enrich-covers-mytheme",
+        "regions": [
+         "desktop/cradle/expressions-app/collections/return-of-zero/mytheme"
+        ],
+        "since_unix_seconds": 1791308731
+       },
+       {
+        "actor": "zcode:expression-enrichment-20261006",
+        "regions": [
+         "campaign-evidence"
+        ],
+        "since_unix_seconds": 1791311912
+       },
+       {
+        "actor": "claude-sonnet-5.5:281-replan",
+        "regions": [
+         "desktop/cradle/kernel/src/native_expression.rs",
+         "desktop/cradle/kernel/tests",
+         "desktop/cradle/expressions-app/field-studies-journeys/src",
+         "desktop/cradle/tests/native-expression-played.mjs"
+        ],
+        "since_unix_seconds": 1791311950
+       },
+       {
+        "actor": "zcode:essay-field-corrections-20261006",
+        "regions": [
+         "site/essay-field.test.mjs"
+        ],
+        "since_unix_seconds": 1791312510
+       },
+       {
+        "actor": "zcode:obsidian-re-campaign-20261007",
+        "regions": [
+         "desktop/cradle/src/kernel/bridge.ts",
+         "campaign-evidence/2026-10-07-obsidian-re"
+        ],
+        "since_unix_seconds": 1791336303
+       },
+       {
+        "actor": "zcode:agent-self-acquaintance",
+        "regions": [
+         "desktop/cradle/src/agency",
+         "desktop/cradle/kernel/src/agent_definition.rs",
+         "desktop/cradle/kernel/tests/agent_definition_gate.rs",
+         "desktop/cradle/tests/agent-native-creation.test.mjs",
+         "desktop/cradle/tests/agent-native-creation-browser.mjs",
+         "desktop/cradle/tests/agent-native-creation-browser.tsx"
+        ],
+        "since_unix_seconds": 1791365014
+       },
+       {
+        "actor": "zcode:expressions-craft-20261007",
+        "regions": [
+         "campaign-evidence/2026-10-07-expression-rework"
+        ],
+        "since_unix_seconds": 1791369170
+       },
+       {
+        "actor": "codex:sol-new-shell",
+        "regions": [
+         "packages/live-shell/ui",
+         "packages/expressions-boundary",
+         "packages/live-shell/src/inhabitants.rs"
+        ],
+        "since_unix_seconds": 1791387552
+       },
+       {
+        "actor": "zcode:expressions-deepen-20261007",
+        "regions": [
+         "campaign-evidence/2026-10-07-expression-rework"
+        ],
+        "since_unix_seconds": 1791388835
+       },
+       {
+        "actor": "codex:sol-saved-work",
+        "regions": [
+         "desktop/cradle/kernel/src/expression_recovery.rs"
+        ],
+        "since_unix_seconds": 1791388873
+       },
+       {
+        "actor": "codex:improvement-parent",
+        "regions": [
+         "scripts/development-field-conformance.py"
+        ],
+        "since_unix_seconds": 1791392079
+       },
+       {
+        "actor": "codex:sol-instrumentation",
+        "regions": [
+         "packages/expressions-boundary/src/editor.ts",
+         "packages/expressions-boundary/src/editorHost.ts",
+         "packages/expressions-boundary/src/nativeDeviceEdits.ts",
+         "packages/live-shell/ui/src/components/NativeDeviceEditors.tsx",
+         "packages/live-shell/ui/src/components/NativeDeviceEditors.css",
+         "packages/live-shell/ui/src/components/GlyphSequenceEditor.tsx",
+         "packages/live-shell/ui/src/components/GlyphSequenceEditor.css",
+         "desktop/cradle/expressions-app/field-studies-journeys/src/hostEditor.ts"
+        ],
+        "since_unix_seconds": 1791399324
+       },
+       {
+        "actor": "codex:native-composition",
+        "regions": [
+         "desktop/cradle/src/workspace/checkpoints.ts"
+        ],
+        "since_unix_seconds": 1791399392
+       },
+       {
+        "actor": "codex:sol-settings",
+        "regions": [
+         "packages/live-shell/ui/src/settings",
+         "packages/live-shell/ui/src/panels/settings.tsx"
+        ],
+        "since_unix_seconds": 1791399503
+       },
+       {
+        "actor": "codex:sol-instrument-editors",
+        "regions": [
+         "packages/instrument-editors"
+        ],
+        "since_unix_seconds": 1791407572
+       },
+       {
+        "actor": "agent:distribution-finish",
+        "regions": [
+         "packages/live-shell/freeze-product-bindings.py",
+         "packages/live-shell/tests/freeze_product_bindings_test.py"
+        ],
+        "since_unix_seconds": 1791420542
+       },
+       {
+        "actor": "codex:sol-shared-time",
+        "regions": [
+         "packages/expressions-boundary/src/timeWindow.ts",
+         "packages/expressions-boundary/tests/time-window-native-acceptance.mjs"
+        ],
+        "since_unix_seconds": 1791439769
+       },
+       {
+        "actor": "zcode:agent-shell-repair",
+        "regions": [
+         "packages/live-shell/ui",
+         "packages/expressions-boundary",
+         "packages/live-shell/src/inhabitants.rs"
+        ],
+        "since_unix_seconds": 1791493218
+       },
+       {
+        "actor": "agent:zcode-device-sdk",
+        "regions": [
+         "packages/live-shell/ui/src/inhabitants",
+         "packages/live-shell/ui/src/components",
+         "packages/live-shell/ui/tests",
+         "packages/live-shell/ui/scripts"
+        ],
+        "since_unix_seconds": 1791540643
+       },
+       {
+        "actor": "agent:zcode-mprime-founding",
+        "regions": [
+         "skills/m-prime-development",
+         "docs"
+        ],
+        "since_unix_seconds": 1791670260
+       },
+       {
+        "actor": "agent:zcode-convergence",
+        "regions": [
+         "desktop/cradle/kernel/src",
+         "desktop/cradle/src",
+         "desktop/cradle/tests"
+        ],
+        "since_unix_seconds": 1791728322
+       },
+       {
+        "actor": "agent:cursor-624-rust",
+        "regions": [
+         "skills/device-sdk",
+         "skills/m-prime-development"
+        ],
+        "since_unix_seconds": 1791749995
+       },
+       {
+        "actor": "claude-code:dlw-conductor",
+        "regions": [
+         "ProjectCentral",
+         ".gitignore",
+         "experiments",
+         "scripts"
+        ],
+        "since_unix_seconds": 1791846057
+       },
+       {
+        "actor": "claude-code:dlw-lead",
+        "regions": [
+         "desktop/cradle/docs/world-shell",
+         "packages/live-shell/ui",
+         "desktop/cradle/kernel",
+         "desktop/cradle/expressions-app",
+         "desktop/cradle/src",
+         ".github"
+        ],
+        "since_unix_seconds": 1791851470
+       },
+       {
+        "actor": "claude-code:dlw-manual",
+        "regions": [
+         "packages/live-shell/ui/src/inhabitants/catalogue"
+        ],
+        "since_unix_seconds": 1792078733
+       },
+       {
+        "actor": "claude-code:dlw-uiux-lead",
+        "regions": [
+         "packages/live-shell/ui/src/App.tsx",
+         "packages/live-shell/ui/src/components",
+         "packages/live-shell/ui/src/frame",
+         "packages/live-shell/ui/src/shell",
+         "packages/live-shell/ui/src/styles.css"
+        ],
+        "since_unix_seconds": 1792497781
+       },
+       {
+        "actor": "claude-code:procedural-body-lead",
+        "regions": [
+         "packages/live-shell/ui/scripts/measure-planet-reference.mjs",
+         "docs/dlw",
+         "desktop/cradle/docs/world-shell/wayfinder",
+         "desktop/cradle/docs/world-shell/evidence/procedural-body-20261020",
+         "packages/live-shell/ui/tests/lib",
+         "packages/live-shell/ui/tests/fixtures/planet-reference.json",
+         "packages/live-shell/ui/tests/w3q-planet-gate.test.mjs",
+         "packages/live-shell/ui/tests/w3q-manual-17-2.test.mjs"
+        ],
+        "since_unix_seconds": 1792501413
+       },
+       {
+        "actor": "claude-code:procedural-body-generator",
+        "regions": [
+         "packages/live-shell/ui/tests/golden/planet",
+         "packages/live-shell/ui/src/projections/atlas/src/globe",
+         "packages/live-shell/ui/src/projections/atlas/body",
+         "packages/live-shell/ui/src/projections/atlas/PORT-PIN.json",
+         "packages/live-shell/ui/src/inhabitants/catalogue/panels/atlas-earth__globe-engine.tsx",
+         "packages/live-shell/ui/tests/w3q-gen-determinism.test.mjs",
+         "packages/live-shell/ui/tests/w3q-gen-dials.test.mjs",
+         "packages/live-shell/ui/tests/w3q-gen-elements.test.mjs",
+         "packages/live-shell/ui/tests/w3q-gen-look-weather.test.mjs",
+         "packages/live-shell/ui/tests/w3q-gen-pipeline.test.mjs",
+         "packages/live-shell/ui/tests/w3q-gen-places-consistency.test.mjs",
+         "packages/live-shell/ui/tests/w3-world-body-generator.test.mjs"
+        ],
+        "since_unix_seconds": 1792501427
+       },
+       {
+        "actor": "claude-code:procedural-body-system",
+        "regions": [
+         "packages/live-shell/ui/tests/w3-world-body-device.test.mjs",
+         "packages/live-shell/ui/tests/w3q-sys-routes.test.mjs",
+         "packages/live-shell/ui/src/projections/atlas/system",
+         "packages/live-shell/ui/src/projections/atlas/places",
+         "packages/live-shell/ui/src/projections/atlas/AtlasProjectionPanel.tsx",
+         "packages/live-shell/ui/src/projections/atlas/src/app/controller.ts",
+         "packages/live-shell/ui/src/projections/atlas/src/sky/orbits.ts",
+         "packages/live-shell/ui/src/projections/atlas/PORT-PIN.json",
+         "packages/live-shell/ui/src/inhabitants/ql/devices/atlasDevices.ts",
+         "desktop/cradle/src/knowledge/WikiFactsEditor.tsx",
+         "packages/live-shell/ui/tests/w3q-sys-orbits.test.mjs",
+         "packages/live-shell/ui/tests/w3q-sys-maturity.test.mjs",
+         "packages/live-shell/ui/tests/w3q-sys-wiring.test.mjs",
+         "packages/live-shell/ui/tests/w3q-sys-places.test.mjs",
+         "packages/live-shell/ui/tests/w3b-your-system.test.mjs"
+        ],
+        "since_unix_seconds": 1792501427
+       },
+       {
+        "actor": "claude-code:uiux-lane-kit",
+        "regions": [
+         "packages/live-shell/ui/src/inhabitants/sdk",
+         "packages/live-shell/ui/tests/kit-motion.test.mjs",
+         "docs/dlw/DLW.md",
+         "docs/dlw/DLW.html"
+        ],
+        "since_unix_seconds": 1792521646
+       },
+       {
+        "actor": "claude-code:reads-lead",
+        "regions": [
+         "desktop/cradle/kernel/src",
+         "desktop/cradle/kernel/Cargo.toml",
+         "desktop/cradle/kernel/tests",
+         "desktop/cradle/src-tauri/src",
+         "desktop/cradle/src-tauri/Cargo.toml",
+         "desktop/cradle/src/kernel",
+         "packages/live-shell/ui/src/owners",
+         "packages/live-shell/ui/src/widgets",
+         "packages/live-shell/ui/src/frame/tracks",
+         "packages/live-shell/ui/src/timeline",
+         "packages/live-shell/ui/src/central",
+         "packages/live-shell/ui/src/native",
+         "packages/live-shell/ui/src/App.tsx",
+         "packages/live-shell/ui/tests",
+         "packages/live-shell/src",
+         "cli/src"
+        ],
+        "since_unix_seconds": 1792541322
+       }
+      ],
+      "admission": null,
+      "live_branch": "dlw/build",
+      "live_head": "cdbde6fe7",
+      "tracked_changes": 36,
+      "untracked": 11,
+      "behind_main": 4,
+      "ahead_main": 12
+     },
+     {
+      "product": "ql-mef",
+      "state": "free",
+      "registered_branch": null,
+      "registered_head": "241fd82",
+      "claimed_by": null,
+      "now_ref": null,
+      "zones": [],
+      "admission": {
+       "free_gb": 13.5,
+       "soft_floor_gb": 20,
+       "hard_floor_gb": 5.0,
+       "tended_freed_mb": 0,
+       "standing": "admitted below the soft floor; breach recorded"
+      },
+      "live_branch": null,
+      "live_head": "241fd82",
+      "tracked_changes": 0,
+      "untracked": 0,
+      "behind_main": 0,
+      "ahead_main": 0
+     },
+     {
+      "product": "workcell",
+      "state": "free",
+      "registered_branch": null,
+      "registered_head": "59f94a3",
+      "claimed_by": null,
+      "now_ref": null,
+      "zones": [
+       {
+        "actor": "codex:improvement-parent",
+        "regions": [
+         "crates/workcell-cli"
+        ],
+        "since_unix_seconds": 1791435376
+       },
+       {
+        "actor": "codex:collaboration-b",
+        "regions": [
+         "crates"
+        ],
+        "since_unix_seconds": 1791435480
+       },
+       {
+        "actor": "claude-code:dlw-conductor",
+        "regions": [
+         "ProjectCentral",
+         ".gitignore",
+         "experiments",
+         "scripts"
+        ],
+        "since_unix_seconds": 1791846079
+       }
+      ],
+      "admission": null,
+      "live_branch": null,
+      "live_head": "59f94a3",
+      "tracked_changes": 0,
+      "untracked": 0,
+      "behind_main": 1,
+      "ahead_main": 0
+     },
+     {
+      "product": "point-cloud-demo",
+      "state": "free",
+      "registered_branch": null,
+      "registered_head": null,
+      "claimed_by": null,
+      "now_ref": null,
+      "zones": [],
+      "admission": null,
+      "live_branch": null,
+      "live_head": "e9c7ccb",
+      "tracked_changes": 0,
+      "untracked": 0,
+      "behind_main": 0,
+      "ahead_main": 0
+     }
+    ],
+    "drift": [
+     "actuation: register pose ('fold/day-close-20261012', '7b4af99') != live ('fold/day-close-20261012', '933731e')",
+     "central: register pose ('fold/day-close-20261012', 'cf58c54') != live ('fix/day-close-no-t-payloads', '8aa1065')",
+     "o-i: register pose ('dlw/phase1-semantics-20261013', 'cc69e19fa') != live ('dlw/build', 'cdbde6fe7')"
+    ]
+   },
+   {
+    "name": "env-2",
+    "path": "/Users/admin/Central/worktrees/env-2",
+    "disk_free_gb": 11.5,
+    "min_free_gb": 20,
+    "hard_free_gb": null,
+    "last_tend": {
+     "at_unix_seconds": 1792588383,
+     "freed_mb": 0,
+     "removed": []
+    },
+    "seats": [
+     {
+      "product": "actuation",
+      "state": "free",
+      "registered_branch": null,
+      "registered_head": "4d49e7d",
+      "claimed_by": null,
+      "now_ref": null,
+      "zones": [],
+      "admission": {
+       "free_gb": 9.4,
+       "soft_floor_gb": 20,
+       "hard_floor_gb": 5.0,
+       "tended_freed_mb": 0,
+       "standing": "admitted below the soft floor; breach recorded"
+      },
+      "live_branch": null,
+      "live_head": "4d49e7d",
+      "tracked_changes": 0,
+      "untracked": 0,
+      "behind_main": 0,
+      "ahead_main": 0
+     },
+     {
+      "product": "ai-kit",
+      "state": "free",
+      "registered_branch": null,
+      "registered_head": "60aff3dc",
+      "claimed_by": null,
+      "now_ref": null,
+      "zones": [],
+      "admission": {
+       "free_gb": 13.6,
+       "soft_floor_gb": 20,
+       "hard_floor_gb": 5.0,
+       "tended_freed_mb": 0,
+       "standing": "admitted below the soft floor; breach recorded"
+      },
+      "live_branch": null,
+      "live_head": "60aff3dc",
+      "tracked_changes": 0,
+      "untracked": 0,
+      "behind_main": 0,
+      "ahead_main": 0
+     },
+     {
+      "product": "central",
+      "state": "free",
+      "registered_branch": null,
+      "registered_head": "ae88a24",
+      "claimed_by": null,
+      "now_ref": null,
+      "zones": [],
+      "admission": {
+       "free_gb": 13.7,
+       "soft_floor_gb": 20,
+       "hard_floor_gb": 5.0,
+       "tended_freed_mb": 0,
+       "standing": "admitted below the soft floor; breach recorded"
+      },
+      "live_branch": null,
+      "live_head": "ae88a24",
+      "tracked_changes": 0,
+      "untracked": 0,
+      "behind_main": 0,
+      "ahead_main": 0
+     },
+     {
+      "product": "factory",
+      "state": "free",
+      "registered_branch": null,
+      "registered_head": "09c3354",
+      "claimed_by": null,
+      "now_ref": null,
+      "zones": [],
+      "admission": {
+       "free_gb": 8.3,
+       "soft_floor_gb": 20,
+       "hard_floor_gb": 5.0,
+       "tended_freed_mb": 0,
+       "standing": "admitted below the soft floor; breach recorded"
+      },
+      "live_branch": null,
+      "live_head": "09c3354",
+      "tracked_changes": 0,
+      "untracked": 0,
+      "behind_main": 1,
+      "ahead_main": 0
+     },
+     {
+      "product": "o-i",
+      "state": "claimed",
+      "registered_branch": "dlw/native-build",
+      "registered_head": "2491a11b6",
+      "claimed_by": "claude-code:dlw-lead",
+      "now_ref": "workcellenv2oi-seat-claimed-branch-2026-10-14-2",
+      "zones": [
+       {
+        "actor": "codex:ci-repair-296",
+        "regions": [
+         "desktop/cradle/tests/search-overlay.mjs,desktop/cradle/kernel/src/bin/walk-bridge.rs"
+        ],
+        "since_unix_seconds": 1791288823
+       },
+       {
+        "actor": "agent:claude-central-field-lead",
+        "regions": [
+         "desktop/cradle/src",
+         "desktop/cradle/package-bundle.sh",
+         "desktop/cradle/expressions-app",
+         "site",
+         "docs",
+         ".wayfinder",
+         "cli/src"
+        ],
+        "since_unix_seconds": 1791305114
+       },
+       {
+        "actor": "zcode:harness-wiring-20261006",
+        "regions": [
+         "desktop/cradle/tests/settings-model.test.mjs"
+        ],
+        "since_unix_seconds": 1791319874
+       },
+       {
+        "actor": "codex:walkbridge-296",
+        "regions": [
+         "desktop/cradle/kernel/src/bin"
+        ],
+        "since_unix_seconds": 1791362609
+       },
+       {
+        "actor": "codex:psc-581",
+        "regions": [
+         "desktop/cradle/kernel/tests"
+        ],
+        "since_unix_seconds": 1791384688
+       },
+       {
+        "actor": "agent:claude-code:opus-5.5",
+        "regions": [
+         ".github/workflows/site.yml"
+        ],
+        "since_unix_seconds": 1791396690
+       },
+       {
+        "actor": "agent/oh-i",
+        "regions": [
+         "desktop/cradle/kernel/tests"
+        ],
+        "since_unix_seconds": 1791409247
+       },
+       {
+        "actor": "zcode:glue-circuit-integration",
+        "regions": [
+         "docs/research/ableton-live-12.0.25/devices/glue-perblock-derivation.md"
+        ],
+        "since_unix_seconds": 1791480227
+       },
+       {
+        "actor": "zcode:glass-bead-game-study",
+        "regions": [
+         "skills/m-prime-development"
+        ],
+        "since_unix_seconds": 1791684675
+       },
+       {
+        "actor": "agent:zcode-convergence",
+        "regions": [
+         "desktop/cradle/kernel/src/agent_definition.rs",
+         "desktop/cradle/kernel/tests/agent_definition_gate.rs",
+         "desktop/cradle/src/agency",
+         "desktop/cradle/tests/agent-self-definition.test.mjs"
+        ],
+        "since_unix_seconds": 1791724803
+       },
+       {
+        "actor": "claude-code:dlw-manual",
+        "regions": [
+         "docs/dlw"
+        ],
+        "since_unix_seconds": 1791897450
+       },
+       {
+        "actor": "claude-code:cradle-instrument-summon",
+        "regions": [
+         "desktop/cradle/src",
+         "desktop/cradle/tests"
+        ],
+        "since_unix_seconds": 1791950692
+       },
+       {
+        "actor": "claude-code:dlw-ft-attempts",
+        "regions": [
+         "desktop/cradle/docs/world-shell/evidence/p0-r1"
+        ],
+        "since_unix_seconds": 1792427628
+       },
+       {
+        "actor": "claude-code:dlw-uiux-lead",
+        "regions": [
+         "target"
+        ],
+        "since_unix_seconds": 1792500228
+       }
+      ],
+      "admission": null,
+      "live_branch": "dlw/native-build",
+      "live_head": "1dc4b6821",
+      "tracked_changes": 0,
+      "untracked": 0,
+      "behind_main": 16,
+      "ahead_main": 0
+     },
+     {
+      "product": "ql-mef",
+      "state": "free",
+      "registered_branch": null,
+      "registered_head": "fc8e28a",
+      "claimed_by": null,
+      "now_ref": null,
+      "zones": [],
+      "admission": {
+       "free_gb": 13.8,
+       "soft_floor_gb": 20,
+       "hard_floor_gb": 5.0,
+       "tended_freed_mb": 0,
+       "standing": "admitted below the soft floor; breach recorded"
+      },
+      "live_branch": null,
+      "live_head": "fc8e28a",
+      "tracked_changes": 0,
+      "untracked": 0,
+      "behind_main": 11,
+      "ahead_main": 0
+     },
+     {
+      "product": "workcell",
+      "state": "free",
+      "registered_branch": null,
+      "registered_head": "1023071",
+      "claimed_by": null,
+      "now_ref": null,
+      "zones": [],
+      "admission": {
+       "free_gb": 6.5,
+       "soft_floor_gb": 20,
+       "hard_floor_gb": 5.0,
+       "tended_freed_mb": 0,
+       "standing": "admitted below the soft floor; breach recorded"
+      },
+      "live_branch": null,
+      "live_head": "1023071",
+      "tracked_changes": 0,
+      "untracked": 0,
+      "behind_main": 0,
+      "ahead_main": 0
+     },
+     {
+      "product": "point-cloud-demo",
+      "state": "free",
+      "registered_branch": null,
+      "registered_head": "e9c7ccb",
+      "claimed_by": null,
+      "now_ref": null,
+      "zones": [
+       {
+        "actor": "zcode:enrich-sproducts-l3",
+        "regions": [
+         "production/s-products"
+        ],
+        "since_unix_seconds": 1791294344
+       },
+       {
+        "actor": "claude-code:dlw-conductor",
+        "regions": [
+         "ProjectCentral",
+         ".gitignore",
+         "experiments",
+         "scripts"
+        ],
+        "since_unix_seconds": 1791841122
+       }
+      ],
+      "admission": null,
+      "live_branch": null,
+      "live_head": "e9c7ccb",
+      "tracked_changes": 0,
+      "untracked": 0,
+      "behind_main": 0,
+      "ahead_main": 0
+     }
+    ],
+    "drift": [
+     "o-i: register pose ('dlw/native-build', '2491a11b6') != live ('dlw/native-build', '1dc4b6821')"
+    ]
+   },
+   {
+    "name": "env-3",
+    "path": "/Users/admin/Central/worktrees/env-3",
+    "disk_free_gb": 11.5,
+    "min_free_gb": 20,
+    "hard_free_gb": null,
+    "last_tend": {
+     "at_unix_seconds": 1792588383,
+     "freed_mb": 0,
+     "removed": []
+    },
+    "seats": [
+     {
+      "product": "actuation",
+      "state": "free",
+      "registered_branch": null,
+      "registered_head": "e3ab00d",
+      "claimed_by": null,
+      "now_ref": null,
+      "zones": [
+       {
+        "actor": "zcode:harness-wiring-20261006",
+        "regions": [
+         "crates"
+        ],
+        "since_unix_seconds": 1791321142
+       }
+      ],
+      "admission": {
+       "free_gb": 15.3,
+       "soft_floor_gb": 20,
+       "hard_floor_gb": 5.0,
+       "tended_freed_mb": 0,
+       "standing": "admitted below the soft floor; breach recorded"
+      },
+      "live_branch": null,
+      "live_head": "cd1f4ce",
+      "tracked_changes": 0,
+      "untracked": 1,
+      "behind_main": 4,
+      "ahead_main": 0
+     },
+     {
+      "product": "ai-kit",
+      "state": "free",
+      "registered_branch": null,
+      "registered_head": "cc6405e6",
+      "claimed_by": null,
+      "now_ref": null,
+      "zones": [],
+      "admission": null,
+      "live_branch": null,
+      "live_head": "cc6405e6",
+      "tracked_changes": 0,
+      "untracked": 0,
+      "behind_main": 1,
+      "ahead_main": 0
+     },
+     {
+      "product": "central",
+      "state": "free",
+      "registered_branch": null,
+      "registered_head": "11e7e69",
+      "claimed_by": null,
+      "now_ref": null,
+      "zones": [],
+      "admission": null,
+      "live_branch": null,
+      "live_head": "11e7e69",
+      "tracked_changes": 0,
+      "untracked": 0,
+      "behind_main": 4,
+      "ahead_main": 0
+     },
+     {
+      "product": "factory",
+      "state": "free",
+      "registered_branch": null,
+      "registered_head": "1d88a83",
+      "claimed_by": null,
+      "now_ref": null,
+      "zones": [
+       {
+        "actor": "agent:zcode-praxis-validation",
+        "regions": [
+         "factory/src",
+         "factory/tests"
+        ],
+        "since_unix_seconds": 1791631683
+       },
+       {
+        "actor": "agent:zcode-praxis-attach",
+        "regions": [
+         "factory/src",
+         "factory/tests"
+        ],
+        "since_unix_seconds": 1791635240
+       }
+      ],
+      "admission": null,
+      "live_branch": null,
+      "live_head": "96a7fef",
+      "tracked_changes": 0,
+      "untracked": 0,
+      "behind_main": 5,
+      "ahead_main": 0
+     },
+     {
+      "product": "o-i",
+      "state": "claimed",
+      "registered_branch": "dlw/t1-theme",
+      "registered_head": "1c70fefa3",
+      "claimed_by": "claude-code:dlw-lead",
+      "now_ref": "workcellenv3oi-seat-claimed-branch-dlwt1theme-2026-10-17",
+      "zones": [
+       {
+        "actor": "codex:psu-580",
+        "regions": [
+         "desktop/cradle/expressions-app/field-studies-journeys/src/native-field/ql/instrument-session.mjs",
+         "desktop/cradle/expressions-app/field-studies-journeys/src/native-field/controller.ts",
+         "desktop/cradle/expressions-app/field-studies-journeys/src/nativeField.ts",
+         "desktop/cradle/expressions-app/field-studies-journeys/tests/native-stage.test.mjs"
+        ],
+        "since_unix_seconds": 1791363347
+       },
+       {
+        "actor": "codex:psu-580-s2",
+        "regions": [
+         "desktop/cradle/expressions-app/field-studies-journeys"
+        ],
+        "since_unix_seconds": 1791372334
+       },
+       {
+        "actor": "codex:walkbridge-v2",
+        "regions": [
+         "desktop/cradle/kernel/src/bin"
+        ],
+        "since_unix_seconds": 1791374402
+       },
+       {
+        "actor": "codex:psg-sampler",
+        "regions": [
+         "desktop/cradle/expressions-app/src/engine"
+        ],
+        "since_unix_seconds": 1791384676
+       },
+       {
+        "actor": "zcode:agent-self-acquaintance",
+        "regions": [
+         "desktop/cradle/tests"
+        ],
+        "since_unix_seconds": 1791385883
+       },
+       {
+        "actor": "claude-code:dlw-lead",
+        "regions": [
+         "packages/live-shell/ui",
+         "packages/oi-design-system"
+        ],
+        "since_unix_seconds": 1792229801
+       }
+      ],
+      "admission": null,
+      "live_branch": "dlw/t1-theme",
+      "live_head": "b2978431f",
+      "tracked_changes": 0,
+      "untracked": 0,
+      "behind_main": 784,
+      "ahead_main": 0
+     },
+     {
+      "product": "ql-mef",
+      "state": "free",
+      "registered_branch": null,
+      "registered_head": "61c0e16",
+      "claimed_by": null,
+      "now_ref": null,
+      "zones": [],
+      "admission": null,
+      "live_branch": null,
+      "live_head": "61c0e16",
+      "tracked_changes": 0,
+      "untracked": 0,
+      "behind_main": 29,
+      "ahead_main": 0
+     },
+     {
+      "product": "workcell",
+      "state": "free",
+      "registered_branch": null,
+      "registered_head": "c7261e2",
+      "claimed_by": null,
+      "now_ref": null,
+      "zones": [],
+      "admission": null,
+      "live_branch": null,
+      "live_head": "a716cd3",
+      "tracked_changes": 0,
+      "untracked": 0,
+      "behind_main": 2,
+      "ahead_main": 0
+     },
+     {
+      "product": "point-cloud-demo",
+      "state": "free",
+      "registered_branch": null,
+      "registered_head": null,
+      "claimed_by": null,
+      "now_ref": null,
+      "zones": [],
+      "admission": null,
+      "live_branch": null,
+      "live_head": "e9c7ccb",
+      "tracked_changes": 0,
+      "untracked": 0,
+      "behind_main": 0,
+      "ahead_main": 0
+     }
+    ],
+    "drift": [
+     "o-i: register pose ('dlw/t1-theme', '1c70fefa3') != live ('dlw/t1-theme', 'b2978431f')"
+    ]
+   }
+  ]
+ }
+}

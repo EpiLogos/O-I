@@ -200,9 +200,6 @@
 .fslice-note{ margin: 0; color: var(--oi-muted-2); font-size: var(--oi-shell-type-ui); }
 
 /* Object pages */
-.fobject-head{ display: flex; align-items: center; gap: 4px; }
-.fobject-head h1{ margin: 0; font-size: var(--oi-shell-type-title, 18px); font-weight: 650; color: var(--oi-accent-ink); overflow-wrap: anywhere; }
-.fobject-fields{ max-width: 760px; }
 .fobject-list{ margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
 .factory-centre .fobject-link{ display: inline-flex; gap: 8px; align-items: baseline; border: 0; padding: 0; background: none; color: var(--oi-accent-ink); font: inherit; font-size: var(--oi-shell-type-ui); text-align: left; cursor: pointer; }
 .factory-centre .fobject-link:hover{ text-decoration: underline; }
