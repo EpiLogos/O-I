@@ -247,7 +247,8 @@ export function useShownBox(element: RefObject<HTMLElement | null> | HTMLElement
   }, [element])
   return box
 }
-const useIsoLayoutEffect = typeof window === 'undefined' ? () => {} : useLayoutEffect
+// A static render lays nothing out: no layout effect there (the kit's test, sdk/panel.tsx useLayoutIso — a real DOM, not a stand-in window).
+const useIsoLayoutEffect = typeof HTMLElement === 'undefined' ? () => {} : useLayoutEffect
 
 /** One device in one of its three runtime sizes (the earlier API): compact on a chain, whole in the pool, full in a pane. */
 export function DeviceView({device, size, picture, actions, wrapRow, binding, generic, marks}: DeviceViewProps) {

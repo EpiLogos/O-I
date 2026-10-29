@@ -281,6 +281,16 @@
 .dp-expand[aria-pressed="true"] { color: var(--accent, #ffbe00); }
 .dp-expand[aria-pressed="true"] > svg { transform: none; }
 
+/* A rack's head (manual §16.4; Live's rack head): three marks after ▸ show or hide its macros, its chain list and the devices of the chosen
+   chain; a mark is amber while its part shows. */
+.dp-rack-marks { display: inline-flex; align-items: center; gap: 1px; }
+.dp-rack-mark[aria-pressed="true"] { color: var(--accent, #ffbe00); }
+
+/* Expanded above the chain (the wide frame), the band that holds the picture stands first, and in each band the section that holds it
+   (manual §16.9 "The display stands in a section of its own, at the left"; §16.12 "A rack's picture is its chain list"). A design writes
+   its picture first; this keeps the order where a band written for the pool puts it later. */
+.dp-wide .dp[data-view="whole"] > .dp-body > .dp-band:has(.dp-display, .dp-cell--rows) { order: -1; }
+
 /* One closed choice in a radio: at 40 % strength, as a disabled control is; the status bar says why. */
 .dp-radio > button[data-why="true"] { opacity: .4; }
 

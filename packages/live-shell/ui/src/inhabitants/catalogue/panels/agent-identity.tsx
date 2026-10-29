@@ -32,8 +32,8 @@
 // A key the owner does not report is drawn "—", and the well names the reading that is missing. The sample is the roster of this ground,
 // read with `agent-profile.roster`: its 39 profiles, their names, roles, revisions, authored skill, method and SkillSet refs and ratified
 // Worlds; Cairn, Flint, Kite and Lilt carry the authored selves of Control/self/agents. It sits in the defaults and the fixtures.
-import {memo, useLayoutEffect, useMemo, useState} from 'react'
-import {Band, Chooser, Display, Folded, Handle, Panel, Readout, Rows, Section, Tile, Toggle, type LightState, type RowItem, type Standing, unreadRows} from '../../sdk/panel'
+import {memo, useMemo, useState} from 'react'
+import {Band, Chooser, Display, Folded, Handle, Panel, Readout, Rows, Section, Tile, Toggle, type LightState, type RowItem, type Standing, unreadRows, useLayoutIso} from '../../sdk/panel'
 import {WoodMark} from '../../sdk/marks'
 import type {WoodSet} from '../../sdk/icons'
 import {maskStatic} from '../../../agent/maskFace'
@@ -267,7 +267,7 @@ function missing(m: Model, v: V): {title: string; body: string} {
 /** The face colours resolved from the shell's tokens: the mask mixes hex values, so it needs the token's value, not its name. */
 function useFaceColours() {
   const [colours, setColours] = useState({ink: 'var(--fizz)', ground: 'var(--bg-0)'})
-  useLayoutEffect(() => {
+  useLayoutIso(() => {
     const style = getComputedStyle(document.documentElement)
     const hex = (name: string, fallback: string) => { const x = style.getPropertyValue(name).trim(); return /^#[0-9a-f]{6}$/i.test(x) ? x : fallback }
     setColours({ink: hex('--fizz', 'var(--fizz)'), ground: hex('--bg-0', 'var(--bg-0)')})

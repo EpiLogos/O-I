@@ -20,7 +20,8 @@ export function poolScale(width: number, height = Infinity, natural = MEASURE.he
   return Math.round(Math.min(SCALE_MAX, width / MEASURE.pool, height > 0 ? height / natural : Infinity) * 100) / 100
 }
 
-const useIsoLayoutEffect = typeof window === 'undefined' ? () => {} : useLayoutEffect
+// A static render lays nothing out (the kit's test, sdk/panel.tsx useLayoutIso: a real DOM, not a stand-in window).
+const useIsoLayoutEffect = typeof HTMLElement === 'undefined' ? () => {} : useLayoutEffect
 
 /** Follow the content box of the nearest element matching `selector` above `ref` (the chain row, the pool), and scale by `law`.
  * Inside an instrument's section a plate keeps 100 % (the instrument's own plate fits itself). */

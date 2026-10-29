@@ -11,6 +11,9 @@
 // pad: §19.22 "Writing a prompt on an empty pad makes the pad"); Clear empties the slot. Run now stands disabled: Factory never runs a
 // pad — "the launch goes through the gateway as any launch does" — and no route launches a pad's task, so recording a begin
 // (`pads-run`) here would claim a run that never started. The choosers' rows (sessions, agents, scopes, seats) have no reading.
+// A pad the bank schedules (`runs_at`) shows that schedule as its routine's `when` and its next time (`next_at_unix_ms`), as readings: the
+// pad keeps no time of its own (§16.8). Make routine is the shell's own act (O-I #748): Settings, Automations, opened on the bank's project
+// for the pad you read, through the `makeRoutine` port; it writes nothing here.
 // The bank shown and the pad you read are the shell's own holds. Pure, apart from the view holds.
 import type {DesignBinding, Standing, Value, ValueChange, Values} from '../../frame/devices/designed'
 import type {DeviceInstance} from '../../frame/devices/deviceRuntime'
@@ -102,8 +105,21 @@ function clockAt(atUnixMs: number | undefined, timezone: string | undefined): st
   } catch { return undefined }
 }
 
-/** The bank's slots as the design's pads (sixteen rows {index, pad, next?, nextIn?, running, last?}). The AIKit Routine that carries a
- * scheduled pad is not read here, so `routine` is left out. Null when the reading is not the bank. Pure. */
+/** When Factory's bank says a pad runs by itself, in the design's words ('weekdays 08:00', 'every 6 h'); nothing for a pad that runs only
+ * when pressed. The pad keeps no time of its own (§16.8, §19.22): this is the bank's reading of its schedule, shown as the pad's routine's
+ * `when`. Pure. */
+export function scheduleWords(runsAt: unknown): string | undefined {
+  if (!isObj(runsAt)) return undefined
+  if (runsAt.kind === 'every') return num(runsAt.hours) !== undefined ? `every ${num(runsAt.hours)} h` : undefined
+  if (runsAt.kind !== 'daily' || !str(runsAt.time)) return undefined
+  const days = Array.isArray(runsAt.days) ? [...runsAt.days].map(String).sort().join(',') : null
+  const word = days === null || days === 'fri,mon,sat,sun,thu,tue,wed' ? 'daily' : days === 'fri,mon,thu,tue,wed' ? 'weekdays' : days === 'sat,sun' ? 'weekends' : days.replace(/,/g, ' ')
+  return `${word} ${String(runsAt.time)}`
+}
+
+/** The bank's slots as the design's pads (sixteen rows {index, pad, next?, nextIn?, running, last?, routine?}): a pad the bank schedules
+ * carries `routine.when`, the schedule as a reading (scheduleWords); the AIKit Routine's own state and its unattended grant are not read
+ * here, so they stay absent. Null when the reading is not the bank. Pure. */
 export function padRows(bank: unknown, timezone?: string): Record<string, unknown>[] | null {
   if (!isObj(bank) || bank.schema !== 'factory.prompt-pads-reading/v1' || !Array.isArray(bank.slots)) return null
   const now = num(bank.now_unix_ms)
@@ -111,7 +127,8 @@ export function padRows(bank: unknown, timezone?: string): Record<string, unknow
     if (!isObj(slot) || num(slot.index) === undefined) return []
     const pad = padOf(slot.pad), next = num(slot.next_at_unix_ms), last = isObj(slot.last) ? slot.last : null
     const end = last && ['done', 'stalled', 'stopped', 'refused'].includes(String(last.state)) ? String(last.state) : undefined
-    return [{index: num(slot.index), pad, running: isObj(slot.running), ...(next !== undefined ? {next: clockAt(next, timezone)} : {}),
+    const when = pad && isObj(slot.pad) ? scheduleWords(slot.pad.runs_at) : undefined
+    return [{index: num(slot.index), pad, running: isObj(slot.running), ...(when ? {routine: {when}} : {}), ...(next !== undefined ? {next: clockAt(next, timezone)} : {}),
       ...(next !== undefined && now !== undefined ? {nextIn: Math.max(0, Math.round((next - now) / 60_000))} : {}),
       ...(last ? {last: {...(end ? {end} : {}), ...(num(last.ended_at_unix_ms) !== undefined ? {at: clockAt(num(last.ended_at_unix_ms), timezone)} : {}),
         ...(str(last.reason) ? {reason: String(last.reason)} : {}), ...(str(last.task_ref) ? {task: String(last.task_ref)} : {})}} : {})}]
@@ -162,9 +179,14 @@ export interface PromptPadsInput {
 /** The writes through Factory (factory_owner pads-write, the kernel's human grant). Absent: no carrier stands. */
 export interface PromptPadsPorts {
   readonly write?: (request: {state_path: string; project_ref: string; index: number; expected_revision: string; pad: unknown}) => Promise<unknown>
+  /** Make routine: Settings, Automations opened on a new routine for the pad you read, in the bank's project (§19.22 Running alone). The
+   * shell's own act: it writes nothing here. */
+  readonly makeRoutine?: (pad: {index: number; projectRef: string; project?: string; name?: string}) => void
 }
 
 const PADS_LOCAL = ['project', 'pad'] as const
+/** Why Make routine stands closed where no Settings window is handed to the device. */
+const NO_SETTINGS = 'Make routine opens Settings, Automations, and no Settings window is handed to the pads here.'
 
 export function promptPadsValues(input: PromptPadsInput | ChainHolds): Values {
   const full = 'holds' in input ? input as PromptPadsInput : {located: {status: 'reading' as const, value: null, error: null}, holds: input as ChainHolds}
@@ -212,11 +234,22 @@ export function promptPadsBinding(input: PromptPadsInput | ChainHolds, ports: Pr
     const pad = key === 'clear' ? null : padWith(raw?.pad, key, value)
     await ports.write!({state_path: where.statePath, project_ref: where.projectRef, index, expected_revision: String(full.bank!.value.revision ?? 'absent'), pad})
   }
+  // Make routine (§19.22 Running alone): the shell's own act, on the pad you read, in the bank's project.
+  const projectRef = where && 'projectRef' in where ? where.projectRef : undefined
+  if (!ports.makeRoutine) standing.makeRoutine = {disabled: NO_SETTINGS}
+  else if (!projectRef) standing.makeRoutine = {disabled: bankWhy ?? PADS_REFUSE.noBank}
+  const makeRoutine = (value: Value | undefined) => {
+    const index = typeof value === 'number' ? value : Number(values.pad)
+    const rows = typeof values.pads === 'string' ? JSON.parse(values.pads) as Record<string, unknown>[] : []
+    const row = rows.find(item => item.index === index), pad = row && isObj(row.pad) ? row.pad : null
+    if (!ports.makeRoutine || !projectRef || !Number.isInteger(index) || !pad) return
+    ports.makeRoutine({index, projectRef, ...(where && 'project' in where && where.project ? {project: where.project} : {}), ...(str(pad.name) ? {name: String(pad.name)} : {})})
+  }
   return {
     id: PROMPT_PADS_ID,
     values,
     standing,
-    local: Object.fromEntries(PADS_LOCAL.map(key => [key, (value: Value | undefined) => holdView(PROMPT_PADS_ID, key, value)])),
+    local: {...Object.fromEntries(PADS_LOCAL.map(key => [key, (value: Value | undefined) => holdView(PROMPT_PADS_ID, key, value)])), makeRoutine},
     writes: key => PAD_SETTINGS.includes(key) || key === 'clear' || key === 'press',
     write: async (changes: readonly ValueChange[]) => {
       for (const {key, value} of changes) {

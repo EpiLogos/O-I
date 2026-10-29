@@ -6,6 +6,9 @@
 // (Link, Ground, Stamp, Tap, Map — `SlotWords.face`), and a marked slot whose owner gives it a reading shows the reading
 // where the mockup draws a field (the day's opening and close on the punch slots).
 import {useEffect, useLayoutEffect, useRef, useState, type ReactNode} from 'react'
+
+// A layout effect only where there is a DOM to measure: a server render takes the plain effect and stays quiet (as the kit's useLayoutIso).
+const useLayoutIso: typeof useLayoutEffect = typeof HTMLElement === 'undefined' ? useEffect : useLayoutEffect
 import {Icon as CutIcon, type IconName} from '../../inhabitants/sdk/Icon'
 import type {SlotBinding, SlotWords, TransportBindings, TransportSlotId} from './slots'
 import {nextFold, type FoldState} from './fold'
@@ -43,7 +46,7 @@ export function Transport({bindings, words}: {bindings: TransportBindings; words
   const folded = fold.folded && fold.key === foldable
   // The bar measures its own room: its box (the window, the toggles beside it) and its groups' widths (an owner's control
   // that appears, a reading that grows). Short of room, the foldable slots fold to their marks; the room back, they open.
-  useLayoutEffect(() => {
+  useLayoutIso(() => {
     const el = bar.current
     if (!el || typeof ResizeObserver === 'undefined') return
     const measure = () => {

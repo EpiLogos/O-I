@@ -44,7 +44,7 @@ import {useState} from 'react'
 import {WoodMark} from '../../sdk/marks'
 import type {WoodSet} from '../../sdk/icons'
 import {Action, Band, Chooser, Display, Folded, Handle, Ladder, Panel, Radio, Readout, Rows, Section, TextField, Tile, Toggle, ValueBox, type LightState, type RowItem, unreadRows, NoReading} from '../../sdk/panel'
-import {NONE, boolOf, clampTo, grown, has, json, numOf, prefixed, scoped, st, strOf, type DesignedDevice, type ViewProps} from './design'
+import {NONE, boolOf, clampTo, grown, has, json, numOf, prefixed, scoped, st, strOf, wideFrame, type DesignedDevice, type ViewProps} from './design'
 import {DOCUMENTATION, FORM_NAME, ORDER, RUNGS, markState, reaching, type Form, type Member} from './practice'
 import {design as captureSkill} from './capture-skill'
 
@@ -570,9 +570,14 @@ function pageLight(v: V, id: PageId): LightState | undefined {
 }
 
 function SetBands({p}: {p: ViewProps}) {
+  // The rack's picture is its chain list (§16.12): expanded above the chain, where the bands stand side by side, it stands first (§16.9).
+  const list = <Section key="list" grow part="chains"><ChainList p={p} size={8 * memberColumns(p)} columns={memberColumns(p)} /></Section>
+  const show = <Section key="show" label="Show" width={76} part="chains"><UnusedFilter p={p} /></Section>
+  const members = <Band key="members">{wideFrame(p) ? [list, show] : [show, list]}</Band>
   return <>
+    {wideFrame(p) && members}
     <Band>
-      <Section label="Set" width={136}>
+      <Section label="Set" width={136} part="macros">
         <Chooser {...st(p, 'set')} does="The set in the rack. Drag a set from the browser to replace it." value={strOf(p.v, 'set') ?? ''}
           options={options(p.v, 'sets')}
           onChange={x => { p.set('set', x); p.set('compose', 'changed') }} />
@@ -582,12 +587,12 @@ function SetBands({p}: {p: ViewProps}) {
           <Readout label="author" does="The set's author, from its package metadata." value={strOf(p.v, 'author')} />
         </div>
       </Section>
-      <Section label="Compose" width={104}>
+      <Section label="Compose" width={104} part="macros">
         <Compose p={p} />
         <Chooser label="Profile" does="The governance profile the composition applies under. Profiles keep their precedence." value={strOf(p.v, 'profile') ?? ''} {...st(p, 'profile')}
           options={options(p.v, 'profiles')} onChange={x => { p.set('profile', x); p.set('compose', 'changed') }} />
       </Section>
-      <Section label="Package" grow>
+      <Section label="Package" grow part="macros">
         <Radio does="The harness to package the set for. The set itself does not change." value={strOf(p.v, 'target') ?? ''} options={TARGETS} {...st(p, 'target')} stack onChange={x => p.set('target', x)} />
         <TextField {...st(p, 'outDir')} label="Into" does="The directory the package is written into, as an absolute path. AIKit writes the package and its receipt there." wide
           value={strOf(p.v, 'outDir') ?? ''} placeholder="/absolute/folder" onChange={x => p.set('outDir', x)} />
@@ -595,16 +600,13 @@ function SetBands({p}: {p: ViewProps}) {
         <Readout label="unsupported" does="Relations the target cannot carry. The receipt names each one." value={unsupported(p.v)} tone={unsupported(p.v) ? 'stall' : undefined} />
       </Section>
     </Band>
-    <Band>
-      <Section label="Show" width={76}><UnusedFilter p={p} /></Section>
-      <Section grow><ChainList p={p} size={8 * memberColumns(p)} columns={memberColumns(p)} /></Section>
-    </Band>
+    {!wideFrame(p) && members}
   </>
 }
 
 function SkillsWhole({p}: {p: ViewProps}) {
   const page = pageOf(p)
-  return <Panel title={strOf(p.v, 'set') ?? 'Skillset rack'} mark={headMark(p.v)} view="whole" light={light(p.v, p.owner)} onFold={p.nav.fold} onFull={p.nav.full}
+  return <Panel title={strOf(p.v, 'set') ?? 'Skillset rack'} mark={headMark(p.v)} view="whole" rack light={light(p.v, p.owner)} onFold={p.nav.fold} onFull={p.nav.full}
     pages={PAGES.map(x => ({id: x.id, label: x.label, light: pageLight(p.v, x.id)}))} page={page} onPage={p.setPage}>
     {page === 'sources' ? <SourcesBands p={p} /> : page === 'adopt' ? <AdoptBands p={p} /> : page === 'procedures' ? <ProcBands p={p} /> : page === 'capture' ? <CaptureBands p={captureOf(p)} /> : <SetBands p={p} />}
   </Panel>
@@ -780,9 +782,9 @@ export const skills: DesignedDevice = {
 
   folded: p => <Folded title={short(p.v)} light={light(p.v, p.owner)} readings={[`${reach(p.v, 5) === undefined ? NONE : reach(p.v, 5)} loaded`]} onUnfold={p.nav.unfold} />,
 
-  compact: p => <Panel title={short(p.v)} mark={headMark(p.v)} view="compact" light={light(p.v, p.owner)} onFold={p.nav.fold} onFull={p.nav.full} onSelect={p.nav.select}>
-    <Section width={244}><ChainList p={p} size={8} columns={1} /></Section>
-    <Section label="Repertoire" width={92}>
+  compact: p => <Panel title={short(p.v)} mark={headMark(p.v)} view="compact" rack light={light(p.v, p.owner)} onFold={p.nav.fold} onFull={p.nav.full} onSelect={p.nav.select}>
+    <Section width={244} part="chains"><ChainList p={p} size={8} columns={1} /></Section>
+    <Section label="Repertoire" width={92} part="macros">
       <Compose p={p} />
       <Readout label="loaded" does="Members whose body entered the agent's context in this session." value={has(p.v, 'members') ? `${reaching(effective(p.v), 5)}/${members(p.v).length}` : undefined} tone="green" />
     </Section>

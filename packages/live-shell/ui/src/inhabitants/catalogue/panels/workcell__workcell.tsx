@@ -815,10 +815,10 @@ export const design: DesignedDevice = {
 
 function CompactView({p}: {p: ViewProps}) {
     const [selected, setSelected] = useState('gateway'), m = macros(p, true)
-    return <Panel title={strOf(p.v, 'name') ?? 'Workcell'} view="compact" light={light(p.v, p.owner)} onFold={p.nav.fold} onFull={p.nav.full} onSelect={p.nav.select}>
-      <Section width={196}><ChainList p={p} selected={selected} onSelect={setSelected} /></Section>
-      <Section label="Macros" width={92}>{m.transport}</Section>
-      <Section width={92}>{m.approvals}{m.stall}{m.land}</Section>
+    return <Panel title={strOf(p.v, 'name') ?? 'Workcell'} view="compact" rack light={light(p.v, p.owner)} onFold={p.nav.fold} onFull={p.nav.full} onSelect={p.nav.select}>
+      <Section width={196} part="chains"><ChainList p={p} selected={selected} onSelect={setSelected} /></Section>
+      <Section label="Macros" width={92} part="macros">{m.transport}</Section>
+      <Section width={92} part="macros">{m.approvals}{m.stall}{m.land}</Section>
     </Panel>
 }
 
@@ -829,20 +829,20 @@ function WholeView({p}: {p: ViewProps}) {
     const pages = PAGES.map(x => ({id: x.id, label: x.label,
       light: x.id === 'world' ? (world ? (faulty(world) ? 'dark' : 'lit') : undefined) as LightState | undefined
         : x.id === 'left' ? (leftFaults === undefined ? undefined : leftFaults ? 'dark' : 'lit') as LightState | undefined : undefined}))
-    return <Panel title={strOf(p.v, 'name') ?? 'Workcell'} view="whole" light={light(p.v, p.owner)} onFold={p.nav.fold} onFull={p.nav.full} pages={pages} page={page} onPage={p.setPage}>
+    return <Panel title={strOf(p.v, 'name') ?? 'Workcell'} view="whole" rack light={light(p.v, p.owner)} onFold={p.nav.fold} onFull={p.nav.full} pages={pages} page={page} onPage={p.setPage}>
       {page === 'world' ? <WorldBand p={p} />
         : page === 'services' ? <ServicesBand p={p} />
         : page === 'exposure' ? <ExposureBand p={p} />
         : page === 'release' ? <ReleaseBand p={p} />
         : page === 'left' ? <LeftBand p={leftOf(p)} />
         : <Band>
-          <Section width={196}>
+          <Section width={196} part="chains">
             <ChainList p={p} selected={selected} onSelect={setSelected} />
             <Readout label={chosen?.name ?? 'device'} does="The selected device's own reading. Its settings open on its head, ▸." value={chosen?.reading} />
           </Section>
-          <Section label="Gateway" width={92}>{m.transport}</Section>
-          <Section width={92}>{m.approvals}{m.stall}</Section>
-          <Section label="Landing" width={92}>{m.land}<Readout label="machine" does="Where the workcell runs: the Remote carrier's reading." value={strOf(p.v, 'machine')} /></Section>
+          <Section label="Gateway" width={92} part="macros">{m.transport}</Section>
+          <Section width={92} part="macros">{m.approvals}{m.stall}</Section>
+          <Section label="Landing" width={92} part="macros">{m.land}<Readout label="machine" does="Where the workcell runs: the Remote carrier's reading." value={strOf(p.v, 'machine')} /></Section>
           <Section grow><Working v={p.v} /></Section>
         </Band>}
     </Panel>

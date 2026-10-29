@@ -95,7 +95,7 @@ function Pads({p, x0, y0, w, h, chosen, choose}: {p: ViewProps; x0: number; y0: 
       const gave = m.id === 'close' ? undefined : numOf(p.v, `gave_${m.id}`)
       const run = () => { if (!why) p.set(m.press, true) }
       return <g key={m.id} opacity={why ? 0.4 : 1}>
-        <g role="button" aria-label={`${m.name}, ${m.faces}`} aria-disabled={why ? true : undefined} tabIndex={0} style={{cursor: why ? 'default' : 'pointer'}}
+        <g role="button" data-pad="run" aria-label={`${m.name}, ${m.faces}`} aria-disabled={why ? true : undefined} tabIndex={0} style={{cursor: why ? 'default' : 'pointer'}}
           data-i={`${m.name} · ${m.faces}|${m.does} Press to run it now.${why ? ` ${why}` : ''}`}
           onClick={run} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); run() } }}>
           <rect x={x + .5} y={y0 + .5} width={pw - 1} height={ph - 1} rx={3} className={running ? 'dp-fill-on' : 'dp-faint'}

@@ -132,7 +132,11 @@ export const AGENT_CONTEXT_ABSENT: Readonly<Record<string, string>> = {
   'ctx.pressure': 'The context pressure: AIKit\'s continuity is not read here (`aikit work continuity pressure` through the kernel\'s aikit_read).',
   'ctx.armed': 'The star commands armed: AIKit\'s continuity is not read here (`aikit work continuity commands` through the kernel\'s aikit_read).',
   'ctx.turn': 'The last turn\'s bounded blocks: AIKit\'s continuity is not read here (`aikit work continuity turn` through the kernel\'s aikit_read).',
+  // The Git row (O-I ticket 748): the chain lays the session's repository in over this (oneAgentBinding.ts withAgentGit).
+  'ctx.git': 'The session\'s repository: the chain that holds the Agent reads it (git_repository_read) and lays it in; it is not read here.',
 }
+/** The Git row's Diff, a press with no value of its own: it waits on the repository the chain lays in. */
+const AGENT_DIFF_ABSENT = 'Diff opens Files\' Diff page on the session\'s repository, which the chain that holds the Agent reads; it is not read here.'
 
 /** Each chain design's refused writes, by key (the refusals its binding's write gives, below). The Agent's light is among them since
  * the kit's activator says why it only reads (inhabitants/sdk/panel.tsx Panel `lightWhy`, c5afc4aa0): the design stands its activator
@@ -350,7 +354,8 @@ function contextStanding(context: AgentInput['context'], values: Values): Record
       : context?.turn?.status === 'reading' ? 'AIKit has not answered its continuity turn yet (`aikit work continuity turn`).'
         : context?.turn ? '`aikit work continuity turn` answered something other than its turn reading.' : AGENT_CONTEXT_ABSENT['ctx.turn']!
   return {...('ctx.turn' in values ? {} : {'ctx.turn': turnWhy}), ...('ctx.pressure' in values ? {} : {'ctx.pressure': why(context?.pressure, 'ctx.pressure')}),
-    ...('ctx.armed' in values ? {} : {'ctx.armed': why(context?.commands, 'ctx.armed')})}
+    ...('ctx.armed' in values ? {} : {'ctx.armed': why(context?.commands, 'ctx.armed')}),
+    ...('ctx.git' in values ? {} : {'ctx.git': AGENT_CONTEXT_ABSENT['ctx.git']!, 'ctx.diff': AGENT_DIFF_ABSENT})}
 }
 
 export function agentValues(input: AgentInput): Values {

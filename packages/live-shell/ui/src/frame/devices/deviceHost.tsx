@@ -17,10 +17,10 @@
 //
 // Each view is drawn as its own component inside the place's boundary: a view that throws stands down for the generic plate's view
 // of the same device, which says why on the status bar's Info line — never a blank place.
-import {Component, cloneElement, isValidElement, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ComponentProps,
+import {Component, cloneElement, createContext, isValidElement, useCallback, useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ComponentProps,
   type CSSProperties, type MouseEvent, type ReactElement, type ReactNode} from 'react'
 import {createPortal} from 'react-dom'
-import {ControlWrapContext, Panel, PlaceContext, Tile, type ControlWrap, type PanelProps, type Standing} from '../../inhabitants/sdk/panel'
+import {ControlWrapContext, Panel, PlaceContext, Tile, type ControlWrap, type PanelProps, type RackPart, type RackShown, type Standing} from '../../inhabitants/sdk/panel'
 import type {PublishedDevice} from './deviceDoor'
 import {DeviceMenu, headMenu, type DeviceMenuState, type HeadMenuItem} from './DeviceMenu'
 import type {DesignBinding, DesignedDevice, DeviceViewName, HostNav, HostedViewProps, Value, ValueChange, Values} from './designed'
@@ -41,6 +41,8 @@ export interface HostState {
   readonly refused: Readonly<Record<string, Refusal>>
   readonly page: string | null
   readonly folded: boolean
+  /** A rack's parts its head hides (Live's rack head: macros, chain list, devices), kept with the device as its fold is; absent, all show. */
+  readonly rack?: Partial<RackShown>
 }
 
 const EMPTY: HostState = {drafts: {}, sent: {}, refused: {}, page: null, folded: false}
@@ -199,6 +201,23 @@ export function setHostFolded(id: string, folded: boolean): void {
   update(id, was => (was.folded === folded ? was : {...was, folded}))
 }
 
+/** Show or hide one part of a rack (its head's mark): every place the rack stands in draws the same, and the chain that draws the rack's
+ * members beside it reads the same (rackShownOf). */
+export function setHostRack(id: string, part: RackPart, shown: boolean): void {
+  update(id, was => ((was.rack?.[part] ?? true) === shown ? was : {...was, rack: {...was.rack, [part]: shown}}))
+}
+
+/** The rack's shown parts and their hand that a hosted view hands its place (HostedDevice → DrawnView). */
+const RackHost = createContext<{readonly shown: Partial<RackShown>; readonly onShow: (part: RackPart, shown: boolean) => void} | undefined>(undefined)
+
+/** Whether a rack shows a part now (all show until its mark hides one). */
+export const rackShownOf = (id: string, part: RackPart): boolean => hostState(id).rack?.[part] ?? true
+
+/** The same, for a chain that draws a rack's members beside it (Live: the devices of the chosen chain), redrawn when the mark moves. */
+export function useRackShown(id: string, part: RackPart): boolean {
+  return useHostState(id).rack?.[part] ?? true
+}
+
 /** Drop a device's host state (tests; a device withdrawn for good). */
 export function resetHost(id?: string): void {
   if (id === undefined) states.clear(); else states.delete(id)
@@ -315,6 +334,8 @@ export function notHereWords(design: Pick<DesignedDevice, 'views' | 'kind' | 'ti
 /** One view of a device, drawn as its own component: what it throws is caught by the boundary around it, never in the host's
  * render. */
 function DrawnView({device, view, props, wrap}: {device: DesignedDevice; view: DeviceViewName; props: HostedViewProps; wrap?: ControlWrap}) {
+  // A rack's shown parts and their hand, kept by the host per device (HostedDevice's RackHost).
+  const rack = useContext(RackHost)
   // The place reaches every Panel, PanelHead and Tile inside the view through the kit's PlaceContext (sdk/panel.tsx, the
   // documentation lane's c5afc4aa0) — a view whose root is a component too; a part's own props still win. The place's wrap reaches
   // every kit control whose standing names its key through ControlWrapContext; a view drawn without one (the generic plate, which
@@ -329,7 +350,7 @@ function DrawnView({device, view, props, wrap}: {device: DesignedDevice; view: D
     : device.popout || viewsOf(device).includes('whole') ? popoutOf(device, props, room)
       : <div className="dp-window-body">{device.full({...props, frame: 'window', room})}</div>
   return <PlaceContext.Provider value={{marks: nav.marks ?? undefined, onRail: nav.rail, onClose: nav.close, onExpand: nav.expand, expanded: nav.expanded,
-    onPopout: nav.popout}}>
+    onPopout: nav.popout, ...(rack ? {rackShown: rack.shown, onRackShow: rack.onShow} : {})}}>
     <ControlWrapContext.Provider value={wrap ?? null}>{withPlaceMarks(drawn, nav)}</ControlWrapContext.Provider>
   </PlaceContext.Provider>
 }
@@ -378,6 +399,8 @@ export function HostedDevice({designed, fallback, binding, view: asked, nav: giv
   const view: DeviceViewName = placed ?? asked
   const nav: HostNav = useMemo(() => navWithin(designed, chain && folds ? {...given, fold: () => setHostFolded(id, true), unfold: () => setHostFolded(id, false)} : given),
     [chain, folds, given, id, designed])
+  // A rack's head marks write here, so every place the rack stands in shows the same parts (manual §16.4).
+  const rack = useMemo(() => (designed.kind === 'rack' ? {shown: state.rack ?? {}, onShow: (part: RackPart, shown: boolean) => setHostRack(id, part, shown)} : undefined), [designed.kind, state.rack, id])
   const root = useRef<HTMLDivElement>(null)
   const dragging = useRef(false)
   const wraps = !!wrap
@@ -447,14 +470,14 @@ export function HostedDevice({designed, fallback, binding, view: asked, nav: giv
     }}
     onClickCapture={() => queueMicrotask(send)} onChangeCapture={() => queueMicrotask(send)}>
     {placed === null ? <p className="device-fault" data-device-absent={asked} data-i={`${name}|${notHereWords(designed, asked)}`}>{notHereWords(designed, asked)}</p> :
-    <ViewBoundary key={at} id={designed.id} onFault={cause => setFault({at, words: faultWords(view, cause, !!plain)})}
+    <RackHost.Provider value={rack}><ViewBoundary key={at} id={designed.id} onFault={cause => setFault({at, words: faultWords(view, cause, !!plain)})}
       fallback={cause => plain
         ? <ViewBoundary id={plain.id} fallback={again => note(faultWords(view, again, false))}>
           <DrawnView device={plain} view={view} props={{...props, fault: faultWords(view, cause, true)}} />
         </ViewBoundary>
         : note(faultWords(view, cause, false))}>
       <DrawnView device={designed} view={view} props={props} wrap={wrap} />
-    </ViewBoundary>}
+    </ViewBoundary></RackHost.Provider>}
     {menu && typeof document !== 'undefined' && createPortal(<DeviceMenu menu={menu} onInvoke={invoke} onClose={closeMenu} />, document.body)}
   </div>
 }

@@ -473,7 +473,29 @@ function contextRows(v: V): RowItem[] {
   return rows
 }
 
-/** The Context page: how full the agent's context is, and what the last turn let in and kept out. */
+/** The session's repository, as the Agent's binding lays it in (`ctx.git`: {branch?, uncommitted?, repo?}); absent, its standing says why
+ * (the world scope's: no session, or a session of your world's root register, which keeps no repository). */
+const gitOf = (v: V): {branch?: string; uncommitted?: number; repo?: string} | undefined => {
+  const raw = json<unknown>(v, 'ctx.git', undefined)
+  return raw && typeof raw === 'object' && !Array.isArray(raw) ? raw as {branch?: string; uncommitted?: number; repo?: string} : undefined
+}
+
+/** The Git row (§19.4 Context; §23.2 Files' Diff page): the session's own repository — its branch and what is uncommitted — and Diff, which
+ * opens Files' Diff page on it, where you read a change before you approve it. A shell act (`ctx.diff`): it writes nothing. */
+function GitRow({p}: {p: ViewProps}) {
+  const git = gitOf(p.v), why = st(p, 'ctx.git').disabled
+  const says = git ? `The session's repository${git.repo ? `, ${git.repo}` : ''}: on ${git.branch ?? NONE}, ${git.uncommitted ?? NONE} uncommitted. Diff opens Files' Diff page on it.`
+    : why ?? 'No reading of the session\'s repository.'
+  return <div className="hm-git-row" data-git-row={git ? 'read' : 'absent'} data-i={`Git|${says}`}>
+    <Readout label="branch" does="The branch the session's repository stands on." value={git?.branch} />
+    <Readout label="uncommitted" does="Files changed in the session's repository and not yet committed." value={git?.uncommitted} tone={git?.uncommitted ? 'accent' : undefined} />
+    <Action {...st(p, 'ctx.diff')} label="Diff" does="Open Files' Diff page on the session's repository: the uncommitted changes and those an agent proposes."
+      disabled={st(p, 'ctx.diff').disabled ?? (git ? undefined : why ?? 'No reading of the session\'s repository.')} onPress={() => p.set('ctx.diff', true)} />
+  </div>
+}
+
+/** The Context page: how full the agent's context is, and what the last turn let in and kept out; the session's repository, and the way to
+ * its Diff page. */
 function ContextBands({p}: {p: ViewProps}) {
   const r = pressureOf(p.v), turn = turnOf(p.v), [page, setPage] = useState(0)
   const entered = turn ? turn.blocks.reduce((n, b) => n + b.standing + b.kept, 0) : undefined
@@ -490,6 +512,7 @@ function ContextBands({p}: {p: ViewProps}) {
         <Readout label="withheld" does="Ordinary lines the bracket kept out. Each bound is disclosed to the agent." value={turn?.withheldLines} tone={turn?.withheldLines ? 'stall' : undefined} />
         <Readout label="blocks out" does="Blocks withheld whole: they carried ordinary lines only, and the bracket allowed none." value={turn?.withheldBlocks} tone={turn?.withheldBlocks ? 'stall' : undefined} />
       </Section>
+      <Section label="Git" width={92}><GitRow p={p} /></Section>
     </Band>
     <Band>
       <Section grow><Rows label={turn?.notice ?? 'The last turn'} does="Each block of the last turn: what entered, what was withheld. Then the star commands the composition arms."
@@ -705,6 +728,7 @@ export const design: DesignedDevice = {
     stage: SAMPLE_STAGE,
     // The Context page's readings (AIKit continuity): the pressure, the last turn's blocks, the armed star commands.
     'ctx.pressure': SAMPLE_PRESSURE, 'ctx.turn': SAMPLE_TURN, 'ctx.armed': JSON.stringify(['continuity-closeout']),
+    'ctx.git': JSON.stringify({branch: 'dlw/build-lane', uncommitted: 3, repo: 'O-I'}),
     // The carried pages' own values, under their prefixes.
     ...prefixed('custody.', custody.defaults, CUSTODY_SHARED), ...prefixed('id.', identity.defaults, IDENTITY_SHARED),
     ...prefixed('thread.', thread.defaults, THREAD_SHARED), ...prefixed('speech.', voice.defaults, VOICE_SHARED),
@@ -745,7 +769,7 @@ export const design: DesignedDevice = {
     // The answer's face (§19.4): the Agent where it speaks to you, on a page's chain in Central.
     ...ANSWER_FIXTURES,
     'No readings': {...Object.fromEntries(['light', 'effort', 'effortHeld', 'cap', 'input', 'quantize', 'heartbeat', 'beat', 'onStall', 'model', 'harness', 'draft', 'sent', 'agent', 'autonomy',
-      'used', 'age', 'thread', 'stage', 'models', 'harnesses', 'ctx.pressure', 'ctx.turn', 'ctx.armed', 'new.open', 'new.for', 'new.kept', 'new.carries', 'new.worlds', 'new.skillsets'].map(k => [k, undefined])),
+      'used', 'age', 'thread', 'stage', 'models', 'harnesses', 'ctx.pressure', 'ctx.turn', 'ctx.armed', 'ctx.git', 'new.open', 'new.for', 'new.kept', 'new.carries', 'new.worlds', 'new.skillsets'].map(k => [k, undefined])),
       ...prefixed('speech.', NO_READINGS(voice), VOICE_SHARED),
       ...prefixed('custody.', NO_READINGS(custody), CUSTODY_SHARED), ...prefixed('id.', NO_READINGS(identity), IDENTITY_SHARED),
       ...prefixed('thread.', NO_READINGS(thread), THREAD_SHARED)},

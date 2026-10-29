@@ -4,8 +4,8 @@
 //
 // The head is one line where it fits; where its controls do not fit beside the readings, they take a second line under them. A
 // reading the owner has not reported draws "—" in the faint ink, never NaN, "undefined" or zero. Styles: panels.css, "Monitors".
-import {useEffect, useLayoutEffect, useRef, useState, type ReactNode, type RefObject} from 'react'
-import {unread, type Tone} from '../../sdk/panel'
+import {useRef, useState, type ReactNode, type RefObject} from 'react'
+import {unread, useLayoutIso, type Tone} from '../../sdk/panel'
 import {NONE, type Room} from './design'
 
 /** One reading in the head: its value, with a short name before it where the value does not say what it is. */
@@ -47,7 +47,7 @@ export function MonitorGroup({label, children}: {readonly label: string; readonl
 const ROOM0: Room = {w: 760, h: 390}
 
 /** Measured before the paint in a browser; drawn at the standard measures where there is no layout (a static render). */
-const useMeasure = typeof window === 'undefined' ? useEffect : useLayoutEffect
+const useMeasure = useLayoutIso
 
 /** The room of a box, measured as it stands and again when it changes. */
 function useRoom<T extends HTMLElement>(): [RefObject<T>, Room] {

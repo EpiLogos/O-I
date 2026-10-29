@@ -28,6 +28,14 @@
 /* The Face page: the face to watch the dynamics on. */
 .an-preview { position: relative; overflow: hidden; background: var(--dp-well, #121519); border: 1px solid var(--line, #24262a); box-sizing: border-box; }
 .an-preview-face { position: absolute; inset: 0; pointer-events: none; }
+/* The whole face's marks (§19.4: Hears and Speaks at the face's lower corners, Chat at its upper right), on the expanded Agent's well and on
+   its Face page: the pane's marks, small. The layer takes no pointer; each mark does. */
+.an-face-marks { position: absolute; pointer-events: none; }
+.an-preview > .an-face-marks { inset: 0; }
+.an-face-marks > .an-mark { width: 18px; height: 18px; pointer-events: auto; }
+.an-face-marks > .an-mark[data-kind="hears"] { left: 2px; bottom: 2px; }
+.an-face-marks > .an-mark[data-kind="speaks"] { right: 2px; bottom: 2px; }
+.an-face-marks > .an-mark[data-kind="chat"] { right: 2px; top: 2px; }
 
 .an-row { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 10px; align-items: start; }
 .an-row--note { align-items: center; }

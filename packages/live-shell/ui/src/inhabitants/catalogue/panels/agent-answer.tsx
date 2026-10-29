@@ -351,6 +351,8 @@ export function AnswerWell({p, run, w, h, size}: {p: ViewProps; run: RunState; w
   return <div className="an-well">
     {well}
     <LiveFace p={p} run={run} still={p.frame === 'window'} className="an-well-face" style={{left: FACE_BOX.x + 1, top: FACE_BOX.y + 1, width: FACE_BOX.w, height: FACE_BOX.h}} />
+    {/* Hears and Speaks at the face's lower corners, Chat at its upper right (§19.4): the whole face carries its marks, as the pane's does. */}
+    <div className="an-face-marks" style={{left: FACE_BOX.x + 1, top: FACE_BOX.y + 1, width: FACE_BOX.w, height: FACE_BOX.h}}><FaceMarks p={p} size={11} /></div>
   </div>
 }
 
@@ -424,6 +426,7 @@ export function FaceBands({p, run}: {p: ViewProps; run: RunState}) {
       <Section width={FACE_PREVIEW.w + 12}>
         <div className="an-preview" style={{width: FACE_PREVIEW.w, height: FACE_PREVIEW.h}} data-i="The face|The agent's face, as the dynamics set here and its own state move it.">
           <LiveFace p={p} run={run} still={p.frame === 'window'} className="an-preview-face" />
+          <div className="an-face-marks"><FaceMarks p={p} size={11} /></div>
         </div>
       </Section>
       <Section label="Feeling" width={FACE_PAD + 12}>
@@ -464,11 +467,31 @@ const note = (key: string | number, words: string) => <div key={key} className="
 /** The three marks at the stage's corners, each the cut's (icon-cut.html, the icon law): Hears the transport's Record (what you say goes
  * in), Speaks Tap's contact and ring (a sound sent out), Chat the conversation's exchange, as Messages wears it. */
 const MARK: Readonly<Record<'hears' | 'speaks' | 'chat', IconName>> = {hears: 'rec', speaks: 'tap', chat: 'contact'}
-function StageMark({kind, on, label, does, standing, onPress}: {kind: keyof typeof MARK; on: boolean | undefined; label: string; does: string; standing: {disabled?: string}; onPress?: () => void}) {
-  return <button type="button" className="an-mark" data-kind={kind} aria-pressed={on === undefined ? undefined : on} aria-label={label} disabled={!onPress || !!standing.disabled}
+/** Where each mark stands on the face (§19.4 "the two marks at the face's lower corners; a third mark opens the conversation"). */
+const CORNER: Readonly<Record<keyof typeof MARK, string>> = {hears: 'lower-left', speaks: 'lower-right', chat: 'upper-right'}
+function StageMark({kind, on, label, does, standing, onPress, size = 16}: {kind: keyof typeof MARK; on: boolean | undefined; label: string; does: string; standing: {disabled?: string}; onPress?: () => void; size?: number}) {
+  return <button type="button" className="an-mark" data-kind={kind} data-corner={CORNER[kind]} aria-pressed={on === undefined ? undefined : on} aria-label={label} disabled={!onPress || !!standing.disabled}
     data-i={`${label}|${[does, standing.disabled].filter(Boolean).join(' ')}`} onClick={onPress}>
-    <Icon name={MARK[kind]} size={16} />
+    <Icon name={MARK[kind]} size={size} />
   </button>
+}
+
+/** The face's three marks, at its corners wherever the face stands whole — the pane, and the whole face of the expanded Agent and its
+ * Face page (§19.4 The answer's face): Hears at the lower left, Speaks at the lower right, Chat at the upper right. The same keys as the
+ * rack's toggles, so the two never disagree. `size` the marks' size: smaller on the expanded plate's face than in the pane. */
+export function FaceMarks({p, size = 16}: {p: ViewProps; size?: number}) {
+  const {v, set} = p
+  const lit = lampOf(p) === 'lit', chat = strOf(v, 'face.chat') !== 'off'
+  const hears = onOf(v, 'speech.hears'), speaks = onOf(v, 'speech.speaks'), hs = st(p, 'speech.hears'), ss = st(p, 'speech.speaks'), cs = st(p, 'face.chat')
+  const unbound = lit ? undefined : 'The conversation is not bound.'
+  return <>
+    <StageMark kind="hears" size={size} on={hears} label="Hears" does={hears ? 'The microphone is open: what you say is written and sent when you stop. Press to close it.' : HEARS}
+      standing={{disabled: hs.disabled ?? unbound}} onPress={hs.disabled || !lit ? undefined : () => set('speech.hears', hears ? 'off' : 'on')} />
+    <StageMark kind="speaks" size={size} on={speaks} label="Speaks" does={speaks ? 'The answer is spoken, and the face moves its mouth with the sound. Press to stop speaking.' : SPEAKS}
+      standing={{disabled: ss.disabled ?? unbound}} onPress={ss.disabled || !lit ? undefined : () => set('speech.speaks', speaks ? 'off' : 'on')} />
+    <StageMark kind="chat" size={size} on={chat} label="Chat" does={chat ? 'Close the conversation: the face has the whole pane.' : 'Open the conversation beside the face.'}
+      standing={cs} onPress={() => set('face.chat', chat ? 'off' : 'on')} />
+  </>
 }
 
 /** The conversation, small, at the right of the face: the exchange, a proposal's two answers, the line to type in. No header: what the
@@ -546,21 +569,15 @@ function Conversation({p, run}: {p: ViewProps; run: RunState}) {
 /** Full: mostly the face. Its three marks stand at its corners; your words, as they are heard, and the agent's, as they are said, stand
  * under it while the conversation is closed (open, the conversation holds them). The conversation is small, at the right. No header. */
 export function AnswerPane({p, run}: {p: ViewProps; run: RunState}) {
-  const {v, set} = p
-  const lit = lampOf(p) === 'lit', ph = PHASE_OF[run], vo = voiceOf(v), chat = strOf(v, 'face.chat') !== 'off'
-  const hears = onOf(v, 'speech.hears'), speaks = onOf(v, 'speech.speaks'), hs = st(p, 'speech.hears'), ss = st(p, 'speech.speaks'), cs = st(p, 'face.chat')
+  const {v} = p
+  const ph = PHASE_OF[run], vo = voiceOf(v), chat = strOf(v, 'face.chat') !== 'off'
   const heard = strOf(v, 'speech.heard')?.trim(), rows = rowsOf(v) ?? [], lastAgent = [...rows].reverse().find(r => r.kind === 'agent')
   const saying = !chat && lastAgent && (ph === 'answering' || vo === 'speaking') ? lastAgent.text : undefined
   return <div className="an-pane" data-chat={chat ? 'on' : 'off'}>
     <div className="an-stage">
       <LiveFace p={p} run={run} className="an-stage-face" />
       {(heard || saying) && <p className="an-subtitle" aria-live="polite">{heard && <span data-who="you">{heard}</span>}{saying && <span data-who="agent">{saying}</span>}</p>}
-      <StageMark kind="hears" on={hears} label="Hears" does={hears ? 'The microphone is open: what you say is written and sent when you stop. Press to close it.' : HEARS}
-        standing={hs} onPress={hs.disabled || !lit ? undefined : () => set('speech.hears', hears ? 'off' : 'on')} />
-      <StageMark kind="speaks" on={speaks} label="Speaks" does={speaks ? 'The answer is spoken, and the face moves its mouth with the sound. Press to stop speaking.' : SPEAKS}
-        standing={ss} onPress={ss.disabled || !lit ? undefined : () => set('speech.speaks', speaks ? 'off' : 'on')} />
-      <StageMark kind="chat" on={chat} label="Chat" does={chat ? 'Close the conversation: the face has the whole pane.' : 'Open the conversation beside the face.'}
-        standing={cs} onPress={() => set('face.chat', chat ? 'off' : 'on')} />
+      <FaceMarks p={p} />
     </div>
     {chat && <Conversation p={p} run={run} />}
   </div>

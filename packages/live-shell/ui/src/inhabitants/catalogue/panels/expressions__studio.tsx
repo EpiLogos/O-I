@@ -39,7 +39,7 @@
 // carries the control's id); show, pane (each carries the device's family: show it whole in the pool, open it full in a pane).
 // A key the owner does not report is absent. The picture then names the missing reading and every control draws "—".
 import {useRef, useState, type ReactNode} from 'react'
-import {Action, Band, Dial, Display, Folded, Handle, PanelHead, Radio, Readout, Rows, Section, Tile, Toggle, ValueBox, fromUnit, toUnit,
+import {Action, Band, Dial, Display, Folded, Handle, PanelHead, RackBody, Radio, Readout, Rows, Section, Tile, Toggle, ValueBox, fromUnit, toUnit, useRack,
   type LightState, type Option, type RowItem, type Scale, type Standing, NoReading} from '../../sdk/panel'
 import {NONE, boolOf, clampTo, has, json, numOf, st, strOf, type DesignedDevice, type Values, type ViewProps} from './design'
 import './expressions__studio.css'
@@ -251,10 +251,12 @@ function Work({p}: {p: ViewProps}) {
 
 /** The plate of a compact or a whole: the kit's `dp` section with the kit's PanelHead, since the Panel has no place for the work's acts. */
 function Plate({p, view, pages, children}: {p: ViewProps; view: 'compact' | 'whole'; pages?: {id: string; label: string}[]; children: ReactNode}) {
-  return <section className="dp st-studio" data-view={view} aria-label="Studio" onPointerDownCapture={p.nav.select}>
-    <PanelHead title="Studio" light={lightOf(p)} lightWhy={LIGHT_WHY} onFold={p.nav.fold} onFull={p.nav.full} acts={<Work p={p} />}
+  // A rack: its head shows or hides its macros, its chain list and the devices of the chosen chain, as Live's rack head does (§16.4).
+  const rack = useRack()
+  return <section className="dp st-studio" data-view={view} data-rack="true" aria-label="Studio" onPointerDownCapture={p.nav.select}>
+    <PanelHead title="Studio" light={lightOf(p)} lightWhy={LIGHT_WHY} onFold={p.nav.fold} onFull={p.nav.full} acts={<Work p={p} />} rack={rack}
       pages={pages} page={p.page} onPage={p.setPage} hint="The rack for every scene of the Expression: your chosen controls as its macros, the field devices as its chains." />
-    <div className="dp-body">{children}</div>
+    <div className="dp-body"><RackBody shown={rack.shown}>{children}</RackBody></div>
   </section>
 }
 
@@ -297,13 +299,13 @@ function MacrosPage({p, list}: {p: ViewProps; list: Chosen[] | undefined}) {
   return <>
     <Band>
       <Section width={w + 12}><Sheet p={p} list={list} w={w} h={146} labelW={66} handles={ROWS} page={page} /></Section>
-      <Section label="Macros" grow>
+      <Section label="Macros" grow part="macros">
         <Rows items={list ? items : undefined} why="No reading of your controls." size={ROWS} page={page} onPage={setAt} selected={sel?.id} onSelect={setPick} onMove={closedWhy(p.v) ? undefined : move}
           does="Your chosen controls, in your order. Choose one to change its reach or remove it; ▲ ▼ or ⌥↑ ⌥↓ move it." label={list ? `${chosen.length} chosen` : undefined} />
       </Section>
     </Band>
     <Band>
-      <Section label="Reach" width={72}>
+      <Section label="Reach" width={72} part="macros">
         <Radio label="Acts on" does="What the chosen control moves: a Field parameter, the selected symbol's (Follow), or one symbol's by name (Bind)."
           value={sel ? sel.scope : ''} options={reach} stack {...stand(p, sel?.scope === 'selected' ? 'bind' : 'follow', !sel ? none : closedWhy(p.v))}
           onChange={x => { if (x !== 'field' && sel && x !== sel.scope) p.set(x === 'selected' ? 'follow' : 'bind', sel.id) }} />
@@ -311,12 +313,12 @@ function MacrosPage({p, list}: {p: ViewProps; list: Chosen[] | undefined}) {
           does="On, the value holds for every scene of the Expression and overrides the scene's envelopes. Off, each scene keeps its own."
           on={shared === true} unknown={shared === undefined} onChange={x => sel && p.set(shareKey(sel), x)} />
       </Section>
-      <Section label="List" width={72}>
+      <Section label="List" width={72} part="macros">
         {addAction(p, list)}
         <Action {...stand(p, 'remove', !sel ? none : closedWhy(p.v))} label="Remove" does="Take the chosen control out of your macros. The parameter stays in the field." onPress={() => p.set('remove', sel!.id)} />
         <Readout label="chosen" does="How many controls you have chosen." value={list ? chosen.length : undefined} />
       </Section>
-      <Section label={sel ? clip(sel.label, 22) : 'Value'} grow>
+      <Section label={sel ? clip(sel.label, 22) : 'Value'} grow part="macros">
         {sel ? <ChosenBox p={p} c={sel} wide /> : <ValueBox label="Value" does="The value of the chosen control." value={NaN} scale={{min: 0, max: 1}} format={String} />}
         <div className="st-pair">
           <Readout label="plays" does="What the field plays when it differs from the value, for example when an envelope or the sky moves it." value={sel && sel.ranged && sel.plays !== null ? fmt(sel, sel.plays) : undefined} />
@@ -351,25 +353,25 @@ function ChainsPage({p, members}: {p: ViewProps; members: Member[] | undefined})
   const placeWhy = !sel ? none : nara ? 'Nara opens over the field: turn it on.' : sel.why ?? undefined
   return <>
     <Band>
-      <Section label="Chains" width={128}>
+      <Section label="Chains" width={128} part="chains">
         <Rows items={chains} size={4} selected={chain} onSelect={id => { setChain(id as ChainId); setPick(undefined) }}
           does="The rack's chains. Choose one to see its devices. The light is on while any of its devices is on." label={members ? `${litOf(p, all)} of ${all.length} on` : undefined}
           why={members ? undefined : 'No reading of the chains\' devices.'} />
       </Section>
-      <Section label={label} grow>
+      <Section label={label} grow part="devices">
         <Rows items={devices} size={6} selected={sel?.family} onSelect={setPick} onRequest={closed ? undefined : (id, on) => p.set(`on:${id}`, on)}
           does="The chain's devices. The square asks the owner to turn a device on or off; the light shows what the owner reports. Choose one to place it." />
       </Section>
     </Band>
     <Band>
-      <Section label={sel ? clip(sel.name, 14) : 'Device'} width={84}>
+      <Section label={sel ? clip(sel.name, 14) : 'Device'} width={84} part="devices">
         <Toggle {...stand(p, sel ? onKey(sel) : 'on', onWhy)} label={nara ? 'Open' : 'On'}
           does={nara ? 'Open your Nara instrument over the field. Press again to close it.' : 'Asks the owner to turn the device on or off. The light shows what the owner reports.'}
           on={sel ? p.v[onKey(sel)] === true : false} unknown={!sel || !has(p.v, onKey(sel))} onChange={x => sel && p.set(onKey(sel), x)} />
         <Action {...stand(p, 'show', placeWhy)} label="Show" does="Show the device whole in the pool, with every setting." onPress={() => sel && p.set('show', sel.family)} />
         <Action {...stand(p, 'pane', placeWhy)} label="Pane" does="Open the device full size in the pane that has focus." onPress={() => sel && p.set('pane', sel.family)} />
       </Section>
-      <Section label="Reads" grow>
+      <Section label="Reads" grow part="devices">
         <Readout big label={sel ? sel.name : 'device'} does="What the device's owner reports, in short." value={sel?.says ?? undefined} />
         <div className="st-pair">
           <Readout label={`${label} on`} does="How many of this chain's devices are on." value={members ? `${litOf(p, inChain)}/${inChain.length}` : undefined} />
@@ -525,7 +527,7 @@ export const design: DesignedDevice = {
     const list = readControls(p.v)
     return <Plate p={p} view="compact">
       <Section width={152}><Sheet p={p} list={list} w={140} h={146} labelW={50} handles={4} /></Section>
-      <Section label="Macros" cols={2} width={160}>{slots(p, list)}</Section>
+      <Section label="Macros" cols={2} width={160} part="macros">{slots(p, list)}</Section>
     </Plate>
   },
 

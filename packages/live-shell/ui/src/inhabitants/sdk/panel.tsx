@@ -25,7 +25,10 @@ const EASE = 'cubic-bezier(0.2, 0.7, 0.2, 1)'
 export const reducedMotion = (): boolean => typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches
 
 /** A layout effect where a DOM stands; server rendering runs no effects either way. */
-const useLayoutIso = typeof window !== 'undefined' ? useLayoutEffect : useEffect
+/** A layout effect where a page lays out, and a plain effect in a server render (react-dom/server: a static render, as the shell's Node suites
+ * draw the designs, warns "useLayoutEffect does nothing on the server" for every layout effect). Decided by whether a real DOM stands —
+ * `HTMLElement` — not by `window`, which the suites stand in for with plain objects. Every part and design measures through this one. */
+export const useLayoutIso: typeof useLayoutEffect = typeof HTMLElement === 'undefined' ? useEffect : useLayoutEffect
 
 /** The detent: a drag that passes within this fraction of the range of the default lands on it. Shift drags past. */
 export const DETENT = 0.022
@@ -904,6 +907,8 @@ export interface PanelProps {
   readonly lightWhy?: string
   /** The device's own acts in the head, after the pages and before the place's marks (the Studio's Save, Undo, Redo). */
   readonly acts?: ReactNode
+  /** A rack (manual §16.1): its head carries Live's three marks, and its sections named by `part` stand only while their mark shows them. */
+  readonly rack?: boolean
   readonly children: ReactNode
 }
 
@@ -920,8 +925,57 @@ export interface Place {
   readonly expanded?: boolean
   /** ↗: pop the device out into its own window, its material with every control (Live's plug-in window). */
   readonly onPopout?: () => void
+  /** A rack's parts the place shows (its head's three marks; the host keeps them per device). Absent, the rack keeps its own. */
+  readonly rackShown?: Partial<RackShown>
+  readonly onRackShow?: (part: RackPart, shown: boolean) => void
 }
 export const PlaceContext = createContext<Place>({})
+
+// ---------------------------------------------------------------- a rack's three parts (Live's rack head)
+
+/** The parts of a rack its head shows or hides, in the order of Live's rack head (manual §16.4 "A rack's head has three more marks, as
+ * Live's do: show or hide the macros, the chain list, and the devices of the selected chain"; Ableton Live 12.0.25 group devices:
+ * AreMacroControlsVisible, IsBranchesListVisible, AreDevicesVisible — devices/racks-session-model.md §1.2). */
+export const RACK_PARTS = ['macros', 'chains', 'devices'] as const
+export type RackPart = typeof RACK_PARTS[number]
+export type RackShown = Readonly<Record<RackPart, boolean>>
+const RACK_ALL: RackShown = {macros: true, chains: true, devices: true}
+/** Each mark's cut (icon-cut.html): a dial for the macros, the list for the chain list, the chain of devices for the devices. */
+const RACK_MARK = {macros: 'form', chains: 'arrangement', devices: 'chain'} as const
+const RACK_WORDS: Readonly<Record<RackPart, readonly [string, string]>> = {
+  macros: ['Macros', 'the rack\'s macros'], chains: ['Chain list', 'the chain list'], devices: ['Devices', 'the devices of the chosen chain'],
+}
+/** What a rack shows, for its sections (Section `part`). Outside a rack every part stands. */
+const RackContext = createContext<RackShown>(RACK_ALL)
+
+/** The body of a rack drawn with PanelHead (a plate the Panel does not draw whole): its sections named by `part` stand while shown. */
+export function RackBody({shown, children}: {readonly shown: RackShown; readonly children: ReactNode}) {
+  return <RackContext.Provider value={shown}>{children}</RackContext.Provider>
+}
+
+/** A rack's shown parts and their hand, for a plate drawn with PanelHead and RackBody: the place's, else the plate's own. */
+export function useRack(): {readonly shown: RackShown; readonly onShow: (part: RackPart, shown: boolean) => void} {
+  const [shown, onShow] = useRackParts(true, useContext(PlaceContext))
+  return {shown, onShow}
+}
+
+/** A rack's shown parts and their hand: the place's, where the host keeps them, else the plate's own. */
+function useRackParts(rack: boolean | undefined, place: Place): [RackShown, (part: RackPart, shown: boolean) => void] {
+  const [own, setOwn] = useState<RackShown>(RACK_ALL)
+  const shown: RackShown = place.rackShown ? {...RACK_ALL, ...place.rackShown} : own
+  const show = place.onRackShow ?? ((part: RackPart, on: boolean) => setOwn(was => ({...was, [part]: on})))
+  return [rack ? shown : RACK_ALL, show]
+}
+
+/** The rack's three marks, after the expanded view's toggle, as Live's rack head carries them. */
+function RackMarks({title, shown, onShow}: {title: string; shown: RackShown; onShow: (part: RackPart, shown: boolean) => void}) {
+  return <span className="dp-rack-marks" role="group" aria-label={`${title}: what the rack shows`}>
+    {RACK_PARTS.map(part => <button key={part} type="button" className="dp-fold dp-rack-mark" data-rack-mark={part} aria-pressed={shown[part] ? 'true' : 'false'}
+      aria-label={`${shown[part] ? 'Hide' : 'Show'} ${RACK_WORDS[part][1]}`}
+      data-i={said(RACK_WORDS[part][0], `${shown[part] ? 'Hides' : 'Shows'} ${RACK_WORDS[part][1]}, as Live's rack head does. The others take the room.`)}
+      onClick={() => onShow(part, !shown[part])}><Icon name={RACK_MARK[part]} size={10} /></button>)}
+  </span>
+}
 
 /** The activator, the same in Panel and PanelHead: a reading of the owner's on/off, pressable only where the owner can turn it. `busy`:
  * the owner reports the device working, so a ring spreads from the light while it does. */
@@ -975,14 +1029,16 @@ function HeadMarks({title, marks, onRail, onFull, fullLabel, place}: {title: str
 }
 
 /** One device panel: the head, then the body — one band on a chain, up to two bands in the pool. */
-export function Panel({title, view, light: reported, onLight, pages, page, onPage, onFold, onFull, onSelect, selected, heldBy, busy, mark, onRail: ownRail, marks: ownMarks, fullLabel, hint, lightWhy, acts, children}: PanelProps) {
+export function Panel({title, view, light: reported, onLight, pages, page, onPage, onFold, onFull, onSelect, selected, heldBy, busy, mark, onRail: ownRail, marks: ownMarks, fullLabel, hint, lightWhy, acts, rack, children}: PanelProps) {
   const light = lightIn(reported), place = useContext(PlaceContext)
   const marks = ownMarks ?? place.marks, onRail = ownRail ?? place.onRail
-  return <section className="dp" data-view={view} data-selected={selected ? 'true' : undefined} aria-label={title}
+  const [shown, show] = useRackParts(rack, place)
+  return <section className="dp" data-view={view} data-selected={selected ? 'true' : undefined} data-rack={rack ? 'true' : undefined} aria-label={title}
     onPointerDownCapture={onSelect}>
     <header className="dp-head" data-i={hint ? said(title, hint) : undefined} onDoubleClick={foldOnDoubleClick(onFold)}>
       <Activator title={title} light={light} onLight={onLight} why={lightWhy} busy={busy} />
       <ExpandToggle title={title} place={place} />
+      {rack && <RackMarks title={title} shown={shown} onShow={show} />}
       {mark}
       <span className="dp-title">{title}</span>
       {heldBy && <span className="dp-head-held" data-i={said('Held', `${heldBy} holds values on this device.`)}>{heldBy}</span>}
@@ -990,7 +1046,7 @@ export function Panel({title, view, light: reported, onLight, pages, page, onPag
       {acts !== undefined && acts !== null && acts !== false && <span className="dp-head-acts">{acts}</span>}
       <HeadMarks title={title} marks={marks} onRail={onRail} onFull={onFull} fullLabel={fullLabel} place={place} />
     </header>
-    <div className="dp-body">{children}</div>
+    <div className="dp-body"><RackContext.Provider value={shown}>{children}</RackContext.Provider></div>
   </section>
 }
 
@@ -1027,17 +1083,20 @@ export interface PanelHeadProps {
   readonly selected?: boolean
   /** Why the activator only reads: it stands disabled and says this. */
   readonly lightWhy?: string
+  /** A rack's three marks (useRack), whose body stands in RackBody. */
+  readonly rack?: {readonly shown: RackShown; readonly onShow: (part: RackPart, shown: boolean) => void}
 }
 
 /** The head of a device panel, for a plate the kit's Panel does not draw whole (an instrument's sections, a compact): the activator, ▾,
  * the name, the held mark, the pages, the device's own acts, the place's marks and ⤢ (manual §16.9). The Panel's own head, as one
  * part. */
-export function PanelHead({title, light: reported, onLight, onFold, mark, onName, nameDoes, heldBy, busy, pages, page, onPage, acts, marks: ownMarks, onRail: ownRail, onFull, fullLabel, hint, selected, lightWhy}: PanelHeadProps) {
+export function PanelHead({title, light: reported, onLight, onFold, mark, onName, nameDoes, heldBy, busy, pages, page, onPage, acts, marks: ownMarks, onRail: ownRail, onFull, fullLabel, hint, selected, lightWhy, rack}: PanelHeadProps) {
   const light = lightIn(reported), place = useContext(PlaceContext)
   const marks = ownMarks ?? place.marks, onRail = ownRail ?? place.onRail
   return <header className="dp-head dp-head--plate" data-selected={selected ? 'true' : undefined} data-i={hint ? said(title, hint) : undefined} onDoubleClick={foldOnDoubleClick(onFold)}>
     <Activator title={title} light={light} onLight={onLight} why={lightWhy} busy={busy} />
     <ExpandToggle title={title} place={place} />
+    {rack && <RackMarks title={title} shown={rack.shown} onShow={rack.onShow} />}
     {mark}
     {onName
       ? <button type="button" className="dp-title dp-title--press" onClick={onName} data-i={said(title, nameDoes ?? hint)}>{title}</button>
@@ -1054,9 +1113,13 @@ export function Band({children}: {readonly children: ReactNode}) {
   return <div className="dp-band">{children}</div>
 }
 
-/** A section of a band, ruled off from the next, named in small capitals. `cols` sets its width in control columns. */
-export function Section({label, cols, width, grow, children}: {readonly label?: string; readonly cols?: number; readonly width?: number; readonly grow?: boolean; readonly children: ReactNode}) {
-  return <div className="dp-sec" data-grow={grow ? 'true' : undefined} style={{width: width ?? (cols ? cols * COL : undefined)} as CSSProperties}>
+/** A section of a band, ruled off from the next, named in small capitals. `cols` sets its width in control columns. `part`: in a rack,
+ * the part of Live's rack the section holds — its macros, its chain list, or the devices of the chosen chain — which stands only while
+ * the rack's head shows it; the sections beside it take the room. */
+export function Section({label, cols, width, grow, part, children}: {readonly label?: string; readonly cols?: number; readonly width?: number; readonly grow?: boolean; readonly part?: RackPart; readonly children: ReactNode}) {
+  const shown = useContext(RackContext)
+  if (part && !shown[part]) return null
+  return <div className="dp-sec" data-grow={grow ? 'true' : undefined} data-rack-part={part} style={{width: width ?? (cols ? cols * COL : undefined)} as CSSProperties}>
     {label && <div className="dp-sec-label">{label}</div>}
     <div className="dp-sec-body" style={cols ? {gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`} as CSSProperties : undefined}>{children}</div>
   </div>

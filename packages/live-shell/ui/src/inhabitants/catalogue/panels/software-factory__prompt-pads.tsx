@@ -121,7 +121,7 @@ function PadGrid({p, r, w, h, live, names}: {p: ViewProps; r: Reading; w: number
       const said = pad ? `${slot.index + 1} · ${pad.name}|${[pad.prompt ? cut(pad.prompt, 80) : undefined, slot.running ? 'Its task runs now.' : end ? `Last run ${END_WORD[end]}${slot.last?.at ? ` ${slot.last.at}` : ''}.` : 'It has not run yet.',
         sched ? `A routine runs it${schedule(slot) ? ` ${schedule(slot)}` : ''}${slot.next ? `; next ${slot.next}` : ''}.` : undefined, stale ? 'Its routine needs its Method proved again before it runs alone.' : undefined].filter(Boolean).join(' ')}`
         : `${slot.index + 1}|An empty pad. Press it, then give it a prompt.`
-      return <g key={slot.index} role="button" tabIndex={live ? 0 : -1} aria-label={pad ? `Pad ${slot.index + 1}, ${pad.name}` : `Pad ${slot.index + 1}, empty`} aria-pressed={me}
+      return <g key={slot.index} role="button" data-pad="read" tabIndex={live ? 0 : -1} aria-label={pad ? `Pad ${slot.index + 1}, ${pad.name}` : `Pad ${slot.index + 1}, empty`} aria-pressed={me}
         data-i={said} style={{cursor: live ? 'pointer' : undefined}} onClick={() => choose(slot.index)}
         onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); choose(slot.index) } }}>
         <rect x={x + 0.5} y={y + 0.5} width={pw - 1} height={ph - 1} rx={2.5}

@@ -88,3 +88,9 @@
 .device-menu-item { display: flex; width: 100%; padding: 3px 10px; text-align: left; color: var(--text) }
 .device-menu-item:not([disabled]):hover, .device-menu-item:not([disabled]):focus-visible { background: var(--sel); color: var(--bg-0); outline: none }
 .device-menu-item[disabled] { color: var(--text-faint); pointer-events: none }
+
+/* A plate's place on its chain (ChainOrder.tsx; manual §16.5, §16.10): a narrow rail at the plate's left carries the grip, as Factory's
+   slots do (agent/devices/factoryDevices.css .factory-slot__rail). The law says what a drag or ⌥← ⌥→ does; a refused move moves nothing. */
+.chain-slot { display: flex; flex: none; min-width: 0; align-items: stretch }
+.chain-slot > .chain-grip { display: flex; align-items: flex-start; justify-content: center; width: 12px; flex: none; padding: 4px 0; background: var(--bg-0); border-right: 1px solid var(--line) }
+.chain-slot:not([data-chain-moves]) > .chain-grip { cursor: not-allowed }

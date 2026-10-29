@@ -17,6 +17,7 @@
 // ANSWER_VIEW_DEFAULTS at c776a3007, retired there in #806). Pure, apart from those view holds.
 import type {DesignBinding, Standing, Value, ValueChange, Values} from '../../frame/devices/designed'
 import {chainHolds, holdView, viewHolds} from './designBindings'
+import {gitRepositoryAbsence} from '../worldScope'
 
 /** A page the Agent carries: its prefix, the keys it shares with the Agent (read and written as the Agent's own), and which of those
  * shared keys the page owns — read from the page's binding and written to its owner rather than the Agent's (Custody sets the autonomy
@@ -66,6 +67,30 @@ export interface CarriedBindings {
   readonly identity?: DesignBinding | null
   readonly thread?: DesignBinding | null
   readonly voice?: DesignBinding | null
+}
+
+/** The session's repository as the chain reads it (kernel git_repository_read for the session's own register, useAgentChainReading.ts and
+ * useSessionGit; agent/worldScope.ts): its branch and uncommitted count, its root, the owner's refusal; `openDiff` opens Files' Diff page. */
+export interface AgentGit {
+  readonly sessionRef: string | null
+  /** The session's register: a project's name, or '' for your world's root register. */
+  readonly project: string
+  readonly repo: {readonly branch?: string; readonly uncommitted?: number} | null
+  readonly repoRoot?: string | null
+  /** The owner's refusal, in its words; null while it answers or has answered. */
+  readonly error: string | null
+  readonly openDiff?: () => void
+}
+
+/** The Git row's reading (`ctx.git`), or why it stands absent — the world scope's words for no session or the root register, the owner's
+ * refusal, or no answer yet. Pure. */
+export function agentGitValues(git: AgentGit): {values: Record<string, Value>; standing: Record<string, Standing>} {
+  const absent = gitRepositoryAbsence(git.sessionRef, git.project)
+  const why = absent ?? git.error ?? (!git.repo ? 'The session\'s repository has not answered yet (git_repository_read).' : null)
+  if (why || !git.repo) return {values: {}, standing: {'ctx.git': {disabled: why ?? 'No reading of the session\'s repository.'}, 'ctx.diff': {disabled: why ?? 'No reading of the session\'s repository.'}}}
+  const repo = git.repoRoot ? git.repoRoot.split('/').filter(Boolean).pop() : git.project
+  const reading = {...(git.repo.branch ? {branch: git.repo.branch} : {}), ...(git.repo.uncommitted !== undefined ? {uncommitted: git.repo.uncommitted} : {}), ...(repo ? {repo} : {})}
+  return {values: {'ctx.git': JSON.stringify(reading)}, standing: git.openDiff ? {} : {'ctx.diff': {disabled: 'No pane tree is handed to the Agent here, so Files\' Diff page cannot open.'}}}
 }
 
 /** One page a device carries, on the binding that owns it. */
@@ -121,6 +146,16 @@ export function composeAgentBinding(own: DesignBinding, pages: CarriedBindings):
   const local: Record<string, (value: Value | undefined) => void> = {...(composed.local ?? {})}
   for (const key of FACE_LOCAL) local[key] = value => holdView(hold, key, value)
   return {...composed, values: values as Values, local}
+}
+
+/** The one Agent with the Context page's Git row laid in (§19.4 Context; §23.2 Files' Diff page), on both chains: the session's repository
+ * as a reading — where it lacks one, why, in place of the Agent's own "laid in by the chain" — and Diff, the shell's own act, which opens
+ * Files' Diff page on it and writes nothing. Pure. */
+export function withAgentGit(binding: DesignBinding, git: AgentGit): DesignBinding {
+  const {values, standing} = agentGitValues(git)
+  const {'ctx.git': _git, 'ctx.diff': _diff, ...rest} = binding.standing ?? {}
+  return {...binding, values: {...binding.values, ...values} as Values, standing: {...rest, ...standing},
+    local: {...(binding.local ?? {}), 'ctx.diff': () => { if (git.openDiff) git.openDiff() }}}
 }
 
 /** Any device's binding with the pages it carries laid in, each under its prefix (the 22 Oct catalogue: a device whose design draws a

@@ -9,7 +9,7 @@
 import type {SurfMode} from './modeGrammar'
 
 export const MODE_WIDGETS: Readonly<Record<SurfMode, readonly string[]>> = {
-  base: ['agent', 'packet', 'trail'],
+  base: ['device:central:agent', 'packet', 'trail'],
   factory: ['results', 'agents', 'terminal'],
   expressions: ['agent', 'sky', 'trail'],
   techne: ['device:techne:journey', 'trail'],

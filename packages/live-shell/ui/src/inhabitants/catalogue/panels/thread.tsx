@@ -33,8 +33,8 @@
 // No CLI route and no kernel op reads the cognitive view or the praxis condition yet: `factory development run` names only
 // thoughtAvailable and thoughtRefs (developmental_read.rs:681), and `field operative` records the operative refs without reading the
 // condition back. Both keys arrive absent, and the views say so.
-import {memo, useLayoutEffect, useMemo, useRef, useState, type ReactNode} from 'react'
-import {Action, Band, Chooser, Display, Folded, Handle, Panel, Radio, Readout, Section, TextField, Tile, Toggle, type LightState, type Option, type Standing} from '../../sdk/panel'
+import {memo, useMemo, useRef, useState, type ReactNode} from 'react'
+import {Action, Band, Chooser, Display, Folded, Handle, Panel, Radio, Readout, Section, TextField, Tile, Toggle, type LightState, type Option, type Standing, useLayoutIso} from '../../sdk/panel'
 import {maskStatic} from '../../../agent/maskFace'
 import {NONE, boolOf, clampTo, has, json, numOf, st, strOf, type DesignedDevice, type ViewProps} from './design'
 import './thread.css'
@@ -514,7 +514,7 @@ function ThreadWell({p, r, live, w, h, size}: {p: ViewProps; r: Reading; live: b
 
 function useFaceColours() {
   const [colours, setColours] = useState({ink: 'var(--fizz)', ground: 'var(--bg-0)'})
-  useLayoutEffect(() => {
+  useLayoutIso(() => {
     const style = getComputedStyle(document.documentElement)
     const hex = (name: string, fallback: string) => { const x = style.getPropertyValue(name).trim(); return /^#[0-9a-f]{6}$/i.test(x) ? x : fallback }
     setColours({ink: hex('--fizz', 'var(--fizz)'), ground: hex('--bg-0', 'var(--bg-0)')})

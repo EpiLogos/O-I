@@ -31,10 +31,10 @@
 // type}; Accept (`new.accept`) keeps it, Change returns to the fields, Discard (`new.discard`) drops it. No kernel route proposes or
 // accepts an agent set yet (Central's sets are read with central.agent-set.resolve).
 // A key the owner has not reported is absent, and the view draws "—" for it and names it in words.
-import {memo, useLayoutEffect, useMemo, useState, type CSSProperties, type ReactNode} from 'react'
+import {memo, useMemo, useState, type CSSProperties, type ReactNode} from 'react'
 import {KindMark} from '../../sdk/marks'
 import {maskStatic} from '../../../agent/maskFace'
-import {Action, Band, Chooser, Dial, Display, Folded, Lamp, Panel, Radio, Readout, Rows, Section, TextField, Tile, ValueBox, type LightState, type Option, type RowItem, type Scale, type Tone, unreadRows, NoReading} from '../../sdk/panel'
+import {Action, Band, Chooser, Dial, Display, Folded, Lamp, Panel, Radio, Readout, Rows, Section, TextField, Tile, ValueBox, type LightState, type Option, type RowItem, type Scale, type Tone, unreadRows, NoReading, useLayoutIso} from '../../sdk/panel'
 import {NONE, has, json, numOf, on, prefixed, scoped, st, strOf, type DesignedDevice, type ViewProps} from './design'
 import {design as decisionHelper} from './decision-helper'
 import {CreatureFace, FigureThumb} from '../faces/CreatureFace'
@@ -247,7 +247,7 @@ const openAction = (p: ViewProps, chosen: Node | undefined) => {
 /** The face colours resolved from the shell's tokens: the mask mixes hex values, so it needs the token's value, not its name. */
 function useFace(size: number) {
   const [colours, setColours] = useState({ink: 'var(--fizz)', ground: 'var(--bg-0)'})
-  useLayoutEffect(() => {
+  useLayoutIso(() => {
     const style = getComputedStyle(document.documentElement)
     const hex = (name: string, fallback: string) => { const x = style.getPropertyValue(name).trim(); return /^#[0-9a-f]{6}$/i.test(x) ? x : fallback }
     setColours({ink: hex('--fizz', 'var(--fizz)'), ground: hex('--bg-0', 'var(--bg-0)')})
@@ -603,17 +603,17 @@ export const design: DesignedDevice = {
     return <Folded title={crewOf(p.v) ?? 'Agentset'} light={lightOf(p)} readings={[known ? `${countOf(list, 'working')}/${list.length} working` : NONE]} onUnfold={p.nav.unfold} />
   },
 
-  compact: p => <Panel title={titleOf(p.v)} mark={headMark} view="compact" {...head(p)} onSelect={p.nav.select}>
-    <Section width={240}>
+  compact: p => <Panel title={titleOf(p.v)} mark={headMark} view="compact" rack {...head(p)} onSelect={p.nav.select}>
+    <Section width={240} part="chains">
       <MemberList p={p} size={8} />
     </Section>
-    <Section label="Limits" cols={2}>
+    <Section label="Limits" cols={2} part="macros">
       {fanBox(p)}
       {depthBox(p)}
       <Readout label="working" does="Members at work, of the most that may run at once." value={workingLine(p)} tone="value" />
       <Readout label="stalled" does="Members that stopped producing output." value={countLine(p.v, 'stalled')} tone={countOf(membersOf(p.v), 'stalled') > 0 ? 'stall' : undefined} />
     </Section>
-    <Section label="Helpers" width={112}>
+    <Section label="Helpers" width={112} part="macros">
       {handBack(p)}
       {modelChooser(p)}
     </Section>
@@ -621,14 +621,14 @@ export const design: DesignedDevice = {
 
   whole: p => {
     const list = membersOf(p.v), chosen = chosenOf(p.v, list), making = on(p.v, 'new.open'), page = p.page === 'helper' ? 'helper' : 'members'
-    return <Panel title={titleOf(p.v)} mark={headMark} view="whole" {...head(p)} pages={PAGES} page={page} onPage={p.setPage}
+    return <Panel title={titleOf(p.v)} mark={headMark} view="whole" rack {...head(p)} pages={PAGES} page={page} onPage={p.setPage}
       acts={making ? undefined : <Action label="New" does="Opens a card to make a new group." onPress={() => p.set('new.open', true)} />}>
       {making ? <NewGroupBands p={p} /> : page === 'helper' ? <HelperBands p={helperOf(p)} /> : <>
       <Band>
-        <Section label="Members" width={220}>
+        <Section label="Members" width={220} part="chains">
           <MemberList p={p} size={8} note={false} label={false} />
         </Section>
-        <Section label="Limits" cols={2}>
+        <Section label="Limits" cols={2} part="macros">
           {fanBox(p)}
           {depthBox(p)}
           <Readout label="working" does="Members at work, of the most that may run at once." value={workingLine(p)} tone="value" />
@@ -642,14 +642,14 @@ export const design: DesignedDevice = {
         </Section>
       </Band>
       <Band>
-        <Section label="Member" cols={4} grow>
+        <Section label="Member" cols={4} grow part="devices">
           <Who chosen={chosen} known={has(p.v, 'members')} pattern={patternOf(p.v)} />
           <Readout label="tool calls" does="Tool calls the chosen member has made." value={chosen?.tools} />
           <Readout label="files" does="Files the chosen member touched." value={chosen?.files?.length} />
           {retryAction(p, chosen)}
           {openAction(p, chosen)}
         </Section>
-        <Section label="Return" cols={2} width={196}>
+        <Section label="Return" cols={2} width={196} part="macros">
           {handBack(p)}
           {joinChooser(p)}
           <div className="as-span">{modelChooser(p)}</div>

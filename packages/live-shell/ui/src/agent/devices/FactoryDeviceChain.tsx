@@ -48,6 +48,10 @@ import {DEVICE_PANE_KIND} from '../../frame/devices/devicePane'
 import type {DesignBinding} from '../../frame/devices/designed'
 import type {DeviceInstance} from '../../frame/devices/deviceRuntime'
 import {useDesign} from '../../frame/devices/designs'
+import {useRackShown} from '../../frame/devices/deviceHost'
+import {openSeatDiff} from '../AgentShellBrowser'
+import {openSettings} from '../../settings/host'
+import {chainLaw, slotStanding} from '../../inhabitants/sdk/chains'
 import {openInstrument} from '../../frame/instrumentDoor'
 import {agentAddress} from '../../inhabitants/agentParamAddresses'
 import {useRosterAnswer} from '../../owners/readers'
@@ -78,7 +82,7 @@ import {composePorts, useRackReading} from './useRackReading'
 import {observedState, useEncounterSessions} from './EncounterObservers'
 import {FRAMES_ID, mainDevices} from './mainTrackBindings'
 import {shownSession, threadBinding, threadJson} from './threadBinding'
-import {CAPTURE_PAGE, CHECKOUTS_PAGE, HELPER_PAGE, MACHINE_PAGE, SEAT_PAGE, carryPages, composeAgentBinding} from './oneAgentBinding'
+import {CAPTURE_PAGE, CHECKOUTS_PAGE, HELPER_PAGE, MACHINE_PAGE, SEAT_PAGE, carryPages, composeAgentBinding, withAgentGit} from './oneAgentBinding'
 import {useHygieneDevice} from '../../central/devices/groundDevices'
 import {openNotificationTarget, useOwnerRequests} from '../../widgets/railDevices'
 import {openedHold, openedOf, withOwnerRequests} from '../../widgets/railBindings'
@@ -157,7 +161,7 @@ const SLOT_DESIGNS: Readonly<Record<string, string>> = {gateway: GATEWAY_DESIGN,
  * session's or the Main track's. */
 export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: string | null; workcell?: string | null}) {
   const shell = useAgentShell()
-  const {reading, transport, binding, resolved, harnesses} = useAgentChainReading(sessionRef)
+  const {reading, transport, binding, resolved, harnesses, git: sessionGit} = useAgentChainReading(sessionRef)
   // The settings an owner accepted on this harness: the only readings effort and input have. The shell's own effort, steer,
   // heartbeat and write-arm flags are presentation, so they are not read here.
   const accepted = useOwnerAccepted(binding)
@@ -278,8 +282,12 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
     ? {op: 'factory_owner', request: {kind: 'pads-read', state_path: padsWhere.statePath, project_ref: padsWhere.projectRef}} : null),
   [padsWhere && 'projectRef' in padsWhere ? padsWhere.statePath : null, padsWhere && 'projectRef' in padsWhere ? padsWhere.projectRef : null]) // eslint-disable-line react-hooks/exhaustive-deps
   const padsBank = useOwnerOp(transport, padsBankOp, 'factory_development_reading').reading
-  const padsPorts = useMemo((): PromptPadsPorts => (transport.kind !== 'unavailable'
-    ? {write: request => factoryOwnerWrite(transport, {kind: 'pads-write', ...request}, '`factory development pads-write`')} : {}), [transport])
+  // Make routine (§19.22 Running alone) opens Settings, Automations on the bank's project, the shell's own act.
+  const padsPorts = useMemo((): PromptPadsPorts => ({
+    ...(transport.kind !== 'unavailable' ? {write: request => factoryOwnerWrite(transport, {kind: 'pads-write', ...request}, '`factory development pads-write`')} : {}),
+    makeRoutine: pad => openSettings({requestId: crypto.randomUUID(), page: 'automations', scope: {scope_kind: 'project', scope_ref: pad.project ?? pad.projectRef},
+      returnLabel: `Back to Prompt pads${pad.name ? ` · ${pad.name}` : ''}`}),
+  }), [transport])
   const padsInput = useMemo(() => ({
     located: {status: padsLocated.status, value: padsLocated.value?.data ?? null, error: padsLocated.error},
     ...(padsBankOp ? {bank: {status: padsBank.status, value: padsBank.value?.data ?? null, error: padsBank.error}} : {}), holds,
@@ -389,8 +397,10 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   const custodyDesignBinding = useMemo(() => custodyBinding({sessionRef, autonomy: reading.autonomy, agent: agentDesignBinding?.values ?? {}, holds, grants, person: currentPerson,
     custody: custodyRead}, scopeDesignBinding, custodyPorts), [sessionRef, reading.autonomy, agentDesignBinding, scopeDesignBinding, holds, grants, currentPerson, custodyRead, custodyPorts])
   const identityDesignBinding = useIdentityDevice(transport, track?.agentRef ?? null, FACTORY_IDENTITY_ID)
-  const oneAgent = useMemo(() => (agentDesignBinding ? composeAgentBinding(agentDesignBinding, {custody: custodyDesignBinding, identity: identityDesignBinding, thread: threadDesignBinding}) : null),
-    [agentDesignBinding, custodyDesignBinding, identityDesignBinding, threadDesignBinding])
+  // The Context page's Git row: the session's own repository, and Diff to Files' Diff page (§19.4 Context; §23.2).
+  const oneAgent = useMemo(() => (agentDesignBinding ? withAgentGit(composeAgentBinding(agentDesignBinding, {custody: custodyDesignBinding, identity: identityDesignBinding, thread: threadDesignBinding}),
+    {...sessionGit, openDiff: openSeatDiff}) : null),
+    [agentDesignBinding, custodyDesignBinding, identityDesignBinding, threadDesignBinding, sessionGit])
   // The line where you type @ (§18.4): an @ word in the Agent's composer opens Search in a pane on it (central/searchPane.tsx).
   useAtSearch(typeof oneAgent?.values.draft === 'string' ? oneAgent.values.draft : undefined)
   // Git / landing's Seat page: the seat instrument, starting at the selected workcell's seat of the project.
@@ -547,6 +557,13 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   }, [])
 
   const choose = (slotId: string) => { shell.setExpandedDevice(slotId as AgentDeviceId); selectDevice(chainDeviceId(slotId)) }
+  // The chain's one law (inhabitants/sdk/chains.ts): a session's chain, or a workcell's road. A slide asks it.
+  const law = chainLaw(place.kind === 'workcell' ? 'workcell' : 'factory-session')
+  const slideWords = (id: string): string => { const standing = slotStanding(law, id); return standing.moves ? law.means : standing.why }
+  // A rack's head hides the devices of its chosen chain (manual §16.4; Live's rack head): the Skillset rack's member inside its slot, and
+  // the workcell's road after its rack.
+  const memberShown = useRackShown(chainDeviceId('skillset'), 'devices')
+  const roadShown = useRackShown(WORKCELL_RACK_ID, 'devices')
   const openDevice = (id: string, title: string) => {
     try { openInstrument(DEVICE_PANE_KIND, undefined, {ref: id, title}) }
     catch (cause) { setNote({kind: 'refused', title: 'Open full', line: cause instanceof Error ? cause.message : String(cause), receipt: null}) }
@@ -568,7 +585,7 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
       setNote({
         kind: 'refused',
         title: 'Slide refused',
-        line: `«${active.reorder.title}» over ${target.label} — the chain composition is declared at the family door (through → who → how → where → lands); no owner operation reorders it — missing op: ${MISSING_OPS.order}; remedy: ${missingOpRemedy('order')}.`,
+        line: `«${active.reorder.title}» over ${target.label} — ${slideWords(active.reorder.id)}${!slotStanding(law, active.reorder.id).moves && law.op?.name === MISSING_OPS.order ? `; remedy: ${missingOpRemedy('order')}.` : ''}`,
         receipt: encodeChainDrag(active.reorder),
       })
       return
@@ -643,8 +660,7 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   const grip = (id: string, title: string) => (
     <span
       role="button" tabIndex={0} draggable className="agent-chain-grip"
-      aria-label={`Slide ${title}: drag, or Alt+Arrow — the chain refuses: its composition is declared (missing op: agent-chain order)`}
-      title="Slide — the chain refuses: the composition is declared"
+      aria-label={`Slide ${title}: drag, or Alt+Arrow — ${slideWords(id)}`} data-i={`Slide ${title}|${slideWords(id)}`}
       onClick={event => event.stopPropagation()}
       onDragStart={event => {
         const reorder = {id: id as AgentChainSlotId, title}
@@ -697,7 +713,7 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
               : {icon: 'pane', label: `Open ${slot.title} full size in a pane`, onPress: () => openFull(slot.id, slot.title)},
         ]} />
         {/* The rack's chosen chain, inside the rack (§19.7): the member device. Its press shows it whole in the pool. */}
-        {slot.id === 'skillset' && memberDevice && memberDesignBinding && (
+        {slot.id === 'skillset' && memberDevice && memberDesignBinding && memberShown && (
           <div className="factory-slot__member" data-device={memberDevice.id} onClick={event => event.stopPropagation()}>
             <DeviceView device={memberDevice} size="compact" binding={memberDesignBinding} actions={[
               {icon: 'detail', label: 'Show the member whole in the pool', onPress: () => selectDevice(memberDevice.id)},
@@ -711,6 +727,7 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
 
   /** One plate of the place's chain (factoryPlaces.ts chainSlots), by what stands there. */
   const plate = (slot: FactorySlot) => {
+    if (place.kind === 'workcell' && slot !== 'workcell' && !roadShown) return null
     if (AGENT_SLOTS.has(slot)) return slotPlate(slot)
     switch (slot) {
       // A group's chain (§19.15): the Agentset rack leads it, one chain for each of the group's sessions, its Helper page the team's
