@@ -106,12 +106,10 @@ test('the Device side is the Studio — its design on the runtime, the ported ma
     assert.match(html, new RegExp(`aria-label="${label}"`), `${label}: a mark on the Studio's head`)
   }
   for (const id of ['studio:tools', 'studio:selected', 'studio:formation', 'studio:capture', 'chosen']) assert.ok(!html.includes(`data-section="${id}"`), `${id}: no longer a Studio section`)
-  // The stage's own controls the manual gives no home stand beside the Studio as the Stage (OPEN), never inside its design.
-  assert.match(html, /data-studio-stage="unplaced"/)
-  assert.ok(html.indexOf('data-studio-stage') > html.indexOf('data-device="expressions:studio"'), 'the Stage after the Studio')
-  // MOVED (O-I #747 round two): the Stage keeps the camera alone; its view and Capture went to the View menu, the Clip panel and File › Export.
-  assert.match(html, /data-section="stage:camera"/)
-  assert.doesNotMatch(html, /data-section="stage:(capture|view)"/)
+  // MOVED (O-I #747, rounds one to three): every stage control is at its home — the camera, the guides and Present the View menu's, Fit,
+  // Keep and Restore the Clip panel's, Capture File › Export's. With no frame relay, macro rack or fault to hold, no Stage stands.
+  assert.doesNotMatch(html, /data-section="stage:(camera|capture|view)"/)
+  assert.doesNotMatch(html, /data-studio-stage=/, 'nothing left to hold: no Stage')
   assert.doesNotMatch(html, /aria-label="Chosen native controls"/, 'Your controls are the Studio\'s macros now (its Macros page), not a section')
 })
 
@@ -134,12 +132,13 @@ test('REPLACED — the selected symbol\'s controls are the scene\'s Clip view\'s
   assert.doesNotMatch(studio(reading({selection: ['e-stone']})), /aria-label="Native editor selection"/, 'not on the Studio')
 })
 
-test('no work open: the Studio stands unlit, no field device and no default value; the Stage says why its keys are off', () => {
+test('no work open: the Studio stands unlit, no field device and no default value, and says it reads nothing', () => {
   const closed = studio(null)
-  assert.match(closed, /Expressions engine · no work is open/)
+  // O-I #747 round three: no Stage stands to carry it (its keys are all at their homes); the Studio's own hover words say no work is open.
+  assert.match(closed, /data-i="Studio\|Expressions engine · no work is open"/)
   assert.doesNotMatch(closed, /data-device="expressions:(?!studio)/, 'no reading, no field device')
   assert.match(closed, /data-device="expressions:studio"/)
-  assert.match(closed, /data-section="stage:camera"/)
+  assert.doesNotMatch(closed, /data-section="stage:camera"/)
   assert.doesNotMatch(closed, /aria-label="Deep edit: the Studio/, 'no work, no door')
 })
 
@@ -157,7 +156,7 @@ test('the settings are the old configuration: Configure swaps the Studio for you
   const closed = renderToStaticMarkup(createElement(ExpressionsStudio, {...props, configure: false,
     own: [{id: 'chosen', title: 'Your controls', children: 'mine'}, {id: 'macros', title: 'Macros', children: 'racks'}]}))
   assert.doesNotMatch(closed, /data-section="chosen"/, 'your chosen controls are the Studio\'s macros, not drawn twice')
-  assert.match(closed, /data-section="stage:camera"[^]*data-section="macros"/, 'the person\'s macro racks stand after the Stage\'s own')
+  assert.match(closed, /data-studio-stage="unplaced"[^]*data-section="macros"/, 'the person\'s macro racks stand on the Stage')
   const detail = await readFile(new URL('../src/components/NativeWorldDetail.tsx', import.meta.url), 'utf8')
   for (const id of ['rack', 'controls', 'macros', 'settings']) assert.ok(detail.includes(`{id:'${id}',`), `the ${id} column is composed from the old configuration`)
 })

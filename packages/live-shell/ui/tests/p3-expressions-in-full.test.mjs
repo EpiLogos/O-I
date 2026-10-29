@@ -152,16 +152,19 @@ test('#747: Present in the View menu and Export in the File menu are the field\'
   // Expression: "Expression JSON; living HTML, with its editor; or the current scene as a native configuration."
   for (const format of ['json', 'html', 'native']) assert.deepEqual(menuStageCommands(`file.export.${format}`, idle), [S.stageExport(format)])
   assert.equal(menuStageCommands('view.session', idle), null, 'an item that is not the field\'s is left to the frame')
-  for (const [id, command] of [['view.grid', 'grid'], ['view.snap', 'snap'], ['view.guides', 'guides']]) assert.deepEqual(menuStageCommands(id, idle), [S.stageView(command)], `${id}: the field's own`)
+  // Round three (manual §20.1, 28f14dfd4: "Turn the field to 2D or 3D, or face its plane — The View menu, beside Grid, Snap and Guides").
+  for (const [id, command] of [['view.grid', 'grid'], ['view.snap', 'snap'], ['view.guides', 'guides'], ['view.flat', 'view-2d'], ['view.depth', 'view-3d'],
+    ['view.face-plane', 'face-plane']]) assert.deepEqual(menuStageCommands(id, idle), [S.stageView(command)], `${id}: the field's own`)
   const menus = await source('../../../../desktop/cradle/src-tauri/src/menus.rs')
-  for (const [id, label] of [['view.present', 'Present'], ['view.grid', 'Grid'], ['view.snap', 'Snap'], ['view.guides', 'Guides'], ['file.export.picture', 'Picture…'],
+  for (const [id, label] of [['view.present', 'Present'], ['view.grid', 'Grid'], ['view.snap', 'Snap'], ['view.guides', 'Guides'], ['view.flat', '2D'], ['view.depth', '3D'],
+    ['view.face-plane', 'Face Plane'], ['file.export.picture', 'Picture…'],
     ['file.export.film', 'Film'], ['file.export.json', 'Expression JSON'], ['file.export.html', 'Living HTML'], ['file.export.native', 'Native Configuration']])
     assert.match(menus, new RegExp(`item\\("${id.replace(/\./g, '\\.')}", "${label}", None\\)`), `${id} stands in the menu bar`)
   assert.match(menus, /SubmenuBuilder::new\(app, "File"\)/, 'a File menu')
   assert.match(menus, /\["edit\.", "create\.", "view\.", "file\.", "app\."\]/, 'its items reach the renderer as oi:command')
   // O-I #747 round two: the search line's > offers them (frame/menu/commandDoor.ts MENU_COMMANDS).
   const {MENU_COMMANDS} = await import('../src/frame/menu/commandDoor.ts')
-  for (const id of ['view.present', 'view.grid', 'view.snap', 'view.guides', 'file.export.picture', 'file.export.film', 'file.export.json', 'file.export.html', 'file.export.native'])
+  for (const id of ['view.present', 'view.grid', 'view.snap', 'view.guides', 'view.flat', 'view.depth', 'view.face-plane', 'file.export.picture', 'file.export.film', 'file.export.json', 'file.export.html', 'file.export.native'])
     assert.ok(MENU_COMMANDS[id], `${id}: an act of the search line's >`)
 })
 

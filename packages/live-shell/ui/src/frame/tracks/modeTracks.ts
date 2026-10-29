@@ -119,7 +119,10 @@ export function nativeTracks(content: NativeExpressionsContent | null | undefine
   const presented = extra.reading && extra.reading.basis.expression_ref === expressionId ? extra.reading : null
   // The saved sequence's loop flag (the Journey's, expressions-boundary/src/scenes.ts `loop`), where a saved sequence stands to loop.
   const loops = content.scenes?.loop === true && content.scenes.timing.saved.available
+  // The Expression's description, as its owner's scenes inventory reads it (O-I #747): its track head's info text. Unread, it is not passed.
+  const description = content.scenes?.description
   return expressionsTrackAdapter.project({expressions: [{id: expressionId, name: workName ?? expressionId,
+    ...(typeof description === 'string' ? {description} : {}),
     scenes: scenes.map(scene => ({id: scene.scene_ref, name: scene.title || scene.native_title, duration: scene.working?.duration ?? scene.snapshot.duration ?? 0, ...statusOf(scene)}))}],
     ...(presented ? {automation: [{expressionId, sceneId: presented.basis.scene_ref, lanes: sceneAutomationOf(presented)}]} : {}),
     ...(playback ? {differs: playback.scene_playing && !playback.saved_sequence_playing} : {}),

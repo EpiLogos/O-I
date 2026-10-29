@@ -86,7 +86,8 @@ test('the Studio\'s head says where the work stands and its link mark copies the
   const html = studio()
   // R4: the plate beside the Studio is the Stage; its head carries where the work stands (the Studio is its design, whose own corner says
   // the save state).
-  assert.match(html, /<header class="dp-head dp-head--plate" data-i="Stage\|Expressions engine · “the stone” at 0:12\.5 · marker “Arrival”">/, 'where the work stands: the head\'s status-bar words (lane BT: the kit\'s head)')
+  // MOVED (O-I #747 round three): no Stage plate stands to carry it (its stage controls are at their homes); the Studio's own slot says it.
+  assert.match(html, /data-design="expressions:studio" data-i="Studio\|Expressions engine · “the stone” at 0:12\.5 · marker “Arrival”"/, 'where the work stands: the Studio\'s status-bar words')
   // R4: the link mark stands in the Studio's head (its place's own marks, ExpressionsStudio.tsx Mark).
   assert.match(html, /data-studio-mark="link" aria-label="Copy address: \?expression=expression%3Akept&amp;scene=scene%3Aone&amp;t=12\.5&amp;marker=m1"/)
   Door.publishHostedChrome({state: READY, run: async () => ({ok: true}), faults: []})

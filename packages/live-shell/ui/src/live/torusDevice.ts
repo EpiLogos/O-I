@@ -16,7 +16,7 @@ import {hostedChrome} from '../projections/expressionsPaneHost'
 import {qlRackState, rackPage, type QlRackState} from '../inhabitants/ql/devices/qlRack'
 import {handsFor, heldFor} from '../techne/devices/designDevices'
 import type {StageRun} from '../components/expressions/studio/StudioStage'
-import {coordinateNames, NO_CONDITION, tattvaKeys, type CoordinateName} from '../inhabitants/ql/devices/qlCoordinateName'
+import {bodyTable, coordinateNames, NO_CONDITION, tattvaBody, tattvaKeys, type BodyTable, type CoordinateName} from '../inhabitants/ql/devices/qlCoordinateName'
 
 export const TORUS_DEVICE_ID = 'live:m1-torus'
 
@@ -82,6 +82,11 @@ export const TORUS_DESIGN_ID = 'quaternal-logic:torus'
  * (catalogue/panels/torus.tsx `determinants`), by the labels of the owner's choices; a design key that is a row key is wrapped as that
  * row is on the chain (MIDI map, DeviceView.tsx useHosting). */
 export const TORUS_DETERMINANT_KEYS: Readonly<Record<string, string>> = {'lens': 'lens', 'context-frame': 'context-frame', 'harmonic-basis': 'harmonic-basis', 'm3-transcription': 'm3-transcription'}
+
+/** Why the Torus's Body source cannot take the tattva yet: QL's table stands, but no write carries Strike, Damping or Agitation to the native
+ * field (stageCommands.ts InstrumentEdit has no body edit; QL's instrument session takes `set-damping` as a decay rate per second, and no
+ * strike share or agitation at all). */
+export const NO_BODY_WRITE = 'the native field takes no Strike, Damping or Agitation through the stage channel — missing op: a body edit on the stage channel (stageCommands.ts InstrumentEdit; QL\'s instrument session takes set-damping as a decay rate per second, not a Q factor) (Expressions).'
 
 const NO_FIELD_PARAMETER = 'the native field announces only its lens, context frame, harmonic basis, M3 transcription, sound, level, cadence and scale, and takes only those through the stage channel (stageCommands.ts InstrumentEdit)'
 
@@ -152,12 +157,14 @@ export const TORUS_ABSENT: Readonly<Record<string, string>> = {
   meter: 'The owner reports no level meter: its audio receipt carries the presentation gain and its block counts, not a level.',
   sounding: 'The owner reports no sounding keys: a struck key is one act through the stage channel, answered yes or no, never reported back as sounding.',
   driveMod: 'Nothing moves the drive: the owner announces no drive, so no planet can take it and no range is drawn round it.',
-  'body.source': 'No body source: QL\'s scene material is a declared policy (scene_field.rs MATERIAL_STANDING), never taken from the tattva; no owner holds body constants by tattva.',
+  // body.source: M2's body constants stand (QL's table, `ql kernel body-constants`; qlCoordinateName.ts BodyTable), and torusBodySource
+  // says what each fibre would set; the native field still takes none of them, so the choice stays closed with that reason.
+  'body.source': `No body source: ${NO_BODY_WRITE}`,
   // tattva.name and tattva.fibre: the live scene's M2 condition the frame announces (qlCoordinateName.ts tattvaKeys), absent with its reason
-  // until it does.
+  // until it does. tattva.standing: the standing of M2's body constants, once read.
   'tattva.name': NO_CONDITION,
   'tattva.fibre': NO_CONDITION,
-  'tattva.standing': 'No table of body constants by tattva stands: QL\'s scene material is a declared policy (scene_field.rs MATERIAL_STANDING).',
+  'tattva.standing': 'Reading M2\'s body constants…',
   ...STAGE_ABSENT,
 }
 
@@ -184,6 +191,20 @@ export function torusDesignValues(state: LiveTorusState | null): Record<string, 
     if (key && option) values[key] = option.label
   }
   return values
+}
+
+/** The Torus's Body source over M2's body constants: `tattva.standing` the table's own, and `body.source` closed with what the condition's
+ * fibre would set (Strike, Damping, Agitation by the table) and the write the native field lacks. */
+export function torusBodySource(condition: FrameInstrumentCondition | null | undefined, table: BodyTable | null): {values: Record<string, Value>; standing: Record<string, Standing>} {
+  if (!table?.ok) {
+    const why = table?.reason ?? 'Reading M2\'s body constants…'
+    return {values: {}, standing: {'tattva.standing': {disabled: why}}}
+  }
+  const set = tattvaBody(condition, table)
+  const would = set.row ? `M2's table gives the ${set.row.fibre} fibre Strike ${Math.round(set.row.strike_share * 100)}%, Damping ${set.row.q_factor} and Agitation ${set.row.agitation} (${table.standing}), but ` : ''
+  return {values: {'tattva.standing': table.standing},
+    standing: {'tattva.standing': {disabled: 'A reading: the standing of M2\'s body constants (QL\'s table: a starting point, to be tuned by ear).'},
+      'body.source': {disabled: `No body source: ${would}${NO_BODY_WRITE}`}}}
 }
 
 /** Whether the owner takes a change of this design key now, and why not when it does not. */
@@ -222,7 +243,8 @@ export function torusDesignBinding(state: LiveTorusState | null, device: DeviceI
   stage: FrameStageReading | null | undefined = hostedChrome()?.state?.instrumentStage ?? null, rack: QlRackState = qlRackState(1),
   run: StageRun | null = hostedChrome()?.run ?? null, held: Readonly<Record<string, Value>> = heldFor(TORUS_DESIGN_ID),
   condition: FrameInstrumentCondition | null | undefined = hostedChrome()?.state?.instrumentCondition ?? null,
-  tattvaName: CoordinateName | null = condition?.tattva_ref ? coordinateNames().get(condition.tattva_ref) ?? null : null): DesignBinding {
+  tattvaName: CoordinateName | null = condition?.tattva_ref ? coordinateNames().get(condition.tattva_ref) ?? null : null,
+  table: BodyTable | null = bodyTable()): DesignBinding {
   const standing: Record<string, Standing> = {}
   for (const key of TORUS_KEYS) {
     const why = writeStanding(state, key)
@@ -242,6 +264,10 @@ export function torusDesignBinding(state: LiveTorusState | null, device: DeviceI
   // The Body group's tattva: the live scene's M2 condition, as the frame announces it, by the map's name for its coordinate.
   const tattva = tattvaKeys(condition, tattvaName)
   Object.assign(standing, tattva.standing)
+  // M2's body constants: their standing is a reading; the Body source stays closed, naming what the fibre would set and the missing write.
+  const body = torusBodySource(condition, table)
+  Object.assign(tattva.values, body.values)
+  Object.assign(standing, body.standing)
   const local: Record<string, (value: Value | undefined) => void> = {...page.local, ...handsFor(TORUS_DESIGN_ID, TORUS_STAGE_LOCAL)}
   const submit = device.submit
   const stageAct = async (change: ValueChange) => {

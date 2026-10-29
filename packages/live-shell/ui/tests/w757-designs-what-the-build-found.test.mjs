@@ -184,16 +184,18 @@ test('the Session grid rolls a group\'s members up whether it is folded or not, 
 
 // ---------------------------------------------------------------- widgets__terminal: the binding names the design's own keys
 
-test('the Terminal\'s binding names the design\'s keys it cannot serve (rooms, provider, answers), and no SHELLS', async () => {
+// REPLACED (O-I #749): the binding named rooms, provider and answers absent ("missing op"); it now serves them from AIKit's session
+// spaces and the owner's capture (tests/w749-terminal-rooms.test.mjs), and a Workbench terminal stands as a room of this computer's own.
+test('the Terminal\'s binding serves the design\'s rooms, provider and answers, and no SHELLS', async () => {
   const term = await import('../src/widgets/terminalBinding.ts')
   const design = await panel('widgets__terminal')
   assert.ok(!/SHELLS/.test(source('inhabitants/catalogue/panels/widgets__terminal.tsx')), 'the design draws from its keys (settled: 322134d71)')
   assert.doesNotMatch(source('widgets/terminalBinding.ts'), /SHELLS/, 'the binding cites no constant the design no longer has')
-  const entry = {reading: {cwd: '/tmp', command: '', exited: false, fontSize: 12, scrollback: 5000, lines: 40, watch: false, attachedAt: 1}, hand: {fontSize: noop, scrollback: noop, watch: noop}}
-  const binding = term.terminalBinding(entry)
+  const entry = {reading: {id: 's', cwd: '/tmp', command: '', exited: false, fontSize: 12, scrollback: 5000, lines: 40, watch: false, attachedAt: 1}, hand: {fontSize: noop, scrollback: noop, watch: noop}}
+  const binding = term.terminalBinding({rooms: [], locals: [entry], followed: {session: null, words: null}, holds: {}, screen: null, hands: {hold: noop, type: noop, keys: noop}, native: false})
   for (const key of ['rooms', 'provider', 'answers']) {
-    assert.ok(key in JSON.parse(JSON.stringify(design.defaults)) || design.defaults[key] !== undefined, `${key} is the design's key`)
-    assert.match(binding.standing[key]?.disabled ?? '', /missing op|no reading/, `${key} stands absent with what it waits for`)
+    assert.ok(design.defaults[key] !== undefined, `${key} is the design's key`)
+    assert.ok(key in binding.values, `${key} is read`)
   }
 })
 

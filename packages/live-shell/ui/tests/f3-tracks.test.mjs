@@ -115,3 +115,20 @@ test('every mode has its tracks by registration, and the views know no mode', as
     assert.doesNotMatch(await readFile(new URL(`../src/frame/tracks/${view}`, import.meta.url), 'utf8'), /'(live|base|factory|expressions|techne)'/, `${view} names no mode`)
   }
 })
+
+// O-I #747 round three: the tracks' reading carries the Expression's description from the owner's scenes inventory, so the track head's
+// Edit info text stands (timeline/expressionsTrackAdapter.ts trackInfo); an unread description is never offered as empty.
+test('the Expression\'s description reaches its track head from the owner\'s scenes inventory', () => {
+  const content = description => ({basis: {expression_ref: 'expression:w'}, scenes: {...(description === undefined ? {} : {description}),
+    scenes: [{scene_ref: 's1', title: 'Opening', native_title: 'n', working: {duration: 4, transition: 0}, snapshot: {duration: null}}]}})
+  const sent = []
+  const controls = {sceneEdit: {op: 'scene-edit', run: intent => { sent.push(intent); return {ok: true} }}}
+  const set = nativeTracks(content('For a reader.'), 'Work', {controls})
+  assert.equal(set.tracks.find(t => t.groupId).info, 'For a reader.')
+  assert.ok(set.actions.trackInfo, 'Edit info text stands')
+  set.actions.trackInfo.run(set.tracks.find(t => t.groupId).id, 'Rewritten.')
+  assert.deepEqual(sent, [{operation: 'expression-description', description: 'Rewritten.'}])
+  const empty = nativeTracks(content(''), 'Work', {controls})
+  assert.ok(empty.actions.trackInfo, 'an empty note is a real value: it is read, and can be written')
+  assert.equal(nativeTracks(content(undefined), 'Work', {controls}).actions.trackInfo, undefined, 'unread: not offered')
+})

@@ -1111,7 +1111,18 @@ function setSceneRef(sceneId:string,automatic=false){const index=sceneIndexOf(sc
  if(scenePlaying&&store.document.scenes[index].transition>0&&engine.capabilities.kind==='preview'&&transitionKindOf(store.document.scenes[index].transitionSpec)==='crossfade'){startCrossfadeSeam(store.document.scenes[index],scene().field.background);}else if(scenePlaying&&store.document.scenes[index].transition>0&&engine.capabilities.kind==='preview'&&transitionKindOf(store.document.scenes[index].transitionSpec)!=='cut'){startPaintedSeam(store.document.scenes[index]);}else{transitionDuration=0;transitionSnapshot=null;$('transition-canvas').hidden=true;}
 
  sceneIndex=index;journeyInstrument?.recordPosition(sceneId); // T9: the strip's Scene is the author's presence, through the presence owner.
+ // O-I #747: the person's own switch takes the owner's selection with it (Clip view's edits name it in their captured basis).
+ if(!automatic)followNativeScene(sceneId);
  if(!automatic)journeyPlaying=false;applySceneView();sceneElapsed=automatic?0:switchLanding(store.document.scenes[index].transitionSpec,outgoingLocal,store.document.scenes[index].duration);selected=[];textId=scene().text[0]?.id??null;saveSession();placementStep=false;shapePickerOpen=false;if(!automatic)journeyPlaying=false;renderAll();void researchInstruments?.refresh();}
+/** O-I #747 (round three): the native owner holds the selection (expressions-boundary sceneEdits.ts refuses an edit whose captured
+ * native_selection names another Scene than its basis). A Scene the person steps to in the frame — ‹ ›, the strip, an arrow key, a kept
+ * address — is selected at the owner too, as saved playback selects it (advanceSavedScene); a switch the owner already holds (the
+ * retained editor's focus) is left alone. A refusal is named. */
+function followNativeScene(sceneId:string){
+ const view=nativeWorkspace?.nativeView(),ref=view?.bindings[sceneId]?.scene_ref;
+ if(!view||!ref||view.document.selection?.scene_ref===ref)return;
+ void nativeWorkspace!.select(sceneId,null).then(outcome=>{if(outcome==='failed')toast('The native owner did not take this Scene\'s selection: the scene\'s edits in Clip view wait until it does.',6500);},error);
+}
 /** Saved playback uses the existing frame playhead; native location changes
  * wait for its exact owner acknowledgement before the next Scene is rendered. */
 async function advanceSavedScene(index:number,local=0){if(sceneAdvancePending||!sceneTransportAlive)return;const view=nativeWorkspace?.nativeView(),target=store.document.scenes[index],targetRef=target&&view?.bindings[target.id]?.scene_ref;

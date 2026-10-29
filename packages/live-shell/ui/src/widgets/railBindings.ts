@@ -72,6 +72,31 @@ export function filesOf(rows: readonly TapeRow[], diff: readonly Record<string, 
   return [...byPath.values()]
 }
 
+/** The file Files opens (§23.2, its `open` hold) as a whole path: the tree holds paths relative to the seat's root where they stand under
+ * it (filesOf), else as the tape named them. Null when there is nothing to open, or a relative path with no root read yet. Pure. */
+export function openFileOf(open: Value | undefined, root: string | null): string | null {
+  if (typeof open !== 'string' || !open) return null
+  if (open.startsWith('/')) return open
+  return root ? `${root.replace(/\/$/, '')}/${open}` : null
+}
+
+/** A whole path placed in Central's ground (the root its listings name, `central.path-ref/v1` `root`): the path the files seam lists it
+ * under, its folder and its name; or why it cannot be, a file outside the ground. Pure. */
+export function groundPlaceOf(path: string, root: string): {relative: string; parent: string; name: string} | {words: string} {
+  const ground = root.replace(/\/$/, '')
+  if (!path.startsWith(`${ground}/`)) return {words: `${path} stands outside Central's ground (${ground}); Central's file owner reads only inside it.`}
+  const relative = path.slice(ground.length + 1), parts = relative.split('/')
+  return {relative, parent: parts.slice(0, -1).join('/'), name: parts[parts.length - 1]!}
+}
+
+/** The agent Files and Web read (§23.2, §23.3 Follow): the selected one while Follow is on (`kept` null), else the one Follow kept, by its
+ * session; a kept agent the agency reading no longer lists is said, never replaced by another. Pure. */
+export function keptTrackOf<T extends {sessionRef: string}>(tracks: readonly T[], kept: string | null, followed: T | null): {track: T | null; words: string | null} {
+  if (kept === null) return {track: followed, words: null}
+  const track = tracks.find(candidate => candidate.sessionRef === kept) ?? null
+  return {track, words: track ? null : `The agent Follow kept (${kept}) no longer stands in the agency reading. Turn Follow on to read the selected agent.`}
+}
+
 /** What a call's output said, as text lines: a string as it is, a content list's text parts, else nothing (never a dump). */
 export function outputLines(output: unknown): string[] {
   const text = (value: unknown): string => typeof value === 'string' ? value

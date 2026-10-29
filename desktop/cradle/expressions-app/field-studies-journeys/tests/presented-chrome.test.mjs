@@ -165,3 +165,18 @@ test('#747: Keep writes the scene\'s kept state with its framing, and the model 
  const wrong=blankJourney();wrong.scenes[0].view={...wrong.scenes[0].view,kept:'yes'};
  assert.throws(()=>validateJourney(wrong),/Invalid kept view/);
 });
+
+// O-I #747 round three (walk, 29 Oct): after the frame's own Scene › (‹ ›, the strip, an arrow key, a kept address), every Clip view scene
+// edit was refused: "The captured native Scene, selection, authored revision, lifetime or intent changed before its edit". The native
+// owner holds the selection (sceneEdits.ts checks native_selection.scene_ref against the basis); the frame switched only its own view.
+// The person's switch now asks the owner to select the scene, as saved playback does (advanceSavedScene) — only when the owner's
+// selection differs, so a switch the owner asked for (the retained editor's focus) is not selected twice.
+test('#747: the person\'s own scene switch takes the native selection with it, at the owner', async () => {
+ const app=await source('../src/app.ts');
+ const body=app.slice(app.indexOf('function setSceneRef('),app.indexOf('/** Saved playback uses the existing frame playhead'));
+ assert.match(body,/sceneIndex=index;[^]*if\(!automatic\)followNativeScene\(sceneId\);/,'a switch that is not automatic follows at the owner');
+ const follow=app.slice(app.indexOf('function followNativeScene('),app.indexOf('function followNativeScene(')+700);
+ assert.match(follow,/const view=nativeWorkspace\?\.nativeView\(\),ref=view\?\.bindings\[sceneId\]\?\.scene_ref;/);
+ assert.match(follow,/if\(!view\|\|!ref\|\|view\.document\.selection\?\.scene_ref===ref\)return;/,'only when the owner\'s selection differs');
+ assert.match(follow,/nativeWorkspace!\.select\(sceneId,null\)/,'the owner\'s own select, as saved playback asks it');
+});

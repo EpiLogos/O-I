@@ -112,14 +112,24 @@ export function onRack(reading: NativeEditorReading | null, family: string): boo
  *   • scene/a:toggle-play — the transport's Play and Stop (useExpressionsTransport.tsx `play`); scene/a:present — View › Present (O-I #747:
  *     menus.rs, StudioStage.tsx menuStageCommands);
  *   • rail/a:tool-select — Clip view's pointer tools, Select (O-I #747: components/expressions/clip/clipBinding.ts `tool`);
- * (R2 retired the Clip side's SceneControls, which carried workspace/a:quick-guide and scene/a:previous, next, timeline and play-journey:
- * the frame's own controls for them stand on the Stage's Frame tools until the scene's Clip view carries them.)
+ * (R2 retired the Clip side's SceneControls, which carried workspace/a:quick-guide and scene/a:previous, next, timeline and play-journey.)
+ *   O-I #747 round three, each to the home the manual gives it (§20.1 "Where everything is"):
+ *   • scene/a:previous, scene/a:next, scene/a:timeline (the scene picker), scene/a:play-journey (saved scenes) — the scenes are Session
+ *     view's rows and the Main track's stops ("Launch, layer and stop scenes — Session view"), the saved sequence its Back to Arrangement;
+ *   • scene/a:open-timeline (Save scene…) — the transport's Capture ("keep your gestures as a scene": useExpressionsTransport.tsx);
+ *   • rail/a:tool-interact, rail/a:tool-pin, rail/a:tool-formation, rail/a:tool-text — the transport's Draw slot, the stage tool rail
+ *     (NativeBarControls.tsx BarTools), and Clip view's Text tool;
+ *   • workspace/a:library — Clip view's pointer row, Library ("opens the browser's library": clipBinding.ts `library`);
+ *   • workspace/a:modes (Compositions…) — the browser's starters ("Start an Expression, from nothing or from a composition — The browser").
+ *   What stays on the Stage has no home in the manual yet (PROPOSEd): workspace/a:quick-guide (Guide) and scene/l:Acts (Acts).
  *   • side/a:toolbelt — Your controls, the toolbelt's own entries with + Parameter (NativeChosenControls.tsx :225);
  *   • view/a:grid, view/a:snap, view/a:guides — View › Grid, Snap, Guides (O-I #747: menus.rs); view/a:face-plane — the Stage's Camera
  *     (StudioStage.tsx StageViewTools);
  *   • present/a:exit-present — View › Present, again (or Esc); recording/a:stop-record — File › Export › Film, again. */
 export const STUDIO_CARRIED: ReadonlySet<string> = new Set([
   'rail/a:pointer-options', 'rail/a:objects', 'rail/a:tool-select', 'workspace/a:studio', 'workspace/a:blueprint',
+  'rail/a:tool-interact', 'rail/a:tool-pin', 'rail/a:tool-formation', 'rail/a:tool-text', 'workspace/a:library', 'workspace/a:modes',
+  'scene/a:previous', 'scene/a:next', 'scene/a:timeline', 'scene/a:play-journey', 'scene/a:open-timeline',
   'save/a:capture-image', 'save/a:record-video', 'save/a:capture-options',
   'scene/a:toggle-play', 'scene/a:present',
   'side/a:toolbelt', 'view/a:grid', 'view/a:snap', 'view/a:face-plane', 'view/a:guides', 'present/a:exit-present', 'recording/a:stop-record',

@@ -918,6 +918,15 @@
       "reason": "Built 18 Oct with live-set unit tests (Base, the four amounts, Global Amount, the revision guard) and kernel tests; no executed native walk is recorded here for live_groove_pool_write; retain explicit operation-specific coverage debt until a walk names it."
     },
     {
+      "op": "live_sets_list",
+      "native_owner": "kernel/src/live_set_owner.rs",
+      "spec_ref": "ProjectCentral/docs/1-vision/dlw/DLW.md \u00a710.3 (What leads the browser \u2014 Live: your sets); O-I #749",
+      "status": "unverified",
+      "scenarios": [],
+      "owner_lane": "M/native verification",
+      "reason": "Built 29 Oct (O-I #749) with kernel tests on a scratch home (the Music folder, Library.cfg's User Library and an added Place; backups, packs, hidden folders and packages never walked) and a headless walk through a walk-bridge; the native app's own browser is not walked here."
+    },
+    {
       "op": "live_set_act",
       "native_owner": "kernel/src/live_set_owner.rs",
       "spec_ref": "ProjectCentral/docs/1-vision/dlw/DLW.md \u00a710.9 Acts and menus and \u00a721.1 Live: tracks and clips; packages/live-set/src/acts.rs, packages/live-set/src/sources.rs remap",
@@ -1005,7 +1014,7 @@
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
-      "reason": "Kernel-direct only: tests/shell_owner_routes.rs against fake owners (Quaternal Logic's kernel m1, scene compose|world, kernel ledger|coverage|apply, techne reading, mef lenses, context-frame list|read (read: QL-MEF#344), wiki living-plan (QL-MEF#346), wiki refract (QL-MEF#350), service capabilities and vak locate|context; with real QL answers as fixtures); no directly attributable executed native walk is recorded here for ql_read; retain explicit operation-specific coverage debt until its owner supplies a receipt."
+      "reason": "Kernel-direct only: tests/shell_owner_routes.rs against fake owners (Quaternal Logic's kernel m1, scene compose|world, kernel ledger|coverage|apply, techne reading, mef lenses, context-frame list|read (read: QL-MEF#344), wiki living-plan (QL-MEF#346), wiki refract (QL-MEF#350), service capabilities, vak locate|context, nara hours and kernel body-constants (O-I #745: the Sky's rulers at a place, M2's body constants by fibre); with real QL answers as fixtures); no directly attributable executed native walk is recorded here for ql_read; retain explicit operation-specific coverage debt until its owner supplies a receipt."
     },
     {
       "op": "seat_write",

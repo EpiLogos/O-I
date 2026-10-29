@@ -347,7 +347,7 @@ test('the Torus\'s tattva is the live scene\'s M2 condition, by the map\'s name 
   assert.deepEqual([binding.values['tattva.name'], binding.values['tattva.fibre']], ['Prithvi Tattva', 'earth'])
   assert.equal(binding.writes('tattva.name'), false, 'a reading')
   assert.equal(binding.standing['tattva.fibre'].disabled, names.FIBRE_READ)
-  assert.match(binding.standing['body.source'].disabled, /declared policy/)
+  assert.match(binding.standing['body.source'].disabled, /native field takes no Strike, Damping or Agitation through the stage channel/)
   const none = model.torusDesignBinding(state(), undefined, {}, null, undefined, null, {}, null, null)
   assert.equal(none.values['tattva.name'], undefined)
   assert.equal(none.standing['tattva.name'].disabled, names.NO_CONDITION)

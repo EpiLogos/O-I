@@ -9,7 +9,8 @@
 //             `dels`, kernel op git_diff_read), and blocked the reason a place is out of reach where the file owner says it is
 //             (`central.directory-reading/v1` NativeFileEntry `retrieval_allowed`). The tape carries no counts of its own.
 //   agent     the agent the tree follows (the shell's selected agent session); open the file shown full; content its lines
-//             (`central.file-reading/v1` `content`, kernel op file_read).
+//             (`central.file-reading/v1` `content`, kernel op file_read); openReason  why the file opened has no reading (outside
+//             Central's ground, or Central does not let it be read).
 // Show, Blocked and Follow are the monitor's own; no owner keeps them.
 //
 // The Diff page (manual §23.2, which took in the Diff device of §23.4): the changes not yet committed, and the changes an agent
@@ -125,7 +126,7 @@ function OpenFile({p, x0, w, h}: {p: ViewProps; x0: number; w: number; h: number
     {lines.length ? lines.slice(0, fit).map((l, i) => <g key={i}>
       <text x={38} y={52 + i * lh} textAnchor="end" className="dp-axis">{i + 1}</text>
       <text x={48} y={52 + i * lh} className="dp-ink dp-mono" style={{fontSize: 10.5, whiteSpace: 'pre'}}>{l.slice(0, room)}</text>
-    </g>) : <text x={14} y={60} className="dp-ink-dim">{path ? 'No reading of the file' : 'Click a file in the tree to read it here'}</text>}
+    </g>) : <text x={14} y={60} className="dp-ink-dim">{path ? strOf(p.v, 'openReason') ?? 'No reading of the file' : 'Click a file in the tree to read it here'}</text>}
     {lines.length > fit && <text x={w - 14} y={h - 6} textAnchor="end" className="dp-axis">+{lines.length - fit} lines</text>}
   </g>
 }

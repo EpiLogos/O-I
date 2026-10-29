@@ -101,6 +101,10 @@ pub fn install(app: &AppHandle, arrangements: &[Arrangement], active: &str) -> t
         .item(&item("view.grid", "Grid", None)?)
         .item(&item("view.snap", "Snap", None)?)
         .item(&item("view.guides", "Guides", None)?)
+        // The field's camera (manual §20.1: "Turn the field to 2D or 3D, or face its plane — The View menu, beside Grid, Snap and Guides").
+        .item(&item("view.flat", "2D", None)?)
+        .item(&item("view.depth", "3D", None)?)
+        .item(&item("view.face-plane", "Face Plane", None)?)
         .separator()
         .fullscreen()
         .build()?;
@@ -174,6 +178,9 @@ mod tests {
             "view.grid",
             "view.snap",
             "view.guides",
+            "view.flat",
+            "view.depth",
+            "view.face-plane",
             "file.export.picture",
             "file.export.film",
             "file.export.json",

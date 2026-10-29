@@ -843,6 +843,60 @@ fn ql_reads_carry_the_m1_engine_and_the_scene_verbatim() {
 }
 
 #[test]
+fn ql_reads_the_hours_at_a_place_and_m2s_body_constants_verbatim() {
+    let _held = hold();
+    let dir = scratch("ql-hours");
+    let ql = Fake::new(&dir, "ql");
+    let _bin = Bound::set("OI_QL_BIN", &ql.bin);
+    // The planets of the day and the hour at the world's declared place (QL's REAL answer).
+    let hours = fixture("ql-nara-hours-2026-10-29.json");
+    ql.answer(&hours["answer"]);
+    let (outcome, form) = dispatched(
+        no_central(&dir),
+        op(json!({"op": "ql_read", "request": {"kind": "sky-hours", "request": hours["input"]}})),
+    );
+    let outcome = outcome.unwrap();
+    assert_eq!(form, "owner-read");
+    let (route, data, _) = reading(&outcome);
+    assert_eq!(route, "ql nara hours");
+    assert_eq!(data, hours["answer"]);
+    assert_eq!(data["hour"]["ruler"]["body"], "Mercury");
+    assert_eq!(ql.asked(), ["nara hours - --json"]);
+    assert_eq!(
+        serde_json::from_str::<Value>(&ql.stdin()).unwrap(),
+        hours["input"],
+        "the request travels on stdin as it was given"
+    );
+    // A place where the Sun does not rise: QL's words come back.
+    ql.refuse(None, hours["refusal_stderr"].as_str().unwrap(), 2);
+    let (outcome, _) = dispatched(
+        no_central(&dir),
+        op(json!({"op": "ql_read", "request": {"kind": "sky-hours", "request": hours["input"]}})),
+    );
+    assert!(outcome.unwrap_err().contains("circumpolar"));
+    // M2's body constants by fibre (QL's REAL answer); another schema is named.
+    let body = fixture("ql-kernel-body-constants-2026-10-29.json");
+    ql.answer(&body["answer"]);
+    ql.forget();
+    let (outcome, _) = dispatched(
+        no_central(&dir),
+        op(json!({"op": "ql_read", "request": {"kind": "body-constants"}})),
+    );
+    let (route, data, _) = reading(&outcome.unwrap());
+    assert_eq!(route, "ql kernel body-constants");
+    assert_eq!(data, body["answer"]);
+    assert_eq!(ql.asked(), ["kernel body-constants --json"]);
+    ql.answer(&hours["answer"]);
+    let (outcome, _) = dispatched(
+        no_central(&dir),
+        op(json!({"op": "ql_read", "request": {"kind": "body-constants"}})),
+    );
+    let error = outcome.unwrap_err();
+    assert!(error.contains("ql.m2-body-constants/v1"), "{error}");
+    let _ = fs::remove_dir_all(&dir);
+}
+
+#[test]
 fn workcell_reads_and_writes_on_its_connections_and_machines() {
     let _held = hold();
     let dir = scratch("workcell");

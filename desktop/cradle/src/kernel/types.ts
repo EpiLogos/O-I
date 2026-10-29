@@ -246,6 +246,12 @@ export type QlReadRequest = {kind:"kernel-m1"|"scene-compose"|"scene-world";requ
   | {kind:"kernel-apply";operator:string;address:string}
   /** `ql techne reading <target.json>` (`ql.techne/v1`): the target on the kernel's stdin. */
   | {kind:"techne-reading";target:unknown}
+  /** `ql nara hours -` (`ql.sky-hours/v1`): the planets of the day and of the hour at a place, for a `ql.sky-day-request/v1`
+   * ({schema, epoch, place:{reference, label, latitude_degrees, longitude_degrees, altitude_metres, timezone},
+   * scope:"world-declared"|"observer-private", backend_policy}) on stdin. */
+  | {kind:"sky-hours";request:unknown}
+  /** `ql kernel body-constants` (`ql.m2-body-constants/v1`): M2's proposed body constants by element fibre. */
+  | {kind:"body-constants"}
   /** `ql mef lenses` ({registryVersion, registryRevision, lenses}), `ql context-frame list` ({grammarVersion, frames}),
    * `ql service capabilities` ({providerState, detail, operations}). */
   | {kind:"mef-lenses"|"context-frame-list"|"service-capabilities"}
@@ -640,6 +646,9 @@ export type KernelOp =
   | {op:"live_take_comp";path:string;expected_revision:string;track:number;take:number;range:{start:number;end:number}}
   // The set's Groove Pool (each groove's Base, Quantize, Timing, Random, Velocity; the set's Global Amount) with its revision.
   | {op:"live_groove_pool_read";path:string}
+  // The person's own Live sets (DLW §10.3 "Live: Your sets"): every .als in the Music folder and in Live's places (Library.cfg's User
+  // Library, its Templates, the folders added to Places), newest first (kernel live_set_owner.rs sets_reading). Read only.
+  | {op:"live_sets_list"}
   // One groove's setting, or with no groove the set's Global Amount ("amount"), against the set's revision.
   | {op:"live_groove_pool_write";path:string;expected_revision:string;groove?:number;field:LiveGrooveField|"amount";value:number|string}
   // One act on the set's objects (DLW §10.9, O-I #743), typed by its kind, against the set's revision (kernel live_set_owner.rs,
@@ -896,6 +905,7 @@ export type KernelOpResult =
   | {result:"live_take_comp_reading";reading:LiveCompReading & {revision:string}}
   | {result:"live_groove_pool_reading";reading:LiveGroovePool & {revision:string}}
   | {result:"live_set_acted";reading:LiveSetActed}
+  | {result:"live_sets_reading";reading:LiveSetsReading}
   | {result:"live_device_descriptors_reading";descriptors:Record<string,unknown[]>}
   | {result:"live_device_params_reading";reading:{params:unknown[]}}
   | {result:"live_device_param_written";reading:{param:unknown}}
@@ -1292,3 +1302,8 @@ export interface LiveSetActed {act: LiveSetAct['kind']; done: string; at: {track
 export interface LiveGroove {id: number | null; name: string; base: string | null; quantize: number | null; timing: number | null; random: number | null; velocity: number | null}
 /** The set's Groove Pool and its Global Amount (with the range Live keeps beside it). */
 export interface LiveGroovePool {grooves: LiveGroove[]; amount: number | null; amountRange: {min: number; max: number} | null}
+/** One of the person's Live sets (kernel live_set_owner.rs sets_reading): its file, its name, the place it stands in, whether it is a
+ * template (under the User Library's Templates), when it last changed. */
+export interface LiveSetEntry {path: string; name: string; place: string; template: boolean; modified_unix_ms: number | null}
+/** `oi.live-sets/v1`: the places read (each with whether it stands), the sets newest first, and whether the walk stopped at its bound. */
+export interface LiveSetsReading {schema: 'oi.live-sets/v1'; places: {label: string; path: string; present: boolean}[]; sets: LiveSetEntry[]; truncated: boolean}

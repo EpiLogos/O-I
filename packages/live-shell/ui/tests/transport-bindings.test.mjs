@@ -237,15 +237,16 @@ test('Expressions with no native reading presses nothing, and Play and Stop say 
 test('Expressions binds the old bar\'s working controls to the slots §10.5 and the old bar name, and no others', () => {
   const {source: bar} = native()
   const bindings = expressions(bar)
-  assert.deepEqual(owner(bindings), ['arm', 'cpu', 'draw', 'key-map', 'loop', 'overdub', 'play', 'position', 're-enable', 'record', 'signature', 'stop', 'tempo'].sort())
+  assert.deepEqual(owner(bindings), ['arm', 'capture', 'cpu', 'draw', 'key-map', 'loop', 'overdub', 'play', 'position', 're-enable', 'record', 'signature', 'stop', 'tempo'].sort())
   // Ticket C: the scene's ratio of hold to change reads the field's own morph hold share (toroidalMorph.holdRatio).
   assert.match(bindings.signature.readout.value, /^\d+ : \d+$/); assert.match(bindings.signature.readout.title, /ratio of hold to change/)
-  for (const id of ['link', 'tap', 'metro', 'quantize', 'key', 'root', 'scale', 'follow', 'capture', 'punch-in', 'punch-out', 'loop-length', 'keys', 'midi-map', 'rate']) {
+  for (const id of ['link', 'tap', 'metro', 'quantize', 'key', 'root', 'scale', 'follow', 'punch-in', 'punch-out', 'loop-length', 'keys', 'midi-map', 'rate']) {
     assert.equal(bindings[id], undefined, `${id} had no control on the old bar and stays unbound`)
   }
   const markup = draw(bindings)
   assert.deepEqual([...markup.matchAll(/data-slot="([^"]+)"/g)].map(m => m[1]).filter((id, i, all) => all.indexOf(id) === i), [...TRANSPORT_SLOT_IDS], 'the same 28 slots, in order')
-  for (const id of ['link', 'tap', 'capture', 'punch-in', 'punch-out', 'keys', 'midi-map']) assert.ok(!enabled(markup, id), `${id} is drawn waiting`)
+  for (const id of ['link', 'tap', 'punch-in', 'punch-out', 'keys', 'midi-map']) assert.ok(!enabled(markup, id), `${id} is drawn waiting`)
+  assert.ok(enabled(markup, 'capture'), 'Capture keeps the gestures as a scene (O-I #747 round three)')
   // The owner's own controls stand in their slots in place of a mark: the time scale, the scrub, the tool rail, Map, the engine light.
   assert.match(markup, /aria-label="Time Scale"/); assert.match(markup, /aria-label="Scene position"/); assert.match(markup, /aria-label="Stage tool"/)
   assert.match(markup, /aria-label="Pin controls"/); assert.match(markup, /aria-label="Engine: Running"/)
@@ -312,4 +313,17 @@ test('Expressions\' bar is the one bar: TransportBar draws ModeTransport for eve
   assert.doesNotMatch(bar, /mode === 'expressions'/, 'no branch for Expressions beside the one bar')
   const {existsSync} = await import('node:fs')
   assert.equal(existsSync(new URL('../src/components/NativeTransportBar.tsx', import.meta.url)), false, 'the retired bar is deleted, not parked')
+})
+
+// O-I #747 round three (manual §20.1: "Play, record, arm the Studio, and keep your gestures as a scene — The transport: Play, Record, Arm and
+// Capture"; "Capture in the transport keeps your last gestures as a new scene"): the Stage plate's Save scene… is the transport's Capture.
+test('Expressions Capture keeps the scene as it stands and makes the next from it, through the owner\'s own snapshot', async () => {
+  const idle = native()
+  const b = expressions(idle.source)
+  assert.ok(b.capture.press); assert.match(b.capture.title, /Capture — keep your gestures as a scene/)
+  b.capture.press(); await settle()
+  const row = idle.source.content.scenes.scenes.find(item => item.scene_ref === idle.source.content.basis.scene_ref)
+  assert.deepEqual(idle.sent, await idle.expected(actions => actions.scene({action: 'save-snapshot', name: row.title, next: true})))
+  const none = expressions(undefined)
+  assert.match(none.capture?.refused ?? '', /No Expression is open here/, 'with nothing open it says why')
 })

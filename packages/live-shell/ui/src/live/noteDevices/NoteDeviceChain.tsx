@@ -19,6 +19,7 @@ import {usePublishedDevice} from '../usePublishedDevice'
 import {noteDevice, noteDeviceReading, type NoteDeviceHold} from '../liveChainDevices'
 import {NoteFoldPicture} from './NoteFoldPicture'
 import {asScaleMappingDevice, scaleMappingBinding, type ScaleMappingWriters} from '../designBindings/scaleMappingBinding'
+import {useQlSkyState} from '../../inhabitants/ql/devices/qlSky'
 import './noteDevices.css'
 
 /** The session hold, as the plates write it. A tie the face changes is an accepted write: any refusal the map named on it is stale. */
@@ -61,8 +62,10 @@ function moveTo(devices: readonly NoteDevice[], id: string, target: number): voi
 function NoteDevicePlate({device, index, devices, mode, catalogue}: {device: NoteDevice; index: number; devices: readonly NoteDevice[]; mode: ModeInForce; catalogue?: NoteDeviceCatalogue}) {
   const designed = device.kind === 'scale' && catalogue !== undefined
   const instance = useMemo(() => { const plain = noteDevice(device, mode, HOLD); return designed ? asScaleMappingDevice(plain) : plain }, [device, mode, designed])
-  const binding = useMemo(() => (designed ? scaleMappingBinding(instance.id, device, catalogue!.reading, catalogue!.hold, WRITERS) : undefined),
-    [designed, instance.id, device, catalogue])
+  // The hour of now as the Sky counts it at its place (QL's `ql nara hours`): Scale mapping reads its planet and the maqāmāt bound to it.
+  const sky = useQlSkyState()
+  const binding = useMemo(() => (designed ? scaleMappingBinding(instance.id, device, catalogue!.reading, catalogue!.hold, WRITERS, sky) : undefined),
+    [designed, instance.id, device, catalogue, sky])
   // Its live picture, in its well wherever it is drawn: the fold it makes of the twelve classes under the mode in force.
   const picture = useCallback(() => <NoteFoldPicture device={device} mode={mode}/>, [device, mode])
   usePublishedDevice(instance.id, instance, picture, binding)

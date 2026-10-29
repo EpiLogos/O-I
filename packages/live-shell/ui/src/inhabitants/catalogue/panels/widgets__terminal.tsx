@@ -18,6 +18,9 @@
 //   folder      where the shell started; command  what started ('' is your shell); exited  whether it ended; lines  the lines kept
 // Settings, written through the surface that holds the lease: fontSize (points), scrollback (lines), watch (Input: true is Watch only).
 // Settings the Terminal holds: follow (true Follows, false Pinned), wrap (wrap long lines).
+//   driving     keys reach the room now (Input is Type and the room's keyboard is held); keys  what you type, sent to the room
+//               while it drives (a keydown or a paste on the screen, as the terminal's own sequences: keyData)
+//   reason      the owner's words for what does not answer (a provider that does not, a takeover it refused)
 // A key the owner has not reported is absent, and the view draws "—" for it.
 import {Band, Chooser, Dial, Display, Folded, Handle, Panel, Radio, Readout, Section, TextField, Tile, Toggle, type LightState, type Option} from '../../sdk/panel'
 import {NONE, boolOf, clampTo, has, json, numOf, st, strOf, type DesignedDevice, type ViewProps} from './design'
@@ -43,14 +46,16 @@ const INPUT: readonly Option<string>[] = [{value: 'type', label: 'Type', does: '
 const PROVIDER_WORD: Record<string, string> = {herdr: 'herdr', tmux: 'tmux', cmux: 'cmux', terminal: 'this terminal'}
 
 interface Line {readonly t: string; /** Typed by an agent. */ readonly by?: 'agent'; /** Output, not a command. */ readonly out?: boolean; /** The shell waits for an answer here. */ readonly ask?: boolean}
-interface Room {readonly id: string; readonly name: string; readonly agent?: string; readonly lines: readonly Line[]}
+/** A room; `read` false where its screen has not been read (a room that is not shown, or a terminal whose surface publishes no text). */
+interface Room {readonly id: string; readonly name: string; readonly agent?: string; readonly lines: readonly Line[]; readonly read: boolean}
 const rec = (x: unknown): x is Record<string, unknown> => typeof x === 'object' && x !== null
 /** The rooms the owner reports, kept where they have a shape; undefined when it reports none. */
 function roomsOf(v: V): Room[] | undefined {
   const raw = json<unknown>(v, 'rooms', undefined)
   if (!Array.isArray(raw)) return undefined
   return raw.flatMap((r): Room[] => rec(r) && typeof r.id === 'string' && typeof r.name === 'string' ? [{id: r.id, name: r.name, agent: typeof r.agent === 'string' ? r.agent : undefined,
-    lines: (Array.isArray(r.lines) ? r.lines : []).flatMap((l): Line[] => rec(l) && typeof l.t === 'string' ? [{t: l.t, by: l.by === 'agent' ? 'agent' : undefined, out: l.out === true, ask: l.ask === true}] : [])}] : [])
+    lines: (Array.isArray(r.lines) ? r.lines : []).flatMap((l): Line[] => rec(l) && typeof l.t === 'string' ? [{t: l.t, by: l.by === 'agent' ? 'agent' : undefined, out: l.out === true, ask: l.ask === true}] : []),
+    read: Array.isArray(r.lines)}] : [])
 }
 const follows = (v: V) => boolOf(v, 'follow') !== false
 const roomOf = (v: V): Room | undefined => { const id = follows(v) ? strOf(v, 'selected') : strOf(v, 'shell'); return roomsOf(v)?.find(r => r.id === id) }
@@ -68,7 +73,7 @@ function Screen({p, w, h, ruler, gauge}: {p: ViewProps; w: number; h: number; ru
   const v = p.v, fs = numOf(v, 'fontSize') ?? FONT.def, cw = cellW(fs), ch = cellH(fs), room = roomOf(v)
   const PAD = 6, top = ruler ? 17 : 5, right = gauge ? 16 : 3
   const fst = st(p, 'fontSize'), sst = st(p, 'scrollback')
-  if (!room) return <text x={PAD} y={h / 2} className="dp-axis">No reading: shell</text>
+  if (!room?.read) return <text x={PAD} y={h / 2} className="dp-axis">No reading: shell</text>
   const cols = Math.max(1, Math.floor((w - PAD - right) / cw)), rows = Math.max(1, Math.floor((h - top - 5) / ch))
   const wrap = boolOf(v, 'wrap') !== false
   const folded: Line[] = wrap ? room.lines.flatMap(l => (l.t.length <= cols ? [l] : Array.from({length: Math.ceil(l.t.length / cols)}, (_, i) => ({...l, t: l.t.slice(i * cols, (i + 1) * cols), by: i ? undefined : l.by})))) : [...room.lines]
@@ -99,6 +104,32 @@ function Screen({p, w, h, ruler, gauge}: {p: ViewProps; w: number; h: number; ru
       onDrag={fst.disabled ? undefined : x => p.set('fontSize', clampTo(FONT.min, FONT.max, Math.round((x - PAD) / 6)))} onReset={fst.disabled ? undefined : () => p.set('fontSize', FONT.def)} />}
   </g>
 }
+
+/** A key pressed on a driving screen as the bytes a terminal sends for it (the VT sequences xterm.js sends: its Keyboard evaluation,
+ * which the cradle's Computer view hands the room through the same takeover client): a printed character as itself, Enter, Backspace,
+ * Tab, Escape, the arrows, Home, End and Delete, and Control with a letter as its control code. Undefined for a key that sends nothing
+ * here (a modifier alone, or a ⌘ shortcut, which stays the app's). */
+export function keyData(event: {key: string; ctrlKey?: boolean; metaKey?: boolean; altKey?: boolean}): string | undefined {
+  if (event.metaKey) return undefined
+  const named: Record<string, string> = {Enter: '\r', Backspace: '\x7f', Tab: '\t', Escape: '\x1b', ArrowUp: '\x1b[A', ArrowDown: '\x1b[B',
+    ArrowRight: '\x1b[C', ArrowLeft: '\x1b[D', Home: '\x1b[H', End: '\x1b[F', Delete: '\x1b[3~'}
+  if (named[event.key]) return named[event.key]
+  if (event.key.length !== 1) return undefined
+  if (event.ctrlKey && /^[a-z@[\]^_\\]$/i.test(event.key)) return String.fromCharCode(event.key.toUpperCase().charCodeAt(0) & 0x1f)
+  return event.altKey ? `\x1b${event.key}` : event.key
+}
+const driving = (v: V) => boolOf(v, 'driving') === true
+/** The screen takes keys while the room drives: a keydown or a paste goes to the room as `keys`, never to the notes or the app. */
+const keysOn = (p: ViewProps) => (driving(p.v) ? {tabIndex: 0, 'data-driving': 'true', 'aria-label': 'Keys go to the room',
+  onKeyDown: (event: {key: string; ctrlKey: boolean; metaKey: boolean; altKey: boolean; preventDefault: () => void; stopPropagation: () => void}) => {
+    const data = keyData(event)
+    if (data === undefined) return
+    event.preventDefault(); event.stopPropagation(); p.set('keys', data)
+  },
+  onPaste: (event: {clipboardData: {getData: (kind: string) => string} | null; preventDefault: () => void}) => {
+    const text = event.clipboardData?.getData('text') ?? ''
+    if (text) { event.preventDefault(); p.set('keys', text) }
+  }} : {})
 
 const gridWord = (v: V) => { const fs = numOf(v, 'fontSize'); if (fs === undefined) return NONE; const g = gridOf(fs); return `${g.cols}×${g.rows}` }
 const DISPLAY_DOES = 'The last lines of the shell at the font size. A teal mark stands by a command an agent ran. Orange: the shell waits for an answer.'
@@ -201,7 +232,7 @@ export const design: DesignedDevice = {
     if (!room) return <div className="wt-pane"><header className="wt-bar"><span data-tone="dim">No reading: shell</span></header></div>
     const wrap = boolOf(v, 'wrap') !== false
     const lines: Line[] = []
-    for (const l of room.lines) {
+    for (const l of room.read ? room.lines : [{t: 'No reading: shell', out: true}]) {
       if (!wrap || l.t.length <= grid.cols) lines.push(wrap ? l : {...l, t: l.t.slice(0, grid.cols)})
       else for (let i = 0; i < l.t.length; i += grid.cols) lines.push({...l, t: l.t.slice(i, i + grid.cols), by: i ? undefined : l.by})
     }
@@ -215,7 +246,7 @@ export const design: DesignedDevice = {
       </header>
       <div className="wt-body" data-quiet={quiet ? 'true' : undefined}>
         <div className="wt-gutter" style={{fontSize: 9.5, lineHeight: `${ch}px`}}>{screen.map((l, i) => <div key={i}>{l.by === 'agent' ? room.agent ?? 'agent' : ' '}</div>)}</div>
-        <div className="wt-screen" style={{width: grid.cols * cw, height: grid.rows * ch, fontSize: fs, lineHeight: `${ch}px`}}>
+        <div className="wt-screen" style={{width: grid.cols * cw, height: grid.rows * ch, fontSize: fs, lineHeight: `${ch}px`}} {...keysOn(p)}>
           {screen.map((l, i) => <div key={i} data-out={l.out ? 'true' : undefined} data-ask={l.ask ? 'true' : undefined}>
             {l.t || ' '}{i === screen.length - 1 && !exited && !quiet && <span className="wt-cur" data-ask={l.ask ? 'true' : undefined} />}
           </div>)}
@@ -227,7 +258,8 @@ export const design: DesignedDevice = {
         <span data-tone="dim">{strOf(v, 'folder') ?? NONE}</span>
         {exited && <span data-tone="dim">exited</span>}
         {ask && <span data-tone="stall">waits for an answer</span>}
-        <span className="wt-fill" data-tone="dim">{boolOf(v, 'watch') ? 'watch only · ' : ''}{kept === undefined || cap === undefined ? NONE : `${linesWord(kept)} of ${linesWord(cap)} lines`}</span>
+        {strOf(v, 'reason') && <span data-tone="stall">{strOf(v, 'reason')}</span>}
+        <span className="wt-fill" data-tone="dim">{driving(v) ? 'typing · ' : boolOf(v, 'watch') ? 'watch only · ' : ''}{kept === undefined || cap === undefined ? NONE : `${linesWord(kept)} of ${linesWord(cap)} lines`}</span>
       </footer>
     </div>
   },
@@ -235,7 +267,7 @@ export const design: DesignedDevice = {
   widget: p => {
     const v = p.v, room = roomOf(v), asks = waits(room)
     return <Tile title="Terminal" light={lightOf(p)} span={2} onFull={p.nav.full}>
-      <div className="wt-tile">
+      <div className="wt-tile" {...keysOn(p)}>
         <Display w={266} h={82} label="Screen" does={DISPLAY_DOES}>
           <Screen p={p} w={266} h={82} ruler={false} gauge={false} />
         </Display>

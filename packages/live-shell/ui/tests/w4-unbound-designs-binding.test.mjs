@@ -258,36 +258,39 @@ test('the surfaces publish what they hold of their PTYs, the newest attached fir
   assert.match(surface, /term\.options\.disableStdin=watching/, 'Watch holds through a checkpoint\'s pause')
 })
 
-test('the Terminal: every key its design reads is classified; Text size, Scrollback and Watch go to the surface that holds the lease; the rest refused in words', async () => {
+// REPLACED (O-I #749): the Terminal read only the newest Workbench terminal, its Follow, the shell shown, the rooms, the provider and
+// whether it answers each absent with a missing op. It now shows a room of a session space (AIKit's working-surface bindings, their
+// capture through working_surface_read), and the Workbench's terminals stand as rooms of this computer's own provider: checked here on
+// that room, the rest in tests/w749-terminal-rooms.test.mjs.
+const NO_HANDS = {hold: () => {}, type: async () => {}, keys: async () => {}}
+const ownRoom = entry => tb.terminalBinding({rooms: [], locals: [entry], followed: {session: null, words: null}, holds: {}, screen: null, hands: NO_HANDS, native: false})
+
+test('the Terminal: every key its design reads is classified; on a Workbench terminal, Text size, Scrollback and Watch go to the surface that holds the lease; the rest refused in words', async () => {
   const entry = terminalEntry()
-  const binding = tb.terminalBinding(entry)
-  // The manual's Terminal (DLW §17.9) draws its rooms with their screens, the room's Provider and whether it answers, and Wrap; the
-  // binding (terminalBinding.ts) does not report them yet. Named here so that no other key goes unclassified.
-  const WAITING = ['rooms', 'provider', 'answers', 'wrap']
-  const keys = designKeys(terminalDesign).filter(key => !WAITING.includes(key))
-  assert.deepEqual(WAITING.filter(key => !designKeys(terminalDesign).includes(key)), [], 'the keys that wait are the design\'s own')
+  const binding = ownRoom(entry)
+  const keys = designKeys(terminalDesign)
   const classes = Object.fromEntries(keys.map(key => [key, classify(binding, key)]))
   for (const key of keys) assert.ok(classes[key], `${key} is classified`)
-  assert.deepEqual(binding.values, {light: 'lit', folder: '/Users/admin/Central/Work/O-I', command: '', exited: false, fontSize: 12, scrollback: 5000, lines: 41, watch: false})
-  for (const key of ['selected', 'shell', 'follow']) assert.match(binding.standing[key].disabled, /missing op: /, key)
-  await binding.write([{key: 'fontSize', value: 14}, {key: 'scrollback', value: 20000}, {key: 'watch', value: true}])
+  assert.deepEqual(binding.values, {rooms: JSON.stringify([{id: 'terminal:surface-1', name: 'This terminal · O-I'}]), follow: true, wrap: true, selected: 'terminal:surface-1',
+    provider: 'terminal', answers: true, light: 'lit', folder: '/Users/admin/Central/Work/O-I', command: '', exited: false, fontSize: 12, scrollback: 5000, lines: 41, watch: false})
+  binding.local.fontSize(14); binding.local.scrollback(20000); binding.local.watch(true)
   assert.deepEqual(entry.hand.calls, [['fontSize', 14], ['scrollback', 20000], ['watch', true]], 'through the surface (recorded, never sent)')
-  for (const key of ['follow', 'shell', 'folder', 'command']) await assert.rejects(binding.write([{key, value: 'x'}]), new RegExp(tb.TERMINAL_REFUSE[key].slice(0, 20)))
+  for (const key of ['folder', 'command']) await assert.rejects(binding.write([{key, value: 'x'}]), new RegExp(tb.LOCAL_REFUSE[key].slice(0, 20)))
   await assert.rejects(binding.write([{key: 'lines', value: 1}]), /lines is a reading/)
-  await assert.rejects(binding.write([{key: 'fontSize', value: 'big'}]), /number of pixels/)
-  assert.equal(tb.terminalBinding(null), null, 'no terminal runs: no binding, never a default')
-  const ended = tb.terminalValues(terminalEntry({exited: true, command: 'npm test'}))
+  assert.equal(tb.terminalBinding({rooms: [], locals: [], followed: {session: null, words: null}, holds: {}, screen: null, hands: NO_HANDS, native: false}), null,
+    'no room and no terminal: no binding, never a default')
+  const ended = ownRoom(terminalEntry({exited: true, command: 'npm test'})).values
   assert.deepEqual([ended.light, ended.exited, ended.command], ['dark', true, 'npm test'])
 })
 
 test('the Terminal draws on its binding in all five views — no NaN, no undefined, never its fixture\'s screens; with none running, the rail says where one starts', () => {
   host.resetHost()
-  const all = drawsOn(terminalDesign, tb.terminalBinding(terminalEntry()), TERMINAL_FIXTURE)
+  const all = drawsOn(terminalDesign, ownRoom(terminalEntry()), TERMINAL_FIXTURE)
   assert.match(all, /No reading: shell/, 'the screen is not reported: said, not drawn from the design\'s own shells')
-  drawsOn(terminalDesign, tb.terminalBinding(terminalEntry({exited: true, command: 'npm test'})), TERMINAL_FIXTURE)
+  drawsOn(terminalDesign, ownRoom(terminalEntry({exited: true, command: 'npm test'})), TERMINAL_FIXTURE)
   door.publishDevice(tb.TERMINAL_ID, null)
   assert.match(renderToStaticMarkup(createElement(rail.TerminalRailWidget, {close: () => {}})), new RegExp(escaped(tb.NO_TERMINAL).replace(/[()[\]?.*+]/g, '\\$&')))
-  door.publishDevice(tb.TERMINAL_ID, {device: tb.terminalDevice(), binding: tb.terminalBinding(terminalEntry())})
+  door.publishDevice(tb.TERMINAL_ID, {device: tb.terminalDevice(), binding: ownRoom(terminalEntry())})
   try {
     const tile = renderToStaticMarkup(createElement(rail.TerminalRailWidget, {close: () => {}}))
     assert.match(tile, /data-device-size="widget"/)
@@ -314,7 +317,10 @@ test('§16.14 — none of the three bindings defaults a reading: unread owners l
   bind.resetHolds()
   // DELETED (#788): the Knowledge route's own values — its binding is gone; Scope's Knowledge readings stand absent (scopeValues, above).
   assert.deepEqual(bind.scopeValues(bind.chainHolds()), {})
-  assert.deepEqual(tb.terminalValues(null), {})
+  // REPLACED (O-I #749): `terminalValues(null)` was {}; with no room and no terminal the Terminal has no binding at all (above), and a room's
+  // screen, provider and answer stand only once read (tests/w749-terminal-rooms.test.mjs).
+  assert.deepEqual(tb.terminalValues({rooms: [], locals: [], followed: {session: null, words: null}, holds: {}, screen: null, hands: NO_HANDS, native: false}).values,
+    {rooms: '[]', follow: true, wrap: true}, 'only the Terminal\'s own holds')
   const voice = vb.voiceValues({state: VOICE_OFF, why: ABSENT_KERNEL})
   // REPLACED (#804): "the closed voice is a reading (Off); nothing else is filled in" — the voice also reports what it holds, for the answer's
   // face (§19.4: Hears and Speaks, attending while you speak): Hears and Speaks off, quiet, nothing heard. Each is the voice owner's own

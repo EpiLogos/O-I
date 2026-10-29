@@ -274,6 +274,19 @@ pub enum QlRead {
     TechneReading {
         target: Value,
     },
+    /// The planets of the day and of the hour at a place (`ql nara hours -`,
+    /// `ql.sky-hours/v1`): the request (`ql.sky-day-request/v1`: an instant,
+    /// a place, and whether it is the world's declared place or a private
+    /// observer's) on stdin. QL's sky provider states the sunrise, sunset and
+    /// next sunrise there; QL's M2 counts the rulers by the map's order and
+    /// names the maqāmāt the map binds to the hour's planet.
+    SkyHours {
+        request: Value,
+    },
+    /// M2's proposed body constants by element fibre (`ql kernel
+    /// body-constants`, `ql.m2-body-constants/v1`): Strike, Q factor,
+    /// Agitation and Boundary strength, each fibre with the map's tattvas.
+    BodyConstants,
     /// The MEF lens registry (`ql mef lenses`).
     MefLenses,
     /// The Context-Frame grammar's frames (`ql context-frame list`).
@@ -1904,6 +1917,21 @@ fn ql_answer(request: &QlRead) -> Result<Reading, Error> {
                 READ_LIMIT,
             )
         }
+        QlRead::SkyHours { request } => (
+            "ql nara hours",
+            words(&["nara", "hours", "-", "--json"]),
+            Some(request),
+            "ql.sky-hours/v1",
+            // The sky provider's runtime is prepared on its first ask (QL bounds that at 45 s).
+            SCENE_LIMIT,
+        ),
+        QlRead::BodyConstants => (
+            "ql kernel body-constants",
+            words(&["kernel", "body-constants", "--json"]),
+            None,
+            "ql.m2-body-constants/v1",
+            READ_LIMIT,
+        ),
         other => return ql_registry_answer(other),
     };
     let mut call = Call::new(ql(), route, args, limit);
