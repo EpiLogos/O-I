@@ -1,0 +1,11 @@
+seat=/Users/admin/Central/worktrees/env-1/o-i
+branch=candidate/20261029
+head=b851408cb772e85ba1bcb37048c1464b0701c4a5
+stamp=20261029T220329Z
+out=/Users/admin/.cache/oi-build-lane-739-target/p0-r1/20261029T220329Z
+target=/Users/admin/.cache/oi-build-lane-739-target
+backing=full-suite
+world=unnamed
+mode=build
+runner_sha256=8a19e02df254381954d76301892b2b03589dabd91a956f43c6daf4705ca3a8f2
+status:
