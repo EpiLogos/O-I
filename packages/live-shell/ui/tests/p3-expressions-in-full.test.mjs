@@ -133,3 +133,39 @@ test('the host draws a rack\'s members from the door, by their design, in their 
   const host = await source('../src/frame/devices/deviceHost.tsx')
   assert.match(host, /\.\.\.\(member \? \{member\} : \{\}\)/)
 })
+
+// ——— O-I #747: the homes the manual gives the Stage plate's relays (§20.1 "Where everything is": "Show the field alone — Present, in the
+// View menu"; "Export a picture or a film of the field — Export, in the File menu"; §20.1 Export's table) ———
+
+test('#747: Present in the View menu and Export in the File menu are the field\'s own acts, with the manual\'s defaults', async () => {
+  const {menuStageCommands} = await import('../src/components/expressions/studio/StudioStage.tsx')
+  const S = await import('../src/native/stageCommands.ts')
+  const idle = {stage: {mode: '2d', grid: false, snap: false, guides: true}, presenting: false, recording: false}
+  assert.deepEqual(menuStageCommands('view.present', idle), [S.stagePresent(true)])
+  assert.deepEqual(menuStageCommands('view.present', {...idle, presenting: true}), [S.stagePresent(false)], 'Present again (or Esc) brings the window back')
+  // Picture: "Width … 1440 by default. Frame: Stage frame … Include page text, on by default. Transparent background, off by default."
+  assert.deepEqual(S.STAGE_CAPTURE_DEFAULTS, {width: 1440, aspect: 'stage', includeText: true, transparent: false})
+  assert.deepEqual(menuStageCommands('file.export.picture', idle), [S.stageCapturePng(S.STAGE_CAPTURE_DEFAULTS)])
+  // Film: "What plays, from the moment you start the recording until you stop it."
+  assert.deepEqual(menuStageCommands('file.export.film', idle), [S.stageRecord('start', S.STAGE_CAPTURE_DEFAULTS)])
+  assert.deepEqual(menuStageCommands('file.export.film', {...idle, recording: true}), [S.stageRecord('stop', S.STAGE_CAPTURE_DEFAULTS), S.STAGE_SAVE_VIDEO])
+  // Expression: "Expression JSON; living HTML, with its editor; or the current scene as a native configuration."
+  for (const format of ['json', 'html', 'native']) assert.deepEqual(menuStageCommands(`file.export.${format}`, idle), [S.stageExport(format)])
+  assert.equal(menuStageCommands('view.session', idle), null, 'an item that is not the field\'s is left to the frame')
+  const menus = await source('../../../../desktop/cradle/src-tauri/src/menus.rs')
+  assert.match(menus, /PRESENT: &str = "view\.present"/); assert.match(menus, /item\(PRESENT, "Present", None\)/)
+  for (const [id, label] of [['file.export.picture', 'Picture'], ['file.export.film', 'Film'], ['file.export.json', 'Expression JSON'],
+    ['file.export.html', 'Living HTML'], ['file.export.native', 'Scene as Native Configuration']]) assert.match(menus, new RegExp(`"${id.replace(/\./g, '\\.')}", "${label}"`), `${id} stands in the menu bar`)
+  assert.match(menus, /SubmenuBuilder::new\(app, "File"\)/, 'a File menu')
+  assert.match(menus, /\["edit\.", "create\.", "view\.", "file\.", "app\."\]/, 'its items reach the renderer as oi:command')
+})
+
+test('#747: the menu bar\'s items the frame does not route go to the mode that stands; Expressions answers Present and Export', async () => {
+  const app = await source('../src/App.tsx')
+  assert.match(app, /new CustomEvent\(MENU_ACT, \{detail: \{id\}, cancelable: true\}\)/, 'one mode-blind door, no per-mode branch')
+  assert.match(app, /sayOnInfoLine\([^)]*'Nothing in this window answers it/, 'unanswered, the status bar says so')
+  const panel = await source('../src/panels/expressions.tsx')
+  assert.match(panel, /window\.addEventListener\(MENU_ACT, menuAct\)/)
+  assert.match(panel, /menuStageCommands\(id, mounted\.host\.getState\(\)\)/)
+  assert.match(panel, /window\.removeEventListener\(MENU_ACT, menuAct\)/)
+})

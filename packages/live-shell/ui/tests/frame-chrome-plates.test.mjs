@@ -144,7 +144,8 @@ test('the Studio stands only what no Expressions device carries; each carried co
   ]}
   const kept = controlsAt(chrome, ['work', 'tools', 'scene', 'side', 'capture'], STUDIO_CARRIED).map(item => item.id)
   // R4: R2 retired the Clip side's SceneControls, so its scene ‹ › is carried by no device: the Stage stands it.
-  assert.deepEqual(kept, ['save/a:native-save', 'rail/a:tool-select', 'scene/a:previous', 'scene/a:open-timeline'])
+  // MOVED (O-I #747): the rail's Select is Clip view's pointer tools' Select (clipBinding.ts `tool`), so the Stage no longer stands it.
+  assert.deepEqual(kept, ['save/a:native-save', 'scene/a:previous', 'scene/a:open-timeline'])
   const model = await source('../src/components/expressions/studio/studioModel.ts')
   for (const id of STUDIO_CARRIED) assert.ok(model.includes(id), `${id} is named with its carrier`)
   const studio2 = await source('../src/components/expressions/studio/ExpressionsStudio.tsx')

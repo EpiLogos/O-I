@@ -334,3 +334,58 @@ test('the Scene\'s selection and chord are mounted once, with Expressions\' bind
   assert.equal(typeof Timeline.useTimelineReading, 'function')
   assert.match(await read('components/expressions/clip/sceneKeepers.ts'), /useTimelineReading\(\)\?\.selectedRef/)
 })
+
+// ——— O-I #747: the scene's Sequence, its View and the pointer's Select are Clip view's (manual §20.1 "Where everything is") ———
+
+const DESIGN = await import(src('inhabitants/catalogue/clips/expressions.tsx').href)
+const tab = (id, v) => renderToStaticMarkup(createElement(() => DESIGN.clip.editor.find(item => item.id === id).draw({v, set: noop, size: 'whole', room: {w: 800, h: 320}})))
+const panel = (id, v) => renderToStaticMarkup(createElement(() => DESIGN.clip.panel.find(item => item.id === id).draw({v, set: noop, size: 'whole', room: {w: 300, h: 600}})))
+const toolMarkup = (id, v) => renderToStaticMarkup(createElement(() => DESIGN.clip.tools.find(item => item.id === id).draw({v, set: noop, size: 'whole', room: {w: 300, h: 600}})))
+
+test('the scene\'s Sequence reads the owner\'s symbols: an empty scene says it has none, never that it is unread (walk 739, X2)', () => {
+  // Run the owner: a new Expression's one scene, as the retained editor reads it — nothing placed.
+  const reading = ownerReading()
+  const values = SC.expressionsClipValues(reading)
+  assert.equal(values.symbols, '[]', 'the owner\'s reading holds the scene\'s symbols, and there are none')
+  const empty = tab('sequence', values)
+  assert.doesNotMatch(empty, /No reading of the scene/, 'a reading of an empty scene is a reading')
+  assert.match(empty, /The scene has no symbols yet/)
+  assert.match(tab('sequence', {}), /No reading of the scene&#x27;s sequence yet/, 'only an absent reading says so')
+  // A symbol the owner reads: its own lane, its steps from the owner's glyph timing (shell/nativeContent.ts readNativeGlyphTiming).
+  const placed = {...reading, scene: {...reading.scene, entities: [Model.entity('Sun', 'S')]}}
+  const withSymbol = SC.expressionsClipValues(placed)
+  const symbols = JSON.parse(withSymbol.symbols)
+  assert.deepEqual(symbols.map(item => item.name), ['Sun'])
+  const said = withSymbol.sequenceUnread
+  assert.ok(symbols[0].steps.length > 0 || typeof said === 'string', 'its steps, or why they could not be read')
+  if (typeof said === 'string') assert.match(tab('sequence', withSymbol), /The scene&#x27;s steps could not be read/)
+  else assert.match(tab('sequence', withSymbol), /data-lane="[^"]*"|Sun/)
+})
+
+test('the scene\'s View stands in its Clip panel: Kept or Not kept, with Keep and Restore through the field\'s own acts (manual §20.1)', async () => {
+  const reading = ownerReading()
+  assert.equal(SC.expressionsClipValues(reading).view, 'not kept', 'a scene that keeps no view of its own')
+  const kept = {...reading, scene: {...reading.scene, view: {...reading.scene.view, mode: '3d', yaw: 0.4, zoom: 1.6}}}
+  assert.equal(SC.expressionsClipValues(kept).view, 'kept')
+  const markup = panel('clip', SC.expressionsClipValues(kept))
+  assert.match(markup, /View/); assert.match(markup, /Kept/); assert.match(markup, /Keep/); assert.match(markup, /Restore/)
+  const ran = []
+  const stage = {state: null, run: async command => { ran.push(command); return {ok: true} }}
+  const binding = SC.expressionsClipBinding({reading: kept, request: async () => ({ok: true, reading: kept}), stage})
+  await binding.write([{key: 'view.keep', value: 1}]); await binding.write([{key: 'view.restore', value: 2}])
+  assert.deepEqual(ran, [{command: 'view', action: 'keep-view'}, {command: 'view', action: 'restore-view'}])
+})
+
+test('the pointer\'s Select is the field\'s own Select, and ends a placement (the port ledger\'s cancel-placement home)', async () => {
+  const reading = ownerReading()
+  const ran = []
+  const field = tool => ({stage: {mode: '2d', grid: false, snap: false, guides: true, tool}})
+  const stage = {state: field('pin'), run: async command => { ran.push(command); return {ok: true} }}
+  const binding = SC.expressionsClipBinding({reading, request: async () => ({ok: true, reading}), stage})
+  assert.equal(binding.values.tool, undefined, 'the field\'s Pin is no pointer tool of Clip view')
+  await binding.write([{key: 'tool', value: 'select'}])
+  assert.deepEqual(ran, [{command: 'tool', tool: 'select'}])
+  assert.equal(SC.expressionsClipBinding({reading, request: null, stage: {...stage, state: field('select')}}).values.tool, 'select', 'the field\'s reading of its tool')
+  for (const tool of ['orbit', 'form', 'bind']) await assert.rejects(binding.write([{key: 'tool', value: tool}]), /./, `${tool} names why`)
+  assert.match(toolMarkup('pointer', {tool: 'select'}), /Select/)
+})

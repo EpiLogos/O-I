@@ -1,15 +1,14 @@
 {
   "schema": "oi.expressions-port-status/v1",
   "recorded_at_utc": "2026-10-09T02:38:34.566Z",
-  "standing": "derived accounting by static reading; live_replay is pending-native-stack for every row (the native stack was down); no original target changes standing | 8 Oct top-bar session: see additions and defects; still no live-shell replay. | Expressions family session: partial-real rows with tests are ported; live replay remains pending. Rounded still has no distinct native render. | 9 Oct native-actions audit (lane zcode:native-actions-audit-l6): 9 partial rows reclassified owner-op-required (gap is solely the native save_as/fork/create owner ops, named per row); 33 partial rows re-verified with named remainders or owner-blocks; mechanical wire-grammar checks pass (tests/audit-l6-wire-grammar.test.mjs); one live replay attempt recorded, not executed (evidence/native-actions-audit-l6-20261009/). No ported row touched; no live_replay field retired; all 126 targets remain pending. | 2026-10-14: restated by PORT-AUDIT §E6 — 'ported' means a shell React home plus a boundary op, read statically; every row stays live_replay: pending-native-stack. The ten rows whose reason named the save_as owner op the shell was said not to call carry a restatement in their notes (the kernel and the boundary relay save_as, fork and create); their status stays owner-op-required until the conformance test admits shell-wiring-gap.",
+  "standing": "derived accounting by static reading; live_replay is pending-native-stack for every row (the native stack was down); no original target changes standing | 8 Oct top-bar session: see additions and defects; still no live-shell replay. | Expressions family session: partial-real rows with tests are ported; live replay remains pending. Rounded still has no distinct native render. | 9 Oct native-actions audit (lane zcode:native-actions-audit-l6): 9 partial rows reclassified owner-op-required (gap is solely the native save_as/fork/create owner ops, named per row); 33 partial rows re-verified with named remainders or owner-blocks; mechanical wire-grammar checks pass (tests/audit-l6-wire-grammar.test.mjs); one live replay attempt recorded, not executed (evidence/native-actions-audit-l6-20261009/). No ported row touched; no live_replay field retired; all 126 targets remain pending. | 2026-10-14: restated by PORT-AUDIT §E6 — 'ported' means a shell React home plus a boundary op, read statically; every row stays live_replay: pending-native-stack. The ten rows whose reason named the save_as owner op the shell was said not to call carry a restatement in their notes (the kernel and the boundary relay save_as, fork and create); their status stays owner-op-required until the conformance test admits shell-wiring-gap. | 2026-10-29 (O-I #747): no row is studio-only-by-design; each of the eleven takes its manual home (§20.1 Where everything is) or names what it waits for.",
   "counts": {
-    "partial": 24,
-    "ported": 136,
-    "studio-only-by-design": 11,
+    "partial": 25,
+    "ported": 144,
     "internal-no-outward-need": 12,
     "owner-op-required": 20,
     "out-of-scope-other-track": 6,
-    "not-ported": 4
+    "not-ported": 6
   },
   "rows": [
     {
@@ -93,42 +92,57 @@
     },
     {
       "action": "studio",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:480",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:1603",
       "kind": "router",
-      "surface": "studio-only",
-      "outward_home": "Expressions Studio (legacy deep editor, retained during port)",
-      "components": [],
-      "boundary_op": "none: toggles the legacy Studio drawer (app.ts:480); the shell reaches the Studio only through device Open-in-studio requests",
-      "tests": [],
-      "status": "studio-only-by-design",
+      "surface": "device",
+      "outward_home": "The Studio device: Device view's rack and the Studio's pane, its Full (§20.3); a scene's or a symbol's settings in Clip view (§20.1 Where everything is)",
+      "components": [
+        "packages/live-shell/ui/src/components/expressions/studio/studioHome.ts",
+        "packages/live-shell/ui/src/panels/expressions.tsx"
+      ],
+      "boundary_op": "host request open-home {section} on the devices (presentedChrome.ts studioHomeRequest; desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:1603) answered by packages/live-shell/ui/src/panels/expressions.tsx:320 → packages/live-shell/ui/src/components/expressions/studio/studioHome.ts:18 openStudioHome",
+      "tests": [
+        "desktop/cradle/expressions-app/field-studies-journeys/tests/presented-chrome.test.mjs",
+        "packages/live-shell/ui/tests/p3-expressions-in-full.test.mjs"
+      ],
+      "status": "ported",
       "live_replay": "pending-native-stack",
-      "note": "Toggles the legacy Studio drawer; the shell reaches the Studio only through device Open in studio requests."
+      "note": "The Studio key in the field asks the shell to open the section where it lives: a field device's in the Studio's pane, a scene's or a symbol's in Clip view. The app's Studio drawer opens only in the frame's own presentation. O-I #747 (manual §20.1 \"Where everything is\"): the app's Studio stands down in the field pane, so no row is retained in it."
     },
     {
       "action": "close-studio",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:481",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:1604",
       "kind": "router",
-      "surface": "studio-only",
-      "outward_home": "Expressions Studio (legacy deep editor, retained during port)",
-      "components": [],
-      "boundary_op": "none: closes the legacy Studio drawer, which is studio chrome hosted by the application frame (app.ts:481)",
-      "tests": [],
-      "status": "studio-only-by-design",
+      "surface": "device",
+      "outward_home": "The Studio's pane closes as any pane does; Device view hides with ⌥⌘4 (§20.1 Pane view, Device view; §16.4)",
+      "components": [
+        "packages/live-shell/ui/src/components/expressions/studio/ExpressionsStudio.tsx"
+      ],
+      "boundary_op": "none: on the devices the app's Studio drawer never opens (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:1603 hands the Studio to the shell), so there is no drawer to close; the Studio's pane and Device view close as the shell's own",
+      "tests": [
+        "desktop/cradle/expressions-app/field-studies-journeys/tests/presented-chrome.test.mjs"
+      ],
+      "status": "ported",
       "live_replay": "pending-native-stack",
-      "note": "Closes the legacy Studio drawer, which is studio chrome hosted by the application frame."
+      "note": "Closing the Studio is the shell's: its pane's close, or Device view hidden. O-I #747 (manual §20.1 \"Where everything is\"): the app's Studio stands down in the field pane, so no row is retained in it."
     },
     {
       "action": "dock-studio",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:482",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:1605",
       "kind": "router",
-      "surface": "studio-only",
-      "outward_home": "Expressions Studio docking (legacy)",
-      "components": [],
-      "boundary_op": "none: docks or floats the legacy Studio panel (app.ts:482); the shell workbench owns its own docking",
-      "tests": [],
-      "status": "studio-only-by-design",
+      "surface": "device",
+      "outward_home": "Device view holds the Studio under the panes; its Full stands beside the field in Pane view (§20.1 Pane view, Device view; §20.3)",
+      "components": [
+        "packages/live-shell/ui/src/components/expressions/studio/ExpressionsStudio.tsx",
+        "packages/live-shell/ui/src/shell/studioBesideField.ts"
+      ],
+      "boundary_op": "none: where the Studio stands is the shell's layout (Device view, or its Full in a pane); the app's drawer docking is never shown on the devices",
+      "tests": [
+        "packages/live-shell/ui/tests/p3-expressions-in-full.test.mjs"
+      ],
+      "status": "ported",
       "live_replay": "pending-native-stack",
-      "note": "Docks or floats the legacy Studio panel (app.ts:482); the shell workbench owns its own docking."
+      "note": "Docking is the shell's workbench: the Studio in Device view, or its Full in a pane beside the field. O-I #747 (manual §20.1 \"Where everything is\"): the app's Studio stands down in the field pane, so no row is retained in it."
     },
     {
       "action": "automation-play",
@@ -842,16 +856,22 @@
     },
     {
       "action": "edit",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:524",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:1653",
       "kind": "router",
-      "surface": "studio-only",
-      "outward_home": "Studio inspector drawer (legacy)",
-      "components": [],
-      "boundary_op": "none: opens the legacy inspector drawer (app.ts:524); the shell device panels and Deep edit replace it",
-      "tests": [],
-      "status": "studio-only-by-design",
+      "surface": "clip",
+      "outward_home": "Clip view's Expression tab for the selected symbol; the Studio for the field (§20.1 Where everything is: \"Shape one symbol — Clip view's Expression tab\")",
+      "components": [
+        "packages/live-shell/ui/src/components/expressions/studio/studioHome.ts",
+        "packages/live-shell/ui/src/panels/expressions.tsx"
+      ],
+      "boundary_op": "host request open-home {section: formations | physics} on the devices (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:1653) answered by packages/live-shell/ui/src/panels/expressions.tsx:320 → packages/live-shell/ui/src/components/expressions/studio/studioHome.ts:18",
+      "tests": [
+        "desktop/cradle/expressions-app/field-studies-journeys/tests/presented-chrome.test.mjs",
+        "packages/live-shell/ui/tests/p3-expressions-in-full.test.mjs"
+      ],
+      "status": "ported",
       "live_replay": "pending-native-stack",
-      "note": "Opens the legacy inspector drawer for the selected object or field; the shell device panels and Deep edit replace it."
+      "note": "E in the field opens the selected symbol in Clip view, or the field in the Studio; the app's inspector opens only in its own presentation. O-I #747 (manual §20.1 \"Where everything is\"): the app's Studio stands down in the field pane, so no row is retained in it."
     },
     {
       "action": "close-inspector",
@@ -868,16 +888,21 @@
     },
     {
       "action": "tab",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:526",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:1655",
       "kind": "router",
-      "surface": "studio-only",
-      "outward_home": "Studio inspector tabs (legacy)",
-      "components": [],
-      "boundary_op": "none: selects a legacy inspector tab (app.ts:526); the shell names Studio sections instead, so tab state stays inside the Studio",
-      "tests": [],
-      "status": "studio-only-by-design",
+      "surface": "clip",
+      "outward_home": "Clip view's editor tabs (Sequence, Envelopes, Expression, Sound) and the Studio's Macros and Chains pages (§20.1 Editor tabs; §20.3 Views)",
+      "components": [
+        "packages/live-shell/ui/src/inhabitants/catalogue/clips/expressions.tsx",
+        "packages/live-shell/ui/src/inhabitants/catalogue/panels/expressions__studio.tsx"
+      ],
+      "boundary_op": "none: a tab is the shell's own view state (the clip host's view.editor, the Studio's page); the app's inspector tabs never show on the devices",
+      "tests": [
+        "packages/live-shell/ui/tests/expressions-clip.test.mjs"
+      ],
+      "status": "ported",
       "live_replay": "pending-native-stack",
-      "note": "Selects a legacy inspector tab; the shell names studio sections instead, so tab state stays inside the Studio."
+      "note": "The shell's tabs are its own: Clip view's four editor tabs and the Studio's two pages. O-I #747 (manual §20.1 \"Where everything is\"): the app's Studio stands down in the field pane, so no row is retained in it."
     },
     {
       "action": "objects",
@@ -1964,16 +1989,20 @@
     },
     {
       "action": "entry-continue",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:647",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:1765",
       "kind": "router",
       "surface": "menu",
-      "outward_home": "Browser recent/start work",
-      "components": [],
-      "boundary_op": "none: the shell has no entry gate (app.ts:647); continuing the last work is the continuity restore, outside this row (packages/live-shell/ui/src/continuity/workspace.tsx)",
-      "tests": [],
-      "status": "studio-only-by-design",
+      "outward_home": "The browser's Expressions list: open an Expression there (§20.1 Where everything is: \"Open an Expression — The browser (§10.3)\"); the kept work reopens where it stood",
+      "components": [
+        "packages/live-shell/ui/src/panels/expressions.tsx"
+      ],
+      "boundary_op": "none: the entry gate stands down on the devices; the panel's boot reopens the kept work (packages/live-shell/ui/src/panels/expressions.tsx:238, the ref and address kept beside it), and the browser opens any other",
+      "tests": [
+        "packages/live-shell/ui/tests/p3-expressions-in-full.test.mjs"
+      ],
+      "status": "ported",
       "live_replay": "pending-native-stack",
-      "note": "The shell has no entry gate. Continuing the last work is the continuity restore, which this thread does not touch; this row does not verify it."
+      "note": "Continuing the last work is the panel's boot on the kept work; the browser opens the rest. O-I #747 (manual §20.1 \"Where everything is\"): the app's Studio stands down in the field pane, so no row is retained in it."
     },
     {
       "action": "entry-open",
@@ -2942,18 +2971,21 @@
     },
     {
       "action": "cancel-placement",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:704",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:1824",
       "kind": "router",
-      "surface": "studio-only",
-      "outward_home": "Studio placement mode (cancel)",
-      "components": [],
-      "boundary_op": "request operation=open editor=placement (Studio-side)",
-      "tests": [
-        "packages/expressions-boundary/tests/native-source-selection-placement.test.mjs"
+      "surface": "clip",
+      "outward_home": "Clip view's pointer tools: Select ends a placement (§20.1 Tools: \"Select — Selects a symbol\")",
+      "components": [
+        "packages/live-shell/ui/src/components/expressions/clip/clipBinding.ts",
+        "packages/live-shell/ui/src/inhabitants/catalogue/clips/expressions.tsx"
       ],
-      "status": "studio-only-by-design",
+      "boundary_op": "frame stage command tool=select (packages/live-shell/ui/src/components/expressions/clip/clipBinding.ts:403, the field's own Select through the hosted runner)",
+      "tests": [
+        "packages/live-shell/ui/tests/expressions-clip.test.mjs"
+      ],
+      "status": "ported",
       "live_replay": "pending-native-stack",
-      "note": "Placement mode lives in the Studio, so the shell has no placement state to cancel."
+      "note": "Choosing Select in Clip view's pointer tools is the field's own Select, which ends a placement. O-I #747 (manual §20.1 \"Where everything is\"): the app's Studio stands down in the field pane, so no row is retained in it."
     },
     {
       "action": "route-up",
@@ -3165,16 +3197,16 @@
     },
     {
       "action": "delete-group",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:716",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:1836",
       "kind": "router",
-      "surface": "studio-only",
-      "outward_home": "Studio Automation section",
+      "surface": "clip",
+      "outward_home": "Clip view's Envelopes (§20.1 Envelopes): the manual names adding and ordering lanes, and no removal of a lane or its followers",
       "components": [],
-      "boundary_op": "none: whole-group deletion is not built in the shell face and stays in the Studio Automation section (app.ts:716)",
+      "boundary_op": "pending: manual — §20.1 Envelopes names no act that removes a lane group; the owner change exists (automation-remove, packages/expressions-boundary/src/editor.ts:56), so the act waits on the manual naming it",
       "tests": [],
-      "status": "studio-only-by-design",
+      "status": "not-ported",
       "live_replay": "pending-native-stack",
-      "note": "Deleting a whole group is not built in the shell face and stays in the Studio Automation section."
+      "note": "Not built ahead of the manual. PROPOSEd for §20.1 Envelopes (a lane's menu: Remove, and Remove with its followers). O-I #747 (manual §20.1 \"Where everything is\"): the app's Studio stands down in the field pane, so no row is retained in it."
     },
     {
       "action": "remove-group-target",
@@ -3289,18 +3321,16 @@
     },
     {
       "action": "fire-lane",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:722",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:1842",
       "kind": "router",
-      "surface": "studio-only",
-      "outward_home": "Studio Automation section (restart ramp)",
+      "surface": "clip",
+      "outward_home": "Clip view's Envelopes, a ramp's Loop (§20.1 Envelopes: \"Once · Loop (restart) · Ping-pong\")",
       "components": [],
-      "boundary_op": "not admitted by boundary (automation-fire)",
-      "tests": [
-        "packages/live-shell/ui/tests/native-automation.test.mjs"
-      ],
-      "status": "studio-only-by-design",
+      "boundary_op": "pending: boundary op and manual — the boundary admits no automation-fire, and §20.1 Envelopes gives a one-shot ramp no restart act",
+      "tests": [],
+      "status": "not-ported",
       "live_replay": "pending-native-stack",
-      "note": "Restart is not built in the shell face and automation-fire is not admitted by the boundary; it stays in the Studio."
+      "note": "Restarting a one-shot ramp has no manual home; a repeating ramp restarts by its Loop. PROPOSEd for §20.1 Envelopes. O-I #747 (manual §20.1 \"Where everything is\"): the app's Studio stands down in the field pane, so no row is retained in it."
     },
     {
       "action": "reveal-param",
@@ -3361,18 +3391,20 @@
     },
     {
       "action": "take-manual",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:726",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:1846",
       "kind": "router",
       "surface": "device",
-      "outward_home": "Automation driver note (per control)",
+      "outward_home": "Taking hold of a value a lane holds, its hand-back light, and the transport's Re-enable (§20.1 Rules: \"When you take hold of a value a lane holds, the hand-back light comes on\"; §20.3 Transport)",
       "components": [
-        "packages/live-shell/ui/src/components/NativeFieldFace.resonance.tsx"
+        "packages/live-shell/ui/src/shell/transports/useExpressionsTransport.tsx"
       ],
-      "boundary_op": "none: manual takeover writes base values outside native history and nativeAutomationEdits.ts refuses it by design (app.ts:726); no shell control exists",
-      "tests": [],
-      "status": "studio-only-by-design",
+      "boundary_op": "none: the manual replaces Take manual control with taking hold and Re-enable (stage automation-resume, packages/live-shell/ui/src/shell/transports/useExpressionsTransport.tsx:205); removing a lane by takeover writes outside native history and is refused by design (nativeAutomationEdits.ts)",
+      "tests": [
+        "packages/live-shell/ui/tests/transport-bindings.test.mjs"
+      ],
+      "status": "partial",
       "live_replay": "pending-native-stack",
-      "note": "Take manual control writes the base value and removes the target lanes outside native history. nativeAutomationEdits.ts refuses this by design (manual takeover is not admitted), so no shell control exists. Lanes are editable from the Automation device."
+      "note": "Partial: Re-enable gives held values back; the takeover that removes lanes is not the manual's and is not built. O-I #747 (manual §20.1 \"Where everything is\"): the app's Studio stands down in the field pane, so no row is retained in it."
     },
     {
       "action": "tune-station",
@@ -3519,16 +3551,21 @@
     },
     {
       "action": "save-browser",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:733",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:1853",
       "kind": "router",
-      "surface": "studio-only",
-      "outward_home": "Studio browser library (legacy localStorage copy)",
-      "components": [],
-      "boundary_op": "none: the legacy browser-storage copy stays in the Studio (app.ts:733); the shell saves through native Save (history save)",
-      "tests": [],
-      "status": "studio-only-by-design",
+      "surface": "menu",
+      "outward_home": "Save: the Studio's head and ⌘S, the owner's native save (§20.1 Where everything is: \"Save, undo and redo — The File and Edit menus, and the Studio's head\")",
+      "components": [
+        "packages/live-shell/ui/src/components/expressions/clip/sceneKeepers.ts",
+        "packages/live-shell/ui/src/inhabitants/catalogue/panels/expressions__studio.tsx"
+      ],
+      "boundary_op": "none: the browser-storage copy has no home in the manual; Save is the owner's native save (packages/live-shell/ui/src/components/expressions/clip/sceneKeepers.ts:23 ⌘S, the Studio head's Save)",
+      "tests": [
+        "packages/live-shell/ui/tests/expressions-clip.test.mjs"
+      ],
+      "status": "ported",
       "live_replay": "pending-native-stack",
-      "note": "The legacy browser-storage copy stays in the Studio; the shell saves through native Save (history save) and its native works list."
+      "note": "The app's browser-storage copy is replaced by the owner's Save; the copy stays in the app's own presentation. O-I #747 (manual §20.1 \"Where everything is\"): the app's Studio stands down in the field pane, so no row is retained in it."
     },
     {
       "action": "export-json",
@@ -3831,6 +3868,18 @@
         "not-ported": 4
       },
       "note": "No row changed status. Four new surfaces and seven defects are listed separately; live-shell replay remains pending for all."
+    },
+    {
+      "stage": "O-I #747, Expressions in full (29 Oct 2026)",
+      "counts": {
+        "partial": 25,
+        "ported": 144,
+        "internal-no-outward-need": 12,
+        "owner-op-required": 20,
+        "out-of-scope-other-track": 6,
+        "not-ported": 6
+      },
+      "note": "The eleven studio-only-by-design rows take the homes manual §20.1 gives them: eight ported (the Studio key and E open the setting where it lives; Select ends a placement; Save, tabs, docking and the entry gate are the shell's), take-manual partial (Re-enable), delete-group and fire-lane not-ported pending the manual. No row is retained in the app's Studio."
     }
   ],
   "additions": [

@@ -16626,7 +16626,7 @@
           "quote": "builder.on_download(downloads::receiver()).build()?;"
         },
         {
-          "at": "packages/live-shell/ui/src/components/expressions/studio/StudioStage.tsx:154",
+          "at": "packages/live-shell/ui/src/components/expressions/studio/StudioStage.tsx:176",
           "quote": "{exported && <p className=\"studio-export-line\""
         }
       ]
@@ -16647,7 +16647,7 @@
           "quote": "export function readHostedAddress"
         },
         {
-          "at": "packages/live-shell/ui/src/panels/expressions.tsx:48",
+          "at": "packages/live-shell/ui/src/panels/expressions.tsx:50",
           "quote": "function engineCheckpoint("
         },
         {

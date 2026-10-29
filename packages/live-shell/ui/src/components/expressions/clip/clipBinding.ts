@@ -22,6 +22,9 @@
 // whose body is that constellation (makeSceneOf, the maker the Expressions set carries: sceneMaker). Pure, apart from the hook at the end.
 import type {Entity, NativeEditorBasis, NativeEditorChange, NativeEditorReading, NativeEditorReply, NativeEditorRequest} from '../../../../../../expressions-boundary/src/editor'
 import type {NativeSceneEditIntent} from '../../../../../../expressions-boundary/src/sceneEdits'
+import type {HostedAppState, StageCommand, StageResult} from '@epilogos/expressions-boundary'
+import {stageReadings, stageTool, stageView} from '../../../native/stageCommands'
+import {useHostedChrome} from '../../../projections/expressionsPaneHost'
 import type {Value, Values} from '../../../frame/devices/designed'
 import {clipBinding, missingOp, useViewHoldsVersion, type ClipBinding, type ClipWiring} from '../../../frame/detail/clipBinding'
 import {madeOfValues, withMadeOf, type ClipSource} from '../../../frame/detail/clipSource'
@@ -118,8 +121,14 @@ export function expressionsClipValues(reading: NativeEditorReading, colour?: str
     if (display) for (const [key, field] of Object.entries(BP)) values[key] = fieldValue(display, field)
   }
   if (reading.scenes) values.scenes = JSON.stringify(reading.scenes.scenes.map(item => ({id: item.scene_ref, name: item.title})))
+  // The scene's view of the field (manual §20.1 The Clip panel, View): kept when the scene holds a framing other than the default one
+  // (field-studies-journeys model.ts blankScene: 2D, facing, zoom 1, no pan), which Keep writes (app.ts keep-view).
+  const view = scene.view
+  values.view = view && (view.mode !== '2d' || view.yaw !== 0 || view.pitch !== 0 || view.zoom !== 1 || view.panX !== 0 || view.panY !== 0) ? 'kept' : 'not kept'
+  // Each symbol's steps are the owner's glyph timing (shell/nativeContent.ts readNativeGlyphTiming). When the owner's reading cannot be
+  // composed into it, the Sequence says why rather than drawing empty lanes as if the scene had no steps (walk 739, X2).
   let timing: ReturnType<typeof readNativeExpressionsContent>['clip_sources'] = []
-  try { timing = readNativeExpressionsContent(reading).clip_sources } catch { timing = [] }
+  try { timing = readNativeExpressionsContent(reading).clip_sources } catch (cause) { timing = []; values.sequenceUnread = cause instanceof Error ? cause.message : String(cause) }
   values.symbols = JSON.stringify(scene.entities.map(entity => {
     const source = timing.find(item => item.scope.view_entity_id === entity.id)
     const steps = source ? source.timing.states.map((state, i) => ({at: state.start_seconds, hold: state.hold_seconds, glide: state.transition_seconds,
@@ -307,14 +316,43 @@ export function sceneMaker(source: NativeCompositionViewSource | null | undefine
     }}
 }
 
+/** The field's own acts the scene's Clip view sends (O-I #747): the hosted application's state and its one runner (projections/
+ * expressionsPaneHost.ts useHostedChrome), as the Stage plate sends them. Absent while no Expressions application is mounted. */
+export interface ClipStage {
+  readonly state: HostedAppState | null
+  readonly run: ((command: StageCommand) => Promise<StageResult>) | null
+}
+
+/** One of the field's own acts, its refusal in the application's words. */
+async function staged(stage: ClipStage | null | undefined, command: StageCommand): Promise<void> {
+  if (!stage?.run) throw new Error('No Expressions application is mounted to act on the field.')
+  const result = await stage.run(command)
+  if (!result.ok) throw new Error(result.error)
+}
+
+/** The pointer tools of Clip view (manual §20.1 Tools: Select, Orbit, Form, Bind) as the field reports its own tool: Select is the
+ * field's Select, and Orbit its orbit gesture. The field's other tools (Interact, Pin, Text, Formation) are no pointer tool here. Pure. */
+export function pointerToolOf(state: HostedAppState | null | undefined): 'select' | 'orbit' | undefined {
+  const tool = stageReadings(state ?? null).tool
+  return tool === 'select' || tool === 'orbit' ? tool : undefined
+}
+
+/** What a pointer tool of Clip view does in the field, or why it cannot yet. Select is the field's own Select, which also ends a
+ * placement (the port ledger's cancel-placement). */
+const POINTER_REFUSED: Readonly<Record<string, string>> = {
+  orbit: 'Orbit is a drag on the field: drag in the field to turn the view round its centre.',
+  form: 'Form: drawing a form in the field from Clip view is not composed yet; the field\'s own placement stands down in its pane.',
+  bind: NOT_COMPOSED('Bind', 'a step source change (step-source)'),
+}
+
 /** clip:expressions's wiring on one reading and its request door. */
 export function expressionsWiring(reading: NativeEditorReading, request: EditorRequest | null, present?: (editor: 'source' | 'layers' | 'placement', basis: NativeEditorBasis) => void,
-  held: Readonly<Record<string, Value>> = {}): ClipWiring {
-  return withMadeOf(sceneWiring(reading, request, present, held), sceneSourceOf(reading.nativeScene))
+  held: Readonly<Record<string, Value>> = {}, stage?: ClipStage | null): ClipWiring {
+  return withMadeOf(sceneWiring(reading, request, present, held, stage), sceneSourceOf(reading.nativeScene))
 }
 
 function sceneWiring(reading: NativeEditorReading, request: EditorRequest | null, present?: (editor: 'source' | 'layers' | 'placement', basis: NativeEditorBasis) => void,
-  held: Readonly<Record<string, Value>> = {}): ClipWiring {
+  held: Readonly<Record<string, Value>> = {}, stage?: ClipStage | null): ClipWiring {
   const send = async (sent: NativeEditorRequest) => { await answered(request, sent) }
   const scene_ref = reading.basis.scene_ref
   const selectedSymbol = () => (reading.selection.entity_ids.length === 1 ? reading.scene.entities.find(entity => entity.id === reading.selection.entity_ids[0]) : undefined)
@@ -334,6 +372,8 @@ function sceneWiring(reading: NativeEditorReading, request: EditorRequest | null
       follow: 'a "Scene leaves → Jump to a scene" trigger is the follow action Jump', jumpTo: 'that trigger\'s scene',
       symbols: 'the Scene\'s entities and each formation\'s glyph timing', objects: 'each entity\'s Formation, Force and Sound', symbol: 'the owner\'s selection, when it is one entity',
       lanes: 'Scene.automation', layers: 'Scene.text', 'bp.bound': 'the native blueprint', 'bp.*': 'the native blueprint\'s transform',
+      view: 'Scene.view: a framing other than the default one is a kept view', sequenceUnread: 'why the owner\'s glyph timing could not be read',
+      tool: 'the field\'s own tool, when it is Select or Orbit (the hosted state\'s stage.tool)',
     },
     acts: {
       colour: async value => send(sceneEdit(reading, {operation: 'clip', scene_ref, set: {colour: value === null || value === '' ? null : String(value)}})),
@@ -356,6 +396,14 @@ function sceneWiring(reading: NativeEditorReading, request: EditorRequest | null
         if (plan.problem) throw new Error(plan.problem)
         if (plan.changes.length) await send(apply(reading.basis, plan.changes))
       },
+      // The scene's View (manual §20.1 The Clip panel): Keep and Restore are the field's own acts (app.ts keep-view, restore-view).
+      'view.keep': async () => staged(stage, stageView('keep-view')),
+      'view.restore': async () => staged(stage, stageView('restore-view')),
+      // The pointer tools (manual §20.1 Tools): Select is the field's own Select; the others say why.
+      tool: async value => {
+        if (value === 'select') return staged(stage, stageTool('select'))
+        throw new Error(POINTER_REFUSED[String(value)] ?? `${String(value)} is no pointer tool of Clip view.`)
+      },
       'act.duplicate': async () => {
         const entity = selectedSymbol()
         if (!entity) throw new Error('Select exactly one symbol first.')
@@ -370,7 +418,7 @@ function sceneWiring(reading: NativeEditorReading, request: EditorRequest | null
       },
     },
     view: {
-      tool: 'the pointer tool: what the pointer does in the field', layer: 'the text block whose settings show', trigger: 'the trigger whose settings show',
+      layer: 'the text block whose settings show', trigger: 'the trigger whose settings show',
       objPage: 'the page of the selected symbol\'s controls', fold: 'Fold: only the symbols that change', highlight: 'Voices: tints the voiced symbols\' lanes',
       loopScene: 'Loop: loops the scene in the editor', 'env.device': 'the envelope editor\'s Device chooser', 'env.lane': 'the envelope editor\'s Control chooser',
       'ar.objects': 'the symbols Arrange moves on Apply', 'ar.rule': 'the rule Arrange applies', 'ar.plane': 'the plane Arrange works in',
@@ -405,6 +453,8 @@ export interface ExpressionsClipInput {
   readonly modes?: QlMusicModes | null
   /** The wiki's constellations, which name the scene's source (owners/constellations.ts). */
   readonly constellations?: readonly Constellation[] | null
+  /** The field's own acts: the hosted application's state and runner (View's Keep and Restore, the pointer's Select). */
+  readonly stage?: ClipStage | null
 }
 
 /** Expressions' clip binding: the presented scene of the open Expression, or null while none is read. Pure. */
@@ -413,10 +463,12 @@ export function expressionsClipBinding(input: ExpressionsClipInput): ClipBinding
   if (!reading) return null
   const ref = `scene:${reading.basis.expression_ref}:${reading.basis.scene_ref}`
   const defaults = arrangeDefaults(reading)
-  const first = clipBinding({mode: 'expressions', ref, values: {}, wiring: expressionsWiring(reading, input.request, input.present), viewDefaults: defaults})
+  const first = clipBinding({mode: 'expressions', ref, values: {}, wiring: expressionsWiring(reading, input.request, input.present, {}, input.stage), viewDefaults: defaults})
   // The arrange plan reads the view's own choices (its rule, plane and objects), as held now.
-  const wiring = expressionsWiring(reading, input.request, input.present, first.values)
-  const values = {...expressionsClipValues(reading, input.colour, input.modes ?? null), ...madeOfValues(sceneSourceOf(reading.nativeScene), input.constellations)}
+  const wiring = expressionsWiring(reading, input.request, input.present, first.values, input.stage)
+  const tool = pointerToolOf(input.stage?.state)
+  const values = {...expressionsClipValues(reading, input.colour, input.modes ?? null), ...madeOfValues(sceneSourceOf(reading.nativeScene), input.constellations),
+    ...(tool ? {tool} : {})}
   return clipBinding({mode: 'expressions', ref, values, wiring, placed: input.placed, viewDefaults: defaults})
 }
 
@@ -430,7 +482,8 @@ export function useExpressionsClip(): ClipBinding | null {
   const editor = workspace.editor
   const modes = useLiveModeCatalogue().reading
   const constellations = useConstellations().rows
+  const hosted = useHostedChrome()
   return expressionsClipBinding({reading: workspace.editorReading ?? null, request: editor ? operation => editor.request(operation) : null,
     present: native.presentNativeEditor, colour: selected.track?.color, placed: presentation === 'arrangement',
-    modes: modes.state === 'ready' ? modes.catalogue : null, constellations})
+    modes: modes.state === 'ready' ? modes.catalogue : null, constellations, stage: hosted ? {state: hosted.state, run: hosted.run} : null})
 }

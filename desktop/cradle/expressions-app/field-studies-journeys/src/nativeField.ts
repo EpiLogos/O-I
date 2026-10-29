@@ -512,6 +512,19 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
  };
  const openLive=()=>{liveEntry.enter();requestAnimationFrame(()=>liveEntry.check());};
  const leaveLive=()=>liveEntry.leave();
+ /** O-I #747 (walk 739, X1): a new authored scene would replace the one the live field holds, which the retained lease refuses
+  * ("authored scene configuration while leased" needs a rebind: controller.ts presentation_changes_requiring_rebind). The field is the
+  * one body (manual §20.2), so it is bound again on the new scene: the lease is let go now, before the scene is configured, so the scene
+  * stands; then the instrument opens again on it as the Live entry opens it, muted. The act that asked for it is named on the
+  * instrument's status line and returned for the frame to say. While no live field is held nothing happens and null is returned. */
+ const rebind=(act:string):string|null=>{
+  const status=(controller.reading as any).status;
+  if(status!=='following'&&status!=='held'&&status!=='opening')return null;
+  const words=`${act}: the live field let go of the last scene so this one can stand, and opens again on it.`;
+  // release's own first steps (the lease let go, renderer.releaseRetainedField) run before its first await, so the new scene can stand.
+  void controller.release(true).then(()=>{controller.reason=words;update();return open('now');}).catch(fail);
+  return words;
+ };
  update();
- return {controller,panel,command,stage,playJanko,touch,openLive,leaveLive,dispose:()=>{clearInterval(timer);panel.removeEventListener('click',click);panel.removeEventListener('input',range);panel.removeEventListener('pointerdown',pressKey);panel.removeEventListener('focusin',focusKey);document.removeEventListener('visibilitychange',visibility);window.removeEventListener('pagehide',pagehide);panel.remove();domainView.dispose();style.remove();void controller.dispose();}};
+ return {controller,panel,command,stage,playJanko,touch,openLive,leaveLive,rebind,dispose:()=>{clearInterval(timer);panel.removeEventListener('click',click);panel.removeEventListener('input',range);panel.removeEventListener('pointerdown',pressKey);panel.removeEventListener('focusin',focusKey);document.removeEventListener('visibilitychange',visibility);window.removeEventListener('pagehide',pagehide);panel.remove();domainView.dispose();style.remove();void controller.dispose();}};
 }

@@ -651,7 +651,10 @@ body.oi-chrome-devices #automation-assignment,
 body.oi-chrome-devices #automation-monitor,
 body.oi-chrome-devices #modes-panel,
 body.oi-chrome-devices #entry-gate,
-body.oi-chrome-devices #capture-panel{visibility:hidden!important;pointer-events:none!important}
+body.oi-chrome-devices #capture-panel,
+body.oi-chrome-devices #toast{visibility:hidden!important;pointer-events:none!important}
+/* O-I #747 (manual §20.1: the field pane shows "the particles, the symbols and the body, and nothing over them"): the toast's words are
+   said on the shell's status bar instead (app.ts toast → presentedChrome.ts sayRequest), so nothing is laid over the field. */
 /* The scenes strip shows itself while the frame's Studio is open (body.studio-open #timeline-panel, above); outside the journey lens, whose
    walk it is, it stands down with the scene bar that holds it. */
 body.oi-chrome-devices:not([data-active-instrument="journey"]) #timeline-panel{visibility:hidden!important;pointer-events:none!important}

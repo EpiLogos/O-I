@@ -3,6 +3,9 @@
 //! Every command has one home here (manual §10.9): Edit acts on the selection,
 //! Create inserts, View shows and hides the window's parts on Live's keys, and
 //! Settings… stands in the application menu on ⌘, as Live's Preferences do.
+//! File's Export and View's Present are the field's in Expressions (manual
+//! §20.1 "Where everything is", O-I #747): the frame hands each to the mode
+//! that stands (App.tsx MENU_ACT), and Expressions runs the field's own act.
 //! Their ids reach the renderer as `oi:command` (live-shell App.tsx routes them).
 use tauri::{menu::{MenuBuilder, SubmenuBuilder, MenuItemBuilder}, AppHandle, Emitter, Manager};
 
@@ -65,6 +68,14 @@ pub fn install(app: &AppHandle, arrangements: &[Arrangement], active: &str) -> t
     let insert_clip = item("create.clip", "Insert Clip", Some("CmdOrCtrl+Shift+M"))?;
     let insert_row = item("create.row", "Insert Row", Some("CmdOrCtrl+I"))?;
     let create = SubmenuBuilder::new(app, "Create").item(&insert_clip).item(&insert_row).build()?;
+    // Export, in the File menu (manual §20.1 Export): a picture, a film, or the Expression itself.
+    let mut export = SubmenuBuilder::new(app, "Export");
+    for (id, label) in EXPORT_ITEMS {
+        export = export.item(&item(id, label, None)?);
+    }
+    let file = SubmenuBuilder::new(app, "File")
+        .item(&export.build()?)
+        .build()?;
     let view = SubmenuBuilder::new(app, "View")
         .item(&item("view.session", "Session View", None)?)
         .item(&item("view.arrangement", "Arrangement View", None)?)
@@ -81,7 +92,10 @@ pub fn install(app: &AppHandle, arrangements: &[Arrangement], active: &str) -> t
         .separator()
         .item(&item("view.mixer", "Mixer", Some("Alt+CmdOrCtrl+M"))?)
         .item(&item("view.io", "In/Out", Some("Alt+CmdOrCtrl+I"))?)
-        .separator().fullscreen()
+        .separator()
+        // Present gives the field the whole screen; Esc brings the window back (manual §20.1 Pane view).
+        .item(&item(PRESENT, "Present", None)?)
+        .fullscreen()
         .build()?;
     let browser = MenuItemBuilder::with_id("workspace.browser", "New Browser Pane").accelerator("CmdOrCtrl+Shift+L").build(app)?;
     let address = MenuItemBuilder::with_id("workspace.browser-address", "Go to Web Address…").accelerator("CmdOrCtrl+L").build(app)?;
@@ -107,16 +121,30 @@ pub fn install(app: &AppHandle, arrangements: &[Arrangement], active: &str) -> t
         .separator().text("region.left", "Show / Hide Central")
         .text("region.right", "Show / Hide Agent");
     let window=window.build()?;
-    app.set_menu(MenuBuilder::new(app).items(&[&application, &edit, &create, &view, &workspace, &window]).build()?)?;
+    app.set_menu(MenuBuilder::new(app).items(&[&application, &file, &edit, &create, &view, &workspace, &window]).build()?)?;
     if let Some(current) = arrangements.iter().find(|w| w.id == active) {
         if let Some(window) = app.get_window("main") { window.set_title(&format!("{} — O-I", current.name))?; }
     }
     Ok(())
 }
 
-/// Whether a menu item is one of the shell's commands (Edit, Create, View, Settings), routed as `oi:command`.
+/// View's Present (manual §20.1 "Show the field alone — Present, in the View menu").
+pub const PRESENT: &str = "view.present";
+
+/// File › Export's items, in the manual's order (§20.1 Export: Picture, Film, Expression).
+pub const EXPORT_ITEMS: [(&str, &str); 5] = [
+    ("file.export.picture", "Picture"),
+    ("file.export.film", "Film"),
+    ("file.export.json", "Expression JSON"),
+    ("file.export.html", "Living HTML"),
+    ("file.export.native", "Scene as Native Configuration"),
+];
+
+/// Whether a menu item is one of the shell's commands (File, Edit, Create, View, Settings), routed as `oi:command`.
 pub fn is_command(id: &str) -> bool {
-    ["edit.", "create.", "view.", "app."].iter().any(|prefix| id.starts_with(prefix))
+    ["edit.", "create.", "view.", "file.", "app."]
+        .iter()
+        .any(|prefix| id.starts_with(prefix))
 }
 
 pub fn dispatch(app: &AppHandle, id: &str) {
@@ -137,5 +165,26 @@ pub fn dispatch(app: &AppHandle, id: &str) {
             let _ = window.set_focus();
             if let Some(shell)=app.get_webview("main") {let _=shell.set_focus();}
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn present_and_export_reach_the_renderer_as_commands() {
+        assert!(is_command(PRESENT));
+        for (id, _) in EXPORT_ITEMS {
+            assert!(is_command(id), "{id} is routed as oi:command");
+        }
+        assert!(!is_command("workspace.browser"));
+        assert!(!is_command("world.choose"));
+    }
+
+    #[test]
+    fn export_names_a_picture_a_film_and_the_expression() {
+        let labels: Vec<&str> = EXPORT_ITEMS.iter().map(|(_, label)| *label).collect();
+        assert_eq!(labels, ["Picture", "Film", "Expression JSON", "Living HTML", "Scene as Native Configuration"]);
     }
 }

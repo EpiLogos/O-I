@@ -79,3 +79,35 @@ test('presented on the devices the editors stand down over the field, are read a
  const find=await source('../src/canvasFindOverlay.tsx');
  assert.match(find,/if\(document\.body\.classList\.contains\('oi-chrome-devices'\)\)dialog\.current\?\.show\(\);else dialog\.current\?\.showModal\(\);/,'on the devices Find is not modal over the canvas');
 });
+
+// O-I #747 (manual §20.1 Pane view: "No panel, list or tool opens inside it. A control you reach from the field opens where it lives").
+test('#747: presented on the devices, the Studio\'s key, E and the toast go to the shell; in its own presentation the frame keeps them', async () => {
+ const {studioHomeRequest,sayRequest}=await import('../build/presentedChrome.js');
+ assert.deepEqual(studioHomeRequest('devices','physics'),{request:'open-home',section:'physics'});
+ assert.equal(studioHomeRequest('frame','physics'),null,'at full size the frame opens its own Studio as it always has');
+ assert.deepEqual(sayRequest('devices','Saved.'),{request:'say',text:'Saved.'});
+ assert.equal(sayRequest('frame','Saved.'),null);
+ assert.equal(sayRequest('devices','  '),null,'nothing to say, nothing sent');
+ const app=await source('../src/app.ts');
+ assert.match(app,/case 'studio':\{[^}]*studioHomeRequest\(presentedChrome\.presentation\(\),studioSection\)[^}]*hostRequest\(home\);break;\}/,'the Studio key asks the shell');
+ assert.match(app,/case 'edit':\{[^}]*studioHomeRequest\(presentedChrome\.presentation\(\),selectedEntity\(\)\?'formations':'physics'\)/,'E: the symbol in Clip view, the field in the Studio');
+ assert.match(app,/function toast\([^)]*\)\{[^]*?sayRequest\(presentedChrome\.presentation\(\),message\)[^]*?hostRequest\(said\)/,'the toast is said on the status bar');
+ const css=await source('../src/workspace.css');
+ assert.match(css,/body\.oi-chrome-devices #toast\{visibility:hidden!important;pointer-events:none!important\}/,'nothing is laid over the field');
+});
+
+// O-I #747, walk 739 X1: "A retained native field is attached; release it before replacing the authored expression scene."
+test('#747 X1: opening another Expression binds the live field again on its scene before the scene is configured, and names the act', async () => {
+ const app=await source('../src/app.ts');
+ // Every open of another Expression goes through applyJourney (a work from the owner, a starter, a featured work, New).
+ const body=app.slice(app.indexOf('function applyJourney('),app.indexOf('function applyJourney(')+1500);
+ const rebind=body.indexOf('nativeField?.rebind('),apply=body.indexOf('store.document=clone(');
+ assert.ok(rebind>0&&rebind<apply,'the field is bound again before the new scene replaces the old');
+ assert.match(body,/if\(j\.id!==store\.document\.id\)\{const said=nativeField\?\.rebind\(/,'only when another Expression opens');
+ assert.match(body,/rebind\(`Opening “\$\{j\.name\}”`\);if\(said\)toast\(said/,'the act is named, and said');
+ const field=await source('../src/nativeField.ts');
+ const own=field.slice(field.indexOf('const rebind='),field.indexOf('const rebind=')+900);
+ assert.match(own,/status!=='following'&&status!=='held'&&status!=='opening'\)return null/,'no live field held, nothing happens');
+ assert.match(own,/controller\.release\(true\)\.then\(\(\)=>\{controller\.reason=words;update\(\);return open\('now'\);\}\)/,'released, then opened again on the new scene');
+ assert.match(field,/return \{controller,panel,command,stage,playJanko,touch,openLive,leaveLive,rebind,/);
+});

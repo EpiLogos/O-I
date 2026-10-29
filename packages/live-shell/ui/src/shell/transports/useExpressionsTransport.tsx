@@ -53,6 +53,14 @@ const noted = (base: string, ...said: (Said | null)[]): string => {
   return lines.length ? `${base} ${lines.join(' ')}` : base
 }
 
+/** Why the scenes cannot play yet: the first reading the transport lacks, in the person's words. Pure. */
+export function unreadReason(source: NativeCompositionViewSource | null, content: NativeCompositionViewSource['content'] | null | undefined): string {
+  if (!source) return 'No Expression is open here. Open one in the browser to play its scenes.'
+  if (!content) return 'The open Expression has not been read yet. Its scenes play once its owner answers.'
+  if (!content.scenes) return 'The Expression\'s owner has not disclosed its scenes, so there is nothing to play yet.'
+  return 'The Expression\'s owner has not disclosed its playback, so Play cannot start or show where it is.'
+}
+
 export const useExpressionsTransport = (reading: ExpressionsTransportReading): TransportBindings => {
   const source = reading.nativeTransport ?? null
   const latest = useRef(source); latest.current = source
@@ -116,7 +124,13 @@ export const useExpressionsTransport = (reading: ExpressionsTransportReading): T
   // The Scene's chord and the selection's focus stand with Expressions, not with its Clip side.
   useSceneKeepers(source)
   const content = source?.content, scenes = content?.scenes, playback = content?.playback
-  if (!source || !content || !scenes || !playback) { playRef.current = null; return readoutBindings(reading.readouts) } // :86 (the old bar drew nothing)
+  // :86 — the old bar drew nothing here, so Play stood dimmed with no reason (walk 739, X2). Play and Stop now stay unpressable and say
+  // why on the status bar (manual §16.10 "Disabled … The status bar says why"): the reading that is missing, named.
+  if (!source || !content || !scenes || !playback) {
+    playRef.current = null
+    const refused = unreadReason(source, content)
+    return {...readoutBindings(reading.readouts), play: {refused}, stop: {refused}}
+  }
   const current = scenes.scenes.find(row => row.scene_ref === content.basis.scene_ref)
   const ready = !!source.actions && !content.standing.pending && !busy                                          // :88
   const model = sceneTransportModel({
