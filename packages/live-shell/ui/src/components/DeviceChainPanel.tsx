@@ -8,7 +8,8 @@ import { LiveDeviceChain } from '../live/LiveDeviceChain'
 export type DetailMode = 'clip' | 'device'
 
 /** The Clip side's one line while no clip of the open set is selected (the host's waiting idiom). */
-export const LIVE_CLIP_WAITS = 'Select a clip in the Session or the Arrangement to see it here.'
+// Live's clip line lives with Live's clip reading (live/LiveClip.tsx), so the detail table reads it without loading this panel.
+export {LIVE_CLIP_WAITS} from '../live/LiveClip'
 
 /** Live's chain. `mode` names the side it stands for; the Clip side is the clip host's, so only the Device side draws here. */
 export function DeviceChainPanel({ ctx, document, selection, mode }: { ctx: PanelContext; document: SetDocument | null; selection: SetSelection; mode: DetailMode }) {

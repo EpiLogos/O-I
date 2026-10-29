@@ -19,10 +19,13 @@ import {ClipWaiting} from './ClipView'
 import {useMeasuredRoom, type ClipPlace} from './ClipHost'
 import {clipHeightIn, publishShownSides, shownSides, type DetailSides} from './detailSides'
 import {MODE_DETAILS, type ChainDrop} from '../../shell/modeDetails'
-import {InstrumentDeviceDetail} from '../../shell/ModeDetail'
+import {loadWhenDrawn} from '../../shell/loadWhenDrawn'
 import {useStandingInstrument} from '../../inhabitants/ql/devices/standingInstrument'
 import type {SurfMode} from '../../shell/modeGrammar'
 import './detail.css'
+
+// A focused instrument's devices (shell/ModeDetail.tsx) load when an instrument first takes the Device side (O-I #740).
+const InstrumentDeviceDetail = loadWhenDrawn('The instrument\'s devices', () => import('../../shell/ModeDetail').then(module => module.InstrumentDeviceDetail))
 
 const useIsoLayoutEffect = typeof window === 'undefined' ? useEffect : useLayoutEffect
 

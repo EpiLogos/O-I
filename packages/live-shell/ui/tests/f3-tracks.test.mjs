@@ -35,6 +35,9 @@ const {SessionGrid} = await import('../src/frame/tracks/SessionGrid.tsx')
 const {ArrangementRuler, placeClips} = await import('../src/frame/tracks/ArrangementRuler.tsx')
 const {MODE_TRACKS, mergeSets, nativeTracks} = await import('../src/frame/tracks/modeTracks.ts')
 const {SURF_MODES} = await import('../src/shell/modeGrammar.ts')
+// The frame's lazy parts (a mode's bodies, its transport and tracks, a device's face) load when first drawn (shell/loadWhenDrawn.ts;
+// O-I #740); a server render cannot wait for a module, so they are fetched first and every body renders itself.
+await (await import('../src/shell/loadWhenDrawn.ts')).loadEveryPart()
 
 const set = {path: '/sets/demo.als', tempo_bpm: 120, scene_count: 3, arrangement_clips: 1, tracks: [
   {kind: 'midi', name: 'Pad', devices: []}, {kind: 'audio', name: 'Drums', devices: []}]}

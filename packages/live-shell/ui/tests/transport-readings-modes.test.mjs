@@ -38,6 +38,8 @@ const {readFile} = await import('node:fs/promises')
 const h = React.createElement
 const R = await import('../src/shell/transports/transportReadings.ts')
 const {ModeTransport, MODE_TITLE} = await import('../src/shell/modeTransports.tsx')
+// A mode's bodies load when first drawn (shell/loadWhenDrawn.ts; O-I #740); a server render cannot wait for a module, so they are fetched first.
+await (await import('../src/shell/loadWhenDrawn.ts')).loadEveryPart()
 const {SURF_MODES} = await import('../src/shell/modeGrammar.ts')
 const {TransportTitle} = await import('../src/components/TransportBar.tsx')
 const {ShellConfigContext} = await import('../src/shell/useSet.ts')

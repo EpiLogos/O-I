@@ -43,6 +43,9 @@ const {MODE_TRACKS} = await import('../src/frame/tracks/modeTracks.ts')
 const {MODE_DETAILS} = await import('../src/shell/modeDetails.tsx')
 const {DetailHost} = await import('../src/frame/detail/DetailHost.tsx')
 const {DetailContext} = await import('../src/frame/detail/detailReading.ts')
+// The frame's lazy parts (a mode's bodies, its transport and tracks, a device's face) load when first drawn (shell/loadWhenDrawn.ts;
+// O-I #740); a server render cannot wait for a module, so they are fetched first and every body renders itself.
+await (await import('../src/shell/loadWhenDrawn.ts')).loadEveryPart()
 
 const SET = {path: '/sets/mercurius.als', tempo_bpm: 120, scene_count: 2, arrangement_clips: 1, tracks: [{kind: 'midi', name: 'Torus', devices: []}, {kind: 'audio', name: 'Voice', devices: []}]}
 const DOC = {path: '/sets/mercurius.als', tempo: 120, scenes: 2, tracks: [
@@ -98,8 +101,10 @@ test('the head: the clip and its track (the mockup\'s "Kit 1 — Drums · clip")
 })
 
 test('code-reading: Live\'s Clip side hosts clip:live on its binding; the old props rows and empty roll are retired', async () => {
-  const details = await readFile(new URL('../src/shell/modeDetails.tsx', import.meta.url), 'utf8')
+  // Live's clip body is its own module, loaded with Live (shell/details/live.tsx; O-I #740), registered by the detail table.
+  const details = await readFile(new URL('../src/shell/details/live.tsx', import.meta.url), 'utf8')
   assert.match(details, /function LiveClip\(\{place\}: \{place: ClipPlace\}\) \{ return <Hosted binding=\{useLiveClip\(\)\}/)
+  assert.match(await readFile(new URL('../src/shell/modeDetails.tsx', import.meta.url), 'utf8'), /const LiveClip: ClipBody = loadWhenDrawn\('Live\\'s clip', \(\) => import\('\.\/details\/live'\)/)
   const clip = await readFile(new URL('../src/live/LiveClip.tsx', import.meta.url), 'utf8')
   assert.doesNotMatch(clip, /ClipView|LiveNoteRoll|liveClipRows/)
   assert.match(clip, /export function liveClipOf\(/, 'the clip reader stays: the head and the binding read it')

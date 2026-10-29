@@ -41,6 +41,9 @@ const torusDeviceModule = await import('../src/live/torusDevice.ts')
 const manifest = await import('../src/inhabitants/quaternalLogicFamilyManifest.ts')
 const qlReading = await import('../src/inhabitants/ql/qlInstrumentReading.ts')
 const chain = await import('../src/components/DeviceChainPanel.tsx')
+// The frame's lazy parts (a mode's bodies, its transport and tracks, a device's face) load when first drawn (shell/loadWhenDrawn.ts;
+// O-I #740); a server render cannot wait for a module, so they are fetched first and every body renders itself.
+await (await import('../src/shell/loadWhenDrawn.ts')).loadEveryPart()
 
 // A reading shaped exactly as the owner produces it (ql-musical-family.test.mjs fixture).
 const ownerReading = () => ({

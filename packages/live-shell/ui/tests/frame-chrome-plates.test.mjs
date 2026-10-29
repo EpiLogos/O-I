@@ -45,6 +45,9 @@ const {controlsAt} = await import('../src/components/expressions/studio/frameChr
 const {wantedPresentation} = await import('../src/components/expressions/studio/framePresentation.ts')
 const {STUDIO_CARRIED} = await import('../src/components/expressions/studio/studioModel.ts')
 const {STAGE_PLATES, EXPRESSION_SECTION} = await import('../src/projections/stageInstruments/stageInstrumentModel.ts')
+// The frame's lazy parts (a mode's bodies, its transport and tracks, a device's face) load when first drawn (shell/loadWhenDrawn.ts;
+// O-I #740); a server render cannot wait for a module, so they are fetched first and every body renders itself.
+await (await import('../src/shell/loadWhenDrawn.ts')).loadEveryPart()
 const {readFile} = await import('node:fs/promises')
 
 door.resetFamilyManifestsForTest()
@@ -155,10 +158,12 @@ test('the Studio stands only what no Expressions device carries; each carried co
 // is the Studio device's, its Full holding every device of the field (tests/p3-expressions-in-full.test.mjs).
 test('the presentation: the frame stands on the devices at every size; declared from the transport in every mode', async () => {
   assert.equal(wantedPresentation(), 'devices')
-  const transports = await source('../src/shell/modeTransports.tsx')
-  const body = transports.slice(transports.indexOf('export function ModeTransport('))
+  // The bar with its bindings (shell/transports/boundTransport.tsx) is every mode's ModeTransport once its bindings arrive (O-I #740).
+  const transports = await source('../src/shell/transports/boundTransport.tsx')
+  const body = transports.slice(transports.indexOf('export const boundTransport'))
   assert.match(body, /useFramePresentation\(\)/, 'the transport declares it')
   assert.doesNotMatch(body.slice(0, body.indexOf('return <Transport')), /mode ===|mode===/, 'no mode branch')
+  assert.match(await source('../src/shell/modeTransports.tsx'), /bound\.boundTransport\(use\)/, 'every mode\'s bar is the bound one')
   const hook = await source('../src/components/expressions/studio/framePresentation.ts')
   assert.match(hook, /command: 'presentation', chrome: want/, 'one command over the one runner')
 })

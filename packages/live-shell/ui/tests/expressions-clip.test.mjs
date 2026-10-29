@@ -301,8 +301,10 @@ test('the retained editor draws only the Studio: its Clip side is the clip host\
 })
 
 test('Expressions\' clip entry hosts its designed clip on the scene\'s binding; the Scene\'s old column is gone from the tree', async () => {
-  const details = await read('shell/modeDetails.tsx')
+  // Expressions' clip body is its own module, loaded with Expressions (shell/details/expressions.tsx; O-I #740).
+  const details = await read('shell/details/expressions.tsx')
   assert.match(details, /function ExpressionsClip\(\{place\}: \{place: ClipPlace\}\) \{ return <Hosted binding=\{useExpressionsClip\(\)\} place=\{place\}/)
+  assert.match(await read('shell/modeDetails.tsx'), /const ExpressionsClip: ClipBody = loadWhenDrawn\('Expressions\\' clip', \(\) => import\('\.\/details\/expressions'\)/)
   const detail = await read('components/NativeWorldDetail.tsx')
   assert.doesNotMatch(detail, /SceneControls|SceneStrip|showSceneControls/)
   const {existsSync} = await import('node:fs')

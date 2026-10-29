@@ -44,6 +44,8 @@ export async function load(u, c, n) {
 const docs = await import('../src/central/documents/centralDocuments.ts')
 const readings = await import('../src/central/documents/documentReadings.ts')
 const pane = await import('../src/central/documents/CentralDocumentPane.tsx')
+// The Day's and the Flow's forms load when first drawn (shell/loadWhenDrawn.ts; O-I #740); a server render cannot wait for a module, so they are fetched first.
+await (await import('../src/shell/loadWhenDrawn.ts')).loadEveryPart()
 const opening = await import('../src/central/documents/useOpenCentralDocument.ts')
 const vertical = await import('../src/central/centralVertical.ts')
 const {groupsOf} = await import('../../../../desktop/cradle/src/surface/engine.ts')

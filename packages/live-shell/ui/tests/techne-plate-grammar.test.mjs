@@ -43,6 +43,9 @@ const Plate = await import('../src/frame/devices/InstrumentPlate.tsx')
 const Fit = await import('../src/frame/devices/plateFit.ts')
 const {InstrumentCompact} = await import('../src/inhabitants/ql/devices/techneCompacts.tsx')
 const {TECHNE_INSTRUMENTS} = await import('../src/inhabitants/sdk/semantics.ts')
+// The frame's lazy parts (a mode's bodies, its transport and tracks, a device's face) load when first drawn (shell/loadWhenDrawn.ts;
+// O-I #740); a server render cannot wait for a module, so they are fetched first and every body renders itself.
+await (await import('../src/shell/loadWhenDrawn.ts')).loadEveryPart()
 const {readFile} = await import('node:fs/promises')
 
 door.resetFamilyManifestsForTest()

@@ -48,7 +48,7 @@ import {captureTechneInstrumentOpen, TECHNE_INSTRUMENT_OPEN, type TechneInstrume
 import {liveWorldSelection, setSelectionOf} from './shell/liveSelection'
 import type {WorldSelection} from '../../../../desktop/cradle/src/workspace/store'
 import type {ModeTransportReadouts} from './shell/ModeTransportBar'
-import {worldNowReadout} from './shell/ModeDetail'
+import {worldNowReadout} from './shell/worldNowReadout'
 import {DetailHost} from './frame/detail/DetailHost'
 import {expandsClip, shownSidesNow, toggleSide, type DetailSide} from './frame/detail/detailSides'
 import {DetailContext, type DetailReading} from './frame/detail/detailReading'
@@ -62,6 +62,7 @@ import './live/liveCentre.css'
 import './live/LiveInstrumentSection'
 import './live/LivePresets'
 import {registerAtlasHost} from './projections/atlas/registerAtlasHost'
+import {loadWorldShellFamilies} from './inhabitants/worldShellFamilies'
 import {registerTimelineHost} from './projections/timelinePane'
 import {registerCentralDocumentPane} from './central/documents/CentralDocumentPane'
 import {registerDevicePane} from './frame/devices/devicePane'
@@ -77,6 +78,9 @@ import {clampBrowserWidth, clampDetailHeight, clampRailWidth, collapseDetail, dr
   expandedDetailHeight, focusKeyOf, frameToggleOf, keptDetailHeight, RESIZE_STEP, switchesDetailSide, type AreaDrag, type DetailExpansions, type FocusTarget, type FrameToggle} from './shell/workspaceAreas'
 import {DeviceFlipHost} from './frame/devices/DeviceFlip'
 registerAtlasHost()
+// The world-shell families (Quaternal Logic, the atlas, the knowledge graph, Central's extensions) are admitted with the frame, as
+// shell/ModeDetail.tsx admitted them when the frame imported it; ModeDetail now loads when a chain first draws (O-I #740).
+loadWorldShellFamilies()
 /** Your system's readings (T-WORLDS §5 W3 phase B), loaded with the Earth: they read Central's worlds, today's set, what plays and what is
  * to hand, and bind the acts that open them and land worlds (projections/atlas/system/SystemReadings.tsx). */
 const SystemReadings = lazy(() => import('./projections/atlas/system/SystemReadings').then(module => ({default: module.SystemReadings})))

@@ -38,6 +38,9 @@ const {readFile} = await import('node:fs/promises')
 const R = await import('../src/shell/transports/transportReadings.ts')
 const {Transport} = await import('../src/frame/transport/Transport.tsx')
 const {slotWords} = await import('../src/shell/modeTransports.tsx')
+// The frame's lazy parts (a mode's bodies, its transport and tracks, a device's face) load when first drawn (shell/loadWhenDrawn.ts;
+// O-I #740); a server render cannot wait for a module, so they are fetched first and every body renders itself.
+await (await import('../src/shell/loadWhenDrawn.ts')).loadEveryPart()
 const source = path => readFile(new URL(`../src/${path}`, import.meta.url), 'utf8')
 
 const SOURCE_REF = 'central:source:control:root:Control/user/day/2026-10-08/day.md'
@@ -153,7 +156,8 @@ test('the Central hook reads through the owners\' own readers and writes only th
   assert.doesNotMatch(code, /readGround\(/, 'no second ground read of its own')
   assert.ok((await source('central/devices/useCentralReadings.ts')).includes('readGround(transport, null)'), 'the one answer reads the root ground')
   assert.doesNotMatch(code, /setInterval|kernelOp\(|fetch\(/, 'no poll and no owner call of its own')
-  assert.match(await source('shell/modeTransports.tsx'), /base: useCentralTransport/)
+  // Registered as the module that holds it, loaded when Central's transport first draws (O-I #740).
+  assert.match(await source('shell/modeTransports.tsx'), /base: \(\) => import\('\.\/transports\/useCentralTransport'\)\.then\(module => module\.useCentralTransport\)/)
 })
 
 test('the Load slot is the reached document\'s save standing (the mockup\'s `edited`), from the document door — never a guess', async () => {

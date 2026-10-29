@@ -48,6 +48,9 @@ const {Workspace} = await import('../src/shell/workspaceContext.tsx')
 const {registerShellSetter} = await import('../src/inhabitants/sdk/shellSetters.ts')
 const {useFactoryTransport} = await import('../src/shell/transports/useFactoryTransport.tsx')
 const {useExpressionsTransport} = await import('../src/shell/transports/useExpressionsTransport.tsx')
+// The frame's lazy parts (a mode's bodies, its transport and tracks, a device's face) load when first drawn (shell/loadWhenDrawn.ts;
+// O-I #740); a server render cannot wait for a module, so they are fetched first and every body renders itself.
+await (await import('../src/shell/loadWhenDrawn.ts')).loadEveryPart()
 
 const words = id => ({label: id, fn: `does ${id}`, dataI: `${id}|does ${id}`, waiting: `${id} waits`})
 const draw = bindings => renderToStaticMarkup(h(Transport, {bindings, words}))

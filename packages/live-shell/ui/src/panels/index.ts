@@ -6,7 +6,7 @@
  * same way — see ui/PANELS.md.
  */
 
-import './expressions'
+import './expressionsPanel' // registers the Expressions application, whose code loads when first shown (panels/expressions.tsx)
 import './knowledge'
 import './settings'
 

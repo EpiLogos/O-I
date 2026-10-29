@@ -3,12 +3,22 @@ import type { ComponentType } from 'react'
 import { registerPanel } from '../../shell/panels'
 import type { PanelContext } from '../../shell/panels'
 
+import { loadWhenDrawn } from '../../shell/loadWhenDrawn'
 import { installProStyles } from './styles'
-import { GlueCompressorPro, GlueCompressorRack } from './glue'
-import { EchoPro, EchoRack } from './echo'
-import { ReverbPro, ReverbRack } from './reverb'
-import { WavetablePro, WavetableRack } from './wavetable'
-import { OperatorPro, OperatorRack } from './operator'
+
+// Each face's code loads when Live's chain first shows it (O-I #740: a device loads when first placed or shown); until then its
+// place shows the shell's waiting line (shell/loadWhenDrawn.ts). The registrations — ids, titles, slots, order — stand at once.
+const face = (name: string, load: () => Promise<ComponentType<PanelContext>>) => loadWhenDrawn<PanelContext>(name, load)
+const GlueCompressorPro = face('Glue Compressor (pro)', () => import('./glue').then(module => module.GlueCompressorPro))
+const GlueCompressorRack = face('Glue (rack)', () => import('./glue').then(module => module.GlueCompressorRack))
+const EchoPro = face('Echo (pro)', () => import('./echo').then(module => module.EchoPro))
+const EchoRack = face('Echo (rack)', () => import('./echo').then(module => module.EchoRack))
+const ReverbPro = face('Reverb (pro)', () => import('./reverb').then(module => module.ReverbPro))
+const ReverbRack = face('Reverb (rack)', () => import('./reverb').then(module => module.ReverbRack))
+const WavetablePro = face('Wavetable (pro)', () => import('./wavetable').then(module => module.WavetablePro))
+const WavetableRack = face('Wavetable (rack)', () => import('./wavetable').then(module => module.WavetableRack))
+const OperatorPro = face('Operator (pro)', () => import('./operator').then(module => module.OperatorPro))
+const OperatorRack = face('Operator (rack)', () => import('./operator').then(module => module.OperatorRack))
 
 /**
  * Device panel ports (pro) — the faithful device-face family that EDITS:

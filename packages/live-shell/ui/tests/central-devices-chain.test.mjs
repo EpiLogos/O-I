@@ -95,6 +95,9 @@ const entries = (extra) => chain.centralDeviceEntries(input(extra))
 const compact = (entry, extra = {}) => html(createElement(DeviceViewOf, {entry, size: 'compact', ...extra}))
 const {DeviceView} = await import('../src/frame/devices/DeviceView.tsx')
 const {BaseDevicesDetail} = await import('../src/shell/ModeDetail.tsx')
+// The frame's lazy parts (a mode's bodies, its transport and tracks, a device's face) load when first drawn (shell/loadWhenDrawn.ts;
+// O-I #740); a server render cannot wait for a module, so they are fetched first and every body renders itself.
+await (await import('../src/shell/loadWhenDrawn.ts')).loadEveryPart()
 /** One device's compact markup out of the chain. */
 const deviceMarkup = (markup, faceId) => {
   const start = markup.indexOf(`data-device="central:${faceId}"`)

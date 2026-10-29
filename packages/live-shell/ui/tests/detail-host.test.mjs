@@ -42,6 +42,9 @@ const {publishShownTracks} = await import('../src/frame/tracks/tracksDoor.ts')
 const {selectedClipOf} = await import('../src/frame/detail/ClipBox.tsx')
 const {factoryTrackAdapter} = await import('../src/timeline/factoryTrackAdapter.ts')
 const {StatusBar} = await import('../src/components/StatusBar.tsx')
+// The frame's lazy parts (a mode's bodies, its transport and tracks, a device's face) load when first drawn (shell/loadWhenDrawn.ts;
+// O-I #740); a server render cannot wait for a module, so they are fetched first and every body renders itself.
+await (await import('../src/shell/loadWhenDrawn.ts')).loadEveryPart()
 
 const UNAVAILABLE = {kind: 'unavailable', reason: 'the test carrier is down'}
 const T = (h, m) => Date.UTC(2026, 9, 8, h, m)

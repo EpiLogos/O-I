@@ -40,6 +40,9 @@ const source = path => readFile(new URL(`../src/${path}`, import.meta.url), 'utf
 const {Transport} = await import('../src/frame/transport/Transport.tsx')
 const {ModeTransport, MODE_TRANSPORT} = await import('../src/shell/modeTransports.tsx')
 const {TRANSPORT_SLOT_IDS} = await import('../src/shell/modeGrammar.ts')
+// The frame's lazy parts (a mode's bodies, its transport and tracks, a device's face) load when first drawn (shell/loadWhenDrawn.ts;
+// O-I #740); a server render cannot wait for a module, so they are fetched first and every body renders itself.
+await (await import('../src/shell/loadWhenDrawn.ts')).loadEveryPart()
 
 const slotsOf = markup => [...markup.matchAll(/data-slot="([^"]+)"/g)].map(m => m[1]).filter((id, i, all) => all.indexOf(id) === i)
 const words = id => ({label: id, fn: `does ${id}`, dataI: `${id}|does ${id}`, waiting: `${id} waits`})

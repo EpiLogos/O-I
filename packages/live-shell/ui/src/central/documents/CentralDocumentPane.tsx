@@ -23,8 +23,6 @@ import {registerProjectionModule} from '../../../../../../desktop/cradle/src/sur
 import {detectTransport} from '../../../../../../desktop/cradle/src/kernel/bridge'
 import {USER_FLOWS_DIR} from '../../../../../../desktop/cradle/src/flow/instances'
 import type {CentralLocation, KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
-import {DocumentDayDieFace} from '../../inhabitants/DocumentDayDieFace'
-import {FlowFace} from '../../inhabitants/DocumentFlowFace'
 import {PageFace, type PageLinkTarget} from '../../inhabitants/DocumentPageFace'
 import {openBinding} from '../../../../../../desktop/cradle/src/surface/engine'
 import {listFiles} from '../../../../../../desktop/cradle/src/files/client'
@@ -36,6 +34,12 @@ import {readLatestFlow, type FlowReading} from './documentReadings'
 import {useDayAnswer} from '../../owners/day'
 import './centralDocuments.css'
 import {DocumentPaneContext, documentLayoutWriter} from './documentDoor'
+import {loadWhenDrawn} from '../../shell/loadWhenDrawn'
+
+// The Day's and the Flow's hosted forms (each carries its whole form page) load when a Day or a Flow is first opened, never with the
+// shell's first frame (O-I #740); until one arrives the pane shows the shell's waiting line for it.
+const DocumentDayDieFace = loadWhenDrawn('The Day', () => import('../../inhabitants/DocumentDayDieFace').then(module => module.DocumentDayDieFace))
+const FlowFace = loadWhenDrawn('The Flow', () => import('../../inhabitants/DocumentFlowFace').then(module => module.FlowFace))
 
 /** A count that advances when the window regains focus or becomes visible: a document that can change outside this shell (a
  * Day initialised elsewhere) is read again then — never polled. */

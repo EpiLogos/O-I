@@ -7,7 +7,6 @@ import {createNativeTechneNavigator} from '@epilogos/expressions-boundary/techne
 import {createLiveStageAnswers} from '../techne/subject/openSubject'
 import {createNativeEditorClient} from '@epilogos/expressions-boundary/editor-host'
 import type {NativeEditorController} from '@epilogos/expressions-boundary/editor'
-import {registerPanel} from '../shell/panels'
 import {useWorkspace} from '../shell/workspace'
 import {readShellConfig, shellTransport} from '../native/application'
 import {qualifiedExpressionOwners} from '../native/expressionOwners'
@@ -471,7 +470,7 @@ export function ExpressionsPanel() {
   </div>
 }
 
-registerPanel({id: 'world.expressions', title: 'Expressions', slot: 'center', component: ExpressionsPanel,
-  order: 10, note: 'The native Expressions application and its deep instruments over one retained document'})
+// The panel is registered by panels/expressionsPanel.ts, which loads this module when the centre first shows the Expressions
+// application (O-I #740): the registration stays with the shell's first frame, the application's code does not.
 // The Factory pane body presents this one frame (T-EXPRESSIONS-PANE-LEASE); it never opens a second frame or lease.
 registerExpressionsPaneHost()

@@ -32,6 +32,8 @@ export async function load(url,context,next){
 
 const {TransportBar} = await import('../src/components/TransportBar.tsx')
 const {LIVE_MODE_SEAM} = await import('../src/live/modes.ts')
+// A mode's bodies load when first drawn (shell/loadWhenDrawn.ts; O-I #740); a server render cannot wait for a module, so they are fetched first.
+await (await import('../src/shell/loadWhenDrawn.ts')).loadEveryPart()
 
 function liveTransport() {
   return renderToStaticMarkup(TransportBar({

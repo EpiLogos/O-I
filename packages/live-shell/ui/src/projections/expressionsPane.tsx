@@ -20,14 +20,16 @@
 
 import {useLayoutEffect, useRef, type CSSProperties} from 'react'
 import {createRoot} from 'react-dom/client'
-import {registerProjectionModule, type ProjectionModuleHandle} from '../../../../../desktop/cradle/src/surface/projectionModules'
+import type {ProjectionModuleHandle} from '../../../../../desktop/cradle/src/surface/projectionModules'
 import {
   attachExpressionsSlot, expressionsPaneAdmitted, preferExpressionsPane, registerExpressionsPane, setExpressionsPanePresented,
   unregisterExpressionsPane, useFramePlacement, useHostedChrome, useHostedExpressions, type ExpressionsPaneAdmission,
 } from './expressionsPaneHost'
 import {clearAskFault, useAskFault} from '../techne/subject/askFault'
 
-export const EXPRESSIONS_MODULE_ID = 'expressions-hosted-presenter'
+// The kind's registration is light (projections/expressionsPaneRegistration.ts): it admits this module, which loads when an Expressions
+// pane first opens (O-I #740).
+export {EXPRESSIONS_MODULE_ID, registerExpressionsPaneHost} from './expressionsPaneRegistration'
 
 /** The frame's reading as one line: the held expression's title and ref, or the honest state the reading stands in. It names the
  * pane in the Info view's hover words. */
@@ -90,7 +92,7 @@ export function ExpressionsPaneBody({paneId, admission}: {paneId: string; admiss
 }
 
 /** Mount the body into a pane element. The module owns the element's content and leaves it clean on unmount. */
-function mountExpressionsPane(element: HTMLElement, paneId: string): ProjectionModuleHandle {
+export function mountExpressionsPane(element: HTMLElement, paneId: string): ProjectionModuleHandle {
   // This instance's own admission: a second instance of the same pane (StrictMode, a remount in one commit) takes the record
   // over, and this one's late unmount and notices no longer reach it (expressionsPaneHost.ts registerExpressionsPane).
   const admission = registerExpressionsPane(paneId, {})
@@ -108,12 +110,3 @@ function mountExpressionsPane(element: HTMLElement, paneId: string): ProjectionM
   }
 }
 
-let registered = false
-
-/** Admit the Expressions body for the `projection.expressions` pane kind. Called once, from the centre's panel module
- * (panels/expressions.tsx), which owns the one hosted frame the pane presents. */
-export function registerExpressionsPaneHost(): void {
-  if (registered) return
-  registered = true
-  registerProjectionModule({id: EXPRESSIONS_MODULE_ID, kind: 'projection.expressions', create: context => mountExpressionsPane(context.element, context.binding.id)})
-}
