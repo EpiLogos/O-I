@@ -41,7 +41,17 @@ import {useContext, useCallback, useEffect, useRef, useState} from 'react'
  * the file's own bytes. A Flow of an earlier schema is hosted as it is.
  *
  * The page's own internal Save keeps its existing meaning (a portable HTML
- * copy inside the sandbox); only the host button sends writes to the owner.
+ * copy inside the sandbox, in the form's menu); only the host's Save sends
+ * writes to the owner — its head's button, and ⌘S pressed inside the page
+ * (useSaveKey: the frame's document-save-key.js hands the chord to its host
+ * before the form's own ⌘S can download the copy).
+ *
+ * A draft is never dropped when the pane closes (central/documents/
+ * keptDrafts.ts): the face keeps it on this device whenever its poll reads
+ * one, and once more before its pane closes; opened again, the Flow comes back
+ * with the draft in it, named, until a save is acknowledged or Re-read sets
+ * it aside. A draft kept on a revision the Flow has since moved from is put
+ * back, and Save names it stale rather than write over the newer Flow.
  * The strip's save outcome renders as the router's named chip — five
  * outcomes, five visuals, detail verbatim in the title. */
 
@@ -59,6 +69,8 @@ import {DocumentPaneContext, documentStateWords, publishDocument, reachedDocumen
 import {openSearchLine} from '../central/searchLineDoor'
 import {flowPacketOf, type PagePacketItem} from '../central/devices/pageReadings'
 import {followDocumentPacket} from '../central/devices/documentPacketContext'
+import {keepDraft, keptDraftMoved, keptDraftNotice, keptDraftOf, keptDraftRefusal, releaseKeptDraft, useDraftKeeping} from '../central/documents/keptDrafts'
+import {useSaveKey} from '../central/documents/useSaveKey'
 
 /** The message the Flow's form sends its host when an @ is typed in an entry (ql-flow.html), and the one the host answers when the line
  * closes, so the form puts the caret and the selection back. */
@@ -96,6 +108,7 @@ function projectFlowDocument(html: string): string {
 }
 
 export function FlowFace({transport, location, presentation = 'device', openLink}: DocumentFlowFaceProps) {
+  const inPane = presentation === 'pane'
   const [instance, setInstance] = useState<FlowInstance>()
   const [face, setFace] = useState<string>()
   const [failure, setFailure] = useState<string>()
@@ -119,20 +132,60 @@ export function FlowFace({transport, location, presentation = 'device', openLink
   /** The first bounded read after docking — the baseline a save compares
    * against. The page's own boot writes belong to the document, not a draft. */
   const baselineText = useRef<string>()
+  /** The revision a draft put back from this device was written against (keptDrafts.ts), while it stands: a save on a Flow that moved
+   * from it since is stale, never a write over the newer Flow. */
+  const keptBasis = useRef<string>()
+  /** The draft last kept on this device, so an unchanged poll writes nothing. */
+  const keptText = useRef<string>()
 
-  /** Read the Flow from its owner; `fresh` (the person's Re-read) asks the owner again whatever the window holds. */
+  /** Read the Flow from its owner; `fresh` (the person's Re-read) asks the owner again whatever the window holds. A draft kept on this
+   * device for this Flow (its pane closed on it, or a save met a newer Flow) is put back in the page, and named. */
   const load = useCallback(async (fresh = false) => {
     setFailure(undefined)
     try {
       const read = await readFlowInstance(transport, location, fresh)
       setInstance(read)
       setRevision(read.revision)
+      const kept = inPane ? keptDraftOf('Flow', location.ref) : null
+      let doc: QlDoc | null = null
+      if (kept) { try { doc = JSON.parse(kept.draft) as QlDoc } catch { doc = null } }
+      if (kept && doc) {
+        // The owner's page as read is the basis the draft is told from; the draft is what the page shows.
+        baselineText.current = JSON.stringify(read.doc)
+        setBaselined(true)
+        keptBasis.current = keptDraftMoved(kept, read.revision) ? kept.basis : undefined
+        keptText.current = kept.draft
+        draftBasis.current = read.revision
+        setDirty(true)
+        setNotice(keptDraftNotice(kept, read.revision))
+        holdPacket(doc)
+        setFace(projectFlowDocument(currentFlow(embedDocument(read.html, doc))))
+        return
+      }
       holdPacket(read.doc)
       setFace(projectFlowDocument(currentFlow(read.html)))
     } catch (error) {
       setFailure(String(error))
     }
-  }, [location, transport, holdPacket])
+  }, [location, transport, holdPacket, inPane])
+
+  /** Keep the draft the page holds on this device (keptDrafts.ts), or say why it could not be kept; `strict` (the pane closing) throws
+   * instead, so the close is refused and the draft stays in its pane. */
+  const keepHeld = useCallback((text: string, strict = false) => {
+    if (!inPane || !instance || keptText.current === text) return
+    try {
+      keepDraft({form: 'Flow', ref: location.ref, basis: keptBasis.current ?? instance.revision, draft: text,
+        title: instance.doc.meta?.title || instance.doc.meta?.documentId || location.path})
+      keptText.current = text
+    } catch (error) {
+      if (strict) throw error
+      setNotice(keptDraftRefusal('Flow', instance.doc.meta?.title))
+    }
+  }, [inPane, instance, location.path, location.ref])
+  const letGo = useCallback((text?: string) => {
+    releaseKeptDraft('Flow', location.ref, text)
+    if (text === undefined || keptText.current === text) keptText.current = undefined
+  }, [location.ref])
 
   useEffect(() => {void load()}, [load])
 
@@ -156,25 +209,33 @@ export function FlowFace({transport, location, presentation = 'device', openLink
       // the page's own boot writes are the document's, not a draft). Before
       // that first read the owner's page is the basis, never the form's own
       // text, which would read every edit as unchanged.
-      const changed = JSON.stringify(doc) !== flowSaveBaseline(baselineText.current, instance.doc)
+      const text = JSON.stringify(doc)
+      const changed = text !== flowSaveBaseline(baselineText.current, instance.doc)
       if (!changed) {
         // Nothing staged: the host sends nothing. The unchanged outcome is
         // still named, because the router's law is to disclose every save
         // attempt's result.
         setSave(unchangedOutcome())
         setDirty(false)
+        letGo(text)
         return
       }
-      if (draftBasis.current !== undefined && draftBasis.current !== instance.revision) {
-        setSave(classifySaveFailure(`the document moved from ${draftBasis.current} to ${instance.revision} after the draft was taken; review before saving`))
+      // A draft put back from this device on a revision the Flow has moved from since: stale, kept, never written over the newer Flow.
+      const basis = keptBasis.current ?? draftBasis.current
+      if (basis !== undefined && basis !== instance.revision) {
+        keepHeld(text)
+        setSave(classifySaveFailure(`the document moved from ${basis} to ${instance.revision} after the draft was taken; review before saving`))
         return
       }
       const result = await writeFlowInstance(transport, instance.location, instance.revision, embedDocument(instance.html, doc))
       if (result.outcome === 'conflict') {
         // The owner named the outcome itself (its CAS refusal): the router
         // carries that name directly — the owner's words are the detail.
+        // The draft is kept on this device against the revision it was
+        // written on, and the re-read Flow comes back with it in the page.
+        keepHeld(text)
         setSave({outcome: 'conflict', detail: `the owner holds revision ${result.current?.revision ?? 'unknown'}; its current bytes are retained for review`, at: new Date().toISOString()})
-        setNotice('The native source moved while this draft stood. Review the current document, then carry the draft or discard it — nothing was overwritten.')
+        if (!inPane) setNotice('The native source moved while this draft stood. Review the current document, then carry the draft or discard it — nothing was overwritten.')
         baselineText.current = undefined
         setBaselined(false)
         await load()
@@ -183,11 +244,14 @@ export function FlowFace({transport, location, presentation = 'device', openLink
       if (result.outcome === 'unchanged') {
         setSave(unchangedOutcome())
         setDirty(false)
+        letGo(text)
         return
       }
       setSave(savedOutcome(`revision ${result.revision ?? instance.revision}`))
       setDirty(false)
+      letGo(text)
       draftBasis.current = undefined
+      keptBasis.current = undefined
       baselineText.current = undefined
       setBaselined(false)
       await load()
@@ -196,7 +260,7 @@ export function FlowFace({transport, location, presentation = 'device', openLink
     } finally {
       setPending(false)
     }
-  }, [captureIsland, instance, load, transport])
+  }, [captureIsland, instance, load, transport, keepHeld, letGo, inPane])
 
   // A re-read takes the owner's page as it now stands, and that page is the new baseline: the one read before would make the
   // owner's own change (a title written from Clip view, an entry appended by the Flow device) read as a draft. Re-reading is how
@@ -204,9 +268,15 @@ export function FlowFace({transport, location, presentation = 'device', openLink
   const reread = useCallback(() => {
     baselineText.current = undefined
     draftBasis.current = undefined
+    keptBasis.current = undefined
+    // Re-reading sets the draft aside: a draft kept on this device for this Flow goes with it (keptDrafts.ts).
+    releaseKeptDraft('Flow', location.ref)
+    keptText.current = undefined
+    setNotice(undefined)
     setBaselined(false)
     setDirty(false)
     void load(true)
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- `load` follows the location this lets go of
   }, [load])
 
   const markDraft = useCallback(() => {
@@ -227,7 +297,12 @@ export function FlowFace({transport, location, presentation = 'device', openLink
         setBaselined(true)
         return
       }
-      if (JSON.stringify(doc) !== baselineText.current) markDraft()
+      const text = JSON.stringify(doc)
+      if (text !== baselineText.current) {
+        markDraft()
+        // The draft is kept on this device as it stands, so a pane that closes (or a window that goes) never takes it with it.
+        keepHeld(text)
+      }
     } catch {
       // Absence of an answer is not a draft; the strip keeps its last state. Three silent polls after the form stood (7.5 s)
       // mean its own scripts never started in this window: say so, rather than show blank paper (the native pass at
@@ -235,7 +310,7 @@ export function FlowFace({transport, location, presentation = 'device', openLink
       unanswered.current += 1
       if (unanswered.current === SILENT_POLLS && baselineText.current === undefined) setNotice('The Flow\'s form has not started in this window: its own scripts did not answer the host\'s read, so nothing is drawn and nothing can be saved.')
     }
-  }, [captureIsland, face, instance, markDraft, pending])
+  }, [captureIsland, face, instance, markDraft, pending, keepHeld])
   const unanswered = useRef(0)
   /** Silent first reads before the face says the form never started: 7.5 s, as when it was asked every 2.5 s. */
   const SILENT_POLLS = 7500 / FLOW_FIRST_READ_MS
@@ -283,7 +358,6 @@ export function FlowFace({transport, location, presentation = 'device', openLink
     window.addEventListener('message', listener)
     return () => window.removeEventListener('message', listener)
   }, [location.path])
-  const inPane = presentation === 'pane'
   const key = useRef(`flow:${Math.random().toString(36).slice(2)}`).current
   const paneId = useContext(DocumentPaneContext) ?? undefined
   // The door carries the Flow's own location, draft fact and last save outcome, so the page family's devices read the reached
@@ -298,6 +372,17 @@ export function FlowFace({transport, location, presentation = 'device', openLink
   // O-I #745): the Send carries what the Packet shows (central/devices/documentPacketContext.ts).
   useEffect(() => (inPane ? followDocumentPacket() : undefined), [inPane])
   useEffect(() => () => withdrawDocument(key), [key])
+  // ⌘S pressed inside the page is this Save (§10.9, §17.8), not the form's portable copy.
+  useSaveKey(frame, standing.save)
+  // Before the pane closes (or splits, or moves), the page is read once more and its draft kept; a page as read lets any kept one go.
+  useDraftKeeping(inPane ? paneId : undefined, async () => {
+    if (!instance || !face || pending) return
+    let doc: QlDoc
+    try { doc = await captureIsland() } catch { return } // the form never answered: nothing was written in it to keep
+    const text = JSON.stringify(doc)
+    if (text !== flowSaveBaseline(baselineText.current, instance.doc) || keptBasis.current !== undefined) keepHeld(text, true)
+    else letGo()
+  })
 
   return (
     <div

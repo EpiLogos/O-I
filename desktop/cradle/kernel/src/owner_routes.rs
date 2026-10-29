@@ -984,11 +984,15 @@ pub enum AikitWrite {
     },
     /// Forget what the knowledge route learned for a destination, a route, a
     /// project or everything (`aikit knowledge forget destination|route|
-    /// project <resource>` / `all`).
+    /// project <resource>` / `all`), or one destination in one world
+    /// (`aikit knowledge forget here <resource>`, O-I #741: the search line's
+    /// ✕), asked in that world's ground — `project`'s, else Central's root.
     KnowledgeForget {
         scope: ForgetScope,
         #[serde(default)]
         resource: Option<String>,
+        #[serde(default)]
+        project: Option<String>,
     },
 }
 
@@ -998,6 +1002,7 @@ pub enum ForgetScope {
     Destination,
     Route,
     Project,
+    Here,
     All,
 }
 
@@ -1052,7 +1057,8 @@ impl AikitWrite {
             | Self::TrustRecord { project, .. }
             | Self::MethodRun { project, .. }
             | Self::MethodProve { project, .. }
-            | Self::SetPackageExport { project, .. } => project.as_deref(),
+            | Self::SetPackageExport { project, .. }
+            | Self::KnowledgeForget { project, .. } => project.as_deref(),
             Self::WikiShapeDeclare { .. }
             | Self::Adopt { .. }
             | Self::ProcedureRun { .. }
@@ -1061,8 +1067,7 @@ impl AikitWrite {
             | Self::BypassIssue { .. }
             | Self::SourceSync { .. }
             | Self::SourcePromote { .. }
-            | Self::SourceRollback { .. }
-            | Self::KnowledgeForget { .. } => None,
+            | Self::SourceRollback { .. } => None,
         }
     }
 }
@@ -3465,12 +3470,15 @@ fn aikit_written(request: &AikitWrite, cwd: Option<&Path>) -> Result<Written, Er
             args.push(id.into());
             ("aikit source rollback", args)
         }
-        AikitWrite::KnowledgeForget { scope, resource } => {
+        AikitWrite::KnowledgeForget {
+            scope, resource, ..
+        } => {
             let mut args = words(&["knowledge", "forget"]);
             let (verb, needs) = match scope {
                 ForgetScope::Destination => ("destination", true),
                 ForgetScope::Route => ("route", true),
                 ForgetScope::Project => ("project", true),
+                ForgetScope::Here => ("here", true),
                 ForgetScope::All => ("all", false),
             };
             args.push(verb.into());

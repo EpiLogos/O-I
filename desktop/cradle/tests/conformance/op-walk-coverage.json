@@ -72,7 +72,7 @@
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
-      "reason": "Kernel-direct only: tests/shell_owner_routes.rs against fake owners (AIKit's capture, promote, trust record, praxis method run|prove, set package export, wiki-shape declare (and its change of roles on --expected-revision, O-I #742), knowledge forget, procedure run|undo, bypass revoke|issue (issue: lane K0, its answers captured in an isolated home), source sync|promote|rollback and adopt --yes [--expect-digest]); no directly attributable executed native walk is recorded here for aikit_write; retain explicit operation-specific coverage debt until its owner supplies a receipt."
+      "reason": "Kernel-direct only: tests/shell_owner_routes.rs against fake owners (AIKit's capture, promote, trust record, praxis method run|prove, set package export, wiki-shape declare (and its change of roles on --expected-revision, O-I #742), knowledge forget (and forget here, one item in one world's ground: O-I #741), procedure run|undo, bypass revoke|issue (issue: lane K0, its answers captured in an isolated home), source sync|promote|rollback and adopt --yes [--expect-digest]); no directly attributable executed native walk is recorded here for aikit_write; retain explicit operation-specific coverage debt until its owner supplies a receipt."
     },
     {
       "op": "being_encounter",

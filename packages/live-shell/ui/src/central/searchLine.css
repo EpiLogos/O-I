@@ -18,6 +18,10 @@
 .search-line-title { flex: none; max-width: 45%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
 .search-line-says { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-faint); font-size: 11px }
 .search-line-used { flex: none; color: var(--text-dim); font-size: 10px }
+/* ✕ beside an item the line counted (§18.4): VS Code's quick-pick item button, shown on the chosen row and under the pointer. */
+.search-line-forget { flex: none; border: 0; padding: 0 4px; background: none; color: var(--text-faint); font: inherit; font-size: 11px; cursor: pointer; visibility: hidden }
+.search-line-results li[data-chosen] .search-line-forget, .search-line-results li:hover .search-line-forget, .search-line-forget:focus-visible { visibility: visible }
+.search-line-forget:hover { color: var(--text) }
 .search-line-key { flex: none; margin-left: auto; color: var(--text-dim); font: inherit; font-size: 11px }
 .search-line-problem { margin: 0; padding: 4px 8px; color: var(--rec); border-top: 1px solid var(--line) }
 .search-line-status { display: flex; gap: 8px; margin: 0; padding: 4px 8px; border-top: 1px solid var(--line); color: var(--text-dim); font-size: 10px }

@@ -40,10 +40,20 @@ import {useContext, useCallback, useEffect, useMemo, useRef, useState} from 'rea
  *
  * A message from the sandbox may stage material but never authorizes a
  * native write. Drafts are retained in the session, same-basis, while the
- * device is docked; explicit Review re-reads the owner before any save. */
+ * device is docked; explicit Review re-reads the owner before any save.
+ *
+ * In a pane a draft is never dropped when the pane closes (central/documents/
+ * keptDrafts.ts): the face keeps the form's snapshot, with the basis it was
+ * staged on, on this device while edits stand and once more before its pane
+ * closes; opened again, the Day comes back with the draft in its form, named.
+ * A Day that moved since stands blocked under Review, and Keep draft edits
+ * carries the draft onto the Day as it stands (the session's reviewOnto). ⌘S
+ * pressed inside the form is the head's Save (useSaveKey), not the form's
+ * HTML copy. */
 
 import {
   DayFormSession,
+  formEdits,
   isObject,
   projectDieDocument,
   unmappedChanges,
@@ -56,6 +66,8 @@ import {useDocumentFrame} from '../../../../../desktop/cradle/src/document/frame
 import dieForm from '../../../../../desktop/cradle/documents/ql-daily-die.html?raw'
 import type {KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
 import {classifySaveFailure, savedOutcome, unchangedOutcome, type SaveRouterReading} from './documentDeviceModel'
+import {keepDraft, keptDraftMoved, keptDraftNotice, keptDraftOf, keptDraftRefusal, releaseKeptDraft, useDraftKeeping} from '../central/documents/keptDrafts'
+import {useSaveKey} from '../central/documents/useSaveKey'
 import {SaveOutcomeChip} from './inhabitantCard.tsx'
 import {linkTarget, PAGE_LINK_MESSAGE, type PageLinkTarget} from './DocumentPageFace'
 import './inhabitantDevices.css'
@@ -100,7 +112,20 @@ function dieFaceOf(payload: unknown): number {
   return typeof face === 'number' && Number.isInteger(face) && face >= 0 && face <= 5 ? face : 0
 }
 
+/** A Day's draft as this device keeps it: the form's snapshot and the basis the session staged it on. */
+interface KeptDay {basis: DieBasis; snapshot: unknown}
+const keptDayOf = (draft: string): KeptDay | null => {
+  try {
+    const value = JSON.parse(draft) as Partial<KeptDay> | null
+    return value && isObject(value.basis) && typeof value.basis.revision === 'string' && Array.isArray(value.basis.fields) ? value as KeptDay : null
+  } catch { return null }
+}
+
 export function DocumentDayDieFace({transport, project, sourceRef, documentId, presentation = 'device', openLink, onDirty}: DocumentDayDieFaceProps) {
+  const inPane = presentation === 'pane'
+  /** The Day as this device keeps its draft (keptDrafts.ts): by the owner's source and document. */
+  const keptRef = `${sourceRef}#${documentId}`
+  const keptText = useRef<string>()
   const session = useMemo(() => new DayFormSession({sourceRef, documentId, revision: '', payload: undefined, fields: []}), [sourceRef, documentId])
   const [basis, setBasis] = useState<DieBasis>()
   const [face, setFace] = useState<string>()
@@ -129,10 +154,36 @@ export function DocumentDayDieFace({transport, project, sourceRef, documentId, p
         const reading = await receiving<unknown>(transport, project, {kind: 'document', source_ref: sourceRef, document_id: documentId})
         const validated = validateDocumentBasis(reading, sourceRef, documentId)
         if (!alive) return
+        templateRef.current = dieForm
+        // A draft kept on this device for this Day (its pane closed on it) is put back in the form on the basis it was staged on, and
+        // named. A Day that moved since stands blocked under Review: Keep draft edits carries it onto the Day as it stands.
+        const kept = inPane ? keptDraftOf('Day', keptRef) : null
+        const held = kept ? keptDayOf(kept.draft) : null
+        if (!alive) return
+        if (kept && held) {
+          try {
+            session.basis = held.basis
+            session.stage(held.snapshot)
+            session.observe(validated)
+            const restored = projectDieDocument(dieForm, held.snapshot)
+            if (!restored) throw new Error('the form cannot draw it')
+            keptText.current = kept.draft
+            setBasis(session.basis)
+            setRevision(session.basis.revision)
+            setDirty(true)
+            if (session.blocked) setReview(validated)
+            setNotice(`${keptDraftNotice(kept, validated.revision, null)}${keptDraftMoved(kept, validated.revision) ? ` Keep draft edits carries it onto r${revisionShort(validated.revision)}.` : ''}`)
+            setFace(restored)
+            return
+          } catch {
+            // A kept draft the form cannot take back stays kept; the Day opens as its owner holds it, and says so.
+            session.basis = validated; session.draft = undefined; session.edited = false; session.blocked = undefined
+            setNotice(`A draft of this Day kept on this device (${new Date(kept.at).toLocaleString('en-GB')}) no longer fits its form, so the Day opens as Central holds it. The draft stays kept.`)
+          }
+        }
         setBasis(validated)
         session.basis = validated
         setRevision(validated.revision)
-        templateRef.current = dieForm
         const projected = projectDieDocument(dieForm, validated.payload)
         if (!projected) throw new Error('Original editor snapshot seam is unavailable; its source remains intact')
         if (alive) setFace(projected)
@@ -141,6 +192,7 @@ export function DocumentDayDieFace({transport, project, sourceRef, documentId, p
       }
     })()
     return () => {alive = false}
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- a kept draft is read as the Day is read, not on its own
   }, [transport, project, sourceRef, documentId, session])
 
   // The bounded host↔frame bridge: dirty announcements and one snapshot at a time.
@@ -201,6 +253,22 @@ export function DocumentDayDieFace({transport, project, sourceRef, documentId, p
     return value
   }, [])
 
+  /** Keep the form's snapshot on this device with the basis it is staged on; `strict` (the pane closing) throws, so the close is refused
+   * and the draft stays in its pane. */
+  const keepHeld = useCallback((snapshot: unknown, strict = false) => {
+    if (!inPane) return
+    const text = JSON.stringify({basis: session.basis, snapshot} satisfies KeptDay)
+    if (keptText.current === text) return
+    try {
+      keepDraft({form: 'Day', ref: keptRef, basis: session.basis.revision, draft: text, title: documentId})
+      keptText.current = text
+    } catch (error) {
+      if (strict) throw error
+      setNotice(keptDraftRefusal('Day', documentId))
+    }
+  }, [inPane, keptRef, documentId, session])
+  const letGo = useCallback(() => { releaseKeptDraft('Day', keptRef); keptText.current = undefined }, [keptRef])
+
   const saveToNative = useCallback(async () => {
     if (!basis) return
     setPending(true)
@@ -226,6 +294,7 @@ export function DocumentDayDieFace({transport, project, sourceRef, documentId, p
       }
       setSave(savedOutcome(unmapped.length ? `${unmapped.length} unmapped region(s) remain only in the original form` : undefined))
       setDirty(session.edited || session.draft !== undefined)
+      if (!unmapped.length) letGo()
       // Re-read the owner so the strip's basis names the revision the owner holds now.
       const reread = await receiving<unknown>(transport, project, {kind: 'document', source_ref: sourceRef, document_id: documentId})
       const next = validateDocumentBasis(reread, sourceRef, documentId)
@@ -244,7 +313,7 @@ export function DocumentDayDieFace({transport, project, sourceRef, documentId, p
     } finally {
       setPending(false)
     }
-  }, [basis, capture, documentId, project, session, sourceRef, transport])
+  }, [basis, capture, documentId, project, session, sourceRef, transport, letGo])
 
   const reviewNative = useCallback(async () => {
     setPending(true)
@@ -287,10 +356,20 @@ export function DocumentDayDieFace({transport, project, sourceRef, documentId, p
     }
   }, [review, session])
 
+  // While edits stand in a pane, the form's snapshot is kept on this device as it stands, so a pane that closes (or a window that goes)
+  // never takes the draft with it.
+  useEffect(() => {
+    if (!inPane || !dirty || !face) return
+    const timer = window.setInterval(() => {
+      if (pending || snapshot.current) return
+      void capture().then(value => keepHeld(value), () => undefined)
+    }, 2500)
+    return () => window.clearInterval(timer)
+  }, [inPane, dirty, face, pending, capture, keepHeld])
+
   const blocked = session.blocked !== undefined
   const openFace = live?.face ?? dieFaceOf(basis?.payload)
   const open = DIE_POSITIONS[openFace]
-  const inPane = presentation === 'pane'
   const key = useRef(`day:${Math.random().toString(36).slice(2)}`).current
   const paneId = useContext(DocumentPaneContext) ?? undefined
   const standing: DocumentInPane = {key, paneId, form: 'Day', title: documentId, revision: revision || undefined,
@@ -303,6 +382,19 @@ export function DocumentDayDieFace({transport, project, sourceRef, documentId, p
   // The aperture follows the document the hand reached (the first one standing until then); a change of standing reaches it.
   useEffect(() => { if (inPane) publishDocument(standing, !reachedDocument()) })
   useEffect(() => () => withdrawDocument(key), [key])
+  // ⌘S pressed inside the form is this Save (§10.9, §17.8), not the form's HTML copy.
+  useSaveKey(frame, standing.save)
+  // Before the pane closes (or splits, or moves), the form's snapshot is taken once more and kept while it holds edits; a form with none
+  // lets any kept draft go.
+  useDraftKeeping(inPane ? paneId : undefined, async () => {
+    if (!face || pending || (!session.edited && session.draft === undefined)) return
+    let value: unknown
+    try { value = await capture() } catch { return } // the form never answered: nothing was written in it to keep
+    let edits = 1
+    try { edits = formEdits(session.basis, value).length } catch { edits = 1 }
+    if (edits || session.blocked) keepHeld(value, true)
+    else letGo()
+  })
   // Held at the door while the form can be turned: the Day device and the transport turn the die you see, not only the owner's.
   const turnable = live !== undefined
   useEffect(() => turnable ? holdDayInPane(documentId, key, {face: openFace, turn: turnTo}) : undefined, [documentId, key, openFace, turnTo, turnable])

@@ -17,15 +17,19 @@ import {useCallback, useContext, useEffect, useRef, useState} from 'react'
  * - a link the page opens ("In relation") is sent to its host, which opens it in the shell: a page of a world opens as its page, an
  *   http(s) address in a web pane. The sandbox grants the page no popups, so without its host a link does nothing.
  *
- * The page's own internal Save keeps its meaning (a portable HTML copy inside the sandbox); only the head's Save writes to the owner. */
+ * The page's own internal Save keeps its meaning (a portable HTML copy inside the sandbox); only the head's Save writes to the owner, and
+ * ⌘S pressed inside the page is that Save (useSaveKey). A draft is never dropped when the pane closes: it is kept on this device and the
+ * page comes back with it, named, until a save is acknowledged or Re-read sets it aside (central/documents/keptDrafts.ts). */
 import {readFile} from '../../../../../desktop/cradle/src/files/client'
 import {saveDocumentPayload, type DocumentSaveOutcome} from '../../../../../desktop/cradle/src/document/hostSave'
 import {documentScripts, useDocumentFrame, useDocumentHostRead, type FrameIsland} from '../../../../../desktop/cradle/src/document/frame'
-import {readDocumentIdentity} from '../../../../../desktop/cradle/src/document/identity'
+import {islandSpan, readDocumentIdentity, sameDocumentPayload} from '../../../../../desktop/cradle/src/document/identity'
 import {readPage, renderPage} from '../../../../../desktop/cradle/src/personal/page.mjs'
 import type {CentralLocation, KernelTransportStatus, NativeFileReading} from '../../../../../desktop/cradle/src/kernel/types'
 import {DocumentPaneContext, documentStateWords, publishDocument, reachedDocument, revisionShort, withdrawDocument, type DocumentInPane} from '../central/documents/documentDoor'
 import {classifySaveFailure, savedOutcome, unchangedOutcome, type SaveRouterReading} from './documentDeviceModel'
+import {keepDraft, keptDraftMoved, keptDraftNotice, keptDraftOf, keptDraftRefusal, releaseKeptDraft, useDraftKeeping} from '../central/documents/keptDrafts'
+import {useSaveKey} from '../central/documents/useSaveKey'
 import './inhabitantDevices.css'
 
 /** The message a page sends its host when a link in it is followed (the page templates' runtime: oi-beings.html, oi-things.html, and
@@ -85,15 +89,48 @@ export function PageFace({transport, location, kind, openLink}: DocumentPageFace
   const readIsland = useDocumentHostRead(frame, true)
   const baseline = useRef<string>()
   const form = kind === 'being' ? 'Being' : 'Thing'
+  /** The revision a draft put back from this device was written against, while it stands (keptDrafts.ts): Save then asks the owner on
+   * that basis, and a page that moved since is stale, never written over. */
+  const keptBasis = useRef<string>()
+  const keptText = useRef<string>()
 
   const load = useCallback(async () => {
     setFailure(undefined)
     try {
       const read = await readFile(transport, location)
       setReading(read)
+      // A draft kept on this device for this page (its pane closed on it) is put back in the page, and named.
+      const kept = keptDraftOf(form, location.ref)
+      const span = kept ? islandSpan(read.content, 'ql-doc') : undefined
+      if (kept && span) {
+        baseline.current = span.text
+        keptBasis.current = keptDraftMoved(kept, read.revision) ? kept.basis : undefined
+        keptText.current = kept.draft
+        setDirty(true)
+        setNotice(keptDraftNotice(kept, read.revision))
+        setFace(projectPage(currentPage(read.content.slice(0, span.start) + kept.draft + read.content.slice(span.end))))
+        return
+      }
       setFace(projectPage(currentPage(read.content)))
     } catch (error) { setFailure(String(error)) }
-  }, [location, transport])
+  }, [location, transport, form])
+
+  /** Keep the page's draft on this device; `strict` (the pane closing) throws, so the close is refused and the draft stays. */
+  const keepHeld = useCallback((text: string, strict = false) => {
+    if (!reading || keptText.current === text) return
+    try {
+      keepDraft({form, ref: location.ref, basis: keptBasis.current ?? reading.revision, draft: text, title: title ?? form})
+      keptText.current = text
+    } catch (error) {
+      if (strict) throw error
+      setNotice(keptDraftRefusal(form, title))
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- the title is read from the reading it follows
+  }, [form, location.ref, reading])
+  const letGo = useCallback((text?: string) => {
+    releaseKeptDraft(form, location.ref, text)
+    if (text === undefined || keptText.current === text) keptText.current = undefined
+  }, [form, location.ref])
   useEffect(() => { void load() }, [load])
 
   const island = useCallback(async (): Promise<string> => {
@@ -109,21 +146,26 @@ export function PageFace({transport, location, kind, openLink}: DocumentPageFace
     setPending(true); setNotice(undefined)
     try {
       const text = await island()
-      if (baseline.current !== undefined && text === baseline.current) { setSave(unchangedOutcome()); setDirty(false); return }
+      if (baseline.current !== undefined && text === baseline.current) { setSave(unchangedOutcome()); setDirty(false); letGo(text); return }
       const result = await saveDocumentPayload(transport, {location: reading.location ?? location, project: reading.project?.name ?? undefined, identity,
-        basisFileRevision: reading.revision, frameIslandText: text})
+        basisFileRevision: keptBasis.current ?? reading.revision, frameIslandText: text})
       setSave(outcomeReading(result.outcome))
       if (result.outcome.state === 'saved' || result.outcome.state === 'unchanged') {
-        setDirty(false); baseline.current = undefined; await load()
+        letGo(text); keptBasis.current = undefined
+        setDirty(false); baseline.current = undefined; setNotice(undefined); await load()
       } else if (result.outcome.state === 'stale' || result.outcome.state === 'conflict') {
+        keepHeld(text)
         setNotice('The page moved behind this draft. Re-read to see it; your edits stay in the pane until you do — nothing was overwritten.')
       }
     } catch (error) {
       setSave(classifySaveFailure(error))
     } finally { setPending(false) }
-  }, [island, load, location, reading, transport])
+  }, [island, load, location, reading, transport, keepHeld, letGo])
 
-  const reread = useCallback(() => { baseline.current = undefined; setDirty(false); setSave(undefined); void load() }, [load])
+  const reread = useCallback(() => {
+    baseline.current = undefined; keptBasis.current = undefined; letGo()
+    setDirty(false); setSave(undefined); setNotice(undefined); void load()
+  }, [load, letGo])
 
   // The draft fact: the island as first read is the baseline; a later read that differs is a draft. Absence of an answer is not one.
   useEffect(() => {
@@ -132,11 +174,11 @@ export function PageFace({transport, location, kind, openLink}: DocumentPageFace
       if (pending) return
       void island().then(text => {
         if (baseline.current === undefined) baseline.current = text
-        else if (text !== baseline.current) setDirty(true)
+        else if (text !== baseline.current) { setDirty(true); keepHeld(text) }
       }, () => undefined)
     }, 2500)
     return () => window.clearInterval(timer)
-  }, [face, island, pending])
+  }, [face, island, pending, keepHeld])
 
   // A link the page follows reaches its host as a message from this frame only; the host opens it in the shell, or says why not.
   useEffect(() => {
@@ -160,6 +202,17 @@ export function PageFace({transport, location, kind, openLink}: DocumentPageFace
     reread: pending ? undefined : reread, rereadLabel: 'Re-read', location: reading?.location ?? location, dirty, ...(save ? {outcome: save.outcome} : {})}
   useEffect(() => { publishDocument(standing, !reachedDocument()) })
   useEffect(() => () => withdrawDocument(key), [key])
+  // ⌘S pressed inside the page is this Save (§10.9, §17.8), not the template's portable copy.
+  useSaveKey(frame, standing.save)
+  // Before the pane closes (or splits, or moves), the page is read once more and its draft kept; a page as read lets any kept one go.
+  useDraftKeeping(paneId, async () => {
+    if (!reading || !face || pending) return
+    let text: string
+    try { text = await island() } catch { return } // the page never answered: nothing was written in it to keep
+    const basis = baseline.current ?? islandSpan(reading.content, 'ql-doc')?.text
+    if (keptBasis.current !== undefined || (basis !== undefined && !sameDocumentPayload(text, basis))) keepHeld(text, true)
+    else letGo()
+  })
 
   return <div onPointerDownCapture={() => publishDocument(standing, true)} onFocusCapture={() => publishDocument(standing, true)}
     className="inhabitant-face-body inhabitant-document" data-document-device={`oi-${kind === 'being' ? 'beings' : 'things'}`}

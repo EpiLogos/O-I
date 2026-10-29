@@ -138,4 +138,11 @@
     if (chord && key === 'g' && open && query) { event.preventDefault(); step(event.shiftKey ? -1 : 1); answer(null); return; }
     if (event.key === 'Escape' && open) parent.postMessage({type: 'oi:document-find-key', key: 'close'}, '*');
   }, true);
+  // A page that replaces another in its pane's frame (a Re-read, a new projection) starts with no find: it says it stands once its
+  // words do, and a find line left open asks it its words again (DocumentFind.tsx), as VS Code's find widget keeps its search over
+  // a file that reloads.
+  if (parent !== window) {
+    const ready = () => parent.postMessage({type: 'oi:document-find-ready'}, '*');
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', ready, {once: true}); else ready();
+  }
 })();
