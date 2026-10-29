@@ -709,6 +709,24 @@
       "reason": "No directly attributable executed native walk is recorded here for ground; retain explicit operation-specific coverage debt until its owner supplies a receipt."
     },
     {
+      "op": "ground_authority",
+      "native_owner": "kernel/src/ground_authority.rs",
+      "spec_ref": "DLW.md \u00a710.11 Ground; O-I #740",
+      "status": "unverified",
+      "scenarios": [],
+      "owner_lane": "A/native verification",
+      "reason": "Walked headless through the walk-bridge kernel and the built ctrl on a scratch world (O-I #740 lane A); no native walk of the Ground step's key yet (#821). Named here as explicit debt, not as coverage."
+    },
+    {
+      "op": "ground_form",
+      "native_owner": "kernel/src/ground_form.rs",
+      "spec_ref": "DLW.md \u00a710.11 Ground; O-I #740",
+      "status": "unverified",
+      "scenarios": [],
+      "owner_lane": "A/native verification",
+      "reason": "Walked headless through the walk-bridge kernel and the built ctrl on a scratch world (O-I #740 lane A); no native walk of the Ground step's Day form yet (#821). Named here as explicit debt, not as coverage."
+    },
+    {
       "op": "harness_agent_control",
       "native_owner": "kernel/src/agency.rs",
       "spec_ref": "gateway-parity convergence r2; Hermes session lifecycle parity routed through the owner's own gateway",
