@@ -34,7 +34,7 @@
 //   points the tier and Relate at the next tier that has no source. Each act returns a receipt.
 // A key the owner does not report is absent: its control draws "—", and the picture names the missing reading.
 import {useState, type ReactNode} from 'react'
-import {Action, Band, Chooser, Dial, Display, Folded, Ladder, Panel, Radio, Readout, Rows, Section, Tile, type LightState, type RowItem} from '../../sdk/panel'
+import {Action, Band, Chooser, Dial, Display, Folded, Ladder, Panel, Radio, Readout, Rows, Section, Tile, type LightState, type RowItem, unreadRows, NoReading} from '../../sdk/panel'
 import {NONE, json, numOf, st, strOf, type DesignedDevice, type ViewProps} from './design'
 
 type V = ViewProps['v']
@@ -237,7 +237,7 @@ function SubjectChooser({p}: {p: ViewProps}) {
 
 /** The rows of the tier in front, then the sources no tier holds: each with its kind, its four ticks and, refused, the owner's words. */
 function sourceRows(v: V, sources: readonly Source[] | undefined, tier: number | undefined): RowItem[] {
-  if (!sources) return [{id: 'none', name: 'No reading of the account', light: 'unknown'}]
+  if (!sources) return unreadRows('No reading of the account.')
   const needs = strOf(v, 'show') === 'needs'
   const shown = (s: Source) => !needs || needsYou(s)
   const row = (s: Source): RowItem => ({id: s.path, name: s.tier === null ? `${tail(s.path)} · unbound` : tail(s.path), light: s.refusal ? 'dark' : needsYou(s) ? 'dark' : 'lit', tone: 'value',
@@ -300,7 +300,7 @@ function TiersBands({p}: {p: ViewProps}) {
 
 function partRows(v: V): RowItem[] {
   const {root, world, account} = partsOf(v)
-  if (!root && !world && !account) return [{id: 'none', name: 'No reading of the root or the world', light: 'unknown'}]
+  if (!root && !world && !account) return unreadRows('No reading of the root or the world.')
   const all = [...(root ?? []), ...(world ?? []), ...(account ? [account] : [])].sort((a, b) => Number(a.present) - Number(b.present))
   return all.map(x => ({id: `${x.where}:${x.path}`, name: x.path, light: x.present ? 'lit' as LightState : 'dark' as LightState, tone: x.present ? 'value' as const : 'stall' as const,
     note: x.present ? x.where : `missing · ${x.where}`, does: x.present ? 'Present.' : x.where === 'root' ? 'Initialise root adds it.' : x.where === 'account' ? 'Ensure gives the world its account.' : 'Reproject stamps it.'}))
@@ -332,7 +332,7 @@ function MakeBands({p}: {p: ViewProps}) {
 
 function returnRows(v: V): RowItem[] {
   const ux = uxOf(v), ex = exOf(v) ?? []
-  if (!ux) return [{id: 'none', name: 'No reading of the experiences', light: 'unknown'}]
+  if (!ux) return unreadRows('No reading of the experiences.')
   if (!ux.length) return [{id: 'none', name: 'No intended experience is bound', light: 'dark'}]
   return ux.flatMap(u => [{id: u.ref, name: u.source, light: 'lit' as LightState, tone: 'value' as const, note: u.ref},
     ...ex.filter(e => e.ux.includes(u.ref)).map(e => ({id: e.ref, name: `↳ ${e.source}`, light: 'lit' as LightState, tone: 'accent' as const, note: 'return', does: `A return written against ${u.ref}.`}))])
@@ -395,7 +395,7 @@ function DocsPane({p}: {p: ViewProps}) {
   return <div className="ref-pane-body">
     <div className="ref-pane-tabs" role="tablist" aria-label="Docs"><button type="button" role="tab" aria-selected="true">Docs · {strOf(p.v, 'subject') ?? NONE}</button></div>
     <div className="ref-doc">
-      <h3>The account <small>{sources ? `${TIERS.filter(t => sources.some(s => s.tier === t)).length} of 6 tiers bound · ${waitingOf(sources)} need you` : 'no reading'}</small></h3>
+      <h3>The account <small>{sources ? `${TIERS.filter(t => sources.some(s => s.tier === t)).length} of 6 tiers bound · ${waitingOf(sources)} need you` : <NoReading name="The account" why="No reading of the account." />}</small></h3>
       {!sources ? <p className="ref-doc-lead">No reading of the account.</p> : <>
         {TIERS.map(t => { const here = sources.filter(s => s.tier === t); return <section key={t} className="ref-doc-kind"><h4>Tier {t} · {TIER_NAME[t]}</h4>
           {here.length ? <ol className="ref-doc-list">{here.map(item)}</ol> : <p className="ref-doc-lead">No source yet.</p>}

@@ -55,7 +55,7 @@
 
 import {InstrumentsSection} from '../frame/InstrumentsSection'
 import {trackRows, type TrackRows} from '../frame/keys/keyDoors'
-import {useContext, useEffect, useMemo, useState, useSyncExternalStore} from 'react'
+import {useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore, type MouseEvent as ReactMouseEvent, type ReactNode} from 'react'
 import {openSettings, setupRequest} from '../settings/host'
 import type {SettingsRequest} from '../settings/adapter'
 import {chooseFolder} from '../settings/folderChooser'
@@ -873,26 +873,60 @@ export function NewForms({forms = DOCUMENT_FORMS, openers}: {forms?: readonly Do
   return <section className="mode-browser-rows" aria-label="New">
     <div className="mode-browser-sep"><span>New document — the four forms</span></div>
     <div className="mode-browser-newforms">
-      {offered.map(({form, mark, opener}) => <button type="button" key={form.kind} data-new-form={form.kind} disabled={!opener}
-        onClick={opener ? () => opener.open() : undefined}
-        data-i={`New ${form.label}|${form.hint}. ${opener ? 'Makes a new one in the focused pane.' : 'The Workbench publishes no opener for this form yet, so it is not made from here.'}`}
+      {offered.map(({form, mark, opener}) => <NewTile key={form.kind} id={form.kind} name={`New ${form.label}`} opener={opener}
+        idle={`New ${form.label}|${form.hint}. ${opener ? 'Makes a new one in the focused pane.' : 'The Workbench publishes no opener for this form yet, so it is not made from here.'}`}
         title={`${form.label} — ${form.hint}. ${opener ? 'Makes a new one in the focused pane.' : 'Not made from the browser yet: the Workbench publishes no opener for this form.'}`}>
         <b aria-hidden="true"><KindMark kind={mark} size={15} /></b>{form.label}
-      </button>)}
+      </NewTile>)}
     </div>
     {/* Your practice (T-WORLDS W4; manual §24.5): the pages your practice keeps, made in your practice world through the Workbench's own
         openers for them (inhabitants/ql/devices/practiceLaunch.ts) — a journal, a dream journal, a journey. */}
     {practice.length > 0 && <>
       <div className="mode-browser-sep"><span>Your practice</span></div>
       <div className="mode-browser-newforms" data-new-practice>
-        {practice.map(opener => <button type="button" key={opener.id} data-new-form={opener.id} onClick={() => opener.open()}
-          data-i={`New ${opener.title}|${opener.hint}. Makes it in your practice world and opens it in the focused pane.`}
+        {practice.map(opener => <NewTile key={opener.id} id={opener.id} name={`New ${opener.title}`} opener={opener}
+          idle={`New ${opener.title}|${opener.hint}. Makes it in your practice world and opens it in the focused pane.`}
           title={`${opener.title} — ${opener.hint}.`}>
           <b aria-hidden="true"><KindMark kind="doc" size={15} /></b>{opener.title}
-        </button>)}
+        </NewTile>)}
       </div>
     </>}
   </section>
+}
+
+/** One New… tile (a form of the four, or a page of your practice): a press makes one thing through the Workbench's opener. While that
+ * make is in flight the tile stands Waiting (manual §16.11: sent, not yet confirmed) and holds off every other press, so a double-click
+ * makes one thing (walked 29 Oct: it acted twice, then said "nothing was made" when something was; O-I #750). When the opener answers,
+ * the tile says on the status bar's Info line what was made, or the owner's own words when it refused — through its data-i, the one
+ * channel the Info line reads. */
+export function NewTile({id, name, opener, idle, title, children}: {id: string; name: string; opener: WorkbenchOpener | null; idle: string; title: string; children: ReactNode}) {
+  const [making, setMaking] = useState(false)
+  const [said, setSaid] = useState<string | null>(null)
+  const self = useRef<HTMLButtonElement>(null)
+  const press = useMemo(() => opener && makeOnce(name, () => opener.open(), {making: setMaking, say: setSaid}), [opener, name])
+  // The Info line reads what the pointer enters: once the answer stands in the tile's data-i, the tile is read again where it stands.
+  useEffect(() => { if (said !== null && typeof MouseEvent !== 'undefined') self.current?.dispatchEvent(new MouseEvent('mouseover', {bubbles: true})) }, [said])
+  return <button ref={self} type="button" data-new-form={id} disabled={!opener} aria-busy={making || undefined} data-standing={making ? 'waiting' : undefined}
+    onClick={press ? (event: ReactMouseEvent<HTMLButtonElement>) => press(event.detail) : undefined} onMouseLeave={() => setSaid(null)} data-i={said ?? idle} title={title}>{children}</button>
+}
+
+/** A press that makes one thing at a time (a New… tile's): the press of `detail` 1 asks `open`; the second click of a double-click
+ * (detail 2 and on), and any press while the first is still being made, make nothing more. While it is made, `making` is true; when the
+ * opener answers, `say` gets the tile's Info line — `name|what was made`, or `name|the owner's own words` when it refused. An opener that
+ * answers nothing (it only opens a surface) says nothing. Returns the press. */
+export function makeOnce(name: string, open: () => void | Promise<string>, on: {making: (making: boolean) => void; say: (line: string | null) => void}): (detail: number) => void {
+  let held = false
+  const words = (cause: unknown) => (cause instanceof Error ? cause.message : String(cause))
+  return detail => {
+    if (held || detail > 1) return
+    held = true
+    on.say(null)
+    let answer: void | Promise<string>
+    try { answer = open() } catch (cause) { held = false; on.say(`${name}|${words(cause)}`); return }
+    if (!answer) { held = false; return }
+    on.making(true)
+    answer.then(made => on.say(`${name}|${made}`), cause => on.say(`${name}|${words(cause)}`)).finally(() => { held = false; on.making(false) })
+  }
 }
 
 /** The designed empty category — the owner has not landed. Names the owner

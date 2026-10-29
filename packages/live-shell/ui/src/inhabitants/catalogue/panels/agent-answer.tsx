@@ -183,7 +183,8 @@ export function answerStateWord(p: ViewProps, run: RunState): string | undefined
   const l = lightOf(p)
   if (l === undefined) return undefined
   if (l === 'dark') return 'not bound'
-  if (l !== 'lit') return 'not read'
+  // Not read: no word in the state's place — its readout stands "—" with the No-reading standing, and the Info line says so.
+  if (l !== 'lit') return undefined
   const vo = voiceOf(p.v)
   return vo === 'listening' ? 'hearing you' : vo === 'speaking' ? 'speaking' : PHASE_OF[run]
 }

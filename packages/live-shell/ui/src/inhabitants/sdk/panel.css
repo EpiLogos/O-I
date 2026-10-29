@@ -161,25 +161,46 @@
 .dp-handle:focus-visible .dp-handle-mark, .dp-handle:hover .dp-handle-mark { fill: var(--dp-on); }
 .dp-handle:focus-visible .dp-handle-n, .dp-handle:hover .dp-handle-n { fill: var(--dp-on-text); }
 
-/* ---- standing */
-.dp-cell[data-automated="on"]::before, .dp-cell[data-automated="overridden"]::before { content: ''; position: absolute; left: 0; top: 2px; width: 5px; height: 5px; border-radius: 50%; background: var(--rec, #e0523f); }
-.dp-cell[data-automated="overridden"]::before { background: transparent; border: 1px solid var(--rec, #e0523f); width: 4px; height: 4px; }
-.dp-cell[data-held="true"] .dp-dial-value { stroke: var(--stall, #ff9b4a); }
-.dp-cell[data-held="true"] .dp-box { --dp-value-dim: color-mix(in srgb, var(--stall, #ff9b4a) 40%, transparent); }
+/* ---- standing (manual §16.11): one per control, `data-standing`, drawn here and nowhere else. What the hand is doing to the control
+   (`data-hand`) and how the place sets it (its view, its size) are other inputs; nothing below reads them. */
+/* Automated: a red dot at the top left. Overridden: the dot hollow (the transport's Re-enable gives the value back to its lane). */
+.dp-cell[data-standing="automated"]::before, .dp-cell[data-standing="overridden"]::before { content: ''; position: absolute; left: 0; top: 2px; width: 5px; height: 5px; border-radius: 50%; background: var(--rec, #e0523f); }
+.dp-cell[data-standing="overridden"]::before { background: transparent; border: 1px solid var(--rec, #e0523f); width: 4px; height: 4px; }
+/* Modulated: the dial's thin outer arc is the range the modulator moves it through (drawn from the value's `mod`); a value box carries
+   the same range as a thin line under its field. */
+.dp-cell[data-standing="modulated"] .dp-dial-mod { opacity: .9; }
+.dp-box-mod { position: absolute; left: calc(var(--m0) * 100%); width: calc((var(--m1) - var(--m0)) * 100%); bottom: -3px; height: 1px; background: var(--dp-value); opacity: .55; pointer-events: none; }
+.dp-cell[data-standing="modulated"] .dp-box-mod { opacity: .9; }
+/* Held: the arc or the fill in orange, the holder's name under the control; press the name to give the value back. */
+.dp-cell[data-standing="held"] .dp-dial-value { stroke: var(--stall, #ff9b4a); }
+.dp-cell[data-standing="held"] .dp-box { --dp-value-dim: color-mix(in srgb, var(--stall, #ff9b4a) 40%, transparent); }
+.dp-cell[data-standing="held"] .dp-toggle, .dp-cell[data-standing="held"] .dp-radio, .dp-cell[data-standing="held"] .dp-chooser { box-shadow: inset 0 0 0 1px var(--stall, #ff9b4a); }
+.dp-cell[data-standing="held"] .dp-toggle[aria-pressed="true"], .dp-cell[data-standing="held"] .dp-radio:not([data-slide]) button[aria-checked="true"], .dp-cell[data-standing="held"] .dp-radio[data-slide] > .dp-thumb { background: var(--stall, #ff9b4a); }
 .dp-handback { padding: 0 3px; height: 11px; background: none; border: 1px solid var(--stall, #ff9b4a); color: var(--stall, #ff9b4a); font: inherit; font-size: 8.5px; line-height: 9px; cursor: pointer; }
-.dp-cell[data-pending="true"] .dp-value, .dp-cell[data-pending="true"] .dp-box > span { font-style: italic; opacity: .75; }
-.dp-cell[data-pending="true"] .dp-dial-value { stroke-dasharray: 2 2; }
-.dp-cell[data-pending="true"] .dp-radio button[aria-checked="true"] { background: transparent; color: var(--dp-on); outline: 1px dashed var(--dp-on); outline-offset: -2px; }
-/* Waiting on the owner (manual §16.10, §6): a toggle and a chooser as a radio — italics, the edge dashed. */
-.dp-cell[data-pending="true"] .dp-toggle, .dp-cell[data-pending="true"] .dp-chooser { font-style: italic; outline: 1px dashed var(--dp-on); outline-offset: -2px; }
-.dp-cell[data-pending="true"] .dp-toggle[aria-pressed="true"] { background: transparent; color: var(--dp-on); }
-.dp-cell[data-disabled="true"] { opacity: .42; }
-/* Refused: the value is the owner's again; the name stays in the stall colour until the next move, and says why. */
-.dp-cell[data-refused="true"] > .dp-label { color: var(--stall, #ff9b4a); }
+/* Waiting (sent, not yet confirmed): the value in italics, the arc dashed, a choice's edge dashed. */
+.dp-cell[data-standing="waiting"] .dp-value, .dp-cell[data-standing="waiting"] .dp-box > span, .dp-cell[data-standing="waiting"] .dp-readout-value { font-style: italic; opacity: .75; }
+.dp-cell[data-standing="waiting"] .dp-dial-value { stroke-dasharray: 2 2; }
+.dp-cell[data-standing="waiting"] .dp-radio button[aria-checked="true"] { background: transparent; color: var(--dp-on); outline: 1px dashed var(--dp-on); outline-offset: -2px; }
+.dp-cell[data-standing="waiting"] .dp-toggle, .dp-cell[data-standing="waiting"] .dp-chooser { font-style: italic; outline: 1px dashed var(--dp-on); outline-offset: -2px; }
+.dp-cell[data-standing="waiting"] .dp-toggle[aria-pressed="true"] { background: transparent; color: var(--dp-on); }
+/* Disabled: the control at 40 %; the status bar says why. */
+.dp-cell[data-standing="disabled"] { opacity: .4; }
+/* Refused: the value is the owner's again; the name stays in the stall colour until the next move, and the Info line says why. */
+.dp-cell[data-standing="refused"] > .dp-label { color: var(--stall, #ff9b4a); }
 /* A toggle the owner has not read: neither on nor off, a hollow face. */
 .dp-toggle[data-unknown="true"] { background: transparent; border-style: dashed; color: var(--text-faint, #71767c); }
-/* No reading (manual §16.11): the value is "—" in the faint ink, the ring or field empty — never NaN, never zero. */
-.dp-cell[data-unread="true"] .dp-value, .dp-cell[data-unread="true"] .dp-box > span, .dp-cell[data-unread="true"] .dp-readout-value { color: var(--text-faint, #71767c); }
+/* No reading: the value is "—" in the faint ink, the ring or field empty, a light hollow — never NaN, never zero, never a sentence. */
+.dp-cell[data-standing="unread"] .dp-value, .dp-cell[data-standing="unread"] .dp-box > span, .dp-cell[data-standing="unread"] .dp-readout-value,
+.dp-cell[data-standing="awaiting"] .dp-value, .dp-cell[data-standing="awaiting"] .dp-box > span, .dp-cell[data-standing="awaiting"] .dp-readout-value { color: var(--text-faint, #71767c); }
+.dp-cell[data-standing="unread"] .dp-radio button, .dp-cell[data-standing="awaiting"] .dp-radio button { color: var(--text-faint, #71767c); }
+/* A list with no reading: its rows stand empty, under a hollow light in its head. */
+.dp-cell--rows[data-standing="unread"] .dp-rows, .dp-cell--rows[data-standing="awaiting"] .dp-rows { background: repeating-linear-gradient(to bottom, transparent 0 16px, color-mix(in srgb, var(--line, #24262a) 70%, transparent) 16px 17px); }
+.dp-rows-head > .dp-lamp { margin-right: 4px; }
+.dp-rows-head:has(> .dp-lamp) { justify-content: flex-start; }
+/* A value written in a line of its own that the owner has not reported (NoReading): "—", faint; breathing while the owner is asked. */
+.dp-no-reading[data-standing] { color: var(--text-faint, #71767c); font-style: normal; }
+/* What the hand is doing (interaction, apart from the standing): a drag shows the vertical arrows; nothing else changes. */
+.dp-cell[data-hand="drag"] { cursor: ns-resize; }
 
 /* ---- folded: the head on its side, at chain height. */
 .dp-folded { flex: none; width: 22px; height: calc(var(--dp-head-h) + var(--dp-body) + 1px); display: flex; flex-direction: column; align-items: center; gap: 6px; padding-top: 5px; background: var(--dp-head); border: 1px solid var(--line, #24262a); }
@@ -212,7 +233,7 @@
 /* A chooser is a native menu, which draws no ::after: it stands 22 high, its 16 px field drawn inside a transparent border. */
 .dp-chooser { height: 22px; margin: -3px 0; border-style: solid; border-width: 3px 0; border-color: transparent; background-clip: padding-box; box-shadow: inset 0 0 0 1px var(--line, #24262a); }
 .dp .dp-chooser:focus-visible { outline: none; box-shadow: inset 0 0 0 1px var(--accent, #ffbe00); }
-.dp-cell[data-pending="true"] .dp-chooser { outline: 1px dashed var(--dp-on); outline-offset: -3px; }
+.dp-cell[data-standing="waiting"] .dp-chooser { outline: 1px dashed var(--dp-on); outline-offset: -3px; }
 
 /* A ladder of evidence: green where established, dark where not, hollow where nobody has observed it. */
 .dp-ladder { flex: none; display: inline-flex; gap: 1px; align-items: center; }
@@ -232,7 +253,7 @@
 .dp-text { height: 16px; width: 100%; min-width: 50px; padding: 0 5px; border: 1px solid var(--line); background: var(--dp-field); color: var(--text); font: inherit; font-size: 10px; outline: none; }
 .dp-text::placeholder { color: var(--text-faint); }
 .dp-text:focus-visible { outline: 1px solid var(--accent); outline-offset: 1px; }
-.dp-cell[data-pending="true"] .dp-text { font-style: italic; }
+.dp-cell[data-standing="waiting"] .dp-text { font-style: italic; }
 
 /* PanelHead (panel.tsx) on a plate the kit's Panel does not draw whole — an instrument's sections, a compact: the same head, carrying the
    plate's type and colour itself, since no .dp stands round it. Its name can be a press (an instrument opens where it plays); the
@@ -311,7 +332,7 @@
 .dp-radio[data-slide] > button { position: relative; z-index: 1; background: transparent; }
 .dp-radio[data-slide] > button[aria-checked="true"] { background: transparent; color: var(--dp-on-text); }
 /* Waiting on the owner: the thumb steps back; the dashed edge on the button stands (§16.11, Waiting). */
-.dp-cell[data-pending="true"] .dp-radio[data-slide] > .dp-thumb { opacity: 0; }
+.dp-cell[data-standing="waiting"] .dp-radio[data-slide] > .dp-thumb { opacity: 0; }
 .dp-pages[data-slide] { background: var(--bg-2, #3f4348); }
 .dp-pages[data-slide] > .dp-thumb { background: var(--dp-face); }
 .dp-pages[data-slide] > button { position: relative; z-index: 1; background: transparent; }
@@ -325,8 +346,9 @@
 /* Something other than the hand moved a value: a ring around the control rings once; the mover's name, where the host names it,
    stands on the control for a moment (the value shows what moved it). */
 .dp-cell[data-flash]::after { content: ''; position: absolute; inset: -2px -3px; border: 1px solid var(--dp-on); opacity: 0; pointer-events: none; }
-.dp-cell[data-flash="a"]::after { animation: dp-flash-a 1s var(--dp-ease) forwards; }
-.dp-cell[data-flash="b"]::after { animation: dp-flash-b 1s var(--dp-ease) forwards; }
+/* Moved (manual §16.11): the ring rings once for each change (data-flash alternates to restart it) while the control stands Moved. */
+.dp-cell[data-standing="moved"][data-flash="a"]::after { animation: dp-flash-a 1s var(--dp-ease) forwards; }
+.dp-cell[data-standing="moved"][data-flash="b"]::after { animation: dp-flash-b 1s var(--dp-ease) forwards; }
 @keyframes dp-flash-a { 0% { opacity: 1; } 100% { opacity: 0; } }
 @keyframes dp-flash-b { 0% { opacity: 1; } 100% { opacity: 0; } }
 .dp-by { position: absolute; top: -5px; right: -3px; z-index: 2; height: 11px; padding: 0 3px; font: 700 8.5px/11px var(--font-ui, sans-serif); letter-spacing: .04em; background: var(--dp-on); color: var(--dp-on-text); pointer-events: none; animation: dp-by 2.4s var(--dp-ease) forwards; }
@@ -335,12 +357,12 @@
 /* Waiting for a first reading (never written as "Loading"): the empty ring, field or value breathes. A reading already held shows at
    once, and is asked again behind it. */
 @keyframes dp-breathe { 0%, 100% { opacity: 1; } 50% { opacity: .4; } }
-.dp-cell[data-waiting="true"] .dp-dial-track, .dp-cell[data-waiting="true"] .dp-box, .dp-cell[data-waiting="true"] .dp-value, .dp-cell[data-waiting="true"] .dp-readout-value, .dp-cell[data-waiting="true"] .dp-chooser, .dp-cell[data-waiting="true"] .dp-text { animation: dp-breathe 1.4s ease-in-out infinite; }
+.dp-cell[data-standing="awaiting"] .dp-dial-track, .dp-cell[data-standing="awaiting"] .dp-box, .dp-cell[data-standing="awaiting"] .dp-value, .dp-cell[data-standing="awaiting"] .dp-readout-value, .dp-cell[data-standing="awaiting"] .dp-chooser, .dp-cell[data-standing="awaiting"] .dp-text, .dp-cell[data-standing="awaiting"] .dp-radio, .dp-cell[data-standing="awaiting"] .dp-toggle, .dp-cell--rows[data-standing="awaiting"] .dp-rows, .dp-lamp[data-standing="awaiting"], .dp-ladder[data-standing="awaiting"] .dp-ladder-rung, .dp-no-reading[data-standing="awaiting"] { animation: dp-breathe 1.4s ease-in-out infinite; }
 
 /* Working: the owner reports it, so a ring spreads from the light for as long as it says so. */
-.dp-lamp[data-busy="true"] { position: relative; }
-.dp-lamp[data-busy="true"]::after, .dp-activator[data-busy="true"]::before { content: ''; position: absolute; inset: -1px; border-radius: 50%; border: 1px solid var(--dp-on); pointer-events: none; animation: dp-ring 1.2s var(--dp-ease) infinite; }
-.dp-activator[data-busy="true"]::before { inset: -1px; }
+.dp-lamp[data-standing="working"] { position: relative; }
+.dp-lamp[data-standing="working"]::after, .dp-activator[data-standing="working"]::before { content: ''; position: absolute; inset: -1px; border-radius: 50%; border: 1px solid var(--dp-on); pointer-events: none; animation: dp-ring 1.2s var(--dp-ease) infinite; }
+.dp-activator[data-standing="working"]::before { inset: -1px; }
 @keyframes dp-ring { 0% { transform: scale(1); opacity: .9; } 100% { transform: scale(2.4); opacity: 0; } }
 /* A rung being worked on pulses. */
 .dp-ladder-rung[data-running="true"] { border-color: var(--dp-on); animation: dp-pulse 1s ease-in-out infinite; }
@@ -354,8 +376,12 @@
 .dp-action[data-done="true"] > .dp-hold-fill { transform: scaleX(1); opacity: 0; transition: opacity 200ms; }
 .dp-action[data-hold="true"]:active:not(:disabled) { background: transparent; color: var(--text); }
 /* Waiting on the owner after a press: a ring turns over the name, which keeps its width. */
-.dp-cell[data-pending="true"] .dp-action { position: relative; font-style: italic; color: color-mix(in srgb, var(--text) 40%, transparent); outline: 1px dashed var(--dp-on); outline-offset: -2px; }
-.dp-cell[data-pending="true"] .dp-action::before { content: ''; position: absolute; left: 50%; top: 50%; width: 7px; height: 7px; margin: -4px 0 0 -4px; border: 1.5px solid var(--dp-on); border-right-color: transparent; border-radius: 50%; animation: dp-spin .8s linear infinite; }
+.dp-cell[data-standing="waiting"] .dp-action { position: relative; font-style: italic; color: color-mix(in srgb, var(--text) 40%, transparent); outline: 1px dashed var(--dp-on); outline-offset: -2px; }
+/* Working: an act the owner reports at work (a run) carries the working light's ring, spreading from its name. */
+.dp-cell[data-standing="working"] .dp-action { position: relative; }
+.dp-cell[data-standing="working"] .dp-action::after { content: ''; position: absolute; inset: 0; border: 1px solid var(--dp-on); pointer-events: none; animation: dp-spread 1.2s var(--dp-ease) infinite; }
+@keyframes dp-spread { 0% { transform: scale(1); opacity: .9; } 100% { transform: scale(1.25, 1.6); opacity: 0; } }
+.dp-cell[data-standing="waiting"] .dp-action::before { content: ''; position: absolute; left: 50%; top: 50%; width: 7px; height: 7px; margin: -4px 0 0 -4px; border: 1.5px solid var(--dp-on); border-right-color: transparent; border-radius: 50%; animation: dp-spin .8s linear infinite; }
 @keyframes dp-spin { to { transform: rotate(360deg); } }
 
 /* A reading you may copy: the mark shows as you point at it, and turns to a tick for a moment once it has copied. */
@@ -391,19 +417,20 @@
 .dp-pad .dp-pad-puck { cursor: grab; }
 .dp-pad > svg:focus-visible .dp-handle-mark, .dp-pad:hover .dp-pad-puck .dp-handle-mark { fill: var(--dp-on); }
 .dp-cell[data-detent="true"] .dp-pad-def { stroke: var(--dp-on); }
-.dp-cell--pad[data-held="true"] .dp-handle-mark { stroke: var(--stall, #ff9b4a); }
-.dp-cell--pad[data-pending="true"] .dp-handle-mark { stroke-dasharray: 2 2; }
+.dp-cell--pad[data-standing="held"] .dp-handle-mark { stroke: var(--stall, #ff9b4a); }
+.dp-cell--pad[data-standing="waiting"] .dp-handle-mark { stroke-dasharray: 2 2; }
 
 /* Reduced motion: the rule above stops every transition and animation under the kit. What carries a state still shows it, standing
    still: a working light keeps a ring, a rung being worked on stays half-lit, a control waiting stays dimmed, the hold's fill is
    still its progress, and the mover's name still stands for its moment and goes. */
 @media (prefers-reduced-motion: reduce) {
   /* `.dp *` does not reach a pseudo-element: each ring is stopped here, and stands still. */
-  .dp-lamp[data-busy="true"]::after, .dp-activator[data-busy="true"]::before { animation: none; transform: scale(1.8); opacity: .6; }
+  .dp-lamp[data-standing="working"]::after, .dp-activator[data-standing="working"]::before { animation: none; transform: scale(1.8); opacity: .6; }
+  .dp-cell[data-standing="working"] .dp-action::after { animation: none; transform: scale(1.1, 1.3); opacity: .6; }
   .dp-cell[data-flash]::after { animation: none; opacity: 0; }
   .dp-ladder-rung[data-running="true"] { background: color-mix(in srgb, var(--dp-on) 45%, var(--bg-0, #26292d)); }
-  .dp-cell[data-waiting="true"] .dp-dial-track, .dp-cell[data-waiting="true"] .dp-box, .dp-cell[data-waiting="true"] .dp-value, .dp-cell[data-waiting="true"] .dp-readout-value, .dp-cell[data-waiting="true"] .dp-chooser, .dp-cell[data-waiting="true"] .dp-text { opacity: .55; }
-  .dp-cell[data-pending="true"] .dp-action::before { animation: none; }
+  .dp-cell[data-standing="awaiting"] .dp-dial-track, .dp-cell[data-standing="awaiting"] .dp-box, .dp-cell[data-standing="awaiting"] .dp-value, .dp-cell[data-standing="awaiting"] .dp-readout-value, .dp-cell[data-standing="awaiting"] .dp-chooser, .dp-cell[data-standing="awaiting"] .dp-text, .dp-cell[data-standing="awaiting"] .dp-radio, .dp-cell[data-standing="awaiting"] .dp-toggle, .dp-cell--rows[data-standing="awaiting"] .dp-rows, .dp-lamp[data-standing="awaiting"], .dp-ladder[data-standing="awaiting"] .dp-ladder-rung, .dp-no-reading[data-standing="awaiting"] { animation: none; opacity: .55; }
+  .dp-cell[data-standing="waiting"] .dp-action::before { animation: none; }
   .dp .dp-action[data-holding="true"] > .dp-hold-fill { transition: transform var(--dp-hold, 900ms) linear !important; }
   .dp .dp-by { animation: dp-by-still 2.4s steps(1, end) forwards !important; }
   @keyframes dp-by-still { 0% { opacity: 1; } 99% { opacity: 1; } 100% { opacity: 0; } }

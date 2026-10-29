@@ -36,7 +36,7 @@
 // tensions, candidates and proposals wait for you: nothing here applies them. (The Thought page and its parts are the Flow's own,
 // central__flow-document.tsx, carried here as the manual now places Contemplate.)
 import {useEffect, useState, type ReactNode} from 'react'
-import {Action, Band, Chooser, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, Tile, Toggle, type LightState, type RowItem, type Tone} from '../../sdk/panel'
+import {Action, Band, Chooser, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, Tile, Toggle, type LightState, type RowItem, type Tone, unreadRows} from '../../sdk/panel'
 import {NONE, boolOf, cradleDocuments, has, json, numOf, shown, st, strOf, type DesignedDevice, type ViewProps} from './design'
 import './central__document.css'
 
@@ -522,9 +522,10 @@ function Horizon({v, w, h}: {v: V; w: number; h: number}) {
 
 function thoughtRows(v: V): RowItem[] {
   const pre = preflightOf(v), thought = thoughtOf(v), since = sinceOf(v), closed = notFlow(v)
-  if (closed) return [{id: 'none', name: closed, light: 'unknown'}]
+  // A page that is not a Flow: Contemplate stands dark and says why on the Info line; with no reading of the template, No reading.
+  if (closed) return kindOf(v) ? [{id: 'none', name: 'Contemplate', light: 'dark', why: closed}] : unreadRows(NO_TEMPLATE)
   if (thought?.state === 'cognition' && since) {
-    if (since.state === 'unavailable') return [{id: 'u', name: 'Changed since is unavailable', light: 'dark', why: since.reason ?? 'The owner gave no reason.'}]
+    if (since.state === 'unavailable') return [{id: 'u', name: 'Changed since', light: 'dark', tone: 'stall', why: `Unavailable: ${since.reason ?? 'the owner gave no reason.'}`}]
     const rows: RowItem[] = [
       ...since.changed.map((c, i) => ({id: `c${i}`, name: c.title, light: 'lit' as LightState, tone: 'stall' as const, note: c.basis && c.observed ? `${c.basis} → ${c.observed}` : c.kind ?? 'moved'})),
       ...since.affected.map((a, i) => ({id: `a${i}`, name: a.title, light: (a.freshness === 'basis-unavailable' ? 'dark' : 'lit') as LightState, tone: 'value' as const, note: FRESH_WORD[a.freshness]})),
@@ -532,8 +533,8 @@ function thoughtRows(v: V): RowItem[] {
     ]
     return rows.length ? rows : [{id: 'none', name: 'Nothing changed since the thought', light: 'lit', tone: 'green'}]
   }
-  if (!pre) return [{id: 'none', name: 'No reading of the preflight', light: 'unknown'}]
-  if (pre.state === 'unavailable') return [{id: 'u', name: 'Contemplate is unavailable', light: 'dark', why: pre.reason ?? 'The owner gave no reason.'}]
+  if (!pre) return unreadRows('No reading of the preflight.')
+  if (pre.state === 'unavailable') return [{id: 'u', name: 'Contemplate', light: 'dark', tone: 'stall', why: `Unavailable: ${pre.reason ?? 'the owner gave no reason.'}`}]
   return [
     {id: 'who', name: `${pre.agent ?? 'An agent'} on ${pre.model ?? NONE} through ${pre.harness ?? NONE}`, light: 'lit', tone: 'value', note: 'runs it'},
     {id: 'focus', name: `${pre.focus} entr${pre.focus === 1 ? 'y' : 'ies'} of the Flow`, light: 'lit', tone: 'value', note: 'reads'},

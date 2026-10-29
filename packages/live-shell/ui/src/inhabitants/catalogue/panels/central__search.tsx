@@ -22,7 +22,7 @@
 // CLI; no kernel op reaches them yet, and the binding owes the route. A `vak:` result carries no horizon unless the owner states one.
 import {useState} from 'react'
 import {KindMark, type KindShapeName} from '../../sdk/marks'
-import {Band, Chooser, Dial, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, TextField, Tile, Toggle, Action, type LightState, type Option, type RowItem} from '../../sdk/panel'
+import {Band, Chooser, Dial, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, TextField, Tile, Toggle, Action, type LightState, type Option, type RowItem, NoReading} from '../../sdk/panel'
 import {NONE, boolOf, clampTo, json, numOf, st, strOf, type DesignedDevice, type Values, type ViewProps} from './design'
 import './central__search.css'
 
@@ -489,7 +489,9 @@ const EnterRadio = ({p}: {p: ViewProps}) =>
 
 function AliasRows({p, size, columns}: {p: ViewProps; size: number; columns: 1 | 2}) {
   const list = aliasesOf(p.v), off = st(p, 'aliases').disabled
-  if (list === undefined) return <><Rows label="Aliases · —" does="Your own short names for long searches." items={[]} size={size} columns={columns} /><p className="srch-none">No reading of the aliases</p></>
+  // No reading of the aliases: the list stands empty under a hollow light; which reading is missing is on the Info line (it was a line of
+  // words under the list).
+  if (list === undefined) return <Rows label="Aliases" does="Your own short names for long searches." items={undefined} why="No reading of the aliases." size={size} columns={columns} />
   if (!list.length) return <><Rows label="Aliases · 0" does="Your own short names for long searches." items={[]} size={size} columns={columns} /><p className="srch-none">No aliases</p></>
   const items: RowItem[] = list.map(a => ({id: a.name, name: `@${a.name}`, light: 'lit', tone: 'value', request: off ? undefined : true, note: trunc(a.search, 24), does: a.search}))
   return <Rows label={`Aliases · ${list.length}`} does={`Your own short names for long searches.${off ? ` ${off}` : ' Turn a square off to remove an alias.'}`} items={items}
@@ -522,7 +524,7 @@ function VakFind({p, r}: {p: ViewProps; r: Reading}) {
     </Band>
     <Band>
       <Section grow>{rows === undefined
-        ? <div className="srch-keep"><Rows label="Round it · —" does="The entries round the one the search located." items={[]} size={10} columns={2} /><p className="srch-none">No reading of the entries round it</p></div>
+        ? <div className="srch-keep"><Rows label="Round it" does="The entries round the one the search located." items={undefined} why="No reading of the entries round it." size={10} columns={2} /></div>
         : <Rows label={`Round it · ${rows.length}`} does="The entries round the one the search located, nearest first. The lit row is the entry; the note is each entry's symbol." items={rows} size={10} columns={2} page={at} onPage={setAt} />}</Section>
     </Band>
   </>
@@ -574,7 +576,7 @@ function SearchWhole({p}: {p: ViewProps}) {
       </Band>
       <Band>
         <Section grow>{r.hits === undefined
-          ? <div className="srch-keep"><Rows label="Results · —" does="The results of the search." items={[]} size={10} columns={2} /><p className="srch-none">{r.raw === undefined ? 'No reading of the query' : 'No reading of the results'}</p></div>
+          ? <div className="srch-keep"><Rows label="Results" does="The results of the search." items={undefined} why={r.raw === undefined ? 'No reading of the query.' : 'No reading of the results.'} size={10} columns={2} /></div>
           : <Rows label={`Results · ${r.hits.length}`} does="The square is not used here. The mark is the kind, the note is the horizons that the kind belongs to." items={rowsOf(r)} size={10} columns={2} page={at} onPage={setAt} />}</Section>
       </Band>
     </>}
@@ -595,10 +597,11 @@ function SearchFull({p}: {p: ViewProps}) {
   return <div className="ref-pane-body srch-full">
     <div className="srch-full-line"><QueryLine p={p} /></div>
     <div className="srch-read">
-      <span>{r.raw === undefined ? 'No reading of the query' : <>Read as <code>{render(r.expr)}</code></>}</span>
+      <span>{r.raw === undefined ? <>Read as <NoReading name="Query" why="No reading of the query." /></> : <>Read as <code>{render(r.expr)}</code></>}</span>
       <span><b>{r.hits?.length ?? NONE}</b> found</span>
       {r.alias && <span>alias <b>@{r.alias}</b></span>}
-      {r.error && <span data-bad="true">The owner refuses it: {r.error}.</span>}
+      {/* The owner's refusal is drawn — the reading in the stall colour, a mark beside it — and its words are on the Info line. */}
+      {r.error && <span data-bad="true" role="img" aria-label="The owner refuses it" data-i={`Query|The owner refuses it: ${r.error}.`}>!</span>}
     </div>
     <div className="srch-full-body">
       <div className="srch-groups">

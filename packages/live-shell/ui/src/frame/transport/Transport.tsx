@@ -88,11 +88,20 @@ export function Transport({bindings, words}: {bindings: TransportBindings; words
   </div>
 }
 
+/** Why a slot no owner binds here stands dimmed: its waiting line after what it does (shell/modeTransports.tsx slotWords writes
+ * "<label> — <fn>. <why>"). */
+export function unboundWhy(words: SlotWords): string {
+  const head = `${words.label} — ${words.fn}. `
+  return words.waiting.startsWith(head) ? words.waiting.slice(head.length) : words.waiting
+}
+
 function Slot({id, binding, words, fold}: {id: TransportSlotId; binding: SlotBinding | undefined; words: SlotWords; fold?: {open: boolean; toggle: () => void}}) {
   const title = binding?.refused ? `${words.label} — ${words.fn}. ${binding.refused}` : binding?.title ?? binding?.readout?.title ?? words.waiting
   // A refused slot stays drawn, dimmed, and the status bar says why (manual §16.10 "Disabled … The status bar says why"): its reason
-  // follows what it does in the line the status bar reads.
-  const dataI = binding?.refused ? `${words.dataI}. ${binding.refused}` : words.dataI
+  // follows what it does in the line the status bar reads. So does a slot no owner binds here (Central's Selection → packet, walked
+  // dimmed with no reason on 29 Oct, O-I #750): its waiting line says why, after what it does.
+  const unbound = !binding?.press && !binding?.step && !binding?.control && !binding?.readout && !!words.waiting
+  const dataI = binding?.refused ? `${words.dataI}. ${binding.refused}` : unbound ? `${words.dataI}. ${unboundWhy(words)}` : words.dataI
   const common = {'data-slot': id, 'data-i': dataI, title, 'aria-label': words.label}
   const light = binding?.lit === undefined ? undefined : binding.lit ? 'on' : 'off'
   const mark = MARKS[id]

@@ -34,7 +34,7 @@
 import {memo, useLayoutEffect, useMemo, useState, type CSSProperties, type ReactNode} from 'react'
 import {KindMark} from '../../sdk/marks'
 import {maskStatic} from '../../../agent/maskFace'
-import {Action, Band, Chooser, Dial, Display, Folded, Lamp, Panel, Radio, Readout, Rows, Section, TextField, Tile, ValueBox, type LightState, type Option, type RowItem, type Scale, type Tone} from '../../sdk/panel'
+import {Action, Band, Chooser, Dial, Display, Folded, Lamp, Panel, Radio, Readout, Rows, Section, TextField, Tile, ValueBox, type LightState, type Option, type RowItem, type Scale, type Tone, unreadRows, NoReading} from '../../sdk/panel'
 import {NONE, has, json, numOf, on, prefixed, scoped, st, strOf, type DesignedDevice, type ViewProps} from './design'
 import {design as decisionHelper} from './decision-helper'
 import {CreatureFace, FigureThumb} from '../faces/CreatureFace'
@@ -197,7 +197,8 @@ function MemberList({p, size, chip = true, note = true, label = true}: {p: ViewP
   const list = membersOf(p.v), chosen = chosenOf(p.v, list)
   const known = has(p.v, 'members')
   return <>
-    <Rows label={label ? (known ? `Members · ${list.length}` : 'Members · no reading') : undefined} does={SAYS.list} items={rowItems(list, chip, note, patternOf(p.v))} size={size} page={page} onPage={setPage}
+    <Rows label={label ? (known ? `Members · ${list.length}` : 'Members') : undefined} does={SAYS.list} items={known ? rowItems(list, chip, note, patternOf(p.v)) : undefined}
+      waiting={st(p, 'members').waiting} why="No reading of the members." size={size} page={page} onPage={setPage}
       selected={chosen?.id} onSelect={st(p, 'member').disabled ? undefined : id => p.set('member', id)} />
     {list.length === 0 && <p className="as-none">{known ? 'The set holds no members.' : 'No reading of the members.'}</p>}
   </>
@@ -304,7 +305,7 @@ function CrewPane({p}: {p: ViewProps}) {
         <span>{list.length} members</span>
         {(['working', 'stalled', 'done', 'idle', 'failed'] as const).filter(s => countOf(list, s) > 0).map(s =>
           <span key={s}><Lamp state={tone(s).light} tone={tone(s).tone} label={STATE_WORD[s]} />{countOf(list, s)} {STATE_WORD[s].toLowerCase()}</span>)}
-      </> : <span>No reading of the members</span>}
+      </> : <span><NoReading name="Members" why="No reading of the members." waiting={st(p, 'members').waiting} /></span>}
     </div>
     <div className="as-body" data-none={list.length === 0 ? 'true' : undefined}>
       {list.length === 0
@@ -446,7 +447,7 @@ function HelperBands({p}: {p: ViewProps}) {
         <Readout label="abstained" does="Answers that picked nothing." value={numOf(v, 'abstained')} />
         <Readout label="refused" does="Picks the engine refused." value={numOf(v, 'refused')} tone="stall" />
       </Section>
-      <Section grow><Rows label={all ? 'The team\'s questions' : 'The team\'s questions · no reading'} items={items} size={8} page={page} onPage={setPage}
+      <Section grow><Rows label="The team's questions" items={all ? items : undefined} why="No reading of the team's questions." size={8} page={page} onPage={setPage}
         onRequest={st(p, 'instruments').disabled ? undefined : (id, x) => p.set(`allow:${id}`, x)}
         does="The questions the helper may answer for this team. The square is your request; the light is the team's measured admission." /></Section>
     </Band>
@@ -514,7 +515,7 @@ function NewGroupBands({p}: {p: ViewProps}) {
     <Band>
       <Section label="Members" grow><Rows does="Your agents. Drag a face into the card, or press a square to add or take out a member." size={6} columns={2}
         items={roster ? roster.map(r => ({id: r.id, name: r.name, light: members.includes(r.id) ? 'lit' as LightState : 'dark' as LightState, tone: 'value' as const, request: members.includes(r.id)}))
-          : [{id: 'none', name: 'No reading of your agents', light: 'unknown'}]}
+          : unreadRows('No reading of your agents.')}
         onRequest={roster ? (id, x) => p.set('new.members', JSON.stringify(x ? [...members, id] : members.filter(m => m !== id))) : undefined} /></Section>
       <Section label="Make" width={104}>
         <Readout label="members" does="The members the group will hold." value={members.length} tone="value" />

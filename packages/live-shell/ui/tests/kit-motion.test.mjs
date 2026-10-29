@@ -167,7 +167,7 @@ test('a pad stands its handle where the two values put it, with a faint line at 
   // plot: left 8, right 92 (x = 8 + .5 × 84 = 50); top 17, bottom 85 (y = 85 − .25 × 68 = 68)
   assert.match(out, /<circle cx="50" cy="68" r="5\.5" class="dp-handle-mark"/)
   assert.equal([...out.matchAll(/class="dp-pad-def"/g)].length, 2, 'a default line for each side')
-  assert.match(out, /Room\|Across and up\./, 'the status bar names it and says what it does')
+  assert.match(out, /Room\|Decay 0\.5 · Size 0\.25 — Across and up\./, 'the status bar names it, gives its value and says what it does (#750: the value joins the Info line)')
 })
 
 test('a pad with no reading on a side draws no handle and no number: the well says so', () => {
@@ -203,9 +203,10 @@ test('one easing and one set of times, and every one shortens to nothing under r
 
 test('under reduced motion every state still shows: a ring stands still, a name still stands and goes, the hold still shows its progress', () => {
   const reduce = css.slice(css.lastIndexOf('@media (prefers-reduced-motion: reduce) {'))
-  assert.match(reduce, /\.dp-lamp\[data-busy="true"\]::after[^}]*animation: none[^}]*opacity: \.6/, '`.dp *` does not reach a pseudo-element: the ring is stopped by name and left standing')
+  // REPLACED (#750): the ring was keyed on data-busy; the kit draws every standing from the one data-standing (Working).
+  assert.match(reduce, /\.dp-lamp\[data-standing="working"\]::after[^}]*animation: none[^}]*opacity: \.6/, '`.dp *` does not reach a pseudo-element: the ring is stopped by name and left standing')
   assert.match(reduce, /\.dp-cell\[data-flash\]::after \{ animation: none; opacity: 0; \}/)
-  assert.match(reduce, /data-waiting="true"[^}]*opacity: \.55/)
+  assert.match(reduce, /data-standing="awaiting"[^}]*opacity: \.55/, 'a reading still to come stays dimmed, still (REPLACED #750: data-waiting → data-standing="awaiting")')
   assert.match(reduce, /\.dp-ladder-rung\[data-running="true"\] \{ background:/)
   assert.match(reduce, /\.dp-hold-fill \{ transition: transform var\(--dp-hold, 900ms\) linear !important; \}/)
   assert.match(reduce, /\.dp \.dp-by \{ animation: dp-by-still/)
@@ -213,6 +214,7 @@ test('under reduced motion every state still shows: a ring stands still, a name 
 
 test('nothing loops but what the owner reports', () => {
   const infinite = [...css.matchAll(/([^{}]+)\{[^}]*animation:[^;}]*infinite/g)].map(m => m[1].trim())
-  for (const selector of infinite) assert.match(selector, /data-busy|data-waiting|data-running|data-pending/, `${selector.slice(0, 80)} loops only while the owner reports it`)
+  // REPLACED (#750): the owner's reports are the one data-standing (working, awaiting, waiting) and a rung's data-running.
+  for (const selector of infinite) assert.match(selector, /data-standing="(working|awaiting|waiting)"|data-running/, `${selector.slice(0, 80)} loops only while the owner reports it`)
   assert.ok(infinite.length >= 4, 'a working light, a rung, a reading to come, a wait')
 })

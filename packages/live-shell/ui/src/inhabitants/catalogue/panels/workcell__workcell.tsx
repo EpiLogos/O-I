@@ -68,7 +68,7 @@
 // why?, workcells?}]), gw.show ('all' | 'ready' | 'inuse'); gw.chain is the gateway whose Frames page a pressed line opens.
 // A key the owner has not reported is absent: the views draw "—" and name the missing reading in the well.
 import {useState} from 'react'
-import {Action, Band, Chooser, Display, Folded, Handle, Lamp, Meter, Panel, Radio, Readout, Rows, Section, Tile, Toggle, type LightState, type Option, type RowItem, type Tone} from '../../sdk/panel'
+import {Action, Band, Chooser, Display, Folded, Handle, Lamp, Meter, Panel, Radio, Readout, Rows, Section, Tile, Toggle, type LightState, type Option, type RowItem, type Tone, unreadRows, NoReading} from '../../sdk/panel'
 import {NONE, boolOf, clampTo, has, json, numOf, prefixed, scoped, st, strOf, type DesignedDevice, type ViewProps} from './design'
 import './workcell__workcell.css'
 
@@ -200,7 +200,7 @@ function ChainList({p, selected, onSelect}: {p: ViewProps; selected: string; onS
   const items: RowItem[] = chain
     ? chain.map((d): RowItem => ({id: d.id, name: d.name, light: d.fault ? 'lit' : lightIn(d.light), tone: d.fault ? 'stall' : undefined, why: d.fault, note: d.reading ?? NONE,
       does: `${d.name}: select it to read it beside the list; ▸ on its head expands it.`}))
-    : [{id: 'none', name: 'No reading of the chain', light: 'unknown'}]
+    : unreadRows('No reading of the chain.')
   return <Rows label="Chain" does="The road in and out, in its order: the gateway, the machine, the seat and its landing." items={items} selected={selected} onSelect={chain ? onSelect : undefined} size={3} />
 }
 
@@ -216,7 +216,7 @@ function Working({v, size = 4}: {v: V; size?: number}) {
         does: i ? `${i.harness}, ${i.pids?.length ?? NONE} processes: processor ${i.cpu === undefined ? NONE : pctText(i.cpu)}, memory ${i.rss === undefined ? NONE : mb(i.rss)}.`
           : !instances ? 'No reading of the harness processes.' : 'The gateway does not name this agent\'s process.'}
     }) : [{id: 'none', name: 'Nobody works here now', light: 'dark'}])
-    : [{id: 'none', name: 'No reading of who works here', light: 'unknown'}]
+    : unreadRows('No reading of who works here.')
   return <Rows label="Working here" does="The agents working in this workcell now, each with its mode, its track and its memory. The meter is its harness process's share of a processor."
     items={items} size={size} />
 }
@@ -282,7 +282,7 @@ function WorldWell({v, w, h}: {v: V; w: number; h: number}) {
   </Display>
 }
 
-const bindingRows = (world: World | null | undefined): RowItem[] => (world === undefined ? [{id: 'none', name: 'No reading of the world', light: 'unknown'}]
+const bindingRows = (world: World | null | undefined): RowItem[] => (world === undefined ? unreadRows('No reading of the world.')
   : world === null ? [{id: 'none', name: 'No world is prepared', light: 'dark'}]
   : world.bindings.map(b => { const s = bindingState(b); return {id: b.ref, name: shortRef(b.ref), light: (s.tone ? 'lit' : 'dark') as LightState, tone: s.tone, note: `${portName(b.port)} · ${s.word}`,
     why: s.fault ? `${b.ref} is ${s.word}. Recover brings it back from the receipt.` : undefined, does: `${b.ref} · ${b.provider ?? NONE} · ${b.necessity ?? NONE}`} }))
@@ -351,7 +351,7 @@ function ServicesWell({v, w, h}: {v: V; w: number; h: number}) {
 function ServicesBand({p}: {p: ViewProps}) {
   const v = p.v, list = shownServices(v), world = worldOf(v), needed = boolOf(v, 'needed')
   const downNeeded = list ? list.filter(s => s.health !== 'healthy' && s.health !== 'degraded' && needOf(world, s)).length : undefined
-  const items: RowItem[] = !list ? [{id: 'none', name: 'No reading of the services', light: 'unknown'}]
+  const items: RowItem[] = !list ? unreadRows('No reading of the services.')
     : list.length === 0 ? [{id: 'none', name: needed ? 'The run needs no service' : 'No service is declared', light: 'dark'}]
     : list.map(s => {
       const need = needOf(world, s), down = s.health !== 'healthy' && s.health !== 'degraded'
@@ -408,7 +408,7 @@ function ExposureBand({p}: {p: ViewProps}) {
   const v = p.v, list = surfacesOf(v), out = omittedOf(v)
   const [chosen, setChosen] = useState<string | undefined>(undefined)
   const sel = list?.find(s => s.ref === chosen) ?? list?.[0]
-  const items: RowItem[] = !list ? [{id: 'none', name: 'No reading of the exposure', light: 'unknown'}]
+  const items: RowItem[] = !list ? unreadRows('No reading of the exposure.')
     : [...list.map((s): RowItem => ({id: s.ref, name: s.interaction ?? shortRef(s.ref), light: 'lit', tone: 'value', note: s.endpoint ?? NONE, does: `${s.ref}: press to choose it, then Open.`})),
       ...(out ?? []).map((o): RowItem => ({id: `x:${o.requirement}`, name: shortRef(o.requirement), light: 'dark', note: o.necessity ?? NONE, why: o.reason ?? 'Workcell gave no reason.'}))]
   if (list?.length === 0 && !out?.length) items.push({id: 'none', name: 'The run exposes nothing', light: 'dark'})
@@ -469,7 +469,7 @@ function ReleaseBand({p}: {p: ViewProps}) {
   const b = world?.bindings.find(x => x.ref === chosen) ?? world?.bindings[0]
   const items: RowItem[] = deltas === undefined
     ? (changes.length ? changes.map(c => ({id: c.ref, name: `${world!.bindings.indexOf(c) + 1} ${shortRef(c.ref)}`, light: 'lit' as LightState, tone: 'accent' as Tone, note: `${nowFate(c)} → ${wantOf(v, c)}`, does: `${c.ref}: Apply asks for ${wantOf(v, c)}.`}))
-      : [{id: 'none', name: world ? 'Nothing to change' : 'No reading of the world', light: world ? 'dark' : 'unknown'}])
+      : world ? [{id: 'none', name: 'Nothing to change', light: 'dark'}] : unreadRows('No reading of the world.'))
     : deltas.map(d => ({id: d.ref, name: shortRef(d.ref), light: d.action ? 'lit' : 'dark', tone: d.action === 'lost' || d.action === 'unbound' ? 'stall' : 'value', note: `${d.observed ?? NONE} → ${d.desired}${d.action ? ` · ${d.action}` : ''}`,
       why: d.action === 'lost' ? 'The binding was ephemeral: its material is gone and cannot come back.' : d.action === 'unbound' ? 'The world holds no binding of this name.' : undefined,
       does: `${d.ref}: what the last Apply did.`}))
@@ -582,9 +582,10 @@ function LeftRings({p}: {p: ViewProps}) {
 }
 
 const leftRows = (g: ReturnType<typeof readLeft>): RowItem[] => {
-  const refused = LEFT_RINGS.flatMap((ring): RowItem[] => (g.refusal[ring] ? [{id: `refused:${ring}`, name: `${LEFT_TITLE[ring]} not read`, light: 'dark', tone: 'stall', why: g.refusal[ring]}] : []))
-  if (!g.anyRead) return refused.length ? refused : [{id: 'none', name: 'No reading', light: 'unknown'}]
-  if (!g.found) return [...refused, {id: 'none', name: 'No reading of the findings', light: 'unknown'}]
+  // A ring whose owner refused stands dark in the stall colour under its own name; the refusal goes to the Info line (`why`).
+  const refused = LEFT_RINGS.flatMap((ring): RowItem[] => (g.refusal[ring] ? [{id: `refused:${ring}`, name: LEFT_TITLE[ring], light: 'dark', tone: 'stall', why: `Not read: ${g.refusal[ring]}`}] : []))
+  if (!g.anyRead) return refused.length ? refused : unreadRows('No reading of what was left behind.')
+  if (!g.found) return unreadRows('No reading of the findings.', undefined, refused)
   if (!g.shown.length) return [...refused, {id: 'clear', name: 'Nothing left behind', light: 'lit', tone: 'green'}]
   return [...refused, ...g.shown.map((f): RowItem => ({id: f.id, name: f.ring === 'bindings' ? shortRef(f.subject.split('#').pop()!) : f.subject, light: 'lit', tone: f.fault ? 'stall' : 'value',
     note: LEFT_SHORT[f.kind] ?? f.kind, does: `${LEFT_KIND[f.kind] ?? f.kind}: ${LEFT_SAYS[f.kind] ?? ''} ${f.subject}`}))]
@@ -627,7 +628,7 @@ function LeftBand({p}: {p: ViewProps}) {
 function LeftDoc({v}: {v: V}) {
   const g = readLeft(v)
   return <>
-    <h3>Left behind <small>{g.anyRead && g.found ? `${g.shown.length} found` : 'no reading'}{g.server ? ` · sandbox server ${g.server}` : ''}</small></h3>
+    <h3>Left behind <small>{g.anyRead && g.found ? `${g.shown.length} found` : <NoReading name="Left behind" why="No reading of the findings." />}{g.server ? ` · sandbox server ${g.server}` : ''}</small></h3>
     <table className="wc-seats">
       <thead><tr><th>What</th><th>Finding</th><th>What it means</th></tr></thead>
       <tbody>{LEFT_RINGS.flatMap(ring => g.refusal[ring] ? [<tr key={`r:${ring}`} data-free="true"><td><b>{LEFT_TITLE[ring]}</b></td><td data-fault="true">not read</td><td>{g.refusal[ring]}</td></tr>] : [])}
@@ -869,7 +870,7 @@ function FullView({p}: {p: ViewProps}) {
 function SeatsDoc({v}: {v: V}) {
   const seats = seatsOf(v), frames = framesOf(v), instances = instancesOf(v)
   return <>
-    <h3>{strOf(v, 'name') ?? NONE} <small>{strOf(v, 'machine') ?? NONE} · {seats ? `${seats.filter(s => s.lane).length} of ${seats.length} seats hold a lane` : 'no reading of the seats'}</small></h3>
+    <h3>{strOf(v, 'name') ?? NONE} <small>{strOf(v, 'machine') ?? NONE} · {seats ? `${seats.filter(s => s.lane).length} of ${seats.length} seats hold a lane` : <NoReading name="Seats" why="No reading of the seats." />}</small></h3>
     <table className="wc-seats">
       <thead><tr><th>Project</th><th>Lane</th><th>Held by</th><th>Co-workers</th><th>Uncommitted</th><th>Against main</th></tr></thead>
       <tbody>{(seats ?? []).map(s => <tr key={s.product} data-free={s.lane ? undefined : 'true'}>
@@ -913,7 +914,7 @@ function WorldDoc({v}: {v: V}) {
     <div className="wc-pane-side">
       <section><h4>Lifetime</h4><ul className="wc-list">
         <li><b>persists</b><span>{world.persistence ?? NONE}</span></li><li><b>keeps on release</b><span>{world.retention ?? NONE}</span></li>
-        <li><b>lease</b><span>{lease === undefined ? 'no reading' : lease.expiresAt === null ? 'none: it lives until released' : `ends ${when(lease.expiresAt)} UTC${at === undefined ? '' : ` · ${span(lease.expiresAt - at)} left`}${lease.renewable ? ' · renewable' : ''}`}</span></li>
+        <li><b>lease</b><span>{lease === undefined ? <NoReading name="Lease" why="No reading of the lease." /> : lease.expiresAt === null ? 'none: it lives until released' : `ends ${when(lease.expiresAt)} UTC${at === undefined ? '' : ` · ${span(lease.expiresAt - at)} left`}${lease.renewable ? ' · renewable' : ''}`}</span></li>
       </ul></section>
       <section><h4>Checkpoints</h4>
         {cps === undefined ? <p className="ref-doc-lead">No reading of the checkpoints.</p> : cps.length === 0 ? <p className="ref-doc-lead">No checkpoint.</p>
@@ -926,7 +927,7 @@ function WorldDoc({v}: {v: V}) {
 function ServicesDoc({v}: {v: V}) {
   const list = servicesOf(v), world = worldOf(v)
   return <>
-    <h3>Services <small>{list ? `${list.filter(s => s.health === 'healthy').length} of ${list.length} up` : 'no reading'}</small></h3>
+    <h3>Services <small>{list ? `${list.filter(s => s.health === 'healthy').length} of ${list.length} up` : <NoReading name="Services" why="No reading of the services." />}</small></h3>
     {list && <table className="wc-seats">
       <thead><tr><th>Service</th><th>Endpoint</th><th>Health</th><th>Availability</th><th>Lifetime</th><th>The run</th></tr></thead>
       <tbody>{list.map(s => <tr key={s.ref} data-free={s.health === 'healthy' ? undefined : 'true'}>
@@ -939,7 +940,7 @@ function ServicesDoc({v}: {v: V}) {
 function ExposureDoc({p}: {p: ViewProps}) {
   const list = surfacesOf(p.v), out = omittedOf(p.v), into = strOf(p.v, 'openIn')
   return <>
-    <h3>Exposure <small>{list ? `${list.length} endpoint${list.length === 1 ? '' : 's'}` : 'no reading'} · opens in {into === 'pane' ? 'a pane' : into === 'web' ? 'Web' : NONE}</small></h3>
+    <h3>Exposure <small>{list ? `${list.length} endpoint${list.length === 1 ? '' : 's'}` : <NoReading name="Exposure" why="No reading of the exposure." />} · opens in {into === 'pane' ? 'a pane' : into === 'web' ? 'Web' : NONE}</small></h3>
     {list && <ul className="wc-surfaces">{list.map(s => <li key={s.ref}>
       <b>{s.interaction ?? s.ref}</b><code>{s.endpoint ?? NONE}</code><span>{s.ref}</span>
       <Action {...st(p, 'open')} label="Open" does="Open this endpoint where Open in says." onPress={() => p.set('open', s.ref)} />

@@ -244,7 +244,8 @@ const lampOf = (p: ViewProps): LightState => { const x = lightOf(p); return x ==
 const stateWord = (lamp: string | undefined, age: number | undefined, answer: string | undefined): string | undefined => {
   if (lamp === undefined) return undefined
   if (lamp === 'dark') return 'off'
-  if (lamp !== 'lit') return 'not read'
+  // Not read: no word in the state's place — it stands "—" with the No-reading standing, and the Info line says so.
+  if (lamp !== 'lit') return undefined
   if (answer === 'stop') return 'stopped'
   if (age === undefined) return undefined
   return age < 0 ? 'idle' : age >= HORIZON && !answer ? 'stalled' : 'working'
@@ -560,11 +561,14 @@ function ThreadPane({p}: {p: ViewProps}) {
   }
   const tool = (it: Item, nested = false) => <details className="th-tool" key={`${it.id}:${rows}`} open={rows === 'output'} data-nested={nested || undefined}>
     <summary><i data-state={it.state} /><b>{it.tool ?? NONE}</b><span>{it.text || NONE}</span></summary>
-    {it.out && <pre className="th-out">{it.out}</pre>}
+    {it.out ? <pre className="th-out">{it.out}</pre>
+      // A tool at work whose output has not come: the empty field breathes (Waiting for a reading); no words stand in its place.
+      : it.state === 'running' && <pre className="th-out" data-standing="awaiting" aria-label="Output still to come" data-i={`${it.tool ?? 'Tool'}|Its output has not come yet.`} />}
   </details>
   const item = (it: Item): ReactNode => {
     switch (it.k) {
-      case 'task': return <div className="th-task" key={it.id}><span>{it.text}</span><i /><small data-state={it.tool === 'stalled' ? 'stalled' : undefined}>{it.tool}</small></div>
+      case 'task': return <div className="th-task" key={it.id}><span>{it.text}</span><i /><small data-state={it.tool === 'stalled' ? 'stalled' : it.tool === NONE ? 'unread' : undefined}
+        data-i={it.tool === NONE ? 'State|No reading of the session\'s state.' : undefined}>{it.tool}</small></div>
       case 'you': case 'agent': case 'text': return bubble(it, <p className="th-text">{it.text || NONE}</p>)
       case 'tool': return <div className="th-row th-row--tool" key={it.id}><span className="th-av th-av--tool" aria-hidden="true" />{tool(it)}</div>
       case 'spawn': {
@@ -617,7 +621,7 @@ function ThreadPane({p}: {p: ViewProps}) {
   return <div className="th-pane">
     <div className="th-pane-head" aria-label="The thread's session">
       <span>Sessions</span>{chain.map((c, i) => <span key={i}>{c}</span>)}<b>{r.me?.agent ?? NONE}</b><span>{r.me?.model ?? NONE}</span><span>turn {r.me?.used ?? NONE} of {r.me?.cap ?? NONE}</span>
-      <span data-state={r.stalled ? 'stalled' : undefined}>{r.state ?? NONE}</span>{boolOf(v, 'pin') === true && <span>pinned</span>}
+      <span data-state={r.stalled ? 'stalled' : r.state === undefined ? 'unread' : undefined} data-i={r.state === undefined ? 'State|No reading of the session\'s state.' : undefined}>{r.state ?? NONE}</span>{boolOf(v, 'pin') === true && <span>pinned</span>}
       {thought && <span data-state="thought">{kept ? `thought ${kept.length} of ${all!.length}` : `thought ${NONE}`}</span>}
     </div>
     {thought && <div className="th-cond" data-i={`Worked under|${SAYS.operative}`}><small>Worked under</small>{cond.length ? cond.map(c => <span key={c}>{c}</span>) : <span>{NONE}</span>}</div>}
@@ -701,7 +705,7 @@ const KITE_ROWS = [
   {who: 'Flint', kind: 'you', text: 'Run the type-check on desktop/cradle/expressions-app and report.'},
   {who: 'Kite', kind: 'agent', text: 'I will read its tsconfig, then run tsc.'},
   {who: 'tool', kind: 'tool', tool: 'Read', text: 'desktop/cradle/expressions-app/tsconfig.json', out: 'file read'},
-  {who: 'tool', kind: 'tool', tool: 'Bash', text: 'tsc --noEmit -p desktop/cradle/expressions-app', out: 'waiting for output', state: 'runs'},
+  {who: 'tool', kind: 'tool', tool: 'Bash', text: 'tsc --noEmit -p desktop/cradle/expressions-app', state: 'runs'},
 ]
 const MODEL_ROWS = [
   {who: 'you', kind: 'you', text: 'Add the model row to the agent device.'},
@@ -722,7 +726,7 @@ const sampleThread = ({stalled, answered}: {stalled?: boolean; answered?: boolea
   {who: 'tool', kind: 'tool', tool: 'Read', text: 'src/agent/AgentShellContext.tsx', out: 'AgentShellState · AgentShellProvider · useAgentShell'},
   {who: 'tool', kind: 'tool', tool: 'Grep', text: 'harness_agent_control', out: '6 matches'},
   {who: 'Kite', kind: 'spawn', text: 'expressions-app root', state: 'runs', link: 'tsc-kite'},
-  {who: 'tool', kind: 'tool', tool: 'Bash', text: 'tsc --noEmit -p packages/live-shell/ui', out: stalled ? 'waits for an answer' : 'waiting for output', state: answered ? undefined : stalled ? 'waits' : 'runs'},
+  {who: 'tool', kind: 'tool', tool: 'Bash', text: 'tsc --noEmit -p packages/live-shell/ui', out: stalled ? 'waits for an answer' : undefined, state: answered ? undefined : stalled ? 'waits' : 'runs'},
   {who: 'you', kind: 'steer', text: 'Skip the cradle root. Nothing changed there.'},
   {who: 'Flint', kind: 'proposal', tool: 'agentParamAddresses.ts', text: 'Add the model row to the agent device', state: answered ? 'approve' : undefined},
   ...(stalled ? [{who: 'Flint', kind: 'stall', tool: 'Bash', text: 'Flint wants to run a command · tsc --noEmit', state: answered ? 'stop' : undefined}] : []),

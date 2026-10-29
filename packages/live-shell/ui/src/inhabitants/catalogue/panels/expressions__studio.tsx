@@ -40,7 +40,7 @@
 // A key the owner does not report is absent. The picture then names the missing reading and every control draws "—".
 import {useRef, useState, type ReactNode} from 'react'
 import {Action, Band, Dial, Display, Folded, Handle, PanelHead, Radio, Readout, Rows, Section, Tile, Toggle, ValueBox, fromUnit, toUnit,
-  type LightState, type Option, type RowItem, type Scale, type Standing} from '../../sdk/panel'
+  type LightState, type Option, type RowItem, type Scale, type Standing, NoReading} from '../../sdk/panel'
 import {NONE, boolOf, clampTo, has, json, numOf, st, strOf, type DesignedDevice, type Values, type ViewProps} from './design'
 import './expressions__studio.css'
 
@@ -298,8 +298,8 @@ function MacrosPage({p, list}: {p: ViewProps; list: Chosen[] | undefined}) {
     <Band>
       <Section width={w + 12}><Sheet p={p} list={list} w={w} h={146} labelW={66} handles={ROWS} page={page} /></Section>
       <Section label="Macros" grow>
-        <Rows items={items} size={ROWS} page={page} onPage={setAt} selected={sel?.id} onSelect={setPick} onMove={closedWhy(p.v) ? undefined : move}
-          does="Your chosen controls, in your order. Choose one to change its reach or remove it; ▲ ▼ or ⌥↑ ⌥↓ move it." label={list ? `${chosen.length} chosen` : 'No reading'} />
+        <Rows items={list ? items : undefined} why="No reading of your controls." size={ROWS} page={page} onPage={setAt} selected={sel?.id} onSelect={setPick} onMove={closedWhy(p.v) ? undefined : move}
+          does="Your chosen controls, in your order. Choose one to change its reach or remove it; ▲ ▼ or ⌥↑ ⌥↓ move it." label={list ? `${chosen.length} chosen` : undefined} />
       </Section>
     </Band>
     <Band>
@@ -353,7 +353,8 @@ function ChainsPage({p, members}: {p: ViewProps; members: Member[] | undefined})
     <Band>
       <Section label="Chains" width={128}>
         <Rows items={chains} size={4} selected={chain} onSelect={id => { setChain(id as ChainId); setPick(undefined) }}
-          does="The rack's chains. Choose one to see its devices. The light is on while any of its devices is on." label={members ? `${litOf(p, all)} of ${all.length} on` : 'No reading'} />
+          does="The rack's chains. Choose one to see its devices. The light is on while any of its devices is on." label={members ? `${litOf(p, all)} of ${all.length} on` : undefined}
+          why={members ? undefined : 'No reading of the chains\' devices.'} />
       </Section>
       <Section label={label} grow>
         <Rows items={devices} size={6} selected={sel?.family} onSelect={setPick} onRequest={closed ? undefined : (id, on) => p.set(`on:${id}`, on)}
@@ -420,7 +421,7 @@ function Suite({p, list, members}: {p: ViewProps; list: Chosen[] | undefined; me
     <header className="st-suite-head">
       <span className="dp-lamp" data-light={lightOf(p)} title={LIGHT_WHY} />
       <b>Studio</b>
-      <span className="st-suite-state">{scene ? `${scene} · ` : ''}{state ?? 'no reading of the work'}</span>
+      <span className="st-suite-state">{scene ? `${scene} · ` : ''}{state ?? <NoReading name="The work" why="No reading of the work." />}</span>
       <nav className="st-suite-index" aria-label="Chains">
         {CHAINS.map(c => {
           const held = (members ?? []).filter(m => m.chain === c.id)
@@ -432,7 +433,7 @@ function Suite({p, list, members}: {p: ViewProps; list: Chosen[] | undefined; me
       <span className="st-suite-acts"><Work p={p} /></span>
     </header>
     <section className="st-suite-belt" aria-label="Your controls">
-      <h3><span>Your controls</span><span className="st-suite-note">{list ? `${list.length} chosen · the same in every scene` : 'no reading'}</span></h3>
+      <h3><span>Your controls</span><span className="st-suite-note">{list ? `${list.length} chosen · the same in every scene` : <NoReading name="Your controls" why="No reading of your controls." />}</span></h3>
       <div className="st-suite-dials">
         {(list ?? []).map(c => <ChosenDial key={c.id} p={p} c={c} />)}
         {addAction(p, list)}

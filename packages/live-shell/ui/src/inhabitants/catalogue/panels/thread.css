@@ -105,3 +105,8 @@
 .th-thought em { font-style: normal; font-size: 9.5px; color: var(--text-faint, #71767c); white-space: nowrap; }
 .th-thought span { min-width: 0; color: var(--text, #d4d7da); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .th-thought small { font-size: 9.5px; color: var(--text-faint, #71767c); white-space: nowrap; }
+/* #750: a tool at work whose output has not come — the empty field breathes (Waiting for a reading), never words in its place; a state
+   the owner has not reported stands faint ("—"), its words on the Info line. */
+.th-out[data-standing="awaiting"] { display: block; height: 9px; width: 120px; background: color-mix(in srgb, var(--text-faint, #71767c) 22%, transparent); animation: dp-breathe 1.4s ease-in-out infinite; }
+.th-task small[data-state="unread"], .th-pane-head span[data-state="unread"] { color: var(--text-faint, #71767c); }
+@media (prefers-reduced-motion: reduce) { .th-out[data-standing="awaiting"] { animation: none; opacity: .55; } }

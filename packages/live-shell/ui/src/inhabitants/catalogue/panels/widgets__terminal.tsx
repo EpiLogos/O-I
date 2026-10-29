@@ -22,7 +22,7 @@
 //               while it drives (a keydown or a paste on the screen, as the terminal's own sequences: keyData)
 //   reason      the owner's words for what does not answer (a provider that does not, a takeover it refused)
 // A key the owner has not reported is absent, and the view draws "—" for it.
-import {Band, Chooser, Dial, Display, Folded, Handle, Panel, Radio, Readout, Section, TextField, Tile, Toggle, type LightState, type Option} from '../../sdk/panel'
+import {Band, Chooser, Dial, Display, Folded, Handle, Lamp, Panel, Radio, Readout, Section, TextField, Tile, Toggle, type LightState, type Option} from '../../sdk/panel'
 import {NONE, boolOf, clampTo, has, json, numOf, st, strOf, type DesignedDevice, type ViewProps} from './design'
 import './widgets__terminal.css'
 
@@ -229,7 +229,10 @@ export const design: DesignedDevice = {
   full: p => {
     const v = p.v, fs = numOf(v, 'fontSize') ?? FONT.def, cw = cellW(fs), ch = cellH(fs), room = roomOf(v), grid = gridOf(fs)
     const cap = numOf(v, 'scrollback'), kept = cap === undefined ? undefined : Math.min(numOf(v, 'lines') ?? 0, cap), ask = waits(room), quiet = silent(v), exited = boolOf(v, 'exited') === true
-    if (!room) return <div className="wt-pane"><header className="wt-bar"><span data-tone="dim">No reading: shell</span></header></div>
+    // No room read: the bar carries a hollow light (No reading) and its words go to the Info line; the screen, the terminal's well,
+    // names which reading is missing (manual §16.12).
+    if (!room) return <div className="wt-pane"><header className="wt-bar"><Lamp state="unknown" waiting={st(p, 'rooms').waiting} label="Shell" why="No reading of the shell." /></header>
+      <div className="wt-body"><div className="wt-screen" style={{fontSize: fs, lineHeight: `${ch}px`}}><div data-out="true">No reading: shell</div></div></div></div>
     const wrap = boolOf(v, 'wrap') !== false
     const lines: Line[] = []
     for (const l of room.read ? room.lines : [{t: 'No reading: shell', out: true}]) {

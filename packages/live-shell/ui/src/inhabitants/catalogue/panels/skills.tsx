@@ -43,7 +43,7 @@
 import {useState} from 'react'
 import {WoodMark} from '../../sdk/marks'
 import type {WoodSet} from '../../sdk/icons'
-import {Action, Band, Chooser, Display, Folded, Handle, Ladder, Panel, Radio, Readout, Rows, Section, TextField, Tile, Toggle, ValueBox, type LightState, type RowItem} from '../../sdk/panel'
+import {Action, Band, Chooser, Display, Folded, Handle, Ladder, Panel, Radio, Readout, Rows, Section, TextField, Tile, Toggle, ValueBox, type LightState, type RowItem, unreadRows, NoReading} from '../../sdk/panel'
 import {NONE, boolOf, clampTo, grown, has, json, numOf, prefixed, scoped, st, strOf, type DesignedDevice, type ViewProps} from './design'
 import {DOCUMENTATION, FORM_NAME, ORDER, RUNGS, markState, reaching, type Form, type Member} from './practice'
 import {design as captureSkill} from './capture-skill'
@@ -108,12 +108,12 @@ function ChainList({p, size, columns}: {p: ViewProps; size: number; columns: num
   const [page, setPage] = useState(0)
   const requests = st(p, 'members').disabled ? undefined : (id: string, x: boolean) => { p.set(`req:${id}`, x); p.set('compose', 'changed') }
   const unused = unusedOf(p.v)
-  const label = !has(p.v, 'members') ? 'Members · no reading'
+  const label = !has(p.v, 'members') ? 'Members'
     : filtering(p.v) ? `Unused · ${members(p.v).filter(m => unused!.has(m.id)).length} of ${members(p.v).length} never used`
     : `Members · ${reaching(effective(p.v), 2)} of ${members(p.v).length} available`
   return <Rows label={label}
     does="The square is your request. The mark is the member's kind, dim when withheld, orange when you can clear what holds it. The ticks are its evidence, carried to verified."
-    items={chains(p.v)} onRequest={requests} size={size} page={page} onPage={setPage} columns={columns} />
+    items={has(p.v, 'members') ? chains(p.v) : undefined} waiting={st(p, 'members').waiting} why="No reading of the members." onRequest={requests} size={size} page={page} onPage={setPage} columns={columns} />
 }
 
 /** The Unused filter: the members AIKit has catalogued and never seen used, from its record of use. */
@@ -205,7 +205,7 @@ function SourcesWell({v, w, h}: {v: V; w: number; h: number}) {
 
 function sourceRows(v: V): RowItem[] {
   const all = sourcesOf(v), roots = rootsOf(v)
-  const items: RowItem[] = all === undefined ? [{id: 'no-sources', name: 'No reading of the sources', light: 'unknown'}]
+  const items: RowItem[] = all === undefined ? unreadRows('No reading of the sources.')
     : all.map(x => ({id: x.id, name: x.id, light: x.active ? 'lit' : 'dark', tone: waits(x) ? 'stall' : 'value',
       note: `${KIND_WORD[x.kind ?? ''] ?? x.kind ?? NONE} · ${x.skills ?? NONE}`, why: waits(x) ? 'A candidate snapshot waits: Promote makes it active.' : x.rejected ? `${x.rejected} skills of the candidate were rejected.` : undefined,
       does: `${x.ground ? 'Central\'s own ground. ' : ''}Active ${snap(x.active) ?? NONE}${x.retired ? `, ${x.retired} retired` : ''}.`}))
@@ -236,7 +236,7 @@ function SourcesBands({p}: {p: ViewProps}) {
       </Section>
     </Band>
     <Band>
-      <Section grow><Rows label={all ? `Sources · ${all.length}, and ${rootsOf(p.v)?.length ?? NONE} trees AIKit does not own` : 'Sources · no reading'}
+      <Section grow><Rows label={all ? `Sources · ${all.length}, and ${rootsOf(p.v)?.length ?? NONE} trees AIKit does not own` : 'Sources'}
         does="The sources AIKit owns, then the skill trees it reads and does not own. Orange: a candidate waits, or copies differ." items={sourceRows(p.v)} size={14} columns={2}
         page={page} onPage={setPage} selected={x?.id} onSelect={id => { if (!id.startsWith('root:') && all?.some(y => y.id === id)) p.set('source', id) }} /></Section>
     </Band>
@@ -299,7 +299,7 @@ function AdoptActs({p}: {p: ViewProps}) {
 
 function adoptRows(v: V): RowItem[] {
   const plan = planFor(v)
-  if (!plan) return [{id: 'none', name: adoptRoot(v) ? 'Preview to read the plan' : 'No reading of the roots', light: 'unknown'}]
+  if (!plan) return adoptRoot(v) ? [{id: 'none', name: 'Preview to read the plan', light: 'unknown'}] : unreadRows('No reading of the roots.')
   return plan.items.map(x => ({id: x.name, name: x.name, light: x.act === 'adopt' ? 'lit' : 'dark', tone: x.act === 'refused' ? 'stall' : 'value',
     note: x.act === 'adopt' ? 'adopt' : x.act === 'owned' ? 'owned' : 'refused', why: x.act === 'refused' ? x.why ?? 'The plan refuses it.' : undefined,
     does: x.act === 'adopt' ? `Copied to skill/${plan.namespace ?? NONE}/${x.name}; a link stands in its place.` : x.act === 'owned' ? 'AIKit already owns it.' : undefined}))
@@ -391,7 +391,7 @@ function ProcWell({p, w, h}: {p: ViewProps; w: number; h: number}) {
 
 function bypassRows(v: V): RowItem[] {
   const all = bypassesOf(v)
-  if (!all) return [{id: 'none', name: 'No reading of the bypasses', light: 'unknown'}]
+  if (!all) return unreadRows('No reading of the bypasses.')
   if (!all.length) return [{id: 'none', name: 'No bypass issued', light: 'dark'}]
   return all.map(b => ({id: b.id, name: b.reason ?? b.id, light: b.state === 'open' ? 'lit' : 'dark', tone: b.state === 'open' ? 'stall' : 'value',
     note: `${b.scope ?? NONE} · ${b.state ?? NONE}`, does: `${b.capability ? `${b.capability} only. ` : 'The whole hook chain. '}Issued ${b.at ?? NONE}.`}))
@@ -496,11 +496,11 @@ function CaptureWell({v, set, w, h}: {v: V; set?: ViewProps['set']; w: number; h
 function CaptureBands({p}: {p: ViewProps}) {
   const v = p.v, steps = capSteps(v), found = capFindings(v), like = capSimilar(v), state = capProposal(v), [page, setPage] = useState(0)
   const stuck = !!found?.some(x => !x.step || steps?.some(y => y.id === x.step && capKept(v, y)))
-  const items: RowItem[] = steps === undefined ? [{id: 'none', name: 'No reading of the steps', light: 'unknown'}]
+  const items: RowItem[] = steps === undefined ? unreadRows('No reading of the steps.')
     : steps.map((x, i) => ({id: x.id, name: `${i + 1} ${x.name}`, request: v[`step:${x.id}`] !== false, light: capKept(v, x) ? 'lit' : 'dark', tone: found?.some(y => y.step === x.id) ? 'stall' as const : 'accent' as const,
       note: `−${x.at} m`, why: found?.some(y => y.step === x.id) ? 'AIKit found a possible secret here. Turn the step off, then release.' : undefined}))
   const held: RowItem[] = state === 'held' && found?.length ? found.map((x, i) => ({id: `h${i}`, name: x.rule, light: 'lit', tone: 'stall', note: x.preview})) : []
-  const near: RowItem[] = like === undefined ? [{id: 'none', name: 'No reading of the members', light: 'unknown'}] : like.map(x => ({id: x.other, name: x.other.split('/').pop() ?? x.other, light: 'lit', tone: 'value', note: `${x.percentage} %`,
+  const near: RowItem[] = like === undefined ? unreadRows('No reading of the members.') : like.map(x => ({id: x.other, name: x.other.split('/').pop() ?? x.other, light: 'lit', tone: 'value', note: `${x.percentage} %`,
     does: `${x.percentage} % of the phrasing is shared. A close match needs a new revision, not a new member.`}))
   const acceptWhy = state === undefined ? 'No proposal yet.' : state === 'held' ? 'A proposal that holds a secret is never accepted. Release it first.' : state !== 'ready' ? 'The proposal is answered.' : !(strOf(v, 'name') ?? '').trim() ? 'Name it first.' : undefined
   return <>
@@ -637,7 +637,7 @@ function SetDoc({v}: {v: V}) {
 function SourcesDoc({v}: {v: V}) {
   const all = sourcesOf(v), roots = rootsOf(v)
   return <>
-    <h3>Sources <small>{all ? `${all.length} owned by AIKit` : 'no reading'} · {roots ? `${roots.length} skill trees it does not own` : 'no reading of the trees'}</small></h3>
+    <h3>Sources <small>{all ? `${all.length} owned by AIKit` : <NoReading name="Sources" why="No reading of the sources." />} · {roots ? `${roots.length} skill trees it does not own` : <NoReading name="Skill trees" why="No reading of the skill trees AIKit does not own." />}</small></h3>
     <ol className="ref-doc-list">{(all ?? []).map(x => <li key={x.id} data-dim={x.active ? undefined : 'true'}>
       <span className="dp-lamp" data-light={x.active ? 'lit' : 'dark'} data-tone={waits(x) ? 'stall' : 'value'} />
       <b>{x.id}</b><span className="ref-doc-rev">{KIND_WORD[x.kind ?? ''] ?? x.kind ?? NONE}</span>
@@ -673,7 +673,7 @@ function AdoptDoc({v}: {v: V}) {
 function ProceduresDoc({v}: {v: V}) {
   const all = proceduresOf(v), byp = bypassesOf(v)
   return <>
-    <h3>Procedures <small>{all ? `${all.length} recorded` : 'no reading'}</small></h3>
+    <h3>Procedures <small>{all ? `${all.length} recorded` : <NoReading name="Procedures" why="No reading of the procedures." />}</small></h3>
     <ol className="ref-doc-list">{[...(all ?? [])].reverse().map(x => <li key={x.id} data-dim={x.state === 'undone' ? 'true' : undefined}>
       <span className="dp-lamp" data-light={x.state === 'committed' ? 'lit' : 'dark'} data-tone={x.state === 'planned' ? 'accent' : 'value'} />
       <b>{x.kind ?? NONE} {shortId(x.id)}</b><span className="ref-doc-rev">{STATE_WORD[x.state ?? ''] ?? NONE}</span>

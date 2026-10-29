@@ -19,7 +19,7 @@
 // (flow-2026-10-03-1432.html) and a packet of three items, the same three the Document device holds, so both say "3 items · 106 chars"
 // as central/documentPayload.ts packetHead does.
 // The actions set their own keys: `capture`, `clear`, `answer`, and `takeOut` (the id of the item to take out).
-import {Action, Band, Dial, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, Tile, Toggle, ValueBox, toUnit, type LightState, type RowItem, type Scale, type Standing} from '../../sdk/panel'
+import {Action, Band, Dial, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, Tile, Toggle, ValueBox, toUnit, type LightState, type RowItem, type Scale, type Standing, unreadRows} from '../../sdk/panel'
 import {NONE, boolOf, clampTo, json, numOf, shown, st, strOf, type DesignedDevice, type ViewProps} from './design'
 import './central__packet.css'
 
@@ -246,7 +246,7 @@ const AnswerThis = ({p}: {p: ViewProps}) =>
 
 function rowsOf(v: V, takeWhy: string | undefined): RowItem[] {
   const pk = fit(v)
-  if (!pk) return [{id: 'none', name: 'No reading of the packet', light: 'unknown'}]
+  if (!pk) return unreadRows('No reading of the packet.')
   const rows = placed(pk)
   if (!rows.length) return [{id: 'none', name: 'Nothing in the packet', light: 'unknown'}]
   return rows.map(({item, waits}) => {

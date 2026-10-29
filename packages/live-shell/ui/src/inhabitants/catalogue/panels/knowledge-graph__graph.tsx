@@ -30,7 +30,7 @@
 // View (graph · list · tree · form) shows the same notes in another shape, and Standing floor (all · fact · claim · inference · guess) hides
 // the relations whose standing is below it; both are the view's own.
 import {useState} from 'react'
-import {Action, Band, Chooser, Dial, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, Tile, Toggle, ValueBox, toUnit, fromUnit, type LightState, type RowItem} from '../../sdk/panel'
+import {Action, Band, Chooser, Dial, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, Tile, Toggle, ValueBox, toUnit, fromUnit, type LightState, type RowItem, NoReading, unreadRows} from '../../sdk/panel'
 import {NONE, boolOf, clampTo, has, json, numOf, st, strOf, type DesignedDevice, type Value, type ViewProps} from './design'
 import {defaultGraphFilters, filterGraph, type FilteredGraph, type GraphFilters} from '../../../../../../../desktop/cradle/src/knowledge/filters'
 import {graphNodeCaption, isUnresolvedGraphNode, projectUnresolvedGraph, unresolvedGraphAssociations} from '../../../../../../../desktop/cradle/src/knowledge/graphNavigation'
@@ -373,8 +373,9 @@ function Flag({p, k, label, does}: {p: ViewProps; k: string; label: string; does
 }
 const GhostToggle = ({p}: {p: ViewProps}) => <Flag p={p} k="ghosts" label="Ghosts" does="Show the links that have no target, as dashed hollow nodes." />
 
-/** Said in a list where there is nothing to list because the owner reported no reading. */
-const NO_ROW: RowItem = {id: 'none', name: 'No reading', light: 'unknown'}
+/** A list with nothing to list because the owner reported no reading of the graph: it stands empty under a hollow light, and the Info
+ * line says which reading is missing. */
+const noRows = (): RowItem[] => unreadRows('No reading of the graph.')
 
 /** The groups of the filter: each member of the owner's set is a request; the light says the filtered graph holds a node of it. */
 function setRows(p: ViewProps, key: 'kinds' | 'relations', names: readonly string[], inGraph: (name: string) => number): RowItem[] {
@@ -386,11 +387,11 @@ const toggleIn = (p: ViewProps, key: 'kinds' | 'relations') => (id: string, requ
   const chosen = list(p.v, key)
   p.set(key, (request ? [...chosen, id] : chosen.filter(x => x !== id)).join('|'))
 }
-const kindRows = (p: ViewProps): RowItem[] => { const read = readingOf(p.v); return read ? setRows(p, 'kinds', read.model.kinds, name => read.result.nodes.filter(n => n.kind === name).length) : [NO_ROW] }
-const relationRows = (p: ViewProps): RowItem[] => { const read = readingOf(p.v); return read ? setRows(p, 'relations', read.model.relations, name => read.result.edges.filter(e => e.relation === name).length) : [NO_ROW] }
+const kindRows = (p: ViewProps): RowItem[] => { const read = readingOf(p.v); return read ? setRows(p, 'kinds', read.model.kinds, name => read.result.nodes.filter(n => n.kind === name).length) : noRows() }
+const relationRows = (p: ViewProps): RowItem[] => { const read = readingOf(p.v); return read ? setRows(p, 'relations', read.model.relations, name => read.result.edges.filter(e => e.relation === name).length) : noRows() }
 const groupRows = (p: ViewProps): RowItem[] => {
   const groups = groupsOf(p.v), read = readingOf(p.v)
-  if (!groups) return [NO_ROW]
+  if (!groups) return noRows()
   if (!groups.length) return [{id: 'none', name: 'No groups', light: 'dark'}]
   const matched = read ? emphasizeGraph(read.result.nodes, groups.map(g => ({...g, enabled: true}))) : undefined
   return groups.map((g): RowItem => {
@@ -478,8 +479,9 @@ type Reach = ReturnType<typeof reachOf>
 function reachRows(r: Reach): RowItem[] {
   const out: RowItem[] = []
   const say = (list: 'links' | 'references' | 'sessions', word: string) => {
-    if (r.status[list] === 'refused') out.push({id: `refused:${list}`, name: `${word}: ${r.from[list]} refused`, light: 'dark', tone: 'stall', why: r.refusal[list as 'references' | 'sessions']})
-    if (r.status[list] === 'unread') out.push({id: `unread:${list}`, name: `No reading of the ${word.toLowerCase()}`, light: 'unknown', does: `The ${word.toLowerCase()} come from ${r.from[list]}.`})
+    // The list's own row: refused, it stands dark in the stall colour and the refusal is on the Info line; unread, its light is hollow.
+    if (r.status[list] === 'refused') out.push({id: `refused:${list}`, name: word, light: 'dark', tone: 'stall', why: `${r.from[list][0]!.toUpperCase()}${r.from[list].slice(1)} refused: ${r.refusal[list as 'references' | 'sessions'] ?? 'it gave no reason.'}`})
+    if (r.status[list] === 'unread') out.push({id: `unread:${list}`, name: word, light: 'unknown', why: `No reading of the ${word.toLowerCase()}.`, does: `The ${word.toLowerCase()} come from ${r.from[list]}.`})
   }
   say('links', 'Links')
   for (const [i, x] of r.links.entries()) out.push({id: `l${i}`, name: x.name, light: x.direct ? 'lit' : 'dark', tone: 'value', note: x.relation, does: `${x.direct ? 'A direct link' : 'A link further out'}, ${x.relation}, from ${x.source}.`})
@@ -784,7 +786,7 @@ function KnowledgePane({p}: {p: ViewProps}) {
   return <div className="kg-pane">
     <div className="kg-field">
       <div className="kg-chips" aria-label="Applied filters">
-        {chips === undefined ? <span className="kg-chip">No reading of the filters</span>
+        {chips === undefined ? <NoReading name="Filters" why="No reading of the filters." />
           : chips.length ? chips.map(chip => <span key={chip} className="kg-chip" data-on="true">{chip}</span>) : <span className="kg-chip">No filter</span>}
         {boolOf(p.v, 'ghosts') === false && <span className="kg-chip">Links with no target are hidden</span>}
       </div>

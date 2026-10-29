@@ -32,7 +32,7 @@
 // Every item takes open, which marks it opened here and tells its owner nothing. A key the owner does not report arrives absent, and the
 // views draw "—" and say what is missing.
 import {useState, type ReactNode} from 'react'
-import {Action, Band, Chooser, Display, Folded, Panel, Radio, Readout, Rows, Section, Tile, Toggle, type LightState, type Option, type RowItem} from '../../sdk/panel'
+import {Action, Band, Chooser, Display, Folded, Panel, Radio, Readout, Rows, Section, Tile, Toggle, type LightState, type Option, type RowItem, unreadRows} from '../../sdk/panel'
 import {NONE, boolOf, clampTo, has, json, numOf, shown, st, strOf, type DesignedDevice, type ViewProps} from './design'
 import './software-factory__approvals.css'
 
@@ -295,8 +295,8 @@ function QueueBands({p}: {p: ViewProps}) {
     </Band>
     <Band>
       <Section width={170}>
-        <Rows label={known ? 'Queue' : 'Queue · no reading'} does="The items that wait for you: a square is a proposal, a ring a request, a diamond a review or a recognition. Press a name to choose it."
-          items={rows} size={7} selected={picked?.id} onSelect={id => p.set('pick', id)} page={page} onPage={setPage} />
+        <Rows label="Queue" why="No reading of the queue." waiting={st(p, 'queue').waiting} does="The items that wait for you: a square is a proposal, a ring a request, a diamond a review or a recognition. Press a name to choose it."
+          items={known ? rows : undefined} size={7} selected={picked?.id} onSelect={id => p.set('pick', id)} page={page} onPage={setPage} />
       </Section>
       <Section label="List" width={112}>
         {showChooser(p)}
@@ -342,9 +342,9 @@ function ReviewWell({item, w, h}: {item: Item | undefined; w: number; h: number}
 function ReviewBands({p}: {p: ViewProps}) {
   const item = reviewedOf(p.v), rv = item?.review, rg = item?.recognition, [page, setPage] = useState(0)
   const met = rv?.criteria.filter(c => c.state === 'satisfied').length, unmet = rv?.criteria.some(c => c.state === 'unsatisfied')
-  const rows: RowItem[] = !item ? [{id: 'none', name: queueOf(p.v) ? 'No review or recognition waits' : 'No reading of the queue', light: 'unknown'}]
+  const rows: RowItem[] = !item ? (queueOf(p.v) ? [{id: 'none', name: 'No review or recognition waits', light: 'dark'}] : unreadRows('No reading of the queue.'))
     : item.kind === 'recognition' ? [{id: 'ret', name: rg?.summary ?? NONE, light: 'lit', tone: 'value', note: 'return'}]
-    : !rv ? [{id: 'none', name: 'No reading of the review', light: 'unknown'}]
+    : !rv ? unreadRows('No reading of the review.')
     : [...rv.criteria.map((c, i) => ({id: `c${i}`, name: c.text, light: (c.state === 'satisfied' ? 'lit' : 'dark') as LightState, tone: c.state === 'unsatisfied' ? 'stall' as const : 'value' as const,
         note: c.state === 'satisfied' ? 'met' : c.state === 'unsatisfied' ? 'not met' : 'open'})),
       ...rv.claims.map((c, i) => ({id: `k${i}`, name: c.statement, light: (c.evidence ? 'lit' : 'dark') as LightState, tone: 'value' as const, note: c.evidence ? `${c.evidence} evidence` : 'no evidence'})),

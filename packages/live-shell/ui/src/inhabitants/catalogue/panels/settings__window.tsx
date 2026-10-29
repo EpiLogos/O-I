@@ -133,7 +133,7 @@
 //   which reads the page it turned to.
 // A key the owner has not reported is absent: its cell draws "—", and the page names the missing reading.
 import {useState, type ReactNode} from 'react'
-import {Action, Chooser, Lamp, Radio, Readout, TextField, Toggle, type LightState, type Option, type Tone} from '../../sdk/panel'
+import {Action, Chooser, Lamp, NoReading, Radio, Readout, TextField, Toggle, type LightState, type Option, type Tone} from '../../sdk/panel'
 import {NONE, boolOf, has, json, numOf, st, strOf, type DesignedDevice, type Value, type ViewProps} from './design'
 import './settings__window.css'
 
@@ -468,7 +468,7 @@ function CredentialsStep({p, reading}: {p: ViewProps; reading: Rec | undefined})
     <table className="st-tbl">
       <Cols w={[150, 210, undefined]} />
       <thead><tr><th>Found {pager}</th><th>Where it lies</th><th>The binding Accept makes</th></tr></thead>
-      <tbody>{items === undefined ? <tr><td colSpan={3} className="st-none">Not read yet.</td></tr>
+      <tbody>{items === undefined ? <tr><td colSpan={3} className="st-none"><NoReading name="Credentials" why="No reading of the credentials found on your computer." /></td></tr>
         : items.length === 0 ? <tr><td colSpan={3} className="st-none">Nothing found.</td></tr>
         : shown.map((r, i) => {
           const id = txt(r.credential), pick = !!id && open.includes(r)
@@ -553,7 +553,7 @@ function SetupPage({p}: {p: ViewProps}) {
   const step = STEPS.find(s => s.id === at)!, reading = steps?.find(s => s.step === at), items = Array.isArray(reading?.items) ? reading!.items.filter(rec) : undefined
   const [shown, pager] = usePaged(items ?? [], 9)
   return <section className="st-sec st-setup">
-    <h4>Setup<small>{steps ? `${accepted} of ${STEPS.length} accepted` : 'your computer is not read yet'}</small>
+    <h4>Setup<small>{steps ? `${accepted} of ${STEPS.length} accepted` : <NoReading name="Setup" why="No reading of your computer yet." />}</small>
       <span className="st-head-acts"><Action {...st(p, 'rereadSetup')} label="Read again" does="Reads your computer again. Nothing is made twice; what you accepted stays." onPress={() => p.set('rereadSetup', true)} /></span></h4>
     <nav className="st-steps" aria-label="Setup steps">{STEPS.map((s, i) => {
       const r = steps?.find(x => x.step === s.id)
@@ -566,7 +566,7 @@ function SetupPage({p}: {p: ViewProps}) {
       <table className="st-tbl">
         <Cols w={[150, 210, undefined]} />
         <thead><tr><th>Found {pager}</th><th>Where</th><th>The change Accept makes</th></tr></thead>
-        <tbody>{items === undefined ? <tr><td colSpan={3} className="st-none">Not read yet.</td></tr>
+        <tbody>{items === undefined ? <tr><td colSpan={3} className="st-none"><NoReading name="Setup" why="No reading of this step yet." /></td></tr>
           : items.length === 0 ? <tr><td colSpan={3} className="st-none">Nothing found.</td></tr>
           : shown.map((r, i) => <tr key={i} data-read={txt(r.why) ? 'true' : undefined}>
             <td><b>{txt(r.name) ?? NONE}</b>{txt(r.why) && <i className="st-why" data-i={`Left alone|${r.why}`}>!</i>}</td>

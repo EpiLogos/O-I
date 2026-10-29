@@ -12,7 +12,7 @@
 // keep it, central.world-relations.save), as Context & world's toggles were before Scope carried them (lock §0.3.5); its standing says why
 // a place takes no request. A place the owner reports no request for has no square.
 import {useState} from 'react'
-import {Action, Band, Dial, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, Tile, Toggle, ValueBox, type LightState, type RowItem} from '../../sdk/panel'
+import {Action, Band, Dial, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, Tile, Toggle, ValueBox, type LightState, type RowItem, unreadRows} from '../../sdk/panel'
 import {NONE, boolOf, clampTo, has, json, numOf, shown, st, strOf, type DesignedDevice, type ViewProps} from './design'
 
 type V = ViewProps['v']
@@ -124,7 +124,7 @@ function RouteWell({v, w, h}: {v: V; w: number; h: number}) {
 function KnowledgeBands({p}: {p: ViewProps}) {
   const v = p.v, readings = readingsOf(v), chosen = readings?.find(x => x.id === strOf(v, 'reading')), [page, setPage] = useState(0), route = strOf(v, 'route')
   const toggle = (key: string, label: string, does: string) => <Toggle {...st(p, key)} key={key} label={label} does={does} on={boolOf(v, key) === true} unknown={boolOf(v, key) === undefined} onChange={x => p.set(key, x)} />
-  const rows: RowItem[] = readings === undefined ? [{id: 'none', name: 'No reading of the pages the agent read', light: 'unknown'}]
+  const rows: RowItem[] = readings === undefined ? unreadRows('No reading of the pages the agent read.')
     : readings.length === 0 ? [{id: 'none', name: 'The agent has read nothing yet', light: 'dark'}]
     : readings.map(x => ({id: x.id, name: x.page, light: x.moved ? 'dark' : 'lit', tone: x.moved ? 'stall' : 'value', note: x.moved ? 'moved' : x.rev ?? x.source,
       does: `From ${x.source}${x.rev ? ` at ${x.rev}` : ''}, ${x.hops} link${x.hops === 1 ? '' : 's'} from a hit.${x.moved ? ' Its source moved since: Read again reads it at the new revision.' : ''}`}))
@@ -262,11 +262,11 @@ function ScopeWhole({p}: {p: ViewProps}) {
     </Band>
     <Band>
       <Section width={132}>
-        <Rows label={has(p.v, 'reads') ? 'Reads' : 'Reads · no reading'} does="The places the agent may read. A teal light marks a place in reach. The square is your request: pressed, the world includes the place; open, it excludes it."
-          items={readRows(p)} onRequest={askRead(p)} size={7} page={readPage} onPage={setReadPage} />
+        <Rows label="Reads" waiting={st(p, 'reads').waiting} why="No reading of the places the agent may read." does="The places the agent may read. A teal light marks a place in reach. The square is your request: pressed, the world includes the place; open, it excludes it."
+          items={has(p.v, 'reads') ? readRows(p) : undefined} onRequest={askRead(p)} size={7} page={readPage} onPage={setReadPage} />
       </Section>
       <Section width={132}>
-        <Rows label={has(p.v, 'writes') ? 'Writes · receipts' : 'Writes · no reading'} does="The places the agent may write. The square is your request; amber marks a place in reach." items={writeRows(p.v)}
+        <Rows label={has(p.v, 'writes') ? 'Writes · receipts' : 'Writes'} waiting={st(p, 'writes').waiting} why="No reading of the places the agent may write." does="The places the agent may write. The square is your request; amber marks a place in reach." items={has(p.v, 'writes') ? writeRows(p.v) : undefined}
           onRequest={(id, x) => p.set(`w:${id}`, x)} size={7} />
       </Section>
       <Section label="Basis" grow>

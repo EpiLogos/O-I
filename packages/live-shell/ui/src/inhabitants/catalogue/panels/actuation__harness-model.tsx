@@ -43,7 +43,7 @@
 // page; Compact and the widget draw the small face; Whole opens on the Answer and Face pages, the whole face at the left of the picture;
 // Full is mostly the face, with its three marks and the conversation at its right. Elsewhere its face is the creature of its type.
 import {memo, useMemo, useState, type ReactNode} from 'react'
-import {Action, Band, Chooser, Dial, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, TextField, Tile, Toggle, ValueBox, type LightState, type Option, type RowItem} from '../../sdk/panel'
+import {Action, Band, Chooser, Dial, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, TextField, Tile, Toggle, ValueBox, type LightState, type Option, type RowItem, unreadRows} from '../../sdk/panel'
 import {maskStatic} from '../../../agent/maskFace'
 import {useFaceColours} from '../../../agent/FaceStage'
 import {NONE, boolOf, clampTo, has, json, numOf, on, prefixed, scoped, shown, st, strOf, type DesignedDevice, type Value, type ViewProps} from './design'
@@ -132,7 +132,8 @@ const turnsLine = (v: V): string | undefined => {
 const stateWord = (lamp: string | undefined, v: V): string | undefined => {
   if (lamp === undefined) return undefined
   if (lamp === 'dark') return 'benched'
-  if (lamp !== 'lit') return 'not read'
+  // Not read: the state readout stands "—" with the No-reading standing; the Info line says so.
+  if (lamp !== 'lit') return undefined
   const n = needle(v)
   return n === 'live' ? 'working' : n === 'unread' ? undefined : n
 }
@@ -309,10 +310,10 @@ const head = (p: ViewProps) => ({light: lampOf(p), busy: busyOf(p), onLight: st(
 
 
 /** Team cell: where the agent stands in Anima or Aletheia — its row, the question the row asks of it, and its depth. */
-function teamRows(v: V): RowItem[] {
+function teamRows(v: V): RowItem[] | undefined {
   const space = strOf(v, 'team.space'), row = strOf(v, 'team.row'), question = strOf(v, 'team.question'), depth = strOf(v, 'team.depth')
   if (space === 'none') return [{id: 'none', name: 'In no team', light: 'dark', note: NONE}]
-  if (space === undefined && row === undefined) return [{id: 'none', name: 'No reading of the team space', light: 'unknown', note: NONE}]
+  if (space === undefined && row === undefined) return undefined
   const line = (id: string, name: string | undefined, note: string): RowItem => ({id, name: name ?? NONE, light: name === undefined ? 'unknown' : 'lit', tone: 'value', note})
   return [line('row', row === undefined ? undefined : `${space ?? NONE} · ${row}`, 'row'), line('question', question, 'asks'), line('depth', depth, 'depth')]
 }
@@ -389,7 +390,8 @@ function AgentBands({p}: {p: ViewProps}) {
       </Section>
     </Band>
     <Band>
-      <Section label="Team cell" grow><Rows does="Where the agent stands in Anima or Aletheia: its row, the question the row asks of it, and its depth. Read from the team space." items={teamRows(p.v)} size={3} /></Section>
+      <Section label="Team cell" grow><Rows does="Where the agent stands in Anima or Aletheia: its row, the question the row asks of it, and its depth. Read from the team space." items={teamRows(p.v)} size={3}
+        waiting={st(p, 'team.space').waiting} why="No reading of the team space." /></Section>
     </Band>
   </>
 }
@@ -462,7 +464,7 @@ function ContextWell({v, w, h}: {v: V; w: number; h: number}) {
 
 function contextRows(v: V): RowItem[] {
   const turn = turnOf(v), armed = armedOf(v)
-  const rows: RowItem[] = !turn ? [{id: 'none', name: 'No reading of the last turn', light: 'unknown'}]
+  const rows: RowItem[] = !turn ? unreadRows('No reading of the last turn.')
     : turn.blocks.map((b, i) => ({id: `b${i}`, name: b.title, light: (b.suppressed ? 'dark' : 'lit') as LightState, tone: b.withheld ? 'stall' as const : 'value' as const,
       note: b.suppressed ? 'withheld' : b.withheld ? `${b.standing + b.kept} in · ${b.withheld} out` : `${b.standing + b.kept} in`,
       why: b.suppressed ? 'The bracket allows no more ordinary blocks: this one carried ordinary lines only, so none of it entered.' : undefined,

@@ -153,8 +153,8 @@ function Steps({p, size}: {p: ViewProps; size: number}) {
       why: here === false ? 'Outside the window. It does not enter the example.' : finding && want ? `AIKit found ${finding.description ?? 'a possible secret'} here.` : undefined, note: `−${s.at} m`}
   })
   const request = st(p, 'steps').disabled ? undefined : (id: string, on: boolean) => p.set(`step:${id}`, on)
-  return <Rows label={all ? `Steps · ${stepsText(v) ?? NONE}` : 'Steps · no reading'} does="The steps found in the example. The square is your request: turn a step off to remove it. The number is the order."
-    items={items} onRequest={request} size={size} page={page} onPage={setPage} />
+  return <Rows label={all ? `Steps · ${stepsText(v) ?? NONE}` : 'Steps'} why="No reading of the steps." does="The steps found in the example. The square is your request: turn a step off to remove it. The number is the order."
+    items={all ? items : undefined} onRequest={request} size={size} page={page} onPage={setPage} />
 }
 
 function Resembles({v, size}: {v: V; size: number}) {
@@ -163,8 +163,8 @@ function Resembles({v, size}: {v: V; size: number}) {
     : [...(dup ? [{other: dup, form: undefined, percentage: 100, summary: 'AIKit already holds this example. It filed no second proposal.'} as Likeness] : []), ...(like ?? [])]
   const items: RowItem[] = (rows ?? []).map(r => ({id: r.other, name: leaf(r.other), light: 'lit', tone: 'value', note: `${r.percentage} %`,
     mark: r.form ? <WoodMark kind={r.form} size={14} set={marks(v)} title={FORM_NAME[r.form]} /> : undefined, does: r.summary ?? `${r.percentage} % of the phrasing is shared.`}))
-  return <Rows label={rows ? (rows.length ? 'Resembles' : 'Resembles · none') : 'Resembles · no reading'}
-    does="The members that the proposal resembles, and how much phrasing is shared. A close match needs a new revision, not a new member." items={items} size={size} />
+  return <Rows label={rows ? (rows.length ? 'Resembles' : 'Resembles · none') : 'Resembles'} why="No reading of the members it resembles."
+    does="The members that the proposal resembles, and how much phrasing is shared. A close match needs a new revision, not a new member." items={rows ? items : undefined} size={size} />
 }
 
 function HeldFor({v, size}: {v: V; size: number}) {

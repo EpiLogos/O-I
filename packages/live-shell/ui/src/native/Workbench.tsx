@@ -545,9 +545,11 @@ export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}
     }
     throw Error('The new tab did not open in the focused pane, so nothing was made.')
   }
-  const freshChoice = async (id: string, kind: string, project?: string) => {
+  /** Make the chosen kind in the blank tab `id`. Resolves true once the tab holds what was made, false when the tab is gone or no longer
+   * blank (nothing was made); refuses in the owner's words. */
+  const freshChoice = async (id: string, kind: string, project?: string): Promise<boolean> => {
     const binding = workbenchMembership(latest.current.book).get(id)
-    if (!binding || binding.kind !== 'blank') return
+    if (!binding || binding.kind !== 'blank') return false
     const {origin, current, workspaceId} = capture(binding, true)
     const form = DOCUMENT_FORMS.find(entry => entry.kind === kind)
     if (form) {
@@ -569,6 +571,7 @@ export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}
     else if (kind === 'search') {current(); origin.book.replaceSurface(workspaceId, {id, kind: 'sources', title: 'Sources', project})}
     else if (['library', 'terminal', 'browser'].includes(kind)) openKind(kind, id, project)
     else throw Error('The native opener does not offer this document kind.')
+    return true
   }
 
   useEffect(() => bindScopeWriter(scope => {
@@ -893,26 +896,27 @@ export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}
       // same fresh choice a blank tab's form picker uses — the owner writes the new document.
       // The Day is not copied: New Day is Central's own (T-WORLDS W2 "New Day calls central initialise-day"), Open today's press —
       // today's Day ensured and made from the Day form when it has none — and today's Day opens in its pane.
+      // Each opener answers what it made (O-I #750): the New… tile holds off a second press while one is being made, and says the answer.
       ...DOCUMENT_FORMS.filter(form => NEW_DOCUMENT_FORMS.includes(form.kind)).map(form => ({id: `form.${form.kind}`, title: form.label, hint: form.hint,
-        open: run(() => {
+        open: (): Promise<string> => {
+          const said = (cause: unknown): never => { openerActions.current.report(cause); throw cause }
           if (form.kind === 'document-42') {
-            void import('../central/devices/centralDeviceWrites').then(({openToday}) => openToday(latest.current.kernel.transport))
-              .then(() => latest.current.book.setLayout(layout => openCentralDocumentAt(layout, {form: 'day', date: null})))
-              .catch(openerActions.current.report)
-            return
+            return import('../central/devices/centralDeviceWrites').then(({openToday}) => openToday(latest.current.kernel.transport))
+              .then(() => { latest.current.book.setLayout(layout => openCentralDocumentAt(layout, {form: 'day', date: null})); return 'Today\'s Day opens in the focused pane.' }).catch(said)
           }
-          const id = crypto.randomUUID()
-          callbacks.current.insert({id, kind: 'blank', title: 'New tab', project: latest.current.book.current.project})
-          // The tab is in the book once the book has rendered it: the fresh choice reads the book then, never the one before.
-          void inBook(id).then(() => callbacks.current.freshChoice(id, form.kind)).catch(openerActions.current.report)
-        })})),
+          try {
+            const id = crypto.randomUUID()
+            callbacks.current.insert({id, kind: 'blank', title: 'New tab', project: latest.current.book.current.project})
+            // The tab is in the book once the book has rendered it: the fresh choice reads the book then, never the one before.
+            return inBook(id).then(() => callbacks.current.freshChoice(id, form.kind))
+              .then(made => made ? `Made a new ${form.label}. It opens in the focused pane.` : 'The new tab closed before anything was made in it.', said)
+          } catch (cause) { openerActions.current.report(cause); return Promise.reject(cause) }
+        }})),
       // Your practice's pages (T-WORLDS W4; inhabitants/ql/devices/practiceLaunch.ts): made in your practice world, or the one it keeps,
       // and opened in a pane of their own; a journey's Deck asks for its theme.
       ...PRACTICE_OPENERS.map(entry => ({id: `form.practice-${entry.practice}`, title: entry.title, hint: entry.hint,
-        open: run(() => {
-          void openPractice(entry.practice, latest.current.kernel.transport, location => latest.current.book.setLayout(layout => openCentralDocumentAt(layout, {form: 'flow', location})))
-            .catch(openerActions.current.report)
-        })})),
+        open: (): Promise<string> => openPractice(entry.practice, latest.current.kernel.transport, location => latest.current.book.setLayout(layout => openCentralDocumentAt(layout, {form: 'flow', location})))
+          .then(() => `Made your ${entry.title}. It opens in a pane of its own.`, (cause: unknown) => { openerActions.current.report(cause); throw cause })})),
     ])
   }, [tauri])
 
