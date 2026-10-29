@@ -51,7 +51,7 @@ import {useDesign} from '../../frame/devices/designs'
 import {openInstrument} from '../../frame/instrumentDoor'
 import {agentAddress} from '../../inhabitants/agentParamAddresses'
 import {useRosterAnswer} from '../../owners/readers'
-import {registerOf, ROOT_REGISTER} from '../worldScope'
+import {registerOf, returnProjectOf, ROOT_REGISTER, useWorldReturns} from '../worldScope'
 import {useAgentSessionsOptional} from '../AgentSessionsProvider'
 import {useAgentShell, type AgentDeviceId} from '../AgentShellContext'
 import {threadTrackOf} from '../threadTrack'
@@ -111,7 +111,7 @@ import {captureSkillBinding, type CaptureSkillPorts} from './captureSkillBinding
 import {RUN_MAP_DESIGN, RUN_MAP_ID, runMapBinding, runMapDevice} from './runMapBinding'
 import {PROMPT_PADS_DESIGN, PROMPT_PADS_ID, padsLocation, promptPadsBinding, promptPadsDevice, type PromptPadsPorts} from './promptPadsBinding'
 import {useDecisionHelperReadings} from './decisionHelperReads'
-import {useActuationRead, useAikitRead, useConnectionShows, useSeatStatusAnswer, useSourceReturnsAnswer, useWorkcellRead} from './workcellReads'
+import {useActuationRead, useAikitRead, useConnectionShows, useSeatStatusAnswer, useWorkcellRead} from './workcellReads'
 import {workcellTrackId} from '../../frame/tracks/returnTracks'
 import '../agentShell.css'
 import './factoryDevices.css'
@@ -430,14 +430,16 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   const agentsetCarrying = useMemo(() => carryPages(agentsetDesignBinding, helperStands ? [{page: HELPER_PAGE, binding: helperDesignBinding}] : []),
     [agentsetDesignBinding, helperStands, helperDesignBinding])
 
-  // The Main track's reader: Approvals on the shown session's consent requests and the project's source returns (lane K1's
+  // The Main track's reader: Approvals on the shown session's consent requests and the world's source returns (lane K1's
   // source_returns_read); the default answer is the Gateway's, never Approvals' (ticket 788). The Ledger is a monitor on the rail
-  // (AgentRailDevices.tsx).
+  // (AgentRailDevices.tsx). Approvals is "one place to answer what waits for you" (§19.14) on Factory's Main track, which is no session's:
+  // it reads every project's returned work, as Central's does in your world (agent/worldScope.ts useWorldReturns), each row in its own
+  // project, and says why when none stands (a world with no project).
   const receipts = useMemo(() => receiptDevices(), [])
   const designsReceipts = {approvals: useDesign(APPROVALS_DESIGN, true)}
   const shownTrack = shown ? tracks?.find(item => item.sessionRef === shown && !item.group) ?? null : null
-  const returns = useSourceReturnsAnswer(transport, register).reading
-  const returned = returns.status === 'answered' ? returns.value : null
+  const approvalsReturns = useWorldReturns(transport, null)
+  const returned = approvalsReturns.returns
   // Factory's unit decisions (W9): the questions the shown session's Runs wait on (unitDecisions.ts), read from the Runs its takes name.
   const shownTakesAll = useAttemptTakes(transport, shownTrack ? [shownTrack.sessionRef] : [], shownTrack?.project ?? ROOT_REGISTER)
   const unitRuns = useMemo(() => {
@@ -462,14 +464,14 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
     const actions = shownHandle && 'actions' in shownHandle ? shownHandle.actions : undefined
     // Approvals is handed no Gateway: the default answer is the Gateway's own, set on the Gateway (§19.14, §19.2; ticket 788).
     const binding = approvalsBinding({session: shownTrack, encounter: state?.reading ?? null, holds,
-      returns: returned, tracks, nowUnixMs: sessions?.nowUnixMs ?? Date.now(), units, person},
+      returns: returned, returnsAbsent: approvalsReturns.absent, returnsRefused: approvalsReturns.refusals, tracks, nowUnixMs: sessions?.nowUnixMs ?? Date.now(), units, person},
       {...(actions ? {permission: (id, decision) => actions.permission(id, decision)} : {}),
-        approve: row => acceptSourceReturn(transport, register, row, person),
+        approve: row => acceptSourceReturn(transport, returnProjectOf(row, null), row, person),
         // Deny on a proposal (§19.14): Central's projectcentral.source.return_reject through invoke_action (sourceReturnAccept.ts).
-        reject: row => rejectSourceReturn(transport, register, row),
+        reject: row => rejectSourceReturn(transport, returnProjectOf(row, null), row),
         ...(transport.kind !== 'unavailable' ? {answerUnit: (project, review) => receiving(transport, project, review).catch(cause => { throw new Error(refusalWords(cause instanceof Error ? cause.message : String(cause))) })} : {})})
-    const commented = withReturnComments(binding, {returns: returned, comment: agentDraft}, {
-      send: (row, words) => commentSourceReturn(transport, register, row, words, person),
+    const commented = withReturnComments(binding, {returns: returned, comment: agentDraft, absent: approvalsReturns.absent}, {
+      send: (row, words) => commentSourceReturn(transport, returnProjectOf(row, null), row, words, person),
       after: () => { void agentWrite?.([{key: 'draft', value: ''}]) },
     })
     // Notifications' readings wait here under Requests (§23.9; the Notifications device was retired into Approvals in the 22 Oct manual
@@ -477,7 +479,7 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
     // withOwnerRequests), as Central's Approvals carries them; Open marks an item opened here, after opening an owner's request.
     return withOwnerRequests(commented, {...ownerRequests, nowUnixMs: sessions?.nowUnixMs || Date.now()}, openNotificationTarget,
       {opened: openedOf(viewHolds(holds, APPROVALS_ID).opened), hold: ids => holdView(APPROVALS_ID, 'opened', openedHold(ids))})
-  }, [shownHandle, shownTrack, holds, returned, tracks, sessions?.nowUnixMs, transport, person, units, agentDraft, agentWrite, ownerRequests, register])
+  }, [shownHandle, shownTrack, holds, returned, approvalsReturns.absent, approvalsReturns.refusals, tracks, sessions?.nowUnixMs, transport, person, units, agentDraft, agentWrite, ownerRequests])
 
   // A workcell's devices (§19.23): Git / landing's Seat page (the seat instrument), starting at the selected workcell's seat of the project;
   // the Remote carrier (Workcell's status) with its Machine page; and the workcell rack, which stands on the rail too (the Workcells tile), so

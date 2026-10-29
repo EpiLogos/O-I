@@ -195,6 +195,7 @@ test('Factory\'s Main track hands Approvals the acceptance: the anchor asked onl
   const view = read('agent/devices/FactoryDeviceChain.tsx')
   assert.match(view, /useCentralAction\(transport, PERSONAL_ANCHOR_ACTION, waiting \? NO_INPUT : null\)/)
   // REPLACED (O-I #740 lane B): RACK_PROJECT ('O-I'); the chain's register — the session's own, the root's null (agent/worldScope.ts).
-  assert.match(view, /approve: row => acceptSourceReturn\(transport, register, row, person\)/)
+  // REPLACED (O-I #740 lane B, round four): the chain's register; Factory's Approvals read the world's returns, each act in its row's project.
+  assert.match(view, /approve: row => acceptSourceReturn\(transport, returnProjectOf\(row, null\), row, person\)/)
   assert.match(view, /const person = anchor\.status === 'answered' \? personRefOf\(anchor\.value\) : null/)
 })
