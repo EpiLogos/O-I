@@ -309,7 +309,7 @@ test('CODE-DERIVED — the self reads as Central gives it: a tier\'s resolved so
   assert.deepEqual(JSON.parse(ground.selfValue(W2.selfInspectOI.data)).unbound, [], 'REAL: O-I has no self, nothing unbound')
 })
 
-test('the Workspace\'s Accept, Ensure and a tier\'s Relate write the world\'s ground as the person\'s presses; UX and EX stay disabled naming the route', async () => {
+test('the Workspace makes no world\'s ground (§18.1: only Setup\'s preview does, extending the grant with it); its Ensure and a tier\'s Relate write as the person\'s presses; UX and EX stay disabled naming the route', async () => {
   pages.resetHolds()
   const presses = []
   const state = {project: 'O-I', pc: {status: 'answered', value: W2.pcInspectOI.data}, self: answered(SELF), preview: async () => {},
@@ -317,19 +317,22 @@ test('the Workspace\'s Accept, Ensure and a tier\'s Relate write the world\'s gr
     relate: async (tier, source) => { presses.push(['relate', tier, source]) }}
   const workspace = {id: 'w1', name: 'O-I', project: 'O-I', layout: {root: null, mode: 'base'}}
   const binding = pages.workspaceBinding('central:workspace', workspace, Date.now(), null, state)
-  for (const key of ['pcAccept', 'selfEnsure', 'selfRelate']) assert.equal(binding.standing[key], undefined, `${key}: stands`)
-  await binding.write([{key: 'pcAccept', value: JSON.stringify({treatment: 'adopt', source: 'ProjectCentral/agents/wiki/wiki.json'})}])
+  for (const key of ['selfEnsure', 'selfRelate']) assert.equal(binding.standing[key], undefined, `${key}: stands`)
+  // No Accept: projectcentral.init, adopt or migrate pressed here would make a ground the person's grant never reaches.
+  assert.ok(!pages.WORKSPACE_WIRING.keys.includes('pcAccept') && !('pcAccept' in pages.WORKSPACE_WIRING.writes), 'the Workspace keeps no Accept')
+  assert.equal(binding.writes('pcAccept'), false)
+  await assert.rejects(binding.write([{key: 'pcAccept', value: JSON.stringify({treatment: 'adopt', source: 'ProjectCentral/agents/wiki/wiki.json'})}]), /no owner takes a change of it here/)
   await binding.write([{key: 'selfEnsure', value: true}])
   await binding.write([{key: 'selfRelate', value: JSON.stringify({as: '0', source: SELF.self_aperture.unbound_sources[0].ref})}])
-  assert.deepEqual(presses, [['accept', 'adopt', 'ProjectCentral/agents/wiki/wiki.json'], ['ensure'], ['relate', 0, SELF.self_aperture.unbound_sources[0].ref]])
+  assert.deepEqual(presses, [['ensure'], ['relate', 0, SELF.self_aperture.unbound_sources[0].ref]], 'a hand that could accept is never pressed')
   await assert.rejects(binding.write([{key: 'selfRelate', value: JSON.stringify({as: 'ux', source: 'x'})}]), /PERSON_ACTS/)
-  await assert.rejects(binding.write([{key: 'pcAccept', value: JSON.stringify({treatment: 'migrate'})}]), /choose the wiki/)
   assert.ok(binding.local.selfSource, 'the source chosen to bind is the view\'s own')
   pages.setHeld('central:workspace', 'bindAs', 'ex')
   assert.equal(pages.workspaceBinding('central:workspace', workspace, Date.now(), null, state).standing.selfRelate.disabled, pages.RELATE_UX_EX_REFUSED)
   pages.resetHolds()
   const root = pages.workspaceBinding('central:workspace', {...workspace, project: undefined}, Date.now(), null, {project: null})
-  for (const key of ['pcAccept', 'selfEnsure', 'selfRelate']) assert.match(root.standing[key].disabled, /no world's ground is read here/)
+  for (const key of ['selfEnsure', 'selfRelate']) assert.match(root.standing[key].disabled, /no world's ground is read here/)
+  assert.equal(root.standing.pcAccept, undefined)
   // REPLACED (#725): the Workspace's Self page drawn on the binding — the Workspace is retired (§18.1: a world's account of itself is Docs);
   // until Docs is bound to the six tiers, the self stands as the binding's own reading, as Central gives it.
   assert.equal(binding.values.self, ground.selfValue(SELF), 'the self, read')

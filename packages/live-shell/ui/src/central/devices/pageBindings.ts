@@ -307,7 +307,7 @@ export const WORKSPACE_WIRING: DesignWiring = {
   design: WORKSPACE_DESIGN,
   keys: ['light', 'name', 'kind', 'folder', 'place', 'keepPanes', 'keepInstruments', 'keepWidgets', 'keepSets', 'rememberIn', 'onLaunch', 'openIn', 'keepWhen', 'sendToDay',
     'mode', 'mem', 'fresh', 'dirty', 'widgets', 'visited', 'clip', 'folders', 'trees', 'sets', 'clips', 'launch', 'keepNow',
-    'pc', 'pcPlan', 'self', 'treatment', 'pcSource', 'bindAs', 'selfSource', 'pcPreview', 'pcAccept', 'selfEnsure', 'selfRelate'],
+    'pc', 'pcPlan', 'self', 'treatment', 'pcSource', 'bindAs', 'selfSource', 'pcPreview', 'selfEnsure', 'selfRelate'],
   reads: {
     light: 'the book holds this workspace open (it is the current one)',
     name: 'the world\'s name as Central discloses it (world browse), when a world\'s head opened the Workspace (§18.1 Name: "The world\'s name"); else the book\'s workspace\'s name',
@@ -323,7 +323,6 @@ export const WORKSPACE_WIRING: DesignWiring = {
     pcPreview: 'Central\'s preview of the treatment chosen (projectcentral.adopt.preview | migrate.preview {project, source}, through invoke_action): a reading, nothing changes',
     mode: 'the book\'s own mode switch (continuity/workspace.tsx setMode → store.ts switchMode): the open mode turns',
     name: 'the book\'s own rename of the current workspace (store.ts rename)',
-    pcAccept: 'the person\'s Accept: projectcentral.init {project, project_id}, adopt or migrate {project, project_id, source} as previewed (invoke_action, action.rs PERSON_ACTS)',
     selfEnsure: 'the person\'s Ensure: projectcentral.docs.ensure {project} (invoke_action, action.rs PERSON_ACTS)',
     selfRelate: 'the person\'s Relate of a tier: projectcentral.docs.tier.relate {project, source_ref, tier, acceptance human-accepted} (invoke_action, action.rs PERSON_ACTS)',
   },
@@ -1265,17 +1264,9 @@ export function workspaceBinding(id: string, workspace: BookWorkspace | null, no
     if (!source) throw new Error('Preview: choose the wiki to keep or copy first.')
     await ground.preview(treatment, source)
   }
-  // The person's Accept, Ensure and Relate (action.rs PERSON_ACTS): what the design sends, to the world's own ground.
+  // The person's Ensure and Relate (action.rs PERSON_ACTS): what the design sends, to the world's own ground. It keeps no Accept: a world's
+  // ground is made only through Setup's preview (manual §18.1), whose Accept extends the person's grant to it (settings/windowPages.ts).
   const noHand = (act: string): string => (ground?.project ? `${act}: no transport reaches Central here.` : `${act}: ${NO_WORLD_GROUND}`)
-  acts.pcAccept = async value => {
-    const asked = typeof value === 'string' && value.startsWith('{') ? (() => { try { return JSON.parse(value) as {treatment?: unknown; source?: unknown} } catch { return {} } })() : {}
-    if (!ground?.accept) throw new Error(noHand('Accept'))
-    const treatment = asked.treatment
-    if (treatment !== 'create' && treatment !== 'adopt' && treatment !== 'migrate') throw new Error('Accept: choose how Central makes the ground (create, adopt or migrate) first.')
-    const source = typeof asked.source === 'string' && asked.source ? asked.source : null
-    if (treatment !== 'create' && !source) throw new Error('Accept: choose the wiki to keep or copy first.')
-    await ground.accept(treatment, source)
-  }
   acts.selfEnsure = async () => {
     if (!ground?.ensure) throw new Error(noHand('Ensure'))
     await ground.ensure()
@@ -1292,7 +1283,6 @@ export function workspaceBinding(id: string, workspace: BookWorkspace | null, no
   const why: Record<string, string> = book ? {} : {mode: NO_BOOK, name: NO_BOOK}
   if (world) why.name = WORLD_NAME_REFUSED
   if (!ground?.preview || !ground.project) why.pcPreview = WORKSPACE_WIRING.refused.pcPreview!
-  if (!ground?.accept) why.pcAccept = noHand('Accept')
   if (!ground?.ensure) why.selfEnsure = noHand('Ensure')
   if (!ground?.relate) why.selfRelate = noHand('Relate')
   else if (held.bindAs === 'ux' || held.bindAs === 'ex') why.selfRelate = RELATE_UX_EX_REFUSED
