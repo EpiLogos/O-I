@@ -1,4 +1,5 @@
 import {useState} from 'react'
+import {plainReason} from '../../../../../desktop/cradle/src/shared/Refusal.tsx'
 import {agentDataI} from './agentFidelity'
 import './agentShell.css'
 
@@ -99,23 +100,11 @@ export function safeJson(value: unknown): string {
   try { return JSON.stringify(value, null, 2) } catch { return String(value) }
 }
 
-/** A named summary line for a refused outcome — the owner's own words,
- * never a JSON dump. A leading JSON object is parsed for its `message`
- * (then `kind`); a mid-text JSON dump is cut at its first brace. */
+/** A named summary line for a refused outcome: the owner's reason in plain words, read by the product's one refusal reader
+ * (desktop/cradle/src/shared/Refusal.tsx `plainReason`: a JSON refusal is read for its message, a thrown-error prefix, a
+ * path, a dump or an owner code never reaches the line), else the place's own fallback. */
 export function refusalLine(error: string | null | undefined, fallback: string): string {
-  const text = (error ?? '').trim()
-  if (!text) return fallback
-  if (text.startsWith('{')) {
-    try {
-      const parsed = JSON.parse(text) as Record<string, unknown>
-      const message = typeof parsed.message === 'string' ? parsed.message : null
-      const kind = typeof parsed.kind === 'string' ? parsed.kind : null
-      if (message) return `the owner refused — ${message}`.slice(0, 220)
-      if (kind) return `the owner refused (${kind})`.slice(0, 220)
-    } catch { /* not a single JSON document — fall through */ }
-  }
-  const cut = text.indexOf(': {"')
-  return (cut > 0 ? text.slice(0, cut) : text).slice(0, 220)
+  return plainReason(error) ?? fallback
 }
 
 export {agentDataI}

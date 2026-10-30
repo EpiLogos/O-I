@@ -1,3 +1,4 @@
+import {refusalWords} from '../../../../../desktop/cradle/src/shared/Refusal.tsx'
 import { useEffect, useState } from 'react'
 import type { UseSet } from '../shell/useSet'
 import type { HostedAppState } from '@epilogos/expressions-boundary'
@@ -65,6 +66,8 @@ export interface StatusSwitches {
 
 export function StatusBar({ state, documentError, viewport, selectedTrack, audio, mode, reading, changeDetailMode, toggleDetailSide, agentInfo, detailShown = true, mixer, toggleMixer, clipName, trackName, trackRef, clipRef, bringSide, hideDetail }: StatusSwitches & { state: UseSet; documentError: string | null; viewport: number[]; selectedTrack?: string; audio: boolean; mode: string; reading: HostedAppState | null; detailMode: DetailMode; changeDetailMode: (mode: DetailMode) => void; /** Show or hide one side of the detail area (manual §16.4: "Hide either one … or the switches in the status bar"); absent, a switch brings its side to the front. */ toggleDetailSide?: (side: DetailSide) => void; agentInfo?: { label: string; fn: string } | null; /** The presentation that stands (kept for the callers; the title line now names the work). */ presentedView?: 'session' | 'arrangement' | null; /** The Base mode's selected ground subject (kept for the callers; THE selection now stands in the title line). */ subjectLabel?: string }) {
   const { set, path, error, loading } = state
+  // The bar's open line says the place's words (shared/Refusal.tsx refusalWords); the raw cause goes to the console.
+  useEffect(() => { if (audio && error) console.warn('The set did not open:', error) }, [audio, error])
   const aperture = useWorkbenchAperture()
   // The detail area's two switches read Clip | Device in every mode (FOUNDATION F4; manual §16.4); what each side holds in this mode
   // is the mode's own registration (WORLD-SHELL-DESIGN Rev 4's pair: Document | Devices, Task log | Agent chain, Scene | Studio,
@@ -104,7 +107,7 @@ export function StatusBar({ state, documentError, viewport, selectedTrack, audio
     <div className="statusbar-info-line" data-region="info-view" data-info={info ? 'reading' : pending ? 'reading-world' : 'idle'}>{info
       ? <><b>{info.label}</b>{info.fn}</>
       : <><b>Info</b>{pending ? INFO_READING_WORLD : INFO_IDLE}</>}</div>
-    {audio && error && <span className="statusbar-error" title={path ?? undefined}>Open failed: {error}</span>}
+    {audio && error && <span className="statusbar-error" title={path ?? undefined}>{refusalWords('The set did not open.', error)}</span>}
     {audio && !error && loading && <span className="statusbar-counts">Opening…</span>}
     {audio && documentError && <span className="statusbar-error" title={documentError}>Document unavailable</span>}
     {audio && set && <span className="statusbar-counts" title={set.path}>{set.tracks.length} tracks · {set.scene_count} scenes · {set.arrangement_clips} clips</span>}

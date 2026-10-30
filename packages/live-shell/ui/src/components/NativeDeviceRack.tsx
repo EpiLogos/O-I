@@ -1,3 +1,4 @@
+import {Refusal} from '../../../../../desktop/cradle/src/shared/Refusal.tsx'
 import {Fragment, useEffect, useId, useRef, useState, type DragEvent, type KeyboardEvent, type MutableRefObject, type PointerEvent as ReactPointerEvent} from 'react'
 import {sameEditorBasis, type NativeEditorBasis, type NativeEditorChange, type NativeEditorReading, type NativeEditorReply, type NativeEditorRequest} from '../../../../expressions-boundary/src/editor'
 import {forceStripDevice, selectedEntity} from './nativeDeviceStripModel'
@@ -115,7 +116,7 @@ export function NativeDeviceRack({reading, request, onOpen}: NativeDeviceRackPro
         : <>{gap !== null && <span className="native-rack-gap" aria-hidden="true"/>}<p className="native-rack-empty">{reading ? EMPTY : 'Open a native Expression to see its devices.'}</p></>}
       <AddDevice choices={choices} locked={locked} onChoose={family => void send([deviceAddChange(family)])}/>
     </div>
-    {error && <p className="native-rack-error" role="alert">{error}</p>}
+    {error && <Refusal className="native-rack-error" said="The rack change was not applied." error={error} ownWords/>}
   </div>
 }
 

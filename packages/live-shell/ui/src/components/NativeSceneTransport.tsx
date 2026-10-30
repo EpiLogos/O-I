@@ -1,3 +1,4 @@
+import {Refusal} from '../../../../../desktop/cradle/src/shared/Refusal.tsx';
 import {useEffect, useRef, useState} from 'react';
 import type {NativeSceneAction} from '../shell/nativeContent';
 import {currentNativeSceneReply, type NativeCompositionViewSource} from '../shell/compositionViews';
@@ -51,7 +52,7 @@ export function NativeSceneTransport({source, compact = false}: {source: NativeC
       <button title="Scene clip details" onClick={()=>source.revealDetail('clip','scene')}>Scene ↗</button>
       <button aria-expanded={actsOpen} onClick={()=>setActsOpen(!actsOpen)}>Acts</button>
     </div>
-    {fault&&<p role="alert">{fault}</p>}
+    {fault&&<Refusal said="The Scene's playback did not change." error={fault} ownWords/>}
     {actsOpen&&<NativeActPassages source={source} close={()=>setActsOpen(false)}/>}
   </section>;
   return <section className="native-scene-transport" aria-label="Native Scene transport">
@@ -72,7 +73,7 @@ export function NativeSceneTransport({source, compact = false}: {source: NativeC
       <button aria-expanded={actsOpen} onClick={()=>setActsOpen(!actsOpen)}>Acts</button>
       <span title={playback.field_paused?'Field paused':'Field running'} aria-label={playback.field_paused?'Field paused':'Field running'} className="native-field-standing">{playback.field_paused?'○':'●'}</span>
     </div>
-    {fault&&<p role="alert">{fault}</p>}
+    {fault&&<Refusal said="The Scene's playback did not change." error={fault} ownWords/>}
     {actsOpen&&<NativeActPassages source={source} close={()=>setActsOpen(false)}/>}
   </section>;
 }

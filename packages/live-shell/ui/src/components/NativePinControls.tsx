@@ -1,9 +1,13 @@
+import {plainReason, refusalWords} from '../../../../../desktop/cradle/src/shared/Refusal.tsx'
 import {useEffect, useState, type MouseEvent} from 'react'
 import type {NativeEditorChange, NativeEditorReading, NativeEditorReply} from '../../../../expressions-boundary/src/editor'
 import {pinnedEntry, pinScopeMark, planPin, scopeFlipChange, setPinMode, usePinMode, type PinControl, type PinDestination} from './nativePinMode'
 import './NativePinControls.css'
 
 const reasonOf = (cause: unknown) => cause instanceof Error ? cause.message : String(cause)
+/** An inline line says the place's words (shared/Refusal.tsx); the raw cause goes to the console. */
+const refusedAs = (line: string, cause: unknown) => {console.warn(line, cause); return reasonOf(cause)}
+const SCOPE_REFUSED = 'Shared or local did not change.', PIN_REFUSED = 'The pin did not change.'
 type PinApply = (changes: readonly NativeEditorChange[]) => Promise<NativeEditorReply>
 
 /** The bar's Map slot (Ableton's Key map): turns Pin mode on. While on, every parameter control shows a pin; the chips choose where a pin goes
@@ -46,8 +50,8 @@ export function ScopeToggle({reading, control, apply, label, disabled = false}: 
   return <span className="pin-scope-wrap">
     <button type="button" className="pin-scope" aria-pressed={mark === 'shared'} disabled={disabled || reading.standing.pending} aria-label={`${label}: ${mark === 'shared' ? 'shared across the Expression' : 'local to this Scene'}`}
       title={mark === 'shared' ? `${label} is shared across the Expression and overrides each Scene's own value. Click to make it local to this Scene.` : `${label} is local to this Scene. Click to share it across the Expression (that suspends this Scene's automation of it).`}
-      onClick={() => {setFault(null); void apply([change]).then(reply => {if (!reply.ok) setFault(reply.error)}, cause => setFault(reasonOf(cause)))}}>{mark === 'shared' ? 'S' : 'L'}</button>
-    {fault && <small role="alert" className="pin-fault">{fault}</small>}
+      onClick={() => {setFault(null); void apply([change]).then(reply => {if (!reply.ok) setFault(refusedAs(SCOPE_REFUSED, reply.error))}, cause => setFault(refusedAs(SCOPE_REFUSED, cause)))}}>{mark === 'shared' ? 'S' : 'L'}</button>
+    {fault && <small role="alert" className="pin-fault">{refusalWords(SCOPE_REFUSED, fault)}</small>}
   </span>
 }
 
@@ -62,12 +66,12 @@ export function PinAffordance({reading, control, apply, label}: {reading: Native
     const plan = planPin(reading, control, mode, event.altKey)
     if (!plan.ok) {setFault(plan.reason); return}
     setFault(plan.note); setBusy(true)
-    void apply(plan.changes).then(reply => {if (!reply.ok) setFault(reply.error)}, cause => setFault(reasonOf(cause))).finally(() => setBusy(false))
+    void apply(plan.changes).then(reply => {if (!reply.ok) setFault(refusedAs(PIN_REFUSED, reply.error))}, cause => setFault(refusedAs(PIN_REFUSED, cause))).finally(() => setBusy(false))
   }
   return <span className="pin-affordance">
     <button type="button" className="pin-button" aria-label={`${pinned ? 'Unpin' : 'Pin'} ${label}`} aria-pressed={pinned} disabled={busy || reading.standing.pending}
       title={pinned ? `${label} is pinned. Click to unpin it.` : `Pin ${label}. Alt-click flips Shared and Local for this pin.`} onClick={click}>{pinned ? '★' : '☆'}</button>
     {pinned && mark && <ScopeToggle reading={reading} control={control} apply={apply} label={label} />}
-    {fault && <small role="alert" className="pin-fault">{fault}</small>}
+    {fault && <small role="alert" className="pin-fault">{plainReason(fault) ?? PIN_REFUSED}</small>}
   </span>
 }

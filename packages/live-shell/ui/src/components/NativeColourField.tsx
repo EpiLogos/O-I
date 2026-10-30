@@ -1,3 +1,4 @@
+import {Refusal} from '../../../../../desktop/cradle/src/shared/Refusal.tsx'
 import {useEffect,useRef,useState,type PointerEvent,type ReactNode} from 'react'
 import type {NativeColourChange,NativeDeviceChange,NativeEditorReply} from '../../../../expressions-boundary/src/editor'
 import {NATIVE_COLOUR_MODES,NATIVE_COLOUR_PALETTES} from '../../../../expressions-boundary/src/nativeDeviceEdits'
@@ -35,7 +36,7 @@ function useColourInput(props:NativeColourFieldProps,section:ColourSection) {
   }).catch(cause=>{if(original.current===edit)retain(edit,owner,cause instanceof Error?cause.message:String(cause));if(current())fail(cause)}).finally(()=>{pending.current=false})
  }
  const discard=()=>{if(!presented())return;try{const receipt=custody.receipt;custody.clear(receipt);if(receipt&&custody.receipt?.ref===receipt.ref)throw Error('The original colour copy remains retained');original.current=null;setAttempt(null);setFault('')}catch(cause){fail(cause)}}
- const status=<>{(fault||custody.fault)&&<p role="alert">{fault||custody.fault}</p>}{attempt&&<div className="native-retained-gesture">Retained original Field input · r{attempt.basis.revision}<button disabled={props.disabled} onClick={()=>submit(attempt)}>Apply original</button><button onClick={discard}>Discard</button></div>}</>
+ const status=<>{(fault||custody.fault)&&<Refusal said="The colour edit was not applied." error={fault||custody.fault} ownWords/>}{attempt&&<div className="native-retained-gesture">Retained original Field input · r{attempt.basis.revision}<button disabled={props.disabled} onClick={()=>submit(attempt)}>Apply original</button><button onClick={discard}>Discard</button></div>}</>
  return {region,attempt,original,pending,custody,presented,retain,submit,fail,status}
 }
 const messageOf=(cause:unknown)=>cause instanceof Error?cause.message:String(cause)
@@ -52,7 +53,7 @@ function useDiscreteColour(props:NativeColourFieldProps) {
   pending.current=true;setBusy(true);setFault('')
   void sent.then(reply=>{if(mounted.current&&current(reply))setFault(reply.ok?'':reply.error)}).catch(cause=>{if(mounted.current)setFault(messageOf(cause))}).finally(()=>{pending.current=false;if(mounted.current)setBusy(false)})
  }
- return {run,busy,alert:fault?<p role="alert">{fault}</p>:null}
+ return {run,busy,alert:fault?<Refusal said="The colour change was not applied." error={fault} ownWords/>:null}
 }
 function PaletteStops(props:NativeColourFieldProps&{onPaletteDraft?:(retained:boolean)=>void}) {
  const input=useColourInput(props,'palette'),colors=input.attempt?.raw?.palette??props.reading.scene.field.palette,discrete=useDiscreteColour(props)
@@ -125,7 +126,7 @@ function ColourAtmosphere(props:NativeColourFieldProps) {
   let change;try{change=atmosphereChange(option[0])}catch(cause){setFault(cause instanceof Error?cause.message:String(cause));return}
   void props.apply([change],props.reading.basis).then(reply=>{if(mounted.current&&current(reply))setFault(reply.ok?'':reply.error)}).catch(cause=>{if(mounted.current)setFault(cause instanceof Error?cause.message:String(cause))})
  }
- return <div className="native-colour-atmosphere"><label>Atmosphere<select aria-label="Background atmosphere" value={mode} disabled={props.disabled} onChange={event=>choose(event.target.value)}>{ATMOSPHERE_OPTIONS.map(([id,label])=><option key={id} value={id}>{label}</option>)}</select></label>{fault&&<p role="alert">{fault}</p>}</div>
+ return <div className="native-colour-atmosphere"><label>Atmosphere<select aria-label="Background atmosphere" value={mode} disabled={props.disabled} onChange={event=>choose(event.target.value)}>{ATMOSPHERE_OPTIONS.map(([id,label])=><option key={id} value={id}>{label}</option>)}</select></label>{fault&&<Refusal said="The atmosphere did not change." error={fault} ownWords/>}</div>
 }
 /** App Palette dynamics shows the semantic spatial field only when it has bindings (inspector.ts:121; written at app.ts:755).
  * No admitted shell change kind exists for it, so it is disclosed here and never shown as a control. */

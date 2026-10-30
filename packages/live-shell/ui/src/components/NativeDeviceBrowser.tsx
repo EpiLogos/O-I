@@ -1,3 +1,4 @@
+import {Refusal} from '../../../../../desktop/cradle/src/shared/Refusal.tsx'
 import {useState} from 'react'
 import type {NativeEditorReading} from '../../../../expressions-boundary/src/editor'
 import {useWorkspace} from '../shell/workspace'
@@ -37,6 +38,6 @@ export function NativeDeviceBrowser({rows, reading, selected}: {rows: readonly D
       <button type="button" className="native-device-add" disabled={row.onRack || busy || !reading} aria-label={`Add ${row.name} to the rack`}
         title={row.onRack ? `${row.name} is already on the rack` : `Add ${row.name} to the rack`} onClick={() => void add(row.family)}>+ Add</button>
     </li>)}</ul>
-    {error && <p className="native-error" role="alert">{error}</p>}
+    {error && <Refusal className="native-error" said="The device was not added." error={error} ownWords/>}
   </section>
 }

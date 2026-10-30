@@ -1,3 +1,4 @@
+import {Refusal} from '../../../../../desktop/cradle/src/shared/Refusal.tsx'
 import {useEffect, useRef, useState, type FormEvent} from 'react'
 import type {NativeEditorBasis, NativeEditorReading, NativeEditorReply, NativeEditorRequest} from '../../../../expressions-boundary/src/editor'
 import {NATIVE_BINDINGS, entityTargets, getParamDef, entityParamDefs} from '../../../../expressions-boundary/src/parameters'
@@ -108,7 +109,7 @@ export function NativeRackEditor({reading, request, configure = false}: NativeRa
   }, [])
   if (!reading) return configure ? <section className="native-rack-editor">Open a native Scene to read its parameter racks.</section> : null
   let racks: NativeParameterRack[]
-  try {racks = readNativeRacks(reading.scene, reading.entityOccurrences).racks} catch (error) {return <section className="native-rack-editor" role="alert">{String(error)}</section>}
+  try {racks = readNativeRacks(reading.scene, reading.entityOccurrences).racks} catch (error) {return <section className="native-rack-editor"><Refusal said="The parameter racks could not be read." error={error}/></section>}
   const rack = racks.find(rack => rack.id === selected) ?? racks[0]
   const owner = rack?.scope.kind === 'entity' ? reading.scene.entities.find(entity => reading.entityOccurrences[entity.id] === (rack.scope.kind === 'entity' ? rack.scope.entity_ref : '')) : undefined
   const unavailable = rack?.scope.kind === 'entity' && !owner
@@ -137,7 +138,7 @@ export function NativeRackEditor({reading, request, configure = false}: NativeRa
       <MappingForm key={rack.id + ':' + rack.macros.length} rack={rack} reading={reading} disabled={disabled} apply={apply} prefill={prefill?.rackId === rack.id ? prefill : undefined} hidden={!configure && prefill?.rackId !== rack.id} onDone={() => setPrefill(null)} />
       <div hidden={!configure} className="native-rack-variations"><strong>Variations</strong><input aria-label="Variation name" placeholder="Name this variation" value={variationName} maxLength={160} disabled={disabled} onChange={event => setVariationName(event.target.value)} /><button disabled={disabled || !variationName.trim() || rack.variations.length >= 128} onClick={() => void apply([{kind: 'rack-variation-capture', rack_id: rack.id, variation_id: identity('variation'), name: variationName.trim()}]).then(ok => {if (ok) setVariationName('')})}>Capture</button>{rack.variations.map(variation => <span key={variation.id}><button disabled={disabled} onClick={() => void apply([{kind: 'rack-variation-recall', rack_id: rack.id, variation_id: variation.id}])}>{variation.name}</button><button disabled={disabled} aria-label={`Remove variation ${variation.name}`} onClick={() => void apply([{kind: 'rack-variation-remove', rack_id: rack.id, variation_id: variation.id}])}>×</button></span>)}</div></div>
     </div> : <p>Create a Field or selected entity rack, then map native parameters to its macros.</p>}
-    {error && <div role="alert" className="native-rack-error">{error}{attempt && <><button disabled={busy || unavailable || attempt.basis.expression_ref !== reading.basis.expression_ref || attempt.basis.scene_ref !== reading.basis.scene_ref} onClick={() => void apply(attempt.changes, reading.basis)}>Retry on current revision</button><button onClick={() => {setAttempt(null); setError('')}}>Discard pending request</button></>}</div>}
+    {error && <Refusal className="native-rack-error" said="The rack change was not applied." error={error} ownWords>{attempt && <><button disabled={busy || unavailable || attempt.basis.expression_ref !== reading.basis.expression_ref || attempt.basis.scene_ref !== reading.basis.scene_ref} onClick={() => void apply(attempt.changes, reading.basis)}>Retry on current revision</button><button onClick={() => {setAttempt(null); setError('')}}>Discard pending request</button></>}</Refusal>}
     <footer hidden={!configure}>Native r{reading.basis.revision} · authored r{reading.basis.authored_revision} · {busy ? 'Committing through owner…' : reading.standing.pending ? 'Native acknowledgement pending' : reading.standing.dirty ? 'Retained draft' : 'Native readback current'}</footer>
   </section>
 }

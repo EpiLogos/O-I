@@ -1,3 +1,4 @@
+import {Refusal} from '../../../../../desktop/cradle/src/shared/Refusal.tsx';
 import {useEffect, useRef, useState} from 'react';
 import {sameEditorBasis, type NativeEditorReading, type NativeEditorReply, type NativeEditorRequest} from '@epilogos/expressions-boundary/editor';
 import type {NativeSceneEditIntent} from '@epilogos/expressions-boundary/scene-edits';
@@ -75,7 +76,7 @@ export function NativeSceneEditor({reading, request}: {reading: NativeEditorRead
       <div className="native-scene-detail-actions"><button role="switch" aria-checked={scenes.loop} className="native-scene-loop" disabled={!!loopReason} title={loopReason??'Loop the saved Scene sequence back to its first Scene at the end'} onClick={()=>void edit(loopIntent(!scenes.loop))}>Loop saved sequence</button></div>
       {!focused&&<button disabled={r.standing.pending||busy||!row.material.available} onClick={()=>void send({operation:'scene',basis:{...r.basis},intent_epoch:r.playback!.intent_epoch,action:'focus',scene_ref:row.scene_ref})}>Focus Scene</button>}
       <small>{row.member_refs.length} native members{!row.membership.complete?' · membership incomplete':''}</small>
-      {fault&&<p role="alert">{fault}</p>}
+      {fault&&<Refusal said="The Scene change was not applied." error={fault} ownWords/>}
     </section>
     <section className="native-scene-list" aria-label="Scene order"><header><strong>Scenes</strong><span>{index+1} / {order.length}</span></header>
       <div className="native-scene-detail-actions">

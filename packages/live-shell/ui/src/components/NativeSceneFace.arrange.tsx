@@ -1,3 +1,4 @@
+import {Refusal} from '../../../../../desktop/cradle/src/shared/Refusal.tsx'
 import {useRef, useState} from 'react'
 import type {NativeEditorChange} from '../../../../expressions-boundary/src/editor'
 import {short} from './nativeFieldFaceValues.ts'
@@ -129,7 +130,7 @@ export function ArrangePanel({reading, apply, disabled}: SceneFacePanelProps) {
         {moves.map(move => <li key={move.id}>{move.name}: {move.text}</li>)}
       </ul>}
 
-      {fault && <p role="alert" className="native-arrange-face-alert">{fault}</p>}
+      {fault && <Refusal className="native-arrange-face-alert" said="The arrangement was not applied." error={fault} ownWords/>}
       {!fault && plan.problem && <p role="alert" className="native-arrange-face-alert">{plan.problem}</p>}
       {note && <p className="native-arrange-face-note">{note}</p>}
       <div className="native-arrange-face-actions">

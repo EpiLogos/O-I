@@ -1,3 +1,4 @@
+import {Refusal} from '../../../../../desktop/cradle/src/shared/Refusal.tsx'
 import type {RefObject} from 'react'
 import type {NativeEditorBasis, NativeEditorChange, NativeEditorController, NativeEditorReading, NativeEditorReply, NativeEditorRequest} from '../../../../expressions-boundary/src/editor'
 import {NativeDeviceEditors} from './NativeDeviceEditors'
@@ -59,7 +60,7 @@ export function NativeDevicePoolView({reading, request, requested, isPresented, 
         onClick={() => window.dispatchEvent(new CustomEvent(OPEN_STUDIO_EVENT, {detail: {section: device.studio}}))}>Open in studio ↗</button>}
       <button type="button" className="native-device-pool-close" aria-label="Close device panel" title="Close (Esc)" onClick={onClose}><span aria-hidden="true">✕</span></button>
     </header>
-    {error && <p className="native-device-pool-error" role="alert">{error}</p>}
+    {error && <Refusal className="native-device-pool-error" said="The device change was not applied." error={error} ownWords/>}
     <div className="native-device-pool-body">
       {ScenePanelView
         ? reading ? <ScenePanelView key={device?.family} reading={reading} request={request} disabled={busy || reading.standing.pending} apply={applyScene}/>

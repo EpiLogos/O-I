@@ -135,7 +135,7 @@ test('Live\'s identity is the title line\'s: the open set by name, and the statu
   const withSet = htmlOf(React.createElement(StatusBar, {state: baseState({set: {path: '/Users/x/Mercurius.als', tracks: [], scene_count: 0, arrangement_clips: 0, tempo_bpm: 120}, path: '/Users/x/Mercurius.als'}), documentError: null, viewport: [1920, 1200], audio: true, mode: 'live', reading: null, detailMode: 'clip', changeDetailMode: () => {}, presentedView: 'session'}))
   assert.match(withSet, /title="\/Users\/x\/Mercurius\.als">0 tracks · 0 scenes · 0 clips</, 'the set\'s counts carry its path')
   const failed = htmlOf(React.createElement(StatusBar, {state: baseState({error: 'no such set'}), documentError: null, viewport: [1920, 1200], audio: true, mode: 'live', reading: null, detailMode: 'clip', changeDetailMode: () => {}, presentedView: 'arrangement'}))
-  assert.match(failed, /class="statusbar-error"[^>]*>Open failed: no such set</, 'an open failure is still read in the bar')
+  assert.match(failed, /class="statusbar-error"[^>]*>The set did not open\. No such set\.</, 'an open failure is still read in the bar, in plain words')
 })
 
 // ————————————————————————————————————————————————————————————————————————

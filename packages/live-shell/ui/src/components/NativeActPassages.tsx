@@ -1,3 +1,4 @@
+import {Refusal} from '../../../../../desktop/cradle/src/shared/Refusal.tsx';
 import {useEffect,useRef,useState} from 'react';
 import {sameEditorBasis,type NativeEditorReply} from '../../../../expressions-boundary/src/editor';
 import type {ActMaterialContract,NativeActList,WorldAct} from '../../../../expressions-boundary/src/nativeMaterials';
@@ -48,7 +49,7 @@ export function NativeActPassages({source,close}:{source:NativeCompositionViewSo
   return <section className="native-act-passages" aria-label="Native performances">
     <header><strong>Performances</strong><button disabled={!ready} onClick={readList}>{inventory?'Refresh':'Read performances'}</button><button onClick={close}>Return</button></header>
     {busy&&<p role="status">Reading the native performance…</p>}
-    {fault&&<p role="alert">{fault}</p>}
+    {fault&&<Refusal said="The native performances could not be read." error={fault} ownWords/>}
     {inventory&&<><p>{inventory.persistent?'Saved performances':'Native session performances'} · {inventory.acts.length}</p>
       {inventory.store_errors.length>0&&<p role="alert">{inventory.store_errors.join(' · ')}</p>}
       <nav aria-label="Performances">{inventory.acts.map(row=>{

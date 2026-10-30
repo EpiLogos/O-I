@@ -136,11 +136,20 @@ test('an owner refusal shows the owner, the operation and the owner\'s message, 
   const html = htmlOf(React.createElement(OwnerRefusal, {owner: 'Native expression owner', operation: 'Perform', error, fallback: 'The native owner refused this operation.', copy: 'copy-7', dataI: 'material-refusal'}))
   assert.match(html, /role="alert"/)
   assert.match(html, /data-owner-refusal="Native expression owner"/)
-  assert.match(html, /the owner refused — Scene is locked by another writer/)
+  assert.match(html, /<span class="line">Scene is locked by another writer\.<\/span>/, 'the owner\'s plain words, read by the product\'s one refusal reader (shared/Refusal.tsx plainReason)')
   assert.match(html, /Perform/)
   assert.match(html, /Retained copy <code>copy-7<\/code>/)
   assert.doesNotMatch(html, /"kind"|"receipt"|&quot;kind&quot;/, 'the raw refusal JSON is not rendered')
   assert.doesNotMatch(html, /<pre/, 'a refusal renders no preformatted dump at all')
+})
+
+test('an owner refusal that is not plain words shows its known cause in plain words, never the path, the prefix or the type', () => {
+  const error = 'Error: Central owner Action refused: AgentProfile source not found: /Users/admin/Central/Work/O-I/ProjectCentral/agents/profiles/profile-bbf99f6f2ff90b4c.json'
+  const html = htmlOf(React.createElement(OwnerRefusal, {owner: 'Central', operation: 'Read the agent', error, fallback: 'The owner refused this reading.'}))
+  assert.match(html, /<span class="line">It was not found\.<\/span>/)
+  assert.doesNotMatch(html, /Error:|\/Users\/|AgentProfile|\.json/, 'nothing raw in the line')
+  const code = htmlOf(React.createElement(OwnerRefusal, {owner: 'Central', operation: 'Read', error: 'refused: {"code":"stale_basis","revision":12}', fallback: 'The owner refused this reading.'}))
+  assert.match(code, /<span class="line">The owner refused this reading\.<\/span>/, 'a code and a dump leave only the place\'s fallback')
 })
 
 test('a refusal with no words falls back to the named fallback, and states no remedy the owner did not name', () => {
