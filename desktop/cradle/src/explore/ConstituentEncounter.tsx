@@ -5,6 +5,7 @@
  * as the ways onward and its World one step away — not the whole World
  * page standing in for the subject that was chosen.
  */
+import {Refusal} from "../shared/Refusal";
 import type {HostedEntry,HostedRelation} from "../knowledge/shared-field";
 import {useEffect,useRef,useState} from "react";
 import {useKernel} from "../kernel/KernelProvider";
@@ -63,7 +64,7 @@ export function ConstituentEncounter({reading,worldLabel,onOpenRef}:{reading:Rea
       <details><summary>Source details</summary><dl className="world-component__meta">{reading.facts.map(row=><div key={row.label}><dt>{row.label}</dt><dd>{row.value}</dd></div>)}</dl><pre>{JSON.stringify(reading,null,2)}</pre></details>
       {reading.session&&<section className="world-component world-component--text">
         <button type="button" disabled={opening} onClick={()=>void openSession()}>{opening?"Opening…":"Open native session"}</button>
-        {error&&<p role="alert">{error}</p>}
+        {error&&<Refusal said="Couldn't open the native session." error={error}/>}
         {binding&&<>
           <EncounterSurface binding={binding} sourceWorldRef={reading.session.sourceWorldRef} onView={view=>setBinding(value=>value?{...value,view:{...value.view,...view}}:value)}/>
           <details><summary>Selections for this session</summary><PreparedContextView project={reading.session.project} session={reading.session.ref} sourceWorldRef={reading.session.sourceWorldRef}/></details>

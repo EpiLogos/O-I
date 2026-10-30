@@ -1,3 +1,4 @@
+import {Refusal, refusalWords} from "../shared/Refusal";
 import {useEffect,useState} from "react";
 import type {AddressedPacket,AddressedTurn,DeliveryRecord,EncounterTaskReading,GroupRecipient} from "./client";
 
@@ -105,7 +106,7 @@ export function AddressedComposer({disabled,dispatch,history,service,agentSessio
       {TERMINAL_NOTE[dispatch.record.phase]&&<p>{TERMINAL_NOTE[dispatch.record.phase]}</p>}
       {dispatch.record.detail&&<p>Owner detail: {dispatch.record.detail}</p>}
     </div>}
-    {dispatch.kind==="refused"&&<p className="encounter-addressed-refusal" role="alert">The owner refused this turn: {dispatch.error}</p>}
+    {dispatch.kind==="refused"&&<Refusal className="encounter-addressed-refusal" said="The owner refused this turn." error={dispatch.error}/>}
     {history.length>0&&<details className="encounter-addressed-history"><summary>Deliveries this view has dispatched ({history.length})</summary><ul>{history.map(entry=><li key={entry.ref}><code>{entry.ref}</code> — {entry.record.phase}{entry.duplicate?" (duplicate read)":''}</li>)}</ul></details>}
     <details className="encounter-addressed-group">
       <summary>Addressed group</summary>
@@ -117,7 +118,7 @@ export function AddressedComposer({disabled,dispatch,history,service,agentSessio
         <button className="encounter-addressed-group-send" disabled={!groupReady()||!onGroupSend} onClick={submitGroup}>Dispatch to the group</button>
       </div>
       {group&&<div className="encounter-addressed-group-state" data-ref={group.ref}>
-        {group.rows.map(row=><p key={row.agentSession} className="encounter-addressed-group-row" data-phase={row.phase??(row.error?"refused":undefined)}><code>{row.agentSession}</code> — {row.error??(row.duplicate?"already held by the owner — durable receipt, nothing resent":`phase: ${row.phase}`)}</p>)}
+        {group.rows.map(row=><p key={row.agentSession} className="encounter-addressed-group-row" data-phase={row.phase??(row.error?"refused":undefined)}><code>{row.agentSession}</code> — {row.error?refusalWords("refused.",row.error):row.duplicate?"already held by the owner — durable receipt, nothing resent":`phase: ${row.phase}`}</p>)}
         <p>Group delivery <code>{group.ref}</code> — individually durable dispatch; no automatic replay of uncertain recipients.</p>
       </div>}
     </details>

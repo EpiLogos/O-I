@@ -550,9 +550,10 @@ class SurfaceBoundary extends Component<{children: ReactNode; title: string}, {f
   state = {failed: false};
   static getDerivedStateFromError() {return {failed: true};}
   componentDidCatch(error: unknown) {
-    const reason = error instanceof Error ? error.message : String(error);
+    // The message says what failed and what to do; the raw cause belongs to the console, not to a workspace message.
+    console.error(`${this.props.title} could not load`, error);
     window.dispatchEvent(new CustomEvent("oi:workspace-message", {detail: {
-      message: `${this.props.title} could not load — ${reason}. Close and reopen this tab to retry.`,
+      message: `${this.props.title} could not load. Close and reopen this tab to try again.`,
     }}));
   }
   render() {return this.state.failed ? null : this.props.children;}

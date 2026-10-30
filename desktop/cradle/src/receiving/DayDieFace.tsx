@@ -1,3 +1,4 @@
+import {Refusal, refusalWords} from "../shared/Refusal";
 import {useCallback,useEffect,useMemo,useRef,useState,useSyncExternalStore} from "react";
 import {DOCUMENT_FORMS,resolveDocumentForm} from "../flow/documentForms";
 import {readFile} from "../files/client";
@@ -121,7 +122,7 @@ export function DayDieFace({payload,revision,sourceRef,documentId,fields,project
   checkpointFlight.current=flight;void flight.finally(()=>{if(checkpointFlight.current===flight)checkpointFlight.current=undefined;}).catch(()=>{});
   return flight;
  },[session]);
- localObserver.current=()=>{void checkpoint().catch(error=>{if(session.active)setMessage(String(error));});};
+ localObserver.current=()=>{void checkpoint().catch(error=>{if(session.active)setMessage(refusalWords("Couldn't keep your edits on this device.",error));});};
  useEffect(()=>{
   const unregister=registerDocumentCheckpoint(bindingId??sourceRef,checkpoint);
   const timer=setInterval(()=>localObserver.current(),2500),hide=()=>localObserver.current();
@@ -142,7 +143,7 @@ export function DayDieFace({payload,revision,sourceRef,documentId,fields,project
    if(editEpoch.current===epoch&&!unmappedChanges(session.basis,next).length)clearDayPageDraft(sourceRef,next,heldOwner.current??null);
    if(editEpoch.current!==epoch)session.markDirty();
    setDirty(session.edited||session.draft!==undefined);setMessage("Native Save acknowledged; source, document and exact revision matched. Unmapped changes remain only in the original form.");
-  } catch(error){if(session.active)setMessage(`Save not completed: ${String(error)}. No automatic replay; retained draft and source need review.`);}
+  } catch(error){if(session.active)setMessage(refusalWords("Save not completed.",error,"No automatic replay; retained draft and source need review."));}
   finally{if(session.active){setPending(false);refresh();}}
  };
  const readForReview=async()=>{
@@ -153,7 +154,7 @@ export function DayDieFace({payload,revision,sourceRef,documentId,fields,project
    if(!current())throw Error('The native Day owner retired before review.');
    const value=await receiving(kernel.transport,project,{kind:"document",source_ref:sourceRef,document_id:documentId});
    if(current())setReview(validateDocumentBasis(value,sourceRef,documentId));
-  }catch(error){if(session.active)setMessage(String(error));}
+  }catch(error){if(session.active)setMessage(refusalWords("Couldn't read the source for review.",error));}
   finally{if(session.active){setPending(false);}}
  };
  const discardToReview=()=>{
@@ -162,18 +163,18 @@ export function DayDieFace({payload,revision,sourceRef,documentId,fields,project
   session.draft=undefined;session.edited=false;session.basis=review;session.blocked=undefined;
   setFace(projectDieDocument(shell.current,review.payload)??undefined);setDirty(false);setReview(undefined);setMessage("Explicitly reopened the reviewed native source; no source was overwritten.");refresh();
  };
- if(failure)return <p className="die-face-unavailable" role="alert">Daily Die original source unavailable: {failure}</p>;
+ if(failure)return <Refusal className="die-face-unavailable" said="Couldn't read the Daily Die's original source." error={failure}/>;
  return <div className="die-face-host">
   <div className="die-face-sync" role="status" aria-live="polite">
    <button type="button" disabled={!face||pending||!!session.blocked} onClick={()=>void save()}>Save Daily Die to native source</button>
    <button type="button" disabled={pending||!face} onClick={()=>void readForReview()}>Review current native source</button>
    <p>{pending?"Waiting for the native operation…":dirty?"Unsaved form edits. Native Save is explicit; the form’s Save HTML copy remains a separate portable artifact.":"Original form over the native Day. Viewing, typing and copied HTML do not authorize automatic native writes."}</p>
-   {session.blocked&&<p role="alert">{session.blocked}</p>}
+   {session.blocked&&<Refusal ownWords said="Couldn't save the Daily Die." error={session.blocked}/>}
    {message&&<p>{message}</p>}
    {!!unmapped.length&&<p role="alert">These original payload regions have no native field mapping and are NOT natively saved: {unmapped.join(", ")}. Keep an HTML copy before leaving.</p>}
    {review&&<section aria-label="Review native Day revision"><strong>Current native revision: {review.revision}</strong>
     {session.changes().map(edit=><details key={edit.id}><summary>{edit.id} · retained draft versus current source</summary><pre>{JSON.stringify({draft:edit.value,current:pointerValue(review.payload,edit.pointer)},null,2).slice(0,12000)}</pre></details>)}
-    <button type="button" onClick={()=>{try{session.reviewOnto(review);if(shell.current)setFace(projectDieDocument(shell.current,session.draft)??undefined);setReview(undefined);setMessage("Draft edits retained against the explicitly reviewed revision. Save remains a separate action.");refresh();}catch(e){setMessage(String(e));}}}>Keep draft edits on this reviewed basis</button>
+    <button type="button" onClick={()=>{try{session.reviewOnto(review);if(shell.current)setFace(projectDieDocument(shell.current,session.draft)??undefined);setReview(undefined);setMessage("Draft edits retained against the explicitly reviewed revision. Save remains a separate action.");refresh();}catch(e){setMessage(refusalWords("Couldn't keep the draft edits on this basis.",e));}}}>Keep draft edits on this reviewed basis</button>
     <button type="button" onClick={discardToReview}>Discard frame edits and reopen this native revision</button>
    </section>}
   </div>

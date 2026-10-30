@@ -4,6 +4,7 @@
  * from a hardcoded table (10-SIDEBARS §4.5). A registered GuardianSource adds
  * each one's repertoire.
  */
+import {Refusal} from "../shared/Refusal";
 import { useEffect, useState } from "react";
 import { Loading } from "../shared/Loading";
 import { getGuardianSource, subscribeGuardianSource } from "./agencySources";
@@ -39,7 +40,7 @@ export function GuardianRepertoire({ project }: { project?: string }) {
     {roster.state === "error" && <p className="oi-refusal" role="alert">Couldn&apos;t load guardians. <button type="button" className="oi-action" onClick={roster.retry}>Retry</button></p>}
     {roster.state === "ready" && !identities.length && <p className="oi-note">No guardians are defined in this scope.</p>}
     {bound && !guardians && !error && identities.length > 0 && <Loading label="Reading Guardian repertoires…" scope="surface"/>}
-    {error && <p className="oi-refusal" role="alert">{error}</p>}
+    {error && <Refusal said="Couldn't read the Guardian's repertoires." error={error}/>}
     <ul className="agency-guardian-list">
       {identities.map((identity) => {
         const guardian = byRef.get(identity.ref);

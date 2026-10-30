@@ -1,3 +1,4 @@
+import {Refusal} from "../shared/Refusal";
 import {useEffect,useMemo,useRef,useState,useSyncExternalStore,type SyntheticEvent} from "react";
 import {useKernel} from "../kernel/KernelProvider";
 import type {EncounterRow} from "../encounter/EncounterList";
@@ -117,9 +118,9 @@ export function NativeAgentLauncher({project,sourceWorldRef,current,onChoose,con
 		</div>}
 		{prepared&&<section aria-label="Prepared native session"><p role="status">Native AgentSession attached. No provider has been started by preparation.</p><p className="oi-note"><code>{prepared.agent_session}</code><br/><code>{prepared.space}</code></p><button type="button" className="oi-action" disabled={opening} onClick={()=>void choose(prepared)}>Open conversation and choose harness</button></section>}
 		{state.world&&<p className="oi-note" role="status">{state.world.world_readiness.ready?`Native World: ${state.world.world_readiness.world_ref}`:state.world.world_readiness.reason??"A native World declaration is required before session preparation."}</p>}
-		{state.readinessError&&<p className="oi-note" role="status">{state.readinessError}</p>}
+		{state.readinessError&&<Refusal className="oi-note" role="status" said="Couldn't read the World and its skills." error={state.readinessError}/>}
 		{state.world?.world_readiness.ready===false&&<button className="oi-action" onClick={()=>openAgentSetup({project,destination:{owner:"central",topic:"world",nativeAction:state.world?.world_readiness.action},reason:state.world?.world_readiness.reason??"Review the native World declaration",refresh})}>Review native World setup</button>}
-		{(state.error||openError)&&<p className="oi-refusal" role="alert">{state.error??openError}</p>}
+		{(state.error||openError)&&<Refusal said="Couldn't start the native session." error={state.error??openError}/>}
 		{state.unknown&&<button type="button" className="oi-action" disabled={state.busy} onClick={()=>void controller.recover()}>Inspect original outcome — no replay</button>}
 		<button type="button" className="oi-action" onClick={()=>openAgentSetup({project,destination:review&&!review.accepted?{owner:"central",topic:"acceptance",nativeAction:"agent-profile.accept"}:{owner:"ai-kit",topic:"harness"},reason:state.error??openError??"Agent, harness or credential setup",refresh})}>Open native Agent/session setup</button>
 	</section>;

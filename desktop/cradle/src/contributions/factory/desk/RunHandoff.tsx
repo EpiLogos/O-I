@@ -12,6 +12,7 @@
  * a desktop-invented verb. Agent completion, human recognition and Git
  * integration are shown as three different states.
  */
+import {Refusal} from "../../../shared/Refusal";
 import {useEffect,useRef,useState} from "react";
 import {useKernel} from "../../../kernel/KernelProvider";
 import {errorWords, type RunEntry} from "./deskStore";
@@ -107,10 +108,10 @@ export function RunHandoff({entry, host, onRecognised}: {entry: RunEntry; host: 
       </span>
     </div>}
     {receipt && <p className="fhandoff-receipt" role="status" data-recognition-receipt={receipt.status}>Recognised — the owner acknowledged this exact Return ({receipt.status.replace(/-/g, " ")}).</p>}
-    {error && <p className="frun-note" role="alert">Recognition was refused: {error}</p>}
+    {error && <Refusal className="frun-note" said="Recognition was refused." error={error}/>}
     {closed && <p className="fhandoff-close" role="status" data-run-close={closed.receipt.status}>{closeWords(closed.receipt).line}</p>}
     {closed?.receipt.status === "refused" && <button type="button" className="oi-action" disabled={closing||acting} onClick={() => void closeAfter(closed.recognitionRef, () => mounted.current)}>{closing ? "Closing…" : "Try the close again"}</button>}
-    {closeError && <p className="frun-note" role="alert">The close was not recorded: {closeError}</p>}
+    {closeError && <Refusal className="frun-note" said="The close was not recorded." error={closeError}/>}
     <p className="fhandoff-states" data-handoff-states>
       <span data-state-agent>{returned.length ? "Agent returned" : "Agent completion not recorded"}</span>
       <span data-state-recognition>{recognitions.length && !pending.length ? "Recognised" : pending.length ? "Awaiting your recognition" : "Not recognised"}</span>
@@ -124,7 +125,7 @@ export function RunHandoff({entry, host, onRecognised}: {entry: RunEntry; host: 
         aria-pressed={nativeReturn?.attempt.record.attemptRef===attempt.attemptRef} title={attempt.attemptRef} onClick={()=>void readReturn(attempt)}>
         {reading?'Reading…':returned.length===1?'Read native Return':attempt.return?.summary||attempt.attemptRef}
       </button>)}</nav>
-      {readError&&<p role="alert">Native Return reading refused: {readError}</p>}
+      {readError&&<Refusal said="Couldn't read the returned material." error={readError}/>}
       {nativeReturn&&<>
         <p>{nativeReturn.attempt.standing==='historical-attempt'?'Historical attempt':'Current attempt'} · native revision {nativeReturn.revision}{nativeReturn.sourceCurrent?'':' · workflow source changed'}</p>
         {nativeReturn.attempt.record.readableReturn?<>

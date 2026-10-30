@@ -5,6 +5,7 @@
  * from "no matches". Stays fully usable when inference is unavailable —
  * this component never touches SetupInferenceSource.
  */
+import {Refusal} from "../shared/Refusal";
 import { useEffect, useRef, useState } from "react";
 import { Glyph } from "../workspace/Glyph";
 import { getSkillSearchSource, subscribeSkillSearchSource } from "./agencySources";
@@ -74,7 +75,7 @@ export function SkillSearch({
         {coverage.coverage === "complete" ? "Complete coverage" : coverage.coverage === "partial" ? "Partial coverage" : coverage.coverage === "stale" ? "Stale index" : "Search unavailable"}
         {coverage.reason ? ` — ${coverage.reason}` : ""}
       </span>}
-      {error && <span className="oi-state" role="alert">{error}</span>}
+      {error && <Refusal className="oi-state" said="Couldn't search the Methods and Skills." error={error}/>}
     </div>
     {!pending && text.trim() && candidates.length === 0 && !error && (
       <p className="oi-empty"><span>No matches for “{text}”.</span></p>

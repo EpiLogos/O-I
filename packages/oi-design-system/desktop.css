@@ -726,6 +726,11 @@
   color: var(--oi-accent-ink);
   overflow-wrap: anywhere;
 }
+/* A refusal says what happened in plain words; its raw cause sits behind a
+ * "Why" disclosure, .oi-refusal-detail (ruling 2). Both are drawn by the one
+ * pattern, desktop/cradle/src/shared/Refusal.tsx, whose own stylesheet
+ * (shared/refusal.css) carries them into the candidate, which does not load
+ * this file. */
 /* A quiet note: supporting detail below body contrast, never dimmed. */
 .oi-note { font-size: var(--oi-shell-type-ui); color: var(--oi-muted-2); }
 

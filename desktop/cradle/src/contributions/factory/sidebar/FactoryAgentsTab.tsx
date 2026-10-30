@@ -16,6 +16,7 @@
  * The agent PROFILE roster (Central's `agent-profile.roster`) stays reachable
  * as secondary detail under "Agent profiles" — read only when opened.
  */
+import {Refusal} from "../../../shared/Refusal";
 import {useCallback, useMemo, useState} from "react";
 import {useKernel} from "../../../kernel/KernelProvider";
 import {kernelRead} from "../../../kernel/bridge";
@@ -81,9 +82,9 @@ export function FactoryAgentsTab() {
   return <div className="fagents" data-agents-tab data-population-state={reading ? "reading" : aperture.state}>
     <label className="fdesk-search fagents-search"><input aria-label="Search Positions" placeholder="Search Positions" value={query} onChange={event => setQuery(event.target.value)} spellCheck={false}/></label>
     {reading && <p className="frtab-empty" role="status">Reading who is here…</p>}
-    {!reading && aperture.state === "unavailable" && <p className="frtab-empty" role="alert" data-population-absence>
-      Couldn't read who is here — {aperture.reason} <small>({aperture.source})</small>. <button type="button" className="fdesk-link" onClick={retry}>Retry</button>
-    </p>}
+    {!reading && aperture.state === "unavailable" && <Refusal className="frtab-empty" data-population-absence said="Couldn't read who is here." error={`${aperture.reason} (${aperture.source})`}>
+      <button type="button" className="fdesk-link" onClick={retry}>Retry</button>
+    </Refusal>}
     {entry && aperture.runAbsence && <p className="frtab-empty" data-run-positions-absence>{aperture.runAbsence}</p>}
     {section("On this run", onRun)}
     {section("In this world", world)}

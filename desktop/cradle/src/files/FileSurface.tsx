@@ -1,3 +1,4 @@
+import {Refusal} from "../shared/Refusal";
 import {TextEditor,EditorCommands,type EditorHandle} from "../editor/lazy";
 import {Loading} from "../shared/Loading";
 import {useEffect,useRef,useState,useSyncExternalStore,type ReactNode, lazy, Suspense} from "react";
@@ -233,7 +234,7 @@ export function FileSurface({binding,forceSource,leadingTools,onView}:{binding:S
     toolbar={<>{leadingTools}<EditorCommands editor={body} markdown={markdown} readOnly={!writable||pending}/>{json&&<EditorButton onClick={formatJson} disabled={!writable}>Format JSON</EditorButton>}</>}
     footer={<><span className="editor-path" title={`Central / ${binding.location?.path}`}>Central / {binding.location?.path}</span>{reading&&<span>Ln {caret.line}, Col {caret.column}</span>}<span>{error&&reading?"Last reading":dirty?"Unsaved":writable?"Saved":"Read only"}</span>{reading?.operations?.history.available&&<button onClick={()=>void loadHistory()} disabled={pending}>History</button>}{writable&&<button onClick={()=>void save()} disabled={pending||!dirty||conflict}>Save ⌘S</button>}</>}
   >
-    {error&&<p role="alert" className="source-note">{error}</p>}
+    {error&&<Refusal className="source-note" ownWords said="That didn't work for this file." error={error}/>}
     {legacyRecoverable&&<p className="source-note">A previous device copy remains. Recover it as a separate, unverified draft. <button disabled={pending} onClick={()=>void recoverDeviceCopy()}>Recover previous device copy</button></p>}
     {pending&&!reading&&<Loading label="Reading file…" scope="surface"/>}
     {conflict&&<section className="file-conflict" aria-label="File conflict"><p>Current file differs from your draft’s basis.</p><textarea readOnly aria-label="Current file" value={reading!.content}/><button disabled={pending} onClick={()=>{const next={...draft!,base_revision:reading!.revision,saved_content:reading!.content};setDraft(next);try{writeDraft(binding.ref!,next);window.dispatchEvent(new CustomEvent("oi:file-draft-changed",{detail:{ref:binding.ref}}));}catch{setError("Could not retain the updated draft basis.");}}}>Use current revision as draft basis</button></section>}

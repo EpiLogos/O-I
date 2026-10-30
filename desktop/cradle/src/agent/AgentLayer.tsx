@@ -1,3 +1,4 @@
+import {Refusal} from "../shared/Refusal";
 import {useChosenAgent} from "../agency/selection";
 import {canonicalPlane} from "../workspace/planeRegistry";
 import {lazy,Suspense,useCallback,useEffect,useMemo,useRef,useState, type ReactNode,type SyntheticEvent} from "react";
@@ -311,7 +312,7 @@ export function AgentLayer({project:projectProp,sourceWorldRef,current,conversat
       avatar={<AvatarPresence agent={agent} presence={presence} bypass={bypass} onOpenAgents={()=>{setRosterWanted(true);select(offered.some(entry=>entry.id==="Agents")?"Agents":plane);}}/>}/>
     {lastSeen!==undefined&&<span className="panel-reconnect" role="status" aria-label="Reconnecting — draft kept" title="Reconnecting — draft kept"/>}
     {desired&&!chosen&&<p className="panel-line" role="status">Selected definition: {desired.name}. Prepare and choose its native session to change the companion; the current conversation was retained.</p>}
-    {nativeProfileError&&<p className="panel-line" role="status">Native Agent source unavailable: {nativeProfileError}</p>}
+    {nativeProfileError&&<Refusal className="panel-line" role="status" data-line="agent-source" said="Couldn't read this agent." error={nativeProfileError}/>}
     {sessionState?.unreachable&&<p className="panel-line" role="status" data-line="unreachable">Agents aren&apos;t reachable here right now. Your files, flows and this draft still work here.</p>}
     {bypass&&plane==="Chat"&&!promoted&&<p className="panel-line panel-bypass" role="status" data-line="bypass">Bypass permissions is on for this session: {agent.name} acts without asking. <button type="button" className="oi-action" onClick={()=>{const ask=sessionState?.mode.reading?.mode_observation?.available_modes.find(option=>modeClass(option.id)==="ask");if(ask&&session)void session.actions.selectMode(ask.id);}}>Back to Ask</button></p>}
     <div className="agent-body">

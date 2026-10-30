@@ -1,4 +1,5 @@
 /** System ingress for install/maintenance, followed by #406 capability setup. */
+import {Refusal} from "../shared/Refusal";
 import {useMemo, useState} from "react";
 import {useKernel} from "../kernel/KernelProvider";
 import {kernelOp} from "../kernel/bridge";
@@ -38,7 +39,7 @@ export function AdoptionEntry({onApplied}: {onApplied: () => void}) {
     {transport.kind === "unavailable"
       ? <p>Native installation is unavailable in this browser. Use the installed O:I terminal setup on the receiving machine; public Library reading needs no installer.</p>
       : <button type="button" className="settings-button is-primary" onClick={() => setOpen(true)}>Install and set up…</button>}
-    {error && <p role="alert">{error}</p>}
+    {error && <Refusal said="Couldn't open capability setup." error={error}/>}
     {open && <AdoptionFlow controller={controller} onApplied={onApplied} onClose={() => setOpen(false)} onConfigure={() => void configure()}
       chooseGround={transport.kind === "tauri" ? async () => {
         const {invoke} = await import("@tauri-apps/api/core");

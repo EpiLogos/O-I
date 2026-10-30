@@ -1,3 +1,4 @@
+import {Refusal} from "../shared/Refusal";
 import {useState} from "react";
 import {useKernel} from "../kernel/KernelProvider";
 import {OBSERVER_ID} from "../visuals/ParticleExpression";
@@ -45,7 +46,7 @@ export function DecisionContemplate({project}:{project:string|null}){
    </div>
    <p>One attempt per consideration, at most 30 seconds. The kernel reserves the bounded cost before sending. Uncertain provider charges remain reserved.</p>
   </fieldset>
-  {error&&<p role="alert" className="flow-error">{error}</p>}
+  {error&&<Refusal className="flow-error" said="The decision didn't go through." error={error}/>}
   <div className="oi-tool-row">
    <button disabled={!!busy} onClick={()=>void prepare()}>Read current basis</button>
    {preflight&&!episode&&<button disabled={!!busy||transport.kind!=="tauri"} onClick={()=>void act("Waiting for native confirmation…",async()=>setEpisode(await authoriseDecisionEpisode(transport,preflight)))}>Allow bounded episode…</button>}

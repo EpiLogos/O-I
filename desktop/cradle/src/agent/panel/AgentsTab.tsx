@@ -1,3 +1,4 @@
+import {Refusal} from "../../shared/Refusal";
 import {useMemo,useState} from "react";
 import {Glyph} from "../../workspace/Glyph";
 import {useKernel} from "../../kernel/KernelProvider";
@@ -57,7 +58,7 @@ export function AgentsTab({project,roster,boundRef,boundPresence,assignment,onMe
    <input className="oi-input agents-search" type="search" aria-label="Search Positions" placeholder="Search Positions" value={query} onChange={event=>setQuery(event.target.value)}/>
   </div>
   {reading&&<p className="agents-empty" role="status" data-empty="reading">Reading who is here…</p>}
-  {!reading&&aperture.state==="unavailable"&&<p className="agents-empty" role="alert" data-population-absence>Couldn&apos;t read who is here — {aperture.reason} <small>({aperture.source})</small>. <button type="button" className="oi-action" onClick={retry}>Retry</button></p>}
+  {!reading&&aperture.state==="unavailable"&&<Refusal className="agents-empty" data-population-absence said="Couldn't read who is here." error={`${aperture.reason} (${aperture.source})`}><button type="button" className="oi-action" onClick={retry}>Retry</button></Refusal>}
   {section("In this world",world)}
   {section("Inherited",inherited)}
   {!reading&&aperture.state==="read"&&total===0&&<p className="agents-empty" data-population-empty>No Positions in this world yet.</p>}

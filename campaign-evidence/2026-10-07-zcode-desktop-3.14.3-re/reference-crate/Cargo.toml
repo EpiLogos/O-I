@@ -1,0 +1,8 @@
+[package]
+name = "zcode-automation-semantics"
+version = "0.1.0"
+edition = "2021"
+publish = false
+description = "Clean-room Rust recreation of the ZCode desktop automation scheduling semantics, from the study's behavior specification. Reference until adopted."
+
+[dependencies]

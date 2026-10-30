@@ -1,4 +1,5 @@
 /** The shared catalogue is a comparison tool; selections come from the live harness. */
+import {Refusal} from "../../../shared/Refusal";
 import {useEffect, useMemo, useState} from "react";
 import type {CatalogueEntry} from "../../../configuration/harnessSource";
 import {modelDisplayName} from "../../../agent/chat/modelPresentation";
@@ -60,7 +61,7 @@ export function ModelCatalogue({data}: {data: SettingsSnapshot}) {
   const entries = catalogue.state === "ok" ? catalogue.rows.entries : [];
   return <section className="settings-models" aria-label="Model catalogue">
     <Row id="model:catalogue" title="Model catalogue" description={catalogue.state === "ok" ? `${catalogue.rows.count} models to compare. Chat choices come from the connected harness.` : "The model catalogue could not be read."}>
-      {catalogue.state === "failed" && <span className="settings-inline-error">{catalogue.error}</span>}
+      {catalogue.state === "failed" && <Refusal className="settings-inline-error" data-catalogue-unavailable said="Couldn't read the model catalogue." error={catalogue.error}/>}
       {catalogue.state === "ok" && <button type="button" className="settings-button" data-catalogue-browse onClick={() => setBrowsing(true)}>Browse…</button>}
       <button type="button" className="settings-button" disabled={refreshing} onClick={() => { setRefreshing(true); void loadSuite().finally(() => setRefreshing(false)); }}>{refreshing ? "Reading…" : "Refresh"}</button>
     </Row>

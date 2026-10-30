@@ -14,6 +14,7 @@
  * `places.ts`'s external store, so opening a place from either region shows
  * the same reading here.
  */
+import {Refusal} from "../shared/Refusal";
 import {useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {scrollWithin} from "../shared/scrollWithin";
 import {useKernel} from "../kernel/KernelProvider";
@@ -148,7 +149,7 @@ export function EpiLogosSurface({binding}: {binding: SurfaceBinding}) {
             <h1 className="epi-reading-title">{place.title}</h1>
             {returnTarget && <button type="button" className="oi-action" onClick={takeReturn}>Return to where you were</button>}
           </div>
-          {readError && <p className="oi-refusal" role="alert">{readError}</p>}
+          {readError && <Refusal said="Couldn't read this place." error={readError}/>}
           {!readError && !reading && <p className="oi-note" role="status">Reading…</p>}
           {reading && (
             <>
@@ -219,7 +220,7 @@ function FamilyEntrances({family, title, state, onBack, onOpen}: {
         <h1 className="epi-reading-title">{title}</h1>
       </div>
       {state.loading && <p className="oi-note" role="status">Reading…</p>}
-      {!state.loading && state.error && <p className="oi-refusal" role="alert">{state.error}</p>}
+      {!state.loading && state.error && <Refusal said="Couldn't read the entrances." error={state.error}/>}
       {!state.loading && !state.error && state.entrances.length === 0 && state.standing && (
         <p className="oi-empty" role="status">{state.standing.reason} — supplied by {state.standing.owner}.</p>
       )}

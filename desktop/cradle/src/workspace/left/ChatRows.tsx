@@ -8,6 +8,7 @@
  * "Couldn't load this project." + Retry; R11 the last-known rows stay after
  * a failed refresh and the caller's header can say "as of …".
  */
+import {Refusal} from "../../shared/Refusal";
 import {useCallback, useEffect, useRef, useState} from "react";
 import {useKernel} from "../../kernel/KernelProvider";
 import {kernelRead, refreshOnReadingsMoved} from "../../kernel/bridge";
@@ -87,7 +88,7 @@ export function useConversations(project: string | undefined, refresh = 0): {sta
 /** The rows themselves, for a branch or a TASKS section. */
 export function ChatRows({project, state, retry, activeRef, kind, onOpen, label, staleInHeader}: {project: string; state: ConversationsState; retry: () => void; activeRef?: string; kind?: string; onOpen?: (row: EncounterRow) => void; label?: string; /** The section header already says "as of" (R11). */ staleInHeader?: boolean}) {
   if (state.kind === "loading") return <p className="left-reading" role="status">Reading {label ?? project}…</p>;
-  if (state.kind === "error") return <div className="left-error" role="alert" data-error-for={project} title={state.message}><p>Couldn't load this project.</p><button type="button" className="oi-action" onClick={retry}>Retry</button></div>;
+  if (state.kind === "error") return <Refusal className="left-error" data-error-for={project} said="Couldn't load this project." error={state.message}><button type="button" className="oi-action" onClick={retry}>Retry</button></Refusal>;
   const rows = state.rows;
   return <div className="left-conversations" data-project={project}>
     {state.kind === "stale" && !staleInHeader && <p className="left-stale-line" title={state.message} data-stale-since={state.since}>As of {formatRelativeTime(state.since)} — couldn't refresh. <button type="button" className="left-link" onClick={retry}>Retry</button></p>}

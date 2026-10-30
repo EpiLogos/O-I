@@ -10,6 +10,7 @@
  * key: no value is ever rendered, held in state, placed in an attribute or
  * copied (S12).
  */
+import {Refusal} from "../../../shared/Refusal";
 import {useRef, useState} from "react";
 import {credentialCards, providerName, storedIn, type CredentialCard} from "../sectionModel";
 import {expect, loadCredentials, loadSuite, plain, recordVerification, refreshAll, type SettingsSnapshot, type VerifyResult} from "../settingsData";
@@ -209,7 +210,7 @@ export function CredentialsSection({data, discovery}: {data: SettingsSnapshot; d
   const suggestions = discovery.findings.filter((finding) => finding.provider && !finding.bound);
   return <div className="settings-credentials" data-credentials-panel>
     {discovery.state === "reading" && <p className="settings-muted" role="status">Looking for keys on this machine…</p>}
-    {discovery.state === "failed" && <p className="settings-inline-error" role="alert">Couldn't look for keys: {discovery.error}</p>}
+    {discovery.state === "failed" && <Refusal className="settings-inline-error" data-credential-discovery-failed said="Couldn't look for keys on this machine." error={discovery.error}/>}
     {discovery.state === "ok" && <p className="settings-card-note" role="status" data-credential-discovery>{suggestions.length === 0 ? "No new keys found on this machine." : `Found ${suggestions.length} ${suggestions.length === 1 ? "key" : "keys"} on this machine — confirm each on its card.`}</p>}
     <div className="settings-cards">
       {cards.map((card) => {

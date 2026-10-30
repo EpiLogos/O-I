@@ -1,0 +1,21 @@
+/* A refusal said plainly (shared/Refusal.tsx; DESKTOP-LANGUAGE.md ruling 2). The place keeps its own box (.oi-refusal, or its own
+ * class); this sets only the line and the disclosure, so they read the same in the candidate, which does not load desktop.css,
+ * and in the everyday desktop. Collapsed, the cause is one quiet word; open, it is the owner's words verbatim, in mono. */
+.oi-refusal-line { margin: 0; }
+.oi-refusal-detail { margin: 4px 0 0; }
+.oi-refusal-detail > summary {
+  width: fit-content;
+  cursor: pointer;
+  color: var(--oi-muted, currentColor);
+  font-size: var(--oi-shell-type-ui, 12px);
+}
+.oi-refusal-detail[open] > summary { margin-bottom: 4px; }
+.oi-refusal-detail > p {
+  margin: 0;
+  font-family: var(--oi-font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: var(--oi-shell-type-ui, 12px);
+  line-height: 1.5;
+  color: var(--oi-muted, currentColor);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

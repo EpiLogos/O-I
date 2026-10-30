@@ -1,3 +1,4 @@
+import {Refusal} from "../shared/Refusal";
 import {useCallback,useEffect,useRef,useState} from "react";
 import {useKernel} from "../kernel/KernelProvider";
 import type {AgentSubject} from "../agent/AgentLayer";
@@ -32,7 +33,7 @@ function ScopedPreparedContext({project,session,sourceWorldRef,onOpenSubject}:Pr
  return <section className="prepared-context" aria-label="Selected context">
   <header><strong>Prepared</strong><small>{context?`${context.items.length} prepared · not sent`:project!==undefined?(error?"Unavailable":"Loading…"):"No destination"}</small><button type="button" className="oi-tool" title="Refresh context" aria-label="Refresh prepared context" disabled={busy||project===undefined} onClick={()=>void perform()}><EditorIcon name="refresh"/></button></header>
   {!sourceWorldRef&&preview.candidate&&<div className="context-preview"><small>Current selection · {preview.title}</small><p>{preview.candidate.text.slice(0,180)}{preview.candidate.text.length>180?"…":""}</p><button type="button" className="oi-action" disabled={preview.busy||!!preview.candidate.error} onClick={addPreviewToContext}>{preview.busy?"Adding…":"Add to context"}</button></div>}
-  {error&&<p className="oi-note" role="alert">{error} No selection was silently converted to a plain-text attachment.</p>}
+  {error&&<Refusal className="oi-note" said="Couldn't prepare this context. No selection was turned into a plain-text attachment instead." error={error}/>}
   {project===undefined&&<p className="oi-note">Select a native Project context to prepare material. Central source identity is retained.</p>}
   {context&&<>
    {context.items.length===0&&!preview.candidate&&<p className="oi-note">{sourceWorldRef?"Selections prepared in this World will appear here.":"Highlight text, then choose Add to context. Use the picker for a component."}</p>}

@@ -23,6 +23,7 @@
  * field, under its unchanged contract — and the publication relates the
  * Expression to them (`oi.world/expresses`, `oi.world/authored-by`).
  */
+import {Refusal} from "../shared/Refusal";
 import {useEffect,useMemo,useState} from "react";
 import {useKernel} from "../kernel/KernelProvider";
 import {kernelOp} from "../kernel/bridge";
@@ -213,7 +214,7 @@ export function ShareProjection({document,onClose}:{document:ExpressionDocument;
   const o=bundle?.omissions;
   return <section className="share-projection" aria-label="Share / Project" data-expression-ref={document.expression_ref} data-expression-revision={document.revision} data-preview-projection-ref={bundle?.projection.projection_ref} data-created={Boolean(created)} data-hosted={Boolean(hosted)} data-acting-position={actingPosition??""} data-constellation-ref={constellationRef??""} data-world-relations={(bundle?.relations??[]).map(relation=>relation.relation).join(",")}>
     <header className="share-head"><div><small>Share / Project</small><strong>{document.title}</strong><span>{document.expression_ref} · revision {document.revision}</span></div><button type="button" aria-label="Close share" disabled={busy} onClick={onClose}>×</button></header>
-    {preview.error&&!bundle&&<p role="status">{preview.error}</p>}
+    {preview.error&&!bundle&&<Refusal role="status" said="Couldn't compose the preview." error={preview.error}/>}
     <div className="share-columns">
       <div className="share-preview-column">
         <h3>Outward preview <small>exactly what another world receives</small></h3>
@@ -272,11 +273,11 @@ export function ShareProjection({document,onClose}:{document:ExpressionDocument;
             {nara&&!withdrawn&&<button type="button" className="share-withdraw-presence" disabled={busy} onClick={()=>void withdrawPresence()}>Withdraw Nara presence</button>}
           </div>}
           {nara&&recoveryState==="pending"&&<p className="share-recovery-pending" role="status">Checking the hosted field for an existing Nara presence before publication…</p>}
-          {nara&&recoveryState==="failed"&&<div className="share-recovery-failed" role="alert"><p>Hosted consent recovery could not establish the current state: {recoveryError}. Publication remains locked.</p><button type="button" disabled={busy} onClick={recoverHostedPresence}>Retry hosted consent recovery</button></div>}
+          {nara&&recoveryState==="failed"&&<Refusal className="share-recovery-failed" said="Couldn't recover the hosted consent. Publication stays locked." error={recoveryError}><button type="button" disabled={busy} onClick={recoverHostedPresence}>Retry hosted consent recovery</button></Refusal>}
           {!created&&recoveries.map(item=><div key={item.projection.projection_ref} className="share-recovered" data-projection-ref={item.projection.projection_ref} data-projection-revision={item.projection.projection_revision}><p role="status">Recovered your hosted Nara presence <code>{item.projection.projection_ref}</code> at Projection revision {item.projection.projection_revision}. Its published scope is frozen until withdrawal.</p><button type="button" className="share-withdraw-presence" disabled={busy} onClick={()=>void withdrawPresence(item)}>{recoveries.length===1?"Withdraw Nara presence":`Withdraw ${item.projection.projection_ref}`}</button></div>)}
           {withdrawn&&recoveries.length===0&&<div className="share-withdrawn" data-projection-ref={withdrawn.projection.projection_ref} data-projection-revision={withdrawn.projection.projection_revision} data-consent-state={withdrawn.consent.state}><p role="status">Consent withdrawn. Projection revision {withdrawn.projection.projection_revision} is withdrawn and cannot be reused.</p><button type="button" onClick={reenter}>Re-enter with new consent</button></div>}
         </div>
-        {error&&<p role="alert">{error}</p>}
+        {error&&<Refusal said="Couldn't share this." error={error}/>}
       </div>
     </div>
   </section>;

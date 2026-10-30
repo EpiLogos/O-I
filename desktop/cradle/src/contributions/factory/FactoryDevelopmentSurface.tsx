@@ -1,3 +1,4 @@
+import {Refusal} from "../../shared/Refusal";
 import {IconTabStrip} from "../../workspace/primitives/IconTabStrip";
 import {CanvasHUD} from "../../workspace/primitives/CanvasHost";
 import {useEffect,useRef,useState,type ReactNode} from "react";
@@ -210,7 +211,7 @@ export function FactoryDevelopmentSurface({project:projectProp,onOpenEncounter}:
     <button className="oi-action" disabled={busy} onClick={()=>void loadStatus()}>Read Workcell status</button>
    </header>
    <div className="factory-panel-body">
-    {statusNote&&<p role="alert">{statusNote}</p>}
+    {statusNote&&<Refusal said="Couldn't read the Workcell status." error={statusNote}/>}
     {status&&<dl className="oi-kv">
      <dt>Workcell</dt><dd><code className="oi-ref">{status.workcell_ref}</code></dd>
      <dt>Health</dt><dd data-workcell-health={status.health}>{status.health}</dd>
@@ -291,7 +292,7 @@ function RunRow({statePath,runRef}:{statePath:string;runRef:string}) {
   </div>
   <details className="oi-disclosure" onToggle={event=>{const next=(event.target as HTMLDetailsElement).open;if(next&&!reading&&!busy)void read();}}>
    <summary>Read run{busy&&<span className="oi-state" role="status">Reading…</span>}</summary>
-   {data?.__refused&&<p role="alert" data-owner-refusal={data.__refused}>The owner refused the read: {data.__refused}</p>}
+   {data?.__refused&&<Refusal data-owner-refusal={data.__refused} said="The owner refused the read." error={data.__refused}/>}
    {data&&!data.__refused&&<>
     <dl className="factory-run-facts oi-kv">
      <dt>Contract</dt><dd><code className="oi-ref">{data.contract}</code></dd>
@@ -325,13 +326,13 @@ function TelemetryRow({telemetry,busy,onRead}:{telemetry:unknown;busy:boolean;on
  return <div className="factory-telemetry">
   {!asked?<button className="oi-action" disabled={busy} onClick={()=>{setAsked(true);onRead();}}>Read execution telemetry</button>:null}
   {asked&&!telemetry&&<p className="oi-note" role="status">Reading execution telemetry…</p>}
-  {data?.__refused&&<p role="alert" data-owner-refusal={data.__refused}>The owner refused the telemetry read: {data.__refused}</p>}
+  {data?.__refused&&<Refusal data-owner-refusal={data.__refused} said="The owner refused to read the telemetry." error={data.__refused}/>}
   {Boolean(telemetry)&&!data?.__refused&&<p role="status">The owner's telemetry reading rendered beside the run.</p>}
  </div>;
 }
 function DevelopmentReading({heading,data}:{heading:string;data:unknown}):ReactNode {
  const refused=(data as {__refused?:string})?.__refused;
- if(refused)return <section className="factory-development-reading" data-reading-refused="true"><h3>{heading}</h3><p role="alert">The owner refused the read: {refused}</p></section>;
+ if(refused)return <section className="factory-development-reading" data-reading-refused="true"><h3>{heading}</h3><Refusal data-owner-refusal={refused} said="The owner refused the read." error={refused}/></section>;
  const contract=(data as {contract?:string})?.contract??"";
  return <section className="factory-development-reading" data-contract={contract}><h3>{heading}{contract&&<code className="oi-ref">{contract}</code>}</h3>
   <pre data-owner-payload={contract}>{JSON.stringify(data,null,1)}</pre>
