@@ -27,12 +27,16 @@
 // (the selected line's label), relation (echo · influence · cause · transform) and standing (fact · claim · inference · guess) of the next
 // line, minimap, autosave, view. A line may carry its standing as a third element ([from, to, standing]).
 //
-// The Light page (§17.4 "The Light page", which took in the Light device of §17.10): an optical bench laid over the board, to see how
-// much of a source's force reaches a conclusion through the chain of lines you drew. Its engine is LightBox's (optics/raytracer.ts
-// traceRays over the Canvas positions, nothing random); the bench here draws the same law:
+// The Light page (techne:light, carried on the Canvas's binding: techne/devices/effectBindings.ts canvasCarryingLight): an optical bench
+// laid over the board, to see how much of a source's force reaches a conclusion through the chain of lines you drew. The manual's Canvas
+// (§17.4) is a table to think out loud on, with its Board, Lines and Form pages; it names no Light page, which the 27 Oct decisions
+// removed with §17.10 (O-I #716: it serves no Part One sentence). Its engine is Technē's light trace (techne/devices/lightTrace.ts
+// traceRays) over the board's positions, deterministic, by the law below. LightBox gave the design, not the engine: LightBox's raytracer
+// traces 2D geometric optics over placed optical elements, and the board holds cards and lines. The bench here draws the same law:
 //   - light leaves the source card and follows the lines you drew, up to Bounces lines deep;
 //   - a card shares the light it receives equally among its lines out, so a conclusion never holds more force than its source gave;
-//   - a line passes the share its standing allows (Transmission) and loses to its length, e^(−length / 4000 canvas units);
+//   - a line passes the share its standing allows (Transmission) and loses to its length, e^(−length / 4000 canvas units); a line that
+//     carries no standing passes nothing, so a board whose lines carry none keeps the light on its source;
 //   - an element on a card changes what leaves it: a funnel sends all of it down the line out that passes the most, a prism fans it into
 //     the Spectrum's bands, a mirror sends it back along the line it came by, an absorber keeps a quarter, a stop ends it, a sensor reads
 //     what arrives and ends it.

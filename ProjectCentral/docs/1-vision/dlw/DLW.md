@@ -4224,6 +4224,8 @@ Press Record and talk. Your words go into the page. Overdub, in the transport, c
 
 A save has one of five outcomes, and the Document names it: saved, unchanged, stale, conflict or refused. A stale or conflicting save keeps your draft and shows what changed. The save state shows next to the page: saved, or edited since save.
 
+While the page holds a draft, its tab carries a mark. With the page in front, ⌘S saves it. Close the pane with a draft in it and the Document asks nothing: the draft stays on this machine, and the page brings it back, named, when it opens again, until a save or Re-read lets it go.
+
 #### The Thought page
 
 You need an agent to read a whole Flow and say what it finds there: the tensions, the next steps it sees, what your ground or the Flow itself should change. And you need that only when you ask. Contemplate is that reading, on the Document's Thought page when it holds a Flow. It never runs by itself.
@@ -4354,7 +4356,7 @@ The widget shows the page you hold, small, with its save state and the size of i
 - To draft by voice, press Record, talk, and set Overdub to add each answer as a new entry.
 - To redesign your Things, change the template once. Every Thing then follows it.
 
-**Source:** Obsidian 1.7.7 (saving, plugins, graph and links)
+**Source:** Obsidian 1.7.7 (saving, plugins, graph and links); VS Code 1.141's workbench (a draft marked on its tab, ⌘S on the page in front, Autosave after a pause, ⌘F in the page in front)
 
 **Stories:** KN06, WR02–WR04, CP09, CP10, CJ08, TD01–TD08, TB01–TB09, TH01–TH05
 
@@ -5427,7 +5429,7 @@ The widget shows the search line, the last results and your aliases. Type @ in t
 - To ask what could serve a task, type `@# @5` and the task. Then include the tools you want with `+`.
 - To read what a coordinate of the map says, type `vak:` and the coordinate, then raise Vāk depth.
 
-**Source:** Ableton Live 12.0.25 (the browser's search); VS Code's workbench (the command line over anything)
+**Source:** Ableton Live 12.0.25 (the browser's search); VS Code 1.141's workbench (the command line over anything; ⌘F in the file in front)
 
 **Stories:** KN01, SH02, UI01, CS01–CS12, CG01–CG06
 
@@ -5608,15 +5610,15 @@ A task is drawn by how it stands:
 |---|---|
 | Queued | A fast blink and no length, because nobody knows yet how long it will take. |
 | Running | A blinking triangle and a fill that has no end. |
-| Stalled | A striped bar and an orange triangle, frozen where the output stopped. The track lights a retry. |
-| Stopped | Ready, in full colour. |
+| Stalled | A striped bar and an orange triangle, frozen where the output stopped. The track lights a retry. When the provider asked for a pause, the bar says how long, and the retry waits for it. |
+| Stopped | Ready, in full colour. A task whose last turn ended where a retry would only repeat it, such as a conversation grown too large for the model, says what to do instead and lights no retry. |
 | Done | Dim and settled. |
 
 An empty square on a track names what a click does: it stops the session after the current task. Double-click an empty square to write a task.
 
 #### Clip view
 
-A running task is watched, so Clip view puts how it launches and what follows it beside the log. A third tab, Intent, holds what the task is for and how you will know it did that.
+A running task is watched, so Clip view puts how it launches and what follows it beside the log. A third tab, Intent, holds what the task is for and how you will know it did that. A fourth, Plan, holds how much planning the task gets before it is built, and the wave it builds in.
 
 ```ui
 clip: clip:factory
@@ -5672,6 +5674,34 @@ You need to say, before a task starts, what difference it must make and what wil
 | Context | What the task may read, and its limits (reading) | Read from AIKit | The sources the task's context draws on, and the constraints it keeps. |
 
 A condition answered met or not met always carries its evidence. Open is an honest answer: the run could not tell, and it says so.
+
+##### The Plan panel
+
+You need to decide how much thought a piece of work gets before an agent builds it, and to see where it stands among the pieces built beside it. A small change you can undo needs a few pointers. A change whose plan, if wrong, would ship the very failure it exists to stop needs research, an attack by someone who did not write it, and perhaps a second design made blind. The Plan panel holds that choice for the task's unit of work, the rounds that answered it, and the wave the unit builds in. The planner sets the rung, from P0 to P4, with its reason. Your one act here is Lock.
+
+| Field | Values | Default | What it does |
+|---|---|---|---|
+| Planning | P0 · P1 · P2 · P3 · P4 (reading) | Read from Factory | How much planning the unit gets. The planner sets it, with its reason. |
+| Asks | Text (reading) | Read from Factory | What the rung asks of the plan. |
+| Why | Text (reading) | Read from Factory | Why the piece earns this rung: an unknown only research can close, or a failure its author cannot see. |
+| Files | A list of files (reading) | Read from Factory | The files the unit may change. Units in one wave build side by side, each in files of its own. |
+| Needs | The rounds still to return (reading) | Read from Factory | What the rung still needs before the plan can lock. Once the plan is locked, the rung it locked at and who locked it stand here instead. |
+| Lock | A button | — | Locks the plan as it stands. Factory refuses while the rung's rounds have not returned, and says which. A lock is never undone. |
+| Rounds | A list (reading) | Read from Factory | Each planning round that returned: research, an adversarial pass, a blind design or a design session, with who ran it and what it brought back. |
+| Wave | A wave, and Waiting · Planning · Building · In review · Fix round · Sealed (reading) | Read from Factory | The wave the unit builds in, and how it stands. |
+| Gate | Text (reading) | Read from Factory | What holds the wave where it stands. |
+| Next | Text (reading) | Read from Factory | The next step the wave can take. |
+| Progress | Plan locked · Built · Merged · Reviewed, each Yes · No · Unknown (reading) | Read from Factory | How far the unit has come, each step with what Factory read to say so. |
+
+| Rung | What the plan holds |
+|---|---|
+| P0, Pointers | A few outcomes and where to look. The builder works out the how. For simple work you can undo. |
+| P1, Spec | The intent, small requirements, a test that fails before the change, and the files it may change. |
+| P2, Research | The spec, and a research round that returns before the spec freezes. |
+| P3, Adversarial | P2's plan, and an attack on it by someone who did not write it. |
+| P4, Blind design | P3's plan, and a design made without reading the earlier ones, then compared with them. Where the two differ, you hold a design session. |
+
+A wave is the set of units built side by side. Each keeps to its own files, or they take turns. A unit's work is admitted only when its plan is locked, every earlier wave has sealed, and its changes stay inside its files. Review opens once the whole wave has merged: two reviewers who wrote none of it, one reading its structure and one its claims. The wave seals when both clear the same revision, and the next wave opens. Run map (§19.25) draws the units and what each waits on; the wave is read here, on each of its units.
 
 A task has no legato and no launch velocity.
 
@@ -5783,6 +5813,9 @@ caption: The Agents tile: each agent a creature, standing at the zone its run ha
 - A row across sessions is a batch. Launching it starts one task on each session in the row. A row launches only what is in it.
 - A loop ends at its stop condition or its cap.
 - A stalled task keeps its place. Retry restarts it from its last good step.
+- Retry lights only for a cause a retry can clear. A turn that failed in a way no cause names stops the task, and no retry is offered on a guess.
+- The planner sets a task's rung. You lock its plan, and a lock is never rewritten.
+- A step of the plan that Factory cannot read shows Unknown, never done.
 - A running task shows no end. A queued task shows no length. A stalled task shows where it stopped and does not look done.
 - The needle shows the last check-in. It does not predict the end. A stalled needle freezes where the output stopped.
 - An attempt is a record. A retry makes a new attempt, as a new take, and the earlier take stays.
@@ -5811,6 +5844,9 @@ caption: The Agents tile: each agent a creature, standing at the zone its run ha
 - To find a lost session, set Sessions' Filter to Running and read the names.
 - To see who is stuck, look for the amber stations in Agents.
 - To carry on yesterday's work with an agent, find the chat under its project and drag it onto an empty track.
+- To find what holds a wave, open one of its tasks' Plan panel and read Gate, then Next.
+
+**Source:** Grok Bot 0.70.2 (the turn runtime's error registry: a retry only for a cause a retry can clear); OpenRig at c8fca9d5 (the planning dial and the wave SDLC)
 
 **Stories:** PX06, DV01, DV03, DV04, FC05, FA01–FA08, FA10–FA13, FS01, FS02, FS04–FS10, FK03, FK06, FK07, FK10, FE05, FT01–FT10, FJ06, RA04, FN02, GA01, GA04, GA09, GA10, GB13
 
@@ -6210,8 +6246,10 @@ agent, by what carries it and by where it stands.
 
 The thread's head shows the chain of parent agents, the model and the turns
 used, and holds Stop and Retry. Retry lights only when the agent has stalled.
-The composer is at the bottom: Enter sends, Option and Enter steer the
-running turn, Esc stops, and the voice button turns speech into words. The
+The composer is at the bottom: Enter sends, Shift and Enter starts a new line,
+and so does Enter inside a block of code. Input decides whether what you send
+steers the running turn or waits as the next task. Esc stops, and the voice
+button turns speech into words. The
 thread can show tool rows collapsed, expanded or hidden, helpers linked or
 inline, and only your messages, the agent's, or its tools.
 
@@ -6385,8 +6423,8 @@ value that an agent moved shows that agent's name.
    Auto, as you come to trust it.
 5. In Factory, type the task in the composer and press Enter. In Central,
    select a passage, put it in the packet, and press Play.
-6. To change course, type a note and press Option and Enter. The agent hears
-   it at the next safe point.
+6. To change course, set Input to Steer, type a note and press Enter. The
+   agent hears it at its next tool.
 7. Open the thread in a pane to read everything the agent did, or pop it out
    to keep it beside your work.
 
@@ -6426,7 +6464,7 @@ value that an agent moved shows that agent's name.
 - To read a stall at a glance, look at the face: a frozen creature on a grey zone is a stall.
 - When an agent seems to forget its guidance late in a long session, open Context. At depleted or critical pressure, ordinary guidance no longer enters; start a fresh session for the next task.
 
-**Source:** Grok Bot 0.68.1 (Factory's agent client: mid-task updates, drafts awaiting approval, voice); Buzz's agent system (steer as the default mid-turn path, diff cards in the thread); OpenRig (BEHAVIOURS.md §4: occupant generations); Ableton Live 12.0.25 (transport, clip envelopes, a device's presets)
+**Source:** Grok Bot 0.68.1 (Factory's agent client: mid-task updates, drafts awaiting approval, voice); Buzz's agent system (steer as the default mid-turn path, diff cards in the thread, Return in the composer); OpenRig (BEHAVIOURS.md §4: occupant generations); Ableton Live 12.0.25 (transport, clip envelopes, a device's presets)
 
 **Stories:** GV03, AG01, AG02, AG04, AG09, UI04, FA01, FA09, FK01–FK05, FK07–FK10, FE01, FE02, FE05, FE06, RA06, FN01, FN03–FN10, FI01–FI09, FY01–FY07, FM01–FM03, FM05, FX11, FD09, FV01–FV12, RW01, RO03, RF03, RF13, NV06
 
@@ -7147,7 +7185,7 @@ Each chain is one agent. The lead is at the top. Its helpers sit below it, with 
 | Depth | A number · No limit | 2 | How deep helpers may spawn their own helpers. The default is a start value, not a limit. |
 | Hand-back | Raw · Digest · Summary | Summary | What a helper returns to its parent. |
 | Subagent model | A model | The lead's model | The default model for everything the group spawns. A member can set its own. |
-| Join | None · All · First · Quorum · Weighted | All | How the members' returns combine. None keeps one return: the last member's, or a single member's. All waits until every member has returned, and an independent reviewer then integrates the returns: stacking them end to end is not integrating. First, Quorum and Weighted stand dark, because no owner combines returns that way yet. |
+| Join | None · All · First · Quorum · Weighted | All | How the members' returns combine. None keeps one return: the last member's, or a single member's. All waits until every member has returned, and an independent reviewer then integrates the returns: stacking them end to end is not integrating. First, Quorum and Weighted stand dark, because no owner combines returns that way yet. Join belongs to the group's set of agents: the rack reads it from Central and saves your change there, with the set. A group that is no set of agents has no Join to read, and the rack names how to tie it to one. |
 | Member state | Working · Idle · Stalled · Done (reading) | Read from each session | The state of each chain. |
 
 #### Making a group
@@ -8079,8 +8117,11 @@ stall card when it stops. The head names where the agent is working now (the
 mode, the track and the workcell), the agent, its model, the turns it has used
 and how it stands.
 
-Write at the foot. Enter sends; Option and Enter steers the turn that runs; Esc
-stops; the voice button turns speech into words. In a group, each message
+Write at the foot. Enter sends; Shift and Enter starts a new line, and so does
+Enter inside a block of code, so the block goes whole. Input says where what you
+send lands while the agent works: Steer reaches the turn that runs, at its next
+tool, and Queue waits as the next task. Esc stops; the voice button turns
+speech into words. In a group, each message
 carries its author's face, and @ and a name speaks to one member. Who answers
 follows the group's type: every member, the first good answer, or the answer
 enough of them agree on.
@@ -8131,7 +8172,7 @@ settings and the Gateway's mark across its head (§19.2).
 - To start a piece of work by talking, write to the agent, then drag its face onto an empty track.
 - To bring two agents into one conversation, make a group of them.
 
-**Source:** Buzz's agent system (agents as members, open relays between agents, per-agent working state); OpenRig (BEHAVIOURS.md §9: the send guard; CROSSWALK §9: delivery at the recipient's next turn)
+**Source:** Buzz's agent system (agents as members, open relays between agents, per-agent working state; CONTRACT Behaviours 1 and 2: queue and steer; Behaviour 5: Return in the composer); OpenRig (BEHAVIOURS.md §9: the send guard; CROSSWALK §9: delivery at the recipient's next turn)
 
 **Stories:** AG06, AG07, WG09, CJ06, CJ12, FM02, FQ01–FQ07, FQ11–FQ14
 
@@ -12741,10 +12782,50 @@ height: 520
 caption: The queue as a lake: four items wait, so it stands half full. One request has floated past the amber line and turned orange.
 ```
 
+```ui
+device: actuation:gateway
+view: full
+height: 520
+caption: The gateway as a river across the head of its frames: two sessions come in as two currents, three frames ride them, and the last check-in came six seconds ago.
+```
+
+```ui
+device: widgets:nows
+view: full
+height: 520
+caption: The NOWs as the field's year, over the moments of the day: four clearings in growth, one bent dormant, none harvested, one laid in the record.
+```
+
+```ui
+device: workcell:git-seat
+view: whole
+page: seat
+fixture: A long lane
+height: 420
+caption: The Seat page as a succession on O-I's three seats: two lanes grown more than two hundred commits past main, the first beside a mound of uncommitted files, and the third seat cleared for the next lane.
+```
+
+```ui
+device: workcell:git-seat
+view: whole
+page: checkouts
+height: 420
+caption: The Checkouts page as erosion: six stray branches cut a groove; the seats are worn by claims, grooved by drift and cut by three disk breaches deep as gullies; the worktrees stand sound.
+```
+
+```ui
+device: central:docs
+view: full
+height: 620
+caption: Docs as erosion across the six tiers of O-I's account: prints where sources moved since their law last read them, grooves where a meaning went stale or a relation wrong, a gully where a design is missing, and implementation bare, with no source on it.
+```
+
 #### Rules
 
 - A face or a ground moves only for something the run did. The idle stays
   still.
+- An environ draws only what its process reports. While a reading is
+  missing, it stands still and names the reading it waits on.
 - Progress never goes down and never predicts the end. The serpent reaches
   the crown only when something is returned.
 - Reduced motion means posture changes only: no breath, no ripple, no sway.
