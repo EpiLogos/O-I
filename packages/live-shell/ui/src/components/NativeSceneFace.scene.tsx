@@ -1,3 +1,4 @@
+import {Refusal} from '../../../../../desktop/cradle/src/shared/Refusal.tsx'
 import {useRef, useState, type KeyboardEvent} from 'react'
 import {NativeSceneEditor} from './NativeSceneEditor'
 import {EXPRESSION_DESCRIPTION_MAX, EXPRESSION_TITLE_MAX, expressionDescriptionProblem, expressionEditRequest, expressionTitleProblem} from './nativeSceneFace.scene.ts'
@@ -61,14 +62,14 @@ export function ScenePanel({reading, request, disabled}: SceneFacePanelProps) {
           aria-invalid={fault ? true : undefined} aria-describedby={fault ? 'native-expression-fault' : undefined}
           onChange={event => {setDraft(event.currentTarget.value); setFault(null)}} onBlur={() => void commit()} onKeyDown={onKey}/>
       </label>
-      {fault && <p id="native-expression-fault" role="alert" className="native-scene-face-fault">{fault}</p>}
+      {fault && <Refusal id="native-expression-fault" className="native-scene-face-fault" said="The Expression's name did not change." error={fault} ownWords/>}
       <label className="native-scene-face-field"><span>Expression description</span>
         <textarea aria-label="Expression description" value={textDraft ?? currentDescription} maxLength={EXPRESSION_DESCRIPTION_MAX}
           disabled={locked} rows={3} aria-invalid={textFault ? true : undefined}
           aria-describedby={textFault ? 'native-expression-description-fault' : undefined}
           onChange={event => {setTextDraft(event.currentTarget.value); setTextFault(null)}} onBlur={() => void commitText()} onKeyDown={onTextKey}/>
       </label>
-      {textFault && <p id="native-expression-description-fault" role="alert" className="native-scene-face-fault">{textFault}</p>}
+      {textFault && <Refusal id="native-expression-description-fault" className="native-scene-face-fault" said="The Expression's description did not change." error={textFault} ownWords/>}
       <p className="native-scene-face-disclosure">Enter commits the title or description (Shift+Enter starts a new line in the description); Escape reverts the field being edited.</p>
     </section>
   </div>

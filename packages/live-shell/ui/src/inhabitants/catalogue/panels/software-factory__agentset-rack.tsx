@@ -12,15 +12,19 @@
 //   for Factory's LegStatus and Hermes' status; tail is subagent.tail; files are Factory's custody rows by member),
 //   fanOut (delegation.max_concurrent_children), depth (delegation.max_spawn_depth), handBack (summary · digest · raw), returnCap
 //   (delegation.max_summary_chars, 0 = no cap), model ('inherit', or the id of delegation.model), models (a JSON list of {id, label?}),
-//   join (none · all · first · quorum · weighted: how the members' returns combine), pattern (the crew's pattern id, the Type of its lead).
-// The owner is asked to write:  fanOut, depth, handBack, returnCap, model and join (the Hermes delegation block of the harness config;
-//   no config.set key carries it yet), and the action retry (Factory's RetryGrant, factory/src/orchestration.rs).
+//   join (none · all · first · quorum · weighted: how the members' returns combine; Central's agent set's `join`, central.agent-set/v1, for
+//   the set the group's session space names), pattern (the crew's pattern id, the Type of its lead).
+// The owner is asked to write:  fanOut, depth, handBack, returnCap and model (the Hermes delegation block of the harness config; no
+//   config.set key carries it yet); join (Central: central.agent-set.save of the group's set at its next revision, the set read with
+//   central.agent-set.read; a group whose space names no set has no join to read or write); and the action retry (Factory's RetryGrant,
+//   factory/src/orchestration.rs).
 // The crew's face (manual §19.15, §25.6): a pattern whose Count is Pair, Crew or Swarm is several whole creatures in one pane, each member
 // in the posture of its own state (faces/CrewFace.tsx). `pattern` is the pattern the crew works as: the Type of its lead, read; `type` on a member
 // names the pattern of that member when it differs from the crew's (a lead that sets a goal and members that decide the detail).
-// Join. The owners combine returns in one way: Software Factory's barrier waits until every leg it names has returned, and then an
-// independent reviewer synthesises (orchestration.rs `barrier_reading`, `synthesize`); Hermes' delegate_task returns every child's result to
-// the parent. So All has an owner operation, None needs none, and First, Quorum and Weighted have no owner operation: they stand named and dark.
+// Join. Central keeps the setting with the group's agent set; the owners that combine returns do it in one way: Software Factory's barrier
+// waits until every leg it names has returned, and then an independent reviewer synthesises (orchestration.rs `barrier_reading`,
+// `synthesize`); AIKit's team hands each member's Return to its parent, and Hermes' delegate_task returns every child's result to the parent.
+// So All has an owner that combines that way, None needs none, and First, Quorum and Weighted have none: they stand named and dark.
 // Fan-out and Depth (manual §19.15) start at 2 and have no upper limit: the top step of each control is No limit, kept as 0.
 // The Helper page (manual §19.15 Decision helpers) carries the Decision helper's own parts (ai-kit__decision-helper.tsx) under `helper.`:
 // the spread of the last question, the question, the pick with its status and the engine's verdict, the team's questions with your

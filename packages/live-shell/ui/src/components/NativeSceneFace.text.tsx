@@ -1,3 +1,4 @@
+import {Refusal} from '../../../../../desktop/cradle/src/shared/Refusal.tsx'
 import {useRef, useState, type KeyboardEvent, type PointerEvent} from 'react'
 import {TEXT_LAYER_BUDGET, TEXT_MAX_LENGTH, TEXT_NUMERIC_RANGE, type NativeSceneTextChange} from '../../../../expressions-boundary/src/sceneMaterialEdits'
 import type {SceneFacePanelProps} from './nativeSceneFaceViews.tsx'
@@ -144,9 +145,9 @@ export function TextPanel({reading, apply, disabled}: SceneFacePanelProps) {
       </div>
       <p id="native-text-position" className="native-text-face-readout">{selected ? `${layerTitle(selected)}: X ${handleX.toFixed(2)}, Y ${handleY.toFixed(2)}` : 'No layer selected'}</p>
       <small>Drag the handle, or use the arrow keys (0.01; Shift 0.1). Escape cancels a drag. The page is drawn at 16:9 from the reference stage width, so line breaks and type can differ from the stage. The page drag here follows the inspector range (−0.5 to 1.5); the stage drag clamps to −0.1 to 0.95.</small>
-      {fault && <div className="native-text-face-fault" role="alert"><p>{fault.message}</p>
+      {fault && <Refusal className="native-text-face-fault" said="The text change was not applied." error={fault.message} ownWords>
         <button type="button" onClick={() => void send(fault.retry)}>Retry</button>
-        <button type="button" onClick={() => {setDrafts({}); setProblems({}); hold(null); setFault(null)}}>Discard</button></div>}
+        <button type="button" onClick={() => {setDrafts({}); setProblems({}); hold(null); setFault(null)}}>Discard</button></Refusal>}
     </section>
 
     <section className="native-text-face-section" aria-labelledby="native-text-selected-title">

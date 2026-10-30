@@ -1,3 +1,4 @@
+import {Refusal} from '../../../../../desktop/cradle/src/shared/Refusal.tsx'
 import {useRef, useState, type FormEvent} from 'react'
 import {
   MAX_BODY_ACTIONS, MAX_TRIGGERS_PER_SCENE, PORTAL_PLACEMENTS, SCENE_BODY_PRESENTATIONS, TRIGGER_OCCASIONS, TRIGGER_OPERATIONS,
@@ -73,7 +74,7 @@ export function BodyPanel({reading, request, disabled}: SceneFacePanelProps) {
     : `${row.label} (${row.carrier === 'engine_composition' ? 'default: use Clear body' : 'no host resolver yet'})`
 
   return <div className="native-body-face" aria-label="Scene body and jump triggers">
-    {fault && <div className="native-body-face-fault" role="alert"><p>{fault}</p><button type="button" onClick={() => setFault(null)}>Dismiss</button></div>}
+    {fault && <Refusal className="native-body-face-fault" said="The body change was not applied." error={fault} ownWords><button type="button" onClick={() => setFault(null)}>Dismiss</button></Refusal>}
 
     <section className="native-body-face-section" aria-labelledby="native-body-scene-title">
       <header><h3 id="native-body-scene-title">Scene body</h3><span>{body ? 'Set' : 'None'}</span></header>

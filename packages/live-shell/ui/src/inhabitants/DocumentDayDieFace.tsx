@@ -49,7 +49,16 @@ import {useContext, useCallback, useEffect, useMemo, useRef, useState} from 'rea
  * A Day that moved since stands blocked under Review, and Keep draft edits
  * carries the draft onto the Day as it stands (the session's reviewOnto). ⌘S
  * pressed inside the form is the head's Save (useSaveKey), not the form's
- * HTML copy. */
+ * HTML copy.
+ *
+ * Autosave (DLW §17.8; central/documents/autosave.ts): the form says when it
+ * is edited (its `dirty` message) and the frame tells each gesture
+ * (document-edit.js); a second after the last one the face runs this same
+ * Save. A Day blocked under Review, or a save the router names stale,
+ * conflict or refused, holds autosave with its reason until Save, Review or
+ * Keep draft edits; the glyph by the save state shows saved, saving or held.
+ * A save leaves the form in its frame when it shows what the owner now holds,
+ * so an edit made meanwhile stays, the next draft. */
 
 import {
   DayFormSession,
@@ -68,6 +77,9 @@ import type {KernelTransportStatus} from '../../../../../desktop/cradle/src/kern
 import {classifySaveFailure, savedOutcome, unchangedOutcome, type SaveRouterReading} from './documentDeviceModel'
 import {keepDraft, keptDraftMoved, keptDraftNotice, keptDraftOf, keptDraftRefusal, releaseKeptDraft, useDraftKeeping} from '../central/documents/keptDrafts'
 import {useSaveKey} from '../central/documents/useSaveKey'
+import {useAutosave} from '../central/documents/useAutosave'
+import {autosaveHeldOf} from '../central/documents/autosave'
+import {AutosaveGlyph} from '../central/documents/AutosaveGlyph'
 import {SaveOutcomeChip} from './inhabitantCard.tsx'
 import {linkTarget, PAGE_LINK_MESSAGE, type PageLinkTarget} from './DocumentPageFace'
 import './inhabitantDevices.css'
@@ -143,6 +155,8 @@ export function DocumentDayDieFace({transport, project, sourceRef, documentId, p
   const snapshot = useRef<{nonce: string; resolve: (value: unknown) => void; reject: (reason: Error) => void; timer: number}>()
   const templateRef = useRef<string>()
   const editEpoch = useRef(0)
+  /** Autosave's ear for the form's own `dirty` message (set where autosave stands, below). */
+  const editedRef = useRef<() => void>()
 
   // Load: the owner's document reading, then the projection onto the shell's own form.
   useEffect(() => {
@@ -217,6 +231,7 @@ export function DocumentDayDieFace({transport, project, sourceRef, documentId, p
         session.markDirty()
         editEpoch.current++
         setDirty(true)
+        editedRef.current?.()
         return
       }
       const held = snapshot.current
@@ -288,8 +303,15 @@ export function DocumentDayDieFace({transport, project, sourceRef, documentId, p
         return result
       })
       if (editEpoch.current !== epoch) {
+        // Edits arrived while the save was in flight. Every field sent was acknowledged (session.save checks each receipt), so the owner
+        // holds the Day the session now stands on; what came after is a new draft on that revision — saved at the next pause, or by Save.
+        // (Before autosave this was named stale, "needs review": nothing had moved at the owner, and with saving as you go it is the
+        // ordinary case of writing on while a save lands.)
         session.markDirty()
-        setSave(classifySaveFailure('Edits arrived while the save was in flight; the retained draft needs review'))
+        setBasis(session.basis)
+        setRevision(session.basis.revision)
+        setSave(savedOutcome('edits made while the save was in flight stand as a new draft'))
+        setDirty(true)
         return
       }
       setSave(savedOutcome(unmapped.length ? `${unmapped.length} unmapped region(s) remain only in the original form` : undefined))
@@ -305,7 +327,11 @@ export function DocumentDayDieFace({transport, project, sourceRef, documentId, p
         setBasis(next)
         setRevision(next.revision)
         setDirty(false)
-        if (templateRef.current) setFace(projectDieDocument(templateRef.current, next.payload) ?? undefined)
+        // The form is drawn again only when it shows other than the owner now holds: a form that shows it stays in its frame, so a key
+        // pressed as the save lands is never thrown away.
+        let differs = true
+        try { differs = formEdits(next, value).length > 0 } catch { differs = true }
+        if (differs && templateRef.current) setFace(projectDieDocument(templateRef.current, next.payload) ?? undefined)
       }
     } catch (error) {
       setSave(classifySaveFailure(error))
@@ -384,6 +410,11 @@ export function DocumentDayDieFace({transport, project, sourceRef, documentId, p
   useEffect(() => () => withdrawDocument(key), [key])
   // ⌘S pressed inside the form is this Save (§10.9, §17.8), not the form's HTML copy.
   useSaveKey(frame, standing.save)
+  // Autosave (§17.8): this same Save a second after you stop; held while the Day is blocked under Review or a save stands stale, in
+  // conflict or refused. The form's own word that it is edited is an edit too.
+  const autosave = useAutosave(frame, {settle: () => session.edited || session.draft !== undefined, save: standing.save ? saveToNative : undefined, pending, dirty,
+    held: autosaveHeldOf(save, session.blocked)})
+  editedRef.current = autosave.edited
   // Before the pane closes (or splits, or moves), the form's snapshot is taken once more and kept while it holds edits; a form with none
   // lets any kept draft go.
   useDraftKeeping(inPane ? paneId : undefined, async () => {
@@ -412,6 +443,7 @@ export function DocumentDayDieFace({transport, project, sourceRef, documentId, p
       {inPane && <div className="document-pane-head" data-document-head="day">
         <span className="document-pane-form">Day · #{open.n} {open.name}</span>
         <span className="document-pane-state" role="status" aria-live="polite">{revision ? `r${revisionShort(revision)} · ` : ''}{standing.state}</span>
+        <AutosaveGlyph glyph={autosave.glyph} />
         <span className="document-pane-acts">
           <button type="button" data-action="save" disabled={!standing.save} onClick={() => standing.save?.()}
             data-i="Save to Central|The owner's revision-checked write of the Day as it stands in its pane.">Save</button>
@@ -460,6 +492,7 @@ export function DocumentDayDieFace({transport, project, sourceRef, documentId, p
             ? <SaveOutcomeChip outcome={save.outcome} detail={save.detail}/>
             : <span className="inhabitant-quiet">{pending ? 'waiting for the native operation…' : blocked ? `blocked — ${session.blocked}` : 'no save attempted'}</span>}
         </span>
+        <AutosaveGlyph glyph={autosave.glyph} />
       </div>}
       {failure && <p className="inhabitant-device-fault" role="alert">Day die original source unavailable: {failure}</p>}
       {notice && <p className="inhabitant-device-notice" role="status">{notice}</p>}

@@ -1,3 +1,4 @@
+import {Refusal} from '../../../../../desktop/cradle/src/shared/Refusal.tsx'
 import {useRef, useState, type KeyboardEvent, type PointerEvent} from 'react'
 import {BLUEPRINT_BASE_SIZE, BLUEPRINT_WORLD_SCALE, blueprintFieldValue, blueprintNativeOf, type BlueprintDisplayTransform, type NativeBlueprintIntent} from '../../../../expressions-boundary/src/nativeBlueprintEdits'
 import type {SceneFacePanelProps} from './nativeSceneFaceViews.tsx'
@@ -178,9 +179,9 @@ export function BlueprintPanel({reading, request, disabled}: SceneFacePanelProps
       <small>Position is in stage units (native / {BLUEPRINT_WORLD_SCALE}), rotation in degrees, relative size from the native scale / {BLUEPRINT_BASE_SIZE}. Enter applies; Escape reverts a field.</small>
     </section>
 
-    {fault && <div className="native-blueprint-fault" role="alert"><p>{fault.message}</p>
+    {fault && <Refusal className="native-blueprint-fault" said="The blueprint change was not applied." error={fault.message} ownWords>
       <button type="button" disabled={locked} onClick={() => void send(fault.retry)}>Retry</button>
-      <button type="button" disabled={locked} onClick={discard}>Discard</button></div>}
+      <button type="button" disabled={locked} onClick={discard}>Discard</button></Refusal>}
   </div>
 }
 

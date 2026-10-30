@@ -2384,6 +2384,8 @@ async function runStageCommand(command:StageCommand):Promise<StageResult>{
   case 'canvas':
    if(!researchInstruments)throw new Error('This application has no Canvas.');
    if(command.action==='camera'){researchInstruments.setCamera(command);break;}
+   // lane AJ: the Canvas's Autosave (DLW §17.4), turned by the Canvas device; on again, what was held is committed.
+   if(command.action==='autosave'){researchAutosave=command.on;await researchInstruments.setAutosave(command.on);break;}
    await researchInstruments.setCanvasConnector(command.line,{...(command.lineKind?{kind:command.lineKind}:{}),...(command.fromSide?{fromSide:command.fromSide}:{}),...(command.toSide?{toSide:command.toSide}:{})});break;
   // W4: the Timeline's camera, saved views, relation links and card categories, each its own act (researchInstruments.tsx timelineAct).
   case 'timeline':if(!researchInstruments)throw new Error('This application has no Timeline.');await researchInstruments.timelineAct(command);break;
@@ -2801,7 +2803,12 @@ document.body.append(researchInspector);
 /** Native world-position pin for a view occurrence (read from the native document). */
 function pinnedOccurrence(sceneId:string,viewEntityId:string):boolean{const view=nativeWorkspace?.nativeView(),occurrence=view?.bindings[sceneId]?.occurrences.find(o=>o.view_entity_id===viewEntityId);return !!(occurrence&&(view!.document.entities[occurrence.entity_ref] as {pinned?:boolean}|undefined)?.pinned);}
 function researchScene(id:string){const value=store.document.scenes.find(item=>item.id===id);if(!value||value.id!==scene().id)throw new Error('The active Scene changed; return to that Scene before editing.');return value;}
-async function commitResearch(){if(!await commitNativeRecorded())throw new Error('The native owner did not acknowledge this edit. Your working draft is retained.');}
+/** The Canvas's Autosave (DLW §17.4 "Saves a short time after a gesture, and at once after a delete"): on, a research edit is committed as
+ * it lands — a gesture as it settles (canvasGesture.ts), a delete at once; off, it stays in the working draft, on the board and unsaved, and
+ * the Canvas's glyph stands held until Autosave is on again, which commits what was held. A connection, a duplicate, a pin and a blueprint
+ * transform are the owner's own acts (nativeWorkspace), not edits of the working draft: they land as they always did. */
+let researchAutosave=true,researchHeld=false;
+async function commitResearch(){if(!researchAutosave){researchHeld=true;return;}if(!await commitNativeRecorded())throw new Error('The native owner did not acknowledge this edit. Your working draft is retained.');researchHeld=false;}
 // B2/E15/E16 — the host a .canvas import runs through (researchMaterial.runCanvasImport). The local store is the one document;
 // the owner is reached through ONE native act (its flush saves the cards, its relations and sides follow, one recorded step).
 function canvasImportHost(sceneId:string):CanvasImportHost{
@@ -2830,6 +2837,8 @@ researchInstruments=installResearchInstruments({
  activateInstrument:lens=>activateInstrument(lens),
  sceneMaterial:id=>clone(researchScene(id)),
  material:async(id,action:ResearchMaterialAction)=>{const target=researchScene(id);changed(()=>applyResearchMaterial(target,action),true,researchMaterialLabel(action));await commitResearch();},
+ // The Canvas's Autosave (commitResearch): whether an edit stands held, whether it saves as it lands, and the commit of what was held.
+ held:()=>researchHeld,autosave:()=>researchAutosave,commitHeld:async()=>{await commitResearch();},
  // lane-1 A3/A4: a connection's line kind, label and bound sides — presentation keyed by the native edge id; the relation itself is untouched.
  connector:async(id,edgeId,value)=>{const target=researchScene(id);changed(()=>applyConnectorRecord(target,edgeId,value),true,'Connection line');await commitResearch();},
  inspectSubject:(ref,context)=>summonSource(ref,context),showInGraph:(subjectRef,nativeOwner)=>summonGraph(subjectRef,nativeOwner),nativeView:()=>nativeWorkspace?.nativeView(),sceneId:()=>scene().id,
@@ -3042,6 +3051,8 @@ async function commitNativeRecorded():Promise<boolean|undefined>{
  if(!nativeWorkspace)return undefined;
  const localId=store.document.id,wasBound=!!kernelOriginFor(store.document);
  const anchor=store.kernelSaveAnchor(),saved=await nativeWorkspace.commitRecorded();
+ // Any commit carries the whole working draft: an edit the Canvas held is saved with it.
+ if(saved)researchHeld=false;
  if(saved){store.attachKernelCheckpoint(anchor,saved.checkpoint);recordAdoptionAfterSave(localId,wasBound);try{saveToLibrary(store.document,kernelOriginFor(store.document));}catch{/* T22: the Library mirror is retried by the next backup. */}}
  return !!saved;
 }

@@ -10,6 +10,8 @@ export async function resolve(specifier, context, next) {
   }
 }
 export async function load(url, context, next) {
+  // A production module's stylesheet is the bundler's; under node it is an empty module, as in the shell's own loaders.
+  if (url.endsWith('.css')) return {format:'module',shortCircuit:true,source:'export {}'};
   if (!url.endsWith('.ts') && !url.endsWith('.tsx')) return next(url,context);
   const source = await readFile(new URL(url),'utf8');
   return {format:'module',shortCircuit:true,source:ts.transpileModule(source,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext,jsx:ts.JsxEmit.ReactJSX},fileName:new URL(url).pathname}).outputText};

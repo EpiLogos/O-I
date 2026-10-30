@@ -22,8 +22,8 @@
 // §1.4, lane W4-Technē): the catalogue's design of the instrument stands at its head on its own owner — the Canvas, the Journey, the
 // Palace, the Knowledge graph — then the holder's own plate where it keeps controls no design carries yet (the frame's chrome, the
 // palace's composition), then its effects: the Lens after every instrument a reading plays through (techne/devices/techneDesigns.ts
-// TECHNE_CHAINS). The Timeline and Light were retired as devices of their own in the 22 Oct manual rewrite: the timeline is Technē's
-// Arrangement view (§17.5), so the Timeline's own plate stands first; Light is the Canvas's Light page (§17.4). The knowledge graph's three faces (scope, filters, display) no longer stand on its
+// TECHNE_CHAINS). The Timeline was retired as a device of its own in the 22 Oct manual rewrite: the timeline is Technē's Arrangement
+// view (§17.5), so the Timeline's own plate stands first. The knowledge graph's three faces (scope, filters, display) no longer stand on its
 // chain: the Knowledge graph's design carries their parameters on its Reach, Filters and Display pages, on the same owner.
 import {useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode, type RefObject} from 'react'
 import {DeviceView} from '../../../frame/devices/DeviceView'

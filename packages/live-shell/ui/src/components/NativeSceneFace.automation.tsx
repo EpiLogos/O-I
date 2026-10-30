@@ -1,3 +1,4 @@
+import {Refusal, refusalWords} from '../../../../../desktop/cradle/src/shared/Refusal.tsx'
 import {useEffect, useRef, useState, type KeyboardEvent, type PointerEvent} from 'react'
 import type {NativeAutomationChange, NativeAutomationLaneValues} from '../../../../expressions-boundary/src/editor'
 import {NATIVE_AUTOMATION_BLENDS, NATIVE_AUTOMATION_EASINGS, NATIVE_AUTOMATION_LANE_LIMIT, NATIVE_AUTOMATION_LOOPS, NATIVE_AUTOMATION_TYPES, NATIVE_AUTOMATION_WAVES} from '../../../../expressions-boundary/src/nativeAutomationEdits'
@@ -93,8 +94,8 @@ export function AutomationFacePanel({reading, apply, disabled}: SceneFacePanelPr
   const loopOn = link.state?.automationLoop === true
   const runFrame = async (command: Parameters<NonNullable<typeof link.run>>[0]) => {
     if (!link.run) return
-    try {const result = await link.run(command); setRunFault(result.ok ? null : result.error)}
-    catch (cause) {setRunFault(cause instanceof Error ? cause.message : String(cause))}
+    try {const result = await link.run(command); if (!result.ok) console.warn('The automation did not run:', result.error); setRunFault(result.ok ? null : result.error)}
+    catch (cause) {console.warn('The automation did not run:', cause); setRunFault(cause instanceof Error ? cause.message : String(cause))}
   }
   const playAll = async () => {
     setRunFault(null)
@@ -272,7 +273,7 @@ export function AutomationFacePanel({reading, apply, disabled}: SceneFacePanelPr
           title="Hold every automation group at its base; Play all restarts them">Pause all</button>
         <button type="button" aria-pressed={loopOn} disabled={locked || !!frameReason} onClick={() => void runFrame(stageAutomationLoop(!loopOn))}
           title={frameReason ?? 'Loop: whenever every one-shot has finished, fire them all again'}>Loop</button>
-        {runFault && <small className="native-automation-face-fault" role="alert">{runFault}</small>}
+        {runFault && <small className="native-automation-face-fault" role="alert">{refusalWords('The automation did not run.', runFault)}</small>}
       </div>
       <p className="native-automation-face-note">Order is semantic. The engine applies lanes in this order, and for each parameter the last enabled replacing lane wins.
         Move a row with the arrows, Alt+Up or Alt+Down, or drag it onto another row.</p>
@@ -339,9 +340,9 @@ export function AutomationFacePanel({reading, apply, disabled}: SceneFacePanelPr
           </div>
           <figcaption>Configuration diagram: computed from this lane's own settings with the engine's waveform and ease (engine/automation.ts), not a recording. {curve.note}</figcaption>
         </figure>
-        {fault && <div className="native-automation-face-fault" role="alert"><p>{fault.message}</p>
+        {fault && <Refusal className="native-automation-face-fault" said="The automation change was not applied." error={fault.message} ownWords>
           <button type="button" onClick={() => void send(fault.retry)}>Retry</button>
-          <button type="button" onClick={() => {setDrafts({}); setProblems({}); hold(null); setFault(null)}}>Discard</button></div>}
+          <button type="button" onClick={() => {setDrafts({}); setProblems({}); hold(null); setFault(null)}}>Discard</button></Refusal>}
         <div className="native-automation-face-pair">{numberField('min', null)}{numberField('max', null)}</div>
         <label className="native-automation-face-field"><span>Sync with leader</span>
           <select aria-label="Sync with leader" value={selected.syncWith ?? ''} disabled={locked || role === 'leader'}

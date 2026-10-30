@@ -1,3 +1,4 @@
+import {plainReason, refusalWords} from '../../../../../desktop/cradle/src/shared/Refusal.tsx'
 import {useEffect, useRef, useState, type KeyboardEvent, type PointerEvent} from 'react'
 import type {HostedAppState, StageCommand, StageResult} from '@epilogos/expressions-boundary'
 import type {NativeEditorChange, NativeEditorReading, NativeEditorReply} from '../../../../expressions-boundary/src/editor'
@@ -8,6 +9,9 @@ import {barEngineLight, barPointer, barRepeatPins, barToolRail, formatBarValue, 
 type Run = (command: StageCommand) => Promise<StageResult>
 export type BarApply = (changes: readonly NativeEditorChange[]) => Promise<NativeEditorReply>
 const reasonOf = (cause: unknown) => cause instanceof Error ? cause.message : String(cause)
+/** An inline line says the place's words (shared/Refusal.tsx); the raw cause goes to the console. */
+const refusedAs = (line: string, cause: unknown) => {console.warn(line, cause); return reasonOf(cause)}
+const TOOL_REFUSED = 'The stage tool did not change.', POINTER_REFUSED = 'The pointer setting did not change.'
 const ABBREVIATION: Record<string, string> = {select: 'S', interact: 'I', pin: 'P', text: 'T', formation: 'F'}
 
 /** One compact numeric control: drag the label, type a value, or use the arrow keys. Base and effective stay apart;
@@ -70,7 +74,7 @@ export function BarValue({parameter, session, disabled, reason}: {parameter: Bar
     <input type="text" inputMode="decimal" aria-label={parameter.label} value={shown} disabled={disabled}
       onChange={event => setDraft(event.target.value)} onBlur={commitText} onKeyDown={onKey} />
     {parameter.effective !== undefined && <small className="bar-value-effective" title="The automated value the engine is using now">→ {formatBarValue(parameter.effective, parameter)}</small>}
-    {fault && <small role="alert" className="bar-value-fault">{fault}</small>}
+    {fault && <small role="alert" className="bar-value-fault">{plainReason(fault) ?? `${parameter.label} was not changed.`}</small>}
   </label>
 }
 
@@ -84,8 +88,8 @@ export function BarTools({state, run}: {state: HostedAppState | null; run: Run |
     if (!run || busy) return
     setBusy(true); setRefusal(null)
     let answer: Promise<StageResult>
-    try {answer = run(command)} catch (cause) {setBusy(false); setRefusal(reasonOf(cause)); return}
-    void answer.then(result => {if (!result.ok) setRefusal(result.error)}, cause => setRefusal(reasonOf(cause))).finally(() => setBusy(false))
+    try {answer = run(command)} catch (cause) {setBusy(false); setRefusal(refusedAs(TOOL_REFUSED, cause)); return}
+    void answer.then(result => {if (!result.ok) setRefusal(refusedAs(TOOL_REFUSED, result.error))}, cause => setRefusal(refusedAs(TOOL_REFUSED, cause))).finally(() => setBusy(false))
   }
   return <div className="bar-tools" role="group" aria-label="Stage tool">
     {barToolRail(state).map(item => <button key={item.tool} type="button" className="bar-tool" aria-label={item.label} aria-pressed={item.pressed}
@@ -93,7 +97,7 @@ export function BarTools({state, run}: {state: HostedAppState | null; run: Run |
       <span className="bar-tool-full">{item.label}</span><span className="bar-tool-abbr" aria-hidden="true">{ABBREVIATION[item.tool]}</span></button>)}
     {repeat.visible && <button type="button" className="bar-tool" aria-label="Repeat pins" aria-pressed={repeat.pressed} disabled={reason !== null}
       title={reason ?? 'Keep placing pins after each click'} onClick={() => send(stagePinRepeat(repeat.pressed !== true))}>Repeat</button>}
-    {refusal && <small role="alert" className="bar-fault">{refusal}</small>}
+    {refusal && <small role="alert" className="bar-fault">{refusalWords(TOOL_REFUSED, refusal)}</small>}
   </div>
 }
 
@@ -104,7 +108,7 @@ export function BarPointerGroup({reading, state, apply, disabled}: {reading: Nat
   if (!pointer) return null
   const write = (change: NativeEditorChange) => {
     setFault(null)
-    void apply([change]).then(reply => {if (!reply.ok) setFault(reply.error)}, cause => setFault(reasonOf(cause)))
+    void apply([change]).then(reply => {if (!reply.ok) setFault(refusedAs(POINTER_REFUSED, reply.error))}, cause => setFault(refusedAs(POINTER_REFUSED, cause)))
   }
   return <div className="bar-pointer" role="group" aria-label="Pointer">
     <select aria-label="Pointer force" value={pointer.mode} disabled={disabled} title="Temporary pointer force"
@@ -116,7 +120,7 @@ export function BarPointerGroup({reading, state, apply, disabled}: {reading: Nat
     <select aria-label="Pointer scope" value={pointer.scope} disabled={disabled} title="Global: shared across this Expression's scenes. Local: this scene only."
       onChange={event => write({kind: 'panel-setting', key: 'pointerScope', value: event.target.value as typeof pointer.scope})}>
       <option value="global">Global</option><option value="local">Local</option></select>
-    {fault && <small role="alert" className="bar-fault">{fault}</small>}
+    {fault && <small role="alert" className="bar-fault">{refusalWords(POINTER_REFUSED, fault)}</small>}
   </div>
 }
 

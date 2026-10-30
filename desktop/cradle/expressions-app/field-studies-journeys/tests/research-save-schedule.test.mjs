@@ -30,14 +30,18 @@ test('the queued-edit guard still refuses an edit that lands after the compositi
 });
 
 test('a research act that has no acknowledged owner is refused, not silently retained', ()=>{
- assert.match(appSource,/async function commitResearch\(\)\{if\(!await commitNativeRecorded\(\)\)throw new Error\(/,'commitResearch throws on refusal');
+ // REPLACED (#741, lane AJ): /async function commitResearch\(\)\{if\(!await commitNativeRecorded\(\)\)throw new Error\(/ — the Canvas's
+ // Autosave Off (DLW §17.4) holds the edit in the working draft first, unsent and said held (aj741-canvas-autosave.test.mjs); a sent edit
+ // the owner does not acknowledge is still refused.
+ assert.match(appSource,/async function commitResearch\(\)\{if\(!researchAutosave\)\{researchHeld=true;return;\}if\(!await commitNativeRecorded\(\)\)throw new Error\(/,'commitResearch throws on refusal');
 });
 
 test('one save-state glyph reports saving, saved and held in the status line', ()=>{
  assert.match(researchSource,/className='research-save-glyph'|className = 'research-save-glyph'|research-save-glyph/,'the glyph element exists');
  for(const state of ['saving','saved','held'])assert.ok(researchSource.includes(`'${state}'`),`the glyph has a ${state} state`);
  assert.match(researchSource,/saveState\('saving'\)/,'an act marks saving when it starts');
- assert.match(researchSource,/try\{await action\(\);saveState\('saved'\);\}/,'an acknowledged act marks saved');
+ // REPLACED (#741, lane AJ): /try\{await action\(\);saveState\('saved'\);\}/ — an act the host holds (Autosave off) marks held.
+ assert.match(researchSource,/try\{await action\(\);saveState\(host\.held\?\.\(\)\?'held':'saved'\);\}/,'an acknowledged act marks saved');
  assert.match(researchSource,/\.catch\(error=>\{saveState\('held'\);/,'a refused act marks held');
 });
 

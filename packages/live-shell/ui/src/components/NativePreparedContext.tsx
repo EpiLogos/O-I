@@ -1,3 +1,4 @@
+import {Refusal} from '../../../../../desktop/cradle/src/shared/Refusal.tsx'
 import {useEffect, useRef, type SyntheticEvent} from 'react'
 import type {AgentSubject} from '../../../../../desktop/cradle/src/agent/AgentLayer'
 import {PreparedContextView} from '../../../../../desktop/cradle/src/context/PreparedContextView'
@@ -12,7 +13,7 @@ export interface NativePreparedContextProps {
 export function NativePreparedContext(props: NativePreparedContextProps) {
   let key: string
   try { key = preparedContextScopeKey(props.scope) }
-  catch (error) { return <p className="native-error" role="alert">{String(error)}</p> }
+  catch (error) { return <Refusal className="native-error" said="The prepared context's scope could not be read." error={error}/> }
   return <ScopedPreparedContext key={key} {...props}/>
 }
 function ScopedPreparedContext({scope, current, onOpenSubject}: NativePreparedContextProps) {
@@ -36,7 +37,7 @@ function ScopedPreparedContext({scope, current, onOpenSubject}: NativePreparedCo
     <section aria-label="Delivered context"><h3>Delivered</h3>
       {!scope.accompanying && <p className="native-empty">Select a retained conversation to inspect what it received.</p>}
       {scope.accompanying && receipts === undefined && !receiptError && <p className="native-empty">The native conversation has not disclosed delivered-context receipts.</p>}
-      {receiptError && <p className="native-error" role="alert">{receiptError}</p>}
+      {receiptError && <Refusal className="native-error" said="The delivered-context receipts could not be read." error={receiptError} ownWords/>}
       {receipts?.length === 0 && <p className="native-empty">No prepared context was delivered in this native reading.</p>}
       {receipts && receipts.length > 0 && <ol>{receipts.map((receipt, index) => <li key={`${receipt.cursor}:${receipt.digest}:${index}`}>
         <p>{receipt.standing}</p><ul>{receipt.items.map(item => <li key={item.id}>{item.title}</li>)}</ul>

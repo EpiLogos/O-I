@@ -274,6 +274,8 @@ export type StageCommand =
   /** The Canvas camera (DLW §17.4): the board point at the pane's centre and the zoom in percent, set through the canvas's own fly. */
   | {command: 'canvas'; action: 'camera'; cx: number; cy: number; zoom: number}
   | {command: 'canvas'; action: 'connector'; line: string; lineKind?: (typeof STAGE_CANVAS_LINE_KINDS)[number]; fromSide?: (typeof STAGE_CANVAS_SIDES)[number]; toSide?: (typeof STAGE_CANVAS_SIDES)[number]}
+  /** The Canvas's Autosave (DLW §17.4): on, each edit is saved as it settles; off, it is held in the working draft (app.ts commitResearch). */
+  | {command: 'canvas'; action: 'autosave'; on: boolean}
   | {command: 'timeline'; action: 'camera'; centre: number; zoom: number}
   | {command: 'timeline'; action: 'view' | 'save-view'; name: string}
   | {command: 'timeline'; action: 'links'; on: boolean}
@@ -437,6 +439,7 @@ export function readStageRequest(raw: unknown): {req: number; command: StageComm
       return {req, command: {command: 'procedural-stage', action: raw.action, procedure_ref: raw.procedure_ref}};
     }
     case 'canvas':
+      if (raw.action === 'autosave') return closed(raw, [...BASE_KEYS, 'action', 'on']) && typeof raw.on === 'boolean' ? {req, command: {command: 'canvas', action: 'autosave', on: raw.on}} : null;
       if (raw.action === 'connector') {
         if (!closed(raw, [...BASE_KEYS, 'action', 'line', 'lineKind', 'fromSide', 'toSide']) || !bounded(raw.line)) return null;
         if (raw.lineKind !== undefined && !stageOneOf(STAGE_CANVAS_LINE_KINDS, raw.lineKind)) return null;

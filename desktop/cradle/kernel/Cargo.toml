@@ -21,3 +21,9 @@ notify = { version = "8", default-features = false, features = ["macos_fsevent"]
 [target.'cfg(target_os = "macos")'.dependencies]
 # The journal FSEvents keeps per volume (journal.rs); notify already builds it.
 fsevent-sys = "4.1"
+
+# The debug walk-bridge (CI's and the dev stack's) hashes an owner binary
+# once per standing (native_expression.rs `Digests`); unoptimised, sha2
+# reads 85 MB of ql in about 2 s, optimised in about 0.15 s.
+[profile.dev.package.sha2]
+opt-level = 3

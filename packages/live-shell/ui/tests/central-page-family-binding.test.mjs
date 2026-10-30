@@ -180,14 +180,19 @@ test('the Document draws an open Flow\'s template, title and save state from its
   assert.deepEqual([v.highlights, v.notes], [1, 2])
   assert.deepEqual(JSON.parse(v.packet), [{entry: 4, scope: 'selection', text: 'Which unit starts first?'}])
   assert.deepEqual(JSON.parse(v.journal), ['Tue 13 Oct', 'Thu 15 Oct'].map(day => day), 'the journal\'s pages by their civil day')
-  for (const key of ['ground', 'layout', 'pinned', 'agentWrites', 'autosave', 'face', 'date']) assert.equal(v[key], undefined, `${key}: no owner reports it`)
+  // REPLACED (#741, lane AJ): "autosave: no owner reports it" — Autosave is the one setting for Central's pages (central/documents/
+  // autosave.ts), On by default (§17.8), which the Document reads and turns (aj741-autosave.test.mjs).
+  for (const key of ['ground', 'layout', 'pinned', 'agentWrites', 'face', 'date']) assert.equal(v[key], undefined, `${key}: no owner reports it`)
+  assert.equal(v.autosave, true, 'Autosave: the setting as it stands, On by default')
   assert.equal(v.view, 'page', 'Page or Source is the view\'s own, at Page')
   // The edited and refused standings, from the face's own facts.
   const edited = bindings.documentBinding('central:document', reachedFlow({...FLOW_DOOR, dirty: true, state: 'edited since save'}), flowMaterial)
   assert.equal(edited.values.dirty, true)
   const stale = bindings.documentBinding('central:document', pageDevices.reachedPageOf({...FLOW_DOOR, dirty: true, outcome: 'stale', state: 'stale — the native source moved'}, null), flowMaterial)
   assert.equal(stale.values.outcome, 'stale')
-  for (const key of ['title', 'template', 'flowView', 'pinned', 'agentWrites', 'autosave', 'clear']) assert.ok(binding.standing[key].disabled.length > 20, `${key} stands disabled with its reason`)
+  // REPLACED (#741, lane AJ): "autosave stands disabled with its reason" — it turns the setting, and each page saves through its own Save.
+  for (const key of ['title', 'template', 'flowView', 'pinned', 'agentWrites', 'clear']) assert.ok(binding.standing[key].disabled.length > 20, `${key} stands disabled with its reason`)
+  assert.equal(binding.standing.autosave, undefined, 'Autosave stands enabled')
 })
 
 test('Save and Re-read are the hosted face\'s own acts; a refused key is refused in its own words, never written', async () => {

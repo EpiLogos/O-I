@@ -3060,17 +3060,6 @@ impl Kernel {
                     document: git::diff(&self.client, request)?,
                 },
             }),
-            KernelOp::WorldBodyRead { project } => {
-                // Central discloses the scope, as the construction write's Action does.
-                let cwd = self.agent_location(project.as_deref())?;
-                Ok(KernelOpOutcome {
-                    read_scopes: None,
-                    receipts: vec![],
-                    result: KernelOpResult::WorldBodyReading {
-                        document: construction::read_body(&self.client, &cwd, project.as_deref())?,
-                    },
-                })
-            }
             op @ (KernelOp::LiveSetRead { .. }
             | KernelOp::LiveDeviceDescriptors
             | KernelOp::LiveDeviceParamsRead { .. }
@@ -3435,7 +3424,9 @@ impl Kernel {
             | KernelOp::ActuationRead { .. }
             | KernelOp::QlRead { .. }
             | KernelOp::WorkcellRead { .. }
-            | KernelOp::AikitRead { .. }) => self
+            | KernelOp::AikitRead { .. }
+            | KernelOp::WorldBodyRead { .. }
+            | KernelOp::FileResolve { .. }) => self
                 .prepare_owner_read(&op)
                 .ok_or("Cannot prepare the owner read")?
                 .execute(),
@@ -3521,7 +3512,9 @@ impl Kernel {
             | KernelOp::InstanceCommission { .. }
             | KernelOp::EncounterProvision { .. }
             | KernelOp::FlowParticipantProvision { .. }
-            | KernelOp::HarnessAgentControl { .. }) => self.apply_owner_write(op),
+            | KernelOp::HarnessAgentControl { .. }
+            | KernelOp::GroundForm { .. }
+            | KernelOp::GroundAuthority { .. }) => self.apply_owner_write(op),
             KernelOp::SettingsReveal { path } => Ok(KernelOpOutcome {
                 read_scopes: None,
                 receipts: Vec::new(),
@@ -3544,20 +3537,6 @@ impl Kernel {
                 let answered = prepared.execute();
                 self.finish_ground(answered)
             }
-            KernelOp::GroundForm { request } => Ok(KernelOpOutcome {
-                read_scopes: None,
-                receipts: Vec::new(),
-                result: KernelOpResult::GroundFormReading {
-                    data: ground_form::operate(&self.client, &request)?,
-                },
-            }),
-            KernelOp::GroundAuthority { request } => Ok(KernelOpOutcome {
-                read_scopes: None,
-                receipts: Vec::new(),
-                result: KernelOpResult::GroundAuthorityReading {
-                    data: ground_authority::operate(&self.client, &request)?,
-                },
-            }),
             KernelOp::Setup { request } => {
                 // First installation must work before Central/root discovery.
                 let cwd = std::env::current_dir().map_err(|e| e.to_string())?;
@@ -3573,13 +3552,6 @@ impl Kernel {
             op @ (KernelOp::FileOperation { .. } | KernelOp::Routine { .. }) => {
                 self.apply_owner_write(op)
             }
-            KernelOp::FileResolve { reference } => Ok(KernelOpOutcome {
-                read_scopes: None,
-                receipts: Vec::new(),
-                result: KernelOpResult::FileResolved {
-                    location: files::resolve(&self.client, &reference)?,
-                },
-            }),
             KernelOp::FilesList { path, fresh } => Ok(KernelOpOutcome {
                 read_scopes: None,
                 receipts: Vec::new(),

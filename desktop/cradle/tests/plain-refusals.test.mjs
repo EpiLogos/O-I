@@ -104,8 +104,9 @@ test('the block: the plain line in the open, the raw cause behind Why, the site\
 const CARRIER = /^(?:err|error|errors|cause|failure|fault|refused|__refused|refusal|exception)$|(?:Error|Failure|Fault|Refused|Refusal|Exception)$/;
 /** What an error's fields hold: its words, its trace, its code. */
 const PARTS = new Set(['message', 'detail', 'stack', 'code']);
-/** The pattern's own readers: what passes through them is plain words. */
-const SAFE = new Set(['plainReason', 'refusalWords']);
+/** The pattern's own readers: what passes through them is plain words. live-shell's refusalLine (agent/RefusalCard.tsx) is
+ * plainReason with the place's own fallback: the product has one reader. */
+const SAFE = new Set(['plainReason', 'refusalWords', 'refusalLine']);
 
 const nameOf = n => ts.isIdentifier(n) ? n.text : ts.isPropertyAccessExpression(n) ? n.name.text
   : ts.isElementAccessExpression(n) && ts.isStringLiteralLike(n.argumentExpression) ? n.argumentExpression.text : undefined;
@@ -353,21 +354,13 @@ const CEILING = {
   'desktop/cradle/src/workspace/DetachedFrame.tsx': 1,
   'desktop/cradle/src/workspace/GroundChooser.tsx': 1,
   'desktop/cradle/src/workspace/settings/sections/ProductSection.tsx': 2,
-  'packages/live-shell/ui/src/App.tsx': 1,
   'packages/live-shell/ui/src/agent/AgentShellBrowser.tsx': 2,
   'packages/live-shell/ui/src/central/devices/CentralDevices.tsx': 1,
   'packages/live-shell/ui/src/central/documents/CentralDocumentPane.tsx': 3,
   'packages/live-shell/ui/src/central/searchLine.tsx': 2,
-  'packages/live-shell/ui/src/components/NativeActPassages.tsx': 1,
-  'packages/live-shell/ui/src/components/NativeAgencyParticipation.tsx': 1,
-  'packages/live-shell/ui/src/components/NativeBarControls.tsx': 3,
   'packages/live-shell/ui/src/components/NativeChosenControls.tsx': 1,
-  'packages/live-shell/ui/src/components/NativeColourField.tsx': 3,
   'packages/live-shell/ui/src/components/NativeContextPanel.tsx': 5,
-  'packages/live-shell/ui/src/components/NativeDeviceBrowser.tsx': 1,
   'packages/live-shell/ui/src/components/NativeDeviceEditors.tsx': 6,
-  'packages/live-shell/ui/src/components/NativeDevicePoolView.tsx': 1,
-  'packages/live-shell/ui/src/components/NativeDeviceRack.tsx': 1,
   'packages/live-shell/ui/src/components/NativeEntityFace.meaning.tsx': 3,
   'packages/live-shell/ui/src/components/NativeEntityFace.sound.tsx': 2,
   'packages/live-shell/ui/src/components/NativeFieldFace.depth.tsx': 1,
@@ -376,23 +369,9 @@ const CEILING = {
   'packages/live-shell/ui/src/components/NativeInputRetention.tsx': 3,
   'packages/live-shell/ui/src/components/NativeMaterialBrowser.tsx': 2,
   'packages/live-shell/ui/src/components/NativeMorphDrive.tsx': 3,
-  'packages/live-shell/ui/src/components/NativeObjectBrowser.tsx': 1,
-  'packages/live-shell/ui/src/components/NativePinControls.tsx': 2,
-  'packages/live-shell/ui/src/components/NativePreparedContext.tsx': 2,
   'packages/live-shell/ui/src/components/NativePropertyBrowser.tsx': 1,
-  'packages/live-shell/ui/src/components/NativeRackEditor.tsx': 2,
-  'packages/live-shell/ui/src/components/NativeSceneEditor.tsx': 1,
-  'packages/live-shell/ui/src/components/NativeSceneFace.arrange.tsx': 1,
-  'packages/live-shell/ui/src/components/NativeSceneFace.automation.tsx': 2,
-  'packages/live-shell/ui/src/components/NativeSceneFace.blueprint.tsx': 1,
-  'packages/live-shell/ui/src/components/NativeSceneFace.body.tsx': 1,
-  'packages/live-shell/ui/src/components/NativeSceneFace.scene.tsx': 2,
-  'packages/live-shell/ui/src/components/NativeSceneFace.text.tsx': 1,
-  'packages/live-shell/ui/src/components/NativeSceneTransport.tsx': 2,
   'packages/live-shell/ui/src/components/NativeTechneBrowser.tsx': 1,
   'packages/live-shell/ui/src/components/NativeWorldDetail.tsx': 1,
-  'packages/live-shell/ui/src/components/OwnerRefusal.tsx': 1,
-  'packages/live-shell/ui/src/components/StatusBar.tsx': 1,
   'packages/live-shell/ui/src/components/WorldBrowser.tsx': 2,
   'packages/live-shell/ui/src/components/devices/ExpressionsDeviceView.tsx': 1,
   'packages/live-shell/ui/src/components/devices/ExpressionsPicture.tsx': 1,

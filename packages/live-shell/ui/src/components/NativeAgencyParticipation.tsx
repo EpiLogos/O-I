@@ -1,3 +1,4 @@
+import {Refusal} from '../../../../../desktop/cradle/src/shared/Refusal.tsx'
 import {useState,type ReactNode} from 'react'
 import {AgentLayer,type AgentAccompanying,type AgentSubject} from '../../../../../desktop/cradle/src/agent/AgentLayer'
 import type {WorkspaceMode} from '../../../../../desktop/cradle/src/workspace/mode'
@@ -32,7 +33,7 @@ export interface NativeAgencyParticipationProps {
 export function NativeAgencyParticipation(props: NativeAgencyParticipationProps) {
   let key: string
   try { key = preparedContextScopeKey(props.scope) }
-  catch (error) { return <p className="native-error" role="alert">{String(error)}</p> }
+  catch (error) { return <Refusal className="native-error" said="This conversation's scope could not be read." error={error}/> }
   return <ScopedNativeAgency key={key} {...props}/>
 }
 function ScopedNativeAgency(props: NativeAgencyParticipationProps) {

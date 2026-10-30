@@ -48,6 +48,8 @@ export interface FrameCanvasReading {
   selected: string[]; selectedLine?: string
   /** The pointer flags (researchInstruments.tsx :885-892): drawing, erasing, lasso, grid snap. */
   drawing: boolean; erasing: boolean; lasso: boolean; snap: boolean
+  /** Autosave (DLW §17.4): whether each edit is saved as it settles, or held in the working draft (app.ts commitResearch). */
+  autosave?: boolean
 }
 export const TIMELINE_PROJECTIONS = ['chronology', 'field', 'relative'] as const
 export interface FrameTimelineEvent {id: string; name: string; from: number; to: number; family?: string; historicity?: string}
@@ -92,7 +94,8 @@ export function journeyReadingOf(doc: {name: string; loop: boolean; scenes: read
 export function canvasReadingOf(canvas: {nodes: readonly {id: string; title?: string; position: {x: number; y: number}; size?: {width?: number; height?: number}}[];
   edges: readonly {id: string; sourceNodeId: string; targetNodeId: string; directionality?: string}[]},
 material: {frames?: Readonly<Record<string, {label: string; title?: string; memberRefs: readonly string[]}>>; connectors?: Readonly<Record<string, {kind: string; label?: string; fromSide?: string; toSide?: string}>>} | undefined,
-view: {viewport?: {x: number; y: number; zoom: number}; pane?: {width: number; height: number}; selected: readonly string[]; selectedLine?: string | null; drawing?: boolean; erasing?: boolean; lasso?: boolean; snap?: boolean},
+view: {viewport?: {x: number; y: number; zoom: number}; pane?: {width: number; height: number}; selected: readonly string[]; selectedLine?: string | null; drawing?: boolean; erasing?: boolean; lasso?: boolean; snap?: boolean
+  autosave?: boolean},
 kindOf: (nodeId: string) => string | undefined): FrameCanvasReading {
   const items = canvas.nodes.slice(0, RESEARCH_LIMITS.items).flatMap((node): FrameCanvasItem[] => {
     if (!finite(node.position?.x) || !finite(node.position?.y)) return []
@@ -118,7 +121,8 @@ kindOf: (nodeId: string) => string | undefined): FrameCanvasReading {
     ? {cx: (pane.width / 2 - viewport.x) / viewport.zoom, cy: (pane.height / 2 - viewport.y) / viewport.zoom, zoom: viewport.zoom * 100} : undefined
   return {items, lines, frames, ...(camera ? {camera} : {}), selected: view.selected.filter(id => known.has(id)),
     ...(view.selectedLine && lines.some(line => line.id === view.selectedLine) ? {selectedLine: view.selectedLine} : {}),
-    drawing: view.drawing === true, erasing: view.erasing === true, lasso: view.lasso === true, snap: view.snap === true}
+    drawing: view.drawing === true, erasing: view.erasing === true, lasso: view.lasso === true, snap: view.snap === true,
+    ...(typeof view.autosave === 'boolean' ? {autosave: view.autosave} : {})}
 }
 
 /** The vendored Canvas's viewport that puts a board point at the pane's centre at a zoom in percent: the inverse of the camera above. */
@@ -183,7 +187,8 @@ function readJourney(raw: unknown): FrameJourneyReading | null {
   return {name: raw.name, loops: raw.loops, stopAtEnd: raw.stopAtEnd, at: raw.at as number, local: raw.local, playing: raw.playing, entered: raw.entered, stops: stops as FrameJourneyStop[]}
 }
 function readCanvas(raw: unknown): FrameCanvasReading | null {
-  if (!plain(raw) || !closed(raw, ['items', 'lines', 'frames', 'camera', 'selected', 'selectedLine', 'drawing', 'erasing', 'lasso', 'snap'])) return null
+  if (!plain(raw) || !closed(raw, ['items', 'lines', 'frames', 'camera', 'selected', 'selectedLine', 'drawing', 'erasing', 'lasso', 'snap', 'autosave'])) return null
+  if (raw.autosave !== undefined && typeof raw.autosave !== 'boolean') return null
   if (!list(raw.items, RESEARCH_LIMITS.items) || !list(raw.lines, RESEARCH_LIMITS.lines) || !list(raw.frames, RESEARCH_LIMITS.frames) || !list(raw.selected, RESEARCH_LIMITS.items)) return null
   for (const key of ['drawing', 'erasing', 'lasso', 'snap'] as const) if (typeof raw[key] !== 'boolean') return null
   const items: FrameCanvasItem[] = []
@@ -213,7 +218,8 @@ function readCanvas(raw: unknown): FrameCanvasReading | null {
   }
   if (raw.selectedLine !== undefined && !text(raw.selectedLine)) return null
   return {items, lines, frames, ...(camera ? {camera} : {}), selected: raw.selected as string[], ...(raw.selectedLine !== undefined ? {selectedLine: raw.selectedLine as string} : {}),
-    drawing: raw.drawing as boolean, erasing: raw.erasing as boolean, lasso: raw.lasso as boolean, snap: raw.snap as boolean}
+    drawing: raw.drawing as boolean, erasing: raw.erasing as boolean, lasso: raw.lasso as boolean, snap: raw.snap as boolean,
+    ...(raw.autosave !== undefined ? {autosave: raw.autosave as boolean} : {})}
 }
 function readTimeline(raw: unknown): FrameTimelineReading | null {
   if (!plain(raw) || !closed(raw, ['projection', 'events', 'edges', 'domain', 'centre', 'zoom', 'views', 'links', 'hiddenCategories'])) return null

@@ -105,6 +105,13 @@ test('OwnerRefusal itself renders no preformatted block and no JSON', async () =
   assert.match(text, /refusalLine\(/, 'the owner words come from the one refusal reader, not a second one')
 })
 
+test('the shell reads a refusal through the product\'s one reader: refusalLine is cradle\'s plainReason with the place\'s fallback', async () => {
+  const text = await read('agent/RefusalCard.tsx')
+  assert.match(text, /import \{plainReason\} from '\.\.\/\.\.\/\.\.\/\.\.\/\.\.\/desktop\/cradle\/src\/shared\/Refusal\.tsx'/, 'the reader is shared/Refusal.tsx\'s')
+  assert.match(text.slice(text.indexOf('export function refusalLine')), /^export function refusalLine\([^)]*\): string \{\n  return plainReason\(error\) \?\? fallback\n\}/, 'refusalLine reads nothing itself')
+  assert.doesNotMatch(text, /JSON\.parse\(|indexOf\(': \{"'\)/, 'no second reading of a JSON refusal or a mid-text dump')
+})
+
 test('across src, a raw JSON dump appears only in the listed developer disclosures', async () => {
   const offenders = []
   const dumpers = new Set()

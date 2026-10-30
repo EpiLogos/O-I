@@ -1,3 +1,4 @@
+import {Refusal} from '../../../../../desktop/cradle/src/shared/Refusal.tsx'
 import {useState} from 'react'
 import type {NativeEditorReading} from '../../../../expressions-boundary/src/editor'
 import {objectAddChange, type ObjectRow} from './nativeBrowserModel'
@@ -60,6 +61,6 @@ export function NativeObjectBrowser({rows, reading, request}: {rows: readonly Ob
       {progress && <p className="native-object-budget" aria-live="polite">{progress}</p>}
     </section>
     {reading && <p className="native-object-budget" aria-live="polite">{count} of {limit} formations and pins in this Scene</p>}
-    {error && <p className="native-error" role="alert">{error}</p>}
+    {error && <Refusal className="native-error" said="The Scene's formations and pins could not be changed." error={error} ownWords/>}
   </section>
 }

@@ -8,8 +8,8 @@
 // instrument"). Each is published on the door with its binding, so its band (Whole), its pane (Full), its window (Pop-out) and its tile
 // (Widget) draw the same device (frame/devices/deviceDoor.ts publishDevice). Every design here declares all six views (none narrows
 // `views`): an instrument stands on a chain and full in a pane and keeps a tile; an effect stands on a chain, and the manual gives the Lens
-// a Full and a Widget too (§17.11 Views). The 22 Oct manual rewrite retired the Timeline and Light as devices of their own: the timeline is
-// Technē's Arrangement view (§17.5), and Light is the Canvas's Light page (§17.4), carried by the Canvas's binding (canvasCarryingLight).
+// a Full and a Widget too (§17.11 Views). The 22 Oct manual rewrite retired the Timeline as a device of its own: the timeline is Technē's
+// Arrangement view (§17.5).
 import {useEffect, useMemo, useReducer, useState, useSyncExternalStore} from 'react'
 import type {DesignBinding} from '../../frame/devices/designed'
 import type {DeviceInstance} from '../../frame/devices/deviceRuntime'
@@ -30,13 +30,13 @@ import {useAtlasHandle, useSuiteStanding} from '../../projections/atlas/AtlasPro
 import {turnAtlasTo} from '../../projections/atlas/places/placesHost'
 import {writeThroughOwner} from '../../inhabitants/ql/devices/ownerWrite'
 import {setFilters} from '../../inhabitants/knowledgeGraphFaceActions'
-import {CANVAS_DESIGN, GRAPH_DESIGN, JOURNEY_DESIGN, LENS_DESIGN, LIGHT_DESIGN, PALACE_DESIGN, designDevice, handsFor, heldFor, useHolds} from './designDevices'
+import {CANVAS_DESIGN, GRAPH_DESIGN, JOURNEY_DESIGN, LENS_DESIGN, PALACE_DESIGN, designDevice, handsFor, heldFor, useHolds} from './designDevices'
 import {SESSION_ACTS, palaceBinding, type PalaceWorld} from './palaceBinding'
 import {canvasBinding, journeyBinding, promotionState, subscribePromotion, type CanvasPromoter, type FrameReadings} from './frameBindings'
 import {relateSceneConstellation} from '../../../../../../desktop/cradle/src/techne/sceneConstellationRelation'
 import {graphBinding, readGraphReach, surfaceRead, GRAPH_READ_NODES, type GraphReach, type GraphWrites} from './graphBinding'
 import {useGraphRead} from './graphRead'
-import {canvasCarryingLight, lensBinding, lightBinding} from './effectBindings'
+import {lensBinding} from './effectBindings'
 import {canvasCarryingForm, formState, readForm, subscribeForm, FORM_LOCAL, type FormFocus, type FormOwners} from './formBinding'
 import {useConstellationFocus} from '../../frame/browser/constellationFocus'
 import {constellationNamed, useConstellations} from '../../owners/constellations'
@@ -50,9 +50,8 @@ import {useLensRegistry} from './lensRegistry'
 import {usePaneChrome} from '../../projections/atlas/paneChrome'
 
 /** Each instrument's chain on the rack: the design that is the instrument (where the instrument is not the holder's own plate, the
- * World of the Project and of World / Places, or the Timeline since its design was retired), then its effects, left to right. The Timeline's design (its head) and Light were
- * retired as devices of their own in the 22 Oct manual rewrite: the timeline is Technē's Arrangement view, and Light is the Canvas's Light
- * page, carried by the Canvas's binding (useTechneDesignBindings). */
+ * World of the Project and of World / Places, or the Timeline since its design was retired), then its effects, left to right. The Timeline's
+ * design (its head) was retired as a device of its own in the 22 Oct manual rewrite: the timeline is Technē's Arrangement view. */
 export const TECHNE_CHAINS: Readonly<Record<string, {readonly head?: string; readonly effects: readonly string[]}>> = {
   'techne:m0': {effects: [LENS_DESIGN]},
   'techne:m1': {head: CANVAS_DESIGN, effects: [LENS_DESIGN]},
@@ -206,9 +205,7 @@ export function useTechneDesignBindings({graph, surface}: {graph: boolean; surfa
     const frame: FrameReadings = {state: hosted?.state ?? null, run: hosted?.run ?? null,
       window: session ? session.time_window ? {from: session.time_window.from, to: session.time_window.to} : null : undefined}
     const formOwners = formFocus ? kernelFormOwners(detectTransport(), formFocus.register) : null
-    // Light, carried as the Canvas's Light page: Technē's light trace over the board the Canvas reads, the bench's settings the view's.
-    const own = canvasBinding(frame, heldFor(CANVAS_DESIGN), PROMOTER, promotion)
-    const canvas = canvasCarryingLight(own, lightBinding(own.values, heldFor(LIGHT_DESIGN)))
+    const canvas = canvasBinding(frame, heldFor(CANVAS_DESIGN), PROMOTER, promotion)
     return {
       [PALACE_DESIGN]: palaceBinding(palace, heldFor(PALACE_DESIGN), SESSION_ACTS, palaceWorld),
       [CANVAS_DESIGN]: formOwners ? canvasCarryingForm(canvas, formFocus!.focus, heldFor(CANVAS_DESIGN), handsFor(CANVAS_DESIGN, FORM_LOCAL), formOwners, form)

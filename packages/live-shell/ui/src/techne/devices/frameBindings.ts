@@ -377,7 +377,7 @@ export const CANVAS_REFUSE = {
   suggest: missing('Suggest', 'the Decision helper\'s Suggest for a card\'s open role (ai-kit:decision-helper has no kernel route here)', 'AIKit'),
   suggested: missing('Suggest', 'the Decision helper\'s Suggest for a card\'s open role (ai-kit:decision-helper has no kernel route here)', 'AIKit'),
 } as const
-const CANVAS_ACTS = ['mode', 'grid', 'minimap', 'cx', 'cy', 'zoom', 'lineKind', 'fromSide', 'toSide', 'promote'] as const
+const CANVAS_ACTS = ['mode', 'grid', 'minimap', 'cx', 'cy', 'zoom', 'lineKind', 'fromSide', 'toSide', 'promote', 'autosave'] as const
 /** The view's own keys: which fit the View chooser stands on (Everything, the first frame): its camera moves through cx, cy and zoom; and
  * the next line's relation type (manual §17.4 "Relation type — Sets the type of the next line"), which Promote sends as the relation. */
 export const CANVAS_LOCAL = ['view', 'relation'] as const
@@ -444,6 +444,8 @@ export function canvasValues(frame: FrameReadings): Values {
     values.sel = board.selected.join(',')
     values.mode = board.drawing ? 'draw' : board.erasing ? 'erase' : board.lasso ? 'lasso' : 'select'
     values.grid = board.snap
+    // Autosave (§17.4): as the frame holds it (researchInstruments.tsx / app.ts commitResearch); unsaid, no reading.
+    put(values, 'autosave', board.autosave)
     // The line the selection holds, as the frame draws it: its connector record, absent = the frame's own curved, auto-sided routing.
     const line = chosen ?? ordered[0]
     if (line) {
@@ -481,6 +483,14 @@ export async function canvasWrite(frame: FrameReadings, changes: readonly ValueC
       continue
     }
     if (key === 'promote') { await promote(frame, held, promoter); continue }
+    // Autosave (§17.4 "Saves a short time after a gesture, and at once after a delete"): the frame's own act; on again, it saves what it held.
+    if (key === 'autosave') {
+      if (typeof value !== 'boolean') throw Error('Autosave is on or off.')
+      if (!board) throw Error(unmounted(frame) ?? NOT_PRESENTED_BOARD)
+      if (board.autosave === value) continue
+      await run(frame, {command: 'canvas', action: 'autosave', on: value})
+      continue
+    }
     if (key === 'grid') {
       if (board?.snap === (value === true)) continue
       await press(frame, control(chrome, 'canvas:tools', 'Snap'), 'Grid')

@@ -77,6 +77,14 @@ fn central_reading(action: &str) -> bool {
 /// (action.rs `reads_only`).
 fn reads_only(client: &CentralClient, op: &KernelOp) -> bool {
     matches!(op, KernelOp::InvokeAction { invocation, .. } if action::reads_only(client, invocation))
+        || matches!(
+            op,
+            KernelOp::GroundForm {
+                request: crate::ground_form::Request::Preview
+            } | KernelOp::GroundAuthority {
+                request: crate::ground_authority::Request::Preview
+            }
+        )
 }
 
 impl PreparedWrite {
@@ -124,6 +132,10 @@ impl PreparedWrite {
             | KernelOp::SeatWrite { .. }
             | KernelOp::ActuationWrite { .. }
             | KernelOp::AikitWrite { .. } => true,
+            // Lane AK: a new world's Day form and the person's key, kept by
+            // Central against the digest the person accepted (ground_form.rs,
+            // ground_authority.rs); a preview changes nothing.
+            KernelOp::GroundForm { .. } | KernelOp::GroundAuthority { .. } => true,
             _ => false,
         }
     }
@@ -142,7 +154,9 @@ impl PreparedWrite {
             KernelOp::AikitWrite { request } => request.project().is_some(),
             KernelOp::WorkcellWrite { .. }
             | KernelOp::SeatWrite { .. }
-            | KernelOp::ActuationWrite { .. } => false,
+            | KernelOp::ActuationWrite { .. }
+            | KernelOp::GroundForm { .. }
+            | KernelOp::GroundAuthority { .. } => false,
             KernelOp::Central { .. }
             | KernelOp::HarnessAgentControl { .. }
             | KernelOp::FileOperation { .. }
@@ -391,6 +405,12 @@ impl PreparedWrite {
                     )?,
                 }
             }
+            KernelOp::GroundForm { request } => KernelOpResult::GroundFormReading {
+                data: crate::ground_form::operate(&self.client, request)?,
+            },
+            KernelOp::GroundAuthority { request } => KernelOpResult::GroundAuthorityReading {
+                data: crate::ground_authority::operate(&self.client, request)?,
+            },
             KernelOp::HarnessAgentControl { binding, control } => {
                 KernelOpResult::HarnessAgentOutcome {
                     document: self
