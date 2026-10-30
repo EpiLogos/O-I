@@ -1328,7 +1328,9 @@ fn spawn(call: Call<'_>) -> Result<std::process::Output, Error> {
         .args(&call.owner.prefix)
         .args(&call.args)
         .env_remove("OI_POSITION_REF")
-        .env_remove("OI_OCCUPANT_GENERATION");
+        .env_remove("OI_OCCUPANT_GENERATION")
+        // The route's ground names its world (O-I #820); an inherited one never stands for it.
+        .env_remove(crate::knowledge::INHERITED_AIKIT_WORLD);
     for variable in call.withheld {
         command.env_remove(variable);
     }

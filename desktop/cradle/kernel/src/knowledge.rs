@@ -64,6 +64,24 @@ pub(crate) fn executable() -> std::ffi::OsString {
     std::env::var_os("OI_BIN").unwrap_or_else(|| "oi".into())
 }
 
+/// The variable through which a session names its AIKit world. The kernel
+/// names the world by the ground it asks AIKit in, and AIKit takes the world
+/// from that ground (O-I #820); one the kernel inherited from whatever
+/// launched it would name another world and outrank the ground, so no AIKit
+/// call the kernel makes carries it.
+pub(crate) const INHERITED_AIKIT_WORLD: &str = "AIKIT_PROJECT_ID";
+
+/// `aikit --json -C <ground>` through `executable`: the call acts for the
+/// world whose ground it is asked in, and for no other.
+fn aikit_in(executable: &OsStr, ground: &Path) -> Command {
+    let mut command = Command::new(executable);
+    command
+        .args(["aikit", "--json", "-C"])
+        .arg(ground)
+        .env_remove(INHERITED_AIKIT_WORLD);
+    command
+}
+
 /// Run one `aikit` application subcommand through the pinned suite
 /// executable and return the owner `data` payload. The envelope law below
 /// is the thin transport's contract, shared by every knowledge operation
@@ -82,8 +100,8 @@ pub fn run_input(cwd: &Path, args: &[&str], input: &Value) -> Result<Value, Call
             detail: "Native Action exceeds its 16 MiB input budget".into(),
         });
     }
-    let mut command = Command::new(executable());
-    command.args(["aikit", "--json", "-C"]).arg(cwd).args(args);
+    let mut command = aikit_in(&executable(), cwd);
+    command.args(args);
     let operation = args
         .iter()
         .take_while(|arg| !arg.starts_with('-'))
@@ -135,8 +153,8 @@ fn run_within(
     executable: &OsStr,
     limit: std::time::Duration,
 ) -> Result<Value, CallError> {
-    let mut command = Command::new(executable);
-    command.args(["aikit", "--json", "-C"]).arg(cwd).args(args);
+    let mut command = aikit_in(executable, cwd);
+    command.args(args);
     let output = bounded_output(command, limit)?;
     decode_envelope(&output)
 }
@@ -401,11 +419,8 @@ pub(crate) fn relations_batch(
         RELATIONS_BATCH_SCHEMA
     };
     let request = serde_json::json!({"schema": schema, "items": rows});
-    let mut command = Command::new(executable);
-    command
-        .args(["aikit", "--json", "-C"])
-        .arg(root)
-        .args(["knowledge", "relations-batch"]);
+    let mut command = aikit_in(executable, root);
+    command.args(["knowledge", "relations-batch"]);
     let bound = crate::owner_process::Bound::read(
         "AIKit",
         "knowledge relations-batch",

@@ -105,7 +105,7 @@ impl Fake {
                 "#!/bin/sh\n\
                  printf '%s\\n' \"$*\" >> \"{d}/argv.txt\"\n\
                  cat > \"{d}/stdin.txt\"\n\
-                 printf 'position=%s\\nbinary=%s\\nroot=%s\\nsandbox_key=%s\\ncwd=%s\\n' \"$OI_POSITION_REF\" \"$FACTORY_NATIVE_CENTRAL_BINARY\" \"$FACTORY_NATIVE_CENTRAL_ROOT\" \"$OPEN_SANDBOX_API_KEY\" \"$(pwd -P)\" > \"{d}/env.txt\"\n\
+                 printf 'position=%s\\nbinary=%s\\nroot=%s\\nsandbox_key=%s\\ncwd=%s\\naikit_world=%s\\n' \"$OI_POSITION_REF\" \"$FACTORY_NATIVE_CENTRAL_BINARY\" \"$FACTORY_NATIVE_CENTRAL_ROOT\" \"$OPEN_SANDBOX_API_KEY\" \"$(pwd -P)\" \"$AIKIT_PROJECT_ID\" > \"{d}/env.txt\"\n\
                  case \"$(cat \"{d}/mode\")\" in\n\
                  refuse) cat \"{d}/refuse.json\" 2>/dev/null; cat \"{d}/refuse.txt\" >&2 2>/dev/null; exit \"$(cat \"{d}/refuse.exit\" 2>/dev/null || echo 2)\" ;;\n\
                  raw) cat \"{d}/answer.txt\" ;;\n\
@@ -2825,7 +2825,7 @@ fn aikit_forgets_one_item_in_the_world_it_is_asked_from() {
             "preserved": ["canonical-resource-identity", "provider-truth", "knowledge-operation-history", "other-worlds"]}),
         )
     };
-    aikit.answer(&forgot(json!("project/prj_o-i")));
+    aikit.answer(&forgot(json!("project:o-i")));
     let (outcome, form) = dispatched(
         kernel(&central),
         op(
@@ -2847,10 +2847,7 @@ fn aikit_forgets_one_item_in_the_world_it_is_asked_from() {
     assert_eq!(receipts(&outcome)[0]["ref"], "source:paper:a");
     let (route, data, _) = reading(&outcome);
     assert_eq!(route, "aikit knowledge forget");
-    assert_eq!(
-        data["forgot"]["DestinationIn"]["project"],
-        "project/prj_o-i"
-    );
+    assert_eq!(data["forgot"]["DestinationIn"]["project"], "project:o-i");
     // Your world: Central's root.
     aikit.forget();
     aikit.answer(&forgot(Value::Null));
@@ -2886,6 +2883,71 @@ fn aikit_forgets_one_item_in_the_world_it_is_asked_from() {
     );
     assert!(outcome.is_err());
     assert!(aikit.asked().is_empty(), "nothing asked of AIKit");
+    let _ = fs::remove_dir_all(&dir);
+}
+
+/// O-I #820: each world reaches AIKit as itself. The kernel names the world by
+/// the ground it asks AIKit in (`-C` for a knowledge call, the working
+/// directory for an owner write), and AIKit takes the world from that ground.
+/// An `AIKIT_PROJECT_ID` the kernel inherited from whatever launched it names
+/// another world and would outrank the ground in AIKit, so it never reaches
+/// AIKit: not on the search line's search, use or history, not on its ✕.
+#[test]
+fn aikit_is_asked_in_the_world_the_desk_names_never_an_inherited_one() {
+    let _held = hold();
+    let dir = scratch("aikit-world");
+    let central = fake_central(&dir);
+    let aikit = Fake::new(&dir, "aikit");
+    let _suite = Bound::set("OI_BIN", &aikit.bin);
+    let _owner = Bound::clear("OI_AIKIT_BIN");
+    let _inherited = Bound::set("AIKIT_PROJECT_ID", "prj_launcher");
+    let ground = fs::canonicalize(dir.join("Work/O-I")).unwrap();
+
+    // The search line's search, in project O-I's ground.
+    aikit.answer(&envelope(json!({"hits": []})));
+    let (outcome, _) = dispatched(
+        kernel(&central),
+        op(
+            json!({"op": "knowledge", "project": "O-I", "request": {"action": "search", "query": "compass"}}),
+        ),
+    );
+    outcome.unwrap();
+    let asked = aikit.asked();
+    assert!(
+        asked[0].starts_with(&format!(
+            "aikit --json -C {} knowledge search",
+            dir.join("Work/O-I").display()
+        )),
+        "asked in O-I's ground: {asked:?}"
+    );
+    assert!(
+        aikit.env().contains("aikit_world=\n"),
+        "no inherited world reaches the search: {}",
+        aikit.env()
+    );
+
+    // Its ✕, in the same ground.
+    aikit.forget();
+    aikit.answer(&envelope(json!({"forgot": {"DestinationIn": {"destination": "wiki:node:compass", "project": "project:o-i"}},
+        "preserved": ["canonical-resource-identity", "provider-truth", "knowledge-operation-history", "other-worlds"]})));
+    let (outcome, _) = dispatched(
+        kernel(&central),
+        op(
+            json!({"op": "aikit_write", "request": {"kind": "knowledge-forget", "scope": "here",
+            "resource": "wiki:node:compass", "project": "O-I"}}),
+        ),
+    );
+    outcome.unwrap();
+    assert!(
+        aikit.env().contains(&format!("cwd={}\n", ground.display())),
+        "{}",
+        aikit.env()
+    );
+    assert!(
+        aikit.env().contains("aikit_world=\n"),
+        "no inherited world reaches the forget: {}",
+        aikit.env()
+    );
     let _ = fs::remove_dir_all(&dir);
 }
 
