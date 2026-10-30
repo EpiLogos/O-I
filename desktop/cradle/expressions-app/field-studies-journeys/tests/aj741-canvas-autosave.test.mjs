@@ -32,7 +32,9 @@ test('the board announces whether it saves as you go, and the reader keeps it', 
 
 test('Off holds each edit in the working draft and the glyph holds; On saves what was held through the same commit', () => {
  const commit=bodyOf(app,'async function commitResearch(');
- assert.match(commit,/if\(!researchAutosave\)\{researchHeld=true;return;\}/,'Off: the edit stands in the working draft, held, never sent');
+ // REPLACED (#741, lane AX): /if\(!researchAutosave\)\{researchHeld=true;return;\}/ — the held state is set through holdResearch,
+ // which tells the glyph at once (ax741-canvas-glyph-follows-held.test.mjs).
+ assert.match(commit,/if\(!researchAutosave\)\{holdResearch\(true\);return;\}/,'Off: the edit stands in the working draft, held, never sent');
  assert.match(commit,/commitNativeRecorded\(\)/,'On: the frame\'s own commit, as before');
  const stage=app.slice(app.indexOf("case 'canvas':"),app.indexOf("case 'timeline':",app.indexOf("case 'canvas':")));
  assert.match(stage,/command\.action==='autosave'/,'the Canvas device turns it by the frame\'s own act');

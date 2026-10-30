@@ -40,6 +40,27 @@ export interface BrowserCategory {
   /** How many rows the category holds, when its source discloses that (the mockup's right-aligned count). Never guessed:
    * a source that does not know leaves it out, and the column draws no count. */
   count?: number
+  /** The category's own acts in the column, as Live's collection labels have them (manual §10.9: its menu — right-click, the menu key
+   * or ⇧F10 — lists each act with its key). Absent, the category has no menu. */
+  acts?: CategoryActs
+}
+
+/** What a category of the column can have done to it, each through its owner; a refusal is thrown in the owner's words. */
+export interface CategoryActs {
+  /** Rename (⌘R): the column takes the new name in place. */
+  rename?: (name: string) => Promise<void>
+  /** Hide: the category leaves the column; the group's Edit brings it back. */
+  hide?: () => Promise<void>
+}
+
+/** One category a group's Edit lists (Live's Edit on the Collections: each label with a box, ticked where the column shows it). */
+export interface EditEntry {
+  id: string
+  label: string
+  mark?: ReactNode
+  shown: boolean
+  /** Show or hide it, through its owner. */
+  show: (shown: boolean) => Promise<void>
 }
 
 /** A row source: its categories and the body that draws a category's rows. */
@@ -52,4 +73,7 @@ export interface BrowserSource {
   moves?: {subscribe(listener: () => void): () => void; version(): number}
   /** What keeps such a source's owner read while the browser stands (it draws nothing). */
   Keeper?: ComponentType
+  /** Live's Edit on the heading of the group this source's categories stand in: every category it may show, hidden ones too, each with
+   * whether the column shows it. The heading keeps its Edit while every category is hidden. */
+  edit?: {kind: BrowserKind; entries: () => readonly EditEntry[]}
 }

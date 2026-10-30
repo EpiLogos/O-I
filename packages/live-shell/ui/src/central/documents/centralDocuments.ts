@@ -123,6 +123,18 @@ export function documentBinding(layout: LayoutState, target: CentralDocumentTarg
   return existing ?? {id: crypto.randomUUID(), kind: CENTRAL_DOCUMENT_PANE_KIND, title, projection: {kind: CENTRAL_DOCUMENT_PANE_KIND, subject_ref: ref}}
 }
 
+/** The drag type a document carries into a pane (manual §16.7 "Open | Double-click it, or drag it into a pane"): its subject ref, which
+ * the pane reads with documentTargetOf. The browser's Places drag a Day this way (frame/browser/placeActs.ts). */
+export const CENTRAL_DOCUMENT_DRAG = 'application/x-oi-central-document'
+
+/** The document a dropped subject names, or null: one Day by its civil date, nothing else yet. A drop names the very document it
+ * was dragged from, so "today" and "the latest Flow", which name whichever is current, are no drop. Pure. */
+export function documentTargetOf(ref: string): CentralDocumentTarget | null {
+  const subject = parseDocumentSubject(ref)
+  const date = subject?.form === 'day' && subject.dayRef ? /:(\d{4}-\d{2}-\d{2})$/.exec(subject.dayRef)?.[1] : undefined
+  return date && dayRefOfDate(date) === ref ? {form: 'day', date} : null
+}
+
 /** Open a document in the layout: in the focused pane, in a named pane, or beside one (the instrument door's own placement,
  * frame/openInstrument.ts — a document opens exactly as an instrument does). */
 export function openCentralDocumentAt(layout: LayoutState, target: CentralDocumentTarget, at?: {groupId: string; edge: PaneEdge | null}): LayoutState {

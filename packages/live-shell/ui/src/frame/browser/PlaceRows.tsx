@@ -8,8 +8,10 @@
 //     declares (workcell_read machine-list);
 //   - Work: Central's Work projects (world_browse), and Add folder… (Setup's Projects step for a folder, §10.11).
 // A press selects a row and its preview stands at the foot of the list, with Live's seven colours to put it in a collection
-// (CollectionRows.tsx CollectStrip). A double-click brings a world into today (the Worlds rows' own seat) or opens a Day. A read an owner
-// refused says so in plain words, with its cause behind Why; a place whose owner has not answered says it is reading.
+// (CollectionRows.tsx CollectStrip). A double-click brings a world into today (the Worlds rows' own seat) or opens a Day (placeActs.ts
+// openPlaceRow). A row drags onto the target the manual names for it (placeActs.ts placeRowDrag): a world onto the empty track, an agent
+// onto an empty track or the agent chain, a Day into a pane, a machine or a workcell onto the rail. A read an owner refused says so in
+// plain words, with its cause behind Why; a place whose owner has not answered says it is reading.
 import {useState, type ReactNode} from 'react'
 import {createPortal} from 'react-dom'
 import type {KernelOp, KernelOutcome, KernelTransportStatus, RootWorld} from '../../../../../../desktop/cradle/src/kernel/types'
@@ -28,6 +30,7 @@ import {Icon} from '../../inhabitants/sdk/Icon'
 import {KindMark} from '../../inhabitants/sdk/marks.tsx'
 import type {ControlledBrowser} from './browserKinds'
 import {CollectStrip} from './CollectionRows'
+import {endPlaceDrag, openPlaceRow, placeRowDrag, startPlaceDrag} from './placeActs'
 import {
   agentRows, dayRows, declaredMachineRows, harnessRows, identityRows, matching, thisMachineRows, workRows, yourWorldRow, type PlaceId, type PlaceRow,
 } from './places'
@@ -112,14 +115,7 @@ function PlaceRowsOf({place, controlled, transport}: {place: PlaceId; controlled
   const chosen = parts.flatMap(part => part.rows).find(row => row.key === selected) ?? null
   const act = (row: PlaceRow) => {
     setSaid(null)
-    if (row.seat) {
-      const world = row.seat
-      void seatWorldFromBrowser(world).then(answer => setSaid(answer.ok ? {ok: true, words: answer.note ?? `${world.name} is in today's set.`}
-        : {ok: false, words: refusalWords(`${world.name} did not come into today.`, answer.error)}))
-    } else if (row.day) {
-      const path = row.day.location?.path ?? `${CENTRAL_DAYS_PATH}/${row.day.name}`
-      void openDay(row.day, path).catch(cause => setSaid({ok: false, words: refusalWords(`${row.label} did not open.`, cause)}))
-    }
+    void openPlaceRow(row, {seat: world => seatWorldFromBrowser(world), openDay}).then(answer => { if (answer) setSaid(answer) })
   }
   let group: string | undefined
   return <section className="mode-browser-rows place-rows" aria-label={place} data-place={place}>
@@ -127,10 +123,12 @@ function PlaceRowsOf({place, controlled, transport}: {place: PlaceId; controlled
     <ul>{rows.map(row => {
       const heading = row.group !== group ? row.group : undefined
       group = row.group
+      const drag = placeRowDrag(row)
       return <li key={row.key}>
         {heading && <h4 className="place-rows-group">{heading}</h4>}
         <button type="button" className={`mode-browser-row${row.key === selected ? ' selected' : ''}`} aria-pressed={row.key === selected}
-          data-place-row={row.ref} data-i={`${row.label}|${row.words}`} title={row.words}
+          data-place-row={row.ref} data-i={`${row.label}|${row.words}`} title={row.words} draggable={drag !== null}
+          onDragStart={drag ? event => startPlaceDrag(event, drag, row) : undefined} onDragEnd={drag ? () => endPlaceDrag(drag) : undefined}
           onClick={() => select(row.key)} onDoubleClick={() => act(row)}
           onKeyDown={event => { if (event.key === 'Enter' && !event.altKey && !event.metaKey && !event.ctrlKey) { event.preventDefault(); act(row) } }}>
           <span aria-hidden="true">{MARKS[row.kind]}</span><span>{row.label}</span><span className="mode-browser-row-meta">{row.meta}</span>

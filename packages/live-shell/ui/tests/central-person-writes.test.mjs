@@ -293,7 +293,7 @@ test('the Flow\'s Thought: the preflight asked by a press — REAL refusal drawn
 
 // ── the Workspace's Ground and Self ──────────────────────────────────────────────────────────────────────────────────────────────
 
-test('REAL — the Workspace\'s Ground and Self read Central\'s inspection and self reading; Preview asks Central\'s plan; Accept and the self writes need a write hand', async () => {
+test('REAL — the Workspace\'s Ground and Self read Central\'s inspection and self reading; Preview asks Central\'s plan; the self writes need a write hand, and it keeps no Accept', async () => {
   const pc = JSON.parse(ground.pcValue(W2.pcInspectOI.data))
   assert.deepEqual([pc.outcome, pc.candidates, pc.signals.map(s => s.kind)], ['already_conformant', [{source: 'ProjectCentral/agents/wiki/wiki.json', space: 'central:wiki:project:O-I'}], ['readme', 'docs']])
   const self = JSON.parse(ground.selfValue(W2.selfInspectOI.data))
@@ -311,8 +311,11 @@ test('REAL — the Workspace\'s Ground and Self read Central\'s inspection and s
   assert.deepEqual(previews, [['adopt', 'ProjectCentral/agents/wiki/wiki.json']], 'the one wiki the inspection names, kept in place')
   pages.setHeld('central:workspace', 'treatment', 'create')
   await assert.rejects(pages.workspaceBinding('central:workspace', workspace, Date.now(), null, state).write([{key: 'pcPreview', value: true}]), /no preview of projectcentral\.init/)
-  // W4: Accept, Ensure and Relate are the person's presses the kernel carries (action.rs PERSON_ACTS); with no write hand here they say so.
-  for (const key of ['pcAccept', 'selfEnsure', 'selfRelate']) assert.match(binding.standing[key].disabled, /no transport reaches Central here/, key)
+  // W4: Ensure and Relate are the person's presses the kernel carries (action.rs PERSON_ACTS); with no write hand here they say so. A
+  // world's ground is made only through Setup's preview (§18.1), so the Workspace keeps no Accept.
+  for (const key of ['selfEnsure', 'selfRelate']) assert.match(binding.standing[key].disabled, /no transport reaches Central here/, key)
+  assert.equal(binding.standing.pcAccept, undefined)
+  assert.equal(binding.writes('pcAccept'), false)
   const root = pages.workspaceBinding('central:workspace', {...workspace, project: undefined}, Date.now(), null, {project: null})
   assert.match(root.standing.pcPreview.disabled, /no world's ground is read here/)
   pages.resetHolds()

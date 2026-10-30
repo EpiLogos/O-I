@@ -22,7 +22,7 @@ import {authorityAllowsTrigger, eligibleProofs, routineBasis, scheduleFromInput,
 import {appearanceValues, automationValues, credentialValues, folderOf, harnessValues, machineValues, NO_AUTHORING, NO_HARNESS, NO_INVOKE, NO_MACHINES, NO_NAVIGATE, NO_PRODUCTS,
   NO_PROFILES, NO_SETUP_AIKIT, NO_SETUP_SOURCE, NO_VISUALS, groundBound, productValues, profileValues, SECRET_REFERENCE, setupFolder, setupHarnessClients, setupHarnessProviders,
   setupKeyFindings, setupNamespace, setupSkillRoots, setupValues, systemValues, type CredentialRow, type SetupCredentials, type SetupHarnesses, type SetupMachine, type SetupPreview,
-  setupExtensionLine, setupPlacementLine, possessive, type SetupExtension, type SetupLeft, type SetupPlacement, type SetupSnapshot, type SetupWorkFolder, type SetupFounding, type SetupKey, type SetupForm, type CivilTimePreview, type SetupBirth, type SetupCivilTime, type SetupDisclosure, groundNameRefusal, groundParts, groundPath} from './windowValues'
+  setupExtensionLine, setupPlacementLine, possessive, type SetupExtension, type SetupLeft, type SetupPlacement, type SetupSnapshot, type SetupWorkFolder, type SetupFounding, type SetupKey, type SetupAgreement, type SetupForm, type CivilTimePreview, type SetupBirth, type SetupCivilTime, type SetupDisclosure, groundNameRefusal, groundParts, groundPath} from './windowValues'
 import type {IdentityProfile} from '../../../../../desktop/cradle/src/nara/identity/types'
 import {chooseFolder, nativeFolderChooser, NO_NATIVE_FOLDER_CHOOSER} from './folderChooser'
 import {AdoptionController} from '../../../../../desktop/cradle/src/configuration/adoptionController'
@@ -645,7 +645,9 @@ const entryNames = (reading: unknown): string[] => {
  * preview of projectcentral.init); Accept presses projectcentral.init, adopt or migrate as previewed, and reads the folder back. Preview also
  * asks Central's central.ground.project.preview, and says in plain words that the person acts as themselves in the project and its agents
  * may write inside it; the same Accept, once the folder stands as a project, presses central.ground.project.adopt on that preview's digest
- * and reads it back (a ground whose key and bounds the person keeps by hand is never changed). Each Accept answers only once its owner
+ * and reads it back (a ground whose key and bounds the person keeps by hand is never changed). Run over an older setup, the Ground step's
+ * Accept brings the person's grant into agreement with what Setup grants today (Central's central.ground.agreement.preview and .adopt on
+ * its digest: the root acts it lacks, added; a grant kept by hand is named and never changed). Each Accept answers only once its owner
  * reads the change back. Plain, so the window's hook and a headless walk drive the same presses. */
 export class SetupWalk {
   readonly controller: AdoptionController
@@ -660,6 +662,7 @@ export class SetupWalk {
   private disclosure: SetupDisclosure | undefined = undefined
   private placement: SetupFounding | undefined = undefined
   private key: SetupKey | undefined = undefined
+  private agreement: SetupAgreement | undefined = undefined
   private form: SetupForm | undefined = undefined
   private brought: string | null = null
   /** Folders you chose to bring in (the browser's Work place: Add folder…), read beside the ones work.candidates finds. */
@@ -678,7 +681,7 @@ export class SetupWalk {
   private compose(): SetupSnapshot {
     return {adoption: this.controller.getSnapshot(), folders: this.folders, plan: this.plan, machine: this.machine, brought: this.brought, harnesses: this.harnesses, credentials: this.credentials,
       ...(this.civilTime ? {civilTime: this.civilTime} : {}), ...(this.groundChoice ? {groundAt: this.groundChoice} : {}), ...(this.birth ? {birth: this.birth} : {}),
-      ...(this.disclosure ? {disclosure: this.disclosure} : {}), ...(this.placement ? {placement: this.placement} : {}), ...(this.key ? {key: this.key} : {}), ...(this.form ? {form: this.form} : {})}
+      ...(this.disclosure ? {disclosure: this.disclosure} : {}), ...(this.placement ? {placement: this.placement} : {}), ...(this.key ? {key: this.key} : {}), ...(this.agreement ? {agreement: this.agreement} : {}), ...(this.form ? {form: this.form} : {})}
   }
   private publish(): void { this.current = this.compose(); for (const listener of [...this.listeners]) listener() }
 
@@ -690,6 +693,7 @@ export class SetupWalk {
     await this.readCivilTime()
     await this.readPlacement()
     await this.readKey()
+    await this.readAgreement()
     await this.readForm()
     await this.readHarnesses()
     await this.readCredentials()
@@ -730,6 +734,19 @@ export class SetupWalk {
       if (!data || typeof data !== 'object' || (data as {schema?: unknown}).schema !== 'oi.ground-authority/v1') throw new Error('The host answered its key in a form Setup does not read (oi.ground-authority/v1 expected).')
       this.key = {state: 'read', reading: data as SetupKey extends {reading: infer R} ? R : never}
     } catch (cause) { this.key = {state: 'refused', error: words(cause)} }
+    this.publish()
+  }
+  /** Whether the person's grant holds the root acts Setup grants today: Central's `central.ground.agreement.preview` (the acts an older
+   * grant lacks, on its digest; a grant kept by hand named in Central's words). A refusal stands in Central's words. */
+  private async readAgreement(): Promise<void> {
+    try {
+      const data = await this.source.central(AGREEMENT_PREVIEW, {})
+      if (!data || typeof data !== 'object' || (data as {schema?: unknown}).schema !== 'central.ground-agreement-preview/v1' || typeof (data as {state?: unknown}).state !== 'string')
+        throw new Error(`Central answered ${AGREEMENT_PREVIEW} in a form Setup does not read (central.ground-agreement-preview/v1 expected).`)
+      const preview = data as {state: string; adds?: unknown; digest?: unknown; reason?: unknown}
+      this.agreement = {state: 'read', preview: {state: preview.state, adds: Array.isArray(preview.adds) ? preview.adds.filter((a): a is string => typeof a === 'string') : [],
+        digest: typeof preview.digest === 'string' ? preview.digest : null, reason: typeof preview.reason === 'string' ? preview.reason : null}}
+    } catch (cause) { this.agreement = {state: 'refused', error: words(cause)} }
     this.publish()
   }
   /** The Day's form: the host's ground_form preview (SetupSource.groundForm) — carried by the ground's O-I project, or Central's preview of
@@ -964,13 +981,13 @@ export class SetupWalk {
     if (before.unresolved) throw new Error('An earlier adoption is unresolved in native oi\'s journal: read it again before another write. Nothing was sent.')
     // The days, bounds and key the step showed are the ones Accept keeps: the previews the person saw, on their digests (Central refuses
     // one that moved).
-    const shown = this.civilTime, shownPlacement = this.placement, shownKey = this.key, shownForm = this.form
+    const shown = this.civilTime, shownPlacement = this.placement, shownKey = this.key, shownForm = this.form, shownAgreement = this.agreement
     if (groundBound(before.discovery)) {
-      // A ground Central keeps already: only its days are made, where it keeps none (an older ground).
+      // A ground Central keeps already: only what an older ground lacks is made — its days, bounds, form or key, and its grant's agreement.
       const where = before.discovery.bound_ground ?? before.discovery.selected_ground ?? before.discovery.suggested_ground
       const acceptance = `dlw-setup-ground-accept:${Date.now()}`
       const days = await this.keepDays(shown, acceptance)
-      const kept = [days, ...(await this.keepFounding(shownPlacement, shownKey, acceptance, shownForm))].filter((line): line is string => !!line)
+      const kept = [days, ...(await this.keepFounding(shownPlacement, shownKey, acceptance, shownForm, shownAgreement))].filter((line): line is string => !!line)
       if (!kept.length) throw new Error('Accepted: Central keeps your ground here already. Nothing is made twice.')
       return `Central keeps your ground at ${where}, where it was. Nothing in it moved. ${kept.join(' ')}`
     }
@@ -1006,7 +1023,7 @@ export class SetupWalk {
       if (now?.state === 'read' && now.preview.state === 'absent') days = 'Your days are not kept yet: Central reads them now that your ground stands. Accept again to keep them as the step shows.'
     }
     // Its bounds and the person's key, on the same acceptance: the ground stands whatever they answer, and each says what it kept.
-    const founded = await this.keepFounding(shownPlacement, shownKey, `oi-setup-adoption:${token}`, shownForm)
+    const founded = await this.keepFounding(shownPlacement, shownKey, `oi-setup-adoption:${token}`, shownForm, shownAgreement)
     await this.readHarnesses()
     await this.readCredentials()
     await this.readMachine()
@@ -1017,8 +1034,10 @@ export class SetupWalk {
   }
   /** Keeps the ground's bounds and the person's key as previewed (manual §10.11 Ground): Central's `central.ground.placement.adopt` on the
    * preview's digest, then the host's ground_authority adopt — the key made in the world's own folder, only its digest sent to Central —
-   * each recognised by the acceptance named and read back. One that cannot be kept says why; neither stops the other. */
-  private async keepFounding(placement: SetupFounding | undefined, key: SetupKey | undefined, acceptance: string, form?: SetupForm): Promise<string[]> {
+   * each recognised by the acceptance named and read back. Then, for a grant an older Setup founded, its agreement with what Setup grants
+   * today (`central.ground.agreement.adopt` on the preview's digest, read back in agreement). One that cannot be kept says why; none
+   * stops another. */
+  private async keepFounding(placement: SetupFounding | undefined, key: SetupKey | undefined, acceptance: string, form?: SetupForm, agreement?: SetupAgreement): Promise<string[]> {
     const said: string[] = []
     if (placement?.state === 'read' && ['absent', 'no-ground'].includes(placement.preview.state) && placement.preview.digest) {
       try {
@@ -1052,6 +1071,20 @@ export class SetupWalk {
           said.push('Central keeps a key in this world so that only you act as you here.')
         } catch (cause) { said.push(`Your key is not kept yet: ${words(cause)} Accept again to keep it.`) }
       }
+    }
+    // The grant an older Setup founded, brought into agreement with what Setup grants today: only the acts the step showed it lacking.
+    const lacking = agreement?.state === 'read' && agreement.preview.state === 'absent' && agreement.preview.digest ? {digest: agreement.preview.digest, adds: agreement.preview.adds ?? []} : null
+    if (lacking?.adds.length) {
+      const adds = lacking.adds
+      try {
+        await this.source.central(AGREEMENT_ADOPT, {actor_kind: 'human', acceptance: 'human-accepted', acceptance_ref: acceptance, expected_digest: lacking.digest})
+        await this.readAgreement()
+        if (this.agreement?.state !== 'read' || this.agreement.preview.state !== 'present') throw new Error(`Central answered ${AGREEMENT_ADOPT}, but your grant does not read back in agreement.`)
+        said.push(`Your grant now holds every act Setup grants today: ${adds.length === 1 ? `${adds[0]} was` : `${adds.slice(0, -1).join(', ')} and ${adds[adds.length - 1]} were`} added; nothing you held was taken away.`)
+      } catch (cause) { said.push(`Your grant is not in agreement yet: ${words(cause)} Accept again to bring it.`) }
+    } else if (agreement?.state !== 'read' || ['no-ground', 'unfounded'].includes(agreement.preview.state)) {
+      // A grant founded just now, or a reading the step did not have: read what Central says of it now, so the row stands as it is.
+      await this.readAgreement()
     }
     return said
   }
@@ -1286,6 +1319,8 @@ const SETUP_GROUND_FIRST = 'Make your ground first: AIKit\'s routes run from you
 const CIVIL_PREVIEW = 'central.time.policy.preview', CIVIL_ADOPT = 'central.time.policy.adopt'
 /** Central's adoption of the ground's bounds (ctrl ground_founding.rs, O-I #740). */
 const PLACEMENT_PREVIEW = 'central.ground.placement.preview', PLACEMENT_ADOPT = 'central.ground.placement.adopt'
+/** Central's agreement of the person's grant with what Setup grants today (ctrl ground_agreement.rs, O-I #740, lane AU). */
+const AGREEMENT_PREVIEW = 'central.ground.agreement.preview', AGREEMENT_ADOPT = 'central.ground.agreement.adopt'
 /** Central's extension of the person's grant and the ground's bounds to a project (ctrl ground_projects.rs, O-I #740, lane D). */
 const PROJECT_PREVIEW = 'central.ground.project.preview', PROJECT_ADOPT = 'central.ground.project.adopt'
 /** Why Setup makes no Factory placement where the host hands it no Factory route. */

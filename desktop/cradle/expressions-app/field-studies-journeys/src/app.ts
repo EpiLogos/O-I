@@ -2808,7 +2808,11 @@ function researchScene(id:string){const value=store.document.scenes.find(item=>i
  * the Canvas's glyph stands held until Autosave is on again, which commits what was held. A connection, a duplicate, a pin and a blueprint
  * transform are the owner's own acts (nativeWorkspace), not edits of the working draft: they land as they always did. */
 let researchAutosave=true,researchHeld=false;
-async function commitResearch(){if(!researchAutosave){researchHeld=true;return;}if(!await commitNativeRecorded())throw new Error('The native owner did not acknowledge this edit. Your working draft is retained.');researchHeld=false;}
+/** Lane AX: whether an edit stands held is set here only, and the Canvas's glyph follows it at once (researchInstruments.tsx followHeld):
+ * a commit by any path carries the whole working draft (commitNativeRecorded), the app's Save too (saveNative), and an edit held outside the
+ * Canvas's own acts (a Timeline layout or view while Autosave is off) is held all the same. */
+function holdResearch(held:boolean){researchHeld=held;researchInstruments?.followHeld();}
+async function commitResearch(){if(!researchAutosave){holdResearch(true);return;}if(!await commitNativeRecorded())throw new Error('The native owner did not acknowledge this edit. Your working draft is retained.');}
 // B2/E15/E16 — the host a .canvas import runs through (researchMaterial.runCanvasImport). The local store is the one document;
 // the owner is reached through ONE native act (its flush saves the cards, its relations and sides follow, one recorded step).
 function canvasImportHost(sceneId:string):CanvasImportHost{
@@ -3034,7 +3038,8 @@ async function saveNative(){
   // same breath as the snapshot the workspace submits, so both describe one document.
   const localId=store.document.id,wasBound=!!kernelOriginFor(store.document);
   const anchor=store.kernelSaveAnchor(),saved=await nativeWorkspace.commitRecorded();
-  if(saved){
+  // Save commits the whole working draft: an edit the Canvas held is saved with it (lane AX).
+  if(saved){holdResearch(false);
    const recorded=store.attachKernelCheckpoint(anchor,saved.checkpoint);
    recordAdoptionAfterSave(localId,wasBound);
    // T22: the Library copy of a document the kernel now holds records its kernel origin at this save.
@@ -3051,8 +3056,8 @@ async function commitNativeRecorded():Promise<boolean|undefined>{
  if(!nativeWorkspace)return undefined;
  const localId=store.document.id,wasBound=!!kernelOriginFor(store.document);
  const anchor=store.kernelSaveAnchor(),saved=await nativeWorkspace.commitRecorded();
- // Any commit carries the whole working draft: an edit the Canvas held is saved with it.
- if(saved)researchHeld=false;
+ // Any commit carries the whole working draft: an edit the Canvas held is saved with it, and its glyph says so at once.
+ if(saved)holdResearch(false);
  if(saved){store.attachKernelCheckpoint(anchor,saved.checkpoint);recordAdoptionAfterSave(localId,wasBound);try{saveToLibrary(store.document,kernelOriginFor(store.document));}catch{/* T22: the Library mirror is retried by the next backup. */}}
  return !!saved;
 }

@@ -55,6 +55,9 @@ import { TAB_LIST_WIDTH_MAX, TAB_LIST_WIDTH_MIN, MODE_CURATION } from "../worksp
  * pane follows the selection or keeps its own. The legacy desktop does not pass it and keeps its toolbar. */
 export interface PaneGrammar {
   openInstrument: (kind: string, groupId: string, edge: import("./types").PaneEdge | null) => void;
+  /** Material dragged into a pane (manual §16.7 "Open | Double-click it, or drag it into a pane | Material opens in its instrument"):
+   * the drag type the host opens, and how it opens what was dropped, in this pane or beside it on the edge it was dropped on. */
+  material?: { type: string; open: (payload: string, groupId: string, edge: import("./types").PaneEdge | null) => void };
   /** The selection a pane pins when its Follow is turned off (WorldContext.selection's ref), if anything is selected. */
   selectionRef?: string;
   /** The host's own marks for the pane controls (the candidate's specimen icons). */
@@ -497,7 +500,8 @@ export function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "gro
         onDragOver={e => {
           const surface = e.dataTransfer.types.includes("application/x-oi-surface");
           const instrument = !!props.paneGrammar && e.dataTransfer.types.includes(INSTRUMENT_DRAG_TYPE);
-          if (!surface && !instrument) return;
+          const material = props.paneGrammar?.material && e.dataTransfer.types.includes(props.paneGrammar.material.type);
+          if (!surface && !instrument && !material) return;
           e.preventDefault(); e.dataTransfer.dropEffect = surface ? "move" : "copy";
           if (props.paneGrammar) setDropAt(dropEdge(e.currentTarget.getBoundingClientRect(), e.clientX, e.clientY) ?? "middle");
         }}
@@ -507,6 +511,8 @@ export function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "gro
           const edge = props.paneGrammar ? dropEdge(e.currentTarget.getBoundingClientRect(), e.clientX, e.clientY) : null;
           const kind = props.paneGrammar ? e.dataTransfer.getData(INSTRUMENT_DRAG_TYPE) : "";
           if (kind) { e.preventDefault(); e.stopPropagation(); props.paneGrammar!.openInstrument(kind, group.id, edge); return; }
+          const dropped = props.paneGrammar?.material ? e.dataTransfer.getData(props.paneGrammar.material.type) : "";
+          if (dropped) { e.preventDefault(); e.stopPropagation(); props.paneGrammar!.material!.open(dropped, group.id, edge); return; }
           const id = e.dataTransfer.getData("application/x-oi-surface");
           if (!id) return;
           e.preventDefault(); e.stopPropagation();
