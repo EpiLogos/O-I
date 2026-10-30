@@ -11,9 +11,12 @@
 // working_surface_input → `aikit session-space working-surface input --by human`), never to a pane that is not live; Watch only stops
 // them; the run goes on either way. A message to the agent never goes through here.
 // The marks are the owner's records, never guessed from the screen's text alone: a command line is the agent's where AIKit delivered that
-// command as an agent's (the capture's `inputs`, AIKit's working-surface input journal, which keeps a person's keys by count only); a
-// line waits for an answer where the provider reports the room's agent `blocked` (Herdr's agent lifecycle, the capture's `agent`). A
-// command an agent runs any other way (its own subprocess, or keys sent to the provider directly) carries no mark: no owner records it.
+// command as an agent's (the capture's `inputs`, AIKit's working-surface input journal, which keeps a person's keys by count only), or
+// where a harness ran that command in the room's own pane as an agent's (the capture's `observed`: AIKit's observer hook names the pane a
+// harness runs in, TMUX_PANE on its server, HERDR_PANE_ID on its socket or cmux's surface, with each command it observes, and the capture
+// reads what was kept for its pane), at a prompt or in the harness's own tool-call line (`Bash(…)`); a line waits for an answer where the
+// provider reports the room's agent `blocked` (Herdr's agent lifecycle, the capture's `agent`). Keys sent to the provider directly, past
+// AIKit, by a process no observer hook runs in, carry no mark: no owner records them.
 //
 // This computer's own terminal is a provider too ("This terminal", §17.9 Provider): each Terminal surface the Workbench opens over the PTY
 // host (desktop/cradle/src/terminal/TerminalSurface.tsx, src-tauri/src/terminal.rs) stands as a room of its own, as before: its folder,
@@ -89,6 +92,13 @@ export interface RoomInput {
   readonly at_unix_ms?: number
 }
 
+/** One command a harness ran in the room's pane, as AIKit's observer kept it for the pane: who ran it, and when. */
+export interface RoomRun {
+  readonly by: string
+  readonly command: string
+  readonly at_unix_ms?: number
+}
+
 /** The shown room's screen, as the owner last captured it. */
 export interface RoomScreen {
   readonly room: string
@@ -100,6 +110,8 @@ export interface RoomScreen {
   readonly input?: {readonly accepts: true} | {readonly accepts: false; readonly reason: string}
   /** The inputs AIKit delivered to the room, oldest first (the capture's `inputs`). */
   readonly inputs?: readonly RoomInput[]
+  /** The commands harnesses ran in the room's pane, oldest first (the capture's `observed`). */
+  readonly observed?: readonly RoomRun[]
   /** The lifecycle state the provider reports for the room's agent (`blocked`: it waits for the person), when it reports one. */
   readonly agentState?: string
 }
@@ -177,7 +189,8 @@ export function screenOf(text: string): string[] {
 
 /** The owner's document for a room's screen (kernel op working_surface_read: `oi.working-surface-reading/v1`, its `capture` AIKit's
  * `aikit.session-space-working-surface-capture/v1`), as the screen the Terminal shows: the capture's text as lines, or, where the
- * provider refused, its words with the lines last kept; whether the room takes keys; the inputs AIKit delivered; the agent's state. */
+ * provider refused, its words with the lines last kept; whether the room takes keys; the inputs AIKit delivered; the commands harnesses
+ * ran in its pane; the agent's state. */
 export function roomScreenOf(room: string, document: unknown, kept?: readonly string[]): RoomScreen {
   const doc = rec(document) ? document : {}
   const owner = rec(doc.capture) ? doc.capture : {}
@@ -188,8 +201,10 @@ export function roomScreenOf(room: string, document: unknown, kept?: readonly st
   const inputs = Array.isArray(owner.inputs) ? owner.inputs.flatMap((row): RoomInput[] => rec(row) && word(row.by) ? [{by: row.by as string,
     ...(typeof row.text === 'string' ? {text: row.text} : {}), ...(Number.isFinite(row.bytes) ? {bytes: row.bytes as number} : {}),
     ...(Number.isFinite(row.at_unix_ms) ? {at_unix_ms: row.at_unix_ms as number} : {})}] : []) : undefined
+  const observed = Array.isArray(owner.observed) ? owner.observed.flatMap((row): RoomRun[] => rec(row) && word(row.by) && word(row.command)
+    ? [{by: row.by as string, command: row.command as string, ...(Number.isFinite(row.at_unix_ms) ? {at_unix_ms: row.at_unix_ms as number} : {})}] : []) : undefined
   const agentState = rec(capture.agent) ? word(capture.agent.state) : undefined
-  const extras = {...(input ? {input} : {}), ...(inputs ? {inputs} : {}), ...(agentState ? {agentState} : {})}
+  const extras = {...(input ? {input} : {}), ...(inputs ? {inputs} : {}), ...(observed ? {observed} : {}), ...(agentState ? {agentState} : {})}
   if (capture.state === 'captured' && typeof capture.text === 'string') return {room, lines: screenOf(capture.text), ...extras}
   return {room, ...(kept ? {lines: kept} : {}), refused: word(capture.reason) ?? word(doc.reason) ?? 'its owner returned no capture', ...extras}
 }
@@ -215,28 +230,43 @@ export function commandsOf(inputs: readonly RoomInput[]): {by: string; command: 
 }
 // eslint-disable-next-line no-control-regex
 const ESCAPE_SEQUENCE = /\x1b\[[0-?]*[ -/]*[@-~]|\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)|\x1b[@-Z\\-_]/g
-/** Where a command starts on a screen line: the line's start, or after a prompt's mark or a space. */
-const PROMPT_END = /(?:^|[\s$#%>❯:])$/
+/** The commands the observer kept as an agent's in the room's pane, each by its first line (what a screen shows where it starts): a
+ * person's runs and an unnamed runner's name none. Pure. */
+export function observedCommandsOf(observed: readonly RoomRun[]): {by: string; command: string}[] {
+  return observed.flatMap(run => {
+    const command = run.command.split('\n')[0]!.trim()
+    return run.by === 'human' || run.by === 'unknown' || !command ? [] : [{by: run.by, command}]
+  })
+}
+/** Where a command starts on a screen line: the line's start, after a prompt's mark or a space, or inside a harness's tool-call line. */
+const PROMPT_END = /(?:^|[\s$#%>❯:(])$/
+/** Whether `joined` ends with the command (or with the command closing a harness's tool call, `Bash(…)`), starting within the first line. */
+const endsWithCommand = (joined: string, firstLength: number, command: string) => [command, `${command})`].some(whole => {
+  const start = joined.length - whole.length
+  return start >= 0 && start <= firstLength && joined.endsWith(whole) && PROMPT_END.test(joined.slice(0, start))
+})
 /** How many screen lines one command may wrap onto. */
 const WRAP_LINES = 8
 
-/** The screen's lines with the owner's marks: from the foot up, each command an agent sent marks as many lines as it sent it (the
- * newest), on the line where it starts after a prompt — the command may wrap onto the lines below, never onto a line another command
- * took, and the longest command that fits wins; the line that waits for an answer is the last one, when the provider reports the room's
- * agent blocked. Pure. */
-export function markedLines(lines: readonly string[], inputs: readonly RoomInput[] | undefined, agentState: string | undefined): {t: string; by?: 'agent'; ask?: boolean}[] {
+/** The screen's lines with the owner's marks: from the foot up, each command an agent sent, or a harness ran in the room's pane as an
+ * agent's, marks as many lines as it was sent or run (the newest), on the line where it starts after a prompt or in a harness's tool-call
+ * line — the command may wrap onto the lines below (a harness indents what it wraps), never onto a line another command took, and the
+ * longest command that fits wins; the line that waits for an answer is the last one, when the provider reports the room's agent blocked.
+ * Pure. */
+export function markedLines(lines: readonly string[], inputs: readonly RoomInput[] | undefined, agentState: string | undefined,
+  observed?: readonly RoomRun[]): {t: string; by?: 'agent'; ask?: boolean}[] {
   const marked: {t: string; by?: 'agent'; ask?: boolean}[] = lines.map(t => ({t}))
   const left = new Map<string, number>()
-  for (const {command} of commandsOf(inputs ?? [])) left.set(command, (left.get(command) ?? 0) + 1)
+  for (const {command} of [...commandsOf(inputs ?? []), ...observedCommandsOf(observed ?? [])]) left.set(command, (left.get(command) ?? 0) + 1)
   const taken = new Set<number>()
   for (let i = marked.length - 1; i >= 0 && left.size; i--) {
     if (taken.has(i)) continue
     for (let k = 0; k < WRAP_LINES && i + k < marked.length && !taken.has(i + k); k++) {
-      const joined = lines.slice(i, i + k + 1).join('').trimEnd()
-      const command = [...left.keys()].sort((a, b) => b.length - a.length).find(c => {
-        const start = joined.length - c.length
-        return start >= 0 && start <= lines[i]!.length && joined.endsWith(c) && PROMPT_END.test(joined.slice(0, start))
-      })
+      const rows = lines.slice(i, i + k + 1)
+      const joined = rows.join('').trimEnd()
+      const indented = k ? [rows[0], ...rows.slice(1).map(row => row.trimStart())].join('').trimEnd() : joined
+      const command = [...left.keys()].sort((a, b) => b.length - a.length)
+        .find(c => endsWithCommand(joined, lines[i]!.length, c) || (k > 0 && endsWithCommand(indented, lines[i]!.length, c)))
       if (!command) continue
       marked[i] = {...marked[i]!, by: 'agent'}
       for (let j = i; j <= i + k; j++) taken.add(j)
@@ -315,7 +345,7 @@ export function terminalValues(input: TerminalInput): {values: Values; standing:
     // A room's screen stands only where it was read: the shown room's capture. Another room, and a Workbench terminal (its surface
     // publishes no text), carry no lines, and the design says so.
     ...input.rooms.map(room => ({id: room.id, name: room.name, ...(room.agent ? {agent: room.agent} : {}),
-      ...(screen?.lines && room.id === screen.room ? {lines: markedLines(screen.lines, screen.inputs, screen.agentState)} : {})})),
+      ...(screen?.lines && room.id === screen.room ? {lines: markedLines(screen.lines, screen.inputs, screen.agentState, screen.observed)} : {})})),
     ...input.locals.map(entry => ({id: localRoomId(entry), name: `This terminal · ${entry.reading.cwd.split('/').filter(Boolean).pop() ?? entry.reading.cwd}`})),
   ]
   values.rooms = JSON.stringify(rooms)
