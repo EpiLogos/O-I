@@ -515,13 +515,133 @@ fn command_development_suite_rollback_s0(args: &[std::ffi::OsString]) -> Result<
     Ok(0)
 }
 
+/// Where the digests `oi where` reads are remembered (`DigestMemory`).
+fn file_digest_cache_path() -> Result<PathBuf, String> {
+    Ok(development_state_root()?.join("cache/file-digests.json"))
+}
+
+const FILE_DIGEST_CACHE_SCHEMA: &str = "oi.file-digest-cache/v1";
+
+#[derive(Debug, Deserialize, Serialize)]
+struct FileDigestCache {
+    schema: String,
+    files: BTreeMap<String, ExecutableStanding>,
+}
+
+/// File digests remembered against each file's standing — its device,
+/// inode, size, modification and change times (`ExecutableStanding`, the
+/// identity the suite's own verification trusts, product_command_route.rs
+/// `verify_active_suite_receipt`). A file whose standing has not moved since
+/// it was hashed is not read again; a replaced or rewritten one is hashed
+/// again. Only a file that stood still while it was hashed is remembered. A
+/// memory that cannot be read starts empty, and one that cannot be written
+/// is hashed again next time.
+struct DigestMemory {
+    path: Option<PathBuf>,
+    remembered: BTreeMap<String, ExecutableStanding>,
+    consulted: BTreeMap<String, ExecutableStanding>,
+    hashed: usize,
+}
+
+impl DigestMemory {
+    /// The memory in the O:I data root.
+    fn open() -> Self {
+        file_digest_cache_path()
+            .map(Self::at)
+            .unwrap_or_else(|_| Self::fresh())
+    }
+
+    /// A memory of this process only: every file is read once.
+    fn fresh() -> Self {
+        Self {
+            path: None,
+            remembered: BTreeMap::new(),
+            consulted: BTreeMap::new(),
+            hashed: 0,
+        }
+    }
+
+    fn at(path: PathBuf) -> Self {
+        let remembered = fs::read(&path)
+            .ok()
+            .and_then(|bytes| serde_json::from_slice::<FileDigestCache>(&bytes).ok())
+            .filter(|cache| cache.schema == FILE_DIGEST_CACHE_SCHEMA)
+            .map(|cache| cache.files)
+            .unwrap_or_default();
+        Self {
+            path: Some(path),
+            remembered,
+            consulted: BTreeMap::new(),
+            hashed: 0,
+        }
+    }
+
+    /// The file's SHA-256: remembered while its standing holds, else read.
+    /// A file already answered in this process is answered again as it was.
+    fn digest(&mut self, path: &Path) -> Result<String, String> {
+        let key = path.to_string_lossy().into_owned();
+        if let Some(entry) = self.consulted.get(&key) {
+            return Ok(entry.sha256.clone());
+        }
+        if let Some(entry) = self.remembered.get(&key) {
+            if executable_standing(path, &entry.sha256).ok().as_ref() == Some(entry) {
+                self.consulted.insert(key, entry.clone());
+                return Ok(entry.sha256.clone());
+            }
+        }
+        let before = executable_standing(path, "")?;
+        let sha256 = file_digest(path)?;
+        self.hashed += 1;
+        let after = executable_standing(path, &sha256)?;
+        if after
+            == (ExecutableStanding {
+                sha256: sha256.clone(),
+                ..before
+            })
+        {
+            self.consulted.insert(key, after);
+        }
+        Ok(sha256)
+    }
+
+    /// Remember what was hashed, beside the remembered files whose standing
+    /// still holds; a moved or vanished file is forgotten.
+    fn close(mut self) {
+        let Some(path) = self.path.take() else {
+            return;
+        };
+        if self.hashed == 0 {
+            return;
+        }
+        let mut files = std::mem::take(&mut self.consulted);
+        for (key, entry) in std::mem::take(&mut self.remembered) {
+            if !files.contains_key(&key)
+                && executable_standing(Path::new(&key), &entry.sha256).ok().as_ref()
+                    == Some(&entry)
+            {
+                files.insert(key, entry);
+            }
+        }
+        // Best effort, as the suite verification is remembered.
+        let _ = atomic_json(
+            &path,
+            &FileDigestCache {
+                schema: FILE_DIGEST_CACHE_SCHEMA.to_owned(),
+                files,
+            },
+        );
+    }
+}
+
 /// Declared companions sit beside the primary at the same cut: resolve the
 /// primary through its links (a managed `bin/<exe>` points into its
 /// content-addressed generation) and read each sibling there. Absence is
-/// reported, never substituted from PATH.
+/// reported, never substituted from PATH. Each present companion's digest is
+/// `digests`' (remembered while the file's standing holds).
 fn s0_companion_locations(
     product: &oi_cli::product_command::ProductCommandDescriptor,
     executable: &std::path::Path,
+    digests: &mut DigestMemory,
 ) -> Result<serde_json::Map<String, serde_json::Value>, String> {
     let resolved = std::fs::canonicalize(executable).unwrap_or_else(|_| executable.to_path_buf());
     let dir = resolved.parent().map(std::path::Path::to_path_buf);
@@ -532,7 +652,7 @@ fn s0_companion_locations(
             .map(|dir| dir.join(&companion.executable))
             .unwrap_or_else(|| std::path::PathBuf::from(&companion.executable));
         let present = is_executable(&path);
-        let sha256 = present.then(|| sha256_file(&path)).transpose()?;
+        let sha256 = present.then(|| digests.digest(&path)).transpose()?;
         companions.insert(
             companion.executable.clone(),
             serde_json::json!({
@@ -558,6 +678,7 @@ fn command_development_where_s0(args: &[std::ffi::OsString]) -> Result<i32, Stri
         .ok_or_else(|| format!("unknown product '{name}'"))?;
     let composition = load_composition()?;
     let registration = composition.modules.get(&product.id);
+    let mut digests = DigestMemory::open();
 
     let mut shadowed_managed_update = None;
     let (authority, modality, executable, receipt_ref, revision, revision_standing, sha256) =
@@ -574,7 +695,7 @@ fn command_development_where_s0(args: &[std::ffi::OsString]) -> Result<i32, Stri
                 .then(|| registration.and_then(|entry| entry.version.clone()))
                 .flatten();
             let sha256 = is_executable(&resolved)
-                .then(|| sha256_file(&resolved))
+                .then(|| digests.digest(&resolved))
                 .transpose()?;
             (
                 "explicit-source-override",
@@ -598,7 +719,7 @@ fn command_development_where_s0(args: &[std::ffi::OsString]) -> Result<i32, Stri
             })?;
             let executable = active_suite_executable_s0(&product.id)?
                 .expect("active receipt was loaded and validated");
-            shadowed_managed_update = suite_shadow_disclosure(&product.id, &receipt)?;
+            shadowed_managed_update = suite_shadow_disclosure(&product.id, &receipt, &mut digests)?;
             (
                 "active-suite-receipt",
                 "managed-suite".to_owned(),
@@ -619,7 +740,7 @@ fn command_development_where_s0(args: &[std::ffi::OsString]) -> Result<i32, Stri
                 .map(|entry| entry.modality.as_str().to_owned())
                 .unwrap_or_else(|| "path-fallback".to_owned());
             let sha256 = is_executable(&executable)
-                .then(|| sha256_file(&executable))
+                .then(|| digests.digest(&executable))
                 .transpose()?;
             (
                 "legacy-fallback-no-active-receipt",
@@ -636,7 +757,8 @@ fn command_development_where_s0(args: &[std::ffi::OsString]) -> Result<i32, Stri
             )
         };
 
-    let companions = s0_companion_locations(product, &executable)?;
+    let companions = s0_companion_locations(product, &executable, &mut digests)?;
+    digests.close();
     let reading = serde_json::json!({
         "schema": "oi.product-location/v1",
         "product": product.id,
@@ -710,7 +832,8 @@ mod development_field_hardening_tests {
         std::fs::create_dir_all(&bin).unwrap();
         std::os::unix::fs::symlink("../products/quaternal-logic/abc/bin/ql", bin.join("ql")).unwrap();
 
-        let companions = s0_companion_locations(ql, &bin.join("ql")).unwrap();
+        let mut digests = DigestMemory::at(temp.path().join("cache/file-digests.json"));
+        let companions = s0_companion_locations(ql, &bin.join("ql"), &mut digests).unwrap();
         let generation = std::fs::canonicalize(&generation).unwrap();
         assert_eq!(
             companions.keys().collect::<Vec<_>>(),
@@ -729,7 +852,9 @@ mod development_field_hardening_tests {
         assert_eq!(focused["executable"], generation.join("ql-focused-host").display().to_string());
         // A product that declares none reads an empty map.
         let central = catalogue.resolve("central").unwrap();
-        assert!(s0_companion_locations(central, &bin.join("ql")).unwrap().is_empty());
+        assert!(s0_companion_locations(central, &bin.join("ql"), &mut digests)
+            .unwrap()
+            .is_empty());
     }
 
     #[cfg(unix)]
@@ -769,8 +894,108 @@ mod development_field_hardening_tests {
         }
         // An absent companion is not invented; `oi where` names it absent.
         assert!(!product_root.join("bin/ql-focused-host").exists());
-        let companions = s0_companion_locations(ql, &staged).unwrap();
+        let mut digests = DigestMemory::at(temp.path().join("cache/file-digests.json"));
+        let companions = s0_companion_locations(ql, &staged, &mut digests).unwrap();
         assert_eq!(companions["ql-field-host"]["present"], true);
         assert_eq!(companions["ql-focused-host"]["present"], false);
+    }
+
+    /// A companion's digest is remembered against its standing: the next
+    /// `oi where` reads no companion whose standing held, and reads again one
+    /// that was rewritten in place (same size, its modification time set
+    /// back) or replaced by another file.
+    #[cfg(unix)]
+    #[test]
+    fn a_companion_is_hashed_again_only_when_rewritten_or_replaced() {
+        let catalogue = oi_cli::product_command::product_command_catalogue_from_json(
+            crate::catalog_source::embedded_catalogue_json(),
+            "test-embedded",
+        )
+        .unwrap();
+        let ql = catalogue.resolve("quaternal-logic").unwrap();
+        let temp = tempfile::tempdir().unwrap();
+        let generation = temp.path().join("products/quaternal-logic/abc/bin");
+        executable(&generation.join("ql"), "#!/bin/sh\n");
+        executable(&generation.join("ql-field-host"), "#!/bin/sh\nhost-one\n");
+        executable(&generation.join("ql-field-worker"), "#!/bin/sh\nworker\n");
+        let memory = temp.path().join("cache/file-digests.json");
+        let host = generation.join("ql-field-host");
+        let locate = || {
+            let mut digests = DigestMemory::at(memory.clone());
+            let companions =
+                s0_companion_locations(ql, &generation.join("ql"), &mut digests).unwrap();
+            let hashed = digests.hashed;
+            digests.close();
+            (companions["ql-field-host"]["sha256"].clone(), hashed)
+        };
+
+        let (first, hashed) = locate();
+        assert_eq!(first, sha256_file(&host).unwrap());
+        assert_eq!(hashed, 2, "a cold memory reads both present companions");
+        let (warm, hashed) = locate();
+        assert_eq!(warm, first);
+        assert_eq!(hashed, 0, "a warm memory reads no companion whose standing held");
+
+        // Rewritten in place: same size, modification time set back.
+        let standing = executable_standing(&host, "").unwrap();
+        std::thread::sleep(std::time::Duration::from_millis(20));
+        fs::write(&host, "#!/bin/sh\nhost-two\n").unwrap();
+        fs::File::options()
+            .write(true)
+            .open(&host)
+            .unwrap()
+            .set_modified(
+                UNIX_EPOCH
+                    + std::time::Duration::new(
+                        standing.modified.0 as u64,
+                        standing.modified.1 as u32,
+                    ),
+            )
+            .unwrap();
+        let (rewritten, hashed) = locate();
+        assert_eq!(rewritten, sha256_file(&host).unwrap());
+        assert_ne!(rewritten, first, "the rewrite is read, not remembered");
+        assert_eq!(hashed, 1, "only the rewritten companion is read again");
+
+        // Replaced: another file renamed over it.
+        let staged = generation.join(".ql-field-host.new");
+        executable(&staged, "#!/bin/sh\nhost-333\n");
+        fs::rename(&staged, &host).unwrap();
+        let (replaced, hashed) = locate();
+        assert_eq!(replaced, sha256_file(&host).unwrap());
+        assert_ne!(replaced, rewritten, "the replacement is read, not remembered");
+        assert_eq!(hashed, 1);
+        let (settled, hashed) = locate();
+        assert_eq!((settled, hashed), (replaced, 0));
+    }
+
+    /// The memory keeps the files other readings remembered while their
+    /// standing holds, and forgets one that vanished.
+    #[cfg(unix)]
+    #[test]
+    fn the_digest_memory_forgets_only_moved_or_vanished_files() {
+        let temp = tempfile::tempdir().unwrap();
+        let memory = temp.path().join("cache/file-digests.json");
+        let (one, two) = (temp.path().join("one"), temp.path().join("two"));
+        executable(&one, "one");
+        executable(&two, "two");
+        let mut digests = DigestMemory::at(memory.clone());
+        digests.digest(&one).unwrap();
+        digests.digest(&two).unwrap();
+        digests.close();
+        fs::remove_file(&two).unwrap();
+        let three = temp.path().join("three");
+        executable(&three, "three");
+        let mut digests = DigestMemory::at(memory.clone());
+        digests.digest(&three).unwrap();
+        digests.close();
+        let kept: FileDigestCache = serde_json::from_slice(&fs::read(&memory).unwrap()).unwrap();
+        assert_eq!(
+            kept.files.keys().cloned().collect::<Vec<_>>(),
+            vec![one.display().to_string(), three.display().to_string()]
+        );
+        let mut digests = DigestMemory::at(memory);
+        assert_eq!(digests.digest(&one).unwrap(), sha256_file(&one).unwrap());
+        assert_eq!(digests.hashed, 0);
     }
 }

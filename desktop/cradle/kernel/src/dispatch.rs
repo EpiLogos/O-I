@@ -437,7 +437,11 @@ pub(crate) fn is_free(op: &KernelOp) -> bool {
         | KernelOp::NaraCoordinate { .. }
         | KernelOp::WorldResolve { .. }
         | KernelOp::A2aExchange { .. }
-        | KernelOp::Setup { .. } => true,
+        | KernelOp::Setup { .. }
+        // Lane AK: an AIKit SessionSpace delivery (being.rs, its owner
+        // re-admits the binding by CAS) and a file shown in Finder.
+        | KernelOp::BeingEncounter { .. }
+        | KernelOp::SettingsReveal { .. } => true,
         KernelOp::SharedField { request } => !crate::shared_field::is_read(request),
         // A presence's listing and withdrawal: SharedField's own transport,
         // nothing of the kernel's Expression or identity.
@@ -550,6 +554,24 @@ fn free(op: KernelOp) -> Result<KernelOpOutcome, String> {
                 },
             })
         }
+        // A projected Agent's delivery through AIKit's SessionSpace owner,
+        // which re-admits the Agent and its binding by CAS (being.rs); and a
+        // file of the person's own shown in Finder. Neither reads or records
+        // kernel state (lane AK).
+        KernelOp::BeingEncounter { request } => Ok(KernelOpOutcome {
+            read_scopes: None,
+            receipts: Vec::new(),
+            result: KernelOpResult::BeingEncounter {
+                data: crate::being::apply(request),
+            },
+        }),
+        KernelOp::SettingsReveal { path } => Ok(KernelOpOutcome {
+            read_scopes: None,
+            receipts: Vec::new(),
+            result: KernelOpResult::SettingsRevealed {
+                data: crate::system_composition::reveal(&path)?,
+            },
+        }),
         _ => Err("This operation reads or records kernel state".into()),
     }
 }
@@ -1453,5 +1475,236 @@ else:
             "owner-write"
         );
         assert_eq!(owner.spawns("central.world"), 0, "preparing asked no owner");
+    }
+
+    /// Every op the wire carries that a prepared form or the free path
+    /// serves, by its wire name. The ordered ops are the census's own
+    /// (`an_owner_runs_under_the_lock_only_for_an_ordering_invariant`).
+    const SERVED_BY_A_FORM: &str = "
+        a2a_exchange actuation_read actuation_write agency_read agent_card agent_definition
+        aikit_read aikit_write being_encounter central chat_default_read client_install
+        composition_read config_apply config_apply_reviewed config_capabilities_read
+        config_desired_discard config_desired_hold config_diff config_plan config_plan_reviewed
+        config_receipts config_registry_read config_reset config_resolutions_read
+        credential_discover credential_list credential_revoke credential_rotate
+        credential_setup credential_verify day_read decide decision_status dictation_probe
+        dictation_transcribe encounter encounter_join encounter_provision
+        encounter_session_detach encounter_session_settings encounter_session_settings_list
+        encounter_task_attempts_list encounter_task_configure encounter_task_copy
+        encounter_task_read encounter_task_remove expression_recovery factory_attempt_read
+        factory_attempt_task_list_read factory_attempt_task_read factory_build_snapshot
+        factory_development_read factory_owner file_bytes file_last_reading file_operation
+        file_read file_resolve files_list flow_changed_since flow_participant_provision
+        gateway_remotes_read gateway_team gateway_write git_diff_read git_repository_read graph
+        ground ground_authority ground_form harness_agent_control harness_agent_read
+        harness_auth_describe harness_status inhabitation_read instance_commission
+        invoke_action janko_window_read knowledge knowledge_impact live_clip_create
+        live_clip_read live_clip_write live_device_descriptors live_device_param_write
+        live_device_params_read live_groove_pool_read live_groove_pool_write live_set_act
+        live_set_read live_sets_list live_take_comp live_track_mixer_write m3_reception
+        material_read model_catalogue model_roster music_modes_read nara_coordinate
+        nara_current nara_dialogue nara_elemental nara_epii nara_expressive_act nara_identity
+        nara_journey nara_lived_context nara_presence nara_voice native_expression now page
+        product_action_run profile_create profile_edit profile_list profile_read
+        profile_use_apply profile_use_plan project_browse project_read ql_read receiving
+        routine seat_status_read seat_write settings_reveal setup shared_field source_history
+        source_returns_read sources_list system_composition_read team_space
+        temporal_events_read wiki_projection_read wiki_projection_sources workcell_read
+        workcell_status_read workcell_write working_surface_attachment working_surface_read
+        world_body_read world_browse world_read world_resolve";
+
+    /// The wire names of every `KernelOp` (lib.rs), as `op_name` spells them.
+    fn wire_names() -> Vec<String> {
+        let source = include_str!("lib.rs");
+        let body = source
+            .split_once("pub enum KernelOp {")
+            .and_then(|(_, rest)| rest.split_once("\n}\n"))
+            .map(|(body, _)| body)
+            .expect("lib.rs declares KernelOp");
+        body.lines()
+            .filter_map(|line| line.strip_prefix("    "))
+            .filter(|line| line.starts_with(|c: char| c.is_ascii_uppercase()))
+            .map(|line| {
+                let variant: String = line.chars().take_while(|c| c.is_alphanumeric()).collect();
+                let mut name = String::new();
+                for (index, c) in variant.chars().enumerate() {
+                    if c.is_uppercase() {
+                        if index > 0 {
+                            name.push('_');
+                        }
+                        name.extend(c.to_lowercase());
+                    } else {
+                        name.push(c);
+                    }
+                }
+                name
+            })
+            .collect()
+    }
+
+    /// Lane AK: the census of what dispatch applies in order, under the
+    /// kernel lock. An ordered arm that runs an owner process there is held
+    /// for the ordering invariant it names; every other ordered arm runs
+    /// none. The arms that ran an owner under the lock for no invariant now
+    /// run it outside: free, or a prepared read or write. And no op of the
+    /// wire goes unclassified: each is in the census or served by a form.
+    #[test]
+    fn an_owner_runs_under_the_lock_only_for_an_ordering_invariant() {
+        use serde_json::json;
+        let owner = crate::tests::FakeOwner::spawn_counter("dispatch-census");
+        let mut kernel = owner.kernel();
+        let mut form = |op: &serde_json::Value| -> &'static str {
+            let op: KernelOp = serde_json::from_value(op.clone()).unwrap();
+            if is_free(&op) {
+                "free"
+            } else {
+                kernel.prepare_op(&op, None).unwrap().form()
+            }
+        };
+        let location =
+            json!({"schema": "central.path-ref/v1", "ref": "ref:a", "root": "R", "path": "a.md"});
+        let proposal = json!({"sites": ["agent.ui"], "credential_ref": "keychain://c",
+            "limits": {"timeout_ms": 1, "max_attempts": 1, "max_total_reserved_microusd": 1,
+                "tariff": {"model_version": "m", "source": "s", "max_input_tokens_per_attempt": 1,
+                    "max_output_tokens_per_attempt": 1, "input_microusd_per_million_tokens": 1,
+                    "output_microusd_per_million_tokens": 1}},
+            "episode_budget_microusd": 1, "episode_seconds": 1});
+
+        // Ordered, with an owner process under the lock, each for its invariant.
+        let expression = "One Expression's revisions advance in arrival order: an act, an \
+            open from its file and a save each answer from, and leave, the revision the store \
+            holds, with the Nara readings over it retired in the same step";
+        let buffer = "A source buffer's canonical layer moves in arrival order with the person's \
+            edits: an open never clobbers a dirty buffer, a save writes the content edited \
+            before it and rebases the buffer on the revision the owner answered";
+        let held = [
+            (
+                expression,
+                json!({"op": "expression", "request": {"operation": "save",
+                "expression_ref": "e", "expected_revision": 1, "location": location,
+                "expected_file_revision": "v", "actor": "a", "actor_kind": "human"}}),
+            ),
+            (
+                expression,
+                json!({"op": "expression_world", "request": {"operation": "capabilities"}}),
+            ),
+            (buffer, json!({"op": "source_open", "source_ref": "s"})),
+            (buffer, json!({"op": "source_save", "source_ref": "s"})),
+            (buffer, json!({"op": "source_reread", "source_ref": "s"})),
+            (
+                buffer,
+                json!({"op": "source_restore", "source_ref": "s", "content": "c",
+                "base_revision": "v", "saved_content": "c"}),
+            ),
+            (buffer, json!({"op": "day_source_open"})),
+            (
+                "A decision's basis — the renderer observation the kernel holds and the owners' \
+              readings beside it — is taken in one hold, so the digest the person confirms \
+              names one moment",
+                json!({"op": "decision_preflight", "proposal": proposal}),
+            ),
+            (
+                "A decision's basis is taken in one hold (as `decision_preflight`)",
+                json!({"op": "invoke_action", "invocation": {"action": "action:decision.preflight", "target_ref": "t"}}),
+            ),
+            (
+                "A hosted World's acts reach their owner in the order they arrived: its owner \
+              fences its own generation, never the order of one host's concurrent sends",
+                json!({"op": "hosted_native", "source_world_ref": "world:w", "action_ref": "a",
+                "request": {"op": "expression", "request": {"operation": "list"}}}),
+            ),
+        ];
+        // Ordered, and no owner process: the kernel's own state, or a file
+        // only the kernel keeps.
+        let kernel_only = [
+            json!({"op": "state"}),
+            json!({"op": "protocol_read"}),
+            json!({"op": "recording_capability_read"}),
+            json!({"op": "decision_read"}),
+            json!({"op": "decision_episode_revoke", "authority_ref": "a"}),
+            json!({"op": "dictation_read"}),
+            json!({"op": "dictation_configure", "stt_url": "u", "expected_revision": 1}),
+            json!({"op": "presentation_read"}),
+            json!({"op": "presentation_observe", "window_id": "w", "visuals": {}, "arrangement": {}}),
+            json!({"op": "theme_import", "theme": {"id": "t", "name": "n", "appearance": "a",
+                "preview": {"ground": "g", "ink": "i", "accent": "a", "strip": []}, "variables": {}}}),
+            json!({"op": "theme_apply", "appearance": "a"}),
+            json!({"op": "theme_revert"}),
+            json!({"op": "theme_remove", "id": "t"}),
+            json!({"op": "nara_decision_record", "decision": {}}),
+            json!({"op": "chat_default_hold", "provider": "p"}),
+            json!({"op": "chat_default_discard"}),
+            json!({"op": "source_edit", "source_ref": "s", "content": "c"}),
+            json!({"op": "surface_open", "surface_id": "s", "kind": "k", "title": "t"}),
+            json!({"op": "surface_close", "surface_id": "s"}),
+            json!({"op": "surface_focus", "surface_id": "s"}),
+        ];
+        // Moved out of the lock by lane AK: they ran an owner under it for
+        // no invariant.
+        let moved = [
+            (json!({"op": "world_body_read"}), "owner-read"),
+            (
+                json!({"op": "file_resolve", "reference": "r"}),
+                "owner-read",
+            ),
+            (
+                json!({"op": "ground_form", "request": {"operation": "preview"}}),
+                "owner-write",
+            ),
+            (
+                json!({"op": "ground_authority", "request": {"operation": "preview"}}),
+                "owner-write",
+            ),
+            (
+                json!({"op": "being_encounter", "request": {"operation": "standing",
+                "agent_ref": "a", "target_agency_ref": "t", "source_refs": []}}),
+                "free",
+            ),
+            (json!({"op": "settings_reveal", "path": "~/a"}), "free"),
+        ];
+
+        for (invariant, op) in &held {
+            assert!(!invariant.trim().is_empty());
+            assert_eq!(form(op), "ordered", "held under the lock: {op}");
+        }
+        for op in &kernel_only {
+            assert_eq!(form(op), "ordered", "ordered, kernel state only: {op}");
+        }
+        for (op, moved_to) in &moved {
+            assert_eq!(form(op), *moved_to, "its owner runs outside the lock: {op}");
+        }
+        assert_eq!(owner.spawns("central.world"), 0, "preparing asked no owner");
+
+        // The census is the whole wire.
+        let census: std::collections::BTreeSet<String> = held
+            .iter()
+            .map(|(_, op)| op)
+            .chain(kernel_only.iter())
+            .map(|op| op["op"].as_str().unwrap().to_owned())
+            .collect();
+        let served: std::collections::BTreeSet<&str> =
+            SERVED_BY_A_FORM.split_whitespace().collect();
+        let names = wire_names();
+        assert!(
+            names.len() > 150,
+            "lib.rs's KernelOp was read: {}",
+            names.len()
+        );
+        let unclassified: Vec<&String> = names
+            .iter()
+            .filter(|name| !census.contains(*name) && !served.contains(name.as_str()))
+            .collect();
+        assert!(
+            unclassified.is_empty(),
+            "an op is in the census or served by a form: {unclassified:?}"
+        );
+        let stale: Vec<&&str> = served
+            .iter()
+            .filter(|name| !names.iter().any(|known| known == *name))
+            .collect();
+        assert!(stale.is_empty(), "no op that left the wire: {stale:?}");
+        for (op, _) in &moved {
+            assert!(served.contains(op["op"].as_str().unwrap()));
+        }
     }
 }

@@ -539,6 +539,10 @@ impl PreparedRead {
             | KernelOp::QlRead { .. }
             | KernelOp::WorkcellRead { .. }
             | KernelOp::AikitRead { .. } => true,
+            // Lane AK: a register's world body (the Wiki owner, from the
+            // place the World discloses) and a file reference resolved by
+            // Central's file route record nothing in the kernel either.
+            KernelOp::WorldBodyRead { .. } | KernelOp::FileResolve { .. } => true,
             KernelOp::GatewayTeam { request } => request.is_read(),
             KernelOp::FactoryOwner { request } => request.is_read(),
             KernelOp::SharedField { request } => crate::shared_field::is_read(request),
@@ -570,6 +574,7 @@ impl PreparedRead {
                 | KernelOp::EncounterJoin { .. }
                 | KernelOp::FlowChangedSince { .. }
                 | KernelOp::KnowledgeImpact { .. }
+                | KernelOp::WorldBodyRead { .. }
         )
     }
 
@@ -876,6 +881,20 @@ impl PreparedRead {
             },
             KernelOp::NaraElemental { request } => KernelOpResult::NaraElemental {
                 data: crate::nara_elemental::execute(&self.client, request)?,
+            },
+            // Central discloses the scope, as the construction write's Action does.
+            KernelOp::WorldBodyRead { project } => {
+                let cwd = crate::agent_prepared::location(&self.world.read()?, project.as_deref())?;
+                KernelOpResult::WorldBodyReading {
+                    document: crate::construction::read_body(
+                        &self.client,
+                        &cwd,
+                        project.as_deref(),
+                    )?,
+                }
+            }
+            KernelOp::FileResolve { reference } => KernelOpResult::FileResolved {
+                location: crate::files::resolve(&self.client, reference)?,
             },
             KernelOp::FactoryBuildSnapshot {
                 project,

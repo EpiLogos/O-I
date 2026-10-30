@@ -54,6 +54,7 @@ fn suite_shadowed_products(
     active: &oi_cli::development_field::ActiveSuiteReceipt,
     managed: &BTreeMap<String, ManagedProduct>,
     ids: &[String],
+    digests: &mut DigestMemory,
 ) -> Vec<String> {
     ids.iter()
         .filter(|id| {
@@ -68,7 +69,7 @@ fn suite_shadowed_products(
             };
             installed.companions.iter().any(|(name, sha256)| {
                 let path = dir.join(name);
-                !(is_executable(&path) && sha256_file(&path).is_ok_and(|digest| &digest == sha256))
+                !(is_executable(&path) && digests.digest(&path).is_ok_and(|digest| &digest == sha256))
             })
         })
         .cloned()
@@ -127,7 +128,7 @@ fn supersede_active_suite(
     ids: &[String],
 ) -> Result<Option<SuiteSupersession>, String> {
     let Some(previous) = load_active_suite_receipt()? else { return Ok(None) };
-    let shadowed = suite_shadowed_products(&previous, managed, ids);
+    let shadowed = suite_shadowed_products(&previous, managed, ids, &mut DigestMemory::fresh());
     if shadowed.is_empty() {
         return Ok(None);
     }
@@ -241,10 +242,11 @@ fn restore_superseded_suite(supersession: &SuiteSupersession) -> Result<(), Stri
 fn suite_shadow_disclosure(
     product_id: &str,
     active: &oi_cli::development_field::ActiveSuiteReceipt,
+    digests: &mut DigestMemory,
 ) -> Result<Option<serde_json::Value>, String> {
     let Some(managed) = load_active_update_receipt(&oi_data_root()?)? else { return Ok(None) };
     let ids = [product_id.to_owned()];
-    if suite_shadowed_products(active, &managed.products, &ids).is_empty() {
+    if suite_shadowed_products(active, &managed.products, &ids, digests).is_empty() {
         return Ok(None);
     }
     let installed = &managed.products[product_id];
@@ -330,8 +332,9 @@ fn report_suite_supersession(supersession: Option<&SuiteSupersession>, json_mode
 fn suite_shadowed_report(ids: &[String]) -> Result<Vec<serde_json::Value>, String> {
     let Some(active) = load_active_suite_receipt()? else { return Ok(Vec::new()) };
     let mut report = Vec::new();
+    let mut digests = DigestMemory::fresh();
     for id in ids {
-        if let Some(mut shadow) = suite_shadow_disclosure(id, &active)? {
+        if let Some(mut shadow) = suite_shadow_disclosure(id, &active, &mut digests)? {
             shadow["product"] = json!(id);
             shadow["receipt_ref"] = json!(active.receipt_ref);
             report.push(shadow);
@@ -472,7 +475,7 @@ mod managed_suite_supersede_tests {
 
         // Before: the suite pins the old ql, and `oi where` names the
         // shadowed managed install rather than hiding it.
-        assert_eq!(suite_shadowed_products(&old, &managed, &ids), ids);
+        assert_eq!(suite_shadowed_products(&old, &managed, &ids, &mut DigestMemory::fresh()), ids);
 
         let supersession = supersede_active_suite(&managed, &ids).unwrap().expect("the shadowed product is superseded");
         assert_eq!(supersession.superseded, ids);
@@ -499,7 +502,7 @@ mod managed_suite_supersede_tests {
 
         // Converged: a second pass has nothing to supersede.
         assert!(supersede_active_suite(&managed, &ids).unwrap().is_none());
-        assert!(suite_shadowed_products(&active, &managed, &ids).is_empty());
+        assert!(suite_shadowed_products(&active, &managed, &ids, &mut DigestMemory::fresh()).is_empty());
 
         // Lineage: `oi suite rollback` finds and can restore the replaced receipt.
         let previous = s0_lineage_previous(&active).unwrap().expect("lineage names the replaced receipt");
@@ -521,7 +524,42 @@ mod managed_suite_supersede_tests {
         executable(Path::new(pinned.executable.as_deref().unwrap()), "#!/bin/sh\necho ql new\n");
         let managed = BTreeMap::from([("quaternal-logic".to_owned(), ql)]);
         let ids = vec!["quaternal-logic".to_owned()];
-        assert_eq!(suite_shadowed_products(&suite, &managed, &ids), ids);
+        assert_eq!(suite_shadowed_products(&suite, &managed, &ids, &mut DigestMemory::fresh()), ids);
+    }
+
+    /// `oi where`'s shadow check reads the pinned companions through its
+    /// digest memory: a converged suite is read once, then not again while
+    /// each companion's standing holds; a companion rewritten in the suite's
+    /// generation is read again and shows the managed install shadowed.
+    #[cfg(unix)]
+    #[test]
+    fn the_shadow_check_reads_a_companion_again_only_once_it_moved() {
+        let temp = tempfile::tempdir().unwrap();
+        let data_root = temp.path().join("data");
+        let _home = DataHome::set(&data_root);
+        let mut suite = active_suite(&data_root, "source");
+        let ql = managed_ql(&data_root);
+        let pinned = suite.products.get_mut("quaternal-logic").unwrap();
+        pinned.sha256 = ql.sha256.clone();
+        let primary = PathBuf::from(pinned.executable.as_deref().unwrap());
+        executable(&primary, "#!/bin/sh\necho ql new\n");
+        for name in ql.companions.keys() {
+            executable(&primary.with_file_name(name), &format!("#!/bin/sh\necho {name}\n"));
+        }
+        let managed = BTreeMap::from([("quaternal-logic".to_owned(), ql)]);
+        let ids = vec!["quaternal-logic".to_owned()];
+        let memory = temp.path().join("cache/file-digests.json");
+        let shadowed = || {
+            let mut digests = DigestMemory::at(memory.clone());
+            let shadowed = suite_shadowed_products(&suite, &managed, &ids, &mut digests);
+            let hashed = digests.hashed;
+            digests.close();
+            (shadowed, hashed)
+        };
+        assert_eq!(shadowed(), (Vec::new(), 2), "a cold memory reads both companions");
+        assert_eq!(shadowed(), (Vec::new(), 0), "a warm memory reads neither");
+        executable(&primary.with_file_name("ql-field-host"), "#!/bin/sh\necho moved\n");
+        assert_eq!(shadowed(), (ids.clone(), 1), "the moved companion is read again");
     }
 
     #[cfg(unix)]
@@ -535,7 +573,7 @@ mod managed_suite_supersede_tests {
         // `oi` is managed but not a suite product; actuation is pinned but
         // the managed receipt does not name it.
         let ids = vec!["oi".to_owned(), "actuation".to_owned()];
-        assert!(suite_shadowed_products(&suite, &managed, &ids).is_empty());
+        assert!(suite_shadowed_products(&suite, &managed, &ids, &mut DigestMemory::fresh()).is_empty());
         assert!(supersede_active_suite(&managed, &ids).unwrap().is_none());
         assert_eq!(load_active_suite_receipt().unwrap().unwrap(), suite);
     }
