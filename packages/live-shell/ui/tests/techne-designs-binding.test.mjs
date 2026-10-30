@@ -2,8 +2,8 @@
 // techne:palace on the palace session, knowledge-graph:graph on the open graph's handle and the kernel graph op, techne:journey and
 // techne:canvas on the research frame as it announces itself, techne:lens on no reachable owner — and where they stand: the head of the
 // open instrument's chain, then its effects (manual §16.2). The 22 Oct manual rewrite retired techne:timeline (§17.5: the timeline is
-// Technē's Arrangement view; its binding, frameBindings.ts timelineBinding, is checked on its own values) and techne:light (§17.4: the
-// Canvas's Light page, its binding carried by the Canvas's, effectBindings.ts canvasCarryingLight) (#725).
+// Technē's Arrangement view; its binding, frameBindings.ts timelineBinding, is checked on its own values) (#725).
+// REMOVED (owner ruling #716): the Canvas's Light page and the binding that carried it — the manual's Canvas has no Light page.
 //
 // Channels:
 // - REAL (tests/fixtures/knowledge-graph-reading-2026-10-21.json): the kernel graph op's answer for the root register's wiki, read
@@ -88,9 +88,9 @@ const escaped = text => text.replace(/&/g, '&amp;').replace(/"/g, '&quot;').repl
 const transport = {kind: 'unavailable', reason: 'the test carrier is down'}
 
 /** The pages each design's Whole declares (its `pages`), by design. */
-// REPLACED (#725): the Canvas's pages take its Light page (§17.4), which took in Light's device; the Timeline's design was retired (§17.5).
+// REPLACED (#725): the Timeline's design was retired (§17.5). REMOVED (owner ruling #716): the Canvas's Light page — its pages are Board, Lines and Form.
 // #757 (part two): the Palace's Whole has its pages — the palace you stand in, Enter, the Integral whole, Compose and Portals.
-const PAGES = {'techne:palace': ['palace', 'enter', 'whole', 'compose', 'portals'], 'techne:journey': ['walk', 'seams'], 'techne:canvas': ['board', 'lines', 'form', 'light'], 'techne:lens': ['lens', 'frame'],
+const PAGES = {'techne:palace': ['palace', 'enter', 'whole', 'compose', 'portals'], 'techne:journey': ['walk', 'seams'], 'techne:canvas': ['board', 'lines', 'form'], 'techne:lens': ['lens', 'frame'],
   'knowledge-graph:graph': ['reach', 'filters', 'display', 'aperture']}
 const pagesOf = design => PAGES[design.id] ?? []
 function hostedAll(design, binding) {
@@ -237,8 +237,9 @@ const answered = {status: 'answered', reading: REAL.outcome.reading, error: null
 // ================================================================================================================ the tests
 
 test('each design is keyed to the catalogue\'s exactly; none is registered over it; each has the views of its places (all six) and its kind', () => {
-  // REPLACED (#725): the Timeline (an instrument) and Light (an effect) were retired as devices of their own (§17.5, §17.4): no device of either.
-  for (const id of ['techne:timeline', 'techne:light']) assert.equal(designs.DESIGN_DEVICES.get(id), undefined, `${id}: retired, no device on the door`)
+  // REPLACED (#725): the Timeline (an instrument) was retired as a device of its own (§17.5): no device of it.
+  // REMOVED (owner ruling #716): Light's id left this list — Light is gone from the product, and nothing names it.
+  for (const id of ['techne:timeline']) assert.equal(designs.DESIGN_DEVICES.get(id), undefined, `${id}: retired, no device on the door`)
   const kinds = {palace: 'instrument', journey: 'instrument', canvas: 'instrument', graph: 'instrument', lens: 'effect'}
   for (const [name, design] of Object.entries(DESIGNS)) {
     const device = designs.DESIGN_DEVICES.get(design.id)
@@ -631,23 +632,14 @@ test('the Canvas on the frame\'s research reading: its cards, lines (the selecte
   assert.match(elsewhere.standing.mode.disabled, /timeline lens/, 'another lens: its controls say why')
 })
 
-// REPLACED (#684): "Light: no reachable owner, so no reading and every control refused naming the operation" — Light's engine is Technē's
-// light trace over the board the Canvas reads (lightTrace.ts; tests/techne-light-trace.test.mjs gives the design's numbers), its settings the
-// view's own. The Canvas still carries Light's page, and its own keys stay the Canvas's.
-test('Light: Technē\'s trace over the board the Canvas reads, its settings in the view\'s hands — on the Canvas that carries its page', async () => {
-  const own = frameB.canvasBinding(frameOf('canvas', {chrome: CANVAS_CHROME}))
-  const binding = effects.lightBinding(own.values)
-  assert.deepEqual(binding.values, effects.LIGHT_STARTS, 'the starting values, the light off')
-  for (const key of effects.LIGHT_LOCAL) assert.equal(typeof binding.local[key], 'function', key)
-  assert.match(binding.standing['sensor.power'].disabled, /Turn the light on/)
-  const canvas = effects.canvasCarryingLight(own, binding)
-  for (const key of effects.LIGHT_LOCAL) {
-    assert.equal(typeof canvas.local[key], 'function', `canvas ${key}: the press is held by the view`)
-    assert.equal(canvas.writes(key), false, `canvas ${key}: nothing is sent to an owner`)
-  }
-  assert.match(canvas.standing['sensor.power'].disabled, /Turn the light on/, 'the sensors\' reading is Light\'s, absent with its reason')
-  for (const key of ['items', 'lines', 'mode']) assert.deepEqual([canvas.values[key], canvas.standing[key]], [own.values[key], own.standing?.[key]], `${key} stays the Canvas's own`)
-  assert.equal(canvas.writes('mode'), own.writes('mode'), 'a Canvas control still writes the Canvas\'s way')
+// REMOVED (owner ruling #716): "Light: Technē's trace over the board the Canvas reads, its settings in the view's hands — on the Canvas that
+// carries its page". The manual's Canvas has no Light page (§17.4), so the product carries no Light binding and the Canvas's binding is its
+// own; what stands in the test's place holds that: the design reads, sets and pages nothing of a bench.
+test('the Canvas has no Light page: its pages are Board, Lines and Form, and it reads and sets no bench key', () => {
+  const bench = key => /^(light|tx|sensor)\./.test(key)
+  assert.deepEqual(keysOf(DESIGNS.canvas).filter(bench), [], 'no bench key among its defaults and fixtures')
+  assert.deepEqual(setKeysOf('techne__canvas.tsx').filter(bench), [], 'no control sets a bench key')
+  assert.doesNotMatch(read('inhabitants/catalogue/panels/techne__canvas.tsx'), /id: 'light'/, 'no Light page declared')
 })
 
 // REAL (desktop/cradle/kernel/tests/fixtures/owner-routes/ql-registry-reads-2026-10-21.json): the installed ql's answers, 21 Oct.
@@ -748,15 +740,14 @@ test('(b) every key each design reads is an owner reading, absent with a reason,
     ['graph', 'knowledge-graph__graph.tsx', graphB.graphBinding(surface, graphB.surfaceRead(surface), writes), key => graphB.graphAbsent(surface, graphB.surfaceRead(surface), key)],
     ['graph (closed)', 'knowledge-graph__graph.tsx', graphB.graphBinding(null, null, writes), key => graphB.graphAbsent(null, null, key)],
     ['journey', 'techne__journey.tsx', frameB.journeyBinding(frame('journey')), key => frameB.journeyAbsent(frame('journey'), key)],
-    // REPLACED (#725): the Timeline's and Light's designs were retired (§17.5, §17.4); the Canvas is classified on the binding that carries
-    // its Light page (canvasCarryingLight), so Light's keys are checked where Light's design checked them.
-    ['canvas', 'techne__canvas.tsx', effects.canvasCarryingLight(frameB.canvasBinding(frame('canvas')), effects.lightBinding(frameB.canvasBinding(frame('canvas')).values)), key => frameB.canvasAbsent(frame('canvas'), key)],
+    // REPLACED (#725): the Timeline's design was retired (§17.5).
+    // REMOVED (owner ruling #716): the Canvas was classified on a binding that carried its Light page; it is classified on its own.
+    ['canvas', 'techne__canvas.tsx', frameB.canvasBinding(frame('canvas')), key => frameB.canvasAbsent(frame('canvas'), key)],
     ['lens', 'techne__lens.tsx', effects.lensBinding(), effects.lensAbsent],
   ]
   const summary = {}
-  // The Canvas carries the Light page (DLW §17.4, "The Light page", which took in §17.10's device): its controls are Light's, refused on
-  // Light's binding, which the Canvas's binding carries. The manual's Canvas settings that no binding carries yet are named here, so that no
-  // other control goes unchecked.
+  // REMOVED (owner ruling #716): the Light page's controls, carried on the Canvas's binding. The manual's Canvas settings that no binding carries yet
+  // are named here, so that no other control goes unchecked.
   // REPLACED (#741, lane AJ): 'autosave' left this list — the Canvas's Autosave is the frame's own act now (aj741-autosave.test.mjs).
   const CANVAS_WAITING = ['tool', 'snap', 'shape', 'relation', 'label']
   // The Knowledge graph's View and Standing floor (DLW §17.3): the manual's settings that graphBinding does not carry yet. (#772: Sessions,
@@ -770,10 +761,7 @@ test('(b) every key each design reads is an owner reading, absent with a reason,
     for (const key of setKeysOf(file)) {
       if (name === 'canvas' && CANVAS_WAITING.includes(key)) continue
       if (name.startsWith('graph') && GRAPH_WAITING.includes(key)) continue
-      const carried = name === 'canvas' && /^(light|tx)\./.test(key)
-      // REPLACED (#684): "the Light page's key stands refused on the Canvas, Light's refusal" — the bench's settings are the view's own.
-      if (carried) assert.ok(binding.local && key in binding.local && !binding.writes?.(key), `canvas: the Light page's ${key} is held by the view on the Canvas`)
-      if (carried) continue
+      // REMOVED (owner ruling #716): "the Light page's key is held by the view on the Canvas" — the Canvas sets no Light key now.
       const local = binding.local && key in binding.local
       const goes = binding.writes?.(key) === true
       const refused = binding.standing?.[key]?.disabled
@@ -784,14 +772,10 @@ test('(b) every key each design reads is an owner reading, absent with a reason,
   // The classification as it stands (the RECEIPT's summary): nothing of a design's sample is a reading.
   // The Canvas reads two fewer of the frame's readings since the manual's Tool and Snap took the place of its pointer flags and grid toggle,
   // and the relation type that of Direction (DLW §17.4); the Knowledge graph reads fewer since Direction, Shared and Orphans left it (§17.3).
-  // REPLACED (#725): the Timeline's thirteen readings and Light's none — both designs retired (§17.5, §17.4); the Timeline's binding still
-  // reads them (its own test above), and Light, carried by the Canvas, reads none of its own still: none of the Light page's keys is a reading.
+  // REPLACED (#725): the Timeline's thirteen readings — its design retired (§17.5); the Timeline's binding still reads them (its own test above).
   assert.ok(summary.palace.reading >= 20 && summary.graph.reading >= 16 && summary.canvas.reading >= 14 && summary.journey.reading >= 30, JSON.stringify(summary))
   assert.equal(summary.lens.reading, 0)
-  // REPLACED (#684): "the Light page reads nothing: its engine is not in this candidate" — the Light page's settings stand at their
-  // starting values in the view's hands, and its sensors read once the light is on over a source (tests/techne-light-trace.test.mjs).
-  const lightPage = effects.canvasCarryingLight(frameB.canvasBinding(frame('canvas')), effects.lightBinding(frameB.canvasBinding(frame('canvas')).values))
-  assert.deepEqual(effects.LIGHT_PAGE_KEYS.filter(key => key in lightPage.values), effects.LIGHT_LOCAL.filter(key => key in effects.LIGHT_STARTS), 'the settings, never a sensor reading while the light is off')
+  // REMOVED (owner ruling #716): "the settings, never a sensor reading while the light is off" — the Light page and its keys are gone.
   console.log('key classification', JSON.stringify(summary))
   session.resetPalaceSession()
 })
@@ -807,10 +791,9 @@ test('the designs draw on their bindings in every view and page — no NaN, no u
     [DESIGNS.graph, graphB.graphBinding(null, null, writes), /Quaternal-Tarot|Point-Cloud-Demo|face-rig/, [], [graphB.NOT_OPEN]],
     [DESIGNS.journey, frameB.journeyBinding(frameOf('journey')), /Nocturne|Fine, irregular stippling\. Form|Language/, ['Gather', 'Rounded grains find a shared current.'], [frameB.JOURNEY_REFUSE.snap]],
     [DESIGNS.journey, frameB.journeyBinding(frameOf('journey', {research: null})), /Nocturne|Fine, irregular stippling|Language/, [], []],
-    // REPLACED (#725): the Timeline's and Light's own drawings — both designs retired (§17.5, §17.4). Light's refusal is drawn on the
-    // Canvas's Light page, on the binding that carries it.
-    // REPLACED (#684): Light's refusal drawn on the Light page — Light reads with Technē's trace; its reason while off is drawn instead.
-    [DESIGNS.canvas, effects.canvasCarryingLight(frameB.canvasBinding(frameOf('canvas', {chrome: CANVAS_CHROME})), effects.lightBinding(frameB.canvasBinding(frameOf('canvas', {chrome: CANVAS_CHROME})).values)), /Which centre speaks first|Sacral|Lower three/,
+    // REPLACED (#725): the Timeline's own drawings — its design retired (§17.5).
+    // REMOVED (owner ruling #716): the Canvas was drawn on a binding that carried its Light page; it is drawn on its own.
+    [DESIGNS.canvas, frameB.canvasBinding(frameOf('canvas', {chrome: CANVAS_CHROME})), /Which centre speaks first|Sacral|Lower three/,
       ['A frame of the board', '84'], [frameB.CANVAS_REFUSE.find]], // REPLACED (#742): Promote reaches its owner; Find stays refused
     [DESIGNS.lens, effects.lensBinding(), /l5-techne-instrument-constellation|registry-disclosure|Fourfold-Zero/, [], [effects.LENS_REFUSE['lens.mode']]],
   ]
@@ -832,15 +815,15 @@ test('the designs draw on their bindings in every view and page — no NaN, no u
 
 test('(d) each design stands where the manual puts it: the instrument at the head of its open chain, then its effects — the Lens after every instrument', () => {
   session.resetPalaceSession()
-  // REPLACED (#725): Light after the Canvas, and the Timeline at the head of the Timeline's chain — Light is the Canvas's Light page (§17.4), the timeline
-  // Technē's Arrangement view (§17.5, §16.1 "Technē's timeline is Arrangement view, not an instrument of its own"): neither stands on a chain.
+  // REPLACED (#725): the Timeline at the head of the Timeline's chain — the timeline is Technē's Arrangement view (§17.5, §16.1 "Technē's
+  // timeline is Arrangement view, not an instrument of its own"): it stands on no chain. REMOVED (owner ruling #716): Light after the Canvas.
   assert.deepEqual(designs.TECHNE_CHAINS['techne:m1'], {head: 'techne:canvas', effects: ['techne:lens']})
   assert.deepEqual(designs.TECHNE_CHAINS['techne:m2'], {effects: ['techne:lens']})
   assert.deepEqual(designs.TECHNE_CHAINS['techne:m3'], {head: 'techne:journey', effects: ['techne:lens']})
   assert.deepEqual(designs.TECHNE_CHAINS['techne:m5'], {head: 'techne:palace', effects: ['techne:lens']})
   assert.deepEqual(designs.TECHNE_CHAINS['knowledge-graph'], {head: 'knowledge-graph:graph', effects: ['techne:lens']})
   for (const holder of ['techne:m0', 'techne:m4']) assert.deepEqual(designs.TECHNE_CHAINS[holder], {effects: ['techne:lens']}, `${holder}: the World is its own plate; the Lens after it`)
-  assert.deepEqual(designs.holdersOf('techne:light'), [], 'REPLACED (#725): Light stands on no chain: it is the Canvas\'s Light page (§17.4)')
+  // REMOVED (owner ruling #716): "Light stands on no chain: it is the Canvas's Light page" — Light is gone, and no id names it.
   assert.deepEqual(designs.holdersOf('techne:timeline'), [], 'the timeline stands on no chain: it is Arrangement view (§17.5)')
   // Rendered: the focused instrument's chain, in order — head, then its plate, then its effects.
   for (const [instrument, head, plate, effectIds] of [
@@ -873,7 +856,8 @@ test('(d) each design stands where the manual puts it: the instrument at the hea
   assert.doesNotMatch(graph, /No family declares a device this instrument holds yet/, 'no empty plate after the design')
   // A design stands on no chain whose instrument is not its own.
   const timeline = renderToStaticMarkup(createElement(InstrumentDeviceDetail, {transport, instrument: 'techne:m2'}))
-  for (const id of ['techne:palace', 'techne:canvas', 'techne:light', 'techne:timeline', 'knowledge-graph:graph']) assert.doesNotMatch(timeline, new RegExp(`data-device-id="${id}" data-chain-place`), `${id} is not on the Timeline's chain`)
+  // REMOVED (owner ruling #716): Light's id left this list.
+  for (const id of ['techne:palace', 'techne:canvas', 'techne:timeline', 'knowledge-graph:graph']) assert.doesNotMatch(timeline, new RegExp(`data-device-id="${id}" data-chain-place`), `${id} is not on the Timeline's chain`)
 })
 
 test('the bindings name their owners and copy no design: no default, no fixture, no catalogue import, shell tokens only', () => {

@@ -19,7 +19,6 @@ export const PALACE_DESIGN = 'techne:palace'
 export const JOURNEY_DESIGN = 'techne:journey'
 export const TIMELINE_DESIGN = 'techne:timeline'
 export const CANVAS_DESIGN = 'techne:canvas'
-export const LIGHT_DESIGN = 'techne:light'
 export const LENS_DESIGN = 'techne:lens'
 export const GRAPH_DESIGN = 'knowledge-graph:graph'
 

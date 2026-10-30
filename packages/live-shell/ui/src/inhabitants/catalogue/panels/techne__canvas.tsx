@@ -1,7 +1,8 @@
-// The Canvas (manual §17.4): Technē's research board — cards, sticky notes, shapes, frames and lines laid out as a mind map. Live's
-// nearest: a device with a map in its well and pages (Hybrid Reverb), here Board and Lines. Its picture is the owner's own minimap
-// (expressions-app field-studies-journeys canvasNavigationOverview.tsx; src/shared/navigationMinimapGeometry.ts): every item as a
-// box, every line between box centres, the pane as a rectangle, all fitted with 8 px of padding. The Lines page draws one line by the
+// The Canvas (manual §17.4): Technē's research board, a table to think out loud on — cards, sticky notes, shapes, frames and lines laid
+// out as a mind map. Live's nearest: a device with a map in its well and pages (Hybrid Reverb), here Board, Lines and Form. Its
+// picture is the owner's own minimap (expressions-app field-studies-journeys canvasNavigationOverview.tsx;
+// src/shared/navigationMinimapGeometry.ts): every item as a box, every line between box centres, the pane as a rectangle, all fitted
+// with 8 px of padding. The Lines page draws one line by the
 // canvas's routing (ReactFlow's bezier, step and straight paths) with the sides it binds to. The controls front the owner's own state:
 // the pointer flags (researchInstruments.tsx:882-889), grid snap (:888), the object picker (:107, :837), the connector record
 // (canvasConnectors.ts: kind, label, sides), saved views (:734-739), Find (canvasFind.ts), Present (canvasPresent.ts) and the
@@ -26,26 +27,9 @@
 // grid · guides), shape (rectangle · ellipse · diamond), colour (the next sticky's colour), lineKind (straight · curved · elbow), label
 // (the selected line's label), relation (echo · influence · cause · transform) and standing (fact · claim · inference · guess) of the next
 // line, minimap, autosave, view. A line may carry its standing as a third element ([from, to, standing]).
-//
-// The Light page (techne:light, carried on the Canvas's binding: techne/devices/effectBindings.ts canvasCarryingLight): an optical bench
-// laid over the board, to see how much of a source's force reaches a conclusion through the chain of lines you drew. The manual's Canvas
-// (§17.4) is a table to think out loud on, with its Board, Lines and Form pages; it names no Light page, which the 27 Oct decisions
-// removed with §17.10 (O-I #716: it serves no Part One sentence). Its engine is Technē's light trace (techne/devices/lightTrace.ts
-// traceRays) over the board's positions, deterministic, by the law below. LightBox gave the design, not the engine: LightBox's raytracer
-// traces 2D geometric optics over placed optical elements, and the board holds cards and lines. The bench here draws the same law:
-//   - light leaves the source card and follows the lines you drew, up to Bounces lines deep;
-//   - a card shares the light it receives equally among its lines out, so a conclusion never holds more force than its source gave;
-//   - a line passes the share its standing allows (Transmission) and loses to its length, e^(−length / 4000 canvas units); a line that
-//     carries no standing passes nothing, so a board whose lines carry none keeps the light on its source;
-//   - an element on a card changes what leaves it: a funnel sends all of it down the line out that passes the most, a prism fans it into
-//     the Spectrum's bands, a mirror sends it back along the line it came by, an absorber keeps a quarter, a stop ends it, a sensor reads
-//     what arrives and ends it.
-// Its keys: light.on, light.source, light.card (the card whose element you set), light.elements ([{at, kind}]), light.bounces (1..100,
-// 35), light.segments (500..20000, 4500), light.spectrum (5 | 9 | 13), light.rays; tx.fact, tx.claim, tx.inference, tx.guess (0..100 %
-// each: 100, 85, 60, 35); sensor.power, the engine's readings [{at, power}]. A ray is a picture: it never becomes a relation.
 import type {CSSProperties, ReactNode} from 'react'
-import {Action, Band, Chooser, Dial, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, TextField, Tile, Toggle, ValueBox, type LightState, type RowItem, type Standing} from '../../sdk/panel'
-import {NONE, boolOf, clampTo, grown, has, json, numOf, pct, st, strOf, type DesignedDevice, type ViewProps} from './design'
+import {Action, Band, Chooser, Display, Folded, Handle, Panel, Radio, Readout, Section, TextField, Tile, Toggle, type LightState, type Standing} from '../../sdk/panel'
+import {NONE, boolOf, clampTo, has, json, numOf, st, strOf, type DesignedDevice, type ViewProps} from './design'
 
 type V = ViewProps['v']
 type SetFn = ViewProps['set']
@@ -134,11 +118,6 @@ function linesOf(v: V): LineEnds[] | undefined {
   if (!Array.isArray(read)) return undefined
   return read.filter((e): e is unknown[] => Array.isArray(e) && (e.length === 2 || e.length === 3) && e.slice(0, 2).every(k => finite(k) || typeof k === 'string'))
     .map(e => [e[0], e[1]] as unknown as LineEnds)
-}
-/** The standing each line carries, by its place in the owner's list; undefined where it carries none. */
-function standingsOf(v: V): (string | undefined)[] {
-  const read = json<unknown>(v, 'lines', undefined)
-  return Array.isArray(read) ? read.filter(e => Array.isArray(e) && (e.length === 2 || e.length === 3)).map(e => (typeof (e as unknown[])[2] === 'string' ? (e as unknown[])[2] as string : undefined)) : []
 }
 const endOf = (boxes: readonly Item[], k: number | string) => (typeof k === 'number' ? boxes[k] : boxes.find(b => b.id === k))
 /** Each line as the two items it joins (undefined where an end is not on the board), in the order the owner gave them. */
@@ -659,149 +638,6 @@ const promote = (p: ViewProps) => {
 const lineCount = (v: V) => linesOf(v)?.length
 const itemCount = (v: V) => items(v)?.length
 
-// ---------------------------------------------------------------- the Light page: the bench over the board
-
-type Element = 'funnel' | 'prism' | 'mirror' | 'absorber' | 'stop' | 'sensor'
-type StandingWord = 'fact' | 'claim' | 'inference' | 'guess'
-const ELEMENT_WORD: Record<Element, string> = {funnel: 'Funnel', prism: 'Prism', mirror: 'Mirror', absorber: 'Absorber', stop: 'Stop', sensor: 'Sensor'}
-const ELEMENT_DOES: Record<Element, string> = {funnel: 'Sends all of the light down the line out that passes the most.', prism: 'Fans the light into the bands of the spectrum.',
-  mirror: 'Sends the light back along the line it came by.', absorber: 'Keeps a quarter of the light.', stop: 'Ends the light.', sensor: 'Reads what arrives, and ends it.'}
-const ELEMENT_MARK: Record<Element, string> = {funnel: '▽', prism: '△', mirror: '|', absorber: '▪', stop: '✕', sensor: '◎'}
-const LIGHT_STANDINGS: readonly StandingWord[] = ['fact', 'claim', 'inference', 'guess']
-const TX_DEF: Record<StandingWord, number> = {fact: 100, claim: 85, inference: 60, guess: 35}
-const SPECTRA = [{value: '5', label: '5', does: 'Five bands.'}, {value: '9', label: '9', does: 'Nine bands.'}, {value: '13', label: '13', does: 'Thirteen bands.'}] as const
-const ABSORBED = .25, LOSS_LENGTH = 4000
-const rec = (x: unknown): x is Record<string, unknown> => typeof x === 'object' && x !== null
-/** The elements on the cards. An engine that still calls the funnel a lens is read as a funnel. */
-const elementsOf = (v: V): Map<string, Element> => new Map(json<unknown[]>(v, 'light.elements', []).flatMap((e): [string, Element][] => {
-  if (!rec(e) || typeof e.at !== 'string' || typeof e.kind !== 'string') return []
-  const kind = e.kind === 'lens' ? 'funnel' : e.kind
-  return kind in ELEMENT_WORD ? [[e.at, kind as Element]] : []
-}))
-const txOf = (v: V, s: string | undefined) => { if (!s || !(LIGHT_STANDINGS as readonly string[]).includes(s)) return undefined; const x = numOf(v, `tx.${s}`); return x === undefined ? undefined : clampTo(0, 100, x) / 100 }
-interface BenchLine {readonly from: string; readonly to: string; readonly standing?: string}
-/** The board's lines as the bench reads them: each between two cards, with the standing it carries. */
-function benchLines(v: V, boxes: readonly Item[]): BenchLine[] {
-  const raw = linesOf(v) ?? [], standings = standingsOf(v)
-  return raw.flatMap(([a, b], i): BenchLine[] => { const A = endOf(boxes, a), B = endOf(boxes, b); return A && B ? [{from: A.id, to: B.id, standing: standings[i]}] : [] })
-}
-
-/** The bench by its law: the power on each line and reaching each card, from the source, up to Bounces lines deep. */
-export function trace(v: V) {
-  const boxes = (items(v) ?? []).filter(b => b.kind === 'card' || b.kind === 'sticky'), lines = benchLines(v, boxes), elements = elementsOf(v)
-  const source = strOf(v, 'light.source'), bounces = numOf(v, 'light.bounces') ?? 35
-  const at = new Map(boxes.map(i => [i.id, i])), centre = (i: Item) => [i.x + i.w / 2, i.y + i.h / 2] as const
-  const lineLoad = new Map<number, number>(), cardLoad = new Map<string, number>(), spectral = new Set<number>()
-  if (!source || !at.has(source) || boolOf(v, 'light.on') !== true) return {boxes, lines, elements, lineLoad, cardLoad, spectral, source}
-  type Ray = {card: string; power: number; came?: number; depth: number; split: boolean}
-  const queue: Ray[] = [{card: source, power: 1, depth: 0, split: false}]
-  cardLoad.set(source, 1)
-  while (queue.length) {
-    const ray = queue.shift()!
-    if (ray.depth >= bounces || ray.power < 1e-3) continue
-    const kind = elements.get(ray.card)
-    if (ray.card !== source && (kind === 'stop' || kind === 'sensor')) continue
-    let outs = lines.map((l, i) => [l, i] as const).filter(([l]) => l.from === ray.card && txOf(v, l.standing) !== undefined)
-    if (kind === 'mirror' && ray.came !== undefined) outs = [[{from: ray.card, to: lines[ray.came]!.from, standing: lines[ray.came]!.standing}, ray.came] as const]
-    if (kind === 'funnel' && outs.length > 1) outs = [outs.reduce((best, o) => (txOf(v, o[0].standing)! > txOf(v, best[0].standing)! ? o : best))]
-    if (!outs.length) continue
-    const power = ray.power * (kind === 'absorber' ? ABSORBED : 1) / outs.length
-    for (const [line, index] of outs) {
-      const a = at.get(line.from), b = at.get(line.to), tx = txOf(v, line.standing)
-      if (!a || !b || tx === undefined) continue
-      const [ax, ay] = centre(a), [bx, by] = centre(b), arrive = power * tx * Math.exp(-Math.hypot(bx - ax, by - ay) / LOSS_LENGTH)
-      lineLoad.set(index, (lineLoad.get(index) ?? 0) + arrive)
-      if (kind === 'prism' || ray.split) spectral.add(index)
-      cardLoad.set(line.to, (cardLoad.get(line.to) ?? 0) + arrive)
-      queue.push({card: line.to, power: arrive, came: index, depth: ray.depth + 1, split: kind === 'prism' || ray.split})
-    }
-  }
-  return {boxes, lines, elements, lineLoad, cardLoad, spectral, source}
-}
-/** The engine's reading at each sensor, by the card it stands on. */
-const powerOf = (v: V) => new Map(json<unknown[]>(v, 'sensor.power', []).flatMap((r): [string, number][] => (rec(r) && typeof r.at === 'string' && finite(r.power) ? [[r.at, r.power]] : [])))
-
-/** The bench over the board, fitted to the well: each card with its element, each line with the light it carries (a ray as bright as
- * its power, fanned into the spectrum's bands after a prism), each sensor with its reading. */
-function Bench({v, w, h, labels}: {v: V; w: number; h: number; labels: boolean}) {
-  const t = trace(v)
-  if (!items(v)) return <Missing w={w} h={h} say={['No reading', 'of the board']} />
-  if (!t.boxes.length) return <Missing w={w} h={h} say={['No cards', 'on the board']} />
-  const x0 = Math.min(...t.boxes.map(i => i.x)), y0 = Math.min(...t.boxes.map(i => i.y)), x1 = Math.max(...t.boxes.map(i => i.x + i.w)), y1 = Math.max(...t.boxes.map(i => i.y + i.h))
-  const k = Math.min((w - 16) / Math.max(1, x1 - x0), (h - 16) / Math.max(1, y1 - y0)), ox = (w - (x1 - x0) * k) / 2, oy = (h - (y1 - y0) * k) / 2
-  const X = (x: number) => ox + (x - x0) * k, Y = (y: number) => oy + (y - y0) * k
-  const chosen = strOf(v, 'light.card'), byId = new Map(t.boxes.map(i => [i.id, i])), bands = Number(strOf(v, 'light.spectrum') ?? 9), rays = boolOf(v, 'light.rays') !== false, read = powerOf(v)
-  const hue = (b: number) => `hsl(${Math.round(270 - 270 * b / Math.max(1, bands - 1))} 80% 62%)`
-  return <g>
-    {t.lines.map((l, i) => { const a = byId.get(l.from), b = byId.get(l.to); if (!a || !b) return null
-      const ax = X(a.x + a.w / 2), ay = Y(a.y + a.h / 2), bx = X(b.x + b.w / 2), by = Y(b.y + b.h / 2), load = t.lineLoad.get(i)
-      return <g key={i}>
-        <path d={`M${ax.toFixed(1)} ${ay.toFixed(1)}L${bx.toFixed(1)} ${by.toFixed(1)}`} className="dp-faint" strokeDasharray={l.standing ? undefined : '2 2'} />
-        {rays && load !== undefined && (t.spectral.has(i)
-          ? Array.from({length: bands}, (_, b) => { const off = (b - (bands - 1) / 2) * 1.1, nx = -(by - ay), ny = bx - ax, len = Math.hypot(nx, ny) || 1
-            return <path key={b} d={`M${(ax + nx / len * off).toFixed(1)} ${(ay + ny / len * off).toFixed(1)}L${(bx + nx / len * off).toFixed(1)} ${(by + ny / len * off).toFixed(1)}`} stroke={hue(b)} strokeWidth={.7} opacity={clampTo(.15, 1, load)} /> })
-          : <path d={`M${ax.toFixed(1)} ${ay.toFixed(1)}L${bx.toFixed(1)} ${by.toFixed(1)}`} stroke="var(--dp-on)" strokeWidth={.6 + 3.2 * load} opacity={clampTo(.2, 1, .25 + load)} />)}
-      </g> })}
-    {t.boxes.map(i => { const kind = t.elements.get(i.id), load = read.get(i.id), src = i.id === t.source
-      return <g key={i.id}>
-        <rect x={X(i.x)} y={Y(i.y)} width={i.w * k} height={i.h * k} rx={2} fill="var(--dp-well)" stroke={src ? 'var(--dp-on)' : kind === 'sensor' ? 'var(--dp-value)' : 'var(--dp-value-dim)'} strokeWidth={src || kind === 'sensor' ? 1.4 : .8} />
-        {i.id === chosen && <rect x={X(i.x) - 2.5} y={Y(i.y) - 2.5} width={i.w * k + 5} height={i.h * k + 5} rx={3} fill="none" stroke="var(--dp-on)" strokeWidth={.8} strokeDasharray="2 2" />}
-        {labels && i.w * k > 40 && <text x={X(i.x) + 3} y={Y(i.y) + 10} className="dp-ink" style={{fontSize: 8}}>{clip(i.name, Math.floor(i.w * k / 5))}</text>}
-        {kind && <text x={X(i.x + i.w) - 3} y={Y(i.y) + 10} textAnchor="end" className="dp-axis" style={{fontSize: 8}}>{ELEMENT_MARK[kind]}</text>}
-        {labels && kind === 'sensor' && <text x={X(i.x + i.w / 2)} y={Y(i.y + i.h) - 3} textAnchor="middle" className="dp-ink" style={{fontSize: 9}}>{load === undefined ? NONE : pct(load * 100)}</text>}
-        {labels && src && <text x={X(i.x + i.w / 2)} y={Y(i.y + i.h) - 3} textAnchor="middle" className="dp-axis" style={{fontSize: 8}}>source</text>}
-      </g> })}
-  </g>
-}
-const BENCH_DOES = 'The bench over the board: light leaves the source card and follows your lines; each line passes the share its standing allows; a sensor reads what arrives.'
-
-function sensorRows(v: V): RowItem[] {
-  const names = new Map((items(v) ?? []).map(i => [i.id, i.name])), read = powerOf(v)
-  const rows = [...elementsOf(v)].filter(([, kind]) => kind === 'sensor').map(([at]): RowItem => {
-    const power = read.get(at)
-    return {id: at, name: names.get(at) ?? at, light: power === undefined ? 'unknown' : power > 0 ? 'lit' : 'dark', tone: 'value', note: power === undefined ? NONE : pct(power * 100),
-      does: 'The power that reaches this sensor, the source being 100 %. The engine reads it.'}
-  })
-  return rows.length ? rows : [{id: 'none', name: 'No sensor on the board', light: 'dark'}]
-}
-function lightControls(p: ViewProps) {
-  const v = p.v, cards = (items(v) ?? []).filter(b => b.kind === 'card' || b.kind === 'sticky'), none = items(v) === undefined ? 'No reading of the board.' : cards.length ? undefined : 'The board holds no card.'
-  const tx = (s: StandingWord) => <Dial key={s} {...st(p, `tx.${s}`)} label={s.charAt(0).toUpperCase() + s.slice(1)} does={`How much of the light a line of standing ${s} passes. A starting point: tune it to the way you read.`}
-    value={numOf(v, `tx.${s}`) ?? NaN} def={TX_DEF[s]} scale={{min: 0, max: 100}} format={pct} onChange={x => p.set(`tx.${s}`, Math.round(x))} />
-  const card = strOf(v, 'light.card'), placed = elementsOf(v)
-  return {
-    on: toggle(p, 'light.on', 'On', 'Turns the light on.'),
-    source: <Chooser {...st(p, 'light.source')} label="Source" does="The card that the light leaves." value={strOf(v, 'light.source') ?? ''} options={cards.map(i => ({value: i.id, label: i.name}))}
-      onChange={x => p.set('light.source', x)} disabled={st(p, 'light.source').disabled ?? none} />,
-    card: <Chooser {...st(p, 'light.card')} label="Card" does="Choose a card, then what it does to the light under Element." value={card ?? ''} options={cards.map(i => ({value: i.id, label: i.name}))}
-      onChange={x => p.set('light.card', x)} disabled={st(p, 'light.card').disabled ?? none} />,
-    element: <Chooser {...st(p, 'light.elements')} label="Element" does="What the chosen card does to the light." value={card === undefined ? '' : placed.get(card) ?? 'none'}
-      options={[{value: 'none', label: 'None', does: 'The card shares the light among its lines out.'}, ...(Object.keys(ELEMENT_WORD) as Element[]).map(e => ({value: e, label: ELEMENT_WORD[e], does: ELEMENT_DOES[e]}))]}
-      onChange={x => { if (card === undefined) return; const next = new Map(placed); if (x === 'none') next.delete(card); else next.set(card, x as Element)
-        p.set('light.elements', JSON.stringify([...next].map(([at, kind]) => ({at, kind})))) }}
-      disabled={st(p, 'light.elements').disabled ?? (card === undefined ? 'Choose a card first.' : undefined)} />,
-    bounces: <ValueBox {...st(p, 'light.bounces')} label="Bounces" does="How many lines deep the light travels." value={numOf(v, 'light.bounces') ?? NaN} def={35} scale={{min: 1, max: 100, step: 1}} format={x => `${x}`} onChange={x => p.set('light.bounces', x)} />,
-    segments: <ValueBox {...st(p, 'light.segments')} label="Segments" does="How finely each ray is traced." value={numOf(v, 'light.segments') ?? NaN} def={4500} scale={{min: 500, max: 20000, log: true, step: 100}} format={x => `${Math.round(x)}`} onChange={x => p.set('light.segments', Math.round(x / 100) * 100)} />,
-    spectrum: <Radio {...st(p, 'light.spectrum')} label="Spectrum" does="How many bands a prism fans the light into." value={strOf(v, 'light.spectrum') ?? ''} options={SPECTRA} onChange={x => p.set('light.spectrum', Number(x))} />,
-    rays: toggle(p, 'light.rays', 'Rays', 'Draws the rays over the Canvas.'),
-    tx,
-  }
-}
-function LightBands({p}: {p: ViewProps}) {
-  const c = lightControls(p), w = grown(p, 194, 650, 480)
-  return <>
-    <Band>
-      <Section width={w + 12}><Display w={w} h={146} label="The bench" does={BENCH_DOES}><Bench v={p.v} w={w} h={146} labels={w > 200} /></Display></Section>
-      <Section label="Source" width={124}>{c.on}{c.source}{c.card}{c.element}</Section>
-      <Section label="Rays" cols={2} grow>{c.bounces}{c.segments}{c.spectrum}{c.rays}</Section>
-    </Band>
-    <Band>
-      <Section label="Transmission" cols={4} width={232}>{LIGHT_STANDINGS.map(s => c.tx(s))}</Section>
-      <Section label="Sensors" grow><Rows does="The power that reaches each sensor, the source being 100 %." items={sensorRows(p.v)} size={4} /></Section>
-    </Band>
-  </>
-}
-
 // ---------------------------------------------------------------- the device
 
 const defaults = {
@@ -822,15 +658,10 @@ const defaults = {
     {id: 'Crown', kind: 'card', x: 60, y: -240, w: 94, h: 94, name: 'Crown', glyph: '✧', tint: '#a590b0'},
     {id: 'question', kind: 'sticky', x: -250, y: 20, w: 220, h: 180, name: 'Which centre speaks first?', tint: 'amber'},
   ]),
-  lines: JSON.stringify([[0, 1, 'fact'], [1, 2, 'claim'], [2, 3, 'claim'], [3, 4, 'inference'], [4, 5, 'inference'], [5, 6, 'guess'], [3, 6, 'guess']]),
+  lines: JSON.stringify([[0, 1, 'fact'], [1, 2, 'claim'], [2, 3, 'claim'], [3, 4, 'inference'], [4, 5, 'inference'], [5, 6, 'guess']]),
   frames: JSON.stringify([{title: 'Lower three', members: ['Root', 'Sacral', 'Solar']}]),
   // The form: none chosen on this board.
   form: '', whole: 'question', roles: '{}', layout: 'free', role: '', suggested: '',
-  // The Light: the root as the source, sensors on the brow and the crown.
-  'light.on': true, 'light.source': 'Root', 'light.card': 'Heart', 'light.elements': JSON.stringify([{at: 'Brow', kind: 'sensor'}, {at: 'Crown', kind: 'sensor'}]),
-  'light.bounces': 35, 'light.segments': 4500, 'light.spectrum': 9, 'light.rays': true, 'tx.fact': 100, 'tx.claim': 85, 'tx.inference': 60, 'tx.guess': 35,
-  // The engine's readings at the two sensors, by the law above (trace() gives the same numbers).
-  'sensor.power': JSON.stringify([{at: 'Brow', power: .103}, {at: 'Crown', power: .102}]),
   // Readings: what the device reports, never set from here.
   save: 'saved', waiting: 4, check: '', checkWhy: '', declared: '', declaredWhy: '', folded: '', foldWhy: '', reading: '', readingWhy: '',
 }
@@ -846,9 +677,9 @@ const DOMAIN_BOARD = {
     ...DOMAINS.map(d => ({...d, kind: 'card', w: 94, h: 94}))]),
   lines: JSON.stringify([['M5', 'M0'], ['M4', 'M5']]), label: 'returns to',
   frames: JSON.stringify([{title: '1-2-3', members: ['M1', 'M2', 'M3']}, {title: '4/5/0', members: ['M4', 'M5', 'M0']}]),
-  whole: 'QL', form: 'sixfold', zoom: 55, cx: 0, cy: 20, sel: 'M4', waiting: 2, 'light.source': 'QL', 'light.elements': '[]', 'sensor.power': '[]',
+  whole: 'QL', form: 'sixfold', zoom: 55, cx: 0, cy: 20, sel: 'M4', waiting: 2,
 }
-const PAGES = [{id: 'board', label: 'Board'}, {id: 'lines', label: 'Lines'}, {id: 'form', label: 'Form'}, {id: 'light', label: 'Light'}] as const
+const PAGES = [{id: 'board', label: 'Board'}, {id: 'lines', label: 'Lines'}, {id: 'form', label: 'Form'}] as const
 const pageOf = (p: ViewProps) => (PAGES.some(x => x.id === p.page) ? p.page : 'board')
 
 export const design: DesignedDevice = {
@@ -867,9 +698,6 @@ export const design: DesignedDevice = {
       roles: JSON.stringify({1: 'M1', 2: 'M2', 3: 'M3'}), suggested: JSON.stringify({role: '4', item: 'M4', confidence: .38})},
     'A conjugate with no direct': {...DOMAIN_BOARD, form: 'twelvefold', layout: 'form', sel: 'M5', check: 'refused', checkWhy: 'Role 4′ has no card on 4. A conjugate stands only on a filled direct role.',
       roles: JSON.stringify({0: 'M0', 1: 'M1', 2: 'M2', 3: 'M3', 5: 'M5', '4′': 'M4'})},
-    'A funnel at the heart': {'light.card': 'Heart', 'light.elements': JSON.stringify([{at: 'Heart', kind: 'funnel'}, {at: 'Brow', kind: 'sensor'}, {at: 'Crown', kind: 'sensor'}]),
-      'sensor.power': JSON.stringify([{at: 'Brow', power: .206}, {at: 'Crown', power: 0}])},
-    'Guesses pass little': {'tx.guess': 10, 'tx.inference': 40, 'sensor.power': JSON.stringify([{at: 'Brow', power: .046}, {at: 'Crown', power: .029}])},
     'No readings': Object.fromEntries(Object.keys(defaults).map(k => [k, undefined])),
   },
 
@@ -881,10 +709,9 @@ export const design: DesignedDevice = {
   </Panel>,
 
   whole: p => {
-    const page = pageOf(p), on = boolOf(p.v, 'light.on')
-    const pages = PAGES.map(x => ({id: x.id, label: x.label, light: x.id === 'light' ? (on === undefined ? undefined : on ? 'lit' : 'dark') as LightState | undefined : undefined}))
-    return <Panel title="Canvas" view="whole" light={light(p)} onFold={p.nav.fold} onFull={p.nav.full} pages={pages} page={page} onPage={p.setPage}>
-      {page === 'light' ? <LightBands p={p} /> : page === 'form' ? <>
+    const page = pageOf(p)
+    return <Panel title="Canvas" view="whole" light={light(p)} onFold={p.nav.fold} onFull={p.nav.full} pages={PAGES} page={page} onPage={p.setPage}>
+      {page === 'form' ? <>
         <Band>
           <Section width={260}><FormDisplay p={p} w={248} h={146} /></Section>
           <Section label="Form" cols={2} grow>
@@ -943,21 +770,19 @@ export const design: DesignedDevice = {
   },
 
   full: p => {
-    const lit = pageOf(p) === 'light', t = toolOf(p.v), n = itemCount(p.v), w = waiting(p.v)
+    const t = toolOf(p.v), n = itemCount(p.v), w = waiting(p.v)
     const status = [t && t.value !== 'select' ? t.label : undefined, zoomText(p.v), `${n ?? NONE} items`, `${w ?? NONE} lines wait for their owner`].filter(Boolean).join(' · ')
     const label: CSSProperties = {fill: 'var(--text-dim)', font: '12px var(--font-ui, sans-serif)'}
     return <div className="ref-pane-body ref-pane-body--dark">
-      <svg viewBox={`0 0 ${PANE.w} ${PANE.h}`} width="100%" height="100%" preserveAspectRatio="xMidYMid meet" className="ref-pane-svg" aria-label={lit ? 'The bench over the Canvas' : 'The Canvas'}>
+      <svg viewBox={`0 0 ${PANE.w} ${PANE.h}`} width="100%" height="100%" preserveAspectRatio="xMidYMid meet" className="ref-pane-svg" aria-label="The Canvas">
         <g className="dp-display" style={{background: 'none'}}>
-          {lit ? <Bench v={p.v} w={PANE.w} h={PANE.h} labels /> : <>
-            <defs><clipPath id="canvas-pane"><rect width={PANE.w} height={PANE.h} /></clipPath></defs>
-            <g clipPath="url(#canvas-pane)"><World v={p.v} /></g>
-            <text x={14} y={24} style={label}>{status}</text>
-            {boolOf(p.v, 'minimap') === true && <g transform={`translate(${PANE.w - 152} ${PANE.h - 118})`}>
-              <rect width={140} height={106} rx={3} style={{fill: 'var(--dp-well)', stroke: 'var(--line, #24262a)', strokeWidth: 1}} opacity={.95} />
-              <Overview p={p} w={140} h={106} handles={0} />
-            </g>}
-          </>}
+          <defs><clipPath id="canvas-pane"><rect width={PANE.w} height={PANE.h} /></clipPath></defs>
+          <g clipPath="url(#canvas-pane)"><World v={p.v} /></g>
+          <text x={14} y={24} style={label}>{status}</text>
+          {boolOf(p.v, 'minimap') === true && <g transform={`translate(${PANE.w - 152} ${PANE.h - 118})`}>
+            <rect width={140} height={106} rx={3} style={{fill: 'var(--dp-well)', stroke: 'var(--line, #24262a)', strokeWidth: 1}} opacity={.95} />
+            <Overview p={p} w={140} h={106} handles={0} />
+          </g>}
         </g>
       </svg>
     </div>
