@@ -53,7 +53,18 @@ import {useContext, useCallback, useEffect, useRef, useState} from 'react'
  * it aside. A draft kept on a revision the Flow has since moved from is put
  * back, and Save names it stale rather than write over the newer Flow.
  * The strip's save outcome renders as the router's named chip — five
- * outcomes, five visuals, detail verbatim in the title. */
+ * outcomes, five visuals, detail verbatim in the title.
+ *
+ * Autosave (DLW §17.8: "Saves a short time after you stop"; central/
+ * documents/autosave.ts, after VS Code's files.autoSave afterDelay): the page
+ * tells the face each edit as it happens (document-edit.js, which the frame
+ * carries; the bridge stays read-only), and a second after the last one the
+ * face reads its island once and, when it holds a draft, runs this same
+ * Save. A save the router names stale, conflict or refused holds autosave,
+ * with its reason, until Save or Re-read; the glyph beside the save state
+ * shows saved, saving or held. A save the owner takes leaves the page in its
+ * frame, so what was typed while it was in flight stays and is the next
+ * draft; only an owner that holds other bytes than were sent is read again. */
 
 import {embedDocument, parseInstance, type QlDoc} from '../../../../../desktop/cradle/src/flow/instance'
 import {TEMPLATE_V4} from '../../../../../desktop/cradle/src/flow/plural'
@@ -71,6 +82,9 @@ import {flowPacketOf, type PagePacketItem} from '../central/devices/pageReadings
 import {followDocumentPacket} from '../central/devices/documentPacketContext'
 import {keepDraft, keptDraftMoved, keptDraftNotice, keptDraftOf, keptDraftRefusal, releaseKeptDraft, useDraftKeeping} from '../central/documents/keptDrafts'
 import {useSaveKey} from '../central/documents/useSaveKey'
+import {useAutosave} from '../central/documents/useAutosave'
+import {autosaveHeldOf} from '../central/documents/autosave'
+import {AutosaveGlyph} from '../central/documents/AutosaveGlyph'
 
 /** The message the Flow's form sends its host when an @ is typed in an entry (ql-flow.html), and the one the host answers when the line
  * closes, so the form puts the caret and the selection back. */
@@ -137,6 +151,9 @@ export function FlowFace({transport, location, presentation = 'device', openLink
   const keptBasis = useRef<string>()
   /** The draft last kept on this device, so an unchanged poll writes nothing. */
   const keptText = useRef<string>()
+  /** Which page the frame holds: a Re-read begins a new one. A read of the page set aside, answered after it, is never the new basis (it
+   * would stand as a draft of the Flow just re-read, and autosave would save it). */
+  const frameGeneration = useRef(0)
 
   /** Read the Flow from its owner; `fresh` (the person's Re-read) asks the owner again whatever the window holds. A draft kept on this
    * device for this Flow (its pane closed on it, or a save met a newer Flow) is put back in the page, and named. */
@@ -227,7 +244,8 @@ export function FlowFace({transport, location, presentation = 'device', openLink
         setSave(classifySaveFailure(`the document moved from ${basis} to ${instance.revision} after the draft was taken; review before saving`))
         return
       }
-      const result = await writeFlowInstance(transport, instance.location, instance.revision, embedDocument(instance.html, doc))
+      const content = embedDocument(instance.html, doc)
+      const result = await writeFlowInstance(transport, instance.location, instance.revision, content)
       if (result.outcome === 'conflict') {
         // The owner named the outcome itself (its CAS refusal): the router
         // carries that name directly — the owner's words are the detail.
@@ -252,6 +270,17 @@ export function FlowFace({transport, location, presentation = 'device', openLink
       letGo(text)
       draftBasis.current = undefined
       keptBasis.current = undefined
+      // The owner holds the bytes sent: the page stays in its frame — an edit typed while the save was in flight stays in it, the next
+      // draft (autosave saves while you write) — and the page as saved is the new basis. An owner that holds something else is read again.
+      if (result.revision && !result.current) {
+        setInstance({...instance, html: content, revision: result.revision, doc})
+        setRevision(result.revision)
+        baselineText.current = text
+        return
+      }
+      // The owner holds other bytes: its page replaces this one, as a Re-read's does (a read of this page is not the new basis).
+      frameGeneration.current++
+      setFace(undefined)
       baselineText.current = undefined
       setBaselined(false)
       await load()
@@ -266,6 +295,10 @@ export function FlowFace({transport, location, presentation = 'device', openLink
   // owner's own change (a title written from Clip view, an entry appended by the Flow device) read as a draft. Re-reading is how
   // the person sets a draft aside (the page family's refusals say "save or re-read them first"), so the draft fact clears too.
   const reread = useCallback(() => {
+    // A new page: the old one leaves the frame until the owner's stands in it (WebKit answers a read from the old page until a new srcdoc
+    // commits), and a read of it still in flight is dropped.
+    frameGeneration.current++
+    setFace(undefined)
     baselineText.current = undefined
     draftBasis.current = undefined
     keptBasis.current = undefined
@@ -275,6 +308,9 @@ export function FlowFace({transport, location, presentation = 'device', openLink
     setNotice(undefined)
     setBaselined(false)
     setDirty(false)
+    // The outcome of a save of the draft set aside goes with it: a stale or conflicting one no longer holds autosave (VS Code: a revert
+    // ends a document's conflict and error), as the Being's and the Thing's Re-read already clears it.
+    setSave(undefined)
     void load(true)
   // eslint-disable-next-line react-hooks/exhaustive-deps -- `load` follows the location this lets go of
   }, [load])
@@ -284,14 +320,18 @@ export function FlowFace({transport, location, presentation = 'device', openLink
     setDirty(true)
   }, [revision])
 
-  // The page announces intent only through the island read; a draft exists
-  // when the host has taken a read and the island differs from the owner's
-  // last known content. The bridge is read-only by construction — the host
-  // never pushes content into the sandbox.
+  // What the page holds reaches the host only through the island read (the
+  // page tells that an edit happened, never what: document-edit.js); a draft
+  // exists when the host has taken a read and the island differs from the
+  // owner's last known content. The bridge is read-only by construction — the
+  // host never pushes content into the sandbox. The poll keeps the draft fact
+  // standing between edits; autosave reads it at the pause after each.
   const refreshDraftStanding = useCallback(async () => {
     if (!instance || !face || pending) return
+    const generation = frameGeneration.current
     try {
       const doc = await captureIsland()
+      if (generation !== frameGeneration.current) return
       if (baselineText.current === undefined) {
         baselineText.current = JSON.stringify(doc)
         setBaselined(true)
@@ -311,6 +351,19 @@ export function FlowFace({transport, location, presentation = 'device', openLink
       if (unanswered.current === SILENT_POLLS && baselineText.current === undefined) setNotice('The Flow\'s form has not started in this window: its own scripts did not answer the host\'s read, so nothing is drawn and nothing can be saved.')
     }
   }, [captureIsland, face, instance, markDraft, pending, keepHeld])
+  /** The draft fact now, for autosave's read at the pause. */
+  const dirtyNow = useRef(dirty)
+  dirtyNow.current = dirty
+  /** Autosave's read at the pause (useAutosave): the island against the basis, a draft marked and kept as the poll keeps it; true when the
+   * page holds one. Before the form's first answer there is no basis to tell a draft from, so nothing is saved. */
+  const settle = useCallback(async () => {
+    if (!instance || !face || baselineText.current === undefined) return false
+    const generation = frameGeneration.current
+    const text = JSON.stringify(await captureIsland())
+    if (generation !== frameGeneration.current) return false
+    if (text !== baselineText.current) { markDraft(); keepHeld(text); return true }
+    return dirtyNow.current
+  }, [captureIsland, face, instance, markDraft, keepHeld])
   const unanswered = useRef(0)
   /** Silent first reads before the face says the form never started: 7.5 s, as when it was asked every 2.5 s. */
   const SILENT_POLLS = 7500 / FLOW_FIRST_READ_MS
@@ -374,6 +427,8 @@ export function FlowFace({transport, location, presentation = 'device', openLink
   useEffect(() => () => withdrawDocument(key), [key])
   // ⌘S pressed inside the page is this Save (§10.9, §17.8), not the form's portable copy.
   useSaveKey(frame, standing.save)
+  // Autosave (§17.8): this same Save a second after you stop, held while a save stands stale, in conflict or refused.
+  const autosave = useAutosave(frame, {settle, save: standing.save ? saveToOwner : undefined, pending, dirty, held: autosaveHeldOf(save)})
   // Before the pane closes (or splits, or moves), the page is read once more and its draft kept; a page as read lets any kept one go.
   useDraftKeeping(inPane ? paneId : undefined, async () => {
     if (!instance || !face || pending) return
@@ -398,6 +453,7 @@ export function FlowFace({transport, location, presentation = 'device', openLink
       {inPane ? <div className="document-pane-head" data-document-head="flow">
         <span className="document-pane-form">Flow</span>
         <span className="document-pane-state" role="status" aria-live="polite">{revision ? `r${revisionShort(revision)} · ` : ''}{standing.state}</span>
+        <AutosaveGlyph glyph={autosave.glyph} />
         <span className="document-pane-acts">
           <button type="button" data-action="save" disabled={!standing.save} onClick={() => standing.save?.()}
             data-i="Save to Central|The owner's revision-checked write of the Flow as it stands in its pane.">Save</button>
@@ -412,6 +468,7 @@ export function FlowFace({transport, location, presentation = 'device', openLink
             ? <SaveOutcomeChip outcome={save.outcome} detail={save.detail}/>
             : <span className="inhabitant-quiet">{pending ? 'waiting for the native operation…' : 'no save attempted'}</span>}
         </span>
+        <AutosaveGlyph glyph={autosave.glyph} />
       </div>}
       {failure && <p className="inhabitant-device-fault" role="alert">Flow document unavailable: {failure}</p>}
       {notice && <p className="inhabitant-device-notice" role="status">{notice}</p>}

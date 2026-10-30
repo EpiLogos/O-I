@@ -152,6 +152,12 @@
 .central-document-pane .document-pane-form { text-transform: uppercase; white-space: nowrap }
 .central-document-pane .document-pane-state { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; letter-spacing: .02em; text-align: right }
 .central-document-pane .document-pane-acts { flex: none; display: flex; gap: 6px }
+/* Autosave's glyph beside the save state (§17.4 "saved, saving or held"; central/documents/AutosaveGlyph.tsx), as the Canvas draws its own:
+   saved a dot, saving a ring, held the accent. */
+.document-autosave-glyph { flex: none; display: inline-block; width: 6px; height: 6px; border-radius: 50%; box-sizing: border-box; background: currentColor;
+  border: 1px solid currentColor; opacity: .55 }
+.document-autosave-glyph[data-save-state="saving"] { background: transparent; opacity: .8 }
+.document-autosave-glyph[data-save-state="held"] { background: var(--accent); border-color: var(--accent); opacity: 1 }
 .central-document-pane .document-pane-acts button { height: 20px; min-height: 0; padding: 0 8px; font: 10.5px/1 var(--oi-font-sans); letter-spacing: .02em; color: var(--pmid);
   background: transparent; border: 1px solid currentColor; border-radius: 2px; cursor: pointer }
 .central-document-pane .document-pane-acts button:disabled { opacity: .4; cursor: default }

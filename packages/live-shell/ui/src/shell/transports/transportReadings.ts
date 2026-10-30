@@ -15,6 +15,7 @@ import type {TransportBindings} from '../../frame/transport/slots'
 import {civilDateOfDayRef} from '../../central/centralVertical'
 import {DIE_POSITIONS, dieFaceLabel, dieFaceOf} from '../../central/devices/dayDie'
 import {revisionShort} from '../../central/documents/documentDoor'
+import {AUTOSAVE_DELAY_MS, nextSaveTiming, saveTimingWords, type AutosaveSetting, type SaveTiming} from '../../central/documents/autosave'
 
 export interface Readout {value: string; title: string}
 
@@ -218,6 +219,8 @@ export function centralBindings(input: {
   document?: {form: string; title: string; state: string; revision?: string; packet?: readonly {readonly chars: number}[]} | null
   /** The face the Day shows where a pane holds it open (documentDoor.ts useDayInPane), which the owner holds at its next Save. */
   face?: number
+  /** Autosave, the one setting for Central's pages (central/documents/autosave.ts), and its two turns: the Autosave and Save timing slots. */
+  autosave?: {setting: AutosaveSetting; set: (on: boolean) => void; time: (timing: SaveTiming) => void}
 }): TransportBindings {
   const read = dayDieOf(input.ground, input.groundError)
   const die = read.state === 'ready' && input.face !== undefined ? {...read, face: input.face} : read
@@ -241,6 +244,23 @@ export function centralBindings(input: {
     ...(sized.scale ? {scale: {readout: sized.scale}} : {}),
     ...(carrier ? {rate: {readout: carrier}} : {}),
     ...(input.document ? {cpu: {readout: documentLoad(input.document)}} : {}),
+    ...(input.autosave ? autosaveSlots(input.autosave) : {}),
+  }
+}
+
+/** Central's Autosave and Save timing (the Metronome and Quantize slots; §17.8 Transport "Saves as you go", "Sets when a save lands"): the
+ * one setting for Central's pages, turned here as the Document's Autosave turns it. Each page saves through its own Save. */
+export function autosaveSlots(autosave: {setting: AutosaveSetting; set: (on: boolean) => void; time: (timing: SaveTiming) => void}): TransportBindings {
+  const {setting} = autosave
+  const when = saveTimingWords(setting.timing)
+  const next = saveTimingWords(nextSaveTiming(setting.timing))
+  return {
+    metro: {lit: setting.on, press: () => autosave.set(!setting.on),
+      title: setting.on
+        ? `Autosave — on: a Central page saves ${when.words}, through its own Save (after VS Code's files.autoSave, ${AUTOSAVE_DELAY_MS} ms). Press to turn it off.`
+        : 'Autosave — off: a Central page saves only when you press Save. Press to turn it on.'},
+    quantize: {readout: {value: when.face, title: `Save timing — a save lands ${when.words}.`}, press: () => autosave.time(nextSaveTiming(setting.timing)),
+      title: `Save timing — a save lands ${when.words}${setting.on ? '' : ' once Autosave is on (Autosave is off)'}. Press for ${next.words}.`},
   }
 }
 

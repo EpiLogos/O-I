@@ -33,6 +33,7 @@ import {kernelOp, kernelRead} from '../../../../../../desktop/cradle/src/kernel/
 import {CONTEMPLATE_FLOW_ACTION, PC_ACCEPT_ACTION, PC_INSPECT_ACTION, PC_PREVIEW_ACTION, PC_DOCS_ENSURE_ACTION, PC_DOCS_INSPECT_ACTION, PC_TIER_RELATE_ACTION, acceptInput, relateInput,
   lastKeptThought, type FlowThought, type ThoughtHand, type WorkspaceGround} from './pageGround'
 import {useHeldRead, useOwnerOp} from '../../owners/ownerCall'
+import {useAutosaveSetting} from '../documents/useAutosave'
 
 /** The Day device's document, as useDayDevice reads it (CentralDevices.tsx). */
 export interface DayDocumentReading {
@@ -270,6 +271,8 @@ export function usePageDevices(transport: KernelTransportStatus, day: DayDocumen
   const roster = useRosterAgents(transport)
   useSyncExternalStore(subscribeHolds, holdsVersion, holdsVersion)
   const version = holdsVersion()
+  // Autosave is one setting for Central's pages (autosave.ts): the Document reads it, so a turn of it re-binds the Document.
+  const autosaveOn = useAutosaveSetting().on
   const location = doc?.form === 'Flow' ? doc.location ?? null : null
   const flow = useFlowPage(transport, location, doc?.revision ?? null)
   // The reached Day: the Day device's own document, or another the Day face named on the door (read here by that name).
@@ -346,8 +349,8 @@ export function usePageDevices(transport: KernelTransportStatus, day: DayDocumen
       page: {save: doc.save, location, dirty: reached.dirty},
       refresh: refreshFlow,
     }
-    // The holds' version re-binds the view's own keys; `heldOf` reads them inside the builders.
+    // The holds' version re-binds the view's own keys; `heldOf` reads them inside the builders. So does the autosave setting.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [doc, reached, material, agents, current, switchMode, rename, setLayout, location, transport, refreshFlow, book, version, thought, ground, world, folders])
+  }, [doc, reached, material, agents, current, switchMode, rename, setLayout, location, transport, refreshFlow, book, version, thought, ground, world, folders, autosaveOn])
 }
 

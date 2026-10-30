@@ -264,6 +264,11 @@ export interface ResearchInstrumentsHost {
  pageMembers?:(delta:number)=>Promise<unknown>;
  sceneMaterial:(sceneId:string)=>Scene;
  material:(sceneId:string,action:ResearchMaterialAction)=>Promise<void>;
+ /** OPTIONAL — the Canvas's Autosave (DLW §17.4; app.ts commitResearch): whether an edit stands held in the working draft, unsaved; whether
+  * edits save as they land; and the commit of what was held. Undeclared hosts save as they land. */
+ held?:()=>boolean;
+ autosave?:()=>boolean;
+ commitHeld?:()=>Promise<void>;
  /** lane-1 A3–A4 — sets or clears one connector's presentation record by native edge id (null clears). OPTIONAL: when the host does not supply it the connector kind, label and side are read but not editable. */
  connector?:(sceneId:string,edgeId:string,value:ResearchConnector|null)=>Promise<void>;
  inspectSubject:(ref:string,context?:{node?:unknown;relationField?:unknown;anchor?:unknown})=>void;
@@ -614,8 +619,9 @@ host.tools.append(saveGlyph);
    const done:Promise<string|null>=mutations.catch(()=>{}).then(async()=>{
     if(destroyed||!host.nativeView()||nativeCanvas(host.nativeView()!,host.sceneId()).key!==key)throw new Error('The selected native composition changed; the queued edit was not applied');
     materialInFlight++;saveState('saving');
-    try{await action();saveState('saved');}finally{materialInFlight--;}
-    if(currentKey===key&&!destroyed){message(typeof notice==='function'?notice():notice??'Saved');if(lens==='m1'){const view=host.nativeView();if(view&&host.sceneId()===canvas.sceneId){const updated=nativeCanvas(view,host.sceneId());render(canvasNode(updated,state,epoch));}else if(refresh||deferredRefresh)await load('m1');}}
+    // An edit the host holds (Autosave off) stands on the board, unsaved: the glyph holds.
+    try{await action();saveState(host.held?.()?'held':'saved');}finally{materialInFlight--;}
+    if(currentKey===key&&!destroyed){message(host.held?.()?'Held, not saved: Autosave is off.':typeof notice==='function'?notice():notice??'Saved');if(lens==='m1'){const view=host.nativeView();if(view&&host.sceneId()===canvas.sceneId){const updated=nativeCanvas(view,host.sceneId());render(canvasNode(updated,state,epoch));}else if(refresh||deferredRefresh)await load('m1');}}
     if(!materialInFlight){const pending=deferredRefresh;deferredRefresh=false;if(pending&&lens&&currentKey!==key)await load(lens);}
     return null;
    }).catch(error=>{saveState('held');const said=error instanceof Error?error.message:String(error);if(currentKey===key&&!destroyed)message(said);return said;});
@@ -1481,7 +1487,7 @@ host.tools.append(saveGlyph);
      const material=host.sceneMaterial(sceneId).research;
      const selected=state.multiSelect?.size?[...state.multiSelect]:state.selectedNode?[state.selectedNode]:[];
      return {canvas:canvasReadingOf(canvas,material,{viewport:state.canvas??captureCanvas?.(),pane:{width:body.clientWidth,height:body.clientHeight},selected,selectedLine:state.selectedEdge,
-      drawing:state.drawing,erasing:state.erasing,lasso:state.lassoOn,snap:state.snapToGrid},
+      drawing:state.drawing,erasing:state.erasing,lasso:state.lassoOn,snap:state.snapToGrid,autosave:host.autosave?.()},
       nodeId=>{const viewId=canvas.occurrences.get(nodeId);return viewId?material?.cards[viewId]?.type:undefined;})};
     }
     if(lens==='m2'&&presentedTimeline&&presentedTimeline.sceneId===host.sceneId()){
@@ -1493,6 +1499,18 @@ host.tools.append(saveGlyph);
     }
    }catch{/* nothing is announced rather than a wrong board */}
    return {};
+  },
+  /** lane AJ: the Canvas's Autosave turned (DLW §17.4; app.ts commitResearch). On again, what was held is committed through the edits'
+   * own queue — the glyph saving, then saved or held; off, the glyph holds while an edit stands unsaved. */
+  async setAutosave(on:boolean){
+   if(!on||!host.held?.()){saveState(host.held?.()?'held':'saved');return;}
+   const done=mutations.catch(()=>{}).then(async()=>{
+    saveState('saving');
+    try{await host.commitHeld?.();saveState(host.held?.()?'held':'saved');message('Saved');}
+    catch(error){saveState('held');message(error instanceof Error?error.message:String(error));throw error;}
+   });
+   mutations=done.catch(()=>{});
+   await done;
   },
   /** lane W4-Technē: the Canvas camera, set through the canvas's own fly (the overview's own path, CanvasNavigationOverview onCamera). */
   setCamera(camera:{cx:number;cy:number;zoom:number}){

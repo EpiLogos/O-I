@@ -757,7 +757,8 @@ test('(b) every key each design reads is an owner reading, absent with a reason,
   // The Canvas carries the Light page (DLW §17.4, "The Light page", which took in §17.10's device): its controls are Light's, refused on
   // Light's binding, which the Canvas's binding carries. The manual's Canvas settings that no binding carries yet are named here, so that no
   // other control goes unchecked.
-  const CANVAS_WAITING = ['tool', 'snap', 'shape', 'relation', 'autosave', 'label']
+  // REPLACED (#741, lane AJ): 'autosave' left this list — the Canvas's Autosave is the frame's own act now (aj741-autosave.test.mjs).
+  const CANVAS_WAITING = ['tool', 'snap', 'shape', 'relation', 'label']
   // The Knowledge graph's View and Standing floor (DLW §17.3): the manual's settings that graphBinding does not carry yet. (#772: Sessions,
   // reach.closed, is the hand's own now — knowledge-graph-reach.test.mjs.)
   const GRAPH_WAITING = ['view', 'floor']

@@ -19,7 +19,12 @@ import {useCallback, useContext, useEffect, useRef, useState} from 'react'
  *
  * The page's own internal Save keeps its meaning (a portable HTML copy inside the sandbox); only the head's Save writes to the owner, and
  * ⌘S pressed inside the page is that Save (useSaveKey). A draft is never dropped when the pane closes: it is kept on this device and the
- * page comes back with it, named, until a save is acknowledged or Re-read sets it aside (central/documents/keptDrafts.ts). */
+ * page comes back with it, named, until a save is acknowledged or Re-read sets it aside (central/documents/keptDrafts.ts).
+ *
+ * Autosave (DLW §17.8; central/documents/autosave.ts): the page tells the face each edit (document-edit.js, in the frame), and a second
+ * after the last one the face reads its island once and, when it holds a draft, runs this same Save. A stale, conflicting or refused save
+ * holds autosave, with its reason, until Save or Re-read; the glyph by the save state shows saved, saving or held. A save the owner takes
+ * and reads back as sent leaves the page in its frame, so an edit made while it was in flight stays, the next draft. */
 import {readFile} from '../../../../../desktop/cradle/src/files/client'
 import {saveDocumentPayload, type DocumentSaveOutcome} from '../../../../../desktop/cradle/src/document/hostSave'
 import {documentScripts, useDocumentFrame, useDocumentHostRead, type FrameIsland} from '../../../../../desktop/cradle/src/document/frame'
@@ -30,6 +35,9 @@ import {DocumentPaneContext, documentStateWords, publishDocument, reachedDocumen
 import {classifySaveFailure, savedOutcome, unchangedOutcome, type SaveRouterReading} from './documentDeviceModel'
 import {keepDraft, keptDraftMoved, keptDraftNotice, keptDraftOf, keptDraftRefusal, releaseKeptDraft, useDraftKeeping} from '../central/documents/keptDrafts'
 import {useSaveKey} from '../central/documents/useSaveKey'
+import {useAutosave} from '../central/documents/useAutosave'
+import {autosaveHeldOf} from '../central/documents/autosave'
+import {AutosaveGlyph} from '../central/documents/AutosaveGlyph'
 import './inhabitantDevices.css'
 
 /** The message a page sends its host when a link in it is followed (the page templates' runtime: oi-beings.html, oi-things.html, and
@@ -152,7 +160,13 @@ export function PageFace({transport, location, kind, openLink}: DocumentPageFace
       setSave(outcomeReading(result.outcome))
       if (result.outcome.state === 'saved' || result.outcome.state === 'unchanged') {
         letGo(text); keptBasis.current = undefined
-        setDirty(false); baseline.current = undefined; setNotice(undefined); await load()
+        setDirty(false); setNotice(undefined)
+        // The owner holds what was sent, read back: the page stays in its frame (an edit made while the save was in flight stays, the next
+        // draft) and the island as saved is the new basis. A save not read back as sent reads the page again.
+        if (result.reading && (result.outcome.state === 'unchanged' || result.outcome.readback === 'verified')) {
+          setReading(result.reading); baseline.current = text; return
+        }
+        baseline.current = undefined; await load()
       } else if (result.outcome.state === 'stale' || result.outcome.state === 'conflict') {
         keepHeld(text)
         setNotice('The page moved behind this draft. Re-read to see it; your edits stay in the pane until you do — nothing was overwritten.')
@@ -166,6 +180,23 @@ export function PageFace({transport, location, kind, openLink}: DocumentPageFace
     baseline.current = undefined; keptBasis.current = undefined; letGo()
     setDirty(false); setSave(undefined); setNotice(undefined); void load()
   }, [load, letGo])
+
+  /** The draft fact now, for autosave's read at the pause. */
+  const dirtyNow = useRef(dirty)
+  dirtyNow.current = dirty
+  /** Autosave's read at the pause (useAutosave): the island against the baseline, a draft marked and kept as the poll keeps it; true when
+   * the page holds one. Before the poll's first read the basis is the page as its owner holds it, read as a payload (the page's own boot
+   * may write it out again): an edit made before that first read is a draft, never the baseline. */
+  const settle = useCallback(async () => {
+    if (!face || !reading) return false
+    const text = await island()
+    if (baseline.current === undefined) {
+      const owner = islandSpan(reading.content, 'ql-doc')?.text
+      if (owner === undefined || sameDocumentPayload(text, owner)) { baseline.current = text; return false }
+    } else if (text === baseline.current) return dirtyNow.current
+    setDirty(true); keepHeld(text)
+    return true
+  }, [face, reading, island, keepHeld])
 
   // The draft fact: the island as first read is the baseline; a later read that differs is a draft. Absence of an answer is not one.
   useEffect(() => {
@@ -204,6 +235,8 @@ export function PageFace({transport, location, kind, openLink}: DocumentPageFace
   useEffect(() => () => withdrawDocument(key), [key])
   // ⌘S pressed inside the page is this Save (§10.9, §17.8), not the template's portable copy.
   useSaveKey(frame, standing.save)
+  // Autosave (§17.8): this same Save a second after you stop, held while a save stands stale, in conflict or refused.
+  const autosave = useAutosave(frame, {settle, save: standing.save ? saveToOwner : undefined, pending, dirty, held: autosaveHeldOf(save)})
   // Before the pane closes (or splits, or moves), the page is read once more and its draft kept; a page as read lets any kept one go.
   useDraftKeeping(paneId, async () => {
     if (!reading || !face || pending) return
@@ -220,6 +253,7 @@ export function PageFace({transport, location, kind, openLink}: DocumentPageFace
     <div className="document-pane-head" data-document-head={kind}>
       <span className="document-pane-form">{form}</span>
       <span className="document-pane-state" role="status" aria-live="polite">{reading?.revision ? `r${revisionShort(reading.revision)} · ` : ''}{standing.state}</span>
+      <AutosaveGlyph glyph={autosave.glyph} />
       <span className="document-pane-acts">
         <button type="button" data-action="save" disabled={!standing.save} onClick={() => standing.save?.()}
           data-i={`Save to Central|The owner's revision-checked write of the ${form} as it stands in its pane.`}>Save</button>

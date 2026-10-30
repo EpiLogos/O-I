@@ -19,6 +19,12 @@
  *      `knowledge history` answers through the kernel, and `aikit knowledge forget here` forgets one item in your world's ground and
  *      names that world; a world Central does not disclose is refused before AIKit is asked. On screen it is UNWALKED: a scratch world
  *      gives AIKit nothing to find, so no item is counted to forget (lane AG's OPEN).
+ * Lane AJ (O-I #741) — Autosave (§17.8 "Saves a short time after you stop"; §17.4 "A small glyph shows saved, saving or held"):
+ *   I. On (the default): typed in the Flow's page, a key at a time, then a pause — the glyph goes saving → saved and Central holds the
+ *      edit, written a second after the last key and never while the keys came, with no Save pressed. Off (the transport's Autosave):
+ *      typed, and nothing is written; the glyph stands held. (B, E, F and G then walk with Autosave Off: they are about a draft that
+ *      stands.) A moved document, Autosave On again: the edit stands held with its reason, Central keeps the other hand's bytes, and
+ *      nothing more is tried until Re-read sets the draft aside.
  *
  * Run: OI_WALK_BRIDGE=<path to walk-bridge> node tests/af741-central-editor.browser.mjs [--evidence <dir>] [--engines chromium,webkit]
  * Nothing is written outside the scratch folders it makes (the Central root, OI_HOME and HOME of every owner it starts).
@@ -159,6 +165,13 @@ async function walk(name) {
     if (body.includes(flowPath.split('/').pop())) ops.push(`${Date.now() - began}ms ${body.slice(0, 160)}`)
   })
   mark = what => ops.push(`${Date.now() - began}ms ── ${what}`)
+  // Every write of the Flow the page asks Central for, with when (lane AJ: autosave writes a second after the last key, never during them).
+  const writes = []
+  page.on('request', request => {
+    if (!request.url().endsWith('/op') || request.method() !== 'POST') return
+    const body = request.postData() ?? ''
+    if (body.includes('"file_operation"') && body.includes(flowPath.split('/').pop()) && body.includes('"write"')) writes.push(Date.now())
+  })
   try {
     await page.goto(site.url, {waitUntil: 'domcontentloaded', timeout: 90000})
     await page.waitForSelector('.transport', {timeout: 90000})
@@ -280,6 +293,66 @@ async function walk(name) {
       assert.equal(shown, true, 'every pane stands again')
     })
 
+    // I. Autosave, On (the default): the glyph's states as they come, read from the page. Both engines walk the one Flow, so what each
+    // types is its own (`-auto<engine>`), never a word the other left there.
+    const glyph = flowPane.locator('.document-autosave-glyph').first()
+    const watchGlyph = () => page.evaluate(() => {
+      const el = document.querySelector('.central-document-pane[data-central-document="flow"] .document-autosave-glyph')
+      window.__ajGlyph = [el?.dataset.saveState]
+      window.__ajGlyphWatch?.disconnect()
+      window.__ajGlyphWatch = new MutationObserver(() => { const now = document.querySelector('.central-document-pane[data-central-document="flow"] .document-autosave-glyph')?.dataset.saveState; if (now !== window.__ajGlyph.at(-1)) window.__ajGlyph.push(now) })
+      window.__ajGlyphWatch.observe(document.querySelector('.central-document-pane[data-central-document="flow"]'), {subtree: true, attributes: true, attributeFilter: ['data-save-state']})
+    })
+    const glyphSeen = () => page.evaluate(() => window.__ajGlyph ?? [])
+    await check('I: Autosave On — typed a key at a time, then a pause: the glyph goes saving → saved, and Central holds the edit, written after the pause', async () => {
+      assert.equal(await page.locator('[data-slot="metro"]').first().getAttribute('data-light'), 'on', 'the transport\'s Autosave stands lit: On by default')
+      assert.equal(await glyph.getAttribute('data-save-state'), 'saved')
+      await watchGlyph()
+      await flowFrame.locator('[aria-label="Title"]').first().click()
+      await page.keyboard.press('End')
+      const firstWrite = writes.length
+      // When the page last took an input, by its own clock (the walk's own clock reads after Playwright's wait between keys).
+      await (await flowFrameObject())?.evaluate(() => { window.addEventListener('input', () => { window.__ajLastInput = Date.now() }, true) })
+      // A key every 250 ms: under the second the pause needs, so nothing may be written while the keys come.
+      await page.keyboard.type(`-auto${name}`, {delay: 250})
+      const typedWrites = writes.length - firstWrite
+      for (let i = 0; i < 150 && writes.length === firstWrite; i++) await page.waitForTimeout(100)
+      await page.waitForFunction(() => (window.__ajGlyph ?? []).at(-1) === 'saved' && (window.__ajGlyph ?? []).includes('saving'), undefined, {timeout: 15000})
+      const lastKey = await (await flowFrameObject())?.evaluate(() => window.__ajLastInput)
+      assert.ok(typeof lastKey === 'number', 'the page took the keys')
+      assert.equal(typedWrites, 0, 'nothing was written while the keys came')
+      const wrote = writes.slice(firstWrite)
+      assert.equal(wrote.length, 1, `one write, after the pause (${wrote.length})`)
+      assert.ok(wrote[0] - lastKey >= 900, `written ${wrote[0] - lastKey} ms after the last key: the pause (1000 ms, VS Code's afterDelay)`)
+      assert.ok((await readFlow()).content.includes(`-auto${name}`), 'Central holds the edit')
+      assert.equal(await page.locator(`[data-surface-id="${ids.flow}"]`).first().getAttribute('data-dirty'), 'false', 'no draft stands on the tab')
+      const seen = await glyphSeen()
+      return `glyph ${seen.join(' → ')}; written ${wrote[0] - lastKey} ms after the last key; "${await flowPane.locator('.document-pane-state').textContent()}"`
+    })
+    await page.screenshot({path: join(evidence, `${name}-06-autosaved.png`)})
+    await check('I: Autosave Off (the transport\'s Autosave) — typed, and nothing is written; the glyph stands held', async () => {
+      await page.locator('[data-slot="metro"]').first().click()
+      await page.waitForFunction(() => document.querySelector('[data-slot="metro"]')?.getAttribute('data-light') === 'off', undefined, {timeout: 5000})
+      const stored = await page.evaluate(() => localStorage.getItem('oi-central.autosave.v1'))
+      assert.match(String(stored), /"on":false/, 'this device keeps the setting')
+      await flowFrame.locator('[aria-label="Title"]').first().click()
+      await page.keyboard.press('End')
+      const before = writes.length
+      await page.keyboard.type(`-held${name}`, {delay: 120})
+      await page.waitForTimeout(3000)
+      assert.equal(writes.length, before, 'no write: Autosave is off')
+      assert.ok(!(await readFlow()).content.includes(`-held${name}`), 'Central does not hold the edit')
+      assert.equal(await glyph.getAttribute('data-save-state'), 'held')
+      // Held is drawn in the accent, as the Canvas draws its own: a filled dot, never the saving ring (the first walk saw a ring: a theme-only token).
+      const paint = await glyph.evaluate(el => getComputedStyle(el).backgroundColor)
+      assert.notEqual(paint, 'rgba(0, 0, 0, 0)', `held is filled (${paint})`)
+      const words = await glyph.getAttribute('aria-label')
+      assert.match(words, /Autosave is off/)
+      await page.waitForFunction(id => document.querySelector(`[data-surface-id="${id}"]`)?.dataset.dirty === 'true', ids.flow, {timeout: 5000})
+      return `${words}; the tab marks the draft`
+    })
+    await page.screenshot({path: join(evidence, `${name}-07-autosave-off.png`)})
+
     // B. the draft on the tab, and the owner's Save
     await check('B: a draft in the Flow marks its pane\'s tab', async () => {
       await flowFrame.locator('[aria-label="Title"]').first().click()
@@ -332,8 +405,18 @@ async function walk(name) {
       await flowFrame.locator('[data-entry]').first().click()
       await page.keyboard.press('Meta+f')
       await flowPane.locator('.document-find input').waitFor({timeout: 5000})
+      // The line has the focus before the keys go (as C waits): WebKit, walked alone, gave ⌘A and the first letter to the page.
+      await page.waitForFunction(() => document.activeElement?.closest('.document-find') != null, undefined, {timeout: 3000})
       await page.keyboard.press('Meta+a'); await page.keyboard.type('stone')
-      await page.waitForFunction(() => /^\d+ of \d+$/.test(document.querySelector('.document-find [data-find-count]')?.textContent ?? ''), undefined, {timeout: 5000})
+      // Say what the line and the page showed when a count did not come (lane AJ: F failed only with WebKit walking alone).
+      const counted = async (what, run) => {
+        try { await run() } catch (error) {
+          const line = await page.evaluate(() => ({count: document.querySelector('.document-find [data-find-count]')?.textContent ?? null,
+            words: document.querySelector('.document-find input')?.value ?? null, focus: document.activeElement?.tagName ?? null}))
+          throw new Error(`${what}: ${error.message.split('\n')[0]}; line ${JSON.stringify(line)}; marks ${JSON.stringify(await marksNow().catch(e => String(e)))}`)
+        }
+      }
+      await counted('the first count', () => page.waitForFunction(() => /^\d+ of \d+$/.test(document.querySelector('.document-find [data-find-count]')?.textContent ?? ''), undefined, {timeout: 5000}))
       const before = (await marksNow())?.all ?? 0
       // The owner's page moves (another editor writes it): one more stone in its title.
       const held = await readFlow()
@@ -355,7 +438,7 @@ async function walk(name) {
       // The moved page holds more stones than the one it replaced (every copy of the title the owner keeps moved): marked there, the line
       // re-armed on it; a line left dead would leave the new page unmarked.
       assert.ok(after > before, `the new page marks its matches, the moved title's among them (${before} before, ${after} now)`)
-      await page.waitForFunction(total => document.querySelector('.document-find [data-find-count]')?.textContent?.endsWith(` of ${total}`), after, {timeout: 5000})
+      await counted(`the count of the new page's ${after}`, () => page.waitForFunction(total => document.querySelector('.document-find [data-find-count]')?.textContent?.endsWith(` of ${total}`), after, {timeout: 5000}))
       await page.locator('.document-find input').focus()
       await page.keyboard.press('Escape')
       await flowPane.locator('.document-find').waitFor({state: 'detached', timeout: 5000})
@@ -408,6 +491,51 @@ async function walk(name) {
       await flowFrame.locator('[aria-label="Title"]').first().waitFor({timeout: 30000})
       for (let i = 0; i < 50 && ((await flowFrame.locator('[aria-label="Title"]').first().textContent()) ?? '').includes('unsaved'); i++) await page.waitForTimeout(100)
       assert.ok(!((await flowFrame.locator('[aria-label="Title"]').first().textContent()) ?? '').includes('unsaved'), 'the page shows the Flow as Central holds it')
+    })
+
+    // I. A moved document under Autosave: held, with its reason, and never written over
+    await check('I: Autosave On, the Flow moved behind the page — the edit stands held with its reason, and Central keeps the other hand\'s bytes', async () => {
+      await page.locator('[data-slot="metro"]').first().click()
+      await page.waitForFunction(() => document.querySelector('[data-slot="metro"]')?.getAttribute('data-light') === 'on', undefined, {timeout: 5000})
+      await page.waitForFunction(() => document.querySelector('.central-document-pane[data-central-document="flow"] [data-document-device="ql-flow"]')?.dataset.baselined === 'true', undefined, {timeout: 30000})
+      // Another hand writes the Flow: one more word in its title.
+      const held = await readFlow()
+      const moved = held.content.split('-bykey').join(`-bykey-elsewhere${name}`)
+      assert.notEqual(moved, held.content, 'the walk found the title to move')
+      const wrote = await postOp(bridgeUrl, {op: 'file_operation', location: flowLocation, request: {action: 'write', expected_revision: held.revision, content: moved}}, 30000)
+      assert.ok(wrote?.outcome?.data?.revision, `Central writes the moved page: ${JSON.stringify(wrote).slice(0, 300)}`)
+      const theirs = await readFlow()
+      await flowFrame.locator('[aria-label="Title"]').first().click()
+      await page.keyboard.press('End')
+      await page.keyboard.type(`-mine${name}`)
+      await page.waitForFunction(() => document.querySelector('.central-document-pane[data-central-document="flow"] .document-autosave-glyph')?.dataset.saveState === 'held', undefined, {timeout: 15000})
+      const words = await flowPane.locator('.document-autosave-glyph').first().getAttribute('aria-label')
+      assert.match(words, /conflict|stale/, 'held, with the reason the save was refused')
+      const now = await readFlow()
+      assert.equal(now.revision, theirs.revision, 'Central\'s Flow is as the other hand left it')
+      assert.ok(!now.content.includes(`-mine${name}`), 'nothing was written over it')
+      // Held: nothing more is tried while it stands, however long.
+      const tries = writes.length
+      await flowFrame.locator('[aria-label="Title"]').first().click()
+      await page.keyboard.press('End')
+      await page.keyboard.type('-again')
+      await page.waitForTimeout(2500)
+      assert.equal(writes.length, tries, 'no autosave while held')
+      assert.equal(await flowPane.locator('.document-autosave-glyph').first().getAttribute('data-save-state'), 'held')
+      return words
+    })
+    await page.screenshot({path: join(evidence, `${name}-08-held.png`)})
+    await check('I: Re-read sets the held draft aside, and the glyph stands saved', async () => {
+      await flowPane.locator('button[data-action="reread"]').click()
+      try {
+        await page.waitForFunction(() => document.querySelector('.central-document-pane[data-central-document="flow"] .document-autosave-glyph')?.dataset.saveState === 'saved', undefined, {timeout: 15000})
+      } catch (error) {
+        // Say what the face held when the glyph did not stand saved.
+        const face = await flowPane.locator('[data-document-device="ql-flow"]').evaluate(el => ({dirty: el.dataset.dirty, baselined: el.dataset.baselined, outcome: el.dataset.saveOutcome})).catch(e => String(e))
+        throw new Error(`${error.message.split('\n')[0]}; glyph "${await flowPane.locator('.document-autosave-glyph').first().getAttribute('aria-label')}"; face ${JSON.stringify(face)}; state "${await flowPane.locator('.document-pane-state').textContent()}"`)
+      }
+      await flowFrame.locator('[aria-label="Title"]', {hasText: `elsewhere${name}`}).first().waitFor({timeout: 30000})
+      return await flowPane.locator('.document-pane-state').textContent()
     })
     if (pageErrors.length) step('page errors (not failing the walk)', pageErrors.slice(0, 6).join(' | '))
   } catch (error) {

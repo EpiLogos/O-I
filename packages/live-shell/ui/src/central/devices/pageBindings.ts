@@ -24,6 +24,7 @@ import {civilDayName} from './dayBinding'
 import type {ActionAnswer} from './centralActions'
 import {rootOfDoctor, scaffoldOfPlan} from '../../inhabitants/centralHygieneModel'
 import {civilDateOf, clockOf, headOf, wordsOfHtml, type DayPage, type FlowPage, type PageEntry} from './pageReadings'
+import {autosaveSetting, setAutosave} from '../documents/autosave'
 
 // ---------------------------------------------------------------------------------------------------------------- the wiring
 
@@ -95,6 +96,8 @@ export const DOCUMENT_WIRING: DesignWiring = {
     // D6, the Selection group (§17.8): what a plain selection does and what Answer this reads are the shell's, held for the person.
     selectionAct: 'what a plain selection does (Highlight, Note, To packet, Remember or Answer this): the shell holds it, no owner keeps it',
     packetScope: 'what Answer this reads (the selection, the page, or what the page links): the shell holds it, no owner keeps it',
+    // §17.8 Autosave: one setting for Central's pages on this device, the transport's Autosave too; the save it makes is the face's own.
+    autosave: 'Autosave: the shell holds it for every Central page on this device (central/documents/autosave.ts); On, the hosted face runs its own Save a second after you stop (DocumentInPane.save)',
   },
   refused: {
     template: 'A page keeps the template it opened with; no owner operation changes it from here.',
@@ -102,7 +105,6 @@ export const DOCUMENT_WIRING: DesignWiring = {
     layout: 'A Day or a Flow keeps its template\'s layout; only a Being or a Thing sets its own.',
     pinned: 'Pin is the pane\'s: pin the document\'s tab in its pane.',
     agentWrites: 'No owner holds how agent entries arrive on a page.',
-    autosave: 'The hosted form saves only when you press Save: no owner saves by itself.',
     clear: `Clear empties the page's own packet on the page — ${ON_THE_PAGE}.`,
     // The five passage acts (§17.8): their owners exist — the page's island through the save router, the packet, central.remember /
     // projectcentral.remember through invoke_action, the agent's Answer — but each acts on the selected passage, which never reaches
@@ -124,7 +126,6 @@ export const DOCUMENT_WIRING: DesignWiring = {
     layout: 'The page\'s layout is its template\'s (a Day or a Flow sets none).',
     pinned: 'No owner reports whether the pane is pinned to its page.',
     agentWrites: 'No owner holds how agent entries arrive on a page.',
-    autosave: 'No owner saves a page by itself.',
     // The Thought page's readings: AIKit's Flow cognition, which the Flow device reads (FLOW_WIRING) and the Document does not yet.
     preflight: `Contemplate's preflight: ${NO_DOCUMENT_THOUGHT} invoke_action \`action:contemplate-flow\`, asked bare (AIKit).`,
     thought: `The last thought: ${NO_DOCUMENT_THOUGHT} aikit_read flow-thoughts, or the run this window asked (AIKit).`,
@@ -818,8 +819,9 @@ export function documentValues(id: string, reached: ReachedPage, material: PageM
       values.island = JSON.stringify(material.page.island)
     }
   }
-  // The Selection group's holds start where the manual sets them (§17.8: Selection act Highlight, Packet scope Selection).
-  return withHeld(id, DOCUMENT_WIRING, values, {view: 'page', copied: false, selectionAct: 'highlight', packetScope: 'selection'})
+  // The Selection group's holds start where the manual sets them (§17.8: Selection act Highlight, Packet scope Selection). Autosave is
+  // the one setting as it stands (autosave.ts), never this device's own hold.
+  return withHeld(id, DOCUMENT_WIRING, values, {view: 'page', copied: false, selectionAct: 'highlight', packetScope: 'selection', autosave: autosaveSetting().on})
 }
 
 /** A Flow's own metadata write (central/devices/centralDeviceWrites.ts setFlowMeta), handed in where the reached page is a Flow. */
@@ -856,7 +858,9 @@ export function documentBinding(id: string, reached: ReachedPage, material: Page
     if (!packet || !clipboard) return
     void clipboard(packet).then(() => setHeld(id, 'copied', true), () => setHeld(id, 'copied', false))
   }
-  return {...binding, local: {...binding.local, copy}}
+  // Autosave turns the one setting (§17.8; the transport's Autosave turns the same), not a hold of this device.
+  const autosave = (value: Value | undefined) => { if (typeof value === 'boolean') setAutosave(value) }
+  return {...binding, local: {...binding.local, copy, autosave}}
 }
 
 // ---------------------------------------------------------------------------------------------------------------- the Flow

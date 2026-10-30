@@ -9,7 +9,9 @@
 //  - the packet's size and scope (Key, Scale): AIKit's prepared context through the kernel's encounter op, the read the packet
 //    widget makes (widgets/PacketWidget.tsx:58-80, `nativeContext`), for the conversation the widget holds (agentConversation.ts
 //    `conversationOf`, THE selection or Fizz's own session);
-//  - the machine serving the ground (Rate): the host's configuration (ShellConfigContext, native/application.ts ShellConfig).
+//  - the machine serving the ground (Rate): the host's configuration (ShellConfigContext, native/application.ts ShellConfig);
+//  - Autosave and Save timing (Metronome, Quantize; §17.8): the one autosave setting for Central's pages (central/documents/autosave.ts),
+//    which the slots turn, as the Document's Autosave does — each page then saves through its own Save.
 // The Day is read again when the window returns (focus, visibility) and after the die turns — never polled.
 import {useContext, useEffect, useState} from 'react'
 import {nativeContext, PREPARED_CONTEXT_CHANGED, type PreparedContext} from '../../../../../../desktop/cradle/src/context/nativeContext'
@@ -27,6 +29,8 @@ import {Workspace} from '../workspaceContext'
 import type {UseModeTransport} from '../modeTransports'
 import {centralBindings, dayDieOf} from './transportReadings'
 import {turnDay, useDayInPane, useReachedDocument} from '../../central/documents/documentDoor'
+import {setAutosave, setSaveTiming} from '../../central/documents/autosave'
+import {useAutosaveSetting} from '../../central/documents/useAutosave'
 
 const NO_CARRIER: KernelTransportStatus = {kind: 'unavailable', reason: 'The shell has published no kernel carrier for this reading.'}
 const message = (cause: unknown): string => cause instanceof Error ? cause.message : String(cause)
@@ -100,5 +104,8 @@ export const useCentralTransport: UseModeTransport = ({readouts}) => {
     ).finally(() => { setTurning(false); ground.refresh() })
   } : undefined
   const document = useReachedDocument()
-  return centralBindings({ground: ground.reading, groundError: ground.error, packet, config, transport, readouts, turn, turned, document, ...(shownFace !== null ? {face: shownFace} : {})})
+  // Autosave and Save timing: the one setting for Central's pages, as the Document's Autosave turns it.
+  const autosave = {setting: useAutosaveSetting(), set: setAutosave, time: setSaveTiming}
+  return centralBindings({ground: ground.reading, groundError: ground.error, packet, config, transport, readouts, turn, turned, document, autosave,
+    ...(shownFace !== null ? {face: shownFace} : {})})
 }
