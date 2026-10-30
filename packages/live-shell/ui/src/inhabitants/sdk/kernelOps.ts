@@ -101,6 +101,7 @@ export const KERNEL_OPS = [
   'file_bytes',
   'working_surface_read',
   'working_surface_attachment',
+  'working_surface_input',
   'recording_capability_read',
   'protocol_read',
   'harness_agent_read',

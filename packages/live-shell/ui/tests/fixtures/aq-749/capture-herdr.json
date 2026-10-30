@@ -1,0 +1,64 @@
+{
+ "schema": "oi.working-surface-reading/v1",
+ "agent_session": "agent-session/aq-walk-herdr",
+ "cwd": "/Users/admin/Central",
+ "bindings": [
+  {
+   "space": "session-space/aq-walk",
+   "binding": "working-surface/aq-walk-herdr",
+   "surface": "surface/terminal/main/shell",
+   "provider": "provider/herdr/current",
+   "label": "aq-walk-herdr"
+  }
+ ],
+ "capture": {
+  "schema": "aikit.session-space-working-surface-capture/v1",
+  "space": "session-space/aq-walk",
+  "binding": "working-surface/aq-walk-herdr",
+  "surface": "surface/terminal/main/shell",
+  "agent_session": "agent-session/aq-walk-herdr",
+  "provider": "provider/herdr/current",
+  "plan_name": "aq-walk-herdr",
+  "observed_at_unix_ms": 1793331274085,
+  "capture": {
+   "state": "captured",
+   "native_id": "w2:p1",
+   "format": "ansi",
+   "text": "env HISTFILE=/dev/null PS1=$  sh\r\nroom % env HISTFILE=/dev/null PS1=$  sh\r\n$rm -i /private/tmp/claude-501/aqw/room/scratch.txt\r\nrm: /private/tmp/claude-501/aqw/room/scratch.txt: No such file or directory\r\n$touch /private/tmp/claude-501/aqw/room/scratch.txt; rm -i /private/tmp/claude-501/aqw/room/s\r\ncratch.txt\r\nremove /private/tmp/claude-501/aqw/room/scratch.txt? \r\n",
+   "truncated": false,
+   "agent": {
+    "agent": "claude",
+    "state": "blocked"
+   }
+  },
+  "input": {
+   "state": "accepts"
+  },
+  "inputs": [
+   {
+    "binding": "working-surface/aq-walk-herdr",
+    "by": "agent-session/aq-walk-herdr",
+    "text": "rm -i /private/tmp/claude-501/aqw/room/scratch.txt\r",
+    "bytes": 51,
+    "native_id": "w2:p1",
+    "at_unix_ms": 1793331272863
+   },
+   {
+    "binding": "working-surface/aq-walk-herdr",
+    "by": "agent-session/aq-walk-herdr",
+    "text": "touch /private/tmp/claude-501/aqw/room/scratch.txt; rm -i /private/tmp/claude-501/aqw/room/scratch.txt\r",
+    "bytes": 103,
+    "native_id": "w2:p1",
+    "at_unix_ms": 1793331273223
+   }
+  ]
+ },
+ "attachment": null,
+ "selected": {
+  "space": "session-space/aq-walk",
+  "binding": "working-surface/aq-walk-herdr",
+  "surface": "surface/terminal/main/shell",
+  "provider": "provider/herdr/current",
+  "label": "aq-walk-herdr"
+ }
+}

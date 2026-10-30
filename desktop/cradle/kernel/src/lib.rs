@@ -618,6 +618,16 @@ pub enum KernelOp {
         agent_session: String,
         binding: String,
     },
+    /// The person's keys to one exact room (DLW §17.9 Input: Type), sent by
+    /// AIKit's working-surface owner to the live pane it binds (`aikit
+    /// session-space working-surface input … --by human`): never to a pane
+    /// that is not live, and recorded by AIKit as the person's (by count only).
+    WorkingSurfaceInput {
+        project: String,
+        agent_session: String,
+        binding: String,
+        text: String,
+    },
     RecordingCapabilityRead,
     AgencyRead {
         project: String,
@@ -1613,6 +1623,11 @@ pub enum KernelOpResult {
         outcome: commission::CommissionOutcome,
     },
     WorkingSurfaceReading {
+        document: serde_json::Value,
+    },
+    /// `{schema: oi.working-surface-input/v1, agent_session, selected, input}`:
+    /// AIKit's receipt of the keys it sent (`aikit.session-space-working-surface-input/v1`).
+    WorkingSurfaceInputReceipt {
         document: serde_json::Value,
     },
     RecordingCapability {
@@ -2911,7 +2926,23 @@ impl Kernel {
             agent_session,
             binding,
             attachment,
+            input: None,
         })
+    }
+
+    /// The person's keys to one exact room, prepared as the working-surface
+    /// read is (outside the lock) and sent by AIKit's owner.
+    pub fn prepare_working_surface_input(
+        &mut self,
+        project: &str,
+        agent_session: String,
+        binding: String,
+        text: String,
+    ) -> Result<working_surface::PreparedRead, String> {
+        let mut prepared =
+            self.prepare_working_surface_read(project, agent_session, Some(binding), false)?;
+        prepared.input = Some(text);
+        Ok(prepared)
     }
 
     /// Native host notification after an actual attachment/client release.
@@ -3660,6 +3691,28 @@ impl Kernel {
                     read_scopes: None,
                     receipts: vec![],
                     result: KernelOpResult::WorkingSurfaceReading { document },
+                })
+            }
+            KernelOp::WorkingSurfaceInput {
+                project,
+                agent_session,
+                binding,
+                text,
+            } => {
+                let cwd = self.agent_location((!project.is_empty()).then_some(project.as_str()))?;
+                let project_ref = self.agent_project_ref(&project, &cwd)?;
+                let document = working_surface::input(
+                    &self.agency,
+                    &cwd,
+                    &project_ref,
+                    &agent_session,
+                    &binding,
+                    &text,
+                )?;
+                Ok(KernelOpOutcome {
+                    read_scopes: None,
+                    receipts: vec![],
+                    result: KernelOpResult::WorkingSurfaceInputReceipt { document },
                 })
             }
             KernelOp::ProtocolRead => Ok(KernelOpOutcome {

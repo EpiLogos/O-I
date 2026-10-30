@@ -717,6 +717,9 @@ export type KernelOp =
   | { op: "file_bytes"; location: CentralLocation }
   | {op:"working_surface_read";project:string;agent_session:string;binding?:string}
   | {op:"working_surface_attachment";project:string;agent_session:string;binding:string}
+  // The person's keys to one exact room (DLW §17.9 Input: Type), sent by AIKit's working-surface owner to the live pane it binds and
+  // recorded by it as the person's, by count only (kernel working_surface.rs input → `aikit session-space working-surface input --by human`).
+  | {op:"working_surface_input";project:string;agent_session:string;binding:string;text:string}
   | {op:"recording_capability_read"}
   /** Which contracts the kernel speaks and enforces (oi.kernel-protocol/v1). */
   | {op:"protocol_read"}
@@ -1010,6 +1013,7 @@ export type KernelOpResult =
   | { result:"day_reading";data:unknown }
   | { result:"central_reading";data:unknown }
   | {result:"working_surface_reading";document:unknown}
+  | {result:"working_surface_input_receipt";document:unknown}
   | {result:"recording_capability";document:unknown}
   | {result:"protocol";document:unknown}
   | {result:"harness_agent_reading";binding:string;document:unknown}

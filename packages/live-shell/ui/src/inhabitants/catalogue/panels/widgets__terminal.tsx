@@ -18,8 +18,8 @@
 //   folder      where the shell started; command  what started ('' is your shell); exited  whether it ended; lines  the lines kept
 // Settings, written through the surface that holds the lease: fontSize (points), scrollback (lines), watch (Input: true is Watch only).
 // Settings the Terminal holds: follow (true Follows, false Pinned), wrap (wrap long lines).
-//   driving     keys reach the room now (Input is Type and the room's keyboard is held); keys  what you type, sent to the room
-//               while it drives (a keydown or a paste on the screen, as the terminal's own sequences: keyData)
+//   driving     keys reach the room now (Input is Type, and the room's owner takes keys: AIKit's working-surface input); keys  what
+//               you type, sent to the room while it drives (a keydown or a paste on the screen, as the terminal's own sequences: keyData)
 //   reason      the owner's words for what does not answer (a provider that does not, a takeover it refused)
 // A key the owner has not reported is absent, and the view draws "—" for it.
 import {Band, Chooser, Dial, Display, Folded, Handle, Lamp, Panel, Radio, Readout, Section, TextField, Tile, Toggle, type LightState, type Option} from '../../sdk/panel'

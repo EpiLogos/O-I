@@ -376,6 +376,21 @@ impl Kernel {
                     )
                     .map(Prepared::Working)
             }
+            KernelOp::WorkingSurfaceInput {
+                project,
+                agent_session,
+                binding,
+                text,
+            } => {
+                return self
+                    .prepare_working_surface_input(
+                        project,
+                        agent_session.clone(),
+                        binding.clone(),
+                        text.clone(),
+                    )
+                    .map(Prepared::Working)
+            }
             _ => {}
         }
         if let Some(p) = self.prepare_decision(op)? {
@@ -651,13 +666,19 @@ fn run_prepared(seat: &mut Seat<'_>, op: KernelOp) -> Result<KernelOpOutcome, St
             let done = seat.owner(|| p.execute())?;
             seat.hold(|kernel| kernel.finish_knowledge(done))?
         }
-        Prepared::Working(p) => Ok(KernelOpOutcome {
-            read_scopes: None,
-            receipts: vec![],
-            result: KernelOpResult::WorkingSurfaceReading {
-                document: seat.owner(|| p.execute())?,
-            },
-        }),
+        Prepared::Working(p) => {
+            let input = p.input.is_some();
+            let document = seat.owner(|| p.execute())?;
+            Ok(KernelOpOutcome {
+                read_scopes: None,
+                receipts: vec![],
+                result: if input {
+                    KernelOpResult::WorkingSurfaceInputReceipt { document }
+                } else {
+                    KernelOpResult::WorkingSurfaceReading { document }
+                },
+            })
+        }
         Prepared::Decision(p, as_action) => {
             let receipt = seat.owner(|| p.execute())?;
             seat.hold(|kernel| kernel.finish_decision(receipt, as_action))?
@@ -1657,8 +1678,8 @@ else:
         routine seat_status_read seat_write settings_reveal setup shared_field source_history
         source_returns_read sources_list system_composition_read team_space
         temporal_events_read wiki_projection_read wiki_projection_sources workcell_read
-        workcell_status_read workcell_write working_surface_attachment working_surface_read
-        world_body_read world_browse world_read world_resolve";
+        workcell_status_read workcell_write working_surface_attachment working_surface_input
+        working_surface_read world_body_read world_browse world_read world_resolve";
 
     /// The wire names of every `KernelOp` (lib.rs), as `op_name` spells them.
     fn wire_names() -> Vec<String> {

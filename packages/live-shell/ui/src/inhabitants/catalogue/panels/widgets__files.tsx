@@ -16,9 +16,12 @@
 // The Diff page (manual §23.2, which took in the Diff device of §23.4): the changes not yet committed, and the changes an agent
 // proposes, read before you approve them; Live's nearest is the clip's Notes editor, the material line by line. Its values stand under
 // `diff.` (a binding hosts the page by prefixing the seat's diff binding):
-//   diff.files  [{path, status, adds, dels, patch?, author?}]: the seat's diff (`central.git-diff/v1` DiffFile `new_path`, `status` A, M or
-//               D, `adds`, `dels`, `patch`; kernel op git_diff_read, from HEAD to the working tree). `author` marks a proposed change; no
-//               owner reports proposed changes yet (a consent request carries a tool call, not a patch).
+//   diff.files  [{path, status, adds, dels, patch?, author?, session?}]: the seat's diff (`central.git-diff/v1` DiffFile `new_path`,
+//               `status` A, M or D, `adds`, `dels`, `patch`; kernel op git_diff_read, from HEAD to the working tree), and the changes an
+//               agent proposes, marked by their `author` and `session`: Central's source returns that wait (source_returns_read), each
+//               read through projectcentral.source.return_read and diffed (railBindings.ts proposedFilesOf). The Gateway keeps no pending
+//               patch of its own (a consent request carries a tool call, not a patch).
+//   diff.followed  the selected session (Session: Selected keeps its proposals; the seat's uncommitted changes are no session's).
 //   diff.branch, diff.head  the seat's branch and HEAD (git_repository_read); diff.open the file whose diff is shown.
 // Changes (diff.show: uncommitted · proposed · both), Session (diff.session: selected · all) and Layout (diff.layout: unified · split) are
 // the monitor's own (the renderer holds a layout only for its session: git/diffModel.ts DiffLayout).
@@ -137,14 +140,17 @@ const CHANGES = [{value: 'uncommitted', label: 'Uncommitted', does: 'The changes
   {value: 'both', label: 'Both', does: 'Both kinds of change.'}] as const
 const SESSIONS = [{value: 'selected', label: 'Selected', does: 'The changes of the selected session.'}, {value: 'all', label: 'All', does: 'The changes of every session.'}] as const
 const LAYOUTS = [{value: 'unified', label: 'Unified', does: 'The lines in one column.'}, {value: 'split', label: 'Side by side', does: 'The old lines at the left, the new at the right.'}] as const
-interface Change {readonly path: string; readonly status: string; readonly adds?: number; readonly dels?: number; readonly patch?: string; readonly author?: string}
+interface Change {readonly path: string; readonly status: string; readonly adds?: number; readonly dels?: number; readonly patch?: string; readonly author?: string; readonly session?: string}
 function changesOf(v: V): Change[] | undefined {
   const raw = json<unknown>(v, 'files', undefined)
   if (!Array.isArray(raw)) return undefined
-  const show = strOf(v, 'show') ?? 'both'
+  const show = strOf(v, 'show') ?? 'both', selected = strOf(v, 'session') !== 'all', followed = strOf(v, 'followed')
   return raw.flatMap((e): Change[] => rec(e) && typeof e.path === 'string' ? [{path: e.path, status: String(e.status ?? 'M'), adds: Number.isInteger(e.adds) ? e.adds as number : undefined,
-    dels: Number.isInteger(e.dels) ? e.dels as number : undefined, patch: typeof e.patch === 'string' ? e.patch : undefined, author: typeof e.author === 'string' ? e.author : undefined}] : [])
+    dels: Number.isInteger(e.dels) ? e.dels as number : undefined, patch: typeof e.patch === 'string' ? e.patch : undefined, author: typeof e.author === 'string' ? e.author : undefined,
+    session: typeof e.session === 'string' ? e.session : undefined}] : [])
     .filter(f => show === 'both' || (show === 'proposed' ? f.author !== undefined : f.author === undefined))
+    // Session: the selected session's proposals; a change no session made (the seat's uncommitted) stands under either.
+    .filter(f => !selected || f.session === undefined || followed === undefined || f.session === followed)
 }
 const openChange = (v: V) => { const fs = changesOf(v), o = strOf(v, 'open'); return fs?.find(f => f.path === o) ?? fs?.find(f => f.patch) ?? fs?.[0] }
 const base = (path: string) => path.split('/').pop() ?? path

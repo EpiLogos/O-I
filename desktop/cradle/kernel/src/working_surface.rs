@@ -15,6 +15,8 @@ pub struct PreparedRead {
     pub agent_session: String,
     pub binding: Option<String>,
     pub attachment: bool,
+    /// The person's keys, when this is an input to the room rather than a read.
+    pub input: Option<String>,
 }
 impl PreparedRead {
     pub fn execute(self) -> Result<Value, String> {
@@ -32,6 +34,20 @@ impl PreparedRead {
             &self.project,
             &cwd,
         )?;
+        if let Some(text) = &self.input {
+            let binding = self
+                .binding
+                .as_deref()
+                .ok_or("Keys go to one exact room; name its binding")?;
+            return input(
+                &self.client,
+                &cwd,
+                &project,
+                &self.agent_session,
+                binding,
+                text,
+            );
+        }
         read(
             &self.client,
             &cwd,
@@ -43,14 +59,67 @@ impl PreparedRead {
     }
 }
 
-pub fn read(
+/// The most text one input carries: a paste, not a file transfer (AIKit's own
+/// bound, working_environment_field.rs INPUT_LIMIT_BYTES).
+const INPUT_LIMIT_BYTES: usize = 64 * 1024;
+
+/// Send the person's keys to the one room bound to this session, through
+/// AIKit's working-surface owner (`working-surface input --by human`). The
+/// binding is selected as the read selects it; AIKit's receipt must name the
+/// same space, binding and session, or it is not this room's.
+pub fn input(
     client: &Client,
     cwd: &Path,
     project: &str,
     agent_session: &str,
-    selected: Option<&str>,
-    attachment: bool,
+    binding: &str,
+    text: &str,
 ) -> Result<Value, String> {
+    if text.is_empty() || text.len() > INPUT_LIMIT_BYTES {
+        return Err(format!(
+            "Keys to a room carry between 1 and {INPUT_LIMIT_BYTES} bytes"
+        ));
+    }
+    if text.contains('\0') {
+        return Err("A NUL byte cannot be sent to a room as typed".into());
+    }
+    let chosen = selected_binding(client, cwd, project, agent_session, binding)?;
+    let space = chosen["space"].as_str().expect("space");
+    let document = client.working_surface_input(cwd, space, binding, text)?;
+    if document["schema"] != "aikit.session-space-working-surface-input/v1"
+        || document["agent_session"] != agent_session
+        || document["space"] != space
+        || document["binding"] != binding
+        || document["surface"] != chosen["surface"]
+    {
+        return Err("The owner's input receipt differs from the selected room".into());
+    }
+    Ok(
+        json!({"schema":"oi.working-surface-input/v1","agent_session":agent_session,"selected":chosen,"input":document}),
+    )
+}
+
+/// The session's binding of that exact ref, as the read selects it.
+fn selected_binding(
+    client: &Client,
+    cwd: &Path,
+    project: &str,
+    agent_session: &str,
+    binding: &str,
+) -> Result<Value, String> {
+    let read = bindings_of(client, cwd, project, agent_session)?;
+    read.into_iter()
+        .find(|row| row["binding"].as_str() == Some(binding))
+        .ok_or_else(|| "Selected working surface is no longer bound to this session".into())
+}
+
+/// Every working-surface binding of this session in the project's spaces.
+fn bindings_of(
+    client: &Client,
+    cwd: &Path,
+    project: &str,
+    agent_session: &str,
+) -> Result<Vec<Value>, String> {
     let spaces = client.read_project(cwd, project)?;
     let mut bindings = Vec::new();
     for space in spaces.as_array().ok_or("Native spaces are not an array")? {
@@ -71,6 +140,18 @@ pub fn read(
             bindings.push(json!({"space":space_ref,"binding":reference,"surface":binding["surface"],"provider":binding["provider"],"label":binding["plan"]["name"]}));
         }
     }
+    Ok(bindings)
+}
+
+pub fn read(
+    client: &Client,
+    cwd: &Path,
+    project: &str,
+    agent_session: &str,
+    selected: Option<&str>,
+    attachment: bool,
+) -> Result<Value, String> {
+    let bindings = bindings_of(client, cwd, project, agent_session)?;
     let mut result = json!({"schema":"oi.working-surface-reading/v1","agent_session":agent_session,"cwd":cwd,"bindings":bindings,"capture":null,"attachment":null});
     let rows = result["bindings"].as_array().expect("bindings");
     let chosen = if let Some(reference) = selected {

@@ -47,6 +47,74 @@ export function diffFilesOf(document: unknown): {files: Record<string, Value>[];
   return {files, head: typeof reading.head_sha === 'string' ? reading.head_sha : null, omitted: typeof reading.omitted_files === 'number' ? reading.omitted_files : 0}
 }
 
+/** Two texts as a unified patch (the lines diffed: the common head and foot set aside, the rest by their longest common subsequence),
+ * with three lines of context and a `@@ -a,b +c,d @@` head for each stretch, and the lines added and removed. A middle too large to
+ * diff line by line stands as removed and added whole. Pure. */
+export function unifiedPatchOf(before: string, after: string, context = 3): {patch: string; adds: number; dels: number} {
+  const split = (text: string) => { const lines = text.split('\n'); if (lines[lines.length - 1] === '') lines.pop(); return lines }
+  const a = split(before), b = split(after)
+  let head = 0
+  while (head < a.length && head < b.length && a[head] === b[head]) head++
+  let foot = 0
+  while (foot < a.length - head && foot < b.length - head && a[a.length - 1 - foot] === b[b.length - 1 - foot]) foot++
+  const am = a.slice(head, a.length - foot), bm = b.slice(head, b.length - foot)
+  // Each line of both, in order: ' ' kept, '-' removed, '+' added.
+  const ops: {kind: ' ' | '-' | '+'; text: string; ai: number; bi: number}[] = a.slice(0, head).map((text, i) => ({kind: ' ', text, ai: i, bi: i}))
+  if (am.length * bm.length <= 4_000_000) {
+    const n = am.length, m = bm.length, lcs = Array.from({length: n + 1}, () => new Uint32Array(m + 1))
+    for (let i = n - 1; i >= 0; i--) for (let j = m - 1; j >= 0; j--) lcs[i]![j] = am[i] === bm[j] ? lcs[i + 1]![j + 1]! + 1 : Math.max(lcs[i + 1]![j]!, lcs[i]![j + 1]!)
+    let i = 0, j = 0
+    while (i < n || j < m) {
+      if (i < n && j < m && am[i] === bm[j]) { ops.push({kind: ' ', text: am[i]!, ai: head + i, bi: head + j}); i++; j++ }
+      else if (i < n && (j === m || lcs[i + 1]![j]! >= lcs[i]![j + 1]!)) { ops.push({kind: '-', text: am[i]!, ai: head + i, bi: head + j}); i++ }
+      else { ops.push({kind: '+', text: bm[j]!, ai: head + i, bi: head + j}); j++ }
+    }
+  } else {
+    am.forEach((text, i) => ops.push({kind: '-', text, ai: head + i, bi: head}))
+    bm.forEach((text, j) => ops.push({kind: '+', text, ai: head + am.length, bi: head + j}))
+  }
+  a.slice(a.length - foot).forEach((text, i) => ops.push({kind: ' ', text, ai: a.length - foot + i, bi: b.length - foot + i}))
+  const changed = ops.map((op, i) => (op.kind !== ' ' ? i : -1)).filter(i => i >= 0)
+  if (!changed.length) return {patch: '', adds: 0, dels: 0}
+  // Stretches: changes closer than twice the context share one hunk.
+  const hunks: [number, number][] = []
+  for (const i of changed) {
+    const last = hunks[hunks.length - 1]
+    if (last && i - last[1] <= 2 * context) last[1] = i
+    else hunks.push([i, i])
+  }
+  const out: string[] = []
+  for (const [first, last] of hunks) {
+    const from = Math.max(0, first - context), to = Math.min(ops.length - 1, last + context), slice = ops.slice(from, to + 1)
+    const olds = slice.filter(op => op.kind !== '+').length, news = slice.filter(op => op.kind !== '-').length
+    const start = (count: number, at: number) => (count === 0 ? at : at + 1)
+    out.push(`@@ -${start(olds, ops[from]!.ai)},${olds} +${start(news, ops[from]!.bi)},${news} @@`)
+    for (const op of slice) out.push(`${op.kind}${op.text}`)
+  }
+  return {patch: out.join('\n'), adds: ops.filter(op => op.kind === '+').length, dels: ops.filter(op => op.kind === '-').length}
+}
+
+/** A Central source's path in its ground (`central:source:<world>:<path>`), as Approvals names a return's (receiptBindings.ts pathOfSource). */
+const sourcePath = (ref: string): string => ref.replace(/^central:source:(?:control:root|project:[^:]+):/, '')
+
+/** The Diff page's proposed changes (widgets__files.tsx `diff.files` with `author`; §23.2 "A proposed change shows its author"): each of
+ * Central's source returns that waits (pending or applying, the queue Approvals answers), as the file it proposes to change, its author
+ * the session's agent (else the session), its session, and — once read (projectcentral.source.return_read's basis and proposed
+ * content) — its lines diffed: A where the basis was empty, else M. A return not yet read carries no lines. Pure. */
+export function proposedFilesOf(entries: readonly {return_ref: string; source_ref: string; status: string; agent_session_ref: string}[],
+  reads: ReadonlyMap<string, unknown>, tracks: readonly {readonly sessionRef: string; readonly agentName: string | null}[]): Record<string, Value>[] {
+  return entries.filter(entry => entry.status === 'pending' || entry.status === 'applying').map(entry => {
+    const proposal = (reads.get(entry.return_ref) as {proposal?: {basis_content?: unknown; proposed_content?: unknown}} | undefined)?.proposal
+    const author = tracks.find(track => track.sessionRef === entry.agent_session_ref)?.agentName ?? entry.agent_session_ref
+    const row: Record<string, Value> = {path: sourcePath(entry.source_ref), status: 'M', author, session: entry.agent_session_ref}
+    if (proposal && typeof proposal.basis_content === 'string' && typeof proposal.proposed_content === 'string') {
+      const diff = unifiedPatchOf(proposal.basis_content, proposal.proposed_content)
+      Object.assign(row, {status: proposal.basis_content === '' ? 'A' : 'M', adds: diff.adds, dels: diff.dels, patch: diff.patch})
+    }
+    return row
+  })
+}
+
 const FETCH = /^(fetch|web_fetch)$/i
 /** A read that fetched a page (the tape's own rule, model.ts: a `fetch` call, or a tool named fetch or web_fetch, is a read). */
 export const isFetch = (row: TapeRow): boolean => row.verb === 'read' && (row.calls.some(call => FETCH.test(call.name ?? '')) || /^https?:\/\//i.test(row.detail ?? row.object))
