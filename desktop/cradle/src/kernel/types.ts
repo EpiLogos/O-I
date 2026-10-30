@@ -678,6 +678,10 @@ export type KernelOp =
   // The person's own Live sets (DLW §10.3 "Live: Your sets"): every .als in the Music folder and in Live's places (Library.cfg's User
   // Library, its Templates, the folders added to Places), newest first (kernel live_set_owner.rs sets_reading). Read only.
   | {op:"live_sets_list"}
+  // Start a new set from one of Live's templates (DLW §10.3, §16.7 "Start from a template"): the template (an absolute .als under the
+  // User Library's Templates) copied whole into the world's project Work/<project> as <name>.als, never over a set that stands there
+  // (kernel live_set_owner.rs set_from_template).
+  | {op:"live_set_from_template";template:string;project:string;name:string}
   // One groove's setting, or with no groove the set's Global Amount ("amount"), against the set's revision.
   | {op:"live_groove_pool_write";path:string;expected_revision:string;groove?:number;field:LiveGrooveField|"amount";value:number|string}
   // One act on the set's objects (DLW §10.9, O-I #743), typed by its kind, against the set's revision (kernel live_set_owner.rs,
@@ -935,6 +939,7 @@ export type KernelOpResult =
   | {result:"live_groove_pool_reading";reading:LiveGroovePool & {revision:string}}
   | {result:"live_set_acted";reading:LiveSetActed}
   | {result:"live_sets_reading";reading:LiveSetsReading}
+  | {result:"live_set_started";reading:LiveSetStarted}
   | {result:"live_device_descriptors_reading";descriptors:Record<string,unknown[]>}
   | {result:"live_device_params_reading";reading:{params:unknown[]}}
   | {result:"live_device_param_written";reading:{param:unknown}}
@@ -1338,4 +1343,7 @@ export interface LiveGroove {id: number | null; name: string; base: string | nul
 export interface LiveSetEntry {path: string; name: string; place: string; template: boolean; modified_unix_ms: number | null}
 /** `oi.live-sets/v1`: the places read (each with whether it stands), the sets newest first, and whether the walk stopped at its bound. */
 export interface LiveSetsReading {schema: 'oi.live-sets/v1'; places: {label: string; path: string; present: boolean}[]; sets: LiveSetEntry[]; truncated: boolean}
+/** `oi.live-set-from-template/v1`: the new set started from a template — its file, its name, the project it is kept in, the template it
+ * came from, and how many tracks the set's reader read in it. */
+export interface LiveSetStarted {schema: 'oi.live-set-from-template/v1'; path: string; name: string; project: string; template: string; tracks: number}
 export interface LiveGroovePool {grooves: LiveGroove[]; amount: number | null; amountRange: {min: number; max: number} | null}

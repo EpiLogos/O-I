@@ -1647,7 +1647,8 @@ else:
         invoke_action janko_window_read knowledge knowledge_impact live_clip_create
         live_clip_read live_clip_write live_device_descriptors live_device_param_write
         live_device_params_read live_groove_pool_read live_groove_pool_write live_set_act
-        live_set_read live_sets_list live_take_comp live_track_mixer_write m3_reception
+        live_set_from_template live_set_read live_sets_list live_take_comp live_track_mixer_write
+        m3_reception
         material_read model_catalogue model_roster music_modes_read nara_coordinate
         nara_current nara_dialogue nara_elemental nara_epii nara_expressive_act nara_identity
         nara_journey nara_lived_context nara_presence nara_voice native_expression now page

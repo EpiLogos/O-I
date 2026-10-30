@@ -305,7 +305,9 @@ test('Live sets: the person\'s own sets from the owner\'s listing, newest first,
   let opened = null
   const markup = html(createElement(LiveSetList, {rows, words: null, openSet: path => { opened = path }}))
   assert.match(markup, /data-live-set="\/home\/Music\/Song.als"[^>]*>.*?<span>Song<\/span><span class="mode-browser-row-meta">open · Music<\/span>/)
-  assert.match(markup, /data-live-set="\/home\/Music\/Ableton\/User Library\/Templates\/Start.als" aria-disabled="true" data-i="Start\|A template of Live&#x27;s[^"]*"/, 'a template is dimmed, its reason in its hover words')
+  // REPLACED (O-I #749, live_set_from_template): a template stood dimmed for want of an owner act; selecting it now offers a new set from it
+  // (tests/w749-live-set-from-template.test.mjs), and it is still never opened as a set itself.
+  assert.match(markup, /data-live-set="\/home\/Music\/Ableton\/User Library\/Templates\/Start.als" aria-pressed="false" data-i="Start\|A template of Live&#x27;s: select it to start a new set from it[^"]*"/, 'a template starts a new set; its words say so')
   assert.equal(opened, null)
   const empty = html(createElement(LiveSetList, {rows: [], words: 'No set stands in Music or User Library.', openSet: () => {}}))
   assert.match(empty, /class="browser-empty"[^>]*>No set stands in Music or User Library\.</, 'none: the owner\'s places, said')

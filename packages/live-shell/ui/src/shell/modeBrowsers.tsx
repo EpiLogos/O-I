@@ -2,8 +2,9 @@
 // knows no mode; this table names the row sources a mode stands on, every one keeping the source it had. The old
 // browsers are the row bodies — Live's set browser, the Expressions library, the ground and world categories of the mode
 // grammar, the agent browser — each drawn under the one browser's control. Every mode also browses the running agent
-// sessions, the named sets and the instruments. The bodies read what the App hands them through BrowserReadingContext,
-// so the sources stay the same objects across renders.
+// sessions, the named sets and the instruments, and every mode's column opens on your Collections and closes on your Places
+// (manual §10.3). The bodies read what the App hands them through BrowserReadingContext, so the sources stay the same objects
+// across renders.
 import {createContext, useContext, type ReactNode} from 'react'
 import type {SurfMode} from './modeGrammar'
 import type {PanelContext} from './panels'
@@ -24,9 +25,14 @@ import {ConstellationRows} from '../frame/browser/ConstellationRows'
 import {CONSTELLATIONS} from '../frame/browser/constellationFocus'
 import {MODE_CONSTELLATION_PREVIEWS} from './constellationPreviews'
 import {TemplateRows} from '../frame/browser/TemplateRows'
+import {COLLECTIONS_SOURCE} from '../frame/browser/CollectionRows'
+import {PLACES, type PlaceId} from '../frame/browser/places'
+import {KindMark} from '../inhabitants/sdk/marks.tsx'
 
 // Expressions' browser loads with Expressions' rows, not with the shell (shell/loadWhenDrawn.ts).
 const WorldBrowser = loadWhenDrawn<{controlled?: ControlledBrowser}>('Expressions\' browser', () => import('../components/WorldBrowser').then(module => module.WorldBrowser))
+// The Places' rows load when a place is first shown (frame/browser/PlaceRows.tsx).
+const PlaceRows = loadWhenDrawn<{controlled: ControlledBrowser}>('The places', () => import('../frame/browser/PlaceRows').then(module => module.PlaceRows))
 
 /** What the bodies read from the App: Live's panel context, the ground subject the browser selects, the agency reading. */
 export interface BrowserReading {
@@ -90,6 +96,11 @@ function ConstellationsRows({controlled}: {controlled: ControlledBrowser}) {
   return <ConstellationRows controlled={controlled} Preview={MODE_CONSTELLATION_PREVIEWS[mode]} />
 }
 
+/** Each place's mark, from the cut. */
+const PLACE_MARKS: Readonly<Record<PlaceId, ReactNode>> = {
+  you: <Icon name="earth" size={12} />, agents: <KindMark kind="agent" size={12} />, machines: <Icon name="hex" size={12} />, work: <KindMark kind="world" size={12} />,
+}
+
 const AGENTS: BrowserSource = {id: 'agents', categories: AGENT_BROWSER_CATEGORIES, Body: AgentRows}
 /** Outside Factory, the running agent sessions only (Factory browses the whole agent browser). */
 const SESSIONS: BrowserSource = {id: 'sessions', categories: AGENT_BROWSER_CATEGORIES.filter(category => category.id === 'sess'), Body: AgentRows}
@@ -104,6 +115,10 @@ const SHARED: readonly BrowserSource[] = [
     Body: TemplateRows},
   {id: 'instruments', categories: [{id: 'instruments', label: 'Instruments', kind: 'instruments', mark: <Icon name="techne" size={12} />, hint: 'open one in a pane'}], Body: InstrumentsRows},
   {id: 'surfaces', categories: [{id: 'surfaces', label: 'Surfaces', kind: 'instruments', mark: <Icon name="browser" size={12} />, hint: 'sources, hosted surfaces, a terminal, a web page — open in a pane'}], Body: SurfacesRows},
+  // The coloured favourites you make, and where your ground lies (manual §10.3): the column's first and last groups, the same in every mode.
+  COLLECTIONS_SOURCE,
+  {id: 'places', categories: PLACES.map(place => ({id: place.id, label: place.label, kind: 'place' as const, mark: PLACE_MARKS[place.id], hint: place.hint, info: place.info})),
+    Body: PlaceRows},
 ]
 
 const grammar = (mode: SurfMode): BrowserSource => ({id: `grammar-${mode}`, categories: modeBrowserCategories(mode), Body: GrammarRows})

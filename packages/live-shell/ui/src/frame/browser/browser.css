@@ -153,3 +153,32 @@
 .one-browser .world-browser-results .browser-edit input { flex: 1 1 0; min-width: 0; height: 19px; padding: 0 5px; border: 1px solid var(--line); border-radius: 2px;
   background: var(--bg-1, var(--dp-well)); color: var(--text); font: inherit; font-size: 11px }
 .one-browser .world-browser-results .browser-edit input:focus { outline: 1px solid var(--accent); outline-offset: -1px }
+/* ——— the Collections (CollectionRows.tsx): each collection's colour as a swatch, in the column, on its rows and in a row's preview, where
+   Live's seven colours put the row in a collection or take it out; a pressed colour holds it ——— */
+.collection-swatch { display: inline-block; flex: none; border-radius: 2px; vertical-align: middle }
+.collection-swatch[data-collection-colour="red"] { background: var(--rec) }
+.collection-swatch[data-collection-colour="orange"] { background: var(--stall) }
+.collection-swatch[data-collection-colour="yellow"] { background: var(--accent) }
+.collection-swatch[data-collection-colour="green"] { background: var(--green) }
+.collection-swatch[data-collection-colour="blue"] { background: var(--sel) }
+.collection-swatch[data-collection-colour="purple"] { background: var(--magenta) }
+.collection-swatch[data-collection-colour="grey"] { background: var(--text-faint) }
+.collect-strip { display: flex; flex-wrap: wrap; gap: 3px; align-items: center; padding: 3px 6px }
+.collect-strip-words { margin-right: 3px; font-size: 10px; color: var(--text-faint) }
+.collect-strip-colour { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; min-height: 0; padding: 0;
+  background: var(--bg-1); border: 1px solid var(--line); border-radius: 2px }
+.collect-strip-colour[aria-pressed="true"] { border-color: var(--text); box-shadow: inset 0 0 0 1px var(--bg-0) }
+.collect-strip-colour:disabled { opacity: 0.45 }
+.place-preview p, .collected-preview p { margin: 0; padding: 3px 6px; font-size: 10.5px; color: var(--text-dim) }
+.collected-preview button { margin: 0 6px 4px }
+/* ——— the Places (PlaceRows.tsx): a place's rows under their groups (Days, Identity, Harnesses, Declared) ——— */
+.place-rows .place-rows-group { margin: 0; padding: 4px 6px 2px; font-size: 9.5px; font-weight: 600; color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.04em }
+/* ——— a Live template (BrowserPane.tsx): selected, the new set's name, the project it is kept in, and Start ——— */
+.browser-template-start { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; padding: 3px 6px 3px 23px; background: var(--bg-3) }
+.browser-template-start label { display: flex; gap: 3px; align-items: center; font-size: 10px; color: var(--text-faint) }
+.browser-template-start input, .browser-template-start select { height: 18px; min-height: 0; padding: 0 4px; font-size: 10px; color: var(--text);
+  background: var(--bg-1); border: 1px solid var(--line); border-radius: 2px }
+.browser-template-start button { height: 18px; min-height: 0; padding: 0 6px; font-size: 9.5px; color: var(--text-dim); background: var(--bg-2);
+  border: 1px solid var(--line); border-radius: 2px }
+.browser-template-start button:disabled { opacity: 0.45 }
+.browser-template-start p { flex-basis: 100%; margin: 0 }

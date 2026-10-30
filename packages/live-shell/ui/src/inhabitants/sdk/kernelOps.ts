@@ -74,6 +74,7 @@ export const KERNEL_OPS = [
   'live_take_comp',
   'live_groove_pool_read',
   'live_sets_list',
+  'live_set_from_template',
   'live_groove_pool_write',
   'live_set_act',
   'config_registry_read',

@@ -1,15 +1,19 @@
-// The browser's four kinds (manual §10.3: "The browser holds four kinds of thing: material to open, instruments to open
-// in a pane, devices to put on a chain, and running things you can work with where they are"). A category belongs to one
-// kind; the one browser groups every category under its kind, in this order. Pure TypeScript.
+// The browser's groups down its left side (manual §10.3: "Down the browser's left side stand Live's three groups: Collections, the
+// coloured favourites you make; the four kinds above, as Live's categories; and Places, where your ground lies"). The four kinds
+// ("The browser holds four kinds of thing: material to open, instruments to open in a pane, devices to put on a chain, and running
+// things you can work with where they are") stand between the Collections and the Places. A category belongs to one group; the one
+// browser groups every category under its own, in this order. Pure TypeScript.
 import type {ComponentType, ReactNode} from 'react'
 
-export type BrowserKind = 'material' | 'instruments' | 'devices' | 'running'
+export type BrowserKind = 'collection' | 'material' | 'instruments' | 'devices' | 'running' | 'place'
 
 export const BROWSER_KINDS: readonly {kind: BrowserKind; label: string; hint: string}[] = [
+  {kind: 'collection', label: 'Collections', hint: 'the coloured favourites you make: what you put in a collection stands under its colour'},
   {kind: 'material', label: 'Material', hint: 'to open: select previews, double-click or drag to a pane opens'},
   {kind: 'instruments', label: 'Instruments', hint: 'to open in a pane'},
   {kind: 'devices', label: 'Devices', hint: 'to put on a chain: drag onto a chain adds'},
   {kind: 'running', label: 'Running', hint: 'running things to work with where they are: drag an agent onto an empty track seats it'},
+  {kind: 'place', label: 'Places', hint: 'where your ground lies: you, your agents, your machines and your work'},
 ]
 
 /** A row body's controls when the one browser holds it: the category it shows, the search, and where its preview goes. */
@@ -43,4 +47,9 @@ export interface BrowserSource {
   id: string
   categories: readonly BrowserCategory[]
   Body: ComponentType<{controlled: ControlledBrowser}>
+  /** A source whose categories follow its owner (the Collections: one category per collection that holds something): it says when
+   * they move, and `categories` is read again. */
+  moves?: {subscribe(listener: () => void): () => void; version(): number}
+  /** What keeps such a source's owner read while the browser stands (it draws nothing). */
+  Keeper?: ComponentType
 }
