@@ -3222,17 +3222,16 @@ impl Kernel {
             KernelOp::WorldResolve { world_id, verify } => {
                 world_resolve::execute(world_resolve::Request { world_id, verify })
             }
+            // Another World's act is sent to its owner under the lock, so
+            // this host's sends reach it in the order they arrived. One
+            // addressed here is its inner op; dispatch serves a prepared
+            // inner op by its own form (lane AO), and applies it here only
+            // when it has none.
             KernelOp::HostedNative {
                 source_world_ref,
                 request,
             } => {
-                if !native_owner_transport::admitted(&request) {
-                    return Err("This hosted route admits only native document, Expression and session operations".into());
-                }
-                let local = std::env::var("OI_SHARED_FIELD_LOCAL_WORLD_REF").map_err(|_| {
-                    "No hosted World address is bound to this native owner".to_owned()
-                })?;
-                if source_world_ref != local {
+                if !hosted_here(&source_world_ref, &request)? {
                     return native_owner_transport::remote(&source_world_ref, &request);
                 }
                 self.apply(*request)
@@ -4029,7 +4028,7 @@ impl Kernel {
             KernelOp::SourceOpen {
                 project,
                 source_ref,
-            } => self.source_open(project.as_deref(), &source_ref),
+            } => self.source_open(project.as_deref(), &source_ref, None),
             KernelOp::SourceEdit {
                 source_ref,
                 content,
@@ -4132,10 +4131,39 @@ impl Kernel {
         self.finish_listing(listing)
     }
 
+    /// The Work project a clean open of `source_ref` routes to, from what the
+    /// kernel holds: the held buffer's route, else the asked project, else the
+    /// configured co-reference. `None` when the open needs no inspection: a
+    /// dirty buffer answers it without its owner, and a root-register buffer
+    /// names no project. Dispatch inspects this project outside the lock and
+    /// hands the answer to `source_open` (lane AO).
+    pub(crate) fn source_open_route(
+        &self,
+        project: Option<&str>,
+        source_ref: &str,
+    ) -> Option<String> {
+        let held = self.buffers.get(source_ref);
+        if held.is_some_and(|buffer| buffer.dirty || buffer.root_register) {
+            return None;
+        }
+        let route = match held {
+            Some(buffer) => buffer.project.as_str(),
+            None => project.unwrap_or(""),
+        };
+        Some(if route.is_empty() {
+            self.client.configured_project().to_owned()
+        } else {
+            route.to_owned()
+        })
+    }
+
+    /// `inspected` is a project route and its ProjectCentral identity, asked
+    /// outside the lock (`source_open_route`, dispatch.rs `open_source`).
     fn source_open(
         &mut self,
         project: Option<&str>,
         source_ref: &str,
+        inspected: Option<(String, Option<String>)>,
     ) -> Result<KernelOpOutcome, String> {
         // The cradle holds unsaved work: opening the same ref again reveals
         // the existing buffer — it never clobbers a dirty layer.
@@ -4181,7 +4209,18 @@ impl Kernel {
                 .unwrap_or(self.client.configured_project())
                 .to_owned()
         };
-        let buffer = self.sync_buffer_from_reading(&reading, true, &route);
+        // The project the buffer belongs to is no part of its canonical layer:
+        // the source-buffer order the lock keeps here never needed it. A
+        // root-register buffer names none, as the Day's does (`DaySourceOpen`;
+        // the owner inspects no empty project). A Work route was inspected
+        // outside the lock when dispatch could (lane AO); it is asked here
+        // only when it could not, or the route moved in between.
+        let project_ref = match inspected {
+            _ if route.is_empty() => None,
+            Some((inspected_route, answer)) if inspected_route == route => answer,
+            _ => source_project_ref(&self.client, &route),
+        };
+        let buffer = self.sync_buffer_from_reading(&reading, true, &route, project_ref);
         let receipt = changed.then(|| {
             self.log.record(KernelEvent::SourceOpened {
                 source: source_semantic_ref(source_ref, Some(&reading.revision.revision))
@@ -4209,6 +4248,7 @@ impl Kernel {
         reading: &SourceReading,
         reset_content: bool,
         project: &str,
+        project_ref: Option<String>,
     ) -> SourceBuffer {
         let source_ref = reading.source.source_ref.clone();
         let previous = self.buffers.get(&source_ref);
@@ -4223,18 +4263,7 @@ impl Kernel {
             source_ref: source_ref.clone(),
             project: project.to_owned(),
             world_ref: reading.world_ref.clone(),
-            project_ref: self
-                .client
-                .run(
-                    "projectcentral.inspect",
-                    serde_json::json!({"project":project}),
-                )
-                .ok()
-                .and_then(|v| {
-                    v.pointer("/manifest/project_id")
-                        .and_then(serde_json::Value::as_str)
-                        .map(str::to_owned)
-                }),
+            project_ref,
             content,
             saved_content: reading.content.clone(),
             base_revision: reading.revision.revision.clone(),
@@ -4475,7 +4504,8 @@ impl Kernel {
         // Nothing changed — same revision, no conflict to clear — nothing
         // is emitted.
         let changed = moved || had_conflict;
-        let buffer = self.sync_buffer_from_reading(&reading, false, &route);
+        let project_ref = source_project_ref(&self.client, &route);
+        let buffer = self.sync_buffer_from_reading(&reading, false, &route, project_ref);
         let receipt = changed.then(|| {
             self.log.record(KernelEvent::SourceOpened {
                 source: source_semantic_ref(source_ref, Some(&reading.revision.revision))
@@ -4809,6 +4839,41 @@ impl Kernel {
             },
         })
     }
+}
+
+/// The ProjectCentral identity of the Work project a source buffer routes
+/// to, by its owner's inspection; `None` when the owner has none to give.
+/// A read of the project's manifest, never of the buffer's source: it needs
+/// no kernel state, so dispatch asks it outside the lock (lane AO).
+pub(crate) fn source_project_ref(client: &CentralClient, project: &str) -> Option<String> {
+    client
+        .run(
+            "projectcentral.inspect",
+            serde_json::json!({ "project": project }),
+        )
+        .ok()
+        .and_then(|reading| {
+            reading
+                .pointer("/manifest/project_id")
+                .and_then(serde_json::Value::as_str)
+                .map(str::to_owned)
+        })
+}
+
+/// Whether a hosted op is addressed to this host's own World (the World
+/// `OI_SHARED_FIELD_LOCAL_WORLD_REF` binds), which applies its inner op
+/// itself, or to another, which its owner route answers. Refused when the
+/// inner op is not one the route admits, or no World is bound here.
+pub(crate) fn hosted_here(source_world_ref: &str, request: &KernelOp) -> Result<bool, String> {
+    if !native_owner_transport::admitted(request) {
+        return Err(
+            "This hosted route admits only native document, Expression and session operations"
+                .into(),
+        );
+    }
+    let local = std::env::var("OI_SHARED_FIELD_LOCAL_WORLD_REF")
+        .map_err(|_| "No hosted World address is bound to this native owner".to_owned())?;
+    Ok(source_world_ref == local)
 }
 
 /// A shortened revision for summaries (the full revision rides in the

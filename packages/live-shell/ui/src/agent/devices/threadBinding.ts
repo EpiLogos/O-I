@@ -41,11 +41,13 @@ export const THREAD_DEVICE_ID = 'factory:thread'
 /** One row of the stream, as the Thread and the Agent read `thread` (thread.tsx:12-17). */
 export interface ThreadRow {
   readonly who?: string
-  readonly kind: 'you' | 'agent' | 'tool' | 'proposal' | 'text'
+  readonly kind: 'you' | 'agent' | 'tool' | 'proposal' | 'ask' | 'text'
   readonly text: string
   readonly tool?: string
   readonly out?: string
   readonly state?: 'runs' | 'waits'
+  /** An ask row: the labels the question allowed. */
+  readonly labels?: readonly string[]
 }
 
 const clip = (text: string, n: number) => (text.length > n ? `${text.slice(0, n - 1)}…` : text)
@@ -156,10 +158,64 @@ export function threadRowsOf(reading: Pick<EncounterReading, 'blocks' | 'permiss
   return out
 }
 
-/** A session's rows as the `thread` value key (the Agent's and the Thread's), or undefined while its conversation is unread. */
-export function threadJson(observed: {readonly reading?: EncounterReading; readonly status?: EncounterStatus} | undefined, agent: string | null): string | undefined {
+/** A session's rows as the `thread` value key (the Agent's and the Thread's), or undefined while its conversation is unread. The session's
+ * asks (`askRowsOf`) stand after its conversation and before a consent request that waits. */
+export function threadJson(observed: {readonly reading?: EncounterReading; readonly status?: EncounterStatus} | undefined, agent: string | null,
+  asks: readonly ThreadRow[] = []): string | undefined {
   const reading = observed?.reading
-  return reading && Array.isArray(reading.blocks) ? JSON.stringify(threadRowsOf(reading, observed?.status, agent)) : undefined
+  if (!reading || !Array.isArray(reading.blocks)) return undefined
+  const rows = threadRowsOf(reading, observed?.status, agent)
+  const waiting = rows.findIndex(row => row.kind === 'proposal')
+  return JSON.stringify(waiting < 0 ? [...rows, ...asks] : [...rows.slice(0, waiting), ...asks, ...rows.slice(waiting)])
+}
+
+// ---------------------------------------------------------------------------------------------------------------- the asks
+
+/** AIKit's answer for the asks one session put to the decision helper (the kernel's aikit_read decision-asks: `aikit decide asks
+ * --agent-session S`, aikit.decision-asks/v1), as useAikitRead carries it. */
+export interface AsksAnswer {readonly status: string; readonly value: unknown; readonly error?: string | null}
+
+/** The labels a question allowed (AIKit keeps the question as asked, `aikit_core::jev::Question`): a Choice's named options, a Noul's
+ * true and false, a Score's rubric levels in order. */
+function labelsOf(question: Obj): string[] {
+  if (question.type === 'choice' && isObj(question.criteria)) return Object.keys(question.criteria)
+  if (question.type === 'noul') return ['true', 'false']
+  if (question.type === 'score' && Array.isArray(question.criteria)) {
+    return question.criteria.map((level, at) => str(level) ?? (isObj(level) ? str(level.label) ?? str(level.name) : undefined) ?? String(at + 1))
+  }
+  return []
+}
+
+/** What the helper answered, in the words of its answer (`aikit_core::jev::Answer`): a Choice's pick, a Noul's side with its value, a
+ * Score's value. */
+function answerOf(answer: unknown): string | undefined {
+  if (!isObj(answer)) return undefined
+  if (answer.type === 'choice') return str(answer.choice)
+  if (answer.type === 'noul' && typeof answer.noul === 'number') return `${answer.noul >= 0.5 ? 'true' : 'false'} (${answer.noul.toFixed(2)})`
+  if (answer.type === 'score' && typeof answer.score === 'number') return String(Math.round(answer.score * 100) / 100)
+  return undefined
+}
+
+/** The asks AIKit kept against the shown session as the Thread's Ask rows (§19.4): one row for each question, in the order they were
+ * asked, each naming the helper that answered (the model AIKit recorded), the labels it allowed and the answer, or why none came. The
+ * answer is evidence (thread.tsx marks it so); nothing here checks or uses it. Rows only for the session asked about, once AIKit answered.
+ * AIKit's encounter view carries no instant per block, so the asks stand after the conversation, not between its turns. */
+export function askRowsOf(answer: AsksAnswer | null | undefined, session: string | null, agent: string | null): ThreadRow[] {
+  const value = answer?.status === 'answered' && isObj(answer.value) ? answer.value : null
+  if (!value || value.schema !== 'aikit.decision-asks/v1' || session == null || value.agent_session !== session || !Array.isArray(value.asks)) return []
+  return value.asks.flatMap(ask => {
+    if (!isObj(ask) || !isObj(ask.questions)) return []
+    const helper = str(ask.answered_by) ?? str(ask.model)
+    const answers = isObj(ask.answers) ? ask.answers : {}
+    return Object.entries(ask.questions).flatMap(([id, question]): ThreadRow[] => {
+      if (!isObj(question)) return []
+      const instructions = str(question.instructions)
+      const said = ask.outcome === 'answered' ? answerOf(answers[id]) : undefined
+      const why = str(ask.failure)
+      return [{...(agent ? {who: agent} : {}), kind: 'ask', ...(helper ? {tool: helper} : {}), text: instructions ? firstLine(instructions) : id, labels: labelsOf(question),
+        ...(said ? {out: said} : ask.outcome === 'unanswered' ? {out: `no answer${why ? `: ${firstLine(why)}` : ''}`} : {})}]
+    })
+  })
 }
 
 /** The light of a session's conversation, from the owner's connection state: a resident provider (or a turn in flight) is on; a
@@ -233,6 +289,8 @@ export interface ThreadInput {
   readonly nowUnixMs: number
   /** The shown session's observation (the encounter store's state), null while none is read. */
   readonly encounter: {readonly reading?: EncounterReading; readonly status?: EncounterStatus} | null
+  /** AIKit's asks of the shown session to the decision helper (aikit_read decision-asks), absent while not asked for. */
+  readonly asks?: AsksAnswer | null
   /** The Agent's values: the composer, Input and interrupt timing are the Agent's own (one binding feeds both devices). */
   readonly agent: Values
   readonly holds: ChainHolds
@@ -265,7 +323,7 @@ export function threadValues(input: ThreadInput, id: string = THREAD_DEVICE_ID):
   if (track?.needle) put(values, 'age', track.needle.atUnixMs == null ? -1 : Math.max(0, Math.round((input.nowUnixMs - track.needle.atUnixMs) / 1000)))
   for (const key of ['input', 'quantize', 'draft', 'sent'] as const) put(values, key, input.agent[key])
   if (input.tracks) values.sessions = JSON.stringify(sessionRowsOf(input.tracks))
-  put(values, 'thread', threadJson(input.encounter ?? undefined, track?.agentName ?? null))
+  put(values, 'thread', threadJson(input.encounter ?? undefined, track?.agentName ?? null, askRowsOf(input.asks, shown, track?.agentName ?? null)))
   return values
 }
 

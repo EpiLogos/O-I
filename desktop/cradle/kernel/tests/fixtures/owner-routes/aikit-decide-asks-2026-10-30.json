@@ -1,0 +1,115 @@
+{
+ "_source": "REAL: aikit decide asks --agent-session agent-session/aletheia-gate-2, ai-kit dlw/684-thread-decisions (debug build), isolated AIKIT_HOME, the installed Kev (jaredpalmer/kev-0.8b) answering on a private loopback port, 30 Oct 2026. Three asks: one named on the command line, one by the session's own AIKIT_SESSION_ID, one whose provider did not answer.",
+ "asks": {
+  "context": {
+   "context_id": null,
+   "project_root": null,
+   "session_id": null
+  },
+  "data": {
+   "agent_session": "agent-session/aletheia-gate-2",
+   "asks": [
+    {
+     "agent_session": "agent-session/aletheia-gate-2",
+     "answered_by": "kev-latest",
+     "answers": {
+      "gate_reading": {
+       "choice": "annotated",
+       "confidence": 0.1206,
+       "probabilities": {
+        "aligned": 0.206,
+        "annotated": 0.3404,
+        "hold": 0.2737,
+        "redirect": 0.1799
+       },
+       "type": "choice"
+      }
+     },
+     "asked_at": "2026-10-30T02:26:16.071743Z",
+     "invocation_ref": "invocation/jev/dec46794c38902858fa1497977fe91c23fb26134a461c2c0a56b01ac8e9d5c83",
+     "model": "kev-latest",
+     "outcome": "answered",
+     "questions": {
+      "gate_reading": {
+       "criteria": {
+        "aligned": "the work matches the spec it cites",
+        "annotated": "matches, with a note to carry",
+        "hold": "stop until a question is answered",
+        "redirect": "the work goes another way than the spec"
+       },
+       "instructions": "Which gate reading fits the passage at this gate?",
+       "type": "choice"
+      }
+     },
+     "request_digest": "blake3:bb5eb771f06510b140e940ebf1c0bc73b82baeed7840980b4fae1ec94eeaed95",
+     "schema": "aikit.decision-ask/v1",
+     "session_id": "ses_916ce69e780ace96fbec9f82"
+    },
+    {
+     "answered_by": "kev-latest",
+     "answers": {
+      "retrieval": {
+       "choice": "partial",
+       "confidence": 0.1863,
+       "probabilities": {
+        "empty": 0.1768,
+        "grounded": 0.3656,
+        "partial": 0.4575
+       },
+       "type": "choice"
+      }
+     },
+     "asked_at": "2026-10-30T02:26:33.728751Z",
+     "invocation_ref": "invocation/jev/81470a25398c5c39f36f461510c9fc7e961e456f5b0c2be16c8e0ead9f7765e2",
+     "model": "kev-latest",
+     "outcome": "answered",
+     "questions": {
+      "retrieval": {
+       "criteria": {
+        "empty": "nothing came back",
+        "grounded": "every claim has a source",
+        "partial": "some claims have sources"
+       },
+       "instructions": "How grounded is the retrieval?",
+       "type": "choice"
+      }
+     },
+     "request_digest": "blake3:6bb7aac5ba7abb3d186f5c63af3edb604d52efbe97ce02f344df2d8ed413d717",
+     "schema": "aikit.decision-ask/v1",
+     "session_id": "ses_916ce69e780ace96fbec9f82"
+    },
+    {
+     "agent_session": "agent-session/aletheia-gate-2",
+     "asked_at": "2026-10-30T02:26:33.804736Z",
+     "failure": "Provider transport failed; payload and credential withheld, usage may be unknown",
+     "invocation_ref": "invocation/jev/54beb990c83f62ccc44542b6647ad28a589b67a81550775fe58cc1c38313f3a0",
+     "model": "kev-latest",
+     "outcome": "unanswered",
+     "questions": {
+      "gate_reading": {
+       "criteria": {
+        "aligned": "the work matches the spec it cites",
+        "annotated": "matches, with a note to carry",
+        "hold": "stop until a question is answered",
+        "redirect": "the work goes another way than the spec"
+       },
+       "instructions": "Which gate reading fits the passage at this gate?",
+       "type": "choice"
+      }
+     },
+     "request_digest": "blake3:bb5eb771f06510b140e940ebf1c0bc73b82baeed7840980b4fae1ec94eeaed95",
+     "schema": "aikit.decision-ask/v1",
+     "session_id": "ses_916ce69e780ace96fbec9f82"
+    }
+   ],
+   "earlier": 0,
+   "schema": "aikit.decision-asks/v1",
+   "session_id": "ses_916ce69e780ace96fbec9f82",
+   "unreadable": 0
+  },
+  "ok": true,
+  "schema": 1,
+  "warnings": []
+ },
+ "installed_refusal": "error: unrecognized subcommand 'asks'\n\nUsage: aikit decide [OPTIONS] <COMMAND>\n\nFor more information, try '--help'.\n"
+}

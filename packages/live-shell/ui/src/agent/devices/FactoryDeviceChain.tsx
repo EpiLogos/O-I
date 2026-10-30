@@ -81,7 +81,7 @@ import {useAgentChainReading} from './useAgentChainReading'
 import {composePorts, useRackReading} from './useRackReading'
 import {observedState, useEncounterSessions} from './EncounterObservers'
 import {FRAMES_ID, mainDevices} from './mainTrackBindings'
-import {shownSession, threadBinding, threadJson} from './threadBinding'
+import {askRowsOf, shownSession, threadBinding, threadJson} from './threadBinding'
 import {CAPTURE_PAGE, CHECKOUTS_PAGE, HELPER_PAGE, MACHINE_PAGE, SEAT_PAGE, carryPages, composeAgentBinding, withAgentGit} from './oneAgentBinding'
 import {useHygieneDevice} from '../../central/devices/groundDevices'
 import {openNotificationTarget, useOwnerRequests} from '../../widgets/railDevices'
@@ -238,7 +238,11 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   }), [shown, sessionRef, tracks])
   const {handles, observers} = useEncounterSessions(observed)
   const models = useModelCatalogue(transport, !waits.agent)
-  const agentThread = useMemo(() => (sessionRef ? threadJson(observedState(handles[sessionRef]), track?.agentName ?? null) : undefined), [handles, sessionRef, track?.agentName])
+  // The asks each conversation's session put to the decision helper, as AIKit keeps them against it (§19.4 Ask rows; O-I ticket 684).
+  const shownAsks = useAikitRead(transport, !waits.agent && shown ? {kind: 'decision-asks', agent_session: shown} : null)
+  const chainAsks = useAikitRead(transport, !waits.agent && sessionRef ? {kind: 'decision-asks', agent_session: sessionRef} : null)
+  const agentThread = useMemo(() => (sessionRef ? threadJson(observedState(handles[sessionRef]), track?.agentName ?? null, askRowsOf(chainAsks, sessionRef, track?.agentName ?? null))
+    : undefined), [handles, sessionRef, track?.agentName, chainAsks])
   // The Agent's Context page (lane W8): AIKit's continuity pressure and armed commands, read while a session's chain stands.
   const contextOn = !waits.agent && sessionRef != null
   const continuityPressure = useAikitRead(transport, contextOn ? {kind: 'continuity-pressure', project: register} : null)
@@ -266,11 +270,11 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
     const state = observedState(shownHandle)
     const actions = shownHandle && 'actions' in shownHandle ? shownHandle.actions : undefined
     return threadBinding({selected: selectedThread, chainSession: sessionRef, tracks, nowUnixMs: sessions?.nowUnixMs ?? 0,
-      encounter: state ? {reading: state.reading, status: state.status} : null, agent: agentDesignBinding?.values ?? {}, holds}, agentDesignBinding, {
+      encounter: state ? {reading: state.reading, status: state.status} : null, asks: shownAsks, agent: agentDesignBinding?.values ?? {}, holds}, agentDesignBinding, {
       ...(actions ? {permission: (id: string, decision: Parameters<typeof actions.permission>[1]) => actions.permission(id, decision), cancel: async () => actions.cancel()} : {}),
       select: ref => { const chosen = tracks?.find(item => item.sessionRef === ref && !item.group); if (chosen) shell.setSelectedTrackId(trackKey(chosen)) },
     })
-  }, [shownHandle, selectedThread, sessionRef, tracks, sessions?.nowUnixMs, agentDesignBinding, holds, shell])
+  }, [shownHandle, selectedThread, sessionRef, tracks, sessions?.nowUnixMs, shownAsks, agentDesignBinding, holds, shell])
 
   // The Tasks and Runs devices were retired (ticket 725: a task is a clip, its attempts the track's takes in Arrangement view, §16.1, §19.1),
   // and their constructors with them (ticket 772): a task's settings are its Clip view's (agent/clipBinding.ts useFactoryClip), its attempts the

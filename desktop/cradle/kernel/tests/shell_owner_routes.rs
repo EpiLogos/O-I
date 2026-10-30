@@ -4444,3 +4444,58 @@ fn aikit_reads_the_skill_roots_setup_adopts_and_who_owns_each() {
         .contains("may cross the requested authority boundary"));
     let _ = fs::remove_dir_all(&dir);
 }
+
+#[test]
+fn aikit_reads_the_asks_kept_against_the_session_that_asked() {
+    let _held = hold();
+    let dir = scratch("decision-asks");
+    let aikit = Fake::new(&dir, "aikit");
+    let _bin = Bound::set("OI_AIKIT_BIN", &aikit.bin);
+    // REAL: three asks of one session, answered by the installed Kev (O-I #684).
+    let real = fixture("aikit-decide-asks-2026-10-30.json");
+    aikit.answer(&real["asks"]);
+    let (outcome, form) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "aikit_read", "request": {"kind": "decision-asks",
+            "agent_session": "agent-session/aletheia-gate-2"}}),
+        ),
+    );
+    assert_eq!(form, "owner-read");
+    let (route, data, _) = reading(&outcome.unwrap());
+    assert_eq!(route, "aikit decide asks");
+    assert_eq!(data, real["asks"]["data"]);
+    assert_eq!(data["asks"].as_array().unwrap().len(), 3);
+    assert_eq!(
+        data["asks"][0]["answers"]["gate_reading"]["choice"],
+        "annotated"
+    );
+    assert_eq!(data["asks"][2]["outcome"], "unanswered");
+    assert_eq!(
+        aikit.asked(),
+        ["decide asks --agent-session agent-session/aletheia-gate-2 --json"]
+    );
+    // An answer for another session than the one asked about is not this session's.
+    aikit.forget();
+    let (outcome, _) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "aikit_read", "request": {"kind": "decision-asks",
+            "agent_session": "agent-session/another"}}),
+        ),
+    );
+    assert!(outcome
+        .unwrap_err()
+        .contains("aikit.decision-asks/v1 for agent-session/another"));
+    // The installed AIKit before ai-kit's `decide asks` (REAL refusal).
+    aikit.refuse(None, real["installed_refusal"].as_str().unwrap(), 2);
+    let (outcome, _) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "aikit_read", "request": {"kind": "decision-asks",
+            "agent_session": "agent-session/aletheia-gate-2"}}),
+        ),
+    );
+    assert!(outcome.unwrap_err().contains("unrecognized subcommand"));
+    let _ = fs::remove_dir_all(&dir);
+}

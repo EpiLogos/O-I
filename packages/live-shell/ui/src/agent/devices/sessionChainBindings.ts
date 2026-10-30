@@ -436,9 +436,10 @@ export const AGENTSET_REFUSE = {
 // whose record names the set it runs (AIKit `agent_set`: tied when Central's team is prepared into the space, inhabit_team_native.rs
 // tie_team_set, or staged as `aikit session-space stage` bind-agent-set); the rack reads the set (central.agent-set.read {scope root, ref}) and
 // writes a new join through central.agent-set.save at the set's next revision (`rN` to `rN+1`, compare-and-swap on the one it read).
-// Where the returns combine: Software Factory's barrier waits for every leg it names before an independent reviewer synthesises
-// (orchestration.rs barrier_reading, synthesize), and AIKit's team hands each member's Return to its parent one by one (`aikit gateway team
-// read`). Neither reads the set's join yet; All is what the barrier does, and None is one Return read alone.
+// Where the returns combine: Software Factory's barrier reads a team step's join from the set as the Run starts and keeps it with the Run
+// (O-I ticket 684; orchestration.rs record_step_join, barrier_reading): All waits for every member before an independent reviewer synthesises, First
+// closes the step on the first acceptable return, and Quorum and Weighted are refused (the set names no count and no weights). AIKit's team
+// hands each member's Return to its parent one by one (`aikit gateway team read`); None is one Return read alone.
 export const JOINS = ['none', 'all', 'first', 'quorum', 'weighted'] as const
 export const JOIN_UNTIED = 'Join: this group names no Central agent set, so no record says how its returns combine. AIKit ties a space to its set when '
   + 'the set\'s team is prepared into it; tie one by hand with `aikit session-space stage` and the bind-agent-set intent (AIKit).'

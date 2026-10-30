@@ -384,6 +384,11 @@ export type AikitReadRequest =
   /** `aikit flow thoughts FLOW_REF [--limit N]` (ai-kit#544): `aikit.flow-thoughts/v1` `{flow, thoughts:[{recorded_at_unix_ms,
    * thought}], unreadable}`, newest first; each `thought` is what `flow_changed_since` takes. */
   | {kind:"flow-thoughts";flow_ref:string;limit?:number|null}
+  /** `aikit decide asks --agent-session S` (O-I #684): `aikit.decision-asks/v1` `{agent_session, session_id, asks, earlier, unreadable}`,
+   * oldest first; each ask `aikit.decision-ask/v1` `{asked_at, invocation_ref, model, questions:{id:{type, instructions, criteria}},
+   * outcome:"answered"|"unanswered", answered_by?, answers?:{id:{type, choice?|noul?|score?, probabilities?, confidence?}}, failure?}`,
+   * kept by AIKit against the session that asked the decision helper. The Agent's thread draws them as Ask rows. */
+  | {kind:"decision-asks";agent_session:string}
   /** `aikit work continuity closeout verify [--project P] [--since UNIX_SECONDS] [--run RUN_REF]`: `{clauses, project, verified}`. An
    * unverified close-out exits 1 with its verdict; it is still the reading. */
   | {kind:"closeout-verify";project?:string|null;since?:number|null;run?:string|null}
