@@ -56,7 +56,7 @@ import '../frame/paneGrammar.css'
 import type {AgentSubject,AgentAccompanying} from '../../../../../desktop/cradle/src/agent/AgentLayer'
 import {isRetainedCentreKind, WARM_WORKSPACES, type WarmTreeRef} from '../../../../../desktop/cradle/src/surface/warmTrees'
 import {RETAINED_VIEW_BUDGET} from '../../../../../desktop/cradle/src/surface/runtime'
-import {CENTRAL_DOCUMENT_PANE_KIND, openCentralDocumentAt, subjectOf, type CentralDocumentTarget} from '../central/documents/centralDocuments'
+import {CENTRAL_DOCUMENT_DRAG, CENTRAL_DOCUMENT_PANE_KIND, documentTargetOf, openCentralDocumentAt, subjectOf, type CentralDocumentTarget} from '../central/documents/centralDocuments'
 import {usePaneDrafts} from '../central/documents/paneDrafts'
 import './workbench.css'
 
@@ -985,6 +985,11 @@ export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}
         paneGrammar: {
           // Through the instrument door, so a stage-lens row dropped on a pane opens the stage there and turns its lens.
           openInstrument: (kind, groupId, edge) => {if (allowed()) openInstrument(kind, {groupId, edge})},
+          // A Day dragged from the browser's Places opens in the pane it was dropped on, or beside it (frame/browser/placeActs.ts).
+          material: {type: CENTRAL_DOCUMENT_DRAG, open: (ref, groupId, edge) => {
+            const target = documentTargetOf(ref)
+            if (target && allowed()) latest.current.book.setLayout(layout => openCentralDocumentAt(layout, target, {groupId, edge}))
+          }},
           selectionRef: owner.context?.selection?.ref,
           mark: name => <Icon name={name === 'pin' ? 'placed' : 'follow'} size={12}/>,
           // The mockup's panes (world-shell-mockup.html .trail, #375): tabs a compact rail on the pane's left edge, folded until

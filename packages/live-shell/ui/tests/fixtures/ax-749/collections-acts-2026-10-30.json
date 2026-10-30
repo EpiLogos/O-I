@@ -1,0 +1,394 @@
+{
+ "source": "ctrl action run (Central dlw/749-collections-acts: central.collections.add, .rename, .show and .read) on a scratch ground made by ctrl init, 30 Oct 2026",
+ "add_green": {
+  "ok": true,
+  "status": "success",
+  "action": "central.collections.add",
+  "data": {
+   "collection": "green",
+   "outcome": "added",
+   "reading": {
+    "collections": [
+     {
+      "colour": "red",
+      "id": "favourites",
+      "items": [],
+      "name": "Favourites",
+      "shown": null
+     },
+     {
+      "colour": "orange",
+      "id": "orange",
+      "items": [],
+      "name": "Orange",
+      "shown": null
+     },
+     {
+      "colour": "yellow",
+      "id": "yellow",
+      "items": [],
+      "name": "Yellow",
+      "shown": null
+     },
+     {
+      "colour": "green",
+      "id": "green",
+      "items": [
+       {
+        "added_at_unix_seconds": 1793360184,
+        "kind": "workcell",
+        "label": "This machine",
+        "ref": "workcell:mac"
+       }
+      ],
+      "name": "Green",
+      "shown": null
+     },
+     {
+      "colour": "blue",
+      "id": "blue",
+      "items": [],
+      "name": "Blue",
+      "shown": null
+     },
+     {
+      "colour": "purple",
+      "id": "purple",
+      "items": [],
+      "name": "Purple",
+      "shown": null
+     },
+     {
+      "colour": "grey",
+      "id": "grey",
+      "items": [],
+      "name": "Grey",
+      "shown": null
+     }
+    ],
+    "kept": true,
+    "revision": "central.content-fnv1a64/v1:265:759e3139e4553f0d",
+    "schema": "central.collections/v1",
+    "source_path": "Control/relations/collections.json",
+    "world": "control:root"
+   },
+   "ref": "workcell:mac",
+   "schema": "central.collections-receipt/v1",
+   "source_path": "Control/relations/collections.json",
+   "world": "control:root"
+  }
+ },
+ "rename_green": {
+  "ok": true,
+  "status": "success",
+  "action": "central.collections.rename",
+  "data": {
+   "collection": "green",
+   "name": "Machines I use",
+   "outcome": "renamed",
+   "reading": {
+    "collections": [
+     {
+      "colour": "red",
+      "id": "favourites",
+      "items": [],
+      "name": "Favourites",
+      "shown": null
+     },
+     {
+      "colour": "orange",
+      "id": "orange",
+      "items": [],
+      "name": "Orange",
+      "shown": null
+     },
+     {
+      "colour": "yellow",
+      "id": "yellow",
+      "items": [],
+      "name": "Yellow",
+      "shown": null
+     },
+     {
+      "colour": "green",
+      "id": "green",
+      "items": [
+       {
+        "added_at_unix_seconds": 1793360184,
+        "kind": "workcell",
+        "label": "This machine",
+        "ref": "workcell:mac"
+       }
+      ],
+      "name": "Machines I use",
+      "shown": null
+     },
+     {
+      "colour": "blue",
+      "id": "blue",
+      "items": [],
+      "name": "Blue",
+      "shown": null
+     },
+     {
+      "colour": "purple",
+      "id": "purple",
+      "items": [],
+      "name": "Purple",
+      "shown": null
+     },
+     {
+      "colour": "grey",
+      "id": "grey",
+      "items": [],
+      "name": "Grey",
+      "shown": null
+     }
+    ],
+    "kept": true,
+    "revision": "central.content-fnv1a64/v1:313:171f8a0351c5d440",
+    "schema": "central.collections/v1",
+    "source_path": "Control/relations/collections.json",
+    "world": "control:root"
+   },
+   "schema": "central.collections-receipt/v1",
+   "source_path": "Control/relations/collections.json",
+   "world": "control:root"
+  }
+ },
+ "hide_favourites": {
+  "ok": true,
+  "status": "success",
+  "action": "central.collections.show",
+  "data": {
+   "collection": "favourites",
+   "outcome": "hidden",
+   "reading": {
+    "collections": [
+     {
+      "colour": "red",
+      "id": "favourites",
+      "items": [],
+      "name": "Favourites",
+      "shown": false
+     },
+     {
+      "colour": "orange",
+      "id": "orange",
+      "items": [],
+      "name": "Orange",
+      "shown": null
+     },
+     {
+      "colour": "yellow",
+      "id": "yellow",
+      "items": [],
+      "name": "Yellow",
+      "shown": null
+     },
+     {
+      "colour": "green",
+      "id": "green",
+      "items": [
+       {
+        "added_at_unix_seconds": 1793360184,
+        "kind": "workcell",
+        "label": "This machine",
+        "ref": "workcell:mac"
+       }
+      ],
+      "name": "Machines I use",
+      "shown": null
+     },
+     {
+      "colour": "blue",
+      "id": "blue",
+      "items": [],
+      "name": "Blue",
+      "shown": null
+     },
+     {
+      "colour": "purple",
+      "id": "purple",
+      "items": [],
+      "name": "Purple",
+      "shown": null
+     },
+     {
+      "colour": "grey",
+      "id": "grey",
+      "items": [],
+      "name": "Grey",
+      "shown": null
+     }
+    ],
+    "kept": true,
+    "revision": "central.content-fnv1a64/v1:355:84da58fd967256f6",
+    "schema": "central.collections/v1",
+    "source_path": "Control/relations/collections.json",
+    "world": "control:root"
+   },
+   "schema": "central.collections-receipt/v1",
+   "shown": false,
+   "source_path": "Control/relations/collections.json",
+   "world": "control:root"
+  }
+ },
+ "show_blue": {
+  "ok": true,
+  "status": "success",
+  "action": "central.collections.show",
+  "data": {
+   "collection": "blue",
+   "outcome": "shown",
+   "reading": {
+    "collections": [
+     {
+      "colour": "red",
+      "id": "favourites",
+      "items": [],
+      "name": "Favourites",
+      "shown": false
+     },
+     {
+      "colour": "orange",
+      "id": "orange",
+      "items": [],
+      "name": "Orange",
+      "shown": null
+     },
+     {
+      "colour": "yellow",
+      "id": "yellow",
+      "items": [],
+      "name": "Yellow",
+      "shown": null
+     },
+     {
+      "colour": "green",
+      "id": "green",
+      "items": [
+       {
+        "added_at_unix_seconds": 1793360184,
+        "kind": "workcell",
+        "label": "This machine",
+        "ref": "workcell:mac"
+       }
+      ],
+      "name": "Machines I use",
+      "shown": null
+     },
+     {
+      "colour": "blue",
+      "id": "blue",
+      "items": [],
+      "name": "Blue",
+      "shown": true
+     },
+     {
+      "colour": "purple",
+      "id": "purple",
+      "items": [],
+      "name": "Purple",
+      "shown": null
+     },
+     {
+      "colour": "grey",
+      "id": "grey",
+      "items": [],
+      "name": "Grey",
+      "shown": null
+     }
+    ],
+    "kept": true,
+    "revision": "central.content-fnv1a64/v1:373:9020bdc8c225ef46",
+    "schema": "central.collections/v1",
+    "source_path": "Control/relations/collections.json",
+    "world": "control:root"
+   },
+   "schema": "central.collections-receipt/v1",
+   "shown": true,
+   "source_path": "Control/relations/collections.json",
+   "world": "control:root"
+  }
+ },
+ "refused_rename": {
+  "ok": false,
+  "status": "invalid_input",
+  "action": "central.collections.rename",
+  "error": {
+   "code": "invalid_input",
+   "message": "A collection's name is one line of at most 64 characters"
+  }
+ },
+ "read_after": {
+  "ok": true,
+  "status": "success",
+  "action": "central.collections.read",
+  "data": {
+   "collections": [
+    {
+     "colour": "red",
+     "id": "favourites",
+     "items": [],
+     "name": "Favourites",
+     "shown": false
+    },
+    {
+     "colour": "orange",
+     "id": "orange",
+     "items": [],
+     "name": "Orange",
+     "shown": null
+    },
+    {
+     "colour": "yellow",
+     "id": "yellow",
+     "items": [],
+     "name": "Yellow",
+     "shown": null
+    },
+    {
+     "colour": "green",
+     "id": "green",
+     "items": [
+      {
+       "added_at_unix_seconds": 1793360184,
+       "kind": "workcell",
+       "label": "This machine",
+       "ref": "workcell:mac"
+      }
+     ],
+     "name": "Machines I use",
+     "shown": null
+    },
+    {
+     "colour": "blue",
+     "id": "blue",
+     "items": [],
+     "name": "Blue",
+     "shown": true
+    },
+    {
+     "colour": "purple",
+     "id": "purple",
+     "items": [],
+     "name": "Purple",
+     "shown": null
+    },
+    {
+     "colour": "grey",
+     "id": "grey",
+     "items": [],
+     "name": "Grey",
+     "shown": null
+    }
+   ],
+   "kept": true,
+   "revision": "central.content-fnv1a64/v1:373:9020bdc8c225ef46",
+   "schema": "central.collections/v1",
+   "source_path": "Control/relations/collections.json",
+   "world": "control:root"
+  }
+ }
+}

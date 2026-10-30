@@ -72,6 +72,7 @@ import {useSessionGit} from '../../agent/devices/useAgentChainReading'
 import {openSeatDiff} from '../../agent/AgentShellBrowser'
 import {custodyBinding} from '../../agent/devices/sessionChainBindings'
 import {shownSession, threadBinding} from '../../agent/devices/threadBinding'
+import {useAikitRead} from '../../agent/devices/workcellReads'
 import {holdView, useChainHolds, viewHolds} from '../../agent/devices/designBindings'
 import {familyFaceDevice} from '../../agent/devices/mainTrackBindings'
 import {APPROVALS_ID, approvalsBinding} from '../../agent/devices/receiptBindings'
@@ -465,11 +466,14 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
   )
   const answerAgents = answerRoster.state === 'ready' ? answerRoster.agents : null
   const refreshNara = nara.refresh
+  // The asks the dialogue's session put to the decision helper, as AIKit keeps them against it: its thread's Ask rows (§19.4), read as
+  // Factory's chain reads its session's (agent/devices/FactoryDeviceChain.tsx; O-I #684).
+  const naraAsks = useAikitRead(transport, nara.session ? {kind: 'decision-asks', agent_session: nara.session} : null)
   // The packet the Agent reads (§19.4 "intent on the packet while it reads"): the prepared items its Send carries, with the session they are
   // prepared for (answerBinding.ts centralAgentValues shows them only for the bound session's own turn).
   const answerInput = useMemo(() => ({nara: {state: nara.state, session: nara.session, resume: nara.resume}, observed: answerObserved, roster: answerAgents,
-    packet: preparedItems ? {items: preparedItems, session: packetSession} : null}),
-  [nara.state, nara.session, nara.resume, answerObserved, answerAgents, preparedItems, packetSession])
+    packet: preparedItems ? {items: preparedItems, session: packetSession} : null, asks: naraAsks}),
+  [nara.state, nara.session, nara.resume, answerObserved, answerAgents, preparedItems, packetSession, naraAsks])
   // The session's next turn: its encounter's own draft, then its Send (the thread pane's). A typed question and a spoken one go this way.
   const answerSend = useMemo(() => (answerHandle && 'actions' in answerHandle
     ? async (text: string) => { answerHandle.actions.change(text); await answerHandle.actions.send() } : null), [answerHandle])
@@ -509,18 +513,20 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
   const identity = useIdentityDevice(transport, centralAgentRef(answerInput), IDENTITY_DEVICE_ID)
   const holds = useChainHolds()
   const custody = useMemo(() => custodyBinding({sessionRef: nara.session, autonomy: null, agent: own.values}, scope), [nara.session, own.values, scope])
+  // The session the Thread page shows (the dialogue's, or the one it is pinned to), and that session's asks to the decision helper.
+  const threadShown = shownSession({selected: nara.session, holds}, CENTRAL_THREAD_HOLD)
+  const shownAsks = useAikitRead(transport, threadShown ? {kind: 'decision-asks', agent_session: threadShown} : null)
   const thread = useMemo(() => {
-    const shown = shownSession({selected: nara.session, holds}, CENTRAL_THREAD_HOLD)
-    const handle = shown ? encounters.handles[shown] : undefined
+    const handle = threadShown ? encounters.handles[threadShown] : undefined
     const state = observedState(handle)
     const actions = handle && 'actions' in handle ? handle.actions : undefined
     return threadBinding({selected: nara.session, chainSession: nara.session, tracks: agency.tracks, nowUnixMs,
-      encounter: state ? {reading: state.reading, status: state.status} : null, agent: own.values, holds}, own, {
+      encounter: state ? {reading: state.reading, status: state.status} : null, asks: shownAsks, agent: own.values, holds}, own, {
       ...(actions ? {permission: (id: string, decision: Parameters<typeof actions.permission>[1]) => actions.permission(id, decision), cancel: async () => actions.cancel()} : {}),
       // Central has no session selection of its own: choosing a session pins the Agent's Thread page to it.
       select: ref => { holdView(CENTRAL_THREAD_HOLD, 'session', ref); holdView(CENTRAL_THREAD_HOLD, 'pin', true) },
     }, CENTRAL_THREAD_HOLD)
-  }, [nara.session, holds, encounters.handles, agency.tracks, nowUnixMs, own])
+  }, [nara.session, threadShown, shownAsks, holds, encounters.handles, agency.tracks, nowUnixMs, own])
   // The Context page's Git row (§19.4 Context; §23.2): the session's own repository, read in its register — your world's root register keeps
   // none, and the row says so in the world scope's words — and Diff to Files' Diff page.
   const sessionGit = useSessionGit(transport, nara.session, naraProject)
