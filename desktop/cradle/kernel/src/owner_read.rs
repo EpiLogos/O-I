@@ -459,6 +459,7 @@ impl PreparedRead {
             | KernelOp::LiveGroovePoolWrite { .. }
             | KernelOp::LiveSetAct { .. }
             | KernelOp::LiveSetsList
+            | KernelOp::LiveSetFromTemplate { .. }
             | KernelOp::CompositionRead { .. }
             // Central's own route and Workcell's status record nothing in the
             // kernel. Central's Day writes are prepared writes (owner_write.rs):

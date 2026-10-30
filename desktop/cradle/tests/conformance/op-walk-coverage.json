@@ -927,6 +927,15 @@
       "reason": "Built 29 Oct (O-I #749) with kernel tests on a scratch home (the Music folder, Library.cfg's User Library and an added Place; backups, packs, hidden folders and packages never walked) and a headless walk through a walk-bridge; the native app's own browser is not walked here."
     },
     {
+      "op": "live_set_from_template",
+      "native_owner": "kernel/src/live_set_owner.rs",
+      "spec_ref": "ProjectCentral/docs/1-vision/dlw/DLW.md \u00a710.3 (Sets, files and media: a new set started from a template takes its tracks and its layout), \u00a716.7 (Start from a template); O-I #749",
+      "status": "unverified",
+      "scenarios": [],
+      "owner_lane": "AP/native verification",
+      "reason": "Built 30 Oct (O-I #749) with kernel tests on a scratch home and world (a User Library template copied whole into Work/<project>, read back by the set's reader before it is kept; a set that stands there, a set that is no template, a project outside the world and a name that is no file name refused, nothing half-made left) and a headless walk through a walk-bridge; the native app's own browser is not walked here (#821)."
+    },
+    {
       "op": "live_set_act",
       "native_owner": "kernel/src/live_set_owner.rs",
       "spec_ref": "ProjectCentral/docs/1-vision/dlw/DLW.md \u00a710.9 Acts and menus and \u00a721.1 Live: tracks and clips; packages/live-set/src/acts.rs, packages/live-set/src/sources.rs remap",

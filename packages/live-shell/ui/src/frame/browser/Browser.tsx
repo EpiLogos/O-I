@@ -5,8 +5,10 @@
 // rows under the browser's control and portals its preview into the foot. The pool holds QL frames and MEF lenses, and in Live the
 // set's grooves beside them, and nothing else (GroovePool.tsx): a device stands whole in its band above the chain, an instrument in a
 // pane, and a reusable arrangement is a template among the rows (TemplateRows.tsx). A category's words are its
-// row's Info (data-i). Drawn at the mockup's floor (world-shell-mockup .bsearch/.bcats/.bres/.bitem; browser.css).
-import {useEffect, useMemo, useRef, useState, type ReactNode} from 'react'
+// row's Info (data-i). Down the left side the Collections lead, the four kinds follow, and the Places close the column (browserKinds.ts);
+// a source whose categories follow its owner (the Collections, CollectionRows.tsx) says when they move, and its Keeper holds its
+// owner read while the browser stands. Drawn at the mockup's floor (world-shell-mockup .bsearch/.bcats/.bres/.bitem; browser.css).
+import {useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode} from 'react'
 import {useBrowserSearchRequest} from '../keys/keyDoors'
 import {BROWSER_KINDS, type BrowserCategory, type BrowserSource} from './browserKinds'
 import {EMPTY_TRAIL, visitCategory, walkTrail} from './browserTrail'
@@ -33,7 +35,15 @@ export interface BrowserProps {
 export const categoryKey = (source: {id: string}, category: {id: string}): string => `${source.id}:${category.id}`
 
 export function Browser({sources, category, onCategory, poolFace = null, pool = true}: BrowserProps) {
-  const categories = useMemo<Placed[]>(() => sources.flatMap(source => source.categories.map(entry => ({...entry, source}))), [sources])
+  // A source whose categories follow its owner (the Collections) says when they move; its categories are read again then.
+  const subscribeMoves = useCallback((listener: () => void) => {
+    const offs = sources.flatMap(source => source.moves ? [source.moves.subscribe(listener)] : [])
+    return () => { for (const off of offs) off() }
+  }, [sources])
+  const movesOf = useCallback(() => sources.map(source => source.moves?.version() ?? 0).join(':'), [sources])
+  const moved = useSyncExternalStore(subscribeMoves, movesOf, movesOf)
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- `moved` is when a moving source's categories change
+  const categories = useMemo<Placed[]>(() => sources.flatMap(source => source.categories.map(entry => ({...entry, source}))), [sources, moved])
   const [held, hold] = useState<string | null>(null)
   const active = onCategory ? category ?? null : held
   const [query, setQuery] = useState('')
@@ -86,6 +96,7 @@ export function Browser({sources, category, onCategory, poolFace = null, pool = 
       </div>
     </div>
     {pool && <section className="one-browser-pool" aria-label="Pool"><GroovePool face={poolFace} /></section>}
+    {sources.map(source => source.Keeper ? <source.Keeper key={source.id} /> : null)}
   </aside>
 }
 

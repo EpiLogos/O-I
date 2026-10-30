@@ -13,8 +13,11 @@ import {trackDeviceFaceTitle} from '../live/liveChain'
 import {NOTE_DEVICE_LABEL, NOTE_DEVICES_WAITING, type NoteDeviceKind} from '../live/noteDevices/noteDevices'
 import {withoutExtension} from '../frame/browser/rowWords'
 import {Workspace} from '../shell/workspaceContext'
-import {useOwnerOp} from '../owners/ownerCall'
-import type {LiveSetsReading} from '../../../../../desktop/cradle/src/kernel/types'
+import {useHeldRead, useOwnerOp} from '../owners/ownerCall'
+import type {KernelOp, LiveSetsReading} from '../../../../../desktop/cradle/src/kernel/types'
+import {kernelOp, type KernelOpCall} from '../../../../../desktop/cradle/src/kernel/bridge'
+import {refusalWords} from '../../../../../desktop/cradle/src/shared/Refusal.tsx'
+import {centralRoot, centralRootHeld} from '../central/centralWorlds'
 const RECENTS_KEY = 'live-shell.recent.sets'
 function loadRecents(): string[] {
   try { const value: unknown = JSON.parse(localStorage.getItem(RECENTS_KEY) ?? '[]'); return Array.isArray(value) ? value.filter((p): p is string => typeof p === 'string').slice(0, 8) : [] } catch { return [] }
@@ -92,19 +95,85 @@ export function liveSetRows(listing: LiveSetsReading | null, defaultSet: string,
 const SET_STANDING_WORDS: Readonly<Record<LiveSetRow['standing'], string>> = {
   open: 'the set open now', yours: 'one of your sets', default: 'the host\'s default set', recent: 'a set this device opened recently', template: 'a template',
 }
-/** Why a template is not opened from here: opening it would write your changes into the template itself. */
-const TEMPLATE_WORDS = 'A template of Live\'s: opening it here would write your changes into the template itself. A new set from it needs the template copied into your project first, and no owner op makes that copy yet.'
+/** What a template does here (manual §10.3: "A new set started from it takes its tracks and its layout"; §16.7 Start from a template):
+ * it is never opened itself, so nothing you do writes into it. */
+const TEMPLATE_WORDS = 'A template of Live\'s: select it to start a new set from it in one of your projects. The new set takes its tracks and its layout; the template stays as it is.'
 
-/** Live sets as rows: select opens a set; a template stands dimmed with its reason; none says the owner's words. */
-export function LiveSetList({rows, words, openSet}: {rows: readonly LiveSetRow[]; words: string | null; openSet: (path: string) => void}) {
+/** Where a new set from a template can be kept: the projects of your world's Work (Central's root disclosure), each by its folder name
+ * and its path; null while Central has not answered; a refusal in Central's words. */
+export type SetProjects = readonly {readonly name: string; readonly path: string}[] | null | {readonly refused: unknown}
+
+/** Starting a set from a template: the projects it can be kept in, and the act (kernel live_set_from_template), which resolves to the
+ * new set's path or throws the owner's refusal. */
+export interface TemplateStart {
+  readonly projects: SetProjects
+  start(template: string, project: string, name: string): Promise<string>
+}
+
+/** The project a new set goes to first: the one the set open now stands in, else the first. Pure. */
+export function projectForNewSet(projects: readonly {readonly name: string; readonly path: string}[], openPath: string | null): string {
+  const holding = openPath ? projects.find(project => openPath.startsWith(`${project.path.replace(/\/+$/, '')}/`)) : undefined
+  return holding?.name ?? projects[0]?.name ?? ''
+}
+
+/** Start a new set from the chosen template: its name, the project it is kept in, and Start; the new set opens when it is made. */
+export function TemplateStartForm({template, start, openSet, openPath}: {template: LiveSetRow; start: TemplateStart; openSet: (path: string) => void; openPath: string | null}) {
+  const projects = Array.isArray(start.projects) ? start.projects as readonly {readonly name: string; readonly path: string}[] : null
+  const [name, setName] = useState(template.name)
+  const [project, setProject] = useState<string | null>(null)
+  const [said, setSaid] = useState<{readonly ok: boolean; readonly words: string} | null>(null)
+  const [busy, setBusy] = useState(false)
+  if (start.projects === null) return <p className="browser-empty" role="status">Reading the projects of your world…</p>
+  if (!projects) return <p className="native-error" role="alert">{refusalWords('The projects of your world are not read, so a new set has nowhere to be kept.', (start.projects as {refused: unknown}).refused)}</p>
+  if (!projects.length) return <p className="browser-empty">Your world's Work holds no project yet: bring one in from the Work place (Add folder…), and a new set can be kept there.</p>
+  const chosen = project ?? projectForNewSet(projects, openPath)
+  return <form className="browser-template-start" data-template-start={template.path} onSubmit={event => {
+    event.preventDefault()
+    if (!name.trim() || busy) return
+    setBusy(true); setSaid(null)
+    void start.start(template.path, chosen, name.trim())
+      .then(path => { setSaid({ok: true, words: `${name.trim()} is started from ${template.name} in ${chosen}.`}); openSet(path) })
+      .catch(cause => setSaid({ok: false, words: refusalWords(`No set was started from ${template.name}.`, cause)}))
+      .finally(() => setBusy(false))
+  }}>
+    <label><span>Name</span><input type="text" value={name} onChange={event => setName(event.target.value)} aria-label="New set's name"
+      data-i="Name|The new set's name: its file in the project is this name with .als." /></label>
+    <label><span>In</span><select value={chosen} onChange={event => setProject(event.target.value)} aria-label="Project"
+      data-i="In|The project of your world the new set is kept in.">
+      {projects.map(entry => <option key={entry.name} value={entry.name}>{entry.name}</option>)}</select></label>
+    <button type="submit" disabled={!name.trim() || busy} data-action="start-from-template"
+      data-i={`Start|Starts a new set from ${template.name} in the project chosen, and opens it. The template stays as it is.`}>Start</button>
+    {said && <p className={said.ok ? 'browser-empty' : 'native-error'} role={said.ok ? 'status' : 'alert'}>{said.words}</p>}
+  </form>
+}
+
+/** Live sets as rows: select opens a set; select a template and a new set can be started from it; none says the owner's words. */
+export function LiveSetList({rows, words, openSet, start = null, openPath = null}: {rows: readonly LiveSetRow[]; words: string | null; openSet: (path: string) => void
+  start?: TemplateStart | null; openPath?: string | null}) {
+  const [chosen, choose] = useState<string | null>(null)
   if (!rows.length) return <div className="browser-empty" data-i={`Live sets|${words ?? 'No set stands here yet.'}`}>{words ?? 'No set stands here yet.'}</div>
   return <>{rows.map(row => {
     const meta = row.place ? `${row.standing === 'yours' ? '' : `${row.standing} · `}${row.place}` : row.standing
-    if (row.standing === 'template') return <button key={row.path} type="button" className="browser-item" data-live-set={row.path} aria-disabled="true" data-i={`${row.name}|${TEMPLATE_WORDS}`}
-      title={`${row.path} — ${TEMPLATE_WORDS}`}><Mark name="lib" size={12} /><span>{row.name}</span><span className="mode-browser-row-meta">{meta}</span></button>
+    if (row.standing === 'template') return <div key={row.path} className="browser-template-row">
+      <button type="button" className="browser-item" data-live-set={row.path} aria-pressed={chosen === row.path} data-i={`${row.name}|${TEMPLATE_WORDS}`}
+        title={`${row.path} — ${TEMPLATE_WORDS}`} onClick={() => choose(chosen === row.path ? null : row.path)}>
+        <Mark name="lib" size={12} /><span>{row.name}</span><span className="mode-browser-row-meta">{meta}</span></button>
+      {chosen === row.path && (start
+        ? <TemplateStartForm template={row} start={start} openSet={openSet} openPath={openPath} />
+        : <p className="browser-empty">A new set is started from a template where the shell reaches the Live document owner.</p>)}
+    </div>
     return <button key={row.path} type="button" className={'browser-item' + (row.standing === 'open' ? ' browser-item-active' : '')} data-live-set={row.path} onClick={() => openSet(row.path)}
       title={`${row.path} — ${SET_STANDING_WORDS[row.standing]}; select opens it`}><Mark name="lib" size={12} /><span>{row.name}</span><span className="mode-browser-row-meta">{meta}</span></button>
   })}</>
+}
+
+/** The act of starting a set from a template through the Live document owner (kernel live_set_owner.rs set_from_template): the new
+ * set's path, or the owner's refusal thrown. */
+export async function startSetFromTemplate(call: (op: KernelOp) => Promise<KernelOpCall>, template: string, project: string, name: string): Promise<string> {
+  const answer = await call({op: 'live_set_from_template', template, project, name})
+  if (answer.error) throw new Error(answer.error)
+  if (answer.outcome?.result !== 'live_set_started') throw new Error('The Live document owner did not start the set.')
+  return answer.outcome.reading.path
 }
 
 /** What Live sets say when no row stands: the owner's refusal, its reading, or the places it read. */
@@ -134,12 +203,21 @@ export function BrowserPane({ defaultSet, ctx, controlled }: { defaultSet: strin
   const listed = useOwnerOp(transport, category === 'Sets' ? {op: 'live_sets_list'} : null, 'live_sets_reading', 'The Live document owner did not answer.').reading
   const listing = listed.status === 'answered' ? (listed.value?.reading ?? null) : null
   const setRows = liveSetRows(listing, defaultSet, recents, ctx.set?.path ?? null, filter)
+  // Where a new set from a template is kept: the projects of your world's Work, read while Live sets is shown and a template stands.
+  const usable = transport && transport.kind !== 'unavailable' ? transport : null
+  const root = useHeldRead(usable && category === 'Sets' && setRows.some(row => row.standing === 'template') ? centralRootHeld(usable) : null, () => centralRoot(usable!))
+  const start: TemplateStart | null = usable ? {
+    projects: root.status === 'answered' && root.value ? (root.value.work?.projects ?? []).map(project => ({name: project.name, path: project.path}))
+      : root.status === 'refused' ? {refused: root.error} : null,
+    start: (template, project, name) => startSetFromTemplate(op => kernelOp(usable, op), template, project, name),
+  } : null
   const devices = [...new Set(ctx.set?.tracks.flatMap(track => track.devices) ?? [])].sort()
   // The opened set's own devices stay browsable: its instruments under Instruments (beside the expanded torus), and every other device,
   // plug-ins included, under Chain devices. Nothing the set contains is hidden by the instrument's categories.
   const filtered = devices.filter(name => category === 'Instruments' ? INSTRUMENTS.has(name) : category === 'Chain devices' && !INSTRUMENTS.has(name)).filter(name => (trackDeviceFaceTitle(name) ?? displayDeviceName(name)).toLowerCase().includes(filter.toLowerCase()))
   const results = <div className="browser-results"><div className="browser-list-heading">Name <span>▴</span></div>
-      {category === 'Sets' && <LiveSetList rows={setRows} words={filter && !setRows.length ? 'No matching set.' : liveSetsWords(listed, listing)} openSet={ctx.openSet} />}
+      {category === 'Sets' && <LiveSetList rows={setRows} words={filter && !setRows.length ? 'No matching set.' : liveSetsWords(listed, listing)} openSet={ctx.openSet}
+        start={start} openPath={ctx.set?.path ?? null} />}
       {category === 'Chain devices' && <NoteDeviceRows filter={filter.toLowerCase()} />}
       {(category === 'Chain devices' || category === 'Instruments') && filtered.map(name => <div key={name} className="browser-item" data-browser-set-device={name} title={`${name} · present in this set · insertion requires native device owner`}><Mark name={INSTRUMENTS.has(name) ? 'keys' : 'chain'} size={12} /><span>{trackDeviceFaceTitle(name) ?? displayDeviceName(name)}</span><span className="mode-browser-row-meta">in this set</span></div>)}
       {(category === 'Chain devices' || category === 'Instruments' || category === 'Samples') && !filtered.length && <div className="browser-empty">{filter ? 'No matching material.' : `No ${category === 'Samples' ? 'samples' : category === 'Instruments' ? 'instruments' : 'other chain devices'} disclosed by this set.`}</div>}

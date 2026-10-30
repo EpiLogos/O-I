@@ -230,6 +230,35 @@ pub fn execute(op: &KernelOp) -> Option<Result<KernelOpResult, String>> {
                 live_set::acts::act(path, expected_revision, act)
                     .map(|reading| KernelOpResult::LiveSetActed { reading })
             }),
+        KernelOp::LiveSetFromTemplate {
+            template,
+            project,
+            name,
+        } => std::env::var_os("HOME")
+            .filter(|home| !home.is_empty())
+            .ok_or_else(|| {
+                "The person's home is not named (HOME), so Live's templates cannot be found"
+                    .to_owned()
+            })
+            .and_then(|home| {
+                let central = std::env::var_os("OI_CENTRAL_ROOT")
+                    .filter(|root| !root.is_empty())
+                    .ok_or_else(|| {
+                        "The world's Central is not named (OI_CENTRAL_ROOT), so a new set has no project to be kept in"
+                            .to_owned()
+                    })?;
+                let _gate = WRITE_GATE
+                    .lock()
+                    .unwrap_or_else(|poisoned| poisoned.into_inner());
+                set_from_template(
+                    std::path::Path::new(&home),
+                    std::path::Path::new(&central),
+                    template,
+                    project,
+                    name,
+                )
+            })
+            .map(|reading| KernelOpResult::LiveSetStarted { reading }),
         KernelOp::LiveSetsList => std::env::var_os("HOME")
             .filter(|home| !home.is_empty())
             .ok_or_else(|| {
@@ -356,11 +385,7 @@ pub fn sets_reading(home: &std::path::Path) -> serde_json::Value {
             places.push(place);
         }
     }
-    let library = places
-        .iter()
-        .skip(1)
-        .find(|(_, path)| path.join("Templates").is_dir())
-        .map(|(_, path)| path.clone());
+    let library = templates_library(&places);
     let mut seen = std::collections::BTreeMap::<std::path::PathBuf, serde_json::Value>::new();
     let (mut looked, mut truncated) = (0usize, false);
     for (_, root) in &places {
@@ -397,12 +422,7 @@ pub fn sets_reading(home: &std::path::Path) -> serde_json::Value {
                     .max_by_key(|(_, root)| root.components().count())
                     .map(|(label, _)| label.clone())
                     .unwrap_or_default();
-                let template = library.as_ref().is_some_and(|library| {
-                    path.strip_prefix(library).is_ok_and(|rest| {
-                        rest.components()
-                            .any(|part| part.as_os_str() == "Templates")
-                    })
-                });
+                let template = is_template(library.as_deref(), &path);
                 let modified = row
                     .metadata()
                     .ok()
@@ -433,6 +453,148 @@ pub fn sets_reading(home: &std::path::Path) -> serde_json::Value {
         .map(|(label, path)| serde_json::json!({"label": label, "path": path.to_string_lossy(), "present": path.is_dir()}))
         .collect();
     serde_json::json!({"schema": "oi.live-sets/v1", "places": places, "sets": sets, "truncated": truncated})
+}
+
+/// Live's User Library, where its Templates stand: the first of Live's own
+/// places (after the Music folder) that holds a Templates folder.
+fn templates_library(places: &[(String, std::path::PathBuf)]) -> Option<std::path::PathBuf> {
+    places
+        .iter()
+        .skip(1)
+        .find(|(_, path)| path.join("Templates").is_dir())
+        .map(|(_, path)| path.clone())
+}
+
+/// Whether a set is one of Live's templates: it stands under a Templates
+/// folder of the User Library.
+fn is_template(library: Option<&std::path::Path>, path: &std::path::Path) -> bool {
+    library.is_some_and(|library| {
+        path.strip_prefix(library).is_ok_and(|rest| {
+            rest.components()
+                .any(|part| part.as_os_str() == "Templates")
+        })
+    })
+}
+
+/// A set's name, as the person gives it: one line of words that names a
+/// file, with Live's `.als` added here (a name that already ends in `.als`
+/// keeps one).
+const SET_NAME_MAX_CHARS: usize = 120;
+fn set_name(name: &str) -> Result<String, String> {
+    let name = name.trim();
+    let name = name.strip_suffix(".als").unwrap_or(name).trim_end();
+    if name.is_empty()
+        || name.chars().count() > SET_NAME_MAX_CHARS
+        || name.starts_with('.')
+        || name
+            .chars()
+            .any(|c| c.is_control() || matches!(c, '/' | '\\' | ':'))
+    {
+        return Err(format!(
+            "A set's name is 1 to {SET_NAME_MAX_CHARS} characters of one line, without a slash or a colon, and not starting with a dot"
+        ));
+    }
+    Ok(name.to_owned())
+}
+
+/// The most a template is read: a Live set is a compressed document.
+const TEMPLATE_MAX_BYTES: u64 = 256 * 1024 * 1024;
+
+/// Start a new set from one of Live's templates (DLW §10.3, "A set you want
+/// to start from again is a template … A new set started from it takes its
+/// tracks and its layout"; §16.7, "Start from a template"): the template, a
+/// set under the User Library's Templates as `sets_reading` marks it, is
+/// copied whole into the project `project` of the world's Central `central`
+/// (`Work/<project>`, a folder of the world: "The set is a file of the DLW's
+/// own, kept in the project") as `<name>.als`. The template stays as it is.
+/// The copy is made under a name of its own and linked into place, so a set
+/// that stands there already is never overwritten and nothing half-made is
+/// left; the copy is read back by the set's own reader before it is kept,
+/// and it is remembered as read, so it can be worked on at once. Answers
+/// `{schema: oi.live-set-from-template/v1, path, name, project, template,
+/// tracks}`.
+pub fn set_from_template(
+    home: &std::path::Path,
+    central: &std::path::Path,
+    template: &str,
+    project: &str,
+    name: &str,
+) -> Result<serde_json::Value, String> {
+    native_document(template)
+        .map_err(|_| "A template is named by its absolute path to a Live set (.als)".to_owned())?;
+    let source = std::path::Path::new(template);
+    let metadata = std::fs::symlink_metadata(source)
+        .map_err(|error| format!("The template {template} cannot be read: {error}"))?;
+    if !metadata.is_file() || metadata.len() > TEMPLATE_MAX_BYTES {
+        return Err(format!("The template {template} is not a Live set file"));
+    }
+    let mut places: Vec<(String, std::path::PathBuf)> = vec![("Music".into(), home.join("Music"))];
+    places.extend(lives_places(home));
+    let library = templates_library(&places);
+    let canonical = |path: &std::path::Path| std::fs::canonicalize(path).ok();
+    let admitted = is_template(library.as_deref(), source)
+        || library
+            .as_deref()
+            .and_then(canonical)
+            .zip(canonical(source))
+            .is_some_and(|(library, source)| is_template(Some(&library), &source));
+    if !admitted {
+        return Err(format!(
+            "{template} is not one of Live's templates (a set under the User Library's Templates): only a template starts a new set"
+        ));
+    }
+    let plain_project = !project.is_empty()
+        && project != "."
+        && project != ".."
+        && !project.starts_with('.')
+        && !project
+            .chars()
+            .any(|c| c.is_control() || matches!(c, '/' | '\\' | ':'));
+    let folder = central.join("Work").join(project);
+    let is_folder = plain_project
+        && std::fs::symlink_metadata(&folder)
+            .is_ok_and(|metadata| metadata.is_dir() && !metadata.file_type().is_symlink());
+    if !is_folder {
+        return Err(format!(
+            "{project} is no project of your world (no folder Work/{project} in its Central): the new set has nowhere to be kept"
+        ));
+    }
+    let name = set_name(name)?;
+    let target = folder.join(format!("{name}.als"));
+    if std::fs::symlink_metadata(&target).is_ok() {
+        return Err(format!(
+            "A set named {name} stands in {project} already: choose another name"
+        ));
+    }
+    let bytes = std::fs::read(source)
+        .map_err(|error| format!("The template {template} cannot be read: {error}"))?;
+    let staged = folder.join(format!(".{name}.als.{}.partial", std::process::id()));
+    let made = std::fs::write(&staged, &bytes)
+        .map_err(|error| format!("The new set could not be written in {project}: {error}"))
+        .and_then(|()| {
+            live_set::api::set_json(&staged.to_string_lossy()).map_err(|error| {
+                format!("The template {template} is not a Live set the DLW can read ({error}): no set was made")
+            })
+        })
+        .and_then(|reading| {
+            std::fs::hard_link(&staged, &target)
+                .map(|()| reading)
+                .map_err(|error| match error.kind() {
+                    std::io::ErrorKind::AlreadyExists => format!(
+                        "A set named {name} stands in {project} already: choose another name"
+                    ),
+                    _ => format!("The new set could not be kept in {project}: {error}"),
+                })
+        });
+    let _ = std::fs::remove_file(&staged);
+    let reading = made?;
+    let path = target.to_string_lossy().into_owned();
+    remember_read(&path);
+    let tracks = reading["summary"]["tracks"].as_array().map_or(0, Vec::len);
+    Ok(
+        serde_json::json!({"schema": "oi.live-set-from-template/v1", "path": path, "name": name,
+        "project": project, "template": template, "tracks": tracks}),
+    )
 }
 
 /// Admit one native `.als` document path, as the host's live_shell_read does.
@@ -1180,6 +1342,131 @@ mod tests {
             "a folder only Live's Places name"
         );
         let _ = std::fs::remove_dir_all(&home);
+    }
+
+    /// A home of sets with a world's Central beside it: the User Library's
+    /// template is a real Live set, and the world keeps one project, Album.
+    fn home_and_world(name: &str) -> (std::path::PathBuf, std::path::PathBuf, std::path::PathBuf) {
+        let home = home_of_sets(name);
+        let template = home.join("Music/Ableton/User Library/Templates/Start Here.als");
+        let set = fixture(&format!("template-{name}"));
+        std::fs::copy(&set, &template).unwrap();
+        std::fs::remove_file(set).unwrap();
+        let central = home.join("Central");
+        std::fs::create_dir_all(central.join("Work/Album")).unwrap();
+        (home, central, template)
+    }
+
+    #[test]
+    fn a_new_set_starts_from_a_template_in_a_project_of_the_world() {
+        let (home, central, template) = home_and_world("from-template");
+        let started = set_from_template(
+            &home,
+            &central,
+            template.to_str().unwrap(),
+            "Album",
+            "First Take",
+        )
+        .unwrap();
+        let made = central.join("Work/Album/First Take.als");
+        assert_eq!(started["schema"], "oi.live-set-from-template/v1");
+        assert_eq!(started["path"], made.to_string_lossy().as_ref());
+        assert_eq!(started["name"], "First Take");
+        assert_eq!(started["project"], "Album");
+        assert_eq!(started["template"], template.to_string_lossy().as_ref());
+        let template_reading = live_set::api::set_json(template.to_str().unwrap()).unwrap();
+        assert_eq!(
+            started["tracks"],
+            template_reading["summary"]["tracks"]
+                .as_array()
+                .unwrap()
+                .len(),
+            "the template's tracks, as the set's reader reads them"
+        );
+        assert_eq!(
+            std::fs::read(&made).unwrap(),
+            std::fs::read(&template).unwrap(),
+            "the new set is the template's tracks and layout, byte for byte"
+        );
+        // The new set is one this kernel has read: it can be written straight away.
+        assert!(admitted_for_write(made.to_str().unwrap()).is_ok());
+        // A set of that name stands there now: refused, and nothing is overwritten.
+        let before = std::fs::read(&made).unwrap();
+        let again = set_from_template(
+            &home,
+            &central,
+            template.to_str().unwrap(),
+            "Album",
+            "First Take.als",
+        );
+        assert!(
+            again.unwrap_err().contains("already"),
+            "a second set of the same name"
+        );
+        assert_eq!(std::fs::read(&made).unwrap(), before);
+        // What is not a template, not a project of the world, or not a name is refused, and nothing is made.
+        let song = home.join("Music/Song.als");
+        for (template, project, name, says) in [
+            (
+                song.to_str().unwrap(),
+                "Album",
+                "Copy",
+                "not one of Live's templates",
+            ),
+            (template.to_str().unwrap(), "Absent", "Copy", "no project"),
+            (template.to_str().unwrap(), "../Album", "Copy", "no project"),
+            (template.to_str().unwrap(), "Album", "a/b", "name"),
+            (template.to_str().unwrap(), "Album", " ", "name"),
+            (template.to_str().unwrap(), "Album", ".hidden", "name"),
+            ("Templates/Start Here.als", "Album", "Copy", "absolute"),
+        ] {
+            let refused = set_from_template(&home, &central, template, project, name).unwrap_err();
+            assert!(
+                refused.contains(says),
+                "{template} {project} {name}: {refused}"
+            );
+        }
+        let made: Vec<_> = std::fs::read_dir(central.join("Work/Album"))
+            .unwrap()
+            .flatten()
+            .map(|row| row.file_name())
+            .collect();
+        assert_eq!(made, vec![std::ffi::OsString::from("First Take.als")]);
+        let _ = std::fs::remove_dir_all(&home);
+    }
+
+    #[test]
+    fn a_template_that_is_not_a_live_set_makes_no_set() {
+        let (home, central, template) = home_and_world("not-a-set");
+        std::fs::write(&template, b"not a set").unwrap();
+        let refused = set_from_template(
+            &home,
+            &central,
+            template.to_str().unwrap(),
+            "Album",
+            "Broken",
+        )
+        .unwrap_err();
+        assert!(refused.contains("not a Live set"), "{refused}");
+        assert!(!central.join("Work/Album/Broken.als").exists());
+        assert_eq!(
+            std::fs::read_dir(central.join("Work/Album"))
+                .unwrap()
+                .count(),
+            0,
+            "no partial copy left behind"
+        );
+        let _ = std::fs::remove_dir_all(&home);
+    }
+
+    #[test]
+    fn set_from_template_parses_from_its_wire_name() {
+        let op: KernelOp = serde_json::from_value(json!({"op": "live_set_from_template",
+            "template": "/t/Start Here.als", "project": "Album", "name": "First Take"}))
+        .unwrap();
+        assert!(
+            matches!(op, KernelOp::LiveSetFromTemplate { ref project, .. } if project == "Album")
+        );
     }
 
     #[test]

@@ -54,13 +54,32 @@ export const ROOT_SETTLE = {tries: 6, apartMs: 400} as const
  * and only then read as the absence it is (r13: the browser's Worlds rows read the first answer and kept it). */
 /** `fresh` asks the kernel again for the first browse too (a read that precedes a write). */
 export async function readWorlds(transport: KernelTransportStatus | undefined, settle: {readonly tries: number; readonly apartMs: number} = ROOT_SETTLE, fresh = false): Promise<CentralWorldsReading> {
+  const root = await readRoot(transport, settle, fresh)
+  return root.state === 'read' ? {state: 'read', worlds: worldsOf(root.root)} : root
+}
+
+/** How the window holds Central's root disclosure (owners/ownerCall.ts useHeldRead): the browser's Places and the projects a new
+ * Live set can be kept in share the one answer. */
+export const centralRootHeld = (transport: KernelTransportStatus): readonly unknown[] => ['central-root', transport]
+
+/** Central's root disclosure, or Central's words for why there is none, thrown. */
+export async function centralRoot(transport: KernelTransportStatus): Promise<RootWorld> {
+  const root = await readRoot(transport)
+  if (root.state !== 'read') throw new Error(root.reason)
+  return root.root
+}
+
+/** Central's root disclosure itself (your world, and every project of its Work), read as readWorlds reads it: the browser's Places
+ * read your world and your Work from it (frame/browser/places.ts). */
+export async function readRoot(transport: KernelTransportStatus | undefined, settle: {readonly tries: number; readonly apartMs: number} = ROOT_SETTLE, fresh = false): Promise<
+  {readonly state: 'read'; readonly root: RootWorld} | {readonly state: 'unavailable'; readonly reason: string}> {
   if (!transport) return {state: 'unavailable', reason: 'the shell published no kernel carrier to this pane'}
   if (transport.kind === 'unavailable') return {state: 'unavailable', reason: transport.reason}
   for (let attempt = 1; ; attempt++) {
     const answer = await kernelRead(transport, {op: 'world_browse'}, {fresh: fresh || attempt > 1})
     if (answer.error || answer.outcome?.result !== 'world_read') return {state: 'unavailable', reason: answer.error ?? 'Central did not disclose its worlds'}
     const navigator = answer.outcome.snapshot.navigator
-    if (navigator?.root) return {state: 'read', worlds: worldsOf(navigator.root)}
+    if (navigator?.root) return {state: 'read', root: navigator.root}
     if (navigator?.error || attempt >= settle.tries) return {state: 'unavailable', reason: navigator?.error ?? 'Central returned no root disclosure'}
     await new Promise(resolve => setTimeout(resolve, settle.apartMs))
   }

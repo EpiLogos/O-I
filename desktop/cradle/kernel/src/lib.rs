@@ -1295,6 +1295,17 @@ pub enum KernelOp {
     /// newest first, templates marked. An owner read of the person's files;
     /// see `live_set_owner.rs` `sets_reading`.
     LiveSetsList,
+    /// Start a new set from one of Live's templates (DLW §10.3, §16.7 "Start
+    /// from a template"): the template (an absolute `.als` under the User
+    /// Library's Templates, as `live_sets_list` marks it) copied whole into
+    /// the project `project` of the world's Central (`Work/<project>`) as
+    /// `<name>.als`, never over a set that stands there. Writes the person's
+    /// files, not kernel state; see `live_set_owner.rs` `set_from_template`.
+    LiveSetFromTemplate {
+        template: String,
+        project: String,
+        name: String,
+    },
     /// `fresh` bypasses the cached listing for this one read — the explicit
     /// tree refresh, not an ordinary expansion.
     FileResolve {
@@ -1909,6 +1920,11 @@ pub enum KernelOpResult {
     },
     /// `{schema: oi.live-sets/v1, places, sets, truncated}`.
     LiveSetsReading {
+        reading: serde_json::Value,
+    },
+    /// `{schema: oi.live-set-from-template/v1, path, name, project, template,
+    /// tracks}`: the new set, read and kept.
+    LiveSetStarted {
         reading: serde_json::Value,
     },
     SystemCompositionReading {
@@ -3072,7 +3088,8 @@ impl Kernel {
             | KernelOp::LiveGroovePoolRead { .. }
             | KernelOp::LiveGroovePoolWrite { .. }
             | KernelOp::LiveSetAct { .. }
-            | KernelOp::LiveSetsList) => self
+            | KernelOp::LiveSetsList
+            | KernelOp::LiveSetFromTemplate { .. }) => self
                 .prepare_owner_read(&op)
                 .ok_or("Cannot prepare the Live document owner operation")?
                 .execute(),

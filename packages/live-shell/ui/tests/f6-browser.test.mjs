@@ -43,8 +43,11 @@ const {MODE_BROWSERS, browserSourcesOf} = await import('../src/shell/modeBrowser
 const {SURF_MODES} = await import('../src/shell/modeGrammar.ts')
 const source = path => readFile(new URL(`../src/${path}`, import.meta.url), 'utf8')
 
-test('the four kinds are the manual\'s, in its order', () => {
-  assert.deepEqual(BROWSER_KINDS.map(k => k.kind), ['material', 'instruments', 'devices', 'running'])
+// REPLACED (O-I #749): the column held the four kinds alone; the manual stands Live's three groups down it — "Collections, the coloured
+// favourites you make; the four kinds above, as Live's categories; and Places, where your ground lies" (§10.3). The four kinds keep
+// their order between them (tests/w749-places-collections.test.mjs reads the Collections and the Places).
+test('the four kinds are the manual\'s, in its order, between the Collections and the Places', () => {
+  assert.deepEqual(BROWSER_KINDS.map(k => k.kind), ['collection', 'material', 'instruments', 'devices', 'running', 'place'])
 })
 
 test('every mode browses its own rows, the running sessions and the instruments — each category under one kind; the named sets are workspaces now', () => {

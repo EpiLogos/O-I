@@ -1,0 +1,288 @@
+{
+ "source": "ctrl action run (Central dlw/749-places-collections: central.collections.read, .add and .remove) on a scratch ground made by ctrl init, 30 Oct 2026",
+ "read_empty": {
+  "ok": true,
+  "status": "success",
+  "action": "central.collections.read",
+  "data": {
+   "collections": [
+    {
+     "colour": "red",
+     "id": "favourites",
+     "items": [],
+     "name": "Favourites"
+    },
+    {
+     "colour": "orange",
+     "id": "orange",
+     "items": [],
+     "name": "Orange"
+    },
+    {
+     "colour": "yellow",
+     "id": "yellow",
+     "items": [],
+     "name": "Yellow"
+    },
+    {
+     "colour": "green",
+     "id": "green",
+     "items": [],
+     "name": "Green"
+    },
+    {
+     "colour": "blue",
+     "id": "blue",
+     "items": [],
+     "name": "Blue"
+    },
+    {
+     "colour": "purple",
+     "id": "purple",
+     "items": [],
+     "name": "Purple"
+    },
+    {
+     "colour": "grey",
+     "id": "grey",
+     "items": [],
+     "name": "Grey"
+    }
+   ],
+   "kept": false,
+   "revision": null,
+   "schema": "central.collections/v1",
+   "source_path": "Control/relations/collections.json",
+   "world": "control:root"
+  }
+ },
+ "add_favourite": {
+  "ok": true,
+  "status": "success",
+  "action": "central.collections.add",
+  "data": {
+   "collection": "favourites",
+   "outcome": "added",
+   "reading": {
+    "collections": [
+     {
+      "colour": "red",
+      "id": "favourites",
+      "items": [
+       {
+        "added_at_unix_seconds": 1793330493,
+        "kind": "agent",
+        "label": "Central guardian",
+        "ref": "agent/central-guardian"
+       }
+      ],
+      "name": "Favourites"
+     },
+     {
+      "colour": "orange",
+      "id": "orange",
+      "items": [],
+      "name": "Orange"
+     },
+     {
+      "colour": "yellow",
+      "id": "yellow",
+      "items": [],
+      "name": "Yellow"
+     },
+     {
+      "colour": "green",
+      "id": "green",
+      "items": [],
+      "name": "Green"
+     },
+     {
+      "colour": "blue",
+      "id": "blue",
+      "items": [],
+      "name": "Blue"
+     },
+     {
+      "colour": "purple",
+      "id": "purple",
+      "items": [],
+      "name": "Purple"
+     },
+     {
+      "colour": "grey",
+      "id": "grey",
+      "items": [],
+      "name": "Grey"
+     }
+    ],
+    "kept": true,
+    "revision": "central.content-fnv1a64/v1:281:ef9a47c200ccfbf6",
+    "schema": "central.collections/v1",
+    "source_path": "Control/relations/collections.json",
+    "world": "control:root"
+   },
+   "ref": "agent/central-guardian",
+   "schema": "central.collections-receipt/v1",
+   "source_path": "Control/relations/collections.json",
+   "world": "control:root"
+  }
+ },
+ "add_blue": {
+  "ok": true,
+  "status": "success",
+  "action": "central.collections.add",
+  "data": {
+   "collection": "blue",
+   "outcome": "added",
+   "reading": {
+    "collections": [
+     {
+      "colour": "red",
+      "id": "favourites",
+      "items": [
+       {
+        "added_at_unix_seconds": 1793330493,
+        "kind": "agent",
+        "label": "Central guardian",
+        "ref": "agent/central-guardian"
+       }
+      ],
+      "name": "Favourites"
+     },
+     {
+      "colour": "orange",
+      "id": "orange",
+      "items": [],
+      "name": "Orange"
+     },
+     {
+      "colour": "yellow",
+      "id": "yellow",
+      "items": [],
+      "name": "Yellow"
+     },
+     {
+      "colour": "green",
+      "id": "green",
+      "items": [],
+      "name": "Green"
+     },
+     {
+      "colour": "blue",
+      "id": "blue",
+      "items": [
+       {
+        "added_at_unix_seconds": 1793330493,
+        "kind": "project",
+        "label": "Album",
+        "ref": "project:Album"
+       }
+      ],
+      "name": "Blue"
+     },
+     {
+      "colour": "purple",
+      "id": "purple",
+      "items": [],
+      "name": "Purple"
+     },
+     {
+      "colour": "grey",
+      "id": "grey",
+      "items": [],
+      "name": "Grey"
+     }
+    ],
+    "kept": true,
+    "revision": "central.content-fnv1a64/v1:447:9f7e27be167864be",
+    "schema": "central.collections/v1",
+    "source_path": "Control/relations/collections.json",
+    "world": "control:root"
+   },
+   "ref": "project:Album",
+   "schema": "central.collections-receipt/v1",
+   "source_path": "Control/relations/collections.json",
+   "world": "control:root"
+  }
+ },
+ "remove_favourite": {
+  "ok": true,
+  "status": "success",
+  "action": "central.collections.remove",
+  "data": {
+   "collection": "favourites",
+   "outcome": "removed",
+   "reading": {
+    "collections": [
+     {
+      "colour": "red",
+      "id": "favourites",
+      "items": [],
+      "name": "Favourites"
+     },
+     {
+      "colour": "orange",
+      "id": "orange",
+      "items": [],
+      "name": "Orange"
+     },
+     {
+      "colour": "yellow",
+      "id": "yellow",
+      "items": [],
+      "name": "Yellow"
+     },
+     {
+      "colour": "green",
+      "id": "green",
+      "items": [],
+      "name": "Green"
+     },
+     {
+      "colour": "blue",
+      "id": "blue",
+      "items": [
+       {
+        "added_at_unix_seconds": 1793330493,
+        "kind": "project",
+        "label": "Album",
+        "ref": "project:Album"
+       }
+      ],
+      "name": "Blue"
+     },
+     {
+      "colour": "purple",
+      "id": "purple",
+      "items": [],
+      "name": "Purple"
+     },
+     {
+      "colour": "grey",
+      "id": "grey",
+      "items": [],
+      "name": "Grey"
+     }
+    ],
+    "kept": true,
+    "revision": "central.content-fnv1a64/v1:257:65e1c0d14819ba6e",
+    "schema": "central.collections/v1",
+    "source_path": "Control/relations/collections.json",
+    "world": "control:root"
+   },
+   "ref": "agent/central-guardian",
+   "schema": "central.collections-receipt/v1",
+   "source_path": "Control/relations/collections.json",
+   "world": "control:root"
+  }
+ },
+ "refused_no_collection": {
+  "ok": false,
+  "status": "invalid_input",
+  "action": "central.collections.add",
+  "error": {
+   "code": "invalid_input",
+   "message": "\"crimson\" is no collection: they are favourites, orange, yellow, green, blue, purple, grey"
+  }
+ }
+}
