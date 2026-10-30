@@ -729,6 +729,14 @@ pub enum AikitRead {
         #[serde(default)]
         limit: Option<u32>,
     },
+    /// The typed questions one agent session put to the decision helper,
+    /// each with the labels it allowed and the answer or why none came,
+    /// oldest first (`aikit decide asks --agent-session S`,
+    /// `aikit.decision-asks/v1`; O-I #684): the Agent's thread draws them as
+    /// its Ask rows. AIKit keeps each against the session that asked.
+    DecisionAsks {
+        agent_session: String,
+    },
     /// Whether a close-out left the objects it claims (`aikit work
     /// continuity closeout verify [--project P] [--since N] [--run R]`): each
     /// clause read back from its carrier. An unverified close-out is AIKit's
@@ -1034,6 +1042,7 @@ impl AikitRead {
             | Self::SourceShow { .. }
             | Self::SourceList
             | Self::FlowThoughts { .. }
+            | Self::DecisionAsks { .. }
             | Self::Collate { .. }
             | Self::Init
             | Self::HarnessDisclose
@@ -2484,6 +2493,12 @@ pub(crate) fn aikit_read_args(request: &AikitRead) -> (&'static str, Vec<OsStrin
             args.push("--json".into());
             ("aikit work continuity turn", args)
         }
+        AikitRead::DecisionAsks { agent_session } => {
+            let mut args = words(&["decide", "asks"]);
+            push_flag(&mut args, "--agent-session", Some(agent_session.as_str()));
+            args.push("--json".into());
+            ("aikit decide asks", args)
+        }
         AikitRead::FlowThoughts { flow_ref, limit } => {
             let mut args = words(&["flow", "thoughts"]);
             args.push(flow_ref.into());
@@ -2682,6 +2697,18 @@ fn aikit_read_answer(request: &AikitRead, cwd: Option<&Path>) -> Result<Reading,
                 ));
             }
             fields(route, data, &[("thoughts", Kind::List)])?
+        }
+        AikitRead::DecisionAsks { agent_session } => {
+            if data.get("schema").and_then(Value::as_str) != Some("aikit.decision-asks/v1")
+                || data.get("agent_session").and_then(Value::as_str) != Some(agent_session.as_str())
+            {
+                return Err(unexpected(
+                    route,
+                    &format!("aikit.decision-asks/v1 for {agent_session}"),
+                    &data,
+                ));
+            }
+            fields(route, data, &[("asks", Kind::List)])?
         }
         AikitRead::Unused => fields(route, data, &[("unused", Kind::List)])?,
         AikitRead::History { view, .. } => match view {

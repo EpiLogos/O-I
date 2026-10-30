@@ -65,11 +65,14 @@ export function presetRows(p: Pattern): PresetRow[] {
     : link === 'Peer' ? {lands: [{device: GATE, setting: 'Agent to agent', value: 'Allow'}]}
     : link === 'Place' ? {lands: [{device: 'Ledger', setting: 'the shared record', value: 'read and written'}], dark: 'The Ledger keeps no marks that fade, so a Trail has no decay.'}
     : link === 'Many' ? {lands: [], dark: 'No setting lets an agent read its nearest neighbours.'} : {lands: []})})
-  // Join. The accepted spec (19 October) found no combining rule at all. The owner operations show one: Software Factory's barrier waits
-  // until every leg it names has returned (orchestration.rs `barrier_reading`: Pending, Complete, Failed), and Hermes' delegate_task
-  // returns every child's result to the parent. So All has a setting; First, Quorum and Weighted have none.
-  rows.push({field: 'Join', value: join, ...(join === 'All' ? {lands: [{device: RACK, setting: 'Join', value: 'All'}]}
-    : join === 'None' ? {lands: []} : {lands: [], dark: `No owner combines returns by ${join.toLowerCase()}: Software Factory's barrier waits for all.`})})
+  // Join. The accepted spec (19 October) found no combining rule at all. Software Factory's barrier now combines a team step's returns by its
+  // Central set's join, kept with the Run from its start (O-I ticket 684; orchestration.rs `record_step_join`, `barrier_reading`): All waits until
+  // every member has returned, First closes the step on the first acceptable return. The manual names no count for Quorum and no member
+  // weights for Weighted, so those have no setting.
+  rows.push({field: 'Join', value: join, ...(join === 'All' || join === 'First' ? {lands: [{device: RACK, setting: 'Join', value: join}]}
+    : join === 'None' ? {lands: []}
+    : {lands: [], dark: join === 'Quorum' ? 'No owner combines returns by quorum: the set names no count of members that must agree.'
+      : `No owner combines returns by ${join.toLowerCase()}: no member of a set carries a weight.`})})
   rows.push({field: 'Change', value: p.change, ...(p.change === 'Same' ? {lands: []} : {lands: [], dark: 'A member keeps its role card; nothing changes it in a run.'})})
   rows.push({field: 'Failure', value: p.breaks, lands: []})
   return rows

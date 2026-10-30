@@ -6130,7 +6130,7 @@ eight fields, each landing in a setting of a device the agent already has.
 | Count | One · Pair · Crew · Swarm | One: a track. Pair and Crew: the rack's Fan-out. Swarm: Fan-out with no limit and Hand-back Digest. |
 | Reach | Read · Draft · Write | Read: Scope's Writes empty. Draft: Write mode Draft. Write: Write mode Direct, with Arm on (§19.12). |
 | Link | None · Parent · Peer · Place · Many | Parent: the rack's Hand-back. Peer: Agent to agent, Allow, on the Gateway (§19.2). Place: the Ledger. Many: no setting. |
-| Join | None · All · First · Quorum · Weighted | All: the rack's Join (§19.15). None: no setting needed. First, Quorum and Weighted: no setting. |
+| Join | None · All · First · Quorum · Weighted | All and First: the rack's Join (§19.15). None: no setting needed. Quorum and Weighted: no setting. |
 | Change | Same role · Changes role | No setting: a member keeps its role. |
 | Failure | Text | How the pattern breaks. A warning, not a setting. |
 
@@ -6139,7 +6139,7 @@ Heartbeat. Each other device takes its setting from its own owner. A field
 that has no setting stays named and dark in the Lands list, with the reason:
 nothing starts an agent on an event, no setting lets an agent read its nearest
 neighbours, the Ledger keeps no marks that fade, and no owner combines returns
-by First, Quorum or Weighted. Nothing stands in for what an instrument lacks
+by Quorum or Weighted. Nothing stands in for what an instrument lacks
 (§16.16). Choosing a type does not lock the settings.
 
 A pattern that breaks in a known way says so in its Failure field. A Trail
@@ -7185,7 +7185,7 @@ Each chain is one agent. The lead is at the top. Its helpers sit below it, with 
 | Depth | A number · No limit | 2 | How deep helpers may spawn their own helpers. The default is a start value, not a limit. |
 | Hand-back | Raw · Digest · Summary | Summary | What a helper returns to its parent. |
 | Subagent model | A model | The lead's model | The default model for everything the group spawns. A member can set its own. |
-| Join | None · All · First · Quorum · Weighted | All | How the members' returns combine. None keeps one return: the last member's, or a single member's. All waits until every member has returned, and an independent reviewer then integrates the returns: stacking them end to end is not integrating. First, Quorum and Weighted stand dark, because no owner combines returns that way yet. Join belongs to the group's set of agents: the rack reads it from Central and saves your change there, with the set. A group that is no set of agents has no Join to read, and the rack names how to tie it to one. |
+| Join | None · All · First · Quorum · Weighted | All | How the members' returns combine. None keeps one return: the last member's, or a single member's. All waits until every member has returned, and an independent reviewer then integrates the returns: stacking them end to end is not integrating. First closes the step on the first acceptable return; the other members' returns are not kept, and their failures do not fail the step. Quorum and Weighted stand dark: the set names no count of members that must agree, and no member carries a weight. Join belongs to the group's set of agents: the rack reads it from Central and saves your change there, with the set. Software Factory reads Join from the set when a run starts, and a running step keeps it. A group that is no set of agents has no Join to read, and the rack names how to tie it to one. |
 | Member state | Working · Idle · Stalled · Done (reading) | Read from each session | The state of each chain. |
 
 #### Making a group
@@ -7333,6 +7333,7 @@ The widget is the Agents tile (§19.1): each member a creature, standing at the 
 - To find the slow member, look for the orange outline.
 - To read the returns only when every member has finished, leave Join on All.
 - To act on one member's return, set Join to None.
+- To act on the first good return, set Join to First.
 
 **Source:** Ableton Live 12.0.25 (racks, chains, macros); Buzz's agent system (teams of agents); QL's own system (decision helpers)
 

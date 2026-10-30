@@ -21,10 +21,11 @@
 // The crew's face (manual §19.15, §25.6): a pattern whose Count is Pair, Crew or Swarm is several whole creatures in one pane, each member
 // in the posture of its own state (faces/CrewFace.tsx). `pattern` is the pattern the crew works as: the Type of its lead, read; `type` on a member
 // names the pattern of that member when it differs from the crew's (a lead that sets a goal and members that decide the detail).
-// Join. Central keeps the setting with the group's agent set; the owners that combine returns do it in one way: Software Factory's barrier
-// waits until every leg it names has returned, and then an independent reviewer synthesises (orchestration.rs `barrier_reading`,
-// `synthesize`); AIKit's team hands each member's Return to its parent, and Hermes' delegate_task returns every child's result to the parent.
-// So All has an owner that combines that way, None needs none, and First, Quorum and Weighted have none: they stand named and dark.
+// Join. Central keeps the setting with the group's agent set. Software Factory's barrier combines a team step's returns by the set's join,
+// read from Central as the Run starts and kept with the Run (O-I ticket 684; orchestration.rs `record_step_join`, `barrier_reading`): All waits until
+// every member has returned and an independent reviewer synthesises; First closes the step on the first acceptable return. None needs no
+// owner. Quorum and Weighted stand named and dark: the manual names no count for Quorum and no member weights for Weighted, no Central set
+// carries either, and Factory refuses to start a step on them.
 // Fan-out and Depth (manual §19.15) start at 2 and have no upper limit: the top step of each control is No limit, kept as 0.
 // The Helper page (manual §19.15 Decision helpers) carries the Decision helper's own parts (ai-kit__decision-helper.tsx) under `helper.`:
 // the spread of the last question, the question, the pick with its status and the engine's verdict, the team's questions with your
@@ -76,20 +77,21 @@ const HANDBACKS: readonly Option<string>[] = [
   {value: 'digest', label: 'Digest', does: 'The helper returns its closing note, its tool calls and the files it touched.'},
   {value: 'raw', label: 'Raw', does: 'The helper returns its whole thread.'},
 ]
-const NO_JOIN = 'No owner combines returns this way: Software Factory\'s barrier waits for all of them.'
+const NO_QUORUM = 'No owner combines returns this way: the set names no count of members that must agree, so Software Factory\'s barrier refuses to start a step on it.'
+const NO_WEIGHT = 'No owner combines returns this way: no member of a set carries a weight, so Software Factory\'s barrier refuses to start a step on it.'
 const JOINS: readonly Option<string>[] = [
   {value: 'none', label: 'None', does: 'One return: the last member\'s, or a single member\'s. Members that hand on in turn (Then: Hand off) combine nothing.'},
   {value: 'all', label: 'All', does: 'The crew waits until every member has returned, then an independent reviewer integrates the returns. Concatenating them is not integrating.'},
-  {value: 'first', label: 'First', does: 'The first good return wins.', why: NO_JOIN},
-  {value: 'quorum', label: 'Quorum', does: 'The crew commits when enough members agree.', why: NO_JOIN},
-  {value: 'weighted', label: 'Weighted', does: 'Each return counts by its strength.', why: NO_JOIN},
+  {value: 'first', label: 'First', does: 'The first acceptable return closes the step. The other members\' returns are not kept, and their failures do not fail it.'},
+  {value: 'quorum', label: 'Quorum', does: 'The crew commits when enough members agree.', why: NO_QUORUM},
+  {value: 'weighted', label: 'Weighted', does: 'Each return counts by its strength.', why: NO_WEIGHT},
 ]
 const SAYS = {
   list: 'One chain for each member, nested as they were spawned. The light is the member\'s state and the chip its model. Where a number shows, it counts tool calls. Press a name to choose it.',
   fanOut: 'The most helpers that run at once. The group has no upper limit; you set one.',
   depth: 'How many levels of helpers may sit below the lead. At 1, helpers do not spawn helpers.',
   handBack: 'What a helper returns to its parent: its closing note, a digest or its whole thread.',
-  join: 'How the members\' returns combine. None keeps one return. All waits for every member. First, Quorum and Weighted have no owner yet.',
+  join: 'How the members\' returns combine. None keeps one return. All waits for every member. First takes the first acceptable return. Quorum and Weighted have no owner yet. A running step keeps the Join it started with.',
   model: 'The model for everything the group spawns. A member can set its own.',
   retry: 'Run the chosen member\'s task again, when it is stalled or failed.',
   open: 'Open the crew full in a pane.',
