@@ -2806,6 +2806,89 @@ fn aikit_verifies_a_reflection_law_handed_on_stdin() {
     let _ = fs::remove_dir_all(&dir);
 }
 
+/// O-I #741 (lane AG): the search line's ✕ forgets one item in the world the
+/// line stands in (DLW §18.4: "Each world you work in keeps its own …
+/// Press ✕ beside it and the line forgets it"). `aikit knowledge forget here`
+/// is asked in that world's own ground — a project's, or Central's root for
+/// your world — and its answer names the world it forgot in.
+#[test]
+fn aikit_forgets_one_item_in_the_world_it_is_asked_from() {
+    let _held = hold();
+    let dir = scratch("aikit-forget-here");
+    let central = fake_central(&dir);
+    let aikit = Fake::new(&dir, "aikit");
+    let _bin = Bound::set("OI_AIKIT_BIN", &aikit.bin);
+    let ground = fs::canonicalize(dir.join("Work/O-I")).unwrap();
+    let forgot = |project: Value| {
+        envelope(
+            json!({"forgot": {"DestinationIn": {"destination": "source:paper:a", "project": project}},
+            "preserved": ["canonical-resource-identity", "provider-truth", "knowledge-operation-history", "other-worlds"]}),
+        )
+    };
+    aikit.answer(&forgot(json!("project/prj_o-i")));
+    let (outcome, form) = dispatched(
+        kernel(&central),
+        op(
+            json!({"op": "aikit_write", "request": {"kind": "knowledge-forget", "scope": "here",
+            "resource": "source:paper:a", "project": "O-I"}}),
+        ),
+    );
+    let outcome = outcome.unwrap();
+    assert_eq!(form, "owner-write");
+    assert_eq!(
+        aikit.asked(),
+        ["knowledge forget here source:paper:a --json"]
+    );
+    assert!(
+        aikit.env().contains(&format!("cwd={}\n", ground.display())),
+        "asked in the world's own ground: {}",
+        aikit.env()
+    );
+    assert_eq!(receipts(&outcome)[0]["ref"], "source:paper:a");
+    let (route, data, _) = reading(&outcome);
+    assert_eq!(route, "aikit knowledge forget");
+    assert_eq!(
+        data["forgot"]["DestinationIn"]["project"],
+        "project/prj_o-i"
+    );
+    // Your world: Central's root.
+    aikit.forget();
+    aikit.answer(&forgot(Value::Null));
+    let (outcome, _) = dispatched(
+        kernel(&central),
+        op(
+            json!({"op": "aikit_write", "request": {"kind": "knowledge-forget", "scope": "here",
+            "resource": "source:paper:a"}}),
+        ),
+    );
+    outcome.unwrap();
+    let root = fs::canonicalize(&dir).unwrap();
+    assert!(
+        aikit.env().contains(&format!("cwd={}\n", root.display())),
+        "your world is asked at Central's root: {}",
+        aikit.env()
+    );
+    // It names the item it forgets; a world Central does not disclose is refused before AIKit is asked.
+    aikit.forget();
+    let (outcome, _) = dispatched(
+        kernel(&central),
+        op(
+            json!({"op": "aikit_write", "request": {"kind": "knowledge-forget", "scope": "here", "project": "O-I"}}),
+        ),
+    );
+    assert_eq!(kind(&outcome.unwrap_err()), "incompatible");
+    let (outcome, _) = dispatched(
+        kernel(&central),
+        op(
+            json!({"op": "aikit_write", "request": {"kind": "knowledge-forget", "scope": "here",
+            "resource": "source:paper:a", "project": "Elsewhere"}}),
+        ),
+    );
+    assert!(outcome.is_err());
+    assert!(aikit.asked().is_empty(), "nothing asked of AIKit");
+    let _ = fs::remove_dir_all(&dir);
+}
+
 /// O-I #786: Docs' Meaning lists the reflection laws a world declares
 /// (`aikit knowledge reflection laws`, `aikit.reflection-laws/v1`) and asks
 /// each one's verdict, both in that world's own ground, where AIKit resolves

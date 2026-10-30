@@ -63,6 +63,8 @@ export function useSearchDevice(transport: KernelTransportStatus, projects: read
   useSyncExternalStore(subscribeHolds, holdsVersion, holdsVersion)
   const version = holdsVersion()
   const query = searchQueryOf(SEARCH_DEVICE_ID), project = searchProjectOf(SEARCH_DEVICE_ID)
+  // Asked again when the search line has changed what AIKit counts (its ✕ forgets an item: searchLine.tsx), not only when the words move.
+  const again = heldOf(SEARCH_DEVICE_ID).again
   const [answer, setAnswer] = useState<SearchAnswer | null>(null)
   useEffect(() => {
     if (!query) return
@@ -75,7 +77,7 @@ export function useSearchDevice(transport: KernelTransportStatus, projects: read
       controller.signal,
     )
     return () => controller.abort()
-  }, [transport, query, project])
+  }, [transport, query, project, again])
   const controlInput = useMemo(() => (query && !project ? {query} : null), [query, project])
   const control = useCentralAction(transport, CONTROL_SEARCH_ACTION, controlInput)
   // A `vak:` term is asked of Quaternal Logic's Vāk registry (kernel ql_read: `ql vak locate`, `ql vak context <ref> <depth>`).

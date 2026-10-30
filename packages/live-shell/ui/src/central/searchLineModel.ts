@@ -13,7 +13,7 @@
 //   - the acts are the menu bar's (frame/menu/commandDoor.ts MENU_COMMANDS, routed by App.tsx's `oi:command` handler), each with the key
 //     the host's menu binds (desktop/cradle/src-tauri/src/menus.rs:58-83, MENU_ACCELERATORS below, held equal to it by
 //     tests/e820-search-line.test.mjs).
-import type {CentralLocation, KnowledgeAddress} from '../../../../../desktop/cradle/src/kernel/types'
+import type {AikitWriteRequest, CentralLocation, KnowledgeAddress} from '../../../../../desktop/cradle/src/kernel/types'
 import type {FlowInstanceRow} from '../../../../../desktop/cradle/src/flow/flowsDir'
 import {textToHtml} from '../../../../../desktop/cradle/src/flow/instance'
 import {MENU_COMMANDS, OBJECT_ACT_OF, type MenuCommand} from '../frame/menu/commandDoor'
@@ -44,6 +44,10 @@ export interface LineResult {
   readonly used?: number
   /** The owner's frecency: how often and how lately, together. */
   readonly frecency?: number
+  /** When it was last opened from the line, in ms: AIKit's newest knowledge history receipt of a route ending at it (latelyOf). */
+  readonly lately?: number
+  /** The provider's own score, without AIKit's learned ease: the order when History is Off. */
+  readonly score?: number
 }
 
 const text = (value: unknown): string | undefined => (typeof value === 'string' && value ? value : undefined)
@@ -68,7 +72,8 @@ export function lineResultsOf(results: string | undefined): LineResult[] {
     const kind = typeof o.kind === 'string' ? o.kind : ''
     const address = addressOf(o.address)
     return [{ref, title: text(o.title) ?? ref, kind, group: searchGroupOf(kind), ...(text(o.says) ? {says: text(o.says)} : {}), ...(text(o.owner) ? {owner: text(o.owner)} : {}),
-      ...(address ? {address} : {}), ...(typeof o.used === 'number' ? {used: o.used} : {}), ...(typeof o.frecency === 'number' ? {frecency: o.frecency} : {})}]
+      ...(address ? {address} : {}), ...(typeof o.used === 'number' ? {used: o.used} : {}), ...(typeof o.frecency === 'number' ? {frecency: o.frecency} : {}),
+      ...(typeof o.score === 'number' ? {score: o.score} : {})}]
   })
 }
 
@@ -79,6 +84,65 @@ export function jumpOrder<T extends {readonly frecency?: number}>(results: reado
   counted.sort((a, b) => (b.result.frecency! - a.result.frecency!) || a.index - b.index)
   const first = new Set(counted.map(entry => entry.result))
   return [...counted.map(entry => entry.result), ...results.filter(result => !first.has(result))]
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// The history (§18.4: "Each item shows how often and how lately you opened it. Press ✕ beside it and the line forgets it. Turn History
+// off and the line never ranks by use.") — AIKit's own: its counts (ranking), its receipts (`knowledge history`) and its forget.
+
+/** Whether the line remembers: Search's History, Remember (the default) or Off. Pure. */
+export const historyOn = (held: {readonly history?: unknown}): boolean => held.history !== 'off'
+
+/** When each destination was last opened from the line: AIKit's `knowledge history` receipts (aikit-store knowledge_application.rs
+ * KnowledgeApplicationReceipt, newest first), each route's last step being where it went. A frame is not an open; a step on the way is
+ * not where you went. Pure. */
+export function latelyOf(receipts: unknown): Map<string, number> {
+  const lately = new Map<string, number>()
+  if (!Array.isArray(receipts)) return lately
+  for (const raw of receipts) {
+    const receipt = raw as {operation?: unknown; recorded_at_ms?: unknown; route?: {steps?: unknown}} | null
+    if (receipt?.operation !== 'route' || typeof receipt.recorded_at_ms !== 'number' || !Array.isArray(receipt.route?.steps)) continue
+    const steps = receipt.route.steps as {resource?: unknown}[]
+    const to = steps[steps.length - 1]?.resource
+    if (typeof to === 'string' && to && (lately.get(to) ?? -Infinity) < receipt.recorded_at_ms) lately.set(to, receipt.recorded_at_ms)
+  }
+  return lately
+}
+
+/** How lately, in a few words: as the line shows it beside how often. Pure. */
+export function latelyWords(at: number, now = Date.now()): string {
+  const minutes = Math.floor((now - at) / 60_000)
+  if (minutes < 1) return 'just now'
+  if (minutes < 60) return `${minutes} min ago`
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return `${hours} h ago`
+  const days = Math.floor(hours / 24)
+  if (days < 2) return 'yesterday'
+  if (days < 14) return `${days} days ago`
+  return new Date(at).toLocaleDateString('en-GB', {day: 'numeric', month: 'short'})
+}
+
+/** How often and how lately, as an item of the line shows it: "4× · 3 h ago". Nothing for an item never counted. Pure. */
+export function usedWords(result: {readonly used?: number; readonly lately?: number}, now = Date.now()): string {
+  if (!result.used) return ''
+  return result.lately === undefined ? `${result.used}×` : `${result.used}× · ${latelyWords(result.lately, now)}`
+}
+
+/** History Off: the results as the provider ranks them, AIKit's learned ease left out — by the provider's own score, highest first, else
+ * in the order given — and no count shown. Pure. */
+export function unranked<T extends LineResult>(results: readonly T[]): T[] {
+  const plain = results.map((result, index) => {
+    const {used: _used, frecency: _frecency, lately: _lately, ...rest} = result
+    return {result: rest as T, index}
+  })
+  plain.sort((a, b) => ((b.result.score ?? -Infinity) - (a.result.score ?? -Infinity)) || a.index - b.index)
+  return plain.map(entry => entry.result)
+}
+
+/** ✕: AIKit forgets this item in the world the line stands in (`aikit knowledge forget here`, through the kernel's aikit_write in that
+ * world's ground — Search's reach: a project, or your world). Pure. */
+export function forgetRequestOf(result: Pick<LineResult, 'ref'>, project: string | undefined): Extract<AikitWriteRequest, {kind: 'knowledge-forget'}> {
+  return {kind: 'knowledge-forget', scope: 'here', resource: result.ref, project: project ?? null}
 }
 
 /** A search's results in groups by kind, in the design's order; a kind turned off (Search's `k:<kind>`, the same settings) is left out. */

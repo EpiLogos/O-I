@@ -136,8 +136,9 @@ test('Factory on Arrangement view\'s ruler: no Launch tab, as in Live', async ()
   const binding = factory.factoryClipBinding({ref: taskRef, tracks: [track], events: null, placed: true})
   assert.equal(binding.placed, true)
   // REPLACED (lane W1-Factory): the design gained the Intent panel (§19.1 "A third tab, Intent"); the ruler still drops only Launch.
-  assert.deepEqual(tabsOf(clipShape(design, binding)).panel, ['clip', 'intent'])
-  assert.deepEqual(tabsOf(clipShape(design, factory.factoryClipBinding({ref: taskRef, tracks: [track], events: null}))).panel, ['clip', 'launch', 'intent'])
+  // REPLACED (lane AH, O-I #741): the design gained the Plan panel (OpenRig's planning dial and wave, as Factory keeps them).
+  assert.deepEqual(tabsOf(clipShape(design, binding)).panel, ['clip', 'intent', 'plan'])
+  assert.deepEqual(tabsOf(clipShape(design, factory.factoryClipBinding({ref: taskRef, tracks: [track], events: null}))).panel, ['clip', 'launch', 'intent', 'plan'])
 })
 
 test('Factory\'s Intent panel: every key absent with the read it waits for, Intent and a new condition refused with the write they lack (§19.1)', async () => {

@@ -65,13 +65,16 @@ export function DocumentFind({paneId, host}: {paneId?: string; host: RefObject<H
       if (!frame || event.source !== frame.contentWindow) return
       const message = pageFindMessage(event.data)
       if (!message) return
+      // A new page stands in the frame (a Re-read replaced the old one) while the line is open: ask it the line's words again, so its
+      // matches are marked and counted as they were on the page it replaced.
+      if (message.kind === 'ready') { if (now.current.open && now.current.query) { setAnswer(null); ask('find', now.current.query) } return }
       if (message.kind === 'key') { if (message.key === 'open') show(message.seed); else if (now.current.open) close(false); return }
       if (message.seed !== undefined) { show(message.seed); return }
       if (now.current.open) setAnswer(message.answer)
     }
     window.addEventListener('message', receive)
     return () => window.removeEventListener('message', receive)
-  }, [host, show, close])
+  }, [host, show, close, ask])
 
   if (!open) return null
   const count = absent ? 'No page to find in yet' : findWords(query, answer)

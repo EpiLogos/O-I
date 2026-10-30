@@ -11,10 +11,14 @@ import type { KernelTransportStatus } from "../kernel/types";
 import pageContextScript from "../context/page-context.js?raw";
 import documentHostScript from "../context/document-host.js?raw";
 import documentFindRaw from "../context/document-find.js?raw";
+import documentSaveKeyRaw from "../context/document-save-key.js?raw";
 
 /** The find every hosted document frame carries (DLW §18.4: ⌘F in a pane finds in the instrument in front, as VS Code's ⌘F finds in the
  * file in front; context/document-find.js). It answers its host and marks; it reads and writes no owner. */
 const documentFindScript = `<script>${documentFindRaw}</script>`;
+/** ⌘S in every hosted document frame (DLW §10.9, §17.8; context/document-save-key.js): the pane's Save, asked of the host, before the
+ * form's own ⌘S (its portable copy) can hear it. Placed after the find, so it stands first in the page's <head>. */
+const documentSaveScript = `<script>${documentSaveKeyRaw}</script>`;
 
 /** Place a page script in a projection: after the page's <head>, else after its <html>, else after its doctype, else first — never
  * before a doctype, which would drop the page out of standards mode. Pure. */
@@ -87,8 +91,8 @@ const useCommitEffect = typeof window === "undefined" ? useEffect : useLayoutEff
  * frame (a layout effect), so the frame's question — a later task — is never posted unheard. */
 export function useDocumentFrame(frame: RefObject<HTMLIFrameElement | null>, projection: string | undefined, transport: KernelTransportStatus): DocumentFrameProps | undefined {
   const kind = transport.kind;
-  // The page carries its pane's find (withFrameScript): the srcdoc and the native frame's write both frame the same projection.
-  const html = useMemo(() => (projection === undefined ? undefined : withFrameScript(projection, documentFindScript)), [projection]);
+  // The page carries its pane's find and its ⌘S (withFrameScript): the srcdoc and the native frame's write both frame the same projection.
+  const html = useMemo(() => (projection === undefined ? undefined : withFrameScript(withFrameScript(projection, documentFindScript), documentSaveScript)), [projection]);
   const props = useMemo(() => (html === undefined ? undefined : documentFrameProps(kind, html)), [html, kind]);
   const native = props?.src !== undefined;
   useCommitEffect(() => {

@@ -35,10 +35,11 @@ export function findKeyOf(event: {key: string; shiftKey: boolean; metaKey: boole
   return null
 }
 
-/** A message from the page, read: its answer, or a key typed inside it. */
+/** A message from the page, read: its answer, a key typed inside it, or that a page (a new one, after a Re-read) stands to be asked. */
 export type PageFindMessage =
   | {readonly kind: 'answer'; readonly request: string | null; readonly answer: FindAnswer; readonly seed?: string}
   | {readonly kind: 'key'; readonly key: 'open' | 'close'; readonly seed: string}
+  | {readonly kind: 'ready'}
 
 export function pageFindMessage(data: unknown): PageFindMessage | null {
   const o = (data && typeof data === 'object' ? data : {}) as Record<string, unknown>
@@ -48,5 +49,6 @@ export function pageFindMessage(data: unknown): PageFindMessage | null {
       ...(typeof o.seed === 'string' ? {seed: o.seed} : {})}
   }
   if (o.type === 'oi:document-find-key' && (o.key === 'open' || o.key === 'close')) return {kind: 'key', key: o.key, seed: typeof o.seed === 'string' ? o.seed : ''}
+  if (o.type === 'oi:document-find-ready') return {kind: 'ready'}
   return null
 }

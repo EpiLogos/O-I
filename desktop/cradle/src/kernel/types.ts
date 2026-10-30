@@ -442,8 +442,9 @@ export type AikitWriteRequest =
   /** `aikit source sync|rollback ID`; `aikit source promote ID [--trust] [--trust-skill C]…`. */
   | {kind:"source-sync"|"source-rollback";id:string}
   | {kind:"source-promote";id:string;trust?:boolean;trust_skills?:string[]}
-  /** `aikit knowledge forget destination|route|project RESOURCE` or `forget all`: answers `{forgot, preserved}`. */
-  | {kind:"knowledge-forget";scope:"destination"|"route"|"project"|"all";resource?:string|null};
+  /** `aikit knowledge forget destination|route|project RESOURCE` or `forget all`: answers `{forgot, preserved}`. `here` (O-I #741) forgets
+   * RESOURCE in one world only — `project`'s, or your world's without one — asked in that world's ground. */
+  | {kind:"knowledge-forget";scope:"destination"|"route"|"project"|"here"|"all";resource?:string|null;project?:string|null};
 
 /** W1.5 changed-since-thought compose (`flow_cognition.rs`): ONE typed
  * reading with both owner sides explicit — a side that could not be queried

@@ -36,7 +36,7 @@ export const VAK_DEPTH = {start: 1, max: 2} as const
 
 export const SEARCH_WIRING: DesignWiring = {
   design: SEARCH_DESIGN,
-  keys: ['light', 'query', 'reach', 'fields', 'limit', 'enter', 'k:person', 'k:agent', 'k:place', 'k:document', 'k:passage', 'k:power', 'k:vak', 'selection', 'from', 'pick',
+  keys: ['light', 'query', 'reach', 'fields', 'limit', 'enter', 'history', 'k:person', 'k:agent', 'k:place', 'k:document', 'k:passage', 'k:power', 'k:vak', 'selection', 'from', 'pick',
     'results', 'aliases', 'projects', 'vak.depth', 'vak.context'],
   reads: {
     light: 'AIKit answered the search (lit) or refused it (dark), in its own words (op knowledge search)',
@@ -50,6 +50,7 @@ export const SEARCH_WIRING: DesignWiring = {
     query: 'the search line: AIKit answers it as typed',
     reach: 'your world, or one project: the search is asked in that project (op knowledge `project`)',
     pick: 'the result the pane shows',
+    history: 'Remember or Off (DLW §18.4 History): whether the search line counts what you open and send to from it (AIKit\'s knowledge route), and whether its jump ranks by that use; Off, it ranks by AIKit\'s match alone and shows no count',
     'vak.depth': 'how far round the located entry the neighbourhood is asked: 0 to 2, QL\'s own bound',
     ...Object.fromEntries(SEARCH_KINDS.map(kind => [`k:${kind}`, 'which kinds the list shows: the view cuts the owner\'s results'])),
   },
@@ -148,14 +149,25 @@ export function controlResultsOf(data: unknown): Record<string, Value>[] | null 
   })
 }
 
-/** The owner's own use count for a hit (AIKit's `ranking.destination`: how many opens it observed, and its frecency — how often and how
- * lately, decayed by the owner's half-life; aikit-core resource/search.rs apply_familiarity). Absent where the owner gives none. */
-function usedOf(hit: KnowledgeHit): {used?: number; frecency?: number} {
-  const destination = (hit as KnowledgeHit & {ranking?: {destination?: {observations?: unknown; frecency?: unknown}}}).ranking?.destination
-  if (!destination) return {}
-  const observations = typeof destination.observations === 'number' && destination.observations > 0 ? destination.observations : undefined
-  const frecency = typeof destination.frecency === 'number' && Number.isFinite(destination.frecency) ? destination.frecency + 0 : undefined
-  return {...(observations ? {used: observations} : {}), ...(frecency !== undefined ? {frecency} : {})}
+/** One of AIKit's accessibility assessments (aikit-core familiarity.rs AccessibilityAssessment), as far as the line reads it. */
+interface Assessment {observations?: unknown; contextual_observations?: unknown; frecency?: unknown; contextual_frecency?: unknown}
+
+/** The owner's own use count for a hit (AIKit's `ranking`: its `destination` assessment, the plain opens it observed, and its `route`
+ * assessment, the routes ending there — the line records its opens as routes, `knowledge route`; aikit-cli app/knowledge.rs
+ * apply_learned_accessibility). Each is read in the world the search was asked in (`contextual_*`, the counts AIKit's own boost reads),
+ * falling back to every world's where an older AIKit gives no contextual count. `used` is how often; `frecency` how often and how lately
+ * together, decayed by the owner's half-life. Absent where the owner gives none. */
+function usedOf(hit: KnowledgeHit): {used?: number; frecency?: number; score?: number} {
+  const ranking = (hit as KnowledgeHit & {ranking?: {destination?: Assessment; route?: Assessment; provider_score?: unknown}}).ranking
+  const number = (value: unknown) => (typeof value === 'number' && Number.isFinite(value) ? value + 0 : undefined)
+  const count = (a: Assessment | undefined) => (a ? number(a.contextual_observations) ?? number(a.observations) ?? 0 : 0)
+  const ease = (a: Assessment | undefined) => (a ? number(a.contextual_frecency) ?? number(a.frecency) : undefined)
+  const score = number(ranking?.provider_score) ?? number((hit as KnowledgeHit & {score?: unknown}).score)
+  if (!ranking?.destination && !ranking?.route) return score === undefined ? {} : {score}
+  const used = count(ranking.destination) + count(ranking.route)
+  const parts = [ease(ranking.destination), ease(ranking.route)].filter((x): x is number => x !== undefined)
+  const frecency = parts.length ? parts.reduce((a, b) => a + b, 0) + 0 : undefined
+  return {...(used > 0 ? {used} : {}), ...(frecency !== undefined ? {frecency} : {}), ...(score !== undefined ? {score} : {})}
 }
 
 /** The owner's results as the design's (central__search.tsx hitOf): ref, title, kind, says, owner — and, for the search line, the address
@@ -201,6 +213,7 @@ export function searchValues(id: string, answer: SearchAnswer | null, projects: 
   for (const kind of SEARCH_KINDS) values[`k:${kind}`] = held[`k:${kind}`] ?? true
   if (held.pick !== undefined) values.pick = held.pick
   values.limit = SEARCH_LIMIT
+  values.history = held.history === 'off' ? 'off' : 'remember'
   if (projects) values.projects = JSON.stringify(projects)
   values['vak.depth'] = vakDepthOf(held['vak.depth'])
   // The answer stands for the query it answered only: a newer query is unread until the owner answers it.

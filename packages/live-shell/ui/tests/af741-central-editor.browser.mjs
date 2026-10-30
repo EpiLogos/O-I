@@ -9,6 +9,16 @@
  *      window; "{n} of {m}", Enter / ⇧Enter wrapping, ⌘G, the marks in the page, Escape closing and handing the page its focus back;
  *      ⌘F with the focus in the browser stays the browser's.
  *   D. §10.2 — a press inside a page focuses its pane.
+ * Lane AG (O-I #741) carries on from there:
+ *   E. §10.9/§17.8 — ⌘S typed inside the Flow page is the pane's Save through Central: the owner holds the edit, and the form's own
+ *      ⌘S (its portable copy) downloads nothing.
+ *   F. §18.4 — a find line left open re-arms on the page a Re-read puts in its frame (the owner's page moved meanwhile).
+ *   G. §2/§16.7 — a draft in a pane that closes is kept on this device: ⇧⌘T brings the Flow back with the draft in its page, named, and
+ *      the owner never saw it; Re-read sets it aside.
+ *   H. §18.4 — the search line's ✕, at the kernel's door, when AIKit's own binary is handed to the bridge (OI_WALK_AIKIT): AIKit's
+ *      `knowledge history` answers through the kernel, and `aikit knowledge forget here` forgets one item in your world's ground and
+ *      names that world; a world Central does not disclose is refused before AIKit is asked. On screen it is UNWALKED: a scratch world
+ *      gives AIKit nothing to find, so no item is counted to forget (lane AG's OPEN).
  *
  * Run: OI_WALK_BRIDGE=<path to walk-bridge> node tests/af741-central-editor.browser.mjs [--evidence <dir>] [--engines chromium,webkit]
  * Nothing is written outside the scratch folders it makes (the Central root, OI_HOME and HOME of every owner it starts).
@@ -34,6 +44,14 @@ if (!bridgeBin) throw new Error('OI_WALK_BRIDGE: the walk-bridge binary to run o
 const ground = join(scratch, 'ground'), home = join(scratch, 'home')
 mkdirSync(home, {recursive: true})
 const isolated = {...process.env, HOME: home, OI_HOME: join(home, 'oi'), OI_CENTRAL_ROOT: ground, AIKIT_HOME: join(home, '.aikit')}
+// AIKit's own binary for the kernel's AIKit routes (aikit_write) and, through a shim, its knowledge op (`oi aikit …`); everything else
+// the suite's own `oi`. Its state is the scratch home's.
+const walkAikit = process.env.OI_WALK_AIKIT
+if (walkAikit) {
+  const shim = join(scratch, 'oi-shim')
+  writeFileSync(shim, `#!/bin/sh\nif [ "$1" = aikit ]; then shift; exec ${JSON.stringify(walkAikit)} "$@"; fi\nexec oi "$@"\n`, {mode: 0o755})
+  Object.assign(isolated, {OI_AIKIT_BIN: walkAikit, OI_BIN: shim, CENTRAL_ROOT: ground, AIKIT_CENTRAL_ROOT: ground})
+}
 execFileSync(process.env.OI_CENTRAL_CTRL_BIN ?? 'ctrl', ['--root', ground, '--json', 'action', 'run', 'central.init'], {encoding: 'utf8', env: isolated})
 mkdirSync(join(ground, 'Control/user/flows'), {recursive: true})
 const port = 4300 + Math.floor(Math.random() * 400)
@@ -41,7 +59,17 @@ const bridgeUrl = `http://127.0.0.1:${port}`
 const bridge = spawn(bridgeBin, [`127.0.0.1:${port}`], {env: isolated, detached: true, stdio: ['ignore', 'ignore', 'pipe']})
 let bridgeLog = ''
 bridge.stderr.on('data', chunk => { if (bridgeLog.length < 20000) bridgeLog += chunk })
-const stopBridge = () => { try { process.kill(-bridge.pid, 'SIGTERM') } catch {} }
+// The bridge's owners can leave a server of their own standing on the scratch ground (AIKit's `session-space encounter-serve`): it is
+// stopped with the bridge, by its pid, found by the scratch ground it was started on — nothing else is touched.
+const stopOnGround = () => {
+  try {
+    for (const line of execFileSync('ps', ['-Ao', 'pid=,command='], {encoding: 'utf8'}).split('\n')) {
+      const [, pid, command] = /^\s*(\d+)\s+(.*)$/.exec(line) ?? []
+      if (pid && Number(pid) !== process.pid && command.includes(ground)) { try { process.kill(Number(pid), 'SIGTERM') } catch {} }
+    }
+  } catch {}
+}
+const stopBridge = () => { try { process.kill(-bridge.pid, 'SIGTERM') } catch {} stopOnGround() }
 process.once('exit', stopBridge)
 for (let i = 0; i < 240; i++) { try { if ((await fetch(`${bridgeUrl}/state`)).ok) break } catch {} await new Promise(done => setTimeout(done, 250)) }
 
@@ -77,6 +105,14 @@ const flowHtml = mintInstance('The stone was carved at Bollingen.\n\nThe second 
 const created = await postOp(bridgeUrl, {op: 'file_operation', location: {schema: 'central.path-ref/v1', ref: `central:path:${root}:${flowPath}`, root, path: flowPath},
   request: {action: 'write', expected_revision: '', content: flowHtml}}, 60000)
 assert.equal(created?.outcome?.data?.outcome, 'created', `Central creates the Flow on the scratch ground: ${JSON.stringify(created).slice(0, 300)}`)
+
+/** The Flow as Central holds it now, and its revision. */
+const flowLocation = {schema: 'central.path-ref/v1', ref: `central:path:${root}:${flowPath}`, root, path: flowPath}
+async function readFlow() {
+  const read = await postOp(bridgeUrl, {op: 'file_read', location: flowLocation}, 30000)
+  const reading = read?.outcome?.reading ?? read?.outcome?.data ?? {}
+  return {content: String(reading.content ?? JSON.stringify(read).slice(0, 2000)), revision: reading.revision}
+}
 
 // ---- the real App, as main.tsx mounts it
 const {js, css} = await bundleEntry({contents: `
@@ -268,6 +304,111 @@ async function walk(name) {
       assert.ok(String(content).includes(`Walked ${name}`), 'Central holds the saved title')
       return await flowPane.locator('.document-pane-state').textContent()
     })
+
+    // E. ⌘S inside the page
+    await check('E: ⌘S typed inside the Flow page saves it through Central, and no portable copy downloads', async () => {
+      const downloads = []
+      const onDownload = download => downloads.push(download.suggestedFilename())
+      page.on('download', onDownload)
+      try {
+        // A save re-reads the Flow and puts the owner's page back in the frame: write in that page, once it stands.
+        await page.waitForFunction(() => document.querySelector('.central-document-pane[data-central-document="flow"] [data-document-device="ql-flow"]')?.dataset.baselined === 'true', undefined, {timeout: 30000})
+        await flowFrame.locator('[aria-label="Title"]').first().click()
+        await page.keyboard.press('End')
+        // One word, no space: WebKit's editable keeps a typed trailing space as a no-break space.
+        await page.keyboard.type('-bykey')
+        await page.waitForFunction(id => document.querySelector(`[data-surface-id="${id}"]`)?.dataset.dirty === 'true', ids.flow, {timeout: 12000})
+        await page.keyboard.press('Meta+s')
+        await page.waitForFunction(id => document.querySelector(`[data-surface-id="${id}"]`)?.dataset.dirty === 'false', ids.flow, {timeout: 20000})
+        assert.ok((await readFlow()).content.includes('-bykey'), 'Central holds the edit ⌘S saved')
+        await page.waitForTimeout(800)
+      } finally { page.off('download', onDownload) }
+      assert.deepEqual(downloads, [], 'the form\'s portable copy was not downloaded')
+      return await flowPane.locator('.document-pane-state').textContent()
+    })
+
+    // F. ⌘F re-arms on the page a Re-read puts in the frame
+    await check('F: a find line left open re-arms on the page a Re-read puts in its place', async () => {
+      await flowFrame.locator('[data-entry]').first().click()
+      await page.keyboard.press('Meta+f')
+      await flowPane.locator('.document-find input').waitFor({timeout: 5000})
+      await page.keyboard.press('Meta+a'); await page.keyboard.type('stone')
+      await page.waitForFunction(() => /^\d+ of \d+$/.test(document.querySelector('.document-find [data-find-count]')?.textContent ?? ''), undefined, {timeout: 5000})
+      const before = (await marksNow())?.all ?? 0
+      // The owner's page moves (another editor writes it): one more stone in its title.
+      const held = await readFlow()
+      const moved = held.content.split('-bykey').join('-bykey stone')
+      assert.notEqual(moved, held.content, 'the walk found the title to move')
+      const wrote = await postOp(bridgeUrl, {op: 'file_operation', location: flowLocation, request: {action: 'write', expected_revision: held.revision, content: moved}}, 30000)
+      assert.ok(['written', 'saved', 'updated'].includes(wrote?.outcome?.data?.outcome) || wrote?.outcome?.data?.revision, `Central writes the moved page: ${JSON.stringify(wrote).slice(0, 300)}`)
+      await (await flowFrameObject())?.evaluate(() => { window.__agOldPage = true })
+      await flowPane.locator('button[data-action="reread"]').click()
+      // The new page stands in the frame: the old document's mark is gone and its words are drawn.
+      let fresh = false
+      for (let i = 0; i < 150 && !fresh; i++) {
+        fresh = await (await flowFrameObject())?.evaluate(() => !window.__agOldPage && !!document.querySelector('[data-entry]')).catch(() => false)
+        if (!fresh) await page.waitForTimeout(100)
+      }
+      assert.ok(fresh, 'the Re-read put a new page in the frame')
+      let after = 0
+      for (let i = 0; i < 60 && after <= before; i++) { after = (await marksNow())?.all ?? 0; if (after <= before) await page.waitForTimeout(100) }
+      // The moved page holds more stones than the one it replaced (every copy of the title the owner keeps moved): marked there, the line
+      // re-armed on it; a line left dead would leave the new page unmarked.
+      assert.ok(after > before, `the new page marks its matches, the moved title's among them (${before} before, ${after} now)`)
+      await page.waitForFunction(total => document.querySelector('.document-find [data-find-count]')?.textContent?.endsWith(` of ${total}`), after, {timeout: 5000})
+      await page.locator('.document-find input').focus()
+      await page.keyboard.press('Escape')
+      await flowPane.locator('.document-find').waitFor({state: 'detached', timeout: 5000})
+      return `${before} marked before, ${after} on the new page; ${await page.evaluate(() => document.querySelector('.document-pane-state')?.textContent)}`
+    })
+
+    // G. a draft in a pane that closes
+    await check('G: a draft in a pane that closes is kept on this device, and the owner never sees it', async () => {
+      await page.waitForFunction(() => document.querySelector('.central-document-pane[data-central-document="flow"] [data-document-device="ql-flow"]')?.dataset.baselined === 'true', undefined, {timeout: 30000})
+      await flowFrame.locator('[aria-label="Title"]').first().click()
+      await page.keyboard.press('End')
+      await page.keyboard.type('-unsaved')
+      await page.waitForFunction(id => document.querySelector(`[data-surface-id="${id}"]`)?.dataset.dirty === 'true', ids.flow, {timeout: 12000})
+      // ⌘W closes the tab in front of the focused pane (desktop/cradle/src/surface/keys.ts): a press on the pane's head focuses it, outside
+      // the page, whose own keys are its own. (The tab's ✕ stands in a strip that folds away under the next pane in this layout.)
+      await flowPane.locator('.document-pane-state').click()
+      await page.evaluate(() => (document.activeElement instanceof HTMLElement) && document.activeElement.blur())
+      await page.keyboard.press('Meta+w')
+      try {
+        await page.locator('.central-document-pane[data-central-document="flow"]').first().waitFor({state: 'detached', timeout: 15000})
+      } catch (error) {
+        // Say what the window said when the pane stayed: a refused close names why.
+        const said = await page.evaluate(() => [...document.querySelectorAll('[role="alert"]')].map(el => el.textContent?.trim()).filter(Boolean).slice(0, 8))
+        throw new Error(`${error.message.split('\n')[0]}; the window said: ${JSON.stringify(said)}`)
+      }
+      const kept = await page.evaluate(() => Object.keys(localStorage).filter(key => key.startsWith('oi-central.kept-draft.v1:Flow:'))
+        .map(key => JSON.parse(localStorage.getItem(key))))
+      assert.equal(kept.length, 1, 'one Flow draft kept on this device')
+      assert.ok(kept[0].draft.includes('unsaved'), 'the draft as it stood')
+      assert.ok(!(await readFlow()).content.includes('unsaved'), 'the owner was never written')
+      await page.screenshot({path: join(evidence, `${name}-04-closed.png`)})
+      return `kept against ${String(kept[0].basis).slice(-8)}`
+    })
+    await check('G: ⇧⌘T brings the Flow back with the draft in its page, named, and its tab marked', async () => {
+      await page.evaluate(() => (document.activeElement instanceof HTMLElement) && document.activeElement.blur())
+      await page.keyboard.press('Meta+Shift+t')
+      const again = page.locator('.central-document-pane[data-central-document="flow"]').first()
+      await again.waitFor({timeout: 30000})
+      await flowFrame.locator('[aria-label="Title"]', {hasText: 'unsaved'}).first().waitFor({timeout: 30000})
+      const notice = await again.locator('.inhabitant-device-notice').first().textContent({timeout: 10000})
+      assert.match(notice, /is back in the page/, 'the page says the draft is back')
+      await page.waitForFunction(() => document.querySelector('.tab[data-dirty="true"]') != null, undefined, {timeout: 12000})
+      await page.screenshot({path: join(evidence, `${name}-05-reopened.png`)})
+      return notice
+    })
+    await check('G: Re-read sets the kept draft aside', async () => {
+      const again = page.locator('.central-document-pane[data-central-document="flow"]').first()
+      await again.locator('button[data-action="reread"]').click()
+      await page.waitForFunction(() => !Object.keys(localStorage).some(key => key.startsWith('oi-central.kept-draft.v1:Flow:')), undefined, {timeout: 10000})
+      await flowFrame.locator('[aria-label="Title"]').first().waitFor({timeout: 30000})
+      for (let i = 0; i < 50 && ((await flowFrame.locator('[aria-label="Title"]').first().textContent()) ?? '').includes('unsaved'); i++) await page.waitForTimeout(100)
+      assert.ok(!((await flowFrame.locator('[aria-label="Title"]').first().textContent()) ?? '').includes('unsaved'), 'the page shows the Flow as Central holds it')
+    })
     if (pageErrors.length) step('page errors (not failing the walk)', pageErrors.slice(0, 6).join(' | '))
   } catch (error) {
     fault('walk', error)
@@ -279,8 +420,38 @@ async function walk(name) {
   receipt[`${name}_flow_ops`] = ops
 }
 
+// H. the search line's ✕ at the kernel's door: AIKit's own history and its forget of one item in one world.
+async function kernelDoor() {
+  if (!walkAikit) { receipt.kernel_door = 'not walked: OI_WALK_AIKIT not given'; console.log('— kernel door: not walked (OI_WALK_AIKIT not given)'); return }
+  console.log('— kernel door (AIKit)')
+  const steps = []
+  const step = (what, run) => run().then(detail => { steps.push({what, detail}); console.log(`  ${what} — ${detail}`) },
+    error => { faults.push(`kernel door: ${what}: ${error.message}`); steps.push({what, fault: error.message}); console.log(`  FAULT ${what} — ${error.message}`) })
+  await step('H: AIKit\'s knowledge history answers through the kernel (the receipts how lately is read from)', async () => {
+    const history = await postOp(bridgeUrl, {op: 'knowledge', request: {action: 'history'}}, 60000)
+    assert.ok(Array.isArray(history?.outcome?.data), `a list of receipts: ${JSON.stringify(history).slice(0, 300)}`)
+    return `${history.outcome.data.length} receipt(s)`
+  })
+  await step('H: ✕ — `aikit knowledge forget here` forgets one item in your world\'s ground, and names that world', async () => {
+    const forgot = await postOp(bridgeUrl, {op: 'aikit_write', request: {kind: 'knowledge-forget', scope: 'here', resource: 'wiki:node:bollingen'}}, 60000)
+    const data = forgot?.outcome?.data
+    assert.equal(forgot?.outcome?.result, 'owner_route_reading', JSON.stringify(forgot).slice(0, 400))
+    assert.equal(data?.forgot?.DestinationIn?.destination, 'wiki:node:bollingen', JSON.stringify(data))
+    assert.ok('project' in (data?.forgot?.DestinationIn ?? {}), 'the world it forgot in is named')
+    assert.ok(data?.preserved?.includes('other-worlds'), 'every other world keeps its own')
+    return `${forgot.outcome.route}: ${JSON.stringify(data.forgot)}`
+  })
+  await step('H: a world Central does not disclose is refused before AIKit is asked', async () => {
+    const refused = await postOp(bridgeUrl, {op: 'aikit_write', request: {kind: 'knowledge-forget', scope: 'here', resource: 'wiki:node:bollingen', project: 'Elsewhere'}}, 60000)
+    assert.ok(refused?.error, JSON.stringify(refused).slice(0, 300))
+    return String(refused.error).slice(0, 120)
+  })
+  receipt.kernel_door = steps
+}
+
 try {
   for (const name of engines) { console.log(`— ${name}`); await walk(name) }
+  await kernelDoor()
 } finally {
   await site.close()
   stopBridge()
