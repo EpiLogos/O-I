@@ -1,12 +1,13 @@
 // O-I #749, the Terminal as a room of a session space (DLW §17.9, §10.1). The room is AIKit's: one working-surface binding of a
 // SessionSpace, read in the agency reading's spaces; its screen the owner's capture (kernel op working_surface_read); its provider the
 // binding's (tmux, herdr, cmux), never the Terminal's. The Terminal follows the run you select or stays pinned, says so when the
-// provider does not answer and keeps the room, returns to the same room when reopened, and sends keys only once you choose to type.
+// provider does not answer and keeps the room, returns to the same room when reopened, and sends keys only once you choose to type
+// (through AIKit's working-surface input: lane AQ, w749-terminal-typing.test.mjs).
 // Channels:
 // - OWNER-SHAPED: the space is `aikit session-space list` as the installed AIKit printed it on a scratch home with a private tmux server
 //   (29 Oct, b749), trimmed to the keys read; the capture text is that room's `working-surface capture` (format ansi) with an escape
 //   added; the refusal is the owner's own words once the tmux server stopped.
-// - SCRIPTED: the hands (holds, takeover, keys) recorded, never sent; the designs drawn through the host.
+// - SCRIPTED: the hands (holds, keys) recorded, never sent; the designs drawn through the host.
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {register} from 'node:module'
@@ -67,11 +68,11 @@ const REFUSED = 'mux.tmux_surface_not_live: tmux has no live AIKit pane for `mai
 
 function hands() {
   const calls = []
-  return {calls, hold: (key, value) => calls.push(['hold', key, value]), type: async (room, on) => { calls.push(['type', room.id, on]) }, keys: async data => { calls.push(['keys', data]) }}
+  return {calls, hold: (key, value) => calls.push(['hold', key, value]), keys: async (room, data) => { calls.push(['keys', room.id, data]) }}
 }
 function input(over = {}) {
   return {rooms: tb.sessionRoomsOf(ROWS, TRACKS), locals: [], followed: {session: 'agent-session/b749-run', words: null}, holds: {},
-    screen: {room: 'working-surface/b749-shell', lines: tb.screenOf(CAPTURE)}, hands: hands(), native: true, ...over}
+    screen: {room: 'working-surface/b749-shell', lines: tb.screenOf(CAPTURE)}, hands: hands(), ...over}
 }
 const roomsIn = binding => JSON.parse(binding.values.rooms)
 
@@ -151,20 +152,18 @@ test('reopened, it returns to the same room: its holds are kept and read back; t
   assert.doesNotMatch(publisher, /working-surface open|op: 'working_surface_open'/, 'the Terminal never creates or reopens a room')
 })
 
-test('keys reach the room only when you choose Type, through the takeover client; Watch only releases it; without it, Input says why', async () => {
+test('keys reach the room only when you choose Type, while its owner takes them; Watch only stops them', async () => {
   const h = hands()
   const watching = tb.terminalBinding(input({hands: h}))
   watching.local.keys('ls\r')
   assert.deepEqual(h.calls, [], 'no key reaches a room you only watch')
   watching.local.watch(false)
-  assert.deepEqual(h.calls, [['type', 'working-surface/b749-shell', true]], 'Type takes the room\'s keyboard')
-  const typing = tb.terminalBinding(input({hands: h, screen: {room: 'working-surface/b749-shell', lines: ['$'], driving: true}}))
+  assert.deepEqual(h.calls, [['hold', 'typing', 'working-surface/b749-shell']], 'Type is the Terminal\'s choice for this room')
+  const typing = tb.terminalBinding(input({hands: h, holds: {typing: 'working-surface/b749-shell'}, screen: {room: 'working-surface/b749-shell', lines: ['$'], input: {accepts: true}}}))
   assert.deepEqual([typing.values.watch, typing.values.driving], [false, true])
   typing.local.keys('ls\r')
   typing.local.watch(true)
-  assert.deepEqual(h.calls.slice(1), [['keys', 'ls\r'], ['type', 'working-surface/b749-shell', false]], 'keys while it drives; Watch only releases')
-  const browser = tb.terminalBinding(input({native: false, hands: hands()}))
-  assert.equal(browser.standing.watch.disabled, tb.NO_TAKEOVER)
+  assert.deepEqual(h.calls.slice(1), [['keys', 'working-surface/b749-shell', 'ls\r'], ['hold', 'typing', undefined]], 'keys while it drives; Watch only stops them')
   for (const key of ['command', 'folder']) await assert.rejects(watching.write([{key, value: 'x'}]), new RegExp(tb.ROOM_REFUSE[key].slice(0, 30)))
   assert.equal(watching.writes('command'), true)
   assert.equal(watching.writes('lines'), false)

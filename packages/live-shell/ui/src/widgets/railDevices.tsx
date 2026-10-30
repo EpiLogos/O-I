@@ -22,7 +22,7 @@ import {useAgencySessions} from '../agent/useAgencySessions'
 import {COMPANIONS} from '../shell/modeDockTiles'
 import {conversationOf} from './agentConversation'
 import {useAgentSessionsOptional} from '../agent/AgentSessionsProvider'
-import {gitRepositoryAbsence, projectOfSession, ROOT_REGISTER} from '../agent/worldScope'
+import {gitRepositoryAbsence, projectOfSession, ROOT_REGISTER, useWorldReturns} from '../agent/worldScope'
 import {useOptionalContinuity} from '../continuity/workspace'
 import {publishDevice, publishedDevice, subscribeDeviceDoor} from '../frame/devices/deviceDoor'
 import {GIT_ID} from '../agent/devices/workcellBindings'
@@ -31,13 +31,13 @@ import {actionAnswerOf, centralActionOp} from '../central/devices/useCentralRead
 import type {closeNowClearing} from '../central/devices/nowsClose'
 import {subscribeTerminals, terminalsNow} from '../../../../../desktop/cradle/src/terminal/terminalReadings'
 import {kernelOp} from '../../../../../desktop/cradle/src/kernel/bridge'
-import {TERMINAL_ID, holdsFrom, screenOf, sessionRoomsOf, terminalBinding, terminalDevice, type RoomScreen, type SessionRoom, type TerminalHolds} from './terminalBinding'
+import {TERMINAL_ID, holdsFrom, roomScreenOf, sessionRoomsOf, terminalBinding, terminalDevice, type RoomScreen, type SessionRoom, type TerminalHolds} from './terminalBinding'
 import {RAIL_DEVICES, railDeviceId, railDevice, type RailDeviceId} from './railDeviceIds'
 import type {DesignBinding, Value} from '../frame/devices/designed'
 import type {DeviceInstance} from '../frame/devices/deviceRuntime'
 import {useWidgetReading} from './widgetReading'
 import type {OwnerReading} from '../owners/ownerReading'
-import {NOTIFY_LIST_ACTION, dayStartMs, diffFilesOf, filesOf, groundPlaceOf, keptTrackOf, nowsCloseWrites, nowsValues, openFileOf, pagesOf, put, trailIndexOf, trailValues, wikiPagesOf, type NotifyLedgerAnswer} from './railBindings'
+import {NOTIFY_LIST_ACTION, dayStartMs, diffFilesOf, filesOf, groundPlaceOf, keptTrackOf, nowsCloseWrites, nowsValues, openFileOf, pagesOf, proposedFilesOf, put, trailIndexOf, trailValues, wikiPagesOf, type NotifyLedgerAnswer} from './railBindings'
 import {returnToStop} from '../shell/TrailWidget'
 import {standingOn} from '../../../../../desktop/cradle/src/workspace/store'
 import {DIFF_PAGE, carryPages} from '../agent/devices/oneAgentBinding'
@@ -167,19 +167,45 @@ function useDiffReading(transport: KernelTransportStatus | undefined): DiffReadi
   }, [transport, chosen, seats, seat, seatValues, repo, patch, root, doc, where.project, where.from === 'none' ? where.words : null])
 }
 
-/** The Diff page's binding (Files' Diff page, §23.4; widgets__files.tsx `diff.` keys): the working diff as read, and the page's own holds.
- * Files carries it under `diff.` (railDevices.tsx RailDevices). */
-function useDiffBinding(reading: DiffReading): DesignBinding {
+/** The changes an agent proposes, for Files' Diff page (§23.2 Changes: Proposed; "A proposed change shows its author"): Central's source
+ * returns of your world that wait — the queue Approvals answers (agent/worldScope.ts useWorldReturns) — each read through Central's
+ * projectcentral.source.return_read for its basis and proposed content, which railBindings.ts proposedFilesOf diffs. A return Central does
+ * not read stands without its lines. The Gateway keeps no pending patch of its own: these are the only proposed changes an owner records. */
+function useProposedChanges(transport: KernelTransportStatus | undefined): Record<string, Value>[] | null {
+  const carrier = transport ?? {kind: 'unavailable' as const, reason: 'No kernel carrier stands.'}
+  const world = useWorldReturns(carrier, null)
+  const agency = useAgencySessions(carrier)
+  const waiting = useMemo(() => (world.returns?.entries ?? []).filter(entry => entry.status === 'pending' || entry.status === 'applying'), [world.returns])
+  const refs = waiting.map(entry => entry.return_ref).join(' ')
+  const reads = useHeldRead(transport && transport.kind !== 'unavailable' && refs ? ['rail-files-proposed', transport, refs] : null, async () => {
+    const read: Record<string, unknown> = {}
+    for (const entry of waiting) {
+      const call = await kernelOp(transport!, centralActionOp('projectcentral.source.return_read', {project: entry.project, return_ref: entry.return_ref}, entry.project))
+      const answer = actionAnswerOf({status: call.error ? 'refused' : 'answered', value: call.outcome?.result === 'action_dispatched' ? call.outcome : null, error: call.error ?? null},
+        'projectcentral.source.return_read')
+      if (answer.status === 'answered') read[entry.return_ref] = answer.value
+    }
+    return read
+  })
+  return useMemo(() => (world.returns ? proposedFilesOf(waiting, new Map(Object.entries(reads.value ?? {})), agency.tracks) : null),
+    [world.returns, waiting, reads.value, agency.tracks])
+}
+
+/** The Diff page's binding (Files' Diff page, §23.4; widgets__files.tsx `diff.` keys): the working diff as read, the changes agents propose
+ * (useProposedChanges), the session Files follows (Session: Selected), and the page's own holds. Files carries it under `diff.`
+ * (railDevices.tsx RailDevices). */
+function useDiffBinding(reading: DiffReading, proposed: Record<string, Value>[] | null, followed: string | null): DesignBinding {
   const {holds, local} = useHolds(['show', 'session', 'layout', 'open'])
   return useMemo(() => {
     const values: Record<string, Value> = {}
+    if (reading.status === 'read' || proposed?.length) put(values, 'files', JSON.stringify([...(reading.status === 'read' ? reading.files : []), ...(proposed ?? [])]))
     if (reading.status === 'read') {
-      put(values, 'files', JSON.stringify(reading.files))
       put(values, 'branch', reading.branch)
       put(values, 'head', reading.head?.slice(0, 9))
     } else if (reading.status === 'refused') put(values, 'reason', reading.words)
+    put(values, 'followed', followed)
     return {id: railDeviceId('files'), values: withHolds(values, holds), local}
-  }, [reading, holds, local])
+  }, [reading, proposed, followed, holds, local])
 }
 
 // ---------------------------------------------------------------------------------------------------------------- Files and Web
@@ -279,13 +305,9 @@ function holdTerminal(key: keyof TerminalHolds, value: Value | undefined): void 
   for (const listener of [...holdsListeners]) listener()
 }
 
-/** How often the shown room's screen is read: while the keyboard is held, closer, so what you typed shows. */
+/** How often the shown room's screen is read: while you type into it, closer, so what you typed shows. */
 const SCREEN_EVERY_MS = 1000, SCREEN_TYPING_MS = 300
-/** The size the takeover client attaches at (the provider fits the room to its newest client while you type). */
-const TAKEOVER_SIZE = {cols: 120, rows: 40} as const
 const wordsOf = (error: unknown) => String(error instanceof Error ? error.message : error).replace(/^Error:\s*/, '').trim()
-type Takeover = typeof import('../../../../../desktop/cradle/src/contributions/factory/workingSurfaceClient')
-type Lease = {room: string; id: string; seq: number; client: Takeover}
 
 function useTerminalBinding(transport: KernelTransportStatus | undefined) {
   const locals = useSyncExternalStore(subscribeTerminals, terminalsNow, terminalsNow)
@@ -302,55 +324,38 @@ function useTerminalBinding(transport: KernelTransportStatus | undefined) {
   const shown = rooms.find(room => room.id === shownId)
   const [screen, setScreen] = useState<RoomScreen | null>(null)
   const [refusal, setRefusal] = useState<string | null>(null)
-  const lease = useRef<Lease | null>(null)
-  const [driving, setDriving] = useState<string | null>(null)
-  const native = carrier.kind === 'tauri'
-  const release = useCallback(async () => {
-    const held = lease.current
-    lease.current = null
-    setDriving(null)
-    if (held) await held.client.release(held.id).catch(error => setRefusal(`Release: ${wordsOf(error)}`))
-  }, [])
-  // The room's keyboard, taken only when the person sets Input to Type: the takeover client attaches to the exact room the owner resolves
-  // (after the native confirmation); its output is drained, the screen being the owner's capture. Watch only, another room, a hidden
-  // window or the end of the attachment releases it; the run goes on either way.
-  const type = useCallback(async (room: SessionRoom, on: boolean) => {
-    setRefusal(null)
-    if (!on) return release()
-    if (lease.current?.room === room.id) return
-    await release()
+  // Your keys, once you chose Type for a room: AIKit's working-surface owner sends them to the exact live pane it binds (kernel op
+  // working_surface_input) and records them as yours, by count only. Keys typed while one send is out go together in the next, in order.
+  const outbox = useRef<{room: SessionRoom; data: string} | null>(null)
+  const sending = useRef(false)
+  const keys = useCallback(async (room: SessionRoom, data: string) => {
+    if (outbox.current && outbox.current.room.id === room.id) outbox.current = {room, data: outbox.current.data + data}
+    else outbox.current = {room, data}
+    if (sending.current) return
+    sending.current = true
     try {
-      const client = await import('../../../../../desktop/cradle/src/contributions/factory/workingSurfaceClient')
-      const got = await client.takeover(room.project, room.session, room.id, TAKEOVER_SIZE)
-      const held: Lease = {room: room.id, id: got.client_id, seq: got.seq, client}
-      lease.current = held
-      setDriving(room.id)
-      while (lease.current === held) {
-        const batch = await client.poll(held.id, held.seq)
-        if (lease.current !== held) return
-        held.seq = batch.seq
-        if (batch.eof) { lease.current = null; setDriving(null); return }
-        await new Promise(resolve => setTimeout(resolve, 200))
+      while (outbox.current) {
+        const next = outbox.current, target = next.room
+        outbox.current = null
+        const result = await kernelOp(carrier, {op: 'working_surface_input', project: target.project, agent_session: target.session, binding: target.id, text: next.data})
+        if (result.error || result.outcome?.result !== 'working_surface_input_receipt') throw Error(result.error ?? 'The working surface owner did not answer.')
+        const sent = (result.outcome.document as {input?: {input?: {state?: string; reason?: string}}}).input?.input
+        if (sent?.state !== 'delivered') throw Error(sent?.reason ?? 'its owner did not deliver the keys')
+        setRefusal(null)
       }
     } catch (error) {
-      if (lease.current) { lease.current = null; setDriving(null) }
+      outbox.current = null
       setRefusal(`Type: ${wordsOf(error)}`)
+    } finally {
+      sending.current = false
     }
-  }, [release])
-  const keys = useCallback(async (data: string) => {
-    const held = lease.current
-    if (held) await held.client.input(held.id, data).catch(error => setRefusal(`Type: ${wordsOf(error)}`))
-  }, [])
-  useEffect(() => { if (lease.current && lease.current.room !== shown?.id) void release() }, [shown?.id, release])
-  useEffect(() => {
-    const hidden = () => { if (document.hidden) void release() }
-    document.addEventListener('visibilitychange', hidden)
-    return () => { document.removeEventListener('visibilitychange', hidden); void release() }
-  }, [release])
+  // The carrier by its kind.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [carrier.kind])
   // The shown room's screen: the owner's capture, read while the window is shown. A refusal is the provider not answering; the last lines
   // stay with it, and the room stays.
   const typing = useRef(false)
-  typing.current = driving !== null
+  typing.current = holds.typing !== undefined && holds.typing === shown?.id
   useEffect(() => {
     setScreen(null)
     if (!shown || carrier.kind === 'unavailable') return
@@ -362,12 +367,9 @@ function useTerminalBinding(transport: KernelTransportStatus | undefined) {
           const result = await kernelOp(carrier, {op: 'working_surface_read', project: shown.project, agent_session: shown.session, binding: shown.id})
           if (cancelled) return
           if (result.error || result.outcome?.result !== 'working_surface_reading') throw Error(result.error ?? 'The working surface owner did not answer.')
-          const document_ = result.outcome.document as {reason?: string; capture?: {capture?: {state?: string; text?: string; reason?: string}} | null}
-          const capture = document_.capture?.capture
-          if (capture?.state === 'captured' && typeof capture.text === 'string') {
-            kept = screenOf(capture.text)
-            setScreen({room: shown.id, lines: kept})
-          } else setScreen({room: shown.id, ...(kept ? {lines: kept} : {}), refused: capture?.reason ?? document_.reason ?? 'its owner returned no capture'})
+          const read = roomScreenOf(shown.id, result.outcome.document, kept)
+          if (read.refused === undefined) kept = read.lines as string[] | undefined
+          setScreen(read)
         } catch (error) {
           if (!cancelled) setScreen({room: shown.id, ...(kept ? {lines: kept} : {}), refused: wordsOf(error)})
         }
@@ -379,13 +381,12 @@ function useTerminalBinding(transport: KernelTransportStatus | undefined) {
   // The room is named by its id, project and session; the carrier by its kind.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shown?.id, shown?.project, shown?.session, carrier.kind])
-  const hands = useMemo(() => ({hold: holdTerminal, type, keys}), [type, keys])
+  const hands = useMemo(() => ({hold: holdTerminal, keys}), [keys])
   return useMemo(() => {
-    const drivenScreen = screen && driving === screen.room ? {...screen, driving: true} : screen
-    const binding = terminalBinding({rooms, locals, followed, holds, screen: drivenScreen, hands, native})
+    const binding = terminalBinding({rooms, locals, followed, holds, screen, hands})
     if (binding && refusal) return {...binding, values: {...binding.values, reason: refusal}}
     return binding
-  }, [rooms, locals, followed, holds, screen, driving, hands, native, refusal])
+  }, [rooms, locals, followed, holds, screen, hands, refusal])
 }
 
 // ---------------------------------------------------------------------------------------------------------------- the Wiki
@@ -547,7 +548,8 @@ export function RailDevices() {
   // Files and Web each follow the selected agent, or keep their own (Follow off); the tape reader is shared where both read one session.
   const filesFollow = useFollowHold(), webFollow = useFollowHold()
   const diffReading = useDiffReading(transport), filesTape = useFollowedTape(filesFollow.kept), webTape = useFollowedTape(webFollow.kept)
-  const trail = useTrailBinding(), diff = useDiffBinding(diffReading), nows = useNowsBinding(transport)
+  const proposed = useProposedChanges(transport)
+  const trail = useTrailBinding(), diff = useDiffBinding(diffReading, proposed, filesTape.session), nows = useNowsBinding(transport)
   const ownFiles = useFilesBinding(filesTape, diffReading, transport, filesFollow), web = useWebBinding(webTape, webFollow), wiki = useWikiBinding(transport)
   // Files carries its Diff page under `diff.` (§23.2, §23.4): the Diff's own binding, prefixed.
   const files = useMemo(() => carryPages(ownFiles, [{page: DIFF_PAGE, binding: diff}]), [ownFiles, diff])

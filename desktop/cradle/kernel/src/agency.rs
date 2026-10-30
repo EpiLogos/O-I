@@ -457,6 +457,44 @@ impl Client {
         .map_err(|error| error.message)
     }
 
+    /// Send keys to one exact room through the owner's own `working-surface
+    /// input`, as the person's (`--by human`). The text travels as one argv
+    /// value (`--text=…`), so a leading dash or a bare `--` stays text.
+    pub(crate) fn working_surface_input(
+        &self,
+        cwd: &Path,
+        space: &str,
+        binding: &str,
+        text: &str,
+    ) -> Result<Value, String> {
+        let mut args: Vec<std::ffi::OsString> = Vec::new();
+        if self.suite_route {
+            args.push("aikit".into());
+        }
+        args.extend(["session-space", "-C"].into_iter().map(Into::into));
+        args.push(cwd.as_os_str().to_owned());
+        args.extend(
+            ["working-surface", "input", space, binding, "--by", "human"]
+                .into_iter()
+                .map(Into::into),
+        );
+        args.push(format!("--text={text}").into());
+        let environment = self
+            .home
+            .as_ref()
+            .map(|home| vec![("AIKIT_HOME".into(), home.as_os_str().to_owned())])
+            .unwrap_or_default();
+        crate::inhabitation::run_bounded_with_env(
+            &self.executable,
+            &args,
+            Some(cwd),
+            std::time::Duration::from_secs(5),
+            "Working surface",
+            &environment,
+        )
+        .map_err(|error| error.message)
+    }
+
     pub fn task_read(&self, cwd: &Path, agent_session: &str) -> Result<Value, String> {
         let mut command = Command::new(&self.executable);
         if self.suite_route {

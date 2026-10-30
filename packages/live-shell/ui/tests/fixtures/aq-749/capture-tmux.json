@@ -1,0 +1,59 @@
+{
+ "schema": "oi.working-surface-reading/v1",
+ "agent_session": "agent-session/aq-walk-tmux",
+ "cwd": "/Users/admin/Central",
+ "bindings": [
+  {
+   "space": "session-space/aq-walk",
+   "binding": "working-surface/aq-walk-tmux",
+   "surface": "surface/terminal/main/shell",
+   "provider": "provider/tmux/current",
+   "label": "aq-walk-tmux"
+  }
+ ],
+ "capture": {
+  "schema": "aikit.session-space-working-surface-capture/v1",
+  "space": "session-space/aq-walk",
+  "binding": "working-surface/aq-walk-tmux",
+  "surface": "surface/terminal/main/shell",
+  "agent_session": "agent-session/aq-walk-tmux",
+  "provider": "provider/tmux/current",
+  "plan_name": "aq-walk-tmux",
+  "observed_at_unix_ms": 1793331264728,
+  "capture": {
+   "state": "captured",
+   "native_id": "%0",
+   "format": "ansi",
+   "text": "$ git -C /Users/admin/Central/worktrees/env-3/ai-kit log --oneline -1\n\u001b[33mfb643bdd (\u001b[1m\u001b[36mHEAD\u001b[0m\u001b[33m -> \u001b[1m\u001b[32mdlw/749-terminal-rooms\u001b[0m\u001b[33m, \u001b[1m\u001b[31morigin/main\u001b[0m\u001b[33m, \u001b[1m\u001b[31morigin/HEAD\u001b[0m\u001b[33m)\u001b[39m aikit z, the\n palette and runs take the world from #570's resolver (#571)\n$ echo typed-by-the-person\ntyped-by-the-person\n$\n",
+   "truncated": false
+  },
+  "input": {
+   "state": "accepts"
+  },
+  "inputs": [
+   {
+    "binding": "working-surface/aq-walk-tmux",
+    "by": "agent-session/aq-walk-tmux",
+    "text": "git -C /Users/admin/Central/worktrees/env-3/ai-kit log --oneline -1\r",
+    "bytes": 68,
+    "native_id": "%0",
+    "at_unix_ms": 1793331254998
+   },
+   {
+    "binding": "working-surface/aq-walk-tmux",
+    "by": "human",
+    "bytes": 25,
+    "native_id": "%0",
+    "at_unix_ms": 1793331255658
+   }
+  ]
+ },
+ "attachment": null,
+ "selected": {
+  "space": "session-space/aq-walk",
+  "binding": "working-surface/aq-walk-tmux",
+  "surface": "surface/terminal/main/shell",
+  "provider": "provider/tmux/current",
+  "label": "aq-walk-tmux"
+ }
+}

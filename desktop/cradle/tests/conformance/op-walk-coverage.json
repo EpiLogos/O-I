@@ -1593,6 +1593,15 @@
       "scenarios": []
     },
     {
+      "op": "working_surface_input",
+      "native_owner": "kernel/src/working_surface.rs",
+      "spec_ref": "DLW manual \u00a717.9 Terminal (Input: Type \u00b7 Watch only); O-I #749 lane AQ",
+      "status": "unverified",
+      "scenarios": [],
+      "owner_lane": "B/native verification",
+      "reason": "Headless only: kernel tests/working_surface_input.rs against a fake AIKit, and lane AQ's walk through AIKit's working-surface input on a private tmux room; no executed native walk is recorded here for working_surface_input (the native window is #821); retain explicit operation-specific coverage debt until its owner supplies a receipt."
+    },
+    {
       "op": "working_surface_read",
       "native_owner": "kernel/src/working_surface.rs",
       "spec_ref": "canonical conformance plan Lane B; authored native terminal capture",
