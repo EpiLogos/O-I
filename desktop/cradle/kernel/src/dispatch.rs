@@ -282,6 +282,19 @@ impl Kernel {
         op: &KernelOp,
         place: Option<agent_prepared::Place>,
     ) -> Result<Prepared, String> {
+        // A hosted op addressed to this host's own World is its inner op,
+        // served by the inner op's own form, as when it is sent directly
+        // (lane AO). One addressed to another World has no form: it is
+        // applied in order, its owner route under the lock (lib.rs).
+        if let KernelOp::HostedNative {
+            source_world_ref,
+            request,
+        } = op
+        {
+            if matches!(crate::hosted_here(source_world_ref, request), Ok(true)) {
+                return self.prepare_op(request, place);
+            }
+        }
         if let Some(p) = self.prepare_nara_epii(op, place.clone())? {
             return Ok(Prepared::Epii(p));
         }
@@ -653,8 +666,37 @@ fn run_prepared(seat: &mut Seat<'_>, op: KernelOp) -> Result<KernelOpOutcome, St
             let done = seat.owner(|| p.execute());
             seat.hold(|kernel| kernel.finish_owner_write(done))?
         }
-        Prepared::Ordered => seat.hold(|kernel| kernel.apply(op))?,
+        Prepared::Ordered => match op {
+            KernelOp::SourceOpen {
+                project,
+                source_ref,
+            } => open_source(seat, project, source_ref),
+            op => seat.hold(|kernel| kernel.apply(op))?,
+        },
     }
+}
+
+/// A source's open (lane AO). Its owner read stays under the lock, in
+/// arrival order with the person's edits: an open never clobbers a dirty
+/// buffer. The inspection of the project it routes to reads that project's
+/// manifest and nothing of the buffer's, so it is asked outside the lock
+/// first; the open takes its answer when it still routes there.
+fn open_source(
+    seat: &mut Seat<'_>,
+    project: Option<String>,
+    source_ref: String,
+) -> Result<KernelOpOutcome, String> {
+    let (route, client) = seat.hold(|kernel| {
+        (
+            kernel.source_open_route(project.as_deref(), &source_ref),
+            kernel.client.clone(),
+        )
+    })?;
+    let inspected = route.map(|route| {
+        let answer = seat.owner(|| crate::source_project_ref(&client, &route));
+        (route, answer)
+    });
+    seat.hold(|kernel| kernel.source_open(project.as_deref(), &source_ref, inspected))?
 }
 
 /// A personal current's commit. Its owner half — the saved identity's
@@ -857,8 +899,9 @@ mod tests {
     }
 
     /// A Central stand-in whose saved-identity read is held while the gate
-    /// file stands, and its project inspection while `<gate>.inspect` does:
-    /// slow owner reads, by a real child process.
+    /// file stands, its project inspection while `<gate>.inspect` does and
+    /// its receiving list while `<gate>.receiving` does: slow owner reads, by
+    /// a real child process. A `source:lane-ao…` source is a Work project's.
     const HELD_IDENTITY_OWNER: &str = r#"#!/usr/bin/env python3
 import hashlib, json, os, sys, time
 log, gate = sys.argv[1], sys.argv[2]
@@ -873,6 +916,15 @@ if action == "projectcentral.inspect":
     while os.path.exists(gate + ".inspect"):
         time.sleep(0.02)
     ok({"manifest": {"project_id": "project:lane-z"}})
+elif action == "projectcentral.source.read" and json.loads(args[i + 3])["source_ref"].startswith("source:lane-ao"):
+    ok({"schema": "central.project-world-source-reading/v1", "world_ref": "project:lane-z",
+        "source": {"ref": json.loads(args[i + 3])["source_ref"], "path": "Work/lane-z/notes.md", "exists": True},
+        "revision": {"revision": "rev-notes-1", "byte_len": 5}, "content": "notes",
+        "content_encoding": "utf-8", "automatic_agent_or_model_invocation": False})
+elif action == "central.receiving.list":
+    while os.path.exists(gate + ".receiving"):
+        time.sleep(0.02)
+    ok({"schema": "central.receiving-page/v1", "returns": []})
 elif action == "projectcentral.source.read":
     while os.path.exists(gate):
         time.sleep(0.02)
@@ -1328,6 +1380,100 @@ else:
         assert!(timing.lock_held < timing.owner);
     }
 
+    /// Lane AO: a source's open inspected the project it routes to under the
+    /// kernel lock, on every open. That inspection reads the project's
+    /// manifest, nothing of the buffer's; it runs outside the lock now, and
+    /// the buffer is born with its answer. The owner read stays held (the
+    /// census's source-buffer order). A root-register buffer names no
+    /// project, as the Day's does, and asks for none.
+    #[test]
+    fn a_source_open_answers_the_field_while_its_project_is_inspected() {
+        let held = HeldIdentity::new("source-open");
+        let gate = held.gate.with_extension("inspect");
+        let op = KernelOp::SourceOpen {
+            project: Some("lane-z".into()),
+            source_ref: "source:lane-ao:notes".into(),
+        };
+        let (outcome, timing) = held.answered_while(
+            &gate,
+            || held.calls("projectcentral.inspect") > 0,
+            |kernel| dispatch(kernel, op),
+        );
+        let KernelOpResult::SourceOpened { buffer } = outcome.unwrap().result else {
+            panic!("the source opened");
+        };
+        assert_eq!(buffer.project_ref.as_deref(), Some("project:lane-z"));
+        assert_eq!(buffer.content, "notes");
+        assert_eq!(held.calls("projectcentral.inspect"), 1);
+        assert_eq!(held.calls("projectcentral.source.read"), 1);
+        assert_eq!(timing.form, "ordered");
+
+        let (root, _) = dispatch(
+            &held.kernel,
+            KernelOp::SourceOpen {
+                project: None,
+                source_ref: "central:source:lane-ao-root".into(),
+            },
+        );
+        let KernelOpResult::SourceOpened { buffer } = root.unwrap().result else {
+            panic!("the root source opened");
+        };
+        assert!(buffer.root_register && buffer.project_ref.is_none());
+        // Its first open could not know it was the root's: the configured
+        // project was inspected, outside the lock, and its answer unused.
+        let inspected = held.calls("projectcentral.inspect");
+        let (again, _) = dispatch(
+            &held.kernel,
+            KernelOp::SourceOpen {
+                project: None,
+                source_ref: "central:source:lane-ao-root".into(),
+            },
+        );
+        assert!(again.is_ok());
+        assert_eq!(
+            held.calls("projectcentral.inspect"),
+            inspected,
+            "a root-register buffer's reopen asks no inspection"
+        );
+    }
+
+    /// The World this host is bound to, for the hosted-op tests (lane AO).
+    const HOSTED_HERE: &str = "world:lane-ao-here";
+
+    /// Lane AO: a hosted op addressed to this host's own World applied its
+    /// inner op under the kernel lock, even one served by a prepared form
+    /// when sent directly. It is served by that form now: the receiving
+    /// list runs outside the lock. Another World's act stays ordered (the
+    /// census's arrival order to a hosted World).
+    #[test]
+    fn a_hosted_op_addressed_here_is_served_by_its_inner_form() {
+        std::env::set_var("OI_SHARED_FIELD_LOCAL_WORLD_REF", HOSTED_HERE);
+        let held = HeldIdentity::new("hosted-here");
+        let gate = held.gate.with_extension("receiving");
+        let op = KernelOp::HostedNative {
+            source_world_ref: HOSTED_HERE.into(),
+            request: Box::new(KernelOp::Receiving {
+                project: None,
+                request: crate::flow::ReceivingRequest::List {
+                    after: None,
+                    limit: None,
+                    open: None,
+                },
+            }),
+        };
+        let (outcome, timing) = held.answered_while(
+            &gate,
+            || held.calls("central.receiving.list") > 0,
+            |kernel| dispatch(kernel, op),
+        );
+        assert!(matches!(
+            outcome.unwrap().result,
+            KernelOpResult::ReceivingReading { ref data } if data["schema"] == "central.receiving-page/v1"
+        ));
+        assert_eq!(held.calls("central.receiving.list"), 1);
+        assert_eq!(timing.form, "owner-read");
+    }
+
     /// The scopes ride the wire beside the result when the kernel could
     /// attribute the op, and are absent when it could not.
     #[test]
@@ -1551,6 +1697,7 @@ else:
     #[test]
     fn an_owner_runs_under_the_lock_only_for_an_ordering_invariant() {
         use serde_json::json;
+        std::env::set_var("OI_SHARED_FIELD_LOCAL_WORLD_REF", HOSTED_HERE);
         let owner = crate::tests::FakeOwner::spawn_counter("dispatch-census");
         let mut kernel = owner.kernel();
         let mut form = |op: &serde_json::Value| -> &'static str {
@@ -1588,7 +1735,13 @@ else:
                 expression,
                 json!({"op": "expression_world", "request": {"operation": "capabilities"}}),
             ),
-            (buffer, json!({"op": "source_open", "source_ref": "s"})),
+            (
+                "A source buffer's canonical layer moves in arrival order with the person's \
+              edits (as the save's): the open's owner read never clobbers a dirty buffer. The \
+              inspection of the project it routes to reads nothing of the buffer's and runs \
+              outside the lock (lane AO, `open_source`)",
+                json!({"op": "source_open", "source_ref": "s"}),
+            ),
             (buffer, json!({"op": "source_save", "source_ref": "s"})),
             (buffer, json!({"op": "source_reread", "source_ref": "s"})),
             (
@@ -1611,6 +1764,12 @@ else:
                 "A hosted World's acts reach their owner in the order they arrived: its owner \
               fences its own generation, never the order of one host's concurrent sends",
                 json!({"op": "hosted_native", "source_world_ref": "world:w", "action_ref": "a",
+                "request": {"op": "expression", "request": {"operation": "list"}}}),
+            ),
+            (
+                "Addressed to this host's own World, a hosted op is its inner op: an \
+              Expression's revisions advance in arrival order (as `expression`)",
+                json!({"op": "hosted_native", "source_world_ref": HOSTED_HERE,
                 "request": {"op": "expression", "request": {"operation": "list"}}}),
             ),
         ];
@@ -1662,6 +1821,15 @@ else:
             ),
             (json!({"op": "settings_reveal", "path": "~/a"}), "free"),
         ];
+        // Moved out of the lock by lane AO: a hosted op addressed to this
+        // host's own World applied a prepared inner op under it; it is served
+        // by the inner op's own form (`prepare_op`). Another World's act is
+        // held above.
+        let addressed_here = [(
+            json!({"op": "hosted_native", "source_world_ref": HOSTED_HERE,
+                "request": {"op": "receiving", "request": {"List": {}}}}),
+            "owner-read",
+        )];
 
         for (invariant, op) in &held {
             assert!(!invariant.trim().is_empty());
@@ -1670,7 +1838,7 @@ else:
         for op in &kernel_only {
             assert_eq!(form(op), "ordered", "ordered, kernel state only: {op}");
         }
-        for (op, moved_to) in &moved {
+        for (op, moved_to) in moved.iter().chain(addressed_here.iter()) {
             assert_eq!(form(op), *moved_to, "its owner runs outside the lock: {op}");
         }
         assert_eq!(owner.spawns("central.world"), 0, "preparing asked no owner");
