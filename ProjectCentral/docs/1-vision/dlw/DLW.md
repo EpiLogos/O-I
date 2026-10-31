@@ -4947,7 +4947,7 @@ arrives with its receipt.
 | Pad | Faces | What the move does |
 |---|---|---|
 | Tasks | 0 → 1 | Reads face 0 and proposes tasks in three tiers: must, should, could. |
-| Patterns | 2 → 3 | Reads what ran and proposes patterns, each with the items that show it. |
+| Patterns | 2 → 3 | Reads what ran and proposes patterns, each with the items that show it. A pattern whose items point at one skill or method can open a refinement of it (§19.7). |
 | Context | 2 → 4 | Gathers what the day's sessions touched. |
 | Synthesis | 1–4 → 5 | Drafts what the day taught, what stays open and a proposal for tomorrow's face 0. |
 | Close | 5 → tomorrow's 0 | Runs the close routine. |
@@ -5659,6 +5659,8 @@ A task launched with Repeat is how you find out which setup of agents works best
 | Stop when | Turn cap · Time cap · Task done · Test pass | Task done | The condition that ends each run. |
 
 Once the first run starts, these do not change. A change starts a new set of takes.
+
+Each take keeps its own NOW, and that NOW names the takes it was run beside, so a take's close is read against its siblings' closes. When the variable is Skillset, a level is a set of skills, or that set with one proposed revision of a skill in it. The revision is in effect for that take only. Nothing in your Home or your project changes, and each take's return shows which revision it worked under.
 
 ##### The Intent panel
 
@@ -6472,6 +6474,8 @@ value that an agent moved shows that agent's name.
 
 An experiment is a task launched with Repeat, each run a take, and the takes set side by side with Compare (§19.1): the question is the task's Intent, what varies stands on its Launch panel, and the readings are the takes'.
 
+An experiment also tests a change to the practice an agent carries (§19.7): does the task go better with the revision than without it? The task's Success conditions are the measure. The revision cannot change them, and each take answers each one as Met, Not met or Open, with its evidence.
+
 **Stories:** PX06
 
 ### 19.6 Frames monitor
@@ -6533,6 +6537,11 @@ hollow. Nothing is inferred upward.
 
 Carried is not loaded, and loaded is not used. A set holds a member. It does
 not make the agent use it.
+
+Loaded and Invoked are read from the session's own events when a task closes,
+never from what the agent says it used. Relied on is lit by the return naming
+the member. When the events and the return disagree, the close records the
+difference as a finding on the task.
 
 #### Parameters
 
@@ -6596,6 +6605,27 @@ Making a skill is using the rack on something you did by hand. You need an agent
 
 - To teach a release routine, do one release by hand with Capture on.
 - To see whether you already have it, read Resembles before you accept.
+
+#### Refining a skill
+
+A skill that your work keeps pulling against needs a change, and the rack proposes one from the work itself. Nothing is refined because it is old or little used.
+
+When a task closes, its events are read against its Success conditions and against what the agent says it relied on. A condition not met is a reason. So is a difference between what the events show and what the return names. If the close shows no reason, nothing more runs and no model is asked. Where a reason stands, Kev picks which member to look at, or abstains (§25.2). When Kev is not running, the close asks the agent that did the task whether to run an improvement, and the agent decides. An improvement runs in a fresh context. It drafts one revision to one member and sends it to you as a proposal. The proposal waits in Approvals, and in the page.
+
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Member | A member of the rack | — | The member the proposal changes. |
+| Why | A list of tasks (reading) | Read from AIKit | The closes that show the reason, each with its reason. |
+| Revision | A revision (reading) | Read from AIKit | The proposed revision, shown beside the revision in use. |
+| Test | The takes of a Repeat (reading) | Read from AIKit | The takes that ran under the proposed revision, beside the takes that ran under the revision in use (§19.1, Variable: Skillset). |
+| Result | Met · Not met · Open, for each condition and level (reading) | Read from AIKit | What each take answered to the task's Success conditions. |
+| Accept | A button | — | Keeps the proposal as the member's next revision. AIKit records the change, and History can take it back. |
+| Discard | A button | — | Drops the proposal. The revision in use stays. |
+
+The test is the task's own, and the proposal cannot change its Success conditions. A proposal whose test did not run, or whose takes did not answer a condition that the revision touches, shows Open. Accept is yours alone.
+
+- To see whether a revision helps, read Result for each level before you accept.
+- To keep the skill as it was, press Discard.
 
 #### Views
 
@@ -12578,6 +12608,8 @@ rule, picked by the helper, written by an agent, accepted by you. A later step
 adds its own mark and never wipes out an earlier one.
 
 You also need to say, in plain words, that something did not go well, and have it looked into. Say it to the agent as you would to a colleague: this did not go well; this rule is being misread; the agents keep using one thing as a reason for another. Your words are kept as yours, as a question, not a verdict. The agent finds the work you mean and shows you how far it will look before it looks any wider. It sets what was meant beside what came back, with what the work was given, what it actually read and what it did, and names the kind of difference it found: a poor result, too much cost or repetition, missing context, a rule that never reached the agent or was read against its words, a machine that failed, or a test that expected the wrong thing. It brings the evidence for and against, says what it cannot know, and proposes a next step with its owner: keep the observation, test it, change a practice, propose a clarification of the rule, or commission a repair. The original work stays as it was, and a rule changes only when you accept the change.
+
+The same looking-into starts without your words when a task closes. The close reads the session's events against the task's Success conditions and against what the agent says it relied on. If every condition is met and the two agree, nothing is open and no model is asked. If not, Kev picks what to read and which practice to look at, or abstains. Where Kev is not running, the close asks the agent that did the task whether to run an improvement, and the agent decides. The improvement runs in a fresh context and drafts the change. A Repeat of the task then runs with the change in effect (§19.1), and the task's Success conditions, which the change cannot alter, decide how each take stands. The result waits in Approvals, and a practice changes only when you accept it (§19.7). Each step costs more than the one before it, and the improvement itself is reached only through them.
 
 **Stories:** FD07, RW13, RO01–RO06
 
