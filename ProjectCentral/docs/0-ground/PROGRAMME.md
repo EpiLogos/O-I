@@ -1557,3 +1557,29 @@ The agent's reading of these words, for the owner to correct:
 - The Epii agent system is built on 4, 5 and 0. Kev, the small decision model, is at 4 Nara; the language model that does the inference is at 5 Epii; and the spine is at 0, drawing on both and on the other evaluators, whether models or other forms of the spine. These are model types inside the Epii agent system. The owner put it as a question and went on to say go ahead; it is recorded as confirmed by that.
 - It is carried by tickets already open: #795 (the take's NOW and the Skillset level in effect), #745 (Loaded and Invoked read from the session's events), #772 (Approvals' answer and the Day's Patterns pad), #757 (the rack's Refining page) and #723 (the same reading at a ticket's resolution). The manual holds it at §25.2, §19.1, §19.5, §19.7 and §18.2, and LOCAL-CAMPAIGN §13.7 holds its procedure. It is no lane of its own.
 - QL-MEF #38 and Actuation's architecture document name the spine as its own facet, not part of the Epii body. They follow this ruling in their own repositories.
+
+### R34 — The instrument in Live's pane, the engine under it, and three holds ruled (owner, 1 Nov 2026)
+
+Spoken in a session on Live's pane and the torus, and copied from the owner's messages with their typing slips corrected and nothing else changed. The first quotation opens the work, the second sends it to the engines themselves, the third rules the holds and the open questions.
+
+> I'm looking at the DLW manual for the Expressions and the Live modes... I'm realising that we don't have a proper visual mode for the Live mode, all of it is in the devices but none yet in the pane view, which I think needs to be a live expressions instrument surface with the torus genuinely built and the physics genuinely reactive, we can use the full compositional system and the live changeability/reactivity of the expressions surface to actually model the torus (and the m2 cymatics qua the surface itself) so the visual experience is visceral... there's also a consideration to be made around the UX for refining the torus and saving the sound-designed instances as instruments or sound types, and also how the clip and track and whatnot aspects operate as a proper music making suite, as the idea that this links or is represented directly in the visual expressions format relative to it becomes part of the synaesthetic nature of the system
+
+> so the whole reverse engineering of Ableton we've been doing didn't even work on the damn core audio mixing system? or we just not yet built it in? ... also seems like you're deriving the musical and QL integration of the torus, rather than looking into all the audio engine code we developed in the QL-MEF repo which gives the depth of the QL musical generation and the spanda oscillations... don't forget dude the torus can literally be a glyph with a variety of forces or points, or it can be built as various objects interlocking in space (less likely), AND in either case the glyph itself can morph between states (which in itself has a whole topological morphology to it) - perhaps look at the expressions engine itself, and the audio engine itself, rather than a second hand manual level description of them
+
+> the 3 "holds" aren't holds, surely the positions are dynamic on the torus, the plate obviously sounds?! and symbol voices are again just the sound of the symbol translated? the other "open" questions are answered by common sense or just looking at how Ableton works my guy, let's also do the "not done" stuff, no reason why it shouldn't be done, so I can actually see the changes....
+
+The agent's reading of these words, for the owner to correct:
+
+- Live's Pane view is the Expressions medium with the torus built in it as one object of the scene. It is a glyph whose shapes are its states and whose helices are its layers. Its eight voices are force points that pull the particles while they sound, its four boundaries are where the particles settle, and its morph from shape to shape keeps the pulse's time. The cymatic field is the surface itself. Manual §9, §20.2 and §21.2; ticket #851.
+- The instrument's dynamics are read from QL's design and engines, not from an account of them. Those are QL-MEF #281, the M1′ and M2′ seeds, `music.rs`, `spanda_field.rs`, `m2_vimarsha.rs`, `continuous/coupled.rs` and K8, together with the Expressions engine. Manual §21.2 was re-derived from them (#848); #850 builds it.
+- The reverse-engineered audio engine lands in the shell, as R1 said: every part sounds in one engine, with the Ableton-derived devices on its chain. Ticket #849.
+- Keeping what you make (#852):
+  - a sound is kept as a preset under the Torus;
+  - a body made from a form, together with its sounds, is kept as an instrument;
+  - the Torus with its chain is kept as a rack.
+- A key's point is dynamic. Its place on its helix is its own, and the turning torus carries that place across the surface. Where a key strikes is worked out from its helix and the pulse at that moment. This ends the hold MT1 and answers the Jankó figure's "Standing of the placement" (QL-MEF `docs/music/JANKO-QL-INSTRUMENT-FIGURE.md` §4a).
+- The plate sounds. It is a body the pulse rings, never a second source (D13).
+- A symbol's voice is the symbol translated into sound: its harmony, which the pulse sounds from where the symbol stands. A name or a mode from M2′'s store can stand in for the translation. This refines the 20 Oct decision on voices (#770).
+- Live's own behaviour answers the two open questions:
+  - Rate syncs to the set's tempo, as Live's synced rates do.
+  - Each note of a chord takes its own voice, so each note strikes its own eight voices, and Polyphony counts notes.
