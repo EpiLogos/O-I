@@ -96,7 +96,9 @@ test('the shared keys restate the design\'s: a carried page\'s default absent un
   const sharedOf = (prefix, design) => Object.keys(design.defaults).filter(key => !(`${prefix}${key}` in agentDesign.defaults)).sort()
   // A shared act key (the Thread's `sent`, the composer's send) has no default to derive it from: the declared list holds it beside them.
   const declared = (page, design) => page.shared.filter(key => key in design.defaults).sort()
-  assert.deepEqual(sharedOf('custody.', custodyDesign), declared(one.CUSTODY_PAGE, custodyDesign))
+  // REPLACED (§19.4 "Run: … the held items and Hand back"): Custody is no page of the Agent's now; it carries Custody's held items and
+  // the Hand back light alone, under `custody.`.
+  assert.deepEqual(Object.keys(agentDesign.defaults).filter(key => key.startsWith('custody.')).sort(), ['custody.handBackLit', 'custody.held'])
   assert.deepEqual(sharedOf('id.', identityDesign), declared(one.IDENTITY_PAGE, identityDesign))
   assert.deepEqual(sharedOf('thread.', threadDesign), declared(one.THREAD_PAGE, threadDesign))
   assert.deepEqual(one.THREAD_PAGE.shared.filter(key => !(key in threadDesign.defaults)), ['sent'], 'the composer\'s send, the Agent\'s own act')
@@ -154,13 +156,15 @@ test('a change goes to the owner of its key: the Agent\'s own row, a carried pag
   await assert.rejects(() => agent.write([{key: 'thread.retry', value: true}]), /Retry: no owner operation carries it yet/)
 })
 
-test('the Agent\'s design draws its pages on the composed binding: Run, Custody, Identity, and the Thread as its Full', () => {
+// REPLACED (§19.4 "Pages Run, Identity and Type. Run: … the held items and Hand back"): Custody's page left the Agent; Run draws its held
+// items and Hand back, and the Custody page no longer stands.
+test('the Agent\'s design draws its pages on the composed binding: Run with the held items and Hand back, Identity, and the Thread as its Full', () => {
   const {agent} = factoryAgent()
   const run = draw(agentDesign, 'whole', agent, 'agent')
   assert.match(run, /Flint/)
-  const custody = draw(agentDesign, 'whole', agent, 'custody')
-  assert.match(custody, /Review gate/)
-  assert.doesNotMatch(custody, /NaN|undefined/)
+  assert.match(run, /Hand back/)
+  assert.doesNotMatch(run, /Review gate|NaN|undefined/)
+  assert.doesNotMatch(run, />Custody</, 'no Custody tab')
   const card = draw(agentDesign, 'whole', agent, 'identity')
   assert.match(card, /Flint/, 'the roster card is the owner\'s')
   const full = draw(agentDesign, 'full', agent)
@@ -190,7 +194,7 @@ test('Central\'s Agent stands on the Answer\'s owners: the dialogue binding its 
   assert.match(draw(agentDesign, 'widget', agent), /Nara/)
 })
 
-test('Scope on Central carries Context & world\'s readings in Scope\'s keys; the Reach, the write mode and Knowledge refused with the ops they lack', async () => {
+test('Scope on Central carries Context & world\'s readings in Scope\'s keys; the Reach, the write mode and its Asks refused with the ops they lack', async () => {
   pages.resetHolds()
   const input = {answer: {bound: true, session: SESSION}, document: 'Flow · mercurius', packet: {items: 2, session: SESSION},
     horizon: {state: 'ready', data: {world_ref: 'control:root', sources: [{binding: {agent_retrieval_allowed: true}}, {binding: {agent_retrieval_allowed: false}}],
@@ -203,11 +207,13 @@ test('Scope on Central carries Context & world\'s readings in Scope\'s keys; the
   assert.equal(scope.values.receipts, context.receipts, 'the session\'s receipts')
   const places = JSON.parse(String(scope.values.reads))
   assert.deepEqual(places.map(place => [place.id, place.ring]), [['packet', 0], ['world', 3]])
-  // REPLACED (#725): Knowledge was one key; Scope's redrawn design draws its Knowledge page (§19.12, which took in the Knowledge route of §19.9)
-  // on its own keys — the sources, Search first, Link depth, Read budget, and Read again and Forget — each refused with the op it lacks.
-  const KNOWLEDGE = ['src.wiki', 'src.project', 'src.code', 'searchFirst', 'linkDepth', 'readBudget', 'readAgain', 'forget']
-  for (const key of ['reach', 'writeMode', ...KNOWLEDGE, 'writes', 'basis', 'route', 'readings']) assert.equal(scope.values[key], undefined, `${key}: no owner reports it`)
-  for (const key of ['reach', 'writeMode', ...KNOWLEDGE]) assert.match(scope.standing[key].disabled, /no owner operation carries it yet — missing op:/, key)
+  // REPLACED: Knowledge was one key, then Scope's Knowledge page (#725); what the agent reads from is Sources' now (§19.9), and Scope's own
+  // settings beyond the reach are its Asks (§19.12) — Tool calls, Calls to other agents, Wait and On no answer — each refused with the op
+  // it lacks. Before it lands, Escalate to and the grants are Custody's, laid in by the chain (sessionChainBindings.ts withCustodyAsks).
+  const ASKS = ['toolCalls', 'calls', 'wait', 'noAnswer']
+  for (const key of ['reach', 'writeMode', ...ASKS, 'writes', 'basis']) assert.equal(scope.values[key], undefined, `${key}: no owner reports it`)
+  for (const key of ['reach', 'writeMode', ...ASKS]) assert.match(scope.standing[key].disabled, /no owner operation carries it yet — missing op:/, key)
+  for (const key of ['src.wiki', 'linkDepth', 'readBudget']) assert.equal(scope.standing[key], undefined, `${key}: no Knowledge page stands on Scope`)
   await assert.rejects(() => scope.write([{key: 'writeMode', value: 'draft'}]), /Write mode: no owner operation/)
   scope.local.reachPending(2)
   assert.equal(world.centralScopeBinding(world.CENTRAL_SCOPE_ID, input).values.reachPending, 2, 'a raised reach waits for Confirm, held')

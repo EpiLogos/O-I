@@ -1,6 +1,6 @@
 // The session's own devices beside the chain on their owners (lane BF3): the Run (DLW §19.1, software-factory:run-device — "on the
 // session's chain"), Custody (§19.13, software-factory:agent-custody — "on the Agent device; the Agent's face shows it") and the
-// Agentset rack (§19.18, software-factory:agentset-rack — "a group's chain in Factory").
+// Agentset rack (§19.15, software-factory:agentset-rack — "on a team's track, where one agent's chain would stand").
 //
 // What the owners report, read 16 Oct 2026 (scratch lane-bf3/shapes/, lane-bf2/shapes/):
 //   the agency reading (agency_read + the roster + each session's task record + temporal_events_read, built by
@@ -22,6 +22,7 @@ import {chainHolds, holdView, viewHolds, type ChainHolds} from './designBindings
 import {rackStateOf, runStateOfSession} from './runFaces'
 import {familyFaceDevice} from './mainTrackBindings'
 import {sessionRowsOf} from './threadBinding'
+import {DECISION_HELPER_DESIGN, DECISION_HELPER_ID} from './decisionHelperBinding'
 
 export const RUN_DESIGN = 'software-factory:run-device'
 export const CUSTODY_DESIGN = 'software-factory:agent-custody'
@@ -418,19 +419,65 @@ export function custodyBinding(input: CustodyInput, scope: Pick<DesignBinding, '
   }
 }
 
+/** The keys of Scope's Asks and Grants pages that Custody's binding owns (§19.12): Before it lands (`gate`) and Escalate to (`escalate`,
+ * among `people`) are Factory's custody record's review gate and escalation contact, and the grants are Actuation's authority list, with
+ * the next grant's settings, Issue and Revoke. */
+export const SCOPE_CUSTODY_KEYS: readonly string[] = ['gate', 'escalate', 'people', 'grants', 'holder', 'worlds', 'readAt', ...CUSTODY_GRANT_SETTINGS, 'issue', 'revoke']
+
+/** Scope with Custody's keys laid in under their own names: a value is Custody's reading, a change goes to Custody's owner, a refusal is
+ * that owner's; every other key stays Scope's. One binding feeds both, so the Agent's Custody page and Scope draw the same gate. Pure. */
+export function withCustodyAsks(scope: DesignBinding, custody: DesignBinding): DesignBinding {
+  const mine = (key: string) => SCOPE_CUSTODY_KEYS.includes(key)
+  const pick = <T>(record: Readonly<Record<string, T>> | undefined): Record<string, T> => Object.fromEntries(Object.entries(record ?? {}).filter(([key]) => mine(key)))
+  const owner = (key: string) => (mine(key) ? custody : scope)
+  return {
+    ...scope,
+    values: {...scope.values, ...pick(custody.values)},
+    standing: {...(scope.standing ?? {}), ...pick(custody.standing)},
+    local: {...(scope.local ?? {}), ...pick(custody.local)},
+    writes: key => { const at = owner(key); return !!at.write && (at.writes ? at.writes(key) : true) },
+    write: async changes => {
+      for (const change of changes) {
+        const at = owner(change.key)
+        if (!at.write) throw Error(reading(change.key))
+        await at.write([change])
+      }
+    },
+  }
+}
+
 // ---------------------------------------------------------------------------------------------------------------- the Agentset rack
 
 const DELEGATION = (what: string, key: string) => missing(what, `Hermes' delegation block (${key}) through the kernel: no config.set key carries it`, 'Hermes')
+/** A macro turns one setting of the Agent on every member (§19.15 Macros); the rack holds each member's session, never its Agent. */
+const MACRO = (what: string) => missing(what, `the ${what} macro turning the Agent's ${what} on every member: the rack holds each member's session, and no address of its Agent's ${what}`, 'Software Factory')
 export const AGENTSET_REFUSE = {
   fanOut: DELEGATION('Fan-out', 'delegation.max_concurrent_children'),
   depth: DELEGATION('Depth', 'delegation.max_spawn_depth'),
   handBack: DELEGATION('Hand-back', 'the helper\'s return form'),
   returnCap: DELEGATION('Summary cap', 'delegation.max_summary_chars'),
-  model: DELEGATION('Subagent model', 'delegation.model'),
+  model: MACRO('Model'),
+  effort: MACRO('Effort'),
+  budget: MACRO('Budget'),
+  unmapped: missing('Unmap', 'keeping one member\'s Model apart from the Model macro, with the rack\'s macros', 'Software Factory'),
+  store: missing('Store', 'keeping where every macro stands as a variation of the rack', 'Software Factory'),
+  variation: missing('Variations', 'moving every macro to where a stored variation keeps it', 'Software Factory'),
+  // The chain list's controls (§19.15 The members): each acts on a member of the group's session space, or on what you attend to.
+  bench: missing('Activator', 'benching a member of the group\'s session space, so it stays in the team and is given no work', 'AIKit'),
+  solo: missing('Solo', 'attending to one member alone, so the views, the tiles and the instruments show only it', 'the live shell'),
+  swap: missing('Hot-Swap', 'swapping a member\'s agent in the group\'s session space for another from the browser, its chain kept', 'AIKit'),
+  extract: missing('Drag out', 'moving a member\'s session out of the group\'s space onto a track of its own, chain and all', 'AIKit'),
+  add: missing('Members', 'seating an agent, or a Decision helper, dropped into the chain list as a member of the group\'s session space', 'AIKit'),
+  // The Devices view (§19.15 "Change a setting there and you change the member"): each device of a member's chain answers to its own owner,
+  // and the rack holds each member's session, never the binding of a device of its chain.
+  dev: missing('Devices', 'changing a device of a member\'s chain from the rack: the rack holds each member\'s session, and no binding of the devices of its chain', 'Software Factory'),
   // Factory retries a unit of a Run under the unit's retry grant (factory_owner attempt-retry, lane K0; the Run map's Retry). The rack
   // holds a member, which is an agent session, and no reading names the Run or the workflow unit the member's task is.
   retry: 'Retry: Factory retries a unit of a Run under its retry grant (factory_owner attempt-retry, the Run map\'s Retry); the rack holds the chosen member, an agent session, and no reading here names the Run or the workflow unit its task is (Software Factory).',
 } as const
+/** A member's own key (`bench:<id>`, `solo:<id>`, `dev:<id>@<device>`): the refusal of the control it belongs to. */
+const memberControl = (key: string): keyof typeof AGENTSET_REFUSE | undefined =>
+  (key.startsWith('bench:') ? 'bench' : key.startsWith('solo:') ? 'solo' : key.startsWith('dev:') ? 'dev' : undefined)
 
 // Join (O-I ticket 684): how the members' returns combine is Central's agent set's (central.agent-set/v1 `join`). The group is an AIKit SessionSpace,
 // whose record names the set it runs (AIKit `agent_set`: tied when Central's team is prepared into the space, inhabit_team_native.rs
@@ -464,10 +511,12 @@ export interface AgentsetInput {
   /** Central's answer to central.agent-set.read for the set the group's space names (group.agentSet); absent while not asked. */
   readonly set?: ActionAnswer | null
   readonly tracks: readonly AgentSessionTrack[] | null
-  /** The models AIKit's catalogue names (kernel model_catalogue), for the Subagent model chooser. */
+  /** The models AIKit's catalogue names (kernel model_catalogue), for the Model macro. */
   readonly models?: readonly string[] | null
   /** The instant the tracks were read at (AgentSessionsProvider nowUnixMs): a member's needle is aged against it. */
   readonly nowUnixMs?: number
+  /** The Decision helper's values (decisionHelperBinding.ts), where one stands on the group: a chain of the rack beside the members. */
+  readonly helper?: Values | null
   readonly holds: ChainHolds
 }
 
@@ -489,8 +538,17 @@ export function agentsetMembers(group: AgentSessionTrack, tracks: readonly Agent
   })
 }
 
-/** The rack's values: the group's name, its members, the member you chose, the models to choose from. The delegation settings are
- * Hermes', and none is read. */
+/** The Decision helper as the rack lists it (§19.15 "A decision helper is a member like any other"): a chain whose instrument is the
+ * Decision helper where an agent's chain has its Agent, its model as the helper's own binding reads it. */
+export function helperMember(helper: Values): Record<string, unknown> {
+  const model = typeof helper.model === 'string' ? helper.model : undefined
+  return {id: DECISION_HELPER_ID, name: 'Decision helper', ...(model ? {model} : {}), chain: [{device: DECISION_HELPER_DESIGN, name: 'Decision helper'}]}
+}
+/** The key of a device of a member's chain in the rack's Devices view (software-factory__agentset-rack.tsx: `dev:<member>@<device>`). */
+export const memberDeviceKey = (member: string, device: string) => `dev:${member}@${device}`
+
+/** The rack's values: the group's name, its members (the Decision helper's chain among them, where one stands, its device on the helper's
+ * own readings), the member you chose, the models to choose from. The delegation settings are Hermes', and none is read. */
 export function agentsetValues(input: AgentsetInput): Values {
   const values: Record<string, Value> = {}
   const group = input.group
@@ -499,9 +557,10 @@ export function agentsetValues(input: AgentsetInput): Values {
   put(values, 'crew', group.agentSet?.ref ?? group.spaceLabel ?? group.purpose)
   if (input.tracks) {
     const members = agentsetMembers(group, input.tracks, input.nowUnixMs ?? 0)
-    values.members = JSON.stringify(members)
+    values.members = JSON.stringify(input.helper ? [...members, helperMember(input.helper)] : members)
     values.light = members.some(member => member.state === 'working') ? 'lit' : 'dark'
   }
+  if (input.helper) values[memberDeviceKey(DECISION_HELPER_ID, DECISION_HELPER_DESIGN)] = JSON.stringify(input.helper)
   put(values, 'member', viewHolds(input.holds, AGENTSET_ID).member)
   if (input.models?.length) values.models = JSON.stringify(input.models.map(id => ({id})))
   const join = setRecordOf(input)?.join
@@ -532,7 +591,7 @@ function joinStanding(input: AgentsetInput, ports: AgentsetPorts | undefined): S
 }
 
 /** The rack's binding: the chosen member is the view's own; Join reads and writes Central's agent set the group runs; every delegation
- * setting and Retry stands disabled with what it lacks. */
+ * setting, macro, chain-list control, device of a member's chain and Retry stands disabled with what it lacks. */
 export function agentsetBinding(input: AgentsetInput, ports?: AgentsetPorts): DesignBinding {
   const standing: Record<string, Standing> = disabled(AGENTSET_REFUSE)
   const join = joinStanding(input, ports)
@@ -542,11 +601,13 @@ export function agentsetBinding(input: AgentsetInput, ports?: AgentsetPorts): De
     id: AGENTSET_ID,
     values: agentsetValues(input),
     standing,
-    local: {member: value => holdView(AGENTSET_ID, 'member', typeof value === 'string' ? value : undefined)},
-    writes: key => key in AGENTSET_REFUSE || (key === 'join' && writable),
+    local: {
+      member: value => holdView(AGENTSET_ID, 'member', typeof value === 'string' ? value : undefined),
+    },
+    writes: key => key in AGENTSET_REFUSE || memberControl(key) !== undefined || (key === 'join' && writable),
     write: async changes => {
       for (const {key, value} of changes) {
-        if (key !== 'join') throw Error(AGENTSET_REFUSE[key as keyof typeof AGENTSET_REFUSE] ?? reading(key))
+        if (key !== 'join') throw Error(AGENTSET_REFUSE[memberControl(key) ?? key as keyof typeof AGENTSET_REFUSE] ?? reading(key))
         if (typeof value !== 'string' || !(JOINS as readonly string[]).includes(value)) throw Error(`Join is none, all, first, quorum or weighted, not ${String(value)}.`)
         if (!ports) throw Error('Join: no carrier to Central\'s central.agent-set.save stands on this chain.')
         const record = setRecordOf(input)

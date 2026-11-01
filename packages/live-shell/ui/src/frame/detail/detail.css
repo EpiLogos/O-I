@@ -30,8 +30,10 @@
 .detail-side--clip .clip-empty, .clip-expanded .clip-empty { flex: 1; min-height: 0; margin: 8px; padding: 10px; display: flex; align-items: center; justify-content: center; text-align: center; border: 1px dashed var(--line-strong); font-size: 10.5px }
 
 /* The chain (world-shell-mockup.html:332 .chain): one row of fixed-width plates on bg-1, gap 6, padding 8, scrolling sideways,
-   ending where a device can be dropped (:348 .dropz). Every plate stands the row's height. */
-.detail-chain { flex: 1; min-height: 0; display: flex; gap: 6px; padding: 8px; overflow-x: auto; overflow-y: hidden; align-items: stretch; background: var(--bg-1); border: 1px solid var(--line) }
+   ending where a device can be dropped (:348 .dropz). Every plate stands the row's height. Its scroller is the overview beside
+   the Device switch (ChainOverview.tsx), as in Live; the row draws no scrollbar of its own. */
+.detail-chain { flex: 1; min-height: 0; display: flex; gap: 6px; padding: 8px; overflow-x: auto; overflow-y: hidden; align-items: stretch; background: var(--bg-1); border: 1px solid var(--line); scrollbar-width: none }
+.detail-chain::-webkit-scrollbar { display: none }
 .detail-chain-devices { flex: none; min-width: 0; min-height: 0; display: flex; gap: 6px; align-items: stretch; overflow: visible }
 .detail-chain-devices:empty { display: none }
 .dropz { width: 140px; flex: none; border: 1px dashed var(--line-strong); display: flex; align-items: center; justify-content: center; text-align: center; color: var(--text-faint); font-size: 10.5px; padding: 10px }

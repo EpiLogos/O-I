@@ -17,7 +17,8 @@
 // Since the 22 Oct manual rewrite (#725): Machine is the Remote carrier's Machine page (§18.7 "What a machine holds against what you
 // declared for it, and its recovery, is the Machine page of the Remote carrier (§19.18)"), whose values stand under `mc.`; Ground hygiene and
 // Impact are retired (§19.16, §18.6), Voice is the Agent's Voice page (§19.21), the Workspace the track's head and Docs (§18.1); and a world's
-// chain is the Packet, the Agent, Scope and Docs on every world (§16.2).
+// chain is the Packet, the Agent, Scope and Docs on every world (§16.2). Since the Remote carrier became one page (§19.18), the Machine page
+// is Workcell's instrument's (§19.23 Machine, band two: "Declared, Reconcile and Recover"), its values still under `mc.`.
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {readFileSync} from 'node:fs'
@@ -64,13 +65,16 @@ const {inhabitantManifest} = await import('../src/inhabitants/manifest.ts')
 const {loadWorldShellFamilies} = await import('../src/inhabitants/worldShellFamilies.ts')
 loadWorldShellFamilies()
 // REPLACED (#725): Machine's design (central__machine.tsx) is retired; the Remote carrier draws the Machine page on the machine's own binding,
-// prefixed `mc.` (workcell__remote-carrier.tsx; carryPages). The Workspace's design is retired too (§18.1).
+// prefixed `mc.` (workcell__remote-carrier.tsx; carryPages). The Workspace's design is retired too (§18.1). REPLACED (§19.18, §19.23):
+// Workcell's instrument draws the Machine page (workcell__workcell.tsx), on the same binding under the same prefix (MACHINE_PAGE).
 const {design: carrierDesign} = await import('../src/inhabitants/catalogue/panels/workcell__remote-carrier.tsx')
-const {carryPages} = await import('../src/agent/devices/oneAgentBinding.ts')
-/** The Remote carrier hosting the Machine page: the machine's binding under `mc.`. */
-const carrying = binding => carryPages({id: 'factory:remote-carrier', values: {}}, [{page: {prefix: 'mc.', shared: []}, binding}])
-const carrierKeys = [...new Set([...Object.keys(carrierDesign.defaults), ...Object.values(carrierDesign.fixtures ?? {}).flatMap(fixture => Object.keys(fixture))])]
+const {design: workcellDesign} = await import('../src/inhabitants/catalogue/panels/workcell__workcell.tsx')
+const {MACHINE_PAGE, carryPages} = await import('../src/agent/devices/oneAgentBinding.ts')
+/** Workcell's instrument hosting the Machine page: the machine's binding under `mc.`. */
+const carrying = binding => carryPages({id: 'factory:workcell', values: {}}, [{page: MACHINE_PAGE, binding}])
+const workcellKeys = [...new Set([...Object.keys(workcellDesign.defaults), ...Object.values(workcellDesign.fixtures ?? {}).flatMap(fixture => Object.keys(fixture))])]
 const {design: agentDesign} = await import('../src/inhabitants/catalogue/panels/actuation__harness-model.tsx')
+const {design: voiceDesign} = await import('../src/inhabitants/catalogue/panels/actuation__voice.tsx')
 const SLOT_DESIGNS = {
   'central:day-die': (await import('../src/inhabitants/catalogue/panels/day.tsx')).day,
   'central:main:approvals': (await import('../src/inhabitants/catalogue/panels/software-factory__approvals.tsx')).design,
@@ -122,13 +126,15 @@ const recorder = () => { const asked = []; return {asked, asks: {replan: () => {
 
 // ── Machine ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 
-test('Machine: the Remote carrier\'s Machine page; every key of it (defaults ∪ fixtures) and every control is classified — a reading, the view\'s own, absent or refused with its reason', () => {
+test('Machine: the Machine page of Workcell\'s instrument; every key of it (defaults ∪ fixtures) and every control is classified — a reading, the view\'s own, absent or refused with its reason', () => {
   // REPLACED (#725): "the catalogue's design" was Machine's own (central:machine) — retired into the Remote carrier's Machine page (§18.7,
   // §19.18), whose `mc.` keys are the machine's own binding's keys under the prefix. MACHINE_DEVICE_ID stays the hold id of its view.
+  // REPLACED (§19.23): the page is Workcell's instrument's now, under the same prefix.
   assert.equal(machine.MACHINE_WIRING.design, 'central:machine')
   assert.equal(machine.MACHINE_DEVICE_ID, 'central:machine')
+  assert.ok(!Object.keys(carrierDesign.defaults).some(key => key.startsWith('mc.')), 'the Remote carrier is one page and carries no Machine page')
   const w = machine.MACHINE_WIRING
-  const machineKeys = carrierKeys.filter(key => key.startsWith('mc.')).map(key => key.slice(3))
+  const machineKeys = workcellKeys.filter(key => key.startsWith('mc.')).map(key => key.slice(3))
   assert.ok(machineKeys.length >= 10, 'the Machine page\'s keys')
   for (const key of machineKeys) assert.ok([w.reads, w.local, w.absent].some(table => key in table), `mc.${key}: a reading, the view's own, or absent with its reason`)
   for (const key of ['replan', 'verify', 'recoveryPlan']) assert.ok(key in w.writes, `${key}: a reading asked again`)
@@ -186,27 +192,28 @@ test('Machine\'s presses: Plan, Verify and the Recover page\'s Plan ask the read
   assert.ok(binding.local.role && binding.local.mode && binding.local.refresh && binding.local.ask, 'Role, Change, Refresh and the ask are the view\'s own')
 })
 
-test('REAL — the Remote carrier\'s Machine page draws the readings; a refused declaration is said where Role stands, an unread device waits', () => {
+test('REAL — the Machine page of Workcell\'s instrument draws the readings; a refused declaration is said where Role stands, an unread device waits', () => {
   // REPLACED (#725): Machine's own views and its Reconcile and Recover pages — the Remote carrier's Machine page holds all three parts as
-  // bands (Declared, Reconcile, Recover; workcell__remote-carrier.tsx), drawn on the machine's binding prefixed `mc.`.
+  // bands (Declared, Reconcile, Recover), drawn on the machine's binding prefixed `mc.`. REPLACED (§19.23): Workcell's instrument's
+  // Machine page holds them as its band two (workcell__workcell.tsx), on the same binding.
   pages.resetHolds()
   const binding = machine.machineBinding('central:machine', REAL_ANSWERS, recorder().asks)
-  const carrier = carrying(binding)
-  host.setHostPage(carrier.id, 'machine')
-  const all = drawsOn(carrierDesign, carrier, MACHINE_FIXTURE, [machine.MACHINE_WIRING.refused.adopt, machine.MACHINE_WIRING.refused.recover])
+  const workcell = carrying(binding)
+  host.setHostPage(workcell.id, 'machine')
+  const all = drawsOn(workcellDesign, workcell, MACHINE_FIXTURE, [machine.MACHINE_WIRING.refused.adopt, machine.MACHINE_WIRING.refused.recover])
   assert.match(all, /current/)
   // A role with no declaration: Central's own words, on Role.
   pages.setHeld('central:machine', 'role', 'nope')
   const refused = machine.machineBinding('central:machine', {...REAL_ANSWERS, declaration: {status: 'refused', error: REAL.declarationRefusal}, plan: {status: 'refused', error: REAL.declarationRefusal}}, recorder().asks)
   assert.equal(refused.values.light, 'dark')
   assert.equal(refused.values.declared, undefined)
-  drawsOn(carrierDesign, carrying(refused), MACHINE_FIXTURE, [`machine.declaration: ${REAL.declarationRefusal}`])
+  drawsOn(workcellDesign, carrying(refused), MACHINE_FIXTURE, [`machine.declaration: ${REAL.declarationRefusal}`])
   pages.resetHolds()
   // Nothing answered yet: the readings wait, never a sample.
   const unread = machine.machineBinding('central:machine', machine.MACHINE_UNREAD, recorder().asks)
   assert.ok(unread.waiting.includes('plan') && unread.waiting.includes('host'))
-  drawsOn(carrierDesign, carrying(unread), MACHINE_FIXTURE)
-  host.resetHost(carrier.id)
+  drawsOn(workcellDesign, carrying(unread), MACHINE_FIXTURE)
+  host.resetHost(workcell.id)
 })
 
 test('Machine reads through the kernel\'s invoke_action: each of its five readings is a Central action with the role it reads', async () => {
@@ -410,7 +417,7 @@ test('CODE-DERIVED — the Answer\'s voice keeps the open voice\'s constitution 
   assert.deepEqual(voiceBodyReadings(voice.snapshot()), {'body.receipt': 'nara-session-request:7'}, 'the last receipt stays')
 })
 
-test('Voice on Central is the Agent\'s Voice page: B\'s binding, with the open voice\'s readings over its absences; Voice\'s chooser stays disabled naming its op; drawn on the Agent', () => {
+test('Voice on Central: B\'s binding, with the open voice\'s readings over its absences; Voice\'s chooser stays disabled naming its op; drawn on Voice, carried on the Agent', () => {
   const state = {...VOICE_OFF, speaks: 'on', constitution: CONSTITUTION, receipt: RECEIPT}
   const binding = chain.centralVoiceBinding(state, null, async () => {})
   assert.equal(binding.id, voiceBind.VOICE_ID)
@@ -419,15 +426,12 @@ test('Voice on Central is the Agent\'s Voice page: B\'s binding, with the open v
   for (const key of ['body.duplex', 'body.bargeIn', 'body.interrupt', 'body.receipt']) assert.equal(binding.standing[key], undefined, `${key}: a reading now`)
   assert.equal(binding.standing['voice.voice'].disabled, voiceBind.VOICE_REFUSE['voice.voice'], 'choosing a voice has no owner operation')
   for (const key of ['voice.voices', 'body.latencyMs', 'turn']) assert.equal(binding.standing[key].disabled, voiceBind.VOICE_ABSENT[key], `${key}: still absent with its reason`)
-  // REPLACED (#725): Voice's own views — Voice is the Agent's Voice page (§19.21 "How an agent speaks … is the Agent's Voice page"), carried
-  // under `speech.` (oneAgentBinding.ts VOICE_PAGE): the Agent's design draws it on the same binding.
+  // REPLACED (§19.4 "The Voice, Custody, Grants and Context pages leave the Agent"; §19.21 "Kind: effect"): Voice draws on its own views
+  // again, on the same binding; the Agent carries it under `speech.` (oneAgentBinding.ts VOICE_PAGE) for the answer's face alone.
+  const page = drawsOn(voiceDesign, binding, /en_US-norman-medium|af_bella|am_michael|bf_emma/)
+  assert.match(page, /af_heart/, 'Voice draws the declared voice')
   const agent = one.composeAgentBinding({id: 'central:agent', values: {}}, {voice: binding})
-  assert.equal(agent.values['speech.voice.voice'], 'af_heart', 'the open voice\'s declared voice, on the Agent')
-  assert.equal(agent.standing['speech.voice.voice'].disabled, voiceBind.VOICE_REFUSE['voice.voice'])
-  host.setHostPage(agent.id, 'voice')
-  const page = drawsOn(agentDesign, agent, /en_US-norman-medium|en_GB-alba-medium|0f3a…c21/)
-  assert.match(page, /af_heart/, 'the Voice page draws the declared voice')
-  host.resetHost(agent.id)
+  assert.equal(agent.values['speech.speaks'], 'on', 'the voice\'s Speaks, on the answer\'s face')
   const closed = chain.centralVoiceBinding(VOICE_OFF, 'The conversation is not bound.', async () => {})
   assert.equal(closed.values['body.duplex'], undefined)
   assert.equal(closed.standing['body.duplex'].disabled, voiceBind.VOICE_ABSENT['body.duplex'])

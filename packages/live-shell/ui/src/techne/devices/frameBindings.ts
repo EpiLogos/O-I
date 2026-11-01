@@ -369,7 +369,12 @@ const NO_DIRECTION = missing('A line\'s direction', 'the relation\'s direction i
 const NO_STANDING = missing('A line\'s standing', 'the relation\'s standing in the frame\'s research announcement, and a command that sets it', 'the research frame')
 const NO_FORM = missing('The form', 'kernel ops for aikit wiki-shape validate · declare · compress', 'AIKit')
 const NOT_PRESENTED_BOARD = 'The frame presents no Canvas now: open the Canvas on the focused pane to read its board.'
+// The Flow page (manual §17.4 "Map a workflow"): Promote would send the drawn lines to Factory, which writes no workflow source; Open
+// is the shell's, which opens a task in Clip view, a song in its Notes and a routine on the Automations page, and has no act here yet.
+const NO_FLOW_WRITE = missing('Promote the flow', 'a write of the workflow source (Factory writes none; `factory workflow check` only reads it)', 'Software Factory')
+const NO_FLOW_OPEN = missing('Open a node', 'the shell\'s act that opens a node where it lives: a task in Clip view, a song in its Notes, a routine on the Automations page', 'the live shell')
 export const CANVAS_REFUSE = {
+  'flow.promote': NO_FLOW_WRITE, 'flow.open': NO_FLOW_OPEN,
   mine: NO_BOARD_EDIT, mineX: NO_BOARD_EDIT, mineY: NO_BOARD_EDIT, mineZ: NO_BOARD_EDIT, sel: NO_BOARD_EDIT,
   add: NO_BOARD_EDIT, addX: NO_BOARD_EDIT, addY: NO_BOARD_EDIT, added: NO_BOARD_EDIT, colourAdded: NO_BOARD_EDIT, shapeFill: NO_BOARD_EDIT, frame2: NO_BOARD_EDIT,
   direction: NO_DIRECTION, standing: NO_STANDING, find: NO_BOARD_EDIT, present: NO_BOARD_EDIT,
@@ -378,9 +383,10 @@ export const CANVAS_REFUSE = {
   suggested: missing('Suggest', 'the Decision helper\'s Suggest for a card\'s open role (ai-kit:decision-helper has no kernel route here)', 'AIKit'),
 } as const
 const CANVAS_ACTS = ['mode', 'grid', 'minimap', 'cx', 'cy', 'zoom', 'lineKind', 'fromSide', 'toSide', 'promote', 'autosave'] as const
-/** The view's own keys: which fit the View chooser stands on (Everything, the first frame): its camera moves through cx, cy and zoom; and
- * the next line's relation type (manual §17.4 "Relation type — Sets the type of the next line"), which Promote sends as the relation. */
-export const CANVAS_LOCAL = ['view', 'relation'] as const
+/** The view's own keys: which fit the View chooser stands on (Everything, the first frame): its camera moves through cx, cy and zoom; the
+ * next line's relation type (manual §17.4 "Relation type — Sets the type of the next line"), which Promote sends as the relation; and the
+ * Flow page's own: whether it shows, and the node and line chosen on it. */
+export const CANVAS_LOCAL = ['view', 'relation', 'flow.show', 'flow.node', 'flow.line'] as const
 
 // ---------------------------------------------------------------------------------------------------------------- Promote
 

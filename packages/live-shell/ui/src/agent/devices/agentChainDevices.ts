@@ -355,7 +355,7 @@ export function slotFace(slot: AgentDeviceRow, chains: readonly SkillChain[] | n
   const held = face.liveSemantic === 'rack' && chains && chains.length > 0 ? chains : null
   return {
     id: ref.faceId, title: slot.title, icon: MARKS[slot.id] ?? 'form', liveSemantic: face.liveSemantic,
-    ...(held ? {invariant: {chains: held.map(chain => chain.ref), chainSelector: face.invariant?.chainSelector ?? 'skill (admit light)'}}
+    ...(held ? {invariant: {chains: held.map(chain => chain.ref)}}
       : face.invariant ? {invariant: face.invariant} : {}),
     ...(face.note ? {note: face.note} : {}),
     ...(face.heldBy ? {heldBy: face.heldBy} : {}),

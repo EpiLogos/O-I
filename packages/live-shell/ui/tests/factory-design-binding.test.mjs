@@ -161,16 +161,18 @@ test('the Gateway reads the harness\'s own answer and writes through the address
   assert.deepEqual(bind.gatewayValues({reading: model.INITIAL_READING, harness}), {}, 'not read: every key absent, the light too')
   const refused = {...model.INITIAL_READING, gatewayAdmitted: false, gateway: {kind: 'refused', title: 'Gateway · hermes', line: 'waiting on AIKit — the gateway is not running', receipt: null}}
   assert.deepEqual(bind.gatewayValues({reading: refused, harness}), {light: 'dark', refused: 'waiting on AIKit — the gateway is not running'}, 'a refused read: dark, in the owner\'s words')
-  const answered = {...model.INITIAL_READING, gatewayAdmitted: true, gatewayDoc: {state: 'ready', transport: 'ws', approvals: 'sometimes', connect: true, stall_after_seconds: 300}}
+  const answered = {...model.INITIAL_READING, gatewayAdmitted: true, gatewayDoc: {state: 'ready', transport: 'ws', approvals: 'session', connect: true, stall_after_seconds: 300}}
+  // The harness's approvals is Scope's Tool calls (§19.12 Asks), not the Gateway's: the Gateway neither reads nor writes it.
   assert.deepEqual(bind.gatewayValues({reading: answered, harness: {binding: 'harness:hermes', resolved: true}}),
     {light: 'lit', harness: 'harness:hermes', readiness: 'ready', transport: 'ws', connect: true, stallAfter: 300},
-    'the carrier\'s own fields, inside the declared choices (approvals "sometimes" is no reading)')
+    'the carrier\'s own fields, inside the declared choices, and never its approvals')
   const calls = []
   const rows = model.slotRows('gateway')
   const binding = bind.gatewayBinding('factory:gateway', {reading: answered, harness}, {
-    transport: rows.find(row => row.key === 'transport'), approvals: rows.find(row => row.key === 'approvals'), connect: rows.find(row => row.key === 'connect'),
+    transport: rows.find(row => row.key === 'transport'), connect: rows.find(row => row.key === 'connect'),
     stallAfter: {...agentAddress('gateway', 'stall-after'), title: 'Stall after'},
   }, async (row, value) => { calls.push([row.key, row.writePath, value]); return fired(row) })
+  await assert.rejects(() => binding.write([{key: 'approvals', value: 'ask'}]), /approvals is a reading/, 'Tool calls are set on Scope')
   await binding.write([{key: 'transport', value: 'stdio'}, {key: 'connect', value: false}, {key: 'stallAfter', value: 90}])
   assert.deepEqual(calls, [['transport', 'kernel:harness_agent_control', 'stdio'], ['connect', 'kernel:harness_agent_control', false], ['stall-after', 'kernel:harness_agent_control', 90]])
   await assert.rejects(() => binding.write([{key: 'fanOut', value: 3}]), /missing op: kernel:harness_agent_control configure \{fan_out\}/)
@@ -510,14 +512,23 @@ test('Scope: no owner reports a reach, a write mode, places or receipts, so none
   await assert.rejects(() => scope().write([{key: 'writeMode', value: 'direct'}]), /WO-SF2/)
   assert.deepEqual(calls, [['shell.setWriteArm', true]])
   await assert.rejects(() => scope().write([{key: 'writeMode', value: 'draft'}]), /draft awaits its writer/)
-  // REPLACED (#725): the single `knowledge` key "set on the Knowledge route inside this Scope" — the Knowledge route was retired into Scope's
-  // Knowledge page (§19.9, §19.12), whose settings are refused here by the operations they lack (designBindings.ts REFUSED_WRITES).
-  await assert.rejects(() => scope().write([{key: 'linkDepth', value: 3}]), /Link depth: no owner operation carries it yet — missing op: a per-agent depth on `aikit knowledge relations`/)
-  await assert.rejects(() => scope().write([{key: 'readBudget', value: 10}]), /Read budget: no owner operation carries it yet — missing op: a per-agent ceiling/)
-  await assert.rejects(() => scope().write([{key: 'searchFirst', value: false}]), /Search first: no owner operation carries it yet/)
-  for (const key of ['src.wiki', 'src.project', 'src.code']) await assert.rejects(() => scope().write([{key, value: true}]), /a lens-level request on the AgentProfile/, key)
+  // REPLACED: Scope's Knowledge page (#725) — what the agent reads from is Sources' now (§19.9, §19.12), and Scope's settings beyond its reach
+  // are its Asks (§19.12 Asks): Calls to other agents, Wait and On no answer refused by the operations they lack (designBindings.ts
+  // REFUSED_WRITES); Tool calls through the Gateway slot's approvals row, or refused where the chain hands in none.
+  await assert.rejects(() => scope().write([{key: 'calls', value: 'allow'}]), /Calls to other agents: no owner operation carries it yet — missing op: an ingress rule for the sender kind agent/)
+  await assert.rejects(() => scope().write([{key: 'wait', value: 3600}]), /Wait: no owner operation carries it yet — missing op: the agent's approvals timeout/)
+  await assert.rejects(() => scope().write([{key: 'noAnswer', value: 'deny'}]), /On no answer: no owner operation carries it yet/)
+  await assert.rejects(() => scope().write([{key: 'toolCalls', value: 'session'}]), /Tool calls: the Gateway's approvals row is not adopted on this chain/)
+  for (const key of ['src.wiki', 'linkDepth', 'readBudget']) assert.equal(scope().writes(key), false, `${key}: no Knowledge page stands on Scope (§19.9 Sources holds it)`)
   await assert.rejects(() => scope().write([{key: 'w:lantern', value: false}]), /scope places write/)
   assert.equal(calls.length, 1)
+  // Tool calls: the harness's approvals, as the gateway reads it, through the Gateway slot's own row (kernel:harness_agent_control).
+  const approvals = model.slotRows('gateway').find(row => row.key === 'approvals')
+  const asked = bind.scopeBinding('factory:world', bind.chainHolds(), writeMode, write, {toolCalls: 'ask', toolCallsRow: approvals})
+  assert.equal(asked.values.toolCalls, 'ask', 'the harness\'s own answer to a tool request')
+  assert.equal(asked.standing.toolCalls, undefined, 'carried: it stands')
+  await assert.rejects(() => asked.write([{key: 'toolCalls', value: 'session'}]), /WO-SF2/, 'the row\'s write, refused here by the stub owner')
+  assert.deepEqual(calls.at(-1), ['kernel:harness_agent_control', 'session'])
   host.resetHost()
   bind.resetHolds()
 })
@@ -543,8 +554,8 @@ test('the Agent, the rack, the member and Scope draw their designs on their bind
   const cases = [[agentDesign, agent], [rackDesign, rack], [memberDesign, member], [scopeDesign, scope]]
   for (const [design, binding] of cases) {
     assert.equal(bind.designWaits(design.id, design), null)
-    // Scope's Knowledge page (§19.12; it took in the Knowledge route, §19.9) is drawn too: its refused settings say why there (#725).
-    const drawn = design.id === bind.SCOPE_DESIGN ? [...hosted(design, binding), ...onPage(design, binding, 'knowledge')] : hosted(design, binding)
+    // Scope's Asks and Grants pages (§19.12) are drawn too: the Asks' refused settings say why there.
+    const drawn = design.id === bind.SCOPE_DESIGN ? [...hosted(design, binding), ...onPage(design, binding, 'asks'), ...onPage(design, binding, 'grants')] : hosted(design, binding)
     drawn.forEach((markup, index) => {
       assert.match(markup, new RegExp(`data-device-view="${views[index % views.length]}"`), `${design.id} ${views[index % views.length]} draws`)
       assert.doesNotMatch(markup, /\bNaN\b|undefined/, `${design.id} ${views[index]}: no absent key drawn as text`)

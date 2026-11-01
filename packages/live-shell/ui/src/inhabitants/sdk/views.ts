@@ -25,9 +25,14 @@ export const RAIL_AND_PANE_VIEWS: readonly DeviceView[] = ['widget', 'full']
 export const DEVICE_STATES: Readonly<Record<string, readonly DeviceView[]>> = {
   'actuation:gateway': CHAIN_AND_PANE,
   'actuation:harness-model': CHAIN_AND_PANE,
+  'actuation:voice': CHAIN_AND_PANE,
+  // AIKit's instrument is born in a pane and stands only there, as Workcell's is: its tile and its Full (§19.26, §19.23, §16.3).
+  'ai-kit:ai-kit': RAIL_AND_PANE_VIEWS,
+  'ai-kit:decision-helper': CHAIN_AND_PANE,
   'ai-kit:messages': RAIL_AND_PANE_VIEWS,
   'ai-kit:skill-device': CHAIN_AND_PANE,
   'ai-kit:skillset-rack': CHAIN_AND_PANE,
+  'ai-kit:sources': CHAIN_AND_PANE,
   'atlas-earth:globe-engine': CHAIN_AND_PANE,
   'central:day-die': CHAIN_AND_PANE,
   'central:docs': CHAIN_AND_PANE,
@@ -86,7 +91,7 @@ export const DEVICE_STATES: Readonly<Record<string, readonly DeviceView[]>> = {
   // Link stands in the transport, not on a chain: Whole beside its button, Full in a pane, its tile on the rail (§16.3, §19.23).
   'workcell:link': ['whole', 'full', 'widget'],
   'workcell:remote-carrier': CHAIN_AND_PANE,
-  'workcell:workcell': CHAIN_AND_PANE,
+  'workcell:workcell': RAIL_AND_PANE_VIEWS,
 }
 
 /** A catalogue device's states, or undefined for a device the catalogue does not draw. */

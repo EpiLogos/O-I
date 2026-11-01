@@ -73,7 +73,9 @@ test('the Left behind page is Ground hygiene\'s census under left.: its findings
   assert.equal(bare.standing['left.recover'].disabled, 'The kernel carrier is unavailable here, so Workcell cannot be asked.')
   // The design draws the page on it: the finding, not "No reading".
   host.setHostPage(rack.id, 'left')
-  const markup = renderToStaticMarkup(createElement(host.HostedDevice, {designed: workcellDesign, binding: rack, view: 'whole', nav: {}}))
+  // REPLACED (§19.23 Full "it has two views, Full and Widget … Its window holds its Full"): the Whole's Left behind band — the Left behind
+  // page is a page of the Full.
+  const markup = renderToStaticMarkup(createElement(host.HostedDevice, {designed: workcellDesign, binding: rack, view: 'full', nav: {}}))
   host.resetHost(rack.id)
   assert.match(markup, /Binding not present|not present/)
 })
@@ -95,5 +97,6 @@ test('a page\'s findings are paged by the hand on both pages that carry the cens
 test('the rail\'s workcell rack carries the Left behind page on the census it reads while the rack stands', () => {
   assert.match(railSource, /LEFT_BEHIND_PAGE/)
   assert.match(railSource, /useHygieneDevice\(transport, asked\)/)
-  assert.match(railSource, /carryPages\(ownWorkcell, \[\{page: GATEWAYS_PAGE, binding: gateways\}, \{page: LEFT_BEHIND_PAGE, binding: leftBehind\}\]\)/)
+  // REPLACED (§19.23, 22 Oct manual): the same census carries the Seats page's checkouts too (`co.`).
+  assert.match(railSource, /carryPages\(ownWorkcell, \[\{page: GATEWAYS_PAGE, binding: gateways\}, \{page: LEFT_BEHIND_PAGE, binding: leftBehind\},\s*\{page: SEAT_PAGE, binding: seat\}, \{page: CHECKOUTS_PAGE, binding: leftBehind\}/)
 })

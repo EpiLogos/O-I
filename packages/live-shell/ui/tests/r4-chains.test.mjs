@@ -122,7 +122,8 @@ test('Factory: the session\'s chain is Agent, skills rack, scope — no Thread, 
   assert.deepEqual(deriveAgentDeviceRows(allFamilyManifests()).map(slot => slot.id), ['gateway', 'agent', 'skillset', 'world', 'git'])
   const places = await source('agent/devices/factoryPlaces.ts')
   assert.match(places, /export const SESSION_CHAIN: readonly FactorySlot\[\] = \['agent', 'skillset', 'world'\]/)
-  assert.match(places, /export const WORKCELL_CHAIN: readonly FactorySlot\[\] = \['workcell', 'gateway', 'remote-carrier', 'git'\]/)
+  // REPLACED (§19.23 "It stands on no chain"; §16.2 "Connections keep the same order"): 'workcell' first — the road is the three connections.
+  assert.match(places, /export const WORKCELL_CHAIN: readonly FactorySlot\[\] = \['gateway', 'remote-carrier', 'git'\]/)
   const text = await source('agent/devices/FactoryDeviceChain.tsx')
   assert.doesNotMatch(text, /<DeviceView device=\{thread\}/, 'no Thread beside the Agent')
   assert.doesNotMatch(text, /placed\(CUSTODY_ID/, 'no Custody beside the Agent')

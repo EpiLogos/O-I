@@ -1,6 +1,6 @@
 // Lane W10, design package D1 (T-COVERAGE §2) on Workcell's routes (a4c97faa9, cdbde6fe7): the workcell rack's Services and harness
 // processes from `workcell doctor` and `instances list|usage`; its World, Exposure and Release, whose reads and writes (`material`,
-// `recover`, `release`, `reconcile`) each take a world's receipt that no reading names; the Remote carrier's Standing page — Offers from
+// `recover`, `release`, `reconcile`) each take a world's receipt that no reading names; the Remote carrier's page — Offers from
 // `workcell discover`, each machine's standing and round trip from `workcell connections probe` (a read that never writes the record), the
 // Plan absent because no reading names the run's demand; Runs' Outputs (`workcell collect` on an attempt's world receipt).
 //
@@ -100,7 +100,7 @@ test('1 · Services from `workcell doctor` and the harness processes from `insta
   for (const map of [material.servicesOf, material.instancesOf, material.offersOf, material.planOf]) assert.equal(map({}), null)
   bind.resetHolds()
   const reread = []
-  const binding = rack.workcellRackBinding(rackInput(), {gateway: null, rereadServices: () => reread.push(true)})
+  const binding = rack.workcellRackBinding(rackInput(), {rereadServices: () => reread.push(true)})
   assert.deepEqual(JSON.parse(binding.values.services), services)
   assert.deepEqual(JSON.parse(binding.values.instances), instances)
   assert.equal(binding.standing.services, undefined)
@@ -108,18 +108,18 @@ test('1 · Services from `workcell doctor` and the harness processes from `insta
   return binding.write([{key: 'readServices', value: true}]).then(() => {
     assert.deepEqual(reread, [true], 'Read now asks doctor again')
     const workcellSays = 'workcell: the state root is not writable'
-    const down = rack.workcellRackBinding(rackInput({doctor: refused(workcellSays), instances: {list: refused(workcellSays), usages: {}}}), {gateway: null})
+    const down = rack.workcellRackBinding(rackInput({doctor: refused(workcellSays), instances: {list: refused(workcellSays), usages: {}}}), {})
     assert.equal(down.standing.services.disabled, workcellSays)
     assert.equal(down.standing.instances.disabled, workcellSays)
     assert.equal(down.standing.readServices.disabled, rack.WORKCELL_REFUSE.readServices, 'no carrier: Read now says so')
-    const unread = rack.workcellRackBinding(rackInput({doctor: undefined, instances: undefined}), {gateway: null})
+    const unread = rack.workcellRackBinding(rackInput({doctor: undefined, instances: undefined}), {})
     assert.match(unread.standing.services.disabled, /Workcell has no `services` command, doctor declares them/)
   })
 })
 
 test('2 · the world\'s writes: none without a world\'s receipt (no reading names one); with one, Recover, Release and Apply go only on the press, on that receipt, refused in Workcell\'s words', async () => {
   bind.resetHolds()
-  const none = rack.workcellRackBinding(rackInput(), {gateway: null, workcell: recorder().port})
+  const none = rack.workcellRackBinding(rackInput(), {workcell: recorder().port})
   for (const key of ['recover', 'apply', 'releaseWorld', 'world', 'surfaces', 'omitted', 'reconciled']) assert.ok(none.standing[key].disabled.includes(rack.NO_RUN), key)
   // REPLACED (lane W12): `workcell worlds` lists the receipts now; not handed in, the rack says it is not read (w12-workcell-worlds.test.mjs).
   assert.match(rack.NO_RUN, /Workcell's world receipts \(`workcell worlds`\) are not read here/)
@@ -127,7 +127,7 @@ test('2 · the world\'s writes: none without a world\'s receipt (no reading name
   await assert.rejects(none.write([{key: 'releaseWorld', value: 'world:x'}]), {message: rack.WORKCELL_REFUSE.releaseWorld})
   await assert.rejects(none.write([{key: 'want:workspace:primary', value: 'released'}]), {message: rack.FATE_REFUSE})
   const {calls, port} = recorder()
-  const binding = rack.workcellRackBinding(rackInput({world: WORLD}), {gateway: null, workcell: port})
+  const binding = rack.workcellRackBinding(rackInput({world: WORLD}), {workcell: port})
   for (const key of ['recover', 'apply', 'releaseWorld']) assert.equal(binding.standing[key], undefined, `${key} stands with a world read`)
   await binding.write([{key: 'recover', value: WORLD.ref}])
   await binding.write([{key: 'releaseWorld', value: WORLD.ref}])
@@ -136,13 +136,13 @@ test('2 · the world\'s writes: none without a world\'s receipt (no reading name
   await binding.write([{key: 'want:service:redis-now/personal-workcell', value: 'suspended'}])
   await assert.rejects(binding.write([{key: 'want:service:not-a-binding', value: 'released'}]), /not a binding of the world/)
   await assert.rejects(binding.write([{key: 'want:workspace:primary', value: 'gone'}]), /fate is one of present, suspended, snapshotted, released/)
-  await rack.workcellRackBinding(rackInput({world: WORLD}), {gateway: null, workcell: port}).write([{key: 'apply', value: true}])
+  await rack.workcellRackBinding(rackInput({world: WORLD}), {workcell: port}).write([{key: 'apply', value: true}])
   assert.deepEqual(calls, [{kind: 'recover', receipt: WORLD.receipt}, {kind: 'release', receipt: WORLD.receipt},
     {kind: 'reconcile', receipt: WORLD.receipt, desired: ['service:redis-now/personal-workcell=suspended']}])
   const workcellSays = 'workcell: the receipt names a world this cell no longer holds'
-  await assert.rejects(rack.workcellRackBinding(rackInput({world: WORLD}), {gateway: null, workcell: async () => { throw new Error(workcellSays) }}).write([{key: 'recover', value: WORLD.ref}]),
+  await assert.rejects(rack.workcellRackBinding(rackInput({world: WORLD}), {workcell: async () => { throw new Error(workcellSays) }}).write([{key: 'recover', value: WORLD.ref}]),
     {message: workcellSays})
-  assert.match(rack.workcellRackBinding(rackInput({world: WORLD}), {gateway: null}).standing.recover.disabled, /carrier is unavailable/)
+  assert.match(rack.workcellRackBinding(rackInput({world: WORLD}), {}).standing.recover.disabled, /carrier is unavailable/)
   // REPLACED (lane K0): Workcell takes checkpoints (`workcell --receipt R checkpoint`, k0-owner-ops-bindings.test.mjs); no world, none taken.
   assert.match(rack.WORKCELL_REFUSE.checkpoint, /workcell --receipt R checkpoint/)
   bind.resetHolds()
@@ -233,11 +233,11 @@ test('6 · Runs\' Outputs: absent with the receipt they lack; with an attempt\'s
 test('7 · the designs draw on these bindings in all their views and pages — no NaN, no undefined, never their fixture text — each refusal drawn as why', () => {
   bind.resetHolds()
   host.resetHost()
-  const rackBinding = rack.workcellRackBinding(rackInput(), {gateway: null, rereadServices: () => {}})
+  const rackBinding = rack.workcellRackBinding(rackInput(), {rereadServices: () => {}})
   const carrierBinding = cell.carrierBinding(answered(REAL.workcellStatus), bind.chainHolds(), undefined, {discover: answered(MATERIAL.discover), probe: answered(PROBE.reachable)})
   const runsBinding = tasks.runsBinding('s', bind.chainHolds(), {takes: [], choose: async () => ({ok: true})})
   const cases = [
-    [rackDesign, rackBinding, ['chain', 'world', 'services', 'exposure', 'release', 'left'], /Claude Code · local|reads-round-2|omarchy · env-1|factory-attempt|Type-check the three|dlw\/uiux-kit-motion/, [rack.WORKCELL_REFUSE.releaseWorld]],
+    [rackDesign, rackBinding, ['chain', 'world', 'services', 'exposure', 'release', 'left', 'seats', 'machine'],/Claude Code · local|reads-round-2|omarchy · env-1|factory-attempt|Type-check the three|dlw\/uiux-kit-motion/, [rack.WORKCELL_REFUSE.releaseWorld]],
     [carrierDesign, carrierBinding, [undefined], /ready-to-carry|private-tailnet|1791417468786/, []],
   ]
   // REPLACED (#725): Runs' design drawn on its binding — no design draws Runs now (§16.1 "its attempts are takes"; §19.1 Results): the
@@ -269,11 +269,12 @@ test('7 · the designs draw on these bindings in all their views and pages — n
 test('8 · (b) every key these designs read is an owner reading, absent with why, the hand\'s, or written through its owner', () => {
   bind.resetHolds()
   // A carried page's keys stand under its prefix and are hosted by prefixing that page's own binding, not this one (design.ts scoped):
-  // the carrier carries the Machine page under `mc.` (DLW §19.18, "The Machine page"; central:machine's binding); the workcell its Left
-  // behind page under `left.` and its tile's gateways under `gw.` (§19.23).
+  // the workcell carries its Left behind page under `left.`, its Seats page under `seat.` and `co.`, its Machine page under `carrier.` and
+  // `mc.` (central:machine's binding) and its tile's gateways under `gw.` (DLW §19.23). REPLACED (§19.18, 22 Oct manual): the carrier's
+  // Machine page under `mc.` — the carrier is one page and carries none.
   const cases = [
-    [rackDesign, rack.workcellRackBinding(rackInput(), {gateway: null, rereadServices: () => {}}), ['left.', 'gw.']],
-    [carrierDesign, cell.carrierBinding(answered(REAL.workcellStatus), bind.chainHolds(), undefined, {discover: answered(MATERIAL.discover)}), ['mc.']],
+    [rackDesign, rack.workcellRackBinding(rackInput(), {rereadServices: () => {}}), ['left.', 'seat.', 'co.', 'carrier.', 'mc.', 'gw.']],
+    [carrierDesign, cell.carrierBinding(answered(REAL.workcellStatus), bind.chainHolds(), undefined, {discover: answered(MATERIAL.discover)}), []],
   ]
   for (const [design, binding, carried] of cases) for (const key of designKeys(design).filter(key => !carried.some(prefix => key.startsWith(prefix)))) assert.ok(classify(binding, key), `${design.id} ${key}`)
   const runs = tasks.runsBinding('s', bind.chainHolds(), {takes: [], choose: async () => ({ok: true})})

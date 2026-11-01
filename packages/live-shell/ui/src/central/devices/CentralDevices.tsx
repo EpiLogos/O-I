@@ -19,8 +19,8 @@
 //
 // The chains are exactly §16.2's (R4; lock §0.3.4; centralChainSlots): a world's chain is the Packet, the agent of the world and its Scope,
 // then Docs, the world's account on six tiers (§18.5); the Main track's chain is the Day, then Approvals. Ground hygiene, Machine and
-// Impact were retired as devices of their own in the 22 Oct manual rewrite: the seats and checkouts are Git / landing's Checkouts page
-// (§19.16), the machine the Remote carrier's Machine page (§18.7, §19.18), what a change reaches the Knowledge graph's, the NOWs' and Docs'
+// Impact were retired as devices of their own in the 22 Oct manual rewrite: the seats and checkouts are the Seats page of Workcell's
+// instrument (§19.17, §19.23), the machine its Machine page (§18.7, §19.23), what a change reaches the Knowledge graph's, the NOWs' and Docs'
 // Meaning (§18.6). Whether a world's folder holds code (Central's git reading, kernel git_repository_read) is still read and said on the
 // chain. Which chain Device view shows follows THE selection, as Live's follows the selected track (centralChainOf): the Main track (the
 // grid's Main head, or the Day's stream and its clips) shows the Day's; a world's track or page shows that world's; with no Central
@@ -70,7 +70,7 @@ import {composeAgentBinding, withAgentGit} from '../../agent/devices/oneAgentBin
 import {ChainSlot, chainLaw, chainSlotOf} from '../../frame/devices/ChainOrder'
 import {useSessionGit} from '../../agent/devices/useAgentChainReading'
 import {openSeatDiff} from '../../agent/AgentShellBrowser'
-import {custodyBinding} from '../../agent/devices/sessionChainBindings'
+import {custodyBinding, withCustodyAsks} from '../../agent/devices/sessionChainBindings'
 import {shownSession, threadBinding} from '../../agent/devices/threadBinding'
 import {holdView, useChainHolds, viewHolds} from '../../agent/devices/designBindings'
 import {familyFaceDevice} from '../../agent/devices/mainTrackBindings'
@@ -509,6 +509,8 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
   const identity = useIdentityDevice(transport, centralAgentRef(answerInput), IDENTITY_DEVICE_ID)
   const holds = useChainHolds()
   const custody = useMemo(() => custodyBinding({sessionRef: nara.session, autonomy: null, agent: own.values}, scope), [nara.session, own.values, scope])
+  // Scope's Before it lands, Escalate to and Grants page are Custody's (§19.12): laid in from its binding under their own keys.
+  const scopeCarrying = useMemo(() => withCustodyAsks(scope, custody), [scope, custody])
   const thread = useMemo(() => {
     const shown = shownSession({selected: nara.session, holds}, CENTRAL_THREAD_HOLD)
     const handle = shown ? encounters.handles[shown] : undefined
@@ -585,9 +587,9 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
   }, [entries, dayBinding, packet, docs])
   useEffect(() => {
     if (others.agent) publishDevice(CENTRAL_AGENT_ID, {device: others.agent, binding: agent})
-    if (others.scope) publishDevice(CENTRAL_SCOPE_ID, {device: others.scope, binding: scope})
+    if (others.scope) publishDevice(CENTRAL_SCOPE_ID, {device: others.scope, binding: scopeCarrying})
     if (others.approvals) publishDevice(CENTRAL_APPROVALS_ID, {device: others.approvals, binding: approvals})
-  }, [others, agent, scope, approvals])
+  }, [others, agent, scopeCarrying, approvals])
   useEffect(() => {
     for (const id of [IDENTITY_DEVICE_ID, CONTEXT_WORLD_DEVICE_ID, SEARCH_DEVICE_ID]) publishDevice(id, null)
     return () => {
@@ -610,7 +612,7 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
   // Each slot of §16.2's chains, by its device's id: the family's own faces, and the Agent, Scope and Approvals of the families that own them.
   const otherSlots: Readonly<Record<string, ReactNode>> = {
     [CENTRAL_AGENT_ID]: otherSlot(CENTRAL_AGENT_ID, others.agent, agent, 'the Agent', 'Open the Agent full in a pane: its thread'),
-    [CENTRAL_SCOPE_ID]: otherSlot(CENTRAL_SCOPE_ID, others.scope, scope, 'Scope', 'Open Scope full size in a pane'),
+    [CENTRAL_SCOPE_ID]: otherSlot(CENTRAL_SCOPE_ID, others.scope, scopeCarrying, 'Scope', 'Open Scope full size in a pane'),
     [CENTRAL_APPROVALS_ID]: otherSlot(CENTRAL_APPROVALS_ID, others.approvals, approvals, 'Approvals', 'Open Approvals full size in a pane'),
   }
   const slot = (id: string): ReactNode => {

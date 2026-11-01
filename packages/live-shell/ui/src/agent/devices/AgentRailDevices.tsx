@@ -1,11 +1,11 @@
 // The rail's agent devices, published in every mode (lane W1-Factory): Messages (DLW §19.24 "born on the widget rail, and opens full in a
 // pane, in every mode"), the Ledger (§19.13) — a monitor, "On the rail, and full in a pane. Never on a chain" (§16.1) — the Frames tile, which
-// is the Gateway's widget (§19.6), and the workcell rack, whose widget is the Workcells tile (§19.23), listing every gateway your machines
+// is the Gateway's widget (§19.6), and Workcell's instrument, whose widget is the Workcells tile (§19.23), listing every gateway your machines
 // reach with its state (§19.3: the Gateways monitor was retired into it in the 22 Oct manual rewrite, its reading carried under `gw.`). The
 // Agency gateway is the Gateway's agency build, whose mark stands in the head of Messages (§19.10): Messages reads the same gateway answer
 // (messagesBinding.ts), and no device of its own stands. They stand on the rail whether or not Factory's chain is mounted, so they are published here,
-// once, beside the rail's own publisher (widgets/railDevices.tsx RailDevices draws this), and never by FactoryDeviceChain.tsx, which draws
-// the workcell rack on a workcell's chain from the door.
+// once, beside the rail's own publisher (widgets/railDevices.tsx RailDevices draws this), and never by FactoryDeviceChain.tsx: Workcell's
+// instrument stands on no chain (§19.23), only full in a pane and as its tile.
 //
 // Every read is the window's shared held reading, the same one the chain reads, so publishing here doubles no owner call: the chain's
 // readings (useAgentChainReading.ts — harness_agent_read and git_repository_read go through the kernel's held-read holder,
@@ -14,9 +14,9 @@
 // useCentralGroundAnswer), the seat instrument (workcellReads.ts useSeatStatusAnswer — slow, so asked only while the Workcells tile is open
 // or a workcell's return track is selected), AIKit's own gateway journal (workcellReads.ts useGatewayEcology and useGatewayReplays: the
 // Frames monitor's frames, lane W6). Messages' Send and a drop onto a track write through the kernel's gateway_write (lane W3, ownerRoutes.ts). The bindings are the devices' own: messagesBinding.ts, mainTrackBindings.ts (rackBinding,
-// agencyBinding, framesBinding), receiptBindings.ts ledgerBinding, workcellRackBinding.ts — the rack's macros write through the Gateway's
-// rows, the same rows and write path the chain's Gateway writes through (designBindings.ts gatewayBinding; agentNativeDispatch.ts
-// fireWritePath).
+// agencyBinding, framesBinding), receiptBindings.ts ledgerBinding, workcellRackBinding.ts — Workcell's instrument, which changes none of its
+// connections' settings (§19.23) and carries the seat instrument, Ground hygiene's census, the Remote carrier's plan and Central's machine
+// readings as its Seats and Machine pages (oneAgentBinding.ts carryPages).
 import {useCallback, useEffect, useMemo, useState} from 'react'
 import {useOwnerOp} from '../../owners/ownerCall'
 import {publishDevice, selectDevice} from '../../frame/devices/deviceDoor'
@@ -35,7 +35,7 @@ import {trackKey} from '../agentRunModel'
 import {chainDeviceId, slotRows} from './agentChainDevices'
 import {gatewayBinding, useChainHolds, viewHolds} from './designBindings'
 import {AGENCY_GATEWAY_ID, FRAMES_ID, FRAMES_VIEW, framesBinding, journalAsks, journalSessions, mainDevices, rackBinding} from './mainTrackBindings'
-import {GATEWAYS_PAGE, LEFT_BEHIND_PAGE, carryPages} from './oneAgentBinding'
+import {CARRIER_PAGE, CHECKOUTS_PAGE, GATEWAYS_PAGE, LEFT_BEHIND_PAGE, MACHINE_PAGE, SEAT_PAGE, carryPages} from './oneAgentBinding'
 import {MESSAGES_ID, PERSON_ACTS, handlingAdvertisedOf, madeOf, messagesBinding, messagesDevice, positionRefs, sentOf, type MessagesPorts} from './messagesBinding'
 import {runStateOfSession} from './runFaces'
 import {hostState} from '../../frame/devices/deviceHost'
@@ -47,7 +47,9 @@ import {useConversationAnswer} from './useConversationAnswer'
 import {ROUTE_WORDS, gatewayWriteOp, ownerRouteWrite, refusalWords, workcellWriteOp} from './ownerRoutes'
 import {usePopulationAnswer} from './usePopulationAnswer'
 import {projectOfSession, registerOf, ROOT_REGISTER} from '../worldScope'
-import {CARRIER_ID, carrierChainState, carrierValues, gitValues} from './workcellBindings'
+import {CARRIER_ID, carrierBinding, carrierChainState, carrierValues, gitValues, planRunOf, runDemandOf, seatBinding} from './workcellBindings'
+import {worldsOf} from './workcellMaterial'
+import {useMachineDevice} from '../../central/devices/machineDevice'
 import {WORKCELL_RACK_ID, chosenWorld, workcellGitReading, workcellRackBinding, workcellRackDevice} from './workcellRackBinding'
 import {useActuationRead, useAikitRead, useGatewayEcology, useGatewayReplays, useInstanceUsages, useSeatStatusAnswer, useSourceReturnsAnswer, useWorkcellRead} from './workcellReads'
 import {useHeardAnswer} from './useHeardAnswer'
@@ -167,17 +169,18 @@ export function AgentRailDevices() {
     ...(handlingAdvertised === undefined ? {} : {handlingAdvertised}), ...(heard ? {heard} : {})}, ports),
     [population, reading, conversation, review, runs, agentSets, holds, ports, railRegister, handlingAdvertised, heard])
 
-  // The workcell rack: the workcell whose return track is selected, its seats, the chain devices' own values, and the Gateway's rows for the
-  // macros — the same rows and the same write path the chain's Gateway writes through.
+  // Workcell's instrument: the workcell whose return track is selected, its seats and the chain devices' own values; it sets none of them
+  // (§19.23: each is set on its device).
   const cellName = workcellOfTrack(shell?.selectedTrackId)
   const railOpen = continuity?.current.widgets?.open
   const asked = cellName != null || !!railOpen?.includes('workcells')
   const seats = useSeatStatusAnswer(transport, asked).reading
+  const seatsUnread = !asked ? SEATS_NOT_ASKED : seats.status === 'refused' && seats.error ? seats.error : undefined
   const gatewayPort = useMemo((): DesignBinding => {
     const rows = slotRows('gateway')
     const stall = agentAddress('gateway', 'stall-after')
     return gatewayBinding(chainDeviceId('gateway'), {reading, harness: {binding, resolved}}, {
-      transport: rows.find(row => row.key === 'transport'), approvals: rows.find(row => row.key === 'approvals'), connect: rows.find(row => row.key === 'connect'),
+      transport: rows.find(row => row.key === 'transport'), connect: rows.find(row => row.key === 'connect'),
       ...(stall ? {stallAfter: {...stall, title: 'Stall after'}} : {}),
     }, (row, value) => fireWritePath(row, value, {transport, binding}))
   }, [reading, binding, resolved, transport])
@@ -230,21 +233,46 @@ export function AgentRailDevices() {
     } : undefined), [transport])
   const ownWorkcell = useMemo(() => {
     const git = gitValues(cellName ? workcellGitReading(seats, cellName, railProject) : reading, holds)
-    const seatsUnread = !asked ? SEATS_NOT_ASKED : seats.status === 'refused' && seats.error ? seats.error : undefined
     return workcellRackBinding({name: cellName, project: railProject, seats: seats.status === 'answered' ? seats.value : null, ...(seatsUnread ? {seatsUnread} : {}),
       chain: {gateway: gatewayPort.values, carrier: carrierValues(workcellAnswer, holds), git}, holds,
       ...(asked ? {doctor: doctor.answer, instances: {list: instanceList.answer, usages}, worlds: worlds.answer, ...(materialOp ? {material} : {}),
         ...(picked.chosen ? {lease: leaseRead.answer, checkpoints: checkpointsRead.answer} : {}),
         ...(lastReconcile && lastReconcile.receipt === picked.chosen?.receipt ? {reconciled: lastReconcile.answer} : {})} : {})},
-    {gateway: gatewayPort, ...(asked && transport.kind !== 'unavailable' ? {rereadServices: doctor.refresh, ...(materialOp ? {rereadWorld: materialRead.refresh} : {})} : {}),
+    {...(asked && transport.kind !== 'unavailable' ? {rereadServices: doctor.refresh, ...(materialOp ? {rereadWorld: materialRead.refresh} : {})} : {}),
       ...(workcellWrite ? {workcell: workcellWrite} : {})})
-  }, [cellName, seats, asked, reading, holds, gatewayPort, workcellAnswer, doctor, instanceList, usages, transport, workcellWrite, worlds.answer, materialOp, material, materialRead.refresh, lastReconcile, picked.chosen?.receipt,
+  }, [cellName, seats, seatsUnread, asked, reading, holds, gatewayPort, workcellAnswer, doctor, instanceList, usages, transport, workcellWrite, worlds.answer, materialOp, material, materialRead.refresh, lastReconcile, picked.chosen?.receipt,
     leaseRead.answer, checkpointsRead.answer, railProject])
   // The Workcells tile lists every gateway your machines reach, with its state (§19.3, §19.23 Widget): the gateways' own binding under `gw.`.
-  // What runs left behind (§19.23, the rack's Left behind page): Ground hygiene's census of this machine's worlds and sandboxes under `left.`,
-  // read while the rack stands (groundDevices.ts useHygieneDevice, the census Git / landing's Checkouts page carries too).
+  // What runs left behind (§19.23 Left behind): Ground hygiene's census of this machine's worlds and sandboxes under `left.`, read while the
+  // instrument stands (groundDevices.ts useHygieneDevice); the same census's worktrees, branches and tenders are the Seats page's, under `co.`.
   const leftBehind = useHygieneDevice(transport, asked)
-  const workcell = useMemo(() => carryPages(ownWorkcell, [{page: GATEWAYS_PAGE, binding: gateways}, {page: LEFT_BEHIND_PAGE, binding: leftBehind}]), [ownWorkcell, gateways, leftBehind])
+  // The Seats page's seats (§19.23): the seat instrument under `seat.` (Git / landing's own binding, workcellBindings.ts seatBinding),
+  // starting at the selected workcell's seat of the project. It is carried as a reading: the page's Release seat is the census's tender.
+  const seat = useMemo(() => seatBinding({status: seats.status === 'answered' ? seats.value : null, ...(seatsUnread ? {unread: seatsUnread} : {}),
+    project: railProject, branch: reading.gitRepo.branch ?? null, workcell: cellName, ...(machineRef ? {machineRef} : {}), holds}),
+  [seats, seatsUnread, railProject, reading.gitRepo.branch, cellName, machineRef, holds])
+  // The Machine page's offers and plan (§19.23 Full): the Remote carrier's binding under `carrier.` — the offers (`workcell discover`) and the run's
+  // plan over them, the run the chosen world names (planRunOf, as the carrier's own chain reads it: FactoryDeviceChain.tsx), and Plan again.
+  const discover = useWorkcellRead(transport, asked ? {kind: 'discover'} : null).answer
+  const runLedger = worlds.answer.status === 'answered' ? worldsOf(worlds.answer.value)?.runLedger : undefined
+  const planRun = planRunOf(picked.chosen, runLedger, viewHolds(holds, CARRIER_ID).planRun)
+  // The runs the chosen world names, held by their content (the listing is read anew each render): a run slug holds no line break.
+  const planRunsKey = picked.chosen?.runs ? picked.chosen.runs.join('\n') : null
+  const planRuns = useMemo(() => (planRunsKey === null ? null : planRunsKey ? planRunsKey.split('\n') : []), [planRunsKey])
+  const runShow = useWorkcellRead(transport, asked && planRun.ref ? {kind: 'run-show', run: planRun.ref} : null).answer
+  const keptDemand = runShow.status === 'answered' ? runDemandOf(runShow.value) : null
+  const keptPath = keptDemand?.standing === 'kept' ? keptDemand.path ?? null : null
+  const runPlan = useWorkcellRead(transport, keptPath ? {kind: 'plan', demand: {demand_json: keptPath}} : null)
+  const carrierPlan = useMemo(() => carrierBinding(workcellAnswer, holds, undefined,
+    {...(asked ? {discover} : {}), run: {ref: planRun.ref, runs: planRuns, ...(planRun.why ? {why: planRun.why} : {}), ...(planRun.ref ? {show: runShow} : {}), ...(keptPath ? {plan: runPlan.answer} : {})}},
+    keptPath && transport.kind !== 'unavailable' ? {replan: runPlan.refresh} : {}),
+  [workcellAnswer, holds, asked, discover, planRun.ref, planRuns, planRun.why, runShow, keptPath, runPlan.answer, runPlan.refresh, transport])
+  // The Machine page's four kinds, Reconcile and Recover (§18.7; §19.23 Full): Central's machine readings under `mc.`, read while the
+  // instrument stands.
+  const machine = useMachineDevice(transport, asked)
+  const workcell = useMemo(() => carryPages(ownWorkcell, [{page: GATEWAYS_PAGE, binding: gateways}, {page: LEFT_BEHIND_PAGE, binding: leftBehind},
+    {page: SEAT_PAGE, binding: seat}, {page: CHECKOUTS_PAGE, binding: leftBehind}, {page: CARRIER_PAGE, binding: carrierPlan}, {page: MACHINE_PAGE, binding: machine}]),
+  [ownWorkcell, gateways, leftBehind, seat, carrierPlan, machine])
 
   // Publish each one again only when its own binding moves; withdraw them all with this publisher.
   const devices = useMemo((): Readonly<Record<string, DeviceInstance | null>> => ({

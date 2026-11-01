@@ -6,13 +6,42 @@
 // that session's track: no follow action leaves the track. A task launched with Repeat is an experiment (§19.5): each run a take, and
 // the Launch panel adds what varies between the runs (`repeat.variable`, `repeat.levels`, `repeat.repeats`, `repeat.stop`) and Compare
 // (`compare`, the takes' own setting: None, a second take, or every take of the Repeat), with the takes it has made (`takes`, a
-// reading). A task has no tools, so the editor takes panel two's room. The Log lays each tool the agent used along the task's
-// time, one lane per tool as notes lie on a piano roll's rows, with the steers you sent marked as lines and a stall marked where the
-// output stopped; the events read as a list under the lanes. Envelopes set the Agent's Effort and Autonomy for this task only.
+// reading). Envelopes set the Agent's Effort and Autonomy for this task only.
 //
-// The owner's material: `log` (JSON rows {at, kind, tool?, text, dur?, state?, heard?}; at and dur in seconds from the task's start;
-// kind is tool | spawn | steer | say | stall), `elapsed` (seconds to the last output), and each envelope's steps on
-// `env.agent.<control>` (JSON [[second, step]…]).
+// The editor holds a task's two materials, as Live's Clip View holds a MIDI clip's notes or an audio clip's sample (caps 01, 23):
+// - Notes: the score of the workflow the task is a unit of (manual §19.1 "The score"). Its rows are the agents and teams that take
+//   parts, from the track's rack; a note
+//   is a unit, its row is who does it, it starts the step after what it waits on, ties run from a note to the notes that wait on it,
+//   a bar stands where stacked notes join, and a lane of waves runs over the rows. A note that is a song of its own draws its notes
+//   small inside it; a double-click opens it (`score.open`), and Back returns. Fold keeps the rows that hold notes, Rack every row of
+//   the track's rack, and Highlight tints the notes of one thread form, as Live folds and highlights a scale (caps 10–12).
+// - Sample (tab id `log`, the shell's view default): the task's log, as a recording on the clock. Each tool the agent used lies on its
+//   lane, the onsets of its events stand under the ruler as Live marks transients (cap 23), steers, stalls and the retrospective
+//   readings are lines across the lanes, and the unit's start and return are warp markers (cap 24). Warp lays the recording onto the
+//   score's ruler, start on the note's start and return on its end; it stands off while the unit has not returned.
+// - Vāk: what each unit carries on its own, lane by lane, as Live's MPE tab carries each note's expression (cap 19): the seven heads of
+//   its composition across the rows, and under them the chosen unit's words.
+// Tools (panel two) reshape the score, and only while the score shows (Live greys Transform under Envelopes, cap 13): Transform
+// (a thread form, an allocation, a tie) and Generate (a score composed from the Intent, or the open heads filled by the decision model).
+//
+// The owner's material: `log` (JSON rows {at, kind, tool?, text, dur?, state?, heard?, reading?}; at and dur in seconds from the task's
+// start; kind is tool | spawn | steer | say | stall | reading), `elapsed` (seconds to the last output), and each envelope's steps on
+// `env.agent.<control>` (JSON [[second, step]…]). `score` (JSON {name, rows: [{id, name, kind: agent | team, rack?}], units: [{key,
+// row, deps?, len?, wave?, proposed?, heads?: {CPF, CT, CP, CF, CFP, CS, direction}, concern?, returns?, sources?, success?, may?, stop?,
+// escalate?, song?: <a score>}], joins: [{key, waits, releases, join}], waves: [{id, name, state}]}): Factory's reading of the workflow
+// the task belongs to, its units with their lowered compositions (`factory workflow inspect <state> <run> --unit`, the source read with
+// `factory workflow source`), the rows from the units' agentRequirements and the track's rack (`central.agent-set.resolve`), the waves
+// from `factory development wave read`. `unit.own` is this clip's own unit; `score.check` is the engine's word on the score
+// (`ql vak compose` admits or refuses each unit's composition; `factory workflow check` admits or refuses the source). Positions are
+// derived from the order, never kept: a unit starts the step after what it waits on; a unit whose thread form is CFP4 (drone) holds to
+// the end of the song.
+// Writes: a note dragged to another row (`score` rewritten) gives the unit to that agent or team; Transform's and Generate's presses
+// (`tr.press`, `gen.press`, `gen.accept`, `gen.discard`). No Factory operation writes a workflow source (it is the project's file, which
+// `factory workflow check` reads and refuses or admits), so the binding stands every score write disabled with that reason. Filling
+// the open heads asks the decision model (`aikit decide invoke` with the team space's Vāk-block instrument, `ql context-frame
+// team-space`), which is not served yet; composing a score from an Intent is an agent's act (Anima), with no operation of its own:
+// both stand disabled with their reasons. The view holds `unit` (the chosen note; a note of another unit selects that unit's clip in
+// the shell), `score.fold`, `score.highlight`, `score.open`, `warp`, `tr.*` and `gen.*` settings.
 //
 // The Intent panel: what the task is for, bounded, and how you will know it was met. Factory keeps it for the task's Run and never
 // copies its source. The required difference is the Development Field's (factory/src/development_field.rs:250 DevelopmentField
@@ -37,13 +66,269 @@
 // Under Return, what the run returned (O-I #759): `returned`, JSON rows {id, name, role, opens, why?} — each artifact and piece of
 // evidence the task's returned attempts name, as Factory resolves it (`factory attempt artifacts`); `open` (a row's id) opens it beside
 // you through Central's file route; a row that does not open carries Factory's reason. `returned.page` is the view's page of them.
-import {Action, Chooser, Radio, Rows as List, TextField, type Option, type RowItem} from '../../sdk/panel'
+import {Action, Chooser, Radio, Rows as List, TextField, Toggle, ValueBox, type Option, type RowItem, type Tone} from '../../sdk/panel'
 import {NONE, json, numOf, strOf} from '../panels/design'
-import {COLOURS, EnvelopeEditor, Fact, Fields, LaneGrid, GrooveOf, GrooveReading, GrooveSwap, MadeOf, grooved, Rows, Row, Rule, Said, Wide, choice, fit, read, write, type Block, type Lane, type Mark, type Point} from './clipKit'
+import {COLOURS, EnvelopeEditor, Fact, Fields, LaneGrid, GrooveOf, GrooveReading, GrooveSwap, MadeOf, Press, RULER_H, grooved, Rows, Row, Rule, Said, Wide, choice, fit, flag, read, write, type Block, type Lane, type Mark, type Meet, type Point, type Tie} from './clipKit'
 import type {ClipProps, DesignedClip} from './design'
 
-interface Entry {readonly at: number; readonly kind: 'tool' | 'spawn' | 'steer' | 'say' | 'stall'; readonly tool?: string; readonly text: string; readonly dur?: number; readonly state?: 'runs' | 'waits'; readonly heard?: string}
+interface Entry {readonly at: number; readonly kind: 'tool' | 'spawn' | 'steer' | 'say' | 'stall' | 'reading'; readonly tool?: string; readonly text: string; readonly dur?: number; readonly state?: 'runs' | 'waits'; readonly heard?: string; readonly reading?: string}
 const logOf = (v: ClipProps['v']) => read<Entry[]>(v, 'log', []).filter(e => Number.isFinite(e.at)).sort((a, b) => a.at - b.at)
+
+// ---------------------------------------------------------------- the score: the workflow the task is a unit of
+
+type Form = 'CFP0' | 'CFP1' | 'CFP2' | 'CFP3' | 'CFP4' | 'CFP5'
+interface Heads {readonly CPF?: string; readonly CT?: string; readonly CP?: string; readonly CF?: string; readonly CFP?: Form; readonly CS?: string; readonly direction?: string}
+interface ScoreRow {readonly id: string; readonly name: string; readonly kind?: 'agent' | 'team'; readonly rack?: boolean}
+interface Unit {
+  readonly key: string; readonly row: string; readonly deps?: readonly string[]; readonly len?: number; readonly wave?: string; readonly proposed?: boolean
+  readonly heads?: Heads; readonly concern?: string; readonly returns?: string; readonly sources?: readonly string[]; readonly success?: readonly string[]
+  readonly may?: readonly string[]; readonly stop?: string; readonly escalate?: string; readonly song?: Score
+}
+interface Join {readonly key: string; readonly waits: readonly string[]; readonly releases: readonly string[]; readonly join?: 'all' | 'first'}
+interface Wave {readonly id: string; readonly name: string; readonly state?: string}
+interface Score {readonly name: string; readonly rows: readonly ScoreRow[]; readonly units: readonly Unit[]; readonly joins?: readonly Join[]; readonly waves?: readonly Wave[]}
+
+/** The thread forms, in the words of what each does with the notes it holds (QL's CFP0–5: single voice, chord, melody, fusion, drone,
+ * canon; ql.vak-workflow-types/v1 ThreadMusicalRole). */
+const FORMS: readonly (Option<string> & {readonly value: Form})[] = [
+  {value: 'CFP0', label: 'Single voice', does: 'One agent does the unit alone.'},
+  {value: 'CFP1', label: 'Chord', does: 'Units stand together at one step, each on its own row, and each return is kept as its own.'},
+  {value: 'CFP2', label: 'Melody', does: 'Units run one after another, and each return is the next unit\'s material.'},
+  {value: 'CFP3', label: 'Fusion', does: 'Units stand together, and a join keeps every return and brings them into one reading.'},
+  {value: 'CFP4', label: 'Drone', does: 'The unit holds across the song and keeps going until its stop condition.'},
+  {value: 'CFP5', label: 'Canon', does: 'The unit is a song of its own, standing as one note here. Double-click it to open it.'},
+]
+const formWord = (f?: string) => FORMS.find(x => x.value === f)?.label
+/** The voice that holds each context frame (the team space's rows, CF1–CF7). */
+const VOICE: Readonly<Record<string, string>> = {CF1: 'Nous', CF2: 'Logos', CF3: 'Eros', CF4: 'Mythos', CF5: 'Anima', CF6: 'Psyche', CF7: 'Sophia'}
+const HEADS: readonly {readonly id: keyof Heads; readonly label: string; readonly does: string; readonly word?: (x: string) => string}[] = [
+  {id: 'CPF', label: 'CPF', does: 'How the person takes part: in dialogue, or an undertaking that names its authority.', word: x => (x === 'authorised-undertaking' ? 'undertaking' : x)},
+  {id: 'CT', label: 'CT', does: 'The kind of content the unit works on.'},
+  {id: 'CP', label: 'CP', does: 'The position of that content: 4.0 ground to 4.5 integration.'},
+  {id: 'CF', label: 'CF', does: 'The context frame the unit stands in, and the voice that holds it.', word: x => `${x} ${VOICE[x] ?? ''}`.trim()},
+  {id: 'CFP', label: 'CFP', does: 'The thread form: how the unit stands with the others.', word: x => formWord(x) ?? x},
+  {id: 'CS', label: 'CS', does: 'The context sequence: how far the passage goes, from the full traverse (CS0) to the direct synthesis (CS5).'},
+  {id: 'direction', label: 'Direction', does: 'Forward, in the prospective pass; returning, in the retrospective pass.', word: x => (x === 'returning' ? 'Returning' : x === 'forward' ? 'Forward' : x)},
+]
+
+function scoreOf(v: ClipProps['v']): Score | undefined {
+  const raw = read<unknown>(v, 'score', undefined)
+  if (!raw || typeof raw !== 'object') return undefined
+  const s = raw as Partial<Score>
+  return Array.isArray(s.rows) && Array.isArray(s.units) ? {name: typeof s.name === 'string' ? s.name : '—', rows: s.rows, units: s.units, joins: s.joins ?? [], waves: s.waves ?? []} : undefined
+}
+/** The score shown: the song, or the song one of its notes holds when that note is open. */
+const shownScore = (v: ClipProps['v']): {score: Score; inside?: Unit} | undefined => {
+  const outer = scoreOf(v)
+  const open = strOf(v, 'score.open'), inside = open ? outer?.units.find(u => u.key === open && u.song) : undefined
+  return outer ? (inside?.song ? {score: inside.song, inside} : {score: outer}) : undefined
+}
+
+/** Where each note stands, read from the order alone: a unit starts the step after the last unit it waits on (directly, or through
+ * the join that releases it) has returned, and is one step long unless it says otherwise; a drone holds to the end of the song. */
+function laid(score: Score): {at: Map<string, {at: number; len: number}>; end: number; joins: Map<string, number>} {
+  const byKey = new Map(score.units.map(u => [u.key, u])), at = new Map<string, {at: number; len: number}>(), joins = new Map<string, number>()
+  const released = new Map<string, Join>()
+  for (const j of score.joins ?? []) for (const k of j.releases) released.set(k, j)
+  const place = (key: string, seen: Set<string>): {at: number; len: number} => {
+    const known = at.get(key)
+    if (known) return known
+    const u = byKey.get(key)
+    if (!u || seen.has(key)) return {at: 0, len: 1}
+    seen.add(key)
+    const ends = (u.deps ?? []).map(d => { const p = place(d, seen); return p.at + p.len })
+    const j = released.get(key)
+    if (j) {
+      const meet = Math.max(0, ...j.waits.map(w => { const p = place(w, seen); return p.at + p.len }))
+      joins.set(j.key, meet); ends.push(meet)
+    }
+    const p = {at: Math.max(0, ...ends), len: Math.max(0.5, u.len ?? 1)}
+    at.set(key, p)
+    return p
+  }
+  for (const u of score.units) if (u.heads?.CFP !== 'CFP4') place(u.key, new Set())
+  const end = Math.max(1, ...[...at.values()].map(p => p.at + p.len))
+  for (const u of score.units) if (u.heads?.CFP === 'CFP4') at.set(u.key, {at: Math.max(0, ...(u.deps ?? []).map(d => { const p = at.get(d); return p ? p.at + p.len : 0 })), len: 0})
+  for (const u of score.units) if (u.heads?.CFP === 'CFP4') { const p = at.get(u.key)!; at.set(u.key, {at: p.at, len: Math.max(0.5, end - p.at)}) }
+  for (const j of score.joins ?? []) if (!joins.has(j.key)) joins.set(j.key, Math.max(0, ...j.waits.map(w => { const p = at.get(w); return p ? p.at + p.len : 0 })))
+  return {at, end, joins}
+}
+const stepLabel = (t: number) => (Math.abs(t - Math.round(t)) < 1e-6 ? String(Math.round(t) + 1) : '')
+const WAVES = 'waves'
+const WAVE_STATE_TONE = (s?: string) => (s === 'Sealed' ? 'green' : s === 'Fix round' ? 'stall' : 'value') as Tone
+
+/** The rows the roll shows: Fold keeps the rows that hold notes; Rack shows every agent and team on the track's rack, used or not. */
+function rowsShown(score: Score, fold: string): ScoreRow[] {
+  const used = new Set(score.units.map(u => u.row))
+  return score.rows.filter(r => (fold === 'rack' ? r.rack !== false || used.has(r.id) : used.has(r.id)))
+}
+
+function Notes(p: ClipProps) {
+  const shown = shownScore(p.v)
+  if (!shown) return <Said>No reading of the score: the workflow this task is a unit of.</Said>
+  const {score, inside} = shown
+  const fold = choice(p.v, 'score.fold', 'fold'), hl = choice(p.v, 'score.highlight', 'none')
+  const {at, end, joins} = laid(score)
+  const rows = rowsShown(score, fold)
+  const lanes: Lane[] = [{id: WAVES, label: 'Waves', key: 'name'}, ...rows.map(r => ({id: r.id, label: `${r.kind === 'team' ? '◆ ' : ''}${r.name}`, key: 'name' as const,
+    marked: r.rack === false}))]
+  const own = strOf(p.v, 'unit.own')
+  const unitBlocks: Block[] = score.units.map(u => {
+    const pos = at.get(u.key) ?? {at: 0, len: 1}, f = u.heads?.CFP
+    const inner = u.song ? (() => { const l = laid(u.song!), n = Math.max(1, u.song!.rows.length)
+      return u.song!.units.map(x => { const q = l.at.get(x.key) ?? {at: 0, len: 1}; return [q.at / l.end, q.len / l.end, u.song!.rows.findIndex(r => r.id === x.row) / n] as const }) })() : undefined
+    return {id: u.key, lane: u.row, at: pos.at, len: pos.len, label: `${u.key}${f && f !== 'CFP0' ? ` · ${formWord(f)?.toLowerCase()}` : ''}`,
+      tone: hl !== 'none' && f === hl ? 'accent' : u.key === own && !inside ? 'green' : 'value', dashed: u.proposed, inner,
+      does: [`${u.key}, by ${score.rows.find(r => r.id === u.row)?.name ?? u.row}`, u.concern, f ? `${formWord(f)}.` : undefined, u.proposed ? 'Proposed: it waits for you to accept it.' : undefined].filter(Boolean).join(' · ')}
+  })
+  const waveSpan = (w: Wave) => {
+    const mine = score.units.filter(u => u.wave === w.id && u.heads?.CFP !== 'CFP4').map(u => at.get(u.key)).filter((q): q is {at: number; len: number} => !!q)
+    return mine.length ? {at: Math.min(...mine.map(q => q.at)), len: Math.max(...mine.map(q => q.at + q.len)) - Math.min(...mine.map(q => q.at))} : undefined
+  }
+  const waveBlocks: Block[] = (score.waves ?? []).flatMap(w => { const s = waveSpan(w); return s ? [{id: `wave:${w.id}`, lane: WAVES, at: s.at, len: s.len,
+    label: `${w.name}${w.state ? ` · ${w.state}` : ''}`, tone: WAVE_STATE_TONE(w.state), does: `The units built side by side in ${w.name}. In Session view it is a row: launch it and each unit starts on its track.`}] : [] })
+  const released = new Set((score.joins ?? []).flatMap(j => j.releases.map(r => `${j.key}>${r}`)))
+  const viaJoin = (u: Unit, d: string) => (score.joins ?? []).some(j => j.waits.includes(d) && released.has(`${j.key}>${u.key}`))
+  const ties: Tie[] = score.units.flatMap(u => (u.deps ?? []).filter(d => !viaJoin(u, d)).map(d => ({from: d, to: u.key, does: `${u.key} waits on ${d}: it starts when ${d} returns, with its return as material.`})))
+  const meets: Meet[] = (score.joins ?? []).map(j => ({at: joins.get(j.key) ?? 0, lanes: [...j.waits, ...j.releases].map(k => score.units.find(u => u.key === k)?.row).filter((r): r is string => !!r),
+    label: j.join === 'first' ? 'First' : 'All', does: `${j.key}: ${j.join === 'first' ? 'the first acceptable return closes it' : 'it waits until every unit has returned'}; then ${j.releases.join(', ')} start.`}))
+  const laneH = Math.max(14, Math.min(34, Math.floor((p.room.h - RULER_H - 20) / Math.max(1, lanes.length))))
+  const move = (id: string, _at: number, lane: string) => {
+    if (lane === WAVES || inside) return
+    const outer = scoreOf(p.v)
+    if (outer) write(p, 'score', {...outer, units: outer.units.map(u => (u.key === id ? {...u, row: lane} : u))})
+  }
+  const check = read<{state?: string; why?: string} | undefined>(p.v, 'score.check', undefined)
+  return <LaneGrid lanes={lanes} blocks={[...waveBlocks, ...unitBlocks]} ties={ties} meets={meets} from={0} to={Math.ceil(end) + 1} major={1} minor={0.5} label={stepLabel}
+    keyW={92} laneH={laneH} highlight selected={strOf(p.v, 'unit') ?? own} onSelect={id => { if (!id.startsWith('wave:')) p.set('unit', id) }}
+    onMove={p.standing?.score?.disabled ? undefined : move} onOpen={id => { if (score.units.find(u => u.key === id)?.song) p.set('score.open', id) }}
+    w={p.room.w} h={p.room.h} name="Notes"
+    does="The score: each unit a note on the row of the agent or team that does it, ties to the units that wait on it, a bar where stacked notes join, the waves over the rows. Drag a note to another row to give it to that agent or team. Double-click a song to open it."
+    under={<div className="clv-foot">
+      {inside && <Action label={`Back to ${scoreOf(p.v)?.name ?? 'the song'}`} does="Returns to the song this one stands in." onPress={() => p.set('score.open', undefined)} />}
+      <span className="clv-own" data-i={`Song|${inside ? `${inside.key}: a song standing as one note of ${scoreOf(p.v)?.name ?? 'its song'}.` : 'The workflow this task is a unit of.'}`}>
+        <span>{score.name}</span><span>{score.units.length} units</span><span>{(score.joins ?? []).length} joins</span><span>{(score.waves ?? []).length} waves</span></span>
+      <span className="clv-own" data-i={`Check|${check?.why ?? 'What the engine said of each unit\'s composition and of the source.'}`} style={{marginLeft: 'auto', color: check?.state === 'refused' ? 'var(--stall)' : check?.state === 'admitted' ? 'var(--green)' : undefined}}>
+        {check ? `${check.state === 'refused' ? 'Refused' : check.state === 'admitted' ? 'Admitted' : 'Checking'}${check.why ? `: ${check.why}` : ''}` : 'No reading of the check'}</span>
+    </div>} underH={20} />
+}
+
+const notesBar = (p: ClipProps) => <>
+  <Toggle label="Fold" does="Keeps only the rows that hold notes." on={choice(p.v, 'score.fold', 'fold') === 'fold'} onChange={x => p.set('score.fold', x ? 'fold' : 'rack')} />
+  <Toggle label="Rack" does="Shows every agent and team on the track's rack, as rows, whether the song gives them a part or not." tone="value"
+    on={choice(p.v, 'score.fold', 'fold') === 'rack'} onChange={x => p.set('score.fold', x ? 'rack' : 'fold')} />
+  <Chooser label="Highlight" does="Tints the notes of one thread form." value={choice(p.v, 'score.highlight', 'none')}
+    options={[{value: 'none', label: 'Highlight: none'}, ...FORMS.map(f => ({value: f.value, label: f.label, does: f.does}))]} onChange={x => p.set('score.highlight', x)} />
+</>
+
+/** The Vāk tab: the score's rows on top, then one lane for each head of a unit's composition, each unit's value at its note; under
+ * them, the chosen unit's own words (Live's MPE tab: each note's expression, lane by lane, cap 19). */
+function Vak(p: ClipProps) {
+  const shown = shownScore(p.v)
+  if (!shown) return <Said>No reading of the score: the workflow this task is a unit of.</Said>
+  const {score} = shown
+  const {at, end} = laid(score)
+  const rows = rowsShown(score, 'fold')
+  const lanes: Lane[] = [...rows.map(r => ({id: r.id, label: r.name, key: 'name' as const})),
+    ...HEADS.map(h => ({id: `h:${h.id}`, label: h.label, key: 'name' as const, marked: true}))]
+  const chosen = score.units.find(u => u.key === (strOf(p.v, 'unit') ?? strOf(p.v, 'unit.own'))) ?? score.units[0]
+  const blocks: Block[] = score.units.flatMap(u => {
+    const pos = at.get(u.key) ?? {at: 0, len: 1}
+    return [{id: u.key, lane: u.row, at: pos.at, len: pos.len, label: u.key, tone: 'value' as Tone, dashed: u.proposed, does: u.concern},
+      // The chosen unit's heads stand lit with their labels; the others stand faint behind, unlabelled, so stacked units never write over
+      // each other. A unit held across the song stands behind only while it is chosen, or it would cover every other.
+      ...(u.key !== chosen?.key && u.heads?.CFP === 'CFP4' ? [] : HEADS.map(h => { const x = u.heads?.[h.id], mine = u.key === chosen?.key
+        return {id: `${u.key}:${h.id}`, lane: `h:${h.id}`, at: pos.at, len: pos.len, label: mine ? (x ? (h.word ? h.word(x) : x) : 'open') : undefined, tone: (x ? 'value' : 'stall') as Tone, dashed: !x,
+          faint: !mine, does: `${u.key} · ${h.label}: ${x ?? 'open: no label chosen yet.'} ${h.does}`} }))]
+  })
+  const words: [string, string | undefined][] = chosen ? [
+    ['Concern', chosen.concern], ['Returns', chosen.returns], ['Sources', chosen.sources?.join(' · ')], ['Success', chosen.success?.join(' · ')],
+    ['May', chosen.may?.join(' · ')], ['Stops when', chosen.stop], ['Escalates', chosen.escalate]] : []
+  const listH = Math.max(60, Math.round(p.room.h * 0.34))
+  const laneH = Math.max(12, Math.min(20, Math.floor((p.room.h - RULER_H - listH) / Math.max(1, lanes.length))))
+  return <LaneGrid lanes={lanes} blocks={blocks} from={0} to={Math.ceil(end) + 1} major={1} minor={0.5} label={stepLabel} keyW={92} laneH={laneH} highlight
+    selected={chosen?.key} onSelect={id => p.set('unit', id.split(':')[0]!)} w={p.room.w} h={p.room.h} name="Vāk"
+    does="What each unit carries on its own: the seven heads of its composition, lane by lane, the selected unit's labels lit at its note and the others faint behind. An open head is dashed: no label is chosen yet. Under the lanes, the selected unit's own words."
+    under={<ul className="clv-list" aria-label={`What ${chosen?.key ?? 'the unit'} carries`}>
+      {words.map(([name, text]) => <li key={name} data-i={`${name}|${text ?? 'No reading.'}`}>
+        <span className="clv-at">{chosen?.key}</span><span className="clv-chip">{name}</span><span className="clv-text">{text ?? '—'}</span><span className="clv-tag" />
+      </li>)}
+    </ul>} underH={listH} />
+}
+
+// ---------------------------------------------------------------- Tools: they reshape the score, and only while it shows
+
+const TR_TOOLS: readonly Option<string>[] = [
+  {value: 'form', label: 'Thread form', does: 'Gives the selected units a thread form: how they stand with each other.'},
+  {value: 'allocate', label: 'Allocate', does: 'Gives the selected units to another agent or team: their row in the score.'},
+  {value: 'connect', label: 'Connect', does: 'Makes the selected unit wait on another: a tie from that unit\'s note to this one.'},
+]
+const JOINS: readonly Option<string>[] = [
+  {value: 'all', label: 'All', does: 'The join waits until every unit has returned, and an independent reviewer brings the returns into one.'},
+  {value: 'first', label: 'First', does: 'The first acceptable return closes the join.'},
+  {value: 'quorum', label: 'Quorum', does: 'Commits when enough units agree.', why: 'No owner joins this way: the song names no count of units that must agree, and Factory refuses to start a step on it.'},
+  {value: 'weighted', label: 'Weighted', does: 'Each return counts by its strength.', why: 'No owner joins this way: no unit carries a weight, and Factory refuses to start a step on it.'},
+]
+const onScore = (p: ClipProps) => { const e = choice(p.v, 'view.editor', 'notes'); return e === 'notes' || e === 'vak' }
+const NOT_ON_SCORE = 'Show Notes: the tools reshape the score.'
+
+function Transform(p: ClipProps) {
+  const tool = choice(p.v, 'tr.tool', 'form'), score = scoreOf(p.v), off = onScore(p) ? (score ? undefined : 'No reading of the score.') : NOT_ON_SCORE
+  const unit = strOf(p.v, 'unit') ?? strOf(p.v, 'unit.own'), form = choice(p.v, 'tr.form', 'CFP3')
+  return <>
+    <Chooser label="Tool" does="The transform to apply to the selected units." value={tool} options={TR_TOOLS} onChange={x => p.set('tr.tool', x)} wide />
+    <Said>{TR_TOOLS.find(t => t.value === tool)?.does}</Said>
+    {tool === 'form' && <Fields>
+      <Wide><Chooser label="Form" does="The thread form the selected units take." value={form} options={FORMS} onChange={x => p.set('tr.form', x)} disabled={off} /></Wide>
+      <Wide><Chooser label="Join" does="Where stacked units meet: whether what comes after waits for all of them, or takes the first." value={choice(p.v, 'tr.join', 'all')} options={JOINS}
+        onChange={x => p.set('tr.join', x)} disabled={off ?? (form === 'CFP1' || form === 'CFP3' ? undefined : 'Only stacked units meet at a join: choose Chord or Fusion.')} /></Wide>
+    </Fields>}
+    {tool === 'allocate' && <Wide><Chooser label="To" does="The agent or team on the track's rack that takes the selected units." value={choice(p.v, 'tr.to')}
+      options={(score?.rows ?? []).map(r => ({value: r.id, label: r.name, why: r.rack === false ? 'Not on the track\'s rack: add it to the rack first.' : undefined}))} onChange={x => p.set('tr.to', x)} disabled={off} /></Wide>}
+    {tool === 'connect' && <Wide><Chooser label="Waits on" does="The unit the selected one waits on. Its return becomes this unit's material." value={choice(p.v, 'tr.on')}
+      options={(score?.units ?? []).filter(u => u.key !== unit).map(u => ({value: u.key, label: u.key}))} onChange={x => p.set('tr.on', x)} disabled={off} /></Wide>}
+    <Rule />
+    <Fields>
+      <Toggle label="Auto" does="Applies the transform at once as you change it." on={flag(p.v, 'tr.auto') ?? false} onChange={x => p.set('tr.auto', x)} disabled={off} />
+      <Press p={p} k="tr.press" label="Transform" does="Applies the transform to the selected units. Factory checks the song and admits or refuses it." why={p.standing?.['tr.press']?.disabled ?? off} />
+    </Fields>
+  </>
+}
+
+const GEN_TOOLS: readonly Option<string>[] = [
+  {value: 'compose', label: 'Compose', does: 'Anima composes a score from the task\'s Intent and the spec it is written in: the units, who takes each part, and the order.'},
+  {value: 'heads', label: 'Fill heads', does: 'The decision model fills the open heads of the selected units, among the labels Quaternal Logic allows, or leaves them open.'},
+]
+const NO_COMPOSE = 'Composing a score is Anima\'s act as an agent: no operation proposes a workflow from an intent yet.'
+const NO_PICK = 'The decision model is not served on this machine: AIKit\'s decision provider does not answer.'
+
+function Generate(p: ClipProps) {
+  const tool = choice(p.v, 'gen.tool', 'compose'), score = scoreOf(p.v), off = onScore(p) ? undefined : NOT_ON_SCORE
+  const unit = score?.units.find(u => u.key === (strOf(p.v, 'unit') ?? strOf(p.v, 'unit.own')))
+  const open = unit ? HEADS.filter(h => !unit.heads?.[h.id]).length : undefined
+  const proposed = score?.units.filter(u => u.proposed).length ?? 0
+  const status = read<{state?: string; why?: string} | undefined>(p.v, 'gen.status', undefined)
+  return <>
+    <Chooser label="Tool" does="The generator that writes into the score." value={tool} options={GEN_TOOLS} onChange={x => p.set('gen.tool', x)} wide />
+    <Said>{GEN_TOOLS.find(t => t.value === tool)?.does}</Said>
+    {tool === 'compose' ? <Rows>
+      <Row label="From"><Fact label="From" does="The spec the score is composed from: the Intent panel's From." value={strOf(p.v, 'intent.source')} /></Row>
+      <Row label="Rack"><Fact label="Rack" does="The agents and teams on the track's rack: the rows the score may give parts to." value={score ? `${score.rows.filter(r => r.rack !== false).length} rows` : undefined} /></Row>
+      <Row label="Waves"><ValueBox label="Waves" does="The most waves the score may hold." value={numOf(p.v, 'gen.waves') ?? NaN} def={2} scale={{min: 1, max: 6, step: 1}} format={x => String(x)} onChange={x => p.set('gen.waves', x)} /></Row>
+    </Rows> : <Rows>
+      <Row label="Open"><Fact label="Open" does="The heads of the selected unit with no label chosen yet." value={open === undefined ? undefined : `${open} of 7 · ${unit!.key}`} /></Row>
+      <Row label="Decides"><Fact label="Decides" does="The decision model that picks, and where it runs." value={strOf(p.v, 'gen.decider')} /></Row>
+    </Rows>}
+    <Rule />
+    <Fields>
+      <Wide><Press p={p} k="gen.press" label="Generate" does="Writes the proposal into the score, dashed, until you accept it." why={p.standing?.['gen.press']?.disabled ?? off ?? (tool === 'compose' ? NO_COMPOSE : NO_PICK)} /></Wide>
+      <Press p={p} k="gen.accept" label="Accept" does="Keeps the dashed notes in the score." why={off ?? (proposed ? undefined : 'Nothing proposed waits.')} />
+      <Press p={p} k="gen.discard" label="Discard" does="Drops the dashed notes." why={off ?? (proposed ? undefined : 'Nothing proposed waits.')} />
+    </Fields>
+    <Fact label="Check" does="The engine's word on the proposal: it admits each composition, or refuses it and says why." value={status ? `${status.state === 'refused' ? 'Refused' : 'Admitted'}${status.why ? `: ${status.why}` : ''}` : undefined}
+      tone={status?.state === 'refused' ? 'stall' : status ? 'green' : undefined} />
+  </>
+}
 
 const clock = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`
 const STATE_WORD: Readonly<Record<string, string>> = {queued: 'Queued', running: 'Running', stalled: 'Stalled', stopped: 'Stopped', done: 'Done'}
@@ -52,35 +337,57 @@ const STATE_TONE = {queued: 'accent', running: 'value', stalled: 'stall', stoppe
 const TOOLS = ['Read', 'Grep', 'Glob', 'Edit', 'Write', 'Bash', 'Web', 'Helpers', 'Messages'] as const
 const laneOf = (e: Entry) => (e.kind === 'spawn' ? 'Helpers' : e.kind === 'say' ? 'Messages' : e.tool ?? 'Messages')
 
+/** The unit's note in the score, where the task's log can be anchored: its start and its end, in steps. */
+const noteOf = (v: ClipProps['v']): {at: number; len: number} | undefined => {
+  const score = scoreOf(v), own = strOf(v, 'unit.own')
+  return score && own ? laid(score).at.get(own) : undefined
+}
+/** Why the log cannot be laid on the score, or undefined when it can: the unit must have returned, and stand in the score. */
+const warpWhy = (v: ClipProps['v']) => (strOf(v, 'state') !== 'done' ? 'The unit has not returned: its return has no place on the score yet.'
+  : noteOf(v) ? undefined : 'No reading of the unit\'s note in the score.')
+
+/** The Sample tab: the task's log, a recording on the clock. Warp lays it on the score's ruler, its start on the note's start and its
+ * return on the note's end, as Live's warp markers pin a sample's moments to the beat (cap 24). */
 function Log(p: ClipProps) {
   const log = logOf(p.v)
   if (!log.length) return <Said>No reading of the task's log yet.</Said>
   const elapsed = numOf(p.v, 'elapsed') ?? Math.max(...log.map(e => e.at + (e.dur ?? 0)))
-  const to = Math.max(60, Math.ceil((elapsed + 8) / 30) * 30)
-  const used = new Set(log.filter(e => e.kind !== 'steer' && e.kind !== 'stall').map(laneOf))
-  const lanes: Lane[] = (p.v.fold === false ? [...TOOLS] : TOOLS.filter(t => used.has(t))).map(t => ({id: t, label: t, key: 'name', marked: used.has(t)}))
-  const state = strOf(p.v, 'state')
+  const note = noteOf(p.v), warped = p.v.warp === true && !warpWhy(p.v) && note !== undefined
+  // On the clock, seconds; warped, steps of the score: the start at the note's start, the return at its end, evenly between.
+  const t = (s: number) => (warped ? note!.at + (s / Math.max(1, elapsed)) * note!.len : s)
+  // Warped, the ruler reaches a quarter step past the note at each end, so its edges and the two flags stand clear.
+  const from = warped ? note!.at - 0.25 : 0, to = warped ? note!.at + note!.len + 0.25 : Math.max(60, Math.ceil((elapsed + 8) / 30) * 30)
+  const used = new Set(log.filter(e => e.kind !== 'steer' && e.kind !== 'stall' && e.kind !== 'reading').map(laneOf))
+  const lanes: Lane[] = (p.v.fold === false ? [...TOOLS] : TOOLS.filter(x => used.has(x))).map(x => ({id: x, label: x, key: 'name', marked: used.has(x)}))
+  const state = strOf(p.v, 'state'), own = strOf(p.v, 'unit.own') ?? 'the unit'
   const blocks: Block[] = log.filter(e => e.kind === 'tool' || e.kind === 'spawn' || e.kind === 'say').map(e => {
     const i = log.indexOf(e)
     const running = e.state === 'runs' && state === 'running' && i === log.length - 1
-    return {id: `e${e.at}-${i}`, lane: laneOf(e), at: e.at, len: running ? undefined : Math.max(1, e.dur ?? 1.5), label: e.text,
+    const len = Math.max(1, e.dur ?? 1.5)
+    return {id: `e${e.at}-${i}`, lane: laneOf(e), at: t(e.at), len: running ? undefined : t(e.at + len) - t(e.at), label: e.text,
       tone: e.kind === 'spawn' ? 'green' : e.kind === 'say' ? 'accent' : e.state === 'waits' && state === 'stalled' ? 'stall' : 'value',
       striped: e.state === 'waits' && state === 'stalled', does: `${clock(e.at)} · ${e.tool ?? e.kind}: ${e.text}`}
   })
-  const marks: Mark[] = log.filter(e => e.kind === 'steer' || e.kind === 'stall').map(e => e.kind === 'steer'
-    ? {at: e.at, label: `Steer: ${e.text}`, tone: 'accent', does: e.heard ?? 'Words you sent in the middle of the turn.'}
-    : {at: e.at, label: `Stall: ${e.text}`, tone: 'stall', does: 'The output stopped here. The track lights a retry.'})
+  const marks: Mark[] = log.filter(e => e.kind === 'steer' || e.kind === 'stall' || e.kind === 'reading').map(e => e.kind === 'steer'
+    ? {at: t(e.at), label: `Steer: ${e.text}`, tone: 'accent', does: e.heard ?? 'Words you sent in the middle of the turn.'}
+    : e.kind === 'reading' ? {at: t(e.at), label: `${e.reading ?? 'Reading'}: ${e.text}`, tone: 'value', does: 'What the retrospective pass read here, set against the score.'}
+      : {at: t(e.at), label: `Stall: ${e.text}`, tone: 'stall', does: 'The output stopped here. The track lights a retry.'})
   if (state === 'running') marks.push({at: elapsed, label: 'Now', tone: 'value', does: 'The last output: the task runs on from here.'})
+  marks.push({at: t(0), label: `Start · ${own}`, pin: true, tone: 'green', does: 'Where the unit started. Warped, it stands on its note\'s start in the score.'})
+  if (state === 'done') marks.push({at: t(elapsed), label: `Return · ${own}`, pin: true, tone: 'green', does: 'Where the unit returned. Warped, it stands on its note\'s end in the score.'})
+  const onsets = log.filter(e => e.kind === 'tool' || e.kind === 'spawn' || e.kind === 'say').map(e => t(e.at))
   const listH = Math.max(58, Math.round(p.room.h * 0.36))
   const laneH = Math.max(14, Math.min(24, Math.floor((p.room.h - 16 - listH) / Math.max(1, lanes.length))))
-  return <LaneGrid lanes={lanes} blocks={blocks} marks={marks} from={0} to={to} major={30} minor={5} label={clock} keyW={64} laneH={laneH}
-    highlight={false} selected={strOf(p.v, 'event')} onSelect={id => p.set('event', id)} w={p.room.w} h={p.room.h}
-    name="Log" does="Each tool the agent used, along the task's time, one lane per tool. Lines mark your steers and where the output stopped. Press a tool to select it."
+  const behind: Block[] = warped && note ? lanes.map(l => ({id: `note:${l.id}`, lane: l.id, at: note.at, len: note.len, faint: true, tone: 'green' as Tone, does: `${own}'s note in the score.`})) : []
+  return <LaneGrid lanes={lanes} blocks={[...behind, ...blocks]} marks={marks} onsets={onsets} from={from} to={to} major={warped ? 1 : 30} minor={warped ? 0.25 : 5}
+    label={warped ? stepLabel : clock} keyW={64} laneH={laneH}
+    highlight={false} selected={strOf(p.v, 'event')} onSelect={id => { if (!id.startsWith('note:')) p.set('event', id) }} w={p.room.w} h={p.room.h}
+    name="Sample" does="The task's log, as a recording: each tool the agent used on its lane, the onsets of its events under the ruler, lines for your steers, a stall and what the retrospective pass read, flags where the unit started and returned. Press a tool to select it."
     under={<ul className="clv-list" aria-label="Events">
       {log.map((e, i) => <li key={i} data-tone={e.kind === 'steer' ? 'accent' : e.kind === 'stall' ? 'stall' : undefined}
-        data-i={`${e.kind === 'tool' ? e.tool ?? 'Tool' : e.kind === 'spawn' ? 'Helper' : e.kind === 'steer' ? 'Steer' : e.kind === 'stall' ? 'Stall' : 'Message'}|${e.text}`}>
+        data-i={`${e.kind === 'tool' ? e.tool ?? 'Tool' : e.kind === 'spawn' ? 'Helper' : e.kind === 'steer' ? 'Steer' : e.kind === 'stall' ? 'Stall' : e.kind === 'reading' ? e.reading ?? 'Reading' : 'Message'}|${e.text}`}>
         <span className="clv-at">{clock(e.at)}</span>
-        <span className="clv-chip">{e.kind === 'tool' ? e.tool : e.kind === 'spawn' ? 'helper' : e.kind}</span>
+        <span className="clv-chip">{e.kind === 'tool' ? e.tool : e.kind === 'spawn' ? 'helper' : e.kind === 'reading' ? e.reading ?? 'reading' : e.kind}</span>
         <span className="clv-text">{e.text}</span>
         <span className="clv-tag">{e.kind === 'steer' ? e.heard ?? '' : e.dur !== undefined ? `${e.dur} s` : e.state === 'runs' ? 'runs' : e.state === 'waits' ? 'waits' : ''}</span>
       </li>)}
@@ -307,9 +614,18 @@ function LaunchPanel(p: ClipProps) {
 const logBar = (p: ClipProps) => <>
   <Radio label="Lanes" does="Fold keeps only the lanes of the tools the agent used." value={p.v.fold === false ? 'all' : 'fold'} onChange={x => p.set('fold', x === 'fold')}
     options={[{value: 'fold', label: 'Fold', does: 'Only the tools the agent used.'}, {value: 'all', label: 'All tools', does: 'Every tool lane.'}]} />
+  <Toggle label="Warp" does="Lays the log on the score's ruler: the unit's start on its note's start, its return on the note's end. Off, the log lies on the clock, as the run went."
+    on={p.v.warp === true} onChange={x => p.set('warp', x)} disabled={p.standing?.warp?.disabled ?? warpWhy(p.v)} />
 </>
 
 const corner = (p: ClipProps) => {
+  const editor = choice(p.v, 'view.editor', 'notes')
+  if (editor === 'notes' || editor === 'vak') {
+    const shown = shownScore(p.v), key = strOf(p.v, 'unit') ?? strOf(p.v, 'unit.own'), u = shown?.score.units.find(x => x.key === key)
+    if (!shown || !u) return null
+    const pos = laid(shown.score).at.get(u.key), row = shown.score.rows.find(r => r.id === u.row)?.name ?? u.row
+    return <span className="clv-own" data-i={`Selected|${u.concern ?? u.key}`}>{fit(`${u.key} · ${row}${pos ? ` · steps ${stepLabel(pos.at)}–${Math.round(pos.at + pos.len) + 1}` : ''}`, 260)}</span>
+  }
   const log = logOf(p.v), selected = strOf(p.v, 'event')
   const at = log.findIndex((e, i) => `e${e.at}-${i}` === selected)
   return at >= 0 ? <span className="clv-own" data-i={`Selected|${log[at]!.text}`}>{fit(`${clock(log[at]!.at)} ${log[at]!.tool ?? ''} ${log[at]!.text}`, 260)}</span> : null
@@ -338,6 +654,65 @@ const STALLED = [
   {at: 9, kind: 'stall', text: 'Waits for an answer: overwrite fixtures/handoff.json (y/N)'},
 ]
 
+/** A returned run of the same task: the log to the return, with what the retrospective pass read against the score. */
+const RETURNED = [
+  ...LOG.slice(0, -1),
+  {at: 31, kind: 'reading', reading: 'T3′ Anomaly', text: 'The first test run read the old capture list, which the score had given to Builder B'},
+  {at: 66, kind: 'tool', tool: 'Bash', dur: 5, text: 'pnpm build widgets · built'},
+  {at: 72, kind: 'reading', reading: 'T5′ Integration', text: 'Every widget has its fixture, and the old ids hold'},
+]
+
+// The song the task is a unit of: the bridge widgets' hand-off, from its plan, as Factory would read it. Rows are the agents and
+// teams on the track's rack; Scribe is on the rack and has no part.
+const C = (CPF: string, CT: string, CP: string, CF: string, CFP: Form, CS: string, direction = 'forward') => ({CPF, CT, CP, CF, CFP, CS, direction})
+const GUARDIANS: Score = {
+  name: 'release-check',
+  rows: [{id: 'g-lead', name: 'Field guardian', kind: 'agent'}, ...['Central', 'AIKit', 'Actuation', 'Factory', 'Workcell', 'QL'].map(n => ({id: `g-${n.toLowerCase()}`, name: `${n} guardian`, kind: 'agent' as const}))],
+  units: [
+    {key: 'gather', row: 'g-lead', heads: C('dialogical', 'CT1', '4.1', 'CF2', 'CFP0', 'CS2')},
+    ...['central', 'aikit', 'actuation', 'factory', 'workcell', 'ql'].map(n => ({key: `check-${n}`, row: `g-${n}`, deps: ['gather'], heads: C('dialogical', 'CT3', '4.3', 'CF4', 'CFP1', 'CS3')})),
+    {key: 'report', row: 'g-lead', heads: C('dialogical', 'CT5', '4.5', 'CF7', 'CFP0', 'CS5', 'returning')},
+  ],
+  joins: [{key: 'agree', waits: ['central', 'aikit', 'actuation', 'factory', 'workcell', 'ql'].map(n => `check-${n}`), releases: ['report'], join: 'all'}],
+  waves: [],
+}
+const SCORE: Score = {
+  name: 'Bridge widget hand-off',
+  rows: [
+    {id: 'planner', name: 'Planner', kind: 'agent', rack: true}, {id: 'builder-a', name: 'Builder A', kind: 'agent', rack: true},
+    {id: 'builder-b', name: 'Builder B', kind: 'agent', rack: true}, {id: 'reviewers', name: 'Reviewers', kind: 'team', rack: true},
+    {id: 'guardians', name: 'Guardians', kind: 'team', rack: true}, {id: 'aletheia', name: 'Aletheia', kind: 'team', rack: true},
+    {id: 'ci', name: 'CI watch', kind: 'agent', rack: true}, {id: 'scribe', name: 'Scribe', kind: 'agent', rack: true},
+  ],
+  units: [
+    {key: 'plan-fixtures', row: 'planner', wave: 'w1', heads: C('dialogical', 'CT1', '4.1', 'CF2', 'CFP0', 'CS2'),
+      concern: 'Say which fixtures each bridge widget needs, and where they live', returns: 'The fixture list, widget by widget', sources: ['Plan · widget hand-off'],
+      success: ['Every bridge widget is named'], may: ['read widgets/'], stop: 'Stop when the plan names no widget', escalate: 'Escalate a widget the plan does not cover'},
+    {key: 'write-fixtures', row: 'builder-a', deps: ['plan-fixtures'], len: 2, wave: 'w1', heads: C('authorised-undertaking', 'CT2', '4.2', 'CF3', 'CFP1', 'CS2'),
+      concern: 'Write the hand-off fixtures for the bridge widgets', returns: 'The fixture files, and the test run that reads them',
+      sources: ['Plan · widget hand-off', 'widgets/handoff.tsx'], success: ['Every widget has a hand-off fixture', 'Old fixture ids are kept', 'pnpm test bridge passes'],
+      may: ['edit fixtures/'], stop: 'Stop when a widget has no hand-off to fix', escalate: 'Escalate a fixture id that must change'},
+    {key: 'drop-capture', row: 'builder-b', deps: ['plan-fixtures'], wave: 'w1', heads: {CPF: 'authorised-undertaking', CT: 'CT2', CP: '4.2', CF: 'CF3', CFP: 'CFP1', direction: 'forward'},
+      concern: 'Drop the old capture list from the reads', returns: 'The reads without the capture list', sources: ['fixtures/capture.json'],
+      success: ['No read names the capture list'], may: ['edit fixtures/capture.json'], stop: 'Stop when nothing reads the list'},
+    {key: 'review', row: 'reviewers', len: 2, wave: 'w2', heads: C('dialogical', 'CT3', '4.3', 'CF4', 'CFP3', 'CS3'),
+      concern: 'Read the wave\'s structure and its claims, by two who wrote none of it', returns: 'One reading of the wave, with its findings', success: ['Both readers clear one revision']},
+    {key: 'release-check', row: 'guardians', len: 2, wave: 'w2', heads: C('dialogical', 'CT3', '4.4', 'CF6', 'CFP5', 'CS4', 'returning'), song: GUARDIANS,
+      concern: 'Check the suite agrees before the hand-off lands', returns: 'Each guardian\'s word, and where they disagree'},
+    {key: 'return-handoff', row: 'aletheia', wave: 'w2', heads: C('authorised-undertaking', 'CT5', '4.5', 'CF7', 'CFP0', 'CS5', 'returning'),
+      concern: 'Return the hand-off: what was meant, what came back, what was learned', returns: 'The Return, with its readings', may: ['write one Return to the NOW field']},
+    {key: 'watch-ci', row: 'ci', wave: 'w1', heads: C('dialogical', 'CT0', '4.0', 'CF1', 'CFP4', 'CS1'),
+      concern: 'Watch the bridge tests, and raise any that fails', returns: 'Each failure, as it comes', stop: 'Stop when the song returns'},
+  ],
+  joins: [
+    {key: 'merged', waits: ['write-fixtures', 'drop-capture'], releases: ['review', 'release-check'], join: 'all'},
+    {key: 'sealed', waits: ['review', 'release-check'], releases: ['return-handoff'], join: 'all'},
+  ],
+  waves: [{id: 'w1', name: 'w1', state: 'Building'}, {id: 'w2', name: 'w2', state: 'Waiting'}],
+}
+/** The same song as Anima proposed it from the Intent: the second wave dashed, until you accept it. */
+const PROPOSED: Score = {...SCORE, units: SCORE.units.map(u => (u.wave === 'w2' ? {...u, proposed: true} : u))}
+
 export const clip: DesignedClip = {
   id: 'clip:factory',
   mode: 'factory',
@@ -359,13 +734,17 @@ export const clip: DesignedClip = {
     'wave.gate': 'write-fixtures\'s plan at P2 is not locked', 'wave.next': 'record write-fixtures\'s research round, then lock its plan',
     ladder: JSON.stringify([{id: 'locked', name: 'Plan locked', value: 'no', why: 'not locked; P2 still needs research'}, {id: 'built', name: 'Built', value: 'no', why: 'no candidate frozen'},
       {id: 'merged', name: 'Merged', value: 'no', why: 'no candidate to merge'}, {id: 'reviewed', name: 'Reviewed', value: 'no', why: 'wave w1 stands planning'}]),
-    'view.panel': 'launch', 'view.editor': 'log',
+    score: JSON.stringify(SCORE), 'unit.own': 'write-fixtures', 'score.fold': 'fold', 'score.highlight': 'none',
+    'score.check': JSON.stringify({state: 'admitted', why: 'every composition admitted; the source compiles'}),
+    warp: false, 'tr.tool': 'form', 'tr.form': 'CFP3', 'tr.join': 'all', 'tr.to': 'builder-b', 'tr.on': 'plan-fixtures', 'tr.auto': false,
+    'gen.tool': 'compose', 'gen.waves': 2, 'gen.decider': 'Kev · this machine',
+    'view.panel': 'launch', 'view.tools': 'transform', 'view.editor': 'notes',
   },
   fixtures: {
     'A running task': {},
     'A stalled task': {name: 'Generate the fixtures', colour: 'var(--stall)', state: 'stalled', 'state.retry': true, 'state.why': 'No check-in within the 90 s bound: the last was 412 s ago, with its task open.',
-      'turns.used': 2, log: JSON.stringify(STALLED), elapsed: 9, then: 'again', loop: true, event: 'e5-2', 'view.panel': 'clip'},
-    'A closed task': {state: 'done', 'state.why': 'Closed: released superseded → task:fixtures-2.', closure: 'released superseded → task:fixtures-2', 'view.panel': 'clip'},
+      'turns.used': 2, log: JSON.stringify(STALLED), elapsed: 9, then: 'again', loop: true, event: 'e5-2', 'view.panel': 'clip', 'view.editor': 'log'},
+    'A closed task': {state: 'done', 'state.why': 'Closed: released superseded → task:fixtures-2.', closure: 'released superseded → task:fixtures-2', 'view.panel': 'clip', 'view.editor': 'log'},
     'An experiment with Repeat': {launch: 'repeat', 'repeat.variable': 'model', 'repeat.levels': 'opus, sonnet, haiku', 'repeat.repeats': 4, 'repeat.stop': 'pass', compare: 'every', takes: 7},
     'Its intent, returned': {'view.panel': 'intent', state: 'done', criteria: JSON.stringify([
       {id: 'c1', text: 'Every widget has a hand-off fixture', state: 'satisfied', evidence: 2}, {id: 'c2', text: 'Old fixture ids are kept', state: 'satisfied', evidence: 1},
@@ -389,7 +768,17 @@ export const clip: DesignedClip = {
       'loop.until': undefined, 'loop.cap': undefined, 'repeat.variable': undefined, 'repeat.levels': undefined, 'repeat.repeats': undefined, 'repeat.stop': undefined, compare: undefined, takes: undefined,
       intent: undefined, 'intent.source': undefined, criteria: undefined, context: undefined, constraints: undefined, returned: undefined,
       plan: undefined, 'plan.asks': undefined, 'plan.why': undefined, 'plan.territory': undefined, 'plan.needs': undefined, 'plan.rounds': undefined,
-      wave: undefined, 'wave.gate': undefined, 'wave.next': undefined, ladder: undefined},
+      wave: undefined, 'wave.gate': undefined, 'wave.next': undefined, ladder: undefined, score: undefined, 'unit.own': undefined, 'score.check': undefined, 'gen.decider': undefined},
+    'Its log against the score': {'view.editor': 'log', 'view.panel': 'intent', state: 'done', 'state.why': 'Returned: the attempt closed with its Return.', warp: true,
+      log: JSON.stringify(RETURNED), elapsed: 72, event: 'e29-7', criteria: JSON.stringify([
+        {id: 'c1', text: 'Every widget has a hand-off fixture', state: 'satisfied', evidence: 2}, {id: 'c2', text: 'Old fixture ids are kept', state: 'satisfied', evidence: 1},
+        {id: 'c3', text: 'pnpm test bridge passes', state: 'satisfied', evidence: 1}])},
+    'What each unit carries': {'view.editor': 'vak', 'view.tools': 'generate', 'gen.tool': 'heads', unit: 'drop-capture'},
+    'A score proposed from its intent': {score: JSON.stringify(PROPOSED), 'view.tools': 'generate', 'gen.tool': 'compose', 'view.panel': 'intent',
+      'gen.status': JSON.stringify({state: 'refused', why: 'drop-capture has no CS'}),
+      'score.check': JSON.stringify({state: 'refused', why: 'drop-capture has no CS: a composition holds all seven heads'})},
+    'A song inside the score': {'score.open': 'release-check', unit: 'gather', 'view.panel': 'plan'},
+    'Its thread forms, highlighted': {'score.highlight': 'CFP1', 'score.fold': 'rack', unit: 'drop-capture'},
   },
   panel: [
     {id: 'clip', label: 'Clip', does: 'The task\'s name, colour, state, turns, output style and loop.', draw: ClipPanel},
@@ -397,10 +786,15 @@ export const clip: DesignedClip = {
     {id: 'intent', label: 'Intent', does: 'What the task is for: the difference it must make, and the conditions that show it did.', draw: IntentPanel},
     {id: 'plan', label: 'Plan', does: 'How much planning the task gets, its rounds and its lock, and the wave it builds in.', draw: PlanPanel},
   ],
-  tools: [],
+  tools: [
+    {id: 'transform', label: 'Transform', does: 'Reshapes the selected units of the score: a thread form, an allocation, a tie.', draw: Transform},
+    {id: 'generate', label: 'Generate', does: 'Writes into the score: a score composed from the Intent, or the open heads filled.', draw: Generate},
+  ],
   editor: [
-    {id: 'log', label: 'Log', does: 'Each tool the agent used along the task\'s time, your steers, and where the output stopped.', draw: Log, bar: logBar},
+    {id: 'notes', label: 'Notes', does: 'The score: the workflow the task is a unit of, each unit a note on the row of the agent or team that does it.', draw: Notes, bar: notesBar},
+    {id: 'log', label: 'Sample', does: 'The task\'s log as a recording: each tool the agent used along its time, your steers, where the output stopped, and where the unit started and returned.', draw: Log, bar: logBar},
     {id: 'envelopes', label: 'Envelopes', does: 'The Agent\'s Effort and Autonomy for this task only.', draw: Envelopes},
+    {id: 'vak', label: 'Vāk', does: 'What each unit carries on its own, lane by lane: the seven heads of its composition, and its own words.', draw: Vak},
   ],
   corner,
 }

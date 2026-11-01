@@ -69,7 +69,7 @@ test('the three devices are keyed to their designs exactly, from the Workcell fa
   // "Claiming a seat … is the Seat page of Git / landing"): the family admits no Seat face, and Git / landing's design draws the Seat page.
   // REPLACED (ticket 772): "the Seat's constructor answers null" — it is gone: the workcell's devices name no Seat.
   assert.equal('seat' in devices, false, 'no Seat device: no constructor stands')
-  assert.ok(Object.keys(gitDesign.defaults).some(key => key.startsWith(SEAT_PAGE.prefix)), 'Git / landing\'s design carries the Seat page\'s keys under seat.')
+  assert.ok(Object.keys(gitDesign.defaults).some(key => key.startsWith(SEAT_PAGE.prefix)), 'Git / landing\'s design carries the Seat group\'s keys under seat.')
   for (const [device, design] of [[devices.carrier, carrierDesign], [devices.link, linkDesign]]) {
     assert.ok(device, `${design.id}: the family admits the face`)
     assert.equal(designKey(device.family, device.face.id), design.id)
@@ -221,25 +221,25 @@ test('the Link on `workcell status` and `gateway who` (the kernel\'s inhabitatio
   bind.resetHolds()
 })
 
-test('the three designs draw on their bindings in all five views — no NaN, no undefined, never their fixtures — each refusal drawn as why; Git / landing draws its Seat page on the seat\'s binding', () => {
+test('the three designs draw on their bindings in all five views — no NaN, no undefined, never their fixtures — each refusal drawn as why; Git / landing draws its Seat group on the seat\'s binding', () => {
   bind.resetHolds()
   host.resetHost()
   const git = {...model.INITIAL_READING, gitAdmitted: true, gitRepo: {branch: 'main', uncommitted: 3}}
-  // REPLACED (#725): the Seat's own design on the seat's binding — the Seat is Git / landing's Seat page now (§19.17), so Git / landing's
-  // design draws it on its Seat page, on the same seat binding carried under `seat.` (FactoryDeviceChain.tsx gitCarrying), never on the
-  // page's sample (the Seat's own fixture words, and Git / landing's).
+  // REPLACED (#725): the Seat's own design on the seat's binding — the Seat is Git / landing's now (§19.17), so Git / landing's design
+  // draws it, on the same seat binding carried under `seat.` (FactoryDeviceChain.tsx gitCarrying), never on the design's sample (the
+  // Seat's own fixture words, and Git / landing's). REPLACED (§19.16, 22 Oct manual): its Seat page left; the Seat group of Whole's one
+  // view draws it.
   const SEAT_FIXTURE = /claude-code:dlw-manual|59f94a3|point-cloud-demo|fold\/day-close-20261012|933731e|Native CLI|5b3c3e0fc|65202d830/
   const carrying = seat => carryPages(cell.gitBinding(git, bind.chainHolds()), [{page: SEAT_PAGE, binding: seat}])
   const cases = [
     [gitDesign, cell.gitBinding(git, bind.chainHolds()), /fold\/day-close-20261012|933731e|Native CLI/, []],
-    [gitDesign, carrying(cell.seatBinding({status: REAL.seatStatus, project: 'O-I', branch: 'dlw/build', holds: bind.chainHolds()})), SEAT_FIXTURE, [cell.SEAT_REFUSE.release], 'seat'],
-    [gitDesign, carrying(cell.seatBinding({status: null, project: 'O-I', branch: null, holds: bind.chainHolds()})), new RegExp(`${SEAT_FIXTURE.source}|dlw/build`), [cell.SEAT_UNREAD], 'seat'],
+    [gitDesign, carrying(cell.seatBinding({status: REAL.seatStatus, project: 'O-I', branch: 'dlw/build', holds: bind.chainHolds()})), SEAT_FIXTURE, [cell.SEAT_REFUSE.release]],
+    [gitDesign, carrying(cell.seatBinding({status: null, project: 'O-I', branch: null, holds: bind.chainHolds()})), new RegExp(`${SEAT_FIXTURE.source}|dlw/build`), [cell.SEAT_UNREAD]],
     [carrierDesign, cell.carrierBinding(answered(REAL.workcellStatus), bind.chainHolds()), /100\.92\.62\.101:7788|ready-to-carry/, []],
     [linkDesign, cell.linkBinding(answered(REAL.workcellStatus), bind.chainHolds(), answered(REAL.population)), /cradle-steward|claude-code:dlw-conductor|fold\/day-close-20261012/, [cell.LINK_REFUSE.link]],
   ]
-  for (const [design, binding, fixture, reasons, page] of cases) {
+  for (const [design, binding, fixture, reasons] of cases) {
     host.resetHost(binding.id)
-    if (page) host.setHostPage(binding.id, page)
     const drawn = hosted(design, binding)
     drawn.forEach((markup, index) => {
       assert.match(markup, new RegExp(`data-device-view="${views[index]}"`), `${design.id} ${views[index]} draws`)
@@ -250,8 +250,7 @@ test('the three designs draw on their bindings in all five views — no NaN, no 
     const all = drawn.join('\n')
     for (const why of reasons) assert.ok(all.includes(escaped(why)), `${design.id}: a refused control says why (${why})`)
   }
-  host.setHostPage(cases[1][1].id, 'seat')
-  assert.ok(hosted(gitDesign, cases[1][1]).join('\n').includes('dlw/build'), 'the Seat page draws the real seat\'s lane')
+  assert.ok(hosted(gitDesign, cases[1][1]).join('\n').includes('dlw/build'), 'the Seat group draws the real seat\'s lane')
   host.resetHost(cases[1][1].id)
   const link = hosted(linkDesign, cases[4][1]).join('\n')
   assert.ok(link.includes('omarchy') && link.includes('connection timed out'), 'the Link draws the real remote and its standing in the owner\'s words')
@@ -268,19 +267,22 @@ test('the chain places them where the manual does: a workcell\'s chain — the R
   // Main track for a workcell's chain; the Link left the Main track for the transport, which publishes it (the frame's own).
   // REPLACED (#725): "the Seat stands inside Git / landing" as a device of its own — the Seat is Git / landing's Seat page (§19.17): the
   // seat binding is carried under `seat.` on Git / landing's binding, and no Seat stands in the slot.
-  assert.match(view, /carryPages\(gitDesignBinding, \[\{page: SEAT_PAGE, binding: seatDesignBinding\}/, 'the Seat is Git / landing\'s Seat page (§19.17)')
+  assert.match(view, /carryPages\(gitDesignBinding, \[\{page: SEAT_PAGE, binding: seatDesignBinding\}\]\)/, 'the Seat is Git / landing\'s Seat group (§19.16, §19.17)')
   assert.doesNotMatch(view, /placed\(SEAT_ID/, 'no Seat device stands inside Git / landing')
-  // REPLACED (#725): the carrier on its own binding — it carries its Machine page (`mc.`, §18.7, §19.18) on Central's machine readings.
-  assert.match(view, /case 'remote-carrier': return placed\(CARRIER_ID, cells\.carrier, carrierCarrying, [^\n]*\n[^\n]*'data-workcell-slot': 'remote-carrier'/,
+  // REPLACED (#725): the carrier on its own binding. REPLACED (§19.18, §19.23, 22 Oct manual): its Machine page left — the machine is the
+  // Machine page of Workcell's instrument, which the rail's publisher carries (below).
+  assert.match(view, /case 'remote-carrier': return placed\(CARRIER_ID, cells\.carrier, carrierDesignBinding, [^\n]*\n[^\n]*'data-workcell-slot': 'remote-carrier'/,
     'the Remote carrier is the second device of a workcell\'s chain (§19.18)')
-  assert.match(view, /carryPages\(carrierDesignBinding, \[\{page: MACHINE_PAGE, binding: machine\}\]\)/, 'its Machine page on Central\'s machine readings')
+  assert.doesNotMatch(view, /MACHINE_PAGE|CHECKOUTS_PAGE/, 'the chain carries no Machine or Checkouts page')
   assert.doesNotMatch(view, /LINK_ID|linkBinding/, 'the Link stands in the transport (§19.19), on no chain of this file')
   // REPLACED (#725): the Gateways monitor on the rail — retired into the Workcells tile (§19.3), the rail's publisher carrying the gateways'
   // binding under `gw.` on the workcell rack's (AgentRailDevices.tsx).
   const rail = read('agent/devices/AgentRailDevices.tsx')
   assert.match(rail, /rackBinding\(\{reading, holds, carrier\}/, 'the gateways\' carrier line reads the carrier')
-  // REPLACED (ticket 772): the rack carries its Left behind page too (§19.23; workcell-left-behind-page.test.mjs).
-  assert.match(rail, /carryPages\(ownWorkcell, \[\{page: GATEWAYS_PAGE, binding: gateways\}, \{page: LEFT_BEHIND_PAGE, binding: leftBehind\}\]\)/, 'the Workcells tile carries the gateways')
+  // REPLACED (ticket 772): the rack carries its Left behind page too (§19.23; workcell-left-behind-page.test.mjs). REPLACED (§19.23, 22 Oct
+  // manual): and its Seats page (the seats and the checkouts) and its Machine page (the carrier's plan and the machine).
+  assert.match(rail, /carryPages\(ownWorkcell, \[\{page: GATEWAYS_PAGE, binding: gateways\}, \{page: LEFT_BEHIND_PAGE, binding: leftBehind\},\s*\{page: SEAT_PAGE, binding: seat\}, \{page: CHECKOUTS_PAGE, binding: leftBehind\}, \{page: CARRIER_PAGE, binding: carrierPlan\}, \{page: MACHINE_PAGE, binding: machine\}\]\)/,
+    'the Workcells tile carries the gateways; the instrument its Left behind, Seats and Machine pages')
   assert.match(rail, /chain === 'remote-carrier' \? CARRIER_ID/, 'choosing that line shows the carrier whole')
   // REPLACED (R4, lane K1): the Seat reads the seat instrument through the kernel (seat_status_read); on a workcell's chain it starts at
   // that workcell's seat.

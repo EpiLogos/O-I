@@ -89,10 +89,14 @@ test('the Agency gateway: its light and refusal from whether it answered; every 
   assert.deepEqual(main.agencyValues(ANSWERED, bind.chainHolds()), {light: 'lit', state: 'ready'})
   assert.deepEqual(main.agencyValues(model.INITIAL_READING, bind.chainHolds()), {})
   const binding = main.agencyBinding(UNREACHABLE, bind.chainHolds())
-  for (const [key, op] of [['service', /aikit gateway serve · shutdown/], ['entry', /gateway setup --mode/], ['coexist', /coexistence --policy/], ['agentPolicy', /sender kind agent/], ['surfaces', /connector add/]]) {
+  for (const [key, op] of [['service', /aikit gateway serve · shutdown/], ['entry', /gateway setup --mode/], ['coexist', /coexistence --policy/], ['surfaces', /connector add/]]) {
     assert.match(binding.standing[key].disabled, op, `${key} stands disabled with its missing op`)
     await assert.rejects(() => binding.write([{key, value: true}]), op)
   }
+  // REPLACED: "Agent to agent" was the agency build's rule; whether one agent may call another is set on the calling agent's Scope (§19.2,
+  // §19.12 Calls to other agents: designBindings.ts REFUSE.calls), and the gateway carries the call or its refusal.
+  assert.equal(binding.standing.agentPolicy, undefined, 'no agent rule stands on the gateway')
+  await assert.rejects(() => binding.write([{key: 'agentPolicy', value: 'allow'}]), /agentPolicy is a reading/)
   await assert.rejects(() => binding.write([{key: 'on:gateway-connector/telegram/main', value: true}]), /connector add/)
   binding.local.entryPending('loopback-service')
   assert.equal(main.agencyValues(UNREACHABLE, bind.chainHolds()).entryPending, 'loopback-service', 'a changed entry is the view\'s own ask until Confirm')
@@ -156,7 +160,9 @@ test('with no session selected the chain draws the Main track — the Run map, A
   // carries the Thread and Custody, §19.4; a task is a clip and a run its track's take lanes, §19.1; the Seat is Git / landing's page,
   // §19.17; an experiment is a task launched with Repeat, its takes set side by side with Compare, §19.5), and the door is the session's memory, so no stale entry of theirs can
   // stand. The chain withdraws exactly what it publishes.
-  assert.match(view, /for \(const id of \[\.\.\.CHAIN_DEVICE_IDS, MEMBER_DEVICE_ID, AGENTSET_ID, APPROVALS_ID, CARRIER_ID, RUN_MAP_ID, PROMPT_PADS_ID\]\) publishDevice\(id, null\)/, 'and withdrawn with the chain — never the rail\'s')
+  // REPLACED: the Decision helper is a device again, a chain of the Agentset rack in place of an Agent (§19.20), so the chain publishes
+  // and withdraws it with the rack.
+  assert.match(view, /for \(const id of \[\.\.\.CHAIN_DEVICE_IDS, MEMBER_DEVICE_ID, AGENTSET_ID, DECISION_HELPER_ID, APPROVALS_ID, CARRIER_ID, RUN_MAP_ID, PROMPT_PADS_ID\]\) publishDevice\(id, null\)/, 'and withdrawn with the chain — never the rail\'s')
   assert.doesNotMatch(view, /THREAD_DEVICE_ID, CUSTODY_ID|TASKS_ID, RUNS_ID|SESSION_DEVICE_IDS|EXPERIMENT_ID, \.\.\./, 'no id nothing publishes')
   // REPLACED (#725): the rail claimed the Gateways tile for the monitor — retired; the Workcells tile lists the gateways (§19.3).
   assert.doesNotMatch(read('agent/agentDockTiles.ts'), /claimRailWidget\('gateways'/, 'no Gateways tile')

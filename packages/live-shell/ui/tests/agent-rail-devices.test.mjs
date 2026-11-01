@@ -126,8 +126,10 @@ test('one publisher: the rail\'s own publisher draws it in every mode; Factory\'
   const chain = read('agent/devices/FactoryDeviceChain.tsx')
   for (const id of ['MESSAGES_ID', 'GATEWAYS_RACK_ID', 'AGENCY_GATEWAY_ID', 'LEDGER_ID']) assert.doesNotMatch(chain, new RegExp(`\\b${id}\\b`), `${id}: not the chain's`)
   assert.doesNotMatch(chain, /publishDevice\(FRAMES_ID/, 'the Frames tile: not the chain\'s to publish (its Gateway\'s ⤢ still opens it)')
-  assert.doesNotMatch(chain, /publishDevice\(WORKCELL_RACK_ID|\[WORKCELL_RACK_ID, /, 'the workcell rack is drawn from the door, not published by the chain')
-  assert.match(chain, /useSyncExternalStore\(subscribeDeviceDoor, \(\) => publishedDevice\(WORKCELL_RACK_ID\)/)
+  assert.doesNotMatch(chain, /publishDevice\(WORKCELL_RACK_ID|\[WORKCELL_RACK_ID, /, 'Workcell\'s instrument is not published by the chain')
+  // REPLACED (§19.23 "It stands on no chain"; §16.3 "Its window holds its Full"): the chain drew the workcell rack from the door; it draws
+  // Workcell's instrument nowhere, so it watches no published entry of it.
+  assert.doesNotMatch(chain, /publishedDevice\(WORKCELL_RACK_ID\)/, 'the chain draws no entry of Workcell\'s instrument')
   // REPLACED (lane W11): the chain reads the same held population answer for Custody's Positions (one keyed read for the window).
   for (const reader of ['useConversationAnswer', 'useCentralGroundAnswer', 'ledgerBinding', 'messagesBinding']) {
     assert.doesNotMatch(chain, new RegExp(`\\b${reader}\\(`), `${reader}: read once, by the rail's publisher`)

@@ -36,6 +36,54 @@
     "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/operator-voice.md"
   },
   {
+    "family": "actuation",
+    "face": "voice",
+    "kind": "parameter",
+    "liveSemantic": "device-audio-fx",
+    "modes": [
+      "factory"
+    ],
+    "formats": {},
+    "invariant": {
+      "transforms": "the agent's answer into speech through its body (the kernel op nara_voice: the local cascade)"
+    },
+    "writePaths": [],
+    "heldBy": [],
+    "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/reverb.md"
+  },
+  {
+    "family": "ai-kit",
+    "face": "ai-kit",
+    "kind": "parameter",
+    "liveSemantic": "device-instrument",
+    "modes": [
+      "factory"
+    ],
+    "formats": {},
+    "invariant": {
+      "generatesAbsent": "Born in a pane: it reads what the run's agents carried and what entered their context, and keeps AIKit's practice — its sources and snapshots, adopted trees, packages and procedures; it changes no device on a chain."
+    },
+    "writePaths": [],
+    "heldBy": [],
+    "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/operator-voice.md"
+  },
+  {
+    "family": "ai-kit",
+    "face": "decision-helper",
+    "kind": "parameter",
+    "liveSemantic": "device-instrument",
+    "modes": [
+      "factory"
+    ],
+    "formats": {},
+    "invariant": {
+      "generatesAbsent": "A pick among the labels the owner allows, or none, for a member's open question: AIKit's decision provider (kernel decision_status) and QL's team space (kernel team_space) are read; no owner operation records the helper's answers or holds its settings yet."
+    },
+    "writePaths": [],
+    "heldBy": [],
+    "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/operator-voice.md"
+  },
+  {
     "family": "ai-kit",
     "face": "messages",
     "kind": "parameter",
@@ -79,12 +127,27 @@
     "invariant": {
       "chains": [
         "skill-device"
-      ],
-      "chainSelector": "skill (admit light)"
+      ]
     },
     "writePaths": [],
     "heldBy": [],
     "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/racks-session-model.md"
+  },
+  {
+    "family": "ai-kit",
+    "face": "sources",
+    "kind": "parameter",
+    "liveSemantic": "device-audio-fx",
+    "modes": [
+      "factory"
+    ],
+    "formats": {},
+    "invariant": {
+      "transforms": "what the agent receives: the pinned sources it reads from and the routes it may search, before it acts"
+    },
+    "writePaths": [],
+    "heldBy": [],
+    "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/reverb.md"
   },
   {
     "family": "atlas-earth",
@@ -502,8 +565,7 @@
     "invariant": {
       "chains": [
         "agent-session"
-      ],
-      "chainSelector": "member (state light)"
+      ]
     },
     "writePaths": [],
     "heldBy": [],
@@ -643,21 +705,16 @@
     "family": "workcell",
     "face": "workcell",
     "kind": "parameter",
-    "liveSemantic": "rack",
+    "liveSemantic": "device-instrument",
     "modes": [
       "factory"
     ],
     "formats": {},
     "invariant": {
-      "chains": [
-        "gateway",
-        "remote-carrier",
-        "git-seat"
-      ],
-      "chainSelector": "the road in and out: the gateway, the machine, the seat and its landing"
+      "generatesAbsent": "Born in a pane: it reads the run's road, its world, its seats and its machine from Workcell and Central, and changes none of its connections' settings — each is set on its device."
     },
     "writePaths": [],
     "heldBy": [],
-    "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/racks-session-model.md"
+    "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/operator-voice.md"
   }
 ]

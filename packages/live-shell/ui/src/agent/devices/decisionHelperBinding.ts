@@ -1,22 +1,25 @@
-// The Decision helper on its owners (T-AGENCY K5; manual §19.20, ai-kit:decision-helper, "a team's chain in Factory, after its
-// members"): the catalogue's design drawn on what AIKit and Quaternal Logic report, nothing else.
+// The Decision helper on its owners (T-AGENCY K5; manual §19.20, ai-kit:decision-helper, "a chain of an Agentset rack, in place of an
+// Agent"): the catalogue's design drawn on what AIKit and Quaternal Logic report, nothing else.
 //   Provider, model, place, state, independence, price: AIKit's decision provider (`aikit decide status`, kernel op decision_status,
 //     aikit.decision-status/v1): `mode` → Provider, `selected_model` → the model, `decision_model.base` → its base, `placement` →
 //     where it runs, `install.state` → loaded or not (the light), `independent_of_acting_models`, `limits.tariff` → no price here.
 //   Instruments: the team space (`ql context-frame team-space`, kernel op team_space, ql.vak-team-space/v1): each instrument's organ,
 //     the rows it is asked at (`cells`), the labels of its head — or, with several heads, the heads' fields — and whether only the
 //     person answers it (`answerable_by: person-only`, the collaboration gate).
-// What no owner reports is absent (a key with no reading is unknown, manual §16.11): the question asked last and its answer, today's
-// log and the counts (no owner records the helper's invocations yet), When and Deadline (no owner holds them), each instrument's
-// measured admission. Every write stands disabled with the operation it lacks. Pure, apart from the view's own hold.
+// What no owner reports is absent (a key with no reading is unknown, manual §16.11): the question asked last and its answer, the run's
+// questions and the counts (no owner records the helper's invocations yet), When and Deadline (no owner holds them), each instrument's
+// measured admission. Every write stands disabled with the operation it lacks. Pure.
 import type {DesignBinding, Standing, Value, Values} from '../../frame/devices/designed'
-import {holdView, viewHolds, type ChainHolds} from './designBindings'
+import type {DeviceInstance} from '../../frame/devices/deviceRuntime'
+import {familyFaceDevice} from './mainTrackBindings'
 
 export const DECISION_HELPER_DESIGN = 'ai-kit:decision-helper'
 export const DECISION_HELPER_ID = 'factory:decision-helper'
 
-// The Decision helper has no device of its own (tickets 725 and 772): it is the Agentset rack's Helper page (§19.20; oneAgentBinding.ts HELPER_PAGE,
-// `helper.`). This module is the page's binding.
+// The Decision helper is a device of its own, AIKit's admitted face (aiKitFamilyManifest.ts `decision-helper`): it stands as a chain of
+// a group's Agentset rack, where an agent's chain has its Agent, and one helper answers every member (§19.15, §19.20). The rack lists it
+// among its members (sessionChainBindings.ts agentsetValues); the chain publishes it on this binding (FactoryDeviceChain.tsx).
+export const decisionHelperDevice = (): DeviceInstance | null => familyFaceDevice(DECISION_HELPER_ID, 'ai-kit', 'decision-helper', 'Decision helper', 'select')
 
 const missing = (what: string, op: string, owner: string) => `${what}: no owner operation carries it yet — missing op: ${op} (${owner}).`
 
@@ -70,11 +73,10 @@ export interface DecisionHelperInput {
   readonly status: unknown
   /** QL's `ql.vak-team-space/v1`, or null while unread or refused. */
   readonly teamSpace: unknown
-  readonly holds: ChainHolds
 }
 
 /** The design's values from the two readings. Pure. */
-export function decisionHelperValues({status, teamSpace, holds}: DecisionHelperInput): Values {
+export function decisionHelperValues({status, teamSpace}: DecisionHelperInput): Values {
   const values: Record<string, Value> = {}
   const put = (key: string, value: Value | undefined) => { if (value !== undefined) values[key] = value }
   if (isObj(status)) {
@@ -94,8 +96,6 @@ export function decisionHelperValues({status, teamSpace, holds}: DecisionHelperI
   }
   const instruments = teamInstruments(teamSpace)
   if (instruments) values.instruments = JSON.stringify(instruments)
-  const chosen = viewHolds(holds, DECISION_HELPER_ID).chosen
-  if (chosen !== undefined) values.chosen = chosen
   return values
 }
 
@@ -113,7 +113,6 @@ export function decisionHelperBinding(input: DecisionHelperInput): DesignBinding
     id: DECISION_HELPER_ID,
     values,
     standing,
-    local: {chosen: value => holdView(DECISION_HELPER_ID, 'chosen', typeof value === 'string' ? value : undefined)},
     writes: key => key in DECISION_HELPER_REFUSE || key.startsWith('allow:'),
     write: async changes => {
       for (const {key} of changes) throw Error(refusal(key))

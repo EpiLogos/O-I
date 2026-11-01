@@ -66,7 +66,7 @@ const {design: gatewayDesign} = await import('../src/inhabitants/catalogue/panel
 const carry = await import('../src/agent/devices/oneAgentBinding.ts')
 const {design: custodyDesign} = await import('../src/inhabitants/catalogue/panels/agent-custody.tsx')
 const {design: ledgerDesign} = await import('../src/inhabitants/catalogue/panels/software-factory__ledger.tsx')
-const {design: helperDesign} = await import('../src/inhabitants/catalogue/panels/decision-helper.tsx')
+const {design: helperDesign} = await import('../src/inhabitants/catalogue/panels/ai-kit__decision-helper.tsx')
 const {design: memberDesign} = await import('../src/inhabitants/catalogue/panels/member.tsx')
 
 family.resetFamilyManifestsForTest()
@@ -324,11 +324,8 @@ test('8 · the Frames monitor reads AIKit\'s own gateway journal: each frame\'s 
   bind.resetHolds()
 })
 
-/** Git / landing carrying the Seat's binding on its Seat page (§19.17; FactoryDeviceChain.tsx gitCarrying), the page in front. */
-const landingWithSeat = seat => {
-  host.setHostPage(cell.GIT_ID, 'seat')
-  return carry.carryPages(cell.gitBinding(model.INITIAL_READING, bind.chainHolds()), [{page: carry.SEAT_PAGE, binding: seat}])
-}
+/** Git / landing carrying the Seat's binding in its Seat group (§19.16, §19.17; FactoryDeviceChain.tsx gitCarrying): Whole is one view. */
+const landingWithSeat = seat => carry.carryPages(cell.gitBinding(model.INITIAL_READING, bind.chainHolds()), [{page: carry.SEAT_PAGE, binding: seat}])
 /** The rail's Frames tile: the Gateway's design on the frames' binding, its Frames page in front (§19.6; AgentRailDevices.tsx FRAMES_ID). */
 const framesTile = binding => { host.setHostPage(main.FRAMES_ID, 'frames'); return binding }
 /** The Seat as its binding reads the real 16 Oct seats. */
@@ -372,7 +369,7 @@ test('every bound design draws on its binding in all its views — no NaN, no un
   const frames = hosted(gatewayDesign, cases[3][1]).map(([, markup]) => markup).join('\n')
   assert.ok(frames.includes('Two roots pass.') && frames.includes('human-message'), 'the Gateway\'s Frames page draws the journal\'s frames')
   const seatPage = hosted(landingDesign, cases[1][1]).map(([, markup]) => markup).join('\n')
-  assert.ok(seatPage.includes('dlw/build'), 'the Seat page draws the real seats')
+  assert.ok(seatPage.includes('dlw/build'), 'the Seat group draws the real seat')
   const carrier = hosted(carrierDesign, cases[2][1]).map(([, markup]) => markup).join('\n')
   assert.ok(carrier.includes('workcell 0.1.0 (174fa1c3133a)') || carrier.includes('omarchy'), 'the carrier draws the real connection')
   bind.resetHolds()
@@ -391,16 +388,16 @@ test('(b) every key the bound designs read is an owner reading, absent with why 
     [main.framesBinding(gateway, bind.chainHolds(), {ecology: answered(ECOLOGY), replays: new Map([['actuation-stream/replay', {value: REPLAY}]])})],
     [main.framesBinding(gateway, bind.chainHolds(), {ecology: answered(ECOLOGY), replays: new Map([['actuation-stream/replay', {error: NO_REPLAY}]])})],
   ]
-  // A carried page's keys stand under its prefix and are hosted by prefixing that page's own binding (design.ts scoped): the carrier
-  // carries the Machine page under `mc.` (DLW §19.18, "The Machine page").
-  const carried = {'workcell:remote-carrier': ['mc.']}
+  // A carried page's keys stand under its prefix and are hosted by prefixing that page's own binding (design.ts scoped). REPLACED (§19.18,
+  // 22 Oct manual): the carrier's Machine page under `mc.` — the carrier is one page and carries none.
+  const carried = {'workcell:remote-carrier': []}
   for (const key of designKeys(carrierDesign).filter(key => !carried[carrierDesign.id].some(prefix => key.startsWith(prefix)))) {
     assert.ok(classify(cases[1][0], key), `${carrierDesign.id} ${key}: a reading, absent with why, or the hand's`)
   }
-  // REPLACED (#725): the Seat's own design's keys — the Seat is Git / landing's Seat page (§19.17): every key of that page (`seat.`, its own
-  // keys under the prefix) is the Seat binding's reading, absent with why, or the hand's.
+  // REPLACED (#725): the Seat's own design's keys — the Seat is Git / landing's Seat group (§19.16, §19.17): every key of it (`seat.`, its
+  // own keys under the prefix) is the Seat binding's reading, absent with why, or the hand's.
   const seatPage = designKeys(landingDesign).filter(key => key.startsWith('seat.')).map(key => key.slice('seat.'.length))
-  assert.ok(seatPage.includes('seats') && seatPage.includes('actor'), 'the Seat page reads the seats and the session\'s actor')
+  assert.ok(seatPage.includes('seats') && seatPage.includes('actor'), 'the Seat group reads the seats and the session\'s actor')
   for (const key of seatPage) assert.ok(classify(seatBinding, key), `${landingDesign.id} seat.${key}: a reading, absent with why, or the hand's`)
   // REPLACED (#725): the Frames monitor's own design's keys — the frames are the Gateway's Frames page (§19.6, §19.2 Frames): every key of
   // that page (actuation__gateway.tsx: the list's settings and the replay's readings) is the frames' binding's reading, absent with why, or
@@ -444,7 +441,8 @@ test('(d) the chain and the rail carry the owner routes where the manual puts th
   // it under `gw.`), and the agency gateway is the Gateway's agency build, its mark in the head of Messages (§19.10).
   assert.match(rail, /RAIL_AGENT_DEVICE_IDS: readonly string\[\] = \[MESSAGES_ID, FRAMES_ID, LEDGER_ID, WORKCELL_RACK_ID\]/, 'Messages, the Frames tile and the monitors stay on the rail')
   // REPLACED (#772): the tile carries the gateways first, then the Left behind page (left., DLW §19.23 "What a run leaves behind").
-  assert.match(rail, /carryPages\(ownWorkcell, \[\{page: GATEWAYS_PAGE, binding: gateways\}, \{page: LEFT_BEHIND_PAGE, binding: leftBehind\}\]\)/, 'the Workcells tile lists the gateways')
+  // REPLACED (§19.23, 22 Oct manual): then the Seats page (seat., co.) and the Machine page (carrier., mc.).
+  assert.match(rail, /carryPages\(ownWorkcell, \[\{page: GATEWAYS_PAGE, binding: gateways\}, \{page: LEFT_BEHIND_PAGE, binding: leftBehind\},\s*\{page: SEAT_PAGE, binding: seat\}/, 'the Workcells tile lists the gateways')
   for (const file of ['agent/devices/ownerRoutes.ts', 'agent/devices/workcellReads.ts', 'agent/devices/workcellBindings.ts', 'agent/devices/mainTrackBindings.ts', 'agent/devices/messagesBinding.ts']) {
     assert.doesNotMatch(read(file), /\.defaults\[|\.fixtures|catalogue\/panels\//, `${file}: no design default or fixture`)
     assert.deepEqual(read(file).match(/#[0-9a-fA-F]{3,8}\b/g) ?? [], [], `${file}: shell tokens only`)

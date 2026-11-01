@@ -292,6 +292,34 @@ export const LAUNCH_REFUSED: Readonly<Record<string, string>> = {
   compare: 'Compare: no owner operation carries it yet — missing op: a comparison of takes (Software Factory).',
 }
 
+/** The score (manual §19.1 "The score"; clip:factory, the Notes tab): the workflow the task is a unit of, its rows the agents and teams of
+ * the track's rack. No reading assembles it yet: the units with their lowered compositions, the source's check, the rows and the waves are
+ * each a separate owner read. Each key is absent with the reads it waits for; every write stands refused, since no Factory operation writes
+ * a workflow source, and the decision model that fills open heads is not served. */
+const SCORE_READ = 'a score read: the units with their lowered compositions (`factory workflow inspect <state> <run> --unit`), the rows of the track\'s rack (`central.agent-set.resolve`) and the waves (`factory development wave read`)'
+export const SCORE_ABSENT: Readonly<Record<string, string>> = {
+  score: `The score: no reading reaches it yet — missing op: ${SCORE_READ} (Software Factory).`,
+  'unit.own': `This task's own unit: no reading reaches it yet — it is read with the score, missing op: ${SCORE_READ} (Software Factory).`,
+  'score.check': 'The engine\'s word on the score: no reading reaches it yet — missing op: `ql vak compose` on each unit\'s composition and `factory workflow check` on the source (Quaternal Logic, Software Factory).',
+  'gen.status': 'Generate\'s state: no reading reaches it yet — missing op: `aikit decide invoke` with the team space\'s Vāk-block instrument, which is not served (AIKit).',
+}
+export const SCORE_REFUSED: Readonly<Record<string, string>> = {
+  score: 'A note moved to another row: no owner operation carries it yet — missing op: a write of the workflow source (Factory writes none; `factory workflow check` only reads it) (Software Factory).',
+  'tr.press': 'Transform: no owner operation carries it yet — missing op: a write of the workflow source (Software Factory).',
+  'gen.press': 'Generate: no owner operation carries it yet — composing a score from the Intent is an agent\'s act, and filling the open heads waits on `aikit decide invoke` (AIKit).',
+  'gen.accept': 'Keep the generated score: no owner operation carries it yet — missing op: a write of the workflow source (Software Factory).',
+  'gen.discard': 'Discard the generated score: nothing was generated to discard — Generate waits on its owner (AIKit).',
+}
+/** The score's settings the view holds: the chosen note, how the rows fold and highlight, the song opened inside a note, Warp, and the
+ * tools' choices before a press. */
+const SCORE_VIEW: Readonly<Record<string, string>> = {
+  unit: 'the note selected in the score', 'score.fold': 'Fold or Rack: which rows the score shows', 'score.highlight': 'the thread form whose notes are tinted',
+  'score.open': 'the song opened inside a note', warp: 'Warp, which lays the log onto the score\'s ruler once the unit has returned',
+  'tr.tool': 'Transform\'s tool', 'tr.form': 'the thread form Transform sets', 'tr.join': 'the join Transform sets', 'tr.to': 'the agent or team Transform allocates to',
+  'tr.on': 'the unit Transform ties from', 'tr.auto': 'whether Transform applies as you choose',
+  'gen.tool': 'Generate\'s tool', 'gen.waves': 'how many waves Generate composes', 'gen.decider': 'the decision model Generate asks',
+}
+
 /** Repeat's fields, which do not change while its takes run (§19.1 The Launch panel: "Once the first run starts, these do not change. A
  * change starts a new set of takes"; AIKit refuses them in the same words). */
 const REPEAT_KEYS: ReadonlySet<string> = new Set(['repeat.variable', 'repeat.levels', 'repeat.repeats', 'repeat.stop'])
@@ -395,14 +423,15 @@ function taskWiring(task: TaskAddress | null, context: TaskSeamContext | null): 
       elapsed: 'the task\'s start to its last activity, in seconds',
       ...(takes ? {takes: 'the session\'s settings: the Repeat\'s set of takes (task.takes) — the takes it made, read once the set ends'} : {}),
     },
-    absent: {...INTENT_ABSENT, ...(takes ? {compare: LAUNCH_ABSENT.compare} : LAUNCH_ABSENT)},
+    absent: {...INTENT_ABSENT, ...SCORE_ABSENT, ...(takes ? {compare: LAUNCH_ABSENT.compare} : LAUNCH_ABSENT)},
     acts,
     view: {
       fold: 'Fold keeps only the lanes of the tools the agent used: how the log shows, not the log',
       event: 'the log row selected in Clip view', 'env.control': 'which of the Agent\'s controls the envelope editor shows',
       'criteria.page': 'the page of success conditions Clip view shows',
+      ...SCORE_VIEW,
     },
-    refused: {...refused, ...INTENT_REFUSED, ...LAUNCH_REFUSED},
+    refused: {...refused, ...INTENT_REFUSED, ...LAUNCH_REFUSED, ...SCORE_REFUSED},
   }
 }
 

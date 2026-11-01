@@ -229,15 +229,19 @@ test('the rack\'s chains hold every part the map holds under a position (M3-1 ha
 
 // ---------------------------------------------------------------- workcell__workcell: a worker's mode and track are optional
 
-test('the Workcell draws a worker with no mode or track as none, and the lane is the chosen project\'s seat\'s', async () => {
+test('the Workcell draws a worker with no mode or track as none, and the tile\'s lane is the chosen workcell\'s', async () => {
   const workcell = await panel('workcell__workcell')
   const working = JSON.stringify([{agent: 'flint'}])
-  for (const view of ['whole', 'full', 'widget']) assert.doesNotMatch(draw(workcell, view, {...workcell.defaults, working}), /undefined/, `${view}: no "undefined"`)
-  const seats = JSON.stringify([{product: 'ai-kit', state: 'claimed', lane: 'aikit/lane'}, {product: 'O-I', state: 'free', lane: null}])
-  const folded = draw(workcell, 'folded', {...workcell.defaults, seats, project: 'O-I'})
-  assert.doesNotMatch(folded, /aikit\/lane/, 'the chosen project\'s seat is free: its lane is none, not another project\'s')
+  // REPLACED (§19.23 Full "it has two views, Full and Widget"): the Whole among the views drawn — it has none.
+  for (const view of ['full', 'widget']) assert.doesNotMatch(draw(workcell, view, {...workcell.defaults, working}), /undefined/, `${view}: no "undefined"`)
+  // REPLACED (§19.23 Widget "The chosen workcell shows its lane, its claim and the faces of the agents working in it"; "It stands on no
+  // chain"): the Folded view's lane, the chosen project's seat's, and the binding's `project`, the project the chain stood for — the
+  // Folded view is gone, and the tile's lane is the chosen workcell's own.
+  const workcells = JSON.stringify([{name: 'env-2', lane: null}, {name: 'env-1', lane: 'aikit/lane', claimedBy: 'agent:kite'}])
+  const tile = draw(workcell, 'widget', {...workcell.defaults, workcells, name: 'env-2'})
+  assert.match(tile, /class="wc-tile-lane"[^>]*><b>free<\/b><\/p>/, 'the chosen workcell\'s seat is free: its lane is free, not another workcell\'s')
   const bind = await import('../src/agent/devices/workcellRackBinding.ts')
-  assert.match(source('agent/devices/workcellRackBinding.ts'), /put\(values, 'project', input\.project\)|values\.project = input\.project/, 'the binding names the project the chain stands for')
+  assert.doesNotMatch(source('agent/devices/workcellRackBinding.ts'), /put\(values, 'project'|values\.project = /, 'the binding names no project a chain stands for')
   assert.equal(typeof bind.workcellRackValues, 'function')
 })
 
@@ -283,7 +287,8 @@ test('the Workcell\'s World page chooses among the worlds Workcell lists for the
   const workcell = await panel('workcell__workcell')
   const rack = await import('../src/agent/devices/workcellRackBinding.ts')
   const worlds = JSON.stringify([{receipt: 'receipt:a', world: 'world:local:o-i:candidate'}, {receipt: 'receipt:b', world: 'world:local:o-i:dlw-build'}])
-  const page = draw(workcell, 'whole', {...workcell.defaults, worlds, worldReceipt: 'receipt:b'}, {page: 'world'})
+  // REPLACED (§19.23 Full "it has two views, Full and Widget"): the Whole's World page — the World page is a page of the Full.
+  const page = draw(workcell, 'full', {...workcell.defaults, worlds, worldReceipt: 'receipt:b'}, {page: 'world'})
   assert.match(page, /world:local:o-i:candidate/, 'the chooser offers each listed world')
   assert.match(page, /Choose a world/, 'none is assumed')
   assert.match(rack.workcellRackBinding.toString(), /values\.worlds = JSON\.stringify\(picked\.listed/, 'the binding hands the listed worlds to the chooser')
@@ -339,12 +344,14 @@ test('the Ledger keys each receipt by its ref: a change by its change_ref, a ret
 
 // ---------------------------------------------------------------- workcell__remote-carrier: a chooser among the runs a world names (part two)
 
-test('the Remote carrier\'s Standing page chooses among the runs Workcell names for the chosen world (`runs`, `planRun`), none assumed', async () => {
+// REPLACED (§19.18, §19.23, 22 Oct manual): the Remote carrier's Standing page — it left; the run's plan over the offers is band one of the
+// Machine page of Workcell's instrument, which carries the carrier's binding under `carrier.` (AgentRailDevices.tsx CARRIER_PAGE).
+test('the Machine page of Workcell\'s instrument chooses among the runs Workcell names for the chosen world (`carrier.runs`, `carrier.planRun`), none assumed', async () => {
   // DLW §19.18 Plan: "The run's needs laid on those offers." `workcell worlds` names each world's runs (the run-ledger slugs whose record
   // names its world_ref; read 28 Oct: run slugs such as development-entry-build-20261008 and its -r2); several wait for the hand's choice.
   const bind = await import('../src/agent/devices/designBindings.ts')
   const cells = await import('../src/agent/devices/workcellBindings.ts')
-  const carrier = await panel('workcell__remote-carrier')
+  const workcell = await panel('workcell__workcell')
   const runs = ['development-entry-build-20261008', 'development-entry-build-20261008-r2']
   const status = {status: 'answered', value: {workcell_ref: 'workcell:mac', connections: []}}
   bind.resetHolds()
@@ -368,11 +375,15 @@ test('the Remote carrier\'s Standing page chooses among the runs Workcell names 
   const chain = source('agent/devices/FactoryDeviceChain.tsx')
   assert.match(chain, /const carrierRunsKey = carrierWorld\?\.runs \? carrierWorld\.runs\.join\('\\n'\) : null/, 'the chosen world\'s runs')
   assert.match(chain, /run: \{ref: carrierRun, runs: carrierRuns,/, 'the world\'s runs reach material.run')
+  // The rail hands the world's runs to the carrier's binding the Machine page carries.
+  const rail = source('agent/devices/AgentRailDevices.tsx')
+  assert.match(rail, /run: \{ref: planRun\.ref, runs: planRuns,/, 'the world\'s runs reach the Machine page\'s material.run')
   // The design draws the chooser where several runs stand, and sets planRun.
-  const page = draw(carrier, 'whole', {...carrier.defaults, runs: JSON.stringify(runs), planRun: runs[1]}, {page: 'standing'})
+  // REPLACED (§19.23 Full "it has two views, Full and Widget"): the Whole's Machine page — the Machine page is a page of the Full.
+  const page = draw(workcell, 'full', {...workcell.defaults, 'carrier.runs': JSON.stringify(runs), 'carrier.planRun': runs[1]}, {page: 'machine'})
   assert.match(page, /Choose a run/, 'none is assumed')
   for (const run of runs) assert.ok(page.includes(run), `the chooser offers ${run}`)
-  assert.doesNotMatch(draw(carrier, 'whole', {...carrier.defaults, runs: undefined}, {page: 'standing'}), /Choose a run/, 'no chooser where nothing names several runs')
+  assert.doesNotMatch(draw(workcell, 'full', {...workcell.defaults, 'carrier.runs': undefined}, {page: 'machine'}), /Choose a run/, 'no chooser where nothing names several runs')
 })
 
 // ---------------------------------------------------------------- techne__palace: the pages, the scene kind, the guide, the locus, Rename and Delete (part two)

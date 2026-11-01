@@ -208,7 +208,9 @@ test('Left behind\'s worlds and bindings read Workcell\'s refusal as prose when 
   try {
     const hygiene = groundBind.hygieneBinding('central:ground-hygiene', {census: {sources: [], worktrees: [], branches: [], seats: [], machineRef: 'workcell:mac'}, findings: [], pages: status, at: 0}, 0, async () => {})
     const rack = one.carryPages({id: 'factory:workcell', values: {name: 'env-2'}}, [{page: one.LEFT_BEHIND_PAGE, binding: hygiene}])
-    const markup = html(createElement(host.HostedDevice, {designed: workcellDesign, binding: rack, view: 'whole', nav: {}}))
+    // REPLACED (§19.23 Full "it has two views, Full and Widget … Its window holds its Full"): the Whole's Left behind band — the Left behind
+    // page is a page of the Full.
+    const markup = html(createElement(host.HostedDevice, {designed: workcellDesign, binding: rack, view: 'full', nav: {}}))
     assert.match(markup, /Workcell could not be started to read its status/, 'the Worlds and Bindings rings\' refusal, in prose')
     assert.doesNotMatch(markup, /\{&quot;kind&quot;|\{"kind"/, 'no raw envelope on the page')
   } finally { host.resetHost('factory:workcell') }

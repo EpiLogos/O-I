@@ -206,7 +206,7 @@ test('the two designs draw on their bindings in all five views — no NaN, no un
   host.resetHost()
   const cases = [
     [ledgerDesign, rec.ledgerBinding({ground: ground([AGENT, NATIVE]), groundError: null, holds: bind.chainHolds()}, {openSession: () => null}), /re-plan port|Cairn|review #482|fixtures\/handoff/, []],
-    // The manual (§19.14): how long a request waits and what happens then are the Agent's Wait and On no answer, and the default
+    // The manual (§19.14): how long a request waits and what happens then are the Wait and On no answer set on the asking agent's Scope, and the default
     // answer is the Gateway's; Approvals shows them and sets none, so no Wait control stands here to carry its refusal.
     [approvalsDesign, rec.approvalsBinding({session: SESSION, encounter: encounter([CONSENT]), holds: bind.chainHolds()}, {}),
       /setModel|Kite|recursive delete/, []],

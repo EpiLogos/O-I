@@ -1,6 +1,6 @@
 // The environs of the process devices (manual §25.6 "Process types, read in time": a creature shows an agent's act, an environ a
-// process's course): the Gateway's river (§19.2), the NOWs' seasons (§23.6), the succession on the Seat page of Git / landing and the
-// erosion on its Checkouts page (§19.16), and the erosion of Docs (§18.5). Each is read from the value keys its device already carries
+// process's course): the Gateway's river (§19.2), the NOWs' seasons (§23.6), the succession of the seats and the erosion of the checkouts on
+// the Seats page of Workcell's instrument (§19.23), and the erosion of Docs (§18.5). Each is read from the value keys its device already carries
 // (faces/environReadings.ts) and drawn in the kit's well (faces/EnvironFaces.tsx), at its home in the device's views; while a reading is
 // missing the picture stands still and says which reading it waits on, and nothing in it moves.
 // Channels: REAL (tests/fixtures/environ-readings-2026-10-21.json: `central.now.list` and `seat status --json` read on workcell:mac,
@@ -52,6 +52,7 @@ const {prefixed} = await import('../src/inhabitants/catalogue/panels/design.ts')
 const {design: gateway} = await import('../src/inhabitants/catalogue/panels/actuation__gateway.tsx')
 const {design: nows} = await import('../src/inhabitants/catalogue/panels/widgets__nows.tsx')
 const {design: git} = await import('../src/inhabitants/catalogue/panels/workcell__git-seat.tsx')
+const {design: workcell} = await import('../src/inhabitants/catalogue/panels/workcell__workcell.tsx')
 const {design: docs} = await import('../src/inhabitants/catalogue/panels/central__docs.tsx')
 const REAL = JSON.parse(readFileSync(new URL('./fixtures/environ-readings-2026-10-21.json', import.meta.url), 'utf8'))
 
@@ -151,23 +152,26 @@ test('the succession: each seat of a product is ground; a lane grows on it, main
   assert.match(F.successionOf({seats: JSON.stringify([{workcell: 'env-1', product: 'o-i', state: 'free'}]), product: 'ql-mef'}).waits, /seat of ql-mef/)
 })
 
-test('the succession at its home: the Seat page of Git / landing, read through the Seat\'s own binding on the real seat status', () => {
+// REPLACED (§19.16, §19.23, 22 Oct manual): the Seat page of Git / landing — it left; the seats are the Seats page of Workcell's instrument.
+test('the succession at its home: the Seats page of Workcell\'s instrument, read through the Seat\'s own binding on the real seat status', () => {
   const values = cell.seatValues({status: REAL.seat, project: 'actuation', branch: null, holds: {views: {}}})
-  assert.ok(values.seats, 'the real reading reaches the Seat page\'s values')
-  const markup = draw(git.whole(props({...git.defaults, ...prefixed('seat.', {...values, seats: values.seats})}, {page: 'seat', frame: 'chain'})))
+  assert.ok(values.seats, 'the real reading reaches the Seats page\'s values')
+  // REPLACED (§19.23 Full "it has two views, Full and Widget"): the Whole's Seats page — the Seats page is a page of the Full.
+  const markup = draw(workcell.full(props({...workcell.defaults, ...prefixed('seat.', {...values, seats: values.seats})}, {page: 'seats'})))
   const well = only(markup, 'succession')
   assert.equal(well.state, 'live')
   const actuation = JSON.parse(values.seats).filter(s => s.product === 'actuation')
   assert.deepEqual([...well.body.matchAll(/data-plot="([a-z]+)"/g)].map(m => m[1]),
     actuation.sort((a, b) => a.workcell.localeCompare(b.workcell)).map(s => s.state === 'claimed' ? 'held' : s.state === 'free' ? 'free' : s.state === 'occupied-foreign-lane' ? 'foreign' : 'unknown'))
-  const none = only(draw(git.whole(props({...git.defaults, 'seat.seats': undefined}, {page: 'seat', frame: 'chain'}))), 'succession')
+  const none = only(draw(workcell.full(props({...workcell.defaults, 'seat.seats': undefined}, {page: 'seats'}))), 'succession')
   assert.deepEqual([none.state, none.words], ['waiting', 'Waits on the seat instrument (seat status).'])
-  assert.equal(environs(draw(git.whole(props(git.defaults, {page: 'landing', frame: 'chain'})))).length, 0, 'the Landing page draws no environ')
+  assert.equal(environs(draw(git.whole(props(git.defaults, {frame: 'chain'})))).length, 0, 'Git / landing\'s one view draws no environ')
 })
 
 // ---------------------------------------------------------------- the erosion
 
-test('the erosion of the checkouts: the real seat status as findings on the rings; a refused ring unsurveyed; the Checkouts page draws it', () => {
+// REPLACED (§19.16, §19.23, 22 Oct manual): the Checkouts page of Git / landing — it left; the checkouts follow the seats on the Seats page.
+test('the erosion of the checkouts: the real seat status as findings on the rings; a refused ring unsurveyed; the Seats page draws it', () => {
   const seats = hygiene.parseSeatStatusJson(JSON.stringify(REAL.seat))
   const sources = [{boundaryOp: 'seat status (Control/user/workcell/seat)', channel: 'machine-instrument', at: 'x'},
     {boundaryOp: 'git worktree list --porcelain', channel: 'machine-instrument', at: 'x', refusal: 'the git repository reading did not answer'}]
@@ -182,10 +186,11 @@ test('the erosion of the checkouts: the real seat status as findings on the ring
   assert.deepEqual([by.worktrees.state, by.worktrees.why], ['unsurveyed', 'git worktree list --porcelain: the git repository reading did not answer'], 'a refused read leaves its ring unsurveyed')
   assert.deepEqual([by.branches.state, by.branches.why], ['unsurveyed', 'No reading of the branches.'])
   assert.match(F.checkoutErosionOf({}).waits, /Waits on the checkouts/)
-  const page = only(draw(git.whole(props(git.defaults, {page: 'checkouts', frame: 'chain'}))), 'erosion')
+  // REPLACED (§19.23 Full "it has two views, Full and Widget"): the Whole's Seats page — the Seats page is a page of the Full.
+  const page = only(draw(workcell.full(props(workcell.defaults, {page: 'seats'}))), 'erosion')
   assert.equal(page.state, 'live')
   assert.deepEqual([...page.body.matchAll(/data-stretch="([a-z]+)"/g)].map(m => m[1]).length, 3, 'branches, seats, worktrees')
-  const none = only(draw(git.whole(props({...git.defaults, ...git.fixtures['No machine read']}, {page: 'checkouts', frame: 'chain'}))), 'erosion')
+  const none = only(draw(workcell.full(props({...workcell.defaults, ...workcell.fixtures['No machine read']}, {page: 'seats'}))), 'erosion')
   assert.deepEqual([none.state, none.words], ['waiting', 'Waits on the checkouts: git worktree list --porcelain refused (the git repository reading did not answer).'])
 })
 

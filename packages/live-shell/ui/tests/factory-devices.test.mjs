@@ -111,7 +111,7 @@ test('every device keeps its Live semantic and invariant (lock §1, §5) — the
   for (const {slot, device} of set) assert.deepEqual(validateFaceSemantic(device.face, {family: slot.family}), [], `${slot.id} keeps its semantic`)
   const rack = slotOf(set, 'skillset').device.face
   assert.deepEqual(rack.invariant.chains, ['gazetteer', 'vault-read', 'zeta'], 'the rack declares the chains it holds')
-  assert.ok(rack.invariant.chainSelector, 'and its chain selector')
+  assert.equal(rack.invariant.chainSelector, undefined, 'and no selector among them: every chain works at once')
   assert.equal(slotOf(chain(), 'skillset').device.face.invariant.chains.length >= 1, true, 'a rack never declares fewer than one chain')
 })
 

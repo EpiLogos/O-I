@@ -61,7 +61,7 @@ export const CHAIN_LAWS: Readonly<Record<ChainKind, ChainLaw>> = {
   },
   workcell: {
     chain: 'workcell', title: 'A workcell\'s chain', manual: '§16.2, §19.23',
-    slots: ['workcell', 'gateway', 'remote-carrier', 'git'], fixed: ['workcell', 'gateway', 'remote-carrier', 'git'],
+    slots: ['gateway', 'remote-carrier', 'git'], fixed: ['gateway', 'remote-carrier', 'git'],
     means: 'The chain\'s order is the road\'s: in through the gateway, onto the machine, into the seat, out through the landing.',
   },
   'expressions-studio': {

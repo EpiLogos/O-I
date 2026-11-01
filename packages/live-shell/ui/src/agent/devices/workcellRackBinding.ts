@@ -1,8 +1,8 @@
-// A workcell on its owners (lane W1-Factory; DLW §19.23, workcell:workcell — "Kind: rack · Track: a workcell: a return track in Factory,
-// and the Works in of every track an agent works on"). A workcell is one of the machine's standing tracks of checkouts (env-1, env-2,
-// env-3), drawn as a rack whose chain carries the road in and out: the Gateway (§19.2), the Remote carrier (§19.18), Git / landing with
-// the Seat inside it (§19.16, §19.17). Its Compact is its chain list, each device with its light, and its four macros (§19.23 Compact);
-// its widget is the Workcells tile (§19.23 Widget).
+// A workcell on its owners (lane W1-Factory; DLW §19.23, workcell:workcell — "Kind: instrument · Pane: born in a pane, and stands only
+// there, on the run you select"). A workcell is one of the machine's standing sets of checkouts (env-1, env-2, env-3); its connections
+// are the three that reach it: the Gateway (§19.2), the Remote carrier (§19.18) and Git / landing (§19.16). It stands on no chain: its
+// Full, in a pane, opens on the run's road, each connection with its reading, and the agents working here (§19.23 Full); it changes none of
+// the connections' settings, each set on its own device. Its widget is the Workcells tile (§19.23 Widget).
 //
 // What the owners report (real shapes in tests/fixtures/workcell-readings-2026-10-21.json, read-only):
 //   `seat status --json` (central.workcell-status/v1; the kernel's seat_status_read, workcellReads.ts useSeatStatusAnswer): each workcell
@@ -11,7 +11,7 @@
 //   `workcell status --json` (the kernel's workcell_status_read, owners/readers.ts useWorkcellAnswer): workcell_ref — the Machine, as the
 //     Remote carrier reads it (workcellBindings.ts carrierValues `here`);
 //   the chain devices' own bindings (designBindings.ts gatewayBinding, workcellBindings.ts carrierBinding, gitBinding): each one's light
-//     and one reading for the chain list, and the Gateway's Transport, Approvals and Stall after for the macros.
+//     and one reading for the chain list.
 //   `workcell doctor` (lane W10, workcell_read {doctor}): the Services page, each declared service with its endpoint, health,
 //     availability and lifetime (workcellMaterial.ts servicesOf); Read now asks doctor again. Workcell has no `services` command: what doctor
 //     declares is what Services draws;
@@ -29,9 +29,10 @@
 //     leaves the lease absent with its error.
 // What nothing reads, each absent with the operation it waits for: who works here with their track and mode (the claims name actors, not
 // tracks or modes), the gateway's frames (a frame-ring read).
-// The writes: the macros Transport, Approvals and Stall after go the Gateway's own way (its rows to kernel:harness_agent_control, the same
-// rows gatewayBinding writes through); Land as is Git / landing's and stands refused in its words (GIT_REFUSE.landAs). Recover, Apply
-// (reconcile) and Release world are Workcell's writes on the machine's worlds (workcell_write {recover, release, reconcile}): each goes only
+// The Seats page's seats and checkouts and the Machine page's plan and machine are the seat instrument's, the checkouts', the Remote
+// carrier's and the machine's own bindings, carried under `seat.`, `co.`, `carrier.` and `mc.` (oneAgentBinding.ts carryPages, as the rail
+// hosts them); this binding writes none of them.
+// The writes: Recover, Apply (reconcile) and Release world are Workcell's writes on the machine's worlds (workcell_write {recover, release, reconcile}): each goes only
 // on the person's press, on the receipt the world's reading handed in, and is refused in Workcell's words; with no world read they stand
 // disabled naming the receipt they lack. Checkpoint takes a checkpoint of the world through its binding's provider (workcell_write
 // {checkpoint}, `workcell --receipt R checkpoint`); a binding whose provider takes none is Workcell's refusal (kind unsupported), shown at the
@@ -41,7 +42,7 @@ import type {DesignBinding, Standing, Value, ValueChange, Values} from '../../fr
 import type {DeviceInstance} from '../../frame/devices/deviceRuntime'
 import {chainHolds, holdView, viewHolds, type ChainHolds} from './designBindings'
 import {FRAME_RING, familyFaceDevice} from './mainTrackBindings'
-import {GIT_REFUSE, SEAT_UNREAD, seatReading, type WorkcellAnswer} from './workcellBindings'
+import {SEAT_UNREAD, seatReading, type WorkcellAnswer} from './workcellBindings'
 import {NO_RUN, instancesOf, materialWorldOf, reconciledOf, servicesOf, worldsOf, type ListedWorld} from './workcellMaterial'
 import type {WorkcellWriteRequest} from '../../../../../../desktop/cradle/src/kernel/types'
 
@@ -51,12 +52,12 @@ const str = (value: unknown): string | undefined => (typeof value === 'string' &
 const num = (value: unknown): number | undefined => (typeof value === 'number' && Number.isFinite(value) ? value : undefined)
 
 export const WORKCELL_RACK_DESIGN = 'workcell:workcell'
-/** The workcell rack on the door: one device, drawn on the chain of the workcell selected (its return track) and as the Workcells tile. */
+/** Workcell's instrument on the door: one device, drawn full in a pane and as the Workcells tile on the rail. */
 export const WORKCELL_RACK_ID = 'factory:workcell'
 
-/** The workcell rack as a device of the runtime: the Workcell family's admitted `workcell` face (workcellFamilyManifest.ts — a rack whose
- * chains are the gateway, the remote carrier and the git seat), so designKey('workcell', 'workcell') is the design's id by the family's own
- * declaration. Null when the family does not admit it. It declares no rows of the address table: its design draws its binding's keys. */
+/** Workcell's instrument as a device of the runtime: the Workcell family's admitted `workcell` face (workcellFamilyManifest.ts — an
+ * instrument born in a pane, on no chain), so designKey('workcell', 'workcell') is the design's id by the family's own declaration. Null
+ * when the family does not admit it. It declares no rows of the address table: its design draws its binding's keys. */
 export function workcellRackDevice(): DeviceInstance | null {
   return familyFaceDevice(WORKCELL_RACK_ID, 'workcell', 'workcell', 'Workcell', 'ret')
 }
@@ -86,9 +87,8 @@ export const WORKCELL_ABSENT = {
   reconciled: unread('The last reconcile', NO_RUN, 'Workcell'),
 } as const
 
-/** The acts no owner carries here, each refused with its command. Land as is Git / landing's own refusal. */
+/** The acts no owner carries here, each refused with its command. */
 export const WORKCELL_REFUSE = {
-  landAs: GIT_REFUSE.landAs,
   reread: missing('Read now', `the kernel's material_read of a world — ${NO_RUN}`, 'Workcell'),
   recover: missing('Recover', `\`workcell --receipt R recover\` on the world's receipt — ${NO_RUN}`, 'Workcell'),
   checkpoint: missing('Checkpoint', `\`workcell --receipt R checkpoint\` on the world's receipt — ${NO_RUN}`, 'Workcell'),
@@ -100,9 +100,6 @@ export const WORKCELL_REFUSE = {
 /** A binding's fate (`want:<binding ref>`) is set on a world's bindings, and no world is read here. */
 export const FATE_REFUSE = missing('A binding\'s fate', `the run's world, whose bindings the fates are set on — ${NO_RUN}`, 'Workcell')
 
-/** The macros that reach into the chain, each written by the Gateway (its rows, as gatewayBinding writes them). */
-export const GATEWAY_MACROS: readonly string[] = ['transport', 'approvals', 'stallAfter']
-const NO_GATEWAY = 'The Gateway is not drawn on its owner here (its design waits), so nothing carries this macro to its row.'
 const NO_NAME = 'No workcell is selected: select a workcell\'s return track (⌥⌘R) to read its chain.'
 
 /** The shell's own settings of the pages, and the shell's starting value of each (§19.23 Parameters: Needed only Off, Open in Web). */
@@ -227,7 +224,6 @@ export function workcellRackValues(input: WorkcellRackInput): Values {
     }))
   }
   const gateway = input.chain.gateway ?? {}
-  for (const key of GATEWAY_MACROS) put(values, key, gateway[key])
   // The machine's services and harness processes are this machine's Workcell's, whichever workcell is chosen.
   const services = input.doctor?.status === 'answered' ? servicesOf(input.doctor.value) : null
   if (services) values.services = JSON.stringify(services)
@@ -235,14 +231,11 @@ export function workcellRackValues(input: WorkcellRackInput): Values {
   if (instances) values.instances = JSON.stringify(instances)
   if (input.name == null) return values
   values.name = input.name
-  // The project the chain stands for: its seat's lane is the folded workcell's (workcell__workcell.tsx laneOf), none while that seat is free.
-  put(values, 'project', input.project)
   put(values, 'machine', str(input.chain.carrier.here))
   const seat = read ? workcellSeat(input.seats, input.name, input.project) : undefined
   values.chain = JSON.stringify(chainList(input, seat))
   const mine = read ? read.seats.filter(row => row.workcell === input.name) : null
-  // The project's seat first, then the others in the instrument's order: the folded workcell and a track's Works in read "the lane its seat
-  // holds" (§19.23 Folded) from the seat of the project the chain stands for (workcell__workcell.tsx laneOf: the first seat with a lane).
+  // The project's seat first, then the others in the instrument's order (the Seats page's rows, one for each seat of each project).
   const ours = (row: Record<string, unknown>) => String(row.product).toLowerCase() === input.project.toLowerCase()
   if (mine) values.seats = JSON.stringify([...mine.filter(ours), ...mine.filter(row => !ours(row))].map(row => seatRow(row as Obj)))
   // The light: the register holds this workcell and its gateway answered; dark when the gateway did not, or the register does not hold it.
@@ -251,9 +244,8 @@ export function workcellRackValues(input: WorkcellRackInput): Values {
   return values
 }
 
-/** The workcell's ports: the Gateway's binding, whose rows the macros write through; doctor read again; Workcell's world writes. */
+/** The workcell's ports: doctor read again; Workcell's world writes. */
 export interface WorkcellRackPorts {
-  readonly gateway: Pick<DesignBinding, 'write'> | null
   /** Ask `workcell doctor` again (Read services). Absent: no carrier stands. */
   readonly rereadServices?: () => void
   /** Workcell's writes on a prepared world (workcell_write {recover, release, reconcile}). Absent: no carrier stands. */
@@ -286,7 +278,6 @@ export function workcellRackBinding(input: WorkcellRackInput, ports: WorkcellRac
   const standing: Record<string, Standing> = {}
   for (const [key, why] of Object.entries(WORKCELL_ABSENT)) standing[key] = {disabled: why}
   for (const [key, why] of Object.entries(WORKCELL_REFUSE)) standing[key] = {disabled: why}
-  if (!ports.gateway) for (const key of GATEWAY_MACROS) standing[key] = {disabled: NO_GATEWAY}
   // Services and the harness processes: Workcell's answers, or its refusal in its words while they do not stand.
   const answerWhy = (answer: WorkcellAnswer | undefined, fallback: string, command: string) => (answer?.status === 'refused' ? answer.error ?? fallback
     : answer?.status === 'reading' ? `Workcell has not answered \`${command}\` yet.` : answer ? `\`${command}\` answered something other than its reading.` : fallback)
@@ -378,14 +369,9 @@ export function workcellRackBinding(input: WorkcellRackInput, ports: WorkcellRac
     values,
     standing,
     local: Object.fromEntries([...Object.keys(WORKCELL_VIEW), 'worldReceipt'].map(key => [key, (value: Value | undefined) => holdView(WORKCELL_RACK_ID, key, value)])),
-    writes: key => GATEWAY_MACROS.includes(key) || key in WORKCELL_REFUSE || key.startsWith('want:'),
+    writes: key => key in WORKCELL_REFUSE || key.startsWith('want:'),
     write: async (changes: readonly ValueChange[]) => {
       for (const {key, value} of changes) {
-        if (GATEWAY_MACROS.includes(key)) {
-          if (!ports.gateway?.write) throw Error(NO_GATEWAY)
-          await ports.gateway.write([{key, value}])
-          continue
-        }
         if (key === 'readServices') {
           if (!ports.rereadServices) throw Error(WORKCELL_REFUSE.readServices)
           ports.rereadServices()
